@@ -75,6 +75,12 @@ struct sn5s330_emul_data {
 	uint8_t int_mask_fall_reg2;
 	/** Emulated INT_MASK_FALL_REG3 register */
 	uint8_t int_mask_fall_reg3;
+	/** Emulated INT_TRIP_RISE_REG1 register */
+	uint8_t int_trip_rise_reg1;
+	/** Emulated INT_TRIP_RISE_REG2 register */
+	uint8_t int_trip_rise_reg2;
+	/** Emulated INT_TRIP_RISE_REG3 register */
+	uint8_t int_trip_rise_reg3;
 };
 
 struct sn5s330_emul_cfg {
@@ -197,6 +203,18 @@ static int sn5s330_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_mask_fall_reg3;
 		break;
+	case SN5S330_INT_TRIP_RISE_REG1:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->int_trip_rise_reg1;
+		break;
+	case SN5S330_INT_TRIP_RISE_REG2:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->int_trip_rise_reg2;
+		break;
+	case SN5S330_INT_TRIP_RISE_REG3:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->int_trip_rise_reg3;
+		break;
 	default:
 		__ASSERT(false, "Unimplemented Register Access Error on 0x%x",
 			 reg);
@@ -296,6 +314,18 @@ static int sn5s330_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	case SN5S330_INT_MASK_FALL_REG3:
 		__ASSERT_NO_MSG(bytes == 1);
 		data->int_mask_fall_reg3 = val;
+		break;
+	case SN5S330_INT_TRIP_RISE_REG1:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->int_trip_rise_reg1 = val;
+		break;
+	case SN5S330_INT_TRIP_RISE_REG2:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->int_trip_rise_reg2 = val;
+		break;
+	case SN5S330_INT_TRIP_RISE_REG3:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->int_trip_rise_reg3 = val;
 		break;
 	default:
 		__ASSERT(false, "Unimplemented Register Access Error on 0x%x",
