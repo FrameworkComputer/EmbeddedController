@@ -11,5 +11,6 @@ register_binman_project(
         "gpio.dts",
         "i2c.dts",
         "motionsense.dts",
-        "pwm.dts"],
+        "pwm.dts",
+    ],
 )

@@ -133,6 +133,10 @@ def test(opts):
     # proceeding.
     subprocess.run([zephyr_dir / 'zmake' / 'run_tests.sh'], check=True)
 
+    # Run formatting checks on all BUILD.py files.
+    config_files = zephyr_dir.rglob("**/BUILD.py")
+    subprocess.run(["black", "--diff", "--check", *config_files], check=True)
+
     subprocess.run(['zmake', '-D', 'testall'], check=True)
 
     # Run the test with coverage also, as sometimes they behave differently.
