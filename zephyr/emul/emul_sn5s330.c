@@ -52,6 +52,17 @@ struct sn5s330_emul_data {
 	uint8_t func_set11_reg;
 	/** Emulated FUNC_SET12 register */
 	uint8_t func_set12_reg;
+	/** Emulated INT_STATUS_REG1 register */
+	uint8_t int_status_reg1;
+	/** Emulated INT_STATUS_REG2 register */
+	uint8_t int_status_reg2;
+	/** Emulated INT_STATUS_REG3 register */
+	uint8_t int_status_reg3;
+	/** Emulated INT_STATUS_REG4 register */
+	/*
+	 * TODO(b:205754232): Register name discrepancy
+	 */
+	uint8_t int_status_reg4;
 };
 
 struct sn5s330_emul_cfg {
@@ -134,6 +145,22 @@ static int sn5s330_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set12_reg;
 		break;
+	case SN5S330_INT_STATUS_REG1:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->int_status_reg1;
+		break;
+	case SN5S330_INT_STATUS_REG2:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->int_status_reg2;
+		break;
+	case SN5S330_INT_STATUS_REG3:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->int_status_reg3;
+		break;
+	case SN5S330_INT_STATUS_REG4:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->int_status_reg4;
+		break;
 	default:
 		__ASSERT(false, "Unimplemented Register Access Error on 0x%x",
 			 reg);
@@ -196,7 +223,20 @@ static int sn5s330_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set12_reg = val;
 		break;
-
+	case SN5S330_INT_STATUS_REG1:
+		/* fallthrough */
+	case SN5S330_INT_STATUS_REG2:
+		/* fallthrough */
+	case SN5S330_INT_STATUS_REG3:
+		__ASSERT(false,
+			 "Write to an unverified-as-safe read-only register on "
+			 "0x%x",
+			 reg);
+		/* fallthrough for checkpath */
+	case SN5S330_INT_STATUS_REG4:
+		__ASSERT_NO_MSG(bytes == 1);
+		data->int_status_reg4 = val;
+		break;
 	default:
 		__ASSERT(false, "Unimplemented Register Access Error on 0x%x",
 			 reg);

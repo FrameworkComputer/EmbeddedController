@@ -43,6 +43,9 @@ enum sn5s330_pp_idx {
 #define SN5S330_INT_STATUS_REG1 0x2F
 #define SN5S330_INT_STATUS_REG2 0x30
 #define SN5S330_INT_STATUS_REG3 0x31
+/*
+ * TODO(b:205754232): Register name discrepancy
+ */
 #define SN5S330_INT_STATUS_REG4 0x32
 
 #define SN5S330_INT_TRIP_RISE_REG1 0x20
