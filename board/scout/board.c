@@ -519,6 +519,8 @@ void board_enable_s0_rails(int enable)
 	gpio_set_level(GPIO_EC_CAM_V3P3_EN, enable);
 
 	gpio_set_level(GPIO_PP3300_TPU_A_EN, enable);
+
+	gpio_set_level(GPIO_EN_LOAD_SWITCH, enable);
 }
 
 int ec_config_get_usb4_present(void)

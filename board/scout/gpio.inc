@@ -87,6 +87,7 @@ GPIO(EC_MX8M_ONOFF,            PIN(9, 3), GPIO_OUT_LOW)
 GPIO(EC_SCALER_EN,             PIN(E, 0), GPIO_OUT_LOW)
 GPIO(PP3300_TPU_A_EN,          PIN(B, 0), GPIO_OUT_LOW)
 GPIO(PWR_CTRL,                 PIN(6, 2), GPIO_OUT_LOW)
+GPIO(EN_LOAD_SWITCH,           PIN(4, 2), GPIO_OUT_LOW)
 
 /* Barreljack */
 GPIO(EN_PPVAR_BJ_ADP_L,        PIN(0, 4), GPIO_OUT_LOW)
@@ -143,7 +144,7 @@ ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)                  /* PWM5 - Fan 1 
 ALTERNATE(PIN_MASK(7, 0x08), 0, MODULE_PWM, 0)                  /* TA2 - Fan Tachometer */
 
 /* ADC */
-ALTERNATE(PIN_MASK(4, 0x3E), 0, MODULE_ADC, 0)                  /* ADC0, ADC1, ADC2, ADC4 */
+ALTERNATE(PIN_MASK(4, 0x3A), 0, MODULE_ADC, 0)                  /* ADC0, ADC1, ADC2, ADC4 */
 ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)                  /* ADC7 */
 ALTERNATE(PIN_MASK(F, 0x01), 0, MODULE_ADC, 0)                  /* ADC9 */
 
@@ -154,7 +155,6 @@ ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                 /* UART from EC 
 UNUSED(PIN(1, 3))						/* EC_GP_SEL1_ODL */
 UNUSED(PIN(C, 0))						/* FAN_PWM_2 */
 UNUSED(PIN(8, 0))						/* LED_BLUE_L */
-UNUSED(PIN(4, 2))						/* ADC3/TEMP_SENSOR_3 */
 UNUSED(PIN(C, 2))						/* A12 NC */
 UNUSED(PIN(1, 2))						/* C6  NC */
 UNUSED(PIN(6, 6))						/* H4  NC */
