@@ -43,11 +43,8 @@ static void test_fail_once_func_set1(void)
 	uint32_t func_set1_value;
 
 	i2c_common_emul_set_write_func(i2c_emul, fail_until_write_func, &count);
-	/*
-	 * Call the init and ignore the return value, we're just checking that
-	 * setting FUNC_SET1 retries at least once.
-	 */
-	sn5s330_drv.init(SN5S330_PORT);
+
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
 	zassert_equal(count, 0, NULL);
 	zassert_ok(sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET1,
 					 &func_set1_value),
