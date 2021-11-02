@@ -252,18 +252,15 @@ class Zmake:
         coverage=False,
     ):
         """Set up a build directory to later be built by "zmake build"."""
-        supported_versions = [
-            util.parse_zephyr_version(v)
-            for v in project.config.supported_zephyr_versions
-        ]
-        zephyr_base = self.locate_zephyr_base(max(supported_versions)).resolve()
+        supported_version = util.parse_zephyr_version(project.config.zephyr_version)
+        zephyr_base = self.locate_zephyr_base(supported_version).resolve()
 
         # Ignore the patchset from the Zephyr version.
         zephyr_version = util.read_zephyr_version(zephyr_base)[:2]
 
         if (
             not ignore_unsupported_zephyr_version
-            and zephyr_version not in supported_versions
+            and zephyr_version != supported_version
         ):
             raise ValueError(
                 "The Zephyr OS version (v{}.{}) is not supported by the "

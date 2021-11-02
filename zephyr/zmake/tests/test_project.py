@@ -58,7 +58,7 @@ def test_find_dts_overlays(modules):
                     zephyr_board=board,
                     output_packer=zmake.output_packers.ElfPacker,
                     supported_toolchains=["llvm"],
-                    supported_zephyr_versions=["v2.7"],
+                    zephyr_version="v2.7",
                     project_dir=pathlib.Path("/fakebuild"),
                 )
             )
@@ -93,7 +93,7 @@ def test_prune_modules(modules):
             zephyr_board="native_posix",
             output_packer=zmake.output_packers.ElfPacker,
             supported_toolchains=["coreboot-sdk"],
-            supported_zephyr_versions=["v2.7"],
+            zephyr_version="v2.7",
             project_dir=pathlib.Path("/fake"),
             modules=modules,
         ),
@@ -116,7 +116,7 @@ def test_prune_modules_unavailable():
             zephyr_board="native_posix",
             output_packer=zmake.output_packers.ElfPacker,
             supported_toolchains=["coreboot-sdk"],
-            supported_zephyr_versions=["v2.7"],
+            zephyr_version="v2.7",
             project_dir=pathlib.Path("/fake"),
             modules=["hal_stm32", "cmsis"],
         ),

@@ -66,7 +66,7 @@ def fake_project(tmp_path):
         project.ProjectConfig(
             project_name="foo",
             zephyr_board="foo",
-            supported_zephyr_versions=["v2.6"],
+            zephyr_version="v2.6",
             supported_toolchains=[
                 "coreboot-sdk",
                 "host",
