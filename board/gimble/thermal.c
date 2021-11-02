@@ -9,6 +9,7 @@
 #include "fan.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "tablet_mode.h"
 #include "temp_sensor.h"
 #include "thermal.h"
 #include "util.h"
@@ -31,6 +32,8 @@ struct fan_step {
 	int8_t off[TEMP_SENSOR_COUNT];
 	/* Fan rpm */
 	uint16_t rpm[FAN_CH_COUNT];
+	/* Fan rpm for tablet mode */
+	uint16_t rpm_tablet[FAN_CH_COUNT];
 };
 /*
  * TODO(b/167931578) Only monitor sensor3 for now.
@@ -39,39 +42,45 @@ struct fan_step {
 static const struct fan_step fan_table[] = {
 	{
 		/* level 0 */
-		.on = {44, -1, -1},
+		.on = {43, -1, -1},
 		.off = {0, -1, -1},
 		.rpm = {0},
+		.rpm_tablet = {0},
 	},
 	{
 		/* level 1 */
-		.on = {46, -1, -1},
-		.off = {44, -1, -1},
-		.rpm = {3200},
+		.on = {45, -1, -1},
+		.off = {43, -1, -1},
+		.rpm = {3400},
+		.rpm_tablet = {3400},
 	},
 	{
 		/* level 2 */
-		.on = {50, -1, -1},
-		.off = {45, -1, -1},
-		.rpm = {3600},
+		.on = {46, -1, -1},
+		.off = {44, -1, -1},
+		.rpm = {3800},
+		.rpm_tablet = {3700},
 	},
 	{
 		/* level 3 */
-		.on = {54, -1, -1},
-		.off = {49, -1, -1},
-		.rpm = {4100},
+		.on = {48, -1, -1},
+		.off = {45, -1, -1},
+		.rpm = {4200},
+		.rpm_tablet = {4100},
 	},
 	{
 		/* level 4 */
-		.on = {58, -1, -1},
-		.off = {53, -1, -1},
-		.rpm = {4900},
+		.on = {50, -1, -1},
+		.off = {47, -1, -1},
+		.rpm = {4800},
+		.rpm_tablet = {4800},
 	},
 	{
 		/* level 5 */
-		.on = {60, -1, -1},
-		.off = {57, -1, -1},
-		.rpm = {5200},
+		.on = {52, -1, -1},
+		.off = {49, -1, -1},
+		.rpm = {5400},
+		.rpm_tablet = {5200},
 	},
 };
 const int num_fan_levels = ARRAY_SIZE(fan_table);
@@ -127,7 +136,10 @@ int fan_table_to_rpm(int fan, int *temp, enum temp_sensor_id temp_sensor)
 
 	switch (fan) {
 	case FAN_CH_0:
-		new_rpm = fan_table[current_level].rpm[FAN_CH_0];
+		if (tablet_get_mode())
+			new_rpm = fan_table[current_level].rpm_tablet[FAN_CH_0];
+		else
+			new_rpm = fan_table[current_level].rpm[FAN_CH_0];
 		break;
 	default:
 		break;
