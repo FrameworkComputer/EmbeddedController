@@ -194,6 +194,7 @@ struct motion_sensor_t icm426xx_base_gyro = {
 	.location = MOTIONSENSE_LOC_BASE,
 	.drv = &icm426xx_drv,
 	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
 	.port = I2C_PORT_ACCEL,
 	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
 	.default_range = 1000, /* dps */
