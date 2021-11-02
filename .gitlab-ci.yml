@@ -46,6 +46,7 @@ before_script:
   - ln -s "$(pwd)" "${MODULES_DIR}/ec"
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install zephyr/zmake --user
+  - python3 -m pip install pyyaml
   - export BUILD_DIR=build
   - export ZEPHYR_DIR=/zephyr
   - export PATH="$PATH:$HOME/.local/bin"
