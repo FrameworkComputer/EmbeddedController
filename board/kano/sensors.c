@@ -6,6 +6,9 @@
 #include "common.h"
 #include "accelgyro.h"
 #include "adc_chip.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_bmi260.h"
+#include "driver/accel_bma422.h"
 #include "driver/accelgyro_icm426xx.h"
 #include "driver/accelgyro_icm_common.h"
 #include "driver/accel_kionix.h"
@@ -45,6 +48,16 @@ K_MUTEX_DEFINE(g_lid_accel_mutex);
 K_MUTEX_DEFINE(g_base_accel_mutex);
 static struct kionix_accel_data g_kx022_data;
 static struct icm_drv_data_t g_icm426xx_data;
+static struct bmi_drv_data_t g_bmi260_data;
+static struct accelgyro_saved_data_t g_bma422_data;
+
+enum base_accelgyro_type {
+	BASE_GYRO_NONE = 0,
+	BASE_GYRO_BMI260 = 1,
+	BASE_GYRO_ICM426XX = 2,
+};
+
+static enum base_accelgyro_type base_accelgyro_config;
 
 /*
  * TODO:(b/197200940): Verify lid and base orientation
@@ -61,6 +74,92 @@ static const mat33_fp_t base_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
+static const mat33_fp_t lid_bma422_standard_ref = {
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(-1)}
+};
+static const mat33_fp_t base_bmi260_standard_ref = {
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+
+static struct motion_sensor_t bmi260_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMI260,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &bmi260_drv,
+	.mutex = &g_base_accel_mutex,
+	.drv_data = &g_bmi260_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
+	.rot_standard_ref = &base_bmi260_standard_ref,
+	.min_frequency = BMI_ACCEL_MIN_FREQ,
+	.max_frequency = BMI_ACCEL_MAX_FREQ,
+	.default_range = 4, /* g */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+	},
+};
+
+static struct motion_sensor_t bmi260_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMI260,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &bmi260_drv,
+	.mutex = &g_base_accel_mutex,
+	.drv_data = &g_bmi260_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_bmi260_standard_ref,
+	.min_frequency = BMI_GYRO_MIN_FREQ,
+	.max_frequency = BMI_GYRO_MAX_FREQ,
+};
+
+static struct motion_sensor_t bma422_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMA422,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &bma4_accel_drv,
+	.mutex = &g_lid_accel_mutex,
+	.drv_data = &g_bma422_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = BMA4_I2C_ADDR_SECONDARY,
+	.rot_standard_ref = &lid_bma422_standard_ref,
+	.min_frequency = BMA4_ACCEL_MIN_FREQ,
+	.max_frequency = BMA4_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, enough for laptop. */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+	},
+};
+
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
@@ -71,7 +170,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv = &kionix_accel_drv,
 		.mutex = &g_lid_accel_mutex,
 		.drv_data = &g_kx022_data,
-		.port = I2C_PORT_SENSOR,
+		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
 		.rot_standard_ref = &lid_standard_ref, /* identity matrix */
@@ -101,7 +200,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_icm426xx_data,
 		.int_signal = GPIO_EC_IMU_INT_R_L,
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
-		.port = I2C_PORT_SENSOR,
+		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
 		.default_range = 4,  /* g */
@@ -130,7 +229,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.drv_data = &g_icm426xx_data,
 		.int_signal = GPIO_EC_IMU_INT_R_L,
 		.flags = MOTIONSENSE_FLAG_INT_SIGNAL,
-		.port = I2C_PORT_SENSOR,
+		.port = I2C_PORT_ACCEL,
 		.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
 		.rot_standard_ref = &base_standard_ref,
@@ -139,6 +238,36 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+
+static void baseboard_sensors_detect(void)
+{
+	int ret, val;
+
+	if (base_accelgyro_config != BASE_GYRO_NONE)
+		return;
+
+	ret = i2c_read8(I2C_PORT_ACCEL, BMA4_I2C_ADDR_SECONDARY,
+		BMA4_CHIP_ID_ADDR, &val);
+	if (ret == 0 && val == BMA422_CHIP_ID) {
+		motion_sensors[LID_ACCEL] = bma422_lid_accel;
+		ccprints("LID_ACCEL is BMA422");
+	} else
+		ccprints("LID_ACCEL is KX022");
+
+	ret = bmi_read8(I2C_PORT_ACCEL, BMI260_ADDR0_FLAGS,
+		BMI260_CHIP_ID, &val);
+	if (ret == 0 && val == BMI260_CHIP_ID_MAJOR) {
+		motion_sensors[BASE_ACCEL] = bmi260_base_accel;
+		motion_sensors[BASE_GYRO] = bmi260_base_gyro;
+		base_accelgyro_config = BASE_GYRO_BMI260;
+		ccprints("BASE ACCEL is BMI260");
+	} else {
+		base_accelgyro_config = BASE_GYRO_ICM426XX;
+		ccprints("BASE ACCEL IS ICM426XX");
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, baseboard_sensors_detect,
+	     HOOK_PRIO_DEFAULT);
 
 static void baseboard_sensors_init(void)
 {
@@ -149,7 +278,12 @@ DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
 
 void motion_interrupt(enum gpio_signal signal)
 {
-	icm426xx_interrupt(signal);
+	if (base_accelgyro_config == BASE_GYRO_NONE)
+		return;
+	if (base_accelgyro_config == BASE_GYRO_BMI260)
+		bmi260_interrupt(signal);
+	else
+		icm426xx_interrupt(signal);
 }
 
 /* Temperature sensor configuration */
