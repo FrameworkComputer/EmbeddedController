@@ -13,7 +13,8 @@
 #include "extpower.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_bmi260.h"
+#include "driver/accelgyro_icm_common.h"
+#include "driver/accelgyro_icm42607.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
@@ -230,9 +231,15 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 static struct mutex g_lid_mutex;
 
 static struct bmi_drv_data_t g_bmi160_data;
-static struct bmi_drv_data_t g_bmi260_data;
+static struct icm_drv_data_t g_icm42607_data;
 
-bool is_bmi260_present;
+enum lid_accelgyro_type {
+	LID_GYRO_NONE = 0,
+	LID_GYRO_BMI160 = 1,
+	LID_GYRO_ICM42607 = 2,
+};
+
+static enum lid_accelgyro_type lid_accelgyro_config;
 
 /* Matrix to rotate accelerometer into standard reference frame */
 const mat33_fp_t lid_standard_ref = {
@@ -286,27 +293,22 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
-struct motion_sensor_t motion_sensors_260[] = {
-	/*
-	 * Note: bmi260: supports accelerometer and gyro sensor
-	 * Requirement: accelerometer sensor must init before gyro sensor
-	 * DO NOT change the order of the following table.
-	 */
+struct motion_sensor_t motion_sensors_icm[] = {
 	[LID_ACCEL] = {
 	 .name = "Lid Accel",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI260,
+	 .chip = MOTIONSENSE_CHIP_ICM42607,
 	 .type = MOTIONSENSE_TYPE_ACCEL,
 	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmi260_drv,
+	 .drv = &icm42607_drv,
 	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_bmi260_data,
+	 .drv_data = &g_icm42607_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
-	 .rot_standard_ref = &lid_standard_ref,
+	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	 .rot_standard_ref = NULL,
 	 .default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
-	 .min_frequency = BMI_ACCEL_MIN_FREQ,
-	 .max_frequency = BMI_ACCEL_MAX_FREQ,
+	 .min_frequency = ICM42607_ACCEL_MIN_FREQ,
+	 .max_frequency = ICM42607_ACCEL_MAX_FREQ,
 	 .config = {
 		 [SENSOR_CONFIG_EC_S0] = {
 			 .odr = 10000 | ROUND_UP_FLAG,
@@ -316,18 +318,18 @@ struct motion_sensor_t motion_sensors_260[] = {
 	[LID_GYRO] = {
 	 .name = "Gyro",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_BMI260,
+	 .chip = MOTIONSENSE_CHIP_ICM42607,
 	 .type = MOTIONSENSE_TYPE_GYRO,
 	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &bmi260_drv,
+	 .drv = &icm42607_drv,
 	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_bmi260_data,
+	 .drv_data = &g_icm42607_data,
 	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
+	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
 	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &lid_standard_ref,
-	 .min_frequency = BMI_GYRO_MIN_FREQ,
-	 .max_frequency = BMI_GYRO_MAX_FREQ,
+	 .rot_standard_ref = NULL,
+	 .min_frequency = ICM42607_GYRO_MIN_FREQ,
+	 .max_frequency = ICM42607_GYRO_MAX_FREQ,
 	},
 };
 
@@ -339,17 +341,20 @@ static void board_detect_motionsensor(void)
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		return;
+	if (lid_accelgyro_config != LID_GYRO_NONE)
+		return;
 
 	/* Check base accelgyro chip */
-	bmi_read8(motion_sensors[LID_ACCEL].port,
-		motion_sensors[LID_ACCEL].i2c_spi_addr_flags,
-		BMI260_CHIP_ID, &val);
-	if (val == BMI260_CHIP_ID_MAJOR) {
-		motion_sensors[LID_ACCEL] = motion_sensors_260[LID_ACCEL];
-		motion_sensors[LID_GYRO] = motion_sensors_260[LID_GYRO];
-		is_bmi260_present = 1;
+	icm_read8(&motion_sensors_icm[LID_ACCEL], ICM42607_REG_WHO_AM_I,
+		  &val);
+	if (val == ICM42607_CHIP_ICM42607P) {
+		motion_sensors[LID_ACCEL] = motion_sensors_icm[LID_ACCEL];
+		motion_sensors[LID_GYRO] = motion_sensors_icm[LID_GYRO];
+		lid_accelgyro_config = LID_GYRO_ICM42607;
+		CPRINTS("LID Accelgyro: ICM42607");
 	} else {
-		is_bmi260_present = 0;
+		lid_accelgyro_config = LID_GYRO_BMI160;
+		CPRINTS("LID Accelgyro: BMI160");
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
@@ -358,8 +363,8 @@ DECLARE_HOOK(HOOK_INIT, board_detect_motionsensor, HOOK_PRIO_DEFAULT + 1);
 
 void motion_interrupt(enum gpio_signal signal)
 {
-	if (is_bmi260_present)
-		bmi260_interrupt(signal);
+	if (lid_accelgyro_config == LID_GYRO_ICM42607)
+		icm42607_interrupt(signal);
 	else
 		bmi160_interrupt(signal);
 }
