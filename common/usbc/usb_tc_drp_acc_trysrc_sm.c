@@ -1893,11 +1893,14 @@ __maybe_unused static void handle_new_power_state(int port)
 
 	/*
 	 * If the sink port was sourcing Vconn, and can no longer, request a
-	 * hard reset on this port to restore Vconn to the source.
+	 * hard reset on this port to restore Vconn to the source.  If we do not
+	 * have sufficient battery to withstand Vbus loss, then continue with
+	 * the inconsistent Vconn state in order to keep the board powered.
 	 */
 	if (IS_ENABLED(CONFIG_USB_PE_SM)) {
 		if (tc_is_vconn_src(port) && tc_is_attached_snk(port) &&
-						!pd_check_vconn_swap(port))
+						!pd_check_vconn_swap(port) &&
+						pd_is_battery_capable())
 			pd_dpm_request(port, DPM_REQUEST_HARD_RESET_SEND);
 	}
 
