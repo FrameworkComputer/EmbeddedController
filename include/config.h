@@ -1061,6 +1061,17 @@
  */
 #undef CONFIG_CHARGER_BQ25720_VSYS_UVP
 
+/* Enable if CONFIG_CHARGER_BQ25720_IDCHG_DEG2 should be applied */
+#undef CONFIG_CHARGER_BQ25720_IDCHG_DEG2_CUSTOM
+
+/*
+ * This config option is used to set the 2nd battery discharge current
+ * limit (IDCHG_TH2) deglitch time (IDCHG_DEG2). This is a 2 bit field
+ * with default value 1 (1.6 ms). The encoded value ranges from 100 us
+ * to 12 ms.
+ */
+#undef CONFIG_CHARGER_BQ25720_IDCHG_DEG2
+
 /* Value of the bq25710 charge sense resistor, in mOhms */
 #undef CONFIG_CHARGER_BQ25710_SENSE_RESISTOR
 

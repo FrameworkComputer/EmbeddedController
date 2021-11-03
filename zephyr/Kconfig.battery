@@ -381,6 +381,24 @@ config PLATFORM_EC_CHARGER_BQ25720_VSYS_UVP
 	  encoded is (0.8 * <value> + 2.4), allowing a threshold in the
 	  range of 2.4 V to 8.0 V to be specified.
 
+config PLATFORM_EC_CHARGER_BQ25720_IDCHG_DEG2_CUSTOM
+	bool "IDCHG_TH2 deglitch time override"
+	depends on PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Enable customizing the charger's 2nd battery discharge current
+	  limit (IDCHG_TH2) deglitch time (IDCHG_DEG2).
+
+config PLATFORM_EC_CHARGER_BQ25720_IDCHG_DEG2
+	int "IDCHG_TH2 deglitch time"
+	range 0 3
+	default 1
+	depends on PLATFORM_EC_CHARGER_BQ25720_IDCHG_DEG2_CUSTOM
+	help
+	  Sets the 2nd battery discharge current limit (IDCHG_TH2)
+	  deglitch time (IDCHG_DEG2). This is a 2 bit field with default
+	  value 1 (1.6 ms). The encoded value ranges from 100 us to 12
+	  ms.
+
 config PLATFORM_EC_CHARGER_MAINTAIN_VBAT
 	bool "Maintain VBAT voltage regardless of AC state"
 	help

@@ -42,6 +42,10 @@
 #define CONFIG_BQ25720_VSYS_UVP 0
 #endif
 
+#ifndef CONFIG_BQ25720_IDCHG_DEG2_CUSTOM
+#define CONFIG_BQ25720_IDCHG_DEG2 1
+#endif
+
 /*
  * Helper macros
  */
@@ -414,7 +418,8 @@ static int bq257x0_init_charge_option_4(int chgnum)
 	if (!IS_ENABLED(CONFIG_CHARGER_BQ25720))
 		return EC_SUCCESS;
 
-	if (!IS_ENABLED(CONFIG_BQ25720_VSYS_UVP_CUSTOM))
+	if (!IS_ENABLED(CONFIG_BQ25720_VSYS_UVP_CUSTOM) &&
+	    !IS_ENABLED(CONFIG_BQ25720_IDCHG_DEG2_CUSTOM))
 		return EC_SUCCESS;
 
 	rv = raw_read16(chgnum, BQ25720_REG_CHARGE_OPTION_4, &reg);
@@ -423,6 +428,9 @@ static int bq257x0_init_charge_option_4(int chgnum)
 
 	if (IS_ENABLED(CONFIG_BQ25720_VSYS_UVP_CUSTOM))
 		reg = SET_CO4(VSYS_UVP, CONFIG_BQ25720_VSYS_UVP, reg);
+
+	if (IS_ENABLED(CONFIG_BQ25720_IDCHG_DEG2_CUSTOM))
+		reg = SET_CO4(IDCHG_DEG2, CONFIG_BQ25720_IDCHG_DEG2, reg);
 
 	return raw_write16(chgnum, BQ25720_REG_CHARGE_OPTION_4, reg);
 }
