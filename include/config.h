@@ -1139,6 +1139,19 @@
  */
 #undef CONFIG_CHARGER_BQ25710_PP_ACOK
 
+/* Enable if CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_MV should be applied */
+#undef CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_CUSTOM
+
+/*
+ * This config option sets the minimum system voltage in
+ * milli-volts. The bq25710 uses 6 bits of resolution and can be
+ * configured from 1.024 V to 16.128 V in 256 mV increments. The bq25720
+ * uses 8 bits of resolution and can be set from 1.0 V to 19.2 V in 100
+ * mV increments. The default value depends on configured number of
+ * battery cells connected in series using the CELL_BATPRESZ strap.
+ */
+#undef CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_MV
+
 /*
  * Board specific maximum input current limit, in mA.
  */

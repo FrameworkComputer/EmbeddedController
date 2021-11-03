@@ -38,6 +38,10 @@
 							     UINT16_MAX)
 #endif
 
+#ifndef CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_CUSTOM
+#define CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_MV 0
+#endif
+
 #ifndef CONFIG_BQ25720_VSYS_UVP_CUSTOM
 #define CONFIG_BQ25720_VSYS_UVP 0
 #endif
@@ -478,20 +482,31 @@ static void bq25710_init(int chgnum)
 	int rv;
 
 	/*
-	 * Reset registers to their default settings. There is no reset pin for
-	 * this chip so without a full power cycle, some registers may not be at
-	 * their default values. Note, need to save the POR value of
-	 * MIN_SYSTEM_VOLTAGE register prior to setting the reset so that the
-	 * correct value is preserved. In order to have the correct value read,
-	 * the bq25710 must not be in low power mode, otherwise the VDDA rail
-	 * may not be powered if AC is not connected. Note, this reset is only
-	 * required when running out of RO and not following sysjump to RW.
+	 * Reset registers to their default settings. There is no reset
+	 * pin for this chip so without a full power cycle, some
+	 * registers may not be at their default values. Note, need to
+	 * save the POR value of MIN_SYSTEM_VOLTAGE/VSYS_MIN register
+	 * prior to setting the reset so that the correct value is
+	 * preserved. In order to have the correct value read, the
+	 * bq25710 must not be in low power mode, otherwise the VDDA
+	 * rail may not be powered if AC is not connected. Note, this
+	 * reset is only required when running out of RO and not
+	 * following sysjump to RW.
 	 */
 	if (!system_jumped_late()) {
 		rv = bq25710_set_low_power_mode(chgnum, 0);
 		/* Allow enough time for VDDA to be powered */
 		msleep(BQ25710_VDDA_STARTUP_DELAY_MSEC);
-		rv |= raw_read16(chgnum, BQ25710_REG_MIN_SYSTEM_VOLTAGE, &vsys);
+
+		if (IS_ENABLED(
+			    CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_CUSTOM)) {
+			vsys = min_system_voltage_to_reg(
+				CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_MV);
+		} else {
+			rv |= raw_read16(chgnum,
+					 BQ25710_REG_MIN_SYSTEM_VOLTAGE, &vsys);
+		}
+
 		rv |= raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_3, &reg);
 		if (!rv) {
 			reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_3, RESET_REG,

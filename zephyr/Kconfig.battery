@@ -399,6 +399,26 @@ config PLATFORM_EC_CHARGER_BQ25720_IDCHG_DEG2
 	  value 1 (1.6 ms). The encoded value ranges from 100 us to 12
 	  ms.
 
+config PLATFORM_EC_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_CUSTOM
+	bool "Enable minimum system voltage override"
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Enable customizing the charger's 2nd battery discharge current
+	  limit (IDCHG_TH2).
+
+config PLATFORM_EC_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_MV
+	int "Minimum system voltage in milli-volts"
+	default 0
+	depends on PLATFORM_EC_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_CUSTOM
+	help
+	  Sets the minimum system voltage in milli-volts. The bq25710
+	  uses 6 bits of resolution and can be configured from 1.024 V
+	  to 16.128 V in 256 mV increments. The bq25720 uses 8 bits of
+	  resolution and can be set from 1.0 V to 19.2 V in 100 mV
+	  increments. The default value depends on configured number of
+	  battery cells connected in series using the CELL_BATPRESZ
+	  strap.
+
 config PLATFORM_EC_CHARGER_MAINTAIN_VBAT
 	bool "Maintain VBAT voltage regardless of AC state"
 	help
