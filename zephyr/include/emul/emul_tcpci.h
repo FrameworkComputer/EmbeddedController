@@ -77,6 +77,13 @@ enum tcpci_emul_rev {
 	TCPCI_EMUL_REV2_0_VER1_1
 };
 
+/** Status of TX message send to TCPCI emulator partner */
+enum tcpci_emul_tx_status {
+	TCPCI_EMUL_TX_SUCCESS,
+	TCPCI_EMUL_TX_DISCARDED,
+	TCPCI_EMUL_TX_FAILED
+};
+
 /** TCPCI specific device operations. Not all of them need to be implemented. */
 struct tcpci_emul_dev_ops {
 	/**
@@ -165,6 +172,17 @@ struct tcpci_emul_partner_ops {
 	 */
 	void (*control_change)(const struct emul *emul,
 			       const struct tcpci_emul_partner_ops *ops);
+
+	/**
+	 * @brief Function called when TCPM consumes message send by partner
+	 *
+	 * @param emul Pointer to TCPCI emulator
+	 * @param ops Pointer to partner operations structure
+	 * @param rx_msg Message that was consumed by TCPM
+	 */
+	void (*rx_consumed)(const struct emul *emul,
+			    const struct tcpci_emul_partner_ops *ops,
+			    const struct tcpci_emul_msg *rx_msg);
 };
 
 /**
@@ -239,6 +257,56 @@ void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev);
  */
 void tcpci_emul_set_dev_ops(const struct emul *emul,
 			    struct tcpci_emul_dev_ops *dev_ops);
+
+/**
+ * @brief Set callback which is called when alert register is changed
+ *
+ * @param emul Pointer to TCPCI emulator
+ * @param alert_callback Pointer to callback
+ * @param alert_callback_data Pointer to data passed to callback as an argument
+ */
+void tcpci_emul_set_alert_callback(const struct emul *emul,
+				   tcpci_emul_alert_state_func alert_callback,
+				   void *alert_callback_data);
+
+/**
+ * @brief Set callbacks for port partner device emulator
+ *
+ * @param emul Pointer to TCPCI emulator
+ * @param partner Pointer to callbacks
+ */
+void tcpci_emul_set_partner_ops(const struct emul *emul,
+				struct tcpci_emul_partner_ops *partner);
+
+/**
+ * @brief Emulate connection of specific device to emulated TCPCI
+ *
+ * @param emul Pointer to TCPCI emulator
+ * @param partner_power_role Power role of connected partner (sink or source)
+ * @param partner_cc1 Voltage on partner CC1 line (usually Rd or Rp)
+ * @param partner_cc2 Voltage on partner CC2 line (usually open or Ra if active
+ *                    cable is emulated)
+ * @param polarity Polarity of plug. If POLARITY_CC1 then partner_cc1 is
+ *                 connected to TCPCI CC1 line. Otherwise partner_cc1 is
+ *                 connected to TCPCI CC2 line.
+ *
+ * @return 0 on success
+ * @return negative on error
+ */
+int tcpci_emul_connect_partner(const struct emul *emul,
+			       enum pd_power_role partner_power_role,
+			       enum tcpc_cc_voltage_status partner_cc1,
+			       enum tcpc_cc_voltage_status partner_cc2,
+			       enum tcpc_cc_polarity polarity);
+
+/**
+ * @brief Allows port partner to select if message was received correctly
+ *
+ * @param emul Pointer to TCPCI emulator
+ * @param status Status of sended message
+ */
+void tcpci_emul_partner_msg_status(const struct emul *emul,
+				   enum tcpci_emul_tx_status status);
 
 /**
  * @}
