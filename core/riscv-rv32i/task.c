@@ -199,22 +199,22 @@ void __ram_code interrupt_enable(void)
 	asm volatile ("csrs  mie, t0");
 }
 
-inline int is_interrupt_enabled(void)
+inline bool is_interrupt_enabled(void)
 {
 	int mie = 0;
 
 	asm volatile ("csrr %0, mie" : "=r"(mie));
 
 	/* Check if MEIE bit is set in MIE register */
-	return !!(mie & 0x800);
+	return mie & 0x800;
 }
 
-inline int in_interrupt_context(void)
+inline bool in_interrupt_context(void)
 {
 	return in_interrupt;
 }
 
-int in_soft_interrupt_context(void)
+bool in_soft_interrupt_context(void)
 {
 	/* group 16 is reserved for soft-irq */
 	return in_interrupt_context() && ec_int_group == 16;

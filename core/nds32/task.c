@@ -224,17 +224,17 @@ void __ram_code interrupt_enable(void)
 	asm volatile ("mtsr %0, $INT_MASK" : : "r"(val));
 }
 
-inline int is_interrupt_enabled(void)
+inline bool is_interrupt_enabled(void)
 {
 	uint32_t val = 0;
 
 	asm volatile ("mfsr %0, $INT_MASK" : "=r"(val));
 
 	/* Interrupts are enabled if any of HW2 ~ HW15 is enabled */
-	return !!(val & 0xFFFC);
+	return val & 0xFFFC;
 }
 
-inline int in_interrupt_context(void)
+inline bool in_interrupt_context(void)
 {
 	/* check INTL (Interrupt Stack Level) bits */
 	return get_psw() & PSW_INTL_MASK;

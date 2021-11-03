@@ -173,7 +173,7 @@ void interrupt_enable(void)
 	__asm__ __volatile__ ("sti");
 }
 
-inline int is_interrupt_enabled(void)
+inline bool is_interrupt_enabled(void)
 {
 	uint32_t eflags = 0;
 
@@ -182,12 +182,12 @@ inline int is_interrupt_enabled(void)
 			      : "=r"(eflags));
 
 	/* Check Interrupt Enable flag */
-	return !!(eflags & 0x200);
+	return eflags & 0x200;
 }
 
-inline int in_interrupt_context(void)
+inline bool in_interrupt_context(void)
 {
-	return !!__in_isr;
+	return __in_isr;
 }
 
 task_id_t task_get_current(void)

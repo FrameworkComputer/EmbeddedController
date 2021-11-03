@@ -227,7 +227,7 @@ void interrupt_enable(void)
 	asm("cpsie i");
 }
 
-inline int is_interrupt_enabled(void)
+inline bool is_interrupt_enabled(void)
 {
 	int primask;
 
@@ -237,7 +237,7 @@ inline int is_interrupt_enabled(void)
 	return !(primask & 0x1);
 }
 
-inline int in_interrupt_context(void)
+inline bool in_interrupt_context(void)
 {
 	int ret;
 	asm("mrs %0, ipsr \n"             /* read exception number */

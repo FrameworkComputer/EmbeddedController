@@ -83,7 +83,7 @@ void interrupt_enable(void);
 /**
  * Check if interrupts are enabled
  */
-int is_interrupt_enabled(void);
+bool is_interrupt_enabled(void);
 
 /*
  * Define irq_lock and irq_unlock that match the function signatures to Zephyr's
@@ -119,12 +119,12 @@ void irq_unlock(uint32_t key);
 /**
  * Return true if we are in interrupt context.
  */
-int in_interrupt_context(void);
+bool in_interrupt_context(void);
 
 /**
  * Return true if we are in software interrupt context.
  */
-int in_soft_interrupt_context(void);
+bool in_soft_interrupt_context(void);
 
 /**
  * Return current interrupt mask with disabling interrupt. Meaning is
