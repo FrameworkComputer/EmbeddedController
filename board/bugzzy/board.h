@@ -171,6 +171,10 @@
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
+#define CONFIG_ACCELGYRO_LSM6DSM        /* Base accel */
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
@@ -228,5 +232,6 @@ enum battery_type {
 
 void panel_power_change_interrupt(enum gpio_signal signal);
 void lcd_reset_change_interrupt(enum gpio_signal signal);
+void motion_interrupt(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */
