@@ -38,6 +38,10 @@
 							     UINT16_MAX)
 #endif
 
+#ifndef CONFIG_BQ25720_VSYS_UVP_CUSTOM
+#define CONFIG_BQ25720_VSYS_UVP 0
+#endif
+
 /*
  * Helper macros
  */
@@ -52,6 +56,10 @@
 
 #define SET_CO3(_field, _v, _x)		SET_BQ_FIELD(BQ257X0,	\
 						     CHARGE_OPTION_3,	\
+						     _field, _v, (_x))
+
+#define SET_CO4(_field, _v, _x)		SET_BQ_FIELD(BQ25720,	\
+						     CHARGE_OPTION_4,	\
 						     _field, _v, (_x))
 
 #define SET_PO1(_field, _v, _x)		SET_BQ_FIELD(BQ257X0,	\
@@ -398,6 +406,27 @@ static int bq257x0_init_charge_option_3(int chgnum)
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_3, reg);
 }
 
+static int bq257x0_init_charge_option_4(int chgnum)
+{
+	int reg;
+	int rv;
+
+	if (!IS_ENABLED(CONFIG_CHARGER_BQ25720))
+		return EC_SUCCESS;
+
+	if (!IS_ENABLED(CONFIG_BQ25720_VSYS_UVP_CUSTOM))
+		return EC_SUCCESS;
+
+	rv = raw_read16(chgnum, BQ25720_REG_CHARGE_OPTION_4, &reg);
+	if (rv)
+		return rv;
+
+	if (IS_ENABLED(CONFIG_BQ25720_VSYS_UVP_CUSTOM))
+		reg = SET_CO4(VSYS_UVP, CONFIG_BQ25720_VSYS_UVP, reg);
+
+	return raw_write16(chgnum, BQ25720_REG_CHARGE_OPTION_4, reg);
+}
+
 static int bq25720_init_vmin_active_protection(int chgnum)
 {
 	int reg;
@@ -474,6 +503,8 @@ static void bq25710_init(int chgnum)
 	bq257x0_init_charge_option_2(chgnum);
 
 	bq257x0_init_charge_option_3(chgnum);
+
+	bq257x0_init_charge_option_4(chgnum);
 
 	bq25720_init_vmin_active_protection(chgnum);
 }

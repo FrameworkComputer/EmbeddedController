@@ -1050,6 +1050,17 @@
  */
 #undef CONFIG_CHARGER_BQ25720_VSYS_TH2_DV
 
+/* Enable if CONFIG_CHARGER_BQ25720_VSYS_UVP should be applied */
+#undef CONFIG_CHARGER_BQ25720_VSYS_UVP_CUSTOM
+
+/*
+ * This config option is used to set the VSYS under voltage (VSYS_UVP)
+ * lockout threshold. This is a 3 bit field with default value 0. The
+ * actual voltage encoded is (0.8 * <value> + 2.4), allowing a threshold
+ * in the range of 2.4 V to 8.0 V to be specified.
+ */
+#undef CONFIG_CHARGER_BQ25720_VSYS_UVP
+
 /* Value of the bq25710 charge sense resistor, in mOhms */
 #undef CONFIG_CHARGER_BQ25710_SENSE_RESISTOR
 

@@ -364,6 +364,23 @@ config PLATFORM_EC_CHARGER_BQ25720_VSYS_TH2_DV
 	  3.2v and 5.9v for 2S or higher batteries.  The valid range is
 	  3.2v - 3.9v for 1S and 3.2 - 9.5v for 2S or higher batteries.
 
+config PLATFORM_EC_CHARGER_BQ25720_VSYS_UVP_CUSTOM
+       	bool "VSYS_UVP override"
+	depends on PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Enable customizing the charger's VSYS_UVP threshold.
+
+config PLATFORM_EC_CHARGER_BQ25720_VSYS_UVP
+       	int "VSYS_UVP threshold"
+	range 0 7
+	default 0
+	depends on PLATFORM_EC_CHARGER_BQ25720_VSYS_UVP_CUSTOM
+	help
+	  Sets the VSYS under voltage (VSYS_UVP) lockout threshold. This
+	  is a 3 bit field with default value 0. The actual voltage
+	  encoded is (0.8 * <value> + 2.4), allowing a threshold in the
+	  range of 2.4 V to 8.0 V to be specified.
+
 config PLATFORM_EC_CHARGER_MAINTAIN_VBAT
 	bool "Maintain VBAT voltage regardless of AC state"
 	help
