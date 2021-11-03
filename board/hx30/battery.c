@@ -87,12 +87,16 @@ enum battery_present battery_is_present(void)
 
 	mv = adc_read_channel(ADC_VCIN1_BATT_TEMP);
 
-	if (mv == ADC_READ_ERROR)
-		return -1;
-
 	bp = (mv < 3000 ? BP_YES : BP_NO);
 
-	return bp;
+	if (mv == ADC_READ_ERROR)
+		return BP_NO;
+	else if (!bp)
+		return BP_NO;
+	else if (!(charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE))
+		return BP_NO;
+	else
+		return bp;
 }
 
 #ifdef CONFIG_EMI_REGION1
