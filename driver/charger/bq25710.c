@@ -326,6 +326,9 @@ static int bq257x0_init_prochot_option_1(int chgnum)
 	reg = SET_PO1_BY_NAME(PP_IDCHG, ENABLE, reg);
 #endif
 
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_PP_INOM))
+		reg = SET_PO1_BY_NAME(PP_INOM, ENABLE, reg);
+
 	return raw_write16(chgnum, BQ25710_REG_PROCHOT_OPTION_1, reg);
 }
 

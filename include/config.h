@@ -1096,6 +1096,14 @@
 #undef CONFIG_CHARGER_BQ25710_BATOC_VTH_MINIMUM
 
 /*
+ * This config option sets the PP_INOM bit in Prochot Option 1
+ * register. This causes PROCHOT to be pulsed when the nominal adapter
+ * current threshold is reached. INOM is 110% of IDPM/IIN_DPM (input
+ * current setting).
+ */
+#undef CONFIG_CHARGER_BQ25710_PP_INOM
+
+/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT

@@ -298,6 +298,16 @@ config PLATFORM_EC_CHARGER_BQ25710_BATOC_VTH_MINIMUM
           on the bq25710 and 133% of PROCHOT IDCHG_TH2 on the
           bq25720. The default threshold is 200% on both chips.
 
+config PLATFORM_EC_CHARGER_BQ25710_PP_INOM
+	bool "Enable PROCHOT on adapter current exceeding INOM"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Sets the PP_INOM bit in Prochot Option 1 register. This causes
+	  PROCHOT to be pulsed when the nominal adapter current
+	  threshold is reached. INOM is 110% of IDPM/IIN_DPM (input
+	  current setting).
+
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	default 10
