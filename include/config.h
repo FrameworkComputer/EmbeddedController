@@ -1111,6 +1111,13 @@
 #undef CONFIG_CHARGER_BQ25710_PP_BATPRES
 
 /*
+ * This config option sets the PP_ACOK in Prochot Option 1
+ * register. This causes PROCHOT to be pulsed when the AC adapter is
+ * removed.
+ */
+#undef CONFIG_CHARGER_BQ25710_PP_ACOK
+
+/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT
