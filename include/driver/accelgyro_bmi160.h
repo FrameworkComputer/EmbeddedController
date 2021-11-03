@@ -383,13 +383,11 @@
 /* Root mean square noise of 100 Hz accelerometer, units: ug */
 #define BMI160_ACCEL_RMS_NOISE_100HZ    1300
 
-#ifdef CONFIG_BMI_SEC_I2C
 /* Functions to access the secondary device through the accel/gyro. */
 int bmi160_sec_raw_read8(const int port, const uint16_t addr_flags,
 			 const uint8_t reg, int *data_ptr);
 int bmi160_sec_raw_write8(const int port, const uint16_t addr_flags,
 			  const uint8_t reg, int data);
-#endif
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
 /*
