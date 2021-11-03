@@ -19,7 +19,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define POWER_LIMIT_1_W	28
+#define POWER_LIMIT_1_W	30
 
 static int pl1_watt;
 static int pl2_watt;
