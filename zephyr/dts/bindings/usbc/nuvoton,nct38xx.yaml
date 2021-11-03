@@ -1,0 +1,14 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Nuvoton NCT38XX USB TCPC binding
+
+compatible: "nuvoton,nct38xx"
+
+properties:
+  gpio-dev:
+    type: phandle
+    description: |
+      Pointer to the NCT38XX GPIO device. This is used to binding the Cros TCPC
+      port index to Zephyr NCT38XX GPIO device.

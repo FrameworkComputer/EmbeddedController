@@ -14,6 +14,17 @@
 #include "tcpm/tcpci.h"
 #include "usb_common.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <device.h>
+#include <drivers/gpio/gpio_nct38xx.h>
+#include "usbc/tcpc_nct38xx.h"
+#endif
+
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_IO_EXPANDER_NCT38XX)
+#error CONFIG_IO_EXPANDER_NCT38XX cannot be used with Zephyr.
+#error Enable the Zephyr driver CONFIG_GPIO_NCT38XX instead.
+#endif
+
 #if !defined(CONFIG_USB_PD_TCPM_TCPCI)
 #error "NCT38XX is using part of standard TCPCI control"
 #error "Please upgrade your board configuration"
@@ -134,8 +145,19 @@ static int nct38xx_init(int port)
 	 * Enable the Vendor Define alert event only when the IO expander
 	 * feature is defined
 	 */
-	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX))
+	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX) ||
+	    IS_ENABLED(CONFIG_GPIO_NCT38XX)) {
+#ifdef CONFIG_ZEPHYR
+		const struct device *dev =
+			nct38xx_get_gpio_device_from_port(port);
+
+		if (!device_is_ready(dev)) {
+			CPRINTS("C%d: device is not ready", port);
+			return EC_ERROR_BUSY;
+		}
+#endif /* CONFIG_ZEPHYR */
 		reg |= TCPC_REG_ALERT_VENDOR_DEF;
+	}
 
 	rv = tcpc_update16(port,
 			   TCPC_REG_ALERT_MASK,
@@ -244,6 +266,20 @@ __overridable int board_map_nct38xx_tcpc_port_to_ioex(int port)
 	return port;
 }
 
+static inline void nct38xx_tcpc_vendor_defined_alert(int port)
+{
+#ifdef CONFIG_ZEPHYR
+	const struct device *dev = nct38xx_get_gpio_device_from_port(port);
+
+	nct38xx_gpio_alert_handler(dev);
+#else
+	int ioexport;
+
+	ioexport = board_map_nct38xx_tcpc_port_to_ioex(port);
+	nct38xx_ioex_event_handler(ioexport);
+#endif /* CONFIG_ZEPHYR */
+}
+
 static void nct38xx_tcpc_alert(int port)
 {
 	int alert, rv;
@@ -274,12 +310,10 @@ static void nct38xx_tcpc_alert(int port)
 	 * tcpci_tcpc_alert().  Check the Vendor Defined Alert bit to
 	 * handle the IOEX IO's interrupt event.
 	 */
-	if (IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX) &&
-		rv == EC_SUCCESS && (alert & TCPC_REG_ALERT_VENDOR_DEF)) {
-		int ioexport;
-
-		ioexport = board_map_nct38xx_tcpc_port_to_ioex(port);
-		nct38xx_ioex_event_handler(ioexport);
+	if ((IS_ENABLED(CONFIG_IO_EXPANDER_NCT38XX) ||
+	     IS_ENABLED(CONFIG_GPIO_NCT38XX)) &&
+	    rv == EC_SUCCESS && (alert & TCPC_REG_ALERT_VENDOR_DEF)) {
+		nct38xx_tcpc_vendor_defined_alert(port);
 	}
 }
 
