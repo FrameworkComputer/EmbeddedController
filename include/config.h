@@ -1104,6 +1104,13 @@
 #undef CONFIG_CHARGER_BQ25710_PP_INOM
 
 /*
+ * This config option sets the PP_BATPRES bit in Prochot Option 1
+ * register. This causes PROCHOT to be pulsed when the battery is
+ * removed.
+ */
+#undef CONFIG_CHARGER_BQ25710_PP_BATPRES
+
+/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT

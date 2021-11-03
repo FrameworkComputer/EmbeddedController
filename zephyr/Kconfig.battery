@@ -308,6 +308,14 @@ config PLATFORM_EC_CHARGER_BQ25710_PP_INOM
 	  threshold is reached. INOM is 110% of IDPM/IIN_DPM (input
 	  current setting).
 
+config PLATFORM_EC_CHARGER_BQ25710_PP_BATPRES
+	bool "Enable PROCHOT on battery removal"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Sets the PP_BATPRES bit in Prochot Option 1 register. This
+	  causes PROCHOT to be pulsed when the battery is removed.
+
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	default 10
