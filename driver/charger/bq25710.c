@@ -32,6 +32,14 @@
 #endif
 
 /*
+ * Helper macros
+ */
+
+#define SET_CO1_BY_NAME(_field, _c, _x)	SET_BQ_FIELD_BY_NAME(BQ257X0,	\
+							     CHARGE_OPTION_1, \
+							     _field, _c, (_x))
+
+/*
  * Delay required from taking the bq25710 out of low power mode and having the
  * correct value in register 0x3E for VSYS_MIN voltage. The length of the delay
  * was determined by experiment. Less than 12 msec was not enough of delay, so
@@ -243,7 +251,8 @@ static int bq257x0_init_charge_option_1(int chgnum)
 	int rv;
 	int reg;
 
-	if (!IS_ENABLED(CONFIG_CHARGER_BQ25710_PSYS_SENSING))
+	if (!IS_ENABLED(CONFIG_CHARGER_BQ25710_PSYS_SENSING) &&
+	    !IS_ENABLED(CONFIG_CHARGER_BQ25710_CMP_REF_1P2))
 		return EC_SUCCESS;
 
 	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_1, &reg);
@@ -252,6 +261,9 @@ static int bq257x0_init_charge_option_1(int chgnum)
 
 	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_PSYS_SENSING))
 		reg = co1_set_psys_sensing(reg, true);
+
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_CMP_REF_1P2))
+		reg = SET_CO1_BY_NAME(CMP_REF, 1P2, reg);
 
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_1, reg);
 }

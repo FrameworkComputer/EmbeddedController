@@ -261,6 +261,15 @@ config PLATFORM_EC_CHARGER_BQ25710_PSYS_SENSING
 	  disabled by default (reset) and needs to be explicitly enabled
 	  for meaningful results.
 
+config PLATFORM_EC_CHARGER_BQ25710_CMP_REF_1P2
+	bool "Use 1.2 V for internal comparator reference voltage"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  This changes the charger's internal comparator reference
+	  voltage to 1.2 V. The power-on default is 2.3 V. This must be
+	  enabled if the board was designed for 1.2 V instead of 2.3 V.
+
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	default 10
