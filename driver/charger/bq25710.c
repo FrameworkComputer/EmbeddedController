@@ -43,6 +43,10 @@
 							     CHARGE_OPTION_2, \
 							     _field, _c, (_x))
 
+#define SET_CO3(_field, _v, _x)		SET_BQ_FIELD(BQ257X0,	\
+						     CHARGE_OPTION_3,	\
+						     _field, _v, (_x))
+
 /*
  * Delay required from taking the bq25710 out of low power mode and having the
  * correct value in register 0x3E for VSYS_MIN voltage. The length of the delay
@@ -311,6 +315,27 @@ static int bq257x0_init_charge_option_2(int chgnum)
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_2, reg);
 }
 
+static int bq257x0_init_charge_option_3(int chgnum)
+{
+	int reg;
+	int rv;
+
+	if (!IS_ENABLED(CONFIG_CHARGER_BQ25720))
+		return EC_SUCCESS;
+
+	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_3, &reg);
+	if (rv)
+		return rv;
+
+	/*
+	 * The bq25720 defaults to 15 A while the bq25710
+	 * defaults to 10A. Set the bq25720 to 10A as well.
+	 */
+	reg = SET_CO3(IL_AVG, BQ25720_CHARGE_OPTION_3_IL_AVG__10A, reg);
+
+	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_3, reg);
+}
+
 static void bq25710_init(int chgnum)
 {
 	int reg;
@@ -405,6 +430,8 @@ static void bq25710_init(int chgnum)
 	}
 
 	bq257x0_init_charge_option_2(chgnum);
+
+	bq257x0_init_charge_option_3(chgnum);
 }
 
 /* Charger interfaces */
