@@ -268,6 +268,95 @@ static void test_battery_get_params(void)
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 }
 
+struct mfgacc_data {
+	int reg;
+	uint8_t *buf;
+	int len;
+};
+
+static int mfgacc_read_func(struct i2c_emul *emul, int reg, uint8_t *val,
+			    int bytes, void *data)
+{
+	struct mfgacc_data *conf = data;
+
+	if (bytes == 0 && conf->reg == reg) {
+		sbat_emul_set_response(emul, reg, conf->buf, conf->len, false);
+	}
+
+	return 1;
+}
+
+/** Test battery manufacturer access */
+static void test_battery_mfacc(void)
+{
+	struct sbat_emul_bat_data *bat;
+	struct mfgacc_data mfacc_conf;
+	struct i2c_emul *emul;
+	uint8_t recv_buf[10];
+	uint8_t mf_data[10];
+	uint16_t cmd;
+	int len;
+
+	emul = sbat_emul_get_ptr(BATTERY_ORD);
+	bat = sbat_emul_get_bat_data(emul);
+
+	/* Select arbitrary command number for the test */
+	cmd = 0x1234;
+
+	/* Test fail on to short receive buffer */
+	len = 2;
+	zassert_equal(EC_ERROR_INVAL,
+		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
+				     len), NULL);
+
+	/* Set correct length for rest of the test */
+	len = 10;
+
+	/* Test fail on writing SB_MANUFACTURER_ACCESS register */
+	i2c_common_emul_set_write_fail_reg(emul, SB_MANUFACTURER_ACCESS);
+	zassert_equal(EC_ERROR_INVAL,
+		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
+				     len), NULL);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test fail on reading manufacturer data (custom handler is not set) */
+	zassert_equal(EC_ERROR_INVAL,
+		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
+				     len), NULL);
+
+	/* Set arbitrary manufacturer data */
+	for (int i = 1; i < len; i++) {
+		mf_data[i] = i;
+	}
+	/* Set first byte of message as length */
+	mf_data[0] = len;
+
+	/* Setup custom handler */
+	mfacc_conf.reg = SB_ALT_MANUFACTURER_ACCESS;
+	mfacc_conf.len = len;
+	mfacc_conf.buf = mf_data;
+	i2c_common_emul_set_read_func(emul, mfgacc_read_func, &mfacc_conf);
+
+	/* Test error when mf_data doesn't start with command */
+	zassert_equal(EC_ERROR_UNKNOWN,
+		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
+				     len), NULL);
+
+	/* Set beginning of the manufacturer data */
+	mf_data[1] = cmd & 0xff;
+	mf_data[2] = (cmd >> 8) & 0xff;
+
+	/* Test successful manufacturer data read */
+	zassert_equal(EC_SUCCESS,
+		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
+				     len), NULL);
+	/* Compare received data ignoring length byte */
+	zassert_mem_equal(mf_data + 1, recv_buf, len - 1, NULL);
+
+	/* Disable custom read function */
+	i2c_common_emul_set_read_func(emul, NULL, NULL);
+}
+
 void test_suite_smart_battery(void)
 {
 	ztest_test_suite(smart_battery,
@@ -276,6 +365,7 @@ void test_suite_smart_battery(void)
 			 ztest_user_unit_test(test_battery_wait_for_stable),
 			 ztest_user_unit_test(test_battery_manufacture_date),
 			 ztest_user_unit_test(test_battery_time_at_rate),
-			 ztest_user_unit_test(test_battery_get_params));
+			 ztest_user_unit_test(test_battery_get_params),
+			 ztest_user_unit_test(test_battery_mfacc));
 	ztest_run_test_suite(smart_battery);
 }
