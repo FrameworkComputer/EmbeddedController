@@ -107,6 +107,17 @@ static const struct usb_mux usbc2_tcss_usb_mux = {
 	.hpd_update = &virtual_hpd_update,
 };
 
+struct kb800x_control_t kb800x_control[] = {
+	[USBC_PORT_C0] = {
+	},
+	[USBC_PORT_C1] = {
+		.retimer_rst_gpio = GPIO_USB_C1_RT_RST_R_ODL,
+	},
+	[USBC_PORT_C2] = {
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(kb800x_control) == USBC_PORT_COUNT);
+
 const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
@@ -118,13 +129,9 @@ const struct usb_mux usb_muxes[] = {
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
-		/* TODO(b/197505149): need to fix the build error and
-		 * clarify how to set the usb_ls_en_gpio and
-		 * retimer_rst_gpio in the same array.
-		 */
-		/*.driver = &kb800x_usb_mux_driver, */
+		.driver = &kb800x_usb_mux_driver,
 		.i2c_port = I2C_PORT_USB_C1_MUX,
-		.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
+		.i2c_addr_flags = KB800X_I2C_ADDR0_FLAGS,
 		.next_mux = &usbc1_tcss_usb_mux,
 	},
 	[USBC_PORT_C2] = {
