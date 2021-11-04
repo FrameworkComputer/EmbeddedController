@@ -14,6 +14,9 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
+/* Free up flash space */
+#undef CONFIG_CONSOLE_CMDHELP
+
 #define CONFIG_VBOOT_EFS2
 
 #define CONFIG_POWER_BUTTON
