@@ -1914,6 +1914,43 @@ static void test_bmi_sec_raw_write8(void)
 		      actual_reg_addr, requested_reg_addr);
 }
 
+/** Test setting an offset on an invalid sensor type */
+static void test_bmi_set_offset_invalid_type(void)
+{
+	struct motion_sensor_t ms_fake;
+	int ret;
+
+	int16_t unused_offset;
+	int16_t temp = 0;
+
+	/* make a copy of the accel motion sensor so we modify its type */
+	memcpy(&ms_fake, &motion_sensors[BMI_ACC_SENSOR_ID], sizeof(ms_fake));
+	ms_fake.type = MOTIONSENSE_TYPE_MAX;
+
+	ret = ms_fake.drv->set_offset(&ms_fake, &unused_offset, temp);
+
+	zassert_equal(ret, EC_RES_INVALID_PARAM,
+		      "Expected return code of %d but got %d",
+		      EC_RES_INVALID_PARAM, ret);
+}
+
+/** Test performing a calibration on a magnetometer, which is not supported */
+static void test_bmi_perform_calib_invalid_type(void)
+{
+	struct motion_sensor_t ms_fake;
+	int ret;
+
+	/* make a copy of the accel motion sensor so we modify its type */
+	memcpy(&ms_fake, &motion_sensors[BMI_ACC_SENSOR_ID], sizeof(ms_fake));
+	ms_fake.type = MOTIONSENSE_TYPE_MAG;
+
+	ret = ms_fake.drv->perform_calib(&ms_fake, 1);
+
+	zassert_equal(ret, EC_RES_INVALID_PARAM,
+		      "Expected return code of %d but got %d",
+		      EC_RES_INVALID_PARAM, ret);
+}
+
 void test_suite_bmi160(void)
 {
 	ztest_test_suite(bmi160,
@@ -1936,6 +1973,9 @@ void test_suite_bmi160(void)
 			 ztest_user_unit_test(test_bmi_acc_fifo),
 			 ztest_user_unit_test(test_bmi_gyr_fifo),
 			 ztest_user_unit_test(test_bmi_sec_raw_read8),
-			 ztest_user_unit_test(test_bmi_sec_raw_write8));
+			 ztest_user_unit_test(test_bmi_sec_raw_write8),
+			 ztest_user_unit_test(test_bmi_set_offset_invalid_type),
+			 ztest_user_unit_test(
+				 test_bmi_perform_calib_invalid_type));
 	ztest_run_test_suite(bmi160);
 }

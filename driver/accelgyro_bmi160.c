@@ -247,6 +247,11 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 	if (!enable)
 		return EC_SUCCESS;
 
+	/* We only support accelerometers and gyroscopes */
+	if (s->type != MOTIONSENSE_TYPE_ACCEL &&
+	    s->type != MOTIONSENSE_TYPE_GYRO)
+		return EC_RES_INVALID_PARAM;
+
 	rate = bmi_get_data_rate(s);
 	/*
 	 * Temporary set frequency to 100Hz to get enough data in a short
@@ -287,10 +292,12 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 		/* Timeout for gyroscope calibration */
 		timeout.val = 800 * MSEC;
 		break;
+	/* LCOV_EXCL_START */
 	default:
-		/* Not supported on Magnetometer */
-		ret = EC_RES_INVALID_PARAM;
-		goto end_perform_calib;
+		/* Unreachable due to sensor type check above. */
+		ASSERT(false);
+		return EC_RES_INVALID_PARAM;
+	/* LCOV_EXCL_STOP */
 	}
 	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
 			 BMI160_FOC_CONF, val);
