@@ -390,22 +390,19 @@ int bmi160_sec_raw_write8(const int port, const uint16_t addr_flags,
 			  const uint8_t reg, int data);
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
-/*
- * Get the mostion sensor ID of the BMI260 sensor that
- * generates the interrupt.
- * The interrupt is converted to the event and transferred to motion
- * sense task that actually handles the interrupt.
+/* Get the motion sensor ID of the BMI160 sensor that generates the interrupt.
+ * The interrupt is converted to the event and transferred to motion sense task
+ * that actually handles the interrupt.
  *
- * Here, we use alias to get the motion sensor ID
- *
- * e.g) base_accel is the label of a child node in /motionsense-sensors
+ * Here we use an alias (bmi160_int) to get the motion sensor ID. This alias
+ * MUST be defined for this driver to work.
  * aliases {
- *     bmi260-int = &base_accel;
+ *   bmi160-int = &base_accel;
  * };
  */
-#if DT_NODE_EXISTS(DT_ALIAS(bmi260_int))
-#define CONFIG_ACCELGYRO_BMI260_INT_EVENT	\
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bmi260_int)))
+#if DT_NODE_EXISTS(DT_ALIAS(bmi160_int))
+#define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bmi160_int)))
 #endif
 #endif
 

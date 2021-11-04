@@ -328,4 +328,24 @@
 /* Root mean square noise of 100Hz accelerometer, units: ug */
 #define BMI260_ACCEL_RMS_NOISE_100HZ    1060
 
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
+/*
+ * Get the motion sensor ID of the BMI260 sensor that
+ * generates the interrupt.
+ * The interrupt is converted to the event and transferred to motion
+ * sense task that actually handles the interrupt.
+ *
+ * Here, we use alias to get the motion sensor ID
+ *
+ * e.g) base_accel is the label of a child node in /motionsense-sensors
+ * aliases {
+ *     bmi260-int = &base_accel;
+ * };
+ */
+#if DT_NODE_EXISTS(DT_ALIAS(bmi260_int))
+#define CONFIG_ACCELGYRO_BMI260_INT_EVENT	\
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bmi260_int)))
+#endif
+#endif
+
 #endif /* __CROS_EC_ACCELGYRO_BMI260_H */
