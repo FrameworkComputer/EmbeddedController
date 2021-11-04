@@ -1745,8 +1745,14 @@ void tc_event_check(int port, int evt)
 		}
 	}
 
-	if (evt & PD_EVENT_UPDATE_DUAL_ROLE)
+	if (evt & PD_EVENT_UPDATE_DUAL_ROLE) {
+		/* If TCPC is idle, start the wake process */
+		if (IS_ENABLED(CONFIG_USB_PD_TCPC_LOW_POWER) &&
+		    get_state_tc(port) == TC_LOW_POWER_MODE)
+			tcpm_wake_low_power_mode(port);
+
 		pd_update_dual_role_config(port);
+	}
 }
 
 /*
