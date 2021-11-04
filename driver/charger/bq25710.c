@@ -177,27 +177,22 @@ static int bq25710_set_psys_sensing(int chgnum, bool enable)
 {
 	int rv;
 	int reg;
-	int mask, on, off;
 
 	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_1, &reg);
 	if (rv)
 		return rv;
 
 	if (IS_ENABLED(CONFIG_CHARGER_BQ25720)) {
-		mask = BQ_FIELD_MASK(BQ25720, CHARGE_OPTION_1, PSYS_CONFIG);
-		on = SET_BQ_FIELD(BQ25720, CHARGE_OPTION_1, PSYS_CONFIG, 0, 0);
-		off = SET_BQ_FIELD(BQ25720, CHARGE_OPTION_1, PSYS_CONFIG, 3, 0);
+		if (enable)
+			reg = SET_BQ_FIELD_BY_NAME(BQ25720, CHARGE_OPTION_1,
+						   PSYS_CONFIG, PBUS_PBAT, reg);
+		else
+			reg = SET_BQ_FIELD_BY_NAME(BQ25720, CHARGE_OPTION_1,
+						   PSYS_CONFIG, OFF, reg);
 	} else if (IS_ENABLED(CONFIG_CHARGER_BQ25710)) {
-		mask = BQ_FIELD_MASK(BQ25710, CHARGE_OPTION_1, EN_PSYS);
-		on = SET_BQ_FIELD(BQ25710, CHARGE_OPTION_1, EN_PSYS, 1, 0);
-		off = SET_BQ_FIELD(BQ25710, CHARGE_OPTION_1, EN_PSYS, 0, 0);
+		reg = SET_BQ_FIELD(BQ25710, CHARGE_OPTION_1, EN_PSYS, enable,
+				   reg);
 	}
-
-	reg &= ~mask;
-	if (enable)
-		reg |= on;
-	else
-		reg |= off;
 
 	rv = raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_1, reg);
 	if (rv)
