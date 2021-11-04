@@ -430,6 +430,16 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*enter_low_power_mode)(int port);
+
+	/**
+	 * Starts I2C wake sequence for TCPC
+	 *
+	 * NOTE: Do no use tcpc_(read|write) style helper methods in this
+	 * function. You must use i2c_(read|write) directly.
+	 *
+	 * @param port Type-C port number
+	 */
+	void (*wake_low_power_mode)(int port);
 #endif
 
 #ifdef CONFIG_USB_PD_FRS_TCPC

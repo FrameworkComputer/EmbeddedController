@@ -580,6 +580,19 @@ int tcpci_enter_low_power_mode(int port)
 {
 	return tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_I2CIDLE);
 }
+
+void tcpci_wake_low_power_mode(int port)
+{
+	/*
+	 * TCPCI 4.8.1 I2C Interface - wake the TCPC with a throw-away command
+	 *
+	 * TODO(b/205140007): Align LPM exit to TCPCI spec for TCPCs which can
+	 * correctly support it
+	 */
+	i2c_write8(tcpc_config[port].i2c_info.port,
+		   tcpc_config[port].i2c_info.addr_flags,
+		   TCPC_REG_COMMAND, TCPC_REG_COMMAND_WAKE_I2C);
+}
 #endif
 
 int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)

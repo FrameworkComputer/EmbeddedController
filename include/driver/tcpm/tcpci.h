@@ -159,6 +159,7 @@
 #define TCPC_REG_ALERT_EXT_SNK_FRS              BIT(0)
 
 #define TCPC_REG_COMMAND           0x23
+#define TCPC_REG_COMMAND_WAKE_I2C		 0x11
 #define TCPC_REG_COMMAND_ENABLE_VBUS_DETECT      0x33
 #define TCPC_REG_COMMAND_SNK_CTRL_LOW            0x44
 #define TCPC_REG_COMMAND_SNK_CTRL_HIGH           0x55
@@ -304,6 +305,7 @@ int tcpci_tcpc_drp_toggle(int port);
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 int tcpci_enter_low_power_mode(int port);
+void tcpci_wake_low_power_mode(int port);
 #endif
 enum ec_error_list tcpci_set_bist_test_mode(const int port,
 		const bool enable);
