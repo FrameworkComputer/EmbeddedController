@@ -17,7 +17,10 @@
  * any unused flash space that can be used to store the .init_rom section.
  */
 #undef CONFIG_CHIP_INIT_ROM_REGION
-#endif
+#else
+/* Free up flash space */
+#undef CONFIG_CONSOLE_CMDHELP
+#endif /* BOARD_VOEMA */
 
 #define CONFIG_VBOOT_EFS2
 
