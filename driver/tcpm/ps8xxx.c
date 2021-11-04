@@ -772,6 +772,9 @@ __maybe_unused static int ps8815_disable_rp_detect_workaround_check(int port)
 	ps8815_disable_rp_detect[port] = false;
 	ps8815_disconnected[port] = true;
 
+	if (product_id[port] != PS8815_PRODUCT_ID)
+		return EC_SUCCESS;
+
 	reg = get_reg_by_product(port, REG_FW_VER);
 	rv = tcpc_read(port, reg, &val);
 	if (rv != EC_SUCCESS)
