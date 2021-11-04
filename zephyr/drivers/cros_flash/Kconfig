@@ -12,6 +12,19 @@ menuconfig CROS_FLASH_NPCX
 	  continue to use most of the existing flash memory processing code in
 	  ECOS.
 
+if CROS_FLASH_NPCX
+
+config CROS_FLASH_NPCX_INIT_PRIORITY
+	int "Nuvoton NPCX flash driver priority for the Zephyr shim"
+	default 85
+	help
+	  This sets the priority of the NPCX flash driver for zephyr shim.
+	  This driver depends on the SPI controller and SPI NOR flash drivers.
+	  Its priority must be lower than CONFIG_SPI_INIT_PRIORITY and
+	  CONFIG_SPI_NOR_INIT_PRIORITY.
+
+endif # CROS_FLASH_NPCX
+
 config CROS_FLASH_IT8XXX2
 	bool "ITE IT81202 flash driver for the Zephyr shim"
 	depends on SOC_FAMILY_RISCV_ITE

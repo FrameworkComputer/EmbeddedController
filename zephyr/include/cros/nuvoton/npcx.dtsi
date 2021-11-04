@@ -60,6 +60,11 @@
 		};
 	};
 
+	fiu0: cros-flash{
+		compatible = "nuvoton,npcx-cros-flash";
+		label = "INTERNAL_FLASH";
+	};
+
 	soc {
 
 		cros_kb_raw: cros-kb-raw@400a3000 {
@@ -107,14 +112,6 @@
 			reg = <0x400b7000 0x2000>;
 			mtc-alarm = <&wui_mtc>;
 			label = "MTC";
-		};
-
-		fiu0: cros-flash@40020000 {
-			compatible = "nuvoton,npcx-cros-flash";
-			reg = <0x40020000 0x80000>;
-			clocks = <&pcc NPCX_CLOCK_BUS_APB3 NPCX_PWDWN_CTL1 2>;
-			label = "FLASH_INTERFACE_UNIT0";
-			pinctrl-0 = <>;
 		};
 
 		shi: shi@4000f000 {
