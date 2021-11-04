@@ -1951,6 +1951,44 @@ static void test_bmi_perform_calib_invalid_type(void)
 		      EC_RES_INVALID_PARAM, ret);
 }
 
+/** Test reading the onboard temperature sensor */
+static void test_bmi_temp_sensor(void)
+{
+	struct i2c_emul *emul = bmi_emul_get(BMI_ORD);
+	int ret;
+
+	/* Part 1:
+	 * Set up the register so we read 300 Kelvin. 0x0000 is 23 deg C, and
+	 * each LSB is 0.5^9 deg C. See BMI160 datasheet for more details.
+	 */
+	int actual_read_temp_k, expected_temp_k = 300;
+	uint16_t temp_reg_value = (K_TO_C(expected_temp_k) - 23) << 9;
+
+	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_0, temp_reg_value & 0xFF);
+	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_1, temp_reg_value >> 8);
+
+	/* The output will be in Kelvin */
+	ret = bmi160_get_sensor_temp(BMI_ACC_SENSOR_ID, &actual_read_temp_k);
+
+	zassert_equal(ret, EC_RES_SUCCESS, "Expected %d but got %d",
+		      EC_RES_SUCCESS, ret);
+	zassert_equal(expected_temp_k, actual_read_temp_k,
+		      "Expected %dK but got %dK", expected_temp_k,
+		      actual_read_temp_k);
+
+	/* Part 2:
+	 * Have the chip return an invalid reading.
+	 */
+	temp_reg_value = BMI_INVALID_TEMP;
+	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_0, temp_reg_value & 0xFF);
+	bmi_emul_set_reg(emul, BMI160_TEMPERATURE_1, temp_reg_value >> 8);
+
+	ret = bmi160_get_sensor_temp(BMI_ACC_SENSOR_ID, &actual_read_temp_k);
+
+	zassert_equal(ret, EC_ERROR_NOT_POWERED, "Expected %d but got %d",
+		      EC_ERROR_NOT_POWERED, ret);
+}
+
 void test_suite_bmi160(void)
 {
 	ztest_test_suite(bmi160,
@@ -1976,6 +2014,7 @@ void test_suite_bmi160(void)
 			 ztest_user_unit_test(test_bmi_sec_raw_write8),
 			 ztest_user_unit_test(test_bmi_set_offset_invalid_type),
 			 ztest_user_unit_test(
-				 test_bmi_perform_calib_invalid_type));
+				 test_bmi_perform_calib_invalid_type),
+			 ztest_user_unit_test(test_bmi_temp_sensor));
 	ztest_run_test_suite(bmi160);
 }
