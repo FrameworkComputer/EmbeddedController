@@ -446,6 +446,8 @@ static int kb800x_set_state(const struct usb_mux *me, mux_state_t mux_state,
 
 static int kb800x_init(const struct usb_mux *me)
 {
+	bool unused;
+
 	gpio_set_level(kb800x_control[me->usb_port].usb_ls_en_gpio, 1);
 	gpio_set_level(kb800x_control[me->usb_port].retimer_rst_gpio, 1);
 
@@ -459,7 +461,7 @@ static int kb800x_init(const struct usb_mux *me)
 	if (!gpio_get_level(kb800x_control[me->usb_port].retimer_rst_gpio))
 		return EC_ERROR_NOT_POWERED;
 
-	return kb800x_set_state(me, USB_PD_MUX_NONE);
+	return kb800x_set_state(me, USB_PD_MUX_NONE, &unused);
 }
 
 static int kb800x_enter_low_power_mode(const struct usb_mux *me)
