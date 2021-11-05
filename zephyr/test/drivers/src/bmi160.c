@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "emul/emul_bmi.h"
 #include "emul/emul_common_i2c.h"
+#include "test_mocks.h"
 
 #include "motion_sense_fifo.h"
 #include "driver/accelgyro_bmi160.h"
@@ -2013,6 +2014,65 @@ static void test_bmi_interrupt_handler(void)
 		     "Event flag is not set after firing interrupt");
 }
 
+/* Make an I2C emulator mock wrapped in FFF for use with test_bmi_init_chip_id()
+ */
+FAKE_VALUE_FUNC(int, bmi_init_chip_id_mock_write_fn, struct i2c_emul *, int,
+		uint8_t, int, void *);
+
+/** Test handling of invalid or unreadable chip IDs in init() */
+static void test_bmi_init_chip_id(void)
+{
+	struct motion_sensor_t *ms = &motion_sensors[BMI_ACC_SENSOR_ID];
+	struct i2c_emul *emul = bmi_emul_get(BMI_ORD);
+	int ret;
+
+	/* Part 1: Cannot read the Chip ID register */
+	i2c_common_emul_set_read_fail_reg(emul, BMI160_CHIP_ID);
+	ret = ms->drv->init(ms);
+
+	zassert_equal(ret, EC_ERROR_UNKNOWN, "Expected %d but got %d",
+		      EC_ERROR_UNKNOWN, ret);
+
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Part 2: Incorrect chip ID - this triggers a series of writes in an
+	 * attempt to 'unlock' the chip.
+	 */
+
+	/* Have the mocked write function return 1 so everything is passed
+	 * through. We only care about using FFF to capture the argument
+	 * history.
+	 */
+
+	RESET_FAKE(bmi_init_chip_id_mock_write_fn);
+	bmi_init_chip_id_mock_write_fn_fake.return_val = 1;
+	i2c_common_emul_set_write_func(emul, bmi_init_chip_id_mock_write_fn,
+				       NULL);
+
+	/* Return a phony chip ID */
+	bmi_emul_set_reg(emul, BMI160_CHIP_ID, 0xFF);
+
+	ret = ms->drv->init(ms);
+
+	/* Verify return value */
+	zassert_equal(ret, EC_ERROR_ACCESS_DENIED, "Expected %d but got %d",
+		      EC_ERROR_ACCESS_DENIED, ret);
+
+	/* Verify that all expected I2C writes were completed, in order */
+	MOCK_ASSERT_I2C_WRITE(bmi_init_chip_id_mock_write_fn, 0, BMI160_CMD_REG,
+			      BMI160_CMD_EXT_MODE_EN_B0);
+	MOCK_ASSERT_I2C_WRITE(bmi_init_chip_id_mock_write_fn, 1, BMI160_CMD_REG,
+			      BMI160_CMD_EXT_MODE_EN_B1);
+	MOCK_ASSERT_I2C_WRITE(bmi_init_chip_id_mock_write_fn, 2, BMI160_CMD_REG,
+			      BMI160_CMD_EXT_MODE_EN_B2);
+	MOCK_ASSERT_I2C_WRITE(bmi_init_chip_id_mock_write_fn, 3,
+			      BMI160_CMD_EXT_MODE_ADDR, BMI160_CMD_PAGING_EN);
+	MOCK_ASSERT_I2C_WRITE(bmi_init_chip_id_mock_write_fn, 4,
+			      BMI160_CMD_EXT_MODE_ADDR, 0);
+
+	i2c_common_emul_set_write_func(emul, NULL, NULL);
+}
+
 void test_suite_bmi160(void)
 {
 	ztest_test_suite(bmi160,
@@ -2040,6 +2100,7 @@ void test_suite_bmi160(void)
 			 ztest_user_unit_test(
 				 test_bmi_perform_calib_invalid_type),
 			 ztest_user_unit_test(test_bmi_temp_sensor),
-			 ztest_user_unit_test(test_bmi_interrupt_handler));
+			 ztest_user_unit_test(test_bmi_interrupt_handler),
+			 ztest_user_unit_test(test_bmi_init_chip_id));
 	ztest_run_test_suite(bmi160);
 }
