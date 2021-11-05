@@ -500,6 +500,17 @@ config PLATFORM_EC_CONSOLE_CMD_I2C_SPEED
 	  the DYNAMIC_SPEED port flag set, the speed can be set. In all
 	  cases, the bus speed is in units of kHz.
 
+config PLATFORM_EC_HOSTCMD_I2C_CONTROL
+	bool "Host command: i2c_control"
+	default n
+	depends on PLATFORM_EC_I2C
+	help
+	  Enable the I2C_CONTROL host command. This comamnd is used to
+	  display an I2C port's bus speed. Additionally, for ports with
+	  the DYNAMIC_SPEED port flag set, the speed can be set. In all
+	  cases, the bus speed is in units of kHz. More functionality of
+	  the command may be added in the future.
+
 config PLATFORM_EC_SMBUS_PEC
 	bool "Packet error checking support for SMBus"
 	help
