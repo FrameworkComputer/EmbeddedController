@@ -16,6 +16,12 @@ config PLATFORM_EC_ESPI_VW_SLP_S4
 	  For power sequencing, use an eSPI virtual wire instead of
 	  defining GPIO_PCH_SLP_S4 in gpio_map.h.
 
+config PLATFORM_EC_ESPI_VW_SLP_S5
+	bool "SLP_S5 is an eSPI virtual wire instead of an alias for SLP_S4"
+	help
+	  For power sequencing, use an eSPI virtual wire to read the SLP_S5 line,
+	  as opposed to merging it into the same net as SLP_S4.
+
 config PLATFORM_EC_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
 	bool "Reset SLP VW signals on eSPI reset"
 	help

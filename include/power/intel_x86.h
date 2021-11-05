@@ -41,6 +41,17 @@
 #else
 #define SLP_S4_SIGNAL_L GPIO_PCH_SLP_S4_L
 #endif
+/*
+ * The SLP_S5 signal has not traditionally been connected to the EC. If virtual
+ * wire support is enabled, then SLP_S5 will be available that way. Otherwise,
+ * use SLP_S4's GPIO as a proxy for SLP_S5. This matches old behavior and
+ * effectively prevents S4 residency.
+ */
+#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S5
+#define SLP_S5_SIGNAL_L VW_SLP_S5_L
+#else
+#define SLP_S5_SIGNAL_L SLP_S4_SIGNAL_L
+#endif
 
 /**
  * Handle RSMRST signal.

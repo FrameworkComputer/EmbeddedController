@@ -46,6 +46,7 @@ static const int s5_inactivity_timeout = 10;
 static const char * const state_names[] = {
 	"G3",
 	"S5",
+	"S4",
 	"S3",
 	"S0",
 #ifdef CONFIG_POWER_S0IX
@@ -57,6 +58,10 @@ static const char * const state_names[] = {
 	"S0->S3",
 	"S3->S5",
 	"S5->G3",
+	"S3->S4",
+	"S4->S3",
+	"S4->S5",
+	"S5->S4",
 #ifdef CONFIG_POWER_S0IX
 	"S0ix->S0",
 	"S0->S0ix",
@@ -246,11 +251,11 @@ void power_set_state(enum power_state new_state)
 
 	/*
 	 * Reset want_g3_exit flag here to prevent the situation that if the
-	 * error handler in POWER_S5S3 decides to force shutdown the system and
+	 * error handler in POWER_S5S4 decides to force shutdown the system and
 	 * the flag is set, the system will go to G3 and then immediately exit
 	 * G3 again.
 	 */
-	if (state == POWER_S5S3)
+	if ((state == POWER_S5S4) || (state == POWER_S5S3))
 		want_g3_exit = 0;
 }
 
@@ -525,6 +530,8 @@ static enum power_state power_common_state(enum power_state state)
 		}
 		break;
 
+	case POWER_S4:
+		/* fallthrough */
 	case POWER_S3:
 		/* fallthrough */
 	case POWER_S0:
@@ -570,10 +577,15 @@ int chipset_in_state(int state_mask)
 		need_mask = CHIPSET_STATE_HARD_OFF | CHIPSET_STATE_SOFT_OFF;
 		break;
 	case POWER_S5:
+	case POWER_S5S4:
+	case POWER_S4S5:
+	case POWER_S4:
 		need_mask = CHIPSET_STATE_SOFT_OFF;
 		break;
 	case POWER_S5S3:
 	case POWER_S3S5:
+	case POWER_S4S3:
+	case POWER_S3S4:
 		need_mask = CHIPSET_STATE_SOFT_OFF | CHIPSET_STATE_SUSPEND;
 		break;
 	case POWER_S3:
@@ -608,11 +620,16 @@ int chipset_in_or_transitioning_to_state(int state_mask)
 	case POWER_S5G3:
 		return state_mask & CHIPSET_STATE_HARD_OFF;
 	case POWER_S5:
-	case POWER_G3S5:
+	case POWER_S4:
 	case POWER_S3S5:
+	case POWER_G3S5:
+	case POWER_S4S5:
+	case POWER_S5S4:
+	case POWER_S3S4:
 		return state_mask & CHIPSET_STATE_SOFT_OFF;
-	case POWER_S3:
 	case POWER_S5S3:
+	case POWER_S3:
+	case POWER_S4S3:
 	case POWER_S0S3:
 		return state_mask & CHIPSET_STATE_SUSPEND;
 #ifdef CONFIG_POWER_S0IX

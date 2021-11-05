@@ -29,6 +29,7 @@
 enum sys_sleep_state {
 	SYS_SLEEP_S3,
 	SYS_SLEEP_S4,
+	SYS_SLEEP_S5,
 #ifdef CONFIG_POWER_S0IX
 	SYS_SLEEP_S0IX,
 #endif
@@ -37,6 +38,7 @@ enum sys_sleep_state {
 static const int sleep_sig[] = {
 	[SYS_SLEEP_S3] = SLP_S3_SIGNAL_L,
 	[SYS_SLEEP_S4] = SLP_S4_SIGNAL_L,
+	[SYS_SLEEP_S5] = SLP_S5_SIGNAL_L,
 #ifdef CONFIG_POWER_S0IX
 	[SYS_SLEEP_S0IX] = GPIO_PCH_SLP_S0_L,
 #endif
@@ -121,7 +123,7 @@ static enum power_state power_wait_s5_rtc_reset(void)
 	}
 
 	s5_exit_tries = 0;
-	return POWER_S5S3; /* Power up to next state */
+	return POWER_S5S4; /* Power up to next state */
 }
 #endif
 
@@ -279,22 +281,34 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 			return power_wait_s5_rtc_reset();
 #endif
 
-		if (chipset_get_sleep_signal(SYS_SLEEP_S4) == 1)
-			return POWER_S5S3; /* Power up to next state */
+		if (chipset_get_sleep_signal(SYS_SLEEP_S5) == 1)
+			return POWER_S5S4; /* Power up to next state */
+		break;
+
+	case POWER_S4:
+		if (chipset_get_sleep_signal(SYS_SLEEP_S5) == 0) {
+			/* Power down to next state */
+			return POWER_S4S5;
+		} else if (chipset_get_sleep_signal(SYS_SLEEP_S4) == 1) {
+			/* Power up to the next level */
+			return POWER_S4S3;
+		}
+
 		break;
 
 	case POWER_S3:
 		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
-			/* Required rail went away */
+			/* Required rail went away, go straight to S5 */
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S3S5;
 		} else if (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1) {
 			/* Power up to next state */
 			return POWER_S3S0;
 		} else if (chipset_get_sleep_signal(SYS_SLEEP_S4) == 0) {
-			/* Power down to next state */
-			return POWER_S3S5;
+			/* Power down to the next state */
+			return POWER_S3S4;
 		}
+
 		break;
 
 	case POWER_S0:
@@ -359,7 +373,15 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		power_s5_up = 1;
 		return POWER_S5;
 
+	case POWER_S5S4:
+		return POWER_S4; /* Power up to next state */
+
+	case POWER_S3S4:
+		return POWER_S4; /* Power down to the next state */
+
 	case POWER_S5S3:
+		/* fallthrough */
+	case POWER_S4S3:
 		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away */
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
@@ -380,7 +402,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 
 	case POWER_S3S0:
 		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
-			/* Required rail went away */
+			/* Required rail went away, go straight back to S5 */
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S3S5;
 		}
@@ -477,6 +499,8 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 #endif
 
 	case POWER_S3S5:
+		/* fallthrough */
+	case POWER_S4S5:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
