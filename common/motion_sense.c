@@ -332,10 +332,10 @@ static inline int motion_sense_init(struct motion_sensor_t *sensor)
 
 	BUILD_ASSERT(SENSOR_COUNT < 32);
 #if defined(HAS_TASK_CONSOLE)
-	ASSERT((task_get_current() == TASK_ID_HOOKS) ||
+	ASSERT((in_deferred_context()) ||
 	       (task_get_current() == TASK_ID_CONSOLE));
 #else
-	ASSERT(task_get_current() == TASK_ID_HOOKS);
+	ASSERT(in_deferred_context());
 #endif /* HAS_TASK_CONSOLE */
 
 	/* Initialize accelerometers. */
@@ -386,7 +386,7 @@ static void motion_sense_switch_sensor_rate(void)
 	struct motion_sensor_t *sensor;
 	unsigned int sensor_setup_mask = 0;
 
-	ASSERT(task_get_current() == TASK_ID_HOOKS);
+	ASSERT(in_deferred_context());
 
 	for (i = 0; i < motion_sensor_count; ++i) {
 		sensor = &motion_sensors[i];

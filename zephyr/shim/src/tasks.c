@@ -94,6 +94,8 @@ const static struct task_ctx_static shimmed_tasks_static[TASK_ID_COUNT] = {
 /* In dynamic tasks, allocate one extra spot for the sysworkq */
 static struct task_ctx_dyn shimmed_tasks_dyn[TASK_ID_COUNT + 1];
 
+#define TASK_ID_SYSWORKQ TASK_ID_COUNT
+
 static int tasks_started;
 #undef CROS_EC_TASK
 #undef TASK_TEST
@@ -367,6 +369,19 @@ void task_enable_irq(int irq)
 inline int in_interrupt_context(void)
 {
 	return k_is_in_isr();
+}
+
+inline bool in_deferred_context(void)
+{
+	/*
+	 * Deferred calls run in the sysworkq, but in ECOS usage we also
+	 * consider HOOKS calls such as HOOK_TICK and HOOK_SECOND as well.
+	 */
+	return (task_get_current() == TASK_ID_SYSWORKQ)
+#if HAS_TASK_HOOKS
+		|| (task_get_current() == TASK_ID_HOOKS)
+#endif
+		;
 }
 
 #if IS_ENABLED(CONFIG_KERNEL_SHELL) && IS_ENABLED(CONFIG_THREAD_MONITOR)
