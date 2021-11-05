@@ -892,6 +892,13 @@ config PLATFORM_EC_USBC_PPC_NX20P3483
 	  The NX20P3483 is a product with combined multiple power switches
 	  and a LDO for USB PD application.
 
+config PLATFORM_EC_USBC_PPC_RT1739
+	bool "Richtek RT1739 Type-C Power Path Controller"
+	help
+	  RT1739 is a highly integrated USB-C Bi-Directional Power Mux and
+	  Protection IC which includes IEC-61000-4-2 ESD protection cell for
+	  VBUS/CC/SBU/DP/DM.
+
 config PLATFORM_EC_USBC_PPC_SN5S330
 	bool "TI SN5S330 PD 3.0 power mux"
 	select PLATFORM_EC_USBC_OCP

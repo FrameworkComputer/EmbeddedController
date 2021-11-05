@@ -206,6 +206,7 @@ driver-$(CONFIG_USB_HUB_GL3590)+=gl3590.o
 # Type-C Power Path Controllers (PPC)
 driver-$(CONFIG_USBC_PPC_AOZ1380)+=ppc/aoz1380.o
 driver-$(CONFIG_USBC_PPC_RT1718S)+=ppc/rt1718s.o
+driver-$(CONFIG_USBC_PPC_RT1739)+=ppc/rt1739.o
 driver-$(CONFIG_USBC_PPC_SN5S330)+=ppc/sn5s330.o
 ifeq ($(CONFIG_USBC_PPC_NX20P3481)$(CONFIG_USBC_PPC_NX20P3483),y)
 driver-y += ppc/nx20p348x.o

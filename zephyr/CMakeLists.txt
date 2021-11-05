@@ -464,6 +464,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_KTU1125
                                                 "${PLATFORM_EC}/driver/ppc/ktu1125.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_NX20P3483
                                                 "${PLATFORM_EC}/driver/ppc/nx20p348x.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_RT1739
+                                                "${PLATFORM_EC}/driver/ppc/rt1739.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SN5S330
                                                 "${PLATFORM_EC}/driver/ppc/sn5s330.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_SYV682X
