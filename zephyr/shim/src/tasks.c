@@ -83,6 +83,7 @@ struct task_ctx_dyn {
 #endif /* CONFIG_THREAD_NAME */
 #define TASK_TEST(_name, _entry, _parameter, _size) \
 	CROS_EC_TASK(_name, _entry, _parameter, _size)
+/* Note: no static entry is required for sysworkq, as it isn't started here */
 const static struct task_ctx_static shimmed_tasks_static[TASK_ID_COUNT] = {
 	CROS_EC_TASK_LIST
 #ifdef TEST_BUILD
@@ -90,7 +91,8 @@ const static struct task_ctx_static shimmed_tasks_static[TASK_ID_COUNT] = {
 #endif
 };
 
-static struct task_ctx_dyn shimmed_tasks_dyn[TASK_ID_COUNT];
+/* In dynamic tasks, allocate one extra spot for the sysworkq */
+static struct task_ctx_dyn shimmed_tasks_dyn[TASK_ID_COUNT + 1];
 
 static int tasks_started;
 #undef CROS_EC_TASK
@@ -98,17 +100,11 @@ static int tasks_started;
 
 task_id_t task_get_current(void)
 {
-	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
+	/* Include sysworkq entry in search for the task ID */
+	for (size_t i = 0; i < TASK_ID_COUNT + 1; ++i) {
 		if (shimmed_tasks_dyn[i].zephyr_tid == k_current_get())
 			return i;
 	}
-
-#if defined(HAS_TASK_HOOKS)
-	/* Hooks ID should be returned for deferred calls */
-	if (k_current_get() == &k_sys_work_q.thread) {
-		return TASK_ID_HOOKS;
-	}
-#endif /* HAS_TASK_HOOKS */
 
 	__ASSERT(false, "Task index out of bound");
 	return 0;
@@ -287,6 +283,7 @@ void set_test_runner_tid(void)
 
 void start_ec_tasks(void)
 {
+	/* Initialize all EC tasks, which does not include the sysworkq entry */
 	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
 		struct task_ctx_dyn *const ctx_dyn = &shimmed_tasks_dyn[i];
 		const struct task_ctx_static *const ctx_static =
@@ -318,6 +315,10 @@ void start_ec_tasks(void)
 			0,
 			K_NO_WAIT);
 	}
+
+	/* Create an entry for sysworkq we can send events to */
+	shimmed_tasks_dyn[TASK_ID_COUNT].zephyr_tid = &k_sys_work_q.thread;
+
 	tasks_started = 1;
 }
 
@@ -330,10 +331,10 @@ int init_signals(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
-	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
+	/* Initialize event structures for all entries, including sysworkq */
+	for (size_t i = 0; i < TASK_ID_COUNT + 1; ++i) {
 		struct task_ctx_dyn *const ctx = &shimmed_tasks_dyn[i];
 
-		/* Initialize the new_event structure */
 		k_poll_signal_init(&ctx->new_event);
 	}
 
