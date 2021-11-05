@@ -230,9 +230,16 @@ config HAS_TASK_PD_C3
 	help
 	  This turns on the PD_C3 task for devices with 4 ports.
 
+config HAS_TASK_PD_INT_SHARED
+	bool # Selected by PLATFORM_EC_USB_PD_INT_SHARED
+	help
+	  This turns on the PD_INT_SHARED task which services PD message
+	  interrupts for any port which has a shared IRQ enabled.
+
 config HAS_TASK_PD_INT_C0
 	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	depends on !PLATFORM_EC_USB_PD_PORT_0_SHARED
 	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
 	help
 	  This turns on the PD_INT_C0 task which handles servicing of Power
@@ -243,6 +250,7 @@ config HAS_TASK_PD_INT_C0
 config HAS_TASK_PD_INT_C1
 	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	depends on !PLATFORM_EC_USB_PD_PORT_1_SHARED
 	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 1
 	help
 	  This turns on the PD_INT_C1 task for devices with >=2 ports.
@@ -250,6 +258,7 @@ config HAS_TASK_PD_INT_C1
 config HAS_TASK_PD_INT_C2
 	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	depends on !PLATFORM_EC_USB_PD_PORT_2_SHARED
 	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 2
 	help
 	  This turns on the PD_INT_C2 task for devices with >=3 ports.
@@ -257,6 +266,7 @@ config HAS_TASK_PD_INT_C2
 config HAS_TASK_PD_INT_C3
 	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY
+	depends on !PLATFORM_EC_USB_PD_PORT_2_SHARED
 	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 3
 	help
 	  This turns on the PD_INT_C3 task for devices with 4 ports.
