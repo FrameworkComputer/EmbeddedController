@@ -464,7 +464,14 @@ static int sn5s330_init(int port)
 		i2c_write8(i2c_port, i2c_addr_flags,
 			   SN5S330_INT_STATUS_REG4, regval);
 
-		/* Turn on PP2 FET. */
+		/*
+		 * Turn on PP2 FET.
+		 * Although PP2 FET is already enabled during dead batter boot
+		 * by the spec, we force that state here.
+		 *
+		 * TODO(207034759): Verify need or remove redundant PP2 set.
+		 */
+
 		status = sn5s330_pp_fet_enable(port, SN5S330_PP2, 1);
 		if (status) {
 			ppc_prints("Failed to turn on PP2 FET!", port);
