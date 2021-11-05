@@ -8,7 +8,7 @@
 #include "charge_manager.h"
 #include "charger.h"
 #include "console.h"
-#include "driver/charger/bq25710.h"
+#include "driver/charger/bq257x0_regs.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "math_util.h"
@@ -110,14 +110,16 @@ static int set_register_charge_option(void)
 	rv = i2c_read16(I2C_PORT_CHARGER, BQ25710_SMBUS_ADDR1_FLAGS,
 		    BQ25710_REG_CHARGE_OPTION_0, &reg);
 	if (rv == EC_SUCCESS) {
-		reg |= BQ25710_CHARGE_OPTION_0_IADP_GAIN;
+		reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, IADP_GAIN, 1, reg);
 		/* if AC only, disable IDPM,
 		 * because it will cause charger keep asserting PROCHOT
 		 */
 		if (!battery_hw_present())
-			reg &= ~BQ25710_CHARGE_OPTION_0_EN_IDPM;
+			reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, EN_IDPM, 0,
+					   reg);
 		else
-			reg |= BQ25710_CHARGE_OPTION_0_EN_IDPM;
+			reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, EN_IDPM, 1,
+					   reg);
 	} else {
 		CPRINTS("Failed to read bq25720");
 		return rv;
