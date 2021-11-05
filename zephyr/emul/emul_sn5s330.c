@@ -316,6 +316,16 @@ static int sn5s330_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	return 0;
 }
 
+void sn5s330_emul_reset(const struct emul *emul)
+{
+	struct sn5s330_emul_data *data = emul->data;
+	struct i2c_common_emul_data common = data->common;
+
+	/* Only Reset the sn5s330 Register Data */
+	memset(data, 0, sizeof(struct sn5s330_emul_data));
+	data->common = common;
+}
+
 static int emul_sn5s330_init(const struct emul *emul,
 			     const struct device *parent)
 {

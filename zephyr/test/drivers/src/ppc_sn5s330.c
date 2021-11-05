@@ -53,10 +53,16 @@ static void test_fail_once_func_set1(void)
 	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
 }
 
+static void reset_sn5s330_state(void)
+{
+	sn5s330_emul_reset(EMUL);
+}
+
 void test_suite_ppc_sn5s330(void)
 {
-	ztest_test_suite(
-		ppc_sn5s330,
-		ztest_unit_test(test_fail_once_func_set1));
+	ztest_test_suite(ppc_sn5s330,
+			 ztest_unit_test_setup_teardown(
+				 test_fail_once_func_set1, reset_sn5s330_state,
+				 reset_sn5s330_state));
 	ztest_run_test_suite(ppc_sn5s330);
 }

@@ -27,4 +27,11 @@ struct i2c_emul *sn5s330_emul_to_i2c_emul(const struct emul *emul);
  */
 int sn5s330_emul_peek_reg(const struct emul *emul, uint32_t reg, uint32_t *val);
 
+/**
+ * @brief Reset the sn5s330 emulator
+ *
+ * @param emul The emulator to reset
+ */
+void sn5s330_emul_reset(const struct emul *emul);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_SN5S330_H_ */
