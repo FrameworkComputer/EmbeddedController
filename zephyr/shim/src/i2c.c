@@ -26,10 +26,15 @@
 #define INIT_REMOTE_PORTS(id) \
 	[I2C_PORT(id)] = DT_PROP_OR(id, remote_port, -1),
 
-#define I2C_PORT_INIT(id)             \
-	{                             \
-		.name = DT_LABEL(id), \
-		.port = I2C_PORT(id), \
+#define I2C_PORT_FLAGS(id)                                                     \
+	COND_CODE_1(DT_PROP(id, dynamic_speed), (I2C_PORT_FLAG_DYNAMIC_SPEED), \
+		    (0))
+
+#define I2C_PORT_INIT(id)                    \
+	{                                    \
+		.name = DT_LABEL(id),        \
+		.port = I2C_PORT(id),        \
+		.flags = I2C_PORT_FLAGS(id), \
 	},
 /*
  * Long term we will not need these, for now they're needed to get things to
