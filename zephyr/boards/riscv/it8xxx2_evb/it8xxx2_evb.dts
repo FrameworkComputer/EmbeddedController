@@ -43,25 +43,9 @@
 			gpios = <&gpiob 0 GPIO_INPUT_PULL_UP>;
 			#enum-name = "GPIO_UART1_RX";
 		};
-		pch_smi_l {
-			gpios = <&gpiod 3 GPIO_OUT_HIGH>;
-			#enum-name = "GPIO_PCH_SMI_L";
-		};
-		pch_sci_l {
-			gpios = <&gpiod 4 GPIO_OUT_HIGH>;
-			#enum-name = "GPIO_PCH_SCI_L";
-		};
-		gate_a20_h {
-			gpios = <&gpiob 5 GPIO_OUT_HIGH>;
-			#enum-name = "GPIO_GATE_A20_H";
-		};
 		sys_reset_l {
 			gpios = <&gpiob 6 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_SYS_RESET_L";
-		};
-		lpc_clkrun_l {
-			gpios = <&gpioh 0 GPIO_OUT_LOW>;
-			#enum-name = "GPIO_LPC_CLKRUN_L";
 		};
 		pch_wake_l {
 			gpios = <&gpiob 7 GPIO_OUT_HIGH>;
@@ -197,6 +181,122 @@
 			rpm_start = <1500>;
 			rpm_max = <6500>;
 		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* gpioa1 */
+			<&gpioa 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioa2 */
+			<&gpioa 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioa3 */
+			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioa4 */
+			<&gpioa 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioa5 */
+			<&gpioa 5 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiob2 */
+			<&gpiob 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiob5 */
+			<&gpiob 5 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioc0 */
+			<&gpioc 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc4 */
+			<&gpioc 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc6 */
+			<&gpioc 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc7 */
+			<&gpioc 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiod0 */
+			<&gpiod 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod1 */
+			<&gpiod 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod2 */
+			<&gpiod 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod3 */
+			<&gpiod 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod4 */
+			<&gpiod 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod5 */
+			<&gpiod 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod7 */
+			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioe1 */
+			<&gpioe 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe5 */
+			<&gpioe 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe6 */
+			<&gpioe 6 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiof0 */
+			<&gpiof 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof1 */
+			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof2 */
+			<&gpiof 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof3 */
+			<&gpiof 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof4 */
+			<&gpiof 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof5 */
+			<&gpiof 5 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiog1 */
+			<&gpiog 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiog6 */
+			<&gpiog 6 GPIO_INPUT_PULL_UP>,
+
+			/* gpioh0 */
+			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioh3 */
+			<&gpioh 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioh4 */
+			<&gpioh 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioh5 */
+			<&gpioh 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioh6 */
+			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioi6 */
+			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi7 */
+			<&gpioi 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioj0 */
+			<&gpioj 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj1 */
+			<&gpioj 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj2 */
+			<&gpioj 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj3 */
+			<&gpioj 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj4 */
+			<&gpioj 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj5 */
+			<&gpioj 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj6 */
+			<&gpioj 6 GPIO_OUT_LOW>,
+			/* gpioj7 */
+			<&gpioj 7 GPIO_OUT_LOW>,
+
+			/* gpiom0 */
+			<&gpiom 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom1 */
+			<&gpiom 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom2 */
+			<&gpiom 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom3 */
+			<&gpiom 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom4 */
+			<&gpiom 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom6 */
+			<&gpiom 6 GPIO_INPUT_PULL_DOWN>;
 	};
 };
 
