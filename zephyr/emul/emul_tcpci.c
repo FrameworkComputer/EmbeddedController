@@ -12,6 +12,7 @@ LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <emul.h>
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
+#include <drivers/gpio/gpio_emul.h>
 
 #include "tcpm/tcpci.h"
 
@@ -58,6 +59,10 @@ struct tcpci_emul_data {
 	struct tcpci_emul_dev_ops *dev_ops;
 	/** Callbacks for TCPCI partner */
 	struct tcpci_emul_partner_ops *partner;
+
+	/** Reference to Alert# GPIO emulator. */
+	const struct device *alert_gpio_port;
+	gpio_pin_t alert_gpio_pin;
 };
 
 /**
@@ -195,19 +200,33 @@ static bool tcpci_emul_check_int(const struct emul *emul)
  *
  * @param emul Pointer to TCPCI emulator
  *
- * @return State of alert line
+ * @return 0 for success, or non-0 for errors.
  */
-static void tcpci_emul_alert_changed(const struct emul *emul)
+static int tcpci_emul_alert_changed(const struct emul *emul)
 {
 	struct tcpci_emul_data *data = emul->data;
+	int rc;
+	bool alert_is_active = tcpci_emul_check_int(emul);
+
+	/** Trigger GPIO. */
+	if (data->alert_gpio_port != NULL) {
+		/* Triggers on edge falling, so set to 0 when there is an alert.
+		 */
+		rc = gpio_emul_input_set(data->alert_gpio_port,
+					 data->alert_gpio_pin,
+					 alert_is_active ? 0 : 1);
+		if (rc != 0)
+			return rc;
+	}
 
 	/* Nothing to do */
 	if (data->alert_callback == NULL) {
-		return;
+		return 0;
 	}
 
-	data->alert_callback(emul, tcpci_emul_check_int(emul),
+	data->alert_callback(emul, alert_is_active,
 			     data->alert_callback_data);
+	return 0;
 }
 
 /** Check description in emul_tcpci.h */
@@ -216,6 +235,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 {
 	struct tcpci_emul_data *data = emul->data;
 	uint16_t dev_cap_2;
+	int rc;
 
 	if (data->rx_msg == NULL) {
 		tcpci_emul_get_reg(emul, TCPC_REG_DEV_CAP_2, &dev_cap_2);
@@ -250,7 +270,9 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 
 		data->reg[TCPC_REG_ALERT] |= TCPC_REG_ALERT_RX_STATUS;
 
-		tcpci_emul_alert_changed(emul);
+		rc = tcpci_emul_alert_changed(emul);
+		if (rc != 0)
+			return rc;
 	}
 
 	rx_msg->next = NULL;
@@ -402,8 +424,9 @@ static void tcpci_emul_reset_role_ctrl(const struct emul *emul)
  *        are not changed.
  *
  * @param emul Pointer to TCPCI emulator
+ * @return 0 if successful
  */
-static void tcpci_emul_reset(const struct emul *emul)
+static int tcpci_emul_reset(const struct emul *emul)
 {
 	struct tcpci_emul_data *data = emul->data;
 
@@ -448,15 +471,16 @@ static void tcpci_emul_reset(const struct emul *emul)
 		data->dev_ops->reset(emul, data->dev_ops);
 	}
 
-	tcpci_emul_alert_changed(emul);
+	return tcpci_emul_alert_changed(emul);
 }
 
 /**
  * @brief Set alert and fault registers to indicate i2c interface fault
  *
  * @param emul Pointer to TCPCI emulator
+ * @return 0 if successful
  */
-static void tcpci_emul_set_i2c_interface_err(const struct emul *emul)
+static int tcpci_emul_set_i2c_interface_err(const struct emul *emul)
 {
 	struct tcpci_emul_data *data = emul->data;
 
@@ -464,7 +488,7 @@ static void tcpci_emul_set_i2c_interface_err(const struct emul *emul)
 					TCPC_REG_FAULT_STATUS_I2C_INTERFACE_ERR;
 	data->reg[TCPC_REG_ALERT + 1] |= TCPC_REG_ALERT_FAULT >> 8;
 
-	tcpci_emul_alert_changed(emul);
+	return tcpci_emul_alert_changed(emul);
 }
 
 /**
@@ -875,6 +899,7 @@ static int tcpci_emul_handle_write(struct i2c_emul *i2c_emul, int reg,
 	bool inform_partner = false;
 	bool alert_changed = false;
 	int reg_bytes;
+	int rc;
 
 	/* This write message was setting register before read */
 	if (msg_len == 1) {
@@ -1027,7 +1052,9 @@ static int tcpci_emul_handle_write(struct i2c_emul *i2c_emul, int reg,
 	tcpci_emul_set_reg(emul, reg, data->write_data);
 
 	if (alert_changed) {
-		tcpci_emul_alert_changed(emul);
+		rc = tcpci_emul_alert_changed(emul);
+		if (rc != 0)
+			return rc;
 	}
 
 	if (inform_partner && data->partner && data->partner->control_change) {
@@ -1089,10 +1116,10 @@ static int tcpci_emul_init(const struct emul *emul, const struct device *parent)
 	i2c_common_emul_init(&data->common);
 
 	ret = i2c_emul_register(parent, emul->dev_label, &data->common.emul);
+	if (ret != 0)
+		return ret;
 
-	tcpci_emul_reset(emul);
-
-	return ret;
+	return tcpci_emul_reset(emul);
 }
 
 #define TCPCI_EMUL(n)							\
@@ -1111,6 +1138,16 @@ static int tcpci_emul_init(const struct emul *emul, const struct device *parent)
 			.read_byte = tcpci_emul_read_byte,		\
 			.access_reg = tcpci_emul_access_reg,		\
 		},							\
+		.alert_gpio_port = COND_CODE_1(				\
+			DT_NODE_HAS_PROP(n, alert_gpio),		\
+			(DEVICE_DT_GET(DT_GPIO_CTLR(			\
+				DT_INST_PROP(n, alert_gpio), gpios))),	\
+			(NULL)),					\
+		.alert_gpio_pin = COND_CODE_1(				\
+			DT_NODE_HAS_PROP(n, alert_gpio),		\
+			(DT_GPIO_PIN(DT_INST_PROP(n, alert_gpio),	\
+				gpios)),				\
+			(0)),						\
 	};								\
 									\
 	static const struct i2c_common_emul_cfg tcpci_emul_cfg_##n = {	\
