@@ -22,6 +22,8 @@ GPIO_INT(AP_EC_WARM_RST_REQ, PIN(D, 3), GPIO_INT_RISING | GPIO_SEL_1P8V,
 GPIO_INT(AP_EC_SHUTDOWN_REQ_L, PIN(F, 2),
          GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V,
          chipset_reset_request_interrupt)
+GPIO_INT(AP_EC_WATCHDOG_L,   PIN(C, 7), GPIO_INT_BOTH | GPIO_SEL_1P8V,
+         power_signal_interrupt)
 GPIO_INT(PG_S5_PWR_OD,           PIN(A, 6), GPIO_INT_BOTH,
 	 power_signal_interrupt)
 GPIO_INT(PG_VDD1_VDD2_OD,        PIN(M, 6), GPIO_INT_BOTH | GPIO_SEL_1P8V,
@@ -132,9 +134,6 @@ ALTERNATE(PIN_MASK(I, 0x6E), 0, MODULE_ADC, 0) /* ADC 1,2,3,5,6 */
 
 /* SPI */
 ALTERNATE(PIN_MASK(M, 0x33), 0, MODULE_SPI, 0) /* SPI */
-
-/* Unimplemented Pins  */
-UNIMPLEMENTED(AP_EC_WATCHDOG_L)
 
 /* *_ODL pin has external pullup so don't pull it down. */
 
