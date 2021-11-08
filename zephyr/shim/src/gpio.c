@@ -69,18 +69,6 @@ struct gpio_signal_callback {
 /*
  * Validate interrupt flags are valid for the Zephyr GPIO driver.
  */
-#define IS_GPIO_INTERRUPT_FLAG(flag, mask) ((flag & mask) == mask)
-#define VALID_GPIO_INTERRUPT_FLAG(flag)                             \
-	(IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_RISING) ||      \
-	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_FALLING) ||     \
-	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_BOTH) ||        \
-	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_LEVEL_LOW) ||        \
-	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_LEVEL_HIGH) ||       \
-	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_TO_INACTIVE) || \
-	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_EDGE_TO_ACTIVE) ||   \
-	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_LEVEL_INACTIVE) ||   \
-	 IS_GPIO_INTERRUPT_FLAG(flag, GPIO_INT_LEVEL_ACTIVE))
-
 #define GPIO_INT(sig, f, cb)                       \
 	BUILD_ASSERT(VALID_GPIO_INTERRUPT_FLAG(f), \
 		     STRINGIFY(sig) " is not using Zephyr interrupt flags");
@@ -259,7 +247,7 @@ void gpio_set_level_verbose(enum console_channel channel,
 	 GPIO_INT_F_FALLING | GPIO_INT_F_LOW | GPIO_INT_F_HIGH |               \
 	 GPIO_SEL_1P8V)
 
-static int convert_from_zephyr_flags(const gpio_flags_t zephyr)
+int convert_from_zephyr_flags(const gpio_flags_t zephyr)
 {
 	/* Start out with the bits that are the same. */
 	int ec_flags = zephyr & GPIO_CONVERSION_SAME_BITS;
@@ -298,7 +286,7 @@ static int convert_from_zephyr_flags(const gpio_flags_t zephyr)
 	return ec_flags;
 }
 
-static gpio_flags_t convert_to_zephyr_flags(int ec_flags)
+gpio_flags_t convert_to_zephyr_flags(int ec_flags)
 {
 	/* Start out with the bits that are the same. */
 	gpio_flags_t zephyr_flags = ec_flags & GPIO_CONVERSION_SAME_BITS;

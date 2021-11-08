@@ -253,6 +253,26 @@ int gpio_get_flags(enum gpio_signal signal);
 int gpio_get_flags_by_mask(uint32_t port, uint32_t mask);
 #endif
 
+#ifdef CONFIG_ZEPHYR
+
+/**
+ * Convert flags from Zephyr to CrOS EC format
+ *
+ * @param zephyr	flags in Zephyr format
+ * @returns		flags in CrOS EC format
+ */
+int convert_from_zephyr_flags(const gpio_flags_t zephyr);
+
+/**
+ * Convert flags from CrOS EC to Zephyr format
+ *
+ * @param ec_flags	flags in CrOS EC format
+ * @returns		flags in Zephyr format
+ */
+gpio_flags_t convert_to_zephyr_flags(int ec_flags);
+
+#endif
+
 /**
  * Get the default flags for a signal.
  *
