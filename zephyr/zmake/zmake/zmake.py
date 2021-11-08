@@ -286,6 +286,7 @@ class Zmake:
         base_config = zmake.build_config.BuildConfig(
             environ_defs={"ZEPHYR_BASE": str(zephyr_base), "PATH": "/usr/bin"},
             cmake_defs={
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "DTS_ROOT": str(self.module_paths["ec"] / "zephyr"),
                 "SYSCALL_INCLUDE_DIRS": str(
                     self.module_paths["ec"] / "zephyr" / "include" / "drivers"
