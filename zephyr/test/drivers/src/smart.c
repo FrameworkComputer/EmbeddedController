@@ -5,6 +5,8 @@
 
 #include <zephyr.h>
 #include <ztest.h>
+#include <shell/shell.h>
+#include <shell/shell_uart.h>
 
 #include "common.h"
 #include "i2c.h"
@@ -357,6 +359,143 @@ static void test_battery_mfacc(void)
 	i2c_common_emul_set_read_func(emul, NULL, NULL);
 }
 
+/** Test battery fake charge level set and read */
+static void test_battery_fake_charge(void)
+{
+	struct sbat_emul_bat_data *bat;
+	struct batt_params batt;
+	struct i2c_emul *emul;
+	int remaining_cap;
+	int fake_charge;
+	int charge;
+	int flags;
+
+	emul = sbat_emul_get_ptr(BATTERY_ORD);
+	bat = sbat_emul_get_bat_data(emul);
+
+	/* Success on command with no argument */
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"battfake"), NULL);
+
+	/* Fail on command with argument which is not a number */
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"battfake test"), NULL);
+
+	/* Fail on command with charge level above 100% */
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"battfake 123"), NULL);
+
+	/* Fail on command with charge level below 0% */
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"battfake -23"), NULL);
+
+	/* Set fake charge level */
+	fake_charge = 65;
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"battfake 65"), NULL);
+
+	/* Test that fake charge level is applied */
+	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
+	battery_get_params(&batt);
+	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
+	zassert_equal(fake_charge, batt.state_of_charge, "%d%% != %d%%",
+		      fake_charge, batt.state_of_charge);
+	remaining_cap = bat->full_cap * fake_charge / 100;
+	zassert_equal(remaining_cap, batt.remaining_capacity, "%d != %d",
+		      remaining_cap, batt.remaining_capacity);
+
+	/* Test fake remaining capacity when full capacity is not available */
+	i2c_common_emul_set_read_fail_reg(emul, SB_FULL_CHARGE_CAPACITY);
+	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |
+		BATT_FLAG_BAD_FULL_CAPACITY;
+	battery_get_params(&batt);
+	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
+	zassert_equal(fake_charge, batt.state_of_charge, "%d%% != %d%%",
+		      fake_charge, batt.state_of_charge);
+	remaining_cap = bat->design_cap * fake_charge / 100;
+	zassert_equal(remaining_cap, batt.remaining_capacity, "%d != %d",
+		      remaining_cap, batt.remaining_capacity);
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Disable fake charge level */
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"battfake -1"), NULL);
+
+	/* Test that fake charge level is not applied */
+	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
+	battery_get_params(&batt);
+	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
+	charge = 100 * bat->cap / bat->full_cap;
+	zassert_equal(charge, batt.state_of_charge, "%d%% != %d%%",
+		      charge, batt.state_of_charge);
+	zassert_equal(bat->cap, batt.remaining_capacity, "%d != %d",
+		      bat->cap, batt.remaining_capacity);
+}
+
+/** Test battery fake temperature set and read */
+static void test_battery_fake_temperature(void)
+{
+	struct sbat_emul_bat_data *bat;
+	struct batt_params batt;
+	struct i2c_emul *emul;
+	int fake_temp;
+	int flags;
+
+	emul = sbat_emul_get_ptr(BATTERY_ORD);
+	bat = sbat_emul_get_bat_data(emul);
+
+	/* Success on command with no argument */
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"batttempfake"), NULL);
+
+	/* Fail on command with argument which is not a number */
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"batttempfake test"), NULL);
+
+	/* Fail on command with too high temperature (above 500.0 K) */
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"batttempfake 5001"), NULL);
+
+	/* Fail on command with too low temperature (below 0 K) */
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"batttempfake -23"), NULL);
+
+	/* Set fake temperature */
+	fake_temp = 2840;
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"batttempfake 2840"), NULL);
+
+	/* Test that fake temperature is applied */
+	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
+	battery_get_params(&batt);
+	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
+	zassert_equal(fake_temp, batt.temperature, "%d != %d",
+		      fake_temp, batt.temperature);
+
+	/* Disable fake temperature */
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"batttempfake -1"), NULL);
+
+	/* Test that fake temperature is not applied */
+	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
+	battery_get_params(&batt);
+	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
+	zassert_equal(bat->temp, batt.temperature, "%d != %d",
+		      bat->temp, batt.temperature);
+}
+
 void test_suite_smart_battery(void)
 {
 	ztest_test_suite(smart_battery,
@@ -366,6 +505,8 @@ void test_suite_smart_battery(void)
 			 ztest_user_unit_test(test_battery_manufacture_date),
 			 ztest_user_unit_test(test_battery_time_at_rate),
 			 ztest_user_unit_test(test_battery_get_params),
-			 ztest_user_unit_test(test_battery_mfacc));
+			 ztest_user_unit_test(test_battery_mfacc),
+			 ztest_user_unit_test(test_battery_fake_charge),
+			 ztest_user_unit_test(test_battery_fake_temperature));
 	ztest_run_test_suite(smart_battery);
 }
