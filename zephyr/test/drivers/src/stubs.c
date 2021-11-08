@@ -11,6 +11,7 @@
 #include "charger/isl923x_public.h"
 #include "charger/isl9241_public.h"
 #include "config.h"
+#include "hooks.h"
 #include "i2c/i2c.h"
 #include "power.h"
 #include "ppc/sn5s330_public.h"
@@ -240,7 +241,23 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 uint16_t tcpc_get_alert_status(void)
 {
-	return 0;
+	uint16_t status = 0;
+
+	/*
+	 * Check which port has the ALERT line set and ignore if that TCPC has
+	 * its reset line active.
+	 */
+	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C0_TCPC_RST_L) != 0)
+			status |= PD_STATUS_TCPC_ALERT_0;
+	}
+
+	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL)) {
+		if (gpio_get_level(GPIO_USB_C1_TCPC_RST_L) != 0)
+			status |= PD_STATUS_TCPC_ALERT_1;
+	}
+
+	return status;
 }
 
 enum power_state power_chipset_init(void)
@@ -271,3 +288,45 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 
 /* Power signals list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {};
+
+void tcpc_alert_event(enum gpio_signal signal)
+{
+	int port;
+
+	switch (signal) {
+	case GPIO_USB_C0_TCPC_INT_ODL:
+		port = 0;
+		break;
+	case GPIO_USB_C1_TCPC_INT_ODL:
+		port = 1;
+		break;
+	default:
+		return;
+	}
+
+	schedule_deferred_pd_interrupt(port);
+}
+
+/* TODO: This code should really be generic, and run based on something in
+ * the dts.
+ */
+static void usbc_interrupt_init(void)
+{
+	/* Enable TCPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+
+	cprints(CC_USB, "Resetting TCPCs...");
+	cflush();
+
+	/* Reset generic TCPCI on port 0. */
+	gpio_set_level(GPIO_USB_C0_TCPC_RST_L, 0);
+	msleep(1);
+	gpio_set_level(GPIO_USB_C0_TCPC_RST_L, 1);
+
+	/* Reset PS8XXX on port 1. */
+	gpio_set_level(GPIO_USB_C1_TCPC_RST_L, 0);
+	msleep(PS8XXX_RESET_DELAY_MS);
+	gpio_set_level(GPIO_USB_C1_TCPC_RST_L, 1);
+}
+DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_INIT_I2C + 1);

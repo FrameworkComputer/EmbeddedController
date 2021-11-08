@@ -20,6 +20,10 @@
 #define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_PG_EC_DSW_PWROK
 
 #define EC_CROS_GPIO_INTERRUPTS                                           \
-	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt)
+	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt) \
+	GPIO_INT(GPIO_USB_C0_TCPC_INT_ODL, GPIO_INT_EDGE_FALLING,	  \
+		 tcpc_alert_event)					  \
+	GPIO_INT(GPIO_USB_C1_TCPC_INT_ODL, GPIO_INT_EDGE_FALLING,	  \
+		 tcpc_alert_event)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
