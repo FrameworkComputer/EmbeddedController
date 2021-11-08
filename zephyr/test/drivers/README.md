@@ -44,7 +44,7 @@ Build the test
 Then run gdb
 
 ```
-(chroot) gdb build/zephyr/test/drivers/build-singleimage/zephyr/zephyr.exe
+(chroot) gdb build/zephyr/test-drivers/build-singleimage/zephyr/zephyr.exe
 # Set breakpoints, run, etc.
 ```
 
