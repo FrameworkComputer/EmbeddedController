@@ -61,6 +61,11 @@ const struct power_signal_info power_signal_list[] = {
 		POWER_SIGNAL_ACTIVE_LOW,
 		"AP_SHUTDOWN_REQ"
 	},
+	[FCL_AP_WATCHDOG] = {
+		GPIO_AP_EC_WATCHDOG_L,
+		POWER_SIGNAL_ACTIVE_LOW,
+		"AP_WDT"
+	},
 	[FCL_PG_S5] = {
 		GPIO_PG_S5_PWR_OD,
 		POWER_SIGNAL_ACTIVE_HIGH,
@@ -229,9 +234,11 @@ void chipset_reset_request_interrupt(enum gpio_signal signal)
 		 * When AP_SHUTDOWN_REQ_L is asserted, we have to check if
 		 * there is a AP_EC_WARM_RST_REQ interrupt prior to this one,
 		 * and that would be a reboot request, rather than a
-		 * shutdown.
+		 * shutdown. In the meantime, the WDT should not be asserted,
+		 * or this is a WDT reset, which will be handled by AP.
 		 */
-		if (!gpio_get_level(signal) && !want_reboot) {
+		if (gpio_get_level(GPIO_AP_EC_WATCHDOG_L) &&
+		    !gpio_get_level(signal) && !want_reboot) {
 			CPRINTS("AP wants shutdown");
 			ap_shutdown = 1;
 		}

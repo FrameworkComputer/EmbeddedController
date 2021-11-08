@@ -9,6 +9,7 @@
 enum power_signal_falconlite {
 	FCL_AP_WARM_RST_REQ,
 	FCL_AP_SHUTDOWN_REQ,
+	FCL_AP_WATCHDOG,
 	FCL_PG_S5,
 	FCL_PG_VDD1_VDD2,
 	FCL_PG_VDD_MEDIA_ML,
