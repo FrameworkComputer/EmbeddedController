@@ -62,6 +62,12 @@
 /* Vendor defined registers */
 #define PS8815_P1_REG_HW_REVISION		0xF0
 
+/* Vendor defined registers */
+#define PS8815_REG_APTX_EQ_AT_10G		0x20
+#define PS8815_REG_RX_EQ_AT_10G			0x22
+#define PS8815_REG_APTX_EQ_AT_5G		0x24
+#define PS8815_REG_RX_EQ_AT_5G			0x26
+
 /*
  * Below register is defined from Parade PS8815 Register Table,
  * See b:189587527 for more detail.
