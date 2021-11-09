@@ -135,7 +135,8 @@ static int sn5s330_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 		*val = data->func_set12_reg;
 		break;
 	default:
-		return -EINVAL;
+		__ASSERT(false, "Unimplemented Register Access Error on 0x%x",
+			 reg);
 	}
 
 	return 0;
@@ -197,7 +198,8 @@ static int sn5s330_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 		break;
 
 	default:
-		return -EINVAL;
+		__ASSERT(false, "Unimplemented Register Access Error on 0x%x",
+			 reg);
 	}
 
 	return 0;
