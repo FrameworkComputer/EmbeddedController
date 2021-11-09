@@ -152,7 +152,7 @@ static int cros_flash_npcx_set_write_enable(const struct device *dev)
 	return  cros_flash_npcx_wait_ready_and_we(dev);
 }
 
-static int cros_flash_npcx_set_status_reg(const struct device *dev, char *data)
+static int cros_flash_npcx_set_status_reg(const struct device *dev, uint8_t *data)
 {
 	uint8_t  opcode = SPI_NOR_CMD_WRSR;
 	int ret = 0;
@@ -243,9 +243,22 @@ static void flash_get_status(const struct device *dev, uint8_t *sr1,
 	crec_flash_lock_mapped_storage(0);
 }
 
-static int flash_write_status_reg(const struct device *dev, uint8_t *data)
+static int flash_set_status(const struct device *dev, uint8_t sr1,
+			    uint8_t sr2)
 {
-	return cros_flash_npcx_set_status_reg(dev, data);
+	int rv;
+	uint8_t regs[2];
+
+	regs[0] = sr1;
+	regs[1] = sr2;
+
+	/* Lock physical flash operations */
+	crec_flash_lock_mapped_storage(1);
+	rv = cros_flash_npcx_set_status_reg(dev, regs);
+	/* Unlock physical flash operations */
+	crec_flash_lock_mapped_storage(0);
+
+	return rv;
 }
 
 static int is_int_flash_protected(const struct device *dev)
@@ -280,8 +293,6 @@ static void flash_uma_lock(const struct device *dev, int enable)
 static int flash_set_status_for_prot(const struct device *dev, int reg1,
 				     int reg2)
 {
-	uint8_t regs[2];
-
 	/*
 	 * Writing SR regs will fail if our UMA lock is enabled. If WP
 	 * is deasserted then remove the lock and allow the write.
@@ -305,15 +316,7 @@ static int flash_set_status_for_prot(const struct device *dev, int reg1,
 	flash_protect_int_flash(dev, !gpio_get_level(GPIO_WP_L));
 #endif /*_CONFIG_WP_ACTIVE_HIGH_*/
 
-	/* Lock physical flash operations */
-	crec_flash_lock_mapped_storage(1);
-
-	regs[0] = reg1;
-	regs[1] = reg2;
-	flash_write_status_reg(dev, regs);
-
-	/* Unlock physical flash operations */
-	crec_flash_lock_mapped_storage(0);
+	flash_set_status(dev, reg1, reg2);
 
 	spi_flash_reg_to_protect(reg1, reg2, &addr_prot_start,
 				 &addr_prot_length);
@@ -392,9 +395,34 @@ static int flash_check_prot_range(unsigned int offset, unsigned int bytes)
 	return EC_SUCCESS;
 }
 
+static void flash_set_quad_enable(const struct device *dev, bool enable)
+{
+	uint8_t sr1, sr2;
+
+	flash_get_status(dev, &sr1, &sr2);
+
+	/* If QE is the same value, return directly. */
+	if (!!(sr2 & SPI_FLASH_SR2_QE) == enable)
+		return;
+
+	if (enable)
+		sr2 |= SPI_FLASH_SR2_QE;
+	else
+		sr2 &= ~SPI_FLASH_SR2_QE;
+	flash_set_status(dev, sr1, sr2);
+}
+
 /* cros ec flash api functions */
 static int cros_flash_npcx_init(const struct device *dev)
 {
+	/* Initialize UMA to unlocked */
+	flash_uma_lock(dev, 0);
+
+	/*
+	 * Disable flash quad enable to avoid /WP pin function is not
+	 * available. */
+	flash_set_quad_enable(dev, false);
+
 	/*
 	 * Protect status registers of internal spi-flash if WP# is active
 	 * during ec initialization.
@@ -404,9 +432,6 @@ static int cros_flash_npcx_init(const struct device *dev)
 #else
 	flash_protect_int_flash(dev, !gpio_get_level(GPIO_WP_L));
 #endif /*CONFIG_WP_ACTIVE_HIGH */
-
-	/* Initialize UMA to unlocked */
-	flash_uma_lock(dev, 0);
 
 	return 0;
 }
