@@ -337,8 +337,12 @@ const char help_str[] =
 			"[toggle|toggle-off|sink|source] [none|usb|dp|dock] "
 			"[dr_swap|pr_swap|vconn_swap]>\n"
 	"      Control USB PD/type-C [deprecated]\n"
-	"  usbpdmuxinfo\n"
-	"      Get USB-C SS mux info\n"
+	"  usbpdmuxinfo [tsv]\n"
+	"      Get USB-C SS mux info.\n"
+	"          tsv: Output as tab separated values. Columns are defined "
+			"as:\n"
+	"               Port, USB enabled, DP enabled, Polarity, HPD IRQ, "
+			"HPD LVL\n"
 	"  usbpdpower [port]\n"
 	"      Get USB PD power information\n"
 	"  version\n"
@@ -6377,6 +6381,14 @@ int cmd_usb_pd_mux_info(int argc, char *argv[])
 	struct ec_params_usb_pd_mux_info p;
 	struct ec_response_usb_pd_mux_info r;
 	int num_ports, rv, i;
+	bool tsv = false;
+
+	if (argc == 2 && (strncmp(argv[1], "tsv", 4) == 0)) {
+		tsv = true;
+	} else if (argc >= 2) {
+		fprintf(stderr, "Usage: %s [tsv]\n", argv[0]);
+		return -1;
+	}
 
 	rv = ec_command(EC_CMD_USB_PD_PORTS, 0, NULL, 0,
 			ec_inbuf, ec_max_insize);
@@ -6392,17 +6404,41 @@ int cmd_usb_pd_mux_info(int argc, char *argv[])
 		if (rv < 0)
 			return rv;
 
-		printf("Port %d: ", i);
-		printf("USB=%d ", !!(r.flags & USB_PD_MUX_USB_ENABLED));
-		printf("DP=%d ", !!(r.flags & USB_PD_MUX_DP_ENABLED));
-		printf("POLARITY=%s ", r.flags & USB_PD_MUX_POLARITY_INVERTED ?
-					"INVERTED" : "NORMAL");
-		printf("HPD_IRQ=%d ", !!(r.flags & USB_PD_MUX_HPD_IRQ));
-		printf("HPD_LVL=%d ", !!(r.flags & USB_PD_MUX_HPD_LVL));
-		printf("SAFE=%d ", !!(r.flags & USB_PD_MUX_SAFE_MODE));
-		printf("TBT=%d ", !!(r.flags & USB_PD_MUX_TBT_COMPAT_ENABLED));
-		printf("USB4=%d ", !!(r.flags & USB_PD_MUX_USB4_ENABLED));
-		printf("\n");
+		if (tsv) {
+			/*
+			 * Machine-readable tab-separated values. This set of
+			 * values is append-only. Columns should not be removed
+			 * or repurposed. Update the documentation above if new
+			 * columns are added.
+			 */
+			printf("%d\t", i);
+			printf("%d\t", !!(r.flags & USB_PD_MUX_USB_ENABLED));
+			printf("%d\t", !!(r.flags & USB_PD_MUX_DP_ENABLED));
+			printf("%s\t",
+				r.flags & USB_PD_MUX_POLARITY_INVERTED ?
+							"INVERTED" : "NORMAL");
+			printf("%d\t", !!(r.flags & USB_PD_MUX_HPD_IRQ));
+			printf("%d\n", !!(r.flags & USB_PD_MUX_HPD_LVL));
+		} else {
+			/* Human-readable mux info. */
+			printf("Port %d: ", i);
+			printf("USB=%d ",
+				!!(r.flags & USB_PD_MUX_USB_ENABLED));
+			printf("DP=%d ", !!(r.flags & USB_PD_MUX_DP_ENABLED));
+			printf("POLARITY=%s",
+				r.flags & USB_PD_MUX_POLARITY_INVERTED ?
+							"INVERTED" : "NORMAL");
+			printf("HPD_IRQ=%d ",
+				!!(r.flags & USB_PD_MUX_HPD_IRQ));
+			printf("HPD_LVL=%d ",
+				!!(r.flags & USB_PD_MUX_HPD_LVL));
+			printf("SAFE=%d ", !!(r.flags & USB_PD_MUX_SAFE_MODE));
+			printf("TBT=%d ",
+				!!(r.flags & USB_PD_MUX_TBT_COMPAT_ENABLED));
+			printf("USB4=%d ",
+				!!(r.flags & USB_PD_MUX_USB4_ENABLED));
+			printf("\n");
+		}
 	}
 
 	return 0;
