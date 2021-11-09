@@ -87,16 +87,7 @@
 &i2c1_0 {
 	label = "I2C_USB_C0_PD";
 	status = "okay";
-	/*
-	 * TODO(b/200280341): PS8805 SPI ROM access
-	 *
-	 * The PS8805 supports 1 MHz during normal operation, but only
-	 * 400 Khz during firmware updates. The I2C passthru commands don't
-	 * currently support changing the I2C frequency or notifying the EC
-	 * that a programming operation is going to start.  Lower the clock
-	 * rate to 400 kHz for all accesses.
-	 */
-	clock-frequency = <I2C_BITRATE_FAST>;
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 };
 
 &i2c_ctrl1 {
@@ -106,8 +97,7 @@
 &i2c2_0 {
 	label = "I2C_USB_C1_PD";
 	status = "okay";
-	/* TODO(b/200280341): PS8805 SPI ROM access */
-	clock-frequency = <I2C_BITRATE_FAST>;
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 };
 
 &i2c_ctrl2 {
