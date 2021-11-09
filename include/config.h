@@ -1071,6 +1071,13 @@
 #undef CONFIG_CHARGER_BQ25710_CMP_REF_1P2
 
 /*
+ * This config option is used to enable the charger's AC over-current
+ * protection. The converter turns off when the OC threshold is
+ * reached. The threshold is selected using the ACOC_VTH bit.
+ */
+#undef CONFIG_CHARGER_BQ25710_EN_ACOC
+
+/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT

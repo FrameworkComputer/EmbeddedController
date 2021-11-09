@@ -39,6 +39,10 @@
 							     CHARGE_OPTION_1, \
 							     _field, _c, (_x))
 
+#define SET_CO2_BY_NAME(_field, _c, _x)	SET_BQ_FIELD_BY_NAME(BQ257X0,	\
+							     CHARGE_OPTION_2, \
+							     _field, _c, (_x))
+
 /*
  * Delay required from taking the bq25710 out of low power mode and having the
  * correct value in register 0x3E for VSYS_MIN voltage. The length of the delay
@@ -283,6 +287,11 @@ static int bq257x0_init_charge_option_2(int chgnum)
 	 * minimum is 20 msec on the bq25720.
 	 */
 	reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_2, PKPWR_TMAX, 0, reg);
+
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_EN_ACOC)) {
+		/* Enable AC input over-current protection. */
+		reg = SET_CO2_BY_NAME(EN_ACOC, ENABLE, reg);
+	}
 
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_2, reg);
 }

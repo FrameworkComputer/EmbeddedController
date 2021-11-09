@@ -270,6 +270,15 @@ config PLATFORM_EC_CHARGER_BQ25710_CMP_REF_1P2
 	  voltage to 1.2 V. The power-on default is 2.3 V. This must be
 	  enabled if the board was designed for 1.2 V instead of 2.3 V.
 
+config PLATFORM_EC_CHARGER_BQ25710_EN_ACOC
+	bool "Enable AC over-current protection"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  This enables the charger's AC over-current protection. The
+	  converter turns off when the OC threshold is reached. The
+	  threshold is selected using the ACOC_VTH bit.
+
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	default 10
