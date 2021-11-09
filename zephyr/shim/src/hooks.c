@@ -13,60 +13,7 @@
 #include "task.h"
 #include "timer.h"
 
-int hook_call_deferred(const struct deferred_data *data, int us)
-{
-	struct k_work_delayable *work = data->work;
-	int rv = 0;
-
-	if (us == -1) {
-		k_work_cancel_delayable(work);
-	} else if (us >= 0) {
-		rv = k_work_reschedule(work, K_USEC(us));
-		if (rv == -EINVAL) {
-			/* Already processing or completed. */
-			return 0;
-		} else if (rv < 0) {
-			cprints(CC_HOOK,
-				"Warning: deferred call not submitted, "
-				"deferred_data=0x%pP, err=%d",
-				data, rv);
-		}
-	} else {
-		return EC_ERROR_PARAM2;
-	}
-
-	return rv;
-}
-
 static struct zephyr_shim_hook_list *hook_registry[HOOK_TYPE_COUNT];
-
-static int zephyr_shim_setup_hooks(const struct device *unused)
-{
-	STRUCT_SECTION_FOREACH(zephyr_shim_hook_list, entry) {
-		struct zephyr_shim_hook_list **loc = &hook_registry[entry->type];
-
-		/* Find the correct place to put the entry in the registry. */
-		while (*loc && (*loc)->priority < entry->priority)
-			loc = &((*loc)->next);
-
-		entry->next = *loc;
-
-		/* Insert the entry. */
-		*loc = entry;
-	}
-
-	return 0;
-}
-
-SYS_INIT(zephyr_shim_setup_hooks, APPLICATION, 1);
-
-void hook_notify(enum hook_type type)
-{
-	struct zephyr_shim_hook_list *p;
-
-	for (p = hook_registry[type]; p; p = p->next)
-		p->routine();
-}
 
 static void check_hook_task_priority(k_tid_t thread)
 {
@@ -119,4 +66,57 @@ void hook_task(void *u)
 		if (next > 0)
 			task_wait_event(next);
 	}
+}
+
+static int zephyr_shim_setup_hooks(const struct device *unused)
+{
+	STRUCT_SECTION_FOREACH(zephyr_shim_hook_list, entry) {
+		struct zephyr_shim_hook_list **loc = &hook_registry[entry->type];
+
+		/* Find the correct place to put the entry in the registry. */
+		while (*loc && (*loc)->priority < entry->priority)
+			loc = &((*loc)->next);
+
+		entry->next = *loc;
+
+		/* Insert the entry. */
+		*loc = entry;
+	}
+
+	return 0;
+}
+
+SYS_INIT(zephyr_shim_setup_hooks, APPLICATION, 1);
+
+void hook_notify(enum hook_type type)
+{
+	struct zephyr_shim_hook_list *p;
+
+	for (p = hook_registry[type]; p; p = p->next)
+		p->routine();
+}
+
+int hook_call_deferred(const struct deferred_data *data, int us)
+{
+	struct k_work_delayable *work = data->work;
+	int rv = 0;
+
+	if (us == -1) {
+		k_work_cancel_delayable(work);
+	} else if (us >= 0) {
+		rv = k_work_reschedule(work, K_USEC(us));
+		if (rv == -EINVAL) {
+			/* Already processing or completed. */
+			return 0;
+		} else if (rv < 0) {
+			cprints(CC_HOOK,
+				"Warning: deferred call not submitted, "
+				"deferred_data=0x%pP, err=%d",
+				data, rv);
+		}
+	} else {
+		return EC_ERROR_PARAM2;
+	}
+
+	return rv;
 }
