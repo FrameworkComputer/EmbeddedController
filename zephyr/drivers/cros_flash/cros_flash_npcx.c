@@ -222,40 +222,25 @@ static int cros_flash_npcx_uma_lock(const struct device *dev, bool enable)
 	return spi_transceive(data->spi_ctrl_dev, &spi_cfg, NULL, NULL);
 }
 
-static int flash_get_status1(const struct device *dev)
+static void flash_get_status(const struct device *dev, uint8_t *sr1,
+			     uint8_t *sr2)
 {
-	uint8_t reg;
-
-	if (all_protected)
-		return saved_sr1;
+	if (all_protected) {
+		*sr1 = saved_sr1;
+		*sr2 = saved_sr2;
+		return;
+	}
 
 	/* Lock physical flash operations */
 	crec_flash_lock_mapped_storage(1);
 
-	cros_flash_npcx_get_status_reg(dev, SPI_NOR_CMD_RDSR, &reg);
+	/* Read status register1 */
+	cros_flash_npcx_get_status_reg(dev, SPI_NOR_CMD_RDSR, sr1);
+	/* Read status register2 */
+	cros_flash_npcx_get_status_reg(dev, SPI_NOR_CMD_RDSR2, sr2);
 
 	/* Unlock physical flash operations */
 	crec_flash_lock_mapped_storage(0);
-
-	return reg;
-}
-
-static int flash_get_status2(const struct device *dev)
-{
-	uint8_t reg;
-
-	if (all_protected)
-		return saved_sr1;
-
-	/* Lock physical flash operations */
-	crec_flash_lock_mapped_storage(1);
-
-	cros_flash_npcx_get_status_reg(dev, SPI_NOR_CMD_RDSR2, &reg);
-
-	/* Unlock physical flash operations */
-	crec_flash_lock_mapped_storage(0);
-
-	return reg;
 }
 
 static int flash_write_status_reg(const struct device *dev, uint8_t *data)
@@ -285,8 +270,7 @@ static void flash_uma_lock(const struct device *dev, int enable)
 		 * Store SR1 / SR2 for later use since we're about to lock
 		 * out all access (including read access) to these regs.
 		 */
-		saved_sr1 = flash_get_status1(dev);
-		saved_sr2 = flash_get_status2(dev);
+		flash_get_status(dev, &saved_sr1, &saved_sr2);
 	}
 
 	cros_flash_npcx_uma_lock(dev, enable);
@@ -355,14 +339,12 @@ static int flash_check_prot_reg(const struct device *dev, unsigned int offset,
 	flash_protect_int_flash(dev, !gpio_get_level(GPIO_WP_L));
 #endif /* CONFIG_WP_ACTIVE_HIGH */
 
-	sr1 = flash_get_status1(dev);
-	sr2 = flash_get_status2(dev);
-
 	/* Invalid value */
 	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	/* Compute current protect range */
+	flash_get_status(dev, &sr1, &sr2);
 	rv = spi_flash_reg_to_protect(sr1, sr2, &start, &len);
 	if (rv)
 		return rv;
@@ -378,14 +360,14 @@ static int flash_write_prot_reg(const struct device *dev, unsigned int offset,
 				unsigned int bytes, int hw_protect)
 {
 	int rv;
-	uint8_t sr1 = flash_get_status1(dev);
-	uint8_t sr2 = flash_get_status2(dev);
+	uint8_t sr1, sr2;
 
 	/* Invalid values */
 	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 
 	/* Compute desired protect range */
+	flash_get_status(dev, &sr1, &sr2);
 	rv = spi_flash_protect_to_reg(offset, bytes, &sr1, &sr2);
 	if (rv)
 		return rv;
@@ -585,8 +567,7 @@ static int cros_flash_npcx_get_jedec_id(const struct device *dev,
 static int cros_flash_npcx_get_status(const struct device *dev,
 		uint8_t *sr1, uint8_t *sr2)
 {
-	*sr1 = flash_get_status1(dev);
-	*sr2 = flash_get_status2(dev);
+	flash_get_status(dev, sr1, sr2);
 
 	return EC_SUCCESS;
 }
