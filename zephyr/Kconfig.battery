@@ -288,6 +288,16 @@ config PLATFORM_EC_CHARGER_BQ25710_ACOC_VTH_1P33
 	  EN_ACOC. Enabling this option selects 133% of
 	  ILIM2. Otherwise, the default is 200% of ILIM2.
 
+config PLATFORM_EC_CHARGER_BQ25710_BATOC_VTH_MINIMUM
+	bool "Select the minimum BATOC threshold"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+          This selects the minimum BATOC protection threshold to be used
+          with EN_BATOC. The minimum threshold is 150% of PROCHOT IDCHG
+          on the bq25710 and 133% of PROCHOT IDCHG_TH2 on the
+          bq25720. The default threshold is 200% on both chips.
+
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	default 10

@@ -298,6 +298,16 @@ static int bq257x0_init_charge_option_2(int chgnum)
 		reg = SET_CO2_BY_NAME(ACOC_VTH, 1P33, reg);
 	}
 
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_BATOC_VTH_MINIMUM)) {
+		/* Set battery over-current threshold to minimum. */
+		if (IS_ENABLED(CONFIG_CHARGER_BQ25720))
+			reg = SET_BQ_FIELD_BY_NAME(BQ25720, CHARGE_OPTION_2,
+						   BATOC_VTH, 1P33, reg);
+		else
+			reg = SET_BQ_FIELD_BY_NAME(BQ25710, CHARGE_OPTION_2,
+						   BATOC_VTH, 1P50, reg);
+	}
+
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_2, reg);
 }
 

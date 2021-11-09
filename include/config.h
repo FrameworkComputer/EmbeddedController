@@ -1085,6 +1085,14 @@
 #undef CONFIG_CHARGER_BQ25710_ACOC_VTH_1P33
 
 /*
+ * This config option selects the minimum BATOC protection threshold to
+ * be used with EN_BATOC. The minimum threshold is 150% of PROCHOT IDCHG
+ * on the bq25710 and 133% of PROCHOT IDCHG_TH2 on the bq25720. The
+ * default threshold is 200% on both chips.
+ */
+#undef CONFIG_CHARGER_BQ25710_BATOC_VTH_MINIMUM
+
+/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT
