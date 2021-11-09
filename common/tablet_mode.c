@@ -179,6 +179,8 @@ void gmr_tablet_switch_disable(void)
 
 static int command_settabletmode(int argc, char **argv)
 {
+	static uint32_t tablet_mode_store;
+
 	if (argc == 1) {
 		print_tablet_mode();
 		return EC_SUCCESS;
@@ -187,6 +189,9 @@ static int command_settabletmode(int argc, char **argv)
 	if (argc != 2)
 		return EC_ERROR_PARAM_COUNT;
 
+	if (tablet_mode_forced == false)
+		tablet_mode_store = tablet_mode;
+
 	if (argv[1][0] == 'o' && argv[1][1] == 'n') {
 		tablet_mode = TABLET_TRIGGER_LID;
 		tablet_mode_forced = true;
@@ -194,6 +199,7 @@ static int command_settabletmode(int argc, char **argv)
 		tablet_mode = 0;
 		tablet_mode_forced = true;
 	} else if (argv[1][0] == 'r') {
+		tablet_mode = tablet_mode_store;
 		tablet_mode_forced = false;
 	} else {
 		return EC_ERROR_PARAM1;
