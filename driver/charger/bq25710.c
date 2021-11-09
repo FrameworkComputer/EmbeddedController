@@ -173,15 +173,8 @@ static int bq25710_set_low_power_mode(int chgnum, int enable)
 	return EC_SUCCESS;
 }
 
-static int bq25710_set_psys_sensing(int chgnum, bool enable)
+static int co1_set_psys_sensing(int reg, bool enable)
 {
-	int rv;
-	int reg;
-
-	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_1, &reg);
-	if (rv)
-		return rv;
-
 	if (IS_ENABLED(CONFIG_CHARGER_BQ25720)) {
 		if (enable)
 			reg = SET_BQ_FIELD_BY_NAME(BQ25720, CHARGE_OPTION_1,
@@ -194,11 +187,7 @@ static int bq25710_set_psys_sensing(int chgnum, bool enable)
 				   reg);
 	}
 
-	rv = raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_1, reg);
-	if (rv)
-		return rv;
-
-	return EC_SUCCESS;
+	return reg;
 }
 
 static int bq25710_adc_start(int chgnum, int adc_en_mask)
@@ -249,6 +238,24 @@ static int bq25710_adc_start(int chgnum, int adc_en_mask)
 }
 #endif
 
+static int bq257x0_init_charge_option_1(int chgnum)
+{
+	int rv;
+	int reg;
+
+	if (!IS_ENABLED(CONFIG_CHARGER_BQ25710_PSYS_SENSING))
+		return EC_SUCCESS;
+
+	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_1, &reg);
+	if (rv)
+		return rv;
+
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_PSYS_SENSING))
+		reg = co1_set_psys_sensing(reg, true);
+
+	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_1, reg);
+}
+
 static void bq25710_init(int chgnum)
 {
 	int reg;
@@ -284,8 +291,7 @@ static void bq25710_init(int chgnum)
 		bq25710_set_low_power_mode(chgnum, 1);
 	}
 
-	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_PSYS_SENSING))
-		bq25710_set_psys_sensing(chgnum, true);
+	bq257x0_init_charge_option_1(chgnum);
 
 	if (!raw_read16(chgnum, BQ25710_REG_PROCHOT_OPTION_1, &reg)) {
 		/* Disable VDPM prochot profile at initialization */
