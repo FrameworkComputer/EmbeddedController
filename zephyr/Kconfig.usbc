@@ -1093,6 +1093,7 @@ config PLATFORM_EC_USB_PD_TCPM_NCT38XX
 config PLATFORM_EC_USB_PD_TCPM_PS8751
 	bool "Parade PS8751 USB-C Gen 2 Type-C Port Controller"
 	select PLATFORM_EC_USB_PD_TCPM_MUX
+	imply PLATFORM_EC_HOSTCMD_I2C_CONTROL
 	help
 	  The Parade Technologies PS8751 is a USB Type-C Port Controller (TCPC)
 	  for USB Type-C Host and DisplayPort applications. It supports
@@ -1101,6 +1102,7 @@ config PLATFORM_EC_USB_PD_TCPM_PS8751
 config PLATFORM_EC_USB_PD_TCPM_PS8805
 	bool "Parade PS8805 USB-C Gen 2 Type-C Port Controller"
 	select PLATFORM_EC_USB_PD_TCPM_MUX
+	imply PLATFORM_EC_HOSTCMD_I2C_CONTROL
 	help
 	  The Parade Technologies PS8805 is an active retiming/redriving
 	  (respectively for USB 3.1 Gen 2 / DisplayPort 1.4a HBR3) integrated
@@ -1121,6 +1123,7 @@ endif # PLATFORM_EC_USB_PD_TCPM_PS8805
 config PLATFORM_EC_USB_PD_TCPM_PS8815
 	bool "Parade PS8815 USB-C Gen 2 Type-C Port Controller"
 	select PLATFORM_EC_USB_PD_TCPM_MUX
+	imply PLATFORM_EC_HOSTCMD_I2C_CONTROL
 	help
 	  The Parade Technologies PS8815 is an active retiming/redriving
 	  (respectively for USB 3.1 Gen 2 / DisplayPort 1.4a HBR3) integrated
