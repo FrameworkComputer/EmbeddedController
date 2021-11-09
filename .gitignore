@@ -23,3 +23,7 @@ cscope.*
 __pycache__
 *.egg-info
 .hypothesis/
+
+# Clangd language server
+.cache/clangd/index/*
+compile_commands.json
