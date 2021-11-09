@@ -68,26 +68,6 @@ config TASK_CHIPSET_STACK_SIZE
 
 endif # HAS_TASK_CHIPSET
 
-config HAS_TASK_HOOKS
-	bool "Hooks task"
-	default y
-	help
-	  This required task runs periodic routines connected to the HOOK_TICK
-	  and HOOK_SECOND events. This task is responsible for running
-	  deferred routines.
-
-if HAS_TASK_HOOKS
-
-config TASK_HOOKS_STACK_SIZE
-	int "Stack size"
-	default 1024
-	help
-	  The stack size of the hooks task.
-
-	  See b/176180736 for checking these stack sizes.
-
-endif # HAS_TASK_HOOKS
-
 config HAS_TASK_HOSTCMD
 	bool
 	depends on PLATFORM_EC_HOSTCMD

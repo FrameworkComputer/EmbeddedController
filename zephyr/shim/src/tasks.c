@@ -374,14 +374,9 @@ inline bool in_interrupt_context(void)
 inline bool in_deferred_context(void)
 {
 	/*
-	 * Deferred calls run in the sysworkq, but in ECOS usage we also
-	 * consider HOOKS calls such as HOOK_TICK and HOOK_SECOND as well.
+	 * Deferred calls run in the sysworkq.
 	 */
-	return (task_get_current() == TASK_ID_SYSWORKQ)
-#if HAS_TASK_HOOKS
-		|| (task_get_current() == TASK_ID_HOOKS)
-#endif
-		;
+	return (task_get_current() == TASK_ID_SYSWORKQ);
 }
 
 #if IS_ENABLED(CONFIG_KERNEL_SHELL) && IS_ENABLED(CONFIG_THREAD_MONITOR)

@@ -31,9 +31,6 @@ typedef uint8_t task_id_t;
  */
 #ifdef CONFIG_SHIMMED_TASKS
 #define CROS_EC_TASK_LIST                                                 \
-	COND_CODE_1(HAS_TASK_HOOKS,                                       \
-		     (CROS_EC_TASK(HOOKS, hook_task, 0,                   \
-				   CONFIG_TASK_HOOKS_STACK_SIZE)), ())    \
 	COND_CODE_1(HAS_TASK_CHG_RAMP,                                    \
 		     (CROS_EC_TASK(CHG_RAMP, chg_ramp_task, 0,            \
 				   CONFIG_TASK_CHG_RAMP_STACK_SIZE)), ()) \

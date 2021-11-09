@@ -30,9 +30,6 @@ config TASK_CHARGER_STACK_SIZE
 config TASK_CHIPSET_STACK_SIZE
 	default 820
 
-config TASK_HOOKS_STACK_SIZE
-	default 672
-
 config TASK_HOSTCMD_STACK_SIZE
 	default 1024
 
