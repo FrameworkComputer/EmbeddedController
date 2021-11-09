@@ -6,6 +6,8 @@
 #define DT_DRV_COMPAT zephyr_syv682x_emul
 
 #include <device.h>
+#include <devicetree/gpio.h>
+#include <drivers/gpio/gpio_emul.h>
 #include <emul.h>
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
@@ -25,6 +27,8 @@ struct syv682x_emul_data {
 	struct i2c_emul emul;
 	/** Smart battery device being emulated */
 	const struct device *i2c;
+	const struct device *frs_en_gpio_port;
+	gpio_pin_t frs_en_gpio_pin;
 	/** Configuration information */
 	const struct syv682x_emul_cfg *cfg;
 	/** Current state of all emulated SYV682x registers */
@@ -62,9 +66,16 @@ int syv682x_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
 
 void syv682x_emul_set_status(struct i2c_emul *emul, uint8_t val)
 {
-	struct syv682x_emul_data *data;
+	struct syv682x_emul_data *data =
+		CONTAINER_OF(emul, struct syv682x_emul_data, emul);
+	int frs_en_gpio = gpio_emul_output_get(data->frs_en_gpio_port,
+			data->frs_en_gpio_pin);
 
-	data = CONTAINER_OF(emul, struct syv682x_emul_data, emul);
+	/* Only assert FRS status if FRS is enabled. */
+	__ASSERT_NO_MSG(frs_en_gpio >= 0);
+	if (!frs_en_gpio)
+		val &= ~SYV682X_STATUS_FRS;
+
 	data->status_cond = val;
 	data->reg[SYV682X_STATUS_REG] |= val;
 
@@ -79,7 +90,7 @@ void syv682x_emul_set_status(struct i2c_emul *emul, uint8_t val)
 	 * the power path off when either of these conditions occurs, and they
 	 * should quickly dissipate. If they somehow stay set, the device should
 	 * interrupt continuously. Relatedly, the emulator should only generate
-	 * an FRS alert if the EC is asserting the FRS GPIO.
+	 * an interrupt based on FRS status if the FRS enable pin was asserted.
 	 */
 }
 
@@ -257,14 +268,19 @@ static int syv682x_emul_init(const struct emul *emul,
 	return ret;
 }
 
-#define SYV682X_EMUL(n)                                                       \
-	static struct syv682x_emul_data syv682x_emul_data_##n = {};           \
-	static const struct syv682x_emul_cfg syv682x_emul_cfg_##n = {         \
-		.i2c_label = DT_INST_BUS_LABEL(n),                            \
-		.data = &syv682x_emul_data_##n,                               \
-		.addr = DT_INST_REG_ADDR(n),                                  \
-	};                                                                    \
-	EMUL_DEFINE(syv682x_emul_init, DT_DRV_INST(n), &syv682x_emul_cfg_##n, \
+#define SYV682X_EMUL(n)                                                        \
+	static struct syv682x_emul_data syv682x_emul_data_##n = {              \
+		.frs_en_gpio_port = DEVICE_DT_GET(DT_GPIO_CTLR(                \
+					DT_INST_PROP(n, frs_en_gpio), gpios)), \
+		.frs_en_gpio_pin = DT_GPIO_PIN(                                \
+				DT_INST_PROP(n, frs_en_gpio), gpios),          \
+	};                                                                     \
+	static const struct syv682x_emul_cfg syv682x_emul_cfg_##n = {          \
+		.i2c_label = DT_INST_BUS_LABEL(n),                             \
+		.data = &syv682x_emul_data_##n,                                \
+		.addr = DT_INST_REG_ADDR(n),                                   \
+	};                                                                     \
+	EMUL_DEFINE(syv682x_emul_init, DT_DRV_INST(n), &syv682x_emul_cfg_##n,  \
 		    &syv682x_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(SYV682X_EMUL)

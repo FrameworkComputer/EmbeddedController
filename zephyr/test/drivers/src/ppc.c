@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include <device.h>
+#include <devicetree/gpio.h>
+#include <drivers/gpio/gpio_emul.h>
 #include <zephyr.h>
 #include <ztest.h>
 #include <ztest_assert.h>
@@ -15,6 +18,8 @@
 #include "usbc_ppc.h"
 
 #define SYV682X_ORD DT_DEP_ORD(DT_NODELABEL(syv682x_emul))
+#define GPIO_USB_C1_FRS_EN_PATH DT_PATH(named_gpios, usb_c1_frs_en)
+#define GPIO_USB_C1_FRS_EN_PORT DT_GPIO_PIN(GPIO_USB_C1_FRS_EN_PATH, gpios)
 
 static const int syv682x_port = 1;
 
@@ -200,6 +205,8 @@ static void test_ppc_syv682x_interrupt(void)
 static void test_ppc_syv682x_frs(void)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+	const struct device *gpio_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_USB_C1_FRS_EN_PATH, gpios));
 	uint8_t reg;
 
 	/*
@@ -211,6 +218,8 @@ static void test_ppc_syv682x_frs(void)
 			"PPC is sourcing VBUS after sink enabled");
 	ppc_set_polarity(syv682x_port, 0 /* CC1 */);
 	ppc_set_frs_enable(syv682x_port, true);
+	zassert_equal(gpio_emul_output_get(gpio_dev, GPIO_USB_C1_FRS_EN_PORT),
+			1, "FRS enabled, but FRS GPIO not asserted");
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
 			"Reading CONTROL_4 failed");
 	zassert_equal(reg &
@@ -219,6 +228,8 @@ static void test_ppc_syv682x_frs(void)
 			"FRS enabled with CC1 polarity, but CONTROL_4 is 0x%x",
 			reg);
 	ppc_set_frs_enable(syv682x_port, false);
+	zassert_equal(gpio_emul_output_get(gpio_dev, GPIO_USB_C1_FRS_EN_PORT),
+			0, "FRS disabled, but FRS GPIO not deasserted");
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
 			"Reading CONTROL_4 failed");
 	zassert_equal(reg &

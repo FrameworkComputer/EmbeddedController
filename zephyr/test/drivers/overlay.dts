@@ -59,6 +59,11 @@
 			enum-name = "GPIO_USB_C1_RT_RST_ODL";
 			label = "USB_C1_RT_RST_ODL";
 		};
+		gpio_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&gpio0 8 (GPIO_OUT_LOW)>;
+			enum-name = "GPIO_USB_C1_FRS_EN";
+			label = "USB_C1_FRS_EN";
+		};
 	};
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
@@ -473,6 +478,7 @@
 			compatible = "zephyr,syv682x-emul";
 			reg = <0x41>;
 			label = "SYV682X_EMUL";
+			frs_en_gpio = <&gpio_usb_c1_frs_en>;
 		};
 
 		usb_c1_bb_retimer_emul: bbretimer@42 {
@@ -512,7 +518,7 @@
 };
 
 &gpio0 {
-	ngpios = <8>;
+	ngpios = <9>;
 };
 
 &i2c0 {
