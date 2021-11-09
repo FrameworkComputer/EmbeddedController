@@ -293,6 +293,11 @@ static int bq257x0_init_charge_option_2(int chgnum)
 		reg = SET_CO2_BY_NAME(EN_ACOC, ENABLE, reg);
 	}
 
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_ACOC_VTH_1P33)) {
+		/* Set ACOC threshold to 133% of ILIM2 */
+		reg = SET_CO2_BY_NAME(ACOC_VTH, 1P33, reg);
+	}
+
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_2, reg);
 }
 

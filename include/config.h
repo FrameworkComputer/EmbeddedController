@@ -1078,6 +1078,13 @@
 #undef CONFIG_CHARGER_BQ25710_EN_ACOC
 
 /*
+ * This config option selects which ACOC protection threshold is used
+ * with EN_ACOC. Enabling this option selects 133% of ILIM2. Otherwise,
+ * the default is 200% of ILIM2.
+ */
+#undef CONFIG_CHARGER_BQ25710_ACOC_VTH_1P33
+
+/*
  * Board specific maximum input current limit, in mA.
  */
 #undef CONFIG_CHARGER_MAX_INPUT_CURRENT

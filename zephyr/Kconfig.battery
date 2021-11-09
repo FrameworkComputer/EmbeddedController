@@ -279,6 +279,15 @@ config PLATFORM_EC_CHARGER_BQ25710_EN_ACOC
 	  converter turns off when the OC threshold is reached. The
 	  threshold is selected using the ACOC_VTH bit.
 
+config PLATFORM_EC_CHARGER_BQ25710_ACOC_VTH_1P33
+	bool "Set ACOC threshold to 133% of ILIM2"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+          This selects which ACOC protection threshold is used with
+	  EN_ACOC. Enabling this option selects 133% of
+	  ILIM2. Otherwise, the default is 200% of ILIM2.
+
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	default 10
