@@ -137,11 +137,6 @@ it8xxx2_evb:
     PROJECT: "it8xxx2_evb"
   <<: *build_template
 
-kohaku:
-  variables:
-    PROJECT: "kohaku"
-  <<: *build_template
-
 lazor:
   variables:
     PROJECT: "lazor"

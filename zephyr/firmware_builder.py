@@ -32,7 +32,6 @@ def build(opts):
         f.write(json_format.MessageToJson(metrics))
 
     targets = [
-        'projects/kohaku',
         'projects/posix-ec',
         'projects/volteer/volteer',
     ]
