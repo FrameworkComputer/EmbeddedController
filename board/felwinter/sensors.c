@@ -45,11 +45,10 @@ K_MUTEX_DEFINE(g_base_accel_mutex);
 static struct stprivate_data g_lis2dw12_data;
 static struct lsm6dso_data lsm6dso_data;
 
-/* TODO(b/184779333): calibrate the orientation matrix on later board stage */
 static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
 	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
+	{ 0, FLOAT_TO_FP(1), 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
 /* TODO(b/184779743): verify orientation matrix */
