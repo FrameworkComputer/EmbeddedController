@@ -8,6 +8,8 @@
 #include <ztest.h>
 #include <drivers/gpio.h>
 #include <drivers/gpio/gpio_emul.h>
+#include <shell/shell.h>
+#include <shell/shell_uart.h>
 
 #include "common.h"
 #include "ec_commands.h"
@@ -632,6 +634,77 @@ static void test_usb_mux_hc_mux_info(void)
 		      response.flags, exp_mode);
 }
 
+/** Test typec console command */
+static void test_usb_mux_typec_command(void)
+{
+	mux_state_t exp_mode;
+
+	/* Test error on command with no argument */
+	zassert_equal(EC_ERROR_PARAM_COUNT,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"typec"), NULL);
+
+	/*
+	 * Test success on passing "debug" as first argument. This will enable
+	 * debug prints, but it is not possible to test that in unit test
+	 * without accessing cprints output.
+	 */
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"typec debug"), NULL);
+
+	/* Test error on port argument that is not a number */
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"typec test1"), NULL);
+
+	/* Test error on invalid port number */
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"typec 5"), NULL);
+
+	/*
+	 * Test success on correct port number. Command should print mux state
+	 * on console, but it is not possible to check that in unit test.
+	 */
+	setup_ztest_proxy_get(0, 2, EC_SUCCESS, USB_PD_MUX_TBT_COMPAT_ENABLED);
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"typec 1"), NULL);
+
+	/* Test setting none mode */
+	exp_mode = USB_PD_MUX_NONE;
+	setup_ztest_proxy_set(0, 2, EC_SUCCESS, exp_mode);
+	/* Mux will enter low power mode */
+	setup_ztest_proxy_enter_lpm(0, 2, EC_SUCCESS);
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"typec 1 none"), NULL);
+
+	/* Test setting USB mode */
+	exp_mode = USB_PD_MUX_USB_ENABLED;
+	setup_ztest_proxy_set(0, 2, EC_SUCCESS, exp_mode);
+	/* Mux will exit low power mode */
+	setup_ztest_proxy_init(0, 2, EC_SUCCESS);
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"typec 1 usb"), NULL);
+
+	/* Test setting DP mode */
+	exp_mode = USB_PD_MUX_DP_ENABLED;
+	setup_ztest_proxy_set(0, 2, EC_SUCCESS, exp_mode);
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"typec 1 dp"), NULL);
+
+	/* Test setting dock mode */
+	exp_mode = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED;
+	setup_ztest_proxy_set(0, 2, EC_SUCCESS, exp_mode);
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"typec 1 dock"), NULL);
+}
+
 /** Setup proxy chain and uninit usb muxes */
 void setup_uninit_mux(void)
 {
@@ -681,6 +754,9 @@ void test_suite_usb_mux(void)
 				setup_init_mux, resotre_usb_mux_chain),
 			 ztest_unit_test_setup_teardown(
 				test_usb_mux_hc_mux_info,
+				setup_init_mux, resotre_usb_mux_chain),
+			 ztest_unit_test_setup_teardown(
+				test_usb_mux_typec_command,
 				setup_init_mux, resotre_usb_mux_chain));
 	ztest_run_test_suite(usb_mux);
 }
