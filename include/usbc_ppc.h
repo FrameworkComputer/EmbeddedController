@@ -158,6 +158,13 @@ struct ppc_drv {
 	 * @return EC_SUCCESS on success, error otherwise.
 	 */
 	int (*enter_low_power_mode)(int port);
+
+	/**
+	 * Interrupt handler for GPIO pin.
+	 *
+	 * @port Port The Type-C port which triggered the interrupt.
+	 */
+	void (*interrupt)(int port);
 };
 
 struct ppc_config_t {

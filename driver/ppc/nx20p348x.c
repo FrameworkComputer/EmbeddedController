@@ -563,4 +563,5 @@ const struct ppc_drv nx20p348x_drv = {
 #ifdef CONFIG_USBC_PPC_VCONN
 	.set_vconn = &nx20p348x_set_vconn,
 #endif /* defined(CONFIG_USBC_PPC_VCONN) */
+	.interrupt = &nx20p348x_interrupt,
 };

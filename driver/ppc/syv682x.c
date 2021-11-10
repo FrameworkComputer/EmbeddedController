@@ -834,4 +834,5 @@ const struct ppc_drv syv682x_drv = {
 #ifdef CONFIG_USBC_PPC_VCONN
 	.set_vconn = &syv682x_set_vconn,
 #endif
+	.interrupt = &syv682x_interrupt,
 };

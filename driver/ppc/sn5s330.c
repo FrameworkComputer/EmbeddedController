@@ -760,4 +760,5 @@ const struct ppc_drv sn5s330_drv = {
 #ifdef CONFIG_USBC_PPC_VCONN
 	.set_vconn = &sn5s330_set_vconn,
 #endif
+	.interrupt = &sn5s330_interrupt,
 };

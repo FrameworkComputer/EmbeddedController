@@ -159,4 +159,5 @@ const struct ppc_drv aoz1380_drv = {
 	.vbus_source_enable = &aoz1380_vbus_source_enable,
 	.set_vbus_source_current_limit =
 		&aoz1380_set_vbus_source_current_limit,
+	.interrupt = &aoz1380_interrupt,
 };
