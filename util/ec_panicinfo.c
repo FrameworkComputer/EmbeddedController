@@ -26,6 +26,26 @@ static void print_panic_reg(int regnum, const uint32_t *regs, int index)
 	printf((regnum & 3) == 3 ? "\n" : " ");
 }
 
+static void panic_show_extra_cm(const struct panic_data *pdata)
+{
+	enum {
+		CPU_NVIC_CFSR_BFARVALID = BIT(15),
+		CPU_NVIC_CFSR_MFARVALID = BIT(7),
+	};
+
+	printf("\n");
+	if (pdata->cm.cfsr & CPU_NVIC_CFSR_BFARVALID)
+		printf("bfar=%08x, ", pdata->cm.bfar);
+	if (pdata->cm.cfsr & CPU_NVIC_CFSR_MFARVALID)
+		printf("mfar=%08x, ", pdata->cm.mfar);
+	printf("cfsr=%08x, ", pdata->cm.cfsr);
+	printf("shcsr=%08x, ", pdata->cm.shcsr);
+	printf("hfsr=%08x, ", pdata->cm.hfsr);
+	printf("dfsr=%08x, ", pdata->cm.dfsr);
+	printf("ipsr=%08x", pdata->cm.regs[CORTEX_PANIC_REGISTER_IPSR]);
+	printf("\n");
+}
+
 static int parse_panic_info_cm(const struct panic_data *pdata)
 {
 	const uint32_t *lregs = pdata->cm.regs;
@@ -67,6 +87,8 @@ static int parse_panic_info_cm(const struct panic_data *pdata)
 	print_panic_reg(13, lregs, origin == ORIG_HANDLER ? 2 : 0);
 	print_panic_reg(14, sregs, 5);
 	print_panic_reg(15, sregs, 6);
+
+	panic_show_extra_cm(pdata);
 
 	return 0;
 }
