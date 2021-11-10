@@ -210,7 +210,7 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 	int rst_signal;
 
 	if (me->usb_port == USBC_PORT_C1)
-		rst_signal = GPIO_USB_C1_RT_RST_R_ODL;
+		rst_signal = IOEX_USB_C1_RT_RST_ODL;
 	else if (me->usb_port == USBC_PORT_C2)
 		rst_signal = IOEX_USB_C2_RT_RST_ODL;
 	else
