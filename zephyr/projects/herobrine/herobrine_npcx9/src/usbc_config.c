@@ -83,14 +83,11 @@ void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
 	case GPIO_USB_C0_SWCTL_INT_ODL:
-		if (board_has_syv_ppc())
-			syv682x_interrupt(0);
-		else
-			sn5s330_interrupt(0);
+		ppc_chips[0].drv->interrupt(0);
 		break;
 
 	case GPIO_USB_C1_SWCTL_INT_ODL:
-		sn5s330_interrupt(1);
+		ppc_chips[1].drv->interrupt(1);
 		break;
 
 	default:
