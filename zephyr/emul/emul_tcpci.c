@@ -436,6 +436,39 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 }
 
 /** Check description in emul_tcpci.h */
+int tcpci_emul_disconnect_partner(const struct emul *emul)
+{
+	struct tcpci_emul_data *data = emul->data;
+	uint16_t val;
+	uint16_t term;
+	int rc;
+
+	data->partner = NULL;
+	/* Set both CC lines to open to indicate disconnect. */
+	rc = tcpci_emul_get_reg(emul, TCPC_REG_CC_STATUS, &val);
+	if (rc != 0)
+		return rc;
+
+	term = TCPC_REG_CC_STATUS_TERM(val);
+
+	rc = tcpci_emul_set_reg(emul, TCPC_REG_CC_STATUS,
+				TCPC_REG_CC_STATUS_SET(term, TYPEC_CC_VOLT_OPEN,
+						       TYPEC_CC_VOLT_OPEN));
+	if (rc != 0)
+		return rc;
+
+	data->reg[TCPC_REG_ALERT] |= TCPC_REG_ALERT_CC_STATUS;
+	rc = tcpci_emul_alert_changed(emul);
+	if (rc != 0)
+		return rc;
+	/* TODO: Wait until DisableSourceVbus (TCPC_REG_COMMAND_SRC_CTRL_LOW?),
+	 * and then set VBUS present = 0 and vSafe0V = 1 after appropriate
+	 * delays.
+	 */
+	return 0;
+}
+
+/** Check description in emul_tcpci.h */
 void tcpci_emul_partner_msg_status(const struct emul *emul,
 				   enum tcpci_emul_tx_status status)
 {

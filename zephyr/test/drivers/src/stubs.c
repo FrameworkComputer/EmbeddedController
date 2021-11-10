@@ -23,6 +23,13 @@
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
+#include "charge_state_v2.h"
+
+#include <logging/log.h>
+LOG_MODULE_REGISTER(stubs);
+
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 /* All of these definitions are just to get the test to link. None of these
  * functions are useful or behave as they should. Please remove them once the
@@ -105,6 +112,56 @@ const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_LGC011;
 
 int board_set_active_charge_port(int port)
 {
+	int is_real_port = (port >= 0 &&
+			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int i;
+
+	if (!is_real_port && port != CHARGE_PORT_NONE)
+		return EC_ERROR_INVAL;
+
+	if (port == CHARGE_PORT_NONE) {
+		CPRINTS("Disabling all charging port");
+
+		/* Disable all ports. */
+		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+			/*
+			 * Do not return early if one fails otherwise we can
+			 * get into a boot loop assertion failure.
+			 */
+			if (board_vbus_sink_enable(i, 0))
+				CPRINTS("Disabling p%d sink path failed.", i);
+		}
+
+		return EC_SUCCESS;
+	}
+
+	/* Check if the port is sourcing VBUS. */
+	if (board_is_sourcing_vbus(port)) {
+		CPRINTS("Skip enable p%d", port);
+		return EC_ERROR_INVAL;
+	}
+
+
+	CPRINTS("New charge port: p%d", port);
+
+	/*
+	 * Turn off the other ports' sink path FETs, before enabling the
+	 * requested charge port.
+	 */
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		if (i == port)
+			continue;
+
+		if (board_vbus_sink_enable(i, 0))
+			CPRINTS("p%d: sink path disable failed.", i);
+	}
+
+	/* Enable requested charge port. */
+	if (board_vbus_sink_enable(port, 1)) {
+		CPRINTS("p%d: sink path enable failed.", port);
+		return EC_ERROR_UNKNOWN;
+	}
+
 	return EC_SUCCESS;
 }
 
@@ -116,6 +173,8 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {
+	charge_set_input_current_limit(
+	MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 struct tcpc_config_t tcpc_config[] = {
@@ -156,9 +215,16 @@ void board_set_ps8xxx_product_id(uint16_t product_id)
 	ps8xxx_product_id = product_id;
 }
 
+int board_vbus_sink_enable(int port, int enable)
+{
+	/* Both ports are controlled by PPC SN5S330 */
+	return ppc_vbus_sink_enable(port, enable);
+}
+
 int board_is_sourcing_vbus(int port)
 {
-	return 0;
+	/* Both ports are controlled by PPC SN5S330 */
+	return ppc_is_sourcing_vbus(port);
 }
 
 struct usb_mux usbc0_virtual_usb_mux = {
