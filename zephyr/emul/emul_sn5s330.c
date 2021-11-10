@@ -120,117 +120,91 @@ static int sn5s330_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 {
 	struct sn5s330_emul_data *data = SN5S330_DATA_FROM_I2C_EMUL(emul);
 
+	__ASSERT(bytes == 0, "bytes 0x%x != 0x0 on reg 0x%x", bytes, reg);
+
 	switch (reg) {
 	case SN5S330_FUNC_SET1:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set1_reg;
 		break;
 	case SN5S330_FUNC_SET2:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set2_reg;
 		break;
 	case SN5S330_FUNC_SET3:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set3_reg;
 		break;
 	case SN5S330_FUNC_SET4:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set4_reg;
 		break;
 	case SN5S330_FUNC_SET5:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set5_reg;
 		break;
 	case SN5S330_FUNC_SET6:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set6_reg;
 		break;
 	case SN5S330_FUNC_SET7:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set7_reg;
 		break;
 	case SN5S330_FUNC_SET8:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set8_reg;
 		break;
 	case SN5S330_FUNC_SET9:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set9_reg;
 		break;
 	case SN5S330_FUNC_SET10:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set10_reg;
 		break;
 	case SN5S330_FUNC_SET11:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set11_reg;
 		break;
 	case SN5S330_FUNC_SET12:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->func_set12_reg;
 		break;
 	case SN5S330_INT_STATUS_REG1:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_status_reg1;
 		break;
 	case SN5S330_INT_STATUS_REG2:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_status_reg2;
 		break;
 	case SN5S330_INT_STATUS_REG3:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_status_reg3;
 		break;
 	case SN5S330_INT_STATUS_REG4:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_status_reg4;
 		break;
 	case SN5S330_INT_MASK_RISE_REG1:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_mask_rise_reg1;
 		break;
 	case SN5S330_INT_MASK_RISE_REG2:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_mask_rise_reg2;
 		break;
 	case SN5S330_INT_MASK_RISE_REG3:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_mask_rise_reg3;
 		break;
 	case SN5S330_INT_MASK_FALL_REG1:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_mask_fall_reg1;
 		break;
 	case SN5S330_INT_MASK_FALL_REG2:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_mask_fall_reg2;
 		break;
 	case SN5S330_INT_MASK_FALL_REG3:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_mask_fall_reg3;
 		break;
 	case SN5S330_INT_TRIP_RISE_REG1:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_trip_rise_reg1;
 		break;
 	case SN5S330_INT_TRIP_RISE_REG2:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_trip_rise_reg2;
 		break;
 	case SN5S330_INT_TRIP_RISE_REG3:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_trip_rise_reg3;
 		break;
 	case SN5S330_INT_TRIP_FALL_REG1:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_trip_fall_reg1;
 		break;
 	case SN5S330_INT_TRIP_FALL_REG2:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_trip_fall_reg2;
 		break;
 	case SN5S330_INT_TRIP_FALL_REG3:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int_trip_fall_reg3;
 		break;
 	default:
@@ -246,53 +220,43 @@ static int sn5s330_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 {
 	struct sn5s330_emul_data *data = SN5S330_DATA_FROM_I2C_EMUL(emul);
 
+	__ASSERT(bytes == 1, "bytes 0x%x != 0x1 on reg 0x%x", bytes, reg);
+
 	switch (reg) {
 	case SN5S330_FUNC_SET1:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set1_reg = val;
 		break;
 	case SN5S330_FUNC_SET2:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set2_reg = val;
 		break;
 	case SN5S330_FUNC_SET3:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set3_reg = val;
 		break;
 	case SN5S330_FUNC_SET4:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set4_reg = val;
 		break;
 	case SN5S330_FUNC_SET5:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set5_reg = val;
 		break;
 	case SN5S330_FUNC_SET6:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set6_reg = val;
 		break;
 	case SN5S330_FUNC_SET7:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set7_reg = val;
 		break;
 	case SN5S330_FUNC_SET8:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set8_reg = val;
 		break;
 	case SN5S330_FUNC_SET9:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set9_reg = val;
 		break;
 	case SN5S330_FUNC_SET10:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set10_reg = val;
 		break;
 	case SN5S330_FUNC_SET11:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set11_reg = val;
 		break;
 	case SN5S330_FUNC_SET12:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->func_set12_reg = val;
 		break;
 	case SN5S330_INT_STATUS_REG1:
@@ -306,55 +270,42 @@ static int sn5s330_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 			 reg);
 		/* fallthrough for checkpath */
 	case SN5S330_INT_STATUS_REG4:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_status_reg4 = val;
 		break;
 	case SN5S330_INT_MASK_RISE_REG1:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_mask_rise_reg1 = val;
 		break;
 	case SN5S330_INT_MASK_RISE_REG2:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_mask_rise_reg2 = val;
 		break;
 	case SN5S330_INT_MASK_RISE_REG3:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_mask_rise_reg3 = val;
 		break;
 	case SN5S330_INT_MASK_FALL_REG1:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_mask_fall_reg1 = val;
 		break;
 	case SN5S330_INT_MASK_FALL_REG2:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_mask_fall_reg2 = val;
 		break;
 	case SN5S330_INT_MASK_FALL_REG3:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_mask_fall_reg3 = val;
 		break;
 	case SN5S330_INT_TRIP_RISE_REG1:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_trip_rise_reg1 = val;
 		break;
 	case SN5S330_INT_TRIP_RISE_REG2:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_trip_rise_reg2 = val;
 		break;
 	case SN5S330_INT_TRIP_RISE_REG3:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_trip_rise_reg3 = val;
 		break;
 	case SN5S330_INT_TRIP_FALL_REG1:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_trip_fall_reg1 = val;
 		break;
 	case SN5S330_INT_TRIP_FALL_REG2:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_trip_fall_reg2 = val;
 		break;
 	case SN5S330_INT_TRIP_FALL_REG3:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int_trip_fall_reg3 = val;
 		break;
 	default:
