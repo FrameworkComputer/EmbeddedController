@@ -10,8 +10,10 @@
 #include <drivers/gpio/gpio_emul.h>
 
 #include "common.h"
+#include "ec_commands.h"
 #include "ec_tasks.h"
 #include "hooks.h"
+#include "host_command.h"
 #include "i2c.h"
 #include "stubs.h"
 #include "task.h"
@@ -586,6 +588,50 @@ void test_usb_mux_chipset_reset(void)
 	hook_notify(HOOK_CHIPSET_RESET);
 }
 
+/* Test host command get mux info */
+static void test_usb_mux_hc_mux_info(void)
+{
+	struct ec_response_usb_pd_mux_info response;
+	struct ec_params_usb_pd_mux_info params;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_USB_PD_MUX_INFO, 0, response);
+	mux_state_t exp_mode;
+
+	/* Set up host command parameters */
+	args.params = &params;
+	args.params_size = sizeof(params);
+
+	/* Test invalid port parameter */
+	params.port = 5;
+	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args), NULL);
+
+	/* Set correct port for rest of the test */
+	params.port = USBC_PORT_C1;
+
+	/* Test error on getting mux mode */
+	setup_ztest_proxy_get(0, 0, EC_ERROR_UNKNOWN,
+			      USB_PD_MUX_TBT_COMPAT_ENABLED);
+	zassert_equal(EC_RES_ERROR, host_command_process(&args), NULL);
+
+	/* Test getting mux mode */
+	exp_mode = USB_PD_MUX_USB_ENABLED;
+	setup_ztest_proxy_get(0, 2, EC_SUCCESS, exp_mode);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+	zassert_equal(args.response_size, sizeof(response), NULL);
+	zassert_equal(exp_mode, response.flags, "mode is 0x%x (!= 0x%x)",
+		      response.flags, exp_mode);
+
+	/* Test clearing HPD IRQ */
+	exp_mode = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_HPD_LVL |
+		   USB_PD_MUX_HPD_IRQ;
+	setup_ztest_proxy_get(0, 2, EC_SUCCESS, exp_mode);
+	setup_ztest_proxy_hpd_update(0, 2, USB_PD_MUX_HPD_LVL);
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+	zassert_equal(args.response_size, sizeof(response), NULL);
+	zassert_equal(exp_mode, response.flags, "mode is 0x%x (!= 0x%x)",
+		      response.flags, exp_mode);
+}
+
 /** Setup proxy chain and uninit usb muxes */
 void setup_uninit_mux(void)
 {
@@ -632,6 +678,9 @@ void test_suite_usb_mux(void)
 				setup_init_mux, resotre_usb_mux_chain),
 			 ztest_unit_test_setup_teardown(
 				test_usb_mux_chipset_reset,
+				setup_init_mux, resotre_usb_mux_chain),
+			 ztest_unit_test_setup_teardown(
+				test_usb_mux_hc_mux_info,
 				setup_init_mux, resotre_usb_mux_chain));
 	ztest_run_test_suite(usb_mux);
 }
