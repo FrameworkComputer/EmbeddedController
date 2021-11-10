@@ -17,8 +17,8 @@
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
-#define SB_RMI_MAILBOX_TIMEOUT_MS 10
-#define SB_RMI_MAILBOX_RETRY_DELAY_US 200
+#define SB_RMI_MAILBOX_TIMEOUT_MS 200
+#define SB_RMI_MAILBOX_RETRY_DELAY_MS 5
 
 /**
  * Write an SB-RMI register
@@ -136,7 +136,7 @@ int sb_rmi_mailbox_xfer(int cmd, uint32_t msg_in, uint32_t *msg_out_ptr)
 			alerted = true;
 			break;
 		}
-		msleep(1);
+		msleep(SB_RMI_MAILBOX_RETRY_DELAY_MS);
 	} while (time_since32(start) < SB_RMI_MAILBOX_TIMEOUT_MS * MSEC);
 
 	if (!alerted) {
