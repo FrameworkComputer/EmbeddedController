@@ -166,6 +166,12 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_2_FAN
 	},
+	[TEMP_SENSOR_3_CHARGER] = {
+		.name = "CHARGER",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_3_CHARGER
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -223,9 +229,31 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 	}
 __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 
+/*
+ * Set value to zero to disable charger thermal control.
+ */
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_CHARGER \
+	{ \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = 0, \
+			[EC_TEMP_THRESH_HALT] = 0, \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = 0, \
+		}, \
+		.temp_fan_off = 0, \
+		.temp_fan_max = 0, \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_charger =
+							THERMAL_CHARGER;
+
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
 	[TEMP_SENSOR_2_FAN] = THERMAL_FAN,
+	[TEMP_SENSOR_3_CHARGER]	= THERMAL_CHARGER,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
