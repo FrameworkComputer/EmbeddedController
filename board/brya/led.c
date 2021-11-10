@@ -27,7 +27,7 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 /*
  * We only have a white and an amber LED, so setting any other color results in
- * both LEDs being off.
+ * both LEDs being off. Cap at 50% to save power.
  */
 struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 				/* Amber, White */
@@ -35,8 +35,8 @@ struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
 	[EC_LED_COLOR_GREEN]  = {   0,   0 },
 	[EC_LED_COLOR_BLUE]   = {   0,   0 },
 	[EC_LED_COLOR_YELLOW] = {   0,   0 },
-	[EC_LED_COLOR_WHITE]  = {   0, 100 },
-	[EC_LED_COLOR_AMBER]  = {  100,  0 },
+	[EC_LED_COLOR_WHITE]  = {   0,  50 },
+	[EC_LED_COLOR_AMBER]  = {  50,   0 },
 };
 
 /* Two logical LEDs with amber and white channels. */
