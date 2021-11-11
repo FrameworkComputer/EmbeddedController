@@ -17,6 +17,16 @@
 			label = "KBLIGHT";
 			frequency = <100>;
 		};
+		led_charge: led_charge {
+			pwms = <&pwm2 0 0>;
+			label = "LED_CHARGE";
+			frequency = <100>;
+		};
+		led_full: led_full {
+			pwms = <&pwm3 0 0>;
+			label = "LED_FULL";
+			frequency = <100>;
+		};
 	};
 };
 
@@ -28,6 +38,18 @@
 
 /* Keyboard backlight */
 &pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* Amber charging LED */
+&pwm2 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* Green full LED */
+&pwm3 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 };
