@@ -66,9 +66,7 @@ void motion_interrupt(enum gpio_signal signal);
 
 /* Battery Types */
 enum battery_type {
-	BATTERY_AEC,
-	BATTERY_AP18F4M,
-	BATTERY_POWER_TECH,
+	BATTERY_AP19B8M,
 	BATTERY_TYPE_COUNT,
 };
 
