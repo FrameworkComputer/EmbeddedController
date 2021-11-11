@@ -238,7 +238,7 @@ int board_set_active_charge_port(int port)
 	int is_valid_port = (port >= 0 &&
 			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
-	int cur_port = charge_manager_get_active_charge_port();
+	int rv;
 
 	if (port == CHARGE_PORT_NONE) {
 		CPRINTSUSB("Disabling all charger ports");
@@ -251,7 +251,7 @@ int board_set_active_charge_port(int port)
 			 */
 			if (nct38xx_get_boot_type(i) ==
 						NCT38XX_BOOT_DEAD_BATTERY) {
-				reset_nct38xx_port(cur_port);
+				reset_nct38xx_port(i);
 				pd_set_error_recovery(i);
 			}
 
@@ -268,34 +268,54 @@ int board_set_active_charge_port(int port)
 		return EC_ERROR_INVAL;
 	}
 
+	/*
+	 * Check if we can reset any ports in dead battery mode
+	 *
+	 * The NCT3807 may continue to keep EN_SNK low on the dead battery port
+	 * and allow a dangerous level of voltage to pass through to the initial
+	 * charge port (see b/183660105).  We must reset the ports if we have
+	 * sufficient battery to do so, which will bring EN_SNK back under
+	 * normal control.
+	 */
+	rv = EC_SUCCESS;
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
+		if (nct38xx_get_boot_type(i) == NCT38XX_BOOT_DEAD_BATTERY) {
+			CPRINTSUSB("Found dead battery on %d", i);
+			/*
+			 * If we have battery, get this port reset ASAP.
+			 * This means temporarily rejecting charge manager
+			 * sets to it.
+			 */
+			if (pd_is_battery_capable()) {
+				reset_nct38xx_port(i);
+				pd_set_error_recovery(i);
+
+				if (port == i)
+					rv = EC_ERROR_INVAL;
+			} else if (port != i) {
+				/*
+				 * If other port is selected and in dead battery
+				 * mode, reset this port.  Otherwise, reject
+				 * change because we'll brown out.
+				 */
+				if (nct38xx_get_boot_type(port) ==
+						NCT38XX_BOOT_DEAD_BATTERY) {
+					reset_nct38xx_port(i);
+					pd_set_error_recovery(i);
+				} else {
+					rv = EC_ERROR_INVAL;
+				}
+			}
+		}
+	}
+
+	if (rv != EC_SUCCESS)
+		return rv;
 
 	/* Check if the port is sourcing VBUS. */
 	if (tcpm_get_src_ctrl(port)) {
 		CPRINTSUSB("Skip enable C%d", port);
 		return EC_ERROR_INVAL;
-	}
-
-	/*
-	 * Disallow changing ports if we booted in dead battery mode and don't
-	 * have sufficient power to withstand Vbus loss.  The NCT3807 may
-	 * continue to keep EN_SNK low on the original port and allow a
-	 * dangerous level of voltage to pass through to the initial charge
-	 * port (see b/183660105)
-	 *
-	 * If we do have sufficient power, then reset the dead battery port and
-	 * set up Type-C error recovery on its connection.
-	 */
-	if (cur_port != CHARGE_PORT_NONE &&
-			port != cur_port &&
-			nct38xx_get_boot_type(cur_port) ==
-						NCT38XX_BOOT_DEAD_BATTERY) {
-		if (pd_is_battery_capable()) {
-			reset_nct38xx_port(cur_port);
-			pd_set_error_recovery(cur_port);
-		} else {
-			CPRINTSUSB("Battery too low for charge port change");
-			return EC_ERROR_INVAL;
-		}
 	}
 
 	CPRINTSUSB("New charge port: C%d", port);
