@@ -782,6 +782,25 @@ __maybe_unused static int test_typec_dis_as_src(void)
 	return EC_SUCCESS;
 }
 
+__maybe_unused static int test_wake_tcpc_toggle_change(void)
+{
+	/* Start with auto toggle disabled */
+	pd_set_dual_role(PORT0, PD_DRP_TOGGLE_OFF);
+	task_wait_event(SECOND);
+
+	/* TCPC should be asleep */
+	TEST_EQ(mock_tcpc.lpm_wake_requested, false, "%d");
+
+	/* Enabled auto toggle */
+	pd_set_dual_role(PORT0, PD_DRP_TOGGLE_ON);
+	task_wait_event(FUDGE);
+
+	/* Ensure TCPC was woken */
+	TEST_EQ(mock_tcpc.lpm_wake_requested, true, "%d");
+
+	return EC_SUCCESS;
+}
+
 /* Reset the mocks before each test */
 void before_test(void)
 {
@@ -832,6 +851,8 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_cc_rd_on_por_reset);
 	RUN_TEST(test_auto_toggle_delay);
 	RUN_TEST(test_auto_toggle_delay_early_connect);
+
+	RUN_TEST(test_wake_tcpc_toggle_change);
 
 	/* Do basic state machine validity checks last. */
 	RUN_TEST(test_tc_no_parent_cycles);
