@@ -1,0 +1,29 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-fans {
+		compatible = "named-fans";
+
+		fan_0 {
+			label = "FAN_0";
+			pwm = <&pwm_fan>;
+			rpm_min = <1000>;
+			rpm_start = <1000>;
+			rpm_max = <6500>;
+			tach = <&tach1>;
+			pgood_gpio = <&gpio_s0_pgood>;
+		};
+	};
+};
+
+/* Tachemeter for fan speed measurement */
+&tach1 {
+	status = "okay";
+	pinctrl-0 = <&alt3_ta1_sl1>; /* Use TA1 as input pin */
+	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
+	pulses-per-round = <2>; /* number of pulses per round of encoder */
+};

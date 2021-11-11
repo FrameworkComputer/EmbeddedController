@@ -5,5 +5,5 @@
 register_npcx_project(
     project_name="guybrush",
     zephyr_board="npcx9",
-    dts_overlays=["battery.dts", "gpio.dts", "i2c.dts"],
+    dts_overlays=["battery.dts", "fan.dts", "gpio.dts", "i2c.dts", "pwm.dts"],
 )

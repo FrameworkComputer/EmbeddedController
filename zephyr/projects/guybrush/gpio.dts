@@ -45,7 +45,7 @@
 			label = "PG_PWR_S5";
 			enum-name = "GPIO_S5_PGOOD";
 		};
-		pg_pcore_s0_r_od {
+		gpio_s0_pgood: pg_pcore_s0_r_od {
 			gpios = <&gpiob 6 GPIO_INPUT>;
 			label = "PG_PCORE_S0_R_OD";
 			enum-name = "GPIO_S0_PGOOD";
