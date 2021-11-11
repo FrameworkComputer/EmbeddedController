@@ -137,6 +137,11 @@
 			enum-name = "GPIO_IMVP9_VRRDY_OD";
 			label = "IMVP9_VRRDY_OD";
 		};
+		ec_edp_bl_en {
+			gpios = <&gpiod 3 GPIO_OUT_HIGH>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+			label = "EC_EDP_BL_EN";
+		};
 	};
 
 	hibernate-wake-pins {
