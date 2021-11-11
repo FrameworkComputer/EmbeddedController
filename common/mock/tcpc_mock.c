@@ -187,7 +187,13 @@ __maybe_unused static int mock_set_src_ctrl(int port, int enable)
 
 __maybe_unused static int mock_enter_low_power_mode(int port)
 {
+	mock_tcpc.lpm_wake_requested = false;
 	return EC_SUCCESS;
+}
+
+__maybe_unused static void mock_wake_low_power_mode(int port)
+{
+	mock_tcpc.lpm_wake_requested = true;
 }
 
 int mock_set_frs_enable(int port, int enable)
@@ -220,6 +226,7 @@ const struct tcpm_drv mock_tcpc_driver = {
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &mock_enter_low_power_mode,
+	.wake_low_power_mode = &mock_wake_low_power_mode,
 #endif
 #ifdef CONFIG_USB_PD_FRS_TCPC
 	.set_frs_enable = &mock_set_frs_enable,
