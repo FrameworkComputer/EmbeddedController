@@ -73,6 +73,7 @@ properties:
       - GPIO_EN_5V_USM
       - GPIO_EN_A_RAILS
       - GPIO_EN_EC_ID_ODL
+      - GPIO_EN_KEYBOARD_BACKLIGHT
       - GPIO_EN_PP3000_SD_U
       - GPIO_EN_PP3000_VMC_PMU
       - GPIO_EN_PP3300_A
