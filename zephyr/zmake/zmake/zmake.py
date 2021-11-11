@@ -756,10 +756,9 @@ class Zmake:
         root_dir = self.module_paths["ec"] / "zephyr"
         for project in zmake.project.find_projects(root_dir).values():
             is_test = project.config.is_test
-            rel_path = project.config.project_dir.relative_to(root_dir)
-            project_build_dir = pathlib.Path(build_dir).joinpath(rel_path)
-            lcov_file = pathlib.Path(build_dir).joinpath(
-                str(rel_path).replace("/", "_") + ".info"
+            project_build_dir = pathlib.Path(build_dir) / project.config.project_name
+            lcov_file = pathlib.Path(build_dir) / "{}.info".format(
+                project.config.project_name
             )
             all_lcov_files.append(lcov_file)
             if is_test:

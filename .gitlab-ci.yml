@@ -68,8 +68,7 @@ seed_cache:
     - ls "${MODULES_DIR}" "${ZEPHYR_ROOT}"
 
 # Users of this template must set:
-# $PROJECT to the project to build in zephyr/projects. E.g. "lazor")
-# $PROJECT_SUBDIR if it is in a subdirectory. E.g. "trogdor/"
+# $PROJECT to the project to build. E.g., "lazor"
 .build_template: &build_template
   stage: build
   needs: ["seed_cache"]
@@ -77,7 +76,7 @@ seed_cache:
     - zmake --zephyr-root "${ZEPHYR_ROOT}"
       --modules-dir "${MODULES_DIR}" -l DEBUG configure -b
       -B "${BUILD_DIR}/${PROJECT}" -t ${TOOLCHAIN:-zephyr}
-      zephyr/projects/${PROJECT_SUBDIR}${PROJECT}
+      "${PROJECT}"
     - for b in "${BUILD_DIR}/${PROJECT}"/build-* ; do
       bdir=$(basename ${b}) ;
       ninja -C ${b} ram_report >"${BUILD_DIR}/${PROJECT}/output/${bdir}_ram_report.txt" ;
@@ -92,15 +91,13 @@ seed_cache:
     expire_in: 1 week
 
 # Users of this template must set:
-# $PROJECT to the project to build in zephyr/projects. E.g. "lazor")
-# $PROJECT_SUBDIR if it is in a subdirectory. E.g. "trogdor/"
+# $PROJECT to the project to build. E.g., "lazor"
 .coverage_template: &coverage_template
   stage: test
   needs: ["merged_coverage", "zephyr_coverage"]
   script:
-    - PROJECT_NAME=$(echo ${PROJECT_SUBDIR}${PROJECT} | tr '/' '_')
-    - grep "SF:" "build/zcoverage/projects_${PROJECT_NAME}.info" | sort -u | sed -e 's|^SF:||' | xargs lcov -o build/no_zephyr_${PROJECT_NAME}.info -e build/merged_no_zephyr.info
-    - /usr/bin/genhtml -q -o build/no_zephyr_${PROJECT_NAME}_rpt -t "${PROJECT} coverage w/o zephyr" -p ${EC_DIR} -s build/no_zephyr_${PROJECT_NAME}.info
+    - grep "SF:" "build/zcoverage/${PROJECT}.info" | sort -u | sed -e 's|^SF:||' | xargs lcov -o build/no_zephyr_${PROJECT}.info -e build/merged_no_zephyr.info
+    - /usr/bin/genhtml -q -o build/no_zephyr_${PROJECT}_rpt -t "${PROJECT} coverage w/o zephyr" -p ${EC_DIR} -s build/no_zephyr_${PROJECT}.info
   artifacts:
     paths:
       - build/*.info
@@ -111,25 +108,21 @@ seed_cache:
 delbin:
   variables:
     PROJECT: "delbin"
-    PROJECT_SUBDIR: "volteer/"
   <<: *build_template
 
 hayato:
   variables:
     PROJECT: "hayato"
-    PROJECT_SUBDIR: "asurada/"
   <<: *build_template
 
 herobrine_npcx9:
   variables:
     PROJECT: "herobrine_npcx9"
-    PROJECT_SUBDIR: "herobrine/"
   <<: *build_template
 
 herobrine_npcx9_coverage:
   variables:
     PROJECT: "herobrine_npcx9"
-    PROJECT_SUBDIR: "herobrine/"
   <<: *coverage_template
 
 it8xxx2_evb:
@@ -140,7 +133,6 @@ it8xxx2_evb:
 lazor:
   variables:
     PROJECT: "lazor"
-    PROJECT_SUBDIR: "trogdor/"
   <<: *build_template
 
 native_posix:
@@ -152,7 +144,6 @@ native_posix:
 volteer:
   variables:
     PROJECT: "volteer"
-    PROJECT_SUBDIR: "volteer/"
   <<: *build_template
 
 ec_coverage:
