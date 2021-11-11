@@ -12,7 +12,7 @@ properties:
 child-binding:
   description: Power Signal List child node
   properties:
-    gpio:
+    power-gpio-pin:
       description:
         PHandle to the associated GPIO
       type: phandle

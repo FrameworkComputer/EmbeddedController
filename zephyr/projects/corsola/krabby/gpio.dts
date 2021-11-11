@@ -290,15 +290,15 @@
 		compatible = "mediatek,power-signal-list";
 		pmic_pwr_good {
 			power-enum-name = "PMIC_PWR_GOOD";
-			gpio = <&pmic_ec_pwrgd>;
+			power-gpio-pin = <&pmic_ec_pwrgd>;
 		};
 		ap_in_s3_l {
 			power-enum-name = "AP_IN_S3_L";
-			gpio = <&ap_in_sleep_l>;
+			power-gpio-pin = <&ap_in_sleep_l>;
 		};
 		ap_wdt_asserted {
 			power-enum-name = "AP_WDT_ASSERTED";
-			gpio = <&ap_ec_watchdog_l>;
+			power-gpio-pin = <&ap_ec_watchdog_l>;
 		};
 	};
 

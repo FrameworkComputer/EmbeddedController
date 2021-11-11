@@ -20,7 +20,7 @@
 	DT_STRING_UPPER_TOKEN(                                                \
 		DT_PROP(                                                      \
 			cid,                                                  \
-			gpio                                                  \
+			power_gpio_pin                                        \
 		),                                                            \
 		enum_name                                                     \
 	)
@@ -29,7 +29,7 @@
 	DT_GPIO_FLAGS(                                                        \
 		DT_PROP(                                                      \
 			cid,                                                  \
-			gpio                                                  \
+			power_gpio_pin                                        \
 		),                                                            \
 		gpios                                                         \
 	) & GPIO_ACTIVE_LOW                                                   \
