@@ -12,6 +12,11 @@
 			label = "FAN";
 			frequency = <25000>;
 		};
+		kblight: kblight {
+			pwms = <&pwm1 0 0>;
+			label = "KBLIGHT";
+			frequency = <100>;
+		};
 	};
 };
 
@@ -19,4 +24,10 @@
 &pwm0 {
 	status = "okay";
 	drive-open-drain;
+};
+
+/* Keyboard backlight */
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 };

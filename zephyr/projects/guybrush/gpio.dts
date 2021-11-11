@@ -290,6 +290,7 @@
 		en_kb_bl {
 			gpios = <&gpio9 7 GPIO_OUT_HIGH>;
 			label = "EN_KB_BL";
+			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
 		};
 		ec_kso_02_inv {
 			gpios = <&gpio1 7 GPIO_OUT_LOW>;
