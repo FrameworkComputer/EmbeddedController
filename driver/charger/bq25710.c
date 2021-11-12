@@ -341,6 +341,33 @@ static int bq257x0_init_charge_option_3(int chgnum)
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_3, reg);
 }
 
+static int bq25720_init_vmin_active_protection(int chgnum)
+{
+	int reg;
+	int rv;
+	int th2_dv;
+
+	if (!IS_ENABLED(CONFIG_CHARGER_BQ25720))
+		return EC_SUCCESS;
+
+	if (!IS_ENABLED(CONFIG_CHARGER_BQ25720_VSYS_TH2_CUSTOM))
+		return EC_SUCCESS;
+
+	rv = raw_read16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION, &reg);
+	if (rv)
+		return rv;
+
+	/*
+	 * The default VSYS_TH2 is 5.9v for a 2S config. Boards may need
+	 * to increase this for stability. PROCHOT is asserted when the
+	 * threshold is reached.
+	 */
+	th2_dv = VMIN_AP_VSYS_TH2_TO_REG(CONFIG_CHARGER_BQ25720_VSYS_TH2_DV);
+	reg = SET_BQ_FIELD(BQ25720, VMIN_AP, VSYS_TH2, th2_dv, reg);
+
+	return raw_write16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION, reg);
+}
+
 static void bq25710_init(int chgnum)
 {
 	int reg;
@@ -410,24 +437,6 @@ static void bq25710_init(int chgnum)
 		raw_write16(chgnum, BQ25710_REG_PROCHOT_OPTION_1, reg);
 	}
 
-	if (IS_ENABLED(CONFIG_CHARGER_BQ25720_VSYS_TH2_CUSTOM)) {
-		/*
-		 * The default VSYS_TH2 is 5.9v for a 2S config. Boards
-		 * may need to increase this for stability. PROCHOT is
-		 * asserted when the threshold is reached.
-		 */
-		if (!raw_read16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION,
-				&reg)) {
-			int th2_dv = VMIN_AP_VSYS_TH2_TO_REG(
-				CONFIG_CHARGER_BQ25720_VSYS_TH2_DV);
-
-			reg = SET_BQ_FIELD(BQ25720, VMIN_AP, VSYS_TH2,
-					   th2_dv, reg);
-			raw_write16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION,
-				    reg);
-		}
-	}
-
 	/* Reduce ILIM from default of 150% to 105% */
 	if (!raw_read16(chgnum, BQ25710_REG_PROCHOT_OPTION_0, &reg)) {
 		reg = SET_BQ_FIELD(BQ257X0, PROCHOT_OPTION_0, ILIM2_VTH, 0,
@@ -438,6 +447,8 @@ static void bq25710_init(int chgnum)
 	bq257x0_init_charge_option_2(chgnum);
 
 	bq257x0_init_charge_option_3(chgnum);
+
+	bq25720_init_vmin_active_protection(chgnum);
 }
 
 /* Charger interfaces */
