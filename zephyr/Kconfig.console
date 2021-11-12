@@ -21,9 +21,11 @@ config PLATFORM_EC_CONSOLE_CHANNEL
 
 	  Boards may #undef this to reduce image size.
 
-# Adjusted to the longest print message from the timer_info command
+# Adjusted to the account for the build_info[] string (about 160 bytes) plus
+# the image type (about 16 bytes).
+# printed by the banner.
 config SHELL_PRINTF_BUFF_SIZE
-	default 130
+	default 180
 
 # Some boards may need to increase the size, depending on the amount of output
 config SHELL_BACKEND_SERIAL_TX_RING_BUFFER_SIZE
