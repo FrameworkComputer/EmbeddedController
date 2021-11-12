@@ -52,8 +52,10 @@ static void hook_tick_work(struct k_work *work)
 		work_queue_error(&hook_ticks_work_data, rv);
 }
 
-static void check_hook_task_priority(k_tid_t thread)
+static void check_hook_task_priority(void)
 {
+	k_tid_t thread = &k_sys_work_q.thread;
+
 	/*
 	 * Numerically lower priorities take precedence, so verify the hook
 	 * related threads cannot preempt any of the shimmed tasks.
@@ -64,6 +66,7 @@ static void check_hook_task_priority(k_tid_t thread)
 			k_thread_name_get(thread),
 			k_thread_priority_get(thread), (TASK_ID_COUNT - 1));
 }
+DECLARE_HOOK(HOOK_INIT, check_hook_task_priority, HOOK_PRIO_FIRST);
 
 static int zephyr_shim_setup_hooks(const struct device *unused)
 {
@@ -92,8 +95,6 @@ static int zephyr_shim_setup_hooks(const struct device *unused)
 			       K_USEC(HOOK_TICK_INTERVAL));
 	if (rv < 0)
 		work_queue_error(&hook_ticks_work_data, rv);
-
-	check_hook_task_priority(&k_sys_work_q.thread);
 
 	return 0;
 }
