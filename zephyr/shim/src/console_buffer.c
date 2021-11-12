@@ -13,6 +13,7 @@
 static char console_buf[CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_BUF_SIZE];
 static uint32_t previous_snapshot_idx;
 static uint32_t current_snapshot_idx;
+static uint32_t head_idx;
 static uint32_t tail_idx;
 
 static inline uint32_t next_idx(uint32_t cur_idx)
@@ -42,6 +43,8 @@ void console_buf_notify_chars(const char *s, size_t len)
 		/* Check if we are starting to overwrite our snapshot
 		 * heads
 		 */
+		if (new_tail == head_idx)
+			head_idx = next_idx(head_idx);
 		if (new_tail == previous_snapshot_idx)
 			previous_snapshot_idx =
 				next_idx(previous_snapshot_idx);
@@ -62,7 +65,7 @@ enum ec_status uart_console_read_buffer_init(void)
 		return EC_RES_TIMEOUT;
 
 	previous_snapshot_idx = current_snapshot_idx;
-	current_snapshot_idx = tail_idx;
+	current_snapshot_idx = head_idx;
 
 	k_mutex_unlock(&console_write_lock);
 
