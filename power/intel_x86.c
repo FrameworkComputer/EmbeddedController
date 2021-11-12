@@ -390,6 +390,10 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 
 		lpc_s3_resume_clear_masks();
 
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		/* Call hooks prior to chipset resume */
+		hook_notify(HOOK_CHIPSET_RESUME_INIT);
+#endif
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
@@ -412,8 +416,13 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		return POWER_S0;
 
 	case POWER_S0S3:
+
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		/* Call hooks after chipset suspend */
+		hook_notify(HOOK_CHIPSET_SUSPEND_COMPLETE);
+#endif
 
 		/* Suspend wireless */
 		wireless_set_state(WIRELESS_SUSPEND);
@@ -445,6 +454,11 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		 * to go into deep sleep in S0ix.
 		 */
 		enable_sleep(SLEEP_MASK_AP_RUN);
+
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		hook_notify(HOOK_CHIPSET_SUSPEND_COMPLETE);
+#endif
+
 		return POWER_S0ix;
 
 	case POWER_S0ixS0:
@@ -453,6 +467,10 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		 * power idle task will not go into deep sleep while in S0.
 		 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
+
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		hook_notify(HOOK_CHIPSET_RESUME_INIT);
+#endif
 
 		sleep_resume_transition();
 		return POWER_S0;
