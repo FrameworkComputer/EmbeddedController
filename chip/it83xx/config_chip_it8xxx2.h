@@ -86,16 +86,16 @@
 || defined(CHIP_VARIANT_IT81202BX_1024)
 
 #if defined(CHIP_VARIANT_IT81302BX_512)
-#define CONFIG_FLASH_SIZE_BYTES           0x00080000
+#define CONFIG_FLASH_SIZE_BYTES     0x00080000
 #define CONFIG_RAM_BASE             0x80080000
-#define CONFIG_RAM_SIZE             0x00010000
 #else
-#define CONFIG_FLASH_SIZE_BYTES           0x00100000
+#define CONFIG_FLASH_SIZE_BYTES     0x00100000
 #define CONFIG_RAM_BASE             0x80100000
-#define CONFIG_RAM_SIZE             0x0000f000
 /* Set ILM (instruction local memory) size up to 1M bytes */
 #define IT83XX_CHIP_FLASH_SIZE_1MB
 #endif
+
+#define CONFIG_RAM_SIZE             0x0000f000
 
 /* Embedded flash is KGD */
 #define IT83XX_CHIP_FLASH_IS_KGD
