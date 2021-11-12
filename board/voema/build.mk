@@ -8,13 +8,7 @@
 
 CHIP:=npcx
 CHIP_FAMILY:=npcx7
-# Limited boards with 796 variant and will use 797 moving forward. Set the
-# modify the variant type to match.
-ifeq ($(BOARD),voema_npcx796fc)
-CHIP_VARIANT:=npcx7m6fc
-else
 CHIP_VARIANT:=npcx7m7fc
-endif
 
 BASEBOARD:=volteer
 

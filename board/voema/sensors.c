@@ -286,8 +286,7 @@ static void baseboard_sensors_init(void)
 	 * TODO: If a SSFC for the base sensor is added, add the check
 	 * here.
 	 */
-	if (IS_ENABLED(BOARD_VOEMA) && get_cbi_ssfc_base_sensor() ==
-			SSFC_SENSOR_BASE_ICM426XX) {
+	if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BASE_ICM426XX) {
 		gpio_enable_interrupt(GPIO_EC_MB_ACCEL_INT_L);
 		motion_sensors[BASE_ACCEL] = icm_base_accel;
 		motion_sensors[BASE_GYRO] = icm_base_gyro;
@@ -303,7 +302,6 @@ static void baseboard_sensors_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_DEFAULT);
 
-#ifndef BOARD_VOEMA_NPCX796FC
 void motion_interrupt(enum gpio_signal signal)
 {
 	icm426xx_interrupt(signal);
@@ -316,4 +314,3 @@ int board_accel_force_mode_mask(void)
 	else
 		return (BIT(LID_ACCEL) | BIT(CLEAR_ALS));
 }
-#endif

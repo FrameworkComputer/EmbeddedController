@@ -11,16 +11,11 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-#ifdef BOARD_VOEMA
 /*
  * The RAM and flash size combination on the the NPCX797FC does not leave
  * any unused flash space that can be used to store the .init_rom section.
  */
 #undef CONFIG_CHIP_INIT_ROM_REGION
-#else
-/* Free up flash space */
-#undef CONFIG_CONSOLE_CMDHELP
-#endif /* BOARD_VOEMA */
 
 #define CONFIG_VBOOT_EFS2
 
@@ -56,12 +51,7 @@
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
 
 /* Sensors without hardware FIFO are in forced mode */
-#ifdef BOARD_VOEMA_NPCX796FC
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS) | BIT(BASE_ACCEL))
-#else
 #define CONFIG_ACCEL_FORCE_MODE_MASK (board_accel_force_mode_mask())
-#endif
 
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -193,10 +183,8 @@ enum usbc_port {
 };
 
 void board_reset_pd_mcu(void);
-#ifndef BOARD_VOEMA_NPCX796FC
 void motion_interrupt(enum gpio_signal signal);
 int board_accel_force_mode_mask(void);
-#endif
 
 #endif /* !__ASSEMBLER__ */
 
