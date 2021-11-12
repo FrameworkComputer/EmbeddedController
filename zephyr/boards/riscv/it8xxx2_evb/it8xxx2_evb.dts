@@ -242,6 +242,10 @@
 	clock-frequency = <1804800>;
 };
 
+&ite_uart1_wrapper {
+	status = "okay";
+};
+
 /* TEST1 */
 &pwm0 {
 	status = "okay";

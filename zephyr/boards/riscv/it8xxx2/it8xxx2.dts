@@ -58,6 +58,10 @@
 	clock-frequency = <1804800>;
 };
 
+&ite_uart1_wrapper {
+	status = "okay";
+};
+
 &cros_kb_raw {
 	status = "okay";
 };
