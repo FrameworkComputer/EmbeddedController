@@ -1037,6 +1037,9 @@
  */
 #undef CONFIG_CHARGER_BQ25710_IDCHG_LIMIT_MA
 
+/* Enable if CONFIG_CHARGER_BQ25720_VSYS_TH2_DV should be applied */
+#undef CONFIG_CHARGER_BQ25720_VSYS_TH2_CUSTOM
+
 /*
  * This config option is used to set the charger's VSYS voltage
  * threshold. When the voltage drops to this level, PROCHOT is asserted

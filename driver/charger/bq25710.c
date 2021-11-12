@@ -31,6 +31,13 @@
 #error "BQ25710 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
 #endif
 
+#ifndef CONFIG_CHARGER_BQ25720_VSYS_TH2_CUSTOM
+#define CONFIG_CHARGER_BQ25720_VSYS_TH2_DV	GET_BQ_FIELD(BQ25720, \
+							     VMIN_AP,	\
+							     VSYS_TH2, \
+							     UINT16_MAX)
+#endif
+
 /*
  * Helper macros
  */
@@ -66,9 +73,7 @@
 
 #define REG_TO_CHARGING_CURRENT(REG) ((REG) / CHARGING_RESISTOR_RATIO)
 #define CHARGING_CURRENT_TO_REG(CUR) ((CUR) * CHARGING_RESISTOR_RATIO)
-#ifdef CONFIG_CHARGER_BQ25720
 #define VMIN_AP_VSYS_TH2_TO_REG(DV) ((DV) - 32)
-#endif
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
@@ -405,20 +410,23 @@ static void bq25710_init(int chgnum)
 		raw_write16(chgnum, BQ25710_REG_PROCHOT_OPTION_1, reg);
 	}
 
-#ifdef CONFIG_CHARGER_BQ25720_VSYS_TH2_DV
-	/*
-	 * The default VSYS_TH2 is 5.9v for a 2S config. Boards
-	 * may need to increase this for stability. PROCHOT is
-	 * asserted when the threshold is reached.
-	 */
-	if (!raw_read16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION, &reg)) {
-		int th2_dv = VMIN_AP_VSYS_TH2_TO_REG(
-			CONFIG_CHARGER_BQ25720_VSYS_TH2_DV);
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25720_VSYS_TH2_CUSTOM)) {
+		/*
+		 * The default VSYS_TH2 is 5.9v for a 2S config. Boards
+		 * may need to increase this for stability. PROCHOT is
+		 * asserted when the threshold is reached.
+		 */
+		if (!raw_read16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION,
+				&reg)) {
+			int th2_dv = VMIN_AP_VSYS_TH2_TO_REG(
+				CONFIG_CHARGER_BQ25720_VSYS_TH2_DV);
 
-		reg = SET_BQ_FIELD(BQ25720, VMIN_AP, VSYS_TH2, th2_dv, reg);
-		raw_write16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION, reg);
+			reg = SET_BQ_FIELD(BQ25720, VMIN_AP, VSYS_TH2,
+					   th2_dv, reg);
+			raw_write16(chgnum, BQ25720_REG_VMIN_ACTIVE_PROTECTION,
+				    reg);
+		}
 	}
-#endif
 
 	/* Reduce ILIM from default of 150% to 105% */
 	if (!raw_read16(chgnum, BQ25710_REG_PROCHOT_OPTION_0, &reg)) {
