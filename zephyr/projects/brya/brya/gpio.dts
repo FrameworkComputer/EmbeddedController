@@ -142,6 +142,11 @@
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 			label = "EC_EDP_BL_EN";
 		};
+		ec_prochot_in_l {
+			gpios = <&gpiof 0 GPIO_INPUT>;
+			enum-name = "GPIO_EC_PROCHOT_IN_L";
+			label = "EC_PROCHOT_IN_L";
+		};
 	};
 
 	hibernate-wake-pins {

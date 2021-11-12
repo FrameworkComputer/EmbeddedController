@@ -31,8 +31,11 @@
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ
 #define POWER_SIGNAL_INT(gpio, edge) \
 	GPIO_INT(gpio, edge, power_signal_interrupt)
+#define AP_PROCHOT_INT(gpio, edge) \
+	GPIO_INT(gpio, edge, throttle_ap_prochot_input_interrupt)
 #else
 #define POWER_SIGNAL_INT(gpio, edge)
+#define AP_PROCHOT_INT(gpio, edge)
 #endif
 
 
@@ -47,5 +50,6 @@
 	POWER_SIGNAL_INT(GPIO_SLP_SUS_L, GPIO_INT_EDGE_BOTH)              \
 	POWER_SIGNAL_INT(GPIO_PG_EC_DSW_PWROK, GPIO_INT_EDGE_BOTH)        \
 	POWER_SIGNAL_INT(GPIO_PG_EC_RSMRST_ODL, GPIO_INT_EDGE_BOTH)       \
-	POWER_SIGNAL_INT(GPIO_PG_EC_ALL_SYS_PWRGD, GPIO_INT_EDGE_BOTH)
+	POWER_SIGNAL_INT(GPIO_PG_EC_ALL_SYS_PWRGD, GPIO_INT_EDGE_BOTH)    \
+	AP_PROCHOT_INT(GPIO_EC_PROCHOT_IN_L, GPIO_INT_EDGE_BOTH)
 #endif /* __ZEPHYR_GPIO_MAP_H */
