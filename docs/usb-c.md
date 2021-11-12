@@ -1,7 +1,24 @@
 # EC Implementation of USB-C Power Delivery and Alternate Modes
 
-USB-C PD requires a complex state machine as USB-C PD can operate in many
-different modes. This includes but isn't limited to:
+USB-C is intended to be a flexible connector supporting multiple data rates,
+protocols, and power in either direction. For one connector to support varying
+states of power delivery, the system and what it is connected to
+must decide who will act as the source (drives power) and sink (consumes power).
+Additionally, they need to decide the correct voltage and current for the source
+to drive by taking into account not only the source's and sink's capabilities,
+but also what the cable can support. Resistance of pull-up and pull-down resistors
+on the configuration channel (CC) ports of the USB-C connector are used to
+negotiate who is source and who is sink when a new USB-C connection is established.
+This allows for setting power characteristics to default USB2 (500mA) default
+USB3 (900mA) 1.5A and 3.0A at 5V. Additional power requirements using USB-PD must
+then be negotiated by the source and sink over the CC pins of the USB-C connectors.
+Beyond power contract negotiations, USB PD messages can be used to enable alternate
+modes (Example: DisplayPort) and send a class of messages called Structured Vendor
+Defined Message (SVDMs), which are not related to power delivery. The additional
+flexiblity and functionality in USB-C requires support from the OS.
+
+From the system, USB PD requires a complex state machine as USB PD can
+operate in many different modes. This includes but isn't limited to:
 
 *   Negotiated power contracts. Either side of the cable can source or sink
     power up to 100W (if supported by device).
