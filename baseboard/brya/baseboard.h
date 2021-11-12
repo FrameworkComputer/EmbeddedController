@@ -237,23 +237,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "cbi.h"
 #include "common.h"
 #include "baseboard_usbc_config.h"
 #include "extpower.h"
 
-/**
- * Configure run-time data structures and operation based on CBI data. This
- * typically includes customization for changes in the BOARD_VERSION and
- * FW_CONFIG fields in CBI. This routine is called from the baseboard after
- * the CBI data has been initialized.
- */
-__override_proto void board_cbi_init(void);
-
-/**
- * Initialize the FW_CONFIG from CBI data. If the CBI data is not valid, set the
- * FW_CONFIG to the board specific defaults.
- */
-__override_proto void board_init_fw_config(void);
 
 /*
  * Check battery disconnect state.
@@ -261,11 +249,6 @@ __override_proto void board_init_fw_config(void);
  * @return true - initialized. false - not.
  */
 __override_proto bool board_battery_is_initialized(void);
-
-/*
- * Return the board revision number.
- */
-uint8_t get_board_id(void);
 
 #endif /* !__ASSEMBLER__ */
 

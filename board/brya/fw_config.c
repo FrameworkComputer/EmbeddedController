@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "cbi.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"

@@ -6,6 +6,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "cbi.h"
+#include "charger.h"
+#include "charge_ramp.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -71,6 +74,16 @@ const struct tcpc_config_t tcpc_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
+
+/******************************************************************************/
+/* USB-A charging control */
+
+const int usb_port_enable[USB_PORT_COUNT] = {
+	GPIO_EN_PP5000_USBA_R,
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
+
+/******************************************************************************/
 
 /* USBC PPC configuration */
 struct ppc_config_t ppc_chips[] = {
@@ -202,6 +215,40 @@ struct ioexpander_config_t ioex_config[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
+
+#ifdef CONFIG_CHARGE_RAMP_SW
+
+/*
+ * TODO(b/181508008): tune this threshold
+ */
+
+#define BC12_MIN_VOLTAGE 4400
+
+/**
+ * Return true if VBUS is too low
+ */
+int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
+{
+	int voltage;
+
+	if (charger_get_vbus_voltage(port, &voltage))
+		voltage = 0;
+
+	if (voltage == 0) {
+		CPRINTS("%s: must be disconnected", __func__);
+		return 1;
+	}
+
+	if (voltage < BC12_MIN_VOLTAGE) {
+		CPRINTS("%s: port %d: vbus %d lower than %d", __func__,
+			port, voltage, BC12_MIN_VOLTAGE);
+		return 1;
+	}
+
+	return 0;
+}
+
+#endif /* CONFIG_CHARGE_RAMP_SW */
 
 void config_usb_db_type(void)
 {
