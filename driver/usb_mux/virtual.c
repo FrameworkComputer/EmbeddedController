@@ -81,10 +81,17 @@ static int virtual_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 			   bool *ack_required)
 {
 	int port = me->usb_port;
+	mux_state_t new_mux_state;
 
-	/* Current USB & DP mux status + existing HPD related mux status */
-	mux_state_t new_mux_state = (mux_state & ~USB_PD_MUX_HPD_STATE) |
-		(virtual_mux_state[port] & USB_PD_MUX_HPD_STATE);
+	/*
+	 * Current USB & DP mux status + existing HPD related mux status if DP
+	 * is still active.  Otherwise, don't preserve HPD state.
+	 */
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
+		new_mux_state = (mux_state & ~USB_PD_MUX_HPD_STATE) |
+			(virtual_mux_state[port] & USB_PD_MUX_HPD_STATE);
+	else
+		new_mux_state = mux_state;
 
 	virtual_mux_update_state(port, new_mux_state, ack_required);
 
