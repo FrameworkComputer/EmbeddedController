@@ -391,20 +391,22 @@ DECLARE_HOOK(HOOK_INIT, sensor_enable_irqs, HOOK_PRIO_DEFAULT);
 #endif
 
 /* Handle the alternative motion sensors */
-#define CHECK_AND_REPLACE_ALT_MOTION_SENSOR(id)                        \
-	do {                                                           \
-		if (cros_cbi_ssfc_check_match(                         \
-			    dev, CBI_SSFC_VALUE_ID(DT_PHANDLE(         \
-					 id, alternate_indicator)))) { \
-			REPLACE_ALT_MOTION_SENSOR(                     \
-				id, DT_PHANDLE(id, alternate_for))     \
-		}                                                      \
-	} while (0);
+#define CHECK_SSFC_AND_ENABLE_ALT_SENSOR(id, cbi_dev)                         \
+	do {                                                                  \
+		if (cros_cbi_ssfc_check_match(cbi_dev, CBI_SSFC_VALUE_ID(     \
+				DT_PHANDLE(id, alternate_ssfc_indicator)))) { \
+			LOG_INF("Replacing \"%s\" for \"%s\" based on SSFC",  \
+				motion_sensors[SENSOR_ID(DT_PHANDLE(id,       \
+					alternate_for))].name,                \
+				motion_sensors_alt[SENSOR_ID(id)].name);      \
+			ENABLE_ALT_MOTION_SENSOR(id);                         \
+		}                                                             \
+	} while (0)
 
-#define ALT_MOTION_SENSOR_INIT_ID(id)                                    \
-	COND_CODE_1(UTIL_AND(DT_NODE_HAS_PROP(id, alternate_for),        \
-			     DT_NODE_HAS_PROP(id, alternate_indicator)), \
-		    (CHECK_AND_REPLACE_ALT_MOTION_SENSOR(id)), ())
+#define ALT_SENSOR_CHECK_SSFC_ID(id, cbi_dev)                                 \
+	COND_CODE_1(UTIL_AND(DT_NODE_HAS_PROP(id, alternate_for),             \
+			     DT_NODE_HAS_PROP(id, alternate_ssfc_indicator)), \
+		    (CHECK_SSFC_AND_ENABLE_ALT_SENSOR(id, cbi_dev);), ())
 
 #if DT_NODE_EXISTS(SENSOR_ALT_NODE)
 
@@ -427,15 +429,15 @@ int motion_sense_probe(enum sensor_alt_id alt_idx)
 	return res;
 }
 
-static void motion_sensors_init_alt(void)
+void motion_sensors_check_ssfc(void)
 {
-	const struct device *dev = device_get_binding("cros_cbi");
+	const struct device *dev = device_get_binding(CROS_CBI_LABEL);
 
 	if (dev != NULL) {
-		DT_FOREACH_CHILD(SENSOR_ALT_NODE, ALT_MOTION_SENSOR_INIT_ID)
+		DT_FOREACH_CHILD_VARGS(SENSOR_ALT_NODE,
+				       ALT_SENSOR_CHECK_SSFC_ID, dev)
 	}
 }
-DECLARE_HOOK(HOOK_INIT, motion_sensors_init_alt, HOOK_PRIO_INIT_I2C + 1);
 #endif /* DT_NODE_EXISTS(SENSOR_ALT_NODE) */
 
 #define DEF_MOTION_ISR_NAME_ENUM(id) \

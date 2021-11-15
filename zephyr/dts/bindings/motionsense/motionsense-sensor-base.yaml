@@ -58,9 +58,9 @@ properties:
     type: phandle
     description: phandle to another sensor that can be swapped with this one
       at runtime.
-  alternate-indicator:
+  alternate-ssfc-indicator:
     type: phandle
-    description: phandle to CBI SSGC value indicating that the sensor
+    description: phandle to CBI SSFC value indicating that the sensor
       should be used
   int-signal:
     type: phandle
