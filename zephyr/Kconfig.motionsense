@@ -187,12 +187,4 @@ config PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF
 
 endif # PLATFORM_EC_ACCEL_SPOOF_MODE
 
-config PLATFORM_EC_MOTION_SENSE_RUNTIME_PROBE_CUSTOM_CALL
-	bool "Disable deferred call that probes motion sensors on boot-up"
-	help
-	  Disables deferred call that probes motion sensors on boot-up.
-	  If this option is enabled, board logic code must call
-	  board_detect_motionsensor manually. This is useful if board needs
-	  manual control of sensors probing.
-
 rsource "Kconfig.sensor_devices"

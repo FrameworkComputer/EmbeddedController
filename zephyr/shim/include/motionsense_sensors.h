@@ -100,12 +100,11 @@ enum sensor_alt_id {
 		SENSOR_INFO_NODE))
 #endif
 
-/**
- * If CONFIG_PLATFORM_EC_MOTION_SENSE_RUNTIME_PROBE_CUSTOM_CALL is enabled,
- * this function must be called to perform probing of alternative sensors.
+/*
+ * Performs probing of alternative sensors marked with "runtime-probe" property
+ * in device tree. If an alternative sensor is detected, the function replaces
+ * a default one in the motion_sensors array.
  */
-#ifdef CONFIG_PLATFORM_EC_MOTION_SENSE_RUNTIME_PROBE_CUSTOM_CALL
 void motion_sense_probe_sensors(void);
-#endif
 
 #endif /* __CROS_EC_MOTIONSENSE_SENSORS_H */

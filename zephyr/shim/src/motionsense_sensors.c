@@ -437,11 +437,7 @@ DECLARE_HOOK(HOOK_INIT, sensor_enable_irqs, HOOK_PRIO_DEFAULT);
 		())
 
 #if DT_NODE_EXISTS(SENSOR_ALT_NODE)
-#ifndef CONFIG_PLATFORM_EC_MOTION_SENSE_RUNTIME_PROBE_CUSTOM_CALL
-static void motion_sense_probe_sensors(void)
-#else
 void motion_sense_probe_sensors(void)
-#endif
 {
 	DT_FOREACH_CHILD(SENSOR_ALT_NODE, PROBE_IF_NEEDED);
 }
@@ -453,10 +449,6 @@ static void motion_sensors_init_alt(void)
 	if (dev != NULL) {
 		DT_FOREACH_CHILD(SENSOR_ALT_NODE, ALT_MOTION_SENSOR_INIT_ID)
 	}
-
-	if (!IS_ENABLED(
-	    CONFIG_PLATFORM_EC_MOTION_SENSE_RUNTIME_PROBE_CUSTOM_CALL))
-		motion_sense_probe_sensors();
 }
 DECLARE_HOOK(HOOK_INIT, motion_sensors_init_alt, HOOK_PRIO_INIT_I2C + 1);
 #endif /* DT_NODE_EXISTS(SENSOR_ALT_NODE) */
