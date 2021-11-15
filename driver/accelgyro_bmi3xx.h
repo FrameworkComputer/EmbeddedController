@@ -50,7 +50,7 @@
 #define BMI3_REG_GYR_CONF			0x21
 #define BMI3_REG_INT_MAP1			0x3A
 #define BMI3_REG_FIFO_WATERMARK			0x35
-
+#define BMI3_REG_UGAIN_OFF_SEL		0x3F
 #define BMI3_REG_FIFO_CONF			0x36
 #define BMI3_FIFO_STOP_ON_FULL			0x01
 #define BMI3_FIFO_TIME_EN			0x01
@@ -106,9 +106,10 @@
 #define BMI3_ACC_FOC_16G_REF			2048
 #define BMI3_FOC_SAMPLE_LIMIT			32
 
-/* 20ms delay for 50Hz ODR */
 #define FOC_TRY_COUNT				5
+/* 20ms delay for 50Hz ODR */
 #define FOC_DELAY				20
+#define OFFSET_UPDATE_DELAY			120
 #define BMI3_INT_STATUS_FWM			0x4000
 #define BMI3_INT_STATUS_FFULL			0x8000
 #define BMI3_INT_STATUS_ORIENTATION		0x0008
