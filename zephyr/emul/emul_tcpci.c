@@ -1139,12 +1139,12 @@ static int tcpci_emul_init(const struct emul *emul, const struct device *parent)
 			.access_reg = tcpci_emul_access_reg,		\
 		},							\
 		.alert_gpio_port = COND_CODE_1(				\
-			DT_NODE_HAS_PROP(n, alert_gpio),		\
+			DT_INST_NODE_HAS_PROP(n, alert_gpio),		\
 			(DEVICE_DT_GET(DT_GPIO_CTLR(			\
 				DT_INST_PROP(n, alert_gpio), gpios))),	\
 			(NULL)),					\
 		.alert_gpio_pin = COND_CODE_1(				\
-			DT_NODE_HAS_PROP(n, alert_gpio),		\
+			DT_INST_NODE_HAS_PROP(n, alert_gpio),		\
 			(DT_GPIO_PIN(DT_INST_PROP(n, alert_gpio),	\
 				gpios)),				\
 			(0)),						\
