@@ -9,11 +9,6 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
-/*
- * TODO(b:188674805) create a driver to pull this information from DeviceTree
- */
-#include "power/mt8192.h"
-
 #define GPIO_ENTERING_RW		GPIO_UNIMPLEMENTED
 #define GPIO_WP_L			GPIO_UNIMPLEMENTED
 

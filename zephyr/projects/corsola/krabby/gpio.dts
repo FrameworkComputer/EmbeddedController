@@ -287,7 +287,7 @@
 	};
 
 	power_signal_list: power-signal-list {
-		compatible = "mediatek,power-signal-list";
+		compatible = "mt8192,power-signal-list";
 		pmic_pwr_good {
 			power-enum-name = "PMIC_PWR_GOOD";
 			power-gpio-pin = <&pmic_ec_pwrgd>;

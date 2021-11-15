@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 description: MediaTek, Power Signal List
-compatible: "mediatek,power-signal-list"
+compatible: "mt8192,power-signal-list"
 
 include: power-signal-list.yaml
 
