@@ -253,29 +253,25 @@ static int ln9310_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 {
 	struct ln9310_emul_data *data = LN9310_DATA_FROM_I2C_EMUL(emul);
 
+	__ASSERT(bytes == 1, "bytes 0x%x != 0x1 on reg 0x%x", bytes, reg);
+
 	switch (reg) {
 	case LN9310_REG_INT1:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int1_reg = val;
 		break;
 	case LN9310_REG_SYS_STS:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->sys_sts_reg = val;
 		break;
 	case LN9310_REG_INT1_MSK:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->int1_msk_reg = val;
 		break;
 	case LN9310_REG_STARTUP_CTRL:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->startup_ctrl_reg = val;
 		break;
 	case LN9310_REG_LION_CTRL:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->lion_ctrl_reg = val;
 		break;
 	case LN9310_REG_BC_STS_B:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->bc_sts_b_reg = val;
 		break;
 	case LN9310_REG_BC_STS_C:
@@ -285,71 +281,54 @@ static int ln9310_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 			 reg);
 		break;
 	case LN9310_REG_CFG_0:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->cfg_0_reg = val;
 		break;
 	case LN9310_REG_CFG_4:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->cfg_4_reg = val;
 		break;
 	case LN9310_REG_CFG_5:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->cfg_5_reg = val;
 		break;
 	case LN9310_REG_PWR_CTRL:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->power_ctrl_reg = val;
 		break;
 	case LN9310_REG_TIMER_CTRL:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->timer_ctrl_reg = val;
 		break;
 	case LN9310_REG_LB_CTRL:
-		__ASSERT_NO_MSG(bytes = 1);
 		data->lower_bound_ctrl_reg = val;
 		break;
 	case LN9310_REG_SPARE_0:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->spare_0_reg = val;
 		break;
 	case LN9310_REG_SWAP_CTRL_0:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->swap_ctrl_0_reg = val;
 		break;
 	case LN9310_REG_SWAP_CTRL_1:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->swap_ctrl_1_reg = val;
 		break;
 	case LN9310_REG_SWAP_CTRL_2:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->swap_ctrl_2_reg = val;
 		break;
 	case LN9310_REG_SWAP_CTRL_3:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->swap_ctrl_3_reg = val;
 		break;
 	case LN9310_REG_TRACK_CTRL:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->track_ctrl_reg = val;
 		break;
 	case LN9310_REG_MODE_CHANGE_CFG:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->mode_change_cfg_reg = val;
 		break;
 	case LN9310_REG_SYS_CTRL:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->sys_ctrl_reg = val;
 		break;
 	case LN9310_REG_FORCE_SC21_CTRL_1:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->force_sc21_ctrl_1_reg = val;
 		break;
 	case LN9310_REG_FORCE_SC21_CTRL_2:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->force_sc21_ctrl_2_reg = val;
 		break;
 	case LN9310_REG_TEST_MODE_CTRL:
-		__ASSERT_NO_MSG(bytes == 1);
 		data->test_mode_ctrl_reg = val;
 		break;
 	default:
@@ -383,101 +362,79 @@ static int ln9310_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 {
 	struct ln9310_emul_data *data = LN9310_DATA_FROM_I2C_EMUL(emul);
 
+	__ASSERT(bytes == 0, "bytes 0x%x != 0x0 on reg 0x%x", bytes, reg);
+
 	switch (reg) {
 	case LN9310_REG_INT1:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int1_reg;
 		break;
 	case LN9310_REG_SYS_STS:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->sys_sts_reg;
 		break;
 	case LN9310_REG_INT1_MSK:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->int1_msk_reg;
 		break;
 	case LN9310_REG_STARTUP_CTRL:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->startup_ctrl_reg;
 		break;
 	case LN9310_REG_LION_CTRL:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->lion_ctrl_reg;
 		break;
 	case LN9310_REG_BC_STS_B:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->bc_sts_b_reg;
 		break;
 	case LN9310_REG_BC_STS_C:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->bc_sts_c_reg;
 		break;
 	case LN9310_REG_CFG_0:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->cfg_0_reg;
 		break;
 	case LN9310_REG_CFG_4:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->cfg_4_reg;
 		break;
 	case LN9310_REG_CFG_5:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->cfg_5_reg;
 		break;
 	case LN9310_REG_PWR_CTRL:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->power_ctrl_reg;
 		break;
 	case LN9310_REG_TIMER_CTRL:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->timer_ctrl_reg;
 		break;
 	case LN9310_REG_LB_CTRL:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->lower_bound_ctrl_reg;
 		break;
 	case LN9310_REG_SPARE_0:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->spare_0_reg;
 		break;
 	case LN9310_REG_SWAP_CTRL_0:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->swap_ctrl_0_reg;
 		break;
 	case LN9310_REG_SWAP_CTRL_1:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->swap_ctrl_1_reg;
 		break;
 	case LN9310_REG_SWAP_CTRL_2:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->swap_ctrl_2_reg;
 		break;
 	case LN9310_REG_SWAP_CTRL_3:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->swap_ctrl_3_reg;
 		break;
 	case LN9310_REG_TRACK_CTRL:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->track_ctrl_reg;
 		break;
 	case LN9310_REG_MODE_CHANGE_CFG:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->mode_change_cfg_reg;
 		break;
 	case LN9310_REG_SYS_CTRL:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->sys_ctrl_reg;
 		break;
 	case LN9310_REG_FORCE_SC21_CTRL_1:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->force_sc21_ctrl_1_reg;
 		break;
 	case LN9310_REG_FORCE_SC21_CTRL_2:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->force_sc21_ctrl_2_reg;
 		break;
 	case LN9310_REG_TEST_MODE_CTRL:
-		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->test_mode_ctrl_reg;
 		break;
 	default:
