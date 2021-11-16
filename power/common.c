@@ -526,23 +526,17 @@ static enum power_state power_common_state(enum power_state state)
 		break;
 
 	case POWER_S3:
+		/* fallthrough */
+	case POWER_S0:
+#ifdef CONFIG_POWER_S0IX
+		/* fallthrough */
+	case POWER_S0ix:
+#endif
 		/* Wait for a message */
 		power_wait_signals(0);
 		task_wait_event(-1);
 		break;
 
-	case POWER_S0:
-		/* Wait for a message */
-		power_wait_signals(0);
-		task_wait_event(-1);
-		break;
-#ifdef CONFIG_POWER_S0IX
-	case POWER_S0ix:
-		/* Wait for a message */
-		power_wait_signals(0);
-		task_wait_event(-1);
-		break;
-#endif
 	default:
 		/* No common functionality for transition states */
 		break;
