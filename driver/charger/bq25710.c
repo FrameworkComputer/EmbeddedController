@@ -146,8 +146,17 @@ static inline enum ec_error_list raw_read16(int chgnum, int offset, int *value)
 
 static inline int min_system_voltage_to_reg(int voltage_mv)
 {
-	return (voltage_mv / BQ25710_MIN_SYSTEM_VOLTAGE_STEP_MV) <<
-			BQ25710_MIN_SYSTEM_VOLTAGE_SHIFT;
+	int steps;
+	int reg;
+
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25720)) {
+		steps = voltage_mv / BQ25720_VSYS_MIN_VOLTAGE_STEP_MV;
+		reg = SET_BQ_FIELD(BQ25720, VSYS_MIN, VOLTAGE, steps, 0);
+	} else {
+		steps = voltage_mv / BQ25710_MIN_SYSTEM_VOLTAGE_STEP_MV;
+		reg = SET_BQ_FIELD(BQ25710, MIN_SYSTEM, VOLTAGE, steps, 0);
+	}
+	return reg;
 }
 
 static inline enum ec_error_list raw_write16(int chgnum, int offset, int value)

@@ -60,14 +60,8 @@
 #endif
 
 /* Min System Voltage Register */
-#if defined(CONFIG_CHARGER_BQ25720)
 #define BQ25710_MIN_SYSTEM_VOLTAGE_STEP_MV	100
-#elif defined(CONFIG_CHARGER_BQ25710)
-#define BQ25710_MIN_SYSTEM_VOLTAGE_STEP_MV	256
-#else
-#error Only the BQ25720 and BQ25710 are supported by bq25710 driver.
-#endif
-#define BQ25710_MIN_SYSTEM_VOLTAGE_SHIFT	8
+#define BQ25720_VSYS_MIN_VOLTAGE_STEP_MV	256
 
 extern const struct charger_drv bq25710_drv;
 
