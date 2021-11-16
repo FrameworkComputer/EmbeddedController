@@ -710,11 +710,12 @@ static int ps8xxx_get_chip_info(int port, int live,
 static int ps8xxx_enter_low_power_mode(int port)
 {
 	/*
-	 * PS8751 has the auto sleep function that enters low power mode on
-	 * its own in ~2 seconds. Other chips don't have it. Stub it out for
-	 * PS8751.
+	 * PS8751/PS8815 has the auto sleep function that enters
+	 * low power mode on its own in ~2 seconds. Other chips
+	 * don't have it. Stub it out for PS8751/PS8815.
 	 */
-	if (product_id[port] == PS8751_PRODUCT_ID)
+	if (product_id[port] == PS8751_PRODUCT_ID ||
+		product_id[port] == PS8815_PRODUCT_ID)
 		return EC_SUCCESS;
 
 	return tcpci_enter_low_power_mode(port);

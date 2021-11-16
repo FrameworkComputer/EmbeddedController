@@ -911,7 +911,14 @@ static void test_ps8xxx_tcpci_low_power_mode(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
 	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
-
+	/*
+	 * PS8751/PS8815 has the auto sleep function that enters
+	 * low power mode on its own in ~2 seconds. Other chips
+	 * don't have it. Stub it out for PS8751/PS8815.
+	 */
+	if (board_get_ps8xxx_product_id(USBC_PORT_C1) == PS8751_PRODUCT_ID ||
+		board_get_ps8xxx_product_id(USBC_PORT_C1) == PS8815_PRODUCT_ID)
+		return;
 	test_tcpci_low_power_mode(tcpci_emul, USBC_PORT_C1);
 }
 
