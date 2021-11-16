@@ -1,0 +1,20 @@
+# Copyright 2021 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: MediaTek MT8186, Power Signal List
+compatible: "mt8186,power-signal-list"
+
+include: power-signal-list.yaml
+
+properties:
+  power-signals-required:
+    default: 4
+
+child-binding:
+  properties:
+    power-enum-name:
+      enum:
+        - AP_IN_RST
+        - AP_IN_S3
+        - AP_WDT_ASSERTED
+        - AP_WARM_RST_REQ

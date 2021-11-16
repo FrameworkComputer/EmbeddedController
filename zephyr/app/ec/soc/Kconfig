@@ -44,6 +44,12 @@ config AP_ARM_MTK_MT8192
 	help
 	  The application processor is a MediaTek MT8192 processor.
 
+config AP_ARM_MTK_MT8186
+	bool "MediaTek MT8186"
+	select AP_AARCH64
+	help
+	  The application processor is a MediaTek MT8186 processor.
+
 config AP_ARM_QUALCOMM_SC7180
 	bool "Qualcomm Snapdragon SC7180"
 	select AP_AARCH64
