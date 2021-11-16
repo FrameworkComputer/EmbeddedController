@@ -32,6 +32,7 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "util.h"
 
 #ifdef CONFIG_BRINGUP
 #define GPIO_SET_LEVEL(signal, value) \
@@ -475,6 +476,11 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5;
 
 		return POWER_G3;
+
+	default:
+		CPRINTS("Unexpected power state %d", state);
+		ASSERT(0);
+		break;
 	}
 
 	return state;

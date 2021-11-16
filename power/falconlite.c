@@ -462,6 +462,11 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5G3:
 		power_seq_run(s5g3_power_seq, ARRAY_SIZE(s5g3_power_seq));
 		return POWER_G3;
+
+	default:
+		CPRINTS("Unexpected power state %d", state);
+		ASSERT(0);
+		break;
 	}
 
 	return state;

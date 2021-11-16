@@ -570,6 +570,11 @@ enum power_state power_handle_state(enum power_state state)
 		}
 
 		return POWER_G3;
+
+	default:
+		CPRINTS("Unexpected power state %d", state);
+		ASSERT(0);
+		break;
 	}
 
 	return state;
