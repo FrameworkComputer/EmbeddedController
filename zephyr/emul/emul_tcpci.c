@@ -335,6 +335,44 @@ void tcpci_emul_set_partner_ops(const struct emul *emul,
 	data->partner = partner;
 }
 
+/**
+ * @brief Get detected voltage for given CC resistor
+ *
+ * @param res CC pull resistor value
+ * @param volt Voltage applied by port partner
+ *
+ * @return Voltage visible at CC resistor side
+ */
+static enum tcpc_cc_voltage_status tcpci_emul_detected_volt_for_res(
+		enum tcpc_cc_pull res,
+		enum tcpc_cc_voltage_status volt)
+{
+	switch (res) {
+	case TYPEC_CC_RD:
+		switch (volt) {
+		/* As Rd we cannot detect another Rd or Ra */
+		case TYPEC_CC_VOLT_RA:
+		case TYPEC_CC_VOLT_RD:
+			return TYPEC_CC_VOLT_OPEN;
+		default:
+			return volt;
+		}
+	case TYPEC_CC_RP:
+		switch (volt) {
+		/* As Rp we cannot detect another Rp */
+		case TYPEC_CC_VOLT_RP_DEF:
+		case TYPEC_CC_VOLT_RP_1_5:
+		case TYPEC_CC_VOLT_RP_3_0:
+			return TYPEC_CC_VOLT_OPEN;
+		default:
+			return volt;
+		}
+	default:
+		/* As Ra or open we cannot detect anything */
+		return TYPEC_CC_VOLT_OPEN;
+	}
+}
+
 /** Check description in emul_tcpci.h */
 int tcpci_emul_connect_partner(const struct emul *emul,
 			       enum pd_power_role partner_power_role,
@@ -343,11 +381,8 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 			       enum tcpc_cc_polarity polarity)
 {
 	enum tcpc_cc_voltage_status cc1_v, cc2_v;
-	uint16_t cc_status, alert;
-	/**
-	 * TODO: Check TCPC config if it is possible to detect that connection
-	 *       in current state.
-	 */
+	uint16_t cc_status, alert, role_ctrl;
+	enum tcpc_cc_pull cc1_r, cc2_r;
 
 	if (polarity == POLARITY_CC1) {
 		cc1_v = partner_cc1;
@@ -357,15 +392,27 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 		cc2_v = partner_cc1;
 	}
 
-	/* As sink we cannot detect active cable */
-	if (partner_power_role == PD_ROLE_SOURCE) {
-		if (cc1_v == TYPEC_CC_VOLT_RA) {
-			cc1_v = TYPEC_CC_VOLT_OPEN;
+	tcpci_emul_get_reg(emul, TCPC_REG_CC_STATUS, &cc_status);
+	if (TCPC_REG_CC_STATUS_LOOK4CONNECTION(cc_status)) {
+		/* Change resistors values in case of DRP toggling */
+		if (partner_power_role == PD_ROLE_SOURCE) {
+			/* TCPCI is sink */
+			cc1_r = TYPEC_CC_RD;
+			cc2_r = TYPEC_CC_RD;
+		} else {
+			/* TCPCI is src */
+			cc1_r = TYPEC_CC_RP;
+			cc2_r = TYPEC_CC_RP;
 		}
-		if (cc2_v == TYPEC_CC_VOLT_RA) {
-			cc2_v = TYPEC_CC_VOLT_OPEN;
-		}
+	} else {
+		/* Use role control resistors values otherwise */
+		tcpci_emul_get_reg(emul, TCPC_REG_ROLE_CTRL, &role_ctrl);
+		cc1_r = TCPC_REG_ROLE_CTRL_CC1(role_ctrl);
+		cc2_r = TCPC_REG_ROLE_CTRL_CC2(role_ctrl);
 	}
+
+	cc1_v = tcpci_emul_detected_volt_for_res(cc1_r, cc1_v);
+	cc2_v = tcpci_emul_detected_volt_for_res(cc2_r, cc2_v);
 
 	/* If CC status is TYPEC_CC_VOLT_RP_*, then BIT(2) is ignored */
 	cc_status = TCPC_REG_CC_STATUS_SET(
@@ -921,6 +968,8 @@ static int tcpci_emul_write_byte(struct i2c_emul *i2c_emul, int reg,
 static int tcpci_emul_handle_command(const struct emul *emul)
 {
 	struct tcpci_emul_data *data = emul->data;
+	uint16_t role_ctrl;
+	uint16_t pwr_ctrl;
 
 	switch (data->write_data & 0xff) {
 	case TCPC_REG_COMMAND_RESET_TRANSMIT_BUF:
@@ -931,12 +980,31 @@ static int tcpci_emul_handle_command(const struct emul *emul)
 			data->rx_msg->idx = 0;
 		}
 		break;
+	case TCPC_REG_COMMAND_LOOK4CONNECTION:
+		tcpci_emul_get_reg(emul, TCPC_REG_ROLE_CTRL, &role_ctrl);
+		tcpci_emul_get_reg(emul, TCPC_REG_POWER_CTRL, &pwr_ctrl);
+
+		/*
+		 * Start DRP toggling only if auto discharge is disabled,
+		 * DRP is enabled and CC1/2 are both Rp or Rd
+		 */
+		if (!(pwr_ctrl & TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT)
+		    && TCPC_REG_ROLE_CTRL_DRP(role_ctrl) &&
+		    (TCPC_REG_ROLE_CTRL_CC1(role_ctrl) ==
+		     TCPC_REG_ROLE_CTRL_CC2(role_ctrl)) &&
+		    (TCPC_REG_ROLE_CTRL_CC1(role_ctrl) == TYPEC_CC_RP ||
+		     TCPC_REG_ROLE_CTRL_CC1(role_ctrl) == TYPEC_CC_RD)) {
+			/* Set Look4Connection and clear CC1/2 state */
+			tcpci_emul_set_reg(
+				emul, TCPC_REG_CC_STATUS,
+				TCPC_REG_CC_STATUS_LOOK4CONNECTION_MASK);
+		}
+		break;
 	case TCPC_REG_COMMAND_ENABLE_VBUS_DETECT:
 	case TCPC_REG_COMMAND_SNK_CTRL_LOW:
 	case TCPC_REG_COMMAND_SNK_CTRL_HIGH:
 	case TCPC_REG_COMMAND_SRC_CTRL_LOW:
 	case TCPC_REG_COMMAND_SRC_CTRL_HIGH:
-	case TCPC_REG_COMMAND_LOOK4CONNECTION:
 	case TCPC_REG_COMMAND_I2CIDLE:
 		break;
 	default:
