@@ -149,6 +149,11 @@
 		};
 	};
 
+	vsby-psl-in-list {
+		/* Use PSL_IN1/2/3 as detection pins from hibernate mode */
+		psl-in-pads = <&psl_in1 &psl_in2 &psl_in3>;
+	};
+
 	def-lvol-io-list {
 		compatible = "nuvoton,npcx-lvolctrl-def";
 	};
@@ -262,6 +267,22 @@
 
 &adc0 {
 	status = "okay";
+};
+
+/* Power switch logic input pads */
+/* LID_OPEN_OD */
+&psl_in1 {
+	flag = <NPCX_PSL_RISING_EDGE>;
+};
+
+/* ACOK_EC_OD */
+&psl_in2 {
+	flag = <NPCX_PSL_RISING_EDGE>;
+};
+
+/* GSC_EC_PWR_BTN_ODL */
+&psl_in3 {
+	flag = <NPCX_PSL_FALLING_EDGE>;
 };
 
 &thermistor_3V3_30K9_47K_4050B {
