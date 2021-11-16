@@ -193,3 +193,42 @@ def test_find_projects_name_conflict(tmp_path):
 
     with pytest.raises(KeyError):
         zmake.project.find_projects(tmp_path)
+
+
+@pytest.mark.parametrize(
+    ("actual_files", "config_files", "expected_files"),
+    [
+        (["prj_link.conf"], [], []),
+        (["prj.conf"], [], ["prj.conf"]),
+        (
+            ["prj.conf", "cfg.conf"],
+            ["prj.conf", "cfg.conf"],
+            ["prj.conf", "cfg.conf"],
+        ),
+        (
+            ["prj.conf", "prj_samus.conf", "prj_link.conf"],
+            ["prj_link.conf"],
+            ["prj.conf", "prj_link.conf"],
+        ),
+    ],
+)
+def test_kconfig_files(tmp_path, actual_files, config_files, expected_files):
+    for name in actual_files:
+        (tmp_path / name).write_text("")
+
+    project = zmake.project.Project(
+        zmake.project.ProjectConfig(
+            project_name="samus",
+            zephyr_board="lm4",
+            output_packer=zmake.output_packers.RawBinPacker,
+            supported_toolchains=["coreboot-sdk"],
+            project_dir=tmp_path,
+            kconfig_files=[tmp_path / name for name in config_files],
+        ),
+    )
+
+    builds = list(project.iter_builds())
+    assert len(builds) == 1
+
+    _, config = builds[0]
+    assert sorted(f.name for f in config.kconfig_files) == sorted(expected_files)

@@ -97,6 +97,7 @@ class ProjectConfig:
     )
     is_test: bool = dataclasses.field(default=False)
     dts_overlays: "list[str]" = dataclasses.field(default_factory=list)
+    kconfig_files: "list[pathlib.Path]" = dataclasses.field(default_factory=list)
     project_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
 
 
@@ -114,9 +115,14 @@ class Project:
             2-tuples of a build configuration name and a BuildConfig.
         """
         conf = build_config.BuildConfig(cmake_defs={"BOARD": self.config.zephyr_board})
+
+        kconfig_files = []
         prj_conf = self.config.project_dir / "prj.conf"
         if prj_conf.is_file():
-            conf |= build_config.BuildConfig(kconfig_files=[prj_conf])
+            kconfig_files.append(prj_conf)
+        kconfig_files.extend(self.config.kconfig_files)
+        conf |= build_config.BuildConfig(kconfig_files=kconfig_files)
+
         for build_name, packer_config in self.packer.configs():
             yield build_name, conf | packer_config
 
