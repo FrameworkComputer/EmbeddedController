@@ -120,6 +120,7 @@ UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(4, 1))       /* GPIO41/ADC4 */
 UNUSED(PIN(6, 6))       /* GPIO66 */
+UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 
 /* Pre-configured PSL balls:  J8  K6 */
 

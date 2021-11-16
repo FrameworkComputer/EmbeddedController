@@ -125,6 +125,7 @@ UNUSED(PIN(A, 0))       /* F_CS0_L/GPIOA0 */
 UNUSED(PIN(9, 6))       /* F_DIO1/GPIO96 */
 UNUSED(PIN(7, 0))       /* GPIO70/PS2_DAT0 */
 UNUSED(PIN(8, 1))       /* PECI DATA/GPIO81 */
+UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 
 /* Pre-configured PSL balls:  J8  K6 */
 

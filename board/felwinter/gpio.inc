@@ -129,6 +129,7 @@ UNUSED(PIN(D, 4))       /* GPIOD4 */
 UNUSED(PIN(C, 6))       /* GPIOC6 */
 UNUSED(PIN(6, 2))       /* GPIO62 */
 UNUSED(PIN(B, 1))       /* GPIOB1 */
+UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 
 /* Pre-configured PSL balls:  J8  K6 */
 
