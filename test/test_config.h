@@ -672,5 +672,9 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define I2C_BITBANG_PORT_COUNT 1
 #endif
 
+#ifdef TEST_PANIC
+#undef CONFIG_PANIC_STRIP_GPR
+#endif
+
 #endif /* TEST_BUILD */
 #endif /* __TEST_TEST_CONFIG_H */
