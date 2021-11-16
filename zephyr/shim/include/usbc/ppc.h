@@ -10,6 +10,7 @@
 #include <devicetree.h>
 #include "usbc/ppc_sn5s330.h"
 #include "usbc/ppc_syv682x.h"
+#include "usbc_ppc.h"
 
 #define PPC_ID(id) DT_CAT(PPC_, id)
 #define PPC_ID_WITH_COMMA(id) PPC_ID(id),

@@ -62,23 +62,6 @@ void usba_oc_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&usba_oc_deferred_data, 0);
 }
 
-#define BOARD_VERSION_UNKNOWN	0xffffffff
-
-/* Check board version to decide which ppc is used. */
-static bool board_has_syv_ppc(void)
-{
-	static uint32_t board_version = BOARD_VERSION_UNKNOWN;
-
-	if (board_version == BOARD_VERSION_UNKNOWN) {
-		if (cbi_get_board_version(&board_version) != EC_SUCCESS) {
-			CPRINTS("Failed to get board version.");
-			board_version = 0;
-		}
-	}
-
-	return (board_version >= 1);
-}
-
 void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -190,10 +173,6 @@ static void board_init_usbc(void)
 {
 	/* Enable USB-A overcurrent interrupt */
 	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
-
-	/* Configure the PPC driver */
-	if (board_has_syv_ppc())
-		PPC_ENABLE_ALTERNATE(ppc_port0_syv);
 }
 DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
 
