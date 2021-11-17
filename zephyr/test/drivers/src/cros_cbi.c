@@ -27,8 +27,22 @@ static void test_check_match(void)
 	zassert_false(value, "Expected cbi ssfc to fail on invalid enum");
 }
 
+static void test_fail_check_match(void)
+{
+	const struct device *dev = device_get_binding(CROS_CBI_LABEL);
+	int value;
+
+	zassert_not_null(dev, NULL);
+
+	value = cros_cbi_ssfc_check_match(dev, CBI_SSFC_VALUE_COUNT);
+	zassert_false(value,
+		      "Expected cbi ssfc to never match CBI_SSFC_VALUE_COUNT");
+}
+
 void test_suite_cros_cbi(void)
 {
-	ztest_test_suite(cros_cbi, ztest_unit_test(test_check_match));
+	ztest_test_suite(cros_cbi,
+			 ztest_unit_test(test_check_match),
+			 ztest_unit_test(test_fail_check_match));
 	ztest_run_test_suite(cros_cbi);
 }
