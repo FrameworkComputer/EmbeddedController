@@ -146,6 +146,7 @@
 /* ISET & CHEN */
 #define MP3372_REG_ISET_CHEN		0x00
 #define MP3372_ISET_21P8_CHEN_ALL	0x70ff
+#define MP3372_ISET_19P4_CHEN_ALL	0x63ff
 /*
  * I2C pin names for baseboard
  *
