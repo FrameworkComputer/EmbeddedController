@@ -70,6 +70,10 @@
 						     CHARGE_OPTION_3,	\
 						     _field, _v, (_x))
 
+#define SET_CO3_BY_NAME(_field, _c, _x)	SET_BQ_FIELD_BY_NAME(BQ257X0,	\
+							     CHARGE_OPTION_3, \
+							     _field, _c, (_x))
+
 #define SET_CO4(_field, _v, _x)		SET_BQ_FIELD(BQ25720,	\
 						     CHARGE_OPTION_4,	\
 						     _field, _v, (_x))
@@ -418,11 +422,7 @@ static int bq257x0_init_charge_option_3(int chgnum)
 	if (rv)
 		return rv;
 
-	/*
-	 * The bq25720 defaults to 15 A while the bq25710
-	 * defaults to 10A. Set the bq25720 to 10A as well.
-	 */
-	reg = SET_CO3(IL_AVG, BQ25720_CHARGE_OPTION_3_IL_AVG__10A, reg);
+	reg = SET_CO3_BY_NAME(IL_AVG, 10A, reg);
 
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_3, reg);
 }
