@@ -1200,7 +1200,12 @@ static int shutdown_on_critical_battery(void)
 		switch (board_critical_shutdown_check(&curr)) {
 		case CRITICAL_SHUTDOWN_HIBERNATE:
 			if (IS_ENABLED(CONFIG_HIBERNATE)) {
-				if (power_get_state() == POWER_S3S5)
+				/*
+				 * If the chipset is on its way down but not
+				 * quite there yet, give it a little time to
+				 * get there.
+				 */
+				if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
 					sleep(1);
 				CPRINTS("Hibernate due to critical battery");
 				cflush();
@@ -1208,7 +1213,11 @@ static int shutdown_on_critical_battery(void)
 			}
 			break;
 		case CRITICAL_SHUTDOWN_CUTOFF:
-			if (power_get_state() == POWER_S3S5)
+			/*
+			 * Give the chipset just a sec to get to off if
+			 * it's trying.
+			 */
+			if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
 				sleep(1);
 			CPRINTS("Cutoff due to critical battery");
 			cflush();
