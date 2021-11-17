@@ -109,6 +109,16 @@ config PLATFORM_EC_POWERSEQ_S0IX
 	  option, Intel's low-power idle sleep state, also known as
 	  "modern sleep".
 
+config PLATFORM_EC_POWERSEQ_S4
+	bool "Advertise S4 residency"
+	depends on PLATFORM_EC_ESPI_VW_SLP_S5
+	default y if AP_X86_INTEL_TGL
+	default y if AP_X86_INTEL_ADL
+	help
+	  Advertise S4 residency capabilities to the AP. This is required for
+	  AP hibernate (suspend-to-disk) on Intel platforms with Key Locker
+	  support (TGL+)
+
 config PLATFORM_EC_POWERSEQ_COMETLAKE
 	bool "Use common Comet Lake code for power sequencing"
 	depends on AP_X86_INTEL_CML

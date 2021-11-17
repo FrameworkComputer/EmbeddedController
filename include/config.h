@@ -3531,6 +3531,9 @@
 /* Support S0ix */
 #undef CONFIG_POWER_S0IX
 
+/* Advertise S4 residency */
+#undef CONFIG_POWER_S4_RESIDENCY
+
 /* Support detecting failure to enter a sleep state (S0ix/S3) */
 #undef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 
@@ -5537,6 +5540,18 @@
 	defined(CONFIG_HOSTCMD_ESPI_VW_SLP_S4) || \
 	defined(CONFIG_HOSTCMD_ESPI_VW_SLP_S5)
 #define CONFIG_HOST_ESPI_VW_POWER_SIGNAL
+#endif
+
+/*
+ * S4 residency works by observing SLP_S5 via virtual wire (as SLP_S5 has not
+ * traditionally been routed to the EC). If the board family wants S4 residency,
+ * they need to use ECs that support eSPI. Note that S4 residency is not
+ * strictly a requirement to support suspend-to-disk, except on Intel platforms
+ * with Key Locker support (TGL+).
+ */
+#if defined(CONFIG_POWER_S4_RESIDENCY) && \
+	!defined(CONFIG_HOSTCMD_ESPI_VW_SLP_S5)
+#error "S4_RESIDENCY needs eSPI support or SLP_S5 routed"
 #endif
 
 /*

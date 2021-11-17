@@ -896,6 +896,7 @@ static const char * const ec_feature_names[] = {
 		"Host-controlled Type-C mode entry",
 	[EC_FEATURE_TYPEC_MUX_REQUIRE_AP_ACK] =
 		"AP ack for Type-C mux configuration",
+	[EC_FEATURE_S4_RESIDENCY] = "S4 residency",
 };
 
 int cmd_inventory(int argc, char *argv[])
