@@ -57,8 +57,8 @@ GPIO(DEBUG_GPIO1,                   PIN(B, 13),      GPIO_OUT_LOW)
 * USB CDP enables. */
 GPIO(USB3_A1_CDP_EN,                PIN(E, 7),       GPIO_OUT_LOW)
 GPIO(USB3_A2_CDP_EN,                PIN(E, 8),       GPIO_OUT_LOW)
-GPIO(USB3_P3_CDP_EN,                PIN(D, 1),      GPIO_OUT_LOW)
-GPIO(USB3_P4_CDP_EN,                PIN(E, 12),      GPIO_OUT_LOW)
+GPIO(USB3_P3_CDP_EN,                PIN(D, 1),       GPIO_OUT_HIGH)
+GPIO(USB3_P4_CDP_EN,                PIN(E, 12),      GPIO_OUT_HIGH)
 
 /* Write protect */
 GPIO(EC_FLASH_WP_ODL,               PIN(A, 3),       GPIO_ODR_HIGH)
