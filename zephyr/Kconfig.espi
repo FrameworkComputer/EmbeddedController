@@ -4,25 +4,25 @@
 
 if PLATFORM_EC_HOST_INTERFACE_ESPI
 
-config PLATFORM_EC_ESPI_VW_SLP_S3
+config PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S3
 	bool "SLP_S3 is an eSPI virtual wire instead of a GPIO"
 	help
 	  For power sequencing, use an eSPI virtual wire instead of
 	  defining GPIO_PCH_SLP_S3 in the GPIO device tree.
 
-config PLATFORM_EC_ESPI_VW_SLP_S4
+config PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S4
 	bool "SLP_S4 is an eSPI virtual wire instead of a GPIO"
 	help
 	  For power sequencing, use an eSPI virtual wire instead of
 	  defining GPIO_PCH_SLP_S4 in the GPIO device tree.
 
-config PLATFORM_EC_ESPI_VW_SLP_S5
+config PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5
 	bool "SLP_S5 is an eSPI virtual wire instead of an alias for SLP_S4"
 	help
 	  For power sequencing, use an eSPI virtual wire to read the SLP_S5 line,
 	  as opposed to merging it into the same net as SLP_S4.
 
-config PLATFORM_EC_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
+config PLATFORM_EC_HOST_INTERFACE_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
 	bool "Reset SLP VW signals on eSPI reset"
 	help
 	  Enable this config to reset SLP* VW when eSPI_RST is asserted
@@ -31,7 +31,7 @@ config PLATFORM_EC_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
 	  maintain these pins' states per request. Note that this is
 	  currently unimplemented for Zephyr. Please see b/183148073.
 
-config PLATFORM_EC_ESPI_DEFAULT_VW_WIDTH_US
+config PLATFORM_EC_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US
 	int "Virtual wire pulse width (microseconds)"
 	default 65
 	help

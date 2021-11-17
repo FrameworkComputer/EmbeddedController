@@ -62,7 +62,7 @@ struct vw_event_t {
 /* Default settings of VWEVMS registers (Please refer Table.43/44) */
 static const struct vwevms_config_t espi_in_list[] = {
 /* IDX EN ENPL ENESP IE/WE          VW Event Bit 0 - 3 (M->S)         */
-#ifdef CONFIG_HOSTCMD_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
+#ifdef CONFIG_HOST_INTERFACE_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
 	{ 0x02, 1, 0, 1, 1 }, /* SLP_S3#,   SLP_S4#,    SLP_S5#,   Reserve */
 #else
 	{ 0x02, 1, 0, 0, 1 }, /* SLP_S3#,   SLP_S4#,    SLP_S5#,   Reserve */

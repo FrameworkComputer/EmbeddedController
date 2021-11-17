@@ -25,12 +25,12 @@ GPIO_INT(PG_VPRIM_CORE_A_OD,   PIN(2, 3), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_PP1050_A_OD,       PIN(2, 2), GPIO_INT_BOTH, power_signal_interrupt)
 /* EC output, but also interrupt so this can be polled as a power signal */
 GPIO_INT(EC_PCH_RSMRST_L,      PIN(A, 6), GPIO_OUTPUT | GPIO_INT_F_RISING | GPIO_INT_F_FALLING, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#ifndef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S4
 GPIO_INT(SLP_S4_L,             PIN(D, 4), GPIO_INT_BOTH, power_signal_interrupt)
 #endif
 GPIO_INT(PG_PP2500_DRAM_U_OD,  PIN(2, 0), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PG_PP1200_U_OD,       PIN(2, 1), GPIO_INT_BOTH, power_signal_interrupt)
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#ifndef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3
 GPIO_INT(SLP_S3_L,             PIN(A, 5), GPIO_INT_BOTH, slp_s3_interrupt)
 #endif
 GPIO_INT(PG_PP950_VCCIO_OD,    PIN(1, 7), GPIO_INT_BOTH, power_signal_interrupt)

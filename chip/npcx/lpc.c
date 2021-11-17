@@ -152,7 +152,7 @@ static void lpc_generate_smi(void)
 	/* Generate a falling edge */
 	espi_wait_vw_not_dirty(VW_SMI_L, ESPI_DIRTY_WAIT_TIME_US);
 	NPCX_HIPMIC(PMC_ACPI) = NPCX_VW_SMI(0);
-	udelay(CONFIG_ESPI_DEFAULT_VW_WIDTH_US);
+	udelay(CONFIG_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US);
 	espi_wait_vw_not_dirty(VW_SMI_L, ESPI_DIRTY_WAIT_TIME_US);
 
 	/* Set signal high */
@@ -160,10 +160,10 @@ static void lpc_generate_smi(void)
 #else
 	/* SET SMIB bit to pull SMI_L to high.*/
 	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
-	udelay(CONFIG_ESPI_DEFAULT_VW_WIDTH_US);
+	udelay(CONFIG_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US);
 	/* Generate a falling edge */
 	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
-	udelay(CONFIG_ESPI_DEFAULT_VW_WIDTH_US);
+	udelay(CONFIG_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US);
 	/* Set signal high */
 	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIB);
 #endif
@@ -199,7 +199,7 @@ static void lpc_generate_sci(void)
 	/* Generate a falling edge */
 	espi_wait_vw_not_dirty(VW_SCI_L, ESPI_DIRTY_WAIT_TIME_US);
 	NPCX_HIPMIC(PMC_ACPI) = NPCX_VW_SCI(0);
-	udelay(CONFIG_ESPI_DEFAULT_VW_WIDTH_US);
+	udelay(CONFIG_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US);
 	espi_wait_vw_not_dirty(VW_SCI_L, ESPI_DIRTY_WAIT_TIME_US);
 
 	/* Set signal high */
@@ -207,10 +207,10 @@ static void lpc_generate_sci(void)
 #else
 	/* Set SCIB bit to pull SCI_L to high.*/
 	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
-	udelay(CONFIG_ESPI_DEFAULT_VW_WIDTH_US);
+	udelay(CONFIG_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US);
 	/* Generate a falling edge */
 	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
-	udelay(CONFIG_ESPI_DEFAULT_VW_WIDTH_US);
+	udelay(CONFIG_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US);
 	/* Set signal high */
 	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
 #endif

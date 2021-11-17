@@ -108,7 +108,7 @@ static void lpc_generate_sci(void)
 	espi_vw_pulse_wire(VW_SCI_L, 0);
 #else
 	MCHP_ACPI_PM_STS |= 1;
-	udelay(CONFIG_ESPI_DEFAULT_VW_WIDTH_US);
+	udelay(CONFIG_HOST_INTERFACE_ESPI_DEFAULT_VW_WIDTH_US);
 	MCHP_ACPI_PM_STS &= ~1;
 #endif
 #endif

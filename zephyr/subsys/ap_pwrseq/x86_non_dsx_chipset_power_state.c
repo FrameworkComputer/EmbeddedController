@@ -40,15 +40,15 @@ enum power_states_ndsx chipset_pwr_seq_get_state(void)
 	 * Not sure how long to wait? 5 seconds total.
 	 */
 	for (int delay = 0; delay < 500; k_msleep(10), delay++) {
-#if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S3)
+#if defined(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S3)
 		if (power_signal_get(PWR_SLP_S3) < 0)
 			continue;
 #endif
-#if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S4)
+#if defined(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S4)
 		if (power_signal_get(PWR_SLP_S4) < 0)
 			continue;
 #endif
-#if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S5)
+#if defined(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5)
 		if (power_signal_get(PWR_SLP_S5) < 0)
 			continue;
 #endif

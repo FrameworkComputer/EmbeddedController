@@ -32,12 +32,12 @@
 #endif
 
 /* GPIO for power signal */
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#ifdef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3
 #define SLP_S3_SIGNAL_L VW_SLP_S3_L
 #else
 #define SLP_S3_SIGNAL_L GPIO_PCH_SLP_S3_L
 #endif
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#ifdef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S4
 #define SLP_S4_SIGNAL_L VW_SLP_S4_L
 #else
 #define SLP_S4_SIGNAL_L GPIO_PCH_SLP_S4_L
@@ -48,7 +48,7 @@
  * use SLP_S4's GPIO as a proxy for SLP_S5. This matches old behavior and
  * effectively prevents S4 residency.
  */
-#ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S5
+#ifdef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S5
 #define SLP_S5_SIGNAL_L VW_SLP_S5_L
 #else
 #define SLP_S5_SIGNAL_L SLP_S4_SIGNAL_L

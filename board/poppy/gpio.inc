@@ -13,14 +13,14 @@ GPIO_INT(USB_C1_PD_INT_ODL,	PIN(C, 5), GPIO_INT_FALLING,			tcpc_alert_event)
 #ifdef CONFIG_POWER_S0IX
 GPIO_INT(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INT_BOTH,			power_signal_interrupt)
 #endif
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
+#ifndef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3
 #ifdef BOARD_LUX
 GPIO_INT(PCH_SLP_S3_L,		PIN(2, 2), GPIO_INT_BOTH,			power_signal_interrupt)
 #else
 GPIO_INT(PCH_SLP_S3_L,		PIN(7, 3), GPIO_INT_BOTH,			power_signal_interrupt)
 #endif
-#endif /* CONFIG_HOSTCMD_ESPI_VW_SLP_S3 */
-#ifndef CONFIG_HOSTCMD_ESPI_VW_SLP_S4
+#endif /* CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S3 */
+#ifndef CONFIG_HOST_INTERFACE_ESPI_VW_SLP_S4
 GPIO_INT(PCH_SLP_S4_L,		PIN(8, 6), GPIO_INT_BOTH,			power_signal_interrupt)
 #endif
 GPIO_INT(PCH_SLP_SUS_L,		PIN(6, 2), GPIO_INT_BOTH,			power_signal_interrupt)
