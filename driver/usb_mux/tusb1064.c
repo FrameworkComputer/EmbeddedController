@@ -14,12 +14,6 @@
 #error "Must choose CONFIG_USB_MUX_TUSB1044 or CONFIG_USB_MUX_TUSB1064"
 #endif
 
-/*
- * configuration bits which never change in the General Register
- * e.g. REG_GENERAL_DP_EN_CTRL or REG_GENERAL_EQ_OVERRIDE
- */
-#define REG_GENERAL_STATIC_BITS REG_GENERAL_EQ_OVERRIDE
-
 static int tusb1064_read(const struct usb_mux *me, uint8_t reg, uint8_t *val)
 {
 	int buffer = 0xee;
@@ -60,11 +54,54 @@ void tusb1044_hpd_update(const struct usb_mux *me, mux_state_t mux_state)
 }
 #endif
 
+int tusb1064_set_dp_rx_eq(const struct usb_mux *me, int db)
+{
+	uint8_t reg;
+	int rv;
+
+	if (db < TUSB1064_DP_EQ_RX_NEG_0_3_DB || db > TUSB1064_DP_EQ_RX_12_1_DB)
+		return EC_ERROR_INVAL;
+
+	/* Set the requested gain values */
+	reg = TUSB1064_DP1EQ(db) | TUSB1064_DP3EQ(db);
+	rv = tusb1064_write(me, TUSB1064_REG_DP1DP3EQ_SEL, reg);
+	if (rv)
+		return rv;
+
+	reg = TUSB1064_DP0EQ(db) | TUSB1064_DP2EQ(db);
+	rv = tusb1064_write(me, TUSB1064_REG_DP0DP2EQ_SEL, reg);
+	if (rv)
+		return rv;
+
+	/* Enable EQ_OVERRIDE so the gain registers are used */
+	rv = tusb1064_read(me, TUSB1064_REG_GENERAL, &reg);
+	if (rv)
+		return rv;
+
+	reg |= REG_GENERAL_EQ_OVERRIDE;
+
+	return tusb1064_write(me, TUSB1064_REG_GENERAL, reg);
+}
+
 /* Writes control register to set switch mode */
 static int tusb1064_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 			    bool *ack_required)
 {
-	int reg = REG_GENERAL_STATIC_BITS;
+	uint8_t reg;
+	int rv;
+	int mask;
+
+	rv = tusb1064_read(me, TUSB1064_REG_GENERAL, &reg);
+	if (rv)
+		return rv;
+
+	/* Mask bits that may be set in this function */
+	mask = REG_GENERAL_CTLSEL_USB3 | REG_GENERAL_CTLSEL_ANYDP |
+		REG_GENERAL_FLIPSEL;
+#ifdef CONFIG_USB_MUX_TUSB1044
+	mask |= REG_GENERAL_HPDIN_OVERRIDE;
+#endif
+	reg &= ~mask;
 
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
@@ -112,21 +149,7 @@ static int tusb1064_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 static int tusb1064_init(const struct usb_mux *me)
 {
 	int res;
-	uint8_t reg;
 	bool unused;
-
-	/* Default to "Floating Pin" DP Equalization */
-	reg = TUSB1064_DP1EQ(TUSB1064_DP_EQ_RX_10_0_DB) |
-		TUSB1064_DP3EQ(TUSB1064_DP_EQ_RX_10_0_DB);
-	res = tusb1064_write(me, TUSB1064_REG_DP1DP3EQ_SEL, reg);
-	if (res)
-		return res;
-
-	reg = TUSB1064_DP0EQ(TUSB1064_DP_EQ_RX_10_0_DB) |
-		TUSB1064_DP2EQ(TUSB1064_DP_EQ_RX_10_0_DB);
-	res = tusb1064_write(me, TUSB1064_REG_DP0DP2EQ_SEL, reg);
-	if (res)
-		return res;
 
 	/*
 	 * Note that bypassing the usb_mux API is okay for internal driver calls

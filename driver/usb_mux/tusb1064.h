@@ -140,4 +140,13 @@
 void tusb1044_hpd_update(const struct usb_mux *me, mux_state_t mux_state);
 #endif
 
+/**
+ * Set DP Rx Equalization value
+ *
+ * @param *me pointer to usb_mux descriptor
+ * @param db requested gain setting for DP Rx path
+ * @return EC_SUCCESS if db param is valid and I2C is successful
+ */
+int tusb1064_set_dp_rx_eq(const struct usb_mux *me, int db);
+
 #endif /* __CROS_EC_TUSB1064_H */
