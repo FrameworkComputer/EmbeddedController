@@ -345,6 +345,30 @@ int dock_get_mf_preference(void)
 	return mf;
 }
 
+static void board_usb_tc_connect(void)
+{
+	int port = TASK_ID_TO_PD_PORT(task_get_current());
+
+	/*
+	 * The EC needs to indicate to the MST hub when the host port is
+	 * attached. GPIO_UFP_PLUG_DET is used for this purpose.
+	 */
+	if (port == USB_PD_PORT_HOST)
+		gpio_set_level(GPIO_UFP_PLUG_DET, 0);
+}
+DECLARE_HOOK(HOOK_USB_PD_CONNECT, board_usb_tc_connect, HOOK_PRIO_DEFAULT);
+
+static void board_usb_tc_disconnect(void)
+{
+	int port = TASK_ID_TO_PD_PORT(task_get_current());
+
+	/* Only the host port disconnect is relevant */
+	if (port == USB_PD_PORT_HOST)
+		gpio_set_level(GPIO_UFP_PLUG_DET, 1);
+}
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, board_usb_tc_disconnect, \
+	     HOOK_PRIO_DEFAULT);
+
 #endif /* SECTION_IS_RW */
 
 static void board_init(void)
