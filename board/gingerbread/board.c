@@ -152,6 +152,20 @@ struct ppc_config_t ppc_chips[] = {
 #endif
 
 #ifdef SECTION_IS_RW
+
+/* TUSB1064 set mux board tuning for DP Rx path */
+static int board_tusb1064_dp_rx_eq_set(const struct usb_mux *me,
+				       mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+
+	/* DP specific config */
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
+		rv = tusb1064_set_dp_rx_eq(me, TUSB1064_DP_EQ_RX_8_9_DB);
+
+	return rv;
+}
+
 /*
  * TCPCs: 2 USBC/PD ports
  *     port 0 -> host port              -> STM32G4 UCPD
@@ -178,6 +192,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_port = I2C_PORT_I2C1,
 		.i2c_addr_flags = TUSB1064_I2C_ADDR0_FLAGS,
 		.driver = &tusb1064_usb_mux_driver,
+		.board_set = &board_tusb1064_dp_rx_eq_set,
 	},
 	[USB_PD_PORT_DP] = {
 		.usb_port = USB_PD_PORT_DP,
