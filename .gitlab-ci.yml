@@ -180,7 +180,7 @@ merged_coverage:
   needs: ["ec_coverage", "zephyr_coverage"]
   script:
     - lcov -o build/merged.info -a build/coverage/lcov.info -a build/zcoverage/lcov.info
-    - lcov -o build/merged_no_zephyr.info -r build/merged.info "${ZEPHYR_ROOT}/*" "${MODULES_DIR}/*" '/usr/include/x86_64-linux-gnu/*'
+    - lcov -o build/merged_no_zephyr.info -r build/merged.info "${ZEPHYR_ROOT}/*" "${MODULES_DIR}/*" "zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
   artifacts:
     paths:
       - build/*.info
