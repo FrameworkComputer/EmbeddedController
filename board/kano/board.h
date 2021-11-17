@@ -3,17 +3,12 @@
  * found in the LICENSE file.
  */
 
-/* Brya board configuration */
+/* Kano board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
 #include "compile_time_macros.h"
-
-/*
- * Early brya boards are not set up for vivaldi
- */
-#undef CONFIG_KEYBOARD_VIVALDI
 
 /* Baseboard features */
 #include "baseboard.h"
