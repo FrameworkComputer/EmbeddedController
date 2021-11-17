@@ -700,9 +700,11 @@ __maybe_unused static void tc_enable_try_src(int en)
 }
 
 /*
- * Exit all modes due to a detach event
+ * Exit all modes due to a detach event or hard reset
+ *
  * Note: this skips the ExitMode VDM steps in the PE because it is assumed the
- * partner is not present to receive them, and the PE will no longer be running.
+ * partner is not present to receive them, and the PE will no longer be running,
+ * or we've forced an abrupt mode exit through a hard reset.
  */
 static void tc_set_modes_exit(int port)
 {
@@ -1304,6 +1306,13 @@ static bool tc_perform_src_hard_reset(int port)
 		/* Set role to DFP */
 		tc_set_data_role(port, PD_ROLE_DFP);
 
+		/*
+		 * USB PD Rev 3.0 Ver 2.0 6.8.3.2: "A Hard Reset Shall cause
+		 * all Active Modes to be exited by both Port Partners and any
+		 * Cable Plugs"
+		 */
+		tc_set_modes_exit(port);
+
 		tc[port].ps_reset_state = PS_STATE1;
 		pd_timer_enable(port, TC_TIMER_TIMEOUT, PD_T_SRC_RECOVER);
 		return false;
@@ -1347,6 +1356,13 @@ static bool tc_perform_snk_hard_reset(int port)
 	case PS_STATE0:
 		/* Hard reset sets us back to default data role */
 		tc_set_data_role(port, PD_ROLE_UFP);
+
+		/*
+		 * USB PD Rev 3.0 Ver 2.0 6.8.3.2: "A Hard Reset Shall cause
+		 * all Active Modes to be exited by both Port Partners and any
+		 * Cable Plugs"
+		 */
+		tc_set_modes_exit(port);
 
 		/*
 		 * When VCONN is supported, the Hard Reset Shall cause
