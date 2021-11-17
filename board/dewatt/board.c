@@ -12,8 +12,7 @@
 #include "common.h"
 #include "cros_board_info.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_bmi160.h"
-#include "driver/accelgyro_bmi323.h"
+#include "driver/accelgyro_bmi260.h"
 #include "driver/accel_bma422.h"
 #include "driver/retimer/ps8811.h"
 #include "driver/retimer/ps8818.h"
@@ -47,15 +46,15 @@ static struct accelgyro_saved_data_t g_bma422_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1),  0},
-	{ 0, 0,  FLOAT_TO_FP(-1)}
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(1), 0,  0},
+	{ 0, 0,  FLOAT_TO_FP(1)}
 };
 
 const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
 	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0,  FLOAT_TO_FP(-1)}
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ 0, 0,  FLOAT_TO_FP(1)}
 };
 
 /*
@@ -79,14 +78,14 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_ACCEL] = {
 		.name = "Base Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI323,
+		.chip = MOTIONSENSE_CHIP_BMI260,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi3xx_drv,
+		.drv = &bmi260_drv,
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI3_ADDR_I2C_PRIM,
+		.i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = BMI_ACCEL_MIN_FREQ,
 		.max_frequency = BMI_ACCEL_MAX_FREQ,
@@ -94,12 +93,12 @@ struct motion_sensor_t motion_sensors[] = {
 		.config = {
 			/* EC use accel for angle detection */
 			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 12500 | ROUND_UP_FLAG,
+				.odr = 10000 | ROUND_UP_FLAG,
 				.ec_rate = 100 * MSEC,
 			},
 			/* Sensor on in S3 */
 			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 12500 | ROUND_UP_FLAG,
+				.odr = 10000 | ROUND_UP_FLAG,
 				.ec_rate = 0,
 			},
 		},
@@ -135,14 +134,14 @@ struct motion_sensor_t motion_sensors[] = {
 	[BASE_GYRO] = {
 		.name = "Base Gyro",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMI323,
+		.chip = MOTIONSENSE_CHIP_BMI260,
 		.type = MOTIONSENSE_TYPE_GYRO,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bmi3xx_drv,
+		.drv = &bmi260_drv,
 		.mutex = &g_base_mutex,
 		.drv_data = &g_bmi_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMI3_ADDR_I2C_PRIM,
+		.i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
 		.default_range = 1000, /* dps */
 		.rot_standard_ref = &base_standard_ref,
 		.min_frequency = BMI_GYRO_MIN_FREQ,
@@ -150,52 +149,6 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-
-struct motion_sensor_t bmi160_base_accel = {
-	.name = "Base Accel",
-	.active_mask = SENSOR_ACTIVE_S0_S3,
-	.chip = MOTIONSENSE_CHIP_BMI160,
-	.type = MOTIONSENSE_TYPE_ACCEL,
-	.location = MOTIONSENSE_LOC_BASE,
-	.drv = &bmi160_drv,
-	.mutex = &g_base_mutex,
-	.drv_data = &g_bmi_data,
-	.port = I2C_PORT_SENSOR,
-	.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	.rot_standard_ref = &base_standard_ref,
-	.min_frequency = BMI_ACCEL_MIN_FREQ,
-	.max_frequency = BMI_ACCEL_MAX_FREQ,
-	.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
-	.config = {
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-		/* Sensor on in S3 */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 10000 | ROUND_UP_FLAG,
-			.ec_rate = 0,
-		},
-	},
-};
-
-struct motion_sensor_t bmi160_base_gyro = {
-	.name = "Base Gyro",
-	.active_mask = SENSOR_ACTIVE_S0_S3,
-	.chip = MOTIONSENSE_CHIP_BMI160,
-	.type = MOTIONSENSE_TYPE_GYRO,
-	.location = MOTIONSENSE_LOC_BASE,
-	.drv = &bmi160_drv,
-	.mutex = &g_base_mutex,
-	.drv_data = &g_bmi_data,
-	.port = I2C_PORT_SENSOR,
-	.i2c_spi_addr_flags = BMI160_ADDR0_FLAGS,
-	.default_range = 1000, /* dps */
-	.rot_standard_ref = &base_standard_ref,
-	.min_frequency = BMI_GYRO_MIN_FREQ,
-	.max_frequency = BMI_GYRO_MAX_FREQ,
-};
 
 __override enum ec_error_list
 board_a1_ps8811_retimer_init(const struct usb_mux *me)
@@ -317,15 +270,8 @@ static int base_gyro_config;
 static void board_update_motion_sensor_config(void)
 {
 	if (board_is_convertible()) {
-		if (get_board_version() == 1) {
-			motion_sensors[BASE_ACCEL] = bmi160_base_accel;
-			motion_sensors[BASE_GYRO] = bmi160_base_gyro;
-			base_gyro_config = BASE_GYRO_BMI160;
-			ccprints("BASE GYRO is BMI160");
-		} else {
-			base_gyro_config = BASE_GYRO_BMI323;
-			ccprints("BASE GYRO is BMI323");
-		}
+		base_gyro_config = BASE_GYRO_BMI260;
+		ccprints("BASE GYRO is BMI260");
 
 		motion_sensor_count = ARRAY_SIZE(motion_sensors);
 		/* Enable Base Accel and Gyro interrupt */
@@ -341,12 +287,9 @@ static void board_update_motion_sensor_config(void)
 void motion_interrupt(enum gpio_signal signal)
 {
 	switch (base_gyro_config) {
-	case BASE_GYRO_BMI160:
-		bmi160_interrupt(signal);
-		break;
-	case BASE_GYRO_BMI323:
+	case BASE_GYRO_BMI260:
 	default:
-		bmi3xx_interrupt(signal);
+		bmi260_interrupt(signal);
 		break;
 	}
 }
