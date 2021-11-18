@@ -19,6 +19,9 @@
  */
 #define CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
 
+/* Chipset */
+#define CONFIG_CHIPSET_RESUME_INIT_HOOK
+
 /* Sensors */
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
