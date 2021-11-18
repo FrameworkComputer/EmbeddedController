@@ -182,13 +182,13 @@ static uint32_t get_exception_frame_size(const struct panic_data *pdata)
 
 	/* CPU uses xPSR[9] to indicate whether it padded the stack for
 	 * alignment or not. */
-	if (pdata->cm.frame[7] & BIT(9))
+	if (pdata->cm.frame[CORTEX_PANIC_FRAME_REGISTER_PSR] & BIT(9))
 		frame_size += sizeof(uint32_t);
 
 #ifdef CONFIG_FPU
 	/* CPU uses EXC_RETURN[4] to indicate whether it stored extended
 	 * frame for FPU or not. */
-	if (!(pdata->cm.regs[11] & BIT(4)))
+	if (!(pdata->cm.regs[CORTEX_PANIC_REGISTER_LR] & BIT(4)))
 		frame_size += 18 * sizeof(uint32_t);
 #endif
 
@@ -202,9 +202,10 @@ static uint32_t get_exception_frame_size(const struct panic_data *pdata)
  */
 static uint32_t get_process_stack_position(const struct panic_data *pdata)
 {
-	uint32_t psp = pdata->cm.regs[0];
+	uint32_t psp = pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
 
-	if (!is_frame_in_handler_stack(pdata->cm.regs[11]))
+	if (!is_frame_in_handler_stack(
+		    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]))
 		psp += get_exception_frame_size(pdata);
 
 	return psp;
@@ -260,8 +261,8 @@ void panic_data_print(const struct panic_data *pdata)
 {
 	const uint32_t *lregs = pdata->cm.regs;
 	const uint32_t *sregs = NULL;
-	const int32_t in_handler =
-		is_frame_in_handler_stack(pdata->cm.regs[11]);
+	const int32_t in_handler = is_frame_in_handler_stack(
+		pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]);
 	int i;
 
 	if (pdata->flags & PANIC_DATA_FLAG_FRAME_VALID)
@@ -269,17 +270,20 @@ void panic_data_print(const struct panic_data *pdata)
 
 	panic_printf("\n=== %s EXCEPTION: %02x ====== xPSR: %08x ===\n",
 		     in_handler ? "HANDLER" : "PROCESS",
-		     lregs[1] & 0xff, sregs ? sregs[7] : -1);
+		     lregs[CORTEX_PANIC_REGISTER_IPSR] & 0xff,
+		     sregs ? sregs[CORTEX_PANIC_FRAME_REGISTER_PSR] : -1);
 	for (i = 0; i < 4; i++)
 		print_reg(i, sregs, i);
 	for (i = 4; i < 10; i++)
 		print_reg(i, lregs, i - 1);
-	print_reg(10, lregs, 9);
-	print_reg(11, lregs, 10);
-	print_reg(12, sregs, 4);
-	print_reg(13, lregs, in_handler ? 2 : 0);
-	print_reg(14, sregs, 5);
-	print_reg(15, sregs, 6);
+	print_reg(10, lregs, CORTEX_PANIC_REGISTER_R10);
+	print_reg(11, lregs, CORTEX_PANIC_REGISTER_R11);
+	print_reg(12, sregs, CORTEX_PANIC_FRAME_REGISTER_R12);
+	print_reg(13, lregs,
+		  in_handler ? CORTEX_PANIC_REGISTER_MSP :
+				     CORTEX_PANIC_REGISTER_PSP);
+	print_reg(14, sregs, CORTEX_PANIC_FRAME_REGISTER_LR);
+	print_reg(15, sregs, CORTEX_PANIC_FRAME_REGISTER_PC);
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 	panic_show_extra(pdata);
@@ -303,8 +307,10 @@ void __keep report_panic(void)
 	pdata->reserved = 0;
 
 	/* Choose the right sp (psp or msp) based on EXC_RETURN value */
-	sp = is_frame_in_handler_stack(pdata->cm.regs[11])
-		? pdata->cm.regs[2] : pdata->cm.regs[0];
+	sp = is_frame_in_handler_stack(
+		     pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) ?
+		     pdata->cm.regs[CORTEX_PANIC_REGISTER_MSP] :
+			   pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
 	/* If stack is valid, copy exception frame to pdata */
 	if ((sp & 3) == 0 &&
 	    sp >= CONFIG_RAM_BASE &&
@@ -439,9 +445,9 @@ void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 	pdata->arch = PANIC_ARCH_CORTEX_M;
 
 	/* Log panic cause */
-	lregs[1] = exception;
-	lregs[3] = reason;
-	lregs[4] = info;
+	lregs[CORTEX_PANIC_REGISTER_IPSR] = exception;
+	lregs[CORTEX_PANIC_REGISTER_R4] = reason;
+	lregs[CORTEX_PANIC_REGISTER_R5] = info;
 }
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
@@ -451,9 +457,9 @@ void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 
 	if (pdata && pdata->struct_version == 2) {
 		lregs = pdata->cm.regs;
-		*exception = lregs[1];
-		*reason = lregs[3];
-		*info = lregs[4];
+		*exception = lregs[CORTEX_PANIC_REGISTER_IPSR];
+		*reason = lregs[CORTEX_PANIC_REGISTER_R4];
+		*info = lregs[CORTEX_PANIC_REGISTER_R5];
 	} else {
 		*exception = *reason = *info = 0;
 	}
