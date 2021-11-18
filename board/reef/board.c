@@ -147,16 +147,41 @@ const struct pwm_t pwm_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
-	{"tcpc0",     NPCX_I2C_PORT0_0, 400,
-		GPIO_EC_I2C_USB_C0_PD_SCL, GPIO_EC_I2C_USB_C0_PD_SDA},
-	{"tcpc1",     NPCX_I2C_PORT0_1, 400,
-		GPIO_EC_I2C_USB_C1_PD_SCL, GPIO_EC_I2C_USB_C1_PD_SDA},
-	{"accelgyro", I2C_PORT_GYRO,   400,
-		GPIO_EC_I2C_GYRO_SCL,      GPIO_EC_I2C_GYRO_SDA},
-	{"sensors",   NPCX_I2C_PORT2,   400,
-		GPIO_EC_I2C_SENSOR_SCL,    GPIO_EC_I2C_SENSOR_SDA},
-	{"batt",      NPCX_I2C_PORT3,   100,
-		GPIO_EC_I2C_POWER_SCL,     GPIO_EC_I2C_POWER_SDA},
+	{
+		.name = "tcpc0",
+		.port = NPCX_I2C_PORT0_0,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C_USB_C0_PD_SCL,
+		.sda  = GPIO_EC_I2C_USB_C0_PD_SDA
+	},
+	{
+		.name = "tcpc1",
+		.port = NPCX_I2C_PORT0_1,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C_USB_C1_PD_SCL,
+		.sda  = GPIO_EC_I2C_USB_C1_PD_SDA
+	},
+	{
+		.name = "accelgyro",
+		.port = I2C_PORT_GYRO,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C_GYRO_SCL,
+		.sda  = GPIO_EC_I2C_GYRO_SDA
+	},
+	{
+		.name = "sensors",
+		.port = NPCX_I2C_PORT2,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C_SENSOR_SCL,
+		.sda  = GPIO_EC_I2C_SENSOR_SDA
+	},
+	{
+		.name = "batt",
+		.port = NPCX_I2C_PORT3,
+		.kbps = 100,
+		.scl  = GPIO_EC_I2C_POWER_SCL,
+		.sda  = GPIO_EC_I2C_POWER_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

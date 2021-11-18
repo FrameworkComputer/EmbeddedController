@@ -66,10 +66,20 @@ const struct adc_t adc_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
-	{"mux",       IT83XX_I2C_CH_C, 400,
-		GPIO_EC_I2C_C_SCL, GPIO_EC_I2C_C_SDA},
-	{"batt",      IT83XX_I2C_CH_E, 100,
-		GPIO_EC_I2C_E_SCL, GPIO_EC_I2C_E_SDA},
+	{
+		.name = "mux",
+		.port = IT83XX_I2C_CH_C,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C_C_SCL,
+		.sda  = GPIO_EC_I2C_C_SDA
+	},
+	{
+		.name = "batt",
+		.port = IT83XX_I2C_CH_E,
+		.kbps = 100,
+		.scl  = GPIO_EC_I2C_E_SCL,
+		.sda  = GPIO_EC_I2C_E_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
