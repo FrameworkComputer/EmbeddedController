@@ -75,8 +75,20 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"charger", I2C_PORT_CHARGER,   400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
-	{"tcpc0",   I2C_PORT_TCPC0,     1000, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{
+		.name = "charger",
+		.port = I2C_PORT_CHARGER,
+		.kbps = 400,
+		.scl  = GPIO_I2C0_SCL,
+		.sda  = GPIO_I2C0_SDA
+	},
+	{
+		.name = "tcpc0",
+		.port = I2C_PORT_TCPC0,
+		.kbps = 1000,
+		.scl  = GPIO_I2C1_SCL,
+		.sda  = GPIO_I2C1_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

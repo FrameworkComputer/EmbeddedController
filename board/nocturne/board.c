@@ -133,26 +133,43 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 /* I2C port map */
 const struct i2c_port_t i2c_ports[] = {
 	{
-		"battery", I2C_PORT_BATTERY, 100, GPIO_EC_I2C4_BATTERY_SCL,
-		GPIO_EC_I2C4_BATTERY_SDA
+		.name = "battery",
+		.port = I2C_PORT_BATTERY,
+		.kbps = 100,
+		.scl  = GPIO_EC_I2C4_BATTERY_SCL,
+		.sda  = GPIO_EC_I2C4_BATTERY_SDA
 	},
 
 	{
-		"power", I2C_PORT_POWER, 100, GPIO_EC_I2C0_POWER_SCL,
-		GPIO_EC_I2C0_POWER_SDA
+		.name = "power",
+		.port = I2C_PORT_POWER,
+		.kbps = 100,
+		.scl  = GPIO_EC_I2C0_POWER_SCL,
+		.sda  = GPIO_EC_I2C0_POWER_SDA
 	},
 
 	{
-		"als_gyro", I2C_PORT_ALS_GYRO, 400, GPIO_EC_I2C5_ALS_GYRO_SCL,
-		GPIO_EC_I2C5_ALS_GYRO_SDA
+		.name = "als_gyro",
+		.port = I2C_PORT_ALS_GYRO,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C5_ALS_GYRO_SCL,
+		.sda  = GPIO_EC_I2C5_ALS_GYRO_SDA
 	},
 
 	{
-		"usbc0", I2C_PORT_USB_C0, 100, GPIO_USB_C0_SCL, GPIO_USB_C0_SDA
+		.name = "usbc0",
+		.port = I2C_PORT_USB_C0,
+		.kbps = 100,
+		.scl  = GPIO_USB_C0_SCL,
+		.sda  = GPIO_USB_C0_SDA
 	},
 
 	{
-		"usbc1", I2C_PORT_USB_C1, 100, GPIO_USB_C1_SCL, GPIO_USB_C1_SDA
+		.name = "usbc1",
+		.port = I2C_PORT_USB_C1,
+		.kbps = 100,
+		.scl  = GPIO_USB_C1_SCL,
+		.sda  = GPIO_USB_C1_SDA
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);

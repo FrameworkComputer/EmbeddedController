@@ -179,11 +179,41 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[]  = {
-	{"tcpc",      NPCX_I2C_PORT0_0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
-	{"als",       NPCX_I2C_PORT0_1, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"charger",   NPCX_I2C_PORT1,   100, GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
-	{"pmic",      NPCX_I2C_PORT2,   400, GPIO_I2C2_SCL,   GPIO_I2C2_SDA},
-	{"accelgyro", NPCX_I2C_PORT3,   400, GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
+	{
+		.name = "tcpc",
+		.port = NPCX_I2C_PORT0_0,
+		.kbps = 400,
+		.scl  = GPIO_I2C0_0_SCL,
+		.sda  = GPIO_I2C0_0_SDA
+	},
+	{
+		.name = "als",
+		.port = NPCX_I2C_PORT0_1,
+		.kbps = 400,
+		.scl  = GPIO_I2C0_1_SCL,
+		.sda  = GPIO_I2C0_1_SDA
+	},
+	{
+		.name = "charger",
+		.port = NPCX_I2C_PORT1,
+		.kbps = 100,
+		.scl  = GPIO_I2C1_SCL,
+		.sda  = GPIO_I2C1_SDA
+	},
+	{
+		.name = "pmic",
+		.port = NPCX_I2C_PORT2,
+		.kbps = 400,
+		.scl  = GPIO_I2C2_SCL,
+		.sda  = GPIO_I2C2_SDA
+	},
+	{
+		.name = "accelgyro",
+		.port = NPCX_I2C_PORT3,
+		.kbps = 400,
+		.scl  = GPIO_I2C3_SCL,
+		.sda  = GPIO_I2C3_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

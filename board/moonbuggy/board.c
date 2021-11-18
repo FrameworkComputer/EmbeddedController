@@ -135,12 +135,48 @@ const struct pwm_t pwm_channels[] = {
 /******************************************************************************/
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
-	{"ina",     I2C_PORT_INA,     400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
-	{"ppc0",    I2C_PORT_PPC0,    400, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"tcpc0",   I2C_PORT_TCPC0,   400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
-	{"pse",     I2C_PORT_PSE,     400, GPIO_I2C4_SCL, GPIO_I2C4_SDA},
-	{"power",   I2C_PORT_POWER,   400, GPIO_I2C5_SCL, GPIO_I2C5_SDA},
-	{"eeprom",  I2C_PORT_EEPROM,  400, GPIO_I2C7_SCL, GPIO_I2C7_SDA},
+	{
+		.name = "ina",
+		.port = I2C_PORT_INA,
+		.kbps = 400,
+		.scl  = GPIO_I2C0_SCL,
+		.sda  = GPIO_I2C0_SDA
+	},
+	{
+		.name = "ppc0",
+		.port = I2C_PORT_PPC0,
+		.kbps = 400,
+		.scl  = GPIO_I2C1_SCL,
+		.sda  = GPIO_I2C1_SDA
+	},
+	{
+		.name = "tcpc0",
+		.port = I2C_PORT_TCPC0,
+		.kbps = 400,
+		.scl  = GPIO_I2C3_SCL,
+		.sda  = GPIO_I2C3_SDA
+	},
+	{
+		.name = "pse",
+		.port = I2C_PORT_PSE,
+		.kbps = 400,
+		.scl  = GPIO_I2C4_SCL,
+		.sda  = GPIO_I2C4_SDA
+	},
+	{
+		.name = "power",
+		.port = I2C_PORT_POWER,
+		.kbps = 400,
+		.scl  = GPIO_I2C5_SCL,
+		.sda  = GPIO_I2C5_SDA
+	},
+	{
+		.name = "eeprom",
+		.port = I2C_PORT_EEPROM,
+		.kbps = 400,
+		.scl  = GPIO_I2C7_SCL,
+		.sda  = GPIO_I2C7_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
