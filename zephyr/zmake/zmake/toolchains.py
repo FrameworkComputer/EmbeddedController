@@ -107,7 +107,7 @@ class ZephyrToolchain(GenericToolchain):
         if not self.zephyr_sdk_install_dir:
             raise RuntimeError(
                 "No installed Zephyr SDK was found"
-                " (see docs/zephyr_build.md for documentation)"
+                " (see docs/zephyr/zephyr_build.md for documentation)"
             )
         tc_vars = {
             "ZEPHYR_SDK_INSTALL_DIR": str(self.zephyr_sdk_install_dir),

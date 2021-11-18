@@ -452,7 +452,7 @@ Note that there are some [FAFT tests][5] that rely on the GPIO name. If you
 enable this option, you may also need to change firmware testing configuration
 [file][6].
 
-[1]:./zephyr_build.md#Working-outside-the-chroot
+[1]:./zephyr/zephyr_build.md#Working-outside-the-chroot
 [2]:https://github.com/zephyrproject-rtos/zephyr/blob/main/subsys/shell/Kconfig
 [3]:https://docs.zephyrproject.org/latest/guides/optimizations/tools.html
 [4]:https://github.com/zephyrproject-rtos/zephyr/issues/2112

@@ -196,7 +196,7 @@ Build and run the test as an EC unit test:
 ```
 
 For building the test as a Zephyr Ztest unit test, follow the instructions in
-[Porting EC unit tests to Ztest](./ztest.md) to build the unit test for Zephyr's
+[Porting EC unit tests to Ztest](./zephyr/ztest.md) to build the unit test for Zephyr's
 "native_posix" host-based target.
 
 <!-- mdformat off(b/139308852) -->
