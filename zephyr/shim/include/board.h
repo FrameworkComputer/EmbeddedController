@@ -30,7 +30,7 @@
 
 /* Include board specific sensor configuration if motionsense is enabled */
 #ifdef CONFIG_MOTIONSENSE
-#include "motionsense_sensors.h"
+#include "motionsense_sensors_defs.h"
 #endif
 
 #endif  /* __BOARD_H */
