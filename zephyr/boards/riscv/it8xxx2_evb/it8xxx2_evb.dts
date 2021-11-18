@@ -173,22 +173,18 @@
 		battery {
 			i2c-port = <&i2c2>;
 			enum-name = "I2C_PORT_BATTERY";
-			label = "BATTERY";
 		};
 		evb-1 {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_EVB_1";
-			label = "EVB_1";
 		};
 		evb-2 {
 			i2c-port = <&i2c1>;
 			enum-name = "I2C_PORT_EVB_2";
-			label = "EVB_2";
 		};
 		opt-4 {
 			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_OPT_4";
-			label = "OPT_4";
 		};
 	};
 

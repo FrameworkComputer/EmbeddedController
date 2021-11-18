@@ -101,42 +101,34 @@
 		usb-c0 {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_USB_C0";
-			label = "USB_C0";
 		};
 		usb-c1 {
 			i2c-port = <&i2c1>;
 			enum-name = "I2C_PORT_USB_C1";
-			label = "USB_C1";
 		};
 		battery {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_BATTERY";
-			label = "BATTERY";
 		};
 		power {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_POWER";
-			label = "POWER";
 		};
 		charger {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_CHARGER";
-			label = "CHARGER";
 		};
 		eeprom {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_EEPROM";
-			label = "EEPROM";
 		};
 		i2c_accel: accel {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_ACCEL";
-			label = "ACCEL";
 		};
 		i2c_sensor: sensor {
 			i2c-port = <&i2c1>;
 			enum-name = "I2C_PORT_SENSOR";
-			label = "SENSOR";
 		};
 	};
 

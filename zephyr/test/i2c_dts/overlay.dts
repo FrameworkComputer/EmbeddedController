@@ -9,7 +9,6 @@
 		accel-0 {
 			i2c-port = <&bmi_i2c>;
 			enum-name = "I2C_PORT_ACCEL";
-			label = "ACCEL_0";
 		};
 	};
 };

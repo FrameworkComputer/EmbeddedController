@@ -50,12 +50,6 @@ properties:
     - I2C_PORT_USB_MUX1
     - I2C_PORT_VIRTUAL_BATTERY
     - I2C_PORT_WLC
-  label:
-    required: true
-    type: string
-    description:
-      Human readable string describing the device (used as device_get_binding()
-      argument).
   dynamic-speed:
     type: boolean
     required: false

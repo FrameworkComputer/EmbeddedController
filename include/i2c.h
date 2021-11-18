@@ -106,9 +106,9 @@ struct i2c_drv {
 
 /* Data structure to define I2C port configuration. */
 struct i2c_port_t {
-	const char *name;     /* Port name */
 	int port;             /* Port */
 #ifndef CONFIG_ZEPHYR
+	const char *name;     /* Port name */
 	int kbps;             /* Speed in kbps */
 	enum gpio_signal scl; /* Port SCL GPIO line */
 	enum gpio_signal sda; /* Port SDA GPIO line */

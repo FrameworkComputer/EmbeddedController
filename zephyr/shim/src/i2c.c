@@ -33,7 +33,6 @@
 
 #define I2C_PORT_INIT(id)                    \
 	{                                    \
-		.name = DT_LABEL(id),        \
 		.port = I2C_PORT(id),        \
 		.flags = I2C_PORT_FLAGS(id), \
 	},
