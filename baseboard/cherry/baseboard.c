@@ -357,10 +357,34 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"bat_chg",  IT83XX_I2C_CH_A, 100, GPIO_I2C_A_SCL, GPIO_I2C_A_SDA},
-	{"sensor",   IT83XX_I2C_CH_B, 400, GPIO_I2C_B_SCL, GPIO_I2C_B_SDA},
-	{"usb0",     IT83XX_I2C_CH_C, 400, GPIO_I2C_C_SCL, GPIO_I2C_C_SDA},
-	{"usb1",     IT83XX_I2C_CH_E, 1000, GPIO_I2C_E_SCL, GPIO_I2C_E_SDA},
+	{
+		.name = "bat_chg",
+		.port = IT83XX_I2C_CH_A,
+		.kbps = 100,
+		.scl  = GPIO_I2C_A_SCL,
+		.sda  = GPIO_I2C_A_SDA
+	},
+	{
+		.name = "sensor",
+		.port = IT83XX_I2C_CH_B,
+		.kbps = 400,
+		.scl  = GPIO_I2C_B_SCL,
+		.sda  = GPIO_I2C_B_SDA
+	},
+	{
+		.name = "usb0",
+		.port = IT83XX_I2C_CH_C,
+		.kbps = 400,
+		.scl  = GPIO_I2C_C_SCL,
+		.sda  = GPIO_I2C_C_SDA
+	},
+	{
+		.name = "usb1",
+		.port = IT83XX_I2C_CH_E,
+		.kbps = 1000,
+		.scl  = GPIO_I2C_E_SCL,
+		.sda  = GPIO_I2C_E_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

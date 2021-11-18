@@ -128,11 +128,41 @@ const struct mft_t mft_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 const struct i2c_port_t i2c_ports[]  = {
-	{"tcpc", I2C_PORT_TCPC0, 400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
-	{"eeprom", I2C_PORT_EEPROM, 400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"backlight", I2C_PORT_BACKLIGHT, 100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"pmic", I2C_PORT_PMIC, 400, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"thermal", I2C_PORT_THERMAL, 400, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+	{
+		.name = "tcpc",
+		.port = I2C_PORT_TCPC0,
+		.kbps = 400,
+		.scl  = GPIO_I2C0_0_SCL,
+		.sda  = GPIO_I2C0_0_SDA
+	},
+	{
+		.name = "eeprom",
+		.port = I2C_PORT_EEPROM,
+		.kbps = 400,
+		.scl  = GPIO_I2C0_1_SCL,
+		.sda  = GPIO_I2C0_1_SDA
+	},
+	{
+		.name = "backlight",
+		.port = I2C_PORT_BACKLIGHT,
+		.kbps = 100,
+		.scl  = GPIO_I2C1_SCL,
+		.sda  = GPIO_I2C1_SDA
+	},
+	{
+		.name = "pmic",
+		.port = I2C_PORT_PMIC,
+		.kbps = 400,
+		.scl  = GPIO_I2C2_SCL,
+		.sda  = GPIO_I2C2_SDA
+	},
+	{
+		.name = "thermal",
+		.port = I2C_PORT_THERMAL,
+		.kbps = 400,
+		.scl  = GPIO_I2C3_SCL,
+		.sda  = GPIO_I2C3_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

@@ -76,31 +76,46 @@ BUILD_ASSERT(ARRAY_SIZE(vcmp_list) == VCMP_COUNT);
 /* I2C Ports */
 const struct i2c_port_t i2c_ports[] = {
 	{
-		"eeprom", I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
-		GPIO_EC_I2C_EEPROM_SDA
+		.name = "eeprom",
+		.port = I2C_PORT_EEPROM,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C_EEPROM_SCL,
+		.sda  = GPIO_EC_I2C_EEPROM_SDA
 	},
 
 	{
-		"battery", I2C_PORT_BATTERY, 100, GPIO_EC_I2C_BATTERY_SCL,
-		GPIO_EC_I2C_BATTERY_SDA
+		.name = "battery",
+		.port = I2C_PORT_BATTERY,
+		.kbps = 100,
+		.scl  = GPIO_EC_I2C_BATTERY_SCL,
+		.sda  = GPIO_EC_I2C_BATTERY_SDA
 	},
 #ifdef HAS_TASK_MOTIONSENSE
 	{
-		"sensor", I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
-		GPIO_EC_I2C_SENSOR_SDA
+		.name = "sensor",
+		.port = I2C_PORT_SENSOR,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C_SENSOR_SCL,
+		.sda  = GPIO_EC_I2C_SENSOR_SDA
 	},
 #endif
 
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	{
-		"sub_usbc1", I2C_PORT_SUB_USB_C1, 1000,
-		GPIO_EC_I2C_SUB_USB_C1_SCL, GPIO_EC_I2C_SUB_USB_C1_SDA
+		.name = "sub_usbc1",
+		.port = I2C_PORT_SUB_USB_C1,
+		.kbps = 1000,
+		.scl  = GPIO_EC_I2C_SUB_USB_C1_SCL,
+		.sda  = GPIO_EC_I2C_SUB_USB_C1_SDA
 	},
 #endif
 
 	{
-		"usbc0", I2C_PORT_USB_C0, 1000, GPIO_EC_I2C_USB_C0_SCL,
-		GPIO_EC_I2C_USB_C0_SDA
+		.name = "usbc0",
+		.port = I2C_PORT_USB_C0,
+		.kbps = 1000,
+		.scl  = GPIO_EC_I2C_USB_C0_SCL,
+		.sda  = GPIO_EC_I2C_USB_C0_SDA
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
