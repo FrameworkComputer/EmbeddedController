@@ -131,6 +131,7 @@
 #define CONFIG_BATTERY_LEVEL_NEAR_FULL 91
 
 #define CONFIG_FANS			FAN_CH_COUNT
+#define RPM_DEVIATION	1
 
 /* Charger defines */
 #define CONFIG_CHARGER_BQ25720
