@@ -75,6 +75,12 @@ enum ec_led_state {
 };
 
 /**
+ * Check the LED state while receive the auto control
+ * command.
+ */
+void board_led_auto_control(void);
+
+/**
  * Control state of LED.
  *
  * @param led_id	ID of LED to control

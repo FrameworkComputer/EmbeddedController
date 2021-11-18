@@ -47,6 +47,16 @@ int led_auto_control_is_enabled(enum ec_led_id led_id)
 	return (led_auto_control_flags & LED_AUTO_CONTROL_FLAG(led_id)) != 0;
 }
 
+__attribute__((weak)) void board_led_auto_control(void)
+{
+	/*
+	 * The projects have only power led won't change the led
+	 * state immediately as the auto command is called for
+	 * they only check the led state while the power state
+	 * is changed.
+	 */
+}
+
 static enum ec_status led_command_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_led_control *p = args->params;
@@ -69,6 +79,8 @@ static enum ec_status led_command_control(struct host_cmd_handler_args *args)
 
 	if (p->flags & EC_LED_FLAGS_AUTO) {
 		led_auto_control(p->led_id, 1);
+		if (!IS_ENABLED(CONFIG_LED_ONOFF_STATES))
+			board_led_auto_control();
 	} else {
 		if (led_set_brightness(p->led_id, p->brightness) != EC_SUCCESS)
 			return EC_RES_INVALID_PARAM;
