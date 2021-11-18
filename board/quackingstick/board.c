@@ -102,14 +102,34 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[] = {
-	{"power",   I2C_PORT_POWER,  100, GPIO_EC_I2C_POWER_SCL,
-					  GPIO_EC_I2C_POWER_SDA},
-	{"tcpc0",   I2C_PORT_TCPC0, 1000, GPIO_EC_I2C_USB_C0_PD_SCL,
-					  GPIO_EC_I2C_USB_C0_PD_SDA},
-	{"eeprom",  I2C_PORT_EEPROM, 400, GPIO_EC_I2C_EEPROM_SCL,
-					  GPIO_EC_I2C_EEPROM_SDA},
-	{"sensor",  I2C_PORT_SENSOR, 400, GPIO_EC_I2C_SENSOR_SCL,
-					  GPIO_EC_I2C_SENSOR_SDA},
+	{
+		.name = "power",
+		.port = I2C_PORT_POWER,
+		.kbps = 100,
+		.scl  = GPIO_EC_I2C_POWER_SCL,
+		.sda  = GPIO_EC_I2C_POWER_SDA
+	},
+	{
+		.name = "tcpc0",
+		.port = I2C_PORT_TCPC0,
+		.kbps = 1000,
+		.scl  = GPIO_EC_I2C_USB_C0_PD_SCL,
+		.sda  = GPIO_EC_I2C_USB_C0_PD_SDA
+	},
+	{
+		.name = "eeprom",
+		.port = I2C_PORT_EEPROM,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C_EEPROM_SCL,
+		.sda  = GPIO_EC_I2C_EEPROM_SDA
+	},
+	{
+		.name = "sensor",
+		.port = I2C_PORT_SENSOR,
+		.kbps = 400,
+		.scl  = GPIO_EC_I2C_SENSOR_SCL,
+		.sda  = GPIO_EC_I2C_SENSOR_SDA
+	},
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
