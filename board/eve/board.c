@@ -192,11 +192,41 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[]  = {
-	{"tcpc0",     I2C_PORT_TCPC0,    400, GPIO_I2C0_0_SCL, GPIO_I2C0_0_SDA},
-	{"tcpc1",     I2C_PORT_TCPC1,    400, GPIO_I2C0_1_SCL, GPIO_I2C0_1_SDA},
-	{"accelgyro", I2C_PORT_GYRO,     400, GPIO_I2C1_SCL,   GPIO_I2C1_SDA},
-	{"sensors",   I2C_PORT_LID_ACCEL, 400, GPIO_I2C2_SCL,  GPIO_I2C2_SDA},
-	{"batt",      I2C_PORT_BATTERY,  100, GPIO_I2C3_SCL,   GPIO_I2C3_SDA},
+	{
+		.name = "tcpc0",
+		.port = I2C_PORT_TCPC0,
+		.kbps = 400,
+		.scl  = GPIO_I2C0_0_SCL,
+		.sda  = GPIO_I2C0_0_SDA
+	},
+	{
+		.name = "tcpc1",
+		.port = I2C_PORT_TCPC1,
+		.kbps = 400,
+		.scl  = GPIO_I2C0_1_SCL,
+		.sda  = GPIO_I2C0_1_SDA
+	},
+	{
+		.name = "accelgyro",
+		.port = I2C_PORT_GYRO,
+		.kbps = 400,
+		.scl  = GPIO_I2C1_SCL,
+		.sda  = GPIO_I2C1_SDA
+	},
+	{
+		.name = "sensors",
+		.port = I2C_PORT_LID_ACCEL,
+		.kbps = 400,
+		.scl  = GPIO_I2C2_SCL,
+		.sda  = GPIO_I2C2_SDA
+	},
+	{
+		.name = "batt",
+		.port = I2C_PORT_BATTERY,
+		.kbps = 100,
+		.scl  = GPIO_I2C3_SCL,
+		.sda  = GPIO_I2C3_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

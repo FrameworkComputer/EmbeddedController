@@ -90,11 +90,21 @@ void usb_spi_board_disable(struct usb_spi_config const *config) {}
 #ifdef CONFIG_I2C
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"master", I2C_PORT_MASTER, 400,
-		GPIO_MASTER_I2C_SCL, GPIO_MASTER_I2C_SDA},
+	{
+		.name = "master",
+		.port = I2C_PORT_MASTER,
+		.kbps = 400,
+		.scl  = GPIO_MASTER_I2C_SCL,
+		.sda  = GPIO_MASTER_I2C_SDA
+	},
 #ifdef BOARD_WAND
-	{"charger", I2C_PORT_CHARGER, 100,
-		GPIO_CHARGER_I2C_SCL, GPIO_CHARGER_I2C_SDA},
+	{
+		.name = "charger",
+		.port = I2C_PORT_CHARGER,
+		.kbps = 100,
+		.scl  = GPIO_CHARGER_I2C_SCL,
+		.sda  = GPIO_CHARGER_I2C_SDA
+	},
 #endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);

@@ -31,7 +31,13 @@ void vbus_event(enum gpio_signal signal);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"charger", I2C_PORT_SY21612, 400, GPIO_I2C0_SCL, GPIO_I2C0_SDA},
+	{
+		.name = "charger",
+		.port = I2C_PORT_SY21612,
+		.kbps = 400,
+		.scl  = GPIO_I2C0_SCL,
+		.sda  = GPIO_I2C0_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

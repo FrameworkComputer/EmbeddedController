@@ -33,7 +33,11 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"lightbar", 5, 400},
+	{
+		.name = "lightbar",
+		.port = 5,
+		.kbps = 400
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
