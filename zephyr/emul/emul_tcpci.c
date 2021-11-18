@@ -452,6 +452,9 @@ void tcpci_emul_partner_msg_status(const struct emul *emul,
 	case TCPCI_EMUL_TX_FAILED:
 		tx_status_alert = TCPC_REG_ALERT_TX_FAILED;
 		break;
+	default:
+		__ASSERT(0, "Invalid partner TX status 0x%x", status);
+		return;
 	}
 
 	tcpci_emul_get_reg(emul, TCPC_REG_ALERT, &alert);
