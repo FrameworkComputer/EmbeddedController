@@ -116,6 +116,34 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c = 60,
 		},
 	},
+	[BATTERY_C204_SECOND] = {
+		.fuel_gauge = {
+			.manuf_name = "AS3FXXd3KB",
+			.device_name = "C214-43",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x10, 0x10 },
+			},
+			.fet = {
+				.reg_addr = 0x99,
+				.reg_mask = 0x000C,
+				.disconnect_val = 0x000C,
+				.cfet_mask = 0x0004,
+				.cfet_off_val = 0x0004
+			},
+		},
+		.batt_info = {
+			.voltage_max = 13200,
+			.voltage_normal = 11550,
+			.voltage_min = 9000,
+			.precharge_current = 256,
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.discharging_min_c = -20,
+			.discharging_max_c = 60,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
