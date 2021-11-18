@@ -39,7 +39,13 @@ DECLARE_HOOK(HOOK_TICK, tick_event, HOOK_PRIO_DEFAULT);
 
 #ifdef CTS_MODULE_I2C
 const struct i2c_port_t i2c_ports[]  = {
-	{"test", STM32_I2C1_PORT, 100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
+	{
+		.name = "test",
+		.port = STM32_I2C1_PORT,
+		.kbps = 100,
+		.scl  = GPIO_I2C1_SCL,
+		.sda  = GPIO_I2C1_SDA
+	},
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);

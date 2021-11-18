@@ -79,11 +79,41 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"master0-0", NPCX_I2C_PORT0_0, 100, GPIO_I2C0_SCL0, GPIO_I2C0_SDA0},
-	{"master0-1", NPCX_I2C_PORT0_1, 100, GPIO_I2C0_SCL1, GPIO_I2C0_SDA1},
-	{"master1",   NPCX_I2C_PORT1,   100, GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"master2",   NPCX_I2C_PORT2,   100, GPIO_I2C2_SCL, GPIO_I2C2_SDA},
-	{"master3",   NPCX_I2C_PORT3,   100, GPIO_I2C3_SCL, GPIO_I2C3_SDA},
+	{
+		.name = "master0-0",
+		.port = NPCX_I2C_PORT0_0,
+		.kbps = 100,
+		.scl  = GPIO_I2C0_SCL0,
+		.sda  = GPIO_I2C0_SDA0
+	},
+	{
+		.name = "master0-1",
+		.port = NPCX_I2C_PORT0_1,
+		.kbps = 100,
+		.scl  = GPIO_I2C0_SCL1,
+		.sda  = GPIO_I2C0_SDA1
+	},
+	{
+		.name = "master1",
+		.port = NPCX_I2C_PORT1,
+		.kbps = 100,
+		.scl  = GPIO_I2C1_SCL,
+		.sda  = GPIO_I2C1_SDA
+	},
+	{
+		.name = "master2",
+		.port = NPCX_I2C_PORT2,
+		.kbps = 100,
+		.scl  = GPIO_I2C2_SCL,
+		.sda  = GPIO_I2C2_SDA
+	},
+	{
+		.name = "master3",
+		.port = NPCX_I2C_PORT3,
+		.kbps = 100,
+		.scl  = GPIO_I2C3_SCL,
+		.sda  = GPIO_I2C3_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

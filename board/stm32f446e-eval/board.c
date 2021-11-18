@@ -43,10 +43,20 @@ struct dwc_usb usb_ctl = {
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{"i2c1", I2C_PORT_0, 100,
-		GPIO_I2C1_SCL, GPIO_I2C1_SDA},
-	{"fmpi2c4", FMPI2C_PORT_3, 100,
-		GPIO_FMPI2C_SCL, GPIO_FMPI2C_SDA},
+	{
+		.name = "i2c1",
+		.port = I2C_PORT_0,
+		.kbps = 100,
+		.scl  = GPIO_I2C1_SCL,
+		.sda  = GPIO_I2C1_SDA
+	},
+	{
+		.name = "fmpi2c4",
+		.port = FMPI2C_PORT_3,
+		.kbps = 100,
+		.scl  = GPIO_FMPI2C_SCL,
+		.sda  = GPIO_FMPI2C_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

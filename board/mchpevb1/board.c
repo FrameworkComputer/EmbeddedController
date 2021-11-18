@@ -230,8 +230,20 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * MCHP EVB connected to KBL RVP3
  */
 const struct i2c_port_t i2c_ports[]  = {
-	{"sensors",  MCHP_I2C_PORT4, 100,  GPIO_SMB04_SCL, GPIO_SMB04_SDA},
-	{"batt",     MCHP_I2C_PORT5, 100,  GPIO_SMB05_SCL, GPIO_SMB05_SDA},
+	{
+		.name = "sensors",
+		.port = MCHP_I2C_PORT4,
+		.kbps = 100,
+		.scl  = GPIO_SMB04_SCL,
+		.sda  = GPIO_SMB04_SDA
+	},
+	{
+		.name = "batt",
+		.port = MCHP_I2C_PORT5,
+		.kbps = 100,
+		.scl  = GPIO_SMB05_SCL,
+		.sda  = GPIO_SMB05_SDA
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 

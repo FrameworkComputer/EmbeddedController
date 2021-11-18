@@ -241,7 +241,13 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
  * I2C interface.
  */
 const struct i2c_port_t i2c_ports[] = {
-	{"tcpc", I2C_PORT_TCPC, 400 /* kHz */, GPIO_I2C2_SCL, GPIO_I2C2_SDA}
+	{
+		.name = "tcpc",
+		.port = I2C_PORT_TCPC,
+		.kbps = 400 /* kHz */,
+		.scl  = GPIO_I2C2_SCL,
+		.sda  = GPIO_I2C2_SDA
+	}
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
