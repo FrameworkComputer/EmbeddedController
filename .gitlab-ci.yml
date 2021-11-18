@@ -115,6 +115,11 @@ hayato:
     PROJECT: "hayato"
   <<: *build_template
 
+hayato_coverage:
+  variables:
+    PROJECT: "hayato"
+  <<: *coverage_template
+
 herobrine_npcx9:
   variables:
     PROJECT: "herobrine_npcx9"
