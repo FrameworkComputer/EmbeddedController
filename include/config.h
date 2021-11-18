@@ -4024,6 +4024,7 @@
 #undef CONFIG_TEMP_SENSOR_G781		/* G781 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_G782		/* G782 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_OTI502	/* OTI502 sensor, on I2C bus */
+#undef CONFIG_TEMP_SENSOR_PCT2075	/* PCT2075 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_SB_TSI	/* SB_TSI sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_TMP006	/* TI TMP006 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_TMP112	/* TI TMP112 sensor, on I2C bus */
