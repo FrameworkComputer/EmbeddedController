@@ -185,6 +185,7 @@ merged_coverage:
     - lcov -o build/merged_no_zephyr.info -r build/merged.info
       "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
       'zephyr/drivers/**' 'zephyr/include/drivers/**'
+      'zephyr/shim/chip/**' 'zephyr/shim/core/**'
       '/usr/include/x86_64-linux-gnu/**'
   artifacts:
     paths:
