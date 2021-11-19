@@ -65,6 +65,26 @@ static void tca_evt(enum gpio_signal signal)
 	irq_ioexpanders();
 }
 
+/*
+ * TUSB1064 set mux board tuning.
+ * Adds in board specific gain and DP lane count configuration
+ */
+static int board_tusb1064_dp_rx_eq_set(const struct usb_mux *me,
+				       mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+
+	/*
+	 * Apply 10dB gain. Note, this value is selected to match the gain that
+	 * would be set by default if the 2 GPIO gain set pins are left
+	 * floating.
+	 */
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
+		rv = tusb1064_set_dp_rx_eq(me, TUSB1064_DP_EQ_RX_10_0_DB);
+
+	return rv;
+}
+
 const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[CHG] = { /* CHG port connected directly to USB 3.0 hub, no mux */ },
 	[DUT] = { /* DUT port with UFP mux */
@@ -72,6 +92,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_port = I2C_PORT_MASTER,
 		.i2c_addr_flags = TUSB1064_I2C_ADDR10_FLAGS,
 		.driver = &tusb1064_usb_mux_driver,
+		.board_set = &board_tusb1064_dp_rx_eq_set,
 	}
 };
 
