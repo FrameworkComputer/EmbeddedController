@@ -36,7 +36,7 @@ before_script:
   - mkdir -p "${MODULES_DIR}"
   - export ZEPHYR_BASE="${CI_PROJECT_DIR}/zephyr/main"
   - mkdir -p "${ZEPHYR_BASE}"
-  - test -d "${ZEPHYR_BASE}/.git" || git clone --depth 1 -b chromeos-v2.7 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}"
+  - test -d "${ZEPHYR_BASE}/.git" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}"
   - test -d "${MODULES_DIR}/cmsis" || git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
   - test -d "${MODULES_DIR}/hal_stm32" || git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
   - test -d "${MODULES_DIR}/nanopb" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb "${MODULES_DIR}/nanopb"
@@ -44,7 +44,7 @@ before_script:
   - ln -s "$(pwd)" "${MODULES_DIR}/ec"
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install zephyr/zmake --user
-  - python3 -m pip install pyyaml
+  - python3 -m pip install pyyaml packaging
   - export BUILD_DIR=build
   - export PATH="$PATH:$HOME/.local/bin"
   - export PYTHONIOENCODING=utf-8

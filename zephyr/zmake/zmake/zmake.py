@@ -159,12 +159,7 @@ class Zmake:
         if zephyr_base:
             self.zephyr_base = zephyr_base
         else:
-            # TODO(b/205884929): Drop v2.7 from path.  This is
-            # intentionally hard-coded here as an intermediate step to
-            # cutting over to the main branch.
-            self.zephyr_base = (
-                self.checkout / "src" / "third_party" / "zephyr" / "main" / "v2.7"
-            )
+            self.zephyr_base = self.checkout / "src" / "third_party" / "zephyr" / "main"
 
         if modules_dir:
             self.module_paths = zmake.modules.locate_from_directory(modules_dir)
