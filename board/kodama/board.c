@@ -81,7 +81,14 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct i2c_port_t i2c_bitbang_ports[] = {
-	{"battery", 2, 100, GPIO_I2C3_SCL, GPIO_I2C3_SDA, .drv = &bitbang_drv},
+	{
+		.name = "battery",
+		.port = 2,
+		.kbps = 100,
+		.scl  = GPIO_I2C3_SCL,
+		.sda  = GPIO_I2C3_SDA,
+		.drv = &bitbang_drv
+	},
 };
 const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 

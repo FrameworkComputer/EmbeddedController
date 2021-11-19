@@ -11,7 +11,13 @@
 #include "util.h"
 
 const struct i2c_port_t i2c_bitbang_ports[] = {
-	{"", 0, 100, GPIO_I2C_SCL, GPIO_I2C_SDA}
+	{
+		.name = "",
+		.port = 0,
+		.kbps = 100,
+		.scl = GPIO_I2C_SCL,
+		.sda = GPIO_I2C_SDA
+	}
 };
 const unsigned int i2c_bitbang_ports_used = 1;
 
