@@ -56,6 +56,9 @@
 #define CONFIG_LED_COMMON
 #define CONFIG_LED_ONOFF_STATES
 
+/* Thermal Config */
+#define CONFIG_TEMP_SENSOR_TMP112
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
