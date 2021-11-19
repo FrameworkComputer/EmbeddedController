@@ -1150,6 +1150,13 @@
  */
 #undef CONFIG_CHARGER_BQ25710_PP_ACOK
 
+/*
+ * This config option sets the PP_IDCHG2 bit in the Charge Option 4
+ * register. This causes PROCHOT to be pulsed when IDCHG_TH2 is reached.
+ */
+
+#undef CONFIG_CHARGER_BQ25720_PP_IDCHG2
+
 /* Enable if CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_MV should be applied */
 #undef CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_CUSTOM
 

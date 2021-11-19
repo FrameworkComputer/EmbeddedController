@@ -324,6 +324,15 @@ config PLATFORM_EC_CHARGER_BQ25710_PP_ACOK
 	  Sets the PP_ACOK in Prochot Option 1 register. This causes
 	  PROCHOT to be pulsed when the AC adapter is removed.
 
+config PLATFORM_EC_CHARGER_BQ25720_PP_IDCHG2
+	bool "Enable PROCHOT on battery current exceeding IDCHG_TH2"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Sets the PP_IDCHG2 bit in Charge Option 4 register. This
+	  causes PROCHOT to be pulsed when the battery discharge current
+	  exceeds IDCHG_TH2.
+
 config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR
 	int "Value of the charge sense-resistor, in mOhms"
 	default 10

@@ -78,6 +78,10 @@
 						     CHARGE_OPTION_4,	\
 						     _field, _v, (_x))
 
+#define SET_CO4_BY_NAME(_field, _c, _x)	SET_BQ_FIELD_BY_NAME(BQ25720,	\
+							     CHARGE_OPTION_4, \
+							     _field, _c, (_x))
+
 #define SET_PO1(_field, _v, _x)		SET_BQ_FIELD(BQ257X0,	\
 						     PROCHOT_OPTION_1,	\
 						     _field, _v, (_x))
@@ -448,6 +452,9 @@ static int bq257x0_init_charge_option_4(int chgnum)
 
 	if (IS_ENABLED(CONFIG_CHARGER_BQ25720_IDCHG_TH2_CUSTOM))
 		reg = SET_CO4(IDCHG_TH2, CONFIG_CHARGER_BQ25720_IDCHG_TH2, reg);
+
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25720_PP_IDCHG2))
+		reg = SET_CO4_BY_NAME(PP_IDCHG2, ENABLE, reg);
 
 	return raw_write16(chgnum, BQ25720_REG_CHARGE_OPTION_4, reg);
 }
