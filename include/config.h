@@ -4026,6 +4026,7 @@
 #undef CONFIG_TEMP_SENSOR_OTI502	/* OTI502 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_SB_TSI	/* SB_TSI sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_TMP006	/* TI TMP006 sensor, on I2C bus */
+#undef CONFIG_TEMP_SENSOR_TMP112	/* TI TMP112 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_TMP411	/* TI TMP411 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_TMP432	/* TI TMP432 sensor, on I2C bus */
 #undef CONFIG_TEMP_SENSOR_TMP468	/* TI TMP468 sensor, on I2C bus */
