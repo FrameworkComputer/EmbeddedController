@@ -39,7 +39,6 @@ class FakeProject:
             project_name="fakeproject",
             zephyr_board="fakeboard",
             supported_toolchains=["llvm"],
-            zephyr_version="v2.5",
             output_packer=zmake.output_packers.ElfPacker,
             project_dir=pathlib.Path("FakeProjectDir"),
         )
@@ -129,12 +128,10 @@ def do_test_with_log_level(log_level, use_configure=False, fnames=None):
             re.compile(r".*build-rw"): get_test_filepath("rw"),
         }
     zephyr_base = mock.Mock()
-    zephyr_root = mock.Mock()
 
     zmk = zm.Zmake(
         jobserver=FakeJobserver(fnames),
         zephyr_base=zephyr_base,
-        zephyr_root=zephyr_root,
     )
 
     with LogCapture(level=log_level) as cap:

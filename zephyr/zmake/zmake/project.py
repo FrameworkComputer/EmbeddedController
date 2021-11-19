@@ -91,7 +91,6 @@ class ProjectConfig:
     zephyr_board: str
     supported_toolchains: "list[str]"
     output_packer: type
-    zephyr_version: str = dataclasses.field(default="v2.7")
     modules: "list[str]" = dataclasses.field(
         default_factory=lambda: modules.known_modules,
     )

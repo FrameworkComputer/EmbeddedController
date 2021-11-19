@@ -57,7 +57,6 @@ def _setup_example_repos(tmp_path):
             zephyr_board="foo",
             output_packer=zmake.output_packers.RawBinPacker,
             supported_toolchains=["coreboot-sdk"],
-            zephyr_version="v2.6",
             project_dir=project_path,
         ),
     )

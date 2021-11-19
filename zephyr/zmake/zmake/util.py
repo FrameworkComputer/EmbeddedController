@@ -64,19 +64,6 @@ def locate_cros_checkout():
     raise FileNotFoundError("Unable to locate a ChromiumOS checkout")
 
 
-def locate_zephyr_base(zephyr_root, version):
-    """Locate the path to the Zephyr RTOS in a ChromiumOS checkout.
-
-    Args:
-        checkout: The path to the ChromiumOS checkout.
-        version: The requested zephyr version, as a tuple of integers.
-
-    Returns:
-        The path to the Zephyr source.
-    """
-    return zephyr_root / "v{}.{}".format(*version[:2])
-
-
 def read_kconfig_file(path):
     """Parse a Kconfig file.
 
@@ -130,23 +117,6 @@ def write_kconfig_file(path, config, only_if_changed=True):
     with open(path, "w") as f:
         for name, value in config.items():
             f.write("{}={}\n".format(name, value))
-
-
-def parse_zephyr_version(version_string):
-    """Parse a human-readable version string (e.g., "v2.4") as a tuple.
-
-    Args:
-        version_string: The human-readable version string.
-
-    Returns:
-        A 2-tuple or 3-tuple of integers representing the version.
-    """
-    match = re.fullmatch(r"v?(\d+)[._](\d+)(?:[._](\d+))?", version_string)
-    if not match:
-        raise ValueError(
-            "{} does not look like a Zephyr version.".format(version_string)
-        )
-    return tuple(int(x) for x in match.groups() if x is not None)
 
 
 def read_zephyr_version(zephyr_base):

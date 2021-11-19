@@ -161,21 +161,11 @@ def main(argv=None):
     parser.add_argument(
         "--zephyr-base", type=pathlib.Path, help="Path to Zephyr OS repository"
     )
-    parser.add_argument(
-        "--zephyr-root",
-        type=pathlib.Path,
-        help="Path to Zephyr OS repos, must contain subdirs like v1.2",
-    )
 
     sub = parser.add_subparsers(dest="subcommand", help="Subcommand")
     sub.required = True
 
     configure = sub.add_parser("configure")
-    configure.add_argument(
-        "--ignore-unsupported-zephyr-version",
-        action="store_true",
-        help="Don't warn about using an unsupported Zephyr version",
-    )
     configure.add_argument("-t", "--toolchain", help="Name of toolchain to use")
     configure.add_argument(
         "--bringup",

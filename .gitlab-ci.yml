@@ -24,7 +24,7 @@ cache:
     - .cache/pip
     - venv/
     - modules/
-    - zephyr/main
+    - zephyr/
 
 
 # The directory structure is:
@@ -34,11 +34,9 @@ cache:
 before_script:
   - export MODULES_DIR="$CI_PROJECT_DIR/modules"
   - mkdir -p "${MODULES_DIR}"
-  - export ZEPHYR_ROOT="$CI_PROJECT_DIR/zephyr/main"
-  - mkdir -p "${ZEPHYR_ROOT}"
-  - test -d "${ZEPHYR_ROOT}/v2.6" || git clone --depth 1 -b chromeos-v2.6 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_ROOT}/v2.6"
-  - test -d "${ZEPHYR_ROOT}/v2.7" || git clone --depth 1 -b chromeos-v2.7 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_ROOT}/v2.7"
-  - test -d "${ZEPHYR_ROOT}/v2.8" || git clone --depth 1 -b chromeos-v2.8 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_ROOT}/v2.8"
+  - export ZEPHYR_BASE="${CI_PROJECT_DIR}/zephyr/main"
+  - mkdir -p "${ZEPHYR_BASE}"
+  - test -d "${ZEPHYR_BASE}/.git" || git clone --depth 1 -b chromeos-v2.7 https://chromium.googlesource.com/chromiumos/third_party/zephyr "${ZEPHYR_BASE}"
   - test -d "${MODULES_DIR}/cmsis" || git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis "${MODULES_DIR}/cmsis"
   - test -d "${MODULES_DIR}/hal_stm32" || git clone --depth 1 -b chromeos-main https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32 "${MODULES_DIR}/hal_stm32"
   - test -d "${MODULES_DIR}/nanopb" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb "${MODULES_DIR}/nanopb"
@@ -48,7 +46,6 @@ before_script:
   - python3 -m pip install zephyr/zmake --user
   - python3 -m pip install pyyaml
   - export BUILD_DIR=build
-  - export ZEPHYR_DIR=/zephyr
   - export PATH="$PATH:$HOME/.local/bin"
   - export PYTHONIOENCODING=utf-8
   - export EC_DIR=/builds/zephyr-ec/ec
@@ -62,10 +59,10 @@ seed_cache:
       - .cache/pip
       - venv/
       - modules/
-      - zephyr/main
+      - zephyr/
     policy: push
   script:
-    - ls "${MODULES_DIR}" "${ZEPHYR_ROOT}"
+    - ls "${MODULES_DIR}" "${ZEPHYR_BASE}"
 
 # Users of this template must set:
 # $PROJECT to the project to build. E.g., "lazor"
@@ -73,7 +70,7 @@ seed_cache:
   stage: build
   needs: ["seed_cache"]
   script:
-    - zmake --zephyr-root "${ZEPHYR_ROOT}"
+    - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG configure -b
       -B "${BUILD_DIR}/${PROJECT}" -t ${TOOLCHAIN:-zephyr}
       "${PROJECT}"
@@ -170,7 +167,7 @@ zephyr_coverage:
   stage: test
   needs: ["seed_cache"]
   script:
-    - zmake --zephyr-root "${ZEPHYR_ROOT}"
+    - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG coverage
       "${BUILD_DIR}/zcoverage"
   artifacts:
@@ -185,7 +182,7 @@ merged_coverage:
   needs: ["ec_coverage", "zephyr_coverage"]
   script:
     - lcov -o build/merged.info -a build/coverage/lcov.info -a build/zcoverage/lcov.info
-    - lcov -o build/merged_no_zephyr.info -r build/merged.info "${ZEPHYR_ROOT}/*" "${MODULES_DIR}/*" "zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
+    - lcov -o build/merged_no_zephyr.info -r build/merged.info "${ZEPHYR_BASE}/*" "${MODULES_DIR}/*" "zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
   artifacts:
     paths:
       - build/*.info
@@ -197,6 +194,6 @@ testall:
   stage: test
   needs: ["seed_cache"]
   script:
-    - zmake --zephyr-root "${ZEPHYR_ROOT}"
+    - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG testall
 

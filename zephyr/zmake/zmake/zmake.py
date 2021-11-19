@@ -153,16 +153,17 @@ class Zmake:
         jobs=0,
         modules_dir=None,
         zephyr_base=None,
-        zephyr_root=None,
     ):
         zmake.multiproc.reset()
         self._checkout = checkout
-        self._zephyr_base = zephyr_base
-        if zephyr_root:
-            self._zephyr_root = zephyr_root
+        if zephyr_base:
+            self.zephyr_base = zephyr_base
         else:
-            self._zephyr_root = (
-                self.checkout / "src" / "third_party" / "zephyr" / "main"
+            # TODO(b/205884929): Drop v2.7 from path.  This is
+            # intentionally hard-coded here as an intermediate step to
+            # cutting over to the main branch.
+            self.zephyr_base = (
+                self.checkout / "src" / "third_party" / "zephyr" / "main" / "v2.7"
             )
 
         if modules_dir:
@@ -188,28 +189,11 @@ class Zmake:
             self._checkout = util.locate_cros_checkout()
         return self._checkout.resolve()
 
-    def locate_zephyr_base(self, version):
-        """Locate the Zephyr OS repository.
-
-        Args:
-            version: If a Zephyr OS base was not supplied to Zmake,
-                which version to search for as a tuple of integers.
-                This argument is ignored if a Zephyr base was supplied
-                to Zmake.
-        Returns:
-            A pathlib.Path to the found Zephyr OS repository.
-        """
-        if self._zephyr_base:
-            return self._zephyr_base
-
-        return util.locate_zephyr_base(self._zephyr_root, version)
-
     def configure(
         self,
         project_name_or_dir,
         build_dir=None,
         toolchain=None,
-        ignore_unsupported_zephyr_version=False,
         build_after_configure=False,
         test_after_configure=False,
         bringup=False,
@@ -234,7 +218,6 @@ class Zmake:
             project=project,
             build_dir=build_dir,
             toolchain=toolchain,
-            ignore_unsupported_zephyr_version=ignore_unsupported_zephyr_version,
             build_after_configure=build_after_configure,
             test_after_configure=test_after_configure,
             bringup=bringup,
@@ -247,7 +230,6 @@ class Zmake:
         project,
         build_dir=None,
         toolchain=None,
-        ignore_unsupported_zephyr_version=False,
         build_after_configure=False,
         test_after_configure=False,
         bringup=False,
@@ -255,23 +237,6 @@ class Zmake:
         allow_warnings=False,
     ):
         """Set up a build directory to later be built by "zmake build"."""
-        supported_version = util.parse_zephyr_version(project.config.zephyr_version)
-        zephyr_base = self.locate_zephyr_base(supported_version).resolve()
-
-        # Ignore the patchset from the Zephyr version.
-        zephyr_version = util.read_zephyr_version(zephyr_base)[:2]
-
-        if (
-            not ignore_unsupported_zephyr_version
-            and zephyr_version != supported_version
-        ):
-            raise ValueError(
-                "The Zephyr OS version (v{}.{}) is not supported by the "
-                "project.  You may wish to either configure BUILD.py to "
-                "support this version, or pass "
-                "--ignore-unsupported-zephyr-version.".format(*zephyr_version)
-            )
-
         # Resolve build_dir if needed.
         if not build_dir:
             build_dir = (
@@ -287,7 +252,7 @@ class Zmake:
 
         generated_include_dir = (build_dir / "include").resolve()
         base_config = zmake.build_config.BuildConfig(
-            environ_defs={"ZEPHYR_BASE": str(zephyr_base), "PATH": "/usr/bin"},
+            environ_defs={"ZEPHYR_BASE": str(self.zephyr_base), "PATH": "/usr/bin"},
             cmake_defs={
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                 "DTS_ROOT": str(self.module_paths["ec"] / "zephyr"),
@@ -307,7 +272,7 @@ class Zmake:
 
         # Symlink the Zephyr base into the build directory so it can
         # be used in the build phase.
-        util.update_symlink(zephyr_base, build_dir / "zephyr_base")
+        util.update_symlink(self.zephyr_base, build_dir / "zephyr_base")
 
         dts_overlay_config = project.find_dts_overlays(module_paths)
 
