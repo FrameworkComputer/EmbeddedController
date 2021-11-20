@@ -1106,6 +1106,17 @@
  */
 #undef CONFIG_CHARGER_BQ25710_CMP_REF_1P2
 
+/* Enable if CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG should be applied */
+#undef CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG_CUSTOM
+
+/*
+ * Input overload time when in peak power mode (PKPWR_TOVLD_DEG). This
+ * limits how long the charger can draw ILIM2 from the adapter. This is
+ * a 2 bit field. On the bq25710 1 ms to 20 ms can be encoded. On the
+ * bq25720 1 ms to 10 ms can be encoded.
+ */
+#undef CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG
+
 /*
  * This config option is used to enable the charger's AC over-current
  * protection. The converter turns off when the OC threshold is

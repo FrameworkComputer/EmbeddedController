@@ -54,6 +54,10 @@
 #define CONFIG_CHARGER_BQ25720_IDCHG_TH2 1
 #endif
 
+#ifndef CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG_CUSTOM
+#define CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG 0
+#endif
+
 /*
  * Helper macros
  */
@@ -61,6 +65,10 @@
 #define SET_CO1_BY_NAME(_field, _c, _x)	SET_BQ_FIELD_BY_NAME(BQ257X0,	\
 							     CHARGE_OPTION_1, \
 							     _field, _c, (_x))
+
+#define SET_CO2(_field, _v, _x)		SET_BQ_FIELD(BQ257X0,	\
+						     CHARGE_OPTION_2,	\
+						     _field, _v, (_x))
 
 #define SET_CO2_BY_NAME(_field, _c, _x)	SET_BQ_FIELD_BY_NAME(BQ257X0,	\
 							     CHARGE_OPTION_2, \
@@ -390,6 +398,12 @@ static int bq257x0_init_charge_option_2(int chgnum)
 	 * minimum is 20 msec on the bq25720.
 	 */
 	reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_2, PKPWR_TMAX, 0, reg);
+
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG_CUSTOM)) {
+		/* Set input overload time in peak power mode. */
+		reg = SET_CO2(PKPWR_TOVLD_DEG,
+			      CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG, reg);
+	}
 
 	if (IS_ENABLED(CONFIG_CHARGER_BQ25710_EN_ACOC)) {
 		/* Enable AC input over-current protection. */

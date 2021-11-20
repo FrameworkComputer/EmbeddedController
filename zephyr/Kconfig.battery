@@ -270,6 +270,25 @@ config PLATFORM_EC_CHARGER_BQ25710_CMP_REF_1P2
 	  voltage to 1.2 V. The power-on default is 2.3 V. This must be
 	  enabled if the board was designed for 1.2 V instead of 2.3 V.
 
+config PLATFORM_EC_CHARGER_BQ25710_PKPWR_TOVLD_DEG_CUSTOM
+	bool "PKPWR_TOVLD_DEG override"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Enable customizing the charger's PKPWR_TOVLD_DEG period.
+
+config PLATFORM_EC_CHARGER_BQ25710_PKPWR_TOVLD_DEG
+	int "PKPWR_TOVLD_DEG period"
+	range 0 3
+	default 0
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Sets the input overload time when in peak power mode
+	  (PKPWR_TOVLD_DEG). This limits how long the charger can draw
+	  ILIM2 from the adapter. This is a 2 bit field. On the bq25710
+	  1 ms to 20 ms can be encoded. On the bq25720 1 ms to 10 ms can
+	  be encoded.
+
 config PLATFORM_EC_CHARGER_BQ25710_EN_ACOC
 	bool "Enable AC over-current protection"
 	default n
