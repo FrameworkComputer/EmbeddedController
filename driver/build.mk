@@ -209,6 +209,7 @@ driver-y += ppc/nx20p348x.o
 endif
 driver-$(CONFIG_USBC_PPC_SYV682X)+=ppc/syv682x.o
 driver-$(CONFIG_USBC_PPC_NX20P3483)+=ppc/nx20p348x.o
+driver-$(CONFIG_USBC_PPC_KTU1125)+=ppc/ktu1125.o
 
 # Switchcap
 driver-$(CONFIG_LN9310)+=ln9310.o
