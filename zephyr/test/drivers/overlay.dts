@@ -84,6 +84,11 @@
 			enum-name = "GPIO_USB_C1_TCPC_RST_L";
 			label = "USB_C1_TCPC_RST_L";
 		};
+		gpio_usb_c1_ppc_int: usb_c1_ppc_int {
+			gpios = <&gpio0 13 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
+			label = "GPIO_USB_C1_PPC_INT_ODL";
+		};
 	};
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
@@ -500,6 +505,7 @@
 			reg = <0x41>;
 			label = "SYV682X_EMUL";
 			frs_en_gpio = <&gpio_usb_c1_frs_en>;
+			alert_gpio = <&gpio_usb_c1_ppc_int>;
 		};
 
 		usb_c1_bb_retimer_emul: bbretimer@42 {
@@ -539,7 +545,7 @@
 };
 
 &gpio0 {
-	ngpios = <13>;
+	ngpios = <14>;
 };
 
 &i2c0 {

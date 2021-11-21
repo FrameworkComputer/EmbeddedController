@@ -29,6 +29,8 @@ struct syv682x_emul_data {
 	const struct device *i2c;
 	const struct device *frs_en_gpio_port;
 	gpio_pin_t frs_en_gpio_pin;
+	const struct device *alert_gpio_port;
+	gpio_pin_t alert_gpio_pin;
 	/** Configuration information */
 	const struct syv682x_emul_cfg *cfg;
 	/** Current state of all emulated SYV682x registers */
@@ -51,6 +53,15 @@ struct syv682x_emul_cfg {
 	struct syv682x_emul_data *data;
 };
 
+/* Asserts or deasserts the interrupt signal to the EC. */
+static void syv682x_emul_set_alert(struct syv682x_emul_data *data, bool alert)
+{
+	int res = gpio_emul_input_set(data->alert_gpio_port,
+			/* The signal is inverted. */
+			data->alert_gpio_pin, !alert);
+	__ASSERT_NO_MSG(res == 0);
+}
+
 int syv682x_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
 {
 	struct syv682x_emul_data *data;
@@ -64,46 +75,34 @@ int syv682x_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
 	return 0;
 }
 
-void syv682x_emul_set_status(struct i2c_emul *emul, uint8_t val)
+void syv682x_emul_set_condition(struct i2c_emul *emul, uint8_t status,
+		uint8_t control_4)
 {
+	uint8_t control_4_interrupt = control_4 & SYV682X_CONTROL_4_INT_MASK;
 	struct syv682x_emul_data *data =
 		CONTAINER_OF(emul, struct syv682x_emul_data, emul);
 	int frs_en_gpio = gpio_emul_output_get(data->frs_en_gpio_port,
 			data->frs_en_gpio_pin);
 
-	/* Only assert FRS status if FRS is enabled. */
 	__ASSERT_NO_MSG(frs_en_gpio >= 0);
+
+	/* Only assert FRS status if FRS is enabled. */
 	if (!frs_en_gpio)
-		val &= ~SYV682X_STATUS_FRS;
+		status &= ~SYV682X_STATUS_FRS;
 
-	data->status_cond = val;
-	data->reg[SYV682X_STATUS_REG] |= val;
+	data->status_cond = status;
+	data->reg[SYV682X_STATUS_REG] |= status;
 
-	if (val & (SYV682X_STATUS_TSD | SYV682X_STATUS_OVP |
+	data->control_4_cond = control_4_interrupt;
+	/* Only update the interrupting bits of CONTROL_4. */
+	data->reg[SYV682X_CONTROL_4_REG] &= ~SYV682X_CONTROL_4_INT_MASK;
+	data->reg[SYV682X_CONTROL_4_REG] |= control_4_interrupt;
+
+	/* These conditions disable the power path. */
+	if (status & (SYV682X_STATUS_TSD | SYV682X_STATUS_OVP |
 				SYV682X_STATUS_OC_HV)) {
 		data->reg[SYV682X_CONTROL_1_REG] |= SYV682X_CONTROL_1_PWR_ENB;
 	}
-
-	/*
-	 * TODO(b/190519131): Make this emulator trigger GPIO-based interrupts
-	 * by itself based on the status. In real life, the device should turn
-	 * the power path off when either of these conditions occurs, and they
-	 * should quickly dissipate. If they somehow stay set, the device should
-	 * interrupt continuously. Relatedly, the emulator should only generate
-	 * an interrupt based on FRS status if the FRS enable pin was asserted.
-	 */
-}
-
-void syv682x_emul_set_control_4(struct i2c_emul *emul, uint8_t val)
-{
-	struct syv682x_emul_data *data;
-	uint8_t val_interrupt = val & SYV682X_CONTROL_4_INT_MASK;
-
-	data = CONTAINER_OF(emul, struct syv682x_emul_data, emul);
-	data->control_4_cond = val_interrupt;
-	/* Only update the interrupting bits. */
-	data->reg[SYV682X_CONTROL_4_REG] &= ~SYV682X_CONTROL_4_INT_MASK;
-	data->reg[SYV682X_CONTROL_4_REG] |= val_interrupt;
 
 	/*
 	 * Note: The description of CONTROL_4 suggests that setting VCONN_OC
@@ -114,12 +113,14 @@ void syv682x_emul_set_control_4(struct i2c_emul *emul, uint8_t val)
 	 */
 
 	/* VBAT_OVP disconnects CC and VCONN. */
-	if (val_interrupt & SYV682X_CONTROL_4_VBAT_OVP) {
+	if (control_4_interrupt & SYV682X_CONTROL_4_VBAT_OVP) {
 		data->reg[SYV682X_CONTROL_4_REG] &= ~(SYV682X_CONTROL_4_CC1_BPS
 				| SYV682X_CONTROL_4_CC2_BPS
 				| SYV682X_CONTROL_4_VCONN1
 				| SYV682X_CONTROL_4_VCONN2);
 	}
+
+	syv682x_emul_set_alert(data, status | control_4_interrupt);
 }
 
 int syv682x_emul_get_reg(struct i2c_emul *emul, int reg, uint8_t *val)
@@ -248,7 +249,7 @@ static struct i2c_emul_api syv682x_emul_api = {
  * @param emul Emulation information
  * @param parent Device to emulate
  *
- * @return 0 indicating success (always)
+ * @return 0 on success or an error code on failure
  */
 static int syv682x_emul_init(const struct emul *emul,
 			  const struct device *parent)
@@ -264,6 +265,10 @@ static int syv682x_emul_init(const struct emul *emul,
 	memset(data->reg, 0, sizeof(data->reg));
 
 	ret = i2c_emul_register(parent, emul->dev_label, &data->emul);
+	if (ret)
+		return ret;
+
+	syv682x_emul_set_alert(data, false);
 
 	return ret;
 }
@@ -274,6 +279,10 @@ static int syv682x_emul_init(const struct emul *emul,
 					DT_INST_PROP(n, frs_en_gpio), gpios)), \
 		.frs_en_gpio_pin = DT_GPIO_PIN(                                \
 				DT_INST_PROP(n, frs_en_gpio), gpios),          \
+		.alert_gpio_port = DEVICE_DT_GET(DT_GPIO_CTLR(                \
+					DT_INST_PROP(n, alert_gpio), gpios)), \
+		.alert_gpio_pin = DT_GPIO_PIN(                                \
+				DT_INST_PROP(n, alert_gpio), gpios),          \
 	};                                                                     \
 	static const struct syv682x_emul_cfg syv682x_emul_cfg_##n = {          \
 		.i2c_label = DT_INST_BUS_LABEL(n),                             \

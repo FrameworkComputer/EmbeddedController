@@ -24,15 +24,16 @@
 #define SYV682X_CONTROL_4_REG		0x04
 
 /* Status Register */
-#define SYV682X_STATUS_OC_HV		BIT(7)
-#define SYV682X_STATUS_RVS		BIT(6)
-#define SYV682X_STATUS_OC_5V		BIT(5)
-#define SYV682X_STATUS_OVP		BIT(4)
-#define SYV682X_STATUS_FRS		BIT(3)
-#define SYV682X_STATUS_TSD		BIT(2)
-#define SYV682X_STATUS_VSAFE_5V		BIT(1)
-#define SYV682X_STATUS_VSAFE_0V		BIT(0)
-#define SYV682X_STATUS_INT_MASK		0xfc
+#define SYV682X_STATUS_OC_HV    BIT(7)
+#define SYV682X_STATUS_RVS      BIT(6)
+#define SYV682X_STATUS_OC_5V    BIT(5)
+#define SYV682X_STATUS_OVP      BIT(4)
+#define SYV682X_STATUS_FRS      BIT(3)
+#define SYV682X_STATUS_TSD      BIT(2)
+#define SYV682X_STATUS_VSAFE_5V BIT(1)
+#define SYV682X_STATUS_VSAFE_0V BIT(0)
+#define SYV682X_STATUS_INT_MASK 0xfc
+#define SYV682X_STATUS_NONE     0
 
 /* Control Register 1 */
 #define SYV682X_CONTROL_1_CH_SEL	BIT(1)
@@ -99,6 +100,7 @@
 #define SYV682X_CONTROL_4_VCONN_OCP	BIT(2)
 #define SYV682X_CONTROL_4_CC_FRS	BIT(1)
 #define SYV682X_CONTROL_4_INT_MASK	0x0c
+#define SYV682X_CONTROL_4_NONE      0
 
 /**
  * @brief Get pointer to SYV682x emulator using device tree order number.
@@ -110,24 +112,17 @@
 struct i2c_emul *syv682x_emul_get(int ord);
 
 /**
- * @brief Set the underlying interrupt conditions affecting the status register
+ * @brief Set the underlying interrupt conditions affecting the SYV682x
  *
- * @param emul SYV682x emulator
- * @param val  A status register value corresponding to the underlying
- *             conditions
+ * @param emul      SYV682x emulator
+ * @param status    A status register value corresponding to the underlying
+ *                  conditions
+ * @param control_4 A control 4 register value corresponding to the underlying
+ *                  conditions; only the bits in SYV682X_CONTROL_4_INT_MASK have
+ *                  an effect.
  */
-void syv682x_emul_set_status(struct i2c_emul *emul, uint8_t val);
-
-/**
- * @brief Set the underlying interrupt conditions affecting the control 4
- *        register
- *
- * @param emul SYV682x emulator
- * @param val  A control 4 register value corresponding to the underlying
- *             conditions; only the bits in SYV682X_CONTROL_4_INT_MASK have an
- *             effect.
- */
-void syv682x_emul_set_control_4(struct i2c_emul *emul, uint8_t val);
+void syv682x_emul_set_condition(struct i2c_emul *emul, uint8_t status,
+		uint8_t control_4);
 
 /**
  * @brief Set value of a register of SYV682x

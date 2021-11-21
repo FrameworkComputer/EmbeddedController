@@ -307,6 +307,17 @@ void tcpc_alert_event(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
+void ppc_alert(enum gpio_signal signal)
+{
+	switch (signal) {
+	case GPIO_USB_C1_PPC_INT_ODL:
+		syv682x_interrupt(USBC_PORT_C1);
+		break;
+	default:
+		return;
+	}
+}
+
 /* TODO: This code should really be generic, and run based on something in
  * the dts.
  */
@@ -328,5 +339,8 @@ static void usbc_interrupt_init(void)
 	gpio_set_level(GPIO_USB_C1_TCPC_RST_L, 0);
 	msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_set_level(GPIO_USB_C1_TCPC_RST_L, 1);
+
+	/* Enable PPC interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_INIT_I2C + 1);

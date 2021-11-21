@@ -24,6 +24,7 @@
 	GPIO_INT(GPIO_USB_C0_TCPC_INT_ODL, GPIO_INT_EDGE_FALLING,	  \
 		 tcpc_alert_event)					  \
 	GPIO_INT(GPIO_USB_C1_TCPC_INT_ODL, GPIO_INT_EDGE_FALLING,	  \
-		 tcpc_alert_event)
+		 tcpc_alert_event) \
+	GPIO_INT(GPIO_USB_C1_PPC_INT_ODL, GPIO_INT_EDGE_FALLING, ppc_alert)
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
