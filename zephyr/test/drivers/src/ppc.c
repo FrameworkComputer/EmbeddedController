@@ -53,12 +53,10 @@ static void test_ppc_syv682x_interrupt(void)
 	/* An OC event less than 100 ms should not cause VBUS to turn off. */
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_OC_5V,
 			SYV682X_CONTROL_4_NONE);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(50);
 	zassert_true(ppc_is_sourcing_vbus(syv682x_port),
 			"PPC is not sourcing VBUS after 50 ms OC");
 	/* But one greater than 100 ms should. */
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(60);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 			"PPC is sourcing VBUS after 100 ms OC");
@@ -82,7 +80,6 @@ static void test_ppc_syv682x_interrupt(void)
 			"Source enable failed");
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_TSD,
 			SYV682X_CONTROL_4_NONE);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(1);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 			"PPC is sourcing power after TSD");
@@ -94,7 +91,6 @@ static void test_ppc_syv682x_interrupt(void)
 			"Source enable failed");
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_OVP,
 			SYV682X_CONTROL_4_NONE);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(1);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 			"PPC is sourcing power after OVP");
@@ -110,7 +106,6 @@ static void test_ppc_syv682x_interrupt(void)
 			"Sink enable failed");
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_OC_HV,
 			SYV682X_CONTROL_4_NONE);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(1);
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
 			"Reading CONTROL_1 failed");
@@ -118,7 +113,6 @@ static void test_ppc_syv682x_interrupt(void)
 			"Power path disabled after HV_OC handled");
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_OC_HV,
 			SYV682X_CONTROL_4_NONE);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(1);
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
 			"Reading CONTROL_1 failed");
@@ -126,7 +120,6 @@ static void test_ppc_syv682x_interrupt(void)
 			"Power path disabled after HV_OC handled");
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_OC_HV,
 			SYV682X_CONTROL_4_NONE);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(1);
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
 			"Reading CONTROL_1 failed");
@@ -143,16 +136,13 @@ static void test_ppc_syv682x_interrupt(void)
 	ppc_set_vconn(syv682x_port, true);
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
 			SYV682X_CONTROL_4_VCONN_OCP);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(1);
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
 			"Reading CONTROL_4 failed");
 	zassert_true(reg &
 			(SYV682X_CONTROL_4_VCONN1 | SYV682X_CONTROL_4_VCONN2),
 			"VCONN disabled after initial VCONN OC");
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(50);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
 			"Reading CONTROL_4 failed");
 	zassert_true(reg &
@@ -162,9 +152,7 @@ static void test_ppc_syv682x_interrupt(void)
 	 * But if the event keeps going for over 100 ms continuously, the driver
 	 * should turn VCONN off.
 	 */
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(60);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
 			"Reading CONTROL_4 failed");
 	zassert_false(reg &
@@ -182,7 +170,6 @@ static void test_ppc_syv682x_interrupt(void)
 	ppc_set_vconn(syv682x_port, true);
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
 			SYV682X_CONTROL_4_VBAT_OVP);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(1);
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
 			"Reading CONTROL_4 failed");
@@ -254,7 +241,6 @@ static void test_ppc_syv682x_frs(void)
 	 */
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_FRS,
 			SYV682X_CONTROL_4_NONE);
-	/* TODO(b/201420132): Simulate passage of time instead of sleeping. */
 	msleep(1);
 	zassert_true(ppc_is_sourcing_vbus(syv682x_port),
 			"PPC is not sourcing VBUS after FRS signal handled");
