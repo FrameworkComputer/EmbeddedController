@@ -34,15 +34,22 @@ const struct usb_mux *org_mux[3];
 static int proxy_init(const struct usb_mux *me)
 {
 	int i = me->i2c_addr_flags;
+	int ec = EC_SUCCESS;
 
-	ztest_check_expected_value(i);
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		ztest_check_expected_value(i);
+	}
 
 	if (org_mux[i] != NULL &&
 	    org_mux[i]->driver->init != NULL) {
-		org_mux[i]->driver->init(org_mux[i]);
+		ec = org_mux[i]->driver->init(org_mux[i]);
 	}
 
-	return ztest_get_return_value();
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		return ztest_get_return_value();
+	}
+
+	return ec;
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
@@ -50,63 +57,92 @@ static int proxy_set(const struct usb_mux *me, mux_state_t mux_state,
 		     bool *ack_required)
 {
 	int i = me->i2c_addr_flags;
+	int ec = EC_SUCCESS;
 
-	ztest_check_expected_value(i);
-	ztest_check_expected_value(mux_state);
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		ztest_check_expected_value(i);
+		ztest_check_expected_value(mux_state);
+	}
 
 	if (org_mux[i] != NULL &&
 	    org_mux[i]->driver->set != NULL) {
-		org_mux[i]->driver->set(org_mux[i], mux_state, ack_required);
+		ec = org_mux[i]->driver->set(org_mux[i], mux_state,
+					     ack_required);
 	}
 
-	return ztest_get_return_value();
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		return ztest_get_return_value();
+	}
+
+	return ec;
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
 static int proxy_get(const struct usb_mux *me, mux_state_t *mux_state)
 {
 	int i = me->i2c_addr_flags;
+	int ec = EC_SUCCESS;
 
-	ztest_check_expected_value(i);
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		ztest_check_expected_value(i);
+	}
 
 	if (org_mux[i] != NULL &&
 	    org_mux[i]->driver->get != NULL) {
-		org_mux[i]->driver->get(org_mux[i], mux_state);
+		ec = org_mux[i]->driver->get(org_mux[i], mux_state);
 	}
 
-	*mux_state = ztest_get_return_value();
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		*mux_state = ztest_get_return_value();
 
-	return ztest_get_return_value();
+		return ztest_get_return_value();
+	}
+
+	return ec;
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
 static int proxy_enter_low_power_mode(const struct usb_mux *me)
 {
 	int i = me->i2c_addr_flags;
+	int ec = EC_SUCCESS;
 
-	ztest_check_expected_value(i);
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		ztest_check_expected_value(i);
+	}
 
 	if (org_mux[i] != NULL &&
 	    org_mux[i]->driver->enter_low_power_mode != NULL) {
-		org_mux[i]->driver->enter_low_power_mode(org_mux[i]);
+		ec = org_mux[i]->driver->enter_low_power_mode(org_mux[i]);
 	}
 
-	return ztest_get_return_value();
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		return ztest_get_return_value();
+	}
+
+	return ec;
 }
 
 /** Proxy function which check calls from usb_mux framework to driver */
 static int proxy_chipset_reset(const struct usb_mux *me)
 {
 	int i = me->i2c_addr_flags;
+	int ec = EC_SUCCESS;
 
-	ztest_check_expected_value(i);
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		ztest_check_expected_value(i);
+	}
 
 	if (org_mux[i] != NULL &&
 	    org_mux[i]->driver->chipset_reset != NULL) {
-		org_mux[i]->driver->chipset_reset(org_mux[i]);
+		ec = org_mux[i]->driver->chipset_reset(org_mux[i]);
 	}
 
-	return ztest_get_return_value();
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		return ztest_get_return_value();
+	}
+
+	return ec;
 }
 
 /** Proxy function for fw update capability */
@@ -120,8 +156,10 @@ static void proxy_hpd_update(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int i = me->i2c_addr_flags;
 
-	ztest_check_expected_value(i);
-	ztest_check_expected_value(mux_state);
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		ztest_check_expected_value(i);
+		ztest_check_expected_value(mux_state);
+	}
 
 	if (org_mux[i] != NULL &&
 	    org_mux[i]->hpd_update != NULL) {
@@ -214,7 +252,6 @@ static void suspend_usbc_task(bool suspend)
 /** Restore original usb_mux chain without proxy */
 static void resotre_usb_mux_chain(void)
 {
-	suspend_usbc_task(/*suspend=*/ false);
 	memcpy(&usb_muxes[USBC_PORT_C1], &usb_mux_c1, sizeof(struct usb_mux));
 }
 
@@ -294,7 +331,9 @@ static int mock_board_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int i = me->i2c_addr_flags;
 
-	ztest_check_expected_value(i);
+	if (task_get_current() == TASK_ID_TEST_RUNNER) {
+		ztest_check_expected_value(i);
+	}
 
 	return EC_SUCCESS;
 }
@@ -435,16 +474,6 @@ static void test_usb_mux_get(void)
 static void test_usb_mux_low_power_mode(void)
 {
 	mux_state_t exp_mode, mode;
-
-	/*
-	 * Virtual mux return ack_required in some cases, but this requires to
-	 * run usb_mux_set in TASK_PD_C1 context. Remove virtual mux from chain
-	 * for this test.
-	 *
-	 * TODO: Find way to setup PD stack in such state that notifing PD task
-	 *       results in required usb_mux_set call.
-	 */
-	org_mux[1] = NULL;
 
 	/* Test enter to low power mode */
 	exp_mode = USB_PD_MUX_NONE;
@@ -708,8 +737,8 @@ static void test_usb_mux_typec_command(void)
 /** Setup proxy chain and uninit usb muxes */
 void setup_uninit_mux(void)
 {
-	suspend_usbc_task(/*suspend=*/ true);
 	setup_usb_mux_proxy_chain();
+	set_test_runner_tid();
 
 	/* Makes sure that usb muxes of port 1 are not init */
 	usb_muxes[USBC_PORT_C1].flags = USB_MUX_FLAG_RESETS_IN_G3;
@@ -719,8 +748,8 @@ void setup_uninit_mux(void)
 /** Setup proxy chain and init usb muxes */
 void setup_init_mux(void)
 {
-	suspend_usbc_task(/*suspend=*/ true);
 	setup_usb_mux_proxy_chain();
+	set_test_runner_tid();
 
 	/* Makes sure that usb muxes of port 1 are init */
 	setup_ztest_proxy_init(0, 2, EC_SUCCESS);

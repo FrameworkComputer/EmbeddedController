@@ -358,8 +358,15 @@ static int configure_mux(int port,
 			if (IS_ENABLED(HAS_TASK_USB_MUX)) {
 				assert(task_get_current() == TASK_ID_USB_MUX);
 			} else {
+#if defined(CONFIG_ZEPHYR) && defined(TEST_BUILD)
+				assert(port ==
+				       TASK_ID_TO_PD_PORT(task_get_current()) ||
+				       task_get_current() ==
+				       TASK_ID_TEST_RUNNER);
+#else
 				assert(port ==
 				       TASK_ID_TO_PD_PORT(task_get_current()));
+#endif /* defined(CONFIG_ZEPHYR) && defined(TEST_BUILD) */
 			}
 
 			/*
