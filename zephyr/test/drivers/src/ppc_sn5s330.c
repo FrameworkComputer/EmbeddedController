@@ -73,15 +73,13 @@ static void test_fail_once_func_set1(void)
 	const struct emul *emul = EMUL;
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(emul);
 	uint32_t count = 1;
-	uint32_t func_set1_value;
+	uint8_t func_set1_value;
 
 	i2c_common_emul_set_write_func(i2c_emul, fail_until_write_func, &count);
 
 	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
 	zassert_equal(count, 0, NULL);
-	zassert_ok(sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET1,
-					 &func_set1_value),
-		   NULL);
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET1, &func_set1_value);
 	zassert_true((func_set1_value & SN5S330_ILIM_1_62) != 0, NULL);
 	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
 }
