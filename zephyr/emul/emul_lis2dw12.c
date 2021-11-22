@@ -29,6 +29,8 @@ struct lis2dw12_emul_data {
 	struct i2c_common_emul_data common;
 	/** Emulated who-am-i register */
 	uint8_t who_am_i_reg;
+	/** Emulated ctrl1 register */
+	uint8_t ctrl1_reg;
 	/** Emulated ctrl2 register */
 	uint8_t ctrl2_reg;
 	/** Soft reset count */
@@ -87,11 +89,16 @@ static int lis2dw12_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->who_am_i_reg;
 		break;
+	case LIS2DW12_CTRL1_ADDR:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->ctrl1_reg;
+		break;
 	case LIS2DW12_CTRL2_ADDR:
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->ctrl2_reg;
 		break;
 	default:
+		__ASSERT(false, "No read handler for register 0x%02x", reg);
 		return -EINVAL;
 	}
 	return 0;
@@ -106,6 +113,9 @@ static int lis2dw12_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	case LIS2DW12_WHO_AM_I_REG:
 		LOG_ERR("Can't write to who-am-i register");
 		return -EINVAL;
+	case LIS2DW12_CTRL1_ADDR:
+		data->ctrl1_reg = val;
+		break;
 	case LIS2DW12_CTRL2_ADDR:
 		__ASSERT_NO_MSG(bytes == 1);
 		if ((val & LIS2DW12_SOFT_RESET_MASK) != 0) {
@@ -115,6 +125,7 @@ static int lis2dw12_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 		data->ctrl2_reg = val & ~LIS2DW12_SOFT_RESET_MASK;
 		break;
 	default:
+		__ASSERT(false, "No write handler for register 0x%02x", reg);
 		return -EINVAL;
 	}
 	return 0;
