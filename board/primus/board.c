@@ -8,6 +8,7 @@
 #include "charge_ramp.h"
 #include "charger.h"
 #include "common.h"
+#include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -34,6 +35,8 @@
 
 #define KBLIGHT_LED_ON_LVL 100
 #define KBLIGHT_LED_OFF_LVL 0
+
+#define PD_MAX_SUSPEND_CURRENT_MA 3000
 
 /******************************************************************************/
 /* USB-A charging control */
@@ -123,12 +126,45 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
 	/*
-	 * Follow OEM request to limit the input current to
-	 * 97% negotiated limit.
+	 * Need to set different input current limit depend on system state.
+	 * Guard adapter plug/ un-plug here.
 	 */
-	charge_ma = charge_ma * 97 / 100;
+
+	if (((max_ma == PD_MAX_CURRENT_MA) &&
+		chipset_in_state(CHIPSET_STATE_ANY_OFF)) ||
+		(max_ma != PD_MAX_CURRENT_MA))
+		charge_ma = charge_ma * 97 / 100;
+	else
+		charge_ma = charge_ma * 93 / 100;
 
 	charge_set_input_current_limit(MAX(charge_ma,
 					CONFIG_CHARGER_INPUT_CURRENT),
 					charge_mv);
 }
+
+static void configure_input_current_limit(void)
+{
+	/*
+	 * If adapter == 3250mA, we need system be charged at 3150mA in S5.
+	 * And system be charged at 3000mA in S0.
+	 */
+	int adapter_current_ma;
+	int adapter_current_mv;
+	/* Get adapter voltage/ current */
+	adapter_current_mv = charge_manager_get_charger_voltage();
+	adapter_current_ma = charge_manager_get_charger_current();
+
+	if ((adapter_current_ma == PD_MAX_CURRENT_MA) &&
+		chipset_in_or_transitioning_to_state(CHIPSET_STATE_SUSPEND))
+		adapter_current_ma = PD_MAX_SUSPEND_CURRENT_MA;
+	else
+		adapter_current_ma = adapter_current_ma * 97 / 100;
+
+	charge_set_input_current_limit(MAX(adapter_current_ma,
+					CONFIG_CHARGER_INPUT_CURRENT),
+					adapter_current_mv);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, configure_input_current_limit,
+		HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE, configure_input_current_limit,
+		HOOK_PRIO_DEFAULT);
