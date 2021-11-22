@@ -15,6 +15,7 @@
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED
 #define CONFIG_LTO
+#define CONFIG_PRESERVE_LOGS
 
 /*
  * TODO: Remove this option once the VBAT no longer keeps high when
