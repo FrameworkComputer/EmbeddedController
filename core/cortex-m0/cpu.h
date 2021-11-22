@@ -38,6 +38,14 @@
 
 #define CPU_NVIC_CCR_UNALIGN_TRAP BIT(3)
 
+/* Bitfield values for EXC_RETURN. */
+#define EXC_RETURN_SPSEL_MASK	BIT(2)
+#define EXC_RETURN_SPSEL_MSP	0
+#define EXC_RETURN_SPSEL_PSP	BIT(2)
+#define EXC_RETURN_MODE_MASK	BIT(3)
+#define EXC_RETURN_MODE_HANDLER	0
+#define EXC_RETURN_MODE_THREAD	BIT(3)
+
 /* Set up the cpu to detect faults */
 void cpu_init(void);
 

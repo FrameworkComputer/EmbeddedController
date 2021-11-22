@@ -304,7 +304,9 @@ void task_start_irq_handler(void *excep_return)
 	 * Continue iff the tasks are ready and we are not called from another
 	 * exception (as the time accouting is done in the outer irq).
 	 */
-	if (!start_called || ((uint32_t)excep_return & 0xf) == 1)
+	if (!start_called
+	    || (((uint32_t)excep_return & EXC_RETURN_MODE_MASK)
+		== EXC_RETURN_MODE_HANDLER))
 		return;
 
 	exc_start_time = t;
@@ -322,7 +324,9 @@ void task_end_irq_handler(void *excep_return)
 	 * Continue iff the tasks are ready and we are not called from another
 	 * exception (as the time accouting is done in the outer irq).
 	 */
-	if (!start_called || ((uint32_t)excep_return & 0xf) == 1)
+	if (!start_called
+	    || (((uint32_t)excep_return & EXC_RETURN_MODE_MASK)
+		== EXC_RETURN_MODE_HANDLER))
 		return;
 
 	/* Track time in interrupts */

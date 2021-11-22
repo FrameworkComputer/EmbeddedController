@@ -389,7 +389,9 @@ void __keep task_start_irq_handler(void *excep_return)
 	 * and we are not called from another exception (this must match the
 	 * logic for when we chain to svc_handler() below).
 	 */
-	if (!need_resched_or_profiling || (((uint32_t)excep_return & 0xf) == 1))
+	if (!need_resched_or_profiling
+	    || (((uint32_t)excep_return & EXC_RETURN_MODE_MASK)
+		== EXC_RETURN_MODE_HANDLER))
 		return;
 
 	exc_start_time = t;
@@ -402,7 +404,9 @@ void __keep task_resched_if_needed(void *excep_return)
 	 * Continue iff a rescheduling event happened or profiling is active,
 	 * and we are not called from another exception.
 	 */
-	if (!need_resched_or_profiling || (((uint32_t)excep_return & 0xf) == 1))
+	if (!need_resched_or_profiling
+	    || (((uint32_t)excep_return & EXC_RETURN_MODE_MASK)
+		== EXC_RETURN_MODE_HANDLER))
 		return;
 
 	svc_handler(0, 0);
