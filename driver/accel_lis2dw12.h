@@ -206,4 +206,10 @@ enum lis2dw12_fs {
  */
 #define LIS2DW12_RESOLUTION		14
 
+#ifdef CONFIG_ZTEST
+int lis2dw12_set_power_mode(const struct motion_sensor_t *s,
+			    enum lis2sw12_mode mode,
+			    enum lis2sw12_lpmode lpmode);
+#endif
+
 #endif /* __CROS_EC_ACCEL_LIS2DW12_H */

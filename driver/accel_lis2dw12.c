@@ -286,7 +286,7 @@ static int lis2dw12_irq_handler(struct motion_sensor_t *s,
 #endif
 
 /**
- * set_power_mode - set sensor power mode
+ * lis2dw12_set_power_mode - set sensor power mode
  * @s: Motion sensor pointer
  * @mode: LIS2DW12_LOW_POWER, LIS2DW12_HIGH_PERF
  * @lpmode: LIS2DW12_LOW_POWER_MODE_2,
@@ -296,9 +296,10 @@ static int lis2dw12_irq_handler(struct motion_sensor_t *s,
  * TODO: LIS2DW12_LOW_POWER_MODE_1 not implemented because output differ
  *       in resolution
  */
-static int set_power_mode(const struct motion_sensor_t *s,
-			  enum lis2sw12_mode mode,
-			  enum lis2sw12_lpmode lpmode)
+STATIC_IF_NOT(CONFIG_ZTEST)
+int lis2dw12_set_power_mode(const struct motion_sensor_t *s,
+			    enum lis2sw12_mode mode,
+			    enum lis2sw12_lpmode lpmode)
 {
 	int ret = EC_SUCCESS;
 
@@ -436,9 +437,9 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	 */
 	if (!IS_ENABLED(CONFIG_ACCEL_LIS2DWL)) {
 		if (reg_val > LIS2DW12_ODR_200HZ_VAL)
-			ret = set_power_mode(s, LIS2DW12_HIGH_PERF, 0);
+			ret = lis2dw12_set_power_mode(s, LIS2DW12_HIGH_PERF, 0);
 		else
-			ret = set_power_mode(s, LIS2DW12_LOW_POWER,
+			ret = lis2dw12_set_power_mode(s, LIS2DW12_LOW_POWER,
 					LIS2DW12_LOW_POWER_MODE_2);
 	}
 
@@ -569,10 +570,10 @@ static int init(struct motion_sensor_t *s)
 		 * lis2dwl supports 14 bit resolution only
 		 * at high performance mode
 		 */
-		ret = set_power_mode(s, LIS2DW12_HIGH_PERF, 0);
+		ret = lis2dw12_set_power_mode(s, LIS2DW12_HIGH_PERF, 0);
 	else
 		/* Set default Mode and Low Power Mode. */
-		ret = set_power_mode(s, LIS2DW12_LOW_POWER,
+		ret = lis2dw12_set_power_mode(s, LIS2DW12_LOW_POWER,
 				     LIS2DW12_LOW_POWER_MODE_2);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
