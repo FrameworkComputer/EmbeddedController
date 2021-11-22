@@ -42,7 +42,7 @@
 
 /* Maximum charging current register value */
 #define ISL923X_CURRENT_REG_MAX 0x17c0 /* bit<12:2> 10111110000 */
-#define RAA489000_CURRENT_REG_MAX 0x1ffc
+#define RAA489000_CURRENT_REG_MAX 0x17fc
 
 /* 2-level adpater current limit duration T1 & T2 in micro seconds */
 #define ISL923X_T1_10000 0x00
