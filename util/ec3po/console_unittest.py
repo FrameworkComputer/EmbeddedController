@@ -162,8 +162,8 @@ class TestConsoleEditingMethods(unittest.TestCase):
                         format=('%(asctime)s - %(module)s -'
                                 ' %(levelname)s - %(message)s'))
 
-    # Create a temp file and set both the master and slave PTYs to the file to
-    # create a loopback.
+    # Create a temp file and set both the controller and peripheral PTYs to the
+    # file to create a loopback.
     self.tempfile = tempfile.TemporaryFile()
 
     # Create some mock pipes. These won't be used since we'll mock out sends
@@ -1067,8 +1067,8 @@ class TestConsoleCompatibility(unittest.TestCase):
     logging.basicConfig(level=logging.DEBUG,
                         format=('%(asctime)s - %(module)s -'
                                 ' %(levelname)s - %(message)s'))
-    # Create a temp file and set both the master and slave PTYs to the file to
-    # create a loopback.
+    # Create a temp file and set both the controller and peripheral PTYs to the
+    # file to create a loopback.
     self.tempfile = tempfile.TemporaryFile()
 
     # Mock out the pipes.
@@ -1350,8 +1350,8 @@ class TestOOBMConsoleCommands(unittest.TestCase):
     logging.basicConfig(level=logging.DEBUG,
                         format=('%(asctime)s - %(module)s -'
                                 ' %(levelname)s - %(message)s'))
-    # Create a temp file and set both the master and slave PTYs to the file to
-    # create a loopback.
+    # Create a temp file and set both the controller and peripheral PTYs to the
+    # file to create a loopback.
     self.tempfile = tempfile.TemporaryFile()
 
     # Mock out the pipes.

@@ -98,8 +98,8 @@ class Console(object):
 
   Attributes:
     logger: A logger for this module.
-    master_pty: File descriptor to the master side of the PTY.  Used for driving
-      output to the user and receiving user input.
+    controller_pty: File descriptor to the controller side of the PTY. Used for
+      driving output to the user and receiving user input.
     user_pty: A string representing the PTY name of the served console.
     cmd_pipe: A socket.socket or multiprocessing.Connection object which
       represents the console side of the command pipe.  This must be a
@@ -139,13 +139,13 @@ class Console(object):
     output_line_log_buffer: buffer for lines coming from the EC to log to debug
   """
 
-  def __init__(self, master_pty, user_pty, interface_pty, cmd_pipe, dbg_pipe,
+  def __init__(self, controller_pty, user_pty, interface_pty, cmd_pipe, dbg_pipe,
                name=None):
     """Initalises a Console object with the provided arguments.
 
     Args:
-    master_pty: File descriptor to the master side of the PTY.  Used for driving
-      output to the user and receiving user input.
+    controller_pty: File descriptor to the controller side of the PTY. Used for
+      driving output to the user and receiving user input.
     user_pty: A string representing the PTY name of the served console.
     interface_pty: A string representing the PTY name of the served command
       interface.
@@ -162,7 +162,7 @@ class Console(object):
     console_prefix = ('%s - ' % name) if name else ''
     logger = logging.getLogger('%sEC3PO.Console' % console_prefix)
     self.logger = interpreter.LoggerAdapter(logger, {'pty': user_pty})
-    self.master_pty = master_pty
+    self.controller_pty = controller_pty
     self.user_pty = user_pty
     self.interface_pty = interface_pty
     self.cmd_pipe = cmd_pipe
@@ -189,7 +189,7 @@ class Console(object):
   def __str__(self):
     """Show internal state of Console object as a string."""
     string = []
-    string.append('master_pty: %s' % self.master_pty)
+    string.append('controller_pty: %s' % self.controller_pty)
     string.append('user_pty: %s' % self.user_pty)
     string.append('interface_pty: %s' % self.interface_pty)
     string.append('cmd_pipe: %s' % self.cmd_pipe)
@@ -208,7 +208,7 @@ class Console(object):
     return '\n'.join(string)
 
   def LogConsoleOutput(self, data):
-    """Log to debug user MCU output to master_pty when line is filled.
+    """Log to debug user MCU output to controller_pty when line is filled.
 
     The logging also suppresses the Cr50 spinner lines by removing characters
     when it sees backspaces.
@@ -261,7 +261,7 @@ class Console(object):
 
   def PrintHistory(self):
     """Print the history of entered commands."""
-    fd = self.master_pty
+    fd = self.controller_pty
     # Make it pretty by figuring out how wide to pad the numbers.
     wide = (len(self.history) // 10) + 1
     for i in range(len(self.history)):
@@ -298,7 +298,7 @@ class Console(object):
     # Print the last entry in the history buffer.
     self.logger.debug('printing previous entry %d - %s', self.history_pos,
                       self.history[self.history_pos])
-    fd = self.master_pty
+    fd = self.controller_pty
     prev_cmd = self.history[self.history_pos]
     os.write(fd, prev_cmd)
     # Update the input buffer.
@@ -312,7 +312,7 @@ class Console(object):
       self.logger.debug('History buffer is empty.')
       return
 
-    fd = self.master_pty
+    fd = self.controller_pty
 
     self.logger.debug('current history position: %d', self.history_pos)
     # Increment the history position.
@@ -357,7 +357,7 @@ class Console(object):
 
   def SliceOutChar(self):
     """Remove a char from the line and shift everything over 1 column."""
-    fd = self.master_pty
+    fd = self.controller_pty
     # Remove the character at the input_buffer_pos by slicing it out.
     self.input_buffer = self.input_buffer[0:self.input_buffer_pos] + \
                         self.input_buffer[self.input_buffer_pos+1:]
@@ -551,14 +551,14 @@ class Console(object):
       EOFError: Allowed to propagate through from self.CheckForEnhancedECImage()
           i.e. from self.dbg_pipe.recv().
     """
-    fd = self.master_pty
+    fd = self.controller_pty
 
     # Enter the OOBM prompt mode if the user presses '%'.
     if byte == ord('%'):
       self.logger.debug('Begin OOBM command.')
       self.receiving_oobm_cmd = True
       # Print a "prompt".
-      os.write(self.master_pty, b'\r\n% ')
+      os.write(self.controller_pty, b'\r\n% ')
       return
 
     # Add chars to the pending OOBM command if we're currently receiving one.
@@ -566,7 +566,7 @@ class Console(object):
       tmp_bytes = six.int2byte(byte)
       self.pending_oobm_cmd += tmp_bytes
       self.logger.debug('%s', tmp_bytes)
-      os.write(self.master_pty, tmp_bytes)
+      os.write(self.controller_pty, tmp_bytes)
       return
 
     if byte == ControlKey.CARRIAGE_RETURN:
@@ -579,7 +579,7 @@ class Console(object):
                             self.pending_oobm_cmd)
 
         # Reset the state.
-        os.write(self.master_pty, b'\r\n' + self.prompt)
+        os.write(self.controller_pty, b'\r\n' + self.prompt)
         self.input_buffer = b''
         self.input_buffer_pos = 0
         self.receiving_oobm_cmd = False
@@ -742,7 +742,7 @@ class Console(object):
     # If there's nothing to move, we're done.
     if not count:
       return
-    fd = self.master_pty
+    fd = self.controller_pty
     seq = b'\033[' + str(count).encode('ascii')
     if direction == 'left':
       # Bind the movement.
@@ -790,7 +790,7 @@ class Console(object):
 
   def SendBackspace(self):
     """Backspace a character on the console."""
-    os.write(self.master_pty, b'\033[1D \033[1D')
+    os.write(self.controller_pty, b'\033[1D \033[1D')
 
   def ProcessOOBMQueue(self):
     """Retrieve an item from the OOBM queue and process it."""
@@ -854,10 +854,10 @@ class Console(object):
   def PrintOOBMHelp(self):
     """Prints out the OOBM help."""
     # Print help syntax.
-    os.write(self.master_pty, b'\r\n' + b'Known OOBM commands:\r\n')
-    os.write(self.master_pty, b'  interrogate <never | always | auto> '
+    os.write(self.controller_pty, b'\r\n' + b'Known OOBM commands:\r\n')
+    os.write(self.controller_pty, b'  interrogate <never | always | auto> '
              b'[enhanced]\r\n')
-    os.write(self.master_pty, b'  loglevel <int>\r\n')
+    os.write(self.controller_pty, b'  loglevel <int>\r\n')
 
   def CheckBufferForEnhancedImage(self, data):
     """Adds data to a look buffer and checks to see for enhanced EC image.
@@ -933,14 +933,14 @@ def StartLoop(console, command_active, shutdown_pipe=None):
   """
   try:
     console.logger.debug('Console is being served on %s.', console.user_pty)
-    console.logger.debug('Console master is on %s.', console.master_pty)
+    console.logger.debug('Console controller is on %s.', console.controller_pty)
     console.logger.debug('Command interface is being served on %s.',
         console.interface_pty)
     console.logger.debug(console)
 
     # This checks for HUP to indicate if the user has connected to the pty.
     ep = select.epoll()
-    ep.register(console.master_pty, select.EPOLLHUP)
+    ep.register(console.controller_pty, select.EPOLLHUP)
 
     # This is used instead of "break" to avoid exiting the loop in the middle of
     # an iteration.
@@ -952,13 +952,13 @@ def StartLoop(console, command_active, shutdown_pipe=None):
     while continue_looping:
       # Check to see if pts is connected to anything
       events = ep.poll(0)
-      master_connected = not events
+      controller_connected = not events
 
       # Check to see if pipes or the console are ready for reading.
       read_list = [console.interface_pty,
                    console.cmd_pipe, console.dbg_pipe]
-      if master_connected:
-        read_list.append(console.master_pty)
+      if controller_connected:
+        read_list.append(console.controller_pty)
       if shutdown_pipe is not None:
         read_list.append(shutdown_pipe)
 
@@ -970,12 +970,12 @@ def StartLoop(console, command_active, shutdown_pipe=None):
       ready_for_reading = select_output[0]
 
       for obj in ready_for_reading:
-        if obj is console.master_pty:
+        if obj is console.controller_pty:
           if not command_active.value:
             # Convert to bytes so we can look for non-printable chars such as
             # Ctrl+A, Ctrl+E, etc.
             try:
-              line = bytearray(os.read(console.master_pty, CONSOLE_MAX_READ))
+              line = bytearray(os.read(console.controller_pty, CONSOLE_MAX_READ))
               console.logger.debug('Input from user: %s, locked:%s',
                   str(line).strip(), command_active.value)
               for i in line:
@@ -985,7 +985,7 @@ def StartLoop(console, command_active, shutdown_pipe=None):
                 except EOFError:
                   console.logger.debug(
                       'ec3po console received EOF from dbg_pipe in HandleChar()'
-                      ' while reading console.master_pty')
+                      ' while reading console.controller_pty')
                   continue_looping = False
                   break
             except OSError:
@@ -1019,11 +1019,11 @@ def StartLoop(console, command_active, shutdown_pipe=None):
             # Write it to the user console.
             if console.raw_debug:
               console.logger.debug('|CMD|-%s->%r',
-                                   ('u' if master_connected else '') +
+                                   ('u' if controller_connected else '') +
                                    ('i' if command_active.value else ''),
                                    data.strip())
-            if master_connected:
-              os.write(console.master_pty, data)
+            if controller_connected:
+              os.write(console.controller_pty, data)
             if command_active.value:
               os.write(console.interface_pty, data)
 
@@ -1040,18 +1040,18 @@ def StartLoop(console, command_active, shutdown_pipe=None):
             # Write it to the user console.
             if len(data) > 1 and console.raw_debug:
               console.logger.debug('|DBG|-%s->%r',
-                                   ('u' if master_connected else '') +
+                                   ('u' if controller_connected else '') +
                                    ('i' if command_active.value else ''),
                                    data.strip())
             console.LogConsoleOutput(data)
-            if master_connected:
+            if controller_connected:
               end = len(data) - 1
               if console.timestamp_enabled:
                 # A timestamp is required at the beginning of this line
                 if tm_req is True:
                   now = datetime.now()
                   tm = CanonicalizeTimeString(now.strftime(HOST_STRFTIME))
-                  os.write(console.master_pty, tm)
+                  os.write(console.controller_pty, tm)
                   tm_req = False
 
                 # Insert timestamps into the middle where appropriate
@@ -1066,7 +1066,7 @@ def StartLoop(console, command_active, shutdown_pipe=None):
               # timestamp required on next input
               if data[end] == b'\n'[0]:
                 tm_req = True
-              os.write(console.master_pty, data_tm)
+              os.write(console.controller_pty, data_tm)
             if command_active.value:
               os.write(console.interface_pty, data)
 
@@ -1083,10 +1083,10 @@ def StartLoop(console, command_active, shutdown_pipe=None):
     pass
 
   finally:
-    ep.unregister(console.master_pty)
+    ep.unregister(console.controller_pty)
     console.dbg_pipe.close()
     console.cmd_pipe.close()
-    os.close(console.master_pty)
+    os.close(console.controller_pty)
     os.close(console.interface_pty)
     if shutdown_pipe is not None:
       shutdown_pipe.close()
@@ -1155,12 +1155,12 @@ def main(argv):
   itpr_process.start()
 
   # Open a new pseudo-terminal pair
-  (master_pty, user_pty) = pty.openpty()
+  (controller_pty, user_pty) = pty.openpty()
   # Set the permissions to 660.
   os.chmod(os.ttyname(user_pty), (stat.S_IRGRP | stat.S_IWGRP |
                                   stat.S_IRUSR | stat.S_IWUSR))
   # Create a console.
-  console = Console(master_pty, os.ttyname(user_pty), cmd_pipe_interactive,
+  console = Console(controller_pty, os.ttyname(user_pty), cmd_pipe_interactive,
                     dbg_pipe_interactive)
   # Start serving the console.
   v = threadproc_shim.Value(ctypes.c_bool, False)
