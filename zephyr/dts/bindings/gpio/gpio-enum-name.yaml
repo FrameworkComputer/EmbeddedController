@@ -60,6 +60,7 @@ properties:
       - GPIO_EC_PCH_SYS_PWROK
       - GPIO_EC_PCH_WAKE_ODL
       - GPIO_EC_PCORE_INT_ODL
+      - GPIO_EC_PEN_CHG_DIS_ODL
       - GPIO_EC_PMIC_EN_ODL
       - GPIO_EC_PMIC_WATCHDOG_L
       - GPIO_EC_PROCHOT_IN_L
@@ -132,6 +133,7 @@ properties:
       - GPIO_PG_MT6315_PROC_ODL
       - GPIO_PG_MT6360_ODL
       - GPIO_PG_PP5000_A_ODL
+      - GPIO_PG_PP5000_Z2_OD
       - GPIO_PMIC_EC_PWRGD
       - GPIO_PMIC_KPD_PWR_ODL
       - GPIO_PMIC_RESIN_L
@@ -143,6 +145,7 @@ properties:
       - GPIO_S0_PGOOD
       - GPIO_S5_PGOOD
       - GPIO_SET_VMC_VOLT_AT_1V8
+      - GPIO_SHI_CS_L
       - GPIO_SKU_ID0
       - GPIO_SKU_ID1
       - GPIO_SKU_ID2
@@ -176,6 +179,7 @@ properties:
       - GPIO_USB_C0_PPC_INT_ODL
       - GPIO_USB_C0_SWCTL_INT_ODL
       - GPIO_USB_C0_TCPC_INT_ODL
+      - GPIO_USB_C0_TCPC_RST
       - GPIO_USB_C0_TCPC_RST_L
       - GPIO_USB_C1_BC12_CHARGER_INT_ODL
       - GPIO_USB_C1_BC12_INT_L
@@ -199,4 +203,5 @@ properties:
       - GPIO_WARM_RESET_L
       - GPIO_WP
       - GPIO_WP_L
+      - GPIO_X_EC_GPIO1
       - GPIO_X_EC_GPIO2
