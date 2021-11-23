@@ -89,6 +89,8 @@ static bool firmware_update;
 
 static bool system_power_present;
 
+void cypd_update_power(void);
+
 void set_pd_fw_update(bool update)
 {
 	firmware_update = update;
@@ -337,6 +339,20 @@ int cypd_set_power_state(int power_state)
 	CPRINTS("%s pwr state %d", __func__, power_state);
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
+
+		if (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
+				charger_current_battery_params()->state_of_charge > 0)
+			/* CYPD firmware will issue error recovery when we change the system
+			 * power state to S0, if battery can't provide the power, it will cause
+			 * power loss.
+			 *
+			 * We can write the 0xC0 to avoid cypd to do the error recovery before we
+			 * change the system power state
+			 */
+			rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC1);
+		else
+			rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
+
 		rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, power_state);
 		if (rv != EC_SUCCESS)
 			break;

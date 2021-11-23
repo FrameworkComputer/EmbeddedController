@@ -505,7 +505,7 @@
  *
  * All other ports set to 0xff (not used)
  */
-
+#define CONFIG_I2C_DEBUG
 #define I2C_PORT_TOUCHPAD		MCHP_I2C_PORT2
 #define I2C_PORT_PD_MCU0        MCHP_I2C_PORT6
 #define I2C_PORT_PD_MCU1        MCHP_I2C_PORT7
