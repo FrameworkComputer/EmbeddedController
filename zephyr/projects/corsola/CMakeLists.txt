@@ -12,9 +12,10 @@ zephyr_library_include_directories(include)
 zephyr_library_sources(
 	"src/board_chipset.c"
 	"src/hibernate.c"
-	"src/usbc_config.c"
-	"src/usb_pd_policy.c"
 )
+
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/usbc_config.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/usb_pd_policy.c")
 
 if(DEFINED CONFIG_BOARD_KRABBY)
 	project(krabby)
