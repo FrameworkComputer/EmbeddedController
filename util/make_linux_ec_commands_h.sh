@@ -57,7 +57,7 @@ patch "${tmp}" << EOF
 + * Copyright (C) 2012 Google, Inc
 + *
 + * NOTE: This file is auto-generated from ChromeOS EC Open Source code from
-+ * https://chromium.googlesource.com/chromiumos/platform/ec/+/master/include/ec_commands.h
++ * https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/include/ec_commands.h
   */
  
  /* Host communication command constants for Chrome EC */

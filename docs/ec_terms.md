@@ -239,7 +239,7 @@
 [BC 1.2 Specification]: <https://www.usb.org/document-library/battery-charging-v12-spec-and-adopters-agreement>
 [CrOS Board Info]: <https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md>
 [CEC Wikipedia page]: <https://en.wikipedia.org/wiki/Consumer_Electronics_Control>
-[DPTF Readme]: <https://github.com/intel/dptf/blob/master/README.txt>
+[DPTF Readme]: <https://github.com/intel/dptf/blob/HEAD/README.txt>
 [eSPI Specification]: <https://www.intel.com/content/dam/support/us/en/documents/software/chipset-software/327432-004_espi_base_specification_rev1.0.pdf>
 [FAFT design doc]: <https://chromium.googlesource.com/chromiumos/third_party/autotest/+/HEAD/docs/faft-design-doc.md>
 [I2C Specification]: <https://www.nxp.com/docs/en/user-guide/UM10204.pdf>

@@ -142,7 +142,7 @@ warn_gpio() {
 }
 
 # Taken verbatim from
-# https://chromium.googlesource.com/chromiumos/docs/+/master/lsb-release.md#shell
+# https://chromium.googlesource.com/chromiumos/docs/+/HEAD/lsb-release.md#shell
 # This should not be used by anything except get_platform_name.
 # See https://crbug.com/98462.
 lsbval() {

@@ -650,7 +650,7 @@ Make sure that this interface is disabled:
 
 <!-- https://docs.google.com/drawings/d/1YhOUD-Qf69NUdugT6n0cX7o7CWvb5begcdmJwv7ch6I -->
 
-[Dragonclaw Rev 0.2 1.8V Rework]: https://github.com/coreboot/chrome-ec/blob/master/docs/images/dragonclaw_rev_0.2_1.8v_load_switch_rework.pdf
+[Dragonclaw Rev 0.2 1.8V Rework]: https://github.com/coreboot/chrome-ec/blob/HEAD/docs/images/dragonclaw_rev_0.2_1.8v_load_switch_rework.pdf
 
 <!-- https://docs.google.com/drawings/d/1w2qbb4AsSxY-KTK2vXZ6TKeWHveWvS3Dkgh61ocu0wc -->
 

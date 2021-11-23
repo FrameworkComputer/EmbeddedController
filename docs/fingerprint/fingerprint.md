@@ -582,7 +582,7 @@ a given device can be found by viewing `chrome://system/#platform_identity_sku`.
 [CBI Info]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
 [Chrome OS Config SKU]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#identity
 [Chrome OS Project Configuration]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md
-[Starlark]: https://docs.bazel.build/versions/master/skylark/language.html
+[Starlark]: https://docs.bazel.build/versions/main/skylark/language.html
 [`create_fingerprint`]: https://chromium.googlesource.com/chromiumos/config/+/e1fa0d7f56eb3dd6e9378e4326de086ada46b7d3/util/hw_topology.star#444
 [Morphius `config.star`]: https://chrome-internal.googlesource.com/chromeos/project/zork/morphius/+/593b657a776ed6b320c826916adc9cd845faf709/config.star#85
 [regenerate the config]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md#making-configuration-changes-for-your-project

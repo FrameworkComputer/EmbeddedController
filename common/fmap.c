@@ -13,7 +13,7 @@
 
 /*
  * FMAP structs.
- * See https://chromium.googlesource.com/chromiumos/third_party/flashmap/+/master/lib/fmap.h
+ * See https://chromium.googlesource.com/chromiumos/third_party/flashmap/+/HEAD/lib/fmap.h
  */
 #define FMAP_NAMELEN 32
 #define FMAP_SIGNATURE "__FMAP__"

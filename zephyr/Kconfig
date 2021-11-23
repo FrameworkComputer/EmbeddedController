@@ -176,7 +176,7 @@ choice PLATFORM_EC_CBI_STORAGE_TYPE
 
 	  See here for detailed information on CBI:
 
-	  https://chromium.googlesource.com/chromiumos/docs/+/master/design_docs/cros_board_info.md
+	  https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
 
 config PLATFORM_EC_CBI_EEPROM
 	bool "CBI EEPROM support"

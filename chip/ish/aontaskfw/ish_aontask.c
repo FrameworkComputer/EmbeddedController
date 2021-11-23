@@ -788,7 +788,7 @@ static void handle_reset(enum ish_pm_state pm_state)
 		 * ISH ipc host driver will set DMA_ENABLED_MASK bit when it
 		 * is loaded and starts, and clear this bit when it is removed.
 		 *
-		 * see: https://github.com/torvalds/linux/blob/master/drivers/
+		 * see: https://github.com/torvalds/linux/blob/HEAD/drivers/
 		 *      hid/intel-ish-hid/ipc/ipc.c
 		 *
 		 * we have two kinds of reset situations need to handle here:
