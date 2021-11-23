@@ -10,3 +10,8 @@ include: base.yaml
 properties:
    reg:
      required: true
+   battery:
+     type: phandle
+     required: false
+     description:
+       Reference to battery emulator.

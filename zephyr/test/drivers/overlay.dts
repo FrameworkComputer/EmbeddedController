@@ -627,6 +627,7 @@
 		status = "okay";
 		reg = <0x9>;
 		label = "ISL923X_EMUL";
+		battery = <&battery>;
 	};
 
 	tcpci_emul: tcpci_emul@82 {

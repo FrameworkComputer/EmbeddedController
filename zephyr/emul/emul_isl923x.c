@@ -16,6 +16,7 @@
 #include "driver/charger/isl923x_public.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_isl923x.h"
+#include "emul/emul_smart_battery.h"
 #include "i2c.h"
 
 #include <logging/log.h>
@@ -55,6 +56,10 @@ LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 /** Mask used for the DC PROCHOT register */
 #define REG_PROCHOT_DC_MASK GENMASK(13, 8)
 
+#define DEFAULT_R_SNS 10
+#define R_SNS CONFIG_CHARGER_SENSE_RESISTOR
+#define REG_TO_CURRENT(REG) ((REG) * DEFAULT_R_SNS / R_SNS)
+
 struct isl923x_emul_data {
 	/** Common I2C data */
 	struct i2c_common_emul_data common;
@@ -84,6 +89,8 @@ struct isl923x_emul_data {
 	uint16_t dc_prochot_reg;
 	/** Emulated ADC vbus register */
 	uint16_t adc_vbus_reg;
+	/** Pointer to battery emulator. */
+	int battery_ord;
 };
 
 struct isl923x_emul_cfg {
@@ -109,9 +116,11 @@ void isl923x_emul_reset(const struct emul *emulator)
 {
 	struct isl923x_emul_data *data = emulator->data;
 	struct i2c_common_emul_data common_backup = data->common;
+	int battery_ord = data->battery_ord;
 
 	memset(data, 0, sizeof(struct isl923x_emul_data));
 	data->common = common_backup;
+	data->battery_ord = battery_ord;
 }
 
 void isl923x_emul_set_manufacturer_id(const struct emul *emulator,
@@ -357,6 +366,35 @@ static int isl923x_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	return 0;
 }
 
+static int isl923x_emul_finish_write(struct i2c_emul *emul, int reg, int bytes)
+{
+	struct isl923x_emul_data *data = ISL923X_DATA_FROM_I2C_EMUL(emul);
+	struct i2c_emul *battery_i2c_emul;
+	struct sbat_emul_bat_data *bat;
+	int16_t current;
+
+	switch (reg) {
+	case ISL923X_REG_CHG_CURRENT:
+		/* Write current to battery. */
+		if (data->battery_ord >= 0) {
+			battery_i2c_emul = sbat_emul_get_ptr(data->battery_ord);
+			if (battery_i2c_emul != NULL) {
+				bat = sbat_emul_get_bat_data(battery_i2c_emul);
+				if (bat != NULL) {
+					current = REG_TO_CURRENT(
+						data->current_limit_reg);
+					if (current > 0)
+						bat->cur = current;
+					else
+						bat->cur = -5;
+				}
+			}
+		}
+		break;
+	}
+	return 0;
+}
+
 static int emul_isl923x_init(const struct emul *emul,
 			     const struct device *parent)
 {
@@ -378,7 +416,12 @@ static int emul_isl923x_init(const struct emul *emul,
 		.common = {                                                    \
 			.write_byte = isl923x_emul_write_byte,                 \
 			.read_byte = isl923x_emul_read_byte,                   \
+			.finish_write = isl923x_emul_finish_write,             \
 		},                                                             \
+		.battery_ord = COND_CODE_1(                                    \
+			DT_INST_NODE_HAS_PROP(n, battery),                     \
+			(DT_DEP_ORD(DT_INST_PROP(n, battery))),                \
+			(-1)),                                                 \
 	};                                                                     \
 	static struct isl923x_emul_cfg isl923x_emul_cfg_##n = {                \
 	.common = {                                                            \
