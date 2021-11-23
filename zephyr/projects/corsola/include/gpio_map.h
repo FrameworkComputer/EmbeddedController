@@ -10,7 +10,104 @@
 #include <gpio_signal.h>
 
 #define GPIO_ENTERING_RW		GPIO_UNIMPLEMENTED
-#define GPIO_WP_L			GPIO_UNIMPLEMENTED
+
+/* TODO: support CONFIG_WP_ACTIVE_HIGH for zephyr */
+#define GPIO_WP			GPIO_UNIMPLEMENTED
+#define GPIO_WP_L		GPIO_UNIMPLEMENTED
+
+#ifdef CONFIG_PLATFORM_EC_POWER_BUTTON
+	#define PWRBTN_INT()        GPIO_INT(GPIO_POWER_BUTTON_L,              \
+					     GPIO_INT_EDGE_BOTH,               \
+					     power_button_interrupt)
+#else
+	#define PWRBTN_INT()
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_VOLUME_BUTTONS
+	#define VOLBTN_INT(pin)     GPIO_INT(pin,                             \
+					     GPIO_INT_EDGE_BOTH,              \
+					     button_interrupt)
+#else
+	#define VOLBTN_INT(pin)
+#endif
+
+#ifdef CONFIG_SOC_IT8XXX2
+	#define AP_SPI_INT()        GPIO_INT(GPIO_SPI0_CS,                     \
+					     GPIO_INT_EDGE_BOTH,               \
+					     spi_event)
+#elif defined(CONFIG_SOC_NPCX9M3F)
+	/* TODO(b:203619750): enable SPI interrupt */
+	#define AP_SPI_INT()
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_TABLET_MODE
+	#define GMR_TABLET_INT()    GPIO_INT(GPIO_TABLET_MODE_L,               \
+					     GPIO_INT_EDGE_BOTH,               \
+					     gmr_tablet_switch_isr)
+#else
+	#define GMR_TABLET_INT()
+#endif
+
+/* TODO(b:203619750): enable power sequencing interrupt */
+#ifdef CONFIG_PLATFORM_EC_POWERSEQ_MT8186
+	#define WARM_RST_REQ_INT()  GPIO_INT(GPIO_AP_EC_WARM_RST_REQ,          \
+					     GPIO_INT_EDGE_RISING,             \
+					     chipset_reset_request_interrupt)
+	#define AP_IN_SLEEP_INT()   GPIO_INT(GPIO_AP_IN_SLEEP_L,               \
+					     GPIO_INT_EDGE_BOTH,               \
+					     power_signal_interrupt)
+#else
+	#define WARM_RST_REQ_INT()
+	#define AP_IN_SLEEP_INT()
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_ACCEL_LIS2DW12
+	#define LID_ACCEL_INT()     GPIO_INT(GPIO_LID_ACCEL_INT_L,             \
+					     GPIO_INT_EDGE_FALLING,            \
+					     lis2dw12_interrupt)
+#else
+	#define LID_ACCEL_INT()
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_EXTPOWER_GPIO
+	#define EXTPWR_INT()        GPIO_INT(GPIO_AC_PRESENT,                  \
+					     GPIO_INT_EDGE_BOTH,               \
+					     extpower_interrupt)
+#else
+	#define EXTPWR_INT()
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_LID_SWITCH
+	#define LID_SWITCH_INT()    GPIO_INT(GPIO_LID_OPEN,                    \
+					     GPIO_INT_EDGE_BOTH,               \
+					     lid_interrupt)
+#else
+	#define LID_SWITCH_INT()
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_SWITCH
+	#define SWITCH_INT()        GPIO_INT(GPIO_WP,                          \
+					     GPIO_INT_EDGE_BOTH,               \
+					     switch_interrupt)
+#else
+	#define SWITCH_INT()
+#endif
+
+#ifdef CONFIG_VARIANT_CORSOLA_DB_DETECTION
+	#define X_EC_GPIO2_INT()    GPIO_INT(GPIO_X_EC_GPIO2,                  \
+					     GPIO_INT_EDGE_BOTH,               \
+					     x_ec_interrupt)
+#else
+	#define X_EC_GPIO2_INT()
+#endif
+
+#ifdef CONFIG_VARIANT_CORSOLA_USBA
+	#define USBA_INT() GPIO_INT(GPIO_AP_XHCI_INIT_DONE,                    \
+				    GPIO_INT_EDGE_BOTH,                        \
+				    usb_a0_interrupt)
+#else
+	#define USBA_INT()
+#endif
 
 #ifdef CONFIG_PLATFORM_EC_GMR_TABLET_MODE
 #define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
@@ -37,33 +134,19 @@ static inline void motion_interrupt(enum gpio_signal signal)
  *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
  */
 #define EC_CROS_GPIO_INTERRUPTS						\
-	GPIO_INT(GPIO_POWER_BUTTON_L,					\
-		 GPIO_INT_EDGE_BOTH, power_button_interrupt)		\
-	GPIO_INT(GPIO_LID_OPEN,						\
-		 GPIO_INT_EDGE_BOTH, lid_interrupt)			\
-	GPIO_INT(GPIO_TABLET_MODE_L,					\
-		 GPIO_INT_EDGE_BOTH, gmr_tablet_switch_isr)		\
-	GPIO_INT(GPIO_AP_EC_WARM_RST_REQ,				\
-		 GPIO_INT_EDGE_RISING, chipset_reset_request_interrupt)	\
-	GPIO_INT(GPIO_AP_IN_SLEEP_L,					\
-		 GPIO_INT_EDGE_BOTH, power_signal_interrupt)		\
+	PWRBTN_INT()							\
+	VOLBTN_INT(GPIO_VOLUME_DOWN_L)					\
+	VOLBTN_INT(GPIO_VOLUME_UP_L)					\
+	LID_SWITCH_INT()						\
+	WARM_RST_REQ_INT()						\
+	GMR_TABLET_INT()						\
 	GPIO_INT(GPIO_BASE_IMU_INT_L,					\
 		 GPIO_INT_EDGE_FALLING, motion_interrupt)		\
-	GPIO_INT(GPIO_LID_ACCEL_INT_L,					\
-		 GPIO_INT_EDGE_FALLING, lis2dw12_interrupt)		\
-	GPIO_INT(GPIO_VOLUME_DOWN_L,					\
-		 GPIO_INT_EDGE_BOTH, button_interrupt)			\
-	GPIO_INT(GPIO_VOLUME_UP_L,					\
-		 GPIO_INT_EDGE_BOTH, button_interrupt)			\
-	GPIO_INT(GPIO_AP_XHCI_INIT_DONE,				\
-		 GPIO_INT_EDGE_BOTH, usb_a0_interrupt)			\
-	GPIO_INT(GPIO_AC_PRESENT,					\
-		 GPIO_INT_EDGE_BOTH, extpower_interrupt)		\
-	GPIO_INT(GPIO_WP,						\
-		 GPIO_INT_EDGE_BOTH, switch_interrupt)			\
-	GPIO_INT(GPIO_SPI0_CS,						\
-		 GPIO_INT_EDGE_FALLING, spi_event)			\
-	GPIO_INT(GPIO_X_EC_GPIO2,					\
-		 GPIO_INT_EDGE_BOTH, x_ec_interrupt)
+	LID_ACCEL_INT()							\
+	USBA_INT()							\
+	EXTPWR_INT()							\
+	SWITCH_INT()							\
+	AP_SPI_INT()							\
+	X_EC_GPIO2_INT()
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
