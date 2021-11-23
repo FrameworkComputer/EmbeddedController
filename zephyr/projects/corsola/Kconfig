@@ -8,6 +8,12 @@ config BOARD_KRABBY
 	  Build Google Krabby reference board. Krabby has MediaTek MT8186 SoC
 	  with ITE it81202-bx EC.
 
+config BOARD_KINGLER
+	bool "Google Kingler Board"
+	help
+	  Build Google Kingler reference board. Krabby has MediaTek MT8186 SoC
+	  with NPCX993FA0BX EC.
+
 config VARIANT_CORSOLA_DB_DETECTION
 	bool "Corsola Platform Runtime Daughter Board Detection"
 	help
