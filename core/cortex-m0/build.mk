@@ -46,3 +46,11 @@ core-$(CONFIG_CURVE25519)+=curve25519/scalarmult.o
 core-$(CONFIG_CURVE25519)+=curve25519/sqr.o
 
 core-$(CONFIG_WATCHDOG)+=watchdog.o
+
+core-$(CONFIG_COMMON_PANIC_OUTPUT)+=exception_panic.o
+
+$(CORE_RW_OUT)/exception_panic.o: $(CORE_RW_OUT)/asm_offsets.h
+$(CORE_RW_OUT)/exception_panic.o: CFLAGS+=-I$(CORE_RW_OUT)
+
+$(CORE_RO_OUT)/exception_panic.o: $(CORE_RO_OUT)/asm_offsets.h
+$(CORE_RO_OUT)/exception_panic.o: CFLAGS+=-I$(CORE_RO_OUT)
