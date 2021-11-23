@@ -352,4 +352,5 @@ void charger_emul_init(struct charger_emul_data *data)
 
 	data->ops.transmit = charger_emul_transmit_op;
 	data->ops.rx_consumed = charger_emul_rx_consumed_op;
+	data->ops.control_change = NULL;
 }
