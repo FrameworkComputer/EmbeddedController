@@ -101,6 +101,8 @@ cmd_run_fuzz = build/host/$*/$*.exe -seed=1 -runs=1 $(silent) \
 cmd_exe = $(CXX) $(ro-objs) $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
 cmd_c_to_o = $(CC) -std=gnu11 $(C_WARN) $(CFLAGS) -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
+cmd_c_to_s = $(CC) -S $(C_WARN) $(CFLAGS) -fno-lto -MMD -MP -MF $@.d -c $< \
+		-MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_cxx_to_o = $(CXX) -std=gnu++17 $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d -c $< \
 		      -MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
@@ -617,6 +619,11 @@ $(out)/RO/%.o:%.c
 	$(call quiet,c_to_o,CC     )
 $(out)/RW/%.o:%.c
 	$(call quiet,c_to_o,CC     )
+
+$(out)/RO/%.s:%.c
+	$(call quiet,c_to_s,CC     )
+$(out)/RW/%.s:%.c
+	$(call quiet,c_to_s,CC     )
 
 $(out)/RO/%.o:%.cc
 	$(call quiet,cxx_to_o,CXX    )
