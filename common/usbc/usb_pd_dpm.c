@@ -53,6 +53,8 @@ static struct {
 #define DPM_FLAG_ENTER_DP             BIT(2)
 #define DPM_FLAG_ENTER_TBT            BIT(3)
 #define DPM_FLAG_ENTER_USB4           BIT(4)
+#define DPM_FLAG_ENTER_ANY            (DPM_FLAG_ENTER_DP | DPM_FLAG_ENTER_TBT \
+					| DPM_FLAG_ENTER_USB4)
 #define DPM_FLAG_SEND_ATTENTION       BIT(5)
 #define DPM_FLAG_DATA_RESET_REQUESTED BIT(6)
 #define DPM_FLAG_DATA_RESET_DONE      BIT(7)
@@ -304,6 +306,7 @@ static void dpm_attempt_mode_entry(int port)
 		return;
 
 	if (IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) &&
+			DPM_CHK_FLAG(port, DPM_FLAG_ENTER_ANY) &&
 			!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED) &&
 			!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
 		pd_dpm_request(port, DPM_REQUEST_DATA_RESET);
