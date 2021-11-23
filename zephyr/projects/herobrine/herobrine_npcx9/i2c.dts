@@ -64,6 +64,7 @@
 };
 
 &i2c0_0 {
+	label = "I2C_POWER";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 
@@ -79,6 +80,7 @@
 };
 
 &i2c1_0 {
+	label = "I2C_USB_C0_PD";
 	status = "okay";
 	/*
 	 * TODO(b/200280341): PS8805 SPI ROM access
@@ -97,6 +99,7 @@
 };
 
 &i2c2_0 {
+	label = "I2C_USB_C1_PD";
 	status = "okay";
 	/* TODO(b/200280341): PS8805 SPI ROM access */
 	clock-frequency = <I2C_BITRATE_FAST>;
@@ -111,11 +114,8 @@
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
-&i2c_ctrl3 {
-	status = "okay";
-};
-
 &i2c4_1 {
+	label = "I2C_RTC";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
@@ -132,6 +132,7 @@
 };
 
 &i2c5_0 {
+	label = "I2C_EEPROM";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
@@ -141,6 +142,7 @@
 };
 
 &i2c7_0 {
+	label = "I2C_SENSOR";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
