@@ -116,6 +116,49 @@ static void test_dead_battery_boot_force_pp2_fets_set(void)
 	zassert_false(sn5s330_drv.is_sourcing_vbus(SN5S330_PORT), NULL);
 }
 
+static void test_enter_low_power_mode(void)
+{
+	const struct emul *emul = EMUL;
+
+	uint8_t func_set2_reg;
+	uint8_t func_set3_reg;
+	uint8_t func_set4_reg;
+	uint8_t func_set9_reg;
+
+	/*
+	 * Requirements were extracted from TI's recommended changes for octopus
+	 * to lower power use during hibernate as well as the follow up changes
+	 * we made to allow the device to wake up from hibernate.
+	 *
+	 * For Reference: b/111006203#comment35
+	 */
+
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	zassert_ok(sn5s330_drv.enter_low_power_mode(SN5S330_PORT), NULL);
+
+	/* 1) Verify VBUS power paths are off */
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
+	zassert_equal(func_set3_reg & SN5S330_PP1_EN, 0, NULL);
+	zassert_equal(func_set3_reg & SN5S330_PP2_EN, 0, NULL);
+
+	/* 2) Verify VCONN power path is off */
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET4, &func_set4_reg);
+	zassert_not_equal(func_set4_reg & SN5S330_CC_EN, 0, NULL);
+	zassert_equal(func_set4_reg & SN5S330_VCONN_EN, 0, NULL);
+
+	/* 3) Verify SBU FET is off */
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET2, &func_set2_reg);
+	zassert_equal(func_set2_reg & SN5S330_SBU_EN, 0, NULL);
+
+	/* 4) Verify VBUS and SBU OVP comparators are off */
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET9, &func_set9_reg);
+	zassert_equal(func_set9_reg & SN5S330_FORCE_OVP_EN_SBU, 0, NULL);
+	zassert_equal(func_set9_reg & SN5S330_PWR_OVR_VBUS, 0, NULL);
+	zassert_not_equal(func_set9_reg & SN5S330_OVP_EN_CC, 0, NULL);
+	zassert_equal(func_set9_reg & SN5S330_FORCE_ON_VBUS_OVP, 0, NULL);
+	zassert_equal(func_set9_reg & SN5S330_FORCE_ON_VBUS_UVP, 0, NULL);
+}
+
 static void reset_sn5s330_state(void)
 {
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
@@ -127,12 +170,16 @@ static void reset_sn5s330_state(void)
 
 void test_suite_ppc_sn5s330(void)
 {
-	ztest_test_suite(ppc_sn5s330,
-			 ztest_unit_test_setup_teardown(
-				 test_dead_battery_boot_force_pp2_fets_set,
-				 reset_sn5s330_state, reset_sn5s330_state),
-			 ztest_unit_test_setup_teardown(
-				 test_fail_once_func_set1, reset_sn5s330_state,
-				 reset_sn5s330_state));
+	ztest_test_suite(
+		ppc_sn5s330,
+		ztest_unit_test_setup_teardown(test_enter_low_power_mode,
+					       reset_sn5s330_state,
+					       reset_sn5s330_state),
+		ztest_unit_test_setup_teardown(
+			test_dead_battery_boot_force_pp2_fets_set,
+			reset_sn5s330_state, reset_sn5s330_state),
+		ztest_unit_test_setup_teardown(test_fail_once_func_set1,
+					       reset_sn5s330_state,
+					       reset_sn5s330_state));
 	ztest_run_test_suite(ppc_sn5s330);
 }
