@@ -6,3 +6,4 @@
 # Zephyr module.  The format is:
 #  vendor-prefix<TAB>vendor name
 cros-ec	The Chromium OS Embedded Controller Project
+cros	The Chromium OS Embedded Controller Project
