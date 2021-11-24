@@ -40,6 +40,7 @@ register_corsola_project(
     project_name="kingler",
     chip="npcx9",
     extra_dts_overlays=[
+        here / "adc_kingler.dts",
         here / "battery_kingler.dts",
         here / "gpio_kingler.dts",
         here / "i2c_kingler.dts",
