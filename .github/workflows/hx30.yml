@@ -6,7 +6,7 @@ on:
       - hx3*
   pull_request:
     branches: 
-      - hx3*
+      - hx30
   workflow_dispatch:
 
 jobs:
