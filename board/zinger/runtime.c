@@ -4,6 +4,7 @@
  */
 /* tiny substitute of the runtime layer */
 
+#include "atomic.h"
 #include "chip/stm32/clock-f.h"
 #include "clock.h"
 #include "common.h"
@@ -16,7 +17,7 @@
 #include "util.h"
 
 volatile uint32_t last_event;
-uint32_t sleep_mask;
+atomic_t sleep_mask;
 
 /* High word of the 64-bit timestamp counter  */
 static volatile uint32_t clksrc_high;

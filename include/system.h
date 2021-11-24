@@ -570,7 +570,7 @@ enum {
  * Current sleep mask. You may read from this variable, but must NOT
  * modify it; use enable_sleep() or disable_sleep() to do that.
  */
-extern uint32_t sleep_mask;
+extern atomic_t sleep_mask;
 
 /*
  * Macros to use to get whether deep sleep is allowed or whether
@@ -613,7 +613,7 @@ static inline void disable_sleep(uint32_t mask)
  * Do NOT access it directly. Use idle_is_disabled() to read it and
  * enable_idle()/disable_idle() to write it.
  */
-extern uint32_t idle_disabled;
+extern atomic_t idle_disabled;
 
 static inline uint32_t idle_is_disabled(void)
 {

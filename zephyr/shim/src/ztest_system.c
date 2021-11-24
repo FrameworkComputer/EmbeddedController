@@ -7,7 +7,7 @@
 #include "cros_version.h"
 
 /* Ongoing actions preventing going into deep-sleep mode. */
-uint32_t sleep_mask;
+atomic_t sleep_mask;
 
 void system_common_pre_init(void)
 {
