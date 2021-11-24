@@ -166,7 +166,11 @@ static void mt6360_usb_charger_task(const int port)
 
 		/* vbus change, start bc12 detection */
 		if (evt & USB_CHG_EVENT_VBUS) {
-			if (pd_snk_is_vbus_provided(port))
+			bool is_non_pd_sink = !pd_capable(port) &&
+				pd_get_power_role(port) == PD_ROLE_SINK &&
+				pd_snk_is_vbus_provided(port);
+
+			if (is_non_pd_sink)
 				mt6360_enable_bc12_detection(1);
 			else
 				mt6360_update_charge_manager(

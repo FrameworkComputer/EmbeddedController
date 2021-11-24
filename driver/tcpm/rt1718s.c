@@ -326,7 +326,11 @@ static void rt1718s_bc12_usb_charger_task(const int port)
 		uint32_t evt = task_wait_event(-1);
 
 		if (evt & USB_CHG_EVENT_VBUS) {
-			if (pd_snk_is_vbus_provided(port))
+			bool is_non_pd_sink = !pd_capable(port) &&
+				pd_get_power_role(port) == PD_ROLE_SINK &&
+				pd_snk_is_vbus_provided(port);
+
+			if (is_non_pd_sink)
 				rt1718s_enable_bc12_sink(port, true);
 			else
 				rt1718s_update_charge_manager(
