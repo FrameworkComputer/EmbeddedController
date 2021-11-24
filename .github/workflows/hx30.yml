@@ -27,7 +27,7 @@ jobs:
           make -j BOARD=$BOARD CROSS_COMPILE=arm-none-eabi-
           echo Built $BOARD ec
       - name: file sha256
-        run: sha256sum build/hx20/ec.bin
+        run: sha256sum build/hx30/ec.bin
       - name: generate artifact version
         run: |
           echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
