@@ -33,6 +33,8 @@ struct lis2dw12_emul_data {
 	uint8_t ctrl1_reg;
 	/** Emulated ctrl2 register */
 	uint8_t ctrl2_reg;
+	/** Emulated ctrl6 register */
+	uint8_t ctrl6_reg;
 	/** Soft reset count */
 	uint32_t soft_reset_count;
 };
@@ -97,6 +99,10 @@ static int lis2dw12_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->ctrl2_reg;
 		break;
+	case LIS2DW12_CTRL6_ADDR:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->ctrl6_reg;
+		break;
 	default:
 		__ASSERT(false, "No read handler for register 0x%02x", reg);
 		return -EINVAL;
@@ -123,6 +129,9 @@ static int lis2dw12_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 			data->soft_reset_count++;
 		}
 		data->ctrl2_reg = val & ~LIS2DW12_SOFT_RESET_MASK;
+		break;
+	case LIS2DW12_CTRL6_ADDR:
+		data->ctrl6_reg = val;
 		break;
 	default:
 		__ASSERT(false, "No write handler for register 0x%02x", reg);

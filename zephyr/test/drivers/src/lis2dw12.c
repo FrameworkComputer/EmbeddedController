@@ -17,6 +17,12 @@
 static void lis2dw12_setup(void)
 {
 	lis2dw12_emul_reset(emul_get_binding(EMUL_LABEL));
+
+	/* Reset certain sensor struct values */
+	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
+
+	ms->current_range = 0;
+
 }
 
 static void test_lis2dw12_init__fail_read_who_am_i(void)
@@ -123,6 +129,30 @@ static void test_lis2dw12_set_power_mode(void)
 		      EC_ERROR_INVAL, rv);
 }
 
+static void test_lis2dw12_set_range(void)
+{
+	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
+	int rv;
+
+	/* Part 1: Happy path. Go above the max range; it will be automatically
+	 * clamped.
+	 */
+
+	rv = ms->drv->set_range(ms, LIS2DW12_ACCEL_FS_MAX_VAL + 1, 0);
+	zassert_equal(rv, EC_SUCCESS, "Expected %d but got %d", EC_SUCCESS, rv);
+	zassert_equal(ms->current_range, LIS2DW12_ACCEL_FS_MAX_VAL,
+		      "Expected %d but got %d", LIS2DW12_ACCEL_FS_MAX_VAL,
+		      ms->current_range);
+
+	/* Part 2: Error accessing register */
+	i2c_common_emul_set_read_fail_reg(lis2dw12_emul_to_i2c_emul(emul),
+					  LIS2DW12_FS_ADDR);
+	rv = ms->drv->set_range(ms, LIS2DW12_ACCEL_FS_MAX_VAL, 0);
+	zassert_equal(rv, EC_ERROR_INVAL, "Expected %d but got %d",
+		      EC_ERROR_INVAL, rv);
+}
+
 void test_suite_lis2dw12(void)
 {
 	ztest_test_suite(lis2dw12,
@@ -143,6 +173,10 @@ void test_suite_lis2dw12(void)
 				 lis2dw12_setup, lis2dw12_setup),
 			 ztest_unit_test_setup_teardown(
 				 test_lis2dw12_set_power_mode,
-				 lis2dw12_setup, lis2dw12_setup));
+				 lis2dw12_setup, lis2dw12_setup),
+			 ztest_unit_test_setup_teardown(
+				 test_lis2dw12_set_range,
+				 lis2dw12_setup, lis2dw12_setup)
+			 );
 	ztest_run_test_suite(lis2dw12);
 }
