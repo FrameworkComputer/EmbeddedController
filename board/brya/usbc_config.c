@@ -354,29 +354,23 @@ void board_reset_pd_mcu(void)
 	msleep(50);
 }
 
-static void enable_ioex(int ioex)
-{
-	ioex_init(ioex);
-}
-
 static void board_tcpc_init(void)
 {
 	/* Don't reset TCPCs after initial reset */
-	if (!system_jumped_late()) {
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
-		/*
-		 * These IO expander pins are implemented using the
-		 * C0/C2 TCPC, so they must be set up after the TCPC has
-		 * been taken out of reset.
-		 */
-		if (get_board_id() == 1) {
-			enable_ioex(IOEX_ID_1_C0_NCT38XX);
-			enable_ioex(IOEX_ID_1_C2_NCT38XX);
-		} else {
-			enable_ioex(IOEX_C0_NCT38XX);
-			enable_ioex(IOEX_C2_NCT38XX);
-		}
+	/*
+	 * These IO expander pins are implemented using the
+	 * C0/C2 TCPC, so they must be set up after the TCPC has
+	 * been taken out of reset.
+	 */
+	if (get_board_id() == 1) {
+		ioex_init(IOEX_ID_1_C0_NCT38XX);
+		ioex_init(IOEX_ID_1_C2_NCT38XX);
+	} else {
+		ioex_init(IOEX_C0_NCT38XX);
+		ioex_init(IOEX_C2_NCT38XX);
 	}
 
 	/* Enable PPC interrupts. */
