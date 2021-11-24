@@ -257,7 +257,7 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
  */
 const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
 	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT6,
-	(MCHP_I2C_CTRL0 << 8) + MCHP_I2C_PORT7,
+	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT7,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT3,
 	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT4,
