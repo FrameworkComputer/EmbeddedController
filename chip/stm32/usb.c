@@ -578,7 +578,7 @@ void usb_wake(void)
 	}
 
 	/* Only allow one caller at a time. */
-	if (!atomic_clear((int *)&usb_wake_done))
+	if (!atomic_clear((atomic_t *)&usb_wake_done))
 		return;
 
 	CPRINTF("WAKE\n");

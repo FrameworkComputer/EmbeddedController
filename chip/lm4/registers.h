@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_REGISTERS_H
 #define __CROS_EC_REGISTERS_H
 
+#include "atomic.h"
 #include "common.h"
 
 #define LM4_UART_CH0_BASE      0x4000c000
@@ -265,7 +266,7 @@ static inline int lm4_fan_addr(int ch, int offset)
 #define LM4_SYSTEM_SRI2C       REG32(0x400fe520)
 #define LM4_SYSTEM_SREEPROM    REG32(0x400fe558)
 
-#define LM4_SYSTEM_SRI2C_ADDR  ((uint32_t *)0x400fe520)
+#define LM4_SYSTEM_SRI2C_ADDR  ((atomic_t *)0x400fe520)
 
 #define LM4_SYSTEM_RCGC_BASE   ((volatile uint32_t *)0x400fe600)
 #define LM4_SYSTEM_RCGCGPIO    REG32(0x400fe608)

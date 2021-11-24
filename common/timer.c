@@ -49,7 +49,7 @@ static int timer_irq;
 static void expire_timer(task_id_t tskid)
 {
 	/* we are done with this timer */
-	atomic_clear_bits(&timer_running, 1 << tskid);
+	atomic_clear_bits((atomic_t *)&timer_running, 1 << tskid);
 	/* wake up the taks waiting for this timer */
 	task_set_event(tskid, TASK_EVENT_TIMER);
 }
@@ -142,7 +142,7 @@ int timer_arm(timestamp_t event, task_id_t tskid)
 		return EC_ERROR_BUSY;
 
 	timer_deadline[tskid] = event;
-	atomic_or(&timer_running, BIT(tskid));
+	atomic_or((atomic_t *)&timer_running, BIT(tskid));
 
 	/* Modify the next event if needed */
 	if ((event.le.hi < now.le.hi) ||
@@ -156,7 +156,7 @@ void timer_cancel(task_id_t tskid)
 {
 	ASSERT(tskid < TASK_ID_COUNT);
 
-	atomic_clear_bits(&timer_running, BIT(tskid));
+	atomic_clear_bits((atomic_t *)&timer_running, BIT(tskid));
 	/*
 	 * Don't need to cancel the hardware timer interrupt, instead do
 	 * timer-related housekeeping when the next timer interrupt fires.

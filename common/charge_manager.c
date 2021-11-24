@@ -1388,9 +1388,9 @@ void charge_manager_source_port(int port, int enable)
 	int p, rp;
 
 	if (enable)
-		atomic_or((uint32_t *)&source_port_bitmap, 1 << port);
+		atomic_or((atomic_t *)&source_port_bitmap, 1 << port);
 	else
-		atomic_clear_bits((uint32_t *)&source_port_bitmap, 1 << port);
+		atomic_clear_bits((atomic_t *)&source_port_bitmap, 1 << port);
 
 	/* No change, exit early. */
 	if (prev_bitmap == source_port_bitmap)
