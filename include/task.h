@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_TASK_H
 #define __CROS_EC_TASK_H
 
+#include "atomic_t.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include <stdbool.h>
@@ -187,7 +188,7 @@ static inline bool in_deferred_context(void)
 /**
  * Return a pointer to the bitmap of events of the task.
  */
-uint32_t *task_get_event_bitmap(task_id_t tskid);
+atomic_t *task_get_event_bitmap(task_id_t tskid);
 
 /**
  * Wait for the next event.

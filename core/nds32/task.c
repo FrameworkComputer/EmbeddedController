@@ -25,7 +25,7 @@ typedef union {
 		 * for __switchto() to work.
 		 */
 		uint32_t sp;       /* Saved stack pointer for context switch */
-		uint32_t events;   /* Bitmaps of received events */
+		atomic_t events;   /* Bitmaps of received events */
 		uint64_t runtime;  /* Time spent in task */
 		uint32_t *stack;   /* Start of stack */
 	};
@@ -250,7 +250,7 @@ task_id_t task_get_current(void)
 	return start_called ? (current_task - tasks) : TASK_ID_INVALID;
 }
 
-uint32_t *task_get_event_bitmap(task_id_t tskid)
+atomic_t *task_get_event_bitmap(task_id_t tskid)
 {
 	task_ *tsk = __task_id_to_ptr(tskid);
 	return &tsk->events;

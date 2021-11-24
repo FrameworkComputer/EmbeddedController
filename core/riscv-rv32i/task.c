@@ -20,7 +20,7 @@ typedef struct {
 	 * for __switchto() to work.
 	 */
 	uint32_t sp;       /* Saved stack pointer for context switch */
-	uint32_t events;   /* Bitmaps of received events */
+	atomic_t events;   /* Bitmaps of received events */
 	uint64_t runtime;  /* Time spent in task */
 	uint32_t *stack;   /* Start of stack */
 } task_;
@@ -229,7 +229,7 @@ task_id_t __ram_code task_get_current(void)
 	return current_task - tasks;
 }
 
-uint32_t * __ram_code task_get_event_bitmap(task_id_t tskid)
+atomic_t * __ram_code task_get_event_bitmap(task_id_t tskid)
 {
 	task_ *tsk = __task_id_to_ptr(tskid);
 
