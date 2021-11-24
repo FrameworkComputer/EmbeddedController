@@ -246,7 +246,40 @@ static void test_ppc_syv682x_frs(void)
 			"PPC is not sourcing VBUS after FRS signal handled");
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
 			SYV682X_CONTROL_4_NONE);
+}
 
+static void test_ppc_syv682x_source_current_limit(void)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+	uint8_t reg;
+	int ilim_val;
+
+	zassert_ok(ppc_set_vbus_source_current_limit(syv682x_port,
+				TYPEC_RP_USB),
+			"Could not set source current limit");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+			"Reading CONTROL_1 failed");
+	ilim_val = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
+	zassert_equal(reg & SYV682X_5V_ILIM_MASK, SYV682X_5V_ILIM_1_25,
+			"Set USB Rp value, but 5V_ILIM is %d", ilim_val);
+
+	zassert_ok(ppc_set_vbus_source_current_limit(syv682x_port,
+				TYPEC_RP_1A5),
+			"Could not set source current limit");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+			"Reading CONTROL_1 failed");
+	ilim_val = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
+	zassert_equal(ilim_val, SYV682X_5V_ILIM_1_75,
+			"Set 1.5A Rp value, but 5V_ILIM is %d", ilim_val);
+
+	zassert_ok(ppc_set_vbus_source_current_limit(syv682x_port,
+				TYPEC_RP_3A0),
+			"Could not set source current limit");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+			"Reading CONTROL_1 failed");
+	ilim_val = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
+	zassert_equal(ilim_val, SYV682X_5V_ILIM_3_30,
+			"Set 3.0A Rp value, but 5V_ILIM is %d", ilim_val);
 }
 
 static void test_ppc_syv682x(void)
@@ -256,6 +289,7 @@ static void test_ppc_syv682x(void)
 	test_ppc_syv682x_vbus_enable();
 	test_ppc_syv682x_interrupt();
 	test_ppc_syv682x_frs();
+	test_ppc_syv682x_source_current_limit();
 }
 
 void test_suite_ppc(void)
