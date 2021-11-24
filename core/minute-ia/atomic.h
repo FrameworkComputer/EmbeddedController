@@ -8,11 +8,9 @@
 #ifndef __CROS_EC_ATOMIC_H
 #define __CROS_EC_ATOMIC_H
 
+#include "atomic_t.h"
 #include "common.h"
 #include "util.h"
-
-typedef int atomic_t;
-typedef atomic_t atomic_val_t;
 
 static inline int bool_compare_and_swap_u32(uint32_t *var, uint32_t old_value,
 		uint32_t new_value)
