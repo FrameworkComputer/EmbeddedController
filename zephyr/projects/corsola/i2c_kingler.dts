@@ -6,47 +6,44 @@
 / {
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
+
 		i2c_sensor: sensor {
 			i2c-port = <&i2c0_0>;
 			enum-name = "I2C_PORT_SENSOR";
 		};
-		tcpc0_2 {
+		i2c_usb_c0: usb-c0 {
 			i2c-port = <&i2c1_0>;
-			enum-name = "I2C_PORT_USB_C0_C2_TCPC";
+			enum-name = "I2C_PORT_USB_C0";
+		};
+		i2c_usb_c1: usb-c1 {
+			i2c-port = <&i2c2_0>;
+			enum-name = "I2C_PORT_USB_C1";
 		};
 		tcpc1 {
-			i2c-port = <&i2c4_1>;
+			i2c-port = <&i2c2_0>;
 			enum-name = "I2C_PORT_USB_C1_TCPC";
 		};
-		ppc0_2 {
-			i2c-port = <&i2c2_0>;
-			enum-name = "I2C_PORT_USB_C0_C2_PPC";
-		};
 		ppc1 {
-			i2c-port = <&i2c6_1>;
+			i2c-port = <&i2c2_0>;
 			enum-name = "I2C_PORT_USB_C1_PPC";
 		};
-		retimer0_2 {
+		eeprom {
 			i2c-port = <&i2c3_0>;
-			enum-name = "I2C_PORT_USB_C0_C2_MUX";
+			enum-name = "I2C_PORT_EEPROM";
+		};
+		charger {
+			i2c-port = <&i2c3_0>;
+			enum-name = "I2C_PORT_POWER";
 		};
 		battery {
 			i2c-port = <&i2c5_0>;
 			enum-name = "I2C_PORT_BATTERY";
 		};
-		eeprom {
-			i2c-port = <&i2c7_0>;
-			enum-name = "I2C_PORT_EEPROM";
-		};
-		charger {
-			i2c-port = <&i2c7_0>;
-			enum-name = "I2C_PORT_CHARGER";
-		};
 	};
-
 };
 
 &i2c0_0 {
+	label = "I2C_SENSOR";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
@@ -56,6 +53,7 @@
 };
 
 &i2c1_0 {
+	label = "I2C_USB_C0";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 };
@@ -65,6 +63,7 @@
 };
 
 &i2c2_0 {
+	label = "I2C_USB_C1";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 };
@@ -74,46 +73,21 @@
 };
 
 &i2c3_0 {
+	label = "I2C_PWR_CBI";
 	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
 &i2c_ctrl3 {
 	status = "okay";
 };
 
-&i2c4_1 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
-};
-
-&i2c_ctrl4 {
-	status = "okay";
-};
-
 &i2c5_0 {
+	label = "I2C_BATTERY";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 };
 
 &i2c_ctrl5 {
-	status = "okay";
-};
-
-&i2c6_1 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
-};
-
-&i2c_ctrl6 {
-	status = "okay";
-};
-
-&i2c7_0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
-};
-
-&i2c_ctrl7 {
 	status = "okay";
 };
