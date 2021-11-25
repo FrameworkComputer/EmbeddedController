@@ -11,6 +11,7 @@
 #include "charger/isl923x_public.h"
 #include "charger/isl9241_public.h"
 #include "config.h"
+#include "fff.h"
 #include "hooks.h"
 #include "i2c/i2c.h"
 #include "power.h"
@@ -301,9 +302,7 @@ struct ppc_config_t ppc_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-void system_hibernate(uint32_t seconds, uint32_t microseconds)
-{
-}
+DEFINE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
 
 uint16_t tcpc_get_alert_status(void)
 {

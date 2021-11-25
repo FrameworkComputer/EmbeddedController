@@ -6,6 +6,7 @@
 #ifndef __TEST_DRIVERS_STUBS_H
 #define __TEST_DRIVERS_STUBS_H
 
+#include "fff.h"
 #include "power.h"
 
 enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
@@ -30,5 +31,8 @@ void force_power_state(bool force, enum power_state state);
  * @param product_id ID of PS8xxx product which is emulated
  */
 void board_set_ps8xxx_product_id(uint16_t product_id);
+
+/* Declare fake function to allow tests to examine calls to this function */
+DECLARE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
 
 #endif /* __TEST_DRIVERS_STUBS_H */

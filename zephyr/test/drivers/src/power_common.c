@@ -4,9 +4,15 @@
  */
 
 #include <ztest.h>
+#include <drivers/gpio.h>
+#include <drivers/gpio/gpio_emul.h>
+#include <shell/shell.h>
+#include <shell/shell_uart.h>
 
 #include "chipset.h"
 #include "common.h"
+#include "extpower.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "power.h"
 #include "stubs.h"
@@ -19,6 +25,9 @@
 #include "battery_smart.h"
 
 #define BATTERY_ORD	DT_DEP_ORD(DT_NODELABEL(battery))
+
+#define GPIO_ACOK_OD_NODE	DT_PATH(named_gpios, acok_od)
+#define GPIO_ACOK_OD_PIN	DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
 
 /* Description of all power states with chipset state masks */
 static struct {
@@ -444,6 +453,220 @@ static void test_power_board_system_is_idle(void)
 		      NULL);
 }
 
+/**
+ * Common setup for hibernation delay tests. Smart discharge zone is setup,
+ * battery is set in safe zone (which trigger hibernation), power state is
+ * set to G3 and AC is disabled. system_hibernate mock is reset.
+ */
+static void setup_hibernation_delay(void)
+{
+	struct ec_response_smart_discharge response;
+	struct ec_params_smart_discharge params;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response);
+	const struct device *acok_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_NODE, gpios));
+	struct sbat_emul_bat_data *bat;
+	struct i2c_emul *emul;
+
+	emul = sbat_emul_get_ptr(BATTERY_ORD);
+	bat = sbat_emul_get_bat_data(emul);
+
+	/* Setup smart discharge zone and set capacity to safe zone */
+	args.params = &params;
+	args.params_size = sizeof(params);
+	params.drate.hibern = 100; /* uA */
+	params.drate.cutoff = 10; /* uA */
+	params.hours_to_zero = 10000; /* h */
+	params.flags = EC_SMART_DISCHARGE_FLAGS_SET;
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+	/*
+	 * Make sure that battery is in safe zone in good condition to
+	 * not trigger hibernate in charge_state_v2.c
+	 */
+	bat->cap = response.dzone.stayup + 5;
+	bat->volt = battery_get_info()->voltage_normal;
+
+	/* Force initial state */
+	force_power_state(true, POWER_G3);
+	zassert_equal(POWER_G3, power_get_state(), NULL);
+
+	/* Stop forcing state */
+	force_power_state(false, 0);
+
+	/* Disable AC */
+	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, 0), NULL);
+	msleep(CONFIG_EXTPOWER_DEBOUNCE_MS + 1);
+	zassert_equal(0, extpower_is_present(), NULL);
+
+	RESET_FAKE(system_hibernate);
+}
+
+/** Test setting hibernation delay through host command */
+static void test_power_hc_hibernation_delay(void)
+{
+	struct ec_response_hibernation_delay response;
+	struct ec_params_hibernation_delay params;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY, 0, response);
+	const struct device *acok_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_NODE, gpios));
+	uint32_t h_delay;
+	int sleep_time;
+
+	/* Setup hibernation delay host command */
+	args.params = &params;
+	args.params_size = sizeof(params);
+
+	/* Set hibernate delay */
+	h_delay = 9;
+	params.seconds = h_delay;
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+
+	zassert_equal(0, response.time_g3, "Time from last G3 enter %d != 0",
+		      response.time_g3);
+	zassert_equal(h_delay, response.time_remaining,
+		      "Time to hibernation %d != %d",
+		      response.time_remaining, h_delay);
+	zassert_equal(h_delay, response.hibernate_delay,
+		      "Hibernation delay %d != %d",
+		      h_delay, response.hibernate_delay);
+
+	/* Kick chipset task to process new hibernation delay */
+	task_wake(TASK_ID_CHIPSET);
+	/* Wait some arbitrary time less than hibernate delay */
+	sleep_time = 6;
+	k_msleep(sleep_time * 1000);
+
+	/* Get hibernate delay */
+	params.seconds = 0;
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+
+	zassert_equal(sleep_time, response.time_g3,
+		      "Time from last G3 enter %d != %d",
+		      response.time_g3, sleep_time);
+	zassert_equal(h_delay - sleep_time, response.time_remaining,
+		      "Time to hibernation %d != %d",
+		      response.time_remaining, h_delay - sleep_time);
+	zassert_equal(h_delay, response.hibernate_delay,
+		      "Hibernation delay %d != %d",
+		      h_delay, response.hibernate_delay);
+	zassert_equal(0, system_hibernate_fake.call_count,
+		     "system_hibernate() shouldn't be called before delay");
+
+	/* Wait to end of the hibenate delay */
+	k_msleep((h_delay - sleep_time) * 1000);
+
+	/* Get hibernate delay */
+	params.seconds = 0;
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+
+	zassert_equal(h_delay, response.time_g3,
+		      "Time from last G3 enter %d != %d",
+		      response.time_g3, h_delay);
+	zassert_equal(0, response.time_remaining,
+		      "Time to hibernation %d != 0",
+		      response.time_remaining);
+	zassert_equal(h_delay, response.hibernate_delay,
+		      "Hibernation delay %d != %d",
+		      h_delay, response.hibernate_delay);
+	zassert_equal(1, system_hibernate_fake.call_count,
+		     "system_hibernate() should be called after delay %d",
+		system_hibernate_fake.call_count);
+
+	/* Wait some more time */
+	k_msleep(2000);
+
+	/* Get hibernate delay */
+	params.seconds = 0;
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+
+	/* After hibernation, remaining time shouldn't be negative */
+	zassert_equal(0, response.time_remaining,
+		      "Time to hibernation %d != 0",
+		      response.time_remaining);
+
+	/* Enable AC */
+	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, 1), NULL);
+	msleep(CONFIG_EXTPOWER_DEBOUNCE_MS + 1);
+	zassert_equal(1, extpower_is_present(), NULL);
+
+	/* Reset system_hibernate fake to check that it is not called on AC */
+	RESET_FAKE(system_hibernate);
+	/* Allow chipset task to spin with enabled AC */
+	task_wake(TASK_ID_CHIPSET);
+	k_msleep(1);
+
+	/* Get hibernate delay */
+	params.seconds = 0;
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+
+	zassert_equal(0, response.time_g3,
+		      "Time from last G3 enter %d should be 0 on AC",
+		      response.time_g3);
+	zassert_equal(0, system_hibernate_fake.call_count,
+		     "system_hibernate() shouldn't be called on AC");
+
+	/* Disable AC */
+	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, 0), NULL);
+	msleep(CONFIG_EXTPOWER_DEBOUNCE_MS + 1);
+	zassert_equal(0, extpower_is_present(), NULL);
+
+	/* Go to different state */
+	force_power_state(true, POWER_G3S5);
+	zassert_equal(POWER_G3S5, power_get_state(), NULL);
+
+	/* Stop forcing state */
+	force_power_state(false, 0);
+
+	/* Get hibernate delay */
+	params.seconds = 0;
+	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
+
+	zassert_equal(0, response.time_g3,
+		      "Time from last G3 enter %d should be 0 on state != G3",
+		      response.time_g3);
+}
+
+/** Test setting hibernation delay through UART command */
+static void test_power_cmd_hibernation_delay(void)
+{
+	uint32_t h_delay;
+	int sleep_time;
+
+	/* Test success on call without argument */
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"hibdelay"), NULL);
+
+	/* Test error on hibernation delay argument that is not a number */
+	zassert_equal(EC_ERROR_PARAM1,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"hibdelay test1"), NULL);
+
+	/* Set hibernate delay */
+	h_delay = 3;
+	zassert_equal(EC_SUCCESS,
+		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+					"hibdelay 3"), NULL);
+
+	/* Kick chipset task to process new hibernation delay */
+	task_wake(TASK_ID_CHIPSET);
+	/* Wait some arbitrary time less than hibernate delay */
+	sleep_time = 2;
+	k_msleep(sleep_time * 1000);
+
+	zassert_equal(0, system_hibernate_fake.call_count,
+		     "system_hibernate() shouldn't be called before delay");
+
+	/* Wait to end of the hibenate delay */
+	k_msleep((h_delay - sleep_time) * 1000);
+
+	zassert_equal(1, system_hibernate_fake.call_count,
+		     "system_hibernate() should be called after delay %d",
+		system_hibernate_fake.call_count);
+}
+
 void test_suite_power_common(void)
 {
 	ztest_test_suite(power_common,
@@ -453,6 +676,12 @@ void test_suite_power_common(void)
 			 ztest_unit_test(test_power_exit_hard_off),
 			 ztest_unit_test(test_power_reboot_ap_at_g3),
 			 ztest_unit_test(test_power_hc_smart_discharge),
-			 ztest_unit_test(test_power_board_system_is_idle));
+			 ztest_unit_test(test_power_board_system_is_idle),
+			 ztest_unit_test_setup_teardown(
+				test_power_hc_hibernation_delay,
+				setup_hibernation_delay, unit_test_noop),
+			 ztest_unit_test_setup_teardown(
+				test_power_cmd_hibernation_delay,
+				setup_hibernation_delay, unit_test_noop));
 	ztest_run_test_suite(power_common);
 }
