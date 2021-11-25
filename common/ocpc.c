@@ -379,6 +379,7 @@ int ocpc_config_secondary_charger(int *desired_input_current,
 	if (batt.desired_voltage) {
 		if (((batt.voltage < batt_info->voltage_min) ||
 		    ((batt.voltage < batt_info->voltage_normal) &&
+		    (current_ma >= 0)	&&
 		    (current_ma <= batt_info->precharge_current))) &&
 		    (ph != PHASE_PRECHARGE)) {
 			/*
