@@ -294,7 +294,7 @@ static struct rx_chunked {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* PRL_FLAGS */
-	uint32_t flags;
+	atomic_t flags;
 	/* error to report when moving to rch_report_error state */
 	enum pe_error error;
 } rch[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -304,7 +304,7 @@ static struct tx_chunked {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* state machine flags */
-	uint32_t flags;
+	atomic_t flags;
 	/* error to report when moving to tch_report_error state */
 	enum pe_error error;
 } tch[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -322,7 +322,7 @@ static struct protocol_layer_tx {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* state machine flags */
-	uint32_t flags;
+	atomic_t flags;
 	/* last message type we transmitted */
 	enum tcpci_msg_type last_xmit_type;
 	/* message id counters for all 6 port partners */
@@ -336,13 +336,13 @@ static struct protocol_hard_reset {
 	/* state machine context */
 	struct sm_ctx ctx;
 	/* state machine flags */
-	uint32_t flags;
+	atomic_t flags;
 } prl_hr[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Chunking Message Object */
 static struct pd_message {
 	/* message status flags */
-	uint32_t flags;
+	atomic_t flags;
 	/* SOP* */
 	enum tcpci_msg_type xmit_type;
 	/* type of message */

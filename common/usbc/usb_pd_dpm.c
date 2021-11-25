@@ -37,7 +37,7 @@
 #define DPM_ATTENION_MAX_VDO 2
 
 static struct {
-	uint32_t flags;
+	atomic_t flags;
 	uint32_t vdm_attention[DPM_ATTENION_MAX_VDO];
 	int vdm_cnt;
 	mutex_t vdm_attention_mutex;
@@ -503,11 +503,11 @@ static uint32_t		max_current_claimed;
 K_MUTEX_DEFINE(max_current_claimed_lock);
 
 /* Ports with PD sink needing > 1.5 A */
-static uint32_t sink_max_pdo_requested;
+static atomic_t sink_max_pdo_requested;
 /* Ports with FRS source needing > 1.5 A */
-static uint32_t source_frs_max_requested;
+static atomic_t source_frs_max_requested;
 /* Ports with non-PD sinks, so current requirements are unknown */
-static uint32_t non_pd_sink_max_requested;
+static atomic_t non_pd_sink_max_requested;
 
 #define LOWEST_PORT(p) __builtin_ctz(p)  /* Undefined behavior if p == 0 */
 

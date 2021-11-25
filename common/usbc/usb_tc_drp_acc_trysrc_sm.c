@@ -401,7 +401,7 @@ static struct type_c {
 	 * else they're disabled if bits PD_DISABLED_NO_CONNECTION or
 	 * PD_DISABLED_BY_POLICY are set.
 	 */
-	uint32_t pd_disabled_mask;
+	atomic_t pd_disabled_mask;
 	/*
 	 * Timer for handling TOGGLE_OFF/FORCE_SINK mode when auto-toggle
 	 * enabled. See drp_auto_toggle_next_state() for details.
@@ -414,13 +414,13 @@ static struct type_c {
 	/* Port polarity */
 	enum tcpc_cc_polarity polarity;
 	/* port flags, see TC_FLAGS_* */
-	uint32_t flags;
+	atomic_t flags;
 	/* The cc state */
 	enum pd_cc_states cc_state;
 	/* Tasks to notify after TCPC has been reset */
-	int tasks_waiting_on_reset;
+	atomic_t tasks_waiting_on_reset;
 	/* Tasks preventing TCPC from entering low power mode */
-	int tasks_preventing_lpm;
+	atomic_t tasks_preventing_lpm;
 	/* Voltage on CC pin */
 	enum tcpc_cc_voltage_status cc_voltage;
 	/* Type-C current */
@@ -457,7 +457,7 @@ static void set_state_tc(const int port, const enum usb_tc_state new_state);
 test_export_static enum usb_tc_state get_state_tc(const int port);
 
 /* Enable variable for Try.SRC states */
-static uint32_t pd_try_src;
+static atomic_t pd_try_src;
 static volatile enum try_src_override_t pd_try_src_override;
 static void pd_update_try_source(void);
 

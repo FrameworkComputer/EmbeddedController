@@ -10,6 +10,8 @@
 
 #include <stdbool.h>
 
+#include "atomic.h"
+
 /*
  * List of all timers that will be managed by usb_pd_timer
  */
@@ -343,28 +345,28 @@ extern uint32_t timer_disabled[MAX_PD_PORTS][TIMER_FIELD_NUM_UINT32S];
 /* exported: do not call directly, only for the defined macros */
 extern void pd_timer_atomic_op(
 		atomic_val_t (*op)(atomic_t*, atomic_val_t),
-		uint32_t *const timer_field, const uint64_t mask);
+		atomic_t *const timer_field, const uint64_t mask);
 
 /* exported: set/clear/check the current timer_active for a timer */
-#define PD_SET_ACTIVE(p, m)	pd_timer_atomic_op(		\
-					atomic_or,		\
-					timer_active[p],	\
+#define PD_SET_ACTIVE(p, m)	pd_timer_atomic_op(			\
+					atomic_or,			\
+					(atomic_t *)timer_active[p],	\
 					(m))
-#define PD_CLR_ACTIVE(p, m)	pd_timer_atomic_op(		\
-					atomic_clear_bits,	\
-					timer_active[p],	\
+#define PD_CLR_ACTIVE(p, m)	pd_timer_atomic_op(			\
+					atomic_clear_bits,		\
+					(atomic_t *)timer_active[p],	\
 					(m))
 #define PD_CHK_ACTIVE(p, m)	((timer_active[p][0] & ((m) >> 32)) | \
 				 (timer_active[p][1] & (m)))
 
 /* exported: set/clear/check the current timer_disabled for a timer */
-#define PD_SET_DISABLED(p, m)	pd_timer_atomic_op(		\
-					atomic_or,		\
-					timer_disabled[p],	\
+#define PD_SET_DISABLED(p, m)	pd_timer_atomic_op(			\
+					atomic_or,			\
+					(atomic_t *)timer_disabled[p],	\
 					(m))
-#define PD_CLR_DISABLED(p, m)	pd_timer_atomic_op(		\
-					atomic_clear_bits,	\
-					timer_disabled[p],	\
+#define PD_CLR_DISABLED(p, m)	pd_timer_atomic_op(			\
+					atomic_clear_bits,		\
+					(atomic_t *)timer_disabled[p],	\
 					(m))
 #define PD_CHK_DISABLED(p, m)	((timer_disabled[p][0] & ((m) >> 32)) | \
 				 (timer_disabled[p][1] & (m)))

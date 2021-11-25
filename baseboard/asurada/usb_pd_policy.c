@@ -155,7 +155,7 @@ __override void svdm_exit_dp_mode(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	static int vbus_prev[CONFIG_USB_PD_PORT_MAX_COUNT];
+	static atomic_t vbus_prev[CONFIG_USB_PD_PORT_MAX_COUNT];
 	int vbus;
 
 	if ((IS_ENABLED(BOARD_HAYATO) && board_get_version() < 4) ||

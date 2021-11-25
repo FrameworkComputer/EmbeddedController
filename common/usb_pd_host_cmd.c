@@ -548,7 +548,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_CONTROL, pd_control, EC_VER_MASK(0));
  * Note: this variable must be aligned on 4-byte boundary because we pass the
  * address to atomic_ functions which use assembly to access them.
  */
-static uint32_t pd_host_event_status __aligned(4);
+static atomic_t pd_host_event_status __aligned(4);
 
 static enum ec_status
 hc_pd_host_event_status(struct host_cmd_handler_args *args)

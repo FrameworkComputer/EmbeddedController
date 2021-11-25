@@ -42,7 +42,7 @@
 static uint8_t oc_event_cnt_tbl[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* A flag for ports with sink device connected. */
-static uint32_t snk_connected_ports;
+static atomic_t snk_connected_ports;
 
 static void clear_oc_tbl(void)
 {

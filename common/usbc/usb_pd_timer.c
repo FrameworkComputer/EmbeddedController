@@ -21,30 +21,35 @@
 #define NO_TIMEOUT	(-1)
 #define EXPIRE_NOW	(0)
 
-#define PD_SET_ACTIVE(p, m)	pd_timer_atomic_op(		\
-					atomic_or,		\
-					timer_active[p],	\
+#define PD_SET_ACTIVE(p, m)	pd_timer_atomic_op(			\
+					atomic_or,			\
+					(atomic_t *)timer_active[p],	\
 					(m))
-#define PD_CLR_ACTIVE(p, m)	pd_timer_atomic_op(		\
-					atomic_clear_bits,	\
-					timer_active[p],	\
+#define PD_CLR_ACTIVE(p, m)	pd_timer_atomic_op(			\
+					atomic_clear_bits,		\
+					(atomic_t *)timer_active[p],	\
 					(m))
-#define PD_CHK_ACTIVE(p, m)	((timer_active[p][0] & ((m) >> 32)) | \
+#define PD_CHK_ACTIVE(p, m)	((timer_active[p][0] & ((m) >> 32)) |	\
 				 (timer_active[p][1] & (m)))
 
-#define PD_SET_DISABLED(p, m)	pd_timer_atomic_op(		\
-					atomic_or,		\
-					timer_disabled[p],	\
+#define PD_SET_DISABLED(p, m)	pd_timer_atomic_op(			\
+					atomic_or,			\
+					(atomic_t *)timer_disabled[p],	\
 					(m))
-#define PD_CLR_DISABLED(p, m)	pd_timer_atomic_op(		\
-					atomic_clear_bits,	\
-					timer_disabled[p],	\
+#define PD_CLR_DISABLED(p, m)	pd_timer_atomic_op(			\
+					atomic_clear_bits,		\
+					(atomic_t *)timer_disabled[p],	\
 					(m))
 #define PD_CHK_DISABLED(p, m)	((timer_disabled[p][0] & ((m) >> 32)) | \
 				 (timer_disabled[p][1] & (m)))
 
 #define TIMER_FIELD_NUM_UINT32S 2
 
+/*
+ * Use uint32_t for timer_active and timer_disabled instead of atomic_t,
+ * because mixing types signed and unsigned around shifting may lead to
+ * undefined behavior.
+ */
 test_mockable_static
 uint32_t timer_active[MAX_PD_PORTS][TIMER_FIELD_NUM_UINT32S];
 test_mockable_static
@@ -119,9 +124,9 @@ __maybe_unused static __const_data const char * const pd_timer_names[] = {
  */
 test_mockable_static void pd_timer_atomic_op(
 		atomic_val_t (*op)(atomic_t*, atomic_val_t),
-		uint32_t *const timer_field, const uint64_t mask_val)
+		atomic_t *const timer_field, const uint64_t mask_val)
 {
-	uint32_t *atomic_timer_field;
+	atomic_t *atomic_timer_field;
 	union mask64_t {
 		struct {
 #if (__BYTE_ORDER__  == __ORDER_LITTLE_ENDIAN__)

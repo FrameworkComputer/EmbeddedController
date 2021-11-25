@@ -243,9 +243,9 @@ static struct pd_protocol {
 	/* Time to debounce exit low power mode */
 	uint64_t low_power_exit_time;
 	/* Tasks to notify after TCPC has been reset */
-	int tasks_waiting_on_reset;
+	atomic_t tasks_waiting_on_reset;
 	/* Tasks preventing TCPC from entering low power mode */
-	int tasks_preventing_lpm;
+	atomic_t tasks_preventing_lpm;
 #endif
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE

@@ -58,10 +58,12 @@ static const uint8_t state_vdm_cmd[DP_STATE_COUNT] = {
  */
 #define DP_FLAG_RETRY	BIT(0)
 
-static uint32_t dpm_dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static atomic_t dpm_dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define DP_SET_FLAG(port, flag) atomic_or(&dpm_dp_flags[port], (flag))
-#define DP_CLR_FLAG(port, flag) atomic_clear_bits(&dpm_dp_flags[port], (flag))
+#define DP_SET_FLAG(port, flag) \
+	atomic_or(&dpm_dp_flags[port], (flag))
+#define DP_CLR_FLAG(port, flag) \
+	atomic_clear_bits(&dpm_dp_flags[port], (flag))
 #define DP_CHK_FLAG(port, flag) (dpm_dp_flags[port] & (flag))
 
 bool dp_is_active(int port)

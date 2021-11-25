@@ -577,9 +577,9 @@ static struct policy_engine {
 	/* current port data role (DFP or UFP) */
 	enum pd_data_role data_role;
 	/* state machine flags */
-	uint32_t flags;
+	atomic_t flags;
 	/* Device Policy Manager Request */
-	uint32_t dpm_request;
+	atomic_t dpm_request;
 	uint32_t dpm_curr_request;
 	/* last requested voltage PDO index */
 	int requested_idx;
@@ -588,7 +588,7 @@ static struct policy_engine {
 	 * Port events - PD_STATUS_EVENT_* values
 	 * Set from PD task but may be cleared by host command
 	 */
-	uint32_t events;
+	atomic_t events;
 
 	/* port address where soft resets are sent */
 	enum tcpci_msg_type soft_reset_sop;
@@ -7283,7 +7283,7 @@ uint8_t pd_get_src_cap_cnt(int port)
 }
 
 /* Track access to the PD discovery structures during HC execution */
-uint32_t task_access[CONFIG_USB_PD_PORT_MAX_COUNT][DISCOVERY_TYPE_COUNT];
+atomic_t task_access[CONFIG_USB_PD_PORT_MAX_COUNT][DISCOVERY_TYPE_COUNT];
 
 void pd_dfp_discovery_init(int port)
 {

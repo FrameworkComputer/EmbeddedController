@@ -132,7 +132,7 @@ int remote_flashing(int argc, char **argv)
 struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
 #endif /* CONFIG_COMMON_RUNTIME */
 
-static __maybe_unused uint32_t pd_host_event_status __aligned(4);
+static __maybe_unused atomic_t pd_host_event_status __aligned(4);
 
 bool pd_firmware_upgrade_check_power_readiness(int port)
 {
@@ -578,7 +578,7 @@ static void pd_send_hard_reset(int port)
 
 #ifdef CONFIG_USBC_OCP
 
-static uint32_t port_oc_reset_req;
+static atomic_t port_oc_reset_req;
 
 static void re_enable_ports(void)
 {
@@ -852,7 +852,7 @@ void pd_set_vbus_discharge(int port, int enable)
 #endif /* CONFIG_USB_PD_DISCHARGE */
 
 #ifdef CONFIG_USB_PD_TCPM_TCPCI
-static uint32_t pd_ports_to_resume;
+static atomic_t pd_ports_to_resume;
 static void resume_pd_port(void)
 {
 	uint32_t port;
