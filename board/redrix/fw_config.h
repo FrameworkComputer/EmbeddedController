@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#ifndef __BOARD_BRYA_FW_CONFIG_H_
-#define __BOARD_BRYA_FW_CONFIG_H_
+#ifndef __BOARD_REDRIX_FW_CONFIG_H_
+#define __BOARD_REDRIX_FW_CONFIG_H_
 
 #include <stdint.h>
 
@@ -52,4 +52,4 @@ union redrix_cbi_fw_config get_fw_config(void);
  */
 bool ec_cfg_has_eps(void);
 
-#endif /* __BOARD_BRYA_FW_CONFIG_H_ */
+#endif /* __BOARD_REDRIX_FW_CONFIG_H_ */
