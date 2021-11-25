@@ -331,17 +331,53 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
-enum power_state mock_state = POWER_G3;
+static enum power_state forced_state;
+static bool force_state;
 
-void set_mock_power_state(enum power_state state)
+void force_power_state(bool force, enum power_state state)
 {
-	mock_state = state;
-	task_wake(TASK_ID_CHIPSET);
+	forced_state = state;
+	force_state = force;
+
+	if (force) {
+		task_wake(TASK_ID_CHIPSET);
+		/*
+		 * TODO(b/201420132) - setting power state requires to wake up
+		 * TASK_ID_CHIPSET Sleep is required to run chipset task before
+		 * continuing with test
+		 */
+		k_msleep(1);
+	}
 }
 
 enum power_state power_handle_state(enum power_state state)
 {
-	return mock_state;
+	switch (state) {
+	case POWER_G3S5:
+	case POWER_S5S3:
+	case POWER_S3S0:
+	case POWER_S0S3:
+	case POWER_S3S5:
+	case POWER_S5G3:
+#ifdef CONFIG_POWER_S0IX
+	case POWER_S0ixS0:
+	case POWER_S0S0ix:
+#endif
+		/*
+		 * Wait for event in transition states to prevent dead loop in
+		 * chipset task
+		 */
+		task_wait_event(-1);
+		break;
+	default:
+		break;
+	}
+
+	if (force_state) {
+		state = forced_state;
+	}
+
+	return state;
 }
 
 void chipset_reset(enum chipset_shutdown_reason reason)

@@ -342,13 +342,7 @@ static int mock_board_set(const struct usb_mux *me, mux_state_t mux_state)
 static void test_usb_mux_init(void)
 {
 	/* Set AP to normal state to init BB retimer */
-	set_mock_power_state(POWER_S0);
-	/*
-	 * TODO(b/201420132) - setting power state requires to wake up
-	 * TASK_ID_CHIPSET Sleep is required to run chipset task before
-	 * continuing with test
-	 */
-	k_msleep(1);
+	power_set_state(POWER_S0);
 
 	/* Test successful initialisation */
 	setup_ztest_proxy_init(0, 2, EC_SUCCESS);

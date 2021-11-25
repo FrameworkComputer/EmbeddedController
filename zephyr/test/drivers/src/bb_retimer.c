@@ -441,13 +441,7 @@ static void test_bb_init(void)
 	emul = bb_emul_get(BB_RETIMER_ORD);
 
 	/* Set AP to normal state and wait for chipset task */
-	set_mock_power_state(POWER_S0);
-	/*
-	 * TODO(b/201420132) - setting power state requires to wake up
-	 * TASK_ID_CHIPSET Sleep is required to run chipset task before
-	 * continuing with test
-	 */
-	k_msleep(1);
+	power_set_state(POWER_S0);
 
 	/* Setup emulator fail on read */
 	i2c_common_emul_set_read_fail_reg(emul, BB_RETIMER_REG_VENDOR_ID);
@@ -508,13 +502,7 @@ static void test_bb_init(void)
 		      NULL);
 
 	/* Set AP to off state and wait for chipset task */
-	set_mock_power_state(POWER_G3);
-	/*
-	 * TODO(b/201420132) - setting power state requires to wake up
-	 * TASK_ID_CHIPSET Sleep is required to run chipset task before
-	 * continuing with test
-	 */
-	k_msleep(1);
+	power_set_state(POWER_G3);
 
 	/* With AP off, init should fail and pins should be unset */
 	zassert_equal(EC_ERROR_NOT_POWERED,
