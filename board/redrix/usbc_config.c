@@ -208,12 +208,16 @@ static void board_tcpc_init(void)
 	int i;
 
 	/* Don't reset TCPCs after initial reset */
-	if (!system_jumped_late()) {
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
-		for (i = 0; i < CONFIG_IO_EXPANDER_PORT_COUNT; ++i)
-			ioex_init(i);
-	}
+	/*
+	 * These IO expander pins are implemented using the
+	 * C0/C1 TCPCs, so they must be set up after the TCPCs has
+	 * been taken out of reset.
+	 */
+	for (i = 0; i < CONFIG_IO_EXPANDER_PORT_COUNT; ++i)
+		ioex_init(i);
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
