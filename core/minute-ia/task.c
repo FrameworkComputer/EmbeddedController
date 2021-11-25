@@ -60,7 +60,7 @@ static uint64_t task_start_time; /* Time task scheduling started */
 static uint32_t exc_start_time;  /* Time of task->exception transition */
 static uint32_t exc_end_time;    /* Time of exception->task transition */
 static uint64_t exc_total_time;  /* Total time in exceptions */
-static uint32_t svc_calls;	 /* Number of service calls */
+static atomic_t svc_calls;	 /* Number of service calls */
 static uint32_t task_switches;	/* Number of times active task changed */
 static uint32_t irq_dist[CONFIG_IRQ_COUNT];	/* Distribution of IRQ calls */
 #endif
@@ -143,13 +143,13 @@ task_ *current_task, *next_task;
  * can do their init within a task switching context.  The hooks task will then
  * make a call to enable all tasks.
  */
-static uint32_t tasks_ready = BIT(TASK_ID_HOOKS);
+static atomic_t tasks_ready = BIT(TASK_ID_HOOKS);
 /*
  * Initially allow only the HOOKS and IDLE task to run, regardless of ready
  * status, in order for HOOK_INIT to complete before other tasks.
  * task_enable_all_tasks() will open the flood gates.
  */
-static uint32_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
+static atomic_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
 
 static int start_called;  /* Has task swapping started */
 
@@ -521,7 +521,7 @@ void task_print_list(void)
 		       "StkUsed\n");
 
 	for (i = 0; i < TASK_ID_COUNT; i++) {
-		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
+		char is_ready = ((uint32_t)tasks_ready & BIT(i)) ? 'R' : ' ';
 		uint32_t *sp;
 
 		int stackused = tasks_init[i].stack_size;

@@ -136,13 +136,13 @@ task_ *current_task = (task_ *)scratchpad;
  * can do their init within a task switching context.  The hooks task will then
  * make a call to enable all tasks.
  */
-static uint32_t tasks_ready = BIT(TASK_ID_HOOKS);
+static atomic_t tasks_ready = BIT(TASK_ID_HOOKS);
 /*
  * Initially allow only the HOOKS and IDLE task to run, regardless of ready
  * status, in order for HOOK_INIT to complete before other tasks.
  * task_enable_all_tasks() will open the flood gates.
  */
-static uint32_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
+static atomic_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
 
 static int start_called;  /* Has task swapping started */
 
@@ -569,7 +569,7 @@ void task_print_list(void)
 	ccputs("Task Ready Name         Events      Time (s)  StkUsed\n");
 
 	for (i = 0; i < TASK_ID_COUNT; i++) {
-		char is_ready = (tasks_ready & (1<<i)) ? 'R' : ' ';
+		char is_ready = ((uint32_t)tasks_ready & BIT(i)) ? 'R' : ' ';
 		uint32_t *sp;
 
 		int stackused = tasks_init[i].stack_size;
