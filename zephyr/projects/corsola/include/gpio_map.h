@@ -42,7 +42,7 @@
 					     GPIO_INT_EDGE_BOTH,               \
 					     spi_event)
 #elif defined(CONFIG_SOC_NPCX9M3F)
-	/* TODO(b:203619750): enable SPI interrupt */
+	/* The interrupt is configured by dts */
 	#define AP_SPI_INT()
 #endif
 
