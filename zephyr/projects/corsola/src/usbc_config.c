@@ -8,7 +8,6 @@
 #include "adc.h"
 #include "baseboard_common.h"
 #include "bc12/pi3usb9201_public.h"
-#include "bc12/mt6360_public.h"
 #include "button.h"
 #include "charger.h"
 #include "charge_state_v2.h"
@@ -129,12 +128,6 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-/* BC12 */
-const struct mt6360_config_t mt6360_config = {
-	.i2c_port = I2C_PORT_POWER,
-	.i2c_addr_flags = MT6360_PMU_I2C_ADDR_FLAGS,
-};
-
 const struct pi3usb9201_config_t
 		pi3usb9201_bc12_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	/* [0]: unused */
@@ -145,7 +138,7 @@ const struct pi3usb9201_config_t
 };
 
 struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{ .drv = &mt6360_drv },
+	{ .drv = NULL },
 	{ .drv = &pi3usb9201_drv },
 };
 
