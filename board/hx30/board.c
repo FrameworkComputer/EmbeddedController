@@ -577,6 +577,12 @@ void board_hibernate_late(void)
 
 }
 
+void thm_ft5399m_set_timeout_en(void)
+{
+	CPRINTS("%s", __func__);
+	i2c_write8(I2C_PORT_THERMAL_2, F75303_I2C_ADDR_FLAGS, 0x22, BIT(7));
+}
+
 /* according to Panel team suggest, delay 60ms to meet spec */
 static void bkoff_on_deferred(void)
 {
