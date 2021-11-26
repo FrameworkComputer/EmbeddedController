@@ -36,6 +36,8 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
+#include "variant_db_detection.h"
+
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
@@ -49,7 +51,6 @@ const struct charger_config_t chg_chips[] = {
 };
 
 /* Baseboard */
-
 static void baseboard_init(void)
 {
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_BC12_INT_ODL);
@@ -57,55 +58,13 @@ static void baseboard_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT-1);
 
-/* Sub-board */
-
-enum board_sub_board board_get_sub_board(void)
-{
-	static enum board_sub_board sub = SUB_BOARD_NONE;
-
-	if (sub != SUB_BOARD_NONE)
-		return sub;
-
-	/* HDMI board has external pull high. */
-	if (gpio_get_level(GPIO_EC_X_GPIO3)) {
-		sub = SUB_BOARD_HDMI;
-		/* Only has 1 PPC with HDMI subboard */
-		ppc_cnt = 1;
-		/* EC_X_GPIO1 */
-		gpio_set_flags(GPIO_EN_HDMI_PWR, GPIO_OUT_HIGH);
-		/* X_EC_GPIO2 */
-		gpio_set_flags(GPIO_PS185_EC_DP_HPD, GPIO_INT_BOTH);
-		/* EC_X_GPIO3 */
-		gpio_set_flags(GPIO_PS185_PWRDN_ODL, GPIO_ODR_HIGH);
-	} else {
-		sub = SUB_BOARD_TYPEC;
-		/* EC_X_GPIO1 */
-		gpio_set_flags(GPIO_USB_C1_FRS_EN, GPIO_OUT_LOW);
-		/* X_EC_GPIO2 */
-		gpio_set_flags(GPIO_USB_C1_PPC_INT_ODL,
-			       GPIO_INT_BOTH | GPIO_PULL_UP);
-		/* EC_X_GPIO3 */
-		gpio_set_flags(GPIO_USB_C1_DP_IN_HPD, GPIO_OUT_LOW);
-	}
-
-	CPRINTS("Detect %s SUB", sub == SUB_BOARD_HDMI ? "HDMI" : "TYPEC");
-	return sub;
-}
-
-static void sub_board_init(void)
-{
-	board_get_sub_board();
-}
-DECLARE_HOOK(HOOK_INIT, sub_board_init, HOOK_PRIO_INIT_I2C - 1);
-
-/* Detect subboard */
 static void board_tcpc_init(void)
 {
 	/* C1: GPIO_USB_C1_PPC_INT_ODL & HDMI: GPIO_PS185_EC_DP_HPD */
 	gpio_enable_interrupt(GPIO_X_EC_GPIO2);
 
 	/* If this is not a Type-C subboard, disable the task. */
-	if (board_get_sub_board() != SUB_BOARD_TYPEC)
+	if (corsola_get_db_type() != CORSOLA_DB_TYPEC)
 		task_disable_task(TASK_ID_PD_C1);
 }
 /* Must be done after I2C and subboard */
@@ -149,7 +108,7 @@ void bc12_interrupt(enum gpio_signal signal)
 
 static void board_sub_bc12_init(void)
 {
-	if (board_get_sub_board() == SUB_BOARD_TYPEC)
+	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
 		gpio_enable_interrupt(GPIO_USB_C1_BC12_CHARGER_INT_ODL);
 	else
 		/* If this is not a Type-C subboard, disable the task. */
@@ -160,7 +119,7 @@ DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_INIT_I2C + 1);
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
-	if (board_get_sub_board() == SUB_BOARD_TYPEC)
+	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
 		return CONFIG_USB_PD_PORT_MAX_COUNT;
 	else
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
@@ -298,8 +257,7 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 int board_set_active_charge_port(int port)
 {
 	int i;
-	int is_valid_port = port == 0 || (port == 1 && board_get_sub_board() ==
-							       SUB_BOARD_TYPEC);
+	int is_valid_port = (port >= 0 && port < board_get_usb_pd_port_count());
 
 	if (!is_valid_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
@@ -379,12 +337,12 @@ static void hdmi_hpd_interrupt(enum gpio_signal signal)
 /* HDMI/TYPE-C function shared subboard interrupt */
 void x_ec_interrupt(enum gpio_signal signal)
 {
-	int sub = board_get_sub_board();
+	int sub = corsola_get_db_type();
 
-	if (sub == SUB_BOARD_TYPEC)
+	if (sub == CORSOLA_DB_TYPEC)
 		/* C1: PPC interrupt */
 		syv682x_interrupt(1);
-	else if (sub == SUB_BOARD_HDMI)
+	else if (sub == CORSOLA_DB_HDMI)
 		hdmi_hpd_interrupt(signal);
 	else
 		CPRINTS("Undetected subboard interrupt.");
@@ -394,7 +352,7 @@ int ppc_get_alert_status(int port)
 {
 	if (port == 0)
 		return gpio_get_level(GPIO_USB_C0_PPC_BC12_INT_ODL) == 0;
-	if (port == 1 && board_get_sub_board() == SUB_BOARD_TYPEC)
+	if (port == 1 && corsola_get_db_type() == CORSOLA_DB_TYPEC)
 		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
 
 	return 0;

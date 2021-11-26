@@ -9,9 +9,11 @@
 #include "driver/usb_mux/ps8743.h"
 #include "hooks.h"
 
+#include "variant_db_detection.h"
+
 void board_usb_mux_init(void)
 {
-	if (board_get_sub_board() == SUB_BOARD_TYPEC) {
+	if (corsola_get_db_type() == CORSOLA_DB_TYPEC) {
 		ps8743_tune_usb_eq(&usb_muxes[1],
 				   PS8743_USB_EQ_TX_12_8_DB,
 				   PS8743_USB_EQ_RX_12_8_DB);
