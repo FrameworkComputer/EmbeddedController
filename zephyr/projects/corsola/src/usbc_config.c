@@ -6,7 +6,6 @@
 /* Corsola baseboard-specific USB-C configuration */
 
 #include "adc.h"
-#include "baseboard_common.h"
 #include "bc12/pi3usb9201_public.h"
 #include "button.h"
 #include "charger.h"
