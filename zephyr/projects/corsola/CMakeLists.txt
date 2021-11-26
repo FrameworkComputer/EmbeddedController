@@ -26,6 +26,8 @@ if(DEFINED CONFIG_BOARD_KRABBY)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 				     "src/krabby/led.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+				     "src/krabby/usb_pd_policy.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 				     "src/krabby/usbc_config.c")
 elseif(DEFINED CONFIG_BOARD_KINGLER)
 	project(kingler)
