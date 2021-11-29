@@ -392,8 +392,14 @@ config PLATFORM_EC_USB_PD_VBUS_MEASURE_TCPC
 config PLATFORM_EC_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 	bool "VBUS on each port is measured using an ADC channel"
 	help
-	  Enable this is there is a separate ADC channel for each USB-C VBUS
+	  Enable this if there is a separate ADC channel for each USB-C VBUS
 	  voltage.
+
+config PLATFORM_EC_USB_PD_VBUS_MEASURE_BY_BOARD
+	bool "VBUS on each port is measured per board specific"
+	help
+	  Enable this if there are different VBUS measurement approaches on
+	  the board, and also `board_get_vbus_voltage()` has to be implemented.
 
 endchoice  # Measuring VBUS voltage
 
