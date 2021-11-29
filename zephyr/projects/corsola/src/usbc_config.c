@@ -42,17 +42,14 @@ static void baseboard_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT-1);
 
-static void board_tcpc_init(void)
+static void baseboard_tcpc_init(void)
 {
-	/* C1: GPIO_USB_C1_PPC_INT_ODL & HDMI: GPIO_PS185_EC_DP_HPD */
-	gpio_enable_interrupt(GPIO_X_EC_GPIO2);
-
 	/* If this is not a Type-C subboard, disable the task. */
 	if (corsola_get_db_type() != CORSOLA_DB_TYPEC)
 		task_disable_task(TASK_ID_PD_C1);
 }
 /* Must be done after I2C and subboard */
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {

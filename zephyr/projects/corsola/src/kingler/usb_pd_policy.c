@@ -1,48 +1,31 @@
-/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-#include "adc.h"
 #include "charge_manager.h"
-#include "chipset.h"
-#include "usb_charge.h"
+#include "console.h"
+#include "driver/ppc/rt1718s.h"
+#include "gpio.h"
+#include "system.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
+#include "util.h"
 
-int pd_snk_is_vbus_provided(int port)
-{
-	static atomic_t vbus_prev[CONFIG_USB_PD_PORT_MAX_COUNT];
-	int vbus;
+#include "baseboard_usbc_config.h"
 
-	/*
-	 * (b:181203590#comment20) TODO(yllin): use
-	 *  PD_VSINK_DISCONNECT_PD for non-5V case.
-	 */
-	vbus = adc_read_channel(board_get_vbus_adc(port)) >=
-	       PD_V_SINK_DISCONNECT_MAX;
-
-#ifdef CONFIG_USB_CHARGER
-	/*
-	 * There's no PPC to inform VBUS change for usb_charger, so inform
-	 * the usb_charger now.
-	 */
-	if (!!(vbus_prev[port] != vbus))
-		usb_charger_vbus_change(port, vbus);
-
-	if (vbus)
-		atomic_or(&vbus_prev[port], 1);
-	else
-		atomic_clear(&vbus_prev[port]);
-#endif
-	return vbus;
-}
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 void pd_power_supply_reset(int port)
 {
 	int prev_en;
 
 	prev_en = ppc_is_sourcing_vbus(port);
+
+	if (port == USBC_PORT_C1)
+		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SOURCE, 0);
 
 	/* Disable VBUS. */
 	ppc_vbus_source_enable(port, 0);
@@ -55,18 +38,22 @@ void pd_power_supply_reset(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
+
 int pd_set_power_supply_ready(int port)
 {
 	int rv;
 
 	/* Disable charging. */
-	rv = ppc_vbus_sink_enable(port, 0);
+	rv = board_vbus_sink_enable(port, 0);
 	if (rv)
 		return rv;
 
 	pd_set_vbus_discharge(port, 0);
 
 	/* Provide Vbus. */
+	if (port == USBC_PORT_C1)
+		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SOURCE, 1);
+
 	rv = ppc_vbus_source_enable(port, 1);
 	if (rv)
 		return rv;
@@ -77,7 +64,8 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
-int board_vbus_source_enabled(int port)
+int pd_snk_is_vbus_provided(int port)
 {
-	return ppc_is_sourcing_vbus(port);
+	/* TODO: use ADC? */
+	return tcpm_check_vbus_level(port, VBUS_PRESENT);
 }

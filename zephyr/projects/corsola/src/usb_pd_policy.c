@@ -18,6 +18,12 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 
+int pd_check_vconn_swap(int port)
+{
+	/* Allow Vconn swap if AP is on. */
+	return chipset_in_state(CHIPSET_STATE_SUSPEND | CHIPSET_STATE_ON);
+}
+
 int svdm_get_hpd_gpio(int port)
 {
 	/* HPD is low active, inverse the result */

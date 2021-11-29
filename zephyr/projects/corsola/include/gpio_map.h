@@ -41,9 +41,21 @@
 	#define AP_SPI_INT()        GPIO_INT(GPIO_SPI0_CS,                     \
 					     GPIO_INT_EDGE_BOTH,               \
 					     spi_event)
+	#define TCPC_C0_INT()
+	#define TCPC_C1_INT()
+	#define PPC_C0_INT()
 #elif defined(CONFIG_SOC_NPCX9M3F)
 	/* The interrupt is configured by dts */
 	#define AP_SPI_INT()
+	#define TCPC_C0_INT()       GPIO_INT(GPIO_USB_C0_TCPC_INT_ODL,         \
+					     GPIO_INT_EDGE_FALLING,            \
+					     tcpc_alert_event)
+	#define TCPC_C1_INT()       GPIO_INT(GPIO_USB_C1_TCPC_INT_ODL,         \
+					     GPIO_INT_EDGE_FALLING,            \
+					     tcpc_alert_event)
+	#define PPC_C0_INT()        GPIO_INT(GPIO_USB_C0_PPC_INT_ODL,          \
+					     GPIO_INT_EDGE_FALLING,            \
+					     ppc_interrupt)
 #endif
 
 #ifdef CONFIG_PLATFORM_EC_TABLET_MODE
@@ -137,6 +149,12 @@
 	#define BASE_IMU_INT()
 #endif
 
+#ifdef CONFIG_PLATFORM_EC_USB_PD_TCPM_RT1718S
+#define GPIO_EN_USB_C1_SINK         RT1718S_GPIO1
+#define GPIO_EN_USB_C1_SOURCE       RT1718S_GPIO2
+#define GPIO_EN_USB_C1_FRS          RT1718S_GPIO3
+#endif
+
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *
@@ -168,6 +186,9 @@
 	EXTPWR_INT()							\
 	SWITCH_INT()							\
 	AP_SPI_INT()							\
+	TCPC_C0_INT()							\
+	TCPC_C1_INT()							\
+	PPC_C0_INT()							\
 	X_EC_GPIO2_INT()
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
