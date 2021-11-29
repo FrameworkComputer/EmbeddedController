@@ -877,12 +877,12 @@ struct queue {
 	 * Head points to the index of the first empty slot to put a new RX
 	 * message. Must be masked before used in lookup.
 	 */
-	uint32_t head;
+	atomic_t head;
 	/*
 	 * Tail points to the index of the first message for the PD task to
 	 * consume. Must be masked before used in lookup.
 	 */
-	uint32_t tail;
+	atomic_t tail;
 	struct cached_tcpm_message buffer[CACHE_DEPTH];
 };
 static struct queue cached_messages[CONFIG_USB_PD_PORT_MAX_COUNT];

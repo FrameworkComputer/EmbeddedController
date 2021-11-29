@@ -384,7 +384,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 #ifdef USB_PD_PORT_TCPC_MST
 void baseboard_mst_enable_control(enum mst_source src, int level)
 {
-	static uint32_t mst_input_levels;
+	static atomic_t mst_input_levels;
 
 	if (level)
 		atomic_or(&mst_input_levels, 1 << src);

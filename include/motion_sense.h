@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_MOTION_SENSE_H
 #define __CROS_EC_MOTION_SENSE_H
 
+#include "atomic.h"
 #include "chipset.h"
 #include "common.h"
 #include "ec_commands.h"
@@ -215,7 +216,7 @@ struct motion_sensor_t {
 	intv3_t spoof_xyz;
 
 	/* How many flush events are pending */
-	uint32_t flush_pending;
+	atomic_t flush_pending;
 
 	/*
 	 * Allow EC to request an higher frequency for the sensors than the AP.

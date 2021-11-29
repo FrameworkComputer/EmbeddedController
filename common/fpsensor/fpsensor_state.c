@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "atomic.h"
 #include "common.h"
 #include "cryptoc/util.h"
 #include "ec_commands.h"
@@ -51,7 +52,7 @@ uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
 /* Status of the FP encryption engine. */
 static uint32_t fp_encryption_status;
 
-uint32_t fp_events;
+atomic_t fp_events;
 
 uint32_t sensor_mode;
 

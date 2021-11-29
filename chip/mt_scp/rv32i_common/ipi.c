@@ -28,7 +28,7 @@ static struct ipc_shared_obj *const ipi_recv_buf =
 	(struct ipc_shared_obj *)(CONFIG_IPC_SHARED_OBJ_ADDR +
 				  sizeof(struct ipc_shared_obj));
 
-static uint32_t disable_irq_count, saved_int_mask;
+static atomic_t disable_irq_count, saved_int_mask;
 
 void ipi_disable_irq(void)
 {

@@ -264,7 +264,7 @@ static struct lazy_wake_masks {
 
 static void host_events_atomic_or(host_event_t *e, host_event_t m)
 {
-	uint32_t *ptr = (uint32_t *)e;
+	atomic_t *ptr = (atomic_t *)e;
 
 	atomic_or(ptr, (uint32_t)m);
 #ifdef CONFIG_HOST_EVENT64
@@ -274,7 +274,7 @@ static void host_events_atomic_or(host_event_t *e, host_event_t m)
 
 static void host_events_atomic_clear(host_event_t *e, host_event_t m)
 {
-	uint32_t *ptr = (uint32_t *)e;
+	atomic_t *ptr = (atomic_t *)e;
 
 	atomic_clear_bits(ptr, (uint32_t)m);
 #ifdef CONFIG_HOST_EVENT64

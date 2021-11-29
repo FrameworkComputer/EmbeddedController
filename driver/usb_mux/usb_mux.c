@@ -32,7 +32,7 @@ static int enable_debug_prints;
  * Flags will reset to 0 after sysjump; This works for current flags as LPM will
  * get reset in the init method which is called during PD task startup.
  */
-static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static atomic_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Device is in low power mode. */
 #define USB_MUX_FLAG_IN_LPM		BIT(0)

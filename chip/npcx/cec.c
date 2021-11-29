@@ -251,7 +251,7 @@ static int cap_charge;
 static uint8_t cec_addr = UINT8_MAX;
 
 /* Events to send to AP */
-static uint32_t cec_events;
+static atomic_t cec_events;
 
 /* APB1 frequency. Store divided by 10k to avoid some runtime divisions */
 static uint32_t apb1_freq_div_10k;

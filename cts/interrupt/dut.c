@@ -66,7 +66,7 @@ void cts_irq2(enum gpio_signal signal)
 
 void clean_state(void)
 {
-	uint32_t *event;
+	atomic_t *event;
 
 	interrupt_enable();
 	got_interrupt = 0;

@@ -22,7 +22,7 @@
 #define CPRINTS(fmt, args...) cprints(CC_PCHG, "PCHG: " fmt, ##args)
 
 /* Currently only used for FW update. */
-static uint32_t pchg_host_events;
+static atomic_t pchg_host_events;
 
 static void pchg_queue_event(struct pchg *ctx, enum pchg_event event)
 {

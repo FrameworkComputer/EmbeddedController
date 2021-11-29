@@ -17,8 +17,8 @@
 #define CPUTS(outstr) cputs(CC_EVENTS, outstr)
 #define CPRINTS(format, args...) cprints(CC_EVENTS, format, ## args)
 
-static uint32_t device_current_events;
-static uint32_t device_enabled_events;
+static atomic_t device_current_events;
+static atomic_t device_enabled_events;
 
 uint32_t device_get_current_events(void)
 {
@@ -40,7 +40,7 @@ void device_set_events(uint32_t mask)
 	/* Ignore events that are not enabled */
 	mask &= device_enabled_events;
 
-	if ((device_current_events & mask) != mask) {
+	if (((uint32_t)device_current_events & mask) != mask) {
 		CPRINTS("device event set 0x%08x", mask);
 	} else {
 		/*
@@ -64,7 +64,7 @@ void device_set_events(uint32_t mask)
 void device_clear_events(uint32_t mask)
 {
 	/* Only print if something's about to change */
-	if (device_current_events & mask)
+	if ((uint32_t)device_current_events & mask)
 		CPRINTS("device event clear 0x%08x", mask);
 
 	atomic_clear_bits(&device_current_events, mask);

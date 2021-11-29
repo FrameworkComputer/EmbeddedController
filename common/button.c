@@ -43,7 +43,7 @@ static uint64_t next_deferred_time;
 /* Bitmask to keep track of simulated state of each button.
  * Bit numbers are aligned to enum button.
  */
-static int sim_button_state;
+static atomic_t sim_button_state;
 
 /*
  * Flip state of associated button type in sim_button_state bitmask.

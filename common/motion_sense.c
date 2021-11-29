@@ -73,7 +73,7 @@ STATIC_IF(CONFIG_MOTION_FILL_LPC_SENSE_DATA) void update_sense_data(
 		uint8_t *lpc_status, int *psample_id);
 
 /* Flags to control whether to send an ODR change event for a sensor */
-static uint32_t odr_event_required;
+static atomic_t odr_event_required;
 
 /* Whether or not the FIFO interrupt should be enabled (set from the AP). */
 __maybe_unused static int fifo_int_enabled;

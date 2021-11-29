@@ -48,7 +48,7 @@ static const struct charger_info sm5803_charger_info = {
 	.input_current_step = INPUT_I_STEP,
 };
 
-static uint32_t irq_pending; /* Bitmask of chips with interrupts pending */
+static atomic_t irq_pending; /* Bitmask of chips with interrupts pending */
 
 static struct mutex flow1_access_lock[CHARGER_NUM];
 static struct mutex flow2_access_lock[CHARGER_NUM];

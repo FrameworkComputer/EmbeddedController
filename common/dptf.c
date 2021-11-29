@@ -45,14 +45,14 @@ static void dptf_init(void)
 DECLARE_HOOK(HOOK_INIT, dptf_init, HOOK_PRIO_DEFAULT);
 
 /* Keep track of which triggered sensor thresholds the AP has seen */
-static uint32_t dptf_seen;
+static atomic_t dptf_seen;
 
 int dptf_query_next_sensor_event(void)
 {
 	int id;
 
 	for (id = 0; id < TEMP_SENSOR_COUNT; id++)
-		if (dptf_seen & BIT(id)) {  /* atomic? */
+		if ((uint32_t)dptf_seen & BIT(id)) {
 			atomic_clear_bits(&dptf_seen, BIT(id));
 			return id;
 		}

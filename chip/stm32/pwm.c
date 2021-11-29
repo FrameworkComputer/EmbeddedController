@@ -17,7 +17,7 @@
 #include "util.h"
 
 /* Bitmap of currently active PWM channels. 1 bit per channel. */
-static uint32_t using_pwm;
+static atomic_t using_pwm;
 
 void pwm_set_duty(enum pwm_channel ch, int percent)
 {

@@ -25,12 +25,12 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
 #define AOZ1380_FLAGS_SOURCE_ENABLED    BIT(0)
 #define AOZ1380_FLAGS_SINK_ENABLED      BIT(1)
 #define AOZ1380_FLAGS_INT_ON_DISCONNECT BIT(2)
-static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static atomic_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 #define AOZ1380_SET_FLAG(port, flag) atomic_or(&flags[port], (flag))
 #define AOZ1380_CLR_FLAG(port, flag) atomic_clear_bits(&flags[port], (flag))
