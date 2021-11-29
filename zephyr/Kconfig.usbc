@@ -946,6 +946,7 @@ choice "Type-C Port Manager (TCPM)"
 
 config PLATFORM_EC_USB_PD_TCPM_TCPCI
 	bool "Use TCPCI"
+	select PLATFORM_EC_USBC_OCP
 	help
 	  Enable a TCPC compatible with the Type-C Port Controller Interface
 	  (TCPCI) Specification. This driver supports both Rev1 v1.2 and Rev2
