@@ -15,8 +15,11 @@
 
 LOG_MODULE_REGISTER(shim_flash, LOG_LEVEL_ERR);
 
-#define CROS_FLASH_DEV DT_LABEL(DT_NODELABEL(fiu0))
-static const struct device *cros_flash_dev;
+#if !DT_HAS_CHOSEN(cros_ec_flash)
+#error "cros-ec,flash device must be chosen"
+#else
+#define cros_flash_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_flash))
+#endif
 
 K_MUTEX_DEFINE(flash_lock);
 
@@ -104,11 +107,8 @@ static int flash_dev_init(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
-	cros_flash_dev = device_get_binding(CROS_FLASH_DEV);
-	if (!cros_flash_dev) {
-		LOG_ERR("Fail to find %s", CROS_FLASH_DEV);
-		return -ENODEV;
-	}
+	if (!device_is_ready(cros_flash_dev))
+		k_oops();
 	cros_flash_init(cros_flash_dev);
 
 	return 0;

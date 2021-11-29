@@ -10,6 +10,9 @@
 #include <nuvoton/npcx.dtsi>
 
 / {
+	chosen {
+		cros-ec,flash = &fiu0;
+	};
 
 	named-bbram-regions {
 		compatible = "named-bbram-regions";

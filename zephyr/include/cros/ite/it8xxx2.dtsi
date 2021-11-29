@@ -6,6 +6,10 @@
 #include <cros/binman.dtsi>
 
 / {
+	chosen {
+		cros-ec,flash = &fiu0;
+	};
+
 	named-bbram-regions {
 		compatible = "named-bbram-regions";
 
