@@ -894,4 +894,10 @@ config PLATFORM_EC_AMD_STT
 	  to temporarily boost above the sustainable power limit, while the
 	  chassis skin temperatures are below limits.
 
+config PLATFORM_EC_MATH_UTIL
+	bool "Math utility"
+	help
+	  Math utilities including bitmask manipulation, division rounding,
+	  trigonometric function, etc.
+
 endif # PLATFORM_EC

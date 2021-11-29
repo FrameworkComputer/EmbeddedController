@@ -98,6 +98,7 @@ config PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT
 
 config PLATFORM_EC_LID_ANGLE
     bool "Lid Angle"
+    select PLATFORM_EC_MATH_UTIL
     help
       Enable this to detect lid angle with two accelerometers. The andgle
       calculation requires the information about which sensor is on the lid

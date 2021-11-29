@@ -121,15 +121,13 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC "${PLATFORM_EC}/common/base32.c"
 zephyr_library_sources_ifdef(CONFIG_HAS_TASK_POWERBTN
                                                 "${PLATFORM_EC}/common/power_button_x86.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_BMA255
-                                                "${PLATFORM_EC}/driver/accel_bma2x2.c"
-                                                "${PLATFORM_EC}/common/math_util.c")
+                                                "${PLATFORM_EC}/driver/accel_bma2x2.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_KX022
                                                 "${PLATFORM_EC}/driver/accel_kionix.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_LIS2DW12
                                                 "${PLATFORM_EC}/driver/accel_lis2dw12.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI
-                                                "${PLATFORM_EC}/driver/accelgyro_bmi_common.c"
-                                                "${PLATFORM_EC}/common/math_util.c")
+                                                "${PLATFORM_EC}/driver/accelgyro_bmi_common.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI160
                                                 "${PLATFORM_EC}/driver/accelgyro_bmi160.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_BMI260
@@ -260,8 +258,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_PWM
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_ONOFF_STATES
                                                 "${PLATFORM_EC}/common/led_onoff_states.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE
-                                                "${PLATFORM_EC}/common/motion_lid.c"
-                                                "${PLATFORM_EC}/common/math_util.c")
+                                                "${PLATFORM_EC}/common/motion_lid.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE
                                                 "${PLATFORM_EC}/common/lid_angle.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LID_SWITCH
@@ -445,3 +442,5 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VSTORE
                                                 "${PLATFORM_EC}/common/vstore.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RTC
 						"${PLATFORM_EC}/common/rtc.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MATH_UTIL
+						"${PLATFORM_EC}/common/math_util.c")
