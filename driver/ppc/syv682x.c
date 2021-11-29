@@ -30,10 +30,10 @@
 #define SYV682X_FLAGS_FRS		BIT(7)
 #define SYV682X_FLAGS_VCONN_OCP		BIT(8)
 
-static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
-static uint32_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
+static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+static atomic_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 /* Running count of sink ocp events */
-static uint32_t sink_ocp_count[CONFIG_USB_PD_PORT_MAX_COUNT];
+static atomic_t sink_ocp_count[CONFIG_USB_PD_PORT_MAX_COUNT];
 static timestamp_t vbus_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 static timestamp_t vconn_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 
