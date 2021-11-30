@@ -844,6 +844,22 @@ config PLATFORM_EC_USBC_PPC_AOZ1380
 	  provide all the functionality and protection needed for sourcing
 	  and sinking current through a USB Type-C port with PD capability.
 
+config PLATFORM_EC_USBC_PPC_RT1718S
+	bool "Richtek RT1718S TCPC/PPC"
+	select PLATFORM_EC_USB_PD_TCPM_RT1718S
+	select PLATFORM_EC_USBC_OCP
+	select PLATFORM_EC_USBC_PPC_POLARITY
+	select PLATFORM_EC_USBC_PPC_SBU
+	select PLATFORM_EC_USBC_PPC_VCONN if PLATFORM_EC_USBC_VCONN
+	help
+	  RT1718S integrates several high voltage protection switch of
+	  SBU1/SBU2/DP/DM from high voltage VBUS touching the adjacent pins. The
+	  AMR of SBU OVP switch is 24V. High Voltage USB 2.0 Switches also
+	  support HV DCP & fast charging protocols. The GPIOs in RT1718S can
+	  be also configured to control system block such as USB3.0 to DP Mux
+	  for alternated mode usage. VCONN Switch with OVP/OCP/RVP/RCP/UVP
+	  protection is also integrated.
+
 config PLATFORM_EC_USBC_PPC_NX20P3483
 	bool "NX20P3483 High Voltage Sink/Source Combo Switch"
 	select PLATFORM_EC_USBC_OCP
@@ -1229,7 +1245,7 @@ config PLATFORM_EC_USB_PD_TCPM_PS8815_FORCE_DID
 endif # PLATFORM_EC_USB_PD_TCPM_PS8815
 
 config PLATFORM_EC_USB_PD_TCPM_RT1715
-	bool "Ricktek RT1715 Type-C Port Controller"
+	bool "Richtek RT1715 Type-C Port Controller"
 	help
 	  The RT1715 is a USB Type-C controller, integrating a complete Type-C
 	  Transceiver including the Rp and Rd resistors. It does the USB Type-C
@@ -1237,6 +1253,16 @@ config PLATFORM_EC_USB_PD_TCPM_RT1715
 	  physical layer of the USB BMC power delivery protocol to allow up to
 	  100W of power and role swap. The BMC PD block enables full support
 	  for alternative interfaces of the Type-C specification.
+
+config PLATFORM_EC_USB_PD_TCPM_RT1718S
+	bool "Richtek RT1718S Type-C Port Controller"
+	select PLATFORM_EC_USBC_PPC_RT17182S
+	help
+	  The RT1718S is an integrated USB Type-C TCPC controller which
+	  includes IEC-61000-4-2 ESD protection cell for CC/SBU/DP/DM.
+	  High voltage USB 2.0 switches also support HV DCP & fast charging
+	  protocols. RT1718S supports TCPC Version 1.2, and Battery Charging
+	  version 1.2 (BC1.2).
 
 config PLATFORM_EC_USB_PD_TCPM_TUSB422
 	bool "TI TUSB422 Port Control with USB PD"
