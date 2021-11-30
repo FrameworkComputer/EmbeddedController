@@ -14,6 +14,8 @@
 
 LOG_MODULE_REGISTER(watchdog_shim, LOG_LEVEL_ERR);
 
+#define wdt DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog))
+
 static void wdt_warning_handler(const struct device *wdt_dev, int channel_id)
 {
 	/* TODO(b/176523207): watchdog warning message */
@@ -23,10 +25,8 @@ static void wdt_warning_handler(const struct device *wdt_dev, int channel_id)
 int watchdog_init(void)
 {
 	int err;
-	const struct device *wdt;
 	struct wdt_timeout_cfg wdt_config;
 
-	wdt = DEVICE_DT_GET(DT_NODELABEL(twd0));
 	if (!device_is_ready(wdt)) {
 		LOG_ERR("Error: device %s is not ready", wdt->name);
 		return -1;
@@ -67,9 +67,6 @@ int watchdog_init(void)
 
 void watchdog_reload(void)
 {
-	const struct device *wdt;
-
-	wdt = DEVICE_DT_GET(DT_NODELABEL(twd0));
 	if (!device_is_ready(wdt))
 		LOG_ERR("Error: device %s is not ready", wdt->name);
 
