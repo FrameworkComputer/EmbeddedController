@@ -428,7 +428,7 @@ static int rt1718s_enter_low_power_mode(int port)
 
 int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val)
 {
-	static struct mutex adc_lock;
+	static mutex_t adc_lock;
 	int rv;
 	const int max_wait_times = 30;
 
