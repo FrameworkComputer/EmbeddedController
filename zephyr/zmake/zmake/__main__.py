@@ -165,7 +165,10 @@ def main(argv=None):
     sub = parser.add_subparsers(dest="subcommand", help="Subcommand")
     sub.required = True
 
-    configure = sub.add_parser("configure")
+    configure = sub.add_parser(
+        "configure",
+        help="Set up a build directory to be built later by the build subcommand",
+    )
     configure.add_argument("-t", "--toolchain", help="Name of toolchain to use")
     configure.add_argument(
         "--bringup",
@@ -207,7 +210,10 @@ def main(argv=None):
         help="Enable CONFIG_COVERAGE Kconfig.",
     )
 
-    build = sub.add_parser("build")
+    build = sub.add_parser(
+        "build",
+        help="Execute the build from a build directory",
+    )
     build.add_argument(
         "build_dir",
         type=pathlib.Path,
@@ -239,16 +245,25 @@ def main(argv=None):
         help="Optional directory to search for BUILD.py files in.",
     )
 
-    test = sub.add_parser("test")
+    test = sub.add_parser(
+        "test",
+        help="Execute tests from a build directory",
+    )
     test.add_argument(
         "build_dir",
         type=pathlib.Path,
         help="The build directory used during configuration",
     )
 
-    sub.add_parser("testall")
+    sub.add_parser(
+        "testall",
+        help="Execute all known builds and tests",
+    )
 
-    coverage = sub.add_parser("coverage")
+    coverage = sub.add_parser(
+        "coverage",
+        help="Run coverage on a build directory",
+    )
     coverage.add_argument(
         "build_dir",
         type=pathlib.Path,
