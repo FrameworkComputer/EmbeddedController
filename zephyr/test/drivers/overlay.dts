@@ -8,6 +8,10 @@
 #include <freq.h>
 
 / {
+	chosen {
+		cros-ec,adc = &adc0;
+	};
+
 	aliases {
 		bmi260-int = &ms_bmi260_accel;
 		bmi160-int = &ms_bmi160_accel;

@@ -10,8 +10,7 @@
 
 LOG_MODULE_REGISTER(shim_adc, LOG_LEVEL_ERR);
 
-#define ADC_NODE DT_NODELABEL(adc0)
-const struct device *adc_dev;
+#define adc_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_adc))
 
 #define HAS_NAMED_ADC_CHANNELS DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
 
@@ -43,11 +42,9 @@ const struct adc_t adc_channels[] = { DT_FOREACH_CHILD(
 static int init_device_bindings(const struct device *device)
 {
 	ARG_UNUSED(device);
-	adc_dev = DEVICE_DT_GET(ADC_NODE);
 
 	if (!device_is_ready(adc_dev)) {
-		LOG_ERR("Error: device %s is not ready", adc_dev->name);
-		return -1;
+		k_oops();
 	}
 
 #if HAS_NAMED_ADC_CHANNELS
