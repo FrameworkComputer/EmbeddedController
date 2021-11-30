@@ -11,8 +11,9 @@
 
 / {
 	chosen {
-		cros-ec,flash = &fiu0;
 		cros-ec,adc = &adc0;
+		cros-ec,espi = &espi0;
+		cros-ec,flash = &fiu0;
 	};
 
 	named-bbram-regions {
