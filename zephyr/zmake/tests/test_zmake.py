@@ -13,6 +13,7 @@ import unittest
 import unittest.mock as mock
 from unittest.mock import patch
 
+import pytest
 from testfixtures import LogCapture
 
 import zmake.build_config
@@ -226,6 +227,72 @@ class TestFilters(unittest.TestCase):
 
         dt_errs = [rec for rec in recs if "adc" in rec]
         assert "devicetree error: 'adc' is marked as required" in list(dt_errs)[0]
+
+
+@pytest.mark.parametrize(
+    ["project_names", "format", "search_dir", "expected_output"],
+    [
+        (
+            ["link", "samus"],
+            "{config.project_name}\n",
+            None,
+            "link\nsamus\n",
+        ),
+        (
+            ["link", "samus"],
+            "{config.project_name}\n",
+            pathlib.Path("/foo/bar"),
+            "link\nsamus\n",
+        ),
+        (
+            [],
+            "{config.project_name}\n",
+            None,
+            "",
+        ),
+        (
+            ["link"],
+            "",
+            None,
+            "",
+        ),
+        (
+            ["link"],
+            "{config.zephyr_board}\n",
+            None,
+            "some_board\n",
+        ),
+        (
+            ["link"],
+            "{config.project_name} is_test={config.is_test}\n",
+            None,
+            "link is_test=False\n",
+        ),
+    ],
+)
+def test_list_projects(project_names, format, search_dir, expected_output, capsys):
+    """Test listing projects with default directory."""
+    fake_projects = {
+        name: zmake.project.Project(
+            zmake.project.ProjectConfig(
+                project_name=name,
+                zephyr_board="some_board",
+                supported_toolchains=["coreboot-sdk"],
+                output_packer=zmake.output_packers.RawBinPacker,
+            )
+        )
+        for name in project_names
+    }
+    zmk = zm.Zmake()
+    with mock.patch(
+        "zmake.project.find_projects",
+        autospec=True,
+        return_value=fake_projects,
+    ):
+        zmk.list_projects(format=format, search_dir=search_dir)
+
+    captured = capsys.readouterr()
+    assert captured.out == expected_output
 
 
 if __name__ == "__main__":

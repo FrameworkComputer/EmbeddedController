@@ -810,3 +810,19 @@ class Zmake:
             if proc.wait():
                 raise OSError(get_process_failure_msg(proc))
             return 0
+
+    def list_projects(self, format, search_dir):
+        """List project names known to zmake on stdout.
+
+        Args:
+            format: The formatting string to print projects with.
+            search_dir: Directory to start the search for
+                BUILD.py files at.
+        """
+        if not search_dir:
+            search_dir = self.module_paths["ec"] / "zephyr"
+
+        for project in zmake.project.find_projects(search_dir).values():
+            print(format.format(config=project.config), end="")
+
+        return 0

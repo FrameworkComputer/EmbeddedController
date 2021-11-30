@@ -220,6 +220,25 @@ def main(argv=None):
         help="Exit with code 2 if warnings are detected",
     )
 
+    list_projects = sub.add_parser(
+        "list-projects",
+        help="List projects known to zmake.",
+    )
+    list_projects.add_argument(
+        "--format",
+        default="{config.project_name}\n",
+        help=(
+            "Output format to print projects (str.format(config=project.config) is "
+            "called on this for each project)."
+        ),
+    )
+    list_projects.add_argument(
+        "search_dir",
+        type=pathlib.Path,
+        nargs="?",
+        help="Optional directory to search for BUILD.py files in.",
+    )
+
     test = sub.add_parser("test")
     test.add_argument(
         "build_dir",
