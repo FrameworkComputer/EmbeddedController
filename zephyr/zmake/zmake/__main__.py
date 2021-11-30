@@ -107,7 +107,10 @@ def main(argv=None):
 
     maybe_reexec(argv)
 
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        prog="zmake",
+        description="Chromium OS's meta-build tool for Zephyr",
+    )
     parser.add_argument(
         "--checkout", type=pathlib.Path, help="Path to ChromiumOS checkout"
     )
