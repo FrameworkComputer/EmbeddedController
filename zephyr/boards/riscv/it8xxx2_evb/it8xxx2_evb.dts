@@ -194,19 +194,20 @@
 
 	named-pwms {
 		compatible = "named-pwms";
+
 		/* NOTE: &pwm number needs same with channel number */
-		test0 {
-			pwms = <&pwm7 PWM_CHANNEL_7 PWM_POLARITY_INVERTED>;
-			label = "TEST0";
+		pwm_test: test {
+			pwms = <&pwm0 PWM_CHANNEL_0 PWM_POLARITY_NORMAL>;
+			label = "TEST";
 			/*
 			 * If we need pwm output in ITE chip power saving
 			 * mode, then we should set frequency <=324Hz.
 			 */
 			frequency = <324>;
 		};
-		test1 {
-			pwms = <&pwm0 PWM_CHANNEL_0 PWM_POLARITY_NORMAL>;
-			label = "TEST1";
+		pwm_fan: fan {
+			pwms = <&pwm7 PWM_CHANNEL_7 PWM_POLARITY_NORMAL>;
+			label = "FAN";
 			frequency = <30000>;
 		};
 	};
@@ -246,13 +247,13 @@
 	status = "okay";
 };
 
-/* TEST1 */
+/* pwm for test */
 &pwm0 {
 	status = "okay";
 	prescaler-cx = <PWM_PRESCALER_C6>;
 };
 
-/* TEST0 */
+/* pwm for fan */
 &pwm7 {
 	status = "okay";
 	prescaler-cx = <PWM_PRESCALER_C4>;
