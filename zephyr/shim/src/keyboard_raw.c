@@ -15,19 +15,17 @@
 
 LOG_MODULE_REGISTER(shim_cros_kb_raw, LOG_LEVEL_ERR);
 
-#define CROS_KB_RAW_NODE DT_NODELABEL(cros_kb_raw)
-static const struct device *cros_kb_raw_dev;
+BUILD_ASSERT(DT_HAS_CHOSEN(cros_ec_raw_kb),
+	     "a cros-ec,raw-kb device must be chosen");
+#define cros_kb_raw_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_raw_kb))
 
 /**
  * Initialize the raw keyboard interface.
  */
 void keyboard_raw_init(void)
 {
-	cros_kb_raw_dev = DEVICE_DT_GET(CROS_KB_RAW_NODE);
-	if (!device_is_ready(cros_kb_raw_dev)) {
-		LOG_ERR("Error: device %s is not ready", cros_kb_raw_dev->name);
-		return;
-	}
+	if (!device_is_ready(cros_kb_raw_dev))
+		k_oops();
 
 	LOG_INF("%s", __func__);
 	cros_kb_raw_init(cros_kb_raw_dev);
@@ -46,10 +44,7 @@ void keyboard_raw_task_start(void)
  */
 test_mockable void keyboard_raw_drive_column(int col)
 {
-	if (cros_kb_raw_dev)
-		cros_kb_raw_drive_column(cros_kb_raw_dev, col);
-	else
-		LOG_ERR("%s: no cros_kb_raw device!", __func__);
+	cros_kb_raw_drive_column(cros_kb_raw_dev, col);
 }
 
 /**
@@ -58,11 +53,7 @@ test_mockable void keyboard_raw_drive_column(int col)
  */
 test_mockable int keyboard_raw_read_rows(void)
 {
-	if (cros_kb_raw_dev)
-		return cros_kb_raw_read_rows(cros_kb_raw_dev);
-
-	LOG_ERR("%s: no cros_kb_raw device!", __func__);
-	return -EIO;
+	return cros_kb_raw_read_rows(cros_kb_raw_dev);
 }
 
 /**
@@ -70,8 +61,5 @@ test_mockable int keyboard_raw_read_rows(void)
  */
 void keyboard_raw_enable_interrupt(int enable)
 {
-	if (cros_kb_raw_dev)
-		cros_kb_raw_enable_interrupt(cros_kb_raw_dev, enable);
-	else
-		LOG_ERR("%s: no cros_kb_raw device!", __func__);
+	cros_kb_raw_enable_interrupt(cros_kb_raw_dev, enable);
 }

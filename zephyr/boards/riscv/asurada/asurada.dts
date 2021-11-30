@@ -140,19 +140,6 @@
 			enum-name = "I2C_PORT_USB_MUX1";
 		};
 	};
-
-	soc {
-		/delete-node/ kscan@f01d00;
-
-		cros_kb_raw: cros-kb-raw@f01d00 {
-			compatible = "ite,it8xxx2-cros-kb-raw";
-			reg = <0x00f01d00 0x29>;
-			label = "CROS_KB_RAW_0";
-			interrupt-parent = <&intc>;
-			interrupts = <13 IRQ_TYPE_LEVEL_HIGH>;
-			status = "disabled";
-		};
-	};
 };
 
 &uart1 {

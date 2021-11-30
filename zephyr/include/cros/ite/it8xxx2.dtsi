@@ -4,6 +4,7 @@
  */
 
 #include <cros/binman.dtsi>
+#include <it8xxx2.dtsi>
 
 / {
 	chosen {
@@ -11,6 +12,7 @@
 		cros-ec,bbram = &bbram;
 		cros-ec,espi = &espi0;
 		cros-ec,flash = &fiu0;
+		cros-ec,raw-kb = &cros_kb_raw;
 		cros-ec,watchdog = &twd0;
 	};
 
@@ -74,6 +76,17 @@
 			compatible = "ite,it8xxx2-cros-flash";
 			reg = <0x80000000 0x100000>;
 			label = "FLASH";
+		};
+
+		/delete-node/ kscan@f01d00;
+
+		cros_kb_raw: cros-kb-raw@f01d00 {
+			compatible = "ite,it8xxx2-cros-kb-raw";
+			reg = <0x00f01d00 0x29>;
+			label = "CROS_KB_RAW_0";
+			interrupt-parent = <&intc>;
+			interrupts = <13 IRQ_TYPE_LEVEL_HIGH>;
+			status = "disabled";
 		};
 	};
 
