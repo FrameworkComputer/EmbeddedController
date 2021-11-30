@@ -56,7 +56,14 @@ static struct usart_hw_ops const usart_variant_hw_ops = {
 
 void usart_clear_tc(struct usart_config const *config)
 {
-	STM32_USART_ICR(config->hw->base) |= STM32_USART_ICR_TCCF;
+	/*
+	 * ST reference code does blind write to this register, as is usual
+	 * with the "write 1 to clear" convention, despite the datasheet
+	 * listing the bits as "keep at reset value", (which we assume is due
+	 * to copying from the description of reserved bits in read/write
+	 * registers.)
+	 */
+	STM32_USART_ICR(config->hw->base) = STM32_USART_ICR_TCCF;
 }
 
 /*
