@@ -306,6 +306,7 @@ static void dpm_attempt_mode_entry(int port)
 		return;
 
 	if (IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) &&
+			IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
 			DPM_CHK_FLAG(port, DPM_FLAG_ENTER_ANY) &&
 			!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED) &&
 			!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
@@ -315,6 +316,7 @@ static void dpm_attempt_mode_entry(int port)
 	}
 
 	if (IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) &&
+			IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
 			!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
 		return;
 	}
