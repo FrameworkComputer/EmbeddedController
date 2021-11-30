@@ -871,6 +871,11 @@ static void lcd_reset_change_deferred(void)
 	if (signal != 0)
 		return;
 
+	signal = gpio_get_level(GPIO_EN_PP1800_PANEL_S0);
+
+	if (signal == 0)
+		return;
+
 	i2c_write8(I2C_PORT_LCD, I2C_ADDR_ISL98607_FLAGS,
 			ISL98607_REG_ENABLE, ISL97607_VP_VN_VBST_DIS);
 
