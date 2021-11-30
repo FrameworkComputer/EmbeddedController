@@ -747,6 +747,7 @@ config PLATFORM_EC_SYSTEM_UNLOCKED
 
 config PLATFORM_EC_THROTTLE_AP
 	bool "CPU throttling"
+	depends on PLATFORM_EC_TEMP_SENSOR
 	help
 	  Enable throttling the CPU based on the temperature sensors. When they
 	  detect that the CPU is getting too hot, the CPU is throttled to
