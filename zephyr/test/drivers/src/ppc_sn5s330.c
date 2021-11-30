@@ -185,6 +185,23 @@ static void test_vbus_source_sink_enable(void)
 	zassert_equal(func_set3_reg & SN5S330_PP2_EN, 0, NULL);
 }
 
+static void test_vbus_discharge(void)
+{
+	const struct emul *emul = EMUL;
+	uint8_t func_set3_reg;
+
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+
+	/* Test enable/disable VBUS discharging */
+	zassert_ok(sn5s330_drv.discharge_vbus(SN5S330_PORT, true), NULL);
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
+	zassert_not_equal(func_set3_reg & SN5S330_VBUS_DISCH_EN, 0, NULL);
+
+	zassert_ok(sn5s330_drv.discharge_vbus(SN5S330_PORT, false), NULL);
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET3, &func_set3_reg);
+	zassert_equal(func_set3_reg & SN5S330_VBUS_DISCH_EN, 0, NULL);
+}
+
 static void reset_sn5s330_state(void)
 {
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
@@ -198,6 +215,9 @@ void test_suite_ppc_sn5s330(void)
 {
 	ztest_test_suite(
 		ppc_sn5s330,
+		ztest_unit_test_setup_teardown(test_vbus_discharge,
+					       reset_sn5s330_state,
+					       reset_sn5s330_state),
 		ztest_unit_test_setup_teardown(test_vbus_source_sink_enable,
 					       reset_sn5s330_state,
 					       reset_sn5s330_state),
