@@ -60,6 +60,7 @@ const void *const usb_strings[] = {
 	[USB_STR_SERIALNO]     = 0,
 	[USB_STR_VERSION]      =
 			USB_STRING_DESC(CROS_EC_SECTION ":" CROS_EC_VERSION32),
+	[USB_STR_SPI_NAME]     = USB_STRING_DESC("SPI"),
 	[USB_STR_I2C_NAME]     = USB_STRING_DESC("I2C"),
 	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
 #ifdef CONFIG_USB_ISOCHRONOUS

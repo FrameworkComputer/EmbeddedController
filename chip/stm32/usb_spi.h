@@ -366,10 +366,17 @@ enum usb_spi_request {
  * If a platform has a small maximum SPI transfer size, it can be optimized
  * by setting these limits to the maximum transfer size.
  */
+#ifdef CONFIG_USB_SPI_BUFFER_SIZE
+#define USB_SPI_BUFFER_SIZE CONFIG_USB_SPI_BUFFER_SIZE
+#else
 #define USB_SPI_BUFFER_SIZE	(USB_SPI_PAYLOAD_SIZE_V2_START + \
 				(4 * USB_SPI_PAYLOAD_SIZE_V2_CONTINUE))
+#endif
 #define USB_SPI_MAX_WRITE_COUNT	USB_SPI_BUFFER_SIZE
 #define USB_SPI_MAX_READ_COUNT	USB_SPI_BUFFER_SIZE
+
+/* Protocol uses two-byte length fields.  Larger buffer makes no sense. */
+BUILD_ASSERT(USB_SPI_BUFFER_SIZE <= 65536);
 
 struct usb_spi_transfer_ctx {
 	/* Address of transfer buffer. */
@@ -520,7 +527,7 @@ struct usb_spi_config {
 		.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,		\
 		.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SPI,		\
 		.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SPI,		\
-		.iInterface         = 0,				\
+		.iInterface         = USB_STR_SPI_NAME,			\
 	};								\
 	const struct usb_endpoint_descriptor				\
 	USB_EP_DESC(INTERFACE, 0) = {					\

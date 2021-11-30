@@ -141,6 +141,7 @@ const void *const usb_strings[] = {
 	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
 	[USB_STR_STREAM_NAME]  = USB_STRING_DESC("Forward"),
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Shell"),
+	[USB_STR_SPI_NAME]     = USB_STRING_DESC("SPI"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
