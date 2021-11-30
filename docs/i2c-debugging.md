@@ -4,6 +4,9 @@ The EC codebase has functionality to help you debug I²C errors without pulling
 out the scope. Some of the debug functionality is disabled by default to save
 space, but can be enabled with the `CONFIG_I2C_DEBUG` option.
 
+For Zephyr EC builds, enable I²C  by adding `CONFIG_PLATFORM_EC_I2C_DEBUG=y` to
+one of your project's Kconfig files.
+
 ## Tracing
 
 You can use the `i2ctrace` command to monitor (ranges of) addresses:
