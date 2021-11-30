@@ -10,6 +10,13 @@ menuconfig PLATFORM_EC_TEMP_SENSOR
 
 if PLATFORM_EC_TEMP_SENSOR
 
+config PLATFORM_EC_TEMP_SENSOR_POWER
+	bool "Temperature sensors are not always powered on"
+	help
+	  If enabled, temperature sensors require enabling power rail before
+	  being read. Enabling it requires to define a pin enabling the power
+	  as GPIO_TEMP_SENSOR_POWER.
+
 config PLATFORM_EC_DPTF
 	bool "Dynamic Platform and Thermal Framework"
 	default y if PLATFORM_EC_ACPI

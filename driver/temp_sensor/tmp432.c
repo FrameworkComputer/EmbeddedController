@@ -16,7 +16,7 @@
 static int temp_val_local;
 static int temp_val_remote1;
 static int temp_val_remote2;
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 static uint8_t is_sensor_shutdown;
 #endif
 static int fake_temp[TMP432_IDX_COUNT] = {-1, -1, -1};
@@ -28,8 +28,8 @@ static int fake_temp[TMP432_IDX_COUNT] = {-1, -1, -1};
  */
 static int has_power(void)
 {
-#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
-	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
+#ifdef CONFIG_TEMP_SENSOR_POWER
+	return gpio_get_level(GPIO_TEMP_SENSOR_POWER);
 #else
 	return !is_sensor_shutdown;
 #endif
@@ -92,7 +92,7 @@ int tmp432_get_val(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 static int tmp432_shutdown(uint8_t want_shutdown)
 {
 	int ret, value;
@@ -388,11 +388,11 @@ DECLARE_CONSOLE_COMMAND(tmp432, command_tmp432,
 
 int tmp432_set_power(enum tmp432_power_state power_on)
 {
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 	uint8_t shutdown = (power_on == TMP432_POWER_OFF) ? 1 : 0;
 	return tmp432_shutdown(shutdown);
 #else
-	gpio_set_level(CONFIG_TEMP_SENSOR_POWER_GPIO, power_on);
+	gpio_set_level(GPIO_TEMP_SENSOR_POWER, power_on);
 	return EC_SUCCESS;
 #endif
 }

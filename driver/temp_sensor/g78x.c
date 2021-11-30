@@ -26,8 +26,8 @@ static int temp_val_remote2;
  */
 static int has_power(void)
 {
-#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
-	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
+#ifdef CONFIG_TEMP_SENSOR_POWER
+	return gpio_get_level(GPIO_TEMP_SENSOR_POWER);
 #else
 	return 1;
 #endif

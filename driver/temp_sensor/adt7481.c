@@ -25,8 +25,8 @@ static uint8_t is_sensor_shutdown;
  */
 static int has_power(void)
 {
-#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
-	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
+#ifdef CONFIG_TEMP_SENSOR_POWER
+	return gpio_get_level(GPIO_TEMP_SENSOR_POWER);
 #else
 	return !is_sensor_shutdown;
 #endif
@@ -340,12 +340,12 @@ DECLARE_CONSOLE_COMMAND(adt7481, command_adt7481,
 
 int adt7481_set_power(enum adt7481_power_state power_on)
 {
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 	uint8_t shutdown = (power_on == ADT7481_POWER_OFF) ? 1 : 0;
 
 	return adt7481_shutdown(shutdown);
 #else
-	gpio_set_level(CONFIG_TEMP_SENSOR_POWER_GPIO, power_on);
+	gpio_set_level(GPIO_TEMP_SENSOR_POWER, power_on);
 	return EC_SUCCESS;
 #endif
 }

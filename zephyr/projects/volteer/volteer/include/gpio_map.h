@@ -21,7 +21,7 @@
  * Note we only need to create aliases for GPIOs that are referenced in common
  * platform/ec code.
  */
-#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_PG_EC_DSW_PWROK
+#define GPIO_TEMP_SENSOR_POWER GPIO_PG_EC_DSW_PWROK
 
 /* Helper macros for generating CROS_EC_GPIO_INTERRUPTS */
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ

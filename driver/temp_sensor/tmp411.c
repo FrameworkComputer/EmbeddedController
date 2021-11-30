@@ -24,8 +24,8 @@ static uint8_t is_sensor_shutdown;
  */
 static int has_power(void)
 {
-#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
-	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
+#ifdef CONFIG_TEMP_SENSOR_POWER
+	return gpio_get_level(GPIO_TEMP_SENSOR_POWER);
 #else
 	return !is_sensor_shutdown;
 #endif
@@ -318,12 +318,12 @@ DECLARE_CONSOLE_COMMAND(tmp411, command_tmp411,
 
 int tmp411_set_power(enum tmp411_power_state power_on)
 {
-#ifndef CONFIG_TEMP_SENSOR_POWER_GPIO
+#ifndef CONFIG_TEMP_SENSOR_POWER
 	uint8_t shutdown = (power_on == TMP411_POWER_OFF) ? 1 : 0;
 
 	return tmp411_shutdown(shutdown);
 #else
-	gpio_set_level(CONFIG_TEMP_SENSOR_POWER_GPIO, power_on);
+	gpio_set_level(GPIO_TEMP_SENSOR_POWER, power_on);
 	return EC_SUCCESS;
 #endif
 }

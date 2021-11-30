@@ -75,8 +75,8 @@ static const struct tmp006_data_t tmp006_data_default = {
 
 static int tmp006_has_power(int idx)
 {
-#ifdef CONFIG_TEMP_SENSOR_POWER_GPIO
-	return gpio_get_level(CONFIG_TEMP_SENSOR_POWER_GPIO);
+#ifdef CONFIG_TEMP_SENSOR_POWER
+	return gpio_get_level(GPIO_TEMP_SENSOR_POWER);
 #else
 	return 1;
 #endif

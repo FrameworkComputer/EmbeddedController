@@ -17,7 +17,7 @@
  * Note we only need to create aliases for GPIOs that are referenced in common
  * platform/ec code.
  */
-#define CONFIG_TEMP_SENSOR_POWER_GPIO GPIO_PG_EC_DSW_PWROK
+#define GPIO_TEMP_SENSOR_POWER GPIO_PG_EC_DSW_PWROK
 
 #define EC_CROS_GPIO_INTERRUPTS                                             \
 	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt)   \
