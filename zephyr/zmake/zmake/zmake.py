@@ -362,7 +362,15 @@ class Zmake:
                 is_configured=True,
             )
         elif build_after_configure:
-            return self.build(build_dir=build_dir)
+            if coverage:
+                return self._coverage_compile_only(
+                    project=project,
+                    build_dir=build_dir,
+                    lcov_file=build_dir / "lcov.info",
+                    is_configured=True,
+                )
+            else:
+                return self.build(build_dir=build_dir)
 
     def build(self, build_dir, output_files_out=None, fail_on_warnings=False):
         """Build a pre-configured build directory."""
@@ -617,17 +625,20 @@ class Zmake:
 
             return 0
 
-    def _coverage_compile_only(self, project, build_dir, lcov_file):
+    def _coverage_compile_only(
+        self, project, build_dir, lcov_file, is_configured=False
+    ):
         self.logger.info("Building %s in %s", project.config.project_name, build_dir)
-        rv = self._configure(
-            project=project,
-            build_dir=build_dir,
-            build_after_configure=False,
-            test_after_configure=False,
-            coverage=True,
-        )
-        if rv:
-            return rv
+        if not is_configured:
+            rv = self._configure(
+                project=project,
+                build_dir=build_dir,
+                build_after_configure=False,
+                test_after_configure=False,
+                coverage=True,
+            )
+            if rv:
+                return rv
 
         # Compute the version string.
         version_string = zmake.version.get_version_string(
@@ -652,7 +663,7 @@ class Zmake:
         dirs = {}
         gcov = "gcov.sh-not-found"
         for build_name, build_config in build_project.iter_builds():
-            self.logger.info("Building %s:%s all.libraries.", build_dir, build_name)
+            self.logger.info("ls build/.", build_dir, build_name)
             dirs[build_name] = build_dir / "build-{}".format(build_name)
             gcov = dirs[build_name] / "gcov.sh"
             proc = self.jobserver.popen(
@@ -725,21 +736,17 @@ class Zmake:
             lcov_file = pathlib.Path(build_dir) / "{}.info".format(
                 project.config.project_name
             )
-            all_lcov_files.append(lcov_file)
             if is_test:
                 # Configure and run the test.
+                all_lcov_files.append(lcov_file)
                 self.executor.append(
                     func=lambda: self._coverage_run_test(
                         project, project_build_dir, lcov_file
                     )
                 )
             else:
-                # Configure and compile the non-test project.
-                self.executor.append(
-                    func=lambda: self._coverage_compile_only(
-                        project, project_build_dir, lcov_file
-                    )
-                )
+                # Don't build non-test projects
+                self.logger.info("Skipping project %s", project.config.project_name)
             if self._sequential:
                 rv = self.executor.wait()
                 if rv:

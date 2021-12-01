@@ -89,16 +89,37 @@ seed_cache:
 
 # Users of this template must set:
 # $PROJECT to the project to build. E.g., "lazor"
+# Builds the project with coverage enabled, removes the non-ec files.
+# Then merges with the tests, excludes all files not used by this project,
+# and generates a report.
 .coverage_template: &coverage_template
   stage: test
   needs: ["merged_coverage", "zephyr_coverage"]
   script:
-    - grep "SF:" "build/zcoverage/${PROJECT}.info" | sort -u | sed -e 's|^SF:||' | xargs lcov -o build/no_zephyr_${PROJECT}.info -e build/merged_no_zephyr.info
-    - /usr/bin/genhtml -q -o build/no_zephyr_${PROJECT}_rpt -t "${PROJECT} coverage w/o zephyr" -p ${EC_DIR} -s build/no_zephyr_${PROJECT}.info
+    - zmake --zephyr-base "${ZEPHYR_BASE}"
+      --modules-dir "${MODULES_DIR}" -l DEBUG configure -b --coverage
+      -B "${BUILD_DIR}/${PROJECT}" -t ${TOOLCHAIN:-zephyr}
+      "${PROJECT}"
+    - lcov -o "${BUILD_DIR}/${PROJECT}/merged.info"
+      -a "${BUILD_DIR}/${PROJECT}/lcov.info" -a build/merged.info
+    - lcov -o "${BUILD_DIR}/${PROJECT}/no_zephyr.info"
+      -r "${BUILD_DIR}/${PROJECT}/lcov.info" "${ZEPHYR_BASE}/**"
+      "${MODULES_DIR}/*" "zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
+    - lcov -o "${BUILD_DIR}/${PROJECT}/merged_no_zephyr.info"
+      -r "${BUILD_DIR}/${PROJECT}/merged.info" "${ZEPHYR_BASE}/**"
+      "${MODULES_DIR}/*" "zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
+    - grep "SF:" "${BUILD_DIR}/${PROJECT}/no_zephyr.info" | sort -u |
+      sed -e 's|^SF:||' | xargs lcov
+      -o "${BUILD_DIR}/${PROJECT}/filtered_no_zephyr.info"
+      -e "${BUILD_DIR}/${PROJECT}/merged_no_zephyr.info"
+    - /usr/bin/genhtml -q -o "${BUILD_DIR}/${PROJECT}/filtered_no_zephyr_rpt"
+      -t "${PROJECT} coverage w/o zephyr"
+      -p ${EC_DIR}
+      -s "${BUILD_DIR}/${PROJECT}/filtered_no_zephyr.info"
   artifacts:
     paths:
-      - build/*.info
-      - build/*_rpt
+      - build/${PROJECT}/*.info
+      - build/${PROJECT}/*_rpt
     expire_in: 1 week
   coverage: '/lines\.*: \d+\.\d+%/'
 
