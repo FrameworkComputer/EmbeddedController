@@ -540,8 +540,10 @@ static int sn5s330_set_vbus_source_current_limit(int port,
 		regval |= SN5S330_ILIM_1_62;
 		break;
 
+	/* USB minimum source current is 0.5A */
 	case TYPEC_RP_USB:
 	default:
+		/* SN5S330 Defaults to USB associated limits */
 		regval |= SN5S330_ILIM_0_63;
 		break;
 	};

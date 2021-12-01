@@ -17,6 +17,7 @@
 /** This must match the index of the sn5s330 in ppc_chips[] */
 #define SN5S330_PORT 0
 #define EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(sn5s330_emul)))
+#define FUNC_SET1_ILIMPP1_MSK 0x1F
 
 /*
  * TODO(b/203364783): Exclude other threads from interacting with the emulator
@@ -202,6 +203,47 @@ static void test_vbus_discharge(void)
 	zassert_equal(func_set3_reg & SN5S330_VBUS_DISCH_EN, 0, NULL);
 }
 
+static void test_set_vbus_source_current_limit(void)
+{
+	const struct emul *emul = EMUL;
+	uint8_t func_set1_reg;
+
+	/* Test every TCPC Pull Resistance Value */
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+
+	/* USB */
+	zassert_ok(sn5s330_drv.set_vbus_source_current_limit(SN5S330_PORT,
+							     TYPEC_RP_USB),
+		   NULL);
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET1, &func_set1_reg);
+	zassert_equal(func_set1_reg & FUNC_SET1_ILIMPP1_MSK, SN5S330_ILIM_0_63,
+		      NULL);
+
+	/* 1.5A */
+	zassert_ok(sn5s330_drv.set_vbus_source_current_limit(SN5S330_PORT,
+							     TYPEC_RP_1A5),
+		   NULL);
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET1, &func_set1_reg);
+	zassert_equal(func_set1_reg & FUNC_SET1_ILIMPP1_MSK, SN5S330_ILIM_1_62,
+		      NULL);
+
+	/* 3.0A */
+	zassert_ok(sn5s330_drv.set_vbus_source_current_limit(SN5S330_PORT,
+							     TYPEC_RP_3A0),
+		   NULL);
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET1, &func_set1_reg);
+	zassert_equal(func_set1_reg & FUNC_SET1_ILIMPP1_MSK, SN5S330_ILIM_3_06,
+		      NULL);
+
+	/* Unknown/Reserved - We set result as USB */
+	zassert_ok(sn5s330_drv.set_vbus_source_current_limit(SN5S330_PORT,
+							     TYPEC_RP_RESERVED),
+		   NULL);
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET1, &func_set1_reg);
+	zassert_equal(func_set1_reg & FUNC_SET1_ILIMPP1_MSK, SN5S330_ILIM_0_63,
+		      NULL);
+}
+
 static void reset_sn5s330_state(void)
 {
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
@@ -215,6 +257,9 @@ void test_suite_ppc_sn5s330(void)
 {
 	ztest_test_suite(
 		ppc_sn5s330,
+		ztest_unit_test_setup_teardown(
+			test_set_vbus_source_current_limit, reset_sn5s330_state,
+			reset_sn5s330_state),
 		ztest_unit_test_setup_teardown(test_vbus_discharge,
 					       reset_sn5s330_state,
 					       reset_sn5s330_state),
