@@ -45,4 +45,39 @@ void lis2dw12_emul_set_who_am_i(const struct emul *emul, uint8_t who_am_i);
  */
 uint32_t lis2dw12_emul_get_soft_reset_count(const struct emul *emul);
 
+/**
+ * @brief Peeks at the value of a register without doing any I2C transaction.
+ *        If the register is unsupported, or `emul` is NULL, this function
+ *        asserts.
+ *
+ * @param emul The emulator to query
+ * @param reg The register to access
+ * @return The value of the register
+ */
+uint8_t lis2dw12_emul_peek_reg(struct i2c_emul *emul, int reg);
+
+/**
+ * @brief Retrieves the ODR[3:0] bits from CRTL1 register
+ *
+ * @param emul The emulator to query
+ * @return The ODR bits, right-aligned
+ */
+uint8_t lis2dw12_emul_peek_odr(struct i2c_emul *emul);
+
+/**
+ * @brief Retrieves the MODE[1:0] bits from CRTL1 register
+ *
+ * @param emul The emulator to query
+ * @return The MODE bits, right-aligned
+ */
+uint8_t lis2dw12_emul_peek_mode(struct i2c_emul *emul);
+
+/**
+ * @brief Retrieves the LPMODE[1:0] bits from CRTL1 register
+ *
+ * @param emul The emulator to query
+ * @return The LPMODE bits, right-aligned
+ */
+uint8_t lis2dw12_emul_peek_lpmode(struct i2c_emul *emul);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_LIS2DW12_H_ */

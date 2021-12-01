@@ -110,6 +110,48 @@ static int lis2dw12_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 	return 0;
 }
 
+uint8_t lis2dw12_emul_peek_reg(struct i2c_emul *emul, int reg)
+{
+	__ASSERT(emul, "emul is NULL");
+
+	uint8_t val;
+	int rv;
+
+	rv = lis2dw12_emul_read_byte(emul, reg, &val, 0);
+	__ASSERT(rv == 0, "Read function returned non-zero: %d", rv);
+
+	return val;
+}
+
+uint8_t lis2dw12_emul_peek_odr(struct i2c_emul *emul)
+{
+	__ASSERT(emul, "emul is NULL");
+
+	uint8_t reg = lis2dw12_emul_peek_reg(emul, LIS2DW12_ACC_ODR_ADDR);
+
+	return (reg & LIS2DW12_ACC_ODR_MASK) >>
+	       __builtin_ctz(LIS2DW12_ACC_ODR_MASK);
+}
+
+uint8_t lis2dw12_emul_peek_mode(struct i2c_emul *emul)
+{
+	__ASSERT(emul, "emul is NULL");
+
+	uint8_t reg = lis2dw12_emul_peek_reg(emul, LIS2DW12_ACC_MODE_ADDR);
+
+	return (reg & LIS2DW12_ACC_MODE_MASK) >>
+	       __builtin_ctz(LIS2DW12_ACC_MODE_MASK);
+}
+
+uint8_t lis2dw12_emul_peek_lpmode(struct i2c_emul *emul)
+{
+	__ASSERT(emul, "emul is NULL");
+
+	uint8_t reg = lis2dw12_emul_peek_reg(emul, LIS2DW12_ACC_LPMODE_ADDR);
+
+	return (reg & LIS2DW12_ACC_LPMODE_MASK);
+}
+
 static int lis2dw12_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 				    int bytes)
 {
