@@ -52,7 +52,7 @@ void console_buf_notify_chars(const char *s, size_t len)
 			current_snapshot_idx =
 				next_idx(current_snapshot_idx);
 
-		console_buf[new_tail] = *s++;
+		console_buf[tail_idx] = *s++;
 		tail_idx = new_tail;
 	}
 	k_mutex_unlock(&console_write_lock);
