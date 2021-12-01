@@ -232,23 +232,6 @@ static void setup_usb_mux_proxy_chain(void)
 	}
 }
 
-static void suspend_usbc_task(bool suspend)
-{
-	static const task_id_t cros_tids[] = {
-		COND_CODE_1(HAS_TASK_PD_C0, (TASK_ID_PD_C0,), ())
-		COND_CODE_1(HAS_TASK_PD_C1, (TASK_ID_PD_C1,), ())
-		COND_CODE_1(HAS_TASK_PD_C2, (TASK_ID_PD_C2,), ())
-		COND_CODE_1(HAS_TASK_PD_C3, (TASK_ID_PD_C3,), ())
-	};
-
-	for (int i = 0; i < ARRAY_SIZE(cros_tids); ++i)
-		/*
-		 * TODO(b/201420132): pd_set_suspend uses sleeps which we should
-		 * minimize
-		 */
-		pd_set_suspend(TASK_ID_TO_PD_PORT(cros_tids[i]), suspend);
-}
-
 /** Restore original usb_mux chain without proxy */
 static void resotre_usb_mux_chain(void)
 {
