@@ -244,6 +244,31 @@ static void test_set_vbus_source_current_limit(void)
 		      NULL);
 }
 
+#ifdef CONFIG_USBC_PPC_SBU
+static void test_sn5s330_set_sbu(void)
+{
+	const struct emul *emul = EMUL;
+	uint8_t func_set2_reg;
+
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+
+	/* Verify driver enables SBU FET */
+	zassert_ok(sn5s330_drv.set_sbu(SN5S330_PORT, true), NULL);
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET2, &func_set2_reg);
+	zassert_not_equal(func_set2_reg & SN5S330_SBU_EN, 0, NULL);
+
+	/* Verify driver disables SBU FET */
+	zassert_ok(sn5s330_drv.set_sbu(SN5S330_PORT, false), NULL);
+	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET2, &func_set2_reg);
+	zassert_equal(func_set2_reg & SN5S330_SBU_EN, 0, NULL);
+}
+#else
+static void test_sn5s330_set_sbu(void)
+{
+	ztest_test_skip();
+}
+#endif /* CONFIG_USBC_PPC_SBU */
+
 static void reset_sn5s330_state(void)
 {
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
@@ -257,6 +282,9 @@ void test_suite_ppc_sn5s330(void)
 {
 	ztest_test_suite(
 		ppc_sn5s330,
+		ztest_unit_test_setup_teardown(test_sn5s330_set_sbu,
+					       reset_sn5s330_state,
+					       reset_sn5s330_state),
 		ztest_unit_test_setup_teardown(
 			test_set_vbus_source_current_limit, reset_sn5s330_state,
 			reset_sn5s330_state),
