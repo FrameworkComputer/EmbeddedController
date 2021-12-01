@@ -603,12 +603,8 @@ static void test_usb_mux_hc_mux_info(void)
 	struct ec_response_usb_pd_mux_info response;
 	struct ec_params_usb_pd_mux_info params;
 	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_USB_PD_MUX_INFO, 0, response);
+		BUILD_HOST_COMMAND(EC_CMD_USB_PD_MUX_INFO, 0, response, params);
 	mux_state_t exp_mode;
-
-	/* Set up host command parameters */
-	args.params = &params;
-	args.params_size = sizeof(params);
 
 	/* Test invalid port parameter */
 	params.port = 5;

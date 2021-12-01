@@ -13,7 +13,8 @@ static void test_host_command_get_protocol_info(void)
 {
 	struct ec_response_get_protocol_info response;
 	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, 0, response);
+		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_PROTOCOL_INFO, 0,
+					    response);
 
 	zassert_ok(host_command_process(&args), NULL);
 	zassert_ok(args.result, NULL);

@@ -297,7 +297,7 @@ static void test_power_hc_smart_discharge(void)
 	struct ec_response_smart_discharge response;
 	struct ec_params_smart_discharge params;
 	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response);
+		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
 	struct i2c_emul *emul;
 	int hours_to_zero;
 	int hibern_drate;
@@ -308,9 +308,6 @@ static void test_power_hc_smart_discharge(void)
 	emul = sbat_emul_get_ptr(BATTERY_ORD);
 
 	/* Set up host command parameters */
-	args.params = &params;
-	args.params_size = sizeof(params);
-
 	params.flags = EC_SMART_DISCHARGE_FLAGS_SET;
 
 	/* Test fail when battery capacity is not available */
@@ -394,7 +391,7 @@ static void test_power_board_system_is_idle(void)
 	struct ec_response_smart_discharge response;
 	struct ec_params_smart_discharge params;
 	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response);
+		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
 	struct sbat_emul_bat_data *bat;
 	struct i2c_emul *emul;
 	uint64_t last_shutdown_time = 0;
@@ -405,8 +402,6 @@ static void test_power_board_system_is_idle(void)
 	bat = sbat_emul_get_bat_data(emul);
 
 	/* Set up host command parameters */
-	args.params = &params;
-	args.params_size = sizeof(params);
 	params.drate.hibern = 100; /* uA */
 	params.drate.cutoff = 10; /* uA */
 	params.hours_to_zero = 1000; /* h */
@@ -463,7 +458,7 @@ static void setup_hibernation_delay(void)
 	struct ec_response_smart_discharge response;
 	struct ec_params_smart_discharge params;
 	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response);
+		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
 	const struct device *acok_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_NODE, gpios));
 	struct sbat_emul_bat_data *bat;
@@ -473,8 +468,6 @@ static void setup_hibernation_delay(void)
 	bat = sbat_emul_get_bat_data(emul);
 
 	/* Setup smart discharge zone and set capacity to safe zone */
-	args.params = &params;
-	args.params_size = sizeof(params);
 	params.drate.hibern = 100; /* uA */
 	params.drate.cutoff = 10; /* uA */
 	params.hours_to_zero = 10000; /* h */
@@ -508,15 +501,12 @@ static void test_power_hc_hibernation_delay(void)
 	struct ec_response_hibernation_delay response;
 	struct ec_params_hibernation_delay params;
 	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY, 0, response);
+		BUILD_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY, 0, response,
+				   params);
 	const struct device *acok_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_NODE, gpios));
 	uint32_t h_delay;
 	int sleep_time;
-
-	/* Setup hibernation delay host command */
-	args.params = &params;
-	args.params_size = sizeof(params);
 
 	/* Set hibernate delay */
 	h_delay = 9;
