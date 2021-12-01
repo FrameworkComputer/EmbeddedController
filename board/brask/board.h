@@ -43,6 +43,8 @@
  */
 #define CONFIG_USBC_RETIMER_KB800X
 #define CONFIG_USBC_PPC_SYV682X
+#undef CONFIG_SYV682X_HV_ILIM
+#define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
 
 /* TODO: b/177608416 - measure and check these values on brya */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
