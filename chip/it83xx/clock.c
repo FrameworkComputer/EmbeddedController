@@ -637,6 +637,12 @@ void __ram_code __idle(void)
 	while (1) {
 		/* Disable interrupts */
 		interrupt_disable();
+#ifdef CONFIG_IT83XX_I2C_CMD_QUEUE
+		if (i2c_idle_not_allowed()) {
+			interrupt_enable();
+			continue;
+		}
+#endif
 		/* Check if the EC can enter deep doze mode or not */
 		if (DEEP_SLEEP_ALLOWED && clock_allow_low_power_idle()) {
 			/* reset low power mode hw timer */

@@ -2794,6 +2794,12 @@
 #undef CONFIG_IT83XX_HARD_RESET_BY_GPG1
 
 /*
+ * Use i2c command queue mode for a single i2c transaction.
+ * (Applied to port D, E, and F)
+ */
+#undef CONFIG_IT83XX_I2C_CMD_QUEUE
+
+/*
  * Enable it if EC's VBAT won't go low when system's power isn't
  * presented (no battery and no AC)
  * If EC's VSTBY and VBAT(power source of BRAM) aren't connected to the same

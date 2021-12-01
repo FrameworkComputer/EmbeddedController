@@ -21,6 +21,48 @@
 /* Default maximum time we allow for an I2C transfer */
 #define I2C_TIMEOUT_DEFAULT_US (100 * MSEC)
 
+#ifdef CONFIG_IT83XX_I2C_CMD_QUEUE
+
+#ifdef CHIP_CORE_NDS32
+#error "Remapping DLM base is required on it8320 series"
+#endif
+
+/* It is allowed to configure the size up to 2K bytes. */
+#define I2C_CQ_MODE_MAX_PAYLOAD_SIZE     128
+/* reserved 5 bytes for ID and CMD_x */
+#define I2C_CQ_MODE_TX_MAX_PAYLOAD_SIZE  (I2C_CQ_MODE_MAX_PAYLOAD_SIZE - 5)
+uint8_t i2c_cq_mode_tx_dlm[I2C_ENHANCED_PORT_COUNT]
+			[I2C_CQ_MODE_MAX_PAYLOAD_SIZE] __aligned(4);
+uint8_t i2c_cq_mode_rx_dlm[I2C_ENHANCED_PORT_COUNT]
+			[I2C_CQ_MODE_MAX_PAYLOAD_SIZE] __aligned(4);
+
+/* Repeat Start */
+#define I2C_CQ_CMD_L_RS BIT(7)
+/*
+ * R/W (Read/ Write) decides the I2C read or write direction
+ * 1: read, 0: write
+ */
+#define I2C_CQ_CMD_L_RW BIT(6)
+/* P (STOP) is the I2C STOP condition */
+#define I2C_CQ_CMD_L_P  BIT(5)
+/* E (End) is this device end flag */
+#define I2C_CQ_CMD_L_E  BIT(4)
+/* LA (Last ACK) is Last ACK in master receiver */
+#define I2C_CQ_CMD_L_LA BIT(3)
+/* bit[2:0] are number of transfer out or receive data which depends on R/W. */
+#define I2C_CQ_CMD_L_NUM_BIT_2_0 GENMASK(2, 0)
+
+struct i2c_cq_packet {
+	uint8_t id;
+	uint8_t cmd_l;
+	uint8_t cmd_h;
+	uint8_t wdata[0];
+};
+
+/* Preventing CPU going into idle mode during command queue I2C transaction. */
+static uint32_t i2c_idle_disabled;
+#endif /* CONFIG_IT83XX_I2C_CMD_QUEUE */
+
 enum enhanced_i2c_transfer_direct {
 	TX_DIRECT,
 	RX_DIRECT,
@@ -98,6 +140,8 @@ enum enhanced_i2c_ctl {
 	E_START_ID = (E_INT_EN | E_MODE_SEL | E_ACK | E_START | E_HW_RST),
 	/* Generate stop condition */
 	E_FINISH = (E_INT_EN | E_MODE_SEL | E_ACK | E_STOP | E_HW_RST),
+	/* start with command queue mode */
+	E_START_CQ = (E_INT_EN | E_MODE_SEL | E_ACK | E_START),
 };
 
 enum i2c_reset_cause {
@@ -587,10 +631,198 @@ static int enhanced_i2c_error(int p)
 	return pd->err;
 }
 
-static int i2c_transaction(int p)
+#ifdef CONFIG_IT83XX_I2C_CMD_QUEUE
+static void enhanced_i2c_set_cmd_addr_regs(int p)
+{
+	int dlm_index = p - I2C_STANDARD_PORT_COUNT;
+	int p_ch = i2c_ch_reg_shift(p);
+	uint32_t dlm_base;
+
+	/* set "Address Register" to store the I2C data */
+	dlm_base = (uint32_t)&i2c_cq_mode_rx_dlm[dlm_index] & 0xffffff;
+	IT83XX_I2C_RAMH2A(p_ch) = (dlm_base >> 16) & 0xff;
+	IT83XX_I2C_RAMHA(p_ch) = (dlm_base >> 8) & 0xff;
+	IT83XX_I2C_RAMLA(p_ch) = dlm_base & 0xff;
+
+	/* Set "Command Address Register" to get commands */
+	dlm_base = (uint32_t)&i2c_cq_mode_tx_dlm[dlm_index] & 0xffffff;
+	IT83XX_I2C_CMD_ADDH2(p_ch) = (dlm_base >> 16) & 0xff;
+	IT83XX_I2C_CMD_ADDH(p_ch) = (dlm_base >> 8) & 0xff;
+	IT83XX_I2C_CMD_ADDL(p_ch) = dlm_base & 0xff;
+}
+
+static void i2c_enable_idle(int port)
+{
+	i2c_idle_disabled &= ~BIT(port);
+}
+
+static void i2c_disable_idle(int port)
+{
+	i2c_idle_disabled |= BIT(port);
+}
+
+uint32_t i2c_idle_not_allowed(void)
+{
+	return i2c_idle_disabled;
+}
+
+static int command_i2c_idle_mask(int argc, char **argv)
+{
+	ccprintf("i2c idle mask: %08x\n", i2c_idle_disabled);
+
+	return EC_SUCCESS;
+}
+DECLARE_SAFE_CONSOLE_COMMAND(i2cidlemask, command_i2c_idle_mask,
+			     NULL, "Display i2c idle mask");
+
+static void enhanced_i2c_cq_write(int p)
+{
+	struct i2c_port_data *pd = pdata + p;
+	struct i2c_cq_packet *i2c_cq_pckt;
+	uint8_t num_bit_2_0 = (pd->out_size - 1) & I2C_CQ_CMD_L_NUM_BIT_2_0;
+	uint8_t num_bit_10_3 = ((pd->out_size - 1) >> 3) & 0xff;
+	int dlm_index = p - I2C_STANDARD_PORT_COUNT;
+
+	i2c_cq_pckt = (struct i2c_cq_packet *)&i2c_cq_mode_tx_dlm[dlm_index];
+	/* Set commands in RAM. */
+	i2c_cq_pckt->id = pd->addr_8bit;
+	i2c_cq_pckt->cmd_l = I2C_CQ_CMD_L_P | I2C_CQ_CMD_L_E | num_bit_2_0;
+	i2c_cq_pckt->cmd_h = num_bit_10_3;
+	for (int i = 0; i < pd->out_size; i++)
+		i2c_cq_pckt->wdata[i] = pd->out[i];
+}
+
+static void enhanced_i2c_cq_read(int p)
+{
+	struct i2c_port_data *pd = pdata + p;
+	struct i2c_cq_packet *i2c_cq_pckt;
+	uint8_t num_bit_2_0 = (pd->in_size - 1) & I2C_CQ_CMD_L_NUM_BIT_2_0;
+	uint8_t num_bit_10_3 = ((pd->in_size - 1) >> 3) & 0xff;
+	int dlm_index = p - I2C_STANDARD_PORT_COUNT;
+
+	i2c_cq_pckt = (struct i2c_cq_packet *)&i2c_cq_mode_tx_dlm[dlm_index];
+	/* Set commands in RAM. */
+	i2c_cq_pckt->id = pd->addr_8bit;
+	i2c_cq_pckt->cmd_l = I2C_CQ_CMD_L_RW | I2C_CQ_CMD_L_P |
+				I2C_CQ_CMD_L_E | num_bit_2_0;
+	i2c_cq_pckt->cmd_h = num_bit_10_3;
+}
+
+static void enhanced_i2c_cq_write_to_read(int p)
+{
+	struct i2c_port_data *pd = pdata + p;
+	struct i2c_cq_packet *i2c_cq_pckt;
+	uint8_t num_bit_2_0 = (pd->out_size - 1) & I2C_CQ_CMD_L_NUM_BIT_2_0;
+	uint8_t num_bit_10_3 = ((pd->out_size - 1) >> 3) & 0xff;
+	int dlm_index = p - I2C_STANDARD_PORT_COUNT;
+	int i;
+
+	i2c_cq_pckt = (struct i2c_cq_packet *)&i2c_cq_mode_tx_dlm[dlm_index];
+	/* Set commands in RAM. (command byte for write) */
+	i2c_cq_pckt->id = pd->addr_8bit;
+	i2c_cq_pckt->cmd_l = num_bit_2_0;
+	i2c_cq_pckt->cmd_h = num_bit_10_3;
+	for (i = 0; i < pd->out_size; i++)
+		i2c_cq_pckt->wdata[i] = pd->out[i];
+	/* Set commands in RAM. (command byte for read) */
+	num_bit_2_0 = (pd->in_size - 1) & I2C_CQ_CMD_L_NUM_BIT_2_0;
+	num_bit_10_3 = ((pd->in_size - 1) >> 3) & 0xff;
+	i2c_cq_pckt->wdata[i++] = I2C_CQ_CMD_L_RS | I2C_CQ_CMD_L_RW |
+				I2C_CQ_CMD_L_P | I2C_CQ_CMD_L_E | num_bit_2_0;
+	i2c_cq_pckt->wdata[i] = num_bit_10_3;
+}
+
+static int enhanced_i2c_cmd_queue_trans(int p)
+{
+	struct i2c_port_data *pd = pdata + p;
+	int p_ch = i2c_ch_reg_shift(p);
+	int dlm_index = p - I2C_STANDARD_PORT_COUNT;
+
+	/* ISR of command queue mode */
+	if (in_interrupt_context()) {
+		/* device 1 finish IRQ */
+		if (IT83XX_I2C_FST(p_ch) & IT83XX_I2C_FST_DEV1_IRQ) {
+			/* get data if this is a read transaction */
+			for (int i = 0; i < pd->in_size; i++)
+				pd->in[i] = i2c_cq_mode_rx_dlm[dlm_index][i];
+		} else {
+			/* device 1 error have occurred. eg. nack, timeout... */
+			if (IT83XX_I2C_NST(p_ch) & IT83XX_I2C_NST_ID_NACK)
+				pd->err = E_HOSTA_ACK;
+			else
+				pd->err = IT83XX_I2C_STR(p_ch) &
+						E_HOSTA_ANY_ERROR;
+		}
+		/* reset bus */
+		IT83XX_I2C_CTR(p_ch) = E_STS_AND_HW_RST;
+		IT83XX_I2C_CTR1(p_ch) = 0;
+
+		return 0;
+	}
+
+	if ((pd->out_size > I2C_CQ_MODE_TX_MAX_PAYLOAD_SIZE) ||
+		(pd->in_size > I2C_CQ_MODE_MAX_PAYLOAD_SIZE)) {
+		pd->err = EC_ERROR_INVAL;
+		return 0;
+	}
+
+	/* State reset and hardware reset */
+	IT83XX_I2C_CTR(p_ch) = E_STS_AND_HW_RST;
+	/* Set "PSR" registers to decide the i2c speed. */
+	IT83XX_I2C_PSR(p_ch) = pdata[p].freq;
+	IT83XX_I2C_HSPR(p_ch) = pdata[p].freq;
+	/* Set time out register. port D, E, or F clock/data low timeout. */
+	IT83XX_I2C_TOR(p_ch) = I2C_CLK_LOW_TIMEOUT;
+
+	/* i2c write to read */
+	if (pd->out_size && pd->in_size)
+		enhanced_i2c_cq_write_to_read(p);
+	/* i2c write */
+	else if (pd->out_size)
+		enhanced_i2c_cq_write(p);
+	/* i2c read */
+	else if (pd->in_size)
+		enhanced_i2c_cq_read(p);
+
+	/* enable i2c module with command queue mode */
+	IT83XX_I2C_CTR1(p_ch) = IT83XX_I2C_MDL_EN | IT83XX_I2C_COMQ_EN;
+	/* one shot on device 1 */
+	IT83XX_I2C_MODE_SEL(p_ch) = 0;
+	IT83XX_I2C_CTR2(p_ch) = 1;
+	/* start */
+	i2c_disable_idle(p);
+	IT83XX_I2C_CTR(p_ch) = E_START_CQ;
+
+	return 0;
+}
+#endif /* CONFIG_IT83XX_I2C_CMD_QUEUE */
+
+static int enhanced_i2c_pio_trans(int p)
 {
 	struct i2c_port_data *pd = pdata + p;
 	int p_ch;
+
+	/* no error */
+	if (!(enhanced_i2c_error(p))) {
+		/* i2c write */
+		if (pd->out_size)
+			return enhanced_i2c_tran_write(p);
+		/* i2c read */
+		else if (pd->in_size)
+			return enhanced_i2c_tran_read(p);
+	}
+
+	p_ch = i2c_ch_reg_shift(p);
+	IT83XX_I2C_CTR(p_ch) = E_STS_AND_HW_RST;
+	IT83XX_I2C_CTR1(p_ch) = 0;
+
+	return 0;
+}
+
+static int i2c_transaction(int p)
+{
+	struct i2c_port_data *pd = pdata + p;
+	int ret;
 
 	if (p < I2C_STANDARD_PORT_COUNT) {
 		/* any error */
@@ -612,18 +844,13 @@ static int i2c_transaction(int p)
 		/* disable the SMBus host interface */
 		IT83XX_SMB_HOCTL2(p) = 0x00;
 	} else {
-		/* no error */
-		if (!(enhanced_i2c_error(p))) {
-			/* i2c write */
-			if (pd->out_size)
-				return enhanced_i2c_tran_write(p);
-			/* i2c read */
-			else if (pd->in_size)
-				return enhanced_i2c_tran_read(p);
-		}
-		p_ch = i2c_ch_reg_shift(p);
-		IT83XX_I2C_CTR(p_ch) = E_STS_AND_HW_RST;
-		IT83XX_I2C_CTR1(p_ch) = 0;
+#ifdef CONFIG_IT83XX_I2C_CMD_QUEUE
+		if (pd->flags == I2C_XFER_SINGLE)
+			ret = enhanced_i2c_cmd_queue_trans(p);
+		else
+#endif
+			ret = enhanced_i2c_pio_trans(p);
+		return ret;
 	}
 	/* done doing work */
 	return 0;
@@ -712,6 +939,10 @@ int chip_i2c_xfer(int port, uint16_t addr_flags,
 	/* reset i2c channel status */
 	if (pd->err)
 		pd->i2ccs = I2C_CH_NORMAL;
+
+#ifdef CONFIG_IT83XX_I2C_CMD_QUEUE
+	i2c_enable_idle(port);
+#endif
 
 	return pd->err;
 }
@@ -933,6 +1164,10 @@ void i2c_init(void)
 			IT83XX_I2C_CTR(p_ch) = E_STS_AND_HW_RST;
 			/* bit1, Module enable */
 			IT83XX_I2C_CTR1(p_ch) = 0;
+#ifdef CONFIG_IT83XX_I2C_CMD_QUEUE
+			/* set command address registers */
+			enhanced_i2c_set_cmd_addr_regs(p);
+#endif
 		}
 		pdata[i].task_waiting = TASK_ID_INVALID;
 	}

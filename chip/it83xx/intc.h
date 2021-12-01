@@ -50,5 +50,8 @@ void spi_peripheral_int_handler(void);
 void lpc_kbc_ibf_interrupt(void);
 void lpc_kbc_obe_interrupt(void);
 #endif
+#ifdef CONFIG_IT83XX_I2C_CMD_QUEUE
+uint32_t i2c_idle_not_allowed(void);
+#endif
 
 #endif /* __CROS_EC_INTC_H */
