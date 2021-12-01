@@ -346,4 +346,25 @@
 			label = "EC_PWM7";
 		};
 	};
+
+	vsby-psl-in-list {
+		/* PSL_IN1/2/4 are used to wake */
+		psl-in-pads = <&psl_in1 &psl_in2 &psl_in4>;
+	};
+};
+
+/* PSL input pads*/
+&psl_in1 {
+	/* MECH_PWR_BTN_ODL */
+	flag = <NPCX_PSL_FALLING_EDGE>;
+};
+
+&psl_in2 {
+	/* ACOK_OD */
+	flag = <NPCX_PSL_RISING_EDGE>;
+};
+
+&psl_in4 {
+	/* LID_OPEN */
+	flag = <NPCX_PSL_RISING_EDGE>;
 };
