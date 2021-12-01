@@ -30,7 +30,7 @@
 #define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
 /* PD / USB-C / PPC */
-#define CONFIG_USB_PD_DEBUG_LEVEL 3
+#define CONFIG_USB_PD_DEBUG_LEVEL 0
 
 /* Optional console commands */
 #define CONFIG_CMD_FLASH
