@@ -426,9 +426,6 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	if (reg_val > LIS2DW12_ODR_1_6kHZ_VAL) {
 		reg_val = LIS2DW12_ODR_1_6kHZ_VAL;
 		normalized_rate = LIS2DW12_ODR_MAX_VAL;
-	} else if (reg_val < LIS2DW12_ODR_12HZ_VAL) {
-		reg_val = LIS2DW12_ODR_12HZ_VAL;
-		normalized_rate = LIS2DW12_ODR_MIN_VAL;
 	}
 
 	/* lis2dwl supports 14 bit resolution only at high performance mode,
