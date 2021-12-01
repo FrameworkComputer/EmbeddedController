@@ -211,6 +211,19 @@
 			frequency = <30000>;
 		};
 	};
+
+	named-fans {
+		compatible = "named-fans";
+
+		fan_0 {
+			label = "FAN_0";
+			pwm = <&pwm_fan>;
+			tach = <&tach0>;
+			rpm_min = <1500>;
+			rpm_start = <1500>;
+			rpm_max = <6500>;
+		};
+	};
 };
 
 &adc0 {
@@ -257,4 +270,11 @@
 &pwm7 {
 	status = "okay";
 	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+/* fan tachometer sensor */
+&tach0 {
+	status = "okay";
+	channel = <IT8XXX2_TACH_CHANNEL_A>;
+	pulses-per-round = <2>;
 };
