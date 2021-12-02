@@ -30,7 +30,11 @@ struct adc_t {
 	struct adc_channel_cfg channel_cfg;
 };
 
+#ifndef CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
 extern const struct adc_t adc_channels[];
+#else
+extern struct adc_t adc_channels[];
+#endif /* CONFIG_ADC_CHANNELS_RUNTIME_CONFIG */
 #else
 /* Empty declaration to avoid warnings if adc.h is included */
 enum adc_channel {
