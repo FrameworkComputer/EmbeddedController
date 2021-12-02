@@ -6,6 +6,8 @@
  */
 
 #include "common.h"
+#include "cros_board_info.h"
+#include "hooks.h"
 #include "led_onoff_states.h"
 #include "led_common.h"
 #include "gpio.h"
@@ -20,6 +22,27 @@
 __override const int led_charge_lvl_1 = 5;
 
 __override const int led_charge_lvl_2 = 97;
+
+static enum pwm_channel pwm_ch_led_blue;
+static enum pwm_channel pwm_ch_led_amber;
+
+static void led_pwm_ch_init(void)
+{
+	int val;
+
+	pwm_ch_led_blue = PWM_CH_LED_FULL;
+	pwm_ch_led_amber = PWM_CH_LED_CHRG;
+
+	/*
+	 * Ver1: GPIOC4(PWM2) -> Blue LED
+	 *       GPIO80(PWM3) -> Amber LED
+	 */
+	if (cbi_get_board_version(&val) == EC_SUCCESS && val <= 1) {
+		pwm_ch_led_blue = PWM_CH_LED_CHRG;
+		pwm_ch_led_amber = PWM_CH_LED_FULL;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, led_pwm_ch_init, HOOK_PRIO_INIT_PWM - 1);
 
 __override struct led_descriptor
 			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
@@ -47,21 +70,21 @@ __override void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_AMBER:
-		pwm_enable(PWM_CH_LED_CHRG, LED_ON_LVL);
-		pwm_enable(PWM_CH_LED_FULL, LED_OFF_LVL);
+		pwm_enable(pwm_ch_led_amber, LED_ON_LVL);
+		pwm_enable(pwm_ch_led_blue, LED_OFF_LVL);
 		break;
 	case EC_LED_COLOR_BLUE:
-		pwm_enable(PWM_CH_LED_CHRG, LED_OFF_LVL);
-		pwm_enable(PWM_CH_LED_FULL, LED_ON_LVL);
+		pwm_enable(pwm_ch_led_amber, LED_OFF_LVL);
+		pwm_enable(pwm_ch_led_blue, LED_ON_LVL);
 		break;
 	case LED_OFF:
-		pwm_enable(PWM_CH_LED_CHRG, LED_OFF_LVL);
-		pwm_enable(PWM_CH_LED_FULL, LED_OFF_LVL);
+		pwm_enable(pwm_ch_led_amber, LED_OFF_LVL);
+		pwm_enable(pwm_ch_led_blue, LED_OFF_LVL);
 		break;
 	default: /* Unsupported colors */
 		CPRINTS("Unsupported LED color: %d", color);
-		pwm_enable(PWM_CH_LED_CHRG, LED_OFF_LVL);
-		pwm_enable(PWM_CH_LED_FULL, LED_OFF_LVL);
+		pwm_enable(pwm_ch_led_amber, LED_OFF_LVL);
+		pwm_enable(pwm_ch_led_blue, LED_OFF_LVL);
 		break;
 	}
 }
