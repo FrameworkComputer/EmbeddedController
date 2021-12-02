@@ -9,10 +9,6 @@ CONFIG_SOC_IT8XXX2=y
 # Platform Configuration
 CONFIG_BOARD_IT8XXX2=y
 
-# SoC configuration
-CONFIG_AP=y
-CONFIG_AP_ARM_MTK_MT8192=y
-
 # Console
 CONFIG_CONSOLE=y
 CONFIG_UART_CONSOLE=y
