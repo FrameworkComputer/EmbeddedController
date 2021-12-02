@@ -1,0 +1,12 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_DRAWCIA_RISCV
+	bool "Google Drawcia Board"
+	help
+	  Build reworked Google Drawcia reference board with ITE81302.
+	  This chip is a pin-compatible chip for the existing EC, but
+	  is the RISCV version.
+
+source "Kconfig.zephyr"
