@@ -400,7 +400,6 @@ enum pd_task_evt {
 void pd0_chip_interrupt(enum gpio_signal signal);
 void pd1_chip_interrupt(enum gpio_signal signal);
 
-void pd_extpower_is_present_interrupt(enum gpio_signal signal);
 void soc_plt_reset_interrupt(enum gpio_signal signal);
 int cypd_get_pps_power_budget(void);
 
@@ -438,6 +437,8 @@ void cypd_print_buff(const char *msg, void *buff, int len);
 void cypd_set_retimer_power(enum power_state power);
 
 void cypd_set_power_active(enum power_state power);
+
+int cypd_get_active_charging_port(void);
 
 void set_pd_fw_update(bool update);
 

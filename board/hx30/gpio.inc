@@ -90,10 +90,6 @@ GPIO(EC_I2C07_PD2_SDA,	PIN(012),	GPIO_INPUT) /* PD controller 1 */
 /* PD controller */
 GPIO_INT(EC_PD_INTA_L,		PIN(0115), GPIO_INT_FALLING, pd0_chip_interrupt)
 GPIO_INT(EC_PD_INTB_L,		PIN(0127), GPIO_INT_FALLING, pd1_chip_interrupt)
-GPIO_INT(TYPEC0_VBUS_ON_EC,	PIN(043),  GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO_INT(TYPEC1_VBUS_ON_EC,	PIN(036),  GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO_INT(TYPEC2_VBUS_ON_EC,	PIN(0142), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
-GPIO_INT(TYPEC3_VBUS_ON_EC,	PIN(0141), GPIO_INT_BOTH | GPIO_ODR_HIGH, pd_extpower_is_present_interrupt)   /* Type-C VBUS select */
 
 GPIO(AC_PRESENT_PD_L,		PIN(0224), GPIO_INPUT)
 GPIO(MUX_SBU_UART_FLIP,		PIN(0101), GPIO_OUT_LOW) /* SBU debug mux enable */

@@ -96,80 +96,6 @@ void set_pd_fw_update(bool update)
 	firmware_update = update;
 }
 
-int pd_extpower_is_present(void)
-{
-	/*Todo improve this logic if we implement PPS charging*/
-	int usb_c_extpower_present = 0;
-
-	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC0_VBUS_ON_EC) ? BIT(0) : 0;
-	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC1_VBUS_ON_EC) ? BIT(1) : 0;
-	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC2_VBUS_ON_EC) ? BIT(2) : 0;
-	usb_c_extpower_present |= gpio_get_level(GPIO_TYPEC3_VBUS_ON_EC) ? BIT(3) : 0;
-	return usb_c_extpower_present;
-}
-static int pd_old_extpower_presence;
-static void pd_extpower_deferred(void)
-{
-	int extpower_presence = pd_extpower_is_present();
-
-	if (extpower_presence == pd_old_extpower_presence)
-		return;
-	CPRINTS("PD Source supply changed! old=0x%x, new=0x%02x",
-			pd_old_extpower_presence, extpower_presence);
-	pd_old_extpower_presence = extpower_presence;
-	/* todo handle safety */
-}
-DECLARE_DEFERRED(pd_extpower_deferred);
-
-void pd_extpower_is_present_interrupt(enum gpio_signal signal)
-{
-	/*Todo improve this logic if we implement PPS charging*/
-	/* Trigger deferred notification of external power change */
-	hook_call_deferred(&pd_extpower_deferred_data,
-			1 * MSEC);
-}
-
-
-void pd_extpower_init(void)
-{
-	pd_old_extpower_presence = pd_extpower_is_present();
-	gpio_enable_interrupt(GPIO_TYPEC0_VBUS_ON_EC);
-	gpio_enable_interrupt(GPIO_TYPEC1_VBUS_ON_EC);
-	gpio_enable_interrupt(GPIO_TYPEC2_VBUS_ON_EC);
-	gpio_enable_interrupt(GPIO_TYPEC3_VBUS_ON_EC);
-}
-
-DECLARE_HOOK(HOOK_INIT, pd_extpower_init, HOOK_PRIO_INIT_EXTPOWER);
-
-int cypd_get_active_charging_port(void)
-{
-	int active_port_mask = pd_extpower_is_present();
-	int active_port = -1;
-
-	switch (active_port_mask) {
-	case BIT(0):
-		active_port = 0;
-		break;
-	case BIT(1):
-		active_port = 1;
-		break;
-	case BIT(2):
-		active_port = 2;
-		break;
-	case BIT(3):
-		active_port = 3;
-		break;
-	case 0:
-		break;
-	default:
-		CPRINTS("WARNING! Danger! PD active ports are more than 1!!! 0x%02x",
-				active_port_mask);
-		break;
-	}
-
-	return active_port;
-}
-
 int cypd_write_reg_block(int controller, int reg, void *data, int len)
 {
 	int rv;
@@ -301,7 +227,7 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write Reg8 0x%x fail!", reg);
 
-	if (cyp5225_wait_for_ack(controller, 100000) != EC_SUCCESS) {
+	if (cyp5225_wait_for_ack(controller, 100*MSEC) != EC_SUCCESS) {
 		CPRINTS("%s timeout on interrupt", __func__);
 		return EC_ERROR_INVAL;
 	}
@@ -309,6 +235,7 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	if (intr_status & CYP5525_DEV_INTR) {
 		cypd_clear_int(controller, CYP5525_DEV_INTR);
 	}
+	usleep(50);
 	return rv;
 }
 int cypd_write_reg16_wait_ack(int controller, int reg, int data)
@@ -339,19 +266,6 @@ int cypd_set_power_state(int power_state)
 	CPRINTS("%s pwr state %d", __func__, power_state);
 
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
-
-		if (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
-				charger_current_battery_params()->state_of_charge > 0)
-			/* CYPD firmware will issue error recovery when we change the system
-			 * power state to S0, if battery can't provide the power, it will cause
-			 * power loss.
-			 *
-			 * We can write the 0xC0 to avoid cypd to do the error recovery before we
-			 * change the system power state
-			 */
-			rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC1);
-		else
-			rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
 
 		rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, power_state);
 		if (rv != EC_SUCCESS)
@@ -498,6 +412,26 @@ void cypd_set_power_active(enum power_state power)
 	cypd_enque_evt(CYPD_EVT_S_CHANGE, 0);
 }
 
+void cypd_set_error_recovery(void)
+{
+	int i;
+
+	for (i = 0;  i < PD_CHIP_COUNT; i++) {
+		if (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
+				charger_current_battery_params()->state_of_charge > 0)
+			/* CYPD firmware will issue error recovery when we change the system
+			 * power state to S0, if battery can't provide the power, it will cause
+			 * power loss.
+			 *
+			 * We can write the 0xC0 to avoid cypd to do the error recovery before we
+			 * change the system power state
+			 */
+			cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC1);
+		else
+			cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
+	}
+}
+
 void update_system_power_state(void)
 {
 
@@ -510,6 +444,7 @@ void update_system_power_state(void)
 		cypd_set_power_state(CYP5525_POWERSTATE_S5);
 		break;
 	default:
+		cypd_set_error_recovery();
 		cypd_set_power_state(CYP5525_POWERSTATE_S0);
 		break;
 
@@ -1501,42 +1436,22 @@ DECLARE_DEFERRED(update_power_limit_deferred);
 static int prev_charge_port = -1;
 int board_set_active_charge_port(int charge_port)
 {
-
-	int mask;
-	int i;
-	int disable_lockout;
-
 	if (prev_charge_port != -1 && prev_charge_port != charge_port) {
 		update_soc_power_limit(false, true);
-		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, 0);
-		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, 0);
-		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, 0);
-		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, 0);
 		usleep(250*MSEC);
 	}
 	prev_charge_port = charge_port;
-	if (charge_port >=0){
-		disable_lockout = 1;
-		mask = 1 << charge_port;
-		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, mask & BIT(0) ? 1: 0);
-		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, mask & BIT(1) ? 1: 0);
-		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, mask & BIT(2) ? 1: 0);
-		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, mask & BIT(3) ? 1: 0);
-	} else {
-		disable_lockout = 0;
-		gpio_set_level(GPIO_TYPEC0_VBUS_ON_EC, 1);
-		gpio_set_level(GPIO_TYPEC1_VBUS_ON_EC, 1);
-		gpio_set_level(GPIO_TYPEC2_VBUS_ON_EC, 1);
-		gpio_set_level(GPIO_TYPEC3_VBUS_ON_EC, 1);
-	}
-	for (i = 0; i < PD_CHIP_COUNT; i++)
-		cypd_write_reg8(i, CYP5225_USER_DISABLE_LOCKOUT, disable_lockout);
 
 	cypd_enque_evt(CYPD_EVT_UPDATE_PWRSTAT, 100);
 	hook_call_deferred(&update_power_limit_deferred_data, 100 * MSEC);
 	CPRINTS("Updating %s port %d", __func__, charge_port);
 
 	return EC_SUCCESS;
+}
+
+int cypd_get_active_charging_port(void)
+{
+	return prev_charge_port;
 }
 
 /**

@@ -8,6 +8,7 @@
 #include "battery.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "cypress5525.h"
 #include "ec_commands.h"
 #include "led_common.h"
 #include "led_pwm.h"
@@ -211,18 +212,29 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 static void set_active_port_color(int color)
 {
-	int port_charging_active = 0;
+	int port = cypd_get_active_charging_port();
 
-	if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
-		port_charging_active = gpio_get_level(GPIO_TYPEC2_VBUS_ON_EC) ||
-								gpio_get_level(GPIO_TYPEC3_VBUS_ON_EC);
-		set_pwm_led_color(PWM_LED0, port_charging_active ? color : -1);
-	}
-
-	if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
-		port_charging_active = gpio_get_level(GPIO_TYPEC0_VBUS_ON_EC) ||
-								gpio_get_level(GPIO_TYPEC1_VBUS_ON_EC);
-		set_pwm_led_color(PWM_LED1, port_charging_active ? color : -1);
+	switch (port) {
+	case 0:
+	case 1:
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+			set_pwm_led_color(PWM_LED0, -1);
+		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
+			set_pwm_led_color(PWM_LED1, color);
+		break;
+	case 2:
+	case 3:
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+			set_pwm_led_color(PWM_LED0, color);
+		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
+			set_pwm_led_color(PWM_LED1, -1);
+		break;
+	default:
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+			set_pwm_led_color(PWM_LED0, -1);
+		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
+			set_pwm_led_color(PWM_LED1, -1);
+		break;
 	}
 }
 
