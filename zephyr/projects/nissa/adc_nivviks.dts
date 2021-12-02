@@ -1,0 +1,26 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_temp_1: temp_1 {
+			label = "TEMP_SENSOR_1";
+			enum-name = "ADC_TEMP_SENSOR_1";
+			channel = <0>;
+		};
+		adc_temp_2: temp_2 {
+			label = "TEMP_SENSOR_2";
+			enum-name = "ADC_TEMP_SENSOR_2";
+			channel = <1>;
+		};
+	};
+
+};
+
+&adc0 {
+	status = "okay";
+};
