@@ -24,11 +24,17 @@
 		.version_mask = _version_mask,                             \
 	}
 #else /* !CONFIG_PLATFORM_EC_HOSTCMD */
-#ifdef __clang__
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)
-#else
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)         \
-	enum ec_status (routine)(struct host_cmd_handler_args *args) \
-		__attribute__((unused))
-#endif /* __clang__ */
+
+/*
+ * Create a fake routine to call the function. The linker should
+ * garbage-collect it since it is behind 'if (0)'
+ */
+#define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
+	int __remove_ ## command(void)					\
+	{								\
+		if (0)							\
+			routine(NULL);					\
+		return 0;						\
+	}
+
 #endif /* CONFIG_PLATFORM_EC_HOSTCMD */
