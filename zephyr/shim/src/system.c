@@ -8,7 +8,6 @@
 #include <drivers/cros_system.h>
 #include <logging/log.h>
 
-#include "bbram.h"
 #include "common.h"
 #include "console.h"
 #include "cros_version.h"
@@ -31,7 +30,9 @@
 
 LOG_MODULE_REGISTER(shim_system, LOG_LEVEL_ERR);
 
-STATIC_IF_NOT(CONFIG_ZTEST) const struct device *bbram_dev;
+static const struct device *const bbram_dev =
+	COND_CODE_1(DT_HAS_CHOSEN(cros_ec_bbram),
+		    DEVICE_DT_GET(DT_CHOSEN(cros_ec_bbram)), NULL);
 static const struct device *sys_dev;
 
 /* Map idx to a bbram offset/size, or return -1 on invalid idx */
@@ -326,13 +327,10 @@ static int system_preinitialize(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
-#if DT_NODE_EXISTS(DT_NODELABEL(bbram))
-	bbram_dev = DEVICE_DT_GET(DT_NODELABEL(bbram));
-	if (!device_is_ready(bbram_dev)) {
+	if (bbram_dev && !device_is_ready(bbram_dev)) {
 		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
 		return -1;
 	}
-#endif
 
 	sys_dev = device_get_binding("CROS_SYSTEM");
 	if (!sys_dev) {

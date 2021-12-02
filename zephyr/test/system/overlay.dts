@@ -4,6 +4,16 @@
  */
 
 / {
+	chosen {
+		cros-ec,bbram = &bbram;
+	};
+
+	bbram: test-bbram-dev {
+		compatible = "zephyr,bbram-emul";
+		label = "TEST_BBRAM_DEV";
+		size = <64>;
+	};
+
 	named-bbram-regions {
 		compatible = "named-bbram-regions";
 		pd0 {
