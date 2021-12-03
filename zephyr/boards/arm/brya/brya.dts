@@ -59,6 +59,10 @@
 			i2c-port = <&i2c7_0>;
 			enum-name = "I2C_PORT_CHARGER";
 		};
+		mp2964 {
+			i2c-port = <&i2c7_0>;
+			enum-name = "I2C_PORT_MP2964";
+		};
 	};
 
 	named-pwms {
@@ -223,6 +227,12 @@
 &i2c7_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+
+	pmic_mp2964: pmic_mp2964@20 {
+		compatible = "mps,mp2964";
+		reg = <0x20>;
+		label = "I2C_ADDR_MP2964_FLAGS";
+	};
 };
 
 &i2c_ctrl7 {
