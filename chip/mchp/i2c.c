@@ -1000,6 +1000,18 @@ static void handle_interrupt(int controller)
 	uint32_t r;
 	int slave_idx;
 	int id = cdata[controller].task_waiting;
+	if (cdata[controller].slave_mode != 1)
+		/*
+		 * WORKAROUND: somehow, controller 2 slave mode get value 133
+		 * and cause the controller to execute the slave process then
+		 * watchdog.
+		 *
+		 * Add this workaround to let factory doing BFT and AFT
+		 *
+		 * TODO: need to find out the root cause.
+		 */
+		cdata[controller].slave_mode = 0;
+
 #ifdef CONFIG_I2C_SLAVE
 	if (cdata[controller].slave_mode) {
 		slave_idx = chip_i2c_get_slave_data_idx(controller);
