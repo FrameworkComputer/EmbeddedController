@@ -3,10 +3,14 @@
 		{
 			"path": "."
 		},
-                {
-                        "name": "hx20",
-                        "path": "board/hx20"
-                },
+		{
+			"name": "hx20",
+			"path": "board/hx20"
+		},
+		{
+			"name": "hx30",
+			"path": "board/hx30"
+		},
 		{
 			"name": "mchp",
 			"path": "chip/mchp"
@@ -19,12 +23,12 @@
 			"name": "include",
 			"path": "include"
 		},
-                {
-                        "name": "driver"
-                        "path": "driver"
-                }
+		{
+			"name": "driver",
+			"path": "driver"
+		}
 	],
-        "settings": {
+	"settings": {
 
-        }
+	}
 }
