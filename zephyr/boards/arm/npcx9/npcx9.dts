@@ -26,6 +26,7 @@
 		zephyr,console = &uart1;
 		zephyr,shell-uart = &uart1;
 		zephyr,flash = &flash0;
+		zephyr,flash-controller = &int_flash;
 	};
 
 	named-i2c-ports {

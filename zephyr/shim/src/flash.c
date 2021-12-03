@@ -6,6 +6,7 @@
 #include <flash.h>
 #include <kernel.h>
 #include <logging/log.h>
+#include <drivers/flash.h>
 
 #include "console.h"
 #include "drivers/cros_flash.h"
@@ -20,10 +21,14 @@ LOG_MODULE_REGISTER(shim_flash, LOG_LEVEL_ERR);
 #else
 #define cros_flash_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_flash))
 #endif
+#if !DT_HAS_CHOSEN(zephyr_flash_controller)
+#error "zephyr,flash-controller device must be chosen"
+#else
+#define flash_ctrl_dev DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_controller))
+#endif
 
 K_MUTEX_DEFINE(flash_lock);
 
-/* TODO(b/174873770): Add calls to Zephyr code here */
 #ifdef CONFIG_EXTERNAL_STORAGE
 void crec_flash_lock_mapped_storage(int lock)
 {
@@ -43,13 +48,12 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 	    (CONFIG_FLASH_WRITE_SIZE - 1))
 		return EC_ERROR_INVAL;
 
-	/* Lock physical flash operations */
-	crec_flash_lock_mapped_storage(1);
-
+	/*
+	 * We need to call cros_flash driver because the procedure
+	 * may differ depending on the chip type e.g. ite chips need to
+	 * call watchdog_reload before calling the Zephyr flash driver.
+	 */
 	rv = cros_flash_physical_write(cros_flash_dev, offset, size, data);
-
-	/* Unlock physical flash operations */
-	crec_flash_lock_mapped_storage(0);
 
 	return rv;
 }
@@ -58,34 +62,52 @@ int crec_flash_physical_erase(int offset, int size)
 {
 	int rv;
 
-	/* Lock physical flash operations */
-	crec_flash_lock_mapped_storage(1);
-
+	/*
+	 * We need to call cros_flash driver because the procedure
+	 * may differ depending on the chip type e.g. ite chips need to
+	 * split a large erase operation and reload watchdog, otherwise
+	 * EC reboot happens
+	 */
 	rv = cros_flash_physical_erase(cros_flash_dev, offset, size);
-
-	/* Unlock physical flash operations */
-	crec_flash_lock_mapped_storage(0);
 
 	return rv;
 }
 
 int crec_flash_physical_get_protect(int bank)
 {
+	/*
+	 * We need to call cros_flash driver because Zephyr flash API
+	 * doesn't support reading protected areas and the procedure is
+	 * different for each flash type.
+	 */
 	return cros_flash_physical_get_protect(cros_flash_dev, bank);
 }
 
 uint32_t crec_flash_physical_get_protect_flags(void)
 {
+	/*
+	 * We need to call cros_flash driver because Zephyr flash API
+	 * doesn't support reading protected areas and the procedure is
+	 * different for each flash type.
+	 */
 	return cros_flash_physical_get_protect_flags(cros_flash_dev);
 }
 
 int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
+	/*
+	 * It is EC specific, so it needs to be implemented in cros_flash driver
+	 * per chip.
+	 */
 	return cros_flash_physical_protect_at_boot(cros_flash_dev, new_flags);
 }
 
 int crec_flash_physical_protect_now(int all)
 {
+	/*
+	 * It is EC specific, so it needs to be implemented in cros_flash driver
+	 * per chip.
+	 */
 	return cros_flash_physical_protect_now(cros_flash_dev, all);
 }
 
@@ -93,9 +115,13 @@ int crec_flash_physical_read(int offset, int size, char *data)
 {
 	int rv;
 
-	/* Lock physical flash operations */
+	/*
+	 * Lock the physical flash operation here because, we call the Zephyr
+	 * driver directly.
+	 */
 	crec_flash_lock_mapped_storage(1);
-	rv = cros_flash_physical_read(cros_flash_dev, offset, size, data);
+
+	rv = flash_read(flash_ctrl_dev, offset, data, size);
 
 	/* Unlock physical flash operations */
 	crec_flash_lock_mapped_storage(0);
@@ -107,7 +133,8 @@ static int flash_dev_init(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
-	if (!device_is_ready(cros_flash_dev))
+	if (!device_is_ready(cros_flash_dev) ||
+	    !device_is_ready(flash_ctrl_dev))
 		k_oops();
 	cros_flash_init(cros_flash_dev);
 

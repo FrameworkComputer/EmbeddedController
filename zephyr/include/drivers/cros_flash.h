@@ -35,9 +35,6 @@
  */
 typedef int (*cros_flash_api_init)(const struct device *dev);
 
-typedef int (*cros_flash_api_physical_read)(const struct device *dev,
-					    int offset, int size, char *data);
-
 typedef int (*cros_flash_api_physical_write)(const struct device *dev,
 					     int offset, int size,
 					     const char *data);
@@ -67,7 +64,6 @@ typedef int (*cros_flash_api_physical_get_status)(const struct device *dev,
 
 __subsystem struct cros_flash_driver_api {
 	cros_flash_api_init init;
-	cros_flash_api_physical_read physical_read;
 	cros_flash_api_physical_write physical_write;
 	cros_flash_api_physical_erase physical_erase;
 	cros_flash_api_physical_get_protect physical_get_protect;
@@ -102,34 +98,6 @@ static inline int z_impl_cros_flash_init(const struct device *dev)
 	}
 
 	return api->init(dev);
-}
-
-/**
- * @brief Read from physical flash.
- *
- * @param dev Pointer to the device structure for the flash driver instance.
- * @param offset Flash offset to read.
- * @param size Number of bytes to read.
- * @param data Destination buffer for data.  Must be 32-bit aligned.
- *
- * @return 0 If successful.
- * @retval -ENOTSUP Not supported api function.
- */
-__syscall int cros_flash_physical_read(const struct device *dev, int offset,
-				       int size, char *data);
-
-static inline int z_impl_cros_flash_physical_read(const struct device *dev,
-						  int offset, int size,
-						  char *data)
-{
-	const struct cros_flash_driver_api *api =
-		(const struct cros_flash_driver_api *)dev->api;
-
-	if (!api->physical_read) {
-		return -ENOTSUP;
-	}
-
-	return api->physical_read(dev, offset, size, data);
 }
 
 /**
