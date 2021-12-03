@@ -359,7 +359,13 @@ DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, board_usb_tc_disconnect, \
 static void board_init(void)
 {
 #ifdef SECTION_IS_RW
-
+	/*
+	 * Set current limit for USB 3.1 Gen 2 ports to 1.5 A. Note, this is
+	 * also done in gpio.inc, but needs to be in RW for platforms which
+	 * shipped with RO that set these 2 lines to the 900 mA level.
+	 */
+	gpio_set_level(GPIO_USB3_P3_CDP_EN, 1);
+	gpio_set_level(GPIO_USB3_P4_CDP_EN, 1);
 #endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
