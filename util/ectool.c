@@ -5098,7 +5098,7 @@ static int ms_help(const char *cmd)
 		cmd);
 	printf("  %s active                       - print active flag\n", cmd);
 	printf("  %s info NUM                     - print sensor info\n", cmd);
-	printf("  %s ec_rate [RATE_MS]            - set/get sample rate\n",
+	printf("  %s ec_rate NUM [RATE_MS]        - set/get sample rate\n",
 		cmd);
 	printf("  %s odr NUM [ODR [ROUNDUP]]      - set/get sensor ODR\n",
 		cmd);
@@ -5167,7 +5167,6 @@ static int cmd_motionsense(int argc, char **argv)
 		{ "Motion sensing inactive", "0"},
 		{ "Motion sensing active", "1"},
 	};
-
 	/* No motionsense command has more than 7 args. */
 	if (argc > 7)
 		return ms_help(argv[0]);
@@ -5389,14 +5388,18 @@ static int cmd_motionsense(int argc, char **argv)
 		return 0;
 	}
 
-	if (argc < 4 && !strcasecmp(argv[1], "ec_rate")) {
+	if (argc > 2 && !strcasecmp(argv[1], "ec_rate")) {
 		param.cmd = MOTIONSENSE_CMD_EC_RATE;
 		param.ec_rate.data = EC_MOTION_SENSE_NO_VALUE;
-
-		if (argc == 3) {
-			param.ec_rate.data = strtol(argv[2], &e, 0);
+		param.sensor_odr.sensor_num = strtol(argv[2], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad %s arg.\n", argv[2]);
+			return -1;
+		}
+		if (argc == 4) {
+			param.ec_rate.data = strtol(argv[3], &e, 0);
 			if (e && *e) {
-				fprintf(stderr, "Bad %s arg.\n", argv[2]);
+				fprintf(stderr, "Bad %s arg.\n", argv[3]);
 				return -1;
 			}
 		}
