@@ -96,8 +96,29 @@ static inline mux_state_t retimer_fw_update_usb_mux_get(int port)
 	return usb_mux_get(port) & USB_RETIMER_FW_UPDATE_MUX_MASK;
 }
 
+/* Allow mux results to be filled in during HOOKS if needed */
+static void last_result_mux_get(void);
+DECLARE_DEFERRED(last_result_mux_get);
+
+static void last_result_mux_get(void)
+{
+	if (!usb_mux_set_completed(cur_port)) {
+		hook_call_deferred(&last_result_mux_get_data, 20 * MSEC);
+		return;
+	}
+
+	last_result = retimer_fw_update_usb_mux_get(cur_port);
+}
+
 void usb_retimer_fw_update_process_op_cb(int port)
 {
+	bool result_mux_get = false;
+
+	if (port != cur_port) {
+		CPRINTS("Unexpected FW op: port %d, cur %d", port, cur_port);
+		return;
+	}
+
 	switch (last_op) {
 	case USB_RETIMER_FW_UPDATE_SUSPEND_PD:
 		last_result = 0;
@@ -123,30 +144,37 @@ void usb_retimer_fw_update_process_op_cb(int port)
 		pd_set_suspend(port, RESUME);
 		break;
 	case USB_RETIMER_FW_UPDATE_GET_MUX:
-		last_result = retimer_fw_update_usb_mux_get(port);
+		result_mux_get = true;
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_USB:
 		usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
 			USB_SWITCH_CONNECT, pd_get_polarity(port));
-		last_result = retimer_fw_update_usb_mux_get(port);
+		result_mux_get = true;
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_SAFE:
 		usb_mux_set_safe_mode(port);
-		last_result = retimer_fw_update_usb_mux_get(port);
+		result_mux_get = true;
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_TBT:
 		usb_mux_set(port, USB_PD_MUX_TBT_COMPAT_ENABLED,
 			USB_SWITCH_CONNECT, pd_get_polarity(port));
-		last_result = retimer_fw_update_usb_mux_get(port);
+		result_mux_get = true;
 		break;
 	case USB_RETIMER_FW_UPDATE_DISCONNECT:
 		usb_mux_set(port, USB_PD_MUX_NONE,
 			USB_SWITCH_DISCONNECT, pd_get_polarity(port));
-		last_result = retimer_fw_update_usb_mux_get(port);
+		result_mux_get = true;
 		break;
 	default:
 		break;
 	}
+
+	/*
+	 * Fill in our mux result if available, or set up a deferred retrieval
+	 * if the set is still pending.
+	 */
+	if (result_mux_get)
+		last_result_mux_get();
 }
 
 void usb_retimer_fw_update_process_op(int port, int op)
@@ -158,6 +186,7 @@ void usb_retimer_fw_update_process_op(int port, int op)
 	 * not change cur_port if retimer scan is in progress
 	 */
 	last_op = op;
+	cur_port = port;
 
 	switch (op) {
 	case USB_RETIMER_FW_UPDATE_QUERY_PORT:
@@ -169,7 +198,6 @@ void usb_retimer_fw_update_process_op(int port, int op)
 		break;
 	case USB_RETIMER_FW_UPDATE_SUSPEND_PD:
 	case USB_RETIMER_FW_UPDATE_RESUME_PD:
-		cur_port = port;
 		tc_usb_firmware_fw_update_run(port);
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_USB:
