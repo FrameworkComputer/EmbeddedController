@@ -82,7 +82,7 @@ GPIO(USB_C0_TCPC_RST_ODL,            PIN(A, 7), GPIO_ODR_LOW)
 GPIO(USB_C1_TCPC_RST_ODL,            PIN(A, 0), GPIO_ODR_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 GPIO(PEN_RST_L,                      PIN(0, 2), GPIO_ODR_HIGH)
-GPIO(LRA_DIS_ODL,                    PIN(0, 4), GPIO_ODR_HIGH)	/* Reserved for disable haptic pad LRA */
+GPIO(LRA_DIS_ODL,                    PIN(0, 4), GPIO_ODR_HIGH)	/* Disable haptic pad LRA */
 
 /* LED */
 GPIO(C0_CHARGE_LED_AMBER_L,          PIN(C, 4), GPIO_OUT_HIGH)	/* Amber C0 port */

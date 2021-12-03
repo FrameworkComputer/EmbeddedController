@@ -6,6 +6,7 @@
 #include "battery.h"
 #include "button.h"
 #include "charge_ramp.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "common.h"
 #include "compile_time_macros.h"
@@ -32,6 +33,9 @@
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+
+/* Battery discharging over-current limit is 8A */
+#define BATT_OC_LIMIT -8000
 
 /* PCHG control */
 #ifdef SECTION_IS_RW
@@ -82,4 +86,28 @@ enum battery_present battery_hw_present(void)
 {
 	/* The GPIO is low when the battery is physically present */
 	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
+}
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	/* Turn off haptic pad LRA if battery discharing current over 8A */
+	if (!(curr->batt.flags & BATT_FLAG_BAD_CURRENT) &&
+	    curr->batt.current < BATT_OC_LIMIT)
+		gpio_set_level(GPIO_LRA_DIS_ODL, 0);
+	else
+		gpio_set_level(GPIO_LRA_DIS_ODL, 1);
+
+	return 0;
+}
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
 }
