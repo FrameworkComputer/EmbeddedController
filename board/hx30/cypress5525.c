@@ -87,10 +87,6 @@ struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 bool verbose_msg_logging;
 static bool firmware_update;
 
-static bool system_power_present;
-
-void cypd_update_power(void);
-
 void set_pd_fw_update(bool update)
 {
 	firmware_update = update;
@@ -279,20 +275,7 @@ void cypd_charger_init_complete(void)
 {
 	charger_init_ok = 1;
 }
-void cypd_update_power(void)
-{
-	if (!charger_init_ok) {
-		system_power_present = 0;
-		return;
-	}
 
-	if (extpower_is_present() ||
-	 (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
-		 charger_current_battery_params()->state_of_charge > 0))
-		system_power_present = 1;
-	else
-		system_power_present = 0;
-}
 
 int cypd_update_power_status(void)
 {
@@ -306,8 +289,6 @@ int cypd_update_power_status(void)
 	if (extpower_is_present()) {
 		power_stat |= BIT(1) + BIT(2);
 	}
-
-	cypd_update_power();
 
 	CPRINTS("%s power_stat 0x%x", __func__, power_stat);
 
@@ -883,6 +864,15 @@ void cypd_update_port_state(int controller, int port)
 		pd_set_input_current_limit(port_idx, 0, 0);
 	}
 
+	/*Todo make this better to enable debug accessory mode */
+	if (pd_port_states[0].c_state == CYPD_STATUS_DEBUG ||
+		pd_port_states[1].c_state == CYPD_STATUS_DEBUG ) {
+			gpio_set_level(GPIO_MUX_SBU_UART_FLIP, 1);
+	} else {
+			gpio_set_level(GPIO_MUX_SBU_UART_FLIP, 0);
+
+	}
+
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
 		charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
@@ -974,16 +964,6 @@ void cyp5525_port_int(int controller, int port)
 	}
 }
 
-void pd_bb_powerdown_deferred(void)
-{
-	pending_retimer_init(0);
-	if (!keep_pch_power() && power_get_state() == POWER_G3) {
-		CPRINTS("BB PCH PWR down");
-		gpio_set_level(GPIO_PCH_PWR_EN, 0);
-	}
-}
-DECLARE_DEFERRED(pd_bb_powerdown_deferred);
-
 int cyp5525_device_int(int controller)
 {
 	int data;
@@ -1052,16 +1032,7 @@ void cypd_handle_state(int controller)
 				usleep(MSEC);
 				
 			}*/
-			pending_retimer_init(1);
-			cypd_update_power();
-			if (system_power_present) {
-				gpio_set_level(GPIO_PCH_PWR_EN, 1);
-				CPRINTS("PD PCH ON");
-			} else {
-				CPRINTS("Dead Battery Condition?");
-			}
 
-			hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
 			cypd_update_power_status();
 
 			cypd_set_power_state(CYP5525_POWERSTATE_S5);
@@ -1148,15 +1119,9 @@ void pd0_chip_interrupt_deferred(void)
 DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
 void pd0_chip_interrupt(enum gpio_signal signal)
 {
-	/* GPIO_PCH_PWR_EN must be first */
-	if (system_power_present) {
-		gpio_set_level(GPIO_PCH_PWR_EN, 1);
-		hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
-	}
-	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_0, 0);
-	pending_retimer_init(1);
+	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
 
-	hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
+	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_0, 0);
 }
 
 void pd1_chip_interrupt_deferred(void)
@@ -1167,15 +1132,9 @@ void pd1_chip_interrupt_deferred(void)
 DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
 void pd1_chip_interrupt(enum gpio_signal signal)
 {
-	/* GPIO_PCH_PWR_EN must be first */
-	if (system_power_present) {
-		gpio_set_level(GPIO_PCH_PWR_EN, 1);
-		hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
-	}
-	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_1, 0);
-	pending_retimer_init(1);
+	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
 
-	hook_call_deferred(&pd_bb_powerdown_deferred_data, BB_PWR_DOWN_TIMEOUT);
+	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_1, 0);
 }
 /*
 void soc_plt_reset_interrupt_deferred(void)
