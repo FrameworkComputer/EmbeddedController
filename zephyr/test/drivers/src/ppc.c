@@ -312,6 +312,29 @@ static void test_ppc_syv682x_write_busy(void)
 	syv682x_emul_set_busy_reads(emul, 0);
 }
 
+static void test_ppc_syv682x_dev_is_connected(void)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+	uint8_t reg;
+
+	zassert_ok(ppc_dev_is_connected(syv682x_port, PPC_DEV_SRC),
+			"Could not connect device as source");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_2_REG, &reg),
+			"Reading CONTROL_2 failed");
+	zassert_false(reg & SYV682X_CONTROL_2_FDSG,
+			"Connected as source, but force discharge enabled");
+
+	zassert_ok(ppc_dev_is_connected(syv682x_port, PPC_DEV_DISCONNECTED),
+			"Could not disconnect device");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_2_REG, &reg),
+			"Reading CONTROL_2 failed");
+	zassert_true(reg & SYV682X_CONTROL_2_FDSG,
+			"Disconnected, but force discharge disabled");
+
+	zassert_ok(ppc_dev_is_connected(syv682x_port, PPC_DEV_SNK),
+			"Could not connect device as source");
+}
+
 static void test_ppc_syv682x(void)
 {
 	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
@@ -321,6 +344,7 @@ static void test_ppc_syv682x(void)
 	test_ppc_syv682x_frs();
 	test_ppc_syv682x_source_current_limit();
 	test_ppc_syv682x_write_busy();
+	test_ppc_syv682x_dev_is_connected();
 }
 
 void test_suite_ppc(void)
