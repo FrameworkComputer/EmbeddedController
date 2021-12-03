@@ -56,11 +56,6 @@ static int stress_test_enable;
 
 static void chipset_force_g3(void);
 
-static int bb_retimer_init_pending = true;
-
-void pending_retimer_init(int pending) {
-	bb_retimer_init_pending = pending;
-}
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -159,12 +154,8 @@ static void chipset_force_g3(void)
 
 
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
-		if (bb_retimer_init_pending == false) {
-			/* retimer power needs to be tied to PCH_PWR_EN */
-			cypd_set_retimer_power(POWER_G3);
 
-			gpio_set_level(GPIO_PCH_PWR_EN, 0);
-		}
+		gpio_set_level(GPIO_PCH_PWR_EN, 0);
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
 		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
 		gpio_set_level(GPIO_AC_PRESENT_OUT, 0);

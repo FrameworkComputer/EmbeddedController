@@ -7,5 +7,4 @@
 #ifndef __CROS_EC_POWERSEQUENCE_H
 #define __CROS_EC_POWERSEQUENCE_H
 int keep_pch_power(void);
-void pending_retimer_init(int pending);
 #endif	/* __CROS_EC_POWERSEQUENCE_H */
