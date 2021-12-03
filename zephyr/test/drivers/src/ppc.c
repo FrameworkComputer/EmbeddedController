@@ -282,6 +282,36 @@ static void test_ppc_syv682x_source_current_limit(void)
 			"Set 3.0A Rp value, but 5V_ILIM is %d", ilim_val);
 }
 
+static void test_ppc_syv682x_write_busy(void)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+
+	/*
+	 * Writes should fail while the BUSY bit is set, except that writes to
+	 * CONTROL_4 should succeed on the SYV682C. 100 reads is intentionally
+	 * many more than the driver is expected to make before reaching its
+	 * timeout. It is not a goal of this test to verify the frequency of
+	 * polling or the exact value of the timeout.
+	 */
+	syv682x_emul_set_busy_reads(emul, 100);
+	zassert_equal(ppc_set_vbus_source_current_limit(syv682x_port,
+				TYPEC_RP_USB),
+			EC_ERROR_TIMEOUT, "SYV682 busy, but write completed");
+	zassert_ok(ppc_set_frs_enable(syv682x_port, false),
+			"Could not set CONTROL_4 while busy on SYV682C");
+
+	/*
+	 * If the busy bit clears before the driver reaches its timeout, the
+	 * write should succeed.
+	 */
+	syv682x_emul_set_busy_reads(emul, 1);
+	zassert_equal(ppc_set_vbus_source_current_limit(syv682x_port,
+				TYPEC_RP_USB), 0,
+			"SYV682 not busy, but write failed");
+
+	syv682x_emul_set_busy_reads(emul, 0);
+}
+
 static void test_ppc_syv682x(void)
 {
 	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
@@ -290,6 +320,7 @@ static void test_ppc_syv682x(void)
 	test_ppc_syv682x_interrupt();
 	test_ppc_syv682x_frs();
 	test_ppc_syv682x_source_current_limit();
+	test_ppc_syv682x_write_busy();
 }
 
 void test_suite_ppc(void)

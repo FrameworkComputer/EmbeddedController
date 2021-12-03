@@ -90,6 +90,7 @@
 #define SYV682X_OVP_17_9		5
 #define SYV682X_OVP_21_6		6
 #define SYV682X_OVP_23_7		7
+#define SYV682X_CONTROL_3_NONE		0
 
 /* Control Register 4 */
 #define SYV682X_CONTROL_4_CC1_BPS	BIT(7)
@@ -123,6 +124,16 @@ struct i2c_emul *syv682x_emul_get(int ord);
  */
 void syv682x_emul_set_condition(struct i2c_emul *emul, uint8_t status,
 		uint8_t control_4);
+
+/**
+ * @brief Cause CONTROL_3[BUSY] to be set for a number of reads. This bit
+ *        signals that I2C writes will be ignored. Each call overrides any
+ *        previous setting.
+ *
+ * @param emul  SYV682x emulator
+ * @param reads The number of reads of CONTROL_3 to keep BUSY set for
+ */
+void syv682x_emul_set_busy_reads(struct i2c_emul *emul, int reads);
 
 /**
  * @brief Set value of a register of SYV682x

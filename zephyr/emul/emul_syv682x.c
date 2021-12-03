@@ -41,6 +41,11 @@ struct syv682x_emul_data {
 	 */
 	uint8_t status_cond;
 	uint8_t control_4_cond;
+	/**
+	 * How many CONTROL_3 reads the busy bit should stay set. 0 means not
+	 * busy.
+	 */
+	int busy_read_count;
 };
 
 /** Static configuration for the emulator */
@@ -121,6 +126,17 @@ void syv682x_emul_set_condition(struct i2c_emul *emul, uint8_t status,
 	}
 
 	syv682x_emul_set_alert(data, status | control_4_interrupt);
+}
+
+void syv682x_emul_set_busy_reads(struct i2c_emul *emul, int reads)
+{
+	struct syv682x_emul_data *data =
+		CONTAINER_OF(emul, struct syv682x_emul_data, emul);
+	data->busy_read_count = reads;
+	if (reads)
+		data->reg[SYV682X_CONTROL_3_REG] |= SYV682X_BUSY;
+	else
+		data->reg[SYV682X_CONTROL_3_REG] &= ~SYV682X_BUSY;
 }
 
 int syv682x_emul_get_reg(struct i2c_emul *emul, int reg, uint8_t *val)
@@ -217,6 +233,15 @@ static int syv682x_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 		 */
 		case SYV682X_STATUS_REG:
 			syv682x_emul_set_reg(emul, reg, data->status_cond);
+			break;
+		case SYV682X_CONTROL_3_REG:
+			/* Update CONTROL_3[BUSY] based on the busy count. */
+			if (data->busy_read_count > 0) {
+				if (--data->busy_read_count == 0) {
+					data->reg[SYV682X_CONTROL_3_REG] &=
+						~SYV682X_BUSY;
+				}
+			}
 			break;
 		case SYV682X_CONTROL_4_REG:
 			syv682x_emul_set_reg(emul, reg,
