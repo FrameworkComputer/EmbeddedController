@@ -163,7 +163,12 @@
 			label = "EN_PP5000_S5";
 		};
 		ec_bl_disable_l {
-			gpios = <&gpiob 6 GPIO_OUT_LOW>;
+			/* The PMIC controls backlight enable and this pin must
+			 * be HiZ for normal operation. But the backlight can
+			 * be enabled by setting this pin low and configuring it
+			 * as an output.
+			 */
+			gpios = <&gpiob 6 GPIO_INPUT>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 			label = "EC_BL_DISABLE_L";
 		};
@@ -362,7 +367,8 @@
 			<&gpio9 3 0>,
 			<&gpioa 7 0>,
 			<&gpio5 0 0>,
-			<&gpio8 1 0>;
+			<&gpio8 1 0>,
+			<&gpiob 7 0>;
 	};
 };
 
