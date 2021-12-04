@@ -3114,6 +3114,7 @@
 #undef CONFIG_LED_DRIVER_LP5562  /* LP5562, on I2C interface */
 #undef CONFIG_LED_DRIVER_MP3385   /* MPS MP3385, on I2C */
 #undef CONFIG_LED_DRIVER_OZ554   /* O2Micro OZ554, on I2C */
+#undef CONFIG_LED_DRIVER_IS31FL3743B /* Lumissil IS31FL3743B on SPI */
 
 /* Offset in flash where little firmware will live. */
 #undef CONFIG_LFW_OFFSET
@@ -3634,6 +3635,29 @@
  * keyboard backlight.
  */
 #undef CONFIG_KBLIGHT_ENABLE_PIN
+
+/*
+ * RGB Keyboard
+ */
+#undef CONFIG_RGB_KEYBOARD
+
+/*
+ * Enable debug messages from a RGB keyboard task.
+ */
+#undef CONFIG_RGB_KEYBOARD_DEBUG
+
+/*
+ * Enable demo for RGB keyboard to run on reset.
+ *
+ * FLOW: In each iteration, a new color is placed in (0,0) and the rest of LEDs
+ * copy colors from adjacent LEDs.
+ *
+ * DOT: A red dot is placed on (0,0) and traverses the grid from top to bottom
+ * left to right. After the entire matrix is traversed, it's repeated with a
+ * new color.
+ */
+#undef CONFIG_RGBKBD_DEMO_FLOW
+#undef CONFIG_RGBKBD_DEMO_DOT
 
 /* Support Real-Time Clock (RTC) */
 #undef CONFIG_RTC

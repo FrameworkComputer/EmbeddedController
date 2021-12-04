@@ -110,6 +110,7 @@ driver-$(CONFIG_LED_DRIVER_LM3630A)+=led/lm3630a.o
 driver-$(CONFIG_LED_DRIVER_LP5562)+=led/lp5562.o
 driver-$(CONFIG_LED_DRIVER_MP3385)+=led/mp3385.o
 driver-$(CONFIG_LED_DRIVER_OZ554)+=led/oz554.o
+driver-$(CONFIG_LED_DRIVER_IS31FL3743B)+=led/is31fl3743b.o
 
 # 7-segment display
 driver-$(CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY)+=led/max695x.o

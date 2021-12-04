@@ -7074,6 +7074,21 @@ struct ec_response_i2c_control {
 	} cmd_response;
 } __ec_align_size1;
 
+#define EC_CMD_RGB_KEYBOARD 0x13a
+
+enum rgbkbd_state {
+	/* RGB keyboard is reset and not initialized. */
+	RGBKBD_STATE_RESET = 0,
+	/* RGB keyboard is initialized but not enabled. */
+	RGBKBD_STATE_INITIALIZED,
+	/* RGB keyboard is enabled and ready to receive a command. */
+	RGBKBD_STATE_ENABLED,
+
+	/* Put no more entry below */
+	RGBKBD_STATE_COUNT,
+};
+
+
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
 
