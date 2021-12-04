@@ -454,9 +454,11 @@ void board_init(void)
 		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
 				GPIO_INPUT | GPIO_PULL_DOWN);
 
+		/* Disable Volume keys for blipper */
+		button_disable_gpio(BUTTON_VOLUME_UP);
+		button_disable_gpio(BUTTON_VOLUME_DOWN);
 		gpio_set_flags(GPIO_VOLDN_BTN_ODL,
 				GPIO_INPUT | GPIO_PULL_DOWN);
-
 		gpio_set_flags(GPIO_VOLUP_BTN_ODL,
 				GPIO_INPUT | GPIO_PULL_DOWN);
 	} else {
