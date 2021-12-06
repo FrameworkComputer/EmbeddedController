@@ -60,8 +60,8 @@
 #endif
 
 /* Min System Voltage Register */
-#define BQ25710_MIN_SYSTEM_VOLTAGE_STEP_MV	100
-#define BQ25720_VSYS_MIN_VOLTAGE_STEP_MV	256
+#define BQ25710_MIN_SYSTEM_VOLTAGE_STEP_MV	256
+#define BQ25720_VSYS_MIN_VOLTAGE_STEP_MV	100
 
 extern const struct charger_drv bq25710_drv;
 
