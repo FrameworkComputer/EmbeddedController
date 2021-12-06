@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <dt-bindings/gpio_defines.h>
+
 / {
 	gpiox: gpio@0 {
 		status = "okay";
