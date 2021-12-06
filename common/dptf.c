@@ -28,6 +28,8 @@ static struct {
 	int temp;     /* degrees K, negative for disabled */
 	cond_t over;      /* watch for crossings */
 } dptf_threshold[TEMP_SENSOR_COUNT][DPTF_THRESHOLDS_PER_SENSOR];
+_STATIC_ASSERT(TEMP_SENSOR_COUNT > 0,
+	       "CONFIG_PLATFORM_EC_DPTF enabled, but no temp sensors");
 
 static void dptf_init(void)
 {
