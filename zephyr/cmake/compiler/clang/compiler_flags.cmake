@@ -9,4 +9,5 @@ set_compiler_property(PROPERTY hosted)
 
 check_set_compiler_property(APPEND PROPERTY warning_extended -Wunused-variable
 	-Werror=unused-variable -Werror=missing-braces
-	-Werror=sometimes-uninitialized)
+	-Werror=sometimes-uninitialized -Werror=unused-function
+	-Werror=array-bounds)
