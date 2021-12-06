@@ -15,6 +15,20 @@
 
 #include <stdio.h>
 
+#define CHECK_XYZ_EQUALS(VEC1, VEC2)                                  \
+	do {                                                          \
+		zassert_equal((VEC1)[X], (VEC2)[X],                   \
+			      "Got %d for X, expected %d", (VEC1)[X], \
+			      (VEC2)[X]);                             \
+		zassert_equal((VEC1)[Y], (VEC2)[Y],                   \
+			      "Got %d for Y, expected %d", (VEC1)[Y], \
+			      (VEC2)[Y]);                             \
+		zassert_equal((VEC1)[Z], (VEC2)[Z],                   \
+			      "Got %d for Z, expected %d", (VEC1)[Z], \
+			      (VEC2)[Z]);                             \
+	} while (0)
+
+/** Used with the LIS2DW12 set rate function to control rounding behavior */
 enum lis2dw12_round_mode {
 	ROUND_DOWN,
 	ROUND_UP,
@@ -28,7 +42,6 @@ static void lis2dw12_setup(void)
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
 
 	ms->current_range = 0;
-
 }
 
 static void test_lis2dw12_init__fail_read_who_am_i(void)
@@ -266,6 +279,92 @@ static void test_lis2dw12_set_rate(void)
 	}
 }
 
+static void test_lis2dw12_read(void)
+{
+	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	struct i2c_emul *i2c_emul = lis2dw12_emul_to_i2c_emul(emul);
+	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
+	struct stprivate_data *drvdata = ms->drv_data;
+	intv3_t sample = { 0, 0, 0 };
+	int rv;
+
+	/* Reading requires a range to be set. Use 1 so it has no effect
+	 * when scaling samples. Also need to set the sensor resolution
+	 * manually.
+	 */
+
+	ms->drv->set_range(ms, 1, 0);
+	drvdata->resol = LIS2DW12_RESOLUTION;
+
+	/* Part 1: Try to read from sensor, but cannot check status register for
+	 * ready bit
+	 */
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul, LIS2DW12_STATUS_REG);
+
+	rv = ms->drv->read(ms, sample);
+
+	zassert_equal(rv, EC_ERROR_INVAL,
+		      "Expected return val of %d but got %d", EC_ERROR_INVAL,
+		      rv);
+
+	/* Part 2: Try to read sensor, but no new data is available. In this
+	 * case, the driver should return the reading in from `ms->raw_xyz`
+	 */
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	lis2dw12_emul_clear_accel_reading(emul);
+	ms->raw_xyz[X] = 123;
+	ms->raw_xyz[Y] = 456;
+	ms->raw_xyz[Z] = 789;
+
+	rv = ms->drv->read(ms, sample);
+
+	zassert_equal(rv, EC_SUCCESS, "Expected return val of %d but got %d",
+		      EC_SUCCESS, rv);
+	CHECK_XYZ_EQUALS(sample, ms->raw_xyz);
+
+	/* Part 3: Read from sensor w/ data ready, but an error occurs during
+	 * read.
+	 */
+	intv3_t fake_sample = { 100, 200, 300 };
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul, LIS2DW12_OUT_X_L_ADDR);
+	lis2dw12_emul_set_accel_reading(emul, fake_sample);
+
+	rv = ms->drv->read(ms, sample);
+
+	zassert_equal(rv, EC_ERROR_INVAL,
+		      "Expected return val of %d but got %d", EC_ERROR_INVAL,
+		      rv);
+
+	/* Part 4: Success */
+
+	intv3_t expected_sample;
+
+	for (int i = 0; i < ARRAY_SIZE(expected_sample); i++) {
+		/* The read routine will normalize `fake_sample` to use the full
+		 * range of INT16, so we need to compensate in our expected
+		 * output
+		 */
+
+		expected_sample[i] = fake_sample[i] *
+				    (1 << (16 - LIS2DW12_RESOLUTION));
+	}
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	lis2dw12_emul_set_accel_reading(emul, fake_sample);
+
+	rv = ms->drv->read(ms, sample);
+
+	zassert_equal(rv, EC_SUCCESS, "Expected return val of %d but got %d",
+		      EC_SUCCESS, rv);
+	CHECK_XYZ_EQUALS(sample, expected_sample);
+}
+
 void test_suite_lis2dw12(void)
 {
 	ztest_test_suite(lis2dw12,
@@ -292,6 +391,9 @@ void test_suite_lis2dw12(void)
 				 lis2dw12_setup, lis2dw12_setup),
 			 ztest_unit_test_setup_teardown(
 				 test_lis2dw12_set_rate,
+				 lis2dw12_setup, lis2dw12_setup),
+			 ztest_unit_test_setup_teardown(
+				 test_lis2dw12_read,
 				 lis2dw12_setup, lis2dw12_setup)
 			 );
 	ztest_run_test_suite(lis2dw12);
