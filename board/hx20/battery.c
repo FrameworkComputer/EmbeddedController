@@ -80,19 +80,42 @@ __override void battery_charger_notify(uint8_t flag)
 	}
 }
 
+static int battery_check_disconnect(void)
+{
+	int rv;
+	uint8_t data[6];
+
+	/* Check if battery charging + discharging is disabled. */
+	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
+			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	if (rv)
+		return BATTERY_DISCONNECT_ERROR;
+
+	if (data[3] & BATTERY_DISCHARGING_DISABLED)
+		return BATTERY_DISCONNECTED;
+
+
+	return BATTERY_NOT_DISCONNECTED;
+}
+
 enum battery_present battery_is_present(void)
 {
 	enum battery_present bp;
 	int mv;
 
 	mv = adc_read_channel(ADC_VCIN1_BATT_TEMP);
-
-	if (mv == ADC_READ_ERROR)
-		return -1;
-
 	bp = (mv < 3000 ? BP_YES : BP_NO);
 
-	return bp;
+	if (mv == ADC_READ_ERROR)
+		return BP_NO;
+	else if (!bp)
+		return BP_NO;
+	else if (!(charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE))
+		return BP_NOT_SURE;
+	else if (battery_check_disconnect() != BATTERY_NOT_DISCONNECTED)
+		return BP_NOT_SURE;
+	else
+		return bp;
 }
 
 #ifdef CONFIG_EMI_REGION1
