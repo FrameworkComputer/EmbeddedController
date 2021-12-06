@@ -33,6 +33,8 @@ struct lis2dw12_emul_data {
 	uint8_t ctrl1_reg;
 	/** Emulated ctrl2 register */
 	uint8_t ctrl2_reg;
+	/** Emulated ctrl3 register */
+	uint8_t ctrl3_reg;
 	/** Emulated ctrl6 register */
 	uint8_t ctrl6_reg;
 	/** Emulated status register */
@@ -69,6 +71,7 @@ void lis2dw12_emul_reset(const struct emul *emul)
 	data->who_am_i_reg = LIS2DW12_WHO_AM_I;
 	data->ctrl1_reg = 0;
 	data->ctrl2_reg = 0;
+	data->ctrl3_reg = 0;
 	data->ctrl6_reg = 0;
 	data->status_reg = 0;
 	data->soft_reset_count = 0;
@@ -107,6 +110,10 @@ static int lis2dw12_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 	case LIS2DW12_CTRL2_ADDR:
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->ctrl2_reg;
+		break;
+	case LIS2DW12_CTRL3_ADDR:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->ctrl3_reg;
 		break;
 	case LIS2DW12_CTRL6_ADDR:
 		__ASSERT_NO_MSG(bytes == 0);
@@ -212,6 +219,9 @@ static int lis2dw12_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 			data->soft_reset_count++;
 		}
 		data->ctrl2_reg = val & ~LIS2DW12_SOFT_RESET_MASK;
+		break;
+	case LIS2DW12_CTRL3_ADDR:
+		data->ctrl3_reg = val;
 		break;
 	case LIS2DW12_CTRL6_ADDR:
 		data->ctrl6_reg = val;

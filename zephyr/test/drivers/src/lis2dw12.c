@@ -122,6 +122,69 @@ static void test_lis2dw12_init__fail_set_bdu(void)
 		      "expected at least one soft reset");
 }
 
+static void test_lis2dw12_init__fail_set_lir(void)
+{
+	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
+	int rv;
+
+	i2c_common_emul_set_read_fail_reg(lis2dw12_emul_to_i2c_emul(emul),
+					  LIS2DW12_LIR_ADDR);
+
+	rv = ms->drv->init(ms);
+	zassert_equal(EC_ERROR_INVAL, rv, "init returned %d but expected %d",
+		      rv, EC_ERROR_INVAL);
+	zassert_true(lis2dw12_emul_get_soft_reset_count(emul) > 0,
+		     "expected at least one soft reset");
+}
+
+static int lis2dw12_test_mock_write_fail_set_power_mode(struct i2c_emul *emul,
+							int reg, uint8_t val,
+							int bytes, void *data)
+{
+	if (reg == LIS2DW12_ACC_LPMODE_ADDR && bytes == 1 &&
+	    (val & LIS2DW12_ACC_LPMODE_MASK) != 0) {
+		/* Cause an error when trying to set the LPMODE */
+		return -EIO;
+	}
+	return 1;
+}
+
+static void test_lis2dw12_init__fail_set_power_mode(void)
+{
+	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
+	int rv;
+
+	i2c_common_emul_set_write_func(
+		lis2dw12_emul_to_i2c_emul(emul),
+		lis2dw12_test_mock_write_fail_set_power_mode, NULL);
+
+	rv = ms->drv->init(ms);
+	zassert_equal(EC_ERROR_INVAL, rv, "init returned %d but expected %d",
+		      rv, EC_ERROR_INVAL);
+	zassert_true(lis2dw12_emul_get_soft_reset_count(emul) > 0,
+		     "expected at least one soft reset");
+}
+
+static void test_lis2dw12_init__success(void)
+{
+	const struct emul *emul = emul_get_binding(EMUL_LABEL);
+	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
+	struct stprivate_data *drvdata = ms->drv_data;
+
+	int rv;
+
+	rv = ms->drv->init(ms);
+	zassert_equal(EC_SUCCESS, rv, "init returned %d but expected %d", rv,
+		      EC_SUCCESS);
+	zassert_true(lis2dw12_emul_get_soft_reset_count(emul) > 0,
+		     "expected at least one soft reset");
+	zassert_equal(LIS2DW12_RESOLUTION, drvdata->resol,
+		      "Expected resolution of %d but got %d",
+		      LIS2DW12_RESOLUTION, drvdata->resol);
+}
+
 static void test_lis2dw12_set_power_mode(void)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
@@ -382,6 +445,15 @@ void test_suite_lis2dw12(void)
 				 lis2dw12_setup, lis2dw12_setup),
 			 ztest_unit_test_setup_teardown(
 				 test_lis2dw12_init__fail_set_bdu,
+				 lis2dw12_setup, lis2dw12_setup),
+			 ztest_unit_test_setup_teardown(
+				 test_lis2dw12_init__fail_set_lir,
+				 lis2dw12_setup, lis2dw12_setup),
+			ztest_unit_test_setup_teardown(
+				 test_lis2dw12_init__fail_set_power_mode,
+				 lis2dw12_setup, lis2dw12_setup),
+			ztest_unit_test_setup_teardown(
+				 test_lis2dw12_init__success,
 				 lis2dw12_setup, lis2dw12_setup),
 			 ztest_unit_test_setup_teardown(
 				 test_lis2dw12_set_power_mode,
