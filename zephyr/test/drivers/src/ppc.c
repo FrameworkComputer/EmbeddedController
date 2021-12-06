@@ -335,6 +335,49 @@ static void test_ppc_syv682x_dev_is_connected(void)
 			"Could not connect device as source");
 }
 
+static void test_ppc_syv682x_vbus_sink_enable(void)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+	uint8_t reg;
+	int ilim;
+
+	/*
+	 * If VBUS source is already enabled, disabling VBUS sink should
+	 * trivially succeed.
+	 */
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
+		   "VBUS enable failed");
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, false),
+		   "Sink disable failed");
+
+	/*
+	 * After enabling VBUS sink, the HV power path should be enabled in sink
+	 * mode with the configured current limit.
+	 */
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, false),
+		   "VBUS enable failed");
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, true),
+		   "Sink disable failed");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+		   NULL);
+	zassert_true(reg & SYV682X_CONTROL_1_CH_SEL,
+		     "Sink enabled, but CH_SEL set to 5V power path");
+	zassert_false(reg & SYV682X_CONTROL_1_PWR_ENB,
+		      "Sink enabled, but power path disabled");
+	zassert_false(reg & SYV682X_CONTROL_1_HV_DR,
+		      "Sink enabled, but high-voltage path in source mode");
+	ilim = (reg & SYV682X_HV_ILIM_MASK) >> SYV682X_HV_ILIM_BIT_SHIFT;
+	zassert_equal(ilim, CONFIG_PLATFORM_EC_USBC_PPC_SYV682X_HV_ILIM,
+		      "Sink enabled, but HV current limit set to %d", ilim);
+
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, false),
+		   "Sink disable failed");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+		   NULL);
+	zassert_true(reg & SYV682X_CONTROL_1_PWR_ENB,
+		     "Sink disabled, but power path enabled");
+}
+
 static void test_ppc_syv682x(void)
 {
 	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
@@ -345,6 +388,7 @@ static void test_ppc_syv682x(void)
 	test_ppc_syv682x_source_current_limit();
 	test_ppc_syv682x_write_busy();
 	test_ppc_syv682x_dev_is_connected();
+	test_ppc_syv682x_vbus_sink_enable();
 }
 
 void test_suite_ppc(void)
