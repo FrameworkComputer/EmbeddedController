@@ -294,6 +294,11 @@ static int syv682x_emul_init(const struct emul *emul,
 		return ret;
 
 	syv682x_emul_set_alert(data, false);
+	data->reg[SYV682X_CONTROL_1_REG] =
+		(SYV682X_HV_ILIM_3_30 << SYV682X_HV_ILIM_BIT_SHIFT) |
+		(SYV682X_5V_ILIM_3_30 << SYV682X_5V_ILIM_BIT_SHIFT) |
+		/* HV_DR = 0 */
+		SYV682X_CONTROL_1_CH_SEL;
 
 	return ret;
 }

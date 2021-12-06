@@ -23,6 +23,109 @@
 
 static const int syv682x_port = 1;
 
+static void check_control_1_default_init(uint8_t control_1)
+{
+	/*
+	 * During init, when not in dead battery mode, the driver should
+	 * configure the high-voltage channel as sink but leave the power path
+	 * disabled. The driver should set the current limits according to
+	 * configuration.
+	 */
+	int ilim;
+
+	zassert_true(control_1 & SYV682X_CONTROL_1_PWR_ENB,
+			"Default init, but power path enabled");
+	ilim = (control_1 & SYV682X_HV_ILIM_MASK) >> SYV682X_HV_ILIM_BIT_SHIFT;
+	zassert_equal(ilim, CONFIG_PLATFORM_EC_USBC_PPC_SYV682X_HV_ILIM,
+			"Default init, but HV current limit set to %d", ilim);
+	zassert_false(control_1 & SYV682X_CONTROL_1_HV_DR,
+			"Default init, but source mode selected");
+	zassert_true(control_1 & SYV682X_CONTROL_1_CH_SEL,
+			"Default init, but 5V power path selected");
+}
+
+static void test_ppc_syv682x_init(void)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+	const struct device *gpio_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_USB_C1_FRS_EN_PATH, gpios));
+	uint8_t reg;
+	int ilim;
+
+	/*
+	 * With a dead battery, the device powers up sinking VBUS, and the
+	 * driver should keep that going..
+	 */
+	zassert_ok(syv682x_emul_set_reg(emul, SYV682X_CONTROL_1_REG,
+				SYV682X_CONTROL_1_CH_SEL), NULL);
+	syv682x_emul_set_condition(emul, SYV682X_STATUS_VSAFE_5V,
+			SYV682X_CONTROL_4_NONE);
+	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+			NULL);
+	zassert_true(reg & SYV682X_CONTROL_1_CH_SEL,
+			"Dead battery init, but CH_SEL set to 5V power path");
+	zassert_false(reg &
+			(SYV682X_CONTROL_1_PWR_ENB | SYV682X_CONTROL_1_HV_DR),
+			"Dead battery init, but CONTROL_1 is 0x%x", reg);
+	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
+			"Dead battery init, but VBUS source enabled");
+
+	/* With VBUS at vSafe0V, init should set the default configuration. */
+	zassert_ok(syv682x_emul_set_reg(emul, SYV682X_CONTROL_1_REG,
+				SYV682X_CONTROL_1_PWR_ENB), NULL);
+	syv682x_emul_set_condition(emul, SYV682X_STATUS_VSAFE_0V,
+			SYV682X_CONTROL_4_NONE);
+	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+			NULL);
+	check_control_1_default_init(reg);
+
+	/* With sink disabled, init should do the same thing. */
+	zassert_ok(syv682x_emul_set_reg(emul, SYV682X_CONTROL_1_REG,
+				SYV682X_CONTROL_1_CH_SEL), NULL);
+	syv682x_emul_set_condition(emul, SYV682X_STATUS_VSAFE_0V,
+			SYV682X_CONTROL_4_NONE);
+	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
+			NULL);
+	check_control_1_default_init(reg);
+
+	/*
+	 * Any init sequence should also disable the FRS GPIO, set the 5V
+	 * current limit according to configuration, set over-current, over-
+	 * voltage, and discharge parameters appropriately, and enable CC lines.
+	 */
+	zassert_equal(gpio_emul_output_get(gpio_dev, GPIO_USB_C1_FRS_EN_PORT),
+			0, "FRS enabled, but FRS GPIO not asserted");
+	ilim = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
+	zassert_equal(ilim, CONFIG_PLATFORM_EC_USB_PD_PULLUP,
+			"Default init, but 5V current limit set to %d", ilim);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_2_REG, &reg),
+			NULL);
+	zassert_equal(reg, (SYV682X_OC_DELAY_10MS << SYV682X_OC_DELAY_SHIFT) |
+			(SYV682X_DSG_RON_200_OHM << SYV682X_DSG_RON_SHIFT) |
+			(SYV682X_DSG_TIME_50MS << SYV682X_DSG_TIME_SHIFT),
+			"Default init, but CONTROL_2 is 0x%x", reg);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_3_REG, &reg),
+			NULL);
+	zassert_equal(reg, (SYV682X_OVP_23_7 << SYV682X_OVP_BIT_SHIFT) |
+			SYV682X_RVS_MASK,
+			"Default init, but CONTROL_3 is 0x%x", reg);
+	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_4_REG, &reg),
+			NULL);
+	zassert_equal(reg & ~SYV682X_CONTROL_4_INT_MASK,
+			SYV682X_CONTROL_4_CC1_BPS | SYV682X_CONTROL_4_CC2_BPS,
+			"Default init, but CONTROL_4 is 0x%x", reg);
+
+	/* Disable the power path again. */
+	zassert_ok(syv682x_emul_set_reg(emul, SYV682X_CONTROL_1_REG,
+				SYV682X_CONTROL_1_PWR_ENB), NULL);
+	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
+			SYV682X_CONTROL_4_NONE);
+
+}
+
 static void test_ppc_syv682x_vbus_enable(void)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
@@ -380,8 +483,7 @@ static void test_ppc_syv682x_vbus_sink_enable(void)
 
 static void test_ppc_syv682x(void)
 {
-	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
-
+	test_ppc_syv682x_init();
 	test_ppc_syv682x_vbus_enable();
 	test_ppc_syv682x_interrupt();
 	test_ppc_syv682x_frs();
