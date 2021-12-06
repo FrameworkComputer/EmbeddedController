@@ -900,6 +900,14 @@ config PLATFORM_EC_USBC_PPC_SYV682C
 	  rer (to on/off Vconn) when smart discahrge is enabled. This allows us
 	  to re-enable the smart discharge on boards using SYV682C.
 
+config PLATFORM_EC_USBC_PPC_SYV682X_HV_ILIM
+	int "SYV682X high-voltage current limit"
+	depends on PLATFORM_EC_USBC_PPC_SYV682X
+	default 2
+	help
+	  SYV682x PPC high voltage power path current limit. Valid values are
+	  0 (1.25A), 1 (1.75A), 2 (3.3A), or 3 (5.5A). See syv682x.h.
+
 config PLATFORM_EC_USBC_PPC_SYV682X_NO_CC
 	bool "SYV682X does not pass through CC"
 	help
@@ -1314,6 +1322,14 @@ config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT8XXX2
 	  (provider and consumer) and Fast Role Swap detection.
 
 endif  # PLATFORM_EC_USBC_PPC
+
+config PLATFORM_EC_USB_PD_PULLUP
+	int "Default source Rp value"
+	default 1
+	help
+	  Default pull-up value on the USB-C ports when they are used as source.
+	  Valid values are 0 (USB default current), 1 (1.5A), and 2 (3.0A). See
+	  enum tcpc_rp_value.
 
 config PLATFORM_EC_USB_PD_ONLY_FIXED_PDOS
 	bool "Only support FIXED type PDOs"
