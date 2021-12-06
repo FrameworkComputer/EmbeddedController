@@ -348,8 +348,6 @@
 		compatible = "unused-gpios";
 
 		unused-gpios =
-			/* uart1_rx */
-			<&gpiob 0 GPIO_INPUT>,
 			/* nc_gpg3 */
 			<&gpiog 3 GPIO_OUT_LOW>,
 			/* nc_gpi7 */
