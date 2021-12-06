@@ -35,8 +35,12 @@ struct lis2dw12_emul_data {
 	uint8_t ctrl2_reg;
 	/** Emulated ctrl6 register */
 	uint8_t ctrl6_reg;
+	/** Emulated status register */
+	uint8_t status_reg;
 	/** Soft reset count */
 	uint32_t soft_reset_count;
+	/** Current X, Y, and Z output data registers */
+	int16_t accel_data[3];
 };
 
 struct lis2dw12_emul_cfg {
@@ -63,8 +67,13 @@ void lis2dw12_emul_reset(const struct emul *emul)
 	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
 	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
 	data->who_am_i_reg = LIS2DW12_WHO_AM_I;
+	data->ctrl1_reg = 0;
 	data->ctrl2_reg = 0;
+	data->ctrl6_reg = 0;
+	data->status_reg = 0;
 	data->soft_reset_count = 0;
+
+	memset(data->accel_data, 0, sizeof(data->accel_data));
 }
 
 void lis2dw12_emul_set_who_am_i(const struct emul *emul, uint8_t who_am_i)
@@ -102,6 +111,38 @@ static int lis2dw12_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 	case LIS2DW12_CTRL6_ADDR:
 		__ASSERT_NO_MSG(bytes == 0);
 		*val = data->ctrl6_reg;
+		break;
+	case LIS2DW12_STATUS_REG:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->status_reg;
+		break;
+	case LIS2DW12_OUT_X_L_ADDR:
+	case LIS2DW12_OUT_X_H_ADDR:
+	case LIS2DW12_OUT_Y_L_ADDR:
+	case LIS2DW12_OUT_Y_H_ADDR:
+	case LIS2DW12_OUT_Z_L_ADDR:
+	case LIS2DW12_OUT_Z_H_ADDR:
+		/* Allow multi-byte reads within this range of registers.
+		 * `bytes` is actually an offset past the starting register
+		 * `reg`.
+		 */
+
+		__ASSERT_NO_MSG(LIS2DW12_OUT_X_L_ADDR + bytes <=
+				LIS2DW12_OUT_Z_H_ADDR);
+
+		/* 0 is OUT_X_L_ADDR .. 5 is OUT_Z_H_ADDR */
+		int offset_into_odrs = reg - LIS2DW12_OUT_X_L_ADDR + bytes;
+
+		/* Which of the 3 channels we're reading. 0 = X, 1 = Y, 2 = Z */
+		int channel = offset_into_odrs / 2;
+
+		if (offset_into_odrs % 2 == 0) {
+			/* Get the LSB (L reg) */
+			*val = data->accel_data[channel] & 0xFF;
+		} else {
+			/* Get the MSB (H reg) */
+			*val = (data->accel_data[channel] >> 8) & 0xFF;
+		}
 		break;
 	default:
 		__ASSERT(false, "No read handler for register 0x%02x", reg);
@@ -175,6 +216,20 @@ static int lis2dw12_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	case LIS2DW12_CTRL6_ADDR:
 		data->ctrl6_reg = val;
 		break;
+	case LIS2DW12_STATUS_REG:
+		__ASSERT(false,
+			 "Attempt to write to read-only status register");
+		return -EINVAL;
+	case LIS2DW12_OUT_X_L_ADDR:
+	case LIS2DW12_OUT_X_H_ADDR:
+	case LIS2DW12_OUT_Y_L_ADDR:
+	case LIS2DW12_OUT_Y_H_ADDR:
+	case LIS2DW12_OUT_Z_L_ADDR:
+	case LIS2DW12_OUT_Z_H_ADDR:
+		__ASSERT(false,
+			 "Attempt to write to data output register 0x%02x",
+			 reg);
+		return -EINVAL;
 	default:
 		__ASSERT(false, "No write handler for register 0x%02x", reg);
 		return -EINVAL;
@@ -197,6 +252,37 @@ static int emul_lis2dw12_init(const struct emul *emul,
 	i2c_common_emul_init(&data->common);
 
 	return i2c_emul_register(parent, emul->dev_label, &data->common.emul);
+}
+
+int lis2dw12_emul_set_accel_reading(const struct emul *emul, intv3_t reading)
+{
+	__ASSERT(emul, "emul is NULL");
+	struct lis2dw12_emul_data *data = emul->data;
+
+	for (int i = X; i <= Z; i++) {
+		/* Ensure we fit in a 14-bit signed integer */
+		if (reading[i] < LIS2DW12_SAMPLE_MIN ||
+		    reading[i] > LIS2DW12_SAMPLE_MAX) {
+			return -EINVAL;
+		}
+		/* Readings are left-aligned, so shift over by 2 */
+		data->accel_data[i] = reading[i] * 4;
+	}
+
+	/* Set the DRDY (data ready) bit */
+	data->status_reg |= LIS2DW12_STS_DRDY_UP;
+
+	return 0;
+}
+
+void lis2dw12_emul_clear_accel_reading(const struct emul *emul)
+{
+	__ASSERT(emul, "emul is NULL");
+	struct lis2dw12_emul_data *data = emul->data;
+
+	/* Zero out the registers and reset DRDY bit */
+	memset(data->accel_data, 0, sizeof(data->accel_data));
+	data->status_reg &= ~LIS2DW12_STS_DRDY_UP;
 }
 
 #define INIT_LIS2DW12(n)                                                  \

@@ -45,6 +45,11 @@
 #define LIS2DW12_FIFO_THS_UP		0x80
 
 #define LIS2DW12_OUT_X_L_ADDR		0x28
+#define LIS2DW12_OUT_X_H_ADDR		0x29
+#define LIS2DW12_OUT_Y_L_ADDR		0x2a
+#define LIS2DW12_OUT_Y_H_ADDR		0x2b
+#define LIS2DW12_OUT_Z_L_ADDR		0x2c
+#define LIS2DW12_OUT_Z_H_ADDR		0x2d
 
 #define LIS2DW12_FIFO_CTRL_ADDR		0x2e
 
@@ -205,6 +210,12 @@ enum lis2dw12_fs {
  * TODO: Support all "LP Power Mode" (res. 12/14 bits).
  */
 #define LIS2DW12_RESOLUTION		14
+
+/** Maximum possible sample */
+#define LIS2DW12_SAMPLE_MAX		((1<<(LIS2DW12_RESOLUTION-1))-1)
+
+/** Smallest possible sample */
+#define LIS2DW12_SAMPLE_MIN		(-(1<<(LIS2DW12_RESOLUTION-1)))
 
 #ifdef CONFIG_ZTEST
 int lis2dw12_set_power_mode(const struct motion_sensor_t *s,

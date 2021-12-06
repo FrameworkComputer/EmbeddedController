@@ -80,4 +80,21 @@ uint8_t lis2dw12_emul_peek_mode(struct i2c_emul *emul);
  */
 uint8_t lis2dw12_emul_peek_lpmode(struct i2c_emul *emul);
 
+/**
+ * @brief Updates the current 3-axis acceleromter reading and
+ *        sets the DRDY (data ready) flag.
+ * @param emul Reference to current LIS2DW12 emulator.
+ * @param reading array of int X, Y, and Z readings.
+ * @return 0 on success, or -EINVAL if readings are out of bounds.
+ */
+int lis2dw12_emul_set_accel_reading(const struct emul *emul,
+				    intv3_t reading);
+
+/**
+ * @brief Clears the current accelerometer reading and resets the
+ *        DRDY (data ready) flag.
+ * @param emul Reference to current LIS2DW12 emulator.
+ */
+void lis2dw12_emul_clear_accel_reading(const struct emul *emul);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_LIS2DW12_H_ */
