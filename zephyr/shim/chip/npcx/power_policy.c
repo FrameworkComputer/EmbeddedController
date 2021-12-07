@@ -20,8 +20,7 @@ struct pm_state_info pm_policy_next_state(uint8_t cpu, int32_t ticks)
 {
 	ARG_UNUSED(cpu);
 
-	/* Deep sleep is allowed and console is not in use. */
-	if (DEEP_SLEEP_ALLOWED != 0 && !npcx_power_console_is_in_use()) {
+	if (DEEP_SLEEP_ALLOWED) {
 		for (int i = ARRAY_SIZE(residency_info) - 1; i >= 0; i--) {
 			if (!pm_constraint_get(residency_info[i].state)) {
 				continue;
