@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <cros/thermistor/thermistor.dtsi>
+
 / {
 	named-adc-channels {
 		compatible = "named-adc-channels";
@@ -19,8 +21,38 @@
 		};
 	};
 
+	named-temp-sensors {
+		memory {
+			compatible = "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+			label = "DDR and SOC";
+			enum-name = "TEMP_SENSOR_1";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_temp_1>;
+		};
+		chassis {
+			compatible = "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+			label = "Ambient";
+			enum-name = "TEMP_SENSOR_2";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_temp_1>;
+		};
+	};
 };
 
 &adc0 {
+	status = "okay";
+};
+
+&thermistor_3V3_51K1_47K_4050B {
 	status = "okay";
 };
