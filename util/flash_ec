@@ -425,8 +425,7 @@ if [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_.*_and_.*$ ]]; then
 fi
 
 servo_is_ccd() {
-	[[ "${SERVO_TYPE}" =~ "ccd_cr50" ]] || \
-	[[ "${SERVO_TYPE}" =~ "ccd_ti50" ]]
+	[[ "${SERVO_TYPE}" =~ "ccd" ]]
 }
 
 servo_has_warm_reset() {
