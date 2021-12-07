@@ -371,6 +371,14 @@ static int board_with_sensor_icm42607(void)
 	return sku_id == 57;
 }
 
+void motion_interrupt(enum gpio_signal signal)
+{
+	if (board_with_sensor_icm42607())
+		icm42607_interrupt(signal);
+	else
+		bmi160_interrupt(signal);
+}
+
 static void board_update_sensor_config_from_sku(void)
 {
 	if (board_is_convertible()) {
