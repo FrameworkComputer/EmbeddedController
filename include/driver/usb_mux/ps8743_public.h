@@ -95,9 +95,19 @@
 #define PS8743_USB_HS_THRESH_NEG_45  0xc0
 #define PS8743_USB_HS_THRESH_NEG_35  0xe0
 
+/* DCI config: 0x45~0x4D */
+#define PS8743_REG_DCI_CONFIG_2        0x47
+#define PS8743_AUTO_DCI_MODE_SHIFT     6
+#define PS8743_AUTO_DCI_MODE_MASK      (3 << PS8743_AUTO_DCI_MODE_SHIFT)
+#define PS8743_AUTO_DCI_MODE_ENABLE    (0 << PS8743_AUTO_DCI_MODE_SHIFT)
+#define PS8743_AUTO_DCI_MODE_FORCE_USB (2 << PS8743_AUTO_DCI_MODE_SHIFT)
+#define PS8743_AUTO_DCI_MODE_FORCE_DCI (3 << PS8743_AUTO_DCI_MODE_SHIFT)
+
 int ps8743_tune_usb_eq(const struct usb_mux *me, uint8_t tx, uint8_t rx);
 int ps8743_write(const struct usb_mux *me, uint8_t reg, uint8_t val);
 int ps8743_read(const struct usb_mux *me, uint8_t reg, int *val);
+int ps8743_field_update(const struct usb_mux *me, uint8_t reg, uint8_t mask,
+			uint8_t val);
 int ps8743_check_chip_id(const struct usb_mux *me, int *val);
 
 #endif /* __CROS_EC_DRIVER_USB_MUX_PS8743_PUBLIC_H */

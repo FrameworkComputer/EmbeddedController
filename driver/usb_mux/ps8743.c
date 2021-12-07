@@ -23,6 +23,14 @@ int ps8743_write(const struct usb_mux *me, uint8_t reg, uint8_t val)
 			  reg, val);
 }
 
+int ps8743_field_update(const struct usb_mux *me, uint8_t reg, uint8_t mask,
+			uint8_t val)
+{
+	return i2c_field_update8(me->i2c_port, me->i2c_addr_flags,
+			  reg, mask, val);
+}
+
+
 int ps8743_check_chip_id(const struct usb_mux *me, int *val)
 {
 	int id1;
