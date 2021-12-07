@@ -23,6 +23,10 @@ void board_usb_mux_init(void)
 		ps8743_write(&usb_muxes[1],
 				   PS8743_REG_HS_DET_THRESHOLD,
 				   PS8743_USB_HS_THRESH_NEG_10);
+		ps8743_field_update(&usb_muxes[1],
+				   PS8743_REG_DCI_CONFIG_2,
+				   PS8743_AUTO_DCI_MODE_MASK,
+				   PS8743_AUTO_DCI_MODE_FORCE_USB);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
