@@ -198,10 +198,10 @@
 			label = "PG_PP5000_Z2_OD";
 			enum-name = "GPIO_PG_PP5000_Z2_OD";
 		};
-		x_ec_gpio1 {
+		ec_x_gpio1 {
 			gpios = <&gpio6 2 GPIO_OUT_LOW>;
-			label = "X_EC_GPIO1";
-			enum-name = "GPIO_X_EC_GPIO1";
+			label = "EC_X_GPIO1";
+			enum-name = "GPIO_EC_X_GPIO1";
 		};
 		dp_aux_path_sel {
 			gpios = <&gpio6 3 GPIO_OUT_LOW>;
