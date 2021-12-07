@@ -104,6 +104,7 @@ driver-$(CONFIG_LED_DRIVER_DS2413)+=led/ds2413.o
 driver-$(CONFIG_LED_DRIVER_LM3509)+=led/lm3509.o
 driver-$(CONFIG_LED_DRIVER_LM3630A)+=led/lm3630a.o
 driver-$(CONFIG_LED_DRIVER_LP5562)+=led/lp5562.o
+driver-$(CONFIG_LED_DRIVER_MP3385)+=led/mp3385.o
 driver-$(CONFIG_LED_DRIVER_OZ554)+=led/oz554.o
 
 # 7-segment display
