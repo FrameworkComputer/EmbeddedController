@@ -44,6 +44,96 @@ config PLATFORM_EC_CONSOLE_CMD_LEDTEST
 
 	    ledtest 0 disable
 
+config PLATFORM_EC_LED_PWM_CHARGE_COLOR
+	int "Battery charging LED color"
+	default 5
+	range 0 5
+	help
+	  Configure the color of LED when battery is charging:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_CHARGE_ERROR_COLOR
+	int "Charging error LED color"
+	default 0
+	range 0 5
+	help
+	  Configure the color of LED when Charging error or battery not present:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_NEAR_FULL_COLOR
+	int "Battery almost full LED color"
+	default 1
+	range 0 5
+	help
+	  Configure the color of LED when charge battery is almost full:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_SOC_ON_COLOR
+	int "AP powered on LED color"
+	default 1
+	range 0 5
+	help
+	  Configure the color of LED when AP powered on:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_SOC_SUSPEND_COLOR
+	int "AP suspended LED color"
+	default 1
+	range 0 5
+	help
+	  Configure the color of LED when AP suspended:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_LOW_BATT_COLOR
+	int "Low battery LED color"
+	default 5
+	range 0 5
+	help
+	  Configure the color of LED when battery is low:
+	    0 - EC_LED_COLOR_RED
+	    1 - EC_LED_COLOR_GREEN
+	    2 - EC_LED_COLOR_BLUE
+	    3 - EC_LED_COLOR_YELLOW
+	    4 - EC_LED_COLOR_WHITE
+	    5 - EC_LED_COLOR_AMBER
+
+	  This value is mapped directly to enum ec_led_colors.
+
 endif # PLATFORM_EC_LED_PWM
 
 config PLATFORM_EC_LED_ONOFF_STATES
