@@ -127,25 +127,31 @@ static void board_led_set_battery(void)
 		set_active_port_color(LED_AMBER);
 		break;
 	case PWR_STATE_DISCHARGE:
-		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
-			if (charge_get_percent() <= 10) {
-				led_blink_cycle =
-					battery_ticks % (2 * TIMES_TICK_ONE_SEC);
+		if (charge_get_percent() <= 10) {
+			led_blink_cycle = battery_ticks % (2 * TIMES_TICK_ONE_SEC);
+			if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
 				side_led_set_color(1,
 					(led_blink_cycle < TIMES_TICK_ONE_SEC) ?
-							LED_WHITE : LED_OFF);
-			}
-			else
+							LED_AMBER : LED_OFF);
+			if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+				side_led_set_color(0,
+					(led_blink_cycle < TIMES_TICK_ONE_SEC) ?
+							LED_AMBER : LED_OFF);
+		} else {
+			if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
 				side_led_set_color(1, LED_OFF);
+			if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+				side_led_set_color(0, LED_OFF);
 		}
-
-		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
-			side_led_set_color(0, LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
 		led_blink_cycle = battery_ticks % TIMES_TICK_ONE_SEC;
-		set_active_port_color((led_blink_cycle < TIMES_TICK_HALF_SEC) ?
-								LED_WHITE : LED_OFF);
+		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
+			side_led_set_color(1, (led_blink_cycle < TIMES_TICK_HALF_SEC) ?
+								LED_AMBER : LED_OFF);
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
+			side_led_set_color(0, (led_blink_cycle < TIMES_TICK_HALF_SEC) ?
+								LED_AMBER : LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
