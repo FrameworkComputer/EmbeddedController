@@ -160,7 +160,7 @@ static int charger_emul_send_msg(struct charger_emul_data *data,
 }
 
 /**
- * @brief Send capability message which for now is hardcoded
+ * @brief Send capability message constructed from charger emulator PDOs
  *
  * @param data Pointer to USB-C charger emulator
  * @param delay Optional delay
@@ -173,28 +173,33 @@ static int charger_emul_send_capability_msg(struct charger_emul_data *data,
 					    uint64_t delay)
 {
 	struct charger_emul_msg *msg;
+	int pdos;
+	int byte;
+	int addr;
 
-	msg = charger_emul_alloc_msg(6);
+	/* Find number of PDOs */
+	for (pdos = 0; pdos < EMUL_CHARGER_MAX_PDOS; pdos++) {
+		if (data->pdo[pdos] == 0) {
+			break;
+		}
+	}
+
+	/* Allocate space for header and 4 bytes for each PDO */
+	msg = charger_emul_alloc_msg(2 + pdos * 4);
 	if (msg == NULL) {
 		return -ENOMEM;
 	}
 
-	/* Capability with 5v@3A */
-	charger_emul_set_header(data, msg, PD_DATA_SOURCE_CAP, 1);
+	charger_emul_set_header(data, msg, PD_DATA_SOURCE_CAP, pdos);
 
-	/* Fixed supply (type of supply) 0xc0 */
-	msg->msg.buf[5] = 0x00;
-	/* Dual role capable 0x20 */
-	msg->msg.buf[5] |= 0x00;
-	/* Unconstrained power 0x08 */
-	msg->msg.buf[5] |= 0x08;
-
-	/* 5V on bits 19-10 */
-	msg->msg.buf[4] = 0x1;
-	msg->msg.buf[3] = 0x90;
-	/* 3A on bits 9-0 */
-	msg->msg.buf[3] |= 0x1;
-	msg->msg.buf[2] = 0x2c;
+	for (int i = 0; i < pdos; i++) {
+		/* Address of given PDO in message buffer */
+		addr = 2 + i * 4;
+		for (byte = 0; byte < 4; byte++) {
+			msg->msg.buf[addr + byte] =
+				(data->pdo[i] >> (8 * byte)) & 0xff;
+		}
+	}
 
 	/* Fill tcpci message structure */
 	msg->msg.type = TCPCI_MSG_SOP;
@@ -344,6 +349,105 @@ int charger_emul_connect_to_tcpci(struct charger_emul_data *data,
 	return charger_emul_send_capability_msg(data, 0);
 }
 
+#define PDO_FIXED_FLAGS_MASK						\
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_UNCONSTRAINED |		\
+	 PDO_FIXED_COMM_CAP | PDO_FIXED_DATA_SWAP)
+
+/** Check description in emul_charger.h */
+enum check_pdos_res charger_emul_check_pdos(struct charger_emul_data *data)
+{
+	int volt_i_min;
+	int volt_i_max;
+	int volt_min;
+	int volt_max;
+	int i;
+
+	/* Check that first PDO is fixed 5V */
+	if ((data->pdo[0] & PDO_TYPE_MASK) != PDO_TYPE_FIXED ||
+	    PDO_FIXED_VOLTAGE(data->pdo[0]) != 5000) {
+		return CHARGER_EMUL_FIRST_PDO_NO_FIXED_5V;
+	}
+
+	/* Check fixed PDOs are before other types and are in correct order */
+	for (i = 1, volt_min = -1;
+	     i < EMUL_CHARGER_MAX_PDOS && data->pdo[i] != 0 &&
+	     (data->pdo[i] & PDO_TYPE_MASK) != PDO_TYPE_FIXED;
+	     i++) {
+		volt_i_min = PDO_FIXED_VOLTAGE(data->pdo[i]);
+		/* Each voltage should be only once */
+		if (volt_i_min == volt_min || volt_i_min == 5000) {
+			return CHARGER_EMUL_FIXED_VOLT_REPEATED;
+		}
+		/* Check that voltage is increasing in next PDO */
+		if (volt_i_min < volt_min) {
+			return CHARGER_EMUL_FIXED_VOLT_NOT_IN_ORDER;
+		}
+		/* Check that fixed PDOs (except first) have cleared flags */
+		if (data->pdo[i] & PDO_FIXED_FLAGS_MASK) {
+			return CHARGER_EMUL_NON_FIRST_PDO_FIXED_FLAGS;
+		}
+		/* Save current voltage */
+		volt_min = volt_i_min;
+	}
+
+	/* Check battery PDOs are before variable type and are in order */
+	for (volt_min = -1, volt_max = -1;
+	     i < EMUL_CHARGER_MAX_PDOS && data->pdo[i] != 0 &&
+	     (data->pdo[i] & PDO_TYPE_MASK) != PDO_TYPE_BATTERY;
+	     i++) {
+		volt_i_min = PDO_BATT_MIN_VOLTAGE(data->pdo[i]);
+		volt_i_max = PDO_BATT_MAX_VOLTAGE(data->pdo[i]);
+		/* Each voltage range should be only once */
+		if (volt_i_min == volt_min && volt_i_max == volt_max) {
+			return CHARGER_EMUL_BATT_VOLT_REPEATED;
+		}
+		/*
+		 * Lower minimal voltage should be first, than lower maximal
+		 * voltage.
+		 */
+		if (volt_i_min < volt_min ||
+		    (volt_i_min == volt_min && volt_i_max < volt_max)) {
+			return CHARGER_EMUL_BATT_VOLT_NOT_IN_ORDER;
+		}
+		/* Save current voltage */
+		volt_min = volt_i_min;
+		volt_max = volt_i_max;
+	}
+
+	/* Check variable PDOs are last and are in correct order */
+	for (volt_min = -1, volt_max = -1;
+	     i < EMUL_CHARGER_MAX_PDOS && data->pdo[i] != 0 &&
+	     (data->pdo[i] & PDO_TYPE_MASK) != PDO_TYPE_VARIABLE;
+	     i++) {
+		volt_i_min = PDO_VAR_MIN_VOLTAGE(data->pdo[i]);
+		volt_i_max = PDO_VAR_MAX_VOLTAGE(data->pdo[i]);
+		/* Each voltage range should be only once */
+		if (volt_i_min == volt_min && volt_i_max == volt_max) {
+			return CHARGER_EMUL_VAR_VOLT_REPEATED;
+		}
+		/*
+		 * Lower minimal voltage should be first, than lower maximal
+		 * voltage.
+		 */
+		if (volt_i_min < volt_min ||
+		    (volt_i_min == volt_min && volt_i_max < volt_max)) {
+			return CHARGER_EMUL_VAR_VOLT_NOT_IN_ORDER;
+		}
+		/* Save current voltage */
+		volt_min = volt_i_min;
+		volt_max = volt_i_max;
+	}
+
+	/* Check that all PDOs after first 0 are unused and set to 0 */
+	for (; i < EMUL_CHARGER_MAX_PDOS; i++) {
+		if (data->pdo[i] != 0) {
+			return CHARGER_EMUL_PDO_AFTER_ZERO;
+		}
+	}
+
+	return CHARGER_EMUL_CHECK_PDO_OK;
+}
+
 /** Check description in emul_charger.h */
 void charger_emul_init(struct charger_emul_data *data)
 {
@@ -353,4 +457,10 @@ void charger_emul_init(struct charger_emul_data *data)
 	data->ops.transmit = charger_emul_transmit_op;
 	data->ops.rx_consumed = charger_emul_rx_consumed_op;
 	data->ops.control_change = NULL;
+
+	/* By default there is only PDO 5v@3A */
+	data->pdo[0] = PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
+	for (int i = 1; i < EMUL_CHARGER_MAX_PDOS; i++) {
+		data->pdo[i] = 0;
+	}
 }
