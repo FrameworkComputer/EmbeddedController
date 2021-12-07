@@ -58,6 +58,12 @@
 #define CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG 0
 #endif
 
+#ifndef CONFIG_CHARGER_BQ257X0_ILIM2_VTH_CUSTOM
+/* Reduce ILIM from default of 150% to 110% */
+#define CONFIG_CHARGER_BQ257X0_ILIM2_VTH \
+	BQ257X0_PROCHOT_OPTION_0_ILIM2_VTH__1P10
+#endif
+
 /*
  * Helper macros
  */
@@ -88,6 +94,14 @@
 
 #define SET_CO4_BY_NAME(_field, _c, _x)	SET_BQ_FIELD_BY_NAME(BQ25720,	\
 							     CHARGE_OPTION_4, \
+							     _field, _c, (_x))
+
+#define SET_PO0(_field, _v, _x)		SET_BQ_FIELD(BQ257X0,	\
+						     PROCHOT_OPTION_0,	\
+						     _field, _v, (_x))
+
+#define SET_PO0_BY_NAME(_field, _c, _x)	SET_BQ_FIELD_BY_NAME(BQ257X0,	\
+							     PROCHOT_OPTION_0, \
 							     _field, _c, (_x))
 
 #define SET_PO1(_field, _v, _x)		SET_BQ_FIELD(BQ257X0,	\
@@ -334,6 +348,20 @@ static int bq257x0_init_charge_option_1(int chgnum)
 	return raw_write16(chgnum, BQ25710_REG_CHARGE_OPTION_1, reg);
 }
 
+static int bq257x0_init_prochot_option_0(int chgnum)
+{
+	int rv;
+	int reg;
+
+	rv = raw_read16(chgnum, BQ25710_REG_PROCHOT_OPTION_0, &reg);
+	if (rv)
+		return rv;
+
+	reg = SET_PO0(ILIM2_VTH, CONFIG_CHARGER_BQ257X0_ILIM2_VTH, reg);
+
+	return raw_write16(chgnum, BQ25710_REG_PROCHOT_OPTION_0, reg);
+}
+
 static int bq257x0_init_prochot_option_1(int chgnum)
 {
 	int rv;
@@ -548,14 +576,9 @@ static void bq25710_init(int chgnum)
 
 	bq257x0_init_charge_option_1(chgnum);
 
-	bq257x0_init_prochot_option_1(chgnum);
+	bq257x0_init_prochot_option_0(chgnum);
 
-	/* Reduce ILIM from default of 150% to 105% */
-	if (!raw_read16(chgnum, BQ25710_REG_PROCHOT_OPTION_0, &reg)) {
-		reg = SET_BQ_FIELD(BQ257X0, PROCHOT_OPTION_0, ILIM2_VTH, 0,
-				   reg);
-		raw_write16(chgnum, BQ25710_REG_PROCHOT_OPTION_0, reg);
-	}
+	bq257x0_init_prochot_option_1(chgnum);
 
 	bq257x0_init_charge_option_2(chgnum);
 

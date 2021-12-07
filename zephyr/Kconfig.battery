@@ -370,6 +370,25 @@ config PLATFORM_EC_CHARGER_BQ25710_SENSE_RESISTOR_AC
 	  external AC power supply. Its value must be known for the calculation
 	  to be correct. The value is typically around 10 mOhms.
 
+config PLATFORM_EC_CHARGER_BQ257X0_ILIM2_VTH_CUSTOM
+	bool "ILIM2_VTH override"
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Enable customizing the charhger's ILIM2_VTH threshold
+
+config PLATFORM_EC_CHARGER_BQ257X0_ILIM2_VTH
+	int "ILIM2 threshold"
+	range 1 30
+	default 9
+	depends on PLATFORM_EC_CHARGER_BQ257X0_ILIM2_VTH_CUSTOM
+	help
+	  Set percentage of IDPM as threshold. ICRIT threshold is set to be 110%
+	  of ILIM2. Input overcurrent protection (ACOC) threshold is also 1.33x
+	  or 2x of ILIM2 (1.33x or 2x based on ACOC limit field).
+	  1  - 25: 110% - 230%, step is 5%.
+	  26 - 30: 250% - 450%, step is 50%.
+	  31: Out of range (ignored).
+
 config PLATFORM_EC_CHARGER_BQ25720_VSYS_TH2_CUSTOM
 	bool "VSYS_TH2 override"
 	depends on PLATFORM_EC_CHARGER_BQ25720
