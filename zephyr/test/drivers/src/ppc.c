@@ -481,6 +481,17 @@ static void test_ppc_syv682x_vbus_sink_enable(void)
 		     "Sink disabled, but power path enabled");
 }
 
+static void test_ppc_syv682x_ppc_dump(void)
+{
+	/*
+	 * The ppc_dump command should succeed for this port. Don't check the
+	 * output, since there are no standard requirements for that.
+	 */
+	const struct ppc_drv *drv = ppc_chips[syv682x_port].drv;
+
+	zassert_ok(drv->reg_dump(syv682x_port), "ppc_dump command failed");
+}
+
 static void test_ppc_syv682x(void)
 {
 	test_ppc_syv682x_init();
@@ -491,6 +502,7 @@ static void test_ppc_syv682x(void)
 	test_ppc_syv682x_write_busy();
 	test_ppc_syv682x_dev_is_connected();
 	test_ppc_syv682x_vbus_sink_enable();
+	test_ppc_syv682x_ppc_dump();
 }
 
 void test_suite_ppc(void)
