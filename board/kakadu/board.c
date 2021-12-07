@@ -535,3 +535,18 @@ void board_fill_source_power_info(int port,
 	r->meas.current_lim = 1500;
 	r->max_power = r->meas.voltage_now * r->meas.current_max;
 }
+
+/* b/207456334: bugged reserved bits causes device not charging */
+static void mt6370_reg_fix(void)
+{
+	i2c_update8(chg_chips[CHARGER_SOLO].i2c_port,
+		    chg_chips[CHARGER_SOLO].i2c_addr_flags,
+		    RT946X_REG_CHGCTRL1,
+		    BIT(3) | BIT(5), MASK_CLR);
+	i2c_update8(chg_chips[CHARGER_SOLO].i2c_port,
+		    chg_chips[CHARGER_SOLO].i2c_addr_flags,
+		    RT946X_REG_CHGCTRL2,
+		    BIT(5) | BIT(RT946X_SHIFT_BATDET_DIS_DLY),
+		    MASK_CLR);
+}
+DECLARE_HOOK(HOOK_INIT, mt6370_reg_fix, HOOK_PRIO_DEFAULT);
