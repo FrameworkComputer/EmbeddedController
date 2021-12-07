@@ -825,6 +825,10 @@ int tc_is_attached_snk(int port)
 	return IS_ATTACHED_SNK(port);
 }
 
+__overridable void tc_update_pd_sleep_mask(int port)
+{
+}
+
 void tc_pd_connection(int port, int en)
 {
 	if (en) {
@@ -836,9 +840,10 @@ void tc_pd_connection(int port, int en)
 		TC_SET_FLAG(port, TC_FLAGS_PARTNER_PD_CAPABLE);
 		/* If a PD device is attached then disable deep sleep */
 		if (IS_ENABLED(CONFIG_LOW_POWER_IDLE) &&
-		    !IS_ENABLED(CONFIG_USB_PD_TCPC_ON_CHIP)) {
+		    IS_ENABLED(CONFIG_USB_PD_TCPC_ON_CHIP))
+			tc_update_pd_sleep_mask(port);
+		else if (IS_ENABLED(CONFIG_LOW_POWER_IDLE))
 			disable_sleep(SLEEP_MASK_USB_PD);
-		}
 
 		/*
 		 * Update the mux state, only when the PD capable flag
@@ -852,7 +857,9 @@ void tc_pd_connection(int port, int en)
 		TC_CLR_FLAG(port, TC_FLAGS_PARTNER_PD_CAPABLE);
 		/* If a PD device isn't attached then enable deep sleep */
 		if (IS_ENABLED(CONFIG_LOW_POWER_IDLE) &&
-		    !IS_ENABLED(CONFIG_USB_PD_TCPC_ON_CHIP)) {
+		    IS_ENABLED(CONFIG_USB_PD_TCPC_ON_CHIP))
+			tc_update_pd_sleep_mask(port);
+		else if (IS_ENABLED(CONFIG_LOW_POWER_IDLE)) {
 			int i;
 
 			/* If all ports are not connected, allow the sleep */
