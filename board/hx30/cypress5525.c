@@ -1132,7 +1132,7 @@ void pd1_chip_interrupt_deferred(void)
 DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
 void pd1_chip_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
+	hook_call_deferred(&pd1_chip_interrupt_deferred_data, 0);
 
 	//task_set_event(TASK_ID_CYPD, CYPD_EVT_INT_CTRL_1, 0);
 }
