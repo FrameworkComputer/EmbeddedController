@@ -13,6 +13,7 @@
 #define __EMUL_CHARGER_H
 
 #include <emul.h>
+#include "emul/emul_tcpci_partner_common.h"
 #include "emul/emul_tcpci.h"
 
 /**
@@ -30,16 +31,10 @@
 
 /** Structure describing charger emulator */
 struct charger_emul_data {
+	/** Common TCPCI partner data */
+	struct tcpci_partner_data common_data;
 	/** Operations used by TCPCI emulator */
 	struct tcpci_emul_partner_ops ops;
-	/** Work used to send message with delay */
-	struct k_work_delayable delayed_send;
-	/** Pointer to connected TCPCI emulator */
-	const struct emul *tcpci_emul;
-	/** Queue for delayed messages */
-	struct k_fifo to_send;
-	/** Next SOP message id */
-	int msg_id;
 	/** Power data objects returned in source capabilities message */
 	uint32_t pdo[EMUL_CHARGER_MAX_PDOS];
 };

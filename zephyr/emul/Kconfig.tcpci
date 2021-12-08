@@ -21,6 +21,14 @@ module = TCPCI_EMUL
 module-str = tcpci_emul
 source "subsys/logging/Kconfig.template.log_config"
 
+config EMUL_TCPCI_PARTNER_COMMON
+	bool
+	help
+	  This option is selected automatically by specific TCPCI partner
+	  emulators. Enable common code that can be used by TCPCI partner device
+	  emulators. It covers sending delayed messages. API of common functions
+	  is available in zephyr/include/emul/emul_common_tcpci_partner.h
+
 config EMUL_PS8XXX
 	bool "Parade PS8XXX emulator"
 	help
@@ -30,6 +38,7 @@ config EMUL_PS8XXX
 
 config EMUL_CHARGER
 	bool "USB-C charger emulator"
+	select EMUL_TCPCI_PARTNER_COMMON
 	help
 	  Enable USB-C charger emulator which may be attached to TCPCI emulator.
 	  API of charger emulator is available in
