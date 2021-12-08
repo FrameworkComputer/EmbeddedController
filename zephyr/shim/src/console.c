@@ -109,13 +109,8 @@ int uart_shell_stop(void)
 	return event.signal->result;
 }
 
-#ifdef SHELL_DEFAULT_BACKEND_CONFIG_FLAGS
 static const struct shell_backend_config_flags shell_cfg_flags =
 	SHELL_DEFAULT_BACKEND_CONFIG_FLAGS;
-#else
-/* TODO(b/205884929): Drop after we drop support for v2.7 */
-static const bool shell_cfg_flags;
-#endif
 
 static void shell_init_from_work(struct k_work *work)
 {
