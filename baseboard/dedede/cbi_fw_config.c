@@ -33,6 +33,12 @@ enum fw_config_db get_cbi_fw_config_db(void)
 	return ((cached_fw_config & FW_CONFIG_DB_MASK) >> FW_CONFIG_DB_OFFSET);
 }
 
+enum fw_config_stylus get_cbi_fw_config_stylus(void)
+{
+	return ((cached_fw_config & FW_CONFIG_STYLUS_MASK)
+			>> FW_CONFIG_STYLUS_OFFSET);
+}
+
 enum fw_config_kblight_type get_cbi_fw_config_kblight(void)
 {
 	return ((cached_fw_config & FW_CONFIG_KB_BL_MASK)

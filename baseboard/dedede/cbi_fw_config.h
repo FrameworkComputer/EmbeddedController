@@ -28,6 +28,16 @@ enum fw_config_db {
 #define FW_CONFIG_DB_MASK			GENMASK(3, 0)
 
 /*
+ * Stylus (1 bit)
+ */
+enum fw_config_stylus {
+	STYLUS_ABSENT = 0,
+	STYLUS_PRESENT = 1,
+};
+#define FW_CONFIG_STYLUS_OFFSET			4
+#define FW_CONFIG_STYLUS_MASK			GENMASK(4, 4)
+
+/*
  * Keyboard backlight (1 bit)
  */
 enum fw_config_kblight_type {
@@ -71,6 +81,7 @@ enum fw_config_hdmi_type {
 #define FW_CONFIG_HDMI_MASK			GENMASK(17, 17)
 
 enum fw_config_db get_cbi_fw_config_db(void);
+enum fw_config_stylus get_cbi_fw_config_stylus(void);
 enum fw_config_kblight_type get_cbi_fw_config_kblight(void);
 enum fw_config_tablet_mode_type get_cbi_fw_config_tablet_mode(void);
 enum fw_config_numeric_pad_type get_cbi_fw_config_numeric_pad(void);
