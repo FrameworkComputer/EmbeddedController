@@ -100,12 +100,13 @@
 			label = "EC_I2C_BATT_SDA";
 		};
 		ec_pen_chg_dis_odl {
-			gpios = <&gpioe 4 GPIO_ODR_LOW>;
+			gpios = <&gpioe 4 GPIO_INPUT>;
 			label = "EC_PEN_CHG_DIS_ODL";
 			enum-name = "GPIO_EC_PEN_CHG_DIS_ODL";
 		};
-		ec_wp_odl {
-			gpios = <&gpioe 3 GPIO_INPUT>;
+		gpio_ec_wp_l: ec_wp_odl {
+			#gpio-cells = <0>;
+			gpios = <&gpioe 3 (GPIO_OPEN_DRAIN)>;
 			label = "EC_WP_ODL";
 			enum-name = "GPIO_WP_L";
 		};
@@ -239,7 +240,7 @@
 			enum-name = "GPIO_HDMI_PRSNT_ODL";
 		};
 		en_pp5000_z2 {
-			gpios = <&gpio3 4 GPIO_OUT_LOW>;
+			gpios = <&gpio3 4 GPIO_OUT_HIGH>;
 			label = "EN_PP5000_Z2";
 			enum-name = "GPIO_EN_PP5000_Z2";
 		};
@@ -283,5 +284,13 @@
 			label = "CCD_MODE_ODL";
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};
+	};
+
+	def-lvol-io-list {
+		compatible = "nuvoton,npcx-lvolctrl-def";
+		lvol-io-pads = <
+			&lvol_ioe3 /*  GPIOE3 GPIO_EC_WP_L */
+			&lvol_io40 /*  GPIO40 GPIO_EC_BL_EN_OD */
+		>;
 	};
 };
