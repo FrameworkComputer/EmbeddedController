@@ -111,7 +111,7 @@ static void test_dead_battery_boot_force_pp2_fets_set(void)
 	 * the PP2_EN bit, the driver also force sets this bit during dead
 	 * battery boot by writing that bit to the FUNC_SET3 reg.
 	 *
-	 * TODO(207034759): Verify need or remove redundant PP2 set.
+	 * TODO(b/207034759): Verify need or remove redundant PP2 set.
 	 */
 	zassert_true(test_write_data.val_intercepted & SN5S330_PP2_EN, NULL);
 	zassert_false(sn5s330_drv.is_sourcing_vbus(SN5S330_PORT), NULL);

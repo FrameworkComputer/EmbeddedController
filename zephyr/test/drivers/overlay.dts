@@ -94,6 +94,11 @@
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 			label = "GPIO_USB_C1_PPC_INT_ODL";
 		};
+		gpio_usb_c0_ppc_int: usb_c0_ppc_int {
+			gpios = <&gpio0 14 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+			label = "GPIO_USB_C0_PPC_INT_ODL";
+		};
 	};
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
@@ -542,7 +547,7 @@
 };
 
 &gpio0 {
-	ngpios = <14>;
+	ngpios = <15>;
 };
 
 &i2c0 {
@@ -585,6 +590,7 @@
 		compatible = "cros,sn5s330-emul";
 		reg = <0x40>;
 		label = "SN5S330_EMUL";
+		int_gpio = <&gpio_usb_c0_ppc_int>;
 	};
 
 	accel_bmi260: bmi260@68 {
