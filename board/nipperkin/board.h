@@ -26,6 +26,8 @@
 /* Max Power = 100 W */
 #define PD_MAX_POWER_MW         ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
 
+#define CONFIG_CHARGER_PROFILE_OVERRIDE
+
 /* USB Type A Features */
 
 /* BC 1.2 */
