@@ -14,6 +14,7 @@
  * connect to 1.8v on other versions.
  */
 #define CONFIG_IT83XX_VCC_1P8V
+#define CONFIG_IT83XX_I2C_CMD_QUEUE
 
 /*
  * On power-on, H1 releases the EC from reset but then quickly asserts and
