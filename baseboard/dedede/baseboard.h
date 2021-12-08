@@ -176,6 +176,7 @@
 
 /* Sensors */
 #define CONFIG_MKBP_EVENT
+#define CONFIG_MKBP_EVENT_WAKEUP_MASK 0
 #define CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT
 
 /* SoC */
