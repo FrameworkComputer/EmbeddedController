@@ -7,5 +7,5 @@
 register_binman_project(
     project_name="drawcia_riscv",
     zephyr_board="it8xxx2",
-    dts_overlays=["gpio.dts", "kb.dts"],
+    dts_overlays=["gpio.dts"],
 )

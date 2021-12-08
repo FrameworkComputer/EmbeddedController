@@ -30,7 +30,6 @@ register_corsola_project(
         here / "battery_krabby.dts",
         here / "gpio_krabby.dts",
         here / "i2c_krabby.dts",
-        here / "kb_krabby.dts",
         here / "motionsense_krabby.dts",
         here / "pwm_krabby.dts",
     ],
