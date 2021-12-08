@@ -805,6 +805,37 @@ struct motion_sensor_t motion_sensors[] = {
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
+/**
+ * Handle debounced pen input changing state.
+ */
+static void pendetect_deferred(void)
+{
+	int pen_charge_enable = !gpio_get_level(GPIO_PEN_DET_ODL) &&
+	    !chipset_in_state(CHIPSET_STATE_ANY_OFF);
+
+	if (pen_charge_enable)
+		gpio_set_level(GPIO_EN_PP5000_PEN, 1);
+	else
+		gpio_set_level(GPIO_EN_PP5000_PEN, 0);
+
+	CPRINTS("Pen charge %sable", pen_charge_enable ? "en" : "dis");
+}
+DECLARE_DEFERRED(pendetect_deferred);
+
+void pen_detect_interrupt(enum gpio_signal signal)
+{
+	/* pen input debounce time */
+	hook_call_deferred(&pendetect_deferred_data, (100 * MSEC));
+}
+
+static void pen_charge_check(void)
+{
+	if (get_cbi_fw_config_stylus() == STYLUS_PRESENT)
+		hook_call_deferred(&pendetect_deferred_data, (100 * MSEC));
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pen_charge_check, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pen_charge_check, HOOK_PRIO_LAST);
+
 void board_init(void)
 {
 	int on;
@@ -871,6 +902,16 @@ void board_init(void)
 		gmr_tablet_switch_disable();
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
+		GPIO_INPUT | GPIO_PULL_DOWN);
+	}
+
+	if (get_cbi_fw_config_stylus() == STYLUS_PRESENT) {
+		gpio_enable_interrupt(GPIO_PEN_DET_ODL);
+		/* Make sure pen detection is triggered or not at sysjump */
+		pen_charge_check();
+	} else {
+		gpio_disable_interrupt(GPIO_PEN_DET_ODL);
+		gpio_set_flags(GPIO_PEN_DET_ODL,
 		GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 

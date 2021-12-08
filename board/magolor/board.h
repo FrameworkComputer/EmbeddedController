@@ -208,5 +208,6 @@ enum battery_type {
 };
 
 void motion_interrupt(enum gpio_signal signal);
+void pen_detect_interrupt(enum gpio_signal s);
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */
