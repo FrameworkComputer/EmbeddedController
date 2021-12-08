@@ -1,0 +1,43 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_temp_soc: temp_soc {
+			label = "SOC";
+			enum-name = "ADC_TEMP_SENSOR_SOC";
+			channel = <0>;
+		};
+		adc_temp_charger: temp_charger {
+			label = "CHARGER";
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			channel = <1>;
+		};
+		adc_temp_memory: temp_memory {
+			label = "MEMORY";
+			enum-name = "ADC_TEMP_SENSOR_MEMORY";
+			channel = <2>;
+		};
+		adc_core_imon1: core_imon1 {
+			label = "CORE_I";
+			enum-name = "ADC_CORE_IMON1";
+			channel = <3>;
+		};
+		adc_core_imon2: core_imon2 {
+			label = "SOC_I";
+			enum-name = "ADC_SOC_IMON2";
+			channel = <4>;
+		};
+	};
+
+};
+
+&adc0 {
+	status = "okay";
+};

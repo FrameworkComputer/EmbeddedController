@@ -9,6 +9,7 @@ def register_variant(project_name):
         zephyr_board="npcx9",
         dts_overlays=[
             # Common to all projects.
+            here / "adc.dts",
             here / "battery.dts",
             here / "fan.dts",
             here / "gpio.dts",
