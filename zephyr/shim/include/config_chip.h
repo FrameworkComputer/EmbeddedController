@@ -356,18 +356,20 @@
 
 #endif /* CONFIG_PLATFORM_EC_ESPI */
 
-#if DT_NODE_EXISTS(DT_NODELABEL(flash0))
-#define CONFIG_PROGRAM_MEMORY_BASE DT_REG_ADDR(DT_NODELABEL(flash0))
+#if DT_HAS_CHOSEN(zephyr_flash)
+#define CONFIG_PROGRAM_MEMORY_BASE DT_REG_ADDR(DT_CHOSEN(zephyr_flash))
 #else
-#define CONFIG_PROGRAM_MEMORY_BASE 0X0
+#error "A zephyr,flash device must be chosen in the device tree"
 #endif
 
-#if DT_NODE_EXISTS(DT_NODELABEL(sram0))
-#define CONFIG_RAM_BASE DT_REG_ADDR(DT_NODELABEL(sram0))
-#define CONFIG_DATA_RAM_SIZE DT_REG_SIZE(DT_NODELABEL(sram0))
-#else
+#if DT_HAS_CHOSEN(zephyr_sram)
+#define CONFIG_RAM_BASE DT_REG_ADDR(DT_CHOSEN(zephyr_sram))
+#define CONFIG_DATA_RAM_SIZE DT_REG_SIZE(DT_CHOSEN(zephyr_sram))
+#elif defined(CONFIG_ARCH_POSIX)
 #define CONFIG_RAM_BASE 0x0
 #define CONFIG_DATA_RAM_SIZE 0x0
+#else
+#error "A zephyr,sram device must be chosen in the device tree"
 #endif
 
 #define CONFIG_RO_MEM_OFF CONFIG_CROS_EC_RO_MEM_OFF
