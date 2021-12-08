@@ -10,7 +10,8 @@
 #include "usb_pd_tcpm.h"
 
 /* RT1718S Private RegMap */
-#define RT1718S_I2C_ADDR_FLAGS				0x43
+#define RT1718S_I2C_ADDR1_FLAGS				0x43
+#define RT1718S_I2C_ADDR2_FLAGS				0x40
 
 #define RT1718S_VID					0x29CF
 #define RT1718S_PID					0x1718
