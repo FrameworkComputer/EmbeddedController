@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * PS8802 retimer.
+ * PS8802/PS8762 retimer.
  */
 #include "usb_mux.h"
 
@@ -46,6 +46,10 @@
 #define PS8802_EXTRA_SWING_LEVEL_P0_UP_2	0X06
 #define PS8802_EXTRA_SWING_LEVEL_P0_UP_3	0X07
 #define PS8802_EXTRA_SWING_LEVEL_P0_MASK	0X07
+
+#define PS8802_REG_DCIRX		0x4B
+#define PS8802_AUTO_DCI_MODE_DISABLE		BIT(7)
+#define PS8802_FORCE_DCI_MODE			BIT(6)
 
 /*
  * PAGE 2 Register Definitions
