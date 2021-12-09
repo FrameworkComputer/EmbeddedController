@@ -17,6 +17,10 @@
 
 #include "adlrvp.h"
 
+/* Heavy I2C communication as POR, increase WDT expired time */
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 5000
+
 /*
  * External parallel crystal between XTAL1 and XTAL2 pins.
  *   #define CONFIG_CLOCK_SRC_EXTERNAL

@@ -64,6 +64,8 @@ const struct i2c_port_t i2c_ports[] = {
 BUILD_ASSERT(ARRAY_SIZE(i2c_ports) == I2C_CHAN_COUNT);
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+/* I2C access in polling mode before task is initialized */
+#ifdef CONFIG_I2C_BITBANG
 const struct i2c_port_t i2c_bitbang_ports[] = {
 	[I2C_BITBANG_CHAN_BRD_ID] = {
 		.name = "bitbang_brd_id",
@@ -84,6 +86,7 @@ const struct i2c_port_t i2c_bitbang_ports[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_bitbang_ports) == I2C_BITBANG_CHAN_COUNT);
 const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
+#endif
 
 /* USB-C TCPC Configuration */
 const struct tcpc_config_t tcpc_config[] = {
