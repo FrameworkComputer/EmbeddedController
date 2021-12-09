@@ -29,6 +29,9 @@ LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 /** Mask used for the charge current register */
 #define REG_CHG_CURRENT_MASK GENMASK(12, 2)
 
+/** Mask used for the system voltage min register */
+#define REG_SYS_VOLTAGE_MIN_MASK GENMASK(13, 8)
+
 /** Mask used for the system voltage max register */
 #define REG_SYS_VOLTAGE_MAX_MASK GENMASK(14, 3)
 
@@ -50,6 +53,12 @@ LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 /** Mask used for the control 3 register */
 #define REG_CONTROL3_MASK GENMASK(15, 0)
 
+/** Mask used for the control 4 register */
+#define REG_CONTROL4_MASK GENMASK(15, 0)
+
+/** Mask used for the control 8 register */
+#define REG_CONTROL8_MASK GENMASK(15, 0)
+
 /** Mask used for the AC PROCHOT register */
 #define REG_PROCHOT_AC_MASK GENMASK(12, 7)
 
@@ -69,6 +78,8 @@ struct isl923x_emul_data {
 	uint16_t adapter_current_limit1_reg;
 	/** Emulated adapter current limit 2 register */
 	uint16_t adapter_current_limit2_reg;
+	/** Emulated min voltage register */
+	uint16_t min_volt_reg;
 	/** Emulated max voltage register */
 	uint16_t max_volt_reg;
 	/** Emulated manufacturer ID register */
@@ -83,6 +94,12 @@ struct isl923x_emul_data {
 	uint16_t control_2_reg;
 	/** Emulated control 3 register */
 	uint16_t control_3_reg;
+	/** Emulated control 4 register */
+	uint16_t control_4_reg;
+	/** Emulated control 8 register (RAA489000-only) */
+	uint16_t control_8_reg;
+	/** Emulated info 2 reg */
+	uint16_t info_2_reg;
 	/** Emulated AC PROCHOT register */
 	uint16_t ac_prochot_reg;
 	/** Emulated DC PROCHOT register */
@@ -166,6 +183,27 @@ void isl923x_emul_set_adc_vbus(const struct emul *emulator,
 	data->adc_vbus_reg = value & GENMASK(13, 6);
 }
 
+void raa489000_emul_set_acok_pin(const struct emul *emulator, uint16_t value)
+{
+	struct isl923x_emul_data *data = emulator->data;
+
+	if (value)
+		data->info_2_reg |= RAA489000_INFO2_ACOK;
+	else
+		data->info_2_reg &= ~RAA489000_INFO2_ACOK;
+}
+
+/** Convenience macro for reading 16-bit registers */
+#define READ_REG_16(REG, BYTES, OUT)                             \
+	do {                                                     \
+		__ASSERT_NO_MSG((BYTES) == 0 || (BYTES) == 1);   \
+		if ((BYTES) == 0)                                \
+			*(OUT) = (uint8_t)((REG)&0xff);          \
+		else                                             \
+			*(OUT) = (uint8_t)(((REG) >> 8) & 0xff); \
+		break;                                           \
+	} while (0)
+
 static int isl923x_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 				  int bytes)
 {
@@ -173,108 +211,83 @@ static int isl923x_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 
 	switch (reg) {
 	case ISL923X_REG_CHG_CURRENT:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->current_limit_reg & 0xff);
-		else
-			*val = (uint8_t)((data->current_limit_reg >> 8) & 0xff);
+		READ_REG_16(data->current_limit_reg, bytes, val);
+		break;
+	case ISL923X_REG_SYS_VOLTAGE_MIN:
+		READ_REG_16(data->min_volt_reg, bytes, val);
 		break;
 	case ISL923X_REG_SYS_VOLTAGE_MAX:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->max_volt_reg & 0xff);
-		else
-			*val = (uint8_t)((data->max_volt_reg >> 8) & 0xff);
+		READ_REG_16(data->max_volt_reg, bytes, val);
 		break;
 	case ISL923X_REG_ADAPTER_CURRENT_LIMIT1:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->adapter_current_limit1_reg &
-					 0xff);
-		else
-			*val = (uint8_t)((data->adapter_current_limit1_reg >>
-					  8) &
-					 0xff);
+		READ_REG_16(data->adapter_current_limit1_reg, bytes, val);
 		break;
 	case ISL923X_REG_ADAPTER_CURRENT_LIMIT2:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->adapter_current_limit2_reg &
-					 0xff);
-		else
-			*val = (uint8_t)((data->adapter_current_limit2_reg >>
-					  8) &
-					 0xff);
+		READ_REG_16(data->adapter_current_limit2_reg, bytes, val);
 		break;
 	case ISL923X_REG_MANUFACTURER_ID:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->manufacturer_id_reg & 0xff);
-		else
-			*val = (uint8_t)((data->manufacturer_id_reg >> 8) &
-					 0xff);
+		READ_REG_16(data->manufacturer_id_reg, bytes, val);
 		break;
 	case ISL923X_REG_DEVICE_ID:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->device_id_reg & 0xff);
-		else
-			*val = (uint8_t)((data->device_id_reg >> 8) & 0xff);
+		READ_REG_16(data->device_id_reg, bytes, val);
 		break;
 	case ISL923X_REG_CONTROL0:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->control_0_reg & 0xff);
-		else
-			*val = (uint8_t)((data->control_0_reg >> 8) & 0xff);
+		READ_REG_16(data->control_0_reg, bytes, val);
 		break;
 	case ISL923X_REG_CONTROL1:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->control_1_reg & 0xff);
-		else
-			*val = (uint8_t)((data->control_1_reg >> 8) & 0xff);
+		READ_REG_16(data->control_1_reg, bytes, val);
 		break;
 	case ISL923X_REG_CONTROL2:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->control_2_reg & 0xff);
-		else
-			*val = (uint8_t)((data->control_2_reg >> 8) & 0xff);
+		READ_REG_16(data->control_2_reg, bytes, val);
 		break;
 	case ISL9238_REG_CONTROL3:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->control_3_reg & 0xff);
-		else
-			*val = (uint8_t)((data->control_3_reg >> 8) & 0xff);
+		READ_REG_16(data->control_3_reg, bytes, val);
+		break;
+	case ISL9238_REG_CONTROL4:
+		READ_REG_16(data->control_4_reg, bytes, val);
+		break;
+	case RAA489000_REG_CONTROL8:
+		READ_REG_16(data->control_8_reg, bytes, val);
+		break;
+	case ISL9238_REG_INFO2:
+		READ_REG_16(data->info_2_reg, bytes, val);
 		break;
 	case ISL923X_REG_PROCHOT_AC:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->ac_prochot_reg & 0xff);
-		else
-			*val = (uint8_t)((data->ac_prochot_reg >> 8) & 0xff);
+		READ_REG_16(data->ac_prochot_reg, bytes, val);
 		break;
 	case ISL923X_REG_PROCHOT_DC:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->dc_prochot_reg & 0xff);
-		else
-			*val = (uint8_t)((data->dc_prochot_reg >> 8) & 0xff);
+		READ_REG_16(data->dc_prochot_reg, bytes, val);
 		break;
 	case RAA489000_REG_ADC_VBUS:
-		__ASSERT_NO_MSG(bytes == 0 || bytes == 1);
-		if (bytes == 0)
-			*val = (uint8_t)(data->adc_vbus_reg & 0xff);
-		else
-			*val = (uint8_t)((data->adc_vbus_reg >> 8) & 0xff);
+		READ_REG_16(data->adc_vbus_reg, bytes, val);
 		break;
 	default:
+		__ASSERT(false, "Attempt to read unimplemented reg 0x%02x",
+			 reg);
 		return -EINVAL;
 	}
 	return 0;
 }
+
+uint16_t isl923x_emul_peek_reg(struct i2c_emul *i2c_emul, int reg)
+{
+	uint8_t bytes[2];
+
+	isl923x_emul_read_byte(i2c_emul, reg, &bytes[0], 0);
+	isl923x_emul_read_byte(i2c_emul, reg, &bytes[1], 1);
+
+	return bytes[1] << 8 | bytes[0];
+}
+
+/** Convenience macro for writing 16-bit registers */
+#define WRITE_REG_16(REG, BYTES, VAL, MASK)                    \
+	do {                                                   \
+		__ASSERT_NO_MSG((BYTES) == 1 || (BYTES) == 2); \
+		if ((BYTES) == 1)                              \
+			(REG) = (VAL) & (MASK);                \
+		else                                           \
+			(REG) |= ((VAL) << 8) & (MASK);        \
+	} while (0)
 
 static int isl923x_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 				   int bytes)
@@ -283,84 +296,63 @@ static int isl923x_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 
 	switch (reg) {
 	case ISL923X_REG_CHG_CURRENT:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->current_limit_reg = val & REG_CHG_CURRENT_MASK;
-		else
-			data->current_limit_reg |= (val << 8) &
-						   REG_CHG_CURRENT_MASK;
+		WRITE_REG_16(data->current_limit_reg, bytes, val,
+			     REG_CHG_CURRENT_MASK);
+		break;
+	case ISL923X_REG_SYS_VOLTAGE_MIN:
+		WRITE_REG_16(data->min_volt_reg, bytes, val,
+			     REG_SYS_VOLTAGE_MIN_MASK);
 		break;
 	case ISL923X_REG_SYS_VOLTAGE_MAX:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->max_volt_reg = val & REG_SYS_VOLTAGE_MAX_MASK;
-		else
-			data->max_volt_reg |= (val << 8) &
-					      REG_SYS_VOLTAGE_MAX_MASK;
+		WRITE_REG_16(data->max_volt_reg, bytes, val,
+			     REG_SYS_VOLTAGE_MAX_MASK);
 		break;
 	case ISL923X_REG_ADAPTER_CURRENT_LIMIT1:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->adapter_current_limit1_reg =
-				val & REG_ADAPTER_CURRENT_LIMIT1_MASK;
-		else
-			data->adapter_current_limit1_reg |=
-				(val << 8) & REG_ADAPTER_CURRENT_LIMIT1_MASK;
+		WRITE_REG_16(data->adapter_current_limit1_reg, bytes, val,
+			     REG_ADAPTER_CURRENT_LIMIT1_MASK);
 		break;
 	case ISL923X_REG_ADAPTER_CURRENT_LIMIT2:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->adapter_current_limit2_reg =
-				val & REG_ADAPTER_CURRENT_LIMIT2_MASK;
-		else
-			data->adapter_current_limit2_reg |=
-				(val << 8) & REG_ADAPTER_CURRENT_LIMIT2_MASK;
+		WRITE_REG_16(data->adapter_current_limit2_reg, bytes, val,
+			     REG_ADAPTER_CURRENT_LIMIT2_MASK);
 		break;
 	case ISL923X_REG_CONTROL0:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->control_0_reg = val & REG_CONTROL0_MASK;
-		else
-			data->control_0_reg |= (val << 8) & REG_CONTROL0_MASK;
+		WRITE_REG_16(data->control_0_reg, bytes, val,
+			     REG_CONTROL0_MASK);
 		break;
 	case ISL923X_REG_CONTROL1:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->control_1_reg = val & REG_CONTROL1_MASK;
-		else
-			data->control_1_reg |= (val << 8) & REG_CONTROL1_MASK;
+		WRITE_REG_16(data->control_1_reg, bytes, val,
+			     REG_CONTROL1_MASK);
 		break;
 	case ISL923X_REG_CONTROL2:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->control_2_reg = val & REG_CONTROL2_MASK;
-		else
-			data->control_2_reg |= (val << 8) & REG_CONTROL2_MASK;
+		WRITE_REG_16(data->control_2_reg, bytes, val,
+			     REG_CONTROL2_MASK);
 		break;
 	case ISL9238_REG_CONTROL3:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->control_3_reg = val & REG_CONTROL3_MASK;
-		else
-			data->control_3_reg |= (val << 8) & REG_CONTROL3_MASK;
+		WRITE_REG_16(data->control_3_reg, bytes, val,
+			     REG_CONTROL3_MASK);
+		break;
+	case ISL9238_REG_CONTROL4:
+		WRITE_REG_16(data->control_4_reg, bytes, val,
+			     REG_CONTROL4_MASK);
+		break;
+	case RAA489000_REG_CONTROL8:
+		WRITE_REG_16(data->control_8_reg, bytes, val,
+			     REG_CONTROL8_MASK);
+		break;
+	case ISL9238_REG_INFO2:
+		__ASSERT(false, "Write to read-only reg ISL9238_REG_INFO2");
 		break;
 	case ISL923X_REG_PROCHOT_AC:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->ac_prochot_reg = val & REG_PROCHOT_AC_MASK;
-		else
-			data->ac_prochot_reg |= (val << 8) &
-						REG_PROCHOT_AC_MASK;
+		WRITE_REG_16(data->ac_prochot_reg, bytes, val,
+			     REG_PROCHOT_AC_MASK);
 		break;
 	case ISL923X_REG_PROCHOT_DC:
-		__ASSERT_NO_MSG(bytes == 1 || bytes == 2);
-		if (bytes == 1)
-			data->dc_prochot_reg = val & REG_PROCHOT_DC_MASK;
-		else
-			data->dc_prochot_reg |= (val << 8) &
-						REG_PROCHOT_DC_MASK;
+		WRITE_REG_16(data->dc_prochot_reg, bytes, val,
+			     REG_PROCHOT_DC_MASK);
 		break;
 	default:
+		__ASSERT(false, "Attempt to write unimplemented reg 0x%02x",
+			 reg);
 		return -EINVAL;
 	}
 	return 0;

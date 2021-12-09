@@ -79,4 +79,22 @@ void isl923x_emul_set_learn_mode_enabled(const struct emul *emulator,
 void isl923x_emul_set_adc_vbus(const struct emul *emulator,
 			       uint16_t value);
 
+/**
+ * @brief Set the state of the ACOK pin, which is reflected in the INFO2
+ *        register
+ *
+ * @param value If 1, AC adapter is present. If 0, no adapter is present
+ */
+void raa489000_emul_set_acok_pin(const struct emul *emulator, uint16_t value);
+
+/**
+ * @brief Peek at a register value. This function will assert if the requested
+ *        register does is unimplemented.
+ *
+ * @param emulator Reference to the I2C emulator being used
+ * @param reg The address of the register to query
+ * @return The 16-bit value of the register
+ */
+uint16_t isl923x_emul_peek_reg(struct i2c_emul *i2c_emul, int reg);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_ */
