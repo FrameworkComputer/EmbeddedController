@@ -12,6 +12,20 @@
 
 #include "baseboard.h"
 
+/* b/203442963
+ * It's workaround to reduce keyboard's "Silver Migration".
+ * From keyboard vendor's feedback, there are two factors to cause
+ * "Silver Migration".
+ * 1. A voltage potential between trace.
+ * 2. The presence of an electrolyte , such as moisture.
+ * The reason cause voltage potential between KSIxx trace is EC enter ec
+ * hibernate PSL and turn EC's VCC1 power off. Besides KSI2, the other
+ * KSIxx will be turn off. KSI2 is powered by H1.
+ * To avoid voltage potential is keep KSIxx on. That means not to enter
+ * ec hibernate PSL.
+ */
+#undef CONFIG_HIBERNATE_PSL
+
 /*
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.

@@ -217,3 +217,8 @@ void board_bmi160_lsm6dsm_interrupt(enum gpio_signal signal)
 	else
 		bmi160_interrupt(signal);
 }
+
+void board_hibernate_late(void)
+{
+	NPCX_KBSINPU = 0x0A;
+}
