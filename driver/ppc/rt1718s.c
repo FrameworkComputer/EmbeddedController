@@ -169,15 +169,20 @@ static int rt1718s_is_vbus_present(int port)
 }
 #endif
 
+int rt1718s_frs_init(int port)
+{
+	/* Set Rx frs unmasked */
+	RETURN_ERROR(update_bits(port, RT1718S_RT_MASK1,
+				 RT1718S_RT_MASK1_M_RX_FRS, 0xFF));
+	return EC_SUCCESS;
+}
+
 static int rt1718s_init(int port)
 {
 	atomic_clear(&flags[port]);
 
 	if (IS_ENABLED(CONFIG_USB_PD_FRS_PPC))
-		/* Set Rx frs unmasked */
-		RETURN_ERROR(update_bits(port, RT1718S_RT_MASK1,
-					RT1718S_RT_MASK1_M_RX_FRS,
-					0xFF));
+		RETURN_ERROR(rt1718s_frs_init(port));
 
 	return EC_SUCCESS;
 }
@@ -189,8 +194,7 @@ static int rt1718s_set_polarity(int port, int polarity)
 }
 #endif
 
-#ifdef CONFIG_USB_PD_FRS_PPC
-static int rt1718s_set_frs_enable(int port, int enable)
+int rt1718s_set_frs_enable(int port, int enable)
 {
 	/*
 	 * Use write instead of update to save 2 i2c read.
@@ -210,7 +214,6 @@ static int rt1718s_set_frs_enable(int port, int enable)
 	RETURN_ERROR(write_reg(port, RT1718S_VBUS_CTRL_EN, vbus_ctrl_en));
 	return EC_SUCCESS;
 }
-#endif
 
 const struct ppc_drv rt1718s_ppc_drv = {
 	.init = &rt1718s_init,

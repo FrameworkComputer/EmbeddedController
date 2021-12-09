@@ -252,6 +252,9 @@ static int rt1718s_init(int port)
 				TCPC_REG_ALERT_MASK_VENDOR_DEF,
 				MASK_SET));
 
+	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC))
+		rt1718s_frs_init(port);
+
 	RETURN_ERROR(board_rt1718s_init(port));
 
 	return EC_SUCCESS;
@@ -557,6 +560,9 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &rt1718s_enter_low_power_mode,
+#endif
+#ifdef CONFIG_USB_PD_FRS_TCPC
+	.set_frs_enable		= &rt1718s_set_frs_enable,
 #endif
 };
 
