@@ -197,4 +197,11 @@ struct ec_response_chassis_open_check {
 	uint8_t status;
 } __ec_align1;
 
+#define EC_CMD_READ_PD_VERSION 0x3E11
+
+struct ec_response_read_pd_version {
+	uint8_t pd0_version[8];
+	uint8_t pd1_version[8];
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */

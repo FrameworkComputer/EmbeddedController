@@ -878,17 +878,27 @@ void cypd_update_port_state(int controller, int port)
 		charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
 	}
 }
+
+uint8_t *get_pd_version(int controller)
+{
+	return pd_chip_config[controller].version;
+}
+
 void cypd_print_version(int controller, const char *vtype, uint8_t *data)
 {
-		CPRINTS("Controller %d  %s version B:%d.%d.%d.%d", /* AP:%d.%d.%d.%c%c */
+	/*
+	 * Base version: Cypress release version
+	 * Application version: FAE release version
+	 */
+	CPRINTS("Controller %d  %s version B:%d.%d.%d.%d, AP:%d.%d.%d.",
 		controller, vtype,
-		(data[3]>>4) & 0xF, (data[3]) & 0xF, data[2], data[0] + (data[1]<<8)
-		/* (data[7]>>4) & 0xF, (data[7]) & 0xF, data[6], data[5], data[4] */
-		);
+		(data[3]>>4) & 0xF, (data[3]) & 0xF, data[2], data[0] + (data[1]<<8),
+		(data[7]>>4) & 0xF, (data[7]) & 0xF, data[6]);
 }
 void cyp5525_get_version(int controller)
 {
 	int rv;
+	int i;
 	uint8_t data[24];
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
@@ -899,6 +909,10 @@ void cyp5525_get_version(int controller)
 	/*cypd_print_version(controller, "Boot", data);*/
 	cypd_print_version(controller, "App1", data+8);
 	cypd_print_version(controller, "App2", data+16);
+
+	/* store the FW2 version into pd_chip_info struct */
+	for (i = 0; i < 8; i++)
+		pd_chip_config[controller].version[i] = data[16+i];
 }
 
 
