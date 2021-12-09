@@ -1,0 +1,251 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * This file is auto-generated from '/tmp/nissa.csv'
+ */
+
+	gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+		gpios = <&gpio0 0 GPIO_INPUT>;
+		enum-name = "GPIO_POWER_BUTTON_L";
+		label = "GSC_EC_PWR_BTN_ODL";
+	};
+	ec_gsc_packet_mode {
+		gpios = <&gpio7 5 GPIO_INPUT>;
+		enum-name = "GPIO_PACKET_MODE_EN";
+		label = "EC_GSC_PACKET_MODE";
+	};
+	ec_kso_02_inv {
+		gpios = <&gpio1 7 GPIO_OUTPUT>;
+		enum-name = "GPIO_KBD_KSO2";
+		label = "EC_KSO_02_INV";
+	};
+	en_kb_bl {
+		gpios = <&gpioa 0 GPIO_OUTPUT>;
+		enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
+		label = "EN_KB_BL";
+	};
+	voldn_btn_odl {
+		gpios = <&gpio9 3 GPIO_INPUT>;
+		enum-name = "GPIO_VOLUME_DOWN_L";
+		label = "VOLDN_BTN_ODL";
+	};
+	volup_btn_odl {
+		gpios = <&gpioa 2 GPIO_INPUT>;
+		enum-name = "GPIO_VOLUME_UP_L";
+		label = "VOLUP_BTN_ODL";
+	};
+	lid_open: lid_open {
+		gpios = <&gpiod 2 GPIO_INPUT>;
+		enum-name = "GPIO_LID_OPEN";
+		label = "LID_OPEN";
+	};
+	tablet_mode_l {
+		gpios = <&gpio9 5 GPIO_INPUT>;
+		enum-name = "GPIO_TABLET_MODE_L";
+		label = "TABLET_MODE_L";
+	};
+	imu_int_l {
+		gpios = <&gpio5 6 GPIO_INPUT>;
+		enum-name = "GPIO_EC_IMU_INT_L";
+		label = "IMU_INT_L";
+	};
+	acc_int_l {
+		gpios = <&gpio5 0 GPIO_INPUT>;
+		enum-name = "GPIO_LID_ACCEL_INT_L";
+		label = "ACC_INT_L";
+	};
+	ec_wp_odl {
+		gpios = <&gpioa 1 GPIO_INPUT>;
+		enum-name = "GPIO_WP_L";
+		label = "EC_WP_ODL";
+	};
+	ec_edp_bl_en_od {
+		gpios = <&gpiod 3 GPIO_ODR_HIGH>;
+		enum-name = "GPIO_ENABLE_BACKLIGHT";
+		label = "EC_EDP_BL_EN_OD";
+	};
+	usb_c0_int_odl {
+		gpios = <&gpio0 1 GPIO_INPUT>;
+		enum-name = "GPIO_USB_C0_PD_INT_ODL";
+		label = "USB_C0_INT_ODL";
+	};
+	hdmi_sel {
+		gpios = <&gpioc 6 GPIO_OUTPUT>;
+		label = "HDMI_SEL";
+	};
+	ccd_mode_odl {
+		gpios = <&gpioe 5 GPIO_INPUT>;
+		enum-name = "GPIO_CCD_MODE_ODL";
+		label = "CCD_MODE_ODL";
+	};
+	ec_battery_pres_odl {
+		gpios = <&gpioa 3 GPIO_INPUT>;
+		enum-name = "GPIO_BATT_PRES_ODL";
+		label = "EC_BATTERY_PRES_ODL";
+	};
+	ec_entering_rw {
+		gpios = <&gpio0 3 GPIO_OUTPUT>;
+		enum-name = "GPIO_ENTERING_RW";
+		label = "EC_ENTERING_RW";
+	};
+	en_usb_a0_vbus {
+		gpios = <&gpio9 1 GPIO_OUTPUT>;
+		enum-name = "GPIO_EN_USB_A_5V";
+		label = "EN_USB_A0_VBUS";
+	};
+	usb_a0_ilimit_sdp {
+		gpios = <&gpio8 5 GPIO_OUTPUT>;
+		label = "USB_A0_ILIMIT_SDP";
+	};
+	en_sub_usb_a1_vbus {
+		gpios = <&gpiod 4 GPIO_OUTPUT>;
+		label = "EN_SUB_USB_A1_VBUS";
+	};
+	sub_usb_a1_ilimit_sdp {
+		gpios = <&gpiod 5 GPIO_OUTPUT>;
+		label = "SUB_USB_A1_ILIMIT_SDP";
+	};
+	imvp91_vrrdy_od {
+		gpios = <&gpio4 3 GPIO_INPUT>;
+		enum-name = "GPIO_IMVP9_VRRDY_OD";
+		label = "IMVP91_VRRDY_OD";
+	};
+	ec_soc_sys_pwrok {
+		gpios = <&gpio3 7 GPIO_OUTPUT>;
+		enum-name = "GPIO_PCH_SYS_PWROK";
+		label = "EC_SOC_SYS_PWROK";
+	};
+	en_slp_z {
+		gpios = <&gpioe 1 GPIO_OUTPUT>;
+		enum-name = "GPIO_EN_SLP_Z";
+		label = "EN_SLP_Z";
+	};
+	en_pp5000_s5 {
+		gpios = <&gpio4 0 GPIO_OUTPUT>;
+		enum-name = "GPIO_EN_PP5000";
+		label = "EN_PP5000_S5";
+	};
+	en_pp3300_s5 {
+		gpios = <&gpiob 6 GPIO_OUTPUT>;
+		enum-name = "GPIO_EN_PP3300_A";
+		label = "EN_PP3300_S5";
+	};
+	ec_soc_dsw_pwrok {
+		gpios = <&gpio6 1 GPIO_OUTPUT>;
+		enum-name = "GPIO_PG_EC_DSW_PWROK";
+		label = "EC_SOC_DSW_PWROK";
+	};
+	ec_soc_rsmrst_l {
+		gpios = <&gpioa 6 GPIO_OUTPUT>;
+		enum-name = "GPIO_PCH_RSMRST_L";
+		label = "EC_SOC_RSMRST_L";
+	};
+	rsmrst_pwrgd_l {
+		gpios = <&gpio9 4 GPIO_INPUT>;
+		enum-name = "GPIO_PG_EC_RSMRST_ODL";
+		label = "RSMRST_PWRGD_L";
+	};
+	slp_sus_l {
+		gpios = <&gpio6 2 GPIO_INPUT>;
+		enum-name = "GPIO_SLP_SUS_L";
+		label = "SLP_SUS_L";
+	};
+	slp_s4_l {
+		gpios = <&gpio7 0 GPIO_INPUT>;
+		enum-name = "GPIO_PCH_SLP_S4_L";
+		label = "SLP_S4_L";
+	};
+	slp_s3_l {
+		gpios = <&gpioa 5 GPIO_INPUT>;
+		enum-name = "GPIO_PCH_SLP_S3_L";
+		label = "SLP_S3_L";
+	};
+	slp_s0_l {
+		gpios = <&gpio9 7 GPIO_INPUT>;
+		enum-name = "GPIO_PCH_SLP_S0_L";
+		label = "SLP_S0_L";
+	};
+	cpu_c10_gate_l {
+		gpios = <&gpio6 7 GPIO_INPUT>;
+		label = "CPU_C10_GATE_L";
+	};
+	pg_pp5000_s5_od {
+		gpios = <&gpio4 2 GPIO_INPUT>;
+		enum-name = "GPIO_PG_PP5000_A_ODL";
+		label = "PG_PP5000_S5_OD";
+	};
+	ec_soc_vccst_pwrgd_od {
+		gpios = <&gpioa 4 GPIO_ODR_HIGH>;
+		enum-name = "GPIO_VCCST_PWRGD_OD";
+		label = "EC_SOC_VCCST_PWRGD_OD";
+	};
+	ec_soc_pch_pwrok_od {
+		gpios = <&gpio7 2 GPIO_ODR_HIGH>;
+		enum-name = "GPIO_PCH_PWROK";
+		label = "EC_SOC_PCH_PWROK_OD";
+	};
+	all_sys_pwrgd {
+		gpios = <&gpioa 7 GPIO_INPUT>;
+		enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
+		label = "ALL_SYS_PWRGD";
+	};
+	pg_pp1050_mem_s3_od {
+		gpios = <&gpiof 0 GPIO_INPUT>;
+		label = "PG_PP1050_MEM_S3_OD";
+	};
+	pg_pp1050_proc {
+		gpios = <&gpio4 1 GPIO_INPUT>;
+		label = "PG_PP1050_PROC";
+	};
+	sys_rst_odl {
+		gpios = <&gpioc 5 GPIO_ODR_LOW>;
+		enum-name = "GPIO_SYS_RESET_L";
+		label = "SYS_RST_ODL";
+	};
+	ec_soc_wake_odl {
+		gpios = <&gpio8 0 GPIO_ODR_LOW>;
+		enum-name = "GPIO_EC_PCH_WAKE_ODL";
+		label = "EC_SOC_WAKE_ODL";
+	};
+	ec_soc_rtcrst {
+		gpios = <&gpio7 6 GPIO_OUTPUT>;
+		enum-name = "GPIO_PCH_RTCRST";
+		label = "EC_SOC_RTCRST";
+	};
+	vccin_aux_vid0 {
+		gpios = <&gpio9 2 GPIO_INPUT>;
+		label = "VCCIN_AUX_VID0";
+	};
+	vccin_aux_vid1 {
+		gpios = <&gpioe 3 GPIO_INPUT>;
+		label = "VCCIN_AUX_VID1";
+	};
+	ec_soc_pwr_btn_odl {
+		gpios = <&gpioc 1 GPIO_ODR_LOW>;
+		enum-name = "GPIO_PCH_PWRBTN_L";
+		label = "EC_SOC_PWR_BTN_ODL";
+	};
+	ec_soc_hdmi_hpd {
+		gpios = <&gpioe 4 GPIO_OUTPUT>;
+		label = "EC_SOC_HDMI_HPD";
+	};
+	ec_prochot_odl {
+		gpios = <&gpiof 1 GPIO_INPUT>;
+		enum-name = "GPIO_CPU_PROCHOT";
+		label = "EC_PROCHOT_ODL";
+	};
+	ec_soc_int_odl {
+		gpios = <&gpiob 0 GPIO_ODR_LOW>;
+		label = "EC_SOC_INT_ODL";
+	};
+	en_pp5000_pen_x {
+		gpios = <&gpioe 2 GPIO_OUTPUT>;
+		label = "EN_PP5000_PEN_X";
+	};
+	pen_detect_odl {
+		gpios = <&gpio9 6 GPIO_INPUT>;
+		label = "PEN_DETECT_ODL";
+	};
