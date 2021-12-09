@@ -456,7 +456,6 @@ config PLATFORM_EC_USB_PD_FRS_PPC
 
 config PLATFORM_EC_USB_PD_FRS_TCPC
 	bool "TCPC"
-	depends on PLATFORM_EC_USBC_TCPC
 	help
 	  Enable this if the Fast Role Swap trigger is implemented in the
 	  Type-C Port Controller (TCPC).
