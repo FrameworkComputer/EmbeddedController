@@ -710,6 +710,32 @@ static void test_isl923x_is_acok(void)
 	zassert_false(acok, "AC OK is true");
 }
 
+static void test_isl923x_enable_asgate(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	int rv;
+
+	/* Part 1: Try enabling the ASGATE */
+	rv = raa489000_enable_asgate(CHARGER_NUM, true);
+
+	zassert_equal(EC_SUCCESS, rv, "Expected return code of %d but got %d",
+		      EC_SUCCESS, rv);
+	zassert_true(
+		isl923x_emul_peek_reg(i2c_emul, RAA489000_REG_CONTROL8) &
+			RAA489000_C8_ASGATE_ON_READY,
+		"RAA489000_C8_ASGATE_ON_READY bit not set in Control Reg 8");
+
+	/* Part 2: Turn it back off */
+	rv = raa489000_enable_asgate(CHARGER_NUM, false);
+
+	zassert_equal(EC_SUCCESS, rv, "Expected return code of %d but got %d",
+		      EC_SUCCESS, rv);
+	zassert_false(isl923x_emul_peek_reg(i2c_emul, RAA489000_REG_CONTROL8) &
+			      RAA489000_C8_ASGATE_ON_READY,
+		      "RAA489000_C8_ASGATE_ON_READY bit set in Control Reg 8");
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(isl923x,
@@ -729,6 +755,7 @@ void test_suite_isl923x(void)
 			 ztest_unit_test(test_discharge_on_ac),
 			 ztest_unit_test(test_get_vbus_voltage),
 			 ztest_unit_test(test_init),
-			 ztest_unit_test(test_isl923x_is_acok));
+			 ztest_unit_test(test_isl923x_is_acok),
+			 ztest_unit_test(test_isl923x_enable_asgate));
 	ztest_run_test_suite(isl923x);
 }
