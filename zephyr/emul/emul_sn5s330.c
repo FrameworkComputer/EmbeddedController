@@ -290,6 +290,20 @@ void sn5s330_emul_make_vbus_overcurrent(const struct emul *emul)
 	sn5s330_emul_assert_interrupt(i2c_emul);
 }
 
+void sn5s330_emul_lower_vbus_below_minv(const struct emul *emul)
+{
+	struct sn5s330_emul_data *data = emul->data;
+	struct i2c_emul *i2c_emul = &data->common.emul;
+
+	data->int_status_reg4 |= SN5S330_VSAFE0V_STAT;
+
+	/* driver disabled this interrupt trigger */
+	if (data->int_status_reg4 & SN5S330_VSAFE0V_MASK)
+		return;
+
+	sn5s330_emul_assert_interrupt(i2c_emul);
+}
+
 void sn5s330_emul_reset(const struct emul *emul)
 {
 	struct sn5s330_emul_data *data = emul->data;

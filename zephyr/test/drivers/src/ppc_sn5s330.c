@@ -298,6 +298,17 @@ static void test_sn5s330_vbus_overcurrent(void)
 	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0, NULL);
 }
 
+static void test_sn5s330_disable_vbus_low_interrupt(void)
+{
+	const struct emul *emul = EMUL;
+
+	/* Interrupt disabled here */
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	/* Would normally cause a vbus low interrupt */
+	sn5s330_emul_lower_vbus_below_minv(emul);
+	zassert_equal(sn5s330_emul_interrupt_set_stub_fake.call_count, 0, NULL);
+}
+
 static void reset_sn5s330_state(void)
 {
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
@@ -312,6 +323,9 @@ void test_suite_ppc_sn5s330(void)
 {
 	ztest_test_suite(
 		ppc_sn5s330,
+		ztest_unit_test_setup_teardown(
+			test_sn5s330_disable_vbus_low_interrupt,
+			reset_sn5s330_state, reset_sn5s330_state),
 		ztest_unit_test_setup_teardown(test_sn5s330_vbus_overcurrent,
 					       reset_sn5s330_state,
 					       reset_sn5s330_state),
