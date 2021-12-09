@@ -541,6 +541,14 @@ config PLATFORM_EC_USB_PD_ALT_MODE
 	  differential pairs. If all are used for the alternate mode, then USB
 	  transmission is not available at all while in this mode.
 
+config PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY
+	bool "USB Power delivery requires AP to enter alternate modes"
+	depends on PLATFORM_EC_USB_PD_ALT_MODE
+	help
+	  Do not enter USB PD alternate modes or USB4 automatically, Wait for
+	  the AP to direct the EC to enter a mode. This requires AP software
+	  support.
+
 config PLATFORM_EC_USB_PD_ALT_MODE_DFP
 	bool "Downward Facing Port support"
 	default y
