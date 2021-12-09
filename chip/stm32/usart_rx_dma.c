@@ -114,6 +114,6 @@ void usart_rx_dma_info(struct usart_config const *config)
 	struct usart_rx_dma const *dma_config =
 		DOWNCAST(config->rx, struct usart_rx_dma const, usart_rx);
 
-	ccprintf("    DMA RX max_bytes %d\n",
-		 atomic_clear((atomic_t *)&dma_config->state->max_bytes));
+	ccprintf("    DMA RX max_bytes %ld\n",
+		 (long)atomic_clear((atomic_t *)&dma_config->state->max_bytes));
 }

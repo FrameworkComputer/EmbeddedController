@@ -754,7 +754,7 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 
 	while (tries--) {
 		if (!(sensor_mode & FP_MODE_ANY_CAPTURE)) {
-			CPRINTS("done (events:%x)", fp_events);
+			CPRINTS("done (events:%lx)", (long)fp_events);
 			return 0;
 		}
 		usleep(100 * MSEC);

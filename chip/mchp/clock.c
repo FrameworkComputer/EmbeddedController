@@ -763,7 +763,7 @@ static int command_dsleep(int argc, char **argv)
 		}
 	}
 
-	ccprintf("Sleep mask: %08x\n", sleep_mask);
+	ccprintf("Sleep mask: %08lx\n", (long)sleep_mask);
 	ccprintf("Console in use timeout:   %d sec\n",
 			console_in_use_timeout_sec);
 
