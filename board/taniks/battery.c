@@ -5,13 +5,13 @@
  * Battery pack vendor provided charging profile
  */
 
+#include "battery.h"
 #include "battery_fuel_gauge.h"
-#include "cbi.h"
+#include "battery_smart.h"
 #include "common.h"
-#include "compile_time_macros.h"
-#include "gpio.h"
+#include "util.h"
 /*
- * Battery info for all Brya battery types. Note that the fields
+ * Battery info for all Taniks battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
  * The effective temperature limits are given by discharging_min/max_c.
  *
@@ -33,80 +33,71 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* POW-TECH GQA05 Battery Information */
-	[BATTERY_POWER_TECH] = {
-		/* BQ40Z50 Fuel Gauge */
+	[BATTERY_SMP] = {
 		.fuel_gauge = {
-			.manuf_name = "POW-TECH",
-			.device_name = "BATGQA05L22",
+			.manuf_name = "SMP",
+			.device_name = "L21M4PG4",
 			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x00,
-				.reg_mask = 0x2000,		/* XDSG */
-				.disconnect_val = 0x2000,
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
-			.voltage_normal		= 11400, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 280,	/* mA */
+			.voltage_max		= 8900, /* mV */
+			.voltage_normal		= 7720, /* mV */
+			.voltage_min		= 6000, /* mV */
+			.precharge_current	= 330,	/* mA */
 			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
+			.start_charging_max_c	= 50,
 			.charging_min_c		= 0,
-			.charging_max_c		= 45,
-			.discharging_min_c	= -10,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
 			.discharging_max_c	= 60,
 		},
 	},
-	/* LGC L17L3PB0 Battery Information */
-	/*
-	 * Battery info provided by ODM on b/143477210, comment #11
-	 */
-	[BATTERY_LGC011] = {
+	[BATTERY_SUNWODA] = {
 		.fuel_gauge = {
-			.manuf_name = "LGC",
+			.manuf_name = "Sunwoda",
+			.device_name = "L21D4PG4",
 			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+				.reg_addr = 0x34,
+				.reg_data = { 0x0000, 0x1000 },
 			},
 			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+				.reg_addr = 0x34,
+				.reg_mask = 0x0100,
+				.disconnect_val = 0x0100,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
+			.voltage_max		= 8900, /* mV */
+			.voltage_normal		= 7720, /* mV */
+			.voltage_min		= 6000, /* mV */
+			.precharge_current	= 330,	/* mA */
 			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
+			.start_charging_max_c	= 50,
 			.charging_min_c		= 0,
 			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 75,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_POWER_TECH;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SMP;
 
-enum battery_present battery_hw_present(void)
+__override bool board_battery_is_initialized(void)
 {
-	enum gpio_signal batt_pres;
+	bool batt_initialization_state;
+	int batt_status;
 
-	if (get_board_id() == 1)
-		batt_pres = GPIO_ID_1_EC_BATT_PRES_ODL;
-	else
-		batt_pres = GPIO_EC_BATT_PRES_ODL;
-
-	/* The GPIO is low when the battery is physically present */
-	return gpio_get_level(batt_pres) ? BP_NO : BP_YES;
+	batt_initialization_state = (battery_status(&batt_status) ? false :
+		!!(batt_status & STATUS_INITIALIZED));
+	return batt_initialization_state;
 }

@@ -5,18 +5,30 @@
 
 #include "common.h"
 #include "accelgyro.h"
-#include "adc.h"
+#include "adc_chip.h"
+#include "driver/accel_bma422.h"
+#include "driver/accel_bma4xx.h"
 #include "driver/accel_lis2dw12.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/accelgyro_lsm6dso.h"
-#include "driver/als_tcs3400_public.h"
+#include "fw_config.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "motion_sense.h"
 #include "temp_sensor.h"
 #include "thermal.h"
 #include "temp_sensor/thermistor.h"
 
+#if 0
+#define CPRINTS(format, args...) ccprints(format, ## args)
+#define CPRINTF(format, args...) ccprintf(format, ## args)
+#else
+#define CPRINTS(format, args...)
+#define CPRINTF(format, args...)
+#endif
+
 /* ADC configuration */
-struct adc_t adc_channels[] = {
+const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_1_DDR_SOC] = {
 		.name = "TEMP_DDR_SOC",
 		.input_ch = NPCX_ADC_CH0,
@@ -24,8 +36,8 @@ struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_2_AMBIENT] = {
-		.name = "TEMP_AMBIENT",
+	[ADC_TEMP_SENSOR_2_FAN] = {
+		.name = "TEMP_FAN",
 		.input_ch = NPCX_ADC_CH1,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -38,8 +50,8 @@ struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_4_WWAN] = {
-		.name = "TEMP_WWAN",
+	[ADC_TEMP_SENSOR_4_CPUCHOKE] = {
+		.name = "CPU_CHOKE",
 		.input_ch = NPCX_ADC_CH7,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -51,79 +63,102 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 K_MUTEX_DEFINE(g_lid_accel_mutex);
 K_MUTEX_DEFINE(g_base_accel_mutex);
 static struct stprivate_data g_lis2dw12_data;
+static struct accelgyro_saved_data_t g_bma422_data;
 static struct lsm6dso_data lsm6dso_data;
+static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
-/* TODO(b/184779333): calibrate the orientation matrix on later board stage */
+/* Matrix to rotate lid and base sensor into standard reference frame */
 static const mat33_fp_t lid_standard_ref = {
 	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
 };
 
-/* TODO(b/184779743): verify orientation matrix */
 static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(-1), 0, 0},
+	{ 0, FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
-/* TCS3400 private data */
-static struct als_drv_data_t g_tcs3400_data = {
-	.als_cal.scale = 1,
-	.als_cal.uscale = 0,
-	.als_cal.offset = 0,
-	.als_cal.channel_scale = {
-		.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kc from VPD */
-		.cover_scale = ALS_CHANNEL_SCALE(1.0),     /* CT */
-	},
-};
-
-/*
- * TODO: b/184702900 need to calibrate ALS/RGB sensor. At default settings,
- * shining phone flashlight on sensor pegs all readings at 0xFFFF.
- */
-static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
-	.calibration.rgb_cal[X] = {
-		.offset = 0,
-		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(1.0),
-		.scale = {
-			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kr */
-			.cover_scale = ALS_CHANNEL_SCALE(1.0)
-		}
-	},
-	.calibration.rgb_cal[Y] = {
-		.offset = 0,
-		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(1.0),
-		.scale = {
-			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kg */
-			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+struct motion_sensor_t bma422_lid_accel = {
+	.name = "Lid Accel - BMA",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMA422,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &bma4_accel_drv,
+	.mutex = &g_lid_accel_mutex,
+	.drv_data = &g_bma422_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = BMA4_I2C_ADDR_PRIMARY, /* 0x18 */
+	.rot_standard_ref = &lid_standard_ref, /* identity matrix */
+	.default_range = 2, /* g, enough for laptop. */
+	.min_frequency = BMA4_ACCEL_MIN_FREQ,
+	.max_frequency = BMA4_ACCEL_MAX_FREQ,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 0,
 		},
 	},
-	.calibration.rgb_cal[Z] = {
-		.offset = 0,
-		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(1.0),
-		.scale = {
-			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kb */
-			.cover_scale = ALS_CHANNEL_SCALE(1.0)
-		}
+};
+
+struct motion_sensor_t lsm6dsm_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LSM6DSM,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &lsm6dsm_drv,
+	.mutex = &g_base_accel_mutex,
+	.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
+			MOTIONSENSE_TYPE_ACCEL),
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+	.rot_standard_ref = &base_standard_ref,
+	.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+	.min_frequency = LSM6DSM_ODR_MIN_VAL,
+	.max_frequency = LSM6DSM_ODR_MAX_VAL,
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 13000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on for angle detection */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 10000 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
 	},
-	.calibration.irt = INT_TO_FP(1),
-	.saturation.again = TCS_DEFAULT_AGAIN,
-	.saturation.atime = TCS_DEFAULT_ATIME,
+};
+
+struct motion_sensor_t lsm6dsm_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_LSM6DSM,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &lsm6dsm_drv,
+	.mutex = &g_base_accel_mutex,
+	.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data, MOTIONSENSE_TYPE_GYRO),
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
+	.default_range = 1000 | ROUND_UP_FLAG, /* dps */
+	.rot_standard_ref = &base_standard_ref,
+	.min_frequency = LSM6DSM_ODR_MIN_VAL,
+	.max_frequency = LSM6DSM_ODR_MAX_VAL,
 };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
-		.name = "Lid Accel",
+		.name = "Lid Accel - ST",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
 		.chip = MOTIONSENSE_CHIP_LIS2DW12,
 		.type = MOTIONSENSE_TYPE_ACCEL,
@@ -132,7 +167,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.mutex = &g_lid_accel_mutex,
 		.drv_data = &g_lis2dw12_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LIS2DW12_ADDR0,
+		.i2c_spi_addr_flags = LIS2DW12_ADDR1, /* 0x19 */
 		.rot_standard_ref = &lid_standard_ref, /* identity matrix */
 		.default_range = 2, /* g */
 		.min_frequency = LIS2DW12_ODR_MIN_VAL,
@@ -140,7 +175,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.config = {
 			/* EC use accel for angle detection */
 			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
+				.odr = 12500 | ROUND_UP_FLAG,
 			},
 			/* Sensor on for lid angle detection */
 			[SENSOR_CONFIG_EC_S3] = {
@@ -157,8 +192,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &lsm6dso_drv,
 		.mutex = &g_base_accel_mutex,
-		.drv_data = LSM6DSO_ST_DATA(lsm6dso_data,
-				MOTIONSENSE_TYPE_ACCEL),
+		.drv_data = &lsm6dso_data,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSO_ADDR0_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
@@ -185,8 +219,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.location = MOTIONSENSE_LOC_BASE,
 		.drv = &lsm6dso_drv,
 		.mutex = &g_base_accel_mutex,
-		.drv_data = LSM6DSO_ST_DATA(lsm6dso_data,
-				MOTIONSENSE_TYPE_GYRO),
+		.drv_data = &lsm6dso_data,
 		.port = I2C_PORT_SENSOR,
 		.i2c_spi_addr_flags = LSM6DSO_ADDR0_FLAGS,
 		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
@@ -195,62 +228,117 @@ struct motion_sensor_t motion_sensors[] = {
 		.max_frequency = LSM6DSO_ODR_MAX_VAL,
 	},
 
-	[CLEAR_ALS] = {
-		.name = "Clear Light",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_TCS3400,
-		.type = MOTIONSENSE_TYPE_LIGHT,
-		.location = MOTIONSENSE_LOC_CAMERA,
-		.drv = &tcs3400_drv,
-		.drv_data = &g_tcs3400_data,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = TCS3400_I2C_ADDR_FLAGS,
-		.rot_standard_ref = NULL,
-		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
-		.min_frequency = TCS3400_LIGHT_MIN_FREQ,
-		.max_frequency = TCS3400_LIGHT_MAX_FREQ,
-		.config = {
-			/* Run ALS sensor in S0 */
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 1000,
-			},
-		},
-	},
-
-	[RGB_ALS] = {
-		/*
-		 * RGB channels read by CLEAR_ALS and so the i2c port and
-		 * address do not need to be defined for RGB_ALS.
-		 */
-		.name = "RGB Light",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_TCS3400,
-		.type = MOTIONSENSE_TYPE_LIGHT_RGB,
-		.location = MOTIONSENSE_LOC_CAMERA,
-		.drv = &tcs3400_rgb_drv,
-		.drv_data = &g_tcs3400_rgb_data,
-		.rot_standard_ref = NULL,
-		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
-	},
 };
+
+#ifdef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+#else
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+#endif
 
-/* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
-const struct motion_sensor_t *motion_als_sensors[] = {
-	&motion_sensors[CLEAR_ALS],
-};
-BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
+
+static void board_detect_motionsensor(void)
+{
+	int ret;
+	int val;
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
+	/*
+	 * b/194765820 - Dynamic motion sensor count
+	 * All board supports tablet mode if board id > 0
+	 */
+	if (get_board_id() == 0 && !ec_cfg_has_tabletmode())
+		return;
+
+	/* Check lid accel chip */
+	ret = i2c_read8(I2C_PORT_SENSOR, LIS2DW12_ADDR1,
+			LIS2DW12_WHO_AM_I_REG, &val);
+	if (ret == 0 && val == LIS2DW12_WHO_AM_I) {
+		CPRINTS("LID_ACCEL is IS2DW12");
+		/* Enable gpio interrupt for lid accel sensor */
+		gpio_enable_interrupt(GPIO_EC_ACCEL_INT_R_L);
+		return;
+	}
+
+	ret = i2c_read8(I2C_PORT_SENSOR, BMA4_I2C_ADDR_PRIMARY,
+			BMA4_CHIP_ID_ADDR, &val);
+	if (ret == 0 && val == BMA422_CHIP_ID) {
+		CPRINTS("LID_ACCEL is BMA422");
+		motion_sensors[LID_ACCEL] = bma422_lid_accel;
+		/*
+		 * The driver for BMA422 doesn't have code to support
+		 * INT1. So, it doesn't need to enable interrupt.
+		 * Vendor recommend to configure EC gpio as high-z if
+		 * we don't use INT1. Keep this pin as input w/o enable
+		 * interrupt.
+		 */
+		return;
+	}
+
+	/* Lid accel is not stuffed, don't allow line to float */
+	gpio_disable_interrupt(GPIO_EC_ACCEL_INT_R_L);
+	gpio_set_flags(GPIO_EC_ACCEL_INT_R_L, GPIO_INPUT | GPIO_PULL_DOWN);
+	CPRINTS("No LID_ACCEL are detected");
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
+		HOOK_PRIO_DEFAULT);
 
 static void baseboard_sensors_init(void)
 {
-	/* Enable gpio interrupt for lid accel sensor */
-	gpio_enable_interrupt(GPIO_EC_ACCEL_INT_R_L);
-	/* Enable interrupt for the TCS3400 color light sensor */
-	gpio_enable_interrupt(GPIO_EC_ALS_RGB_INT_R_L);
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
+	CPRINTS("baseboard_sensors_init");
+	/* b/194765820
+	 * Dynamic motion sensor count
+	 * All board supports tablet mode if board id > 0
+	 */
+	if (ec_cfg_has_tabletmode()) {
+		/*
+		 * GPIO_EC_ACCEL_INT_R_L
+		 * The interrupt of lid accel is disabled by default.
+		 * We'll enable it later if lid accel is LIS2DW12.
+		 */
+
+		/* Change Request (b/199529373)
+		 * GYRO sensor change from ST LSM6DSOETR3TR to ST LSM6DS3TR-C
+		 *	LSM6DSOETR3TR base accel/gyro if board id = 0
+		 *	LSM6DS3TR-C Base accel/gyro if board id > 0
+		 */
+		if (get_board_id() > 0) {
+			motion_sensors[BASE_ACCEL] = lsm6dsm_base_accel;
+			motion_sensors[BASE_GYRO] = lsm6dsm_base_gyro;
+		}
+
+		/* Enable gpio interrupt for base accelgyro sensor */
+		gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
+	} else {
+		CPRINTS("Clamshell");
+		motion_sensor_count = 0;
+		/* Gyro is not present, don't allow line to float */
+		gpio_set_flags(GPIO_EC_IMU_INT_R_L, GPIO_INPUT |
+				GPIO_PULL_DOWN);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
+
+void motion_interrupt(enum gpio_signal signal)
+{
+	if (motion_sensors[LID_ACCEL].chip == MOTIONSENSE_CHIP_LIS2DW12) {
+		lis2dw12_interrupt(signal);
+		CPRINTS("IS2DW12 interrupt");
+		return;
+	}
+
+	/*
+	 * From other project, ex. guybrush, it seem BMA422 doesn't have
+	 * interrupt handler when EC_ACCEL_INT_R_L is asserted.
+	 * However, I don't see BMA422 assert EC_ACCEL_INT_R_L when it has
+	 * power. That could be the reason EC code doesn't register any
+	 * interrupt handler.
+	 */
+	CPRINTS("BMA422 interrupt");
+
+}
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
@@ -258,35 +346,37 @@ const struct temp_sensor_t temp_sensors[] = {
 		.name = "DDR and SOC",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_DDR_SOC,
+		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
 	},
-	[TEMP_SENSOR_2_AMBIENT] = {
-		.name = "Ambient",
+	[TEMP_SENSOR_2_FAN] = {
+		.name = "FAN",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_AMBIENT,
+		.idx = ADC_TEMP_SENSOR_2_FAN
 	},
 	[TEMP_SENSOR_3_CHARGER] = {
-		.name = "Charger",
+		.name = "CHARGER",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_3_CHARGER,
+		.idx = ADC_TEMP_SENSOR_3_CHARGER
 	},
-	[TEMP_SENSOR_4_WWAN] = {
-		.name = "WWAN",
+	[TEMP_SENSOR_4_CPUCHOKE] = {
+		.name = "CPU CHOKE",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_4_WWAN,
+		.idx = ADC_TEMP_SENSOR_4_CPUCHOKE
 	},
 };
+
+
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
+ * TODO(b/201021109): update for Alder Lake/brya
  *
- * Alder Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
+ * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
- * DDR temperature limit (85 C)
+ * DDR temperature limit (100 C)
  */
 /*
  * TODO(b/202062363): Remove when clang is fixed.
@@ -294,11 +384,11 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #define THERMAL_CPU \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 		}, \
 		.temp_fan_off = C_TO_K(35), \
 		.temp_fan_max = C_TO_K(60), \
@@ -306,7 +396,7 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
+ * TODO(b/201021109): update for Alder Lake/brya
  *
  * Inductor limits - used for both charger and PP3300 regulator
  *
@@ -316,97 +406,31 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
  * PP3300 regulator: operating range -40 C to 145 C
  *
  * Inductors: limit of 125c
- * PCB: limit is 80c
+ * PCB: limit is 100c
  */
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_AMBIENT \
+#define THERMAL_FAN \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_ambient =
-	THERMAL_AMBIENT;
-
-/*
- * Inductor limits - used for both charger and PP3300 regulator
- *
- * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
- *
- * Charger max recommended temperature 125C, max absolute temperature 150C
- * PP3300 regulator: operating range -40 C to 125 C
- *
- * Inductors: limit of 125c
- * PCB: limit is 80c
- */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CHARGER \
-	{ \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(120), \
-		}, \
-		.temp_host_release = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(65), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_charger =
-	THERMAL_CHARGER;
-
-/*
- * TODO(b/180681346): update for brya WWAN module
- */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_WWAN \
-	{ \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(130), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(130), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 		}, \
 		.temp_fan_off = C_TO_K(35), \
 		.temp_fan_max = C_TO_K(60), \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_wwan =
-	THERMAL_WWAN;
+__maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 
+/* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_2_AMBIENT] = THERMAL_AMBIENT,
-	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
-	[TEMP_SENSOR_4_WWAN] = THERMAL_WWAN,
+	[TEMP_SENSOR_2_FAN] = THERMAL_FAN,
+	[TEMP_SENSOR_3_CHARGER] = THERMAL_FAN,
+	[TEMP_SENSOR_4_CPUCHOKE] = THERMAL_FAN,
 };
+
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
-static void board_thermals_init(void)
-{
-	if (get_board_id() == 1) {
-		/*
-		 * Board ID 1 only has 3 sensors and the AMBIENT sensor
-		 * ADC pins have been reassigned, so we're down to 2
-		 * sensors that can easily be configured. So, alias the
-		 * AMBIENT sensor ADC channel to the unimplemented ADC
-		 * slots.
-		 */
-		adc_channels[ADC_TEMP_SENSOR_3_CHARGER].input_ch = NPCX_ADC_CH1;
-		adc_channels[ADC_TEMP_SENSOR_4_WWAN].input_ch = NPCX_ADC_CH1;
-	}
-}
-
-DECLARE_HOOK(HOOK_INIT, board_thermals_init, HOOK_PRIO_INIT_CHIPSET);

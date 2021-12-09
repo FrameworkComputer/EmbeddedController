@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 #
-# Brya board specific files build
+# Taniks board specific files build
 #
 
 CHIP:=npcx
@@ -22,5 +22,4 @@ board-y+=keyboard.o
 board-y+=led.o
 board-y+=pwm.o
 board-y+=sensors.o
-board-y+=tune_mp2964.o
 board-y+=usbc_config.o

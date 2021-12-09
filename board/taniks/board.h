@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Brya board configuration */
+/* Taniks board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -11,12 +11,14 @@
 #include "compile_time_macros.h"
 
 /*
- * Early brya boards are not set up for vivaldi
+ * Taniks boards are set up for vivaldi
  */
-#undef CONFIG_KEYBOARD_VIVALDI
+#define CONFIG_KEYBOARD_VIVALDI
 
 /* Baseboard features */
 #include "baseboard.h"
+
+#define CONFIG_SYSTEM_UNLOCKED
 
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
@@ -24,31 +26,24 @@
  */
 #define CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
 
-#define CONFIG_MP2964
-
 /* LED */
-#define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 2
-#undef CONFIG_LED_PWM_NEAR_FULL_COLOR
-#undef CONFIG_LED_PWM_SOC_ON_COLOR
-#undef CONFIG_LED_PWM_SOC_SUSPEND_COLOR
-#undef CONFIG_LED_PWM_LOW_BATT_COLOR
-#define CONFIG_LED_PWM_NEAR_FULL_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_ON_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_SUSPEND_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
+#define CONFIG_LED_ONOFF_STATES
 
 /* Sensors */
+#define	CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
+
+
+/* Change Request (b/211078551)
+ * GYRO sensor change from ST LSM6DSOETR3TR to ST LSM6DS3TR-C
+ *	LSM6DSOETR3TR base accel/gyro if board id = 0
+ *	LSM6DS3TR-C Base accel/gyro if board id > 0
+ */
 #define CONFIG_ACCELGYRO_LSM6DSO	/* Base accel */
 #define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
-/* TCS3400 ALS */
-#define CONFIG_ALS
-#define ALS_COUNT 1
-#define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
+#define CONFIG_ACCELGYRO_LSM6DSM
+#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
@@ -59,13 +54,14 @@
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
+	(BIT(LID_ACCEL))
 
 /* Lid accel */
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
 #define CONFIG_LID_ANGLE_SENSOR_BASE	BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID	LID_ACCEL
+#define CONFIG_ACCEL_BMA4XX
 #define CONFIG_ACCEL_LIS2DWL
 #define CONFIG_ACCEL_LIS2DW_AS_BASE
 #define CONFIG_ACCEL_LIS2DW12_INT_EVENT \
@@ -86,18 +82,10 @@
 
 #define CONFIG_IO_EXPANDER
 #define CONFIG_IO_EXPANDER_NCT38XX
-#define CONFIG_IO_EXPANDER_PORT_COUNT		4
+#define CONFIG_IO_EXPANDER_PORT_COUNT		1
 
 #define CONFIG_USB_PD_TCPM_PS8815
 #define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
-#define CONFIG_USBC_RETIMER_INTEL_BB
-
-/* I2C speed console command */
-#define CONFIG_CMD_I2C_SPEED
-
-/* I2C control host command */
-#define CONFIG_HOSTCMD_I2C_CONTROL
-
 #define CONFIG_USBC_PPC_SYV682X
 #define CONFIG_USBC_PPC_NX20P3483
 
@@ -110,9 +98,12 @@
  * Passive USB-C cables only support up to 60W.
  */
 #define PD_OPERATING_POWER_MW	15000
-#define PD_MAX_POWER_MW		60000
+#define PD_MAX_POWER_MW		45000
 #define PD_MAX_CURRENT_MA	3000
 #define PD_MAX_VOLTAGE_MV	20000
+
+/* The lower the input voltage, the higher the power efficiency. */
+#define PD_PREFER_LOW_VOLTAGE
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -148,27 +139,18 @@
 #define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
-#define GPIO_ID_1_EC_KB_BL_EN		GPIO_EC_BATT_PRES_ODL
-
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
 
 /* I2C Bus Configuration */
-
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
-
-#define I2C_PORT_USB_C0_C2_TCPC	NPCX_I2C_PORT1_0
+#define I2C_PORT_USB_C0_TCPC	NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1_TCPC	NPCX_I2C_PORT4_1
-
-#define I2C_PORT_USB_C0_C2_PPC	NPCX_I2C_PORT2_0
+#define I2C_PORT_USB_C0_PPC	NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_C1_PPC	NPCX_I2C_PORT6_1
-
-#define I2C_PORT_USB_C0_C2_BC12	NPCX_I2C_PORT2_0
+#define I2C_PORT_USB_C0_BC12	NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_C1_BC12	NPCX_I2C_PORT6_1
-
-#define I2C_PORT_USB_C0_C2_MUX	NPCX_I2C_PORT3_0
 #define I2C_PORT_USB_C1_MUX	NPCX_I2C_PORT6_1
-
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT5_0
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT7_0
 #define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
@@ -178,27 +160,13 @@
 
 #define I2C_ADDR_MP2964_FLAGS	0x20
 
-/*
- * see b/174768555#comment22
- */
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x56
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR	0x57
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-
-/* Retimer */
-#define CONFIG_USBC_RETIMER_FW_UPDATE
-
 /* Thermal features */
 #define CONFIG_THERMISTOR
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_TEMP_SENSOR_POWER_GPIO	GPIO_SEQ_EC_DSW_PWROK
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 
+/* Fan */
 #define CONFIG_FANS			FAN_CH_COUNT
 
 /* Charger defines */
@@ -208,13 +176,6 @@
 #define CONFIG_CHARGE_RAMP_SW
 #define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR		10
 #define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC	10
-#define CONFIG_CHARGER_BQ25710_PSYS_SENSING
-
-/*
- * Older boards have a different ADC assignment.
- */
-
-#define CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
 
 #ifndef __ASSEMBLER__
 
@@ -224,17 +185,17 @@
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_1_DDR_SOC,
-	ADC_TEMP_SENSOR_2_AMBIENT,
+	ADC_TEMP_SENSOR_2_FAN,
 	ADC_TEMP_SENSOR_3_CHARGER,
-	ADC_TEMP_SENSOR_4_WWAN,
+	ADC_TEMP_SENSOR_4_CPUCHOKE,
 	ADC_CH_COUNT
 };
 
 enum temp_sensor_id {
 	TEMP_SENSOR_1_DDR_SOC,
-	TEMP_SENSOR_2_AMBIENT,
+	TEMP_SENSOR_2_FAN,
 	TEMP_SENSOR_3_CHARGER,
-	TEMP_SENSOR_4_WWAN,
+	TEMP_SENSOR_4_CPUCHOKE,
 	TEMP_SENSOR_COUNT
 };
 
@@ -242,32 +203,24 @@ enum sensor_id {
 	LID_ACCEL = 0,
 	BASE_ACCEL,
 	BASE_GYRO,
-	CLEAR_ALS,
-	RGB_ALS,
 	SENSOR_COUNT
 };
 
 enum ioex_port {
 	IOEX_C0_NCT38XX = 0,
-	IOEX_C2_NCT38XX,
-	IOEX_ID_1_C0_NCT38XX,
-	IOEX_ID_1_C2_NCT38XX,
 	IOEX_PORT_COUNT
 };
 
 enum battery_type {
-	BATTERY_POWER_TECH,
-	BATTERY_LGC011,
-	BATTERY_TYPE_COUNT
+	BATTERY_SMP,
+	BATTERY_LGC,
+	BATTERY_SUNWODA,
+	BATTERY_TYPE_COUNT,
 };
 
 enum pwm_channel {
-	PWM_CH_LED2 = 0,		/* PWM0 (white charger) */
-	PWM_CH_LED3,			/* PWM1 (orange on DB) */
-	PWM_CH_LED1,			/* PWM2 (orange charger) */
-	PWM_CH_KBLIGHT,			/* PWM3 */
+	PWM_CH_KBLIGHT = 0,		/* PWM3 */
 	PWM_CH_FAN,			/* PWM5 */
-	PWM_CH_LED4,			/* PWM7 (white on DB) */
 	PWM_CH_COUNT
 };
 
@@ -280,6 +233,8 @@ enum mft_channel {
 	MFT_CH_0 = 0,
 	MFT_CH_COUNT
 };
+
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 
