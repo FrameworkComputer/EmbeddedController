@@ -62,7 +62,7 @@ static atomic_t sim_button_state;
  */
 static int simulated_button_pressed(const struct button_config *button)
 {
-	return !!(sim_button_state & BIT(button->type));
+	return !!((uint32_t)sim_button_state & BIT(button->type));
 }
 #endif
 
@@ -389,7 +389,8 @@ static void simulate_button_release_deferred(void)
 	/* Release the button */
 	for (button_idx = 0; button_idx < BUTTON_COUNT; button_idx++) {
 		/* Check state for button pressed */
-		if (sim_button_state & BIT(buttons[button_idx].type)) {
+		if ((uint32_t)sim_button_state &
+		    BIT(buttons[button_idx].type)) {
 			/* Set state of the button as released */
 			atomic_clear_bits(&sim_button_state,
 					  BIT(buttons[button_idx].type));
