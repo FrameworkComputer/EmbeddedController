@@ -8,5 +8,8 @@
 		default_battery: smp_l20m3pg2 {
 			compatible = "smp,l20m3pg2";
 		};
+		lgc_l20l3pg2 {
+			compatible = "lgc,l20l3pg2";
+		};
 	};
 };
