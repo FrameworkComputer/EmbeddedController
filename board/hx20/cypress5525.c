@@ -972,7 +972,7 @@ void cyp5525_port_int(int controller, int port)
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_PORT_PD_RESPONSE_REG(port), data2, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("PORT_PD_RESPONSE_REG failed");
-		print_pd_response_code(controller,
+	print_pd_response_code(controller,
 		port,
 		data2[0],
 		data2[1]);
