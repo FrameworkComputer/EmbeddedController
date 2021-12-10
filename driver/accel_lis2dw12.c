@@ -64,7 +64,7 @@ static __maybe_unused int lis2dw12_enable_fifo(const struct motion_sensor_t *s,
  * @s: Motion sensor pointer
  */
 static __maybe_unused int lis2dw12_load_fifo(struct motion_sensor_t *s,
-			 int nsamples, uint32_t *last_fifo_read_ts)
+					     int nsamples)
 {
 	int ret, left, length, i;
 	struct ec_response_motion_sensor_data vect;
@@ -87,7 +87,6 @@ static __maybe_unused int lis2dw12_load_fifo(struct motion_sensor_t *s,
 
 		ret = st_raw_read_n(s->port, s->i2c_spi_addr_flags,
 				    LIS2DW12_OUT_X_L_ADDR, fifo, length);
-		*last_fifo_read_ts = __hw_clock_source_read();
 		if (ret != EC_SUCCESS)
 			return ret;
 
@@ -106,8 +105,6 @@ static __maybe_unused int lis2dw12_load_fifo(struct motion_sensor_t *s,
 		}
 		left -= length;
 	} while (left > 0);
-
-	motion_sense_fifo_commit_data();
 
 	return EC_SUCCESS;
 }
@@ -128,21 +125,6 @@ static __maybe_unused int lis2dw12_get_fifo_samples(struct motion_sensor_t *s,
 	*nsamples = tmp & LIS2DW12_FIFO_DIFF_MASK;
 
 	return EC_SUCCESS;
-}
-
-static __maybe_unused int fifo_data_avail(struct motion_sensor_t *s)
-{
-	int ret, nsamples;
-
-	if (s->flags & MOTIONSENSE_FLAG_INT_SIGNAL)
-		return gpio_get_level(s->int_signal) ==
-			!!(MOTIONSENSE_FLAG_INT_ACTIVE_HIGH & s->flags);
-
-	ret = lis2dw12_get_fifo_samples(s, &nsamples);
-	/* If we failed to read the FIFO size assume empty. */
-	if (ret != EC_SUCCESS)
-		return 0;
-	return nsamples;
 }
 
 /**
@@ -211,22 +193,16 @@ static __maybe_unused int lis2dw12_config_interrupt(
 }
 
 #ifdef LIS2DW12_ENABLE_FIFO
-static void lis2dw12_handle_interrupt_for_fifo(uint32_t ts)
-{
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
-	    time_after(ts, last_interrupt_timestamp))
-		last_interrupt_timestamp = ts;
-
-	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LIS2DW12_INT_EVENT);
-}
-
 /**
  * lis2dw12_interrupt - interrupt from int pin of sensor
  * Schedule Motion Sense Task to manage Interrupts.
  */
 void lis2dw12_interrupt(enum gpio_signal signal)
 {
-	lis2dw12_handle_interrupt_for_fifo(__hw_clock_source_read());
+	if (IS_ENABLED(LIS2DW12_ENABLE_FIFO))
+		last_interrupt_timestamp = __hw_clock_source_read();
+
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LIS2DW12_INT_EVENT);
 }
 
 /**
@@ -235,8 +211,6 @@ void lis2dw12_interrupt(enum gpio_signal signal)
 static int lis2dw12_irq_handler(struct motion_sensor_t *s,
 					       uint32_t *event)
 {
-	int ret = EC_SUCCESS;
-
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCEL_LIS2DW12_INT_EVENT))) {
 		return EC_ERROR_NOT_HANDLED;
@@ -254,34 +228,23 @@ static int lis2dw12_irq_handler(struct motion_sensor_t *s,
 	}
 
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		bool commit_needed = false;
 		int nsamples;
-		uint32_t last_fifo_read_ts;
-		uint32_t triggering_interrupt_timestamp =
-			last_interrupt_timestamp;
 
-		ret = lis2dw12_get_fifo_samples(s, &nsamples);
-		if (ret != EC_SUCCESS)
-			return ret;
+		do {
+			RETURN_ERROR(lis2dw12_get_fifo_samples(s, &nsamples));
 
-		last_fifo_read_ts = __hw_clock_source_read();
-		if (nsamples == 0)
-			return EC_SUCCESS;
+			if (nsamples != 0) {
+				commit_needed = true;
+				RETURN_ERROR(lis2dw12_load_fifo(s, nsamples));
+			}
+		} while (nsamples != 0);
 
-		ret = lis2dw12_load_fifo(s, nsamples, &last_fifo_read_ts);
-
-		/*
-		 * Check if FIFO isn't empty and we never got an interrupt.
-		 * This can happen if new entries were added to the FIFO after
-		 * the count was read, but before the FIFO was cleared out.
-		 * In the long term it might be better to use the last
-		 * spread timestamp instead.
-		 */
-		if (fifo_data_avail(s) &&
-		    triggering_interrupt_timestamp == last_interrupt_timestamp)
-			lis2dw12_handle_interrupt_for_fifo(last_fifo_read_ts);
+		if (commit_needed)
+			motion_sense_fifo_commit_data();
 	}
 
-	return ret;
+	return EC_SUCCESS;
 }
 #endif
 
