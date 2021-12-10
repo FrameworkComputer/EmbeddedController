@@ -5960,6 +5960,10 @@
 /*
  * Define CONFIG_USB_PD_TCPC_ON_CHIP if we use ITE series TCPM driver
  * on the board.
+ *
+ * NOTE: If we don't use all the ITE pd ports on a board, then we need to
+ *       start from port0 to use the ITE pd port. If we start from port1,
+ *       then port1 HOOK function never works.
  */
 #ifdef CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #define CONFIG_USB_PD_TCPC_ON_CHIP
