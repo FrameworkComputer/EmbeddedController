@@ -95,6 +95,8 @@ enum pd_rx_errors {
  * Note: Some bits and decode macros are defined in ec_commands.h
  */
 #define PDO_FIXED_SUSPEND	BIT(28) /* USB Suspend supported */
+/* Higher capability in vSafe5V sink PDO */
+#define PDO_FIXED_SNK_HIGHER_CAP          BIT(28)
 #define PDO_FIXED_FRS_CURR_NOT_SUPPORTED  (0 << 23)
 #define PDO_FIXED_FRS_CURR_DFLT_USB_POWER (1 << 23)
 #define PDO_FIXED_FRS_CURR_1A5_AT_5V      (2 << 23)

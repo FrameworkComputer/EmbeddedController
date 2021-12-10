@@ -45,4 +45,12 @@ config EMUL_TCPCI_PARTNER_SRC
 	  emulator. API of source device emulator is available in
 	  zephyr/include/emul/tcpc/emul_tcpci_partner_src.h
 
+config EMUL_TCPCI_PARTNER_SNK
+	bool "USB-C sink device emulator"
+	select EMUL_TCPCI_PARTNER_COMMON
+	help
+	  Enable USB-C sink device emulator which may be attached to TCPCI
+	  emulator. API of source device emulator is available in
+	  zephyr/include/emul/tcpc/emul_tcpci_partner_snk.h
+
 endif # EMUL_TCPCI
