@@ -23,7 +23,7 @@
 
 	named-temp-sensors {
 		memory {
-			compatible = "cros-ec,temp-sensor";
+			compatible = "cros-ec,temp-sensor-thermistor";
 			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 			label = "DDR and SOC";
 			enum-name = "TEMP_SENSOR_1";
@@ -35,7 +35,7 @@
 			adc = <&adc_temp_1>;
 		};
 		chassis {
-			compatible = "cros-ec,temp-sensor";
+			compatible = "cros-ec,temp-sensor-thermistor";
 			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 			label = "Ambient";
 			enum-name = "TEMP_SENSOR_2";

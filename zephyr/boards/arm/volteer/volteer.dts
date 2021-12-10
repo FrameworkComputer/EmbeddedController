@@ -116,7 +116,7 @@
 
 	named-temp-sensors {
 		charger {
-			compatible = "cros-ec,temp-sensor";
+			compatible = "cros-ec,temp-sensor-thermistor";
 			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
 			label = "TEMP_SENSOR_CHARGER";
 			enum-name = "TEMP_SENSOR_CHARGER";
@@ -128,7 +128,7 @@
 			adc = <&adc_charger>;
 		};
 		pp3300_regulator {
-			compatible = "cros-ec,temp-sensor";
+			compatible = "cros-ec,temp-sensor-thermistor";
 			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
 			label = "TEMP_SENSOR_PP3300_REGULATOR";
 			enum-name = "TEMP_SENSOR_PP3300_REGULATOR";
@@ -140,7 +140,7 @@
 			adc = <&adc_pp3300_regulator>;
 		};
 		ddr_soc {
-			compatible = "cros-ec,temp-sensor";
+			compatible = "cros-ec,temp-sensor-thermistor";
 			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
 			label = "TEMP_SENSOR_DDR_SOC";
 			enum-name = "TEMP_SENSOR_DDR_SOC";
@@ -152,7 +152,7 @@
 			adc = <&adc_ddr_soc>;
 		};
 		fan {
-			compatible = "cros-ec,temp-sensor";
+			compatible = "cros-ec,temp-sensor-thermistor";
 			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
 			label = "TEMP_SENSOR_FAN";
 			enum-name = "TEMP_SENSOR_FAN";

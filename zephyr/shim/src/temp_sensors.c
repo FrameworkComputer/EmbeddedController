@@ -47,6 +47,6 @@ static int thermistor_get_temp(const struct temp_sensor_t *sensor,
 DT_FOREACH_STATUS_OKAY(cros_ec_thermistor, DEFINE_THERMISTOR_DATA)
 
 const struct temp_sensor_t temp_sensors[] = {
-	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor, TEMP_THERMISTOR)
+	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_thermistor, TEMP_THERMISTOR)
 };
 #endif /* named_temp_sensors */

@@ -7,18 +7,7 @@ description: >
   Zero values in degrees K(-273 in degrees C)in thermal thresholds will
   be ignored
 
-compatible: cros-ec,temp-sensor
-
 properties:
-    adc:
-      required: true
-      type: phandle
-      description: The named adc channel
-
-    thermistor:
-      type: phandle
-      description: Underlying thermistor device if used
-
     label:
       required: true
       type: string
