@@ -98,7 +98,7 @@ static void backlight_enable_deferred(void)
 }
 DECLARE_DEFERRED(backlight_enable_deferred);
 
-void backlight_enable_interrupt(enum gpio_signal signal)
+void oz554_interrupt(enum gpio_signal signal)
 {
 	/*
 	 * 1. Spec says backlight should be turned on after 500ms
@@ -131,17 +131,4 @@ int oz554_set_config(int offset, int data)
 	}
 	oz554_conf[i].data = data;
 	return EC_SUCCESS;
-}
-
-static void init_oz554(void)
-{
-	oz554_board_init();
-
-	gpio_enable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
-}
-DECLARE_HOOK(HOOK_INIT, init_oz554, HOOK_PRIO_DEFAULT);
-
-
-__overridable void oz554_board_init(void)
-{
 }

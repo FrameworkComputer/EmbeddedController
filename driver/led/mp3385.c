@@ -97,7 +97,7 @@ static void mp3385_backlight_enable_deferred(void)
 }
 DECLARE_DEFERRED(mp3385_backlight_enable_deferred);
 
-void backlight_enable_interrupt(enum gpio_signal signal)
+void mp3385_interrupt(enum gpio_signal signal)
 {
 	/*
 	 * 1. Spec says backlight should be turned on after 500ms

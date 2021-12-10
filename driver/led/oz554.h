@@ -15,7 +15,7 @@
  * Overridable board initialization.  Should be overridden by a board
  * specific function if the default is not appropriate
  */
-__override_proto void oz554_board_init(void);
+void oz554_board_init(void);
 
 /**
  * Update oz554 configuration array (oz554_conf).
@@ -30,6 +30,6 @@ int oz554_set_config(int offset, int data);
 #define OZ554_POWER_BACKLIGHT_DELAY SECOND
 #endif
 
-void backlight_enable_interrupt(enum gpio_signal signal);
+void oz554_interrupt(enum gpio_signal signal);
 
 #endif

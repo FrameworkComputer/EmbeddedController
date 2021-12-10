@@ -30,6 +30,6 @@ int mp3385_set_config(int offset, int data);
 #define MP3385_POWER_BACKLIGHT_DELAY SECOND
 #endif
 
-void backlight_enable_interrupt(enum gpio_signal signal);
+void mp3385_interrupt(enum gpio_signal signal);
 
 #endif

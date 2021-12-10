@@ -11,7 +11,7 @@
 GPIO_INT(USB_C0_PD_INT_ODL,	PIN(3, 7), GPIO_INT_FALLING | GPIO_PULL_UP,	tcpc_alert_event)
 GPIO_INT(AC_PRESENT,		PIN(C, 1), GPIO_INT_BOTH,			extpower_interrupt)
 GPIO_INT(POWER_BUTTON_L,	PIN(0, 4), GPIO_INT_BOTH | GPIO_PULL_UP,	power_button_interrupt)	/* MECH_PWR_BTN_ODL */
-GPIO_INT(PANEL_BACKLIGHT_EN,	PIN(4, 4), GPIO_INT_RISING, backlight_enable_interrupt)
+GPIO_INT(PANEL_BACKLIGHT_EN,	PIN(4, 4), GPIO_INT_RISING, oz554_interrupt)
 
 GPIO_INT(PCH_SLP_S0_L,		PIN(7, 5), GPIO_INT_BOTH,			power_signal_interrupt)
 GPIO_INT(PCH_SLP_SUS_L,		PIN(6, 2), GPIO_INT_BOTH,			power_signal_interrupt)

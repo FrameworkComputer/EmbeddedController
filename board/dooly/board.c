@@ -761,6 +761,10 @@ static void board_init(void)
 	/* Always claim AC is online, because we don't have a battery. */
 	memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 	*memmap_batt_flags |= EC_BATT_FLAG_AC_PRESENT;
+
+	/* Initial backlight ic setting */
+	oz554_board_init();
+	gpio_enable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -1227,7 +1231,7 @@ static void power_monitor(void)
 	hook_call_deferred(&power_monitor_data, delay);
 }
 
-__override void oz554_board_init(void)
+void oz554_board_init(void)
 {
 	int pin_status = 0;
 

@@ -5,12 +5,13 @@
 
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "oz554.h"
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
 
-__override void oz554_board_init(void)
+void oz554_board_init(void)
 {
 	int pin_status = 0;
 
@@ -40,3 +41,10 @@ __override void oz554_board_init(void)
 		break;
 	}
 }
+
+static void init_oz554(void)
+{
+	oz554_board_init();
+	gpio_enable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
+}
+DECLARE_HOOK(HOOK_INIT, init_oz554, HOOK_PRIO_DEFAULT);
