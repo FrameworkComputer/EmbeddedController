@@ -326,13 +326,8 @@ static int icm426xx_config_interrupt(const struct motion_sensor_t *s)
 	int val, ret;
 
 	/* configure INT1 pin */
-	val = ICM426XX_INT1_PUSH_PULL;
-	if (s->flags & MOTIONSENSE_FLAG_INT_ACTIVE_HIGH)
-		val |= ICM426XX_INT1_ACTIVE_HIGH;
-
-	ret = icm_write8(s, ICM426XX_REG_INT_CONFIG, val);
-	if (ret != EC_SUCCESS)
-		return ret;
+	RETURN_ERROR(icm_write8(s, ICM426XX_REG_INT_CONFIG,
+				ICM426XX_INT1_PUSH_PULL));
 
 	/* deassert async reset for proper INT pin operation */
 	ret = icm_field_update8(s, ICM426XX_REG_INT_CONFIG1,

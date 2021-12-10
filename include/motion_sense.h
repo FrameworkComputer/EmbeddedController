@@ -129,7 +129,6 @@ struct motion_data_t {
  */
 #define MOTIONSENSE_FLAG_IN_SPOOF_MODE		BIT(1)
 #define MOTIONSENSE_FLAG_INT_SIGNAL		BIT(2)
-#define MOTIONSENSE_FLAG_INT_ACTIVE_HIGH	BIT(3)
 
 struct online_calib_data {
 	/**

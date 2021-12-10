@@ -516,8 +516,7 @@ static int init(struct motion_sensor_t *s)
 		goto err_unlock;
 
 	/* Interrupt trigger level of power-on-reset is HIGH */
-	if (IS_ENABLED(LIS2DW12_ENABLE_FIFO) &&
-	    !(MOTIONSENSE_FLAG_INT_ACTIVE_HIGH & s->flags)) {
+	if (IS_ENABLED(LIS2DW12_ENABLE_FIFO)) {
 		ret = st_write_data_with_mask(s, LIS2DW12_H_ACTIVE_ADDR,
 						LIS2DW12_H_ACTIVE_MASK,
 						LIS2DW12_EN_BIT);

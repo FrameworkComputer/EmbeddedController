@@ -89,12 +89,8 @@ __maybe_unused static int lis2ds_config_interrupt(const struct motion_sensor_t *
 	int ret = EC_SUCCESS;
 
 	/* Interrupt trigger level of power-on-reset is HIGH */
-	if (!(s->flags & MOTIONSENSE_FLAG_INT_ACTIVE_HIGH)) {
-		ret = st_write_data_with_mask(s, LIS2DS_H_ACTIVE_ADDR,
-					      LIS2DS_H_ACTIVE_MASK, LIS2DS_EN_BIT);
-		if (ret != EC_SUCCESS)
-			return ret;
-	}
+	RETURN_ERROR(st_write_data_with_mask(s, LIS2DS_H_ACTIVE_ADDR,
+				LIS2DS_H_ACTIVE_MASK, LIS2DS_EN_BIT));
 
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 		/*
