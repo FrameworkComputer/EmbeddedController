@@ -24,8 +24,6 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-#define IS_FSTS_EMPTY(s) ((s).len & LSM6DSM_FIFO_EMPTY)
-
 #ifndef FIFO_READ_LEN
 #define FIFO_READ_LEN 0
 #endif
@@ -34,7 +32,7 @@
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT 0
 #endif
 
-static volatile uint32_t last_interrupt_timestamp;
+STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
 
 /**
  * Gets the sensor type associated with the dev_fifo enum. This type can be used
@@ -337,8 +335,7 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 	}
 }
 
-static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts,
-		     uint32_t *last_fifo_read_ts)
+static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts)
 {
 	uint32_t interrupt_timestamp = last_interrupt_timestamp;
 	int err, left, length;
@@ -352,12 +349,6 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts,
 	left *= sizeof(uint16_t);
 	left = (left / OUT_XYZ_SIZE) * OUT_XYZ_SIZE;
 
-	/*
-	 * TODO(b/122912601): phaser360: Investigate Standard Deviation error
-	 *				 during CtsSensorTests
-	 * - check "pattern" register versus where code thinks it is parsing
-	 */
-
 	/* Push all data on upper side. */
 	do {
 		/* Fit len to pre-allocated static buffer. */
@@ -370,7 +361,6 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts,
 		err = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
 					  LSM6DSM_FIFO_DATA_ADDR,
 					  fifo, length);
-		*last_fifo_read_ts = __hw_clock_source_read();
 		if (err != EC_SUCCESS)
 			return err;
 
@@ -381,38 +371,11 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts,
 		 * where we empty the FIFO, and a new IRQ comes in between
 		 * reading the last sample and pushing it into the FIFO.
 		 */
-
 		push_fifo_data(s, fifo, length, interrupt_timestamp);
 		left -= length;
 	} while (left > 0);
 
-	motion_sense_fifo_commit_data();
-
 	return EC_SUCCESS;
-}
-
-static int is_fifo_empty(struct motion_sensor_t *s, struct fstatus *fsts)
-{
-	int res;
-
-	if (s->flags & MOTIONSENSE_FLAG_INT_SIGNAL)
-		return gpio_get_level(s->int_signal);
-	CPRINTS("Interrupt signal not set for %s", s->name);
-	res = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
-				  LSM6DSM_FIFO_STS1_ADDR,
-				  (int8_t *)fsts, sizeof(*fsts));
-	/* If we failed to read the FIFO size assume empty. */
-	if (res != EC_SUCCESS)
-		return 1;
-	return IS_FSTS_EMPTY(*fsts);
-}
-
-static void handle_interrupt_for_fifo(uint32_t ts)
-{
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
-	    time_after(ts, last_interrupt_timestamp))
-		last_interrupt_timestamp = ts;
-	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LSM6DSM_INT_EVENT);
 }
 
 /**
@@ -420,7 +383,10 @@ static void handle_interrupt_for_fifo(uint32_t ts)
  */
 void lsm6dsm_interrupt(enum gpio_signal signal)
 {
-	handle_interrupt_for_fifo(__hw_clock_source_read());
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		last_interrupt_timestamp = __hw_clock_source_read();
+
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LSM6DSM_INT_EVENT);
 }
 
 /**
@@ -429,43 +395,36 @@ void lsm6dsm_interrupt(enum gpio_signal signal)
 __maybe_unused static int irq_handler(
 	struct motion_sensor_t *s, uint32_t *event)
 {
-	int ret = EC_SUCCESS;
-
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCEL_LSM6DSM_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 		struct fstatus fsts;
-		uint32_t last_fifo_read_ts;
-		uint32_t triggering_interrupt_timestamp =
-			last_interrupt_timestamp;
+		int fifo_empty = false;
+		bool commit_needed = false;
 
-		/* Read how many data pattern on FIFO to read and pattern. */
-		ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
-					  LSM6DSM_FIFO_STS1_ADDR,
-					  (uint8_t *)&fsts, sizeof(fsts));
-		if (ret != EC_SUCCESS)
-			return ret;
-		last_fifo_read_ts = __hw_clock_source_read();
-		if (fsts.len & (LSM6DSM_FIFO_DATA_OVR | LSM6DSM_FIFO_FULL))
-			CPRINTS("%s FIFO Overrun: %04x", s->name, fsts.len);
-		if (!IS_FSTS_EMPTY(fsts))
-			ret = load_fifo(s, &fsts, &last_fifo_read_ts);
-
-		/*
-		 * Check if FIFO isn't empty and we never got an interrupt.
-		 * This can happen if new entries were added to the FIFO after
-		 * the count was read, but before the FIFO was cleared out.
-		 * In the long term it might be better to use the last
-		 * spread timestamp instead.
-		 */
-		if (!is_fifo_empty(s, &fsts) &&
-		    triggering_interrupt_timestamp == last_interrupt_timestamp)
-			handle_interrupt_for_fifo(last_fifo_read_ts);
+		while (!fifo_empty) {
+			/* Read how many data pattern on FIFO to read. */
+			RETURN_ERROR(st_raw_read_n_noinc(s->port,
+					s->i2c_spi_addr_flags,
+					LSM6DSM_FIFO_STS1_ADDR,
+					(uint8_t *)&fsts, sizeof(fsts)));
+			if (fsts.len & (LSM6DSM_FIFO_DATA_OVR |
+					LSM6DSM_FIFO_FULL))
+				CPRINTS("%s FIFO Overrun: %04x",
+					s->name, fsts.len);
+			fifo_empty = fsts.len & LSM6DSM_FIFO_EMPTY;
+			if (!fifo_empty) {
+				commit_needed = true;
+				RETURN_ERROR(load_fifo(s, &fsts));
+			}
+		}
+		if (commit_needed)
+			motion_sense_fifo_commit_data();
 	}
 
-	return ret;
+	return EC_SUCCESS;
 }
 
 /**
