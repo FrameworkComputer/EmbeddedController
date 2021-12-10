@@ -167,18 +167,32 @@ static void led_set_battery(void)
 			if (charge_get_percent() < 10)
 				led_set_color_battery(LED_RIGHT_PORT,
 					(battery_ticks % LED_TICKS_PER_CYCLE
-					 < LED_ON_TICKS) ? LED_WHITE : LED_OFF);
+					 < LED_ON_TICKS) ? LED_AMBER : LED_OFF);
 			else
 				led_set_color_battery(LED_RIGHT_PORT, LED_OFF);
 		}
 
-		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
-			led_set_color_battery(LED_LEFT_PORT, LED_OFF);
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
+			if (charge_get_percent() < 10)
+				led_set_color_battery(LED_LEFT_PORT,
+					(battery_ticks % LED_TICKS_PER_CYCLE
+					 < LED_ON_TICKS) ? LED_AMBER : LED_OFF);
+			else
+				led_set_color_battery(LED_LEFT_PORT, LED_OFF);
+		}
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
-				LED_WHITE : LED_OFF);
+		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
+			led_set_color_battery(LED_RIGHT_PORT,
+				(battery_ticks & 0x1) ? LED_AMBER : LED_OFF);
+		}
+
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
+			led_set_color_battery(LED_LEFT_PORT,
+				(battery_ticks & 0x1) ? LED_AMBER : LED_OFF);
+		}
 		break;
+
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
 		break;
