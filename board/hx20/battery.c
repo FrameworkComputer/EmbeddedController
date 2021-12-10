@@ -110,8 +110,6 @@ enum battery_present battery_is_present(void)
 		return BP_NO;
 	else if (!bp)
 		return BP_NO;
-	else if (!(charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE))
-		return BP_NOT_SURE;
 	else if (battery_check_disconnect() != BATTERY_NOT_DISCONNECTED)
 		return BP_NOT_SURE;
 	else

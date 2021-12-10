@@ -357,9 +357,7 @@ void cypd_update_power(void)
 	}
 
 	if (extpower_is_present() ||
-	 (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
-		 charger_current_battery_params()->state_of_charge > 0 &&
-		 battery_is_present() == BP_YES))
+		battery_is_present() == BP_YES)
 		system_power_present = 1;
 	else
 		system_power_present = 0;
@@ -370,9 +368,7 @@ int cypd_update_power_status(void)
 	int i;
 	int rv = EC_SUCCESS;
 	int power_stat = 0;
-	if (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
-		charger_current_battery_params()->state_of_charge > 0 &&
-		battery_is_present() == BP_YES) {
+	if (battery_is_present() == BP_YES) {
 		power_stat |= BIT(3);
 	}
 	if (extpower_is_present()) {
