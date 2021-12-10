@@ -320,27 +320,21 @@ void board_reset_pd_mcu(void)
 	msleep(50);
 }
 
-static void enable_ioex(int ioex)
-{
-	ioex_init(ioex);
-}
-
 static void board_tcpc_init(void)
 {
+	int i;
+
 	/* Don't reset TCPCs after initial reset */
-	if (!system_jumped_late()) {
+	if (!system_jumped_late())
 		board_reset_pd_mcu();
 
-		/*
-		 * These IO expander pins are implemented using the
-		 * C0/C1/C2/C3 TCPCs, so they must be set up after the TCPC
-		 * has been taken out of reset.
-		 */
-		enable_ioex(IOEX_C0_NCT38XX);
-		enable_ioex(IOEX_C1_NCT38XX);
-		enable_ioex(IOEX_C2_NCT38XX);
-		enable_ioex(IOEX_C3_NCT38XX);
-	}
+	/*
+	 * These IO expander pins are implemented using the
+	 * C0/C1/C2/C3 TCPCs, so they must be set up after the TCPC
+	 * has been taken out of reset.
+	 */
+	for (i = 0; i < CONFIG_IO_EXPANDER_PORT_COUNT; ++i)
+		ioex_init(i);
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
