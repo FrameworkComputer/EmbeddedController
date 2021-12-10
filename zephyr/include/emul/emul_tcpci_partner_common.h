@@ -37,6 +37,12 @@ struct tcpci_partner_data {
 	struct k_fifo to_send;
 	/** Next SOP message id */
 	int msg_id;
+	/** Power role (used in message header) */
+	enum pd_power_role power_role;
+	/** Data role (used in message header) */
+	enum pd_data_role data_role;
+	/** Revision (used in message header) */
+	enum pd_rev_type rev;
 };
 
 /** Structure of message used by TCPCI partner emulator */

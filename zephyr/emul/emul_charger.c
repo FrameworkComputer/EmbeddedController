@@ -286,6 +286,10 @@ void charger_emul_init(struct charger_emul_data *data)
 {
 	tcpci_partner_init(&data->common_data);
 
+	data->common_data.data_role = PD_ROLE_UFP;
+	data->common_data.power_role = PD_ROLE_SOURCE;
+	data->common_data.rev = PD_REV20;
+
 	data->ops.transmit = charger_emul_transmit_op;
 	data->ops.rx_consumed = charger_emul_rx_consumed_op;
 	data->ops.control_change = NULL;

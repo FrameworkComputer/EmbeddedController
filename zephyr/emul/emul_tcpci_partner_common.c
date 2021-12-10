@@ -49,8 +49,8 @@ void tcpci_partner_set_header(struct tcpci_partner_data *data,
 {
 	/* Header msg id has only 3 bits and wraps around after 8 messages */
 	uint16_t msg_id = data->msg_id & 0x7;
-	uint16_t header = PD_HEADER(type, PD_ROLE_SOURCE, PD_ROLE_UFP, msg_id,
-				    cnt, PD_REV20, 0 /* ext */);
+	uint16_t header = PD_HEADER(type, data->power_role, data->data_role,
+				    msg_id, cnt, data->rev, 0 /* ext */);
 	data->msg_id++;
 
 	msg->msg.buf[1] = (header >> 8) & 0xff;
