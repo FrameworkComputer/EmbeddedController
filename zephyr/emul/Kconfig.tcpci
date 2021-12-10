@@ -36,12 +36,12 @@ config EMUL_PS8XXX
 	  for TCPCI emulator. PS8XXX specific API is available in
 	  zephyr/include/emul/emul_tcpci.h
 
-config EMUL_CHARGER
-	bool "USB-C charger emulator"
+config EMUL_TCPCI_PARTNER_SRC
+	bool "USB-C source device emulator"
 	select EMUL_TCPCI_PARTNER_COMMON
 	help
-	  Enable USB-C charger emulator which may be attached to TCPCI emulator.
-	  API of charger emulator is available in
-	  zephyr/include/emul/emul_charger.h
+	  Enable USB-C source device emulator which may be attached to TCPCI
+	  emulator. API of source device emulator is available in
+	  zephyr/include/emul/emul_tcpci_partner_src.h
 
 endif # EMUL_TCPCI

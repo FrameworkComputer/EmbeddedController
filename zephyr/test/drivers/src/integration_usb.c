@@ -59,7 +59,7 @@ static void test_attach_compliant_charger(void)
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
 	struct i2c_emul *i2c_emul;
 	uint16_t battery_status;
-	struct charger_emul_data my_charger;
+	struct tcpci_src_emul_data my_charger;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
 
@@ -75,8 +75,8 @@ static void test_attach_compliant_charger(void)
 
 	/* Attach emulated charger. */
 	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_AC_OK_PIN, 1), NULL);
-	charger_emul_init(&my_charger);
-	zassert_ok(charger_emul_connect_to_tcpci(&my_charger, tcpci_emul),
+	tcpci_src_emul_init(&my_charger);
+	zassert_ok(tcpci_src_emul_connect_to_tcpci(&my_charger, tcpci_emul),
 		   NULL);
 
 	/* Wait for current ramp. */
