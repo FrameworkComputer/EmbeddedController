@@ -13,7 +13,7 @@
 #define __EMUL_TCPCI_PARTNER_COMMON_H
 
 #include <emul.h>
-#include "emul/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci.h"
 
 #include "ec_commands.h"
 #include "usb_pd.h"

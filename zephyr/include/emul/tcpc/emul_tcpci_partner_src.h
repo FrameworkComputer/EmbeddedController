@@ -13,8 +13,8 @@
 #define __EMUL_TCPCI_PARTNER_SRC_H
 
 #include <emul.h>
-#include "emul/emul_tcpci_partner_common.h"
-#include "emul/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci_partner_common.h"
+#include "emul/tcpc/emul_tcpci.h"
 #include "usb_pd.h"
 
 /**

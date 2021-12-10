@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+add_subdirectory("tcpc")
+
 zephyr_library_sources_ifdef(CONFIG_EMUL_COMMON_I2C	emul_common_i2c.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_SMART_BATTERY	emul_smart_battery.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_BMA255		emul_bma255.c)
@@ -17,8 +19,4 @@ zephyr_library_sources_ifdef(CONFIG_EMUL_LIS2DW12	emul_lis2dw12.c)
 zephyr_library_sources_ifdef(CONFIG_I2C_MOCK		i2c_mock.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_ISL923X	emul_isl923x.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_CLOCK_CONTROL	emul_clock_control.c)
-zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI		emul_tcpci.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_SN5S330	emul_sn5s330.c)
-zephyr_library_sources_ifdef(CONFIG_EMUL_PS8XXX		emul_ps8xxx.c)
-zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI_PARTNER_SRC	emul_tcpci_partner_src.c)
-zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI_PARTNER_COMMON	emul_tcpci_partner_common.c)

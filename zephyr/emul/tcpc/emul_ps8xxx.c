@@ -16,8 +16,8 @@ LOG_MODULE_REGISTER(ps8xxx_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include "tcpm/tcpci.h"
 
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_ps8xxx.h"
-#include "emul/emul_tcpci.h"
+#include "emul/tcpc/emul_ps8xxx.h"
+#include "emul/tcpc/emul_tcpci.h"
 
 #include "driver/tcpm/ps8xxx.h"
 

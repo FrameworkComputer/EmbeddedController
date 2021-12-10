@@ -13,7 +13,8 @@ menuconfig EMUL_TCPCI
 	  It is used to test tcpci code. It supports reads and writes to all
 	  emulator registers. Generic TCPCI emulator can be used as the base
 	  for specific TCPC device emulator that follow TCPCI specification.
-	  TCPCI emulator API is available in zephyr/include/emul/emul_tcpci.h
+	  TCPCI emulator API is available in
+	  zephyr/include/emul/tcpc/emul_tcpci.h
 
 if EMUL_TCPCI
 
@@ -27,14 +28,14 @@ config EMUL_TCPCI_PARTNER_COMMON
 	  This option is selected automatically by specific TCPCI partner
 	  emulators. Enable common code that can be used by TCPCI partner device
 	  emulators. It covers sending delayed messages. API of common functions
-	  is available in zephyr/include/emul/emul_common_tcpci_partner.h
+	  is available in zephyr/include/emul/tcpc/emul_common_tcpci_partner.h
 
 config EMUL_PS8XXX
 	bool "Parade PS8XXX emulator"
 	help
 	  Enable emulator for PS8XXX family of TCPC. This emulator is extenstion
 	  for TCPCI emulator. PS8XXX specific API is available in
-	  zephyr/include/emul/emul_tcpci.h
+	  zephyr/include/emul/tcpc/emul_ps8xxx.h
 
 config EMUL_TCPCI_PARTNER_SRC
 	bool "USB-C source device emulator"
@@ -42,6 +43,6 @@ config EMUL_TCPCI_PARTNER_SRC
 	help
 	  Enable USB-C source device emulator which may be attached to TCPCI
 	  emulator. API of source device emulator is available in
-	  zephyr/include/emul/emul_tcpci_partner_src.h
+	  zephyr/include/emul/tcpc/emul_tcpci_partner_src.h
 
 endif # EMUL_TCPCI

@@ -9,8 +9,8 @@ LOG_MODULE_REGISTER(tcpci_partner, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <zephyr.h>
 
 #include "common.h"
-#include "emul/emul_tcpci_partner_common.h"
-#include "emul/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci_partner_common.h"
+#include "emul/tcpc/emul_tcpci.h"
 #include "usb_pd.h"
 
 /** Check description in emul_common_tcpci_partner.h */

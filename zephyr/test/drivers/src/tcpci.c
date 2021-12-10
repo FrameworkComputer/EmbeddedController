@@ -11,7 +11,7 @@
 #include "common.h"
 #include "ec_tasks.h"
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "stubs.h"

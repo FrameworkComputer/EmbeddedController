@@ -8,7 +8,7 @@
 
 #include "common.h"
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci.h"
 #include "tcpci_test_common.h"
 
 #include "tcpm/tcpci.h"

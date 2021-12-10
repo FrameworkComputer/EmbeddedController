@@ -17,7 +17,7 @@ LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include "tcpm/tcpci.h"
 
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci.h"
 
 #define TCPCI_DATA_FROM_I2C_EMUL(_emul)					     \
 	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \

@@ -5,14 +5,14 @@
 
 #include <zephyr.h>
 #include <ztest.h>
-
-#include "emul/emul_tcpci.h"
-#include "emul/emul_smart_battery.h"
-#include "emul/emul_tcpci_partner_src.h"
 #include <drivers/gpio/gpio_emul.h>
+
 #include "battery_smart.h"
-#include "tcpm/tcpci.h"
 #include "ec_tasks.h"
+#include "emul/emul_smart_battery.h"
+#include "emul/tcpc/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci_partner_src.h"
+#include "tcpm/tcpci.h"
 
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
