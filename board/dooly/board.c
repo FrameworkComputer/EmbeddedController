@@ -18,6 +18,7 @@
 #include "driver/als_tcs3400.h"
 #include "driver/ina3221.h"
 #include "driver/led/oz554.h"
+#include "driver/led/mp3385.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -762,8 +763,11 @@ static void board_init(void)
 	memmap_batt_flags = host_get_memmap(EC_MEMMAP_BATT_FLAG);
 	*memmap_batt_flags |= EC_BATT_FLAG_AC_PRESENT;
 
-	/* Initial backlight ic setting */
-	oz554_board_init();
+	/* Initial backlight ic setting by ssfc */
+	if (ec_ssfc_get_led_ic() == SSFC_LED_MP3385)
+		mp3385_board_init();
+	else
+		oz554_board_init();
 	gpio_enable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
@@ -1255,4 +1259,46 @@ void oz554_board_init(void)
 		CPRINTS("PANEL UNKNOWN");
 		break;
 	}
+}
+
+void mp3385_board_init(void)
+{
+	int pin_status = 0;
+
+	pin_status |= gpio_get_level(GPIO_PANEL_ID0) << 0;
+	pin_status |= gpio_get_level(GPIO_PANEL_ID1) << 1;
+
+	switch (pin_status) {
+	case 0x00:
+		CPRINTS("PANEL_HAN01.10A");
+		mp3385_set_config(0, 0xF1);
+		mp3385_set_config(2, 0x4C);
+		mp3385_set_config(5, 0xB7);
+		break;
+	case 0x02:
+		CPRINTS("PANEL_WF9_SSA2");
+		mp3385_set_config(0, 0xF1);
+		mp3385_set_config(2, 0x55);
+		mp3385_set_config(5, 0x87);
+		break;
+	default:
+		CPRINTS("PANEL UNKNOWN");
+		break;
+	}
+}
+
+void board_backlight_enable_interrupt(enum gpio_signal signal)
+{
+	switch (ec_ssfc_get_led_ic()) {
+	case SSFC_LED_OZ554:
+		oz554_interrupt(signal);
+		break;
+	case SSFC_LED_MP3385:
+		mp3385_interrupt(signal);
+		break;
+	default:
+		oz554_interrupt(signal);
+		break;
+	}
+
 }
