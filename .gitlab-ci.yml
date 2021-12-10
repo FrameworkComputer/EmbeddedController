@@ -104,10 +104,10 @@ seed_cache:
       -a "${BUILD_DIR}/${PROJECT}/lcov.info" -a build/merged.info
     - lcov -o "${BUILD_DIR}/${PROJECT}/no_zephyr.info"
       -r "${BUILD_DIR}/${PROJECT}/lcov.info" "${ZEPHYR_BASE}/**"
-      "${MODULES_DIR}/*" "zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
+      "${MODULES_DIR}/*" "${EC_DIR}/zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
     - lcov -o "${BUILD_DIR}/${PROJECT}/merged_no_zephyr.info"
       -r "${BUILD_DIR}/${PROJECT}/merged.info" "${ZEPHYR_BASE}/**"
-      "${MODULES_DIR}/*" "zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
+      "${MODULES_DIR}/*" "${EC_DIR}/zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
     - grep "SF:" "${BUILD_DIR}/${PROJECT}/no_zephyr.info" | sort -u |
       sed -e 's|^SF:||' | xargs lcov
       -o "${BUILD_DIR}/${PROJECT}/filtered_no_zephyr.info"
@@ -205,8 +205,8 @@ merged_coverage:
     - lcov -o build/merged.info -a build/coverage/lcov.info -a build/zcoverage/lcov.info
     - lcov -o build/merged_no_zephyr.info -r build/merged.info
       "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
-      'zephyr/drivers/**' 'zephyr/include/drivers/**'
-      'zephyr/shim/chip/**' 'zephyr/shim/core/**'
+      '${EC_DIR}/zephyr/drivers/**' '${EC_DIR}/zephyr/include/drivers/**'
+      '${EC_DIR}/zephyr/shim/chip/**' '${EC_DIR}/zephyr/shim/core/**'
       '/usr/include/x86_64-linux-gnu/**'
   artifacts:
     paths:
