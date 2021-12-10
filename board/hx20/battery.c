@@ -40,6 +40,7 @@ static const struct battery_info info = {
 	.discharging_max_c = 62,
 };
 
+static enum battery_present batt_pres_prev = BP_NOT_SURE;
 static uint8_t charging_maximum_level = NEED_RESTORE;
 static int old_btp;
 
@@ -100,20 +101,31 @@ static int battery_check_disconnect(void)
 
 enum battery_present battery_is_present(void)
 {
-	enum battery_present bp;
+	enum battery_present batt_pres;
 	int mv;
 
 	mv = adc_read_channel(ADC_VCIN1_BATT_TEMP);
-	bp = (mv < 3000 ? BP_YES : BP_NO);
+	batt_pres = (mv < 3000 ? BP_YES : BP_NO);
 
 	if (mv == ADC_READ_ERROR)
 		return BP_NO;
-	else if (!bp)
+
+	/*
+	 * If the battery is present now and was present last time we checked,
+	 * return early.
+	 */
+	if (batt_pres == BP_YES && batt_pres_prev == batt_pres)
+		return batt_pres;
+
+
+	if (!batt_pres)
 		return BP_NO;
 	else if (battery_check_disconnect() != BATTERY_NOT_DISCONNECTED)
 		return BP_NOT_SURE;
-	else
-		return bp;
+
+	batt_pres_prev = batt_pres;
+
+	return batt_pres;
 }
 
 #ifdef CONFIG_EMI_REGION1
