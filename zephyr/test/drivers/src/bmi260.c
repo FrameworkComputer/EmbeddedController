@@ -1913,7 +1913,7 @@ void test_interrupt_handler(void)
 	 * interrupt, and ensure the flag is set.
 	 */
 
-	uint32_t *mask;
+	atomic_t *mask;
 
 	mask = task_get_event_bitmap(TASK_ID_MOTIONSENSE);
 	zassert_true(mask != NULL,
