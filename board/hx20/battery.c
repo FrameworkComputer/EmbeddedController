@@ -132,7 +132,7 @@ void battery_customize(struct charge_state_data *emi_info)
 	int year = 0;
 
 	/* manufacture date is static data */
-	if (!read_manuf_date && battery_is_present()) {
+	if (!read_manuf_date && battery_is_present() == BP_YES) {
 		rv = battery_manufacture_date(&year, &month, &day);
 		if (rv == EC_SUCCESS) {
 			ccprintf("Batt manufacturer date: %d.%d.%d\n", year, month, day);
