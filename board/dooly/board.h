@@ -309,8 +309,20 @@ void show_critical_error(void);
 #define EC_CFG_THERMAL_H		7
 #define EC_CFG_THERMAL_MASK GENMASK(EC_CFG_THERMAL_H, EC_CFG_THERMAL_L)
 
+/*
+ * Second Source Factory Cache (SSFC) CBI field
+ */
+/*
+ * Led driver IC (2 bits).
+ */
+#define EC_SSFC_LED_L		0
+#define EC_SSFC_LED_H		1
+#define EC_SSFC_LED_MASK GENMASK(EC_SSFC_LED_H, EC_SSFC_LED_L)
+
+
 unsigned int ec_config_get_bj_power(void);
 unsigned int ec_config_get_thermal_solution(void);
+unsigned int ec_ssfc_get_led_ic(void);
 
 #endif /* !__ASSEMBLER__ */
 

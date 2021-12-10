@@ -705,6 +705,7 @@ const unsigned int ina3221_count = ARRAY_SIZE(ina3221);
 static uint16_t board_version;
 static uint32_t sku_id;
 static uint32_t fw_config;
+static uint32_t ssfc;
 
 static void cbi_init(void)
 {
@@ -722,8 +723,11 @@ static void cbi_init(void)
 		sku_id = val;
 	if (cbi_get_fw_config(&val) == EC_SUCCESS)
 		fw_config = val;
-	CPRINTS("Board Version: %d, SKU ID: 0x%08x, F/W config: 0x%08x",
-		board_version, sku_id, fw_config);
+	if (cbi_get_ssfc(&val) == EC_SUCCESS)
+		ssfc = val;
+	CPRINTS("Board Version: %d, SKU ID: 0x%08x, "
+			"F/W config: 0x%08x, SSFC: 0x%08x ",
+		board_version, sku_id, fw_config, ssfc);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -962,6 +966,11 @@ unsigned int ec_config_get_bj_power(void)
 unsigned int ec_config_get_thermal_solution(void)
 {
 	return (fw_config & EC_CFG_THERMAL_MASK) >> EC_CFG_THERMAL_L;
+}
+
+unsigned int ec_ssfc_get_led_ic(void)
+{
+	return (ssfc & EC_SSFC_LED_MASK) >> EC_SSFC_LED_L;
 }
 
 /*
