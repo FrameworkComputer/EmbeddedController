@@ -651,7 +651,6 @@ main() {
     echo "Failed to get platform name"
     exit "${EXIT_CONFIG}"
   fi
-  PLATFORM_NAME="${PLATFORM_NAME%-kernelnext}"
   readonly PLATFORM_NAME
 
   if ! PLATFORM_BASE_NAME="$(platform_base_name "${PLATFORM_NAME}")"; then
