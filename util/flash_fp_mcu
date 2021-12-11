@@ -56,6 +56,24 @@ check_hardware_write_protect_disabled() {
   fi
 }
 
+# Get the gpiochip base number from sysfs that matches
+# a device path
+get_sysfs_gpiochip_base() {
+  local match="${1}"
+
+  for chip in /sys/class/gpio/gpiochip*
+  do
+    case "$(readlink ${chip})" in
+     ${match})
+      echo "${chip#/sys/class/gpio/gpiochip}"
+      return 0
+      ;;
+    esac
+  done
+
+  return 1
+}
+
 # Get the spiid for the fingerprint sensor based on the modalias
 # string: https://crbug.com/955117
 get_spiid() {
@@ -410,8 +428,8 @@ flash_fp_mcu_stm32() {
   # outputs because they're not open-drain signals.
   # TODO(b/179839337): Make this the default and properly support
   # open-drain outputs on other platforms.
-  if [[ "${PLATFORM_NAME}" != "strongbad" ]] &&
-     [[ "${PLATFORM_NAME}" != "herobrine" ]]; then
+  if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "herobrine" ]]; then
     gpio in       "${gpio_boot0}" "${gpio_nrst}"
   fi
   gpio unexport "${gpio_boot0}" "${gpio_nrst}"
@@ -547,11 +565,18 @@ config_strongbad() {
   # TODO(b/179533783): Fix modalias on strongbad and remove this bypass.
   readonly DEVICEID="spi10.0"
 
-  readonly GPIO_CHIP="gpiochip392"
+  local dev_path="*/platform/soc@0/3500000.pinctrl/gpio/*"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
   # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 22
-  readonly GPIO_NRST=$((392 + $(gpiofind FP_RST_L|cut -f2 -d" ")))
+  readonly GPIO_NRST=$((${gpiobase} + $(gpiofind FP_RST_L|cut -f2 -d" ")))
   # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
-  readonly GPIO_BOOT0=$((392 + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+  readonly GPIO_BOOT0=$((${gpiobase} + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
   # TODO(b/179839337): Hardware currently doesn't support PWREN, but the
   # next revision will. Add a comment here about the power enable gpio.
   readonly GPIO_PWREN=-1
