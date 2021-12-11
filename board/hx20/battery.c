@@ -40,6 +40,7 @@ static const struct battery_info info = {
 	.discharging_max_c = 62,
 };
 
+static enum battery_present batt_pres_prev = BP_NOT_SURE;
 static uint8_t charging_maximum_level = NEED_RESTORE;
 static int old_btp;
 
@@ -80,19 +81,51 @@ __override void battery_charger_notify(uint8_t flag)
 	}
 }
 
+static int battery_check_disconnect(void)
+{
+	int rv;
+	uint8_t data[6];
+
+	/* Check if battery charging + discharging is disabled. */
+	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
+			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	if (rv)
+		return BATTERY_DISCONNECT_ERROR;
+
+	if (data[3] & BATTERY_DISCHARGING_DISABLED)
+		return BATTERY_DISCONNECTED;
+
+
+	return BATTERY_NOT_DISCONNECTED;
+}
+
 enum battery_present battery_is_present(void)
 {
-	enum battery_present bp;
+	enum battery_present batt_pres;
 	int mv;
 
 	mv = adc_read_channel(ADC_VCIN1_BATT_TEMP);
+	batt_pres = (mv < 3000 ? BP_YES : BP_NO);
 
 	if (mv == ADC_READ_ERROR)
-		return -1;
+		return BP_NO;
 
-	bp = (mv < 3000 ? BP_YES : BP_NO);
+	/*
+	 * If the battery is present now and was present last time we checked,
+	 * return early.
+	 */
+	if (batt_pres == BP_YES && batt_pres_prev == batt_pres)
+		return batt_pres;
 
-	return bp;
+
+	if (!batt_pres)
+		return BP_NO;
+	else if (battery_check_disconnect() != BATTERY_NOT_DISCONNECTED)
+		return BP_NOT_SURE;
+
+	batt_pres_prev = batt_pres;
+
+	return batt_pres;
 }
 
 #ifdef CONFIG_EMI_REGION1
@@ -111,7 +144,7 @@ void battery_customize(struct charge_state_data *emi_info)
 	int year = 0;
 
 	/* manufacture date is static data */
-	if (!read_manuf_date && battery_is_present()) {
+	if (!read_manuf_date && battery_is_present() == BP_YES) {
 		rv = battery_manufacture_date(&year, &month, &day);
 		if (rv == EC_SUCCESS) {
 			ccprintf("Batt manufacturer date: %d.%d.%d\n", year, month, day);

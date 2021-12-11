@@ -357,8 +357,7 @@ void cypd_update_power(void)
 	}
 
 	if (extpower_is_present() ||
-	 (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
-		 charger_current_battery_params()->state_of_charge > 0))
+		battery_is_present() == BP_YES)
 		system_power_present = 1;
 	else
 		system_power_present = 0;
@@ -369,8 +368,7 @@ int cypd_update_power_status(void)
 	int i;
 	int rv = EC_SUCCESS;
 	int power_stat = 0;
-	if (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
-		charger_current_battery_params()->state_of_charge > 0) {
+	if (battery_is_present() == BP_YES) {
 		power_stat |= BIT(3);
 	}
 	if (extpower_is_present()) {
@@ -670,7 +668,7 @@ void cypd_response_get_battery_capability(int controller, int port,
 	/* Set PID */
 	msg[1] = PRODUCT_ID;
 
-	if (battery_is_present()) {
+	if (battery_is_present() == BP_YES) {
 		/*
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
@@ -735,7 +733,7 @@ int cypd_response_get_battery_status(int controller, int port, uint32_t pd_heade
 	uint32_t header = PD_DATA_BATTERY_STATUS + PD_HEADER_SOP(sop_type);
 	int port_idx = (controller << 1) + port;
 
-	if (battery_is_present()) {
+	if (battery_is_present() == BP_YES) {
 		/*
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
