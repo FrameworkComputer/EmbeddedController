@@ -274,3 +274,11 @@ __override bool board_is_dts_port(int port)
 {
 	return port == USBC_PORT_C0;
 }
+
+__override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
+{
+	if (ec_cfg_mlb_usb())
+		return TBT_SS_U32_GEN1_GEN2;
+
+	return TBT_SS_TBT_GEN3;
+}

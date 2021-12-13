@@ -54,6 +54,11 @@ union primus_cbi_fw_config get_fw_config(void)
 	return fw_config;
 }
 
+enum ec_cfg_mlb_usb ec_cfg_mlb_usb(void)
+{
+	return fw_config.mlb_usb;
+}
+
 enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void)
 {
 	return fw_config.usb_db;
