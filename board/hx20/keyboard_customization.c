@@ -235,7 +235,9 @@ void board_kblight_init(void)
 #define FN_PRESSED BIT(0)
 #define FN_LOCKED BIT(1)
 static uint8_t Fn_key;
-static uint8_t keep_fn_key_code;
+static uint8_t keep_fn_key_F1F12;
+static uint8_t keep_fn_key_special;
+static uint8_t keep_fn_key_functional;
 
 void fnkey_shutdown(void) {
 	uint8_t current_kb = 0;
@@ -264,12 +266,20 @@ void fnkey_startup(void) {
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, fnkey_startup, HOOK_PRIO_DEFAULT);
 
-static void fn_keep_check(int8_t pressed)
+static void fn_keep_check_F1F12(int8_t pressed)
 {
 	if (pressed)
-		keep_fn_key_code = 1;
+		keep_fn_key_F1F12 = 1;
 	else
-		keep_fn_key_code = 0;
+		keep_fn_key_F1F12 = 0;
+}
+
+static void fn_keep_check_special(int8_t pressed)
+{
+	if (pressed)
+		keep_fn_key_special = 1;
+	else
+		keep_fn_key_special = 0;
 }
 
 int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
@@ -278,12 +288,12 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 
 	if (!(Fn_key & FN_LOCKED) &&
 		(lock & FN_PRESSED) &&
-		!keep_fn_key_code)
+		!keep_fn_key_F1F12)
 		return EC_SUCCESS;
 	else if (Fn_key & FN_LOCKED &&
 		!(lock & FN_PRESSED))
 		return EC_SUCCESS;
-	else if (!pressed && !keep_fn_key_code)
+	else if (!pressed && !keep_fn_key_F1F12)
 		return EC_SUCCESS;
 
 	switch (prss_key) {
@@ -307,10 +317,12 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 		break;
 	case SCANCODE_F7:  /* TODO: DIM_SCREEN */
 		update_hid_key(HID_KEY_DISPLAY_BRIGHTNESS_DN, pressed);
+		fn_keep_check_F1F12(pressed);
 		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_F8:  /* TODO: BRIGHTEN_SCREEN */
 		update_hid_key(HID_KEY_DISPLAY_BRIGHTNESS_UP, pressed);
+		fn_keep_check_F1F12(pressed);
 		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_F9:  /* EXTERNAL_DISPLAY */
@@ -321,10 +333,12 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 			simulate_keyboard(SCANCODE_P, 0);
 			simulate_keyboard(SCANCODE_LEFT_WIN, 0);
 		}
+		fn_keep_check_F1F12(pressed);
 		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_F10:  /* FLIGHT_MODE */
 		update_hid_key(HID_KEY_AIRPLANE_MODE, pressed);
+		fn_keep_check_F1F12(pressed);
 		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_F11:
@@ -343,12 +357,12 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t lock, int8_t pressed)
 	default:
 		return EC_SUCCESS;
 	}
-	fn_keep_check(pressed);
+	fn_keep_check_F1F12(pressed);
 	return EC_SUCCESS;
 }
 
 
-int hotkey_special_key(uint16_t *key_code)
+int hotkey_special_key(uint16_t *key_code, int8_t pressed)
 {
 	const uint16_t prss_key = *key_code;
 
@@ -374,14 +388,23 @@ int hotkey_special_key(uint16_t *key_code)
 	case SCANCODE_DOWN:  /* PAGE_DOWN */
 		*key_code = 0xe07a;
 		break;
+	default:
+		return EC_SUCCESS;
 	}
+	fn_keep_check_special(pressed);
 	return EC_SUCCESS;
 }
 
-int functional_hotkey(uint16_t *key_code)
+int functional_hotkey(uint16_t *key_code, int8_t pressed)
 {
 	const uint16_t prss_key = *key_code;
 	uint8_t bl_brightness = 0;
+
+	/* don't send break key if last time doesn't send make key */
+	if (!pressed && keep_fn_key_functional) {
+		keep_fn_key_functional = 0;
+		return EC_ERROR_UNKNOWN;
+	}
 
 	switch (prss_key) {
 	case SCANCODE_ESC: /* TODO: FUNCTION_LOCK */
@@ -389,14 +412,12 @@ int functional_hotkey(uint16_t *key_code)
 			Fn_key &= ~FN_LOCKED;
 		else
 			Fn_key |= FN_LOCKED;
-		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_B:
 		/* BREAK_KEY */
 		simulate_keyboard(0xe07e, 1);
 		simulate_keyboard(0xe0, 1);
 		simulate_keyboard(0x7e, 0);
-		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_P:
 		/* PAUSE_KEY */
@@ -405,7 +426,6 @@ int functional_hotkey(uint16_t *key_code)
 		simulate_keyboard(0xe1, 1);
 		simulate_keyboard(0x14, 0);
 		simulate_keyboard(0x77, 0);
-		return EC_ERROR_UNIMPLEMENTED;
 		break;
 	case SCANCODE_SPACE:	/* TODO: TOGGLE_KEYBOARD_BACKLIGHT */
 		bl_brightness = kblight_get();
@@ -428,10 +448,12 @@ int functional_hotkey(uint16_t *key_code)
 		}
 		kblight_set(bl_brightness);
 		/* we dont want to pass the space key event to the OS */
-		return EC_ERROR_UNKNOWN;
 		break;
+	default:
+		return EC_SUCCESS;
 	}
-	return EC_SUCCESS;
+	keep_fn_key_functional = 1;
+	return EC_ERROR_UNIMPLEMENTED;
 }
 
 enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
@@ -464,21 +486,23 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 	/*
 	 * If the function key is not held then
 	 * we pass through all events without modifying them
+	 * but if last time have press FN still need keep that
 	 */
-	if (!Fn_key)
+	if (!Fn_key && !keep_fn_key_special && !keep_fn_key_functional)
 		return EC_SUCCESS;
 
 	if (Fn_key & FN_LOCKED && !(Fn_key & FN_PRESSED))
 		return EC_SUCCESS;
 
-	r = hotkey_special_key(make_code);
+	r = hotkey_special_key(make_code, pressed);
 	if (r != EC_SUCCESS)
 		return r;
 
-	if (!pressed || pressed_key != *make_code)
+	if ((!pressed && !keep_fn_key_functional) ||
+		pressed_key != *make_code)
 		return EC_SUCCESS;
 
-	r = functional_hotkey(make_code);
+	r = functional_hotkey(make_code, pressed);
 	if (r != EC_SUCCESS)
 		return r;
 
