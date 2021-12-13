@@ -844,6 +844,23 @@ static void test_isl923x_hibernate__happy_path(void)
 	}
 }
 
+static void test_isl923x_hibernate__invalid_charger_number(void)
+{
+	/* Mocks should just be pass-through */
+	RESET_FAKE(hibernate_mock_read_fn);
+	RESET_FAKE(hibernate_mock_write_fn);
+	hibernate_mock_read_fn_fake.return_val = 1;
+	hibernate_mock_write_fn_fake.return_val = 1;
+
+	raa489000_hibernate(board_get_charger_chip_count() + 1, false);
+
+	/* Make sure no I2C activity happened */
+	zassert_equal(hibernate_mock_read_fn_fake.call_count, 0,
+		      "No I2C reads should have happened");
+	zassert_equal(hibernate_mock_write_fn_fake.call_count, 0,
+		      "No I2C writes should have happened");
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(
@@ -864,6 +881,9 @@ void test_suite_isl923x(void)
 		ztest_unit_test(test_isl923x_enable_asgate),
 		ztest_unit_test_setup_teardown(
 			test_isl923x_hibernate__happy_path,
+			hibernate_test_setup, hibernate_test_teardown),
+		ztest_unit_test_setup_teardown(
+			test_isl923x_hibernate__invalid_charger_number,
 			hibernate_test_setup, hibernate_test_teardown));
 	ztest_run_test_suite(isl923x);
 }
