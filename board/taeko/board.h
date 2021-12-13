@@ -19,6 +19,7 @@
 #include "baseboard.h"
 
 #define CONFIG_SYSTEM_UNLOCKED
+#define CONFIG_BYPASS_CBI_EEPROM_WP_CHECK
 
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
