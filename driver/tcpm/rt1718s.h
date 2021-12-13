@@ -260,4 +260,12 @@ int rt1718s_set_frs_enable(int port, int enable);
  */
 int rt1718s_frs_init(int port);
 
+
+/**
+ * Software reset RT1718S
+ *
+ * @param port		USB-C port
+ * @return EC_SUCCESS if success, EC_ERROR_UNKNOWN otherwise.
+ */
+int rt1718s_sw_reset(int port);
 #endif /* __CROS_EC_USB_PD_TCPM_MT6370_H */

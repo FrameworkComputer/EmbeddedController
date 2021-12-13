@@ -88,7 +88,7 @@ int rt1718s_read16(int port, int reg, int *val)
 }
 
 
-static int rt1718s_sw_reset(int port)
+int rt1718s_sw_reset(int port)
 {
 	int rv;
 
