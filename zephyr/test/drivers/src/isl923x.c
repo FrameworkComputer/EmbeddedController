@@ -948,6 +948,26 @@ static void test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL4(void)
 			      ISL9238_REG_CONTROL3, MOCK_IGNORE_VALUE);
 }
 
+static void test_isl923x_hibernate__adc_disable(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	uint16_t expected;
+
+	raa489000_hibernate(CHARGER_NUM, true);
+
+	/* Check ISL9238_REG_CONTROL3 (disable_adc = true) */
+	expected = isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3);
+	expected &= ~RAA489000_ENABLE_ADC;
+
+	MOCK_ASSERT_I2C_READ(hibernate_mock_read_fn, 4, ISL9238_REG_CONTROL3);
+	MOCK_ASSERT_I2C_READ(hibernate_mock_read_fn, 5, ISL9238_REG_CONTROL3);
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 4, ISL9238_REG_CONTROL3,
+			      expected & 0xff);
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 5, ISL9238_REG_CONTROL3,
+			      expected >> 8);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(
@@ -983,6 +1003,9 @@ void test_suite_isl923x(void)
 			hibernate_test_setup, hibernate_test_teardown),
 		ztest_unit_test_setup_teardown(
 			test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL4,
+			hibernate_test_setup, hibernate_test_teardown),
+		ztest_unit_test_setup_teardown(
+			test_isl923x_hibernate__adc_disable,
 			hibernate_test_setup, hibernate_test_teardown));
 	ztest_run_test_suite(isl923x);
 }
