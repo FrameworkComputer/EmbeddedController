@@ -5,6 +5,7 @@
 
 #include <ztest.h>
 #include <drivers/emul.h>
+#include <fff.h>
 
 #include "battery.h"
 #include "battery_smart.h"
@@ -14,6 +15,7 @@
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_isl923x.h"
 #include "system.h"
+#include "test_mocks.h"
 
 BUILD_ASSERT(CONFIG_CHARGER_SENSE_RESISTOR == 10 ||
 	     CONFIG_CHARGER_SENSE_RESISTOR == 5);
@@ -736,26 +738,132 @@ static void test_isl923x_enable_asgate(void)
 		      "RAA489000_C8_ASGATE_ON_READY bit set in Control Reg 8");
 }
 
+/* Mock read and write functions to use in the hibernation test */
+FAKE_VALUE_FUNC(int, hibernate_mock_read_fn, struct i2c_emul *, int, uint8_t *,
+		int, void *);
+FAKE_VALUE_FUNC(int, hibernate_mock_write_fn, struct i2c_emul *, int, uint8_t,
+		int, void *);
+
+/**
+ * @brief Setup function for the hibernate tests.
+ */
+static void hibernate_test_setup(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+
+	/* Reset mocks and make the read/write mocks pass all data through */
+	RESET_FAKE(hibernate_mock_read_fn);
+	RESET_FAKE(hibernate_mock_write_fn);
+	hibernate_mock_read_fn_fake.return_val = 1;
+	hibernate_mock_write_fn_fake.return_val = 1;
+
+	i2c_common_emul_set_read_func(i2c_emul, hibernate_mock_read_fn, NULL);
+	i2c_common_emul_set_write_func(i2c_emul, hibernate_mock_write_fn, NULL);
+
+	/* Don't fail on any register access */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+}
+
+/**
+ * @brief Teardown function for the hibernate tests.
+ */
+static void hibernate_test_teardown(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+
+	/* Clear the mock read/write functions */
+	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
+
+	/* Don't fail on any register access */
+	i2c_common_emul_set_read_fail_reg(i2c_emul,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(i2c_emul,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
+}
+
+static void test_isl923x_hibernate__happy_path(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	uint16_t actual;
+
+	raa489000_hibernate(CHARGER_NUM, false);
+
+	/* Check ISL923X_REG_CONTROL0 */
+	actual = isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL0);
+
+	zassert_false(actual & RAA489000_C0_EN_CHG_PUMPS_TO_100PCT,
+		      "RAA489000_C0_EN_CHG_PUMPS_TO_100PCT should not be set");
+	zassert_false(actual & RAA489000_C0_BGATE_FORCE_ON,
+		      "RAA489000_C0_BGATE_FORCE_ON should not be set");
+
+	/* Check ISL923X_REG_CONTROL1 */
+	actual = isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1);
+
+	zassert_false(actual & RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE,
+		      "RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE should not be set");
+	zassert_false(actual & ISL923X_C1_ENABLE_PSYS,
+		      "ISL923X_C1_ENABLE_PSYS should not be set");
+	zassert_true(actual & RAA489000_C1_BGATE_FORCE_OFF,
+		     "RAA489000_C1_BGATE_FORCE_OFF should be set");
+	zassert_true(actual & ISL923X_C1_DISABLE_MON,
+		     "ISL923X_C1_DISABLE_MON should be set");
+
+	/* Check ISL9238_REG_CONTROL3 (disable_adc = false) */
+	actual = isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3);
+
+	zassert_true(actual & RAA489000_ENABLE_ADC,
+		     "RAA489000_ENABLE_ADC should be set");
+
+	/* Check ISL9238_REG_CONTROL4 */
+	actual = isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL4);
+
+	zassert_true(actual & RAA489000_C4_DISABLE_GP_CMP,
+		     "RAA489000_C4_DISABLE_GP_CMP should be set");
+
+	/* Ensure all expected register reads and writes happened */
+	int registers[] = { ISL923X_REG_CONTROL0, ISL923X_REG_CONTROL1,
+			    ISL9238_REG_CONTROL3, ISL9238_REG_CONTROL4 };
+
+	for (int i = 0; i < ARRAY_SIZE(registers); i++) {
+		/* Each reg has 2 reads and 2 writes because they are 16-bit */
+		MOCK_ASSERT_I2C_READ(hibernate_mock_read_fn, i * 2,
+				     registers[i]);
+		MOCK_ASSERT_I2C_READ(hibernate_mock_read_fn, (i * 2) + 1,
+				     registers[i]);
+		MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, i * 2,
+				      registers[i], MOCK_IGNORE_VALUE);
+		MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, (i * 2) + 1,
+				      registers[i], MOCK_IGNORE_VALUE);
+	}
+}
+
 void test_suite_isl923x(void)
 {
-	ztest_test_suite(isl923x,
-			 ztest_unit_test(test_isl923x_set_current),
-			 ztest_unit_test(test_isl923x_set_voltage),
-			 ztest_unit_test(test_isl923x_set_input_current_limit),
-			 ztest_unit_test(test_manufacturer_id),
-			 ztest_unit_test(test_device_id),
-			 ztest_unit_test(test_options),
-			 ztest_unit_test(test_get_info),
-			 ztest_unit_test(test_status),
-			 ztest_unit_test(test_set_mode),
-			 ztest_unit_test(test_post_init),
-			 ztest_unit_test(test_set_ac_prochot),
-			 ztest_unit_test(test_set_dc_prochot),
-			 ztest_unit_test(test_comparator_inversion),
-			 ztest_unit_test(test_discharge_on_ac),
-			 ztest_unit_test(test_get_vbus_voltage),
-			 ztest_unit_test(test_init),
-			 ztest_unit_test(test_isl923x_is_acok),
-			 ztest_unit_test(test_isl923x_enable_asgate));
+	ztest_test_suite(
+		isl923x, ztest_unit_test(test_isl923x_set_current),
+		ztest_unit_test(test_isl923x_set_voltage),
+		ztest_unit_test(test_isl923x_set_input_current_limit),
+		ztest_unit_test(test_manufacturer_id),
+		ztest_unit_test(test_device_id), ztest_unit_test(test_options),
+		ztest_unit_test(test_get_info), ztest_unit_test(test_status),
+		ztest_unit_test(test_set_mode), ztest_unit_test(test_post_init),
+		ztest_unit_test(test_set_ac_prochot),
+		ztest_unit_test(test_set_dc_prochot),
+		ztest_unit_test(test_comparator_inversion),
+		ztest_unit_test(test_discharge_on_ac),
+		ztest_unit_test(test_get_vbus_voltage),
+		ztest_unit_test(test_init),
+		ztest_unit_test(test_isl923x_is_acok),
+		ztest_unit_test(test_isl923x_enable_asgate),
+		ztest_unit_test_setup_teardown(
+			test_isl923x_hibernate__happy_path,
+			hibernate_test_setup, hibernate_test_teardown));
 	ztest_run_test_suite(isl923x);
 }

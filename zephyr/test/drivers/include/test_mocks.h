@@ -53,7 +53,7 @@
 			#EXPECTED_REG ") but wrote to reg 0x%02x",            \
 			(CALL_NUM), (EXPECTED_REG),                           \
 			FAKE##_fake.arg1_history[(CALL_NUM)]);                \
-		if (EXPECTED_VAL != MOCK_IGNORE_VALUE) {                      \
+		if ((EXPECTED_VAL) != MOCK_IGNORE_VALUE) {                    \
 			zassert_equal(                                        \
 				FAKE##_fake.arg2_history[(CALL_NUM)],         \
 				(EXPECTED_VAL),                               \
@@ -69,6 +69,30 @@
  *         written.
  */
 #define MOCK_IGNORE_VALUE (-1)
+
+/**
+ * @brief  Helper macro for asserting that a certain register read occurred.
+ *         Used when wrapping an I2C emulator mock read function in FFF. Prints
+ *         useful error messages when the assertion fails.
+ * @param  FAKE - name of the fake whose arg history to insepct. Do not include
+ *          '_fake' at the end.
+ * @param  CALL_NUM - Index in to the call history that this write should have
+ *          occurred at. Zero based.
+ * @param  EXPECTED_REG - The register address that was supposed to be read
+ *          from.
+ */
+#define MOCK_ASSERT_I2C_READ(FAKE, CALL_NUM, EXPECTED_REG)                    \
+	do {                                                                  \
+		zassert_true((CALL_NUM) < FAKE##_fake.call_count,             \
+			     "Call #%d did not occur (%d I2C reads total)",   \
+			     (CALL_NUM), FAKE##_fake.call_count);             \
+		zassert_equal(                                                \
+			FAKE##_fake.arg1_history[(CALL_NUM)], (EXPECTED_REG), \
+			"Expected I2C read #%d from register 0x%02x ("        \
+			#EXPECTED_REG ") but read from reg 0x%02x",           \
+			(CALL_NUM), (EXPECTED_REG),                           \
+			FAKE##_fake.arg1_history[(CALL_NUM)]);                \
+	} while (0)
 
 /*
  * Mock declarations
