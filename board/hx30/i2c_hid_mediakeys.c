@@ -273,7 +273,7 @@ int i2c_hid_process(unsigned int len, uint8_t *buffer)
 		response_len = sizeof(hid_desc);
 		break;
 	case I2C_HID_REPORT_DESC_REGISTER:
-		memcpy(buffer, &report_desc, sizeof(report_desc));
+		memcpy(buffer, report_desc, sizeof(report_desc));
 		response_len = sizeof(report_desc);
 		break;
 	case I2C_HID_INPUT_REPORT_REGISTER:

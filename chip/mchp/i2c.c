@@ -172,24 +172,24 @@ static int chip_i2c_is_controller_valid(int controller)
 	return 1;
 }
 
-static int chip_i2c_get_slave_addresses(int port)
+static int chip_i2c_get_slave_addresses(int controller)
 {
 #ifdef CONFIG_I2C_SLAVE
 	int i;
 	for (i = 0; i < i2c_slvs_used; i++) {
-		if (i2c_slv_ports[i].port == port)
+		if (i2c_slv_ports[i].port == controller)
 			/*return two addresses, one for read, one for write*/
 			return i2c_slv_ports[i].slave_adr;
 	}
 #endif
 	return 0;
 }
-static int chip_i2c_get_slave_data_idx(int port)
+static int chip_i2c_get_slave_data_idx(int controller)
 {
 #ifdef CONFIG_I2C_SLAVE
 	int i;
 	for (i = 0; i < i2c_slvs_used; i++) {
-		if (i2c_slv_ports[i].port == port)
+		if (i2c_slv_ports[i].port == controller)
 			/*return two addresses, one for read, one for write*/
 			return i;
 	}
@@ -365,7 +365,7 @@ static void restart_slave(int controller)
  */
 static void configure_controller(int controller, int port, int kbps)
 {
-	uint32_t slave = chip_i2c_get_slave_addresses(port);
+	uint32_t slave = chip_i2c_get_slave_addresses(controller);
 	if (!chip_i2c_is_controller_valid(controller))
 		return;
 
@@ -1000,21 +1000,15 @@ static void handle_interrupt(int controller)
 	uint32_t r;
 	int slave_idx;
 	int id = cdata[controller].task_waiting;
-	if (cdata[controller].slave_mode != 1)
-		/*
-		 * WORKAROUND: somehow, controller 2 slave mode get value 133
-		 * and cause the controller to execute the slave process then
-		 * watchdog.
-		 *
-		 * Add this workaround to let factory doing BFT and AFT
-		 *
-		 * TODO: need to find out the root cause.
-		 */
-		cdata[controller].slave_mode = 0;
 
 #ifdef CONFIG_I2C_SLAVE
 	if (cdata[controller].slave_mode) {
 		slave_idx = chip_i2c_get_slave_data_idx(controller);
+
+		/* we don't need to process wrong slave idx */
+		if (slave_idx < 0)
+			return;
+
 		r = MCHP_I2C_STATUS(controller);
 		if (r & STS_BER) {
 			/*stop and restart*/
