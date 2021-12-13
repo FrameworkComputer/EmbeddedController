@@ -30,6 +30,7 @@ register_nissa_project(
         here / "adc_nivviks.dts",
         here / "gpio_nivviks.dts",
         here / "i2c_nivviks.dts",
+        here / "pwm_nivviks.dts",
     ],
     extra_kconfig_files=[here / "prj_nivviks.conf"],
 )
