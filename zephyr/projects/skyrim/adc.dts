@@ -9,35 +9,61 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
-		adc_temp_soc: temp_soc {
+		adc_temp_soc: temp-soc {
 			label = "SOC";
 			enum-name = "ADC_TEMP_SENSOR_SOC";
 			channel = <0>;
 		};
-		adc_temp_charger: temp_charger {
+		adc_temp_charger: temp-charger {
 			label = "CHARGER";
 			enum-name = "ADC_TEMP_SENSOR_CHARGER";
 			channel = <1>;
 		};
-		adc_temp_memory: temp_memory {
+		adc_temp_memory: temp-memory {
 			label = "MEMORY";
 			enum-name = "ADC_TEMP_SENSOR_MEMORY";
 			channel = <2>;
 		};
-		adc_core_imon1: core_imon1 {
+		adc_core_imon1: core-imon1 {
 			label = "CORE_I";
 			enum-name = "ADC_CORE_IMON1";
 			channel = <3>;
 		};
-		adc_core_imon2: core_imon2 {
+		adc_core_imon2: core-imon2 {
 			label = "SOC_I";
 			enum-name = "ADC_SOC_IMON2";
 			channel = <4>;
 		};
 	};
 
+	named-temp-sensors {
+		charger-thermistor {
+			compatible = "cros-ec,temp-sensor-thermistor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "Charger";
+			enum-name = "TEMP_SENSOR_CHARGER";
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			adc = <&adc_temp_charger>;
+		};
+		memory-thermistor {
+			compatible = "cros-ec,temp-sensor-thermistor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "Memory";
+			enum-name = "TEMP_SENSOR_MEMORY";
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			adc = <&adc_temp_memory>;
+		};
+	};
 };
 
 &adc0 {
+	status = "okay";
+};
+
+&thermistor_3V3_30K9_47K_4050B {
 	status = "okay";
 };
