@@ -93,6 +93,7 @@ static void max695x_init(void)
 	max695x_i2c_write(MAX695X_REG_DECODE_MODE, buf, ARRAY_SIZE(buf));
 }
 DECLARE_HOOK(HOOK_INIT, max695x_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, max695x_init, HOOK_PRIO_DEFAULT);
 
 static void max695x_shutdown(void)
 {
