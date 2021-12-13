@@ -861,6 +861,93 @@ static void test_isl923x_hibernate__invalid_charger_number(void)
 		      "No I2C writes should have happened");
 }
 
+static void test_isl923x_hibernate__fail_at_ISL923X_REG_CONTROL0(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+
+	raa489000_hibernate(CHARGER_NUM, false);
+
+	/*
+	 * We have no return codes to check, so instead verify that the first
+	 * successful I2C write is to CONTROL1 and not CONTROL0.
+	 */
+
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 0, ISL923X_REG_CONTROL1,
+			      MOCK_IGNORE_VALUE);
+}
+
+static void test_isl923x_hibernate__fail_at_ISL923X_REG_CONTROL1(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+
+	raa489000_hibernate(CHARGER_NUM, false);
+
+	/*
+	 * Ensure we skipped CONTROL1. (NB: due to 16-bit regs, each write takes
+	 * two calls to the mock_write_fn)
+	 */
+
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 0, ISL923X_REG_CONTROL0,
+			      MOCK_IGNORE_VALUE);
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 1, ISL923X_REG_CONTROL0,
+			      MOCK_IGNORE_VALUE);
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 2, ISL9238_REG_CONTROL3,
+			      MOCK_IGNORE_VALUE);
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 3, ISL9238_REG_CONTROL3,
+			      MOCK_IGNORE_VALUE);
+}
+
+static void test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL3(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL9238_REG_CONTROL3);
+
+	raa489000_hibernate(CHARGER_NUM, false);
+
+	/*
+	 * Ensure we skipped CONTROL3. (NB: due to 16-bit regs, each write takes
+	 * two calls to the mock_write_fn)
+	 */
+
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 2, ISL923X_REG_CONTROL1,
+			      MOCK_IGNORE_VALUE);
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 3, ISL923X_REG_CONTROL1,
+			      MOCK_IGNORE_VALUE);
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 4, ISL9238_REG_CONTROL4,
+			      MOCK_IGNORE_VALUE);
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn, 5, ISL9238_REG_CONTROL4,
+			      MOCK_IGNORE_VALUE);
+}
+
+static void test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL4(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL9238_REG_CONTROL4);
+
+	raa489000_hibernate(CHARGER_NUM, false);
+
+	/*
+	 * Ensure we skipped CONTROL4. (i.e. the last calls should be to write
+	 * to CONTROL3)
+	 */
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn,
+			      hibernate_mock_write_fn_fake.call_count - 2,
+			      ISL9238_REG_CONTROL3, MOCK_IGNORE_VALUE);
+	MOCK_ASSERT_I2C_WRITE(hibernate_mock_write_fn,
+			      hibernate_mock_write_fn_fake.call_count - 1,
+			      ISL9238_REG_CONTROL3, MOCK_IGNORE_VALUE);
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(
@@ -884,6 +971,18 @@ void test_suite_isl923x(void)
 			hibernate_test_setup, hibernate_test_teardown),
 		ztest_unit_test_setup_teardown(
 			test_isl923x_hibernate__invalid_charger_number,
+			hibernate_test_setup, hibernate_test_teardown),
+		ztest_unit_test_setup_teardown(
+			test_isl923x_hibernate__fail_at_ISL923X_REG_CONTROL0,
+			hibernate_test_setup, hibernate_test_teardown),
+		ztest_unit_test_setup_teardown(
+			test_isl923x_hibernate__fail_at_ISL923X_REG_CONTROL1,
+			hibernate_test_setup, hibernate_test_teardown),
+		ztest_unit_test_setup_teardown(
+			test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL3,
+			hibernate_test_setup, hibernate_test_teardown),
+		ztest_unit_test_setup_teardown(
+			test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL4,
 			hibernate_test_setup, hibernate_test_teardown));
 	ztest_run_test_suite(isl923x);
 }
