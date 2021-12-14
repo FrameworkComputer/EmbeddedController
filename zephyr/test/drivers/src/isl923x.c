@@ -1022,6 +1022,60 @@ static void test_isl9238c_hibernate(void)
 	}
 }
 
+static void test_isl9238c_resume(void)
+{
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
+	uint16_t control1_expected, control2_expected, control3_expected;
+	int rv;
+
+	/* Part 1: Happy path */
+	control1_expected =
+		(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1) &
+			~ISL923X_C1_DISABLE_MON) | ISL923X_C1_ENABLE_PSYS
+		;
+	control2_expected =
+		isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2) &
+		~ISL923X_C2_COMPARATOR;
+	control3_expected =
+		isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3) &
+		~ISL9238_C3_BGATE_OFF;
+
+	rv = isl9238c_resume(CHARGER_NUM);
+
+	zassert_equal(EC_SUCCESS, rv, "Expected return code %d but got %d",
+		      EC_SUCCESS, rv);
+	zassert_equal(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1),
+		      control1_expected,
+		      "Unexpected register value 0x%02x. Should be 0x%02x",
+		      isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1),
+		      control1_expected);
+	zassert_equal(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2),
+		      control2_expected,
+		      "Unexpected register value 0x%02x. Should be 0x%02x",
+		      isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2),
+		      control2_expected);
+	zassert_equal(isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3),
+		      control3_expected,
+		      "Unexpected register value 0x%02x. Should be 0x%02x",
+		      isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3),
+		      control3_expected);
+
+	/* Part 2: Fail reading each register and check for error code */
+	int registers[] = { ISL923X_REG_CONTROL1, ISL923X_REG_CONTROL2,
+			    ISL9238_REG_CONTROL3 };
+
+	for (int i = 0; i < ARRAY_SIZE(registers); i++) {
+		i2c_common_emul_set_read_fail_reg(i2c_emul, registers[i]);
+
+		rv = isl9238c_resume(CHARGER_NUM);
+
+		zassert_equal(EC_ERROR_INVAL, rv,
+			      "Wrong return code. Expected %d but got %d",
+			      EC_ERROR_INVAL, rv);
+	}
+}
+
 void test_suite_isl923x(void)
 {
 	ztest_test_suite(
@@ -1062,7 +1116,10 @@ void test_suite_isl923x(void)
 			test_isl923x_hibernate__adc_disable,
 			hibernate_test_setup, hibernate_test_teardown),
 		ztest_unit_test_setup_teardown(test_isl9238c_hibernate,
-					       unit_test_noop,
+					       hibernate_test_teardown,
+					       hibernate_test_teardown),
+		ztest_unit_test_setup_teardown(test_isl9238c_resume,
+					       hibernate_test_teardown,
 					       hibernate_test_teardown));
 	ztest_run_test_suite(isl923x);
 }
