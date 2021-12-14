@@ -7,17 +7,13 @@
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
-		power {
-			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_POWER";
-		};
 		battery {
-			i2c-port = <&i2c0>;
-			remote-port = <0>;
+			i2c-port = <&i2c1>;
+			remote-port = <1>;
 			enum-name = "I2C_PORT_BATTERY";
 		};
 		virtual-battery {
-			i2c-port = <&i2c0>;
+			i2c-port = <&i2c1>;
 			enum-name = "I2C_PORT_VIRTUAL_BATTERY";
 		};
 		eeprom {
@@ -29,12 +25,8 @@
 			enum-name = "I2C_PORT_CHARGER";
 		};
 		i2c_sensor: sensor {
-			i2c-port = <&i2c1>;
+			i2c-port = <&i2c3>;
 			enum-name = "I2C_PORT_SENSOR";
-		};
-		i2c-accel {
-			i2c-port = <&i2c1>;
-			enum-name = "I2C_PORT_ACCEL";
 		};
 		ppc0 {
 			i2c-port = <&i2c2>;
@@ -68,14 +60,14 @@
 	/* EC_I2C_PWR_CBI */
 	label = "I2C_PWR_CBI";
 	status = "okay";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
+	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
 &i2c1 {
-	/* EC_I2C_SENSOR */
-	label = "I2C_SENSOR";
+	/* EC_I2C_BATTERY */
+	label = "I2C_BATTERY";
 	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
+	clock-frequency = <I2C_BITRATE_STANDARD>;
 };
 
 &i2c2 {
@@ -83,6 +75,20 @@
 	label = "I2C_USB_C0";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c3 {
+	/* EC_I2C_SENSOR */
+	label = "I2C_SENSOR";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	/*
+	 * b/210800948: i2c3 is not working at this moment.
+	 *
+	 * The driver support for i2c3 on GPF2/F3 is under review in
+	 * following PR.
+	 * https://github.com/zephyrproject-rtos/zephyr/pull/41389
+	 */
 };
 
 &i2c4 {
