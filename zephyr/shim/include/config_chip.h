@@ -477,6 +477,11 @@
 #define CONFIG_THERMISTOR
 #endif
 
+#undef CONFIG_TEMP_SENSOR_TMP112
+#ifdef CONFIG_PLATFORM_EC_TEMP_SENSOR_TMP112
+#define CONFIG_TEMP_SENSOR_TMP112
+#endif
+
 #ifdef CONFIG_PLATFORM_EC_I2C
 /* Also see shim/include/i2c/i2c.h which defines the ports enum */
 #define CONFIG_I2C_CONTROLLER

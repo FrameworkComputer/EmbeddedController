@@ -31,6 +31,12 @@ config PLATFORM_EC_THERMISTOR
 	  Enables support for thermistors (resistor whose resistance is
 	  strongly dependent on temperature) as temperature-sensor type.
 
+config PLATFORM_EC_TEMP_SENSOR_TMP112
+	bool "TMP112 support"
+	help
+	  Enables support for the CrosEC TMP112 driver, an i2c peripheral
+	  temperature sensor from TI.
+
 endif # PLATFORM_EC_TEMP_SENSOR
 
 
