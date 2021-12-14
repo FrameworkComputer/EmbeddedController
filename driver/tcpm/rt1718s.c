@@ -527,6 +527,35 @@ int rt1718s_gpio_get_level(int port, enum rt1718s_gpio signal)
 	return !!(val & RT1718S_GPIO_CTRL_I);
 }
 
+static int command_rt1718s_gpio(int argc, char **argv)
+{
+	int i, j;
+	uint32_t flags;
+
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
+
+		if (tcpc_config[i].drv != &rt1718s_tcpm_drv)
+			continue;
+
+		for (j = 0; j < RT1718S_GPIO_COUNT; j++) {
+			int rv;
+
+			rv = rt1718s_read8(i, RT1718S_GPIO_CTRL(j), &flags);
+			if (rv)
+				return EC_ERROR_UNKNOWN;
+
+			ccprintf("C%d GPIO%d OD=%d PU=%d PD=%d OE=%d HL=%d\n",
+				 i, j, !(flags & RT1718S_GPIO_CTRL_OD_N),
+				 !!(flags & RT1718S_GPIO_CTRL_PU),
+				 !!(flags & RT1718S_GPIO_CTRL_PD),
+				 !!(flags & RT1718S_GPIO_CTRL_OE),
+				 !!(flags & RT1718S_GPIO_CTRL_O));
+		}
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(rt1718s_gpio, command_rt1718s_gpio, "", "RT1718S GPIO");
+
 /* RT1718S is a TCPCI compatible port controller */
 const struct tcpm_drv rt1718s_tcpm_drv = {
 	.init			= &rt1718s_init,
