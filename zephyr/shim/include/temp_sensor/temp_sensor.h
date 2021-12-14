@@ -23,6 +23,21 @@ enum temp_sensor_id {
 
 #undef TEMP_SENSOR_ID_WITH_COMMA
 
+/* TMP112 access array */
+#define ZSHIM_TMP112_SENSOR_ID(node_id) DT_STRING_UPPER_TOKEN(node_id, \
+							      tmp112_name)
+#define TMP112_SENSOR_ID_WITH_COMMA(node_id) ZSHIM_TMP112_SENSOR_ID(node_id),
+
+enum tmp112_sensor {
+#if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_temp_sensor_tmp112)
+	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_tmp112,
+			       TMP112_SENSOR_ID_WITH_COMMA)
+#endif
+	TMP112_COUNT,
+};
+
+#undef TMP112_SENSOR_ID_WITH_COMMA
+
 #endif /* CONFIG_PLATFORM_EC_TEMP_SENSOR */
 
 #endif /* ZEPHYR_SHIM_INCLUDE_TEMP_SENSOR_TEMP_SENSOR_H_ */
