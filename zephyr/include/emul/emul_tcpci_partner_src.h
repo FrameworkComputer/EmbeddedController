@@ -9,8 +9,8 @@
  * @brief Backend API for USB-C charger emulator
  */
 
-#ifndef __EMUL_CHARGER_H
-#define __EMUL_CHARGER_H
+#ifndef __EMUL_TCPCI_PARTNER_SRC_H
+#define __EMUL_TCPCI_PARTNER_SRC_H
 
 #include <emul.h>
 #include "emul/emul_tcpci_partner_common.h"
@@ -104,4 +104,4 @@ enum check_pdos_res charger_emul_check_pdos(struct charger_emul_data *data);
  * @}
  */
 
-#endif /* __EMUL_CHARGER */
+#endif /* __EMUL_TCPCI_PARTNER_SRC_H */

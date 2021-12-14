@@ -9,8 +9,8 @@ LOG_MODULE_REGISTER(charger_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <zephyr.h>
 
 #include "common.h"
-#include "emul/emul_charger.h"
 #include "emul/emul_tcpci_partner_common.h"
+#include "emul/emul_tcpci_partner_src.h"
 #include "emul/emul_tcpci.h"
 #include "usb_pd.h"
 

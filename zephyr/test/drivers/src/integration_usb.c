@@ -8,7 +8,7 @@
 
 #include "emul/emul_tcpci.h"
 #include "emul/emul_smart_battery.h"
-#include "emul/emul_charger.h"
+#include "emul/emul_tcpci_partner_src.h"
 #include <drivers/gpio/gpio_emul.h>
 #include "battery_smart.h"
 #include "tcpm/tcpci.h"
