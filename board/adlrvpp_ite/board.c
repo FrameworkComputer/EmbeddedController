@@ -8,6 +8,7 @@
 #include "fan.h"
 #include "fusb302.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "i2c_bitbang.h"
 #include "it83xx_pd.h"
@@ -137,3 +138,17 @@ const struct tcpc_config_t tcpc_config[] = {
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_MAX_COUNT);
+
+static void enable_irq(void)
+{
+	gpio_enable_interrupt(CONFIG_BATTERY_PRESENT_GPIO);
+}
+DECLARE_HOOK(HOOK_INIT, enable_irq, HOOK_PRIO_LAST);
+
+DECLARE_DEFERRED(set_charger_system_voltage);
+
+void battery_detect_interrupt(enum gpio_signal signal)
+{
+	/* Trigger deferred notification of battery interrupt */
+	hook_call_deferred(&set_charger_system_voltage_data, 0);
+}

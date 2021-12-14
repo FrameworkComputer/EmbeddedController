@@ -213,6 +213,8 @@ void ppc_interrupt(enum gpio_signal signal);
 void tcpc_alert_event(enum gpio_signal signal);
 void board_connect_c0_sbu(enum gpio_signal s);
 int board_get_version(void);
+void battery_detect_interrupt(enum gpio_signal signal);
+void set_charger_system_voltage(void);
 
 #endif /* !__ASSEMBLER__ */
 
