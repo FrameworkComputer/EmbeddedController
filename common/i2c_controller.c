@@ -272,8 +272,8 @@ int i2c_xfer_unlocked(const int port,
 			num_msgs++;
 		}
 
-
-		if (no_pec_af & ~I2C_ADDR_MASK)
+		/* Big endian flag is used in wrappers for this call */
+		if (no_pec_af & ~(I2C_ADDR_MASK | I2C_FLAG_BIG_ENDIAN))
 			ccprintf("Ignoring flags from i2c addr_flags: %04x",
 					no_pec_af);
 
