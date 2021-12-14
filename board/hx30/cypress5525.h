@@ -336,6 +336,7 @@ struct pd_chip_config_t {
 	uint16_t addr_flags;
 	enum cyp5525_state state;
 	int gpio;
+	uint8_t version[8];
 };
 
 struct pd_port_current_state_t {
@@ -437,6 +438,8 @@ void cypd_print_buff(const char *msg, void *buff, int len);
 void cypd_set_retimer_power(enum power_state power);
 
 void cypd_set_power_active(enum power_state power);
+
+uint8_t *get_pd_version(int controller);
 
 int cypd_get_active_charging_port(void);
 
