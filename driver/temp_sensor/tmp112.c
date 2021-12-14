@@ -7,11 +7,15 @@
 
 #include "common.h"
 #include "console.h"
-#include "tmp112.h"
 #include "i2c.h"
 #include "hooks.h"
 #include "math_util.h"
+#include "temp_sensor/tmp112.h"
 #include "util.h"
+
+#ifdef CONFIG_ZEPHYR
+#include "temp_sensor/temp_sensor.h"
+#endif
 
 #define TMP112_RESOLUTION 12
 #define TMP112_SHIFT1 (16 - TMP112_RESOLUTION)
