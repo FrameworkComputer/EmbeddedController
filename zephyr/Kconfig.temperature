@@ -38,6 +38,12 @@ config PLATFORM_EC_THERMISTOR
 	  Enables support for thermistors (resistor whose resistance is
 	  strongly dependent on temperature) as temperature-sensor type.
 
+config PLATFORM_EC_TEMP_SENSOR_SB_TSI
+	bool "SB TSI support"
+	help
+	  Enables support for the Side Band Temperature Sensor Interface,
+	  an i2c peripheral available on AMD platforms.
+
 config PLATFORM_EC_TEMP_SENSOR_TMP112
 	bool "TMP112 support"
 	help
