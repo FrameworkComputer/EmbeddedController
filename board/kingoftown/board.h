@@ -104,6 +104,11 @@ enum battery_type {
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
 
+/* support factory keyboard test */
+#define CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+
 #endif /* !defined(__ASSEMBLER__) */
 
 #endif /* __CROS_EC_BOARD_H */
