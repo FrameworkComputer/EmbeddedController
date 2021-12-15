@@ -14,7 +14,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "sb_tsi.h"
+#include "temp_sensor/sb_tsi.h"
 #include "util.h"
 
 static int raw_read8(const int offset, int *data_ptr)
