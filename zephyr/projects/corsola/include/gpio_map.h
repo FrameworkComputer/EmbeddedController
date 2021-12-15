@@ -21,10 +21,6 @@
 #define GPIO_USB_C1_DP_IN_HPD   GPIO_EC_X_GPIO3
 #define GPIO_PS185_PWRDN_ODL    GPIO_EC_X_GPIO3
 
-/* TODO: support CONFIG_WP_ACTIVE_HIGH for zephyr */
-#define GPIO_WP			GPIO_UNIMPLEMENTED
-#define GPIO_WP_L		GPIO_UNIMPLEMENTED
-
 #ifdef CONFIG_PLATFORM_EC_POWER_BUTTON
 	#define PWRBTN_INT()        GPIO_INT(GPIO_POWER_BUTTON_L,              \
 					     GPIO_INT_EDGE_BOTH,               \
@@ -96,7 +92,7 @@
 #endif
 
 #ifdef CONFIG_PLATFORM_EC_SWITCH
-	#define SWITCH_INT()        GPIO_INT(GPIO_WP,                          \
+	#define SWITCH_INT()        GPIO_INT(GPIO_WP_L,                        \
 					     GPIO_INT_EDGE_BOTH,               \
 					     switch_interrupt)
 #else

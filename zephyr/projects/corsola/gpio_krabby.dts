@@ -78,10 +78,10 @@
 			enum-name = "GPIO_AC_PRESENT";
 			label = "AC_PRESENT";
 		};
-		wp: wp {
+		ec_flash_wp_odl: ec_flash_wp_odl {
 			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_WP";
-			label = "WP";
+			enum-name = "GPIO_WP_L";
+			label = "WP_L";
 		};
 		spi0_cs: spi0_cs {
 			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
