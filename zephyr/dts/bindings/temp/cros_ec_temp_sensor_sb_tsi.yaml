@@ -1,0 +1,16 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: >
+  Properties for an Side Band Temperature Sensor Interface sensor
+
+include: cros_ec_temp_sensor.yaml
+
+compatible: cros-ec,temp-sensor-sb-tsi
+
+properties:
+    port:
+      required: true
+      type: phandle
+      description: phandle to the sensor's i2c port
