@@ -313,16 +313,19 @@ BUILD_ASSERT(ARRAY_SIZE(irqs) == SCP_INTC_IRQ_COUNT);
  * Lower group has higher priority.
  * Higher INT number has higher priority.
  */
+#define EC_INT_MAGIC_DUMP_GROUP BIT(15)
 int chip_get_ec_int(void)
 {
 	extern volatile int ec_int;
 	unsigned int group, sta;
 	int word;
 
-	if (!SCP_CORE0_INTC_IRQ_OUT)
-		goto error;
-
 	group = read_csr(CSR_VIC_MICAUSE);
+
+	if (!SCP_CORE0_INTC_IRQ_OUT) {
+		ec_int = EC_INT_MAGIC_DUMP_GROUP | group;
+		goto error;
+	}
 
 	for (word = SCP_INTC_GRP_LEN - 1; word >= 0; --word) {
 		sta = SCP_CORE0_INTC_IRQ_GRP_STA(group, word);
