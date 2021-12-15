@@ -10,7 +10,6 @@
 #include "bc12/pi3usb9201_public.h"
 #include "charge_manager.h"
 #include "charger.h"
-#include "charger/isl923x_public.h"
 #include "console.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/usb_mux/ps8743.h"
@@ -29,8 +28,8 @@
 const struct charger_config_t chg_chips[] = {
 	{
 		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
+		.i2c_addr_flags = 0,
+		.drv = NULL,
 	},
 };
 

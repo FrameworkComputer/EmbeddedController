@@ -23,28 +23,11 @@
 			enum-name = "ADC_BOARD_ID_1";
 			channel = <2>;
 		};
-		adc_charger_amon_r {
-			label = "ADC_AMON_BMON";
-			enum-name = "ADC_AMON_BMON";
-			channel = <3>;
-			mul = <1000>;
-			div = <18>;
-		};
 		adc_vbus_c1 {
 			label = "ADC_VBUS_C1";
 			enum-name = "ADC_VBUS_C1";
-			channel = <5>;
+			channel = <7>;
 			mul = <10>;
-		};
-		adc_charger_pmon {
-			label = "ADC_PMON";
-			enum-name = "ADC_PMON";
-			channel = <6>;
-		};
-		adc-psys {
-			label = "ADC_PSYS";
-			enum-name = "ADC_PSYS";
-			channel = <6>;
 		};
 	};
 };

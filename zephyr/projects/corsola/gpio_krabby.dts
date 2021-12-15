@@ -345,7 +345,9 @@
 			<&gpiof 1 (GPIO_INPUT | GPIO_PULL_DOWN)>,
 			<&gpioh 0 (GPIO_INPUT | GPIO_PULL_DOWN)>,
 			<&gpioh 6 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpioi 7 (GPIO_INPUT | GPIO_PULL_DOWN)>,
+			<&gpioi 3 (GPIO_INPUT | GPIO_PULL_DOWN)>,
+			<&gpioi 5 (GPIO_INPUT | GPIO_PULL_DOWN)>,
+			<&gpioi 6 (GPIO_INPUT | GPIO_PULL_DOWN)>,
 			<&gpiom 6 (GPIO_INPUT | GPIO_PULL_DOWN)>,
 			/* spi_clk_gpg6 */
 			<&gpiog 6 (GPIO_INPUT | GPIO_PULL_UP)>,
