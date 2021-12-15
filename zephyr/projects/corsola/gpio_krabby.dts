@@ -336,8 +336,6 @@
 			<&gpioh 3 GPIO_ODR_HIGH>,
 			/* ccd_mode_odl */
 			<&gpioc 4 GPIO_INPUT>,
-			/* uart1_rx */
-			<&gpiob 0 GPIO_INPUT>,
 			/* unnamed nc pins */
 			<&gpioa 3 (GPIO_INPUT | GPIO_PULL_DOWN)>,
 			<&gpioa 6 (GPIO_INPUT | GPIO_PULL_DOWN)>,
