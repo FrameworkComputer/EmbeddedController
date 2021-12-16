@@ -47,7 +47,7 @@
 			compatible = "silergy,syv682x";
 			status = "okay";
 			port = <&i2c_tcpc0>;
-			i2c-addr-flags = "SYV682X_ADDR0_FLAGS";
+			i2c-addr-flags = "SYV682X_ADDR1_FLAGS";
 			alternate-for = <&ppc_port0>;
 		};
 	};
