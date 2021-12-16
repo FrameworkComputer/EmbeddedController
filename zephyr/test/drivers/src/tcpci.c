@@ -295,8 +295,9 @@ static void test_generic_tcpci_mux_init(void)
 	zassert_equal(EC_ERROR_TIMEOUT,
 		      tcpci_tcpm_mux_init(tcpci_usb_mux), NULL);
 
-	/* Set correct power status for rest of the test */
-	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS, 0);
+	/* Set default power status for rest of the test */
+	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
+			   TCPC_REG_POWER_STATUS_VBUS_DET);
 
 	/* Test fail on alert mask write fail */
 	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_ALERT_MASK);
