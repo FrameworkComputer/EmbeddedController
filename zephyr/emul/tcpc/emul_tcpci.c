@@ -380,8 +380,8 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 			       enum tcpc_cc_voltage_status partner_cc2,
 			       enum tcpc_cc_polarity polarity)
 {
+	uint16_t cc_status, alert, role_ctrl, power_status;
 	enum tcpc_cc_voltage_status cc1_v, cc2_v;
-	uint16_t cc_status, alert, role_ctrl;
 	enum tcpc_cc_pull cc1_r, cc2_r;
 
 	if (polarity == POLARITY_CC1) {
@@ -424,10 +424,16 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 			   alert | TCPC_REG_ALERT_CC_STATUS);
 
 	if (partner_power_role == PD_ROLE_SOURCE) {
-		/* Set TCPCI emulator VBUS to present (connected, above 4V) */
-		tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
-				   TCPC_REG_POWER_STATUS_VBUS_PRES |
-				   TCPC_REG_POWER_STATUS_VBUS_DET);
+		tcpci_emul_get_reg(emul, TCPC_REG_POWER_STATUS, &power_status);
+		if (power_status & TCPC_REG_POWER_STATUS_VBUS_DET) {
+			/*
+			 * Set TCPCI emulator VBUS to present (connected,
+			 * above 4V) only if VBUS detection is enabled
+			 */
+			tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
+					   TCPC_REG_POWER_STATUS_VBUS_PRES |
+					   power_status);
+		}
 	}
 
 	tcpci_emul_alert_changed(emul);
@@ -439,6 +445,7 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 int tcpci_emul_disconnect_partner(const struct emul *emul)
 {
 	struct tcpci_emul_data *data = emul->data;
+	uint16_t power_status;
 	uint16_t val;
 	uint16_t term;
 	int rc;
@@ -465,6 +472,12 @@ int tcpci_emul_disconnect_partner(const struct emul *emul)
 	 * and then set VBUS present = 0 and vSafe0V = 1 after appropriate
 	 * delays.
 	 */
+
+	/* Clear VBUS present in case if source partner is disconnected */
+	tcpci_emul_get_reg(emul, TCPC_REG_POWER_STATUS, &power_status);
+	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
+			   power_status & ~TCPC_REG_POWER_STATUS_VBUS_PRES);
+
 	return 0;
 }
 
