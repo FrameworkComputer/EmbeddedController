@@ -24,5 +24,5 @@ enum board_usb_c1_mux board_get_usb_c1_mux(void)
 
 enum board_usb_a1_retimer board_get_usb_a1_retimer(void)
 {
-	return USB_A1_RETIMER_PS8811;
+	return USB_A1_RETIMER_UNKNOWN;
 };
