@@ -14,6 +14,8 @@
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
+#include "driver/temp_sensor/thermistor.h"
+#include "temp_sensor.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -163,6 +165,65 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
+/* Thermistors */
+const struct temp_sensor_t temp_sensors[] = {
+	[ADC_TEMP_SENSOR_1] = {.name = "Memory",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_1},
+	[ADC_TEMP_SENSOR_2] = {.name = "Charger",
+			   .type = TEMP_SENSOR_TYPE_BOARD,
+			   .read = get_temp_3v3_51k1_47k_4050b,
+			   .idx = ADC_TEMP_SENSOR_2},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
+
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_MEMORY \
+	{ \
+		.temp_host = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(95), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
+			[EC_TEMP_THRESH_HALT] = 0, \
+		}, \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_memory =
+	THERMAL_MEMORY;
+
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_CHARGER \
+	{ \
+		.temp_host = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_WARN] = 0, \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(55), \
+			[EC_TEMP_THRESH_HALT] = 0, \
+		}, \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_charger =
+	THERMAL_CHARGER;
+
+struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
+
+static void setup_thermal(void)
+{
+	thermal_params[ADC_TEMP_SENSOR_1] = thermal_memory;
+	thermal_params[ADC_TEMP_SENSOR_2] = thermal_charger;
+}
+
 void board_init(void)
 {
 	int on;
@@ -205,6 +266,9 @@ void board_init(void)
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
 	board_power_5v_enable(on);
+
+	/* Initialize THERMAL */
+	setup_thermal();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
