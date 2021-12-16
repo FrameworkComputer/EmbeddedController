@@ -39,7 +39,17 @@ struct ioex_gpio_config {
 	int port;
 };
 
+#ifdef CONFIG_PLATFORM_EC_IOEX_CROS_DRV
 #define IOEX_IS_CROS_DRV(config) (config->cros_drv_index >= 0)
+#else
+/*
+ * If no legacy cros-ec IOEX drivers are used, we need a stub
+ * symbol for ioex_config[].  Set the IOEX_IS_CROS_DRV to constant 0
+ * which will cause all these checks to compile out.
+ */
+#define IOEX_IS_CROS_DRV(config) 0
+struct ioexpander_config_t ioex_config[0];
+#endif
 
 struct ioex_int_config {
 	const enum ioex_signal signal;
