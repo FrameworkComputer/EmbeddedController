@@ -170,10 +170,14 @@ struct motion_sensor_t base_gyro_1 = {
 
 static int board_use_st_sensor(void)
 {
-	/* sku_id 0xa8-0xa9 use ST sensors */
+	/* sku_id 0xa8-0xa9, 0xbe, 0xbf use ST sensors */
 	uint32_t sku_id = system_get_sku_id();
 
-	return sku_id == 0xa8 || sku_id == 0xa9;
+	if (sku_id == 0xa8 || sku_id == 0xa9 ||
+		sku_id == 0xbe || sku_id == 0xbf)
+		return 1;
+	else
+		return 0;
 }
 
 /* treeya board will use two sets of lid/base sensor, we need update
