@@ -5,9 +5,11 @@
  * Battery pack vendor provided charging profile
  */
 
+#include "battery.h"
 #include "battery_fuel_gauge.h"
 #include "charge_state.h"
 #include "common.h"
+#include "util.h"
 
 /*
  * Battery info for all waddledoo battery types. Note that the fields
@@ -32,35 +34,67 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* POW-TECH Battery Information */
-	[BATTERY_POWER_TECH] = {
+	/* C21N2018 Battery Information*/
+	 [BATTERY_C21N2018] = {
 		.fuel_gauge = {
-			.manuf_name = "POW-TECH",
+			.manuf_name = "AS3GXXD3KA",
+			.device_name = "C110160",
 			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.reg_addr       = 0x00,
-				.reg_mask       = 0x2000,
+				.reg_addr = 0x0,
+				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			},
 		},
 		.batt_info = {
-			.voltage_max          = 8800,    /* mV */
-			.voltage_normal       = 7700,
-			.voltage_min          = 6000,
-			.precharge_current    = 160,       /* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c       = 0,
-			.charging_max_c       = 45,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 60,
+			.voltage_max            = 8800,
+			.voltage_normal         = 7890,
+			.voltage_min            = 6000,
+			.precharge_current      = 256,
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 60,
+			.discharging_min_c      = -20,
+			.discharging_max_c      = 60,
 		},
-
+	},
+	/* C21N2018 second Battery Information*/
+	[BATTERY_C21N2018_2ND] = {
+		.fuel_gauge = {
+			.manuf_name = "AS3FXXD3KA",
+			.device_name = "C110160",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.reg_addr = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			},
+		},
+		.batt_info = {
+			.voltage_max            = 8800,
+			.voltage_normal         = 7890,
+			.voltage_min            = 6000,
+			.precharge_current      = 256,
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 45,
+			.charging_min_c         = 0,
+			.charging_max_c         = 60,
+			.discharging_min_c      = -20,
+			.discharging_max_c      = 60,
+		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_POWER_TECH;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_C21N2018;

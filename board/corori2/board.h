@@ -194,7 +194,8 @@ enum pwm_channel {
 
 /* List of possible batteries */
 enum battery_type {
-	BATTERY_POWER_TECH,
+	BATTERY_C21N2018,
+	BATTERY_C21N2018_2ND,
 	BATTERY_TYPE_COUNT,
 };
 
