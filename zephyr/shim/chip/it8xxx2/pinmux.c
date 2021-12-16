@@ -8,6 +8,15 @@
 #include <dt-bindings/pinctrl/it8xxx2-pinctrl.h>
 #include <soc.h>
 
+#define SCL 0
+#define SDA 1
+#define IT8XXX2_I2C_DEV_PINMUX(node, signal)    DEVICE_DT_GET(DT_PHANDLE( \
+	DT_PINCTRL_BY_IDX(DT_NODELABEL(node), 0, signal), pinctrls))
+#define IT8XXX2_I2C_DEV_PIN(node, signal)       DT_PHA( \
+	DT_PINCTRL_BY_IDX(DT_NODELABEL(node), 0, signal), pinctrls, pin)
+#define IT8XXX2_I2C_DEV_ALT_FUNC(node, signal)  DT_PHA( \
+	DT_PINCTRL_BY_IDX(DT_NODELABEL(node), 0, signal), pinctrls, alt_func)
+
 static int it8xxx2_pinmux_init(const struct device *dev)
 {
 	ARG_UNUSED(dev);
@@ -70,17 +79,21 @@ static int it8xxx2_pinmux_init_latr(const struct device *dev)
 		pinmux_pin_set(portf, 7, IT8XXX2_PINMUX_FUNC_1);
 	}
 #endif
-#if DT_NODE_HAS_STATUS(DT_NODELABEL(i2c3), okay) && \
-	DT_NODE_HAS_STATUS(DT_NODELABEL(pinmuxh), okay)
-	{
-		const struct device *porth =
-				DEVICE_DT_GET(DT_NODELABEL(pinmuxh));
+#if DT_NODE_HAS_STATUS(DT_NODELABEL(i2c3), okay)
+	/* Pinmux control group */
+	const struct device *clk_pinctrls = IT8XXX2_I2C_DEV_PINMUX(i2c3, SCL);
+	const struct device *dat_pinctrls = IT8XXX2_I2C_DEV_PINMUX(i2c3, SDA);
+	/* GPIO pin */
+	uint8_t clk_pin = IT8XXX2_I2C_DEV_PIN(i2c3, SCL);
+	uint8_t dat_pin = IT8XXX2_I2C_DEV_PIN(i2c3, SDA);
+	/* Alternate function */
+	uint8_t clk_alt = IT8XXX2_I2C_DEV_ALT_FUNC(i2c3, SCL);
+	uint8_t dat_alt = IT8XXX2_I2C_DEV_ALT_FUNC(i2c3, SDA);
 
-		/* I2C3 CLK */
-		pinmux_pin_set(porth, 1, IT8XXX2_PINMUX_FUNC_3);
-		/* I2C3 DAT */
-		pinmux_pin_set(porth, 2, IT8XXX2_PINMUX_FUNC_3);
-	}
+	/* I2C3 CLK */
+	pinmux_pin_set(clk_pinctrls, clk_pin, clk_alt);
+	/* I2C3 DAT */
+	pinmux_pin_set(dat_pinctrls, dat_pin, dat_alt);
 #endif
 #if DT_NODE_HAS_STATUS(DT_NODELABEL(i2c4), okay) && \
 	DT_NODE_HAS_STATUS(DT_NODELABEL(pinmuxe), okay)
