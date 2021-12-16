@@ -1,0 +1,33 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: GPIO LED pins parent node
+
+compatible: "cros-ec,gpio-led-pins"
+
+child-binding:
+    description: Each child node describes all the GPIO pins that need to be
+                 altered to set a specific color. Eg. for a board supporting
+                 Blue and Amber LEDs - to set LED_AMBER color, amber LED will
+                 need to be set to 1 and blue LED to 0 So a node looks like
+                 color-amber {
+                              led-color = "LED_AMBER";
+                              led-pins = <&gpio_ec_chg_led_y_c1 1>,
+                                         <&gpio_ec_chg_led_b_c1 0>;
+                             };
+    properties:
+        led-color:
+            type: string
+            required: true
+            enum:
+                - LED_OFF
+                - LED_RED
+                - LED_GREEN
+                - LED_BLUE
+                - LED_YELLOW
+                - LED_WHITE
+                - LED_AMBER
+        led-pins:
+            type: phandle-array
+            required: false

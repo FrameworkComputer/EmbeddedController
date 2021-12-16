@@ -188,9 +188,11 @@
 			gpios = <&gpio7 5 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_ec_chg_led_y_c1: ec_chg_led_y_c1 {
+			#led-pin-cells = <1>;
 			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_chg_led_b_c1: ec_chg_led_b_c1 {
+			#led-pin-cells = <1>;
 			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_brd_id0: brd_id0 {

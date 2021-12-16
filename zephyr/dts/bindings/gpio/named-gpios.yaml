@@ -14,6 +14,9 @@ child-binding:
     gpios:
       type: phandle-array
       required: true
+    "#led-pin-cells":
+      type: int
+      required: false
     no-auto-init:
       description:
         When set, the GPIO is not initialised, and can be
@@ -24,3 +27,5 @@ child-binding:
         according to the flags in the gpios node.
       type: boolean
       required: false
+  led-pin-cells:
+    - value

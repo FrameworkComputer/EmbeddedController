@@ -28,7 +28,8 @@ LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 #define BAT_LED_ON 1
 #define BAT_LED_OFF 0
 
-#define GPIO_LED_NODE    DT_PATH(gpio_led, gpio_led_colors)
+#define GPIO_LED_COLOR_NODE  DT_PATH(gpio_led, gpio_led_colors)
+#define GPIO_LED_PINS_NODE   DT_PATH(gpio_led, gpio_led_pins)
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_BATTERY_LED,
@@ -43,31 +44,7 @@ enum led_color {
 	LED_COLOR_COUNT  /* Number of colors, not a color itself */
 };
 
-static void led_set_color(enum led_color color)
-{
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_y_c1),
-		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_b_c1),
-		(color == LED_BLUE) ? BAT_LED_ON : BAT_LED_OFF);
-}
-
-void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
-{
-	brightness_range[EC_LED_COLOR_AMBER] = 1;
-	brightness_range[EC_LED_COLOR_BLUE] = 1;
-}
-
-int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
-{
-	if (brightness[EC_LED_COLOR_BLUE] != 0)
-		led_set_color(LED_BLUE);
-	else if (brightness[EC_LED_COLOR_AMBER] != 0)
-		led_set_color(LED_AMBER);
-	else
-		led_set_color(LED_OFF);
-
-	return EC_SUCCESS;
-}
+#define LED_PIN_COUNT	(LED_COLOR_COUNT - 1)
 
 struct led_color_node_t {
 	int led_color;
@@ -151,8 +128,70 @@ struct node_prop_t {
 },
 
 struct node_prop_t node_array[] = {
-	DT_FOREACH_CHILD(GPIO_LED_NODE, SET_LED_VALUES)
+	DT_FOREACH_CHILD(GPIO_LED_COLOR_NODE, SET_LED_VALUES)
 };
+
+struct gpio_pins_t {
+	enum gpio_signal signal;
+	int val;
+};
+
+struct led_pins_node_t {
+	int led_color;
+	struct gpio_pins_t gpio_pins[LED_PIN_COUNT];
+};
+
+#define SET_PIN(node_id, prop, i)					\
+{									\
+	.signal = GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, i)),	\
+	.val = DT_PHA_BY_IDX(node_id, prop, i, value)			\
+},
+
+#define SET_GPIO_PIN(node_id)						\
+{									\
+	DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN)		\
+}
+
+#define SET_PIN_NODE(node_id)						\
+{									\
+	.led_color = GET_PROP(node_id, led_color),			\
+	.gpio_pins = SET_GPIO_PIN(node_id)				\
+},
+
+struct led_pins_node_t pins_node[LED_COLOR_COUNT] = {
+	DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, SET_PIN_NODE)
+};
+
+static void led_set_color(enum led_color color)
+{
+	for (int i = 0; i < LED_COLOR_COUNT; i++) {
+		if (pins_node[i].led_color == color) {
+			for (int j = 0; j < LED_PIN_COUNT; j++) {
+				gpio_pin_set_dt(gpio_get_dt_spec(
+					pins_node[i].gpio_pins[j].signal),
+					pins_node[i].gpio_pins[j].val);
+			}
+		}
+	}
+}
+
+void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
+{
+	brightness_range[EC_LED_COLOR_AMBER] = 1;
+	brightness_range[EC_LED_COLOR_BLUE] = 1;
+}
+
+int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
+{
+	if (brightness[EC_LED_COLOR_BLUE] != 0)
+		led_set_color(LED_BLUE);
+	else if (brightness[EC_LED_COLOR_AMBER] != 0)
+		led_set_color(LED_AMBER);
+	else
+		led_set_color(LED_OFF);
+
+	return EC_SUCCESS;
+}
 
 static enum power_state get_chipset_state(void)
 {
@@ -265,7 +304,7 @@ static int find_color(int node_idx, int ticks)
 		ticks = ticks % GET_PERIOD(node_idx, MAX_COLOR - 1);
 
 		for (color_idx = 0; color_idx < MAX_COLOR; color_idx++) {
-			if (GET_PERIOD(node_idx, color_idx) > ticks)
+			if (ticks < GET_PERIOD(node_idx, color_idx))
 				break;
 		}
 	}
