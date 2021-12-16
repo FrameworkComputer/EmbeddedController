@@ -611,14 +611,22 @@ void tcpc_alert_event(enum gpio_signal signal)
 static void reset_nct38xx_port(int port)
 {
 	enum gpio_signal reset_gpio_l;
+	int a_vbus, a_limit_sdp, a1_retimer_en;
 
-	if (port == USBC_PORT_C0)
+	/* Save type-A GPIO values to restore after reset */
+	if (port == USBC_PORT_C0) {
 		reset_gpio_l = GPIO_USB_C0_TCPC_RST_L;
-	else if (port == USBC_PORT_C1)
+		ioex_get_level(IOEX_EN_PP5000_USB_A0_VBUS, &a_vbus);
+		ioex_get_level(IOEX_USB_A0_LIMIT_SDP, &a_limit_sdp);
+	} else if (port == USBC_PORT_C1) {
 		reset_gpio_l = GPIO_USB_C1_TCPC_RST_L;
-	else
+		ioex_get_level(IOEX_EN_PP5000_USB_A1_VBUS_DB, &a_vbus);
+		ioex_get_level(IOEX_USB_A1_LIMIT_SDP_DB, &a_limit_sdp);
+		ioex_get_level(IOEX_USB_A1_RETIMER_EN, &a1_retimer_en);
+	} else {
 		/* Invalid port: do nothing */
 		return;
+	}
 
 	gpio_set_level(reset_gpio_l, 0);
 	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
@@ -626,6 +634,17 @@ static void reset_nct38xx_port(int port)
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
 		msleep(NCT3807_RESET_POST_DELAY_MS);
+
+	/* Re-init ioex after resetting the TCPC */
+	ioex_init(port);
+	if (port == USBC_PORT_C0) {
+		ioex_set_level(IOEX_EN_PP5000_USB_A0_VBUS, a_vbus);
+		ioex_set_level(IOEX_USB_A0_LIMIT_SDP, a_limit_sdp);
+	} else {
+		ioex_set_level(IOEX_EN_PP5000_USB_A1_VBUS_DB, a_vbus);
+		ioex_set_level(IOEX_USB_A1_LIMIT_SDP_DB, a_limit_sdp);
+		ioex_set_level(IOEX_USB_A1_RETIMER_EN, a1_retimer_en);
+	}
 }
 
 
