@@ -1,0 +1,135 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-pins = <
+			&gpio_gsc_ec_pwr_btn_odl
+			&gpio_lid_open
+		>;
+	};
+
+	named-temp-sensors {
+		memory {
+			compatible = "cros-ec,temp-sensor-thermistor";
+			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+			label = "DDR and SOC";
+			enum-name = "TEMP_SENSOR_1";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_temp_sensor_1>;
+		};
+		chassis {
+			compatible = "cros-ec,temp-sensor-thermistor";
+			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+			label = "Ambient";
+			enum-name = "TEMP_SENSOR_2";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_temp_sensor_2>;
+		};
+	};
+
+	/*
+	 * Alias kblist to correct node.
+	 * It would be nice to use alias here, but the code
+	 * uses DT_NODELABEL to directly reference the node label.
+	 */
+	named-pwms {
+		compatible = "named-pwms";
+
+		kblight: pwm_kb_bl {
+		};
+	};
+};
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};
+
+/* Power switch logic input pads */
+/* LID_OPEN_OD */
+&psl_in1 {
+	flag = <NPCX_PSL_RISING_EDGE>;
+};
+
+/* ACOK_EC_OD */
+&psl_in2 {
+	flag = <NPCX_PSL_RISING_EDGE>;
+};
+
+/* GSC_EC_PWR_BTN_ODL */
+&psl_in3 {
+	flag = <NPCX_PSL_FALLING_EDGE>;
+};
+
+/* Set bus speeds for I2C */
+&i2c0_0 {
+	label = "I2C_EEPROM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c1_0 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c3_0 {
+	label = "I2C_USB_C0_TCPC";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c5_1 {
+	label = "I2C_SUB_C1_TCPC";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c7_0 {
+	label = "I2C_BATTERY";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+/* PWM frequencies */
+&pwm_ec_psys {
+	frequency = <10000>;
+};
+
+&pwm_pwm_kb_bl {
+	frequency = <10000>;
+};
+
+&pwm_pwm_led_1_odl {
+	frequency = <324>;
+};
+
+&pwm_pwm_led_2_odl {
+	frequency = <324>;
+};
+
+&pwm_pwm_led_3_odl {
+	frequency = <324>;
+};
+
+/* Enable LEDs to work while CPU suspended */
+&pwm0 {
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+&pwm1 {
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+&pwm2 {
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
