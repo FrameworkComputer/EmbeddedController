@@ -6,9 +6,7 @@
 /dts-v1/;
 
 #include <cros/nuvoton/npcx9.dtsi>
-#include <dt-bindings/adc/adc.h>
 #include <dt-bindings/gpio_defines.h>
-#include <dt-bindings/wake_mask_event_defines.h>
 #include <nuvoton/npcx9m3f.dtsi>
 
 / {
@@ -32,42 +30,6 @@
 
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
-		i2c_sensor: sensor {
-			i2c-port = <&i2c0_0>;
-			enum-name = "I2C_PORT_SENSOR";
-		};
-		tcpc0_2 {
-			i2c-port = <&i2c1_0>;
-			enum-name = "I2C_PORT_USB_C0_C2_TCPC";
-		};
-		tcpc1 {
-			i2c-port = <&i2c4_1>;
-			enum-name = "I2C_PORT_USB_C1_TCPC";
-		};
-		ppc0_2 {
-			i2c-port = <&i2c2_0>;
-			enum-name = "I2C_PORT_USB_C0_C2_PPC";
-		};
-		ppc1 {
-			i2c-port = <&i2c6_1>;
-			enum-name = "I2C_PORT_USB_C1_PPC";
-		};
-		retimer0_2 {
-			i2c-port = <&i2c3_0>;
-			enum-name = "I2C_PORT_USB_C0_C2_MUX";
-		};
-		battery {
-			i2c-port = <&i2c5_0>;
-			enum-name = "I2C_PORT_BATTERY";
-		};
-		eeprom {
-			i2c-port = <&i2c7_0>;
-			enum-name = "I2C_PORT_EEPROM";
-		};
-		charger {
-			i2c-port = <&i2c7_0>;
-			enum-name = "I2C_PORT_CHARGER";
-		};
 	};
 
 	named-pwms {
@@ -87,78 +49,6 @@
 	status = "okay";
 	current-speed = <115200>;
 	pinctrl-0 = <&altj_cr_sin1_sl2 &altj_cr_sout1_sl2>;
-};
-
-&i2c0_0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
-};
-
-&i2c_ctrl0 {
-	status = "okay";
-};
-
-&i2c1_0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
-};
-
-&i2c_ctrl1 {
-	status = "okay";
-};
-
-&i2c2_0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
-};
-
-&i2c_ctrl2 {
-	status = "okay";
-};
-
-&i2c3_0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
-};
-
-&i2c_ctrl3 {
-	status = "okay";
-};
-
-&i2c4_1 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
-};
-
-&i2c_ctrl4 {
-	status = "okay";
-};
-
-&i2c5_0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
-};
-
-&i2c_ctrl5 {
-	status = "okay";
-};
-
-&i2c6_1 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
-};
-
-&i2c_ctrl6 {
-	status = "okay";
-};
-
-&i2c7_0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_FAST>;
-};
-
-&i2c_ctrl7 {
-	status = "okay";
 };
 
 &cros_kb_raw {
