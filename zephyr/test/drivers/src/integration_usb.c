@@ -12,9 +12,13 @@
 #include "ec_tasks.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "host_command.h"
+#include "stubs.h"
 #include "tcpm/tcpci.h"
+#include "test/usb_pe.h"
+#include "utils.h"
 
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
@@ -174,6 +178,33 @@ static void test_attach_pd_charger(void)
 	 */
 }
 
+static void test_attach_sink(void)
+{
+	const struct emul *tcpci_emul =
+		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
+	struct tcpci_snk_emul_data my_sink;
+
+	/* Set chipset to ON, this will set TCPM to DRP */
+	test_set_chipset_to_s0();
+
+	/* TODO(b/214401892): Check why need to give time TCPM to spin */
+	k_sleep(K_SECONDS(1));
+
+	/* Attach emulated sink */
+	tcpci_snk_emul_init(&my_sink);
+	zassert_ok(tcpci_snk_emul_connect_to_tcpci(&my_sink, tcpci_emul),
+		   NULL);
+
+	/* Wait for PD negotiation */
+	k_sleep(K_SECONDS(10));
+
+	/*
+	 * Test that SRC ready is achieved
+	 * TODO: Change it to examining EC_CMD_TYPEC_STATUS
+	 */
+	zassert_equal(PE_SRC_READY, get_state_pe(USBC_PORT_C0), NULL);
+}
+
 void test_suite_integration_usb(void)
 {
 	ztest_test_suite(integration_usb,
@@ -182,6 +213,9 @@ void test_suite_integration_usb(void)
 				 remove_emulated_devices),
 			 ztest_user_unit_test_setup_teardown(
 				 test_attach_pd_charger, init_tcpm,
+				 remove_emulated_devices),
+			 ztest_user_unit_test_setup_teardown(
+				 test_attach_sink, init_tcpm,
 				 remove_emulated_devices));
 	ztest_run_test_suite(integration_usb);
 }
