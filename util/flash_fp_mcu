@@ -494,17 +494,25 @@ config_hatch() {
 
 config_herobrine() {
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev11.0"
+  readonly DEVICE="/dev/spidev9.0"
   # TODO(b/179533783): Fix this script to look for non-ACPI modalias
-  readonly DEVICEID="spi11.0"
+  readonly DEVICEID="spi9.0"
 
-  readonly GPIO_CHIP="gpiochip336"
-  # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 78
-  readonly GPIO_NRST=$((336 + $(gpiofind FP_RST_L|cut -f2 -d" ")))
-  # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 77
-  readonly GPIO_BOOT0=$((336 + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+  local dev_path="*/platform/soc@0/f100000.pinctrl/gpio/*"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+  # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 22
+  readonly GPIO_NRST=$((${gpiobase} + $(gpiofind FP_RST_L|cut -f2 -d" ")))
+  # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
+  readonly GPIO_BOOT0=$((${gpiobase} + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+
   # EN FP RAILS is $(gpiofind EN_FP_RAILS) is gpiochip0 42
-  readonly GPIO_PWREN=$((336 + $(gpiofind EN_FP_RAILS|cut -f2 -d" ")))
+  readonly GPIO_PWREN=$((${gpiobase} + $(gpiofind EN_FP_RAILS|cut -f2 -d" ")))
 }
 
 config_nami() {
