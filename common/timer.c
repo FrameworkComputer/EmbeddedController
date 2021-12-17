@@ -34,7 +34,7 @@ int32_t k_usleep(int32_t);
 #define TIMER_SYSJUMP_TAG 0x4d54  /* "TM" */
 
 /* High 32-bits of the 64-bit timestamp counter. */
-STATIC_IF_NOT(CONFIG_HWTIMER_64BIT) uint32_t clksrc_high;
+STATIC_IF_NOT(CONFIG_HWTIMER_64BIT) volatile uint32_t clksrc_high;
 
 /* Bitmap of currently running timers */
 static uint32_t timer_running;
@@ -229,6 +229,11 @@ timestamp_t get_time(void)
 	} else {
 		ts.le.hi = clksrc_high;
 		ts.le.lo = __hw_clock_source_read();
+		/*
+		 * TODO(b/213342294) If statement below doesn't catch overflows
+		 * when interrupts are disabled or currently processed interrupt
+		 * has higher priority.
+		 */
 		if (ts.le.hi != clksrc_high) {
 			ts.le.hi = clksrc_high;
 			ts.le.lo = __hw_clock_source_read();
