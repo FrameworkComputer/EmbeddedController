@@ -216,6 +216,16 @@
 			gpios = <&gpio7 5 GPIO_OUT_HIGH>;
 			label = "USB_A_CDP_ILIM_EN_L";
 		};
+		usb_c0_frs_en {
+			gpios = <&gpioc 5 GPIO_OUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
+			label = "USB_C0_FRS_EN";
+		};
+		usb_c1_frs_en {
+			gpios = <&gpioc 1 GPIO_OUT_LOW>;
+			enum-name = "GPIO_USB_C1_FRS_EN";
+			label = "USB_C1_FRS_EN";
+		};
 		ec_chg_led_y_c0 {
 			gpios = <&gpio6 0 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CHG_LED_Y_C0";
@@ -347,11 +357,9 @@
 			<&gpio5 2 0>,
 			<&gpio5 4 0>,
 			<&gpio7 6 0>,
-			<&gpioc 5 0>,
 			<&gpiod 1 0>,
 			<&gpiod 0 0>,
 			<&gpioe 3 0>,
-			<&gpioc 1 0>,
 			<&gpio0 4 0>,
 			<&gpiod 6 0>,
 			<&gpio3 2 0>,
