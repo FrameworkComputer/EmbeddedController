@@ -17,7 +17,7 @@
 #include "driver/retimer/ps8811.h"
 #include "driver/retimer/ps8818.h"
 #include "driver/temp_sensor/sb_tsi.h"
-#include "driver/temp_sensor/tmp112.h"
+#include "driver/temp_sensor/pct2075.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -30,7 +30,7 @@
 #include "tablet_mode.h"
 #include "temp_sensor.h"
 #include "temp_sensor/thermistor.h"
-#include "temp_sensor/tmp112.h"
+#include "temp_sensor/pct2075.h"
 #include "thermal.h"
 #include "usb_mux.h"
 
@@ -303,7 +303,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 static void board_chipset_startup(void)
 {
 	if (get_board_version() > 1)
-		tmp112_init();
+		pct2075_init();
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
 	     HOOK_PRIO_DEFAULT);
@@ -313,7 +313,7 @@ int board_get_soc_temp_k(int idx, int *temp_k)
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;
 
-	return tmp112_get_val_k(idx, temp_k);
+	return pct2075_get_val_k(idx, temp_k);
 }
 
 int board_get_soc_temp_mk(int *temp_mk)
@@ -321,7 +321,7 @@ int board_get_soc_temp_mk(int *temp_mk)
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;
 
-	return tmp112_get_val_mk(TMP112_SOC, temp_mk);
+	return pct2075_get_val_mk(PCT2075_SOC, temp_mk);
 }
 
 int board_get_ambient_temp_mk(int *temp_mk)
@@ -329,7 +329,7 @@ int board_get_ambient_temp_mk(int *temp_mk)
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
 		return EC_ERROR_NOT_POWERED;
 
-	return tmp112_get_val_mk(TMP112_AMB, temp_mk);
+	return pct2075_get_val_mk(PCT2075_AMB, temp_mk);
 }
 
 /* ADC Channels */
@@ -375,18 +375,18 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /* Temp Sensors */
 static int board_get_memory_temp(int, int *);
 
-const struct tmp112_sensor_t tmp112_sensors[] = {
-	{ I2C_PORT_SENSOR, TMP112_I2C_ADDR_FLAGS0 },
-	{ I2C_PORT_SENSOR, TMP112_I2C_ADDR_FLAGS1 },
+const struct pct2075_sensor_t pct2075_sensors[] = {
+	{ I2C_PORT_SENSOR, PCT2075_I2C_ADDR_FLAGS0 },
+	{ I2C_PORT_SENSOR, PCT2075_I2C_ADDR_FLAGS7 },
 };
-BUILD_ASSERT(ARRAY_SIZE(tmp112_sensors) == TMP112_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(pct2075_sensors) == PCT2075_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_SOC] = {
 		.name = "SOC",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = board_get_soc_temp_k,
-		.idx = TMP112_SOC,
+		.idx = PCT2075_SOC,
 	},
 	[TEMP_SENSOR_CHARGER] = {
 		.name = "Charger",
@@ -409,8 +409,8 @@ const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_AMBIENT] = {
 		.name = "Ambient",
 		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = tmp112_get_val_k,
-		.idx = TMP112_AMB,
+		.read = pct2075_get_val_k,
+		.idx = PCT2075_AMB,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
