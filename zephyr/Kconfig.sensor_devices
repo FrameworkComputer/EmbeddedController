@@ -86,6 +86,12 @@ config PLATFORM_EC_ALS_TCS3400
 	  The driver supports TCS3400 which provides color and
 	  IR (red, green, blue, clear and IR) ambient light sensing.
 
+config PLATFORM_EC_ALS_CM32183
+	bool "CM32183 Ambient Light Sensor Driver"
+	help
+	  The driver supports CM32183 which provides ambient
+	  light sensing.
+
 config PLATFORM_EC_ACCELGYRO_ICM426XX
 	bool "ICM426XX Accelgyro Driver"
 	select PLATFORM_EC_ACCELGYRO_ICM
