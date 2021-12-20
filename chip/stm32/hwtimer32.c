@@ -46,7 +46,20 @@ uint32_t __hw_clock_source_read(void)
 
 void __hw_clock_source_set(uint32_t ts)
 {
+	/*
+	 * Stop counter to avoid race between setting counter value
+	 * and clearing status.
+	 */
+	STM32_TIM_CR1(TIM_CLOCK32) &= ~1;
+
+	/* Set counter value */
 	STM32_TIM32_CNT(TIM_CLOCK32) = ts;
+
+	/* Clear status */
+	STM32_TIM_SR(TIM_CLOCK32) = 0;
+
+	/* Start counting */
+	STM32_TIM_CR1(TIM_CLOCK32) |= 1;
 }
 
 static void __hw_clock_source_irq(void)
