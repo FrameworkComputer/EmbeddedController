@@ -499,7 +499,7 @@ int board_set_active_charge_port(int port)
 	 * Stop the charger IC from switching while changing ports.  Otherwise,
 	 * we can overcurrent the adapter we're switching to. (crbug.com/926056)
 	 */
-	if (old_port != CHARGE_PORT_NONE)
+	if ((old_port != CHARGE_PORT_NONE) && (old_port != port))
 		charger_discharge_on_ac(1);
 
 	/* Enable requested charge port. */
