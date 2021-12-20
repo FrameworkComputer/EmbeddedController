@@ -254,8 +254,24 @@ void force_time(timestamp_t ts)
 	if (IS_ENABLED(CONFIG_HWTIMER_64BIT)) {
 		__hw_clock_source_set64(ts.val);
 	} else {
+		/* Save current interrupt state */
+		bool interrupt_enabled = is_interrupt_enabled();
+
+		/*
+		 * Updating timer shouldn't be interrupted (eg. when counter
+		 * overflows) because it could lead to some unintended
+		 * consequences. Please note that this function can be called
+		 * with disabled or enabled interrupts so we need to restore
+		 * the original state later.
+		 */
+		interrupt_disable();
+
 		clksrc_high = ts.le.hi;
 		__hw_clock_source_set(ts.le.lo);
+
+		/* Restore original interrupt state */
+		if (interrupt_enabled)
+			interrupt_enable();
 	}
 
 	/* some timers might be already expired : process them */
