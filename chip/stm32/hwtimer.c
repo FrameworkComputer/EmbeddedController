@@ -209,8 +209,32 @@ uint32_t __hw_clock_source_read(void)
 
 void __hw_clock_source_set(uint32_t ts)
 {
+	ASSERT(!is_interrupt_enabled());
+
+	/* Stop counting (LSB first, then MSB) */
+	STM32_TIM_CR1(TIM_CLOCK_LSB) &= ~1;
+	STM32_TIM_CR1(TIM_CLOCK_MSB) &= ~1;
+
+	/* Set new value to counters */
 	STM32_TIM_CNT(TIM_CLOCK_MSB) = ts >> 16;
 	STM32_TIM_CNT(TIM_CLOCK_LSB) = ts & 0xffff;
+
+	/*
+	 * Clear status. We may clear information other than timer overflow
+	 * (eg. event timestamp was matched) but:
+	 * - Bits other than overflow are unused (see __hw_clock_source_irq())
+	 * - After setting timestamp software will trigger timer interrupt using
+	 *   task_trigger_irq() (see force_time() in common/timer.c).
+	 *   process_timers() is called from timer interrupt, so if "match" bit
+	 *   was present in status (think: some task timers are expired)
+	 *   process_timers() will handle that correctly.
+	 */
+	STM32_TIM_SR(TIM_CLOCK_MSB) = 0;
+	STM32_TIM_SR(TIM_CLOCK_LSB) = 0;
+
+	/* Start counting (MSB first, then LSB) */
+	STM32_TIM_CR1(TIM_CLOCK_MSB) |= 1;
+	STM32_TIM_CR1(TIM_CLOCK_LSB) |= 1;
 }
 
 static void __hw_clock_source_irq(void)
@@ -356,13 +380,13 @@ int __hw_clock_source_init(uint32_t start_t)
 	STM32_TIM_DIER(TIM_CLOCK_MSB) = 0x0001;
 	STM32_TIM_DIER(TIM_CLOCK_LSB) = 0x0000;
 
+	/* Override the count with the start value */
+	STM32_TIM_CNT(TIM_CLOCK_MSB) = start_t >> 16;
+	STM32_TIM_CNT(TIM_CLOCK_LSB) = start_t & 0xffff;
+
 	/* Start counting */
 	STM32_TIM_CR1(TIM_CLOCK_MSB) |= 1;
 	STM32_TIM_CR1(TIM_CLOCK_LSB) |= 1;
-
-	/* Override the count with the start value now that counting has
-	 * started. */
-	__hw_clock_source_set(start_t);
 
 	/* Enable timer interrupts */
 	task_enable_irq(IRQ_MSB);
