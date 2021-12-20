@@ -53,9 +53,20 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 __override void led_set_color_power(enum ec_led_colors color)
 {
+	static enum ec_led_colors prev_color = EC_LED_COLOR_COUNT;
+
 	/* Don't set led if led_auto_control is disabled. */
 	if (!led_auto_control_is_enabled(EC_LED_ID_POWER_LED) ||
 		!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+		return;
+	}
+
+	/*
+	 * Sometimes system wakes and sleeps automatically.
+	 * Add LED debounce time to prevent blinking led by this.
+	 */
+	if (prev_color != color) {
+		prev_color = color;
 		return;
 	}
 
@@ -72,12 +83,22 @@ __override void led_set_color_power(enum ec_led_colors color)
 
 __override void led_set_color_battery(enum ec_led_colors color)
 {
+	static enum ec_led_colors prev_color = EC_LED_COLOR_COUNT;
+
 	/* Don't set led if led_auto_control is disabled. */
 	if (!led_auto_control_is_enabled(EC_LED_ID_POWER_LED) ||
 		!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
 		return;
 	}
 
+	/*
+	 * Sometimes system wakes and sleeps automatically.
+	 * Add LED debounce time to prevent blinking led by this.
+	 */
+	if (prev_color != color) {
+		prev_color = color;
+		return;
+	}
 	/*
 	 * Battery leds must be turn off when blue led is on
 	 * because bugzzy has 3-in-1 led.
