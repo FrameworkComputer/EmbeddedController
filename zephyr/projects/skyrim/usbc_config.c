@@ -624,6 +624,8 @@ void baseboard_a1_retimer_setup(void)
 }
 DECLARE_DEFERRED(baseboard_a1_retimer_setup);
 
+/* TODO: Remove when guybrush is no longer supported */
+#ifdef CONFIG_BOARD_GUYBRUSH
 void board_overcurrent_event(int port, int is_overcurrented)
 {
 	switch (port) {
@@ -636,3 +638,4 @@ void board_overcurrent_event(int port, int is_overcurrented)
 		break;
 	}
 }
+#endif

@@ -11,7 +11,6 @@
 
 /* Power input signals */
 enum power_signal {
-	X86_SLP_S0_N, /* SOC  -> SLP_S3_S0I3_L */
 	X86_SLP_S3_N, /* SOC  -> SLP_S3_L */
 	X86_SLP_S5_N, /* SOC  -> SLP_S5_L */
 
@@ -21,6 +20,9 @@ enum power_signal {
 	/* Number of X86 signals */
 	POWER_SIGNAL_COUNT,
 };
+
+#define GPIO_ENTERING_RW	GPIO_UNIMPLEMENTED
+#define GPIO_PCH_SYS_PWROK	GPIO_UNIMPLEMENTED
 
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
@@ -42,21 +44,17 @@ enum power_signal {
 	GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt)      \
 	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,                      \
 		 power_button_interrupt)                                       \
-	GPIO_INT(GPIO_EC_PWR_BTN_ODL, GPIO_INT_EDGE_BOTH,                      \
-		 power_button_interrupt)                                       \
 	GPIO_INT(GPIO_PCH_SLP_S3_L, GPIO_INT_EDGE_BOTH, baseboard_en_pwr_s0)   \
 	GPIO_INT(GPIO_PCH_SLP_S5_L, GPIO_INT_EDGE_BOTH,                        \
 		 power_signal_interrupt)                                       \
-	GPIO_INT(GPIO_PCH_SLP_S0_L, GPIO_INT_EDGE_BOTH,                        \
-		 power_signal_interrupt)                                       \
 	GPIO_INT(GPIO_S5_PGOOD, GPIO_INT_EDGE_BOTH, baseboard_en_pwr_s0)       \
 	GPIO_INT(GPIO_S0_PGOOD, GPIO_INT_EDGE_BOTH, power_signal_interrupt)    \
-	GPIO_INT(GPIO_EC_PCORE_INT_ODL, GPIO_INT_EDGE_BOTH,                    \
-		 power_signal_interrupt)                                       \
 	GPIO_INT(GPIO_PG_GROUPC_S0_OD, GPIO_INT_EDGE_BOTH,                     \
-		 baseboard_en_pwr_pcore_s0)                                    \
-	GPIO_INT(GPIO_PG_LPDDR4X_S3_OD, GPIO_INT_EDGE_BOTH,                    \
-		 baseboard_en_pwr_pcore_s0)                                    \
+		 baseboard_set_en_pwr_pcore)                                   \
+	GPIO_INT(GPIO_PG_LPDDR5_S3_OD, GPIO_INT_EDGE_BOTH,                     \
+		 baseboard_set_en_pwr_pcore)                                   \
+	GPIO_INT(GPIO_PG_LPDDR5_S0_OD, GPIO_INT_EDGE_BOTH,                     \
+		 baseboard_set_soc_pwr_pgood)				       \
 	GPIO_INT(GPIO_VOLUME_UP_L, GPIO_INT_EDGE_BOTH, button_interrupt)       \
 	GPIO_INT(GPIO_USB_C0_TCPC_INT_ODL, GPIO_INT_EDGE_FALLING,              \
 		 tcpc_alert_event)					       \

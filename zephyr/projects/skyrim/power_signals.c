@@ -10,21 +10,8 @@
 #include "power.h"
 #include "timer.h"
 
-/* Wake Sources */
-const enum gpio_signal hibernate_wake_pins[] = {
-	GPIO_LID_OPEN,
-	GPIO_AC_PRESENT,
-	GPIO_POWER_BUTTON_L,
-};
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
-
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
-	[X86_SLP_S0_N] = {
-		.gpio = GPIO_PCH_SLP_S0_L,
-		.flags = POWER_SIGNAL_ACTIVE_HIGH,
-		.name = "SLP_S0_DEASSERTED",
-	},
 	[X86_SLP_S3_N] = {
 		.gpio = GPIO_PCH_SLP_S3_L,
 		.flags = POWER_SIGNAL_ACTIVE_HIGH,
@@ -52,7 +39,8 @@ static void baseboard_interrupt_init(void)
 {
 	/* Enable Power Group interrupts. */
 	gpio_enable_interrupt(GPIO_PG_GROUPC_S0_OD);
-	gpio_enable_interrupt(GPIO_PG_LPDDR4X_S3_OD);
+	gpio_enable_interrupt(GPIO_PG_LPDDR5_S0_OD);
+	gpio_enable_interrupt(GPIO_PG_LPDDR5_S3_OD);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_interrupt_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -82,13 +70,28 @@ void board_pwrbtn_to_pch(int level)
 	gpio_set_level(GPIO_PCH_PWRBTN_L, level);
 }
 
-void baseboard_en_pwr_pcore_s0(enum gpio_signal signal)
+/* Note: signal parameter unused */
+void baseboard_set_soc_pwr_pgood(enum gpio_signal unused)
 {
+	gpio_set_level(GPIO_EC_SOC_PWR_GOOD,
+				gpio_get_level(GPIO_EN_PWR_PCORE_S0_R) &&
+				gpio_get_level(GPIO_PG_LPDDR5_S0_OD));
+}
 
-	/* EC must AND signals PG_LPDDR4X_S3_OD and PG_GROUPC_S0_OD */
+/* Note: signal parameter unused */
+void baseboard_set_en_pwr_pcore(enum gpio_signal unused)
+{
+	/*
+	 * EC must AND signals PG_LPDDR5_S3_OD, PG_GROUPC_S0_OD, and
+	 * EN_PWR_S0_R
+	 */
 	gpio_set_level(GPIO_EN_PWR_PCORE_S0_R,
-		       gpio_get_level(GPIO_PG_LPDDR4X_S3_OD) &&
-		       gpio_get_level(GPIO_PG_GROUPC_S0_OD));
+					gpio_get_level(GPIO_PG_LPDDR5_S3_OD) &&
+					gpio_get_level(GPIO_PG_GROUPC_S0_OD) &&
+					gpio_get_level(GPIO_EN_PWR_S0_R));
+
+	/* Update EC_SOC_PWR_GOOD based on our results */
+	baseboard_set_soc_pwr_pgood(unused);
 }
 
 void baseboard_en_pwr_s0(enum gpio_signal signal)
@@ -98,6 +101,9 @@ void baseboard_en_pwr_s0(enum gpio_signal signal)
 	gpio_set_level(GPIO_EN_PWR_S0_R,
 		       gpio_get_level(GPIO_PCH_SLP_S3_L) &&
 		       gpio_get_level(GPIO_S5_PGOOD));
+
+	/* Change EN_PWR_PCORE_S0_R if needed*/
+	baseboard_set_en_pwr_pcore(signal);
 
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);

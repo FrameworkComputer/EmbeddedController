@@ -9,11 +9,6 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
-		adc_temp_soc: temp-soc {
-			label = "SOC";
-			enum-name = "ADC_TEMP_SENSOR_SOC";
-			channel = <0>;
-		};
 		adc_temp_charger: temp-charger {
 			label = "CHARGER";
 			enum-name = "ADC_TEMP_SENSOR_CHARGER";
