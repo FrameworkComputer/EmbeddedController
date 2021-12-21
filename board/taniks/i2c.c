@@ -35,6 +35,14 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_EC_I2C_USB_C0_PPC_BC_SDA,
 	},
 	{
+		/* I2C3 */
+		.name = "kbmcu",
+		.port = I2C_PORT_KBMCU,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_KBMCU_SCL,
+		.sda = GPIO_EC_I2C_KBMCU_SDA,
+	},
+	{
 		/* I2C4 C1 TCPC */
 		/* TODO(b/211080526): Change TCPC1's (PS8815) I2C frequency from 400Khz to 1000Khz */
 		.name = "tcpc1",
