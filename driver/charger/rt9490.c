@@ -492,6 +492,37 @@ static int rt9490_ramp_get_current_limit(int chgnum)
 }
 #endif
 
+#ifdef CONFIG_CMD_CHARGER_DUMP
+static void dump_range(int chgnum, int from, int to)
+{
+	for (int reg = from; reg <= to; ++reg) {
+		int val = 0;
+
+		if (!rt9490_read8(chgnum, reg, &val))
+			CPRINTS("    0x%02x: 0x%02x", reg, val);
+		else
+			CPRINTS("    0x%02x: (error)", reg);
+	}
+}
+
+static void rt9490_dump_registers(int chgnum)
+{
+	uint16_t ts, tdie;
+
+	CPRINTS("CHG_STATUS:");
+	dump_range(chgnum, RT9490_REG_CHG_STATUS0, RT9490_REG_CHG_STATUS4);
+	CPRINTS("FAULT_STATUS:");
+	dump_range(chgnum, RT9490_REG_FAULT_STATUS0, RT9490_REG_FAULT_STATUS1);
+	CPRINTS("IRQ_FLAG:");
+	dump_range(chgnum, RT9490_REG_CHG_IRQ_FLAG0, RT9490_REG_CHG_IRQ_FLAG5);
+
+	rt9490_read16(chgnum, RT9490_REG_TS_ADC, &ts);
+	CPRINTS("TS_ADC: %d.%d%%", ts / 10, ts % 10);
+	rt9490_read16(chgnum, RT9490_REG_TDIE_ADC, &tdie);
+	CPRINTS("TDIE_ADC: %d deg C", tdie);
+}
+#endif
+
 const struct charger_drv rt9490_drv = {
 	.init = &rt9490_init,
 	.get_info = &rt9490_get_info,
@@ -519,5 +550,8 @@ const struct charger_drv rt9490_drv = {
 	.ramp_is_stable = &rt9490_ramp_is_stable,
 	.ramp_is_detected = &rt9490_ramp_is_detected,
 	.ramp_get_current_limit = &rt9490_ramp_get_current_limit,
+#endif
+#ifdef CONFIG_CMD_CHARGER_DUMP
+	.dump_registers = &rt9490_dump_registers,
 #endif
 };
