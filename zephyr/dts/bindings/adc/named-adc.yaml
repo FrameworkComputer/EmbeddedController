@@ -13,8 +13,7 @@ child-binding:
       required: true
       type: string
       description:
-        Human-readable string describing the device (used as
-        device_get_binding() argument)
+        String used to describe an ADC channel in the 'adc' console command.
     channel:
       required: true
       type: int

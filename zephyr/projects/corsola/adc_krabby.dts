@@ -8,23 +8,23 @@
 		compatible = "named-adc-channels";
 
 		adc_vbus_c0 {
-			label = "ADC_VBUS_C0";
+			label = "VBUS_C0";
 			enum-name = "ADC_VBUS_C0";
 			channel = <0>;
 			mul = <10>;
 		};
 		adc_board_id0 {
-			label = "ADC_BOARD_ID_0";
+			label = "BOARD_ID_0";
 			enum-name = "ADC_BOARD_ID_0";
 			channel = <1>;
 		};
 		adc_board_id1 {
-			label = "ADC_BOARD_ID_1";
+			label = "BOARD_ID_1";
 			enum-name = "ADC_BOARD_ID_1";
 			channel = <2>;
 		};
 		adc_vbus_c1 {
-			label = "ADC_VBUS_C1";
+			label = "VBUS_C1";
 			enum-name = "ADC_VBUS_C1";
 			channel = <7>;
 			mul = <10>;
