@@ -77,6 +77,12 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
 #define PD_VCONN_SWAP_DELAY		5000 /* us */
 
+/* I2C speed console command */
+#define CONFIG_CMD_I2C_SPEED
+
+/* I2C control host command */
+#define CONFIG_HOSTCMD_I2C_CONTROL
+
 /*
  * Passive USB-C cables only support up to 60W.
  */
