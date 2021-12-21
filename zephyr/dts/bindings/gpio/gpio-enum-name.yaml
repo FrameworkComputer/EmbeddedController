@@ -35,6 +35,7 @@ properties:
       - GPIO_EC_ALS_RGB_INT_L
       - GPIO_EC_AP_DP_HPD_ODL
       - GPIO_EC_BL_EN_OD
+      - GPIO_EC_CBI_WP
       - GPIO_EC_CHG_LED_B_C1
       - GPIO_EC_CHG_LED_W_C0
       - GPIO_EC_CHG_LED_W_C1
@@ -55,6 +56,7 @@ properties:
       - GPIO_EC_I2C7_EEPROM_PWR_SDA_R
       - GPIO_EC_I2C_SENSOR_SCL
       - GPIO_EC_I2C_SENSOR_SDA
+      - GPIO_EC_I2C_USBC_PD_INT
       - GPIO_EC_IMU_INT_L
       - GPIO_EC_INT_L
       - GPIO_EC_PCH_SYS_PWROK
@@ -66,6 +68,8 @@ properties:
       - GPIO_EC_PROCHOT_IN_L
       - GPIO_EC_PWR_BTN_ODL
       - GPIO_EC_RST_ODL
+      - GPIO_EC_SOC_PWR_GOOD
+      - GPIO_EC_SC_RST
       - GPIO_EC_WP_L
       - GPIO_EC_X_GPIO1
       - GPIO_EC_X_GPIO3
@@ -88,12 +92,14 @@ properties:
       - GPIO_EN_PWR_A
       - GPIO_EN_PWR_PCORE_S0_R
       - GPIO_EN_PWR_S0_R
+      - GPIO_EN_PWR_S3
       - GPIO_EN_S5_RAILS
       - GPIO_EN_SLP_Z
       - GPIO_EN_ULP
       - GPIO_EN_USB_A_5V
       - GPIO_HDMI_PRSNT_ODL
       - GPIO_HIBERNATE_L
+      - GPIO_HUB_RST
       - GPIO_I2C_A_SCL
       - GPIO_I2C_A_SDA
       - GPIO_I2C_B_SCL
@@ -123,12 +129,15 @@ properties:
       - GPIO_PCH_SLP_S5_L
       - GPIO_PCH_SLP_SUS_L
       - GPIO_PCH_SYS_PWROK
+      - GPIO_PCORE_OCP_L
       - GPIO_PGOOD_FAN
       - GPIO_PG_EC_ALL_SYS_PWRGD
       - GPIO_PG_EC_DSW_PWROK
       - GPIO_PG_EC_RSMRST_ODL
       - GPIO_PG_GROUPC_S0_OD
       - GPIO_PG_LPDDR4X_S3_OD
+      - GPIO_PG_LPDDR5_S0_OD
+      - GPIO_PG_LPDDR5_S3_OD
       - GPIO_PG_MT6315_GPU_ODL
       - GPIO_PG_MT6315_PROC_ODL
       - GPIO_PG_MT6360_ODL
@@ -144,12 +153,14 @@ properties:
       - GPIO_QSIP_ON
       - GPIO_S0_PGOOD
       - GPIO_S5_PGOOD
+      - GPIO_SC_0_INT_L
       - GPIO_SET_VMC_VOLT_AT_1V8
       - GPIO_SHI_CS_L
       - GPIO_SKU_ID0
       - GPIO_SKU_ID1
       - GPIO_SKU_ID2
       - GPIO_SLP_SUS_L
+      - GPIO_SOC_THERMTRIP_ODL
       - GPIO_SPI0_CS
       - GPIO_SPI_CLK_GPG6
       - GPIO_SPI_CS_GPG7
@@ -196,6 +207,8 @@ properties:
       - GPIO_USB_C1_SWCTL_INT_ODL
       - GPIO_USB_C1_TCPC_INT_ODL
       - GPIO_USB_C1_TCPC_RST_L
+      - GPIO_USB_HUB_FAULT_ODL
+      - GPIO_USB_FAULT_ODL
       - GPIO_VCCST_PWRGD_OD
       - GPIO_VBOB_EN
       - GPIO_VOLUME_DOWN_L
