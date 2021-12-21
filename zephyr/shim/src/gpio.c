@@ -35,7 +35,7 @@ struct gpio_config {
 		DT_NODE_HAS_PROP(id, enum_name),                             \
 		(                                                            \
 			{                                                    \
-				.name = DT_LABEL(id),                        \
+				.name = DT_NODE_FULL_NAME(id),               \
 				.dev = DEVICE_DT_GET(DT_PHANDLE(id, gpios)), \
 				.pin = DT_GPIO_PIN(id, gpios),               \
 				.init_flags = DT_GPIO_FLAGS(id, gpios),      \

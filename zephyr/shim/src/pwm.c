@@ -25,7 +25,7 @@ LOG_MODULE_REGISTER(pwm_shim, LOG_LEVEL_ERR);
  * This macro is called from within DT_FOREACH_CHILD
  */
 #define INIT_DEV_BINDING(id) {                                              \
-		pwm_configs[PWM_CHANNEL(id)].name = DT_LABEL(id);           \
+		pwm_configs[PWM_CHANNEL(id)].name = DT_NODE_FULL_NAME(id);  \
 		pwm_configs[PWM_CHANNEL(id)].dev = DEVICE_DT_GET(           \
 			DT_PHANDLE(id, pwms));                              \
 		pwm_configs[PWM_CHANNEL(id)].pin = DT_PWMS_CHANNEL(id);     \
