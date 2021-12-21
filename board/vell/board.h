@@ -61,7 +61,10 @@
 #define CONFIG_USBC_RETIMER_INTEL_BB
 
 #define CONFIG_USBC_PPC_SYV682X
+/* TODO: b/211791444 - Remove it after compile error fixed */
 #define CONFIG_USBC_PPC_NX20P3483
+#undef CONFIG_SYV682X_HV_ILIM
+#define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
 
 /* TODO: b/177608416 - measure and check these values on brya */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
