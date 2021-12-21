@@ -425,7 +425,7 @@ void ppc_alert(enum gpio_signal signal)
 /* TODO: This code should really be generic, and run based on something in
  * the dts.
  */
-static void usbc_interrupt_init(void)
+static void stubs_interrupt_init(void)
 {
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
@@ -447,5 +447,8 @@ static void usbc_interrupt_init(void)
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+
+	/* Enable SwitchCap interrupt */
+	gpio_enable_interrupt(GPIO_SWITCHCAP_PG_INT_L);
 }
-DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, stubs_interrupt_init, HOOK_PRIO_INIT_I2C + 1);

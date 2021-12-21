@@ -99,6 +99,11 @@
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 			label = "GPIO_USB_C0_PPC_INT_ODL";
 		};
+		gpio_switchcap_pg_int_l: switchcap_pg_int_l {
+			gpios = <&gpio0 15 GPIO_INPUT>;
+			enum-name = "GPIO_SWITCHCAP_PG_INT_L";
+			label = "SWITCHCAP_PG_INT_L";
+		};
 	};
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
@@ -547,7 +552,7 @@
 };
 
 &gpio0 {
-	ngpios = <15>;
+	ngpios = <16>;
 };
 
 &i2c0 {
@@ -609,6 +614,7 @@
 		status = "okay";
 		reg = <0x80>;
 		label = "LN9310";
+		pg_int_gpio = <&gpio_switchcap_pg_int_l>;
 	};
 
 	lis2dw12_emul: lis2dw12@19 {
