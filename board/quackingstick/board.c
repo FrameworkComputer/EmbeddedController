@@ -412,6 +412,10 @@ static void board_init(void)
 	 */
 	gpio_enable_interrupt(GPIO_CCD_MODE_ODL);
 
+	/* Enable pen input detect interrupt */
+	if (system_get_board_version() >= 2)
+		gpio_enable_interrupt(GPIO_EC_PEN_PDCT_L);
+
 	/* Set the backlight duty cycle to 0. AP will override it later. */
 	pwm_set_duty(PWM_CH_DISPLIGHT, 0);
 }
@@ -625,6 +629,33 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT),
 				       charge_mv);
 }
+
+/**
+ * Handle debounced pen input changing state.
+ */
+static void pen_input_deferred(void)
+{
+	bool pen_charge_enable = !gpio_get_level(GPIO_EC_PEN_PDCT_L) &&
+			!chipset_in_state(CHIPSET_STATE_ANY_OFF);
+
+	gpio_set_level(GPIO_PEN_PWR_EN, pen_charge_enable);
+
+	CPRINTS("Pen charge %sable", pen_charge_enable ? "en" : "dis");
+}
+DECLARE_DEFERRED(pen_input_deferred);
+
+void pen_input_interrupt(enum gpio_signal signal)
+{
+	/* pen input debounce time */
+	hook_call_deferred(&pen_input_deferred_data, (100 * MSEC));
+}
+
+static void pen_charge_check(void)
+{
+	hook_call_deferred(&pen_input_deferred_data, (100 * MSEC));
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pen_charge_check, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pen_charge_check, HOOK_PRIO_LAST);
 
 uint16_t tcpc_get_alert_status(void)
 {

@@ -39,6 +39,7 @@ GPIO_INT(BASE_DET_L,        PIN(3, 7), GPIO_INT_BOTH, base_detect_interrupt)  /*
 
 /* Sensor interrupts */
 GPIO_INT(ACCEL_GYRO_INT_L,  PIN(A, 0), GPIO_INT_FALLING, motion_interrupt)  /* Accelerometer/gyro interrupt */
+GPIO_INT(EC_PEN_PDCT_L,     PIN(5, 0), GPIO_INT_BOTH, pen_input_interrupt)  /* Pen input detect */
 
 /*
  * EC_RST_ODL acts as a wake source from hibernate mode. However, it does not
@@ -62,6 +63,7 @@ GPIO(EC_BL_DISABLE_L,       PIN(B, 6), GPIO_OUT_LOW)   /* Backlight disable sign
 
 /* Base detection */
 GPIO(EN_BASE,               PIN(0, 4), GPIO_OUT_LOW)   /* Enable power to detachable base */
+GPIO(PEN_PWR_EN,            PIN(8, 2), GPIO_OUT_LOW)   /* Pen input charge */
 
 /* USB-C */
 GPIO(USB_C0_PD_RST_L,       PIN(F, 1), GPIO_ODR_HIGH)  /* Port-0 TCPC chip reset, actaully Open-Drain */
@@ -122,12 +124,10 @@ GPIO(ARM_X86,               PIN(6, 6), GPIO_OUT_LOW)  /* NC, low for power savin
 /* Unused GPIOs, NC. Apply PU for power saving */
 UNUSED(PIN(F, 5))
 UNUSED(PIN(4, 0))
-UNUSED(PIN(8, 2))
 UNUSED(PIN(7, 4))
 UNUSED(PIN(7, 3))
 UNUSED(PIN(D, 7))
 UNUSED(PIN(6, 0))
-UNUSED(PIN(5, 0))
 UNUSED(PIN(C, 5))
 UNUSED(PIN(3, 0))
 UNUSED(PIN(E, 4))

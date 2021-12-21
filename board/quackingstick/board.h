@@ -116,6 +116,7 @@ void board_set_tcpc_power_mode(int port, int mode);
 void base_detect_interrupt(enum gpio_signal signal);
 /* motion sensor interrupt */
 void motion_interrupt(enum gpio_signal signal);
+void pen_input_interrupt(enum gpio_signal signal);
 
 #endif /* !defined(__ASSEMBLER__) */
 
