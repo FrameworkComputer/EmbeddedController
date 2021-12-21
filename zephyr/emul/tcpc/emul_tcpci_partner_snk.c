@@ -51,33 +51,14 @@ static int tcpci_snk_emul_num_of_pdos(struct tcpci_snk_emul_data *data)
 static int tcpci_snk_emul_send_capability_msg(struct tcpci_snk_emul_data *data,
 					      uint64_t delay)
 {
-	struct tcpci_partner_msg *msg;
 	int pdos;
-	int addr;
 
 	/* Find number of PDOs */
 	pdos = tcpci_snk_emul_num_of_pdos(data);
 
-	/* Allocate space for header and each PDO */
-	msg = tcpci_partner_alloc_msg(TCPCI_MSG_HEADER_LEN +
-				      pdos * TCPCI_MSG_DO_LEN);
-	if (msg == NULL) {
-		return -ENOMEM;
-	}
-
-	tcpci_partner_set_header(&data->common_data, msg, PD_DATA_SINK_CAP,
-				 pdos);
-
-	for (int i = 0; i < pdos; i++) {
-		/* Address of given PDO in message buffer */
-		addr = TCPCI_MSG_HEADER_LEN + i * TCPCI_MSG_DO_LEN;
-		sys_put_le32(data->pdo[i], msg->msg.buf + addr);
-	}
-
-	/* Fill tcpci message structure */
-	msg->msg.type = TCPCI_MSG_SOP;
-
-	return tcpci_partner_send_msg(&data->common_data, msg, delay);
+	return tcpci_partner_send_data_msg(&data->common_data,
+					   PD_DATA_SINK_CAP,
+					   data->pdo, pdos, delay);
 }
 
 /**
@@ -256,7 +237,6 @@ static uint32_t tcpci_snk_emul_create_rdo(uint32_t src_pdo, uint32_t snk_pdo,
 static void tcpci_snk_emul_handle_source_cap(struct tcpci_snk_emul_data *data,
 					     const struct tcpci_emul_msg *msg)
 {
-	struct tcpci_partner_msg *req_msg;
 	uint32_t rdo = 0;
 	uint32_t pdo;
 	int missing_current;
@@ -302,22 +282,8 @@ static void tcpci_snk_emul_handle_source_cap(struct tcpci_snk_emul_data *data,
 		rdo = tcpci_snk_emul_create_rdo(pdo, data->pdo[0], 1);
 	}
 
-	/* Allocate space for header and RDO */
-	req_msg = tcpci_partner_alloc_msg(TCPCI_MSG_HEADER_LEN +
-					  TCPCI_MSG_DO_LEN);
-	if (req_msg == NULL) {
-		return;
-	}
-
-	tcpci_partner_set_header(&data->common_data, req_msg, PD_DATA_REQUEST,
-				 1);
-
-	sys_put_le32(rdo, req_msg->msg.buf + TCPCI_MSG_HEADER_LEN);
-
-	/* Fill tcpci message structure */
-	req_msg->msg.type = TCPCI_MSG_SOP;
-
-	tcpci_partner_send_msg(&data->common_data, req_msg, 0);
+	tcpci_partner_send_data_msg(&data->common_data, PD_DATA_REQUEST, &rdo,
+				    1 /* = data_obj_num */, 0 /* = delay */);
 }
 
 /**

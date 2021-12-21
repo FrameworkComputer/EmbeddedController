@@ -27,10 +27,7 @@ LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 static int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
 					      uint64_t delay)
 {
-	struct tcpci_partner_msg *msg;
 	int pdos;
-	int byte;
-	int addr;
 
 	/* Find number of PDOs */
 	for (pdos = 0; pdos < PDO_MAX_OBJECTS; pdos++) {
@@ -39,28 +36,9 @@ static int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
 		}
 	}
 
-	/* Allocate space for header and 4 bytes for each PDO */
-	msg = tcpci_partner_alloc_msg(2 + pdos * 4);
-	if (msg == NULL) {
-		return -ENOMEM;
-	}
-
-	tcpci_partner_set_header(&data->common_data, msg, PD_DATA_SOURCE_CAP,
-				 pdos);
-
-	for (int i = 0; i < pdos; i++) {
-		/* Address of given PDO in message buffer */
-		addr = 2 + i * 4;
-		for (byte = 0; byte < 4; byte++) {
-			msg->msg.buf[addr + byte] =
-				(data->pdo[i] >> (8 * byte)) & 0xff;
-		}
-	}
-
-	/* Fill tcpci message structure */
-	msg->msg.type = TCPCI_MSG_SOP;
-
-	return tcpci_partner_send_msg(&data->common_data, msg, delay);
+	return tcpci_partner_send_data_msg(&data->common_data,
+					   PD_DATA_SOURCE_CAP,
+					   data->pdo, pdos, delay);
 }
 
 /**

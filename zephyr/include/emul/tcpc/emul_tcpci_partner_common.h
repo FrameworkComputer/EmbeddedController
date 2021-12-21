@@ -53,6 +53,10 @@ struct tcpci_partner_msg {
 	struct tcpci_emul_msg msg;
 	/** Time when message should be sent if message is delayed */
 	uint64_t time;
+	/** Type of the message */
+	int type;
+	/** Number of data objects */
+	int data_objects;
 };
 
 /**
@@ -64,14 +68,15 @@ struct tcpci_partner_msg {
 void tcpci_partner_init(struct tcpci_partner_data *data);
 
 /**
- * @brief Allocate message
+ * @brief Allocate message with space for header and given number of data
+ *        objects. Type of message is set to TCPCI_MSG_SOP by default.
  *
- * @param size Size of message buffer
+ * @param data_objects Number of data objects in message
  *
  * @return Pointer to new message on success
  * @return NULL on error
  */
-struct tcpci_partner_msg *tcpci_partner_alloc_msg(size_t size);
+struct tcpci_partner_msg *tcpci_partner_alloc_msg(int data_objects);
 
 /**
  * @brief Free message's memory
@@ -85,12 +90,9 @@ void tcpci_partner_free_msg(struct tcpci_partner_msg *msg);
  *
  * @param data Pointer to TCPCI partner emulator
  * @param msg Pointer to message
- * @param type Type of message
- * @param cnt Number of data objects
  */
 void tcpci_partner_set_header(struct tcpci_partner_data *data,
-			      struct tcpci_partner_msg *msg,
-			      int type, int cnt);
+			      struct tcpci_partner_msg *msg);
 
 /**
  * @brief Send message to TCPCI emulator or schedule message
@@ -119,6 +121,25 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 int tcpci_partner_send_control_msg(struct tcpci_partner_data *data,
 				   enum pd_ctrl_msg_type type,
 				   uint64_t delay);
+
+/**
+ * @brief Send data message with optional delay. Data objects are copied to
+ *        message.
+ *
+ * @param data Pointer to TCPCI partner emulator
+ * @param type Type of message
+ * @param data_obj Pointer to array of data objects
+ * @param data_obj_num Number of data objects
+ * @param delay Optional delay
+ *
+ * @return 0 on success
+ * @return -ENOMEM when there is no free memory for message
+ * @return -EINVAL on TCPCI emulator add RX message error
+ */
+int tcpci_partner_send_data_msg(struct tcpci_partner_data *data,
+				enum pd_data_msg_type type,
+				uint32_t *data_obj, int data_obj_num,
+				uint64_t delay);
 
 /**
  * @}
