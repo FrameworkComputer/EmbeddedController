@@ -240,6 +240,13 @@ config PLATFORM_EC_CONSOLE_CMD_HCDEBUG
 
 	  See PLATFORM_EC_HOSTCMD_DEBUG_MODE for more detail.
 
+config PLATFORM_EC_CONSOLE_CMD_IRQ
+	bool "Console command: irq"
+	depends on TRACING_ISR && TRACING_USER
+	help
+	  Enable the "irq" console command. This command lists the number of
+	  IRQ calls.
+
 config PLATFORM_EC_CONSOLE_CMD_MEM
 	bool "Console command: md, rw"
 	default y
