@@ -630,6 +630,12 @@ config PLATFORM_EC_CONSOLE_CMD_CHGRAMP
 	      OC 1: s0 oc_det0 icl0
 	      OC 2: s0 oc_det0 icl0
 
+config PLATFORM_EC_CONSOLE_CMD_CHARGER_DUMP
+	bool "Console command: charger dump"
+	help
+	  Enable the "charger dump" subcommand. If the charger driver provides
+	  a dump_registers() function, this command shows its register dump.
+
 endif # PLATFORM_EC_CHARGER
 
 config PLATFORM_EC_BATTERY_CRITICAL_SHUTDOWN_CUT_OFF
@@ -717,7 +723,7 @@ choice PLATFORM_EC_BATTERY_API
 	  Select the battery API version. V2 is required on dual-battery-systems
 	  and hostless bases with a battery. V1 should not be used except for
 	  testing on legacy boards.
-      
+
 config PLATFORM_EC_BATTERY_V1
 	bool "Enable battery API v1"
 	depends on !PLATFORM_EC_BATTERY_V2
