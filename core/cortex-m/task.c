@@ -543,6 +543,15 @@ void task_clear_pending_irq(int irq)
 	CPU_NVIC_UNPEND(irq / 32) = 1 << (irq % 32);
 }
 
+/*
+ * Reading interrupt clear-pending register gives us information if interrupt
+ * is pending.
+ */
+bool task_is_irq_pending(int irq)
+{
+	return CPU_NVIC_UNPEND(irq / 32) & (1 << (irq % 32));
+}
+
 void task_trigger_irq(int irq)
 {
 	CPU_NVIC_SWTRIG = irq;

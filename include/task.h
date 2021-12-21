@@ -377,6 +377,13 @@ int task_reset(task_id_t id, int wait);
  */
 void task_clear_pending_irq(int irq);
 
+/**
+ * Check if irq is pending.
+ *
+ * Returns true if interrupt with given number is pending, false otherwise.
+ */
+bool task_is_irq_pending(int irq);
+
 #ifdef CONFIG_ZEPHYR
 typedef struct k_mutex mutex_t;
 
