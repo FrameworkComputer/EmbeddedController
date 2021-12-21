@@ -1,0 +1,17 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_GUYBRUSH
+	bool "Google Guybrush Board"
+	help
+	  Build Google Guybrush reference board.  This board build is a
+	  prototype rather than a releasing product.
+
+config BOARD_SKYRIM
+	bool "Google Skyrim Board"
+	help
+	  Build Google Skyrim reference board.  This board uses an AMD SoC
+	  and NPCX9 EC
+
+source "Kconfig.zephyr"

@@ -7,9 +7,11 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(guybrush)
 
-zephyr_library_include_directories(include)
+zephyr_library_include_directories_ifdef(CONFIG_BOARD_SKYRIM include)
+zephyr_library_include_directories_ifdef(CONFIG_BOARD_GUYBRUSH include_guybrush)
 
-zephyr_library_sources("power_signals.c")
+zephyr_library_sources_ifdef(CONFIG_BOARD_SKYRIM "power_signals.c")
+zephyr_library_sources_ifdef(CONFIG_BOARD_GUYBRUSH "power_signals_guybrush.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 	"usbc_config.c"
