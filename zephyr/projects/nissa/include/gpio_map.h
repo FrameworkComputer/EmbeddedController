@@ -25,6 +25,7 @@
  *   GPIO_INT(NAMED_GPIO(h1_ec_pwr_btn_odl), GPIO_INT_EDGE_BOTH, button_print)
  */
 /* Helper macros for generating CROS_EC_GPIO_INTERRUPTS */
+
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ
 #define POWER_SIGNAL_INT(gpio, edge) \
 	GPIO_INT(gpio, edge, power_signal_interrupt)
@@ -35,14 +36,39 @@
 #define AP_PROCHOT_INT(gpio, edge)
 #endif
 
+#ifdef CONFIG_PLATFORM_EC_POWER_BUTTON
+	#define PWRBTN_INT()        GPIO_INT(GPIO_POWER_BUTTON_L,              \
+					     GPIO_INT_EDGE_BOTH,               \
+					     power_button_interrupt)
+#else
+	#define PWRBTN_INT()
+#endif
 
-#define EC_CROS_GPIO_INTERRUPTS                                           \
-	GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)        \
-	GPIO_INT(GPIO_POWER_BUTTON_L, GPIO_INT_EDGE_BOTH,                 \
-		 power_button_interrupt)                                  \
-	POWER_SIGNAL_INT(GPIO_SLP_SUS_L, GPIO_INT_EDGE_BOTH)              \
-	POWER_SIGNAL_INT(GPIO_PG_EC_DSW_PWROK, GPIO_INT_EDGE_BOTH)        \
-	POWER_SIGNAL_INT(GPIO_PG_EC_RSMRST_ODL, GPIO_INT_EDGE_BOTH)       \
-	POWER_SIGNAL_INT(GPIO_PG_EC_ALL_SYS_PWRGD, GPIO_INT_EDGE_BOTH)    \
+#ifdef CONFIG_PLATFORM_EC_LID_SWITCH
+	#define LID_INT()       GPIO_INT(GPIO_LID_OPEN, \
+				GPIO_INT_EDGE_BOTH,     \
+				lid_interrupt)
+#else
+	#define LID_INT()
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_VOLUME_BUTTONS
+	#define VOLBTN_INT(pin)     GPIO_INT(pin,                             \
+					     GPIO_INT_EDGE_BOTH,              \
+					     button_interrupt)
+#else
+	#define VOLBTN_INT(pin)
+#endif
+
+
+#define EC_CROS_GPIO_INTERRUPTS                                         \
+	LID_INT()							\
+	PWRBTN_INT()							\
+	VOLBTN_INT(GPIO_VOLUME_DOWN_L)					\
+	VOLBTN_INT(GPIO_VOLUME_UP_L)					\
+	POWER_SIGNAL_INT(GPIO_SLP_SUS_L, GPIO_INT_EDGE_BOTH)            \
+	POWER_SIGNAL_INT(GPIO_PG_EC_DSW_PWROK, GPIO_INT_EDGE_BOTH)      \
+	POWER_SIGNAL_INT(GPIO_PG_EC_RSMRST_ODL, GPIO_INT_EDGE_BOTH)     \
+	POWER_SIGNAL_INT(GPIO_PG_EC_ALL_SYS_PWRGD, GPIO_INT_EDGE_BOTH)  \
 	AP_PROCHOT_INT(GPIO_EC_PROCHOT_ODL, GPIO_INT_EDGE_BOTH)
 #endif /* __ZEPHYR_GPIO_MAP_H */

@@ -5,6 +5,7 @@
 
 /dts-v1/;
 
+#include <dt-bindings/gpio_defines.h>
 #include <cros/ite/it8xxx2.dtsi>
 #include <it8xxx2.dtsi>
 

@@ -32,3 +32,13 @@ register_nissa_project(
     ],
     extra_kconfig_files=[here / "prj_nivviks.conf"],
 )
+
+register_nissa_project(
+    project_name="nereid",
+    chip="it8xxx2",
+    extra_dts_overlays=[
+        here / "nereid_generated.dts",
+        here / "nereid_overlay.dts",
+    ],
+    extra_kconfig_files=[here / "prj_nereid.conf"],
+)

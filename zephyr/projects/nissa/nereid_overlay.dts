@@ -1,0 +1,128 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-pins = <
+			&gpio_gsc_ec_pwr_btn_odl
+			&gpio_lid_open
+		>;
+	};
+
+	named-temp-sensors {
+		memory {
+			compatible = "cros-ec,temp-sensor-thermistor";
+			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+			label = "DDR and SOC";
+			enum-name = "TEMP_SENSOR_1";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_temp_sensor_1>;
+		};
+		charger {
+			compatible = "cros-ec,temp-sensor-thermistor";
+			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+			label = "Charger";
+			enum-name = "TEMP_SENSOR_CHARGER";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_temp_sensor_2>;
+		};
+		ambient {
+			compatible = "cros-ec,temp-sensor-thermistor";
+			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+			label = "Ambiient";
+			enum-name = "TEMP_SENSOR_AMB";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_temp_sensor_3>;
+		};
+	};
+
+	/*
+	 * Alias kblist to correct node.
+	 */
+	named-pwms {
+		compatible = "named-pwms";
+
+		kblight: pwm_kb_bl {
+		};
+	};
+};
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};
+
+/* Set bus speeds for I2C */
+&i2c0 {
+	label = "I2C_EEPROM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c1 {
+	label = "I2C_BATTERY";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c2 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c4 {
+	label = "I2C_SUB_C1_TCPC";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c5 {
+	label = "I2C_USB_C0_TCPC";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+/* PWM config */
+&pwm0 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&pwm1 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&pwm2 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&pwm3 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&pwm_pwm_kb_bl {
+	frequency = <10000>;
+};
+
+&pwm_pwm_led_1_odl {
+	frequency = <324>;
+};
+
+&pwm_pwm_led_2_odl {
+	frequency = <324>;
+};
+
+&pwm_pwm_led_3_odl {
+	frequency = <324>;
+};
