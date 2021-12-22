@@ -233,7 +233,7 @@ func (c *It81302) Pwm(p string) string {
 			if strings.HasPrefix(ss, "PWM") && len(ss) > 3 {
 				pwm := fmt.Sprintf("pwm%s", ss[3:])
 				c.okay = append(c.okay, pwm)
-				return fmt.Sprintf("%s %s 0", pwm, ss[3:])
+				return fmt.Sprintf("%s %s", pwm, ss[3:])
 			}
 		}
 		return ""

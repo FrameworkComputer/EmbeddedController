@@ -57,8 +57,8 @@ func TestMulti(t *testing.T) {
 		t.Errorf("Expected empty string, got %s for I2c()", n.I2c(pin))
 	}
 	pin = "L9"
-	if n.Pwm(pin) != "pwm4 0 0" {
-		t.Errorf("Expected \"pwm4 0 0\", got %s for Pwm()", n.Pwm(pin))
+	if n.Pwm(pin) != "pwm4 4" {
+		t.Errorf("Expected \"pwm4 4\", got %s for Pwm()", n.Pwm(pin))
 	}
 	pin = "F8"
 	if n.I2c(pin) != "i2c3_0" {

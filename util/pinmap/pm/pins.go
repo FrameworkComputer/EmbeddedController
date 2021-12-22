@@ -8,6 +8,7 @@ package pm
 const (
 	ADC = iota
 	PWM
+	PWM_INVERT
 	I2C
 	Input
 	Output

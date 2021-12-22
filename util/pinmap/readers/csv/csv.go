@@ -80,6 +80,9 @@ func (r *CSVReader) Read(chipName, arg string) (*pm.Pins, error) {
 		case "PWM":
 			p.PinType = pm.PWM
 			pins.Pwm = append(pins.Pwm, p)
+		case "PWM_INVERT":
+			p.PinType = pm.PWM_INVERT
+			pins.Pwm = append(pins.Pwm, p)
 		case "I2C_DATA":
 			// Only the clock pin is used for the config
 			continue

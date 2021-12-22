@@ -39,6 +39,7 @@ func TestName(t *testing.T) {
 		},
 		Pwm: []*pm.Pin{
 			&pm.Pin{pm.PWM, "C3", "EC_PWM_1", "FAN_1"},
+			&pm.Pin{pm.PWM_INVERT, "J9", "EC_PWM_2", "LED_1"},
 		},
 	}
 	check(t, "ADc", exp.Adc, pins.Adc)

@@ -227,9 +227,9 @@ func (c *Npcx993) Pwm(p string) string {
 		// Found the pin, now find the PWM name.
 		for _, ss := range strings.Split(s, ",") {
 			if strings.HasPrefix(ss, "PWM") && len(ss) > 3 {
-				pwm := fmt.Sprintf("pwm%s 0 0", ss[3:])
-				c.okay = append(c.okay, pwm)
-				return pwm
+				ch := ss[3:]
+				c.okay = append(c.okay, fmt.Sprintf("pwm%s", ch))
+				return fmt.Sprintf("pwm%s %s", ch, ch)
 			}
 		}
 		return ""

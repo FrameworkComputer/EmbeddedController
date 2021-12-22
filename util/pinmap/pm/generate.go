@@ -143,9 +143,15 @@ func i2cConfig(out io.Writer, pin *Pin, chip Chip) {
 
 // pwmConfig is the handler for PWM pins.
 func pwmConfig(out io.Writer, pin *Pin, chip Chip) {
-	if pin.PinType != PWM {
+	var inv string
+	switch pin.PinType {
+	default:
 		fmt.Printf("Unknown PWM type (%d) for pin %s, ignored\n", pin.PinType, pin.Pin)
 		return
+	case PWM:
+		inv = "0"
+	case PWM_INVERT:
+		inv = "1"
 	}
 	c := chip.Pwm(pin.Pin)
 	if len(c) == 0 {
@@ -154,7 +160,7 @@ func pwmConfig(out io.Writer, pin *Pin, chip Chip) {
 	}
 	lc := strings.ToLower(pin.Signal)
 	fmt.Fprintf(out, "\t\tpwm_%s: %s {\n", lc, lc)
-	fmt.Fprintf(out, "\t\t\tpwms = <&%s>;\n", c)
+	fmt.Fprintf(out, "\t\t\tpwms = <&%s %s>;\n", c, inv)
 	fmt.Fprintf(out, "\t\t\tlabel = \"%s\";\n", pin.Signal)
 	if len(pin.Enum) > 0 {
 		fmt.Fprintf(out, "\t\t\tenum-name = \"%s\";\n", pin.Enum)

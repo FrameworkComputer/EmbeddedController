@@ -55,6 +55,7 @@ func TestGenerate(t *testing.T) {
 		},
 		Pwm: []*pm.Pin{
 			&pm.Pin{pm.PWM, "E5", "EC_LED_1", "ENUM_LED_1"},
+			&pm.Pin{pm.PWM_INVERT, "F6", "EC_LED_2", "ENUM_LED_2"},
 		},
 	}
 	var out bytes.Buffer
@@ -112,9 +113,14 @@ func TestGenerate(t *testing.T) {
 		compatible = "named-pwms";
 
 		pwm_ec_led_1: ec_led_1 {
-			pwms = <&pwm1>;
+			pwms = <&pwm1 0>;
 			label = "EC_LED_1";
 			enum-name = "ENUM_LED_1";
+		};
+		pwm_ec_led_2: ec_led_2 {
+			pwms = <&pwm1 1>;
+			label = "EC_LED_2";
+			enum-name = "ENUM_LED_2";
 		};
 	};
 };
