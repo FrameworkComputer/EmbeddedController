@@ -28,21 +28,6 @@ static enum {
 	AUX_PORT_C1HDMI = 1,
 } aux_port = AUX_PORT_NONE;
 
-int svdm_get_hpd_gpio(int port)
-{
-	/* HPD is low active, inverse the result */
-	return !gpio_get_level(GPIO_EC_AP_DP_HPD_ODL);
-}
-
-void svdm_set_hpd_gpio(int port, int en)
-{
-	/*
-	 * HPD is low active, inverse the en
-	 * TODO: C0&C1 shares the same HPD, implement FCFS policy.
-	 */
-	gpio_set_level(GPIO_EC_AP_DP_HPD_ODL, !en);
-}
-
 static void aux_switch_port(int port)
 {
 	if (port != AUX_PORT_NONE)
@@ -64,6 +49,33 @@ static void aux_display_disconnected(int port)
 		aux_switch_port(other_port);
 	else
 		aux_switch_port(AUX_PORT_NONE);
+}
+
+int svdm_get_hpd_gpio(int port)
+{
+	/* HPD is low active, inverse the result */
+	return !gpio_get_level(GPIO_EC_AP_DP_HPD_ODL);
+}
+
+void svdm_set_hpd_gpio(int port, int en)
+{
+	/*
+	 * Cherry can only output to 1 display port at a time.
+	 * This implements FCFS policy by changing the aux channel. If a
+	 * display is connected to the either port (says A), and the port A
+	 * will be served until the display is disconnected from port A.
+	 * It won't output to the other display which connects to port B.
+	 */
+	if (en) {
+		if (aux_port == AUX_PORT_NONE)
+			aux_switch_port(port);
+	} else {
+		aux_display_disconnected(port);
+	}
+	/*
+	 * HPD is low active, inverse the en
+	 */
+	gpio_set_level_verbose(CC_USBPD, GPIO_EC_AP_DP_HPD_ODL, !en);
 }
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
@@ -115,29 +127,15 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		 * b/171172053#comment14: since the HPD_DSTREAM_DEBOUNCE_IRQ is
 		 * very short (500us), we can use udelay instead of usleep for
 		 * more stable pulse period.
+		 *
+		 * Note that this should be the only difference between our code
+		 * and common code.
 		 */
 		udelay(HPD_DSTREAM_DEBOUNCE_IRQ);
 		svdm_set_hpd_gpio(port, 1);
 	} else {
 		svdm_set_hpd_gpio(port, lvl);
 	}
-
-	/*
-	 * Cherry can only output to 1 display port at a time.
-	 * This implements FCFS policy by changing the aux channel. If a
-	 * display is connected to the either port (says A), and the port A
-	 * will be served until the display is disconnected from port A.
-	 * It won't output to the other display which connects to port B.
-	 */
-	if (lvl && aux_port == AUX_PORT_NONE)
-		/*
-		 * A display is connected, and no display was plugged on either
-		 * port.
-		 */
-		aux_switch_port(port);
-	else if (!lvl)
-		aux_display_disconnected(port);
-
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
@@ -154,22 +152,6 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 	/* ack */
 	return 1;
-}
-
-__override void svdm_exit_dp_mode(int port)
-{
-#ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	svdm_set_hpd_gpio(port, 0);
-#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
-	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-				 USB_PD_MUX_HPD_IRQ_DEASSERTED);
-
-	aux_display_disconnected(port);
-
-#ifdef USB_PD_PORT_TCPC_MST
-	if (port == USB_PD_PORT_TCPC_MST)
-		baseboard_mst_enable_control(port, 0);
-#endif
 }
 
 int pd_snk_is_vbus_provided(int port)
