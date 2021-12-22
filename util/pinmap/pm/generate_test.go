@@ -89,11 +89,13 @@ func TestGenerate(t *testing.T) {
 		compatible = "named-gpios";
 
 		gpio_ec_in_1: ec_in_1 {
+			#gpio-cells = <0>;
 			gpios = <&gpio C3 GPIO_INPUT>;
 			label = "EC_IN_1";
 			enum-name = "ENUM_IN_1";
 		};
 		gpio_ec_out_2: ec_out_2 {
+			#gpio-cells = <0>;
 			gpios = <&gpio D4 GPIO_OUTPUT>;
 			label = "EC_OUT_2";
 			enum-name = "ENUM_OUT_2";
@@ -141,7 +143,7 @@ func TestGenerate(t *testing.T) {
 	if exp != got {
 		// Split each string into lines and compare the lines.
 		expLines := strings.Split(exp, "\n")
-		gotLines := strings.Split(exp, "\n")
+		gotLines := strings.Split(got, "\n")
 		if len(expLines) != len(gotLines) {
 			t.Errorf("Expected %d lines, got %d lines", len(expLines), len(gotLines))
 		}
