@@ -311,6 +311,7 @@ static void tcpci_snk_emul_transmit_op(const struct emul *emul,
 
 	/* Handle hard reset */
 	if (type == TCPCI_MSG_TX_HARD_RESET) {
+		tcpci_partner_clear_msg_queue(&data->common_data);
 		data->common_data.msg_id = 0;
 		return;
 	}

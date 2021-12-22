@@ -79,58 +79,96 @@ static void tcpci_partner_delayed_send(struct k_work *work)
 		CONTAINER_OF(kwd, struct tcpci_partner_data, delayed_send);
 	struct tcpci_partner_msg *msg;
 	uint64_t now;
-	int ec;
+	int ret;
 
-	while (!k_fifo_is_empty(&data->to_send)) {
-		/*
-		 * It is safe to not check msg == NULL, because this thread is
-		 * the only one consumer
-		 */
-		msg = k_fifo_peek_head(&data->to_send);
+	do {
+		ret = k_mutex_lock(&data->to_send_mutex, K_FOREVER);
+	} while (ret);
+
+	while (!sys_slist_is_empty(&data->to_send)) {
+		msg = SYS_SLIST_PEEK_HEAD_CONTAINER(&data->to_send, msg, node);
 
 		now = k_uptime_get();
 		if (now >= msg->time) {
-			k_fifo_get(&data->to_send, K_FOREVER);
+			sys_slist_get_not_empty(&data->to_send);
+			k_mutex_unlock(&data->to_send_mutex);
+
 			tcpci_partner_set_header(data, msg);
-			ec = tcpci_emul_add_rx_msg(data->tcpci_emul, &msg->msg,
-						   true /* send alert */);
-			if (ec) {
+			ret = tcpci_emul_add_rx_msg(data->tcpci_emul, &msg->msg,
+						    true /* send alert */);
+			if (ret) {
 				tcpci_partner_free_msg(msg);
 			}
+
+			do {
+				ret = k_mutex_lock(&data->to_send_mutex,
+						   K_FOREVER);
+			} while (ret);
 		} else {
 			k_work_reschedule(kwd, K_MSEC(msg->time - now));
 			break;
 		}
 	}
+
+	k_mutex_unlock(&data->to_send_mutex);
 }
 
 /** Check description in emul_common_tcpci_partner.h */
 int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 			   struct tcpci_partner_msg *msg, uint64_t delay)
 {
+	struct tcpci_partner_msg *next_msg;
+	struct tcpci_partner_msg *prev_msg;
 	uint64_t now;
-	int ec;
+	int ret;
 
 	if (delay == 0) {
 		tcpci_partner_set_header(data, msg);
-		ec = tcpci_emul_add_rx_msg(data->tcpci_emul, &msg->msg, true);
-		if (ec) {
+		ret = tcpci_emul_add_rx_msg(data->tcpci_emul, &msg->msg, true);
+		if (ret) {
 			tcpci_partner_free_msg(msg);
 		}
 
-		return ec;
+		return ret;
 	}
 
 	now = k_uptime_get();
 	msg->time = now + delay;
-	k_fifo_put(&data->to_send, msg);
-	/*
-	 * This will change execution time of delayed_send only if it is not
-	 * already scheduled
-	 */
-	k_work_schedule(&data->delayed_send, K_MSEC(delay));
 
-	return 0;
+	ret = k_mutex_lock(&data->to_send_mutex, K_FOREVER);
+	if (ret) {
+		tcpci_partner_free_msg(msg);
+
+		return ret;
+	}
+
+	prev_msg = SYS_SLIST_PEEK_HEAD_CONTAINER(&data->to_send, prev_msg,
+						 node);
+	/* Current message should be sent first */
+	if (prev_msg == NULL || prev_msg->time > msg->time) {
+		sys_slist_prepend(&data->to_send, &msg->node);
+		k_work_reschedule(&data->delayed_send, K_MSEC(delay));
+		k_mutex_unlock(&data->to_send_mutex);
+		return 0;
+	}
+
+	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&data->to_send, prev_msg, next_msg,
+					  node) {
+		/*
+		 * If we reach tail or next message should be sent after new
+		 * message, insert new message to the list.
+		 */
+		if (next_msg == NULL || next_msg->time > msg->time) {
+			sys_slist_insert(&data->to_send, &prev_msg->node,
+					 &msg->node);
+			k_mutex_unlock(&data->to_send_mutex);
+			return 0;
+		}
+	}
+
+	__ASSERT(0, "Message should be always inserted to the list");
+
+	return -1;
 }
 
 /** Check description in emul_common_tcpci_partner.h */
@@ -176,8 +214,34 @@ int tcpci_partner_send_data_msg(struct tcpci_partner_data *data,
 }
 
 /** Check description in emul_common_tcpci_partner.h */
+int tcpci_partner_clear_msg_queue(struct tcpci_partner_data *data)
+{
+	struct tcpci_partner_msg *msg;
+	int ret;
+
+	k_work_cancel_delayable(&data->delayed_send);
+
+	ret = k_mutex_lock(&data->to_send_mutex, K_FOREVER);
+	if (ret) {
+		return ret;
+	}
+
+	while (!sys_slist_is_empty(&data->to_send)) {
+		msg = SYS_SLIST_CONTAINER(
+				sys_slist_get_not_empty(&data->to_send),
+				msg, node);
+		tcpci_partner_free_msg(msg);
+	}
+
+	k_mutex_unlock(&data->to_send_mutex);
+
+	return 0;
+}
+
+/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_init(struct tcpci_partner_data *data)
 {
 	k_work_init_delayable(&data->delayed_send, tcpci_partner_delayed_send);
-	k_fifo_init(&data->to_send);
+	sys_slist_init(&data->to_send);
+	k_mutex_init(&data->to_send_mutex);
 }
