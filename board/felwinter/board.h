@@ -234,6 +234,10 @@ enum mft_channel {
 	MFT_CH_COUNT
 };
 
+void pen_detect_interrupt(enum gpio_signal s);
+
+void pen_config(void);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

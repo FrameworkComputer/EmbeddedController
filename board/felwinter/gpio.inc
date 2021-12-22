@@ -31,6 +31,7 @@ GPIO_INT(USB_C1_TCPC_INT_ODL,            PIN(A, 2), GPIO_INT_FALLING, tcpc_alert
 GPIO_INT(USB_C2_BC12_INT_ODL,            PIN(8, 3), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C2_PPC_INT_ODL,             PIN(7, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C2_RT_INT_ODL,              PIN(4, 1), GPIO_INT_FALLING, retimer_interrupt)
+GPIO_INT(PEN_DET_ODL,                    PIN(D, 4), GPIO_INT_BOTH, pen_detect_interrupt)
 
 /* USED GPIOs: */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -67,6 +68,7 @@ GPIO(EC_PCH_WAKE_R_ODL,              PIN(C, 0), GPIO_ODR_HIGH)
 GPIO(EC_PROCHOT_ODL,                 PIN(6, 3), GPIO_ODR_HIGH)
 GPIO(EN_PP5000_FAN,                  PIN(6, 1), GPIO_OUT_HIGH)
 GPIO(EN_PP5000_USBA_R,               PIN(D, 7), GPIO_OUT_LOW)
+GPIO(EN_PP5000_PEN,                  PIN(E, 1), GPIO_OUT_LOW)
 GPIO(EN_S5_RAILS,                    PIN(B, 6), GPIO_OUT_LOW)
 GPIO(IMVP9_VRRDY_OD,                 PIN(4, 3), GPIO_INPUT)
 GPIO(PCH_PWROK,                      PIN(7, 2), GPIO_OUT_LOW)
@@ -124,8 +126,6 @@ UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(C, 3))       /* GPIOC3 */
-UNUSED(PIN(E, 1))       /* GPIOE1 */
-UNUSED(PIN(D, 4))       /* GPIOD4 */
 UNUSED(PIN(C, 6))       /* GPIOC6 */
 UNUSED(PIN(6, 2))       /* GPIO62 */
 UNUSED(PIN(B, 1))       /* GPIOB1 */

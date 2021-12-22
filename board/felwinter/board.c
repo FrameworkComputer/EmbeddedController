@@ -63,6 +63,13 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
+/* Called on AP S5 -> S3 transition */
+static void board_chipset_startup(void)
+{
+	pen_config();
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
 #ifdef CONFIG_CHARGE_RAMP_SW
 
 /*
@@ -114,5 +121,50 @@ static void board_init(void)
 	if (ec_cfg_usb_mb_type() == MB_USB4_TBT)
 		mb_update_usb4_tbt_config_from_config();
 
+	if (ec_cfg_stylus() == STYLUS_PRSENT)
+		gpio_enable_interrupt(GPIO_PEN_DET_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+
+/**
+ * Deferred function to handle pen detect change
+ */
+static void pendetect_deferred(void)
+{
+	static int debounced_pen_detect;
+	int pen_detect = !gpio_get_level(GPIO_PEN_DET_ODL);
+
+	if (pen_detect == debounced_pen_detect)
+		return;
+
+	debounced_pen_detect = pen_detect;
+
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		gpio_set_level(GPIO_EN_PP5000_PEN, debounced_pen_detect);
+}
+DECLARE_DEFERRED(pendetect_deferred);
+
+void pen_detect_interrupt(enum gpio_signal s)
+{
+	/* Trigger deferred notification of pen detect change */
+	hook_call_deferred(&pendetect_deferred_data,
+			500 * MSEC);
+}
+
+void pen_config(void)
+{
+	if (ec_cfg_stylus() == STYLUS_PRSENT) {
+		/* Make sure pen detection is triggered or not at resume */
+		if (!gpio_get_level(GPIO_PEN_DET_ODL))
+			gpio_set_level(GPIO_EN_PP5000_PEN, 1);
+		else
+			gpio_set_level(GPIO_EN_PP5000_PEN, 0);
+	}
+}
+
+static void board_chipset_shutdown(void)
+{
+	gpio_set_level(GPIO_EN_PP5000_PEN, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);

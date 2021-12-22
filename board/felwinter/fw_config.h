@@ -29,11 +29,16 @@ enum ec_cfg_usb_mb_type {
 	MB_USB3_NON_TBT = 1
 };
 
+enum ec_cfg_stylus_type {
+	STYLUS_ABSENT = 0,
+	STYLUS_PRSENT = 1
+};
+
 union brya_cbi_fw_config {
 	struct {
 		enum ec_cfg_usb_db_type			usb_db : 3;
 		uint32_t				wifi : 2;
-		uint32_t				stylus : 1;
+		enum ec_cfg_stylus_type			stylus : 1;
 		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
 		uint32_t				audio : 3;
 		uint32_t				thermal : 2;
@@ -66,3 +71,10 @@ enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
 enum ec_cfg_usb_mb_type ec_cfg_usb_mb_type(void);
 
 #endif /* __BOARD_BRYA_FW_CONFIG_H_ */
+
+/**
+ * Get the stylus type from FW_CONFIG.
+ *
+ * @return the stylus type.
+ */
+enum ec_cfg_stylus_type ec_cfg_stylus(void);
