@@ -885,7 +885,7 @@ static void lcd_reset_change_deferred(void)
 DECLARE_DEFERRED(lcd_reset_change_deferred);
 void lcd_reset_change_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&lcd_reset_change_deferred_data, 17 * MSEC);
+	hook_call_deferred(&lcd_reset_change_deferred_data, 45 * MSEC);
 }
 
 /**
