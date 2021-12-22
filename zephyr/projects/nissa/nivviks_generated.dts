@@ -303,23 +303,23 @@
 		compatible = "named-pwms";
 
 		pwm_ec_psys: ec_psys {
-			pwms = <&pwm7 0 0>;
+			pwms = <&pwm7 7 0>;
 			label = "EC_PSYS";
 		};
 		pwm_pwm_kb_bl: pwm_kb_bl {
-			pwms = <&pwm6 0 0>;
+			pwms = <&pwm6 6 0>;
 			label = "PWM_KB_BL";
 		};
 		pwm_pwm_led_1_odl: pwm_led_1_odl {
-			pwms = <&pwm2 0 0>;
+			pwms = <&pwm2 2 1>;
 			label = "PWM_LED_1_ODL";
 		};
 		pwm_pwm_led_2_odl: pwm_led_2_odl {
-			pwms = <&pwm0 0 0>;
+			pwms = <&pwm0 0 1>;
 			label = "PWM_LED_2_ODL";
 		};
 		pwm_pwm_led_3_odl: pwm_led_3_odl {
-			pwms = <&pwm1 0 0>;
+			pwms = <&pwm1 1 1>;
 			label = "PWM_LED_3_ODL";
 		};
 	};
