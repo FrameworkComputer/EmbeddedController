@@ -10,6 +10,10 @@
 
 LOG_MODULE_REGISTER(shim_adc, LOG_LEVEL_ERR);
 
+#if defined(CONFIG_PLATFORM_EC_ADC_CMD) && defined(CONFIG_ADC_SHELL)
+#error "Define only one 'adc' console command."
+#endif
+
 #define adc_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_adc))
 
 #define HAS_NAMED_ADC_CHANNELS DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
