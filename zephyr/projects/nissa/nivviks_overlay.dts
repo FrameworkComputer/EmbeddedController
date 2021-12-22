@@ -27,10 +27,10 @@
 			temp_host_release_high = <80>;
 			adc = <&adc_temp_sensor_1>;
 		};
-		chassis {
+		charger {
 			compatible = "cros-ec,temp-sensor-thermistor";
 			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
-			label = "Ambient";
+			label = "Charger";
 			enum-name = "TEMP_SENSOR_2";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
