@@ -859,6 +859,14 @@ config PLATFORM_EC_USBC_PPC_RT1718S
 	  for alternated mode usage. VCONN Switch with OVP/OCP/RVP/RCP/UVP
 	  protection is also integrated.
 
+config PLATFORM_EC_USBC_PPC_KTU1125
+	bool "Kinetic KTU1125 Power Path Controller"
+	select PLATFORM_EC_USBC_OCP
+	help
+	  KTU1125 integrates power switches to provide a compact protection
+	  solution to USB Type-C applications by eliminating the dependence
+	  on external components.
+
 config PLATFORM_EC_USBC_PPC_NX20P3483
 	bool "NX20P3483 High Voltage Sink/Source Combo Switch"
 	select PLATFORM_EC_USBC_OCP
