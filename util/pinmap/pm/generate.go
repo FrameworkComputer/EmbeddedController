@@ -9,10 +9,10 @@ import (
 	"io"
 	"sort"
 	"strings"
+	"time"
 )
 
-// TODO(b/211717378): Fix the date handling
-const header = `/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+const header = `/* Copyright %d The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -25,8 +25,8 @@ const header = `/* Copyright 2021 The Chromium OS Authors. All rights reserved.
 // Generate creates the DTS configuration from the pins using the chip as a
 // reference and writes the DTS to the output.
 func Generate(out io.Writer, pins *Pins, chip Chip) {
-	// Write header
-	fmt.Fprintf(out, "%s", header)
+	// Write header with date.
+	fmt.Fprintf(out, header, time.Now().Year())
 	pinConfig(out, "named-adc-channels", pins.Adc, chip, adcConfig)
 	pinConfig(out, "named-gpios", pins.Gpio, chip, gpioConfig)
 	pinConfig(out, "named-i2c-ports", pins.I2c, chip, i2cConfig)

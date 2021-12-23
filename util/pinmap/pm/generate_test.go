@@ -10,6 +10,7 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+	"time"
 
 	"pinmap/pm"
 )
@@ -65,8 +66,8 @@ func TestGenerate(t *testing.T) {
 	 * to parse the device tree directly and ensuing it is correct.
 	 * However this would considerably complicate this test.
 	 */
-	exp :=
-		`/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+	expFmt :=
+		`/* Copyright %d The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -135,6 +136,7 @@ func TestGenerate(t *testing.T) {
 	status = "okay";
 };
 `
+	exp := fmt.Sprintf(expFmt, time.Now().Year())
 	got := out.String()
 	if exp != got {
 		// Split each string into lines and compare the lines.
