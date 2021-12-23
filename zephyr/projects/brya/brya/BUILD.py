@@ -8,5 +8,6 @@ register_npcx_project(
     dts_overlays=[
         "cbi_eeprom.dts",
         "gpio.dts",
+        "motionsense.dts",
     ],
 )

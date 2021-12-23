@@ -37,6 +37,22 @@
 			gpios = <&gpio7 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
+		gpio_ec_accel_int_l: ec_accel_int_l {
+			gpios = <&gpio8 1 GPIO_INPUT>;
+			enum-name = "GPIO_EC_ACCEL_INT";
+		};
+		gpio_ec_imu_int_l: gpio_ec_imu_int_l {
+			gpios = <&gpio5 6 GPIO_INPUT>;
+			enum-name = "GPIO_EC_IMU_INT_L";
+		};
+		gpio_ec_als_rgb_int_l: gpio_ec_als_rgb_int_l {
+			gpios = <&gpiod 4 GPIO_INPUT>;
+			enum-name = "GPIO_EC_ALS_RGB_INT_L";
+		};
+		tablet_mode_l {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
 		acok_od: acok_od {
 			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
