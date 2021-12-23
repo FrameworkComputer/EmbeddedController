@@ -35,7 +35,7 @@ This binary can be run directly or moved to an appropriate binary directory.
 Running `pinmap --help` prints a usage page.
 
 The `--reader` flag allows selecting different forms of input.
-The default is `csv`, which is intended to be the download CSV from a spreadsheet.
+The default is `csv`, which is expected to be the downloaded CSV from a spreadsheet.
 
 The `--chip` flag selects the EC part to be used.
 
@@ -50,7 +50,7 @@ map that allows the reader to be informed which columns are to be used.
 Multiple EC chips may be supported in the same spreadsheet. The EC part name is set
 as one of the column headers, and this column can be selected using the `--chip` flag.
 
-An example of a working CSV file can also be viewed in the [file](reader/csv/testdata/data.csv)
+An example of a working CSV file can also be viewed in the [file](readers/csv/testdata/data.csv)
 used for the unit tests.
 
 The key columns that are expected (and must match exactly) by the reader are:
@@ -69,8 +69,9 @@ generate the GPIO or other configuration flags in the DTS.
 | ----------- | ----------- |
 | `ADC` | An analogue to digital converter signal |
 | `PWM` | A pulse width modulator signal |
+| `PWM_INVERT` | A pulse width modulator signal with inverted output |
 | `I2C_CLOCK` | The clock signal for an I2C bus |
-| `I2C_DATA` | The data signal for an I2C bus |
+| `I2C_DATA` | The data signal for an I2C bus (ignored) |
 | `INPUT` | A GPIO input signal |
 | `OUTPUT` | A GPIO output signal |
 | `OUTPUT_ODR` | A GPIO output open drain signal |
@@ -85,7 +86,7 @@ bus is referenced - the `I2C_DATA` signal is effectively ignored.
 
 ## Example use
 
-Assume that the spreadsheet is downloaded to the file `signals.csv`, and
+Assume that the spreadsheet is downloaded as CSV format to the file `signals.csv`, and
 a NPCX993 EC chip is selected, the following command can be run:
 
 ```
@@ -96,6 +97,5 @@ The file `generated.dts` contains the DTS configuration as processed and generat
 
 ## TODO
 
-- Add unit tests for generator.go
 - Read signals from arbitrage (requires more data in arbitrage)
 - Build chip map from vendor data
