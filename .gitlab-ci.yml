@@ -94,12 +94,21 @@ seed_cache:
 # and generates a report.
 .coverage_template: &coverage_template
   stage: test
-  needs: ["merged_coverage", "zephyr_coverage"]
+  needs: ["merged_coverage", "zephyr_coverage", "twister_coverage"]
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG configure -b --coverage
       -B "${BUILD_DIR}/${PROJECT}" -t ${TOOLCHAIN:-zephyr}
       "${PROJECT}"
+    - lcov -o "${BUILD_DIR}/${PROJECT}/merged_twister.info" -a "${BUILD_DIR}/${PROJECT}/lcov.info" -a "${BUILD_DIR}/zephyr_codecov/fixed.info"
+    - lcov -o "${BUILD_DIR}/${PROJECT}/merged_twister_no_ec.info" -e "${BUILD_DIR}/${PROJECT}/merged_twister.info" "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
+    - grep "SF:" "${BUILD_DIR}/${PROJECT}/lcov.info" | sort -u |
+      sed -e 's|^SF:||' | xargs lcov
+      -o "${BUILD_DIR}/${PROJECT}/filtered_twister.info"
+      -e "${BUILD_DIR}/${PROJECT}/merged_twister_no_ec.info"
+    - /usr/bin/genhtml -q -o "${BUILD_DIR}/${PROJECT}/filtered_twister_rpt"
+      -t "${PROJECT} coverage of twister tests"
+      -s "${BUILD_DIR}/${PROJECT}/filtered_twister.info"
     - lcov -o "${BUILD_DIR}/${PROJECT}/merged.info"
       -a "${BUILD_DIR}/${PROJECT}/lcov.info" -a build/merged.info
     - lcov -o "${BUILD_DIR}/${PROJECT}/no_zephyr.info"
@@ -121,6 +130,7 @@ seed_cache:
       - build/${PROJECT}/*.info
       - build/${PROJECT}/*_rpt
     expire_in: 1 week
+    when: always
   coverage: '/lines\.*: \d+\.\d+%/'
 
 delbin:
