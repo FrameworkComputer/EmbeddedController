@@ -634,6 +634,12 @@ static int init(struct motion_sensor_t *s)
 		/* Unrecognized sensor */
 		CPRINTS("Unknown WHO_AM_I value: 0x%x", tmp);
 		return EC_ERROR_ACCESS_DENIED;
+	} else {
+		/*
+		 * Recognized sensor
+		 * Log print for factory check chip ID (b:196781249)
+		 */
+		CPRINTS("SENSOR accelgyro_lsm6dsm WHO_AM_I value: 0x%x", tmp);
 	}
 
 	/*
