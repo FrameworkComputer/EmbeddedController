@@ -1259,6 +1259,13 @@ config PLATFORM_EC_USB_PD_TCPM_PS8815_FORCE_DID
 	  chip version register and force the correct device ID.
 endif # PLATFORM_EC_USB_PD_TCPM_PS8815
 
+config PLATFORM_EC_USB_PD_TCPM_RAA489000
+  bool "Renesas RAA489000 Type-C port controller and battery charger"
+  select PLATFORM_EC_USB_PD_PPC
+  help
+    Build drivers for the RAA489000, a combined battery charger and USB-C
+    TCPCI.
+
 config PLATFORM_EC_USB_PD_TCPM_RT1715
 	bool "Richtek RT1715 Type-C Port Controller"
 	help
