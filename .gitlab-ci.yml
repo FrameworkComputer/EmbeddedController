@@ -223,3 +223,28 @@ testall:
     - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG testall
 
+twister_coverage:
+  stage: test
+  needs: ["seed_cache"]
+  script:
+    - mkdir -p build/zephyr_codecov
+    - for commitid in $(cd "${ZEPHYR_BASE}" ; git fetch --depth=100 ; git log | awk '/GitOrigin-RevId:/ {print $2}') ; do
+        echo "COMMITID = ${commitid?}" ;
+        if wget -O /tmp/coverage.html "https://codecov.io/gh/zephyrproject-rtos/zephyr/commit/${commitid?}/build" ; then
+          downloadurl=$(sed -e '/download\/build/!d' -e 's|^.*href="|https://codecov.io|' -e 's|".*$||' /tmp/coverage.html | head -1) ;
+          echo "DOWNLOADURL = ${downloadurl?}" ;
+          wget -O build/zephyr_codecov/merged.info.raw "${downloadurl?}" ;
+          sed <build/zephyr_codecov/merged.info.raw >build/zephyr_codecov/merged.info
+            -e '1,/<<<<<< network/d' -e '/<<<<<< EOF/,$d' ;
+          sed <build/zephyr_codecov/merged.info >build/zephyr_codecov/fixed.info
+            -e "s|/__w/zephyr/zephyr|${ZEPHYR_BASE}|"
+            -e "s|/__w/zephyr/modules/hal/cmsis|${MODULES_DIR}/cmsis|"
+            -e "s|/__w/zephyr/modules|${MODULES_DIR}|" ;
+          break ;
+        fi ;
+      done
+    - lcov --summary build/zephyr_codecov/fixed.info
+  artifacts:
+    paths:
+      - build/zephyr_codecov/fixed.info
+    expire_in: 1 week
