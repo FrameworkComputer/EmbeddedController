@@ -1,0 +1,17 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# common fields for both ICM426xx accel and gyro
+
+# every motionsense sensor node should include motionsense-sensor-base.yaml
+include: motionsense-sensor-base.yaml
+
+properties:
+  i2c-spi-addr-flags:
+    type: string
+    description: i2c address or SPI peripheral logic GPIO
+    enum:
+      - "ICM42607_ADDR0_FLAGS"
+      - "ICM42607_ADDR1_FLAGS"
+    default: "ICM42607_ADDR0_FLAGS"

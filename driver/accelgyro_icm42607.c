@@ -26,6 +26,27 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
+
+/* Get the motion sensor ID of the ICM42607 sensor that generates the interrupt.
+ * The interrupt is converted to the event and transferred to motion sense task
+ * that actually handles the interrupt.
+ *
+ * Here we use an alias (icm42607_int) to get the motion sensor ID. This alias
+ * MUST be defined for this driver to work.
+ * aliases {
+ *   icm42607-int = &base_accel;
+ * };
+ */
+#if DT_NODE_EXISTS(DT_ALIAS(icm42607_int))
+#define CONFIG_ACCELGYRO_ICM42607_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(icm42607_int)))
+#else
+#error Missing aliases/icm42607-int in device tree
+#endif
+
+#endif /* defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS) */
+
 STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
 
 static int icm_switch_on_mclk(const struct motion_sensor_t *s)
