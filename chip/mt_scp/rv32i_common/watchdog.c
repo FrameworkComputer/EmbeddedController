@@ -17,7 +17,7 @@ void watchdog_reload(void)
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
 
-void disable_watchdog(void)
+void watchdog_disable(void)
 {
 	/* disable watchdog */
 	SCP_CORE0_WDT_CFG &= ~WDT_EN;
@@ -25,7 +25,7 @@ void disable_watchdog(void)
 	SCP_CORE0_WDT_IRQ |= BIT(0);
 }
 
-void enable_watchdog(void)
+void watchdog_enable(void)
 {
 	const uint32_t timeout = WDT_PERIOD(CONFIG_WATCHDOG_PERIOD_MS);
 
@@ -41,7 +41,7 @@ void enable_watchdog(void)
 
 int watchdog_init(void)
 {
-	enable_watchdog();
+	watchdog_enable();
 
 	return EC_SUCCESS;
 }

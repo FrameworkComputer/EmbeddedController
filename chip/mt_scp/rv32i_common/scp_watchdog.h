@@ -9,7 +9,7 @@
 
 #include "watchdog.h"
 
-void disable_watchdog(void);
-void enable_watchdog(void);
+void watchdog_disable(void);
+void watchdog_enable(void);
 
 #endif /* __SCP_WATCHDOG_H */
