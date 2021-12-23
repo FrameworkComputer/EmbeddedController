@@ -112,9 +112,6 @@
 };
 
 /* PWM frequencies */
-&pwm_ec_psys {
-	frequency = <10000>;
-};
 
 &pwm_pwm_kb_bl {
 	frequency = <10000>;

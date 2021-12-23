@@ -354,10 +354,6 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		pwm_ec_psys: ec_psys {
-			pwms = <&pwm7 7 0>;
-			label = "EC_PSYS";
-		};
 		pwm_pwm_kb_bl: pwm_kb_bl {
 			pwms = <&pwm6 6 0>;
 			label = "PWM_KB_BL";
@@ -434,9 +430,5 @@
 };
 
 &pwm6 {
-	status = "okay";
-};
-
-&pwm7 {
 	status = "okay";
 };
