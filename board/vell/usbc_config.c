@@ -299,25 +299,25 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 
 void board_reset_pd_mcu(void)
 {
-	/*
-	 * TODO(b/203371200): figure out correct timing
-	 */
-
 	gpio_set_level(GPIO_USB_C0_C1_TCPC_RST_ODL, 0);
 	gpio_set_level(GPIO_USB_C2_C3_TCPC_RST_ODL, 0);
 
 	/*
 	 * delay for power-on to reset-off and min. assertion time
 	 */
-
-	msleep(20);
+	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 
 	gpio_set_level(GPIO_USB_C0_C1_TCPC_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C2_C3_TCPC_RST_ODL, 1);
 
-	/* wait for chips to come up */
+	nct38xx_reset_notify(USBC_PORT_C0);
+	nct38xx_reset_notify(USBC_PORT_C1);
+	nct38xx_reset_notify(USBC_PORT_C2);
+	nct38xx_reset_notify(USBC_PORT_C3);
 
-	msleep(50);
+	/* wait for chips to come up */
+	if (NCT3808_RESET_POST_DELAY_MS != 0)
+		msleep(NCT3808_RESET_POST_DELAY_MS);
 }
 
 static void board_tcpc_init(void)
