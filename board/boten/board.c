@@ -468,6 +468,8 @@ void board_init(void)
 		gpio_set_flags(GPIO_LID_360_L, GPIO_INPUT | GPIO_PULL_DOWN);
 		gpio_set_flags(GPIO_VOLUP_BTN_ODL, GPIO_INPUT | GPIO_PULL_DOWN);
 		gpio_set_flags(GPIO_VOLDN_BTN_ODL, GPIO_INPUT | GPIO_PULL_DOWN);
+		button_disable_gpio(BUTTON_VOLUME_UP);
+		button_disable_gpio(BUTTON_VOLUME_DOWN);
 	}
 
 	/* Set LEDs luminance */
