@@ -11,8 +11,11 @@
 #include "charge_manager.h"
 #include "charger.h"
 #include "console.h"
+#include "driver/charger/rt9490.h"
+#include "driver/ppc/rt1739.h"
 #include "driver/tcpm/it83xx_pd.h"
-#include "driver/usb_mux/ps8743.h"
+#include "driver/usb_mux/tusb1064.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "ppc/syv682x_public.h"
 #include "usb_mux/it5205_public.h"
@@ -28,25 +31,17 @@
 const struct charger_config_t chg_chips[] = {
 	{
 		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = 0,
-		.drv = NULL,
+		.i2c_addr_flags = RT9490_ADDR_FLAGS,
+		.drv = &rt9490_drv,
 	},
 };
 
-const struct pi3usb9201_config_t
-		pi3usb9201_bc12_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	/* [0]: unused */
-	[1] = {
-		.i2c_port = I2C_PORT_PPC1,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	}
-};
 /* PPC */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.i2c_port = I2C_PORT_PPC0,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
+		.i2c_addr_flags = RT1739_ADDR1_FLAGS,
+		.drv = &rt1739_ppc_drv,
 		.frs_en = GPIO_SIGNAL(DT_NODELABEL(usb_c0_ppc_frsinfo)),
 	},
 	{
@@ -59,57 +54,38 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{ .drv = NULL },
-	{ .drv = &pi3usb9201_drv },
+	{ .drv = &rt1739_bc12_drv },
+	{ .drv = &rt9490_bc12_drv },
 };
 
-void bc12_interrupt(enum gpio_signal signal)
+void c0_bc12_interrupt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
+	rt1739_interrupt(0);
+}
+
+void c1_bc12_interrupt(enum gpio_signal signal)
+{
+	rt9490_interrupt(1);
 }
 
 
 static void board_sub_bc12_init(void)
 {
-/*
- * This function seems quite broken, so leave it out for now.
- */
-#ifndef CONFIG_ZEPHYR
 	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
-		/*
-		 * The original code had:
-		 *
-		 * gpio_enable_interrupt(GPIO_USB_C1_BC12_CHARGER_INT_ODL);
-		 *
-		 * But this interrupt was defined out in gpio_map.h for
-		 * this EC type.
-		 */
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12_charger));
 	else
 		/* If this is not a Type-C subboard, disable the task. */
-		/*
-		 * And this function is not implemented in zephyr
-		 */
 		task_disable_task(TASK_ID_USB_CHG_P1);
-#endif
 }
 /* Must be done after I2C and subboard */
 DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_INIT_I2C + 1);
 
 static void board_usbc_init(void)
 {
-	/*
-	 * Original code was:
-	 *
-	 * gpio_enable_interrupt(GPIO_USB_C0_PPC_BC12_INT_ODL);
-	 *
-	 * But this interrupt is defined out in gpio_map.h for
-	 * CONFIG_SOC_IT8XXX2
-	 */
-#ifdef CONFIG_SOC_NPCX9M3F
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
-#endif
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc_bc12));
 }
-DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_DEFAULT-1);
+DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_DEFAULT + 1);
 
 /* TCPC */
 struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
@@ -128,19 +104,6 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = 0,
 	},
 };
-
-void board_usb_mux_init(void)
-{
-	if (corsola_get_db_type() == CORSOLA_DB_TYPEC) {
-		ps8743_tune_usb_eq(&usb_muxes[1],
-				   PS8743_USB_EQ_TX_12_8_DB,
-				   PS8743_USB_EQ_RX_12_8_DB);
-		ps8743_write(&usb_muxes[1],
-				   PS8743_REG_HS_DET_THRESHOLD,
-				   PS8743_USB_HS_THRESH_NEG_10);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
 
 void ppc_interrupt(enum gpio_signal signal)
 {
@@ -257,40 +220,11 @@ const struct usb_mux usbc0_virtual_mux = {
 	.driver = &virtual_usb_mux_driver,
 	.hpd_update = &virtual_hpd_update,
 };
-
 const struct usb_mux usbc1_virtual_mux = {
 	.usb_port = 1,
 	.driver = &virtual_usb_mux_driver,
 	.hpd_update = &virtual_hpd_update,
 };
-
-static int board_ps8743_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
-{
-	int rv = EC_SUCCESS;
-	int reg = 0;
-
-	rv = ps8743_read(me, PS8743_REG_MODE, &reg);
-	if (rv)
-		return rv;
-
-	/* Disable FLIP pin, enable I2C control. */
-	reg |= PS8743_MODE_FLIP_REG_CONTROL;
-	/* Disable CE_USB pin, enable I2C control. */
-	reg |= PS8743_MODE_USB_REG_CONTROL;
-	/* Disable CE_DP pin, enable I2C control. */
-	reg |= PS8743_MODE_DP_REG_CONTROL;
-
-	/*
-	 * DP specific config
-	 *
-	 * Enable/Disable IN_HPD on the DB.
-	 */
-	gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_dp_in_hpd),
-		       mux_state & USB_PD_MUX_DP_ENABLED);
-
-	return ps8743_write(me, PS8743_REG_MODE, reg);
-}
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -303,10 +237,10 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_USB_MUX1,
-		.i2c_addr_flags = PS8743_I2C_ADDR0_FLAG,
-		.driver = &ps8743_usb_mux_driver,
+		.i2c_addr_flags = TUSB1064_I2C_ADDR0_FLAGS,
+		.driver = &tusb1064_usb_mux_driver,
+		.hpd_update = &tusb1044_hpd_update,
 		.next_mux = &usbc1_virtual_mux,
-		.board_set = &board_ps8743_mux_set,
 	},
 };
 

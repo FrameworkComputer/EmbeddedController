@@ -96,5 +96,15 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "icm42607_interrupt";
 		};
+		int_usb_c0_ppc_bc12: usb_c0_ppc_bc12 {
+			irq-pin = <&usb_c0_ppc_bc12_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "c0_bc12_interrupt";
+		};
+		int_usb_c1_bc12_charger: usb_c1_bc12_charger {
+			irq-pin = <&usb_c1_bc12_charger_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "c1_bc12_interrupt";
+		};
 	};
 };
