@@ -423,15 +423,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-__overridable uint16_t board_get_ps8xxx_product_id(int port)
-{
-	/* Coachz board rev 2+ changes TCPC from 8805 to 8755*/
-	if (system_get_board_version() < 2)
-		return PS8805_PRODUCT_ID;
-
-	return PS8755_PRODUCT_ID;
-}
-
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */
