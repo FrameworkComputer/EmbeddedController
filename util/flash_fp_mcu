@@ -509,7 +509,7 @@ config_herobrine() {
 
 config_nami() {
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev32765.0"
+  readonly DEVICE="/dev/spidev1.0"
 
   readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
