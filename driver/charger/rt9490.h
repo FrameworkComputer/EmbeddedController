@@ -169,6 +169,28 @@ struct rt9490_init_setting {
 #define RT9490_JEITA_WARM_MASK			BIT(1)
 #define RT9490_JEITA_HOT_MASK			BIT(0)
 
+/* CHG_IRQ_FLAG1 */
+#define RT9490_BC12_DONE_FLAG			BIT(0)
+
+/* CHG_IRQ_MASK0 */
+#define RT9490_CHG_IRQ_MASK0_ALL		0xFF
+
+/* CHG_IRQ_MASK1 */
+#define RT9490_BC12_DONE_MASK			BIT(0)
+#define RT9490_CHG_IRQ_MASK1_ALL		0xD7
+
+/* CHG_IRQ_MASK2 */
+#define RT9490_CHG_IRQ_MASK2_ALL		0x7F
+
+/* CHG_IRQ_MASK3 */
+#define RT9490_CHG_IRQ_MASK3_ALL		0x1F
+
+/* CHG_IRQ_MASK4 */
+#define RT9490_CHG_IRQ_MASK4_ALL		0xFF
+
+/* CHG_IRQ_MASK5 */
+#define RT9490_CHG_IRQ_MASK5_ALL		0xF4
+
 /* SAFETY TMR CTRL */
 #define RT9490_EN_TRICHG_TMR			BIT(5)
 #define RT9490_EN_PRECHG_TMR			BIT(4)
@@ -196,6 +218,10 @@ struct rt9490_init_setting {
 #define RT9490_VBUS_STAT_SHIFT			1
 #define RT9490_BC12_DONE_STAT			BIT(0)
 
+#define RT9490_SDP				0x1
+#define RT9490_CDP				0x2
+#define RT9490_DCP				0x3
+
 /* FAULT STATUS0 */
 #define RT9490_VBAT_OVP_STAT			BIT(5)
 
@@ -211,5 +237,8 @@ struct rt9490_init_setting {
 #define RT9490_JEITA_COLD_HOT			BIT(0)
 
 extern const struct charger_drv rt9490_drv;
+extern const struct bc12_drv rt9490_bc12_drv;
+
+void rt9490_interrupt(int port);
 
 #endif /* __CROS_EC_RT9490_H */

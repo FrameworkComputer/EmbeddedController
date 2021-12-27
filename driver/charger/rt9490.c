@@ -323,6 +323,21 @@ static int rt9490_init_setting(int chgnum)
 			RT9490_VAC_OVP_26V << RT9490_VAC_OVP_SHIFT));
 
 
+	/* Mask all interrupts except BC12 done */
+	RETURN_ERROR(rt9490_set_bit(chgnum, RT9490_REG_CHG_IRQ_MASK0,
+				    RT9490_CHG_IRQ_MASK0_ALL));
+	RETURN_ERROR(rt9490_set_bit(chgnum, RT9490_REG_CHG_IRQ_MASK1,
+				    RT9490_CHG_IRQ_MASK1_ALL &
+				    ~RT9490_BC12_DONE_MASK));
+	RETURN_ERROR(rt9490_set_bit(chgnum, RT9490_REG_CHG_IRQ_MASK2,
+				    RT9490_CHG_IRQ_MASK2_ALL));
+	RETURN_ERROR(rt9490_set_bit(chgnum, RT9490_REG_CHG_IRQ_MASK3,
+				    RT9490_CHG_IRQ_MASK3_ALL));
+	RETURN_ERROR(rt9490_set_bit(chgnum, RT9490_REG_CHG_IRQ_MASK4,
+				    RT9490_CHG_IRQ_MASK4_ALL));
+	RETURN_ERROR(rt9490_set_bit(chgnum, RT9490_REG_CHG_IRQ_MASK5,
+				    RT9490_CHG_IRQ_MASK5_ALL));
+
 	return EC_SUCCESS;
 }
 
@@ -555,3 +570,157 @@ const struct charger_drv rt9490_drv = {
 	.dump_registers = &rt9490_dump_registers,
 #endif
 };
+
+/* BC1.2 */
+static int rt9490_get_bc12_ilim(enum charge_supplier supplier)
+{
+	switch (supplier) {
+	case CHARGE_SUPPLIER_BC12_DCP:
+	case CHARGE_SUPPLIER_BC12_CDP:
+		return USB_CHARGER_MAX_CURR_MA;
+	case CHARGE_SUPPLIER_BC12_SDP:
+	default:
+		return USB_CHARGER_MIN_CURR_MA;
+	}
+}
+
+static enum charge_supplier rt9490_get_bc12_device_type(int chgnum)
+{
+	int reg, vbus_stat;
+
+	if (rt9490_read8(chgnum, RT9490_REG_CHG_STATUS1, &reg))
+		return CHARGE_SUPPLIER_NONE;
+
+	vbus_stat = (reg & RT9490_VBUS_STAT_MASK) >> RT9490_VBUS_STAT_SHIFT;
+
+	switch (vbus_stat) {
+	case RT9490_SDP:
+		CPRINTS("BC12 SDP");
+		return CHARGE_SUPPLIER_BC12_SDP;
+	case RT9490_CDP:
+		CPRINTS("BC12 CDP");
+		return CHARGE_SUPPLIER_BC12_CDP;
+	case RT9490_DCP:
+		CPRINTS("BC12 DCP");
+		return CHARGE_SUPPLIER_BC12_DCP;
+	default:
+		CPRINTS("BC12 UNKNOWN 0x%02X", vbus_stat);
+		return CHARGE_SUPPLIER_NONE;
+	}
+}
+
+static void rt9490_update_charge_manager(int port,
+					 enum charge_supplier new_bc12_type)
+{
+	static enum charge_supplier current_bc12_type = CHARGE_SUPPLIER_NONE;
+
+	if (new_bc12_type != current_bc12_type) {
+		if (current_bc12_type >= 0)
+			charge_manager_update_charge(current_bc12_type, port,
+							NULL);
+
+		if (new_bc12_type != CHARGE_SUPPLIER_NONE) {
+			struct charge_port_info chg = {
+				.current = rt9490_get_bc12_ilim(new_bc12_type),
+				.voltage = USB_CHARGER_VOLTAGE_MV,
+			};
+
+			charge_manager_update_charge(new_bc12_type, port, &chg);
+		}
+
+		current_bc12_type = new_bc12_type;
+	}
+}
+
+/* TODO: chgnum is not passed into the task, assuming only one charger */
+#ifndef CONFIG_CHARGER_SINGLE_CHIP
+#error rt9490 bc1.2 driver only works in single charger mode.
+#endif
+
+static void rt9490_usb_charger_task(const int port)
+{
+	rt9490_enable_chgdet_flow(CHARGER_SOLO, false);
+
+	while (1) {
+		uint32_t evt = task_wait_event(-1);
+
+		/* vbus change, start bc12 detection */
+		if (evt & USB_CHG_EVENT_VBUS) {
+			/*
+			 * b/193753475#comment33: don't trigger bc1.2 detection
+			 * after PRSwap/FRSwap.
+			 *
+			 * Note that the only scenario we want to catch is power
+			 * role swap. For other cases, `is_non_pd_sink` may have
+			 * false positive (e.g. pd_capable() is false during
+			 * initial PD negotiation). But it's okay to always
+			 * trigger bc1.2 detection for other cases.
+			 */
+			bool is_non_pd_sink = !pd_capable(port) &&
+				pd_get_power_role(port) == PD_ROLE_SINK &&
+				pd_snk_is_vbus_provided(port);
+
+			if (is_non_pd_sink)
+				rt9490_enable_chgdet_flow(CHARGER_SOLO, true);
+			else
+				rt9490_update_charge_manager(
+						port, CHARGE_SUPPLIER_NONE);
+		}
+
+		/* detection done, update charge_manager and stop detection */
+		if (evt & USB_CHG_EVENT_BC12) {
+			enum charge_supplier supplier =
+				rt9490_get_bc12_device_type(CHARGER_SOLO);
+
+			rt9490_update_charge_manager(port, supplier);
+			rt9490_enable_chgdet_flow(CHARGER_SOLO, false);
+		}
+	}
+}
+
+static atomic_t pending_events;
+
+void rt9490_deferred_interrupt(void)
+{
+	atomic_t current = atomic_clear(&pending_events);
+
+	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port) {
+		int ret, irq_flag;
+
+		if (!(current & BIT(port)))
+			continue;
+
+		if (bc12_ports[port].drv != &rt9490_bc12_drv)
+			continue;
+
+		/* IRQ flag is read clear, no need to write back */
+		ret = rt9490_read8(CHARGER_SOLO, RT9490_REG_CHG_IRQ_FLAG1,
+				   &irq_flag);
+		if (ret)
+			return;
+
+		if (irq_flag & RT9490_BC12_DONE_FLAG)
+			task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
+					USB_CHG_EVENT_BC12);
+	}
+}
+DECLARE_DEFERRED(rt9490_deferred_interrupt);
+
+void rt9490_interrupt(int port)
+{
+	atomic_or(&pending_events, BIT(port));
+	hook_call_deferred(&rt9490_deferred_interrupt_data, 0);
+}
+
+const struct bc12_drv rt9490_bc12_drv = {
+	.usb_charger_task = rt9490_usb_charger_task,
+};
+
+#ifdef CONFIG_BC12_SINGLE_DRIVER
+/* provide a default bc12_ports[] for backward compatibility */
+struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
+	[0 ... (CHARGE_PORT_COUNT - 1)] = {
+		.drv = &rt9490_bc12_drv,
+	},
+};
+#endif /* CONFIG_BC12_SINGLE_DRIVER */
