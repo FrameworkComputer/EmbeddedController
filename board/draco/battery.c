@@ -33,67 +33,68 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/* POW-TECH GQA05 Battery Information */
-	[BATTERY_POWER_TECH] = {
-		/* BQ40Z50 Fuel Gauge */
+	/* DYNAPACK COSMAX Battery Information */
+	[BATTERY_DYNAPACK_COSMX] = {
+		/* RAJ240045 Fuel Gauge */
 		.fuel_gauge = {
-			.manuf_name = "POW-TECH",
-			.device_name = "BATGQA05L22",
+			.manuf_name = "333-2C-4C-A",
 			.ship_mode = {
 				.reg_addr = 0x00,
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x00,
-				.reg_mask = 0x2000,		/* XDSG */
-				.disconnect_val = 0x2000,
+				.mfgacc_support = 0,
+				.reg_addr = 0x43,
+				.reg_mask = 0x0003,
+				.disconnect_val = 0x0,
 			}
 		},
 		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
-			.voltage_normal		= 11400, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 280,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 45,
-			.discharging_min_c	= -10,
-			.discharging_max_c	= 60,
-		},
-	},
-	/* LGC L17L3PB0 Battery Information */
-	[BATTERY_LGC011] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
-			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
+			.voltage_max		= 17600,
+			.voltage_normal		= 15400, /* mV */
+			.voltage_min		= 12000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
 			.start_charging_max_c	= 45,
 			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 75,
+			.charging_max_c		= 50,
+			.discharging_min_c	= -10,
+			.discharging_max_c	= 60,
+		},
+	},
+	/* DYNAPACK HIGHPOWER Battery Information */
+	[BATTERY_DYNAPACK_HIGHPOWER] = {
+		/* RAJ240045 Fuel Gauge */
+		.fuel_gauge = {
+			.manuf_name = "333-2D-4C-A",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 0,
+				.reg_addr = 0x43,
+				.reg_mask = 0x0003,
+				.disconnect_val = 0x0,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 17600,
+			.voltage_normal		= 15400, /* mV */
+			.voltage_min		= 12000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 45,
+			.charging_min_c		= 0,
+			.charging_max_c		= 50,
+			.discharging_min_c	= -10,
+			.discharging_max_c	= 60,
 		},
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_POWER_TECH;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DYNAPACK_COSMX;
 
 enum battery_present battery_hw_present(void)
 {
