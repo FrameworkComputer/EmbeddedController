@@ -51,20 +51,9 @@
 	};
 
 	soc {
-		bbram: bb-ram@f02200 {
-			#address-cells = <1>;
-			#size-cells = <1>;
-			compatible = "ite,it8xxx2-cros-bbram";
-			status = "okay";
-			reg = <0x00f02200 0xbf>;
-			reg-names = "memory";
-			label = "BBRAM";
-		};
-
 		shi: shi@f03a00 {
 			compatible = "ite,it8xxx2-cros-shi";
 			reg = <0x00f03a00 0x30>;
-			label = "SHI";
 			interrupts = <171 0>;
 			interrupt-parent = <&intc>;
 			pinctrl-0 = <&shi_mosi_gpm0_default
