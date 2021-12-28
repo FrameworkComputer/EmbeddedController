@@ -7,6 +7,7 @@ register_npcx_project(
     zephyr_board="brya",
     dts_overlays=[
         "cbi_eeprom.dts",
+        "fan.dts",
         "gpio.dts",
         "motionsense.dts",
         "pwm.dts",
