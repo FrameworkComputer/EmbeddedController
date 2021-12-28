@@ -20,7 +20,6 @@ BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
  * initialized.
  */
 static const union agah_cbi_fw_config fw_config_defaults = {
-	.usb_db = DB_USB3_PS8815,
 	.kb_bl = KEYBOARD_BACKLIGHT_ENABLED,
 };
 
@@ -38,9 +37,4 @@ void board_init_fw_config(void)
 union agah_cbi_fw_config get_fw_config(void)
 {
 	return fw_config;
-}
-
-enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void)
-{
-	return fw_config.usb_db;
 }

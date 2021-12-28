@@ -31,7 +31,6 @@
 
 __override void board_cbi_init(void)
 {
-	config_usb_db_type();
 }
 
 /* Called on AP S3 -> S0 transition */

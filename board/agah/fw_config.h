@@ -11,14 +11,8 @@
 /****************************************************************************
  * CBI FW_CONFIG layout for Agah board.
  *
- * Source of truth is the project/brya/agah/config.star configuration file.
+ * Source of truth is the project/draco/agah/config.star configuration file.
  */
-
-enum ec_cfg_usb_db_type {
-	DB_USB_ABSENT = 0,
-	DB_USB3_PS8815 = 1,
-	DB_USB_ABSENT2 = 15
-};
 
 enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_DISABLED = 0,
@@ -27,9 +21,6 @@ enum ec_cfg_keyboard_backlight_type {
 
 union agah_cbi_fw_config {
 	struct {
-		enum ec_cfg_usb_db_type			usb_db : 4;
-		uint32_t				sd_db : 2;
-		uint32_t				lte_db : 1;
 		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
 		uint32_t				audio : 3;
 		uint32_t				reserved_1 : 21;
@@ -43,12 +34,5 @@ union agah_cbi_fw_config {
  * @return the FW_CONFIG for the board.
  */
 union agah_cbi_fw_config get_fw_config(void);
-
-/**
- * Get the USB daughter board type from FW_CONFIG.
- *
- * @return the USB daughter board type.
- */
-enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
 
 #endif /* __BOARD_AGAH_FW_CONFIG_H_ */

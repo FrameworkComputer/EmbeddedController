@@ -22,36 +22,19 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 	{
 		/* I2C1 */
-		.name = "tcpc0,2",
-		.port = I2C_PORT_USB_C0_C2_TCPC,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_TCPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_TCPC_SDA,
+		.name = "tcpc0",
+		.port = I2C_PORT_USB_C0_TCPC,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_USB_C0_SCL,
+		.sda = GPIO_EC_I2C_USB_C0_SDA,
 	},
 	{
 		/* I2C2 */
-		.name = "ppc0,2",
-		.port = I2C_PORT_USB_C0_C2_PPC,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SDA,
-	},
-	{
-		/* I2C3 */
-		.name = "retimer0,2",
-		.port = I2C_PORT_USB_C0_C2_MUX,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_RT_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_RT_SDA,
-	},
-	{
-		/* I2C4 C1 TCPC */
 		.name = "tcpc1",
 		.port = I2C_PORT_USB_C1_TCPC,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C1_TCPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
-		.flags = I2C_PORT_FLAG_DYNAMIC_SPEED,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_USB_C1_SCL,
+		.sda = GPIO_EC_I2C_USB_C1_SDA,
 	},
 	{
 		/* I2C5 */
@@ -63,12 +46,11 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 	{
 		/* I2C6 */
-		.name = "ppc1",
-		.port = I2C_PORT_USB_C1_PPC,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C1_MIX_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_MIX_SDA,
-		.flags = I2C_PORT_FLAG_DYNAMIC_SPEED,
+		.name = "usba1",
+		.port = I2C_PORT_USBA1_RT,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_USBA_RT_SCL,
+		.sda = GPIO_EC_I2C_USBA_RT_SDA,
 	},
 	{
 		/* I2C7 */
@@ -80,19 +62,3 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-/*
- * I2C controllers are initialized in main.c. This sets the speed much
- * later, but before I2C peripherals are initialized.
- */
-static void set_board_legacy_i2c_speeds(void)
-{
-	if (get_board_id() >= BOARD_ID_FAST_PLUS_CAPABLE)
-		return;
-
-	ccprints("setting USB DB I2C buses to 400 kHz\n");
-
-	i2c_set_freq(I2C_PORT_USB_C1_TCPC, I2C_FREQ_400KHZ);
-	i2c_set_freq(I2C_PORT_USB_C1_PPC, I2C_FREQ_400KHZ);
-}
-DECLARE_HOOK(HOOK_INIT, set_board_legacy_i2c_speeds, HOOK_PRIO_INIT_I2C - 1);
