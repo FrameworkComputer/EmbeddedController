@@ -1,0 +1,24 @@
+# Copyright 2022 Google LLC
+# SPDX-License-Identifier: Apache-2.0
+
+description: ITE, it8xxx2-cros-kb-raw node
+
+compatible: "ite,it8xxx2-cros-kb-raw"
+
+include: cros-kb-raw-controller.yaml
+
+properties:
+    reg:
+      required: true
+
+    interrupts:
+      required: true
+
+    wucctrl:
+      type: phandles
+      description: |
+        Configure wakeup controller, this controller is used to set that
+        when the interrupt is triggered in EC low power mode, it can wakeup
+        EC or not. Via this controller, we set the wakeup trigger edge,
+        enable, disable, and clear wakeup status for the specific pin which
+        may be gpio pins or alternate pins.
