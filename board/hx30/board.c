@@ -515,6 +515,13 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
 
 	reconfigure_kbbl_pwm_frquency();
+
+	/**
+	 * If we plug-in DC and chassis open, EC will assert EC_ON.
+	 * We should de-assert the VCI_OUT if we do not power on system.
+	 */
+	if (!extpower_is_present())
+		board_power_off();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT + 1);
 
@@ -1045,6 +1052,16 @@ void fingerprint_power_button_interrupt(enum gpio_signal signal)
 		hook_call_deferred(&fingerprint_power_button_change_deferred_data,
 				50);
 }
+
+void board_hook_second(void)
+{
+
+	check_chassis_open(0);
+
+	check_deferred_time(&board_power_off_deferred_data);
+
+}
+DECLARE_HOOK(HOOK_SECOND, board_hook_second, HOOK_PRIO_DEFAULT);
 
 static int cmd_bbram(int argc, char **argv)
 {
