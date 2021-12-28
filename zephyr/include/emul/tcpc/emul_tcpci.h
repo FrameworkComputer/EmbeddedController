@@ -276,7 +276,7 @@ void tcpci_emul_set_alert_callback(const struct emul *emul,
  * @param partner Pointer to callbacks
  */
 void tcpci_emul_set_partner_ops(const struct emul *emul,
-				struct tcpci_emul_partner_ops *partner);
+				const struct tcpci_emul_partner_ops *partner);
 
 /**
  * @brief Emulate connection of specific device to emulated TCPCI

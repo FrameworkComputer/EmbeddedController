@@ -65,7 +65,7 @@ static void test_attach_compliant_charger(void)
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
 	struct i2c_emul *i2c_emul;
 	uint16_t battery_status;
-	struct tcpci_src_emul_data my_charger;
+	struct tcpci_src_emul my_charger;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
 
@@ -82,7 +82,9 @@ static void test_attach_compliant_charger(void)
 	/* Attach emulated charger. */
 	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_AC_OK_PIN, 1), NULL);
 	tcpci_src_emul_init(&my_charger);
-	zassert_ok(tcpci_src_emul_connect_to_tcpci(&my_charger, tcpci_emul),
+	zassert_ok(tcpci_src_emul_connect_to_tcpci(&my_charger.data,
+						   &my_charger.common_data,
+						   &my_charger.ops, tcpci_emul),
 		   NULL);
 
 	/* Wait for current ramp. */
@@ -103,7 +105,7 @@ static void test_attach_pd_charger(void)
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
 	struct i2c_emul *i2c_emul;
 	uint16_t battery_status;
-	struct tcpci_src_emul_data my_charger;
+	struct tcpci_src_emul my_charger;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
 	struct ec_params_charge_state charge_params;
@@ -124,7 +126,9 @@ static void test_attach_pd_charger(void)
 	/* Attach emulated charger. This will send Source Capabilities. */
 	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_AC_OK_PIN, 1), NULL);
 	tcpci_src_emul_init(&my_charger);
-	zassert_ok(tcpci_src_emul_connect_to_tcpci(&my_charger, tcpci_emul),
+	zassert_ok(tcpci_src_emul_connect_to_tcpci(&my_charger.data,
+						   &my_charger.common_data,
+						   &my_charger.ops, tcpci_emul),
 		   NULL);
 
 	/* Wait for current ramp. */
@@ -182,7 +186,7 @@ static void test_attach_sink(void)
 {
 	const struct emul *tcpci_emul =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
-	struct tcpci_snk_emul_data my_sink;
+	struct tcpci_snk_emul my_sink;
 
 	/* Set chipset to ON, this will set TCPM to DRP */
 	test_set_chipset_to_s0();
@@ -192,14 +196,16 @@ static void test_attach_sink(void)
 
 	/* Attach emulated sink */
 	tcpci_snk_emul_init(&my_sink);
-	zassert_ok(tcpci_snk_emul_connect_to_tcpci(&my_sink, tcpci_emul),
+	zassert_ok(tcpci_snk_emul_connect_to_tcpci(&my_sink.data,
+						   &my_sink.common_data,
+						   &my_sink.ops, tcpci_emul),
 		   NULL);
 
 	/* Wait for PD negotiation */
 	k_sleep(K_SECONDS(10));
 
 	/* Test if partner believe that PD negotiation is completed */
-	zassert_true(my_sink.pd_completed, NULL);
+	zassert_true(my_sink.data.pd_completed, NULL);
 	/*
 	 * Test that SRC ready is achieved
 	 * TODO: Change it to examining EC_CMD_TYPEC_STATUS

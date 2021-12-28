@@ -58,7 +58,7 @@ struct tcpci_emul_data {
 	/** Callbacks for specific TCPCI device emulator */
 	struct tcpci_emul_dev_ops *dev_ops;
 	/** Callbacks for TCPCI partner */
-	struct tcpci_emul_partner_ops *partner;
+	const struct tcpci_emul_partner_ops *partner;
 
 	/** Reference to Alert# GPIO emulator. */
 	const struct device *alert_gpio_port;
@@ -351,7 +351,7 @@ void tcpci_emul_set_alert_callback(const struct emul *emul,
 
 /** Check description in emul_tcpci.h */
 void tcpci_emul_set_partner_ops(const struct emul *emul,
-				struct tcpci_emul_partner_ops *partner)
+				const struct tcpci_emul_partner_ops *partner)
 {
 	struct tcpci_emul_data *data = emul->data;
 

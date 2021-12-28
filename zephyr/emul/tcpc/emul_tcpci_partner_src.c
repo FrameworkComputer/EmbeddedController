@@ -15,18 +15,10 @@ LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include "emul/tcpc/emul_tcpci.h"
 #include "usb_pd.h"
 
-/**
- * @brief Send capability message constructed from source device emulator PDOs
- *
- * @param data Pointer to USB-C source device emulator
- * @param delay Optional delay
- *
- * @return 0 on success
- * @return -ENOMEM when there is no free memory for message
- * @return -EINVAL on TCPCI emulator add RX message error
- */
-static int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
-					      uint64_t delay)
+/** Check description in emul_tcpci_partner_src.h */
+int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
+				       struct tcpci_partner_data *common_data,
+				       uint64_t delay)
 {
 	int pdos;
 
@@ -37,9 +29,50 @@ static int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
 		}
 	}
 
-	return tcpci_partner_send_data_msg(&data->common_data,
+	return tcpci_partner_send_data_msg(common_data,
 					   PD_DATA_SOURCE_CAP,
 					   data->pdo, pdos, delay);
+}
+
+/** Check description in emul_tcpci_partner_src.h */
+enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
+	struct tcpci_src_emul_data *data,
+	struct tcpci_partner_data *common_data,
+	const struct tcpci_emul_msg *msg)
+{
+	uint16_t header;
+
+	header = sys_get_le16(msg->buf);
+
+	if (PD_HEADER_CNT(header)) {
+		/* Handle data message */
+		switch (PD_HEADER_TYPE(header)) {
+		case PD_DATA_REQUEST:
+			tcpci_partner_send_control_msg(common_data,
+						       PD_CTRL_ACCEPT, 0);
+			/* PS ready after 15 ms */
+			tcpci_partner_send_control_msg(common_data,
+						       PD_CTRL_PS_RDY, 15);
+			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+		default:
+			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+		}
+	} else {
+		/* Handle control message */
+		switch (PD_HEADER_TYPE(header)) {
+		case PD_CTRL_GET_SOURCE_CAP:
+			tcpci_src_emul_send_capability_msg(data, common_data,
+							   0);
+			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+		case PD_CTRL_SOFT_RESET:
+			/* Send capability after 15 ms to establish PD again */
+			tcpci_src_emul_send_capability_msg(data, common_data,
+							   15);
+			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+		default:
+			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+		}
+	}
 }
 
 /**
@@ -58,18 +91,19 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 				       enum tcpci_msg_type type,
 				       int retry)
 {
-	struct tcpci_src_emul_data *data =
-		CONTAINER_OF(ops, struct tcpci_src_emul_data, ops);
+	struct tcpci_src_emul *src_emul =
+		CONTAINER_OF(ops, struct tcpci_src_emul, ops);
 	enum tcpci_partner_handler_res processed;
 	uint16_t header;
 
-	processed = tcpci_partner_common_msg_handler(&data->common_data,
+	processed = tcpci_partner_common_msg_handler(&src_emul->common_data,
 						     tx_msg, type,
 						     TCPCI_EMUL_TX_SUCCESS);
 	/* Handle hard reset */
 	if (processed == TCPCI_PARTNER_COMMON_MSG_HARD_RESET) {
 		/* Send capability after 15 ms to establish PD again */
-		tcpci_src_emul_send_capability_msg(data, 15);
+		tcpci_src_emul_send_capability_msg(&src_emul->data,
+						   &src_emul->common_data, 15);
 
 		return;
 	}
@@ -80,59 +114,24 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 	}
 
 	header = sys_get_le16(tx_msg->buf);
+	if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED &&
+	    !(PD_HEADER_CNT(header) == 0 &&
+	      PD_HEADER_TYPE(header) == PD_CTRL_SOFT_RESET)) {
+		/*
+		 * Only soft reset requires additional handling after
+		 * common handler
+		 */
+		return;
+	}
 
-	if (PD_HEADER_CNT(header)) {
-		if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED) {
-			/* Message already processed by common handler */
-			return;
-		}
-
-		/* Handle data message */
-		switch (PD_HEADER_TYPE(header)) {
-		case PD_DATA_REQUEST:
-			tcpci_partner_send_control_msg(&data->common_data,
-						       PD_CTRL_ACCEPT, 0);
-			/* PS ready after 15 ms */
-			tcpci_partner_send_control_msg(&data->common_data,
-						       PD_CTRL_PS_RDY, 15);
-			break;
-		default:
-			tcpci_partner_send_control_msg(&data->common_data,
-						       PD_CTRL_REJECT, 0);
-			break;
-		}
-	} else {
-		if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED &&
-		    PD_HEADER_TYPE(header) != PD_CTRL_SOFT_RESET) {
-			/*
-			 * Only soft reset requires additional handling after
-			 * common handler
-			 */
-			return;
-		}
-
-		/* Handle control message */
-		switch (PD_HEADER_TYPE(header)) {
-		case PD_CTRL_GET_SOURCE_CAP:
-			tcpci_src_emul_send_capability_msg(data, 0);
-			break;
-		case PD_CTRL_GET_SINK_CAP:
-			tcpci_partner_send_control_msg(&data->common_data,
-						       PD_CTRL_REJECT, 0);
-			break;
-		case PD_CTRL_DR_SWAP:
-			tcpci_partner_send_control_msg(&data->common_data,
-						       PD_CTRL_REJECT, 0);
-			break;
-		case PD_CTRL_SOFT_RESET:
-			/* Send capability after 15 ms to establish PD again */
-			tcpci_src_emul_send_capability_msg(data, 15);
-			break;
-		default:
-			tcpci_partner_send_control_msg(&data->common_data,
-						       PD_CTRL_REJECT, 0);
-			break;
-		}
+	/* Call source specific handler */
+	processed = tcpci_src_emul_handle_sop_msg(&src_emul->data,
+						  &src_emul->common_data,
+						  tx_msg);
+	if (processed == TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED) {
+		/* Send reject for not handled messages (PD rev 2.0) */
+		tcpci_partner_send_control_msg(&src_emul->common_data,
+					       PD_CTRL_REJECT, 0);
 	}
 }
 
@@ -158,11 +157,13 @@ static void tcpci_src_emul_rx_consumed_op(
 
 /** Check description in emul_tcpci_partner_src.h */
 int tcpci_src_emul_connect_to_tcpci(struct tcpci_src_emul_data *data,
+				    struct tcpci_partner_data *common_data,
+				    const struct tcpci_emul_partner_ops *ops,
 				    const struct emul *tcpci_emul)
 {
 	int ec;
 
-	tcpci_emul_set_partner_ops(tcpci_emul, &data->ops);
+	tcpci_emul_set_partner_ops(tcpci_emul, ops);
 	ec = tcpci_emul_connect_partner(tcpci_emul, PD_ROLE_SOURCE,
 					TYPEC_CC_VOLT_RP_3_0,
 					TYPEC_CC_VOLT_OPEN, POLARITY_CC1);
@@ -170,9 +171,9 @@ int tcpci_src_emul_connect_to_tcpci(struct tcpci_src_emul_data *data,
 		return ec;
 	}
 
-	data->common_data.tcpci_emul = tcpci_emul;
+	common_data->tcpci_emul = tcpci_emul;
 
-	return tcpci_src_emul_send_capability_msg(data, 0);
+	return tcpci_src_emul_send_capability_msg(data, common_data, 0);
 }
 
 #define PDO_FIXED_FLAGS_MASK						\
@@ -274,22 +275,28 @@ enum check_pdos_res tcpci_src_emul_check_pdos(struct tcpci_src_emul_data *data)
 	return TCPCI_SRC_EMUL_CHECK_PDO_OK;
 }
 
-/** Check description in emul_tcpci_parnter_src.h */
-void tcpci_src_emul_init(struct tcpci_src_emul_data *data)
+/** Check description in emul_tcpci_partner_src.h */
+void tcpci_src_emul_init_data(struct tcpci_src_emul_data *data)
 {
-	tcpci_partner_init(&data->common_data);
-
-	data->common_data.data_role = PD_ROLE_UFP;
-	data->common_data.power_role = PD_ROLE_SOURCE;
-	data->common_data.rev = PD_REV20;
-
-	data->ops.transmit = tcpci_src_emul_transmit_op;
-	data->ops.rx_consumed = tcpci_src_emul_rx_consumed_op;
-	data->ops.control_change = NULL;
-
 	/* By default there is only PDO 5v@3A */
 	data->pdo[0] = PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 	for (int i = 1; i < PDO_MAX_OBJECTS; i++) {
 		data->pdo[i] = 0;
 	}
+}
+
+/** Check description in emul_tcpci_parnter_src.h */
+void tcpci_src_emul_init(struct tcpci_src_emul *emul)
+{
+	tcpci_partner_init(&emul->common_data);
+
+	emul->common_data.data_role = PD_ROLE_UFP;
+	emul->common_data.power_role = PD_ROLE_SOURCE;
+	emul->common_data.rev = PD_REV20;
+
+	emul->ops.transmit = tcpci_src_emul_transmit_op;
+	emul->ops.rx_consumed = tcpci_src_emul_rx_consumed_op;
+	emul->ops.control_change = NULL;
+
+	tcpci_src_emul_init_data(&emul->data);
 }
