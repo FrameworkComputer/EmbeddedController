@@ -41,12 +41,29 @@ struct tcpci_partner_data {
 	struct k_mutex to_send_mutex;
 	/** Next SOP message id */
 	int msg_id;
+	/** Last received message id */
+	int recv_msg_id;
 	/** Power role (used in message header) */
 	enum pd_power_role power_role;
 	/** Data role (used in message header) */
 	enum pd_data_role data_role;
 	/** Revision (used in message header) */
 	enum pd_rev_type rev;
+	/**
+	 * Mask for control message types that shouldn't be handled
+	 * in common message handler
+	 */
+	uint32_t common_handler_masked;
+	/**
+	 * True if accept and reject messages shouldn't trigger soft reset
+	 * in common message handler
+	 */
+	bool wait_for_response;
+	/**
+	 * If emulator triggers soft reset, it waits for accept. If accept
+	 * doesn't arrive, hard reset is triggered.
+	 */
+	bool in_soft_reset;
 };
 
 /** Structure of message used by TCPCI partner emulator */
@@ -61,6 +78,13 @@ struct tcpci_partner_msg {
 	int type;
 	/** Number of data objects */
 	int data_objects;
+};
+
+/** Result of common handler */
+enum tcpci_partner_handler_res {
+	TCPCI_PARTNER_COMMON_MSG_HANDLED,
+	TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED,
+	TCPCI_PARTNER_COMMON_MSG_HARD_RESET
 };
 
 /**
@@ -155,6 +179,61 @@ int tcpci_partner_send_data_msg(struct tcpci_partner_data *data,
  * @return negative on failure
  */
 int tcpci_partner_clear_msg_queue(struct tcpci_partner_data *data);
+
+/**
+ * @brief Send hard reset and set common data to state after hard reset (reset
+ *        counters, flags, clear message queue)
+ *
+ * @param data Pointer to TCPCI partner emulator
+ */
+void tcpci_partner_common_send_hard_reset(struct tcpci_partner_data *data);
+
+/**
+ * @brief Send hard reset and set common data to state after soft reset (reset
+ *        counters, set flags to wait for accept)
+ *
+ * @param data Pointer to TCPCI partner emulator
+ */
+void tcpci_partner_common_send_soft_reset(struct tcpci_partner_data *data);
+
+/**
+ * @brief Common handler for TCPCI messages. It handles hard reset, soft reset,
+ *        repeated messages. It handles vendor defined messages by skipping
+ *        them. Accept and reject messages are handled when soft reset is send.
+ *        Accept/reject messages are skipped when wait_for_response flag is set.
+ *        All control messages may be masked by
+ *        @ref tcpci_partner_common_handler_mask_msg
+ *        If @p tx_status isn't success, then all message handling is skipped.
+ *
+ * @param data Pointer to TCPCI partner emulator
+ * @param tx_msg Message received by partner emulator
+ * @param type Type of message
+ * @param tx_status Status which should be returned to TCPCI emulator
+ *
+ * @param TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled by common code
+ * @param TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
+ * @param TCPCI_PARTNER_COMMON_MSG_HARD_RESET Message was handled by sending
+ *                                            hard reset
+ */
+enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
+	struct tcpci_partner_data *data,
+	const struct tcpci_emul_msg *tx_msg,
+	enum tcpci_msg_type type,
+	enum tcpci_emul_tx_status tx_status);
+
+
+/**
+ * @brief Select if @ref tcpci_partner_common_msg_handler should handle specific
+ *        control message type.
+ *
+ * @param data Pointer to TCPCI partner emulator
+ * @param type Control message to mask/unmask
+ * @param enable If true message of that type is handled, if false common
+ *               handler doesn't handle message of that type
+ */
+void tcpci_partner_common_handler_mask_msg(struct tcpci_partner_data *data,
+					   enum pd_ctrl_msg_type type,
+					   bool enable);
 
 /**
  * @}

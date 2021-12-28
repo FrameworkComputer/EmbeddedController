@@ -282,6 +282,8 @@ static void tcpci_snk_emul_handle_source_cap(struct tcpci_snk_emul_data *data,
 		rdo = tcpci_snk_emul_create_rdo(pdo, data->pdo[0], 1);
 	}
 
+	/* Expect response for request */
+	data->common_data.wait_for_response = true;
 	tcpci_partner_send_data_msg(&data->common_data, PD_DATA_REQUEST, &rdo,
 				    1 /* = data_obj_num */, 0 /* = delay */);
 }
@@ -304,25 +306,32 @@ static void tcpci_snk_emul_transmit_op(const struct emul *emul,
 {
 	struct tcpci_snk_emul_data *data =
 		CONTAINER_OF(ops, struct tcpci_snk_emul_data, ops);
+	enum tcpci_partner_handler_res processed;
 	uint16_t header;
 
-	/* Acknowledge that message was sent successfully */
-	tcpci_emul_partner_msg_status(emul, TCPCI_EMUL_TX_SUCCESS);
+	processed = tcpci_partner_common_msg_handler(&data->common_data,
+						     tx_msg, type,
+						     TCPCI_EMUL_TX_SUCCESS);
+	switch (processed) {
+	case TCPCI_PARTNER_COMMON_MSG_HARD_RESET:
+		/* Handle hard reset */
+		data->wait_for_ps_rdy = false;
+		data->pd_completed = false;
 
-	/* Handle hard reset */
-	if (type == TCPCI_MSG_TX_HARD_RESET) {
-		tcpci_partner_clear_msg_queue(&data->common_data);
-		data->common_data.msg_id = 0;
 		return;
+	case TCPCI_PARTNER_COMMON_MSG_HANDLED:
+		/* Message handled nothing to do */
+		return;
+	case TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED:
+	default:
+		/* Continue */
+		break;
 	}
 
 	/* Handle only SOP messages */
 	if (type != TCPCI_MSG_SOP) {
 		return;
 	}
-
-	LOG_HEXDUMP_INF(tx_msg->buf, tx_msg->cnt,
-			"USB-C sink received message");
 
 	header = sys_get_le16(tx_msg->buf);
 
@@ -331,9 +340,6 @@ static void tcpci_snk_emul_transmit_op(const struct emul *emul,
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_DATA_SOURCE_CAP:
 			tcpci_snk_emul_handle_source_cap(data, tx_msg);
-			break;
-		case PD_DATA_VENDOR_DEF:
-			/* VDM (vendor defined message) - ignore */
 			break;
 		default:
 			tcpci_partner_send_control_msg(&data->common_data,
@@ -354,18 +360,24 @@ static void tcpci_snk_emul_transmit_op(const struct emul *emul,
 			tcpci_partner_send_control_msg(&data->common_data,
 						       PD_CTRL_REJECT, 0);
 			break;
-		case PD_CTRL_SOFT_RESET:
-			data->common_data.msg_id = 0;
-			tcpci_partner_send_control_msg(&data->common_data,
-						       PD_CTRL_ACCEPT, 0);
-			break;
-		case PD_CTRL_ACCEPT:
-			break;
-		case PD_CTRL_REJECT:
-			break;
 		case PD_CTRL_PING:
 			break;
 		case PD_CTRL_PS_RDY:
+			__ASSERT(data->wait_for_ps_rdy,
+				 "Unexpected PS RDY message");
+			data->wait_for_ps_rdy = false;
+			data->pd_completed = true;
+			break;
+		case PD_CTRL_REJECT:
+			/* Request rejected. Ask for capabilities again. */
+			tcpci_partner_send_control_msg(&data->common_data,
+						       PD_CTRL_GET_SOURCE_CAP,
+						       0);
+			data->common_data.wait_for_response = false;
+			break;
+		case PD_CTRL_ACCEPT:
+			data->common_data.wait_for_response = false;
+			data->wait_for_ps_rdy = true;
 			break;
 		default:
 			tcpci_partner_send_control_msg(&data->common_data,
@@ -408,6 +420,9 @@ int tcpci_snk_emul_connect_to_tcpci(struct tcpci_snk_emul_data *data,
 	if (!ret) {
 		data->common_data.tcpci_emul = tcpci_emul;
 	}
+
+	data->wait_for_ps_rdy = false;
+	data->pd_completed = false;
 
 	return ret;
 }

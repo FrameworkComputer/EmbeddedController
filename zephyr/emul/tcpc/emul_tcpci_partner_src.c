@@ -6,6 +6,7 @@
 #include <logging/log.h>
 LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
+#include <sys/byteorder.h>
 #include <zephyr.h>
 
 #include "common.h"
@@ -59,21 +60,33 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 {
 	struct tcpci_src_emul_data *data =
 		CONTAINER_OF(ops, struct tcpci_src_emul_data, ops);
+	enum tcpci_partner_handler_res processed;
 	uint16_t header;
 
-	/* Acknowledge that message was sent successfully */
-	tcpci_emul_partner_msg_status(emul, TCPCI_EMUL_TX_SUCCESS);
+	processed = tcpci_partner_common_msg_handler(&data->common_data,
+						     tx_msg, type,
+						     TCPCI_EMUL_TX_SUCCESS);
+	/* Handle hard reset */
+	if (processed == TCPCI_PARTNER_COMMON_MSG_HARD_RESET) {
+		/* Send capability after 15 ms to establish PD again */
+		tcpci_src_emul_send_capability_msg(data, 15);
+
+		return;
+	}
 
 	/* Handle only SOP messages */
 	if (type != TCPCI_MSG_SOP) {
 		return;
 	}
 
-	LOG_HEXDUMP_DBG(tx_msg->buf, tx_msg->cnt, "Source received message");
-
-	header = (tx_msg->buf[1] << 8) | tx_msg->buf[0];
+	header = sys_get_le16(tx_msg->buf);
 
 	if (PD_HEADER_CNT(header)) {
+		if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED) {
+			/* Message already processed by common handler */
+			return;
+		}
+
 		/* Handle data message */
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_DATA_REQUEST:
@@ -83,15 +96,21 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 			tcpci_partner_send_control_msg(&data->common_data,
 						       PD_CTRL_PS_RDY, 15);
 			break;
-		case PD_DATA_VENDOR_DEF:
-			/* VDM (vendor defined message) - ignore */
-			break;
 		default:
 			tcpci_partner_send_control_msg(&data->common_data,
 						       PD_CTRL_REJECT, 0);
 			break;
 		}
 	} else {
+		if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED &&
+		    PD_HEADER_TYPE(header) != PD_CTRL_SOFT_RESET) {
+			/*
+			 * Only soft reset requires additional handling after
+			 * common handler
+			 */
+			return;
+		}
+
 		/* Handle control message */
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_CTRL_GET_SOURCE_CAP:
@@ -106,9 +125,6 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 						       PD_CTRL_REJECT, 0);
 			break;
 		case PD_CTRL_SOFT_RESET:
-			data->common_data.msg_id = 0;
-			tcpci_partner_send_control_msg(&data->common_data,
-						       PD_CTRL_ACCEPT, 0);
 			/* Send capability after 15 ms to establish PD again */
 			tcpci_src_emul_send_capability_msg(data, 15);
 			break;

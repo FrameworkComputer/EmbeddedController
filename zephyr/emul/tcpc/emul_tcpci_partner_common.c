@@ -276,6 +276,159 @@ int tcpci_partner_clear_msg_queue(struct tcpci_partner_data *data)
 	return 0;
 }
 
+/**
+ * @brief Reset common data to state after hard reset (reset counters, flags,
+ *        clear message queue)
+ *
+ * @param data Pointer to TCPCI partner emulator
+ */
+static void tcpci_partner_common_reset(struct tcpci_partner_data *data)
+{
+	tcpci_partner_clear_msg_queue(data);
+	data->msg_id = 0;
+	data->recv_msg_id = -1;
+	data->wait_for_response = false;
+	data->in_soft_reset = false;
+}
+
+/** Check description in emul_common_tcpci_partner.h */
+void tcpci_partner_common_send_hard_reset(struct tcpci_partner_data *data)
+{
+	struct tcpci_partner_msg *msg;
+
+	tcpci_partner_common_reset(data);
+
+	msg = tcpci_partner_alloc_msg(0);
+	msg->msg.type = TCPCI_MSG_TX_HARD_RESET;
+
+	tcpci_partner_send_msg(data, msg, 0);
+}
+
+/** Check description in emul_common_tcpci_partner.h */
+void tcpci_partner_common_send_soft_reset(struct tcpci_partner_data *data)
+{
+	/* Reset counters */
+	data->msg_id = 0;
+	data->recv_msg_id = -1;
+	/* Send message */
+	tcpci_partner_send_control_msg(data, PD_CTRL_SOFT_RESET, 0);
+	/* Wait for accept of soft reset */
+	data->wait_for_response = true;
+	data->in_soft_reset = true;
+}
+
+/** Check description in emul_common_tcpci_partner.h */
+enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
+	struct tcpci_partner_data *data,
+	const struct tcpci_emul_msg *tx_msg,
+	enum tcpci_msg_type type,
+	enum tcpci_emul_tx_status tx_status)
+{
+	uint16_t header;
+	int msg_type;
+
+	tcpci_emul_partner_msg_status(data->tcpci_emul, tx_status);
+	/* If receiving message was unsuccessful, abandon processing message */
+	if (tx_status != TCPCI_EMUL_TX_SUCCESS) {
+		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+	}
+
+	LOG_HEXDUMP_INF(tx_msg->buf, tx_msg->cnt,
+			"USB-C partner emulator received message");
+
+	/* Handle hard reset */
+	if (type == TCPCI_MSG_TX_HARD_RESET) {
+		tcpci_partner_common_reset(data);
+
+		return TCPCI_PARTNER_COMMON_MSG_HARD_RESET;
+	}
+
+	/* Handle only SOP messages */
+	if (type != TCPCI_MSG_SOP) {
+		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+	}
+
+	header = sys_get_le16(tx_msg->buf);
+	msg_type = PD_HEADER_TYPE(header);
+
+	if (PD_HEADER_ID(header) == data->recv_msg_id &&
+	    msg_type != PD_CTRL_SOFT_RESET) {
+		/* Repeated message mark as handled */
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	}
+
+	data->recv_msg_id = PD_HEADER_ID(header);
+
+	if (PD_HEADER_CNT(header)) {
+		switch (PD_HEADER_TYPE(header)) {
+		case PD_DATA_VENDOR_DEF:
+			/* VDM (vendor defined message) - ignore */
+			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+		default:
+			/* No other common handlers for data messages */
+			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+		}
+	}
+
+	if (data->common_handler_masked & BIT(msg_type)) {
+		/* This message type is masked from common handler */
+		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+	}
+
+	/* Handle control message */
+	switch (PD_HEADER_TYPE(header)) {
+	case PD_CTRL_SOFT_RESET:
+		data->msg_id = 0;
+		tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+
+	case PD_CTRL_REJECT:
+		if (data->in_soft_reset) {
+			tcpci_partner_common_send_hard_reset(data);
+
+			return TCPCI_PARTNER_COMMON_MSG_HARD_RESET;
+		}
+		/* Fall through */
+	case PD_CTRL_ACCEPT:
+		if (data->wait_for_response) {
+			if (data->in_soft_reset) {
+				/*
+				 * Accept is response to soft reset send by
+				 * common code. It is handled here
+				 */
+				data->wait_for_response = false;
+				data->in_soft_reset = false;
+
+				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+			}
+			/*
+			 * Accept/reject is expected message and emulator code
+			 * should handle it
+			 */
+			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+		}
+
+		/* Unexpected message - trigger soft reset */
+		tcpci_partner_common_send_soft_reset(data);
+
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	}
+
+	return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+}
+
+/** Check description in emul_common_tcpci_partner.h */
+void tcpci_partner_common_handler_mask_msg(struct tcpci_partner_data *data,
+					   enum pd_ctrl_msg_type type,
+					   bool enable)
+{
+	if (enable) {
+		data->common_handler_masked |= BIT(type);
+	} else {
+		data->common_handler_masked &= ~BIT(type);
+	}
+}
+
 /** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_init(struct tcpci_partner_data *data)
 {
@@ -283,4 +436,5 @@ void tcpci_partner_init(struct tcpci_partner_data *data)
 		     NULL);
 	sys_slist_init(&data->to_send);
 	k_mutex_init(&data->to_send_mutex);
+	tcpci_partner_common_reset(data);
 }

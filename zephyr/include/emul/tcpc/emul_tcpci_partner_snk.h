@@ -35,6 +35,10 @@ struct tcpci_snk_emul_data {
 	struct tcpci_emul_partner_ops ops;
 	/** Power data objects returned in sink capabilities message */
 	uint32_t pdo[PDO_MAX_OBJECTS];
+	/** Emulator is waiting for PS RDY message */
+	bool wait_for_ps_rdy;
+	/** PS RDY was received and PD negotiation is completed */
+	bool pd_completed;
 };
 
 /**

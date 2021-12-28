@@ -198,6 +198,8 @@ static void test_attach_sink(void)
 	/* Wait for PD negotiation */
 	k_sleep(K_SECONDS(10));
 
+	/* Test if partner believe that PD negotiation is completed */
+	zassert_true(my_sink.pd_completed, NULL);
 	/*
 	 * Test that SRC ready is achieved
 	 * TODO: Change it to examining EC_CMD_TYPEC_STATUS
