@@ -125,11 +125,6 @@ __override int board_c1_ps8818_mux_set(const struct usb_mux *me,
 		if (rv)
 			return rv;
 
-		/* Enable HPD on the DB */
-		gpio_set_level(GPIO_USB_C1_HPD, 1);
-	} else {
-		/* Disable HPD on the DB */
-		gpio_set_level(GPIO_USB_C1_HPD, 0);
 	}
 
 	return rv;
