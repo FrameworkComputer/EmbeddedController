@@ -50,7 +50,17 @@ config EMUL_TCPCI_PARTNER_SNK
 	select EMUL_TCPCI_PARTNER_COMMON
 	help
 	  Enable USB-C sink device emulator which may be attached to TCPCI
-	  emulator. API of source device emulator is available in
+	  emulator. API of sink device emulator is available in
 	  zephyr/include/emul/tcpc/emul_tcpci_partner_snk.h
+
+config EMUL_TCPCI_PARTNER_DRP
+	bool "USB-C dual role device emulator"
+	select EMUL_TCPCI_PARTNER_COMMON
+	select EMUL_TCPCI_PARTNER_SNK
+	select EMUL_TCPCI_PARTNER_SRC
+	help
+	  Enable USB-C dual role device emulator which may be attached to TCPCI
+	  emulator. API of dual role device emulator is available in
+	  zephyr/include/emul/tcpc/emul_tcpci_partner_drp.h
 
 endif # EMUL_TCPCI
