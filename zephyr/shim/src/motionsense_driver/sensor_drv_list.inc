@@ -43,3 +43,6 @@
 #ifdef CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607
 #include "icm42607-drvinfo.inc"
 #endif
+#ifdef CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO
+#include "lsm6dso-drvinfo.inc"
+#endif

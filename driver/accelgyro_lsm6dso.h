@@ -8,14 +8,8 @@
 #ifndef __CROS_EC_ACCELGYRO_LSM6DSO_H
 #define __CROS_EC_ACCELGYRO_LSM6DSO_H
 
+#include "driver/accelgyro_lsm6dso_public.h"
 #include "stm_mems_common.h"
-
-/*
- * 7-bit address is 110101xb. Where 'x' is determined
- * by the voltage on the ADDR pin
- */
-#define LSM6DSO_ADDR0_FLAGS		0x6a
-#define LSM6DSO_ADDR1_FLAGS		0x6b
 
 /* Access to embedded sensor hub register bank */
 #define LSM6DSO_FUNC_CFG_ACC_ADDR	0x01
@@ -112,11 +106,6 @@ struct lsm6dso_fstatus {
 	uint16_t len;
 	uint16_t pattern;
 };
-
-/* Absolute maximum rate for Acc and Gyro sensors */
-#define LSM6DSO_ODR_MIN_VAL		13000
-#define LSM6DSO_ODR_MAX_VAL \
-	MOTION_MAX_SENSOR_FREQUENCY(416000, 13000)
 
 /* ODR reg value from selected data rate in mHz */
 #define LSM6DSO_ODR_TO_REG(_odr) (__fls(_odr / LSM6DSO_ODR_MIN_VAL) + 1)

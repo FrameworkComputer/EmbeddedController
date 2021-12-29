@@ -54,7 +54,7 @@ config PLATFORM_EC_ACCEL_LIS2DW12_AS_BASE
 	help
 	  The LIS2DW driver supports fifo and interrupt, but letting lid accel
 	  sensor work at polling mode is a common selection in current usage
-	  model. This option will select interrupt (foced mode).
+	  model. This option will select interrupt (forced mode).
 
 config PLATFORM_EC_ACCELGYRO_BMI160
 	bool "BMI160 Accelgyrometer Driver"
@@ -99,6 +99,21 @@ config PLATFORM_EC_ACCELGYRO_ICM42607
 	help
 	  The driver supports ICM42607 which provides both accelerometer and
 	  gyroscope readings.
+
+config PLATFORM_EC_ACCELGYRO_LSM6DSO
+	bool "LSM6DSO Accelgyro Driver"
+	select PLATFORM_EC_STM_MEMS_COMMON
+	help
+	  The driver supports ST's LSM6DSO 3D digital accelerometer sensor.
+	  It allows measurements of acceleration in three perpendicular axes.
+
+config PLATFORM_EC_ACCELGYRO_LSM6DSO_AS_BASE
+	bool "LSM6DSO Interrupt force mode"
+	depends on PLATFORM_EC_ACCELGYRO_LSM6DSO
+	help
+	  The LSM6DSO driver supports fifo and interrupt, but letting lid accel
+	  sensor work at polling mode is a common selection in current usage
+	  model. This option will select interrupt (forced mode).
 
 config PLATFORM_EC_STM_MEMS_COMMON
 	bool

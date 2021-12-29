@@ -144,6 +144,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_ICM426XX
                                                 "${PLATFORM_EC}/driver/accelgyro_icm426xx.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607
                                                 "${PLATFORM_EC}/driver/accelgyro_icm42607.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO
+                                                "${PLATFORM_EC}/driver/accelgyro_lsm6dso.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ACCEL_FIFO
                                                 "${PLATFORM_EC}/common/motion_sense_fifo.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ADC_CMD

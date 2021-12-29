@@ -25,6 +25,23 @@ STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
 STATIC_IF(CONFIG_ACCEL_INTERRUPTS) int config_interrupt(
 		const struct motion_sensor_t *s);
 
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
+/* Get the motion sensor ID of the LSM6DSO sensor that generates the
+ * interrupt. The interrupt is converted to the event and transferred to
+ * motion sense task that actually handles the interrupt.
+ *
+ * Here we use an alias (lsm6dso_int) to get the motion sensor ID. This alias
+ * MUST be defined for this driver to work.
+ * aliases {
+ *   lsm6dso-int = &lid_accel;
+ * };
+ */
+#if DT_NODE_EXISTS(DT_ALIAS(lsm6dso_int))
+#define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(lsm6dso_int)))
+#endif
+#endif
+
 /*
  * When ODR change, the sensor filters need settling time;
  * Add a counter to discard a well known number of data with
