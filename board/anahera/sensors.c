@@ -72,15 +72,12 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/199246802): Need to update for Alder Lake/anahera
- */
-/*
  * TODO(b/202062363): Remove when clang is fixed.
  */
 #define THERMAL_FAN \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
 		}, \
 		.temp_host_release = { \
@@ -90,8 +87,6 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 
 /*
- * TODO(b/199246802): Need to update for Alder Lake/anahera
- *
  * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to SOC, so we need to use the lower
  * SOC temperature limit (85 C)
@@ -102,7 +97,7 @@ __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 #define THERMAL_CPU \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
 		}, \
 		.temp_host_release = { \
@@ -111,9 +106,6 @@ __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
-/*
- * TODO(b/199246802): Need to update for Alder Lake/anahera
- */
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
@@ -131,19 +123,16 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 	THERMAL_CHARGER;
 
 /*
- * TODO(b/199246802): Need to update for Alder Lake/anahera
- */
-/*
  * TODO(b/202062363): Remove when clang is fixed.
  */
 #define THERMAL_REGULATOR \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(52), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(55), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(47), \
 		}, \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_regulator =
