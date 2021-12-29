@@ -230,8 +230,8 @@ int board_chipset_power_on(void)
 
 	gpio_set_level(GPIO_AC_PRESENT_OUT, 1);
 
-	if (want_boot_ap_at_g3) {
-		CPRINTS("press power button for G3 Boot!");
+	if (want_boot_ap_at_g3 || rtc_reset_tries) {
+		CPRINTS("Assert the power button signal to power on system!");
 		/* assert the power button to power on system */
 		msleep(30);
 		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
