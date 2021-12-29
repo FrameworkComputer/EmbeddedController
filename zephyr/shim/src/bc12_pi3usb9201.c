@@ -30,12 +30,10 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 };
 
 #define BC12_GPIO_ENABLE_INTERRUPT(inst)                          \
-	do {                                                      \
-		if (DT_INST_NODE_HAS_PROP(inst, irq)) {           \
-			gpio_enable_interrupt(                    \
-			GPIO_SIGNAL(DT_INST_PHANDLE(inst, irq))); \
-		}                                                 \
-	} while (0);
+	IF_ENABLED(DT_INST_NODE_HAS_PROP(inst, irq),		  \
+		   (gpio_enable_interrupt(			  \
+			GPIO_SIGNAL(DT_INST_PHANDLE(inst, irq)))) \
+		   );
 
 static void bc12_enable_irqs(void)
 {
