@@ -39,10 +39,6 @@
  */
 #define GPIO_USB_C1_INT_ODL GPIO_USB_C1_INT_V1_ODL
 
-/* LED */
-#define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 1
-
 /* PWM */
 #define CONFIG_PWM
 
@@ -98,9 +94,6 @@ enum chg_id {
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
-	PWM_CH_LED_RED,
-	PWM_CH_LED_GREEN,
-	PWM_CH_LED_BLUE,
 	PWM_CH_COUNT,
 };
 
