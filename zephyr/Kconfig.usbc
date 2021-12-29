@@ -33,6 +33,7 @@ config PLATFORM_EC_USB_PORT_POWER_DUMB_CUSTOM_HOOK
 menuconfig PLATFORM_EC_USBC
 	bool "USB Type-C"
 	default y if PLATFORM_EC_BATTERY
+	depends on PLATFORM_EC_MATH_UTIL
 	help
 	  Enable this to support various USB Type-C features chosen by the
 	  options below. USB-C is widely used on modern Chromebooks and the EC's

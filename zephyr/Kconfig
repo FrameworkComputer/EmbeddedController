@@ -890,6 +890,7 @@ config PLATFORM_EC_AMD_STT
 
 config PLATFORM_EC_MATH_UTIL
 	bool "Math utility"
+	default y
 	help
 	  Math utilities including bitmask manipulation, division rounding,
 	  trigonometric function, etc.
