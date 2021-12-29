@@ -6,6 +6,12 @@
 #include <cros/thermistor/thermistor.dtsi>
 
 / {
+	batteries {
+		default_battery: lgc {
+			compatible = "lgc,ap18c8k";
+		};
+	};
+
 	hibernate-wake-pins {
 		compatible = "cros-ec,hibernate-wake-pins";
 		wakeup-pins = <
