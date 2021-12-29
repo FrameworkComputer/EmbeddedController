@@ -209,6 +209,16 @@ config PLATFORM_EC_CHARGER_BQ25720
 	  wide range of input power sources are supported such as high
 	  voltage USB-C power delivery.
 
+config PLATFORM_EC_CHARGER_RAA489000
+	bool "Use the RAA489000 charger"
+	depends on PLATFORM_EC_I2C
+	depends on PLATFORM_EC_CHARGER_SENSE_RESISTOR > 0
+	depends on PLATFORM_EC_CHARGER_SENSE_RESISTOR_AC > 0
+	select PLATFORM_EC_CHARGER_NARROW_VDC
+	help
+	  Enables the driver for the Renesas RAA489000 battery charger
+	  with integrated USB-C TCPC.
+
 config PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
 	bool "Board supports discharge mode"
 	help
