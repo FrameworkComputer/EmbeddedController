@@ -9,61 +9,49 @@
 
 		recovery_l {
 			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "RECOVERY_L";
 		};
 		wp_l {
 			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_WP_L";
-			label = "WP_L";
 		};
 		gpio_ac_present: ac_present {
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
-			label = "AC_PRESENT";
 		};
 		gpio_power_button_l: power_button_l {
 			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
-			label = "POWER_BUTTON_L";
 		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
-			label = "LID_OPEN";
 		};
 		entering_rw {
 			gpios = <&gpio3 6 GPIO_OUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
-			label = "ENTERING_RW";
 		};
 		pch_wake_l {
 			gpios = <&gpio5 0 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_EC_PCH_WAKE_ODL";
-			label = "PCH_WAKE_L";
 		};
 		gpio_pgood_fan: pgood_fan {
 			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_PGOOD_FAN";
-			label = "PGOOD_FAN";
 		};
 		spi_cs_l {
 			gpios = <&gpioa 5 GPIO_OUT_HIGH>;
-			label = "SPI_CS_L";
 		};
 		board_version1 {
 			gpios = <&gpio6 4 GPIO_INPUT>;
 			enum-name = "GPIO_BOARD_VERSION1";
-			label = "BOARD_VERSION1";
 		};
 		board_version2 {
 			gpios = <&gpio6 5 GPIO_INPUT>;
 			enum-name = "GPIO_BOARD_VERSION2";
-			label = "BOARD_VERSION2";
 		};
 		board_version3 {
 			gpios = <&gpio6 6 GPIO_INPUT>;
 			enum-name = "GPIO_BOARD_VERSION3";
-			label = "BOARD_VERSION3";
 		};
 	};
 

@@ -10,328 +10,256 @@
 		ec_lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
-			label = "EC_LID_OPEN";
 		};
 		ec_wp_l {
 			gpios = <&gpioa 1 GPIO_INPUT>;
 			enum-name = "GPIO_WP_L";
-			label = "EC_WP_L";
 		};
 		h1_ec_pwr_btn_odl {
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
-			label = "H1_EC_PWR_BTN_ODL";
 		};
 		acok_od {
 			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
-			label = "ACOK_OD";
 		};
 		slp_s0_l {
 			gpios = <&gpiod 5 GPIO_INPUT>;
 			enum-name = "GPIO_PCH_SLP_S0_L";
-			label = "SLP_S0_L";
 		};
 		slp_s3_l {
 			gpios = <&gpioa 5 GPIO_INPUT>;
 			enum-name = "GPIO_PCH_SLP_S3_L";
-			label = "SLP_S3_L";
 		};
 		slp_sus_l {
 			gpios = <&gpiod 7 GPIO_INPUT>;
 			enum-name = "GPIO_SLP_SUS_L";
-			label = "SLP_SUS_L";
 		};
 		pg_ec_rsmrst_odl {
 			gpios = <&gpioe 2 GPIO_INPUT>;
 			enum-name = "GPIO_PG_EC_RSMRST_ODL";
-			label = "PG_EC_RSMRST_ODL";
 		};
 		dsw_pwrok {
 			gpios = <&gpioc 7 GPIO_INPUT>;
 			enum-name = "GPIO_PG_EC_DSW_PWROK";
-			label = "DSW_PWROK";
 		};
 		pg_ec_all_sys_pwrgd {
 			gpios = <&gpiof 4 GPIO_INPUT>;
 			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
-			label = "PG_EC_ALL_SYS_PWRGD";
 		};
 		gpio_ec_imu_int_l: ec_imu_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
 			enum-name = "GPIO_EC_IMU_INT_L";
-			label = "EC_IMU_INT_L";
 		};
 		tablet_mode_l {
 			gpios = <&gpio9 5 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
-			label = "TABLET_MODE_L";
 		};
 		ec_accel_int {
 			gpios = <&gpio8 1 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "EC_ACCEL_INT";
 		};
 		usb_c0_tcpc_int_odl {
 			gpios = <&gpioe 0 GPIO_INPUT>;
-			label = "USB_C0_TCPC_INT_ODL";
 		};
 		usb_c1_tcpc_int_odl {
 			gpios = <&gpioa 2 GPIO_INPUT>;
-			label = "USB_C1_TCPC_INT_ODL";
 		};
 		usb_c0_ppc_int_odl {
 			gpios = <&gpio6 2 GPIO_INPUT>;
-			label = "USB_C0_PPC_INT_ODL";
 		};
 		usb_c1_ppc_int_odl {
 			gpios = <&gpiof 5 GPIO_INPUT>;
-			label = "USB_C1_PPC_INT_ODL";
 		};
 		usb_c0_bc12_int_odl {
 			gpios = <&gpioe 4 GPIO_INPUT>;
-			label = "USB_C0_BC12_INT_ODL";
 		};
 		usb_c1_mix_int_odl {
 			gpios = <&gpio0 3 GPIO_INPUT>;
-			label = "USB_C1_MIX_INT_ODL";
 		};
 		ec_voldn_btn_odl {
 			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "EC_VOLDN_BTN_ODL";
 		};
 		ec_volup_btn_odl {
 			gpios = <&gpio9 7 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "EC_VOLUP_BTN_ODL";
 		};
 		en_pp3300_a {
 			gpios = <&gpioa 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PP3300_A";
-			label = "EN_PP3300_A";
 		};
 		en_pp5000_a {
 			gpios = <&gpioa 4 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PP5000";
-			label = "EN_PP5000_A";
 		};
 		en_ppvar_vccin {
 			gpios = <&gpio4 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PPVAR_VCCIN";
-			label = "EN_PPVAR_VCCIN";
 		};
 		ec_rst_odl {
 			gpios = <&gpio0 2 GPIO_INPUT>;
-			label = "EC_RST_ODL";
 		};
 		ec_pch_sys_pwrok {
 			gpios = <&gpio3 7 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_PCH_SYS_PWROK";
-			label = "EC_PCH_SYS_PWROK";
 		};
 		ec_pch_rsmrst_odl {
 			gpios = <&gpioa 6 GPIO_ODR_LOW>;
 			enum-name = "GPIO_PCH_RSMRST_L";
-			label = "EC_PCH_RSMRST_ODL";
 		};
 		ec_pch_pwr_btn_odl {
 			gpios = <&gpioc 1 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
-			label = "EC_PCH_PWR_BTN_ODL";
 		};
 		ec_pch_rtcrst {
 			gpios = <&gpio7 6 GPIO_OUT_LOW>;
 			enum-name = "GPIO_PCH_RTCRST";
-			label = "EC_PCH_RTCRST";
 		};
 		ec_pch_wake_odl {
 			gpios = <&gpio7 4 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_EC_PCH_WAKE_ODL";
-			label = "EC_PCH_WAKE_ODL";
 		};
 		ec_entering_rw {
 			gpios = <&gpioe 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
-			label = "EC_ENTERING_RW";
 		};
 		ec_prochot_odl {
 			gpios = <&gpio6 3 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_CPU_PROCHOT";
-			label = "EC_PROCHOT_ODL";
 		};
 		ec_prochot_in_l {
 			gpios = <&gpiof 0 GPIO_INPUT>;
 			enum-name = "GPIO_EC_PROCHOT_IN_L";
-			label = "EC_PROCHOT_IN_L";
 		};
 		sys_rst_odl {
 			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_SYS_RESET_L";
-			label = "SYS_RST_ODL";
 		};
 		ec_pch_int_odl {
 			gpios = <&gpiob 0 GPIO_ODR_HIGH>;
-			label = "EC_PCH_INT_ODL";
 		};
 		en_pp5000_usba {
 			gpios = <&gpioc 6 GPIO_OUT_LOW>;
-			label = "EN_PP5000_USBA";
 		};
 		usb_a_low_pwr_od {
 			gpios = <&gpio6 6 GPIO_ODR_LOW>;
-			label = "USB_A_LOW_PWR_OD";
 		};
 		usb_c0_rt_rst_odl {
 			gpios = <&gpiod 4 GPIO_ODR_LOW>;
-			label = "USB_C0_RT_RST_ODL";
 		};
 		usb_c1_rt_rst_odl {
 			gpios = <&gpio8 3 GPIO_ODR_LOW>;
-			label = "USB_C1_RT_RST_ODL";
 		};
 		usb_c0_oc_odl {
 			gpios = <&gpiob 1 GPIO_ODR_HIGH>;
-			label = "USB_C0_OC_ODL";
 		};
 		usb_c1_oc_odl {
 			gpios = <&gpio5 0 GPIO_ODR_HIGH>;
-			label = "USB_C1_OC_ODL";
 		};
 		uart2_ec_rx {
 			gpios = <&gpio7 5 GPIO_OUT_LOW>;
-			label = "UART2_EC_RX";
 		};
 		led_1_l {
 			gpios = <&gpioc 4 GPIO_OUT_HIGH>;
-			label = "LED_1_L";
 		};
 		led_2_l {
 			gpios = <&gpioc 3 GPIO_OUT_HIGH>;
-			label = "LED_2_L";
 		};
 		led_3_l {
 			gpios = <&gpioc 2 GPIO_OUT_HIGH>;
-			label = "LED_3_L";
 		};
 		ccd_mode_odl {
 			gpios = <&gpioe 5 GPIO_INPUT>;
-			label = "CCD_MODE_ODL";
 		};
 		ec_kb_bl_en {
 			gpios = <&gpio8 6 GPIO_OUT_LOW>;
-			label = "EC_KB_BL_EN";
 		};
 		unused_gpio34 {
 			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIO34";
 		};
 		unused_gpio41 {
 			gpios = <&gpio4 1 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIO41";
 		};
 		unused_gpio72 {
 			gpios = <&gpio7 2 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIO72";
 		};
 		unused_gpio96 {
 			gpios = <&gpio9 6 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIO96";
 		};
 		unused_gpioa7 {
 			gpios = <&gpioa 7 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIOA7";
 		};
 		unused_gpioc0 {
 			gpios = <&gpioc 0 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIOC0";
 		};
 		unused_gpiof2 {
 			gpios = <&gpiof 2 (GPIO_INPUT | GPIO_PULL_UP)>;
-			label = "UNUSED_GPIOF2";
 		};
 		ec_edp_bl_en {
 			gpios = <&gpiod 3 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
-			label = "EC_EDP_BL_EN";
 		};
 		ec_i2c0_sensor_scl {
 			gpios = <&gpiob 5 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C0_SENSOR_SCL";
-			label = "EC_I2C0_SENSOR_SCL";
 		};
 		ec_i2c0_sensor_sda {
 			gpios = <&gpiob 4 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C0_SENSOR_SDA";
-			label = "EC_I2C0_SENSOR_SDA";
 		};
 		ec_i2c1_usb_c0_scl {
 			gpios = <&gpio9 0 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C1_USB_C0_SCL";
-			label = "EC_I2C1_USB_C0_SCL";
 		};
 		ec_i2c1_usb_c0_sda {
 			gpios = <&gpio8 7 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C1_USB_C0_SDA";
-			label = "EC_I2C1_USB_C0_SDA";
 		};
 		ec_i2c2_usb_c1_scl {
 			gpios = <&gpio9 2 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C2_USB_C1_SCL";
-			label = "EC_I2C2_USB_C1_SCL";
 		};
 		ec_i2c2_usb_c1_sda {
 			gpios = <&gpio9 1 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C2_USB_C1_SDA";
-			label = "EC_I2C2_USB_C1_SDA";
 		};
 		ec_i2c3_usb_1_mix_scl {
 			gpios = <&gpiod 1 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C3_USB_1_MIX_SCL";
-			label = "EC_I2C3_USB_1_MIX_SCL";
 		};
 		ec_i2c3_usb_1_mix_sda {
 			gpios = <&gpiod 0 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C3_USB_1_MIX_SDA";
-			label = "EC_I2C3_USB_1_MIX_SDA";
 		};
 		ec_i2c5_power_scl {
 			gpios = <&gpio3 3 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C5_BATTERY_SCL";
-			label = "EC_I2C5_POWER_SCL";
 		};
 		ec_i2c5_power_sda {
 			gpios = <&gpio3 6 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C5_BATTERY_SDA";
-			label = "EC_I2C5_POWER_SDA";
 		};
 		ec_i2c7_eeprom_scl {
 			gpios = <&gpiob 3 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C7_EEPROM_PWR_SCL_R";
-			label = "EC_I2C7_EEPROM_SCL";
 		};
 		ec_i2c7_eeprom_sda {
 			gpios = <&gpiob 2 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C7_EEPROM_PWR_SDA_R";
-			label = "EC_I2C7_EEPROM_SDA";
 		};
 		ec_batt_pres_odl {
 			gpios = <&gpioe 1 GPIO_INPUT>;
-			label = "EC_BATT_PRES_ODL";
 		};
 		usb_c0_dp_hpd {
 			gpios = <&gpiof 3 GPIO_INPUT>;
-			label = "USB_C0_DP_HPD";
 		};
 		usb_c1_dp_hpd {
 			gpios = <&gpio7 0 GPIO_INPUT>;
-			label = "USB_C1_DP_HPD";
 		};
 		en_pp5000_fan {
 			gpios = <&gpio6 1 GPIO_OUT_LOW>;
-			label = "EN_PP5000_FAN";
 		};
 		ec_kso_02_inv {
 			gpios = <&gpio1 7 GPIO_OUT_LOW>;
 			enum-name = "GPIO_KBD_KSO2";
-			label = "EC_KSO_02_INV";
 		};
 	};
 

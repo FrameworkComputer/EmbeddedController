@@ -25,12 +25,10 @@
 		ec_batt_pres_odl {
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
-			label = "EC_BATT_PRES_ODL";
 		};
 		acok_od {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
-			label = "ACOK_OD";
 		};
 		/* In test WP is output because CBI use it, but it is also
 		 * input, because test_all_tags set it to enable write
@@ -40,69 +38,56 @@
 			#gpio-cells = <0>;
 			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_OUTPUT)>;
 			enum-name = "GPIO_WP_L";
-			label = "WP_L";
 		};
 		pg_ec_dsw_pwrok {
 			gpios = <&gpio0 4 GPIO_INPUT>;
 			enum-name = "GPIO_PG_EC_DSW_PWROK";
-			label = "PG_EC_DSW_PWROK";
 		};
 		ec_pch_wake_odl {
 			gpios = <&gpio0 5 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_EC_PCH_WAKE_ODL";
-			label = "EC_PCH_WAKE_ODL";
 		};
 		/* Setup USB C1 pin as output to check their state in test */
 		usb_c1_ls_en {
 			gpios = <&gpio0 6 (GPIO_INPUT | GPIO_PULL_UP |
 					   GPIO_OUTPUT)>;
 			enum-name = "GPIO_USB_C1_LS_EN";
-			label = "USB_C1_LS_EN";
 		};
 		usb_c1_rt_rst_odl {
 			gpios = <&gpio0 7 (GPIO_OUTPUT | GPIO_INPUT)>;
 			enum-name = "GPIO_USB_C1_RT_RST_ODL";
-			label = "USB_C1_RT_RST_ODL";
 		};
 		gpio_usb_c1_frs_en: usb_c1_frs_en {
 			gpios = <&gpio0 8 (GPIO_OUT_LOW)>;
 			enum-name = "GPIO_USB_C1_FRS_EN";
-			label = "USB_C1_FRS_EN";
 		};
 		usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
 			gpios = <&gpio0 9 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
-			label = "USB_C0_TCPC_INT_ODL";
 		};
 		usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
 			gpios = <&gpio0 10 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
-			label = "USB_C1_TCPC_INT_ODL";
 		};
 		usb_c0_tcpc_rst_l {
 			gpios = <&gpio0 11 (GPIO_OUT_HIGH | GPIO_INPUT)>;
 			enum-name = "GPIO_USB_C0_TCPC_RST_L";
-			label = "USB_C0_TCPC_RST_L";
 		};
 		usb_c1_tcpc_rst_l {
 			gpios = <&gpio0 12 (GPIO_OUT_HIGH | GPIO_INPUT)>;
 			enum-name = "GPIO_USB_C1_TCPC_RST_L";
-			label = "USB_C1_TCPC_RST_L";
 		};
 		gpio_usb_c1_ppc_int: usb_c1_ppc_int {
 			gpios = <&gpio0 13 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
-			label = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c0_ppc_int: usb_c0_ppc_int {
 			gpios = <&gpio0 14 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
-			label = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_switchcap_pg_int_l: switchcap_pg_int_l {
 			gpios = <&gpio0 15 GPIO_INPUT>;
 			enum-name = "GPIO_SWITCHCAP_PG_INT_L";
-			label = "SWITCHCAP_PG_INT_L";
 		};
 	};
 	named-i2c-ports {

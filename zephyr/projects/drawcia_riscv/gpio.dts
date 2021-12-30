@@ -9,30 +9,25 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		wp_l {
+		ec_wp_od {
 			gpios = <&gpioa 6 GPIO_INPUT>;
 			enum-name = "GPIO_WP_L";
-			label = "EC_WP_OD";
 		};
 		ec_entering_rw {
 			gpios = <&gpiog 0 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
-			label = "EC_ENTERING_RW";
 		};
 		h1_ec_pwr_btn_odl {
 			gpios = <&gpioe 2 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
-			label = "H1_EC_PWR_BTN_ODL";
 		};
 		lid_open {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
-			label = "lid_open";
 		};
-		ec_ac_mkbp_int_l {
+		ec_ap_mkbp_int_l {
 			gpios = <&gpiol 5 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_EC_INT_L";
-			label = "EC_AP_MKBP_INT_L";
 		};
 	};
 
