@@ -29,6 +29,7 @@ register_nissa_project(
     extra_dts_overlays=[
         here / "nivviks_generated.dts",
         here / "nivviks_overlay.dts",
+        here / "nivviks_motionsense.dts",
     ],
     extra_kconfig_files=[here / "prj_nivviks.conf"],
 )
