@@ -123,6 +123,7 @@ properties:
       - GPIO_I2C_F_SDA
       - GPIO_IMVP9_VRRDY_OD
       - GPIO_KBD_KSO2
+      - GPIO_EC_KB_BL_EN_L
       - GPIO_LID_ACCEL_INT_L
       - GPIO_LID_OPEN
       - GPIO_M2_SSD_PLN

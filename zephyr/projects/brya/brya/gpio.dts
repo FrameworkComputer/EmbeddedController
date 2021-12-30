@@ -27,6 +27,10 @@
 			gpios = <&gpioa 3 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
+		ec_kb_bl_en_l {
+			gpios = <&gpio8 6 GPIO_OUT_HIGH>;
+			enum-name = "GPIO_EC_KB_BL_EN_L";
+		};
 		ec_chg_led_y_c1 {
 			gpios = <&gpioc 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CHG_LED_Y_C1";
@@ -144,6 +148,14 @@
 		gpio_en_pp5000_fan: en_pp5000_fan {
 			gpios = <&gpio6 1 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_EN_PP5000_FAN";
+		};
+		ec_voldn_btn_odl {
+			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		ec_volup_btn_odl {
+			gpios = <&gpio9 7 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_UP_L";
 		};
 	};
 
