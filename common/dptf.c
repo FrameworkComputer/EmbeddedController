@@ -198,7 +198,7 @@ static int command_dptftemp(int argc, char **argv)
 		ccprintf("    %s\n", temp_sensors[id].name);
 	}
 
-	ccprintf("AP seen mask: 0x%08lx\n", (long)dptf_seen);
+	ccprintf("AP seen mask: 0x%08x\n", (int)dptf_seen);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(dptftemp, command_dptftemp,

@@ -579,8 +579,8 @@ void task_print_list(void)
 		     sp++)
 			stackused -= sizeof(uint32_t);
 
-		ccprintf("%4d %c %-16s %08lx %11.6lld  %3d/%3d\n", i, is_ready,
-			 task_names[i], (long)tasks[i].events, tasks[i].runtime,
+		ccprintf("%4d %c %-16s %08x %11.6lld  %3d/%3d\n", i, is_ready,
+			 task_names[i], (int)tasks[i].events, tasks[i].runtime,
 			 stackused, tasks_init[i].stack_size);
 		cflush();
 	}
@@ -623,10 +623,10 @@ DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info,
 static int command_task_ready(int argc, char **argv)
 {
 	if (argc < 2) {
-		ccprintf("tasks_ready: 0x%08lx\n", (long)tasks_ready);
+		ccprintf("tasks_ready: 0x%08x\n", (int)tasks_ready);
 	} else {
 		tasks_ready = strtoi(argv[1], NULL, 16);
-		ccprintf("Setting tasks_ready to 0x%08lx\n", (long)tasks_ready);
+		ccprintf("Setting tasks_ready to 0x%08x\n", (int)tasks_ready);
 		__schedule(0, 0);
 	}
 
