@@ -19,7 +19,8 @@
 			label = "GSC_EC_PWR_BTN_ODL";
 		};
 
-		wp_l {
+		gpio_ec_wp_l: wp_l {
+			#gpio-cells = <0>;
 			gpios = <&gpioa 1 GPIO_INPUT>;
 			enum-name = "GPIO_WP_L";
 			label = "EC_WP_ODL";
