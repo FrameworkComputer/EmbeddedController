@@ -149,20 +149,3 @@ struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_4_WWAN] = THERMAL_WWAN,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
-static void board_thermals_init(void)
-{
-	if (get_board_id() == 1) {
-		/*
-		 * Board ID 1 only has 3 sensors and the AMBIENT sensor
-		 * ADC pins have been reassigned, so we're down to 2
-		 * sensors that can easily be configured. So, alias the
-		 * AMBIENT sensor ADC channel to the unimplemented ADC
-		 * slots.
-		 */
-		adc_channels[ADC_TEMP_SENSOR_3_CHARGER].input_ch = NPCX_ADC_CH1;
-		adc_channels[ADC_TEMP_SENSOR_4_WWAN].input_ch = NPCX_ADC_CH1;
-	}
-}
-
-DECLARE_HOOK(HOOK_INIT, board_thermals_init, HOOK_PRIO_INIT_CHIPSET);
