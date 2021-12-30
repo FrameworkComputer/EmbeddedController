@@ -584,7 +584,8 @@ static void lpc_port80_interrupt(void)
 	uint32_t code = 0;
 
 	/* buffer Port80 data to the local buffer if FIFO is not empty */
-	while (IS_BIT_SET(NPCX_DP80STS, NPCX_DP80STS_FNE))
+	while (IS_BIT_SET(NPCX_DP80STS, NPCX_DP80STS_FNE) &&
+		   (count < ARRAY_SIZE(port80_buf)))
 		port80_buf[count++] = NPCX_DP80BUF;
 
 	for (i = 0; i < count; i++) {
