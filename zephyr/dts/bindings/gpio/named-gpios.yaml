@@ -9,13 +9,6 @@ child-binding:
        gpios:
           type: phandle-array
           required: true
-       # TODO(b/208436570) drop label once it's not used in any dts file.
-       label:
-          required: false
-          type: string
-          description: |
-            Human readable string describing the device (used as
-            device_get_binding() argument)
        "#gpio-cells":
           type: int
           required: false
