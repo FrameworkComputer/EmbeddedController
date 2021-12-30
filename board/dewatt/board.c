@@ -415,63 +415,6 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
-	[TEMP_SENSOR_SOC] = {
-		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(105),
-		},
-		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-		},
-		/* TODO: Setting fan off to 0 so it's allways on */
-		.temp_fan_off = C_TO_K(0),
-		.temp_fan_max = C_TO_K(70),
-	},
-	[TEMP_SENSOR_CHARGER] = {
-		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(105),
-		},
-		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-		},
-		.temp_fan_off = 0,
-		.temp_fan_max = 0,
-	},
-	[TEMP_SENSOR_MEMORY] = {
-		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(105),
-		},
-		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-		},
-		.temp_fan_off = 0,
-		.temp_fan_max = 0,
-	},
-	[TEMP_SENSOR_CPU] = {
-		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(105),
-		},
-		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
-		},
-		/*
-		 * CPU temp sensor fan thresholds are high because they are a
-		 * backup for the SOC temp sensor fan thresholds.
-		 */
-		.temp_fan_off = C_TO_K(60),
-		.temp_fan_max = C_TO_K(90),
-	},
-	/*
-	 * Note: Leave ambient entries at 0, both as it does not represent a
-	 * hotspot and as not all boards have this sensor
-	 */
-};
-BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
 static int board_get_memory_temp(int idx, int *temp_k)
 {
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
