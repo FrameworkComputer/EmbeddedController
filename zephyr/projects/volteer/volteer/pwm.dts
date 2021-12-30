@@ -7,31 +7,31 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		led1_blue: led1_blue {
+		led1_blue: led_1_l {
 			#pwm-cells = <0>;
 			pwms = <&pwm2 0 PWM_POLARITY_INVERTED>;
 			frequency = <4800>;
 		};
-		led2_green: led2_green  {
+		led2_green: led_2_l  {
 			#pwm-cells = <0>;
 			pwms = <&pwm0 0 PWM_POLARITY_INVERTED>;
 			frequency = <4800>;
 		};
-		led3_red: led3_red {
+		led3_red: led_3_l {
 			#pwm-cells = <0>;
 			pwms = <&pwm1 0 PWM_POLARITY_INVERTED>;
 			frequency = <4800>;
 		};
-		led3_sidesel: led3_sidesel {
+		led3_sidesel: led_sidesel_4_l {
 			#pwm-cells = <0>;
 			pwms = <&pwm7 0 PWM_POLARITY_INVERTED>;
 			frequency = <2400>;
 		};
-		kblight: kblight {
+		kblight: ec_kb_bl_pwm {
 			pwms = <&pwm3 0 0>;
 			frequency = <2400>;
 		};
-		pwm_fan: fan {
+		pwm_fan: fan_pwm {
 			pwms = <&pwm5 0 0>;
 			frequency = <25000>;
 		};

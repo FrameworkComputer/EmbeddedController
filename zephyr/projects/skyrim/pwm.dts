@@ -7,24 +7,20 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		pwm_fan: fan {
+		pwm_fan: ec_fan_pwm {
 			pwms = <&pwm0 0 0>;
-			label = "FAN";
 			frequency = <25000>;
 		};
-		kblight: kblight {
+		kblight: pwm_kb_bl {
 			pwms = <&pwm1 0 0>;
-			label = "KBLIGHT";
 			frequency = <100>;
 		};
-		led_charge: led_charge {
+		led_charge: ec_pwm_led_chrg_l {
 			pwms = <&pwm2 0 0>;
-			label = "LED_CHARGE";
 			frequency = <100>;
 		};
-		led_full: led_full {
+		led_full: ec_pwm_led_full_l {
 			pwms = <&pwm3 0 0>;
-			label = "LED_FULL";
 			frequency = <100>;
 		};
 	};

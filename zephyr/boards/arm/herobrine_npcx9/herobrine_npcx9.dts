@@ -50,14 +50,12 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		kblight: kblight {
+		kblight: kb_bl_pwm {
 			pwms = <&pwm3 0 0>;
-			label = "KBLIGHT";
 			frequency = <10000>;
 		};
-		displight: displight {
+		displight: ecl_bl_pwm_r {
 			pwms = <&pwm5 0 0>;
-			label = "DISPLIGHT";
 			frequency = <4800>;
 		};
 	};

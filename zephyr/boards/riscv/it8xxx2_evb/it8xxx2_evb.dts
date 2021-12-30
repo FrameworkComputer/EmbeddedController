@@ -174,7 +174,6 @@
 		/* NOTE: &pwm number needs same with channel number */
 		pwm_test: test {
 			pwms = <&pwm0 PWM_CHANNEL_0 PWM_POLARITY_NORMAL>;
-			label = "TEST";
 			/*
 			 * If we need pwm output in ITE chip power saving
 			 * mode, then we should set frequency <=324Hz.
@@ -183,7 +182,6 @@
 		};
 		pwm_fan: fan {
 			pwms = <&pwm7 PWM_CHANNEL_7 PWM_POLARITY_NORMAL>;
-			label = "FAN";
 			frequency = <30000>;
 		};
 	};
