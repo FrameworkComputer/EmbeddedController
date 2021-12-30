@@ -20,6 +20,20 @@
 		>;
 	};
 
+	named-gpios {
+		/*
+		 * TODO(b:212490923): decide what to do with these sorts of
+		 * signals that have varying function depending on the present
+		 * sub-board.
+		 */
+		gpio_sub_usb_c1_int_odl: sub_usb_c1_int_odl {
+			#gpio-cells = <0>;
+			gpios = <&gpio0 2 GPIO_INPUT>;
+			label = "SUB_USB_C1_INT_ODL";
+			enum-name = "GPIO_USB_C1_PD_INT_ODL";
+		};
+	};
+
 	named-temp-sensors {
 		memory {
 			compatible = "cros-ec,temp-sensor-thermistor";
@@ -56,6 +70,30 @@
 		compatible = "named-pwms";
 
 		kblight: pwm_kb_bl {
+		};
+	};
+
+	usbc {
+		port0 {
+			bc12 {
+				compatible = "pericom,pi3usb9201";
+				port = <&i2c_ec_i2c_usb_c0>;
+				/*
+				 * BC1.2 interrupt is shared with TCPC, so
+				 * IRQ is not specified here and handled by
+				 * usb_c0_interrupt.
+				 */
+			};
+		};
+		/*
+		 * TODO(b:211693800): port1 may not be present on some
+		 * sub-boards.
+		 */
+		port1 {
+			bc12 {
+				compatible = "pericom,pi3usb9201";
+				port = <&i2c_ec_i2c_sub_usb_c1>;
+			};
 		};
 	};
 };

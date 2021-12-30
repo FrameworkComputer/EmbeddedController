@@ -10,6 +10,8 @@ zephyr_include_directories(include)
 
 if(DEFINED CONFIG_BOARD_NIVVIKS)
 	project(nivviks)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_NEREID)
 	project(nereid)
