@@ -101,7 +101,7 @@ int power_signal_is_asserted(const struct power_signal_info *s);
 /**
  * Get the level of provided input signal.
  */
-__overridable int power_signal_get_level(enum gpio_signal signal);
+__override_proto int power_signal_get_level(enum gpio_signal signal);
 
 /**
  * Enable interrupt for provided input signal.
