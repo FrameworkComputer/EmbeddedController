@@ -91,13 +91,11 @@ func TestGenerate(t *testing.T) {
 		gpio_ec_in_1: ec_in_1 {
 			#gpio-cells = <0>;
 			gpios = <&gpio C3 GPIO_INPUT>;
-			label = "EC_IN_1";
 			enum-name = "ENUM_IN_1";
 		};
 		gpio_ec_out_2: ec_out_2 {
 			#gpio-cells = <0>;
 			gpios = <&gpio D4 GPIO_OUTPUT>;
-			label = "EC_OUT_2";
 			enum-name = "ENUM_OUT_2";
 		};
 	};
@@ -116,12 +114,10 @@ func TestGenerate(t *testing.T) {
 
 		pwm_ec_led_1: ec_led_1 {
 			pwms = <&pwm1 0>;
-			label = "EC_LED_1";
 			enum-name = "ENUM_LED_1";
 		};
 		pwm_ec_led_2: ec_led_2 {
 			pwms = <&pwm1 1>;
-			label = "EC_LED_2";
 			enum-name = "ENUM_LED_2";
 		};
 	};
