@@ -15,17 +15,55 @@
 #include <device.h>
 #include <devicetree.h>
 
+/*
+ * Macros are _INST_ types, so require DT_DRV_COMPAT to be defined.
+ */
+#define DT_DRV_COMPAT named_cbi_ssfc_value
+#define CROS_CBI_LABEL				"cros_cbi"
+
 #define CBI_SSFC_VALUE_COMPAT			named_cbi_ssfc_value
 #define CBI_SSFC_VALUE_ID(id)			DT_CAT(CBI_SSFC_VALUE_, id)
 #define CBI_SSFC_VALUE_ID_WITH_COMMA(id)	CBI_SSFC_VALUE_ID(id),
 #define CBI_SSFC_VALUE_INST_ENUM(inst, _) \
 	CBI_SSFC_VALUE_ID_WITH_COMMA(DT_INST(inst, CBI_SSFC_VALUE_COMPAT))
-#define CROS_CBI_LABEL				"cros_cbi"
 
 enum cbi_ssfc_value_id {
 	UTIL_LISTIFY(DT_NUM_INST_STATUS_OKAY(CBI_SSFC_VALUE_COMPAT),
 		     CBI_SSFC_VALUE_INST_ENUM)
 	CBI_SSFC_VALUE_COUNT
+};
+
+#undef DT_DRV_COMPAT
+
+/*
+ * Macros to help generate the enum list of field names.
+ */
+#define CBI_FW_CONFIG_FIELD_COMPAT			named_cbi_fw_config
+/*
+ * Prepend enum name with CBI_FW_CONFIG_FIELD_
+ */
+#define CBI_FW_CONFIG_FIELD_ENUM_NAME(id)	DT_CAT(CBI_FW_CONFIG_FIELD_, id)
+/*
+ * Invoked for each child of all instances of nodes with
+ * compatible = "named-cbi-fw-config"
+ * Creates an enum field id from the enum-name property.
+ */
+#define CBI_FW_CONFIG_FIELD_ID(node)	\
+	CBI_FW_CONFIG_FIELD_ENUM_NAME(DT_STRING_TOKEN(node, enum_name))
+
+#define CBI_FW_CONFIG_FIELD_ID_WITH_COMMA(node)	\
+	CBI_FW_CONFIG_FIELD_ID(node),
+
+/*
+ * Invoked for each node that has compatible = "named-cbi-fw-config"
+ */
+#define CBI_FW_CONFIG_FIELD_ALL(inst) \
+	DT_FOREACH_CHILD_STATUS_OKAY(inst, CBI_FW_CONFIG_FIELD_ID_WITH_COMMA)
+
+enum cbi_fw_config_field_id {
+	DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_FIELD_COMPAT,
+			       CBI_FW_CONFIG_FIELD_ALL)
+	CBI_FW_CONFIG_FIELD_COUNT
 };
 
 /**
@@ -38,10 +76,14 @@ enum cbi_ssfc_value_id {
 typedef int (*cros_cbi_api_init)(const struct device *dev);
 typedef bool (*cros_cbi_api_ssfc_check_match)(const struct device *dev,
 					      enum cbi_ssfc_value_id value_id);
+typedef int (*cros_cbi_api_get_fw_config)(const struct device *dev,
+					  enum cbi_fw_config_field_id field_id,
+					  uint32_t *value);
 
 __subsystem struct cros_cbi_driver_api {
 	cros_cbi_api_init init;
 	cros_cbi_api_ssfc_check_match ssfc_check_match;
+	cros_cbi_api_get_fw_config get_fw_config;
 };
 
 /**
@@ -88,11 +130,39 @@ z_impl_cros_cbi_ssfc_check_match(const struct device *dev,
 	const struct cros_cbi_driver_api *api =
 		(const struct cros_cbi_driver_api *)dev->api;
 
-	if (!api->ssfc_check_match) {
+	if (!api->ssfc_check_match)
 		return -ENOTSUP;
-	}
 
 	return api->ssfc_check_match(dev, value_id);
+}
+
+/**
+ * @brief Retrieve the value of the FW_CONFIG field
+ *
+ * @param dev Pointer to the device.
+ * @param field_id Enum identifying the field to return.
+ * @param value Pointer to the returned value.
+ *
+ * @return 0 if value found and returned.
+ * @retval -ENOTSUP Not supported api function.
+ * @retval -EINVAL Invalid field_id.
+ */
+__syscall int cros_cbi_get_fw_config(const struct device *dev,
+				     enum cbi_fw_config_field_id field_id,
+				     uint32_t *value);
+
+static inline int
+z_impl_cros_cbi_get_fw_config(const struct device *dev,
+			      enum cbi_fw_config_field_id field_id,
+			      uint32_t *value)
+{
+	const struct cros_cbi_driver_api *api =
+		(const struct cros_cbi_driver_api *)dev->api;
+
+	if (!api->get_fw_config)
+		return -ENOTSUP;
+
+	return api->get_fw_config(dev, field_id, value);
 }
 
 /**

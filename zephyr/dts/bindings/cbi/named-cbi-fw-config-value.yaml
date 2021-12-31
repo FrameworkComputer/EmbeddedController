@@ -1,0 +1,21 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description:
+    Possible CBI FW_CONFIG individual field values.
+    It has to be defined as a grandchild on the "named-cbi-fw-config" nodes
+
+compatible: "named-cbi-fw-config-value"
+
+properties:
+    enum-name:
+        type: string
+        required: true
+        description:
+            Name of the value used for description purposes
+    value:
+        type: int
+        required: true
+        description:
+          Unique value within the parent CBI FW_CONFIG field

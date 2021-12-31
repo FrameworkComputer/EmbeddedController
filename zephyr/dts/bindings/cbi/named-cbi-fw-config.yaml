@@ -1,0 +1,52 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: CBI Firmware Config fields (FW_CONFIG)
+
+compatible: "named-cbi-fw-config"
+
+child-binding:
+    description:
+        CBI Firmware Config fields definition.
+        Each field is defined via a start bit (from LSB) and a size.
+        The total size of all FW_CONFIG bit fields must not exceed 32 bits.
+    properties:
+        enum-name:
+            type: string
+            required: true
+            description:
+              Name of field used for description purposes
+        start:
+            type: int
+            required: true
+            description: The starting bit of the field (LSB = 0)
+        size:
+            type: int
+            required: true
+            description: The size of the field in bits.
+
+# Example:
+#
+# cbi-fw-config {
+#     compatible = "named-cbi-fw-config";
+#
+#     fan {
+#         enum-name = "FAN";
+#         start = <0>
+#         size = <1>;
+#         fan_absent {
+#             enum-name = "ABSENT"
+#             compatible = "named-cbi-fw-config-value";
+#             value = <0>;
+#         fan_present {
+#             enum-name = "PRESENT"
+#             compatible = "named-cbi-fw-config-value";
+#             value = <1>;
+#         };
+#     };
+# };
+#
+# This will generate an enum field id for CBI_FW_CONFIG_FIELD_FAN,
+# and separate values for CBI_FW_CONFIG_FIELD_FAN_ABSENT = 0 and
+# CBI_FW_CONFIG_FIELD_FAN_PRESENT = 1
