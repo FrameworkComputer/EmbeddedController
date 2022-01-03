@@ -83,7 +83,7 @@ GPIO(EC_I2C_QI_INT_ODL,              PIN(9, 6), GPIO_INPUT)
 
 /* HDMI CEC */
 /* TODO(b/197474873): Enable HDMI CEC */
-GPIO(HDMI_CEC_IN,                    PIN(7, 3), GPIO_INPUT)
+GPIO(HDMI_CEC_IN,                    PIN(4, 0), GPIO_INPUT)
 GPIO(HDMI_CEC_OUT,                   PIN(D, 3), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
 GPIO(HDMI_CEC_PULL_UP,               PIN(C, 2), GPIO_OUT_HIGH)
 
@@ -158,7 +158,7 @@ ALTERNATE(PIN_MASK(E, 0x18), 0, MODULE_I2C, 0)               /* GPIOE4/I2C6_SCL1
 ALTERNATE(PIN_MASK(F, 0x0c), 0, MODULE_I2C, 0)               /* GPIOF3/I2C4_SCL1, GPIOF2/I2C4_SDA1 */
 
 /* PWM alternate functions */
-ALTERNATE(PIN_MASK(4, 0x01), 0, MODULE_PWM, 0)               /* GPIO40/TA1 */
+ALTERNATE(PIN_MASK(7, 0x08), 0, MODULE_PWM, 0)               /* GPIO73/TA2 */
 ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)               /* GPIOB7/PWM5 */
 ALTERNATE(PIN_MASK(C, 0x18), 0, MODULE_PWM, 0)               /* GPIOC4/PWM2, GPIOC3/PWM0 */
 
