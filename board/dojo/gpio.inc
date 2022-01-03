@@ -33,11 +33,7 @@ GPIO_INT(BASE_IMU_INT_L,     PIN(M, 3), GPIO_INT_FALLING | GPIO_SEL_1P8V,
          icm42607_interrupt)
 /* USB-C interrupts */
 GPIO_INT(USB_C0_PPC_INT_ODL, PIN(D, 1), GPIO_INT_BOTH, ppc_interrupt)
-#ifdef BOARD_CHERRY
-GPIO_INT(USB_C0_BC12_INT_ODL,PIN(J, 4), GPIO_INT_FALLING, bc12_interrupt)
-#else /* TOMATO */
 GPIO_INT(USB_C0_BC12_INT_ODL,PIN(I, 5), GPIO_INT_FALLING, bc12_interrupt)
-#endif
 GPIO_INT(USB_C1_INT_ODL,     PIN(B, 2), GPIO_INT_FALLING, rt1718s_tcpc_interrupt)
 /* TODO: not used in other devices? */
 GPIO(LID_ACCEL_INT_L,        PIN(M, 2), GPIO_INT_FALLING | GPIO_SEL_1P8V)
@@ -57,10 +53,8 @@ GPIO_INT(WP,                 PIN(I, 4), GPIO_INT_BOTH | GPIO_SEL_1P8V,
          switch_interrupt) /* EC_FLASH_WP_OD */
 GPIO_INT(SPI0_CS,            PIN(M, 5), GPIO_INT_FALLING,
          spi_event)        /* SPI slave Chip Select -- AP_SPI_EC_CS_L */
-#ifndef BOARD_CHERRY
 GPIO_INT(AP_XHCI_INIT_DONE,  PIN(J, 5), GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V,
          xhci_init_done_interrupt)
-#endif
 
 /* Power Sequencing Signals */
 GPIO(EC_PMIC_EN_ODL,         PIN(D, 0), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
@@ -131,15 +125,7 @@ GPIO(PG_PP5000_S5_OD,        PIN(D, 2), GPIO_INPUT)
 GPIO(PG_MT6315_GPU_ODL,      PIN(H, 6), GPIO_INPUT)
 /* reserved for future use */
 GPIO(CCD_MODE_ODL,           PIN(C, 4), GPIO_INPUT)
-/*
- * ADC pins don't have internal pull-down capability,
- * so we set them as output low.
- */
-#ifdef BOARD_CHERRY
-GPIO(NC_GPI5,                PIN(I, 5), GPIO_OUT_LOW)
-#else
-GPIO(NC_GPJ4,                PIN(J, 4), GPIO_INPUT | GPIO_PULL_DOWN)
-#endif
+
 /* NC pins, enable internal pull-up/down to avoid floating state. */
 GPIO(NC_GPA1,                PIN(A, 1), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(PWM7,                   PIN(A, 7), GPIO_INPUT | GPIO_PULL_DOWN)
@@ -148,6 +134,7 @@ GPIO(SPI_CLK_GPG6,           PIN(G, 6), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(PG_NVME_OD,             PIN(H, 3), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(EN_PP2500_NVME_X,       PIN(J, 2), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(EN_PP1200_NVME_X,       PIN(J, 3), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(NC_GPJ4,                PIN(J, 4), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(NC_GPM6,                PIN(M, 6), GPIO_INPUT | GPIO_PULL_DOWN)
 /*
  * These pins don't have internal pull-down capability,
