@@ -1,0 +1,26 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	power_signal_list: power-signal-list {
+		compatible = "mt8186,power-signal-list";
+		ap_in_rst {
+			power-enum-name = "AP_IN_RST";
+			power-gpio-pin = <&ap_sysrst_odl_r>;
+		};
+		ap_in_s3 {
+			power-enum-name = "AP_IN_S3";
+			power-gpio-pin = <&ap_in_sleep_l>;
+		};
+		ap_wdt_asserted {
+			power-enum-name = "AP_WDT_ASSERTED";
+			power-gpio-pin = <&ap_ec_wdtrst_l>;
+		};
+		ap_warm_rst_req {
+			power-enum-name = "AP_WARM_RST_REQ";
+			power-gpio-pin = <&ap_ec_warm_rst_req>;
+		};
+	};
+};

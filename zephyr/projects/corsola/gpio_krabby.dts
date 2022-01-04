@@ -7,19 +7,6 @@
 #include <dt-bindings/wake_mask_event_defines.h>
 
 / {
-	gpiox: gpio@0 {
-		status = "okay";
-		compatible = "zephyr,gpio-emul";
-		label = "GPIO_UNIMPLEMENTED";
-		reg = <0x800 0x4>;
-		rising-edge;
-		falling-edge;
-		high-level;
-		low-level;
-		gpio-controller;
-		#gpio-cells = <2>;
-	};
-
 	named-gpios {
 		compatible = "named-gpios";
 
@@ -36,11 +23,13 @@
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		ap_ec_warm_rst_req: ap_ec_warm_rst_req {
-			gpios = <&gpiod 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpiod 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_HIGH)>;
 			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
 		};
 		ap_in_sleep_l: ap_in_sleep_l {
-			gpios = <&gpiob 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpiob 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_IN_SLEEP_L";
 		};
 		base_imu_int_l: base_imu_int_l {
@@ -107,12 +96,14 @@
 			gpios = <&gpiob 5 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_BL_EN_OD";
 		};
-		ap_ec_sysrst_odl: ap_ec_sysrst_odl {
-			gpios = <&gpioj 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		ap_sysrst_odl_r: ap_ec_sysrst_odl {
+			gpios = <&gpioj 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_EC_SYSRST_ODL";
 		};
 		ap_ec_wdtrst_l: ap_ec_wdtrst_l {
-			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_EC_WDTRST_L";
 		};
 		ec_int_l: ec_int_l {
@@ -215,20 +206,6 @@
 			gpios = <&gpioj 3 GPIO_INPUT>;
 			enum-name = "GPIO_HDMI_PRSNT_ODL";
 		};
-
-		/* pins used in power/mt8192, to be removed */
-		ap_ec_watchdog_l: ap_ec_watchdog_l {
-			gpios = <&gpiox 0 GPIO_INPUT>;
-			enum-name = "GPIO_AP_EC_WATCHDOG_L";
-		};
-		ec_pmic_watchdog_l: ec_pmic_watchdog_l {
-			gpios = <&gpiox 0 GPIO_INPUT>;
-			enum-name = "GPIO_EC_PMIC_WATCHDOG_L";
-		};
-		pmic_ec_pwrgd: pmic_ec_pwrgd {
-			gpios = <&gpiox 0 GPIO_INPUT>;
-			enum-name = "GPIO_PMIC_EC_PWRGD";
-		};
 	};
 
 	ec-mkbp-host-event-wakeup-mask {
@@ -253,22 +230,6 @@
 		wakeup-pins = <&ac_present
 			       &power_button_l
 			       &lid_open>;
-	};
-
-	power_signal_list: power-signal-list {
-		compatible = "mt8192,power-signal-list";
-		pmic_pwr_good {
-			power-enum-name = "PMIC_PWR_GOOD";
-			power-gpio-pin = <&pmic_ec_pwrgd>;
-		};
-		ap_in_s3_l {
-			power-enum-name = "AP_IN_S3_L";
-			power-gpio-pin = <&ap_in_sleep_l>;
-		};
-		ap_wdt_asserted {
-			power-enum-name = "AP_WDT_ASSERTED";
-			power-gpio-pin = <&ap_ec_watchdog_l>;
-		};
 	};
 
 	unused-pins {

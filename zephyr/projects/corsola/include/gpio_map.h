@@ -54,17 +54,27 @@
 	#define GMR_TABLET_INT()
 #endif
 
-/* TODO(b:203619750): enable power sequencing interrupt */
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ_MT8186
 	#define WARM_RST_REQ_INT()  GPIO_INT(GPIO_AP_EC_WARM_RST_REQ,          \
 					     GPIO_INT_EDGE_RISING,             \
 					     chipset_reset_request_interrupt)
+
 	#define AP_IN_SLEEP_INT()   GPIO_INT(GPIO_AP_IN_SLEEP_L,               \
+					     GPIO_INT_EDGE_BOTH,               \
+					     power_signal_interrupt)
+
+	#define AP_IN_RST_INT()     GPIO_INT(GPIO_AP_EC_SYSRST_ODL,            \
+					     GPIO_INT_EDGE_BOTH,               \
+					     power_signal_interrupt)
+
+	#define AP_EC_WDTRST_INT()  GPIO_INT(GPIO_AP_EC_WDTRST_L,              \
 					     GPIO_INT_EDGE_BOTH,               \
 					     power_signal_interrupt)
 #else
 	#define WARM_RST_REQ_INT()
 	#define AP_IN_SLEEP_INT()
+	#define AP_IN_RST_INT()
+	#define AP_EC_WDTRST_INT()
 #endif
 
 #ifdef CONFIG_PLATFORM_EC_ACCEL_LIS2DW12
@@ -145,6 +155,9 @@ static inline void motion_interrupt(enum gpio_signal signal)
 	VOLBTN_INT(GPIO_VOLUME_UP_L)					\
 	LID_SWITCH_INT()						\
 	WARM_RST_REQ_INT()						\
+	AP_IN_SLEEP_INT()						\
+	AP_IN_RST_INT()							\
+	AP_EC_WDTRST_INT()						\
 	GMR_TABLET_INT()						\
 	GPIO_INT(GPIO_BASE_IMU_INT_L,					\
 		 GPIO_INT_EDGE_FALLING, motion_interrupt)		\

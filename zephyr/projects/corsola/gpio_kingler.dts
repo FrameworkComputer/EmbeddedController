@@ -24,16 +24,19 @@
 		spi_ap_di_ec_do {
 			gpios = <&gpio4 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
-		ap_ec_warm_rst_req {
-			gpios = <&gpio5 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		ap_ec_warm_rst_req: ap_ec_warm_rst_req {
+			gpios = <&gpio5 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+				 GPIO_ACTIVE_HIGH)>;
 			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
 		};
-		ap_ec_wdtrst_l {
-			gpios = <&gpio5 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		ap_ec_wdtrst_l: ap_ec_wdtrst_l {
+			gpios = <&gpio5 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+				 GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_EC_WDTRST_L";
 		};
-		ap_in_sleep_l {
-			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		ap_in_sleep_l: ap_in_sleep_l {
+			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+				 GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_IN_SLEEP_L";
 		};
 		en_ulp {
@@ -142,8 +145,9 @@
 			gpios = <&gpiod 4 GPIO_INPUT>;
 			enum-name = "GPIO_X_EC_GPIO2";
 		};
-		ap_sysrst_odl_r {
-			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		ap_sysrst_odl_r: ap_sysrst_odl_r {
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+				 GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_EC_SYSRST_ODL";
 		};
 		ap_xhci_init_done {
@@ -211,7 +215,7 @@
 			enum-name = "GPIO_EC_AP_DP_HPD_ODL";
 		};
 		ec_pmic_en_odl {
-			gpios = <&gpio7 4 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio7 4 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_PMIC_EN_ODL";
 		};
 		ec_volup_btn_odl {
