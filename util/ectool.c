@@ -3023,12 +3023,13 @@ int read_mapped_temperature(int id)
 	return rv;
 }
 
-static int get_thermal_fan_percent(int temp)
+static int get_thermal_fan_percent(int temp, int sensor_id)
 {
 	struct ec_params_thermal_get_threshold_v1 p;
 	struct ec_thermal_config r;
 	int rv = 0;
 
+	p.sensor_num = sensor_id;
 	rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 1, &p, sizeof(p),
 			&r, sizeof(r));
 
@@ -3055,7 +3056,7 @@ static int cmd_temperature_print(int id, int mtemp)
 	if (rc < 0)
 		return rc;
 	printf("%-20s  %d K (= %d C) %11d%%\n", r.sensor_name, temp,
-	       K_TO_C(temp), get_thermal_fan_percent(temp));
+	       K_TO_C(temp), get_thermal_fan_percent(temp, id));
 
 	return 0;
 }
