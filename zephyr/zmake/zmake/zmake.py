@@ -658,7 +658,7 @@ class Zmake:
         dirs = {}
         gcov = "gcov.sh-not-found"
         for build_name, build_config in build_project.iter_builds():
-            self.logger.info("ls build/.", build_dir, build_name)
+            self.logger.info("Building %s:%s all.libraries.", build_dir, build_name)
             dirs[build_name] = build_dir / "build-{}".format(build_name)
             gcov = dirs[build_name] / "gcov.sh"
             proc = self.jobserver.popen(
