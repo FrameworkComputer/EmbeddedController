@@ -163,6 +163,26 @@ it8xxx2_evb:
     PROJECT: "it8xxx2_evb"
   <<: *build_template
 
+kingler:
+  variables:
+    PROJECT: "kingler"
+  <<: *build_template
+
+kingler_coverage:
+  variables:
+    PROJECT: "kingler"
+  <<: *coverage_template
+
+krabby:
+  variables:
+    PROJECT: "krabby"
+  <<: *build_template
+
+krabby_coverage:
+  variables:
+    PROJECT: "krabby"
+  <<: *coverage_template
+
 lazor:
   variables:
     PROJECT: "lazor"
@@ -173,6 +193,16 @@ native_posix:
     PROJECT: "posix-ec"
     TOOLCHAIN: "host"
   <<: *build_template
+
+skyrim:
+  variables:
+    PROJECT: "skyrim"
+  <<: *build_template
+
+skyrim_coverage:
+  variables:
+    PROJECT: "skyrim"
+  <<: *coverage_template
 
 volteer:
   variables:
