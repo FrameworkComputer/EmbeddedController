@@ -33,11 +33,25 @@ enum ec_ssfc_lid_sensor {
 	SSFC_SENSOR_LIS2DWL = 3
 };
 
+/*
+ * Usb Mux (Bits 20-21)
+ */
+enum ec_ssfc_usb_mux {
+	SSFC_USBMUX_PS8762 = 0,
+	SSFC_USBMUX_PS8743 = 1,
+};
+
 union dedede_cbi_ssfc {
 	struct {
 		uint32_t base_sensor : 3;
 		uint32_t lid_sensor : 3;
-		uint32_t reserved_2 : 26;
+		uint32_t cam_wfc: 3;
+		uint32_t cam_ufc: 2;
+		uint32_t cam_vcm: 2;
+		uint32_t TS_Source: 4;
+		uint32_t AUDIO_CODEC_SOURCE: 3;
+		uint32_t usb_mux: 2;
+		uint32_t reserved_2 : 10;
 	};
 	uint32_t raw_value;
 };
@@ -56,5 +70,11 @@ enum ec_ssfc_base_sensor get_cbi_ssfc_base_sensor(void);
  */
 enum ec_ssfc_lid_sensor get_cbi_ssfc_lid_sensor(void);
 
+/**
+ * Get the Usb Mux type from SSFC_CONFIG.
+ *
+ * @return the Usb Mux board type.
+ */
+enum ec_ssfc_usb_mux get_cbi_ssfc_usb_mux(void);
 
 #endif /* _DEDEDE_CBI_SSFC__H_ */
