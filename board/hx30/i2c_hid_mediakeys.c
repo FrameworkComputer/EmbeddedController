@@ -23,6 +23,7 @@
 
 #define REPORT_ID_RADIO				0x01
 #define REPORT_ID_CONSUMER		    0x02
+#define REPORT_ID_SENSOR			0x03
 
 /*
  * See hid usage tables for consumer page
@@ -49,9 +50,16 @@ struct consumer_button_report {
 	uint16_t button_id;
 } __packed;
 
+struct als_input_report {
+	uint8_t sensor_state;
+	uint8_t event_type;
+	uint16_t illuminanceValue;
+} __packed;
+
+
 static struct radio_report radio_button;
 static struct consumer_button_report consumer_button;
-
+static struct als_input_report als_snesor;
 
 int update_hid_key(enum media_key key, bool pressed)
 {
@@ -93,34 +101,171 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 
 static const uint8_t report_desc[] = {
 	/* Airplane Radio Collection */
-	0x05, 0x01,	/* USAGE_PAGE (Generic Desktop) */
-	0x09, 0x0C,	/* USAGE (Wireless Radio Controls) */
-	0xA1, 0x01,	/*   COLLECTION (Application) */
-	0x85, REPORT_ID_RADIO,		/* Report ID (Radio) */
-	0x15, 0x00,	/*     LOGICAL_MINIMUM (0) */
-	0x25, 0x01,	/*     LOGICAL_MAXIMUM (1) */
-	0x09, 0xC6,	/*     USAGE (Wireless Radio Button) */
-	0x95, 0x01,	/*     REPORT_COUNT (1) */
-	0x75, 0x01,	/*     REPORT_SIZE (1) */
-	0x81, 0x06,	/*     INPUT (Data,Var,Rel) */
-	0x75, 0x07,	/*     REPORT_SIZE (7) */
-	0x81, 0x03,	/*     INPUT (Cnst,Var,Abs) */
-	0xC0,	    /*   END_COLLECTION */
+	0x05, 0x01,		/* USAGE_PAGE (Generic Desktop) */
+	0x09, 0x0C,		/* USAGE (Wireless Radio Controls) */
+	0xA1, 0x01,		/* COLLECTION (Application) */
+	0x85, REPORT_ID_RADIO,	/* Report ID (Radio) */
+	0x15, 0x00,		/* LOGICAL_MINIMUM (0) */
+	0x25, 0x01,		/* LOGICAL_MAXIMUM (1) */
+	0x09, 0xC6,		/* USAGE (Wireless Radio Button) */
+	0x95, 0x01,		/* REPORT_COUNT (1) */
+	0x75, 0x01,		/* REPORT_SIZE (1) */
+	0x81, 0x06,		/* INPUT (Data,Var,Rel) */
+	0x75, 0x07,		/* REPORT_SIZE (7) */
+	0x81, 0x03,		/* INPUT (Cnst,Var,Abs) */
+	0xC0,			/* END_COLLECTION */
 
 	/* Consumer controls collection */
-	0x05, 0x0C,	/* USAGE_PAGE (Consumer Devices) */
-	0x09, 0x01,	/* USAGE (Consumer Control) */
-	0xA1, 0x01,	/*   COLLECTION (Application) */
-	0x85, REPORT_ID_CONSUMER,		/* Report ID (Consumer) */
-	0x15, 0x00,	/*     LOGICAL_MINIMUM (0x0) */
-	0x26, 0xFF, 0x03,	/*     LOGICAL_MAXIMUM (0x3FF) */
-	0x19, 0x00,	/*     Usage Minimum (0) */
-	0x2A, 0xFF, 0x03,	/*     Usage Maximum (0) */
-	0x75, 0x10,	/*     Report Size (16) */
-	0x95, 0x01,	/*     Report Count (1) */
-	0x81, 0x00,	/*     Input (Data,Arr,Abs) */
-	0xC0,	    /*   END_COLLECTION */
+	0x05, 0x0C,		/* USAGE_PAGE (Consumer Devices) */
+	0x09, 0x01,		/* USAGE (Consumer Control) */
+	0xA1, 0x01,		/* COLLECTION (Application) */
+	0x85, REPORT_ID_CONSUMER,	/* Report ID (Consumer) */
+	0x15, 0x00,		/* LOGICAL_MINIMUM (0x0) */
+	0x26, 0xFF, 0x03,	/* LOGICAL_MAXIMUM (0x3FF) */
+	0x19, 0x00,		/* Usage Minimum (0) */
+	0x2A, 0xFF, 0x03,	/* Usage Maximum (0) */
+	0x75, 0x10,		/* Report Size (16) */
+	0x95, 0x01,		/* Report Count (1) */
+	0x81, 0x00,		/* Input (Data,Arr,Abs) */
+	0xC0,			/* END_COLLECTION */
 
+	/* Sensor controls collection */
+	0x05, 0x20,		/* USAGE_PAGE (sensor) */
+	0x09, 0x41,		/* USAGE ID (Light: Ambient Light) */
+	0xA1, 0x00,		/* COLLECTION (Physical) */
+	0x85, REPORT_ID_SENSOR,	/* Report ID (Sensor) */
+
+	0x05, 0x20,		/* USAGE PAGE (Sensor) */
+	0x0A, 0x09, 0x03,	/* USAGE ID (Property: Sensor Connection Type) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x25, 0x02,		/* LOGICAL_MAXIMUM (0x02) */
+	0x75, 0x08,		/* Report Size (8) */
+	0x95, 0x01,		/* Report Count (1) */
+	0xA1, 0x02,		/* COLLECTION (logical) */
+	0x0A, 0x30, 0x08,	/* Connection Type: PC Integrated */
+	0x0A, 0x31, 0x08,	/* Connection Type: PC Attached */
+	0x0A, 0x32, 0x08,	/* Connection Type: PC External */
+	0xB1, 0x00,		/* Feature (Data,Arr,Abs) */
+	0xC0,			/* END_COLLECTION */
+
+	0x0A, 0x16, 0x03,	/* USAGE ID (Property: Reporting State) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x25, 0x05,		/* LOGICAL_MAXIMUM (0x05) */
+	0x75, 0x08,		/* Report Size (8) */
+	0x95, 0x01,		/* Report Count (1) */
+	0xA1, 0x02,		/* COLLECTION (logical) */
+	0x0A, 0x40, 0x08,	/* Reporting State: Report No Events */
+	0x0A, 0x41, 0x08,	/* Reporting State: Report All Events */
+	0x0A, 0x42, 0x08,	/* Reporting State: Report Threshold Events */
+	0x0A, 0x43, 0x08,	/* Reporting State: Wake On No Events */
+	0x0A, 0x44, 0x08,	/* Reporting State: Wake On All Events */
+	0x0A, 0x45, 0x08,	/* Reporting State: Wake On Threshold Events */
+	0xB1, 0x00,		/* Feature (Data,Arr,Abs) */
+	0xC0,			/* END_COLLECTION */
+
+	0x0A, 0x19, 0x03,	/* USAGE ID (Property: Power State Undefined Select) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x25, 0x05,		/* LOGICAL_MAXIMUM (0x05) */
+	0x75, 0x08,		/* Report Size (8) */
+	0x95, 0x01,		/* Report Count (1) */
+	0xA1, 0x02,		/* COLLECTION (logical) */
+	0x0A, 0x50, 0x08,	/* Power State: Undefined */
+	0x0A, 0x51, 0x08,	/* Power State: D0 Full Power */
+	0x0A, 0x52, 0x08,	/* Power State: D1 Low Power */
+	0x0A, 0x53, 0x08,	/* Power State: D2 Standby Power with Wakeup */
+	0x0A, 0x54, 0x08,	/* Power State: D3 sleep with Wakeup */
+	0x0A, 0x55, 0x08,	/* Power State: D4 Power Off */
+	0xB1, 0x00,		/* Feature (Data,Arr,Abs) */
+	0xC0,			/* END_COLLECTION */
+
+	0x0A, 0x01, 0x02,	/* USAGE ID (Event: Sensor State) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x25, 0x06,		/* LOGICAL_MAXIMUM (0x06) */
+	0x75, 0x08,		/* Report Size (8) */
+	0x95, 0x01,		/* Report Count (1) */
+	0xA1, 0x02,		/* COLLECTION (logical) */
+	0x0A, 0x00, 0x08,	/* Sensor State: Undefined */
+	0x0A, 0x01, 0x08,	/* Sensor State: Ready */
+	0x0A, 0x02, 0x08,	/* Sensor State: Not Available */
+	0x0A, 0x03, 0x08,	/* Sensor State: No Data */
+	0x0A, 0x04, 0x08,	/* Sensor State: Initializing */
+	0x0A, 0x05, 0x08,	/* Sensor State: Access Denied */
+	0x0A, 0x06, 0x08,	/* Sensor State: Error */
+	0xB1, 0x00,		/* Feature (Data,Arr,Abs) */
+	0xC0,			/* END_COLLECTION */
+
+	0x0A, 0x0E, 0x03,	/* USAGE ID (Property: Report Interval) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x27, 0xFF, 0xFF, 0xFF, 0XFF,	/* LOGICAL_MAXIMUM (0xFFFFFFFF) */
+	0x75, 0x20,		/* Report Size (32) */
+	0x95, 0x01,		/* Report Count (1) */
+	0x55, 0x00,		/* UNIT EXPONENT (0x00) */
+	0xB1, 0x02,		/* Feature (Data,Var,Abs) */
+
+	0x0A, 0xD1, 0xE4,	/* USAGE ID (Modified Change Sensitivity Percent of Range) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x26, 0x10, 0x27,	/* LOGICAL_MAXIMUM (0x2710) */
+	0x75, 0x10,		/* Report Size (16) */
+	0x95, 0x01,		/* Report Count (1) */
+	0x55, 0x0E,		/* UNIT EXPONENT (0x0E) */
+	0xB1, 0x02,		/* Feature (Data,Var,Abs) */
+
+	0x0A, 0xD1, 0x24,	/* USAGE ID (Modified Maximum) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x26, 0xFF, 0xFF,	/* LOGICAL_MAXIMUM (0xFFFF) */
+	0x75, 0x10,		/* Report Size (16) */
+	0x95, 0x01,		/* Report Count (1) */
+	0x55, 0x00,		/* UNIT EXPONENT (0x00) */
+	0xB1, 0x02,		/* Feature (Data,Var,Abs) */
+
+	0x0A, 0xD1, 0x34,	/* USAGE ID (Modified Minimum) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x26, 0xFF, 0xFF,	/* LOGICAL_MAXIMUM (0xFFFF) */
+	0x75, 0x10,		/* Report Size (16) */
+	0x95, 0x01,		/* Report Count (1) */
+	0x55, 0x00,		/* UNIT EXPONENT (0x00) */
+	0xB1, 0x02,		/* Feature (Data,Var,Abs) */
+
+	0x05, 0x20,		/* USAGE PAGE (Sensor) */
+	0x0A, 0x01, 0x02,	/* USAGE ID (Event: Sensor State) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x25, 0x06,		/* LOGICAL_MAXIMUM (0x06) */
+	0x75, 0x08,		/* Report Size (8) */
+	0x95, 0x01,		/* Report Count (1) */
+	0xA1, 0x02,		/* COLLECTION (logical) */
+	0x0A, 0x00, 0x08,	/* Sensor State: Undefined */
+	0x0A, 0x01, 0x08,	/* Sensor State: Ready */
+	0x0A, 0x02, 0x08,	/* Sensor State: Not Available */
+	0x0A, 0x03, 0x08,	/* Sensor State: No Data */
+	0x0A, 0x04, 0x08,	/* Sensor State: Initializing */
+	0x0A, 0x05, 0x08,	/* Sensor State: Access Denied */
+	0x0A, 0x06, 0x08,	/* Sensor State: Error */
+	0x81, 0x00,		/* Input (Data,Arr,Abs) */
+	0xC0,			/* END_COLLECTION */
+
+	0x0A, 0x02, 0x02,	/* USAGE (Sensor event) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x25, 0x05,		/* LOGICAL_MAXIMUM (0x05) */
+	0x75, 0x08,		/* Report Size (8) */
+	0x95, 0x01,		/* Report Count (1) */
+	0xA1, 0x02,		/* COLLECTION (logical) */
+	0x0A, 0x10, 0x08,	/* Sensor Event: Unknown */
+	0x0A, 0x11, 0x08,	/* Sensor Event: State Changed */
+	0x0A, 0x12, 0x08,	/* Sensor Event: Property Changed */
+	0x0A, 0x13, 0x08,	/* Sensor Event: Data Updated */
+	0x0A, 0x14, 0x08,	/* Sensor Event: Poll Response */
+	0x0A, 0x15, 0x08,	/* Sensor Event: Change Sensitivity */
+	0x81, 0x00,		/* Input (Data,Arr,Abs) */
+	0xC0,			/* END_COLLECTION */
+
+	0x0A, 0xD1, 0x04,	/* USAGE (Data Field: Illuminance) */
+	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
+	0x26, 0xFF, 0xFF,	/* LOGICAL_MAXIMUM (0XFFFF) */
+	0x55, 0x00,		/* UNIT EXPONENT (0x00) */
+	0x75, 0x10,		/* Report Size (16) */
+	0x95, 0x01,		/* Report Count (1) */
+	0x81, 0x02,		/* Input (Data,Arr,Abs) */
+	0xC0,			/* END_COLLECTION */
 };
 
 
@@ -133,7 +278,7 @@ static struct i2c_hid_descriptor hid_desc = {
 	.wReportDescRegister = I2C_HID_REPORT_DESC_REGISTER,
 	.wInputRegister = I2C_HID_INPUT_REPORT_REGISTER,
 	.wMaxInputLength = I2C_HID_HEADER_SIZE +
-			   sizeof(struct consumer_button_report), /*Note if there are multiple reports this has to be max*/
+			   sizeof(struct als_input_report), /*Note if there are multiple reports this has to be max*/
 	.wOutputRegister = 0,
 	.wMaxOutputLength = 0,
 	.wCommandRegister = I2C_HID_COMMAND_REGISTER,
@@ -171,6 +316,13 @@ void i2c_hid_mediakeys_init(void)
 	pending_reset = false;
 }
 
+void i2c_hid_als_init(void)
+{
+	als_snesor.event_type = 0x04; /* HID_DATA_UPDATED */
+	als_snesor.sensor_state = 0x02; /* HID READY */
+	als_snesor.illuminanceValue = 0x00;
+}
+
 static void i2c_hid_send_response(void)
 {
 		task_set_event(TASK_ID_HID, 0x8000, 0);
@@ -197,6 +349,7 @@ static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer)
 	switch (command) {
 	case I2C_HID_CMD_RESET:
 		i2c_hid_mediakeys_init();
+		i2c_hid_als_init();
 
 		/* Wait for the 2-bytes I2C read following the protocol reset. */
 		pending_probe = false;
@@ -286,9 +439,8 @@ int i2c_hid_process(unsigned int len, uint8_t *buffer)
 		/* Reset protocol: 2 empty bytes. */
 		if (pending_reset) {
 			pending_reset = false;
-			buffer[0] = 0;
-			buffer[1] = 0;
-			response_len = 2;
+			memset(buffer, 0, hid_desc.wMaxInputLength);
+			response_len = hid_desc.wMaxInputLength;
 			break;
 		}
 		/* Common input report requests. */

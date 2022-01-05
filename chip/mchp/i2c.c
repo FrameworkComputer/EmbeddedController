@@ -110,6 +110,8 @@
  */
 #define I2C_WAIT_BLOCKING_TIMEOUT_US 25
 
+#define I2C_MAX_HOST_PACKET_SIZE_EXTEND 350
+
 enum i2c_transaction_state {
 	/* Stop condition was sent in previous transaction */
 	I2C_TRANSACTION_STOPPED,
@@ -154,7 +156,7 @@ static struct {
 	int count;
 	int length;
 	uint8_t addr;
-	uint8_t buffer[I2C_MAX_HOST_PACKET_SIZE];
+	uint8_t buffer[I2C_MAX_HOST_PACKET_SIZE_EXTEND];
 } slavedata[I2C_SLAVE_CONTROLLER_COUNT];
 
 static const uint16_t i2c_controller_pcr[MCHP_I2C_CTRL_MAX] = {
@@ -1051,8 +1053,8 @@ static void handle_interrupt(int controller)
 		} else {
 			slavedata[slave_idx].buffer[slavedata[slave_idx].count++] = MCHP_I2C_DATA(controller);
 		}
-		if (slavedata[slave_idx].count >= I2C_MAX_HOST_PACKET_SIZE) {
-			slavedata[slave_idx].count = I2C_MAX_HOST_PACKET_SIZE - 1;
+		if (slavedata[slave_idx].count >= I2C_MAX_HOST_PACKET_SIZE_EXTEND) {
+			slavedata[slave_idx].count = I2C_MAX_HOST_PACKET_SIZE_EXTEND - 1;
 		}
 		MCHP_INT_SOURCE(MCHP_I2C_GIRQ) = MCHP_I2C_GIRQ_BIT(controller);
 		return;
