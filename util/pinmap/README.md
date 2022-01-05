@@ -73,12 +73,11 @@ generate the GPIO or other configuration flags in the DTS.
 | `I2C_CLOCK` | The clock signal for an I2C bus |
 | `I2C_DATA` | The data signal for an I2C bus (ignored) |
 | `INPUT` | A GPIO input signal |
+| `INPUT_PU` | A GPIO input signal with internal pull-up |
+| `INPUT_PD` | A GPIO input signal with internal pull-down |
 | `OUTPUT` | A GPIO output signal |
 | `OUTPUT_ODR` | A GPIO output open drain signal |
 | `OUTPUT_ODL` | A GPIO output open drain signal (default low) |
-| `INTERRUPT_FALLING` | A GPIO input signal used as an interrupt (triggered when falling) |
-| `INTERRUPT_RISING` | A GPIO input signal used as an interrupt (triggered when rising) |
-| `INTERRUPT_BOTH` | A GPIO input signal used as an interrupt (triggered both directions) |
 | `OTHER` | This signal is ignored, and no DTS configuration is generated for this pin |
 
 For the I2C signals, only the `I2C_CLOCK` signal is used to determine which I2C

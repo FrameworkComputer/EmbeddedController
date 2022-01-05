@@ -36,6 +36,7 @@ func TestName(t *testing.T) {
 			&pm.Pin{pm.Input, "D4", "EC_GPIO_1", "GPIO1"},
 			&pm.Pin{pm.Output, "E5", "EC_GPIO_2", "GPIO2"},
 			&pm.Pin{pm.OutputODL, "F6", "EC_GPIO_3", ""},
+			&pm.Pin{pm.InputPU, "K10", "EC_GPIO_4", ""},
 		},
 		Pwm: []*pm.Pin{
 			&pm.Pin{pm.PWM, "C3", "EC_PWM_1", "FAN_1"},

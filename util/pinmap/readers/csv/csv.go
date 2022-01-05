@@ -89,11 +89,14 @@ func (r *CSVReader) Read(chipName, arg string) (*pm.Pins, error) {
 		case "I2C_CLOCK":
 			p.PinType = pm.I2C
 			pins.I2c = append(pins.I2c, p)
-		case "INPUT",
-			"INTERRUPT_FALLING",
-			"INTERRUPT_RISING",
-			"INTERRUPT_BOTH":
+		case "INPUT":
 			p.PinType = pm.Input
+			pins.Gpio = append(pins.Gpio, p)
+		case "INPUT_PU":
+			p.PinType = pm.InputPU
+			pins.Gpio = append(pins.Gpio, p)
+		case "INPUT_PD":
+			p.PinType = pm.InputPD
 			pins.Gpio = append(pins.Gpio, p)
 		case "OUTPUT":
 			p.PinType = pm.Output
