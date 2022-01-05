@@ -70,6 +70,8 @@
 /* USB */
 #define CONFIG_BC12_DETECT_PI3USB9201
 #define CONFIG_USBC_RETIMER_PS8802
+#define CONFIG_USB_MUX_PS8743
+#define CONFIG_USB_MUX_RUNTIME_CONFIG
 
 /* Common USB-A defines */
 #define USB_PORT_COUNT 2
@@ -205,6 +207,12 @@ enum battery_type {
 	BATTERY_MURATA_AP18C4K,
 	BATTERY_COSMX_AP20CBL,
 	BATTERY_TYPE_COUNT,
+};
+
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
+	USBC_PORT_COUNT
 };
 
 void motion_interrupt(enum gpio_signal signal);
