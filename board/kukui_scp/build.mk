@@ -6,7 +6,12 @@
 # Board specific files build
 #
 CHIP:=mt_scp
+
+ifeq ($(BOARD), corsola_scp)
+CHIP_VARIANT:=mt8186
+else
 CHIP_VARIANT:=mt8183
+endif
 
 board-y=board.o
 board-$(HAS_TASK_VDEC_SERVICE)+=vdec.o

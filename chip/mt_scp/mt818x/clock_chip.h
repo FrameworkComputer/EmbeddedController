@@ -18,8 +18,9 @@
 #ifndef ULPOSC2_CLOCK_MHZ
 #define ULPOSC2_CLOCK_MHZ 330
 #endif
-
+#ifdef CHIP_VARIANT_MT8183
 void scp_enable_clock(void);
+#endif
 
 enum scp_clock_source {
 	SCP_CLK_26M = CLK_SEL_SYS_26M,

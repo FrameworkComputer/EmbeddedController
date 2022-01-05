@@ -67,6 +67,10 @@
 #define SCP_AP_RESOURCE			REG32(SCP_CFG_BASE + 0x04)
 #define SCP_BUS_RESOURCE		REG32(SCP_CFG_BASE + 0x08)
 
+#ifdef CHIP_VARIANT_MT8186
+#define SCP_TCM_LOCK_CFG        	(CFGREG_BASE + 0x10)
+#endif
+
 /* SCP to host interrupt */
 #define SCP_HOST_INT			REG32(SCP_CFG_BASE + 0x1C)
 #define   IPC_SCP2HOST_SSHUB		0xff0000
@@ -123,8 +127,15 @@
 #define   D_CACHE_SLP_PROT_EN		BIT(4)
 #define SCP_ONE_TIME_LOCK		REG32(SCP_CFG_BASE + 0xDC)
 #define SCP_SECURE_CTRL			REG32(SCP_CFG_BASE + 0xE0)
+
+#ifdef CHIP_VARIANT_MT8186
+#define	JTAG_DBG_REQ_BIT         	BIT(3)
+#define   DISABLE_REMAP			BIT(31)
+#else
+#define   DISABLE_REMAP                 BIT(22)
+#endif
+
 #define   ENABLE_SPM_MASK_VREQ		BIT(28)
-#define   DISABLE_REMAP			BIT(22)
 #define   DISABLE_JTAG			BIT(21)
 #define   DISABLE_AP_TCM		BIT(20)
 #define SCP_SYS_CTRL			REG32(SCP_CFG_BASE + 0xE4)
@@ -327,7 +338,13 @@
  */
 #define SCP_CLK_SLEEP_CTRL		REG32(SCP_CLK_BASE + 0x20)
 #define   EN_SLEEP_CTRL			BIT(0)
+
+#ifdef CHIP_VARIANT_MT8186
+#define   VREQ_COUNTER_MASK		0x7F
+#else
 #define   VREQ_COUNTER_MASK		0xfe
+#endif
+
 #define   VREQ_COUNTER_VAL(v)		(((v) << 1) & VREQ_COUNTER_MASK)
 #define   SPM_SLEEP_MODE		BIT(8)
 #define   SPM_SLEEP_MODE_CLK_AO		BIT(9)
@@ -370,9 +387,17 @@
 #define SCP_SLEEP_WAKE_DEBUG		REG32(SCP_CLK_BASE + 0x38)
 #define SCP_DCM_EN			REG32(SCP_CLK_BASE + 0x3C)
 #define SCP_WAKE_CKSW			REG32(SCP_CLK_BASE + 0x40)
-#define   WAKE_CKSW_SEL_NORMAL_MASK	0x3
-#define   WAKE_CKSW_SEL_SLOW_MASK	0x30
+
+#ifdef CHIP_VARIANT_MT8186
+#define WAKE_CKSW_SEL_NORMAL_BIT    0
+#define WAKE_CKSW_SEL_SLOW_BIT      4
+#define WAKE_CKSW_SEL_SLOW_MASK     0x3
+#else
+#define   WAKE_CKSW_SEL_SLOW_MASK       0x30
 #define   WAKE_CKSW_SEL_SLOW_DEFAULT	0x10
+#endif
+
+#define   WAKE_CKSW_SEL_NORMAL_MASK	0x3
 #define SCP_CLK_UART			REG32(SCP_CLK_BASE + 0x44)
 #define   CLK_UART_SEL_MASK		0x3
 #define   CLK_UART_SEL_26M		0x0
@@ -393,6 +418,19 @@
 #define SCP_CLK_DIV_CNT			REG32(SCP_CLK_BASE + 0x50)
 #define SCP_CPU_VREQ			REG32(SCP_CLK_BASE + 0x54)
 #define   CPU_VREQ_HW_MODE		0x10001
+
+#ifdef CHIP_VARIANT_MT8186
+#define   VREQ_SEL			BIT(0)
+#define   VREQ_PMIC_WRAP_SEL		BIT(1)
+#define   VREQ_VALUE			BIT(4)
+#define   VREQ_EXT_SEL			BIT(8)
+#define   VREQ_DVFS_SEL			BIT(16)
+#define   VREQ_DVFS_VALUE		BIT(20)
+#define   VREQ_DVFS_EXT_SEL		BIT(24)
+#define   VREQ_SRCLKEN_SEL		BIT(27)
+#define   VREQ_SRCLKEN_VALUE		BIT(28)
+#endif
+
 #define SCP_CLK_CLEAR			REG32(SCP_CLK_BASE + 0x58)
 #define SCP_CLK_HIGH_CORE		REG32(SCP_CLK_BASE + 0x5C)
 #define   CLK_HIGH_CORE_CG		(1 << 1)
@@ -407,6 +445,11 @@
 #define   HIGH_FINAL_VAL_DEFAULT	0x300
 #define SCP_CLK_L1_SRAM_PD		REG32(SCP_CLK_BASE + 0x80)
 #define SCP_CLK_TCM_TAIL_SRAM_PD	REG32(SCP_CLK_BASE + 0x94)
+
+#ifdef CHIP_VARIANT_MT8186
+#define SCP_CLK_CTRL_GENERAL_CTRL	REG32(SCP_CLK_BASE + 0x9C)
+#endif
+
 #define SCP_CLK_SLEEP			REG32(SCP_CLK_BASE + 0xA0)
 #define   SLOW_WAKE_DISABLE		1
 #define SCP_FAST_WAKE_CNT_END		REG32(SCP_CLK_BASE + 0xA4)
@@ -529,16 +572,40 @@
 #define AP_CLK_CFG_5_CLR	REG32(TOPCK_BASE + 0x0098)
 #define   PWRAP_ULPOSC_CG	BIT(31)
 
+#ifdef CHIP_VARIANT_MT8186
+/* SCP PLL MUX RG */
+#define CLK_CFG_UPDATE          (TOPCK_BASE + 0x0004)
+#define SCP_CK_UPDATE_SHFT      1
+#define CLK_CFG_0               (TOPCK_BASE + 0x0040)
+#define CLK_CFG_0_SET           (TOPCK_BASE + 0x0044)
+#define CLK_CFG_0_CLR           (TOPCK_BASE + 0x0048)
+#define CLK_SCP_SEL_MSK     0x7
+#define CLK_SCP_SEL_SHFT    8
+#endif
+
 /* OSC meter */
+#ifdef CHIP_VARIANT_MT8186
+#define AP_CLK_MISC_CFG_0		REG32(TOPCK_BASE + 0x0140)
+#define AP_CLK_DBG_CFG			REG32(TOPCK_BASE + 0x017C)
+#else
 #define AP_CLK_MISC_CFG_0		REG32(TOPCK_BASE + 0x0104)
+#define AP_CLK_DBG_CFG                  REG32(TOPCK_BASE + 0x010C)
+#endif
+
 #define   MISC_METER_DIVISOR_MASK	0xff000000
 #define   MISC_METER_DIV_1		0
-#define AP_CLK_DBG_CFG			REG32(TOPCK_BASE + 0x010C)
 #define   DBG_MODE_MASK			3
 #define   DBG_MODE_SET_CLOCK            0
 #define   DBG_BIST_SOURCE_MASK		(0x3f << 16)
+
+#ifdef CHIP_VARIANT_MT8186
+#define   DBG_BIST_SOURCE_ULPOSC1	(35 << 16)
+#define   DBG_BIST_SOURCE_ULPOSC2	(34 << 16)
+#else
 #define   DBG_BIST_SOURCE_ULPOSC1	(0x26 << 16)
 #define   DBG_BIST_SOURCE_ULPOSC2	(0x25 << 16)
+#endif
+
 #define AP_SCP_CFG_0			REG32(TOPCK_BASE + 0x0220)
 #define   CFG_FREQ_METER_RUN		(1 << 4)
 #define   CFG_FREQ_METER_ENABLE		(1 << 12)
@@ -579,16 +646,37 @@
 /* AP_GPIO_SEC, n in [0..5] */
 #define AP_GPIO_SEC(n)			REG32(AP_GPIO_BASE + 0xF00 + ((n) << 4))
 
+#ifdef CHIP_VARIANT_MT8186
+#define AP_PLL_CON0			REG32(AP_BASE + 0xC000)
+#define LTECLKSQ_EN			BIT(0)
+#define LTECLKSQ_LPF_EN			BIT(1)
+#define LTECLKSQ_HYS_EN			BIT(2)
+#define LTECLKSQ_VOD_EN			BIT(3)
+#define LTECLKSQ_HYS_SEL		(0x1 << 4)
+#define CLKSQ_RESERVE			(0x1 << 10)
+#define SSUSB26M_CK2_EN			BIT(13)
+#define SSUSB26M_CK_EN			BIT(14)
+#define XTAL26M_CK_EN			BIT(15)
+#define ULPOSC_CTRL_SEL			(0xf << 16)
+#endif
+
 /*
  * PLL ULPOSC
  * ULPOSC1:  AP_ULPOSC_CON[0] AP_ULPOSC_CON[1]
  * ULPOSC2:  AP_ULPOSC_CON[2] AP_ULPOSC_CON[3]
  * osc: 0 for ULPOSC1, 1 for ULPSOC2.
  */
+#ifdef CHIP_VARIANT_MT8186
+#define AP_ULPOSC_BASE0			(AP_BASE + 0xC500)
+#define AP_ULPOSC_BASE1			(AP_BASE + 0xC504)
+#define AP_ULPOSC_CON02(osc)		REG32(AP_ULPOSC_BASE0 + (osc) * 0x80)
+#define AP_ULPOSC_CON13(osc)		REG32(AP_ULPOSC_BASE1 + (osc) * 0x80)
+#else
 #define AP_ULPOSC_BASE0			(AP_BASE + 0xC700)
 #define AP_ULPOSC_BASE1			(AP_BASE + 0xC704)
 #define AP_ULPOSC_CON02(osc)		REG32(AP_ULPOSC_BASE0 + (osc) * 0x8)
 #define AP_ULPOSC_CON13(osc)		REG32(AP_ULPOSC_BASE1 + (osc) * 0x8)
+#endif
 /*
  * AP_ULPOSC_CON[0,2]
  * bit0-5:   calibration
@@ -598,14 +686,23 @@
  * bit23:    CP_EN
  * bit24-31: reserved
  */
+#ifdef CHIP_VARIANT_MT8186
+#define OSC_CALI_MASK			0x3f
+#define OSC_IBAND_SHIFT			6
+#define OSC_FBAND_MASK			0xf
+#define OSC_FBAND_SHIFT			13
+#define OSC_DIV_SHIFT			17
+#else
 #define OSC_CALI_MSK			(0x3f << 0)
 #define OSC_CALI_BITS			6
 #define OSC_IBAND_MASK			(0x7f << 6)
 #define OSC_FBAND_MASK			(0x0f << 13)
 #define OSC_DIV_MASK			(0x1f << 17)
 #define OSC_DIV_BITS			5
-#define OSC_CP_EN			BIT(23)
 #define OSC_RESERVED_MASK		(0xff << 24)
+#endif
+
+#define OSC_CP_EN			BIT(23)
 /* AP_ULPOSC_CON[1,3] */
 #define OSC_MOD_MASK			(0x03 << 0)
 #define OSC_DIV2_EN			BIT(2)

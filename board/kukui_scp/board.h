@@ -10,7 +10,12 @@
 
 #define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_HOSTCMD) | CC_MASK(CC_IPI)))
 
+#ifdef CHIP_VARIANT_MT8186
+#define CONFIG_FLASH_SIZE_BYTES 0x2C000 /* SRAM Size: 256KB */
+#else
 #define CONFIG_FLASH_SIZE_BYTES 0x58000 /* Image file size: 256KB */
+#endif
+
 #undef  CONFIG_LID_SWITCH
 #undef  CONFIG_FW_INCLUDE_RO
 #define CONFIG_MKBP_EVENT
@@ -35,9 +40,20 @@
  * | 8KB D-CACHE
  * +-------------------- 0x80000
  */
+#ifdef CHIP_VARIANT_MT8186
+#define ICACHE_BASE 0x3E000
+#else
 #define ICACHE_BASE 0x7C000
+#endif
+
 #define CONFIG_ROM_BASE 0x0
+
+#ifdef CHIP_VARIANT_MT8186
+#define CONFIG_RAM_BASE 0x2C000
+#else
 #define CONFIG_RAM_BASE 0x58000
+#endif
+
 #define CONFIG_ROM_SIZE (CONFIG_RAM_BASE - CONFIG_ROM_BASE)
 #define CONFIG_RAM_SIZE (CONFIG_IPC_SHARED_OBJ_ADDR - CONFIG_RAM_BASE)
 #define CONFIG_CODE_RAM_SIZE CONFIG_RAM_BASE
@@ -90,8 +106,11 @@
  *   1 - SCP UART1
  *   2 - share with AP UART0
  */
+#ifdef CHIP_VARIANT_MT8186
+#define CONFIG_UART_CONSOLE 1
+#else
 #define CONFIG_UART_CONSOLE 0
-
+#endif
 /* We let AP setup the correct pinmux. */
 #undef    UART0_PINMUX_11_12
 #undef    UART0_PINMUX_110_112

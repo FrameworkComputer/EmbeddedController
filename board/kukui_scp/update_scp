@@ -1,12 +1,12 @@
 #!/bin/bash
-# Copyright 2019 The Chromium OS Authors. All rights reserved.
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
 usage() {
-  echo "Usage: $0 [IP] [bin/elf]" >&2
+  echo "Usage: $0 [kukui_scp/corsola_scp] [IP] [bin/elf]" >&2
   echo >&2
-  echo "Deploy kukui_scp image to DUT, and restart the remoteproc driver" >&2
+  echo "Deploy kukui_scp/corsola_scp image to DUT, and restart the remoteproc driver" >&2
   exit 2
 }
 
@@ -14,25 +14,31 @@ if [[ -z "$1" ]]; then
    usage
 fi
 
-KUKUI_IP="$1"
-INFILE="build/kukui_scp/ec.bin"
+if [ "$1" = "kukui_scp" ] || [ "$1" = "corsola_scp" ]; then
+   BOARD="$1"
+else
+   usage
+fi
 
-case "$2" in
+DUT_IP="$2"
+INFILE="build/$BOARD/ec.bin"
+
+case "$3" in
 bin)
   ;;
 elf|"") # Default
   # ec.obj is an elf file that has the right memory layout to be loaded
   # from the AP/kernel.
-  INFILE="build/kukui_scp/ec.obj"
+  INFILE="build/$BOARD/ec.obj"
   ;;
 *)
   usage
   ;;
 esac
 
-scp "$INFILE" "$KUKUI_IP":/lib/firmware/scp.img
+scp "$INFILE" "$DUT_IP":/lib/firmware/scp.img
 
-ssh "$KUKUI_IP" sh -x -c "'
+ssh "$DUT_IP" sh -x -c "'
     sync;
     echo stop > /sys/class/remoteproc/remoteproc0/state;
     echo start > /sys/class/remoteproc/remoteproc0/state'"
