@@ -537,23 +537,29 @@ bool usb_mux_set_completed(int port)
 	return !sets_pending;
 }
 
-mux_state_t usb_mux_get(int port)
+static enum ec_error_list try_usb_mux_get(int port, mux_state_t *mux_state)
 {
-	mux_state_t mux_state;
-	int rv;
-
-	if (port >= board_get_usb_pd_port_count()) {
-		return USB_PD_MUX_NONE;
-	}
+	if (port >= board_get_usb_pd_port_count())
+		return EC_ERROR_INVAL;
 
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
 		usb_mux_init(port);
 
-	if (flags[port] & USB_MUX_FLAG_IN_LPM)
-		return USB_PD_MUX_NONE;
+	if (flags[port] & USB_MUX_FLAG_IN_LPM) {
+		*mux_state = USB_PD_MUX_NONE;
+		return EC_SUCCESS;
+	}
 
-	rv = configure_mux(port, USB_MUX_GET_MODE, &mux_state);
+	return configure_mux(port, USB_MUX_GET_MODE, mux_state);
+}
+
+mux_state_t usb_mux_get(int port)
+{
+	mux_state_t mux_state;
+	enum ec_status rv;
+
+	rv = try_usb_mux_get(port, &mux_state);
 
 	return rv ? USB_PD_MUX_NONE : mux_state;
 }
@@ -725,9 +731,8 @@ static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 	if (port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
 
-	if (configure_mux(port, USB_MUX_GET_MODE, &mux_state))
+	if (try_usb_mux_get(port, &mux_state))
 		return EC_RES_ERROR;
-
 	r->flags = mux_state;
 
 	/* Clear HPD IRQ event since we're about to inform host of it. */
