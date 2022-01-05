@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Draco board configuration */
+/* Agah board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -11,7 +11,7 @@
 #include "compile_time_macros.h"
 
 /*
- * Early draco boards are not set up for vivaldi
+ * Early agah boards are not set up for vivaldi
  */
 #undef CONFIG_KEYBOARD_VIVALDI
 
