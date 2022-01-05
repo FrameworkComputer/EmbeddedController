@@ -168,7 +168,7 @@
 		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
 			#gpio-cells = <0>;
-			gpios = <&gpio0 0 GPIO_INPUT>;
+			gpios = <&gpio0 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_hdmi_sel: hdmi_sel {
@@ -192,7 +192,7 @@
 		};
 		gpio_pen_detect_odl: pen_detect_odl {
 			#gpio-cells = <0>;
-			gpios = <&gpio9 6 GPIO_INPUT>;
+			gpios = <&gpio9 6 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_pg_pp1050_mem_s3_od: pg_pp1050_mem_s3_od {
 			#gpio-cells = <0>;
@@ -200,7 +200,7 @@
 		};
 		gpio_pg_pp1050_proc: pg_pp1050_proc {
 			#gpio-cells = <0>;
-			gpios = <&gpio4 1 GPIO_INPUT>;
+			gpios = <&gpio4 1 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_pg_pp5000_s5_od: pg_pp5000_s5_od {
 			#gpio-cells = <0>;
@@ -209,7 +209,7 @@
 		};
 		gpio_rsmrst_pwrgd_l: rsmrst_pwrgd_l {
 			#gpio-cells = <0>;
-			gpios = <&gpio9 4 GPIO_INPUT>;
+			gpios = <&gpio9 4 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_PG_EC_RSMRST_ODL";
 		};
 		gpio_slp_s0_l: slp_s0_l {
@@ -252,7 +252,7 @@
 		};
 		gpio_usb_c0_int_odl: usb_c0_int_odl {
 			#gpio-cells = <0>;
-			gpios = <&gpio0 1 GPIO_INPUT>;
+			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_C0_PD_INT_ODL";
 		};
 		gpio_vccin_aux_vid0: vccin_aux_vid0 {
@@ -265,12 +265,12 @@
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
 			#gpio-cells = <0>;
-			gpios = <&gpio9 3 GPIO_INPUT>;
+			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		gpio_volup_btn_odl: volup_btn_odl {
 			#gpio-cells = <0>;
-			gpios = <&gpioa 2 GPIO_INPUT>;
+			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 	};
