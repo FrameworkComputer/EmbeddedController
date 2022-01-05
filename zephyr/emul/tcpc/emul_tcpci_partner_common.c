@@ -227,9 +227,8 @@ int tcpci_partner_clear_msg_queue(struct tcpci_partner_data *data)
 	}
 
 	while (!sys_slist_is_empty(&data->to_send)) {
-		msg = SYS_SLIST_CONTAINER(
-				sys_slist_get_not_empty(&data->to_send),
-				msg, node);
+		msg = CONTAINER_OF(sys_slist_get_not_empty(&data->to_send),
+				   struct tcpci_partner_msg, node);
 		tcpci_partner_free_msg(msg);
 	}
 
