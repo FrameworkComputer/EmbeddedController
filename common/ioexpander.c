@@ -154,6 +154,60 @@ int ioex_get_port(int ioex, int port, int *val)
 }
 #endif
 
+int ioex_save_gpio_state(int ioex, int *state, int state_len)
+{
+	int rv;
+	const struct ioex_info *g = ioex_list;
+	const struct ioexpander_drv *drv = ioex_config[ioex].drv;
+	int state_offset = 0;
+
+	for (int i = 0; i < IOEX_COUNT; i++, g++) {
+		if (g->ioex != ioex)
+			continue;
+
+		if (state_offset >= state_len) {
+			CPRINTS("%s state buffer is too small", __func__);
+			return EC_ERROR_UNKNOWN;
+		}
+
+		rv = drv->get_flags_by_mask(g->ioex, g->port, g->mask,
+					    &state[state_offset++]);
+		if (rv) {
+			CPRINTS("%s failed to get flags rv=%d", __func__, rv);
+			return rv;
+		}
+	}
+
+	return EC_SUCCESS;
+}
+
+int ioex_restore_gpio_state(int ioex, const int *state, int state_len)
+{
+	int rv;
+	const struct ioex_info *g = ioex_list;
+	const struct ioexpander_drv *drv = ioex_config[ioex].drv;
+	int state_offset = 0;
+
+	for (int i = 0; i < IOEX_COUNT; i++, g++) {
+		if (g->ioex != ioex)
+			continue;
+
+		if (state_offset >= state_len) {
+			CPRINTS("%s state buffer is too small", __func__);
+			return EC_ERROR_UNKNOWN;
+		}
+
+		rv = drv->set_flags_by_mask(g->ioex, g->port, g->mask,
+				       state[state_offset++]);
+		if (rv) {
+			CPRINTS("%s failed to set flags rv=%d", __func__, rv);
+			return rv;
+		}
+	}
+
+	return EC_SUCCESS;
+}
+
 int ioex_init(int ioex)
 {
 	const struct ioex_info *g = ioex_list;

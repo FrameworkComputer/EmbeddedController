@@ -179,4 +179,24 @@ const char *ioex_get_name(enum ioex_signal signal);
  */
 int signal_is_ioex(int signal);
 
+/*
+ * Save gpio state of IO expander
+ *
+ * @param ioex		IO expander chip's port number
+ * @param state		Buffer to hold gpio state
+ * @param state_len	Length of state buffer, IOEX_COUNT is recommended
+ * @return		EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_save_gpio_state(int ioex, int *state, int state_len);
+
+/*
+ * Restore gpio state of IO expander
+ *
+ * @param ioex		IO expander chip's port number
+ * @param state		Buffer with gpio state saved by ioex_save_gpio_state
+ * @param state_len	Length of state buffer, IOEX_COUNT is recommended
+ * @return		EC_SUCCESS if successful, non-zero if error.
+ */
+int ioex_restore_gpio_state(int ioex, const int *state, int state_len);
+
 #endif /* __CROS_EC_IOEXPANDER_H */
