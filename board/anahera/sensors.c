@@ -77,7 +77,7 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #define THERMAL_FAN \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(73), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
 		}, \
 		.temp_host_release = { \
