@@ -29,8 +29,10 @@
 
 /** Common data for TCPCI partner device emulators */
 struct tcpci_partner_data {
-	/** Work used to send message with delay */
-	struct k_work_delayable delayed_send;
+	/** Timer used to send message with delay */
+	struct k_timer delayed_send;
+	/** Reserved for fifo, used for scheduling messages */
+	void *fifo_data;
 	/** Pointer to connected TCPCI emulator */
 	const struct emul *tcpci_emul;
 	/** Queue for delayed messages */

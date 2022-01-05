@@ -72,11 +72,10 @@ void tcpci_partner_set_header(struct tcpci_partner_data *data,
  *
  * @param work Pointer to work structure
  */
-static void tcpci_partner_delayed_send(struct k_work *work)
+static void tcpci_partner_delayed_send(void *fifo_data)
 {
-	struct k_work_delayable *kwd = k_work_delayable_from_work(work);
 	struct tcpci_partner_data *data =
-		CONTAINER_OF(kwd, struct tcpci_partner_data, delayed_send);
+		CONTAINER_OF(fifo_data, struct tcpci_partner_data, fifo_data);
 	struct tcpci_partner_msg *msg;
 	uint64_t now;
 	int ret;
@@ -105,12 +104,52 @@ static void tcpci_partner_delayed_send(struct k_work *work)
 						   K_FOREVER);
 			} while (ret);
 		} else {
-			k_work_reschedule(kwd, K_MSEC(msg->time - now));
+			k_timer_start(&data->delayed_send,
+				      K_MSEC(msg->time - now), K_NO_WAIT);
 			break;
 		}
 	}
 
 	k_mutex_unlock(&data->to_send_mutex);
+}
+
+/** FIFO to schedule TCPCI partners that needs to send message */
+K_FIFO_DEFINE(delayed_send_fifo);
+
+/**
+ * @brief Thread which sends delayed messages for TCPCI partners
+ *
+ * @param a unused
+ * @param b unused
+ * @param c unused
+ */
+static void tcpci_partner_delayed_send_thread(void *a, void *b, void *c)
+{
+	void *fifo_data;
+
+	while (1) {
+		fifo_data = k_fifo_get(&delayed_send_fifo, K_FOREVER);
+		tcpci_partner_delayed_send(fifo_data);
+	}
+}
+
+/** Thread for sending delayed messages */
+K_THREAD_DEFINE(tcpci_partner_delayed_send_tid, 512 /* stack size */,
+		tcpci_partner_delayed_send_thread, NULL, NULL, NULL,
+		0 /* priority */, 0, 0);
+
+/**
+ * @brief Timeout handler which adds TCPCI partner that has pending delayed
+ *        message to send
+ *
+ * @param timer Pointer to timer which triggered timeout
+ */
+static void tcpci_partner_delayed_send_timer(struct k_timer *timer)
+{
+	struct tcpci_partner_data *data =
+		CONTAINER_OF(timer, struct tcpci_partner_data, delayed_send);
+
+	k_fifo_put(&delayed_send_fifo, &data->fifo_data);
 }
 
 /** Check description in emul_common_tcpci_partner.h */
@@ -147,7 +186,7 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 	/* Current message should be sent first */
 	if (prev_msg == NULL || prev_msg->time > msg->time) {
 		sys_slist_prepend(&data->to_send, &msg->node);
-		k_work_reschedule(&data->delayed_send, K_MSEC(delay));
+		k_timer_start(&data->delayed_send, K_MSEC(delay), K_NO_WAIT);
 		k_mutex_unlock(&data->to_send_mutex);
 		return 0;
 	}
@@ -219,7 +258,7 @@ int tcpci_partner_clear_msg_queue(struct tcpci_partner_data *data)
 	struct tcpci_partner_msg *msg;
 	int ret;
 
-	k_work_cancel_delayable(&data->delayed_send);
+	k_timer_stop(&data->delayed_send);
 
 	ret = k_mutex_lock(&data->to_send_mutex, K_FOREVER);
 	if (ret) {
@@ -240,7 +279,8 @@ int tcpci_partner_clear_msg_queue(struct tcpci_partner_data *data)
 /** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_init(struct tcpci_partner_data *data)
 {
-	k_work_init_delayable(&data->delayed_send, tcpci_partner_delayed_send);
+	k_timer_init(&data->delayed_send, tcpci_partner_delayed_send_timer,
+		     NULL);
 	sys_slist_init(&data->to_send);
 	k_mutex_init(&data->to_send_mutex);
 }
