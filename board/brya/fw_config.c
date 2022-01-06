@@ -10,7 +10,7 @@
 #include "cros_board_info.h"
 #include "fw_config.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 static union brya_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
