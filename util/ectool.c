@@ -3271,6 +3271,10 @@ int cmd_thermal_get_threshold_v1(int argc, char *argv[])
 	printf("sensor  warn  high  halt   fan_off fan_max   name\n");
 	for (i = 0; i < EC_MAX_TEMP_SENSOR_ENTRIES; i++) {
 
+		if (read_mapped_temperature(i) ==
+			EC_TEMP_SENSOR_NOT_PRESENT)
+			continue;
+
 		/* ask for one */
 		p.sensor_num = i;
 		rv = ec_command(EC_CMD_THERMAL_GET_THRESHOLD, 1,
