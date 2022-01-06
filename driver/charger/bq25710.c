@@ -123,14 +123,12 @@
 /* Sense resistor configurations and macros */
 #define DEFAULT_SENSE_RESISTOR 10
 
-#define INPUT_RESISTOR_RATIO \
-	((CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC) / DEFAULT_SENSE_RESISTOR)
-
-#define CHARGING_RESISTOR_RATIO \
-	((CONFIG_CHARGER_BQ25710_SENSE_RESISTOR) / DEFAULT_SENSE_RESISTOR)
-
-#define REG_TO_CHARGING_CURRENT(REG) ((REG) / CHARGING_RESISTOR_RATIO)
-#define CHARGING_CURRENT_TO_REG(CUR) ((CUR) * CHARGING_RESISTOR_RATIO)
+#define REG_TO_CHARGING_CURRENT(REG) ((REG) * \
+	DEFAULT_SENSE_RESISTOR / CONFIG_CHARGER_BQ25710_SENSE_RESISTOR)
+#define REG_TO_CHARGING_CURRENT_AC(REG) ((REG) * \
+	DEFAULT_SENSE_RESISTOR / CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC)
+#define CHARGING_CURRENT_TO_REG(CUR) ((CUR) * \
+	CONFIG_CHARGER_BQ25710_SENSE_RESISTOR / DEFAULT_SENSE_RESISTOR)
 #define VMIN_AP_VSYS_TH2_TO_REG(DV) ((DV) - 32)
 
 /* Console output macros */
@@ -146,18 +144,24 @@ static uint32_t bq25710_perf_mode_req;
 static struct mutex bq25710_perf_mode_mutex;
 #endif
 
+/*
+ * 10mOhm sense resistor, there is 50mA offset at code 0.
+ * 5mOhm sense resistor, there is 100mA offset at code 0.
+ */
+#define BQ25710_IIN_DPM_CODE0_OFFSET REG_TO_CHARGING_CURRENT(50)
+
 /* Charger parameters */
 static const struct charger_info bq25710_charger_info = {
 	.name         = "bq25710",
 	.voltage_max  = 19200,
 	.voltage_min  = 1024,
 	.voltage_step = 8,
-	.current_max  = 8128 / CHARGING_RESISTOR_RATIO,
-	.current_min  = 64 / CHARGING_RESISTOR_RATIO,
-	.current_step = 64 / CHARGING_RESISTOR_RATIO,
-	.input_current_max  = 6400 / INPUT_RESISTOR_RATIO,
-	.input_current_min  = 50 / INPUT_RESISTOR_RATIO,
-	.input_current_step = 50 / INPUT_RESISTOR_RATIO,
+	.current_max  = REG_TO_CHARGING_CURRENT(8128),
+	.current_min  = REG_TO_CHARGING_CURRENT(64),
+	.current_step = REG_TO_CHARGING_CURRENT(64),
+	.input_current_max  = REG_TO_CHARGING_CURRENT_AC(6400),
+	.input_current_min  = REG_TO_CHARGING_CURRENT_AC(50),
+	.input_current_step = REG_TO_CHARGING_CURRENT_AC(50),
 };
 
 static enum ec_error_list bq25710_get_option(int chgnum, int *option);
@@ -165,14 +169,24 @@ static enum ec_error_list bq25710_set_option(int chgnum, int option);
 
 static inline int iin_dpm_reg_to_current(int reg)
 {
-	return (reg + 1) * BQ257X0_IIN_DPM_CURRENT_STEP_MA /
-		INPUT_RESISTOR_RATIO;
+	/*
+	 * When set 00 at 3F register, read 22h back,
+	 * you will see 00, but actually it’s 50mA@10mOhm right now.
+	 * TI don’t have exactly 0A setting for input current limit,
+	 * it set the 50mA@10mOhm offset so that the converter can
+	 * work normally.
+	 */
+	if (reg == 0)
+		return BQ25710_IIN_DPM_CODE0_OFFSET;
+	else
+		return REG_TO_CHARGING_CURRENT_AC(reg *
+			BQ257X0_IIN_DPM_CURRENT_STEP_MA);
 }
 
 static inline int iin_host_current_to_reg(int current)
 {
-	return (current * INPUT_RESISTOR_RATIO /
-		BQ257X0_IIN_HOST_CURRENT_STEP_MA) - 1;
+	return (REG_TO_CHARGING_CURRENT_AC(current) /
+		BQ257X0_IIN_HOST_CURRENT_STEP_MA);
 }
 
 static inline enum ec_error_list raw_read16(int chgnum, int offset, int *value)
