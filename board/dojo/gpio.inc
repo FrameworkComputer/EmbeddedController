@@ -65,6 +65,7 @@ GPIO(PG_MT6360_ODL,          PIN(F, 1), GPIO_INPUT)
 GPIO(EN_SLP_Z,               PIN(E, 3), GPIO_OUT_LOW)
 GPIO(SYS_RST_ODL,            PIN(B, 6), GPIO_ODR_LOW)
 GPIO(EC_BL_EN_OD,            PIN(B, 5), GPIO_ODR_LOW | GPIO_SEL_1P8V)
+GPIO(EN_PP3300_SSD,          PIN(H, 1), GPIO_ODR_LOW) /* NVME power sequence control */
 
 /* MKBP event synchronization */
 GPIO(EC_INT_L,               PIN(E, 6), GPIO_ODR_HIGH | GPIO_SEL_1P8V) /* EC_AP_INT_ODL */
@@ -98,8 +99,6 @@ GPIO(I2C_E_SCL,              PIN(E, 0), GPIO_INPUT) /* I2C_USB_C1_SCL */
 GPIO(I2C_E_SDA,              PIN(E, 7), GPIO_INPUT) /* I2C_USB_C1_SDA */
 GPIO(I2C_F_SCL,              PIN(A, 4), GPIO_INPUT) /* Rev 2+ I2C_PROG_SCL */
 GPIO(I2C_F_SDA,              PIN(A, 5), GPIO_INPUT) /* Rev 2+ I2C_PROG_SDA */
-GPIO(I2C_H_SCL,              PIN(H, 1), GPIO_INPUT) /* Rev 0,1 I2C_PROG_SCL */
-GPIO(I2C_H_SDA,              PIN(H, 2), GPIO_INPUT) /* Rev 0,1 I2C_PROG_SDA */
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(B, 0x18), 1, MODULE_I2C, 0) /* I2C A */
@@ -131,6 +130,7 @@ GPIO(NC_GPA1,                PIN(A, 1), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(PWM7,                   PIN(A, 7), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(EC_NVME_PLN_ODL,        PIN(D, 7), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_CLK_GPG6,           PIN(G, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(NC_GPH2,                PIN(H, 2), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(PG_NVME_OD,             PIN(H, 3), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(EN_PP2500_NVME_X,       PIN(J, 2), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(EN_PP1200_NVME_X,       PIN(J, 3), GPIO_INPUT | GPIO_PULL_DOWN)

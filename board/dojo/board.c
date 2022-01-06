@@ -170,10 +170,17 @@ static void board_init(void)
 	pwm_enable(PWM_CH_LED2, 0);
 
 	board_update_motion_sensor_config();
-
-	if (board_get_version() >= 2) {
-		gpio_set_flags(GPIO_I2C_H_SCL, GPIO_INPUT | GPIO_PULL_DOWN);
-		gpio_set_flags(GPIO_I2C_H_SDA, GPIO_INPUT | GPIO_PULL_DOWN);
-	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+static void enable_nvme(void)
+{
+	gpio_set_level(GPIO_EN_PP3300_SSD, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enable_nvme, HOOK_PRIO_DEFAULT);
+
+static void disable_nvme(void)
+{
+	gpio_set_level(GPIO_EN_PP3300_SSD, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_nvme, HOOK_PRIO_DEFAULT);
