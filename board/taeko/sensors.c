@@ -68,7 +68,7 @@ static struct lsm6dso_data lsm6dso_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* The matrix for new DB */
-static const mat33_fp_t lid_standard_ref_for_new_DB = {
+static const mat33_fp_t lid_ref_for_new_DB = {
 	{ FLOAT_TO_FP(-1), 0, 0},
 	{ 0, FLOAT_TO_FP(1), 0},
 	{ 0, 0, FLOAT_TO_FP(-1)}
@@ -280,6 +280,11 @@ static void board_detect_motionsensor(void)
 		 * we don't use INT1. Keep this pin as input w/o enable
 		 * interrupt.
 		 */
+		if (get_board_id() >= 2) {
+			/* Need to change matrix when board ID >= 2 */
+			bma422_lid_accel.rot_standard_ref =
+					&lid_ref_for_new_DB;
+		}
 		return;
 	}
 
@@ -316,9 +321,9 @@ static void baseboard_sensors_init(void)
 		}
 
 		if (get_board_id() >= 2) {
-			/*Need to change matrix when board ID >= 2*/
+			/* Need to change matrix when board ID >= 2 */
 			motion_sensors[LID_ACCEL].rot_standard_ref =
-							&lid_standard_ref_for_new_DB;
+							&lid_ref_for_new_DB;
 		}
 
 		/* Enable gpio interrupt for base accelgyro sensor */
