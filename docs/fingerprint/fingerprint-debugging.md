@@ -32,17 +32,24 @@ used for JTAG and SWD for ARM devices.
     is the only software required for flashing.
 *   In order to perform breakpoint debugging, you will need a tool that supports
     connecting `gdbserver`. This document will assume [CLion] \(Googlers see
-    [CLion for Chrome OS]) and was tested with `JLink_Linux_V684a_x86_64`.
-    Alternatively, you can use [Ozone], a standalone debugger from Segger.
+    [CLion for Chrome OS]) and was tested with `JLink v6.94a`. Alternatively,
+    you can use [Ozone], a standalone debugger from Segger.
 
 ## JLink Software {#software}
 
-Download the [JLink Software], choosing the `J-Link Software and Documentation
-pack for Linux, TGZ archive, 64-bit` version. This version is recommended
-because it's simple to extract the tarball into a directory that is accessible
-to the Chrome OS chroot. The instructions in this document assume that you have
-extracted the tarball in
-`~/chromiumos/src/platform/ec/JLink_Linux_V684a_x86_64`.
+Install the JLink software in the chroot with the following command:
+
+```bash
+(chroot) $ sudo emerge jlink
+```
+
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: The above command will print out a message directing you to manually
+download a tarball. You must follow these instructions for the installation to
+be complete.
+***
+<!-- mdformat on -->
 
 ## Connecting SWD {#connect-swd}
 
@@ -112,14 +119,14 @@ sensor runs at 1.8V. The pin is also not connected on the current designs.
 ```bash
 # JLinkRemoteServerCLExe will listen on port 19020 (among others) by default.
 # This can be overridden with the -Port argument.
-(outside) $ ./JLink_Linux_V684a_x86_64/JLinkRemoteServerCLExe -select USB
+(chroot) $ JLinkRemoteServerCLExe -select USB
 ```
 
 You should see the following:
 
 ```bash
-SEGGER J-Link Remote Server V6.84a
-Compiled Sep  7 2020 18:28:13
+SEGGER J-Link Remote Server V6.94a
+Compiled Jan 14 2021 11:52:48
 
 'q' to quit '?' for help
 
@@ -156,7 +163,7 @@ Start the JLink gdbserver for the appropriate MCU type:
 *   Icetower / [Nucleo STM32H743ZI]: `STM32H743ZI`
 
 ```bash
-(outside) $ ./JLink_Linux_V684a_x86_64/JLinkGDBServerCLExe -select USB -device STM32F412CG -endian little -if SWD -speed auto -noir -noLocalhostOnly
+(chroot) $ JLinkGDBServerCLExe -select USB -device STM32F412CG -endian little -if SWD -speed auto -noir -noLocalhostOnly
 ```
 
 You should see the port that `gdbserver` is running on in the output:
@@ -164,7 +171,7 @@ You should see the port that `gdbserver` is running on in the output:
 ```bash
 Connecting to J-Link...
 J-Link is connected.
-Firmware: J-Trace PRO V2 Cortex-M compiled Dec 13 2019 11:19:22
+Firmware: J-Trace PRO V2 Cortex-M compiled Feb  5 2021 14:50:19
 Hardware: V2.00
 S/N: XXXXX
 Feature(s): RDI, FlashBP, FlashDL, JFlash, GDB
