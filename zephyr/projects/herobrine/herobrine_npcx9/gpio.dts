@@ -24,15 +24,15 @@
 			enum-name = "GPIO_USB_C1_SWCTL_INT_ODL";
 		};
 		gpio_usb_c0_bc12_int_l: usb_c0_bc12_int_l {
-			gpios = <&gpio6 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio6 1 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_C0_BC12_INT_L";
 		};
 		gpio_usb_c1_bc12_int_l: usb_c1_bc12_int_l {
-			gpios = <&gpio8 2 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio8 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_C1_BC12_INT_L";
 		};
 		usb_a0_oc_odl {
-			gpios = <&gpiof 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpiof 4 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_A0_OC_ODL";
 		};
 		gpio_chg_acok_od: chg_acok_od {
@@ -44,11 +44,11 @@
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		ec_voldn_btn_odl {
-			gpios = <&gpio6 2 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio6 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		ec_volup_btn_odl {
-			gpios = <&gpioc 2 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioc 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		ec_wp_odl {
@@ -64,7 +64,7 @@
 			enum-name = "GPIO_AP_RST_L";
 		};
 		ps_hold {
-			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpioa 6 GPIO_INPUT_PULL_DOWN>;
 			enum-name = "GPIO_PS_HOLD";
 		};
 		ap_suspend {
@@ -72,7 +72,7 @@
 			enum-name = "GPIO_AP_SUSPEND";
 		};
 		mb_power_good {
-			gpios = <&gpio3 7 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpio3 7 GPIO_INPUT_PULL_DOWN>;
 			enum-name = "GPIO_POWER_GOOD";
 		};
 		warm_reset_l {
@@ -80,7 +80,7 @@
 			enum-name = "GPIO_WARM_RESET_L";
 		};
 		ap_ec_spi_cs_l {
-			gpios = <&gpio5 3 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpio5 3 GPIO_INPUT_PULL_DOWN>;
 		};
 		tablet_mode_l {
 			gpios = <&gpioc 6 GPIO_INPUT>;
@@ -200,13 +200,13 @@
 			enum-name = "GPIO_EC_CHG_LED_W_C1";
 		};
 		ap_ec_spi_mosi {
-			gpios = <&gpio4 6 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpio4 6 GPIO_INPUT_PULL_DOWN>;
 		};
 		ap_ec_spi_miso {
-			gpios = <&gpio4 7 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpio4 7 GPIO_INPUT_PULL_DOWN>;
 		};
 		ap_ec_spi_clk {
-			gpios = <&gpio5 5 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpio5 5 GPIO_INPUT_PULL_DOWN>;
 		};
 		gpio_brd_id0: brd_id0 {
 			gpios = <&gpio9 4 GPIO_INPUT>;
@@ -233,7 +233,7 @@
 			enum-name = "GPIO_SKU_ID2";
 		};
 		gpio_switchcap_pg: src_vph_pwr_pg {
-			gpios = <&gpioe 2 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpioe 2 GPIO_INPUT_PULL_DOWN>;
 			enum-name = "GPIO_SWITCHCAP_PG";
 		};
 		arm_x86 {

@@ -286,20 +286,20 @@
 			/* ccd_mode_odl */
 			<&gpioc 4 GPIO_INPUT>,
 			/* unnamed nc pins */
-			<&gpioa 3 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpioa 6 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpioa 7 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpioc 3 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpiod 7 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpiof 1 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpioh 0 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpioh 6 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpioi 3 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpioi 5 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpioi 6 (GPIO_INPUT | GPIO_PULL_DOWN)>,
-			<&gpiom 6 (GPIO_INPUT | GPIO_PULL_DOWN)>,
+			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpioc 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 5 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpiom 6 GPIO_INPUT_PULL_DOWN>,
 			/* spi_clk_gpg6 */
-			<&gpiog 6 (GPIO_INPUT | GPIO_PULL_UP)>,
+			<&gpiog 6 GPIO_INPUT_PULL_UP>,
 			/* spi_mosi_gpg4 */
 			<&gpiog 4 GPIO_OUT_LOW>,
 			/* spi_miso_gpg5 */

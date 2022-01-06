@@ -47,12 +47,12 @@
 		};
 		/* TODO: Add interrupt handler */
 		sc_0_int_l {
-			gpios = <&gpio6 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio6 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_SC_0_INT_L";
 		};
 		/* TODO: Add interrupt handler */
 		usb_hub_fault_q_odl {
-			gpios = <&gpioe 5 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioe 5 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_HUB_FAULT_ODL";
 		};
 		pg_lpddr5_s3_od {
@@ -60,18 +60,18 @@
 			enum-name = "GPIO_PG_LPDDR5_S3_OD";
 		};
 		3axis_int_l {
-			gpios = <&gpioa 2 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
 		};
 		ec_soc_pwr_btn_l {
 			gpios = <&gpioa 7 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		volup_btn_odl {
-			gpios = <&gpio6 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio6 7 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		voldn_btn_odl {
-			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio7 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		ec_sc_rst {

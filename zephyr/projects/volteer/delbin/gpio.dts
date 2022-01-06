@@ -56,7 +56,7 @@
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		ec_accel_int {
-			gpios = <&gpio8 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio8 1 GPIO_INPUT_PULL_UP>;
 		};
 		usb_c0_tcpc_int_odl {
 			gpios = <&gpioe 0 GPIO_INPUT>;
@@ -77,10 +77,10 @@
 			gpios = <&gpio0 3 GPIO_INPUT>;
 		};
 		ec_voldn_btn_odl {
-			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 		};
 		ec_volup_btn_odl {
-			gpios = <&gpio9 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio9 7 GPIO_INPUT_PULL_UP>;
 		};
 		en_pp3300_a {
 			gpios = <&gpioa 3 GPIO_OUT_LOW>;
@@ -173,25 +173,25 @@
 			gpios = <&gpio8 6 GPIO_OUT_LOW>;
 		};
 		unused_gpio34 {
-			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio3 4 GPIO_INPUT_PULL_UP>;
 		};
 		unused_gpio41 {
-			gpios = <&gpio4 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio4 1 GPIO_INPUT_PULL_UP>;
 		};
 		unused_gpio72 {
-			gpios = <&gpio7 2 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio7 2 GPIO_INPUT_PULL_UP>;
 		};
 		unused_gpio96 {
-			gpios = <&gpio9 6 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio9 6 GPIO_INPUT_PULL_UP>;
 		};
 		unused_gpioa7 {
-			gpios = <&gpioa 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioa 7 GPIO_INPUT_PULL_UP>;
 		};
 		unused_gpioc0 {
-			gpios = <&gpioc 0 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioc 0 GPIO_INPUT_PULL_UP>;
 		};
 		unused_gpiof2 {
-			gpios = <&gpiof 2 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpiof 2 GPIO_INPUT_PULL_UP>;
 		};
 		ec_edp_bl_en {
 			gpios = <&gpiod 3 GPIO_OUT_HIGH>;

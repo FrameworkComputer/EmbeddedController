@@ -69,7 +69,7 @@
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		ec_accel_int {
-			gpios = <&gpio8 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio8 1 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_EC_ACCEL_INT";
 		};
 		usb_c0_tcpc_int_odl {
@@ -107,11 +107,11 @@
 			enum-name = "GPIO_USB_C1_FRS_EN";
 		};
 		ec_voldn_btn_odl {
-			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		ec_volup_btn_odl {
-			gpios = <&gpio9 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio9 7 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		en_pp3300_a {
@@ -220,18 +220,18 @@
 			gpios = <&gpioe 5 GPIO_INPUT>;
 		};
 		ec_slp_s0ix {
-			gpios = <&gpio7 2 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio7 2 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_unused_gpio41: unused_gpio41 {
 			#gpio-cells = <0>;
-			gpios = <&gpio4 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio4 1 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_C1_LS_EN";
 		};
 		ec_kb_bl_en {
-			gpios = <&gpio8 6 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio8 6 GPIO_INPUT_PULL_UP>;
 		};
 		ec_espi_alert_l {
-			gpios = <&gpio5 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio5 7 GPIO_INPUT_PULL_UP>;
 		};
 		ec_edp_bl_en {
 			gpios = <&gpiod 3 GPIO_OUT_HIGH>;

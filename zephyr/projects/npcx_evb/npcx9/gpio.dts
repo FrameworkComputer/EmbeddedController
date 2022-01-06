@@ -8,10 +8,10 @@
 		compatible = "named-gpios";
 
 		recovery_l {
-			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio0 3 GPIO_INPUT_PULL_UP>;
 		};
 		wp_l {
-			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_WP_L";
 		};
 		gpio_ac_present: ac_present {
@@ -35,7 +35,7 @@
 			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 		};
 		gpio_pgood_fan: pgood_fan {
-			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioc 7 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_PGOOD_FAN";
 		};
 		spi_cs_l {

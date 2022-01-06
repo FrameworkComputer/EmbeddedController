@@ -19,7 +19,7 @@
 			enum-name = "GPIO_PCH_SLP_S0_L";
 		};
 		ec_pcore_int_odl {
-			gpios = <&gpiof 0 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpiof 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_EC_PCORE_INT_ODL";
 		};
 		pg_groupc_s0_od {
@@ -59,36 +59,36 @@
 			enum-name = "GPIO_USB_C0_C1_FAULT_ODL";
 		};
 		3axis_int_l {
-			gpios = <&gpioa 2 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpioa 2 GPIO_INPUT_PULL_DOWN>;
 		};
 		voldn_btn_odl {
-			gpios = <&gpioa 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioa 7 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		volup_btn_odl {
-			gpios = <&gpio9 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		ec_ps2_clk {
-			gpios = <&gpio6 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio6 7 GPIO_INPUT_PULL_UP>;
 		};
 		ec_ps2_dat {
-			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio7 0 GPIO_INPUT_PULL_UP>;
 		};
 		ec_ps2_rst {
-			gpios = <&gpio6 2 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio6 2 GPIO_INPUT_PULL_UP>;
 		};
 		ec_gpiob0 {
-			gpios = <&gpiob 0 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpiob 0 GPIO_INPUT_PULL_UP>;
 		};
 		ec_gpio81 {
-			gpios = <&gpio8 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio8 1 GPIO_INPUT_PULL_UP>;
 		};
 		ec_psl_gpo {
-			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpiod 7 GPIO_INPUT_PULL_UP>;
 		};
 		ec_pwm7 {
-			gpios = <&gpio6 0 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio6 0 GPIO_INPUT_PULL_UP>;
 		};
 	};
 

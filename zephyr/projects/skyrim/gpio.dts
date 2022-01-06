@@ -86,11 +86,11 @@
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		usb_c0_bc12_int_odl {
-			gpios = <&gpioa 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioa 4 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 		usb_c1_bc12_int_odl {
-			gpios = <&gpio9 6 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio9 6 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
 		usb_c0_tcpc_rst_l {
@@ -180,16 +180,16 @@
 			gpios = <&gpio5 4 GPIO_PULL_UP>;
 		};
 		6axis_int_l {
-			gpios = <&gpioa 0 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpioa 0 GPIO_INPUT_PULL_UP>;
 		};
 		tablet_mode {
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
 		ec_gpio56 {
-			gpios = <&gpio5 6 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio5 6 GPIO_INPUT_PULL_UP>;
 		};
 		ec_flprg2 {
-			gpios = <&gpio8 6 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio8 6 GPIO_INPUT_PULL_UP>;
 		};
 	};
 
