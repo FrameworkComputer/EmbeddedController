@@ -140,9 +140,13 @@
 #endif
 
 #ifdef CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607
-	#define BASE_IMU_INT() GPIO_INT(GPIO_BASE_IMU_INT_L,                   \
-					GPIO_INT_EDGE_FALLING,                 \
-					icm42607_interrupt)
+	#define BASE_IMU_INT()      GPIO_INT(GPIO_BASE_IMU_INT_L,              \
+					     GPIO_INT_EDGE_FALLING,            \
+					     icm42607_interrupt)
+#elif defined(CONFIG_PLATFORM_EC_ACCELGYRO_BMI3XX)
+	#define BASE_IMU_INT()      GPIO_INT(GPIO_BASE_IMU_INT_L,              \
+					     GPIO_INT_EDGE_FALLING,            \
+					     bmi3xx_interrupt)
 #else
 	#define BASE_IMU_INT()
 #endif
