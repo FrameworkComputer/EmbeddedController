@@ -34,7 +34,7 @@ static void gpio_init(void)
 	task_enable_irq(NPCX_IRQ_WKINTH_0);
 	task_enable_irq(NPCX_IRQ_WKINTA_1);
 	task_enable_irq(NPCX_IRQ_WKINTB_1);
-#ifndef HAS_TASK_KEYSCAN
+#ifdef NPCX_SELECT_KSI_TO_GPIO
 	task_enable_irq(NPCX_IRQ_KSI_WKINTC_1);
 #endif
 	task_enable_irq(NPCX_IRQ_WKINTD_1);
@@ -171,7 +171,7 @@ GPIO_IRQ_FUNC(__gpio_wk0g_interrupt, WUI_INT(MIWU_TABLE_0, MIWU_GROUP_7));
 GPIO_IRQ_FUNC(__gpio_wk0h_interrupt, WUI_INT(MIWU_TABLE_0, MIWU_GROUP_8));
 GPIO_IRQ_FUNC(__gpio_wk1a_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_1));
 GPIO_IRQ_FUNC(__gpio_wk1b_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_2));
-#ifndef HAS_TASK_KEYSCAN
+#ifdef NPCX_SELECT_KSI_TO_GPIO
 /* Declare GPIO irq functions for KSI pins if there's no keyboard scan task, */
 GPIO_IRQ_FUNC(__gpio_wk1c_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_3));
 #endif
@@ -190,7 +190,7 @@ DECLARE_IRQ(NPCX_IRQ_WKINTG_0,         __gpio_wk0g_interrupt, 3);
 DECLARE_IRQ(NPCX_IRQ_WKINTH_0,         __gpio_wk0h_interrupt, 3);
 DECLARE_IRQ(NPCX_IRQ_WKINTA_1,         __gpio_wk1a_interrupt, 3);
 DECLARE_IRQ(NPCX_IRQ_WKINTB_1,         __gpio_wk1b_interrupt, 3);
-#ifndef HAS_TASK_KEYSCAN
+#ifdef NPCX_SELECT_KSI_TO_GPIO
 DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1,     __gpio_wk1c_interrupt, 3);
 #endif
 DECLARE_IRQ(NPCX_IRQ_WKINTD_1,         __gpio_wk1d_interrupt, 3);

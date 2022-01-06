@@ -84,4 +84,8 @@
 #define GPIO_PIN(port, index) GPIO_##port, BIT(index)
 #define GPIO_PIN_MASK(p, m) .port = GPIO_##p, .mask = (m)
 
+#if !defined(HAS_TASK_KEYSCAN)
+#define NPCX_SELECT_KSI_TO_GPIO
+#endif
+
 #endif  /* __CROS_EC_CONFIG_CHIP_H */

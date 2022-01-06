@@ -138,6 +138,7 @@ test_mockable int keyboard_raw_read_rows(void)
 	return (~NPCX_KBSIN) & KB_ROW_MASK;
 }
 
+#ifndef NPCX_SELECT_KSI_TO_GPIO
 /**
  * Enable or disable keyboard interrupts.
  */
@@ -161,6 +162,7 @@ static void keyboard_raw_interrupt(void)
 	task_wake(TASK_ID_KEYSCAN);
 }
 DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1, keyboard_raw_interrupt, 5);
+#endif
 
 int keyboard_raw_is_input_low(int port, int id)
 {
