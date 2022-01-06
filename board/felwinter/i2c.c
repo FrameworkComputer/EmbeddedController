@@ -49,6 +49,7 @@ const struct i2c_port_t i2c_ports[] = {
 		.kbps = 400,
 		.scl = GPIO_EC_I2C_USB_C1_TCPC_SCL,
 		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
+		.flags = I2C_PORT_FLAG_DYNAMIC_SPEED,
 	},
 	{
 		/* I2C5 */
