@@ -560,3 +560,30 @@ __override void lid_angle_peripheral_enable(int enable)
 			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
 	}
 }
+
+static const struct ec_response_keybd_config keybd1 = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	/* No function keys, no numeric keypad and no screenlock key */
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	/*
+	 * Future boards should use fw_config if needed.
+	 */
+
+	return &keybd1;
+}
