@@ -38,63 +38,47 @@ enum cbi_ssfc_value_id {
 /*
  * Macros to help generate the enum list of field and value names.
  */
+
+/*
+ * Retrieve the enum-name property for this node.
+ */
 #define CBI_FW_CONFIG_ENUM(node)	DT_STRING_TOKEN(node, enum_name)
 
-#define CBI_FW_CONFIG_COMPAT			named_cbi_fw_config
 /*
- * Prepend enum name with CBI_FW_CONFIG_FIELD_
+ * Create an enum entry without a value (an enum with a following comma).
  */
-#define CBI_FW_CONFIG_F_PREPEND(id)	DT_CAT(CBI_FW_CONFIG_FIELD_, id)
-/*
- * Invoked for each child of all instances of nodes with
- * compatible = "named-cbi-fw-config"
- * Creates an enum field id from the enum-name property.
- */
-#define CBI_FW_CONFIG_F_ENUM(node)	\
-	CBI_FW_CONFIG_F_PREPEND(CBI_FW_CONFIG_ENUM(node))
-
-#define CBI_FW_CONFIG_F_ENUM_WITH_COMMA(node)	\
-	CBI_FW_CONFIG_F_ENUM(node),
+#define CBI_FW_CONFIG_ENUM_WITH_COMMA(node)	\
+	CBI_FW_CONFIG_ENUM(node),
 
 /*
- * Invoked for each node that has compatible = "named-cbi-fw-config"
+ * Create a single enum entry with assignment to the node's value,
+ * along with a following comma.
  */
-#define CBI_FW_CONFIG_F_ALL(inst) \
-	DT_FOREACH_CHILD_STATUS_OKAY(inst, CBI_FW_CONFIG_F_ENUM_WITH_COMMA)
+#define CBI_FW_CONFIG_ENUM_WITH_VALUE(node) \
+	CBI_FW_CONFIG_ENUM(node) = DT_PROP(node, value),
 
+/*
+ * Generate a list of enum entries without a value.
+ */
+#define CBI_FW_CONFIG_CHILD_ENUM_LIST(node) \
+	DT_FOREACH_CHILD_STATUS_OKAY(node, CBI_FW_CONFIG_ENUM_WITH_COMMA)
+
+/*
+ * Enum list of all fields.
+ */
 enum cbi_fw_config_field_id {
-	DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_COMPAT,
-			       CBI_FW_CONFIG_F_ALL)
+	DT_FOREACH_STATUS_OKAY(named_cbi_fw_config,
+			       CBI_FW_CONFIG_CHILD_ENUM_LIST)
 	CBI_FW_CONFIG_FIELDS_COUNT
 };
-
-#define CBI_FW_CONFIG_VALUE_COMPAT		named_cbi_fw_config_value
-
-#define CBI_FW_CONFIG_V_PARENT(node) CBI_FW_CONFIG_ENUM(DT_PARENT(node))
-
-/*
- * Create the full enum name for this child node, as
- * CBI_FW_CONFIG_FIELD_field_value
- */
-#define CBI_FW_CONFIG_V_NAME(p, e) DT_CAT4(CBI_FW_CONFIG_VALUE_, p, _, e)
-
-#define CBI_FW_CONFIG_V_ENUM(node) \
-	CBI_FW_CONFIG_V_NAME(CBI_FW_CONFIG_V_PARENT(node), \
-			     DT_STRING_TOKEN(node, enum_name))
-
-/*
- * Create a single enum entry with assignment to the child value.
- */
-#define CBI_FW_CONFIG_V_ENTRY(node) \
-	CBI_FW_CONFIG_V_ENUM(node) = DT_PROP(node, value),
 
 /*
  * enum list of all child values.
  */
 enum cbi_fw_config_value_id {
-	DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT,
-			       CBI_FW_CONFIG_V_ENTRY)
-	CBI_FW_CONFIG_VALUES_COUNT
+	DT_FOREACH_STATUS_OKAY(named_cbi_fw_config_value,
+			       CBI_FW_CONFIG_ENUM_WITH_VALUE)
+	CBI_FW_CONFIG_VALUES_LAST /* added to ensure at least one entry */
 };
 
 /**
