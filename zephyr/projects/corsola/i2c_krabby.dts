@@ -56,7 +56,7 @@
 
 };
 
-&i2c0 {
+i2c_pwr_cbi: &i2c0 {
 	/* EC_I2C_PWR_CBI */
 	label = "I2C_PWR_CBI";
 	status = "okay";
