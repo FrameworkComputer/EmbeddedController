@@ -53,3 +53,12 @@ config PLATFORM_EC_HOSTCMD_CONSOLE_BUF_SIZE
 	  modular arithmetic is used.
 
 endif # PLATFORM_EC_HOSTCMD_CONSOLE
+
+menuconfig PLATFORM_EC_CONSOLE_DEBUG
+	bool "Console Debug"
+	depends on CONSOLE
+	default n
+	help
+	  Write all zephyr_print() messages to printk() also. Not recommended
+	  outside of tests.
+

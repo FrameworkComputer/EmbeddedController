@@ -278,6 +278,8 @@ static void zephyr_print(const char *buff, size_t size)
 		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
 		if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE))
 			console_buf_notify_chars(buff, size);
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_CONSOLE_DEBUG))
+			printk("%s", buff);
 	}
 }
 
