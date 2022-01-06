@@ -36,8 +36,11 @@ enum cbi_ssfc_value_id {
 #undef DT_DRV_COMPAT
 
 /*
- * Macros to help generate the enum list of field and value names.
+ * Macros to help generate the enum list of field and value names
+ * for the FW_CONFIG CBI data.
  */
+#define CBI_FW_CONFIG_COMPAT		named_cbi_fw_config
+#define CBI_FW_CONFIG_VALUE_COMPAT	named_cbi_fw_config_value
 
 /*
  * Retrieve the enum-name property for this node.
@@ -67,7 +70,7 @@ enum cbi_ssfc_value_id {
  * Enum list of all fields.
  */
 enum cbi_fw_config_field_id {
-	DT_FOREACH_STATUS_OKAY(named_cbi_fw_config,
+	DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_COMPAT,
 			       CBI_FW_CONFIG_CHILD_ENUM_LIST)
 	CBI_FW_CONFIG_FIELDS_COUNT
 };
@@ -76,7 +79,7 @@ enum cbi_fw_config_field_id {
  * enum list of all child values.
  */
 enum cbi_fw_config_value_id {
-	DT_FOREACH_STATUS_OKAY(named_cbi_fw_config_value,
+	DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT,
 			       CBI_FW_CONFIG_ENUM_WITH_VALUE)
 	CBI_FW_CONFIG_VALUES_LAST /* added to ensure at least one entry */
 };
