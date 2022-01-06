@@ -169,10 +169,13 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-
 /* Board specific handlers */
 void led_alert(int enable);
 void show_critical_error(void);
+
+/* Board ADS control handlers */
+void ads_5v_interrupt(enum gpio_signal signal);
+void ads_12v_interrupt(enum gpio_signal signal);
 
 /*
  * firmware config fields

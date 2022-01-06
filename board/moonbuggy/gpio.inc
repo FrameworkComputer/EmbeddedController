@@ -45,14 +45,15 @@ GPIO_INT(EC_RECOVERY_BTN_ODL,  PIN(F, 1), GPIO_INT_BOTH, button_interrupt)
  * Recovery button input from H1.
  */
 GPIO_INT(H1_EC_RECOVERY_BTN_ODL, PIN(2, 4), GPIO_INT_BOTH, button_interrupt)
-GPIO(BJ_ADP_PRESENT_L,     PIN(8, 2), GPIO_INT_BOTH | GPIO_PULL_UP)
+GPIO_INT(BJ_ADP_PRESENT_L,       PIN(8, 2), GPIO_INT_FALLING | GPIO_PULL_UP,
+ads_12v_interrupt)
 
 /* Port power control interrupts */
 GPIO_INT(HDMI_CONN0_OC_ODL,    PIN(0, 7), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(HDMI_CONN1_OC_ODL,    PIN(0, 6), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A1_OC_ODL,        PIN(A, 2), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A2_OC_ODL,        PIN(F, 5), GPIO_INT_BOTH, port_ocp_interrupt)
-GPIO_INT(USB_A3_OC_ODL,        PIN(0, 3), GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(USB_A3_OC_ODL,        PIN(C, 2), GPIO_INT_BOTH, port_ocp_interrupt)
 
 /* PCH/CPU signals */
 GPIO(EC_PCH_PWROK,             PIN(0, 5), GPIO_OUT_LOW)
@@ -102,6 +103,10 @@ GPIO(M2_SSD_PLN,               PIN(A, 0), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_ODR_HIGH)
 GPIO(PACKET_MODE_EN,           PIN(7, 5), GPIO_OUT_LOW)
+GPIO_INT(ADS_5VS_V2_ADP_PRESENT_L,   PIN(0, 3), GPIO_INT_FALLING | GPIO_PULL_UP,
+ads_5v_interrupt)
+GPIO(EC_AC_JACK_CHARGER_EC_L,        PIN(C, 0), GPIO_OUT_LOW)
+GPIO(LAN_WAKE_ODL_EC,                PIN(8, 0), GPIO_INPUT)       /* LAN_WAKE */
 
 /* HDMI/CEC */
 GPIO(HDMI_CONN0_CEC_OUT,       PIN(B, 1), GPIO_ODR_HIGH)
@@ -148,11 +153,8 @@ ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                 /* UART from EC 
 
 /* Unused pins */
 UNUSED(PIN(1, 3))						/* EC_GP_SEL1_ODL */
-UNUSED(PIN(C, 0))						/* FAN_PWM_2 */
-UNUSED(PIN(8, 0))						/* LED_BLUE_L */
 UNUSED(PIN(4, 4))						/* ADC1/TEMP_SENSOR_2 */
 UNUSED(PIN(4, 2))						/* ADC3/TEMP_SENSOR_3 */
-UNUSED(PIN(C, 2))						/* A12 NC */
 UNUSED(PIN(9, 2))						/* K8  NC */
 UNUSED(PIN(9, 1))						/* L8  NC */
 UNUSED(PIN(1, 2))						/* C6  NC */
