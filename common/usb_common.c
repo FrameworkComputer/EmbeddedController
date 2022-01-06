@@ -838,7 +838,7 @@ void pd_set_vbus_discharge(int port, int enable)
 	if (get_usb_pd_discharge() == USB_PD_DISCHARGE_GPIO) {
 		gpio_discharge_vbus(port, enable);
 	} else if (get_usb_pd_discharge() == USB_PD_DISCHARGE_TCPC) {
-#ifdef CONFIG_USB_PD_DISCHARGE_PPC
+#ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 		tcpc_discharge_vbus(port, enable);
 #endif
 	} else if (get_usb_pd_discharge() == USB_PD_DISCHARGE_PPC) {
