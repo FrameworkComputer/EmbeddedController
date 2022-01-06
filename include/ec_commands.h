@@ -180,13 +180,17 @@ extern "C" {
 #define EC_MEMMAP_ACC_STATUS_PRESENCE_BIT    BIT(7)
 
 /* Number of temp sensors at EC_MEMMAP_TEMP_SENSOR */
-#define EC_TEMP_SENSOR_ENTRIES     16
+#define EC_TEMP_SENSOR_ENTRIES        16
 /*
  * Number of temp sensors at EC_MEMMAP_TEMP_SENSOR_B.
  *
  * Valid only if EC_MEMMAP_THERMAL_VERSION returns >= 2.
  */
 #define EC_TEMP_SENSOR_B_ENTRIES      8
+
+/* Max temp sensor entries for host commands */
+#define EC_MAX_TEMP_SENSOR_ENTRIES    (EC_TEMP_SENSOR_ENTRIES + \
+				       EC_TEMP_SENSOR_B_ENTRIES)
 
 /* Special values for mapped temperature sensors */
 #define EC_TEMP_SENSOR_NOT_PRESENT    0xff
