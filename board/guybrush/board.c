@@ -288,10 +288,10 @@ __override int board_c1_ps8818_mux_set(const struct usb_mux *me,
 			return rv;
 
 		/* Enable HPD on the DB */
-		gpio_set_level(GPIO_USB_C1_HPD, 1);
+		ioex_set_level(IOEX_USB_C1_IN_HPD, 1);
 	} else {
 		/* Disable HPD on the DB */
-		gpio_set_level(GPIO_USB_C1_HPD, 0);
+		ioex_set_level(IOEX_USB_C1_IN_HPD, 0);
 	}
 
 	return rv;

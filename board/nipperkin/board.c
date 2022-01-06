@@ -125,6 +125,11 @@ __override int board_c1_ps8818_mux_set(const struct usb_mux *me,
 		if (rv)
 			return rv;
 
+		/* Enable HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_IN_HPD, 1);
+	} else {
+		/* Disable HPD on the DB */
+		ioex_set_level(IOEX_USB_C1_IN_HPD, 0);
 	}
 
 	return rv;
