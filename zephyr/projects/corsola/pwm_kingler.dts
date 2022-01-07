@@ -1,0 +1,47 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-pwms {
+		compatible = "named-pwms";
+
+		led1_red: ec_led1_odl {
+			#pwm-cells = <0>;
+			pwms = <&pwm0 0 PWM_POLARITY_INVERTED>;
+			frequency = <100>;
+		};
+		led2_green: ec_led2_odl {
+			#pwm-cells = <0>;
+			pwms = <&pwm1 0 PWM_POLARITY_INVERTED>;
+			frequency = <100>;
+		};
+		led3_blue: ec_led3_odl {
+			#pwm-cells = <0>;
+			pwms = <&pwm2 0 PWM_POLARITY_INVERTED>;
+			frequency = <100>;
+		};
+	};
+};
+
+/* Red LED */
+&pwm0 {
+	status = "okay";
+	drive-open-drain;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* Green LED */
+&pwm1 {
+	status = "okay";
+	drive-open-drain;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* Blue LED */
+&pwm2 {
+	status = "okay";
+	drive-open-drain;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
