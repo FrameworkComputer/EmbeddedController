@@ -1,0 +1,41 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig AP_PWRSEQ
+	bool "AP Power sequencing support"
+	help
+	  Enables AP power sequencing support with
+	  embedded controller. This includes normal shutdown, critical
+	  shutdown and reset handling.
+
+if AP_PWRSEQ
+
+config X86_NON_DSX_PWRSEQ
+	bool
+	default n
+	help
+	  This option enables Non Deep Sleep Well power sequencing for
+	  Intel x86 chips.
+
+config X86_NON_DSX_PWRSEQ_ADL
+	bool "x86 Non Deep Sx power sequencing on ADL"
+	depends on AP_X86_INTEL_ADL
+	select X86_NON_DSX_PWRSEQ
+	default n
+	help
+	  This enables AP power sequecing support for Intel Alderlake
+	  family of chipset.
+
+config X86_NON_DSW_PWRSEQ_STACK_SIZE
+	int "AP pwrseq stack size (in bytes)"
+	default 1024
+	help
+	  This option specifies the size of the stack used by the
+	  AP power sequencing state machine thread handler.
+
+endif
+
+module = AP_PWRSEQ
+module-str = ap_pwrseq
+source "subsys/logging/Kconfig.template.log_config"

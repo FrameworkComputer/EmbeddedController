@@ -1,0 +1,159 @@
+ # Copyright 2022 The Chromium OS Authors. All rights reserved.
+ # Use of this source code is governed by a BSD-style license that can be
+ # found in the LICENSE file.
+
+description: Common fields for AP power sequence
+
+compatible: "intel,ap-pwrseq"
+
+properties:
+    dsw-pwrok-delay:
+      type: int
+      required: false
+      default: 10
+      description: |
+        Delay to set DSW_PWROK high to PCH after 3.3V rail stable,
+        in milliseconds.
+
+    rsmrst-delay:
+      type: int
+      required: false
+      default: 10
+      description: |
+        Delay to set RSMRST from EC to SoC, in milliseconds.
+
+    sys-pwrok-delay:
+      type: int
+      required: false
+      default: 45
+      description: |
+        Delay from PG_EC_ALL_SYS_PWRGD high to set EC_PCH_SYS_PWROK high,
+        in milliseconds.
+
+    pm-pwrbtn-delay:
+      type: int
+      required: false
+      default: 200
+      description: |
+        Power button delay, in milliseconds.
+
+    pch-pwrok-delay:
+      type: int
+      required: false
+      default: 2
+      description: |
+        Delay in ms from IMVP9_VRRDY high to PCH_PWROK high delay.
+
+    vccst-pwrgd-delay:
+      type: int
+      required: false
+      default: 2
+      description: |
+        Delay in ms from PG_EC_ALL_SYS_PWRGD high
+        to VCCST_PWRGD high.
+
+    sys-reset-delay:
+      type: int
+      required: false
+      default: 32
+      description: Debounce time for SYS_RESET_L.
+
+    vrrdy-timeout:
+      type: int
+      required: false
+      default: 50
+      description: |
+        Timeout in ms for IMVP9_VRRDY high.
+
+    all-sys-pwrgd-timeout:
+      type: int
+      required: false
+      default: 0
+      description: |
+        Timeout in ms for ALL_SYS_PWRGD input to EC to be high.
+
+    wait-signal-timeout:
+      type: int
+      required: false
+      default: 1000
+      description: |
+        Timeout in ms for monitoring power signals.
+
+    pg-ec-dsw-pwrok-gpios:
+      type: phandle-array
+      required: false
+      description: |
+        VR/Circuit input to EC 3.3V power good signal.
+
+    ec-pch-rsmrst-odl-gpios:
+      type: phandle-array
+      required: true
+      description: |
+        EC output to PCH, indicating RSMRST power good signal.
+
+    en-pp5000-s5-gpios:
+      type: phandle-array
+      required: false
+      description: |
+        Output from EC to enable 5V rail.
+
+    pg-ec-rsmrst-odl-gpios:
+      type: phandle-array
+      required: true
+      description: |
+        VR/Circuit input to EC RSMRST power good for
+        VCCPRIM rails and other S5 rails.
+
+    slp-s3-l-gpios:
+      type: phandle-array
+      required: true
+      description: |
+        SLP_S3 signal input to EC for S3 sleep control from SoC.
+
+    pg-ec-all-sys-pwrgd-gpios:
+      type: phandle-array
+      required: true
+      description: |
+        This represents the power good for all
+        the platform voltage rails input to EC.
+
+    sys-rst-l-gpios:
+      type: phandle-array
+      required: false
+      description: |
+        SYS Reset signal output from EC.
+
+    ec-pch-sys-pwrok-gpios:
+      type: phandle-array
+      required: true
+      description: |
+        SYS_PWROK is a generic power good input to the PCH from EC,
+        driven and utilized in a platform specific manner.
+
+    pch-pwrok-gpios:
+      type: phandle-array
+      required: true
+      description: |
+        PCH PWROK assertion indicates all the main PCH
+        primary rails and all the CPU rails are up from EC to PCH.
+
+    imvp9-vrrdy-od-gpios:
+      type: phandle-array
+      required: true
+      description: |
+        IMVP VRRDY input signal to EC indicates that the IMVP
+        start-up sequence is complete.
+
+    vccst-pwrgd-od-gpios:
+      type: phandle-array
+      required: true
+      description: |
+        VCCST PWRGD signal output from EC to indicate that the
+        VCC1P05_PROC/VDDQ power supplies are stable and
+        within specification.
+
+    slp-sus-l-gpios:
+      type: phandle-array
+      required: true
+      description: |
+        SLP_SUS signal from SoC to EC.

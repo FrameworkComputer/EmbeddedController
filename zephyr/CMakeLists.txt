@@ -91,6 +91,7 @@ endif()
 add_subdirectory("app")
 add_subdirectory("drivers")
 add_subdirectory("emul")
+add_subdirectory("subsys")
 
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 # Creates a phony target all.libraries in case you only want to build the
