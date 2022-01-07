@@ -9,5 +9,6 @@ register_npcx_project(
         "cbi_eeprom.dts",
         "gpio.dts",
         "motionsense.dts",
+        "pwm.dts",
     ],
 )
