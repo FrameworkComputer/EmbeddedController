@@ -8,10 +8,12 @@
 #include <drivers/gpio/gpio_emul.h>
 
 #include "battery_smart.h"
+#include "ec_commands.h"
 #include "ec_tasks.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
+#include "host_command.h"
 #include "tcpm/tcpci.h"
 
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
@@ -100,6 +102,10 @@ static void test_attach_pd_charger(void)
 	struct tcpci_src_emul_data my_charger;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
+	struct ec_params_charge_state charge_params;
+	struct ec_response_charge_state charge_response;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+			EC_CMD_CHARGE_STATE, 0, charge_response, charge_params);
 
 	/*
 	 * TODO(b/209907297): Implement the steps of the test beyond USB default
@@ -133,6 +139,20 @@ static void test_attach_pd_charger(void)
 	 * current); make sure that reports from battery and PD host commands
 	 * match; check that host command reports no active PDO.
 	 */
+	/*
+	 * TODO(b/209907297): Also check the corresponding PD state and
+	 * encapsulate this for use in other tests.
+	 */
+	charge_params.chgnum = 0;
+	charge_params.cmd = CHARGE_STATE_CMD_GET_STATE;
+	zassert_ok(host_command_process(&args), "Failed to get charge state");
+	zassert_true(charge_response.get_state.ac, "USB default but AC absent");
+	zassert_equal(charge_response.get_state.chg_voltage, 5000,
+			"USB default volage %dmV",
+			charge_response.get_state.chg_voltage);
+	zassert_true(charge_response.get_state.chg_current > 0,
+			"USB default current %dmA",
+			charge_response.get_state.chg_current);
 
 	/*
 	 * 3. Wait for SenderResponseTimeout. Expect TCPM to send Request.
