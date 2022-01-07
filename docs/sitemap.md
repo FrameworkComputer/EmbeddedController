@@ -31,6 +31,7 @@
 *   [Fingerprint Factory Requirements](./fingerprint/fingerprint-factory-requirements.md)
 *   [Fingerprint Quick Factory Guide](./fingerprint/fingerprint-factory-quick-guide.md)
 *   [Dragonclaw Schematics and Layout](./schematics/dragonclaw)
+*   [Fingerprint MCU RAM and Flash](./fingerprint/fingerprint-ram-and-flash.md)
 
 ## Testing
 

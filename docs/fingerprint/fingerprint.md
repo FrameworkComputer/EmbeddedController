@@ -33,6 +33,9 @@ MCU                      | Sensor     | Firmware (EC "board")                   
 [STM32H743] \(Cortex-M7) | [FPC 1145] | `dartmonkey`<br>(aka `nocturne_fp`, `nami_fp`) | [Icetower v0.2] <br>(Previously Dragontalon) | [Nucleo H743ZI2]
 [STM32F412] \(Cortex-M4) | [FPC 1025] | `bloonchipper`<br>(aka `hatch_fp`)             | [Dragonclaw v0.2]                            | [Nucleo F412ZG]
 
+RAM and Flash details for each board are in the [Fingerprint MCU RAM and Flash]
+document.
+
 ### Sensor Template Sizes
 
 Sensor     | Fingerprint Template Size
@@ -587,3 +590,4 @@ a given device can be found by viewing `chrome://system/#platform_identity_sku`.
 [Morphius `config.star`]: https://chrome-internal.googlesource.com/chromeos/project/zork/morphius/+/593b657a776ed6b320c826916adc9cd845faf709/config.star#85
 [regenerate the config]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md#making-configuration-changes-for-your-project
 [`CLFactory`]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md#making-bulk-changes-across-repos
+[Fingerprint MCU RAM and Flash]: ./fingerprint-ram-and-flash.md
