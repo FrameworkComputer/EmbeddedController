@@ -215,6 +215,7 @@ config PLATFORM_EC_CHARGER_RAA489000
 	depends on PLATFORM_EC_CHARGER_SENSE_RESISTOR > 0
 	depends on PLATFORM_EC_CHARGER_SENSE_RESISTOR_AC > 0
 	select PLATFORM_EC_CHARGER_NARROW_VDC
+	select PLATFORM_EC_CHARGER_TRICKLE
 	help
 	  Enables the driver for the Renesas RAA489000 battery charger
 	  with integrated USB-C TCPC.
@@ -514,6 +515,14 @@ config PLATFORM_EC_CHARGER_NARROW_VDC
 
 	  This should be enabled by charger drivers which need it. It cannot
 	  be set otherwise, even in prj.conf
+
+config PLATFORM_EC_CHARGER_TRICKLE
+	bool
+	help
+	  Select this if the charger allows trickle charging, which allows
+	  the battery to charge with a minimum voltage.
+
+	  This should be enabled by charger drivers which need it.
 
 config PLATFORM_EC_CHARGER_OTG_SUPPORTED
 	bool
