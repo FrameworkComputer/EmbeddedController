@@ -149,7 +149,7 @@ uint32_t task_wait_event(int timeout_us)
 
 	t1.val = get_time().val + timeout_us;
 
-	asm volatile("cpsid i");
+	interrupt_disable();
 	/* the event already happened */
 	if (last_event || !timeout_us) {
 		evt = last_event;
@@ -196,7 +196,7 @@ uint32_t task_wait_event(int timeout_us)
 
 		asm volatile("cpsie i ; isb");
 		/* note: interrupt that woke us up will run here */
-		asm volatile("cpsid i");
+		interrupt_disable();
 
 		t0 = get_time();
 		/* check for timeout if timeout was set */
@@ -239,7 +239,7 @@ noreturn
 void __keep cpu_reset(void)
 {
 	/* Disable interrupts */
-	asm volatile("cpsid i");
+	interrupt_disable();
 	/* reboot the CPU */
 	CPU_NVIC_APINT = 0x05fa0004;
 	/* Spin and wait for reboot; should never return */

@@ -449,7 +449,7 @@ static int command_sleep(int argc, char **argv)
 		void (*rom_clock_set)(uint32_t rcc) = func_table[23];
 
 		/* Disable interrupts. */
-		asm volatile("cpsid i");
+		interrupt_disable();
 
 		switch (clock) {
 		case 1: /* 16MHz IOSC */
@@ -486,7 +486,7 @@ static int command_sleep(int argc, char **argv)
 			/* Enable the port. */
 			LM4_UART_CTL(0) |= 0x0001;
 		}
-		asm volatile("cpsie i");
+		interrupt_enable();
 	}
 
 	if (uartfbrd) {
@@ -495,7 +495,7 @@ static int command_sleep(int argc, char **argv)
 	}
 
 	/* Enable interrupts. */
-	asm volatile("cpsid i");
+	interrupt_disable();
 
 	/* gate peripheral clocks */
 	if (level & 1) {

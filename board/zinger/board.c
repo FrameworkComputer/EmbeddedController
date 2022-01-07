@@ -38,7 +38,7 @@ static void jump_to_rw(void)
 
 	debug_printf("Jump to RW\n");
 	/* Disable interrupts */
-	asm volatile("cpsid i");
+	interrupt_disable();
 	/* Call RW firmware reset vector */
 	jump_rw_rst();
 }

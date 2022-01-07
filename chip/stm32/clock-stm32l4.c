@@ -1039,7 +1039,7 @@ void __idle(void)
 	struct rtc_time_reg rtc0, rtc1;
 
 	while (1) {
-		asm volatile("cpsid i");
+		interrupt_disable();
 
 		t0 = get_time();
 		next_delay = __hw_clock_event_get() - t0.le.lo;
@@ -1103,7 +1103,7 @@ void __idle(void)
 			/* Normal idle : only CPU clock stopped */
 			asm("wfi");
 		}
-		asm volatile("cpsie i");
+		interrupt_enable();
 	}
 }
 

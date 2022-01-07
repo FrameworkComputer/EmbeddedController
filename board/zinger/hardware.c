@@ -464,7 +464,7 @@ void flash_physical_permanent_protect(void)
 	/* Set RDP to level 1 to prevent disabling the protection */
 	write_optb(0, 0x11);
 	/* Reset by using OBL_LAUNCH to take changes into account */
-	asm volatile("cpsid i");
+	interrupt_disable();
 	STM32_FLASH_CR |= FLASH_CR_OBL_LAUNCH;
 	/* Spin and wait for reboot; should never return */
 	while (1)

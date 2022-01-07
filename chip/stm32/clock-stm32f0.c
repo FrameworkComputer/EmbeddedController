@@ -259,7 +259,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 		set_rtc_alarm(seconds, microseconds, &rtc, 0);
 
 	/* interrupts off now */
-	asm volatile("cpsid i");
+	interrupt_disable();
 
 #ifdef CONFIG_HIBERNATE_WAKEUP_PINS
 	/* enable the wake up pins */
@@ -298,7 +298,7 @@ void __idle(void)
 	struct rtc_time_reg rtc0, rtc1;
 
 	while (1) {
-		asm volatile("cpsid i");
+		interrupt_disable();
 
 		t0 = get_time();
 		next_delay = __hw_clock_event_get() - t0.le.lo;
@@ -376,7 +376,7 @@ void __idle(void)
 #ifdef CONFIG_LOW_POWER_IDLE_LIMITED
 en_int:
 #endif
-		asm volatile("cpsie i");
+		interrupt_enable();
 	}
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
