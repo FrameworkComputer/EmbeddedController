@@ -148,7 +148,7 @@ static void test_attach_pd_charger(void)
 	zassert_ok(host_command_process(&args), "Failed to get charge state");
 	zassert_true(charge_response.get_state.ac, "USB default but AC absent");
 	zassert_equal(charge_response.get_state.chg_voltage, 5000,
-			"USB default volage %dmV",
+			"USB default voltage %dmV",
 			charge_response.get_state.chg_voltage);
 	zassert_true(charge_response.get_state.chg_current > 0,
 			"USB default current %dmA",
