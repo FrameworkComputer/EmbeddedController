@@ -7,6 +7,7 @@
 #include "charger.h"
 #include "charger/isl923x_public.h"
 #include "usb_pd.h"
+#include "sub_board.h"
 
 const struct charger_config_t chg_chips[] = {
 	{
@@ -14,12 +15,13 @@ const struct charger_config_t chg_chips[] = {
 		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
 		.drv = &isl923x_drv,
 	},
-	/*
-	 * TODO(b:212490923) port 1 is present on sub-boards 1 and 2 with same
-	 * configuration as port 0 but on I2C_PORT_USB_C1_TCPC.
-	 */
+	/* Sub-board */
+	{
+		.i2c_port = I2C_PORT_USB_C1_TCPC,
+		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
+		.drv = &isl923x_drv,
+	},
 };
-const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
 
 int extpower_is_present(void)
 {
@@ -34,4 +36,19 @@ int extpower_is_present(void)
 	}
 
 	return 0;
+}
+
+/*
+ * Count of chargers depends on sub board presence.
+ */
+__override uint8_t board_get_charger_chip_count(void)
+{
+	switch (nissa_get_sb_type()) {
+	default:
+		return 1;
+
+	case NISSA_SB_C_A:
+	case NISSA_SB_C_LTE:
+		return 2;
+	}
 }
