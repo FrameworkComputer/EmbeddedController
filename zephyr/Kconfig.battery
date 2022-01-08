@@ -119,6 +119,30 @@ menuconfig PLATFORM_EC_CHARGER
 
 if PLATFORM_EC_CHARGER
 
+choice PLATFORM_EC_CHARGER_TYPE
+	prompt "Select how many chargers are on the board"
+	default PLATFORM_EC_CHARGER_SINGLE_CHIP
+	help
+	  Select a single charger or multiple chargers.
+	  Multiple chargers imply one charger per type-C port (OCPC).
+
+config PLATFORM_EC_CHARGER_SINGLE_CHIP
+	bool "Board has a single charger"
+	help
+	  Enables a single charger for the board, which is assigned
+	  index 0.
+
+config PLATFORM_EC_OCPC
+	bool "Board has multiple chargers"
+	help
+	  Enables multiple chargers, one for each type-C port (OCPC).
+	  The assumption is that that primary charger is index 0 and is the
+	  charger IC connected to the battery FET.
+	  Additionally, `chgnum` is assumed to be the same as the
+	  charge port index.
+
+endchoice  # PLATFORM_EC_CHARGER_TYPE
+
 config PLATFORM_EC_CHARGE_MANAGER
 	bool "Charge manager"
 	default y
@@ -219,6 +243,19 @@ config PLATFORM_EC_CHARGER_RAA489000
 	help
 	  Enables the driver for the Renesas RAA489000 battery charger
 	  with integrated USB-C TCPC.
+
+if PLATFORM_EC_OCPC
+
+config PLATFORM_EC_OCPC_DEF_RBATT_MOHMS
+	int "Resistance between the secondary charger IC and the battery"
+	help
+	  Boards using OCPC must define this value in order to seed the
+	  starting board battery and system resistance between the secondary
+	  charger IC and the battery.
+	  This should be at a minimum the Rds(on) resistance of the BFET plus
+	  the series sense resistor.
+
+endif  # PLATFORM_EC_OCPC
 
 config PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
 	bool "Board supports discharge mode"

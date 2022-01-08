@@ -11,8 +11,9 @@
 /* Corsola board specific hibernate implementation */
 __override void board_hibernate_late(void)
 {
-	if (IS_ENABLED(CONFIG_CHARGER_ISL9238C))
-		isl9238c_hibernate(CHARGER_SOLO);
+#if	defined(CONFIG_CHARGER_ISL9238C)
+	isl9238c_hibernate(CHARGER_SOLO);
+#endif
 
 	gpio_set_level(GPIO_EN_ULP, 1);
 
