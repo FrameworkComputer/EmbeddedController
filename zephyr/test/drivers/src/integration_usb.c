@@ -38,6 +38,7 @@ static void init_tcpm(void)
 
 	set_test_runner_tid();
 	zassert_ok(tcpci_tcpm_init(0), 0);
+	tcpci_emul_set_rev(tcpci_emul, TCPCI_EMUL_REV1_0_VER1_0);
 	pd_set_suspend(0, 0);
 	/* Reset to disconnected state. */
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
