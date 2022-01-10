@@ -156,6 +156,10 @@ static void test_attach_pd_charger(void)
 	charge_params.cmd = CHARGE_STATE_CMD_GET_STATE;
 	zassert_ok(host_command_process(&args), "Failed to get charge state");
 	zassert_true(charge_response.get_state.ac, "USB default but AC absent");
+	/*
+	 * TODO(b/213909940): This check will fail if test_suite_smart_battery
+	 * has not been run previously. Figure out why and fix it.
+	 */
 	zassert_equal(charge_response.get_state.chg_voltage, 5000,
 			"USB default voltage %dmV",
 			charge_response.get_state.chg_voltage);
