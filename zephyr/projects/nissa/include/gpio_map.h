@@ -36,9 +36,17 @@
 #define AP_PROCHOT_INT(gpio, edge)
 #endif
 
+#ifdef CONFIG_PLATFORM_EC_SWITCH
+	#define WP_INT()        GPIO_INT(GPIO_WP_L,                           \
+					 GPIO_INT_EDGE_BOTH,                  \
+					 switch_interrupt)
+#else
+	#define WP_INT()
+#endif
+
 #ifdef CONFIG_PLATFORM_EC_POWER_BUTTON
-	#define PWRBTN_INT()        GPIO_INT(GPIO_POWER_BUTTON_L,              \
-					     GPIO_INT_EDGE_BOTH,               \
+	#define PWRBTN_INT()        GPIO_INT(GPIO_POWER_BUTTON_L,             \
+					     GPIO_INT_EDGE_BOTH,              \
 					     power_button_interrupt)
 #else
 	#define PWRBTN_INT()
@@ -50,6 +58,14 @@
 				lid_interrupt)
 #else
 	#define LID_INT()
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO_AS_BASE
+	#define LSM6DSO_INT()   GPIO_INT(GPIO_EC_IMU_INT_L, \
+				GPIO_INT_EDGE_FALLING,     \
+				lsm6dso_interrupt)
+#else
+	#define LSM6DSO_INT()
 #endif
 
 #ifdef CONFIG_PLATFORM_EC_VOLUME_BUTTONS
@@ -70,7 +86,9 @@
 
 
 #define EC_CROS_GPIO_INTERRUPTS                                         \
+	WP_INT()							\
 	LID_INT()							\
+	LSM6DSO_INT()							\
 	PWRBTN_INT()							\
 	VOLBTN_INT(GPIO_VOLUME_DOWN_L)					\
 	VOLBTN_INT(GPIO_VOLUME_UP_L)					\
