@@ -64,6 +64,7 @@
 #define AP_PROCHOT_INT(gpio, edge)
 #endif
 
+#define GPIO_EC_BATT_PRES_ODL GPIO_BATT_PRES_ODL
 
 #define EC_CROS_GPIO_INTERRUPTS                                           \
 	GMR_TABLET_MODE_INT(GPIO_TABLET_MODE_L, GPIO_INT_EDGE_BOTH)       \
