@@ -48,6 +48,7 @@
 		gpio_cpu_c10_gate_l: cpu_c10_gate_l {
 			#gpio-cells = <0>;
 			gpios = <&gpio6 7 GPIO_INPUT>;
+			enum-name = "GPIO_CPU_C10_GATE_L";
 		};
 		gpio_ec_battery_pres_odl: ec_battery_pres_odl {
 			#gpio-cells = <0>;
@@ -87,6 +88,7 @@
 		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
 			#gpio-cells = <0>;
 			gpios = <&gpioe 4 GPIO_OUTPUT>;
+			enum-name = "GPIO_EC_SOC_HDMI_HPD";
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
 			#gpio-cells = <0>;
@@ -146,6 +148,7 @@
 		gpio_en_pp5000_pen_x: en_pp5000_pen_x {
 			#gpio-cells = <0>;
 			gpios = <&gpioe 2 GPIO_OUTPUT>;
+			enum-name = "GPIO_EN_PP5000_PEN_X";
 		};
 		gpio_en_pp5000_s5: en_pp5000_s5 {
 			#gpio-cells = <0>;
@@ -160,6 +163,7 @@
 		gpio_en_sub_usb_a1_vbus: en_sub_usb_a1_vbus {
 			#gpio-cells = <0>;
 			gpios = <&gpiod 4 GPIO_OUTPUT>;
+			enum-name = "GPIO_EN_SUB_USB_A1_VBUS";
 		};
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
 			#gpio-cells = <0>;
@@ -174,6 +178,7 @@
 		gpio_hdmi_sel: hdmi_sel {
 			#gpio-cells = <0>;
 			gpios = <&gpioc 6 GPIO_OUTPUT>;
+			enum-name = "GPIO_HDMI_SEL";
 		};
 		gpio_imu_int_l: imu_int_l {
 			#gpio-cells = <0>;
@@ -193,14 +198,17 @@
 		gpio_pen_detect_odl: pen_detect_odl {
 			#gpio-cells = <0>;
 			gpios = <&gpio9 6 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_PEN_DETECT_ODL";
 		};
 		gpio_pg_pp1050_mem_s3_od: pg_pp1050_mem_s3_od {
 			#gpio-cells = <0>;
 			gpios = <&gpiof 0 GPIO_INPUT>;
+			enum-name = "GPIO_PG_PP1050_MEM_S3_OD";
 		};
 		gpio_pg_pp1050_proc: pg_pp1050_proc {
 			#gpio-cells = <0>;
 			gpios = <&gpio4 1 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_PG_PP1050_PROC";
 		};
 		gpio_pg_pp5000_s5_od: pg_pp5000_s5_od {
 			#gpio-cells = <0>;
@@ -235,6 +243,7 @@
 		gpio_sub_usb_a1_ilimit_sdp: sub_usb_a1_ilimit_sdp {
 			#gpio-cells = <0>;
 			gpios = <&gpiod 5 GPIO_OUTPUT>;
+			enum-name = "GPIO_SUB_USB_A1_ILIMIT_SDP";
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			#gpio-cells = <0>;
@@ -249,6 +258,7 @@
 		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
 			#gpio-cells = <0>;
 			gpios = <&gpio8 5 GPIO_OUTPUT>;
+			enum-name = "GPIO_USB_A0_ILIMIT_SDP";
 		};
 		gpio_usb_c0_int_odl: usb_c0_int_odl {
 			#gpio-cells = <0>;
@@ -258,10 +268,12 @@
 		gpio_vccin_aux_vid0: vccin_aux_vid0 {
 			#gpio-cells = <0>;
 			gpios = <&gpio9 2 GPIO_INPUT>;
+			enum-name = "GPIO_VCCIN_AUX_VID0";
 		};
 		gpio_vccin_aux_vid1: vccin_aux_vid1 {
 			#gpio-cells = <0>;
 			gpios = <&gpioe 3 GPIO_INPUT>;
+			enum-name = "GPIO_VCCIN_AUX_VID1";
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
 			#gpio-cells = <0>;
