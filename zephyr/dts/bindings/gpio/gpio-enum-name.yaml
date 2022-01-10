@@ -24,6 +24,7 @@ properties:
       - GPIO_BOARD_VERSION3
       - GPIO_CCD_MODE_ODL
       - GPIO_CHARGER_PROCHOT_ODL
+      - GPIO_CPU_C10_GATE_L
       - GPIO_CPU_PROCHOT
       - GPIO_DA9313_GPIO0
       - GPIO_DEPRECATED_AP_RST_REQ
@@ -67,7 +68,9 @@ properties:
       - GPIO_EC_PMIC_WATCHDOG_L
       - GPIO_EC_PROCHOT_IN_L
       - GPIO_EC_PWR_BTN_ODL
+      - GPIO_EC_PSYS
       - GPIO_EC_RST_ODL
+      - GPIO_EC_SOC_HDMI_HPD
       - GPIO_EC_SOC_PWR_GOOD
       - GPIO_EC_SC_RST
       - GPIO_EC_WP_L
@@ -85,6 +88,7 @@ properties:
       - GPIO_EN_PP5000
       - GPIO_EN_PP5000_A
       - GPIO_EN_PP5000_FAN
+      - GPIO_EN_PP5000_PEN_X
       - GPIO_EN_PP5000_USBA
       - GPIO_EN_PP5000_USB_A0_VBUS
       - GPIO_EN_PP5000_Z2
@@ -95,9 +99,14 @@ properties:
       - GPIO_EN_PWR_S3
       - GPIO_EN_S5_RAILS
       - GPIO_EN_SLP_Z
+      - GPIO_EN_SUB_USB_A1_VBUS
       - GPIO_EN_ULP
       - GPIO_EN_USB_A_5V
+      - GPIO_HDMI_EN_SUB_ODL
+      - GPIO_HDMI_EN_SUB_RAILS_ODL
+      - GPIO_HDMI_HPD_SUB_ODL
       - GPIO_HDMI_PRSNT_ODL
+      - GPIO_HDMI_SEL
       - GPIO_HIBERNATE_L
       - GPIO_HUB_RST
       - GPIO_I2C_A_SCL
@@ -130,6 +139,7 @@ properties:
       - GPIO_PCH_SLP_SUS_L
       - GPIO_PCH_SYS_PWROK
       - GPIO_PCORE_OCP_L
+      - GPIO_PEN_DETECT_ODL
       - GPIO_PGOOD_FAN
       - GPIO_PG_EC_ALL_SYS_PWRGD
       - GPIO_PG_EC_DSW_PWROK
@@ -141,6 +151,8 @@ properties:
       - GPIO_PG_MT6315_GPU_ODL
       - GPIO_PG_MT6315_PROC_ODL
       - GPIO_PG_MT6360_ODL
+      - GPIO_PG_PP1050_MEM_S3_OD
+      - GPIO_PG_PP1050_PROC
       - GPIO_PG_PP5000_A_ODL
       - GPIO_PG_PP5000_Z2_OD
       - GPIO_PMIC_EC_PWRGD
@@ -166,6 +178,7 @@ properties:
       - GPIO_SPI_CS_GPG7
       - GPIO_SPI_MISO_GPG5
       - GPIO_SPI_MOSI_GPG4
+      - GPIO_SUB_USB_A1_ILIMIT_SDP
       - GPIO_SWITCHCAP_ON
       - GPIO_SWITCHCAP_ON_L
       - GPIO_SWITCHCAP_PG
@@ -176,6 +189,7 @@ properties:
       - GPIO_TRACKPAD_INT_GATE
       - GPIO_USB_A0_FAULT_ODL
       - GPIO_USB_A0_OC_ODL
+      - GPIO_USB_A0_ILIMIT_SDP
       - GPIO_USB_A_LOW_PWR_OD
       - GPIO_USB_C0_BC12_INT_L
       - GPIO_USB_C0_BC12_INT_ODL
@@ -209,6 +223,8 @@ properties:
       - GPIO_USB_C1_TCPC_RST_L
       - GPIO_USB_HUB_FAULT_ODL
       - GPIO_USB_FAULT_ODL
+      - GPIO_VCCIN_AUX_VID0
+      - GPIO_VCCIN_AUX_VID1
       - GPIO_VCCST_PWRGD_OD
       - GPIO_VBOB_EN
       - GPIO_VOLUME_DOWN_L
