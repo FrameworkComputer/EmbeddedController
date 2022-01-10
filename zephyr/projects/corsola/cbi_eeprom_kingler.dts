@@ -12,6 +12,5 @@
 		pagesize = <16>;
 		address-width = <8>;
 		timeout = <5>;
-		wp-gpios = <&gpio_ec_wp_l>;
 	};
 };

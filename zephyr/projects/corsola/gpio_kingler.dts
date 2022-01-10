@@ -86,7 +86,6 @@
 			enum-name = "GPIO_EC_PEN_CHG_DIS_ODL";
 		};
 		gpio_ec_wp_l: ec_wp_odl {
-			#gpio-cells = <0>;
 			gpios = <&gpioe 3 (GPIO_OPEN_DRAIN)>;
 			enum-name = "GPIO_WP_L";
 		};
