@@ -165,6 +165,17 @@ void s0_action_handler(const struct common_pwrseq_config *com_cfg)
 	generate_sys_pwrok_handler(com_cfg);
 }
 
+/* This should be overridden if there is no power sequencer chip */
+__attribute__((weak)) int intel_x86_get_pg_ec_dsw_pwrok(
+			const struct common_pwrseq_config *com_cfg)
+{
+#if PWRSEQ_GPIO_PRESENT(pg_ec_dsw_pwroks_gpios)
+	return gpio_pin_get_dt(&com_cfg->pg_ec_dsw_pwrok);
+#else
+	return 0;
+#endif
+}
+
 void intel_x86_sys_reset_delay(void)
 {
 	/*
@@ -173,6 +184,65 @@ void intel_x86_sys_reset_delay(void)
 	 */
 	k_msleep(chip_cfg.sys_reset_delay_ms);
 }
+
+void chipset_reset(enum pwrseq_chipset_shutdown_reason reason)
+{
+	/*
+	 * Irrespective of cold_reset value, always toggle SYS_RESET_L to
+	 * perform a chipset reset. RCIN# which was used earlier to trigger
+	 * a warm reset is known to not work in certain cases where the CPU
+	 * is in a bad state (crbug.com/721853).
+	 *
+	 * The EC cannot control warm vs cold reset of the chipset using
+	 * SYS_RESET_L; it's more of a request.
+	 */
+	LOG_DBG("%s: %d", __func__, reason);
+
+	/*
+	 * Toggling SYS_RESET_L will not have any impact when it's already
+	 * low (i,e. Chipset is in reset state).
+	 */
+	if (gpio_pin_get_dt(&(chip_cfg.sys_rst_l)) == 0) {
+		LOG_DBG("Chipset is in reset state");
+		return;
+	}
+
+	gpio_pin_set_dt(&(chip_cfg.sys_rst_l), 0);
+	intel_x86_sys_reset_delay();
+	gpio_pin_set_dt(&(chip_cfg.sys_rst_l), 1);
+}
+
+void chipset_force_shutdown(enum pwrseq_chipset_shutdown_reason reason,
+				const struct common_pwrseq_config *com_cfg)
+{
+	int timeout_ms = 50;
+
+	/* TODO: below
+	 * report_ap_reset(reason);
+	 */
+
+	/* Turn off RMSRST_L  to meet tPCH12 */
+	gpio_pin_set_dt(&com_cfg->ec_pch_rsmrst_odl, 0);
+
+	/* Turn off S5 rails */
+	gpio_pin_set_dt(&com_cfg->enable_pp5000_a, 0);
+
+	/*
+	 * TODO(b/179519791): Replace this wait with
+	 * power_wait_signals_timeout()
+	 */
+	/* Now wait for DSW_PWROK and  RSMRST_ODL to go away. */
+	while (intel_x86_get_pg_ec_dsw_pwrok(com_cfg) &&
+			gpio_pin_get_dt(&com_cfg->pg_ec_rsmrst_odl) &&
+			(timeout_ms > 0)) {
+		k_msleep(1);
+		timeout_ms--;
+	};
+
+	if (!timeout_ms)
+		LOG_DBG("DSW_PWROK or RSMRST_ODL didn't go low!  Assuming G3.");
+}
+
 
 void g3s5_action_handler(const struct common_pwrseq_config *com_cfg)
 {

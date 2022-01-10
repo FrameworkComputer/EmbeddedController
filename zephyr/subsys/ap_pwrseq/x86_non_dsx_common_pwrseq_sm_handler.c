@@ -132,6 +132,15 @@ void pwr_sm_set_state(enum power_states_ndsx new_state)
 	pwrseq_ctx.power_state = new_state;
 }
 
+void apshutdown(void)
+{
+	if (pwr_sm_get_state() != SYS_POWER_STATE_G3) {
+		chipset_force_shutdown(PWRSEQ_CHIPSET_SHUTDOWN_CONSOLE_CMD,
+								&com_cfg);
+		pwr_sm_set_state(SYS_POWER_STATE_G3);
+	}
+}
+
 /* Check RSMRST is fine to move from S5 to higher state */
 int check_rsmrst_ok(void)
 {
@@ -184,7 +193,11 @@ static int common_pwr_sm_run(int state)
 			rsmrst_pass_thru_handler();
 			return SYS_POWER_STATE_S5S4;
 		}
-		break;
+		return SYS_POWER_STATE_S5G3;
+
+	case SYS_POWER_STATE_S5G3:
+		chipset_force_shutdown(PWRSEQ_CHIPSET_SHUTDOWN_G3, &com_cfg);
+		return SYS_POWER_STATE_G3;
 
 	case SYS_POWER_STATE_S5S4:
 		/* Check if the PCH has come out of suspend state */
@@ -192,7 +205,8 @@ static int common_pwr_sm_run(int state)
 			LOG_DBG("RSMRST is ok");
 			return SYS_POWER_STATE_S4;
 		}
-		break;
+		LOG_DBG("RSMRST is not ok");
+		return SYS_POWER_STATE_S5;
 
 	case SYS_POWER_STATE_S4:
 		return SYS_POWER_STATE_S3;
@@ -216,7 +230,6 @@ static int common_pwr_sm_run(int state)
 	case SYS_POWER_STATE_S4S5:
 	case SYS_POWER_STATE_S3S4:
 	case SYS_POWER_STATE_S0S3:
-	case SYS_POWER_STATE_S5G3:
 		break;
 
 	default:

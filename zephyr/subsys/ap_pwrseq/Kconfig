@@ -27,6 +27,15 @@ config X86_NON_DSX_PWRSEQ_ADL
 	  This enables AP power sequecing support for Intel Alderlake
 	  family of chipset.
 
+config X86_NON_DSX_PWRSEQ_CONSOLE
+	bool "Console commands for x86 Non Deep Sx power sequencing"
+	depends on X86_NON_DSX_PWRSEQ
+	default n
+	help
+	  This option enables Non Deep Sleep Well power sequencing shell
+	  console commands to debug.
+
+
 config X86_NON_DSW_PWRSEQ_STACK_SIZE
 	int "AP pwrseq stack size (in bytes)"
 	default 1024

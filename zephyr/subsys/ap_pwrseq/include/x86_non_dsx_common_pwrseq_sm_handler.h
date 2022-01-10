@@ -42,8 +42,15 @@ struct common_pwrseq_config {
 enum power_states_ndsx chipset_pwr_sm_run(
 				enum power_states_ndsx curr_state,
 				const struct common_pwrseq_config *com_cfg);
-void init_chipset_pwr_seq_state(void);
 void all_sig_pass_thru_handler(void);
+void chipset_force_shutdown(enum pwrseq_chipset_shutdown_reason reason,
+				const struct common_pwrseq_config *com_cfg);
+void chipset_reset(enum pwrseq_chipset_shutdown_reason reason);
 void common_rsmrst_pass_thru_handler(void);
+void init_chipset_pwr_seq_state(void);
+enum power_states_ndsx pwr_sm_get_state(void);
+void apshutdown(void);
+
+extern const char pwrsm_dbg[][25];
 
 #endif /* __X86_NON_DSX_COMMON_H__ */
