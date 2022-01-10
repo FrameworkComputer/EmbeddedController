@@ -18,6 +18,7 @@ static int cm32183_read_lux(const struct motion_sensor_t *s, intv3_t v)
 	struct cm32183_drv_data *drv_data = CM32183_GET_DATA(s);
 	int ret;
 	int data;
+
 	ret = i2c_read16(s->port, s->i2c_spi_addr_flags,
 		CM32183_REG_ALS_RESULT, &data);
 	if (ret)
@@ -73,6 +74,7 @@ static int cm32183_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
 	int ret;
 	int data;
+
 	ret = i2c_read16(s->port, s->i2c_spi_addr_flags,
 		CM32183_REG_ALS_RESULT, &data);
 	if (ret)
@@ -95,6 +97,7 @@ static int cm32183_init(const struct motion_sensor_t *s)
 {
 	int ret;
 	int data;
+
 	ret = i2c_write16(s->port, s->i2c_spi_addr_flags,
 		CM32183_REG_CONFIGURE, 0x0004);
 	if (ret)

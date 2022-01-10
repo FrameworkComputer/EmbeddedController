@@ -182,6 +182,10 @@
 #define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 55000 /* only if battery is not present*/
 #define CONFIG_CHARGER_CUSTOMER_SETTING
 #define CONFIG_CMD_CHARGER_DUMP
+
+
+#define CONFIG_ALS_CM32183
+
 /*
  * MCHP disable this for Kabylake eSPI bring up
  * #define CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON 1
@@ -411,17 +415,8 @@
 #define CONFIG_PECI_COMMON
 #define CONFIG_PECI_TJMAX 100
 
-/* SPI Accelerometer
- * CONFIG_SPI_FLASH_PORT is the index into
- * spi_devices[] in board.c
- */
-/*#define CONFIG_SPI_ACCEL_PORT 1*/
 
-/*
- * Enable EC UART commands to read/write
- * motion sensor.
- */
-/*#define CONFIG_CMD_ACCELS*/
+#define CONFIG_CMD_ACCELS
 
 /*
  * Enable 1 slot of secure temporary storage to support
@@ -514,6 +509,7 @@
 #define I2C_PORT_CHARGER        MCHP_I2C_PORT1
 #define I2C_PORT_THERMAL_2		MCHP_I2C_PORT1
 #define I2C_PORT_THERMAL		MCHP_I2C_PORT3
+#define I2C_PORT_ALS			MCHP_I2C_PORT4
 
 /* GPIO for power signal */
 #ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
@@ -669,11 +665,7 @@ enum power_signal {
 };
 
 enum sensor_id {
-	BASE_ACCEL,
-	BASE_GYRO,
-#ifdef CONFIG_ACCEL_KX022
-	LID_ACCEL,
-#endif
+	SENSOR_ALS,
 	SENSOR_COUNT,
 };
 
