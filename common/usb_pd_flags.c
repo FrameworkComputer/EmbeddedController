@@ -26,8 +26,10 @@ enum usb_pd_vbus_detect get_usb_pd_vbus_detect(void)
 		return (enum usb_pd_vbus_detect)USB_PD_VBUS_DETECT_PPC;
 	else if (IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_CHARGER))
 		return (enum usb_pd_vbus_detect)USB_PD_VBUS_DETECT_CHARGER;
-	else
+	else if (IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_NONE))
 		return (enum usb_pd_vbus_detect)USB_PD_VBUS_DETECT_NONE;
+	else
+		return (enum usb_pd_vbus_detect)USB_PD_VBUS_DETECT_UNKNOWN;
 }
 
 enum usb_pd_discharge get_usb_pd_discharge(void)
