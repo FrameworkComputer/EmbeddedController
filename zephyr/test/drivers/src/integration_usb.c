@@ -113,6 +113,10 @@ static void test_attach_pd_charger(void)
 	struct ec_response_charge_state charge_response;
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
 			EC_CMD_CHARGE_STATE, 0, charge_response, charge_params);
+	struct ec_params_typec_status typec_params;
+	struct ec_response_typec_status typec_response;
+	struct host_cmd_handler_args typec_args =  BUILD_HOST_COMMAND(
+			EC_CMD_TYPEC_STATUS, 0, typec_response, typec_params);
 
 	/*
 	 * TODO(b/209907297): Implement the steps of the test beyond USB default
@@ -166,6 +170,22 @@ static void test_attach_pd_charger(void)
 	zassert_true(charge_response.get_state.chg_current > 0,
 			"USB default current %dmA",
 			charge_response.get_state.chg_current);
+
+	typec_params.port = 0;
+	zassert_ok(host_command_process(&typec_args),
+			"Failed to get Type-C state");
+	zassert_true(typec_response.pd_enabled,
+			"Charger attached but PD disabled");
+	zassert_true(typec_response.dev_connected,
+			"Charger attached but device disconnected");
+	zassert_true(typec_response.sop_connected,
+			"Charger attached but not SOP capable");
+	zassert_equal(typec_response.source_cap_count, 1,
+			"Charger has %d source PDOs",
+			typec_response.source_cap_count);
+	zassert_equal(typec_response.power_role, PD_ROLE_SINK,
+			"Charger attached, but TCPM power role is %d",
+			typec_response.power_role);
 
 	/*
 	 * 3. Wait for SenderResponseTimeout. Expect TCPM to send Request.
