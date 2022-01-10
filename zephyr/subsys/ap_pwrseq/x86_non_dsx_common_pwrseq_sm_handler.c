@@ -292,6 +292,8 @@ static int pwrseq_init()
 	/* Configure gpio from device tree */
 	pwrseq_gpio_init();
 	LOG_DBG("Done gpio init");
+	/* Register espi handler */
+	ndsx_espi_configure();
 	/* TODO: Define initial state of power sequence */
 	LOG_DBG("Init pwr seq state");
 	init_pwr_seq_state();

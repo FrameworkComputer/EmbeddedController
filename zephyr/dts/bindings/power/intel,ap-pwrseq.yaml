@@ -79,6 +79,13 @@ properties:
       description: |
         Timeout in ms for monitoring power signals.
 
+    pwrseq-espi-max-freq:
+      type: int
+      required: false
+      default: 20
+      description: |
+        Maximum configured frequency for espi channel.
+
     pg-ec-dsw-pwrok-gpios:
       type: phandle-array
       required: false

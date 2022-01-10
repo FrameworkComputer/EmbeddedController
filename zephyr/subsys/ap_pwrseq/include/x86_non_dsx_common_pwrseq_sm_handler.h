@@ -7,6 +7,8 @@
 #define __X86_NON_DSX_COMMON_PWRSEQ_SM_HANDLER_H__
 
 #include <x86_common_pwrseq.h>
+#include <x86_non_dsx_espi.h>
+#include <zephyr/types.h>
 
 #define DT_DRV_COMPAT intel_ap_pwrseq
 #define INTEL_COM_POWER_NODE	DT_INST(0, intel_ap_pwrseq)
