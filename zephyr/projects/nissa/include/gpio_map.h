@@ -76,15 +76,6 @@
 	#define VOLBTN_INT(pin)
 #endif
 
-#ifdef CONFIG_PLATFORM_EC_USBC
-	#define USBC_INT(pin, port)	GPIO_INT(pin,			      \
-						 GPIO_INT_EDGE_FALLING,	      \
-						 usb_c ## port ## _interrupt)
-#else
-	#define USBC_INT(pin, port)
-#endif
-
-
 #define EC_CROS_GPIO_INTERRUPTS                                         \
 	WP_INT()							\
 	LID_INT()							\
@@ -96,7 +87,5 @@
 	POWER_SIGNAL_INT(GPIO_PG_EC_DSW_PWROK, GPIO_INT_EDGE_BOTH)      \
 	POWER_SIGNAL_INT(GPIO_PG_EC_RSMRST_ODL, GPIO_INT_EDGE_BOTH)     \
 	POWER_SIGNAL_INT(GPIO_PG_EC_ALL_SYS_PWRGD, GPIO_INT_EDGE_BOTH)  \
-	AP_PROCHOT_INT(GPIO_EC_PROCHOT_ODL, GPIO_INT_EDGE_BOTH)		\
-	USBC_INT(GPIO_USB_C0_PD_INT_ODL, 0)				\
-	USBC_INT(GPIO_USB_C1_PD_INT_ODL, 1)
+	AP_PROCHOT_INT(GPIO_EC_PROCHOT_ODL, GPIO_INT_EDGE_BOTH)
 #endif /* __ZEPHYR_GPIO_MAP_H */

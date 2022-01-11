@@ -14,6 +14,40 @@
 		>;
 	};
 
+	named-gpios {
+		/*
+		 * Input GPIO when used with type-C port 1
+		 */
+		gpio_usb_c1_int_odl: usb_c1_int_odl {
+			status = "disabled";
+			#gpio-cells = <0>;
+			gpios = <&gpioe 6 GPIO_INPUT_PULL_UP>;
+		};
+		/*
+		 * Output GPIO when used with HDMI port
+		 */
+		gpio_en_sub_rails_odl: en_sub_rails_odl {
+			status = "disabled";
+			#gpio-cells = <0>;
+			gpios = <&gpioe 6 GPIO_OUTPUT>;
+		};
+
+		/*
+		 * Alternative use for I2C_PORT_USB_C1_TCPC
+		 * when HDMI sub-board connected.
+		 */
+		gpio_hdmi_en_sub_odl: hdmi_en_sub_odl {
+			status = "disabled";
+			#gpio-cells = <0>;
+			gpios = <&gpioe 7 GPIO_OPEN_DRAIN>;
+		};
+		gpio_hpd_sub_odl: hdmi_hpd_sub_odl {
+			status = "disabled";
+			#gpio-cells = <0>;
+			gpios = <&gpioe 0 GPIO_INPUT>;
+		};
+	};
+
 	named-temp-sensors {
 		memory {
 			compatible = "cros-ec,temp-sensor-thermistor";
