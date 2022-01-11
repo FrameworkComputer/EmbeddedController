@@ -11,7 +11,7 @@
 #include "i2c.h"
 #include "util.h"
 #include "timer.h"
-
+#include "chipset.h"
 #include "hwtimer.h"
 #include "util.h"
 #include "i2c_hid.h"
@@ -345,7 +345,7 @@ void i2c_hid_als_init(void)
 
 static void i2c_hid_send_response(void)
 {
-		task_set_event(TASK_ID_HID, 0x8000, 0);
+		task_set_event(TASK_ID_HID, 0xC000, 0);
 }
 static size_t fill_report(uint8_t *buffer, uint8_t report_id, const void *data,
 			  size_t data_len)
@@ -484,11 +484,16 @@ int i2c_hid_process(unsigned int len, uint8_t *buffer)
 				fill_report(buffer, REPORT_ID_RADIO,
 						&radio_button,
 						sizeof(struct radio_report));
-		} else {
+		} else if (input_mode == REPORT_ID_CONSUMER) {
 			response_len =
 				fill_report(buffer, REPORT_ID_CONSUMER,
 						&consumer_button,
 						sizeof(struct consumer_button_report));
+		} else if (input_mode == REPORT_ID_SENSOR) {
+			response_len =
+				fill_report(buffer, REPORT_ID_SENSOR,
+						&als_sensor,
+						sizeof(struct als_input_report));
 		}
 		break;
 	case I2C_HID_COMMAND_REGISTER:
@@ -547,6 +552,13 @@ void hid_irq_to_host(void)
 	gpio_set_level(GPIO_SOC_EC_INT_L, 1);
 	usleep(10);
 }
+
+void report_illuminance_value(void)
+{
+   	task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) | 0x4000), 0);
+}
+DECLARE_DEFERRED(report_illuminance_value);
+
 void hid_handler_task(void *p)
 {
 	uint32_t event;
@@ -560,6 +572,13 @@ void hid_handler_task(void *p)
 		if (event & 0x8000) {
 			hid_irq_to_host();
 		}
+
+		if (event & 0x4000) {
+			/* start reporting illuminance value in S0*/
+			hook_call_deferred(&report_illuminance_value_data,
+					((int) als_feature.report_interval) * MSEC);
+        }
+
 		if (event & 0xFFFF) {
 
 			for (i = 0; i < 15; i++) {
@@ -586,10 +605,24 @@ void hid_handler_task(void *p)
 						input_mode = REPORT_ID_RADIO;
 							radio_button.state = key_states[i] ? 1 : 0;
 						break;
+					case HID_ALS_REPORT_LUX:
+
+						input_mode = REPORT_ID_SENSOR;
+						break;
 					}
-					hid_irq_to_host();
+					/* we don't need to assert the interrupt when system state in S0ix */
+					if (chipset_in_state(CHIPSET_STATE_ON))
+						hid_irq_to_host();
 				}
 			}
 		}
 	}
 };
+
+#define COEFFICIENT (38 / 10) /* 3.8x */
+
+/* ALS callback function */
+void set_illuminance_value(uint16_t value)
+{
+    als_sensor.illuminanceValue = value * COEFFICIENT;
+}

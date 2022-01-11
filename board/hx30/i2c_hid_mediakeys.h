@@ -77,25 +77,17 @@
 #define HID_POLL_RESPONSE		5
 #define HID_CHANGE_SENSITIVITY		6
 
-/* HID_USAGE_SENSOR_DATA_MOTION_STATE */
-#define HID_STILL		0
-#define HID_IN_MOTION		1
-
-#define SWAP_WORD_DAT(a)	(((a>>8)&0xFF)|((a<<8)&0xFF00))
-#define SWAP_DWORD_DATA(a)	(a>65535)?((((a<<24)&0xFF000000)|((a<<8)&0x00FF0000))+\
-					((a>>8)&0x0000FF00)+((a>>24)&0xFF)):\
-					((((a>>8)&0xFF)|((a<<8)&0xFF00))*65536)
-
 enum media_key {
     HID_KEY_DISPLAY_BRIGHTNESS_UP,
     HID_KEY_DISPLAY_BRIGHTNESS_DN,
     HID_KEY_AIRPLANE_MODE,
-
+    HID_ALS_REPORT_LUX,
     HID_KEY_MAX
 };
 /*HID_KEY_MAX cannot be > TASK_EVENT_CUSTOM_BIT*/
 BUILD_ASSERT(HID_KEY_MAX < 16);
 
 int update_hid_key(enum media_key key, bool pressed);
+void set_illuminance_value(uint16_t value);
 
 #endif /* __CROS_EC_I2C_HID_MEDIAKEYS_H */
