@@ -193,6 +193,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_HW
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_RAMP_SW
                                                 "${PLATFORM_EC}/common/charge_ramp.c"
                                                 "${PLATFORM_EC}/common/charge_ramp_sw.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_OCPC
+                                                "${PLATFORM_EC}/common/ocpc.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_EEPROM
                                                 "${PLATFORM_EC}/common/cbi.c"
