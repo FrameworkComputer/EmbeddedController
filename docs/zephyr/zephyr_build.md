@@ -8,26 +8,14 @@ This section describes how to build and use zmake.
 
 ## Syncing the source
 
-N.B. The Zephyr build relies on multiple repos and tools which get installed as
-packages into the chroot.  This means that partial syncs are not supported
-(i.e. just doing `repo sync .` in platform/ec). You must run
-`~/trunk/src/scripts/update_chroot` frequently, ideally each time you do a full
-repo sync. This will update zmake and the repos in src/third_party/zephyr
-
+*** note
+The Zephyr build relies on multiple repos.  This means that partial
+syncs are not supported (i.e., just doing `repo sync .` in
+`platform/ec`), as you may end up with a Zephyr kernel or module which
+is not compatible with your EC checkout.
+***
 
 ## Working inside the chroot
-
-### Install zmake
-
-The `zephyr-build-tools` ebuild builds and installed zmake. This should happen
-automatically, with the caveat above.
-
-To do this manually and run tests:
-
-```bash
-FEATURE=test sudo -E emerge zephyr-build-tools
-```
-
 
 ### Building
 
