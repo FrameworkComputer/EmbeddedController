@@ -4,10 +4,13 @@
 
 menuconfig AP_PWRSEQ
 	bool "AP Power sequencing support"
+	select HAS_TASK_POWERBTN
 	help
 	  Enables AP power sequencing support with
 	  embedded controller. This includes normal shutdown, critical
 	  shutdown and reset handling.
+	  Enabling this automatically enables HAS_TASK_POWERBTN since this task
+	  is required to handle power button pressed/released by user.
 
 if AP_PWRSEQ
 

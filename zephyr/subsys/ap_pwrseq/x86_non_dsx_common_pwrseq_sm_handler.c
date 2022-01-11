@@ -294,6 +294,11 @@ void chipset_request_exit_hardoff(bool should_exit)
 	pwrseq_ctx.want_g3_exit = should_exit;
 }
 
+static bool chipset_is_exit_hardoff(void)
+{
+	return pwrseq_ctx.want_g3_exit;
+}
+
 uint32_t pwrseq_get_input_signals(void)
 {
 	return pwrseq_ctx.in_signals;
@@ -360,7 +365,11 @@ static int common_pwr_sm_run(int state)
 {
 	switch (state) {
 	case SYS_POWER_STATE_G3:
-		/* Nothing to do */
+		if (chipset_is_exit_hardoff()) {
+			chipset_request_exit_hardoff(false);
+			return SYS_POWER_STATE_G3S5;
+		}
+
 		break;
 
 	case SYS_POWER_STATE_G3S5:
@@ -570,6 +579,7 @@ static inline void create_pwrseq_thread(void)
 void init_pwr_seq_state(void)
 {
 	init_chipset_pwr_seq_state();
+	chipset_request_exit_hardoff(false);
 
 	pwr_sm_set_state(SYS_POWER_STATE_G3S5);
 }
