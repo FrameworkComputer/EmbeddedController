@@ -114,17 +114,7 @@ a rough guide.
 First configure the build with the project you want:
 
 ```bash
-# Use -t zephyr when running outside chroot
-
-zmake configure -B /tmp/z/vol zephyr/projects/volteer/volteer/ -t zephyr
-```
-
-If you are building for posix-ec, change the default toolchain to host to make
-it use the system toolchain instead of llvm. Make sure to start with a clean
-build directory if zmake returns any build error:
-
-```bash
-zmake configure -B /tmp/posix zephyr/projects/posix-ec -t host
+zmake configure -B /tmp/z/vol zephyr/projects/volteer/volteer/
 ```
 
 Then build with just the target directory:
