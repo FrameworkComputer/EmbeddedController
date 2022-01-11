@@ -114,7 +114,7 @@ a rough guide.
 First configure the build with the project you want:
 
 ```bash
-zmake configure -B /tmp/z/vol zephyr/projects/volteer/volteer/
+zmake configure -B /tmp/z/vol volteer
 ```
 
 Then build with just the target directory:
