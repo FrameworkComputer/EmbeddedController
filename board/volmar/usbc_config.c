@@ -445,9 +445,6 @@ void bc12_interrupt(enum gpio_signal signal)
 			break;
 		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
 		break;
-	case GPIO_USB_C2_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P2, USB_CHG_EVENT_BC12);
-		break;
 	default:
 		break;
 	}
