@@ -128,6 +128,8 @@ cov-dont-test += fpsensor_state
 cov-dont-test += version
 # interrupt: The test often times out if enabled for coverage.
 cov-dont-test += interrupt
+# Tests that use test_run_multistep are flaky.
+cov-dont-test += flash flash_write_protect kb_scan
 cov-test-list-host = $(filter-out $(cov-dont-test), $(test-list-host))
 
 accel_cal-y=accel_cal.o
