@@ -951,6 +951,8 @@ config PLATFORM_EC_USBC_PPC_DEDICATED_INT
 	  ppc_get_alert_status() to find out he interrupt status for a port.
 	  This function should be provided by the board code.
 
+endif  # PLATFORM_EC_USBC_PPC
+
 config PLATFORM_EC_USB_PD_TCPC_LOW_POWER
 	bool "Allow Type-C Port Controller to enter low-power mode"
 	default y
@@ -1343,8 +1345,6 @@ config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT8XXX2
 	  Enable a driver for the ITE IT8XXX2 on-chip UBB Type-C Port Manager.
 	  This supports up to two USB Type-C ports with Dual Role function
 	  (provider and consumer) and Fast Role Swap detection.
-
-endif  # PLATFORM_EC_USBC_PPC
 
 config PLATFORM_EC_USB_PD_PULLUP
 	int "Default source Rp value"

@@ -7,15 +7,11 @@
 #include "chipset.h"
 #include "hooks.h"
 #include "usb_mux.h"
-#include "usbc_ppc.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/raa489000.h"
 #include "sub_board.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-
-struct ppc_config_t ppc_chips[] = {};
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -53,17 +49,34 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+static uint8_t cached_usb_pd_port_count;
+
 __override uint8_t board_get_usb_pd_port_count(void)
+{
+	if (cached_usb_pd_port_count == 0)
+		CPRINTS("USB PD Port count not initialized!");
+	return cached_usb_pd_port_count;
+}
+
+/*
+ * Initialise the USB PD port count, which
+ * depends on which sub-board is attached.
+ */
+static void init_usb_pd_port_count(void)
 {
 	switch (nissa_get_sb_type()) {
 	default:
-		return 1;
+		cached_usb_pd_port_count = 1;
 
 	case NISSA_SB_C_A:
 	case NISSA_SB_C_LTE:
-		return 2;
+		cached_usb_pd_port_count = 2;
 	}
 }
+/*
+ * Make sure setup is done after EEPROM is readable.
+ */
+DECLARE_HOOK(HOOK_INIT, init_usb_pd_port_count, HOOK_PRIO_INIT_I2C + 1);
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
@@ -171,8 +184,8 @@ uint16_t tcpc_get_alert_status(void)
 		}
 	}
 
-	/* TODO(b:212490923) ignore C1 interrupts if port is not present. */
-	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
+	if (board_get_usb_pd_port_count() == 2 &&
+	    !gpio_get_level(GPIO_USB_C1_PD_INT_ODL)) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
 			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
@@ -255,7 +268,7 @@ DECLARE_DEFERRED(poll_c1_int);
 static void usbc_interrupt_trigger(int port)
 {
 	schedule_deferred_pd_interrupt(port);
-	task_set_event(PD_PORT_TO_TASK_ID(port), USB_CHG_EVENT_BC12);
+	task_set_event(USB_CHG_PORT_TO_TASK_ID(port), USB_CHG_EVENT_BC12);
 }
 
 #define USBC_INT_POLL_DATA(port) poll_c ## port ## _int_data
