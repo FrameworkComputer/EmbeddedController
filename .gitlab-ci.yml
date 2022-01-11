@@ -194,6 +194,16 @@ native_posix:
     TOOLCHAIN: "host"
   <<: *build_template
 
+npcx7_evb:
+  variables:
+    PROJECT: "npcx7"
+  <<: *build_template
+
+npcx9_evb:
+  variables:
+    PROJECT: "npcx9"
+  <<: *build_template
+
 skyrim:
   variables:
     PROJECT: "skyrim"
