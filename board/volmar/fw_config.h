@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#ifndef __BOARD_BRYA_FW_CONFIG_H_
-#define __BOARD_BRYA_FW_CONFIG_H_
+#ifndef __BOARD_VOLMAR_FW_CONFIG_H_
+#define __BOARD_VOLMAR_FW_CONFIG_H_
 
 #include <stdint.h>
 
 /****************************************************************************
- * CBI FW_CONFIG layout for Brya board.
+ * CBI FW_CONFIG layout for Volmar board.
  *
- * Source of truth is the project/brya/brya/config.star configuration file.
+ * Source of truth is the project/brya/volmar/config.star configuration file.
  */
 
 enum ec_cfg_usb_db_type {
@@ -25,7 +25,7 @@ enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
-union brya_cbi_fw_config {
+union volmar_cbi_fw_config {
 	struct {
 		enum ec_cfg_usb_db_type			usb_db : 4;
 		uint32_t				sd_db : 2;
@@ -42,7 +42,7 @@ union brya_cbi_fw_config {
  *
  * @return the FW_CONFIG for the board.
  */
-union brya_cbi_fw_config get_fw_config(void);
+union volmar_cbi_fw_config get_fw_config(void);
 
 /**
  * Get the USB daughter board type from FW_CONFIG.
@@ -51,4 +51,4 @@ union brya_cbi_fw_config get_fw_config(void);
  */
 enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
 
-#endif /* __BOARD_BRYA_FW_CONFIG_H_ */
+#endif /* __BOARD_VOLMAR_FW_CONFIG_H_ */
