@@ -93,20 +93,12 @@ log_level_map = {
 }
 
 
-def main(argv=None):
-    """The main function.
-
-    Args:
-        argv: Optionally, the command-line to parse, not including argv[0].
+def get_argparser():
+    """Get the argument parser.
 
     Returns:
-        Zero upon success, or non-zero upon failure.
+        An argparse.ArgumentParser.
     """
-    if argv is None:
-        argv = sys.argv[1:]
-
-    maybe_reexec(argv)
-
     parser = argparse.ArgumentParser(
         prog="zmake",
         description="Chromium OS's meta-build tool for Zephyr",
@@ -273,6 +265,24 @@ def main(argv=None):
         help="The build directory used during configuration",
     )
 
+    return parser
+
+
+def main(argv=None):
+    """The main function.
+
+    Args:
+        argv: Optionally, the command-line to parse, not including argv[0].
+
+    Returns:
+        Zero upon success, or non-zero upon failure.
+    """
+    if argv is None:
+        argv = sys.argv[1:]
+
+    maybe_reexec(argv)
+
+    parser = get_argparser()
     opts = parser.parse_args(argv)
 
     # Default logging
