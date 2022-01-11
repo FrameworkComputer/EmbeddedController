@@ -10,7 +10,7 @@
 		adc_charger_pmon_r {
 			label = "ADC_CHARGER_PMON_R";
 			enum-name = "ADC_PSYS";
-			channel = <0>;
+			io-channels = <&adc0 0>;
 			/*
 			 * ISL9238C PSYS output is 1.44 uA/W over 33K resistor.
 			 */
@@ -19,17 +19,17 @@
 		adc_ec_id0 {
 			label = "ADC_EC_ID0";
 			enum-name = "ADC_ID_0";
-			channel = <1>;
+			io-channels = <&adc0 1>;
 		};
 		adc_ec_id1 {
 			label = "ADC_EC_ID1";
 			enum-name = "ADC_ID_1";
-			channel = <2>;
+			io-channels = <&adc0 2>;
 		};
 		adc_charger_amon_r {
 			label = "ADC_AMON_R";
 			enum-name = "ADC_AMON_BMON";
-			channel = <3>;
+			io-channels = <&adc0 3>;
 			mul = <1000>;
 			div = <18>;
 		};

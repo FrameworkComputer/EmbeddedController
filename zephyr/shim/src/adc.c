@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <devicetree/io-channels.h>
 #include <drivers/adc.h>
 #include <logging/log.h>
 #include "adc.h"
@@ -14,19 +15,18 @@ LOG_MODULE_REGISTER(shim_adc, LOG_LEVEL_ERR);
 #error "Define only one 'adc' console command."
 #endif
 
-#define adc_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_adc))
-
 #define HAS_NAMED_ADC_CHANNELS DT_NODE_EXISTS(DT_INST(0, named_adc_channels))
 
 #if HAS_NAMED_ADC_CHANNELS
 #define ADC_CHANNEL_COMMA(node_id)                                        \
 	[ZSHIM_ADC_ID(node_id)] = {                                       \
 		.name = DT_LABEL(node_id),                                \
-		.input_ch = DT_PROP(node_id, channel),                    \
+		.dev = DEVICE_DT_GET(DT_IO_CHANNELS_CTLR(node_id)),        \
+		.input_ch = DT_IO_CHANNELS_INPUT(node_id),                \
 		.factor_mul = DT_PROP(node_id, mul),                      \
 		.factor_div = DT_PROP(node_id, div),                      \
 		.channel_cfg = {                                          \
-			.channel_id = DT_PROP(node_id, channel),          \
+			.channel_id = DT_IO_CHANNELS_INPUT(node_id),      \
 			.gain = DT_STRING_TOKEN(node_id, gain),           \
 			.reference = DT_STRING_TOKEN(node_id, reference), \
 			.acquisition_time =                               \
@@ -47,13 +47,14 @@ static int init_device_bindings(const struct device *device)
 {
 	ARG_UNUSED(device);
 
-	if (!device_is_ready(adc_dev)) {
-		k_oops();
-	}
-
 #if HAS_NAMED_ADC_CHANNELS
-	for (int i = 0; i < ARRAY_SIZE(adc_channels); i++)
-		adc_channel_setup(adc_dev, &adc_channels[i].channel_cfg);
+	for (int i = 0; i < ARRAY_SIZE(adc_channels); i++) {
+		if (!device_is_ready(adc_channels[i].dev))
+			k_oops();
+
+		adc_channel_setup(adc_channels[i].dev,
+				  &adc_channels[i].channel_cfg);
+	}
 #endif
 
 	return 0;
@@ -73,12 +74,13 @@ int adc_read_channel(enum adc_channel ch)
 		.calibrate = false,
 	};
 
-	rv = adc_read(adc_dev, &seq);
+	rv = adc_read(adc_channels[ch].dev, &seq);
 	if (rv)
 		return rv;
 
-	adc_raw_to_millivolts(adc_ref_internal(adc_dev), ADC_GAIN_1,
-			      CONFIG_PLATFORM_EC_ADC_RESOLUTION, &ret);
+	adc_raw_to_millivolts(adc_ref_internal(adc_channels[ch].dev),
+			      ADC_GAIN_1, CONFIG_PLATFORM_EC_ADC_RESOLUTION,
+			      &ret);
 	ret = (ret * adc_channels[ch].factor_mul) / adc_channels[ch].factor_div;
 	return ret;
 }

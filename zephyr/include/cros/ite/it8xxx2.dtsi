@@ -8,7 +8,6 @@
 
 / {
 	chosen {
-		cros-ec,adc = &adc0;
 		cros-ec,bbram = &bbram;
 		cros-ec,espi = &espi0;
 		cros-ec,flash = &fiu0;

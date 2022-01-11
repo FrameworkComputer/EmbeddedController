@@ -10,23 +10,23 @@
 		adc_vbus_c0 {
 			label = "VBUS_C0";
 			enum-name = "ADC_VBUS_C0";
-			channel = <0>;
+			io-channels = <&adc0 0>;
 			mul = <10>;
 		};
 		adc_board_id0 {
 			label = "BOARD_ID_0";
 			enum-name = "ADC_BOARD_ID_0";
-			channel = <1>;
+			io-channels = <&adc0 1>;
 		};
 		adc_board_id1 {
 			label = "BOARD_ID_1";
 			enum-name = "ADC_BOARD_ID_1";
-			channel = <2>;
+			io-channels = <&adc0 2>;
 		};
 		adc_vbus_c1 {
 			label = "VBUS_C1";
 			enum-name = "ADC_VBUS_C1";
-			channel = <7>;
+			io-channels = <&adc0 7>;
 			mul = <10>;
 		};
 	};

@@ -13,22 +13,22 @@
 		adc_ec_vsense_pp3300_s5: ec_vsense_pp3300_s5 {
 			label = "EC_VSENSE_PP3300_S5";
 			enum-name = "ADC_PP3300_S5";
-			channel = <0>;
+			io-channels = <&adc0 0>;
 		};
 		adc_temp_sensor_1: temp_sensor_1 {
 			label = "TEMP_SENSOR_1";
 			enum-name = "ADC_TEMP_SENSOR_1";
-			channel = <2>;
+			io-channels = <&adc0 2>;
 		};
 		adc_temp_sensor_2: temp_sensor_2 {
 			label = "TEMP_SENSOR_2";
 			enum-name = "ADC_TEMP_SENSOR_2";
-			channel = <3>;
+			io-channels = <&adc0 3>;
 		};
 		adc_temp_sensor_3: temp_sensor_3 {
 			label = "TEMP_SENSOR_3";
 			enum-name = "ADC_TEMP_SENSOR_3";
-			channel = <13>;
+			io-channels = <&adc0 13>;
 		};
 	};
 

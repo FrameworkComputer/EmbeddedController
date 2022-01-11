@@ -14,10 +14,10 @@ child-binding:
       type: string
       description:
         String used to describe an ADC channel in the 'adc' console command.
-    channel:
+    io-channels:
       required: true
-      type: int
-      description: ADC channel used
+      type: phandle-array
+      description: IO channels specifiers ADC channel used
     mul:
       required: false
       type: int

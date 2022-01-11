@@ -105,7 +105,7 @@
 		adc_temp_soc: temp-soc {
 			label = "SOC";
 			enum-name = "ADC_TEMP_SENSOR_SOC";
-			channel = <0>;
+			io-channels = <&adc0 0>;
 		};
 	};
 };

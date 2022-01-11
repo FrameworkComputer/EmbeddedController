@@ -118,14 +118,14 @@
 		vbus {
 			label = "VBUS";
 			enum-name = "ADC_VBUS";
-			channel = <1>;
+			io-channels = <&adc0 1>;
 			/* Measure VBUS through a 1/10 voltage divider */
 			mul = <10>;
 		};
 		amon_bmon {
 			label = "AMON_BMON";
 			enum-name = "ADC_AMON_BMON";
-			channel = <2>;
+			io-channels = <&adc0 2>;
 			/*
 			 * Adapter current output or battery charging/
 			 * discharging current (uV) 18x amplification on
@@ -137,7 +137,7 @@
 		psys {
 			label = "PSYS";
 			enum-name = "ADC_PSYS";
-			channel = <3>;
+			io-channels = <&adc0 3>;
 			/*
 			 * ISL9238 PSYS output is 1.44 uA/W over 5.6K resistor,
 			 * to read 0.8V @ 99 W, i.e. 124000 uW/mV.

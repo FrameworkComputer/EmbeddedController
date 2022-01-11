@@ -24,6 +24,7 @@ enum adc_channel {
 
 struct adc_t {
 	const char *name;
+	const struct device *dev;
 	uint8_t input_ch;
 	int factor_mul;
 	int factor_div;

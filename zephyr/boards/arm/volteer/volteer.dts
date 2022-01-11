@@ -95,22 +95,22 @@
 		adc_charger: charger {
 			label = "TEMP_CHARGER";
 			enum-name = "ADC_TEMP_SENSOR_CHARGER";
-			channel = <0>;
+			io-channels = <&adc0 0>;
 		};
 		adc_pp3300_regulator: pp3300_regulator {
 			label = "TEMP_PP3300_REGULATOR";
 			enum-name = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
-			channel = <1>;
+			io-channels = <&adc0 1>;
 		};
 		adc_ddr_soc: ddr_soc {
 			label = "TEMP_DDR_SOC";
 			enum-name = "ADC_TEMP_SENSOR_DDR_SOC";
-			channel = <8>;
+			io-channels = <&adc0 8>;
 		};
 		adc_fan: fan {
 			label = "TEMP_FAN";
 			enum-name = "ADC_TEMP_SENSOR_FAN";
-			channel = <3>;
+			io-channels = <&adc0 3>;
 		};
 	};
 
