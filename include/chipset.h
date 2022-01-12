@@ -48,7 +48,7 @@ enum critical_shutdown {
 	CRITICAL_SHUTDOWN_CUTOFF,
 };
 
-#ifdef HAS_TASK_CHIPSET
+#if defined(HAS_TASK_CHIPSET) || defined(CONFIG_ZEPHYR)
 
 /**
  * Check if chipset is in a given state.

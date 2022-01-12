@@ -289,6 +289,11 @@ void pwr_sm_set_state(enum power_states_ndsx new_state)
 	pwrseq_ctx.power_state = new_state;
 }
 
+void chipset_request_exit_hardoff(bool should_exit)
+{
+	pwrseq_ctx.want_g3_exit = should_exit;
+}
+
 uint32_t pwrseq_get_input_signals(void)
 {
 	return pwrseq_ctx.in_signals;

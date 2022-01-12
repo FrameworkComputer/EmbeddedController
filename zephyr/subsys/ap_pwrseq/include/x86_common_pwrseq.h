@@ -77,6 +77,8 @@ enum pwrseq_chipset_shutdown_reason {
 struct pwrseq_context {
 	/* On power-on start boot up sequence */
 	enum power_states_ndsx power_state;
+	/* Indicate should exit G3 power state or not */
+	bool want_g3_exit;
 
 	/*
 	 * Current input power signal states. Each bit represents an input
