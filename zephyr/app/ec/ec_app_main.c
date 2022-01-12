@@ -85,21 +85,6 @@ void ec_app_main(void)
 		hook_notify(HOOK_INIT);
 	}
 
-
-	/*
-	 * Increase priority of shell thread.
-	 * This is temporary code that'll be removed
-	 * after the feature outlined in bug b/191795553
-	 * is implemented.
-	 */
-	{
-		static const struct shell *shell;
-
-		shell = shell_backend_uart_get_ptr();
-		k_thread_priority_set(shell->ctx->tid,
-				K_HIGHEST_APPLICATION_THREAD_PRIO);
-	}
-
 	/*
 	 * Print the init time.  Not completely accurate because it can't take
 	 * into account the time before timer_init(), but it'll at least catch

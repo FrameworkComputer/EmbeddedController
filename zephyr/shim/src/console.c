@@ -24,6 +24,7 @@ LOG_MODULE_REGISTER(shim_console, LOG_LEVEL_ERR);
 
 static const struct device *uart_shell_dev =
 	DEVICE_DT_GET(DT_CHOSEN(zephyr_shell_uart));
+static int shell_priority = K_HIGHEST_APPLICATION_THREAD_PRIO;
 static const struct shell *shell_zephyr;
 static struct k_poll_signal shell_uninit_signal;
 static struct k_poll_signal shell_init_signal;
@@ -127,6 +128,13 @@ static void shell_init_from_work(struct k_work *work)
 	/* Initialize the shell and re-enable both RX and TX */
 	shell_init(shell_backend_uart_get_ptr(), uart_shell_dev,
 		   shell_cfg_flags, log_backend, level);
+
+	/*
+	 * shell_init() always resets the priority back to the default.
+	 * Update the priority as setup by the shimmed task code.
+	 */
+	k_thread_priority_set(shell_zephyr->ctx->tid, shell_priority);
+
 	uart_irq_rx_enable(uart_shell_dev);
 	uart_irq_tx_enable(uart_shell_dev);
 
@@ -156,6 +164,12 @@ void uart_shell_start(void)
 
 	/* Wait for initialization to be run, the signal will wake us */
 	k_poll(&event, 1, K_FOREVER);
+}
+
+void uart_shell_set_priority(int prio)
+{
+	shell_priority = prio;
+	k_thread_priority_set(shell_zephyr->ctx->tid, shell_priority);
 }
 
 int zshim_run_ec_console_command(const struct zephyr_console_command *command,
@@ -347,4 +361,12 @@ int cprints(enum console_channel channel, const char *format, ...)
 	zephyr_print(buff, len);
 
 	return rv > 0 ? EC_SUCCESS : rv;
+}
+
+/*
+ * Placeholder task so that the shell/console task priority can get set
+ * correctly by shimmed_task_id.h
+ */
+void console_task_nop(void *p)
+{
 }
