@@ -84,40 +84,21 @@ build/cerise/RW/space_free_flash grew by 548 bytes: (7076 to 7624)
 
 ### Checking a single zephyr-ec build
 
-By default all the information messages from the `zmake` tool are hidden during
-builds of zephyr-ec boards.
-
-Changing the logging level to INFO, displays the flash and SRAM usage of board.
+By default, `zmake` will display the flash and SRAM usage of the
+board.
 
 ```
-$ zmake -l INFO configure -b volteer
-INFO: Clearing old build directory /mnt/host/source/src/platform/ec/build/zephyr/projects/volteer/volteer
+$ zmake configure -b volteer
     ...
-INFO: [volteer:ro]Memory region         Used Size  Region Size  %age Used
-INFO: [volteer:ro]FLASH:      238852 B       512 KB     45.56%
-INFO: [volteer:ro]SRAM:       57144 B        62 KB     90.01%
-INFO: [volteer:ro]IDT_LIST:          0 GB         2 KB      0.00%
-INFO: [volteer:rw]Memory region         Used Size  Region Size  %age Used
-INFO: [volteer:rw]FLASH:      238852 B       512 KB     45.56%
-INFO: [volteer:rw]SRAM:       57144 B        62 KB     90.01%
-INFO: [volteer:rw]IDT_LIST:          0 GB         2 KB      0.00%
-```
-
-For easier to read output, you can run the ninja build tool directly and see the
-RO and RW footprint.
-
-```
-$ zmake configure volteer
-$ ninja -C build/zephyr/projects/volteer/volteer/build-ro
-ninja: Entering directory 'build/zephyr/projects/volteer/volteer/build-ro'
-[1/324] Preparing syscall dependency handling
-
-[317/324] Linking C executable zephyr/zephyr_prebuilt.elf
-
-[324/324] Linking C executable zephyr/zephyr.elf
+Building /mnt/host/source/src/platform/ec/build/zephyr/volteer:ro: /usr/bin/ninja -C /mnt/host/source/src/platform/ec/build/zephyr/volteer/build-ro
 Memory region         Used Size  Region Size  %age Used
-           FLASH:      238852 B       512 KB     45.56%
-            SRAM:       57144 B        62 KB     90.01%
+           FLASH:      230852 B       512 KB     44.03%
+            SRAM:       51520 B        62 KB     81.15%
+        IDT_LIST:          0 GB         2 KB      0.00%
+Building /mnt/host/source/src/platform/ec/build/zephyr/volteer:rw: /usr/bin/ninja -C /mnt/host/source/src/platform/ec/build/zephyr/volteer/build-rw
+Memory region         Used Size  Region Size  %age Used
+           FLASH:      230852 B       512 KB     44.03%
+            SRAM:       51520 B        62 KB     81.15%
         IDT_LIST:          0 GB         2 KB      0.00%
 ```
 
