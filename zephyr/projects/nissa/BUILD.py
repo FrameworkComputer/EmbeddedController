@@ -31,6 +31,7 @@ register_nissa_project(
         here / "nivviks_overlay.dts",
         here / "nivviks_motionsense.dts",
         here / "nivviks_keyboard.dts",
+        here / "nivviks_power_signals.dts",
     ],
     extra_kconfig_files=[here / "prj_nivviks.conf"],
 )
