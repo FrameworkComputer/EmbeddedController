@@ -157,7 +157,11 @@ def get_argparser():
         "--zephyr-base", type=pathlib.Path, help="Path to Zephyr OS repository"
     )
 
-    sub = parser.add_subparsers(dest="subcommand", help="Subcommand")
+    sub = parser.add_subparsers(
+        dest="subcommand",
+        metavar="subcommand",
+        help="Subcommand to run",
+    )
     sub.required = True
 
     configure = sub.add_parser(
