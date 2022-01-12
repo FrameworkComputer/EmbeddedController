@@ -17,3 +17,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_EEPROM
   "${PLATFORM_EC_BASEBOARD}/cbi.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PWM_KBLIGHT
   "kblight_hooks.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
+  "${PLATFORM_EC_BASEBOARD}/battery_presence.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
+  "battery_present.c")

@@ -55,6 +55,8 @@ properties:
       - GPIO_EC_I2C5_BATTERY_SDA
       - GPIO_EC_I2C7_EEPROM_PWR_SCL_R
       - GPIO_EC_I2C7_EEPROM_PWR_SDA_R
+      - GPIO_EC_I2C_BAT_SCL
+      - GPIO_EC_I2C_BAT_SDA
       - GPIO_EC_I2C_SENSOR_SCL
       - GPIO_EC_I2C_SENSOR_SDA
       - GPIO_EC_I2C_USBC_PD_INT
@@ -121,6 +123,7 @@ properties:
       - GPIO_I2C_E_SDA
       - GPIO_I2C_F_SCL
       - GPIO_I2C_F_SDA
+      - GPIO_ID_1_EC_BATT_PRES_ODL
       - GPIO_IMVP9_VRRDY_OD
       - GPIO_KBD_KSO2
       - GPIO_EC_KB_BL_EN_L

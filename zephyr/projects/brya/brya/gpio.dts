@@ -24,6 +24,18 @@
 			gpios = <&gpioa 3 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
+		id_1_ec_batt_pres_odl {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+			enum-name = "GPIO_ID_1_EC_BATT_PRES_ODL";
+		};
+		ec_i2c_bat_scl {
+			gpios = <&gpio3 3 GPIO_INPUT>;
+			enum-name = "GPIO_EC_I2C_BAT_SCL";
+		};
+		ec_i2c_bat_sda {
+			gpios = <&gpio3 6 GPIO_INPUT>;
+			enum-name = "GPIO_EC_I2C_BAT_SDA";
+		};
 		ec_kb_bl_en_l {
 			gpios = <&gpio8 6 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_EC_KB_BL_EN_L";
