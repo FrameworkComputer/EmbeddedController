@@ -21,7 +21,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 
-static uint32_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
