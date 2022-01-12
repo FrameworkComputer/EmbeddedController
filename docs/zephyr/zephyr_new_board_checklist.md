@@ -65,3 +65,4 @@ EC Feature                                                                  | Ne
 [Configure BC1.2 Charger Detector (TODO)](./zephyr_template.md)             | no
 [Configure Battery (TODO)](./zephyr_template.md)                            | no
 [Configure ADC](./zephyr_adc.md)                                            | no
+[Configure Temperature Sensors](./zephyr_temperature_sensor.md)             | no
