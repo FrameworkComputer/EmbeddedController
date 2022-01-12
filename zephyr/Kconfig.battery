@@ -627,14 +627,6 @@ config PLATFORM_EC_CHARGER_SENSE_RESISTOR_AC
 	  external AC power supply. Its value must be known for the calculation
 	  to be correct. The value is typically around 10 mOhms.
 
-config PLATFORM_EC_BATTERY_FUEL_GAUGE
-	bool "Board supplies battery info"
-	help
-	  The fuel gauge information is used to cut off the battery for shipping
-	  mode and to check the charge/discharge FET status.  The battery
-	  information is used to set voltage, current and temperature operating
-	  limits for the battery.
-
 config PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
 	bool
 	help
@@ -732,6 +724,14 @@ config PLATFORM_EC_BATTERY_CUT_OFF
 	  console command and the EC_CMD_BATTERY_CUT_OFF host command.
 	  Once defined, a board specific board_cut_off_battery() function
 	  has to be provided.
+
+config PLATFORM_EC_BATTERY_FUEL_GAUGE
+	bool "Board supplies battery info"
+	help
+	  The fuel gauge information is used to cut off the battery for shipping
+	  mode and to check the charge/discharge FET status.  The battery
+	  information is used to set voltage, current and temperature operating
+	  limits for the battery.
 
 config PLATFORM_EC_BATTERY_HW_PRESENT_CUSTOM
 	bool "Hardware check of battery presence"
