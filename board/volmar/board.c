@@ -74,34 +74,3 @@ static void set_board_id_1_gpios(void)
 	gpio_set_flags(GPIO_ID_1_EC_KB_BL_EN, GPIO_OUT_LOW);
 }
 DECLARE_HOOK(HOOK_INIT, set_board_id_1_gpios, HOOK_PRIO_FIRST);
-
-/*
- * Reclaim GPIO pins on board ID 1 that are used as ADC inputs on
- * current boards. ALT function group MODULE_ADC pins are set in
- * HOOK_PRIO_INIT_ADC and can be reclaimed right after the hook runs.
- */
-
-static void board_id_1_reclaim_adc(void)
-{
-	if (get_board_id() != 1)
-		return;
-
-	/*
-	 * GPIO_ID_1_USB_C0_C2_TCPC_RST_ODL is on GPIO34
-	 *
-	 * The TCPC has already been reset by board_tcpc_init() executed
-	 * from HOOK_PRIO_INIT_CHIPSET. Later, the pin gets set to ADC6
-	 * in HOOK_PRIO_INIT_ADC, so we simply need to set the pin back
-	 * to GPIO34.
-	 */
-	gpio_set_flags(GPIO_ID_1_USB_C0_C2_TCPC_RST_ODL, GPIO_ODR_HIGH);
-	gpio_set_alternate_function(GPIO_PORT_3, BIT(4), GPIO_ALT_FUNC_NONE);
-
-	/*
-	 * The pin gets set to ADC7 in HOOK_PRIO_INIT_ADC, so we simply
-	 * need to set it back to GPIOE1.
-	 */
-	gpio_set_flags(GPIO_ID_1_EC_BATT_PRES_ODL, GPIO_INPUT);
-	gpio_set_alternate_function(GPIO_PORT_E, BIT(1), GPIO_ALT_FUNC_NONE);
-}
-DECLARE_HOOK(HOOK_INIT, board_id_1_reclaim_adc, HOOK_PRIO_INIT_ADC + 1);
