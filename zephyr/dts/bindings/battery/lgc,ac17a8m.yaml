@@ -1,0 +1,59 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "LGC AC17A8M"
+compatible: "lgc,ac17a8m"
+
+include: battery-smart.yaml
+
+properties:
+   enum-name:
+      type: string
+      default: "lgc,ac17a8m"
+
+   # TI BQ40Z55 Fuel Gauge
+   manuf_name:
+      default: "LGC"
+   device_name:
+      default: "AC17A8M"
+   ship_mode_reg_addr:
+      default: 0x00
+   ship_mode_reg_data:
+      default: [ 0x0010, 0x0010 ]
+   fet_mfgacc_support:
+      default: 0
+   fet_reg_addr:
+      default: 0x00
+   fet_reg_mask:
+      default: 0x2000
+   fet_disconnect_val:
+      default: 0x2000
+   fet_cfet_mask:
+      default: 0x4000
+   fet_cfet_off_val:
+      default: 0x4000
+
+   # Battery info
+   # voltage_max =13200, Calculated value with 5 tenth % error margin
+   # considered is: ((13200 * 1000) / (1000 + 5)) = 13134
+   voltage_max:
+      default: 13134
+   voltage_normal:
+      default: 11550
+   voltage_min:
+      default: 9000
+   precharge_current:
+      default: 256
+   start_charging_min_c:
+      default: 0
+   start_charging_max_c:
+      default: 45
+   charging_min_c:
+      default: 0
+   charging_max_c:
+      default: 60
+   discharging_min_c:
+      default: 0
+   discharging_max_c:
+      default: 75

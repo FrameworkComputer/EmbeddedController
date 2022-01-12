@@ -1,0 +1,59 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "POWERTECH BATGQA05L22"
+compatible: "powertech,batgqa05l22"
+
+include: battery-smart.yaml
+
+properties:
+   enum-name:
+      type: string
+      default: "powertech,batgqa05l22"
+
+   # TI BQ40Z50 Fuel Gauge
+   manuf_name:
+      default: "POW-TECH"
+   device_name:
+      default: "BATGQA05L22"
+   ship_mode_reg_addr:
+      default: 0x00
+   ship_mode_reg_data:
+      default: [ 0x0010, 0x0010 ]
+   fet_mfgacc_support:
+      default: 1
+   fet_reg_addr:
+      default: 0x00
+   fet_reg_mask:
+      default: 0x2000
+   fet_disconnect_val:
+      default: 0x2000
+   fet_cfet_mask:
+      default: 0x4000
+   fet_cfet_off_val:
+      default: 0x4000
+
+   # Battery info
+   # voltage_max = 13050, Calculated value with 5 tenth % error margin
+   # considered is: ((13050 * 1000) / (1000 + 5)) = 12985
+   voltage_max:
+      default: 12985
+   voltage_normal:
+      default: 11400
+   voltage_min:
+      default: 9000
+   precharge_current:
+      default: 280
+   start_charging_min_c:
+      default: 0
+   start_charging_max_c:
+      default: 45
+   charging_min_c:
+      default: 0
+   charging_max_c:
+      default: 45
+   discharging_min_c:
+      default: -10
+   discharging_max_c:
+      default: 60
