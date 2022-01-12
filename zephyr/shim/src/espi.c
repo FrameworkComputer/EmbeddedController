@@ -509,7 +509,7 @@ static void espi_peripheral_handler(const struct device *dev,
 	}
 }
 
-int zephyr_shim_setup_espi(void)
+static int zephyr_shim_setup_espi(const struct device *unused)
 {
 	static struct {
 		struct espi_callback cb;
@@ -557,6 +557,9 @@ int zephyr_shim_setup_espi(void)
 
 	return 0;
 }
+
+/* Must be before zephyr_shim_setup_hooks. */
+SYS_INIT(zephyr_shim_setup_espi, APPLICATION, 0);
 
 bool is_acpi_command(uint32_t data)
 {

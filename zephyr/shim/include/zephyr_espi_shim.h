@@ -10,13 +10,6 @@
 #include <stdint.h>
 
 /**
- * zephyr_shim_setup_espi() - initialize eSPI device
- *
- * Return: 0 upon success, or <0 upon failure.
- */
-int zephyr_shim_setup_espi(void);
-
-/**
  * Check if the message is an ACPI command.
  *
  * @param data The full ACPI event data.
