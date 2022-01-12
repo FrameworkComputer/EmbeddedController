@@ -497,6 +497,8 @@ static void test_ps8xxx_get_chip_info(uint16_t current_product_id)
 		      info.product_id, NULL);
 	zassert_equal(device_id, info.device_id, NULL);
 	zassert_equal(fw_rev, info.fw_version_number, NULL);
+
+	zassert_equal(false, check_ps8755_chip(USBC_PORT_C1), NULL);
 }
 
 static void test_ps8805_get_chip_info(void)
@@ -746,6 +748,14 @@ static void test_ps8805_gpio(void)
 			.level = 1,
 		},
 	};
+
+	/* Test fail on invalid signal for gpio control reg */
+	zassert_equal(EC_ERROR_INVAL,
+		      ps8805_gpio_set_level(USBC_PORT_C1, PS8805_GPIO_NUM, 1),
+		      NULL);
+	zassert_equal(EC_ERROR_INVAL,
+		      ps8805_gpio_get_level(USBC_PORT_C1, PS8805_GPIO_NUM,
+					    &level), NULL);
 
 	/* Setup fail on gpio control reg read */
 	i2c_common_emul_set_read_fail_reg(gpio_i2c_emul,
