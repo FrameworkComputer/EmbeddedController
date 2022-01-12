@@ -11,6 +11,7 @@ cscope.*
 .tests-passed
 .failedboards/
 .sizes.txt
+.gdb_history
 
 # VSCode IDE
 .vscode/*
