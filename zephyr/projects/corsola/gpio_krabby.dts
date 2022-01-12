@@ -115,7 +115,7 @@
 			enum-name = "GPIO_DP_AUX_PATH_SEL";
 		};
 		ec_ap_dp_hpd_odl: ec_ap_dp_hpd_odl {
-			gpios = <&gpioj 0 GPIO_ODR_HIGH>;
+			gpios = <&gpioj 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_AP_DP_HPD_ODL";
 		};
 		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus {

@@ -210,7 +210,7 @@
 			enum-name = "GPIO_USB_A0_FAULT_ODL";
 		};
 		ec_ap_dp_hpd_odl {
-			gpios = <&gpio6 1 GPIO_ODR_HIGH>;
+			gpios = <&gpio6 1 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_AP_DP_HPD_ODL";
 		};
 		ec_pmic_en_odl {
