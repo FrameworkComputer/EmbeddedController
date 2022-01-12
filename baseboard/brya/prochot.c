@@ -46,7 +46,7 @@ static int cal_sys_watt(void)
 
 	adapter_voltage_v = charge_manager_get_charger_voltage() / 1000;
 
-	W_adpt = IDPM * adapter_voltage_v / PROCHOT_ADAPTER_WATT_RATIO * 100;
+	W_adpt = IDPM * adapter_voltage_v * PROCHOT_ADAPTER_WATT_RATIO / 100;
 
 	return W_adpt;
 }
