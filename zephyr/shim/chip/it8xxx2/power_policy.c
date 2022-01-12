@@ -14,7 +14,7 @@ static const struct pm_state_info pm_states[] =
 	PM_STATE_INFO_LIST_FROM_DT_CPU(DT_NODELABEL(cpu0));
 
 /* CROS PM policy handler */
-struct pm_state_info pm_policy_next_state(uint8_t cpu, int32_t ticks)
+const struct pm_state_info *pm_policy_next_state(uint8_t cpu, int32_t ticks)
 {
 	ARG_UNUSED(cpu);
 
@@ -33,9 +33,9 @@ struct pm_state_info pm_policy_next_state(uint8_t cpu, int32_t ticks)
 				continue;
 			}
 
-			return pm_states[i];
+			return &pm_states[i];
 		}
 	}
 
-	return (struct pm_state_info){PM_STATE_ACTIVE, 0, 0};
+	return NULL;
 }
