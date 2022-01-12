@@ -274,6 +274,9 @@ static void ioex_isr(const struct device *port,
 
 int ioex_init(int ioex)
 {
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_IOEX_CROS_DRV))
+		return EC_SUCCESS;
+
 	const struct ioexpander_drv *drv = ioex_config[ioex].drv;
 	int rv;
 
