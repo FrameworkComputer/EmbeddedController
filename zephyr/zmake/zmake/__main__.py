@@ -97,7 +97,7 @@ def get_argparser():
     """Get the argument parser.
 
     Returns:
-        An argparse.ArgumentParser.
+        A two tuple, the argument parser, and the subcommand action.
     """
     parser = argparse.ArgumentParser(
         prog="zmake",
@@ -269,7 +269,26 @@ def get_argparser():
         help="The build directory used during configuration",
     )
 
-    return parser
+    generate_readme = sub.add_parser(
+        "generate-readme",
+        help="Update the auto-generated markdown documentation",
+    )
+    generate_readme.add_argument(
+        "-o",
+        "--output-file",
+        default=pathlib.Path(__file__).parent.parent / "README.md",
+        help="File to write to.  It will only be written if changed.",
+    )
+    generate_readme.add_argument(
+        "--diff",
+        action="store_true",
+        help=(
+            "If specified, diff the README with the expected contents instead of "
+            "writing out."
+        ),
+    )
+
+    return parser, sub
 
 
 def main(argv=None):
@@ -286,7 +305,7 @@ def main(argv=None):
 
     maybe_reexec(argv)
 
-    parser = get_argparser()
+    parser, _ = get_argparser()
     opts = parser.parse_args(argv)
 
     # Default logging

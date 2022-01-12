@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 """Module encapsulating Zmake wrapper object."""
+import difflib
 import logging
 import os
 import pathlib
@@ -12,6 +13,7 @@ import subprocess
 import tempfile
 
 import zmake.build_config
+import zmake.generate_readme
 import zmake.jobserver
 import zmake.modules
 import zmake.multiproc
@@ -827,4 +829,39 @@ class Zmake:
         for project in zmake.project.find_projects(search_dir).values():
             print(format.format(config=project.config), end="")
 
+        return 0
+
+    def generate_readme(self, output_file, diff=False):
+        """Re-generate the auto-generated README file.
+
+        Args:
+            output_file: A pathlib.Path; to be written only if changed.
+            diff: Instead of writing out, report the diff.
+        """
+        expected_contents = zmake.generate_readme.generate_readme()
+
+        if output_file.is_file():
+            current_contents = output_file.read_text()
+            if expected_contents == current_contents:
+                return 0
+            if diff:
+                self.logger.error(
+                    "The auto-generated README.md differs from the expected contents:"
+                )
+                for line in difflib.unified_diff(
+                    current_contents.splitlines(keepends=True),
+                    expected_contents.splitlines(keepends=True),
+                    str(output_file),
+                ):
+                    self.logger.error(line.rstrip())
+                self.logger.error('Run "zmake generate-readme" to fix this.')
+                return 1
+
+        if diff:
+            self.logger.error(
+                'The README.md file does not exist.  Run "zmake generate-readme".'
+            )
+            return 1
+
+        output_file.write_text(expected_contents)
         return 0

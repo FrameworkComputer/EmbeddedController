@@ -33,3 +33,6 @@ black --check --diff .
 
 # Check flake8 reports no issues.
 flake8 .
+
+# Check auto-generated README.md is as expected.
+python -m zmake generate-readme --diff
