@@ -85,6 +85,7 @@ GPIO(EN_IMVP8_VR,              PIN(F, 4), GPIO_OUT_LOW)
 GPIO(EC_CAM_V3P3_EN,           PIN(C, 6), GPIO_OUT_LOW)
 GPIO(EC_MX8M_ONOFF,            PIN(9, 3), GPIO_OUT_LOW)
 GPIO(EC_SCALER_EN,             PIN(E, 0), GPIO_OUT_LOW)
+GPIO(EC_IMX8_EN,               PIN(C, 0), GPIO_OUT_LOW)
 GPIO(PP3300_TPU_A_EN,          PIN(B, 0), GPIO_OUT_LOW)
 GPIO(PWR_CTRL,                 PIN(6, 2), GPIO_OUT_LOW)
 GPIO(EN_LOAD_SWITCH,           PIN(4, 2), GPIO_OUT_LOW)
@@ -154,7 +155,6 @@ ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)                 /* UART from EC 
 
 /* Unused pins */
 UNUSED(PIN(1, 3))						/* EC_GP_SEL1_ODL */
-UNUSED(PIN(C, 0))						/* FAN_PWM_2 */
 UNUSED(PIN(8, 0))						/* LED_BLUE_L */
 UNUSED(PIN(C, 2))						/* A12 NC */
 UNUSED(PIN(1, 2))						/* C6  NC */

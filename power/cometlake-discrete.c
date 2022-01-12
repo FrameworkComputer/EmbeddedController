@@ -207,6 +207,11 @@ static void shutdown_s5_rails(void)
 #endif
 }
 
+__overridable void board_enable_s0ix_rails(int enable)
+{
+	/* Board-specific enable for any additional rails in S0ix */
+}
+
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s(%d)", __func__, reason);
@@ -348,6 +353,16 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		shutdown_s0_rails();
 		break;
+
+#ifdef CONFIG_POWER_S0IX
+	case POWER_S0ixS0:
+		board_enable_s0ix_rails(0);
+		break;
+
+	case POWER_S0S0ix:
+		board_enable_s0ix_rails(1);
+		break;
+#endif
 
 	case POWER_S5:
 		/*
