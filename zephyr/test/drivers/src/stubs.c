@@ -325,48 +325,6 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-enum power_state power_chipset_init(void)
-{
-	return POWER_G3;
-}
-
-enum power_state power_handle_state(enum power_state state)
-{
-	switch (state) {
-	case POWER_G3S5:
-	case POWER_S5S3:
-	case POWER_S3S0:
-	case POWER_S0S3:
-	case POWER_S3S5:
-	case POWER_S5G3:
-#ifdef CONFIG_POWER_S0IX
-	case POWER_S0ixS0:
-	case POWER_S0S0ix:
-#endif
-		/*
-		 * Wait for event in transition states to prevent dead loop in
-		 * chipset task
-		 */
-		task_wait_event(-1);
-		break;
-	default:
-		break;
-	}
-
-	return state;
-}
-
-void chipset_reset(enum chipset_shutdown_reason reason)
-{
-}
-
-void chipset_force_shutdown(enum chipset_shutdown_reason reason)
-{
-}
-
-/* Power signals list. Must match order of enum power_signal. */
-const struct power_signal_info power_signal_list[] = {};
-
 void tcpc_alert_event(enum gpio_signal signal)
 {
 	int port;
@@ -429,3 +387,18 @@ static void stubs_interrupt_init(void)
 	gpio_enable_interrupt(GPIO_SWITCHCAP_PG_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, stubs_interrupt_init, HOOK_PRIO_INIT_I2C + 1);
+
+void board_set_switchcap_power(int enable)
+{
+	gpio_set_level(GPIO_SWITCHCAP_ON, enable);
+}
+
+int board_is_switchcap_enabled(void)
+{
+	return gpio_get_level(GPIO_SWITCHCAP_ON);
+}
+
+int board_is_switchcap_power_good(void)
+{
+	return gpio_get_level(GPIO_SWITCHCAP_PG);
+}
