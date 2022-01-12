@@ -330,25 +330,6 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
-static enum power_state forced_state;
-static bool force_state;
-
-void force_power_state(bool force, enum power_state state)
-{
-	forced_state = state;
-	force_state = force;
-
-	if (force) {
-		task_wake(TASK_ID_CHIPSET);
-		/*
-		 * TODO(b/201420132) - setting power state requires to wake up
-		 * TASK_ID_CHIPSET Sleep is required to run chipset task before
-		 * continuing with test
-		 */
-		k_msleep(1);
-	}
-}
-
 enum power_state power_handle_state(enum power_state state)
 {
 	switch (state) {
@@ -370,10 +351,6 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 	default:
 		break;
-	}
-
-	if (force_state) {
-		state = forced_state;
 	}
 
 	return state;

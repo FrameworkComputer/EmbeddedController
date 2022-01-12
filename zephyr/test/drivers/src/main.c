@@ -32,10 +32,12 @@ extern void test_suite_tcpci(void);
 extern void test_suite_ps8xxx(void);
 extern void test_suite_integration_usb(void);
 extern void test_suite_power_common(void);
+extern void test_suite_power_common_no_tasks(void);
 
 void test_main(void)
 {
 	/* Test suites to run before ec_app_main.*/
+	test_suite_power_common_no_tasks();
 
 	ec_app_main();
 

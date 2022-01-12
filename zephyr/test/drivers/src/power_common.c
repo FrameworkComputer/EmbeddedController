@@ -17,6 +17,7 @@
 #include "power.h"
 #include "stubs.h"
 #include "task.h"
+#include "ec_tasks.h"
 
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_smart_battery.h"
@@ -174,67 +175,64 @@ static void test_power_chipset_in_or_transitioning_to_state(void)
 	}
 }
 
-/** Test using chipset_exit_hard_off() in different power states */
+/* Test using chipset_exit_hard_off() in different power states. The only
+ * way to test the value of want_g3_exit is to set the power state to G3
+ * and then to see if test_power_common_state() transitions to G3S5 or not.
+ */
 static void test_power_exit_hard_off(void)
 {
 	/* Force initial state */
-	force_power_state(true, POWER_G3);
+	power_set_state(POWER_G3);
+	test_power_common_state();
 	zassert_equal(POWER_G3, power_get_state(), NULL);
-
-	/* Stop forcing state */
-	force_power_state(false, 0);
 
 	/* Test after exit hard off, we reach G3S5 */
 	chipset_exit_hard_off();
-	/*
-	 * TODO(b/201420132) - chipset_exit_hard_off() is waking up
-	 * TASK_ID_CHIPSET Sleep is required to run chipset task before
-	 * continuing with test
-	 */
-	k_msleep(1);
+	test_power_common_state();
 	zassert_equal(POWER_G3S5, power_get_state(), NULL);
 
 	/* Go back to G3 and check we stay there */
-	force_power_state(true, POWER_G3);
-	force_power_state(false, 0);
+	power_set_state(POWER_G3);
+	test_power_common_state();
 	zassert_equal(POWER_G3, power_get_state(), NULL);
 
 	/* Exit G3 again */
 	chipset_exit_hard_off();
-	/* TODO(b/201420132) - see comment above */
-	k_msleep(1);
+	test_power_common_state();
 	zassert_equal(POWER_G3S5, power_get_state(), NULL);
 
 	/* Go to S5G3 */
-	force_power_state(true, POWER_S5G3);
+	power_set_state(POWER_S5G3);
+	test_power_common_state();
 	zassert_equal(POWER_S5G3, power_get_state(), NULL);
 
-	/* Test exit hard off in S5G3 -- should immedietly exit G3 */
+	/* Test exit hard off in S5G3 -- should set want_g3_exit */
 	chipset_exit_hard_off();
 	/* Go back to G3 and check we exit it to G3S5 */
-	force_power_state(true, POWER_G3);
+	power_set_state(POWER_G3);
+	test_power_common_state();
 	zassert_equal(POWER_G3S5, power_get_state(), NULL);
 
 	/* Test exit hard off is cleared on entering S5 */
 	chipset_exit_hard_off();
-	force_power_state(true, POWER_S5);
+	power_set_state(POWER_S5);
 	zassert_equal(POWER_S5, power_get_state(), NULL);
+
 	/* Go back to G3 and check we stay in G3 */
-	force_power_state(true, POWER_G3);
-	force_power_state(false, 0);
+	power_set_state(POWER_G3);
+	test_power_common_state();
 	zassert_equal(POWER_G3, power_get_state(), NULL);
 
 	/* Test exit hard off doesn't work on other states */
-	force_power_state(true, POWER_S5S3);
-	force_power_state(false, 0);
+	power_set_state(POWER_S5S3);
+	test_power_common_state();
 	zassert_equal(POWER_S5S3, power_get_state(), NULL);
 	chipset_exit_hard_off();
-	/* TODO(b/201420132) - see comment above */
-	k_msleep(1);
+	test_power_common_state();
 
 	/* Go back to G3 and check we stay in G3 */
-	force_power_state(true, POWER_G3);
-	force_power_state(false, 0);
+	power_set_state(POWER_G3);
+	test_power_common_state();
 	zassert_equal(POWER_G3, power_get_state(), NULL);
 }
 
@@ -249,18 +247,20 @@ static void test_power_reboot_ap_at_g3(void)
 		.params = &params,
 		.params_size = sizeof(params),
 	};
-	int offset_for_still_in_g3_test;
 	int delay_ms;
+	int64_t before_time;
 
 	/* Force initial state S0 */
-	force_power_state(true, POWER_S0);
+	power_set_state(POWER_S0);
+	test_power_common_state();
 	zassert_equal(POWER_S0, power_get_state(), NULL);
 
 	/* Test version 0 (no delay argument) */
 	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
 
 	/* Go to G3 and check if reboot is triggered */
-	force_power_state(true, POWER_G3);
+	power_set_state(POWER_G3);
+	test_power_common_state();
 	zassert_equal(POWER_G3S5, power_get_state(), NULL);
 
 	/* Test version 1 (with delay argument) */
@@ -270,24 +270,10 @@ static void test_power_reboot_ap_at_g3(void)
 	zassert_equal(EC_RES_SUCCESS, host_command_process(&args), NULL);
 
 	/* Go to G3 and check if reboot is triggered after delay */
-	force_power_state(true, POWER_G3);
-	force_power_state(false, 0);
-	zassert_equal(POWER_G3, power_get_state(), NULL);
-	/*
-	 * Arbitrary chosen offset before end of reboot delay to check if G3
-	 * state wasn't left too soon
-	 */
-	offset_for_still_in_g3_test = 50;
-	k_msleep(delay_ms - offset_for_still_in_g3_test);
-	/* Test if still in G3 */
-	zassert_equal(POWER_G3, power_get_state(), NULL);
-	/*
-	 * power_common_state() use for loop with 100ms sleeps. msleep() wait at
-	 * least specified time, so wait 10% longer than specified delay to take
-	 * this into account.
-	 */
-	k_msleep(offset_for_still_in_g3_test + delay_ms / 10);
-	/* Test if reboot is triggered */
+	power_set_state(POWER_G3);
+	before_time = k_uptime_get();
+	test_power_common_state();
+	zassert_true(k_uptime_delta(&before_time) > 3000, NULL);
 	zassert_equal(POWER_G3S5, power_get_state(), NULL);
 }
 
@@ -481,11 +467,8 @@ static void setup_hibernation_delay(void)
 	bat->volt = battery_get_info()->voltage_normal;
 
 	/* Force initial state */
-	force_power_state(true, POWER_G3);
+	power_set_state(POWER_G3);
 	zassert_equal(POWER_G3, power_get_state(), NULL);
-
-	/* Stop forcing state */
-	force_power_state(false, 0);
 
 	/* Disable AC */
 	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, 0), NULL);
@@ -603,11 +586,8 @@ static void test_power_hc_hibernation_delay(void)
 	zassert_equal(0, extpower_is_present(), NULL);
 
 	/* Go to different state */
-	force_power_state(true, POWER_G3S5);
+	power_set_state(POWER_G3S5);
 	zassert_equal(POWER_G3S5, power_get_state(), NULL);
-
-	/* Stop forcing state */
-	force_power_state(false, 0);
 
 	/* Get hibernate delay */
 	params.seconds = 0;
@@ -657,14 +637,25 @@ static void test_power_cmd_hibernation_delay(void)
 		system_hibernate_fake.call_count);
 }
 
+void test_suite_power_common_no_tasks(void)
+{
+	ztest_test_suite(
+		power_common_no_tasks,
+		ztest_unit_test_setup_teardown(test_power_exit_hard_off,
+					       set_test_runner_tid,
+					       unit_test_noop),
+		ztest_unit_test_setup_teardown(test_power_reboot_ap_at_g3,
+					       set_test_runner_tid,
+					       unit_test_noop));
+	ztest_run_test_suite(power_common_no_tasks);
+}
+
 void test_suite_power_common(void)
 {
 	ztest_test_suite(power_common,
 			 ztest_unit_test(test_power_chipset_in_state),
 			 ztest_unit_test(
 			       test_power_chipset_in_or_transitioning_to_state),
-			 ztest_unit_test(test_power_exit_hard_off),
-			 ztest_unit_test(test_power_reboot_ap_at_g3),
 			 ztest_unit_test(test_power_hc_smart_discharge),
 			 ztest_unit_test(test_power_board_system_is_idle),
 			 ztest_unit_test_setup_teardown(

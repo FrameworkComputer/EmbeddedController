@@ -379,4 +379,12 @@ __override_proto void board_power_5v_enable(int enable);
  */
 void power_5v_enable(task_id_t tid, int enable);
 
+#ifdef CONFIG_ZTEST
+/**
+ * @brief Perform one state transition with power_common_state() as
+ * chipset_task() would.
+ */
+void test_power_common_state(void);
+#endif
+
 #endif  /* __CROS_EC_POWER_H */

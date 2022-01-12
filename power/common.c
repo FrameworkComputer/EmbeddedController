@@ -677,6 +677,18 @@ void chipset_exit_hard_off(void)
 	task_wake(TASK_ID_CHIPSET);
 }
 
+#ifdef CONFIG_ZTEST
+void test_power_common_state(void)
+{
+	enum power_state new_state;
+
+	task_wake(task_get_current());
+	new_state = power_common_state(state);
+	if (new_state != state)
+		power_set_state(new_state);
+}
+#endif
+
 /*****************************************************************************/
 /* Task function */
 
