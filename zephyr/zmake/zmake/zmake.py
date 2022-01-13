@@ -11,7 +11,6 @@ import pathlib
 import re
 import shutil
 import subprocess
-import tempfile
 
 import zmake.build_config
 import zmake.generate_readme
@@ -595,31 +594,21 @@ class Zmake:
 
     def testall(self, clobber=False):
         """Test all the valid test targets"""
-        tmp_dirs = []
         for project in zmake.project.find_projects(
             self.module_paths["ec"] / "zephyr"
         ).values():
             is_test = project.config.is_test
-            temp_build_dir = tempfile.mkdtemp(
-                suffix="-{}".format(project.config.project_name),
-                prefix="zbuild-",
-            )
-            tmp_dirs.append(temp_build_dir)
             # Configure and run the test.
             self.executor.append(
                 func=lambda: self._configure(
                     project=project,
-                    build_dir=pathlib.Path(temp_build_dir),
                     build_after_configure=True,
                     test_after_configure=is_test,
                     clobber=clobber,
                 )
             )
 
-        rv = self.executor.wait()
-        for tmpdir in tmp_dirs:
-            shutil.rmtree(tmpdir)
-        return rv
+        return self.executor.wait()
 
     def _run_lcov(self, build_dir, lcov_file, initial=False, gcov=""):
         gcov = os.path.abspath(gcov)
