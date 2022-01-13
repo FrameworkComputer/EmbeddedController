@@ -107,6 +107,7 @@
 		};
 		usb_c0_bc12_int_odl {
 			gpios = <&gpio8 3 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 		ec_entering_rw {
 			gpios = <&gpio0 3 GPIO_OUT_LOW>;
