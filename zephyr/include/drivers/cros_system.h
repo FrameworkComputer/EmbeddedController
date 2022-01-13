@@ -72,9 +72,7 @@ enum system_reset_cause {
  * @return GPIO enumeration
  */
 #define SYSTEM_DT_WAKEUP_GPIO_ENUM_BY_IDX(i, _)                           \
-	COND_CODE_1(DT_NODE_HAS_PROP(SYSTEM_DT_NODE_WAKEUP_PIN_BY_IDX(i), \
-				     enum_name),                          \
-		    (GPIO_SIGNAL(SYSTEM_DT_NODE_WAKEUP_PIN_BY_IDX(i)), ), ())
+		GPIO_SIGNAL(SYSTEM_DT_NODE_WAKEUP_PIN_BY_IDX(i)),
 
 /**
  * @typedef cros_system_get_reset_cause_api

@@ -11,9 +11,37 @@
 #include <devicetree.h>
 #include <toolchain.h>
 
-#define GPIO_SIGNAL(id) DT_STRING_UPPER_TOKEN(id, enum_name)
+/** @brief Returns the enum-name property as a token
+ *
+ * Returns the enum-name property for this node as an upper case token
+ * suitable for use as a GPIO signal name.
+ * The enum-name property must exist, so this macro should only
+ * be called conditionally upon checking the property exists.
+ */
+#define GPIO_SIGNAL_NAME_FROM_ENUM(id) DT_STRING_UPPER_TOKEN(id, enum_name)
+
+/** @brief Creates a GPIO signal name using the DTS ordinal number
+ *
+ * Create a GPIO signal name for a GPIO that does not contain
+ * the enum-name property. The DTS ordinal number is used
+ * to generate a unique name for this GPIO.
+ */
+#define GPIO_SIGNAL_NAME_FROM_ORD(ord) DT_CAT(GPIO_ORD_, ord)
+
+/** @brief Generate a GPIO signal name for this id
+ *
+ * Depending on whether the enum-name property exists, create
+ * a GPIO signal name from either the enum-name or a
+ * unique name generated using the DTS ordinal.
+ */
+#define GPIO_SIGNAL_NAME(id)					\
+	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name),		\
+		(GPIO_SIGNAL_NAME_FROM_ENUM(id)),		\
+		(GPIO_SIGNAL_NAME_FROM_ORD(id ## _ORD)))
+
+#define GPIO_SIGNAL(id)		GPIO_SIGNAL_NAME(id)
 #define GPIO_SIGNAL_WITH_COMMA(id) \
-	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name), (GPIO_SIGNAL(id), ), ())
+	GPIO_SIGNAL(id),
 enum gpio_signal {
 	GPIO_UNIMPLEMENTED = -1,
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
@@ -23,6 +51,7 @@ enum gpio_signal {
 	GPIO_LIMIT = 0x0FFF,
 };
 #undef GPIO_SIGNAL_WITH_COMMA
+
 BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
 
 /** @brief Converts a node identifier under named gpios to enum
