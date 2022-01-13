@@ -61,7 +61,6 @@
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
-#define CONFIG_STM_HWTIMER32
 #define TIM_CLOCK32 2
 #define TIM_CLOCK_MSB 3
 #define TIM_CLOCK_LSB 15

@@ -19,7 +19,6 @@
 /* Optional features */
 #undef CONFIG_LID_SWITCH
 #undef CONFIG_HIBERNATE
-#define CONFIG_STM_HWTIMER32
 #define CONFIG_WATCHDOG_HELP
 #define CONFIG_TASK_PROFILING
 

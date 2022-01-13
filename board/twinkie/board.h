@@ -104,8 +104,6 @@ enum usb_strings {
 	USB_STR_COUNT
 };
 
-#define CONFIG_STM_HWTIMER32
-
 /* Standard-current Rp */
 #define PD_SRC_VNC PD_SRC_DEF_VNC_MV
 #define PD_SRC_RD_THRESHOLD PD_SRC_DEF_RD_THRESH_MV

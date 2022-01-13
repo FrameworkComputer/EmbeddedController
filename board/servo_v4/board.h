@@ -35,7 +35,6 @@
 #define CONFIG_CMD_USART_INFO
 
 /* Optional features */
-#define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
 #define CONFIG_PVD
 /* See 'Programmable voltage detector characteristics' in the STM32F072x8

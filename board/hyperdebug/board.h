@@ -36,7 +36,6 @@
 #undef CONFIG_UART_RX_DMA
 
 /* Optional features */
-#define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
 #undef CONFIG_PVD
 /*

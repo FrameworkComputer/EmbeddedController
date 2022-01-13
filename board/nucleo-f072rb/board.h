@@ -16,7 +16,6 @@
 #define CONFIG_UART_CONSOLE 2
 
 /* Optional features */
-#define CONFIG_STM_HWTIMER32
 
 #ifdef CTS_MODULE
 #undef STM32_IRQ_EXT2_3_PRIORITY

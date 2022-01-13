@@ -15,7 +15,6 @@
 #define CONFIG_UART_CONSOLE 1
 
 /* Optional features */
-#define CONFIG_STM_HWTIMER32
 #define CONFIG_ADC
 #define CONFIG_BOARD_PRE_INIT
 #define CONFIG_CMD_SPI_FLASH

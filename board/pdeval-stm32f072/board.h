@@ -21,7 +21,6 @@
 #define CONFIG_HW_CRC
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
-#define CONFIG_STM_HWTIMER32
 /* USB Power Delivery configuration */
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV1

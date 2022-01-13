@@ -17,8 +17,6 @@
 #define CONFIG_STREAM_USART2
 #define CONFIG_CMD_USART_INFO
 
-#define CONFIG_STM_HWTIMER32
-
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
  * switch.

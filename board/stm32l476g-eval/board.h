@@ -33,7 +33,6 @@
 #endif
 
 /* Optional features */
-#define CONFIG_STM_HWTIMER32
 
 #ifdef CTS_MODULE_I2C
 #define CONFIG_I2C

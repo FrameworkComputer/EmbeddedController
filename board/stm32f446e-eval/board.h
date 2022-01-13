@@ -56,7 +56,6 @@
 #undef CONFIG_WATCHDOG
 
 /* Optional features */
-#define CONFIG_STM_HWTIMER32
 #define CONFIG_DMA_HELP
 #define CONFIG_FLASH_CROS
 

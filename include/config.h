@@ -4001,9 +4001,6 @@
 /* Default stack size to use for tasks, in bytes */
 #undef CONFIG_STACK_SIZE
 
-/* Use 32-bit timer for clock source on stm32. */
-#undef CONFIG_STM_HWTIMER32
-
 /* Compile charger detect for STM32 */
 #undef CONFIG_STM32_CHARGER_DETECT
 

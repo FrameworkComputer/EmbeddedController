@@ -111,7 +111,6 @@
 #define CONFIG_LTO
 #define CONFIG_FORCE_CONSOLE_RESUME
 #define CONFIG_MATH_UTIL
-#define CONFIG_STM_HWTIMER32
 
 /* USB Configuration */
 #define CONFIG_USB

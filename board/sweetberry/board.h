@@ -77,7 +77,6 @@
 #undef CONFIG_WATCHDOG
 
 /* Optional features */
-#define CONFIG_STM_HWTIMER32
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

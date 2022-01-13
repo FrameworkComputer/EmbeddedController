@@ -30,7 +30,6 @@
 #undef CONFIG_UART_RX_DMA
 
 /* Optional features */
-#define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
 #define CONFIG_PVD
 /* See 'Programmable voltage detector characteristics' in the STM32F072x8
