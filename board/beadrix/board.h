@@ -15,6 +15,7 @@
 /* System unlocked in early development */
 #define CONFIG_SYSTEM_UNLOCKED
 
+/* EC console commands */
 #define CONFIG_CMD_CHARGER_DUMP
 
 /* Battery */
@@ -24,13 +25,13 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* Charger */
-#define CONFIG_CHARGER_SM5803		/* C0 and C1: Charger */
-#define CONFIG_USB_PD_VBUS_DETECT_CHARGER
-#define CONFIG_USB_PD_5V_CHARGER_CTRL
-#define CONFIG_CHARGER_OTG
+#define CONFIG_CHARGER_RAA489000
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+#define CONFIG_CHARGER_SENSE_RESISTOR 10
+#define CONFIG_CHARGE_RAMP_HW
 #undef  CONFIG_CHARGER_SINGLE_CHIP
 #define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 21 /* R_DS(on) 10.7mOhm + 10mOhm sns rstr */
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
 
 /*
  * GPIO for C1 interrupts, for baseboard use
@@ -65,21 +66,45 @@
 #define CONFIG_GMR_TABLET_MODE
 
 /* TCPC */
-#define CONFIG_USB_PD_PORT_MAX_COUNT 2
-#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP	/* C0: ITE EC TCPC */
-#define CONFIG_USB_PD_TCPM_ANX7447	/* C1: ANX TCPC + Mux */
-#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
+#define CONFIG_USB_PD_TCPM_ANX7447	/* C1: MUX  only*/
+#define CONFIG_USB_PD_TCPM_MUX
+#define CONFIG_USB_PD_TCPM_ANX7447_AUX_PU_PD
 
 /* Thermistors */
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THERMISTOR
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
-/* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
-#define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
+/* USB */
+#define CONFIG_BC12_DETECT_PI3USB9201
+#define CONFIG_USB_MUX_RUNTIME_CONFIG
+#define CONFIG_USB_MUX_IT5205	/* C0: ITE MUX */
 
-#define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
+/* USB PD */
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#define CONFIG_USB_PD_TCPM_RAA489000 /* C1: TCPC + Charger */
+#undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
+#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
+
+/* USB Mux and Retimer */
+#define CONFIG_USB_MUX_RUNTIME_CONFIG
+#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
+#define CONFIG_USBC_RETIMER_NB7V904M
+
+/* USB defines specific to external TCPCs */
+#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USB_PD_DISCHARGE_TCPC
+#define CONFIG_USB_PD_TCPC_LOW_POWER
+
+/* Variant references the TCPCs to determine Vbus sourcing */
+#define CONFIG_USB_PD_5V_EN_CUSTOM
+
+#undef PD_POWER_SUPPLY_TURN_ON_DELAY
+#undef PD_POWER_SUPPLY_TURN_OFF_DELAY
+/* 20% margin added for these timings */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY	13080	/* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY	16080	/* us */
 
 #ifndef __ASSEMBLER__
 
