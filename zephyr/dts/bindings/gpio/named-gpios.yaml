@@ -3,13 +3,23 @@ description: Named GPIOs parent node
 compatible: "named-gpios"
 
 child-binding:
-    description: Named GPIOs child node
-    include: gpio-enum-name.yaml
-    properties:
-       gpios:
-          type: phandle-array
-          required: true
-       "#gpio-cells":
-          type: int
-          required: false
-          const: 0
+  description: Named GPIOs child node
+  include: gpio-enum-name.yaml
+  properties:
+    gpios:
+      type: phandle-array
+      required: true
+    "#gpio-cells":
+      type: int
+      required: false
+      const: 0
+    no-auto-init:
+      description:
+        When set, the GPIO is not initialised, and can be
+        initialised separately in code, but is still saved so that
+        it appears in the list of GPIOs.
+
+        When not set, the GPIO h/w is configured and initialised at startup
+        according to the flags in the gpios node.
+      type: boolean
+      required: false
