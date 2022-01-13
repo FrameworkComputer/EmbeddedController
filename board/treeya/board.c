@@ -19,8 +19,11 @@
 #include "switch.h"
 #include "tablet_mode.h"
 #include "task.h"
+#include "system_chip.h"
 
 #include "gpio_list.h"
+
+static uint8_t is_psl_hibernate;
 
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
@@ -185,6 +188,8 @@ static int board_use_st_sensor(void)
  */
 void board_update_sensor_config_from_sku(void)
 {
+	uint32_t sku_id = system_get_sku_id();
+
 	if (board_is_convertible()) {
 		/* sku_id a8-a9 use ST sensors */
 		if (board_use_st_sensor()) {
@@ -207,6 +212,13 @@ void board_update_sensor_config_from_sku(void)
 		gpio_set_flags(GPIO_6AXIS_INT_L,
 			       GPIO_INPUT | GPIO_PULL_DOWN);
 	}
+
+	if (sku_id == 160 || sku_id == 168 || sku_id == 169 ||
+			sku_id == 190 || sku_id == 191) {
+		is_psl_hibernate = 0;
+	} else {
+		is_psl_hibernate = 1;
+	}
 }
 
 /* bmi160 or lsm6dsm need differenct interrupt function */
@@ -218,7 +230,89 @@ void board_bmi160_lsm6dsm_interrupt(enum gpio_signal signal)
 		bmi160_interrupt(signal);
 }
 
+static void system_psl_type_sel(int psl_no, uint32_t flags)
+{
+	/* Set PSL input events' type as level or edge trigger */
+	if ((flags & GPIO_INT_F_HIGH) || (flags & GPIO_INT_F_LOW))
+		CLEAR_BIT(NPCX_GLUE_PSL_CTS, psl_no + 4);
+	else if ((flags & GPIO_INT_F_RISING) || (flags & GPIO_INT_F_FALLING))
+		SET_BIT(NPCX_GLUE_PSL_CTS, psl_no + 4);
+
+	/*
+	 * Set PSL input events' polarity is low (high-to-low) active or
+	 * high (low-to-high) active
+	 */
+	if (flags & GPIO_HIB_WAKE_HIGH)
+		SET_BIT(NPCX_DEVALT(ALT_GROUP_D), 2 * psl_no);
+	else
+		CLEAR_BIT(NPCX_DEVALT(ALT_GROUP_D), 2 * psl_no);
+}
+
+int system_config_psl_mode(enum gpio_signal signal)
+{
+	int psl_no;
+	const struct gpio_info *g = gpio_list + signal;
+
+	if (g->port == GPIO_PORT_D && g->mask == MASK_PIN2) /* GPIOD2 */
+		psl_no = 0;
+	else if (g->port == GPIO_PORT_0 && (g->mask & 0x07)) /* GPIO00/01/02 */
+		psl_no = GPIO_MASK_TO_NUM(g->mask) + 1;
+	else
+		return 0;
+
+	system_psl_type_sel(psl_no, g->flags);
+	return 1;
+}
+
+void system_enter_psl_mode(void)
+{
+	/* Configure pins from GPIOs to PSL which rely on VSBY power rail. */
+	gpio_config_module(MODULE_PMU, 1);
+
+	/*
+	 * Only PSL_IN events can pull PSL_OUT to high and reboot ec.
+	 * We should treat it as wake-up pin reset.
+	 */
+	NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PIN;
+
+	/*
+	 * Pull PSL_OUT (GPIO85) to low to cut off ec's VCC power rail by
+	 * setting bit 5 of PDOUT(8).
+	 */
+	SET_BIT(NPCX_PDOUT(GPIO_PORT_8), 5);
+}
+
+/* Hibernate function implemented by PSL (Power Switch Logic) mode. */
+noreturn void __keep __enter_hibernate_in_psl(void)
+{
+	system_enter_psl_mode();
+	/* Spin and wait for PSL cuts power; should never return */
+	while (1)
+		;
+}
+
 void board_hibernate_late(void)
 {
-	NPCX_KBSINPU = 0x0A;
+	int i;
+
+	/*
+	 * If the SKU cannot use PSL hibernate, immediately return to go the
+	 * non-PSL hibernate flow.
+	 */
+	if (!is_psl_hibernate) {
+		NPCX_KBSINPU = 0x0A;
+		return;
+	}
+
+	for (i = 0; i < hibernate_wake_pins_used; i++) {
+		/* Config PSL pins setting for wake-up inputs */
+		if (!system_config_psl_mode(hibernate_wake_pins[i]))
+			ccprintf("Invalid PSL setting in wake-up pin %d\n", i);
+	}
+
+	/* Clear all pending IRQ otherwise wfi will have no affect */
+	for (i = NPCX_IRQ_0 ; i < NPCX_IRQ_COUNT ; i++)
+		task_clear_pending_irq(i);
+
+	__enter_hibernate_in_psl();
 }
