@@ -32,6 +32,9 @@
 #define BUTTON_ID_BRIGHTNESS_INCREMENT 0x006F
 #define BUTTON_ID_BRIGHTNESS_DECREMENT 0x0070
 
+#define EVENT_HID_HOST_IRQ	0x8000
+#define EVENT_REPORT_ILLUMINANCE_VALUE	0x4000
+
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
 
@@ -345,7 +348,8 @@ void i2c_hid_als_init(void)
 
 static void i2c_hid_send_response(void)
 {
-		task_set_event(TASK_ID_HID, 0xC000, 0);
+		task_set_event(TASK_ID_HID,
+			EVENT_HID_HOST_IRQ | EVENT_REPORT_ILLUMINANCE_VALUE, 0);
 }
 static size_t fill_report(uint8_t *buffer, uint8_t report_id, const void *data,
 			  size_t data_len)
@@ -569,11 +573,11 @@ void hid_handler_task(void *p)
 		if (event & TASK_EVENT_I2C_IDLE) {
 			/* TODO host is requesting data from device */
 		}
-		if (event & 0x8000) {
+		if (event & EVENT_HID_HOST_IRQ) {
 			hid_irq_to_host();
 		}
 
-		if (event & 0x4000) {
+		if (event & EVENT_REPORT_ILLUMINANCE_VALUE) {
 			/* start reporting illuminance value in S0*/
 			hook_call_deferred(&report_illuminance_value_data,
 					((int) als_feature.report_interval) * MSEC);
