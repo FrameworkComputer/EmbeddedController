@@ -136,17 +136,3 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	/* ack */
 	return 1;
 }
-
-__override void svdm_exit_dp_mode(int port)
-{
-#ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	svdm_set_hpd_gpio(port, 0);
-#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
-	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-				 USB_PD_MUX_HPD_IRQ_DEASSERTED);
-
-#ifdef USB_PD_PORT_TCPC_MST
-	if (port == USB_PD_PORT_TCPC_MST)
-		baseboard_mst_enable_control(port, 0);
-#endif
-}
