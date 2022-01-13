@@ -24,6 +24,9 @@
 	 */
 	motionsense-mutex {
 		compatible = "cros-ec,motionsense-mutex";
+		lid_mutex: lid-mutex {
+			label = "LID_MUTEX";
+		};
 		base_mutex: base-mutex {
 			label = "BASE_MUTEX";
 		};
@@ -32,6 +35,11 @@
 	/* Rotation matrix used by drivers. */
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 (-1) 0 0
+				 0 0 (-1)>;
+		};
 		base_rot_ref: base-rotation-ref {
 			mat33 = <0 (-1) 0
 				 1 0 0
@@ -49,6 +57,10 @@
 	 * "struct als_drv_data_t" in accelgyro.h
 	 */
 	motionsense-sensor-data {
+		bma4xx_data: bma4xx-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
 		bmi3xx_data: bmi3xx-drv-data {
 			compatible = "cros-ec,drvdata-bmi3xx";
 			status = "okay";
@@ -61,6 +73,32 @@
 	 * motion sensor IDs for lid angle calculation.
 	 */
 	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			label = "Lid Accel";
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			default-range = <2>;
+			drv-data = <&bma4xx_data>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					label = "SENSOR_CONFIG_EC_S0";
+					odr = <(12500 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					label = "SENSOR_CONFIG_EC_S3";
+					odr = <(12500 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
 		base_accel: base-accel {
 			compatible = "cros-ec,bmi3xx-accel";
 			status = "okay";
@@ -111,5 +149,7 @@
 		 * be enabled at initial stage
 		 */
 		sensor-irqs = <&int_base_imu>;
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel>;
 	};
 };
