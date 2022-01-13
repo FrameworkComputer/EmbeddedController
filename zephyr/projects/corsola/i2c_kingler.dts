@@ -76,6 +76,12 @@ i2c_pwr_cbi: &i2c3_0 {
 	label = "I2C_PWR_CBI";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+
+	isl9238: isl9238@9 {
+		compatible = "intersil,isl9238";
+		reg = <0x09>;
+		label = "ISL9238_CHARGER";
+	};
 };
 
 &i2c_ctrl3 {
