@@ -24,8 +24,19 @@
 #define CONFIG_RAM_BASE 0x20000000
 #define CONFIG_RAM_SIZE 0x00004000
 
-/* Number of IRQ vectors on the NVIC */
-#define CONFIG_IRQ_COUNT 45
+/* Number of IRQ vectors on the NVIC
+ *
+ * Section 10.1 "Nested vectored interrupt controller (NVIC)" states:
+ * 45 maskable interrupt channels in Cat.1 and Cat.2 devices (see Table 49)
+ * 54 maskable interrupt channels in Cat.3 devices (see Table 50) and 57
+ * channels in Cat.4, Cat.5 and Cat.6 devices (see Table 51).
+ *
+ * The only STM32L15 that we support is the "discovery" board is a "Category
+ * 3" device. See Section 1.5 "Product Category definition".
+ *
+ * https://www.st.com/resource/en/reference_manual/cd00240193-stm32l100xx-stm32l151xx-stm32l152xx-and-stm32l162xx-advanced-arm-based-32-bit-mcus-stmicroelectronics.pdf
+ */
+#define CONFIG_IRQ_COUNT 54
 
 /* Lots of RAM, so use bigger UART buffer */
 #undef CONFIG_UART_TX_BUF_SIZE
