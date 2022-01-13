@@ -17,7 +17,7 @@
  * each USART, an entry will be NULL if no USART driver is initialized for the
  * corresponding hardware instance.
  */
-#define STM32_USARTS_MAX 4
+#define STM32_USARTS_MAX 5
 
 static struct usart_config const *configs[STM32_USARTS_MAX];
 
@@ -128,12 +128,12 @@ static void usart3_interrupt(void)
 	usart_interrupt(configs[2]);
 }
 
-DECLARE_IRQ(STM32_IRQ_USART4, usart4_interrupt, 2);
+DECLARE_IRQ(STM32_IRQ_USART3, usart3_interrupt, 2);
 #endif
 
 #if defined(CONFIG_STREAM_USART4)
 struct usart_hw_config const usart4_hw = {
-	.index          = 2,
+	.index          = 3,
 	.base           = STM32_USART4_BASE,
 	.irq            = STM32_IRQ_USART4,
 	.clock_register = &STM32_RCC_APB1ENR,
@@ -141,10 +141,28 @@ struct usart_hw_config const usart4_hw = {
 	.ops            = &usart_variant_hw_ops,
 };
 
-void usart4_interrupt(void)
+static void usart4_interrupt(void)
 {
-	usart_interrupt(configs[2]);
+	usart_interrupt(configs[3]);
 }
 
 DECLARE_IRQ(STM32_IRQ_USART4, usart4_interrupt, 2);
+#endif
+
+#if defined(CONFIG_STREAM_USART5)
+struct usart_hw_config const usart5_hw = {
+	.index          = 4,
+	.base           = STM32_USART5_BASE,
+	.irq            = STM32_IRQ_USART5,
+	.clock_register = &STM32_RCC_APB1ENR,
+	.clock_enable   = STM32_RCC_PB1_USART5,
+	.ops            = &usart_variant_hw_ops,
+};
+
+static void usart5_interrupt(void)
+{
+	usart_interrupt(configs[4]);
+}
+
+DECLARE_IRQ(STM32_IRQ_USART5, usart5_interrupt, 2);
 #endif

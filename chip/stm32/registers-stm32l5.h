@@ -78,7 +78,7 @@
 #define STM32_IRQ_USART3          63
 #define STM32_IRQ_USART4          64
 #define STM32_IRQ_USART5          65
-#define STM32_IRQ_LPUART          66
+#define STM32_IRQ_LPUART1         66
 #define STM32_IRQ_LPTIM1          67
 #define STM32_IRQ_LPTIM2          68
 #define STM32_IRQ_TIM15           69
@@ -145,8 +145,17 @@
 #define STM32_PWR_BASE              (APB1PERIPH_BASE + 0x7000UL)
 #define STM32_DAC_BASE              (APB1PERIPH_BASE + 0x7400UL)
 #define STM32_DAC1_BASE             (APB1PERIPH_BASE + 0x7400UL)
+#define STM32_OPAMP_BASE            (APB1PERIPH_BASE + 0x7800UL)
+#define STM32_LPTIM1_BASE           (APB1PERIPH_BASE + 0x7C00UL)
+#define STM32_LPUART1_BASE          (APB1PERIPH_BASE + 0x8000UL)
+#define STM32_I2C4_BASE             (APB1PERIPH_BASE + 0x8400UL)
+#define STM32_LPTIM2_BASE           (APB1PERIPH_BASE + 0x9400UL)
+#define STM32_LPTIM3_BASE           (APB1PERIPH_BASE + 0x9800UL)
+#define STM32_FDCAN_RAM_BASE        (APB1PERIPH_BASE + 0xA400UL)
+#define STM32_CAN_RAM_BASE          (APB1PERIPH_BASE + 0xAC00UL)
 #define STM32_USB_FS_BASE           (APB1PERIPH_BASE + 0xD400UL)
 #define STM32_USB_CAN_SRAM_BASE     (APB1PERIPH_BASE + 0xD800UL)
+#define STM32_UCPD1_BASE            (APB1PERIPH_BASE + 0xDC00UL)
 
 /*!< APB2 peripherals */
 #define STM32_SYSCFG_BASE           (APB2PERIPH_BASE + 0x0000UL)
@@ -360,8 +369,11 @@
 #define PWR_CR1_VOS_0                (0x1UL << PWR_CR1_VOS_POS)
 #define PWR_CR1_VOS_1                (0x2UL << PWR_CR1_VOS_POS)
 
+#define STM32_PWR_CR2_IOSV_POS       9U
+#define STM32_PWR_CR2_IOSV_MASK      BIT(STM32_PWR_CR2_IOSV_POS)
+#define STM32_PWR_CR2_IOSV           STM32_PWR_CR2_IOSV_MASK
 #define STM32_PWR_CR2_USV_POS        10U
-#define STM32_PWR_CR2_USV_MASK       (0x7UL << STM32_PWR_CR2_USV_POS)
+#define STM32_PWR_CR2_USV_MASK       BIT(STM32_PWR_CR2_USV_POS)
 #define STM32_PWR_CR2_USV            STM32_PWR_CR2_USV_MASK
 
 
@@ -2420,5 +2432,11 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #define STM32_DMA_CCR_PL_HIGH		(2 << 12)
 #define STM32_DMA_CCR_PL_VERY_HIGH	(3 << 12)
 #define STM32_DMA_CCR_MEM2MEM		BIT(14)
+
+/* LPUART gets accessed as UART9 in STM32 uart module */
+#define STM32_USART9_BASE		STM32_LPUART1_BASE
+#define STM32_IRQ_USART9		STM32_IRQ_LPUART1
+#define DMAMUX_REQ_UART9_RX		DMAMUX_REQ_LPUART1_RX
+#define DMAMUX_REQ_UART9_TX		DMAMUX_REQ_LPUART1_TX
 
 #endif /* !__ASSEMBLER__ */
