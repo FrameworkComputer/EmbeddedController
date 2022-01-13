@@ -7,6 +7,7 @@
 
 #include "charger.h"
 #include "console.h"
+#include "driver/bc12/pi3usb9201_public.h"
 #include "driver/charger/isl923x_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/ppc/rt1718s.h"
@@ -72,6 +73,21 @@ const struct charger_config_t chg_chips[] = {
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {};
 
 struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	[USBC_PORT_C0] = {
+		.drv = &pi3usb9201_drv,
+	},
+	[USBC_PORT_C1] = {
+		.drv = &rt1718s_bc12_drv,
+	}
+};
+
+const struct pi3usb9201_config_t
+		pi3usb9201_bc12_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	[USBC_PORT_C0] = {
+		.i2c_port = I2C_PORT_USB_C0,
+		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
+	},
+	[USBC_PORT_C1] = { /* unused */ }
 };
 
 void board_tcpc_init(void)
@@ -91,6 +107,9 @@ void board_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
 	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
 		gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+
+	/* Enable BC1.2 interrupts. */
+	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
@@ -275,4 +294,9 @@ void ppc_interrupt(enum gpio_signal signal)
 	default:
 		break;
 	}
+}
+
+void bc12_interrupt(enum gpio_signal signal)
+{
+	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
 }
