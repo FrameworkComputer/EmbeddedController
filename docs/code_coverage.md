@@ -48,3 +48,10 @@ selected in `Kconfig.board`.
 
 The coverage report top-level page is
 `build/ztest-coverage/coverage_rpt/index.html`.
+
+For manual coverage report you can run:
+`zmake configure --test --coverage <PATH>`
+
+Example:
+`zmake configure --test --coverage zephyr/test/drivers/`
+`genhtml -q -o build/ztest-coverage/coverage_rpt/ build/zephyr/test-drivers/output/zephyr.info`
