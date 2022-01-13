@@ -138,6 +138,8 @@ You might also find these files useful (using read-only as an example):
 *   `build-ro/zephyr/zephyr.dts` - devicetree that is used
 *   `build-ro/zephyr/zephyr.dts` - map of image
 
+Googlers may be interested in setting up [building with Goma](../goma.md)
+as well.
 
 ### Looking at the Kconfig
 
