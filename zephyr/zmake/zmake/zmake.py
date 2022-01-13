@@ -4,6 +4,7 @@
 
 """Module encapsulating Zmake wrapper object."""
 import difflib
+import functools
 import logging
 import os
 import pathlib
@@ -153,11 +154,15 @@ class Zmake:
         checkout=None,
         jobserver=None,
         jobs=0,
+        goma=False,
+        gomacc="/mnt/host/depot_tools/.cipd_bin/gomacc",
         modules_dir=None,
         zephyr_base=None,
     ):
         zmake.multiproc.reset()
         self._checkout = checkout
+        self.goma = goma
+        self.gomacc = gomacc
         if zephyr_base:
             self.zephyr_base = zephyr_base
         else:
@@ -178,7 +183,7 @@ class Zmake:
 
         self.logger = logging.getLogger(self.__class__.__name__)
         self.executor = zmake.multiproc.Executor()
-        self._sequential = jobs == 1
+        self._sequential = jobs == 1 and not goma
 
     @property
     def checkout(self):
@@ -291,6 +296,13 @@ class Zmake:
         if allow_warnings:
             base_config |= zmake.build_config.BuildConfig(
                 cmake_defs={"ALLOW_WARNINGS": "ON"}
+            )
+        if self.goma:
+            base_config |= zmake.build_config.BuildConfig(
+                cmake_defs={
+                    "CMAKE_C_COMPILER_LAUNCHER": self.gomacc,
+                    "CMAKE_CXX_COMPILER_LAUNCHER": self.gomacc,
+                },
             )
 
         if not build_dir.exists():
@@ -464,6 +476,9 @@ class Zmake:
             with self.jobserver.get_job():
                 dirs[build_name] = build_dir / "build-{}".format(build_name)
                 cmd = ["/usr/bin/ninja", "-C", dirs[build_name].as_posix()]
+                if self.goma:
+                    # Go nuts ninja, goma does the heavy lifting!
+                    cmd.append("-j1024")
                 self.logger.info(
                     "Building %s:%s: %s",
                     build_dir,
@@ -520,9 +535,50 @@ class Zmake:
 
         return 0
 
+    def _run_test(self, elf_file):
+        """Run a single test, with goma if enabled.
+
+        Args:
+            elf_file: The path to the ELF to run.
+        """
+        cmd = []
+        if self.goma:
+            cmd.append(self.gomacc)
+        cmd.append(elf_file)
+
+        def _run():
+            self.logger.info("Running tests in %s.", elf_file)
+            proc = self.jobserver.popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding="utf-8",
+                errors="replace",
+            )
+            job_id = "test {}".format(elf_file)
+            zmake.multiproc.log_output(
+                self.logger,
+                logging.DEBUG,
+                proc.stdout,
+                job_id=job_id,
+            )
+            zmake.multiproc.log_output(
+                self.logger,
+                logging.ERROR,
+                proc.stderr,
+                job_id=job_id,
+            )
+            if proc.wait():
+                raise OSError(get_process_failure_msg(proc))
+
+        if self.goma:
+            _run()
+        else:
+            with self.jobserver.get_job():
+                _run()
+
     def test(self, build_dir):
         """Test a build directory."""
-        procs = []
         output_files = []
         self.build(build_dir, output_files_out=output_files)
 
@@ -533,33 +589,8 @@ class Zmake:
             return 0
 
         for output_file in output_files:
-            self.logger.info("Running tests in %s.", output_file)
-            with self.jobserver.get_job():
-                proc = self.jobserver.popen(
-                    [output_file],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    encoding="utf-8",
-                    errors="replace",
-                )
-                job_id = "test {}".format(output_file)
-                zmake.multiproc.log_output(
-                    self.logger,
-                    logging.DEBUG,
-                    proc.stdout,
-                    job_id=job_id,
-                )
-                zmake.multiproc.log_output(
-                    self.logger,
-                    logging.ERROR,
-                    proc.stderr,
-                    job_id=job_id,
-                )
-                procs.append(proc)
+            self.executor.append(func=functools.partial(self._run_test, output_file))
 
-        for idx, proc in enumerate(procs):
-            if proc.wait():
-                raise OSError(get_process_failure_msg(proc))
         return 0
 
     def testall(self, clobber=False):

@@ -124,6 +124,12 @@ def get_argparser():
         help="Degree of multiprogramming to use",
     )
     parser.add_argument(
+        "--goma",
+        action="store_true",
+        dest="goma",
+        help="Enable hyperspeed compilation with Goma! (Googlers only)",
+    )
+    parser.add_argument(
         "-l",
         "--log-level",
         choices=list(log_level_map.keys()),
@@ -348,7 +354,8 @@ def main(argv=None):
         zmake = call_with_namespace(zm.Zmake, opts)
         subcommand_method = getattr(zmake, opts.subcommand.replace("-", "_"))
         result = call_with_namespace(subcommand_method, opts)
-        return result
+        wait_rv = zmake.executor.wait()
+        return result or wait_rv
     finally:
         multiproc.wait_for_log_end()
 
