@@ -176,6 +176,12 @@ def get_argparser():
         help="Enable bringup debugging features",
     )
     configure.add_argument(
+        "--clobber",
+        action="store_true",
+        dest="clobber",
+        help="Delete existing build directories, even if configuration is unchanged",
+    )
+    configure.add_argument(
         "--allow-warnings",
         action="store_true",
         default=False,
@@ -254,9 +260,15 @@ def get_argparser():
         help="The build directory used during configuration",
     )
 
-    sub.add_parser(
+    testall = sub.add_parser(
         "testall",
         help="Execute all known builds and tests",
+    )
+    testall.add_argument(
+        "--clobber",
+        action="store_true",
+        dest="clobber",
+        help="Delete existing build directories, even if configuration is unchanged",
     )
 
     coverage = sub.add_parser(

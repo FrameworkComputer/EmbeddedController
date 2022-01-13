@@ -34,7 +34,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake configure
 
-**Usage:** `zmake configure [-h] [-t TOOLCHAIN] [--bringup] [--allow-warnings] [-B BUILD_DIR] [-b] [--test] project_name_or_dir [-c]`
+**Usage:** `zmake configure [-h] [-t TOOLCHAIN] [--bringup] [--clobber] [--allow-warnings] [-B BUILD_DIR] [-b] [--test] project_name_or_dir [-c]`
 
 #### Positional Arguments
 
@@ -49,6 +49,7 @@ Chromium OS's meta-build tool for Zephyr
 | `-h`, `--help` | show this help message and exit |
 | `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--bringup` | Enable bringup debugging features |
+| `--clobber` | Delete existing build directories, even if configuration is unchanged |
 | `--allow-warnings` | Do not treat warnings as errors |
 | `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Build directory |
 | `-b`, `--build` | Run the build after configuration |
@@ -107,13 +108,14 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake testall
 
-**Usage:** `zmake testall [-h]`
+**Usage:** `zmake testall [-h] [--clobber]`
 
 #### Optional Arguments
 
 |   |   |
 |---|---|
 | `-h`, `--help` | show this help message and exit |
+| `--clobber` | Delete existing build directories, even if configuration is unchanged |
 
 ### zmake coverage
 

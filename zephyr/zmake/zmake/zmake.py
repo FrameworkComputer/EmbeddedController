@@ -193,6 +193,7 @@ class Zmake:
         toolchain=None,
         build_after_configure=False,
         test_after_configure=False,
+        clobber=False,
         bringup=False,
         coverage=False,
         allow_warnings=False,
@@ -217,6 +218,7 @@ class Zmake:
             toolchain=toolchain,
             build_after_configure=build_after_configure,
             test_after_configure=test_after_configure,
+            clobber=clobber,
             bringup=bringup,
             coverage=coverage,
             allow_warnings=allow_warnings,
@@ -229,6 +231,7 @@ class Zmake:
         toolchain=None,
         build_after_configure=False,
         test_after_configure=False,
+        clobber=False,
         bringup=False,
         coverage=False,
         allow_warnings=False,
@@ -242,9 +245,10 @@ class Zmake:
                 / "zephyr"
                 / project.config.project_name
             )
-        # Make sure the build directory is clean.
-        if os.path.exists(build_dir):
-            self.logger.info("Clearing old build directory %s", build_dir)
+
+        # Clobber build directory if requested.
+        if clobber and build_dir.exists():
+            self.logger.info("Clearing build directory %s due to --clobber", build_dir)
             shutil.rmtree(build_dir)
 
         generated_include_dir = (build_dir / "include").resolve()
@@ -294,11 +298,9 @@ class Zmake:
         if not generated_include_dir.exists():
             generated_include_dir.mkdir()
         processes = []
+        files_to_write = []
         self.logger.info("Building %s in %s.", project.config.project_name, build_dir)
         for build_name, build_config in project.iter_builds():
-            self.logger.info(
-                "Configuring %s:%s.", project.config.project_name, build_name
-            )
             config = (
                 base_config
                 | toolchain_config
@@ -306,7 +308,33 @@ class Zmake:
                 | dts_overlay_config
                 | build_config
             )
+
+            config_json = config.as_json()
+            config_json_file = build_dir / f"cfg-{build_name}.json"
+            if config_json_file.is_file():
+                if config_json_file.read_text() == config_json:
+                    self.logger.info(
+                        "Skip reconfiguring %s:%s due to previous cmake run of "
+                        "equivalent configuration.  Run with --clobber if this "
+                        "optimization is undesired.",
+                        project.config.project_name,
+                        build_name,
+                    )
+                    continue
+                else:
+                    config_json_file.unlink()
+
+            files_to_write.append((config_json_file, config_json))
+
             output_dir = build_dir / "build-{}".format(build_name)
+            if output_dir.exists():
+                self.logger.info("Clobber %s due to configuration changes.", output_dir)
+                shutil.rmtree(output_dir)
+
+            self.logger.info(
+                "Configuring %s:%s.", project.config.project_name, build_name
+            )
+
             kconfig_file = build_dir / "kconfig-{}.conf".format(build_name)
             proc = config.popen_cmake(
                 self.jobserver,
@@ -342,6 +370,9 @@ class Zmake:
         for proc in processes:
             if proc.wait():
                 raise OSError(get_process_failure_msg(proc))
+
+        for path, contents in files_to_write:
+            path.write_text(contents)
 
         # To reconstruct a Project object later, we need to know the
         # name and project directory.
@@ -531,7 +562,7 @@ class Zmake:
                 raise OSError(get_process_failure_msg(proc))
         return 0
 
-    def testall(self):
+    def testall(self, clobber=False):
         """Test all the valid test targets"""
         tmp_dirs = []
         for project in zmake.project.find_projects(
@@ -550,6 +581,7 @@ class Zmake:
                     build_dir=pathlib.Path(temp_build_dir),
                     build_after_configure=True,
                     test_after_configure=is_test,
+                    clobber=clobber,
                 )
             )
 

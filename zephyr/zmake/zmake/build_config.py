@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 """Encapsulation of a build configuration."""
 
+import json
 
 import zmake.util as util
 
@@ -97,4 +98,16 @@ class BuildConfig:
                 ]
                 if getattr(self, name)
             )
+        )
+
+    def as_json(self):
+        """Provide a stable JSON representation of the build config."""
+        return json.dumps(
+            {
+                "environ_defs": self.environ_defs,
+                "cmake_defs": self.cmake_defs,
+                "kconfig_defs": self.kconfig_defs,
+                "kconfig_files": [str(p.resolve()) for p in self.kconfig_files],
+            },
+            sort_keys=True,
         )

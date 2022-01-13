@@ -200,3 +200,57 @@ def test_popen_cmake_kconfig(conf, project_dir, build_dir):
         assert kconfig_defs == conf.kconfig_defs
     finally:
         os.unlink(temp_path)
+
+
+def test_build_config_json_stability():
+    # as_json() should return equivalent strings for two equivalent
+    # build configs.
+    a = BuildConfig(
+        environ_defs={
+            "A": "B",
+            "B": "C",
+        },
+        cmake_defs={
+            "Z": "Y",
+            "X": "W",
+        },
+        kconfig_defs={
+            "CONFIG_A": "y",
+            "CONFIG_B": "n",
+        },
+        kconfig_files=[
+            pathlib.Path("/a/b/c.conf"),
+            pathlib.Path("d/e/f.conf"),
+        ],
+    )
+
+    # Dict ordering is intentionally reversed in b.
+    b = BuildConfig(
+        environ_defs={
+            "B": "C",
+            "A": "B",
+        },
+        cmake_defs={
+            "X": "W",
+            "Z": "Y",
+        },
+        kconfig_defs={
+            "CONFIG_B": "n",
+            "CONFIG_A": "y",
+        },
+        kconfig_files=[
+            pathlib.Path("/a/b/c.conf"),
+            pathlib.Path("d/e/f.conf"),
+        ],
+    )
+
+    assert a.as_json() == b.as_json()
+
+
+def test_build_config_json_inequality():
+    # Two differing build configs should not have the same json
+    # representation.
+    a = BuildConfig(cmake_defs={"A": "B"})
+    b = BuildConfig(environ_defs={"A": "B"})
+
+    assert a.as_json() != b.as_json()
