@@ -219,7 +219,7 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
-		.flags = 0,
+		.flags = PWM_CONFIG_DSLEEP,
 		.freq_hz = 10000, /* SYV226 supports 10~100kHz */
 		.pcfsr_sel = PWM_PRESCALER_C6,
 	},
