@@ -38,6 +38,12 @@ config PLATFORM_EC_THERMISTOR
 	  Enables support for thermistors (resistor whose resistance is
 	  strongly dependent on temperature) as temperature-sensor type.
 
+config PLATFORM_EC_TEMP_SENSOR_PCT2075
+	bool "PCT2075 support"
+	help
+	  Enables support for the CrosEC PCT2075 sensor, an i2c peripheral
+	  temperature sensor from NXP.
+
 config PLATFORM_EC_TEMP_SENSOR_SB_TSI
 	bool "SB TSI support"
 	help
