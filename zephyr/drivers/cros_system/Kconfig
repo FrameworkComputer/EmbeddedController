@@ -45,3 +45,26 @@ config CROS_SYSTEM_IT8XXX2_INIT_PRIORITY
 	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
 
 endif # CROS_SYSTEM_IT8XXX2
+
+menuconfig CROS_SYSTEM_XEC
+	bool "Microchip XEC cros system driver"
+	depends on SOC_FAMILY_MEC
+	default y
+	help
+	  This option enables the cros system driver for the MCHP XEC family of
+	  processors. Currently, Zephyr doesn't provide the system related API.
+	  The cros system driver provides the low-level driver related to
+	  chromium ec system functionality.
+
+if CROS_SYSTEM_XEC
+
+config CROS_SYSTEM_XEC_INIT_PRIORITY
+	int "cros_system MEC initialization priority"
+	default 10
+	help
+	  This sets the MEC cros_system driver initialization priority.
+	  The cros_system driver provides access to the MEC reset cause
+	  and must be higher priority than
+	  CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY.
+
+endif # CONFIG_CROS_SYSTEM_XEC

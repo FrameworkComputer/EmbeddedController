@@ -4,3 +4,4 @@
 
 zephyr_library_sources_ifdef(CONFIG_CROS_SYSTEM_IT8XXX2	cros_system_it8xxx2.c)
 zephyr_library_sources_ifdef(CONFIG_CROS_SYSTEM_NPCX	cros_system_npcx.c)
+zephyr_library_sources_ifdef(CONFIG_CROS_SYSTEM_XEC	cros_system_xec.c)

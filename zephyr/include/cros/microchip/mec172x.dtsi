@@ -1,0 +1,94 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <cros/binman.dtsi>
+#include <microchip/mec172xnsz.dtsi>
+
+/ {
+	chosen {
+		cros-ec,adc = &adc0;
+		cros-ec,bbram = &bbram;
+		cros-ec,espi = &espi0;
+		cros-ec,flash = &fiu0;
+		cros-ec,raw-kb = &cros_kb_raw;
+		cros-ec,watchdog = &wdog;
+		cros,rtc = &crtc;
+	};
+
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+
+		scratchpad {
+			offset = <0x00>;
+			size = <0x04>;
+		};
+		saved-reset-flags {
+			offset = <0x04>;
+			size = <0x04>;
+		};
+		wake {
+			offset = <0x08>;
+			size = <0x04>;
+		};
+		pd0 {
+			offset = <0x0c>;
+			size = <0x01>;
+		};
+		pd1 {
+			offset = <0x0d>;
+			size = <0x01>;
+		};
+		try_slot {
+			offset = <0x0e>;
+			size = <0x01>;
+		};
+		pd2 {
+			offset = <0x0f>;
+			size = <0x01>;
+		};
+		ramlog {
+			offset = <0x20>;
+			size = <0x01>;
+		};
+		panic_flags {
+			offset = <0x23>;
+			size = <0x01>;
+		};
+		panic_bkup {
+			offset = <0x24>;
+			size = <0x1c>;
+		};
+		lct_time {
+			offset = <0x40>;
+			size = <0x04>;
+		};
+	};
+
+	fiu0: cros-flash{
+		compatible = "microchip,xec-cros-flash";
+		label = "INTERNAL_FLASH";
+	};
+
+/*
+ *	power-states {
+ *	suspend_to_idle_instant: suspend_to_idle_instant {
+ *	compatible = "zephyr,power-state";
+ *	power-state-name = "suspend-to-idle";
+ *	substate-id = <0>;
+ *	min-residency-us = <500>;
+ *	};
+ *
+ *	suspend_to_idle_normal: suspend_to_idle_normal {
+ *	compatible = "zephyr,power-state";
+ *	power-state-name = "suspend-to-idle";
+ *	substate-id = <1>;
+ *	min-residency-us = <200100>;
+ *	};
+ *	};
+ */
+};
+
