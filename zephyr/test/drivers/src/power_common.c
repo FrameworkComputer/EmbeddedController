@@ -216,6 +216,7 @@ static void test_power_exit_hard_off(void)
 	/* Test exit hard off is cleared on entering S5 */
 	chipset_exit_hard_off();
 	power_set_state(POWER_S5);
+	test_power_common_state();
 	zassert_equal(POWER_S5, power_get_state(), NULL);
 
 	/* Go back to G3 and check we stay in G3 */
