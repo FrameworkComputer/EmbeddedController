@@ -35,4 +35,14 @@ config CROS_KB_RAW_ITE
 	  kscan interface so we can continue to use most of the existing
 	  keyboard-scanning code in ECOS.
 
+menuconfig CROS_KB_RAW_XEC
+	bool "Microchip raw-keyboard-scan driver for the Zephyr shim"
+	depends on SOC_FAMILY_MEC
+	default y
+	help
+	  This option enables a driver for providing raw access to the
+	  keyboard-scan peripheral in the chip. This is used instead of the
+	  kscan interface so we can continue to use most of the existing
+	  keyboard-scanning code in ECOS.
+
 endif # PLATFORM_EC_KEYBOARD
