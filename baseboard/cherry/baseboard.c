@@ -270,18 +270,6 @@ __maybe_unused void xhci_init_done_interrupt(enum gpio_signal signal)
 
 /* USB Mux */
 
-const struct usb_mux usbc0_virtual_mux = {
-	.usb_port = 0,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-
-const struct usb_mux usbc1_virtual_mux = {
-	.usb_port = 1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-
 static int board_ps8762_mux_set(const struct usb_mux *me,
 				mux_state_t mux_state)
 {
@@ -334,7 +322,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_port = I2C_PORT_USB_MUX0,
 		.i2c_addr_flags = PS8802_I2C_ADDR_FLAGS,
 		.driver = &ps8802_usb_mux_driver,
-		.next_mux = &usbc0_virtual_mux,
 		.board_init = &board_ps8762_mux_init,
 		.board_set = &board_ps8762_mux_set,
 	},
@@ -343,7 +330,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_port = I2C_PORT_USB_MUX1,
 		.i2c_addr_flags = ANX3443_I2C_ADDR0_FLAGS,
 		.driver = &anx3443_usb_mux_driver,
-		.next_mux = &usbc1_virtual_mux,
 		.board_set = &board_anx3443_mux_set,
 	},
 };
