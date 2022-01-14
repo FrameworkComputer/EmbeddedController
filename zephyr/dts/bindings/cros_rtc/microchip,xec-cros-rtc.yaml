@@ -1,0 +1,13 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Microchip, XEC Real time clock (RTC) node
+
+compatible: "microchip,xec-cros-rtc"
+
+include: base.yaml
+
+properties:
+    reg:
+      required: true

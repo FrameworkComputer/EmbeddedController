@@ -17,6 +17,13 @@ config CROS_RTC_NPCX
 	  This option enables a driver for providing the support of Real-Time
 	  Clock (RTC) on the NPCX chip.
 
+config CROS_RTC_XEC
+	bool "Microchip XEC Real-Time Clock (RTC) driver for the Zephyr shim"
+	depends on SOC_FAMILY_MEC
+	help
+	  This option enables a driver for providing the support of Real-Time
+	  Clock (RTC) on the MCHP XEC chip.
+
 config CROS_RTC_NXP_PCF85063A
 	bool "NXP PCF85063A Real-Time Clock (RTC) driver for the Zephyr shim"
 	depends on PLATFORM_EC_I2C
