@@ -7,10 +7,10 @@
 
 #include "common.h"
 #include "console.h"
-#include "pct2075.h"
 #include "i2c.h"
 #include "hooks.h"
 #include "math_util.h"
+#include "temp_sensor/pct2075.h"
 #include "util.h"
 
 #define PCT2075_RESOLUTION 11
