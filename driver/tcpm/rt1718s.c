@@ -405,6 +405,23 @@ void rt1718s_vendor_defined_alert(int port)
 	tcpc_write16(port, TCPC_REG_ALERT, TCPC_REG_ALERT_VENDOR_DEF);
 }
 
+__overridable int board_rt1718s_set_snk_enable(int port, int enable)
+{
+	return EC_SUCCESS;
+}
+
+
+static int rt1718s_tcpm_set_snk_ctrl(int port, int enable)
+{
+	int rv;
+
+	rv = board_rt1718s_set_snk_enable(port, enable);
+	if (rv)
+		return rv;
+
+	return tcpci_tcpm_set_snk_ctrl(port, enable);
+}
+
 static void rt1718s_alert(int port)
 {
 	int alert;
@@ -584,7 +601,7 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 #endif
 	.get_chip_info		= &tcpci_get_chip_info,
 #ifdef CONFIG_USB_PD_PPC
-	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
+	.set_snk_ctrl		= &rt1718s_tcpm_set_snk_ctrl,
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
 #endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER

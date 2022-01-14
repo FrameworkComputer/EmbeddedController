@@ -269,4 +269,13 @@ int rt1718s_frs_init(int port);
  * @return EC_SUCCESS if success, EC_ERROR_UNKNOWN otherwise.
  */
 int rt1718s_sw_reset(int port);
+
+/**
+ * Board hook for rt1718s_set_snk_enable
+ *
+ * @param port		USB-C port
+ * @param enable	enable/disable sink
+ * @return EC_SUCCESS if success, EC_ERROR_UNKNOWN otherwise.
+ */
+__override_proto int board_rt1718s_set_snk_enable(int port, int enable);
 #endif /* __CROS_EC_USB_PD_TCPM_MT6370_H */
