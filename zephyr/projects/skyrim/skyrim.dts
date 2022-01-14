@@ -102,4 +102,32 @@
 		lvol-io-pads = <&lvol_io92 &lvol_io91 &lvol_ioe4 &lvol_ioe3
 				&lvol_iob3 &lvol_iob2 &lvol_io50>;
 	};
+
+	named-temp-sensors {
+		soc-pct2075 {
+			compatible = "cros-ec,temp-sensor-pct2075";
+			label = "SOC";
+			enum-name = "TEMP_SENSOR_SOC";
+			pct2075-name = "PCT2075_SOC";
+			port = <&i2c_sensor>;
+			i2c-addr-flags = "PCT2075_I2C_ADDR_FLAGS0";
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			temp_fan_off = <0>;
+			temp_fan_max = <70>;
+		};
+		amb-pct2075 {
+			compatible = "cros-ec,temp-sensor-pct2075";
+			label = "Ambient";
+			enum-name = "TEMP_SENSOR_AMB";
+			pct2075-name = "PCT2075_AMB";
+			port = <&i2c_sensor>;
+			i2c-addr-flags = "PCT2075_I2C_ADDR_FLAGS7";
+		};
+		/* Disable SB TSI for first board revision */
+		sb-tsi-sensor {
+			status = "disabled";
+		};
+	};
 };

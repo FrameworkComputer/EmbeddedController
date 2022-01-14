@@ -108,4 +108,28 @@
 			io-channels = <&adc0 0>;
 		};
 	};
+
+	named-temp-sensors {
+		soc-tmp112 {
+			compatible = "cros-ec,temp-sensor-tmp112";
+			label = "SOC";
+			enum-name = "TEMP_SENSOR_SOC";
+			tmp112-name = "TMP112_SOC";
+			port = <&i2c_sensor>;
+			i2c-addr-flags = "TMP112_I2C_ADDR_FLAGS0";
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			temp_fan_off = <0>;
+			temp_fan_max = <70>;
+		};
+		amb-tmp112 {
+			compatible = "cros-ec,temp-sensor-tmp112";
+			label = "Ambient";
+			enum-name = "TEMP_SENSOR_AMB";
+			tmp112-name = "TMP112_AMB";
+			port = <&i2c_sensor>;
+			i2c-addr-flags = "TMP112_I2C_ADDR_FLAGS1";
+		};
+	};
 };
