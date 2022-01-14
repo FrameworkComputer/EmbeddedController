@@ -67,10 +67,12 @@ static void init_usb_pd_port_count(void)
 	switch (nissa_get_sb_type()) {
 	default:
 		cached_usb_pd_port_count = 1;
+		break;
 
 	case NISSA_SB_C_A:
 	case NISSA_SB_C_LTE:
 		cached_usb_pd_port_count = 2;
+		break;
 	}
 }
 /*
