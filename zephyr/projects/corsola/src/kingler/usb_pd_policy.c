@@ -44,7 +44,7 @@ int pd_set_power_supply_ready(int port)
 	int rv;
 
 	/* Disable charging. */
-	rv = board_vbus_sink_enable(port, 0);
+	rv = ppc_vbus_sink_enable(port, 0);
 	if (rv)
 		return rv;
 

@@ -214,12 +214,12 @@ int board_is_sourcing_vbus(int port)
 	return board_vbus_source_enabled(port);
 }
 
-int board_vbus_sink_enable(int port, int enable)
+__override int board_rt1718s_set_snk_enable(int port, int enable)
 {
 	if (port == USBC_PORT_C1)
 		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SINK, enable);
 
-	return ppc_vbus_sink_enable(port, enable);
+	return EC_SUCCESS;
 }
 
 int board_set_active_charge_port(int port)
@@ -240,7 +240,7 @@ int board_set_active_charge_port(int port)
 			 * Do not return early if one fails otherwise we can
 			 * get into a boot loop assertion failure.
 			 */
-			if (board_vbus_sink_enable(i, 0))
+			if (ppc_vbus_sink_enable(i, 0))
 				CPRINTS("Disabling C%d as sink failed.", i);
 		}
 
@@ -263,12 +263,12 @@ int board_set_active_charge_port(int port)
 		if (i == port)
 			continue;
 
-		if (board_vbus_sink_enable(i, 0))
+		if (ppc_vbus_sink_enable(i, 0))
 			CPRINTS("C%d: sink path disable failed.", i);
 	}
 
 	/* Enable requested charge port. */
-	if (board_vbus_sink_enable(port, 1)) {
+	if (ppc_vbus_sink_enable(port, 1)) {
 		CPRINTS("C%d: sink path enable failed.", port);
 		return EC_ERROR_UNKNOWN;
 	}
