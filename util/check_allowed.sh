@@ -30,6 +30,11 @@ usage() {
 	exit 1
 }
 
+die() {
+	echo >&2 "$1"
+	exit 2
+}
+
 [ $# -ge 3 ] || usage
 
 config="$1"
@@ -52,7 +57,8 @@ sed -n 's/^\(CONFIG_[A-Za-z0-9_]*\).*/\1/p' "${config}" | sort | uniq \
 	>"${new_configs}"
 
 # Find any not mentioned in the allowed file
-comm -23 "${new_configs}" "${allow}" > "${suspects}"
+comm -23 --check-order "${new_configs}" "${allow}" > "${suspects}" || \
+	die "${allow} must be sorted"
 
 # Find all the Kconfig options so far defined
 find "${srctree}" -type f -name "Kconfig*" -exec cat {} \; | sed -n -e \
