@@ -89,6 +89,12 @@
 #define CONFIG_USBC_PPC_SYV682X
 #define CONFIG_USBC_PPC_NX20P3483
 
+/* I2C speed console command */
+#define CONFIG_CMD_I2C_SPEED
+
+/* I2C control host command */
+#define CONFIG_HOSTCMD_I2C_CONTROL
+
 /* TODO: b/177608416 - measure and check these values on brya */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
