@@ -391,14 +391,9 @@ class Zmake:
         util.update_symlink(project.config.project_dir, build_dir / "project")
 
         if test_after_configure:
-            rv = self.test(build_dir=build_dir)
-            if rv or not coverage:
-                return rv
-            return self._coverage_run_test(
-                project=project,
+            return self.test(
                 build_dir=build_dir,
-                lcov_file=build_dir / "output" / "zephyr.info",
-                is_configured=True,
+                coverage=coverage,
             )
         elif build_after_configure:
             if coverage:
@@ -406,7 +401,6 @@ class Zmake:
                     project=project,
                     build_dir=build_dir,
                     lcov_file=build_dir / "lcov.info",
-                    is_configured=True,
                 )
             else:
                 return self.build(build_dir=build_dir)
@@ -534,11 +528,15 @@ class Zmake:
 
         return 0
 
-    def _run_test(self, elf_file):
+    def _run_test(self, elf_file, coverage, gcov, build_dir, lcov_file):
         """Run a single test, with goma if enabled.
 
         Args:
             elf_file: The path to the ELF to run.
+            coverage: True if coverage is enabled.
+            gcov: Path to the gcov binary.
+            build_dir: Path to the build directory
+            lcov_file: Output path for the generated lcov file.
         """
         cmd = []
         if self.goma:
@@ -569,6 +567,8 @@ class Zmake:
             )
             if proc.wait():
                 raise OSError(get_process_failure_msg(proc))
+            if coverage:
+                self._run_lcov(build_dir, lcov_file, initial=False, gcov=gcov)
 
         if self.goma:
             _run()
@@ -576,7 +576,7 @@ class Zmake:
             with self.jobserver.get_job():
                 _run()
 
-    def test(self, build_dir):
+    def test(self, build_dir, coverage=False):
         """Test a build directory."""
         output_files = []
         self.build(build_dir, output_files_out=output_files)
@@ -587,8 +587,22 @@ class Zmake:
         if not project.config.is_test:
             return 0
 
+        gcov = "gcov.sh-not-found"
+        if coverage:
+            for build_name, build_config in project.iter_builds():
+                gcov = build_dir / "build-{}".format(build_name) / "gcov.sh"
+
         for output_file in output_files:
-            self.executor.append(func=functools.partial(self._run_test, output_file))
+            self.executor.append(
+                func=functools.partial(
+                    self._run_test,
+                    elf_file=output_file,
+                    coverage=coverage,
+                    gcov=gcov,
+                    build_dir=build_dir,
+                    lcov_file=build_dir / "output" / "zephyr.info",
+                )
+            )
 
         return 0
 
@@ -612,82 +626,69 @@ class Zmake:
 
     def _run_lcov(self, build_dir, lcov_file, initial=False, gcov=""):
         gcov = os.path.abspath(gcov)
-        with self.jobserver.get_job():
-            if initial:
-                self.logger.info("Running (initial) lcov on %s.", build_dir)
-            else:
-                self.logger.info("Running lcov on %s.", build_dir)
-            cmd = [
-                "/usr/bin/lcov",
-                "--gcov-tool",
-                gcov,
-                "-q",
-                "-o",
-                "-",
-                "-c",
-                "-d",
-                build_dir,
-                "-t",
-                lcov_file.stem,
-                "--rc",
-                "lcov_branch_coverage=1",
-                "--exclude",
-                "*/build-*/zephyr/*/generated/*",
-                "--exclude",
-                "*/ec/test/*",
-                "--exclude",
-                "*/ec/zephyr/shim/chip/npcx/npcx_monitor/*",
-                "--exclude",
-                "*/ec/zephyr/emul/*",
-                "--exclude",
-                "*/ec/zephyr/test/*",
-                "--exclude",
-                "*/testsuite/*",
-                "--exclude",
-                "*/subsys/emul/*",
-            ]
-            if initial:
-                cmd += ["-i"]
-            proc = self.jobserver.popen(
-                cmd,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                encoding="utf-8",
-                errors="replace",
-            )
-            zmake.multiproc.log_output(
-                self.logger,
-                logging.WARNING,
-                proc.stderr,
-                job_id="{}-lcov".format(build_dir),
-            )
+        if initial:
+            self.logger.info("Running (initial) lcov on %s.", build_dir)
+        else:
+            self.logger.info("Running lcov on %s.", build_dir)
+        cmd = [
+            "/usr/bin/lcov",
+            "--gcov-tool",
+            gcov,
+            "-q",
+            "-o",
+            "-",
+            "-c",
+            "-d",
+            build_dir,
+            "-t",
+            lcov_file.stem,
+            "--rc",
+            "lcov_branch_coverage=1",
+            "--exclude",
+            "*/build-*/zephyr/*/generated/*",
+            "--exclude",
+            "*/ec/test/*",
+            "--exclude",
+            "*/ec/zephyr/shim/chip/npcx/npcx_monitor/*",
+            "--exclude",
+            "*/ec/zephyr/emul/*",
+            "--exclude",
+            "*/ec/zephyr/test/*",
+            "--exclude",
+            "*/testsuite/*",
+            "--exclude",
+            "*/subsys/emul/*",
+        ]
+        if initial:
+            cmd += ["-i"]
+        proc = self.jobserver.popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding="utf-8",
+            errors="replace",
+        )
+        zmake.multiproc.log_output(
+            self.logger,
+            logging.WARNING,
+            proc.stderr,
+            job_id="{}-lcov".format(build_dir),
+        )
 
-            with open(lcov_file, "w") as outfile:
-                for line in proc.stdout:
-                    if line.startswith("SF:"):
-                        path = line[3:].rstrip()
-                        outfile.write("SF:%s\n" % os.path.realpath(path))
-                    else:
-                        outfile.write(line)
-            if proc.wait():
-                raise OSError(get_process_failure_msg(proc))
+        with open(lcov_file, "w") as outfile:
+            for line in proc.stdout:
+                if line.startswith("SF:"):
+                    path = line[3:].rstrip()
+                    outfile.write("SF:%s\n" % os.path.realpath(path))
+                else:
+                    outfile.write(line)
+        if proc.wait():
+            raise OSError(get_process_failure_msg(proc))
 
-            return 0
+        return 0
 
-    def _coverage_compile_only(
-        self, project, build_dir, lcov_file, is_configured=False
-    ):
+    def _coverage_compile_only(self, project, build_dir, lcov_file):
         self.logger.info("Building %s in %s", project.config.project_name, build_dir)
-        if not is_configured:
-            rv = self._configure(
-                project=project,
-                build_dir=build_dir,
-                build_after_configure=False,
-                test_after_configure=False,
-                coverage=True,
-            )
-            if rv:
-                return rv
 
         # Compute the version string.
         version_string = zmake.version.get_version_string(
@@ -748,49 +749,28 @@ class Zmake:
             if proc.wait():
                 raise OSError(get_process_failure_msg(proc))
 
-        return self._run_lcov(build_dir, lcov_file, initial=True, gcov=gcov)
+        with self.jobserver.get_job():
+            return self._run_lcov(build_dir, lcov_file, initial=True, gcov=gcov)
 
-    def _coverage_run_test(
-        self,
-        project,
-        build_dir,
-        lcov_file,
-        is_configured=False,
-    ):
-        self.logger.info(
-            "Running test %s in %s", project.config.project_name, build_dir
-        )
-        if not is_configured:
-            rv = self._configure(
-                project=project,
-                build_dir=build_dir,
-                build_after_configure=True,
-                test_after_configure=True,
-                coverage=True,
-            )
-            if rv:
-                return rv
-        gcov = "gcov.sh-not-found"
-        for build_name, build_config in project.iter_builds():
-            gcov = build_dir / "build-{}".format(build_name) / "gcov.sh"
-        return self._run_lcov(build_dir, lcov_file, initial=False, gcov=gcov)
-
-    def coverage(self, build_dir):
+    def coverage(self, build_dir, clobber=False):
         """Builds all targets with coverage enabled, and then runs the tests."""
         all_lcov_files = []
         root_dir = self.module_paths["ec"] / "zephyr"
         for project in zmake.project.find_projects(root_dir).values():
             is_test = project.config.is_test
             project_build_dir = pathlib.Path(build_dir) / project.config.project_name
-            lcov_file = pathlib.Path(build_dir) / "{}.info".format(
-                project.config.project_name
-            )
             if is_test:
                 # Configure and run the test.
-                all_lcov_files.append(lcov_file)
+                all_lcov_files.append(project_build_dir / "output" / "zephyr.info")
                 self.executor.append(
-                    func=lambda: self._coverage_run_test(
-                        project, project_build_dir, lcov_file
+                    func=functools.partial(
+                        self._configure,
+                        project=project,
+                        build_dir=project_build_dir,
+                        build_after_configure=True,
+                        test_after_configure=is_test,
+                        coverage=True,
+                        clobber=clobber,
                     )
                 )
             else:

@@ -93,7 +93,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake test
 
-**Usage:** `zmake test [-h] build_dir`
+**Usage:** `zmake test [-h] [-c] build_dir`
 
 #### Positional Arguments
 
@@ -106,6 +106,7 @@ Chromium OS's meta-build tool for Zephyr
 |   |   |
 |---|---|
 | `-h`, `--help` | show this help message and exit |
+| `-c`, `--coverage` | Run lcov after running test to generate coverage info file. |
 
 ### zmake testall
 
@@ -120,7 +121,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake coverage
 
-**Usage:** `zmake coverage [-h] build_dir`
+**Usage:** `zmake coverage [-h] [--clobber] build_dir`
 
 #### Positional Arguments
 
@@ -133,6 +134,7 @@ Chromium OS's meta-build tool for Zephyr
 |   |   |
 |---|---|
 | `-h`, `--help` | show this help message and exit |
+| `--clobber` | Delete existing build directories, even if configuration is unchanged |
 
 ### zmake generate-readme
 
