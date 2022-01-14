@@ -1,0 +1,39 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: >
+  Properties for a PCT2075 I2C temperature sensor
+
+include: cros_ec_temp_sensor.yaml
+
+compatible: cros-ec,temp-sensor-pct2075
+
+properties:
+    pct2075-name:
+      type: string
+      required: true
+      description:
+        Enum value to index into the PCT2075 specific sensors
+      enum:
+      - PCT2075_SOC
+      - PCT2075_AMB
+
+    port:
+      required: true
+      type: phandle
+      description: phandle to the named i2c port
+
+    i2c-addr-flags:
+      required: true
+      type: string
+      description: I2C address of chip
+      enum:
+        - PCT2075_I2C_ADDR_FLAGS0
+        - PCT2075_I2C_ADDR_FLAGS1
+        - PCT2075_I2C_ADDR_FLAGS2
+        - PCT2075_I2C_ADDR_FLAGS3
+        - PCT2075_I2C_ADDR_FLAGS4
+        - PCT2075_I2C_ADDR_FLAGS5
+        - PCT2075_I2C_ADDR_FLAGS6
+        - PCT2075_I2C_ADDR_FLAGS7

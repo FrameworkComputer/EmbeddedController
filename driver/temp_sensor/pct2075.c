@@ -13,6 +13,10 @@
 #include "temp_sensor/pct2075.h"
 #include "util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "temp_sensor/temp_sensor.h"
+#endif
+
 #define PCT2075_RESOLUTION 11
 #define PCT2075_SHIFT1 (16 - PCT2075_RESOLUTION)
 #define PCT2075_SHIFT2 (PCT2075_RESOLUTION - 8)

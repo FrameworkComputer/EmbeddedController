@@ -5,6 +5,7 @@
 
 #include "adc.h"
 #include "temp_sensor.h"
+#include "temp_sensor/pct2075.h"
 #include "temp_sensor/sb_tsi.h"
 #include "temp_sensor/temp_sensor.h"
 #include "temp_sensor/thermistor.h"
@@ -47,6 +48,31 @@ static int thermistor_get_temp(const struct temp_sensor_t *sensor,
 	},
 
 DT_FOREACH_STATUS_OKAY(cros_ec_thermistor, DEFINE_THERMISTOR_DATA)
+
+#if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_temp_sensor_pct2075)
+static int pct2075_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
+{
+	return pct2075_get_val_k(sensor->idx, temp_ptr);
+}
+#endif /* cros_ec_temp_sensor_pct2075 */
+
+#define DEFINE_PCT2075_DATA(node_id)                                        \
+	[ZSHIM_PCT2075_SENSOR_ID(node_id)] = {                              \
+		.i2c_port = I2C_PORT(DT_PHANDLE(node_id, port)),            \
+		.i2c_addr_flags = DT_STRING_TOKEN(node_id, i2c_addr_flags), \
+	},
+
+#define TEMP_PCT2075(node_id)                            \
+	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {              \
+		.name = DT_LABEL(node_id),               \
+		.read = pct2075_get_temp,                \
+		.idx = ZSHIM_PCT2075_SENSOR_ID(node_id), \
+		.type = TEMP_SENSOR_TYPE_BOARD,          \
+	},
+
+const struct pct2075_sensor_t pct2075_sensors[PCT2075_COUNT] = {
+	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_pct2075, DEFINE_PCT2075_DATA)
+};
 
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_temp_sensor_sb_tsi)
 static int sb_tsi_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
@@ -96,6 +122,7 @@ const struct tmp112_sensor_t tmp112_sensors[TMP112_COUNT] = {
 
 const struct temp_sensor_t temp_sensors[] = {
 	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_thermistor, TEMP_THERMISTOR)
+	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_pct2075, TEMP_PCT2075)
 	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_sb_tsi, TEMP_SB_TSI)
 	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_tmp112, TEMP_TMP112)
 };
