@@ -143,6 +143,16 @@ config PLATFORM_EC_OCPC
 
 endchoice  # PLATFORM_EC_CHARGER_TYPE
 
+config PLATFORM_EC_CHARGER_RUNTIME_CONFIG
+	bool "Allow charger configuration at runtime"
+	default n
+	help
+	  When enabled, the internal array of charger chip configuration will
+	  not be made constant. This allows board code to do runtime
+	  reconfiguration, such as to configure ports that may only be present
+	  in some hardware configurations or when ports in some configurations
+	  are setup differently.
+
 config PLATFORM_EC_CHARGE_MANAGER
 	bool "Charge manager"
 	default y

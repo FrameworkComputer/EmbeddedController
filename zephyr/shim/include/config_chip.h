@@ -271,6 +271,11 @@
 #define CONFIG_CHARGER_SINGLE_CHIP
 #endif
 
+#undef CONFIG_CHARGER_RUNTIME_CONFIG
+#ifdef CONFIG_PLATFORM_EC_CHARGER_RUNTIME_CONFIG
+#define CONFIG_CHARGER_RUNTIME_CONFIG
+#endif
+
 /*
  * Note - ISL9241 chargers for all channels are configured with the same
  * switching frequency. Use the first ISL9241 instance found in the device tree.
