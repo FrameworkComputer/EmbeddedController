@@ -5,6 +5,7 @@
 config PLATFORM_EC_FLASH_INIT_PRIORITY
   int "Init priority of the flash module"
   default 90 if SOC_FAMILY_NPCX
+  default 90 if SOC_FAMILY_MEC
   default 52
   help
     The initialization priority of the flash module. This should always be

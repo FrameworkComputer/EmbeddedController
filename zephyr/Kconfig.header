@@ -6,7 +6,7 @@ config PLATFORM_EC_RO_HEADER
 	bool "RO section includes a header"
 	default y
 	depends on CROS_EC_RO
-	depends on SOC_FAMILY_NPCX
+	depends on SOC_FAMILY_NPCX || SOC_FAMILY_MEC
 	help
 	  The RO image residing on flash memory has a header section. The header
 	  is used on some chips (such as the npcx) to load the image correctly
@@ -24,6 +24,7 @@ config PLATFORM_EC_RO_HEADER_OFFSET
 config PLATFORM_EC_RO_HEADER_SIZE
 	hex "Size of the RO header"
 	default 0x40 if SOC_FAMILY_NPCX
+	default 0x140 if SOC_SERIES_MEC172X
 	default 0x0
 	help
 	  The size of the RO header in bytes. This values should come from the

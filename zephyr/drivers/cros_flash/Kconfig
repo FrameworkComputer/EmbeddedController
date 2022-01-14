@@ -33,3 +33,26 @@ config CROS_FLASH_IT8XXX2
 	  This option enables the flash driver for the it8xxx2 chip. We can
 	  access the flash by read, write and erase. The it8xxx2 flash size
 	  is 1M byte.
+
+config CROS_FLASH_XEC
+	bool "Microchip XEC flash driver for the Zephyr shim"
+	depends on SOC_FAMILY_MEC
+	default y
+	help
+	  This option enables the flash driver for the MEC172x chips. Flash
+	  access is via the QSPI driver to one of three ports: internal 512KB
+	  SPI flash in the MEC1727 or external shared or private ports on
+	  MEC1723, etc.
+
+if CROS_FLASH_XEC
+
+config CROS_FLASH_XEC_INIT_PRIORITY
+	int "Microchip XEC flash driver priority for the Zephyr shim"
+	default 85
+	help
+	  This sets the priority of the MCHP flash driver for zephyr shim.
+	  This driver depends on the SPI controller and SPI NOR flash drivers.
+	  Its priority must be lower than CONFIG_SPI_INIT_PRIORITY and
+	  CONFIG_SPI_NOR_INIT_PRIORITY.
+
+endif # CROS_FLASH_XEC

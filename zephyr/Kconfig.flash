@@ -6,6 +6,7 @@ if PLATFORM_EC_FLASH_CROS
 
 config PLATFORM_EC_SPI_FLASH_REGS
 	bool "Enable SPI flash registers"
+	default y if SOC_FAMILY_MEC
 	default y if SOC_FAMILY_NPCX
 	help
 	  Enables flash registers for SPI flash (both internal and external).
@@ -64,6 +65,7 @@ config PLATFORM_EC_CONSOLE_CMD_SYSJUMP
 choice PLATFORM_EC_STORAGE_TYPE
        prompt "Code storage type"
        default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_NPCX
+       default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_MEC
        default PLATFORM_EC_INTERNAL_STORAGE if SOC_FAMILY_RISCV_ITE
        help
          Sets the EC code storage type.
