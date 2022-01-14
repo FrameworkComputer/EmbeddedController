@@ -78,7 +78,6 @@
 			gpios = <&gpiob 0 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_SC_RST";
 		};
-		/* TODO: Add CBI_WP feature config */
 		ec_cbi_wp {
 			gpios = <&gpio8 1 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CBI_WP";
