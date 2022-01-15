@@ -4,11 +4,11 @@
 
 description: CBI Firmware Config fields (FW_CONFIG)
 
-compatible: "named-cbi-fw-config"
+compatible: "cros-ec,cbi-fw-config"
 
 child-binding:
     description:
-        CBI Firmware Config fields definition.
+        ChromeOS CBI Firmware Config fields definition.
         Each field is defined via a start bit (from LSB) and a size.
         The total size of all FW_CONFIG bit fields must not exceed 32 bits.
     properties:
@@ -29,7 +29,7 @@ child-binding:
 # Example:
 #
 # cbi-fw-config {
-#     compatible = "named-cbi-fw-config";
+#     compatible = "cros-ec,cbi-fw-config";
 #
 #     fan {
 #         enum-name = "FAN";
@@ -37,11 +37,11 @@ child-binding:
 #         size = <1>;
 #         fan_absent {
 #             enum-name = "ABSENT"
-#             compatible = "named-cbi-fw-config-value";
+#             compatible = "cros-ec,cbi-fw-config-value";
 #             value = <0>;
 #         fan_present {
 #             enum-name = "PRESENT"
-#             compatible = "named-cbi-fw-config-value";
+#             compatible = "cros-ec,cbi-fw-config-value";
 #             value = <1>;
 #         };
 #     };

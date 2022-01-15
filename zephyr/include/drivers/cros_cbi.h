@@ -39,8 +39,8 @@ enum cbi_ssfc_value_id {
  * Macros to help generate the enum list of field and value names
  * for the FW_CONFIG CBI data.
  */
-#define CBI_FW_CONFIG_COMPAT		named_cbi_fw_config
-#define CBI_FW_CONFIG_VALUE_COMPAT	named_cbi_fw_config_value
+#define CBI_FW_CONFIG_COMPAT		cros_ec_cbi_fw_config
+#define CBI_FW_CONFIG_VALUE_COMPAT	cros_ec_cbi_fw_config_value
 
 /*
  * Retrieve the enum-name property for this node.

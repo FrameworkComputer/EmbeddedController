@@ -4,9 +4,9 @@
 
 description:
     Possible CBI FW_CONFIG individual field values.
-    It has to be defined as a grandchild on the "named-cbi-fw-config" nodes
+    It has to be defined as a grandchild on the "cros-ec,cbi-fw-config" nodes
 
-compatible: "named-cbi-fw-config-value"
+compatible: "cros-ec,cbi-fw-config-value"
 
 properties:
     enum-name:
