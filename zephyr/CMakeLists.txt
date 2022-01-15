@@ -469,6 +469,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PRL_SM
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_ANX7447
                                                 "${PLATFORM_EC}/driver/tcpm/anx7447.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_CCGXXF
+                                                "${PLATFORM_EC}/driver/tcpm/ccgxxf.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_NCT38XX
                                                 "${PLATFORM_EC}/driver/tcpm/nct38xx.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8751

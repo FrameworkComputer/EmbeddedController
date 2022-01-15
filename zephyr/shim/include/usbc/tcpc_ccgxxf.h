@@ -16,6 +16,6 @@
 			.addr_flags = DT_STRING_UPPER_TOKEN(                  \
 					id, i2c_addr_flags),                  \
 		},                                                            \
-		.drv = &tcpci_tcpm_drv,                                       \
+		.drv = &ccgxxf_tcpm_drv,                                      \
 		.flags = TCPC_FLAGS_TCPCI_REV2_0,                             \
 	},
