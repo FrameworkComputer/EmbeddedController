@@ -21,7 +21,16 @@ class BuildConfig:
         self.environ_defs = dict(environ_defs)
         self.cmake_defs = dict(cmake_defs)
         self.kconfig_defs = dict(kconfig_defs)
-        self.kconfig_files = kconfig_files
+
+        def _remove_duplicate_paths(files):
+            # Remove multiple of the same kconfig file in a row.
+            result = []
+            for path in files:
+                if not result or path != result[-1]:
+                    result.append(path)
+            return result
+
+        self.kconfig_files = _remove_duplicate_paths(kconfig_files)
 
     def popen_cmake(
         self, jobclient, project_dir, build_dir, kconfig_path=None, **kwargs
@@ -83,7 +92,7 @@ class BuildConfig:
             environ_defs=dict(**self.environ_defs, **other.environ_defs),
             cmake_defs=dict(**self.cmake_defs, **other.cmake_defs),
             kconfig_defs=dict(**self.kconfig_defs, **other.kconfig_defs),
-            kconfig_files=list({*self.kconfig_files, *other.kconfig_files}),
+            kconfig_files=[*self.kconfig_files, *other.kconfig_files],
         )
 
     def __repr__(self):

@@ -254,3 +254,21 @@ def test_build_config_json_inequality():
     b = BuildConfig(environ_defs={"A": "B"})
 
     assert a.as_json() != b.as_json()
+
+
+def test_kconfig_file_duplicates():
+    # Kconfig files should be like the "uniq" command.  Repeats should
+    # be removed, but not duplicates.
+    cfg = BuildConfig(
+        kconfig_files=[
+            pathlib.Path("/a/b/c.conf"),
+            pathlib.Path("/a/b/c.conf"),
+            pathlib.Path("/d/e/f.conf"),
+            pathlib.Path("/a/b/c.conf"),
+        ]
+    )
+    assert cfg.kconfig_files == [
+        pathlib.Path("/a/b/c.conf"),
+        pathlib.Path("/d/e/f.conf"),
+        pathlib.Path("/a/b/c.conf"),
+    ]
