@@ -77,7 +77,7 @@ static int wait_for_vrrdy(void)
 }
 
 /* PCH_PWROK to PCH from EC */
-int generate_pch_pwrok_handler(int delay)
+__attribute__((weak)) int generate_pch_pwrok_handler(int delay)
 {
 	/* Enable PCH_PWROK, gated by VRRDY. */
 	if (power_signal_get(PWR_PCH_PWROK) == 0) {
@@ -186,7 +186,8 @@ void ap_power_reset(enum ap_power_shutdown_reason reason)
 	ap_power_ev_send_callbacks(AP_POWER_RESET);
 }
 
-void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
+__attribute__((weak)) void ap_power_force_shutdown(
+	enum ap_power_shutdown_reason reason)
 {
 	int timeout_ms = 50;
 
@@ -219,7 +220,7 @@ void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
 	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
 }
 
-void g3s5_action_handler(void)
+__attribute__((weak)) void g3s5_action_handler(int delay, int signal_timeout)
 {
 	power_signal_set(PWR_EN_PP5000_A, 1);
 }
@@ -246,7 +247,8 @@ enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state,
 	/* Add chipset specific state handling if any */
 	switch (curr_state) {
 	case SYS_POWER_STATE_G3S5:
-		g3s5_action_handler();
+		g3s5_action_handler(com_cfg->pch_dsw_pwrok_delay_ms,
+				    com_cfg->wait_signal_timeout_ms);
 		break;
 	case SYS_POWER_STATE_S5:
 		break;
