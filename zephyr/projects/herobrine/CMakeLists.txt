@@ -16,9 +16,9 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
   "src/led.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
   "src/i2c.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
-  "src/alt_dev_replacement.c")
 
 if(DEFINED CONFIG_BOARD_HEROBRINE_NPCX9)
 	project(herobrine_npcx9)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
+	  "src/herobrine_npcx9/alt_dev_replacement.c")
 endif()
