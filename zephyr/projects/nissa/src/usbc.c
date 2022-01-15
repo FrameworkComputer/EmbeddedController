@@ -298,79 +298,40 @@ static void usbc_interrupt_trigger(int port)
 	task_set_event(USB_CHG_PORT_TO_TASK_ID(port), USB_CHG_EVENT_BC12);
 }
 
-#define USBC_INT_POLL_DATA(port) poll_c ## port ## _int_data
-#define USBC_INT_POLL(port)						\
-	static void poll_c ## port ## _int (void)			\
-	{								\
-		if (!gpio_pin_get_dt(					\
-			GPIO_DT_FROM_NODELABEL				\
-				(gpio_usb_c ## port ## _int_odl))) {	\
-			usbc_interrupt_trigger(port);			\
-			hook_call_deferred(&USBC_INT_POLL_DATA(port),	\
-					   USBC_INT_POLL_DELAY_US);	\
-		}							\
+#define USBC_INT_POLL(port)						    \
+	static void poll_c ## port ## _int (void)			    \
+	{								    \
+		if (!gpio_pin_get_dt(					    \
+			GPIO_DT_FROM_NODELABEL				    \
+				(gpio_usb_c ## port ## _int_odl))) {	    \
+			usbc_interrupt_trigger(port);			    \
+			hook_call_deferred(&poll_c ## port ## _int_data,    \
+					   USBC_INT_POLL_DELAY_US);	    \
+		}							    \
 	}
 
 USBC_INT_POLL(0)
 USBC_INT_POLL(1)
 
-void usb_c0_interrupt(const struct device *port,
-		      struct gpio_callback *cb,
-		      gpio_port_pins_t pins)
+void usb_interrupt(enum gpio_signal signal)
 {
+	int port;
+	const struct deferred_data *ud;
+
+	if (signal == GPIO_USB_C0_PD_INT_ODL) {
+		port = 0;
+		ud = &poll_c0_int_data;
+	} else {
+		port = 1;
+		ud = &poll_c1_int_data;
+	}
 	/*
 	 * We've just been called from a falling edge, so there's definitely
 	 * no lost IRQ right now. Cancel any pending check.
 	 */
-	hook_call_deferred(&USBC_INT_POLL_DATA(0), -1);
+	hook_call_deferred(ud, -1);
 	/* Trigger polling of TCPC and BC1.2 in respective tasks */
-	usbc_interrupt_trigger(0);
+	usbc_interrupt_trigger(port);
 	/* Check for lost interrupts in a bit */
-	hook_call_deferred(&USBC_INT_POLL_DATA(0), USBC_INT_POLL_DELAY_US);
+	hook_call_deferred(ud, USBC_INT_POLL_DELAY_US);
 }
-
-void usb_c1_interrupt(const struct device *port,
-		      struct gpio_callback *cb,
-		      gpio_port_pins_t pins)
-{
-	hook_call_deferred(&USBC_INT_POLL_DATA(1), -1);
-	usbc_interrupt_trigger(1);
-	hook_call_deferred(&USBC_INT_POLL_DATA(1), USBC_INT_POLL_DELAY_US);
-}
-
-/*
- * Set up one USB port's interrupt handling.
- */
-static void usbc_init_interrupt(int port,
-				const struct gpio_dt_spec *gpio,
-				struct gpio_callback *cb_data,
-				gpio_callback_handler_t cb)
-{
-	int ret;
-
-	gpio_init_callback(cb_data, cb, BIT(gpio->pin));
-	gpio_add_callback(gpio->port, cb_data);
-	ret = gpio_pin_interrupt_configure_dt(gpio, GPIO_INT_EDGE_FALLING);
-	if (ret != 0)
-		CPRINTS("USB init interrupt failed on port %d", port);
-}
-
-static void usbc_init(void)
-{
-	static struct gpio_callback c0_callback;
-	static struct gpio_callback c1_callback;
-
-	usbc_init_interrupt(0, GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl),
-			    &c0_callback,
-			    usb_c0_interrupt);
-	if (board_get_usb_pd_port_count() == 2)
-		/*
-		 * Use GPIO_DT_FROM_NODELABEL since this node does not have a
-		 * enum signal name allocated to it.
-		 */
-		usbc_init_interrupt(1,
-				    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl),
-				    &c1_callback,
-				    usb_c1_interrupt);
-}
-DECLARE_HOOK(HOOK_INIT, usbc_init, HOOK_PRIO_DEFAULT);

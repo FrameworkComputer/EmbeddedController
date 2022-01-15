@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Nivviks sub-board hardware configuration */
+/* Nereid sub-board hardware configuration */
 
 #include <init.h>
 #include <kernel.h>
@@ -17,7 +17,7 @@
 
 #include "sub_board.h"
 
-static void nivviks_subboard_init(void)
+static void nereid_subboard_init(void)
 {
 	enum nissa_sub_board_type sb = nissa_get_sb_type();
 
@@ -41,9 +41,6 @@ static void nivviks_subboard_init(void)
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl),
 			GPIO_INPUT);
-	} else {
-		/* Disable the port 1 charger task */
-		task_disable_task(TASK_ID_USB_CHG_P1);
 	}
 	if (sb == NISSA_SB_HDMI_A) {
 		/* Disable I2C_PORT_USB_C1_TCPC */
@@ -51,16 +48,17 @@ static void nivviks_subboard_init(void)
 		/* Enable HDMI GPIOs */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_NODELABEL(gpio_en_sub_rails_odl),
-			GPIO_OUTPUT_HIGH);
+			GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH);
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_NODELABEL(gpio_hdmi_en_sub_odl),
-			GPIO_OUTPUT_HIGH);
+			GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH);
 		/* Configure the interrupt separately */
-		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_hpd_sub_odl),
-				      GPIO_INPUT);
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_hpd_sub_odl),
+			GPIO_INPUT);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, nivviks_subboard_init, HOOK_PRIO_FIRST+1);
+DECLARE_HOOK(HOOK_INIT, nereid_subboard_init, HOOK_PRIO_FIRST+1);
 
 /*
  * Enable interrupts
@@ -68,14 +66,8 @@ DECLARE_HOOK(HOOK_INIT, nivviks_subboard_init, HOOK_PRIO_FIRST+1);
 static void board_init(void)
 {
 	/*
-	 * Enable sensor interrupts
-	 */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
-	/*
+	 * TODO
 	 * Enable USB-C interrupts.
 	 */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0));
-	if (board_get_usb_pd_port_count() == 2)
-		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1));
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

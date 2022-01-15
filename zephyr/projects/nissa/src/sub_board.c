@@ -5,8 +5,13 @@
 
 /* Nissa sub-board selection */
 
+#include <device.h>
 #include <drivers/cros_cbi.h>
+#include <drivers/gpio.h>
+
 #include "console.h"
+#include "hooks.h"
+#include "gpio/gpio_int.h"
 #include "sub_board.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
