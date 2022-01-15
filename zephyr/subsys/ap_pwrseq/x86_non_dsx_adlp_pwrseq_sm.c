@@ -85,7 +85,8 @@ static int wait_for_vrrdy(void)
 }
 
 /* PCH_PWROK to PCH from EC */
-int generate_pch_pwrok_handler(void)
+__attribute__((weak)) int generate_pch_pwrok_handler(
+				const struct chipset_pwrseq_config *chip_cfg)
 {
 	/* Enable PCH_PWROK, gated by VRRDY. */
 	if (power_signal_get(PWR_PCH_PWROK) == 0) {
@@ -95,7 +96,7 @@ int generate_pch_pwrok_handler(void)
 			ap_off();
 			return -1;
 		}
-		k_msleep(chip_cfg.pch_pwrok_delay_ms);
+		k_msleep(chip_cfg->pch_pwrok_delay_ms);
 		power_signal_set(PWR_PCH_PWROK, 1);
 		LOG_DBG("Set PCH_PWROK\n");
 	}
@@ -143,7 +144,7 @@ void s0_action_handler(const struct common_pwrseq_config *com_cfg)
 	/* TODO: There is possibility of EC not needing to generate
 	 * this as power sequencer may do it
 	 */
-	ret = generate_pch_pwrok_handler();
+	ret = generate_pch_pwrok_handler(&chip_cfg);
 	if (ret) {
 		LOG_DBG("PCH_PWROK handling failed err=%d\n", ret);
 		return;
@@ -199,7 +200,8 @@ void chipset_reset(enum pwrseq_chipset_shutdown_reason reason)
 	power_signal_set(PWR_SYS_RST, 0);
 }
 
-void chipset_force_shutdown(enum pwrseq_chipset_shutdown_reason reason,
+__attribute__((weak)) void chipset_force_shutdown(
+				enum pwrseq_chipset_shutdown_reason reason,
 				const struct common_pwrseq_config *com_cfg)
 {
 	int timeout_ms = 50;
@@ -230,10 +232,23 @@ void chipset_force_shutdown(enum pwrseq_chipset_shutdown_reason reason,
 		LOG_DBG("DSW_PWROK or RSMRST_ODL didn't go low!  Assuming G3.");
 }
 
-
-void g3s5_action_handler(const struct common_pwrseq_config *com_cfg)
+__attribute__((weak)) void g3s5_action_handler(
+				const struct common_pwrseq_config *com_cfg)
 {
 	power_signal_set(PWR_EN_PP5000_A, 1);
+}
+
+__attribute__((weak)) void s3s0_action_handler(
+				const struct common_pwrseq_config *com_cfg)
+{
+}
+
+__attribute__((weak)) void s0s3_action_handler(
+				const struct common_pwrseq_config *com_cfg)
+{
+	ARG_UNUSED(com_cfg);
+
+	ap_off();
 }
 
 void init_chipset_pwr_seq_state(void)
@@ -249,6 +264,12 @@ enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state,
 		g3s5_action_handler(com_cfg);
 		break;
 	case SYS_POWER_STATE_S5:
+		break;
+	case SYS_POWER_STATE_S3S0:
+		s3s0_action_handler(com_cfg);
+		break;
+	case SYS_POWER_STATE_S0S3:
+		s0s3_action_handler(com_cfg);
 		break;
 	case SYS_POWER_STATE_S0:
 		s0_action_handler(com_cfg);

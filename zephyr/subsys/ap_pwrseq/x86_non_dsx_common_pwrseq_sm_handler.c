@@ -58,10 +58,7 @@ static int check_power_rails_enabled(void)
 {
 	int out = 1;
 
-/*
- * Should have CONFIG_HAVE_EN_PP3300
 	out &= power_signal_get(PWR_EN_PP3300_A);
- */
 	out &= power_signal_get(PWR_EN_PP5000_A);
 	out &= power_signal_get(PWR_DSW_PWROK);
 	return out;
@@ -241,7 +238,7 @@ static int common_pwr_sm_run(int state)
 			return SYS_POWER_STATE_G3;
 		} else if (power_signals_off(IN_PCH_SLP_S3))
 			return SYS_POWER_STATE_S3S0;
-		else if (!power_signals_off(IN_PCH_SLP_S4))
+		else if (power_signals_on(IN_PCH_SLP_S4))
 			return SYS_POWER_STATE_S3S4;
 
 		break;
@@ -263,7 +260,7 @@ static int common_pwr_sm_run(int state)
 			chipset_force_shutdown(
 				PWRSEQ_CHIPSET_SHUTDOWN_POWERFAIL, &com_cfg);
 			return SYS_POWER_STATE_G3;
-		} else if (!power_signals_off(IN_PCH_SLP_S3))
+		} else if (power_signals_on(IN_PCH_SLP_S3))
 			return SYS_POWER_STATE_S0S3;
 		/* TODO: S0ix */
 
