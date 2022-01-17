@@ -82,13 +82,9 @@ i2c_pwr_cbi: &i2c0 {
 	label = "I2C_SENSOR";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	/*
-	 * b/210800948: i2c3 is not working at this moment.
-	 *
-	 * The driver support for i2c3 on GPF2/F3 is under review in
-	 * following PR.
-	 * https://github.com/zephyrproject-rtos/zephyr/pull/41389
-	 */
+	gpio-dev = <&gpiof>;
+	pinctrl-0 = <&pinctrl_i2c_clk3_gpf2    /* GPF2 */
+		     &pinctrl_i2c_data3_gpf3>; /* GPF3 */
 };
 
 &i2c4 {
