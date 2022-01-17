@@ -236,6 +236,13 @@
 #define CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_CUSTOM
 #define CONFIG_CHARGER_BQ25710_VSYS_MIN_VOLTAGE_MV 6100
 
+/* RGB Keyboard */
+#define GPIO_RGBKBD_SDB_L	GPIO_KBMCU_INT_ODL
+#define CONFIG_RGB_KEYBOARD
+#define CONFIG_LED_DRIVER_AW20198     /* Awinic AW20198 on I2C */
+#define RGB_GRID0_COL		11
+#define RGB_GRID0_ROW		6
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"	/* needed by registers.h */

@@ -4,6 +4,7 @@
  */
 #include <string.h>
 
+#include "aw20198.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -15,25 +16,7 @@
 #define CPRINTF(fmt, args...) cprintf(CC_RGBKBD, "AW20198: " fmt, ##args)
 #define CPRINTS(fmt, args...) cprints(CC_RGBKBD, "AW20198: " fmt, ##args)
 
-/* This depends on AD0 and Ad1. (GRD, GRD) = 0x20. */
-#define AW20198_I2C_ADDR_FLAG	0x20
-
-#define AW20198_ROW_SIZE	6
-#define AW20198_COL_SIZE	11
-#define AW20198_GRID_SIZE	(AW20198_COL_SIZE * AW20198_ROW_SIZE)
-#define AW20198_BUF_SIZE	(SIZE_OF_RGB * AW20198_GRID_SIZE)
-
-#define AW20198_PAGE_FUNC	0xC0
-#define AW20198_PAGE_PWM	0xC1
-#define AW20198_PAGE_SCALE	0xC2
-
-#define AW20198_REG_GCR		0x00
-#define AW20198_REG_GCC		0x01
-#define AW20198_REG_RSTN	0x2F
-#define AW20198_REG_MIXCR	0x46
-#define AW20198_REG_PAGE	0xF0
-
-#define AW20198_RESET_MAGIC	0xAE
+#define BUF_SIZE	(SIZE_OF_RGB * AW20198_GRID_SIZE)
 
 static int aw20198_read(struct rgbkbd *ctx, uint8_t addr, uint8_t *value)
 {
@@ -99,7 +82,7 @@ static int aw20198_enable(struct rgbkbd *ctx, bool enable)
 static int aw20198_set_color(struct rgbkbd *ctx, uint8_t offset,
 			     struct rgb_s *color, uint8_t len)
 {
-	uint8_t buf[sizeof(offset) + AW20198_BUF_SIZE];
+	uint8_t buf[sizeof(offset) + BUF_SIZE];
 	const int frame_len = len * SIZE_OF_RGB + sizeof(offset);
 	const int frame_offset = offset * SIZE_OF_RGB;
 	int i, rv;
@@ -127,7 +110,7 @@ static int aw20198_set_color(struct rgbkbd *ctx, uint8_t offset,
 static int aw20198_set_scale(struct rgbkbd *ctx, uint8_t offset, uint8_t scale,
 			     uint8_t len)
 {
-	uint8_t buf[sizeof(offset) + AW20198_BUF_SIZE];
+	uint8_t buf[sizeof(offset) + BUF_SIZE];
 	const int frame_len = len * SIZE_OF_RGB + sizeof(offset);
 	const int frame_offset = offset * SIZE_OF_RGB;
 	int rv;

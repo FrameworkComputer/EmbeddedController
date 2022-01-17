@@ -3,9 +3,11 @@
  * found in the LICENSE file.
  */
 
+#include "aw20198.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "keyboard_scan.h"
+#include "rgb_keyboard.h"
 #include "timer.h"
 
 /* Keyboard scan setting */
@@ -45,6 +47,24 @@ static const struct ec_response_keybd_config taniks_kb = {
 	},
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
+
+static struct rgb_s grid0[RGB_GRID0_COL * RGB_GRID0_ROW];
+
+struct rgbkbd rgbkbds[] = {
+	[0] = {
+		.cfg = &(const struct rgbkbd_cfg) {
+			.drv = &aw20198_drv,
+			.i2c = I2C_PORT_KBMCU,
+			.col_len = RGB_GRID0_COL,
+			.row_len = RGB_GRID0_ROW,
+		},
+		.buf = grid0,
+	},
+};
+const uint8_t rgbkbd_count = ARRAY_SIZE(rgbkbds);
+
+const uint8_t rgbkbd_hsize = RGB_GRID0_COL;
+const uint8_t rgbkbd_vsize = RGB_GRID0_ROW;
 
 __override const struct ec_response_keybd_config
 *board_vivaldi_keybd_config(void)
