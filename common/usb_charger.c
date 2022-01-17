@@ -131,6 +131,13 @@ void usb_charger_task(void *u)
 {
 	int port = TASK_ID_TO_USB_CHG_PORT(task_get_current());
 
+	/*
+	 * The actual number of ports may be less than the maximum
+	 * configured, so only run the task if the port exists.
+	 */
+	if (port >= board_get_usb_pd_port_count())
+		return;
+
 	ASSERT(bc12_ports[port].drv->usb_charger_task);
 	bc12_ports[port].drv->usb_charger_task(port);
 }
