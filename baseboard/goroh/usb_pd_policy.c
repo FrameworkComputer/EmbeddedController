@@ -38,15 +38,7 @@ int svdm_get_hpd_gpio(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	/* TODO(yllin): check SNK VBUS detection */
 	return ppc_is_vbus_present(port);
-
-	/*
-	 * (b:181203590#comment20) TODO(yllin): use
-	 *  PD_VSINK_DISCONNECT_PD for non-5V case.
-	 */
-	return charge_manager_get_vbus_voltage(port) >=
-	       PD_V_SINK_DISCONNECT_MAX;
 }
 
 void pd_power_supply_reset(int port)
