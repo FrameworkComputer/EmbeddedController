@@ -216,14 +216,16 @@ static void test_ppc_syv682x_interrupt(void)
 			"Power path disabled after HV_OC handled");
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_OC_HV,
 			SYV682X_CONTROL_4_NONE);
-	msleep(1);
+	/* Alert GPIO doesn't change so wait for delayed syv682x interrupt */
+	msleep(15);
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
 			"Reading CONTROL_1 failed");
 	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB, 0,
 			"Power path disabled after HV_OC handled");
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_OC_HV,
 			SYV682X_CONTROL_4_NONE);
-	msleep(1);
+	/* Alert GPIO doesn't change so wait for delayed syv682x interrupt */
+	msleep(15);
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
 			"Reading CONTROL_1 failed");
 	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB,
@@ -391,12 +393,12 @@ static void test_ppc_syv682x_write_busy(void)
 
 	/*
 	 * Writes should fail while the BUSY bit is set, except that writes to
-	 * CONTROL_4 should succeed on the SYV682C. 100 reads is intentionally
+	 * CONTROL_4 should succeed on the SYV682C. 1000 reads is intentionally
 	 * many more than the driver is expected to make before reaching its
 	 * timeout. It is not a goal of this test to verify the frequency of
 	 * polling or the exact value of the timeout.
 	 */
-	syv682x_emul_set_busy_reads(emul, 100);
+	syv682x_emul_set_busy_reads(emul, 1000);
 	zassert_equal(ppc_set_vbus_source_current_limit(syv682x_port,
 				TYPEC_RP_USB),
 			EC_ERROR_TIMEOUT, "SYV682 busy, but write completed");
