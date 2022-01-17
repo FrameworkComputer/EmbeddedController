@@ -46,6 +46,8 @@ uint32_t __hw_clock_source_read(void)
 
 void __hw_clock_source_set(uint32_t ts)
 {
+	ASSERT(!is_interrupt_enabled());
+
 	/*
 	 * Stop counter to avoid race between setting counter value
 	 * and clearing status.
@@ -55,7 +57,16 @@ void __hw_clock_source_set(uint32_t ts)
 	/* Set counter value */
 	STM32_TIM32_CNT(TIM_CLOCK32) = ts;
 
-	/* Clear status */
+	/*
+	 * Clear status. We may clear information other than timer overflow
+	 * (eg. event timestamp was matched) but:
+	 * - Bits other than overflow are unused (see __hw_clock_source_irq())
+	 * - After setting timestamp software will trigger timer interrupt using
+	 *   task_trigger_irq() (see force_time() in common/timer.c).
+	 *   process_timers() is called from timer interrupt, so if "match" bit
+	 *   was present in status (think: some task timers are expired)
+	 *   process_timers() will handle that correctly.
+	 */
 	STM32_TIM_SR(TIM_CLOCK32) = 0;
 
 	/* Start counting */
@@ -239,12 +250,11 @@ int __hw_clock_source_init(uint32_t start_t)
 	/* Set up the overflow interrupt */
 	STM32_TIM_DIER(TIM_CLOCK32) = 0x0001;
 
+	/* Override the count with the start value */
+	STM32_TIM32_CNT(TIM_CLOCK32) = start_t;
+
 	/* Start counting */
 	STM32_TIM_CR1(TIM_CLOCK32) |= 1;
-
-	/* Override the count with the start value now that counting has
-	 * started. */
-	__hw_clock_source_set(start_t);
 
 	/* Enable timer interrupts */
 	task_enable_irq(IRQ_TIM(TIM_CLOCK32));
