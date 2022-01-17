@@ -12,7 +12,6 @@
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/raa489000.h"
 
-#include "gpios.h"
 #include "sub_board.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
@@ -201,7 +200,7 @@ uint16_t tcpc_get_alert_status(void)
 	 * Therefore, go out and actually read the alert registers to report the
 	 * alert status.
 	 */
-	if (!gpio_pin_get_dt(&gpio_usb_c0_int_odl)) {
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl))) {
 		if (!tcpc_read16(0, TCPC_REG_ALERT, &regval)) {
 			/* The TCPCI Rev 1.0 spec says to ignore bits 14:12. */
 			if (!(tcpc_config[0].flags & TCPC_FLAGS_TCPCI_REV2_0))
@@ -213,7 +212,7 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	if (board_get_usb_pd_port_count() == 2 &&
-	    !gpio_pin_get_dt(&gpio_usb_c1_int_odl)) {
+	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
 			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
@@ -300,14 +299,16 @@ static void usbc_interrupt_trigger(int port)
 }
 
 #define USBC_INT_POLL_DATA(port) poll_c ## port ## _int_data
-#define USBC_INT_POLL(port)						    \
-	static void poll_c ## port ## _int (void)			    \
-	{								    \
-		if (!gpio_pin_get_dt(&gpio_usb_c ## port ## _int_odl)) { \
-			usbc_interrupt_trigger(port);			    \
-			hook_call_deferred(&USBC_INT_POLL_DATA(port),	    \
-					   USBC_INT_POLL_DELAY_US);	    \
-		}							    \
+#define USBC_INT_POLL(port)						\
+	static void poll_c ## port ## _int (void)			\
+	{								\
+		if (!gpio_pin_get_dt(					\
+			GPIO_DT_FROM_NODELABEL				\
+				(gpio_usb_c ## port ## _int_odl))) {	\
+			usbc_interrupt_trigger(port);			\
+			hook_call_deferred(&USBC_INT_POLL_DATA(port),	\
+					   USBC_INT_POLL_DELAY_US);	\
+		}							\
 	}
 
 USBC_INT_POLL(0)
@@ -359,11 +360,16 @@ static void usbc_init(void)
 	static struct gpio_callback c0_callback;
 	static struct gpio_callback c1_callback;
 
-	usbc_init_interrupt(0, &gpio_usb_c0_int_odl,
+	usbc_init_interrupt(0, GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl),
 			    &c0_callback,
 			    usb_c0_interrupt);
 	if (board_get_usb_pd_port_count() == 2)
-		usbc_init_interrupt(1, &gpio_usb_c1_int_odl,
+		/*
+		 * Use GPIO_DT_FROM_NODELABEL since this node does not have a
+		 * enum signal name allocated to it.
+		 */
+		usbc_init_interrupt(1,
+				    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl),
 				    &c1_callback,
 				    usb_c1_interrupt);
 }

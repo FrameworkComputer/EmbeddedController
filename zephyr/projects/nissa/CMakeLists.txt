@@ -8,7 +8,6 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 zephyr_include_directories(include)
 zephyr_library_sources("src/sub_board.c")
-zephyr_library_sources("src/gpios.c")
 
 if(DEFINED CONFIG_BOARD_NIVVIKS)
 	project(nivviks)
