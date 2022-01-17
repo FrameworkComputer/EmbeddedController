@@ -20,23 +20,34 @@ LOG_MODULE_REGISTER(gpio_shim, LOG_LEVEL_ERR);
  * device tree node.
  */
 struct gpio_config {
+	/* Access structure for lookup */
+	struct gpio_dt_spec spec;
 	/* GPIO net name */
 	const char *name;
-	/* Set at build time for lookup */
-	const struct device *dev;
-	/* Bit number of pin within device */
-	gpio_pin_t pin;
 	/* From DTS, excludes interrupts flags */
 	gpio_flags_t init_flags;
 	/* From DTS, skips initialisation */
 	bool no_auto_init;
 };
 
+/*
+ * Initialise a gpio_dt_spec structure.
+ * Normally the standard macro (GPIO_DT_SPEC_GET) could be used, but
+ * the flags stored in our device tree config are the full 32 bit flags,
+ * whereas the standard macros assume that only 8 bits of initial flags
+ * will be needed.
+ */
+#define OUR_DT_SPEC(id)						\
+	{							\
+		.port = DEVICE_DT_GET(DT_GPIO_CTLR(id, gpios)),	\
+		.pin = DT_GPIO_PIN(id, gpios),			\
+		.dt_flags = 0xFF & (DT_GPIO_FLAGS(id, gpios)),	\
+	}
+
 #define GPIO_CONFIG(id)                                      \
 	{                                                    \
+		.spec = OUR_DT_SPEC(id),		     \
 		.name = DT_NODE_FULL_NAME(id),               \
-		.dev = DEVICE_DT_GET(DT_PHANDLE(id, gpios)), \
-		.pin = DT_GPIO_PIN(id, gpios),               \
 		.init_flags = DT_GPIO_FLAGS(id, gpios),      \
 		.no_auto_init = DT_PROP(id, no_auto_init),   \
 	},
@@ -45,6 +56,26 @@ static const struct gpio_config configs[] = {
 	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_CONFIG)
 #endif
 };
+
+#undef GPIO_CONFIG
+#undef OUR_DT_SPEC
+
+/*
+ * Generate a pointer for each GPIO, pointing to the gpio_dt_spec entry
+ * in the table. These are named after the GPIO generated signal name,
+ * so they can be used directly in Zephyr GPIO API calls.
+ *
+ * Potentially, instead of generating a pointer, the macro could
+ * point directly into the table by exposing the gpio_config struct.
+ */
+
+#define GPIO_PTRS(id) const struct gpio_dt_spec * const	\
+	GPIO_DT_NAME(GPIO_SIGNAL(id)) =			\
+	&configs[GPIO_SIGNAL(id)].spec;
+
+#if DT_NODE_EXISTS(DT_PATH(named_gpios))
+DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_PTRS)
+#endif
 
 int gpio_is_implemented(enum gpio_signal signal)
 {
@@ -56,28 +87,14 @@ int gpio_get_level(enum gpio_signal signal)
 	if (!gpio_is_implemented(signal))
 		return 0;
 
-	const int l = gpio_pin_get_raw(configs[signal].dev,
-				       configs[signal].pin);
+	const int l = gpio_pin_get_raw(configs[signal].spec.port,
+				       configs[signal].spec.pin);
 
 	if (l < 0) {
 		LOG_ERR("Cannot read %s (%d)", configs[signal].name, l);
 		return 0;
 	}
 	return l;
-}
-
-int gpio_get_pin(enum gpio_signal signal)
-{
-	if (!gpio_is_implemented(signal))
-		return 0;
-	return configs[signal].pin;
-}
-
-const struct device *gpio_get_dev(enum gpio_signal signal)
-{
-	if (!gpio_is_implemented(signal))
-		return 0;
-	return configs[signal].dev;
 }
 
 int gpio_get_ternary(enum gpio_signal signal)
@@ -115,8 +132,8 @@ void gpio_set_level(enum gpio_signal signal, int value)
 	if (!gpio_is_implemented(signal))
 		return;
 
-	int rv = gpio_pin_set_raw(configs[signal].dev,
-				  configs[signal].pin,
+	int rv = gpio_pin_set_raw(configs[signal].spec.port,
+				  configs[signal].spec.pin,
 				  value);
 
 	if (rv < 0) {
@@ -229,6 +246,13 @@ int gpio_get_default_flags(enum gpio_signal signal)
 	return convert_from_zephyr_flags(configs[signal].init_flags);
 }
 
+const struct gpio_dt_spec *gpio_get_dt_spec(enum gpio_signal signal)
+{
+	if (!gpio_is_implemented(signal))
+		return 0;
+	return &configs[signal].spec;
+}
+
 static int init_gpios(const struct device *unused)
 {
 	gpio_flags_t flags;
@@ -244,7 +268,7 @@ static int init_gpios(const struct device *unused)
 		if (configs[i].no_auto_init)
 			continue;
 
-		if (!device_is_ready(configs[i].dev))
+		if (!device_is_ready(configs[i].spec.port))
 			LOG_ERR("Not found (%s)", configs[i].name);
 
 		/*
@@ -259,7 +283,7 @@ static int init_gpios(const struct device *unused)
 				~(GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_HIGH);
 		}
 
-		rv = gpio_pin_configure(configs[i].dev, configs[i].pin, flags);
+		rv = gpio_pin_configure_dt(&configs[i].spec, flags);
 		if (rv < 0) {
 			LOG_ERR("Config failed %s (%d)", configs[i].name, rv);
 		}
@@ -287,8 +311,8 @@ void gpio_reset(enum gpio_signal signal)
 	if (!gpio_is_implemented(signal))
 		return;
 
-	gpio_pin_configure(configs[signal].dev, configs[signal].pin,
-			   configs[signal].init_flags);
+	gpio_pin_configure_dt(&configs[signal].spec,
+			      configs[signal].init_flags);
 }
 
 void gpio_set_flags(enum gpio_signal signal, int flags)
@@ -296,8 +320,8 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 	if (!gpio_is_implemented(signal))
 		return;
 
-	gpio_pin_configure(configs[signal].dev, configs[signal].pin,
-			   convert_to_zephyr_flags(flags));
+	gpio_pin_configure_dt(&configs[signal].spec,
+			      convert_to_zephyr_flags(flags));
 }
 
 int signal_is_gpio(int signal)

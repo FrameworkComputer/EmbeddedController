@@ -299,10 +299,10 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 	 * Config interrupt flags (e.g. INT_EDGE_BOTH) & enable interrupt
 	 * together.
 	 */
-	rv = gpio_pin_interrupt_configure(gpio_get_dev(signal),
-					  gpio_get_pin(signal),
-					  (interrupt->flags | GPIO_INT_ENABLE) &
-						  ~GPIO_INT_DISABLE);
+	rv = gpio_pin_interrupt_configure_dt(gpio_get_dt_spec(signal),
+					     (interrupt->flags |
+					      GPIO_INT_ENABLE) &
+					      ~GPIO_INT_DISABLE);
 	if (rv < 0) {
 		LOG_ERR("Failed to enable interrupt on %s (%d)",
 			gpio_get_name(signal), rv);
@@ -324,9 +324,8 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 	if (!gpio_is_implemented(signal))
 		return -1;
 
-	rv = gpio_pin_interrupt_configure(gpio_get_dev(signal),
-					  gpio_get_pin(signal),
-					  GPIO_INT_DISABLE);
+	rv = gpio_pin_interrupt_configure_dt(gpio_get_dt_spec(signal),
+					     GPIO_INT_DISABLE);
 	if (rv < 0) {
 		LOG_ERR("Failed to disable interrupt on %s (%d)",
 			gpio_get_name(signal), rv);
@@ -349,10 +348,10 @@ static int init_gpio_ints(const struct device *unused)
 		if (signal == GPIO_UNIMPLEMENTED)
 			continue;
 
+		const struct gpio_dt_spec *spec = gpio_get_dt_spec(signal);
 		gpio_init_callback(&zephyr_gpio_callbacks[i], gpio_handler_shim,
-				   BIT(gpio_get_pin(signal)));
-		rv = gpio_add_callback(gpio_get_dev(signal),
-				       &zephyr_gpio_callbacks[i]);
+				   BIT(spec->pin));
+		rv = gpio_add_callback(spec->port, &zephyr_gpio_callbacks[i]);
 
 		if (rv < 0) {
 			LOG_ERR("Callback reg failed %s (%d)",

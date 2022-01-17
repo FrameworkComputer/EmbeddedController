@@ -48,20 +48,6 @@ struct unused_pin_config {
  */
 int gpio_config_unused_pins(void) __attribute__((weak));
 
-/**
- * @brief Obtain the pin number of the GPIO
- *
- * @return pin number of GPIO
- */
-int gpio_get_pin(enum gpio_signal signal);
-
-/**
- * @brief Obtain the Zephyr device of the GPIO
- *
- * @return device of the GPIO
- */
-const struct device *gpio_get_dev(enum gpio_signal signal);
-
 #if DT_NODE_EXISTS(DT_PATH(unused_pins))
 /**
  * @brief Get a node from path '/unused-pins' which has a prop 'unused-gpios'.
