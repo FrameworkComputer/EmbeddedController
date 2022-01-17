@@ -10,6 +10,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "time.h"
 #include "usb_mux.h"
@@ -25,6 +26,11 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+static struct {
+	mux_state_t mux_state;
+	bool awake;
+} saved_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 static inline int anx3443_read(const struct usb_mux *me,
 			       uint8_t reg, int *val)
 {
@@ -39,11 +45,20 @@ static inline int anx3443_write(const struct usb_mux *me,
 
 static int anx3443_power_off(const struct usb_mux *me)
 {
+	/**
+	 * No-op if the mux is already down.
+	 *
+	 * Writing or reading any register wakes the mux up.
+	 */
+	if (!saved_mux_state[me->usb_port].awake)
+		return EC_SUCCESS;
+
 	/*
 	 * The mux will not send an acknowledgment when powered off, so ignore
 	 * response and always return success.
 	 */
 	anx3443_write(me, ANX3443_REG_POWER_CNTRL, ANX3443_POWER_CNTRL_OFF);
+	saved_mux_state[me->usb_port].awake = false;
 	return EC_SUCCESS;
 }
 
@@ -52,9 +67,6 @@ static int anx3443_wake_up(const struct usb_mux *me)
 	timestamp_t start;
 	int rv;
 	int val;
-
-	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return EC_ERROR_NOT_POWERED;
 
 	/* Keep reading top register until mux wakes up or timesout */
 	start = get_time();
@@ -72,6 +84,7 @@ static int anx3443_wake_up(const struct usb_mux *me)
 	/* ULTRA_LOW_POWER must always be disabled (Fig 2-2) */
 	RETURN_ERROR(anx3443_write(me, ANX3443_REG_ULTRA_LOW_POWER,
 				   ANX3443_ULTRA_LOW_POWER_DIS));
+	saved_mux_state[me->usb_port].awake = true;
 
 	return EC_SUCCESS;
 }
@@ -84,14 +97,18 @@ static int anx3443_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
 
-	/* Mux is not powered in Z1 */
-	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS
-						      : EC_ERROR_NOT_POWERED;
+	saved_mux_state[me->usb_port].mux_state = mux_state;
 
 	/* To disable both DP and USB the mux must be powered off. */
 	if (!(mux_state & (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED)))
 		return anx3443_power_off(me);
+
+	/**
+	 * If the request state is not NONE, process it after we back to
+	 * S0.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		return EC_SUCCESS;
 
 	RETURN_ERROR(anx3443_wake_up(me));
 
@@ -160,3 +177,46 @@ const struct usb_mux_driver anx3443_usb_mux_driver = {
 	.set = anx3443_set_mux,
 	.get = anx3443_get_mux,
 };
+
+static bool anx3443_port_is_usb2_only(const struct usb_mux *me)
+{
+	int val;
+	int port = me->usb_port;
+
+	if (!(saved_mux_state[port].mux_state & USB_PD_MUX_USB_ENABLED))
+		return false;
+
+	if (anx3443_read(me, ANX3443_REG_USB_STATUS, &val))
+		return false;
+
+	return !(val & ANX3443_UP_EN_RTERM_ST);
+}
+
+static void anx3443_suspend(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		const struct usb_mux *mux = &usb_muxes[i];
+
+		if (mux->driver != &anx3443_usb_mux_driver)
+			continue;
+
+		if (anx3443_port_is_usb2_only(mux))
+			anx3443_power_off(mux);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, anx3443_suspend, HOOK_PRIO_DEFAULT);
+
+static void anx3443_resume(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		int port = usb_muxes[i].usb_port;
+		bool ack_required;
+
+		if (usb_muxes[i].driver != &anx3443_usb_mux_driver)
+			continue;
+
+		anx3443_set_mux(&usb_muxes[i], saved_mux_state[port].mux_state,
+				&ack_required);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, anx3443_resume, HOOK_PRIO_DEFAULT);

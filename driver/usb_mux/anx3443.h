@@ -21,6 +21,11 @@
 #define ANX3443_REG_POWER_CNTRL		0x2B
 #define ANX3443_POWER_CNTRL_OFF		0xFF
 
+#define ANX3443_REG_USB_STATUS		0xD7
+/* status of downstream RX term */
+#define ANX3443_DN_EN_RTERM_ST		BIT(7)
+/* status of upstream RX term */
+#define ANX3443_UP_EN_RTERM_ST		BIT(6)
 
 /* Ultra low power control register  */
 #define ANX3443_REG_ULTRA_LOW_POWER	0xE6
