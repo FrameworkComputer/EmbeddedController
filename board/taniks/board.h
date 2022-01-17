@@ -239,9 +239,9 @@ enum ioex_port {
 };
 
 enum battery_type {
-	BATTERY_SMP,
+	BATTERY_SMP_51W,
+	BATTERY_SMP_71W,
 	BATTERY_LGC,
-	BATTERY_SUNWODA,
 	BATTERY_TYPE_COUNT,
 };
 
