@@ -49,19 +49,6 @@
 				MKBP_EVENT_SENSOR_FIFO)>;
 	};
 
-	named-pwms {
-		compatible = "named-pwms";
-
-		kblight: kb_bl_pwm {
-			pwms = <&pwm3 0 0>;
-			frequency = <10000>;
-		};
-		displight: ecl_bl_pwm_r {
-			pwms = <&pwm5 0 0>;
-			frequency = <4800>;
-		};
-	};
-
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
@@ -101,16 +88,6 @@
 	status = "okay";
 	current-speed = <115200>;
 	pinctrl-0 = <&altj_cr_sin1_sl2 &altj_cr_sout1_sl2>;
-};
-
-/* Keyboard backlight */
-&pwm3 {
-	status = "okay";
-};
-
-/* Display backlight */
-&pwm5 {
-	status = "okay";
 };
 
 &adc0 {
