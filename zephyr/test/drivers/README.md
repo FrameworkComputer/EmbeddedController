@@ -20,7 +20,8 @@ To calculate code coverage for this test only
 
 ```bash
 (chroot) zmake configure --coverage --test zephyr/test/drivers
-(chroot) genhtml -q -o build/zephyr/test-drivers/output/coverage_rpt \
+(chroot) genhtml --branch-coverage -q \
+        -o build/zephyr/test-drivers/output/coverage_rpt \
         build/zephyr/test-drivers/output/zephyr.info
 ```
 

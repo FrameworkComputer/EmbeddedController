@@ -106,7 +106,8 @@ seed_cache:
       sed -e 's|^SF:||' | xargs lcov --rc lcov_branch_coverage=1
       -o "${BUILD_DIR}/${PROJECT}/filtered_twister.info"
       -e "${BUILD_DIR}/${PROJECT}/merged_twister_no_ec.info"
-    - /usr/bin/genhtml -q -o "${BUILD_DIR}/${PROJECT}/filtered_twister_rpt"
+    - /usr/bin/genhtml --branch-coverage -q
+      -o "${BUILD_DIR}/${PROJECT}/filtered_twister_rpt"
       -t "${PROJECT} coverage of twister tests"
       -s "${BUILD_DIR}/${PROJECT}/filtered_twister.info"
     - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/merged.info"
@@ -121,7 +122,8 @@ seed_cache:
       sed -e 's|^SF:||' | xargs lcov --rc lcov_branch_coverage=1
       -o "${BUILD_DIR}/${PROJECT}/filtered_no_zephyr.info"
       -e "${BUILD_DIR}/${PROJECT}/merged_no_zephyr.info"
-    - /usr/bin/genhtml -q -o "${BUILD_DIR}/${PROJECT}/filtered_no_zephyr_rpt"
+    - /usr/bin/genhtml --branch-coverage -q
+      -o "${BUILD_DIR}/${PROJECT}/filtered_no_zephyr_rpt"
       -t "${PROJECT} coverage w/o zephyr"
       -p ${EC_DIR}
       -s "${BUILD_DIR}/${PROJECT}/filtered_no_zephyr.info"
