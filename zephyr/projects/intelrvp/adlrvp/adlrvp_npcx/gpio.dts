@@ -34,11 +34,13 @@
 		vol_dn_ec {
 			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_PULL_UP)>;
 		};
-		smc_lid {
-			gpios = <&gpio0 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+		smc_lid: smc_lid {
+			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_LID_OPEN";
 		};
-		mech_pwr_btn_odl {
+		mech_pwr_btn_odl: mech_pwr_btn_odl {
 			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		std_adp_prsnt {
 			gpios = <&gpio0 2 GPIO_INPUT>;
@@ -114,12 +116,14 @@
 		};
 		ec_flash_wp_odl {
 			gpios = <&gpio9 4 GPIO_INPUT>;
+			enum-name = "GPIO_WP_L";
 		};
 		ec_h1_packet_mode {
 			gpios = <&gpioe 2 GPIO_OUT_LOW>;
 		};
 		ec_entering_rw {
 			gpios = <&gpiod 4 GPIO_OUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
 		};
 		ccd_mode_odl {
 			gpios = <&gpiof 4 GPIO_INPUT>;

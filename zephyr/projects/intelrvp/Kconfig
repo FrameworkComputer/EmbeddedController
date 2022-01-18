@@ -1,0 +1,12 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_ADLRVP_NPCX
+	bool "Intel ADLRVP_NPCX board"
+	depends on SOC_NPCX9M3F
+	help
+	  Build Intel ADLRVP_NPCX reference board. This board has Intel ADL RVP
+	  SoC with NPCX9M3F EC.
+
+source "Kconfig.zephyr"

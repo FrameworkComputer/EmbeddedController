@@ -1,0 +1,20 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_lid_open: lid_open {
+			irq-pin = <&smc_lid>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_power_button: power_button {
+			irq-pin = <&mech_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+	};
+};
