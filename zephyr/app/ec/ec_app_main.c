@@ -38,7 +38,8 @@ void ec_app_main(void)
 
 	system_print_banner();
 
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG)) {
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_WATCHDOG) &&
+		!IS_ENABLED(CONFIG_WDT_DISABLE_AT_BOOT)) {
 		watchdog_init();
 	}
 

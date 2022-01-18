@@ -395,3 +395,8 @@ int board_is_switchcap_power_good(void)
 {
 	return gpio_get_level(GPIO_SWITCHCAP_PG);
 }
+
+void sys_arch_reboot(int type)
+{
+	ARG_UNUSED(type);
+}

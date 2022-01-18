@@ -16,10 +16,17 @@ LOG_MODULE_REGISTER(watchdog_shim, LOG_LEVEL_ERR);
 
 #define wdt DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog))
 
+#ifdef TEST_BUILD
+extern bool wdt_warning_triggered;
+#endif /* TEST_BUILD */
+
 static void wdt_warning_handler(const struct device *wdt_dev, int channel_id)
 {
 	/* TODO(b/176523207): watchdog warning message */
 	printk("Watchdog deadline is close!\n");
+	#ifdef TEST_BUILD
+	wdt_warning_triggered = true;
+	#endif
 }
 
 int watchdog_init(void)

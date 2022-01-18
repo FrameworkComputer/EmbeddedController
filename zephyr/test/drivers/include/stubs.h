@@ -24,4 +24,6 @@ void board_set_ps8xxx_product_id(uint16_t product_id);
 /* Declare fake function to allow tests to examine calls to this function */
 DECLARE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
 
+void sys_arch_reboot(int type);
+
 #endif /* __TEST_DRIVERS_STUBS_H */

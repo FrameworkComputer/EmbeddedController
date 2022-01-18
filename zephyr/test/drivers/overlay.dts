@@ -10,6 +10,7 @@
 / {
 	chosen {
 		cros-ec,espi = &espi0;
+		cros-ec,watchdog = &wdt_counter;
 	};
 
 	aliases {
@@ -596,6 +597,13 @@
 	clock: clock {
 		compatible = "cros,clock-control-emul";
 		clock-frequency = <DT_FREQ_M(100)>; /* 100 MHz */
+	};
+
+	wdt_counter: wdt-counter {
+		compatible = "zephyr,counter-watchdog";
+		status = "okay";
+		counter = <&counter0>;
+		label = "WDT_COUNTER";
 	};
 };
 
