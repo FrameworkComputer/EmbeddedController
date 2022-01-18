@@ -1,0 +1,6 @@
+#ifdef BOARD_HOST
+#define CONFIG_TEST_MOCK_LIST \
+	MOCK(ADC)             \
+	MOCK(BATTERY)         \
+
+#endif

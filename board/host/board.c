@@ -20,6 +20,7 @@
 #include "temp_sensor.h"
 #include "test_util.h"
 #include "timer.h"
+#include "usb_pd_tcpm.h"
 #include "util.h"
 
 /*
@@ -30,6 +31,10 @@
 #define GPIO_0  0
 
 #include "gpio_list.h"
+
+test_mockable const struct tcpc_config_t tcpc_config[] = {
+	[0] = {},
+};
 
 test_mockable enum battery_present battery_is_present(void)
 {

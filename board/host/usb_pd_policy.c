@@ -23,8 +23,8 @@ test_mockable void pd_power_supply_reset(int port)
 	/* Not implemented */
 }
 
-void pd_set_input_current_limit(int port, uint32_t max_ma,
-				uint32_t supply_voltage)
+__overridable void pd_set_input_current_limit(int port, uint32_t max_ma,
+					      uint32_t supply_voltage)
 {
 	/* Not implemented */
 }

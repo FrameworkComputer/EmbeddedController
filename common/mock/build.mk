@@ -4,6 +4,7 @@
 
 # See common/mock/README.md for more information.
 
+mock-$(HAS_MOCK_ADC) += adc_mock.o
 mock-$(HAS_MOCK_BATTERY) += battery_mock.o
 mock-$(HAS_MOCK_CHARGE_MANAGER) += charge_manager_mock.o
 mock-$(HAS_MOCK_FP_SENSOR) += fp_sensor_mock.o
@@ -21,3 +22,4 @@ mock-$(HAS_MOCK_USB_TC_SM) += usb_tc_sm_mock.o
 mock-$(HAS_MOCK_USB_PD_DPM) += usb_pd_dpm_mock.o
 mock-$(HAS_MOCK_DP_ALT_MODE) += dp_alt_mode_mock.o
 mock-$(HAS_MOCK_USB_PRL) += usb_prl_mock.o
+mock-$(HAS_MOCK_USB_PE_DRP_SM) += usb_pe_drp_sm_mock.o

@@ -56,7 +56,9 @@ driver-$(CONFIG_BATTERY_BQ20Z453)+=battery/bq20z453.o
 driver-$(CONFIG_BATTERY_BQ27541)+=battery/bq27541.o
 driver-$(CONFIG_BATTERY_BQ27621)+=battery/bq27621_g1.o
 driver-$(CONFIG_BATTERY_MAX17055)+=battery/max17055.o
+ifeq ($(HAS_MOCK_BATTERY),)
 driver-$(CONFIG_BATTERY_SMART)+=battery/smart.o
+endif
 driver-$(CONFIG_BATTERY_BQ4050)+=battery/bq4050.o
 driver-$(CONFIG_BATTERY_MM8013)+=battery/mm8013.o
 

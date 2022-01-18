@@ -44,6 +44,7 @@ enum temp_sensor_id {
 enum adc_channel {
 	ADC_CH_CHARGER_CURRENT,
 	ADC_AC_ADAPTER_ID_VOLTAGE,
+	ADC_VBUS,
 
 	ADC_CH_COUNT
 };
