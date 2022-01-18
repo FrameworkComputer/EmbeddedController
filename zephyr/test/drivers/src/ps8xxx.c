@@ -181,6 +181,8 @@ static void test_ps8815_set_cc(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
 	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
+	int64_t start_time;
+	int64_t delay;
 
 	/* Set firmware version <= 0x10 to set "disable rp detect" workaround */
 	tcpci_emul_set_reg(tcpci_emul, PS8XXX_REG_FW_REV, 0x8);
@@ -228,12 +230,12 @@ static void test_ps8815_set_cc(void)
 	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a00);
 	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
 
-	/*
-	 * TODO(b/203858808): Find if it is possible to detect additional 1 ms
-	 *                    delay
-	 */
+	start_time = k_uptime_get();
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
 			    "delay on HW rev 0x0a00");
+	delay = k_uptime_delta(&start_time);
+	zassert_true(delay >= 1,
+		     "expected delay on HW rev 0x0a00 (delay %lld)", delay);
 
 	/*
 	 * Set hw revision 0x0a01 to enable workaround for b/171430855 (delay
@@ -241,8 +243,12 @@ static void test_ps8815_set_cc(void)
 	 */
 	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a01);
 	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	start_time = k_uptime_get();
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
 			    "delay on HW rev 0x0a01");
+	delay = k_uptime_delta(&start_time);
+	zassert_true(delay >= 1,
+		     "expected delay on HW rev 0x0a01 (delay %lld)", delay);
 
 	/*
 	 * Set other hw revision to disable workaround for b/171430855 (delay
@@ -250,8 +256,12 @@ static void test_ps8815_set_cc(void)
 	 */
 	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a02);
 	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	start_time = k_uptime_get();
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
 			    "no delay on other HW rev");
+	delay = k_uptime_delta(&start_time);
+	zassert_true(delay == 0,
+		     "unexpected delay on HW rev 0x0a02 (delay %lld)", delay);
 }
 
 /** Test PS8xxx set vconn */
@@ -324,12 +334,14 @@ static void test_ps8xxx_transmit(void)
 }
 
 /** Test PS8805 and PS8815 drp toggle */
-static void test_ps88x5_drp_toggle(void)
+static void test_ps88x5_drp_toggle(bool delay_expected)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
 	const struct emul *tcpci_emul = ps8xxx_emul_get_tcpci(ps8xxx_emul);
 	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(tcpci_emul);
 	uint16_t exp_role_ctrl;
+	int64_t start_time;
+	int64_t delay;
 
 	/* Test fail on command write */
 	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul, TCPC_REG_COMMAND);
@@ -362,8 +374,15 @@ static void test_ps88x5_drp_toggle(void)
 	/* Test drp toggle when CC is snk. Role control CC lines should be RP */
 	exp_role_ctrl = TCPC_REG_ROLE_CTRL_SET(TYPEC_DRP, TYPEC_RP_USB,
 					       TYPEC_CC_RP, TYPEC_CC_RP);
+	start_time = k_uptime_get();
 	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
 		      NULL);
+	delay = k_uptime_delta(&start_time);
+	if (delay_expected) {
+		zassert_true(delay >= 1, "expected delay (%lld ms)", delay);
+	} else {
+		zassert_true(delay == 0, "unexpected delay (%lld ms)", delay);
+	}
 	check_tcpci_reg(tcpci_emul, TCPC_REG_ROLE_CTRL, exp_role_ctrl);
 	check_tcpci_reg(tcpci_emul, TCPC_REG_COMMAND,
 			TCPC_REG_COMMAND_LOOK4CONNECTION);
@@ -376,11 +395,46 @@ static void test_ps88x5_drp_toggle(void)
 	/* Test drp toggle when CC is src. Role control CC lines should be RD */
 	exp_role_ctrl = TCPC_REG_ROLE_CTRL_SET(TYPEC_DRP, TYPEC_RP_USB,
 					       TYPEC_CC_RD, TYPEC_CC_RD);
+	start_time = k_uptime_get();
 	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
 		      NULL);
+	delay = k_uptime_delta(&start_time);
+	if (delay_expected) {
+		zassert_true(delay >= 1, "expected delay (%lld ms)", delay);
+	} else {
+		zassert_true(delay == 0, "unexpected delay (%lld ms)", delay);
+	}
 	check_tcpci_reg(tcpci_emul, TCPC_REG_ROLE_CTRL, exp_role_ctrl);
 	check_tcpci_reg(tcpci_emul, TCPC_REG_COMMAND,
 			TCPC_REG_COMMAND_LOOK4CONNECTION);
+}
+
+/** Test PS8815 drp toggle */
+static void test_ps8815_drp_toggle(void)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+
+	/*
+	 * Set hw revision 0x0a00 to enable workaround for b/171430855 (delay
+	 * 1 ms on role control reg update)
+	 */
+	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a00);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	test_ps88x5_drp_toggle(true);
+
+	/*
+	 * Set other hw revision to disable workaround for b/171430855 (delay
+	 * 1 ms on role control reg update)
+	 */
+	ps8xxx_emul_set_hw_rev(ps8xxx_emul, 0x0a02);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
+	test_ps88x5_drp_toggle(false);
+}
+
+/** Test PS8805 drp toggle */
+static void test_ps8805_drp_toggle(void)
+{
+	test_ps88x5_drp_toggle(false);
 }
 
 /** Test PS8xxx get chip info code used by all PS8xxx devices */
@@ -1020,7 +1074,7 @@ void test_suite_ps8xxx(void)
 				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8xxx_transmit,
 				 setup_ps8805, unit_test_noop),
-			 ztest_unit_test_setup_teardown(test_ps88x5_drp_toggle,
+			 ztest_unit_test_setup_teardown(test_ps8805_drp_toggle,
 				 setup_ps8805, unit_test_noop),
 			 ztest_unit_test_setup_teardown(
 				 test_ps8805_get_chip_info,
@@ -1083,7 +1137,7 @@ void test_suite_ps8xxx(void)
 				 setup_ps8815, unit_test_noop),
 			 ztest_unit_test_setup_teardown(test_ps8xxx_transmit,
 				 setup_ps8815, unit_test_noop),
-			 ztest_unit_test_setup_teardown(test_ps88x5_drp_toggle,
+			 ztest_unit_test_setup_teardown(test_ps8815_drp_toggle,
 				 setup_ps8815, unit_test_noop),
 			 ztest_unit_test_setup_teardown(
 				 test_ps8815_get_chip_info,

@@ -764,6 +764,7 @@ __maybe_unused static int ps8815_transmit_buffer_workaround_check(int port)
 		ps8xxx_role_control_delay_ms[port] = 1;
 		break;
 	default:
+		ps8xxx_role_control_delay_ms[port] = 0;
 		break;
 	}
 
