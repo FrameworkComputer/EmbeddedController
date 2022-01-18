@@ -19,16 +19,8 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#define vsafe5v_min (3800/25)
-#define vsafe0v_max (800/25)
-/*
- * These interface are workable while ADC is enabled, before
- * calling them should make sure ec driver finished chip initilization.
- */
-#define is_equal_greater_safe5v(port) \
-		(((anx7447_get_vbus_voltage(port))) > vsafe5v_min)
-#define is_equal_greater_safe0v(port) \
-		(((anx7447_get_vbus_voltage(port))) > vsafe0v_max)
+#define VSAFE5V_MIN 3800
+#define VSAFE0V_MAX 800
 
 struct anx_state {
 	uint16_t i2c_addr_flags;
@@ -403,14 +395,44 @@ static int anx7447_release(int port)
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-static int anx7447_get_vbus_voltage(int port)
+static int anx7447_get_vbus_voltage(int port, int *vbus)
 {
-	int vbus_volt = 0;
+	int val;
+	int error;
 
-	tcpc_read16(port, TCPC_REG_VBUS_VOLTAGE, &vbus_volt);
+	/*
+	 * b:214893572#comment33: This function is partially copied from
+	 * tcpci_get_vbus_voltage because ANX7447 dev_cap_1 reports VBUS_MEASURE
+	 * unsupported, however, it actually does. So we have an identical
+	 * implementation but just skip the dev_cap_1 check.
+	 */
 
-	return vbus_volt;
+	error = tcpc_read16(port, TCPC_REG_VBUS_VOLTAGE, &val);
+	if (error)
+		return error;
+
+	*vbus = TCPC_REG_VBUS_VOLTAGE_VBUS(val);
+	return EC_SUCCESS;
+}
+
+#ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
+/*
+ * This interface are workable while ADC is enabled, before
+ * calling them should make sure ec driver finished chip initialization.
+ */
+static bool is_equal_greater_safe0v(int port)
+{
+	int vbus;
+	int error;
+
+	error = anx7447_get_vbus_voltage(port, &vbus);
+	if (error)
+		return true;
+
+	if (vbus > VSAFE0V_MAX)
+		return true;
+
+	return false;
 }
 
 int anx7447_set_power_supply_ready(int port)
@@ -839,6 +861,7 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
 #endif
+	.get_vbus_voltage	= &anx7447_get_vbus_voltage,
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
 	.set_cc			= &anx7447_set_cc,
 	.set_polarity		= &anx7447_set_polarity,

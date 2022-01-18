@@ -1334,7 +1334,6 @@ void tcpci_tcpc_alert(int port)
 int tcpci_get_vbus_voltage(int port, int *vbus)
 {
 	int error, val;
-	int scale, measure;
 
 	if (!(dev_cap_1[port] & TCPC_REG_DEV_CAP_1_VBUS_MEASURE_ALARM_CAPABLE))
 		return EC_ERROR_UNIMPLEMENTED;
@@ -1343,16 +1342,7 @@ int tcpci_get_vbus_voltage(int port, int *vbus)
 	if (error)
 		return error;
 
-	/*
-	 * 00: the measurement is not scaled
-	 * 01: the measurement is divided by 2
-	 * 10: the measurement is divided by 4
-	 * 11: reserved
-	 */
-	scale = (val & TCPC_REG_VBUS_VOLTAGE_SCALE_FACTOR) >> 9;
-	measure = val & TCPC_REG_VBUS_VOLTAGE_MEASUREMENT;
-
-	*vbus = (1 << scale) * measure * TCPC_REG_VBUS_VOLTAGE_LSB;
+	*vbus = TCPC_REG_VBUS_VOLTAGE_VBUS(val);
 	return EC_SUCCESS;
 }
 
