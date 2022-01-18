@@ -4,6 +4,7 @@
  */
 
 /* Taniks board configuration */
+#define CONFIG_BUTTONS_RUNTIME_CONFIG
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -14,7 +15,7 @@
  * Taniks boards are set up for vivaldi
  */
 #define CONFIG_KEYBOARD_VIVALDI
-
+#undef CONFIG_VOLUME_BUTTONS
 /* Baseboard features */
 #include "baseboard.h"
 

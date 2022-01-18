@@ -50,6 +50,22 @@ __override void board_cbi_init(void)
 	config_usb_db_type();
 }
 
+void board_init(void)
+{
+
+	if (ec_cfg_has_tabletmode()) {
+
+	} else {
+		/* only clamshell todo */
+		gpio_set_flags(GPIO_EC_VOLUP_BTN_ODL, GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_EC_VOLDN_BTN_ODL, GPIO_INPUT | GPIO_PULL_DOWN);
+		button_disable_gpio(BUTTON_VOLUME_UP);
+		button_disable_gpio(BUTTON_VOLUME_DOWN);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
