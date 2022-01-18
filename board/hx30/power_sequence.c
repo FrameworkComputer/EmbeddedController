@@ -51,11 +51,20 @@ static int ap_boot_delay = 9;  /* set 9 second for global reset wait time  */
 static int me_change;
 static int power_s5_up;
 static int s5_exit_tries;
+static int rtc_reset_tries;
 static int stress_test_enable;
 
 
 static void chipset_force_g3(void);
 
+
+static void intel_x86_rtc_reset(void)
+{
+	CPRINTS("Asserting RTCRST# to PCH");
+	gpio_set_level(GPIO_EC_RTCRST, 1);
+	udelay(100);
+	gpio_set_level(GPIO_EC_RTCRST, 0);
+}
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -221,8 +230,8 @@ int board_chipset_power_on(void)
 
 	gpio_set_level(GPIO_AC_PRESENT_OUT, 1);
 
-	if (want_boot_ap_at_g3) {
-		CPRINTS("press power button for G3 Boot!");
+	if (want_boot_ap_at_g3 || rtc_reset_tries) {
+		CPRINTS("Assert the power button signal to power on system!");
 		/* assert the power button to power on system */
 		msleep(30);
 		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
@@ -398,9 +407,14 @@ enum power_state power_handle_state(enum power_state state)
 			/* force shutdown process shouldn't keep PCH power */
 			return POWER_S5G3;
 
+		/**
+		 * power up process: wait SLP_S4 signal, if not detect the SLP_S4 in 9s,
+		 * EC will do the rtc reset 5 times.
+		 *
+		 * stress test process: ap_boot_delay will be change via host command, wait
+		 * pch to auto power up.
+		 */
 		if (power_s5_up || stress_test_enable) {
-			/* Wait S5 signal when power up from S5 */
-
 			while ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == 0) {
 
 				if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
@@ -413,6 +427,19 @@ enum power_state power_handle_state(enum power_state state)
 						ap_boot_delay = 9;
 						set_hw_diagnostic(DIAGNOSTICS_SLP_S4, 1);
 
+						if (!stress_test_enable && (++rtc_reset_tries < 6)) {
+							/**
+							 * When we can't detect the SLP_S4 signal, we need to remove
+							 * all power rail, and doing the rtc reset to power up again.
+							 */
+							chipset_force_g3();
+							intel_x86_rtc_reset();
+							udelay(10 * MSEC);
+							return POWER_G3S5;
+						}
+
+						/* Still can't power on, go into G3S5 state */
+						rtc_reset_tries = 0;
 						return POWER_S5G3;
 					}
 
@@ -421,17 +448,16 @@ enum power_state power_handle_state(enum power_state state)
 				}
 			}
 
+			 /* Power up to next state */
 			s5_exit_tries = 0;
-			return POWER_S5S3; /* Power up to next state */
-		}
-		
-
-
-		s5_exit_tries = 0;
-
-		if ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == IN_PCH_SLP_S4_DEASSERTED) {
+			rtc_reset_tries = 0;
 			return POWER_S5S3;
 		}
+
+		/* shutdown process */
+		s5_exit_tries = 0;
+		if ((power_get_signals() & IN_PCH_SLP_S4_DEASSERTED) == IN_PCH_SLP_S4_DEASSERTED)
+			return POWER_S5S3;
 
 		break;
 
@@ -561,7 +587,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5G3:
 		CPRINTS("PH S5G3");
-		/* if we need to keep pch power, return to G3S5 state */
+		/* if we need to keep pch power, return to S5 state */
 
 #ifdef CONFIG_EMI_REGION1
 		if (keep_pch_power())
