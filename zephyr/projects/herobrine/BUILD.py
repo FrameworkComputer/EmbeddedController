@@ -13,6 +13,7 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
             here / "gpio.dts",
             here / "i2c.dts",
             here / "motionsense.dts",
+            here / "pwm.dts",
             here / "switchcap.dts",
             here / "usbc.dts",
             # Project-specific DTS customization.
