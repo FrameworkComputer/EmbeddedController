@@ -136,7 +136,7 @@ config PLATFORM_EC_GMR_TABLET_MODE
     bool "Giant Magnetoresistance(GMR) Tablet Mode"
     help
       Enable this to use GMR sensor to detect tablet mode.
-      It requires to set GMR_TABLET_MODE_GPIO_L to map the interrupt from
+      It requires to set GPIO_TABLET_MODE_L to map the interrupt from
       the sensor and direct its mapping to gmr_tablet_switch_isr
       in common/tablet_mode.c.
 

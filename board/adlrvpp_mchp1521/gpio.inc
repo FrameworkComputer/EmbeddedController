@@ -76,7 +76,7 @@ GPIO_INT(KBC_SCANOUT_15,	PIN(0151),	GPIO_INT_BOTH,	ppc_interrupt)
 GPIO_INT(KBC_CAPSLOCK,		PIN(0127),	GPIO_INT_BOTH,	ppc_interrupt)
 
 /* Sensor Interrupts */
-/* GMR_TABLET_MODE_GPIO_L */
+/* GPIO_TABLET_MODE_L */
 GPIO_INT(EC_SLATEMODE_HALLOUT_SNSR_R,	PIN(064),	GPIO_INT_BOTH |
 					GPIO_SEL_1P8V,	gmr_tablet_switch_isr)
 

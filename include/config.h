@@ -3915,13 +3915,13 @@
 
 /*
  * Config to identify what devices use GMR sensor to detect tablet mode. If a
- * board selects this config, it also needs to provide GMR_TABLET_MODE_GPIO_L
+ * board selects this config, it also needs to provide GPIO_TABLET_MODE_L
  * and direct its interrupt to gmr_tablet_switch_isr.
  */
 #undef CONFIG_GMR_TABLET_MODE
 
 /*
- * Board provides board_sensor_at_360 method instead of GMR_TABLET_MODE_GPIO_L
+ * Board provides board_sensor_at_360 method instead of GPIO_TABLET_MODE_L
  * as the means for determining the state of the flipped-360-degree mode.
  */
 #undef CONFIG_GMR_TABLET_MODE_CUSTOM

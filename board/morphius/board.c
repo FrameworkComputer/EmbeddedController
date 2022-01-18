@@ -874,7 +874,7 @@ int board_sensor_at_360(void)
 	 * mode.
 	 */
 	if (board_ver >= 3)
-		return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+		return !gpio_get_level(GPIO_TABLET_MODE_L);
 
 	return 0;
 }

@@ -100,9 +100,6 @@ void tablet_disable(void)
 
 /* This ifdef can be removed once we clean up past projects which do own init */
 #ifdef CONFIG_GMR_TABLET_MODE
-#ifndef GMR_TABLET_MODE_GPIO_L
-#error  GMR_TABLET_MODE_GPIO_L must be defined
-#endif
 #ifdef CONFIG_DPTF_MOTION_LID_NO_GMR_SENSOR
 #error The board has GMR sensor
 #endif
@@ -110,7 +107,7 @@ static void gmr_tablet_switch_interrupt_debounce(void)
 {
 	gmr_sensor_at_360 = IS_ENABLED(CONFIG_GMR_TABLET_MODE_CUSTOM)
 				     ? board_sensor_at_360()
-				     : !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+				     : !gpio_get_level(GPIO_TABLET_MODE_L);
 
 	/*
 	 * DPTF table is updated only when the board enters/exits completely
@@ -159,7 +156,7 @@ static void gmr_tablet_switch_init(void)
 	if (disabled)
 		return;
 
-	gpio_enable_interrupt(GMR_TABLET_MODE_GPIO_L);
+	gpio_enable_interrupt(GPIO_TABLET_MODE_L);
 	/*
 	 * Ensure tablet mode is initialized according to the hardware state
 	 * so that the cached state reflects reality.
@@ -170,7 +167,7 @@ DECLARE_HOOK(HOOK_INIT, gmr_tablet_switch_init, HOOK_PRIO_DEFAULT);
 
 void gmr_tablet_switch_disable(void)
 {
-	gpio_disable_interrupt(GMR_TABLET_MODE_GPIO_L);
+	gpio_disable_interrupt(GPIO_TABLET_MODE_L);
 	/* Cancel any pending debounce calls */
 	hook_call_deferred(&gmr_tablet_switch_interrupt_debounce_data, -1);
 	tablet_disable();

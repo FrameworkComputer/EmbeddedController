@@ -160,7 +160,7 @@ static bool board_is_convertible(void)
 int board_sensor_at_360(void)
 {
 	if (board_is_convertible())
-		return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+		return !gpio_get_level(GPIO_TABLET_MODE_L);
 
 	return 0;
 }

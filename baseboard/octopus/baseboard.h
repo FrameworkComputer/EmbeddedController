@@ -278,7 +278,6 @@
 /* Common Sensor Defines */
 #define CONFIG_TABLET_MODE
 #define CONFIG_GMR_TABLET_MODE
-#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
 /*
  * Slew rate on the PP1800_SENSOR load switch requires a short delay on startup.
  */

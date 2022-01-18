@@ -141,10 +141,6 @@
 	#define USBA_INT()
 #endif
 
-#ifdef CONFIG_PLATFORM_EC_GMR_TABLET_MODE
-#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
-#endif
-
 #ifdef CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607
 	#define BASE_IMU_INT() GPIO_INT(GPIO_BASE_IMU_INT_L,                   \
 					GPIO_INT_EDGE_FALLING,                 \

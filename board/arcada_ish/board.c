@@ -156,7 +156,7 @@ int board_sensor_at_360(void)
 	 * also active.
 	 */
 	return lid_is_open() &&
-	       !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+	       !gpio_get_level(GPIO_TABLET_MODE_L);
 }
 
 /* Initialize board. */

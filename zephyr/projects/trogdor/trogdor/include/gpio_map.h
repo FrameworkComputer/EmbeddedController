@@ -9,10 +9,6 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
-#ifdef CONFIG_PLATFORM_EC_GMR_TABLET_MODE
-#define GMR_TABLET_MODE_GPIO_L GPIO_TABLET_MODE_L
-#endif
-
 /*
  * Set EC_CROS_GPIO_INTERRUPTS to a space-separated list of GPIO_INT items.
  *

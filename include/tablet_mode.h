@@ -33,7 +33,7 @@ void tablet_disable(void);
 /**
  * Interrupt service routine for gmr sensor.
  *
- * GMR_TABLET_MODE_GPIO_L must be defined.
+ * GPIO_TABLET_MODE_L must be defined.
  *
  * @param signal: GPIO signal
  */
@@ -50,7 +50,7 @@ void gmr_tablet_switch_disable(void);
 /**
  * This must be defined when CONFIG_GMR_TABLET_MODE_CUSTOM is defined. This
  * allows a board to override the default behavior that determines if the
- * 360 sensor is active: !gpio_get_level(GMR_TABLET_MODE_GPIO_L).
+ * 360 sensor is active: !gpio_get_level(GPIO_TABLET_MODE_L).
  *
  * Returns 1 if the 360 sensor is active; otherwise 0.
  */

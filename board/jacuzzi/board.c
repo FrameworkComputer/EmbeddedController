@@ -573,7 +573,7 @@ int board_sensor_at_360(void)
 	if (board_version == 8 || board_version == 9)
 		return 0;
 	else
-		return !gpio_get_level(GMR_TABLET_MODE_GPIO_L);
+		return !gpio_get_level(GPIO_TABLET_MODE_L);
 }
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 

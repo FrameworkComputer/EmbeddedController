@@ -33,7 +33,6 @@
 #ifdef CONFIG_PLATFORM_EC_GMR_TABLET_MODE
 #define GMR_TABLET_MODE_INT(gpio, edge) GPIO_INT(gpio, edge, \
 						 gmr_tablet_switch_isr)
-#define GMR_TABLET_MODE_GPIO_L	GPIO_TABLET_MODE_L
 #else
 #define GMR_TABLET_MODE_INT(gpio, edge)
 #endif
