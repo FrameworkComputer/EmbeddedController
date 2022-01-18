@@ -44,7 +44,7 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		},
 		.drv = &anx7447_tcpm_drv,
 		/* Alert is active-low, open-drain */
-		.flags = TCPC_FLAGS_ALERT_OD,
+		.flags = TCPC_FLAGS_ALERT_OD | TCPC_FLAGS_VBUS_MONITOR,
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -54,7 +54,7 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		},
 		.drv = &rt1718s_tcpm_drv,
 		/* Alert is active-low, open-drain */
-		.flags = TCPC_FLAGS_ALERT_OD,
+		.flags = TCPC_FLAGS_ALERT_OD | TCPC_FLAGS_VBUS_MONITOR,
 	}
 };
 
@@ -355,4 +355,25 @@ void ppc_interrupt(enum gpio_signal signal)
 void bc12_interrupt(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+}
+
+__override int board_get_vbus_voltage(int port)
+{
+	int voltage = 0;
+	int rv;
+
+	switch (port) {
+	case USBC_PORT_C0:
+		rv = tcpc_config[USBC_PORT_C0].drv->get_vbus_voltage(port,
+								     &voltage);
+		if (rv)
+			return 0;
+		break;
+	case USBC_PORT_C1:
+		rt1718s_get_adc(port, RT1718S_ADC_VBUS1, &voltage);
+		break;
+	default:
+		return 0;
+	}
+	return voltage;
 }
