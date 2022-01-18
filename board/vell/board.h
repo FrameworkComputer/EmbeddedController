@@ -214,6 +214,7 @@ enum ioex_port {
 
 enum battery_type {
 	BATTERY_SIMPLO_COS,
+	BATTERY_SIMPLO_COS2,
 	BATTERY_TYPE_COUNT
 };
 
