@@ -400,6 +400,28 @@ int charge_manager_get_vbus_voltage(int port)
 				get_current_supplier(port)));
 }
 
+#ifdef CONFIG_CMD_VBUS
+static int command_vbus(int argc, char **argv)
+{
+	/* port = -1 to print all the ports */
+	int port = -1;
+
+	if (argc == 2)
+		port = atoi(argv[1]);
+
+	for (int i = 0; i < board_get_usb_pd_port_count(); i++) {
+		if (port < 0 || i == port)
+			ccprintf("VBUS C%d = %d mV\n", i,
+				 charge_manager_get_vbus_voltage(i));
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(vbus, command_vbus,
+			"[port]",
+			"VBUS of the given port");
+#endif
+
 /**
  * Fills passed power_info structure with current info about the passed port.
  *

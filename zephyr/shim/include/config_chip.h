@@ -1099,6 +1099,11 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_USB_PD_VBUS_MEASURE_BY_BOARD
 #endif /* VBUS-voltage measurement */
 
+#undef CONFIG_CMD_VBUS
+#ifdef CONFIG_PLATFORM_EC_CMD_VBUS
+#define CONFIG_CMD_VBUS
+#endif
+
 #undef CONFIG_USB_CHARGER
 #ifdef CONFIG_PLATFORM_EC_USB_CHARGER
 #define CONFIG_USB_CHARGER

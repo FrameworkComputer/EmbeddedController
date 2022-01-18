@@ -41,5 +41,11 @@ config PLATFORM_EC_USB_PD_VBUS_MEASURE_BY_BOARD
 
 endchoice # PLATFORM_EC_USB_PD_VBUS_MEASURE_MODE
 
+config PLATFORM_EC_CMD_VBUS
+	bool "Console command to print VBUS"
+	help
+	  Support console command vbus to print the VBUS on each port
+	  respectively.
+
 endif # PLATFORM_EC_USB_POWER_DELIVERY
 endif # PLATFORM_EC_USBC
