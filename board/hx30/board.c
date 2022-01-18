@@ -20,7 +20,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "cypress5525.h"
-#include "driver/als_opt3001.h"
+#include "driver/als_cm32183.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi_common.h"
@@ -260,7 +260,7 @@ const uint16_t i2c_port_to_ctrl[I2C_PORT_COUNT] = {
 	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT7,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT1,
 	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT3,
-	(MCHP_I2C_CTRL2 << 8) + MCHP_I2C_PORT4,
+	(MCHP_I2C_CTRL1 << 8) + MCHP_I2C_PORT4,
 	(MCHP_I2C_CTRL4 << 8) + MCHP_I2C_PORT2,
 	(MCHP_I2C_CTRL3 << 8) + MCHP_I2C_PORT0,
 };
@@ -970,6 +970,39 @@ static void setup_fans(void)
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
+
+/* CM32183 private data */
+static struct cm32183_drv_data g_cm32183_data = {
+	.scale = 1,
+	.uscale = 0,
+	.offset = 0,
+};
+
+
+struct motion_sensor_t motion_sensors[] = {
+	[SENSOR_ALS] = {
+		.name = "",
+		.active_mask = SENSOR_ACTIVE_S0_S3,
+		.chip = MOTIONSENSE_CHIP_CM32183,
+		.type = MOTIONSENSE_TYPE_LIGHT,
+		.location = MOTIONSENSE_LOC_CAMERA,
+		.drv = &cm32183_drv,
+		.drv_data = &g_cm32183_data,
+		.port = I2C_PORT_ALS,
+		.i2c_spi_addr_flags = CM32183_I2C_ADDR,
+		.rot_standard_ref = NULL,
+		.default_range = 0x10000, /* scale = 1x, uscale = 0 */
+		.min_frequency = CM32183_LIGHT_MIN_FREQ,
+		.max_frequency = CM32183_LIGHT_MAX_FREQ,
+		.config = {
+			/* Run ALS sensor in S0 */
+			[SENSOR_CONFIG_EC_S0] = {
+				.odr = 1000,
+			},
+		},
+	},
+};
+const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 void check_deferred_time (const struct deferred_data *data)
 {
