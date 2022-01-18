@@ -9,6 +9,7 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
         zephyr_board="herobrine_npcx9",
         dts_overlays=[
             # Common to all projects.
+            here / "adc.dts",
             here / "battery.dts",
             here / "gpio.dts",
             here / "i2c.dts",
