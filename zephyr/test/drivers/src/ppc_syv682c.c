@@ -15,15 +15,17 @@
 #include "stubs.h"
 #include "syv682x.h"
 #include "timer.h"
+#include "test_state.h"
 #include "usbc_ppc.h"
 
 #define SYV682X_ORD DT_DEP_ORD(DT_NODELABEL(syv682x_emul))
 #define GPIO_USB_C1_FRS_EN_PATH DT_PATH(named_gpios, usb_c1_frs_en)
+
 #define GPIO_USB_C1_FRS_EN_PORT DT_GPIO_PIN(GPIO_USB_C1_FRS_EN_PATH, gpios)
 
 static const int syv682x_port = 1;
 
-static void test_board_is_syv682c(void)
+ZTEST(ppc_syv682c, test_board_is_syv682c)
 {
 	zassert_true(syv682x_board_is_syv682c(0), NULL);
 }
@@ -49,7 +51,7 @@ static void check_control_1_default_init(uint8_t control_1)
 			"Default init, but 5V power path selected");
 }
 
-static void test_ppc_syv682x_init(void)
+ZTEST(ppc_syv682c, test_ppc_syv682x_init)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	const struct device *gpio_dev =
@@ -131,15 +133,15 @@ static void test_ppc_syv682x_init(void)
 
 }
 
-static void test_ppc_syv682x_vbus_enable(void)
+ZTEST(ppc_syv682c, test_ppc_syv682x_vbus_enable)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
 
 	zassert_ok(syv682x_emul_get_reg(emul, SYV682X_CONTROL_1_REG, &reg),
 			"Reading CONTROL_1 failed");
-	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB,
-			SYV682X_CONTROL_1_PWR_ENB, "VBUS sourcing disabled");
+	zassert_not_equal(reg & SYV682X_CONTROL_1_PWR_ENB,
+			  SYV682X_CONTROL_1_PWR_ENB, "VBUS sourcing disabled");
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 			"PPC sourcing VBUS at beginning of test");
 
@@ -153,11 +155,13 @@ static void test_ppc_syv682x_vbus_enable(void)
 			"PPC is not sourcing VBUS after VBUS enabled");
 }
 
-static void test_ppc_syv682x_interrupt(void)
+ZTEST(ppc_syv682c, test_ppc_syv682x_interrupt)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
 
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
+		   "VBUS enable failed");
 	/* An OC event less than 100 ms should not cause VBUS to turn off. */
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_OC_5V,
 			SYV682X_CONTROL_4_NONE);
@@ -299,7 +303,7 @@ static void test_ppc_syv682x_interrupt(void)
 			SYV682X_CONTROL_4_NONE);
 }
 
-static void test_ppc_syv682x_frs(void)
+ZTEST(ppc_syv682c, test_ppc_syv682x_frs)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	const struct device *gpio_dev =
@@ -358,7 +362,7 @@ static void test_ppc_syv682x_frs(void)
 			SYV682X_CONTROL_4_NONE);
 }
 
-static void test_ppc_syv682x_source_current_limit(void)
+ZTEST(ppc_syv682c, test_ppc_syv682x_source_current_limit)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
@@ -392,7 +396,7 @@ static void test_ppc_syv682x_source_current_limit(void)
 			"Set 3.0A Rp value, but 5V_ILIM is %d", ilim_val);
 }
 
-static void test_ppc_syv682x_write_busy(void)
+ZTEST(ppc_syv682c, test_ppc_syv682x_write_busy)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 
@@ -422,7 +426,7 @@ static void test_ppc_syv682x_write_busy(void)
 	syv682x_emul_set_busy_reads(emul, 0);
 }
 
-static void test_ppc_syv682x_dev_is_connected(void)
+ZTEST(ppc_syv682c, test_ppc_syv682x_dev_is_connected)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
@@ -445,7 +449,7 @@ static void test_ppc_syv682x_dev_is_connected(void)
 			"Could not connect device as source");
 }
 
-static void test_ppc_syv682x_vbus_sink_enable(void)
+ZTEST(ppc_syv682c, test_ppc_syv682x_vbus_sink_enable)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
@@ -488,7 +492,7 @@ static void test_ppc_syv682x_vbus_sink_enable(void)
 		     "Sink disabled, but power path enabled");
 }
 
-static void test_ppc_syv682x_ppc_dump(void)
+ZTEST(ppc_syv682c, test_ppc_syv682x_ppc_dump)
 {
 	/*
 	 * The ppc_dump command should succeed for this port. Don't check the
@@ -499,19 +503,4 @@ static void test_ppc_syv682x_ppc_dump(void)
 	zassert_ok(drv->reg_dump(syv682x_port), "ppc_dump command failed");
 }
 
-void test_suite_ppc_syv682c(void)
-{
-	ztest_test_suite(
-		ppc_syv682c,
-		ztest_unit_test(test_board_is_syv682c),
-		ztest_unit_test(test_ppc_syv682x_init),
-		ztest_unit_test(test_ppc_syv682x_vbus_enable),
-		ztest_unit_test(test_ppc_syv682x_interrupt),
-		ztest_unit_test(test_ppc_syv682x_frs),
-		ztest_unit_test(test_ppc_syv682x_source_current_limit),
-		ztest_unit_test(test_ppc_syv682x_write_busy),
-		ztest_unit_test(test_ppc_syv682x_dev_is_connected),
-		ztest_unit_test(test_ppc_syv682x_vbus_sink_enable),
-		ztest_unit_test(test_ppc_syv682x_ppc_dump));
-	ztest_run_test_suite(ppc_syv682c);
-}
+ZTEST_SUITE(ppc_syv682c, drivers_predicate_post_main, NULL, NULL, NULL, NULL);

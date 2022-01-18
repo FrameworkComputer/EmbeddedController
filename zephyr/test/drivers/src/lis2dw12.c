@@ -8,6 +8,7 @@
 #include "driver/accel_lis2dw12.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_lis2dw12.h"
+#include "test_state.h"
 
 #define LIS2DW12_NODELABEL DT_NODELABEL(ms_lis2dw12_accel)
 #define LIS2DW12_SENSOR_ID SENSOR_ID(LIS2DW12_NODELABEL)
@@ -34,7 +35,7 @@ enum lis2dw12_round_mode {
 	ROUND_UP,
 };
 
-static void lis2dw12_setup(void)
+static inline void lis2dw12_setup(void)
 {
 	lis2dw12_emul_reset(emul_get_binding(EMUL_LABEL));
 
@@ -44,7 +45,19 @@ static void lis2dw12_setup(void)
 	ms->current_range = 0;
 }
 
-static void test_lis2dw12_init__fail_read_who_am_i(void)
+static void lis2dw12_before(void *state)
+{
+	ARG_UNUSED(state);
+	lis2dw12_setup();
+}
+
+static void lis2dw12_after(void *state)
+{
+	ARG_UNUSED(state);
+	lis2dw12_setup();
+}
+
+ZTEST(lis2dw12, test_lis2dw12_init__fail_read_who_am_i)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -56,7 +69,7 @@ static void test_lis2dw12_init__fail_read_who_am_i(void)
 	zassert_equal(EC_ERROR_INVAL, rv, NULL);
 }
 
-static void test_lis2dw12_init__fail_who_am_i(void)
+ZTEST(lis2dw12, test_lis2dw12_init__fail_who_am_i)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -70,7 +83,7 @@ static void test_lis2dw12_init__fail_who_am_i(void)
 		      EC_ERROR_ACCESS_DENIED);
 }
 
-static void test_lis2dw12_init__fail_write_soft_reset(void)
+ZTEST(lis2dw12, test_lis2dw12_init__fail_write_soft_reset)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -82,7 +95,7 @@ static void test_lis2dw12_init__fail_write_soft_reset(void)
 	zassert_equal(EC_ERROR_INVAL, rv, NULL);
 }
 
-static void test_lis2dw12_init__timeout_read_soft_reset(void)
+ZTEST(lis2dw12, test_lis2dw12_init__timeout_read_soft_reset)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -106,7 +119,7 @@ static int lis2dw12_test_mock_write_fail_set_bdu(struct i2c_emul *emul, int reg,
 	return 1;
 }
 
-static void test_lis2dw12_init__fail_set_bdu(void)
+ZTEST(lis2dw12, test_lis2dw12_init__fail_set_bdu)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -122,7 +135,7 @@ static void test_lis2dw12_init__fail_set_bdu(void)
 		      "expected at least one soft reset");
 }
 
-static void test_lis2dw12_init__fail_set_lir(void)
+ZTEST(lis2dw12, test_lis2dw12_init__fail_set_lir)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -150,7 +163,7 @@ static int lis2dw12_test_mock_write_fail_set_power_mode(struct i2c_emul *emul,
 	return 1;
 }
 
-static void test_lis2dw12_init__fail_set_power_mode(void)
+ZTEST(lis2dw12, test_lis2dw12_init__fail_set_power_mode)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -167,7 +180,7 @@ static void test_lis2dw12_init__fail_set_power_mode(void)
 		     "expected at least one soft reset");
 }
 
-static void test_lis2dw12_init__success(void)
+ZTEST(lis2dw12, test_lis2dw12_init__success)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -185,7 +198,7 @@ static void test_lis2dw12_init__success(void)
 		      LIS2DW12_RESOLUTION, drvdata->resol);
 }
 
-static void test_lis2dw12_set_power_mode(void)
+ZTEST(lis2dw12, test_lis2dw12_set_power_mode)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -211,7 +224,7 @@ static void test_lis2dw12_set_power_mode(void)
 		      EC_ERROR_INVAL, rv);
 }
 
-static void test_lis2dw12_set_range(void)
+ZTEST(lis2dw12, test_lis2dw12_set_range)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct motion_sensor_t *ms = &motion_sensors[LIS2DW12_SENSOR_ID];
@@ -235,7 +248,7 @@ static void test_lis2dw12_set_range(void)
 		      EC_ERROR_INVAL, rv);
 }
 
-static void test_lis2dw12_set_rate(void)
+ZTEST(lis2dw12, test_lis2dw12_set_rate)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct i2c_emul *i2c_emul = lis2dw12_emul_to_i2c_emul(emul);
@@ -342,7 +355,7 @@ static void test_lis2dw12_set_rate(void)
 	}
 }
 
-static void test_lis2dw12_read(void)
+ZTEST(lis2dw12, test_lis2dw12_read)
 {
 	const struct emul *emul = emul_get_binding(EMUL_LABEL);
 	struct i2c_emul *i2c_emul = lis2dw12_emul_to_i2c_emul(emul);
@@ -428,45 +441,5 @@ static void test_lis2dw12_read(void)
 	CHECK_XYZ_EQUALS(sample, expected_sample);
 }
 
-void test_suite_lis2dw12(void)
-{
-	ztest_test_suite(lis2dw12,
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_init__fail_read_who_am_i,
-				 lis2dw12_setup, lis2dw12_setup),
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_init__fail_who_am_i,
-				 lis2dw12_setup, lis2dw12_setup),
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_init__fail_write_soft_reset,
-				 lis2dw12_setup, lis2dw12_setup),
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_init__timeout_read_soft_reset,
-				 lis2dw12_setup, lis2dw12_setup),
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_init__fail_set_bdu,
-				 lis2dw12_setup, lis2dw12_setup),
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_init__fail_set_lir,
-				 lis2dw12_setup, lis2dw12_setup),
-			ztest_unit_test_setup_teardown(
-				 test_lis2dw12_init__fail_set_power_mode,
-				 lis2dw12_setup, lis2dw12_setup),
-			ztest_unit_test_setup_teardown(
-				 test_lis2dw12_init__success,
-				 lis2dw12_setup, lis2dw12_setup),
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_set_power_mode,
-				 lis2dw12_setup, lis2dw12_setup),
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_set_range,
-				 lis2dw12_setup, lis2dw12_setup),
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_set_rate,
-				 lis2dw12_setup, lis2dw12_setup),
-			 ztest_unit_test_setup_teardown(
-				 test_lis2dw12_read,
-				 lis2dw12_setup, lis2dw12_setup)
-			 );
-	ztest_run_test_suite(lis2dw12);
-}
+ZTEST_SUITE(lis2dw12, drivers_predicate_post_main, NULL, lis2dw12_before,
+	    lis2dw12_after, NULL);

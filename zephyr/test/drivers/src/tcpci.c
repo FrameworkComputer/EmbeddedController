@@ -18,11 +18,12 @@
 #include "tcpci_test_common.h"
 
 #include "tcpm/tcpci.h"
+#include "test_state.h"
 
 #define EMUL_LABEL DT_NODELABEL(tcpci_emul)
 
 /** Test TCPCI init and vbus level */
-static void test_generic_tcpci_init(void)
+ZTEST(tcpci, test_generic_tcpci_init)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -30,7 +31,7 @@ static void test_generic_tcpci_init(void)
 }
 
 /** Test TCPCI release */
-static void test_generic_tcpci_release(void)
+ZTEST(tcpci, test_generic_tcpci_release)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -38,7 +39,7 @@ static void test_generic_tcpci_release(void)
 }
 
 /** Test TCPCI get cc */
-static void test_generic_tcpci_get_cc(void)
+ZTEST(tcpci, test_generic_tcpci_get_cc)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -46,7 +47,7 @@ static void test_generic_tcpci_get_cc(void)
 }
 
 /** Test TCPCI set cc */
-static void test_generic_tcpci_set_cc(void)
+ZTEST(tcpci, test_generic_tcpci_set_cc)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -54,7 +55,7 @@ static void test_generic_tcpci_set_cc(void)
 }
 
 /** Test TCPCI set polarity */
-static void test_generic_tcpci_set_polarity(void)
+ZTEST(tcpci, test_generic_tcpci_set_polarity)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -62,7 +63,7 @@ static void test_generic_tcpci_set_polarity(void)
 }
 
 /** Test TCPCI set vconn */
-static void test_generic_tcpci_set_vconn(void)
+ZTEST(tcpci, test_generic_tcpci_set_vconn)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -70,7 +71,7 @@ static void test_generic_tcpci_set_vconn(void)
 }
 
 /** Test TCPCI set msg header */
-static void test_generic_tcpci_set_msg_header(void)
+ZTEST(tcpci, test_generic_tcpci_set_msg_header)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -78,7 +79,7 @@ static void test_generic_tcpci_set_msg_header(void)
 }
 
 /** Test TCPCI rx and sop prime enable */
-static void test_generic_tcpci_set_rx_detect(void)
+ZTEST(tcpci, test_generic_tcpci_set_rx_detect)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -86,7 +87,7 @@ static void test_generic_tcpci_set_rx_detect(void)
 }
 
 /** Test TCPCI get raw message from TCPC revision 2.0 */
-static void test_generic_tcpci_get_rx_message_raw_rev2(void)
+ZTEST(tcpci, test_generic_tcpci_get_rx_message_raw_rev2)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -97,7 +98,7 @@ static void test_generic_tcpci_get_rx_message_raw_rev2(void)
 }
 
 /** Test TCPCI get raw message from TCPC revision 1.0 */
-static void test_generic_tcpci_get_rx_message_raw_rev1(void)
+ZTEST(tcpci, test_generic_tcpci_get_rx_message_raw_rev1)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -108,7 +109,7 @@ static void test_generic_tcpci_get_rx_message_raw_rev1(void)
 }
 
 /** Test TCPCI transmitting message from TCPC revision 2.0 */
-static void test_generic_tcpci_transmit_rev2(void)
+ZTEST(tcpci, test_generic_tcpci_transmit_rev2)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -119,7 +120,7 @@ static void test_generic_tcpci_transmit_rev2(void)
 }
 
 /** Test TCPCI transmitting message from TCPC revision 1.0 */
-static void test_generic_tcpci_transmit_rev1(void)
+ZTEST(tcpci, test_generic_tcpci_transmit_rev1)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -130,7 +131,7 @@ static void test_generic_tcpci_transmit_rev1(void)
 }
 
 /** Test TCPCI alert */
-static void test_generic_tcpci_alert(void)
+ZTEST(tcpci, test_generic_tcpci_alert)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -139,7 +140,7 @@ static void test_generic_tcpci_alert(void)
 
 
 /** Test TCPCI alert RX message */
-static void test_generic_tcpci_alert_rx_message(void)
+ZTEST(tcpci, test_generic_tcpci_alert_rx_message)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -147,7 +148,7 @@ static void test_generic_tcpci_alert_rx_message(void)
 }
 
 /** Test TCPCI auto discharge on disconnect */
-static void test_generic_tcpci_auto_discharge(void)
+ZTEST(tcpci, test_generic_tcpci_auto_discharge)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -155,7 +156,7 @@ static void test_generic_tcpci_auto_discharge(void)
 }
 
 /** Test TCPCI drp toggle */
-static void test_generic_tcpci_drp_toggle(void)
+ZTEST(tcpci, test_generic_tcpci_drp_toggle)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -163,7 +164,7 @@ static void test_generic_tcpci_drp_toggle(void)
 }
 
 /** Test TCPCI get chip info */
-static void test_generic_tcpci_get_chip_info(void)
+ZTEST(tcpci, test_generic_tcpci_get_chip_info)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -171,7 +172,7 @@ static void test_generic_tcpci_get_chip_info(void)
 }
 
 /** Test TCPCI enter low power mode */
-static void test_generic_tcpci_low_power_mode(void)
+ZTEST(tcpci, test_generic_tcpci_low_power_mode)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -179,7 +180,7 @@ static void test_generic_tcpci_low_power_mode(void)
 }
 
 /** Test TCPCI set bist test mode */
-static void test_generic_tcpci_set_bist_mode(void)
+ZTEST(tcpci, test_generic_tcpci_set_bist_mode)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
@@ -187,7 +188,7 @@ static void test_generic_tcpci_set_bist_mode(void)
 }
 
 /** Test TCPCI discharge vbus */
-void test_generic_tcpci_discharge_vbus(void)
+ZTEST(tcpci, test_generic_tcpci_discharge_vbus)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 	uint8_t exp_ctrl, initial_ctrl;
@@ -209,7 +210,7 @@ void test_generic_tcpci_discharge_vbus(void)
 }
 
 /** Test TCPC xfer */
-static void test_tcpc_xfer(void)
+ZTEST(tcpci, test_tcpc_xfer)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 	uint16_t val, exp_val;
@@ -228,7 +229,7 @@ static void test_tcpc_xfer(void)
 }
 
 /** Test TCPCI debug accessory enable/disable */
-static void test_generic_tcpci_debug_accessory(void)
+ZTEST(tcpci, test_generic_tcpci_debug_accessory)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 	uint8_t exp_val, initial_val;
@@ -264,7 +265,7 @@ static void set_usb_mux_tcpc(void)
 }
 
 /** Test TCPCI mux init */
-static void test_generic_tcpci_mux_init(void)
+ZTEST(tcpci, test_generic_tcpci_mux_init)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
@@ -323,7 +324,7 @@ static void test_generic_tcpci_mux_init(void)
 }
 
 /** Test TCPCI mux enter low power mode */
-static void test_generic_tcpci_mux_enter_low_power(void)
+ZTEST(tcpci, test_generic_tcpci_mux_enter_low_power)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
@@ -463,45 +464,25 @@ static void test_generic_tcpci_mux_set_get(void)
 		      mux_state, mux_state_get);
 }
 
-void test_suite_tcpci(void)
+ZTEST(tcpci, test_generic_tcpci_mux_set_get)
+{
+	test_generic_tcpci_mux_set_get();
+}
+
+ZTEST(tcpci, test_generic_tcpci_mux_set_get__not_tcpc)
+{
+	set_usb_mux_not_tcpc();
+	test_generic_tcpci_mux_set_get();
+	set_usb_mux_tcpc();
+}
+
+static void *tcpci_setup(void)
 {
 	/* This test suite assumes that first usb mux for port C0 is TCPCI */
 	__ASSERT(usb_muxes[USBC_PORT_C0].driver == &tcpci_tcpm_usb_mux_driver,
 		 "Invalid config of usb_muxes in test/drivers/src/stubs.c");
 
-	ztest_test_suite(tcpci,
-			 ztest_unit_test(test_generic_tcpci_init),
-			 ztest_unit_test(test_generic_tcpci_release),
-			 ztest_unit_test(test_generic_tcpci_get_cc),
-			 ztest_unit_test(test_generic_tcpci_set_cc),
-			 ztest_unit_test(test_generic_tcpci_set_polarity),
-			 ztest_unit_test(test_generic_tcpci_set_vconn),
-			 ztest_unit_test(test_generic_tcpci_set_msg_header),
-			 ztest_unit_test(test_generic_tcpci_set_rx_detect),
-			 ztest_unit_test(
-				test_generic_tcpci_get_rx_message_raw_rev2),
-			 ztest_unit_test(test_generic_tcpci_transmit_rev2),
-			 ztest_unit_test(
-				test_generic_tcpci_get_rx_message_raw_rev1),
-			 ztest_unit_test(test_generic_tcpci_transmit_rev1),
-			 ztest_unit_test(test_generic_tcpci_alert),
-			 ztest_unit_test(test_generic_tcpci_alert_rx_message),
-			 ztest_unit_test(test_generic_tcpci_auto_discharge),
-			 ztest_unit_test(test_generic_tcpci_drp_toggle),
-			 ztest_unit_test(test_generic_tcpci_get_chip_info),
-			 ztest_unit_test(test_generic_tcpci_low_power_mode),
-			 ztest_unit_test(test_generic_tcpci_set_bist_mode),
-			 ztest_unit_test(test_generic_tcpci_discharge_vbus),
-			 ztest_unit_test(test_tcpc_xfer),
-			 ztest_unit_test(test_generic_tcpci_debug_accessory),
-			 ztest_unit_test(test_generic_tcpci_mux_init),
-			 ztest_unit_test(
-				test_generic_tcpci_mux_enter_low_power),
-			 /* Test set/get with usb mux and without TCPC */
-			 ztest_unit_test_setup_teardown(
-				test_generic_tcpci_mux_set_get,
-				set_usb_mux_not_tcpc, set_usb_mux_tcpc),
-			 /* Test set/get with usb mux and TCPC */
-			 ztest_unit_test(test_generic_tcpci_mux_set_get));
-	ztest_run_test_suite(tcpci);
+	return NULL;
 }
+
+ZTEST_SUITE(tcpci, drivers_predicate_post_main, tcpci_setup, NULL, NULL, NULL);

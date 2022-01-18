@@ -13,6 +13,7 @@ LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
 #include <drivers/gpio/gpio_emul.h>
+#include <ztest.h>
 
 #include "tcpm/tcpci.h"
 
@@ -1435,3 +1436,16 @@ static int tcpci_emul_init(const struct emul *emul, const struct device *parent)
 		    &tcpci_emul_cfg_##n, &tcpci_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(TCPCI_EMUL)
+
+#ifdef CONFIG_ZTEST_NEW_API
+#define TCPCI_EMUL_RESET_RULE_BEFORE(n) \
+	tcpci_emul_reset(&EMUL_REG_NAME(DT_DRV_INST(n)));
+static void tcpci_emul_reset_rule_before(const struct ztest_unit_test *test,
+					 void *data)
+{
+	ARG_UNUSED(test);
+	ARG_UNUSED(data);
+	DT_INST_FOREACH_STATUS_OKAY(TCPCI_EMUL_RESET_RULE_BEFORE);
+}
+ZTEST_RULE(tcpci_emul_reset, tcpci_emul_reset_rule_before, NULL);
+#endif /* CONFIG_ZTEST_NEW_API */

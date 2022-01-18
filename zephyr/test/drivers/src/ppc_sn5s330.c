@@ -15,6 +15,7 @@
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sn5s330.h"
 #include "usbc_ppc.h"
+#include "test_state.h"
 
 /** This must match the index of the sn5s330 in ppc_chips[] */
 #define SN5S330_PORT 0
@@ -74,7 +75,7 @@ static int fail_until_write_func(struct i2c_emul *emul, int reg, uint8_t val,
 	return 1;
 }
 
-static void test_fail_once_func_set1(void)
+ZTEST(ppc_sn5s330, test_fail_once_func_set1)
 {
 	const struct emul *emul = EMUL;
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(emul);
@@ -90,7 +91,7 @@ static void test_fail_once_func_set1(void)
 	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
 }
 
-static void test_dead_battery_boot_force_pp2_fets_set(void)
+ZTEST(ppc_sn5s330, test_dead_battery_boot_force_pp2_fets_set)
 {
 	const struct emul *emul = EMUL;
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(emul);
@@ -122,7 +123,7 @@ static void test_dead_battery_boot_force_pp2_fets_set(void)
 	zassert_false(sn5s330_drv.is_sourcing_vbus(SN5S330_PORT), NULL);
 }
 
-static void test_enter_low_power_mode(void)
+ZTEST(ppc_sn5s330, test_enter_low_power_mode)
 {
 	const struct emul *emul = EMUL;
 
@@ -165,7 +166,7 @@ static void test_enter_low_power_mode(void)
 	zassert_equal(func_set9_reg & SN5S330_FORCE_ON_VBUS_UVP, 0, NULL);
 }
 
-static void test_vbus_source_sink_enable(void)
+ZTEST(ppc_sn5s330, test_vbus_source_sink_enable)
 {
 	const struct emul *emul = EMUL;
 	uint8_t func_set3_reg;
@@ -191,7 +192,7 @@ static void test_vbus_source_sink_enable(void)
 	zassert_equal(func_set3_reg & SN5S330_PP2_EN, 0, NULL);
 }
 
-static void test_vbus_discharge(void)
+ZTEST(ppc_sn5s330, test_vbus_discharge)
 {
 	const struct emul *emul = EMUL;
 	uint8_t func_set3_reg;
@@ -208,7 +209,7 @@ static void test_vbus_discharge(void)
 	zassert_equal(func_set3_reg & SN5S330_VBUS_DISCH_EN, 0, NULL);
 }
 
-static void test_set_vbus_source_current_limit(void)
+ZTEST(ppc_sn5s330, test_set_vbus_source_current_limit)
 {
 	const struct emul *emul = EMUL;
 	uint8_t func_set1_reg;
@@ -249,7 +250,7 @@ static void test_set_vbus_source_current_limit(void)
 		      NULL);
 }
 
-static void test_sn5s330_set_sbu(void)
+ZTEST(ppc_sn5s330, test_sn5s330_set_sbu)
 #ifdef CONFIG_USBC_PPC_SBU
 {
 	const struct emul *emul = EMUL;
@@ -273,7 +274,7 @@ static void test_sn5s330_set_sbu(void)
 }
 #endif /* CONFIG_USBC_PPC_SBU */
 
-static void test_sn5s330_vbus_overcurrent(void)
+ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent)
 {
 	const struct emul *emul = EMUL;
 	uint8_t int_trip_rise_reg1;
@@ -297,7 +298,7 @@ static void test_sn5s330_vbus_overcurrent(void)
 	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0, NULL);
 }
 
-static void test_sn5s330_disable_vbus_low_interrupt(void)
+ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt)
 #ifdef CONFIG_USBC_PPC_VCONN
 {
 	const struct emul *emul = EMUL;
@@ -314,7 +315,7 @@ static void test_sn5s330_disable_vbus_low_interrupt(void)
 }
 #endif /* CONFIG_USBC_PPC_VCONN */
 
-static void test_sn5s330_set_vconn_fet(void)
+ZTEST(ppc_sn5s330, test_sn5s330_set_vconn_fet)
 {
 	const struct emul *emul = EMUL;
 	uint8_t func_set4_reg;
@@ -330,7 +331,7 @@ static void test_sn5s330_set_vconn_fet(void)
 	zassert_not_equal(func_set4_reg & SN5S330_VCONN_EN, 0, NULL);
 }
 
-static void reset_sn5s330_state(void)
+static inline void reset_sn5s330_state(void)
 {
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
 
@@ -340,39 +341,17 @@ static void reset_sn5s330_state(void)
 	RESET_FAKE(sn5s330_emul_interrupt_set_stub);
 }
 
-void test_suite_ppc_sn5s330(void)
+static void ppc_sn5s330_before(void *state)
 {
-	ztest_test_suite(
-		ppc_sn5s330,
-		ztest_unit_test_setup_teardown(test_sn5s330_set_vconn_fet,
-					       reset_sn5s330_state,
-					       reset_sn5s330_state),
-		ztest_unit_test_setup_teardown(
-			test_sn5s330_disable_vbus_low_interrupt,
-			reset_sn5s330_state, reset_sn5s330_state),
-		ztest_unit_test_setup_teardown(test_sn5s330_vbus_overcurrent,
-					       reset_sn5s330_state,
-					       reset_sn5s330_state),
-		ztest_unit_test_setup_teardown(test_sn5s330_set_sbu,
-					       reset_sn5s330_state,
-					       reset_sn5s330_state),
-		ztest_unit_test_setup_teardown(
-			test_set_vbus_source_current_limit, reset_sn5s330_state,
-			reset_sn5s330_state),
-		ztest_unit_test_setup_teardown(test_vbus_discharge,
-					       reset_sn5s330_state,
-					       reset_sn5s330_state),
-		ztest_unit_test_setup_teardown(test_vbus_source_sink_enable,
-					       reset_sn5s330_state,
-					       reset_sn5s330_state),
-		ztest_unit_test_setup_teardown(test_enter_low_power_mode,
-					       reset_sn5s330_state,
-					       reset_sn5s330_state),
-		ztest_unit_test_setup_teardown(
-			test_dead_battery_boot_force_pp2_fets_set,
-			reset_sn5s330_state, reset_sn5s330_state),
-		ztest_unit_test_setup_teardown(test_fail_once_func_set1,
-					       reset_sn5s330_state,
-					       reset_sn5s330_state));
-	ztest_run_test_suite(ppc_sn5s330);
+	ARG_UNUSED(state);
+	reset_sn5s330_state();
 }
+
+static void ppc_sn5s330_after(void *state)
+{
+	ARG_UNUSED(state);
+	reset_sn5s330_state();
+}
+
+ZTEST_SUITE(ppc_sn5s330, drivers_predicate_post_main, NULL, ppc_sn5s330_before,
+	    ppc_sn5s330_after, NULL);

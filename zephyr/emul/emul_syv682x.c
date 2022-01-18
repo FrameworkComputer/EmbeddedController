@@ -16,6 +16,7 @@
 LOG_MODULE_REGISTER(syv682x);
 #include <stdint.h>
 #include <string.h>
+#include <ztest.h>
 
 #include "emul/emul_syv682x.h"
 
@@ -265,6 +266,18 @@ static struct i2c_emul_api syv682x_emul_api = {
 	.transfer = syv682x_emul_transfer,
 };
 
+static void syv682x_emul_reset(struct syv682x_emul_data *data)
+{
+	memset(data->reg, 0, sizeof(data->reg));
+
+	syv682x_emul_set_alert(data, false);
+	data->reg[SYV682X_CONTROL_1_REG] =
+		(SYV682X_HV_ILIM_3_30 << SYV682X_HV_ILIM_BIT_SHIFT) |
+		(SYV682X_5V_ILIM_3_30 << SYV682X_5V_ILIM_BIT_SHIFT) |
+		/* HV_DR = 0 */
+		SYV682X_CONTROL_1_CH_SEL;
+}
+
 /**
  * @brief Set up a new SYV682x emulator
  *
@@ -281,26 +294,14 @@ static int syv682x_emul_init(const struct emul *emul,
 {
 	const struct syv682x_emul_cfg *cfg = emul->cfg;
 	struct syv682x_emul_data *data = cfg->data;
-	int ret;
 
 	data->emul.api = &syv682x_emul_api;
 	data->emul.addr = cfg->addr;
 	data->i2c = parent;
 	data->cfg = cfg;
-	memset(data->reg, 0, sizeof(data->reg));
 
-	ret = i2c_emul_register(parent, emul->dev_label, &data->emul);
-	if (ret)
-		return ret;
-
-	syv682x_emul_set_alert(data, false);
-	data->reg[SYV682X_CONTROL_1_REG] =
-		(SYV682X_HV_ILIM_3_30 << SYV682X_HV_ILIM_BIT_SHIFT) |
-		(SYV682X_5V_ILIM_3_30 << SYV682X_5V_ILIM_BIT_SHIFT) |
-		/* HV_DR = 0 */
-		SYV682X_CONTROL_1_CH_SEL;
-
-	return ret;
+	syv682x_emul_reset(data);
+	return i2c_emul_register(parent, emul->dev_label, &data->emul);
 }
 
 #define SYV682X_EMUL(n)                                                        \
@@ -309,10 +310,10 @@ static int syv682x_emul_init(const struct emul *emul,
 					DT_INST_PROP(n, frs_en_gpio), gpios)), \
 		.frs_en_gpio_pin = DT_GPIO_PIN(                                \
 				DT_INST_PROP(n, frs_en_gpio), gpios),          \
-		.alert_gpio_port = DEVICE_DT_GET(DT_GPIO_CTLR(                \
-					DT_INST_PROP(n, alert_gpio), gpios)), \
-		.alert_gpio_pin = DT_GPIO_PIN(                                \
-				DT_INST_PROP(n, alert_gpio), gpios),          \
+		.alert_gpio_port = DEVICE_DT_GET(DT_GPIO_CTLR(                 \
+					DT_INST_PROP(n, alert_gpio), gpios)),  \
+		.alert_gpio_pin = DT_GPIO_PIN(                                 \
+				DT_INST_PROP(n, alert_gpio), gpios),           \
 	};                                                                     \
 	static const struct syv682x_emul_cfg syv682x_emul_cfg_##n = {          \
 		.i2c_label = DT_INST_BUS_LABEL(n),                             \
@@ -337,3 +338,16 @@ struct i2c_emul *syv682x_emul_get(int ord)
 		return NULL;
 	}
 }
+
+#ifdef CONFIG_ZTEST_NEW_API
+#define SYV682X_EMUL_RESET_RULE_BEFORE(n) \
+	syv682x_emul_reset(&syv682x_emul_data_##n);
+static void emul_syv682x_reset_before(const struct ztest_unit_test *test,
+				      void *data)
+{
+	ARG_UNUSED(test);
+	ARG_UNUSED(data);
+	DT_INST_FOREACH_STATUS_OKAY(SYV682X_EMUL_RESET_RULE_BEFORE);
+}
+ZTEST_RULE(emul_syv682x_reset, emul_syv682x_reset_before, NULL);
+#endif /* CONFIG_ZTEST_NEW_API */

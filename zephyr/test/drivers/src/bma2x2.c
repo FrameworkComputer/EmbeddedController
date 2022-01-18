@@ -14,6 +14,7 @@
 #include "accelgyro.h"
 #include "motion_sense.h"
 #include "driver/accel_bma2x2.h"
+#include "test_state.h"
 
 /** How accurate comparision of vectors should be. */
 #define V_EPS 8
@@ -154,7 +155,7 @@ static int emul_read_reset(struct i2c_emul *emul, int reg, uint8_t *buf,
 /**
  * Test get offset with and without rotation. Also test behaviour on I2C error.
  */
-static void test_bma_get_offset(void)
+ZTEST_USER(bma2x2, test_bma_get_offset)
 {
 	struct i2c_emul *emul;
 	int16_t ret_offset[3];
@@ -205,7 +206,7 @@ static void test_bma_get_offset(void)
 /**
  * Test set offset with and without rotation. Also test behaviour on I2C error.
  */
-static void test_bma_set_offset(void)
+ZTEST_USER(bma2x2, test_bma_set_offset)
 {
 	struct i2c_emul *emul;
 	int16_t ret_offset[3];
@@ -302,7 +303,7 @@ static void check_set_range_f(struct i2c_emul *emul, int range, int rnd,
 	check_set_range_f(emul, range, rnd, exp_range, __LINE__)
 
 /** Test set range with and without I2C errors. */
-static void test_bma_set_range(void)
+ZTEST_USER(bma2x2, test_bma_set_range)
 {
 	struct i2c_emul *emul;
 	int start_range;
@@ -375,7 +376,7 @@ static void test_bma_set_range(void)
 }
 
 /** Test init with and without I2C errors. */
-static void test_bma_init(void)
+ZTEST_USER(bma2x2, test_bma_init)
 {
 	struct reset_func_data reset_func_data;
 	struct i2c_emul *emul;
@@ -506,7 +507,7 @@ static void check_set_rate_f(struct i2c_emul *emul, int rate, int rnd,
 	check_set_rate_f(emul, rate, rnd, exp_rate, __LINE__)
 
 /** Test set and get rate with and without I2C errors. */
-static void test_bma_rate(void)
+ZTEST_USER(bma2x2, test_bma_rate)
 {
 	struct i2c_emul *emul;
 	uint8_t reg_rate;
@@ -614,7 +615,7 @@ static void test_bma_rate(void)
 }
 
 /** Test read with and without I2C errors. */
-static void test_bma_read(void)
+ZTEST_USER(bma2x2, test_bma_read)
 {
 	struct i2c_emul *emul;
 	int16_t ret_acc[3];
@@ -755,7 +756,7 @@ static int emul_write_calib_func(struct i2c_emul *emul, int reg, uint8_t val,
 }
 
 /** Test offset compensation with and without I2C errors. */
-static void test_bma_perform_calib(void)
+ZTEST_USER(bma2x2, test_bma_perform_calib)
 {
 	struct calib_func_data func_data;
 	struct i2c_emul *emul;
@@ -903,24 +904,18 @@ static void test_bma_perform_calib(void)
 }
 
 /** Test get resolution. */
-static void test_bma_get_resolution(void)
+ZTEST_USER(bma2x2, test_bma_get_resolution)
 {
 	/* Resolution should be always 12 bits */
 	zassert_equal(12, ms.drv->get_resolution(&ms), NULL);
 }
 
-void test_suite_bma2x2(void)
+static void *bma2x2_setup(void)
 {
 	k_mutex_init(&sensor_mutex);
 
-	ztest_test_suite(bma2x2,
-			 ztest_user_unit_test(test_bma_get_offset),
-			 ztest_user_unit_test(test_bma_set_offset),
-			 ztest_user_unit_test(test_bma_set_range),
-			 ztest_user_unit_test(test_bma_init),
-			 ztest_user_unit_test(test_bma_rate),
-			 ztest_user_unit_test(test_bma_read),
-			 ztest_user_unit_test(test_bma_perform_calib),
-			 ztest_user_unit_test(test_bma_get_resolution));
-	ztest_run_test_suite(bma2x2);
+	return NULL;
 }
+
+ZTEST_SUITE(bma2x2, drivers_predicate_post_main, bma2x2_setup, NULL, NULL,
+	    NULL);

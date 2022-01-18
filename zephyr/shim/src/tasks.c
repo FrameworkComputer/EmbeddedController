@@ -281,7 +281,19 @@ void set_test_runner_tid(void)
 {
 	shimmed_tasks_dyn[TASK_ID_TEST_RUNNER].zephyr_tid = k_current_get();
 }
-#endif
+
+#ifdef CONFIG_SET_TEST_RUNNER_TID_RULE
+static void set_test_runner_tid_rule_before(const struct ztest_unit_test *test,
+					    void *data)
+{
+	ARG_UNUSED(test);
+	ARG_UNUSED(data);
+	set_test_runner_tid();
+}
+
+ZTEST_RULE(set_test_runner_tid, set_test_runner_tid_rule_before, NULL);
+#endif /* CONFIG_SET_TEST_RUNNER_TID_RULE */
+#endif /* TEST_BUILD */
 
 void start_ec_tasks(void)
 {

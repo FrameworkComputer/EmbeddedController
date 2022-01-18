@@ -13,6 +13,7 @@ LOG_MODULE_REGISTER(emul_tcs);
 #include <drivers/emul.h>
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
+#include <ztest.h>
 
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_tcs3400.h"
@@ -644,3 +645,16 @@ struct i2c_emul *tcs_emul_get(int ord)
 		return NULL;
 	}
 }
+
+#ifdef CONFIG_ZTEST_NEW_API
+#define TCS3400_EMUL_RESET_RULE_BEFORE(n) \
+	tcs_emul_reset(&(tcs_emul_data_##n.common.emul));
+static void emul_tcs3400_reset_rule_before(const struct ztest_unit_test *test,
+					   void *data)
+{
+	ARG_UNUSED(test);
+	ARG_UNUSED(data);
+	DT_INST_FOREACH_STATUS_OKAY(TCS3400_EMUL_RESET_RULE_BEFORE);
+}
+ZTEST_RULE(emul_tcs3400_reset, emul_tcs3400_reset_rule_before, NULL);
+#endif /* CONFIG_ZTEST_NEW_API */

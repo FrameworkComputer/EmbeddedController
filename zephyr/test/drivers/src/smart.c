@@ -15,11 +15,12 @@
 
 #include "battery.h"
 #include "battery_smart.h"
+#include "test_state.h"
 
 #define BATTERY_ORD	DT_DEP_ORD(DT_NODELABEL(battery))
 
 /** Test all simple getters */
-static void test_battery_getters(void)
+ZTEST_USER(smart_battery, test_battery_getters)
 {
 	struct sbat_emul_bat_data *bat;
 	struct i2c_emul *emul;
@@ -76,7 +77,7 @@ static void test_battery_getters(void)
 }
 
 /** Test getting capacity. These functions should force mAh mode */
-static void test_battery_get_capacity(void)
+ZTEST_USER(smart_battery, test_battery_get_capacity)
 {
 	struct sbat_emul_bat_data *bat;
 	struct i2c_emul *emul;
@@ -114,7 +115,7 @@ static void test_battery_get_capacity(void)
 
 
 /** Test battery status */
-static void test_battery_status(void)
+ZTEST_USER(smart_battery, test_battery_status)
 {
 	struct sbat_emul_bat_data *bat;
 	struct i2c_emul *emul;
@@ -140,7 +141,7 @@ static void test_battery_status(void)
 }
 
 /** Test wait for stable function */
-static void test_battery_wait_for_stable(void)
+ZTEST_USER(smart_battery, test_battery_wait_for_stable)
 {
 	struct i2c_emul *emul;
 
@@ -156,7 +157,7 @@ static void test_battery_wait_for_stable(void)
 }
 
 /** Test manufacture date */
-static void test_battery_manufacture_date(void)
+ZTEST_USER(smart_battery, test_battery_manufacture_date)
 {
 	struct sbat_emul_bat_data *bat;
 	struct i2c_emul *emul;
@@ -180,7 +181,7 @@ static void test_battery_manufacture_date(void)
 }
 
 /** Test time at rate */
-static void test_battery_time_at_rate(void)
+ZTEST_USER(smart_battery, test_battery_time_at_rate)
 {
 	struct sbat_emul_bat_data *bat;
 	struct i2c_emul *emul;
@@ -238,7 +239,7 @@ static void test_battery_time_at_rate(void)
 }
 
 /** Test battery get params */
-static void test_battery_get_params(void)
+ZTEST_USER(smart_battery, test_battery_get_params)
 {
 	struct sbat_emul_bat_data *bat;
 	struct batt_params batt;
@@ -347,7 +348,7 @@ static int mfgacc_read_func(struct i2c_emul *emul, int reg, uint8_t *val,
 }
 
 /** Test battery manufacturer access */
-static void test_battery_mfacc(void)
+ZTEST_USER(smart_battery, test_battery_mfacc)
 {
 	struct sbat_emul_bat_data *bat;
 	struct mfgacc_data mfacc_conf;
@@ -418,7 +419,7 @@ static void test_battery_mfacc(void)
 }
 
 /** Test battery fake charge level set and read */
-static void test_battery_fake_charge(void)
+ZTEST_USER(smart_battery, test_battery_fake_charge)
 {
 	struct sbat_emul_bat_data *bat;
 	struct batt_params batt;
@@ -497,7 +498,7 @@ static void test_battery_fake_charge(void)
 }
 
 /** Test battery fake temperature set and read */
-static void test_battery_fake_temperature(void)
+ZTEST_USER(smart_battery, test_battery_fake_temperature)
 {
 	struct sbat_emul_bat_data *bat;
 	struct batt_params batt;
@@ -554,18 +555,4 @@ static void test_battery_fake_temperature(void)
 		      bat->temp, batt.temperature);
 }
 
-void test_suite_smart_battery(void)
-{
-	ztest_test_suite(smart_battery,
-			 ztest_user_unit_test(test_battery_getters),
-			 ztest_user_unit_test(test_battery_get_capacity),
-			 ztest_user_unit_test(test_battery_status),
-			 ztest_user_unit_test(test_battery_wait_for_stable),
-			 ztest_user_unit_test(test_battery_manufacture_date),
-			 ztest_user_unit_test(test_battery_time_at_rate),
-			 ztest_user_unit_test(test_battery_get_params),
-			 ztest_user_unit_test(test_battery_mfacc),
-			 ztest_user_unit_test(test_battery_fake_charge),
-			 ztest_user_unit_test(test_battery_fake_temperature));
-	ztest_run_test_suite(smart_battery);
-}
+ZTEST_SUITE(smart_battery, drivers_predicate_post_main, NULL, NULL, NULL, NULL);

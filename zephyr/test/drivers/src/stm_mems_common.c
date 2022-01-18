@@ -13,6 +13,7 @@
 #include "emul/emul_common_i2c.h"
 #include "emul/i2c_mock.h"
 #include "i2c/i2c.h"
+#include "test_state.h"
 
 #define MOCK_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(i2c_mock)))
 
@@ -20,11 +21,6 @@ struct mock_properties {
 	/* Incremented by the mock function every time it is called */
 	int call_count;
 };
-
-static void setup(void)
-{
-	i2c_mock_reset(MOCK_EMUL);
-}
 
 static int mock_read_fn(struct i2c_emul *emul, int reg, uint8_t *val, int bytes,
 			void *data)
@@ -52,7 +48,7 @@ static int mock_write_fn(struct i2c_emul *emul, int reg, uint8_t val, int bytes,
 	return ztest_get_return_value();
 }
 
-static void test_st_raw_read_n(void)
+ZTEST(stm_mems_common, test_st_raw_read_n)
 {
 	const struct emul *emul = MOCK_EMUL;
 	struct i2c_emul *i2c_emul = i2c_mock_to_i2c_emul(emul);
@@ -73,7 +69,7 @@ static void test_st_raw_read_n(void)
 		      EC_ERROR_INVAL);
 }
 
-static void test_st_raw_read_n_noinc(void)
+ZTEST(stm_mems_common, test_st_raw_read_n_noinc)
 {
 	const struct emul *emul = MOCK_EMUL;
 	struct i2c_emul *i2c_emul = i2c_mock_to_i2c_emul(emul);
@@ -95,7 +91,7 @@ static void test_st_raw_read_n_noinc(void)
 		      EC_ERROR_INVAL);
 }
 
-static void test_st_write_data_with_mask(void)
+ZTEST(stm_mems_common, test_st_write_data_with_mask)
 {
 	const struct emul *emul = MOCK_EMUL;
 	struct i2c_emul *i2c_emul = i2c_mock_to_i2c_emul(emul);
@@ -172,7 +168,7 @@ static void test_st_write_data_with_mask(void)
 		      "mock_write_fn was not called.");
 }
 
-static void test_st_get_resolution(void)
+ZTEST(stm_mems_common, test_st_get_resolution)
 {
 	int expected_resolution = 123;
 	int rv;
@@ -190,7 +186,7 @@ static void test_st_get_resolution(void)
 		      expected_resolution);
 }
 
-static void test_st_set_offset(void)
+ZTEST(stm_mems_common, test_st_set_offset)
 {
 	int16_t expected_offset[3] = { 123, 456, 789 };
 
@@ -214,7 +210,7 @@ static void test_st_set_offset(void)
 		      expected_offset[Z]);
 }
 
-static void test_st_get_offset(void)
+ZTEST(stm_mems_common, test_st_get_offset)
 {
 	struct stprivate_data driver_data = {
 		.offset = { [X] = 123, [Y] = 456, [Z] = 789 },
@@ -246,7 +242,7 @@ static void test_st_get_offset(void)
 		      driver_data.offset[Z]);
 }
 
-static void test_st_get_data_rate(void)
+ZTEST(stm_mems_common, test_st_get_data_rate)
 {
 	int expected_data_rate = 456;
 	int rv;
@@ -266,7 +262,7 @@ static void test_st_get_data_rate(void)
 		      expected_data_rate);
 }
 
-static void test_st_normalize(void)
+ZTEST(stm_mems_common, test_st_normalize)
 {
 	struct stprivate_data driver_data = {
 		.resol = 12, /* 12 bits of useful data (arbitrary) */
@@ -331,20 +327,11 @@ static void test_st_normalize(void)
 		      expected_output[Z]);
 }
 
-void test_suite_stm_mems_common(void)
+static void stm_mems_common_before(void *state)
 {
-	ztest_test_suite(
-		stm_mems_common,
-		ztest_unit_test_setup_teardown(test_st_raw_read_n, setup,
-					       unit_test_noop),
-		ztest_unit_test_setup_teardown(test_st_raw_read_n_noinc, setup,
-					       unit_test_noop),
-		ztest_unit_test_setup_teardown(test_st_write_data_with_mask,
-					       setup, unit_test_noop),
-		ztest_unit_test(test_st_get_resolution),
-		ztest_unit_test(test_st_set_offset),
-		ztest_unit_test(test_st_get_offset),
-		ztest_unit_test(test_st_get_data_rate),
-		ztest_unit_test(test_st_normalize));
-	ztest_run_test_suite(stm_mems_common);
+	ARG_UNUSED(state);
+	i2c_mock_reset(MOCK_EMUL);
 }
+
+ZTEST_SUITE(stm_mems_common, drivers_predicate_post_main, NULL,
+	    stm_mems_common_before, NULL, NULL);

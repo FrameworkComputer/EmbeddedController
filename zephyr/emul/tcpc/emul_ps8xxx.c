@@ -575,3 +575,17 @@ static int ps8xxx_emul_init(const struct emul *emul,
 		    &ps8xxx_emul_cfg_##n, &ps8xxx_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(PS8XXX_EMUL)
+
+#ifdef CONFIG_ZMAKE_NEW_API
+
+#define PS8XXX_EMUL_RESET_RULE_BEFORE(n) \
+	ps8xxx_emul_tcpci_reset(&ps8xxx_emul_data_##n, &ps8xxx_emul_ops);
+static void ps8xxx_emul_reset_rule_before(const struct ztest_unit_test *test,
+					  void *data)
+{
+	ARG_UNUSED(test);
+	ARG_UNUSED(data);
+	DT_INST_FOREACH_STATUS_OKAY(PS8XXX_EMUL_RESET_RULE_BEFORE);
+}
+ZTEST_RULE(ps8xxx_emul_reset, ps8xxx_emul_reset_rule_before, NULL);
+#endif /* CONFIG_ZMAKE_NEW_API */

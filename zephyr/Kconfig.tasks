@@ -6,6 +6,15 @@
 
 menu "Tasks"
 
+config TASKS_SET_TEST_RUNNER_TID_RULE
+	bool "Automatically call set_test_runner_tid() for each test"
+	depends on ZTEST && ZTEST_NEW_API
+	help
+	  This enables the test rule which will run before each unit test and
+	  call set_test_runner_tid(). This function is needed to allow-list the
+	  new thread created by ztest to access some of the components in the
+	  EC.
+
 config HAS_TASK_CHARGER
 	bool
 	depends on PLATFORM_EC_BATTERY

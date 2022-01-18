@@ -14,6 +14,7 @@
 #include "motion_sense.h"
 #include "motion_sense_fifo.h"
 #include "driver/als_tcs3400.h"
+#include "test_state.h"
 
 #define TCS_ORD			DT_DEP_ORD(DT_NODELABEL(tcs_emul))
 #define TCS_CLR_SENSOR_ID	SENSOR_ID(DT_NODELABEL(tcs3400_clear))
@@ -25,7 +26,7 @@
 #define V_EPS		8
 
 /** Test initialization of light sensor driver and device */
-static void test_tcs_init(void)
+ZTEST_USER(tcs3400, test_tcs_init)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
 	struct i2c_emul *emul;
@@ -58,7 +59,7 @@ static void test_tcs_init(void)
 }
 
 /** Test if read function leaves device in correct mode to accuire data */
-static void test_tcs_read(void)
+ZTEST_USER(tcs3400, test_tcs_read)
 {
 	struct motion_sensor_t *ms;
 	struct i2c_emul *emul;
@@ -120,11 +121,14 @@ static void check_fifo_empty_f(struct motion_sensor_t *ms,
 
 		if (ms - motion_sensors == vector.sensor_num) {
 			zassert_unreachable(
-					"Unexpected frame for clear sensor");
+				"Unexpected frame for clear sensor @line: %d",
+				line);
 		}
 
 		if (ms_rgb - motion_sensors == vector.sensor_num) {
-			zassert_unreachable("Unexpected frame for rgb sensor");
+			zassert_unreachable(
+				"Unexpected frame for rgb sensor @line: %d",
+				line);
 		}
 	}
 }
@@ -135,7 +139,7 @@ static void check_fifo_empty_f(struct motion_sensor_t *ms,
  * Test different conditions where irq handler fail or commit no data
  * to fifo
  */
-static void test_tcs_irq_handler_fail(void)
+ZTEST_USER(tcs3400, test_tcs_irq_handler_fail)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
 	struct i2c_emul *emul;
@@ -223,7 +227,7 @@ static void check_fifo_f(struct motion_sensor_t *ms,
 	check_fifo_f(ms, ms_rgb, exp_v, eps, __LINE__)
 
 /** Test calibration mode reading of light sensor values */
-static void test_tcs_read_calibration(void)
+ZTEST_USER(tcs3400, test_tcs_read_calibration)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
 	struct i2c_emul *emul;
@@ -335,7 +339,7 @@ static void set_emul_val_from_exp(int *exp_v, uint16_t *scale,
 }
 
 /** Test normal mode reading of light sensor values */
-static void test_tcs_read_xyz(void)
+ZTEST_USER(tcs3400, test_tcs_read_xyz)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
 	struct i2c_emul *emul;
@@ -413,7 +417,7 @@ static void test_tcs_read_xyz(void)
  * Test getting and setting scale of light sensor. Checks if collected values
  * are scaled properly.
  */
-static void test_tcs_scale(void)
+ZTEST_USER(tcs3400, test_tcs_scale)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
 	struct i2c_emul *emul;
@@ -525,7 +529,7 @@ static void test_tcs_scale(void)
 }
 
 /** Test setting and getting data rate of light sensor */
-static void test_tcs_data_rate(void)
+ZTEST_USER(tcs3400, test_tcs_data_rate)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
 	struct i2c_emul *emul;
@@ -587,7 +591,7 @@ static void test_tcs_data_rate(void)
 }
 
 /** Test set range function of clear and RGB sensors */
-static void test_tcs_set_range(void)
+ZTEST_USER(tcs3400, test_tcs_set_range)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
 	struct i2c_emul *emul;
@@ -607,16 +611,4 @@ static void test_tcs_set_range(void)
 	zassert_equal(0x10000, ms->current_range, NULL);
 }
 
-void test_suite_tcs3400(void)
-{
-	ztest_test_suite(tcs3400,
-			 ztest_user_unit_test(test_tcs_init),
-			 ztest_user_unit_test(test_tcs_read),
-			 ztest_user_unit_test(test_tcs_irq_handler_fail),
-			 ztest_user_unit_test(test_tcs_read_calibration),
-			 ztest_user_unit_test(test_tcs_read_xyz),
-			 ztest_user_unit_test(test_tcs_scale),
-			 ztest_user_unit_test(test_tcs_data_rate),
-			 ztest_user_unit_test(test_tcs_set_range));
-	ztest_run_test_suite(tcs3400);
-}
+ZTEST_SUITE(tcs3400, drivers_predicate_post_main, NULL, NULL, NULL, NULL);

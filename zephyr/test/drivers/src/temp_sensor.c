@@ -15,6 +15,7 @@
 #include "common.h"
 #include "temp_sensor.h"
 #include "temp_sensor/temp_sensor.h"
+#include "test_state.h"
 
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)
@@ -23,7 +24,7 @@
 #define ADC_CHANNELS_NUM	DT_PROP(DT_NODELABEL(adc0), nchannels)
 
 /** Test error code when invalid sensor is passed to temp_sensor_read() */
-static void test_temp_sensor_wrong_id(void)
+ZTEST_USER(temp_sensor, test_temp_sensor_wrong_id)
 {
 	int temp;
 
@@ -33,7 +34,7 @@ static void test_temp_sensor_wrong_id(void)
 }
 
 /** Test error code when temp_sensor_read() is called with powered off ADC */
-static void test_temp_sensor_adc_error(void)
+ZTEST_USER(temp_sensor, test_temp_sensor_adc_error)
 {
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_PG_EC_DSW_PWROK_PATH, gpios));
@@ -94,7 +95,7 @@ static void check_valid_temperature(const struct device *adc_dev, int sensor)
 }
 
 /** Test if temp_sensor_read() returns temperature on success */
-static void test_temp_sensor_read(void)
+ZTEST_USER(temp_sensor, test_temp_sensor_read)
 {
 	const struct device *adc_dev = DEVICE_DT_GET(ADC_DEVICE_NODE);
 	int chan;
@@ -121,7 +122,7 @@ static void test_temp_sensor_read(void)
 	}
 }
 
-void test_suite_temp_sensor(void)
+static void *temp_sensor_setup(void)
 {
 	const struct device *dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_PG_EC_DSW_PWROK_PATH, gpios));
@@ -131,9 +132,8 @@ void test_suite_temp_sensor(void)
 	zassert_ok(gpio_emul_input_set(dev, GPIO_PG_EC_DSW_PWROK_PORT, 1),
 		   NULL);
 
-	ztest_test_suite(temp_sensor,
-			 ztest_user_unit_test(test_temp_sensor_wrong_id),
-			 ztest_user_unit_test(test_temp_sensor_adc_error),
-			 ztest_user_unit_test(test_temp_sensor_read));
-	ztest_run_test_suite(temp_sensor);
+	return NULL;
 }
+
+ZTEST_SUITE(temp_sensor, drivers_predicate_post_main, temp_sensor_setup, NULL,
+	    NULL, NULL);

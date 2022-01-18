@@ -14,6 +14,7 @@
 #include "common.h"
 #include "../driver/temp_sensor/thermistor.h"
 #include "temp_sensor/temp_sensor.h"
+#include "test_state.h"
 
 
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
@@ -39,7 +40,7 @@
  * Test if get temp function return expected error when ADC is not powered
  * (indicated as GPIO pin set to low) and return success after powering on ADC.
  */
-static void test_thermistor_power_pin(void)
+ZTEST_USER(thermistor, test_thermistor_power_pin)
 {
 	int temp;
 	int sensor_idx;
@@ -96,7 +97,7 @@ static int adc_error_func(const struct device *dev, unsigned int channel,
 }
 
 /** Test if get temp function return expected error on ADC malfunction */
-static void test_thermistor_adc_read_error(void)
+ZTEST_USER(thermistor, test_thermistor_adc_read_error)
 {
 	int temp;
 	int sensor_idx;
@@ -250,7 +251,7 @@ static void do_thermistor_test(const struct temp_sensor_t *temp_sensor,
 	[ZSHIM_TEMP_SENSOR_ID(node_id)] = DT_PROP( \
 		DT_PHANDLE(node_id, thermistor), steinhart_reference_res),
 
-static void test_thermistors_adc_temperature_conversion(void)
+ZTEST_USER(thermistor, test_thermistors_adc_temperature_conversion)
 {
 	int sensor_idx;
 
@@ -265,7 +266,7 @@ static void test_thermistors_adc_temperature_conversion(void)
 				   reference_res_arr[sensor_idx]);
 }
 
-static void test_device_nodes_enabled(void)
+ZTEST_USER(thermistor, test_device_nodes_enabled)
 {
 	zassert_equal(NAMED_TEMP_SENSORS_SIZE, TEMP_SENSORS_ENABLED_SIZE,
 		      "Temperature sensors in device tree and "
@@ -274,7 +275,7 @@ static void test_device_nodes_enabled(void)
 	/* Thermistor nodes being enabled are already tested by compilation. */
 }
 
-void test_suite_thermistor(void)
+static void *thermistor_setup(void)
 {
 	const struct device *dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_PG_EC_DSW_PWROK_PATH, gpios));
@@ -284,12 +285,8 @@ void test_suite_thermistor(void)
 	zassert_ok(gpio_emul_input_set(dev, GPIO_PG_EC_DSW_PWROK_PORT, 1),
 		   NULL);
 
-	ztest_test_suite(thermistor,
-			 ztest_user_unit_test(test_device_nodes_enabled),
-			 ztest_user_unit_test(test_thermistor_power_pin),
-			 ztest_user_unit_test(test_thermistor_adc_read_error),
-			 ztest_user_unit_test(
-				test_thermistors_adc_temperature_conversion));
-
-	ztest_run_test_suite(thermistor);
+	return NULL;
 }
+
+ZTEST_SUITE(thermistor, drivers_predicate_post_main, thermistor_setup, NULL,
+	    NULL, NULL);

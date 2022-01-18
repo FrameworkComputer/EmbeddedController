@@ -15,6 +15,7 @@
 #include "battery.h"
 #include "extpower.h"
 #include "stubs.h"
+#include "test_state.h"
 
 #include <logging/log.h>
 LOG_MODULE_REGISTER(test_drivers_bc12, LOG_LEVEL_DBG);
@@ -185,6 +186,8 @@ static void test_bc12_pi3usb9201_client_mode(
 		port = USBC_PORT_C0;
 		voltage = USB_CHARGER_VOLTAGE_MV;
 	}
+	/* Wait for the charge port to update. */
+	msleep(500);
 	zassert_equal(charge_manager_get_active_charge_port(),
 		      port, NULL);
 	zassert_equal(charge_manager_get_supplier(),
@@ -227,7 +230,7 @@ static void test_bc12_pi3usb9201_client_mode(
  * attached host type. In both host mode and client mode, the detection results
  * are reported through I2C to the controller.
  */
-static void test_bc12_pi3usb9201(void)
+ZTEST_USER(bc12, test_bc12_pi3usb9201)
 {
 	const struct device *batt_pres_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
@@ -272,9 +275,4 @@ static void test_bc12_pi3usb9201(void)
 	}
 }
 
-void test_suite_bc12(void)
-{
-	ztest_test_suite(bc12,
-			 ztest_user_unit_test(test_bc12_pi3usb9201));
-	ztest_run_test_suite(bc12);
-}
+ZTEST_SUITE(bc12, drivers_predicate_post_main, NULL, NULL, NULL, NULL);

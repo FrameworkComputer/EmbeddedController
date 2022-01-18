@@ -8,8 +8,9 @@
 
 #include "ec_commands.h"
 #include "host_command.h"
+#include "test_state.h"
 
-static void test_host_command_hc_pd_ports(void)
+ZTEST_USER(usb_pd_host_cmd, test_host_command_hc_pd_ports)
 {
 	struct ec_response_usb_pd_ports response;
 	struct host_cmd_handler_args args =
@@ -23,10 +24,5 @@ static void test_host_command_hc_pd_ports(void)
 		      CONFIG_PLATFORM_EC_USB_PD_PORT_MAX_COUNT, NULL);
 }
 
-void test_suite_usb_pd_host_cmd(void)
-{
-	ztest_test_suite(usb_pd_host_cmd,
-			 ztest_user_unit_test(
-				 test_host_command_hc_pd_ports));
-	ztest_run_test_suite(usb_pd_host_cmd);
-}
+ZTEST_SUITE(usb_pd_host_cmd, drivers_predicate_post_main, NULL, NULL, NULL,
+	    NULL);

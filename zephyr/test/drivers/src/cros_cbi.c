@@ -7,8 +7,9 @@
 #include <ztest.h>
 
 #include "drivers/cros_cbi.h"
+#include "test_state.h"
 
-static void test_check_match(void)
+ZTEST(cros_cbi, test_check_match)
 {
 	const struct device *dev = device_get_binding(CROS_CBI_LABEL);
 	int value;
@@ -27,7 +28,7 @@ static void test_check_match(void)
 	zassert_false(value, "Expected cbi ssfc to fail on invalid enum");
 }
 
-static void test_fail_check_match(void)
+ZTEST(cros_cbi, test_fail_check_match)
 {
 	const struct device *dev = device_get_binding(CROS_CBI_LABEL);
 	int value;
@@ -39,7 +40,7 @@ static void test_fail_check_match(void)
 		      "Expected cbi ssfc to never match CBI_SSFC_VALUE_COUNT");
 }
 
-static void test_fw_config(void)
+ZTEST(cros_cbi, test_fw_config)
 {
 	const struct device *dev = device_get_binding(CROS_CBI_LABEL);
 	uint32_t value;
@@ -60,11 +61,4 @@ static void test_fw_config(void)
 		      "Expected field value to not match FW_FIELD_2_X");
 }
 
-void test_suite_cros_cbi(void)
-{
-	ztest_test_suite(cros_cbi,
-			 ztest_unit_test(test_check_match),
-			 ztest_unit_test(test_fail_check_match),
-			 ztest_unit_test(test_fw_config));
-	ztest_run_test_suite(cros_cbi);
-}
+ZTEST_SUITE(cros_cbi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);

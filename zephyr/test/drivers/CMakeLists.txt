@@ -13,5 +13,3 @@ zephyr_include_directories("${PLATFORM_EC}/driver/ppc/")
 
 FILE(GLOB test_sources src/*.c)
 target_sources(app PRIVATE ${test_sources})
-
-target_sources(app PRIVATE "${PLATFORM_EC}/test/cbi.c")

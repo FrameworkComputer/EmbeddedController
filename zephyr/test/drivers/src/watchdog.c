@@ -21,6 +21,7 @@
 #include "hooks.h"
 #include "stubs.h"
 #include "watchdog.h"
+#include "test_state.h"
 
 /**
  * @brief Default watchdog timeout plus some time for it to expire.
@@ -41,8 +42,9 @@ K_TIMER_DEFINE(ktimer, NULL, NULL);
 /**
  * @brief Watchdog test setup handler.
  */
-static void setup_watchdog(void)
+static void watchdog_before(void *state)
 {
+	ARG_UNUSED(state);
 	set_test_runner_tid();
 	wdt_warning_triggered = false;
 }
@@ -50,8 +52,9 @@ static void setup_watchdog(void)
 /**
  * @brief Watchdog test teardown handler.
  */
-static void teardown_watchdog(void)
+static void watchdog_after(void *state)
 {
+	ARG_UNUSED(state);
 	wdt_warning_triggered = false;
 }
 
@@ -65,7 +68,7 @@ static void teardown_watchdog(void)
  *  - Successful on first init.
  *  - Failure on second init.
  */
-static void test_watchdog_init(void)
+ZTEST(watchdog, test_watchdog_init)
 {
 	int retval = EC_SUCCESS;
 
@@ -89,7 +92,7 @@ static void test_watchdog_init(void)
  * Expected Results
  *  - watchdog warning handler function is never triggered
  */
-static void test_watchdog_reload(void)
+ZTEST(watchdog, test_watchdog_reload)
 {
 	int i;
 	int safe_wait_ms = DEFAULT_WDT_EXPIRY_MS / 2;
@@ -115,7 +118,7 @@ static void test_watchdog_reload(void)
  * Expected Results
  *  - Validate watchdog warning handler function is triggered.
  */
-static void test_wdt_warning_handler(void)
+ZTEST(watchdog, test_wdt_warning_handler)
 {
 	zassert_false(wdt_warning_triggered, "Watchdog timer expired early.");
 
@@ -129,18 +132,5 @@ static void test_wdt_warning_handler(void)
 /**
  * @brief Test Suite: Verifies watchdog functionality.
  */
-void test_suite_watchdog(void)
-{
-	ztest_test_suite(watchdog,
-			 ztest_unit_test_setup_teardown(test_watchdog_init,
-							setup_watchdog,
-							teardown_watchdog),
-			 ztest_unit_test_setup_teardown(test_watchdog_reload,
-							setup_watchdog,
-							teardown_watchdog),
-			 ztest_unit_test_setup_teardown(
-				 test_wdt_warning_handler, setup_watchdog,
-				 teardown_watchdog));
-
-	ztest_run_test_suite(watchdog);
-}
+ZTEST_SUITE(watchdog, drivers_predicate_post_main, NULL, watchdog_before,
+	    watchdog_after, NULL);
