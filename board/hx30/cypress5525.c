@@ -423,6 +423,9 @@ void update_system_power_state(void)
 	case POWER_S3S5:
 		cypd_set_power_state(CYP5525_POWERSTATE_S5);
 		break;
+	case POWER_S0S0ix:
+		cypd_set_power_state(CYP5525_POWERSTATE_S3);
+		break;
 	default:
 		cypd_set_error_recovery();
 		cypd_set_power_state(CYP5525_POWERSTATE_S0);
