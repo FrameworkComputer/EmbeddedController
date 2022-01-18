@@ -11,7 +11,7 @@
 #include "i2c.h"
 #include "util.h"
 #include "timer.h"
-
+#include "chipset.h"
 #include "hwtimer.h"
 #include "util.h"
 #include "i2c_hid.h"
@@ -32,15 +32,14 @@
 #define BUTTON_ID_BRIGHTNESS_INCREMENT 0x006F
 #define BUTTON_ID_BRIGHTNESS_DECREMENT 0x0070
 
+#define EVENT_HID_HOST_IRQ	0x8000
+#define EVENT_REPORT_ILLUMINANCE_VALUE	0x4000
+
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
 
 static uint8_t key_states[HID_KEY_MAX];
 static uint32_t update_key;
-/*
- *
- *
- */
 
 struct radio_report {
 	uint8_t state;
@@ -56,10 +55,25 @@ struct als_input_report {
 	uint16_t illuminanceValue;
 } __packed;
 
+struct als_feature_report {
+	/* Common properties */
+	uint8_t connection_type;
+	uint8_t reporting_state;
+	uint8_t power_state;
+	uint8_t sensor_state;
+	uint32_t report_interval;
+
+	/* Properties specific to this sensor */
+	uint16_t sensitivity;
+	uint16_t maximum;
+	uint16_t minimum;
+} __packed;
+
 
 static struct radio_report radio_button;
 static struct consumer_button_report consumer_button;
-static struct als_input_report als_snesor;
+static struct als_input_report als_sensor;
+static struct als_feature_report als_feature;
 
 int update_hid_key(enum media_key key, bool pressed)
 {
@@ -318,14 +332,24 @@ void i2c_hid_mediakeys_init(void)
 
 void i2c_hid_als_init(void)
 {
-	als_snesor.event_type = 0x04; /* HID_DATA_UPDATED */
-	als_snesor.sensor_state = 0x02; /* HID READY */
-	als_snesor.illuminanceValue = 0x00;
+	als_feature.connection_type = HID_INTEGRATED;
+	als_feature.reporting_state = HID_ALL_EVENTS;
+	als_feature.power_state = HID_D0_FULL_POWER;
+	als_feature.sensor_state = HID_READY;
+	als_feature.report_interval = 100;
+	als_feature.sensitivity = HID_ALS_SENSITIVITY;
+	als_feature.maximum = HID_ALS_MAX;
+	als_feature.minimum = HID_ALS_MIN;
+
+	als_sensor.event_type = 0x04; /* HID_DATA_UPDATED */
+	als_sensor.sensor_state = 0x02; /* HID READY */
+	als_sensor.illuminanceValue = 0x00;
 }
 
 static void i2c_hid_send_response(void)
 {
-		task_set_event(TASK_ID_HID, 0x8000, 0);
+		task_set_event(TASK_ID_HID,
+			EVENT_HID_HOST_IRQ | EVENT_REPORT_ILLUMINANCE_VALUE, 0);
 }
 static size_t fill_report(uint8_t *buffer, uint8_t report_id, const void *data,
 			  size_t data_len)
@@ -339,11 +363,22 @@ static size_t fill_report(uint8_t *buffer, uint8_t report_id, const void *data,
 	return response_len;
 }
 
+static void extract_report(size_t len, const uint8_t *buffer, void *data,
+			   size_t data_len)
+{
+	if (len != 9 + data_len) {
+		CPRINTS("I2C-HID: SET_REPORT buffer length mismatch");
+		return;
+	}
+	memcpy(data, buffer + 9, data_len);
+}
+
 static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer)
 {
 	uint8_t command = buffer[3] & 0x0F;
 	uint8_t power_state = buffer[2] & 0x03;
 	uint8_t report_id = buffer[2] & 0x0F;
+	uint8_t report_type = (buffer[2] & 0x30) >> 4;
 	size_t response_len = 0;
 
 	switch (command) {
@@ -358,8 +393,6 @@ static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer)
 		i2c_hid_send_response();
 		break;
 	case I2C_HID_CMD_GET_REPORT:
-			CPRINTF("HID RPT");
-
 		switch (report_id) {
 		case REPORT_ID_RADIO:
 			response_len =
@@ -373,6 +406,19 @@ static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer)
 						&consumer_button,
 						sizeof(struct consumer_button_report));
 			break;
+		case REPORT_ID_SENSOR:
+			if (report_type == 0x01) {
+				response_len =
+					fill_report(buffer, report_id,
+						&als_sensor,
+						sizeof(struct als_input_report));
+			} else if (report_type == 0x03) {
+				response_len =
+					fill_report(buffer, report_id,
+						&als_feature,
+						sizeof(struct als_feature_report));
+			}
+			break;
 		default:
 			response_len = 2;
 			buffer[0] = response_len;
@@ -382,16 +428,9 @@ static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer)
 		break;
 	case I2C_HID_CMD_SET_REPORT:
 		switch (report_id) {
-		/*
-		case REPORT_ID_INPUT_MODE:
-			extract_report(len, buffer, &input_mode,
-						sizeof(input_mode));
+		case REPORT_ID_SENSOR:
+			extract_report(len, buffer, &als_feature, sizeof(struct als_feature_report));
 			break;
-		case REPORT_ID_REPORTING:
-			extract_report(len, buffer, &reporting,
-						sizeof(reporting));
-			break;
-		*/
 		default:
 			break;
 		}
@@ -449,11 +488,16 @@ int i2c_hid_process(unsigned int len, uint8_t *buffer)
 				fill_report(buffer, REPORT_ID_RADIO,
 						&radio_button,
 						sizeof(struct radio_report));
-		} else {
+		} else if (input_mode == REPORT_ID_CONSUMER) {
 			response_len =
 				fill_report(buffer, REPORT_ID_CONSUMER,
 						&consumer_button,
 						sizeof(struct consumer_button_report));
+		} else if (input_mode == REPORT_ID_SENSOR) {
+			response_len =
+				fill_report(buffer, REPORT_ID_SENSOR,
+						&als_sensor,
+						sizeof(struct als_input_report));
 		}
 		break;
 	case I2C_HID_COMMAND_REGISTER:
@@ -512,6 +556,13 @@ void hid_irq_to_host(void)
 	gpio_set_level(GPIO_SOC_EC_INT_L, 1);
 	usleep(10);
 }
+
+void report_illuminance_value(void)
+{
+   	task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) | 0x4000), 0);
+}
+DECLARE_DEFERRED(report_illuminance_value);
+
 void hid_handler_task(void *p)
 {
 	uint32_t event;
@@ -522,9 +573,16 @@ void hid_handler_task(void *p)
 		if (event & TASK_EVENT_I2C_IDLE) {
 			/* TODO host is requesting data from device */
 		}
-		if (event & 0x8000) {
+		if (event & EVENT_HID_HOST_IRQ) {
 			hid_irq_to_host();
 		}
+
+		if (event & EVENT_REPORT_ILLUMINANCE_VALUE) {
+			/* start reporting illuminance value in S0*/
+			hook_call_deferred(&report_illuminance_value_data,
+					((int) als_feature.report_interval) * MSEC);
+        }
+
 		if (event & 0xFFFF) {
 
 			for (i = 0; i < 15; i++) {
@@ -551,10 +609,24 @@ void hid_handler_task(void *p)
 						input_mode = REPORT_ID_RADIO;
 							radio_button.state = key_states[i] ? 1 : 0;
 						break;
+					case HID_ALS_REPORT_LUX:
+
+						input_mode = REPORT_ID_SENSOR;
+						break;
 					}
-					hid_irq_to_host();
+					/* we don't need to assert the interrupt when system state in S0ix */
+					if (chipset_in_state(CHIPSET_STATE_ON))
+						hid_irq_to_host();
 				}
 			}
 		}
 	}
 };
+
+#define COEFFICIENT (38 / 10) /* 3.8x */
+
+/* ALS callback function */
+void set_illuminance_value(uint16_t value)
+{
+    als_sensor.illuminanceValue = value * COEFFICIENT;
+}
