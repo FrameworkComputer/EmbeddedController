@@ -274,7 +274,7 @@ static void test_power_reboot_ap_at_g3(void)
 	power_set_state(POWER_G3);
 	before_time = k_uptime_get();
 	test_power_common_state();
-	zassert_true(k_uptime_delta(&before_time) > 3000, NULL);
+	zassert_true(k_uptime_delta(&before_time) >= 3000, NULL);
 	zassert_equal(POWER_G3S5, power_get_state(), NULL);
 }
 
