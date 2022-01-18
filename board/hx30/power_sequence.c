@@ -362,8 +362,10 @@ enum power_state power_handle_state(enum power_state state)
 				resume_ms_flag--;
 			return POWER_S0;
 		}		
-		if (check_s0ix_statsus())
+		if (check_s0ix_statsus()) {
+			cypd_set_power_active(POWER_S0);
 			return POWER_S0ixS0;
+		}
 
 		break;
 
@@ -455,8 +457,10 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S0S3;
 		}
 #ifdef CONFIG_POWER_S0IX
-		if (check_s0ix_statsus())
+		if (check_s0ix_statsus()) {
+			cypd_set_power_active(POWER_S3);
 			return POWER_S0S0ix;
+		}
 #endif
 		break;
 
