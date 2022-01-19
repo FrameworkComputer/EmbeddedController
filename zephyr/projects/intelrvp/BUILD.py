@@ -35,6 +35,7 @@ register_intelrvp_project(
         here / "adlrvp/adlrvp_npcx/adlrvp_npcx.dts",
         here / "adlrvp/adlrvp_npcx/gpio.dts",
         here / "adlrvp/adlrvp_npcx/interrupts.dts",
+        here / "adlrvp/adlrvp_npcx/pwm.dts",
     ],
     extra_kconfig_files=[here / "adlrvp/adlrvp_npcx/prj.conf"],
 )

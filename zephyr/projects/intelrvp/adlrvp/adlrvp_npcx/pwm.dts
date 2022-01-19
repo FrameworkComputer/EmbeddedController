@@ -1,0 +1,21 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-pwms {
+		compatible = "named-pwms";
+
+		pwm_fan: fan {
+			pwms = <&pwm3 0 0>;
+			frequency = <30000>;
+		};
+	};
+};
+
+/* Fan control */
+&pwm3 {
+	status = "okay";
+	drive-open-drain;
+};
