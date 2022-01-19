@@ -39,10 +39,6 @@
 			gpios = <&gpioe 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_PCH_RSMRST_L";
 		};
-		uart1_rx {
-			gpios = <&gpiob 0 GPIO_INPUT_PULL_UP>;
-			#enum-name = "GPIO_UART1_RX";
-		};
 		sys_reset_l {
 			gpios = <&gpiob 6 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_SYS_RESET_L";
