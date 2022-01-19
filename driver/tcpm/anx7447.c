@@ -346,14 +346,10 @@ static int anx7447_init(int port)
 	if (rv)
 		return rv;
 
-	/*
-	 * Specifically disable voltage alarms, as VBUS_VOLTAGE_ALARM_HI may
-	 * trigger repeatedly despite being masked (b/153989733)
-	 */
-	rv = tcpc_update16(port, TCPC_REG_POWER_CTRL,
-			   TCPC_REG_POWER_CTRL_VBUS_VOL_MONITOR_DIS, MASK_SET);
-	if (rv)
-		return rv;
+	/* Set VBUS_VOLTAGE_ALARM_HI threshold */
+	RETURN_ERROR(tcpc_write16(port, TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG, 0x3FF));
+	/* Set VCONN_VOLTAGE_ALARM_HI threshold to 6V */
+	RETURN_ERROR(tcpc_write16(port, VCONN_VOLTAGE_ALARM_HI_CFG, 0xF0));
 
 	/* ADC enable, use to monitor VBUS voltage */
 	rv = tcpc_read(port, ANX7447_REG_ADC_CTRL_1, &reg);
