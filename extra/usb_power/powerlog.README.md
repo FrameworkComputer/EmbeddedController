@@ -47,7 +47,7 @@ this session, a `.scenario` file.
     the chroot. To use `powerlog.py` use the command:
 
     ```
-    (Anywhere in chroot) powerlog -b <board>_r0_loc.board -c <board>_r0_loc.scenario
+    (Anywhere in chroot) sudo powerlog -b <board>_r0_loc.board -c <board>_r0_loc.scenario
     ```
 
     There is no need to specify the absolute path to the `.board` and
