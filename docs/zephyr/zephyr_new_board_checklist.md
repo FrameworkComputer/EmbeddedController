@@ -52,7 +52,7 @@ feature.
 EC Feature                                                                  | Needed for Power On
 :-------------------------------------------------------------------------- | :-----------------:
 [Configure EC Chipset (TODO)](./zephyr_template.md)                         | yes
-[Configure AP to EC Communication (TOD0)](./zephyr_template.md)             | yes
+[Configure AP to EC Communication](./zephyr_ap_ec_comm.md)                  | yes
 [Configure AP Power Sequencing (TODO)](./zephyr_template.md)                | yes
 [Configure USB-C (TODO)](./zephyr_template.md)                              | yes
 [Configure Charger (TODO)](./zephyr_template.md)                            | yes

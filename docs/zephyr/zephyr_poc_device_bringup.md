@@ -38,6 +38,8 @@ As long as you get this compiling that should be enough to move to the
 next step.  Further testing of the host command layer will require
 power sequencing up and going.
 
+For further explanation, check [AP-EC communication](zephyr_ap_ec_comm.md) document.
+
 ## Enabling some simple GPIO-based buttons and switches
 
 Next, you can:
