@@ -264,6 +264,9 @@
 #define TCPC_REG_TX_BUFFER         0x51
 
 #define TCPC_REG_VBUS_VOLTAGE                0x70
+#define TCPC_REG_VBUS_VOLTAGE_MEASUREMENT    GENMASK(9, 0)
+#define TCPC_REG_VBUS_VOLTAGE_SCALE_FACTOR   GENMASK(11, 10)
+#define TCPC_REG_VBUS_VOLTAGE_LSB            25
 
 #define TCPC_REG_VBUS_SINK_DISCONNECT_THRESH 0x72
 #define TCPC_REG_VBUS_SINK_DISCONNECT_THRESH_DEFAULT 0x008C /* 3.5 V */
@@ -320,6 +323,7 @@ int tcpci_tcpm_mux_get(const struct usb_mux *me, mux_state_t *mux_state);
 int tcpci_tcpm_mux_enter_low_power(const struct usb_mux *me);
 int tcpci_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 *chip_info);
+int tcpci_get_vbus_voltage(int port, int *vbus);
 #ifdef CONFIG_USBC_PPC
 bool tcpci_tcpm_get_snk_ctrl(int port);
 int tcpci_tcpm_set_snk_ctrl(int port, int enable);

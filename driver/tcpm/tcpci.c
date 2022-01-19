@@ -1331,6 +1331,31 @@ void tcpci_tcpc_alert(int port)
 		task_set_event(PD_PORT_TO_TASK_ID(port), pd_event);
 }
 
+int tcpci_get_vbus_voltage(int port, int *vbus)
+{
+	int error, val;
+	int scale, measure;
+
+	if (!(dev_cap_1[port] & TCPC_REG_DEV_CAP_1_VBUS_MEASURE_ALARM_CAPABLE))
+		return EC_ERROR_UNIMPLEMENTED;
+
+	error = tcpc_read16(port, TCPC_REG_VBUS_VOLTAGE, &val);
+	if (error)
+		return error;
+
+	/*
+	 * 00: the measurement is not scaled
+	 * 01: the measurement is divided by 2
+	 * 10: the measurement is divided by 4
+	 * 11: reserved
+	 */
+	scale = (val & TCPC_REG_VBUS_VOLTAGE_SCALE_FACTOR) >> 9;
+	measure = val & TCPC_REG_VBUS_VOLTAGE_MEASUREMENT;
+
+	*vbus = (1 << scale) * measure * TCPC_REG_VBUS_VOLTAGE_LSB;
+	return EC_SUCCESS;
+}
+
 /*
  * This call will wake up the TCPC if it is in low power mode upon accessing the
  * i2c bus (but the pd state machine should put it back into low power mode).
@@ -1484,6 +1509,15 @@ int tcpci_tcpm_init(int port)
 					? BIT(VBUS_PRESENT)
 					: BIT(VBUS_SAFE0V);
 	}
+
+	/* Enable/disable VBUS monitor by the flag */
+	error = tcpc_update8(port, TCPC_REG_POWER_CTRL,
+			     TCPC_REG_POWER_CTRL_VBUS_VOL_MONITOR_DIS,
+			     tcpc_config[port].flags & TCPC_FLAGS_VBUS_MONITOR ?
+				     MASK_CLR :
+				     MASK_SET);
+	if (error)
+		return error;
 
 	/*
 	 * Force an update to the VBUS status in case the TCPC doesn't send a
@@ -1817,6 +1851,7 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
 #endif
+	.get_vbus_voltage	= &tcpci_get_vbus_voltage,
 	.select_rp_value	= &tcpci_tcpm_select_rp_value,
 	.set_cc			= &tcpci_tcpm_set_cc,
 	.set_polarity		= &tcpci_tcpm_set_polarity,

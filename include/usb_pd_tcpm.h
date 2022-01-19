@@ -213,6 +213,16 @@ struct tcpm_drv {
 	bool (*check_vbus_level)(int port, enum vbus_level level);
 
 	/**
+	 * Get VBUS voltage
+	 *
+	 * @param port Type-C port number
+	 * @param vbus read VBUS voltage in mV
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*get_vbus_voltage)(int port, int *vbus);
+
+	/**
 	 * Set the value of the CC pull-up used when we are a source.
 	 *
 	 * @param port Type-C port number
@@ -499,6 +509,7 @@ struct tcpm_drv {
  * Bit 5 --> Set to 1 to prevent TCPC setting debug accessory control
  * Bit 6 --> TCPC controls VCONN (even when CONFIG_USB_PD_TCPC_VCONN is off)
  * Bit 7 --> TCPC controls FRS (even when CONFIG_USB_PD_FRS_TCPC is off)
+ * Bit 8 --> TCPC enable VBUS monitoring
  */
 #define TCPC_FLAGS_ALERT_ACTIVE_HIGH	BIT(0)
 #define TCPC_FLAGS_ALERT_OD		BIT(1)
@@ -508,6 +519,7 @@ struct tcpm_drv {
 #define TCPC_FLAGS_NO_DEBUG_ACC_CONTROL	BIT(5)
 #define TCPC_FLAGS_CONTROL_VCONN	BIT(6)
 #define TCPC_FLAGS_CONTROL_FRS		BIT(7)
+#define TCPC_FLAGS_VBUS_MONITOR		BIT(8)
 
 struct tcpc_config_t {
 	enum ec_bus_type bus_type;	/* enum ec_bus_type */
