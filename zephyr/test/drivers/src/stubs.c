@@ -54,13 +54,6 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
 /* Charger Chip Configuration */
 const struct charger_config_t chg_chips[] = {
-#ifdef CONFIG_PLATFORM_EC_CHARGER_ISL9241
-	{
-		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
-		.drv = &isl9241_drv,
-	},
-#endif
 #ifdef CONFIG_PLATFORM_EC_CHARGER_ISL9238
 	{
 		.i2c_port = I2C_PORT_CHARGER,
