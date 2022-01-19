@@ -21,4 +21,6 @@ if(DEFINED CONFIG_BOARD_HEROBRINE_NPCX9)
 	project(herobrine_npcx9)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 	  "src/herobrine_npcx9/alt_dev_replacement.c")
+elseif(DEFINED CONFIG_BOARD_HOGLIN)
+	project(hoglin)
 endif()
