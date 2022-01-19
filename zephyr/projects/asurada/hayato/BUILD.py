@@ -5,5 +5,11 @@
 register_binman_project(
     project_name="hayato",
     zephyr_board="asurada",
-    dts_overlays=["battery.dts", "gpio.dts", "motionsense.dts", "pwm.dts"],
+    dts_overlays=[
+        "battery.dts",
+        "gpio.dts",
+        "interrupts.dts",
+        "motionsense.dts",
+        "pwm.dts",
+    ],
 )
