@@ -344,6 +344,18 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 			return EC_ERROR_INVAL;
 		memcpy(dest, &val, bounded_read_len);
 		break;
+#ifdef CONFIG_BATTERY_SMART
+	/*
+	 * Only supports sb for now, respective gauges should implement their
+	 * function.
+	 */
+	case SB_RUN_TIME_TO_EMPTY:
+		/* This may cause an i2c transaction */
+		if (battery_run_time_to_empty(&val))
+			return EC_ERROR_INVAL;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+#endif
 	case SB_CHARGING_CURRENT:
 		if (curr_batt->flags & BATT_FLAG_BAD_DESIRED_CURRENT)
 			return EC_ERROR_BUSY;
