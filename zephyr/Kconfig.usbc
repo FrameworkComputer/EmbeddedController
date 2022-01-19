@@ -607,8 +607,15 @@ config PLATFORM_EC_USB_PD_DATA_RESET_MSG
 	  mandatory for products supporting USB4 but optional for other PD 3.0
 	  products.
 
-choice "VBUS detection method"
+choice PLATFORM_EC_USB_PD_VBUS_DETECTION_TYPE
 	prompt "Select the method to detect VBUS"
+	default PLATFORM_EC_USB_PD_VBUS_DETECT_NONE
+
+config PLATFORM_EC_USB_PD_VBUS_DETECT_NONE
+	bool "No way to detect VBUS"
+	help
+	  Choose this option if it is not possible to detect VBUS. This causes
+	  the `check_vbus_level` function pointer in the driver struct to be NULL.
 
 config PLATFORM_EC_USB_PD_VBUS_DETECT_TCPC
 	bool "TCPC detects VBUS"
@@ -627,12 +634,7 @@ config PLATFORM_EC_USB_PD_VBUS_DETECT_PPC
 	  Choose this option if the Power-Path Controller (PPC) can detect the
 	  presence of VBUS
 
-config PLATFORM_EC_USB_PD_VBUS_DETECT_NONE
-	bool "No way to detect VBUS"
-	help
-	  Choose this option if it is not possible to detect VBUS.
-
-endchoice  # VBUS detection method
+endchoice  # PLATFORM_EC_USB_PD_VBUS_DETECTION_TYPE
 
 config PLATFORM_EC_USB_TYPEC_SM
 	bool "Type-C (TC) physical-layer state machine"
