@@ -16,8 +16,6 @@
 #include "timer.h"
 #include "watchdog.h"
 
-#define IRQ_TIM(n) CONCAT2(STM32_IRQ_TIM, n)
-
 void __hw_clock_event_set(uint32_t deadline)
 {
 	/* set the match on the deadline */

@@ -124,7 +124,6 @@
  * Timers are defined per board.  This gives us flexibility to work around
  * timers which are dedicated to board-specific PWM sources.
  */
-#define IRQ_TIM(n) CONCAT2(STM32_IRQ_TIM, n)
 #define IRQ_MSB IRQ_TIM(TIM_CLOCK_MSB)
 #define IRQ_LSB IRQ_TIM(TIM_CLOCK_LSB)
 #define IRQ_WD  IRQ_TIM(TIM_WATCHDOG)

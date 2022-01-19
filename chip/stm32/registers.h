@@ -142,6 +142,8 @@ struct timer_ctlr {
 /* Must be volatile, or compiler optimizes out repeated accesses */
 typedef volatile struct timer_ctlr timer_ctlr_t;
 
+#define IRQ_TIM(n) CONCAT2(STM32_IRQ_TIM, n)
+
 /* --- Low power timers --- */
 #define STM32_LPTIM_BASE(n)          CONCAT3(STM32_LPTIM, n, _BASE)
 
