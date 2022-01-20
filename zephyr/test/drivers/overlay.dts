@@ -638,6 +638,9 @@
 		label = "BATTERY";
 		cycle-count = <99>;
 		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		/* Real battery voltages are multiples of 4.4V. */
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
 	};
 
 	bma_emul: bma@18 {

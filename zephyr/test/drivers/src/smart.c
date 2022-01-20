@@ -248,10 +248,6 @@ static void test_battery_get_params(void)
 	emul = sbat_emul_get_ptr(BATTERY_ORD);
 	bat = sbat_emul_get_bat_data(emul);
 
-	/* Battery wants to charge */
-	bat->desired_charg_cur = 1000;
-	bat->desired_charg_volt = 5000;
-
 	/* Fail temperature read */
 	i2c_common_emul_set_read_fail_reg(emul, SB_TEMPERATURE);
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE |

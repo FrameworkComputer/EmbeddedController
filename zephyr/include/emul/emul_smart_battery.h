@@ -15,6 +15,7 @@
 #include <emul.h>
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
+#include <stdint.h>
 
 /**
  * @brief Smart Battery emulator backend API
