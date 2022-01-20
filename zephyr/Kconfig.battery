@@ -113,6 +113,7 @@ menuconfig PLATFORM_EC_CHARGER
 	bool "Charging support"
 	default y
 	select HAS_TASK_CHARGER
+	select PLATFORM_EC_EXTPOWER
 	help
 	  Enable the EC charging task.  This enables compilation of the
           charge_state_v2 code.

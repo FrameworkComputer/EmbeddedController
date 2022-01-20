@@ -332,8 +332,19 @@ config PLATFORM_EC_EMULATED_SYSRQ
 	  This option enables support for sending emulated SysRq events to AP
 	  (on designs with a keyboard, SysRq is passed as normal key presses).
 
+config PLATFORM_EC_EXTPOWER
+	bool "Support external power detection"
+	depends on PLATFORM_EC_HOOKS && PLATFORM_EC_HOSTCMD
+	help
+	  Enable code for handling the detection of external power.
+	  If PLATFORM_EC_EXTPOWER_GPIO is not set, then the board
+	  must supply the function board_check_extpower in order
+	  to check for external power, and update the state via
+	  extpower_handle_update().
+
 config PLATFORM_EC_EXTPOWER_GPIO
 	bool "GPIO-based external power detection"
+	select PLATFORM_EC_EXTPOWER
 	depends on PLATFORM_EC_HOOKS && PLATFORM_EC_HOSTCMD
 	help
 	  Enable shimming the extpower_gpio module, which provides
