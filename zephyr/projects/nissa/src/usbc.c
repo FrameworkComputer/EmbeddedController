@@ -58,9 +58,9 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
  */
 __override void board_hibernate_late(void)
 {
-	raa489000_hibernate(CHARGER_PRIMARY, true);
 	if (board_get_usb_pd_port_count() == 2)
 		raa489000_hibernate(CHARGER_SECONDARY, true);
+	raa489000_hibernate(CHARGER_PRIMARY, true);
 
 	gpio_set_level(GPIO_EN_SLP_Z, 1);
 	/*
