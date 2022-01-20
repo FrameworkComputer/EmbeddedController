@@ -6,6 +6,7 @@
 #include "battery.h"
 #include "charger.h"
 #include "charger/isl923x_public.h"
+#include "extpower.h"
 #include "usb_pd.h"
 #include "sub_board.h"
 
@@ -36,6 +37,21 @@ int extpower_is_present(void)
 	}
 
 	return 0;
+}
+
+/*
+ * Nivviks does not have a GPIO indicating whether extpower is present,
+ * so detect using the charger(s).
+ */
+__override void board_check_extpower(void)
+{
+	static int last_extpower_present;
+	int extpower_present = extpower_is_present();
+
+	if (last_extpower_present ^ extpower_present)
+		extpower_handle_update(extpower_present);
+
+	last_extpower_present = extpower_present;
 }
 
 /*
