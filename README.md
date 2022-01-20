@@ -1,3 +1,82 @@
+# Framework Laptop Embedded Controller (EC)
+
+## Introduction
+
+This project holds the code used for the Framework Laptop Embedded Controller.
+
+## Warning
+
+The Embedded Controller on your Framework Laptop handles low level functions, including power sequencing the system. Modifying the EC code can cause your system to not power on or boot or cause damage to the mainboard, battery, or other parts of the system or devices attached to the system. **Hardware damage caused by EC firmware modifications would not be covered under the Framework Limited Warranty.**
+
+## Building
+
+### Environment Configuration
+
+The Framework Laptop EC code can be built easily outside the Chromium development environment as a standalone project with a minimal set of tools.
+
+On Ubuntu you can install the development tools easily.
+
+```
+sudo apt install gcc-arm-none-eabi libftdi1-dev
+```
+
+## Framework Laptop EC for Intel 11th Gen Core Processors
+
+Building the project
+```
+make BOARD=hx20 CROSS_COMPILE=arm-none-eabi-
+```
+
+The output artifact is ```build/hx20/ec.bin``` which can be flashed to the EC SPI flash ROM.
+
+### EC Flash configuration
+
+When flashing the EC for Framework Laptops with Intel 11th Gen Core Processors, do not erase or overwrite the sectors 0x3C000 to 0x3FFFF, or 0x79000 to 0x7FFFF.
+
+Currently the EC only runs from the ro region. 
+```
+00000000:00000fff bootsector
+00001000:00039fff lfwro
+00040000:00078fff rw
+```
+## EC background information
+The EC is a MEC1521H-B0-I-SZ WFBGA144 which has 256kB of RAM. 
+
+Most changes are limited to the following folders, however there are some modifications in common.
+```
+board/hx20
+chip/mchp
+```
+
+### EC Boot process
+Note that the EC has a checksum and header verification of the EC code image. Arbitarily modifying code, for example with a reverse engineering tool will cause the EC to fail to boot. Compiling the code from source will correctly generate the required checksum information to allow the EC to boot.
+
+### EC Debug
+The EC has debug header in the upper right corner of the Mainboard next to the on-board power button.  This is the 10 pin EC debug connector JECDB. Pin 1 is nearest the power button. The EC is configured for 2 wire SWD. 
+
+|Pin|Description|
+| --- | --- |
+| 1  | EC_VCC_3.3 |
+| 2  | TDI |
+| 3  | TMS |
+| 4  | CLK |
+| 5  | TDO |
+| 6  | UART_TX |
+| 7  | UART_RX |
+| 8  | |
+| 9  | EC_RESETI |
+| 10 | GND |
+
+## Background
+
+The Framework Laptop EC is based upon the Google Chromium EC repository: https://chromium.googlesource.com/chromiumos/platform/ec. We upstream common features where they fit into the design decisions of Chrome OS. However, there are a number of features and changes that will be unlikely to be upstreamed because they are unnecessary for Chrome OS operation or do not fit the philosophy of Chrome OS.
+
+For example, we implement memory mapped regions that are not used in Chrome OS such as the UCSI driver.
+
+The remainder of this README file is directly from Google's Chromium EC project.
+
+---
+
 # Embedded Controller (EC)
 
 [TOC]
