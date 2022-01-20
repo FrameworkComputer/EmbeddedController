@@ -1255,6 +1255,14 @@ function dut_i2c_dev() {
 		return
 	fi
 
+	local has_i2c_pseudo="$(dut_control_get_or_die \
+		"${ACTIVE_DEVICE}_i2c_pseudo_is_running")"
+	if [[ "${has_i2c_pseudo}" == False ]]; then
+		error "i2c-pseudo module is not running."
+		error "Please follow https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/iteflash.md#i2c-pseudo"
+		die "to install i2c-pseudo module."
+	fi
+
 	local adap_num=
 	adap_num="$(dut_control_get_or_die \
 	    "${ACTIVE_DEVICE}_i2c_pseudo_adapter_num")"
