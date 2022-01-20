@@ -85,6 +85,17 @@
 			temp_host_release_high = <80>;
 			adc = <&adc_temp_sensor_3>;
 		};
+
+		/*
+		 * TODO(b/215449005): Re-enable when all ADC
+		 * channels supported.
+		 */
+		/delete-node/ ambient;
+	};
+	/* TODO(b/215449005): Re-enable when all ADC channels supported. */
+	named-adc-channels {
+		compatible = "named-adc-channels";
+		/delete-node/ temp_sensor_3;
 	};
 
 	/*
