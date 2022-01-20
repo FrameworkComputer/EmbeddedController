@@ -202,7 +202,19 @@ def test_popen_cmake_kconfig(conf, project_dir, build_dir):
         os.unlink(temp_path)
 
 
-def test_build_config_json_stability():
+@pytest.fixture
+def fake_kconfig_files(tmp_path):
+    """Provide a list of 4 different fake kconfig file paths."""
+
+    paths = [tmp_path / f"{letter}.conf" for letter in "ABCD"]
+
+    for path, cfg_name in zip(paths, ("ONE", "TWO", "THREE", "FOUR")):
+        path.write_text(f"# Fake kconfig file for testing.\nCONFIG_{cfg_name}=y\n")
+
+    return paths
+
+
+def test_build_config_json_stability(fake_kconfig_files):
     # as_json() should return equivalent strings for two equivalent
     # build configs.
     a = BuildConfig(
@@ -218,10 +230,7 @@ def test_build_config_json_stability():
             "CONFIG_A": "y",
             "CONFIG_B": "n",
         },
-        kconfig_files=[
-            pathlib.Path("/a/b/c.conf"),
-            pathlib.Path("d/e/f.conf"),
-        ],
+        kconfig_files=fake_kconfig_files,
     )
 
     # Dict ordering is intentionally reversed in b.
@@ -238,10 +247,7 @@ def test_build_config_json_stability():
             "CONFIG_B": "n",
             "CONFIG_A": "y",
         },
-        kconfig_files=[
-            pathlib.Path("/a/b/c.conf"),
-            pathlib.Path("d/e/f.conf"),
-        ],
+        kconfig_files=list(fake_kconfig_files),
     )
 
     assert a.as_json() == b.as_json()
@@ -256,19 +262,43 @@ def test_build_config_json_inequality():
     assert a.as_json() != b.as_json()
 
 
-def test_kconfig_file_duplicates():
+def test_build_config_json_inequality_dtc_changes(tmp_path):
+    # When DTC overlay files change, so should the JSON.
+    dts_file_1 = tmp_path / "overlay1.dts"
+    dts_file_1.write_text("/* blah */\n")
+
+    dts_file_2 = tmp_path / "overlay2.dts"
+    dts_file_2.write_text("/* zonks! */\n")
+
+    cfg = BuildConfig(
+        cmake_defs={
+            "DTC_OVERLAY_FILE": f"{dts_file_1};{dts_file_2}",
+        },
+    )
+
+    orig_json = cfg.as_json()
+
+    # Now, change dts_file_2!
+    dts_file_2.write_text("/* I changed!! */\n")
+
+    new_json = cfg.as_json()
+
+    assert orig_json != new_json
+
+
+def test_kconfig_file_duplicates(fake_kconfig_files):
     # Kconfig files should be like the "uniq" command.  Repeats should
     # be removed, but not duplicates.
     cfg = BuildConfig(
         kconfig_files=[
-            pathlib.Path("/a/b/c.conf"),
-            pathlib.Path("/a/b/c.conf"),
-            pathlib.Path("/d/e/f.conf"),
-            pathlib.Path("/a/b/c.conf"),
+            fake_kconfig_files[0],
+            fake_kconfig_files[0],
+            fake_kconfig_files[1],
+            fake_kconfig_files[0],
         ]
     )
     assert cfg.kconfig_files == [
-        pathlib.Path("/a/b/c.conf"),
-        pathlib.Path("/d/e/f.conf"),
-        pathlib.Path("/a/b/c.conf"),
+        fake_kconfig_files[0],
+        fake_kconfig_files[1],
+        fake_kconfig_files[0],
     ]

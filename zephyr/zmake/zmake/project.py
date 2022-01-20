@@ -141,7 +141,11 @@ class Project:
             if dts_path.is_file():
                 overlays.append(dts_path.resolve())
 
-        overlays.extend(self.config.dts_overlays)
+        for path in self.config.dts_overlays:
+            # Support configs which don't explicitly put "here" in front.
+            if isinstance(path, str):
+                path = self.config.project_dir / path
+            overlays.append(path.resolve())
 
         if overlays:
             return build_config.BuildConfig(
