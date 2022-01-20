@@ -10,6 +10,7 @@
 #include "battery_smart.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
+#include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_drp.h"
@@ -105,6 +106,8 @@ static void test_attach_pd_charger(void)
 {
 	const struct emul *tcpci_emul =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
+	const struct emul *charger_emul =
+		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 	struct i2c_emul *i2c_emul;
 	uint16_t battery_status;
 	struct tcpci_src_emul my_charger;
@@ -124,20 +127,22 @@ static void test_attach_pd_charger(void)
 	 * charging.
 	 */
 
-	/* 1. Configure source PDOs of partner (probably fixed source 5V 3A
-	 * and fixed source 20V 3A). Currently, the partner emulator only
-	 * supports the default USB power PDO.
+	/* Attach emulated charger. Send Source Capabilities that offer 20V. Set
+	 * the charger input voltage to ~18V (the highest voltage it supports).
 	 */
-
-	/* Attach emulated charger. This will send Source Capabilities. */
 	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_AC_OK_PIN, 1), NULL);
 	tcpci_src_emul_init(&my_charger);
+	my_charger.data.pdo[1] =
+		PDO_FIXED(20000, 3000, PDO_FIXED_UNCONSTRAINED);
 	zassert_ok(tcpci_src_emul_connect_to_tcpci(&my_charger.data,
 						   &my_charger.common_data,
 						   &my_charger.ops, tcpci_emul),
 		   NULL);
+	isl923x_emul_set_adc_vbus(charger_emul, 0x3f);
 
-	/* Wait for current ramp. */
+	/* Wait for PD negotiation and current ramp.
+	 * TODO(b/213906889): Check message timing and contents.
+	 */
 	k_sleep(K_SECONDS(10));
 
 	/* Verify battery charging. */
@@ -148,13 +153,14 @@ static void test_attach_pd_charger(void)
 	zassert_equal(battery_status & STATUS_DISCHARGING, 0,
 		      "Battery is discharging: %d", battery_status);
 
-	/*
-	 * 2. Check charging current and voltage (should be 5V, default USB
-	 * current); make sure that reports from battery and PD host commands
-	 * match; check that host command reports no active PDO.
+	/* Check the charging voltage and current. Cross-check the PD state,
+	 * the battery/charger state, and the active PDO as reported by the PD
+	 * state. The charging voltage and current are not directly related to
+	 * the PD charging and current, but they should be positive if the
+	 * battery is charging.
 	 */
 	/*
-	 * TODO(b/209907297): Also check the corresponding PD state and
+	 * TODO(b/213908743): Also check the corresponding PD state and
 	 * encapsulate this for use in other tests.
 	 */
 	charge_params.chgnum = 0;
@@ -177,7 +183,7 @@ static void test_attach_pd_charger(void)
 			"Charger attached but device disconnected");
 	zassert_true(typec_response.sop_connected,
 			"Charger attached but not SOP capable");
-	zassert_equal(typec_response.source_cap_count, 1,
+	zassert_equal(typec_response.source_cap_count, 2,
 			"Charger has %d source PDOs",
 			typec_response.source_cap_count);
 	zassert_equal(typec_response.power_role, PD_ROLE_SINK,
