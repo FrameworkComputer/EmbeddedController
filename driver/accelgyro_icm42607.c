@@ -1034,6 +1034,123 @@ static int icm42607_init_config(const struct motion_sensor_t *s)
 	/* Wait for 280 us for the OTP to load */
 	usleep(280);
 
+	/* Write POR value for all registers not loaded with OTP */
+	ret = icm_write8(s, ICM42607_REG_GYRO_CONFIG0, 0x06);
+	if (ret)
+		return ret;
+
+	ret = icm_write8(s, ICM42607_REG_ACCEL_CONFIG0, 0x06);
+	if (ret)
+		return ret;
+
+	ret = icm_write8(s, ICM42607_REG_APEX_CONFIG0, 0x08);
+	if (ret)
+		return ret;
+
+	ret = icm_write8(s, ICM42607_REG_APEX_CONFIG1,  0x02);
+	if (ret)
+		return ret;
+
+	ret = icm_write8(s, ICM42607_REG_FIFO_CONFIG1, 0x01);
+	if (ret)
+		return ret;
+
+	ret = icm_write8(s, ICM42607_REG_FIFO_CONFIG2, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write8(s, ICM42607_REG_FIFO_CONFIG3, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_FIFO_CONFIG5, 0x20);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_INT_SOURCE7, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_INT_SOURCE8, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_INT_SOURCE9, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_INT_SOURCE10, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_APEX_CONFIG2, 0xA2);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_APEX_CONFIG3, 0x85);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_APEX_CONFIG4, 0x51);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_APEX_CONFIG5, 0x80);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_APEX_CONFIG9, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_APEX_CONFIG10, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_APEX_CONFIG11, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_OFFSET_USER0, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_OFFSET_USER1, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_OFFSET_USER2, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_OFFSET_USER3, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_OFFSET_USER4, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_OFFSET_USER5, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_OFFSET_USER6, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_OFFSET_USER7, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_OFFSET_USER8, 0x00);
+	if (ret)
+		return ret;
+
+	ret = icm_write_mclk_reg(s, ICM42607_MREG_APEX_CONFIG12, 0x00);
+	if (ret)
+		return ret;
+
 	ret = icm_switch_off_mclk(s);
 	if (ret)
 		return ret;
@@ -1088,26 +1205,6 @@ static int icm42607_init(struct motion_sensor_t *s)
 		ret = icm_read8(s, ICM42607_REG_INT_STATUS, &val);
 		if (ret)
 			goto out_unlock;
-
-		/* Reset to make sure previous state are not there */
-		ret = icm_write8(s, ICM42607_REG_SIGNAL_PATH_RESET,
-				 ICM42607_SOFT_RESET_DEV_CONFIG);
-		if (ret)
-			goto out_unlock;
-
-		/* Check reset is done, 1ms max */
-		for (i = 0; i < 5; ++i) {
-			usleep(200);
-			ret = icm_read8(s, ICM42607_REG_INT_STATUS, &val);
-			if (ret)
-				goto out_unlock;
-			if (val == ICM42607_RESET_DONE_INT)
-				break;
-		}
-		if (val != ICM42607_RESET_DONE_INT) {
-			ret = EC_ERROR_HW_INTERNAL;
-			goto out_unlock;
-		}
 
 		/* configure sensor */
 		ret = icm42607_init_config(s);
