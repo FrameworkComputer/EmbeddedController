@@ -2121,6 +2121,9 @@
 /* Enable support for floating point unit */
 #undef CONFIG_FPU
 
+/* Enable warnings on FPU exceptions */
+#undef CONFIG_FPU_WARNINGS
+
 /*****************************************************************************/
 /* Firmware region configuration */
 

@@ -158,6 +158,7 @@ charge_manager_drp_charging-y=charge_manager.o fake_usbc.o
 charge_ramp-y+=charge_ramp.o
 compile_time_macros-y=compile_time_macros.o
 console_edit-y=console_edit.o
+cortexm_fpu-y=cortexm_fpu.o
 crc-y=crc.o
 entropy-y=entropy.o
 extpwr_gpio-y=extpwr_gpio.o

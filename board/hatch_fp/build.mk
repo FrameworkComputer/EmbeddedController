@@ -29,6 +29,7 @@ test-list-y=\
        aes \
        cec \
        compile_time_macros \
+       cortexm_fpu \
        crc \
        flash_physical \
        flash_write_protect \

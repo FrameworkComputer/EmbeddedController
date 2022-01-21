@@ -42,5 +42,6 @@ core-$(CONFIG_AES_GCM)+=ghash.o
 core-$(CONFIG_ARMV7M_CACHE)+=cache.o
 core-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic.o
 core-$(CONFIG_COMMON_RUNTIME)+=switch.o task.o
+core-$(CONFIG_FPU)+=fpu.o
 core-$(CONFIG_WATCHDOG)+=watchdog.o
 core-$(CONFIG_MPU)+=mpu.o

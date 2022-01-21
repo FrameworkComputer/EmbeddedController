@@ -117,6 +117,8 @@ class AllTests:
                 TestConfig(name='aes'),
             'cec':
                 TestConfig(name='cec'),
+            'cortexm_fpu':
+                TestConfig(name='cortexm_fpu'),
             'crc':
                 TestConfig(name='crc'),
             'flash_physical':

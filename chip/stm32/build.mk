@@ -49,6 +49,7 @@ chip-y+=clock-$(CHIP_FAMILY).o
 ifeq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),stm32f0 stm32f3 stm32f4))
 chip-y+=clock-f.o
 endif
+chip-$(CONFIG_FPU)+=fpu.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_SPI_CONTROLLER)+=spi_master$(SPI_TYPE).o
 chip-$(CONFIG_COMMON_GPIO)+=gpio.o gpio-$(CHIP_FAMILY).o
