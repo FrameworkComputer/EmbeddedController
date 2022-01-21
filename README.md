@@ -14,10 +14,24 @@ The Embedded Controller on your Framework Laptop handles low level functions, in
 
 The Framework Laptop EC code can be built easily outside the Chromium development environment as a standalone project with a minimal set of tools.
 
-On Ubuntu you can install the development tools easily.
+You can install the development tools easily.
+
+On Ubuntu
 
 ```
 sudo apt install gcc-arm-none-eabi libftdi1-dev
+```
+
+On Fedora
+
+```
+sudo dnf install arm-none-eabi-gcc-cs libftdi-devel
+```
+
+On Arch Linux
+
+```
+sudo pacman -S arm-none-eabi-gcc libftdi
 ```
 
 ## Framework Laptop EC for Intel 11th Gen Core Processors
