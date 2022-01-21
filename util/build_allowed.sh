@@ -63,14 +63,14 @@ if [ -r "${allowed}" ]; then
 		comm -13 "${tmp}/allowed.tmp4" "${allowed}"
 		mv "${tmp}/allowed.tmp4" "${allowed}"
 	elif [ -s "${tmp}/allowed.tmp5" ]; then
-		echo >&2 "Congratulations! The following options are now in"
-		echo >&2 "Kconfig:"
-		cat "${tmp}/allowed.tmp5"
+		echo >&2 "The following options are now in Kconfig:"
+		cat >&2 "${tmp}/allowed.tmp5"
 		echo >&2
 		echo >&2 "Please run this to update the list of allowed ad-hoc"
-		echo >&2 "CONFIGs and include this update in your CL."
+		echo >&2 "CONFIGs and include this update in your CL:"
 		echo >&2
 		echo -e >&2 "\t./util/build_allowed.sh -u"
+		exit 1
 	fi
 else
 	# If there is no file yet, add one. This allows it to be regenerated
