@@ -54,14 +54,20 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 /*
- * Board specific hibernate function.
+ * Board specific hibernate functions.
  */
-__override void board_hibernate_late(void)
+__override void board_hibernate(void)
 {
+	/* Shut down the chargers */
 	if (board_get_usb_pd_port_count() == 2)
 		raa489000_hibernate(CHARGER_SECONDARY, true);
 	raa489000_hibernate(CHARGER_PRIMARY, true);
+	CPRINTS("Charger(s) hibernated");
+	cflush();
+}
 
+__override void board_hibernate_late(void)
+{
 	gpio_set_level(GPIO_EN_SLP_Z, 1);
 	/*
 	 * The system should hibernate, but there may be
