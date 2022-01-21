@@ -13,6 +13,7 @@
 /* Free up flash space */
 #ifdef SECTION_IS_RO
 #define CONFIG_DEBUG_ASSERT_BRIEF
+#undef CONFIG_USB_PD_TCPMV1_DEBUG
 #endif
 
 /*
