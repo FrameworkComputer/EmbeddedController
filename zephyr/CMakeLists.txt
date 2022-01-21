@@ -61,12 +61,6 @@ if(DEFINED CONFIG_PLATFORM_EC)
       set_property(TARGET app PROPERTY INTERPROCEDURAL_OPTIMIZATION True)
     endif()
   endif()
-
-  set_compiler_property(APPEND PROPERTY warning_base
-                        # TODO(b/210501420): Make EC code compatible with
-                        # -W-address-of-packed-member
-                        -Wno-address-of-packed-member
-  )
 endif()
 
 # Switch from the "zephyr" library to the "app" library for all Chromium OS

@@ -16,14 +16,17 @@ hc_regulator_get_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_regulator_get_info *p = args->params;
 	struct ec_response_regulator_get_info *r = args->response;
+	void *voltages_mv = r->voltages_mv;
+	uint16_t num_voltages;
 	int rv;
 
-	rv = board_regulator_get_info(p->index, r->name, &r->num_voltages,
-				      r->voltages_mv);
+	rv = board_regulator_get_info(p->index, r->name, &num_voltages,
+				      voltages_mv);
 
 	if (rv)
 		return EC_RES_ERROR;
 
+	r->num_voltages = num_voltages;
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
@@ -69,13 +72,15 @@ hc_regulator_get_voltage(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_regulator_get_voltage *p = args->params;
 	struct ec_response_regulator_get_voltage *r = args->response;
+	uint32_t voltage_mv;
 	int rv;
 
-	rv = board_regulator_get_voltage(p->index, &r->voltage_mv);
+	rv = board_regulator_get_voltage(p->index, &voltage_mv);
 
 	if (rv)
 		return EC_RES_ERROR;
 
+	r->voltage_mv = voltage_mv;
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }

@@ -492,6 +492,8 @@ static int tcs3400_post_events(struct motion_sensor_t *s,
 	      (raw_data[BLUE_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
 	      (raw_data[GREEN_CRGB_IDX] != TCS_SATURATION_LEVEL)))) {
 
+		void *udata = vector.udata;
+
 		if (is_spoof(rgb_s)) {
 			memcpy(last_v, rgb_s->spoof_xyz, sizeof(rgb_s->spoof_xyz));
 		} else if (is_calibration) {
@@ -502,7 +504,7 @@ static int tcs3400_post_events(struct motion_sensor_t *s,
 			memcpy(last_v, xyz_data, sizeof(xyz_data));
 		}
 
-		ec_motion_sensor_clamp_u16s(vector.udata, last_v);
+		ec_motion_sensor_clamp_u16s(udata, last_v);
 
 		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 			vector.sensor_num = rgb_s - motion_sensors;

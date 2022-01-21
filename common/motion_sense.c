@@ -1070,6 +1070,12 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 	struct ec_response_motion_sense *out = args->response;
 	struct motion_sensor_t *sensor;
 	int i, ret = EC_RES_INVALID_PARAM, reported;
+	const void *in_offset;
+	const void *in_scale;
+	void *out_calib_read;
+	void *out_scale;
+	void *out_offset;
+	int16_t out_temp;
 
 	switch (in->cmd) {
 	case MOTIONSENSE_CMD_DUMP:
@@ -1236,8 +1242,9 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			if (!sensor->drv->set_offset)
 				return EC_RES_INVALID_COMMAND;
 
+			in_offset = in->sensor_offset.offset;
 			ret = sensor->drv->set_offset(sensor,
-						in->sensor_offset.offset,
+						in_offset,
 						in->sensor_offset.temp);
 			if (ret != EC_SUCCESS)
 				return ret;
@@ -1246,10 +1253,12 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (!sensor->drv->get_offset)
 			return EC_RES_INVALID_COMMAND;
 
-		ret = sensor->drv->get_offset(sensor, out->sensor_offset.offset,
-				&out->sensor_offset.temp);
+		out_offset = out->sensor_offset.offset;
+		ret = sensor->drv->get_offset(sensor, out_offset, &out_temp);
 		if (ret != EC_SUCCESS)
 			return ret;
+
+		out->sensor_offset.temp = out_temp;
 		args->response_size = sizeof(out->sensor_offset);
 		break;
 
@@ -1264,9 +1273,10 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			if (!sensor->drv->set_scale)
 				return EC_RES_INVALID_COMMAND;
 
+			in_scale = in->sensor_scale.scale;
 			ret = sensor->drv->set_scale(sensor,
-						in->sensor_scale.scale,
-						in->sensor_scale.temp);
+						     in_scale,
+						     in->sensor_scale.temp);
 			if (ret != EC_SUCCESS)
 				return ret;
 		}
@@ -1274,10 +1284,13 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (!sensor->drv->get_scale)
 			return EC_RES_INVALID_COMMAND;
 
-		ret = sensor->drv->get_scale(sensor, out->sensor_scale.scale,
-				&out->sensor_scale.temp);
+		out_scale = out->sensor_scale.scale;
+		ret = sensor->drv->get_scale(sensor, out_scale,
+				&out_temp);
 		if (ret != EC_SUCCESS)
 			return ret;
+
+		out->sensor_scale.temp = out_temp;
 		args->response_size = sizeof(out->sensor_scale);
 		break;
 
@@ -1294,10 +1307,13 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 				sensor, in->perform_calib.enable);
 		if (ret != EC_SUCCESS)
 			return ret;
-		ret = sensor->drv->get_offset(sensor, out->perform_calib.offset,
-				&out->perform_calib.temp);
+
+		out_offset = out->perform_calib.offset;
+		ret = sensor->drv->get_offset(sensor, out_offset, &out_temp);
 		if (ret != EC_SUCCESS)
 			return ret;
+
+		out->perform_calib.temp = out_temp;
 		args->response_size = sizeof(out->perform_calib);
 		break;
 
@@ -1367,9 +1383,9 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
 
-
+		out_calib_read = &out->online_calib_read;
 		args->response_size =
-			online_calibration_read(sensor, &out->online_calib_read)
+			online_calibration_read(sensor, out_calib_read)
 			? sizeof(struct ec_response_online_calibration_data)
 			: 0;
 		break;
