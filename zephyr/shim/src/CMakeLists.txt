@@ -21,6 +21,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ADC         adc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
                                                             battery.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_EEPROM  cbi.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_EEPROM  cbi_eeprom.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_GPIO    cbi.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI
                                                             espi.c)
