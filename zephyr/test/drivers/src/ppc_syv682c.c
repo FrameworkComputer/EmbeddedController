@@ -27,7 +27,7 @@ static const int syv682x_port = 1;
 
 ZTEST(ppc_syv682c, test_board_is_syv682c)
 {
-	zassert_true(syv682x_board_is_syv682c(0), NULL);
+	zassert_true(syv682x_board_is_syv682c(syv682x_port), NULL);
 }
 
 static void check_control_1_default_init(uint8_t control_1)
