@@ -1209,15 +1209,6 @@ struct ec_response_hello {
 /* Get version number */
 #define EC_CMD_GET_VERSION 0x0002
 
-#if !defined(CHROMIUM_EC) && !defined(__KERNEL__)
-/*
- * enum ec_current_image is deprecated and replaced by enum ec_image. This
- * macro exists for backwards compatibility of external projects until they
- * have been updated: b/149987779.
- */
-#define ec_current_image ec_image
-#endif
-
 enum ec_image {
 	EC_IMAGE_UNKNOWN = 0,
 	EC_IMAGE_RO,
@@ -2055,7 +2046,7 @@ enum sysinfo_flags {
 
 struct ec_response_sysinfo {
 	uint32_t reset_flags; /**< EC_RESET_FLAG_* flags */
-	uint32_t current_image; /**< enum ec_current_image */
+	uint32_t current_image; /**< enum ec_image */
 	uint32_t flags; /**< enum sysinfo_flags */
 } __ec_align4;
 
