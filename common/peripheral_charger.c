@@ -38,7 +38,7 @@ static void _send_host_event(const struct pchg *ctx, uint32_t event)
 {
 	int port = PCHG_CTX_TO_PORT(ctx);
 
-	atomic_or(&pchg_host_events, event | port << EC_MKBP_PCHG_PORT_SHIFT);
+	atomic_or(&pchg_host_events, event | EC_MKBP_PCHG_PORT_TO_EVENT(port));
 	mkbp_send_event(EC_MKBP_EVENT_PCHG);
 }
 
@@ -542,20 +542,23 @@ void pchg_task(void *u)
 
 	while (true) {
 		/* Process pending events for all ports. */
-		int rv = 0;
-
 		for (p = 0; p < pchg_count; p++) {
 			ctx = &pchgs[p];
 			do {
 				if (atomic_clear(&ctx->irq))
 					pchg_queue_event(ctx, PCHG_EVENT_IRQ);
-				rv |= pchg_run(ctx);
+				if (!pchg_run(ctx))
+					continue;
+				atomic_or(&pchg_host_events,
+					  EC_MKBP_PCHG_PORT_TO_EVENT(p));
 			} while (queue_count(&ctx->events));
 		}
 
-		/* Send one host event for all ports. */
-		if (rv)
-			device_set_single_event(EC_DEVICE_EVENT_WLC);
+		/* Send one host event (over MKBP) for all ports. */
+		if (pchg_host_events) {
+			atomic_or(&pchg_host_events, EC_MKBP_PCHG_DEVICE_EVENT);
+			mkbp_send_event(EC_MKBP_EVENT_PCHG);
+		}
 
 		task_wait_event(-1);
 	}
