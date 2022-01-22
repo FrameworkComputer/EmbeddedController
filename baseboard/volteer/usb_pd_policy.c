@@ -197,13 +197,23 @@ static int svdm_tbt_compat_response_enter_mode(
 	mux_state = usb_mux_get(port);
 	/*
 	 * Ref: USB PD 3.0 Spec figure 6-21 Successful Enter Mode sequence
-	 * UFP (responder) should be in USB mode or safe mode before sending
-	 * Enter Mode Command response.
+	 * UFP (responder) should be in USB mode or safe mode before entering a
+	 * Mode that requires the reconfiguring of any pins.
 	 */
 	if ((mux_state & USB_PD_MUX_USB_ENABLED) ||
 		(mux_state & USB_PD_MUX_SAFE_MODE)) {
 		pd_ufp_set_enter_mode(port, payload);
 		set_tbt_compat_mode_ready(port);
+
+		/*
+		 * Ref: Above figure 6-21: UFP (responder) should be in the new
+		 * mode before sending the ACK.  However, our mux set sequence
+		 * may exceed tVDMEnterMode, so wait as long as we can
+		 * before sending the reply without violating that timer.
+		 */
+		if (!usb_mux_set_completed(port))
+			usleep(PD_T_VDM_E_MODE / 2);
+
 		CPRINTS("UFP Enter TBT mode");
 		return 1; /* ACK */
 	}
