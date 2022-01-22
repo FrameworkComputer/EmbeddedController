@@ -6,6 +6,7 @@ zephyr_library_sources(console.c)
 zephyr_library_sources(crc.c)
 zephyr_library_sources(gpio.c)
 zephyr_library_sources(gpio_id.c)
+zephyr_library_sources(gpio_int.c)
 zephyr_library_sources(power.c)
 
 if (DEFINED CONFIG_ARCH_POSIX)
