@@ -21,7 +21,7 @@
  * Wait for the EC to be unbusy.  Returns 0 if unbusy, non-zero if
  * timeout.
  */
-static int wait_for_ec(int status_addr, int timeout_usec)
+int wait_for_ec(int status_addr, int timeout_usec)
 {
 	int i;
 	int delay = INITIAL_UDELAY;
@@ -246,6 +246,8 @@ static int ec_readmem_lpc(int offset, int bytes, void *dest)
 	return cnt;
 }
 
+int comm_init_lpc_mec(void) __attribute__((weak));
+
 int comm_init_lpc(void)
 {
 	int i;
@@ -271,6 +273,15 @@ int comm_init_lpc(void)
 		fprintf(stderr,
 			"Very likely this board doesn't have a Chromium EC.\n");
 		return -4;
+	}
+
+	/* Check for a MEC first. */
+	if (comm_init_lpc_mec && comm_init_lpc_mec() >= 0) {
+		ec_max_outsize = EC_LPC_HOST_PACKET_SIZE -
+			sizeof(struct ec_host_request);
+		ec_max_insize = EC_LPC_HOST_PACKET_SIZE -
+			sizeof(struct ec_host_response);
+		return 0;
 	}
 
 	/*
