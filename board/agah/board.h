@@ -51,6 +51,7 @@
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_TCPM_RT1715
 #undef CONFIG_USB_PD_TCPM_NCT38XX
+#define CONFIG_USBC_RETIMER_PS8818
 
 /* I2C speed console command */
 #define CONFIG_CMD_I2C_SPEED

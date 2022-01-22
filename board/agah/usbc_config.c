@@ -14,6 +14,7 @@
 #include "console.h"
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/syv682x_public.h"
+#include "driver/retimer/ps8818.h"
 #include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
@@ -85,30 +86,86 @@ struct ppc_config_t ppc_chips[] = {
 
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-/* USBC mux configuration - Alder Lake includes internal mux */
-static const struct usb_mux usbc0_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-static const struct usb_mux usbc2_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C2,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
+const static struct ps8818_reg_val equalizer_default_table[] = {
+	{
+		.reg = PS8818_REG1_APTX1EQ_10G_LEVEL,
+		.mask = PS8818_EQ_LEVEL_UP_MASK,
+		.val = PS8818_EQ_LEVEL_UP_19DB,
+	},
+	{
+		.reg = PS8818_REG1_APTX2EQ_10G_LEVEL,
+		.mask = PS8818_EQ_LEVEL_UP_MASK,
+		.val = PS8818_EQ_LEVEL_UP_19DB,
+	},
+	{
+		.reg = PS8818_REG1_APTX1EQ_5G_LEVEL,
+		.mask = PS8818_EQ_LEVEL_UP_MASK,
+		.val = PS8818_EQ_LEVEL_UP_19DB,
+	},
+	{
+		.reg = PS8818_REG1_APTX2EQ_5G_LEVEL,
+		.mask = PS8818_EQ_LEVEL_UP_MASK,
+		.val = PS8818_EQ_LEVEL_UP_19DB,
+	},
+	{
+		.reg = PS8818_REG1_RX_PHY,
+		.mask = PS8818_RX_INPUT_TERM_MASK,
+		.val = PS8818_RX_INPUT_TERM_112_OHM,
+	},
 };
 
+#define NUM_EQ_DEFAULT_ARRAY ARRAY_SIZE(equalizer_default_table)
+
+int board_ps8818_mux_set(const struct usb_mux *me,
+				    mux_state_t mux_state)
+{
+	int rv = EC_SUCCESS;
+	int i;
+
+	/* USB specific config */
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+
+		/* Boost the USB gain */
+		for (i = 0; i < NUM_EQ_DEFAULT_ARRAY; i++)
+			rv |= ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+				equalizer_default_table[i].reg,
+				equalizer_default_table[i].mask,
+				equalizer_default_table[i].val);
+	}
+
+	/* DP specific config */
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		/* Boost the DP gain */
+		rv |= ps8818_i2c_field_update8(me,
+					PS8818_REG_PAGE1,
+					PS8818_REG1_DPEQ_LEVEL,
+					PS8818_DPEQ_LEVEL_UP_MASK,
+					PS8818_DPEQ_LEVEL_UP_19DB);
+	}
+
+	return rv;
+}
+
+const static struct usb_mux usbc2_ps8818 = {
+	.usb_port = USBC_PORT_C2,
+	.i2c_port = I2C_PORT_USB_C2_TCPC,
+	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+	.driver = &ps8818_usb_retimer_driver,
+	.board_set = &board_ps8818_mux_set,
+};
+
+/* USBC mux configuration - Alder Lake includes internal mux */
 const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.usb_port = USBC_PORT_C0,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
-		.next_mux = &usbc0_tcss_usb_mux,
 	},
 	[USBC_PORT_C2] = {
 		.usb_port = USBC_PORT_C2,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
-		.next_mux = &usbc2_tcss_usb_mux,
+		.next_mux = &usbc2_ps8818,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
