@@ -163,6 +163,23 @@ static int svdm_tbt_compat_response_modes(int port, uint32_t *payload)
 	}
 }
 
+/* Track whether we've been enabled to ACK TBT EnterModes requests */
+static bool tbt_ufp_ack_allowed[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+__override enum ec_status board_set_tbt_ufp_reply(int port,
+						 enum typec_tbt_ufp_reply reply)
+{
+	/* Note: Host command has already bounds-checked port */
+	if (reply == TYPEC_TBT_UFP_REPLY_ACK)
+		tbt_ufp_ack_allowed[port] = true;
+	else if (reply == TYPEC_TBT_UFP_REPLY_NAK)
+		tbt_ufp_ack_allowed[port] = false;
+	else
+		return EC_RES_INVALID_PARAM;
+
+	return EC_RES_SUCCESS;
+}
+
 static int svdm_tbt_compat_response_enter_mode(
 	int port, uint32_t *payload)
 {
@@ -170,6 +187,10 @@ static int svdm_tbt_compat_response_enter_mode(
 
 	/* Do not enter mode while CPU is off. */
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF))
+		return 0; /* NAK */
+
+	/* Do not enter mode while policy disallows it */
+	if (!tbt_ufp_ack_allowed[port])
 		return 0; /* NAK */
 
 	if ((PD_VDO_VID(payload[0]) != USB_VID_INTEL) ||
