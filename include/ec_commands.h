@@ -6635,6 +6635,7 @@ enum typec_control_command {
 	TYPEC_CONTROL_COMMAND_EXIT_MODES,
 	TYPEC_CONTROL_COMMAND_CLEAR_EVENTS,
 	TYPEC_CONTROL_COMMAND_ENTER_MODE,
+	TYPEC_CONTROL_COMMAND_TBT_UFP_REPLY,
 };
 
 /* Modes (USB or alternate) that a type-C port may enter. */
@@ -6642,6 +6643,12 @@ enum typec_mode {
 	TYPEC_MODE_DP,
 	TYPEC_MODE_TBT,
 	TYPEC_MODE_USB4,
+};
+
+/* Replies the AP may specify to the TBT EnterMode command as a UFP */
+enum typec_tbt_ufp_reply {
+	TYPEC_TBT_UFP_REPLY_NAK,
+	TYPEC_TBT_UFP_REPLY_ACK,
 };
 
 struct ec_params_typec_control {
@@ -6655,8 +6662,12 @@ struct ec_params_typec_control {
 	 * the command version when adding new sub-commands.
 	 */
 	union {
+		/* Used for CLEAR_EVENTS */
 		uint32_t clear_events_mask;
-		uint8_t mode_to_enter;      /* enum typec_mode */
+		/* Used for ENTER_MODE - enum typec_mode */
+		uint8_t mode_to_enter;
+		/* Used for TBT_UFP_REPLY - enum typec_tbt_ufp_reply */
+		uint8_t tbt_ufp_reply;
 		uint8_t placeholder[128];
 	};
 } __ec_align1;

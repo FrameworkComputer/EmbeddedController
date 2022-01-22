@@ -100,6 +100,14 @@ DECLARE_HOST_COMMAND(EC_CMD_TYPEC_DISCOVERY,
 		     hc_typec_discovery,
 		     EC_VER_MASK(0));
 
+/* Default to feature unavailable, with boards supporting it overriding */
+__overridable enum ec_status
+			board_set_tbt_ufp_reply(int port,
+						enum typec_tbt_ufp_reply reply)
+{
+	return EC_RES_UNAVAILABLE;
+}
+
 static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_typec_control *p = args->params;
@@ -116,6 +124,8 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 		break;
 	case TYPEC_CONTROL_COMMAND_ENTER_MODE:
 		return pd_request_enter_mode(p->port, p->mode_to_enter);
+	case TYPEC_CONTROL_COMMAND_TBT_UFP_REPLY:
+		return board_set_tbt_ufp_reply(p->port, p->tbt_ufp_reply);
 	default:
 		return EC_RES_INVALID_PARAM;
 	}

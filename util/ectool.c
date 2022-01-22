@@ -9833,7 +9833,9 @@ int cmd_typec_control(int argc, char *argv[])
 			"    1: Clear events\n"
 			"        args: <event mask>\n"
 			"    2: Enter mode\n"
-			"        args: <0: DP, 1:TBT, 2:USB4>\n",
+			"        args: <0: DP, 1:TBT, 2:USB4>\n"
+			"    3: Set TBT UFP Reply\n"
+			"        args: <0: NAK, 1: ACK>\n",
 			argv[0]);
 		return -1;
 	}
@@ -9876,6 +9878,19 @@ int cmd_typec_control(int argc, char *argv[])
 			return -1;
 		}
 		p.mode_to_enter = conversion_result;
+	case TYPEC_CONTROL_COMMAND_TBT_UFP_REPLY:
+		if (argc < 4) {
+			fprintf(stderr, "Missing reply\n");
+			return -1;
+		}
+
+		conversion_result = strtol(argv[3], &endptr, 0);
+		if ((endptr && *endptr) || conversion_result > UINT8_MAX ||
+						conversion_result < 0) {
+			fprintf(stderr, "Bad reply\n");
+			return -1;
+		}
+		p.tbt_ufp_reply = conversion_result;
 	}
 
 	rv = ec_command(EC_CMD_TYPEC_CONTROL, 0, &p, sizeof(p),
