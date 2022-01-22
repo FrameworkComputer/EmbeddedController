@@ -1,0 +1,39 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+description: |
+  GPIO interrupts list bindings.
+
+  Uses device tree to configure the interrupt handling e.g
+
+    int_wp_l: wp_l {
+      irq-gpio = <&gpio_ec_wp_odl>;
+      flags = <GPIO_INT_EDGE_BOTH>;
+      handler = "wp_interrupt";
+    };
+
+  The interrupt can be enabled either using the DTS label:
+
+    gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_wp_l));
+
+  or the legacy:
+
+    gpio_enable_interrupt(GPIO_WP_L);
+
+compatible: "cros-ec,gpio-interrupts"
+
+child-binding:
+  description: GPIO Interrupt definition.
+  properties:
+    irq-gpio:
+      type: phandle
+      required: true
+      description: The GPIO source of the interrupt.
+    flags:
+      type: int
+      required: true
+      description: The zephyr gpio interrupt config flags.
+    handler:
+      type: string
+      description: The C function name attached to this interrupt.
