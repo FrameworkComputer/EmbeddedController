@@ -213,6 +213,7 @@
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_FIELD_1_B";
 				value = <1>;
+				default;
 			};
 		};
 		field-2 {

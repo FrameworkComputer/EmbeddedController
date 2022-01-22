@@ -11,6 +11,7 @@ child-binding:
         ChromeOS CBI Firmware Config fields definition.
         Each field is defined via a start bit (from LSB) and a size.
         The total size of all FW_CONFIG bit fields must not exceed 32 bits.
+        One default value for each field may be indicated.
     properties:
         enum-name:
             type: string
@@ -43,6 +44,7 @@ child-binding:
 #             enum-name = "PRESENT"
 #             compatible = "cros-ec,cbi-fw-config-value";
 #             value = <1>;
+#             default;
 #         };
 #     };
 # };

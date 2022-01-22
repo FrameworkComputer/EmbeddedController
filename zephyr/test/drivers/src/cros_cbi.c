@@ -50,8 +50,8 @@ static void test_fw_config(void)
 	ret = cros_cbi_get_fw_config(dev, FW_CONFIG_FIELD_1, &value);
 	zassert_true(ret == 0,
 		     "Expected no error return from cros_cbi_get_fw_config");
-	zassert_true(value == FW_FIELD_1_A,
-		     "Expected field value to match FW_FIELD_1_A");
+	zassert_true(value == FW_FIELD_1_B,
+		     "Expected field value to match FW_FIELD_1_B as default");
 
 	ret = cros_cbi_get_fw_config(dev, FW_CONFIG_FIELD_2, &value);
 	zassert_true(ret == 0,

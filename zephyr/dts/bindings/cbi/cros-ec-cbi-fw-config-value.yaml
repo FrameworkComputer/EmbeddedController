@@ -19,3 +19,9 @@ properties:
         required: true
         description:
           Unique value within the parent CBI FW_CONFIG field
+    default:
+        type: boolean
+        description:
+          If set, this value will be the default value of this field
+          if the FW_CONFIG data is invalid or unavailable. It must
+          appear only once for any single field.

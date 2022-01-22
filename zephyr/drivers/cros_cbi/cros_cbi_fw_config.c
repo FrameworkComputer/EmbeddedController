@@ -55,6 +55,12 @@ LOG_MODULE_REGISTER(cros_cbi_fw_config, LOG_LEVEL_ERR);
 #define FW_PARENT_SIZE(id) DT_PROP(DT_PARENT(id), size)
 
 /*
+ * For a child "named-cbi-fw-config-value" node, retrieve the
+ * start of the parent field this value is associated with.
+ */
+#define FW_PARENT_START(id) DT_PROP(DT_PARENT(id), start)
+
+/*
  * Validation check to ensure total field sizes do not exceed 32 bits.
  * The FOREACH loop is nested, one to iterate through all the
  * fw_config nodes, and another for the child field nodes in each
@@ -101,7 +107,17 @@ BUILD_ASSERT(BIT_COUNT(TOTAL_BITS_SET) == TOTAL_FW_CONFIG_NODES_SIZE,
 DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT, FW_VALUE_BUILD_ASSERT)
 
 /*
- * Define union bit fields based on the device tree entries. Example:
+ * Macro to initialise the fields to default value (if specified)
+ */
+#define CBI_FW_CONFIG_INIT_DEFAULT(id, data)				   \
+	do {								   \
+		if (DT_PROP(id, default)) {				   \
+			data->cached_fw_config |=			   \
+				DT_PROP(id, value) << FW_PARENT_START(id); \
+		}							   \
+	} while (0);
+/*
+ * Define bit fields based on the device tree entries. Example:
  * cbi-fw-config {
  *	compatible = "named-cbi-fw-config";
  *
@@ -145,11 +161,16 @@ void cros_cbi_fw_config_init(const struct device *dev)
 {
 	struct cros_cbi_data *data = (struct cros_cbi_data *)(dev->data);
 
-	if (cbi_get_fw_config(&data->cached_fw_config) != EC_SUCCESS)
+	if (cbi_get_fw_config(&data->cached_fw_config) != EC_SUCCESS) {
 		/*
-		 * Missing fw config will defaults to all zeros.
+		 * Missing fw config will set the default or 0 for
+		 * every field.
 		 */
 		data->cached_fw_config = 0;
+		DT_FOREACH_STATUS_OKAY_VARGS(CBI_FW_CONFIG_VALUE_COMPAT,
+					       CBI_FW_CONFIG_INIT_DEFAULT,
+					       data)
+	}
 
 	LOG_INF("Read CBI FW Config : 0x%08X\n", data->cached_fw_config);
 }
