@@ -1,0 +1,91 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_lid_open: lid_open {
+			irq-gpio = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_ac_present: ac_present {
+			irq-gpio = <&gpio_acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_power_button: power_button {
+			irq-gpio = <&gpio_mech_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_slp_s3: slp_s3 {
+			irq-gpio = <&gpio_slp_s3_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_en_pwr_s0";
+		};
+		int_slp_s5: slp_s5 {
+			irq-gpio = <&gpio_slp_s5_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_s5_pgood: s5_pgood {
+			irq-gpio = <&gpio_pg_pwr_s5>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_en_pwr_s0";
+		};
+		int_s0_pgood: s0_pgood {
+			irq-gpio = <&gpio_s0_pgood>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_pg_groupc_s0: pg_groupc_s0 {
+			irq-gpio = <&gpio_pg_groupc_s0_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_set_en_pwr_pcore";
+		};
+		int_volume_up: volume_up {
+			irq-gpio = <&gpio_volup_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_volume_down: volume_down {
+			irq-gpio = <&gpio_voldn_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_usb_c0_tcpc: usb_c0_tcpc {
+			irq-gpio = <&gpio_usb_c0_tcpc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usb_c1_tcpc: usb_c1_tcpc {
+			irq-gpio = <&gpio_usb_c1_tcpc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usb_c0_ppc: usb_c0_ppc {
+			irq-gpio = <&gpio_usb_c0_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_usb_c1_ppc: usb_c1_ppc {
+			irq-gpio = <&gpio_usb_c1_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_usb_c0_bc12: usb_c0_bc12 {
+			irq-gpio = <&gpio_usb_c0_bc12_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bc12_interrupt";
+		};
+		int_usb_c1_bc12: usb_c1_bc12 {
+			irq-gpio = <&gpio_usb_c1_bc12_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bc12_interrupt";
+		};
+	};
+};

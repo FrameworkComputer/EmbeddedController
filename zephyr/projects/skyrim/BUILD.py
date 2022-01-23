@@ -14,6 +14,7 @@ def register_variant(project_name):
             here / "fan.dts",
             here / "gpio.dts",
             here / "i2c.dts",
+            here / "interrupts.dts",
             here / "pwm.dts",
             # Project-specific DTS customizations.
             here / f"{project_name}.dts",

@@ -6,6 +6,7 @@
 #include "chipset.h"
 #include "config.h"
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "power.h"
 #include "timer.h"
@@ -51,8 +52,8 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 static void baseboard_interrupt_init(void)
 {
 	/* Enable Power Group interrupts. */
-	gpio_enable_interrupt(GPIO_PG_GROUPC_S0_OD);
-	gpio_enable_interrupt(GPIO_PG_LPDDR4X_S3_OD);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_groupc_s0));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr4x_s3));
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_interrupt_init, HOOK_PRIO_INIT_I2C + 1);
 

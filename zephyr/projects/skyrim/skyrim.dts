@@ -14,7 +14,8 @@
 			gpios = <&gpio7 4 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PWR_S3";
 		};
-		pg_groupc_s0_od {
+		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
+			#gpio-cells = <0>;
 			gpios = <&gpiof 0 GPIO_INPUT>;
 			enum-name = "GPIO_PG_GROUPC_S0_OD";
 		};
@@ -55,7 +56,8 @@
 			gpios = <&gpioe 5 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_HUB_FAULT_ODL";
 		};
-		pg_lpddr5_s3_od {
+		gpio_pg_lpddr5_s3_od: pg_lpddr5_s3_od {
+			#gpio-cells = <0>;
 			gpios = <&gpio7 3 GPIO_INPUT>;
 			enum-name = "GPIO_PG_LPDDR5_S3_OD";
 		};
@@ -66,11 +68,13 @@
 			gpios = <&gpioa 7 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
-		volup_btn_odl {
+		gpio_volup_btn_odl: volup_btn_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpio6 7 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
-		voldn_btn_odl {
+		gpio_voldn_btn_odl: voldn_btn_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpio7 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
@@ -86,7 +90,8 @@
 			gpios = <&gpiod 7 GPIO_INPUT>;
 			enum-name = "GPIO_WP_L";
 		};
-		pg_lpddr5_s0_od {
+		gpio_pg_lpddr5_s0_od: pg_lpddr5_s0_od {
+			#gpio-cells = <0>;
 			gpios = <&gpio6 0 GPIO_INPUT>;
 			enum-name = "GPIO_PG_LPDDR5_S0_OD";
 		};
@@ -127,6 +132,21 @@
 		/* Disable SB TSI for first board revision */
 		sb-tsi-sensor {
 			status = "disabled";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_pg_lpddr_s3: pg_lpddr_s3 {
+			irq-gpio = <&gpio_pg_lpddr5_s3_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_set_en_pwr_pcore";
+		};
+		int_pg_lpddr_s0: pg_lpddr_s0 {
+			irq-gpio = <&gpio_pg_lpddr5_s0_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_set_soc_pwr_pgood";
 		};
 	};
 };

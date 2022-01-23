@@ -23,6 +23,7 @@
 #include "driver/usb_mux/anx7451.h"
 #include "driver/usb_mux/amd_fp6.h"
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "power.h"
 #include "usb_mux.h"
@@ -84,16 +85,16 @@ BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_MAX_COUNT);
 static void usbc_interrupt_init(void)
 {
 	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
 
 	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_tcpc));
 
 	/* Enable BC 1.2 interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
 
 	/* TODO: Enable SBU fault interrupts (io expander )*/
 }
