@@ -59,6 +59,7 @@ EC Feature                                                                  | Ne
 [Configure GPIO](./zephyr_gpio.md)                                          | yes
 [Configure Batteries (TODO)](./zephyr_template.md)                          | no
 [Configure CrOS Board Information (CBI) (TODO)](./zephyr_template.md)       | no
+[Configure CrOS CBI FW CONFIG](./zephyr_fw_config.md)                       | no
 [Configure Keyboard (TODO)](./zephyr_template.md)                           | no
 [Configure LEDs (TODO)](./zephyr_template.md)                               | no
 [Configure Motion Sensors (TODO)](./zephyr_template.md)                     | no
