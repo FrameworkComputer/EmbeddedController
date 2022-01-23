@@ -363,9 +363,7 @@ static enum ec_status cmd_charging_limit_control(struct host_cmd_handler_args *a
 		charging_maximum_level = charging_maximum_level | CHG_LIMIT_OVERRIDE;
 
 	if (p->modes & CHG_LIMIT_GET_LIMIT) {
-		uint8_t max = 0;
-		system_get_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, &max);
-		r->max_percentage = max;
+		system_get_bbram(SYSTEM_BBRAM_IDX_CHG_MAX, &r->max_percentage);
 		args->response_size = sizeof(*r);
 	}
 
