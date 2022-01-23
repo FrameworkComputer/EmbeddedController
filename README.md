@@ -127,13 +127,13 @@ This is the `10 pin` EC debug connector **JECDB**.
 `Pin 1` is nearest the power button. <br>
 The EC is configured for `2 Wire SWD`.
 
-| Pin | Description | | Pin | Description |
-|:---:|:-----------:| |:---:|:-----------:|
-| `1` | `EC_VCC_3.3`| | `6` | `UART_TX`
-| `2` | `TDI`       | | `7` | `UART_RX`
-| `3` | `TMS`       | | `8` |
-| `4` | `CLK`       | | `9` | `EC_RESETI`
-| `5` | `TDO`       | |`10` | `GND`
+|  Pin  | Description | |  Pin  | Description |
+|:-----:|:-----------:|-|:-----:|:-----------:|
+| **1** | `EC_VCC_3.3`| | **6** | `UART_TX`
+| **2** | `TDI`       | | **7** | `UART_RX`
+| **3** | `TMS`       | | **8** |
+| **4** | `CLK`       | | **9** | `EC_RESETI`
+| **5** | `TDO`       | |**10** | `GND`
 
 ---
 
