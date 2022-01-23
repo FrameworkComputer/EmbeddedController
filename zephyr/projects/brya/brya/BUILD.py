@@ -11,6 +11,7 @@ register_npcx_project(
         "cbi_eeprom.dts",
         "fan.dts",
         "gpio.dts",
+        "interrupts.dts",
         "motionsense.dts",
         "pwm.dts",
         "pwm_leds.dts",
