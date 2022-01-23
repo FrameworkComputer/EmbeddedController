@@ -5,5 +5,5 @@
 register_npcx_project(
     project_name="delbin",
     zephyr_board="volteer",
-    dts_overlays=["gpio.dts", "motionsense.dts"],
+    dts_overlays=["gpio.dts", "interrupts.dts", "motionsense.dts"],
 )
