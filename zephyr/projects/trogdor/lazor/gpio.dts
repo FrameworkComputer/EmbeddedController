@@ -7,94 +7,116 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		usb_c0_pd_int_odl {
+		gpio_usb_c0_pd_int_odl: usb_c0_pd_int_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpioe 0 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_PD_INT_ODL";
 		};
-		usb_c1_pd_int_odl {
+		gpio_usb_c1_pd_int_odl: usb_c1_pd_int_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpiof 5 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C1_PD_INT_ODL";
 		};
-		usb_c0_swctl_int_odl {
+		gpio_usb_c0_swctl_int_odl: usb_c0_swctl_int_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpio0 3 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_SWCTL_INT_ODL";
 		};
-		usb_c1_swctl_int_odl {
+		gpio_usb_c1_swctl_int_odl: usb_c1_swctl_int_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpio4 0 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C1_SWCTL_INT_ODL";
 		};
-		usb_c0_bc12_int_l {
+		gpio_usb_c0_bc12_int_l: usb_c0_bc12_int_l {
+			#gpio-cells = <0>;
 			gpios = <&gpio6 1 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_C0_BC12_INT_L";
 		};
-		usb_c1_bc12_int_l {
+		gpio_usb_c1_bc12_int_l: usb_c1_bc12_int_l {
+			#gpio-cells = <0>;
 			gpios = <&gpio8 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_C1_BC12_INT_L";
 		};
-		usb_a0_oc_odl {
+		gpio_usb_a0_oc_odl: usb_a0_oc_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpiod 1 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_A0_OC_ODL";
 		};
 		gpio_acok_od: acok_od {
+			#gpio-cells = <0>;
 			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
-		ccd_mode_odl {
+		gpio_ccd_mode_odl: ccd_mode_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpioe 3 GPIO_INPUT>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
-		ec_voldn_btn_odl {
+		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpio7 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
-		ec_volup_btn_odl {
+		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpiof 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
-		ec_wp_odl {
+		gpio_ec_wp_odl: ec_wp_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpioa 1 GPIO_INPUT>;
 			enum-name = "GPIO_WP_L";
 		};
 		gpio_lid_open_ec: lid_open_ec {
+			#gpio-cells = <0>;
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
-		ap_rst_l {
+		gpio_ap_rst_l: ap_rst_l {
+			#gpio-cells = <0>;
 			gpios = <&gpioc 1 GPIO_INPUT>;
 			enum-name = "GPIO_AP_RST_L";
 		};
-		ps_hold {
+		gpio_ps_hold: ps_hold {
+			#gpio-cells = <0>;
 			gpios = <&gpioa 4 GPIO_INPUT_PULL_DOWN>;
 			enum-name = "GPIO_PS_HOLD";
 		};
-		ap_suspend {
+		gpio_ap_suspend: ap_suspend {
+			#gpio-cells = <0>;
 			gpios = <&gpio5 7 GPIO_INPUT>;
 			enum-name = "GPIO_AP_SUSPEND";
 		};
-		deprecated_ap_rst_req {
+		gpio_deprecated_ap_rst_req: deprecated_ap_rst_req {
+			#gpio-cells = <0>;
 			gpios = <&gpioc 2 GPIO_INPUT_PULL_DOWN>;
 			enum-name = "GPIO_DEPRECATED_AP_RST_REQ";
 		};
-		power_good {
+		gpio_power_good: power_good {
+			#gpio-cells = <0>;
 			gpios = <&gpio5 4 GPIO_INPUT_PULL_DOWN>;
 			enum-name = "GPIO_POWER_GOOD";
 		};
-		warm_reset_l {
+		gpio_warm_reset_l: warm_reset_l {
+			#gpio-cells = <0>;
 			gpios = <&gpiof 4 GPIO_INPUT>;
 			enum-name = "GPIO_WARM_RESET_L";
 		};
 		ap_ec_spi_cs_l {
 			gpios = <&gpio5 3 GPIO_INPUT_PULL_DOWN>;
 		};
-		tablet_mode_l {
+		gpio_tablet_mode_l: tablet_mode_l {
+			#gpio-cells = <0>;
 			gpios = <&gpioc 6 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_accel_gyro_int_l: accel_gyro_int_l {
+			#gpio-cells = <0>;
 			gpios = <&gpioa 0 GPIO_INPUT>;
 			enum-name = "GPIO_ACCEL_GYRO_INT_L";
 		};
@@ -102,11 +124,13 @@
 			gpios = <&gpioe 2 GPIO_INPUT>;
 			enum-name = "GPIO_DA9313_GPIO0";
 		};
-		switchcap_pg_int_l {
+		gpio_switchcap_pg_int_l: switchcap_pg_int_l {
+			#gpio-cells = <0>;
 			gpios = <&gpioe 2 GPIO_INPUT>;
 			enum-name = "GPIO_SWITCHCAP_PG_INT_L";
 		};
 		gpio_ec_rst_odl: ec_rst_odl {
+			#gpio-cells = <0>;
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_EC_RST_ODL";
 		};

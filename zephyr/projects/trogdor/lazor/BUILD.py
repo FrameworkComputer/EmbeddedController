@@ -8,6 +8,7 @@ register_npcx_project(
     dts_overlays=[
         "battery.dts",
         "gpio.dts",
+        "interrupts.dts",
         "keyboard.dts",
         "led.dts",
         "motionsense.dts",

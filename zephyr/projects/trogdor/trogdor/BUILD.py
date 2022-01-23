@@ -5,5 +5,10 @@
 register_npcx_project(
     project_name="trogdor",
     zephyr_board="trogdor",
-    dts_overlays=["gpio.dts", "battery.dts", "motionsense.dts"],
+    dts_overlays=[
+        "gpio.dts",
+        "battery.dts",
+        "interrupts.dts",
+        "motionsense.dts",
+    ],
 )
