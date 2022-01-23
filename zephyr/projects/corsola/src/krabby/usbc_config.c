@@ -71,18 +71,43 @@ void bc12_interrupt(enum gpio_signal signal)
 
 static void board_sub_bc12_init(void)
 {
+/*
+ * This function seems quite broken, so leave it out for now.
+ */
+#ifndef CONFIG_ZEPHYR
 	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
-		gpio_enable_interrupt(GPIO_USB_C1_BC12_CHARGER_INT_ODL);
+		/*
+		 * The original code had:
+		 *
+		 * gpio_enable_interrupt(GPIO_USB_C1_BC12_CHARGER_INT_ODL);
+		 *
+		 * But this interrupt was defined out in gpio_map.h for
+		 * this EC type.
+		 */
 	else
 		/* If this is not a Type-C subboard, disable the task. */
+		/*
+		 * And this function is not implemented in zephyr
+		 */
 		task_disable_task(TASK_ID_USB_CHG_P1);
+#endif
 }
 /* Must be done after I2C and subboard */
 DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_INIT_I2C + 1);
 
 static void board_usbc_init(void)
 {
-	gpio_enable_interrupt(GPIO_USB_C0_PPC_BC12_INT_ODL);
+	/*
+	 * Original code was:
+	 *
+	 * gpio_enable_interrupt(GPIO_USB_C0_PPC_BC12_INT_ODL);
+	 *
+	 * But this interrupt is defined out in gpio_map.h for
+	 * CONFIG_SOC_IT8XXX2
+	 */
+#ifdef CONFIG_SOC_NPCX9M3F
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_DEFAULT-1);
 

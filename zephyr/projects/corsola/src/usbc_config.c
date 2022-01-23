@@ -14,6 +14,7 @@
 #include "ec_commands.h"
 #include "extpower.h"
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "lid_switch.h"
@@ -38,7 +39,9 @@
 /* Baseboard */
 static void baseboard_init(void)
 {
-	gpio_enable_interrupt(GPIO_AP_XHCI_INIT_DONE);
+#ifdef CONFIG_VARIANT_CORSOLA_USBA
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usba));
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT-1);
 

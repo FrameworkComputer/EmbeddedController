@@ -14,6 +14,7 @@
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/rt1718s.h"
 #include "driver/usb_mux/ps8743.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "timer.h"
 #include "usb_charge.h"
@@ -125,17 +126,26 @@ void board_tcpc_init(void)
 	}
 
 	/* Enable PPC interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	/*
+	 * The original code says GPIO_USB_C0_TCPC_INT_ODL but
+	 * the comments say PPC interrupt, so perhaps
+	 * this should be int_usb_c0_ppc.
+	 * Since int_usb_c0_tcpc is enabled further down, this
+	 * does look like a typo.
+	 */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
 	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
-		gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_x_ec_gpio2));
 
 	/* Enable TCPC interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
 	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
-		gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_usb_c1_tcpc));
 
 	/* Enable BC1.2 interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
