@@ -13,6 +13,7 @@
 #include "config.h"
 #include "cros_board_info.h"
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "ppc/sn5s330_public.h"
 #include "ppc/syv682x_public.h"
@@ -172,7 +173,7 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 static void board_init_usbc(void)
 {
 	/* Enable USB-A overcurrent interrupt */
-	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_a0_oc));
 }
 DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
 
@@ -185,11 +186,11 @@ void board_tcpc_init(void)
 	}
 
 	/* Enable PPC interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_swctl));
 
 	/* Enable TCPC interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_pd));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_pd));
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see

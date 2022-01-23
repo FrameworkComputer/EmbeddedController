@@ -14,6 +14,8 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
             here / "gpio.dts",
             here / "common.dts",
             here / "i2c.dts",
+            here / "interrupts.dts",
+            here / "interrupts.dts",
             here / "motionsense.dts",
             here / "pwm.dts",
             here / "switchcap.dts",
@@ -32,7 +34,6 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
 
 register_variant(
     project_name="herobrine_npcx9",
-    extra_kconfig_files=[here / "prj_herobrine_npcx9.conf"],
 )
 
 
