@@ -20,8 +20,9 @@ Kconfig Option                          | Default | Documentation
 
 Configure the GPIO module by declaring all GPIOs in the devicetree node with
 `compatible` property `named-gpios`. The GPIO module automatically initializes
-all GPIOs from this node. The C source code accesses GPIOs using the specified
-`enum-name` property.
+all GPIOs from this node (unless the `no-auto-init` property is present).
+Legacy C source code accesses GPIOs using the specified
+`enum-name` property as an enum name of the GPIO.
 
 Named GPIO properties:
 
@@ -29,7 +30,11 @@ Property | Description | Settings
 :------- | :---------- | :-------
 `#gpio-cells` | Specifier cell count, always `<0>`, required if the node label is used in a `-gpios` property. | `<0>`
 `gpios` | GPIO phandle, identifies the port (X), pin number (Y) and flags. | `<&gpioX Y flags>`
-`enum-name` | The enum used to refer to the GPIO in the code. | `GPIO_<NAME>`
+`enum-name` | An optional name used to define an enum to refer to the GPIO in legacy code. | `GPIO_<NAME>`
+`no-auto-init` | If present, the GPIO **will not** be initialized at start-up. | boolean, default false
+
+The use of `no-auto-init` allows GPIOs to be skipped at start-up initialization time,
+and selectively enabled by code at some later time.
 
 The file [gpio-enum-name.yaml] defines the list of valid `enum-name` values.
 
@@ -56,6 +61,37 @@ included from the main project DTS file.
 
 For platform specific features, other flags may be available in the Zephyr
 [dt-bindings/gpio/gpio.h] file, such as `GPIO_VOLTAGE_1P8`.
+
+### Legacy enum-name usage
+
+Only GPIOs that require referencing from legacy common code should have an `enum-name` property.
+The legacy API (e.g `gpio_get_level(enum gpio_signal)`) requires a known name for the enum, which
+is set using the `enum-name` property.
+
+### Zephyr GPIO API usage
+
+GPIOs references that are not in legacy common code should use the
+[standard Zephyr API](https://docs.zephyrproject.org/latest/reference/peripherals/gpio.html)
+to access the GPIOs.
+To facilitate this, all GPIOs in `named-gpios` will have prebuilt `struct gpio_dt_spec` blocks
+created that may be used directly in the Zephyr GPIO API calls.
+These blocks are accessed via a macro (`GPIO_DT_LABEL`) using the node label on the GPIO.
+The legacy enum can also be used to retrieve the `gpio_dt_spec` for an GPIO via the
+function `gpio_get_dt_spec` (though this is a runtime lookup). E.g:
+
+```
+	fan_status = gpio_pin_get_dt(GPIO_DT_LABEL(gpio_en_pp5000_fan));
+...
+	/*
+	 * Legacy code gave us an enum gpio_signal, get a Zephyr reference
+	 * for that GPIO.
+	 */
+	const struct gpio_dt_spec *my_gpio = gpio_get_dt_spec(my_signal);
+	my_status = gpio_pin_get_dt(my_gpio);
+```
+
+The goal is to migrate away from using the legacy API to use the Zephyr API, and
+eventually deprecate the use of the `enum-name` property to generate the GPIO signal enum.
 
 ### Unused GPIOs
 
@@ -107,28 +143,65 @@ named-gpios {
 }
 ```
 
-## Board Specific Code
+## GPIO Interrupts
 
-Projects that use GPIO interrupts have to specify the interrupt to routine
-mappings in a board specific file. This normally happens in [gpio_map.h] in
-the project `include` directory, by specifying a series of `GPIO_INT` in a
-`EC_CROS_GPIO_INTERRUPTS` define. For example:
+GPIO interrupts are specified in a device tree node with a `compatible` property
+of `cros-ec,gpio-interrupts`.
+
+Child nodes of this single node contain the following properties:
+
+Property | Description | Settings
+:------- | :---------- | :-------
+`irq-gpio` | A reference via a node label to the GPIO that is associated with this interrupt. | `<&gpio_lable>`
+`flags` | The GPIO [interrupt flags](https://docs.zephyrproject.org/latest/reference/peripherals/gpio.html) that define how the interrupt is generated. | `GPIO_INT_<flags>`
+`handler` | The C name of the interrupt handler that handles the interrupt. | C function name.
+
+For example:
 
 ```
-#define EC_CROS_GPIO_INTERRUPTS                                               \
-        GPIO_INT(GPIO_AC_PRESENT, GPIO_INT_EDGE_BOTH, extpower_interrupt)     \
-        GPIO_INT(GPIO_LID_OPEN, GPIO_INT_EDGE_BOTH, lid_interrupt)            \
-        ...
+gpio-interrupts {
+        compatible = "cros-ec,gpio-interrupts";
+...
+        int_power_button: power_button {
+                irq-gpio = <&gpio_ec_pwr_btn_l>;
+		flags = <GPIO_INT_EDGE_BOTH>;
+                handler = "power_button_interrupt";
+        };
+...
+}
 ```
 
-The format of GPIO_INT is:
+There must only be one named node containing all of the device tree interrupt
+configuration, but of course overlays may be used to add child nodes or modify the
+single node.
 
-`GPIO_INT(signal, flags, irq_handler)`
+The C handler takes one argument, the `enum signal` of the GPIO, such as:
 
-- `signal` is the GPIO `enum-name` defined in the `named-gpios` declaration,
-  any of [gpio-enum-name.yaml].
-- `flags` is a Zephyr GPIO interrupt flag, any of [include/drivers/gpio.h].
-- `irq_handler` is function called when the interrupt is triggered.
+```
+void power_button_interrupt(enum gpio_signal signal)
+{
+	/* Process power button event */
+...
+}
+```
+
+This matches the function signature of the existing legacy interrupt handlers, so no
+shims are required.
+
+Before any interrupt can be received, it must be enabled. Legacy code uses
+the functions `gpio_enable_interrupt(enum signal)` and
+`gpio_disable_interrupt(enum signal)` functions.
+
+Whilst it is possible to use the Zephyr GPIO interrupt API directly,
+for convenience (until the deprecation of the legacy GPIO enum signal names)
+interrupts can be identified via a macro and the label on the interrupt child nodes,
+and these can be used to enable or disable the interrupts:
+
+```
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_power_button));
+```
+
+This avoid having to create boiler-plate callbacks as part of the interrupt setup.
 
 ## Threads
 
