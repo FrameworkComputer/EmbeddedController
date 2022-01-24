@@ -235,14 +235,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_LED1,
-	PWM_CH_LED2,
-	PWM_CH_LED3,
-	PWM_CH_KBLIGHT,
-	PWM_CH_COUNT,
-};
-
 void board_reset_pd_mcu(void);
 void rt1718s_tcpc_interrupt(enum gpio_signal signal);
 
