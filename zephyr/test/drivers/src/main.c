@@ -33,6 +33,7 @@ extern void test_suite_integration_usb(void);
 extern void test_suite_power_common(void);
 extern void test_suite_power_common_no_tasks(void);
 extern void test_suite_watchdog(void);
+extern void test_suite_usb_pd_host_cmd(void);
 
 void test_main(void)
 {
@@ -67,4 +68,5 @@ void test_main(void)
 	test_suite_integration_usb();
 	test_suite_power_common();
 	test_suite_watchdog();
+	test_suite_usb_pd_host_cmd();
 }
