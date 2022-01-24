@@ -17,9 +17,26 @@
 #include "test_util.h"
 
 /* Defined in implementation */
-int hex8tou32(char *str, uint32_t *val);
 int command_pd(int argc, char **argv);
 int remote_flashing(int argc, char **argv);
+
+static enum debug_level prl_debug_level;
+static enum debug_level pe_debug_level;
+static enum debug_level tc_debug_level;
+
+static bool pd_get_polarity_called;
+static bool pd_comm_is_enabled_called;
+static bool pd_get_power_role_called;
+static bool pd_get_data_role_called;
+static bool tc_is_vconn_src_called;
+static bool tc_get_current_state_called;
+static bool tc_get_flags_called;
+static bool pe_get_current_state_called;
+static bool pe_get_flags_called;
+static bool pd_get_dual_role_called;
+static bool board_get_usb_pd_port_count_called;
+static bool pd_srccaps_dump_called;
+static bool pd_timer_dump_called;
 
 static enum try_src_override_t try_src_override;
 static int test_port;
@@ -34,6 +51,94 @@ static uint32_t vdm_data[10];
 static enum pd_dual_role_states dr_state;
 
 /* Mock functions */
+int tc_is_vconn_src(int port)
+{
+	tc_is_vconn_src_called = true;
+	return 0;
+}
+
+enum pd_power_role pd_get_power_role(int port)
+{
+	pd_get_power_role_called = true;
+	return 0;
+}
+
+uint32_t pe_get_flags(int port)
+{
+	pe_get_flags_called = true;
+	return 0;
+}
+
+const char *pe_get_current_state(int port)
+{
+	pe_get_current_state_called = true;
+	return "PE_STATE";
+}
+
+enum pd_dual_role_states pd_get_dual_role(int port)
+{
+	pd_get_dual_role_called = true;
+	return 0;
+}
+
+void pd_timer_dump(int port)
+{
+	pd_timer_dump_called = true;
+}
+
+void pd_srccaps_dump(int port)
+{
+	pd_srccaps_dump_called = true;
+}
+
+void prl_set_debug_level(enum debug_level level)
+{
+	prl_debug_level = level;
+}
+
+void pe_set_debug_level(enum debug_level level)
+{
+	pe_debug_level = level;
+}
+
+void tc_set_debug_level(enum debug_level level)
+{
+	tc_debug_level = level;
+}
+
+enum pd_data_role pd_get_data_role(int port)
+{
+	pd_get_data_role_called = true;
+	return 0;
+}
+
+void tc_state_init(int port)
+{
+}
+
+void tc_event_check(int port, int evt)
+{
+}
+
+uint8_t tc_get_pd_enabled(int port)
+{
+	return 0;
+}
+
+void pe_run(int port, int evt, int en)
+{
+}
+
+void tc_run(int port)
+{
+}
+
+uint8_t board_get_usb_pd_port_count(void)
+{
+	board_get_usb_pd_port_count_called = true;
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
+}
+
 void pe_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 					int count)
 {
@@ -90,25 +195,29 @@ void pd_set_dual_role(int port, enum pd_dual_role_states state)
 int pd_comm_is_enabled(int port)
 {
 	test_port = port;
+	pd_comm_is_enabled_called = true;
 	return 0;
 }
 
-int pd_get_polarity(int port)
+enum tcpc_cc_polarity pd_get_polarity(int port)
 {
 	test_port = port;
+	pd_get_polarity_called = true;
 	return 0;
 }
 
 uint32_t tc_get_flags(int port)
 {
 	test_port = port;
+	tc_get_flags_called = true;
 	return 0;
 }
 
 const char *tc_get_current_state(int port)
 {
 	test_port = port;
-	return 0;
+	tc_get_current_state_called = true;
+	return "TC_STATE";
 }
 
 void tc_try_src_override(enum try_src_override_t ov)
@@ -132,40 +241,30 @@ enum try_src_override_t tc_get_try_src_override(void)
 	return try_src_override;
 }
 
-static int test_hex8tou32(void)
-{
-	char const *tst_str[] = {"01234567", "89abcdef",
-					"AABBCCDD", "EEFF0011"};
-	uint32_t const tst_int[] = {0x01234567, 0x89abcdef,
-					0xaabbccdd, 0xeeff0011};
-	uint32_t val;
-	int i;
-
-	for (i = 0; i < 4; i++) {
-		hex8tou32(tst_str[i], &val);
-		TEST_ASSERT(val == tst_int[i]);
-	}
-
-	return EC_SUCCESS;
-}
-
-static int test_command_pd_arg_count(void)
-{
-	int argc;
-	char const *argv[] = {"pd", "", 0, 0, 0};
-
-	for (argc = 0; argc < 3; argc++)
-		TEST_ASSERT(command_pd(argc, argv) == EC_ERROR_PARAM_COUNT);
-
-	return EC_SUCCESS;
-}
-
-static int test_command_pd_port_num(void)
+static int test_command_pd_dump(void)
 {
 	int argc = 3;
-	char const *argv[10] = {"pd", "5", 0, 0, 0};
+	char *argv[] = {"pd", "dump", "", 0, 0, 0};
+	char test[2];
 
+	sprintf(test, "e");
+	argv[2] = test;
 	TEST_ASSERT(command_pd(argc, argv) == EC_ERROR_PARAM2);
+
+	for (int i = DEBUG_DISABLE; i <= DEBUG_LEVEL_MAX; i++) {
+		sprintf(test, "%d", i);
+		argv[2] = test;
+		TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
+		TEST_ASSERT(prl_debug_level == i);
+		TEST_ASSERT(pe_debug_level == i);
+		TEST_ASSERT(tc_debug_level == i);
+	}
+
+	sprintf(test, "%d", DEBUG_LEVEL_MAX + 1);
+	argv[2] = test;
+	TEST_ASSERT(prl_debug_level == DEBUG_LEVEL_MAX);
+	TEST_ASSERT(pe_debug_level == DEBUG_LEVEL_MAX);
+	TEST_ASSERT(tc_debug_level == DEBUG_LEVEL_MAX);
 
 	return EC_SUCCESS;
 }
@@ -173,7 +272,7 @@ static int test_command_pd_port_num(void)
 static int test_command_pd_try_src(void)
 {
 	int argc = 3;
-	char const *argv[] = {"pd", "trysrc", "2", 0, 0};
+	char *argv[] = {"pd", "trysrc", "2", 0, 0};
 
 	try_src_override = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -190,10 +289,44 @@ static int test_command_pd_try_src(void)
 	return EC_SUCCESS;
 }
 
+static int test_command_pd_version(void)
+{
+	int argc = 2;
+	char *argv[] = {"pd", "version", 0, 0, 0};
+
+	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
+
+	return EC_SUCCESS;
+}
+
+static int test_command_pd_arg_count(void)
+{
+	int argc;
+	char *argv[] = {"pd", "", 0, 0, 0};
+
+	for (argc = 0; argc < 3; argc++)
+		TEST_ASSERT(command_pd(argc, argv) == EC_ERROR_PARAM_COUNT);
+
+	return EC_SUCCESS;
+}
+
+static int test_command_pd_port_num(void)
+{
+	int argc = 3;
+	char *argv[10] = {"pd", "0", 0, 0, 0};
+	char test[2];
+
+	sprintf(test, "%d", CONFIG_USB_PD_PORT_MAX_COUNT);
+	argv[1] = test;
+	TEST_ASSERT(command_pd(argc, argv) == EC_ERROR_PARAM2);
+
+	return EC_SUCCESS;
+}
+
 static int test_command_pd_tx(void)
 {
 	int argc = 3;
-	char const *argv[] = {"pd", "0", "tx", 0, 0};
+	char *argv[] = {"pd", "0", "tx", 0, 0};
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -206,7 +339,7 @@ static int test_command_pd_tx(void)
 static int test_command_pd_charger(void)
 {
 	int argc = 3;
-	char const *argv[] = {"pd", "1", "charger", 0, 0};
+	char *argv[] = {"pd", "1", "charger", 0, 0};
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -219,7 +352,7 @@ static int test_command_pd_charger(void)
 static int test_command_pd_dev1(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "0", "dev", "20", 0};
+	char *argv[] = {"pd", "0", "dev", "20", 0};
 
 	request = 0;
 	max_volt = 0;
@@ -234,7 +367,7 @@ static int test_command_pd_dev1(void)
 static int test_command_pd_dev2(void)
 {
 	int argc = 3;
-	char const *argv[] = {"pd", "1", "dev", 0, 0};
+	char *argv[] = {"pd", "1", "dev", 0, 0};
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -248,7 +381,7 @@ static int test_command_pd_dev2(void)
 static int test_command_pd_disable(void)
 {
 	int argc = 3;
-	char const *argv[] = {"pd", "0", "disable", 0, 0};
+	char *argv[] = {"pd", "0", "disable", 0, 0};
 
 	comm_enable = 1;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -261,7 +394,7 @@ static int test_command_pd_disable(void)
 static int test_command_pd_enable(void)
 {
 	int argc = 3;
-	char const *argv[] = {"pd", "1", "enable", 0, 0};
+	char *argv[] = {"pd", "1", "enable", 0, 0};
 
 	comm_enable = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -274,7 +407,7 @@ static int test_command_pd_enable(void)
 static int test_command_pd_hard(void)
 {
 	int argc = 3;
-	char const *argv[] = {"pd", "0", "hard", 0, 0};
+	char *argv[] = {"pd", "0", "hard", 0, 0};
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -287,7 +420,7 @@ static int test_command_pd_hard(void)
 static int test_command_pd_soft(void)
 {
 	int argc = 3;
-	char const *argv[] = {"pd", "0", "soft", 0, 0};
+	char *argv[] = {"pd", "0", "soft", 0, 0};
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -300,7 +433,7 @@ static int test_command_pd_soft(void)
 static int test_command_pd_swap1(void)
 {
 	int argc = 3;
-	char const *argv[] = {"pd", "0", "swap", 0, 0};
+	char *argv[] = {"pd", "0", "swap", 0, 0};
 
 	TEST_ASSERT(command_pd(argc, argv) == EC_ERROR_PARAM_COUNT);
 
@@ -310,7 +443,7 @@ static int test_command_pd_swap1(void)
 static int test_command_pd_swap2(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "0", "swap", "power", 0};
+	char *argv[] = {"pd", "0", "swap", "power", 0};
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -323,7 +456,7 @@ static int test_command_pd_swap2(void)
 static int test_command_pd_swap3(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "1", "swap", "data", 0};
+	char *argv[] = {"pd", "1", "swap", "data", 0};
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -336,7 +469,7 @@ static int test_command_pd_swap3(void)
 static int test_command_pd_swap4(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "0", "swap", "vconn", 0};
+	char *argv[] = {"pd", "0", "swap", "vconn", 0};
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -349,9 +482,19 @@ static int test_command_pd_swap4(void)
 static int test_command_pd_swap5(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "0", "swap", "xyz", 0};
+	char *argv[] = {"pd", "0", "swap", "xyz", 0};
 
 	TEST_ASSERT(command_pd(argc, argv) == EC_ERROR_PARAM3);
+
+	return EC_SUCCESS;
+}
+
+static int test_command_pd_dualrole0(void)
+{
+	int argc = 3;
+	char *argv[] = {"pd", "0", "dualrole", 0, 0};
+
+	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
 
 	return EC_SUCCESS;
 }
@@ -359,7 +502,7 @@ static int test_command_pd_swap5(void)
 static int test_command_pd_dualrole1(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "0", "dualrole", "on", 0};
+	char *argv[] = {"pd", "0", "dualrole", "on", 0};
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -372,7 +515,7 @@ static int test_command_pd_dualrole1(void)
 static int test_command_pd_dualrole2(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "0", "dualrole", "off", 0};
+	char *argv[] = {"pd", "0", "dualrole", "off", 0};
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -385,7 +528,7 @@ static int test_command_pd_dualrole2(void)
 static int test_command_pd_dualrole3(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "0", "dualrole", "freeze", 0};
+	char *argv[] = {"pd", "0", "dualrole", "freeze", 0};
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -398,7 +541,7 @@ static int test_command_pd_dualrole3(void)
 static int test_command_pd_dualrole4(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "0", "dualrole", "sink", 0};
+	char *argv[] = {"pd", "0", "dualrole", "sink", 0};
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -411,7 +554,7 @@ static int test_command_pd_dualrole4(void)
 static int test_command_pd_dualrole5(void)
 {
 	int argc = 4;
-	char const *argv[] = {"pd", "0", "dualrole", "source", 0};
+	char *argv[] = {"pd", "0", "dualrole", "source", 0};
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -421,51 +564,91 @@ static int test_command_pd_dualrole5(void)
 	return EC_SUCCESS;
 }
 
+static int test_command_pd_state(void)
+{
+	int argc = 3;
+	char *argv[] = {"pd", "0", "state", 0, 0};
+
+	pd_get_polarity_called = false;
+	pd_comm_is_enabled_called = false;
+	pd_get_power_role_called = false;
+	pd_get_data_role_called = false;
+	tc_is_vconn_src_called = false;
+	tc_get_current_state_called = false;
+	tc_get_flags_called = false;
+	pe_get_current_state_called = false;
+	pe_get_flags_called = false;
+
+	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
+	TEST_ASSERT(pd_get_polarity_called);
+	TEST_ASSERT(pd_comm_is_enabled_called);
+	TEST_ASSERT(pd_get_power_role_called);
+	TEST_ASSERT(pd_get_data_role_called);
+	TEST_ASSERT(tc_is_vconn_src_called);
+	TEST_ASSERT(tc_get_current_state_called);
+	TEST_ASSERT(tc_get_flags_called);
+	TEST_ASSERT(pe_get_current_state_called);
+	TEST_ASSERT(pe_get_flags_called);
+
+	return EC_SUCCESS;
+}
+
+static int test_command_pd_srccaps(void)
+{
+	int argc = 3;
+	char *argv[] = {"pd", "0", "srccaps", 0, 0};
+
+	pd_srccaps_dump_called = false;
+	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
+	TEST_ASSERT(pd_srccaps_dump_called);
+
+	return EC_SUCCESS;
+}
+
+static int test_command_pd_timer(void)
+{
+	int argc = 3;
+	char *argv[] = {"pd", "0", "timer", 0, 0};
+
+	pd_timer_dump_called = false;
+	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
+	TEST_ASSERT(pd_timer_dump_called);
+
+	return EC_SUCCESS;
+}
+
 
 void run_test(int argc, char **argv)
 {
 	test_reset();
 
-	RUN_TEST(test_hex8tou32);
+	RUN_TEST(test_command_pd_dump);
+	RUN_TEST(test_command_pd_try_src);
+	RUN_TEST(test_command_pd_version);
 	RUN_TEST(test_command_pd_arg_count);
 	RUN_TEST(test_command_pd_port_num);
-	RUN_TEST(test_command_pd_try_src);
 	RUN_TEST(test_command_pd_tx);
-	RUN_TEST(test_command_pd_bist_tx);
-	RUN_TEST(test_command_pd_bist_rx);
 	RUN_TEST(test_command_pd_charger);
 	RUN_TEST(test_command_pd_dev1);
 	RUN_TEST(test_command_pd_dev2);
 	RUN_TEST(test_command_pd_disable);
 	RUN_TEST(test_command_pd_enable);
 	RUN_TEST(test_command_pd_hard);
-	RUN_TEST(test_command_pd_info);
 	RUN_TEST(test_command_pd_soft);
 	RUN_TEST(test_command_pd_swap1);
 	RUN_TEST(test_command_pd_swap2);
 	RUN_TEST(test_command_pd_swap3);
 	RUN_TEST(test_command_pd_swap4);
 	RUN_TEST(test_command_pd_swap5);
-	RUN_TEST(test_command_pd_ping);
-	RUN_TEST(test_command_pd_vdm1);
-	RUN_TEST(test_command_pd_vdm2);
-	RUN_TEST(test_command_pd_vdm3);
-	RUN_TEST(test_command_pd_vdm4);
-	RUN_TEST(test_command_pd_vdm5);
-	RUN_TEST(test_command_pd_vdm6);
-	RUN_TEST(test_command_pd_flash1);
-	RUN_TEST(test_command_pd_flash2);
-	RUN_TEST(test_command_pd_flash3);
-	RUN_TEST(test_command_pd_flash4);
-	RUN_TEST(test_command_pd_flash5);
-	RUN_TEST(test_command_pd_flash6);
-	RUN_TEST(test_command_pd_flash7);
-	RUN_TEST(test_command_pd_flash8);
+	RUN_TEST(test_command_pd_dualrole0);
 	RUN_TEST(test_command_pd_dualrole1);
 	RUN_TEST(test_command_pd_dualrole2);
 	RUN_TEST(test_command_pd_dualrole3);
 	RUN_TEST(test_command_pd_dualrole4);
 	RUN_TEST(test_command_pd_dualrole5);
+	RUN_TEST(test_command_pd_state);
+	RUN_TEST(test_command_pd_srccaps);
+	RUN_TEST(test_command_pd_timer);
 
 	test_print_result();
 }

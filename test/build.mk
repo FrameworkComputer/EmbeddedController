@@ -83,6 +83,7 @@ test-list-host += uptime
 test-list-host += usb_common
 test-list-host += usb_pd_int
 test-list-host += usb_pd
+test-list-host += usb_pd_console
 test-list-host += usb_pd_giveback
 test-list-host += usb_pd_rev30
 test-list-host += usb_pd_pdo_fixed
@@ -137,7 +138,7 @@ cov-dont-test += stillness_detector usb_pe_drp_noextended charge_manager
 cov-dont-test += timer_dos cec float queue x25519 usb_pd_timer motion_sense_fifo
 cov-dont-test += kb_scan_strict entropy kb_mkbp cbi_wp gyro_cal newton_fit
 cov-dont-test += shmalloc usb_common usb_ppc utils_str battery_get_params_smart
-cov-dont-test += rtc charge_ramp kasa motion_angle_tablet usb_prl
+cov-dont-test += rtc charge_ramp kasa motion_angle_tablet usb_prl usb_pd_console
 
 cov-test-list-host = $(filter-out $(cov-dont-test), $(test-list-host))
 
@@ -221,6 +222,7 @@ uptime-y=uptime.o
 usb_common-y=usb_common_test.o fake_battery.o
 usb_pd_int-y=usb_pd_int.o
 usb_pd-y=usb_pd.o
+usb_pd_console-y=usb_pd_console.o
 usb_pd_giveback-y=usb_pd.o
 usb_pd_rev30-y=usb_pd.o
 usb_pd_pdo_fixed-y=usb_pd_pdo_fixed_test.o

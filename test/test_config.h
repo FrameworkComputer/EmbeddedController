@@ -576,6 +576,20 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USBC_PPC_VCONN
 #endif
 
+#ifdef TEST_USB_PD_CONSOLE
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#define CONFIG_USB_PE_SM
+#define CONFIG_CMD_PD
+#define CONFIG_USB_PD_TCPMV2
+#define CONFIG_USB_PD_TRY_SRC
+#define CONFIG_USB_PD_DUAL_ROLE
+#define CONFIG_USBC_VCONN
+#define CONFIG_USBC_VCONN_SWAP
+#define CONFIG_CMD_PD_TIMER
+#undef CONFIG_USB_PD_HOST_CMD
+#undef CONFIG_USB_PRL_SM
+#endif
+
 #if defined(TEST_CHARGE_MANAGER) || defined(TEST_CHARGE_MANAGER_DRP_CHARGING)
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */

@@ -191,6 +191,7 @@ test_export_static int command_pd(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
+#ifndef TEST_BUILD
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
 	 "version"
 	 "\ndump [0|1|2|3]"
@@ -210,3 +211,4 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 	,
 	"USB PD");
+#endif

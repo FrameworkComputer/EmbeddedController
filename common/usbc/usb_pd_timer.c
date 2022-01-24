@@ -310,7 +310,7 @@ int pd_timer_next_expiration(int port)
 }
 
 #ifdef CONFIG_CMD_PD_TIMER
-void pd_timer_dump(int port)
+test_mockable_static void pd_timer_dump(int port)
 {
 	int timer;
 	uint64_t now = get_time().val;
