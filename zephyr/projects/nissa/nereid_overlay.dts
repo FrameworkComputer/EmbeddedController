@@ -6,6 +6,12 @@
 #include <cros/thermistor/thermistor.dtsi>
 
 / {
+	batteries {
+		default_battery: lgc {
+			compatible = "lgc,ap18c8k";
+		};
+	};
+
 	hibernate-wake-pins {
 		compatible = "cros-ec,hibernate-wake-pins";
 		wakeup-pins = <
@@ -32,6 +38,16 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
+		int_usb_c0: usb_c0 {
+			irq-gpio = <&gpio_usb_c0_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_c0_interrupt";
+		};
+		int_usb_c1: usb_c1 {
+			irq-gpio = <&gpio_usb_c1_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_c1_interrupt";
+		};
 		int_prochot: ap_prochot {
 			irq-gpio = <&gpio_ec_prochot_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -46,6 +62,14 @@
 		gpio_usb_c1_int_odl: usb_c1_int_odl {
 			#gpio-cells = <0>;
 			gpios = <&gpioe 6 GPIO_INPUT_PULL_UP>;
+			no-auto-init;
+		};
+		/*
+		 * Output GPIO when used with type-A port 1
+		 */
+		gpio_en_sub_usb_a1_vbus: en_sub_usb_a1_vbus {
+			#gpio-cells = <0>;
+			gpios = <&gpiof 0 GPIO_OUTPUT>;
 			no-auto-init;
 		};
 		/*
@@ -130,6 +154,23 @@
 		compatible = "named-pwms";
 
 		kblight: pwm_kb_bl {
+		};
+	};
+
+	usbc {
+		port0 {
+			bc12 {
+				compatible = "pericom,pi3usb9201";
+				port = <&i2c_ec_i2c_usb_c0>;
+				irq = <&gpio_usb_c0_int_odl>;
+			};
+		};
+		port1 {
+			bc12 {
+				compatible = "pericom,pi3usb9201";
+				port = <&i2c_ec_i2c_sub_usb_c1>;
+				irq = <&gpio_usb_c1_int_odl>;
+			};
 		};
 	};
 };

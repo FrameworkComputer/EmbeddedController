@@ -66,8 +66,10 @@ DECLARE_HOOK(HOOK_INIT, nereid_subboard_init, HOOK_PRIO_FIRST+1);
 static void board_init(void)
 {
 	/*
-	 * TODO
 	 * Enable USB-C interrupts.
 	 */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0));
+	if (board_get_usb_pd_port_count() == 2)
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1));
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
