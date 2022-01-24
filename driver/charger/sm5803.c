@@ -50,8 +50,8 @@ static const struct charger_info sm5803_charger_info = {
 
 static atomic_t irq_pending; /* Bitmask of chips with interrupts pending */
 
-static struct mutex flow1_access_lock[CHARGER_NUM];
-static struct mutex flow2_access_lock[CHARGER_NUM];
+static mutex_t flow1_access_lock[CHARGER_NUM];
+static mutex_t flow2_access_lock[CHARGER_NUM];
 
 static int charger_vbus[CHARGER_NUM];
 
@@ -395,6 +395,19 @@ static void init_status_retrieve(void)
 		memcpy(&chip_inited, tag_contents, size);
 }
 DECLARE_HOOK(HOOK_INIT, init_status_retrieve, HOOK_PRIO_FIRST);
+
+#ifdef CONFIG_ZEPHYR
+static void init_mutexes(void)
+{
+	int i;
+
+	for (i = 0; i < CHARGER_NUM; i++) {
+		k_mutex_init(&flow1_access_lock[i]);
+		k_mutex_init(&flow2_access_lock[i]);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, init_mutexes, HOOK_PRIO_FIRST);
+#endif
 
 static void sm5803_init(int chgnum)
 {

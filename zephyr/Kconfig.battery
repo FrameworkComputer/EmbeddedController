@@ -255,6 +255,15 @@ config PLATFORM_EC_CHARGER_RAA489000
 	  Enables the driver for the Renesas RAA489000 battery charger
 	  with integrated USB-C TCPC.
 
+config PLATFORM_EC_CHARGER_SM5803
+	bool "Use the SM5803 charger"
+	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_NARROW_VDC
+	help
+	  Enables the driver for the SM5803.
+	  The SM5803 is the Silicon Mitus SM5803 Buck-Boost Charger.
+
+
 if PLATFORM_EC_OCPC
 
 config PLATFORM_EC_OCPC_DEF_RBATT_MOHMS
