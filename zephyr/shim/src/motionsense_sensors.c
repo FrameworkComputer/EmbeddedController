@@ -7,6 +7,7 @@
 #include "common.h"
 #include "accelgyro.h"
 #include "hooks.h"
+#include "gpio/gpio_int.h"
 #include "drivers/cros_cbi.h"
 #include "motionsense_sensors.h"
 
@@ -375,13 +376,13 @@ BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
  *
  *         // list of GPIO interrupts that have to
  *         // be enabled at initial stage
- *        sensor-irqs = <&gpio_ec_imu_int_l &gpio_ec_als_rgb_int_l>;
+ *        sensor-irqs = <&int_imu &int_als_rgb>;
  * };
  */
 #if DT_NODE_HAS_PROP(SENSOR_INFO_NODE, sensor_irqs)
 #define SENSOR_GPIO_ENABLE_INTERRUPT(i, id)		\
-	gpio_enable_interrupt(				\
-		GPIO_SIGNAL(DT_PHANDLE_BY_IDX(id, sensor_irqs, i)));
+	gpio_enable_dt_interrupt(				\
+		&GPIO_INT_FROM_NODE(DT_PHANDLE_BY_IDX(id, sensor_irqs, i)));
 static void sensor_enable_irqs(void)
 {
 	UTIL_LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, sensor_irqs),
