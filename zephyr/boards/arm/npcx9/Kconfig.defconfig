@@ -7,4 +7,4 @@ if BOARD_NPCX9
 config BOARD
 	default "npcx9"
 
-endif # BOARD_TROGDOR
+endif # BOARD_NPCX9
