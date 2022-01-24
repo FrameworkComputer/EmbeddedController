@@ -194,7 +194,7 @@ do {									       \
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODE(WAKEUP_NGPIO(id, prop, idx)),  \
 			      GPIO_INPUT);				       \
 	gpio_enable_dt_interrupt(					       \
-		&GPIO_INT_FROM_NODE(WAKEUP_INT(id, prop, idx)));	       \
+		GPIO_INT_FROM_NODE(WAKEUP_INT(id, prop, idx)));	       \
 	} while (0);
 
 /*
