@@ -84,7 +84,7 @@ func TestGenerate(t *testing.T) {
 		adc_ec_adc_1: ec_adc_1 {
 			label = "EC_ADC_1";
 			enum-name = "ENUM_ADC_1";
-			channel = <A1>;
+			io-channels = <&adc0 A1>;
 		};
 	};
 

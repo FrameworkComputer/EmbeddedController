@@ -85,7 +85,7 @@ func adcConfig(out io.Writer, pin *Pin, chip Chip) {
 	if len(pin.Enum) > 0 {
 		fmt.Fprintf(out, "\t\t\tenum-name = \"%s\";\n", pin.Enum)
 	}
-	fmt.Fprintf(out, "\t\t\tchannel = <%s>;\n", c)
+	fmt.Fprintf(out, "\t\t\tio-channels = <&adc0 %s>;\n", c)
 	fmt.Fprintf(out, "\t\t};\n")
 }
 
