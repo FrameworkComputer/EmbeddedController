@@ -15,6 +15,7 @@
 #include "common.h"
 #include "hwtimer.h"
 #include "registers.h"
+#include "scp_timer.h"
 #include "task.h"
 
 #define TIMER_SYSTEM 5
@@ -27,18 +28,23 @@ static uint8_t sys_high;
 /* High 32-bit for event timer. */
 static uint8_t event_high;
 
-static void timer_enable(int n)
+void timer_enable(int n)
 {
 	/* cannot be changed when timer is enabled */
 	SCP_CORE0_TIMER_IRQ_CTRL(n) |= TIMER_IRQ_EN;
 	SCP_CORE0_TIMER_EN(n) |= TIMER_EN;
 }
 
-static void timer_disable(int n)
+void timer_disable(int n)
 {
 	SCP_CORE0_TIMER_EN(n) &= ~TIMER_EN;
 	/* cannot be changed when timer is enabled */
 	SCP_CORE0_TIMER_IRQ_CTRL(n) &= ~TIMER_IRQ_EN;
+}
+
+uint32_t timer_read_raw_sr(void)
+{
+	return SCP_CORE0_TIMER_CUR_VAL(TIMER_SR);
 }
 
 static int timer_is_irq(int n)
@@ -138,6 +144,10 @@ int __hw_clock_source_init(uint32_t start_t)
 	/* Event tick timer */
 	timer_set_clock(TIMER_EVENT, TIMER_CLK_SRC_BCLK);
 	task_enable_irq(SCP_IRQ_TIMER(TIMER_EVENT));
+
+	/* SR timer */
+	timer_set_clock(TIMER_SR, TIMER_CLK_SRC_26M);
+	task_disable_irq(SCP_IRQ_TIMER(TIMER_SR));
 
 	return SCP_IRQ_TIMER(TIMER_SYSTEM);
 }
