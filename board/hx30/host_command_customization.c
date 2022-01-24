@@ -78,6 +78,10 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 			set_pd_fw_update(true);
 		}
 	case FLASH_ACCESS_SPI:
+		/* Disable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 2);
 		break;
 
 	case FLASH_FIRMWARE_DONE:
@@ -94,6 +98,10 @@ static enum ec_status flash_notified(struct host_cmd_handler_args *args)
 		}
 
 	case FLASH_ACCESS_SPI_DONE:
+		/* Set GPIO56 as PWM */
+		gpio_set_alternate_function(1, 0x4000, 1);
+		/* Enable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
 		break;
 	default:
 		return EC_ERROR_INVAL;
