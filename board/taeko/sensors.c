@@ -346,6 +346,10 @@ void motion_interrupt(enum gpio_signal signal)
 	if (motion_sensors[LID_ACCEL].chip == MOTIONSENSE_CHIP_LIS2DW12) {
 		lis2dw12_interrupt(signal);
 		CPRINTS("IS2DW12 interrupt");
+	}
+	if (motion_sensors[BASE_ACCEL].chip == MOTIONSENSE_CHIP_LSM6DSM) {
+		lsm6dsm_interrupt(signal);
+		CPRINTS("LSM6DSM interrupt");
 		return;
 	}
 
