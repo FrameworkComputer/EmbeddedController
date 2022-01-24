@@ -6,6 +6,7 @@
 /dts-v1/;
 
 #include <cros/nuvoton/npcx9.dtsi>
+#include <dt-bindings/adc/adc.h>
 #include <dt-bindings/gpio_defines.h>
 #include <dt-bindings/wake_mask_event_defines.h>
 #include <nuvoton/npcx9m3f.dtsi>
@@ -48,12 +49,49 @@
 				MKBP_EVENT_SENSOR_FIFO)>;
 	};
 
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		vbus {
+			label = "VBUS";
+			enum-name = "ADC_VBUS";
+			io-channels = <&adc0 1>;
+			/* Measure VBUS through a 1/10 voltage divider */
+			mul = <10>;
+		};
+		amon_bmon {
+			label = "AMON_BMON";
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 2>;
+			/*
+			 * Adapter current output or battery charging/
+			 * discharging current (uV) 18x amplification on
+			 * charger side.
+			 */
+			mul = <1000>;
+			div = <18>;
+		};
+		psys {
+			label = "PSYS";
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 3>;
+			/*
+			 * ISL9238 PSYS output is 1.44 uA/W over 5.6K resistor,
+			 * to read 0.8V @ 99 W, i.e. 124000 uW/mV.
+			 */
+			mul = <124000>;
+		};
+	};
 };
 
 &uart1 {
 	status = "okay";
 	current-speed = <115200>;
 	pinctrl-0 = <&altj_cr_sin1_sl2 &altj_cr_sout1_sl2>;
+};
+
+&adc0 {
+	status = "okay";
 };
 
 &cros_kb_raw {
