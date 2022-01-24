@@ -15,7 +15,7 @@ The CBI feature is enabled using:
 
 Kconfig Option                   | Default | Documentation
 :--------------------------------| :-----: | :------------
-`CONFIG_PLATFORM_EC_CBI_EEPROM   | n       | [zephyr/Kconfig](../zephyr/Kconfig)
+`CONFIG_PLATFORM_EC_CBI_EEPROM`   | n       | [zephyr/Kconfig](../zephyr/Kconfig)
 
 One of the CBI elements is the
 [`FW_CONFIG`](https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/firmware_config.md)
