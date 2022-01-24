@@ -215,31 +215,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 		.temp_host_release = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
-
-/*
- * TODO(b/203839956): update for Alder Lake/vell
- */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_AMBIENT \
-	{ \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_ambient =
-	THERMAL_AMBIENT;
 
 /*
  * TODO(b/203839956): update for Alder Lake/vell
@@ -250,14 +227,12 @@ __maybe_unused static const struct ec_thermal_config thermal_ambient =
 #define THERMAL_CHARGER \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(120), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(65), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_charger =
 	THERMAL_CHARGER;
@@ -271,14 +246,12 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 #define THERMAL_WWAN \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(130), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(130), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_wwan =
 	THERMAL_WWAN;
@@ -293,14 +266,12 @@ __maybe_unused static const struct ec_thermal_config thermal_wwan =
 #define THERMAL_DDR \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_ddr =
 	THERMAL_DDR;
@@ -315,14 +286,12 @@ __maybe_unused static const struct ec_thermal_config thermal_ddr =
 #define THERMAL_REGULATOR \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(120), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(65), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_regulator =
 	THERMAL_REGULATOR;
