@@ -5,6 +5,7 @@
 cmake_minimum_required(VERSION 3.13.1)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
+project(herobrine_npcx9)
 
 zephyr_library_include_directories(include)
 
@@ -18,7 +19,3 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
   "src/i2c.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
   "src/alt_dev_replacement.c")
-
-if(DEFINED CONFIG_BOARD_HEROBRINE_NPCX9)
-	project(herobrine_npcx9)
-endif()
