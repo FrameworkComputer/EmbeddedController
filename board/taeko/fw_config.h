@@ -29,6 +29,11 @@ enum ec_cfg_tabletmode_type {
 	TABLETMODE_ENABLED = 1
 };
 
+enum ec_cfg_kbnumpad {
+	KEYBOARD_NUMBER_PAD_ABSENT = 0,
+	KEYBOARD_NUMBER_PAD = 1
+};
+
 union taeko_cbi_fw_config {
 	struct {
 		enum ec_cfg_usb_db_type			usb_db : 2;
@@ -44,7 +49,8 @@ union taeko_cbi_fw_config {
 		 * bit13: emmc
 		 */
 		enum ec_cfg_tabletmode_type		tabletmode : 1;
-		uint32_t				reserved_2 : 17;
+		enum ec_cfg_kbnumpad                    kbnumpad : 1;
+		uint32_t				reserved_2 : 16;
 	};
 	uint32_t raw_value;
 };
@@ -79,4 +85,11 @@ bool ec_cfg_has_keyboard_backlight(void);
  */
 bool ec_cfg_has_tabletmode(void);
 
+/**
+ * Check if the FW_CONFIG has enable keyboard number pad.
+ *
+ * @return true if board supports keyboard number pad, false if the
+ * keyboard number pad doesn't support it.
+ */
+bool ec_cfg_has_keyboard_number_pad(void);
 #endif /* __BOARD_TAEKO_FW_CONFIG_H_ */

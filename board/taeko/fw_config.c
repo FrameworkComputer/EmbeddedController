@@ -66,3 +66,8 @@ bool ec_cfg_has_tabletmode(void)
 {
 	return (fw_config.tabletmode == TABLETMODE_ENABLED);
 }
+
+bool ec_cfg_has_keyboard_number_pad(void)
+{
+	return (fw_config.kbnumpad == KEYBOARD_NUMBER_PAD);
+}

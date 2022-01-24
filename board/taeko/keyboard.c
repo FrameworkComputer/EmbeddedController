@@ -7,6 +7,7 @@
 #include "ec_commands.h"
 #include "keyboard_scan.h"
 #include "timer.h"
+#include "fw_config.h"
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
@@ -41,8 +42,29 @@ static const struct ec_response_keybd_config taeko_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+static const struct ec_response_keybd_config tarlo_kb = {
+	.num_top_row_keys = 11,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_MICMUTE,             /* T8 */
+		TK_VOL_MUTE,		/* T9 */
+		TK_VOL_DOWN,		/* T10 */
+		TK_VOL_UP,		/* T11 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
+};
+
 __override const struct ec_response_keybd_config
 *board_vivaldi_keybd_config(void)
 {
-	return &taeko_kb;
+	if (ec_cfg_has_keyboard_number_pad())
+		return &tarlo_kb;
+	else
+		return &taeko_kb;
 }
