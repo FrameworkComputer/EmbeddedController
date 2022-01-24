@@ -25,7 +25,7 @@ __override struct keyboard_scan_config keyscan_config = {
 };
 
 static const struct ec_response_keybd_config taniks_kb = {
-	.num_top_row_keys = 10,
+	.num_top_row_keys = 11,
 	.action_keys = {
 		TK_BACK,		/* T1 */
 		TK_REFRESH,		/* T2 */
@@ -34,11 +34,12 @@ static const struct ec_response_keybd_config taniks_kb = {
 		TK_SNAPSHOT,		/* T5 */
 		TK_BRIGHTNESS_DOWN,	/* T6 */
 		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_VOL_MUTE,		/* T8 */
-		TK_VOL_DOWN,		/* T9 */
-		TK_VOL_UP,		/* T10 */
+		TK_MICMUTE,		/* T8 */
+		TK_VOL_MUTE,		/* T9 */
+		TK_VOL_DOWN,		/* T10 */
+		TK_VOL_UP,		/* T11 */
 	},
-	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
 __override const struct ec_response_keybd_config
