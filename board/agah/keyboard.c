@@ -19,8 +19,8 @@ __override struct keyboard_scan_config keyscan_config = {
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
+		0x1c, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xa4, 0xff, 0xf6, 0x55, 0xfe, 0xff, 0xff, 0xff, /* full set */
 	},
 };
 
@@ -41,7 +41,8 @@ static const struct ec_response_keybd_config keybd = {
 		TK_VOL_DOWN,		/* T12 */
 		TK_VOL_UP,		/* T13 */
 	},
-	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+	/* There's no screen lock key on agah */
+	.capabilities = KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
 
