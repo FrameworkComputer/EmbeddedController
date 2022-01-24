@@ -12,7 +12,7 @@
 #ifndef __EMUL_TCPCI_PARTNER_COMMON_H
 #define __EMUL_TCPCI_PARTNER_COMMON_H
 
-#include <emul.h>
+#include <drivers/emul.h>
 #include "emul/tcpc/emul_tcpci.h"
 
 #include "ec_commands.h"

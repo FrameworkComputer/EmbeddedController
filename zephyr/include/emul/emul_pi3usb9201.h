@@ -12,7 +12,7 @@
 #ifndef __EMUL_PI3USB9201_H
 #define __EMUL_PI3USB9201_H
 
-#include <emul.h>
+#include <drivers/emul.h>
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
 

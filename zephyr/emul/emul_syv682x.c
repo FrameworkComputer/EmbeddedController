@@ -8,7 +8,7 @@
 #include <device.h>
 #include <devicetree/gpio.h>
 #include <drivers/gpio/gpio_emul.h>
-#include <emul.h>
+#include <drivers/emul.h>
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL

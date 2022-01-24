@@ -10,7 +10,7 @@
 #include <drivers/gpio/gpio_emul.h>
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
-#include <emul.h>
+#include <drivers/emul.h>
 #include <errno.h>
 #include <sys/__assert.h>
 

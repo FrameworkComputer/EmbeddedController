@@ -6,7 +6,7 @@
 #define DT_DRV_COMPAT zephyr_pi3usb9201_emul
 
 #include <device.h>
-#include <emul.h>
+#include <drivers/emul.h>
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
 

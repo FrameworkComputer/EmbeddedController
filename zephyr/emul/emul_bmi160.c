@@ -10,7 +10,7 @@
 LOG_MODULE_REGISTER(emul_bmi160);
 
 #include <device.h>
-#include <emul.h>
+#include <drivers/emul.h>
 #include <drivers/i2c.h>
 #include <drivers/i2c_emul.h>
 

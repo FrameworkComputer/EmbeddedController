@@ -6,7 +6,7 @@
 #include <kernel.h>
 #include <device.h>
 #include <devicetree.h>
-#include <emul.h>
+#include <drivers/emul.h>
 #include <ztest.h>
 #include <fff.h>
 

@@ -8,7 +8,7 @@
 
 #include <device.h>
 #include <drivers/i2c_emul.h>
-#include <emul.h>
+#include <drivers/emul.h>
 
 /**
  * @brief Get the emulator's parent bus device

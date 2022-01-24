@@ -6,7 +6,7 @@
 #ifndef ZEPHYR_INCLUDE_EMUL_EMUL_SN5S330_H_
 #define ZEPHYR_INCLUDE_EMUL_EMUL_SN5S330_H_
 
-#include <emul.h>
+#include <drivers/emul.h>
 #include <drivers/i2c_emul.h>
 
 /**
