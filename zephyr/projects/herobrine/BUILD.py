@@ -6,7 +6,7 @@
 def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()):
     register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9",
+        zephyr_board="herobrine_npcx9",
         dts_overlays=[
             # Common to all projects.
             here / "adc.dts",
