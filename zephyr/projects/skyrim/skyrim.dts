@@ -129,10 +129,6 @@
 			port = <&i2c_sensor>;
 			i2c-addr-flags = "PCT2075_I2C_ADDR_FLAGS7";
 		};
-		/* Disable SB TSI for first board revision */
-		sb-tsi-sensor {
-			status = "disabled";
-		};
 	};
 
 	gpio-interrupts {

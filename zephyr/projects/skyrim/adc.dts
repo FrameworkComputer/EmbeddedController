@@ -52,17 +52,6 @@
 			temp_host_release_high = <80>;
 			adc = <&adc_temp_memory>;
 		};
-		sb-tsi-sensor {
-			compatible = "cros-ec,temp-sensor-sb-tsi";
-			label = "CPU";
-			enum-name = "TEMP_SENSOR_CPU";
-			port = <&i2c_soc_thermal>;
-			temp_host_high = <100>;
-			temp_host_halt = <105>;
-			temp_host_release_high = <80>;
-			temp_fan_off = <60>;
-			temp_fan_max = <90>;
-		};
 	};
 };
 
