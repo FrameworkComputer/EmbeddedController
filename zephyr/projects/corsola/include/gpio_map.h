@@ -9,8 +9,6 @@
 #include <devicetree.h>
 #include <gpio_signal.h>
 
-#define GPIO_BATT_PRES_ODL		NAMED_GPIO(ec_batt_pres_odl)
-
 #define GPIO_ENTERING_RW		GPIO_UNIMPLEMENTED
 
 /* daughterboard GPIO remap */
