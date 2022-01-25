@@ -186,6 +186,12 @@
     typical application is to control fan speeds or the brightness of a
     backlight.
 
+*   **Retimer** {#retimer}
+
+    A device that can extract the embedded clock signal from a high-speed
+    protocol, fully recover the data, and retransmit a fresh copy of the data
+    using a clean clock.
+
 *   **SAFT - Semi-Automated Firmware Tests** {#saft}
 
     A suite of tests for firmware, succeeded by [FAFT](#faft). See the
@@ -219,6 +225,10 @@
 
     The specific contents of a SPI frame varies based on the SPI peripheral
     type.
+
+*   **SSMUX - Super Speed Multiplexer** {#ssmux}
+
+    See the [USB-C documentation](./usb-c.md#ssmux) for more details.
 
 *   **SVDM - Structured Vendor Defined Messages** {#svdm}
 
