@@ -246,7 +246,10 @@ ifeq ($(TEST_BUILD),)
 	@echo "directory!  Otherwise, you won't be able to enter any commands."
 endif # not a TEST_BUILD
 endif # CONFIG_EXPERIMENTAL_CONSOLE=y
-	$(call quiet,check_allowed)
+#	TODO(b/195718112): Disable config option check as it's
+#	suspected to be breaking the CQ. We should consider enabling
+#	as a pre-submit only when re-enabling.
+#	$(call quiet,check_allowed)
 
 proj-%: | $(FAILED_BOARDS_DIR)
 	@touch $(FAILED_BOARDS_DIR)/$*
