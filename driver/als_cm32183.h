@@ -98,19 +98,7 @@
 #define CM32183_REG_TRIGGER_LOW_THRESHOLD     BIT(15)
 #define CM32183_REG_TRIGGER_HIGH_THRESHOLD    BIT(16)
 
-extern const struct accelgyro_drv cm32183_drv;
-
-struct cm32183_drv_data {
-	int rate;
-	int last_value;
-	/* the coefficient is scale.uscale */
-	int16_t scale;
-	uint16_t uscale;
-	int16_t offset;
-};
-
-#define CM32183_GET_DATA(_s)	((struct cm32183_drv_data *)(_s)->drv_data)
-
-int cm32183_read_lux(int *lux);
+int cm32183_read_lux(int *lux, int af);
+int cm32183_init(void);
 
 #endif	/* __CROS_EC_ALS_CM32183_H */
