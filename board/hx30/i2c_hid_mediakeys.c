@@ -343,7 +343,7 @@ void i2c_hid_als_init(void)
 
 	als_sensor.event_type = 0x04; /* HID_DATA_UPDATED */
 	als_sensor.sensor_state = 0x02; /* HID READY */
-	als_sensor.illuminanceValue = 0x00;
+	als_sensor.illuminanceValue = 0x0000;
 }
 
 static void i2c_hid_send_response(void)
@@ -559,6 +559,9 @@ void hid_irq_to_host(void)
 
 void report_illuminance_value(void)
 {
+	/* bypass the EC_MEMMAP_ALS value to input report */
+	als_sensor.illuminanceValue = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
+
    	task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) | 0x4000), 0);
 }
 DECLARE_DEFERRED(report_illuminance_value);
@@ -622,11 +625,3 @@ void hid_handler_task(void *p)
 		}
 	}
 };
-
-#define COEFFICIENT (38 / 10) /* 3.8x */
-
-/* ALS callback function */
-void set_illuminance_value(uint16_t value)
-{
-    als_sensor.illuminanceValue = value * COEFFICIENT;
-}
