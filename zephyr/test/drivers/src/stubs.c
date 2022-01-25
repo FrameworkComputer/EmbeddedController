@@ -401,3 +401,12 @@ void sys_arch_reboot(int type)
 {
 	ARG_UNUSED(type);
 }
+
+/* GPIO TEST interrupt handler */
+bool gpio_test_interrupt_triggered;
+void gpio_test_interrupt(enum gpio_signal signal)
+{
+	ARG_UNUSED(signal);
+	printk("%s called\n", __func__);
+	gpio_test_interrupt_triggered = true;
+}

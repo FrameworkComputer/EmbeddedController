@@ -26,4 +26,6 @@ DECLARE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
 
 void sys_arch_reboot(int type);
 
+/* Declare GPIO_TEST interrupt handler */
+void gpio_test_interrupt(enum gpio_signal signal);
 #endif /* __TEST_DRIVERS_STUBS_H */

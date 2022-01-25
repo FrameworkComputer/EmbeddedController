@@ -205,6 +205,7 @@ properties:
       - GPIO_SYS_RESET_L
       - GPIO_SYS_RST_ODL
       - GPIO_TABLET_MODE_L
+      - GPIO_TEST
       - GPIO_TRACKPAD_INT_GATE
       - GPIO_USB_A0_FAULT_ODL
       - GPIO_USB_A0_OC_ODL
