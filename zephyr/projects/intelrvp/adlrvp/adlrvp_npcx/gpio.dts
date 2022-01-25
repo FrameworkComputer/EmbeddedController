@@ -7,23 +7,29 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		all_sys_pwrgd {
+		all_sys_pwrgd: all_sys_pwrgd {
 			gpios = <&gpio7 0 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
 		};
-		rsmrst_pwrgd {
+		rsmrst_pwrgd: rsmrst_pwrgd {
 			gpios = <&gpio3 7 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_RSMRST_ODL";
 		};
-		pch_slp_s0_n {
+		pch_slp_s0_n: pch_slp_s0_n {
 			gpios = <&gpioa 1 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S0_L";
 		};
-		vccpdsw_3p3 {
+		vccpdsw_3p3: vccpdsw_3p3 {
 			gpios = <&gpio4 5 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_DSW_PWROK";
 		};
-		pm_slp_sus_ec_n {
+		pm_slp_sus_ec_n: pm_slp_sus_ec_n {
 			gpios = <&gpio8 6 GPIO_INPUT>;
+			enum-name = "GPIO_SLP_SUS_L";
 		};
 		pm_slp_s3_n {
 			gpios = <&gpiob 0 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S3_L";
 		};
 		pm_slp_s4_n {
 			gpios = <&gpioa 5 GPIO_INPUT>;
@@ -90,15 +96,19 @@
 		};
 		prochot_ec_n {
 			gpios = <&gpioa 7 GPIO_INPUT>;
+			enum-name = "GPIO_CPU_PROCHOT";
 		};
 		sys_rst_odl {
 			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_SYS_RESET_L";
 		};
 		pm_rsmrst_n {
 			gpios = <&gpiod 3 GPIO_OUT_LOW>;
+			enum-name = "GPIO_PCH_RSMRST_L";
 		};
 		pm_pwrbtn_n {
 			gpios = <&gpio9 7 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		ec_spi_oe_mecc {
 			gpios = <&gpio6 0 GPIO_OUT_LOW>;
@@ -106,15 +116,19 @@
 		};
 		ec_ds3 {
 			gpios = <&gpioc 4 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EN_PP3300_A";
 		};
 		pch_pwrok_ec {
 			gpios = <&gpioa 0 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_PWROK";
 		};
 		sys_pwrok {
 			gpios = <&gpio9 3 GPIO_OUT_LOW>;
+			enum-name = "GPIO_PCH_SYS_PWROK";
 		};
 		ec_dsw_pwrok {
 			gpios = <&gpio9 5 GPIO_OUT_LOW>;
+			enum-name = "GPIO_PCH_DSW_PWROK";
 		};
 		ec_flash_wp_odl {
 			gpios = <&gpio9 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;

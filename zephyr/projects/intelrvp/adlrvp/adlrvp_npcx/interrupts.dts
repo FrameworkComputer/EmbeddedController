@@ -21,5 +21,30 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
+		int_slp_s0: slp_s0 {
+			irq-pin = <&pch_slp_s0_n>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_slp_sus: slp_sus {
+			irq-pin = <&pm_slp_sus_ec_n>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_pg_dsw_pwrok: pg_dsw_pwrok {
+			irq-pin = <&vccpdsw_3p3>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_rsmrst_pwrgd: rsmrst_pwrgd {
+			irq-pin = <&rsmrst_pwrgd>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_all_sys_pwrgd: all_sys_pwrgd {
+			irq-pin = <&all_sys_pwrgd>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
 	};
 };

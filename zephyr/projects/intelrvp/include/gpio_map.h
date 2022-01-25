@@ -6,4 +6,6 @@
 #ifndef __ZEPHYR_GPIO_MAP_H
 #define __ZEPHYR_GPIO_MAP_H
 
+#define GPIO_EN_PP5000                  GPIO_UNIMPLEMENTED
+
 #endif /* __ZEPHYR_GPIO_MAP_H */
