@@ -25,10 +25,6 @@
 
 /* BC12 */
 
-/* LED */
-#define CONFIG_LED_ONOFF_STATES
-#define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
-
 /* PD / USB-C / PPC */
 #undef CONFIG_USB_PD_DEBUG_LEVEL /* default to 1, configurable in ec console */
 
@@ -101,10 +97,12 @@ enum sensor_id {
 };
 
 enum pwm_channel {
-	PWM_CH_LED1,
-	PWM_CH_LED2,
-	PWM_CH_LED3,
+	PWM_CH_LED_C1_WHITE,
+	PWM_CH_LED_C1_AMBER,
+	PWM_CH_LED_PWR,
 	PWM_CH_KBLIGHT,
+	PWM_CH_LED_C0_WHITE,
+	PWM_CH_LED_C0_AMBER,
 	PWM_CH_COUNT,
 };
 

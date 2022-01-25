@@ -184,19 +184,19 @@ static void board_update_motion_sensor_config(void)
  * number of pwm channel greater than three.
  */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED1] = {
+	[PWM_CH_LED_C1_WHITE] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 324, /* maximum supported frequency */
 		.pcfsr_sel = PWM_PRESCALER_C4,
 	},
-	[PWM_CH_LED2] = {
+	[PWM_CH_LED_C1_AMBER] = {
 		.channel = 1,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 324, /* maximum supported frequency */
 		.pcfsr_sel = PWM_PRESCALER_C4,
 	},
-	[PWM_CH_LED3] = {
+	[PWM_CH_LED_PWR] = {
 		.channel = 2,
 		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
 		.freq_hz = 324, /* maximum supported frequency */
@@ -208,6 +208,18 @@ const struct pwm_t pwm_channels[] = {
 		.freq_hz = 10000, /* SYV226 supports 10~100kHz */
 		.pcfsr_sel = PWM_PRESCALER_C6,
 	},
+	[PWM_CH_LED_C0_WHITE] = {
+		.channel = 6,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+		.freq_hz = 324, /* maximum supported frequency */
+		.pcfsr_sel = PWM_PRESCALER_C4,
+	},
+	[PWM_CH_LED_C0_AMBER] = {
+		.channel = 7,
+		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+		.freq_hz = 324, /* maximum supported frequency */
+		.pcfsr_sel = PWM_PRESCALER_C4,
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -217,9 +229,6 @@ static void board_init(void)
 	/* Enable motion sensor interrupt */
 	gpio_enable_interrupt(GPIO_BASE_IMU_INT_L);
 	gpio_enable_interrupt(GPIO_LID_ACCEL_INT_L);
-
-	/* Disable PWM_CH_LED2(Green) for unuse */
-	pwm_enable(PWM_CH_LED2, 0);
 
 	board_update_motion_sensor_config();
 }

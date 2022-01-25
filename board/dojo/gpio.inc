@@ -110,7 +110,7 @@ ALTERNATE(PIN_MASK(E, 0x81), 1, MODULE_I2C, 0) /* I2C E */
 ALTERNATE(PIN_MASK(B, 0x03), 1, MODULE_UART, 0) /* EC to Servo */
 
 /* PWM */
-ALTERNATE(PIN_MASK(A, 0b1111), 1, MODULE_PWM, 0) /* PWM 0,1,2,3 */
+ALTERNATE(PIN_MASK(A, 0b11001111), 1, MODULE_PWM, 0) /* PWM 0,1,2,3,6,7 */
 
 /* ADC */
 ALTERNATE(PIN_MASK(I, 0b11001001), 0, MODULE_ADC, 0) /* ADC 0,3,6,7 */
@@ -127,8 +127,6 @@ GPIO(CCD_MODE_ODL,           PIN(C, 4), GPIO_INPUT)
 
 /* NC pins, enable internal pull-up/down to avoid floating state. */
 GPIO(NC_GPA1,                PIN(A, 1), GPIO_INPUT | GPIO_PULL_DOWN)
-GPIO(PWM6,                   PIN(A, 6), GPIO_INPUT | GPIO_PULL_DOWN)
-GPIO(PWM7,                   PIN(A, 7), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(EC_NVME_PLN_ODL,        PIN(D, 7), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_CLK_GPG6,           PIN(G, 6), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(NC_GPH2,                PIN(H, 2), GPIO_INPUT | GPIO_PULL_DOWN)
