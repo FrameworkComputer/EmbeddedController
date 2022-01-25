@@ -9,6 +9,10 @@
 #include <devicetree.h>
 #include <autoconf.h>
 
+#define SENSOR_NODE			DT_PATH(motionsense_sensor)
+#define SENSOR_INFO_NODE		DT_PATH(motionsense_sensor_info)
+#define SENSOR_ALT_NODE			DT_PATH(motionsense_sensor_alt)
+
 /*
  * The battery enum is used in various drivers and these assume that it is
  * always available (defined in board.h). With Zephyr we don't include board.h
@@ -1606,9 +1610,9 @@
 
 #undef CONFIG_ALS
 #undef CONFIG_ALS_COUNT
-#ifdef CONFIG_PLATFORM_EC_ALS
+#if DT_NODE_HAS_PROP(SENSOR_INFO_NODE, als_sensors)
 #define CONFIG_ALS
-#define ALS_COUNT CONFIG_PLATFORM_EC_ALS_COUNT
+#define ALS_COUNT DT_PROP_LEN(SENSOR_INFO_NODE, als_sensors)
 #else
 #define ALS_COUNT 0
 #endif
