@@ -86,9 +86,14 @@ if [ -s "${new_adhoc}" ]; then
 	echo >&2 "Also see details in http://issuetracker.google.com/181253613"
 	echo >&2
 	echo >&2 "To temporarily disable this, use: ALLOW_CONFIG=1 make ..."
+	rm -rf "${tmp}"
+	exit 1
 else
-	# Check if we can remove some things from the allowed file
-	./util/build_allowed.sh
+	# If we are running in a git repo, check if we can remove some things
+	# from the allowed file
+	if git status 2>/dev/null; then
+		./util/build_allowed.sh
+	fi
 fi
 
 rm -rf "${tmp}"
