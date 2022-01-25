@@ -1391,16 +1391,6 @@ function flash_ite_spi_ccd_i2c() {
 	fi
 }
 
-function flash_nrf51() {
-	OCD_CHIP_CFG="nrf51_chip.cfg"
-	OCD_CMDS="init; flash_nrf51 ${IMG} ${FLAGS_offset}; exit_debug_mode_nrf51; shutdown;"
-
-	flash_openocd
-
-	# waiting 100us for the reset pulse is not necessary, it takes ~2.5ms
-	dut_control swd_reset:on swd_reset:off
-}
-
 function flash_npcx_jtag() {
 	IMG_PATH="${EC_DIR}/build/${BOARD}"
 	OCD_CHIP_CFG="npcx_chip.cfg"
