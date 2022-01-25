@@ -1391,14 +1391,6 @@ function flash_ite_spi_ccd_i2c() {
 	fi
 }
 
-function flash_lm4() {
-	OCD_CHIP_CFG="lm4_chip.cfg"
-	OCD_CMDS="init; flash_lm4 ${IMG} ${FLAGS_offset}; shutdown;"
-
-	flash_openocd
-
-}
-
 function flash_nrf51() {
 	OCD_CHIP_CFG="nrf51_chip.cfg"
 	OCD_CMDS="init; flash_nrf51 ${IMG} ${FLAGS_offset}; exit_debug_mode_nrf51; shutdown;"
