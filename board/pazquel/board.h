@@ -101,6 +101,7 @@ enum pwm_channel {
 
 enum battery_type {
 	BATTERY_GANFENG,
+	BATTERY_POWTECH_SG20QT1C,
 	BATTERY_TYPE_COUNT,
 };
 /* Reset all TCPCs. */
