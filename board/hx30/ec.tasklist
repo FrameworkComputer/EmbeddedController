@@ -16,6 +16,7 @@
 	TASK_ALWAYS(POWERBTN, power_button_task, NULL, LARGER_TASK_STACK_SIZE) \
 	TASK_ALWAYS(CYPD, cypd_interrupt_handler_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(IICTPEMU, mouse_interrupt_handler_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(ALS, als_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(HID, hid_handler_task, NULL, IDLE_TASK_STACK_SIZE) \
     TASK_NOTEST(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE)
 

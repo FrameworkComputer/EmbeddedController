@@ -251,6 +251,11 @@ const struct i2c_port_t i2c_ports[]  = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
+struct als_t als[] = {
+	{"CAPELLA", cm32183_init, cm32183_read_lux, 34},
+};
+BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
+
 /*
  * Map ports to controller.
  * Ports may map to the same controller.

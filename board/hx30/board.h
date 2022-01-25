@@ -158,6 +158,8 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 /* Optional features */
+#define CONFIG_ALS
+#define CONFIG_CMD_ALS
 
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_SMART
@@ -509,7 +511,7 @@
 #define I2C_PORT_CHARGER        MCHP_I2C_PORT1
 #define I2C_PORT_THERMAL_2		MCHP_I2C_PORT1
 #define I2C_PORT_THERMAL		MCHP_I2C_PORT3
-#define I2C_PORT_SENSOR			MCHP_I2C_PORT4
+#define I2C_PORT_ALS			MCHP_I2C_PORT4
 
 /* GPIO for power signal */
 #ifdef CONFIG_HOSTCMD_ESPI_VW_SLP_S3
@@ -671,7 +673,7 @@ enum sensor_id {
 
 /* Light sensors */
 enum als_id {
-	ALS_OPT3001 = 0,
+	ALS_CM32183 = 0,
 
 	ALS_COUNT
 };
