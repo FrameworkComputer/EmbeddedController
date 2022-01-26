@@ -25,7 +25,7 @@
 
 static const int syv682x_port = 1;
 
-ZTEST(ppc_syv682c, test_board_is_syv682c)
+ZTEST(ppc_syv682c, test_syv682x_board_is_syv682c)
 {
 	zassert_true(syv682x_board_is_syv682c(syv682x_port), NULL);
 }
@@ -51,7 +51,7 @@ static void check_control_1_default_init(uint8_t control_1)
 			"Default init, but 5V power path selected");
 }
 
-ZTEST(ppc_syv682c, test_ppc_syv682x_init)
+ZTEST(ppc_syv682c, test_syv682x_init)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	const struct device *gpio_dev =
@@ -133,7 +133,7 @@ ZTEST(ppc_syv682c, test_ppc_syv682x_init)
 
 }
 
-ZTEST(ppc_syv682c, test_ppc_syv682x_vbus_enable)
+ZTEST(ppc_syv682c, test_syv682x_vbus_enable)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
@@ -155,7 +155,7 @@ ZTEST(ppc_syv682c, test_ppc_syv682x_vbus_enable)
 			"PPC is not sourcing VBUS after VBUS enabled");
 }
 
-ZTEST(ppc_syv682c, test_ppc_syv682x_interrupt)
+ZTEST(ppc_syv682c, test_syv682x_interrupt)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
@@ -303,7 +303,7 @@ ZTEST(ppc_syv682c, test_ppc_syv682x_interrupt)
 			SYV682X_CONTROL_4_NONE);
 }
 
-ZTEST(ppc_syv682c, test_ppc_syv682x_frs)
+ZTEST(ppc_syv682c, test_syv682x_frs)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	const struct device *gpio_dev =
@@ -362,7 +362,7 @@ ZTEST(ppc_syv682c, test_ppc_syv682x_frs)
 			SYV682X_CONTROL_4_NONE);
 }
 
-ZTEST(ppc_syv682c, test_ppc_syv682x_source_current_limit)
+ZTEST(ppc_syv682c, test_syv682x_source_current_limit)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
@@ -396,7 +396,7 @@ ZTEST(ppc_syv682c, test_ppc_syv682x_source_current_limit)
 			"Set 3.0A Rp value, but 5V_ILIM is %d", ilim_val);
 }
 
-ZTEST(ppc_syv682c, test_ppc_syv682x_write_busy)
+ZTEST(ppc_syv682c, test_syv682x_write_busy)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 
@@ -426,7 +426,7 @@ ZTEST(ppc_syv682c, test_ppc_syv682x_write_busy)
 	syv682x_emul_set_busy_reads(emul, 0);
 }
 
-ZTEST(ppc_syv682c, test_ppc_syv682x_dev_is_connected)
+ZTEST(ppc_syv682c, test_syv682x_dev_is_connected)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
@@ -449,7 +449,7 @@ ZTEST(ppc_syv682c, test_ppc_syv682x_dev_is_connected)
 			"Could not connect device as source");
 }
 
-ZTEST(ppc_syv682c, test_ppc_syv682x_vbus_sink_enable)
+ZTEST(ppc_syv682c, test_syv682x_vbus_sink_enable)
 {
 	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
 	uint8_t reg;
@@ -492,7 +492,7 @@ ZTEST(ppc_syv682c, test_ppc_syv682x_vbus_sink_enable)
 		     "Sink disabled, but power path enabled");
 }
 
-ZTEST(ppc_syv682c, test_ppc_syv682x_ppc_dump)
+ZTEST(ppc_syv682c, test_syv682x_ppc_dump)
 {
 	/*
 	 * The ppc_dump command should succeed for this port. Don't check the
