@@ -116,7 +116,6 @@ func gpioConfig(out io.Writer, pin *Pin, chip Chip) {
 	}
 	lc := strings.ToLower(pin.Signal)
 	fmt.Fprintf(out, "\t\tgpio_%s: %s {\n", lc, lc)
-	fmt.Fprintf(out, "\t\t\t#gpio-cells = <0>;\n")
 	fmt.Fprintf(out, "\t\t\tgpios = <&%s %s>;\n", c, gtype)
 	if len(pin.Enum) > 0 {
 		fmt.Fprintf(out, "\t\t\tenum-name = \"%s\";\n", pin.Enum)
