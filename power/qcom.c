@@ -612,7 +612,7 @@ enum power_state power_chipset_init(void)
 /**
  * Power off the AP
  */
-static void power_off(void)
+static void power_off_seq(void)
 {
 	/* Check PMIC POWER_GOOD */
 	if (is_pmic_pwron()) {
@@ -664,7 +664,7 @@ static int power_is_enough(void)
  *
  * @return EC_SUCCESS or error
  */
-static int power_on(void)
+static int power_on_seq(void)
 {
 	int ret;
 
@@ -812,12 +812,14 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	task_wake(TASK_ID_CHIPSET);
 }
 
-void chipset_reset(enum chipset_shutdown_reason reason)
+/**
+ * Warm reset the AP
+ *
+ * @return EC_SUCCESS or error
+ */
+static int warm_reset_seq(void)
 {
 	int rv;
-
-	CPRINTS("%s(%d)", __func__, reason);
-	report_ap_reset(reason);
 
 	/*
 	 * Warm reset sequence:
@@ -838,7 +840,22 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 
 	rv = power_wait_signals_timeout(IN_AP_RST_ASSERTED,
 					PMIC_POWER_AP_RESPONSE_TIMEOUT);
+
 	/* Exception case: PMIC not work as expected, request a cold reset */
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	return EC_SUCCESS;
+}
+
+void chipset_reset(enum chipset_shutdown_reason reason)
+{
+	int rv;
+
+	CPRINTS("%s(%d)", __func__, reason);
+	report_ap_reset(reason);
+
+	rv = warm_reset_seq();
 	if (rv != EC_SUCCESS) {
 		CPRINTS("AP refuses to warm reset. Cold resetting.");
 		request_cold_reset();
@@ -991,8 +1008,8 @@ enum power_state power_handle_state(enum power_state state)
 		/* Initialize components to ready state before AP is up. */
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
-		if (power_on() != EC_SUCCESS) {
-			power_off();
+		if (power_on_seq() != EC_SUCCESS) {
+			power_off_seq();
 			boot_from_off = 0;
 			return POWER_S5;
 		}
@@ -1101,7 +1118,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we drop power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
-		power_off();
+		power_off_seq();
 		CPRINTS("power shutdown complete");
 
 		/* Call hooks after we drop power rails */
