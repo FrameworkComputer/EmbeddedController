@@ -641,7 +641,7 @@ class Zmake:
             "-d",
             build_dir,
             "-t",
-            lcov_file.stem,
+            build_dir.stem,
             "--rc",
             "lcov_branch_coverage=1",
             "--exclude",
