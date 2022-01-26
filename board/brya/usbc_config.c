@@ -100,6 +100,7 @@ struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0_C2_PPC,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.frs_en = IOEX_USB_C0_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 	[USBC_PORT_C1] = {
@@ -110,11 +111,8 @@ struct ppc_config_t ppc_chips[] = {
 	},
 	[USBC_PORT_C2] = {
 		.i2c_port = I2C_PORT_USB_C0_C2_PPC,
-		/*
-		 * b/179987870
-		 * schematics I2C map says ADDR3
-		 */
 		.i2c_addr_flags = SYV682X_ADDR2_FLAGS,
+		.frs_en = IOEX_USB_C2_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 };
