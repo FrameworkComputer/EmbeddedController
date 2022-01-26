@@ -66,6 +66,35 @@ const struct board_batt_params board_battery_info[] = {
 			.vendor_param_start = 0x70,
 		},
 	},
+	/* LGC MPPHPPFO021C Battery Information */
+	[BATTERY_LGC] = {
+		.fuel_gauge = {
+			.manuf_name = "313-42-14-A",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 8700,		/* mV */
+			.voltage_normal = 7520,		/* mV */
+			.voltage_min = 6000,		/* mV */
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -10,
+			.discharging_max_c = 60,
+			.vendor_param_start = 0x70,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
