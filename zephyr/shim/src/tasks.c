@@ -226,13 +226,6 @@ static void task_entry(void *task_context_static,
 	struct task_ctx_static *const ctx_static =
 			(struct task_ctx_static *)task_context_static;
 
-#ifdef CONFIG_THREAD_NAME
-	struct task_ctx_dyn *const ctx_dyn =
-			(struct task_ctx_dyn *)task_context_dyn;
-	/* Name thread for debugging */
-	k_thread_name_set(ctx_dyn->zephyr_tid, ctx_static->name);
-#endif
-
 	/* Call into task entry point */
 	ctx_static->entry((void *)ctx_static->parameter);
 }
@@ -328,6 +321,11 @@ void start_ec_tasks(void)
 			K_PRIO_PREEMPT(TASK_ID_COUNT - i - 1),
 			0,
 			K_NO_WAIT);
+
+#ifdef CONFIG_THREAD_NAME
+		/* Name thread for debugging */
+		k_thread_name_set(ctx_dyn->zephyr_tid, ctx_static->name);
+#endif
 	}
 
 	/* Create an entry for sysworkq we can send events to */
