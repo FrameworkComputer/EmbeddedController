@@ -442,7 +442,7 @@ struct tcpm_drv {
 	void (*wake_low_power_mode)(int port);
 #endif
 
-#ifdef CONFIG_USB_PD_FRS_TCPC
+#ifdef CONFIG_USB_PD_FRS
 	/**
 	 * Enable/Disable TCPC FRS detection
 	 *
@@ -498,6 +498,7 @@ struct tcpm_drv {
  *           the vSafe0V bit in the EXTENDED_STATUS_REGISTER
  * Bit 5 --> Set to 1 to prevent TCPC setting debug accessory control
  * Bit 6 --> TCPC controls VCONN (even when CONFIG_USB_PD_TCPC_VCONN is off)
+ * Bit 7 --> TCPC controls FRS (even when CONFIG_USB_PD_FRS_TCPC is off)
  */
 #define TCPC_FLAGS_ALERT_ACTIVE_HIGH	BIT(0)
 #define TCPC_FLAGS_ALERT_OD		BIT(1)
@@ -506,6 +507,7 @@ struct tcpm_drv {
 #define TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V	BIT(4)
 #define TCPC_FLAGS_NO_DEBUG_ACC_CONTROL	BIT(5)
 #define TCPC_FLAGS_CONTROL_VCONN	BIT(6)
+#define TCPC_FLAGS_CONTROL_FRS		BIT(7)
 
 struct tcpc_config_t {
 	enum ec_bus_type bus_type;	/* enum ec_bus_type */
