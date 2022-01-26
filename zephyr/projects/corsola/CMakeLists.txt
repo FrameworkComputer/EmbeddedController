@@ -21,7 +21,8 @@ zephyr_library_sources_ifdef(CONFIG_VARIANT_CORSOLA_DB_DETECTION
 
 if(DEFINED CONFIG_BOARD_KRABBY)
 	project(krabby)
-	zephyr_library_sources("src/krabby/hooks.c")
+	zephyr_library_sources("src/krabby/hooks.c"
+			       "src/krabby/charger_workaround.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C "src/krabby/i2c.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 				     "src/krabby/led.c")
