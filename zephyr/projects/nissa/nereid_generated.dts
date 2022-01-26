@@ -38,12 +38,10 @@
 		gpio_acc_int_l: acc_int_l {
 			#gpio-cells = <0>;
 			gpios = <&gpioc 0 GPIO_INPUT>;
-			enum-name = "GPIO_LID_ACCEL_INT_L";
 		};
 		gpio_all_sys_pwrgd: all_sys_pwrgd {
 			#gpio-cells = <0>;
 			gpios = <&gpiob 7 GPIO_INPUT>;
-			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
 		};
 		gpio_ccd_mode_odl: ccd_mode_odl {
 			#gpio-cells = <0>;
@@ -82,12 +80,10 @@
 		gpio_ec_prochot_odl: ec_prochot_odl {
 			#gpio-cells = <0>;
 			gpios = <&gpioi 1 GPIO_INPUT>;
-			enum-name = "GPIO_CPU_PROCHOT";
 		};
 		gpio_ec_soc_dsw_pwrok: ec_soc_dsw_pwrok {
 			#gpio-cells = <0>;
 			gpios = <&gpiol 7 GPIO_OUTPUT>;
-			enum-name = "GPIO_PG_EC_DSW_PWROK";
 		};
 		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
 			#gpio-cells = <0>;
@@ -102,32 +98,26 @@
 		gpio_ec_soc_pch_pwrok_od: ec_soc_pch_pwrok_od {
 			#gpio-cells = <0>;
 			gpios = <&gpiod 6 GPIO_ODR_HIGH>;
-			enum-name = "GPIO_PCH_PWROK";
 		};
 		gpio_ec_soc_pwr_btn_odl: ec_soc_pwr_btn_odl {
 			#gpio-cells = <0>;
 			gpios = <&gpiob 6 GPIO_ODR_LOW>;
-			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
 			#gpio-cells = <0>;
 			gpios = <&gpioh 0 GPIO_OUTPUT>;
-			enum-name = "GPIO_PCH_RSMRST_L";
 		};
 		gpio_ec_soc_rtcrst: ec_soc_rtcrst {
 			#gpio-cells = <0>;
 			gpios = <&gpiok 2 GPIO_OUTPUT>;
-			enum-name = "GPIO_PCH_RTCRST";
 		};
 		gpio_ec_soc_sys_pwrok: ec_soc_sys_pwrok {
 			#gpio-cells = <0>;
 			gpios = <&gpiof 2 GPIO_OUTPUT>;
-			enum-name = "GPIO_PCH_SYS_PWROK";
 		};
 		gpio_ec_soc_vccst_pwrgd_od: ec_soc_vccst_pwrgd_od {
 			#gpio-cells = <0>;
 			gpios = <&gpioe 5 GPIO_ODR_HIGH>;
-			enum-name = "GPIO_VCCST_PWRGD_OD";
 		};
 		gpio_ec_soc_wake_odl: ec_soc_wake_odl {
 			#gpio-cells = <0>;
@@ -147,7 +137,6 @@
 		gpio_en_pp3300_s5: en_pp3300_s5 {
 			#gpio-cells = <0>;
 			gpios = <&gpioc 5 GPIO_OUTPUT>;
-			enum-name = "GPIO_EN_PP3300_A";
 		};
 		gpio_en_pp5000_pen_x: en_pp5000_pen_x {
 			#gpio-cells = <0>;
@@ -157,17 +146,14 @@
 		gpio_en_pp5000_s5: en_pp5000_s5 {
 			#gpio-cells = <0>;
 			gpios = <&gpiok 5 GPIO_OUTPUT>;
-			enum-name = "GPIO_EN_PP5000";
 		};
 		gpio_en_slp_z: en_slp_z {
 			#gpio-cells = <0>;
 			gpios = <&gpiok 3 GPIO_OUTPUT>;
-			enum-name = "GPIO_EN_SLP_Z";
 		};
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
 			#gpio-cells = <0>;
 			gpios = <&gpiol 6 GPIO_OUTPUT>;
-			enum-name = "GPIO_EN_USB_A_5V";
 		};
 		gpio_en_usb_c0_cc1_vconn: en_usb_c0_cc1_vconn {
 			#gpio-cells = <0>;
@@ -190,12 +176,10 @@
 		gpio_imu_int_l: imu_int_l {
 			#gpio-cells = <0>;
 			gpios = <&gpioj 0 GPIO_INPUT>;
-			enum-name = "GPIO_EC_IMU_INT_L";
 		};
 		gpio_imvp91_vrrdy_od: imvp91_vrrdy_od {
 			#gpio-cells = <0>;
 			gpios = <&gpioj 4 GPIO_INPUT>;
-			enum-name = "GPIO_IMVP9_VRRDY_OD";
 		};
 		gpio_lid_open: lid_open {
 			#gpio-cells = <0>;
@@ -220,32 +204,26 @@
 		gpio_pg_pp5000_s5_od: pg_pp5000_s5_od {
 			#gpio-cells = <0>;
 			gpios = <&gpioe 3 GPIO_INPUT>;
-			enum-name = "GPIO_PG_PP5000_A_ODL";
 		};
 		gpio_rsmrst_pwrgd_l: rsmrst_pwrgd_l {
 			#gpio-cells = <0>;
 			gpios = <&gpioe 1 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_PG_EC_RSMRST_ODL";
 		};
 		gpio_slp_s0_l: slp_s0_l {
 			#gpio-cells = <0>;
 			gpios = <&gpioe 4 GPIO_INPUT>;
-			enum-name = "GPIO_PCH_SLP_S0_L";
 		};
 		gpio_slp_s3_l: slp_s3_l {
 			#gpio-cells = <0>;
 			gpios = <&gpioh 3 GPIO_INPUT>;
-			enum-name = "GPIO_PCH_SLP_S3_L";
 		};
 		gpio_slp_s4_l: slp_s4_l {
 			#gpio-cells = <0>;
 			gpios = <&gpioi 5 GPIO_INPUT>;
-			enum-name = "GPIO_PCH_SLP_S4_L";
 		};
 		gpio_slp_sus_l: slp_sus_l {
 			#gpio-cells = <0>;
 			gpios = <&gpiog 2 GPIO_INPUT>;
-			enum-name = "GPIO_SLP_SUS_L";
 		};
 		gpio_sub_usb_a1_ilimit_sdp: sub_usb_a1_ilimit_sdp {
 			#gpio-cells = <0>;
@@ -255,7 +233,6 @@
 		gpio_sys_rst_odl: sys_rst_odl {
 			#gpio-cells = <0>;
 			gpios = <&gpiod 1 GPIO_ODR_LOW>;
-			enum-name = "GPIO_SYS_RESET_L";
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			#gpio-cells = <0>;
@@ -274,7 +251,6 @@
 		gpio_usb_c0_int_odl: usb_c0_int_odl {
 			#gpio-cells = <0>;
 			gpios = <&gpiok 0 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_USB_C0_PD_INT_ODL";
 		};
 		gpio_vccin_aux_vid0: vccin_aux_vid0 {
 			#gpio-cells = <0>;

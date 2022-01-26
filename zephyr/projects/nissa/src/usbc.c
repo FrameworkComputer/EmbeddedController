@@ -67,7 +67,7 @@ __override void board_hibernate(void)
 
 __override void board_hibernate_late(void)
 {
-	gpio_set_level(GPIO_EN_SLP_Z, 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_slp_z), 1);
 	/*
 	 * The system should hibernate, but there may be
 	 * a small delay, so return.
@@ -318,7 +318,7 @@ void usb_interrupt(enum gpio_signal signal)
 	int port;
 	const struct deferred_data *ud;
 
-	if (signal == GPIO_USB_C0_PD_INT_ODL) {
+	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_int_odl))) {
 		port = 0;
 		ud = &poll_c0_int_data;
 	} else {

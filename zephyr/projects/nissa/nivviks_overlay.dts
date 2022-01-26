@@ -80,7 +80,6 @@
 		gpio_usb_c1_int_odl: usb_c1_int_odl {
 			#gpio-cells = <0>;
 			gpios = <&gpio0 2 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_USB_C1_PD_INT_ODL";
 			no-auto-init;
 		};
 		/*
