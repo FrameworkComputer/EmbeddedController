@@ -417,7 +417,7 @@ static int nxp_rtc_pcf85063a_init(const struct device *dev)
 }
 
 #define PCF85063A_INT_GPIOS \
-	DT_PHANDLE_BY_IDX(DT_NODELABEL(pcf85063a), int_gpios, 0)
+	DT_PHANDLE(DT_NODELABEL(pcf85063a), int_pin)
 
 /*
  * dt_flags is a uint8_t type.  However, for platform/ec
@@ -426,20 +426,19 @@ static int nxp_rtc_pcf85063a_init(const struct device *dev)
  * Cast back to a gpio_dt_flags to compile, discarding the bits
  * that are not supported by the Zephyr GPIO API.
  */
-#define CROS_EC_GPIO_DT_SPEC_GET_BY_IDX(node_id, prop, idx)                \
-	{                                                                  \
-		.port =                                                    \
-		DEVICE_DT_GET(DT_GPIO_CTLR_BY_IDX(node_id, prop, idx)),    \
-		.pin = DT_GPIO_PIN_BY_IDX(node_id, prop, idx),             \
-		.dt_flags =                                                \
-		(gpio_dt_flags_t)DT_GPIO_FLAGS_BY_IDX(node_id, prop, idx), \
+#define CROS_EC_GPIO_DT_SPEC_GET(node_id, prop)                     \
+	{                                                           \
+		.port = DEVICE_DT_GET(DT_GPIO_CTLR(node_id, prop)), \
+		.pin = DT_GPIO_PIN(node_id, prop),                  \
+		.dt_flags =                                         \
+		(gpio_dt_flags_t)DT_GPIO_FLAGS(node_id, prop),      \
 	}
 
 static const struct nxp_rtc_pcf85063a_config nxp_rtc_pcf85063a_cfg_0 = {
 	.bus = DEVICE_DT_GET(DT_INST_BUS(0)),
 	.i2c_addr_flags = DT_INST_REG_ADDR(0),
 	.gpio_alert =
-		CROS_EC_GPIO_DT_SPEC_GET_BY_IDX(PCF85063A_INT_GPIOS, gpios, 0)
+		CROS_EC_GPIO_DT_SPEC_GET(PCF85063A_INT_GPIOS, gpios)
 };
 
 static struct nxp_rtc_pcf85063a_data nxp_rtc_pcf85063a_data_0;

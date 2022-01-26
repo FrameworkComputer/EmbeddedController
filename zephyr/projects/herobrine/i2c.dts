@@ -123,7 +123,7 @@
 		compatible = "nxp,rtc-pcf85063a";
 		reg = <0x51>;
 		label = "RTC_PCF85063A";
-		int-gpios = <&gpio_rtc_ec_wake_odl>;
+		int-pin = <&gpio_rtc_ec_wake_odl>;
 	};
 };
 
