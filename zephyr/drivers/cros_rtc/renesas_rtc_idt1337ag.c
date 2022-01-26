@@ -445,8 +445,8 @@ static int renesas_rtc_idt1337ag_init(const struct device *dev)
 					       GPIO_INT_EDGE_FALLING);
 }
 
-#define IDT1337AG_INT_GPIOS \
-	DT_PHANDLE_BY_IDX(DT_NODELABEL(idt1337ag), int_gpios, 0)
+#define IDT1337AG_INT_PIN \
+	DT_PHANDLE(DT_NODELABEL(idt1337ag), int_pin)
 
 /*
  * dt_flags is a uint8_t type.  However, for platform/ec
@@ -455,20 +455,18 @@ static int renesas_rtc_idt1337ag_init(const struct device *dev)
  * Cast back to a gpio_dt_flags to compile, discarding the bits
  * that are not supported by the Zephyr GPIO API.
  */
-#define CROS_EC_GPIO_DT_SPEC_GET_BY_IDX(node_id, prop, idx)                \
-	{                                                                  \
-		.port =                                                    \
-		DEVICE_DT_GET(DT_GPIO_CTLR_BY_IDX(node_id, prop, idx)),    \
-		.pin = DT_GPIO_PIN_BY_IDX(node_id, prop, idx),             \
-		.dt_flags =                                                \
-		(gpio_dt_flags_t)DT_GPIO_FLAGS_BY_IDX(node_id, prop, idx), \
+#define CROS_EC_GPIO_DT_SPEC_GET(node_id, prop)                     \
+	{                                                           \
+		.port = DEVICE_DT_GET(DT_GPIO_CTLR(node_id, prop)), \
+		.pin = DT_GPIO_PIN(node_id, prop),                  \
+		.dt_flags =                                         \
+		(gpio_dt_flags_t)DT_GPIO_FLAGS(node_id, prop),      \
 	}
 
 static const struct renesas_rtc_idt1337ag_config renesas_rtc_idt1337ag_cfg_0 = {
 	.bus = DEVICE_DT_GET(DT_INST_BUS(0)),
 	.i2c_addr_flags = DT_INST_REG_ADDR(0),
-	.gpio_alert =
-		CROS_EC_GPIO_DT_SPEC_GET_BY_IDX(IDT1337AG_INT_GPIOS, gpios, 0)
+	.gpio_alert = CROS_EC_GPIO_DT_SPEC_GET(IDT1337AG_INT_PIN, gpios)
 };
 
 static struct renesas_rtc_idt1337ag_data renesas_rtc_idt1337ag_data_0;

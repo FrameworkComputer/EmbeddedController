@@ -11,7 +11,7 @@ properties:
     label:
       required: true
 
-    int-gpios:
-      type: phandle-array
+    int-pin:
+      type: phandle
       required: true
       description: Interrupt from RTC
