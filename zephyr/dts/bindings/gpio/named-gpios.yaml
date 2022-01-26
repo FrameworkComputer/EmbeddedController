@@ -6,13 +6,14 @@ child-binding:
   description: Named GPIOs child node
   include: gpio-enum-name.yaml
   properties:
+    #
+    # Must name this property [..-]gpios which
+    # is treated specially (looks for #gpio-cells
+    # in referenced node so that cell properties can
+    # be specified).
     gpios:
       type: phandle-array
       required: true
-    "#gpio-cells":
-      type: int
-      required: false
-      const: 0
     no-auto-init:
       description:
         When set, the GPIO is not initialised, and can be

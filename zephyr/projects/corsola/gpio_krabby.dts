@@ -11,69 +11,56 @@
 		compatible = "named-gpios";
 
 		power_button_l: power_button_l {
-			#gpio-cells = <0>;
 			gpios = <&gpioe 4 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		lid_open: lid_open {
-			#gpio-cells = <0>;
 			gpios = <&gpioe 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
 		tablet_mode_l: tablet_mode_l {
-			#gpio-cells = <0>;
 			gpios = <&gpioj 7 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		ap_ec_warm_rst_req: ap_ec_warm_rst_req {
-			#gpio-cells = <0>;
 			gpios = <&gpiod 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
 					   GPIO_ACTIVE_HIGH)>;
 			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
 		};
 		ap_in_sleep_l: ap_in_sleep_l {
-			#gpio-cells = <0>;
 			gpios = <&gpiob 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
 					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_IN_SLEEP_L";
 		};
 		base_imu_int_l: base_imu_int_l {
-			#gpio-cells = <0>;
 			gpios = <&gpiom 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_BASE_IMU_INT_L";
 		};
 		lid_accel_int_l: lid_accel_int_l {
-			#gpio-cells = <0>;
 			gpios = <&gpiom 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_LID_ACCEL_INT_L";
 		};
 		volume_down_l: volume_down_l {
-			#gpio-cells = <0>;
 			gpios = <&gpiod 5 GPIO_INPUT>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		volume_up_l: volume_up_l {
-			#gpio-cells = <0>;
 			gpios = <&gpiod 6 GPIO_INPUT>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		ap_xhci_init_done: ap_xhci_init_done {
-			#gpio-cells = <0>;
 			gpios = <&gpioj 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_AP_XHCI_INIT_DONE";
 		};
 		ac_present: ac_present {
-			#gpio-cells = <0>;
 			gpios = <&gpioe 5 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		ec_flash_wp_odl: ec_flash_wp_odl {
-			#gpio-cells = <0>;
 			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_WP_L";
 		};
 		spi0_cs: spi0_cs {
-			#gpio-cells = <0>;
 			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		x_ec_gpio2: x_ec_gpio2 {
@@ -109,13 +96,11 @@
 			enum-name = "GPIO_EC_BL_EN_OD";
 		};
 		ap_sysrst_odl_r: ap_ec_sysrst_odl {
-			#gpio-cells = <0>;
 			gpios = <&gpioj 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
 					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_EC_SYSRST_ODL";
 		};
 		ap_ec_wdtrst_l: ap_ec_wdtrst_l {
-			#gpio-cells = <0>;
 			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
 					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_EC_WDTRST_L";

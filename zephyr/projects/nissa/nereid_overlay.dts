@@ -57,23 +57,19 @@
 
 	named-gpios {
 		gpio_sb_1: sb_1 {
-			#gpio-cells = <0>;
 			gpios = <&gpioe 6 GPIO_INPUT_PULL_UP>;
 			no-auto-init;
 		};
 		gpio_sb_2: sb_2 {
-			#gpio-cells = <0>;
 			gpios = <&gpiof 0 GPIO_OUTPUT>;
 			no-auto-init;
 		};
 
 		gpio_sb_3: sb_3 {
-			#gpio-cells = <0>;
 			gpios = <&gpioe 7 GPIO_OPEN_DRAIN>;
 			no-auto-init;
 		};
 		gpio_sb_4: sb_4 {
-			#gpio-cells = <0>;
 			gpios = <&gpioe 0 GPIO_INPUT>;
 			no-auto-init;
 		};
@@ -195,7 +191,6 @@
 		pagesize = <16>;
 		address-width = <8>;
 		timeout = <5>;
-		wp-gpios = <&gpio_ec_wp_odl>;
 	};
 };
 

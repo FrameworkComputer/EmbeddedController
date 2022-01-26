@@ -15,7 +15,6 @@
 			enum-name = "GPIO_EN_PWR_S3";
 		};
 		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
-			#gpio-cells = <0>;
 			gpios = <&gpiof 0 GPIO_INPUT>;
 			enum-name = "GPIO_PG_GROUPC_S0_OD";
 		};
@@ -57,7 +56,6 @@
 			enum-name = "GPIO_USB_HUB_FAULT_ODL";
 		};
 		gpio_pg_lpddr5_s3_od: pg_lpddr5_s3_od {
-			#gpio-cells = <0>;
 			gpios = <&gpio7 3 GPIO_INPUT>;
 			enum-name = "GPIO_PG_LPDDR5_S3_OD";
 		};
@@ -69,12 +67,10 @@
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_volup_btn_odl: volup_btn_odl {
-			#gpio-cells = <0>;
 			gpios = <&gpio6 7 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
-			#gpio-cells = <0>;
 			gpios = <&gpio7 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
@@ -91,7 +87,6 @@
 			enum-name = "GPIO_WP_L";
 		};
 		gpio_pg_lpddr5_s0_od: pg_lpddr5_s0_od {
-			#gpio-cells = <0>;
 			gpios = <&gpio6 0 GPIO_INPUT>;
 			enum-name = "GPIO_PG_LPDDR5_S0_OD";
 		};

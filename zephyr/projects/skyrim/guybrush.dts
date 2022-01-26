@@ -11,27 +11,22 @@
 			enum-name = "GPIO_WP_L";
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
-			#gpio-cells = <0>;
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_EC_PWR_BTN_ODL";
 		};
 		gpio_slp_s3_s0i3_l: slp_s3_s0i3_l {
-			#gpio-cells = <0>;
 			gpios = <&gpio7 4 GPIO_INPUT>;
 			enum-name = "GPIO_PCH_SLP_S0_L";
 		};
 		gpio_ec_pcore_int_odl: ec_pcore_int_odl {
-			#gpio-cells = <0>;
 			gpios = <&gpiof 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_EC_PCORE_INT_ODL";
 		};
 		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
-			#gpio-cells = <0>;
 			gpios = <&gpioa 3 GPIO_INPUT>;
 			enum-name = "GPIO_PG_GROUPC_S0_OD";
 		};
 		gpio_pg_lpddr4x_s3_od: pg_lpddr4x_s3_od {
-			#gpio-cells = <0>;
 			gpios = <&gpio9 5 GPIO_INPUT>;
 			enum-name = "GPIO_PG_LPDDR4X_S3_OD";
 		};
@@ -67,12 +62,10 @@
 			gpios = <&gpioa 2 GPIO_INPUT_PULL_DOWN>;
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
-			#gpio-cells = <0>;
 			gpios = <&gpioa 7 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		gpio_volup_btn_odl: volup_btn_odl {
-			#gpio-cells = <0>;
 			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};

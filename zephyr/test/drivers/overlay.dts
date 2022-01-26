@@ -35,7 +35,6 @@
 		 * protection.
 		 */
 		gpio_wp_l: wp_l {
-			#gpio-cells = <0>;
 			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_OUTPUT)>;
 			enum-name = "GPIO_WP_L";
 		};
@@ -674,7 +673,6 @@
 		pagesize = <8>;
 		address-width = <8>;
 		timeout = <5>;
-		wp-gpios = <&gpio_wp_l>;
 	};
 
 	battery: sb@b {

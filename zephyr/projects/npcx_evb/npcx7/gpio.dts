@@ -15,17 +15,14 @@
 			enum-name = "GPIO_WP_L";
 		};
 		gpio_ac_present: ac_present {
-			#gpio-cells = <0>;
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_power_button_l: power_button_l {
-			#gpio-cells = <0>;
 			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_lid_open: lid_open {
-			#gpio-cells = <0>;
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
