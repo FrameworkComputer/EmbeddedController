@@ -5,19 +5,19 @@
 menu "Sensor Devices"
 
 config PLATFORM_EC_ACCELGYRO_BMI
-	bool "Config used to include common accelgyro BMI features"
+	bool
 	select PLATFORM_EC_MATH_UTIL
 	help
-	  Do not set this directly in a .conf file. This value should be set
-	  using an `select` statement in other BMI family of drivers such as
-	  BMI260.
+	  This config does not contain a prompt on purpose, it cannot be set
+	  directly from a .conf file. This value should be set using an `select`
+	  statement in other BMI family of drivers such as BMI260.
 
 config PLATFORM_EC_ACCELGYRO_ICM
-	bool "Config used to include common accelgyro ICM features"
+	bool
 	help
-	  Do not set this directly in a .conf file. This value should be set
-	  using an `select` statement in other ICM family of drivers such as
-	  ICM426XX.
+	  This config does not contain a prompt on purpose, it cannot be set
+	  directly from a .conf file. This value should be set using an `select`
+	  statement in other BMI family of drivers such as ICM426XX.
 
 config PLATFORM_EC_ACCEL_BMA255
 	bool "BMA2X2 Accelerometer Family Driver"
