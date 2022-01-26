@@ -168,7 +168,7 @@ enum power_request_t {
 	POWER_REQ_NONE,
 	POWER_REQ_OFF,
 	POWER_REQ_ON,
-	POWER_REQ_RESET,
+	POWER_REQ_COLD_RESET,
 
 	POWER_REQ_COUNT,
 };
@@ -253,7 +253,7 @@ void chipset_ap_rst_interrupt(enum gpio_signal signal)
 /* Issue a request to initiate a reset sequence */
 static void request_cold_reset(void)
 {
-	power_request = POWER_REQ_RESET;
+	power_request = POWER_REQ_COLD_RESET;
 	task_wake(TASK_ID_CHIPSET);
 }
 
@@ -698,7 +698,7 @@ static uint8_t check_for_power_on_event(void)
 	if (power_request == POWER_REQ_ON) {
 		power_request = POWER_REQ_NONE;
 		return POWER_ON_BY_POWER_REQ_ON;
-	} else if (power_request == POWER_REQ_RESET) {
+	} else if (power_request == POWER_REQ_COLD_RESET) {
 		power_request = POWER_REQ_NONE;
 		return POWER_ON_BY_POWER_REQ_RESET;
 	}
@@ -740,7 +740,7 @@ static uint8_t check_for_power_off_event(void)
 	if (power_request == POWER_REQ_OFF) {
 		power_request = POWER_REQ_NONE;
 		return POWER_OFF_BY_POWER_REQ_OFF;
-	} else if (power_request == POWER_REQ_RESET) {
+	} else if (power_request == POWER_REQ_COLD_RESET) {
 		/*
 		 * The power_request flag will be cleared later
 		 * in check_for_power_on_event() in S5.
