@@ -80,7 +80,7 @@ GPIO(USB_C1_DP_IN_HPD,       PIN(J, 1), GPIO_OUT_LOW)
 GPIO(USB_C0_FRS_EN,          PIN(F, 0), GPIO_OUT_LOW)
 
 /* Misc Signals */
-GPIO(EN_KB_BL,               PIN(A, 6), GPIO_OUT_LOW)
+GPIO(EN_KB_BL,               PIN(J, 2), GPIO_OUT_LOW)
 GPIO(EC_BATT_PRES_ODL,       PIN(C, 0), GPIO_INPUT)
 GPIO(EN_EC_ID_ODL,           PIN(H, 5), GPIO_ODR_LOW)
 GPIO(ENTERING_RW,            PIN(C, 5), GPIO_OUT_LOW) /* EC_ENTERING_RW */
@@ -127,12 +127,12 @@ GPIO(CCD_MODE_ODL,           PIN(C, 4), GPIO_INPUT)
 
 /* NC pins, enable internal pull-up/down to avoid floating state. */
 GPIO(NC_GPA1,                PIN(A, 1), GPIO_INPUT | GPIO_PULL_DOWN)
+GPIO(PWM6,                   PIN(A, 6), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(PWM7,                   PIN(A, 7), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(EC_NVME_PLN_ODL,        PIN(D, 7), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_CLK_GPG6,           PIN(G, 6), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(NC_GPH2,                PIN(H, 2), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(PG_NVME_OD,             PIN(H, 3), GPIO_INPUT | GPIO_PULL_DOWN)
-GPIO(EN_PP2500_NVME_X,       PIN(J, 2), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(EN_PP1200_NVME_X,       PIN(J, 3), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(NC_GPJ4,                PIN(J, 4), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(NC_GPM6,                PIN(M, 6), GPIO_INPUT | GPIO_PULL_DOWN)
