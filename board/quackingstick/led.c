@@ -80,59 +80,33 @@ static void board_led_set_battery(void)
 		break;
 	case PWR_STATE_DISCHARGE:
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
-			/* Discharging in S3: White 1 sec, off 1 sec */
-			period = (1 + 1) * LED_ONE_SEC;
+			/* Discharging in S3: Amber 1 sec, off 3 sec */
+			period = (1 + 3) * LED_ONE_SEC;
 			battery_ticks = battery_ticks % period;
-			if (battery_ticks < 1 * LED_ONE_SEC) {
-				if (charge_get_percent() < 10) {
-				/* Blink amber light (1 sec on, 1 sec off) */
-					color = LED_AMBER;
-				} else {
-				/* Blink white light (1 sec on, 1 sec off) */
-					color = LED_BLUE;
-				}
-			} else {
+			if (battery_ticks < 1 * LED_ONE_SEC)
+				color = LED_AMBER;
+			else
 				color = LED_OFF;
-			}
+		} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			/* Discharging in S5: off */
+			color = LED_OFF;
 		} else {
-			/* Discharging in S5 and S0: off */
-			/* Blink amber light (1 sec on, 1 sec off) */
-			if (charge_get_percent() < 10) {
-				period = (1 + 1) * LED_ONE_SEC;
-				battery_ticks = battery_ticks % period;
-				if (battery_ticks < 1 * LED_ONE_SEC)
-					color = LED_AMBER;
-				else
-					color = LED_OFF;
-			} else {
-				/* G3 or S5 or S0: off */
-				color = LED_OFF;
-			}
+			/* Discharging in S0: Blue on */
+			color = LED_BLUE;
 		}
 		break;
 	case PWR_STATE_ERROR:
-		/* Battery error: Amber on 0.5 sec, off 0.5 sec */
+		/* Battery error: Amber on 1 sec, off 1 sec */
 		period = (1 + 1) * LED_HALF_ONE_SEC;
 		battery_ticks = battery_ticks % period;
-		if (battery_ticks < 1 * LED_HALF_ONE_SEC)
+		if (battery_ticks < 1 * LED_ONE_SEC)
 			color = LED_AMBER;
 		else
 			color = LED_OFF;
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		/* Full Charged: Blue on */
-		/* S3: Blink white light (1 sec on, 1 sec off) */
-		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
-			period = (1 + 1) * LED_ONE_SEC;
-			battery_ticks = battery_ticks % period;
-			if (battery_ticks < 1 * LED_ONE_SEC)
-				color = LED_BLUE;
-			else
-				color = LED_OFF;
-		} else {
-			/* Full charged: White on */
-			color = LED_BLUE;
-		}
+		color = LED_BLUE;
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE) {
