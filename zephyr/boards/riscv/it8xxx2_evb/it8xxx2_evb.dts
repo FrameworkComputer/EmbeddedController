@@ -80,7 +80,7 @@
 			enum-name = "GPIO_EC_I2C5_BATTERY_SDA";
 		};
 
-		spi0_cs {
+		spi0_cs: spi0_cs {
 			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_SPI0_CS";
 		};

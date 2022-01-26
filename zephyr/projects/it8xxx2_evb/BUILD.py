@@ -5,4 +5,7 @@
 register_raw_project(
     project_name="it8xxx2_evb",
     zephyr_board="it8xxx2_evb",
+    dts_overlays=[
+        "interrupts.dts",
+    ],
 )
