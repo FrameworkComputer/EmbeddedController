@@ -664,7 +664,7 @@
 		compatible = "cros,sn5s330-emul";
 		reg = <0x40>;
 		label = "SN5S330_EMUL";
-		int_gpio = <&gpio_usb_c0_ppc_int>;
+		int-pin = <&gpio_usb_c0_ppc_int>;
 	};
 
 	accel_bmi260: bmi260@68 {

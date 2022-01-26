@@ -30,9 +30,9 @@ LOG_MODULE_REGISTER(sn5s330_emul, CONFIG_SN5S330_EMUL_LOG_LEVEL);
 struct sn5s330_emul_data {
 	/** Common I2C data */
 	struct i2c_common_emul_data common;
-	/** Emulated int_gpio port */
+	/** Emulated int-pin port */
 	const struct device *gpio_int_port;
-	/** Emulated int_gpio pin */
+	/** Emulated int-pin pin */
 	gpio_pin_t gpio_int_pin;
 	/** Emulated FUNC_SET1 register */
 	uint8_t func_set1_reg;
@@ -344,10 +344,10 @@ static int emul_sn5s330_init(const struct emul *emul,
 }
 
 #define SN5S330_GET_GPIO_INT_PORT(n) \
-	DEVICE_DT_GET(DT_GPIO_CTLR(DT_INST_PROP(n, int_gpio), gpios))
+	DEVICE_DT_GET(DT_GPIO_CTLR(DT_INST_PROP(n, int_pin), gpios))
 
 #define SN5S330_GET_GPIO_INT_PIN(n) \
-	DT_GPIO_PIN(DT_INST_PROP(n, int_gpio), gpios)
+	DT_GPIO_PIN(DT_INST_PROP(n, int_pin), gpios)
 
 #define INIT_SN5S330(n)                                                        \
 	static struct sn5s330_emul_data sn5s330_emul_data_##n = {              \

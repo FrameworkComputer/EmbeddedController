@@ -10,7 +10,7 @@ include: base.yaml
 properties:
     reg:
       required: true
-    int_gpio:
+    int-pin:
       type: phandle
       description: The GPIO that receives an interrupt signal from this device
       required: true
