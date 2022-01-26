@@ -54,7 +54,7 @@ static int mock_write_fn_always_fail(struct i2c_emul *emul, int reg,
 	return 0;
 }
 
-ZTEST(isl329x, test_isl923x_set_current)
+ZTEST(isl923x, test_isl923x_set_current)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -94,7 +94,7 @@ ZTEST(isl329x, test_isl923x_set_current)
 	}
 }
 
-ZTEST(isl329x, test_isl923x_set_voltage)
+ZTEST(isl923x, test_isl923x_set_voltage)
 {
 	int expected_voltage_milli_volts[] = { 8,    16,   32,	 64,
 					       128,  256,  512,	 1024,
@@ -127,7 +127,7 @@ ZTEST(isl329x, test_isl923x_set_voltage)
 	}
 }
 
-ZTEST(isl329x, test_isl923x_set_input_current_limit)
+ZTEST(isl923x, test_isl923x_set_input_current_limit)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -193,7 +193,7 @@ ZTEST(isl329x, test_isl923x_set_input_current_limit)
 	}
 }
 
-ZTEST(isl329x, test_manufacturer_id)
+ZTEST(isl923x, test_manufacturer_id)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -214,7 +214,7 @@ ZTEST(isl329x, test_manufacturer_id)
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-ZTEST(isl329x, test_device_id)
+ZTEST(isl923x, test_device_id)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -235,7 +235,7 @@ ZTEST(isl329x, test_device_id)
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-ZTEST(isl329x, test_options)
+ZTEST(isl923x, test_options)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -276,7 +276,7 @@ ZTEST(isl329x, test_options)
 		      "Expected options 0xff7ffffe but got 0x%x", option);
 }
 
-ZTEST(isl329x, test_get_info)
+ZTEST(isl923x, test_get_info)
 {
 	const struct charger_info *info = isl923x_drv.get_info(CHARGER_NUM);
 
@@ -295,7 +295,7 @@ ZTEST(isl329x, test_get_info)
 		      NULL);
 }
 
-ZTEST(isl329x, test_status)
+ZTEST(isl923x, test_status)
 {
 	int status;
 
@@ -303,7 +303,7 @@ ZTEST(isl329x, test_status)
 	zassert_equal(CHARGER_LEVEL_2, status, NULL);
 }
 
-ZTEST(isl329x, test_set_mode)
+ZTEST(isl923x, test_set_mode)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 
@@ -321,12 +321,12 @@ ZTEST(isl329x, test_set_mode)
 	zassert_true(!isl923x_emul_is_learn_mode_enabled(isl923x_emul), NULL);
 }
 
-ZTEST(isl329x, test_post_init)
+ZTEST(isl923x, test_post_init)
 {
 	zassert_ok(isl923x_drv.post_init(CHARGER_NUM), NULL);
 }
 
-ZTEST(isl329x, test_set_ac_prochot)
+ZTEST(isl923x, test_set_ac_prochot)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
@@ -387,7 +387,7 @@ ZTEST(isl329x, test_set_ac_prochot)
 			      current_milli_amps);
 	}
 }
-ZTEST(isl329x, test_set_dc_prochot)
+ZTEST(isl923x, test_set_dc_prochot)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
@@ -443,7 +443,7 @@ ZTEST(isl329x, test_set_dc_prochot)
 	}
 }
 
-ZTEST(isl329x, test_comparator_inversion)
+ZTEST(isl923x, test_comparator_inversion)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
@@ -490,7 +490,7 @@ ZTEST(isl329x, test_comparator_inversion)
 	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) == 0, NULL);
 }
 
-ZTEST(isl329x, test_discharge_on_ac)
+ZTEST(isl923x, test_discharge_on_ac)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
@@ -541,7 +541,7 @@ ZTEST(isl329x, test_discharge_on_ac)
 	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) == 0, NULL);
 }
 
-ZTEST(isl329x, test_get_vbus_voltage)
+ZTEST(isl923x, test_get_vbus_voltage)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -570,7 +570,7 @@ ZTEST(isl329x, test_get_vbus_voltage)
 	}
 }
 
-ZTEST(isl329x, test_init)
+ZTEST(isl923x, test_init)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -676,7 +676,7 @@ ZTEST(isl329x, test_init)
 	system_jumped_late_mock.ret_val = false;
 }
 
-ZTEST(isl329x, test_isl923x_is_acok)
+ZTEST(isl923x, test_isl923x_is_acok)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -713,7 +713,7 @@ ZTEST(isl329x, test_isl923x_is_acok)
 	zassert_false(acok, "AC OK is true");
 }
 
-ZTEST(isl329x, test_isl923x_enable_asgate)
+ZTEST(isl923x, test_isl923x_enable_asgate)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
