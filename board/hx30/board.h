@@ -158,6 +158,8 @@
 #define CONFIG_SYSTEM_UNLOCKED
 
 /* Optional features */
+#define CONFIG_ALS
+#define CONFIG_CMD_ALS
 
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_SMART
@@ -671,7 +673,7 @@ enum sensor_id {
 
 /* Light sensors */
 enum als_id {
-	ALS_OPT3001 = 0,
+	ALS_CM32183 = 0,
 
 	ALS_COUNT
 };
