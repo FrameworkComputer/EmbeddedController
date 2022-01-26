@@ -18,6 +18,8 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+#undef CONFIG_GMR_TABLET_MODE
+#undef CONFIG_VOLUME_BUTTONS
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
  * until we can confirm all earlier chips are out of service.
@@ -28,7 +30,7 @@
 
 /* LED */
 #define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 2
+#define CONFIG_LED_PWM_COUNT 4
 #undef CONFIG_LED_PWM_NEAR_FULL_COLOR
 #undef CONFIG_LED_PWM_SOC_ON_COLOR
 #undef CONFIG_LED_PWM_SOC_SUSPEND_COLOR
@@ -76,10 +78,6 @@
 /* Sensor console commands */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
-
-/* USB Type A Features */
-#define USB_PORT_COUNT			1
-#define CONFIG_USB_PORT_POWER_DUMB
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
@@ -133,7 +131,6 @@
 #define GPIO_PCH_SLP_S0_L		GPIO_SYS_SLP_S0IX_L
 #define GPIO_PCH_SLP_S3_L		GPIO_SLP_S3_L
 #define GPIO_TEMP_SENSOR_POWER		GPIO_SEQ_EC_DSW_PWROK
-#define GMR_TABLET_MODE_GPIO_L		GPIO_TABLET_MODE_L
 
 /*
  * GPIO_EC_PCH_INT_ODL is used for MKBP events as well as a PCH wakeup
@@ -145,8 +142,6 @@
 #define GPIO_PG_EC_RSMRST_ODL		GPIO_SEQ_EC_RSMRST_ODL
 #define GPIO_POWER_BUTTON_L		GPIO_GSC_EC_PWR_BTN_ODL
 #define GPIO_SYS_RESET_L		GPIO_SYS_RST_ODL
-#define GPIO_VOLUME_DOWN_L		GPIO_EC_VOLDN_BTN_ODL
-#define GPIO_VOLUME_UP_L		GPIO_EC_VOLUP_BTN_ODL
 #define GPIO_WP_L			GPIO_EC_WP_ODL
 
 #define GPIO_ID_1_EC_KB_BL_EN		GPIO_EC_BATT_PRES_ODL
@@ -158,17 +153,13 @@
 
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
 
-#define I2C_PORT_USB_C0_C2_TCPC	NPCX_I2C_PORT1_0
-#define I2C_PORT_USB_C1_TCPC	NPCX_I2C_PORT4_1
+#define I2C_PORT_USB_C0_C1_TCPC	NPCX_I2C_PORT1_0
+#define I2C_PORT_USB_C2_C3_TCPC	NPCX_I2C_PORT4_1
 
-#define I2C_PORT_USB_C0_C2_PPC	NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_C1_PPC	NPCX_I2C_PORT6_1
+#define I2C_PORT_USB_PPC_BC12	NPCX_I2C_PORT2_0
 
-#define I2C_PORT_USB_C0_C2_BC12	NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_C1_BC12	NPCX_I2C_PORT6_1
-
-#define I2C_PORT_USB_C0_C2_MUX	NPCX_I2C_PORT3_0
-#define I2C_PORT_USB_C1_MUX	NPCX_I2C_PORT6_1
+#define I2C_PORT_USB_C0_C1_MUX	NPCX_I2C_PORT3_0
+#define I2C_PORT_USB_C2_C3_MUX	NPCX_I2C_PORT6_1
 
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT5_0
 #define I2C_PORT_CHARGER	NPCX_I2C_PORT7_0
@@ -182,8 +173,8 @@
 /*
  * see b/174768555#comment22
  */
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x56
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR	0x57
+#define USBC_PORT_C0_C2_BB_RETIMER_I2C_ADDR	0x56
+#define USBC_PORT_C1_C3_BB_RETIMER_I2C_ADDR	0x57
 
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
@@ -227,7 +218,6 @@ enum adc_channel {
 	ADC_TEMP_SENSOR_1_DDR_SOC,
 	ADC_TEMP_SENSOR_2_AMBIENT,
 	ADC_TEMP_SENSOR_3_CHARGER,
-	ADC_TEMP_SENSOR_4_WWAN,
 	ADC_CH_COUNT
 };
 
@@ -235,7 +225,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_1_DDR_SOC,
 	TEMP_SENSOR_2_AMBIENT,
 	TEMP_SENSOR_3_CHARGER,
-	TEMP_SENSOR_4_WWAN,
 	TEMP_SENSOR_COUNT
 };
 
@@ -250,9 +239,9 @@ enum sensor_id {
 
 enum ioex_port {
 	IOEX_C0_NCT38XX = 0,
+	IOEX_C1_NCT38XX,
 	IOEX_C2_NCT38XX,
-	IOEX_ID_1_C0_NCT38XX,
-	IOEX_ID_1_C2_NCT38XX,
+	IOEX_C3_NCT38XX,
 	IOEX_PORT_COUNT
 };
 
@@ -262,12 +251,12 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_LED2 = 0,		/* PWM0 (white charger) */
-	PWM_CH_LED3,			/* PWM1 (orange on DB) */
-	PWM_CH_LED1,			/* PWM2 (orange charger) */
-	PWM_CH_KBLIGHT,			/* PWM3 */
-	PWM_CH_FAN,			/* PWM5 */
-	PWM_CH_LED4,			/* PWM7 (white on DB) */
+	PWM_CH_SIDE_LED_R = 0,		/* PWM0 (Red charger) */
+	PWM_CH_SIDE_LED_G,			/* PWM1 (Green charger) */
+	PWM_CH_SIDE_LED_B,			/* PWM2 (Blue charger) */
+	PWM_CH_KBLIGHT,				/* PWM3 */
+	PWM_CH_FAN,					/* PWM5 */
+	PWM_CH_POWER_LED_W,			/* PWM7 (white LED) */
 	PWM_CH_COUNT
 };
 

@@ -38,13 +38,7 @@ struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_4_WWAN] = {
-		.name = "TEMP_WWAN",
-		.input_ch = NPCX_ADC_CH7,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
+
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -243,12 +237,8 @@ BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 
 static void baseboard_sensors_init(void)
 {
-	/* Enable gpio interrupt for lid accel sensor */
-	gpio_enable_interrupt(GPIO_EC_ACCEL_INT_R_L);
 	/* Enable interrupt for the TCS3400 color light sensor */
 	gpio_enable_interrupt(GPIO_EC_ALS_RGB_INT_R_L);
-	/* Enable gpio interrupt for base accelgyro sensor */
-	gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -272,12 +262,7 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_3_CHARGER,
 	},
-	[TEMP_SENSOR_4_WWAN] = {
-		.name = "WWAN",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_4_WWAN,
-	},
+
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -390,7 +375,6 @@ struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
 	[TEMP_SENSOR_2_AMBIENT] = THERMAL_AMBIENT,
 	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
-	[TEMP_SENSOR_4_WWAN] = THERMAL_WWAN,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
@@ -405,7 +389,6 @@ static void board_thermals_init(void)
 		 * slots.
 		 */
 		adc_channels[ADC_TEMP_SENSOR_3_CHARGER].input_ch = NPCX_ADC_CH1;
-		adc_channels[ADC_TEMP_SENSOR_4_WWAN].input_ch = NPCX_ADC_CH1;
 	}
 }
 
