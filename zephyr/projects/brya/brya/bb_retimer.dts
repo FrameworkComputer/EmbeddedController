@@ -11,14 +11,14 @@
 		compatible = "intel,jhl8040r";
 		reg = <0x56>;
 		label = "USB_C0_BB_RETIMER";
-		int-gpios = <&usb_c0_rt_int_odl>;
-		reset-gpios = <&usb_c0_rt_rst_odl>;
+		int-pin = <&usb_c0_rt_int_odl>;
+		reset-pin = <&usb_c0_rt_rst_odl>;
 	};
 	usb_c2_bb_retimer: jhl8040r@57 {
 		compatible = "intel,jhl8040r";
 		reg = <0x57>;
 		label = "USB_C2_BB_RETIMER";
-		int-gpios = <&usb_c2_rt_int_odl>;
-		reset-gpios = <&usb_c2_rt_rst_odl>;
+		int-pin = <&usb_c2_rt_int_odl>;
+		reset-pin = <&usb_c2_rt_rst_odl>;
 	};
 };

@@ -9,14 +9,14 @@ compatible: "intel,jhl8040r"
 include: i2c-device.yaml
 
 properties:
-    reset-gpios:
-      type: phandle-array
+    reset-pin:
+      type: phandle
       required: true
 
-    int-gpios:
-      type: phandle-array
+    int-pin:
+      type: phandle
       required: false
 
-    ls-en-gpios:
-      type: phandle-array
+    ls-en-pin:
+      type: phandle
       required: false

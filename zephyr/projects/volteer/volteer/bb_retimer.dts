@@ -11,8 +11,8 @@
 		compatible = "intel,jhl8040r";
 		reg = <0x40>;
 		label = "USB_C1_BB_RETIMER";
-		int-gpios = <&gpio_usb_c1_mix_int_odl>;
-		reset-gpios = <&gpio_usb_c1_rt_rst_odl>;
-		ls-en-gpios = <&gpio_unused_gpio41>;
+		int-pin = <&gpio_usb_c1_mix_int_odl>;
+		reset-pin = <&gpio_usb_c1_rt_rst_odl>;
+		ls-en-pin = <&gpio_unused_gpio41>;
 	};
 };
