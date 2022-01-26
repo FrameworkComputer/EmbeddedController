@@ -80,11 +80,11 @@ config SYSTEM_WORKQUEUE_STACK_SIZE
 # Chromium EC stack sizes
 
 config TASK_CHARGER_STACK_SIZE
-	default 750
+	default 1056
 
 config TASK_CHIPSET_STACK_SIZE
 	default 1056 if AP_x86
-	default 684 if AP_ARM
+	default 1056 if AP_ARM
 	default 1200 # Safe default
 
 config TASK_HOSTCMD_STACK_SIZE
