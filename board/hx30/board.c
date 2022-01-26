@@ -245,8 +245,8 @@ const struct i2c_port_t i2c_ports[]  = {
 	{"touchpd",  MCHP_I2C_PORT2, 100,  GPIO_I2C_2_SDA, GPIO_I2C_2_SCL},
 	{"sensors",  MCHP_I2C_PORT3, 100,  GPIO_I2C_3_SDA, GPIO_I2C_3_SCL},
 	{"als",      MCHP_I2C_PORT4, 100,  GPIO_I2C_4_SDA, GPIO_I2C_4_SCL},
-	{"pd1",      MCHP_I2C_PORT6, 100,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
-	{"pd2",      MCHP_I2C_PORT7, 100,  GPIO_I2C_7_SDA, GPIO_I2C_7_SCL},
+	{"pd1",      MCHP_I2C_PORT6, 400,  GPIO_I2C_6_SDA, GPIO_I2C_6_SCL},
+	{"pd2",      MCHP_I2C_PORT7, 400,  GPIO_I2C_7_SDA, GPIO_I2C_7_SCL},
 
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
