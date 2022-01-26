@@ -174,4 +174,10 @@ config PLATFORM_EC_PWM_KBLIGHT
 
 endchoice  # Keyboard backlight
 
+config PLATFORM_EC_KBLIGHT_ENABLE_PIN
+	bool "Keyboard backlight enable pin"
+	help
+	  Enables control of the keyboard backlight through a GPIO enable and
+	  disable pin.  This pin must be defined as GPIO_EN_KEYBOARD_BACKLIGHT.
+
 endif # PLATFORM_EC_KEYBOARD

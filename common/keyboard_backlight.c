@@ -57,7 +57,7 @@ int kblight_get(void)
 
 int kblight_enable(int enable)
 {
-#ifdef GPIO_EN_KEYBOARD_BACKLIGHT
+#ifdef CONFIG_KBLIGHT_ENABLE_PIN
 	gpio_set_level(GPIO_EN_KEYBOARD_BACKLIGHT, enable);
 #endif
 	if (!kblight.drv || !kblight.drv->enable)
@@ -67,7 +67,7 @@ int kblight_enable(int enable)
 
 int kblight_get_enabled(void)
 {
-#ifdef GPIO_EN_KEYBOARD_BACKLIGHT
+#ifdef CONFIG_KBLIGHT_ENABLE_PIN
 	if (!gpio_get_level(GPIO_EN_KEYBOARD_BACKLIGHT))
 		return 0;
 #endif

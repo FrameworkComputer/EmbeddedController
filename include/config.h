@@ -3602,6 +3602,12 @@
  */
 #undef CONFIG_PWM_KBLIGHT
 
+/*
+ * Support a GPIO enable pin (set as GPIO_EN_KEYBOARD_BACKLIGHT) for the
+ * keyboard backlight.
+ */
+#undef CONFIG_KBLIGHT_ENABLE_PIN
+
 /* Support Real-Time Clock (RTC) */
 #undef CONFIG_RTC
 
