@@ -169,6 +169,7 @@ enum power_request_t {
 	POWER_REQ_OFF,
 	POWER_REQ_ON,
 	POWER_REQ_COLD_RESET,
+	POWER_REQ_WARM_RESET,
 
 	POWER_REQ_COUNT,
 };
@@ -250,17 +251,17 @@ void chipset_ap_rst_interrupt(enum gpio_signal signal)
 	power_signal_interrupt(signal);
 }
 
+#ifdef CONFIG_CHIPSET_SC7180
+
+/* 1 if AP_RST_L and PS_HOLD is overdriven by EC */
+static char ap_rst_overdriven;
+
 /* Issue a request to initiate a reset sequence */
 static void request_cold_reset(void)
 {
 	power_request = POWER_REQ_COLD_RESET;
 	task_wake(TASK_ID_CHIPSET);
 }
-
-#ifdef CONFIG_CHIPSET_SC7180
-
-/* 1 if AP_RST_L and PS_HOLD is overdriven by EC */
-static char ap_rst_overdriven;
 
 void chipset_warm_reset_interrupt(enum gpio_signal signal)
 {
@@ -848,18 +849,32 @@ static int warm_reset_seq(void)
 	return EC_SUCCESS;
 }
 
-void chipset_reset(enum chipset_shutdown_reason reason)
+/**
+ * Check for some event triggering the warm reset.
+ *
+ * The only event is a request by the console command `apreset`.
+ */
+static void check_for_warm_reset_event(void)
 {
 	int rv;
 
+	if (power_request == POWER_REQ_WARM_RESET) {
+		power_request = POWER_REQ_NONE;
+		rv = warm_reset_seq();
+		if (rv != EC_SUCCESS) {
+			CPRINTS("AP refuses to warm reset. Cold resetting.");
+			power_request = POWER_REQ_COLD_RESET;
+		}
+	}
+}
+
+void chipset_reset(enum chipset_shutdown_reason reason)
+{
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);
 
-	rv = warm_reset_seq();
-	if (rv != EC_SUCCESS) {
-		CPRINTS("AP refuses to warm reset. Cold resetting.");
-		request_cold_reset();
-	}
+	power_request = POWER_REQ_WARM_RESET;
+	task_wake(TASK_ID_CHIPSET);
 }
 
 /*
@@ -1070,6 +1085,8 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S0;
 
 	case POWER_S0:
+		check_for_warm_reset_event();
+
 		shutdown_from_on = check_for_power_off_event();
 		if (shutdown_from_on) {
 			return POWER_S0S3;
