@@ -48,6 +48,14 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
 
 endchoice # PLATFORM_EC_KEYBOARD
 
+config PLATFORM_EC_KEYBOARD_DEBUG
+	bool "Enable keyboard debug prints"
+	depends on PLATFORM_EC_SYSTEM_UNLOCKED
+	help
+	  Enable keyboard debug prints to show up in early bringup, for example
+	  if the board is currently headless and keyboard functionality is being
+	  checked.
+
 config PLATFORM_EC_KEYBOARD_KEYPAD
 	bool "Support a numeric keypad"
 	help
