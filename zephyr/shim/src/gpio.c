@@ -194,8 +194,8 @@ int convert_from_zephyr_flags(const gpio_flags_t zephyr)
 			unhandled_flags);
 	}
 
-	if (zephyr & GPIO_DISCONNECTED)
-		ec_flags |= GPIO_FLAG_NONE;
+	if (zephyr == GPIO_DISCONNECTED)
+		ec_flags = GPIO_FLAG_NONE;
 	if (zephyr & GPIO_OUTPUT_INIT_LOW)
 		ec_flags |= GPIO_LOW;
 	if (zephyr & GPIO_OUTPUT_INIT_HIGH)
@@ -233,8 +233,8 @@ gpio_flags_t convert_to_zephyr_flags(int ec_flags)
 			unhandled_flags);
 	}
 
-	if (ec_flags & GPIO_FLAG_NONE)
-		zephyr_flags |= GPIO_DISCONNECTED;
+	if (ec_flags == GPIO_FLAG_NONE)
+		zephyr_flags = GPIO_DISCONNECTED;
 	if (ec_flags & GPIO_LOW)
 		zephyr_flags |= GPIO_OUTPUT_INIT_LOW;
 	if (ec_flags & GPIO_HIGH)
