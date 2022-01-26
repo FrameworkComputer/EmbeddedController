@@ -70,7 +70,6 @@ config PLATFORM_EC_ACCEL_INTERRUPTS
 
 config PLATFORM_EC_ALS
     bool "Ambient Light Sensor(ALS)"
-    default y if HAS_TASK_ALS
     help
       Enable this to indicate there's at least one or more ALS devices available.
       If PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA is set, then motion task updates
