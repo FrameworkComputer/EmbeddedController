@@ -26,7 +26,7 @@
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
-		acok_od {
+		gpio_acok_od: acok_od {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
@@ -87,7 +87,6 @@
 		};
 		gpio_switchcap_pg_int_l: switchcap_pg_int_l {
 			gpios = <&gpio0 15 GPIO_INPUT>;
-			enum-name = "GPIO_SWITCHCAP_PG_INT_L";
 		};
 		gpio_ap_rst_l: ap_rst_l {
 			gpios = <&gpio0 16 GPIO_INPUT>;
@@ -134,6 +133,42 @@
 			enum-name = "GPIO_SWITCHCAP_PG";
 		};
 	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_ac_present: ac_present {
+			irq-gpio = <&gpio_acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_usb_c0: usb_c0 {
+			irq-gpio = <&usb_c0_tcpc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usb_c1: usb_c1 {
+			irq-gpio = <&usb_c1_tcpc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usb_c0_ppc: usb_c0_ppc {
+			irq-gpio = <&gpio_usb_c0_ppc_int>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_alert";
+		};
+		int_usb_c1_ppc: usb_c1_ppc {
+			irq-gpio = <&gpio_usb_c1_ppc_int>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_alert";
+		};
+		int_switchcap_pg: switchcap_pg {
+			irq-gpio = <&gpio_switchcap_pg_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ln9310_interrupt";
+		};
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 

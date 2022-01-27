@@ -12,6 +12,7 @@
 #include "charger/isl9241_public.h"
 #include "config.h"
 #include "fff.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c/i2c.h"
 #include "power.h"
@@ -356,8 +357,8 @@ void ppc_alert(enum gpio_signal signal)
 static void stubs_interrupt_init(void)
 {
 	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1));
 
 	cprints(CC_USB, "Resetting TCPCs...");
 	cflush();
@@ -373,11 +374,11 @@ static void stubs_interrupt_init(void)
 	gpio_set_level(GPIO_USB_C1_TCPC_RST_L, 1);
 
 	/* Enable PPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
 
 	/* Enable SwitchCap interrupt */
-	gpio_enable_interrupt(GPIO_SWITCHCAP_PG_INT_L);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_switchcap_pg));
 }
 DECLARE_HOOK(HOOK_INIT, stubs_interrupt_init, HOOK_PRIO_INIT_I2C + 1);
 
