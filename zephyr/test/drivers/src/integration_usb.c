@@ -29,6 +29,9 @@
 #define GPIO_AC_OK_PATH DT_PATH(named_gpios, acok_od)
 #define GPIO_AC_OK_PIN DT_GPIO_PIN(GPIO_AC_OK_PATH, gpios)
 
+#define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
+#define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
+
 static void integration_usb_before(void *state)
 {
 	const struct emul *tcpci_emul =
@@ -37,8 +40,12 @@ static void integration_usb_before(void *state)
 	struct sbat_emul_bat_data *bat;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
+	const struct device *batt_pres_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
 
 	ARG_UNUSED(state);
+	zassert_ok(gpio_emul_input_set(batt_pres_dev,
+				       GPIO_BATT_PRES_ODL_PORT, 0), NULL);
 	set_test_runner_tid();
 	zassert_ok(tcpci_tcpm_init(0), 0);
 	tcpci_emul_set_rev(tcpci_emul, TCPCI_EMUL_REV1_0_VER1_0);

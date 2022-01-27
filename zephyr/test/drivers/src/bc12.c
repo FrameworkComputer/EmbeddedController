@@ -275,4 +275,8 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 	}
 }
 
+/*
+ * TODO(b/216660795): Cleanup state using a teardown_fn
+ */
+
 ZTEST_SUITE(bc12, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
