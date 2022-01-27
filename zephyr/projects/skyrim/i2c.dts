@@ -64,6 +64,7 @@
 
 &i2c0_0 {
 	status = "okay";
+	label = "I2C_TCPC0";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
@@ -73,6 +74,7 @@
 
 &i2c1_0 {
 	status = "okay";
+	label = "I2C_TCPC1";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
@@ -82,6 +84,7 @@
 
 &i2c2_0 {
 	status = "okay";
+	label = "I2C_BATTERY";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 };
 
@@ -91,6 +94,7 @@
 
 &i2c3_0 {
 	status = "okay";
+	label = "I2C_USB_MUX";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
@@ -100,6 +104,7 @@
 
 &i2c4_1 {
 	status = "okay";
+	label = "I2C_CHARGER";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
@@ -109,6 +114,7 @@
 
 &i2c5_0 {
 	status = "okay";
+	label = "I2C_EEPROM";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
 	cbi_eeprom: eeprom@50 {
@@ -128,6 +134,7 @@
 
 &i2c6_1 {
 	status = "okay";
+	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
@@ -137,6 +144,7 @@
 
 &i2c7_0 {
 	status = "okay";
+	label = "I2C_THERMAL_AP";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
