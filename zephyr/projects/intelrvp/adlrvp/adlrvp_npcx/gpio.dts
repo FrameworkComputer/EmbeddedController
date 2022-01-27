@@ -1,0 +1,251 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		all_sys_pwrgd {
+			gpios = <&gpio7 0 GPIO_INPUT>;
+		};
+		rsmrst_pwrgd {
+			gpios = <&gpio3 7 GPIO_INPUT>;
+		};
+		pch_slp_s0_n {
+			gpios = <&gpioa 1 GPIO_INPUT>;
+		};
+		vccpdsw_3p3 {
+			gpios = <&gpio4 5 GPIO_INPUT>;
+		};
+		pm_slp_sus_ec_n {
+			gpios = <&gpio8 6 GPIO_INPUT>;
+		};
+		pm_slp_s3_n {
+			gpios = <&gpiob 0 GPIO_INPUT>;
+		};
+		pm_slp_s4_n {
+			gpios = <&gpioa 5 GPIO_INPUT>;
+		};
+		volume_up {
+			gpios = <&gpio6 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+		};
+		vol_dn_ec {
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+		};
+		smc_lid {
+			gpios = <&gpio0 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+		};
+		mech_pwr_btn_odl {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+		};
+		std_adp_prsnt {
+			gpios = <&gpio0 2 GPIO_INPUT>;
+		};
+		bc_acok {
+			gpios = <&gpioc 6 GPIO_INPUT>;
+		};
+		usbc_tcpc_alrt_p0 {
+			gpios = <&gpio4 0 GPIO_INPUT>;
+		};
+		usbc_tcpc_alrt_p1 {
+			gpios = <&gpio6 2 GPIO_INPUT>;
+		};
+		usbc_tcpc_alrt_p2 {
+			gpios = <&gpio6 3 GPIO_INPUT>;
+		};
+		usbc_tcpc_alrt_p3 {
+			gpios = <&gpio6 7 GPIO_INPUT>;
+		};
+		usbc_tcpc_ppc_alrt_p0 {
+			gpios = <&gpiof 0 GPIO_INPUT>;
+		};
+		usbc_tcpc_ppc_alrt_p1 {
+			gpios = <&gpiof 1 GPIO_INPUT>;
+		};
+		usbc_tcpc_ppc_alrt_p2 {
+			gpios = <&gpiof 2 GPIO_INPUT>;
+		};
+		usbc_tcpc_ppc_alrt_p3 {
+			gpios = <&gpiof 3 GPIO_INPUT>;
+		};
+		smc_wake_sci_n_mecc {
+			gpios = <&gpioa 4 GPIO_ODR_HIGH>;
+		};
+		ec_pch_mkbp_int_odl {
+			gpios = <&gpiof 5 GPIO_ODR_HIGH>;
+		};
+		lpc_espi_rst_n {
+			gpios = <&gpio5 4 GPIO_INPUT>;
+		};
+		plt_rst_l {
+			gpios = <&gpioa 2 GPIO_INPUT>;
+		};
+		slate_mode_indication {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+		};
+		prochot_ec_n {
+			gpios = <&gpioa 7 GPIO_INPUT>;
+		};
+		sys_rst_odl {
+			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
+		};
+		pm_rsmrst_n {
+			gpios = <&gpiod 3 GPIO_OUT_LOW>;
+		};
+		pm_pwrbtn_n {
+			gpios = <&gpio9 7 GPIO_ODR_HIGH>;
+		};
+		ec_spi_oe_mecc {
+			gpios = <&gpio6 0 GPIO_OUT_LOW>;
+		};
+		ec_ds3 {
+			gpios = <&gpioc 4 GPIO_OUT_LOW>;
+		};
+		pch_pwrok_ec {
+			gpios = <&gpioa 0 GPIO_INPUT>;
+		};
+		sys_pwrok {
+			gpios = <&gpio9 3 GPIO_OUT_LOW>;
+		};
+		ec_dsw_pwrok {
+			gpios = <&gpio9 5 GPIO_OUT_LOW>;
+		};
+		ec_flash_wp_odl {
+			gpios = <&gpio9 4 GPIO_INPUT>;
+		};
+		ec_h1_packet_mode {
+			gpios = <&gpioe 2 GPIO_OUT_LOW>;
+		};
+		ec_entering_rw {
+			gpios = <&gpiod 4 GPIO_OUT_LOW>;
+		};
+		ccd_mode_odl {
+			gpios = <&gpiof 4 GPIO_INPUT>;
+		};
+		bat_det {
+			gpios = <&gpio7 6 GPIO_INPUT>;
+		};
+		edp_bklt_en_mecc {
+			gpios = <&gpioe 1 GPIO_OUT_HIGH>;
+		};
+		led_1_l {
+			gpios = <&gpiob 6 GPIO_OUT_HIGH>;
+		};
+		led_2_l {
+			gpios = <&gpiob 7 GPIO_OUT_HIGH>;
+		};
+		therm_sen_mecc {
+			gpios = <&gpioc 0 GPIO_OUT_LOW>;
+		};
+		smb_bs_clk {
+			gpios = <&gpiob 3 GPIO_INPUT>;
+		};
+		smb_bs_data {
+			gpios = <&gpiob 2 GPIO_INPUT>;
+		};
+		usbc_tcpc_i2c_clk_p0 {
+			gpios = <&gpiob 5 GPIO_INPUT>;
+		};
+		usbc_tcpc_i2c_data_p0 {
+			gpios = <&gpiob 4 GPIO_INPUT>;
+		};
+		usbc_tcpc_i2c_clk_p2 {
+			gpios = <&gpio9 2 GPIO_INPUT>;
+		};
+		usbc_tcpc_i2c_data_p2 {
+			gpios = <&gpio9 1 GPIO_INPUT>;
+		};
+		usbc_tcpc_i2c_clk_p1 {
+			gpios = <&gpio9 0 GPIO_INPUT>;
+		};
+		usbc_tcpc_i2c_data_p1 {
+			gpios = <&gpio8 7 GPIO_INPUT>;
+		};
+		usbc_tcpc_i2c_clk_p3 {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
+		usbc_tcpc_i2c_data_p3 {
+			gpios = <&gpiod 0 GPIO_INPUT>;
+		};
+		sml1_clk_mecc {
+			gpios = <&gpio3 3 GPIO_INPUT>;
+		};
+		sml1_data_mecc {
+			gpios = <&gpio3 6 GPIO_INPUT>;
+		};
+		smb_pch_clk {
+			gpios = <&gpioc 2 GPIO_INPUT>;
+		};
+		smb_pch_data {
+			gpios = <&gpioc 1 GPIO_INPUT>;
+		};
+		i3c_0_scl {
+			gpios = <&gpioe 4 GPIO_INPUT>;
+		};
+		i3c_0_sda {
+			gpios = <&gpioe 3 GPIO_INPUT>;
+		};
+		cpu_cat_err_mecc {
+			gpios = <&gpio3 4 GPIO_INPUT>;
+		};
+		tp29 {
+			gpios = <&gpio5 0 GPIO_INPUT>;
+		};
+		tp28 {
+			gpios = <&gpio5 6 GPIO_INPUT>;
+		};
+		espi_alert0_n {
+			gpios = <&gpio5 7 GPIO_INPUT>;
+		};
+		batt_disable_ec {
+			gpios = <&gpio6 6 GPIO_INPUT>;
+		};
+		tp33 {
+			gpios = <&gpio7 2 GPIO_INPUT>;
+		};
+		tp26 {
+			gpios = <&gpio7 3 GPIO_INPUT>;
+		};
+		slp_s0_cs_n {
+			gpios = <&gpio7 4 GPIO_INPUT>;
+		};
+		ec_peci {
+			gpios = <&gpio8 1 GPIO_INPUT>;
+		};
+		cpu_c10_gate_mecc {
+			gpios = <&gpio9 6 GPIO_INPUT>;
+		};
+		smb_pch_alrt {
+			gpios = <&gpioa 3 GPIO_INPUT>;
+		};
+		smc_sdown_mecc {
+			gpios = <&gpiob 1 GPIO_INPUT>;
+		};
+		std_adpt_cntrl_gpio {
+			gpios = <&gpioc 3 GPIO_INPUT>;
+		};
+		sml1_alert {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		smc_onoff_n {
+			gpios = <&gpiod 2 GPIO_INPUT>;
+		};
+		suswarn {
+			gpios = <&gpiod 5 GPIO_INPUT>;
+		};
+		tp_gpiod6_ec {
+			gpios = <&gpiod 6 GPIO_INPUT>;
+		};
+		tp_gpiod7_ec {
+			gpios = <&gpiod 7 GPIO_INPUT>;
+		};
+		me_g3_to_m3_ec {
+			gpios = <&gpioe 0 GPIO_INPUT>;
+		};
+		ec_kso_02_inv {
+			gpios = <&gpio1 7 GPIO_OUT_LOW>;
+		};
+	};
+};
