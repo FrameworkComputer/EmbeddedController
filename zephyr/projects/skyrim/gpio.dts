@@ -13,6 +13,7 @@
 		};
 		ec_gsc_packet_mode {
 			gpios = <&gpiob 1 GPIO_OUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_mech_pwr_btn_odl: mech_pwr_btn_odl {
 			#gpio-cells = <0>;
