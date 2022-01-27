@@ -198,13 +198,24 @@ static int get_amon_bmon(int chgnum, enum isl923x_amon_bmon amon,
 		ret = raw_write16(chgnum, ISL923X_REG_CONTROL1, reg);
 	}
 
-	mutex_unlock(&control1_mutex_isl923x);
-
 	if (ret)
-		return ret;
+		goto err;
 
 	*adc = adc_read_channel(ADC_AMON_BMON);
 
+	ret = raw_read16(chgnum, ISL923X_REG_CONTROL1, &reg);
+	if (ret)
+		goto err;
+
+	/* Disable monitor */
+	reg |= ISL923X_C1_DISABLE_MON;
+
+	ret = raw_write16(chgnum, ISL923X_REG_CONTROL1, reg);
+	if (ret)
+		goto err;
+
+err:
+	mutex_unlock(&control1_mutex_isl923x);
 	return ret;
 }
 #endif
@@ -608,6 +619,16 @@ static void isl923x_init(int chgnum)
 			goto init_fail;
 	}
 
+	if (raw_read16(chgnum, ISL923X_REG_CONTROL1, &reg))
+		goto init_fail;
+	/*
+	 * Disable amon/bmon by default.
+	 */
+	reg |= ISL923X_C1_DISABLE_MON;
+
+	if (raw_write16(chgnum, ISL923X_REG_CONTROL1, reg))
+		goto init_fail;
+
 	if (IS_ENABLED(CONFIG_TRICKLE_CHARGING))
 		if (raw_write16(chgnum, ISL923X_REG_SYS_VOLTAGE_MIN,
 				precharge_voltage))
@@ -888,7 +909,7 @@ void raa489000_hibernate(int chgnum, bool disable_adc)
 		 */
 		regval |= RAA489000_C1_BGATE_FORCE_OFF;
 
-		/* Disable AMON/BMON */
+		/* Disable AMON/BMON. MON is enabled at get_amon_bmon() */
 		regval |= ISL923X_C1_DISABLE_MON;
 
 		/* Disable PSYS */
@@ -952,10 +973,6 @@ void raa489000_hibernate(int chgnum, bool disable_adc)
 
 enum ec_error_list isl9238c_hibernate(int chgnum)
 {
-	/* Disable IMON */
-	RETURN_ERROR(raw_update16(chgnum, ISL923X_REG_CONTROL1,
-				ISL923X_C1_DISABLE_MON, MASK_SET));
-
 	/* Disable PSYS */
 	RETURN_ERROR(raw_update16(chgnum, ISL923X_REG_CONTROL1,
 				ISL923X_C1_ENABLE_PSYS, MASK_CLR));
@@ -975,9 +992,6 @@ enum ec_error_list isl9238c_hibernate(int chgnum)
 enum ec_error_list isl9238c_resume(int chgnum)
 {
 	/* Revert everything in isl9238c_hibernate() */
-	RETURN_ERROR(raw_update16(chgnum, ISL923X_REG_CONTROL1,
-				ISL923X_C1_DISABLE_MON, MASK_CLR));
-
 	RETURN_ERROR(raw_update16(chgnum, ISL923X_REG_CONTROL1,
 				ISL923X_C1_ENABLE_PSYS, MASK_SET));
 

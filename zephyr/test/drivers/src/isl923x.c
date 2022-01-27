@@ -1057,9 +1057,8 @@ ZTEST(isl923x_hibernate, test_isl9238c_resume)
 
 	/* Part 1: Happy path */
 	control1_expected =
-		(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1) &
-			~ISL923X_C1_DISABLE_MON) | ISL923X_C1_ENABLE_PSYS
-		;
+		isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1) |
+		ISL923X_C1_ENABLE_PSYS;
 	control2_expected =
 		isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2) &
 		~ISL923X_C2_COMPARATOR;
