@@ -10,7 +10,7 @@
 	chosen {
 		cros-ec,bbram = &bbram;
 		cros-ec,espi = &espi0;
-		cros-ec,flash = &fiu0;
+		cros-ec,flash-controller = &fiu0;
 		cros-ec,raw-kb = &cros_kb_raw;
 		cros-ec,watchdog = &twd0;
 	};

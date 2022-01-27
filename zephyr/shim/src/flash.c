@@ -16,10 +16,10 @@
 
 LOG_MODULE_REGISTER(shim_flash, LOG_LEVEL_ERR);
 
-#if !DT_HAS_CHOSEN(cros_ec_flash)
-#error "cros-ec,flash device must be chosen"
+#if !DT_HAS_CHOSEN(cros_ec_flash_controller)
+#error "cros-ec,flash-controller device must be chosen"
 #else
-#define cros_flash_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_flash))
+#define cros_flash_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_flash_controller))
 #endif
 #if !DT_HAS_CHOSEN(zephyr_flash_controller)
 #error "zephyr,flash-controller device must be chosen"
