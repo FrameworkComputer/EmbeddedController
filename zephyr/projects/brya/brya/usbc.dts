@@ -13,7 +13,7 @@
 			bc12 {
 				compatible = "pericom,pi3usb9201";
 				status = "okay";
-				irq = <&gpio_usb_c0_bc12_int_odl>;
+				irq = <&int_usb_c0_bc12>;
 				port = <&c0_c2_bc12>;
 				i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
 			};
@@ -28,7 +28,7 @@
 			bc12 {
 				compatible = "pericom,pi3usb9201";
 				status = "okay";
-				irq = <&gpio_usb_c1_bc12_int_odl>;
+				irq = <&int_usb_c1_bc12>;
 				port = <&c1_bc12>;
 				i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
 			};
@@ -39,7 +39,7 @@
 			bc12 {
 				compatible = "pericom,pi3usb9201";
 				status = "okay";
-				irq = <&gpio_usb_c2_bc12_int_odl>;
+				irq = <&int_usb_c2_bc12>;
 				port = <&c0_c2_bc12>;
 				i2c-addr-flags = "PI3USB9201_I2C_ADDR_1_FLAGS";
 			};

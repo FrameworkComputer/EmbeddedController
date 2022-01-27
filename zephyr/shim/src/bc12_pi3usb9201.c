@@ -7,6 +7,7 @@
 
 #include <devicetree.h>
 #include "bc12/pi3usb9201_public.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "task.h"
 #include "usb_charge.h"
@@ -31,8 +32,8 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 
 #define BC12_GPIO_ENABLE_INTERRUPT(inst)                          \
 	IF_ENABLED(DT_INST_NODE_HAS_PROP(inst, irq),		  \
-		   (gpio_enable_interrupt(			  \
-			GPIO_SIGNAL(DT_INST_PHANDLE(inst, irq)))) \
+		   (gpio_enable_dt_interrupt(			  \
+			&GPIO_INT_FROM_NODE(DT_INST_PHANDLE(inst, irq)))) \
 		   );
 
 static void bc12_enable_irqs(void)

@@ -162,14 +162,14 @@
 			bc12 {
 				compatible = "pericom,pi3usb9201";
 				port = <&i2c_ec_i2c_usb_c0>;
-				irq = <&gpio_usb_c0_int_odl>;
+				irq = <&int_usb_c0>;
 			};
 		};
 		port1 {
 			bc12 {
 				compatible = "pericom,pi3usb9201";
 				port = <&i2c_ec_i2c_sub_usb_c1>;
-				irq = <&gpio_usb_c1_int_odl>;
+				irq = <&int_usb_c1>;
 			};
 		};
 	};
