@@ -4,8 +4,6 @@
 
 if PLATFORM_EC_THROTTLE_AP
 
-# TODO(b/177676794): Add the CONFIG_THROTTLE_AP_ON_... options
-
 config PLATFORM_EC_CHIPSET_CAN_THROTTLE
 	bool "CPU can support throttling"
 	default y
@@ -28,5 +26,36 @@ config PLATFORM_EC_CONSOLE_CMD_APTHROTTLE
 
 	     AP throttling type 0 is off (0x00000000)
 	     AP throttling type 1 is off (0x00000000)
+
+config PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
+	bool "Throttle AP based on battery discharge current"
+	default n
+	help
+	  Throttle the CPU when battery discharge current is too high. When
+	  this feature is enabled, the threshold value must be set in
+	  PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT_LIMIT.
+
+if PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
+
+config PLATFORM_EC_THROTTLE_AP_ON_BAT_DISCHG_CURRENT_LIMIT
+	int "Discharge current limit in milliamperes"
+	default 0
+endif
+
+config PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE
+	bool "Throttle AP based on battery voltage"
+	default n
+	help
+	  Throttle the CPU when battery voltage drops below a defined threshold
+	  where the board still boots but some components don't function
+	  perfectly. When this feature is enabled, the threshold value must be
+	  set in PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE_THRESH.
+
+if PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE
+
+config PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE_THRESH
+	int "Low voltage threshold in millivolts"
+	default 0
+endif
 
 endif # PLATFORM_EC_THROTTLE_AP
