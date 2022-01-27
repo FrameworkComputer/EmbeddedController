@@ -39,9 +39,9 @@ enum functional_mode {
 struct ln9310_emul_data {
 	/** Common I2C data */
 	struct i2c_common_emul_data common;
-	/** Emulated int_gpio port */
+	/** Emulated int_pin port */
 	const struct device *gpio_int_port;
-	/** Emulated int_gpio pin */
+	/** Emulated int_pin pin */
 	gpio_pin_t gpio_int_pin;
 	/** The current emulated battery cell type */
 	enum battery_cell_type battery_cell_type;
@@ -484,10 +484,10 @@ static int emul_ln9310_init(const struct emul *emul,
 }
 
 #define LN9310_GET_GPIO_INT_PORT(n) \
-	DEVICE_DT_GET(DT_GPIO_CTLR(DT_INST_PROP(n, pg_int_gpio), gpios))
+	DEVICE_DT_GET(DT_GPIO_CTLR(DT_INST_PROP(n, pg_int_pin), gpios))
 
 #define LN9310_GET_GPIO_INT_PIN(n) \
-	DT_GPIO_PIN(DT_INST_PROP(n, pg_int_gpio), gpios)
+	DT_GPIO_PIN(DT_INST_PROP(n, pg_int_pin), gpios)
 
 #define INIT_LN9310(n)                                                         \
 	const struct ln9310_config_t ln9310_config = {                         \

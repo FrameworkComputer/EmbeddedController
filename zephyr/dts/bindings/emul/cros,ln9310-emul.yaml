@@ -11,7 +11,7 @@ include: base.yaml
 properties:
   reg:
     required: true
-  pg_int_gpio:
+  pg-int-pin:
     type: phandle
     description:
       GPIO that receives interrupt signal from this device.

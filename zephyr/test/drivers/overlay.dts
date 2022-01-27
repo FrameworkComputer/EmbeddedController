@@ -727,7 +727,7 @@
 		status = "okay";
 		reg = <0x80>;
 		label = "LN9310";
-		pg_int_gpio = <&gpio_switchcap_pg_int_l>;
+		pg-int-pin = <&gpio_switchcap_pg_int_l>;
 	};
 
 	lis2dw12_emul: lis2dw12@19 {
