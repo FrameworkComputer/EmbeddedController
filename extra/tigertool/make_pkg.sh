@@ -17,6 +17,8 @@ cp ../usb_serial/console.py "${DEST}"
 cp ../../../../../chroot/usr/bin/dfu-util "${DEST}"
 cp flash_dfu.sh "${DEST}"
 cp tigertool.py "${DEST}"
+cp tigertest.py "${DEST}"
+cp README.md "${DEST}"
 
 cp -r ecusb "${DEST}"
 cp -r ../../../../../chroot/usr/lib64/python2.7/site-packages/usb "${DEST}"

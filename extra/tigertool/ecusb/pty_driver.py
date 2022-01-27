@@ -171,6 +171,9 @@ class ptyDriver(object):
     except pexpect.TIMEOUT:
       raise ptyError('Timeout waiting for response.')
     finally:
+      if not regex_list:
+        # Must be longer than delaybeforesend
+        time.sleep(0.1)
       self._close()
     return result_list
 

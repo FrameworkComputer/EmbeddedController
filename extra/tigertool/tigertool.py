@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright 2017 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -36,7 +36,7 @@ def do_mux(mux, pty):
     c.log('Mux setting %s invalid, try one of %s' % (mux, validmux))
     return False
 
-  cmd = '\r\nmux %s\r\n' % mux
+  cmd = 'mux %s' % mux
   regex = 'TYPE\-C mux is ([^\s\r\n]*)\r'
 
   results = pty._issue_cmd_get_results(cmd, [regex])[0]
@@ -62,11 +62,10 @@ def do_version(pty):
   # RW:      tigertail_v1.1.6749-74d1a312e
   # Build:   tigertail_v1.1.6749-74d1a312e
   #          2017-07-25 20:08:34 nsanders@meatball.mtv.corp.google.com
-
   """
-  cmd = '\r\nversion\r\n'
-  regex = 'RO:\s+(\S+)\s+RW:\s+(\S+)\s+Build:\s+(\S+)\s+' \
-          '(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d) (\S+)'
+  cmd = 'version'
+  regex = r'RO:\s+(\S+)\s+RW:\s+(\S+)\s+Build:\s+(\S+)\s+' \
+          r'(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d) (\S+)'
 
   results = pty._issue_cmd_get_results(cmd, [regex])[0]
   c.log('Version is %s' % results[3])
@@ -87,8 +86,8 @@ def do_check_serial(pty):
   # > serialno
   # Serial number: number
   """
-  cmd = '\r\nserialno\r\n'
-  regex = 'Serial number: ([^\n\r]+)'
+  cmd = 'serialno'
+  regex = r'Serial number: ([^\n\r]+)'
 
   results = pty._issue_cmd_get_results(cmd, [regex])[0]
   c.log('Serial is %s' % results[1])
@@ -126,45 +125,71 @@ def do_power(count, bus, pty):
 
   c.log('time,\tmV,\tmW,\tmA')
 
-  cmd = '\r\nina %s\r\n' % ina
-  regex = 'Bus voltage  : \S+ \S+ (\d+) mV\s+' \
-          'Power        : \S+ \S+ (\d+) mW\s+' \
-          'Current      : \S+ \S+ (\d+) mA'
+  cmd = 'ina %s' % ina
+  regex = r'Bus voltage  : \S+ \S+ (\d+) mV\s+' \
+          r'Power        : \S+ \S+ (\d+) mW\s+' \
+          r'Current      : \S+ \S+ (\d+) mA'
 
   for i in range(0, count):
     results = pty._issue_cmd_get_results(cmd, [regex])[0]
-    c.log('%.2f,\t%s,\t%s\t%s' % (time.time() - start,
-          results[1], results[2], results[3]))
+    c.log('%.2f,\t%s,\t%s\t%s' % (
+        time.time() - start,
+        results[1], results[2], results[3]))
 
   return True
 
-def do_reboot(pty):
+def do_reboot(pty, serialname):
   """Reboot via ec console pty
 
   Args:
     pty: a pty object connected to tigertail
+    serialname: serial name, can be None.
 
   Command is: reboot.
   """
-  cmd = '\r\nreboot\r\n'
-  regex = 'Rebooting'
+  cmd = 'reboot'
+
+  # Check usb dev number on current instance.
+  devno = c.check_usb_dev(STM_VIDPID, serialname=serialname)
+  if not devno:
+    c.log('Device not found')
+    return False
 
   try:
-    results = pty._issue_cmd_get_results(cmd, [regex])[0]
-    time.sleep(1)
-    c.log(results)
+    pty._issue_cmd(cmd)
   except Exception as e:
-    c.log(e)
+    c.log('Failed to send command: ' + str(e))
+    return False
+
+  try:
+    c.wait_for_usb_remove(STM_VIDPID, timeout=3., serialname=serialname)
+  except Exception as e:
+    # Polling for reboot isn't reliable but if it hasn't happened in 3 seconds
+    # it's not going to. This step just goes faster if it's detected.
+    pass
+
+  try:
+    c.wait_for_usb(STM_VIDPID, timeout=3., serialname=serialname)
+  except Exception as e:
+    c.log('Failed to return from reboot: ' + str(e))
+    return False
+
+  # Check that the device had a new device number, i.e. it's
+  # disconnected and reconnected.
+  newdevno = c.check_usb_dev(STM_VIDPID, serialname=serialname)
+  if newdevno == devno:
+    c.log("Device didn't reboot")
     return False
 
   return True
 
-def do_sysjump(region, pty):
+def do_sysjump(region, pty, serialname):
   """Set region via ec console 'pty'.
 
   Args:
     region: ec code region to execute, 'ro' or 'rw'
     pty: a pty object connected to tigertail
+    serialname: serial name, can be None.
 
   Commands are:
   # > sysjump rw
@@ -175,12 +200,24 @@ def do_sysjump(region, pty):
         region, validregion))
     return False
 
-  cmd = '\r\nsysjump %s\r\n' % region
+  cmd = 'sysjump %s' % region
   try:
     pty._issue_cmd(cmd)
-    time.sleep(1)
   except Exception as e:
-    c.log(e)
+    c.log('Exception: ' + str(e))
+    return False
+
+  try:
+    c.wait_for_usb_remove(STM_VIDPID, timeout=3., serialname=serialname)
+  except Exception as e:
+    # Polling for reboot isn't reliable but if it hasn't happened in 3 seconds
+    # it's not going to. This step just goes faster if it's detected.
+    pass
+
+  try:
+    c.wait_for_usb(STM_VIDPID, timeout=3., serialname=serialname)
+  except Exception as e:
+    c.log('Failed to return from restart: ' + str(e))
     return False
 
   c.log('Region requested %s' % region)
@@ -192,7 +229,7 @@ def get_parser():
   parser.add_argument('-s', '--serialno', type=str, default=None,
                       help='serial number of board to use')
   parser.add_argument('-b', '--bus', type=str, default='vbus',
-                     help='Which rail to log: [vbus|cc1|cc2]')
+                      help='Which rail to log: [vbus|cc1|cc2]')
   group = parser.add_mutually_exclusive_group()
   group.add_argument('--setserialno', type=str, default=None,
                      help='serial number to set on the board.')
@@ -238,10 +275,10 @@ def main(argv):
     result &= do_mux(opts.mux, pty)
 
   elif opts.sysjump:
-    result &= do_sysjump(opts.sysjump, pty)
+    result &= do_sysjump(opts.sysjump, pty, serialname=opts.serialno)
 
   elif opts.reboot:
-    result &= do_reboot(pty)
+    result &= do_reboot(pty, serialname=opts.serialno)
 
   elif opts.check_version:
     result &= do_version(pty)
@@ -259,7 +296,7 @@ def main(argv):
     c.log('PASS')
   else:
     c.log('FAIL')
-    exit(-1)
+    sys.exit(-1)
 
 
 if __name__ == '__main__':
