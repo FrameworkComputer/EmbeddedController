@@ -517,6 +517,7 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 void board_hibernate(void)
 {
 	int port;
+	enum ec_error_list ret;
 
 	/*
 	 * If we are charging, then drop the Vbus level down to 5V to ensure
@@ -533,7 +534,8 @@ void board_hibernate(void)
 	}
 
 	/* Try to put our battery fuel gauge into sleep mode */
-	if (battery_sleep_fuel_gauge() != EC_SUCCESS)
+	ret = battery_sleep_fuel_gauge();
+	if ((ret != EC_SUCCESS) && (ret != EC_ERROR_UNIMPLEMENTED))
 		cprints(CC_SYSTEM, "Failed to send battery sleep command");
 }
 
