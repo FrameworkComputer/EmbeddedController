@@ -85,7 +85,6 @@ static void base_detect_change(enum base_status status)
 		return;
 
 	gpio_set_level(GPIO_EN_BASE, connected);
-	tablet_set_mode(!connected, TABLET_TRIGGER_BASE);
 	base_set_state(connected);
 	current_base_status = status;
 }
