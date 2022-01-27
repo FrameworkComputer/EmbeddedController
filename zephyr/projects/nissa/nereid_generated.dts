@@ -92,7 +92,7 @@
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
 			#gpio-cells = <0>;
-			gpios = <&gpiob 2 GPIO_ODR_LOW>;
+			gpios = <&gpiod 5 GPIO_ODR_LOW>;
 			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_soc_pch_pwrok_od: ec_soc_pch_pwrok_od {
@@ -121,7 +121,7 @@
 		};
 		gpio_ec_soc_wake_odl: ec_soc_wake_odl {
 			#gpio-cells = <0>;
-			gpios = <&gpiod 5 GPIO_ODR_LOW>;
+			gpios = <&gpiob 2 GPIO_ODR_LOW>;
 			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 		};
 		gpio_ec_wp_odl: ec_wp_odl {
