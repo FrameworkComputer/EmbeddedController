@@ -155,27 +155,27 @@
 		compatible = "cros-ec,gpio-interrupts";
 
 		int_pg_lpddr4x_s3: pg_lpddr4x_s3 {
-			irq-gpio = <&gpio_pg_lpddr4x_s3_od>;
+			irq-pin = <&gpio_pg_lpddr4x_s3_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_en_pwr_pcore_s0";
 		};
 		int_slp_s3_s0i3: slp_s3_s0i3 {
-			irq-gpio = <&gpio_slp_s3_s0i3_l>;
+			irq-pin = <&gpio_slp_s3_s0i3_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_ec_pwr_btn: ec_pwr_btn {
-			irq-gpio = <&gpio_ec_pwr_btn_odl>;
+			irq-pin = <&gpio_ec_pwr_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_ec_pcore: ec_pcore {
-			irq-gpio = <&gpio_ec_pcore_int_odl>;
+			irq-pin = <&gpio_ec_pcore_int_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_pg_groupc_s0: pg_groupc_s0 {
-			irq-gpio = <&gpio_pg_groupc_s0_od>;
+			irq-pin = <&gpio_pg_groupc_s0_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_en_pwr_pcore_s0";
 		};

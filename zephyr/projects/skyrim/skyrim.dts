@@ -135,12 +135,12 @@
 		compatible = "cros-ec,gpio-interrupts";
 
 		int_pg_lpddr_s3: pg_lpddr_s3 {
-			irq-gpio = <&gpio_pg_lpddr5_s3_od>;
+			irq-pin = <&gpio_pg_lpddr5_s3_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_set_en_pwr_pcore";
 		};
 		int_pg_lpddr_s0: pg_lpddr_s0 {
-			irq-gpio = <&gpio_pg_lpddr5_s0_od>;
+			irq-pin = <&gpio_pg_lpddr5_s0_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_set_soc_pwr_pgood";
 		};

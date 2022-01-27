@@ -8,77 +8,77 @@
 		compatible = "cros-ec,gpio-interrupts";
 
 		int_power_button: power_button {
-			irq-gpio = <&power_button_l>;
+			irq-pin = <&power_button_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
 		int_volume_up: volume_up {
-			irq-gpio = <&volume_up_l>;
+			irq-pin = <&volume_up_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
 		int_volume_down: volume_down {
-			irq-gpio = <&volume_down_l>;
+			irq-pin = <&volume_down_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
 		int_lid_open: lid_open {
-			irq-gpio = <&lid_open>;
+			irq-pin = <&lid_open>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
 		int_warm_rst: warm_rst {
-			irq-gpio = <&ap_ec_warm_rst_req>;
+			irq-pin = <&ap_ec_warm_rst_req>;
 			flags = <GPIO_INT_EDGE_RISING>;
 			handler = "chipset_reset_request_interrupt";
 		};
 		int_ap_in_sleep: ap_in_sleep {
-			irq-gpio = <&ap_in_sleep_l>;
+			irq-pin = <&ap_in_sleep_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_ap_in_rst: ap_in_rst {
-			irq-gpio = <&ap_sysrst_odl_r>;
+			irq-pin = <&ap_sysrst_odl_r>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_ap_wdtrst: ap_wdtrst {
-			irq-gpio = <&ap_ec_wdtrst_l>;
+			irq-pin = <&ap_ec_wdtrst_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_tablet_mode: tablet_mode {
-			irq-gpio = <&tablet_mode_l>;
+			irq-pin = <&tablet_mode_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gmr_tablet_switch_isr";
 		};
 		int_base_imu: base_imu {
-			irq-gpio = <&base_imu_int_l>;
+			irq-pin = <&base_imu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "icm42607_interrupt";
 		};
 		int_accel: accel {
-			irq-gpio = <&lid_accel_int_l>;
+			irq-pin = <&lid_accel_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "lis2dw12_interrupt";
 		};
 		int_ac_present: ac_present {
-			irq-gpio = <&ac_present>;
+			irq-pin = <&ac_present>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
 		int_usba: usba {
-			irq-gpio = <&ap_xhci_init_done>;
+			irq-pin = <&ap_xhci_init_done>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "usb_a0_interrupt";
 		};
 		int_wp: wp {
-			irq-gpio = <&ec_flash_wp_odl>;
+			irq-pin = <&ec_flash_wp_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "switch_interrupt";
 		};
 		int_spi0_cs: spi0_cs {
-			irq-gpio = <&spi0_cs>;
+			irq-pin = <&spi0_cs>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "spi_event";
 		};

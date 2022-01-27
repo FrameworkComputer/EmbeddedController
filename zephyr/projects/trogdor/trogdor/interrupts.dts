@@ -8,107 +8,107 @@
 		compatible = "cros-ec,gpio-interrupts";
 
 		int_ac_present: ac_present {
-			irq-gpio = <&gpio_chg_acok_od>;
+			irq-pin = <&gpio_chg_acok_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
 		int_lid_open: lid_open {
-			irq-gpio = <&gpio_lid_open_ec>;
+			irq-pin = <&gpio_lid_open_ec>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
 		int_wp: wp {
-			irq-gpio = <&gpio_ec_wp_odl>;
+			irq-pin = <&gpio_ec_wp_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "switch_interrupt";
 		};
 		int_power_button: power_button {
-			irq-gpio = <&gpio_ec_pwr_btn_odl>;
+			irq-pin = <&gpio_ec_pwr_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
 		int_volume_up: volume_up {
-			irq-gpio = <&gpio_ec_volup_btn_odl>;
+			irq-pin = <&gpio_ec_volup_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
 		int_volume_down: volume_down {
-			irq-gpio = <&gpio_ec_voldn_btn_odl>;
+			irq-pin = <&gpio_ec_voldn_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
 		int_ap_rst: ap_rst {
-			irq-gpio = <&gpio_ap_rst_l>;
+			irq-pin = <&gpio_ap_rst_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "chipset_ap_rst_interrupt";
 		};
 		int_ap_suspend: ap_suspend {
-			irq-gpio = <&gpio_ap_suspend>;
+			irq-pin = <&gpio_ap_suspend>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_deprecated_ap_rst_req: deprecated_ap_rst_req {
-			irq-gpio = <&gpio_deprecated_ap_rst_req>;
+			irq-pin = <&gpio_deprecated_ap_rst_req>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_power_good: power_good {
-			irq-gpio = <&gpio_power_good>;
+			irq-pin = <&gpio_power_good>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "chipset_power_good_interrupt";
 		};
 		int_ps_hold: ps_hold {
-			irq-gpio = <&gpio_ps_hold>;
+			irq-pin = <&gpio_ps_hold>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_warm_reset: warm_reset {
-			irq-gpio = <&gpio_warm_reset_l>;
+			irq-pin = <&gpio_warm_reset_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "chipset_warm_reset_interrupt";
 		};
 		int_usb_c0_tcpc: usb_c0_tcpc {
-			irq-gpio = <&gpio_usb_c0_pd_int_odl>;
+			irq-pin = <&gpio_usb_c0_pd_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "tcpc_alert_event";
 		};
 		int_usb_c1_tcpc: usb_c1_tcpc {
-			irq-gpio = <&gpio_usb_c1_pd_int_odl>;
+			irq-pin = <&gpio_usb_c1_pd_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "tcpc_alert_event";
 		};
 		int_usb_c0_swctl: usb_c0_swctl {
-			irq-gpio = <&gpio_usb_c0_swctl_int_odl>;
+			irq-pin = <&gpio_usb_c0_swctl_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "ppc_interrupt";
 		};
 		int_usb_c1_swctl: usb_c1_swctl {
-			irq-gpio = <&gpio_usb_c1_swctl_int_odl>;
+			irq-pin = <&gpio_usb_c1_swctl_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "ppc_interrupt";
 		};
 		int_usb_c0_bc12: usb_c0_bc12 {
-			irq-gpio = <&gpio_usb_c0_bc12_int_l>;
+			irq-pin = <&gpio_usb_c0_bc12_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb0_evt";
 		};
 		int_usb_c1_bc12: usb_c1_bc12 {
-			irq-gpio = <&gpio_usb_c1_bc12_int_l>;
+			irq-pin = <&gpio_usb_c1_bc12_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb1_evt";
 		};
 		int_usb_a0_oc: usb_a0_oc {
-			irq-gpio = <&gpio_usb_a0_oc_odl>;
+			irq-pin = <&gpio_usb_a0_oc_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "usba_oc_interrupt";
 		};
 		int_accel: accel {
-			irq-gpio = <&gpio_accel_gyro_int_l>;
+			irq-pin = <&gpio_accel_gyro_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bmi160_interrupt";
 		};
 		int_tablet_mode: tablet_mode {
-			irq-gpio = <&gpio_tablet_mode_l>;
+			irq-pin = <&gpio_tablet_mode_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gmr_tablet_switch_isr";
 		};

@@ -8,67 +8,67 @@
 		compatible = "cros-ec,gpio-interrupts";
 
 		int_imu: imu {
-			irq-gpio = <&gpio_ec_imu_int_l>;
+			irq-pin = <&gpio_ec_imu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bmi260_interrupt";
 		};
 		int_tablet_mode: tablet_mode {
-			irq-gpio = <&gpio_tablet_mode_l>;
+			irq-pin = <&gpio_tablet_mode_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gmr_tablet_switch_isr";
 		};
 		int_ac_present: ac_present {
-			irq-gpio = <&gpio_acok_od>;
+			irq-pin = <&gpio_acok_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
 		int_lid_open: lid_open {
-			irq-gpio = <&gpio_ec_lid_open>;
+			irq-pin = <&gpio_ec_lid_open>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
 		int_power_button: power_button {
-			irq-gpio = <&gpio_h1_ec_pwr_btn_odl>;
+			irq-pin = <&gpio_h1_ec_pwr_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
 		int_wp: wp {
-			irq-gpio = <&gpio_ec_wp_l>;
+			irq-pin = <&gpio_ec_wp_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "switch_interrupt";
 		};
 		int_pch_slp_s0: pch_slp_s0 {
-			irq-gpio = <&gpio_slp_s0_l>;
+			irq-pin = <&gpio_slp_s0_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_pch_slp_s3: pch_slp_s3 {
-			irq-gpio = <&gpio_slp_s3_l>;
+			irq-pin = <&gpio_slp_s3_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_dsw_pwrok: dsw_pwrok {
-			irq-gpio = <&gpio_dsw_pwrok>;
+			irq-pin = <&gpio_dsw_pwrok>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_rsmrst: rsmrst {
-			irq-gpio = <&gpio_pg_ec_rsmrst_odl>;
+			irq-pin = <&gpio_pg_ec_rsmrst_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_all_sys_pwrgd: all_sys_pwrgd {
-			irq-gpio = <&gpio_pg_ec_all_sys_pwrgd>;
+			irq-pin = <&gpio_pg_ec_all_sys_pwrgd>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_slp_sus: slp_sus {
-			irq-gpio = <&gpio_slp_sus_l>;
+			irq-pin = <&gpio_slp_sus_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
 		int_prochot_in: prochot_in {
-			irq-gpio = <&gpio_ec_prochot_in_l>;
+			irq-pin = <&gpio_ec_prochot_in_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "throttle_ap_prochot_input_interrupt";
 		};

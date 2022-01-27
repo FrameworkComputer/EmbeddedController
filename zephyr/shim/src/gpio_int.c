@@ -168,17 +168,17 @@ struct gpio_int_config {
 
 #define GPIO_INT_FUNC(name) extern void name(enum gpio_signal)
 
-#define GPIO_INT_CREATE(id, irq_gpio)					\
+#define GPIO_INT_CREATE(id, irq_pin)					\
 	GPIO_INT_FUNC(DT_STRING_TOKEN(id, handler));			\
 	struct gpio_int_config GPIO_INT_FROM_NODE(id) = {		\
 		.handler = DT_STRING_TOKEN(id, handler),		\
-		.arg = GPIO_SIGNAL(irq_gpio),				\
+		.arg = GPIO_SIGNAL(irq_pin),				\
 		.flags = DT_PROP(id, flags),				\
-		.port = DEVICE_DT_GET(DT_GPIO_CTLR(irq_gpio, gpios)),	\
-		.pin = DT_GPIO_PIN(irq_gpio, gpios),			\
+		.port = DEVICE_DT_GET(DT_GPIO_CTLR(irq_pin, gpios)),	\
+		.pin = DT_GPIO_PIN(irq_pin, gpios),			\
 	};
 
-#define GPIO_INT_DEFN(id) GPIO_INT_CREATE(id, DT_PROP(id, irq_gpio))
+#define GPIO_INT_DEFN(id) GPIO_INT_CREATE(id, DT_PHANDLE(id, irq_pin))
 
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
 	DT_FOREACH_CHILD(DT_IRQ_NODE, GPIO_INT_DEFN)
@@ -243,17 +243,17 @@ int gpio_disable_dt_interrupt(struct gpio_int_config *conf)
  * the gpio_signal to enable/disable interrupts
  */
 
-#define GPIO_SIG_MAP_ENTRY(id, irq_gpio)                                       \
-	COND_CODE_1(DT_NODE_HAS_PROP(irq_gpio, enum_name),                 \
+#define GPIO_SIG_MAP_ENTRY(id, irq_pin)                                       \
+	COND_CODE_1(DT_NODE_HAS_PROP(irq_pin, enum_name),                 \
 		    (                                                      \
 			    {                                              \
 				    .signal = DT_STRING_UPPER_TOKEN(       \
-					    irq_gpio, enum_name),          \
-				    .config = &GPIO_INT_FROM_NODE(id),	   \
+					    irq_pin, enum_name),          \
+				    .config = &GPIO_INT_FROM_NODE(id), \
 			    },),                                           \
 		    ())
 
-#define GPIO_SIG_MAP(id) GPIO_SIG_MAP_ENTRY(id, DT_PROP(id, irq_gpio))
+#define GPIO_SIG_MAP(id) GPIO_SIG_MAP_ENTRY(id, DT_PHANDLE(id, irq_pin))
 
 static const struct {
 	enum gpio_signal signal;

@@ -8,17 +8,17 @@
 		compatible = "cros-ec,gpio-interrupts";
 
 		int_power_button: power_button {
-			irq-gpio = <&power_button_l>;
+			irq-pin = <&power_button_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
 		int_lid_open: lid_open {
-			irq-gpio = <&lid_open>;
+			irq-pin = <&lid_open>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
 		int_spi0_cs: spi0_cs {
-			irq-gpio = <&spi0_cs>;
+			irq-pin = <&spi0_cs>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "spi_event";
 		};

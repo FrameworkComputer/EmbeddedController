@@ -8,7 +8,7 @@ description: |
   Uses device tree to configure the interrupt handling e.g
 
     int_wp_l: wp_l {
-      irq-gpio = <&gpio_ec_wp_odl>;
+      irq-pin = <&gpio_ec_wp_odl>;
       flags = <GPIO_INT_EDGE_BOTH>;
       handler = "wp_interrupt";
     };
@@ -26,10 +26,15 @@ compatible: "cros-ec,gpio-interrupts"
 child-binding:
   description: GPIO Interrupt definition.
   properties:
-    irq-gpio:
+    #
+    # This is named irq-pin rather than irq-gpio because
+    # anything with a name appended with "gpio" is treated specially,
+    # which causes warnings about missing #gpio-cells.
+    #
+    irq-pin:
       type: phandle
       required: true
-      description: The GPIO source of the interrupt.
+      description: The named-gpio GPIO source of the interrupt.
     flags:
       type: int
       required: true

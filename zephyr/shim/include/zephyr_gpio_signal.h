@@ -79,7 +79,7 @@ BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
  * For example, given the DTS node under "named-gpios":
  *
  * gpio_ec_wp_l: ec_wp_l {
- *	gpios = <&gpioe 5 GPIO_INPUT>;
+ *	gpio = <&gpioe 5 GPIO_INPUT>;
  *	enum-name = "GPIO_WP_L";
  * };
  *
