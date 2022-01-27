@@ -8,3 +8,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(intelrvp)
 
 zephyr_include_directories(include)
+
+if(DEFINED CONFIG_BOARD_ADLRVP_NPCX)
+  zephyr_library_sources("src/intelrvp.c")
+endif()

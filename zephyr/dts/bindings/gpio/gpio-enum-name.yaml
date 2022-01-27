@@ -48,6 +48,7 @@ properties:
       - GPIO_EC_PMIC_WATCHDOG_L
       - GPIO_EC_PROCHOT_IN_L
       - GPIO_EC_RST_ODL
+      - GPIO_EC_SPI_OE_MECC
       - GPIO_EC_WP_L
       - GPIO_EC_X_GPIO1
       - GPIO_EC_X_GPIO3

@@ -74,6 +74,7 @@
 		};
 		smc_wake_sci_n_mecc {
 			gpios = <&gpioa 4 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 		};
 		ec_pch_mkbp_int_odl {
 			gpios = <&gpiof 5 GPIO_ODR_HIGH>;
@@ -101,6 +102,7 @@
 		};
 		ec_spi_oe_mecc {
 			gpios = <&gpio6 0 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EC_SPI_OE_MECC";
 		};
 		ec_ds3 {
 			gpios = <&gpioc 4 GPIO_OUT_LOW>;
