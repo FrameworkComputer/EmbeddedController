@@ -232,7 +232,7 @@
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			#gpio-cells = <0>;
-			gpios = <&gpiod 1 GPIO_ODR_LOW>;
+			gpios = <&gpiod 1 GPIO_ODR_HIGH>;
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			#gpio-cells = <0>;
