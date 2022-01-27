@@ -5,7 +5,8 @@
 menuconfig CROS_FLASH_NPCX
 	bool "Nuvoton NPCX flash driver for the Zephyr shim"
 	depends on SOC_FAMILY_NPCX
-	default y if FLASH_SIZE > 0
+	default y
+	select PLATFORM_EC_FLASH_CROS
 	help
 	  This option enables a flash unit interface (FIU) driver for the NPCX
 	  chip. This is used instead of the flash memory interface so we can
@@ -29,6 +30,7 @@ config CROS_FLASH_IT8XXX2
 	bool "ITE IT81202 flash driver for the Zephyr shim"
 	depends on SOC_FAMILY_RISCV_ITE
 	default y
+	select PLATFORM_EC_FLASH_CROS
 	help
 	  This option enables the flash driver for the it8xxx2 chip. We can
 	  access the flash by read, write and erase. The it8xxx2 flash size
@@ -38,6 +40,7 @@ config CROS_FLASH_XEC
 	bool "Microchip XEC flash driver for the Zephyr shim"
 	depends on SOC_FAMILY_MEC
 	default y
+	select PLATFORM_EC_FLASH_CROS
 	help
 	  This option enables the flash driver for the MEC172x chips. Flash
 	  access is via the QSPI driver to one of three ports: internal 512KB

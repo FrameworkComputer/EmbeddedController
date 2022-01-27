@@ -28,10 +28,6 @@ config CROS_EC_DATA_RAM_SIZE
 config CROS_EC_RAM_SIZE
 	default 0x0000f800
 
-config FLASH_SIZE
-	default 1024 if SOC_NPCX7M6FB
-	default 512  if SOC_NPCX7M6FC || SOC_NPCX7M7FC
-
 config CROS_EC_RO_MEM_OFF
 	default 0x0
 
