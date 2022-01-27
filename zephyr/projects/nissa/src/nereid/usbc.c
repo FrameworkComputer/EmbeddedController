@@ -219,3 +219,12 @@ void usb_c1_interrupt(enum gpio_signal s)
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
 }
+
+int pd_snk_is_vbus_provided(int port)
+{
+	int chg_det = 0;
+
+	sm5803_get_chg_det(port, &chg_det);
+
+	return chg_det;
+}
