@@ -87,6 +87,7 @@ struct ec_params_me_control {
 	uint8_t me_mode;
 } __ec_align1;
 
+/* To notice EC enter non-acpi mode */
 #define EC_CMD_CUSTOM_HELLO	0x3E07
 
 #define EC_CMD_DISABLE_PS2_EMULATION 0x3E08
@@ -196,6 +197,9 @@ struct ec_response_fp_led_level {
 struct ec_response_chassis_open_check {
 	uint8_t status;
 } __ec_align1;
+
+/* To notice EC enter acpi mode */
+#define EC_CMD_CUSTOM_HELLO_ACPI       0x3E10
 
 #define EC_CMD_READ_PD_VERSION 0x3E11
 

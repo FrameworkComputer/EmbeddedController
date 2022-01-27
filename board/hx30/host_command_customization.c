@@ -161,6 +161,18 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 	/* clear ACPI ready flags for pre-os*/
 	*host_get_customer_memmap(0x00) &= ~BIT(0);
 
+	r->out_data = d + 0x01020304;
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CUSTOM_HELLO, host_custom_command_hello, EC_VER_MASK(0));
+
+static enum ec_status host_custom_command_hello_acpi(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_hello *p = args->params;
+	struct ec_response_hello *r = args->response;
+	uint32_t d = p->in_data;
 	/**
 	 * Moved sci enable on this host command, we need to check acpi_driver ready flag
 	 * every boot up (both cold boot and warn boot)
@@ -176,7 +188,7 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_CUSTOM_HELLO, host_custom_command_hello, EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_CUSTOM_HELLO_ACPI, host_custom_command_hello_acpi, EC_VER_MASK(0));
 
 
 static enum ec_status disable_ps2_mouse_emulation(struct host_cmd_handler_args *args)
