@@ -5,14 +5,6 @@
 
 #ifndef __CROS_EC_FLASH_CHIP_H
 #define __CROS_EC_FLASH_CHIP_H
-
-/*
- * Flash size of IT81202 is 1MB.
- * We use only half space of flash to save time of erasing RW image from flash.
- */
-#define CONFIG_FLASH_SIZE_BYTES         (DT_REG_SIZE(DT_NODELABEL(flash0)) / 2)
-/* Program is run directly from storage */
-#define CONFIG_MAPPED_STORAGE_BASE      DT_REG_ADDR(DT_NODELABEL(flash0))
 /*
  * One page program instruction allows maximum 256 bytes (a page) of data
  * to be programmed.
