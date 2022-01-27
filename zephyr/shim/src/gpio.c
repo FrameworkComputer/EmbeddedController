@@ -10,6 +10,7 @@
 
 #include "gpio.h"
 #include "gpio/gpio.h"
+#include "ioexpander.h"
 #include "sysjump.h"
 #include "cros_version.h"
 
@@ -146,6 +147,22 @@ void gpio_set_level_verbose(enum console_channel channel,
 {
 	cprints(channel, "Set %s: %d", gpio_get_name(signal), value);
 	gpio_set_level(signal, value);
+}
+
+void gpio_or_ioex_set_level(int signal, int value)
+{
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_IOEX) && signal_is_ioex(signal))
+		ioex_set_level(signal, value);
+	else
+		gpio_set_level(signal, value);
+}
+
+int gpio_or_ioex_get_level(int signal, int *value)
+{
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_IOEX) && signal_is_ioex(signal))
+		return ioex_get_level(signal, value);
+	*value = gpio_get_level(signal);
+	return EC_SUCCESS;
 }
 
 /* GPIO flags which are the same in Zephyr and this codebase */
