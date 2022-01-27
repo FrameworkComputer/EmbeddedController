@@ -47,6 +47,7 @@
 		};
 		bc_acok {
 			gpios = <&gpioc 6 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
 		};
 		usbc_tcpc_alrt_p0 {
 			gpios = <&gpio4 0 GPIO_INPUT>;
