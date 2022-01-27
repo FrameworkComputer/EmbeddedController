@@ -170,7 +170,7 @@ struct gpio_int_config {
 
 #define GPIO_INT_CREATE(id, irq_gpio)					\
 	GPIO_INT_FUNC(DT_STRING_TOKEN(id, handler));			\
-	struct gpio_int_config GPIO_NODE_TO_INTERRUPT(id) = {		\
+	struct gpio_int_config GPIO_INT_FROM_NODE(id) = {		\
 		.handler = DT_STRING_TOKEN(id, handler),		\
 		.arg = GPIO_SIGNAL(irq_gpio),				\
 		.flags = DT_PROP(id, flags),				\
@@ -249,7 +249,7 @@ int gpio_disable_dt_interrupt(struct gpio_int_config *conf)
 			    {                                              \
 				    .signal = DT_STRING_UPPER_TOKEN(       \
 					    irq_gpio, enum_name),          \
-				    .config = &GPIO_NODE_TO_INTERRUPT(id), \
+				    .config = &GPIO_INT_FROM_NODE(id),	   \
 			    },),                                           \
 		    ())
 

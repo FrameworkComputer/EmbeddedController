@@ -18,13 +18,13 @@
 /*
  * Creates an internal name for the interrupt config block.
  */
-#define GPIO_NODE_TO_INTERRUPT(id) DT_CAT(gpio_interrupt_, id)
+#define GPIO_INT_FROM_NODE(id) DT_CAT(gpio_interrupt_, id)
 
 /*
  * Maps nodelabel of interrupt node to internal configuration block.
  */
 #define GPIO_INT_FROM_NODELABEL(lbl) \
-	(&GPIO_NODE_TO_INTERRUPT(DT_NODELABEL(lbl)))
+	(&GPIO_INT_FROM_NODE(DT_NODELABEL(lbl)))
 
 /*
  * Forward reference to avoiding exposing internal structure
@@ -52,7 +52,7 @@ int gpio_disable_dt_interrupt(struct gpio_int_config *zc);
  * Declare interrupt configuration data structures.
  */
 #define GPIO_INT_DECLARE(id)	\
-	extern struct gpio_int_config GPIO_NODE_TO_INTERRUPT(id);
+	extern struct gpio_int_config GPIO_INT_FROM_NODE(id);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
 DT_FOREACH_CHILD(DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_interrupts),
