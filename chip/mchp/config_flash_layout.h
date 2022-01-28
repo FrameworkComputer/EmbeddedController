@@ -103,13 +103,33 @@
  * NOTE: EC_RO and EC_RW must start at CONFIG_FLASH_ERASE_SIZE or
  * greater aligned boundaries.
  */
-#define CONFIG_BOOT_HEADER_STORAGE_OFF		0x1000
+
 #define CONFIG_RW_BOOT_HEADER_STORAGE_OFF	0
 #if defined(CHIP_FAMILY_MEC172X)
-#define CONFIG_BOOT_HEADER_STORAGE_SIZE		0xc0
+/*
+ * Changed to 0x140 original 0xc0 which is incorrect
+ * Python SPI image generator is locating header at offset 0x100 which is
+ * in first 4KB. We moved header into first 4KB to free up the 0x140 (320)
+ * bytes of code image space. Layout is:
+ * SPI Offset:
+ * 0x0 - 0x3 = Boot-ROM TAG
+ * 0x4 - 0xff = 0xFF padding
+ * 0x100 - 0x23F = Boot-ROM Header must be on >= 0x100 boundary
+ *                 This header points to LFW at 0x1000
+ * 0x240 - 0xfff = 0xFF padding
+ * 0x1000 - 0x1fff = 4KB Little Firmware loaded by Boot-ROM into first 4KB
+ *                   of CODE SRAM.
+ * 0x2000 - 0x3ffff = EC_RO padded with 0xFF
+ * 0x40000 - 0x7ffff = EC_RW padded with 0xFF
+ * To EC the "header" is one 4KB chunk at offset 0
+ */
+#define CONFIG_BOOT_HEADER_STORAGE_OFF		0
+#define CONFIG_BOOT_HEADER_STORAGE_SIZE     0x1000
 #elif defined(CHIP_FAMILY_MEC152X)
+#define CONFIG_BOOT_HEADER_STORAGE_OFF		0x1000
 #define CONFIG_BOOT_HEADER_STORAGE_SIZE		0x140
 #elif defined(CHIP_FAMILY_MEC170X)
+#define CONFIG_BOOT_HEADER_STORAGE_OFF		0x1000
 #define CONFIG_BOOT_HEADER_STORAGE_SIZE		0x80
 #else
 #error "FORCED BUILD ERROR: CHIP_FAMILY_xxxx not set or invalid"
