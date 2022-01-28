@@ -234,7 +234,7 @@ static void charge_manager_init(void)
 			source_port_rp[i] = CONFIG_USB_PD_PULLUP;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_CHARGE_MANAGER_INIT);
+DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_INIT_CHARGE_MANAGER);
 
 /**
  * Check if the charge manager is seeded.

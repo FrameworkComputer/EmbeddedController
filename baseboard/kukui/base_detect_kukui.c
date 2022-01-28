@@ -227,5 +227,5 @@ static void board_pogo_charge_init(void)
 		charge_manager_update_charge(i, CHARGE_PORT_POGO, NULL);
 }
 DECLARE_HOOK(HOOK_INIT, board_pogo_charge_init,
-	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
+	     HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 #endif

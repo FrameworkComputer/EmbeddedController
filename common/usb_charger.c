@@ -125,7 +125,7 @@ static void usb_charger_init(void)
 		update_vbus_supplier(i, pd_is_vbus_present(i));
 	}
 }
-DECLARE_HOOK(HOOK_INIT, usb_charger_init, HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
+DECLARE_HOOK(HOOK_INIT, usb_charger_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
 void usb_charger_task(void *u)
 {

@@ -537,7 +537,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 	/*
 	 * In terms of timing, this should always work because
-	 * HOOK_PRIO_CHARGE_MANAGER_INIT is notified after HOOK_PRIO_INIT_I2C.
+	 * HOOK_PRIO_INIT_CHARGE_MANAGER is notified after HOOK_PRIO_INIT_I2C.
 	 * If CBI isn't initialized or contains invalid data, we assume it's
 	 * a new board.
 	 */
@@ -811,7 +811,7 @@ static void board_charge_manager_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_charge_manager_init,
-	     HOOK_PRIO_CHARGE_MANAGER_INIT + 1);
+	     HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
 static void board_init(void)
 {
