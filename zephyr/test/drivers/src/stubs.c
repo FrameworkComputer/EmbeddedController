@@ -347,7 +347,7 @@ static void stubs_interrupt_init(void)
 	/* Enable SwitchCap interrupt */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_switchcap_pg));
 }
-DECLARE_HOOK(HOOK_INIT, stubs_interrupt_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, stubs_interrupt_init, HOOK_PRIO_POST_I2C);
 
 void board_set_switchcap_power(int enable)
 {

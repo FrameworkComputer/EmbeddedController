@@ -271,7 +271,7 @@ static void charger_chips_init(void)
 			chg_chips[chip].drv->init(chip);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_I2C);
 
 enum ec_error_list charger_post_init(void)
 {

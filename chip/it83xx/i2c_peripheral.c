@@ -341,4 +341,4 @@ static void i2c_peripheral_init(void)
 		task_enable_irq(i2c_periph_ctrl[p].irq);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, i2c_peripheral_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, i2c_peripheral_init, HOOK_PRIO_POST_I2C);

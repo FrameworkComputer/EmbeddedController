@@ -45,7 +45,7 @@ static void sku_init(void)
 	sku_id = system_get_sku_id();
 	CPRINTS("SKU: %u (%s)", sku_id, model_name[get_model()]);
 }
-DECLARE_HOOK(HOOK_INIT, sku_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, sku_init, HOOK_PRIO_POST_I2C);
 
 enum battery_cell_type board_get_battery_cell_type(void)
 {

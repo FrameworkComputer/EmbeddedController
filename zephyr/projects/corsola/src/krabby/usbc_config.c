@@ -57,7 +57,7 @@ static void board_sub_bc12_init(void)
 		task_disable_task(TASK_ID_USB_CHG_P1);
 }
 /* Must be done after I2C and subboard */
-DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_POST_I2C);
 
 static void board_usbc_init(void)
 {
