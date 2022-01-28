@@ -34,6 +34,7 @@ enum hook_priority {
 	HOOK_PRIO_INIT_CHIPSET = HOOK_PRIO_FIRST + 3,
 	/* Lid switch inits before power button */
 	HOOK_PRIO_INIT_LID = HOOK_PRIO_FIRST + 4,
+	HOOK_PRIO_POST_LID = HOOK_PRIO_INIT_LID + 1,
 	/* Power button inits before chipset and switch */
 	HOOK_PRIO_INIT_POWER_BUTTON = HOOK_PRIO_FIRST + 5,
 	/* Init switch states after power button / lid */
