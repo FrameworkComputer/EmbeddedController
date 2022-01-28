@@ -73,4 +73,4 @@ static void corsola_db_init(void)
 {
 	corsola_get_db_type();
 }
-DECLARE_HOOK(HOOK_INIT, corsola_db_init, HOOK_PRIO_INIT_I2C - 1);
+DECLARE_HOOK(HOOK_INIT, corsola_db_init, HOOK_PRIO_PRE_I2C);
