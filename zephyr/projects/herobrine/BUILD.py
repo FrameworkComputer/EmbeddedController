@@ -33,6 +33,7 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
 
 register_variant(
     project_name="herobrine_npcx9",
+    extra_kconfig_files=[here / "prj_herobrine_npcx9.conf"],
 )
 
 
