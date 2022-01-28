@@ -172,7 +172,7 @@
 			handler = "ln9310_interrupt";
 		};
 		int_gpio_test: test {
-			irq-gpio = <&gpio_test>;
+			irq-pin = <&gpio_test>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gpio_test_interrupt";
 		};
