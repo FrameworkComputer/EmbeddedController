@@ -15,6 +15,7 @@ enum hook_priority {
 	HOOK_PRIO_FIRST = 1,       /* Highest priority */
 	HOOK_PRIO_DEFAULT = 5000,  /* Default priority */
 	HOOK_PRIO_PRE_DEFAULT = HOOK_PRIO_DEFAULT - 1,
+	HOOK_PRIO_POST_DEFAULT = HOOK_PRIO_DEFAULT + 1,
 	HOOK_PRIO_LAST = 9999,     /* Lowest priority */
 
 	/* Specific hook vales for HOOK_INIT */
