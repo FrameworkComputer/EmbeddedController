@@ -75,6 +75,58 @@ static void integration_usb_after(void *state)
 	k_sleep(K_SECONDS(1));
 }
 
+/* Check the results of EC_CMD_CHARGE_STATE against expected charger properties.
+ */
+static void check_charge_state(int chgnum, bool attached)
+{
+	struct ec_params_charge_state charge_params = {
+		.chgnum = chgnum, .cmd = CHARGE_STATE_CMD_GET_STATE};
+	struct ec_response_charge_state charge_response;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+			EC_CMD_CHARGE_STATE, 0, charge_response, charge_params);
+
+	zassert_ok(host_command_process(&args), "Failed to get charge state");
+	zassert_equal(charge_response.get_state.ac, attached,
+			"USB default but AC absent");
+	if (attached) {
+		zassert_true(charge_response.get_state.chg_voltage > 0,
+				"Battery charging voltage %dmV",
+				charge_response.get_state.chg_voltage);
+		zassert_true(charge_response.get_state.chg_current > 0,
+				"Battery charging current %dmA",
+				charge_response.get_state.chg_current);
+	}
+}
+
+/* Check the results of EC_CMD_TYPEC_STATUS against expected charger properties.
+ */
+static void check_typec_status(int port, enum pd_power_role port_role,
+		enum usb_chg_type charger_type, int source_cap_count)
+{
+	struct ec_params_typec_status typec_params = {.port = port};
+	struct ec_response_typec_status typec_response;
+	struct host_cmd_handler_args typec_args =  BUILD_HOST_COMMAND(
+			EC_CMD_TYPEC_STATUS, 0, typec_response, typec_params);
+
+	zassert_ok(host_command_process(&typec_args),
+			"Failed to get Type-C state");
+	zassert_true(typec_response.pd_enabled ==
+			(charger_type == USB_CHG_TYPE_PD),
+			"Charger attached but PD disabled");
+	zassert_true(typec_response.dev_connected ==
+			(charger_type != USB_CHG_TYPE_NONE),
+			"Charger attached but device disconnected");
+	zassert_true(typec_response.sop_connected ==
+			(charger_type == USB_CHG_TYPE_PD),
+			"Charger attached but not SOP capable");
+	zassert_equal(typec_response.source_cap_count, source_cap_count,
+			"Charger has %d source PDOs",
+			typec_response.source_cap_count);
+	zassert_equal(typec_response.power_role, port_role,
+			"Charger attached, but TCPM power role is %d",
+			typec_response.power_role);
+}
+
 /* Check the results of EC_CMD_USB_PD_POWER_INFO against expected charger
  * properties.
  */
@@ -171,14 +223,6 @@ ZTEST(integration_usb, test_attach_pd_charger)
 	struct tcpci_src_emul my_charger;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
-	struct ec_params_charge_state charge_params;
-	struct ec_response_charge_state charge_response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-			EC_CMD_CHARGE_STATE, 0, charge_response, charge_params);
-	struct ec_params_typec_status typec_params;
-	struct ec_response_typec_status typec_response;
-	struct host_cmd_handler_args typec_args =  BUILD_HOST_COMMAND(
-			EC_CMD_TYPEC_STATUS, 0, typec_response, typec_params);
 
 	/* Attach emulated charger. Send Source Capabilities that offer 20V. Set
 	 * the charger input voltage to ~18V (the highest voltage it supports).
@@ -217,34 +261,8 @@ ZTEST(integration_usb, test_attach_pd_charger)
 	 * the PD charging and current, but they should be positive if the
 	 * battery is charging.
 	 */
-	/* TODO(b/213908743): Encapsulate this for use in other tests. */
-	charge_params.chgnum = 0;
-	charge_params.cmd = CHARGE_STATE_CMD_GET_STATE;
-	zassert_ok(host_command_process(&args), "Failed to get charge state");
-	zassert_true(charge_response.get_state.ac, "USB default but AC absent");
-	zassert_true(charge_response.get_state.chg_voltage > 0,
-			"Battery charging voltage %dmV",
-			charge_response.get_state.chg_voltage);
-	zassert_true(charge_response.get_state.chg_current > 0,
-			"Battery charging current %dmA",
-			charge_response.get_state.chg_current);
-
-	typec_params.port = 0;
-	zassert_ok(host_command_process(&typec_args),
-			"Failed to get Type-C state");
-	zassert_true(typec_response.pd_enabled,
-			"Charger attached but PD disabled");
-	zassert_true(typec_response.dev_connected,
-			"Charger attached but device disconnected");
-	zassert_true(typec_response.sop_connected,
-			"Charger attached but not SOP capable");
-	zassert_equal(typec_response.source_cap_count, 2,
-			"Charger has %d source PDOs",
-			typec_response.source_cap_count);
-	zassert_equal(typec_response.power_role, PD_ROLE_SINK,
-			"Charger attached, but TCPM power role is %d",
-			typec_response.power_role);
-
+	check_charge_state(0, true);
+	check_typec_status(0, PD_ROLE_SINK, USB_CHG_TYPE_PD, 2);
 	check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK, USB_CHG_TYPE_PD,
 			20000, 3000);
 }
