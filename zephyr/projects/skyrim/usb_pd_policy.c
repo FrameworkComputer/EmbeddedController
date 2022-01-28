@@ -70,9 +70,12 @@ __override int board_pd_set_frs_enable(int port, int enable)
 	/*
 	 * Both PPCs require the FRS GPIO to be set as soon as FRS capability
 	 * is established.
-	 *
-	 * TODO: Set IOEX_USB_C0_TCPC_FASTSW_CTL_EN
 	 */
+	if (port == 0)
+		ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN, enable);
+	else
+		ioex_set_level(IOEX_USB_C1_TCPC_FASTSW_CTL_EN, enable);
+
 	return EC_SUCCESS;
 }
 
