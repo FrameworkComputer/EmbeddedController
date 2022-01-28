@@ -133,6 +133,7 @@
 		};
 		ec_disable_disp_bl {
 			gpios = <&gpioa 6 GPIO_OUT_HIGH>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT_L";
 		};
 		ec_i2c_usb_a0_c0_scl {
 			gpios = <&gpiob 5 GPIO_INPUT>;
