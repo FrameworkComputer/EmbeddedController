@@ -155,6 +155,8 @@ struct usb_mux usbc1_ps8818 = {
 	.board_set = &board_c1_ps8818_mux_set,
 };
 
+/* TODO: ANX7483 support */
+
 /*
  * ANX7491(A1) and ANX7451(C1) are on the same i2c bus. Both default
  * to 0x29 for the USB i2c address. This moves ANX7451(C1) USB i2c
@@ -199,6 +201,10 @@ struct usb_mux usb_muxes[] = {
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
+
+/* TODO: SBU flip on DB with fusb */
+/* TODO: HPD signal on PS8818 DB */
+/* TODO: A1 retimer enable and reset on PS8811 DB */
 
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX
@@ -626,21 +632,3 @@ void baseboard_a1_retimer_setup(void)
 	a1_retimer.board_init(&a1_retimer);
 }
 DECLARE_DEFERRED(baseboard_a1_retimer_setup);
-
-/* TODO: Remove when guybrush is no longer supported */
-#ifdef CONFIG_BOARD_GUYBRUSH
-void board_overcurrent_event(int port, int is_overcurrented)
-{
-	switch (port) {
-	case USBC_PORT_C0:
-	case USBC_PORT_C1:
-		gpio_pin_set_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_usb_c0_c1_fault_odl),
-			!is_overcurrented);
-		break;
-
-	default:
-		break;
-	}
-}
-#endif
