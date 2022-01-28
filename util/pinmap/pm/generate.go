@@ -103,12 +103,18 @@ func gpioConfig(out io.Writer, pin *Pin, chip Chip) {
 		return
 	case Input:
 		gtype = "GPIO_INPUT"
+	case InputL:
+		gtype = "(GPIO_INPUT | GPIO_ACTIVE_LOW)"
 	case InputPU:
 		gtype = "GPIO_INPUT_PULL_UP"
+	case InputPUL:
+		gtype = "(GPIO_INPUT_PULL_UP | GPIO_ACTIVE_LOW)"
 	case InputPD:
 		gtype = "GPIO_INPUT_PULL_DOWN"
 	case Output:
 		gtype = "GPIO_OUTPUT"
+	case OutputL:
+		gtype = "(GPIO_OUTPUT | GPIO_ACTIVE_LOW)"
 	case OutputOD:
 		gtype = "GPIO_ODR_HIGH"
 	case OutputODL:

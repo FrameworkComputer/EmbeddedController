@@ -11,9 +11,12 @@ const (
 	PWM_INVERT
 	I2C
 	Input
+	InputL
 	InputPU
+	InputPUL
 	InputPD
 	Output
+	OutputL
 	OutputOD
 	OutputODL
 )
