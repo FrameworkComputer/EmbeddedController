@@ -13,8 +13,10 @@ zephyr_library_include_directories_ifdef(CONFIG_BOARD_GUYBRUSH include_guybrush)
 zephyr_library_sources_ifdef(CONFIG_BOARD_SKYRIM "power_signals.c")
 zephyr_library_sources_ifdef(CONFIG_BOARD_GUYBRUSH "power_signals_guybrush.c")
 
+zephyr_library_sources_ifdef(CONFIG_BOARD_SKYRIM "usbc_config.c")
+zephyr_library_sources_ifdef(CONFIG_BOARD_GUYBRUSH "usbc_config_guybrush.c")
+
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
-	"usbc_config.c"
 	"usb_pd_policy.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
