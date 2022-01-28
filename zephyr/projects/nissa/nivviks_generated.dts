@@ -145,10 +145,6 @@
 			#gpio-cells = <0>;
 			gpios = <&gpioe 1 GPIO_OUTPUT>;
 		};
-		gpio_en_sub_usb_a1_vbus: en_sub_usb_a1_vbus {
-			#gpio-cells = <0>;
-			gpios = <&gpiod 4 GPIO_OUTPUT>;
-		};
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
 			#gpio-cells = <0>;
 			gpios = <&gpio9 1 GPIO_OUTPUT>;
@@ -217,7 +213,7 @@
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			#gpio-cells = <0>;
-			gpios = <&gpioc 5 GPIO_ODR_LOW>;
+			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			#gpio-cells = <0>;
