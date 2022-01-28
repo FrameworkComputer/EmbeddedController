@@ -122,7 +122,7 @@ static void init_leds_off(void)
 	set_pwm_led_enable(PWM_LED1, 1);
 #endif /* CONFIG_LED_PWM_COUNT >= 2 */
 }
-DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_INIT_PWM + 1);
+DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_POST_PWM);
 
 #ifndef CONFIG_LED_PWM_TASK_DISABLED
 static uint8_t pulse_period;

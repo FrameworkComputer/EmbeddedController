@@ -99,4 +99,4 @@ static void pwm_led_duty_init(void)
 	pwm_set_duty(PWM_CH_LED_CHRG, 100);
 	pwm_set_duty(PWM_CH_LED_FULL, 100);
 }
-DECLARE_HOOK(HOOK_INIT, pwm_led_duty_init, HOOK_PRIO_INIT_PWM + 1);
+DECLARE_HOOK(HOOK_INIT, pwm_led_duty_init, HOOK_PRIO_POST_PWM);
