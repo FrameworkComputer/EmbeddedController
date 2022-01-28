@@ -141,7 +141,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pb_chipset_shutdown,
 	      * Slightly higher than handle_pending_reboot because
 	      * it may clear AP_IDLE flag.
 	      */
-	     HOOK_PRIO_DEFAULT - 1);
+	     HOOK_PRIO_PRE_DEFAULT);
 #endif
 
 /**

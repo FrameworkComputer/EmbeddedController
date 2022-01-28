@@ -49,7 +49,7 @@ static void baseboard_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usba));
 #endif
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT-1);
+DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_PRE_DEFAULT);
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
