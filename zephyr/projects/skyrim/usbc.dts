@@ -1,0 +1,41 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		compatible = "named-usbc-ports";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0: usbc-port0@0 {
+			reg = <0>;
+			bc12 {
+				compatible = "pericom,pi3usb9201";
+				status = "okay";
+				irq = <&int_usb_c0_bc12>;
+				port = <&i2c_tcpc0>;
+				i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
+			};
+			tcpc {
+				compatible = "nuvoton,nct38xx";
+				gpio-dev = <&nct3807_C0>;
+			};
+		};
+
+		port1: usbc-port1@1 {
+			reg = <1>;
+			bc12 {
+				compatible = "pericom,pi3usb9201";
+				status = "okay";
+				irq = <&int_usb_c1_bc12>;
+				port = <&i2c_tcpc1>;
+				i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
+			};
+			tcpc {
+				compatible = "nuvoton,nct38xx";
+				gpio-dev = <&nct3807_C1>;
+			};
+		};
+	};
+};

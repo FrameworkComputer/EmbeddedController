@@ -115,19 +115,6 @@ struct ppc_config_t ppc_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
-
 /*
  * .init is not necessary here because it has nothing
  * to do. Primary mux will handle mux state so .get is

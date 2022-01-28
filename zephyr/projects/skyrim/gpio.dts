@@ -190,6 +190,101 @@
 		/* PSL_IN1/2/4 are used to wake */
 		psl-in-pads = <&psl_in1 &psl_in2 &psl_in4>;
 	};
+
+	named-ioexes {
+		compatible = "named-ioexes";
+
+		usb_c0_tcpc_fastsw_ctl_en {
+			gpios = <&ioex_c0_port0 4 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C0_TCPC_FASTSW_CTL_EN";
+			label = "IOEX_USB_C0_TCPC_FASTSW_CTL_EN";
+		};
+		usb_c0_ppc_en_l {
+			gpios = <&ioex_c0_port1 0 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C0_PPC_EN_L";
+			label = "IOEX_USB_C0_PPC_EN_L";
+		};
+		usb_c0_ppc_ilim_3a_en {
+			gpios = <&ioex_c0_port1 1 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C0_PPC_ILIM_3A_EN";
+			label = "IOEX_USB_C0_PPC_ILIM_3A_EN";
+		};
+		/* TODO: figure out interrupts */
+		usb_c0_sbu_fault_odl {
+			gpios = <&ioex_c0_port1 2 GPIO_INPUT>;
+			enum-name = "IOEX_USB_C0_FAULT_ODL";
+			label = "IOEX_USB_C0_FAULT_ODL";
+		};
+		en_pp5500_usb_a0_vbus {
+			gpios = <&ioex_c0_port1 5 GPIO_OUT_LOW>;
+			enum-name = "IOEX_EN_PP5000_USB_A0_VBUS";
+			label = "IOEX_EN_PP5000_USB_A0_VBUS";
+		};
+		/* TODO: figure out interrupts */
+		usb_a0_fault_odl {
+			gpios = <&ioex_c0_port1 6 GPIO_INPUT>;
+			enum-name = "IOEX_USB3_A0_FAULT_L";
+			label = "IOEX_USB3_A0_FAULT_L";
+		};
+		usb_c0_sbu_flip {
+			gpios = <&ioex_c0_port1 7 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C0_SBU_FLIP";
+			label = "IOEX_USB_C0_SBU_FLIP";
+		};
+
+		usb_a1_retimer_en {
+			gpios = <&ioex_c1_port0 0 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_A1_RETIMER_EN";
+			label = "IOEX_USB_A1_RETIMER_EN";
+		};
+		usb_a1_retimer_rst {
+			gpios = <&ioex_c1_port0 1 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_A1_RETIMER_RST";
+			label = "IOEX_USB_A1_RETIMER_RST";
+		};
+		usb_c1_in_hpd {
+			gpios = <&ioex_c1_port0 3 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C1_HPD_IN_DB";
+			label = "IOEX_USB_C1_IN_HPD";
+		};
+		usb_c1_tcpc_fastsw_ctl_en {
+			gpios = <&ioex_c1_port0 4 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C1_TCPC_FASTSW_CTL_EN";
+			label = "IOEX_USB_C1_TCPC_FASTSW_CTL_EN";
+		};
+		usb_c1_ppc_en_l {
+			gpios = <&ioex_c1_port1 0 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C1_PPC_EN_L";
+			label = "IOEX_USB_C1_PPC_EN_L";
+		};
+		usb_c1_ppc_ilim_3a_en {
+			gpios = <&ioex_c1_port1 1 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C1_PPC_ILIM_3A_EN";
+			label = "IOEX_USB_C1_PPC_ILIM_3A_EN";
+		};
+		/* TODO: figure out interrupts */
+		usb_c1_sbu_fault_odl {
+			gpios = <&ioex_c1_port1 2 GPIO_INPUT>;
+			enum-name = "IOEX_USB_C1_FAULT_ODL";
+			label = "IOEX_USB_C1_FAULT_ODL";
+		};
+		en_pp5500_usb_a1_vbus {
+			gpios = <&ioex_c1_port1 5 GPIO_OUT_LOW>;
+			enum-name = "IOEX_EN_PP5000_USB_A1_VBUS_DB";
+			label = "IOEX_EN_PP5000_USB_A1_VBUS";
+		};
+		/* TODO: figure out interrupts */
+		usb_a1_fault_db_odl {
+			gpios = <&ioex_c1_port1 6 GPIO_INPUT>;
+			enum-name = "IOEX_USB_A1_FAULT_DB_ODL";
+			label = "IOEX_USB_A1_FAULT_DB_ODL";
+		};
+		usb_c1_sbu_flip {
+			gpios = <&ioex_c1_port1 7 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C1_SBU_FLIP";
+			label = "IOEX_USB_C1_SBU_FLIP";
+		};
+	};
 };
 
 /* PSL input pads*/
@@ -206,4 +301,82 @@
 &psl_in4 {
 	/* LID_OPEN */
 	flag = <NPCX_PSL_RISING_EDGE>;
+};
+
+&i2c0_0 {
+	status = "okay";
+
+	nct3807_C0:nct3807_C0@70 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "nuvoton,nct38xx-gpio";
+		reg = <0x70>;
+		label = "NCT3807_C0";
+
+		ioex_c0_port0:gpio@0 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x0>;
+			label = "NCT3807_C0_GPIO0";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+			pinmux_mask = <0xf7>;
+		};
+		ioex_c0_port1:gpio@1 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x1>;
+			label = "NCT3807_C0_GPIO1";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+		};
+	};
+
+	nct3808_alert_0 {
+		compatible = "nuvoton,nct38xx-gpio-alert";
+		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
+		nct38xx-dev = <&nct3807_C0>;
+		label = "NCT3807_ALERT_0";
+	};
+};
+
+&i2c1_0 {
+	status = "okay";
+
+	nct3807_C1:nct3807_C1@70 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "nuvoton,nct38xx-gpio";
+		reg = <0x70>;
+		label = "NCT3807_C1";
+
+		ioex_c1_port0:gpio@0 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x0>;
+			label = "NCT3807_C1_GPIO0";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+			pinmux_mask = <0xf7>;
+		};
+		ioex_c1_port1:gpio@1 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x1>;
+			label = "NCT3807_C1_GPIO1";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+		};
+	};
+
+	nct3808_alert_1 {
+		compatible = "nuvoton,nct38xx-gpio-alert";
+		irq-gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
+		nct38xx-dev = <&nct3807_C1>;
+		label = "NCT3807_ALERT_1";
+	};
 };
