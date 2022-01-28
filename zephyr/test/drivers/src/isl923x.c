@@ -545,8 +545,8 @@ ZTEST(isl923x, test_get_vbus_voltage)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
-	int reg_values[] = { BIT(6),  BIT(7),  BIT(8),	BIT(9),
-			     BIT(10), BIT(11), BIT(12), BIT(13) };
+	/* Standard fixed-power PD source voltages. */
+	int test_voltage_mv[] = { 5000, 9000, 15000, 20000 };
 	int voltage;
 
 	/* Test fail to read the ADC vbus register */
@@ -557,15 +557,21 @@ ZTEST(isl923x, test_get_vbus_voltage)
 	i2c_common_emul_set_read_fail_reg(i2c_emul,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
-	for (int i = 0; i < ARRAY_SIZE(reg_values); ++i) {
-		int expected_voltage = (reg_values[i] >> 6) * 96;
+	for (int i = 0; i < ARRAY_SIZE(test_voltage_mv); ++i) {
+		int expected_voltage_mv = test_voltage_mv[i];
 
-		isl923x_emul_set_adc_vbus(isl923x_emul, reg_values[i]);
+		isl923x_emul_set_adc_vbus(isl923x_emul, expected_voltage_mv);
 		zassert_ok(isl923x_drv.get_vbus_voltage(CHARGER_NUM, 0,
 							&voltage),
 			   NULL);
-		zassert_equal(expected_voltage, voltage,
-			      "Expected %dmV but got %dmV", expected_voltage,
+		/* isl923x_get_vbus_voltage treats the measured voltage as
+		 * having an effective step size of 96 mV. This is slightly
+		 * different than the scheme described in the ISL9238 datasheet.
+		 * Reported VBUS should therefore be within 100 mV of nominal
+		 * VBUS.
+		 */
+		zassert_within(expected_voltage_mv, voltage, 100,
+			      "Expected %dmV but got %dmV", expected_voltage_mv,
 			      voltage);
 	}
 }

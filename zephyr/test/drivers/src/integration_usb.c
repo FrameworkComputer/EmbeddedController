@@ -203,8 +203,7 @@ ZTEST(integration_usb, test_attach_5v_pd_charger)
 						   &my_charger.common_data,
 						   &my_charger.ops, tcpci_emul),
 		   NULL);
-	/* This corresponds to 4.992V. */
-	isl923x_emul_set_adc_vbus(charger_emul, 0x0d00);
+	isl923x_emul_set_adc_vbus(charger_emul, 5000);
 
 	/* Wait for current ramp. */
 	k_sleep(K_SECONDS(10));
@@ -249,12 +248,7 @@ ZTEST(integration_usb, test_attach_20v_pd_charger)
 						   &my_charger.common_data,
 						   &my_charger.ops, tcpci_emul),
 		   NULL);
-	/* This corresponds to 20.352V according to the scheme used by
-	 * isl923x_get_vbus_voltage, which is slightly different than that
-	 * described in the ISL9238 datasheet.
-	 * TODO(b/216497851): Specify this in natural units.
-	 */
-	isl923x_emul_set_adc_vbus(charger_emul, 0x3500);
+	isl923x_emul_set_adc_vbus(charger_emul, 20000);
 
 	/* Wait for PD negotiation and current ramp.
 	 * TODO(b/213906889): Check message timing and contents.

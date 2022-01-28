@@ -74,10 +74,9 @@ void isl923x_emul_set_learn_mode_enabled(const struct emul *emulator,
  * @brief Set the emulator's ADC vbus register
  *
  * @param emulator The emulator to modify
- * @param value The new ADC register value
+ * @param vbus_mv  VBUS voltage in mV
  */
-void isl923x_emul_set_adc_vbus(const struct emul *emulator,
-			       uint16_t value);
+void isl923x_emul_set_adc_vbus(const struct emul *emulator, uint16_t vbus_mv);
 
 /**
  * @brief Set the state of the ACOK pin, which is reflected in the INFO2

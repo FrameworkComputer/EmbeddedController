@@ -174,13 +174,12 @@ void isl923x_emul_set_learn_mode_enabled(const struct emul *emulator,
 		data->control_1_reg &= ~ISL923X_C1_LEARN_MODE_ENABLE;
 }
 
-void isl923x_emul_set_adc_vbus(const struct emul *emulator,
-			       uint16_t value)
+void isl923x_emul_set_adc_vbus(const struct emul *emulator, uint16_t vbus_mv)
 {
 	struct isl923x_emul_data *data = emulator->data;
 
 	/* The VBUS voltage is returned in bits 13:6. The LSB is 96mV. */
-	data->adc_vbus_reg = value & GENMASK(13, 6);
+	data->adc_vbus_reg = ((vbus_mv / 96) << 6) & GENMASK(13, 6);
 }
 
 void raa489000_emul_set_acok_pin(const struct emul *emulator, uint16_t value)
