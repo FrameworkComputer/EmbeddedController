@@ -5,12 +5,13 @@
 
 /*
  * Explicitly include common.h to populate predefined macros in test_config.h
- * early. e.g. CONFIG_FPU, which is needed in math_util.h
+ * early. e.g. CONFIG_FPU, which is needed in math_util.h.
  */
 #include "common.h"
 
 #include "mat33.h"
 #include "mat44.h"
+#include "math.h"
 #include "math_util.h"
 #include "test_util.h"
 #include "vec3.h"
@@ -69,7 +70,7 @@ static int test_fpv3_dot(void)
 	int i;
 	floatv3_t a = {1.8f, 2.12f, 4.12f};
 	floatv3_t b = {3.1f, 4.3f, 5.8f};
-	/* Golden result g = dot(a, b) */
+	/* Golden result g = dot(a, b). */
 	float g = 38.592f;
 	fpv3_t fpa, fpb;
 	volatile fp_t result;
@@ -91,7 +92,7 @@ static int test_fpv3_norm_squared(void)
 	const int N = 3;
 	int i;
 	floatv3_t a = {3.0f, 4.0f, 5.0f};
-	/* Golden result g = norm_squared(a) */
+	/* Golden result g = norm_squared(a). */
 	float g = 50.0f;
 	fpv3_t fpa;
 
@@ -108,7 +109,7 @@ static int test_fpv3_norm(void)
 {
 	const int N = 3;
 	floatv3_t a = {3.1f, 4.2f, 5.3f};
-	/* Golden result g = norm(a) */
+	/* Golden result g = norm(a). */
 	float g = 7.439086f;
 	int i;
 	fpv3_t fpa;
@@ -131,9 +132,9 @@ static int test_int_sqrtf(void)
 	TEST_ASSERT(int_sqrtf(1111088889) == 33333);
 	TEST_ASSERT(int_sqrtf(123456789) == 11111);
 	TEST_ASSERT(int_sqrtf(1000000000000000005) == 1000000000);
-	/* Return zero for imaginary numbers */
+	/* Return zero for imaginary numbers. */
 	TEST_ASSERT(int_sqrtf(-100) == 0);
-	/* Return INT32_MAX for input greater than INT32_MAX ^ 2 */
+	/* Return INT32_MAX for input greater than INT32_MAX ^ 2. */
 	TEST_ASSERT(int_sqrtf(INT64_MAX) == INT32_MAX);
 #endif
 
@@ -192,7 +193,7 @@ static int test_mat33_fp_scalar_mul(void)
 		{1.1f, 2.2f, 3.3f},
 		{0.38f, 13.2f, 88.3f}
 	};
-	/* Golden result g = scalar_mul(a, scale) */
+	/* Golden result g = scalar_mul(a, scale). */
 	mat33_float_t g = {{3.11f, 6.22f, 9.33f},
 			   {3.421f, 6.842f, 10.263f},
 			   {1.18179988861083984375f, 41.051998138427734375f,
@@ -320,6 +321,60 @@ static int test_mat44_fp_solve(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_isnan(void)
+{
+	float zero = 0.0f;
+	float smallest = 1.40130e-45f;
+	float highest = 3.40282e38f;
+
+	/* 0.0/0.0 results in NaN. */
+	TEST_ASSERT(isnan(zero / zero));
+	TEST_ASSERT(isnan(-zero / zero));
+	TEST_ASSERT(isnan(zero / -zero));
+	TEST_ASSERT(isnan(-zero / -zero));
+
+	/*
+	 * Make sure the smallest number (which is also denormalized) won't be
+	 * recognized as NaN.
+	 */
+	TEST_ASSERT(!isnan(smallest));
+
+	/* Make sure highest number won't be recognized as NaN. */
+	TEST_ASSERT(!isnan(highest));
+
+	/* Make sure that 0.0 is not recognized as NaN. */
+	TEST_ASSERT(!isnan(zero));
+	TEST_ASSERT(!isnan(-zero));
+
+	return EC_SUCCESS;
+}
+
+test_static int test_isinf(void)
+{
+	float one = 1.0f;
+	float zero = 0.0f;
+	float smallest = 1.40130e-45f;
+	float highest = 3.40282e38f;
+
+	TEST_ASSERT(isinf(one / zero));
+	TEST_ASSERT(isinf(-one / zero));
+
+	/*
+	 * Make sure the smallest number (which is also denormalized) won't be
+	 * recognized as infinity.
+	 */
+	TEST_ASSERT(!isinf(smallest));
+
+	/* Make sure highest number won't be recognized as infinity. */
+	TEST_ASSERT(!isinf(highest));
+
+	/* Make sure that 0.0 is not recognized as infinity. */
+	TEST_ASSERT(!isinf(zero));
+	TEST_ASSERT(!isinf(-zero));
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
@@ -335,6 +390,8 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_mat33_fp_get_eigenbasis);
 	RUN_TEST(test_mat44_fp_decompose_lup);
 	RUN_TEST(test_mat44_fp_solve);
+	RUN_TEST(test_isnan);
+	RUN_TEST(test_isinf);
 
 	test_print_result();
 }

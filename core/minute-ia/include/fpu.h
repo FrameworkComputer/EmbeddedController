@@ -189,53 +189,5 @@ static inline float acosf(float v)
 	return atan2f(sqrtf(1.0 - v * v), v);
 }
 
-#define COND_FP_NAN      0x0100
-#define COND_FP_SIGNBIT  0x0200
-#define COND_FP_NORMAL   0x0400
-#define COND_FP_ZERO     0x4000
-#define COND_FP_INFINITE (COND_FP_NAN | COND_FP_NORMAL)
-
-/* Check if V is NaN (not-a-number).  */
-static inline int __isnanf(float v)
-{
-	uint16_t stat;
-
-	asm volatile(
-		"fxam\n"
-		"fnstsw %0\n"
-		: "=r" (stat)
-		: "v" (v));
-
-	return (stat & (COND_FP_NAN | COND_FP_NORMAL | COND_FP_ZERO))
-	       == COND_FP_NAN;
-}
-
-/**
- * Check if V is infinite.
- *
- * @return 0 if V is finite or NaN.
- * @return +1 if V is +infinite.
- * @return -1 if V is -infinite.
- */
-static inline int __isinff(float v)
-{
-	uint16_t stat;
-
-	asm volatile(
-		"fxam\n"
-		"fnstsw %0\n"
-		: "=r" (stat)
-		: "v" (v));
-
-	if ((stat & (COND_FP_NAN | COND_FP_NORMAL | COND_FP_ZERO)) ==
-	    COND_FP_INFINITE) {
-		/* Infinite number, check sign */
-		return stat & COND_FP_SIGNBIT ? -1 : 1;
-	}
-
-	/* Finite or NaN */
-	return 0;
-}
-
 #endif  /* CONFIG_FPU */
 #endif  /* __CROS_EC_FPU_H */
