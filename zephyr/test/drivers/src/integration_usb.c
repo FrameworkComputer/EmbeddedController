@@ -10,8 +10,10 @@
 #include "battery_smart.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
+#include "driver/tcpm/ps8xxx_public.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
+#include "emul/tcpc/emul_ps8xxx.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_drp.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
@@ -24,6 +26,8 @@
 #include "test_state.h"
 
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
+#define TCPCI_EMUL_LABEL2 DT_NODELABEL(tcpci_ps8xxx_emul)
+
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
 
 #define GPIO_AC_OK_PATH DT_PATH(named_gpios, acok_od)
@@ -36,22 +40,30 @@ static void integration_usb_before(void *state)
 {
 	const struct emul *tcpci_emul =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
+	const struct emul *tcpci_emul2 =
+		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
 	struct i2c_emul *i2c_emul;
 	struct sbat_emul_bat_data *bat;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
-	const struct device *batt_pres_dev =
-		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
 
 	ARG_UNUSED(state);
-	zassert_ok(gpio_emul_input_set(batt_pres_dev,
-				       GPIO_BATT_PRES_ODL_PORT, 0), NULL);
-	set_test_runner_tid();
-	zassert_ok(tcpci_tcpm_init(0), 0);
+	zassert_ok(tcpc_config[0].drv->init(0), NULL);
+	if (IS_ENABLED(CONFIG_BUG209907615)) {
+		/* Fails USB Mux tests */
+		/*
+		 * Arbitrary FW ver. The emulator should really be setting this
+		 * during its init.
+		 */
+		tcpci_emul_set_reg(tcpci_emul2, PS8XXX_REG_FW_REV, 0x31);
+		zassert_ok(tcpc_config[1].drv->init(1), NULL);
+	}
 	tcpci_emul_set_rev(tcpci_emul, TCPCI_EMUL_REV1_0_VER1_0);
 	pd_set_suspend(0, 0);
+	pd_set_suspend(1, 0);
 	/* Reset to disconnected state. */
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
+	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul2), NULL);
 
 	/* Battery defaults to charging, so reset to not charging. */
 	i2c_emul = sbat_emul_get_ptr(BATTERY_ORD);
@@ -65,12 +77,15 @@ static void integration_usb_after(void *state)
 {
 	const struct emul *tcpci_emul =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
+	const struct emul *tcpci_emul2 =
+		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
 	ARG_UNUSED(state);
 
 	/* TODO: This function should trigger gpios to signal there is nothing
 	 * attached to the port.
 	 */
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
+	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul2), NULL);
 	/* Give time to actually disconnect */
 	k_sleep(K_SECONDS(1));
 }
@@ -221,6 +236,7 @@ ZTEST(integration_usb, test_attach_5v_pd_charger)
 	 */
 	check_charge_state(0, true);
 	check_typec_status(0, PD_ROLE_SINK, USB_CHG_TYPE_PD, 1);
+	/* TODO(b/217394181): Refactor to direct assert calls */
 	check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK, USB_CHG_TYPE_PD,
 			5000, 3000);
 }
@@ -271,6 +287,8 @@ ZTEST(integration_usb, test_attach_20v_pd_charger)
 	 */
 	check_charge_state(0, true);
 	check_typec_status(0, PD_ROLE_SINK, USB_CHG_TYPE_PD, 2);
+
+	/* TODO(b/217394181): Refactor to direct assert calls */
 	check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK, USB_CHG_TYPE_PD,
 			20000, 3000);
 }
@@ -280,11 +298,6 @@ ZTEST(integration_usb, test_attach_sink)
 	const struct emul *tcpci_emul =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
 	struct tcpci_snk_emul my_sink;
-
-	/*
-	 * TODO: investigate why call in integration_usb_before() is not enough
-	 */
-	set_test_runner_tid();
 
 	/* Set chipset to ON, this will set TCPM to DRP */
 	test_set_chipset_to_s0();
@@ -317,11 +330,6 @@ ZTEST(integration_usb, test_attach_drp)
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
 	struct tcpci_drp_emul my_drp;
 
-	/*
-	 * TODO: investigate why call in integration_usb_before() is not enough
-	 */
-	set_test_runner_tid();
-
 	/* Set chipset to ON, this will set TCPM to DRP */
 	test_set_chipset_to_s0();
 
@@ -345,6 +353,79 @@ ZTEST(integration_usb, test_attach_drp)
 	 * TODO: Change it to examining EC_CMD_TYPEC_STATUS
 	 */
 	zassert_equal(PE_SNK_READY, get_state_pe(USBC_PORT_C0), NULL);
+}
+
+ZTEST(integration_usb, test_attach_src_then_snk)
+{
+	const struct emul *tcpci_emul_src =
+		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
+	const struct emul *tcpci_emul_snk =
+		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
+	struct tcpci_src_emul my_charger;
+	struct tcpci_snk_emul my_sink;
+	const struct device *gpio_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
+	struct ec_params_usb_pd_power_info params_c0 = { .port = 0 };
+	struct ec_response_usb_pd_power_info response_c0;
+	struct ec_params_usb_pd_power_info params_c1 = { .port = 1 };
+	struct ec_response_usb_pd_power_info response_c1;
+	struct host_cmd_handler_args args_c0 = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_USB_PD_POWER_INFO, 0, response_c0);
+	struct host_cmd_handler_args args_c1 = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_USB_PD_POWER_INFO, 0, response_c1);
+
+	args_c0.params = &params_c0;
+	args_c1.params = &params_c1;
+
+	/* 1) Attach SOURCE */
+
+	/* Attach emulated charger. */
+	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_AC_OK_PIN, 1), NULL);
+	tcpci_src_emul_init(&my_charger);
+	zassert_ok(tcpci_src_emul_connect_to_tcpci(
+			   &my_charger.data, &my_charger.common_data,
+			   &my_charger.ops, tcpci_emul_src),
+		   NULL);
+
+	/* Wait for current ramp. */
+	k_sleep(K_SECONDS(10));
+
+	/* 2) Attach SINK */
+
+	/* Set chipset to ON, this will set TCPM to DRP */
+	test_set_chipset_to_s0();
+
+	/* TODO(b/214401892): Check why need to give time TCPM to spin */
+	k_sleep(K_SECONDS(1));
+
+	/* Attach emulated sink */
+	tcpci_snk_emul_init(&my_sink);
+	zassert_ok(tcpci_snk_emul_connect_to_tcpci(
+			   &my_sink.data, &my_sink.common_data, &my_sink.ops,
+			   tcpci_emul_snk),
+		   NULL);
+
+	/* Wait for PD negotiation */
+	k_sleep(K_SECONDS(10));
+
+	/* TODO(b/217394181): limit to value faking */
+	if (IS_ENABLED(CONFIG_BUG209907615)) {
+		/* Verify Default 5V and 3A */
+		/* Fails on actual mV reported as it is way past max 5000 */
+		/* TODO(b/217394181): Refactor to direct assert calls */
+		check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK,
+					USB_CHG_TYPE_PD, 5000, 3000);
+	}
+
+	/* TODO(b/217394181): limit to value faking */
+	if (IS_ENABLED(CONFIG_BUG209907615)) {
+		/*
+		 * TODO(b/217394181): Refactor to direct assert calls
+		 * TODO(b/209907615): Confirm measure value requirements
+		 */
+		check_usb_pd_power_info(0, USB_PD_PORT_POWER_SOURCE,
+					USB_CHG_TYPE_PD, 5000, 3000);
+	}
 }
 
 ZTEST_SUITE(integration_usb, drivers_predicate_post_main, NULL,
