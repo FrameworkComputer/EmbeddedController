@@ -79,7 +79,7 @@ static void nivviks_subboard_init(void)
 				      GPIO_INPUT);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, nivviks_subboard_init, HOOK_PRIO_FIRST+1);
+DECLARE_HOOK(HOOK_INIT, nivviks_subboard_init, HOOK_PRIO_POST_FIRST);
 
 /*
  * Enable interrupts
