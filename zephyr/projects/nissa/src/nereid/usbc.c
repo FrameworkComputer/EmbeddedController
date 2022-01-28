@@ -10,6 +10,8 @@
 #include "system.h"
 #include "driver/charger/sm5803.h"
 #include "driver/tcpm/it83xx_pd.h"
+#include "driver/tcpm/ps8xxx_public.h"
+#include "driver/tcpm/tcpci.h"
 
 #include "sub_board.h"
 
@@ -24,11 +26,18 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = 0,
 	},
 	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		/* TCPC is embedded within EC so no i2c config needed */
-		.drv = &it8xxx2_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
+		/*
+		 * Sub-board: optional PS8745 TCPC+redriver. Works like other
+		 * PS8xxx chips but TCPCI-only; no mux.
+		 */
+		.bus_type = EC_BUS_TYPE_I2C,
+		.i2c_info = {
+			.port = I2C_PORT_USB_C1_TCPC,
+			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+		},
+		.drv = &tcpci_tcpm_drv,
+		/* PS8745 implements TCPCI 2.0 */
+		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 	},
 };
 
@@ -127,7 +136,28 @@ int board_set_active_charge_port(int port)
 
 uint16_t tcpc_get_alert_status(void)
 {
-	return 0;
+	/*
+	 * TCPC 0 is embedded in the EC and processes interrupts in the chip
+	 * code (it83xx/intc.c). This function only needs to poll port C1 if
+	 * present.
+	 */
+	uint16_t status = 0;
+	int regval;
+
+	/* Is the C1 port present and its IRQ line asserted? */
+	if (board_get_usb_pd_port_count() == 2 &&
+	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
+		/*
+		 * C1 IRQ is shared between BC1.2 and TCPC; poll TCPC to see if
+		 * it asserted the IRQ.
+		 */
+		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
+			if (regval)
+				status = PD_STATUS_TCPC_ALERT_1;
+		}
+	}
+
+	return status;
 }
 
 int pd_check_vconn_swap(int port)
