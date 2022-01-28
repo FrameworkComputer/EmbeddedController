@@ -17,6 +17,7 @@
 
 #include "chipset.h"
 #include "console.h"
+#include "gpio/gpio_int.h"
 #include "host_command.h"
 
 /* Console output macros */
@@ -370,7 +371,7 @@ static int cros_shi_ite_init(const struct device *dev)
 	irq_enable(DT_INST_IRQN(0));
 
 	/* Enable SPI chip select pin interrupt */
-	gpio_enable_interrupt(GPIO_SPI0_CS);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_spi0_cs));
 
 	return 0;
 }

@@ -75,7 +75,6 @@
 		spi0_cs: spi0_cs {
 			#gpio-cells = <0>;
 			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_SPI0_CS";
 		};
 		x_ec_gpio2: x_ec_gpio2 {
 			gpios = <&gpiob 2 (GPIO_INPUT | GPIO_ODR_HIGH)>;
