@@ -40,6 +40,7 @@ enum hook_priority {
 	HOOK_PRIO_POST_LID = HOOK_PRIO_INIT_LID + 1,
 	/* Power button inits before chipset and switch */
 	HOOK_PRIO_INIT_POWER_BUTTON = HOOK_PRIO_FIRST + 5,
+	HOOK_PRIO_POST_POWER_BUTTON = HOOK_PRIO_INIT_POWER_BUTTON + 1,
 	/* Init switch states after power button / lid */
 	HOOK_PRIO_INIT_SWITCH = HOOK_PRIO_FIRST + 6,
 	/* Init fan before PWM */

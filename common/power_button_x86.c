@@ -562,7 +562,7 @@ static void power_button_pulse_setting_restore_state(void)
 		power_button_pulse_enabled = *state;
 }
 DECLARE_HOOK(HOOK_INIT, power_button_pulse_setting_restore_state,
-	     HOOK_PRIO_INIT_POWER_BUTTON + 1);
+	     HOOK_PRIO_POST_POWER_BUTTON);
 
 static void power_button_pulse_setting_preserve_state(void)
 {
