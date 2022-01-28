@@ -88,6 +88,10 @@ static void check_charge_state(int chgnum, bool attached)
 	zassert_ok(host_command_process(&args), "Failed to get charge state");
 	zassert_equal(charge_response.get_state.ac, attached,
 			"USB default but AC absent");
+	/* The charging voltage and current are not directly related to the PD
+	 * charging and current, but they should be positive if the battery is
+	 * charging.
+	 */
 	if (attached) {
 		zassert_true(charge_response.get_state.chg_voltage > 0,
 				"Battery charging voltage %dmV",
@@ -170,10 +174,12 @@ static void check_usb_pd_power_info(int port, enum usb_power_roles role,
 			power_info_response.max_power);
 }
 
-ZTEST(integration_usb, test_attach_compliant_charger)
+ZTEST(integration_usb, test_attach_5v_pd_charger)
 {
 	const struct emul *tcpci_emul =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
+	const struct emul *charger_emul =
+		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 	struct i2c_emul *i2c_emul;
 	uint16_t battery_status;
 	struct tcpci_src_emul my_charger;
@@ -190,13 +196,15 @@ ZTEST(integration_usb, test_attach_compliant_charger)
 
 	/* TODO? Send host command to verify PD_ROLE_DISCONNECTED. */
 
-	/* Attach emulated charger. */
+	/* Attach emulated charger. The default PDO offers 5V 3A. */
 	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_AC_OK_PIN, 1), NULL);
 	tcpci_src_emul_init(&my_charger);
 	zassert_ok(tcpci_src_emul_connect_to_tcpci(&my_charger.data,
 						   &my_charger.common_data,
 						   &my_charger.ops, tcpci_emul),
 		   NULL);
+	/* This corresponds to 4.992V. */
+	isl923x_emul_set_adc_vbus(charger_emul, 0x0d00);
 
 	/* Wait for current ramp. */
 	k_sleep(K_SECONDS(10));
@@ -207,12 +215,18 @@ ZTEST(integration_usb, test_attach_compliant_charger)
 		   NULL);
 	zassert_equal(battery_status & STATUS_DISCHARGING, 0,
 		      "Battery is discharging: %d", battery_status);
-	/* TODO: Also check voltage, current, etc. */
+
+	/* Check the charging voltage and current. Cross-check the PD state,
+	 * the battery/charger state, and the active PDO as reported by the PD
+	 * state.
+	 */
+	check_charge_state(0, true);
+	check_typec_status(0, PD_ROLE_SINK, USB_CHG_TYPE_PD, 1);
+	check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK, USB_CHG_TYPE_PD,
+			5000, 3000);
 }
 
-#define BATTERY_ORD	DT_DEP_ORD(DT_NODELABEL(battery))
-
-ZTEST(integration_usb, test_attach_pd_charger)
+ZTEST(integration_usb, test_attach_20v_pd_charger)
 {
 	const struct emul *tcpci_emul =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
