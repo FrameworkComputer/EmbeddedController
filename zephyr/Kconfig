@@ -109,6 +109,13 @@ config PLATFORM_EC_BACKLIGHT_LID
 	  which allows the AP to override the backlight setting until the next
 	  change in the lid state.
 
+config PLATFORM_EC_BACKLIGHT_LID_ACTIVE_LOW
+	bool "Control for the display backlight is active low"
+	depends on PLATFORM_EC_BACKLIGHT_LID
+	help
+	  Support controlling the backlight with an active low GPIO signal.
+          This config option expects a GPIO_ENABLE_BACKLIGHT_L defined.
+
 config PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
 	bool "Work around H1 reset issue"
 	help

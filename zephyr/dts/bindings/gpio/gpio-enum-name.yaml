@@ -92,6 +92,7 @@ properties:
       - GPIO_EC_X_GPIO1
       - GPIO_EC_X_GPIO3
       - GPIO_ENABLE_BACKLIGHT
+      - GPIO_ENABLE_BACKLIGHT_L
       - GPIO_ENTERING_RW
       - GPIO_EN_5V_USM
       - GPIO_EN_A_RAILS
