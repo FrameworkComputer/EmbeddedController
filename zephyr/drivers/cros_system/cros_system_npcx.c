@@ -13,6 +13,7 @@
 #include <sys/util.h>
 
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "rom_chip.h"
 #include "soc_gpio.h"
 #include "soc_miwu.h"
@@ -141,6 +142,13 @@ static void system_npcx_disable_instant_wakeup(void)
 	inst_pmc->ENIDL_CTL &= ~BIT(NPCX_ENIDL_CTL_LP_WK_CTL);
 }
 
+/*
+ * Fake wake ISR handler, needed for pins that do not have a handler.
+ */
+void wake_isr(enum gpio_signal signal)
+{
+}
+
 static void system_npcx_set_wakeup_gpios_before_hibernate(void)
 {
 	const uintptr_t miwu_base[] = {
@@ -164,19 +172,43 @@ static void system_npcx_set_wakeup_gpios_before_hibernate(void)
 		}
 	}
 
-	static const int wakeup_pin_list[] = {
 #if DT_NODE_EXISTS(SYSTEM_DT_NODE_HIBERNATE_CONFIG)
-		UTIL_LISTIFY(SYSTEM_DT_NODE_WAKEUP_PIN_LEN,
-			     SYSTEM_DT_WAKEUP_GPIO_ENUM_BY_IDX, _)
-#endif
-	};
 
-	/* Reconfigure wake-up GPIOs */
-	for (int i = 0; i < ARRAY_SIZE(wakeup_pin_list); i++) {
-		gpio_reset(wakeup_pin_list[i]);
-		/* Re-enable interrupt for wake-up inputs */
-		gpio_enable_interrupt(wakeup_pin_list[i]);
-	}
+/*
+ * Get the interrupt DTS node for this wakeup pin
+ */
+#define WAKEUP_INT(id, prop, idx)  DT_PHANDLE_BY_IDX(id, prop, idx)
+
+/*
+ * Get the named-gpio node for this wakeup pin by reading the
+ * irq-gpio property from the interrupt node.
+ */
+#define WAKEUP_NGPIO(id, prop, idx) \
+	DT_PHANDLE(WAKEUP_INT(id, prop, idx), irq_pin)
+
+/*
+ * Reset and re-enable interrupts on this wake pin.
+ */
+#define WAKEUP_SETUP(id, prop, idx)		\
+do {									       \
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODE(WAKEUP_NGPIO(id, prop, idx)),  \
+			      GPIO_INPUT);				       \
+	gpio_enable_dt_interrupt(					       \
+		&GPIO_INT_FROM_NODE(WAKEUP_INT(id, prop, idx)));	       \
+	} while (0);
+
+/*
+ * For all the wake-pins, re-init the GPIO and re-enable the interrupt.
+ */
+	DT_FOREACH_PROP_ELEM(SYSTEM_DT_NODE_HIBERNATE_CONFIG,
+			     wakeup_irqs,
+			     WAKEUP_SETUP);
+
+#undef WAKEUP_INT
+#undef WAKEUP_NGPIO
+#undef WAKEUP_SETUP
+
+#endif
 }
 
 /*

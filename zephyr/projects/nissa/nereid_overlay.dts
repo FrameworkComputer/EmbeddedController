@@ -14,9 +14,9 @@
 
 	hibernate-wake-pins {
 		compatible = "cros-ec,hibernate-wake-pins";
-		wakeup-pins = <
-			&gpio_gsc_ec_pwr_btn_odl
-			&gpio_lid_open
+		wakeup-irqs = <
+			&int_power_button
+			&int_lid_open
 		>;
 	};
 

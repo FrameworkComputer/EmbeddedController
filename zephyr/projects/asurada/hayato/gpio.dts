@@ -277,9 +277,9 @@
 
 	hibernate-wake-pins {
 		compatible = "cros-ec,hibernate-wake-pins";
-		wakeup-pins = <&ac_present
-			       &power_button_l
-			       &lid_open>;
+		wakeup-irqs = <&int_ac_present
+			       &int_power_button
+			       &int_lid_open>;
 	};
 
 	power_signal_list: power-signal-list {

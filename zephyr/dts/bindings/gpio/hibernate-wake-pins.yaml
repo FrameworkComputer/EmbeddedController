@@ -7,7 +7,7 @@ description: Hibernate Wake-up Pins Configurations
 compatible: "cros-ec,hibernate-wake-pins"
 
 properties:
-  wakeup-pins:
+  wakeup-irqs:
     type: phandles
     required: true
-    description: GPIO list for hibernate wake-up
+    description: Interrupt list for hibernate wake-up

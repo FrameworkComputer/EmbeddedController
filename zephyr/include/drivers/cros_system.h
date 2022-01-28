@@ -47,34 +47,6 @@ enum system_reset_cause {
 #define SYSTEM_DT_NODE_HIBERNATE_CONFIG DT_INST(0, cros_ec_hibernate_wake_pins)
 
 /**
- * @brief Get the length of 'wakeup-pins' property
- *
- * @return length of 'wakeup-pins' prop which type is 'phandles'
- */
-#define SYSTEM_DT_NODE_WAKEUP_PIN_LEN \
-	DT_PROP_LEN(SYSTEM_DT_NODE_HIBERNATE_CONFIG, wakeup_pins)
-
-/**
- * @brief Get a node identifier from a phandle in property 'wakeup-pins' at
- *        index i.
- *
- * @param i index of 'wakeup-pins' prop which type is 'phandles'
- * @return node identifier with that path.
- */
-#define SYSTEM_DT_NODE_WAKEUP_PIN_BY_IDX(i) \
-	DT_PHANDLE_BY_IDX(SYSTEM_DT_NODE_HIBERNATE_CONFIG, wakeup_pins, i)
-
-/**
- * @brief Get the enum using in chromium system by index i in 'wakeup-pins'
- *        list.
- *
- * @param i index of 'wakeup-pins' prop which type is 'phandles'
- * @return GPIO enumeration
- */
-#define SYSTEM_DT_WAKEUP_GPIO_ENUM_BY_IDX(i, _)                           \
-		GPIO_SIGNAL(SYSTEM_DT_NODE_WAKEUP_PIN_BY_IDX(i)),
-
-/**
  * @typedef cros_system_get_reset_cause_api
  * @brief Callback API for getting reset cause instance.
  * See cros_system_get_reset_cause() for argument descriptions
