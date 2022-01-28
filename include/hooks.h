@@ -32,6 +32,7 @@ enum hook_priority {
 	HOOK_PRIO_POST_I2C = HOOK_PRIO_INIT_I2C + 1,
 	/* Chipset inits before modules which need to know its initial state. */
 	HOOK_PRIO_INIT_CHIPSET = HOOK_PRIO_FIRST + 3,
+	HOOK_PRIO_POST_CHIPSET = HOOK_PRIO_INIT_CHIPSET + 1,
 	/* Lid switch inits before power button */
 	HOOK_PRIO_INIT_LID = HOOK_PRIO_FIRST + 4,
 	HOOK_PRIO_POST_LID = HOOK_PRIO_INIT_LID + 1,

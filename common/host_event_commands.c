@@ -837,5 +837,5 @@ static void restore_lazy_wm(void)
 		lazy_wm = *wm_state;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, restore_lazy_wm, HOOK_PRIO_INIT_CHIPSET + 1);
+DECLARE_HOOK(HOOK_INIT, restore_lazy_wm, HOOK_PRIO_POST_CHIPSET);
 #endif
