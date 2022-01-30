@@ -68,6 +68,9 @@ if SOC_SERIES_NPCX9
 config IDLE_STACK_SIZE
 	default 192
 
+config MAIN_STACK_SIZE
+	default 1200
+
 config ISR_STACK_SIZE
 	default 1024
 
@@ -75,7 +78,7 @@ config SHELL_STACK_SIZE
 	default 1536
 
 config SYSTEM_WORKQUEUE_STACK_SIZE
-	default 800
+	default 1024
 
 # Chromium EC stack sizes
 
@@ -103,7 +106,7 @@ config TASK_PD_INT_STACK_SIZE
 	default 736
 
 config TASK_USB_CHG_STACK_SIZE
-	default 544
+	default 800
 
 endif # SOC_SERIES_NPCX9
 ##############################################################################
