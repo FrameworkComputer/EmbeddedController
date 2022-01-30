@@ -107,13 +107,6 @@ static int cm32183_get_offset(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-static int cm32183_irq_handler(struct motion_sensor_t *s, uint32_t *event)
-{
-	return cm32183_read(s, s->xyz);
-}
-#endif
-
 /**
  * Initialise CM32183 light sensor.
  */
@@ -145,7 +138,4 @@ const struct accelgyro_drv cm32183_drv = {
 	.get_offset = cm32183_get_offset,
 	.set_data_rate = cm32183_set_data_rate,
 	.get_data_rate = cm32183_get_data_rate,
-#ifdef CONFIG_ACCEL_INTERRUPTS
-	.irq_handler = cm32183_irq_handler,
-#endif
 };
