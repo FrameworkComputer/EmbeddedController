@@ -10,6 +10,7 @@
 
 #include "common.h"
 
+#ifndef CONFIG_ZEPHYR
 enum hook_priority {
 	/* Generic values across all hooks */
 	HOOK_PRIO_FIRST = 1,       /* Highest priority */
@@ -67,6 +68,70 @@ enum hook_priority {
 	/* After all sensors have been polled */
 	HOOK_PRIO_TEMP_SENSOR_DONE = HOOK_PRIO_TEMP_SENSOR + 1,
 };
+#else
+/*
+ * On Zephyr SYS_INIT priorities may only be 0-99. The priority level must
+ * be a decimal integer literal. See the definition of SYS_INIT() in
+ * the upstream zephyr/init.h file.
+ *
+ * The priorities below match the relative priorities defined above.
+ *
+ * TODO(b/226434387): Convert HOOK_INIT calls in shim layer to SYS_INT
+ */
+	/* Generic values across all hooks */
+#define	HOOK_PRIO_FIRST 1           /* Highest priority */
+#define	HOOK_PRIO_POST_FIRST 2
+#define	HOOK_PRIO_PRE_DEFAULT 49    /* Priority just before default */
+#define	HOOK_PRIO_DEFAULT 50        /* Default priority */
+#define	HOOK_PRIO_POST_DEFAULT 51   /* Priority just after default */
+#define	HOOK_PRIO_LAST 99           /* Lowest priority */
+
+	/* LPC inits before modules which need memory-mapped I/O */
+#define	HOOK_PRIO_INIT_LPC 2
+	/*
+	 * I2C dependents (battery, sensors, etc), everything but the
+	 * controllers. I2C controller is now initialized in main.c
+	 * TODO(b/138384267): Split this hook up and name the resulting
+	 * ones more semantically.
+	 */
+#define	HOOK_PRIO_PRE_I2C 2
+#define	HOOK_PRIO_INIT_I2C 3
+#define	HOOK_PRIO_POST_I2C 4
+	/* Chipset inits before modules which need to know its initial state. */
+#define	HOOK_PRIO_INIT_CHIPSET 4
+#define	HOOK_PRIO_POST_CHIPSET 5
+	/* Lid switch inits before power button */
+#define	HOOK_PRIO_INIT_LID 5
+#define	HOOK_PRIO_POST_LID 6
+	/* Power button inits before chipset and switch */
+#define	HOOK_PRIO_INIT_POWER_BUTTON 6
+#define	HOOK_PRIO_POST_POWER_BUTTON 7
+	/* Init switch states after power button / lid */
+#define	HOOK_PRIO_INIT_SWITCH 7
+	/* Init fan before PWM */
+#define	HOOK_PRIO_INIT_FAN 8
+	/* PWM inits before modules which might use it (LEDs) */
+#define	HOOK_PRIO_INIT_PWM 9
+#define	HOOK_PRIO_POST_PWM 10
+	/* Extpower inits before modules which might use it (battery, LEDs) */
+#define	HOOK_PRIO_INIT_EXTPOWER 11
+#define	HOOK_PRIO_POST_EXTPOWER 12
+	/* Init VBOOT hash later, since it depends on deferred functions */
+#define	HOOK_PRIO_INIT_VBOOT_HASH 13
+	/* Init charge manager before usage in board init */
+#define	HOOK_PRIO_INIT_CHARGE_MANAGER 13
+#define	HOOK_PRIO_POST_CHARGE_MANAGER 14
+
+/*
+ * For Zephyr, the non-init related hook priorities must still be defined.
+ */
+enum hook_priority {
+	/* Specific values to lump temperature-related hooks together */
+	HOOK_PRIO_TEMP_SENSOR = 60,
+	/* After all sensors have been polled */
+	HOOK_PRIO_TEMP_SENSOR_DONE = HOOK_PRIO_TEMP_SENSOR + 1,
+};
+#endif
 
 enum hook_type {
 	/*

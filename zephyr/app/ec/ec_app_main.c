@@ -81,11 +81,6 @@ void ec_app_main(void)
 	 */
 	k_thread_priority_set(&k_sys_work_q.thread, LOWEST_THREAD_PRIORITY);
 
-	/* Call init hooks before main tasks start */
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOOKS)) {
-		hook_notify(HOOK_INIT);
-	}
-
 	/*
 	 * Print the init time.  Not completely accurate because it can't take
 	 * into account the time before timer_init(), but it'll at least catch
