@@ -76,6 +76,7 @@ a corresponding Kconfig option for Zephyr'''
     subparsers = parser.add_subparsers(dest='cmd')
     subparsers.required = True
 
+    subparsers.add_parser('build', help='Build new list of ad-hoc CONFIGs')
     subparsers.add_parser('check', help='Check for new ad-hoc CONFIGs')
 
     return parser.parse_args(argv)
@@ -344,6 +345,31 @@ update in your CL:
             return 1
         return 0
 
+    def do_build(self, configs_file, srcdir, allowed_file, prefix, use_defines,
+                 search_paths):
+        """Find new ad-hoc configs in the configs_file
+
+        Args:
+            configs_file: Filename containing CONFIG options to check
+            srcdir: Source directory to scan for Kconfig files
+            allowed_file: File containing allowed CONFIG options
+            prefix: Prefix to strip from the start of each Kconfig
+                (e.g. 'PLATFORM_EC_')
+            use_defines: True if each line of the file starts with #define
+            search_paths: List of project paths to search for Kconfig files, in
+                addition to the current directory
+
+        Returns:
+            Exit code: 0 if OK, 1 if a problem was found
+        """
+        new_adhoc, _, updated_adhoc = self.check_adhoc_configs(
+            configs_file, srcdir, allowed_file, prefix, use_defines,
+            search_paths)
+        with open(NEW_ALLOWED_FNAME, 'w') as out:
+            combined = sorted(new_adhoc + updated_adhoc)
+            for config in combined:
+                print(f'CONFIG_{config}', file=out)
+        print(f'New list is in {NEW_ALLOWED_FNAME}')
 
 def main(argv):
     """Main function"""
@@ -354,6 +380,10 @@ def main(argv):
     if args.cmd == 'check':
         return checker.do_check(
             configs_file=args.configs, srcdir=args.srctree,
+            allowed_file=args.allowed, prefix=args.prefix,
+            use_defines=args.use_defines, search_paths=args.search_path)
+    elif args.cmd == 'build':
+        return checker.do_build(configs_file=args.configs, srcdir=args.srctree,
             allowed_file=args.allowed, prefix=args.prefix,
             use_defines=args.use_defines, search_paths=args.search_path)
     return 2
