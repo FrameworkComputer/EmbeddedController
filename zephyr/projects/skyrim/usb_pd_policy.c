@@ -26,7 +26,7 @@ int pd_check_vconn_swap(int port)
 	 * S5_PGOOD depends on PG_PP5000_S5 being asserted,
 	 * so GPIO_S5_PGOOD is a reasonable proxy for PP5000_S5
 	 */
-	return gpio_get_level(GPIO_S5_PGOOD);
+	return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_pwr_s5));
 }
 
 void pd_power_supply_reset(int port)

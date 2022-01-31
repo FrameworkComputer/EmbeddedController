@@ -67,38 +67,41 @@ void board_pwrbtn_to_pch(int level)
 	const uint32_t timeout_rsmrst_rise_us = 30 * MSEC;
 
 	/* Add delay for G3 exit if asserting PWRBTN_L and RSMRST_L is low. */
-	if (!level && !gpio_get_level(GPIO_PCH_RSMRST_L)) {
+	if (!level &&
+	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l))) {
 		start = get_time();
 		do {
 			usleep(200);
-			if (gpio_get_level(GPIO_PCH_RSMRST_L))
+			if (gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l)))
 				break;
 		} while (time_since32(start) < timeout_rsmrst_rise_us);
 
-		if (!gpio_get_level(GPIO_PCH_RSMRST_L))
+		if (!gpio_pin_get_dt(
+		    GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l)))
 			ccprints("Error pwrbtn: RSMRST_L still low");
 
 		msleep(16);
 	}
-	gpio_set_level(GPIO_PCH_PWRBTN_L, level);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_btn_l), level);
 }
 
 void baseboard_en_pwr_pcore_s0(enum gpio_signal signal)
 {
 
 	/* EC must AND signals PG_LPDDR4X_S3_OD and PG_GROUPC_S0_OD */
-	gpio_set_level(GPIO_EN_PWR_PCORE_S0_R,
-		       gpio_get_level(GPIO_PG_LPDDR4X_S3_OD) &&
-		       gpio_get_level(GPIO_PG_GROUPC_S0_OD));
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_pcore_s0_r),
+	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr4x_s3_od)) &&
+	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_groupc_s0_od)));
 }
 
 void baseboard_en_pwr_s0(enum gpio_signal signal)
 {
 
 	/* EC must AND signals SLP_S3_L and PG_PWR_S5 */
-	gpio_set_level(GPIO_EN_PWR_S0_R,
-		       gpio_get_level(GPIO_PCH_SLP_S3_L) &&
-		       gpio_get_level(GPIO_S5_PGOOD));
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0_r),
+		       gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) &&
+		       gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_pwr_s5)));
 
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);

@@ -49,11 +49,11 @@
 			gpios = <&gpiob 7 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PWR_A";
 		};
-		en_pwr_s0_r {
+		gpio_en_pwr_s0_r: en_pwr_s0_r {
 			gpios = <&gpiof 1 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PWR_S0_R";
 		};
-		en_pwr_pcore_s0_r {
+		gpio_en_pwr_pcore_s0_r: en_pwr_pcore_s0_r {
 			gpios = <&gpioe 1 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PWR_PCORE_S0_R";
 		};
@@ -61,7 +61,7 @@
 			gpios = <&gpio7 6 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_SYS_RESET_L";
 		};
-		ec_soc_rsmrst_l {
+		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
 			gpios = <&gpioc 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_PCH_RSMRST_L";
 		};
@@ -106,11 +106,11 @@
 			gpios = <&gpio9 6 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
-		usb_c0_tcpc_rst_l {
+		gpio_usb_c0_tcpc_rst_l: usb_c0_tcpc_rst_l {
 			gpios = <&gpio3 4 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_USB_C0_TCPC_RST_L";
 		};
-		usb_c1_tcpc_rst_l {
+		gpio_usb_c1_tcpc_rst_l: usb_c1_tcpc_rst_l {
 			gpios = <&gpio3 7 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_USB_C1_TCPC_RST_L";
 		};

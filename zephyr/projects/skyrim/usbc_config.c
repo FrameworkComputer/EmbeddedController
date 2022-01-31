@@ -394,19 +394,19 @@ void tcpc_alert_event(enum gpio_signal signal)
 
 static void reset_nct38xx_port(int port)
 {
-	enum gpio_signal reset_gpio_l;
+	const struct gpio_dt_spec *reset_gpio_l;
 
 	if (port == USBC_PORT_C0)
-		reset_gpio_l = GPIO_USB_C0_TCPC_RST_L;
+		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_l);
 	else if (port == USBC_PORT_C1)
-		reset_gpio_l = GPIO_USB_C1_TCPC_RST_L;
+		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_rst_l);
 	else
 		/* Invalid port: do nothing */
 		return;
 
-	gpio_set_level(reset_gpio_l, 0);
+	gpio_pin_set_dt(reset_gpio_l, 0);
 	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
-	gpio_set_level(reset_gpio_l, 1);
+	gpio_pin_set_dt(reset_gpio_l, 1);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
 		msleep(NCT3807_RESET_POST_DELAY_MS);
@@ -430,13 +430,17 @@ uint16_t tcpc_get_alert_status(void)
 	 * Check which port has the ALERT line set and ignore if that TCPC has
 	 * its reset line active.
 	 */
-	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_C0_TCPC_RST_L) != 0)
+	if (!gpio_pin_get_dt(
+	     GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
+		if (gpio_pin_get_dt(
+		    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
-	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL)) {
-		if (gpio_get_level(GPIO_USB_C1_TCPC_RST_L) != 0)
+	if (!gpio_pin_get_dt(
+	     GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
+		if (gpio_pin_get_dt(
+		    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_1;
 	}
 
@@ -634,7 +638,9 @@ void board_overcurrent_event(int port, int is_overcurrented)
 	switch (port) {
 	case USBC_PORT_C0:
 	case USBC_PORT_C1:
-		gpio_set_level(GPIO_USB_C0_C1_FAULT_ODL, !is_overcurrented);
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_usb_c0_c1_fault_odl),
+			!is_overcurrented);
 		break;
 
 	default:

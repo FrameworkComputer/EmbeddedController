@@ -49,7 +49,7 @@
 		ec_mem_event {
 			gpios = <&gpioa 5 GPIO_OUT_LOW>;
 		};
-		ec_soc_pwr_btn_l {
+		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
 			gpios = <&gpio6 3 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
@@ -59,7 +59,7 @@
 		soc_thermtrip_odl {
 			gpios = <&gpioe 5 GPIO_INPUT>;
 		};
-		usb_c0_c1_fault_odl {
+		gpio_usb_c0_c1_fault_odl: usb_c0_c1_fault_odl {
 			gpios = <&gpio7 3 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_USB_C0_C1_FAULT_ODL";
 		};

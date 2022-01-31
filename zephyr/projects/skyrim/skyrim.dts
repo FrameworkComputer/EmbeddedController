@@ -37,7 +37,7 @@
 			gpios = <&gpioa 1 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_EC_INT_L";
 		};
-		ec_soc_pwr_good {
+		gpio_ec_soc_pwr_good: ec_soc_pwr_good {
 			gpios = <&gpiod 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_SOC_PWR_GOOD";
 		};
@@ -64,7 +64,7 @@
 		3axis_int_l {
 			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
 		};
-		ec_soc_pwr_btn_l {
+		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
 			gpios = <&gpioa 7 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
