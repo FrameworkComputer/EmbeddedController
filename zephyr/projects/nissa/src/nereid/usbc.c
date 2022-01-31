@@ -62,11 +62,6 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
  * TODO(b/201000844): Fill in missing functions.
  */
 
-int board_is_sourcing_vbus(int port)
-{
-	return 0;
-}
-
 int board_set_active_charge_port(int port)
 {
 	return EC_SUCCESS;
