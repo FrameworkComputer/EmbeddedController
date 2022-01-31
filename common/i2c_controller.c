@@ -475,7 +475,7 @@ int i2c_read32(const int port,
 
 	if (I2C_IS_BIG_ENDIAN(addr_flags))
 		*data = ((int)buf[0] << 24) | ((int)buf[1] << 16) |
-			((int)buf[0] << 8) | buf[1];
+			((int)buf[2] << 8) | buf[3];
 	else
 		*data = ((int)buf[3] << 24) | ((int)buf[2] << 16) |
 			((int)buf[1] << 8) | buf[0];
