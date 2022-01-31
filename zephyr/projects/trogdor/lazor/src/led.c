@@ -44,9 +44,9 @@ enum led_color {
 
 static void led_set_color(enum led_color color)
 {
-	gpio_set_level(GPIO_EC_CHG_LED_Y_C1,
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_y_c1),
 		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
-	gpio_set_level(GPIO_EC_CHG_LED_B_C1,
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_b_c1),
 		(color == LED_BLUE) ? BAT_LED_ON : BAT_LED_OFF);
 }
 

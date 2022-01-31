@@ -221,11 +221,11 @@
 		usb_a_cdp_ilim_en {
 			gpios = <&gpio7 5 GPIO_OUT_HIGH>;
 		};
-		ec_chg_led_y_c1 {
+		gpio_ec_chg_led_y_c1: ec_chg_led_y_c1 {
 			gpios = <&gpioc 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CHG_LED_Y_C1";
 		};
-		ec_chg_led_b_c1 {
+		gpio_ec_chg_led_b_c1: ec_chg_led_b_c1 {
 			gpios = <&gpioc 4 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CHG_LED_B_C1";
 		};
