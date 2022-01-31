@@ -131,7 +131,7 @@ Card). FPC also provides design drawings for the rubber stamp. The stamp,
 test-fixture and test station need to be implemented by the OEM/ODM/Module House
 (often only module house).
 
-The `MTS` _must_ be followed by the module manufacturer, but Google does not
+The `MTS` *must* be followed by the module manufacturer, but Google does not
 provide direct support for this testing. FPC is the main point of contact.
 
 The module testing procedure is documented in the following:
