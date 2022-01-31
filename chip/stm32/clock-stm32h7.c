@@ -399,6 +399,7 @@ void clock_enable_module(enum module_id module, int enable)
 static int idle_sleep_cnt;
 static int idle_dsleep_cnt;
 static uint64_t idle_dsleep_time_us;
+static int idle_sleep_prevented_cnt;
 static int dsleep_recovery_margin_us = 1000000;
 
 /* STOP_MODE_LATENCY: delay to wake up from STOP mode with flash off in SVOS5 */
@@ -463,6 +464,11 @@ static void set_lptim_event(int delay_us, uint16_t *lptim_cnt)
 	*lptim_cnt = cnt;
 }
 
+static bool timer_interrupt_pending(void)
+{
+	return task_is_irq_pending(IRQ_TIM(TIM_CLOCK32));
+}
+
 void __idle(void)
 {
 	timestamp_t t0;
@@ -473,8 +479,45 @@ void __idle(void)
 	while (1) {
 		interrupt_disable();
 
+		/*
+		 * Get timestamp with interrupts disabled.
+		 * This value is used as a base to calculate timestamp after
+		 * wake from deep sleep. In combination with next_delay it gives
+		 * information how long the CPU can sleep. The timestamp can
+		 * point to the previous "epoch" when timer overflowed after
+		 * interrupts were disabled, since clksrc_high (which keeps
+		 * higher 32 bits of the timestamp) will not be updated.
+		 */
 		t0 = get_time();
+
+		/*
+		 * Get time to next event.
+		 * After disabling interrupts, event timestamp
+		 * (__hw_clock_event_get()) is frozen, because
+		 * process_timers(), responsible for updating the
+		 * next event value with __hw_clock_event_set(),
+		 * can't be called. There is a risk that timer overflow
+		 * occurred after interrupts were disabled and obtained
+		 * event timestamp points to previous "epoch". We will
+		 * check that later.
+		 */
 		next_delay = __hw_clock_event_get() - t0.le.lo;
+
+		/*
+		 * Repeat idle enter procedure when timer interrupt is pending
+		 * (eg. overflow occurred after disabling interrupts). To work
+		 * properly, this code assumes that timer interrupt is enabled
+		 * in NVIC and interrupt is generated on timer overflow.
+		 */
+		if (timer_interrupt_pending()) {
+			idle_sleep_prevented_cnt++;
+
+			/* Enable interrupts to handle detected overflow. */
+			interrupt_enable();
+
+			/* Repeat idle enter procedure. */
+			continue;
+		}
 
 		if (DEEP_SLEEP_ALLOWED &&
 		    next_delay > LPTIM_PERIOD_US + STOP_MODE_LATENCY) {
@@ -554,6 +597,8 @@ static int command_idle_stats(int argc, char **argv)
 	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
 	ccprintf("Time spent in deep-sleep:            %.6llds\n",
 			idle_dsleep_time_us);
+	ccprintf("Num of prevented sleep:              %d\n",
+			idle_sleep_prevented_cnt);
 	ccprintf("Total time on:                       %.6llds\n", ts.val);
 	ccprintf("Deep-sleep closest to wake deadline: %dus\n",
 			dsleep_recovery_margin_us);
