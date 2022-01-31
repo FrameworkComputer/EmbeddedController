@@ -126,7 +126,7 @@
 			gpios = <&gpiod 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_SWITCHCAP_ON";
 		};
-		en_pp5000_s5 {
+		gpio_en_pp5000_s5: en_pp5000_s5 {
 			gpios = <&gpio7 3 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_EN_PP5000";
 		};
@@ -147,23 +147,23 @@
 			gpios = <&gpio7 4 GPIO_OUT_LOW>;
 			enum-name = "GPIO_TRACKPAD_INT_GATE";
 		};
-		usb_c0_pd_rst_l {
+		gpio_usb_c0_pd_rst_l: usb_c0_pd_rst_l {
 			gpios = <&gpiof 1 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_USB_C0_PD_RST_L";
 		};
-		usb_c1_pd_rst_l {
+		gpio_usb_c1_pd_rst_l: usb_c1_pd_rst_l {
 			gpios = <&gpioe 4 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_USB_C1_PD_RST_L";
 		};
-		dp_mux_oe_l {
+		gpio_dp_mux_oe_l: dp_mux_oe_l {
 			gpios = <&gpiob 1 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_DP_MUX_OE_L";
 		};
-		dp_mux_sel {
+		gpio_dp_mux_sel: dp_mux_sel {
 			gpios = <&gpio4 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_DP_MUX_SEL";
 		};
-		dp_hot_plug_det_r {
+		gpio_dp_hot_plug_det_r: dp_hot_plug_det_r {
 			gpios = <&gpio9 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_DP_HOT_PLUG_DET";
 		};
@@ -182,19 +182,19 @@
 			gpios = <&gpioc 1 GPIO_OUT_LOW>;
 			enum-name = "GPIO_USB_C1_FRS_EN";
 		};
-		ec_chg_led_y_c0 {
+		gpio_ec_chg_led_y_c0: ec_chg_led_y_c0 {
 			gpios = <&gpio6 0 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CHG_LED_Y_C0";
 		};
-		ec_chg_led_w_c0 {
+		gpio_ec_chg_led_w_c0: ec_chg_led_w_c0 {
 			gpios = <&gpioc 0 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CHG_LED_W_C0";
 		};
-		ec_chg_led_y_c1 {
+		gpio_ec_chg_led_y_c1: ec_chg_led_y_c1 {
 			gpios = <&gpioc 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CHG_LED_Y_C1";
 		};
-		ec_chg_led_w_c1 {
+		gpio_ec_chg_led_w_c1: ec_chg_led_w_c1 {
 			gpios = <&gpioc 4 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CHG_LED_W_C1";
 		};

@@ -18,7 +18,7 @@
 int pd_check_vconn_swap(int port)
 {
 	/* In G3, do not allow vconn swap since PP5000 rail is off */
-	return gpio_get_level(GPIO_EN_PP5000);
+	return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pp5000_s5));
 }
 
 static uint8_t vbus_en[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -143,10 +143,11 @@ static int is_dp_muxable(int port)
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
 {
-	enum gpio_signal hpd = GPIO_DP_HOT_PLUG_DET;
+	const struct gpio_dt_spec *hpd =
+		GPIO_DT_FROM_NODELABEL(gpio_dp_hot_plug_det_r);
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
-	int cur_lvl = gpio_get_level(hpd);
+	int cur_lvl = gpio_pin_get_dt(hpd);
 	mux_state_t mux_state;
 
 	dp_status[port] = payload[1];
@@ -173,8 +174,9 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		 * TODO(waihong): Better to move switching DP mux to
 		 * the usb_mux abstraction.
 		 */
-		gpio_set_level(GPIO_DP_MUX_SEL, port == 1);
-		gpio_set_level(GPIO_DP_MUX_OE_L, 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_sel),
+				port == 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_oe_l), 0);
 
 		/* Connect the SBU lines in PPC chip. */
 		if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
@@ -192,8 +194,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
 		/* Disconnect the DP port selection mux. */
-		gpio_set_level(GPIO_DP_MUX_OE_L, 1);
-		gpio_set_level(GPIO_DP_MUX_SEL, 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_oe_l), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_sel), 0);
 
 		/* Disconnect the SBU lines in PPC chip. */
 		if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
@@ -226,9 +228,9 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 			usleep(svdm_hpd_deadline[port] - now);
 
 		/* Generate IRQ_HPD pulse */
-		gpio_set_level(hpd, 0);
+		gpio_pin_set_dt(hpd, 0);
 		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
-		gpio_set_level(hpd, 1);
+		gpio_pin_set_dt(hpd, 1);
 
 		/* Set the minimum time delay (2ms) for the next HPD IRQ */
 		svdm_hpd_deadline[port] = get_time().val +
@@ -237,7 +239,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0;
 	} else {
-		gpio_set_level(hpd, lvl);
+		gpio_pin_set_dt(hpd, lvl);
 		/* Set the minimum time delay (2ms) for the next HPD IRQ */
 		svdm_hpd_deadline[port] = get_time().val +
 			HPD_USTREAM_DEBOUNCE_LVL;
@@ -250,13 +252,14 @@ __override void svdm_exit_dp_mode(int port)
 {
 	if (is_dp_muxable(port)) {
 		/* Disconnect the DP port selection mux. */
-		gpio_set_level(GPIO_DP_MUX_OE_L, 1);
-		gpio_set_level(GPIO_DP_MUX_SEL, 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_oe_l), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_mux_sel), 0);
 
 		/* Signal AP for the HPD low event */
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
 					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
-		gpio_set_level(GPIO_DP_HOT_PLUG_DET, 0);
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_dp_hot_plug_det_r), 0);
 	}
 }
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */

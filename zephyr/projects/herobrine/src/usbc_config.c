@@ -54,7 +54,8 @@ static void usba_oc_deferred(void)
 {
 	/* Use next number after all USB-C ports to indicate the USB-A port */
 	board_overcurrent_event(CONFIG_USB_PD_PORT_MAX_COUNT,
-				!gpio_get_level(GPIO_USB_A0_OC_ODL));
+				!gpio_pin_get_dt(
+				 GPIO_DT_FROM_NODELABEL(gpio_usb_a0_oc_odl)));
 }
 DECLARE_DEFERRED(usba_oc_deferred);
 
@@ -207,11 +208,11 @@ void board_reset_pd_mcu(void)
 	cprints(CC_USB, "Resetting TCPCs...");
 	cflush();
 
-	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 0);
 	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 1);
 	msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
@@ -320,11 +321,13 @@ uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
 
-	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
-		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_int_odl)))
+		if (gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l)))
 			status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL))
-		if (gpio_get_level(GPIO_USB_C1_PD_RST_L))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_int_odl)))
+		if (gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l)))
 			status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;

@@ -36,9 +36,13 @@ enum led_color {
 
 static void side_led_set_color(int port, enum led_color color)
 {
-	gpio_set_level(port ? GPIO_EC_CHG_LED_Y_C1 : GPIO_EC_CHG_LED_Y_C0,
+	gpio_pin_set_dt(port ?
+		GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_y_c1) :
+		GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_y_c0),
 		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
-	gpio_set_level(port ? GPIO_EC_CHG_LED_W_C1 : GPIO_EC_CHG_LED_W_C0,
+	gpio_pin_set_dt(port ?
+		GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_w_c1) :
+		GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_w_c0),
 		(color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
 }
 
