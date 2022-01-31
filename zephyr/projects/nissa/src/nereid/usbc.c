@@ -41,68 +41,6 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-/*
- * TODO(b/197480501): Move common code into common file.
- */
-
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.usb_port = 0,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
-	},
-	{ /* sub-board */
-		.usb_port = 1,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
-	},
-};
-
-static uint8_t cached_usb_pd_port_count;
-
-__override uint8_t board_get_usb_pd_port_count(void)
-{
-	if (cached_usb_pd_port_count == 0)
-		CPRINTS("USB PD Port count not initialized!");
-	return cached_usb_pd_port_count;
-}
-
-/*
- * Initialise the USB PD port count, which
- * depends on which sub-board is attached.
- */
-static void init_usb_pd_port_count(void)
-{
-	switch (nissa_get_sb_type()) {
-	default:
-		cached_usb_pd_port_count = 1;
-		break;
-
-	case NISSA_SB_C_A:
-	case NISSA_SB_C_LTE:
-		cached_usb_pd_port_count = 2;
-		break;
-	}
-}
-/*
- * Make sure setup is done after EEPROM is readable.
- */
-DECLARE_HOOK(HOOK_INIT, init_usb_pd_port_count, HOOK_PRIO_INIT_I2C + 1);
-
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
-{
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/*
-	 * Assume charger overdraws by about 4%, keeping the actual draw
-	 * within spec. This adjustment can be changed with characterization
-	 * of actual hardware.
-	 */
-	icl = icl * 96 / 100;
-	charge_set_input_current_limit(icl, charge_mv);
-}
-
 /* Vconn control for integrated ITE TCPC */
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 {
@@ -158,12 +96,6 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	return status;
-}
-
-int pd_check_vconn_swap(int port)
-{
-	/* Allow VCONN swaps if the AP is on. */
-	return chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON);
 }
 
 void pd_power_supply_reset(int port)

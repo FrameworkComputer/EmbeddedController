@@ -53,18 +53,3 @@ __override void board_check_extpower(void)
 
 	last_extpower_present = extpower_present;
 }
-
-/*
- * Count of chargers depends on sub board presence.
- */
-__override uint8_t board_get_charger_chip_count(void)
-{
-	switch (nissa_get_sb_type()) {
-	default:
-		return 1;
-
-	case NISSA_SB_C_A:
-	case NISSA_SB_C_LTE:
-		return 2;
-	}
-}
