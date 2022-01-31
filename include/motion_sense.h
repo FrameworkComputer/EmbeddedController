@@ -273,7 +273,7 @@ extern unsigned int motion_min_interval;
  * Priority of the motion sense resume/suspend hooks, to be sure associated
  * hooks are scheduled properly.
  */
-#define MOTION_SENSE_HOOK_PRIO (HOOK_PRIO_DEFAULT)
+#define MOTION_SENSE_HOOK_PRIO HOOK_PRIO_DEFAULT
 
 /**
  * Take actions at end of sensor initialization:
