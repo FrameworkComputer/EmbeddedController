@@ -745,7 +745,7 @@ The log file is `/var/log/cros_fp.log`.
 [RM0433]: https://www.st.com/content/ccc/resource/technical/document/reference_manual/group0/c9/a3/76/fa/55/46/45/fa/DM00314099/files/DM00314099.pdf/jcr:content/translations/en.DM00314099.pdf
 [sandboxing]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/sandboxing.md
 [seccomp filter]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/biod/init/seccomp/biod-seccomp-amd64.policy
-[Security Audit Report]: https://drive.google.com/a/google.com/file/d/0B1HHKpeDpzYnMDdocGxwWUhpckpWM0hMU0tPa2ZjdEFnLU53/
+[Security Audit Report]: https://drive.google.com/file/d/0B1HHKpeDpzYnMDdocGxwWUhpckpWM0hMU0tPa2ZjdEFnLU53/view?usp=sharing&resourcekey=0-utAJosm8Lwvx9TOz7F4i7w
 [state machine]: https://chromium.googlesource.com/chromiumos/platform/ec/+/90d177e3f0ae729bea7e24934a3c6ef9f2520d45/common/fpsensor.c#252
 [statically allocated]: https://chromium.googlesource.com/chromiumos/platform/ec/+/90d177e3f0ae729bea7e24934a3c6ef9f2520d45/common/fpsensor.c#57
 [system key]: https://chromium.googlesource.com/chromiumos/platform2/+/23b79133514ac2cd986bce21c398fb6658bda248/cryptohome/mount_encrypted/encryption_key.h#125
