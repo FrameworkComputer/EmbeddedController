@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 
 #include "variant_db_detection.h"
@@ -19,20 +20,31 @@ static void corsola_db_config(enum corsola_db_type type)
 	switch (type) {
 	case CORSOLA_DB_HDMI:
 		/* EC_X_GPIO1 */
-		gpio_set_flags(GPIO_EN_HDMI_PWR, GPIO_OUT_HIGH);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_hdmi_pwr),
+				   GPIO_OUT_HIGH);
 		/* X_EC_GPIO2 */
-		gpio_set_flags(GPIO_PS185_EC_DP_HPD, GPIO_INT_BOTH);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd),
+				      GPIO_INPUT);
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_x_ec_gpio2));
 		/* EC_X_GPIO3 */
-		gpio_set_flags(GPIO_PS185_PWRDN_ODL, GPIO_ODR_HIGH);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_pwrdn_odl),
+				      GPIO_ODR_HIGH);
 		return;
 	case CORSOLA_DB_TYPEC:
 		/* EC_X_GPIO1 */
-		gpio_set_flags(GPIO_USB_C1_FRS_EN, GPIO_OUT_LOW);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_frs_en),
+				      GPIO_OUT_LOW);
 		/* X_EC_GPIO2 */
-		gpio_set_flags(GPIO_USB_C1_PPC_INT_ODL,
-			       GPIO_INT_BOTH | GPIO_PULL_UP);
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_ALIAS(gpio_usb_c1_ppc_int_odl),
+			GPIO_INPUT | GPIO_PULL_UP);
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_x_ec_gpio2));
 		/* EC_X_GPIO3 */
-		gpio_set_flags(GPIO_USB_C1_DP_IN_HPD, GPIO_OUT_LOW);
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_ALIAS(gpio_usb_c1_dp_in_hpd),
+			GPIO_OUT_LOW);
 		return;
 	default:
 	break;
@@ -47,7 +59,7 @@ enum corsola_db_type corsola_get_db_type(void)
 	if (db != CORSOLA_DB_NONE)
 		return db;
 
-	if (!gpio_get_level(GPIO_HDMI_PRSNT_ODL))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hdmi_prsnt_odl)))
 		db = CORSOLA_DB_HDMI;
 	else
 		db = CORSOLA_DB_TYPEC;

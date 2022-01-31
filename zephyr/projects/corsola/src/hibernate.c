@@ -15,7 +15,7 @@ __override void board_hibernate_late(void)
 	isl9238c_hibernate(CHARGER_SOLO);
 #endif
 
-	gpio_set_level(GPIO_EN_ULP, 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_ulp), 1);
 
 	/* should not reach here */
 	__builtin_unreachable();

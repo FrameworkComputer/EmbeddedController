@@ -8,12 +8,12 @@
 
 static void board_suspend(void)
 {
-	gpio_set_level(GPIO_EN_5V_USM, 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_usm), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_suspend, HOOK_PRIO_DEFAULT);
 
 static void board_resume(void)
 {
-	gpio_set_level(GPIO_EN_5V_USM, 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_usm), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_resume, HOOK_PRIO_DEFAULT);

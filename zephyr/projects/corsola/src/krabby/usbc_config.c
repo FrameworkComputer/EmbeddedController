@@ -47,13 +47,13 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_port = I2C_PORT_PPC0,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
 		.drv = &syv682x_drv,
-		.frs_en = GPIO_USB_C0_PPC_FRSINFO,
+		.frs_en = GPIO_SIGNAL(DT_NODELABEL(usb_c0_ppc_frsinfo)),
 	},
 	{
 		.i2c_port = I2C_PORT_PPC1,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
 		.drv = &syv682x_drv,
-		.frs_en = GPIO_USB_C1_FRS_EN,
+		.frs_en = GPIO_SIGNAL(DT_ALIAS(gpio_usb_c1_frs_en)),
 	},
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
@@ -144,16 +144,18 @@ DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
 
 void ppc_interrupt(enum gpio_signal signal)
 {
-	if (signal == GPIO_USB_C1_PPC_INT_ODL)
+	if (signal == GPIO_SIGNAL(DT_ALIAS(gpio_usb_c1_ppc_int_odl)))
 		syv682x_interrupt(1);
 }
 
 int ppc_get_alert_status(int port)
 {
 	if (port == 0)
-		return gpio_get_level(GPIO_USB_C0_PPC_BC12_INT_ODL) == 0;
+		return gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(usb_c0_ppc_bc12_int_odl)) == 0;
 	if (port == 1 && corsola_get_db_type() == CORSOLA_DB_TYPEC)
-		return gpio_get_level(GPIO_USB_C1_PPC_INT_ODL) == 0;
+		return gpio_pin_get_dt(
+			GPIO_DT_FROM_ALIAS(gpio_usb_c1_ppc_int_odl)) == 0;
 
 	return 0;
 }
@@ -284,7 +286,7 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	 *
 	 * Enable/Disable IN_HPD on the DB.
 	 */
-	gpio_set_level(GPIO_USB_C1_DP_IN_HPD,
+	gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_dp_in_hpd),
 		       mux_state & USB_PD_MUX_DP_ENABLED);
 
 	return ps8743_write(me, PS8743_REG_MODE, reg);

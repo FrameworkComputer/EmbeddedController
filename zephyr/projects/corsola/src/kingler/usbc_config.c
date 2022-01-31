@@ -200,9 +200,9 @@ void board_reset_pd_mcu(void)
 
 	/* reset C0 ANX3447 */
 	/* Assert reset */
-	gpio_set_level(GPIO_USB_C0_TCPC_RST, 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst), 1);
 	msleep(1);
-	gpio_set_level(GPIO_USB_C0_TCPC_RST, 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst), 0);
 	/* After TEST_R release, anx7447/3447 needs 2ms to finish eFuse
 	 * loading.
 	 */
@@ -290,12 +290,14 @@ uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
 
-	if (!gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL)) {
-		if (!gpio_get_level(GPIO_USB_C0_TCPC_RST))
+	if (!gpio_pin_get_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
+		if (!gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst)))
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
-	if (!gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl)))
 		return status |= PD_STATUS_TCPC_ALERT_1;
 	return status;
 }
@@ -305,10 +307,10 @@ void tcpc_alert_event(enum gpio_signal signal)
 	int port;
 
 	switch (signal) {
-	case GPIO_USB_C0_TCPC_INT_ODL:
+	case GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_tcpc_int_odl)):
 		port = 0;
 		break;
-	case GPIO_USB_C1_TCPC_INT_ODL:
+	case GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c1_tcpc_int_odl)):
 		port = 1;
 		break;
 	default:
@@ -321,10 +323,10 @@ void tcpc_alert_event(enum gpio_signal signal)
 void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
+	case GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_ppc_int_odl)):
 		ppc_chips[0].drv->interrupt(0);
 		break;
-	case GPIO_USB_C1_PPC_INT_ODL:
+	case GPIO_SIGNAL(DT_ALIAS(gpio_usb_c1_ppc_int_odl)):
 		ppc_chips[1].drv->interrupt(1);
 		break;
 	default:

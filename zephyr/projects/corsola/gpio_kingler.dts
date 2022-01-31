@@ -39,7 +39,7 @@
 				 GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_IN_SLEEP_L";
 		};
-		en_ulp {
+		gpio_en_ulp: en_ulp {
 			gpios = <&gpioc 6 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_ULP";
 		};
@@ -133,7 +133,7 @@
 			gpios = <&gpio0 1 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
-		en_5v_usm {
+		gpio_en_5v_usm: en_5v_usm {
 			gpios = <&gpio0 2 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_5V_USM";
 		};
@@ -162,19 +162,19 @@
 			gpios = <&gpio7 0 GPIO_INPUT>;
 			enum-name = "GPIO_PG_PP5000_Z2_OD";
 		};
-		ec_x_gpio1 {
+		gpio_ec_x_gpio1: ec_x_gpio1 {
 			gpios = <&gpio6 2 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_X_GPIO1";
 		};
-		dp_aux_path_sel {
+		dp_aux_path_sel: dp_aux_path_sel {
 			gpios = <&gpio6 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_DP_AUX_PATH_SEL";
 		};
-		ec_bl_en_od {
+		gpio_ec_bl_en_od: ec_bl_en_od {
 			gpios = <&gpio4 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_BL_EN_OD";
 		};
-		ec_x_gpio3 {
+		gpio_ec_x_gpio3: ec_x_gpio3 {
 			gpios = <&gpiod 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_X_GPIO3";
 		};
@@ -182,7 +182,7 @@
 			gpios = <&gpio7 3 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
-		usb_c0_tcpc_rst {
+		gpio_usb_c0_tcpc_rst: usb_c0_tcpc_rst {
 			gpios = <&gpioc 0 GPIO_OUT_LOW>;
 			enum-name = "GPIO_USB_C0_TCPC_RST";
 		};
@@ -190,7 +190,7 @@
 			gpios = <&gpio6 0 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PP5000_USB_A0_VBUS";
 		};
-		hdmi_prsnt_odl {
+		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
 			gpios = <&gpio3 7 GPIO_INPUT>;
 			enum-name = "GPIO_HDMI_PRSNT_ODL";
 		};
@@ -210,7 +210,7 @@
 			gpios = <&gpioc 7 GPIO_INPUT>;
 			enum-name = "GPIO_USB_A0_FAULT_ODL";
 		};
-		ec_ap_dp_hpd_odl {
+		ec_ap_dp_hpd_odl: ec_ap_dp_hpd_odl {
 			gpios = <&gpio6 1 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_AP_DP_HPD_ODL";
 		};
@@ -230,6 +230,18 @@
 			gpios = <&gpioe 5 GPIO_INPUT>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};
+	};
+
+	/*
+	 * aliases for sub-board GPIOs
+	 */
+	aliases {
+		gpio-en-hdmi-pwr = &gpio_ec_x_gpio1;
+		gpio-usb-c1-frs-en = &gpio_ec_x_gpio1;
+		gpio-usb-c1-ppc-int-odl = &gpio_x_ec_gpio2;
+		gpio-ps185-ec-dp-hpd = &gpio_x_ec_gpio2;
+		gpio-usb-c1-dp-in-hpd = &gpio_ec_x_gpio3;
+		gpio-ps185-pwrdn-odl = &gpio_ec_x_gpio3;
 	};
 
 	def-lvol-io-list {

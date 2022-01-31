@@ -48,7 +48,7 @@
 			gpios = <&gpiod 6 GPIO_INPUT>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
-		ap_xhci_init_done: ap_xhci_init_done {
+		gpio_ap_xhci_init_done: ap_xhci_init_done {
 			gpios = <&gpioj 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_AP_XHCI_INIT_DONE";
 		};
@@ -63,7 +63,7 @@
 		spi0_cs: spi0_cs {
 			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
-		x_ec_gpio2: x_ec_gpio2 {
+		gpio_x_ec_gpio2: x_ec_gpio2 {
 			gpios = <&gpiob 2 (GPIO_INPUT | GPIO_ODR_HIGH)>;
 			enum-name = "GPIO_X_EC_GPIO2";
 		};
@@ -83,7 +83,7 @@
 			gpios = <&gpioc 6 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_EN_PP5000_Z2";
 		};
-		en_ulp: en_ulp {
+		gpio_en_ulp: en_ulp {
 			gpios = <&gpioe 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_ULP";
 		};
@@ -91,7 +91,7 @@
 			gpios = <&gpiog 1 GPIO_ODR_LOW>;
 			enum-name = "GPIO_SYS_RST_ODL";
 		};
-		ec_bl_en_od: ec_bl_en_od {
+		gpio_ec_bl_en_od: ec_bl_en_od {
 			gpios = <&gpiob 5 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_EC_BL_EN_OD";
 		};
@@ -137,7 +137,7 @@
 			gpios = <&gpioc 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
-		en_5v_usm: en_5v_usm {
+		gpio_en_5v_usm: en_5v_usm {
 			gpios = <&gpiog 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_5V_USM";
 		};
@@ -193,18 +193,30 @@
 			gpios = <&gpioa 5 GPIO_INPUT>;
 			enum-name = "GPIO_I2C_F_SDA";
 		};
-		ec_x_gpio1: ec_x_gpio1 {
+		gpio_ec_x_gpio1: ec_x_gpio1 {
 			gpios = <&gpioh 4 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_X_GPIO1";
 		};
-		ec_x_gpio3: ec_x_gpio3 {
+		gpio_ec_x_gpio3: ec_x_gpio3 {
 			gpios = <&gpioj 1 GPIO_INPUT>;
 			enum-name = "GPIO_EC_X_GPIO3";
 		};
-		hdmi_prsnt_odl: hdmi_prsnt_odl {
+		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
 			gpios = <&gpioj 3 GPIO_INPUT>;
 			enum-name = "GPIO_HDMI_PRSNT_ODL";
 		};
+	};
+
+	/*
+	 * aliases for sub-board GPIOs
+	 */
+	aliases {
+		gpio-en-hdmi-pwr = &gpio_ec_x_gpio1;
+		gpio-usb-c1-frs-en = &gpio_ec_x_gpio1;
+		gpio-usb-c1-ppc-int-odl = &gpio_x_ec_gpio2;
+		gpio-ps185-ec-dp-hpd = &gpio_x_ec_gpio2;
+		gpio-usb-c1-dp-in-hpd = &gpio_ec_x_gpio3;
+		gpio-ps185-pwrdn-odl = &gpio_ec_x_gpio3;
 	};
 
 	ec-mkbp-host-event-wakeup-mask {

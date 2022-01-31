@@ -70,7 +70,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
 void usb_a0_interrupt(enum gpio_signal signal)
 {
-	enum usb_charge_mode mode = gpio_get_level(signal) ?
+	enum usb_charge_mode mode = gpio_pin_get_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_ap_xhci_init_done)) ?
 		USB_CHARGE_MODE_ENABLED : USB_CHARGE_MODE_DISABLED;
 
 	for (int i = 0; i < USB_PORT_COUNT; i++)
@@ -100,7 +101,8 @@ int debounced_hpd;
 
 static void ps185_hdmi_hpd_deferred(void)
 {
-	const int new_hpd = gpio_get_level(GPIO_PS185_EC_DP_HPD);
+	const int new_hpd = gpio_pin_get_dt(
+				GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd));
 
 	/* HPD status not changed, probably a glitch, just return. */
 	if (debounced_hpd == new_hpd)
@@ -108,7 +110,8 @@ static void ps185_hdmi_hpd_deferred(void)
 
 	debounced_hpd = new_hpd;
 
-	gpio_set_level(GPIO_EC_AP_DP_HPD_ODL, !debounced_hpd);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl),
+			!debounced_hpd);
 	CPRINTS(debounced_hpd ? "HDMI plug" : "HDMI unplug");
 }
 DECLARE_DEFERRED(ps185_hdmi_hpd_deferred);
