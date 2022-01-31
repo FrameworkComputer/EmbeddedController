@@ -230,7 +230,28 @@ print-boards:
 		$(sort $(boards)))
 
 ifeq ($(ALLOW_CONFIG),)
-cmd_check_allowed = ./util/check_allowed.sh ${config} util/config_allowed.txt .
+
+# These are options defined by both ECOS and Zephyr. We need to tolerate this
+# rather than begging the user to drop them from config_allowed since when the
+# Zephyr Kconfig is not available (-I argument below does not point to the right
+# place), they will not be considered a problem.
+# You may add new options here if needed, although this should only occur if
+# Zephyr upstream happens to add the same option, since we are requiring new
+# ECOS options to have a corresponding Kconfig anyway.
+conflicting_options := \
+	AUDIO_CODEC \
+	DAC \
+	DMA \
+	EEPROM \
+	I2C_BITBANG \
+	PECI \
+	SPI \
+	UART_CONSOLE
+
+cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
+	 -a util/config_allowed.txt -p PLATFORM_EC_ -s zephyr/ \
+	 -I $(abspath ../../../src/third_party/zephyr/main) \
+	 $(foreach opt,$(conflicting_options),-i $(opt)) check
 else
 cmd_check_allowed = true
 endif
