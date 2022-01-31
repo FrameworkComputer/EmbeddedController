@@ -13,9 +13,11 @@
 static inline void kbd_backlight_enable(bool enable)
 {
 	if (get_board_id() == 1)
-		gpio_set_level(GPIO_ID_1_EC_KB_BL_EN, enable);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_id_1_ec_kb_bl_en),
+				enable);
 	else
-		gpio_set_level(GPIO_EC_KB_BL_EN_L, !enable);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_kb_bl_en_l),
+				!enable);
 }
 
 /* Called on AP S3 -> S0 transition */
@@ -46,6 +48,7 @@ static void set_board_id_1_gpios(void)
 	if (get_board_id() != 1)
 		return;
 
-	gpio_set_flags(GPIO_ID_1_EC_KB_BL_EN, GPIO_OUT_LOW);
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_id_1_ec_kb_bl_en),
+			      GPIO_OUT_LOW);
 }
 DECLARE_HOOK(HOOK_INIT, set_board_id_1_gpios, HOOK_PRIO_FIRST);

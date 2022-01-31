@@ -26,11 +26,19 @@
 			gpios = <&gpio7 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_CHARGER_VAP_OTG_EN";
 		};
-		ec_batt_pres_odl {
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
 			gpios = <&gpioa 3 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
-		id_1_ec_batt_pres_odl {
+		/*
+		 * Same GPIO as gpio_ec_batt_pres_odl,
+		 * but only enabled for board id 1.
+		 */
+		gpio_id_1_ec_kb_bl_en: id_1_ec_kb_bl_en {
+			gpios = <&gpioa 3 GPIO_OUT_LOW>;
+			no-auto-init;
+		};
+		gpio_id_1_ec_batt_pres_odl: id_1_ec_batt_pres_odl {
 			gpios = <&gpioe 1 GPIO_INPUT>;
 			enum-name = "GPIO_ID_1_EC_BATT_PRES_ODL";
 		};
@@ -42,7 +50,7 @@
 			gpios = <&gpio3 6 GPIO_INPUT>;
 			enum-name = "GPIO_EC_I2C_BAT_SDA";
 		};
-		ec_kb_bl_en_l {
+		gpio_ec_kb_bl_en_l: ec_kb_bl_en_l {
 			gpios = <&gpio8 6 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_EC_KB_BL_EN_L";
 		};
