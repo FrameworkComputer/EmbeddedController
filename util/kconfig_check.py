@@ -63,6 +63,9 @@ a corresponding Kconfig option for Zephyr'''
     parser.add_argument(
         '-D', '--debug', action='store_true',
         help='Enabling debugging (provides a full traceback on error)')
+    parser.add_argument(
+        '-i', '--ignore', action='append',
+        help='Kconfig options to ignore (without CONFIG_ prefix)')
     parser.add_argument('-I', '--search-path', type=str, action='append',
                         help='Search paths to look for Kconfigs')
     parser.add_argument('-p', '--prefix', type=str, default='PLATFORM_EC_',
@@ -290,7 +293,7 @@ class KconfigCheck:
         return new_adhoc, unneeded_adhoc, updated_adhoc
 
     def do_check(self, configs_file, srcdir, allowed_file, prefix, use_defines,
-                 search_paths):
+                 search_paths, ignore=None):
         """Find new ad-hoc configs in the configs_file
 
         Args:
@@ -302,6 +305,9 @@ class KconfigCheck:
             use_defines: True if each line of the file starts with #define
             search_paths: List of project paths to search for Kconfig files, in
                 addition to the current directory
+            ignore: List of Kconfig options to ignore if they match an ad-hoc
+                CONFIG. This means they will not cause an error if they match
+                an ad-hoc CONFIG.
 
         Returns:
             Exit code: 0 if OK, 1 if a problem was found
@@ -327,12 +333,15 @@ To temporarily disable this, use: ALLOW_CONFIG=1 make ...
 ''', file=sys.stderr)
             return 1
 
+        if not ignore:
+            ignore = []
+        unneeded_adhoc = [name for name in unneeded_adhoc if name not in ignore]
         if unneeded_adhoc:
             with open(NEW_ALLOWED_FNAME, 'w') as out:
                 for config in updated_adhoc:
                     print('CONFIG_%s' % config, file=out)
-            now_in_kconfig = '\n'.join(['CONFIG_%s' % name
-                                        for name in unneeded_adhoc])
+            now_in_kconfig = '\n'.join(
+                ['CONFIG_%s' % name for name in unneeded_adhoc])
             print(f'''The following options are now in Kconfig:
 
 {now_in_kconfig}
@@ -381,7 +390,8 @@ def main(argv):
         return checker.do_check(
             configs_file=args.configs, srcdir=args.srctree,
             allowed_file=args.allowed, prefix=args.prefix,
-            use_defines=args.use_defines, search_paths=args.search_path)
+            use_defines=args.use_defines, search_paths=args.search_path,
+            ignore=args.ignore)
     elif args.cmd == 'build':
         return checker.do_build(configs_file=args.configs, srcdir=args.srctree,
             allowed_file=args.allowed, prefix=args.prefix,
