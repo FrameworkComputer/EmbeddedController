@@ -84,7 +84,7 @@ uint16_t tcpc_get_alert_status(void)
 
 	/* Is the C1 port present and its IRQ line asserted? */
 	if (board_get_usb_pd_port_count() == 2 &&
-	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
+	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
 		/*
 		 * C1 IRQ is shared between BC1.2 and TCPC; poll TCPC to see if
 		 * it asserted the IRQ.
@@ -164,7 +164,7 @@ static void check_c1_line(void)
 	 * If line is still being held low, see if there's more to process from
 	 * one of the chips.
 	 */
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
 		notify_c1_chips();
 		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
 	}

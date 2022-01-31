@@ -33,13 +33,13 @@ static void nereid_subboard_init(void)
 			GPIO_DT_FROM_NODELABEL(gpio_sub_usb_a1_ilimit_sdp),
 			GPIO_DISCONNECTED);
 		gpio_pin_configure_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_en_sub_usb_a1_vbus),
+			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
 			GPIO_DISCONNECTED);
 	}
 	if (sb == NISSA_SB_C_A || sb == NISSA_SB_C_LTE) {
 		/* Enable type-C port 1 */
 		gpio_pin_configure_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl),
+			GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
 			GPIO_INPUT);
 	}
 	if (sb == NISSA_SB_HDMI_A) {
@@ -47,14 +47,14 @@ static void nereid_subboard_init(void)
 		/* TODO(b:212490923): Use pinctrl to switch from I2C */
 		/* Enable HDMI GPIOs */
 		gpio_pin_configure_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_en_sub_rails_odl),
+			GPIO_DT_FROM_ALIAS(gpio_en_rails_odl),
 			GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH);
 		gpio_pin_configure_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_hdmi_en_sub_odl),
+			GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl),
 			GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH);
 		/* Configure the interrupt separately */
 		gpio_pin_configure_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_hpd_sub_odl),
+			GPIO_DT_FROM_ALIAS(gpio_hpd_odl),
 			GPIO_INPUT);
 	}
 }

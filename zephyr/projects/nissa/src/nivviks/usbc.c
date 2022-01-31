@@ -154,7 +154,7 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	if (board_get_usb_pd_port_count() == 2 &&
-	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
+	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
 			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
@@ -234,20 +234,29 @@ static void usbc_interrupt_trigger(int port)
 	task_set_event(USB_CHG_PORT_TO_TASK_ID(port), USB_CHG_EVENT_BC12);
 }
 
-#define USBC_INT_POLL(port)						    \
-	static void poll_c ## port ## _int (void)			    \
-	{								    \
-		if (!gpio_pin_get_dt(					    \
-			GPIO_DT_FROM_NODELABEL				    \
-				(gpio_usb_c ## port ## _int_odl))) {	    \
-			usbc_interrupt_trigger(port);			    \
-			hook_call_deferred(&poll_c ## port ## _int_data,    \
-					   USBC_INT_POLL_DELAY_US);	    \
-		}							    \
+static inline void poll_usb_gpio(int port,
+				 const struct gpio_dt_spec *gpio,
+				 const struct deferred_data *ud)
+{
+	if (!gpio_pin_get_dt(gpio)) {
+		usbc_interrupt_trigger(port);
+		hook_call_deferred(ud, USBC_INT_POLL_DELAY_US);
 	}
+}
 
-USBC_INT_POLL(0)
-USBC_INT_POLL(1)
+static void poll_c0_int (void)
+{
+	poll_usb_gpio(0,
+		      GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl),
+		      &poll_c0_int_data);
+}
+
+static void poll_c1_int (void)
+{
+	poll_usb_gpio(1,
+		      GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
+		      &poll_c1_int_data);
+}
 
 void usb_interrupt(enum gpio_signal signal)
 {
