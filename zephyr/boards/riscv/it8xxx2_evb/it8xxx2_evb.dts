@@ -49,40 +49,31 @@
 		};
 		i2c_a_scl {
 			gpios = <&gpiob 3 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C0_SENSOR_SCL";
 		};
 		i2c_a_sda {
 			gpios = <&gpiob 4 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C0_SENSOR_SDA";
 		};
 		i2c_b_scl {
 			gpios = <&gpioc 1 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C1_USB_C0_SCL";
 		};
 		i2c_b_sda {
 			gpios = <&gpioc 2 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C1_USB_C0_SDA";
 		};
 		i2c_c_scl {
 			gpios = <&gpiof 6 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C2_USB_C1_SCL";
 		};
 		i2c_c_sda {
 			gpios = <&gpiof 7 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C2_USB_C1_SDA";
 		};
 		i2c_e_scl {
 			gpios = <&gpioe 0 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C5_BATTERY_SCL";
 		};
 		i2c_e_sda {
 			gpios = <&gpioe 7 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C5_BATTERY_SDA";
 		};
 
 		spi0_cs: spi0_cs {
 			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_SPI0_CS";
 		};
 	};
 

@@ -57,11 +57,9 @@
 		};
 		gpio_ec_imu_int_l: ec_imu_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
-			enum-name = "GPIO_EC_IMU_INT_L";
 		};
 		gpio_ec_als_rgb_int_l: ec_als_rgb_int_l {
 			gpios = <&gpiod 4 GPIO_INPUT>;
-			enum-name = "GPIO_EC_ALS_RGB_INT_L";
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpio9 5 GPIO_INPUT>;
@@ -69,7 +67,6 @@
 		};
 		gpio_ec_accel_int: ec_accel_int {
 			gpios = <&gpio8 1 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_EC_ACCEL_INT";
 		};
 		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
 			gpios = <&gpioe 0 GPIO_INPUT>;
@@ -93,7 +90,6 @@
 		};
 		gpio_usb_c1_mix_int_odl: usb_c1_mix_int_odl {
 			gpios = <&gpio0 3 GPIO_INPUT>;
-			enum-name = "GPIO_USB_C1_MIX_INT_ODL";
 		};
 		gpio_usb_c1_bc12_int_odl: usb_c1_bc12_int_odl {
 			gpios = <&gpio0 3 GPIO_INPUT>;
@@ -180,7 +176,6 @@
 		};
 		usb_a_low_pwr_od {
 			gpios = <&gpio6 6 GPIO_ODR_LOW>;
-			enum-name = "GPIO_USB_A_LOW_PWR_OD";
 		};
 		gpio_usb_c1_rt_rst_odl_boardid_0: usb_c1_rt_rst_odl_boardid_0 {
 			gpios = <&gpio3 2 GPIO_ODR_LOW>;
@@ -206,7 +201,6 @@
 		};
 		m2_ssd_pln {
 			gpios = <&gpioa 0 GPIO_ODR_HIGH>;
-			enum-name = "GPIO_M2_SSD_PLN";
 		};
 		m2_ssd_pla {
 			gpios = <&gpio7 0 GPIO_INPUT>;
@@ -233,51 +227,39 @@
 		};
 		ec_i2c0_sensor_scl {
 			gpios = <&gpiob 5 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C0_SENSOR_SCL";
 		};
 		ec_i2c0_sensor_sda {
 			gpios = <&gpiob 4 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C0_SENSOR_SDA";
 		};
 		ec_i2c1_usb_c0_scl {
 			gpios = <&gpio9 0 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C1_USB_C0_SCL";
 		};
 		ec_i2c1_usb_c0_sda {
 			gpios = <&gpio8 7 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C1_USB_C0_SDA";
 		};
 		ec_i2c2_usb_c1_scl {
 			gpios = <&gpio9 2 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C2_USB_C1_SCL";
 		};
 		ec_i2c2_usb_c1_sda {
 			gpios = <&gpio9 1 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C2_USB_C1_SDA";
 		};
 		ec_i2c3_usb_1_mix_scl {
 			gpios = <&gpiod 1 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C3_USB_1_MIX_SCL";
 		};
 		ec_i2c3_usb_1_mix_sda {
 			gpios = <&gpiod 0 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C3_USB_1_MIX_SDA";
 		};
 		ec_i2c5_battery_scl {
 			gpios = <&gpio3 3 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C5_BATTERY_SCL";
 		};
 		ec_i2c5_battery_sda {
 			gpios = <&gpio3 6 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C5_BATTERY_SDA";
 		};
 		ec_i2c7_eeprom_pwr_scl_r {
 			gpios = <&gpiob 3 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C7_EEPROM_PWR_SCL_R";
 		};
 		ec_i2c7_eeprom_pwr_sda_r {
 			gpios = <&gpiob 2 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C7_EEPROM_PWR_SDA_R";
 		};
 		/*
 		 * TODO(b:190743662) Cleanup to possibly remove the enum

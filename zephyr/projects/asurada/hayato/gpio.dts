@@ -45,7 +45,6 @@
 		};
 		gpio_accel_gyro_int_l: base_imu_int_l {
 			gpios = <&gpioj 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_EC_IMU_INT_L";
 		};
 		gpio_lid_accel_int_l: lid_accel_int_l {
 			gpios = <&gpioj 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
@@ -53,7 +52,6 @@
 		};
 		als_rgb_int_odl {
 			gpios = <&gpiof 0 GPIO_INPUT>;
-			enum-name = "GPIO_ALS_RGB_INT_ODL";
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpiod 1 GPIO_INPUT>;
@@ -104,15 +102,12 @@
 		};
 		pg_mt6315_proc_odl {
 			gpios = <&gpioe 1 GPIO_INPUT>;
-			enum-name = "GPIO_PG_MT6315_PROC_ODL";
 		};
 		pg_mt6360_odl {
 			gpios = <&gpiof 1 GPIO_INPUT>;
-			enum-name = "GPIO_PG_MT6360_ODL";
 		};
 		pg_pp5000_a_odl {
 			gpios = <&gpioa 6 GPIO_INPUT>;
-			enum-name = "GPIO_PG_PP5000_A_ODL";
 		};
 		en_slp_z {
 			gpios = <&gpioe 3 GPIO_OUT_LOW>;
@@ -168,35 +163,27 @@
 		};
 		i2c_b_scl {
 			gpios = <&gpiob 3 GPIO_INPUT>;
-			enum-name = "GPIO_I2C_B_SCL";
 		};
 		i2c_b_sda {
 			gpios = <&gpiob 4 GPIO_INPUT>;
-			enum-name = "GPIO_I2C_B_SDA";
 		};
 		i2c_c_scl {
 			gpios = <&gpioc 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_I2C_C_SCL";
 		};
 		i2c_c_sda {
 			gpios = <&gpioc 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_I2C_C_SDA";
 		};
 		i2c_e_scl {
 			gpios = <&gpioe 0 GPIO_INPUT>;
-			enum-name = "GPIO_I2C_E_SCL";
 		};
 		i2c_e_sda {
 			gpios = <&gpioe 7 GPIO_INPUT>;
-			enum-name = "GPIO_I2C_E_SDA";
 		};
 		i2c_f_scl {
 			gpios = <&gpiof 6 GPIO_INPUT>;
-			enum-name = "GPIO_I2C_F_SCL";
 		};
 		i2c_f_sda {
 			gpios = <&gpiof 7 GPIO_INPUT>;
-			enum-name = "GPIO_I2C_F_SDA";
 		};
 		ec_x_gpio1 {
 			gpios = <&gpioh 4 GPIO_OUT_LOW>;
@@ -209,12 +196,10 @@
 		set_vmc_volt_at_1v8 {
 			gpios = <&gpiod 4 (GPIO_INPUT_PULL_DOWN |
 					GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_SET_VMC_VOLT_AT_1V8";
 		};
 		en_pp3000_vmc_pmu {
 			gpios = <&gpiod 2 (GPIO_INPUT_PULL_DOWN |
 					GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_EN_PP3000_VMC_PMU";
 		};
 		packet_mode_en {
 			gpios = <&gpioa 3 GPIO_INPUT_PULL_DOWN>;
@@ -222,20 +207,16 @@
 		};
 		usb_a0_fault_odl {
 			gpios = <&gpioa 7 GPIO_INPUT>;
-			enum-name = "GPIO_USB_A0_FAULT_ODL";
 		};
 		charger_prochot_odl {
 			gpios = <&gpioc 3 GPIO_INPUT>;
-			enum-name = "GPIO_CHARGER_PROCHOT_ODL";
 		};
 		pg_mt6315_gpu_odl {
 			gpios = <&gpioh 6 GPIO_INPUT>;
-			enum-name = "GPIO_PG_MT6315_GPU_ODL";
 		};
 		en_pp3000_sd_u {
 			gpios = <&gpiog 1 (GPIO_INPUT_PULL_DOWN |
 					GPIO_VOLTAGE_1P8)>;
-			enum-name = "GPIO_EN_PP3000_SD_U";
 		};
 		ccd_mode_odl {
 			gpios = <&gpioc 4 GPIO_INPUT>;
@@ -243,19 +224,15 @@
 		};
 		spi_clk_gpg6 {
 			gpios = <&gpiog 6 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_SPI_CLK_GPG6";
 		};
 		spi_mosi_gpg4 {
 			gpios = <&gpiog 4 GPIO_OUT_LOW>;
-			enum-name = "GPIO_SPI_MOSI_GPG4";
 		};
 		spi_miso_gpg5 {
 			gpios = <&gpiog 5 GPIO_OUT_LOW>;
-			enum-name = "GPIO_SPI_MISO_GPG5";
 		};
 		spi_cs_gpg7 {
 			gpios = <&gpiog 7 GPIO_OUT_LOW>;
-			enum-name = "GPIO_SPI_CS_GPG7";
 		};
 	};
 

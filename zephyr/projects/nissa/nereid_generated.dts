@@ -47,7 +47,6 @@
 		};
 		gpio_cpu_c10_gate_l: cpu_c10_gate_l {
 			gpios = <&gpiog 1 GPIO_INPUT>;
-			enum-name = "GPIO_CPU_C10_GATE_L";
 		};
 		gpio_ec_battery_pres_odl: ec_battery_pres_odl {
 			gpios = <&gpioi 4 GPIO_INPUT>;
@@ -76,7 +75,6 @@
 		};
 		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
 			gpios = <&gpiok 7 GPIO_OUTPUT>;
-			enum-name = "GPIO_EC_SOC_HDMI_HPD";
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
 			gpios = <&gpiod 5 GPIO_ODR_LOW>;
@@ -117,7 +115,6 @@
 		};
 		gpio_en_pp5000_pen_x: en_pp5000_pen_x {
 			gpios = <&gpiob 5 GPIO_OUTPUT>;
-			enum-name = "GPIO_EN_PP5000_PEN_X";
 		};
 		gpio_en_pp5000_s5: en_pp5000_s5 {
 			gpios = <&gpiok 5 GPIO_OUTPUT>;
@@ -140,7 +137,6 @@
 		};
 		gpio_hdmi_sel: hdmi_sel {
 			gpios = <&gpioc 6 GPIO_OUTPUT>;
-			enum-name = "GPIO_HDMI_SEL";
 		};
 		gpio_imu_int_l: imu_int_l {
 			gpios = <&gpioj 0 GPIO_INPUT>;
@@ -154,15 +150,12 @@
 		};
 		gpio_pen_detect_odl: pen_detect_odl {
 			gpios = <&gpioj 1 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_PEN_DETECT_ODL";
 		};
 		gpio_pg_pp1050_mem_s3_od: pg_pp1050_mem_s3_od {
 			gpios = <&gpiod 3 GPIO_INPUT>;
-			enum-name = "GPIO_PG_PP1050_MEM_S3_OD";
 		};
 		gpio_pg_pp1050_proc: pg_pp1050_proc {
 			gpios = <&gpiol 1 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_PG_PP1050_PROC";
 		};
 		gpio_pg_pp5000_s5_od: pg_pp5000_s5_od {
 			gpios = <&gpioe 3 GPIO_INPUT>;
@@ -184,7 +177,6 @@
 		};
 		gpio_sub_usb_a1_ilimit_sdp: sub_usb_a1_ilimit_sdp {
 			gpios = <&gpiof 1 GPIO_OUTPUT>;
-			enum-name = "GPIO_SUB_USB_A1_ILIMIT_SDP";
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpiod 1 GPIO_ODR_HIGH>;
@@ -195,7 +187,6 @@
 		};
 		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
 			gpios = <&gpiol 5 GPIO_OUTPUT>;
-			enum-name = "GPIO_USB_A0_ILIMIT_SDP";
 		};
 		gpio_usb_c0_frs: usb_c0_frs {
 			gpios = <&gpioc 4 GPIO_OUTPUT>;
@@ -205,11 +196,9 @@
 		};
 		gpio_vccin_aux_vid0: vccin_aux_vid0 {
 			gpios = <&gpiod 0 GPIO_INPUT>;
-			enum-name = "GPIO_VCCIN_AUX_VID0";
 		};
 		gpio_vccin_aux_vid1: vccin_aux_vid1 {
 			gpios = <&gpiok 1 GPIO_INPUT>;
-			enum-name = "GPIO_VCCIN_AUX_VID1";
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
 			gpios = <&gpioi 6 GPIO_INPUT_PULL_UP>;

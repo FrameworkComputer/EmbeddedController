@@ -8,11 +8,9 @@
 		/* Skyrim-specific GPIO customizations */
 		usb_fault_odl {
 			gpios = <&gpio5 0 GPIO_ODR_HIGH>;
-			enum-name = "GPIO_USB_FAULT_ODL";
 		};
 		en_pwr_s3 {
 			gpios = <&gpio7 4 GPIO_OUT_LOW>;
-			enum-name = "GPIO_EN_PWR_S3";
 		};
 		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
 			gpios = <&gpiof 0 GPIO_INPUT>;
@@ -21,16 +19,13 @@
 		/* TODO: Add interrupt handler */
 		ec_i2c_usbc_pd_int {
 			gpios = <&gpioa 3 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C_USBC_PD_INT";
 		};
 		/* TODO: Add interrupt handler */
 		soc_thermtrip_odl {
 			gpios = <&gpio9 5 GPIO_INPUT>;
-			enum-name = "GPIO_SOC_THERMTRIP_ODL";
 		};
 		hub_rst {
 			gpios = <&gpio6 6 GPIO_OUT_LOW>;
-			enum-name = "GPIO_HUB_RST";
 		};
 		ec_soc_int_l {
 			gpios = <&gpioa 1 GPIO_OUT_HIGH>;
@@ -38,26 +33,21 @@
 		};
 		gpio_ec_soc_pwr_good: ec_soc_pwr_good {
 			gpios = <&gpiod 3 GPIO_OUT_LOW>;
-			enum-name = "GPIO_EC_SOC_PWR_GOOD";
 		};
 		/* TODO: Add interrupt handler to shut down */
 		pcore_ocp_r_l {
 			gpios = <&gpioa 5 GPIO_INPUT>;
-			enum-name = "GPIO_PCORE_OCP_L";
 		};
 		/* TODO: Add interrupt handler */
 		sc_0_int_l {
 			gpios = <&gpio6 3 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_SC_0_INT_L";
 		};
 		/* TODO: Add interrupt handler */
 		usb_hub_fault_q_odl {
 			gpios = <&gpioe 5 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_USB_HUB_FAULT_ODL";
 		};
 		gpio_pg_lpddr5_s3_od: pg_lpddr5_s3_od {
 			gpios = <&gpio7 3 GPIO_INPUT>;
-			enum-name = "GPIO_PG_LPDDR5_S3_OD";
 		};
 		3axis_int_l {
 			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
@@ -76,7 +66,6 @@
 		};
 		ec_sc_rst {
 			gpios = <&gpiob 0 GPIO_OUT_LOW>;
-			enum-name = "GPIO_EC_SC_RST";
 		};
 		ec_cbi_wp {
 			gpios = <&gpio8 1 GPIO_OUT_LOW>;
@@ -88,7 +77,6 @@
 		};
 		gpio_pg_lpddr5_s0_od: pg_lpddr5_s0_od {
 			gpios = <&gpio6 0 GPIO_INPUT>;
-			enum-name = "GPIO_PG_LPDDR5_S0_OD";
 		};
 	};
 

@@ -88,7 +88,6 @@
 		};
 		gpio_accel_gyro_int_l: accel_gyro_int_l {
 			gpios = <&gpioa 3 GPIO_INPUT>;
-			enum-name = "GPIO_ACCEL_GYRO_INT_L";
 		};
 		gpio_rtc_ec_wake_odl: rtc_ec_wake_odl {
 			gpios = <&gpio0 2 GPIO_INPUT>;
@@ -145,7 +144,6 @@
 		};
 		tp_int_gate {
 			gpios = <&gpio7 4 GPIO_OUT_LOW>;
-			enum-name = "GPIO_TRACKPAD_INT_GATE";
 		};
 		gpio_usb_c0_pd_rst_l: usb_c0_pd_rst_l {
 			gpios = <&gpiof 1 GPIO_OUT_HIGH>;
@@ -157,7 +155,6 @@
 		};
 		gpio_dp_mux_oe_l: dp_mux_oe_l {
 			gpios = <&gpiob 1 GPIO_ODR_HIGH>;
-			enum-name = "GPIO_DP_MUX_OE_L";
 		};
 		gpio_dp_mux_sel: dp_mux_sel {
 			gpios = <&gpio4 5 GPIO_OUT_LOW>;
@@ -165,7 +162,6 @@
 		};
 		gpio_dp_hot_plug_det_r: dp_hot_plug_det_r {
 			gpios = <&gpio9 5 GPIO_OUT_LOW>;
-			enum-name = "GPIO_DP_HOT_PLUG_DET";
 		};
 		en_usb_a_5v {
 			gpios = <&gpiof 0 GPIO_OUT_LOW>;

@@ -132,7 +132,6 @@
 		};
 		qsip_on {
 			gpios = <&gpio5 0 GPIO_OUT_LOW>;
-			enum-name = "GPIO_QSIP_ON";
 		};
 		hibernate_l {
 			gpios = <&gpio5 2 GPIO_OUT_HIGH>;
@@ -168,7 +167,6 @@
 		};
 		trackpad_int_gate {
 			gpios = <&gpio7 4 GPIO_OUT_LOW>;
-			enum-name = "GPIO_TRACKPAD_INT_GATE";
 		};
 		usb_c0_pd_rst_l {
 			gpios = <&gpiof 1 GPIO_ODR_HIGH>;
@@ -203,7 +201,6 @@
 		};
 		gpio_ec_chg_led_b_c1: ec_chg_led_b_c1 {
 			gpios = <&gpioc 4 GPIO_OUT_LOW>;
-			enum-name = "GPIO_EC_CHG_LED_B_C1";
 		};
 		ap_ec_spi_mosi {
 			gpios = <&gpio4 6 GPIO_INPUT_PULL_DOWN>;
@@ -255,11 +252,9 @@
 		};
 		ec_i2c_sensor_scl {
 			gpios = <&gpiob 3 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C_SENSOR_SCL";
 		};
 		ec_i2c_sensor_sda {
 			gpios = <&gpiob 2 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C_SENSOR_SDA";
 		};
 		gpio_brd_id0: brd_id0 {
 			gpios = <&gpioc 7 GPIO_INPUT>;

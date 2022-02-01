@@ -64,7 +64,7 @@ __override uint8_t board_get_usb_pd_port_count(void)
 
 /* USB-A */
 const int usb_port_enable[] = {
-	GPIO_EN_PP5000_USB_A0_VBUS,
+	GPIO_SIGNAL(DT_NODELABEL(en_pp5000_usb_a0_vbus))
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 

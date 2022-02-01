@@ -49,7 +49,6 @@
 		};
 		gpio_ec_imu_int_l: ec_imu_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
-			enum-name = "GPIO_EC_IMU_INT_L";
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpio9 5 GPIO_INPUT>;
@@ -199,51 +198,39 @@
 		};
 		ec_i2c0_sensor_scl {
 			gpios = <&gpiob 5 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C0_SENSOR_SCL";
 		};
 		ec_i2c0_sensor_sda {
 			gpios = <&gpiob 4 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C0_SENSOR_SDA";
 		};
 		ec_i2c1_usb_c0_scl {
 			gpios = <&gpio9 0 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C1_USB_C0_SCL";
 		};
 		ec_i2c1_usb_c0_sda {
 			gpios = <&gpio8 7 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C1_USB_C0_SDA";
 		};
 		ec_i2c2_usb_c1_scl {
 			gpios = <&gpio9 2 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C2_USB_C1_SCL";
 		};
 		ec_i2c2_usb_c1_sda {
 			gpios = <&gpio9 1 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C2_USB_C1_SDA";
 		};
 		ec_i2c3_usb_1_mix_scl {
 			gpios = <&gpiod 1 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C3_USB_1_MIX_SCL";
 		};
 		ec_i2c3_usb_1_mix_sda {
 			gpios = <&gpiod 0 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C3_USB_1_MIX_SDA";
 		};
 		ec_i2c5_power_scl {
 			gpios = <&gpio3 3 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C5_BATTERY_SCL";
 		};
 		ec_i2c5_power_sda {
 			gpios = <&gpio3 6 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C5_BATTERY_SDA";
 		};
 		ec_i2c7_eeprom_scl {
 			gpios = <&gpiob 3 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C7_EEPROM_PWR_SCL_R";
 		};
 		ec_i2c7_eeprom_sda {
 			gpios = <&gpiob 2 GPIO_INPUT>;
-			enum-name = "GPIO_EC_I2C7_EEPROM_PWR_SDA_R";
 		};
 		ec_batt_pres_odl {
 			gpios = <&gpioe 1 GPIO_INPUT>;

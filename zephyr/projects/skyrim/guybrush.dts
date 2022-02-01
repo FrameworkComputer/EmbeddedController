@@ -12,7 +12,6 @@
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
 			gpios = <&gpio0 1 GPIO_INPUT>;
-			enum-name = "GPIO_EC_PWR_BTN_ODL";
 		};
 		gpio_slp_s3_s0i3_l: slp_s3_s0i3_l {
 			gpios = <&gpio7 4 GPIO_INPUT>;
@@ -20,7 +19,6 @@
 		};
 		gpio_ec_pcore_int_odl: ec_pcore_int_odl {
 			gpios = <&gpiof 0 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_EC_PCORE_INT_ODL";
 		};
 		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
 			gpios = <&gpioa 3 GPIO_INPUT>;
