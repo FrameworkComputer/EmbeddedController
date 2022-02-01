@@ -78,6 +78,9 @@
 		gpio_pg_lpddr5_s0_od: pg_lpddr5_s0_od {
 			gpios = <&gpio6 0 GPIO_INPUT>;
 		};
+		ec_espi_rst_l {
+			gpios = <&gpio5 4 GPIO_PULL_DOWN>;
+		};
 	};
 
 	def-lvol-io-list {
