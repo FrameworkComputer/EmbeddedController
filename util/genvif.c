@@ -701,6 +701,20 @@ static bool is_usb4_supported(void)
 			    IS_ENABLED(CONFIG_USB_PD_USB4));
 }
 
+static bool is_usb4_tbt3_compatible(void)
+{
+	return get_vif_bool(&vif.Component[component_index]
+				.vif_field[USB4_TBT3_Compatibility_Supported],
+			    IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE));
+}
+
+static bool is_usb4_pcie_tunneling_supported(void)
+{
+	return get_vif_bool(&vif.Component[component_index]
+				.vif_field[USB4_PCIe_Tunneling_Supported],
+			    IS_ENABLED(CONFIG_USB_PD_PCIE_TUNNELING));
+}
+
 static bool is_usb_pd_supported(void)
 {
 	return get_vif_bool(&vif.Component[component_index]
@@ -770,6 +784,14 @@ static bool does_support_host_usb_data(void)
 	return get_vif_bool(&vif.Component[component_index]
 				.vif_field[Host_Supports_USB_Data],
 			    can_act_as_host());
+}
+
+static int vif_get_max_tbt_speed(void)
+{
+	struct vif_Component_t *c;
+
+	c = &vif.Component[component_index];
+	return get_vif_number(&c->vif_field[USB4_Max_Speed], -1);
 }
 
 static void init_src_pdos(void)
@@ -2131,13 +2153,10 @@ __maybe_unused static void set_vif_field_itis(struct vif_field_t *vif_field,
  *
  * vif_Component USB4 Port Fields
  *	USB4_Lane_0_Adapter			numericFieldType
- *	USB4_Max_Speed				numericFieldType
  *	USB4_DFP_Supported			booleanFieldType
  *	USB4_UFP_Supported			booleanFieldType
  *	USB4_USB3_Tunneling_Supported		booleanFieldType
  *	USB4_DP_Tunneling_Supported		booleanFieldType
- *	USB4_PCIe_Tunneling_Supported		booleanFieldType
- *	USB4_TBT3_Compatibility_Supported	booleanFieldType
  *	USB4_CL1_State_Supported		booleanFieldType
  *	USB4_CL2_State_Supported		booleanFieldType
  *	USB4_Num_Retimers			numericFieldType
@@ -3207,6 +3226,39 @@ static void init_vif_component_usb_type_c_fields(
 		IS_ENABLED(CONFIG_USBC_VCONN));
 }
 
+static void init_vif_component_usb4_port_fields(struct vif_field_t *vif_fields)
+{
+	int vi;
+	const char *vs;
+
+	if (!is_usb4_supported())
+		return;
+
+	vi = vif_get_max_tbt_speed();
+	switch (vi) {
+	case 0:
+		vs = "Gen 2 (20Gb)";
+		break;
+	case 1:
+		vs = "Gen 3 (40Gb)";
+		break;
+	default:
+		vs = "Undefined";
+	}
+
+	set_vif_field_itss(&vif_fields[USB4_Max_Speed],
+			   vif_component_name[USB4_Max_Speed],
+			   vi, vs);
+
+	set_vif_field_b(&vif_fields[USB4_TBT3_Compatibility_Supported],
+			vif_component_name[USB4_TBT3_Compatibility_Supported],
+			is_usb4_tbt3_compatible());
+
+	set_vif_field_b(&vif_fields[USB4_PCIe_Tunneling_Supported],
+			vif_component_name[USB4_PCIe_Tunneling_Supported],
+			is_usb4_pcie_tunneling_supported());
+}
+
 /*********************************************************************
  * Init VIF/Component[] USB Data - Upstream Facing Port Fields
  *
@@ -3804,6 +3856,9 @@ static int gen_vif(const char *board,
 		init_vif_component_usb_type_c_fields(
 				vif->Component[component_index].vif_field,
 				type);
+
+		init_vif_component_usb4_port_fields(
+			vif->Component[component_index].vif_field);
 
 		init_vif_component_usb_data_ufp_fields(
 				vif->Component[component_index].vif_field);
