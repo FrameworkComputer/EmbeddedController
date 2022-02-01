@@ -30,6 +30,23 @@
 
 static int forcing_shutdown; /* Forced shutdown in progress? */
 
+#ifdef CONFIG_POWERSEQ_FAKE_CONTROL
+/* Create fake power states through forcing the SoC SLP signal sequencing */
+void power_fake_s0(void)
+{
+	/* Change the SLP signals to output and drive them */
+	gpio_set_flags(GPIO_PCH_SLP_S5_L, GPIO_OUT_HIGH);
+	gpio_set_flags(GPIO_PCH_SLP_S3_L, GPIO_OUT_HIGH);
+}
+
+void power_fake_disable(void)
+{
+	/* Pins back to inputs */
+	gpio_set_flags(GPIO_PCH_SLP_S5_L, GPIO_INPUT);
+	gpio_set_flags(GPIO_PCH_SLP_S3_L, GPIO_INPUT);
+}
+#endif /* defined(CONFIG_POWERSEQ_FAKE_CONTROL) */
+
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s()", __func__);
