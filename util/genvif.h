@@ -15,7 +15,6 @@
 #define MAX_NUM_SOP_SVID_MODES 10
 #define MAX_NUM_USB4_ROUTERS 16
 
-
 struct vif_field_t {
 	const char *name;
 	char *tag_value;
@@ -167,6 +166,7 @@ struct vif_Usb4RouterListType_t {
 /* 3.2.3 Component Fields */
 
 enum vif_Component_indexes {
+	Component_Header,			/* comment */
 	Port_Label,				/* nonEmptyString */
 	Connector_Type,				/* numericFieldType */
 	USB4_Supported,				/* booleanFieldType */
@@ -180,6 +180,7 @@ enum vif_Component_indexes {
 	Captive_Cable_Is_eMarked,		/* booleanFieldType */
 
 	/* 3.2.4 General PD Fields */
+	General_PD_Header,			/* comment */
 	PD_Spec_Revision_Major,			/* numericFieldType */
 	PD_Spec_Revision_Minor,			/* numericFieldType */
 	PD_Spec_Version_Major,			/* numericFieldType */
@@ -205,6 +206,7 @@ enum vif_Component_indexes {
 	ID_Header_Connector_Type_SOP,		/* numericFieldType */
 
 	/* 3.2.4 General PD Fields */
+	PD_Capabilities_Header,			/* comment */
 	USB_Comms_Capable,			/* booleanFieldType */
 	DR_Swap_To_DFP_Supported,		/* booleanFieldType */
 	DR_Swap_To_UFP_Supported,		/* booleanFieldType */
@@ -218,6 +220,7 @@ enum vif_Component_indexes {
 	Enter_USB_Supported,			/* booleanFieldType */
 
 	/* 3.2.5 USB Type-C Fields */
+	USB_Type_C_Header,			/* comment */
 	Type_C_Can_Act_As_Host,			/* booleanFieldType */
 	Type_C_Can_Act_As_Device,		/* booleanFieldType */
 
@@ -237,6 +240,7 @@ enum vif_Component_indexes {
 	Type_C_Is_Alt_Mode_Adapter,		/* booleanFieldType */
 
 	/* 3.2.6 USB4 Port Fields (missing from output) */
+	USB4_Port_Header,			/* comment */
 	USB4_Lane_0_Adapter,			/* numericFieldType */
 	USB4_Max_Speed,				/* numericFieldType */
 	USB4_DFP_Supported,			/* booleanFieldType */
@@ -260,12 +264,14 @@ enum vif_Component_indexes {
 	Device_Gen2x1_tLinkTurnaround,		/* numericFieldType */
 
 	/* 3.2.19 Product Power Fields */
+	Product_Power_Header,			/* comment */
 	Product_Total_Source_Power_mW,		/* numericFieldType */
 	Port_Source_Power_Type,			/* numericFieldType */
 	Port_Source_Power_Gang,			/* nonEmptyString */
 	Port_Source_Power_Gang_Max_Power,	/* numericFieldType */
 
 	/* 3.2.8 USB Data - Downstream Facing Port Fields */
+	USB_Host_Header,			/* comment */
 	Host_Supports_USB_Data,			/* booleanFieldType */
 	Host_Speed,				/* numericFieldType */
 	Host_Contains_Captive_Retimer,		/* booleanFieldType */
@@ -278,9 +284,11 @@ enum vif_Component_indexes {
 	Hub_Port_Number,			/* numericFieldType */
 
 	/* 3.2.14 Battery Charging 1.2 Fields */
+	BC_1_2_Header,				/* comment */
 	BC_1_2_Charging_Port_Type,		/* numericFieldType */
 
 	/* 3.2.9 PD Source Fields */
+	PD_Source_Header,			/* comment */
 	PD_Power_As_Source,			/* numericFieldType */
 	EPR_Supported_As_Src,			/* booleanFieldType */
 	USB_Suspend_May_Be_Cleared,		/* booleanFieldType */
@@ -294,6 +302,7 @@ enum vif_Component_indexes {
 	/* insert: SrcPdoList */
 
 	/* 3.2.10 PD Sink Fields */
+	PD_Sink_Header,				/* comment */
 	PD_Power_As_Sink,			/* numericFieldType */
 	EPR_Supported_As_Snk,			/* booleanFieldType */
 	No_USB_Suspend_May_Be_Set,		/* booleanFieldType */
@@ -305,6 +314,7 @@ enum vif_Component_indexes {
 	/* insert: SnkPdoList */
 
 	/* 3.2.11 PD Dual Role Fields */
+	Dual_Role_Header,			/* comment */
 	Accepts_PR_Swap_As_Src,			/* booleanFieldType */
 	Accepts_PR_Swap_As_Snk,			/* booleanFieldType */
 	Requests_PR_Swap_As_Src,		/* booleanFieldType */
@@ -312,6 +322,7 @@ enum vif_Component_indexes {
 	FR_Swap_Supported_As_Initial_Sink,	/* booleanFieldType */
 
 	/* 3.2.12 SOP Discover ID Fields */
+	SOP_Discover_ID_Header,			/* comment */
 	XID_SOP,				/* numericFieldType */
 	Data_Capable_As_USB_Host_SOP,		/* booleanFieldType */
 	Data_Capable_As_USB_Device_SOP,		/* booleanFieldType */
@@ -395,6 +406,7 @@ enum vif_Component_indexes {
 	/* 3.2.18 Repeater Fields */
 	Repeater_One_Type,			/* numericFieldType */
 	Repeater_Two_Type,			/* numericFieldType */
+
 	Component_Indexes
 };
 
@@ -405,7 +417,6 @@ struct vif_Component_t {
 	struct vif_snkPdoList_t		SnkPdoList[MAX_NUM_SNK_PDOS];
 	struct vif_sopSVIDList_t	SOPSVIDList[MAX_NUM_SOP_SVIDS];
 	struct vif_cableSVIDList_t	CableSVIDList[MAX_NUM_CABLE_SVIDS];
-
 
 	/*
 	 * The following fields are deprecated.  They should not be written
@@ -423,6 +434,7 @@ struct vif_Component_t {
 /* 3.2.2 Product Fields */
 
 enum vif_Product_indexes {
+	USB4_Product_Header,			/* comment */
 	USB4_DROM_Vendor_ID,			/* numericFieldType */
 	USB4_Dock,				/* booleanFieldType */
 	USB4_Num_Internal_Host_Controllers,	/* numericFieldType */
