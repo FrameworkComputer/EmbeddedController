@@ -1141,3 +1141,29 @@ static void preserve_enable_5v_state(void)
 }
 DECLARE_HOOK(HOOK_SYSJUMP, preserve_enable_5v_state, HOOK_PRIO_DEFAULT);
 #endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
+
+#ifdef CONFIG_POWERSEQ_FAKE_CONTROL
+static int command_power_fake(int argc, char **argv)
+{
+	if (argc < 2) {
+		ccprints("Error: Argument required");
+		return EC_ERROR_PARAM_COUNT;
+	}
+
+	if (strcasecmp(argv[1], "S0") == 0) {
+		power_fake_s0();
+		if (power_get_state() == POWER_G3)
+			want_g3_exit = 1;
+	} else if (strcasecmp(argv[1], "disable") == 0) {
+		power_fake_disable();
+	} else {
+		ccprints("Error: Unknown param");
+		return EC_ERROR_PARAM1;
+	}
+
+	power_update_signals();
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(powerfake, command_power_fake, "S0|disable",
+			"Force power inputs for early board bringup");
+#endif /* defined(CONFIG_POWERSEQ_FAKE_CONTROL) */

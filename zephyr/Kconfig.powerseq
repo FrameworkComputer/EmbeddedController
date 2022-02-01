@@ -50,6 +50,15 @@ config PLATFORM_EC_POWERSEQ_PP5000_CONTROL
 	  Guard access to the PP5000 GPIO using mutex locks, allowing
 	  the rail to be changed in a task-safe manner.
 
+config PLATFORM_EC_POWERSEQ_FAKE_CONTROL
+	bool "Console command: powerfake"
+	depends on PLATFORM_EC_SYSTEM_UNLOCKED
+	help
+	  Enable fake control of the power sequencing on the platform.  This
+	  will require some SoC-specific implementation and allows a fake boot
+	  without an SoC present.  This command should not be used on platforms
+	  with an SoC present.
+
 menuconfig PLATFORM_EC_POWERSEQ_AMD
 	bool "AMD power sequencing"
 	depends on AP_X86_AMD

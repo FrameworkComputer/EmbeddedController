@@ -387,4 +387,24 @@ void power_5v_enable(task_id_t tid, int enable);
 void test_power_common_state(void);
 #endif
 
+
+#ifdef CONFIG_POWERSEQ_FAKE_CONTROL
+/**
+ * Enable a fake S0 state
+ *
+ * Set whatever GPIOs or other parameters are required to get the system into a
+ * fake S0 state.  This allows for the S0 power state to be tested before an SoC
+ * is available for the board.
+ */
+void power_fake_s0(void);
+
+/**
+ * Disable any fake power state
+ *
+ * Undo any actions which were taken to force another power state and return
+ * GPIOs and other parameters to their default state.
+ */
+void power_fake_disable(void);
+#endif /* defined(CONFIG_POWER_FAKE_CONTROL) */
+
 #endif  /* __CROS_EC_POWER_H */

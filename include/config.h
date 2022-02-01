@@ -1457,6 +1457,13 @@
 /* Redefine when we need a different power-on sequence on the same chipset. */
 #define CONFIG_CHIPSET_POWER_SEQ_VERSION 0
 
+/*
+ * Allow fake control of the power states.
+ *
+ * Note: This should NOT be used on platforms which have an SoC present.
+ */
+#undef CONFIG_POWERSEQ_FAKE_CONTROL
+
 /* AMD Side-Band Remote Management Interface (SB-RMI) support */
 #undef CONFIG_AMD_SB_RMI
 
