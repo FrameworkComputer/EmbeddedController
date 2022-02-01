@@ -34,6 +34,11 @@
 #define DEFAULT_MISSING_PID	0xFFFF
 #define DEFAULT_MISSING_BCD_DEV	0x0000
 
+/*
+ * XML namespace for VIF
+ */
+#define VIF_ ""
+
 const uint32_t *src_pdo;
 uint32_t src_pdo_cnt;
 
@@ -92,7 +97,7 @@ int component_index;
 /*
  * TAG Name Strings
  */
-#define NAME_INIT(str) [str] = #str
+#define NAME_INIT(str) [str] = VIF_ #str
 
 const char *vif_name[] = {
 	NAME_INIT(VIF_Specification),
@@ -402,6 +407,31 @@ BUILD_ASSERT(ARRAY_SIZE(vif_product_usb4_router_name) == USB4_Router_Indexes);
 static bool streq(const char *str1, const char *str2)
 {
 	return strcasecmp(str1, str2) == 0;
+}
+
+static bool is_start_tag(const char *xmlstr, const char *viftag)
+{
+	const char *xmltag;
+
+	if (strncasecmp(xmlstr, VIF_, sizeof(VIF_) - 1) != 0)
+		return 0;
+
+	xmltag = xmlstr + sizeof(VIF_) - 1;
+	return strcasecmp(xmltag, viftag) == 0;
+}
+
+static bool is_end_tag(const char *xmlstr, const char *viftag)
+{
+	const char *xmltag;
+
+	if (xmlstr[0] != '/')
+		return 0;
+
+	if (strncasecmp(xmlstr + 1, VIF_, sizeof(VIF_) - 1) != 0)
+		return 0;
+
+	xmltag = xmlstr + 1 + sizeof(VIF_) - 1;
+	return strcasecmp(xmltag, viftag) == 0;
 }
 
 /*****************************************************************************
@@ -768,6 +798,22 @@ static void vif_out_str(FILE *vif_file, int level, const char *str)
 	fprintf(vif_file, "%s\r\n", str);
 }
 
+static void vif_out_start(FILE *vif_file, int level, const char *str)
+{
+	while (level-- > 0)
+		fprintf(vif_file, "  ");
+
+	fprintf(vif_file, "<" VIF_ "%s>\r\n", str);
+}
+
+static void vif_out_end(FILE *vif_file, int level, const char *str)
+{
+	while (level-- > 0)
+		fprintf(vif_file, "  ");
+
+	fprintf(vif_file, "</" VIF_ "%s>\r\n", str);
+}
+
 static void vif_out_field(FILE *vif_file, int level,
 			  const struct vif_field_t *vif_field)
 {
@@ -815,7 +861,7 @@ static void vif_output_vif_component_cable_svid_mode_list(FILE *vif_file,
 				CableSVID_Mode_Indexes))
 		return;
 
-	vif_out_str(vif_file, level++, "<CableSVIDModeList>");
+	vif_out_start(vif_file, level++, "CableSVIDModeList");
 	for (index = 0; index < MAX_NUM_CABLE_SVID_MODES; ++index) {
 		const struct vif_cableSVIDModeList_t *mode_list =
 				&svid_list->CableSVIDModeList[index];
@@ -824,12 +870,12 @@ static void vif_output_vif_component_cable_svid_mode_list(FILE *vif_file,
 					CableSVID_Mode_Indexes))
 			break;
 
-		vif_out_str(vif_file, level++, "<SOPSVIDMode>");
+		vif_out_start(vif_file, level++, "SOPSVIDMode");
 		vif_out_fields(vif_file, level,
 			       mode_list->vif_field, CableSVID_Mode_Indexes);
-		vif_out_str(vif_file, --level, "</SOPSVIDMode>");
+		vif_out_end(vif_file, --level, "SOPSVIDMode");
 	}
-	vif_out_str(vif_file, --level, "</CableSVIDModeList>");
+	vif_out_end(vif_file, --level, "CableSVIDModeList");
 }
 
 static void vif_output_vif_component_cable_svid_list(FILE *vif_file,
@@ -841,7 +887,7 @@ static void vif_output_vif_component_cable_svid_list(FILE *vif_file,
 				CableSVID_Indexes))
 		return;
 
-	vif_out_str(vif_file, level++, "<CableSVIDList>");
+	vif_out_start(vif_file, level++, "CableSVIDList");
 	for (index = 0; index < MAX_NUM_CABLE_SVIDS; ++index) {
 		const struct vif_cableSVIDList_t *svid_list =
 				&component->CableSVIDList[index];
@@ -850,14 +896,14 @@ static void vif_output_vif_component_cable_svid_list(FILE *vif_file,
 					CableSVID_Indexes))
 			break;
 
-		vif_out_str(vif_file, level++, "<CableSVID>");
+		vif_out_start(vif_file, level++, "CableSVID");
 		vif_out_fields(vif_file, level,
 			       svid_list->vif_field, CableSVID_Indexes);
 		vif_output_vif_component_cable_svid_mode_list(vif_file,
 						svid_list, level);
-		vif_out_str(vif_file, --level, "</CableSVID>");
+		vif_out_end(vif_file, --level, "CableSVID");
 	}
-	vif_out_str(vif_file, --level, "</CableSVIDList>");
+	vif_out_end(vif_file, --level, "CableSVIDList");
 }
 
 static void vif_output_vif_component_sop_svid_mode_list(FILE *vif_file,
@@ -869,7 +915,7 @@ static void vif_output_vif_component_sop_svid_mode_list(FILE *vif_file,
 				SopSVID_Mode_Indexes))
 		return;
 
-	vif_out_str(vif_file, level++, "<SOPSVIDModeList>");
+	vif_out_start(vif_file, level++, "SOPSVIDModeList");
 	for (index = 0; index < MAX_NUM_SOP_SVID_MODES; ++index) {
 		const struct vif_sopSVIDModeList_t *mode_list =
 				&svid_list->SOPSVIDModeList[index];
@@ -878,12 +924,12 @@ static void vif_output_vif_component_sop_svid_mode_list(FILE *vif_file,
 					SopSVID_Mode_Indexes))
 			break;
 
-		vif_out_str(vif_file, level++, "<SOPSVIDMode>");
+		vif_out_start(vif_file, level++, "SOPSVIDMode");
 		vif_out_fields(vif_file, level,
 			       mode_list->vif_field, SopSVID_Mode_Indexes);
-		vif_out_str(vif_file, --level, "</SOPSVIDMode>");
+		vif_out_end(vif_file, --level, "SOPSVIDMode");
 	}
-	vif_out_str(vif_file, --level, "</SOPSVIDModeList>");
+	vif_out_end(vif_file, --level, "SOPSVIDModeList");
 }
 
 static void vif_output_vif_component_sop_svid_list(FILE *vif_file,
@@ -895,7 +941,7 @@ static void vif_output_vif_component_sop_svid_list(FILE *vif_file,
 				SopSVID_Indexes))
 		return;
 
-	vif_out_str(vif_file, level++, "<SOPSVIDList>");
+	vif_out_start(vif_file, level++, "SOPSVIDList");
 	for (index = 0; index < MAX_NUM_SOP_SVIDS; ++index) {
 		const struct vif_sopSVIDList_t *svid_list =
 				&component->SOPSVIDList[index];
@@ -904,14 +950,14 @@ static void vif_output_vif_component_sop_svid_list(FILE *vif_file,
 					SopSVID_Indexes))
 			break;
 
-		vif_out_str(vif_file, level++, "<SOPSVID>");
+		vif_out_start(vif_file, level++, "SOPSVID");
 		vif_out_fields(vif_file, level,
 			       svid_list->vif_field, SopSVID_Indexes);
 		vif_output_vif_component_sop_svid_mode_list(vif_file,
 						svid_list, level);
-		vif_out_str(vif_file, --level, "</SOPSVID>");
+		vif_out_end(vif_file, --level, "SOPSVID");
 	}
-	vif_out_str(vif_file, --level, "</SOPSVIDList>");
+	vif_out_end(vif_file, --level, "SOPSVIDList");
 }
 
 static void vif_output_vif_component_snk_pdo_list(FILE *vif_file,
@@ -923,7 +969,7 @@ static void vif_output_vif_component_snk_pdo_list(FILE *vif_file,
 				Snk_PDO_Indexes))
 		return;
 
-	vif_out_str(vif_file, level++, "<SnkPdoList>");
+	vif_out_start(vif_file, level++, "SnkPdoList");
 	for (index = 0; index < MAX_NUM_SNK_PDOS; ++index) {
 		const struct vif_snkPdoList_t *pdo_list =
 				&component->SnkPdoList[index];
@@ -932,12 +978,12 @@ static void vif_output_vif_component_snk_pdo_list(FILE *vif_file,
 					Snk_PDO_Indexes))
 			break;
 
-		vif_out_str(vif_file, level++, "<SnkPDO>");
+		vif_out_start(vif_file, level++, "SnkPDO");
 		vif_out_fields(vif_file, level,
 			       pdo_list->vif_field, Snk_PDO_Indexes);
-		vif_out_str(vif_file, --level, "</SnkPDO>");
+		vif_out_end(vif_file, --level, "SnkPDO");
 	}
-	vif_out_str(vif_file, --level, "</SnkPdoList>");
+	vif_out_end(vif_file, --level, "SnkPdoList");
 }
 
 static void vif_output_vif_component_src_pdo_list(FILE *vif_file,
@@ -949,7 +995,7 @@ static void vif_output_vif_component_src_pdo_list(FILE *vif_file,
 				Src_PDO_Indexes))
 		return;
 
-	vif_out_str(vif_file, level++, "<SrcPdoList>");
+	vif_out_start(vif_file, level++, "SrcPdoList");
 	for (index = 0; index < MAX_NUM_SRC_PDOS; ++index) {
 		const struct vif_srcPdoList_t *pdo_list =
 				&component->SrcPdoList[index];
@@ -958,12 +1004,12 @@ static void vif_output_vif_component_src_pdo_list(FILE *vif_file,
 					Src_PDO_Indexes))
 			break;
 
-		vif_out_str(vif_file, level++, "<SrcPDO>");
+		vif_out_start(vif_file, level++, "SrcPDO");
 		vif_out_fields(vif_file, level,
 			       pdo_list->vif_field, Src_PDO_Indexes);
-		vif_out_str(vif_file, --level, "</SrcPDO>");
+		vif_out_end(vif_file, --level, "SrcPDO");
 	}
-	vif_out_str(vif_file, --level, "</SrcPdoList>");
+	vif_out_end(vif_file, --level, "SrcPdoList");
 }
 
 static void vif_output_vif_component(FILE *vif_file,
@@ -979,7 +1025,7 @@ static void vif_output_vif_component(FILE *vif_file,
 					Component_Indexes))
 			return;
 
-		vif_out_str(vif_file, level++, "<Component>");
+		vif_out_start(vif_file, level++, "Component");
 		vif_out_fields(vif_file, level,
 			       component->vif_field, Component_Indexes);
 		vif_output_vif_component_snk_pdo_list(vif_file,
@@ -994,7 +1040,7 @@ static void vif_output_vif_component(FILE *vif_file,
 		vif_output_vif_component_cable_svid_list(vif_file,
 						component,
 						level);
-		vif_out_str(vif_file, --level, "</Component>");
+		vif_out_end(vif_file, --level, "Component");
 	}
 }
 
@@ -1007,7 +1053,7 @@ static void vif_output_vif_product_usb4router_endpoint(FILE *vif_file,
 				PCIe_Endpoint_Indexes))
 		return;
 
-	vif_out_str(vif_file, level++, "<PCIeEndpointList>");
+	vif_out_start(vif_file, level++, "PCIeEndpointList");
 	for (index = 0; index < MAX_NUM_PCIE_ENDPOINTS; ++index) {
 		const struct vif_PCIeEndpointListType_t *endpont =
 				&router->PCIeEndpointList[index];
@@ -1016,12 +1062,12 @@ static void vif_output_vif_product_usb4router_endpoint(FILE *vif_file,
 					PCIe_Endpoint_Indexes))
 			break;
 
-		vif_out_str(vif_file, level++, "<PCIeEndpoint>");
+		vif_out_start(vif_file, level++, "PCIeEndpoint");
 		vif_out_fields(vif_file, level,
 			       endpont->vif_field, PCIe_Endpoint_Indexes);
-		vif_out_str(vif_file, --level, "</PCIeEndpoint>");
+		vif_out_end(vif_file, --level, "PCIeEndpoint");
 	}
-	vif_out_str(vif_file, --level, "</PCIeEndpointList>");
+	vif_out_end(vif_file, --level, "PCIeEndpointList");
 }
 
 static void vif_output_vif_product_usb4router(FILE *vif_file,
@@ -1033,7 +1079,7 @@ static void vif_output_vif_product_usb4router(FILE *vif_file,
 				USB4_Router_Indexes))
 		return;
 
-	vif_out_str(vif_file, level++, "<USB4RouterList>");
+	vif_out_start(vif_file, level++, "USB4RouterList");
 	for (index = 0; index < MAX_NUM_USB4_ROUTERS; ++index) {
 		const struct vif_Usb4RouterListType_t *router =
 				&vif->Product.USB4RouterList[index];
@@ -1042,15 +1088,15 @@ static void vif_output_vif_product_usb4router(FILE *vif_file,
 					USB4_Router_Indexes))
 			break;
 
-		vif_out_str(vif_file, level++, "<Usb4Router>");
+		vif_out_start(vif_file, level++, "Usb4Router");
 		vif_out_fields(vif_file, level,
 			       router->vif_field, USB4_Router_Indexes);
 		vif_output_vif_product_usb4router_endpoint(vif_file,
 							   router,
 							   level);
-		vif_out_str(vif_file, --level, "</Usb4Router>");
+		vif_out_end(vif_file, --level, "Usb4Router");
 	}
-	vif_out_str(vif_file, --level, "</USB4RouterList>");
+	vif_out_end(vif_file, --level, "USB4RouterList");
 }
 
 static void vif_output_vif_product(FILE *vif_file,
@@ -1059,20 +1105,20 @@ static void vif_output_vif_product(FILE *vif_file,
 	if (!vif_fields_present(vif->Product.vif_field, Product_Indexes))
 		return;
 
-	vif_out_str(vif_file, level++, "<Product>");
+	vif_out_start(vif_file, level++, "Product");
 	vif_out_fields(vif_file, level,
 		       vif->Product.vif_field, Product_Indexes);
 	vif_output_vif_product_usb4router(vif_file, vif, level);
-	vif_out_str(vif_file, --level, "</Product>");
+	vif_out_end(vif_file, --level, "Product");
 }
 
 static void vif_output_vif_xml(FILE *vif_file, struct vif_t *vif, int level)
 {
 	vif_out_field(vif_file, level, &vif->vif_field[VIF_Specification]);
 
-	vif_out_str(vif_file, level++, "<VIF_App>");
+	vif_out_start(vif_file, level++, "VIF_App");
 	vif_out_fields(vif_file, level, vif->vif_app_field, VIF_App_Indexes);
-	vif_out_str(vif_file, --level, "</VIF_App>");
+	vif_out_end(vif_file, --level, "VIF_App");
 
 	vif_out_fields_range(vif_file, level,
 		       vif->vif_field, Vendor_Name, VIF_Indexes);
@@ -1092,14 +1138,14 @@ static int vif_output_xml(const char *name, struct vif_t *vif)
 
 	vif_out_str(vif_file, level,
 		"<?xml version=\"1.0\" encoding=\"utf-8\"?>");
-	vif_out_str(vif_file, level++,
-		"<VIF xmlns=\"http://usb.org/VendorInfoFile.xsd\">");
+	vif_out_start(vif_file, level++,
+		"VIF xmlns=\"http://usb.org/VendorInfoFile.xsd\"");
 
 	vif_output_vif_xml(vif_file, vif, level);
 	vif_output_vif_product(vif_file, vif, level);
 	vif_output_vif_component(vif_file, vif, level);
 
-	vif_out_str(vif_file, --level, "</VIF>");
+	vif_out_end(vif_file, --level, "VIF");
 
 	fclose(vif_file);
 	return 0;
@@ -1257,6 +1303,17 @@ static void ignore_to_end_tag(void)
 			break;
 	}
 }
+
+/*
+ * get_next_tag() consumes the entire element when there
+ * is no nested tag. there is no way to know if the end
+ * tag has been consumed:
+ *
+ * <tag></tag>                       next call returns </end>
+ * </end>
+ *
+ * <tag><nested value=x /></tag>     next call returns <nested>
+ */
 static bool get_next_tag(char *name,
 			 char *tag_value,
 			 char *str_value)
@@ -1313,7 +1370,8 @@ static bool get_next_tag(char *name,
 
 			/* Looking for a tag name */
 			while ((ch = ov_getc()) != EOF) {
-				if (ch == '_' || isalpha(ch) || isdigit(ch)) {
+				if (ch == '_' || ch == ':' ||
+				    isalpha(ch) || isdigit(ch)) {
 					name[name_index++] = ch;
 				} else {
 					ov_pushback(ch);
@@ -1387,7 +1445,7 @@ static void override_vif_product_pcie_endpoint_field(
 	while (get_next_tag(name, tag_value, str_value)) {
 		int i;
 
-		if (streq(name, "/PCIeEndpoint"))
+		if (is_end_tag(name, "PCIeEndpoint"))
 			break;
 
 		for (i = 0; i < PCIe_Endpoint_Indexes; i++)
@@ -1414,10 +1472,10 @@ static void override_vif_product_pcie_endpoint_list_field(
 	int endpoint_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/PCIeEndpointList"))
+		if (is_end_tag(name, "PCIeEndpointList"))
 			break;
 
-		if (streq(name, "PCIeEndpoint"))
+		if (is_start_tag(name, "PCIeEndpoint"))
 			override_vif_product_pcie_endpoint_field(
 					&endpoint_list[endpoint_index++]);
 		else
@@ -1436,10 +1494,10 @@ static void override_vif_product_usb4router_fields(
 	int endpoint_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/Usb4Router"))
+		if (is_end_tag(name, "Usb4Router"))
 			break;
 
-		if (streq(name, "PCIeEndpointList"))
+		if (is_start_tag(name, "PCIeEndpointList"))
 			override_vif_product_pcie_endpoint_list_field(
 				&router->PCIeEndpointList[endpoint_index++]);
 		else {
@@ -1471,10 +1529,10 @@ static void override_vif_product_usb4routerlist_fields(
 	int router_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/USB4RouterList"))
+		if (is_end_tag(name, "USB4RouterList"))
 			break;
 
-		if (streq(name, "Usb4Router"))
+		if (is_start_tag(name, "Usb4Router"))
 			override_vif_product_usb4router_fields(
 				&router_list[router_index++]);
 		else
@@ -1491,10 +1549,10 @@ static void override_vif_product_fields(struct vif_Product_t *vif_product)
 	char str_value[80];
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/Product"))
+		if (is_end_tag(name, "Product"))
 			break;
 
-		if (streq(name, "USB4RouterList"))
+		if (is_start_tag(name, "USB4RouterList"))
 			override_vif_product_usb4routerlist_fields(
 				vif_product->USB4RouterList);
 		else {
@@ -1527,7 +1585,7 @@ static void override_vif_component_src_pdo_fields(
 	while (get_next_tag(name, tag_value, str_value)) {
 		int i;
 
-		if (streq(name, "/SrcPdo"))
+		if (is_end_tag(name, "SrcPdo"))
 			break;
 
 		for (i = 0; i < Src_PDO_Indexes; i++)
@@ -1554,10 +1612,10 @@ static void override_vif_component_src_pdo_list_fields(
 	int src_pdo_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/SrcPdoList"))
+		if (is_end_tag(name, "SrcPdoList"))
 			break;
 
-		if (streq(name, "SrcPdo"))
+		if (is_start_tag(name, "SrcPdo"))
 			override_vif_component_src_pdo_fields(
 				&vif_src_pdo_list[src_pdo_index++]);
 		else
@@ -1577,7 +1635,7 @@ static void override_vif_component_snk_pdo_fields(
 	while (get_next_tag(name, tag_value, str_value)) {
 		int i;
 
-		if (streq(name, "/SnkPdo"))
+		if (is_end_tag(name, "SnkPdo"))
 			break;
 
 		for (i = 0; i < Snk_PDO_Indexes; i++)
@@ -1604,10 +1662,10 @@ static void override_vif_component_snk_pdo_list_fields(
 	int snk_pdo_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/SnkPdoList"))
+		if (is_end_tag(name, "SnkPdoList"))
 			break;
 
-		if (streq(name, "SnkPdo"))
+		if (is_start_tag(name, "SnkPdo"))
 			override_vif_component_snk_pdo_fields(
 				&vif_snk_pdo_list[snk_pdo_index++]);
 		else
@@ -1627,7 +1685,7 @@ static void override_vif_component_sop_svid_mode_fields(
 	while (get_next_tag(name, tag_value, str_value)) {
 		int i;
 
-		if (streq(name, "/SOPSVIDMode"))
+		if (is_end_tag(name, "SOPSVIDMode"))
 			break;
 
 		for (i = 0; i < SopSVID_Indexes; i++)
@@ -1654,10 +1712,10 @@ static void override_vif_component_sop_svid_mode_list_fields(
 	int mode_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/SOPSVIDModeList"))
+		if (is_end_tag(name, "SOPSVIDModeList"))
 			break;
 
-		if (streq(name, "SOPSVIDMode"))
+		if (is_start_tag(name, "SOPSVIDMode"))
 			override_vif_component_sop_svid_mode_fields(
 				&svid_mode_list[mode_index++]);
 		else
@@ -1675,10 +1733,10 @@ static void override_vif_component_sop_svid_fields(
 	char str_value[80];
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/SOPSVID"))
+		if (is_end_tag(name, "SOPSVID"))
 			break;
 
-		if (streq(name, "SOPSVIDModeList"))
+		if (is_start_tag(name, "SOPSVIDModeList"))
 			override_vif_component_sop_svid_mode_list_fields(
 				vif_sop_svid->SOPSVIDModeList);
 		else {
@@ -1710,10 +1768,10 @@ static void override_vif_component_sop_svid_list_fields(
 	int sop_svid_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/SOPSVIDList"))
+		if (is_end_tag(name, "SOPSVIDList"))
 			break;
 
-		if (streq(name, "SOPSVID"))
+		if (is_start_tag(name, "SOPSVID"))
 			override_vif_component_sop_svid_fields(
 				&vif_sop_svid_list[sop_svid_index++]);
 		else
@@ -1733,7 +1791,7 @@ static void override_vif_component_cable_svid_mode_fields(
 	while (get_next_tag(name, tag_value, str_value)) {
 		int i;
 
-		if (streq(name, "/CableSVIDMode"))
+		if (is_end_tag(name, "CableSVIDMode"))
 			break;
 
 		for (i = 0; i < CableSVID_Mode_Indexes; i++)
@@ -1760,10 +1818,10 @@ static void override_vif_component_cable_svid_mode_list_fields(
 	int mode_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/CableSVIDModeList"))
+		if (is_end_tag(name, "CableSVIDModeList"))
 			break;
 
-		if (streq(name, "CableSVIDMode"))
+		if (is_start_tag(name, "CableSVIDMode"))
 			override_vif_component_cable_svid_mode_fields(
 				&vif_cable_mode_list[mode_index++]);
 		else
@@ -1782,10 +1840,10 @@ static void override_vif_component_cable_svid_fields(
 	int mode_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/CableSVID"))
+		if (is_end_tag(name, "CableSVID"))
 			break;
 
-		if (streq(name, "CableSVIDModeList"))
+		if (is_start_tag(name, "CableSVIDModeList"))
 			override_vif_component_cable_svid_mode_list_fields(
 				&vif_cable_svid->CableSVIDModeList[
 							mode_index++]);
@@ -1817,10 +1875,10 @@ static void override_vif_component_cable_svid_list_fields(
 	int cable_svid_index = 0;
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/CableSVIDList"))
+		if (is_end_tag(name, "CableSVIDList"))
 			break;
 
-		if (streq(name, "CableSVID"))
+		if (is_start_tag(name, "CableSVID"))
 			override_vif_component_cable_svid_fields(
 				&vif_cable_svid_list[cable_svid_index++]);
 		else
@@ -1838,19 +1896,19 @@ static void override_vif_component_fields(
 	char str_value[80];
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/Component"))
+		if (is_end_tag(name, "Component"))
 			break;
 
-		if (streq(name, "SrcPdoList"))
+		if (is_start_tag(name, "SrcPdoList"))
 			override_vif_component_src_pdo_list_fields(
 					vif_component->SrcPdoList);
-		else if (streq(name, "SnkPdoList"))
+		else if (is_start_tag(name, "SnkPdoList"))
 			override_vif_component_snk_pdo_list_fields(
 					vif_component->SnkPdoList);
-		else if (streq(name, "SOPSVIDList"))
+		else if (is_start_tag(name, "SOPSVIDList"))
 			override_vif_component_sop_svid_list_fields(
 					vif_component->SOPSVIDList);
-		else if (streq(name, "CableSVIDList"))
+		else if (is_start_tag(name, "CableSVIDList"))
 			override_vif_component_cable_svid_list_fields(
 					vif_component->CableSVIDList);
 		else {
@@ -1882,7 +1940,7 @@ static void override_vif_app_fields(struct vif_t *vif)
 	while (get_next_tag(name, tag_value, str_value)) {
 		int i;
 
-		if (streq(name, "/VIF_App"))
+		if (is_end_tag(name, "VIF_App"))
 			break;
 
 		for (i = 0; i < VIF_App_Indexes; i++)
@@ -1903,15 +1961,15 @@ static void override_vif_fields(struct vif_t *vif)
 
 	component_index = 0;
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "/VIF"))
+		if (is_end_tag(name, "VIF"))
 			break;
 
-		if (streq(name, "VIF_App"))
+		if (is_start_tag(name, "VIF_App"))
 			override_vif_app_fields(vif);
-		else if (streq(name, "Component"))
+		else if (is_start_tag(name, "Component"))
 			override_vif_component_fields(
 				&vif->Component[component_index++]);
-		else if (streq(name, "Product"))
+		else if (is_start_tag(name, "Product"))
 			override_vif_product_fields(&vif->Product);
 		else {
 			int i;
@@ -1965,7 +2023,7 @@ static int override_gen_vif(char *over_name, struct vif_t *vif)
 	}
 
 	while (get_next_tag(name, tag_value, str_value)) {
-		if (streq(name, "VIF"))
+		if (is_start_tag(name, "VIF"))
 			override_vif_fields(vif);
 		else
 			fprintf(stderr,
