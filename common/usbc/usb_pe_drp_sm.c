@@ -7174,8 +7174,6 @@ static void pe_ddr_perform_data_reset_entry(int port)
 	 */
 	if (IS_ENABLED(CONFIG_USBC_VCONN) && tc_is_vconn_src(port))
 		pd_request_vconn_swap_off(port);
-	else
-		PE_SET_FLAG(port, PE_FLAGS_DATA_RESET_COMPLETE);
 }
 
 static void pe_ddr_perform_data_reset_run(int port)
