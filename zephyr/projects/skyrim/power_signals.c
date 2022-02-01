@@ -112,3 +112,13 @@ void baseboard_en_pwr_s0(enum gpio_signal signal)
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);
 }
+
+void baseboard_set_en_pwr_s3(enum gpio_signal signal)
+{
+	/* EC must enable PWR_S3 when SLP_S5_L goes high, disable on low */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s3),
+	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)));
+
+	/* Chain off the normal power signal interrupt handler */
+	power_signal_interrupt(signal);
+}

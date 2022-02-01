@@ -9,7 +9,7 @@
 		usb_fault_odl {
 			gpios = <&gpio5 0 GPIO_ODR_HIGH>;
 		};
-		en_pwr_s3 {
+		gpio_en_pwr_s3: en_pwr_s3 {
 			gpios = <&gpio7 4 GPIO_OUT_LOW>;
 		};
 		gpio_pg_groupc_s0_od: pg_groupc_s0_od {

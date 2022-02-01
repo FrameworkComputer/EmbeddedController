@@ -30,7 +30,7 @@
 		int_slp_s5: slp_s5 {
 			irq-pin = <&gpio_slp_s5_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "power_signal_interrupt";
+			handler = "baseboard_set_en_pwr_s3";
 		};
 		int_s5_pgood: s5_pgood {
 			irq-pin = <&gpio_pg_pwr_s5>;

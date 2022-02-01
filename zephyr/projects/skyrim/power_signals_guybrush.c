@@ -106,3 +106,11 @@ void baseboard_en_pwr_s0(enum gpio_signal signal)
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);
 }
+
+void baseboard_set_en_pwr_s3(enum gpio_signal signal)
+{
+	/* EC has no EN_PWR_S3 on this board */
+
+	/* Chain off the normal power signal interrupt handler */
+	power_signal_interrupt(signal);
+}
