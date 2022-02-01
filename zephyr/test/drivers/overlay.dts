@@ -673,6 +673,8 @@
 		pagesize = <8>;
 		address-width = <8>;
 		timeout = <5>;
+		/* gpio_wp_l */
+		wp-gpios = <&gpio0 3 (GPIO_INPUT | GPIO_OUTPUT)>;
 	};
 
 	battery: sb@b {

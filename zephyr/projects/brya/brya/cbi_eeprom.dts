@@ -12,7 +12,7 @@
 		pagesize = <16>;
 		address-width = <8>;
 		timeout = <5>;
-		/* Not used */
-		/* wp-gpios = <&gpio_ec_wp_l>; */
+		/* gpio_ec_wp_l */
+		wp-gpios = <&gpioa 1 GPIO_INPUT>;
 	};
 };

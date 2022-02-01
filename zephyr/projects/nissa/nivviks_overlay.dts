@@ -209,6 +209,8 @@
 		pagesize = <16>;
 		address-width = <8>;
 		timeout = <5>;
+		/* gpio_ec_wp_odl */
+		wp-gpios = <&gpioa 1 GPIO_INPUT>;
 	};
 };
 
