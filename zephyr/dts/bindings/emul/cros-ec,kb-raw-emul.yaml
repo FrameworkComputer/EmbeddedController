@@ -1,0 +1,21 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Emulator for Chromiumos EC raw keyboard driver.
+
+compatible: "cros-ec,kb-raw-emul"
+
+include: cros-kb-raw-controller.yaml
+
+properties:
+  rows:
+    required: false
+    type: int
+    default: 8
+    description: Number of keyboard scan rows
+  cols:
+    required: false
+    type: int
+    default: 18
+    description: Number of keyboard scan columns

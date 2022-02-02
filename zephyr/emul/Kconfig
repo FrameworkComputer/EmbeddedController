@@ -69,6 +69,11 @@ config EMUL_BB_RETIMER
 	  reads and writes to all emulator registers. Emulators API is
 	  available in zephyr/include/emul/emul_bb_retimer.h
 
+config EMUL_KB_RAW
+	bool "Raw keyboard emulator"
+	help
+	  Enable the raw keyboard emulator.
+
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"
