@@ -415,3 +415,12 @@ void gpio_test_interrupt(enum gpio_signal signal)
 	printk("%s called\n", __func__);
 	gpio_test_interrupt_triggered = true;
 }
+
+int clock_get_freq(void)
+{
+	return 16000000;
+}
+
+void system_enter_hibernate(uint32_t seconds, uint32_t microseconds)
+{
+}

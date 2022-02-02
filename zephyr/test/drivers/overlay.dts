@@ -11,6 +11,7 @@
 	chosen {
 		cros-ec,espi = &espi0;
 		cros-ec,watchdog = &wdt_counter;
+		cros-ec,raw-kb = &cros_kb_raw;
 	};
 
 	aliases {
@@ -663,6 +664,11 @@
 		status = "okay";
 		counter = <&counter0>;
 		label = "WDT_COUNTER";
+	};
+
+	cros_kb_raw: kb-raw-emul {
+		compatible = "cros-ec,kb-raw-emul";
+		label = "KB_RAW";
 	};
 };
 
