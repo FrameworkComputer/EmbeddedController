@@ -171,6 +171,17 @@ config PLATFORM_EC_POWERSEQ_PP3300_RAIL_FIRST
 
 endif # PLATFORM_EC_POWERSEQ_ICELAKE
 
+if PLATFORM_EC_POWERSEQ_RTC_RESET
+
+config PLATFORM_EC_S5_EXIT_WAIT
+	int "time(in secs) for EC to wait for system to exit from S5"
+	default 4
+	help
+	  Timeout value for which EC has to wait for system to exit from S5
+	  before performing RTC reset and moving the system to G3.
+
+endif # PLATFORM_EC_POWERSEQ_RTC_RESET
+
 endif # PLATFORM_EC_POWERSEQ_INTEL
 
 config PLATFORM_EC_POWERSEQ_MT8192

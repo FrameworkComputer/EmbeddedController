@@ -6784,4 +6784,12 @@
 #define CONFIG_AMD_SB_RMI
 #endif
 
+/*
+ * Default timeout value for which EC has to wait for system to exit from S5
+ * before performing RTC reset and moving the system to G3.
+ */
+#if defined(CONFIG_BOARD_HAS_RTC_RESET) && !defined(CONFIG_S5_EXIT_WAIT)
+#define CONFIG_S5_EXIT_WAIT 4
+#endif
+
 #endif  /* __CROS_EC_CONFIG_H */
