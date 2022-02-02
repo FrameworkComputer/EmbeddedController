@@ -164,6 +164,7 @@ static void dpm_set_mode_entry_done(int port)
 void dpm_set_mode_exit_request(int port)
 {
 	DPM_SET_FLAG(port, DPM_FLAG_EXIT_REQUEST);
+	DPM_CLR_FLAG(port, DPM_FLAG_DATA_RESET_DONE);
 }
 
 void dpm_data_reset_complete(int port)
@@ -414,8 +415,27 @@ static void dpm_attempt_mode_exit(int port)
 	enum dpm_msg_setup_status status = MSG_SETUP_ERROR;
 	enum tcpci_msg_type tx_type = TCPCI_MSG_SOP;
 
-	if (IS_ENABLED(CONFIG_USB_PD_USB4) &&
-	    enter_usb_entry_is_done(port)) {
+	/* First, try Data Reset. If Data Reset completes, all the alt mode
+	 * state checked below will reset to its inactive state. If Data Reset
+	 * is not supported, exit active modes individually.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG)) {
+		if (!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED)
+				&& !DPM_CHK_FLAG(port,
+					DPM_FLAG_DATA_RESET_DONE)) {
+			pd_dpm_request(port, DPM_REQUEST_DATA_RESET);
+			DPM_SET_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED);
+			return;
+		} else if (!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
+			return;
+		}
+		/* TODO(b/209625351): Check for Not Supported case. */
+	}
+
+	/* TODO(b/209625351): Data Reset is the only real way to exit from USB4
+	 * mode. If that failed, the TCPM shouldn't try anything else.
+	 */
+	if (IS_ENABLED(CONFIG_USB_PD_USB4) && enter_usb_entry_is_done(port)) {
 		CPRINTS("C%d: USB4 teardown", port);
 		usb4_exit_mode_request(port);
 	}
@@ -428,8 +448,7 @@ static void dpm_attempt_mode_exit(int port)
 	if (IS_ENABLED(CONFIG_USBC_SS_MUX) && !usb_mux_set_completed(port))
 		return;
 
-	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
-	    tbt_is_active(port)) {
+	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) && tbt_is_active(port)) {
 		/*
 		 * When the port is in USB4 mode and receives an exit request,
 		 * it leaves USB4 SOP in active state.
