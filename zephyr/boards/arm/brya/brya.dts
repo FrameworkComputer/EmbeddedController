@@ -46,6 +46,7 @@
 		tcpc1 {
 			i2c-port = <&i2c4_1>;
 			enum-name = "I2C_PORT_USB_C1_TCPC";
+			dynamic-speed;
 		};
 		ppc0_2: ppc0_2 {
 			i2c-port = <&i2c2_0>;
@@ -54,6 +55,7 @@
 		ppc1: ppc1 {
 			i2c-port = <&i2c6_1>;
 			enum-name = "I2C_PORT_USB_C1_PPC";
+			dynamic-speed;
 		};
 		retimer0_2 {
 			i2c-port = <&i2c3_0>;
