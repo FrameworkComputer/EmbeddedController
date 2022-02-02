@@ -1,0 +1,109 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		power {
+			i2c-port = <&i2c0_0>;
+			enum-name = "I2C_PORT_POWER";
+		};
+		battery {
+			i2c-port = <&i2c0_0>;
+			remote-port = <0>;
+			enum-name = "I2C_PORT_BATTERY";
+		};
+		virtual-battery {
+			i2c-port = <&i2c0_0>;
+			enum-name = "I2C_PORT_VIRTUAL_BATTERY";
+		};
+		charger {
+			i2c-port = <&i2c0_0>;
+			enum-name = "I2C_PORT_CHARGER";
+		};
+		tcpc0 {
+			i2c-port = <&i2c1_0>;
+			enum-name = "I2C_PORT_TCPC0";
+		};
+		tcpc1 {
+			i2c-port = <&i2c2_0>;
+			enum-name = "I2C_PORT_TCPC1";
+		};
+		eeprom {
+			i2c-port = <&i2c5_0>;
+			enum-name = "I2C_PORT_EEPROM";
+		};
+		i2c_sensor: sensor {
+			i2c-port = <&i2c7_0>;
+			enum-name = "I2C_PORT_SENSOR";
+		};
+		accel {
+			i2c-port = <&i2c7_0>;
+			enum-name = "I2C_PORT_ACCEL";
+		};
+	};
+
+};
+
+&i2c0_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+
+	isl9238: isl9238@9 {
+		compatible = "intersil,isl9238";
+		reg = <0x09>;
+		label = "ISL9238_CHARGER";
+	};
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&i2c1_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c_ctrl1 {
+	status = "okay";
+};
+
+&i2c2_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+};
+
+&i2c_ctrl2 {
+	status = "okay";
+};
+
+&i2c3_0 {
+	/* Not used as no WLC connected */
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c5_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+};
+
+&i2c7_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c_ctrl7 {
+	status = "okay";
+};

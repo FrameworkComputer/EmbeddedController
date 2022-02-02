@@ -8,6 +8,7 @@
 #include "console.h"
 #include "driver/ln9310.h"
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "power/qcom.h"
@@ -32,20 +33,24 @@ static void switchcap_init(void)
 		 * When the chip in power down mode, it outputs high-Z.
 		 * Set pull-down to avoid floating.
 		 */
-		gpio_set_flags(GPIO_DA9313_GPIO0, GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_da9313_gpio0),
+			GPIO_INPUT | GPIO_PULL_DOWN);
 
 		/*
 		 * Configure DA9313 enable, push-pull output. Don't set the
 		 * level here; otherwise, it will override its value and
 		 * shutdown the switchcap when sysjump to RW.
 		 */
-		gpio_set_flags(GPIO_SWITCHCAP_ON, GPIO_OUTPUT);
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_switchcap_on),
+			GPIO_OUTPUT);
 	} else if (board_has_ln9310()) {
 		CPRINTS("Use switchcap: LN9310");
 
-		/* Configure and enable interrupt for LN9310 */
-		gpio_set_flags(GPIO_SWITCHCAP_PG_INT_L, GPIO_INT_FALLING);
-		gpio_enable_interrupt(GPIO_SWITCHCAP_PG_INT_L);
+		/* Enable interrupt for LN9310 */
+		gpio_enable_dt_interrupt(
+			GPIO_INT_FROM_NODELABEL(int_switchcap_pg));
 
 		/*
 		 * Configure LN9310 enable, open-drain output. Don't set the
@@ -65,8 +70,9 @@ static void switchcap_init(void)
 		 * (6) GPIO init according to gpio.inc -> push-pull LOW
 		 * (7) This function configures it -> open-drain LOW
 		 */
-		gpio_set_flags(GPIO_SWITCHCAP_ON_L,
-			       GPIO_OUTPUT | GPIO_OPEN_DRAIN);
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_switchcap_on_l),
+			GPIO_OUTPUT | GPIO_OPEN_DRAIN);
 
 		/* Only configure the switchcap if not sysjump */
 		if (!system_jumped_late()) {
@@ -75,7 +81,9 @@ static void switchcap_init(void)
 			 * switchcap won't be enabled after the switchcap is
 			 * configured from standby mode to switching mode.
 			 */
-			gpio_set_level(GPIO_SWITCHCAP_ON_L, 1);
+			gpio_pin_set_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_switchcap_on_l),
+				1);
 			ln9310_init();
 		}
 	} else if (board_has_buck_ic()) {
@@ -89,30 +97,40 @@ DECLARE_HOOK(HOOK_INIT, switchcap_init, HOOK_PRIO_DEFAULT);
 void board_set_switchcap_power(int enable)
 {
 	if (board_has_da9313()) {
-		gpio_set_level(GPIO_SWITCHCAP_ON, enable);
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_switchcap_on),
+			enable);
 	} else if (board_has_ln9310()) {
-		gpio_set_level(GPIO_SWITCHCAP_ON_L, !enable);
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_switchcap_on_l),
+			!enable);
 		ln9310_software_enable(enable);
 	} else if (board_has_buck_ic()) {
-		gpio_set_level(GPIO_VBOB_EN, enable);
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_vbob_en),
+			enable);
 	}
 }
 
 int board_is_switchcap_enabled(void)
 {
 	if (board_has_da9313())
-		return gpio_get_level(GPIO_SWITCHCAP_ON);
+		return gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_switchcap_on));
 	else if (board_has_ln9310())
-		return !gpio_get_level(GPIO_SWITCHCAP_ON_L);
+		return !gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_switchcap_on_l));
 
 	/* Board has buck ic*/
-	return gpio_get_level(GPIO_VBOB_EN);
+	return gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_vbob_en));
 }
 
 int board_is_switchcap_power_good(void)
 {
 	if (board_has_da9313())
-		return gpio_get_level(GPIO_DA9313_GPIO0);
+		return gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_da9313_gpio0));
 	else if (board_has_ln9310())
 		return ln9310_power_good();
 

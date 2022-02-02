@@ -17,10 +17,12 @@ void board_hibernate(void)
 		 * Sensors are unpowered in hibernate. Apply PD to the
 		 * interrupt lines such that they don't float.
 		 */
-		gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
-		gpio_set_flags(GPIO_LID_ACCEL_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(
+				      gpio_accel_gyro_int_l),
+				      GPIO_DISCONNECTED);
+		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(
+				      gpio_lid_accel_int_l),
+				      GPIO_DISCONNECTED);
 	}
 
 	/*
@@ -42,5 +44,5 @@ void board_hibernate(void)
 void board_hibernate_late(void)
 {
 	/* Set the hibernate GPIO to turn off the rails */
-	gpio_set_level(GPIO_HIBERNATE_L, 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hibernate_l), 0);
 }

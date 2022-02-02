@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <dt-bindings/wake_mask_event_defines.h>
+
 / {
 	named-gpios {
 		compatible = "named-gpios";
@@ -98,7 +100,7 @@
 			gpios = <&gpioa 0 GPIO_INPUT>;
 			enum-name = "GPIO_ACCEL_GYRO_INT_L";
 		};
-		da9313_gpio0 {
+		gpio_da9313_gpio0: da9313_gpio0 {
 			gpios = <&gpioe 2 GPIO_INPUT>;
 			enum-name = "GPIO_DA9313_GPIO0";
 		};
@@ -133,27 +135,27 @@
 		qsip_on {
 			gpios = <&gpio5 0 GPIO_OUT_LOW>;
 		};
-		hibernate_l {
+		gpio_hibernate_l: hibernate_l {
 			gpios = <&gpio5 2 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_HIBERNATE_L";
 		};
-		switchcap_on {
+		gpio_switchcap_on: switchcap_on {
 			gpios = <&gpiod 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_SWITCHCAP_ON";
 		};
-		switchcap_on_l {
+		gpio_switchcap_on_l: switchcap_on_l {
 			gpios = <&gpiod 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_SWITCHCAP_ON_L";
 		};
-		vbob_en {
+		gpio_vbob_en: vbob_en {
 			gpios = <&gpiod 3 GPIO_OUT_LOW>;
 			enum-name = "GPIO_VBOB_EN";
 		};
-		en_pp3300_a {
+		gpio_en_pp3300_a: en_pp3300_a {
 			gpios = <&gpioa 6 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PP3300_A";
 		};
-		en_pp5000_a {
+		gpio_en_pp5000_a: en_pp5000_a {
 			gpios = <&gpio6 7 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EN_PP5000";
 		};
@@ -161,30 +163,30 @@
 			gpios = <&gpiob 6 GPIO_OUT_LOW>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
-		lid_accel_int_l {
+		gpio_lid_accel_int_l: lid_accel_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
 			enum-name = "GPIO_LID_ACCEL_INT_L";
 		};
 		trackpad_int_gate {
 			gpios = <&gpio7 4 GPIO_OUT_LOW>;
 		};
-		usb_c0_pd_rst_l {
+		gpio_usb_c0_pd_rst_l: usb_c0_pd_rst_l {
 			gpios = <&gpiof 1 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_USB_C0_PD_RST_L";
 		};
-		usb_c1_pd_rst_l {
+		gpio_usb_c1_pd_rst_l: usb_c1_pd_rst_l {
 			gpios = <&gpioe 4 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_USB_C1_PD_RST_L";
 		};
-		dp_mux_oe_l {
+		gpio_dp_mux_oe_l: dp_mux_oe_l {
 			gpios = <&gpio9 6 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_DP_MUX_OE_L";
 		};
-		dp_mux_sel {
+		gpio_dp_mux_sel: dp_mux_sel {
 			gpios = <&gpio4 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_DP_MUX_SEL";
 		};
-		dp_hot_plug_det {
+		gpio_dp_hot_plug_det: dp_hot_plug_det {
 			gpios = <&gpio9 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_DP_HOT_PLUG_DET";
 		};
@@ -308,6 +310,26 @@
 			&int_lid_open
 			&int_ec_rst
 		>;
+	};
+
+	ec-mkbp-host-event-wakeup-mask {
+		compatible = "ec-wake-mask-event";
+		wakeup-mask = <(
+			HOST_EVENT_LID_OPEN |
+			HOST_EVENT_POWER_BUTTON |
+			HOST_EVENT_AC_CONNECTED |
+			HOST_EVENT_AC_DISCONNECTED |
+			HOST_EVENT_HANG_DETECT |
+			HOST_EVENT_RTC |
+			HOST_EVENT_MODE_CHANGE |
+			HOST_EVENT_DEVICE)>;
+	};
+
+	ec-mkbp-event-wakeup-mask {
+		compatible = "ec-wake-mask-event";
+		wakeup-mask = <(MKBP_EVENT_KEY_MATRIX |
+				MKBP_EVENT_HOST_EVENT |
+				MKBP_EVENT_SENSOR_FIFO)>;
 	};
 
 	sku {

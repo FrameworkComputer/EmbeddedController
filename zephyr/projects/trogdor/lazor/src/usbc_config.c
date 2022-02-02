@@ -15,6 +15,7 @@
 #include "config.h"
 #include "driver/ln9310.h"
 #include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "ppc/sn5s330_public.h"
 #include "system.h"
@@ -90,7 +91,8 @@ static void usba_oc_deferred(void)
 {
 	/* Use next number after all USB-C ports to indicate the USB-A port */
 	board_overcurrent_event(CONFIG_USB_PD_PORT_MAX_COUNT,
-				!gpio_get_level(GPIO_USB_A0_OC_ODL));
+				!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
+					gpio_usb_a0_oc_odl)));
 }
 DECLARE_DEFERRED(usba_oc_deferred);
 
@@ -102,10 +104,10 @@ void usba_oc_interrupt(enum gpio_signal signal)
 void ppc_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
-	case GPIO_USB_C0_SWCTL_INT_ODL:
+	case GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_swctl_int_odl)):
 		sn5s330_interrupt(0);
 		break;
-	case GPIO_USB_C1_SWCTL_INT_ODL:
+	case GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c1_swctl_int_odl)):
 		sn5s330_interrupt(1);
 		break;
 	default:
@@ -236,17 +238,17 @@ __override int board_get_default_battery_type(void)
 static void board_init_usbc(void)
 {
 	/* Enable BC1.2 interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_L);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
 
 	/* Enable USB-A overcurrent interrupt */
-	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_a0_oc));
 	/*
 	 * The H1 SBU line for CCD are behind PPC chip. The PPC internal FETs
 	 * for SBU may be disconnected after DP alt mode is off. Should enable
 	 * the CCD_MODE_ODL interrupt to make sure the SBU FETs are connected.
 	 */
-	gpio_enable_interrupt(GPIO_CCD_MODE_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_ccd_mode));
 }
 DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
 
@@ -259,11 +261,11 @@ void board_tcpc_init(void)
 	}
 
 	/* Enable PPC interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_SWCTL_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_swctl));
 
 	/* Enable TCPC interrupts */
-	gpio_enable_interrupt(GPIO_USB_C0_PD_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
@@ -280,11 +282,11 @@ void board_reset_pd_mcu(void)
 	cprints(CC_USB, "Resetting TCPCs...");
 	cflush();
 
-	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 0);
 	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
-	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 1);
 }
 
 void board_set_tcpc_power_mode(int port, int mode)
@@ -392,11 +394,13 @@ uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
 
-	if (!gpio_get_level(GPIO_USB_C0_PD_INT_ODL))
-		if (gpio_get_level(GPIO_USB_C0_PD_RST_L))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_int_odl)))
+		if (gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l)))
 			status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_get_level(GPIO_USB_C1_PD_INT_ODL))
-		if (gpio_get_level(GPIO_USB_C1_PD_RST_L))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_int_odl)))
+		if (gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l)))
 			status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;
