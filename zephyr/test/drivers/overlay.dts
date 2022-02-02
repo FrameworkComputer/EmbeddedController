@@ -117,7 +117,8 @@
 			enum-name = "GPIO_WARM_RESET_L";
 		};
 		gpio_lid_open_ec: lid_open_ec {
-			gpios = <&gpio0 23 GPIO_INPUT>;
+			/* GPIO_PULL_UP will cause this start asserted. */
+			gpios = <&gpio0 23 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_switchcap_on: switchcap_on {
@@ -125,7 +126,10 @@
 			enum-name = "GPIO_SWITCHCAP_ON";
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
-			gpios = <&gpio0 25 GPIO_INPUT>;
+			/* GPIO_PULL_UP will cause this start asserted,
+			 * i.e. not pressed.
+			 */
+			gpios = <&gpio0 25 (GPIO_INPUT | GPIO_PULL_UP)>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_src_vph_pwr_pg: src_vph_pwr_pg {
@@ -176,6 +180,11 @@
 			irq-pin = <&gpio_test>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gpio_test_interrupt";
+		};
+		int_lid_open_ec: lid_open_ec {
+			irq-pin = <&gpio_lid_open_ec>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
 		};
 		int_mb_power_good: mb_power_good {
 			irq-pin = <&gpio_mb_power_good>;
