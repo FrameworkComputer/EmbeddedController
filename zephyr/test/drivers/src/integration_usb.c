@@ -42,6 +42,11 @@ static void integration_usb_before(void *state)
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
 	const struct emul *tcpci_emul2 =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
+	const struct emul *charger_emul =
+		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+	/* Reset vbus to 0mV */
+	/* TODO(b/217610871): Remove redundant test state cleanup */
+	isl923x_emul_set_adc_vbus(charger_emul, 0);
 	struct i2c_emul *i2c_emul;
 	struct sbat_emul_bat_data *bat;
 	const struct device *gpio_dev =
@@ -79,6 +84,8 @@ static void integration_usb_after(void *state)
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
 	const struct emul *tcpci_emul2 =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
+	const struct emul *charger_emul =
+		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 	ARG_UNUSED(state);
 
 	/* TODO: This function should trigger gpios to signal there is nothing
@@ -88,6 +95,9 @@ static void integration_usb_after(void *state)
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul2), NULL);
 	/* Give time to actually disconnect */
 	k_sleep(K_SECONDS(1));
+
+	/* Reset vbus to 0mV */
+	isl923x_emul_set_adc_vbus(charger_emul, 0);
 }
 
 /* Check the results of EC_CMD_CHARGE_STATE against expected charger properties.
