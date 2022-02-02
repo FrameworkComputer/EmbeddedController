@@ -9,22 +9,14 @@ project(lazor)
 
 zephyr_library_include_directories(include)
 
-set(PLATFORM_EC_BASEBOARD "${PLATFORM_EC}/baseboard/trogdor" CACHE PATH
-    "Path to the platform/ec baseboard directory")
-set(PLATFORM_EC_BOARD "${PLATFORM_EC}/board/lazor" CACHE PATH
-  "Path to the platform/ec board directory")
-
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
-  "${PLATFORM_EC_BASEBOARD}/hibernate.c"
-  "${PLATFORM_EC_BASEBOARD}/power.c"
-  "${PLATFORM_EC_BASEBOARD}/usb_pd_policy.c"
-  "${PLATFORM_EC_BOARD}/usbc_config.c")
+  "src/power.c"
+  "src/usb_pd_policy.c"
+  "src/usbc_config.c")
 
 zephyr_library_sources(
-  "${PLATFORM_EC_BOARD}/hibernate.c"
-  "${PLATFORM_EC_BOARD}/sku.c"
-  "${PLATFORM_EC_BOARD}/switchcap.c"
-  "${PLATFORM_EC_BOARD}/usbc_config.c")
+  "src/sku.c"
+  "src/switchcap.c")
 
 # Board specific implementation
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
