@@ -6,7 +6,7 @@
 
 ## Usage
 
-**Usage:** `zmake [-h] [--checkout CHECKOUT] [-D] [-j JOBS] [--goma] [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}] [-L] [--log-label] [--modules-dir MODULES_DIR] [--zephyr-base ZEPHYR_BASE] subcommand ...`
+**Usage:** `zmake [-h] [--checkout CHECKOUT] [-j JOBS] [--goma] [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL} | -D] [-L] [--log-label] [--modules-dir MODULES_DIR] [--zephyr-base ZEPHYR_BASE] subcommand ...`
 
 Chromium OS's meta-build tool for Zephyr
 
@@ -22,10 +22,10 @@ Chromium OS's meta-build tool for Zephyr
 |---|---|
 | `-h`, `--help` | show this help message and exit |
 | `--checkout CHECKOUT` | Path to ChromiumOS checkout |
-| `-D`, `--debug` | Turn on debug features (e.g., stack trace, verbose logging) |
 | `-j JOBS`, `--jobs JOBS` | Degree of multiprogramming to use |
 | `--goma` | Enable hyperspeed compilation with Goma! (Googlers only) |
-| `-l LOG_LEVEL`, `--log-level LOG_LEVEL` | Set the logging level (default=INFO) |
+| `-l {DEBUG,INFO,WARNING,ERROR,CRITICAL}`, `--log-level {DEBUG,INFO,WARNING,ERROR,CRITICAL}` | Set the logging level (default=INFO) |
+| `-D`, `--debug` | Alias for --log-level=DEBUG |
 | `-L`, `--no-log-label` | Turn off logging labels |
 | `--log-label` | Turn on logging labels |
 | `--modules-dir MODULES_DIR` | The path to a directory containing all modules needed.  If unspecified, zmake will assume you have a Chrome OS checkout and try locating them in the checkout. |

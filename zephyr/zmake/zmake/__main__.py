@@ -107,13 +107,6 @@ def get_argparser():
         "--checkout", type=pathlib.Path, help="Path to ChromiumOS checkout"
     )
     parser.add_argument(
-        "-D",
-        "--debug",
-        action="store_true",
-        default=False,
-        help=("Turn on debug features (e.g., stack trace, " "verbose logging)"),
-    )
-    parser.add_argument(
         "-j",
         "--jobs",
         # TODO(b/178196029): ninja doesn't know how to talk to a
@@ -129,13 +122,26 @@ def get_argparser():
         dest="goma",
         help="Enable hyperspeed compilation with Goma! (Googlers only)",
     )
-    parser.add_argument(
+
+    log_level_group = parser.add_mutually_exclusive_group()
+    log_level_group.add_argument(
         "-l",
         "--log-level",
-        choices=list(log_level_map.keys()),
-        dest="log_level",
+        choices=log_level_map.values(),
+        metavar=f"{{{','.join(log_level_map)}}}",
+        type=lambda x: log_level_map[x],
+        default=logging.INFO,
         help="Set the logging level (default=INFO)",
     )
+    log_level_group.add_argument(
+        "-D",
+        "--debug",
+        dest="log_level",
+        action="store_const",
+        const=logging.DEBUG,
+        help="Alias for --log-level=DEBUG",
+    )
+
     parser.add_argument(
         "-L",
         "--no-log-label",
@@ -340,15 +346,7 @@ def main(argv=None):
     opts = parser.parse_args(argv)
 
     # Default logging
-    log_level = logging.INFO
     log_label = False
-
-    if opts.log_level:
-        log_level = log_level_map[opts.log_level]
-        log_label = True
-    elif opts.debug:
-        log_level = logging.DEBUG
-        log_label = True
 
     if opts.log_label is not None:
         log_label = opts.log_label
@@ -358,10 +356,7 @@ def main(argv=None):
         log_format = "%(message)s"
         multiproc.log_job_names = False
 
-    logging.basicConfig(format=log_format, level=log_level)
-
-    if not opts.debug:
-        sys.tracebacklimit = 0
+    logging.basicConfig(format=log_format, level=opts.log_level)
 
     try:
         zmake = call_with_namespace(zm.Zmake, opts)
