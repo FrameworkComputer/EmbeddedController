@@ -91,7 +91,7 @@ if [ -s "${new_adhoc}" ]; then
 else
 	# If we are running in a git repo, check if we can remove some things
 	# from the allowed file
-	if git status 2>/dev/null; then
+	if git rev-parse --is-inside-work-tree 1>/dev/null 2>&1; then
 		./util/build_allowed.sh
 	fi
 fi
