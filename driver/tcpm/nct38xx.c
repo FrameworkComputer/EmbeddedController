@@ -116,7 +116,7 @@ static int nct38xx_init(int port)
 		return rv;
 
 	/* Set FRS direction for SNK detect, if FRS is enabled */
-	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC)) {
+	if (tcpm_tcpc_has_frs_control(port)) {
 		reg = TCPC_REG_DEV_CAP_2_SNK_FR_SWAP;
 		rv = tcpc_write(port, TCPC_REG_DEV_CAP_2, reg);
 		if (rv)
@@ -344,6 +344,9 @@ static int nct3807_handle_fault(int port, int fault)
 
 __maybe_unused static int nct38xx_set_frs_enable(int port, int enable)
 {
+	if (!tcpm_tcpc_has_frs_control(port))
+		return EC_SUCCESS;
+
 	/*
 	 * From b/192012189: Enabling FRS for this chip should:
 	 *
@@ -404,7 +407,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
 #endif
 	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
-#ifdef CONFIG_USB_PD_FRS_TCPC
+#ifdef CONFIG_USB_PD_FRS
 	.set_frs_enable         = &nct38xx_set_frs_enable,
 #endif
 	.handle_fault		= &nct3807_handle_fault,
