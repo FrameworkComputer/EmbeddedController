@@ -85,7 +85,7 @@
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_switchcap_pg_int_l: switchcap_pg_int_l {
-			gpios = <&gpio0 15 GPIO_INPUT>;
+			gpios = <&gpio0 15 (GPIO_OUTPUT | GPIO_INPUT)>;
 		};
 		gpio_ap_rst_l: ap_rst_l {
 			gpios = <&gpio0 16 GPIO_INPUT>;
@@ -96,7 +96,8 @@
 			enum-name = "GPIO_PS_HOLD";
 		};
 		gpio_mb_power_good: mb_power_good {
-			gpios = <&gpio0 18 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpio0 18 (GPIO_OUTPUT | GPIO_INPUT |
+				GPIO_PULL_DOWN)>;
 			enum-name = "GPIO_POWER_GOOD";
 		};
 		gpio_ap_suspend: ap_suspend {
@@ -120,7 +121,7 @@
 			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_switchcap_on: switchcap_on {
-			gpios = <&gpio0 24 GPIO_OUT_LOW>;
+			gpios = <&gpio0 24 (GPIO_INPUT | GPIO_OUT_LOW)>;
 			enum-name = "GPIO_SWITCHCAP_ON";
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
@@ -128,7 +129,8 @@
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_src_vph_pwr_pg: src_vph_pwr_pg {
-			gpios = <&gpio0 26 (GPIO_INPUT | GPIO_PULL_DOWN)>;
+			gpios = <&gpio0 26 (GPIO_INPUT | GPIO_OUTPUT |
+				GPIO_PULL_DOWN)>;
 			enum-name = "GPIO_SWITCHCAP_PG";
 		};
 		gpio_test: test {
@@ -174,6 +176,11 @@
 			irq-pin = <&gpio_test>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gpio_test_interrupt";
+		};
+		int_mb_power_good: mb_power_good {
+			irq-pin = <&gpio_mb_power_good>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
 		};
 	};
 

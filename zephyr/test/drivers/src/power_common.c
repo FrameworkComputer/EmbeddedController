@@ -25,6 +25,7 @@
 
 #include "battery.h"
 #include "battery_smart.h"
+#include "utils.h"
 
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
 
@@ -111,7 +112,7 @@ static int in_state_test_masks[] = {
 };
 
 /** Test chipset_in_state() for each state */
-ZTEST(power_common, test_power_chipset_in_state)
+ZTEST(power_common_no_tasks, test_power_chipset_in_state)
 {
 	bool expected_in_state;
 	bool transition_from;
@@ -146,7 +147,7 @@ ZTEST(power_common, test_power_chipset_in_state)
 }
 
 /** Test chipset_in_or_transitioning_to_state() for each state */
-ZTEST(power_common, test_power_chipset_in_or_transitioning_to_state)
+ZTEST(power_common_no_tasks, test_power_chipset_in_or_transitioning_to_state)
 {
 	bool expected_in_state;
 	bool in_state;
@@ -482,8 +483,7 @@ static void setup_hibernation_delay(void *state)
 	bat->volt = battery_get_info()->voltage_normal;
 
 	/* Force initial state */
-	power_set_state(POWER_G3);
-	zassert_equal(POWER_G3, power_get_state(), NULL);
+	test_set_chipset_to_g3();
 
 	/* Disable AC */
 	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, 0), NULL);
@@ -504,6 +504,11 @@ ZTEST(power_common_hibernation, test_power_hc_hibernation_delay)
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_NODE, gpios));
 	uint32_t h_delay;
 	int sleep_time;
+
+	zassert_equal(power_get_state(), POWER_G3,
+		"Power state is %d, expected G3", power_get_state());
+	/* This is a no-op, but it will reset the last_shutdown_time. */
+	power_set_state(POWER_G3);
 
 	/* Set hibernate delay */
 	h_delay = 9;
@@ -615,6 +620,11 @@ ZTEST(power_common_hibernation, test_power_cmd_hibernation_delay)
 {
 	uint32_t h_delay;
 	int sleep_time;
+
+	zassert_equal(power_get_state(), POWER_G3,
+		"Power state is %d, expected G3", power_get_state());
+	/* This is a no-op, but it will reset the last_shutdown_time. */
+	power_set_state(POWER_G3);
 
 	/* Test success on call without argument */
 	zassert_equal(EC_SUCCESS,

@@ -17,9 +17,11 @@
 #include "stubs.h"
 #include "usb_prl_sm.h"
 #include "usb_tc_sm.h"
+#include "chipset.h"
 
 #include "driver/retimer/bb_retimer.h"
 #include "test_state.h"
+#include "utils.h"
 
 #define GPIO_USB_C1_LS_EN_PATH DT_PATH(named_gpios, usb_c1_ls_en)
 #define GPIO_USB_C1_LS_EN_PORT DT_GPIO_PIN(GPIO_USB_C1_LS_EN_PATH, gpios)
@@ -446,7 +448,7 @@ ZTEST_USER(bb_retimer, test_bb_init)
 	emul = bb_emul_get(BB_RETIMER_ORD);
 
 	/* Set AP to normal state and wait for chipset task */
-	power_set_state(POWER_S0);
+	test_set_chipset_to_s0();
 
 	/* Setup emulator fail on read */
 	i2c_common_emul_set_read_fail_reg(emul, BB_RETIMER_REG_VENDOR_ID);
@@ -507,7 +509,7 @@ ZTEST_USER(bb_retimer, test_bb_init)
 		      NULL);
 
 	/* Set AP to off state and wait for chipset task */
-	power_set_state(POWER_G3);
+	test_set_chipset_to_g3();
 
 	/* With AP off, init should fail and pins should be unset */
 	zassert_equal(EC_ERROR_NOT_POWERED,

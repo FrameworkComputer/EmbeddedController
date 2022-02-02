@@ -27,6 +27,7 @@
 
 #include "usb_mux.h"
 #include "test_state.h"
+#include "utils.h"
 
 /** Copy of original usb_muxes[USB_PORT_C1] */
 struct usb_mux usb_mux_c1;
@@ -404,7 +405,7 @@ ZTEST(usb_uninit_mux, test_usb_mux_init)
 	set_test_runner_tid();
 
 	/* Set AP to normal state to init BB retimer */
-	power_set_state(POWER_S0);
+	test_set_chipset_to_s0();
 
 	/* Test successful initialisation */
 	usb_mux_init(USBC_PORT_C1);

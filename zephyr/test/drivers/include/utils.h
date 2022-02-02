@@ -11,4 +11,7 @@
 /** @brief Set chipset to S0 state. Call all necessary hooks. */
 void test_set_chipset_to_s0(void);
 
+/** @brief Set chipset to G3 state. Call all necessary hooks. */
+void test_set_chipset_to_g3(void);
+
 #endif /* ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_ */

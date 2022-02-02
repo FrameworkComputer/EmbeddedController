@@ -62,7 +62,10 @@ int system_is_in_rw(void)
 
 uint32_t system_get_reset_flags(void)
 {
-	return 0;
+	/* Don't power up the AP automatically, let the tests do it if they
+	 * need to.
+	 */
+	return EC_RESET_FLAG_AP_OFF;
 }
 
 void system_print_banner(void)
