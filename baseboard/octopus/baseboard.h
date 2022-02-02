@@ -69,6 +69,12 @@
 
 	/* EC variant determines USB-C variant */
 	#define VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS
+
+	/*
+	 * Limit maximal ODR to 125Hz, the EC is using ~5ms per sample at
+	 * 48MHz core cpu clock.
+	 */
+	#define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 125000
 #else
 	#error Must define a VARIANT_OCTOPUS_EC
 #endif /* VARIANT_OCTOPUS_EC */
