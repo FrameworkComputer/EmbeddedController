@@ -820,7 +820,7 @@ ZTEST(usb_init_mux, test_usb_mux_typec_command)
 
 	/* Test error on command with no argument */
 	zassert_equal(EC_ERROR_PARAM_COUNT,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"typec"), NULL);
 
 	/*
@@ -829,17 +829,17 @@ ZTEST(usb_init_mux, test_usb_mux_typec_command)
 	 * without accessing cprints output.
 	 */
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"typec debug"), NULL);
 
 	/* Test error on port argument that is not a number */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"typec test1"), NULL);
 
 	/* Test error on invalid port number */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"typec 5"), NULL);
 
 	/*
@@ -848,7 +848,7 @@ ZTEST(usb_init_mux, test_usb_mux_typec_command)
 	 */
 	set_proxy_get_mux_state_seq(USB_PD_MUX_TBT_COMPAT_ENABLED);
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"typec 1"), NULL);
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_get, NUM_OF_PROXY);
 
@@ -856,7 +856,7 @@ ZTEST(usb_init_mux, test_usb_mux_typec_command)
 	reset_proxy_fakes();
 	exp_mode = USB_PD_MUX_NONE;
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"typec 1 none"), NULL);
 	CHECK_PROXY_FAKE_CALL_CNT_MUX_STATE(proxy_set, NUM_OF_PROXY, exp_mode);
 	/* Mux will enter low power mode */
@@ -870,7 +870,7 @@ ZTEST(usb_init_mux, test_usb_mux_typec_command)
 	reset_proxy_fakes();
 	exp_mode = USB_PD_MUX_USB_ENABLED | polarity;
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"typec 1 usb"), NULL);
 	CHECK_PROXY_FAKE_CALL_CNT_MUX_STATE(proxy_set, NUM_OF_PROXY, exp_mode);
 	/* Mux will exit low power mode */
@@ -880,7 +880,7 @@ ZTEST(usb_init_mux, test_usb_mux_typec_command)
 	reset_proxy_fakes();
 	exp_mode = USB_PD_MUX_DP_ENABLED | polarity;
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"typec 1 dp"), NULL);
 	CHECK_PROXY_FAKE_CALL_CNT_MUX_STATE(proxy_set, NUM_OF_PROXY, exp_mode);
 
@@ -888,7 +888,7 @@ ZTEST(usb_init_mux, test_usb_mux_typec_command)
 	reset_proxy_fakes();
 	exp_mode = USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED | polarity;
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"typec 1 dock"), NULL);
 	CHECK_PROXY_FAKE_CALL_CNT_MUX_STATE(proxy_set, NUM_OF_PROXY, exp_mode);
 }

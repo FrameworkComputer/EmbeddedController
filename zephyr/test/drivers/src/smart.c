@@ -434,28 +434,28 @@ ZTEST_USER(smart_battery, test_battery_fake_charge)
 
 	/* Success on command with no argument */
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"battfake"), NULL);
 
 	/* Fail on command with argument which is not a number */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"battfake test"), NULL);
 
 	/* Fail on command with charge level above 100% */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"battfake 123"), NULL);
 
 	/* Fail on command with charge level below 0% */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"battfake -23"), NULL);
 
 	/* Set fake charge level */
 	fake_charge = 65;
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"battfake 65"), NULL);
 
 	/* Test that fake charge level is applied */
@@ -483,7 +483,7 @@ ZTEST_USER(smart_battery, test_battery_fake_charge)
 
 	/* Disable fake charge level */
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"battfake -1"), NULL);
 
 	/* Test that fake charge level is not applied */
@@ -511,28 +511,28 @@ ZTEST_USER(smart_battery, test_battery_fake_temperature)
 
 	/* Success on command with no argument */
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"batttempfake"), NULL);
 
 	/* Fail on command with argument which is not a number */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"batttempfake test"), NULL);
 
 	/* Fail on command with too high temperature (above 500.0 K) */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"batttempfake 5001"), NULL);
 
 	/* Fail on command with too low temperature (below 0 K) */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"batttempfake -23"), NULL);
 
 	/* Set fake temperature */
 	fake_temp = 2840;
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"batttempfake 2840"), NULL);
 
 	/* Test that fake temperature is applied */
@@ -544,7 +544,7 @@ ZTEST_USER(smart_battery, test_battery_fake_temperature)
 
 	/* Disable fake temperature */
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"batttempfake -1"), NULL);
 
 	/* Test that fake temperature is not applied */

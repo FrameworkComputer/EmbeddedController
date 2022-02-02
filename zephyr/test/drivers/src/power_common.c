@@ -628,20 +628,20 @@ ZTEST(power_common_hibernation, test_power_cmd_hibernation_delay)
 
 	/* Test success on call without argument */
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"hibdelay"),
 		      NULL);
 
 	/* Test error on hibernation delay argument that is not a number */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"hibdelay test1"),
 		      NULL);
 
 	/* Set hibernate delay */
 	h_delay = 3;
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
+		      shell_execute_cmd(get_ec_shell(),
 					"hibdelay 3"),
 		      NULL);
 

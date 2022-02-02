@@ -32,6 +32,13 @@ void uart_shell_start(void);
  * the PD threads, but higher than the HOSTCMD thread.  See shimmed_task_id.h
  */
 void uart_shell_set_priority(int prio);
+
+#ifdef TEST_BUILD
+/* Gets the pointer to the zephyr shell, since it might not always be
+ * the uart backend.
+ */
+const struct shell *get_ec_shell(void);
+#endif
 #else
 static inline int uart_shell_stop(void)
 {

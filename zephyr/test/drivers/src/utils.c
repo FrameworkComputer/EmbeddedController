@@ -48,15 +48,14 @@ void test_set_chipset_to_s0(void)
 		   NULL);
 
 	/* The easiest way to power on seems to be the shell command. */
-	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(shell_backend_uart_get_ptr(),
-					"power on"),
+	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "power on"),
 		      NULL);
 
 	k_sleep(K_SECONDS(1));
 
 	/* Check if chipset is in correct state */
-	zassert_equal(POWER_S0, power_get_state(), NULL);
+	zassert_equal(POWER_S0, power_get_state(), "Expected S0, got %d",
+		      power_get_state());
 }
 
 void test_set_chipset_to_g3(void)
@@ -65,5 +64,6 @@ void test_set_chipset_to_g3(void)
 	chipset_force_shutdown(CHIPSET_RESET_KB_SYSRESET);
 	k_sleep(K_SECONDS(20));
 	/* Check if chipset is in correct state */
-	zassert_equal(POWER_G3, power_get_state(), NULL);
+	zassert_equal(POWER_G3, power_get_state(), "Expected G3, got %d",
+		      power_get_state());
 }
