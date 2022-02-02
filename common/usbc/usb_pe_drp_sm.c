@@ -6119,10 +6119,12 @@ static void pe_vdm_response_entry(int port)
 			/*
 			 * If command response is an ACK and if the command was
 			 * either enter/exit mode, then update the PE modal flag
-			 * accordingly.
+			 * accordingly and cancel any DFP swap attempts.
 			 */
-			if (vdo_cmd == CMD_ENTER_MODE)
+			if (vdo_cmd == CMD_ENTER_MODE) {
+				PE_CLR_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
 				PE_SET_FLAG(port, PE_FLAGS_MODAL_OPERATION);
+			}
 			if (vdo_cmd == CMD_EXIT_MODE)
 				PE_CLR_FLAG(port, PE_FLAGS_MODAL_OPERATION);
 		} else if (!vdo_len) {
