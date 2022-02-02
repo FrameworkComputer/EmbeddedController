@@ -4,5 +4,8 @@
 
 config BUG209907615
 	bool "Enable tests for b:209907615"
+	help
+	This flag may change as we protoype integration tests.
+	TODO(b/209907615): Remove when test finished.
 
 source "Kconfig.zephyr"

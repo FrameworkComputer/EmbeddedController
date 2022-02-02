@@ -54,15 +54,12 @@ static void integration_usb_before(void *state)
 
 	ARG_UNUSED(state);
 	zassert_ok(tcpc_config[0].drv->init(0), NULL);
-	if (IS_ENABLED(CONFIG_BUG209907615)) {
-		/* Fails USB Mux tests */
-		/*
-		 * Arbitrary FW ver. The emulator should really be setting this
-		 * during its init.
-		 */
-		tcpci_emul_set_reg(tcpci_emul2, PS8XXX_REG_FW_REV, 0x31);
-		zassert_ok(tcpc_config[1].drv->init(1), NULL);
-	}
+	/*
+	 * Arbitrary FW ver. The emulator should really be setting this
+	 * during its init.
+	 */
+	tcpci_emul_set_reg(tcpci_emul2, PS8XXX_REG_FW_REV, 0x31);
+	zassert_ok(tcpc_config[1].drv->init(1), NULL);
 	tcpci_emul_set_rev(tcpci_emul, TCPCI_EMUL_REV1_0_VER1_0);
 	pd_set_suspend(0, 0);
 	pd_set_suspend(1, 0);
@@ -365,13 +362,15 @@ ZTEST(integration_usb, test_attach_drp)
 	zassert_equal(PE_SNK_READY, get_state_pe(USBC_PORT_C0), NULL);
 }
 
-ZTEST(integration_usb, test_attach_src_then_snk)
+ZTEST(integration_usb, test_attach_src_then_snk__verify_pd_info_cmd)
 {
 	const struct emul *tcpci_emul_src =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
 	const struct emul *tcpci_emul_snk =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
 	struct tcpci_src_emul my_charger;
+	const struct emul *charger_emul =
+		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 	struct tcpci_snk_emul my_sink;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
@@ -396,6 +395,7 @@ ZTEST(integration_usb, test_attach_src_then_snk)
 			   &my_charger.data, &my_charger.common_data,
 			   &my_charger.ops, tcpci_emul_src),
 		   NULL);
+	isl923x_emul_set_adc_vbus(charger_emul, 5000);
 
 	/* Wait for current ramp. */
 	k_sleep(K_SECONDS(10));
@@ -418,24 +418,38 @@ ZTEST(integration_usb, test_attach_src_then_snk)
 	/* Wait for PD negotiation */
 	k_sleep(K_SECONDS(10));
 
-	/* TODO(b/217394181): limit to value faking */
-	if (IS_ENABLED(CONFIG_BUG209907615)) {
-		/* Verify Default 5V and 3A */
-		/* Fails on actual mV reported as it is way past max 5000 */
-		/* TODO(b/217394181): Refactor to direct assert calls */
-		check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK,
-					USB_CHG_TYPE_PD, 5000, 3000);
-	}
+	/* Verify Default 5V and 3A */
+	/* TODO(b/217394181): Refactor to direct assert calls */
+	check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK, USB_CHG_TYPE_PD,
+				5000, 3000);
 
-	/* TODO(b/217394181): limit to value faking */
-	if (IS_ENABLED(CONFIG_BUG209907615)) {
-		/*
-		 * TODO(b/217394181): Refactor to direct assert calls
-		 * TODO(b/209907615): Confirm measure value requirements
-		 */
-		check_usb_pd_power_info(0, USB_PD_PORT_POWER_SOURCE,
-					USB_CHG_TYPE_PD, 5000, 3000);
-	}
+	/*
+	 * TODO(b/209907615): Confirm measure value requirements
+	 */
+	zassert_ok(host_command_process(&args_c1),
+		   "Failed to get PD power info");
+	/* Verify we are the source to the attached sink */
+	zassert_equal(response_c1.role, USB_PD_PORT_POWER_SOURCE,
+		      "Expected Power role %d, but PD reports role %d",
+		      USB_PD_PORT_POWER_SOURCE, response_c1.role);
+	/*
+	 * TODO(b/209907615): Confirm charge type requirement
+	 */
+	zassert_equal(response_c1.type, USB_CHG_TYPE_NONE,
+		      "Expected Charger type %d, but PD reports type %d",
+		      USB_CHG_TYPE_NONE, response_c1.type);
+	/* Verify Default 5V and 3A */
+	zassert_within(response_c1.meas.voltage_now, 5000, 5000 / 10,
+		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
+		       5000, response_c1.meas.voltage_now);
+	zassert_equal(response_c1.meas.current_max, 3000,
+		      "Expected Charging at VBUS max %dmA, but PD reports %dmA",
+		      3000, response_c1.meas.current_max);
+
+	/* Note: We are the source so we skip checking: */
+	/* meas.voltage_max */
+	/* max_power */
+	/* current limit */
 }
 
 ZTEST_SUITE(integration_usb, drivers_predicate_post_main, NULL,
