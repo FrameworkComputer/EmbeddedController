@@ -7,8 +7,10 @@
 
 #include "adc.h"
 #include "base_fw_config.h"
+#include "battery.h"
 #include "board_fw_config.h"
 #include "button.h"
+#include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "cros_board_info.h"
@@ -484,3 +486,20 @@ static void hdmi_hpd_interrupt(enum gpio_signal signal)
 	/* Debounce for 2 msec */
 	hook_call_deferred(&hdmi_hpd_handler_data, (2 * MSEC));
 }
+
+void board_set_current_limit(void)
+{
+	const int no_battery_current_limit_override_ma = 6000;
+	/*
+	 * When there is no battery, override charger current limit to
+	 * prevent brownout during boot.
+	 */
+	if (battery_is_present() == BP_NO) {
+		ccprints("No Battery Found - Override Current Limit to %dmA",
+			 no_battery_current_limit_override_ma);
+		charger_set_input_current_limit(
+			CHARGER_SOLO, no_battery_current_limit_override_ma);
+	}
+}
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, board_set_current_limit,
+	     HOOK_PRIO_INIT_EXTPOWER);
