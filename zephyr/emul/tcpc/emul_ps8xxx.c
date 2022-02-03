@@ -529,6 +529,8 @@ static int ps8xxx_emul_init(const struct emul *emul,
 
 	tcpci_emul_set_reg(data->tcpci_emul, TCPC_REG_PRODUCT_ID,
 			   data->prod_id);
+	/* FW rev is never 0 in a working device. Set arbitrary FW rev. */
+	tcpci_emul_set_reg(data->tcpci_emul, PS8XXX_REG_FW_REV, 0x31);
 
 	return ret;
 }
