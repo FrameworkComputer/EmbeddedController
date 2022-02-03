@@ -3,7 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * SPI master driver.
+ * SPI controller driver.
  */
 
 #include "common.h"
@@ -16,7 +16,7 @@
 #include "timer.h"
 #include "util.h"
 
-/* SPI ports are used as master */
+/* SPI ports are used as controller */
 static stm32_spi_regs_t *SPI_REGS[] = {
 #ifdef CONFIG_STM32_SPI1_CONTROLLER
 	STM32_SPI1_REGS,
@@ -96,14 +96,14 @@ static uint8_t spi_enabled[ARRAY_SIZE(SPI_REGS)];
  * Initialize SPI module, registers, and clocks
  * @param spi_device  device to initialize.
  */
-static void spi_master_config(const struct spi_device_t *spi_device)
+static void spi_controller_config(const struct spi_device_t *spi_device)
 {
 	int port = spi_device->port;
 
 	stm32_spi_regs_t *spi = SPI_REGS[port];
 
 	/*
-	 * Set SPI master, baud rate, and software slave control.
+	 * Set SPI controller, baud rate, and software peripheral control.
 	 */
 	spi->cr1 = STM32_SPI_CR1_SSI;
 	spi->cfg2 = STM32_SPI_CFG2_MSTR | STM32_SPI_CFG2_SSM |
@@ -116,9 +116,9 @@ static void spi_master_config(const struct spi_device_t *spi_device)
 	dma_select_channel(dma_rx_option[port].channel, dma_req_rx[port]);
 }
 
-static int spi_master_initialize(const struct spi_device_t *spi_device)
+static int spi_controller_initialize(const struct spi_device_t *spi_device)
 {
-	spi_master_config(spi_device);
+	spi_controller_config(spi_device);
 
 	gpio_set_level(spi_device->gpio_cs, 1);
 
@@ -131,7 +131,7 @@ static int spi_master_initialize(const struct spi_device_t *spi_device)
 /**
  * Shutdown SPI module
  */
-static int spi_master_shutdown(const struct spi_device_t *spi_device)
+static int spi_controller_shutdown(const struct spi_device_t *spi_device)
 {
 	int rv = EC_SUCCESS;
 	int port = spi_device->port;
@@ -159,9 +159,9 @@ int spi_enable(const struct spi_device_t *spi_device, int enable)
 	if (enable == spi_enabled[port])
 		return EC_SUCCESS;
 	if (enable)
-		return spi_master_initialize(spi_device);
+		return spi_controller_initialize(spi_device);
 	else
-		return spi_master_shutdown(spi_device);
+		return spi_controller_shutdown(spi_device);
 }
 
 static int spi_dma_start(const struct spi_device_t *spi_device,
@@ -180,7 +180,7 @@ static int spi_dma_start(const struct spi_device_t *spi_device,
 	dma_clear_isr(dma_tx_option[port].channel);
 	dma_clear_isr(dma_rx_option[port].channel);
 	/* restore proper SPI configuration registers. */
-	spi_master_config(spi_device);
+	spi_controller_config(spi_device);
 
 	spi->cr2 = len;
 	spi->cfg1 |= STM32_SPI_CFG1_RXDMAEN;

@@ -798,7 +798,7 @@ enum dma_channel {
 	STM32_DMAC_FMPI2C4_TX = STM32_DMA1_STREAM5,
 	STM32_DMAC_FMPI2C4_RX = STM32_DMA1_STREAM2,
 
-	/* Legacy naming for spi_master.c */
+	/* Legacy naming for spi_controller.c */
 	STM32_DMAC_SPI1_TX = STM32_DMA2_STREAM3, /* REQ 3 */
 	STM32_DMAC_SPI1_RX = STM32_DMA2_STREAM0, /* REQ 3 */
 	STM32_DMAC_SPI2_TX = STM32_DMA1_STREAM4, /* REQ 0 */

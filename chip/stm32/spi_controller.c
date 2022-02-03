@@ -3,7 +3,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
- * SPI master driver.
+ * SPI controller driver.
  */
 
 #include "common.h"
@@ -25,7 +25,7 @@
 #undef  HAS_SPI3
 #endif
 
-/* The second (and third if available) SPI port are used as master */
+/* The second (and third if available) SPI port are used as controller */
 static stm32_spi_regs_t *SPI_REGS[] = {
 #ifdef CONFIG_STM32_SPI1_CONTROLLER
 	STM32_SPI1_REGS,
@@ -148,56 +148,57 @@ static int spi_clear_tx_fifo(stm32_spi_regs_t *spi)
  *
  * - port: which port to initialize.
  */
-static int spi_master_initialize(const struct spi_device_t *spi_device)
+static int spi_controller_initialize(const struct spi_device_t *spi_device)
 {
 	int port = spi_device->port;
 
 	stm32_spi_regs_t *spi = SPI_REGS[port];
 
 	/*
-	 * Set SPI master, baud rate, and software slave control.
+	 * Set SPI controller, baud rate, and software peripheral control.
 	 * */
 
 	/*
 	 * STM32F412
-	 * Section 26.3.5 Slave select (NSS) pin management and Figure 276
+	 * Section 26.3.5 Chip select (NSS) pin management and Figure 276
 	 * https://www.st.com/resource/en/reference_manual/dm00180369.pdf#page=817
 	 *
 	 * The documentation in this section is a bit confusing, so here's a
 	 * summary based on discussion with ST:
 	 *
 	 * Software NSS management (SSM = 1):
-	 *   - In master mode, the NSS output is deactivated. You need to use a
-	 *     GPIO in output mode for slave select. This is generally used for
-	 *     multi-slave operation, but you can also use it for single slave
-	 *     operation. In this case, you should make sure to configure a GPIO
-	 *     for NSS, but *not* activate the SPI alternate function on that
-	 *     same pin since that will enable hardware NSS management (see
-	 *     below).
-	 *   - In slave mode, the NSS input level is equal to the SSI bit value.
+	 *   - In controller mode, the NSS output is deactivated. You need to
+	 *     use a GPIO in output mode for chip select. This is generally used
+	 *     for multi-peripheral operation, but you can also use it for
+	 *     single peripheral operation. In this case, you should make sure
+	 *     to configure a GPIO for NSS, but *not* activate the SPI alternate
+	 *     function on that same pin since that will enable hardware NSS
+	 *     management (see below).
+	 *   - In peripheral mode, the NSS input level is equal to the SSI bit
+	 *     value.
 	 *
 	 * Hardware NSS management (SSM = 0):
-	 *   - In slave mode, when NSS pin is detected low the slave (MCU) is
-	 *     selected.
-	 *   - In master mode, there are two configurations, depending on the
-	 *     SSOE bit in register SPIx_CR1.
+	 *   - In peripheral mode, when NSS pin is detected low the peripheral
+	 *     (MCU) is selected.
+	 *   - In controller mode, there are two configurations, depending on
+	 *     the SSOE bit in register SPIx_CR1.
 	 *       - NSS output enable (SSM=0, SSOE=1):
-	 *         The MCU (master) drives NSS low as soon as SPI is enabled
+	 *         The MCU (controller) drives NSS low as soon as SPI is enabled
 	 *         (SPE=1) and releases it when SPI is disabled (SPE=0).
 	 *
 	 *       - NSS output disable (SSM=0, SSOE=0):
-	 *         Allows multimaster capability. The MCU (master) drives NSS
-	 *         low.  If another master tries to takes control of the bus and
-	 *         NSS is pulled low, a mode fault is generated and the MCU
-	 *         changes to slave mode.
+	 *         Allows multi-controller capability. The MCU (controller)
+	 *         drives NSS low. If another controller tries to takes control
+	 *         of the bus and NSS is pulled low, a mode fault is generated
+	 *         and the MCU changes to peripheral mode.
 	 *
 	 *   - NSS output disable (SSM=0, SSOE=0): if the MCU is acting as
-	 *     master on the bus, this config allows multimaster capability. If
-	 *     the NSS pin is pulled low in this mode, the SPI enters master
-	 *     mode fault state and the device is automatically reconfigured in
-	 *     slave mode.  In slave mode, the NSS pin works as a standard "chip
-	 *     select" input and the slave is selected while NSS lin is at low
-	 *     level.
+	 *     controller on the bus, this config allows multi-controller
+	 *     capability. If the NSS pin is pulled low in this mode, the SPI
+	 *     enters controller mode fault state and the device is
+	 *     automatically reconfigured in peripheral mode. In peripheral
+	 *     mode, the NSS pin works as a standard "chip select" input and the
+	 *     peripheral is selected while NSS lin is at low level.
 	 */
 	spi->cr1 = STM32_SPI_CR1_MSTR | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI |
 		   (spi_device->div << 3);
@@ -239,7 +240,7 @@ static int spi_master_initialize(const struct spi_device_t *spi_device)
 /**
  * Shutdown SPI module
  */
-static int spi_master_shutdown(const struct spi_device_t *spi_device)
+static int spi_controller_shutdown(const struct spi_device_t *spi_device)
 {
 	int rv = EC_SUCCESS;
 	int port = spi_device->port;
@@ -268,9 +269,9 @@ int spi_enable(const struct spi_device_t *spi_device, int enable)
 	if (enable == spi_enabled[spi_device->port])
 		return EC_SUCCESS;
 	if (enable)
-		return spi_master_initialize(spi_device);
+		return spi_controller_initialize(spi_device);
 	else
-		return spi_master_shutdown(spi_device);
+		return spi_controller_shutdown(spi_device);
 }
 
 static int spi_dma_start(int port, const uint8_t *txdata,

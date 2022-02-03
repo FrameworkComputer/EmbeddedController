@@ -51,7 +51,7 @@ chip-y+=clock-f.o
 endif
 chip-$(CONFIG_FPU)+=fpu.o
 chip-$(CONFIG_SPI)+=spi.o
-chip-$(CONFIG_SPI_CONTROLLER)+=spi_master$(SPI_TYPE).o
+chip-$(CONFIG_SPI_CONTROLLER)+=spi_controller$(SPI_TYPE).o
 chip-$(CONFIG_COMMON_GPIO)+=gpio.o gpio-$(CHIP_FAMILY).o
 chip-$(CONFIG_COMMON_TIMER)+=hwtimer$(TIMER_TYPE).o
 chip-$(CONFIG_I2C)+=i2c-$(CHIP_FAMILY).o
