@@ -19,3 +19,35 @@ is intended to ensure that we have a path to upstreaming our code eventually and
 do not rely on Chrome OS-specific tools. It does make use of 'zmake', however.
 
 See the piplines [here](https://gitlab.com/zephyr-ec/ec/-/pipelines).
+
+## CQ builder
+
+To test the cq builder script run these commands:
+
+### firmware-zephyr-cq
+```
+rm -rf /tmp/artifact_bundles /tmp/artifact_bundle_metadata \
+  ~/chromiumos/src/platform/ec/build
+cd ~/chromiumos/src/platform/ec/zephyr
+./firmware_builder.py --metrics /tmp/metrics build && \
+./firmware_builder.py --metrics /tmp/metrics test && \
+./firmware_builder.py --metrics /tmp/metrics bundle && \
+echo PASSED
+cat /tmp/artifact_bundle_metadata
+ls -l /tmp/artifact_bundles/
+```
+
+### firmware-zephyr-cov-cq
+```
+rm -rf /tmp/artifact_bundles-cov /tmp/artifact_bundle_metadata-cov \
+  ~/chromiumos/src/platform/ec/build
+cd ~/chromiumos/src/platform/ec/zephyr
+./firmware_builder.py --metrics /tmp/metrics --code-coverage build && \
+./firmware_builder.py --metrics /tmp/metrics --code-coverage test && \
+./firmware_builder.py --metrics /tmp/metrics --code-coverage \
+  --output-dir=/tmp/artifact_bundles-cov \
+  --metadata=/tmp/artifact_bundle_metadata-cov bundle && \
+echo PASSED
+cat /tmp/artifact_bundle_metadata-cov
+ls -l /tmp/artifact_bundles-cov
+```
