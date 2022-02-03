@@ -50,14 +50,14 @@ LID_OPEN,MISC,Indicator from lid switch that lid is open,IN,both,--,N,3.30 V,,G7
 TABLET_MODE_L,MISC,Indicator from lid switch that lid is flipped all the way around,IN,both,--,N,3.30 V,,M12,L8,INPUT,GPIO_TABLET_MODE_L,,Not required to connect to EC?
 IMU_INT_L,MISC,Interrupt from base intertial measurement unit,IN,falling,,N,1.80 V,IMU,M2,F15,INPUT,,,
 ACC_INT_L,MISC,Interrupt from lid accel (only in convertibles),IN,falling,,N,1.80 V,ACC,G10,E2,INPUT,,,Not required from Dedede?
-EC_WP_ODL,MISC,Write protection status from GSC,IN,no,--,N,3.30 V,GSC,L12,R8,INPUT,GPIO_WP_L,,
+EC_WP_ODL,MISC,Write protection status from GSC,IN,no,--,N,3.30 V,GSC,L12,R8,INPUT_L,GPIO_WP_L,,
 EC_EDP_BL_EN_OD,MISC,EC override of backlight enable,OUT,,OD,N,3.30 V,,E10,R15,OUTPUT_ODR,GPIO_ENABLE_BACKLIGHT,,
 TEMP_SENSOR_1,MISC,NTC 1 - near memory,IN,no,ADC,N,ANA,,F2,H15,ADC,ADC_TEMP_SENSOR_1,,
 TEMP_SENSOR_2,MISC,NTC 2 - near chassis hot spot,IN,no,ADC,N,ANA,,E3,G10,ADC,ADC_TEMP_SENSOR_2,,
 TEMP_SENSOR_3,MISC,NTC 3 - Ambient/skin temp,IN,no,ADC,N,ANA,,#N/A,A13,ADC,ADC_TEMP_SENSOR_3,,
 USB_C0_INT_ODL,MISC,Interrupt for all ICs for Type-C port 0,IN,,--,Y,3.30 V,,E6,P1,INPUT_PU,,,
-"SUB_USB_C1_INT_OD
-(HDMI: EN_SUB_RAILS_ODL)",MISC,"Interrupt for all ICs for Type-C port 1 or the sub-boar
+"SUB_USB_C1_INT_ODL
+(HDMI: EN_SUB_RAILS_ODL)",MISC,"Interrupt for all ICs for Type-C port 1 or the sub-board
 HDMI: Enable 5V power rail/output/active low",IN,,--,Y,3.30 V,,F7,N2,OTHER,,,
 HDMI_SEL,MISC,Configures AUX to be HDMI DDC,OUT,,TTL,N,3.30 V,,D10,F2,OUTPUT,,,
 CCD_MODE_ODL,MISC,Indicates whether H1 is using SBU lines for debug. Also can trigger CCD if the EC decides to.,I/O,falling,--/OD,N,3.30 V,GSC,A12,B9,INPUT,GPIO_CCD_MODE_ODL,,
@@ -115,4 +115,4 @@ EN_USB_C0_CC2_VCONN,USB-PD,CC2 vconn en for IT81302 only,OUT,,TTL,N,3.30 V,,#N/A
 EC_TRIS_L,DEBUG,Debug for NPCX993,,,,,,,E4,#N/A,OTHER,,,
 EC_TEST_L,DEBUG,Debug for NPCX994,,,,,,,K2,#N/A,OTHER,,,
 EC_32KXOUT,DEBUG,Debug for NPCX995,,,,,,,M5,#N/A,OTHER,,,
-EC_SHDF_ESPI_L,DEBUG,Debug for NPCX996,,,,,,,H3,#N/A,OTHER,,
+EC_SHDF_ESPI_L,DEBUG,Debug for NPCX996,,,,,,,H3,#N/A,OTHER,,,

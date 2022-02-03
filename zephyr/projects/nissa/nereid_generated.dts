@@ -85,6 +85,7 @@
 		};
 		gpio_ec_soc_pwr_btn_odl: ec_soc_pwr_btn_odl {
 			gpios = <&gpiob 6 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
 			gpios = <&gpioh 0 GPIO_OUTPUT>;
@@ -102,7 +103,7 @@
 			gpios = <&gpiob 2 GPIO_ODR_LOW>;
 		};
 		gpio_ec_wp_odl: ec_wp_odl {
-			gpios = <&gpioa 6 GPIO_INPUT>;
+			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_WP_L";
 		};
 		gpio_en_kb_bl: en_kb_bl {
