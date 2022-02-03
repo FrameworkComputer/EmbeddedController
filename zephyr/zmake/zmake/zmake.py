@@ -396,7 +396,7 @@ class Zmake:
                 coverage=coverage,
             )
         elif build_after_configure:
-            if coverage and project.config.is_test:
+            if coverage and not project.config.is_test:
                 return self._coverage_compile_only(
                     project=project,
                     build_dir=build_dir,
