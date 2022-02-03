@@ -53,17 +53,26 @@ static void integration_usb_before(void *state)
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
 
 	ARG_UNUSED(state);
+	/*
+	 * TODO(b/217755888): Refactor to using assume API
+	 */
 	zassert_ok(tcpc_config[0].drv->init(0), NULL);
 	/*
 	 * Arbitrary FW ver. The emulator should really be setting this
 	 * during its init.
 	 */
 	tcpci_emul_set_reg(tcpci_emul2, PS8XXX_REG_FW_REV, 0x31);
+	/*
+	 * TODO(b/217755888): Refactor to using assume API
+	 */
 	zassert_ok(tcpc_config[1].drv->init(1), NULL);
 	tcpci_emul_set_rev(tcpci_emul, TCPCI_EMUL_REV1_0_VER1_0);
 	pd_set_suspend(0, 0);
 	pd_set_suspend(1, 0);
 	/* Reset to disconnected state. */
+	/*
+	 * TODO(b/217755888): Refactor to using assume API
+	 */
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul2), NULL);
 
@@ -72,6 +81,9 @@ static void integration_usb_before(void *state)
 	bat = sbat_emul_get_bat_data(i2c_emul);
 	bat->cur = -5;
 
+	/*
+	 * TODO(b/217755888): Refactor to using assume API
+	 */
 	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_AC_OK_PIN, 0), NULL);
 }
 
@@ -87,6 +99,9 @@ static void integration_usb_after(void *state)
 
 	/* TODO: This function should trigger gpios to signal there is nothing
 	 * attached to the port.
+	 */
+	/*
+	 * TODO(b/217755888): Refactor to using assume API
 	 */
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul2), NULL);
@@ -360,96 +375,6 @@ ZTEST(integration_usb, test_attach_drp)
 	 * TODO: Change it to examining EC_CMD_TYPEC_STATUS
 	 */
 	zassert_equal(PE_SNK_READY, get_state_pe(USBC_PORT_C0), NULL);
-}
-
-ZTEST(integration_usb, test_attach_src_then_snk__verify_pd_info_cmd)
-{
-	const struct emul *tcpci_emul_src =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
-	const struct emul *tcpci_emul_snk =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
-	struct tcpci_src_emul my_charger;
-	const struct emul *charger_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
-	struct tcpci_snk_emul my_sink;
-	const struct device *gpio_dev =
-		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
-	struct ec_params_usb_pd_power_info params_c0 = { .port = 0 };
-	struct ec_response_usb_pd_power_info response_c0;
-	struct ec_params_usb_pd_power_info params_c1 = { .port = 1 };
-	struct ec_response_usb_pd_power_info response_c1;
-	struct host_cmd_handler_args args_c0 = BUILD_HOST_COMMAND_RESPONSE(
-		EC_CMD_USB_PD_POWER_INFO, 0, response_c0);
-	struct host_cmd_handler_args args_c1 = BUILD_HOST_COMMAND_RESPONSE(
-		EC_CMD_USB_PD_POWER_INFO, 0, response_c1);
-
-	args_c0.params = &params_c0;
-	args_c1.params = &params_c1;
-
-	/* 1) Attach SOURCE */
-
-	/* Attach emulated charger. */
-	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_AC_OK_PIN, 1), NULL);
-	tcpci_src_emul_init(&my_charger);
-	zassert_ok(tcpci_src_emul_connect_to_tcpci(
-			   &my_charger.data, &my_charger.common_data,
-			   &my_charger.ops, tcpci_emul_src),
-		   NULL);
-	isl923x_emul_set_adc_vbus(charger_emul, 5000);
-
-	/* Wait for current ramp. */
-	k_sleep(K_SECONDS(10));
-
-	/* 2) Attach SINK */
-
-	/* Set chipset to ON, this will set TCPM to DRP */
-	test_set_chipset_to_s0();
-
-	/* TODO(b/214401892): Check why need to give time TCPM to spin */
-	k_sleep(K_SECONDS(1));
-
-	/* Attach emulated sink */
-	tcpci_snk_emul_init(&my_sink);
-	zassert_ok(tcpci_snk_emul_connect_to_tcpci(
-			   &my_sink.data, &my_sink.common_data, &my_sink.ops,
-			   tcpci_emul_snk),
-		   NULL);
-
-	/* Wait for PD negotiation */
-	k_sleep(K_SECONDS(10));
-
-	/* Verify Default 5V and 3A */
-	/* TODO(b/217394181): Refactor to direct assert calls */
-	check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK, USB_CHG_TYPE_PD,
-				5000, 3000);
-
-	/*
-	 * TODO(b/209907615): Confirm measure value requirements
-	 */
-	zassert_ok(host_command_process(&args_c1),
-		   "Failed to get PD power info");
-	/* Verify we are the source to the attached sink */
-	zassert_equal(response_c1.role, USB_PD_PORT_POWER_SOURCE,
-		      "Expected Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SOURCE, response_c1.role);
-	/*
-	 * TODO(b/209907615): Confirm charge type requirement
-	 */
-	zassert_equal(response_c1.type, USB_CHG_TYPE_NONE,
-		      "Expected Charger type %d, but PD reports type %d",
-		      USB_CHG_TYPE_NONE, response_c1.type);
-	/* Verify Default 5V and 3A */
-	zassert_within(response_c1.meas.voltage_now, 5000, 5000 / 10,
-		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
-		       5000, response_c1.meas.voltage_now);
-	zassert_equal(response_c1.meas.current_max, 3000,
-		      "Expected Charging at VBUS max %dmA, but PD reports %dmA",
-		      3000, response_c1.meas.current_max);
-
-	/* Note: We are the source so we skip checking: */
-	/* meas.voltage_max */
-	/* max_power */
-	/* current limit */
 }
 
 ZTEST_SUITE(integration_usb, drivers_predicate_post_main, NULL,
