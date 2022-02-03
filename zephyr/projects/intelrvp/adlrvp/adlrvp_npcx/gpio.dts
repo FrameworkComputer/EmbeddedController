@@ -117,7 +117,7 @@
 			gpios = <&gpio9 5 GPIO_OUT_LOW>;
 		};
 		ec_flash_wp_odl {
-			gpios = <&gpio9 4 GPIO_INPUT>;
+			gpios = <&gpio9 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_WP_L";
 		};
 		ec_h1_packet_mode {

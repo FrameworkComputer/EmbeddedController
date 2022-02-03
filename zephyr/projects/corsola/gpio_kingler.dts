@@ -81,7 +81,7 @@
 			gpios = <&gpioe 4 GPIO_INPUT>;
 		};
 		gpio_ec_wp_l: ec_wp_odl {
-			gpios = <&gpioe 3 GPIO_INPUT>;
+			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_WP_L";
 		};
 		lid_accel_int_l {

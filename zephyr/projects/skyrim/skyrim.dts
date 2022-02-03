@@ -72,7 +72,7 @@
 			enum-name = "GPIO_EC_CBI_WP";
 		};
 		ec_wp_l {
-			gpios = <&gpiod 7 GPIO_INPUT>;
+			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_WP_L";
 		};
 		gpio_pg_lpddr5_s0_od: pg_lpddr5_s0_od {

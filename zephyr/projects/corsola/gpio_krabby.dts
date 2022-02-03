@@ -54,7 +54,8 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		ec_flash_wp_odl: ec_flash_wp_odl {
-			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_WP_L";
 		};
 		spi0_cs: spi0_cs {

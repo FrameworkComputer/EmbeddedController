@@ -36,7 +36,8 @@
 		 * protection.
 		 */
 		gpio_wp_l: wp_l {
-			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_OUTPUT)>;
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_OUTPUT |
+					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_WP_L";
 		};
 		pg_ec_dsw_pwrok {

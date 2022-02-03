@@ -11,7 +11,8 @@
 			gpios = <&gpio0 3 GPIO_INPUT_PULL_UP>;
 		};
 		wp_l {
-			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio9 3 (GPIO_INPUT_PULL_UP |
+					   GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_WP_L";
 		};
 		gpio_ac_present: ac_present {

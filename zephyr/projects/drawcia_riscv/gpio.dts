@@ -10,7 +10,7 @@
 		compatible = "named-gpios";
 
 		ec_wp_od {
-			gpios = <&gpioa 6 GPIO_INPUT>;
+			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_WP_L";
 		};
 		ec_entering_rw {

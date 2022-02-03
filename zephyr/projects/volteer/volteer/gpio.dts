@@ -16,7 +16,7 @@
 			enum-name = "GPIO_EC_WP_L";
 		};
 		wp_l {
-			gpios = <&gpioa 1 GPIO_INPUT>;
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_WP_L";
 		};
 		gpio_h1_ec_pwr_btn_odl: h1_ec_pwr_btn_odl {
