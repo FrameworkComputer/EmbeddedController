@@ -54,7 +54,7 @@ static int get_led_id_color(enum pwm_led_id id, int color)
 
 void set_pwm_led_color(enum pwm_led_id id, int color)
 {
-	struct pwm_led duty = { 0 };
+	struct pwm_led_color_map duty = { 0 };
 	const struct pwm_led *led = &pwm_leds[id];
 
 	if ((id >= CONFIG_LED_PWM_COUNT) || (id < 0) ||
