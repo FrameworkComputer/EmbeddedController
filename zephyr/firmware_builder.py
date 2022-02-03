@@ -86,8 +86,8 @@ def bundle_coverage(opts):
     for project in zmake.project.find_projects(zephyr_dir).values():
         if not project.config.is_test:
             build_dir = platform_ec / "build" / "zephyr" / project.config.project_name
-            artifacts_dir = build_dir
-            all_lcov_files.append(artifacts_dir / 'lcov.info')
+            artifacts_dir = build_dir / 'output'
+            all_lcov_files.append(artifacts_dir / 'zephyr.info')
     build_dir = platform_ec / "build"
     print("all_lcov_files = %s" % all_lcov_files)
     cmd = [

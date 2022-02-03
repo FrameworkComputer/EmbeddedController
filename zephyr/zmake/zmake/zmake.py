@@ -397,10 +397,13 @@ class Zmake:
             )
         elif build_after_configure:
             if coverage and not project.config.is_test:
+                output_dir = build_dir / "output"
+                if not output_dir.exists():
+                    output_dir.mkdir()
                 return self._coverage_compile_only(
                     project=project,
                     build_dir=build_dir,
-                    lcov_file=build_dir / "lcov.info",
+                    lcov_file=output_dir / "zephyr.info",
                 )
             else:
                 return self.build(build_dir=build_dir)
