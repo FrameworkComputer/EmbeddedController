@@ -6,8 +6,8 @@
 #include <device.h>
 #include <drivers/uart.h>
 #include <shell/shell.h>
-#ifdef CONFIG_SHELL_BACKEND_DUMMY
-#include <shell/shell_dummy.h>
+#ifdef CONFIG_SHELL_BACKEND_DUMMY /* nocheck */
+#include <shell/shell_dummy.h> /* nocheck */
 #endif
 #include <shell/shell_uart.h>
 #include <stdbool.h>
@@ -22,6 +22,16 @@
 #include "uart.h"
 #include "usb_console.h"
 #include "zephyr_console_shim.h"
+
+#if !defined(CONFIG_SHELL_BACKEND_SERIAL) && \
+	!defined(CONFIG_SHELL_BACKEND_DUMMY) /* nocheck */
+#error Must select either CONFIG_SHELL_BACKEND_SERIAL or \
+	CONFIG_SHELL_BACKEND_DUMMY /* nocheck */
+#endif
+#if defined(CONFIG_SHELL_BACKEND_SERIAL) && \
+	defined(CONFIG_SHELL_BACKEND_DUMMY) /* nocheck */
+#error Must select only one shell backend
+#endif
 
 LOG_MODULE_REGISTER(shim_console, LOG_LEVEL_ERR);
 
@@ -218,8 +228,8 @@ static int init_ec_shell(const struct device *unused)
 {
 #if defined(CONFIG_SHELL_BACKEND_SERIAL)
 		shell_zephyr = shell_backend_uart_get_ptr();
-#elif defined(CONFIG_SHELL_BACKEND_DUMMY)
-		shell_zephyr = shell_backend_dummy_get_ptr();
+#elif defined(CONFIG_SHELL_BACKEND_DUMMY) /* nocheck */
+		shell_zephyr = shell_backend_dummy_get_ptr(); /* nocheck */
 #else
 #error A shell backend must be enabled
 #endif
