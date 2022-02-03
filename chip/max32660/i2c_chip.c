@@ -195,7 +195,7 @@ void board_i2c_process(int read, uint8_t addr, int len, char *buffer,
 /**
  * chip_i2c_xfer() - Low Level function for I2C Master Reads and Writes.
  * @port: Port to access
- * @slave_addr:	Slave device address
+ * @addr_flags:	Device address and flags
  * @out: Data to send
  * @out_size: Number of bytes to send
  * @in: Destination buffer for received data
@@ -210,7 +210,7 @@ void board_i2c_process(int read, uint8_t addr, int len, char *buffer,
  *
  * Return EC_SUCCESS, or non-zero if error.
  */
-int chip_i2c_xfer(int port, const uint16_t slave_addr_flags, const uint8_t *out,
+int chip_i2c_xfer(int port, const uint16_t addr_flags, const uint8_t *out,
 		  int out_size, uint8_t *in, int in_size, int flags)
 {
 	int xfer_start;
@@ -221,7 +221,7 @@ int chip_i2c_xfer(int port, const uint16_t slave_addr_flags, const uint8_t *out,
 	xfer_stop = flags & I2C_XFER_STOP;
 
 	if (out_size) {
-		status = i2c_master_write(i2c_bus_ports[port], slave_addr_flags,
+		status = i2c_master_write(i2c_bus_ports[port], addr_flags,
 					  xfer_start, xfer_stop, out, out_size,
 					  1);
 		if (status != EC_SUCCESS) {
@@ -229,7 +229,7 @@ int chip_i2c_xfer(int port, const uint16_t slave_addr_flags, const uint8_t *out,
 		}
 	}
 	if (in_size) {
-		status = i2c_master_read(i2c_bus_ports[port], slave_addr_flags,
+		status = i2c_master_read(i2c_bus_ports[port], addr_flags,
 					 xfer_start, xfer_stop, in, in_size, 0);
 		if (status != EC_SUCCESS) {
 			return status;

@@ -309,11 +309,11 @@ DECLARE_IRQ(IRQ_SLAVE, i2c_event_interrupt, 2);
 /*****************************************************************************/
 /* Interface */
 
-int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
+int chip_i2c_xfer(const int port, const uint16_t addr_flags,
 		  const uint8_t *out, int out_bytes,
 		  uint8_t *in, int in_bytes, int flags)
 {
-	int addr_8bit = I2C_STRIP_FLAGS(slave_addr_flags) << 1;
+	int addr_8bit = I2C_STRIP_FLAGS(addr_flags) << 1;
 	int rv = EC_SUCCESS;
 	int i;
 	int xfer_start = flags & I2C_XFER_START;

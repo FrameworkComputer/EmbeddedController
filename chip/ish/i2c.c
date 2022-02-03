@@ -158,7 +158,7 @@ static void i2c_intr_switch(uint32_t *base, int mode)
 }
 
 static void i2c_init_transaction(struct i2c_context *ctx,
-				 uint16_t slave_addr, uint8_t flags)
+				 uint16_t addr, uint8_t flags)
 {
 	uint32_t con_value;
 	uint32_t *base = ctx->base;
@@ -169,7 +169,7 @@ static void i2c_init_transaction(struct i2c_context *ctx,
 	i2c_intr_switch(base, DISABLE_INT);
 
 	i2c_mmio_write(base, IC_ENABLE, IC_ENABLE_DISABLE);
-	i2c_mmio_write(base, IC_TAR, (slave_addr << IC_TAR_OFFSET) |
+	i2c_mmio_write(base, IC_TAR, (addr << IC_TAR_OFFSET) |
 			TAR_SPECIAL_VAL | IC_10BITADDR_MASTER_VAL);
 
 	/* set Clock SCL Count */
@@ -293,7 +293,7 @@ static void i2c_write_read_commands(uint32_t *base, uint8_t len, int more_data,
 	}
 }
 
-int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
+int chip_i2c_xfer(const int port, const uint16_t addr_flags,
 		  const uint8_t *out, int out_size,
 		  uint8_t *in, int in_size, int flags)
 {
@@ -302,7 +302,7 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 	uint64_t expire_ts;
 	struct i2c_context *ctx;
 	ssize_t curr_index = 0;
-	uint16_t addr = I2C_STRIP_FLAGS(slave_addr_flags);
+	uint16_t addr = I2C_STRIP_FLAGS(addr_flags);
 	int begin_indx;
 	uint8_t repeat_start = 0;
 
@@ -386,7 +386,7 @@ int chip_i2c_xfer(const int port, const uint16_t slave_addr_flags,
 				(begin_indx == 0) && (repeat_start != 0));
 
 
-		/* need timeout in case no ACK from slave */
+		/* need timeout in case no ACK from peripheral */
 		task_wait_event_mask(TASK_EVENT_I2C_IDLE, 2*MSEC);
 
 		if (ctx->interrupts & M_TX_ABRT) {

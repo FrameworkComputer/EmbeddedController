@@ -406,46 +406,46 @@ int reg_type_mapping(enum usb_power_ina_type ina_type)
 	}
 }
 
-uint16_t ina2xx_readagain(uint8_t port, uint16_t slave_addr_flags)
+uint16_t ina2xx_readagain(uint8_t port, uint16_t addr_flags)
 {
 	int res;
 	uint16_t val;
 
-	res = i2c_xfer(port, slave_addr_flags,
+	res = i2c_xfer(port, addr_flags,
 		       NULL, 0, (uint8_t *)&val, sizeof(uint16_t));
 
 	if (res) {
 		CPRINTS("INA2XX I2C readagain failed p:%d a:%02x",
-			(int)port, (int)I2C_STRIP_FLAGS(slave_addr_flags));
+			(int)port, (int)I2C_STRIP_FLAGS(addr_flags));
 		return 0x0bad;
 	}
 	return (val >> 8) | ((val & 0xff) << 8);
 }
 
 
-uint16_t ina2xx_read(uint8_t port, uint16_t slave_addr_flags,
+uint16_t ina2xx_read(uint8_t port, uint16_t addr_flags,
 		     uint8_t reg)
 {
 	int res;
 	int val;
 
-	res = i2c_read16(port, slave_addr_flags, reg, &val);
+	res = i2c_read16(port, addr_flags, reg, &val);
 	if (res) {
 		CPRINTS("INA2XX I2C read failed p:%d a:%02x, r:%02x",
-			(int)port, (int)I2C_STRIP_FLAGS(slave_addr_flags),
+			(int)port, (int)I2C_STRIP_FLAGS(addr_flags),
 			(int)reg);
 		return 0x0bad;
 	}
 	return (val >> 8) | ((val & 0xff) << 8);
 }
 
-int ina2xx_write(uint8_t port, uint16_t slave_addr_flags,
+int ina2xx_write(uint8_t port, uint16_t addr_flags,
 		 uint8_t reg, uint16_t val)
 {
 	int res;
 	uint16_t be_val = (val >> 8) | ((val & 0xff) << 8);
 
-	res = i2c_write16(port, slave_addr_flags, reg, be_val);
+	res = i2c_write16(port, addr_flags, reg, be_val);
 	if (res)
 		CPRINTS("INA2XX I2C write failed");
 	return res;
