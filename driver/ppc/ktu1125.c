@@ -86,6 +86,7 @@ static int ktu1125_dump(int port)
 {
 	int i;
 	int data;
+	CPRINTF("PPC%d: KTU1125. Registers:\n", port);
 
 	for (i = KTU1125_ID; i <= KTU1125_INT_DATA; i++) {
 		read_reg(port, i, &data);
@@ -100,10 +101,12 @@ static int ktu1125_dump(int port)
 /* helper */
 static int ktu1125_power_path_control(int port, int enable)
 {
-	int status = enable ? clr_flags(port, KTU1125_CTRL_SW_CFG,
+	int status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG,
 					KTU1125_SW_AB_EN)
-			    : set_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_SW_AB_EN);
+			    : clr_flags(port, KTU1125_CTRL_SW_CFG,
+					KTU1125_SW_AB_EN |
+					KTU1125_CC1S_VCONN |
+					KTU1125_CC2S_VCONN);
 
 	if (status) {
 		CPRINTS("ppc p%d: Failed to %s power path",
@@ -121,8 +124,6 @@ static int ktu1125_init(int port)
 	int set_sw2_cfg = 0;
 	int sysb_clp;
 	int status;
-
-	CPRINTF("KTU1125 init\n");
 
 	/* Read and verify KTU1125 Vendor and Chip ID */
 	status = read_reg(port, KTU1125_ID, &regval);
@@ -204,8 +205,12 @@ static int ktu1125_init(int port)
 	set_sw2_cfg |= (KTU_T_HIC_MS_17 << KTU1125_T_HIC_SHIFT);
 	/* Set vbus discharge resistance */
 	set_sw2_cfg |= (KTU1125_DIS_RES_1400 << KTU1125_DIS_RES_SHIFT);
-	/* Set Vbus OVP threshold to ~5V */
-	set_sw2_cfg |= (KTU1125_SYSB_VLIM_6_00 << KTU1125_OVP_BUS_SHIFT);
+	/*
+	 * Set the over voltage protection to the maximum (25V) to support
+	 * sinking from a 20V PD charger. The common PPC code doesn't provide
+	 * any hooks for indicating what the currently negotiated voltage is
+	 */
+	set_sw2_cfg |= (KTU1125_SYSB_VLIM_25_00 << KTU1125_OVP_BUS_SHIFT);
 
 	status = write_reg(port, KTU1125_SET_SW2_CFG, set_sw2_cfg);
 	if (status) {
@@ -225,7 +230,7 @@ static int ktu1125_init(int port)
 	 */
 
 	/* Leave SYSA_OK and FRS masked for SNK group of interrupts */
-	regval =  KTU1125_SNK_MASK_ALL & ~(KTU1125_SYSA_OK | KTU1125_FR_SWAP);
+	regval =  KTU1125_SNK_MASK_ALL & (KTU1125_SYSA_OK | KTU1125_FR_SWAP);
 	status = write_reg(port, KTU1125_INTMASK_SNK, regval);
 	if (status) {
 		ppc_err_prints("Failed to write INTMASK_SNK!", port, status);
@@ -233,7 +238,7 @@ static int ktu1125_init(int port)
 	}
 
 	/* Only leave VBUS_OK masked for SRC group of interrupts */
-	regval = KTU1125_SRC_MASK_ALL & ~KTU1125_VBUS_OK;
+	regval = KTU1125_SRC_MASK_ALL & KTU1125_VBUS_OK;
 	status = write_reg(port, KTU1125_INTMASK_SRC, regval);
 	if (status) {
 		ppc_err_prints("Failed to write INTMASK_SRC!", port, status);
@@ -241,7 +246,7 @@ static int ktu1125_init(int port)
 	}
 
 	/* Unmask the entire DATA group of interrupts */
-	status = write_reg(port, KTU1125_INTMASK_DATA, KTU1125_DATA_MASK_ALL);
+	status = write_reg(port, KTU1125_INTMASK_DATA, ~KTU1125_DATA_MASK_ALL);
 	if (status) {
 		ppc_err_prints("Failed to write INTMASK_DATA!", port, status);
 		return status;
@@ -352,7 +357,9 @@ static int ktu1125_set_vconn(int port, int enable)
 	int status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG,
 					KTU1125_VCONN_EN)
 			    : clr_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_VCONN_EN);
+					KTU1125_VCONN_EN |
+					KTU1125_CC1S_VCONN |
+					KTU1125_CC2S_VCONN);
 
 	return status;
 }
