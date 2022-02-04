@@ -35,27 +35,29 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake configure
 
-**Usage:** `zmake configure [-h] [-t TOOLCHAIN] [--bringup] [--clobber] [--allow-warnings] [-B BUILD_DIR] [-b] [--test] project_name [-c]`
+**Usage:** `zmake configure [-h] [-b] [--test] [-t TOOLCHAIN] [--bringup] [--clobber] [--allow-warnings] [-B BUILD_DIR] [-c] (-a | --host-tests-only | project_name [project_name ...])`
 
 #### Positional Arguments
 
 |   |   |
 |---|---|
-| `project_name` | Name of the project to setup |
+| `project_name` | Name(s) of the project(s) to build |
 
 #### Optional Arguments
 
 |   |   |
 |---|---|
 | `-h`, `--help` | show this help message and exit |
+| `-b`, `--build` | Run the build after configuration |
+| `--test` | Test the .elf file after building |
 | `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--bringup` | Enable bringup debugging features |
 | `--clobber` | Delete existing build directories, even if configuration is unchanged |
 | `--allow-warnings` | Do not treat warnings as errors |
-| `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Build directory |
-| `-b`, `--build` | Run the build after configuration |
-| `--test` | Test the .elf file after configuration |
+| `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
 | `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
+| `-a`, `--all` | Select all projects |
+| `--host-tests-only` | Select all test projects |
 
 ### zmake build
 

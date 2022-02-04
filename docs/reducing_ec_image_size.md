@@ -122,10 +122,10 @@ images outside chroot before running the commands below.
 $ zmake configure -B /tmp/zephyr-volteer volteer
 
 # Build the RO image
-$ ninja -C /tmp/zephyr-volteer/build-ro
+$ ninja -C /tmp/zephyr-volteer/volteer/build-ro
 
 # Generate the ROM report, report sent to stdout
-$ ninja -C /tmp/zephyr-volteer/build-ro rom_report
+$ ninja -C /tmp/zephyr-volteer/volteer/build-ro rom_report
 ```
 
 Please refer to the [Zephyr Optimization Tools][3] documentation for details on

@@ -114,13 +114,13 @@ a rough guide.
 First configure the build with the project you want:
 
 ```bash
-zmake configure -B /tmp/z/vol volteer
+zmake configure -B /tmp/z volteer
 ```
 
 Then build with just the target directory:
 
 ```
-zmake build /tmp/z/vol
+zmake build /tmp/z/volteer
 ```
 
 The output is in that directory:
@@ -146,7 +146,7 @@ as well.
 It should be possible to do this with:
 
 ```bash
-ninja -C /tmp/z/vol/build-ro menuconfig
+ninja -C /tmp/z/volteer/build-ro menuconfig
 ```
 
 However at present this does not work [b/184662866](http://b/184662866).

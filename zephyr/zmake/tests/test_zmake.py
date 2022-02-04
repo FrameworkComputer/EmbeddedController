@@ -156,7 +156,9 @@ EXTRAVERSION =
                 ):
                     if use_configure:
                         zmk.configure(
-                            "fakeproject", build_dir=pathlib.Path("build"), clobber=True
+                            ["fakeproject"],
+                            build_dir=pathlib.Path("build"),
+                            clobber=True,
                         )
                     else:
                         with patch("zmake.version.write_version_header", autospec=True):

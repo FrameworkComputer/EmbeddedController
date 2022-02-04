@@ -180,28 +180,6 @@ def get_argparser():
         "configure",
         help="Set up a build directory to be built later by the build subcommand",
     )
-    configure.add_argument("-t", "--toolchain", help="Name of toolchain to use")
-    configure.add_argument(
-        "--bringup",
-        action="store_true",
-        dest="bringup",
-        help="Enable bringup debugging features",
-    )
-    configure.add_argument(
-        "--clobber",
-        action="store_true",
-        dest="clobber",
-        help="Delete existing build directories, even if configuration is unchanged",
-    )
-    configure.add_argument(
-        "--allow-warnings",
-        action="store_true",
-        default=False,
-        help="Do not treat warnings as errors",
-    )
-    configure.add_argument(
-        "-B", "--build-dir", type=pathlib.Path, help="Build directory"
-    )
     configure.add_argument(
         "-b",
         "--build",
@@ -213,19 +191,9 @@ def get_argparser():
         "--test",
         action="store_true",
         dest="test_after_configure",
-        help="Test the .elf file after configuration",
+        help="Test the .elf file after building",
     )
-    configure.add_argument(
-        "project_name",
-        help="Name of the project to setup",
-    )
-    configure.add_argument(
-        "-c",
-        "--coverage",
-        action="store_true",
-        dest="coverage",
-        help="Enable CONFIG_COVERAGE Kconfig.",
-    )
+    add_common_configure_args(configure)
 
     build = sub.add_parser(
         "build",
@@ -327,6 +295,64 @@ def get_argparser():
     )
 
     return parser, sub
+
+
+def add_common_configure_args(sub_parser: argparse.ArgumentParser):
+    """Adds common arguments used by configure-like subcommands."""
+    sub_parser.add_argument("-t", "--toolchain", help="Name of toolchain to use")
+    sub_parser.add_argument(
+        "--bringup",
+        action="store_true",
+        dest="bringup",
+        help="Enable bringup debugging features",
+    )
+    sub_parser.add_argument(
+        "--clobber",
+        action="store_true",
+        dest="clobber",
+        help="Delete existing build directories, even if configuration is unchanged",
+    )
+    sub_parser.add_argument(
+        "--allow-warnings",
+        action="store_true",
+        default=False,
+        help="Do not treat warnings as errors",
+    )
+    sub_parser.add_argument(
+        "-B",
+        "--build-dir",
+        type=pathlib.Path,
+        help="Root build directory, project files will be in "
+        "${build_dir}/${project_name}",
+    )
+    sub_parser.add_argument(
+        "-c",
+        "--coverage",
+        action="store_true",
+        dest="coverage",
+        help="Enable CONFIG_COVERAGE Kconfig.",
+    )
+    group = sub_parser.add_mutually_exclusive_group(required=True)
+    group.add_argument(
+        "-a",
+        "--all",
+        action="store_true",
+        dest="all_projects",
+        help="Select all projects",
+    )
+    group.add_argument(
+        "--host-tests-only",
+        action="store_true",
+        dest="host_tests_only",
+        help="Select all test projects",
+    )
+    group.add_argument(
+        "project_names",
+        nargs="*",
+        metavar="project_name",
+        help="Name(s) of the project(s) to build",
+        default=[],
+    )
 
 
 def main(argv=None):
