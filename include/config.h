@@ -5411,6 +5411,12 @@
 /* PDU size for fw update over USB (or TPM). */
 #define CONFIG_UPDATE_PDU_SIZE 1024
 
+/* DFU firmware upgrade options */
+/*
+ * Enables DFU USB Runtime identifier.
+ */
+#undef CONFIG_DFU_RUNTIME
+
 /*
  * If defined, charge_get_state returns a special status if battery is
  * discharging and battery is nearly full.

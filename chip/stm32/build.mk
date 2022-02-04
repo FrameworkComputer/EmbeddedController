@@ -81,6 +81,7 @@ chip-$(CHIP_FAMILY_STM32F3)+=flash-f.o
 chip-$(CHIP_FAMILY_STM32F4)+=flash-f.o
 endif
 chip-$(CONFIG_ADC)+=adc-$(CHIP_FAMILY).o
+chip-$(CONFIG_DFU_RUNTIME)+=usb_dfu_runtime.o
 chip-$(CONFIG_STM32_CHARGER_DETECT)+=charger_detect.o
 chip-$(CONFIG_DEBUG_PRINTF)+=debug_printf.o
 chip-$(CONFIG_OTP)+=otp-$(CHIP_FAMILY).o
