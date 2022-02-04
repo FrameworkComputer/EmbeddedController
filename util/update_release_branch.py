@@ -217,22 +217,30 @@ def main(argv):
     relevant_paths.append('util/getversion.sh')
     relevant_paths = ' '.join(relevant_paths)
 
-    # Now that we have the paths of interest, let's perform the merge.
-    print('Updating remote...')
-    subprocess.run(['git', 'remote', 'update'], check=True)
-    subprocess.run(['git', 'checkout', '-B', opts.release_branch, 'cros/' +
-                    opts.release_branch], check=True)
-    print('Attempting git merge...')
-    if opts.merge_strategy == 'recursive' and not opts.strategy_option:
-        opts.strategy_option = 'theirs'
-    print('Using "%s" merge strategy' % opts.merge_strategy,
-          ("with strategy option '%s'" % opts.strategy_option
-           if opts.strategy_option else ''))
-    arglist = ['git', 'merge', '--no-ff', '--no-commit', 'cros/main', '-s',
-               opts.merge_strategy]
-    if opts.strategy_option:
-        arglist.append('-X' + opts.strategy_option)
-    subprocess.run(arglist, check=True)
+    # Check if we are already in merge process
+    result = subprocess.run(['git', 'rev-parse', '--quiet', '--verify',
+                             'MERGE_HEAD'], stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL, check=False)
+    if result.returncode:
+        # Let's perform the merge
+        print('Updating remote...')
+        subprocess.run(['git', 'remote', 'update'], check=True)
+        subprocess.run(['git', 'checkout', '-B', opts.release_branch, 'cros/' +
+                        opts.release_branch], check=True)
+        print('Attempting git merge...')
+        if opts.merge_strategy == 'recursive' and not opts.strategy_option:
+            opts.strategy_option = 'theirs'
+        print('Using "%s" merge strategy' % opts.merge_strategy,
+              ("with strategy option '%s'" % opts.strategy_option
+               if opts.strategy_option else ''))
+        arglist = ['git', 'merge', '--no-ff', '--no-commit', 'cros/main', '-s',
+                   opts.merge_strategy]
+        if opts.strategy_option:
+            arglist.append('-X' + opts.strategy_option)
+        subprocess.run(arglist, check=True)
+    else:
+        print('We have already started merge process.',
+              'Attempt to generate commit.')
 
     print('Generating commit message...')
     branch = subprocess.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
