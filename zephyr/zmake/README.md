@@ -110,7 +110,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake testall
 
-**Usage:** `zmake testall [-h] [--clobber]`
+**Usage:** `zmake testall [-h] [--clobber] [-B BUILD_DIR]`
 
 #### Optional Arguments
 
@@ -118,6 +118,7 @@ Chromium OS's meta-build tool for Zephyr
 |---|---|
 | `-h`, `--help` | show this help message and exit |
 | `--clobber` | Delete existing build directories, even if configuration is unchanged |
+| `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Build directory |
 
 ### zmake coverage
 

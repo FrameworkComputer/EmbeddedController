@@ -606,16 +606,22 @@ class Zmake:
 
         return 0
 
-    def testall(self, clobber=False):
+    def testall(self, build_dir=None, clobber=False):
         """Test all the valid test targets"""
         for project in zmake.project.find_projects(
             self.module_paths["ec"] / "zephyr"
         ).values():
             is_test = project.config.is_test
+            if build_dir:
+                project_build_dir = build_dir / project.config.project_name
+            else:
+                project_build_dir = None
             # Configure and run the test.
             self.executor.append(
-                func=lambda: self._configure(
+                func=functools.partial(
+                    self._configure,
                     project=project,
+                    build_dir=project_build_dir,
                     build_after_configure=True,
                     test_after_configure=is_test,
                     clobber=clobber,

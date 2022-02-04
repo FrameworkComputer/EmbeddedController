@@ -289,6 +289,7 @@ def get_argparser():
         dest="clobber",
         help="Delete existing build directories, even if configuration is unchanged",
     )
+    testall.add_argument("-B", "--build-dir", type=pathlib.Path, help="Build directory")
 
     coverage = sub.add_parser(
         "coverage",
