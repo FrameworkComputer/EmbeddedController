@@ -74,23 +74,23 @@ static inline int disable_ereg_bank_acc(const struct motion_sensor_t *s)
 							LSM6DSM_FUNC_CFG_EN);
 }
 
-static inline int enable_aux_i2c_master(const struct motion_sensor_t *s)
+static inline int enable_aux_i2c_controller(const struct motion_sensor_t *s)
 {
-	return set_reg_bit_field(s, LSM6DSM_MASTER_CFG_ADDR,
-							LSM6DSM_I2C_MASTER_ON);
+	return set_reg_bit_field(s, LSM6DSM_CONTROLLER_CFG_ADDR,
+				 LSM6DSM_I2C_CONTROLLER_ON);
 }
 
-static inline int disable_aux_i2c_master(const struct motion_sensor_t *s)
+static inline int disable_aux_i2c_controller(const struct motion_sensor_t *s)
 {
-	return clear_reg_bit_field(s, LSM6DSM_MASTER_CFG_ADDR,
-							LSM6DSM_I2C_MASTER_ON);
+	return clear_reg_bit_field(s, LSM6DSM_CONTROLLER_CFG_ADDR,
+				   LSM6DSM_I2C_CONTROLLER_ON);
 }
 
-static inline int restore_master_cfg(const struct motion_sensor_t *s,
+static inline int restore_controller_cfg(const struct motion_sensor_t *s,
 								int cache)
 {
 	return st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			     LSM6DSM_MASTER_CFG_ADDR, cache);
+			     LSM6DSM_CONTROLLER_CFG_ADDR, cache);
 }
 
 static int enable_i2c_pass_through(const struct motion_sensor_t *s,
@@ -99,7 +99,7 @@ static int enable_i2c_pass_through(const struct motion_sensor_t *s,
 	int ret;
 
 	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LSM6DSM_MASTER_CFG_ADDR, cache);
+			   LSM6DSM_CONTROLLER_CFG_ADDR, cache);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x MCR error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -112,7 +112,7 @@ static int enable_i2c_pass_through(const struct motion_sensor_t *s,
 	 * so that there is no bus contention.
 	 */
 	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			    LSM6DSM_MASTER_CFG_ADDR,
+			    LSM6DSM_CONTROLLER_CFG_ADDR,
 			    *cache | LSM6DSM_EXT_TRIGGER_EN);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x MCETEN error ret: %d\n",
@@ -122,18 +122,19 @@ static int enable_i2c_pass_through(const struct motion_sensor_t *s,
 	msleep(10);
 
 	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			    LSM6DSM_MASTER_CFG_ADDR,
+			    LSM6DSM_CONTROLLER_CFG_ADDR,
 				 *cache & ~(LSM6DSM_EXT_TRIGGER_EN
-					    | LSM6DSM_I2C_MASTER_ON));
+					    | LSM6DSM_I2C_CONTROLLER_ON));
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x MCC error ret: %d\n",
 			__func__, s->name, s->type, ret);
-		restore_master_cfg(s, *cache);
+		restore_controller_cfg(s, *cache);
 		return ret;
 	}
 
 	return st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			LSM6DSM_MASTER_CFG_ADDR, LSM6DSM_I2C_PASS_THRU_MODE);
+			     LSM6DSM_CONTROLLER_CFG_ADDR,
+			     LSM6DSM_I2C_PASS_THRU_MODE);
 }
 
 static inline int power_down_accel(const struct motion_sensor_t *s,
@@ -215,7 +216,7 @@ int sensorhub_config_ext_reg(const struct motion_sensor_t *s,
 	}
 
 	ret = st_raw_write8(s->port, slv_addr_flags, reg, val);
-	restore_master_cfg(s, tmp);
+	restore_controller_cfg(s, tmp);
 	return ret;
 }
 
@@ -260,7 +261,7 @@ int sensorhub_config_slv0_read(const struct motion_sensor_t *s,
 		goto out_restore_ctrl1;
 	}
 
-	ret = enable_aux_i2c_master(s);
+	ret = enable_aux_i2c_controller(s);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x ENI2CM error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -297,9 +298,9 @@ int sensorhub_check_and_rst(const struct motion_sensor_t *s,
 			    uint8_t rst_reg, uint8_t rst_val)
 {
 	int ret, tmp;
-	int tmp_master_cfg;
+	int tmp_controller_cfg;
 
-	ret = enable_i2c_pass_through(s, &tmp_master_cfg);
+	ret = enable_i2c_pass_through(s, &tmp_controller_cfg);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x ENI2C error ret: %d\n",
 			__func__, s->name, s->type, ret);
@@ -310,18 +311,18 @@ int sensorhub_check_and_rst(const struct motion_sensor_t *s,
 	if (ret != EC_SUCCESS) {
 		CPRINTF("%s: %s type:0x%x WAIR error ret: %d\n",
 			__func__, s->name, s->type, ret);
-		goto err_restore_master_cfg;
+		goto err_restore_controller_cfg;
 	}
 
 	if (tmp != whoami_val) {
 		CPRINTF("%s: %s type:0x%x WAIC error ret: %d\n",
 			__func__, s->name, s->type, ret);
 		ret = EC_ERROR_UNKNOWN;
-		goto err_restore_master_cfg;
+		goto err_restore_controller_cfg;
 	}
 
 	ret = st_raw_write8(s->port, slv_addr_flags, rst_reg, rst_val);
-err_restore_master_cfg:
-	restore_master_cfg(s, tmp_master_cfg);
+err_restore_controller_cfg:
+	restore_controller_cfg(s, tmp_controller_cfg);
 	return ret;
 }
