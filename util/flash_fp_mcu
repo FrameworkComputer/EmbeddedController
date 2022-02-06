@@ -209,6 +209,16 @@ get_platform_name() {
   echo "${platform_name}"
 }
 
+# Test the current running kernel version against a regular expression.
+# Returns 0 if the regex matches.
+match_kernel_regex() {
+  local match_exp=$1
+  local kversion
+  kversion=$(uname -r)
+  [[ $kversion =~ $match_exp ]]
+  return $?
+}
+
 # Given a full platform name, extract the base platform.
 #
 # Tests are also run on modified images, like hatch-arc-r, hatch-borealis, or
@@ -516,8 +526,12 @@ config_herobrine() {
 }
 
 config_nami() {
+  local device="/dev/spidev1.0"
+  # Support kernel version 4.4 during transition to 5.4
+  match_kernel_regex "^4\.4\." && device="/dev/spidev32765.0"
+
   readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev1.0"
+  readonly DEVICE="${device}"
 
   readonly GPIO_CHIP="gpiochip360"
   # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
@@ -529,16 +543,7 @@ config_nami() {
 }
 
 config_nami-kernelnext() {
-  readonly TRANSPORT="SPI"
-  readonly DEVICE="/dev/spidev1.0"
-
-  readonly GPIO_CHIP="gpiochip360"
-  # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
-  readonly GPIO_NRST=417
-  # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
-  readonly GPIO_BOOT0=437
-  # FP_PWR_EN is on GPP_B11 = 360 + 35 = 395
-  readonly GPIO_PWREN=395
+  config_nami
 }
 
 config_nocturne() {
