@@ -13,15 +13,12 @@
 #include "i2c.h"
 #include "test_util.h"
 #include "util.h"
+#include "write_protect.h"
 
 static void test_setup(void)
 {
 	/* Make sure that write protect is disabled */
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	gpio_set_level(GPIO_WP, 0);
-#else
-	gpio_set_level(GPIO_WP_L, 1);
-#endif /* CONFIG_WP_ACTIVE_HIGH */
+	write_protect_set(0);
 
 	cbi_create();
 	cbi_write();
@@ -235,11 +232,7 @@ DECLARE_EC_TEST(test_all_tags)
 	zassert_equal(count, CBI_TAG_COUNT, "%d, %d", count, CBI_TAG_COUNT);
 
 	/* Write protect */
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	gpio_set_level(GPIO_WP, 1);
-#else
-	gpio_set_level(GPIO_WP_L, 0);
-#endif /* CONFIG_WP_ACTIVE_HIGH */
+	write_protect_set(1);
 	zassert_equal(cbi_write(), EC_ERROR_ACCESS_DENIED, NULL);
 
 	return EC_SUCCESS;

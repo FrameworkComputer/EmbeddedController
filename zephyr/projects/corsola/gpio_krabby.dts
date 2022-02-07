@@ -7,6 +7,10 @@
 #include <dt-bindings/wake_mask_event_defines.h>
 
 / {
+	aliases {
+		gpio-wp = &ec_flash_wp_odl;
+	};
+
 	named-gpios {
 		compatible = "named-gpios";
 
@@ -56,7 +60,6 @@
 		ec_flash_wp_odl: ec_flash_wp_odl {
 			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
 					   GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_WP_L";
 		};
 		spi0_cs: spi0_cs {
 			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;

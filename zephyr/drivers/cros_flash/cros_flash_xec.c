@@ -16,6 +16,7 @@
 #include "flash.h"
 #include "gpio.h"
 #include "spi_flash_reg.h"
+#include "write_protect.h"
 #include "../drivers/flash/spi_nor.h"
 
 LOG_MODULE_REGISTER(cros_flash, LOG_LEVEL_ERR);
@@ -299,11 +300,7 @@ static int flash_set_status_for_prot(const struct device *dev, int reg1)
 	 * If WP# is active and ec doesn't protect the status registers of
 	 * internal spi-flash, protect it now before setting them.
 	 */
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	flash_protect_int_flash(dev, gpio_get_level(GPIO_WP));
-#else
-	flash_protect_int_flash(dev, !gpio_get_level(GPIO_WP_L));
-#endif /*_CONFIG_WP_ACTIVE_HIGH_*/
+	flash_protect_int_flash(dev, write_protect_is_asserted());
 
 	flash_set_status(dev, reg1);
 
@@ -325,11 +322,7 @@ static int flash_check_prot_reg(const struct device *dev, unsigned int offset,
 	 * If WP# is active and ec doesn't protect the status registers of
 	 * internal spi-flash, protect it now.
 	 */
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	flash_protect_int_flash(dev, gpio_get_level(GPIO_WP));
-#else
-	flash_protect_int_flash(dev, !gpio_get_level(GPIO_WP_L));
-#endif /* CONFIG_WP_ACTIVE_HIGH */
+	flash_protect_int_flash(dev, write_protect_is_asserted());
 
 	/* Invalid value */
 	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
@@ -395,11 +388,7 @@ static int cros_flash_xec_init(const struct device *dev)
 	 * Protect status registers of internal spi-flash if WP# is active
 	 * during ec initialization.
 	 */
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	flash_protect_int_flash(dev, gpio_get_level(GPIO_WP));
-#else
-	flash_protect_int_flash(dev, !gpio_get_level(GPIO_WP_L));
-#endif /*CONFIG_WP_ACTIVE_HIGH */
+	flash_protect_int_flash(dev, write_protect_is_asserted());
 
 	return 0;
 }

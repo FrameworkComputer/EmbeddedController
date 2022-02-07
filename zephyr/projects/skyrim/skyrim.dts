@@ -4,6 +4,10 @@
  */
 
 / {
+	aliases {
+		gpio-wp = &gpio_wp;
+	};
+
 	named-gpios {
 		/* Skyrim-specific GPIO customizations */
 		usb_fault_odl {
@@ -71,9 +75,8 @@
 			gpios = <&gpio8 1 GPIO_OUT_LOW>;
 			enum-name = "GPIO_EC_CBI_WP";
 		};
-		ec_wp_l {
+		gpio_wp: ec_wp_l {
 			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_WP_L";
 		};
 		gpio_pg_lpddr5_s0_od: pg_lpddr5_s0_od {
 			gpios = <&gpio6 0 GPIO_INPUT>;

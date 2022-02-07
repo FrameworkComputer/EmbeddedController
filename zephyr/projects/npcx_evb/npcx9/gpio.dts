@@ -4,16 +4,19 @@
  */
 
 / {
+	aliases {
+		gpio-wp = &gpio_wp;
+	};
+
 	named-gpios {
 		compatible = "named-gpios";
 
 		recovery_l {
 			gpios = <&gpio0 3 GPIO_INPUT_PULL_UP>;
 		};
-		wp_l {
+		gpio_wp: wp_l {
 			gpios = <&gpio9 3 (GPIO_INPUT_PULL_UP |
 					   GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_WP_L";
 		};
 		gpio_ac_present: ac_present {
 			gpios = <&gpiod 2 GPIO_INPUT>;

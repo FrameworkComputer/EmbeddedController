@@ -100,7 +100,6 @@
 		};
 		gpio_ec_wp_odl: ec_wp_odl {
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_WP_L";
 		};
 		gpio_en_kb_bl: en_kb_bl {
 			gpios = <&gpioa 0 GPIO_OUTPUT>;

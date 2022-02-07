@@ -6,6 +6,11 @@
 #include <cros/thermistor/thermistor.dtsi>
 
 / {
+	aliases {
+		gpio-wp = &gpio_ec_wp_odl;
+		int-wp = &int_wp_l;
+	};
+
 	batteries {
 		default_battery: lgc {
 			compatible = "lgc,ap18c8k";

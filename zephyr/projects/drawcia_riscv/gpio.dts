@@ -6,12 +6,15 @@
 #include <dt-bindings/gpio_defines.h>
 
 / {
+	aliases {
+		gpio-wp = &gpio_wp;
+	};
+
 	named-gpios {
 		compatible = "named-gpios";
 
-		ec_wp_od {
+		gpio_wp: ec_wp_od {
 			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_WP_L";
 		};
 		ec_entering_rw {
 			gpios = <&gpiog 0 GPIO_OUTPUT_LOW>;

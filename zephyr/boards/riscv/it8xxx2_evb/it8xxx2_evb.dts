@@ -20,6 +20,10 @@
 		zephyr,flash-controller = &flashctrl;
 	};
 
+	aliases {
+		gpio-wp = &gpio_wp;
+	};
+
 	named-gpios {
 		compatible = "named-gpios";
 
@@ -31,10 +35,9 @@
 			gpios = <&gpioe 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_LID_OPEN";
 		};
-		wp_l {
+		gpio_wp: wp_l {
 			gpios = <&gpioi 4 (GPIO_INPUT_PULL_UP |
 					   GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_WP_L";
 		};
 		pch_pltrst_l {
 			gpios = <&gpioe 3 GPIO_INPUT_PULL_UP>;

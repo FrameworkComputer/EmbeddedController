@@ -4,6 +4,10 @@
  */
 
 / {
+	aliases {
+		int-wp = &int_wp_l;
+	};
+
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 

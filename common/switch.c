@@ -15,6 +15,7 @@
 #include "power_button.h"
 #include "switch.h"
 #include "util.h"
+#include "write_protect.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
@@ -88,11 +89,7 @@ static void switch_init(void)
 	 * reading the write protect signal, but we enable the interrupt for it
 	 * here.  Take ownership of WP back, or refactor it to its own module.
 	 */
-#ifdef CONFIG_WP_ACTIVE_HIGH
-	gpio_enable_interrupt(GPIO_WP);
-#else
-	gpio_enable_interrupt(GPIO_WP_L);
-#endif
+	write_protect_enable_interrupt();
 }
 DECLARE_HOOK(HOOK_INIT, switch_init, HOOK_PRIO_INIT_SWITCH);
 

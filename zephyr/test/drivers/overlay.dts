@@ -19,6 +19,7 @@
 		bmi160-int = &ms_bmi160_accel;
 		lis2dw12-int = &ms_lis2dw12_accel;
 		tcs3400-int = &tcs3400_clear;
+		gpio-wp = &gpio_wp_l;
 	};
 	named-gpios {
 		compatible = "named-gpios";
@@ -38,7 +39,6 @@
 		gpio_wp_l: wp_l {
 			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_OUTPUT |
 					   GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_WP_L";
 		};
 		pg_ec_dsw_pwrok {
 			gpios = <&gpio0 4 GPIO_INPUT>;

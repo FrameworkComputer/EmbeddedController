@@ -4,11 +4,14 @@
  */
 
 / {
+	aliases {
+		gpio-wp = &gpio_wp;
+	};
+
 	named-gpios {
 		/* Guybrush-specific GPIO customizations */
-		ec_wp_l {
+		gpio_wp: ec_wp_l {
 			gpios = <&gpio5 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_WP_L";
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
 			gpios = <&gpio0 1 GPIO_INPUT>;

@@ -9,23 +9,18 @@
 #include "system.h"
 #include "task.h"
 #include "test_util.h"
+#include "write_protect.h"
 
 test_static int check_image_and_hardware_write_protect(void)
 {
-	int wp;
+	bool wp;
 
 	if (system_get_image_copy() != EC_IMAGE_RO) {
 		ccprintf("This test is only works when running RO\n");
 		return EC_ERROR_UNKNOWN;
 	}
 
-#ifdef CONFIG_WP_ALWAYS
-        wp = 1;
-#elif defined(CONFIG_WP_ACTIVE_HIGH)
-        wp = gpio_get_level(GPIO_WP);
-#else
-	wp = !gpio_get_level(GPIO_WP_L);
-#endif
+	wp = write_protect_is_asserted();
 
 	if (!wp) {
 		ccprintf("Hardware write protect (GPIO_WP) must be enabled\n");

@@ -10,6 +10,5 @@
 #include <gpio_signal.h>
 
 #define GPIO_ENTERING_RW	GPIO_UNIMPLEMENTED
-#define GPIO_WP_L		GPIO_UNIMPLEMENTED
 
 #endif /* __ZEPHYR_GPIO_MAP_H */

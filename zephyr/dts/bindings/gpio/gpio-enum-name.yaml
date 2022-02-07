@@ -153,6 +153,4 @@ properties:
       - GPIO_VOLUME_DOWN_L
       - GPIO_VOLUME_UP_L
       - GPIO_WARM_RESET_L
-      - GPIO_WP
-      - GPIO_WP_L
       - GPIO_X_EC_GPIO2

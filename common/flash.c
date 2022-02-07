@@ -18,6 +18,7 @@
 #include "system.h"
 #include "util.h"
 #include "vboot_hash.h"
+#include "write_protect.h"
 
 /*
  * Contents of erased flash, as a 32-bit value.  Most platforms erase flash
@@ -745,15 +746,8 @@ uint32_t crec_flash_get_protect(void)
 #endif
 
 	/* Read write protect GPIO */
-#ifdef CONFIG_WP_ALWAYS
-	flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
-#elif defined(CONFIG_WP_ACTIVE_HIGH)
-	if (gpio_get_level(GPIO_WP))
+	if (write_protect_is_asserted())
 		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
-#else
-	if (!gpio_get_level(GPIO_WP_L))
-		flags |= EC_FLASH_PROTECT_GPIO_ASSERTED;
-#endif
 
 #ifdef CONFIG_FLASH_PSTATE
 	/* Read persistent state of RO-at-boot flag */

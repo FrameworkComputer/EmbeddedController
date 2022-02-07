@@ -4,6 +4,10 @@
  */
 
 / {
+	aliases {
+		gpio-wp = &gpio_ec_wp_l;
+	};
+
 	named-gpios {
 		compatible = "named-gpios";
 
@@ -82,7 +86,6 @@
 		};
 		gpio_ec_wp_l: ec_wp_odl {
 			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_WP_L";
 		};
 		lid_accel_int_l {
 			gpios = <&gpiob 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
