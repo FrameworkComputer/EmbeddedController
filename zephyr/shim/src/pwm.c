@@ -18,8 +18,6 @@
 
 LOG_MODULE_REGISTER(pwm_shim, LOG_LEVEL_ERR);
 
-#define USECS_PER_SEC 1000000
-
 /*
  * Initialize the device bindings in pwm_channels.
  * This macro is called from within DT_FOREACH_CHILD
@@ -80,7 +78,7 @@ static int init_pwms(const struct device *unused)
 		 * TODO - check that devicetree frequency is less than 1/2
 		 * max frequency from the chip driver.
 		 */
-		pwm->period_us = USECS_PER_SEC / pwm->freq;
+		pwm->period_us = USEC_PER_SEC / pwm->freq;
 	}
 
 	return rv;
