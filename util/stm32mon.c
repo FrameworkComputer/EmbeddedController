@@ -298,14 +298,14 @@ enum interface_mode {
  * stm32f07xxx: 0x76
  * stm32f411xx: 0x72
  */
-#define DEFAULT_I2C_SLAVE_ADDRESS 0x76
+#define DEFAULT_I2C_PERIPHERAL_ADDRESS 0x76
 
 /* store custom parameters */
 speed_t baudrate = DEFAULT_BAUDRATE;
 int connect_retries = DEFAULT_CONNECT_RETRIES;
 int i2c_adapter = INVALID_I2C_ADAPTER;
 const char *spi_adapter;
-int i2c_slave_address = DEFAULT_I2C_SLAVE_ADDRESS;
+int i2c_peripheral_address = DEFAULT_I2C_PERIPHERAL_ADDRESS;
 uint8_t boot_loader_version;
 const char *serial_port = "/dev/ttyUSB1";
 const char *input_filename;
@@ -506,7 +506,7 @@ int open_i2c(const int port)
 		perror("Unable to open i2c adapter");
 		return -1;
 	}
-	if (ioctl(fd, I2C_SLAVE, i2c_slave_address >> 1) < 0) {
+	if (ioctl(fd, I2C_SLAVE, i2c_peripheral_address >> 1) < 0) {
 		perror("Unable to select proper address");
 		close(fd);
 		return -1;
@@ -1548,7 +1548,7 @@ int parse_parameters(int argc, char **argv)
 			mode = MODE_I2C;
 			break;
 		case 'l':
-			i2c_slave_address = strtol(optarg, NULL, 0);
+			i2c_peripheral_address = strtol(optarg, NULL, 0);
 			break;
 		case 'b':
 			baudrate = parse_baudrate(optarg);
