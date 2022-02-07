@@ -13,8 +13,7 @@ import sys
 
 
 def cmd_flash(args: argparse.Namespace) -> int:
-    """
-    Flash the entire firmware FPMCU using the native bootloader.
+    """Flash the entire firmware FPMCU using the native bootloader.
 
     This requires the Chromebook to be in dev mode with hardware write protect
     disabled.
@@ -33,7 +32,7 @@ def cmd_flash(args: argparse.Namespace) -> int:
 
     print(f'Running {" ".join(cmd)}.')
     sys.stdout.flush()
-    p = subprocess.run(cmd)
+    p = subprocess.run(cmd)  # pylint: disable=subprocess-run-check
     return p.returncode
 
 
