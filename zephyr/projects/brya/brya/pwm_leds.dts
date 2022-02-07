@@ -46,3 +46,27 @@
 		};
 	};
 };
+
+/* LED2 */
+&pwm0 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* LED3 */
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* LED1 */
+&pwm2 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* LED4 */
+&pwm7 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};

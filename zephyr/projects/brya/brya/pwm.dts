@@ -7,26 +7,6 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		led1: led1 {
-			#pwm-cells = <0>;
-			pwms = <&pwm2 0 PWM_POLARITY_INVERTED>;
-			frequency = <4800>;
-		};
-		led2: led2  {
-			#pwm-cells = <0>;
-			pwms = <&pwm0 0 PWM_POLARITY_INVERTED>;
-			frequency = <4800>;
-		};
-		led3: led3 {
-			#pwm-cells = <0>;
-			pwms = <&pwm1 0 PWM_POLARITY_INVERTED>;
-			frequency = <4800>;
-		};
-		led4: led4 {
-			#pwm-cells = <0>;
-			pwms = <&pwm7 0 PWM_POLARITY_INVERTED>;
-			frequency = <4800>;
-		};
 		kblight: kblight {
 			pwms = <&pwm3 0 0>;
 			frequency = <2400>;
@@ -38,24 +18,6 @@
 	};
 };
 
-/* LED2 */
-&pwm0 {
-	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-};
-
-/* LED3 */
-&pwm1 {
-	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-};
-
-/* LED1 */
-&pwm2 {
-	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-};
-
 /* Keyboard backlight */
 &pwm3 {
 	status = "okay";
@@ -65,10 +27,4 @@
 &pwm5 {
 	status = "okay";
 	drive-open-drain;
-};
-
-/* LED4 */
-&pwm7 {
-	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 };

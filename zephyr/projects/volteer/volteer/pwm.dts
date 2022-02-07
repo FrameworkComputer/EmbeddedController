@@ -7,26 +7,6 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		led1_blue: led_1_l {
-			#pwm-cells = <0>;
-			pwms = <&pwm2 0 PWM_POLARITY_INVERTED>;
-			frequency = <4800>;
-		};
-		led2_green: led_2_l  {
-			#pwm-cells = <0>;
-			pwms = <&pwm0 0 PWM_POLARITY_INVERTED>;
-			frequency = <4800>;
-		};
-		led3_red: led_3_l {
-			#pwm-cells = <0>;
-			pwms = <&pwm1 0 PWM_POLARITY_INVERTED>;
-			frequency = <4800>;
-		};
-		led3_sidesel: led_sidesel_4_l {
-			#pwm-cells = <0>;
-			pwms = <&pwm7 0 PWM_POLARITY_INVERTED>;
-			frequency = <2400>;
-		};
 		kblight: ec_kb_bl_pwm {
 			pwms = <&pwm3 0 0>;
 			frequency = <2400>;
@@ -38,24 +18,6 @@
 	};
 };
 
-/* Green LED */
-&pwm0 {
-	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-};
-
-/* Red LED */
-&pwm1 {
-	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-};
-
-/* Blue LED */
-&pwm2 {
-	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-};
-
 /* Keyboard backlight */
 &pwm3 {
 	status = "okay";
@@ -65,10 +27,4 @@
 &pwm5 {
 	status = "okay";
 	drive-open-drain;
-};
-
-/* Side selection LED */
-&pwm7 {
-	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 };
