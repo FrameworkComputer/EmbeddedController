@@ -28,6 +28,7 @@
 #include "util.h"
 #include "wireless.h"
 #include "driver/temp_sensor/f75303.h"
+#include "driver/temp_sensor/f75397.h"
 #include "diagnostics.h"
 #include "cypress5525.h"
 
@@ -172,6 +173,7 @@ static void chipset_force_g3(void)
 	}
 
 	f75303_set_enabled(0);
+	f75397_set_enabled(0);
 
 }
 
@@ -527,6 +529,7 @@ enum power_state power_handle_state(enum power_state state)
         msleep(10);
 		thm_ft5399m_set_timeout_en();
 		f75303_set_enabled(1);
+		f75397_set_enabled(1);
 
         gpio_set_level(GPIO_EC_VCCST_PG, 1);
 
@@ -544,6 +547,7 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_set_level(GPIO_EC_VCCST_PG, 0);
 			gpio_set_level(GPIO_VR_ON, 0);
 			f75303_set_enabled(0);
+			f75397_set_enabled(0);
 			return POWER_S3;
 		}
 
@@ -573,6 +577,7 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		me_gpio_change(GPIO_OUT_LOW);
 		f75303_set_enabled(0);
+		f75397_set_enabled(0);
 		return POWER_S3;
 		break;
 

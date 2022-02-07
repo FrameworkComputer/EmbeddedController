@@ -57,6 +57,7 @@
 #include "task.h"
 #include "temp_sensor.h"
 #include "driver/temp_sensor/f75303.h"
+#include "driver/temp_sensor/f75397.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_charge.h"
@@ -896,6 +897,18 @@ const struct temp_sensor_t temp_sensors[] = {
 		.idx = 0,
 	},
 #endif /* CONFIG_PECI */
+	[TEMP_SENSOR2_LOCAL] = {
+		.name = "F75397_Local",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = f75397_get_val,
+		.idx = F75397_IDX_LOCAL
+	},
+	[TEMP_SENSOR2_REMOTE] = {
+		.name = "F75397_VCCGT",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = f75397_get_val,
+		.idx = F75397_IDX_REMOTE1
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
