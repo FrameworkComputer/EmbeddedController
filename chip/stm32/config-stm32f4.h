@@ -70,3 +70,6 @@
 #define CONFIG_IRQ_COUNT	97
 
 #undef CONFIG_CMD_CHARGEN
+
+/* DFU Address */
+#define STM32_DFU_BASE              0x1fff0000

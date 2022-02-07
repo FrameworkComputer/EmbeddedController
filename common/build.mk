@@ -215,8 +215,10 @@ common-$(CONFIG_AUDIO_CODEC_WOV)+=hotword_dsp_api.o
 endif
 
 ifneq ($(CONFIG_COMMON_RUNTIME),)
+ifneq ($(CONFIG_DFU_BOOTMANAGER_MAIN),ro)
 common-$(CONFIG_MALLOC)+=shmalloc.o
 common-$(call not_cfg,$(CONFIG_MALLOC))+=shared_mem.o
+endif
 endif
 
 ifeq ($(CTS_MODULE),)

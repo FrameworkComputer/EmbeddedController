@@ -5425,6 +5425,24 @@
 #undef CONFIG_DFU_RUNTIME
 
 /*
+ * Indicates this region is a DFU Boot Manager and is a minimal runtime.
+ */
+#undef CONFIG_DFU_BOOTMANAGER_MAIN
+/*
+ * Enables DFU Boot Manager reboot loop protection. When unexpected reboots
+ * occur, a counter is incremented which will enter DFU once it exceeds
+ * the value defined. This parameter should only be enabled on setups which
+ * can issue the command to exit DFU.
+ */
+#undef CONFIG_DFU_BOOTMANAGER_MAX_REBOOT_COUNT
+
+/*
+ * Enables access to shared utilities required for the application
+ * and DFU Boot Manager. This allows the application to enter DFU.
+ */
+#undef CONFIG_DFU_BOOTMANAGER_SHARED
+
+/*
  * If defined, charge_get_state returns a special status if battery is
  * discharging and battery is nearly full.
  */

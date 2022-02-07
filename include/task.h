@@ -463,7 +463,9 @@ struct irq_def {
 
 /* Include ec.irqlist here for compilation dependency */
 #define ENABLE_IRQ(x)
+#if !defined(CONFIG_DFU_BOOTMANAGER_MAIN)
 #include "ec.irqlist"
+#endif /* !defined(CONFIG_DFU_BOOTMANAGER_MAIN) */
 #endif /* CONFIG_COMMON_RUNTIME */
 #endif /* !CONFIG_ZEPHYR */
 

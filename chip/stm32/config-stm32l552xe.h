@@ -34,3 +34,6 @@
 
 /* Number of DMA channels supported (8 channels each for DMA1 and DMA2) */
 #define DMAC_COUNT 16
+
+/* DFU Address */
+#define STM32_DFU_BASE              0x0bf90000

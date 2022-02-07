@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "dfu_bootmanager_shared.h"
 #include "registers.h"
 #include "usb_descriptor.h"
 #include "usb_dfu_runtime.h"
@@ -51,7 +52,7 @@ static int dfu_runtime_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 		/* Host is requesting a jump from application to DFU mode. */
 
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
-		return 0;
+		return dfu_bootmanager_enter_dfu();
 	} else if (packet.bmRequestType ==
 			(USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE)) {
 		if (packet.bRequest == USB_DFU_RUNTIME_REQ_GET_STATUS) {

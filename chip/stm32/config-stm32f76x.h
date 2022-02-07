@@ -58,3 +58,6 @@
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT	109
+
+/* DFU Address */
+#define STM32_DFU_BASE              0x1ff00000

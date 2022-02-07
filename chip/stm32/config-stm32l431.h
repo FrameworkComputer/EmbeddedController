@@ -75,3 +75,6 @@
 #define WP_BANK_COUNT           63
 #define PSTATE_BANK             62
 #define PSTATE_BANK_COUNT       1
+
+/* DFU Address */
+#define STM32_DFU_BASE              0x1fff0000

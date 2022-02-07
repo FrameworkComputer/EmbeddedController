@@ -41,3 +41,6 @@
 #define CONFIG_USB_RAM_SIZE        512
 #define CONFIG_USB_RAM_ACCESS_TYPE uint32_t
 #define CONFIG_USB_RAM_ACCESS_SIZE 4
+
+/* DFU Address */
+#define STM32_DFU_BASE              0x1ff00000

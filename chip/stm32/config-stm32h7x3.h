@@ -71,3 +71,6 @@
 #define MPU_ATTR_FLASH_MEMORY  0x02
 /* SRAM Data is Normal memory type / non-shareable / write-back, write-alloc */
 #define MPU_ATTR_INTERNAL_SRAM 0x0B
+
+/* DFU Address */
+#define STM32_DFU_BASE              0x1ff00000
