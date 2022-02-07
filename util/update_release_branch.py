@@ -91,8 +91,7 @@ Cq-Include-Trybots: chromeos/cq:cq-orchestrator
 
 
 def get_relevant_boards(baseboard):
-    """Searches through the EC repo looking for boards that use the given
-    baseboard.
+    """Searches the EC repo looking for boards that use the given baseboard.
 
     Args:
         baseboard: String containing the baseboard to consider
@@ -113,7 +112,9 @@ def get_relevant_boards(baseboard):
 
 
 def get_relevant_commits(head, merge_head, fmt, relevant_paths):
-    """Searches git history to find changes since the last merge which modify
+    """Find relevant changes since last merge.
+
+    Searches git history to find changes since the last merge which modify
     files present in relevant_paths.
 
     Args:
@@ -158,13 +159,13 @@ def main(argv):
         argv: A list of the command line arguments passed to this script.
     """
     # Set up argument parser.
-    parser = argparse.ArgumentParser(description=("A script that generates a "
-                                                  "merge commit from cros/main"
-                                                  " to a desired release "
-                                                  "branch.  By default, the "
-                                                  "'recursive' merge strategy "
-                                                  "with the 'theirs' strategy "
-                                                  "option is used."))
+    parser = argparse.ArgumentParser(description=('A script that generates a '
+                                                  'merge commit from cros/main'
+                                                  ' to a desired release '
+                                                  'branch.  By default, the '
+                                                  '"recursive" merge strategy '
+                                                  'with the "theirs" strategy '
+                                                  'option is used.'))
     parser.add_argument('--baseboard')
     parser.add_argument('--board')
     parser.add_argument('release_branch', help=('The name of the target release'
@@ -197,7 +198,7 @@ def main(argv):
     else:
         parser.error('You must specify a board OR a baseboard')
 
-    print("Gathering relevant paths...")
+    print('Gathering relevant paths...')
     relevant_paths = []
     if opts.baseboard:
         relevant_paths.append(baseboard_dir)
@@ -217,14 +218,14 @@ def main(argv):
     relevant_paths = ' '.join(relevant_paths)
 
     # Now that we have the paths of interest, let's perform the merge.
-    print("Updating remote...")
+    print('Updating remote...')
     subprocess.run(['git', 'remote', 'update'], check=True)
     subprocess.run(['git', 'checkout', '-B', opts.release_branch, 'cros/' +
                     opts.release_branch], check=True)
-    print("Attempting git merge...")
+    print('Attempting git merge...')
     if opts.merge_strategy == 'recursive' and not opts.strategy_option:
         opts.strategy_option = 'theirs'
-    print("Using '%s' merge strategy" % opts.merge_strategy,
+    print('Using "%s" merge strategy' % opts.merge_strategy,
           ("with strategy option '%s'" % opts.strategy_option
            if opts.strategy_option else ''))
     arglist = ['git', 'merge', '--no-ff', '--no-commit', 'cros/main', '-s',
@@ -233,7 +234,7 @@ def main(argv):
         arglist.append('-X' + opts.strategy_option)
     subprocess.run(arglist, check=True)
 
-    print("Generating commit message...")
+    print('Generating commit message...')
     branch = subprocess.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
                             stdout=subprocess.PIPE,
                             encoding='utf-8',
@@ -248,12 +249,12 @@ def main(argv):
                                 encoding='utf-8',
                                 check=True).stdout.rstrip()
 
-    print("Typing as fast as I can...")
+    print('Typing as fast as I can...')
     commit_msg = git_commit_msg(branch, head, merge_head, relevant_paths)
     subprocess.run(['git', 'commit', '--signoff', '-m', commit_msg], check=True)
     subprocess.run(['git', 'commit', '--amend'], check=True)
     print(("Finished! **Please review the commit to see if it's to your "
-           "liking.**"))
+           'liking.**'))
 
 
 if __name__ == '__main__':
