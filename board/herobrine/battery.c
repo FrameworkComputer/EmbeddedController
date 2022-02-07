@@ -10,9 +10,9 @@
 #include "util.h"
 
 /*
- * Battery info for all herobrine_npcx9 battery types. Note that the fields
- * start_charging_min/max and charging_min/max are not used for the charger.
- * The effective temperature limits are given by discharging_min/max_c.
+ * Battery info for all herobrine battery types. Note that the fields start
+ * charging_min/max and charging_min/max are not used for the charger. The
+ * effective temperature limits are given by discharging_min/max_c.
  *
  * Fuel Gauge (FG) parameters which are used for determining if the battery
  * is connected, the appropriate ship mode (battery cutoff) command, and the
