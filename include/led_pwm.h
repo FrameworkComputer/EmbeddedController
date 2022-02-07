@@ -12,7 +12,7 @@
 #include "pwm/pwm.h"
 #endif
 
-#define PWM_LED_NO_CHANNEL -1
+#define PWM_LED_NO_CHANNEL ((enum pwm_channel)(-1))
 
 struct pwm_led {
 	enum pwm_channel ch0;
