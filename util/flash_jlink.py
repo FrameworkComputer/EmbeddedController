@@ -4,6 +4,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# pylint: disable=logging-fstring-interpolation
+
 """Flashes firmware using Segger J-Link.
 
 This script requires Segger hardware attached via JTAG/SWD.
@@ -27,17 +29,18 @@ import time
 DEFAULT_SEGGER_REMOTE_PORT = 19020
 
 # Commands are documented here: https://wiki.segger.com/J-Link_Commander
-JLINK_COMMANDS = '''
+JLINK_COMMANDS = """
 exitonerror 1
 r
 loadfile {FIRMWARE} {FLASH_ADDRESS}
 r
 go
 exit
-'''
+"""
 
 
 class BoardConfig:
+    """Board configuration."""
     def __init__(self, interface, device, flash_address):
         self.interface = interface
         self.device = device
@@ -92,7 +95,7 @@ def create_jlink_command_file(firmware_file, config):
     tmp = tempfile.NamedTemporaryFile()
     tmp.write(JLINK_COMMANDS.format(FIRMWARE=firmware_file,
                                     FLASH_ADDRESS=config.flash_address).encode(
-        'utf-8'))
+                                        'utf-8'))
     tmp.flush()
     return tmp
 
@@ -131,7 +134,7 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
         logging.debug(f'Checking connection to {remote}.')
         if not is_tcp_port_open(ip, port):
             logging.error(
-                f'JLink server doesn\'t seem to be listening on {remote}.')
+                f"JLink server doesn't seem to be listening on {remote}.")
             logging.error('Ensure that JLinkRemoteServerCLExe is running.')
             return 1
         cmd.extend(['-ip', remote])
@@ -144,7 +147,7 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
         '-CommandFile', cmd_file,
         ])
     logging.debug('Running command: "%s"', ' '.join(cmd))
-    completed_process = subprocess.run(cmd)
+    completed_process = subprocess.run(cmd)  # pylint: disable=subprocess-run-check
     logging.debug('JLink return code: %d', completed_process.returncode)
     return completed_process.returncode
 
