@@ -469,7 +469,7 @@ config PLATFORM_EC_I2C
 	help
 	  Enable compilation of the EC i2c module. Once enabled, it will be
 	  possible to make calls using the old platform/ec i2c APIs defined
-	  in include/i2c.h and implemented in common/i2c_master.c. Doing so
+	  in include/i2c.h and implemented in common/i2c_controller.c. Doing so
 	  should make shimming other platform/ec modules which rely on i2c
 	  communication "just work" without requiring any further code changes.
 
@@ -531,7 +531,7 @@ config PLATFORM_EC_SMBUS_PEC
 	  i2c_read_string and i2c_write_block. Where
 	  - write operation appends an error checking byte at end of transfer, and
 	  - read operatoin verifies the correctness of error checking byte from the
-	  slave.
+	  peripheral.
 	  Set I2C_FLAG on addr_flags parameter to use this feature.
 
 	  This option also enables error checking function on smart batteries.
@@ -899,9 +899,9 @@ config PLATFORM_EC_AMD_SB_RMI
 	bool "Enable driver for AMD SB-RMI interface"
 	help
 	  AMD platforms provide the Side-Band Remote Management Interface.
-	  SB-RMI provides an interface for an external SMBus master to perform
-	  tasks such as managing power consumption and power limits of the CPU
-	  socket.
+	  SB-RMI provides an interface for an external SMBus controller to
+	  perform tasks such as managing power consumption and power limits of
+	  the CPU socket.
 
 config PLATFORM_EC_AMD_STT
 	bool "Enable driver for AMD STT interface"
