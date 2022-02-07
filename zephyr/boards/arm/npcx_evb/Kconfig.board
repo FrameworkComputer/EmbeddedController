@@ -13,6 +13,6 @@ config BOARD_NPCX7_EVB
 
 config BOARD_NPCX9_EVB
 	bool "NPCX9 Evaluation Board"
-	depends on SOC_NPCX9M3F || SOC_NPCX9M6F
+	depends on SOC_NPCX9M3F || SOC_NPCX9M6F || SOC_NPCX9M7F
 	# Allow generating initial 0 line coverage.
 	select HAS_COVERAGE_SUPPORT

@@ -10,6 +10,7 @@
 /*
  * #include <nuvoton/npcx9m3f.dtsi>
  * #include <nuvoton/npcx9m6f.dtsi>
+ * #include <nuvoton/npcx9m7f.dtsi>
  */
 #include <nuvoton/npcx9m6f.dtsi>
 #include "npcx_evb.dtsi"
