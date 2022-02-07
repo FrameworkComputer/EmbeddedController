@@ -2,34 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# TODO(sjg): Not USB-C: perhaps we should have a 'power' thing at the top level?
-config PLATFORM_EC_USB_A_PORT_COUNT
-	int "Number of USB-A ports"
-	default 0
-	help
-	  This sets the number of USB-A ports on the device. These ports do
-	  not support USB Power Delivery features but can be used to power
-	  external devices (according to the USB 3 spec, not the Battery Charger
-	  standard) and to charge devices slowly if power is enabled to them.
-
-config PLATFORM_EC_USB_PORT_POWER_DUMB
-	bool "Simple control of power to USB-A ports"
-	depends on PLATFORM_EC_USB_A_PORT_COUNT > 0
-	default y
-	help
-	  Enable this to provide simple control of the power to USB ports
-	  using GPIOs. To use this your board code must provide a
-	  usb_port_enable[] array with the GPIOs to use for each port. This
-	  implements the EC_CMD_USB_CHARGE_SET_MODE host command and provides
-	  a 'usbchargemode' console command.
-
-config PLATFORM_EC_USB_PORT_POWER_DUMB_CUSTOM_HOOK
-	bool "Simple control of power to USB-A ports"
-	depends on PLATFORM_EC_USB_PORT_POWER_DUMB
-	help
-	  Enable this if your board does not want to use the default S3 hooks
-	  from USB_PORT_POWER_DUMB.
-
 menuconfig PLATFORM_EC_USBC
 	bool "USB Type-C"
 	default y if PLATFORM_EC_BATTERY

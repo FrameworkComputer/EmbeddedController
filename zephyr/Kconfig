@@ -61,6 +61,7 @@ rsource "Kconfig.tasks"
 rsource "Kconfig.temperature"
 rsource "Kconfig.timer"
 rsource "Kconfig.throttle_ap"
+rsource "Kconfig.usba"
 rsource "Kconfig.usbc"
 rsource "Kconfig.watchdog"
 
