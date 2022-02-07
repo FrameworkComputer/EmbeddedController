@@ -1,0 +1,18 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: BMA4XX driver data node
+
+compatible: "cros-ec,drvdata-bma4xx"
+
+include: drvdata-base.yaml
+
+#
+# examples:
+#
+# bma4xx_data: bma4xx-drv-data {
+#       compatible = "cros-ec,drvdata-bma4xx";
+#       status = "okay";
+# };
+#

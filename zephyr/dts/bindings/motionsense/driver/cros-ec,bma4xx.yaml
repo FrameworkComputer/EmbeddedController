@@ -1,0 +1,19 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: motionsense sensor node for BMA4xx
+
+compatible: "cros-ec,bma4xx"
+
+# every motionsense sensor node should include motionsense-sensor-base.yaml
+include: motionsense-sensor-base.yaml
+
+properties:
+  i2c-spi-addr-flags:
+    type: string
+    description: i2c address or SPI peripheral logic GPIO
+    enum:
+      - "BMA4_I2C_ADDR_PRIMARY"
+      - "BMA4_I2C_ADDR_SECONDARY"
+    default: "BMA4_I2C_ADDR_PRIMARY"
