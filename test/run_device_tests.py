@@ -4,6 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# pylint: disable=line-too-long
 """Runs unit tests on device and displays the results.
 
 This script assumes you have a ~/.servodrc config file with a line that
@@ -11,6 +12,8 @@ corresponds to the board being tested.
 
 See https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/servo.md#servodrc
 """
+# pylint: enable=line-too-long
+
 import argparse
 import concurrent
 import io
@@ -25,7 +28,9 @@ from enum import Enum
 from pathlib import Path
 from typing import Optional, BinaryIO, List
 
+# pylint: disable=import-error
 import colorama  # type: ignore[import]
+# pylint: enable=import-error
 
 EC_DIR = Path(os.path.dirname(os.path.realpath(__file__))).parent
 JTRACE_FLASH_SCRIPT = os.path.join(EC_DIR, 'util/flash_jlink.py')
@@ -241,7 +246,7 @@ def power(board_config: BoardConfig, on: bool) -> None:
         board_config.servo_power_enable + ':' + state,
     ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
-    subprocess.run(cmd).check_returncode()
+    subprocess.run(cmd).check_returncode()  # pylint: disable=subprocess-run-check
 
 
 def hw_write_protect(enable: bool) -> None:
@@ -256,7 +261,7 @@ def hw_write_protect(enable: bool) -> None:
         'fw_wp_state:' + state,
         ]
     logging.debug('Running command: "%s"', ' '.join(cmd))
-    subprocess.run(cmd).check_returncode()
+    subprocess.run(cmd).check_returncode()  # pylint: disable=subprocess-run-check
 
 
 def build(test_name: str, board_name: str, compiler: str) -> None:
@@ -273,12 +278,12 @@ def build(test_name: str, board_name: str, compiler: str) -> None:
     ]
 
     logging.debug('Running command: "%s"', ' '.join(cmd))
-    subprocess.run(cmd).check_returncode()
+    subprocess.run(cmd).check_returncode()  # pylint: disable=subprocess-run-check
 
 
 def flash(test_name: str, board: str, flasher: str, remote: str) -> bool:
     """Flash specified test to specified board."""
-    logging.info("Flashing test")
+    logging.info('Flashing test')
 
     cmd = []
     if flasher == JTRACE:
@@ -296,7 +301,7 @@ def flash(test_name: str, board: str, flasher: str, remote: str) -> bool:
                                 test_name + '.bin'),
     ])
     logging.debug('Running command: "%s"', ' '.join(cmd))
-    completed_process = subprocess.run(cmd)
+    completed_process = subprocess.run(cmd)  # pylint: disable=subprocess-run-check
     return completed_process.returncode == 0
 
 
@@ -349,7 +354,7 @@ def run_test(test: TestConfig, console: str, executor: ThreadPoolExecutor) ->\
              bool:
     """Run specified test."""
     start = time.time()
-    with open(console, "wb+", buffering=0) as c:
+    with open(console, 'wb+', buffering=0) as c:
         # Wait for boot to finish
         time.sleep(1)
         c.write('\n'.encode())
@@ -366,7 +371,7 @@ def run_test(test: TestConfig, console: str, executor: ThreadPoolExecutor) ->\
             if not line:
                 now = time.time()
                 if now - start > test.timeout_secs:
-                    logging.debug("Test timed out")
+                    logging.debug('Test timed out')
                     return False
                 continue
 
@@ -435,10 +440,10 @@ def main():
 
     flasher_choices = [SERVO_MICRO, JTRACE]
     parser.add_argument(
-         '--flasher', '-f',
-         choices=flasher_choices,
-         default=JTRACE
-     )
+        '--flasher', '-f',
+        choices=flasher_choices,
+        default=JTRACE
+    )
 
     compiler_options = [GCC, CLANG]
     parser.add_argument('--compiler', '-c',
@@ -518,4 +523,4 @@ def main():
 
 
 if __name__ == '__main__':
-  sys.exit(main())
+    sys.exit(main())
