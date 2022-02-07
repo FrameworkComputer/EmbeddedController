@@ -204,60 +204,6 @@
 		gpio_ec_chg_led_b_c1: ec_chg_led_b_c1 {
 			gpios = <&gpioc 4 GPIO_OUT_LOW>;
 		};
-		ap_ec_spi_mosi {
-			gpios = <&gpio4 6 GPIO_INPUT_PULL_DOWN>;
-		};
-		ap_ec_spi_miso {
-			gpios = <&gpio4 7 GPIO_INPUT_PULL_DOWN>;
-		};
-		ap_ec_spi_clk {
-			gpios = <&gpio5 5 GPIO_INPUT_PULL_DOWN>;
-		};
-		kb_bl_pwm {
-			gpios = <&gpio8 0 GPIO_INPUT>;
-		};
-		edp_bkltctl {
-			gpios = <&gpiob 7 GPIO_INPUT>;
-		};
-		ppvar_boostin_sense {
-			gpios = <&gpio4 4 GPIO_INPUT>;
-		};
-		charger_iadp {
-			gpios = <&gpio4 3 GPIO_INPUT>;
-		};
-		charger_pmon {
-			gpios = <&gpio4 2 GPIO_INPUT>;
-		};
-		ec_i2c_power_scl {
-			gpios = <&gpiob 5 GPIO_INPUT>;
-		};
-		ec_i2c_power_sda {
-			gpios = <&gpiob 4 GPIO_INPUT>;
-		};
-		ec_i2c_usb_c0_pd_scl {
-			gpios = <&gpio9 0 GPIO_INPUT>;
-		};
-		ec_i2c_usb_c0_pd_sda {
-			gpios = <&gpio8 7 GPIO_INPUT>;
-		};
-		ec_i2c_usb_c1_pd_scl {
-			gpios = <&gpio9 2 GPIO_INPUT>;
-		};
-		ec_i2c_usb_c1_pd_sda {
-			gpios = <&gpio9 1 GPIO_INPUT>;
-		};
-		ec_i2c_eeprom_scl {
-			gpios = <&gpio3 3 GPIO_INPUT>;
-		};
-		ec_i2c_eeprom_sda {
-			gpios = <&gpio3 6 GPIO_INPUT>;
-		};
-		ec_i2c_sensor_scl {
-			gpios = <&gpiob 3 GPIO_INPUT>;
-		};
-		ec_i2c_sensor_sda {
-			gpios = <&gpiob 2 GPIO_INPUT>;
-		};
 		gpio_brd_id0: brd_id0 {
 			gpios = <&gpioc 7 GPIO_INPUT>;
 			enum-name = "GPIO_BOARD_VERSION1";

@@ -7,7 +7,7 @@
 
 #include <cros/nuvoton/npcx7.dtsi>
 #include <dt-bindings/gpio_defines.h>
-#include <nuvoton/npcx7m7fc.dtsi>
+#include <nuvoton/npcx7m6fc.dtsi>
 
 / {
 	model = "NPCX7";
