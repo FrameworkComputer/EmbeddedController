@@ -10,8 +10,28 @@
 
 #ifdef CONFIG_ZEPHYR
 #include "pwm/pwm.h"
+#include "drivers/pwm.h"
 #endif
 
+#ifdef CONFIG_ZEPHYR
+#define PWM_LED_NO_CHANNEL NULL
+
+/* This could really be pwm_dt_spec. */
+struct pwm_led_dt_channel {
+	const struct device *dev;
+	uint32_t channel;
+	pwm_flags_t flags;
+	uint32_t period_us;
+};
+
+struct pwm_led {
+	const struct pwm_led_dt_channel *ch0;
+	const struct pwm_led_dt_channel *ch1;
+	const struct pwm_led_dt_channel *ch2;
+
+	void (*set_duty)(const struct pwm_led_dt_channel *ch, int percent);
+};
+#else
 #define PWM_LED_NO_CHANNEL ((enum pwm_channel)(-1))
 
 struct pwm_led {
@@ -22,6 +42,7 @@ struct pwm_led {
 	void (*enable)(enum pwm_channel ch, int enabled);
 	void (*set_duty)(enum pwm_channel ch, int percent);
 };
+#endif
 
 struct pwm_led_color_map {
 	uint8_t ch0;

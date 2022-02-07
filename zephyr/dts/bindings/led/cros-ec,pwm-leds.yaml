@@ -14,14 +14,17 @@ properties:
     required: true
     description: |
       List of pwm-leds nodes. These are expected to have a pwms property
-      pointing to the relevant PWMs, in red, green, blue and optionally sidesel
-      order.
+      pointing to the relevant PWMs, up to three PWM devices. The order is
+      matched against the array order of the color-map- properties.
 
       For example
         pwmleds {
                 compatible = "pwm-leds";
                 pwm_led0: pwm_led_0 {
-                        pwms = <&led3_red &led2_green &led1_blue>;
+                        pwms = <&pwm1 0 PWM_POLARITY_INVERTED
+                                &pwm0 0 PWM_POLARITY_INVERTED
+                                &pwm2 0 PWM_POLARITY_INVERTED>;
+
                 };
         };
         cros-pwmleds {
@@ -33,7 +36,27 @@ properties:
     type: phandle
     required: false
     description: |
-      PWM node phandle for the SIDESEL line, if present.
+      A pwm-leds node for the SIDESEL line, if present.
+
+      For example
+        pwmleds {
+                compatible = "pwm-leds";
+                pwm_sidesel: pwm_sidesel {
+                        pwms = <&pwm7 0 PWM_POLARITY_INVERTED>;
+
+                };
+        };
+        cros-pwmleds {
+                compatible = "cros-ec,pwm-leds";
+                sidesel = <&pwm_sidesel>;
+        };
+
+  frequency:
+    type: int
+    required: true
+    description: |
+      PWM frequency in Hz for LEDs. SIDESEL, if present, uses half the
+      frequency.
 
   color-map-red:
     type: array

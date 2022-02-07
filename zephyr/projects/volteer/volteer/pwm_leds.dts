@@ -7,7 +7,12 @@
 	pwmleds {
 		compatible = "pwm-leds";
 		pwm_led0: pwm_led_0 {
-			pwms = <&led3_red &led2_green &led1_blue>;
+			pwms = <&pwm1 0 PWM_POLARITY_INVERTED
+				&pwm0 0 PWM_POLARITY_INVERTED
+				&pwm2 0 PWM_POLARITY_INVERTED>;
+		};
+		pwm_sidesel: pwm_sidesel {
+			pwms = <&pwm7 0 PWM_POLARITY_INVERTED>;
 		};
 	};
 
@@ -15,7 +20,9 @@
 		compatible = "cros-ec,pwm-leds";
 
 		leds = <&pwm_led0>;
-		sidesel = <&led3_sidesel>;
+		sidesel = <&pwm_sidesel>;
+
+		frequency = <4800>;
 
 		color-map-red    = <100   0   0>;
 		color-map-green  = <  0 100   0>;
