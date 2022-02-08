@@ -275,15 +275,6 @@
 		};
 	};
 
-	hibernate-wake-pins {
-		compatible = "cros-ec,hibernate-wake-pins";
-		wakeup-irqs = <
-			&int_ac_present
-			&int_power_button
-			&int_lid_open
-		>;
-	};
-
 	named-ioexes {
 		compatible = "named-ioexes";
 

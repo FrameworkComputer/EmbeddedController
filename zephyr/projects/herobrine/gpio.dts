@@ -248,19 +248,6 @@
 		>;
 	};
 
-	hibernate-wake-pins {
-		compatible = "cros-ec,hibernate-wake-pins";
-		wakeup-irqs = <
-			/*
-			 * TODO(b/216893756): Resolve how
-			 * hibernation is done.
-			 */
-			&int_ac_present
-			&int_power_button
-			&int_lid_open
-		>;
-	};
-
 	vsby-psl-in-list {
 		/* Use PSL_IN1/2/3/4 as detection pins from hibernate mode */
 		psl-in-pads = <&psl_in1 &psl_in2 &psl_in3 &psl_in4>;
