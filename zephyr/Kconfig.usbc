@@ -15,6 +15,7 @@ menuconfig PLATFORM_EC_USBC
 	  including Display Port, Thunderbolt, and USB4.
 
 rsource "Kconfig.retimer"
+rsource "Kconfig.pd_int_shared"
 
 if PLATFORM_EC_USBC
 
@@ -95,45 +96,6 @@ menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 	  those devices.
 
 if PLATFORM_EC_USB_POWER_DELIVERY
-
-menuconfig PLATFORM_EC_USB_PD_INT_SHARED
-	bool "USB-C ports share PD interrupts"
-	select HAS_TASK_PD_INT_SHARED
-	help
-	  This enables processing of shared interrupts where multiple ports
-	  share a single IRQ on the EC. Only one shared IRQ is supported,
-	  but any combination of ports can be serviced by that one IRQ.
-
-if PLATFORM_EC_USB_PD_INT_SHARED
-
-config PLATFORM_EC_USB_PD_PORT_0_SHARED
-	bool "Port 0 IRQ is shared"
-	help
-	  Enable handling of port 0 PD interrupts signalled by an IRQ that is
-	  shared by every other port enabled in this section.
-
-config PLATFORM_EC_USB_PD_PORT_1_SHARED
-	bool "Port 1 IRQ is shared"
-	depends on PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 1
-	help
-	  Enable handling of port 1 PD interrupts signalled by an IRQ that is
-	  shared by every other port enabled in this section.
-
-config PLATFORM_EC_USB_PD_PORT_2_SHARED
-	bool "Port 2 IRQ is shared"
-	depends on PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 2
-	help
-	  Enable handling of port 2 PD interrupts signalled by an IRQ that is
-	  shared by every other port enabled in this section.
-
-config PLATFORM_EC_USB_PD_PORT_3_SHARED
-	bool "Port 3 IRQ is shared"
-	depends on PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 3
-	help
-	  Enable handling of port 3 PD interrupts signalled by an IRQ that is
-	  shared by every other port enabled in this section.
-
-endif # PLATFORM_EC_USB_PD_INT_SHARED
 
 config PLATFORM_EC_USB_PD_HOST_CMD
 	bool "Host commands related to USB Power Delivery"
