@@ -18,7 +18,6 @@
 		};
 		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
 			gpios = <&gpiof 0 GPIO_INPUT>;
-			enum-name = "GPIO_PG_GROUPC_S0_OD";
 		};
 		/* TODO: Add interrupt handler */
 		ec_i2c_usbc_pd_int {
@@ -73,7 +72,6 @@
 		};
 		ec_cbi_wp {
 			gpios = <&gpio8 1 GPIO_OUT_LOW>;
-			enum-name = "GPIO_EC_CBI_WP";
 		};
 		gpio_wp: ec_wp_l {
 			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
