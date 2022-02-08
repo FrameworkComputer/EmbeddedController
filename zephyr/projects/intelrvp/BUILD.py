@@ -16,14 +16,17 @@ def register_intelrvp_project(
         register_func = register_npcx_project
 
     kconfig_files = [here / "prj.conf"]
+    dts_overlays = []
     if project_name.startswith("adlrvp"):
         kconfig_files.append(here / "adlrvp/prj.conf")
+        dts_overlays.append(here / "adlrvp/battery.dts")
     kconfig_files.extend(extra_kconfig_files)
+    dts_overlays.extend(extra_dts_overlays)
 
     register_func(
         project_name=project_name,
         zephyr_board=chip,
-        dts_overlays=extra_dts_overlays,
+        dts_overlays=dts_overlays,
         kconfig_files=kconfig_files,
     )
 

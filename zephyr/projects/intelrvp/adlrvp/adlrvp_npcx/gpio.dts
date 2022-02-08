@@ -146,6 +146,7 @@
 		};
 		bat_det {
 			gpios = <&gpio7 6 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 		edp_bklt_en_mecc {
 			gpios = <&gpioe 1 GPIO_OUT_HIGH>;
