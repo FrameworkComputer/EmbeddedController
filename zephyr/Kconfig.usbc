@@ -14,6 +14,8 @@ menuconfig PLATFORM_EC_USBC
 	  of attached USB-C partners and enabling alternate operational modes,
 	  including Display Port, Thunderbolt, and USB4.
 
+rsource "Kconfig.retimer"
+
 if PLATFORM_EC_USBC
 
 config PLATFORM_EC_CHARGER_INPUT_CURRENT
@@ -76,82 +78,6 @@ config PLATFORM_EC_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
 	  which is then used by MS Windows to request a Extended Compatible
 	  ID Feature descriptor so that Windows will know to load its WINUSB
 	  driver.
-
-config PLATFORM_EC_USBC_RETIMER_INTEL_BB
-	bool "Support Intel Burnside Bridge retimer"
-	help
-	  Enable this to support the Intel Burnside Bridge Thunderbolt / USB /
-	  DisplayPort retimer.
-
-	  Intel Burnside Bridge is a Type-C multi-protocol retimer to be used
-	  in on-board applications. Burnside Bridge offers the ability to latch
-	  protocol signals into on-chip memory before retransmitting them
-	  onwards. It can be used to extend the physical length of the system
-	  without increasing high-frequency jitter.
-
-	  Burnside Bridge supports spec compliant retimer of following
-	  protocols:
-
-	    - Display Port: four unidirectional DP lanes
-	    - USB3.1 Gen1/2: one bi-directional USB lane
-	    - Thunderbolt: two bi-directional CIO lanes
-	    - Multifunction Display (MFD): two unidirectional lanes of DP and
-	      one bidirectional lane of USB3.1 Gen1/2
-
-config PLATFORM_EC_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
-	bool "Use runtime configuration of Intel Burnside Bridge"
-	depends on PLATFORM_EC_USBC_RETIMER_INTEL_BB
-	default y
-	help
-	  Enable this to allow run-time configuration of the Burnside Bridge
-	  driver structure. This makes the bb_controls[] array writable, i.e.
-	  not const. It should be declared as such in the board config.
-
-	  This is useful when the board has runtime information that changes
-	  the configuration, such as Chromium OS Board Info (CBI set in the
-	  factory. Without this, multiple EC images would need to be installed
-	  depending on the board.
-
-config PLATFORM_EC_USBC_RETIMER_ANX7451
-	bool "Support Analogix ANX7451 10G Active Mux and Retimer"
-	help
-	  ANX7451 is a 4x4 re-timing mux capable of switching DisplayPort (DP)
-	  and USB3.2 Gen 2 10Gbps signals to support a single USB Type-C port.
-	  ANX7451 has built-in re-timers to recover both the USB and DP signals
-	  with loss compensation of 23dB for USB and up to 27dB for DP.
-
-config PLATFORM_EC_USBC_RETIMER_PS8811
-	bool "Support Parade PS8811 Single Port USB 3.1 Gen 2 10G Retimer"
-	help
-	  The PS8811 is a one-port bidirectional USB 3.1 Gen 2 retimer that
-	  integrates the UniEye equalizer and a retimer to re-condition USB 3.1
-	  signals for long media link applications. It supports USB 3.1 Gen 2
-	  with operation speed up to 10Gbps as well as Gen 1 operation at 5Gbps.
-
-config PLATFORM_EC_USBC_RETIMER_PS8818
-	bool "Parade PS8818 USB Type-C Retimer for USB and DP Alternate Mode"
-	help
-	  PS8818 is a 10Gbps retimer for Type-C applications with the
-	  integrated USB3.1 and DisplayPort alternate mode port.
-
-config PLATFORM_EC_USBC_RETIMER_KB800X
-	bool "Enable KB800X retimer"
-	help
-	  The KB8001 is a Universal Serial Bus (USB) Type-C 40 Gb/s multiprotocol
-	  switch and bidirectional Bit-Level Retimer (BLR) which supports:
-	    - Display Port: four unidirectional DP lanes
-	    - USB3.1 Gen1/2: one bi-directional USB lane
-	    - USB4/Thunderbolt: two bi-directional CIO lanes
-	    - Multifunction Display (MFD): two unidirectional lanes of DP and
-	      one bidirectional lane of USB3.1 Gen1/2
-
-config PLATFORM_EC_KB800X_CUSTOM_XBAR
-	bool "Use custom remapping of HSIO XBAR"
-	depends on PLATFORM_EC_USBC_RETIMER_KB800X
-	default n
-	help
-	  Enable this to allow using a custom crossbar configuration for the HSIO
-	  lanes.
 
 menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 	bool "USB Type-C Power Delivery (PD)"
