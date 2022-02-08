@@ -1,0 +1,11 @@
+[MASTER]
+init-hook='import sys; sys.path.append("/usr/lib64/python3.6/site-packages")'
+
+[MESSAGES CONTROL]
+
+disable=bad-continuation,bad-whitespace,format,fixme
+
+[format]
+
+max-line-length=88
+string-quote=double

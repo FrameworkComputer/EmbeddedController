@@ -9,7 +9,7 @@ import pathlib
 
 import zmake.build_config as build_config
 import zmake.configlib as configlib
-import zmake.modules as modules
+import zmake.modules
 import zmake.toolchains as toolchains
 
 
@@ -92,7 +92,7 @@ class ProjectConfig:
     supported_toolchains: "list[str]"
     output_packer: type
     modules: "list[str]" = dataclasses.field(
-        default_factory=lambda: modules.known_modules,
+        default_factory=lambda: zmake.modules.known_modules,
     )
     is_test: bool = dataclasses.field(default=False)
     dts_overlays: "list[str]" = dataclasses.field(default_factory=list)
