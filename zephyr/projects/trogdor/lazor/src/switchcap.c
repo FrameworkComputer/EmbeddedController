@@ -71,19 +71,19 @@ static void switchcap_init(void)
 		 * (7) This function configures it -> open-drain LOW
 		 */
 		gpio_pin_configure_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_switchcap_on_l),
+			GPIO_DT_FROM_NODELABEL(gpio_switchcap_on),
 			GPIO_OUTPUT | GPIO_OPEN_DRAIN);
 
 		/* Only configure the switchcap if not sysjump */
 		if (!system_jumped_late()) {
 			/*
-			 * Deassert the enable pin (set it HIGH), so the
+			 * Deassert the enable pin, so the
 			 * switchcap won't be enabled after the switchcap is
 			 * configured from standby mode to switching mode.
 			 */
 			gpio_pin_set_dt(
-				GPIO_DT_FROM_NODELABEL(gpio_switchcap_on_l),
-				1);
+				GPIO_DT_FROM_NODELABEL(gpio_switchcap_on),
+				0);
 			ln9310_init();
 		}
 	} else if (board_has_buck_ic()) {
@@ -102,8 +102,8 @@ void board_set_switchcap_power(int enable)
 			enable);
 	} else if (board_has_ln9310()) {
 		gpio_pin_set_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_switchcap_on_l),
-			!enable);
+			GPIO_DT_FROM_NODELABEL(gpio_switchcap_on),
+			enable);
 		ln9310_software_enable(enable);
 	} else if (board_has_buck_ic()) {
 		gpio_pin_set_dt(
@@ -114,12 +114,9 @@ void board_set_switchcap_power(int enable)
 
 int board_is_switchcap_enabled(void)
 {
-	if (board_has_da9313())
+	if (board_has_da9313() || board_has_ln9310())
 		return gpio_pin_get_dt(
 				GPIO_DT_FROM_NODELABEL(gpio_switchcap_on));
-	else if (board_has_ln9310())
-		return !gpio_pin_get_dt(
-				GPIO_DT_FROM_NODELABEL(gpio_switchcap_on_l));
 
 	/* Board has buck ic*/
 	return gpio_pin_get_dt(

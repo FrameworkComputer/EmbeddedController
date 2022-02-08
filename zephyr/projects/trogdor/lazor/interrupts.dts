@@ -37,9 +37,14 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
+		/*
+		 * Note this is an active low input, so
+		 * the direction is from logical low to
+		 * logical high.
+		 */
 		int_switchcap_pg: switchcap_pg {
 			irq-pin = <&gpio_switchcap_pg_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
+			flags = <GPIO_INT_EDGE_RISING>;
 			handler = "ln9310_interrupt";
 		};
 		int_ap_rst: ap_rst {

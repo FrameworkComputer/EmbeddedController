@@ -3,11 +3,12 @@ description: SwitchCap controlled by LN9310
 compatible: "switchcap-ln9310"
 
 properties:
-  enable-l-pin:
+  enable-pin:
     type: phandle
     required: true
     description: |
-      GPIO used to enable the switch cap - active low
+      GPIO used to enable the switch cap. Relies on
+      GPIO flags to determine active low or high.
 
   port:
     type: phandle

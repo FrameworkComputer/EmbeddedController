@@ -104,9 +104,11 @@
 			gpios = <&gpioe 2 GPIO_INPUT>;
 			enum-name = "GPIO_DA9313_GPIO0";
 		};
+		/*
+		 * Active low input
+		 */
 		gpio_switchcap_pg_int_l: switchcap_pg_int_l {
-			gpios = <&gpioe 2 GPIO_INPUT>;
-			enum-name = "GPIO_SWITCHCAP_PG_INT_L";
+			gpios = <&gpioe 2 (GPIO_ACTIVE_LOW | GPIO_INPUT)>;
 		};
 		gpio_ec_rst_odl: ec_rst_odl {
 			gpios = <&gpio0 2 GPIO_INPUT>;
@@ -142,10 +144,6 @@
 		gpio_switchcap_on: switchcap_on {
 			gpios = <&gpiod 5 GPIO_OUT_LOW>;
 			enum-name = "GPIO_SWITCHCAP_ON";
-		};
-		gpio_switchcap_on_l: switchcap_on_l {
-			gpios = <&gpiod 5 GPIO_OUT_LOW>;
-			enum-name = "GPIO_SWITCHCAP_ON_L";
 		};
 		gpio_vbob_en: vbob_en {
 			gpios = <&gpiod 3 GPIO_OUT_LOW>;
