@@ -98,9 +98,8 @@
 		gpio_ec_soc_vccst_pwrgd_od: ec_soc_vccst_pwrgd_od {
 			gpios = <&gpioe 5 GPIO_ODR_HIGH>;
 		};
-		gpio_ec_soc_wake_odl: ec_soc_wake_odl {
+		gpio_ec_pch_wake_odl: ec_soc_wake_odl {
 			gpios = <&gpiob 2 GPIO_ODR_LOW>;
-			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 		};
 		gpio_ec_wp_odl: ec_wp_odl {
 			gpios = <&gpioa 6 GPIO_INPUT>;

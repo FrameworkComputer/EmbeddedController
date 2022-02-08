@@ -43,9 +43,8 @@
 			gpios = <&gpiob 6 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_SYS_RESET_L";
 		};
-		pch_wake_l {
+		gpio_ec_pch_wake_odl: pch_wake_l {
 			gpios = <&gpiob 7 GPIO_OUT_HIGH>;
-			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 		};
 		i2c_a_scl {
 			gpios = <&gpiob 3 GPIO_INPUT>;

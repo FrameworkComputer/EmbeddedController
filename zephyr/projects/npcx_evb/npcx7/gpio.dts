@@ -30,9 +30,8 @@
 			gpios = <&gpio3 6 GPIO_OUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
-		pch_wake_l {
+		gpio_ec_pch_wake_odl: pch_wake_l {
 			gpios = <&gpio5 0 GPIO_OUT_HIGH>;
-			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 		};
 		gpio_pgood_fan: pgood_fan {
 			gpios = <&gpioc 7 GPIO_INPUT_PULL_UP>;

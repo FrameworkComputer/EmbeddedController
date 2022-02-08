@@ -73,9 +73,8 @@
 		usbc_tcpc_ppc_alrt_p3 {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 		};
-		smc_wake_sci_n_mecc {
+		gpio_ec_pch_wake_odl: smc_wake_sci_n_mecc {
 			gpios = <&gpioa 4 GPIO_ODR_HIGH>;
-			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 		};
 		ec_pch_mkbp_int_odl {
 			gpios = <&gpiof 5 GPIO_ODR_HIGH>;

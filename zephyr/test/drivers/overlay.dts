@@ -42,9 +42,8 @@
 			gpios = <&gpio0 4 GPIO_INPUT>;
 			enum-name = "GPIO_PG_EC_DSW_PWROK";
 		};
-		ec_pch_wake_odl {
+		gpio_ec_pch_wake_odl: ec_pch_wake_odl {
 			gpios = <&gpio0 5 GPIO_OUT_HIGH>;
-			enum-name = "GPIO_EC_PCH_WAKE_ODL";
 		};
 		/* Setup USB C1 pin as output to check their state in test */
 		usb_c1_ls_en {

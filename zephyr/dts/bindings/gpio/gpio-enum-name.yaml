@@ -43,7 +43,6 @@ properties:
       - GPIO_EC_DPBRDG_HPD_ODL
       - GPIO_EC_INT_L
       - GPIO_EC_PCH_SYS_PWROK
-      - GPIO_EC_PCH_WAKE_ODL
       - GPIO_EC_PMIC_EN_ODL
       - GPIO_EC_PMIC_WATCHDOG_L
       - GPIO_EC_PROCHOT_IN_L

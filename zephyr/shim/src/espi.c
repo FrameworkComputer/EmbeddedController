@@ -218,7 +218,8 @@ static void lpc_update_wake(host_event_t wake_events)
 	wake_events &= ~EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON);
 
 	/* Signal is asserted low when wake events is non-zero */
-	gpio_set_level(GPIO_EC_PCH_WAKE_ODL, !wake_events);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pch_wake_odl),
+			!wake_events);
 }
 
 static void lpc_generate_smi(void)
