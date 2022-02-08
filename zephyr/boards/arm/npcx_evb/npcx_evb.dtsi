@@ -71,11 +71,6 @@
 			io-channels = <&adc0 4>;
 		};
 	};
-
-	vsby-psl-in-list {
-		/* Use PSL_IN1/2/3 as detection pins from hibernate mode */
-		psl-in-pads = <&psl_in1 &psl_in2 &psl_in3>;
-	};
 };
 
 &i2c0_0 {
@@ -125,17 +120,6 @@
 
 &adc0 {
 	status = "okay";
-};
-
-/* Power switch logic input pads */
-&psl_in1 {
-	flag = <NPCX_PSL_FALLING_EDGE>;
-};
-&psl_in2 {
-	flag = <NPCX_PSL_FALLING_EDGE>;
-};
-&psl_in3 {
-	flag = <NPCX_PSL_RISING_EDGE>;
 };
 
 &cros_kb_raw {

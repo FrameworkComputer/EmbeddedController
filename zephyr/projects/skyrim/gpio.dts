@@ -188,6 +188,7 @@
 	vsby-psl-in-list {
 		/* PSL_IN1/2/4 are used to wake */
 		psl-in-pads = <&psl_in1 &psl_in2 &psl_in4>;
+		status = "okay";
 	};
 
 	named-ioexes {

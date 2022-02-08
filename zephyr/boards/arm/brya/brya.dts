@@ -170,6 +170,7 @@
 	vsby-psl-in-list {
 		/* Use PSL_IN1/2/3 as detection pins from hibernate mode */
 		psl-in-pads = <&psl_in1 &psl_in2 &psl_in3>;
+		status = "okay";
 	};
 
 	def-lvol-io-list {
