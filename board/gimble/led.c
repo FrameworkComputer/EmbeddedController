@@ -78,34 +78,49 @@ __override void led_set_color_battery(enum ec_led_colors color)
 	/* Check which port is the charging port,
 	 * and turn on the corresponding led.
 	 */
-	port = charge_manager_get_active_charge_port();
-	switch (port) {
-	case LED_SIDESEL_MB_PORT:
+	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+		port = charge_manager_get_active_charge_port();
+		switch (port) {
+		case LED_SIDESEL_MB_PORT:
+			switch (color) {
+			case EC_LED_COLOR_AMBER:
+				led1_duty = BAT_LED_ON_LVL;
+				break;
+			case EC_LED_COLOR_WHITE:
+				led2_duty = BAT_LED_ON_LVL;
+				break;
+			default: /* LED_OFF and other unsupported colors */
+				break;
+			}
+			break;
+		case LED_SIDESEL_DB_PORT:
+			switch (color) {
+			case EC_LED_COLOR_AMBER:
+				led3_duty = BAT_LED_ON_LVL;
+				break;
+			case EC_LED_COLOR_WHITE:
+				led4_duty = BAT_LED_ON_LVL;
+				break;
+			default: /* LED_OFF and other unsupported colors */
+				break;
+			}
+			break;
+		default: /* Unknown charging port */
+			break;
+		}
+	} else {  
 		switch (color) {
 		case EC_LED_COLOR_AMBER:
 			led1_duty = BAT_LED_ON_LVL;
-			break;
-		case EC_LED_COLOR_WHITE:
-			led2_duty = BAT_LED_ON_LVL;
-			break;
-		default: /* LED_OFF and other unsupported colors */
-			break;
-		}
-		break;
-	case LED_SIDESEL_DB_PORT:
-		switch (color) {
-		case EC_LED_COLOR_AMBER:
 			led3_duty = BAT_LED_ON_LVL;
 			break;
 		case EC_LED_COLOR_WHITE:
+			led2_duty = BAT_LED_ON_LVL;
 			led4_duty = BAT_LED_ON_LVL;
 			break;
 		default: /* LED_OFF and other unsupported colors */
 			break;
 		}
-		break;
-	default: /* Unknown charging port */
-		break;
 	}
 
 	pwm_set_duty(PWM_CH_LED1, led1_duty);
@@ -141,8 +156,12 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 			led_set_color_battery(EC_LED_COLOR_AMBER);
 		else if (brightness[EC_LED_COLOR_WHITE] != 0)
 			led_set_color_battery(EC_LED_COLOR_WHITE);
-		else
+		else if (brightness[LED_OFF] != 0)
 			led_set_color_battery(LED_OFF);
+		else {
+			led_auto_control(led_id, 1);
+			led_set_color_battery(LED_OFF);
+		}
 	} else if (led_id == EC_LED_ID_POWER_LED) {
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
 			led_set_color_power(EC_LED_COLOR_WHITE);
