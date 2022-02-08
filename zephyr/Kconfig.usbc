@@ -20,6 +20,7 @@ rsource "Kconfig.pd_meas_vbus"
 rsource "Kconfig.pd_frs"
 rsource "Kconfig.pd_discharge"
 rsource "Kconfig.pd_vbus_detection"
+rsource "Kconfig.pd_console_cmd"
 
 if PLATFORM_EC_USBC
 
@@ -369,56 +370,6 @@ config PLATFORM_EC_USB_PD_LOGGING
 
 	  The log events are stored in a circular buffer, each one being a
 	  struct event_log_entry.
-
-menuconfig PLATFORM_EC_USB_PD_CONSOLE_CMD
-	bool "Enable USB PD console commands"
-	default y if PLATFORM_EC_USB_PD_ALT_MODE_DFP
-	help
-	  Enables various USB-C PD related console commands.
-
-if PLATFORM_EC_USB_PD_CONSOLE_CMD
-
-config PLATFORM_EC_CONSOLE_CMD_USB_PD_PE
-	bool "Console command: pe"
-	default y
-	help
-	  This command dumps information about the USB PD alternate mode options
-	  discovered from the partner device. It can be useful for debugging.
-
-	  Example: pe 1 dump
-	     IDENT SOP:
-
-	             [ID Header] 2c000bda :: AMA, VID:0bda
-	             [Cert Stat] 00000000
-	             [2] 00000209    [3] 11000f09
-	     IDENT SOP':
-	             [ID Header] 1c000489 :: PCable, VID:0489
-	             [Cert Stat] 000001c6
-	             [2] f6810000    [3] 11082051
-	     SVID[0]: ff01 MODES: [1] 000c0045
-	     MODE[1]: svid:ff01 caps:000c0045
-
-config PLATFORM_EC_CONSOLE_CMD_USB_PD_CABLE
-	bool "Console command: pdcable"
-	default y
-	help
-	  This commands shows the USB cable charactistics as detected from the
-	  device. It can be useful for debugging problems with cables and the
-	  device's response to them.
-
-	  Example: pdcable 1
-	     Cable Type: Passive
-	     Cable Rev: 1.0
-	     Connector Type: 2
-	     Cable Current: 5A
-	     USB Superspeed Signaling support: 1
-	     Rounded support: No
-	     Optical cable: No
-	     Retimer support: No
-	     Link training: Bi-directional
-	     Thunderbolt cable type: Passive
-
-endif  # PLATFORM_EC_USB_PD_CONSOLE_CMD
 
 choice "USB-C device type"
 	prompt "Select the USB-C device type"
