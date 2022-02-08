@@ -21,6 +21,7 @@ rsource "Kconfig.pd_frs"
 rsource "Kconfig.pd_discharge"
 rsource "Kconfig.pd_vbus_detection"
 rsource "Kconfig.pd_console_cmd"
+rsource "Kconfig.pd_usbc_device_type"
 
 if PLATFORM_EC_USBC
 
@@ -370,36 +371,6 @@ config PLATFORM_EC_USB_PD_LOGGING
 
 	  The log events are stored in a circular buffer, each one being a
 	  struct event_log_entry.
-
-choice "USB-C device type"
-	prompt "Select the USB-C device type"
-	default PLATFORM_EC_USB_DRP_ACC_TRYSRC
-
-config PLATFORM_EC_USB_VPD
-	bool "VCONN-Powered Device"
-	help
-	  This enables support for supplying power to devices that accept power
-	  over the USB VCONN line.
-
-	  See here for details:
-
-	  https://www.usb.org/sites/default/files/D1T2-3a%20-%20CTVPDs%20and%20Making%20Your%20Own%20USB-C%20Thingamajig.pdf
-
-config PLATFORM_EC_USB_CTVPD
-	bool "Charge-Through VCONN-Powered Device"
-	help
-	  This enables support for supplying power to devices, with a circuit
-	  that deals with this without needing the involvement of the main
-	  device.
-
-config PLATFORM_EC_USB_DRP_ACC_TRYSRC
-	bool "Dual-Role Port, Audio Accessory, and Try.SRC Device"
-	help
-	  This is the most flexible option, allowing the port to operate in
-	  a dual-role capacity, so that power can be accepted or supplied on
-	  a port.
-
-endchoice  # USB-C device type
 
 config PLATFORM_EC_USB_PD_TRY_SRC
 	bool "Enable Try.SRC mode"

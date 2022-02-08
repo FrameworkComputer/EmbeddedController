@@ -1,0 +1,39 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+if PLATFORM_EC_USB_POWER_DELIVERY
+
+choice "USB-C device type"
+	prompt "Select the USB-C device type"
+	default PLATFORM_EC_USB_DRP_ACC_TRYSRC
+
+config PLATFORM_EC_USB_VPD
+	bool "VCONN-Powered Device"
+	help
+	  This enables support for supplying power to devices that accept power
+	  over the USB VCONN line.
+
+	  See here for details:
+
+	  https://www.usb.org/sites/default/files/D1T2-3a%20-%20CTVPDs%20and%20Making%20Your%20Own%20USB-C%20Thingamajig.pdf
+
+config PLATFORM_EC_USB_CTVPD
+	bool "Charge-Through VCONN-Powered Device"
+	help
+	  This enables support for supplying power to devices, with a circuit
+	  that deals with this without needing the involvement of the main
+	  device.
+
+config PLATFORM_EC_USB_DRP_ACC_TRYSRC
+	bool "Dual-Role Port, Audio Accessory, and Try.SRC Device"
+	help
+	  This is the most flexible option, allowing the port to operate in
+	  a dual-role capacity, so that power can be accepted or supplied on
+	  a port.
+
+endchoice  # USB-C device type
+
+endif # PLATFORM_EC_USB_POWER_DELIVERY
+endif # PLATFORM_EC_USBC
