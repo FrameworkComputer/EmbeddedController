@@ -1,0 +1,42 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+if PLATFORM_EC_USB_POWER_DELIVERY
+
+config PLATFORM_EC_USB_PD_DISCHARGE
+	bool "Board can discharge VBUS"
+	default y
+	help
+	  Enable this if the board can enable VBUS discharge (eg. through a
+	  GPIO-controlled discharge circuit, or through port controller
+	  registers) to discharge VBUS rapidly on disconnect
+
+choice "Discharge method"
+	prompt "Select the discharge method"
+	depends on PLATFORM_EC_USB_PD_DISCHARGE
+
+config PLATFORM_EC_USB_PD_DISCHARGE_GPIO
+	bool "GPIO control"
+	help
+	  Enable this if the discharge circuit is controlled by a GPIO
+
+	  TODO: How to specify the GPIO?
+
+config PLATFORM_EC_USB_PD_DISCHARGE_TCPC
+	bool "Discharge circuit is provided by the TCPC"
+	help
+	  Enable this if the discharge circuit is provided by Power-Delivery
+	  resistors on the USB Type-C Port Controller (TCPC).
+
+config PLATFORM_EC_USB_PD_DISCHARGE_PPC
+	bool "Discharge circuit is provided by the PPC"
+	help
+	  Enable this if the discharge circuit is using Power Delivery
+	  resistors on the Power Path Controller.
+
+endchoice  # Discharge method
+
+endif # PLATFORM_EC_USB_POWER_DELIVERY
+endif # PLATFORM_EC_USBC

@@ -18,6 +18,7 @@ rsource "Kconfig.retimer"
 rsource "Kconfig.pd_int_shared"
 rsource "Kconfig.pd_meas_vbus"
 rsource "Kconfig.pd_frs"
+rsource "Kconfig.pd_discharge"
 
 if PLATFORM_EC_USBC
 
@@ -225,39 +226,6 @@ config PLATFORM_EC_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	  board supports toggling of the power role autonomously. When this is
 	  disabled, the USB power delivery task is responsible for manually
 	  toggling the power role.
-
-config PLATFORM_EC_USB_PD_DISCHARGE
-	bool "Board can discharge VBUS"
-	default y
-	help
-	  Enable this if the board can enable VBUS discharge (eg. through a
-	  GPIO-controlled discharge circuit, or through port controller
-	  registers) to discharge VBUS rapidly on disconnect
-
-choice "Discharge method"
-	prompt "Select the discharge method"
-	depends on PLATFORM_EC_USB_PD_DISCHARGE
-
-config PLATFORM_EC_USB_PD_DISCHARGE_GPIO
-	bool "GPIO control"
-	help
-	  Enable this if the discharge circuit is controlled by a GPIO
-
-	  TODO: How to specify the GPIO?
-
-config PLATFORM_EC_USB_PD_DISCHARGE_TCPC
-	bool "Discharge circuit is provided by the TCPC"
-	help
-	  Enable this if the discharge circuit is provided by Power-Delivery
-	  resistors on the USB Type-C Port Controller (TCPC).
-
-config PLATFORM_EC_USB_PD_DISCHARGE_PPC
-	bool "Discharge circuit is provided by the PPC"
-	help
-	  Enable this if the discharge circuit is using Power Delivery
-	  resistors on the Power Path Controller.
-
-endchoice  # Discharge method
 
 config PLATFORM_EC_USB_PD_REV30
 	bool "USB PD Rev3.0 functionality"
