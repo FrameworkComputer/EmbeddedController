@@ -25,6 +25,7 @@ rsource "Kconfig.pd_usbc_device_type"
 rsource "Kconfig.pd"
 rsource "Kconfig.ppc"
 rsource "Kconfig.usb_mux"
+rsource "Kconfig.usbc_ss_mux"
 
 if PLATFORM_EC_USBC
 
@@ -146,62 +147,6 @@ config PLATFORM_EC_USB_PD_TCPM_TCPCI
 #  CONFIG_USB_PD_TCPM_CCGXXF
 
 endchoice  # Type-C Port Manager (TCPM)
-
-config PLATFORM_EC_USBC_SS_MUX
-	bool "SuperSpeed mux"
-	default y
-	help
-	  Enable this to support the USB Type-C SuperSpeed Mux. If enabled,
-	  the USB stack will call usb_mux_set() to change the mux settings.
-	  The board must provide a driver in usb_muxes[] for each port so
-	  that this can work.
-
-if PLATFORM_EC_USBC_SS_MUX
-
-config PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
-	bool "USB mux runtime config"
-	default y
-	help
-	  Allows the configuration of the USB mux to be set up at runtime. This
-	  makes the usb_muxes[] array writable, i.e. not const. It should be
-	  declared as such in the board config.
-
-	  This is useful when the board has runtime information that changes
-	  the configuration, such as Chromium OS Board Info (CBI set in the
-	  factory. Without this, multiple EC images would need to be installed
-	  depending on the board.
-
-config PLATFORM_EC_USBC_SS_MUX_DFP_ONLY
-	bool "Use SuperSpeed mux only when DFP"
-        help
-	  Only configure the USB Type-C SuperSpeed Mux when a port is a
-	  Downstream Facing Port (DFP). This is needed for chipsets which
-	  don't support being an Upstream Facing Port UFP).
-
-config PLATFORM_EC_USB_MUX_VIRTUAL
-	bool "USB Mux is virtual"
-	depends on PLATFORM_EC_USBC_SS_MUX
-	help
-	  Enable this if a virtual USB mux is supported on the EC, which is
-	  actually handled by the AP. In this case the AP gets an interrupt
-	  and is is informed when status changes, via the
-	  EC_CMD_USB_PD_MUX_INFO host command.
-
-config PLATFORM_EC_USBC_RETIMER_FW_UPDATE
-	bool "Support firmware update of USB Type-C retimers"
-	default y
-	depends on PLATFORM_EC_USBC_SS_MUX
-	help
-	   Enable this to support USB Type-C retimer firmware update. Each
-	   Type-C retimer indicates its capability of supporting firmware update
-	   independently in its usb_mux_driver.
-
-	   During AP boot-up, the AP scans each PD port for retimers but only
-	   if there are no Type-C devices attached to the port. The firmware
-	   update can only be performed on retimers which show up in the AP
-	   thunderbolt device entries.
-
-endif  # PLATFORM_EC_USBC_SS_MUX
 
 config PLATFORM_EC_CONSOLE_CMD_PPC_DUMP
 	bool "Console command: ppc_dump"
