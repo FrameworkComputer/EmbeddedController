@@ -1,0 +1,50 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+if PLATFORM_EC_USB_POWER_DELIVERY
+
+config PLATFORM_EC_USB_PD_FRS
+	bool "Support Fast Role Swap protocol"
+	help
+	  Enables the protocol side of Fast Role Swap (FRS). This allows the
+	  device to switch from a SNK to a SRC (or vice versa) based on
+	  communication with the partner device.
+
+	  For this to work the trigger must be implemented in either the
+	  Type-C Port Controller (TCPC) or Power Path Controller (PPC).
+
+	  FRS differs from the traditional power-role swap in that FRS
+	  guarantees there is no interruption of power nor disruption of data
+	  communication to any downstream devices (such as devices connected
+	  to a USB-C hub or dock).
+
+if PLATFORM_EC_USB_PD_FRS
+
+choice "Trigger implementation"
+	prompt "Select where the trigger is implemented"
+	help
+	  The Fast Role Swap (protocol requires that a trigger be implemented to
+	  initiate the swap. Use this option to select which of the available
+	  options should be used.
+
+config PLATFORM_EC_USB_PD_FRS_PPC
+	bool "PPC"
+	depends on PLATFORM_EC_USBC_PPC
+	help
+	  Enable this if the Fast Role Swap trigger is implemented in the
+	  Power Path Controller (PPC).
+
+config PLATFORM_EC_USB_PD_FRS_TCPC
+	bool "TCPC"
+	help
+	  Enable this if the Fast Role Swap trigger is implemented in the
+	  Type-C Port Controller (TCPC).
+
+endchoice # Trigger implementation
+
+endif # PLATFORM_EC_USB_PD_FRS
+
+endif # PLATFORM_EC_USB_POWER_DELIVERY
+endif # PLATFORM_EC_USBC
