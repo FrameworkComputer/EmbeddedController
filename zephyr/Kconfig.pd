@@ -1,0 +1,338 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+
+menuconfig PLATFORM_EC_USB_POWER_DELIVERY
+	bool "USB Type-C Power Delivery (PD)"
+	default y
+	select HAS_TASK_PD_C0
+	help
+	  USB has always provided basic power to an attached peripheral. USB-C
+	  PD is part of the USB 3.0 standard and allows a lot more functionality
+	  than the basic 500mA @ 5V. It allows negotiating power delivery over
+	  the USB cable to select voltages up to 20V with current up to 5A.
+
+	  This option also enables the Type-C Port Manager (TCPM) on the EC. The
+	  TCPM deals with the various state changes in the system as devices are
+	  plugged and unplugged, as well as changes in power requirements from
+	  those devices.
+
+if PLATFORM_EC_USB_POWER_DELIVERY
+
+config PLATFORM_EC_USB_PD_HOST_CMD
+	bool "Host commands related to USB Power Delivery"
+	default y
+	help
+	  This enables host commands which allow finding out the capabilities
+	  of USB PD, checking is status and controlling how it operates. For
+	  devices which support firmware update, this is provided as well,
+	  with the firmware being sent from the AP.
+
+config PLATFORM_EC_USB_PD_PORT_MAX_COUNT
+	int "Maximum number of USB PD ports supported"
+	default 2
+	help
+	  This sets the limit on the number of PD ports supported on the
+	  device. This is used to set the size for tables used by devices.
+
+	  TODO(b/176237074): Can we calculate this from the devicetree at some
+	  point? Or update the sn5S330 driver to use an 8-bit flag byte for
+	  source_enabled[] so that plenty of ports are supported without this
+	  configuration option?
+
+config PLATFORM_EC_CONSOLE_CMD_MFALLOW
+	bool "Console command: mfallow"
+	default y
+	help
+	  Controls whether multi-function support is allowed for DP (Display
+	  Port) connections. Default setting allows multi-function support when
+	  the attached device also supports multi-function mode.
+
+	    mfallow <port> [true | false]
+
+config PLATFORM_EC_CONSOLE_CMD_PD
+	bool "Console command: pd"
+	default y
+	help
+	  Provides information about the current USB Power Delivery state and
+	  also allows various changes to be made for testing purposes.
+
+	  It has a number of subcommands:
+
+	     pd dump <n>  - sets the debug level (0-3). This affects all layers
+	                    of the stack
+	     pd trysrc [0/1/2] - prints or sets the Try.SRC override. Use 0 to
+	                    force Try.SRC off, 1 to force Try.SRC on, and 2 to
+	                    let USB PD stack control the Try.SRC behavior.
+	     pd version   - show PD version in use
+	     pd <port> state  - show start for a PD port
+
+	  Ssee usb_pd_console.c for full details including various commands
+	  for role swap, reset, enable/disable, requesting SNK or SRC, etc.
+
+config PLATFORM_EC_USB_PD_DEBUG_FIXED_LEVEL
+	bool "USB Power Delivery debug level is fixed at build time"
+	help
+	  Enable this to set the debug level to a fixed value in the build.
+	  This saves space but means that the level cannot be changed using
+	  commands like 'pd dump'. Typically this should be set when a platform
+	  is shipped.
+
+config PLATFORM_EC_USB_PD_DEBUG_LEVEL
+	int "Debug level to use"
+	depends on PLATFORM_EC_USB_PD_DEBUG_FIXED_LEVEL
+	help
+	  Sets the value of the debug level to use. If this is 0 then no
+	  debugging output is available from the USB Power Delivery stack.
+	  The meaning of each level depends on the module in question, but
+	  the maximum available level is 3.
+
+config PLATFORM_EC_USB_PD_5V_EN_CUSTOM
+	bool "Custom method of detecting VBUS"
+	help
+	  Enable this if your board needs a custom method to determine if VBUS
+	  is enabled on a source port. You must provide an implementation of:
+
+	     int board_is_sourcing_vbus(int port)
+
+	  It should return 0 if not sourcing VBUS on that port and non-zero
+	  if sourcing.
+
+config PLATFORM_EC_USB_PD_5V_CHARGER_CTRL
+	bool "Ask charger if VBUS is enabled on a source port"
+	help
+	  Enable this if the charger controls VBUS on a source port.
+	  The function charger_is_sourcing_otg_power is called
+	  to determine if VBUS is enabled on the source port.
+
+config PLATFORM_EC_USBC_VCONN
+	bool "Support USB Type-C VCONN"
+	default y
+	help
+	  This enables support for USB Type-C connector voltage (VCONN). This
+	  option must be enabled to communicate with electronically marked
+	  (E-Mark) cables. This option is required for operation with USB4 and
+	  Thunderbolt devices.
+
+	  This is not needed for captive cables.
+
+config PLATFORM_EC_USB_PD_DUAL_ROLE
+	bool "Board can act as a dual-role Power Delivery port"
+	default y
+	help
+	  This enables support for switching between source and sink during
+	  operation. This means that the port can accept power (e.g. to charge
+	  up its battery), or send out power to an attached device on the same
+	  port.
+
+config PLATFORM_EC_USB_PD_DPS
+	bool "Board can support Dynamic PDO Selection"
+	depends on PLATFORM_EC_BATTERY
+	default n
+	help
+	  Enable this if the board needs dynamic PDO selection.
+	  DPS picks a power efficient PDO regarding to the underlying battery
+	  configuration and the system loading.
+	  Default configuration can be overridden by `dps_config` to adapt
+	  to each board's need.
+
+config PLATFORM_EC_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+	bool "Board can use TCPC-controlled DRP toggle"
+	depends on PLATFORM_EC_USB_PD_DUAL_ROLE
+	default y
+	help
+	  Enable this if the USB Type-C Port Controllers (TCPC) used on the
+	  board supports toggling of the power role autonomously. When this is
+	  disabled, the USB power delivery task is responsible for manually
+	  toggling the power role.
+
+config PLATFORM_EC_USB_PD_REV30
+	bool "USB PD Rev3.0 functionality"
+	default y
+	help
+	  Enable this to allow Rev3.0 functionality, including features such as
+	  Fast Role Swap, advertising the available power across all ports of a
+	  multi-port charger, and USB4. If disabled, only USB Power Delivery
+	  Rev2.0 functionality is supported.
+
+	  This defaults to y because PD Rev3.0 is required for USB4
+	  functionality.
+
+config PLATFORM_EC_USB_PD_ALT_MODE
+	bool "USB Power Delivery alternate mode"
+	default y
+	help
+	  Enable this to support USB PD alternate mode. This allows negotiation
+	  of a different mode of operation to allow non-USB traffic to pass over
+	  a USB Type-C link. This makes use of some or all of the USB 3.0 bus
+	  differential pairs. If all are used for the alternate mode, then USB
+	  transmission is not available at all while in this mode.
+
+config PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY
+	bool "USB Power delivery requires AP to enter alternate modes"
+	depends on PLATFORM_EC_USB_PD_ALT_MODE
+	help
+	  Do not enter USB PD alternate modes or USB4 automatically, Wait for
+	  the AP to direct the EC to enter a mode. This requires AP software
+	  support.
+
+config PLATFORM_EC_USB_PD_ALT_MODE_DFP
+	bool "Downward Facing Port support"
+	default y
+	help
+	  Enable support for USB Power Delivery alternate mode of Downward
+	  Facing Port.
+
+	  TODO: Add more help here
+
+config PLATFORM_EC_USB_PD_ALT_MODE_UFP
+	bool "Upward Facing Port support"
+	help
+	  Enable support for USB Power Delivery alternate mode of Upward
+	  Facing Port (UFP).
+
+	  By default, Chromium OS only enables alternate modes (Display Port,
+	  USB4, Thuderbolt, etc) when the USB data role resolves to the
+	  Downstream Facing Port (DFP) role. Enable this option to support
+	  USB4 and ThunderBolt operation when the Chromium OS data role
+	  resolves to the UFP role.
+
+config PLATFORM_EC_USB_PD_USB32_DRD
+	bool "Port is cable of operating as an USB3.2 device"
+	default y
+	help
+	  Enable this if the board's USB Power Delivery Downward Facing Port is
+	  able to support the USB3.2 standard. This is advertised to the
+	  other end so that it can potentially take advantage of the additional
+	  features available.
+
+config PLATFORM_EC_USB_PD_DP_HPD_GPIO
+	bool "Hotplug Detect (HPD) is controlled by an EC GPIO"
+	help
+	  Enable this if the EC must send the Hotplug Detect (HPD) signal to
+	  the DisplayPort Graphics Processing Unit (GPU) via a GPIO. Otherwise
+	  this is sent by the display device.
+
+config PLATFORM_EC_USB_PD_DP_HPD_GPIO_CUSTOM
+	bool "Custom handling of HPD GPIO"
+	depends on PLATFORM_EC_USB_PD_DP_HPD_GPIO
+	help
+	  Enable this if the Hotplug Detect (HPD) GPIO level has to be handled
+	  by custom functions. In this case your board must implement a
+	  function to enable the feature for a port and another function to
+	  check the current state:
+
+	    void svdm_set_hpd_gpio(int port, int enable);
+
+	    int svdm_get_hpd_gpio(int port);
+
+config PLATFORM_EC_USB_PD_DATA_RESET_MSG
+	bool "Enable the PD Data Reset Message."
+	depends on PLATFORM_EC_USB_PD_REV30
+	help
+	  Enable this to support the Data Reset PD message flows. This is
+	  mandatory for products supporting USB4 but optional for other PD 3.0
+	  products.
+
+config PLATFORM_EC_USB_TYPEC_SM
+	bool "Type-C (TC) physical-layer state machine"
+	default y
+	help
+	  This enables the bottom layer of the TCPMv2 state machine which
+	  handles using CC lines to set the voltage-level of the power supplied.
+	  You should normally define this unless you want to override it in your
+	  board code, which is not recommended.
+
+config PLATFORM_EC_USB_PRL_SM
+	bool "Protocol layer (PRL) state machine"
+	default y
+	help
+	  This enables the middle layer of the power-delivery (PD) protocol,
+	  which deals with the flow of power messages across the USB Type-C
+	  interface. You should normally define this unless you want to override
+	  it in your board code, which is not recommended.
+
+config PLATFORM_EC_USB_PE_SM
+	bool "Policy engine (PE) state machine"
+	default y
+	help
+	  This enables the top layer of the power-delivery (PD) protocol, which
+	  deals with the actually PD messages that are exchanged with attached
+	  USB devices. You should normally define this unless you want to
+	  override it in your board code, which is not recommended.
+
+config PLATFORM_EC_USB_PD_DECODE_SOP
+	def_bool y  # Required for TCPMV2
+	help
+	  This enables support for encoding of the message's Start Of Packet
+	  (SOP, SOP' and SOP'', collectively called SOP*) in bits 31-28 of the
+	  32-bit msg header type.
+
+config PLATFORM_EC_HOSTCMD_PD_CONTROL
+	bool "Host command: EC_CMD_PD_CONTROL"
+	default y
+	help
+	  Enable the EC_CMD_PD_CONTROL host command. This allows control
+	  of the USB-PD chip from the AP, including reset, suspend/resume
+	  and enabling power.
+
+	  This host command can be manually executed using the
+	  "ectool pdcontrol" command from the Chromium OS shell.
+
+config PLATFORM_EC_USB_PD_LOGGING
+	bool "Host command: EC_CMD_PD_GET_LOG_ENTRY"
+	help
+	  Enable logging of USB Power Delivery events. The AP can request the
+	  log to see what has happened recently.
+
+	  The log events are stored in a circular buffer, each one being a
+	  struct event_log_entry.
+
+config PLATFORM_EC_USB_PD_TRY_SRC
+	bool "Enable Try.SRC mode"
+	depends on PLATFORM_EC_USB_DRP_ACC_TRYSRC
+	default y
+	help
+	  This enables Try.SRC mode so that the board will try to be a source
+	  for power if the other end offers both options. This can be useful
+	  for laptops, for example, since when attaching to a cellphone we want
+	  the laptop to charge the phone, not vice versa.
+
+config PLATFORM_EC_USB_PD_USB4
+	bool "USB4 support"
+	depends on PLATFORM_EC_USB_PD_REV30
+	default y
+	help
+	  This enables support for entering into USB4 mode between two port
+	  partners. The provides new features such as higher speeds and more
+	  flexible multiplexing of data on the cable for different purposes,
+	  e.g. attaching multiple displays and storage devices on the same bus.
+
+config PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+	bool "Thunderbolt-compatible mode support"
+	depends on PLATFORM_EC_USB_PD_REV30
+	default y
+	help
+	  Enable this to allow entering into Thunderbolt-compatible mode between
+	  two port partners. This does not require that USB4 mode be enabled.
+
+config PLATFORM_EC_USB_PD_STARTUP_DELAY_MS
+	int "PD thread startup delay time in milliseconds"
+	default 0
+	help
+	  Have the USB-PD thread(s) delay this many milliseconds after startup
+	  before beginning regular processing. This can be helpful if external
+	  processes need to happen shortly after reset and PD initialization may
+	  interfere with them.
+
+	  For instance, if the EC enters programming mode when it receives a special
+	  signal but requires USB-PD power in order to remain alive, PD
+	  initialization can cause the system to reset and interrupt programming.
+	  Adding a delay to startup can provide a wider window to enter programming
+	  mode and help prevent such issues.
+
+endif  # PLATFORM_EC_USB_POWER_DELIVERY
+
+endif # PLATFORM_EC_USBC
