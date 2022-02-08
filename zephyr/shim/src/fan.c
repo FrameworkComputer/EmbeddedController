@@ -371,9 +371,11 @@ void fan_set_rpm_target(int ch, int rpm)
 int fan_is_stalled(int ch)
 {
 	int is_pgood = 1;
+	const struct gpio_dt_spec *gp =
+		gpio_get_dt_spec(fans[ch].conf->enable_gpio);
 
-	if (gpio_is_implemented(fans[ch].conf->enable_gpio))
-		is_pgood = gpio_get_level(fans[ch].conf->enable_gpio);
+	if (gp != NULL)
+		is_pgood = gpio_pin_get_dt(gp);
 
 	return fan_get_enabled(ch) && fan_get_duty(ch) &&
 	       !fan_get_rpm_actual(ch) && is_pgood;
