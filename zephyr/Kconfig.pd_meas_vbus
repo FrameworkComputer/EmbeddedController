@@ -1,0 +1,44 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+if PLATFORM_EC_USB_POWER_DELIVERY
+
+choice "Measuring VBUS voltage"
+	prompt "Select how VBUS voltage is measured"
+
+config PLATFORM_EC_USB_PD_VBUS_MEASURE_NOT_PRESENT
+	bool "VBUS voltage cannot be read"
+	help
+	  Enable this if the board does not provide any mechanism for the EC to
+	  read the analog VBUS voltage.
+
+config PLATFORM_EC_USB_PD_VBUS_MEASURE_CHARGER
+	bool "On-board charger supports VBUS measurement"
+	help
+	  Enable this if the VBUS voltage can be read using a charger on the
+	  board.
+
+config PLATFORM_EC_USB_PD_VBUS_MEASURE_TCPC
+	bool "Type-C Port Controller supports VBUS measurement"
+	help
+	  Enable this if the VBUS voltage can be read using the on-board
+	  TCPC.
+
+config PLATFORM_EC_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
+	bool "VBUS on each port is measured using an ADC channel"
+	help
+	  Enable this if there is a separate ADC channel for each USB-C VBUS
+	  voltage.
+
+config PLATFORM_EC_USB_PD_VBUS_MEASURE_BY_BOARD
+	bool "VBUS on each port is measured per board specific"
+	help
+	  Enable this if there are different VBUS measurement approaches on
+	  the board, and also `board_get_vbus_voltage()` has to be implemented.
+
+endchoice  # Measuring VBUS voltage
+
+endif # PLATFORM_EC_USB_POWER_DELIVERY
+endif # PLATFORM_EC_USBC
