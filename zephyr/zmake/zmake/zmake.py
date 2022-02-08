@@ -531,7 +531,7 @@ class Zmake:
 
         return 0
 
-    def _run_test(self, elf_file, coverage, gcov, build_dir, lcov_file):
+    def _run_test(self, elf_file, coverage, gcov, build_dir, lcov_file, timeout=None):
         """Run a single test, with goma if enabled.
 
         Args:
@@ -568,10 +568,18 @@ class Zmake:
                 proc.stderr,
                 job_id=job_id,
             )
-            if proc.wait():
-                raise OSError(get_process_failure_msg(proc))
-            if coverage:
-                self._run_lcov(build_dir, lcov_file, initial=False, gcov=gcov)
+            try:
+                if proc.wait(timeout=timeout):
+                    raise OSError(get_process_failure_msg(proc))
+                if coverage:
+                    self._run_lcov(build_dir, lcov_file, initial=False, gcov=gcov)
+            except subprocess.TimeoutExpired as e:
+                proc.terminate()
+                try:
+                    proc.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+                raise e
 
         if self.goma:
             _run()
@@ -604,6 +612,7 @@ class Zmake:
                     gcov=gcov,
                     build_dir=build_dir,
                     lcov_file=build_dir / "output" / "zephyr.info",
+                    timeout=project.config.test_timeout_secs,
                 )
             )
 
