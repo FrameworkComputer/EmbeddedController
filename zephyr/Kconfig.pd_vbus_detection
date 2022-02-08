@@ -1,0 +1,38 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+if PLATFORM_EC_USB_POWER_DELIVERY
+
+choice PLATFORM_EC_USB_PD_VBUS_DETECTION_TYPE
+	prompt "Select the method to detect VBUS"
+	default PLATFORM_EC_USB_PD_VBUS_DETECT_NONE
+
+config PLATFORM_EC_USB_PD_VBUS_DETECT_NONE
+	bool "No way to detect VBUS"
+	help
+	  Choose this option if it is not possible to detect VBUS. This causes
+	  the `check_vbus_level` function pointer in the driver struct to be NULL.
+
+config PLATFORM_EC_USB_PD_VBUS_DETECT_TCPC
+	bool "TCPC detects VBUS"
+	help
+	  Choose this option if the TCPC can detect the presence of VBUS
+
+config PLATFORM_EC_USB_PD_VBUS_DETECT_CHARGER
+	bool "Charger detects VBUS"
+	help
+	  Choose this option if the battery charger can detect the presence
+	  of VBUS
+
+config PLATFORM_EC_USB_PD_VBUS_DETECT_PPC
+	bool "PPC detects VBUS"
+	help
+	  Choose this option if the Power-Path Controller (PPC) can detect the
+	  presence of VBUS
+
+endchoice  # PLATFORM_EC_USB_PD_VBUS_DETECTION_TYPE
+
+endif # PLATFORM_EC_USB_POWER_DELIVERY
+endif # PLATFORM_EC_USBC
