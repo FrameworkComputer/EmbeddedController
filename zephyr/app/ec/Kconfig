@@ -4,9 +4,10 @@
 
 menuconfig CROS_EC
 	bool "Chromium OS EC app"
+	imply PRINTK
 	imply SHELL
 	imply SHELL_MINIMAL
-	imply PRINTK
+	imply STACK_SENTINEL
 	help
 	  Enable the common Chromium OS EC application. This prints a message,
 	  starts the EC tasks and sets up any drivers that are needed.
