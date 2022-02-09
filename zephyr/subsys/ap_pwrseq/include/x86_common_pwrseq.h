@@ -9,6 +9,7 @@
 #include <drivers/espi.h>
 #include <drivers/gpio.h>
 #include <logging/log.h>
+#include <x86_power_signals.h>
 
 /**
  * @brief System power states for Non Deep Sleep Well
@@ -76,5 +77,17 @@ enum pwrseq_chipset_shutdown_reason {
 struct pwrseq_context {
 	/* On power-on start boot up sequence */
 	enum power_states_ndsx power_state;
+
+	/*
+	 * Current input power signal states. Each bit represents an input
+	 * power signal that is defined by enum power_signal in same order.
+	 * 1 - signal state is asserted.
+	 * 0 - signal state is de-asserted.
+	 */
+	uint32_t in_signals;
+	/* Input signal state we're waiting for */
+	uint32_t in_want;
+	/* Signal values which print debug output */
+	uint32_t in_debug;
 };
-#endif /* __X86_COMMON_H__ */
+#endif /* __X86_COMMON_PWRSEQ_H__ */

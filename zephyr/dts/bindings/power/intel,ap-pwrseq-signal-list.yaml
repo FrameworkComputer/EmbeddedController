@@ -1,0 +1,63 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Power sequence signals information list.
+    The signals could be GPIO signals, eSPI signals through virtual wire.
+
+compatible: "intel,ap-pwrseq-signal-list"
+
+child-binding:
+    description: Power sequence signals list child node
+    properties:
+        dbg-label:
+            type: string
+            required: true
+            description: Label of power signals used in debug messages
+
+        pwrseq-int-gpios:
+            type: phandle-array
+            required: false
+            description: Associated GPIO interrupts pin
+
+        pwrseq-int-flags:
+            type: int
+            required: false
+            description: GPIO interrupt configuration flags.
+
+        enable-int-on-boot:
+            type: boolean
+            required: false
+            description: true - Enable GPIO interrupt at boot up;
+                         false - Do not enable GPIO interrupt at boot up.
+
+        pwrseq-vw-enum:
+            type: string
+            required: false
+            description: Enumeration value to eSPI signals that can be sent
+              or received through virtual wire channel
+            enum:
+            - ESPI_VWIRE_SIGNAL_SLP_S3
+            - ESPI_VWIRE_SIGNAL_SLP_S4
+            - ESPI_VWIRE_SIGNAL_SLP_S5
+
+        pwrseq-signal-enum:
+            type: string
+            required: true
+            description: Enumeration values for power signals
+
+        pwrseq-adc-enum:
+            type: string
+            required: false
+
+        flags:
+            type: int
+            required: true
+            description: bit 0 represents active in high or low state
+              bit[0] = 1 active high
+              bit[0] = 0 active low
+
+        pwrseq-board-value:
+            type: string
+            required: false
+            description: a value defined at board level.

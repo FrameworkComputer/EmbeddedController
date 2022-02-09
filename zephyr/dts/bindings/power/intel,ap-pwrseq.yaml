@@ -79,6 +79,13 @@ properties:
       description: |
         Timeout in ms for monitoring power signals.
 
+    s5-inactivity-timeout:
+      type: int
+      required: false
+      default: 10
+      description: |
+        Timeout in seconds for dropping back from S5 to G3.
+
     pwrseq-espi-max-freq:
       type: int
       required: false

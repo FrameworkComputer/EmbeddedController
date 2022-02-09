@@ -274,7 +274,7 @@ void init_chipset_pwr_seq_state(void)
 enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state,
 				 const struct common_pwrseq_config *com_cfg)
 {
-/* Add chipset specific state handling if any */
+	/* Add chipset specific state handling if any */
 	switch (curr_state) {
 	case SYS_POWER_STATE_G3S5:
 		g3s5_action_handler(com_cfg);
