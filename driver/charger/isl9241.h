@@ -14,6 +14,11 @@
 #define CHARGE_V_MAX	18304
 #define CHARGE_V_MIN	64
 #define CHARGE_V_STEP	8
+/*
+ * When the default sense resistor value is used, register values
+ * represent mA. For other sense resistors values, register
+ * values must be scaled accordingly to convert to mA.
+ */
 #define CHARGE_I_MAX	6140
 #define CHARGE_I_MIN	4
 #define CHARGE_I_STEP	4
