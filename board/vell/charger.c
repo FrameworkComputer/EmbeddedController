@@ -95,3 +95,10 @@ static void set_ac_prochot(void)
 	isl9241_set_ac_prochot(CHARGER_SOLO, PD_MAX_CURRENT_MA);
 }
 DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
+
+/* Set the DCPROCHOT base on battery over discharging current 10.5A */
+static void set_dc_prochot(void)
+{
+	isl9241_set_dc_prochot(CHARGER_SOLO, 10500);
+}
+DECLARE_HOOK(HOOK_INIT, set_dc_prochot, HOOK_PRIO_DEFAULT);
