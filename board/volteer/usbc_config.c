@@ -29,7 +29,7 @@ static const struct tcpc_config_t tcpc_config_p1_usb3 = {
 	.bus_type = EC_BUS_TYPE_I2C,
 	.i2c_info = {
 		.port = I2C_PORT_USB_C1,
-		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+		.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
 	},
 	.flags = TCPC_FLAGS_TCPCI_REV2_0 | TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,
 	.drv = &ps8xxx_tcpm_drv,
@@ -301,15 +301,15 @@ static void ps8815_reset(void)
 	CPRINTS("%s: patching ps8815 registers", __func__);
 
 	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		      PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f was %02x", val);
 
 	if (i2c_write8(I2C_PORT_USB_C1,
-		       PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+		       PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f set to 0x31");
 
 	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		      PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f now %02x", val);
 }
 

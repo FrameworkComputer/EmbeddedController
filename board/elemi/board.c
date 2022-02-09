@@ -248,7 +248,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
 __override void board_ps8xxx_tcpc_init(int port)
 {
 	/* b/189587527: Set Displayport EQ loss up to 10dB */
-	tcpc_addr_write(port, PS8751_I2C_ADDR1_P1_FLAGS,
+	tcpc_addr_write(port, PS8XXX_I2C_ADDR1_P1_FLAGS,
 		PS8815_REG_DP_EQ_SETTING,
 		PS8815_DPEQ_LOSS_UP_10DB << PS8815_REG_DP_EQ_COMP_SHIFT);
 }
@@ -290,15 +290,15 @@ static void ps8815_reset(void)
 	CPRINTS("%s: patching ps8815 registers", __func__);
 
 	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		      PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f was %02x", val);
 
 	if (i2c_write8(I2C_PORT_USB_C1,
-		       PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+		       PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f set to 0x31");
 
 	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8751_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+		      PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f now %02x", val);
 }
 
@@ -379,7 +379,7 @@ const struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C1,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+			.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
 		},
 		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
 			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V,

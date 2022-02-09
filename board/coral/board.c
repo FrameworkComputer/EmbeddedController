@@ -207,7 +207,7 @@ struct i2c_stress_test i2c_stress_tests[] = {
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_TCPC
 	{
 		.port = NPCX_I2C_PORT0_1,
-		.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+		.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
 		.i2c_test = &ps8xxx_i2c_stress_test_dev,
 	},
 #endif
@@ -258,7 +258,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = NPCX_I2C_PORT0_1,
-			.addr_flags = PS8751_I2C_ADDR1_FLAGS,
+			.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},

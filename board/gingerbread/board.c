@@ -180,7 +180,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_I2C3,
-			.addr_flags = PS8751_I2C_ADDR2_FLAGS,
+			.addr_flags = PS8XXX_I2C_ADDR2_FLAGS,
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},
@@ -197,7 +197,7 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_DP] = {
 		.usb_port = USB_PD_PORT_DP,
 		.i2c_port = I2C_PORT_I2C3,
-		.i2c_addr_flags = PS8751_I2C_ADDR2_FLAGS,
+		.i2c_addr_flags = PS8XXX_I2C_ADDR2_FLAGS,
 		.driver = &tcpci_tcpm_usb_mux_driver,
 		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 	},
