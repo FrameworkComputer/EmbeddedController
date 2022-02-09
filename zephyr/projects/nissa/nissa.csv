@@ -50,7 +50,7 @@ LID_OPEN,MISC,Indicator from lid switch that lid is open,IN,both,--,N,3.30 V,,G7
 TABLET_MODE_L,MISC,Indicator from lid switch that lid is flipped all the way around,IN,both,--,N,3.30 V,,M12,L8,INPUT,GPIO_TABLET_MODE_L,,Not required to connect to EC?
 IMU_INT_L,MISC,Interrupt from base intertial measurement unit,IN,falling,,N,1.80 V,IMU,M2,F15,INPUT,,,
 ACC_INT_L,MISC,Interrupt from lid accel (only in convertibles),IN,falling,,N,1.80 V,ACC,G10,E2,INPUT,,,Not required from Dedede?
-EC_WP_ODL,MISC,Write protection status from GSC,IN,no,--,N,3.30 V,GSC,L12,R8,INPUT_L,GPIO_WP_L,,
+EC_WP_ODL,MISC,Write protection status from GSC,IN,no,--,N,3.30 V,GSC,L12,R8,INPUT_L,,,
 EC_EDP_BL_EN_OD,MISC,EC override of backlight enable,OUT,,OD,N,3.30 V,,E10,R15,OUTPUT_ODR,GPIO_ENABLE_BACKLIGHT,,
 TEMP_SENSOR_1,MISC,NTC 1 - near memory,IN,no,ADC,N,ANA,,F2,H15,ADC,ADC_TEMP_SENSOR_1,,
 TEMP_SENSOR_2,MISC,NTC 2 - near chassis hot spot,IN,no,ADC,N,ANA,,E3,G10,ADC,ADC_TEMP_SENSOR_2,,
