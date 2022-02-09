@@ -696,33 +696,31 @@ static int power_on_seq(void)
  */
 static uint8_t check_for_power_on_event(void)
 {
+	uint8_t ret;
+
 	if (power_request == POWER_REQ_ON) {
-		power_request = POWER_REQ_NONE;
-		return POWER_ON_BY_POWER_REQ_ON;
+		ret = POWER_ON_BY_POWER_REQ_ON;
 	} else if (power_request == POWER_REQ_COLD_RESET) {
-		power_request = POWER_REQ_NONE;
-		return POWER_ON_BY_POWER_REQ_RESET;
+		ret = POWER_ON_BY_POWER_REQ_RESET;
+	} else if (auto_power_on) {
+		/* power on requested at EC startup for recovery */
+		ret = POWER_ON_BY_AUTO_POWER_ON;
+	} else if (lid_opened) {
+		/* check lid open */
+		ret = POWER_ON_BY_LID_OPEN;
+	} else if (power_button_is_pressed()) {
+		/* check for power button press */
+		ret = POWER_ON_BY_POWER_BUTTON_PRESSED;
+	} else {
+		ret = POWER_OFF_CANCEL;
 	}
-	/* Clear invalid request */
+
+	/* The flags are handled above. Clear them all. */
 	power_request = POWER_REQ_NONE;
+	auto_power_on = 0;
+	lid_opened = 0;
 
-	/* power on requested at EC startup for recovery */
-	if (auto_power_on) {
-		auto_power_on = 0;
-		return POWER_ON_BY_AUTO_POWER_ON;
-	}
-
-	/* Check lid open */
-	if (lid_opened) {
-		lid_opened = 0;
-		return POWER_ON_BY_LID_OPEN;
-	}
-
-	/* check for power button press */
-	if (power_button_is_pressed())
-		return POWER_ON_BY_POWER_BUTTON_PRESSED;
-
-	return POWER_OFF_CANCEL;
+	return ret;
 }
 
 /**
