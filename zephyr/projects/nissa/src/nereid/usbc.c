@@ -95,6 +95,22 @@ uint16_t tcpc_get_alert_status(void)
 
 void pd_power_supply_reset(int port)
 {
+	int prev_en;
+
+	if (port < 0 || port >= board_get_usb_pd_port_count())
+		return;
+
+	prev_en = charger_is_sourcing_otg_power(port);
+
+	/* Disable Vbus */
+	charger_enable_otg_power(port, 0);
+
+	/* Discharge Vbus if previously enabled */
+	if (prev_en)
+		sm5803_set_vbus_disch(port, 1);
+
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
 int pd_set_power_supply_ready(int port)
