@@ -245,6 +245,7 @@ conflicting_options := \
 	EEPROM \
 	I2C_BITBANG \
 	PECI \
+	PS2 \
 	SPI \
 	UART_CONSOLE
 
