@@ -195,12 +195,6 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
 
-/*
- * Older boards have a different ADC assignment.
- */
-
-#define CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"	/* needed by registers.h */
