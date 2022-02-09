@@ -21,13 +21,14 @@
 		tcs3400-int = &tcs3400_clear;
 		gpio-wp = &gpio_wp_l;
 	};
+	/*
+	 * Keep these GPIOs in pin order.
+	 * If you need to add one, make sure you increase
+	 * ngpios in the gpio0 node further down.
+	 */
 	named-gpios {
 		compatible = "named-gpios";
 
-		ec_batt_pres_odl {
-			gpios = <&gpio0 28 GPIO_INPUT>;
-			enum-name = "GPIO_BATT_PRES_ODL";
-		};
 		gpio_acok_od: acok_od {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
@@ -48,42 +49,33 @@
 			gpios = <&gpio0 5 GPIO_OUT_HIGH>;
 		};
 		/* Setup USB C1 pin as output to check their state in test */
-		usb_c1_ls_en {
+		usb_c1_ls_en: usb_c1_ls_en {
 			gpios = <&gpio0 6 (GPIO_INPUT_PULL_UP |
 					   GPIO_OUTPUT)>;
-			enum-name = "GPIO_USB_C1_LS_EN";
 		};
-		usb_c1_rt_rst_odl {
+		usb_c1_rt_rst_odl: usb_c1_rt_rst_odl {
 			gpios = <&gpio0 7 (GPIO_OUTPUT | GPIO_INPUT)>;
-			enum-name = "GPIO_USB_C1_RT_RST_ODL";
 		};
 		gpio_usb_c1_frs_en: usb_c1_frs_en {
 			gpios = <&gpio0 8 (GPIO_OUT_LOW)>;
-			enum-name = "GPIO_USB_C1_FRS_EN";
 		};
 		usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
 			gpios = <&gpio0 9 GPIO_INPUT>;
-			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
 		usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
 			gpios = <&gpio0 10 GPIO_INPUT>;
-			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
 		};
-		usb_c0_tcpc_rst_l {
+		usb_c0_tcpc_rst_l: usb_c0_tcpc_rst_l {
 			gpios = <&gpio0 11 (GPIO_OUT_HIGH | GPIO_INPUT)>;
-			enum-name = "GPIO_USB_C0_TCPC_RST_L";
 		};
-		usb_c1_tcpc_rst_l {
+		usb_c1_tcpc_rst_l: usb_c1_tcpc_rst_l {
 			gpios = <&gpio0 12 (GPIO_OUT_HIGH | GPIO_INPUT)>;
-			enum-name = "GPIO_USB_C1_TCPC_RST_L";
 		};
 		gpio_usb_c1_ppc_int: usb_c1_ppc_int {
 			gpios = <&gpio0 13 GPIO_INPUT>;
-			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c0_ppc_int: usb_c0_ppc_int {
 			gpios = <&gpio0 14 GPIO_INPUT>;
-			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_switchcap_pg_int_l: switchcap_pg_int_l {
 			gpios = <&gpio0 15 (GPIO_OUTPUT | GPIO_INPUT)>;
@@ -124,7 +116,6 @@
 		};
 		gpio_switchcap_on: switchcap_on {
 			gpios = <&gpio0 24 (GPIO_INPUT | GPIO_OUT_LOW)>;
-			enum-name = "GPIO_SWITCHCAP_ON";
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
 			/* GPIO_PULL_UP will cause this start asserted,
@@ -136,11 +127,17 @@
 		gpio_src_vph_pwr_pg: src_vph_pwr_pg {
 			gpios = <&gpio0 26 (GPIO_INPUT | GPIO_OUTPUT |
 				GPIO_PULL_DOWN)>;
-			enum-name = "GPIO_SWITCHCAP_PG";
 		};
 		gpio_test: test {
 			gpios = <&gpio0 27 (GPIO_INPUT | GPIO_OUTPUT)>;
-			enum-name = "GPIO_TEST";
+		};
+		ec_batt_pres_odl {
+			gpios = <&gpio0 28 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_no_init: no_init {
+			gpios = <&gpio0 29 (GPIO_ACTIVE_LOW | GPIO_INPUT)>;
+			no-auto-init;
 		};
 	};
 
@@ -683,7 +680,7 @@
 };
 
 &gpio0 {
-	ngpios = <29>;
+	ngpios = <30>;
 };
 
 &i2c0 {

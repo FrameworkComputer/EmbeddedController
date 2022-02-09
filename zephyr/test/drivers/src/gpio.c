@@ -19,6 +19,7 @@
 #include "ec_tasks.h"
 #include "gpio.h"
 #include "gpio/gpio.h"
+#include "gpio/gpio_int.h"
 #include "stubs.h"
 #include "util.h"
 #include "test_state.h"
@@ -115,7 +116,8 @@ ZTEST(gpio, test_convert_to_zephyr_flags)
  */
 ZTEST(gpio, test_signal_is_gpio)
 {
-	zassert_true(signal_is_gpio(GPIO_TEST), "Expected true");
+	zassert_true(signal_is_gpio(
+		GPIO_SIGNAL(DT_NODELABEL(gpio_test))), "Expected true");
 }
 
 /**
@@ -127,27 +129,20 @@ ZTEST(gpio, test_signal_is_gpio)
  * Expected Results
  *  - Success
  */
-ZTEST(gpio, test_gpio_get_set_level)
+ZTEST(gpio, test_gpio_pin_get_set_level)
 {
-	enum gpio_signal signal = GPIO_TEST;
-	int level;
+	const struct gpio_dt_spec *gp = GPIO_DT_FROM_NODELABEL(gpio_test);
 
 	/* Test invalid signal */
-	gpio_set_level(GPIO_COUNT, 0);
-	zassert_equal(0, gpio_get_level(GPIO_COUNT), "Expected level==0");
+	zassert_equal(NULL, gpio_get_dt_spec(-1), "Expected NULL ptr");
 
+	zassert_false(gp == NULL, "Unexpected NULL ptr");
 	/* Test valid signal */
-	gpio_set_level(signal, 0);
-	zassert_equal(0, gpio_get_level(signal), "Expected level==0");
+	gpio_pin_set_dt(gp, 0);
+	zassert_equal(0, gpio_pin_get_dt(gp), "Expected level==0");
 
-	gpio_set_level(signal, 1);
-	zassert_equal(1, gpio_get_level(signal), "Expected level==1");
-
-	level = gpio_get_ternary(signal);
-	zassert_equal(2, level, "Expected level==2, returned=%d", level);
-
-	gpio_set_level_verbose(CC_CHIPSET, signal, 0);
-	zassert_equal(0, gpio_get_level(signal), "Expected level==0");
+	gpio_pin_set_dt(gp, 1);
+	zassert_equal(1, gpio_pin_get_dt(gp), "Expected level==1");
 }
 
 /**
@@ -161,7 +156,7 @@ ZTEST(gpio, test_gpio_get_set_level)
  */
 ZTEST(gpio, test_gpio_get_name)
 {
-	enum gpio_signal signal = GPIO_TEST;
+	enum gpio_signal signal = GPIO_SIGNAL(DT_NODELABEL(gpio_test));
 	const char *signal_name;
 
 	/* Test invalid signal */
@@ -204,7 +199,7 @@ gpio_flags_t gpio_helper_get_flags(enum gpio_signal signal)
  */
 ZTEST(gpio, test_gpio_get_default_flags)
 {
-	enum gpio_signal signal = GPIO_TEST;
+	enum gpio_signal signal = GPIO_SIGNAL(DT_NODELABEL(gpio_test));
 	gpio_flags_t flags;
 	gpio_flags_t flags_at_start[GPIO_COUNT];
 	int def_flags;
@@ -241,6 +236,36 @@ ZTEST(gpio, test_gpio_get_default_flags)
 	zassert_equal(flags, GPIO_OUTPUT, "Flags set 0x%x", flags);
 }
 
+
+/**
+ * @brief TestPurpose: Verify GPIO no-auto-init.
+ *
+ * @details
+ * Validate no-auto-init device tree property,
+ * which will not initialise the GPIO at startup.
+ *
+ * Expected Results
+ *  - Success
+ */
+ZTEST(gpio, test_gpio_no_auto_init)
+{
+	const struct gpio_dt_spec *gp = GPIO_DT_FROM_NODELABEL(gpio_no_init);
+	enum gpio_signal signal = GPIO_SIGNAL(DT_NODELABEL(gpio_no_init));
+	gpio_flags_t flags;
+
+	flags = gpio_helper_get_flags(signal);
+	zassert_equal(0, flags,
+		      "Expected 0x%08x, returned 0x%08X",
+		      0, flags);
+
+	/* Configure pin. */
+	gpio_pin_configure_dt(gp, GPIO_INPUT | GPIO_OUTPUT);
+	flags = gpio_helper_get_flags(signal);
+	zassert_equal(flags,
+		      (GPIO_ACTIVE_LOW | GPIO_OUTPUT | GPIO_INPUT),
+		       "Flags set 0x%x", flags);
+}
+
 /**
  * @brief TestPurpose: Verify GPIO reset.
  *
@@ -252,7 +277,7 @@ ZTEST(gpio, test_gpio_get_default_flags)
  */
 ZTEST(gpio, test_gpio_reset)
 {
-	enum gpio_signal signal = GPIO_TEST;
+	enum gpio_signal signal = GPIO_SIGNAL(DT_NODELABEL(gpio_test));
 	gpio_flags_t flags;
 	gpio_flags_t flags_at_start[GPIO_COUNT];
 
@@ -287,35 +312,32 @@ ZTEST(gpio, test_gpio_reset)
  * @brief TestPurpose: Verify GPIO enable/disable interrupt.
  *
  * @details
- * Validate gpio_enable_interrupt
+ * Validate gpio_enable_dt_interrupt
  *
  * Expected Results
  *  - Success
  */
 extern bool gpio_test_interrupt_triggered;
-ZTEST(gpio, test_gpio_enable_interrupt)
+ZTEST(gpio, test_gpio_enable_dt_interrupt)
 {
-	enum gpio_signal signal = GPIO_TEST;
+	const struct gpio_dt_spec *gp = GPIO_DT_FROM_NODELABEL(gpio_test);
+	const struct gpio_int_config *intr =
+		GPIO_INT_FROM_NODELABEL(int_gpio_test);
 
 	gpio_test_interrupt_triggered = false;
-
-	/* Test invalid signal */
-	zassert_not_equal(EC_SUCCESS, gpio_disable_interrupt(GPIO_COUNT), NULL);
-	zassert_not_equal(EC_SUCCESS, gpio_enable_interrupt(GPIO_COUNT), NULL);
-	zassert_false(gpio_test_interrupt_triggered, NULL);
 
 	/* Test valid signal */
-	zassert_ok(gpio_disable_interrupt(signal), NULL);
-	gpio_set_level(signal, 0);
+	zassert_ok(gpio_disable_dt_interrupt(intr), NULL);
+	gpio_pin_set_dt(gp, 0);
 	zassert_false(gpio_test_interrupt_triggered, NULL);
-	gpio_set_level(signal, 1);
+	gpio_pin_set_dt(gp, 1);
 	zassert_false(gpio_test_interrupt_triggered, NULL);
 
-	zassert_ok(gpio_enable_interrupt(signal), NULL);
-	gpio_set_level(signal, 0);
+	zassert_ok(gpio_enable_dt_interrupt(intr), NULL);
+	gpio_pin_set_dt(gp, 0);
 	zassert_true(gpio_test_interrupt_triggered, NULL);
 	gpio_test_interrupt_triggered = false;
-	gpio_set_level(signal, 1);
+	gpio_pin_set_dt(gp, 1);
 	zassert_true(gpio_test_interrupt_triggered, NULL);
 }
 
@@ -330,7 +352,7 @@ static void gpio_before(void *state)
 	 *	gpio_reset(i);
 	 * }
 	 */
-	gpio_reset(GPIO_TEST);
+	gpio_reset(GPIO_SIGNAL(DT_NODELABEL(gpio_test)));
 }
 
 /**
