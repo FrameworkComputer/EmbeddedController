@@ -139,19 +139,6 @@ void board_tcpc_init(void)
 		board_reset_pd_mcu();
 	}
 
-	/* Enable PPC interrupts */
-	/*
-	 * The original code says GPIO_USB_C0_TCPC_INT_ODL but
-	 * the comments say PPC interrupt, so perhaps
-	 * this should be int_usb_c0_ppc.
-	 * Since int_usb_c0_tcpc is enabled further down, this
-	 * does look like a typo.
-	 */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
-	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
-		gpio_enable_dt_interrupt(
-			GPIO_INT_FROM_NODELABEL(int_x_ec_gpio2));
-
 	/* Enable TCPC interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
 	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
