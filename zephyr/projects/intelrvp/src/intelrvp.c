@@ -9,6 +9,6 @@
 static void board_init(void)
 {
 	/* Enable SOC SPI */
-	gpio_set_level(GPIO_EC_SPI_OE_MECC, 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_spi_oe_mecc), 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_LAST);
