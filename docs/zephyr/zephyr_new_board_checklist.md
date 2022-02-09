@@ -55,6 +55,7 @@ EC Feature                                                                  | Ne
 [Configure EC Chipset (TODO)](./zephyr_template.md)                         | yes
 [Configure AP to EC Communication](./zephyr_ap_ec_comm.md)                  | yes
 [Configure AP Power Sequencing (TODO)](./zephyr_template.md)                | yes
+[Configure USB-A](./zephyr_usba.md)                                         | no
 [Configure USB-C (TODO)](./zephyr_template.md)                              | yes
 [Configure Charger (TODO)](./zephyr_template.md)                            | yes
 [Configure I2C Buses](./zephyr_i2c.md)                                      | yes
