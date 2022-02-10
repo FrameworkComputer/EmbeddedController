@@ -295,9 +295,17 @@ static int init_gpios(const struct device *unused)
 		 */
 		flags = configs[i].init_flags;
 
-		if (is_sys_jumped) {
+		/*
+		 * For warm boot, retrieve the current value of any
+		 * output pins so that no changes are made.
+		 */
+		if (is_sys_jumped && (flags & GPIO_OUTPUT)) {
+			int current = gpio_pin_get_dt(&configs[i].spec);
+
 			flags &=
-				~(GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_HIGH);
+			    ~(GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_HIGH);
+			flags |= current ? GPIO_OUTPUT_INIT_HIGH
+					 : GPIO_OUTPUT_INIT_LOW;
 		}
 
 		rv = gpio_pin_configure_dt(&configs[i].spec, flags);
