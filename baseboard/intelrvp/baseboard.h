@@ -50,6 +50,9 @@
 /* Port80 display */
 #define CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY
 
+/* RVP ID read retry count */
+#define RVP_VERSION_READ_RETRY_CNT	2
+
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_FUEL_GAUGE

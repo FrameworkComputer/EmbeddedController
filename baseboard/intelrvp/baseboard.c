@@ -139,14 +139,23 @@ DECLARE_HOOK(HOOK_INIT, board_interrupts_init, HOOK_PRIO_FIRST);
 
 int ioexpander_read_intelrvp_version(int *port0, int *port1)
 {
-	if (pca9555_read(I2C_PORT_PCA9555_BOARD_ID_GPIO,
-		I2C_ADDR_PCA9555_BOARD_ID_GPIO,
-		PCA9555_CMD_INPUT_PORT_0, port0))
-		return -1;
+	int i, rv;
 
-	return pca9555_read(I2C_PORT_PCA9555_BOARD_ID_GPIO,
-		I2C_ADDR_PCA9555_BOARD_ID_GPIO,
-		PCA9555_CMD_INPUT_PORT_1, port1);
+	for (i = 0; i < RVP_VERSION_READ_RETRY_CNT; i++) {
+		rv = pca9555_read(I2C_PORT_PCA9555_BOARD_ID_GPIO,
+			I2C_ADDR_PCA9555_BOARD_ID_GPIO,
+			PCA9555_CMD_INPUT_PORT_0, port0);
+
+		if (!rv && !pca9555_read(I2C_PORT_PCA9555_BOARD_ID_GPIO,
+			I2C_ADDR_PCA9555_BOARD_ID_GPIO,
+			PCA9555_CMD_INPUT_PORT_1, port1))
+			return 0;
+
+		msleep(1);
+	}
+
+	/* pca9555 read failed */
+	return -1;
 }
 
 __override void intel_x86_sys_reset_delay(void)
