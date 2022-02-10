@@ -25,7 +25,7 @@
 		compatible = "named-gpios";
 
 		ec_batt_pres_odl {
-			gpios = <&gpio0 1 GPIO_INPUT>;
+			gpios = <&gpio0 28 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 		gpio_acok_od: acok_od {
@@ -683,7 +683,7 @@
 };
 
 &gpio0 {
-	ngpios = <28>;
+	ngpios = <29>;
 };
 
 &i2c0 {

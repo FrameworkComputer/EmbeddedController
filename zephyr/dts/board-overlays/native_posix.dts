@@ -3,4 +3,19 @@
  * found in the LICENSE file.
  */
 
-/* TODO(sjg): add things */
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		entering_rw {
+			gpios = <&gpio0 1 GPIO_OUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};
+
+&gpio0 {
+	ngpios = <2>;
+};
