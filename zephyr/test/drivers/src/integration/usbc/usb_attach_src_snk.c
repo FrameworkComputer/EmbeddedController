@@ -141,7 +141,7 @@ static void integration_usb_attach_src_then_snk_after(void *state)
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
 }
 
-ZTEST_F(integration_usb_attach_src_then_snk, attached_src_port_role)
+ZTEST_F(integration_usb_attach_src_then_snk, verify_snk_port_pd_info)
 {
 	struct ec_params_usb_pd_power_info params = { .port = SNK_PORT };
 	struct ec_response_usb_pd_power_info response;
@@ -155,169 +155,33 @@ ZTEST_F(integration_usb_attach_src_then_snk, attached_src_port_role)
 	zassert_equal(response.role, USB_PD_PORT_POWER_SINK,
 		      "Power role %d, but PD reports role %d",
 		      USB_PD_PORT_POWER_SINK, response.role);
-}
-
-ZTEST_F(integration_usb_attach_src_then_snk, attached_src_port_charger_type)
-{
-	struct ec_params_usb_pd_power_info params = { .port = SNK_PORT };
-	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
-
-	/* Assume */
-	zassume_ok(host_command_process(&args), "Failed to get PD power info");
-
-	zassume_equal(response.role, USB_PD_PORT_POWER_SINK,
-		      "Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SINK, response.role);
-
-	/* Assert */
 	zassert_equal(response.type, USB_CHG_TYPE_PD,
 		      "Charger type %d, but PD reports type %d",
 		      USB_CHG_TYPE_PD, response.type);
-}
 
-ZTEST_F(integration_usb_attach_src_then_snk,
-	attached_src_port_default_max_voltage)
-{
-	struct ec_params_usb_pd_power_info params = { .port = SNK_PORT };
-	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
-
-	/* Assume */
-	zassume_ok(host_command_process(&args), "Failed to get PD power info");
-
-	zassume_equal(response.role, USB_PD_PORT_POWER_SINK,
-		      "Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SINK, response.role);
-
-	zassume_equal(response.type, USB_CHG_TYPE_PD,
-		      "Charger type %d, but PD reports type %d",
-		      USB_CHG_TYPE_PD, response.type);
-
-	/* Assert */
+	/* Verify Default 5V and 3A */
 	zassert_equal(response.meas.voltage_max, 5000,
 		      "Charging at VBUS %dmV, but PD reports %dmV", 5000,
 		      response.meas.voltage_max);
-}
 
-ZTEST_F(integration_usb_attach_src_then_snk,
-	attached_src_port_default_voltage_now)
-{
-	struct ec_params_usb_pd_power_info params = { .port = SNK_PORT };
-	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
-
-	/* Assume */
-	zassume_ok(host_command_process(&args), "Failed to get PD power info");
-
-	zassume_equal(response.role, USB_PD_PORT_POWER_SINK,
-		      "Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SINK, response.role);
-
-	zassume_equal(response.type, USB_CHG_TYPE_PD,
-		      "Charger type %d, but PD reports type %d",
-		      USB_CHG_TYPE_PD, response.type);
-
-	zassume_equal(response.meas.voltage_max, 5000,
-		      "Charging at VBUS %dmV, but PD reports %dmV", 5000,
-		      response.meas.voltage_max);
-
-	/* Assert */
 	zassert_within(response.meas.voltage_now, 5000, 5000 / 10,
 		       "Actually charging at VBUS %dmV, but PD reports %dmV",
 		       5000, response.meas.voltage_now);
-}
 
-ZTEST_F(integration_usb_attach_src_then_snk,
-	attached_src_port_default_max_current)
-{
-	struct ec_params_usb_pd_power_info params = { .port = SNK_PORT };
-	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
-
-	/* Assume */
-	zassume_ok(host_command_process(&args), "Failed to get PD power info");
-
-	zassume_equal(response.role, USB_PD_PORT_POWER_SINK,
-		      "Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SINK, response.role);
-
-	zassume_equal(response.type, USB_CHG_TYPE_PD,
-		      "Charger type %d, but PD reports type %d",
-		      USB_CHG_TYPE_PD, response.type);
-
-	/* Assert */
 	zassert_equal(response.meas.current_max, 3000,
 		      "Charging at VBUS max %dmA, but PD reports %dmA", 3000,
 		      response.meas.current_max);
-}
 
-ZTEST_F(integration_usb_attach_src_then_snk,
-	attached_src_port_default_current_limit)
-{
-	struct ec_params_usb_pd_power_info params = { .port = SNK_PORT };
-	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
-
-	/* Assume */
-	zassume_ok(host_command_process(&args), "Failed to get PD power info");
-
-	zassume_equal(response.role, USB_PD_PORT_POWER_SINK,
-		      "Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SINK, response.role);
-
-	zassume_equal(response.type, USB_CHG_TYPE_PD,
-		      "Charger type %d, but PD reports type %d",
-		      USB_CHG_TYPE_PD, response.type);
-
-	/* Assert */
 	zassert_true(response.meas.current_lim >= 3000,
 		     "Charging at VBUS max %dmA, but PD current limit %dmA",
 		     3000, response.meas.current_lim);
+
+	zassert_equal(response.max_power, 5000 * 3000,
+		      "Charging up to %duW, PD max power %duW", 5000 * 3000,
+		      response.max_power);
 }
 
-ZTEST_F(integration_usb_attach_src_then_snk,
-	attached_src_port_default_max_power)
-{
-	struct ec_params_usb_pd_power_info params = { .port = SNK_PORT };
-	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
-
-	/* Assume */
-	zassume_ok(host_command_process(&args), "Failed to get PD power info");
-
-	zassume_equal(response.role, USB_PD_PORT_POWER_SINK,
-		      "Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SINK, response.role);
-
-	zassume_equal(response.type, USB_CHG_TYPE_PD,
-		      "Charger type %d, but PD reports type %d",
-		      USB_CHG_TYPE_PD, response.type);
-
-	zassume_equal(response.meas.voltage_max, 5000,
-		      "Charging at VBUS %dmV, but PD reports %dmV", 5000,
-		      response.meas.voltage_max);
-
-	zassume_equal(response.meas.current_max, 3000,
-		      "Charging at VBUS max %dmA, but PD reports %dmA", 3000,
-		      response.meas.current_max);
-
-	/* Assert */
-	int expected_max_power =
-		response.meas.current_max * response.meas.voltage_max;
-
-	zassert_equal(response.max_power, expected_max_power,
-		      "Charging up to %duW, PD max power %duW",
-		      expected_max_power, response.max_power);
-}
-
-ZTEST_F(integration_usb_attach_src_then_snk, attached_snk_port_role)
+ZTEST_F(integration_usb_attach_src_then_snk, verify_src_port_pd_info)
 {
 	struct ec_params_usb_pd_power_info params = { .port = SRC_PORT };
 	struct ec_response_usb_pd_power_info response;
@@ -329,77 +193,27 @@ ZTEST_F(integration_usb_attach_src_then_snk, attached_snk_port_role)
 
 	/* Assert */
 	zassert_equal(response.role, USB_PD_PORT_POWER_SOURCE,
-		      "Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SOURCE, response.role);
-}
-
-ZTEST_F(integration_usb_attach_src_then_snk, attached_snk_port_charger_type)
-{
-	struct ec_params_usb_pd_power_info params = { .port = SRC_PORT };
-	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
-
-	/* Assume */
-	zassume_ok(host_command_process(&args), "Failed to get PD power info");
-
-	zassume_equal(response.role, USB_PD_PORT_POWER_SOURCE,
-		      "Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SOURCE, response.role);
-
-	/* Assert */
-	zassert_equal(response.type, USB_CHG_TYPE_NONE,
-		      "Charger type %d, but PD reports type %d",
-		      USB_CHG_TYPE_NONE, response.type);
-}
-
-ZTEST_F(integration_usb_attach_src_then_snk, attached_snk_port_voltage_now)
-{
-	struct ec_params_usb_pd_power_info params = { .port = SRC_PORT };
-	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
-
-	/* Assume */
-	zassume_ok(host_command_process(&args), "Failed to get PD power info");
-
-	zassume_equal(response.role, USB_PD_PORT_POWER_SOURCE,
-		      "Power role %d, but PD reports role %d",
-		      USB_PD_PORT_POWER_SOURCE, response.role);
-
-	zassume_equal(response.type, USB_CHG_TYPE_NONE,
-		      "Charger type %d, but PD reports type %d",
-		      USB_CHG_TYPE_NONE, response.type);
-
-	/* Assert */
-	zassert_within(response.meas.voltage_now, 5000, 5000 / 10,
-		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
-		       5000, response.meas.voltage_now);
-}
-
-ZTEST_F(integration_usb_attach_src_then_snk,
-	attached_snk_port_default_max_current)
-{
-	struct ec_params_usb_pd_power_info params = { .port = SRC_PORT };
-	struct ec_response_usb_pd_power_info response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
-
-	/* Assume */
-	zassume_ok(host_command_process(&args), "Failed to get PD power info");
-
-	zassume_equal(response.role, PD_ROLE_SOURCE,
 		      "Power role %d, but PD reports role %d", PD_ROLE_SOURCE,
 		      response.role);
 
-	zassume_equal(response.type, USB_CHG_TYPE_NONE,
+	zassert_equal(response.type, USB_CHG_TYPE_NONE,
 		      "Charger type %d, but PD reports type %d",
 		      USB_CHG_TYPE_NONE, response.type);
 
-	/* Assert */
-	zassert_equal(response.meas.current_max, 3000,
+	/* Verify Default 5V and 3A */
+	/* TODO(b/209907615): Confirm measure value requirements */
+	zassert_within(response.meas.voltage_now, 5000, 5000 / 10,
+		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
+		       5000, response.meas.voltage_now);
+
+	zassume_equal(response.meas.current_max, 3000,
 		      "Charging at VBUS max %dmA, but PD reports %dmA", 3000,
 		      response.meas.current_max);
+
+	/* Note: We are the source so we skip checking: */
+	/* meas.voltage_max */
+	/* max_power */
+	/* current limit */
 }
 
 ZTEST_SUITE(integration_usb_attach_src_then_snk, drivers_predicate_post_main,
