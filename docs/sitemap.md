@@ -60,6 +60,7 @@
 
 ## Zephyr
 
+*   [Zephyr New Board Checklist](./zephyr/zephyr_new_board_checklist.md)
 *   [Building Zephyr OS](./zephyr/zephyr_build.md)
 *   [Initialization Order](./zephyr/zephyr_init.md)
 *   [Proof-of-Concept-Device Bringup](./zephyr/zephyr_poc_device_bringup.md)
