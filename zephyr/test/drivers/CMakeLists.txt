@@ -58,3 +58,5 @@ target_sources(app PRIVATE
   src/vboot_hash.c
   src/watchdog.c
 )
+
+add_subdirectory(isl923x)

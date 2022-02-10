@@ -295,7 +295,7 @@
 
 	adc0: adc {
 		compatible = "zephyr,adc-emul";
-		nchannels = <4>;
+		nchannels = <6>;
 		ref-internal-mv = <3300>;
 		#io-channel-cells = <1>;
 		label = "ADC_0";
@@ -324,6 +324,19 @@
 			label = "ADC_TEMP_SENSOR_FAN";
 			enum-name = "ADC_TEMP_SENSOR_FAN";
 			io-channels = <&adc0 3>;
+		};
+		amon_bmon {
+			label = "AMON_BMON";
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 4>;
+			mul = <1000>;
+			div = <20>;
+		};
+		psys {
+			label = "PSYS";
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 5>;
+			mul = <124000>;
 		};
 	};
 

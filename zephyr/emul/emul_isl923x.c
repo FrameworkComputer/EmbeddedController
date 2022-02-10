@@ -66,6 +66,9 @@ LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 /** Mask used for the DC PROCHOT register */
 #define REG_PROCHOT_DC_MASK GENMASK(13, 8)
 
+/** Mask used for the INPUT VOLTAGE register */
+#define REG_INPUT_VOLTAGE_MASK GENMASK(15, 0)
+
 #define DEFAULT_R_SNS 10
 #define R_SNS CONFIG_CHARGER_SENSE_RESISTOR
 #define REG_TO_CURRENT(REG) ((REG) * DEFAULT_R_SNS / R_SNS)
@@ -107,6 +110,8 @@ struct isl923x_emul_data {
 	uint16_t dc_prochot_reg;
 	/** Emulated ADC vbus register */
 	uint16_t adc_vbus_reg;
+	/** Emulated input voltage register */
+	uint16_t input_voltage_reg;
 	/** Pointer to battery emulator. */
 	int battery_ord;
 };
@@ -267,6 +272,9 @@ static int isl923x_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 	case RAA489000_REG_ADC_VBUS:
 		READ_REG_16(data->adc_vbus_reg, bytes, val);
 		break;
+	case ISL9238_REG_INPUT_VOLTAGE:
+		READ_REG_16(data->input_voltage_reg, bytes, val);
+		break;
 	default:
 		__ASSERT(false, "Attempt to read unimplemented reg 0x%02x",
 			 reg);
@@ -355,6 +363,10 @@ static int isl923x_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 	case ISL923X_REG_PROCHOT_DC:
 		WRITE_REG_16(data->dc_prochot_reg, bytes, val,
 			     REG_PROCHOT_DC_MASK);
+		break;
+	case ISL9238_REG_INPUT_VOLTAGE:
+		WRITE_REG_16(data->input_voltage_reg, bytes, val,
+					REG_INPUT_VOLTAGE_MASK);
 		break;
 	default:
 		__ASSERT(false, "Attempt to write unimplemented reg 0x%02x",
