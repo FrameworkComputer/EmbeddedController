@@ -155,4 +155,13 @@ enum ioexpander_id {
 	CONFIG_IO_EXPANDER_PORT_COUNT
 };
 
+/**
+ * Obtain the gpio_dt_spec structure associated with
+ * this gpio signal.
+ *
+ * @param signal	GPIO signal to get gpio_dt_spec for
+ * @returns		gpio_dt_spec associated with signal, or 0 if invalid
+ */
+const struct gpio_dt_spec *gpio_get_dt_spec(enum gpio_signal signal);
+
 #undef IOEXPANDER_ID_FROM_INST_WITH_COMMA

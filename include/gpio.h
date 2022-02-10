@@ -271,15 +271,6 @@ int convert_from_zephyr_flags(const gpio_flags_t zephyr);
  */
 gpio_flags_t convert_to_zephyr_flags(int ec_flags);
 
-/**
- * Obtain the gpio_dt_spec structure associated with
- * this gpio signal.
- *
- * @param signal	GPIO signal to get gpio_dt_spec for
- * @returns		gpio_dt_spec associated with signal, or 0 if invalid
- */
-const struct gpio_dt_spec *gpio_get_dt_spec(enum gpio_signal signal);
-
 #endif
 
 /**
