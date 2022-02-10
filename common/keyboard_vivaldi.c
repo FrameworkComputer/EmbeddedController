@@ -63,6 +63,7 @@ static const uint16_t action_scancodes[] = {
 	[TK_PRIVACY_SCRN_TOGGLE] = SCANCODE_PRIVACY_SCRN_TOGGLE,
 	[TK_MICMUTE] = SCANCODE_MICMUTE,
 	[TK_KBD_BKLIGHT_TOGGLE] = SCANCODE_KBD_BKLIGHT_TOGGLE,
+	[TK_MENU] = SCANCODE_MENU,
 };
 
 static const struct ec_response_keybd_config *vivaldi_keybd;

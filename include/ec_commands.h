@@ -6426,6 +6426,7 @@ enum action_key {
 	TK_PREV_TRACK = 17,
 	TK_KBD_BKLIGHT_TOGGLE = 18,
 	TK_MICMUTE = 19,
+	TK_MENU = 20,
 };
 
 /*
