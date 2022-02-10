@@ -1,77 +1,80 @@
 <VIF>
-  <VIF_Specification>3.12</VIF_Specification>
+  <VIF_Specification>3.18</VIF_Specification>
   <Vendor_Name>Google</Vendor_Name>
   <Model_Part_Number>test</Model_Part_Number>
   <Product_Revision>FIX-ME</Product_Revision>
   <TID>65535</TID>
   <VIF_Product_Type value="0">Port Product</VIF_Product_Type>
   <Certification_Type value="0">End Product</Certification_Type>
-  <Product>
-    <Product_VID value="6353">18D1</Product_VID>
-  </Product>
   <Component>
     <Port_Label>0</Port_Label>
     <Connector_Type value="2">Type-C®</Connector_Type>
-    <USB4_Supported value="false">NO</USB4_Supported>
-    <USB_PD_Support value="true">YES</USB_PD_Support>
+    <USB4_Supported value="false" />
+    <USB_PD_Support value="true" />
     <PD_Port_Type value="4">DRP</PD_Port_Type>
     <Type_C_State_Machine value="2">DRP</Type_C_State_Machine>
-    <Captive_Cable value="false">NO</Captive_Cable>
-    <Port_Battery_Powered value="false">NO</Port_Battery_Powered>
+    <Captive_Cable value="false" />
+    <Port_Battery_Powered value="false" />
     <BC_1_2_Support value="0">None</BC_1_2_Support>
     <PD_Spec_Revision_Major value="3" />
-    <PD_Spec_Revision_Minor value="0" />
-    <PD_Spec_Version_Major value="2" />
-    <PD_Spec_Version_Minor value="0" />
+    <PD_Spec_Revision_Minor value="1" />
+    <PD_Spec_Version_Major value="1" />
+    <PD_Spec_Version_Minor value="3" />
     <PD_Specification_Revision value="2">Revision 3</PD_Specification_Revision>
-    <USB_Comms_Capable value="true">YES</USB_Comms_Capable>
-    <DR_Swap_To_DFP_Supported value="true">YES</DR_Swap_To_DFP_Supported>
-    <DR_Swap_To_UFP_Supported value="false">NO</DR_Swap_To_UFP_Supported>
-    <Unconstrained_Power value="false">NO</Unconstrained_Power>
-    <VCONN_Swap_To_On_Supported value="false">NO</VCONN_Swap_To_On_Supported>
-    <VCONN_Swap_To_Off_Supported value="false">NO</VCONN_Swap_To_Off_Supported>
-    <Responds_To_Discov_SOP_UFP value="false">NO</Responds_To_Discov_SOP_UFP>
-    <Responds_To_Discov_SOP_DFP value="false">NO</Responds_To_Discov_SOP_DFP>
-    <Attempts_Discov_SOP value="true">YES</Attempts_Discov_SOP>
-    <Chunking_Implemented_SOP value="false">NO</Chunking_Implemented_SOP>
-    <Unchunked_Extended_Messages_Supported value="false">NO</Unchunked_Extended_Messages_Supported>
-    <Manufacturer_Info_Supported_Port value="false">NO</Manufacturer_Info_Supported_Port>
-    <Security_Msgs_Supported_SOP value="false">NO</Security_Msgs_Supported_SOP>
+    <USB_Comms_Capable value="true" />
+    <DR_Swap_To_DFP_Supported value="true" />
+    <DR_Swap_To_UFP_Supported value="false" />
+    <Unconstrained_Power value="false" />
+    <VCONN_Swap_To_On_Supported value="false" />
+    <VCONN_Swap_To_Off_Supported value="false" />
+    <Responds_To_Discov_SOP_UFP value="false" />
+    <Responds_To_Discov_SOP_DFP value="false" />
+    <Attempts_Discov_SOP value="true" />
+    <Chunking_Implemented_SOP value="false" />
+    <Unchunked_Extended_Messages_Supported value="false" />
+    <Manufacturer_Info_Supported_Port value="false" />
+    <Security_Msgs_Supported_SOP value="false" />
     <Num_Fixed_Batteries value="1" />
     <Num_Swappable_Battery_Slots value="0" />
     <ID_Header_Connector_Type_SOP value="2">USB Type-C® Receptacle</ID_Header_Connector_Type_SOP>
-    <SOP_Capable value="true">YES</SOP_Capable>
-    <SOP_P_Capable value="false">NO</SOP_P_Capable>
-    <SOP_PP_Capable value="false">NO</SOP_PP_Capable>
-    <SOP_P_Debug_Capable value="false">NO</SOP_P_Debug_Capable>
-    <SOP_PP_Debug_Capable value="false">NO</SOP_PP_Debug_Capable>
-    <Type_C_Implements_Try_SRC value="false">NO</Type_C_Implements_Try_SRC>
-    <Type_C_Implements_Try_SNK value="false">NO</Type_C_Implements_Try_SNK>
+    <SOP_Capable value="true" />
+    <SOP_P_Capable value="false" />
+    <SOP_PP_Capable value="false" />
+    <SOP_P_Debug_Capable value="false" />
+    <SOP_PP_Debug_Capable value="false" />
+    <Type_C_Implements_Try_SRC value="false" />
+    <Type_C_Implements_Try_SNK value="false" />
     <RP_Value value="1">1.5A</RP_Value>
-    <Type_C_Is_VCONN_Powered_Accessory value="false">NO</Type_C_Is_VCONN_Powered_Accessory>
-    <Type_C_Is_Debug_Target_SRC value="true">YES</Type_C_Is_Debug_Target_SRC>
-    <Type_C_Is_Debug_Target_SNK value="true">YES</Type_C_Is_Debug_Target_SNK>
-    <Type_C_Can_Act_As_Host value="true">YES</Type_C_Can_Act_As_Host>
-    <Type_C_Is_Alt_Mode_Controller value="false">NO</Type_C_Is_Alt_Mode_Controller>
-    <Type_C_Can_Act_As_Device value="false">NO</Type_C_Can_Act_As_Device>
+    <Type_C_Is_VCONN_Powered_Accessory value="false" />
+    <Type_C_Is_Debug_Target_SRC value="true" />
+    <Type_C_Is_Debug_Target_SNK value="true" />
+    <Power_Interruption_Available value="0">No Interruption Possible</Power_Interruption_Available>
+    <Data_Reset_Supported value="false" />
+    <Enter_USB_Supported value="false" />
+    <Type_C_Can_Act_As_Host value="true" />
+    <Type_C_Is_Alt_Mode_Controller value="false" />
+    <Type_C_Is_Alt_Mode_Adapter value="false" />
+    <Type_C_Can_Act_As_Device value="false" />
     <Type_C_Power_Source value="1">UFP-powered</Type_C_Power_Source>
-    <Type_C_Port_On_Hub value="false">NO</Type_C_Port_On_Hub>
-    <Type_C_Supports_Audio_Accessory value="false">NO</Type_C_Supports_Audio_Accessory>
-    <Type_C_Sources_VCONN value="false">NO</Type_C_Sources_VCONN>
+    <Type_C_Port_On_Hub value="false" />
+    <Type_C_Supports_Audio_Accessory value="false" />
+    <Type_C_Sources_VCONN value="false" />
     <PD_Power_As_Source value="15000">15000 mW</PD_Power_As_Source>
-    <USB_Suspend_May_Be_Cleared value="false">NO</USB_Suspend_May_Be_Cleared>
-    <Sends_Pings value="false">NO</Sends_Pings>
+    <USB_Suspend_May_Be_Cleared value="false" />
+    <Sends_Pings value="false" />
     <FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
-    <Master_Port value="false">NO</Master_Port>
+    <Master_Port value="false" />
     <Num_Src_PDOs value="1" />
-    <Host_Supports_USB_Data value="true">YES</Host_Supports_USB_Data>
-    <Host_Speed value="1">USB 3.2 GEN 1x1</Host_Speed>
-    <Is_DFP_On_Hub value="false">NO</Is_DFP_On_Hub>
-    <Host_Contains_Captive_Retimer value="false">NO</Host_Contains_Captive_Retimer>
-    <Host_Is_Embedded value="false">NO</Host_Is_Embedded>
-    <PD_OC_Protection value="false">NO</PD_OC_Protection>
+    <Host_Supports_USB_Data value="true" />
+    <Host_Speed value="1">USB 3.2 Gen 1x1</Host_Speed>
+    <Is_DFP_On_Hub value="false" />
+    <Host_Contains_Captive_Retimer value="false" />
+    <Host_Is_Embedded value="false" />
+    <PD_OC_Protection value="false" />
     <Product_Total_Source_Power_mW value="15000">15000 mW</Product_Total_Source_Power_mW>
     <Port_Source_Power_Type value="0">Assured</Port_Source_Power_Type>
+    <EPR_Supported_As_Src value="false" />
+    <Modal_Operation_Supported_SOP value="false" />
     <SrcPdoList>
       <SrcPDO>
         <Src_PDO_Supply_Type value="0">Fixed</Src_PDO_Supply_Type>
