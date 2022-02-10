@@ -777,6 +777,21 @@ config PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
 	  Enable this to allow entering into Thunderbolt-compatible mode between
 	  two port partners. This does not require that USB4 mode be enabled.
 
+config PLATFORM_EC_USB_PD_STARTUP_DELAY_MS
+  int "PD thread startup delay time in milliseconds"
+  default 0
+  help
+    Have the USB-PD thread(s) delay this many milliseconds after startup
+    before beginning regular processing. This can be helpful if external
+    processes need to happen shortly after reset and PD initialization may
+    interfere with them.
+
+    For instance, if the EC enters programming mode when it receives a special
+    signal but requires USB-PD power in order to remain alive, PD
+    initialization can cause the system to reset and interrupt programming.
+    Adding a delay to startup can provide a wider window to enter programming
+    mode and help prevent such issues.
+
 endif  # PLATFORM_EC_USB_POWER_DELIVERY
 
 menuconfig PLATFORM_EC_USBC_PPC

@@ -4432,6 +4432,12 @@
 #undef CONFIG_USB_PD_DEBUG_LEVEL
 
 /*
+ * Set to a nonzero value to delay PD task startup by the given
+ * amount of time.
+ */
+#define CONFIG_USB_PD_STARTUP_DELAY_MS 0
+
+/*
  * Define if this board is using runtime flags instead of build time configs
  * to control USB PD properties.
  */

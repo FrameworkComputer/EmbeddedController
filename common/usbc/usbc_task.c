@@ -166,6 +166,10 @@ void pd_task(void *u)
 	if (port >= board_get_usb_pd_port_count())
 		return;
 
+#if CONFIG_USB_PD_STARTUP_DELAY_MS > 0
+	msleep(CONFIG_USB_PD_STARTUP_DELAY_MS);
+#endif
+
 	while (1) {
 		pd_timer_init(port);
 		pd_task_init(port);
