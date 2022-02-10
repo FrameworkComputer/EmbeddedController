@@ -726,6 +726,13 @@ static bool is_alt_mode_controller(void)
 			    IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP));
 }
 
+static bool is_alt_mode_adapter(void)
+{
+	return get_vif_bool(&vif.Component[component_index]
+			    .vif_field[Type_C_Is_Alt_Mode_Adapter],
+			    IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP));
+}
+
 static bool does_respond_to_discov_sop_ufp(void)
 {
 	return get_vif_bool(&vif.Component[component_index]
@@ -3143,7 +3150,14 @@ static void init_vif_component_usb_type_c_fields(
 		set_vif_field_b(&vif_fields[Type_C_Can_Act_As_Device],
 			vif_component_name[Type_C_Can_Act_As_Device],
 			false);
+		set_vif_field_b(&vif_fields[Type_C_Is_Alt_Mode_Adapter],
+				vif_component_name[Type_C_Is_Alt_Mode_Adapter],
+				false);
 	}
+
+	set_vif_field_b(&vif_fields[Modal_Operation_Supported_SOP],
+			vif_component_name[Modal_Operation_Supported_SOP],
+			is_alt_mode_adapter());
 
 	{
 		int ps = POWER_UFP;
