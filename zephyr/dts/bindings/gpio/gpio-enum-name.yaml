@@ -42,6 +42,7 @@ properties:
       - GPIO_EC_CHG_LED_Y_C1
       - GPIO_EC_DPBRDG_HPD_ODL
       - GPIO_EC_INT_L
+      - GPIO_EC_KB_BL_EN_L
       - GPIO_EC_PCH_SYS_PWROK
       - GPIO_EC_PMIC_EN_ODL
       - GPIO_EC_PMIC_WATCHDOG_L
@@ -76,7 +77,6 @@ properties:
       - GPIO_ID_1_USB_C0_C2_TCPC_RST_ODL
       - GPIO_IMVP9_VRRDY_OD
       - GPIO_KBD_KSO2
-      - GPIO_EC_KB_BL_EN_L
       - GPIO_LID_ACCEL_INT_L
       - GPIO_LID_OPEN
       - GPIO_PACKET_MODE_EN
@@ -115,6 +115,7 @@ properties:
       - GPIO_SYS_RESET_L
       - GPIO_SYS_RST_ODL
       - GPIO_TABLET_MODE_L
+      - GPIO_TEMP_SENSOR_POWER
       - GPIO_TEST
       - GPIO_USB_A0_OC_ODL
       - GPIO_USB_C0_BC12_INT_L
@@ -141,15 +142,15 @@ properties:
       - GPIO_USB_C1_PD_RST_L
       - GPIO_USB_C1_PPC_INT_ODL
       - GPIO_USB_C1_RST_ODL
-      - GPIO_USB_C1_RT_RST_R_ODL
       - GPIO_USB_C1_RT_RST_ODL
+      - GPIO_USB_C1_RT_RST_R_ODL
       - GPIO_USB_C1_SWCTL_INT_ODL
       - GPIO_USB_C1_TCPC_INT_ODL
       - GPIO_USB_C1_TCPC_RST_L
       - GPIO_USB_C2_BC12_INT_ODL
       - GPIO_USB_C2_PPC_INT_ODL
-      - GPIO_VCCST_PWRGD_OD
       - GPIO_VBOB_EN
+      - GPIO_VCCST_PWRGD_OD
       - GPIO_VOLUME_DOWN_L
       - GPIO_VOLUME_UP_L
       - GPIO_WARM_RESET_L

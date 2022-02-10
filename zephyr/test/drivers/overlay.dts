@@ -42,7 +42,7 @@
 		};
 		pg_ec_dsw_pwrok {
 			gpios = <&gpio0 4 GPIO_INPUT>;
-			enum-name = "GPIO_PG_EC_DSW_PWROK";
+			enum-name = "GPIO_TEMP_SENSOR_POWER";
 		};
 		gpio_ec_pch_wake_odl: ec_pch_wake_odl {
 			gpios = <&gpio0 5 GPIO_OUT_HIGH>;
