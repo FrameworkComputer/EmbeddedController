@@ -53,8 +53,11 @@
 
 int peci_Rd_Pkg_Config(uint8_t index, uint16_t parameter, int rlen, uint8_t *in);
 int peci_Wr_Pkg_Config(uint8_t index, uint16_t parameter, uint32_t data, int wlen);
+int espi_oob_retry_receive_date(uint8_t *readBuf);
+int espi_oob_peci_transaction(struct peci_data *peci);
 
 int peci_update_PL1(int watt);
 int peci_update_PL2(int watt);
 int peci_update_PL4(int watt);
 int peci_update_PsysPL2(int watt);
+int peci_over_espi_temp_sensor_get_val(int idx, int *temp_ptr);

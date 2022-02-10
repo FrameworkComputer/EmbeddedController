@@ -838,7 +838,7 @@ const struct temp_sensor_t temp_sensors[] = {
 	[TEMP_SENSOR_PECI] = {
 		.name = "PECI",
 		.type = TEMP_SENSOR_TYPE_CPU,
-		.read = peci_temp_sensor_get_val,
+		.read = peci_over_espi_temp_sensor_get_val,
 		.idx = 0,
 	},
 #endif /* CONFIG_PECI */

@@ -69,9 +69,54 @@ int peci_Wr_Pkg_Config(uint8_t index, uint16_t parameter, uint32_t data, int wle
 	for (clen = 4; clen < wlen - 1; clen++)
 		out[clen] = ((data >> ((clen - 4) * 8)) & 0xFF);
 
-	rv = peci_transaction(&peci);
+	if (board_get_version() >= BOARD_VERSION_7)
+		espi_oob_peci_transaction(&peci);
+	else {
+		/* DVT1 is HW PECI pin */
+		rv = peci_transaction(&peci);
+		if (rv)
+			return rv;
+	}
+	return EC_SUCCESS;
+}
+
+static int peci_over_espi_get_cpu_temp(int *cpu_temp)
+{
+	int rv;
+
+	uint8_t r_buf[PECI_GET_TEMP_READ_LENGTH] = {0};
+	struct peci_data peci = {
+		.cmd_code = PECI_CMD_GET_TEMP,
+		.addr = PECI_TARGET_ADDRESS,
+		.w_len = PECI_GET_TEMP_WRITE_LENGTH,
+		.r_len = PECI_GET_TEMP_READ_LENGTH,
+		.w_buf = NULL,
+		.r_buf = r_buf,
+		.timeout_us = PECI_GET_TEMP_TIMEOUT_US,
+	};
+
+	rv = espi_oob_peci_transaction(&peci);
+
+	if (rv == EC_ERROR_TIMEOUT) {
+		CPRINTS("ESPI GET VALUE TIMEOUT!");
+		espi_oob_retry_receive_date(r_buf);
+	}
+
 	if (rv)
 		return rv;
+
+
+	/* Get relative raw data of temperature. */
+	*cpu_temp = (r_buf[1] << 8) | r_buf[0];
+
+	/* Convert relative raw data to degrees C. */
+	*cpu_temp = ((*cpu_temp ^ 0xFFFF) + 1) >> 6;
+
+	if (*cpu_temp >= CONFIG_PECI_TJMAX)
+		return EC_ERROR_INVAL;
+
+	/* temperature in K */
+	*cpu_temp = CONFIG_PECI_TJMAX - *cpu_temp + 273;
 
 	return EC_SUCCESS;
 }
@@ -188,4 +233,26 @@ __override int stop_read_peci_temp(void)
 	}
 	
 	return EC_SUCCESS;
+}
+
+int peci_over_espi_temp_sensor_get_val(int idx, int *temp_ptr)
+{
+	int i, rv;
+
+	rv = stop_read_peci_temp();
+
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	/*
+	 * Retry reading PECI CPU temperature if the first sample is
+	 * invalid or failed to obtain.
+	 */
+	for (i = 0; i < 2; i++) {
+		rv = peci_over_espi_get_cpu_temp(temp_ptr);
+		if (!rv)
+			break;
+	}
+
+	return rv;
 }

@@ -63,6 +63,15 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr);
 int peci_transaction(struct peci_data *peci);
 
 /**
+ * calculate the Assured Write value based on the number of bytes in input
+ * buffer
+ *
+ * @param   data_blk_ptr
+ * @param   length
+ */
+uint8_t calc_AWFCS(uint8_t *data_blk_ptr, unsigned int length);
+
+/**
  * Stop to read PECI temp
  *
  */
