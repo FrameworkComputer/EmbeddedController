@@ -82,6 +82,9 @@
 		ec_espi_rst_l {
 			gpios = <&gpio5 4 GPIO_PULL_DOWN>;
 		};
+		6axis_int_l {
+			gpios = <&gpioa 0 GPIO_INPUT>;
+		};
 	};
 
 	def-lvol-io-list {

@@ -88,6 +88,9 @@
 		ec_pwm7 {
 			gpios = <&gpio6 0 GPIO_INPUT_PULL_UP>;
 		};
+		6axis_int_l {
+			gpios = <&gpioa 0 GPIO_INPUT_PULL_UP>;
+		};
 	};
 
 	def-lvol-io-list {

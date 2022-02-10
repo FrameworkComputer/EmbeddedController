@@ -175,9 +175,6 @@
 			gpios = <&gpio1 7 GPIO_OUT_LOW>;
 			enum-name = "GPIO_KBD_KSO2";
 		};
-		6axis_int_l {
-			gpios = <&gpioa 0 GPIO_INPUT_PULL_UP>;
-		};
 		tablet_mode {
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
