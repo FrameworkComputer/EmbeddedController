@@ -15,6 +15,7 @@
 
 /* Keyboard features */
 #define CONFIG_KEYBOARD_FACTORY_TEST
+#define CONFIG_KEYBOARD_REFRESH_ROW3
 
 /* EC console commands */
 #define CONFIG_CMD_BUTTON
