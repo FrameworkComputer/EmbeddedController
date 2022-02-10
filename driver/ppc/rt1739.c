@@ -172,9 +172,9 @@ static int rt1739_workaround(int port)
 			RT1739_OSC640K_FORCE_EN,
 			MASK_SET));
 
-		RETURN_ERROR(write_reg(port, RT1739_VBUS_DAULT_DIS,
+		RETURN_ERROR(write_reg(port, RT1739_VBUS_FAULT_DIS,
+				       RT1739_OVP_DISVBUS_EN |
 				       RT1739_UVLO_DISVBUS_EN |
-				       RT1739_SRCP_DISVBUS_EN |
 				       RT1739_SCP_DISVBUS_EN |
 				       RT1739_OCPS_DISVBUS_EN));
 		break;
