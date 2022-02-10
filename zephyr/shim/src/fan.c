@@ -5,6 +5,7 @@
 
 #define DT_DRV_COMPAT named_fans
 
+#include <drivers/gpio.h>
 #include <drivers/sensor.h>
 #include <logging/log.h>
 #include <sys/util_macro.h>
@@ -16,7 +17,6 @@
 #include "math_util.h"
 #include "hooks.h"
 #include "gpio_signal.h"
-#include "gpio.h"
 
 LOG_MODULE_REGISTER(fan_shim, LOG_LEVEL_ERR);
 

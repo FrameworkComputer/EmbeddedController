@@ -4,8 +4,8 @@
  */
 
 #include <devicetree.h>
+#include <drivers/gpio.h>
 #include "common.h"
-#include "gpio.h"
 
 /* TODO(b/218600962): Consolidate switchcap code. */
 

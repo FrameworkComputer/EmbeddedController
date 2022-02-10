@@ -6,6 +6,7 @@
 #include <atomic.h>
 #include <device.h>
 #include <drivers/espi.h>
+#include <drivers/gpio.h>
 #include <logging/log.h>
 #include <kernel.h>
 #include <stdint.h>
@@ -15,7 +16,6 @@
 #include "chipset.h"
 #include "common.h"
 #include "espi.h"
-#include "gpio.h"
 #include "hooks.h"
 #include "i8042_protocol.h"
 #include "keyboard_protocol.h"

@@ -3,9 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include "cros_board_info.h"
 #include <drivers/eeprom.h>
-#include "gpio.h"
+#include <drivers/gpio.h>
+
+#include "console.h"
+#include "cros_board_info.h"
 #include "write_protect.h"
 
 #if DT_NODE_EXISTS(DT_NODELABEL(cbi_eeprom))
