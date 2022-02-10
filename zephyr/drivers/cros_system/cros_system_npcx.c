@@ -4,7 +4,6 @@
  */
 
 #include <arch/arm/aarch32/cortex_m/cmsis.h>
-#include <drivers/cros_system.h>
 #include <drivers/gpio.h>
 #include <drivers/watchdog.h>
 #include <logging/log.h>
@@ -12,7 +11,7 @@
 #include <soc/nuvoton_npcx/reg_def_cros.h>
 #include <sys/util.h>
 
-#include "gpio.h"
+#include "drivers/cros_system.h"
 #include "gpio/gpio_int.h"
 #include "rom_chip.h"
 #include "soc_gpio.h"

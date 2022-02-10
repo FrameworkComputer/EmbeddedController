@@ -14,7 +14,6 @@
 #include <soc.h>
 
 #include "flash.h"
-#include "gpio.h"
 #include "spi_flash_reg.h"
 #include "write_protect.h"
 #include "../drivers/flash/spi_nor.h"

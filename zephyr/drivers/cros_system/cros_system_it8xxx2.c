@@ -6,12 +6,12 @@
 #define DT_DRV_COMPAT ite_it8xxx2_gctrl
 
 #include <device.h>
-#include <drivers/cros_system.h>
+#include <drivers/gpio.h>
 #include <logging/log.h>
 #include <soc.h>
 #include <soc/ite_it8xxx2/reg_def_cros.h>
 
-#include "gpio.h"
+#include "drivers/cros_system.h"
 #include "gpio/gpio_int.h"
 #include "system.h"
 #include "util.h"
