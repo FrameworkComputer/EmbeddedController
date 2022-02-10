@@ -1,0 +1,13 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USBA Port Enable Pins Configurations
+
+compatible: "cros-ec,usba-port-enable-pins"
+
+properties:
+  enable-pins:
+    type: phandles
+    required: true
+    description: List of USBA Port Enable Pins

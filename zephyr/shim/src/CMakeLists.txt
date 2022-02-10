@@ -67,3 +67,4 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8805
                                                             tcpc_ps8xxx.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8815
                                                             tcpc_ps8xxx.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBA        usba.c)
