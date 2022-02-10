@@ -29,6 +29,9 @@
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
 #define TCPCI_EMUL_LABEL2 DT_NODELABEL(tcpci_ps8xxx_emul)
 
+#define DEFAULT_VBUS_MV 5000
+#define DEFAULT_VBUS_MA 3000
+
 struct integration_usb_attach_src_then_snk_fixture {
 	/* TODO(b/217737667): Remove driver specific code. */
 	const struct emul *tcpci_generic_emul;
@@ -75,16 +78,16 @@ static void integration_usb_attach_src_then_snk_before(void *state)
 	/* TODO(b/217737667): Remove driver specific code. */
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
 
-	zassume_ok(tcpc_config[0].drv->init(0), NULL);
+	zassume_ok(tcpc_config[SNK_PORT].drv->init(SNK_PORT), NULL);
 	/*
 	 * Arbitrary FW ver. The emulator should really be setting this
 	 * during its init.
 	 */
 	tcpci_emul_set_reg(tcpci_emul_snk, PS8XXX_REG_FW_REV, 0x31);
-	zassume_ok(tcpc_config[1].drv->init(1), NULL);
+	zassume_ok(tcpc_config[SRC_PORT].drv->init(SRC_PORT), NULL);
 	tcpci_emul_set_rev(tcpci_emul_src, TCPCI_EMUL_REV1_0_VER1_0);
-	pd_set_suspend(0, 0);
-	pd_set_suspend(1, 0);
+	pd_set_suspend(SNK_PORT, false);
+	pd_set_suspend(SRC_PORT, false);
 	/* Reset to disconnected state. */
 	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_src), NULL);
 	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_snk), NULL);
@@ -97,7 +100,7 @@ static void integration_usb_attach_src_then_snk_before(void *state)
 			   &my_charger.data, &my_charger.common_data,
 			   &my_charger.ops, tcpci_emul_src),
 		   NULL);
-	isl923x_emul_set_adc_vbus(charger_emul, 5000);
+	isl923x_emul_set_adc_vbus(charger_emul, DEFAULT_VBUS_MV);
 
 	/* Wait for current ramp. */
 	k_sleep(K_SECONDS(10));
@@ -159,26 +162,26 @@ ZTEST_F(integration_usb_attach_src_then_snk, verify_snk_port_pd_info)
 		      "Charger type %d, but PD reports type %d",
 		      USB_CHG_TYPE_PD, response.type);
 
-	/* Verify Default 5V and 3A */
-	zassert_equal(response.meas.voltage_max, 5000,
-		      "Charging at VBUS %dmV, but PD reports %dmV", 5000,
-		      response.meas.voltage_max);
+	zassert_equal(response.meas.voltage_max, DEFAULT_VBUS_MV,
+		      "Charging at VBUS %dmV, but PD reports %dmV",
+		      DEFAULT_VBUS_MV, response.meas.voltage_max);
 
-	zassert_within(response.meas.voltage_now, 5000, 5000 / 10,
+	zassert_within(response.meas.voltage_now, DEFAULT_VBUS_MV,
+		       DEFAULT_VBUS_MV / 10,
 		       "Actually charging at VBUS %dmV, but PD reports %dmV",
-		       5000, response.meas.voltage_now);
+		       DEFAULT_VBUS_MV, response.meas.voltage_now);
 
-	zassert_equal(response.meas.current_max, 3000,
-		      "Charging at VBUS max %dmA, but PD reports %dmA", 3000,
-		      response.meas.current_max);
+	zassert_equal(response.meas.current_max, DEFAULT_VBUS_MA,
+		      "Charging at VBUS max %dmA, but PD reports %dmA",
+		      DEFAULT_VBUS_MA, response.meas.current_max);
 
-	zassert_true(response.meas.current_lim >= 3000,
+	zassert_true(response.meas.current_lim >= DEFAULT_VBUS_MA,
 		     "Charging at VBUS max %dmA, but PD current limit %dmA",
-		     3000, response.meas.current_lim);
+		     DEFAULT_VBUS_MA, response.meas.current_lim);
 
-	zassert_equal(response.max_power, 5000 * 3000,
-		      "Charging up to %duW, PD max power %duW", 5000 * 3000,
-		      response.max_power);
+	zassert_equal(response.max_power, DEFAULT_VBUS_MV * DEFAULT_VBUS_MA,
+		      "Charging up to %duW, PD max power %duW",
+		      DEFAULT_VBUS_MV * DEFAULT_VBUS_MA, response.max_power);
 }
 
 ZTEST_F(integration_usb_attach_src_then_snk, verify_src_port_pd_info)
@@ -200,15 +203,15 @@ ZTEST_F(integration_usb_attach_src_then_snk, verify_src_port_pd_info)
 		      "Charger type %d, but PD reports type %d",
 		      USB_CHG_TYPE_NONE, response.type);
 
-	/* Verify Default 5V and 3A */
 	/* TODO(b/209907615): Confirm measure value requirements */
-	zassert_within(response.meas.voltage_now, 5000, 5000 / 10,
+	zassert_within(response.meas.voltage_now, DEFAULT_VBUS_MV,
+		       DEFAULT_VBUS_MV / 10,
 		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
-		       5000, response.meas.voltage_now);
+		       DEFAULT_VBUS_MV, response.meas.voltage_now);
 
-	zassume_equal(response.meas.current_max, 3000,
-		      "Charging at VBUS max %dmA, but PD reports %dmA", 3000,
-		      response.meas.current_max);
+	zassume_equal(response.meas.current_max, DEFAULT_VBUS_MA,
+		      "Charging at VBUS max %dmA, but PD reports %dmA",
+		      DEFAULT_VBUS_MA, response.meas.current_max);
 
 	/* Note: We are the source so we skip checking: */
 	/* meas.voltage_max */
