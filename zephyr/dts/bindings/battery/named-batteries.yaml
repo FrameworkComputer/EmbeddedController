@@ -2,7 +2,11 @@ description: Named Batteries parent node
 
 compatible: "named-batteries"
 
-# TODO(b/183544739): Move this to use compatible strings
+# TODO(b/218888909): Delete this file after all boards have been converted to
+# use the "batteries" node
+
+# This file is deprecated.  Do not additional enum-name.  Instead create
+# a new battery descriptor file matching the battery-info.yaml format.
 
 child-binding:
     description: Named batteries child node
