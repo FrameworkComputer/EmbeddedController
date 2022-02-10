@@ -423,7 +423,3 @@ int clock_get_freq(void)
 {
 	return 16000000;
 }
-
-void system_enter_hibernate(uint32_t seconds, uint32_t microseconds)
-{
-}

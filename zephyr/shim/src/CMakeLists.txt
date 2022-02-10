@@ -13,8 +13,9 @@ if (DEFINED CONFIG_ARCH_POSIX)
   zephyr_library_sources(ztest_system.c)
 else()
   zephyr_library_sources(system.c)
-  zephyr_library_sources("${PLATFORM_EC}/common/system.c")
 endif()
+zephyr_library_sources("${PLATFORM_EC}/common/system.c")
+
 zephyr_library_sources_ifdef(no_libgcc                  libgcc_${ARCH}.S)
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ADC         adc.c)

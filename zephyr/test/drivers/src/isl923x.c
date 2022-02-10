@@ -668,18 +668,10 @@ ZTEST(isl923x, test_init)
 		      "Expected input current 0mV but got %dmV", input_current);
 
 	/*
-	 * Test system_jumped_late being true (will not call
-	 * set_input_current_limit)
+	 * TODO(b/219520539): Test system_jumped_late being true (will not call
+	 * set_input_current_limit). It isn't clear how to stimulate the
+	 * code in system.c to cause a late jump.
 	 */
-	system_jumped_late_mock.ret_val = true;
-	system_jumped_late_mock.call_count = 0;
-	isl923x_emul_reset(isl923x_emul);
-	isl923x_drv.init(CHARGER_NUM);
-	zassert_equal(
-		1, system_jumped_late_mock.call_count,
-		"Expected to have called system_jumped_late() once, but got %d calls",
-		system_jumped_late_mock.call_count);
-	system_jumped_late_mock.ret_val = false;
 }
 
 ZTEST(isl923x, test_isl923x_is_acok)
