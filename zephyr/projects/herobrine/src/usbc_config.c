@@ -146,10 +146,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	}
 };
 
-const int usb_port_enable[USB_PORT_COUNT] = {
-	GPIO_EN_USB_A_5V,
-};
-
 /* Initialize board USC-C things */
 static void board_init_usbc(void)
 {
