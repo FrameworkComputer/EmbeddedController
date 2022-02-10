@@ -216,8 +216,8 @@ def get_argparser():
         help="Test the .elf file after configuration",
     )
     configure.add_argument(
-        "project_name_or_dir",
-        help="Path to the project to build",
+        "project_name",
+        help="Name of the project to setup",
     )
     configure.add_argument(
         "-c",
