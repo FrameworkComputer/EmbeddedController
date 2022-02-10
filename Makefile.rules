@@ -244,6 +244,7 @@ conflicting_options := \
 	DMA \
 	EEPROM \
 	I2C_BITBANG \
+	INA219 \
 	PECI \
 	PS2 \
 	SPI \
