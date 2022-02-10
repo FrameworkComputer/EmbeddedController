@@ -31,19 +31,9 @@ def build(opts):
     with open(opts.metrics, 'w') as f:
         f.write(json_format.MessageToJson(metrics))
 
-    targets = [
-        'projects/posix-ec',
-        'projects/volteer/volteer',
-    ]
-    for target in targets:
-        print('Building {}'.format(target))
-        cmd = ['zmake', '-D', 'configure', '-b']
-        if opts.code_coverage:
-            cmd.append('--coverage')
-        cmd.append(target)
-        rv = subprocess.run(cmd, cwd=pathlib.Path(__file__).parent).returncode
-        if rv != 0:
-            return rv
+    # Nothing to do, as the test phase actually does the builds.
+    # TODO(b/217788621): Do a build-only here once we can separate build
+    # and test phases on zmake CLI.
     return 0
 
 
