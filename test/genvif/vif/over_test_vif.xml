@@ -1,19 +1,19 @@
-<VIF>
+<vif:VIF>
   <!-- Override the following fields -->
-  <Model_Part_Number>SuperTestWithOverride</Model_Part_Number>
-  <Product_Revision>Final</Product_Revision>
-  <TID>12345</TID>
+  <vif:Model_Part_Number>SuperTestWithOverride</vif:Model_Part_Number>
+  <vif:Product_Revision>Final</vif:Product_Revision>
+  <vif:TID>12345</vif:TID>
 
-  <Component>
+  <vif:Component>
     <!-- Remove Sends_Pings -->
-    <Sends_Pings />
+    <vif:Sends_Pings />
 
-    <SrcPdoList>
-      <SrcPDO>
+    <vif:SrcPdoList>
+      <vif:SrcPDO>
         <!-- Add in missing fields for SrcPdo0 -->
-        <Src_PD_OCP_OC_Debounce value="50">50 msec</Src_PD_OCP_OC_Debounce>
-        <Src_PD_OCP_OC_Threshold value="360">3600 mA</Src_PD_OCP_OC_Threshold>
-      </SrcPDO>
-    </SrcPdoList>
-  </Component>
-</VIF>
+        <vif:Src_PD_OCP_OC_Debounce value="50">50 msec</vif:Src_PD_OCP_OC_Debounce>
+        <vif:Src_PD_OCP_OC_Threshold value="360">3600 mA</vif:Src_PD_OCP_OC_Threshold>
+      </vif:SrcPDO>
+    </vif:SrcPdoList>
+  </vif:Component>
+</vif:VIF>

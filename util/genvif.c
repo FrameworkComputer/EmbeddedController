@@ -35,9 +35,9 @@
 #define DEFAULT_MISSING_BCD_DEV	0x0000
 
 /*
- * XML namespace for VIF
+ * XML namespace for VIF as of VifEditorRelease 3.2.3.0
  */
-#define VIF_ ""
+#define VIF_ "vif:"
 
 const uint32_t *src_pdo;
 uint32_t src_pdo_cnt;

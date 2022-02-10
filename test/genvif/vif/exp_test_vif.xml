@@ -1,87 +1,87 @@
-<VIF>
-  <VIF_Specification>3.18</VIF_Specification>
-  <Vendor_Name>Google</Vendor_Name>
-  <Model_Part_Number>test</Model_Part_Number>
-  <Product_Revision>FIX-ME</Product_Revision>
-  <TID>65535</TID>
-  <VIF_Product_Type value="0">Port Product</VIF_Product_Type>
-  <Certification_Type value="0">End Product</Certification_Type>
-  <Component>
-    <Port_Label>0</Port_Label>
-    <Connector_Type value="2">Type-C®</Connector_Type>
-    <USB4_Supported value="false" />
-    <USB_PD_Support value="true" />
-    <PD_Port_Type value="4">DRP</PD_Port_Type>
-    <Type_C_State_Machine value="2">DRP</Type_C_State_Machine>
-    <Captive_Cable value="false" />
-    <Port_Battery_Powered value="false" />
-    <BC_1_2_Support value="0">None</BC_1_2_Support>
-    <PD_Spec_Revision_Major value="3" />
-    <PD_Spec_Revision_Minor value="1" />
-    <PD_Spec_Version_Major value="1" />
-    <PD_Spec_Version_Minor value="3" />
-    <PD_Specification_Revision value="2">Revision 3</PD_Specification_Revision>
-    <USB_Comms_Capable value="true" />
-    <DR_Swap_To_DFP_Supported value="true" />
-    <DR_Swap_To_UFP_Supported value="false" />
-    <Unconstrained_Power value="false" />
-    <VCONN_Swap_To_On_Supported value="false" />
-    <VCONN_Swap_To_Off_Supported value="false" />
-    <Responds_To_Discov_SOP_UFP value="false" />
-    <Responds_To_Discov_SOP_DFP value="false" />
-    <Attempts_Discov_SOP value="true" />
-    <Chunking_Implemented_SOP value="false" />
-    <Unchunked_Extended_Messages_Supported value="false" />
-    <Manufacturer_Info_Supported_Port value="false" />
-    <Security_Msgs_Supported_SOP value="false" />
-    <Num_Fixed_Batteries value="1" />
-    <Num_Swappable_Battery_Slots value="0" />
-    <ID_Header_Connector_Type_SOP value="2">USB Type-C® Receptacle</ID_Header_Connector_Type_SOP>
-    <SOP_Capable value="true" />
-    <SOP_P_Capable value="false" />
-    <SOP_PP_Capable value="false" />
-    <SOP_P_Debug_Capable value="false" />
-    <SOP_PP_Debug_Capable value="false" />
-    <Type_C_Implements_Try_SRC value="false" />
-    <Type_C_Implements_Try_SNK value="false" />
-    <RP_Value value="1">1.5A</RP_Value>
-    <Type_C_Is_VCONN_Powered_Accessory value="false" />
-    <Type_C_Is_Debug_Target_SRC value="true" />
-    <Type_C_Is_Debug_Target_SNK value="true" />
-    <Power_Interruption_Available value="0">No Interruption Possible</Power_Interruption_Available>
-    <Data_Reset_Supported value="false" />
-    <Enter_USB_Supported value="false" />
-    <Type_C_Can_Act_As_Host value="true" />
-    <Type_C_Is_Alt_Mode_Controller value="false" />
-    <Type_C_Is_Alt_Mode_Adapter value="false" />
-    <Type_C_Can_Act_As_Device value="false" />
-    <Type_C_Power_Source value="1">UFP-powered</Type_C_Power_Source>
-    <Type_C_Port_On_Hub value="false" />
-    <Type_C_Supports_Audio_Accessory value="false" />
-    <Type_C_Sources_VCONN value="false" />
-    <PD_Power_As_Source value="15000">15000 mW</PD_Power_As_Source>
-    <USB_Suspend_May_Be_Cleared value="false" />
-    <Sends_Pings value="false" />
-    <FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
-    <Master_Port value="false" />
-    <Num_Src_PDOs value="1" />
-    <Host_Supports_USB_Data value="true" />
-    <Host_Speed value="1">USB 3.2 Gen 1x1</Host_Speed>
-    <Is_DFP_On_Hub value="false" />
-    <Host_Contains_Captive_Retimer value="false" />
-    <Host_Is_Embedded value="false" />
-    <PD_OC_Protection value="false" />
-    <Product_Total_Source_Power_mW value="15000">15000 mW</Product_Total_Source_Power_mW>
-    <Port_Source_Power_Type value="0">Assured</Port_Source_Power_Type>
-    <EPR_Supported_As_Src value="false" />
-    <Modal_Operation_Supported_SOP value="false" />
-    <SrcPdoList>
-      <SrcPDO>
-        <Src_PDO_Supply_Type value="0">Fixed</Src_PDO_Supply_Type>
-        <Src_PDO_Peak_Current value="0">100% IOC</Src_PDO_Peak_Current>
-        <Src_PDO_Voltage value="100">5000 mV</Src_PDO_Voltage>
-        <Src_PDO_Max_Current value="300">3000 mA</Src_PDO_Max_Current>
-      </SrcPDO>
-    </SrcPdoList>
-  </Component>
-</VIF>
+<vif:VIF>
+  <vif:VIF_Specification>3.18</vif:VIF_Specification>
+  <vif:Vendor_Name>Google</vif:Vendor_Name>
+  <vif:Model_Part_Number>test</vif:Model_Part_Number>
+  <vif:Product_Revision>FIX-ME</vif:Product_Revision>
+  <vif:TID>65535</vif:TID>
+  <vif:VIF_Product_Type value="0">Port Product</vif:VIF_Product_Type>
+  <vif:Certification_Type value="0">End Product</vif:Certification_Type>
+  <vif:Component>
+    <vif:Port_Label>0</vif:Port_Label>
+    <vif:Connector_Type value="2">Type-C®</vif:Connector_Type>
+    <vif:USB4_Supported value="false" />
+    <vif:USB_PD_Support value="true" />
+    <vif:PD_Port_Type value="4">DRP</vif:PD_Port_Type>
+    <vif:Type_C_State_Machine value="2">DRP</vif:Type_C_State_Machine>
+    <vif:Captive_Cable value="false" />
+    <vif:Port_Battery_Powered value="false" />
+    <vif:BC_1_2_Support value="0">None</vif:BC_1_2_Support>
+    <vif:PD_Spec_Revision_Major value="3" />
+    <vif:PD_Spec_Revision_Minor value="1" />
+    <vif:PD_Spec_Version_Major value="1" />
+    <vif:PD_Spec_Version_Minor value="3" />
+    <vif:PD_Specification_Revision value="2">Revision 3</vif:PD_Specification_Revision>
+    <vif:USB_Comms_Capable value="true" />
+    <vif:DR_Swap_To_DFP_Supported value="true" />
+    <vif:DR_Swap_To_UFP_Supported value="false" />
+    <vif:Unconstrained_Power value="false" />
+    <vif:VCONN_Swap_To_On_Supported value="false" />
+    <vif:VCONN_Swap_To_Off_Supported value="false" />
+    <vif:Responds_To_Discov_SOP_UFP value="false" />
+    <vif:Responds_To_Discov_SOP_DFP value="false" />
+    <vif:Attempts_Discov_SOP value="true" />
+    <vif:Chunking_Implemented_SOP value="false" />
+    <vif:Unchunked_Extended_Messages_Supported value="false" />
+    <vif:Manufacturer_Info_Supported_Port value="false" />
+    <vif:Security_Msgs_Supported_SOP value="false" />
+    <vif:Num_Fixed_Batteries value="1" />
+    <vif:Num_Swappable_Battery_Slots value="0" />
+    <vif:ID_Header_Connector_Type_SOP value="2">USB Type-C® Receptacle</vif:ID_Header_Connector_Type_SOP>
+    <vif:SOP_Capable value="true" />
+    <vif:SOP_P_Capable value="false" />
+    <vif:SOP_PP_Capable value="false" />
+    <vif:SOP_P_Debug_Capable value="false" />
+    <vif:SOP_PP_Debug_Capable value="false" />
+    <vif:Type_C_Implements_Try_SRC value="false" />
+    <vif:Type_C_Implements_Try_SNK value="false" />
+    <vif:RP_Value value="1">1.5A</vif:RP_Value>
+    <vif:Type_C_Is_VCONN_Powered_Accessory value="false" />
+    <vif:Type_C_Is_Debug_Target_SRC value="true" />
+    <vif:Type_C_Is_Debug_Target_SNK value="true" />
+    <vif:Power_Interruption_Available value="0">No Interruption Possible</vif:Power_Interruption_Available>
+    <vif:Data_Reset_Supported value="false" />
+    <vif:Enter_USB_Supported value="false" />
+    <vif:Type_C_Can_Act_As_Host value="true" />
+    <vif:Type_C_Is_Alt_Mode_Controller value="false" />
+    <vif:Type_C_Is_Alt_Mode_Adapter value="false" />
+    <vif:Type_C_Can_Act_As_Device value="false" />
+    <vif:Type_C_Power_Source value="1">UFP-powered</vif:Type_C_Power_Source>
+    <vif:Type_C_Port_On_Hub value="false" />
+    <vif:Type_C_Supports_Audio_Accessory value="false" />
+    <vif:Type_C_Sources_VCONN value="false" />
+    <vif:PD_Power_As_Source value="15000">15000 mW</vif:PD_Power_As_Source>
+    <vif:USB_Suspend_May_Be_Cleared value="false" />
+    <vif:Sends_Pings value="false" />
+    <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="0">FR_Swap not supported</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
+    <vif:Master_Port value="false" />
+    <vif:Num_Src_PDOs value="1" />
+    <vif:Host_Supports_USB_Data value="true" />
+    <vif:Host_Speed value="1">USB 3.2 Gen 1x1</vif:Host_Speed>
+    <vif:Is_DFP_On_Hub value="false" />
+    <vif:Host_Contains_Captive_Retimer value="false" />
+    <vif:Host_Is_Embedded value="false" />
+    <vif:PD_OC_Protection value="false" />
+    <vif:Product_Total_Source_Power_mW value="15000">15000 mW</vif:Product_Total_Source_Power_mW>
+    <vif:Port_Source_Power_Type value="0">Assured</vif:Port_Source_Power_Type>
+    <vif:EPR_Supported_As_Src value="false" />
+    <vif:Modal_Operation_Supported_SOP value="false" />
+    <vif:SrcPdoList>
+      <vif:SrcPDO>
+        <vif:Src_PDO_Supply_Type value="0">Fixed</vif:Src_PDO_Supply_Type>
+        <vif:Src_PDO_Peak_Current value="0">100% IOC</vif:Src_PDO_Peak_Current>
+        <vif:Src_PDO_Voltage value="100">5000 mV</vif:Src_PDO_Voltage>
+        <vif:Src_PDO_Max_Current value="300">3000 mA</vif:Src_PDO_Max_Current>
+      </vif:SrcPDO>
+    </vif:SrcPdoList>
+  </vif:Component>
+</vif:VIF>
