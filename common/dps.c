@@ -355,6 +355,10 @@ static bool has_new_power_request(struct pdo_candidate *cand)
 	for (int i = 0; i < board_get_usb_pd_port_count(); ++i) {
 		const uint32_t * const src_caps = pd_get_src_caps(i);
 
+		/* If the port is not SNK, skip evaluating this port. */
+		if (pd_get_power_role(i) != PD_ROLE_SINK)
+			continue;
+
 		for (int j = 0; j < pd_get_src_cap_cnt(i); ++j) {
 			int ma, mv, unused;
 			int mw;
