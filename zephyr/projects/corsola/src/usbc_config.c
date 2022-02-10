@@ -143,3 +143,17 @@ void x_ec_interrupt(enum gpio_signal signal)
 	else
 		CPRINTS("Undetected subboard interrupt.");
 }
+
+void board_hdmi_suspend(void)
+{
+	if (corsola_get_db_type() == CORSOLA_DB_HDMI)
+		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_pwrdn_odl), 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_hdmi_suspend, HOOK_PRIO_DEFAULT);
+
+void board_hdmi_resume(void)
+{
+	if (corsola_get_db_type() == CORSOLA_DB_HDMI)
+		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_pwrdn_odl), 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_hdmi_resume, HOOK_PRIO_DEFAULT);

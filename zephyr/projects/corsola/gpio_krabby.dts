@@ -65,7 +65,7 @@
 			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_x_ec_gpio2: x_ec_gpio2 {
-			gpios = <&gpiob 2 (GPIO_INPUT | GPIO_ODR_HIGH)>;
+			gpios = <&gpiob 2 GPIO_INPUT>;
 		};
 		usb_c0_ppc_bc12_int_odl: usb_c0_ppc_bc12_int_odl {
 			gpios = <&gpiod 1 GPIO_INPUT>;
@@ -173,7 +173,7 @@
 			gpios = <&gpioh 4 GPIO_OUT_LOW>;
 		};
 		gpio_ec_x_gpio3: ec_x_gpio3 {
-			gpios = <&gpioj 1 GPIO_INPUT>;
+			gpios = <&gpioj 1 GPIO_OUT_LOW>;
 		};
 		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
 			gpios = <&gpioj 3 GPIO_INPUT>;

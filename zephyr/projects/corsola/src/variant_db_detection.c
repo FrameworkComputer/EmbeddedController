@@ -6,7 +6,8 @@
 /* Corsola daughter board detection */
 
 #include "console.h"
-#include "gpio.h"
+#include "drivers/gpio.h"
+#include "dt-bindings/gpio_defines.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 
@@ -15,13 +16,15 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+BUILD_ASSERT(GPIO_OUT_HIGH == 0xA00, "Don't use cros ec gpio flags here");
+
 static void corsola_db_config(enum corsola_db_type type)
 {
 	switch (type) {
 	case CORSOLA_DB_HDMI:
 		/* EC_X_GPIO1 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_hdmi_pwr),
-				   GPIO_OUT_HIGH);
+				      GPIO_OUT_HIGH);
 		/* X_EC_GPIO2 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd),
 				      GPIO_INPUT);
@@ -47,8 +50,7 @@ static void corsola_db_config(enum corsola_db_type type)
 			GPIO_OUT_LOW);
 		return;
 	default:
-	break;
-
+		break;
 	}
 }
 
