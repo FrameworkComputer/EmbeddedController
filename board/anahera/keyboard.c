@@ -55,12 +55,12 @@ static const struct ec_response_keybd_config keybd_wo_privacy_wo_kblight = {
 		TK_SNAPSHOT,			/* T5 */
 		TK_BRIGHTNESS_DOWN,		/* T6 */
 		TK_BRIGHTNESS_UP,		/* T7 */
-		TK_PREV_TRACK,			/* T8 */
-		TK_PLAY_PAUSE,			/* T9 */
-		TK_MICMUTE,			/* T10 */
-		TK_VOL_MUTE,			/* T11 */
-		TK_VOL_DOWN,			/* T12 */
-		TK_VOL_UP,			/* T13 */
+		TK_PLAY_PAUSE,			/* T8 */
+		TK_MICMUTE,			/* T9 */
+		TK_VOL_MUTE,			/* T10 */
+		TK_VOL_DOWN,			/* T11 */
+		TK_VOL_UP,			/* T12 */
+		TK_MENU,			/* T13 */
 	},
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
