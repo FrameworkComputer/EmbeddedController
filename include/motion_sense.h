@@ -12,7 +12,6 @@
 #include "chipset.h"
 #include "common.h"
 #include "ec_commands.h"
-#include "gpio.h"
 #include "i2c.h"
 #include "math_util.h"
 #include "queue.h"

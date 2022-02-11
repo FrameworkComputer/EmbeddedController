@@ -8,7 +8,8 @@
 #ifndef __CROS_EC_LN9310_H
 #define __CROS_EC_LN9310_H
 
-#include "gpio.h"
+#include "common.h"
+#include "gpio_signal.h"
 
 /* I2C address */
 #define LN9310_I2C_ADDR_0_FLAGS		0x72

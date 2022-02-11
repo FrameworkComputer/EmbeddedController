@@ -8,6 +8,7 @@
 #include "adc_chip.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dso.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
 #include "temp_sensor.h"

@@ -10,6 +10,7 @@
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dso.h"
 #include "driver/als_tcs3400_public.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
 #include "temp_sensor.h"

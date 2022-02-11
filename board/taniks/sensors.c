@@ -12,6 +12,7 @@
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/accelgyro_lsm6dso.h"
 #include "fw_config.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "motion_sense.h"

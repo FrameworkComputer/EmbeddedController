@@ -10,6 +10,7 @@
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "extpower.h"
+#include "gpio.h"
 #include "i2c.h"
 #include "lid_switch.h"
 #include "power.h"
