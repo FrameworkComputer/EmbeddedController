@@ -16,7 +16,6 @@ if (DEFINED CONFIG_ARCH_POSIX)
 else()
   zephyr_library_sources(system.c)
 endif()
-zephyr_library_sources("${PLATFORM_EC}/common/system.c")
 
 zephyr_library_sources_ifdef(no_libgcc                  libgcc_${ARCH}.S)
 

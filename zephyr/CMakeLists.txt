@@ -113,6 +113,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC "${PLATFORM_EC}/common/base32.c"
                                                 "${PLATFORM_EC}/common/printf.c"
                                                 "${PLATFORM_EC}/common/queue.c"
                                                 "${PLATFORM_EC}/common/shared_mem.c"
+                                                "${PLATFORM_EC}/common/system.c"
                                                 "${PLATFORM_EC}/common/uart_printf.c"
                                                 "${PLATFORM_EC}/common/util.c"
                                                 "${PLATFORM_EC}/common/version.c")
