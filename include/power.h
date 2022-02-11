@@ -10,7 +10,7 @@
 
 #include "common.h"
 #include "compiler.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 #include "task_id.h"
 
 FORWARD_DECLARE_ENUM(power_state) {

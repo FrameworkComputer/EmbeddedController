@@ -7,6 +7,7 @@
 #define ZEPHYR_CHROME_POWER_POWER_H
 
 #include <devicetree.h>
+#include <drivers/gpio.h>
 
 #define POWER_SIGNAL_LIST_NODE                                                \
 	DT_NODELABEL(power_signal_list)
