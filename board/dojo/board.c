@@ -6,7 +6,6 @@
 
 #include "common.h"
 #include "console.h"
-#include "driver/accel_bma422.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_icm42607.h"
@@ -43,7 +42,6 @@ static struct mutex g_lid_mutex;
 
 static struct icm_drv_data_t g_icm42607_data;
 static struct kionix_accel_data g_kx022_data;
-static struct accelgyro_saved_data_t g_bma422_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 static const mat33_fp_t base_standard_ref = {
@@ -136,45 +134,6 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-struct motion_sensor_t bma422_lid_accel = {
-	.name = "Lid Accel",
-	.active_mask = SENSOR_ACTIVE_S0_S3,
-	.chip = MOTIONSENSE_CHIP_BMA422,
-	.type = MOTIONSENSE_TYPE_ACCEL,
-	.location = MOTIONSENSE_LOC_LID,
-	.drv = &bma4_accel_drv,
-	.mutex = &g_lid_mutex,
-	.drv_data = &g_bma422_data,
-	.port = I2C_PORT_ACCEL,
-	.i2c_spi_addr_flags = BMA4_I2C_ADDR_PRIMARY,
-	.rot_standard_ref = &lid_standard_ref,
-	.min_frequency = BMA4_ACCEL_MIN_FREQ,
-	.max_frequency = BMA4_ACCEL_MAX_FREQ,
-	.default_range = 2, /* g, enough for laptop. */
-	.config = {
-		/* EC use accel for angle detection */
-		[SENSOR_CONFIG_EC_S0] = {
-			.odr = 12500 | ROUND_UP_FLAG,
-			.ec_rate = 100 * MSEC,
-		},
-		/* Sensor on in S3 */
-		[SENSOR_CONFIG_EC_S3] = {
-			.odr = 12500 | ROUND_UP_FLAG,
-			.ec_rate = 0,
-		},
-	},
-};
-
-static void board_update_motion_sensor_config(void)
-{
-	if (system_get_board_version() >= 2) {
-		motion_sensors[LID_ACCEL] = bma422_lid_accel;
-		ccprints("LID ACCEL is BMA422");
-	} else {
-		ccprints("LID ACCEL is KX022");
-	}
-}
-
 /* PWM */
 
 /*
@@ -229,8 +188,6 @@ static void board_init(void)
 	/* Enable motion sensor interrupt */
 	gpio_enable_interrupt(GPIO_BASE_IMU_INT_L);
 	gpio_enable_interrupt(GPIO_LID_ACCEL_INT_L);
-
-	board_update_motion_sensor_config();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
