@@ -8,6 +8,7 @@
 #include "cbi_fw_config.h"
 #include "charge_state.h"
 #include "extpower.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "led_common.h"
 

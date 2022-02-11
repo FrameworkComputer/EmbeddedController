@@ -8,6 +8,7 @@
 #include "console.h"
 #include "extpower.h"
 #include "fan.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "lid_switch.h"

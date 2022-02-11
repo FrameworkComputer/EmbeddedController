@@ -9,6 +9,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "extpower.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "led_common.h"
 

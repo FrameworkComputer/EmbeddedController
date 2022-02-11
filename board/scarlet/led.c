@@ -8,6 +8,7 @@
 #include "battery.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "led_common.h"
 #include "lid_switch.h"

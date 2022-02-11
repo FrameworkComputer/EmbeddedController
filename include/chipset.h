@@ -16,7 +16,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "ec_commands.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 #include "stddef.h"
 
 /*
