@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include <drivers/gpio.h>
+
 #include "common.h"
 #include "config.h"
 #include "console.h"
 #include "driver/ln9310.h"
-#include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c.h"

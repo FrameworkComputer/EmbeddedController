@@ -3,7 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "gpio.h"
+#include <drivers/gpio.h>
+
 #include "hooks.h"
 #include "power.h"
 #include "task.h"
