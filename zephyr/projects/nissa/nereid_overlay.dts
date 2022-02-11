@@ -12,8 +12,8 @@
 	};
 
 	batteries {
-		default_battery: lgc {
-			compatible = "lgc,ap18c8k";
+		default_battery: smp_l20m3pg0 {
+			compatible = "smp,l20m3pg0";
 		};
 	};
 
