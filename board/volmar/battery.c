@@ -122,10 +122,41 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c    = 75,
 		},
 	},
+	/* COSMX AP20CBL Battery Information */
+	[BATTERY_COSMX_AP20CBL] = {
+		.fuel_gauge = {
+			.manuf_name = "COSMX KT0030B002",
+			.device_name = "AP20CBL",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+				.cfet_mask = 0x4000,
+				.cfet_off_val = 0x4000,
+			},
+		},
+		.batt_info = {
+			.voltage_max            = 13200,
+			.voltage_normal         = 11550,
+			.voltage_min            = 9000,
+			.precharge_current      = 256,
+			.start_charging_min_c   = 0,
+			.start_charging_max_c   = 50,
+			.charging_min_c         = 0,
+			.charging_max_c         = 60,
+			.discharging_min_c      = -20,
+			.discharging_max_c      = 75,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
-const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_AP19B8M;
+const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_COSMX_AP20CBL;
 
 enum battery_present battery_hw_present(void)
 {
