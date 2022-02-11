@@ -8,6 +8,7 @@
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_scan.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include <host_command.h>
 #include <util.h>
 #include <hooks.h>

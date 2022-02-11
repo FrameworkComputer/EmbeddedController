@@ -10,7 +10,7 @@
 
 #include "common.h"
 #include "compile_time_macros.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 #include "ec_commands.h"
 
 #define BUTTON_FLAG_ACTIVE_HIGH  BIT(0)

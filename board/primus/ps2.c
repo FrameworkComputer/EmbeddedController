@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "gpio.h"
 #include "hooks.h"
 #include "i8042_protocol.h"
 #include "keyboard_8042.h"
