@@ -356,6 +356,29 @@ void board_tcpc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
 
+static void da9313_pvc_mode_ctrl(int enable)
+{
+	/*
+	 * On enable, PVC operates in automatic frequency mode.
+	 * On disable, PVC operates in fixed frequency mode.
+	 */
+	if (enable)
+		i2c_update8(I2C_PORT_POWER, DA9313_I2C_ADDR_FLAGS,
+			    DA9313_REG_PVC_CTRL,
+			    DA9313_PVC_CTRL_PVC_MODE, MASK_SET);
+	else
+		i2c_update8(I2C_PORT_POWER, DA9313_I2C_ADDR_FLAGS,
+			    DA9313_REG_PVC_CTRL,
+			    DA9313_PVC_CTRL_PVC_MODE, MASK_CLR);
+}
+
+void da9313_init(void)
+{
+	/* PVC operates in fixed frequency mode in S0. */
+	da9313_pvc_mode_ctrl(0);
+}
+DECLARE_HOOK(HOOK_INIT, da9313_init, HOOK_PRIO_DEFAULT+1);
+
 void board_hibernate(void)
 {
 	int i;
@@ -387,12 +410,17 @@ static void board_chipset_suspend(void)
 	 */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 	pwm_enable(PWM_CH_DISPLIGHT, 0);
+
+	/* PVC operates in automatic frequency mode in S3. */
+	da9313_pvc_mode_ctrl(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
+	/* PVC operates in fixed frequency mode in S0. */
+	da9313_pvc_mode_ctrl(0);
 	/* Turn on display and keyboard backlight in S0. */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
 	if (pwm_get_duty(PWM_CH_DISPLIGHT))
