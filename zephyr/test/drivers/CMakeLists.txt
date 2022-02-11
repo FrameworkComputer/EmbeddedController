@@ -24,6 +24,7 @@ target_sources(app PRIVATE
   src/cros_cbi.c
   src/espi.c
   src/gpio.c
+  src/host_cmd/motion_sense.c
   src/integration/usbc/usb.c
   src/integration/usbc/usb_20v_3a_pd_charger.c
   src/integration/usbc/usb_5v_3a_pd_sink.c
@@ -37,6 +38,7 @@ target_sources(app PRIVATE
   src/lis2dw12.c
   src/ln9310.c
   src/main.c
+  src/motion_sense/motion_sense.c
   src/panic.c
   src/power_common.c
   src/ppc_sn5s330.c
