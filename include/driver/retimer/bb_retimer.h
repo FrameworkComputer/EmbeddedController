@@ -8,7 +8,6 @@
 #ifndef __CROS_EC_BB_RETIMER_H
 #define __CROS_EC_BB_RETIMER_H
 
-#include "gpio.h"
 #include "usb_mux.h"
 #include "driver/retimer/bb_retimer_public.h"
 

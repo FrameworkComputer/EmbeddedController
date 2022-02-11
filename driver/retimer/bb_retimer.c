@@ -9,6 +9,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
