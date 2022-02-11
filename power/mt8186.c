@@ -61,6 +61,13 @@
 /* 30 ms for hard reset, we hold it longer to prevent TPM false alarm. */
 #define SYS_RST_PULSE_LENGTH (50 * MSEC)
 
+/*
+ * A delay for distinguish a WDT reset or a normal shutdown. It usually takes
+ * 90ms to pull AP_IN_SLEEP_L low in a normal shutdown.
+ */
+#define NORMAL_SHUTDOWN_DELAY (150 * MSEC)
+#define RESET_FLAG_TIMEOUT (2 * SECOND)
+
 #ifndef CONFIG_ZEPHYR
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -72,6 +79,11 @@ const struct power_signal_info power_signal_list[] = {
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 #endif /* CONFIG_ZEPHYR */
 
+/* indicate MT8186 is processing a chipset reset. */
+static bool is_resetting;
+/* indicate MT8186 is processing a AP shutdown. */
+static bool is_shutdown;
+
 static void reset_request_interrupt_deferred(void)
 {
 	chipset_reset(CHIPSET_RESET_AP_REQ);
@@ -80,7 +92,34 @@ DECLARE_DEFERRED(reset_request_interrupt_deferred);
 
 void chipset_reset_request_interrupt(enum gpio_signal signal)
 {
+	power_signal_interrupt(signal);
 	hook_call_deferred(&reset_request_interrupt_deferred_data, 0);
+}
+
+static void watchdog_interrupt_deferred(void)
+{
+	/*
+	 * If this is a real WDT, AP_IN_SLEEP_L should keep high after
+	 * the WDT interrupt is fired. Otherwise, it's a normal shutdown.
+	 */
+	if (gpio_get_level(GPIO_AP_IN_SLEEP_L))
+		chipset_reset(CHIPSET_RESET_AP_WATCHDOG);
+}
+DECLARE_DEFERRED(watchdog_interrupt_deferred);
+
+void chipset_watchdog_interrupt(enum gpio_signal signal)
+{
+	power_signal_interrupt(signal);
+
+	/*
+	 * We need this guard in that:
+	 * 1. AP_EC_WDTRST_L will recursively toggle until the AP is reset.
+	 * 2. If a warm reset request or AP shutdown is processing, then this
+	 *    interrupt tirgger is a fake WDT interrupt, we should skip it.
+	 */
+	if (!is_resetting && !is_shutdown)
+		hook_call_deferred(&watchdog_interrupt_deferred_data,
+				   NORMAL_SHUTDOWN_DELAY);
 }
 
 static void release_power_button(void)
@@ -95,6 +134,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);
 
+	is_shutdown = true;
 	/*
 	 * Force power off. This condition will reset once the state machine
 	 * transitions to G3.
@@ -127,11 +167,24 @@ void chipset_exit_hard_off_button(void)
 }
 DECLARE_DEFERRED(chipset_exit_hard_off_button);
 
+static void reset_flag_deferred(void)
+{
+	if (!is_resetting)
+		return;
+
+	CPRINTS("chipset_reset failed");
+	is_resetting = false;
+	task_wake(TASK_ID_CHIPSET);
+}
+DECLARE_DEFERRED(reset_flag_deferred);
+
 void chipset_reset(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s: %d", __func__, reason);
 	report_ap_reset(reason);
 
+	is_resetting = true;
+	hook_call_deferred(&reset_flag_deferred_data, RESET_FLAG_TIMEOUT);
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 0);
 	usleep(SYS_RST_PULSE_LENGTH);
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
@@ -167,9 +220,21 @@ DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
  *  G3 |         1 |                   x |
  *
  * S5 is only used when exit from G3 in power_common_state().
+ * is_resetting flag indicate it's resetting chipset, and it's always S0.
+ * is_shutdown flag indicates it's shutting down the AP, it goes for G3.
  */
 static enum power_state power_get_signal_state(void)
 {
+	/*
+	 * We are processing a chipset reset(S0->S0), so we don't check the
+	 * power signals until the reset is finished. This is because
+	 * while the chipset is resetting, the intermediate power signal state
+	 * is not reflecting the current power state.
+	 */
+	if (is_resetting)
+		return POWER_S0;
+	if (is_shutdown)
+		return POWER_G3;
 	if (power_get_signals() & IN_AP_RST)
 		return POWER_G3;
 	if (power_get_signals() & IN_SUSPEND_ASSERTED)
@@ -183,13 +248,13 @@ enum power_state power_chipset_init(void)
 	enum power_state init_state = power_get_signal_state();
 
 	/* Enable reboot / sleep control inputs from AP */
-	gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
 	gpio_enable_interrupt(GPIO_AP_IN_SLEEP_L);
 	gpio_enable_interrupt(GPIO_AP_EC_SYSRST_ODL);
-	gpio_enable_interrupt(GPIO_AP_EC_WDTRST_L);
 
 	if (system_jumped_late()) {
 		if (init_state == POWER_S0) {
+			gpio_enable_interrupt(GPIO_AP_EC_WDTRST_L);
+			gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
 			disable_sleep(SLEEP_MASK_AP_RUN);
 			CPRINTS("already in S0");
 		}
@@ -232,6 +297,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	switch (state) {
 	case POWER_G3:
+		is_shutdown = false;
 		if (next_state != POWER_G3)
 			return POWER_G3S5;
 		break;
@@ -249,6 +315,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0:
 		if (next_state != POWER_S0)
 			return POWER_S0S3;
+		is_resetting = false;
 
 		break;
 
@@ -257,6 +324,9 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5S3:
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
+
+		gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
+		gpio_enable_interrupt(GPIO_AP_EC_WDTRST_L);
 
 		GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
 		msleep(PMIC_EN_PULSE_MS);
@@ -329,6 +399,9 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
+		gpio_disable_interrupt(GPIO_AP_EC_WDTRST_L);
+		gpio_disable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
+
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);

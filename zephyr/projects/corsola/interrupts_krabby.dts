@@ -48,8 +48,8 @@
 		};
 		int_ap_wdtrst: ap_wdtrst {
 			irq-pin = <&ap_ec_wdtrst_l>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "power_signal_interrupt";
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "chipset_watchdog_interrupt";
 		};
 		int_tablet_mode: tablet_mode {
 			irq-pin = <&tablet_mode_l>;
