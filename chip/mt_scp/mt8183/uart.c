@@ -7,6 +7,7 @@
 
 #include "clock_chip.h"
 #include "console.h"
+#include "gpio.h"
 #include "registers.h"
 #include "serial_reg.h"
 #include "system.h"

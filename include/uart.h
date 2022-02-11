@@ -10,7 +10,7 @@
 
 #include <stdarg.h>  /* For va_list */
 #include "common.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 
 /**
  * Initialize the UART module.

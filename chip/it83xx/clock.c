@@ -9,6 +9,7 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hwtimer.h"
 #include "hwtimer_chip.h"
 #include "intc.h"

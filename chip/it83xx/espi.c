@@ -7,6 +7,7 @@
 
 #include "console.h"
 #include "espi.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "port80.h"
 #include "power.h"

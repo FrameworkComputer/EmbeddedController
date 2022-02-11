@@ -11,6 +11,7 @@
 #include "uart.h"
 #include "registers.h"
 #include "tmr_regs.h"
+#include "gpio.h"
 #include "gpio_regs.h"
 #include "common.h"
 #include "gcr_regs.h"
