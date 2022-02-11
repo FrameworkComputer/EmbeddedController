@@ -13,7 +13,7 @@
 
 #include "assert.h"
 #include "common.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 #include "keyboard_config.h"
 
 /* Column values for keyboard_raw_drive_column() */

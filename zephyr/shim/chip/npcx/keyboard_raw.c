@@ -6,6 +6,7 @@
 /* Functions needed by keyboard scanner module for Chrome EC */
 
 #include <device.h>
+#include <drivers/gpio.h>
 #include <logging/log.h>
 #include <soc.h>
 #include <soc_gpio.h>
