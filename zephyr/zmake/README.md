@@ -35,13 +35,13 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake configure
 
-**Usage:** `zmake configure [-h] [-t TOOLCHAIN] [--bringup] [--clobber] [--allow-warnings] [-B BUILD_DIR] [-b] [--test] project_name [-c]`
+**Usage:** `zmake configure [-h] [-t TOOLCHAIN] [--bringup] [--clobber] [--allow-warnings] [-B BUILD_DIR] [-b] [--test] project_name_or_dir [-c]`
 
 #### Positional Arguments
 
 |   |   |
 |---|---|
-| `project_name` | Name of the project to setup |
+| `project_name_or_dir` | Path to the project to build |
 
 #### Optional Arguments
 

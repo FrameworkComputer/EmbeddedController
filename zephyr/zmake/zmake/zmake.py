@@ -192,7 +192,7 @@ class Zmake:
 
     def configure(
         self,
-        project_name,
+        project_name_or_dir,
         build_dir=None,
         toolchain=None,
         build_after_configure=False,
@@ -203,12 +203,19 @@ class Zmake:
         allow_warnings=False,
     ):
         """Locate a project by name or directory and then call _configure."""
-        root_dir = self.module_paths["ec"] / "zephyr"
+        root_dir = pathlib.Path(project_name_or_dir)
+        if not root_dir.is_dir():
+            root_dir = self.module_paths["ec"] / "zephyr"
         found_projects = zmake.project.find_projects(root_dir)
-        try:
-            project = found_projects[project_name]
-        except KeyError as e:
-            raise KeyError(f"No project named {project_name}") from e
+        if len(found_projects) == 1:
+            # Likely passed directory path, wants to build only
+            # project from there.
+            project = next(iter(found_projects.values()))
+        else:
+            try:
+                project = found_projects[project_name_or_dir]
+            except KeyError as e:
+                raise KeyError("No project named {}".format(project_name_or_dir)) from e
         return self._configure(
             project=project,
             build_dir=build_dir,
