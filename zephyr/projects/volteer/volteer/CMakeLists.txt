@@ -14,7 +14,7 @@ set(PLATFORM_EC_BASEBOARD "${PLATFORM_EC}/baseboard/volteer" CACHE PATH
     "Path to the platform/ec baseboard directory")
 
 # Include board specific header files
-zephyr_library_include_directories(
+cros_ec_library_include_directories(
   include
   "${PLATFORM_EC_BASEBOARD}"
   "${PLATFORM_EC_BOARD}")

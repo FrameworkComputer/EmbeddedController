@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.13.1)
 
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
-zephyr_library_include_directories(include)
+cros_ec_library_include_directories(include)
 
 # Include selected EC source from the baseboard
 zephyr_library_sources(

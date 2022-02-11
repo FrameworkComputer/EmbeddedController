@@ -112,9 +112,9 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(ec)
 ```
 
-You may additionally want to specify any C files or include
-directories your project needs using `zephyr_library_sources` or
-`zephyr_library_include_directories`.
+You may additionally want to specify any C files your project needs
+using `zephyr_library_sources`. If you need to add extra include
+directories, use `cros_ec_library_include_directories`.
 
 ### prj.conf and prj_${project_name}.conf
 

@@ -63,16 +63,40 @@ if(DEFINED CONFIG_PLATFORM_EC)
   endif()
 endif()
 
+# The EC application is split into two libraries:
+#   app: contains all the legacy code
+#   ec_shim: contains all the code under platform/ec/shim
+#
+# This allows us to add an extra compiler definition __REQUIRE_ZEPHYR_GPIOS__
+# that is applied only to the Zephyr sources. This is used to verify that
+# all Zephyr sources are using the upstream Zephyr GPIO API and not the legacy
+# EC API.
+zephyr_library_named(ec_shim)
+get_property(APP_LTO_PROPERTY TARGET app PROPERTY INTERPROCEDURAL_OPTIMIZATION)
+set_property(TARGET ec_shim PROPERTY INTERPROCEDURAL_OPTIMIZATION ${APP_LTO_PROPERTY})
+set_property(TARGET ec_shim APPEND PROPERTY COMPILE_DEFINITIONS __REQUIRE_ZEPHYR_GPIOS__)
+
 # Switch from the "zephyr" library to the "app" library for all Chromium OS
 # sources.
 set(ZEPHYR_CURRENT_LIBRARY app)
 
-add_subdirectory(linker)
+# Custom function that ensures the include path is always updated for both
+# libraries.
+function(cros_ec_library_include_directories)
+  target_include_directories(app PRIVATE ${ARGN})
+  target_include_directories(ec_shim PRIVATE ${ARGN})
+endfunction()
+function(cros_ec_library_include_directories_ifdef feature_toggle)
+  if(${${feature_toggle}})
+    target_include_directories(app PRIVATE ${ARGN})
+    target_include_directories(ec_shim PRIVATE ${ARGN})
+  endif()
+endfunction()
 
-zephyr_library_include_directories(include)
+cros_ec_library_include_directories(include)
 
 if (DEFINED CONFIG_PLATFORM_EC)
-  zephyr_library_include_directories(
+  cros_ec_library_include_directories(
     "${PLATFORM_EC}/zephyr/shim/include"
     "${PLATFORM_EC}/fuzz"
     "${PLATFORM_EC}/test"
@@ -82,12 +106,6 @@ if (DEFINED CONFIG_PLATFORM_EC)
     "${PLATFORM_EC}/third_party")
 endif()
 
-add_subdirectory("app")
-add_subdirectory("drivers")
-add_subdirectory("emul")
-add_subdirectory("subsys")
-
-add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 # Creates a phony target all.libraries in case you only want to build the
 # libraries and not the binaries. For example for creating the initial zero
 # coverage files.
@@ -483,3 +501,12 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RTC
 						"${PLATFORM_EC}/common/rtc.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MATH_UTIL
 						"${PLATFORM_EC}/common/math_util.c")
+
+# Switch to ec_shim library for all Zephyr sources
+set(ZEPHYR_CURRENT_LIBRARY ec_shim)
+
+add_subdirectory(linker)
+add_subdirectory("app")
+add_subdirectory("drivers")
+add_subdirectory("emul")
+add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
