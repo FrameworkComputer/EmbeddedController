@@ -11,6 +11,9 @@
 #include "common.h"
 #include "console.h"
 
+#ifdef __REQUIRE_ZEPHYR_GPIOS__
+#error "Zephyr source files must use the Zephyr GPIO API"
+#endif
 
 /*
  * If compiling with Zephyr, include the GPIO_ definitions to deal with name
