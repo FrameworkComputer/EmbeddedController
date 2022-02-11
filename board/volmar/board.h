@@ -49,7 +49,9 @@
 #define CONFIG_USB_PD_TCPM_RT1715 /* C0 */
 #define CONFIG_USB_PD_TCPM_PS8815 /* C1 */
 #define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
-#define CONFIG_USBC_RETIMER_INTEL_BB
+
+/* Retimer */
+#undef CONFIG_USBC_RETIMER_INTEL_BB
 
 /* I2C speed console command */
 #define CONFIG_CMD_I2C_SPEED
@@ -122,7 +124,6 @@
 #define I2C_PORT_USB_C0_C2_BC12	NPCX_I2C_PORT2_0
 #define I2C_PORT_USB_C1_BC12	NPCX_I2C_PORT6_1
 
-#define I2C_PORT_USB_C0_C2_MUX	NPCX_I2C_PORT3_0
 #define I2C_PORT_USB_C1_MUX	NPCX_I2C_PORT6_1
 
 #define I2C_PORT_BATTERY	NPCX_I2C_PORT5_0
@@ -133,21 +134,6 @@
 #define I2C_ADDR_EEPROM_FLAGS	0x50
 
 #define I2C_ADDR_MP2964_FLAGS	0x20
-
-/*
- * see b/174768555#comment22
- */
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x56
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR	0x57
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-
-/* Retimer */
-#define CONFIG_USBC_RETIMER_FW_UPDATE
 
 /* Thermal features */
 #define CONFIG_THERMISTOR
