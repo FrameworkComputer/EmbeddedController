@@ -160,11 +160,11 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
 
 /*
- * EC will boot AP to depthcharge if: (BAT >= 2%) || (AC >= 50W)
+ * EC will boot AP to depthcharge if: (BAT >= 2%) || (AC >= 65W)
  * CONFIG_CHARGER_LIMIT_* is not set, so there is no additional restriction on
  * Depthcharge to boot OS.
  */
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		50000
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		65000
 
 /*
  * We would prefer to use CONFIG_CHARGE_RAMP_HW to enable legacy BC1.2 charging
