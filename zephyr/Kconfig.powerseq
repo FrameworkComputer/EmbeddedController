@@ -50,6 +50,14 @@ config PLATFORM_EC_POWERSEQ_PP5000_CONTROL
 	  Guard access to the PP5000 GPIO using mutex locks, allowing
 	  the rail to be changed in a task-safe manner.
 
+config PLATFORM_EC_POWERSEQ_RSMRST_DELAY
+	bool "Wait at least 10ms before deasserting RSMRST to PCH"
+	default y if AP_X86_INTEL_TGL
+	depends on AP_X86_AMD || AP_X86_INTEL
+	help
+	  Wait at least 10ms between power signals going high and
+	  deasserting RSMRST to PCH.
+
 config PLATFORM_EC_POWERSEQ_FAKE_CONTROL
 	bool "Console command: powerfake"
 	depends on PLATFORM_EC_SYSTEM_UNLOCKED
@@ -95,13 +103,6 @@ config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
 	help
 	  If CPU_PROCHOT should be treated as active-low, enable this
 	  configuration option.
-
-config PLATFORM_EC_POWERSEQ_RSMRST_DELAY
-	bool "Wait at least 10ms before deasserting RSMRST to PCH"
-	default y if AP_X86_INTEL_TGL
-	help
-	  Wait at least 10ms between power signals going high and
-	  deasserting RSMRST to PCH.
 
 config PLATFORM_EC_POWERSEQ_RTC_RESET
 	bool "Board has an RTC reset"
