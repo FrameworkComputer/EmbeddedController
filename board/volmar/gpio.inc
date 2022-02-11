@@ -9,8 +9,6 @@
 
 /* INTERRUPT GPIOs: */
 GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
-GPIO_INT(EC_ACCEL_INT_R_L,               PIN(8, 1), GPIO_SEL_1P8V | GPIO_INT_FALLING, lis2dw12_interrupt)
-GPIO_INT(EC_IMU_INT_R_L,                 PIN(5, 6), GPIO_SEL_1P8V | GPIO_INT_FALLING, lsm6dso_interrupt)
 GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
 GPIO_INT(EC_VOLDN_BTN_ODL,               PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,               PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
@@ -124,6 +122,8 @@ UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(8, 3))       /* GPIO83 */
 UNUSED(PIN(7, 0))       /* GPIO70 */
 UNUSED(PIN(4, 1))       /* GPIO41 */
+UNUSED(PIN(8, 1))       /* GPIO81 */
+UNUSED(PIN(5, 6))       /* GPIO56 */
 
 /* Pre-configured PSL balls:  J8  K6 */
 
