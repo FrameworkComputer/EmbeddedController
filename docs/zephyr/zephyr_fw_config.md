@@ -90,19 +90,17 @@ should be used to access the CBI API to retrieve selected fields,
 and then the defined enums used e.g:
 
 ```
-#include <drivers/cros_cbi.h>
+#include "cros_cbi.h"
 
     int get_power_watts()
     {
-        const struct device *dev;
 	int ret;
 	uint32_t val;
 
-	dev = device_get_binding(CROS_CBI_LABEL);
 	if (dev == null)
 	    return -1;
 
-	ret = cros_cbi_get_fw_config(dev, FW_BJ_POWER, &val);
+	ret = cros_cbi_get_fw_config(FW_BJ_POWER, &val);
 	if (ret < 0)
 	    return -1;
 

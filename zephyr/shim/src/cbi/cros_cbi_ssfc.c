@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_CBI_CROS_CBI_SSFC_H
-#define __CROS_CBI_CROS_CBI_SSFC_H
+#include <logging/log.h>
 
-/* CBI SSFC part */
+#include "cros_board_info.h"
+#include "cros_cbi.h"
 
-/* This part of the driver is about CBI SSFC part.
- * Actually, two "compatible" values are handle here -
+LOG_MODULE_REGISTER(cros_cbi_ssfc, LOG_LEVEL_ERR);
+
+/* Actually, two "compatible" values are handle here -
  * named_cbi_ssfc_value and named_cbi_ssfc. named_cbi_ssfc_value nodes are
  * grandchildren of the named_cbi_ssfc node. named_cbi_ssfc_value is introduced
  * to iterate over grandchildren of the named_cbi_ssfc(macro
@@ -22,16 +23,16 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_cbi_ssfc) < 2,
 	     "More than 1 CBI SSFS node");
 #define CBI_SSFC_NODE DT_INST(0, named_cbi_ssfc)
 
-#define CBI_SSFC_INIT_DEFAULT_ID(id, data)                           \
-	do {                                                         \
-		if (DT_PROP(id, default)) {                          \
-			data->cached_ssfc.CBI_SSFC_UNION_ENTRY_NAME( \
-				DT_PARENT(id)) = DT_PROP(id, value); \
-		}                                                    \
+#define CBI_SSFC_INIT_DEFAULT_ID(id, ssfc)                              \
+	do {                                                            \
+		if (DT_PROP(id, default)) {                             \
+			ssfc.CBI_SSFC_UNION_ENTRY_NAME(DT_PARENT(id)) = \
+				DT_PROP(id, value);                     \
+		}                                                       \
 	} while (0);
 
-#define CBI_SSFC_INIT_DEFAULT(inst, data) \
-	CBI_SSFC_INIT_DEFAULT_ID(DT_DRV_INST(inst), data)
+#define CBI_SSFC_INIT_DEFAULT(inst, ssfc) \
+	CBI_SSFC_INIT_DEFAULT_ID(DT_DRV_INST(inst), ssfc)
 
 #define CBI_SSFC_VALUE_ARRAY_ID(id) \
 	[CBI_SSFC_VALUE_ID(id)] = DT_PROP(id, value),
@@ -128,6 +129,46 @@ BUILD_ASSERT(sizeof(union cbi_ssfc) == sizeof(uint32_t),
 
 DT_INST_FOREACH_STATUS_OKAY(CBI_SSFC_VALUE_BUILD_ASSERT)
 
-#undef DT_DRV_COMPAT
+static const uint8_t ssfc_values[] = {
+	DT_INST_FOREACH_STATUS_OKAY(CBI_SSFC_VALUE_ARRAY)
+};
 
-#endif /* __CROS_CBI_CROS_CBI_SSFC_H */
+static union cbi_ssfc cached_ssfc;
+
+void cros_cbi_ssfc_init(void)
+{
+	if (cbi_get_ssfc(&cached_ssfc.raw_value) != EC_SUCCESS) {
+		DT_INST_FOREACH_STATUS_OKAY_VARGS(CBI_SSFC_INIT_DEFAULT,
+						  cached_ssfc)
+	}
+
+	LOG_INF("Read CBI SSFC : 0x%08X\n", cached_ssfc.raw_value);
+}
+
+static int cros_cbi_ssfc_get_parent_field_value(union cbi_ssfc cached_ssfc,
+						enum cbi_ssfc_value_id value_id,
+						uint32_t *value)
+{
+	switch (value_id) {
+		DT_INST_FOREACH_STATUS_OKAY_VARGS(CBI_SSFC_PARENT_VALUE_CASE,
+						  cached_ssfc, value)
+	default:
+		LOG_ERR("CBI SSFC parent field value not found: %d\n",
+			value_id);
+		return -EINVAL;
+	}
+	return 0;
+}
+
+bool cros_cbi_ssfc_check_match(enum cbi_ssfc_value_id value_id)
+{
+	int rc;
+	uint32_t value;
+
+	rc = cros_cbi_ssfc_get_parent_field_value(cached_ssfc, value_id,
+						  &value);
+	if (rc) {
+		return false;
+	}
+	return value == ssfc_values[value_id];
+}

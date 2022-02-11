@@ -3,12 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <drivers/cros_cbi.h>
 #include <logging/log.h>
 
 #include "cros_board_info.h"
-#include "cros_cbi_ssfc.h"
-#include "cros_cbi_common.h"
+#include "cros_cbi.h"
 
 LOG_MODULE_REGISTER(cros_cbi_fw_config, LOG_LEVEL_ERR);
 
@@ -109,12 +107,12 @@ DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT, FW_VALUE_BUILD_ASSERT)
 /*
  * Macro to initialise the fields to default value (if specified)
  */
-#define CBI_FW_CONFIG_INIT_DEFAULT(id, data)				   \
-	do {								   \
-		if (DT_PROP(id, default)) {				   \
-			data->cached_fw_config |=			   \
-				DT_PROP(id, value) << FW_PARENT_START(id); \
-		}							   \
+#define CBI_FW_CONFIG_INIT_DEFAULT(id, fw_config)            \
+	do {                                                 \
+		if (DT_PROP(id, default)) {                  \
+			fw_config |= DT_PROP(id, value)      \
+				     << FW_PARENT_START(id); \
+		}                                            \
 	} while (0);
 /*
  * Define bit fields based on the device tree entries. Example:
@@ -157,22 +155,22 @@ DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT, FW_VALUE_BUILD_ASSERT)
 #define FW_FIELD_NODES(inst, cached, value) \
 	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, FW_FIELD_CASE, cached, value)
 
-void cros_cbi_fw_config_init(const struct device *dev)
-{
-	struct cros_cbi_data *data = (struct cros_cbi_data *)(dev->data);
+uint32_t cached_fw_config;
 
-	if (cbi_get_fw_config(&data->cached_fw_config) != EC_SUCCESS) {
+void cros_cbi_fw_config_init(void)
+{
+	if (cbi_get_fw_config(&cached_fw_config) != EC_SUCCESS) {
 		/*
 		 * Missing fw config will set the default or 0 for
 		 * every field.
 		 */
-		data->cached_fw_config = 0;
+		cached_fw_config = 0;
 		DT_FOREACH_STATUS_OKAY_VARGS(CBI_FW_CONFIG_VALUE_COMPAT,
-					       CBI_FW_CONFIG_INIT_DEFAULT,
-					       data)
+					     CBI_FW_CONFIG_INIT_DEFAULT,
+					     cached_fw_config)
 	}
 
-	LOG_INF("Read CBI FW Config : 0x%08X\n", data->cached_fw_config);
+	LOG_INF("Read CBI FW Config : 0x%08X\n", cached_fw_config);
 }
 
 static int cros_cbi_fw_config_get_field(
@@ -195,15 +193,12 @@ static int cros_cbi_fw_config_get_field(
 	return 0;
 }
 
-int cros_cbi_ec_get_fw_config(const struct device *dev,
-			      enum cbi_fw_config_field_id field_id,
-			      uint32_t *value)
+int cros_cbi_get_fw_config(enum cbi_fw_config_field_id field_id,
+			   uint32_t *value)
 {
-	struct cros_cbi_data *data = (struct cros_cbi_data *)(dev->data);
 	int rc;
 
-	rc = cros_cbi_fw_config_get_field(data->cached_fw_config,
-					  field_id, value);
+	rc = cros_cbi_fw_config_get_field(cached_fw_config, field_id, value);
 	if (rc)
 		LOG_ERR("CBI FW Config field not found: %d\n", field_id);
 	return rc;

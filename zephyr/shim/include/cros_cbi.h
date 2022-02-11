@@ -3,13 +3,8 @@
  * found in the LICENSE file.
  */
 
-/**
- * @file
- * @brief Chrome OS-specific API for access to Cros Board Info(CBI)
- */
-
-#ifndef ZEPHYR_INCLUDE_DRIVERS_CROS_CBI_H_
-#define ZEPHYR_INCLUDE_DRIVERS_CROS_CBI_H_
+#ifndef __CROS_EC_CROS_CBI_H
+#define __CROS_EC_CROS_CBI_H
 
 #include <kernel.h>
 #include <device.h>
@@ -85,79 +80,31 @@ enum cbi_fw_config_value_id {
 };
 
 /**
- * @cond INTERNAL_HIDDEN
+ * @brief Initialize CBI SSFC
  *
- * cros cbi raw driver API definition and system call entry points
- *
- * (Internal use only.)
+ * The function has to be called before checking SSFC values.
  */
-typedef int (*cros_cbi_api_init)(const struct device *dev);
-typedef bool (*cros_cbi_api_ssfc_check_match)(const struct device *dev,
-					      enum cbi_ssfc_value_id value_id);
-typedef int (*cros_cbi_api_get_fw_config)(const struct device *dev,
-					  enum cbi_fw_config_field_id field_id,
-					  uint32_t *value);
-
-__subsystem struct cros_cbi_driver_api {
-	cros_cbi_api_init init;
-	cros_cbi_api_ssfc_check_match ssfc_check_match;
-	cros_cbi_api_get_fw_config get_fw_config;
-};
+void cros_cbi_ssfc_init(void);
 
 /**
- * @endcond
- */
-
-/**
- * @brief Initialize CBI.
+ * @brief Initialize CBI FW
  *
- * @param dev Pointer to the device structure for the CBI instance.
- *
- * @return 0 If successful.
- * @retval -ENOTSUP Not supported api function.
+ * The function has to be called before getting CBI FW_CONFIG.
  */
-__syscall int cros_cbi_init(const struct device *dev);
-
-static inline int z_impl_cros_cbi_init(const struct device *dev)
-{
-	const struct cros_cbi_driver_api *api =
-		(const struct cros_cbi_driver_api *)dev->api;
-
-	if (!api->init) {
-		return -ENOTSUP;
-	}
-
-	return api->init(dev);
-}
+void cros_cbi_fw_config_init(void);
 
 /**
  * @brief Check if the CBI SSFC value matches the one in the EEPROM
  *
- * @param dev Pointer to the device.
+ * @param value_id The SSFC value to check in EEPROM.
  *
- * @return 1 If matches, 0 if not.
- * @retval -ENOTSUP Not supported api function.
+ * @return true If matches, false if not.
  */
-__syscall int cros_cbi_ssfc_check_match(const struct device *dev,
-					enum cbi_ssfc_value_id value_id);
-
-static inline int
-z_impl_cros_cbi_ssfc_check_match(const struct device *dev,
-				 enum cbi_ssfc_value_id value_id)
-{
-	const struct cros_cbi_driver_api *api =
-		(const struct cros_cbi_driver_api *)dev->api;
-
-	if (!api->ssfc_check_match)
-		return -ENOTSUP;
-
-	return api->ssfc_check_match(dev, value_id);
-}
+bool cros_cbi_ssfc_check_match(enum cbi_ssfc_value_id value_id);
 
 /**
  * @brief Retrieve the value of the FW_CONFIG field
  *
- * @param dev Pointer to the device.
  * @param field_id Enum identifying the field to return.
  * @param value Pointer to the returned value.
  *
@@ -165,26 +112,7 @@ z_impl_cros_cbi_ssfc_check_match(const struct device *dev,
  * @retval -ENOTSUP Not supported api function.
  * @retval -EINVAL Invalid field_id.
  */
-__syscall int cros_cbi_get_fw_config(const struct device *dev,
-				     enum cbi_fw_config_field_id field_id,
-				     uint32_t *value);
+int cros_cbi_get_fw_config(enum cbi_fw_config_field_id field_id,
+			   uint32_t *value);
 
-static inline int
-z_impl_cros_cbi_get_fw_config(const struct device *dev,
-			      enum cbi_fw_config_field_id field_id,
-			      uint32_t *value)
-{
-	const struct cros_cbi_driver_api *api =
-		(const struct cros_cbi_driver_api *)dev->api;
-
-	if (!api->get_fw_config)
-		return -ENOTSUP;
-
-	return api->get_fw_config(dev, field_id, value);
-}
-
-/**
- * @}
- */
-#include <syscalls/cros_cbi.h>
-#endif /* ZEPHYR_INCLUDE_DRIVERS_CROS_CBI_H_ */
+#endif /* __CROS_EC_CROS_CBI_H */

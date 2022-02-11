@@ -4,12 +4,12 @@
  */
 
 #include <device.h>
-#include <drivers/cros_cbi.h>
 
 #include "battery.h"
 #include "charger.h"
 #include "charge_state_v2.h"
 #include "chipset.h"
+#include "cros_cbi.h"
 #include "hooks.h"
 #include "usb_mux.h"
 #include "system.h"
@@ -99,7 +99,6 @@ enum nissa_sub_board_type nissa_get_sb_type(void)
 	static enum nissa_sub_board_type sb = NISSA_SB_UNKNOWN;
 	int ret;
 	uint32_t val;
-	const struct device *dev;
 
 	/*
 	 * Return cached value.
@@ -108,35 +107,30 @@ enum nissa_sub_board_type nissa_get_sb_type(void)
 		return sb;
 
 	sb = NISSA_SB_NONE;	/* Defaults to none */
-	dev = device_get_binding(CROS_CBI_LABEL);
-	if (dev == NULL) {
-		LOG_WRN("No %s device", CROS_CBI_LABEL);
-	} else {
-		ret = cros_cbi_get_fw_config(dev, FW_SUB_BOARD, &val);
-		if (ret != 0) {
-			LOG_WRN("Error retrieving CBI FW_CONFIG field %d",
-				FW_SUB_BOARD);
-			return sb;
-		}
-		switch (val) {
-		default:
-			LOG_WRN("No sub-board defined");
-			break;
-		case FW_SUB_BOARD_1:
-			sb = NISSA_SB_C_A;
-			LOG_INF("SB: USB type C, USB type A");
-			break;
+	ret = cros_cbi_get_fw_config(FW_SUB_BOARD, &val);
+	if (ret != 0) {
+		LOG_WRN("Error retrieving CBI FW_CONFIG field %d",
+			FW_SUB_BOARD);
+		return sb;
+	}
+	switch (val) {
+	default:
+		LOG_WRN("No sub-board defined");
+		break;
+	case FW_SUB_BOARD_1:
+		sb = NISSA_SB_C_A;
+		LOG_INF("SB: USB type C, USB type A");
+		break;
 
-		case FW_SUB_BOARD_2:
-			sb = NISSA_SB_C_LTE;
-			LOG_INF("SB: USB type C, WWAN LTE");
-			break;
+	case FW_SUB_BOARD_2:
+		sb = NISSA_SB_C_LTE;
+		LOG_INF("SB: USB type C, WWAN LTE");
+		break;
 
-		case FW_SUB_BOARD_3:
-			sb = NISSA_SB_HDMI_A;
-			LOG_INF("SB: HDMI, USB type A");
-			break;
-		}
+	case FW_SUB_BOARD_3:
+		sb = NISSA_SB_HDMI_A;
+		LOG_INF("SB: HDMI, USB type A");
+		break;
 	}
 	return sb;
 }

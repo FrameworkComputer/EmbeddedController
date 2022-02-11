@@ -9,6 +9,8 @@ zephyr_library_sources(gpio_id.c)
 zephyr_library_sources(gpio_int.c)
 zephyr_library_sources(power.c)
 
+add_subdirectory("cbi")
+
 if (DEFINED CONFIG_ARCH_POSIX)
   zephyr_library_sources(ztest_system.c)
 else()
@@ -21,9 +23,6 @@ zephyr_library_sources_ifdef(no_libgcc                  libgcc_${ARCH}.S)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ADC         adc.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
                                                             battery.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_EEPROM  cbi.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_EEPROM  cbi_eeprom.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_GPIO    cbi.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI
                                                             espi.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN         fan.c)
