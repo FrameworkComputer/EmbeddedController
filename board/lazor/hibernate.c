@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "gpio.h"
 #include "sku.h"
 #include "system.h"
 #include "usbc_ppc.h"

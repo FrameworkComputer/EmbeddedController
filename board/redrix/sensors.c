@@ -11,6 +11,7 @@
 #include "driver/accel_bma422.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/als_tcs3400_public.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
 #include "temp_sensor.h"

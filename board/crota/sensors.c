@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "console.h"
 #include "accelgyro.h"
 #include "adc.h"
 #include "driver/accel_lis2dw12.h"

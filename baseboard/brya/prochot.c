@@ -9,6 +9,7 @@
 #include "charger.h"
 #include "console.h"
 #include "driver/charger/bq257x0_regs.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "math_util.h"

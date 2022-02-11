@@ -10,6 +10,7 @@
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "sn5s330.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"

@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "compile_time_macros.h"
+#include "console.h"
 #include "hooks.h"
 #include "i2c.h"
 

@@ -9,6 +9,7 @@
 #include <stddef.h>
 #include "common.h"
 #include "config_chip.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "stdbool.h"

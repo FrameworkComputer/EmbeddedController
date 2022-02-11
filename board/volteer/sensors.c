@@ -11,6 +11,7 @@
 #include "driver/accelgyro_bmi260_public.h"
 #include "driver/als_tcs3400_public.h"
 #include "keyboard_scan.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"

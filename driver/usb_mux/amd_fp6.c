@@ -8,6 +8,7 @@
 #include "amd_fp6.h"
 #include "chipset.h"
 #include "common.h"
+#include "console.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "queue.h"

@@ -15,6 +15,7 @@
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "mkbp_event.h"
 #include "stdbool.h"

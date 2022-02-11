@@ -10,6 +10,7 @@
 #include "driver/mp4245.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/mp4245.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "task.h"
 #include "timer.h"

@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "driver/tcpm/rt1718s.h"
 #include "driver/tcpm/tcpci.h"
+#include "gpio.h"
 #include "timer.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_mux.h"

@@ -13,6 +13,7 @@
 #include <stdint.h>
 #include "assert.h"
 #include "atomic.h"
+#include "console.h"
 #include "usb_common.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_pd.h"

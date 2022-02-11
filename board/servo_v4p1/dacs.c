@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "console.h"
 #include "dacs.h"
 #include "i2c.h"
 #include "ioexpanders.h"

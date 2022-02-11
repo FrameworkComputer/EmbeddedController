@@ -7,6 +7,7 @@
 #include "adc_chip.h"
 #include "battery.h"
 #include "console.h"
+#include "gpio.h"
 #include "it83xx_pd.h"
 #include "pwm.h"
 #include "pwm_chip.h"

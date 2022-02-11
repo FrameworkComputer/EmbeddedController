@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "chipset.h"
+#include "console.h"
 #include "i2c.h"
 #include "sb_rmi.h"
 #include "stdbool.h"

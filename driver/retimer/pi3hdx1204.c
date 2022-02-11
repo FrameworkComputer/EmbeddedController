@@ -5,6 +5,7 @@
  * PI3HDX1204 retimer.
  */
 
+#include "console.h"
 #include "i2c.h"
 #include "pi3hdx1204.h"
 

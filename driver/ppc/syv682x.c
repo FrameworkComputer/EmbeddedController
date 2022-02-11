@@ -9,6 +9,7 @@
 #include "config.h"
 #include "console.h"
 #include "syv682x.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"

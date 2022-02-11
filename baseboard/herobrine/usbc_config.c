@@ -8,6 +8,7 @@
 #include "charger.h"
 #include "charger/isl923x_public.h"
 #include "charge_state.h"
+#include "console.h"
 #include "usb_pd.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)

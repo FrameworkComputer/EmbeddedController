@@ -6,6 +6,7 @@
  */
 #include "battery.h"
 #include "common.h"
+#include "gpio.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"

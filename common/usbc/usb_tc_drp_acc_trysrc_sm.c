@@ -7,6 +7,7 @@
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "system.h"
 #include "task.h"

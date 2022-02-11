@@ -12,6 +12,7 @@
 #include "common.h"
 #include "driver/retimer/bb_retimer_public.h"
 #include "extpower.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "ioexpander.h"
 #include "isl9241.h"

@@ -9,6 +9,7 @@
 #include "charge_state_v2.h"
 #include "console.h"
 #include "driver/ppc/sn5s330.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "tcpm/tcpci.h"
 #include "system.h"

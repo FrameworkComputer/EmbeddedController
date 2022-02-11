@@ -15,6 +15,7 @@
 #include "driver/accelgyro_icm_common.h"
 #include "driver/accelgyro_icm426xx.h"
 #include "keyboard_scan.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"

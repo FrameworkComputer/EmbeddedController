@@ -4,6 +4,7 @@
  */
 
 #include "atomic.h"
+#include "console.h"
 #include "chipset.h"
 #include "timer.h"
 #include "usb_dp_alt_mode.h"

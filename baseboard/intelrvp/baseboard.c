@@ -9,6 +9,7 @@
 #include "charge_state.h"
 #include "espi.h"
 #include "fan.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "pca9555.h"
 #include "peci.h"

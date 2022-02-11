@@ -12,6 +12,7 @@
 #include "driver/accelgyro_icm426xx.h"
 #include "driver/accelgyro_icm_common.h"
 #include "driver/accel_kionix.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
 #include "temp_sensor.h"

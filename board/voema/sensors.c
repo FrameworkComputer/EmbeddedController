@@ -14,6 +14,7 @@
 #include "driver/als_tcs3400.h"
 #include "driver/sync.h"
 #include "keyboard_scan.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "system.h"

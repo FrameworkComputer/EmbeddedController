@@ -11,6 +11,7 @@
 #include "driver/tcpm/rt1718s.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
+#include "gpio.h"
 #include "stdint.h"
 #include "system.h"
 #include "task.h"

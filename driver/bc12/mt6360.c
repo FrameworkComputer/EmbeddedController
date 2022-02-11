@@ -9,6 +9,7 @@
 #include "crc8.h"
 #include "mt6360.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"

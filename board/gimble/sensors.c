@@ -11,6 +11,7 @@
 #include "driver/accel_bma422.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_lsm6dsm.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "motion_sense.h"

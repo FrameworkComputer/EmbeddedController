@@ -9,7 +9,7 @@
 #define __CROS_EC_I2C_H
 
 #include "common.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 #include "host_command.h"
 #include "stddef.h"
 

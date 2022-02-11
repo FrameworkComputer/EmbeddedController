@@ -15,6 +15,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "temp_sensor.h"
 #include "usb_pd.h"

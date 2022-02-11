@@ -16,6 +16,7 @@
 #include "console.h"
 #include "crc8.h"
 #include "flash.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "sha256.h"
 #include "system.h"

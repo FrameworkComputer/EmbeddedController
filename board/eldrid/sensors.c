@@ -11,6 +11,7 @@
 #include "driver/accelgyro_bmi160.h"
 #include "driver/sync.h"
 #include "keyboard_scan.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "task.h"

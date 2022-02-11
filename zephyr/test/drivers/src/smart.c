@@ -9,6 +9,7 @@
 #include <shell/shell_uart.h>
 
 #include "common.h"
+#include "console.h"
 #include "i2c.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_smart_battery.h"

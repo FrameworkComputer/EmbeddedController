@@ -5,6 +5,7 @@
  * NXP PCA9675PW I/O Port expander driver source
  */
 
+#include "gpio.h"
 #include "i2c.h"
 #include "ioexpander.h"
 #include "pca9675.h"

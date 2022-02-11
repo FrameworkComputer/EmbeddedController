@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "gpio.h"
 #include "i2c.h"
 #include "ioexpander.h"
 #include "system.h"

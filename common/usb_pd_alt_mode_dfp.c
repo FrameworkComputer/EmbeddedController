@@ -7,6 +7,7 @@
 
 #include "chipset.h"
 #include "console.h"
+#include "gpio.h"
 #include "task.h"
 #include "task_id.h"
 #include "timer.h"

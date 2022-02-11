@@ -9,6 +9,7 @@
  * section 5.2
  */
 
+#include "console.h"
 #include "usb_dp_alt_mode.h"
 #include "mock/dp_alt_mode_mock.h"
 
