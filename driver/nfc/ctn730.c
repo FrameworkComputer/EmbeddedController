@@ -390,6 +390,17 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 			CPRINTS("Download Mode (%s)",
 				_text_reset_reason(buf[1]));
 			ctx->event = PCHG_EVENT_RESET;
+			/*
+			 * CTN730 sends a reset event to notify us it entered
+			 * download mode unintentionally (e.g. corrupted FW).
+			 * In such cases, we stay in download mode to avoid an
+			 * infinite loop.
+			 *
+			 * If it's intended, we leave alone the mode, respecting
+			 * the mode set by the PCHG task.
+			 */
+			if (buf[1] != WLC_HOST_CTRL_RESET_REASON_INTENDED)
+				ctx->mode = PCHG_MODE_DOWNLOAD;
 		} else {
 			return EC_ERROR_INVAL;
 		}
