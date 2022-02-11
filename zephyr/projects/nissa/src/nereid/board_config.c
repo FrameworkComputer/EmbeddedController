@@ -5,12 +5,12 @@
 
 /* Nereid sub-board hardware configuration */
 
+#include <drivers/gpio.h>
 #include <init.h>
 #include <kernel.h>
 #include <sys/printk.h>
 
 #include "driver/charger/sm5803.h"
-#include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "usb_pd.h"
