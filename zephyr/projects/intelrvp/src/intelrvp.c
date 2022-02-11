@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+/* TODO: b/218904113: Convert to using Zephyr GPIOs */
 #include "gpio.h"
 #include "hooks.h"
 

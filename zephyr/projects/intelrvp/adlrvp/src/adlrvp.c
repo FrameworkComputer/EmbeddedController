@@ -3,7 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "gpio.h"
+/* TODO: b/218904113: Convert to using Zephyr GPIOs */
+#include "gpio_signal.h"
 #include "power/icelake.h"
 
 /******************************************************************************/
