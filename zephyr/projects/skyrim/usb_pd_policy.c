@@ -5,13 +5,14 @@
 
 /* Shared USB-C policy for Zork boards */
 
+#include <drivers/gpio.h>
+
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "gpio.h"
 #include "ioexpander.h"
 #include "system.h"
 #include "usb_mux.h"

@@ -5,13 +5,14 @@
 
 #include "chipset.h"
 #include "config.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "power.h"
 #include "timer.h"
 
 /* Power Signal Input List */
+/* TODO: b/218904113: Convert to using Zephyr GPIOs */
 const struct power_signal_info power_signal_list[] = {
 	[X86_SLP_S3_N] = {
 		.gpio = GPIO_PCH_SLP_S3_L,

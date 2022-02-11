@@ -3,15 +3,18 @@
  * found in the LICENSE file.
  */
 
+#include <drivers/gpio.h>
+
 #include "chipset.h"
 #include "config.h"
-#include "gpio.h"
+#include "gpio_signal.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "power.h"
 #include "timer.h"
 
 /* Wake Sources */
+/* TODO: b/218904113: Convert to using Zephyr GPIOs */
 const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_LID_OPEN,
 	GPIO_AC_PRESENT,
@@ -20,6 +23,7 @@ const enum gpio_signal hibernate_wake_pins[] = {
 const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
 
 /* Power Signal Input List */
+/* TODO: b/218904113: Convert to using Zephyr GPIOs */
 const struct power_signal_info power_signal_list[] = {
 	[X86_SLP_S0_N] = {
 		.gpio = GPIO_PCH_SLP_S0_L,
