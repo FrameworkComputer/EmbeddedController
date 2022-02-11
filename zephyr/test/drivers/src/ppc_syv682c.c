@@ -492,6 +492,36 @@ ZTEST(ppc_syv682c, test_syv682x_vbus_sink_enable)
 		     "Sink disabled, but power path enabled");
 }
 
+ZTEST(ppc_syv682c, test_syv682x_vbus_sink_oc_limit)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, true),
+			"Sink enable failed");
+
+	/* Generate 4 consecutive sink over-current interrupts. After reaching
+	 * this count, the driver should prevent sink enable until the count is
+	 * cleared by sink disable.
+	 */
+	for (int i = 0; i < 4; ++i) {
+		syv682x_emul_set_condition(emul, SYV682X_STATUS_OC_HV,
+				SYV682X_CONTROL_4_NONE);
+		msleep(15);
+	}
+	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
+			SYV682X_CONTROL_4_NONE);
+
+	zassert_not_equal(ppc_vbus_sink_enable(syv682x_port, true), EC_SUCCESS,
+			"VBUS sink enable succeeded after 4 OC events");
+
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, false),
+			"Sink disable failed");
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, true),
+			"Sink enable failed");
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, false),
+			"Sink disable failed");
+}
+
 ZTEST(ppc_syv682c, test_syv682x_ppc_dump)
 {
 	/*
