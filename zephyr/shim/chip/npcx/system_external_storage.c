@@ -109,9 +109,12 @@ uint32_t system_get_lfw_address()
 
 enum ec_image system_get_shrspi_image_copy(void)
 {
-	uint32_t fwctrl = 0;
+	static uint32_t fwctrl = 0xFFFFFFFF;
 
-	syscon_read_reg(mdc_dev, NPCX_FWCTRL, &fwctrl);
+	/* On first entry, read the value and cache it. */
+	if (fwctrl == 0xFFFFFFFF) {
+		syscon_read_reg(mdc_dev, NPCX_FWCTRL, &fwctrl);
+	}
 	if (IS_BIT_SET(fwctrl, NPCX_FWCTRL_RO_REGION)) {
 		/* RO image */
 #ifdef CHIP_HAS_RO_B
