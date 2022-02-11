@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include <drivers/gpio.h>
 #include <stdbool.h>
 
 #include "cbi.h"
-#include "gpio.h"
 #include "hooks.h"
 
 /* Enable/Disable keyboard backlight gpio */
@@ -49,6 +49,6 @@ static void set_board_id_1_gpios(void)
 		return;
 
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_id_1_ec_kb_bl_en),
-			      GPIO_OUT_LOW);
+			      GPIO_OUTPUT_LOW);
 }
 DECLARE_HOOK(HOOK_INIT, set_board_id_1_gpios, HOOK_PRIO_FIRST);

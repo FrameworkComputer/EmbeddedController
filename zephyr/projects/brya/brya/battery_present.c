@@ -2,10 +2,10 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include <drivers/gpio.h>
 
 #include "battery.h"
 #include "cbi.h"
-#include "gpio.h"
 
 enum battery_present battery_hw_present(void)
 {
