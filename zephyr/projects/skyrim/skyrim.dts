@@ -6,6 +6,7 @@
 / {
 	aliases {
 		gpio-wp = &gpio_wp;
+		gpio-cbi-wp = &gpio_cbi_wp;
 	};
 
 	named-gpios {
@@ -70,7 +71,7 @@
 		ec_sc_rst {
 			gpios = <&gpiob 0 GPIO_OUT_LOW>;
 		};
-		ec_cbi_wp {
+		gpio_cbi_wp: ec_cbi_wp {
 			gpios = <&gpio8 1 GPIO_OUT_LOW>;
 		};
 		gpio_wp: ec_wp_l {

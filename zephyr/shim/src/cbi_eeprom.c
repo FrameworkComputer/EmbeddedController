@@ -12,10 +12,14 @@
 #define CBI_EEPROM_DEV DEVICE_DT_GET(DT_NODELABEL(cbi_eeprom))
 
 #ifdef CONFIG_PLATFORM_EC_EEPROM_CBI_WP
+#if !DT_NODE_EXISTS(DT_ALIAS(gpio_cbi_wp))
+#error gpio_cbi_wp alias has to point to the CBI WP output pin.
+#endif
+
 void cbi_latch_eeprom_wp(void)
 {
 	cprints(CC_SYSTEM, "CBI WP latched");
-	gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_wp), 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_cbi_wp), 1);
 }
 #endif /* CONFIG_PLATFORM_EC_EEPROM_CBI_WP */
 
