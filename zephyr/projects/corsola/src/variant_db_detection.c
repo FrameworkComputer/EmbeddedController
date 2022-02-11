@@ -4,10 +4,9 @@
  */
 
 /* Corsola daughter board detection */
+#include <drivers/gpio.h>
 
 #include "console.h"
-#include "drivers/gpio.h"
-#include "dt-bindings/gpio_defines.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 
@@ -16,15 +15,13 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
-BUILD_ASSERT(GPIO_OUT_HIGH == 0xA00, "Don't use cros ec gpio flags here");
-
 static void corsola_db_config(enum corsola_db_type type)
 {
 	switch (type) {
 	case CORSOLA_DB_HDMI:
 		/* EC_X_GPIO1 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_hdmi_pwr),
-				      GPIO_OUT_HIGH);
+				   GPIO_OUTPUT_HIGH);
 		/* X_EC_GPIO2 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd),
 				      GPIO_INPUT);
@@ -32,12 +29,12 @@ static void corsola_db_config(enum corsola_db_type type)
 			GPIO_INT_FROM_NODELABEL(int_x_ec_gpio2));
 		/* EC_X_GPIO3 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_pwrdn_odl),
-				      GPIO_ODR_HIGH);
+				     GPIO_OUTPUT_HIGH | GPIO_OPEN_DRAIN);
 		return;
 	case CORSOLA_DB_TYPEC:
 		/* EC_X_GPIO1 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_frs_en),
-				      GPIO_OUT_LOW);
+				      GPIO_OUTPUT_LOW);
 		/* X_EC_GPIO2 */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_ppc_int_odl),
@@ -47,7 +44,7 @@ static void corsola_db_config(enum corsola_db_type type)
 		/* EC_X_GPIO3 */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_dp_in_hpd),
-			GPIO_OUT_LOW);
+			GPIO_OUTPUT_LOW);
 		return;
 	default:
 		break;

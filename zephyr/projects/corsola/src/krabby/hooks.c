@@ -3,7 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "gpio.h"
+#include <drivers/gpio.h>
+
 #include "hooks.h"
 
 static void board_suspend(void)

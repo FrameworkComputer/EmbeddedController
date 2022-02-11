@@ -5,7 +5,6 @@
 
 #include "chipset.h"
 #include "ec_commands.h"
-#include "gpio.h"
 #include "hooks.h"
 #include "led_common.h"
 #include "led_onoff_states.h"

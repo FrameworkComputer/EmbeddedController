@@ -5,6 +5,8 @@
 
 /* Corsola baseboard-specific USB-C configuration */
 
+#include <drivers/gpio.h>
+
 #include "adc.h"
 #include "baseboard_usbc_config.h"
 #include "button.h"
@@ -13,7 +15,6 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"
-#include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c.h"

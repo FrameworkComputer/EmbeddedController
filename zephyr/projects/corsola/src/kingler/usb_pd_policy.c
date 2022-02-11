@@ -6,7 +6,6 @@
 #include "charge_manager.h"
 #include "console.h"
 #include "driver/ppc/rt1718s.h"
-#include "gpio.h"
 #include "system.h"
 #include "usb_mux.h"
 #include "usb_pd.h"

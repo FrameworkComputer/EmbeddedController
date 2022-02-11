@@ -25,6 +25,13 @@
 #include "baseboard_usbc_config.h"
 #include "variant_db_detection.h"
 
+/* TODO(b/220196310): Create GPIO driver for RT17181S TCPC */
+#ifdef __REQUIRE_ZEPHYR_GPIOS__
+#undef __REQUIRE_ZEPHYR_GPIOS__
+#endif
+#include "gpio.h"
+
+
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 

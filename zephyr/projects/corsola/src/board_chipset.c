@@ -5,8 +5,9 @@
 
 /* Corsola baseboard-chipset specific configuration */
 
+#include <drivers/gpio.h>
+
 #include "common.h"
-#include "gpio.h"
 #include "hooks.h"
 
 /* Called on AP S3 -> S0 transition */

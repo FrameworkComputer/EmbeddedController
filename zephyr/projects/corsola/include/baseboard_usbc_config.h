@@ -8,11 +8,7 @@
 #ifndef __CROS_EC_BASEBOARD_USBC_CONFIG_H
 #define __CROS_EC_BASEBOARD_USBC_CONFIG_H
 
-#include "gpio.h"
-
-void bc12_interrupt(enum gpio_signal signal);
 void ppc_interrupt(enum gpio_signal signal);
-void tcpc_alert_event(enum gpio_signal signal);
 
 /* USB-A ports */
 enum usba_port {
