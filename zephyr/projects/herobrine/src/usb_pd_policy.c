@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
+#include <drivers/gpio.h>
+
 #include "charge_manager.h"
 #include "chipset.h"
 #include "console.h"
-#include "gpio.h"
 #include "system.h"
 #include "usb_mux.h"
 #include "usbc_ppc.h"

@@ -5,12 +5,13 @@
  * Power and battery LED control.
  */
 
+#include <drivers/gpio.h>
+
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "ec_commands.h"
-#include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"

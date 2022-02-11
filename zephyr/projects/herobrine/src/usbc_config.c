@@ -5,6 +5,8 @@
 
 /* Herobrine board-specific USB-C configuration */
 
+#include <drivers/gpio.h>
+
 #include "charger.h"
 #include "charger/isl923x_public.h"
 #include "charge_manager.h"
@@ -12,7 +14,6 @@
 #include "common.h"
 #include "config.h"
 #include "cros_board_info.h"
-#include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "ppc/sn5s330_public.h"
