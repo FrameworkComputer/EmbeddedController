@@ -8,6 +8,9 @@
 #include <kernel.h>
 #include <logging/log.h>
 
+#ifdef __REQUIRE_ZEPHYR_GPIOS__
+#undef __REQUIRE_ZEPHYR_GPIOS__
+#endif
 #include "gpio.h"
 #include "gpio/gpio.h"
 #include "gpio/gpio_int.h"

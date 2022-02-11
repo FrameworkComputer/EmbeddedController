@@ -4,6 +4,10 @@
  */
 
 #include <devicetree.h>
+
+#ifdef __REQUIRE_ZEPHYR_GPIOS__
+#undef __REQUIRE_ZEPHYR_GPIOS__
+#endif
 #include "gpio.h"
 #include "util.h"
 
@@ -17,6 +21,7 @@
 #define CONVERT_NUMERAL_SYSTEM(system, bits, nbits) \
 	CONVERT_NUMERAL_SYSTEM_EVAL(system, bits, nbits)
 
+/* TODO: b/218904113: Convert to using Zephyr GPIOs */
 #define READ_PIN_FROM_PHANDLE(node_id, prop, idx) \
 	gpio_get_ternary(GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, idx))),
 
