@@ -39,10 +39,12 @@
 			gpios = <&gpioa 5 GPIO_INPUT>;
 		};
 		volume-up {
-			gpios = <&gpio6 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio6 1 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		vol-dn-ec {
-			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			gpios = <&gpio0 3 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		smc_lid: smc-lid {
 			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
@@ -269,6 +271,7 @@
 		};
 		ec-kso-02-inv {
 			gpios = <&gpio1 7 GPIO_OUT_LOW>;
+			enum-name = "GPIO_KBD_KSO2";
 		};
 	};
 };
