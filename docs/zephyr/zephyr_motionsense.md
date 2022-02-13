@@ -125,12 +125,14 @@ directly query these sensors instead of waiting for an interrupt).
 
 ## Board Specific Code
 
-*Document any board specific routines that a user must create to successfully
-compile and run. For many features, this can section can be empty.*
+Motionsense requires no board specific code.
 
 ## Threads
 
-*Document any threads enabled by this feature.*
+When enabled, the `motion_sense_task` will be created. The task's stack size can
+be set using `CONFIG_TASK_MOTIONSENSE_STACK_SIZE`, but the priority is fixed.
+Additional information about the task priority can be found in
+[shimmed_task_id.h](https://source.chromium.org/chromium/chromiumos/platform/ec/+/HEAD:zephyr/shim/include/shimmed_task_id.h).
 
 ## Testing and Debugging
 
