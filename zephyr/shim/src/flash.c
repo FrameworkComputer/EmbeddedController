@@ -205,7 +205,7 @@ SHELL_CMD_REGISTER(flashchip, NULL, "Information about flash chip",
 
 /*
  * The priority flash_dev_init should be lower than GPIO initialization because
- * it calls gpio_get_level function.
+ * it calls gpio_pin_get_dt function.
  */
 #if CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY <= \
 	CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY
