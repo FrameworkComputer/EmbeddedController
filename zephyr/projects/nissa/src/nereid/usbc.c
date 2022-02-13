@@ -60,9 +60,25 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 			!!enabled);
 }
 
-/*
- * TODO(b/201000844): Fill in missing functions.
- */
+__override bool pd_check_vbus_level(int port, enum vbus_level level)
+{
+	/*
+	 * While the charger can differentiate SAFE0V from REMOVED, doing so
+	 * requires doing a I2C read of the VBUS analog level. Because this
+	 * function can be polled by the USB state machines and doing the I2C
+	 * read is relatively costly, we only check the cached VBUS presence
+	 * (for which interrupts record transitions).
+	 */
+	switch (level) {
+	case VBUS_PRESENT:
+		return sm5803_is_vbus_present(port);
+	case VBUS_SAFE0V:	/* Less than vSafe0V */
+	case VBUS_REMOVED:	/* Less than vSinkDisconnect */
+		return !sm5803_is_vbus_present(port);
+	}
+	LOG_WRN("Unrecognized vbus_level value: %d", level);
+	return false;
+}
 
 int board_set_active_charge_port(int port)
 {
@@ -94,6 +110,10 @@ uint16_t tcpc_get_alert_status(void)
 
 	return status;
 }
+
+/*
+ * TODO(b/201000844): Fill in missing functions.
+ */
 
 void pd_power_supply_reset(int port)
 {
