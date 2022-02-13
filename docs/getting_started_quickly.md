@@ -28,6 +28,19 @@ toolchain incompatibilities may require extra debug.
     git clone https://chromium.googlesource.com/chromiumos/platform/ec
     ```
 
+1.  Select a target board
+
+    ```bash
+    export BOARD=<target board>
+    ```
+
+    Refer to the [Chromium OS Developer
+    Guide](https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md)
+    for more details about selecting the appropriate target board. If you are
+    just getting your environment set up and are unsure which board you will be
+    targeting then you may select a board from `board/` or just
+    choose a safe default, such as `nocturne`.
+
 1.  Build your EC image:
 
     ```bash
