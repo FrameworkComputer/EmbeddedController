@@ -37,13 +37,6 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_2_FAN] = {
-		.name = "TEMP_FAN",
-		.input_ch = NPCX_ADC_CH1,
-		.factor_mul = ADC_MAX_VOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-	},
 	[ADC_TEMP_SENSOR_3_CHARGER] = {
 		.name = "TEMP_CHARGER",
 		.input_ch = NPCX_ADC_CH6,
@@ -54,6 +47,62 @@ const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_4_CPUCHOKE] = {
 		.name = "CPU_CHOKE",
 		.input_ch = NPCX_ADC_CH7,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_KSI_00] = {
+		.name = "KSI_00",
+		.input_ch = NPCX_ADC_CH1,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_KSI_01] = {
+		.name = "KSI_01",
+		.input_ch = NPCX_ADC_CH2,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_KSI_02] = {
+		.name = "KSI_02",
+		.input_ch = NPCX_ADC_CH4,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_KSI_03] = {
+		.name = "KSI_03",
+		.input_ch = NPCX_ADC_CH5,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_KSI_04] = {
+		.name = "KSI_04",
+		.input_ch = NPCX_ADC_CH8,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_KSI_05] = {
+		.name = "KSI_05",
+		.input_ch = NPCX_ADC_CH9,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_KSI_06] = {
+		.name = "KSI_06",
+		.input_ch = NPCX_ADC_CH10,
+		.factor_mul = ADC_MAX_VOLT,
+		.factor_div = ADC_READ_MAX + 1,
+		.shift = 0,
+	},
+	[ADC_KSI_07] = {
+		.name = "KSI_07",
+		.input_ch = NPCX_ADC_CH11,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
@@ -351,12 +400,6 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
 	},
-	[TEMP_SENSOR_2_FAN] = {
-		.name = "FAN",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_FAN
-	},
 	[TEMP_SENSOR_3_CHARGER] = {
 		.name = "CHARGER",
 		.type = TEMP_SENSOR_TYPE_BOARD,
@@ -431,7 +474,6 @@ __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_2_FAN] = THERMAL_FAN,
 	[TEMP_SENSOR_3_CHARGER] = THERMAL_FAN,
 	[TEMP_SENSOR_4_CPUCHOKE] = THERMAL_FAN,
 };
