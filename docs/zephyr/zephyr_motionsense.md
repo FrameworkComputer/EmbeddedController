@@ -72,10 +72,56 @@ Kconfig sub-option                           | Default | Documentation
 
 ## Devicetree Nodes
 
-*Detail the devicetree nodes that configure the feature.*
+Initiating the devicetree nodes for motionsense requires a bit of internal
+knowledge of the drivers'
+[bindings](https://source.chromium.org/chromium/chromiumos/platform/ec/+/HEAD:zephyr/dts/bindings/motionsense/).
 
-*Note - avoid documenting node properties here.  Point to the relevant `.yaml`
-file instead, which contains the authoritative definition.*
+### Sensor mutex
+
+Some drivers, such as the BMI260, which combine 2 sensors (accelerometer and
+gyroscope) will require a mutex to be defined. The individual nodes in the
+devicetree will accept a `phandle` pointing to the mutex
+[here](https://source.chromium.org/chromium/chromiumos/platform/ec/+/HEAD:zephyr/dts/bindings/motionsense/motionsense-sensor-base.yaml;l=37;drc=67e0b58c17177858595001baa1aa607b54b18d11).
+It is important for both nodes of these sensors to point to the same mutex (
+see example below).
+
+### Location and orientation
+
+The location of the sensor is dictated in an enum property
+[location](https://source.chromium.org/chromium/chromiumos/platform/ec/+/HEAD:zephyr/dts/bindings/motionsense/motionsense-sensor-base.yaml;l=29;drc=67e0b58c17177858595001baa1aa607b54b18d11).
+It is important to note that sensors which are combined in a single chip (such
+as the BMI260) should have the same value for both nodes.
+This property allows the distinction between sensors location at the following:
+
+* "base" - the base of the laptop (where the keyboard is).
+* "lid" - the screen surface of the laptop.
+* "camera" - an explicit location for the camera.
+
+In addition to the location, each sensor node should also include a reference
+to a [rotation matrix](https://source.chromium.org/chromium/chromiumos/platform/ec/+/HEAD:zephyr/dts/bindings/motionsense/motionsense-sensor-base.yaml;l=45;drc=67e0b58c17177858595001baa1aa607b54b18d11).
+This will be used to orient the sensor data according to the standardised screen
+coordinates.
+
+### Internal sensor data
+
+Internal sensor data nodes can be found [here](https://source.chromium.org/chromium/chromiumos/platform/ec/+/HEAD:zephyr/dts/bindings/motionsense/drvdata/).
+These are required, one per physical sensor, in order to instantiate the
+internal data structures. It is important to check the required properties of
+each binding to ensure proper instantiation.
+
+### Motion sensor nodes
+
+All motion sensor nodes (accel, gyro, and mag) should be declared inside the
+`motionsense-sensor` node. This will in-turn create the `motion_sensors` array
+required for the sensor logic.
+
+### Additional sensor meta-data
+
+Additional information about sensors can be provided by the
+[motionsense-sensor-info](https://source.chromium.org/chromium/chromiumos/platform/ec/+/HEAD:zephyr/dts/bindings/motionsense/cros-ec,motionsense-sensor-info.yaml).
+This node provides information about the ALS (ambient light sensor) list, the
+various interrupts, and sensors which are placed in force mode (motionsense will
+directly query these sensors instead of waiting for an interrupt).
 
 ## Board Specific Code
 
