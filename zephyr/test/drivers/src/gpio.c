@@ -24,6 +24,7 @@
 #include "util.h"
 #include "test_state.h"
 
+extern bool gpio_test_interrupt_triggered;
 /**
  * @brief TestPurpose: Verify Zephyr to EC GPIO bitmask conversion.
  *
@@ -118,6 +119,71 @@ ZTEST(gpio, test_signal_is_gpio)
 {
 	zassert_true(signal_is_gpio(
 		GPIO_SIGNAL(DT_NODELABEL(gpio_test))), "Expected true");
+}
+
+/**
+ * @brief TestPurpose: Verify legacy API GPIO set/get level.
+ *
+ * @details
+ * Validate set/get level for legacy API
+ * This tests the legacy API, though no Zepyhr
+ * based code should use it.
+ *
+ * Expected Results
+ *  - Success
+ */
+ZTEST(gpio, test_legacy_gpio_get_set_level)
+{
+	enum gpio_signal signal = GPIO_SIGNAL(DT_NODELABEL(gpio_test));
+	int level;
+	/* Test invalid signal */
+	gpio_set_level(GPIO_COUNT, 0);
+	zassert_equal(0, gpio_get_level(GPIO_COUNT), "Expected level==0");
+	/* Test valid signal */
+	gpio_set_level(signal, 0);
+	zassert_equal(0, gpio_get_level(signal), "Expected level==0");
+	gpio_set_level(signal, 1);
+	zassert_equal(1, gpio_get_level(signal), "Expected level==1");
+	level = gpio_get_ternary(signal);
+	gpio_set_level_verbose(CC_CHIPSET, signal, 0);
+	zassert_equal(0, gpio_get_level(signal), "Expected level==0");
+}
+
+/**
+ * @brief TestPurpose: Verify legacy GPIO enable/disable interrupt.
+ *
+ * @details
+ * Validate gpio_enable_interrupt/gpio_disable_interrupt
+ * Uses the legacy API. No Zephyr code should use this API.
+ *
+ * Expected Results
+ *  - Success
+ */
+
+ZTEST(gpio, test_legacy_gpio_enable_interrupt)
+{
+	enum gpio_signal signal = GPIO_SIGNAL(DT_NODELABEL(gpio_test));
+
+	gpio_test_interrupt_triggered = false;
+
+	/* Test invalid signal */
+	zassert_not_equal(EC_SUCCESS, gpio_disable_interrupt(GPIO_COUNT), NULL);
+	zassert_not_equal(EC_SUCCESS, gpio_enable_interrupt(GPIO_COUNT), NULL);
+	zassert_false(gpio_test_interrupt_triggered, NULL);
+
+	/* Test valid signal */
+	zassert_ok(gpio_disable_interrupt(signal), NULL);
+	gpio_set_level(signal, 0);
+	zassert_false(gpio_test_interrupt_triggered, NULL);
+	gpio_set_level(signal, 1);
+	zassert_false(gpio_test_interrupt_triggered, NULL);
+
+	zassert_ok(gpio_enable_interrupt(signal), NULL);
+	gpio_set_level(signal, 0);
+	zassert_true(gpio_test_interrupt_triggered, NULL);
+	gpio_test_interrupt_triggered = false;
+	gpio_set_level(signal, 1);
+	zassert_true(gpio_test_interrupt_triggered, NULL);
 }
 
 /**
@@ -317,7 +383,6 @@ ZTEST(gpio, test_gpio_reset)
  * Expected Results
  *  - Success
  */
-extern bool gpio_test_interrupt_triggered;
 ZTEST(gpio, test_gpio_enable_dt_interrupt)
 {
 	const struct gpio_dt_spec *gp = GPIO_DT_FROM_NODELABEL(gpio_test);
