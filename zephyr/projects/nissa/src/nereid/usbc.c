@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <logging/log.h>
+
 #include "charge_state_v2.h"
 #include "chipset.h"
 #include "hooks.h"
@@ -15,7 +17,7 @@
 
 #include "sub_board.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{

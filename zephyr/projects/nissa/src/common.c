@@ -16,8 +16,8 @@
 
 #include "sub_board.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#include <logging/log.h>
+LOG_MODULE_REGISTER(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -37,7 +37,7 @@ static uint8_t cached_usb_pd_port_count;
 __override uint8_t board_get_usb_pd_port_count(void)
 {
 	if (cached_usb_pd_port_count == 0)
-		CPRINTS("USB PD Port count not initialized!");
+		LOG_WRN("USB PD Port count not initialized!");
 	return cached_usb_pd_port_count;
 }
 
@@ -110,31 +110,31 @@ enum nissa_sub_board_type nissa_get_sb_type(void)
 	sb = NISSA_SB_NONE;	/* Defaults to none */
 	dev = device_get_binding(CROS_CBI_LABEL);
 	if (dev == NULL) {
-		CPRINTS("No %s device", CROS_CBI_LABEL);
+		LOG_WRN("No %s device", CROS_CBI_LABEL);
 	} else {
 		ret = cros_cbi_get_fw_config(dev, FW_SUB_BOARD, &val);
 		if (ret != 0) {
-			CPRINTS("Error retrieving CBI FW_CONFIG field %d",
+			LOG_WRN("Error retrieving CBI FW_CONFIG field %d",
 				FW_SUB_BOARD);
 			return sb;
 		}
 		switch (val) {
 		default:
-			CPRINTS("No sub-board defined");
+			LOG_WRN("No sub-board defined");
 			break;
 		case FW_SUB_BOARD_1:
 			sb = NISSA_SB_C_A;
-			CPRINTS("SB: USB type C, USB type A");
+			LOG_INF("SB: USB type C, USB type A");
 			break;
 
 		case FW_SUB_BOARD_2:
 			sb = NISSA_SB_C_LTE;
-			CPRINTS("SB: USB type C, WWAN LTE");
+			LOG_INF("SB: USB type C, WWAN LTE");
 			break;
 
 		case FW_SUB_BOARD_3:
 			sb = NISSA_SB_HDMI_A;
-			CPRINTS("SB: HDMI, USB type A");
+			LOG_INF("SB: HDMI, USB type A");
 			break;
 		}
 	}

@@ -14,4 +14,8 @@ config BOARD_NEREID
 	  Build Google Nereid reference board. Nereid has Intel ADL-N SoC
 	  with IT81302 EC.
 
+module = NISSA
+module-str = Nissa board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
 source "Kconfig.zephyr"

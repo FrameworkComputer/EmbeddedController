@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <logging/log.h>
+
 #include "charge_state_v2.h"
 #include "chipset.h"
 #include "hooks.h"
@@ -14,7 +16,7 @@
 
 #include "sub_board.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -48,7 +50,7 @@ __override void board_hibernate(void)
 	if (board_get_usb_pd_port_count() == 2)
 		raa489000_hibernate(CHARGER_SECONDARY, true);
 	raa489000_hibernate(CHARGER_PRIMARY, true);
-	CPRINTS("Charger(s) hibernated");
+	LOG_INF("Charger(s) hibernated");
 	cflush();
 }
 
@@ -81,7 +83,7 @@ int board_set_active_charge_port(int port)
 
 	old_port = charge_manager_get_active_charge_port();
 
-	CPRINTS("New chg p%d", port);
+	LOG_INF("New chg p%d", port);
 
 	/* Disable all ports. */
 	if (port == CHARGE_PORT_NONE) {
@@ -94,7 +96,7 @@ int board_set_active_charge_port(int port)
 
 	/* Check if port is sourcing VBUS. */
 	if (board_is_sourcing_vbus(port)) {
-		CPRINTS("Skip enable p%d", port);
+		LOG_WRN("Skip enable p%d", port);
 		return EC_ERROR_INVAL;
 	}
 
@@ -108,7 +110,7 @@ int board_set_active_charge_port(int port)
 
 		if (tcpc_write(i, TCPC_REG_COMMAND,
 			       TCPC_REG_COMMAND_SNK_CTRL_LOW))
-			CPRINTS("p%d: sink path disable failed.", i);
+			LOG_WRN("p%d: sink path disable failed.", i);
 	}
 
 	/*
@@ -121,7 +123,7 @@ int board_set_active_charge_port(int port)
 	/* Enable requested charge port. */
 	if (tcpc_write(port, TCPC_REG_COMMAND,
 		       TCPC_REG_COMMAND_SNK_CTRL_HIGH)) {
-		CPRINTS("p%d: sink path enable failed.", port);
+		LOG_WRN("p%d: sink path enable failed.", port);
 		charger_discharge_on_ac(0);
 		return EC_ERROR_UNKNOWN;
 	}
