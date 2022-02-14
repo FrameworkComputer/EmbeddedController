@@ -27,16 +27,7 @@
 #define CONFIG_MP2964
 
 /* LED */
-#define CONFIG_LED_PWM
-#define CONFIG_LED_PWM_COUNT 2
-#undef CONFIG_LED_PWM_NEAR_FULL_COLOR
-#undef CONFIG_LED_PWM_SOC_ON_COLOR
-#undef CONFIG_LED_PWM_SOC_SUSPEND_COLOR
-#undef CONFIG_LED_PWM_LOW_BATT_COLOR
-#define CONFIG_LED_PWM_NEAR_FULL_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_ON_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_SOC_SUSPEND_COLOR EC_LED_COLOR_WHITE
-#define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
+#define CONFIG_LED_ONOFF_STATES
 
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
@@ -179,12 +170,8 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_LED2 = 0,		/* PWM0 (white charger) */
-	PWM_CH_LED3,			/* PWM1 (orange on DB) */
-	PWM_CH_LED1,			/* PWM2 (orange charger) */
-	PWM_CH_KBLIGHT,			/* PWM3 */
+	PWM_CH_KBLIGHT = 0,		/* PWM3 */
 	PWM_CH_FAN,			/* PWM5 */
-	PWM_CH_LED4,			/* PWM7 (white on DB) */
 	PWM_CH_COUNT
 };
 
