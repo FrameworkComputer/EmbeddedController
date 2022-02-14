@@ -24,6 +24,7 @@
 
 /* Sensors */
 #define CONFIG_ACCEL_BMA255		/* Lid accel */
+#define CONFIG_ACCEL_BMA4XX		/* 2nd source Lid accel */
 #define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
