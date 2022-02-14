@@ -740,8 +740,8 @@ __maybe_unused static int ps8815_tcpc_fast_role_swap_enable(int port,
 	 * TODO(b/183127346): Confirm register write order
 	 */
 	status = tcpc_update8(port,
-			      PS8815_P1_REG_RESERVED_F4,
-			      PS8815_P1_REG_RESERVED_F4_FRS_EN,
+			      PS8815_REG_RESERVED_F4,
+			      PS8815_REG_RESERVED_F4_FRS_EN,
 			      enable ? MASK_SET : MASK_CLR);
 	if (status != EC_SUCCESS)
 		return status;
@@ -852,8 +852,8 @@ static int ps8xxx_tcpm_init(int port)
 		 */
 		if (tcpm_tcpc_has_frs_control(port)) {
 			status = tcpc_update8(port,
-					      PS8815_P1_REG_RESERVED_D1,
-					      PS8815_P1_REG_RESERVED_D1_FRS_EN,
+					      PS8815_REG_RESERVED_D1,
+					      PS8815_REG_RESERVED_D1_FRS_EN,
 					      MASK_SET);
 			if (status != EC_SUCCESS)
 				return status;
