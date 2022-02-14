@@ -90,6 +90,7 @@
 #ifndef __ASSEMBLER__
 
 #include "common.h"
+#include "gpio_signal.h"
 
 /* No GPIO abstraction layer */
 
