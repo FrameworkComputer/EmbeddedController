@@ -10,30 +10,29 @@ The `named-gpios` compatible node is used as the source of the names. Each child
 of the `named-gpios` node is named from a EC pin name, has a `gpios` property
 referencing the GPIO pin.
 
-The program matches the GPIO controller and pin for each of the `named-gpios` entries,
-and creates overlay DTS fragments for each of the GPIO controllers setting the `gpio-line-names`.
+The program matches the GPIO controller and pin for each of the
+`named-gpios` entries, and creates overlay DTS fragments for each of
+the GPIO controllers setting the `gpio-line-names`.
 
-The purpose of this program is to help upstream the EC GPIO support, specifically
-to enable a Zephyr based console command equivalent to `gpioget` and `gpioset`.
+The purpose of this program is to help upstream the EC GPIO support,
+specifically to enable a Zephyr based console command equivalent
+to `gpioget` and `gpioset`.
 
-Currently these commands rely on the existence of the `named-gpios` child nodes to
-specify the engineer-friendly name of the GPIO pins. However, core Zephyr does not
-use `named-gpios`, and any command upstreamed to Zephyr should only rely on
-the core Zephyr API and interfaces (and the `gpio-line-names` property is a standard attribute of
-the Zephyr GPIO definition).
+Currently these commands rely on the existence of the
+`named-gpios` child nodes to specify the engineer-friendly name of
+the GPIO pins. However, core Zephyr does not use `named-gpios`,
+and any command upstreamed to Zephyr should only rely on
+the core Zephyr API and interfaces (and the `gpio-line-names`
+property is a standard attribute of the Zephyr GPIO definition).
 
-Using this program, a DTS fragment can be generated from an existing DTS with a `named-gpios` node
-that will allow an upstreamed `gpioget`/`gpioset` command to operate.
+Using this program, a DTS fragment can be generated from an existing
+DTS with a `named-gpios` node that will allow an upstreamed
+`gpioget`/`gpioset` command to operate.
 
 ## Building
 
-This program uses an external library to read the DTB; this external library requires
-go 1.17 at the minimum, and currently the ChromeOS SDK installs go 1.15, so this
-program will require building outside of the SDK:
-
 ```
-[from home directory outside the SDK]
-cd ~/chromiumos/src/platform/ec/util/dt-gpionames
+cd platform/ec/util/dt-gpionames
 go build
 
 ```
@@ -42,12 +41,11 @@ This builds the `dt-gpionames` binary in this directory.
 
 ## Executing
 
-The program input expects a compiled, flattened device tree binary (DTB) file.
-This can built from an existing device tree source file using the device tree compiler (dtc),
-which is installed in the SDK by default.
+The program input expects a compiled, flattened device tree binary (DTB)
+file.
 
-The source file for the compiler can be obtained from a device tree source file generated as part
-of a project build.
+The source file for the compiler can be obtained from a device tree
+source file generated as part of a project build.
 
 So the complete process is (using the nivviks project target as an example):
 
@@ -60,7 +58,19 @@ dtc --out /tmp/dt.dtb ../../build/zephyr/nivviks/build-ro/zephyr/zephyr.dts
 ./dt-gpionames --output gpionames.dts --input /tmp/dt.dtb
 ```
 
-This `gpionames.dts` can then be copied and added to the project's device tree source files.
+This `gpionames.dts` can then be copied and added to the project's
+device tree source files.
+
+A shell script is available that runs these commands as a
+single step:
+
+
+```
+gpionames.sh <project>
+```
+
+Where `project` is the project target e.g `nivviks`, `lazor` etc.
+The script will place the output file in `/tmp/gpionames-`<project>`.dts`.
 
 ## Examples
 
