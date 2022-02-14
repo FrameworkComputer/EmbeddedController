@@ -2,8 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config BOARD_HEROBRINE_NPCX9
-	bool "Google Herobrine-NPCX9 Baseboard"
+config BOARD_HEROBRINE
+	bool "Google Herobrine Baseboard"
 	help
 	  Build Google Herobrine reference board.  The board uses Nuvoton
 	  NPCX9 chip as the EC.

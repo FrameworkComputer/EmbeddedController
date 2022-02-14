@@ -17,10 +17,10 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
   "src/i2c.c")
 
-if(DEFINED CONFIG_BOARD_HEROBRINE_NPCX9)
-	project(herobrine_npcx9)
+if(DEFINED CONFIG_BOARD_HEROBRINE)
+	project(herobrine)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
-	  "src/herobrine_npcx9/alt_dev_replacement.c")
+	  "src/herobrine/alt_dev_replacement.c")
 elseif(DEFINED CONFIG_BOARD_HOGLIN)
 	project(hoglin)
 endif()
