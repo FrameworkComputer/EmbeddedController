@@ -157,6 +157,12 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_2_FAN
 	},
+	[TEMP_SENSOR_3_CHARGER] = {
+		.name = "Charger",
+		.type = TEMP_SENSOR_TYPE_BOARD,
+		.read = get_temp_3v3_30k9_47k_4050b,
+		.idx = ADC_TEMP_SENSOR_3_CHARGER
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -177,10 +183,10 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(60), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(50), \
+		.temp_fan_off = 0, \
+		.temp_fan_max = C_TO_K(73), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
@@ -203,20 +209,36 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 #define THERMAL_FAN \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(60), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(70), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(50), \
+		}, \
+		.temp_fan_off = 0, \
+		.temp_fan_max = C_TO_K(63), \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
+
+#define THERMAL_CHARGER \
+	{ \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(60), \
 		}, \
-		.temp_fan_off = C_TO_K(40), \
-		.temp_fan_max = C_TO_K(55), \
+		.temp_fan_off = 0, \
+		.temp_fan_max = C_TO_K(73), \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
+__maybe_unused static const struct ec_thermal_config thermal_charger =
+	THERMAL_CHARGER;
 
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
 	[TEMP_SENSOR_2_FAN] = THERMAL_FAN,
+	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
