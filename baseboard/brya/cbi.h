@@ -29,4 +29,10 @@ __override_proto void board_cbi_init(void);
  */
 __override_proto void board_init_fw_config(void);
 
+/**
+ * Initialize the SSFC from CBI data. If the CBI data is not valid, set the
+ * SSFC to the board specific defaults.
+ */
+__override_proto void board_init_ssfc(void);
+
 #endif /* __CROS_EC_BASEBOARD_CBI_H */

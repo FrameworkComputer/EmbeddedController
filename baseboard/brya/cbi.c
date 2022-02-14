@@ -28,6 +28,10 @@ __overridable void board_init_fw_config(void)
 {
 }
 
+__overridable void board_init_ssfc(void)
+{
+}
+
 /*
  * Read CBI from I2C EEPROM and initialize variables for board variants.
  */
@@ -45,6 +49,8 @@ static void cbi_init(void)
 	CPRINTS("Board ID: %d", board_id);
 
 	board_init_fw_config();
+
+	board_init_ssfc();
 
 	/* Allow the board project to make runtime changes based on CBI data */
 	board_cbi_init();
