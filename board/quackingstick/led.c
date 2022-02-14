@@ -97,7 +97,7 @@ static void board_led_set_battery(void)
 		break;
 	case PWR_STATE_ERROR:
 		/* Battery error: Amber on 1 sec, off 1 sec */
-		period = (1 + 1) * LED_HALF_ONE_SEC;
+		period = (1 + 1) * LED_ONE_SEC;
 		battery_ticks = battery_ticks % period;
 		if (battery_ticks < 1 * LED_ONE_SEC)
 			color = LED_AMBER;
