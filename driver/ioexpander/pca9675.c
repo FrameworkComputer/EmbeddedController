@@ -10,10 +10,6 @@
 #include "ioexpander.h"
 #include "pca9675.h"
 
-#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
-#error "This driver doesn't support get_port function"
-#endif
-
 struct pca9675_ioexpander {
 	/* I/O port direction (1 = input, 0 = output) */
 	uint16_t io_direction;
@@ -122,6 +118,16 @@ int pca9675_init(int ioex)
 	return pca9675_reset(ioex);
 }
 
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+
+/* Read levels for whole IO expander port */
+static int pca9675_get_port(int ioex, int port, int *val)
+{
+	return pca9675_read16(ioex, (uint16_t *)val);
+}
+
+#endif
+
 const struct ioexpander_drv pca9675_ioexpander_drv = {
 	.init			= &pca9675_init,
 	.get_level		= &pca9675_get_level,
@@ -129,4 +135,7 @@ const struct ioexpander_drv pca9675_ioexpander_drv = {
 	.get_flags_by_mask	= &pca9675_get_flags_by_mask,
 	.set_flags_by_mask	= &pca9675_set_flags_by_mask,
 	.enable_interrupt	= &pca9675_enable_interrupt,
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+	.get_port		= &pca9675_get_port,
+#endif
 };
