@@ -108,7 +108,7 @@ def get_test_filepath(suffix):
     return os.path.join(OUR_PATH, "files", "sample_{}.txt".format(suffix))
 
 
-def do_test_with_log_level(log_level, use_configure=False, fnames=None):
+def do_test_with_log_level(log_level, fnames=None):
     """Test filtering using a particular log level
 
     Args:
@@ -128,16 +128,22 @@ def do_test_with_log_level(log_level, use_configure=False, fnames=None):
             re.compile(r".*build-ro"): get_test_filepath("ro"),
             re.compile(r".*build-rw"): get_test_filepath("rw"),
         }
-    zephyr_base = mock.Mock()
 
-    zmk = zm.Zmake(
-        jobserver=FakeJobserver(fnames),
-        zephyr_base=zephyr_base,
-    )
+    with tempfile.TemporaryDirectory() as tmpname:
+        tmpname = pathlib.Path(tmpname)
+        os.mkdir(tmpname / "ec")
+        os.mkdir(tmpname / "ec" / "zephyr")
+        with open(tmpname / "ec" / "zephyr" / "module.yml", "w") as fd:
+            fd.write("hi")
+        zephyr_base = tmpname / "zephyr_base"
+        zmk = zm.Zmake(
+            jobserver=FakeJobserver(fnames),
+            zephyr_base=zephyr_base,
+            modules_dir=tmpname,
+        )
 
-    with LogCapture(level=log_level) as cap:
-        with tempfile.TemporaryDirectory() as tmpname:
-            with open(os.path.join(tmpname, "VERSION"), "w") as fd:
+        with LogCapture(level=log_level) as cap:
+            with open(tmpname / "VERSION", "w") as fd:
                 fd.write(
                     """VERSION_MAJOR = 2
 VERSION_MINOR = 5
@@ -146,23 +152,17 @@ VERSION_TWEAK = 0
 EXTRAVERSION =
 """
                 )
-            (pathlib.Path(tmpname) / "project_name.txt").write_text("fakeproject")
-            zephyr_base.resolve = mock.Mock(return_value=pathlib.Path(tmpname))
             with patch("zmake.version.get_version_string", return_value="123"):
                 with patch.object(
                     zmake.project,
                     "find_projects",
                     return_value={"fakeproject": FakeProject()},
                 ):
-                    if use_configure:
-                        zmk.configure(
+                    with patch("zmake.version.write_version_header", autospec=True):
+                        zmk.build(
                             ["fakeproject"],
-                            build_dir=pathlib.Path("build"),
                             clobber=True,
                         )
-                    else:
-                        with patch("zmake.version.write_version_header", autospec=True):
-                            zmk.build(pathlib.Path(tmpname))
                     multiproc.wait_for_log_end()
 
     recs = [rec.getMessage() for rec in cap.records]
@@ -183,18 +183,21 @@ class TestFilters(unittest.TestCase):
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
         expected = {
-            "Building {}:build-ro: /usr/bin/ninja -C {}/build-build-ro".format(
-                tmpname, tmpname
+            "Configuring fakeproject:build-rw.",
+            "Configuring fakeproject:build-ro.",
+            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmpname),
+            "Building fakeproject:build-ro: /usr/bin/ninja -C {}-build-ro".format(
+                tmpname / "ec/build/zephyr/fakeproject/build"
             ),
-            "Building {}:build-rw: /usr/bin/ninja -C {}/build-build-rw".format(
-                tmpname, tmpname
+            "Building fakeproject:build-rw: /usr/bin/ninja -C {}-build-rw".format(
+                tmpname / "ec/build/zephyr/fakeproject/build"
             ),
         }
         for suffix in ["ro", "rw"]:
             with open(get_test_filepath("%s_INFO" % suffix)) as f:
                 for line in f:
                     expected.add(
-                        "[{}:build-{}]{}".format(tmpname, suffix, line.strip())
+                        "[fakeproject:build-{}]{}".format(suffix, line.strip())
                     )
         # This produces an easy-to-read diff if there is a difference
         self.assertEqual(expected, set(recs))
@@ -205,11 +208,14 @@ class TestFilters(unittest.TestCase):
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
         expected = {
-            "Building {}:build-ro: /usr/bin/ninja -C {}/build-build-ro".format(
-                tmpname, tmpname
+            "Configuring fakeproject:build-rw.",
+            "Configuring fakeproject:build-ro.",
+            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmpname),
+            "Building fakeproject:build-ro: /usr/bin/ninja -C {}-build-ro".format(
+                tmpname / "ec/build/zephyr/fakeproject/build"
             ),
-            "Building {}:build-rw: /usr/bin/ninja -C {}/build-build-rw".format(
-                tmpname, tmpname
+            "Building fakeproject:build-rw: /usr/bin/ninja -C {}-build-rw".format(
+                tmpname / "ec/build/zephyr/fakeproject/build"
             ),
             "Running cat {}/files/sample_ro.txt".format(OUR_PATH),
             "Running cat {}/files/sample_rw.txt".format(OUR_PATH),
@@ -218,7 +224,7 @@ class TestFilters(unittest.TestCase):
             with open(get_test_filepath(suffix)) as f:
                 for line in f:
                     expected.add(
-                        "[{}:build-{}]{}".format(tmpname, suffix, line.strip())
+                        "[fakeproject:build-{}]{}".format(suffix, line.strip())
                     )
         # This produces an easy-to-read diff if there is a difference
         self.assertEqual(expected, set(recs))
@@ -226,7 +232,7 @@ class TestFilters(unittest.TestCase):
     def test_filter_devicetree_error(self):
         """Test that devicetree errors appear"""
         recs, tmpname = do_test_with_log_level(
-            logging.ERROR, True, {re.compile(r".*"): get_test_filepath("err")}
+            logging.ERROR, {re.compile(r".*"): get_test_filepath("err")}
         )
 
         dt_errs = [rec for rec in recs if "adc" in rec]

@@ -37,7 +37,7 @@ You need the host version of gdb:
 
 Build the test
 ```bash
-(chroot) zmake configure --build test-drivers
+(chroot) zmake build test-drivers
 ```
 
 Then run gdb

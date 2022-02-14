@@ -71,7 +71,7 @@ seed_cache:
   needs: ["seed_cache"]
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}"
-      --modules-dir "${MODULES_DIR}" -l DEBUG configure -b
+      --modules-dir "${MODULES_DIR}" -l DEBUG build
       -B "${BUILD_DIR}" -t ${TOOLCHAIN:-zephyr}
       "${PROJECT}"
     - for b in "${BUILD_DIR}/${PROJECT}"/build-* ; do
@@ -97,7 +97,7 @@ seed_cache:
   needs: ["merged_coverage", "zephyr_coverage", "twister_coverage"]
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}"
-      --modules-dir "${MODULES_DIR}" -l DEBUG configure -b --coverage
+      --modules-dir "${MODULES_DIR}" -l DEBUG build --coverage
       -B "${BUILD_DIR}" -t ${TOOLCHAIN:-zephyr}
       "${PROJECT}"
     - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/output/merged_twister.info" -a "${BUILD_DIR}/${PROJECT}/output/zephyr.info" -a "${BUILD_DIR}/zephyr_codecov/fixed.info"

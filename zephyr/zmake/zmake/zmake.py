@@ -159,6 +159,7 @@ class Zmake:
         zephyr_base=None,
     ):
         zmake.multiproc.reset()
+        self.logger = logging.getLogger(self.__class__.__name__)
         self._checkout = checkout
         self.goma = goma
         self.gomacc = gomacc
@@ -180,7 +181,6 @@ class Zmake:
             except OSError:
                 self.jobserver = zmake.jobserver.GNUMakeJobServer(jobs=jobs)
 
-        self.logger = logging.getLogger(self.__class__.__name__)
         self.executor = zmake.multiproc.Executor()
         self._sequential = jobs == 1 and not goma
 
@@ -273,6 +273,32 @@ class Zmake:
             if rv:
                 return rv
         return 0
+
+    def build(
+        self,
+        project_names,
+        build_dir=None,
+        toolchain=None,
+        clobber=False,
+        bringup=False,
+        coverage=False,
+        allow_warnings=False,
+        all_projects=False,
+        host_tests_only=False,
+    ):
+        """Locate and build the specified projects."""
+        return self.configure(
+            project_names,
+            build_dir=build_dir,
+            toolchain=toolchain,
+            clobber=clobber,
+            bringup=bringup,
+            coverage=coverage,
+            allow_warnings=allow_warnings,
+            all_projects=all_projects,
+            host_tests_only=host_tests_only,
+            build_after_configure=True,
+        )
 
     def _configure(
         self,
@@ -436,26 +462,48 @@ class Zmake:
         (build_dir / "project_name.txt").write_text(project.config.project_name)
         util.update_symlink(project.config.project_dir, build_dir / "project")
 
-        if test_after_configure and project.config.is_test:
-            return self.test(
+        output_files = []
+        if build_after_configure or test_after_configure:
+            rv = self._build(
                 build_dir=build_dir,
+                project=project,
+                fail_on_warnings=not allow_warnings,
                 coverage=coverage,
+                output_files_out=output_files,
             )
-        elif build_after_configure:
-            if coverage and not project.config.is_test:
-                output_dir = build_dir / "output"
-                if not output_dir.exists():
-                    output_dir.mkdir()
-                return self._coverage_compile_only(
-                    project=project,
-                    build_dir=build_dir,
-                    lcov_file=output_dir / "zephyr.info",
+            if rv:
+                return rv
+        if test_after_configure and project.config.is_test:
+            gcov = "gcov.sh-not-found"
+            for build_name, _ in project.iter_builds():
+                target_build_dir = build_dir / "build-{}".format(build_name)
+                gcov = target_build_dir / "gcov.sh"
+            for output_file in output_files:
+                self.executor.append(
+                    func=functools.partial(
+                        self._run_test,
+                        elf_file=output_file,
+                        coverage=coverage,
+                        gcov=gcov,
+                        build_dir=build_dir,
+                        lcov_file=build_dir / "output" / "zephyr.info",
+                        timeout=project.config.test_timeout_secs,
+                    )
                 )
-            else:
-                return self.build(build_dir=build_dir)
+                if self._sequential:
+                    rv = self.executor.wait()
+                    if rv:
+                        return rv
         return 0
 
-    def build(self, build_dir, output_files_out=None, fail_on_warnings=False):
+    def _build(
+        self,
+        build_dir,
+        project,
+        output_files_out=None,
+        fail_on_warnings=False,
+        coverage=False,
+    ):
         """Build a pre-configured build directory."""
 
         def wait_and_check_success(procs, writers):
@@ -497,8 +545,6 @@ class Zmake:
         dirs = {}
 
         build_dir = build_dir.resolve()
-        found_projects = zmake.project.find_projects(build_dir / "project")
-        project = found_projects[(build_dir / "project_name.txt").read_text()]
 
         # Compute the version string.
         version_string = zmake.version.get_version_string(
@@ -515,16 +561,21 @@ class Zmake:
             build_dir / "include" / "ec_version.h",
         )
 
-        for build_name, build_config in project.iter_builds():
+        gcov = "gcov.sh-not-found"
+        for build_name, _ in project.iter_builds():
             with self.jobserver.get_job():
                 dirs[build_name] = build_dir / "build-{}".format(build_name)
+                gcov = dirs[build_name] / "gcov.sh"
                 cmd = ["/usr/bin/ninja", "-C", dirs[build_name].as_posix()]
                 if self.goma:
                     # Go nuts ninja, goma does the heavy lifting!
                     cmd.append("-j1024")
+                # Only tests will actually build with coverage enabled.
+                if coverage and not project.config.is_test:
+                    cmd.append("all.libraries")
                 self.logger.info(
                     "Building %s:%s: %s",
-                    build_dir,
+                    project.config.project_name,
                     build_name,
                     zmake.util.repr_command(cmd),
                 )
@@ -535,7 +586,7 @@ class Zmake:
                     encoding="utf-8",
                     errors="replace",
                 )
-                job_id = "{}:{}".format(build_dir, build_name)
+                job_id = "{}:{}".format(project.config.project_name, build_name)
                 out = zmake.multiproc.log_output(
                     logger=self.logger,
                     log_level=logging.INFO,
@@ -569,12 +620,20 @@ class Zmake:
 
         if output_files_out is None:
             output_files_out = []
-        for output_file, output_name in project.packer.pack_firmware(
-            packer_work_dir, self.jobserver, version_string=version_string, **dirs
-        ):
-            shutil.copy2(output_file, output_dir / output_name)
-            self.logger.debug("Output file '%s' created.", output_file)
-            output_files_out.append(output_file)
+        # For non-tests, they won't link with coverage, so don't pack the
+        # firmware. Also generate a lcov file.
+        if coverage and not project.config.is_test:
+            with self.jobserver.get_job():
+                self._run_lcov(
+                    build_dir, output_dir / "zephyr.info", initial=True, gcov=gcov
+                )
+        else:
+            for output_file, output_name in project.packer.pack_firmware(
+                packer_work_dir, self.jobserver, version_string=version_string, **dirs
+            ):
+                shutil.copy2(output_file, output_dir / output_name)
+                self.logger.debug("Output file '%s' created.", output_file)
+                output_files_out.append(output_file)
 
         return 0
 
@@ -637,17 +696,20 @@ class Zmake:
     def test(self, build_dir, coverage=False):
         """Test a build directory."""
         output_files = []
-        self.build(build_dir, output_files_out=output_files)
-
-        # If the project built but isn't a test, just bail.
+        build_dir = build_dir.resolve()
         found_projects = zmake.project.find_projects(build_dir / "project")
         project = found_projects[(build_dir / "project_name.txt").read_text()]
+        self._build(
+            build_dir, project=project, output_files_out=output_files, coverage=coverage
+        )
+
+        # If the project built but isn't a test, just bail.
         if not project.config.is_test:
             return 0
 
         gcov = "gcov.sh-not-found"
         if coverage:
-            for build_name, build_config in project.iter_builds():
+            for build_name, _ in project.iter_builds():
                 gcov = build_dir / "build-{}".format(build_name) / "gcov.sh"
 
         for output_file in output_files:
@@ -751,71 +813,6 @@ class Zmake:
             raise OSError(get_process_failure_msg(proc))
 
         return 0
-
-    def _coverage_compile_only(self, project, build_dir, lcov_file):
-        self.logger.info("Building %s in %s", project.config.project_name, build_dir)
-
-        # Compute the version string.
-        version_string = zmake.version.get_version_string(
-            project,
-            build_dir / "zephyr_base",
-            zmake.modules.locate_from_directory(build_dir / "modules"),
-        )
-
-        # The version header needs to generated during the build phase
-        # instead of configure, as the tree may have changed since
-        # configure was run.
-        zmake.version.write_version_header(
-            version_string,
-            build_dir / "include" / "ec_version.h",
-        )
-
-        # Use ninja to compile the all.libraries target.
-        found_projects = zmake.project.find_projects(build_dir / "project")
-        build_project = found_projects[(build_dir / "project_name.txt").read_text()]
-
-        procs = []
-        dirs = {}
-        gcov = "gcov.sh-not-found"
-        for build_name, build_config in build_project.iter_builds():
-            self.logger.info("Building %s:%s all.libraries.", build_dir, build_name)
-            dirs[build_name] = build_dir / "build-{}".format(build_name)
-            gcov = dirs[build_name] / "gcov.sh"
-            proc = self.jobserver.popen(
-                ["/usr/bin/ninja", "-C", dirs[build_name], "all.libraries"],
-                # Ninja will connect as a job client instead and claim
-                # many jobs.
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                encoding="utf-8",
-                errors="replace",
-            )
-            job_id = "{}:{}".format(build_dir, build_name)
-            zmake.multiproc.log_output(
-                logger=self.logger,
-                log_level=logging.DEBUG,
-                file_descriptor=proc.stdout,
-                log_level_override_func=ninja_stdout_log_level_override,
-                job_id=job_id,
-            )
-            zmake.multiproc.log_output(
-                self.logger,
-                logging.ERROR,
-                proc.stderr,
-                job_id=job_id,
-            )
-            if self._sequential:
-                if proc.wait():
-                    raise OSError(get_process_failure_msg(proc))
-            else:
-                procs.append(proc)
-
-        for proc in procs:
-            if proc.wait():
-                raise OSError(get_process_failure_msg(proc))
-
-        with self.jobserver.get_job():
-            return self._run_lcov(build_dir, lcov_file, initial=True, gcov=gcov)
 
     def _merge_lcov_files(self, projects, build_dir, output_file):
         all_lcov_files = []

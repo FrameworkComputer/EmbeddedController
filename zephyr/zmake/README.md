@@ -61,20 +61,27 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake build
 
-**Usage:** `zmake build [-h] build_dir [-w]`
+**Usage:** `zmake build [-h] [-t TOOLCHAIN] [--bringup] [--clobber] [--allow-warnings] [-B BUILD_DIR] [-c] (-a | --host-tests-only | project_name [project_name ...])`
 
 #### Positional Arguments
 
 |   |   |
 |---|---|
-| `build_dir` | The build directory used during configuration |
+| `project_name` | Name(s) of the project(s) to build |
 
 #### Optional Arguments
 
 |   |   |
 |---|---|
 | `-h`, `--help` | show this help message and exit |
-| `-w`, `--fail-on-warnings` | Exit with code 2 if warnings are detected |
+| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
+| `--bringup` | Enable bringup debugging features |
+| `--clobber` | Delete existing build directories, even if configuration is unchanged |
+| `--allow-warnings` | Do not treat warnings as errors |
+| `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
+| `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
+| `-a`, `--all` | Select all projects |
+| `--host-tests-only` | Select all test projects |
 
 ### zmake list-projects
 

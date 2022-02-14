@@ -111,32 +111,26 @@ documentation] to install the Zephyr build tools.
 You can use `zmake help` to obtain help on how to use zmake. The following is
 a rough guide.
 
-First configure the build with the project you want:
+First configure the build with the project(s) you want:
 
 ```bash
-zmake configure -B /tmp/z volteer
-```
-
-Then build with just the target directory:
-
-```
-zmake build /tmp/z/volteer
+zmake build -B /tmp/z volteer
 ```
 
 The output is in that directory:
 
-*   `output/zephyr.bin` - output binary (read-only and read-write packed
+*   `volteer/output/zephyr.bin` - output binary (read-only and read-write packed
     together)
-*   `output/zephyr.ro.elf` - read-only ELF for debugging
-*   `output/zephyr.rw.elf` - read-write ELF for debugging
+*   `volteer/output/zephyr.ro.elf` - read-only ELF for debugging
+*   `volteer/output/zephyr.rw.elf` - read-write ELF for debugging
 
 You might also find these files useful (using read-only as an example):
 
-*   `build-ro/zephyr/.config` - Kconfig options selected
-*   `build-ro/zephyr/include/generated/devicetree_unfixed.h` - the (large)
+*   `volteer/build-ro/zephyr/.config` - Kconfig options selected
+*   `volteer/build-ro/zephyr/include/generated/devicetree_unfixed.h` - the (large)
     header file that zephyr uses to provide devicetree information to the C code
-*   `build-ro/zephyr/zephyr.dts` - devicetree that is used
-*   `build-ro/zephyr/zephyr.dts` - map of image
+*   `volteer/build-ro/zephyr/zephyr.dts` - devicetree that is used
+*   `volteer/build-ro/zephyr/zephyr.dts` - map of image
 
 Googlers may be interested in setting up [building with Goma](../goma.md)
 as well.

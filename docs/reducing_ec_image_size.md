@@ -13,7 +13,7 @@ The EC codebase supports two build types:
 1. `cros-ec` builds are the legacy EC images built using Make (e.g. `make
    BOARD=volteer`)
 1. `zephyr-ec` builds are the EC images built using the Zephyr RTOS kernel using
-   zmake/Cmake (e.g. `zmake configure -b zephyr/projects/volteer/volteer`)
+   zmake/Cmake (e.g. `zmake build volteer`)
 
 ### Checking a single cros-ec build
 
@@ -88,7 +88,7 @@ By default, `zmake` will display the flash and SRAM usage of the
 board.
 
 ```
-$ zmake configure -b volteer
+$ zmake build volteer
     ...
 Building /mnt/host/source/src/platform/ec/build/zephyr/volteer:ro: /usr/bin/ninja -C /mnt/host/source/src/platform/ec/build/zephyr/volteer/build-ro
 Memory region         Used Size  Region Size  %age Used
