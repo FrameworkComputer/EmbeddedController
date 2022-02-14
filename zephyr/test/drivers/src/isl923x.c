@@ -583,7 +583,7 @@ ZTEST(isl923x, test_init)
 	int input_current;
 
 	/* Test failed CTRL2 register read (prochot debounce) */
-	isl923x_emul_reset(isl923x_emul);
+	isl923x_emul_reset_registers(isl923x_emul);
 	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
 	isl923x_drv.init(CHARGER_NUM);
 	i2c_common_emul_set_read_fail_reg(i2c_emul,
@@ -595,7 +595,7 @@ ZTEST(isl923x, test_init)
 		      "Expected input current 0mV but got %dmV", input_current);
 
 	/* Test failed CTRL2 register write */
-	isl923x_emul_reset(isl923x_emul);
+	isl923x_emul_reset_registers(isl923x_emul);
 	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
 	isl923x_drv.init(CHARGER_NUM);
 	i2c_common_emul_set_write_fail_reg(i2c_emul,
@@ -607,7 +607,7 @@ ZTEST(isl923x, test_init)
 		      "Expected input current 0mV but got %dmV", input_current);
 
 	/* Test failed CTRL 0 read */
-	isl923x_emul_reset(isl923x_emul);
+	isl923x_emul_reset_registers(isl923x_emul);
 	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
 	isl923x_drv.init(CHARGER_NUM);
 	i2c_common_emul_set_read_fail_reg(i2c_emul,
@@ -619,7 +619,7 @@ ZTEST(isl923x, test_init)
 		      "Expected input current 0mV but got %dmV", input_current);
 
 	/* Test failed CTRL 0 write */
-	isl923x_emul_reset(isl923x_emul);
+	isl923x_emul_reset_registers(isl923x_emul);
 	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
 	isl923x_drv.init(CHARGER_NUM);
 	i2c_common_emul_set_write_fail_reg(i2c_emul,
@@ -631,7 +631,7 @@ ZTEST(isl923x, test_init)
 		      "Expected input current 0mV but got %dmV", input_current);
 
 	/* Test failed CTRL 3 read */
-	isl923x_emul_reset(isl923x_emul);
+	isl923x_emul_reset_registers(isl923x_emul);
 	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL9238_REG_CONTROL3);
 	isl923x_drv.init(CHARGER_NUM);
 	i2c_common_emul_set_read_fail_reg(i2c_emul,
@@ -643,7 +643,7 @@ ZTEST(isl923x, test_init)
 		      "Expected input current 0mV but got %dmV", input_current);
 
 	/* Test failed CTRL 3 write */
-	isl923x_emul_reset(isl923x_emul);
+	isl923x_emul_reset_registers(isl923x_emul);
 	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL9238_REG_CONTROL3);
 	isl923x_drv.init(CHARGER_NUM);
 	i2c_common_emul_set_write_fail_reg(i2c_emul,
@@ -655,7 +655,7 @@ ZTEST(isl923x, test_init)
 		      "Expected input current 0mV but got %dmV", input_current);
 
 	/* Test failed write adapter current limit */
-	isl923x_emul_reset(isl923x_emul);
+	isl923x_emul_reset_registers(isl923x_emul);
 	i2c_common_emul_set_write_fail_reg(i2c_emul,
 					   ISL923X_REG_ADAPTER_CURRENT_LIMIT1);
 	isl923x_drv.init(CHARGER_NUM);
