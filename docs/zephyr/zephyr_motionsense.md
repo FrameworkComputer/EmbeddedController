@@ -136,7 +136,31 @@ Additional information about the task priority can be found in
 
 ## Testing and Debugging
 
-*Provide any tips for testing and debugging the EC feature.*
+Properly debugging the sensor framework generally involves one of the following:
+
+* If the device is a convertible (laptop/tablet) flip the screen over and make
+  sure that screen rotations work.
+* In the EC console test the following commands:
+  * `accelrange id [data [roundup]]` where the `id` is the sensor number. If
+    `data` is not provided, then this command will perform a read and print the
+    range of the motion sensor. Otherwise, it will set the range to the nearest
+    `data` value depending on `roundup` being either `0` or `1`.
+  * `accelres id [data [roundup]]` where the `id` is the sensor number. If
+    `data` is not provided, then this command will perform a read and print the
+    resolution of the motion sensor. Otherwise, it will set the resolution to
+    the nearest `data` value depending on `roundup` being either `0` or `1`.
+  * `accelrate id [data [roundup]]` where the `id` is the sensor number. If
+    `data` is not provided, then this command will perform a read and print the
+    ODR of the motion sensor. Otherwise, it will set the ODR to the nearest
+    `data` value depending on `roundup` being either `0` or `1`.
+  * `accelread id [n]` where the `id` is the sensor number. If `n` is provided,
+    the sensor will be read `n` times. Otherwise, only a single read operation
+    will take place.
+* From the kernel root shell, test the following commands:
+  * `ectool motionsense` to print all the motion data.
+  * `ectool lid_angle` to verify that the rotation matrices are set correctly
+    for the lid and base accelerometers.
+  * See [ectool] for additional commands or run `ectool help motionsense`.
 
 ## Example
 
@@ -165,3 +189,4 @@ Reference this link in your text by matching the text in brackets exactly.
 [GMR TABLET MODE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_GMR_TABLET_MODE"&ss=chromiumos
 [ACCEL INFO CMD]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_CONSOLE_CMD_ACCEL_INFO"&ss=chromiumos
 [ACCEL SPOOF CMD]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF"&ss=chromiumos
+[ectool]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/util/ectool.c;?q=function:ms_help&ss=chromiumos
