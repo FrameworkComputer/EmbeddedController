@@ -295,8 +295,8 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
 	},
 	[TEMP_SENSOR_5V_REGULATOR] = {
 		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(54),
-			[EC_TEMP_THRESH_HALT] = C_TO_K(57),
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(55),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(58),
 		},
 		.temp_host_release = {
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(47),

@@ -184,8 +184,8 @@ struct chg_curr_step {
 
 static const struct chg_curr_step chg_curr_table[] = {
 	{.on =  0, .off =  0, .curr_ma = 3566},
-	{.on = 65, .off = 64, .curr_ma = 2500},
-	{.on = 69, .off = 68, .curr_ma = 1500},
+	{.on = 66, .off = 65, .curr_ma = 2500},
+	{.on = 70, .off = 69, .curr_ma = 1500},
 };
 
 
