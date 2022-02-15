@@ -136,7 +136,7 @@ const struct usb_mux usb_muxes[] = {
 		.driver = &bb_usb_retimer,
 		.hpd_update = bb_retimer_hpd_update,
 		.i2c_port = I2C_PORT_USB_C0_C1_MUX,
-		.i2c_addr_flags = USBC_PORT_C0_C2_BB_RETIMER_I2C_ADDR,
+		.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
 		.next_mux = &usbc0_tcss_usb_mux,
 	},
 	[USBC_PORT_C1] = {
@@ -144,7 +144,7 @@ const struct usb_mux usb_muxes[] = {
 		.driver = &bb_usb_retimer,
 		.hpd_update = bb_retimer_hpd_update,
 		.i2c_port = I2C_PORT_USB_C0_C1_MUX,
-		.i2c_addr_flags = USBC_PORT_C1_C3_BB_RETIMER_I2C_ADDR,
+		.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
 		.next_mux = &usbc1_tcss_usb_mux,
 	},
 	[USBC_PORT_C2] = {
@@ -152,7 +152,7 @@ const struct usb_mux usb_muxes[] = {
 		.driver = &bb_usb_retimer,
 		.hpd_update = bb_retimer_hpd_update,
 		.i2c_port = I2C_PORT_USB_C2_C3_MUX,
-		.i2c_addr_flags = USBC_PORT_C0_C2_BB_RETIMER_I2C_ADDR,
+		.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
 		.next_mux = &usbc2_tcss_usb_mux,
 	},
 	[USBC_PORT_C3] = {
@@ -160,7 +160,7 @@ const struct usb_mux usb_muxes[] = {
 		.driver = &bb_usb_retimer,
 		.hpd_update = bb_retimer_hpd_update,
 		.i2c_port = I2C_PORT_USB_C2_C3_MUX,
-		.i2c_addr_flags = USBC_PORT_C1_C3_BB_RETIMER_I2C_ADDR,
+		.i2c_addr_flags = USBC_PORT_C3_BB_RETIMER_I2C_ADDR,
 		.next_mux = &usbc3_tcss_usb_mux,
 	},
 };
