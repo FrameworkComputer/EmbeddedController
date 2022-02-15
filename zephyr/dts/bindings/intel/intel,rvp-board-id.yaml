@@ -1,0 +1,26 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Intel RVP Board id
+
+compatible: "intel,rvp-board-id"
+
+properties:
+    bom-gpios:
+      type: phandle-array
+      required: true
+      description: |
+       A list contains GPIO pins corresponding to BOM ID bits.
+
+    fab-gpios:
+      type: phandle-array
+      required: true
+      description: |
+       A list contains GPIO pins corresponding to FAB ID bits.
+
+    board-gpios:
+      type: phandle-array
+      required: true
+      description: |
+       A list contains GPIO pins corresponding to BOARD ID bits.
