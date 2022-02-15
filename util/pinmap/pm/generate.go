@@ -12,6 +12,11 @@ import (
 	"time"
 )
 
+type lineName struct {
+	pin  int    // Pin number
+	name string // Pin name
+}
+
 const header = `/* Copyright %d The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
@@ -24,7 +29,8 @@ const header = `/* Copyright %d The Chromium OS Authors. All rights reserved.
 
 // Generate creates the DTS configuration from the pins using the chip as a
 // reference and writes the DTS to the output.
-func Generate(out io.Writer, pins *Pins, chip Chip) {
+func Generate(out io.Writer, pins *Pins, chip Chip, names bool) {
+	lineNameMap := make(map[string][]lineName)
 	// Write header with date.
 	fmt.Fprintf(out, header, time.Now().Year())
 	// Default sort function (by Signal)
@@ -36,25 +42,18 @@ func Generate(out io.Writer, pins *Pins, chip Chip) {
 		return chip.I2c(jPin.Pin) > chip.I2c(iPin.Pin)
 	}
 	pinConfig(out, "named-adc-channels", pins.Adc, chip, sortSignal, adcConfig)
-	pinConfig(out, "named-gpios", pins.Gpio, chip, sortSignal, gpioConfig)
+	pinConfig(out, "named-gpios", pins.Gpio, chip, sortSignal, func(out io.Writer, pin *Pin, chip Chip) {
+		gpioConfig(out, pin, chip, lineNameMap)
+	})
 	pinConfig(out, "named-i2c-ports", pins.I2c, chip, sortI2c, i2cConfig)
 	pinConfig(out, "named-pwms", pins.Pwm, chip, sortSignal, pwmConfig)
 	fmt.Fprintf(out, "};\n")
 	// Retrieve the enabled nodes, sort, de-dup and
 	// generate overlays.
-	en := chip.EnabledNodes()
-	if len(en) != 0 {
-		sort.Strings(en)
-		var prev string
-		for _, s := range en {
-			if s == prev {
-				continue
-			}
-			fmt.Fprintf(out, "\n&%s {\n", s)
-			fmt.Fprintf(out, "\tstatus = \"okay\";\n")
-			fmt.Fprintf(out, "};\n")
-			prev = s
-		}
+	generateEnabledNodes(out, chip.EnabledNodes())
+	// If gpio line names are required, generate them.
+	if names {
+		generateLineNames(out, lineNameMap)
 	}
 }
 
@@ -97,10 +96,11 @@ func adcConfig(out io.Writer, pin *Pin, chip Chip) {
 	fmt.Fprintf(out, "\t\t};\n")
 }
 
-// gpioConfig is the handler for GPIO pins.
-func gpioConfig(out io.Writer, pin *Pin, chip Chip) {
-	c := chip.Gpio(pin.Pin)
-	if len(c) == 0 {
+// gpioConfig is the handler for GPIO pins. It also stores
+// the line name into the map.
+func gpioConfig(out io.Writer, pin *Pin, chip Chip, lineNameMap map[string][]lineName) {
+	gc, gp := chip.Gpio(pin.Pin)
+	if len(gc) == 0 {
 		fmt.Printf("No matching GPIO for pin %s, ignored\n", pin.Pin)
 		return
 	}
@@ -130,11 +130,12 @@ func gpioConfig(out io.Writer, pin *Pin, chip Chip) {
 	}
 	lc := strings.ToLower(pin.Signal)
 	fmt.Fprintf(out, "\t\tgpio_%s: %s {\n", lc, lc)
-	fmt.Fprintf(out, "\t\t\tgpios = <&%s %s>;\n", c, gtype)
+	fmt.Fprintf(out, "\t\t\tgpios = <&%s %d %s>;\n", gc, gp, gtype)
 	if len(pin.Enum) > 0 {
 		fmt.Fprintf(out, "\t\t\tenum-name = \"%s\";\n", pin.Enum)
 	}
 	fmt.Fprintf(out, "\t\t};\n")
+	lineNameMap[gc] = append(lineNameMap[gc], lineName{gp, lc})
 }
 
 // i2cConfig is the handler for I2C pins.
@@ -182,4 +183,68 @@ func pwmConfig(out io.Writer, pin *Pin, chip Chip) {
 		fmt.Fprintf(out, "\t\t\tenum-name = \"%s\";\n", pin.Enum)
 	}
 	fmt.Fprintf(out, "\t\t};\n")
+}
+
+// generateEnabledNodes generates a "status = okay"
+// property for the list of nodes passed.
+func generateEnabledNodes(out io.Writer, nodes []string) {
+	if len(nodes) != 0 {
+		sort.Strings(nodes)
+		var prev string
+		for _, s := range nodes {
+			if s == prev {
+				continue
+			}
+			fmt.Fprintf(out, "\n&%s {\n", s)
+			fmt.Fprintf(out, "\tstatus = \"okay\";\n")
+			fmt.Fprintf(out, "};\n")
+			prev = s
+		}
+	}
+}
+
+// generateLineNames generates GPIO line names
+// for the GPIO controller map passed.
+// Empty strings are added for missing pins.
+// The format generated is:
+//
+//  &gpioX {
+//     gpio-line-names =
+//          "",
+//          "gpio_name_1",
+//          "",
+//          "",
+//          "gpio_name_2";
+//  };
+//
+func generateLineNames(out io.Writer, gpios map[string][]lineName) {
+	// Sort the GPIO controller names.
+	var gcList []string
+	for gc, _ := range gpios {
+		gcList = append(gcList, gc)
+	}
+	sort.Strings(gcList)
+	for _, gc := range gcList {
+		ln := gpios[gc]
+		// Sort names into pin order.
+		sort.Slice(ln, func(i, j int) bool {
+			return ln[j].pin > ln[i].pin
+		})
+		fmt.Fprintf(out, "\n&%s {\n", gc)
+		fmt.Fprintf(out, "\tgpio-line-names =\n")
+		fmt.Fprintf(out, "\t\t")
+		for i, v := range ln {
+			// If not the first, add comma and step to next line
+			if i != 0 {
+				fmt.Fprintf(out, ",\n\t\t")
+			}
+			// Add filler empty strings
+			for sk := i; sk < v.pin; sk++ {
+				fmt.Fprintf(out, "\"\",\n\t\t")
+			}
+			fmt.Fprintf(out, "\"%s\"", v.name)
+		}
+		fmt.Fprintf(out, ";\n")
+		fmt.Fprintf(out, "};\n")
+	}
 }

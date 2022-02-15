@@ -30,8 +30,9 @@ func (c *genChip) Adc(pin string) string {
 	return pin
 }
 
-func (c *genChip) Gpio(pin string) string {
-	return fmt.Sprintf("gpio %s", pin)
+func (c *genChip) Gpio(pin string) (string, int) {
+
+	return fmt.Sprintf("gpio%c", pin[0]), int(pin[1] - '0')
 }
 
 func (c *genChip) I2c(pin string) string {
@@ -72,7 +73,7 @@ func TestGenerate(t *testing.T) {
 		},
 	}
 	var out bytes.Buffer
-	pm.Generate(&out, pins, &genChip{})
+	pm.Generate(&out, pins, &genChip{}, true)
 	/*
 	 * Rather than doing a golden output text compare, it would be better
 	 * to parse the device tree directly and ensuing it is correct.
@@ -102,19 +103,19 @@ func TestGenerate(t *testing.T) {
 		compatible = "named-gpios";
 
 		gpio_ec_in_1: ec_in_1 {
-			gpios = <&gpio C3 GPIO_INPUT>;
+			gpios = <&gpioC 3 GPIO_INPUT>;
 			enum-name = "ENUM_IN_1";
 		};
 		gpio_ec_in_3: ec_in_3 {
-			gpios = <&gpio G7 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpioG 7 GPIO_INPUT_PULL_UP>;
 			enum-name = "ENUM_IN_3";
 		};
 		gpio_ec_in_4: ec_in_4 {
-			gpios = <&gpio H8 GPIO_INPUT_PULL_DOWN>;
+			gpios = <&gpioH 8 GPIO_INPUT_PULL_DOWN>;
 			enum-name = "ENUM_IN_4";
 		};
 		gpio_ec_out_2: ec_out_2 {
-			gpios = <&gpio D4 GPIO_OUTPUT>;
+			gpios = <&gpioD 4 GPIO_OUTPUT>;
 			enum-name = "ENUM_OUT_2";
 		};
 	};
@@ -168,6 +169,48 @@ func TestGenerate(t *testing.T) {
 
 &pwm1 {
 	status = "okay";
+};
+
+&gpioC {
+	gpio-line-names =
+		"",
+		"",
+		"",
+		"ec_in_1";
+};
+
+&gpioD {
+	gpio-line-names =
+		"",
+		"",
+		"",
+		"",
+		"ec_out_2";
+};
+
+&gpioG {
+	gpio-line-names =
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"ec_in_3";
+};
+
+&gpioH {
+	gpio-line-names =
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"",
+		"ec_in_4";
 };
 `
 	exp := fmt.Sprintf(expFmt, time.Now().Year())

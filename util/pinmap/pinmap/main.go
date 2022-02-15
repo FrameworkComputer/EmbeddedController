@@ -17,6 +17,7 @@ import (
 var chipFlag = flag.String("chip", "", "Chip to use for pinmap")
 var output = flag.String("output", "gpio.dts", "Output file")
 var reader = flag.String("reader", "csv", "Input source type")
+var names = flag.Bool("names", false, "Generate gpio-line-names")
 var force = flag.Bool("force", false, "Overwrite output file")
 
 func main() {
@@ -41,7 +42,7 @@ func main() {
 	if err != nil {
 		Error(fmt.Sprintf("Failed to create %s: %v", *output, err))
 	}
-	pm.Generate(out, pins, chip)
+	pm.Generate(out, pins, chip, *names)
 }
 
 // fileExists returns true if the file currently exists.

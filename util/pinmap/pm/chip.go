@@ -26,10 +26,10 @@ type Chip interface {
 	 */
 	Adc(pin string) string
 	/*
-	 * Gpio will return a DTS reference to the appropriate GPIO
-	 * that is connected to this pin.
+	 * Gpio will return a gpio controller and a pin number for
+	 * the appropriate GPIO that is connected to this pin.
 	 */
-	Gpio(pin string) string
+	Gpio(pin string) (string, int)
 	/*
 	 * I2C will return a DTS reference to the appropriate I2C
 	 * bus that is connected to this pin. The pin is assumed to be

@@ -176,23 +176,32 @@ func (c *Npcx993) Adc(p string) string {
 	}
 }
 
-// Gpio returns the GPIO config for this pin.
-func (c *Npcx993) Gpio(p string) string {
+// Gpio returns the GPIO config for this pin, as
+// a GPIO controller name and a pin number.
+func (c *Npcx993) Gpio(p string) (string, int) {
 	s, ok := npcx993_pins[p]
 	if ok {
 		// Found the pin, now find the GP name.
 		for _, ss := range strings.Split(s, ",") {
+			var offs int
 			if strings.HasPrefix(ss, "GPO") && len(ss) == 5 {
-				lc := strings.ToLower(ss)
-				return fmt.Sprintf("gpio%c %c", lc[3], lc[4])
+				offs = 3
 			} else if strings.HasPrefix(ss, "GPIO") && len(ss) == 6 {
-				lc := strings.ToLower(ss)
-				return fmt.Sprintf("gpio%c %c", lc[4], lc[5])
+				offs = 4
+			} else {
+				continue
 			}
+			lc := strings.ToLower(ss)
+			pin := int(lc[offs+1] - '0')
+			if pin < 0 || pin > 9 {
+				fmt.Printf("Pin value is %d\n", pin)
+				return "", 0
+			}
+			return fmt.Sprintf("gpio%c", lc[offs]), pin
 		}
-		return ""
+		return "", 0
 	} else {
-		return ""
+		return "", 0
 	}
 }
 

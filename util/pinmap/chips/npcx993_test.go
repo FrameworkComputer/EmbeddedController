@@ -29,8 +29,9 @@ func TestMissing(t *testing.T) {
 	if n.Adc(none) != "" {
 		t.Errorf("Expected empty string, got %s for Adc()", n.Adc(none))
 	}
-	if n.Gpio(none) != "" {
-		t.Errorf("Expected empty string, got %s for Gpio()", n.Gpio(none))
+	gc, gp := n.Gpio(none)
+	if gc != "" {
+		t.Errorf("Expected empty string, got %s %d for Gpio()", gc, gp)
 	}
 	if n.Pwm(none) != "" {
 		t.Errorf("Expected empty string, got %s for Pwm()", n.Pwm(none))
@@ -47,8 +48,9 @@ func TestMulti(t *testing.T) {
 	if n.Adc(pin) != "10" {
 		t.Errorf("Expected \"10\", got %s for Adc()", n.Adc(pin))
 	}
-	if n.Gpio(pin) != "gpioe 0" {
-		t.Errorf("Expected \"gpioe 0\", got %s for Gpio()", n.Gpio(pin))
+	gc, gp := n.Gpio(pin)
+	if gc != "gpioe" || gp != 0 {
+		t.Errorf("Expected \"gpioe 0\", got %s %d for Gpio()", gc, gp)
 	}
 	if n.Pwm(pin) != "" {
 		t.Errorf("Expected empty string, got %s for Pwm()", n.Pwm(pin))
