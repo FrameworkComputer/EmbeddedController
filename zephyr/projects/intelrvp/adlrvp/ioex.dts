@@ -1,0 +1,158 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-ioexes {
+		compatible = "named-ioexes";
+
+		usb-c0-bb-retimer-rst {
+			gpios = <&ioex_c0_port 0 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C0_BB_RETIMER_RST";
+			label = "USB_C0_BB_RETIMER_RST";
+		};
+		usb-c0-bb-retimer-ls-en {
+			gpios = <&ioex_c0_port 1 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C0_BB_RETIMER_LS_EN";
+			label = "USB_C0_BB_RETIMER_LS_EN";
+		};
+		usb-c0-usb-mux-cntrl-1 {
+			gpios = <&ioex_c0_port 4 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C0_USB_MUX_CNTRL_1";
+			label = "USB_C0_USB_MUX_CNTRL_1";
+		};
+		usb-c0-usb-mux-cntrl-0 {
+			gpios = <&ioex_c0_port 5 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C0_USB_MUX_CNTRL_0";
+			label = "USB_C0_USB_MUX_CNTRL_0";
+		};
+		usb-c1-bb-retimer-rst {
+			gpios = <&ioex_c1_port 0 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C1_BB_RETIMER_RST";
+			label = "USB_C1_BB_RETIMER_RST";
+		};
+		usb-c1-bb-retimer-ls-en {
+			gpios = <&ioex_c1_port 1 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C1_BB_RETIMER_LS_EN";
+			label = "USB_C1_BB_RETIMER_LS_EN";
+		};
+		usb-c1-hpd {
+			gpios = <&ioex_c1_port 2 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C1_HPD";
+			label = "USB_C1_HPD";
+		};
+		usb-c0-c1-oc {
+			gpios = <&ioex_c1_port 8 GPIO_OUT_HIGH>;
+			enum-name = "IOEX_USB_C0_C1_OC";
+			label = "USB_C0_C1_OC";
+		};
+		usb-c2-bb-retimer-rst {
+			gpios = <&ioex_c2_port 0 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C2_BB_RETIMER_RST";
+			label = "USB_C2_BB_RETIMER_RST";
+		};
+		usb-c2-bb-retimer-ls-en {
+			gpios = <&ioex_c2_port 1 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C2_BB_RETIMER_LS_EN";
+			label = "USB_C2_BB_RETIMER_LS_EN";
+		};
+		usb-c2-usb-mux-cntrl-1 {
+			gpios = <&ioex_c2_port 4 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C2_USB_MUX_CNTRL_1";
+			label = "USB_C2_USB_MUX_CNTRL_1";
+		};
+		usb-c2-usb-mux-cntrl-0 {
+			gpios = <&ioex_c2_port 5 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C2_USB_MUX_CNTRL_0";
+			label = "USB_C2_USB_MUX_CNTRL_0";
+		};
+		usb-c3-bb-retimer-rst {
+			gpios = <&ioex_c3_port 0 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C3_BB_RETIMER_RST";
+			label = "USB_C3_BB_RETIMER_RST";
+		};
+		usb-c3-bb-retimer-ls-en {
+			gpios = <&ioex_c3_port 1 GPIO_OUT_LOW>;
+			enum-name = "IOEX_USB_C3_BB_RETIMER_LS_EN";
+			label = "USB_C3_BB_RETIMER_LS_EN";
+		};
+		usb-c2-c3-oc {
+			gpios = <&ioex_c3_port 8 GPIO_OUT_HIGH>;
+			enum-name = "IOEX_USB_C2_C3_OC";
+			label = "USB_C2_C3_OC";
+		};
+	};
+
+	/* IOEX_C0_PCA9675 */
+	ioex-c0 {
+		compatible = "cros,ioex-chip";
+		i2c-port = <&typec_0>;
+		i2c-addr = <0x21>;
+		drv = "pca9675_ioexpander_drv";
+		flags = <0x00>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		ioex_c0_port: ioex-c0-port@0 {
+			compatible = "cros,ioex-port";
+			reg = <0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <16>;
+		};
+	};
+
+	/* IOEX_C1_PCA9675 */
+	ioex-c1 {
+		compatible = "cros,ioex-chip";
+		i2c-port = <&typec_1>;
+		i2c-addr = <0x21>;
+		drv = "pca9675_ioexpander_drv";
+		flags = <0x00>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		ioex_c1_port: ioex-c1-port@0 {
+			compatible = "cros,ioex-port";
+			reg = <0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <16>;
+		};
+	};
+
+	/* IOEX_C2_PCA9675 */
+	ioex-c2 {
+		compatible = "cros,ioex-chip";
+		i2c-port = <&typec_2>;
+		i2c-addr = <0x21>;
+		drv = "pca9675_ioexpander_drv";
+		flags = <0x00>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		ioex_c2_port: ioex-c2-port@0 {
+			compatible = "cros,ioex-port";
+			reg = <0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <16>;
+		};
+	};
+
+	/* IOEX_C3_PCA9675 */
+	ioex-c3 {
+		compatible = "cros,ioex-chip";
+		i2c-port = <&typec_3>;
+		i2c-addr = <0x21>;
+		drv = "pca9675_ioexpander_drv";
+		flags = <0x00>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		ioex_c3_port: ioex-c3-port@0 {
+			compatible = "cros,ioex-port";
+			reg = <0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <16>;
+		};
+	};
+};

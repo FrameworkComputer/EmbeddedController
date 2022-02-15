@@ -103,6 +103,7 @@ properties:
       - IOEX_USB_C1_DATA_EN
       - IOEX_USB_C1_FAULT_ODL
       - IOEX_USB_C1_FRS_EN
+      - IOEX_USB_C1_HPD
       - IOEX_USB_C1_HPD_IN_DB
       - IOEX_USB_C1_IN_HPD
       - IOEX_USB_C1_MUX_RST_DB
