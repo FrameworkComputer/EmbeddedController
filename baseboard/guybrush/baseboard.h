@@ -90,6 +90,7 @@
 #define GPIO_WP_L			GPIO_EC_WP_L
 
 /* Host communication */
+#define CONFIG_CMD_APTHROTTLE
 #define CONFIG_CMD_CHARGEN
 #define CONFIG_HOST_INTERFACE_ESPI
 #define CONFIG_MKBP_EVENT
