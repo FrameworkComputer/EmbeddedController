@@ -1232,6 +1232,12 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 			read_len += msg->len;
 		else
 			write_len += msg->len;
+#ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
+		if (system_is_locked() &&
+			!board_allow_i2c_passthru(params->port)) {
+			return EC_RES_ACCESS_DENIED;
+		}
+#endif
 	}
 
 	/* Check there is room for the data */
@@ -1358,14 +1364,6 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 			PTHRUPRINTF("\n");
 		}
 		if (rv) {
-#ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
-			if (system_is_locked() &&
-			    !board_allow_i2c_passthru(params->port)) {
-				if (port_is_locked)
-					i2c_lock(params->port, 0);
-				return EC_RES_ACCESS_DENIED;
-			}
-#endif
 			if (!port_is_locked)
 				i2c_lock(params->port, (port_is_locked = 1));
 			rv = i2c_xfer_unlocked(params->port,
