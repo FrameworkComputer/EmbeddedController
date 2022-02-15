@@ -428,7 +428,7 @@ struct motion_sensor_t motion_sensors[] = {
 };
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-int board_allow_i2c_passthru(int port)
+int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 {
 	/*
 	 * Battery port is the only port passthru is allowed on and this board

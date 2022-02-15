@@ -346,9 +346,9 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-int board_allow_i2c_passthru(int port)
+int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 {
-	return (port == I2C_PORT_VIRTUAL_BATTERY);
+	return (cmd_desc->port == I2C_PORT_VIRTUAL_BATTERY);
 }
 
 /* TCPC */

@@ -7,7 +7,7 @@
 
 #include "i2c.h"
 
-int board_allow_i2c_passthru(int port)
+int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 {
-	return (port == I2C_PORT_VIRTUAL_BATTERY);
+	return (cmd_desc->port == I2C_PORT_VIRTUAL_BATTERY);
 }

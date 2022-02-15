@@ -1205,6 +1205,11 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	unsigned int size;
 	int msgnum;
 
+#ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
+	uint8_t cmd_id = 0xff;
+	const uint8_t *out;
+#endif
+
 	if (args->params_size < sizeof(*params)) {
 		PTHRUPRINTS("no params, params_size=%d, need at least %d",
 			    args->params_size, sizeof(*params));
@@ -1217,6 +1222,10 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 
+#ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
+	out = (uint8_t *) args->params + size;
+#endif
+
 	/* Loop and process messages */;
 	for (msgnum = 0, msg = params->msg; msgnum < params->num_msgs;
 	     msgnum++, msg++) {
@@ -1228,14 +1237,24 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 			    addr_flags & EC_I2C_ADDR_MASK,
 			    msg->len);
 
-		if (addr_flags & EC_I2C_FLAG_READ)
+		if (addr_flags & EC_I2C_FLAG_READ) {
 			read_len += msg->len;
-		else
-			write_len += msg->len;
+		} else {
 #ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
-		if (system_is_locked() &&
-			!board_allow_i2c_passthru(params->port)) {
-			return EC_RES_ACCESS_DENIED;
+			cmd_id = out[write_len];
+#endif
+			write_len += msg->len;
+		}
+#ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
+		if (system_is_locked()) {
+			const struct i2c_cmd_desc_t cmd_desc = {
+				.port = params->port,
+				.addr_flags = addr_flags,
+				.cmd = cmd_id,
+			};
+			if (!board_allow_i2c_passthru(
+				&cmd_desc))
+				return EC_RES_ACCESS_DENIED;
 		}
 #endif
 	}
