@@ -116,13 +116,8 @@ static void integration_usb_after(void *state)
  */
 static void check_charge_state(int chgnum, bool attached)
 {
-	struct ec_params_charge_state charge_params = {
-		.chgnum = chgnum, .cmd = CHARGE_STATE_CMD_GET_STATE};
-	struct ec_response_charge_state charge_response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-			EC_CMD_CHARGE_STATE, 0, charge_response, charge_params);
-
-	zassert_ok(host_command_process(&args), "Failed to get charge state");
+	struct ec_response_charge_state charge_response =
+		host_cmd_charge_state(chgnum);
 	zassert_equal(charge_response.get_state.ac, attached,
 			"USB default but AC absent");
 	/* The charging voltage and current are not directly related to the PD
@@ -261,58 +256,6 @@ ZTEST(integration_usb, test_attach_5v_pd_charger)
 	/* TODO(b/217394181): Refactor to direct assert calls */
 	check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK, USB_CHG_TYPE_PD,
 			5000, 3000);
-}
-
-ZTEST(integration_usb, test_attach_20v_pd_charger)
-{
-	const struct emul *tcpci_emul =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
-	const struct emul *charger_emul =
-		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
-	struct i2c_emul *i2c_emul;
-	uint16_t battery_status;
-	struct tcpci_src_emul my_charger;
-	const struct device *gpio_dev =
-		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
-
-	/* Attach emulated charger. Send Source Capabilities that offer 20V. Set
-	 * the charger input voltage to ~18V (the highest voltage it supports).
-	 */
-	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_AC_OK_PIN, 1), NULL);
-	tcpci_src_emul_init(&my_charger);
-	my_charger.data.pdo[1] =
-		PDO_FIXED(20000, 3000, PDO_FIXED_UNCONSTRAINED);
-	zassert_ok(tcpci_src_emul_connect_to_tcpci(&my_charger.data,
-						   &my_charger.common_data,
-						   &my_charger.ops, tcpci_emul),
-		   NULL);
-	isl923x_emul_set_adc_vbus(charger_emul, 20000);
-
-	/* Wait for PD negotiation and current ramp.
-	 * TODO(b/213906889): Check message timing and contents.
-	 */
-	k_sleep(K_SECONDS(10));
-
-	/* Verify battery charging. */
-	i2c_emul = sbat_emul_get_ptr(BATTERY_ORD);
-	zassert_ok(sbat_emul_get_word_val(i2c_emul, SB_BATTERY_STATUS,
-					  &battery_status),
-		   NULL);
-	zassert_equal(battery_status & STATUS_DISCHARGING, 0,
-		      "Battery is discharging: %d", battery_status);
-
-	/* Check the charging voltage and current. Cross-check the PD state,
-	 * the battery/charger state, and the active PDO as reported by the PD
-	 * state. The charging voltage and current are not directly related to
-	 * the PD charging and current, but they should be positive if the
-	 * battery is charging.
-	 */
-	check_charge_state(0, true);
-	check_typec_status(0, PD_ROLE_SINK, USB_CHG_TYPE_PD, 2);
-
-	/* TODO(b/217394181): Refactor to direct assert calls */
-	check_usb_pd_power_info(0, USB_PD_PORT_POWER_SINK, USB_CHG_TYPE_PD,
-			20000, 3000);
 }
 
 ZTEST(integration_usb, test_attach_sink)

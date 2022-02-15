@@ -29,9 +29,6 @@
 
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
 
-#define GPIO_ACOK_OD_NODE DT_PATH(named_gpios, acok_od)
-#define GPIO_ACOK_OD_PIN DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
-
 /* Description of all power states with chipset state masks */
 static struct {
 	/* Power state */
@@ -460,8 +457,6 @@ static void setup_hibernation_delay(void *state)
 	struct ec_params_smart_discharge params;
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
-	const struct device *acok_dev =
-		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_NODE, gpios));
 	struct sbat_emul_bat_data *bat;
 	struct i2c_emul *emul;
 	ARG_UNUSED(state);
@@ -486,9 +481,7 @@ static void setup_hibernation_delay(void *state)
 	test_set_chipset_to_g3();
 
 	/* Disable AC */
-	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, 0), NULL);
-	msleep(CONFIG_EXTPOWER_DEBOUNCE_MS + 1);
-	zassert_equal(0, extpower_is_present(), NULL);
+	set_ac_enabled(false);
 
 	RESET_FAKE(system_hibernate);
 }
@@ -500,8 +493,6 @@ ZTEST(power_common_hibernation, test_power_hc_hibernation_delay)
 	struct ec_params_hibernation_delay params;
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
 		EC_CMD_HIBERNATION_DELAY, 0, response, params);
-	const struct device *acok_dev =
-		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_NODE, gpios));
 	uint32_t h_delay;
 	int sleep_time;
 
@@ -577,9 +568,7 @@ ZTEST(power_common_hibernation, test_power_hc_hibernation_delay)
 		      response.time_remaining);
 
 	/* Enable AC */
-	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, 1), NULL);
-	msleep(CONFIG_EXTPOWER_DEBOUNCE_MS + 1);
-	zassert_equal(1, extpower_is_present(), NULL);
+	set_ac_enabled(true);
 
 	/* Reset system_hibernate fake to check that it is not called on AC */
 	RESET_FAKE(system_hibernate);
@@ -598,9 +587,7 @@ ZTEST(power_common_hibernation, test_power_hc_hibernation_delay)
 		      "system_hibernate() shouldn't be called on AC");
 
 	/* Disable AC */
-	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, 0), NULL);
-	msleep(CONFIG_EXTPOWER_DEBOUNCE_MS + 1);
-	zassert_equal(0, extpower_is_present(), NULL);
+	set_ac_enabled(false);
 
 	/* Go to different state */
 	power_set_state(POWER_G3S5);

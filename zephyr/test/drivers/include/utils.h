@@ -6,7 +6,11 @@
 #ifndef ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 #define ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 
+#include <drivers/gpio/gpio_emul.h>
+
 #include "charger.h"
+#include "extpower.h"
+#include "host_command.h"
 
 /** @brief Set chipset to S0 state. Call all necessary hooks. */
 void test_set_chipset_to_s0(void);
@@ -118,5 +122,97 @@ void test_set_chipset_to_g3(void);
  *            for real arguments accepted.
  */
 #define zassume_mem_equal(...) zassert_mem_equal(##__VA_ARGS__)
+
+/**
+ * Run the host command to get the charge state for a given charger number.
+ *
+ * This function assumes a successful host command processing and will make a
+ * call to the zassume_* API. A failure here will abort the calling test.
+ *
+ * @param chgnum The charger number to query.
+ * @return The result of the query.
+ */
+static inline struct ec_response_charge_state host_cmd_charge_state(int chgnum)
+{
+	struct ec_params_charge_state params = {
+		.chgnum = chgnum,
+		.cmd = CHARGE_STATE_CMD_GET_STATE,
+	};
+	struct ec_response_charge_state response;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_CHARGE_STATE, 0, response, params);
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to get charge state for chgnum %d", chgnum);
+	return response;
+}
+
+/**
+ * Run the host command to get the USB PD power info for a given port.
+ *
+ * This function assumes a successful host command processing and will make a
+ * call to the zassume_* API. A failure here will abort the calling test.
+ *
+ * @param port The USB port to get info from.
+ * @return The result of the query.
+ */
+static inline struct ec_response_usb_pd_power_info host_cmd_power_info(int port)
+{
+	struct ec_params_usb_pd_power_info params = { .port = port };
+	struct ec_response_usb_pd_power_info response;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_USB_PD_POWER_INFO, 0, response, params);
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to get power info for port %d", port);
+	return response;
+}
+
+/**
+ * Run the host command to get the Type-C status information for a given port.
+ *
+ * This function assumes a successful host command processing and will make a
+ * call to the zassume_* API. A failure here will abort the calling test.
+ *
+ * @param port The USB port to get info from.
+ * @return The result of the query.
+ */
+static inline struct ec_response_typec_status host_cmd_typec_status(int port)
+{
+	struct ec_params_typec_status params = { .port = port };
+	struct ec_response_typec_status response;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_TYPEC_STATUS, 0, response, params);
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to get Type-C state for port %d", port);
+	return response;
+}
+
+#define GPIO_ACOK_OD_NODE DT_NODELABEL(gpio_acok_od)
+#define GPIO_ACOK_OD_PIN  DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
+
+/**
+ * Set whether or not AC is enabled.
+ *
+ * If enabled, the device _should_ begin charging.
+ *
+ * This function assumes a successful gpio emulator call and will make a call
+ * to the zassume_* API. A failure here will abort the calling test.
+ *
+ * This function sleeps to wait for the GPIO interrupt to take place.
+ *
+ * @param enabled Whether or not to enable AC.
+ */
+static inline void set_ac_enabled(bool enabled)
+{
+	const struct device *acok_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_NODE, gpios));
+
+	zassume_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PIN, enabled),
+		   NULL);
+	k_sleep(K_MSEC(CONFIG_EXTPOWER_DEBOUNCE_MS + 1));
+	zassume_equal(enabled, extpower_is_present(), NULL);
+}
 
 #endif /* ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_ */

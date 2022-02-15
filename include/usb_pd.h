@@ -104,6 +104,8 @@ enum pd_rx_errors {
 #define PDO_FIXED_PEAK_CURR () /* [21..20] Peak current */
 #define PDO_FIXED_VOLT(mv)  (((mv)/50) << 10) /* Voltage in 50mV units */
 #define PDO_FIXED_CURR(ma)  (((ma)/10) << 0)  /* Max current in 10mA units */
+#define PDO_FIXED_GET_VOLT(pdo) (((pdo >> 10) & 0x3FF) * 50)
+#define PDO_FIXED_GET_CURR(pdo) ((pdo & 0x3FF) * 10)
 
 #define PDO_FIXED(mv, ma, flags) (PDO_FIXED_VOLT(mv) |\
 				  PDO_FIXED_CURR(ma) | (flags))
