@@ -778,3 +778,10 @@ enum ec_error_list charger_enable_linear_charge(int chgnum, bool enable)
 
 	return EC_ERROR_UNIMPLEMENTED;
 }
+
+#ifdef CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+inline int charger_get_min_bat_pct_for_power_on(void)
+{
+	return CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON;
+}
+#endif

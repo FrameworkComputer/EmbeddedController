@@ -8,6 +8,11 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
 cros_ec_library_include_directories(include)
 
+# Common Herobrine implementation
+zephyr_library_sources(
+  "src/board_chipset.c"
+)
+
 # Board specific implementation
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
   "src/usbc_config.c"
