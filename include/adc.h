@@ -27,6 +27,13 @@ extern const struct adc_t adc_channels[];
 extern struct adc_t adc_channels[];
 #endif
 
+/**
+ * ADC initial.
+ */
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+void adc_init(void);
+#endif
+
 /*
  * Boards which use the ADC interface must provide enum adc_channel in the
  * board.h file.  See chip/$CHIP/adc_chip.h for additional chip-specific

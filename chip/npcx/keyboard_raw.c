@@ -52,7 +52,7 @@ void keyboard_raw_init(void)
 	gpio_config_module(MODULE_KEYBOARD_SCAN, 1);
 
 	/*
-	 * Enable interrupts for the inputs.  The top-level interrupt is still
+	 * Enable interrupts for the inputs. The top-level interrupt is still
 	 * masked off, so this won't trigger interrupts yet.
 	 */
 
@@ -72,6 +72,7 @@ void keyboard_raw_init(void)
 /**
  * Finish initialization after task scheduling has started.
  */
+#if !defined(CONFIG_KEYBOARD_SCAN_ADC)
 void keyboard_raw_task_start(void)
 {
 	/* Enable MIWU to trigger KBS interrupt */
@@ -162,6 +163,78 @@ static void keyboard_raw_interrupt(void)
 	task_wake(TASK_ID_KEYSCAN);
 }
 DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1, keyboard_raw_interrupt, 5);
+#endif
+
+#else
+void keyboard_raw_task_start(void)
+{
+	/* Enable interrupts for keyboard matrix inputs */
+	keyboard_raw_enable_interrupt(1);
+}
+
+static void set_kb_columns(int level)
+{
+	gpio_set_level(GPIO_KSO_00, level & BIT(0));
+	gpio_set_level(GPIO_KSO_01, level & BIT(1));
+	gpio_set_level(GPIO_KSO_02, level & BIT(2));
+	gpio_set_level(GPIO_KSO_03, level & BIT(3));
+	gpio_set_level(GPIO_KSO_04, level & BIT(4));
+	gpio_set_level(GPIO_KSO_05, level & BIT(5));
+	gpio_set_level(GPIO_KSO_06, level & BIT(6));
+	gpio_set_level(GPIO_KSO_07, level & BIT(7));
+	gpio_set_level(GPIO_KSO_08, level & BIT(8));
+	gpio_set_level(GPIO_KSO_09, level & BIT(9));
+	gpio_set_level(GPIO_KSO_10, level & BIT(10));
+	gpio_set_level(GPIO_KSO_11, level & BIT(11));
+	gpio_set_level(GPIO_KSO_12, level & BIT(12));
+	gpio_set_level(GPIO_KSO_13, level & BIT(13));
+	gpio_set_level(GPIO_KSO_14, level & BIT(14));
+}
+
+void keyboard_raw_drive_column(int col)
+{
+	if (col == KEYBOARD_COLUMN_NONE)
+		/* Drive all lines to low */
+		set_kb_columns(0);
+
+	else if (col == KEYBOARD_COLUMN_ALL)
+		/* Drive all lines to high to detect any key press */
+		set_kb_columns(0xFFFF);
+
+	else
+		set_kb_columns(BIT(col));
+}
+
+void keyboard_raw_enable_interrupt(int enable)
+{
+	if (enable) {
+		gpio_enable_interrupt(GPIO_KSI_00);
+		gpio_enable_interrupt(GPIO_KSI_01);
+		gpio_enable_interrupt(GPIO_KSI_02);
+		gpio_enable_interrupt(GPIO_KSI_03);
+		gpio_enable_interrupt(GPIO_KSI_04);
+		gpio_enable_interrupt(GPIO_KSI_05);
+		gpio_enable_interrupt(GPIO_KSI_06);
+		gpio_enable_interrupt(GPIO_KSI_07);
+		gpio_enable_interrupt(GPIO_RFR_KEY_L);
+	} else {
+		gpio_disable_interrupt(GPIO_KSI_00);
+		gpio_disable_interrupt(GPIO_KSI_01);
+		gpio_disable_interrupt(GPIO_KSI_02);
+		gpio_disable_interrupt(GPIO_KSI_03);
+		gpio_disable_interrupt(GPIO_KSI_04);
+		gpio_disable_interrupt(GPIO_KSI_05);
+		gpio_disable_interrupt(GPIO_KSI_06);
+		gpio_disable_interrupt(GPIO_KSI_07);
+		gpio_disable_interrupt(GPIO_RFR_KEY_L);
+	}
+}
+
+void keyboard_raw_gpio_interrupt(enum gpio_signal signal)
+{
+	/* Wake the scan task */
+	task_wake(TASK_ID_KEYSCAN);
+}
 #endif
 
 int keyboard_raw_is_input_low(int port, int id)
