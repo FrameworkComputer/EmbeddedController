@@ -45,9 +45,11 @@
 		};
 		gpio_en_pwr_s0_r: en_pwr_s0_r {
 			gpios = <&gpiof 1 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EN_PWR_S0_R";
 		};
 		gpio_en_pwr_pcore_s0_r: en_pwr_pcore_s0_r {
 			gpios = <&gpioe 1 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EN_PWR_PCORE_S0_R";
 		};
 		ec_sys_rst_l {
 			gpios = <&gpio7 6 GPIO_ODR_HIGH>;

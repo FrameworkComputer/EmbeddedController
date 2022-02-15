@@ -39,6 +39,7 @@
 		};
 		gpio_pgood_fan: pgood_fan {
 			gpios = <&gpioc 7 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_PGOOD_FAN";
 		};
 		spi_cs_l {
 			gpios = <&gpioa 5 GPIO_OUT_HIGH>;

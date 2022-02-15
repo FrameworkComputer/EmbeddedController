@@ -15,7 +15,7 @@
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
-		gpio_wp: ec_wp_l {
+		gpio_wp: wp_l {
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_h1_ec_pwr_btn_odl: h1_ec_pwr_btn_odl {
@@ -268,6 +268,7 @@
 		};
 		gpio_en_pp5000_fan: en_pp5000_fan {
 			gpios = <&gpio6 1 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EN_PP5000_FAN";
 		};
 		ec_kso_02_inv {
 			gpios = <&gpio1 7 GPIO_OUT_LOW>;

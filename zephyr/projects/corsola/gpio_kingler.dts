@@ -115,6 +115,7 @@
 		};
 		ec_rst_odl {
 			gpios = <&gpio7 7 GPIO_INPUT>;
+			enum-name = "GPIO_EC_RST_ODL";
 		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;
