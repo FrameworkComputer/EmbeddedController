@@ -1,4 +1,4 @@
-/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -63,6 +63,9 @@
 			gpios = <&gpio1 7 GPIO_OUTPUT>;
 			enum-name = "GPIO_KBD_KSO2";
 		};
+		gpio_ec_pch_wake_odl: ec_pch_wake_odl {
+			gpios = <&gpiob 0 GPIO_ODR_LOW>;
+		};
 		gpio_ec_prochot_odl: ec_prochot_odl {
 			gpios = <&gpiof 1 GPIO_INPUT>;
 		};
@@ -80,7 +83,7 @@
 			gpios = <&gpio7 2 GPIO_ODR_HIGH>;
 		};
 		gpio_ec_soc_pwr_btn_odl: ec_soc_pwr_btn_odl {
-			gpios = <&gpioc 1 GPIO_ODR_LOW>;
+			gpios = <&gpioc 1 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
@@ -94,9 +97,6 @@
 		};
 		gpio_ec_soc_vccst_pwrgd_od: ec_soc_vccst_pwrgd_od {
 			gpios = <&gpioa 4 GPIO_ODR_HIGH>;
-		};
-		gpio_ec_pch_wake_odl: ec_soc_wake_odl {
-			gpios = <&gpiob 0 GPIO_ODR_LOW>;
 		};
 		gpio_ec_wp_odl: ec_wp_odl {
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
