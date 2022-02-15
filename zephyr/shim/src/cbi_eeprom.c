@@ -15,7 +15,7 @@
 void cbi_latch_eeprom_wp(void)
 {
 	cprints(CC_SYSTEM, "CBI WP latched");
-	gpio_set_level(GPIO_EC_CBI_WP, 1);
+	gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_wp), 1);
 }
 #endif /* CONFIG_PLATFORM_EC_EEPROM_CBI_WP */
 
