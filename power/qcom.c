@@ -612,15 +612,27 @@ enum power_state power_chipset_init(void)
 
 /**
  * Power off the AP
+ *
+ * @param shutdown_event	reason of shutdown, which is a return value of
+ *				check_for_power_off_event()
  */
-static void power_off_seq(void)
+static void power_off_seq(uint8_t shutdown_event)
 {
 	/* Check PMIC POWER_GOOD */
 	if (is_pmic_pwron()) {
-		/* Do a graceful way to shutdown PMIC/AP first */
-		set_pmic_pwron(0);
-		usleep(PMIC_POWER_OFF_DELAY);
-
+		if (shutdown_event == POWER_OFF_BY_POWER_GOOD_LOST) {
+			/*
+			 * The POWER_GOOD was lost previously, which sets the
+			 * shutdown_event flag. But now it is up again. This
+			 * is unexpected. Show the warning message. Then go
+			 * straight to turn off the switchcap.
+			 */
+			CPRINTS("Warning: POWER_GOOD up again after lost");
+		} else {
+			/* Do a graceful way to shutdown PMIC/AP first */
+			set_pmic_pwron(0);
+			usleep(PMIC_POWER_OFF_DELAY);
+		}
 	}
 
 	/*
@@ -1023,7 +1035,7 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
 		if (power_on_seq() != EC_SUCCESS) {
-			power_off_seq();
+			power_off_seq(shutdown_from_on);
 			boot_from_off = 0;
 			return POWER_S5;
 		}
@@ -1134,7 +1146,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we drop power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
-		power_off_seq();
+		power_off_seq(shutdown_from_on);
 		CPRINTS("power shutdown complete");
 
 		/* Call hooks after we drop power rails */
