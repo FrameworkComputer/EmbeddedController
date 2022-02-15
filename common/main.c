@@ -6,6 +6,9 @@
  */
 
 #include "board_config.h"
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+#include "adc.h"
+#endif
 #include "button.h"
 #include "chipset.h"
 #include "clock.h"
@@ -207,10 +210,19 @@ test_mockable __keep int main(void)
 		}
 	}
 
-
 #ifdef HAS_TASK_KEYSCAN
-	keyboard_scan_init();
+
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+	/*
+	 * Initialize adc here as we need to use it during keyboard_scan_init
+	 * to scan boot keys
+	 */
+	adc_init();
 #endif
+
+	keyboard_scan_init();
+#endif /* HAS_TASK_KEYSCAN */
+
 #if defined(CONFIG_DEDICATED_RECOVERY_BUTTON) || defined(CONFIG_VOLUME_BUTTONS)
 	button_init();
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON | CONFIG_VOLUME_BUTTONS) */

@@ -5,6 +5,7 @@
 
 /* Keyboard scanner module for Chrome EC */
 
+#include "adc.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
@@ -79,15 +80,15 @@ __overridable struct keyboard_scan_config keyscan_config = {
 
 /* Boot key list.  Must be in same order as enum boot_key. */
 struct boot_key_entry {
-	uint8_t mask_index;
-	uint8_t mask_value;
+	uint8_t col;
+	uint8_t row;
 };
 
 #ifdef CONFIG_KEYBOARD_BOOT_KEYS
 static const struct boot_key_entry boot_key_list[] = {
-	{KEYBOARD_COL_ESC, KEYBOARD_MASK_ESC},   /* Esc */
-	{KEYBOARD_COL_DOWN, KEYBOARD_MASK_DOWN}, /* Down-arrow */
-	{KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_MASK_LEFT_SHIFT}, /* Left-Shift */
+	{KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC},   /* Esc */
+	{KEYBOARD_COL_DOWN, KEYBOARD_ROW_DOWN}, /* Down-arrow */
+	{KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_ROW_LEFT_SHIFT}, /* Left-Shift */
 };
 static uint32_t boot_key_value = BOOT_KEY_NONE;
 #endif
@@ -194,6 +195,45 @@ static void ensure_keyboard_scanned(int old_polls)
 		usleep(keyscan_config.scan_period_us);
 }
 
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+/**
+ * Read KSI ADC rows
+ *
+ * Read each adc channel and look for voltage crossing threshold level
+ */
+static int keyboard_read_adc_rows(void)
+{
+	uint8_t kb_row = 0;
+
+	/* Read each adc channel to build row byte */
+	for (int i = 0; i < KEYBOARD_ROWS; i++) {
+		if (adc_read_channel(ADC_KSI_00 + i) >
+				keyscan_config.ksi_threshold_mv)
+			kb_row |= (1 << i);
+	}
+
+	return kb_row;
+}
+
+/**
+ * Read refresh key
+ *
+ * Refresh key is detached from rest of the matrix in ADC based
+ * keyboard, so needs to be read through GPIO
+ *
+ * @param state		Destination for new state (must be KEYBOARD_COLS_MAX
+ *			long).
+ */
+static void keyboard_read_refresh_key(uint8_t *state)
+{
+	if (!gpio_get_level(GPIO_RFR_KEY_L))
+		state[KEYBOARD_COL_REFRESH] |= BIT(KEYBOARD_ROW_REFRESH);
+	else
+		state[KEYBOARD_COL_REFRESH] &= ~BIT(KEYBOARD_ROW_REFRESH);
+}
+#endif
+
+
 /**
  * Simulate a keypress.
  *
@@ -266,13 +306,26 @@ static int read_matrix(uint8_t *state)
 		udelay(keyscan_config.output_settle_us);
 
 		/* Read the row state */
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+		state[c] = keyboard_read_adc_rows();
+#else
 		state[c] = keyboard_raw_read_rows();
+#endif
 
 		/* Use simulated keyscan sequence instead if testing active */
 		if (IS_ENABLED(CONFIG_KEYBOARD_TEST))
 			state[c] = keyscan_seq_get_scan(c, state[c]);
 	}
 
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+	/* Account for the refresh key */
+	keyboard_read_refresh_key(state);
+
+	/*
+	 * KB with ADC support doesn't have transitional ghost,
+	 * this check isn't required
+	 */
+#else
 	/* 2. Detect transitional ghost */
 	for (c = 0; c < keyboard_cols; c++) {
 		int c2;
@@ -296,6 +349,7 @@ static int read_matrix(uint8_t *state)
 			}
 		}
 	}
+#endif
 
 	/* 3. Fix result */
 	for (c = 0; c < keyboard_cols; c++) {
@@ -488,9 +542,11 @@ static int check_keys_changed(uint8_t *state)
 	/* Read the raw key state */
 	any_pressed = read_matrix(new_state);
 
-	/* Ignore if so many keys are pressed that we're ghosting. */
-	if (has_ghosting(new_state))
-		return any_pressed;
+	if (!IS_ENABLED(CONFIG_KEYBOARD_SCAN_ADC)) {
+		/* Ignore if so many keys are pressed that we're ghosting. */
+		if (has_ghosting(new_state))
+			return any_pressed;
+	}
 
 	/* Check for changes between previous scan and this one */
 	for (c = 0; c < keyboard_cols; c++) {
@@ -629,9 +685,9 @@ static uint32_t check_key_list(const uint8_t *state)
 	/* Update mask with all boot keys that were pressed. */
 	k = boot_key_list;
 	for (c = 0; c < ARRAY_SIZE(boot_key_list); c++, k++) {
-		if (curr_state[k->mask_index] & k->mask_value) {
+		if (curr_state[k->col] & BIT(k->row)) {
 			boot_key_mask |= BIT(c);
-			curr_state[k->mask_index] &= ~k->mask_value;
+			curr_state[k->col] &= ~BIT(k->row);
 		}
 	}
 
@@ -644,6 +700,31 @@ static uint32_t check_key_list(const uint8_t *state)
 	CPRINTS("KB boot key mask %x", boot_key_mask);
 	return boot_key_mask;
 }
+
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+static void read_adc_boot_keys(uint8_t *state)
+{
+	int k;
+
+	for (k = 0; k < ARRAY_SIZE(boot_key_list); k++) {
+		int c = boot_key_list[k].col;
+		int r = boot_key_list[k].row;
+
+		/* Select column, then wait a bit for it to settle */
+		keyboard_raw_drive_column(c);
+		udelay(keyscan_config.output_settle_us);
+
+		if (adc_read_channel(ADC_KSI_00 + r) >
+				keyscan_config.ksi_threshold_mv)
+			state[c] |= BIT(r);
+	}
+
+	/* Read refresh key */
+	keyboard_read_refresh_key(state);
+
+	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
+}
+#endif
 
 /**
  * Check what boot key is down, if any.
@@ -715,14 +796,19 @@ void keyboard_scan_init(void)
 	keyboard_mask_refresh = KEYBOARD_ROW_TO_MASK(
 		board_keyboard_row_refresh());
 
-	/* Configure GPIO */
-	keyboard_raw_init();
+	if (!IS_ENABLED(CONFIG_KEYBOARD_SCAN_ADC))
+		/* Configure GPIO */
+		keyboard_raw_init();
 
 	/* Tri-state the columns */
 	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 
 	/* Initialize raw state */
+#ifndef CONFIG_KEYBOARD_SCAN_ADC
 	read_matrix(debounced_state);
+#else
+	read_adc_boot_keys(debounced_state);
+#endif
 
 #ifdef CONFIG_KEYBOARD_LANGUAGE_ID
 	/* Check keyboard ID state */
@@ -817,9 +903,16 @@ void keyboard_scan_task(void *u)
 			 * user pressing a key and enable_interrupt()
 			 * starting to pay attention to edges.
 			 */
+#ifndef CONFIG_KEYBOARD_SCAN_ADC
 			if (!local_disable_scanning &&
 			    (keyboard_raw_read_rows() || force_poll))
 				break;
+#else
+			if (!local_disable_scanning &&
+			    (keyboard_read_adc_rows() || force_poll ||
+					!gpio_get_level(GPIO_RFR_KEY_L)))
+				break;
+#endif
 			else
 				task_wait_event(-1);
 		}
