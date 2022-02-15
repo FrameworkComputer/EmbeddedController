@@ -20,6 +20,7 @@
 #include "driver/als_tcs3400.h"
 #include "fw_config.h"
 #include "hooks.h"
+#include "keyboard_raw.h"
 #include "lid_switch.h"
 #include "power_button.h"
 #include "power.h"
@@ -121,11 +122,6 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 }
 
 #endif /* CONFIG_CHARGE_RAMP_SW */
-
-void keyboard_raw_enable_interrupt(int enable)
-{
-
-}
 
 enum battery_present battery_hw_present(void)
 {
