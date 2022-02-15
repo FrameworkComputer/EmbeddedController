@@ -736,9 +736,6 @@ __maybe_unused static int ps8815_tcpc_fast_role_swap_enable(int port,
 	if (!tcpm_tcpc_has_frs_control(port))
 		return EC_SUCCESS;
 
-	/*
-	 * TODO(b/183127346): Confirm register write order
-	 */
 	status = tcpc_update8(port,
 			      PS8815_REG_RESERVED_F4,
 			      PS8815_REG_RESERVED_F4_FRS_EN,
