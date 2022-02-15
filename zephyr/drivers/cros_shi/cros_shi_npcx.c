@@ -764,7 +764,16 @@ static void cros_shi_npcx_reset_prepare(struct shi_reg *const inst)
 static int cros_shi_npcx_enable(const struct device *dev)
 {
 	const struct cros_shi_npcx_config *const config = DRV_CONFIG(dev);
+	const struct device *clk_dev = DEVICE_DT_GET(NPCX_CLK_CTRL_NODE);
 	struct shi_reg *const inst = HAL_INSTANCE(dev);
+	int ret;
+
+	ret = clock_control_on(clk_dev,
+			       (clock_control_subsys_t *)&config->clk_cfg);
+	if (ret < 0) {
+		DEBUG_CPRINTF("Turn on SHI clock fail %d", ret);
+		return ret;
+	}
 
 	cros_shi_npcx_reset_prepare(inst);
 	npcx_miwu_irq_disable(&config->shi_cs_wui);
@@ -782,6 +791,8 @@ static int cros_shi_npcx_enable(const struct device *dev)
 static int cros_shi_npcx_disable(const struct device *dev)
 {
 	const struct cros_shi_npcx_config *const config = DRV_CONFIG(dev);
+	const struct device *clk_dev = DEVICE_DT_GET(NPCX_CLK_CTRL_NODE);
+	int ret;
 
 	state = SHI_STATE_DISABLED;
 
@@ -790,6 +801,13 @@ static int cros_shi_npcx_disable(const struct device *dev)
 
 	/* Configure pin-mux from SHI to GPIO. */
 	npcx_pinctrl_mux_configure(config->alts_list, config->alts_size, 0);
+
+	ret = clock_control_off(clk_dev,
+			       (clock_control_subsys_t *)&config->clk_cfg);
+	if (ret < 0) {
+		DEBUG_CPRINTF("Turn off SHI clock fail %d", ret);
+		return ret;
+	}
 
 	/*
 	 * Allow deep sleep again in case CS dropped before ec was
