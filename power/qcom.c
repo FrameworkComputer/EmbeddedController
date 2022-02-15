@@ -621,12 +621,13 @@ static void power_off_seq(void)
 		set_pmic_pwron(0);
 		usleep(PMIC_POWER_OFF_DELAY);
 
-		/*
-		 * Disable signal interrupts, as they are floating when
-		 * switchcap off.
-		 */
-		power_signal_disable_interrupt(GPIO_AP_RST_L);
 	}
+
+	/*
+	 * Disable signal interrupts, as they are floating when
+	 * switchcap off.
+	 */
+	power_signal_disable_interrupt(GPIO_AP_RST_L);
 
 	/* Check the switchcap status */
 	if (is_system_powered()) {
