@@ -432,6 +432,9 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 __overridable uint16_t board_get_ps8xxx_product_id(int port)
 {
+	if (check_ps8755_chip(port))
+		return PS8755_PRODUCT_ID;
+
 	return PS8805_PRODUCT_ID;
 }
 
