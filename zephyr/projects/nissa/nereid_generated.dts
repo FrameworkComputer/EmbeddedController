@@ -10,6 +10,11 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
+		adc_ec_vsense_pp1050_proc: ec_vsense_pp1050_proc {
+			label = "EC_VSENSE_PP1050_PROC";
+			enum-name = "ADC_PP1050_PROC";
+			io-channels = <&adc0 14>;
+		};
 		adc_ec_vsense_pp3300_s5: ec_vsense_pp3300_s5 {
 			label = "EC_VSENSE_PP3300_S5";
 			enum-name = "ADC_PP3300_S5";
@@ -152,9 +157,6 @@
 		};
 		gpio_pg_pp1050_mem_s3_od: pg_pp1050_mem_s3_od {
 			gpios = <&gpiod 3 GPIO_INPUT>;
-		};
-		gpio_pg_pp1050_proc: pg_pp1050_proc {
-			gpios = <&gpiol 1 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_pg_pp5000_s5_od: pg_pp5000_s5_od {
 			gpios = <&gpioe 3 GPIO_INPUT>;

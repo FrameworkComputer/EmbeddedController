@@ -94,6 +94,7 @@ child-binding:
       - ADC_ID_0
       - ADC_ID_1
       - ADC_PMON
+      - ADC_PP1050_PROC
       - ADC_PP3300_S5
       - ADC_PSYS
       - ADC_SOC_IMON2
