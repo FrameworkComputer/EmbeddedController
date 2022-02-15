@@ -8,5 +8,8 @@
 		default_battery: aec_5477109 {
 			compatible = "aec,5477109";
 		};
+		smp_l20m3pg1 {
+			compatible = "smp,l20m3pg1";
+		};
 	};
 };

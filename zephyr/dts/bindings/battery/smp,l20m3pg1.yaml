@@ -1,0 +1,57 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "SMP L20M30PG1"
+compatible: "smp,l20m3pg1"
+
+include: battery-smart.yaml
+
+properties:
+   enum-name:
+      type: string
+      default: "smp,l20m3pg1"
+
+   # TI L20M3PG1 Fuel Gauge
+   manuf_name:
+      default: "SMP"
+   device_name:
+      default: "L20M3PG1"
+   ship_mode_reg_addr:
+      default: 0x00
+   ship_mode_reg_data:
+      default: [ 0x0010, 0x0010 ]
+   fet_mfgacc_support:
+      default: 1
+   fet_reg_addr:
+      default: 0x0054
+   fet_reg_mask:
+      default: 0x2000
+   fet_disconnect_val:
+      default: 0x2000
+   fet_cfet_mask:
+      default: 0x6000
+   fet_cfet_off_val:
+      default: 0x6000
+
+   # Battery info
+   voltage_max:
+      default: 13200
+   voltage_normal:
+      default: 11520
+   voltage_min:
+      default: 9000
+   precharge_current:
+      default: 247
+   start_charging_min_c:
+      default: 0
+   start_charging_max_c:
+      default: 50
+   charging_min_c:
+      default: 0
+   charging_max_c:
+      default: 60
+   discharging_min_c:
+      default: -40
+   discharging_max_c:
+      default: 73

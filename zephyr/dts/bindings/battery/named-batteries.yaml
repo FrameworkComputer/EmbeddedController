@@ -25,4 +25,5 @@ child-binding:
             - "lgc_l20l3pg2"
             - "murata_ap18c4k"
             - "smp_l20m3pg0"
+            - "smp,l20m3pg1"
             - "smp_l20m3pg2"
