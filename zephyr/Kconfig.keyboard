@@ -122,6 +122,13 @@ config PLATFORM_EC_KEYBOARD_REFRESH_ROW3
 	  matrix to row 3. This is used by the boot key detection code to
 	  determine if the refresh key is held down at boot.
 
+config PLATFORM_EC_KEYBOARD_SCAN_ANTIGHOST_ADC
+	bool "Keyboard supports antighost feature"
+	help
+	  Enable this to support anti-ghost feature. KSI lines need to be
+	  connected to adc channels to identify key presses by reading adc
+	  voltage.
+
 config PLATFORM_EC_VOLUME_BUTTONS
 	bool "Board has volume-up and volume-down buttons"
 	help

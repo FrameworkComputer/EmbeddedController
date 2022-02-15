@@ -2941,6 +2941,9 @@
  */
 #define CONFIG_KEYBOARD_RUNTIME_KEYS
 
+/* Add support for ADC based antighost feature */
+#undef CONFIG_KEYBOARD_SCAN_ADC
+
 /*
  * Allow the board layer keyboard customization. If define, the board layer
  * needs to implement:

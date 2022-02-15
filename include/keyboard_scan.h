@@ -32,6 +32,10 @@ struct keyboard_scan_config {
 	uint32_t poll_timeout_us;
 	/* Mask with 1 bits only for keys that actually exist */
 	uint8_t actual_key_mask[KEYBOARD_COLS_MAX];
+#ifdef CONFIG_KEYBOARD_SCAN_ADC
+	/* KSI threshold ADC voltage in mV */
+	uint16_t ksi_threshold_mv;
+#endif
 };
 
 /**
