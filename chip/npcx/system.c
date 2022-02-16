@@ -33,8 +33,9 @@
 
 /* ROM address of chip revision */
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
-#define CHIP_REV_ADDR        0x0000FFFC
-#define CHIP_REV_STR_SIZE    12
+#define CHIP_REV_ADDR             0x0000FFFC
+#define CHIP_REV_STR_SIZE         12
+#define PWDWN_8_RESERVED_SET_MASK 0x30
 #else
 #define CHIP_REV_ADDR        0x00007FFC
 #define CHIP_REV_STR_SIZE    6
@@ -852,15 +853,20 @@ void system_pre_init(void)
 	 * EC should be initialized in Booter
 	 */
 
-	/* Power-down the modules we don't need */
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_1) = 0xF9; /* Skip SDP_PD FIU_PD */
+	/* Power down KBS, SDP, PS2, UART1, and MFT1-3 */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_1) = 0xFB;
+	/* Power down PWM0-7 */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_2) = 0xFF;
 #if defined(CHIP_FAMILY_NPCX5)
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x0F; /* Skip GDMA */
+	/* Power down SMB0-3 */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x0F;
 #elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x3F; /* Skip GDMA */
+	/* Power down SMB0-4 */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_3) = 0x3F;
 #endif
-	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_4) = 0xF4; /* Skip ITIM2/1_PD */
+	/* Power down ITIM3, ADC, PECI, SPIP */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_4) = 0xF4;
+	/* Power down C2HACC, SHM_REG, SHM, Port80, and MSWC */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5) = 0xF8;
 
 	pwdwn6 = 0x70 |
@@ -871,7 +877,7 @@ void system_pre_init(void)
 		 */
 		BIT(NPCX_PWDWN_CTL6_ITIM6_PD) |
 #endif
-		BIT(NPCX_PWDWN_CTL6_ITIM4_PD); /* Skip ITIM5_PD */
+		BIT(NPCX_PWDWN_CTL6_ITIM4_PD);
 #if !defined(CONFIG_HOST_INTERFACE_ESPI)
 	pwdwn6 |= 1 << NPCX_PWDWN_CTL6_ESPI_PD;
 #endif
@@ -881,13 +887,18 @@ void system_pre_init(void)
 #if defined(CHIP_VARIANT_NPCX7M6FB) || defined(CHIP_VARIANT_NPCX7M6FC) || \
 	defined(CHIP_VARIANT_NPCX7M7FC) || defined(CHIP_VARIANT_NPCX7M7WB) || \
 	defined(CHIP_VARIANT_NPCX7M7WC)
+	/* Power down UART2, SMB5-7, ITIM64, and WoV */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0xE7;
 #else
+	/* Power down SMB5-7 */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0x07;
 #endif
 #endif
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
+	/* Power down UART2-4, SMB5-7, and ITIM64 */
 	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_7) = 0xFF;
+	/* Power down I3C */
+	NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_8) = PWDWN_8_RESERVED_SET_MASK | 0x01;
 #endif
 
 	/* Following modules can be powered down automatically in npcx7 */
