@@ -8,6 +8,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "keyboard_backlight.h"
 #include "pwm.h"
 #include "util.h"
 
@@ -16,6 +17,10 @@
 #endif
 
 #ifdef CONFIG_PWM
+
+#define PWM_RAW_TO_PERCENT(v) \
+	DIV_ROUND_NEAREST((uint32_t)(v) * 100, UINT16_MAX)
+#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v) * UINT16_MAX / 100)
 
 /*
  * Get target channel based on type / index host command parameters.
@@ -27,11 +32,6 @@ static int get_target_channel(enum pwm_channel *channel, int type, int index)
 	case EC_PWM_TYPE_GENERIC:
 		*channel = index;
 		break;
-#ifdef CONFIG_PWM_KBLIGHT
-	case EC_PWM_TYPE_KB_LIGHT:
-		*channel = PWM_CH_KBLIGHT;
-		break;
-#endif
 #ifdef CONFIG_PWM_DISPLIGHT
 	case EC_PWM_TYPE_DISPLAY_LIGHT:
 		*channel = PWM_CH_DISPLIGHT;
@@ -49,13 +49,13 @@ __attribute__((weak)) void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
 	int percent;
 
 	/* Convert 16 bit duty to percent on [0, 100] */
-	percent = DIV_ROUND_NEAREST((uint32_t)duty * 100, 65535);
+	percent = PWM_RAW_TO_PERCENT(duty);
 	pwm_set_duty(ch, percent);
 }
 
 __attribute__((weak)) uint16_t pwm_get_raw_duty(enum pwm_channel ch)
 {
-	return (pwm_get_duty(ch) * 65535) / 100;
+	return PWM_PERCENT_TO_RAW(pwm_get_duty(ch));
 }
 
 static enum ec_status
@@ -63,6 +63,14 @@ host_command_pwm_set_duty(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pwm_set_duty *p = args->params;
 	enum pwm_channel channel;
+
+#ifdef CONFIG_PWM_KBLIGHT
+	if (p->pwm_type == EC_PWM_TYPE_KB_LIGHT) {
+		kblight_set(PWM_RAW_TO_PERCENT(p->duty));
+		kblight_enable(p->duty > 0);
+		return EC_RES_SUCCESS;
+	}
+#endif
 
 	if (get_target_channel(&channel, p->pwm_type, p->index))
 		return EC_RES_INVALID_PARAM;
@@ -83,6 +91,14 @@ host_command_pwm_get_duty(struct host_cmd_handler_args *args)
 	struct ec_response_pwm_get_duty *r = args->response;
 
 	enum pwm_channel channel;
+
+#ifdef CONFIG_PWM_KBLIGHT
+	if (p->pwm_type == EC_PWM_TYPE_KB_LIGHT) {
+		r->duty = PWM_PERCENT_TO_RAW(kblight_get());
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	}
+#endif
 
 	if (get_target_channel(&channel, p->pwm_type, p->index))
 		return EC_RES_INVALID_PARAM;
