@@ -4,17 +4,9 @@
  */
 
 / {
-	named-pwms {
-		compatible = "named-pwms";
-
-		displight: edp_bkltctl {
-			pwms = <&pwm5 0 0>;
-			frequency = <4800>;
-		};
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm6 6 0>;
+		frequency = <10000>;
 	};
-};
-
-/* Display backlight */
-&pwm5 {
-	status = "okay";
 };

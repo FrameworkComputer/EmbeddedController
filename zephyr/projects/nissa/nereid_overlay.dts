@@ -164,16 +164,6 @@
 		/delete-node/ temp_sensor_3;
 	};
 
-	/*
-	 * Alias kblist to correct node.
-	 */
-	named-pwms {
-		compatible = "named-pwms";
-
-		kblight: pwm_kb_bl {
-		};
-	};
-
 	usbc {
 		port0 {
 			bc12 {

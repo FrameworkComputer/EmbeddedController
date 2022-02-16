@@ -144,18 +144,6 @@
 		};
 	};
 
-	/*
-	 * Alias kblist to correct node.
-	 * It would be nice to use alias here, but the code
-	 * uses DT_NODELABEL to directly reference the node label.
-	 */
-	named-pwms {
-		compatible = "named-pwms";
-
-		kblight: pwm_kb_bl {
-		};
-	};
-
 	usbc {
 		port0 {
 			bc12 {

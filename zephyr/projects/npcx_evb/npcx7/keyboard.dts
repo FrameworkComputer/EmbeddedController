@@ -28,4 +28,14 @@
 			0xc8	/* C12 */
 			>;
 	};
+
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm2 0 0>;
+		frequency = <10000>;
+	};
+};
+
+&pwm2 {
+	status = "okay";
 };

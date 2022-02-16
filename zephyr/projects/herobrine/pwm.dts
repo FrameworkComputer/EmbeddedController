@@ -7,20 +7,11 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		kblight: kb_bl_pwm {
-			pwms = <&pwm3 0 0>;
-			frequency = <10000>;
-		};
 		displight: ecl_bl_pwm_r {
 			pwms = <&pwm5 0 0>;
 			frequency = <4800>;
 		};
 	};
-};
-
-/* Keyboard backlight */
-&pwm3 {
-	status = "okay";
 };
 
 /* Display backlight */

@@ -12,6 +12,7 @@ register_npcx_project(
         "fan.dts",
         "gpio.dts",
         "interrupts.dts",
+        "keyboard.dts",
         "motionsense.dts",
         "pwm.dts",
         "pwm_leds.dts",

@@ -23,4 +23,14 @@
 			0xca	/* C12 */
 			>;
 	};
+
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm3 0 0>;
+		frequency = <10000>;
+	};
+};
+
+&pwm3 {
+	status = "okay";
 };

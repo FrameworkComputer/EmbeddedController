@@ -1,0 +1,20 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: PWM keyboard backlight configuration
+
+compatible: "cros-ec,kblight-pwm"
+
+include: base.yaml
+
+properties:
+  pwms:
+    type: phandle-array
+    required: true
+    description: PWM controlling the Keyboard backlight level.
+
+  frequency:
+    type: int
+    required: true
+    description: PWM frequency in Hz.

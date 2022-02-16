@@ -7,20 +7,11 @@
 	named-pwms {
 		compatible = "named-pwms";
 
-		kblight: ec_kb_bl_pwm {
-			pwms = <&pwm3 0 0>;
-			frequency = <2400>;
-		};
 		pwm_fan: fan_pwm {
 			pwms = <&pwm5 0 0>;
 			frequency = <25000>;
 		};
 	};
-};
-
-/* Keyboard backlight */
-&pwm3 {
-	status = "okay";
 };
 
 /* Fan control */

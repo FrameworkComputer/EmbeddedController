@@ -25,4 +25,14 @@
 			0	/* C14 - for keypad */
 			>;
 	};
+
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm3 0 0>;
+		frequency = <2400>;
+	};
+};
+
+&pwm3 {
+	status = "okay";
 };

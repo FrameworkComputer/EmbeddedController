@@ -11,10 +11,6 @@
 			pwms = <&pwm0 0 0>;
 			frequency = <25000>;
 		};
-		kblight: kblight {
-			pwms = <&pwm2 0 0>;
-			frequency = <10000>;
-		};
 	};
 };
 
@@ -22,9 +18,4 @@
 &pwm0 {
 	status = "okay";
 	drive-open-drain;
-};
-
-/* kblight */
-&pwm2 {
-	status = "okay";
 };
