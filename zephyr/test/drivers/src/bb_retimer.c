@@ -523,4 +523,30 @@ ZTEST_USER(bb_retimer, test_bb_init)
 		      NULL);
 }
 
+/** Test BB retimer console command */
+ZTEST_USER(bb_retimer, test_bb_console_cmd)
+{
+	int rv;
+
+	/* Validate well formed shell commands */
+	rv = shell_execute_cmd(get_ec_shell(), "bb 1 r 2");
+	zassert_ok(rv, "rv=%d", rv);
+	rv = shell_execute_cmd(get_ec_shell(), "bb 1 w 2 0");
+	zassert_ok(rv, "rv=%d", rv);
+
+	/* Validate errors for malformed shell commands */
+	rv = shell_execute_cmd(get_ec_shell(), "bb x");
+	zassert_equal(EC_ERROR_PARAM_COUNT, rv, "rv=%d", rv);
+	rv = shell_execute_cmd(get_ec_shell(), "bb x r 2");
+	zassert_equal(EC_ERROR_PARAM1, rv, "rv=%d", rv);
+	rv = shell_execute_cmd(get_ec_shell(), "bb 0 r 2");
+	zassert_equal(EC_ERROR_PARAM1, rv, "rv=%d", rv);
+	rv = shell_execute_cmd(get_ec_shell(), "bb 1 x 2");
+	zassert_equal(EC_ERROR_PARAM2, rv, "rv=%d", rv);
+	rv = shell_execute_cmd(get_ec_shell(), "bb 1 r x");
+	zassert_equal(EC_ERROR_PARAM3, rv, "rv=%d", rv);
+	rv = shell_execute_cmd(get_ec_shell(), "bb 1 w 2 x");
+	zassert_equal(EC_ERROR_PARAM4, rv, "rv=%d", rv);
+}
+
 ZTEST_SUITE(bb_retimer, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
