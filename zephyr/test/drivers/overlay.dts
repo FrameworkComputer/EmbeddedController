@@ -20,6 +20,7 @@
 		lis2dw12-int = &ms_lis2dw12_accel;
 		tcs3400-int = &tcs3400_clear;
 		gpio-wp = &gpio_wp_l;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
 	/*
 	 * Keep these GPIOs in pin order.
@@ -40,6 +41,9 @@
 		gpio_wp_l: wp_l {
 			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_OUTPUT |
 					   GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
+			gpios = <&gpio0 4 (GPIO_INPUT | GPIO_OUT_LOW)>;
 		};
 		pg_ec_dsw_pwrok {
 			gpios = <&gpio0 4 GPIO_INPUT>;

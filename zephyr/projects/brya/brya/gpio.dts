@@ -6,6 +6,7 @@
 / {
 	aliases {
 		gpio-wp = &gpio_ec_wp_l;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
 
 	named-gpios {
@@ -118,9 +119,8 @@
 			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
-		ec_kso_02_inv {
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 GPIO_OUT_LOW>;
-			enum-name = "GPIO_KBD_KSO2";
 		};
 		gpio_ec_pch_wake_odl: ec_pch_wake_r_odl {
 			gpios = <&gpioc 0 GPIO_ODR_HIGH>;

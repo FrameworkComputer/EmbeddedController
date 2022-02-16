@@ -21,6 +21,12 @@
 #include <logging/log.h>
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED
+#if !DT_NODE_EXISTS(KBD_KS02_NODE)
+#error gpio_kbd_kso2 alias has to point to the keyboard column 2 output pin.
+#endif
+#endif /* CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED */
+
 #define XEC_MAX_KEY_COLS 18 /* Maximum rows of keyboard matrix */
 #define XEC_MAX_KEY_ROWS 8 /* Maximum columns of keyboard matrix */
 #define XEC_KB_ROW_MASK (BIT(XEC_MAX_KEY_ROWS) - 1)
@@ -79,23 +85,21 @@ static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 	/* Drive all lines to high. i.e. Key detection is disabled. */
 	if (col == KEYBOARD_COLUMN_NONE) {
 		inst->KSO_SEL = MCHP_KSCAN_KSO_EN;
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED))
-			gpio_set_level(GPIO_KBD_KSO2, 0);
+		cros_kb_raw_set_col2(0);
 	}
 	/* Drive all lines to low for detection any key press */
 	else if (col == KEYBOARD_COLUMN_ALL) {
 		inst->KSO_SEL = MCHP_KSCAN_KSO_ALL;
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED))
-			gpio_set_level(GPIO_KBD_KSO2, 1);
+		cros_kb_raw_set_col2(1);
 	}
 	/* Drive one line to low for determining which key's state changed. */
 	else if (IS_ENABLED(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED)) {
 		if (col == 2) {
 			inst->KSO_SEL = MCHP_KSCAN_KSO_EN;
-			gpio_set_level(GPIO_KBD_KSO2, 1);
+			cros_kb_raw_set_col2(1);
 		} else {
 			inst->KSO_SEL = col + CONFIG_KEYBOARD_KSO_BASE;
-			gpio_set_level(GPIO_KBD_KSO2, 0);
+			cros_kb_raw_set_col2(0);
 		}
 	} else {
 		inst->KSO_SEL = col + CONFIG_KEYBOARD_KSO_BASE;

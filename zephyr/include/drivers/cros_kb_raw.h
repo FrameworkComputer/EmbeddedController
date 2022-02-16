@@ -1,7 +1,6 @@
-/*
- * Copyright 2020 Google LLC
- *
- * SPDX-License-Identifier: Apache-2.0
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
  */
 
 /**
@@ -25,6 +24,18 @@
 
 #include <kernel.h>
 #include <device.h>
+#include <drivers/gpio.h>
+
+#include "gpio_signal.h"
+
+/*
+ * When CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED is enabled, the keyboard
+ * driver must drive the column 2 output to the opposite state. If the keyboard
+ * driver doesn't support push-pull operation, then the pin is set using the
+ * GPIO module. Use the presence of the alias node "gpio-kbd-kso2" to determine
+ * when this code is needed.
+ */
+#define KBD_KS02_NODE DT_ALIAS(gpio_kbd_kso2)
 
 /**
  * @brief CROS Keyboard Raw Driver APIs
@@ -160,6 +171,25 @@ static inline int z_impl_cros_kb_raw_enable_interrupt(const struct device *dev,
 	}
 
 	return api->enable_interrupt(dev, enable);
+}
+
+/**
+ * @brief Set the physical value of the keyboard column 2 output.
+ *
+ * When CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED is enabled, the keyboard
+ * driver must invert the column 2 output.
+ *
+ * @param value Physical value to set to the pin
+ */
+static inline void cros_kb_raw_set_col2(int value)
+{
+#if defined CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED && \
+	DT_NODE_EXISTS(KBD_KS02_NODE)
+	const struct gpio_dt_spec *kbd_dt_spec =
+		GPIO_DT_FROM_NODE(KBD_KS02_NODE);
+
+	gpio_pin_set_raw(kbd_dt_spec->port, kbd_dt_spec->pin, value);
+#endif
 }
 
 /**

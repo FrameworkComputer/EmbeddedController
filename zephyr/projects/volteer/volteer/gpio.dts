@@ -6,6 +6,7 @@
 / {
 	aliases {
 		gpio-wp = &gpio_wp;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
 
 	named-gpios {
@@ -269,9 +270,8 @@
 		gpio_en_pp5000_fan: en_pp5000_fan {
 			gpios = <&gpio6 1 GPIO_OUT_LOW>;
 		};
-		ec_kso_02_inv {
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 GPIO_OUT_LOW>;
-			enum-name = "GPIO_KBD_KSO2";
 		};
 	};
 

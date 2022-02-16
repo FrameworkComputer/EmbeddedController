@@ -48,7 +48,6 @@ properties:
       - GPIO_EN_S5_RAILS
       - GPIO_EN_USB_A_5V
       - GPIO_IMVP9_VRRDY_OD
-      - GPIO_KBD_KSO2
       - GPIO_LID_ACCEL_INT_L
       - GPIO_LID_OPEN
       - GPIO_PACKET_MODE_EN

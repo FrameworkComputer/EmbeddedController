@@ -9,7 +9,6 @@
 #include <dt-bindings/clock/npcx_clock.h>
 #include <drivers/cros_kb_raw.h>
 #include <drivers/clock_control.h>
-#include <drivers/gpio.h>
 #include <kernel.h>
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
@@ -21,6 +20,12 @@
 
 #include <logging/log.h>
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
+
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED
+#if !DT_NODE_EXISTS(KBD_KS02_NODE)
+#error gpio_kbd_kso2 alias has to point to the keyboard column 2 output pin.
+#endif
+#endif /* CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED */
 
 #define NPCX_MAX_KEY_COLS 18 /* Maximum rows of keyboard matrix */
 #define NPCX_MAX_KEY_ROWS 8 /* Maximum columns of keyboard matrix */
@@ -127,24 +132,19 @@ static int cros_kb_raw_npcx_drive_column(const struct device *dev, int col)
 	/* Drive all lines to high. ie. Key detection is disabled. */
 	if (col == KEYBOARD_COLUMN_NONE) {
 		mask = ~0;
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED)) {
-			gpio_set_level(GPIO_KBD_KSO2, 0);
-		}
+		cros_kb_raw_set_col2(0);
 	}
 	/* Drive all lines to low for detection any key press */
 	else if (col == KEYBOARD_COLUMN_ALL) {
 		mask = ~(BIT(keyboard_cols) - 1);
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED)) {
-			gpio_set_level(GPIO_KBD_KSO2, 1);
-		}
+		cros_kb_raw_set_col2(1);
 	}
 	/* Drive one line to low for determining which key's state changed. */
 	else {
-		if (IS_ENABLED(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED)) {
-			if (col == 2)
-				gpio_set_level(GPIO_KBD_KSO2, 1);
-			else
-				gpio_set_level(GPIO_KBD_KSO2, 0);
+		if (col == 2) {
+			cros_kb_raw_set_col2(1);
+		} else {
+			cros_kb_raw_set_col2(0);
 		}
 		mask = ~BIT(col_out);
 	}
