@@ -9,6 +9,7 @@
 #include <kernel.h>
 #include <sys/printk.h>
 
+#include "driver/charger/isl923x_public.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -16,6 +17,8 @@
 #include "task.h"
 
 #include "sub_board.h"
+
+LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 static void nivviks_subboard_init(void)
 {
@@ -75,3 +78,23 @@ static void board_init(void)
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1));
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+__override void board_hibernate(void)
+{
+	/* Shut down the chargers */
+	if (board_get_usb_pd_port_count() == 2)
+		raa489000_hibernate(CHARGER_SECONDARY, true);
+	raa489000_hibernate(CHARGER_PRIMARY, true);
+	LOG_INF("Charger(s) hibernated");
+	cflush();
+}
+
+/* Trigger shutdown by enabling the Z-sleep circuit */
+__override void board_hibernate_late(void)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_slp_z), 1);
+	/*
+	 * The system should hibernate, but there may be
+	 * a small delay, so return.
+	 */
+}

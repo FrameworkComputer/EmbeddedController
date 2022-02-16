@@ -10,7 +10,6 @@
 #include "hooks.h"
 #include "usb_mux.h"
 #include "system.h"
-#include "driver/charger/isl923x_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/raa489000.h"
 
@@ -40,28 +39,6 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = TCPC_FLAGS_TCPCI_REV2_0,
 	},
 };
-
-/*
- * Board specific hibernate functions.
- */
-__override void board_hibernate(void)
-{
-	/* Shut down the chargers */
-	if (board_get_usb_pd_port_count() == 2)
-		raa489000_hibernate(CHARGER_SECONDARY, true);
-	raa489000_hibernate(CHARGER_PRIMARY, true);
-	LOG_INF("Charger(s) hibernated");
-	cflush();
-}
-
-__override void board_hibernate_late(void)
-{
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_slp_z), 1);
-	/*
-	 * The system should hibernate, but there may be
-	 * a small delay, so return.
-	 */
-}
 
 int board_is_sourcing_vbus(int port)
 {
