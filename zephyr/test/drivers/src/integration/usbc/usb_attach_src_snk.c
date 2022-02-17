@@ -37,6 +37,8 @@ struct integration_usb_attach_src_then_snk_fixture {
 	const struct emul *tcpci_generic_emul;
 	const struct emul *tcpci_ps8xxx_emul;
 	const struct emul *charger_isl923x_emul;
+	struct tcpci_src_emul my_src;
+	struct tcpci_snk_emul my_snk;
 };
 
 struct integration_usb_attach_snk_then_src_fixture {
@@ -44,6 +46,8 @@ struct integration_usb_attach_snk_then_src_fixture {
 	const struct emul *tcpci_generic_emul;
 	const struct emul *tcpci_ps8xxx_emul;
 	const struct emul *charger_isl923x_emul;
+	struct tcpci_src_emul my_src;
+	struct tcpci_snk_emul my_snk;
 };
 
 static void *integration_usb_src_snk_setup(void)
@@ -54,8 +58,11 @@ static void *integration_usb_src_snk_setup(void)
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL2));
 	const struct emul *charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+	static struct tcpci_src_emul my_src;
+	static struct tcpci_snk_emul my_snk;
 
 	static struct integration_usb_attach_src_then_snk_fixture emul_state;
+
 	/* Setting these are required because compiler believes these values are
 	 * not compile time constants.
 	 */
@@ -65,20 +72,21 @@ static void *integration_usb_src_snk_setup(void)
 	emul_state.tcpci_generic_emul = tcpci_emul;
 	emul_state.tcpci_ps8xxx_emul = tcpci_emul2;
 	emul_state.charger_isl923x_emul = charger_emul;
+	emul_state.my_src = my_src;
+	emul_state.my_snk = my_snk;
 
 	return &emul_state;
 }
 
 static void integration_usb_attach_snk_then_src_before(void *state)
 {
-	struct integration_usb_attach_src_then_snk_fixture *my_state = state;
-
+	const struct integration_usb_attach_src_then_snk_fixture *my_state =
+		state;
 	const struct emul *tcpci_emul_src = my_state->tcpci_generic_emul;
 	const struct emul *tcpci_emul_snk = my_state->tcpci_ps8xxx_emul;
 	const struct emul *charger_emul = my_state->charger_isl923x_emul;
-
-	struct tcpci_src_emul my_charger;
-	struct tcpci_snk_emul my_sink;
+	struct tcpci_src_emul my_src = my_state->my_src;
+	struct tcpci_snk_emul my_snk = my_state->my_snk;
 
 	/* Reset vbus to 0mV */
 	/* TODO(b/217610871): Remove redundant test state cleanup */
@@ -108,10 +116,10 @@ static void integration_usb_attach_snk_then_src_before(void *state)
 	k_sleep(K_SECONDS(1));
 
 	/* Attach emulated sink */
-	tcpci_snk_emul_init(&my_sink);
+	tcpci_snk_emul_init(&my_snk);
 
 	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
-			   &my_sink.data, &my_sink.common_data, &my_sink.ops,
+			   &my_snk.data, &my_snk.common_data, &my_snk.ops,
 			   tcpci_emul_snk),
 		   NULL);
 
@@ -121,10 +129,10 @@ static void integration_usb_attach_snk_then_src_before(void *state)
 	/* 2) Attach SOURCE */
 
 	/* Attach emulated charger. */
-	tcpci_src_emul_init(&my_charger);
+	tcpci_src_emul_init(&my_src);
 	zassume_ok(tcpci_src_emul_connect_to_tcpci(
-			   &my_charger.data, &my_charger.common_data,
-			   &my_charger.ops, tcpci_emul_src),
+			   &my_src.data, &my_src.common_data, &my_src.ops,
+			   tcpci_emul_src),
 		   NULL);
 	isl923x_emul_set_adc_vbus(charger_emul, DEFAULT_VBUS_MV);
 
@@ -140,8 +148,8 @@ static void integration_usb_attach_src_then_snk_before(void *state)
 	const struct emul *tcpci_emul_snk = my_state->tcpci_ps8xxx_emul;
 	const struct emul *charger_emul = my_state->charger_isl923x_emul;
 
-	struct tcpci_src_emul my_charger;
-	struct tcpci_snk_emul my_sink;
+	struct tcpci_src_emul my_src = my_state->my_src;
+	struct tcpci_snk_emul my_snk = my_state->my_snk;
 
 	/* Reset vbus to 0mV */
 	/* TODO(b/217610871): Remove redundant test state cleanup */
@@ -165,10 +173,10 @@ static void integration_usb_attach_src_then_snk_before(void *state)
 	/* 1) Attach SOURCE */
 
 	/* Attach emulated charger. */
-	tcpci_src_emul_init(&my_charger);
+	tcpci_src_emul_init(&my_src);
 	zassume_ok(tcpci_src_emul_connect_to_tcpci(
-			   &my_charger.data, &my_charger.common_data,
-			   &my_charger.ops, tcpci_emul_src),
+			   &my_src.data, &my_snk.common_data, &my_snk.ops,
+			   tcpci_emul_src),
 		   NULL);
 	isl923x_emul_set_adc_vbus(charger_emul, DEFAULT_VBUS_MV);
 
@@ -184,10 +192,10 @@ static void integration_usb_attach_src_then_snk_before(void *state)
 	k_sleep(K_SECONDS(1));
 
 	/* Attach emulated sink */
-	tcpci_snk_emul_init(&my_sink);
+	tcpci_snk_emul_init(&my_snk);
 
 	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
-			   &my_sink.data, &my_sink.common_data, &my_sink.ops,
+			   &my_snk.data, &my_snk.common_data, &my_snk.ops,
 			   tcpci_emul_snk),
 		   NULL);
 
