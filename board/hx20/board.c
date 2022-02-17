@@ -496,6 +496,56 @@ static void check_chassis_open(int init)
 	}
 }
 
+void charge_psys_onoff(uint8_t enable)
+{
+	int control0 = 0x0000;
+	int control1 = 0x0000;
+	int control4 = 0x0000;
+	int data = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, &control1)) {
+		CPRINTS("read charger control1 fail");
+	}
+
+	if (enable) {
+		control0 &= ~ISL9241_CONTROL0_NGATE;
+		control1 &= ~(ISL9241_CONTROL1_IMON | ISL9241_CONTROL1_BGATE);
+		control1 |= ISL9241_CONTROL1_PSYS;
+		control4 &= ~ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0B00;
+		CPRINTS("Power saving disable");
+	} else {
+		control0 |= ISL9241_CONTROL0_NGATE;
+		control1 |= (ISL9241_CONTROL1_IMON | ISL9241_CONTROL1_BGATE);
+		control1 &= ~ISL9241_CONTROL1_PSYS;
+		control4 |= ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0000;
+		CPRINTS("Power saving enable");
+	}
+
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, data)) {
+		CPRINTS("Update charger ACOK reference fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, control0)) {
+		CPRINTS("Update charger control0 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, control1)) {
+		CPRINTS("Update charger control1 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, control4)) {
+		CPRINTS("Update charger control4 fail");
+	}
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -529,6 +579,7 @@ static void board_chipset_startup(void)
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 1);
 
+	charge_psys_onoff(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		board_chipset_startup,
@@ -547,6 +598,7 @@ static void board_chipset_shutdown(void)
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 0);
 
+	charge_psys_onoff(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
@@ -783,7 +835,7 @@ void charger_update(void)
 		CPRINTS("update charger!!");
 
 		val = ISL9241_CONTROL1_PROCHOT_REF_6800 |
-				ISL9241_CONTROL1_SWITCH_FREQ | ISL9241_CONTROL1_PSYS;
+				ISL9241_CONTROL1_SWITCH_FREQ;
 
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_CONTROL1, val)) {
