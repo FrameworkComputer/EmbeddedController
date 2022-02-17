@@ -38,20 +38,28 @@ appear to be caused in part by using relative paths instead of absolute paths.)
 
 To build the Zephyr unit tests for code coverage run:
 
-`zmake coverage build/ztest-coverage`
-
-This target will compile, without linking, all zephyr projects with
-`CONFIG_COVERAGE` Kconfig option enabled, run the tests, and then process the
-profiling data into a code coverage report using the `lcov` and `genhtml`
-tools. This requires the `HAS_COVERAGE_SUPPORT` option, which can only be
-selected in `Kconfig.board`.
+`zmake test --host-tests-only --coverage`
+`genhtml -q -o build/zephyr/coverage_rpt/ build/zephyr/all_tests.info`
 
 The coverage report top-level page is
-`build/ztest-coverage/coverage_rpt/index.html`.
+`build/zephyr/coverage_rpt/index.html`.
 
-For manual coverage report you can run:
-`zmake configure --test --coverage <TESTNAME>`
+However you probably want to merge that with a single board's coverage report
+also, so that you can include code that is not part of any test as well.
+
+```
+zmake build --coverage herobrine
+zmake test --host-tests-only --coverage
+genhtml -q -s --branch-coverage -o build/zephyr/coverage_rpt/ \
+  build/zephyr/all_tests.info build/zephyr/herobrine/output/zephyr.info
+```
+
+The coverage report top-level page is
+`build/zephyr/coverage_rpt/index.html`.
+
+For coverage report for a single test you can run:
+`zmake test --coverage <TESTNAME>`
 
 Example:
-`zmake configure --test --coverage test-drivers`
-`genhtml -q -o build/ztest-coverage/coverage_rpt/ build/zephyr/test-drivers/output/zephyr.info`
+`zmake test --coverage test-drivers`
+`genhtml -q -o build/zephyr/test-drivers/output/coverage_rpt/ build/zephyr/test-drivers/output/zephyr.info`

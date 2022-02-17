@@ -178,7 +178,7 @@ uses.
 Use `zmake` to build and run the test:
 
 ```
-(cr) $ zmake -l DEBUG configure --test -B build/ztest/base32 test-base32
+(cr) $ zmake -l DEBUG test test-base32
 ...
 UART_0 connected to pseudotty: /dev/pts/1
 *** Booting Zephyr OS build zephyr-v2.4.0-1-g63b2330a85cd  ***

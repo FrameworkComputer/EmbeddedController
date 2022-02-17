@@ -226,12 +226,11 @@ zephyr_coverage:
   needs: ["seed_cache"]
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}"
-      --modules-dir "${MODULES_DIR}" -l DEBUG coverage
-      "${BUILD_DIR}/zcoverage"
+      --modules-dir "${MODULES_DIR}" -l DEBUG test
+      --coverage --host-tests-only
   artifacts:
     paths:
-      - build/zcoverage/coverage_rpt/*
-      - build/zcoverage/*.info
+      - build/zephyr/all_tests.info
     expire_in: 1 week
   coverage: '/lines\.*: \d+\.\d+%/'
 
@@ -239,7 +238,7 @@ merged_coverage:
   stage: test
   needs: ["ec_coverage", "zephyr_coverage"]
   script:
-    - lcov --rc lcov_branch_coverage=1 -o build/merged.info -a build/coverage/lcov.info -a build/zcoverage/lcov.info
+    - lcov --rc lcov_branch_coverage=1 -o build/merged.info -a build/coverage/lcov.info -a build/zephyr/all_tests.info
     - lcov --rc lcov_branch_coverage=1 -o build/merged_no_zephyr.info -r build/merged.info
       "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
       "${EC_DIR}/zephyr/drivers/**" "${EC_DIR}/zephyr/include/drivers/**"
@@ -258,7 +257,7 @@ testall:
   needs: ["seed_cache"]
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}"
-      --modules-dir "${MODULES_DIR}" -l DEBUG testall
+      --modules-dir "${MODULES_DIR}" -l DEBUG test --all
 
 twister_coverage:
   stage: test

@@ -5,13 +5,13 @@ so we can test interactions between different subsystems easily.
 ## Run all the test suites
 
 ```bash
-(chroot) zmake configure --test test-drivers
+(chroot) zmake test test-drivers
 ```
 
 To see all the output of zmake (for example if the build fails)
 
 ```bash
-(chroot) zmake -l DEBUG -j 1 configure --test test-drivers
+(chroot) zmake -l DEBUG -j 1 test test-drivers
 ```
 
 ## Code coverage
@@ -19,7 +19,7 @@ To see all the output of zmake (for example if the build fails)
 To calculate code coverage for this test only
 
 ```bash
-(chroot) zmake configure --coverage --test test-drivers
+(chroot) zmake test --coverage test-drivers
 (chroot) genhtml --branch-coverage -q \
         -o build/zephyr/test-drivers/output/coverage_rpt \
         build/zephyr/test-drivers/output/zephyr.info

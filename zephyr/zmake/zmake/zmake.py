@@ -11,6 +11,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+from typing import List
 
 import zmake.build_config
 import zmake.generate_readme
@@ -192,7 +193,7 @@ class Zmake:
 
     def _resolve_projects(
         self, project_names, all_projects=False, host_tests_only=False
-    ):
+    ) -> List[zmake.project.Project]:
         """Finds all projects for the specified command line flags.
 
         Returns a list of projects.
@@ -256,17 +257,19 @@ class Zmake:
         rv = self.executor.wait()
         if rv:
             return rv
-        if len(projects) > 1 and coverage and test_after_configure:
+        test_projects = [p for p in projects if p.config.is_test]
+        if len(test_projects) > 1 and coverage and test_after_configure:
             rv = self._merge_lcov_files(
-                projects=[p for p in projects if p.config.is_test],
+                projects=test_projects,
                 build_dir=build_dir,
                 output_file=build_dir / "all_tests.info",
             )
             if rv:
                 return rv
-        if len(projects) > 1 and coverage and build_after_configure:
+        non_test_projects = [p for p in projects if not p.config.is_test]
+        if len(non_test_projects) > 1 and coverage and build_after_configure:
             rv = self._merge_lcov_files(
-                projects=[p for p in projects if not p.config.is_test],
+                projects=non_test_projects,
                 build_dir=build_dir,
                 output_file=build_dir / "all_builds.info",
             )
@@ -298,6 +301,95 @@ class Zmake:
             all_projects=all_projects,
             host_tests_only=host_tests_only,
             build_after_configure=True,
+        )
+
+    def test(
+        self,
+        project_names,
+        build_dir=None,
+        toolchain=None,
+        clobber=False,
+        bringup=False,
+        coverage=False,
+        allow_warnings=False,
+        all_projects=False,
+        host_tests_only=False,
+        no_rebuild=False,
+    ):
+        """Locate and build the specified projects."""
+        if not no_rebuild:
+            return self.configure(
+                project_names,
+                build_dir=build_dir,
+                toolchain=toolchain,
+                clobber=clobber,
+                bringup=bringup,
+                coverage=coverage,
+                allow_warnings=allow_warnings,
+                all_projects=all_projects,
+                host_tests_only=host_tests_only,
+                test_after_configure=True,
+            )
+        # Resolve build_dir if needed.
+        if not build_dir:
+            build_dir = self.module_paths["ec"] / "build" / "zephyr"
+
+        projects = self._resolve_projects(
+            project_names, all_projects=all_projects, host_tests_only=host_tests_only
+        )
+        test_projects = [p for p in projects if p.config.is_test]
+        for project in test_projects:
+            project_build_dir = pathlib.Path(build_dir) / project.config.project_name
+            gcov = "gcov.sh-not-found"
+            for build_name, _ in project.iter_builds():
+                target_build_dir = project_build_dir / "build-{}".format(build_name)
+                gcov = target_build_dir / "gcov.sh"
+            self.executor.append(
+                func=functools.partial(
+                    self._run_test,
+                    elf_file=project_build_dir / "output" / "zephyr.elf",
+                    coverage=coverage,
+                    gcov=gcov,
+                    build_dir=project_build_dir,
+                    lcov_file=project_build_dir / "output" / "zephyr.info",
+                    timeout=project.config.test_timeout_secs,
+                )
+            )
+            if self._sequential:
+                rv = self.executor.wait()
+                if rv:
+                    return rv
+        rv = self.executor.wait()
+        if rv:
+            return rv
+        if len(test_projects) > 1 and coverage:
+            rv = self._merge_lcov_files(
+                projects=test_projects,
+                build_dir=build_dir,
+                output_file=build_dir / "all_tests.info",
+            )
+            if rv:
+                return rv
+        return 0
+
+    def testall(
+        self,
+        build_dir=None,
+        toolchain=None,
+        clobber=False,
+        bringup=False,
+        coverage=False,
+        allow_warnings=False,
+    ):
+        return self.test(
+            [],
+            build_dir=build_dir,
+            toolchain=toolchain,
+            clobber=clobber,
+            bringup=bringup,
+            coverage=coverage,
+            allow_warnings=allow_warnings,
+            all_projects=True,
         )
 
     def _configure(
@@ -499,7 +591,7 @@ class Zmake:
     def _build(
         self,
         build_dir,
-        project,
+        project: zmake.project.Project,
         output_files_out=None,
         fail_on_warnings=False,
         coverage=False,
@@ -692,64 +784,6 @@ class Zmake:
         else:
             with self.jobserver.get_job():
                 _run()
-
-    def test(self, build_dir, coverage=False):
-        """Test a build directory."""
-        output_files = []
-        build_dir = build_dir.resolve()
-        found_projects = zmake.project.find_projects(build_dir / "project")
-        project = found_projects[(build_dir / "project_name.txt").read_text()]
-        self._build(
-            build_dir, project=project, output_files_out=output_files, coverage=coverage
-        )
-
-        # If the project built but isn't a test, just bail.
-        if not project.config.is_test:
-            return 0
-
-        gcov = "gcov.sh-not-found"
-        if coverage:
-            for build_name, _ in project.iter_builds():
-                gcov = build_dir / "build-{}".format(build_name) / "gcov.sh"
-
-        for output_file in output_files:
-            self.executor.append(
-                func=functools.partial(
-                    self._run_test,
-                    elf_file=output_file,
-                    coverage=coverage,
-                    gcov=gcov,
-                    build_dir=build_dir,
-                    lcov_file=build_dir / "output" / "zephyr.info",
-                    timeout=project.config.test_timeout_secs,
-                )
-            )
-
-        return 0
-
-    def testall(self, build_dir=None, clobber=False):
-        """Test all the valid test targets"""
-        for project in zmake.project.find_projects(
-            self.module_paths["ec"] / "zephyr"
-        ).values():
-            is_test = project.config.is_test
-            if build_dir:
-                project_build_dir = build_dir / project.config.project_name
-            else:
-                project_build_dir = None
-            # Configure and run the test.
-            self.executor.append(
-                func=functools.partial(
-                    self._configure,
-                    project=project,
-                    build_dir=project_build_dir,
-                    build_after_configure=True,
-                    test_after_configure=is_test,
-                    clobber=clobber,
-                )
-            )
-
-        return self.executor.wait()
 
     def _run_lcov(self, build_dir, lcov_file, initial=False, gcov=""):
         gcov = os.path.abspath(gcov)

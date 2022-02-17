@@ -347,7 +347,7 @@ Follow these steps:
 Unit tests, implemented using the Ztest framework, can be found in
 `zephyr/test`.
 
-To run all unit tests, you use `zmake testall`.
+To build all projects and run all unit tests, you use `zmake test --all`.
 
 ## Alternatives Considered
 

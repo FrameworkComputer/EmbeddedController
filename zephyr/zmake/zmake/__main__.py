@@ -222,24 +222,18 @@ def get_argparser():
 
     test = sub.add_parser(
         "test",
-        help="Execute tests from a build directory",
+        help="Configure, build and run tests on specified projects",
     )
     test.add_argument(
-        "-c",
-        "--coverage",
+        "--no-rebuild",
         action="store_true",
-        dest="coverage",
-        help="Run lcov after running test to generate coverage info file.",
+        help="Do not configure or build before running tests.",
     )
-    test.add_argument(
-        "build_dir",
-        type=pathlib.Path,
-        help="The build directory used during configuration",
-    )
+    add_common_configure_args(test)
 
     testall = sub.add_parser(
         "testall",
-        help="Execute all known builds and tests",
+        help="Alias for test --all",
     )
     testall.add_argument(
         "--clobber",
