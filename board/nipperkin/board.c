@@ -360,7 +360,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 /*
  * With privacy screen, with keyboard backlight
  */
-static const struct ec_response_keybd_config keybd_w_privacy_w_kblight = {
+static const struct ec_response_keybd_config
+	keybd_w_privacy_w_kblight = {
 	.num_top_row_keys = 13,
 	.action_keys = {
 		TK_BACK,			/* T1 */
@@ -383,7 +384,8 @@ static const struct ec_response_keybd_config keybd_w_privacy_w_kblight = {
 /*
  * Without privacy screen, with keyboard backlight
  */
-static const struct ec_response_keybd_config keybd_wo_privacy_w_kblight = {
+static const struct ec_response_keybd_config
+	keybd_wo_privacy_w_kblight = {
 	.num_top_row_keys = 13,
 	.action_keys = {
 		TK_BACK,			/* T1 */
@@ -406,7 +408,8 @@ static const struct ec_response_keybd_config keybd_wo_privacy_w_kblight = {
 /*
  * With privacy screen, without keyboard backlight
  */
-static const struct ec_response_keybd_config keybd_w_privacy_wo_kblight = {
+static const struct ec_response_keybd_config
+	keybd_w_privacy_wo_kblight = {
 	.num_top_row_keys = 13,
 	.action_keys = {
 		TK_BACK,			/* T1 */
@@ -429,7 +432,8 @@ static const struct ec_response_keybd_config keybd_w_privacy_wo_kblight = {
 /*
  * Without privacy screen, without keyboard backlight
  */
-static const struct ec_response_keybd_config keybd_wo_privacy_wo_kblight = {
+static const struct ec_response_keybd_config
+	keybd_wo_privacy_wo_kblight_V0 = {
 	.num_top_row_keys = 13,
 	.action_keys = {
 		TK_BACK,			/* T1 */
@@ -449,6 +453,27 @@ static const struct ec_response_keybd_config keybd_wo_privacy_wo_kblight = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+static const struct ec_response_keybd_config
+	keybd_wo_privacy_wo_kblight_V1 = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,			/* T1 */
+		TK_REFRESH,			/* T2 */
+		TK_FULLSCREEN,			/* T3 */
+		TK_OVERVIEW,			/* T4 */
+		TK_SNAPSHOT,			/* T5 */
+		TK_BRIGHTNESS_DOWN,		/* T6 */
+		TK_BRIGHTNESS_UP,		/* T7 */
+		TK_PLAY_PAUSE,			/* T8 */
+		TK_MICMUTE,			/* T9 */
+		TK_VOL_MUTE,			/* T10 */
+		TK_VOL_DOWN,			/* T11 */
+		TK_VOL_UP,			/* T12 */
+		TK_MENU,			/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
@@ -458,8 +483,12 @@ board_vivaldi_keybd_config(void)
 		return &keybd_wo_privacy_w_kblight;
 	else if (board_has_privacy_panel() && !board_has_kblight())
 		return &keybd_w_privacy_wo_kblight;
-	else
-		return &keybd_wo_privacy_wo_kblight;
+	else {
+		if (get_board_version() <= 3)
+			return &keybd_wo_privacy_wo_kblight_V0;
+		else
+			return &keybd_wo_privacy_wo_kblight_V1;
+	}
 }
 
 const struct pi3hdx1204_tuning pi3hdx1204_tuning = {
