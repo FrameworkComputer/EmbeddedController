@@ -35,4 +35,12 @@ setuptools.setup(
             "zmake=zmake.__main__:main",
         ],
     },
+    extras_require={
+        "tests": [
+            "coverage",
+            "pytest",
+            "hypothesis",
+            "testfixtures",
+        ],
+    },
 )

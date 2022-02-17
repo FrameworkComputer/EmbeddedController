@@ -43,7 +43,7 @@ before_script:
   - test -d "${MODULES_DIR}/cryptoc" || git clone --depth 1 -b main https://chromium.googlesource.com/chromiumos/third_party/cryptoc "${MODULES_DIR}/cryptoc"
   - ln -s "$(pwd)" "${MODULES_DIR}/ec"
   - python3 -V  # Print out python version for debugging
-  - python3 -m pip install zephyr/zmake --user
+  - python3 -m pip install 'zephyr/zmake[tests]' --user
   - python3 -m pip install pyyaml packaging
   - export BUILD_DIR=build
   - export PATH="$PATH:$HOME/.local/bin"
@@ -285,3 +285,17 @@ twister_coverage:
       - build/zephyr_codecov/fixed.info
     expire_in: 1 week
   coverage: '/lines\.*: \d+\.\d+%/'
+
+zmake_coverage:
+  stage: test
+  needs: ["seed_cache"]
+  script:
+    - cd zephyr/zmake
+    - coverage run --source=zmake -m pytest .
+    - coverage report
+    - coverage html
+  artifacts:
+    paths:
+      - zephyr/zmake/htmlcov/*
+    expire_in: 1 week
+  coverage: '/TOTAL\.* \d+%/'
