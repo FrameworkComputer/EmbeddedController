@@ -183,6 +183,80 @@
 		ec_flprg2 {
 			gpios = <&gpio8 6 GPIO_INPUT_PULL_UP>;
 		};
+
+		usb_c0_tcpc_fastsw_ctl_en {
+			gpios = <&ioex_c0_port0 4 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_TCPC_FASTSW_CTL_EN";
+		};
+		usb_c0_ppc_en_l {
+			gpios = <&ioex_c0_port1 0 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_PPC_EN_L";
+		};
+		usb_c0_ppc_ilim_3a_en {
+			gpios = <&ioex_c0_port1 1 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_PPC_ILIM_3A_EN";
+		};
+		/* TODO: figure out interrupts */
+		usb_c0_sbu_fault_odl {
+			gpios = <&ioex_c0_port1 2 GPIO_INPUT>;
+			enum-name = "IOEX_USB_C0_FAULT_ODL";
+		};
+		ioex_en_pp5500_usb_a0_vbus: en_pp5500_usb_a0_vbus {
+			gpios = <&ioex_c0_port1 5 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_EN_PP5000_USB_A0_VBUS";
+		};
+		/* TODO: figure out interrupts */
+		usb_a0_fault_odl {
+			gpios = <&ioex_c0_port1 6 GPIO_INPUT>;
+			enum-name = "IOEX_USB3_A0_FAULT_L";
+		};
+		usb_c0_sbu_flip {
+			gpios = <&ioex_c0_port1 7 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_SBU_FLIP";
+		};
+
+		usb_a1_retimer_en {
+			gpios = <&ioex_c1_port0 0 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_A1_RETIMER_EN";
+		};
+		usb_a1_retimer_rst {
+			gpios = <&ioex_c1_port0 1 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_A1_RETIMER_RST";
+		};
+		usb_c1_in_hpd {
+			gpios = <&ioex_c1_port0 3 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_HPD_IN_DB";
+		};
+		usb_c1_tcpc_fastsw_ctl_en {
+			gpios = <&ioex_c1_port0 4 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_TCPC_FASTSW_CTL_EN";
+		};
+		usb_c1_ppc_en_l {
+			gpios = <&ioex_c1_port1 0 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_PPC_EN_L";
+		};
+		usb_c1_ppc_ilim_3a_en {
+			gpios = <&ioex_c1_port1 1 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_PPC_ILIM_3A_EN";
+		};
+		/* TODO: figure out interrupts */
+		usb_c1_sbu_fault_odl {
+			gpios = <&ioex_c1_port1 2 GPIO_INPUT>;
+			enum-name = "IOEX_USB_C1_FAULT_ODL";
+		};
+		ioex_en_pp5500_usb_a1_vbus: en_pp5500_usb_a1_vbus {
+			gpios = <&ioex_c1_port1 5 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_EN_PP5000_USB_A1_VBUS_DB";
+		};
+		/* TODO: figure out interrupts */
+		usb_a1_fault_db_odl {
+			gpios = <&ioex_c1_port1 6 GPIO_INPUT>;
+			enum-name = "IOEX_USB_A1_FAULT_DB_ODL";
+		};
+		usb_c1_sbu_flip {
+			gpios = <&ioex_c1_port1 7 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_SBU_FLIP";
+		};
 	};
 
 	usba-port-enable-list {
@@ -195,101 +269,6 @@
 		/* PSL_IN1/2/4 are used to wake */
 		psl-in-pads = <&psl_in1 &psl_in2 &psl_in4>;
 		status = "okay";
-	};
-
-	named-ioexes {
-		compatible = "named-ioexes";
-
-		usb_c0_tcpc_fastsw_ctl_en {
-			gpios = <&ioex_c0_port0 4 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C0_TCPC_FASTSW_CTL_EN";
-			label = "IOEX_USB_C0_TCPC_FASTSW_CTL_EN";
-		};
-		usb_c0_ppc_en_l {
-			gpios = <&ioex_c0_port1 0 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C0_PPC_EN_L";
-			label = "IOEX_USB_C0_PPC_EN_L";
-		};
-		usb_c0_ppc_ilim_3a_en {
-			gpios = <&ioex_c0_port1 1 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C0_PPC_ILIM_3A_EN";
-			label = "IOEX_USB_C0_PPC_ILIM_3A_EN";
-		};
-		/* TODO: figure out interrupts */
-		usb_c0_sbu_fault_odl {
-			gpios = <&ioex_c0_port1 2 GPIO_INPUT>;
-			enum-name = "IOEX_USB_C0_FAULT_ODL";
-			label = "IOEX_USB_C0_FAULT_ODL";
-		};
-		ioex_en_pp5500_usb_a0_vbus: en_pp5500_usb_a0_vbus {
-			gpios = <&ioex_c0_port1 5 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_EN_PP5000_USB_A0_VBUS";
-			label = "IOEX_EN_PP5000_USB_A0_VBUS";
-		};
-		/* TODO: figure out interrupts */
-		usb_a0_fault_odl {
-			gpios = <&ioex_c0_port1 6 GPIO_INPUT>;
-			enum-name = "IOEX_USB3_A0_FAULT_L";
-			label = "IOEX_USB3_A0_FAULT_L";
-		};
-		usb_c0_sbu_flip {
-			gpios = <&ioex_c0_port1 7 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C0_SBU_FLIP";
-			label = "IOEX_USB_C0_SBU_FLIP";
-		};
-
-		usb_a1_retimer_en {
-			gpios = <&ioex_c1_port0 0 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_A1_RETIMER_EN";
-			label = "IOEX_USB_A1_RETIMER_EN";
-		};
-		usb_a1_retimer_rst {
-			gpios = <&ioex_c1_port0 1 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_A1_RETIMER_RST";
-			label = "IOEX_USB_A1_RETIMER_RST";
-		};
-		usb_c1_in_hpd {
-			gpios = <&ioex_c1_port0 3 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C1_HPD_IN_DB";
-			label = "IOEX_USB_C1_IN_HPD";
-		};
-		usb_c1_tcpc_fastsw_ctl_en {
-			gpios = <&ioex_c1_port0 4 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C1_TCPC_FASTSW_CTL_EN";
-			label = "IOEX_USB_C1_TCPC_FASTSW_CTL_EN";
-		};
-		usb_c1_ppc_en_l {
-			gpios = <&ioex_c1_port1 0 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C1_PPC_EN_L";
-			label = "IOEX_USB_C1_PPC_EN_L";
-		};
-		usb_c1_ppc_ilim_3a_en {
-			gpios = <&ioex_c1_port1 1 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C1_PPC_ILIM_3A_EN";
-			label = "IOEX_USB_C1_PPC_ILIM_3A_EN";
-		};
-		/* TODO: figure out interrupts */
-		usb_c1_sbu_fault_odl {
-			gpios = <&ioex_c1_port1 2 GPIO_INPUT>;
-			enum-name = "IOEX_USB_C1_FAULT_ODL";
-			label = "IOEX_USB_C1_FAULT_ODL";
-		};
-		ioex_en_pp5500_usb_a1_vbus: en_pp5500_usb_a1_vbus {
-			gpios = <&ioex_c1_port1 5 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_EN_PP5000_USB_A1_VBUS_DB";
-			label = "IOEX_EN_PP5000_USB_A1_VBUS";
-		};
-		/* TODO: figure out interrupts */
-		usb_a1_fault_db_odl {
-			gpios = <&ioex_c1_port1 6 GPIO_INPUT>;
-			enum-name = "IOEX_USB_A1_FAULT_DB_ODL";
-			label = "IOEX_USB_A1_FAULT_DB_ODL";
-		};
-		usb_c1_sbu_flip {
-			gpios = <&ioex_c1_port1 7 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C1_SBU_FLIP";
-			label = "IOEX_USB_C1_SBU_FLIP";
-		};
 	};
 };
 

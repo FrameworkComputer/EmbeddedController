@@ -7,7 +7,12 @@
 #ifndef __CROS_EC_IOEXPANDER_H
 #define __CROS_EC_IOEXPANDER_H
 
+#ifdef CONFIG_ZEPHYR
+#define ioex_signal gpio_signal
+#include "gpio.h"
+#else
 enum ioex_signal;	/* from gpio_signal.h */
+#endif
 
 /* IO expander signal definition structure */
 struct ioex_info {
@@ -80,6 +85,51 @@ struct ioexpander_config_t {
 };
 
 extern struct ioexpander_config_t ioex_config[];
+
+#ifdef CONFIG_ZEPHYR
+
+#define ioex_enable_interrupt gpio_enable_interrupt
+#define ioex_disable_interrupt gpio_disable_interrupt
+
+#ifdef CONFIG_GPIO_GET_EXTENDED
+inline int ioex_get_flags(enum gpio_signal signal, int *flags)
+{
+	*flags = gpio_get_flags(signal);
+	return EC_SUCCESS;
+}
+#endif
+
+inline int ioex_set_flags(enum gpio_signal signal, int flags)
+{
+	gpio_set_flags(signal, flags);
+	return EC_SUCCESS;
+}
+
+inline int ioex_get_level(enum gpio_signal signal, int *val)
+{
+	*val = gpio_get_level(signal);
+	return EC_SUCCESS;
+}
+
+inline int ioex_set_level(enum gpio_signal signal, int val)
+{
+	gpio_set_level(signal, val);
+	return EC_SUCCESS;
+}
+
+int ioex_init(int ioex);
+
+inline const char *ioex_get_name(enum ioex_signal signal)
+{
+	return gpio_get_name(signal);
+}
+
+inline int signal_is_ioex(int signal)
+{
+	return 0;
+}
+
+#else
 
 /*
  * Enable the interrupt for the IOEX signal
@@ -198,5 +248,7 @@ int ioex_save_gpio_state(int ioex, int *state, int state_len);
  * @return		EC_SUCCESS if successful, non-zero if error.
  */
 int ioex_restore_gpio_state(int ioex, const int *state, int state_len);
+
+#endif /* CONFIG_ZEPHYR */
 
 #endif /* __CROS_EC_IOEXPANDER_H */

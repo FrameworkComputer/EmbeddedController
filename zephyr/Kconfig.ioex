@@ -15,18 +15,10 @@ if PLATFORM_EC_IOEX
 config PLATFORM_EC_IOEX_INIT_PRIORITY
 	int "IO expander init priority"
 	range 0 99
-	default 52
+	default 50
 	help
 	  Sets the priority of function that initializes
 	  the IO expander subsystem
-
-config PLATFORM_EC_CONSOLE_CMD_IOEX
-	bool "Enable shell commands for IO expander"
-	depends on SHELL
-	help
-	  Enable shell commands for IO expander.
-	  It will enable ioexget and ioexset commands in EC console
-	  that allow to get and change values of IO expanders pins.
 
 config PLATFORM_EC_IOEX_CROS_DRV
 	bool

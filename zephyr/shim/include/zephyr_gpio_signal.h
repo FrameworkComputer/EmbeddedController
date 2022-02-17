@@ -49,6 +49,10 @@ enum gpio_signal {
 #endif
 	GPIO_COUNT,
 	GPIO_LIMIT = 0x0FFF,
+
+	IOEX_SIGNAL_START = GPIO_LIMIT + 1,
+	IOEX_SIGNAL_END = IOEX_SIGNAL_START,
+	IOEX_LIMIT = 0x1FFF,
 };
 #undef GPIO_SIGNAL_WITH_COMMA
 
@@ -123,28 +127,6 @@ DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DT_PTR_DECL)
 
 #endif /* DT_NODE_EXISTS(DT_PATH(named_gpios)) */
 
-/*
- * Define enums for IO expanders and signals
- */
-#define IOEX_SIGNAL(id) DT_STRING_UPPER_TOKEN(id, enum_name)
-#define IOEX_SIGNAL_WITH_COMMA(id) \
-	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name), (IOEX_SIGNAL(id), ), ())
-enum ioex_signal {
-	IOEX_SIGNAL_START = GPIO_LIMIT + 1,
-	/* Used to ensure that the first IOEX signal is same as start */
-	__IOEX_PLACEHOLDER = GPIO_LIMIT,
-#if DT_NODE_EXISTS(DT_PATH(named_ioexes))
-	DT_FOREACH_CHILD(DT_PATH(named_ioexes), IOEX_SIGNAL_WITH_COMMA)
-#endif
-	IOEX_SIGNAL_END,
-	IOEX_LIMIT = 0x1FFF,
-};
-BUILD_ASSERT(IOEX_SIGNAL_END < IOEX_LIMIT);
-
-#undef IOEX_SIGNAL_WITH_COMMA
-#undef IOEX_SIGNAL
-
-#define IOEX_COUNT (IOEX_SIGNAL_END - IOEX_SIGNAL_START)
 
 #define IOEXPANDER_ID_EXPAND(id) ioex_chip_##id
 #define IOEXPANDER_ID(id) IOEXPANDER_ID_EXPAND(id)
