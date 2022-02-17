@@ -83,10 +83,6 @@ int board_set_active_charge_port(int port)
 
 	switch (port) {
 	case CHARGE_PORT_TYPEC0:
-	case CHARGE_PORT_TYPEC1:
-	case CHARGE_PORT_TYPEC2:
-		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
-		break;
 	case CHARGE_PORT_BARRELJACK:
 		/* Make sure BJ adapter is sourcing power */
 		if (gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL))
