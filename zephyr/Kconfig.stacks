@@ -110,14 +110,3 @@ config TASK_USB_CHG_STACK_SIZE
 
 endif # SOC_SERIES_NPCX9
 ##############################################################################
-
-##############################################################################
-if SOC_SERIES_RISCV32_IT8XXX2
-
-# Zephyr internal stack sizes
-
-config SHELL_STACK_SIZE
-	default 1560
-
-endif # SOC_SERIES_RISCV32_IT8XXX2
-##############################################################################
