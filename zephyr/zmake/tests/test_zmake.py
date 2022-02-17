@@ -8,10 +8,7 @@ import logging
 import os
 import pathlib
 import re
-import tempfile
-import unittest
-import unittest.mock as mock
-from unittest.mock import patch
+import unittest.mock
 
 import pytest
 from testfixtures import LogCapture
@@ -22,7 +19,6 @@ import zmake.multiproc as multiproc
 import zmake.output_packers
 import zmake.project
 import zmake.toolchains
-import zmake.zmake as zm
 
 OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 
@@ -33,8 +29,8 @@ class FakeProject:
     # pylint: disable=too-few-public-methods
 
     def __init__(self):
-        self.packer = mock.Mock()
-        self.packer.pack_firmware = mock.Mock(return_value=[])
+        self.packer = unittest.mock.Mock()
+        self.packer.pack_firmware = unittest.mock.Mock(return_value=[])
 
         self.config = zmake.project.ProjectConfig(
             project_name="fakeproject",
@@ -79,7 +75,7 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
 
     def get_job(self):
         """Fake implementation of get_job(), which returns a real JobHandle()"""
-        return zmake.jobserver.JobHandle(mock.Mock())
+        return zmake.jobserver.JobHandle(unittest.mock.Mock())
 
     # pylint: disable=arguments-differ
     def popen(self, cmd, *args, **kwargs):
@@ -108,7 +104,7 @@ def get_test_filepath(suffix):
     return os.path.join(OUR_PATH, "files", "sample_{}.txt".format(suffix))
 
 
-def do_test_with_log_level(log_level, fnames=None):
+def do_test_with_log_level(zmake_factory_from_dir, log_level, fnames=None):
     """Test filtering using a particular log level
 
     Args:
@@ -119,9 +115,7 @@ def do_test_with_log_level(log_level, fnames=None):
             (None to use default ro/rw output)
 
     Returns:
-        tuple:
-            - List of log strings obtained from the run
-            - Temporary directory used for build
+        - List of log strings obtained from the run
     """
     if fnames is None:
         fnames = {
@@ -129,68 +123,51 @@ def do_test_with_log_level(log_level, fnames=None):
             re.compile(r".*build-rw"): get_test_filepath("rw"),
         }
 
-    with tempfile.TemporaryDirectory() as tmpname:
-        tmpname = pathlib.Path(tmpname)
-        os.mkdir(tmpname / "ec")
-        os.mkdir(tmpname / "ec" / "zephyr")
-        with open(tmpname / "ec" / "zephyr" / "module.yml", "w") as fd:
-            fd.write("hi")
-        zephyr_base = tmpname / "zephyr_base"
-        zmk = zm.Zmake(
-            jobserver=FakeJobserver(fnames),
-            zephyr_base=zephyr_base,
-            modules_dir=tmpname,
-        )
-
-        with LogCapture(level=log_level) as cap:
-            with open(tmpname / "VERSION", "w") as fd:
-                fd.write(
-                    """VERSION_MAJOR = 2
-VERSION_MINOR = 5
-PATCHLEVEL = 0
-VERSION_TWEAK = 0
-EXTRAVERSION =
-"""
-                )
-            with patch("zmake.version.get_version_string", return_value="123"):
-                with patch.object(
-                    zmake.project,
-                    "find_projects",
-                    return_value={"fakeproject": FakeProject()},
+    zmk = zmake_factory_from_dir(jobserver=FakeJobserver(fnames))
+    with LogCapture(level=log_level) as cap:
+        with unittest.mock.patch(
+            "zmake.version.get_version_string", return_value="123"
+        ):
+            with unittest.mock.patch.object(
+                zmake.project,
+                "find_projects",
+                return_value={"fakeproject": FakeProject()},
+            ):
+                with unittest.mock.patch(
+                    "zmake.version.write_version_header", autospec=True
                 ):
-                    with patch("zmake.version.write_version_header", autospec=True):
-                        zmk.build(
-                            ["fakeproject"],
-                            clobber=True,
-                        )
-                    multiproc.wait_for_log_end()
+                    zmk.build(
+                        ["fakeproject"],
+                        clobber=True,
+                    )
+                multiproc.wait_for_log_end()
 
     recs = [rec.getMessage() for rec in cap.records]
-    return recs, tmpname
+    return recs
 
 
-class TestFilters(unittest.TestCase):
+class TestFilters:
     """Test filtering of stdout and stderr"""
 
-    def test_filter_normal(self):
+    def test_filter_normal(self, zmake_factory_from_dir):
         """Test filtering of a normal build (with no errors)"""
-        recs, _ = do_test_with_log_level(logging.ERROR)
-        self.assertFalse(recs)
+        recs = do_test_with_log_level(zmake_factory_from_dir, logging.ERROR)
+        assert not recs
 
-    def test_filter_info(self):
+    def test_filter_info(self, zmake_factory_from_dir, tmp_path):
         """Test what appears on the INFO level"""
-        recs, tmpname = do_test_with_log_level(logging.INFO)
+        recs = do_test_with_log_level(zmake_factory_from_dir, logging.INFO)
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
         expected = {
             "Configuring fakeproject:build-rw.",
             "Configuring fakeproject:build-ro.",
-            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmpname),
+            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmp_path),
             "Building fakeproject:build-ro: /usr/bin/ninja -C {}-build-ro".format(
-                tmpname / "ec/build/zephyr/fakeproject/build"
+                tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
             "Building fakeproject:build-rw: /usr/bin/ninja -C {}-build-rw".format(
-                tmpname / "ec/build/zephyr/fakeproject/build"
+                tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
         }
         for suffix in ["ro", "rw"]:
@@ -200,22 +177,22 @@ class TestFilters(unittest.TestCase):
                         "[fakeproject:build-{}]{}".format(suffix, line.strip())
                     )
         # This produces an easy-to-read diff if there is a difference
-        self.assertEqual(expected, set(recs))
+        assert expected == set(recs)
 
-    def test_filter_debug(self):
+    def test_filter_debug(self, zmake_factory_from_dir, tmp_path):
         """Test what appears on the DEBUG level"""
-        recs, tmpname = do_test_with_log_level(logging.DEBUG)
+        recs = do_test_with_log_level(zmake_factory_from_dir, logging.DEBUG)
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
         expected = {
             "Configuring fakeproject:build-rw.",
             "Configuring fakeproject:build-ro.",
-            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmpname),
+            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmp_path),
             "Building fakeproject:build-ro: /usr/bin/ninja -C {}-build-ro".format(
-                tmpname / "ec/build/zephyr/fakeproject/build"
+                tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
             "Building fakeproject:build-rw: /usr/bin/ninja -C {}-build-rw".format(
-                tmpname / "ec/build/zephyr/fakeproject/build"
+                tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
             "Running cat {}/files/sample_ro.txt".format(OUR_PATH),
             "Running cat {}/files/sample_rw.txt".format(OUR_PATH),
@@ -227,12 +204,14 @@ class TestFilters(unittest.TestCase):
                         "[fakeproject:build-{}]{}".format(suffix, line.strip())
                     )
         # This produces an easy-to-read diff if there is a difference
-        self.assertEqual(expected, set(recs))
+        assert expected == set(recs)
 
-    def test_filter_devicetree_error(self):
+    def test_filter_devicetree_error(self, zmake_factory_from_dir):
         """Test that devicetree errors appear"""
-        recs, tmpname = do_test_with_log_level(
-            logging.ERROR, {re.compile(r".*"): get_test_filepath("err")}
+        recs = do_test_with_log_level(
+            zmake_factory_from_dir,
+            logging.ERROR,
+            {re.compile(r".*"): get_test_filepath("err")},
         )
 
         dt_errs = [rec for rec in recs if "adc" in rec]
@@ -280,7 +259,9 @@ class TestFilters(unittest.TestCase):
         ),
     ],
 )
-def test_list_projects(project_names, format, search_dir, expected_output, capsys):
+def test_list_projects(
+    project_names, format, search_dir, expected_output, capsys, zmake_from_dir
+):
     """Test listing projects with default directory."""
     fake_projects = {
         name: zmake.project.Project(
@@ -293,17 +274,12 @@ def test_list_projects(project_names, format, search_dir, expected_output, capsy
         )
         for name in project_names
     }
-    zmk = zm.Zmake()
-    with mock.patch(
+    with unittest.mock.patch(
         "zmake.project.find_projects",
         autospec=True,
         return_value=fake_projects,
     ):
-        zmk.list_projects(format=format, search_dir=search_dir)
+        zmake_from_dir.list_projects(format=format, search_dir=search_dir)
 
     captured = capsys.readouterr()
     assert captured.out == expected_output
-
-
-if __name__ == "__main__":
-    unittest.main()

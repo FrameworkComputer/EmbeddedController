@@ -46,12 +46,12 @@ def test_zmake_does_not_exist(fake_env, mock_execve):
     mock_execve.assert_not_called()
 
 
-def test_zmake_reexec(fake_env, mock_execve):
-    # Nothing else applies?  The re-exec should happen.
-    fake_env["CROS_WORKON_SRCROOT"] = "/mnt/host/source"
+def test_zmake_reexec(fake_env, mock_execve, tmp_path, fake_checkout):
+    # Nothing else applies?  The re-exec should happen, when in a checkout
+    fake_env["CROS_WORKON_SRCROOT"] = tmp_path
     main.maybe_reexec(["--help"])
     new_env = dict(fake_env)
-    new_env["PYTHONPATH"] = "/mnt/host/source/src/platform/ec/zephyr/zmake"
+    new_env["PYTHONPATH"] = str(fake_checkout.resolve())
     mock_execve.assert_called_once_with(
         sys.executable,
         [sys.executable, "-m", "zmake", "--help"],
