@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Common settings and fixtures for all tests."""
+
 import os
 import pathlib
 
@@ -14,10 +16,12 @@ hypothesis.settings.register_profile(
     "cq", suppress_health_check=hypothesis.HealthCheck.all()
 )
 
+# pylint: disable=redefined-outer-name,unused-argument
+
 
 @pytest.fixture
 def zmake_factory_from_dir(tmp_path):
-    """Creates module dirs and returns a Zmake object."""
+    """Creates module dirs and returns a Zmake object factory."""
 
     os.mkdir(tmp_path / "ec")
     os.mkdir(tmp_path / "ec" / "zephyr")
@@ -32,6 +36,7 @@ def zmake_factory_from_dir(tmp_path):
 
 @pytest.fixture
 def zmake_from_dir(zmake_factory_from_dir):
+    """Creates module dirs and returns a Zmake object."""
     return zmake_factory_from_dir()
 
 

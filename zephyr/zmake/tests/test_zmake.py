@@ -26,7 +26,7 @@ OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 class FakeProject:
     """A fake project which requests two builds and does no packing"""
 
-    # pylint: disable=too-few-public-methods
+    # pylint: disable=too-few-public-methods,no-self-use
 
     def __init__(self):
         self.packer = unittest.mock.Mock()
@@ -46,13 +46,16 @@ class FakeProject:
         yield "build-ro", zmake.build_config.BuildConfig()
         yield "build-rw", zmake.build_config.BuildConfig()
 
-    def prune_modules(self, paths):
+    def prune_modules(self, _):
+        """Fake implementation of prune_modules."""
         return {}  # pathlib.Path('path')]
 
-    def find_dts_overlays(self, module_paths):
+    def find_dts_overlays(self, _):
+        """Fake implementation of find_dts_overlays."""
         return zmake.build_config.BuildConfig()
 
     def get_toolchain(self, module_paths, override=None):
+        """Fake implementation of get_toolchain."""
         return zmake.toolchains.GenericToolchain(
             override or "foo",
             modules=module_paths,
@@ -149,6 +152,8 @@ def do_test_with_log_level(zmake_factory_from_dir, log_level, fnames=None):
 class TestFilters:
     """Test filtering of stdout and stderr"""
 
+    # pylint: disable=no-self-use
+
     def test_filter_normal(self, zmake_factory_from_dir):
         """Test filtering of a normal build (with no errors)"""
         recs = do_test_with_log_level(zmake_factory_from_dir, logging.ERROR)
@@ -171,8 +176,8 @@ class TestFilters:
             ),
         }
         for suffix in ["ro", "rw"]:
-            with open(get_test_filepath("%s_INFO" % suffix)) as f:
-                for line in f:
+            with open(get_test_filepath("%s_INFO" % suffix)) as file:
+                for line in file:
                     expected.add(
                         "[fakeproject:build-{}]{}".format(suffix, line.strip())
                     )
@@ -198,8 +203,8 @@ class TestFilters:
             "Running cat {}/files/sample_rw.txt".format(OUR_PATH),
         }
         for suffix in ["ro", "rw"]:
-            with open(get_test_filepath(suffix)) as f:
-                for line in f:
+            with open(get_test_filepath(suffix)) as file:
+                for line in file:
                     expected.add(
                         "[fakeproject:build-{}]{}".format(suffix, line.strip())
                     )
@@ -219,7 +224,7 @@ class TestFilters:
 
 
 @pytest.mark.parametrize(
-    ["project_names", "format", "search_dir", "expected_output"],
+    ["project_names", "fmt", "search_dir", "expected_output"],
     [
         (
             ["link", "samus"],
@@ -260,8 +265,8 @@ class TestFilters:
     ],
 )
 def test_list_projects(
-    project_names, format, search_dir, expected_output, capsys, zmake_from_dir
-):
+    project_names, fmt, search_dir, expected_output, capsys, zmake_from_dir
+):  # pylint: disable=too-many-arguments
     """Test listing projects with default directory."""
     fake_projects = {
         name: zmake.project.Project(
@@ -279,7 +284,7 @@ def test_list_projects(
         autospec=True,
         return_value=fake_projects,
     ):
-        zmake_from_dir.list_projects(format=format, search_dir=search_dir)
+        zmake_from_dir.list_projects(format=fmt, search_dir=search_dir)
 
     captured = capsys.readouterr()
     assert captured.out == expected_output
