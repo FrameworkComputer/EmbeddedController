@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#define DT_DRV_COMPAT named_fans
+
 #include <drivers/sensor.h>
 #include <logging/log.h>
 #include <sys/util_macro.h>
@@ -17,6 +19,9 @@
 #include "gpio.h"
 
 LOG_MODULE_REGISTER(fan_shim, LOG_LEVEL_ERR);
+
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
+	     "Exactly one instance of named-fan should be defined.");
 
 #define FAN_CONFIGS(node_id)                                                   \
 	const struct fan_conf node_id##_conf = {                               \
@@ -51,14 +56,10 @@ LOG_MODULE_REGISTER(fan_shim, LOG_LEVEL_ERR);
 		.pwm_id = PWM_CHANNEL(DT_PHANDLE(node_id, pwm)), \
 	},
 
-#if DT_NODE_EXISTS(DT_INST(0, named_fans))
-DT_FOREACH_CHILD(DT_INST(0, named_fans), FAN_CONFIGS)
-#endif /* named_fan */
+DT_INST_FOREACH_CHILD(0, FAN_CONFIGS)
 
 const struct fan_t fans[] = {
-#if DT_NODE_EXISTS(DT_INST(0, named_fans))
-	DT_FOREACH_CHILD(DT_INST(0, named_fans), FAN_INST)
-#endif /* named_fan */
+	DT_INST_FOREACH_CHILD(0, FAN_INST)
 };
 
 #define TACHO_DEV_INIT(node_id) {                         \
@@ -105,9 +106,7 @@ struct fan_control_t {
 static struct fan_status_t fan_status[FAN_CH_COUNT];
 static int rpm_pre[FAN_CH_COUNT];
 static struct fan_control_t fan_control[] = {
-#if DT_NODE_EXISTS(DT_INST(0, named_fans))
-	DT_FOREACH_CHILD(DT_INST(0, named_fans), FAN_CONTROL_INST)
-#endif /* named_fan */
+	DT_INST_FOREACH_CHILD(0, FAN_CONTROL_INST)
 };
 
 /**
@@ -341,7 +340,7 @@ void fan_channel_setup(int ch, unsigned int flags)
 	struct fan_status_t *status = fan_status + ch;
 
 	if (flags & FAN_USE_RPM_MODE) {
-		DT_FOREACH_CHILD(DT_INST(0, named_fans), TACHO_DEV_INIT)
+		DT_INST_FOREACH_CHILD(0, TACHO_DEV_INIT)
 	}
 
 	status->flags = flags;
