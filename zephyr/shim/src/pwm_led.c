@@ -16,12 +16,11 @@
 #include "hooks.h"
 #include "led_common.h"
 #include "led_pwm.h"
-#include "pwm.h"
 #include "util.h"
 
 LOG_MODULE_REGISTER(pwm_led, LOG_LEVEL_ERR);
 
-BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(cros_ec_pwm_leds) <= 1,
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 	     "Multiple CrOS EC PWM LED instances defined");
 BUILD_ASSERT(DT_INST_PROP_LEN(0, leds) <= 2,
 	     "Unsupported number of LEDs defined");
@@ -52,8 +51,9 @@ static void pwm_led_set_duty(const struct pwm_led_dt_channel *ch, int percent)
 
 	rv = pwm_pin_set_usec(ch->dev, ch->channel, ch->period_us, pulse_us,
 			      ch->flags);
-	if (rv)
+	if (rv) {
 		LOG_ERR("pwm_pin_set_usec() failed %s (%d)", ch->dev->name, rv);
+	}
 }
 
 #define PWM_CHANNEL_DT_BY_IDX_INIT(node_id, led_ch, _period_us)             \
@@ -147,26 +147,27 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	}
 
 	if (DT_INST_NODE_HAS_PROP(0, color_map_red) &&
-	    brightness[EC_LED_COLOR_RED])
+	    brightness[EC_LED_COLOR_RED]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_RED);
-	else if (DT_INST_NODE_HAS_PROP(0, color_map_green) &&
-		 brightness[EC_LED_COLOR_GREEN])
+	} else if (DT_INST_NODE_HAS_PROP(0, color_map_green) &&
+		 brightness[EC_LED_COLOR_GREEN]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_GREEN);
-	else if (DT_INST_NODE_HAS_PROP(0, color_map_blue) &&
-			brightness[EC_LED_COLOR_BLUE])
+	} else if (DT_INST_NODE_HAS_PROP(0, color_map_blue) &&
+			brightness[EC_LED_COLOR_BLUE]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_BLUE);
-	else if (DT_INST_NODE_HAS_PROP(0, color_map_yellow) &&
-			brightness[EC_LED_COLOR_YELLOW])
+	} else if (DT_INST_NODE_HAS_PROP(0, color_map_yellow) &&
+			brightness[EC_LED_COLOR_YELLOW]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_YELLOW);
-	else if (DT_INST_NODE_HAS_PROP(0, color_map_white) &&
-			brightness[EC_LED_COLOR_WHITE])
+	} else if (DT_INST_NODE_HAS_PROP(0, color_map_white) &&
+			brightness[EC_LED_COLOR_WHITE]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_WHITE);
-	else if (DT_INST_NODE_HAS_PROP(0, color_map_amber) &&
-			brightness[EC_LED_COLOR_AMBER])
+	} else if (DT_INST_NODE_HAS_PROP(0, color_map_amber) &&
+			brightness[EC_LED_COLOR_AMBER]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_AMBER);
-	else
+	} else {
 		/* Otherwise, the "color" is "off". */
 		set_pwm_led_color(pwm_id, -1);
+	}
 
 	return EC_SUCCESS;
 }
