@@ -104,37 +104,6 @@ static void integration_usb_after(void *state)
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
 }
 
-ZTEST(integration_usb, test_attach_sink)
-{
-	const struct emul *tcpci_emul =
-		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
-	struct tcpci_snk_emul my_sink;
-
-	/* Set chipset to ON, this will set TCPM to DRP */
-	test_set_chipset_to_s0();
-
-	/* TODO(b/214401892): Check why need to give time TCPM to spin */
-	k_sleep(K_SECONDS(1));
-
-	/* Attach emulated sink */
-	tcpci_snk_emul_init(&my_sink);
-	zassert_ok(tcpci_snk_emul_connect_to_tcpci(&my_sink.data,
-						   &my_sink.common_data,
-						   &my_sink.ops, tcpci_emul),
-		   NULL);
-
-	/* Wait for PD negotiation */
-	k_sleep(K_SECONDS(10));
-
-	/* Test if partner believe that PD negotiation is completed */
-	zassert_true(my_sink.data.pd_completed, NULL);
-	/*
-	 * Test that SRC ready is achieved
-	 * TODO: Change it to examining EC_CMD_TYPEC_STATUS
-	 */
-	zassert_equal(PE_SRC_READY, get_state_pe(USBC_PORT_C0), NULL);
-}
-
 ZTEST(integration_usb, test_attach_drp)
 {
 	const struct emul *tcpci_emul =
