@@ -186,6 +186,18 @@
 	status = "okay";
 };
 
+&adc_ec_vsense_pp3300_s5 {
+	/*
+	 * Voltage divider on input has 47k upper and 220k lower legs with 3 V
+	 * full-scale reading on the ADC. Apply the largest possible multiplier
+	 * (without overflowing int32) to get the best possible approximation
+	 * of the actual ratio, but derate by a factor of two to ensure
+	 * unexpectedly high values won't overflow.
+	 */
+	mul = <(715828 / 2)>;
+	div = <(589820 / 2)>;
+};
+
 /* Set bus speeds for I2C */
 &i2c0 {
 	label = "I2C_EEPROM";
