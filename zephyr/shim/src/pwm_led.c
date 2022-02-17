@@ -44,6 +44,11 @@ static void pwm_led_set_duty(const struct pwm_led_dt_channel *ch, int percent)
 	uint32_t pulse_us;
 	int rv;
 
+	if (!device_is_ready(ch->dev)) {
+		LOG_ERR("PWM device %s not ready", ch->dev->name);
+		return;
+	}
+
 	pulse_us = DIV_ROUND_NEAREST(ch->period_us * percent, 100);
 
 	LOG_DBG("LED PWM %s set percent (%d), pulse %d", ch->dev->name, percent,
