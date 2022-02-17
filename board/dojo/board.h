@@ -31,6 +31,9 @@
 
 /* BC12 */
 
+/* Charger */
+#define CONFIG_CHARGER_PROFILE_OVERRIDE
+
 /* PD / USB-C / PPC */
 #undef CONFIG_USB_PD_DEBUG_LEVEL /* default to 1, configurable in ec console */
 
@@ -109,6 +112,24 @@ enum pwm_channel {
 	PWM_CH_LED_C0_AMBER,
 	PWM_CH_COUNT,
 };
+
+/* Temperature charging level */
+enum temp_chg_lvl {
+	LEVEL_0 = 0,
+	LEVEL_1,
+	LEVEL_2,
+	CHG_LEVEL_COUNT,
+};
+
+/* Temperature charging struct */
+struct temp_chg_struct {
+	int lo_thre;
+	int hi_thre;
+	int chg_curr;
+};
+
+/* Forward declaration of temperature charging table */
+extern const struct temp_chg_struct temp_chg_table[];
 
 int board_accel_force_mode_mask(void);
 

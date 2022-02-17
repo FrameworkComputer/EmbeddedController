@@ -6,6 +6,10 @@
 #include "battery.h"
 #include "battery_fuel_gauge.h"
 #include "battery_smart.h"
+#include "charge_state.h"
+#include "console.h"
+#include "temp_sensor.h"
+#include "util.h"
 
 const struct board_batt_params board_battery_info[] = {
 	/* DynaPack CosMX Battery Information */
@@ -161,3 +165,44 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_DYNAPACK_COS;
+
+int charger_profile_override(struct charge_state_data *curr)
+{
+	int chg_temp;
+	int prev_chg_lvl;
+	static int chg_lvl;
+
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		temp_sensor_read(TEMP_SENSOR_CHARGER, &chg_temp);
+		chg_temp = K_TO_C(chg_temp);
+
+		prev_chg_lvl = chg_lvl;
+		if (chg_temp <= temp_chg_table[chg_lvl].lo_thre &&
+		    chg_lvl > 0)
+			chg_lvl--;
+		else if (chg_temp >= temp_chg_table[chg_lvl].hi_thre &&
+		         chg_lvl < CHG_LEVEL_COUNT - 1)
+			chg_lvl++;
+
+		curr->requested_current = MIN(curr->requested_current,
+		      temp_chg_table[chg_lvl].chg_curr);
+
+		if(chg_lvl != prev_chg_lvl)
+			ccprints("Override chg curr to %dmA by chg LEVEL_%d",
+			         curr->requested_current, chg_lvl);
+	}
+
+	return 0;
+}
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+						  uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+						  uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
+}

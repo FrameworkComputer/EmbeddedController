@@ -36,6 +36,26 @@ __override struct keyboard_scan_config keyscan_config = {
 	},
 };
 
+/* Temperature charging table */
+const struct temp_chg_struct temp_chg_table[] = {
+	[LEVEL_0] = {
+		.lo_thre = 0,
+		.hi_thre = 68,
+		.chg_curr = 3000,
+	},
+	[LEVEL_1] = {
+		.lo_thre = 63,
+		.hi_thre = 74,
+		.chg_curr = 1500,
+	},
+	[LEVEL_2] = {
+		.lo_thre = 69,
+		.hi_thre = 100,
+		.chg_curr = 500,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(temp_chg_table) == CHG_LEVEL_COUNT);
+
 /* Sensor */
 static struct mutex g_base_mutex;
 static struct mutex g_lid_mutex;
