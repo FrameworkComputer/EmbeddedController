@@ -21,8 +21,10 @@
 
 #define CPRINTS(fmt, args...) cprints(CC_PCHG, "PCHG: " fmt, ##args)
 
-/* Currently only used for FW update. */
-static atomic_t pchg_host_events;
+/* Host event queue. Shared by all ports. */
+static struct queue const host_events =
+		QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, uint32_t);
+struct mutex host_event_mtx;
 
 static void pchg_queue_event(struct pchg *ctx, enum pchg_event event)
 {
@@ -34,11 +36,23 @@ static void pchg_queue_event(struct pchg *ctx, enum pchg_event event)
 	mutex_unlock(&ctx->mtx);
 }
 
-static void _send_host_event(const struct pchg *ctx, uint32_t event)
+static void pchg_queue_host_event(struct pchg *ctx, uint32_t event)
 {
-	int port = PCHG_CTX_TO_PORT(ctx);
+	size_t len;
 
-	atomic_or(&pchg_host_events, event | EC_MKBP_PCHG_PORT_TO_EVENT(port));
+	event |= EC_MKBP_PCHG_PORT_TO_EVENT(PCHG_CTX_TO_PORT(ctx));
+
+	mutex_lock(&host_event_mtx);
+	len = queue_add_unit(&host_events, &event);
+	mutex_unlock(&host_event_mtx);
+	if (len == 0) {
+		ctx->dropped_host_event_count++;
+		CPRINTS("ERR: Host event queue is full");
+		/* Send a reminder. */
+		mkbp_send_event(EC_MKBP_EVENT_PCHG);
+		return;
+	}
+
 	mkbp_send_event(EC_MKBP_EVENT_PCHG);
 }
 
@@ -330,16 +344,16 @@ static void pchg_state_download(struct pchg *ctx)
 		if (rv == EC_SUCCESS) {
 			ctx->state = PCHG_STATE_DOWNLOADING;
 		} else if (rv != EC_SUCCESS_IN_PROGRESS) {
-			_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+			pchg_queue_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
 			CPRINTS("ERR: Failed to open");
 		}
 		break;
 	case PCHG_EVENT_UPDATE_OPENED:
 		ctx->state = PCHG_STATE_DOWNLOADING;
-		_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_OPENED);
+		pchg_queue_host_event(ctx, EC_MKBP_PCHG_UPDATE_OPENED);
 		break;
 	case PCHG_EVENT_UPDATE_ERROR:
-		_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+		pchg_queue_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
 		break;
 	default:
 		break;
@@ -359,36 +373,53 @@ static void pchg_state_downloading(struct pchg *ctx)
 			break;
 		rv = ctx->cfg->drv->update_write(ctx);
 		if (rv != EC_SUCCESS && rv != EC_SUCCESS_IN_PROGRESS) {
-			_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+			pchg_queue_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
 			CPRINTS("ERR: Failed to write");
 		}
 		break;
 	case PCHG_EVENT_UPDATE_WRITTEN:
 		ctx->update.data_ready = 0;
-		_send_host_event(ctx, EC_MKBP_PCHG_WRITE_COMPLETE);
+		pchg_queue_host_event(ctx, EC_MKBP_PCHG_WRITE_COMPLETE);
 		break;
 	case PCHG_EVENT_UPDATE_CLOSE:
 		rv = ctx->cfg->drv->update_close(ctx);
 		if (rv == EC_SUCCESS) {
 			ctx->state = PCHG_STATE_DOWNLOAD;
 		} else if (rv != EC_SUCCESS_IN_PROGRESS) {
-			_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+			pchg_queue_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
 			CPRINTS("ERR: Failed to close");
 		}
 		break;
 	case PCHG_EVENT_UPDATE_CLOSED:
 		ctx->state = PCHG_STATE_DOWNLOAD;
-		_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_CLOSED);
+		pchg_queue_host_event(ctx, EC_MKBP_PCHG_UPDATE_CLOSED);
 		break;
 	case PCHG_EVENT_UPDATE_ERROR:
 		CPRINTS("ERR: Failed to update");
-		_send_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
+		pchg_queue_host_event(ctx, EC_MKBP_PCHG_UPDATE_ERROR);
 		break;
 	default:
 		break;
 	}
 }
 
+/**
+ * Process an event.
+ *
+ * The handler of the current state processes one event. If the event is IRQ,
+ * the driver is called (get_event), which translates the event to an actual
+ * event. Note that state handlers themselves may enqueue a new event.
+ *
+ * It returns 1 if the processed event needs to be reported to the host. This is
+ * notified as EC_MKBP_PCHG_DEVICE_EVENT. The host will call EC_CMD_PCHG to get
+ * updated status including the SoC and errors.
+ *
+ * State handlers may send a host event separately. For example, FW update
+ * events are reported as EC_MKBP_PCHG_UPDATE_*.
+ *
+ * @param ctx
+ * @return 1: Notify host of EC_MKBP_PCHG_DEVICE_EVENT.
+ */
 static int pchg_run(struct pchg *ctx)
 {
 	enum pchg_state previous_state = ctx->state;
@@ -457,7 +488,8 @@ static int pchg_run(struct pchg *ctx)
 
 	/*
 	 * Notify the host of
-	 * - [S0] Charge update with SoC change and all other events.
+	 * - [S0] Charge update with SoC change and all other events except
+	 *   FW update events.
 	 * - [S3/S0IX] Device attach or detach (for wake-up)
 	 * - [S5/G3] No events.
 	 */
@@ -470,6 +502,16 @@ static int pchg_run(struct pchg *ctx)
 
 	if (ctx->event == PCHG_EVENT_CHARGE_UPDATE)
 		return ctx->battery_percent != previous_battery;
+
+	/* Don't report FW update events because they're separately reported. */
+	if (ctx->event == PCHG_EVENT_UPDATE_OPENED ||
+	    ctx->event == PCHG_EVENT_UPDATE_CLOSED ||
+	    ctx->event == PCHG_EVENT_UPDATE_WRITTEN ||
+	    ctx->event == PCHG_EVENT_UPDATE_ERROR ||
+	    ctx->event == PCHG_EVENT_UPDATE_OPEN ||
+	    ctx->event == PCHG_EVENT_UPDATE_WRITE ||
+	    ctx->event == PCHG_EVENT_UPDATE_CLOSE)
+		return 0;
 
 	return ctx->event != PCHG_EVENT_NONE;
 }
@@ -504,6 +546,7 @@ static void pchg_startup(void)
 	int p;
 
 	CPRINTS("%s", __func__);
+	queue_init(&host_events);
 
 	for (p = 0; p < pchg_count; p++) {
 		ctx = &pchgs[p];
@@ -547,17 +590,10 @@ void pchg_task(void *u)
 			do {
 				if (atomic_clear(&ctx->irq))
 					pchg_queue_event(ctx, PCHG_EVENT_IRQ);
-				if (!pchg_run(ctx))
-					continue;
-				atomic_or(&pchg_host_events,
-					  EC_MKBP_PCHG_PORT_TO_EVENT(p));
+				if (pchg_run(ctx))
+					pchg_queue_host_event(
+						ctx, EC_MKBP_PCHG_DEVICE_EVENT);
 			} while (queue_count(&ctx->events));
-		}
-
-		/* Send one host event (over MKBP) for all ports. */
-		if (pchg_host_events) {
-			atomic_or(&pchg_host_events, EC_MKBP_PCHG_DEVICE_EVENT);
-			mkbp_send_event(EC_MKBP_EVENT_PCHG);
 		}
 
 		task_wait_event(-1);
@@ -580,9 +616,13 @@ DECLARE_HOST_COMMAND(EC_CMD_PCHG_COUNT, hc_pchg_count, EC_VER_MASK(0));
 static enum ec_status hc_pchg(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_pchg *p = args->params;
-	struct ec_response_pchg *r = args->response;
+	struct ec_response_pchg_v2 *r = args->response;
 	int port = p->port;
 	struct pchg *ctx;
+
+	/* Version 0 shouldn't exist. */
+	if (args->version == 0)
+		return EC_RES_INVALID_VERSION;
 
 	if (port >= pchg_count)
 		return EC_RES_INVALID_PARAM;
@@ -599,20 +639,33 @@ static enum ec_status hc_pchg(struct host_cmd_handler_args *args)
 	r->error = ctx->error;
 	r->fw_version = ctx->fw_version;
 	r->dropped_event_count = ctx->dropped_event_count;
+	r->dropped_host_event_count = ctx->dropped_host_event_count;
 
-	args->response_size = sizeof(*r);
+	args->response_size = args->version == 1 ?
+			sizeof(struct ec_response_pchg) : sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PCHG, hc_pchg, EC_VER_MASK(1));
+DECLARE_HOST_COMMAND(EC_CMD_PCHG, hc_pchg, EC_VER_MASK(1) | EC_VER_MASK(2));
 
 int pchg_get_next_event(uint8_t *out)
 {
-	uint32_t events = atomic_clear(&pchg_host_events);
+	uint32_t event;
+	size_t len;
 
-	memcpy(out, &events, sizeof(events));
+	mutex_lock(&host_event_mtx);
+	len = queue_remove_unit(&host_events, &event);
+	mutex_unlock(&host_event_mtx);
+	if (len == 0)
+		return 0;
 
-	return sizeof(events);
+	memcpy(out, &event, sizeof(event));
+
+	/* Ping host again if there are more events to send. */
+	if (queue_count(&host_events))
+		mkbp_send_event(EC_MKBP_EVENT_PCHG);
+
+	return sizeof(event);
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_PCHG, pchg_get_next_event);
 

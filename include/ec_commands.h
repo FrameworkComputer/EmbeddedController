@@ -6916,7 +6916,20 @@ struct ec_response_pchg {
 	/* Fields added in version 1 */
 	uint32_t fw_version;
 	uint32_t dropped_event_count;
-} __ec_align2;
+} __ec_align4;
+
+struct ec_response_pchg_v2 {
+	uint32_t error;			/* enum pchg_error */
+	uint8_t state;			/* enum pchg_state state */
+	uint8_t battery_percentage;
+	uint8_t unused0;
+	uint8_t unused1;
+	/* Fields added in version 1 */
+	uint32_t fw_version;
+	uint32_t dropped_event_count;
+	/* Fields added in version 2 */
+	uint32_t dropped_host_event_count;
+} __ec_align4;
 
 enum pchg_state {
 	/* Charger is reset and not initialized. */
@@ -6962,7 +6975,7 @@ enum pchg_state {
 #define EC_MKBP_PCHG_PORT_SHIFT		28
 /* Utility macros for converting MKBP event <-> port number. */
 #define EC_MKBP_PCHG_EVENT_TO_PORT(e)	(((e) >> EC_MKBP_PCHG_PORT_SHIFT) & 0xf)
-#define EC_MKBP_PCHG_PORT_TO_EVENT(p)	(BIT((p) + EC_MKBP_PCHG_PORT_SHIFT))
+#define EC_MKBP_PCHG_PORT_TO_EVENT(p)	((p) << EC_MKBP_PCHG_PORT_SHIFT)
 /* Utility macro for extracting event bits. */
 #define EC_MKBP_PCHG_EVENT_MASK(e)	((e) \
 					& GENMASK(EC_MKBP_PCHG_PORT_SHIFT-1, 0))

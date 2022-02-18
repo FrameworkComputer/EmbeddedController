@@ -206,6 +206,8 @@ struct pchg {
 	uint8_t battery_percent;
 	/* Number of dropped events (due to queue overflow) */
 	uint32_t dropped_event_count;
+	/* Number of dropped host events (due to queue overflow) */
+	uint32_t dropped_host_event_count;
 	/* enum pchg_mode */
 	uint8_t mode;
 	/* FW version */
