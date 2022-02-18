@@ -423,17 +423,25 @@ void system_reset(int flags)
 
 	if (flags & SYSTEM_RESET_HARD) {
 #ifdef CONFIG_SOFTWARE_PANIC
-		uint32_t reason, info;
-		uint8_t exception;
-		uint8_t panic_flags = panic_get_data()->flags;
-
 		/* Panic data will be wiped by hard reset, so save it */
-		panic_get_reason(&reason, &info, &exception);
-		/* 16 bits stored - upper 16 bits of reason / info are lost */
-		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_REASON, reason);
-		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_INFO, info);
-		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, exception);
-		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_FLAGS, panic_flags);
+		uint32_t reason, info;
+		uint8_t exception, panic_flags;
+		struct panic_data *pdata = panic_get_data();
+
+		if (pdata) {
+			panic_flags = pdata->flags;
+			panic_get_reason(&reason, &info, &exception);
+			/*
+			 * 16 bits stored - upper 16 bits of reason / info
+			 * are lost.
+			 */
+			bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_REASON, reason);
+			bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_INFO, info);
+			bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_EXCEPTION,
+			    exception);
+			bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_FLAGS,
+			    panic_flags);
+		}
 #endif
 
 #if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32L4)
