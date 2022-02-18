@@ -269,6 +269,7 @@ void system_pre_init(void)
 #ifdef CONFIG_SOFTWARE_PANIC
 	uint16_t reason, info;
 	uint8_t exception, panic_flags;
+	struct panic_data *pdata;
 #endif
 
 	/* enable clock on Power module */
@@ -350,13 +351,24 @@ void system_pre_init(void)
 	reason = bkpdata_read(BKPDATA_INDEX_SAVED_PANIC_REASON);
 	info = bkpdata_read(BKPDATA_INDEX_SAVED_PANIC_INFO);
 	exception = bkpdata_read(BKPDATA_INDEX_SAVED_PANIC_EXCEPTION);
-	panic_flags = bkpdata_read(BKPDATA_INDEX_SAVED_PANIC_FLAGS);
-	if (reason || info || exception || panic_flags) {
+	if (reason || info || exception) {
 		panic_set_reason(reason, info, exception);
-		panic_get_data()->flags = panic_flags;
 		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_REASON, 0);
 		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_INFO, 0);
 		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, 0);
+	}
+
+	/*
+	 * Older ROs restore reason, info, and exception, but do not support
+	 * the saved panic flags. In that case, we will let RW handle restoring
+	 * the panic flags. If we get to this point in the code and the panic
+	 * data does not exist, it doesn't make sense to try to only restore
+	 * the panic flags, the information was lost.
+	 */
+	pdata = panic_get_data();
+	panic_flags = bkpdata_read(BKPDATA_INDEX_SAVED_PANIC_FLAGS);
+	if (pdata && panic_flags) {
+		pdata->flags = panic_flags;
 		bkpdata_write(BKPDATA_INDEX_SAVED_PANIC_FLAGS, 0);
 	}
 #endif
