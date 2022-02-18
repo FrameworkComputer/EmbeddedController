@@ -36,6 +36,9 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+/* a flag for indicating the tasks are inited. */
+static bool tasks_inited;
+
 /* Baseboard */
 static void baseboard_init(void)
 {
@@ -44,15 +47,6 @@ static void baseboard_init(void)
 #endif
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT-1);
-
-static void baseboard_tcpc_init(void)
-{
-	/* If this is not a Type-C subboard, disable the task. */
-	if (corsola_get_db_type() != CORSOLA_DB_TYPEC)
-		task_disable_task(TASK_ID_PD_C1);
-}
-/* Must be done after I2C and subboard */
-DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 static void baseboard_x_ec_gpio2_init(void)
 {
@@ -63,10 +57,14 @@ DECLARE_HOOK(HOOK_INIT, baseboard_x_ec_gpio2_init, HOOK_PRIO_DEFAULT);
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
-	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
-		return CONFIG_USB_PD_PORT_MAX_COUNT;
-	else
-		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
+	if (corsola_get_db_type() == CORSOLA_DB_HDMI) {
+		if (tasks_inited)
+			return CONFIG_USB_PD_PORT_MAX_COUNT;
+		else
+			return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
+	}
+
+	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
 /* USB-A */
@@ -112,17 +110,74 @@ static void ps185_hdmi_hpd_deferred(void)
 
 	debounced_hpd = new_hpd;
 
+	if (!corsola_is_dp_muxable(USBC_PORT_C1)) {
+		if (debounced_hpd)
+			CPRINTS("C0 port is already muxed.");
+		return;
+	}
+
+	if (debounced_hpd) {
+		dp_status[USBC_PORT_C1] =
+			VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
+				      0, /* HPD level ... not applicable */
+				      0, /* exit DP? ... no */
+				      0, /* usb mode? ... no */
+				      0, /* multi-function ... no */
+				      1, /* DP enabled ... yes */
+				      0, /* power low?  ... no */
+				      (!!DP_FLAGS_DP_ON));
+		/* update C1 virtual mux */
+		usb_mux_set(USBC_PORT_C1,
+			    USB_PD_MUX_DP_ENABLED,
+			    USB_SWITCH_DISCONNECT,
+			    0 /* polarity, don't care */);
+
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(dp_aux_path_sel),
+				debounced_hpd);
+		CPRINTS("Set DP_AUX_PATH_SEL: %d", 1);
+	}
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl),
 			!debounced_hpd);
 	CPRINTS(debounced_hpd ? "HDMI plug" : "HDMI unplug");
 }
 DECLARE_DEFERRED(ps185_hdmi_hpd_deferred);
 
+static void ps185_hdmi_hpd_disconnect_deferred(void)
+{
+	const int new_hpd = gpio_pin_get_dt(
+				GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd));
+
+	if (debounced_hpd == new_hpd && !new_hpd) {
+		dp_status[USBC_PORT_C1] =
+			VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
+				      0, /* HPD level ... not applicable */
+				      0, /* exit DP? ... no */
+				      0, /* usb mode? ... no */
+				      0, /* multi-function ... no */
+				      0, /* DP enabled ... no */
+				      0, /* power low?  ... no */
+				      (!DP_FLAGS_DP_ON));
+		usb_mux_set(USBC_PORT_C1, USB_PD_MUX_NONE,
+			    USB_SWITCH_DISCONNECT,
+			    0 /* polarity, don't care */);
+	}
+
+}
+DECLARE_DEFERRED(ps185_hdmi_hpd_disconnect_deferred);
+
 #define PS185_HPD_DEBOUCE 250
+#define HPD_SINK_ABSENCE_DEBOUNCE (2 * MSEC)
 
 static void hdmi_hpd_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&ps185_hdmi_hpd_deferred_data, PS185_HPD_DEBOUCE);
+
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd)))
+		hook_call_deferred(&ps185_hdmi_hpd_disconnect_deferred_data,
+				   HPD_SINK_ABSENCE_DEBOUNCE);
+	else
+		hook_call_deferred(&ps185_hdmi_hpd_disconnect_deferred_data,
+				   -1);
 }
 
 /* HDMI/TYPE-C function shared subboard interrupt */
@@ -152,3 +207,51 @@ void board_hdmi_resume(void)
 		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_pwrdn_odl), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_hdmi_resume, HOOK_PRIO_DEFAULT);
+
+static void tasks_init_deferred(void)
+{
+	tasks_inited = true;
+}
+DECLARE_DEFERRED(tasks_init_deferred);
+
+static void hdmi_fix_c1_port(void)
+{
+	static struct ppc_drv virtual_ppc_drv = { 0 };
+	static struct tcpm_drv virtual_tcpc_drv = { 0 };
+	static struct bc12_drv virtual_bc12_drv = { 0 };
+
+	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
+		return;
+
+	/* drop related C1 port drivers when it's a HDMI DB. */
+	ppc_chips[USBC_PORT_C1] =
+		(const struct ppc_config_t){ .drv = &virtual_ppc_drv };
+	tcpc_config[USBC_PORT_C1] =
+		(const struct tcpc_config_t){ .drv = &virtual_tcpc_drv };
+	bc12_ports[USBC_PORT_C1] =
+		(const struct bc12_config){ .drv = &virtual_bc12_drv };
+	/* Use virtual mux to notify AP the mainlink direction. */
+	usb_muxes[USBC_PORT_C1] = (struct usb_mux){
+		.usb_port = USBC_PORT_C1,
+		.driver = &virtual_usb_mux_driver,
+		.hpd_update = &virtual_hpd_update,
+	};
+
+	/*
+	 * If a HDMI DB is attached, C1 port tasks will be exiting in that
+	 * the port number is larger than board_get_usb_pd_port_count().
+	 * After C1 port tasks finished, we intentionally increase the port
+	 * count by 1 for usb_mux to access the C1 virtual mux for notifying
+	 * mainlink direction.
+	 */
+	hook_call_deferred(&tasks_init_deferred_data, 2 * SECOND);
+}
+DECLARE_HOOK(HOOK_INIT, hdmi_fix_c1_port, HOOK_PRIO_DEFAULT);
+
+__override uint8_t get_dp_pin_mode(int port)
+{
+	if (corsola_get_db_type() == CORSOLA_DB_HDMI && port == USBC_PORT_C1)
+		return MODE_DP_PIN_E;
+
+	return pd_dfp_dp_get_pin_mode(port, dp_status[port]);
+}

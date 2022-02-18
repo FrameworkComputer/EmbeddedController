@@ -11,6 +11,8 @@
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 
+#include "baseboard_usbc_config.h"
+
 #if CONFIG_USB_PD_3A_PORTS != 1
 #error Corsola reference must have at least one 3.0 A port
 #endif
@@ -39,15 +41,7 @@ void svdm_set_hpd_gpio(int port, int en)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl), !en);
 }
 
-/**
- * Is the port fine to be muxed its DisplayPort lines?
- *
- * Only one port can be muxed to DisplayPort at a time.
- *
- * @param port	Port number of TCPC.
- * @return	1 is fine; 0 is bad as other port is already muxed;
- */
-static int is_dp_muxable(int port)
+int corsola_is_dp_muxable(int port)
 {
 	int i;
 
@@ -72,7 +66,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 	dp_status[port] = payload[1];
 
-	if (!is_dp_muxable(port)) {
+	if (!corsola_is_dp_muxable(port)) {
 		/* TODO(waihong): Info user? */
 		CPRINTS("p%d: The other port is already muxed.", port);
 		return 0; /* nak */

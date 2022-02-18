@@ -28,4 +28,14 @@ enum usbc_port {
 };
 BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
 
+/**
+ * Is the port fine to be muxed its DisplayPort lines?
+ *
+ * Only one port can be muxed to DisplayPort at a time.
+ *
+ * @param port	Port number of TCPC.
+ * @return	1 is fine; 0 is bad as other port is already muxed;
+ */
+int corsola_is_dp_muxable(int port);
+
 #endif /* __CROS_EC_BASEBOARD_USBC_CONFIG_H */
