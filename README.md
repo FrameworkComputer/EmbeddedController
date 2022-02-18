@@ -2,6 +2,12 @@
 
 [TOC]
 
+> **Note** - This document covers the legacy Chrome EC implementation. The
+> legacy EC implementation is used by all Chromebook reference designs prior to
+> July 2021. On newer Chromebook designs, the EC implementation is based on the
+> Zephyr RTOS. Refer to the [Zephyr EC Introduction](./docs/zephyr/README.md)
+> for details on the Zephyr EC implementation.
+
 ## Introduction
 
 The Chromium OS project includes open source software for embedded controllers

@@ -38,7 +38,8 @@ Each feature includes the following sub-tasks:
 
 ## Adding a new board to zmake
 
-Refer the [zmake](TODO) documentation to add a new board project to zmake.
+Refer the [project configuration](project_config.md) documentation to add a new
+board project to zmake.
 
 ## Configure EC Features
 
