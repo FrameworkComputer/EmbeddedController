@@ -185,6 +185,12 @@
 		};
 	};
 
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&ioex_en_pp5500_usb_a0_vbus
+			       &ioex_en_pp5500_usb_a1_vbus>;
+	};
+
 	vsby-psl-in-list {
 		/* PSL_IN1/2/4 are used to wake */
 		psl-in-pads = <&psl_in1 &psl_in2 &psl_in4>;
@@ -215,7 +221,7 @@
 			enum-name = "IOEX_USB_C0_FAULT_ODL";
 			label = "IOEX_USB_C0_FAULT_ODL";
 		};
-		en_pp5500_usb_a0_vbus {
+		ioex_en_pp5500_usb_a0_vbus: en_pp5500_usb_a0_vbus {
 			gpios = <&ioex_c0_port1 5 GPIO_OUT_LOW>;
 			enum-name = "IOEX_EN_PP5000_USB_A0_VBUS";
 			label = "IOEX_EN_PP5000_USB_A0_VBUS";
@@ -268,7 +274,7 @@
 			enum-name = "IOEX_USB_C1_FAULT_ODL";
 			label = "IOEX_USB_C1_FAULT_ODL";
 		};
-		en_pp5500_usb_a1_vbus {
+		ioex_en_pp5500_usb_a1_vbus: en_pp5500_usb_a1_vbus {
 			gpios = <&ioex_c1_port1 5 GPIO_OUT_LOW>;
 			enum-name = "IOEX_EN_PP5000_USB_A1_VBUS_DB";
 			label = "IOEX_EN_PP5000_USB_A1_VBUS";
