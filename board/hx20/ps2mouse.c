@@ -56,14 +56,15 @@ void send_movement_packet(void)
 	int max = 3;
 	int timeout = 0;
 
-
 	if (five_button_mode)
 		max = 4;
 	/* sometimes the host will get behind */
-	while (aux_buffer_available() < max && timeout++ < 25)
+	while (aux_buffer_available() < max && timeout++ < 25 &&
+			(*task_get_event_bitmap(emumouse_task_id) & PS2MOUSE_EVT_AUX_DATA) == 0) {
 		usleep(10*MSEC);
+	}
 
-	if (timeout == 25) {
+	if (timeout == 25 || (*task_get_event_bitmap(emumouse_task_id) & PS2MOUSE_EVT_AUX_DATA)) {
 		CPRINTS("PS2M Dropping");
 		/*drop mouse packet - host is too far behind */
 		return;
@@ -431,9 +432,7 @@ void mouse_interrupt_handler_task(void *p)
 		if (ec_mode_disabled == false) {
 			if (evt & PS2MOUSE_EVT_AUX_DATA) {
 				process_request(aux_data);
-			}
-
-			if  (evt & PS2MOUSE_EVT_INTERRUPT) {
+			} else if  (evt & PS2MOUSE_EVT_INTERRUPT) {
 				usleep(4*MSEC);
 				/* at the expensive of a slight additional latency
 				 * check to see if the soc has grabbed this out from under us
