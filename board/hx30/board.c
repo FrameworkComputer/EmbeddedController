@@ -897,12 +897,6 @@ const struct temp_sensor_t temp_sensors[] = {
 		.idx = 0,
 	},
 #endif /* CONFIG_PECI */
-	[TEMP_SENSOR2_LOCAL] = {
-		.name = "F75397_Local",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = f75397_get_val,
-		.idx = F75397_IDX_LOCAL
-	},
 	[TEMP_SENSOR2_REMOTE] = {
 		.name = "F75397_VCCGT",
 		.type = TEMP_SENSOR_TYPE_BOARD,
