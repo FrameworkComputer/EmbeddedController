@@ -9354,25 +9354,46 @@ static int cmd_pchg_wait_event(int port, uint32_t expected)
 static int cmd_pchg_update_open(int port, uint32_t version,
 				uint32_t *block_size, uint32_t *crc)
 {
-	struct ec_params_pchg_update *p =
+	struct ec_params_pchg_update *pu =
 		(struct ec_params_pchg_update *)(ec_outbuf);
 	struct ec_response_pchg_update *r =
 		(struct ec_response_pchg_update *)(ec_inbuf);
+	struct ec_params_pchg p;
+	struct ec_response_pchg_v2 rv2;
 	int rv;
 
 	/* Open session. */
-	p->port = port;
-	p->cmd = EC_PCHG_UPDATE_CMD_OPEN;
-	p->version = version;
-	rv = ec_command(EC_CMD_PCHG_UPDATE, 0, p, sizeof(*p), r, sizeof(*r));
+	pu->port = port;
+	pu->cmd = EC_PCHG_UPDATE_CMD_OPEN;
+	pu->version = version;
+	rv = ec_command(EC_CMD_PCHG_UPDATE, 0, pu, sizeof(*pu), r, sizeof(*r));
 	if (rv < 0) {
 		fprintf(stderr, "\nFailed to open update session: %d\n", rv);
 		return rv;
 	}
 
-	if (r->block_size + sizeof(*p) > ec_max_outsize) {
+	if (r->block_size + sizeof(*pu) > ec_max_outsize) {
 		fprintf(stderr, "\nBlock size (%d) is too large.\n",
 			r->block_size);
+		return -1;
+	}
+
+	rv = cmd_pchg_wait_event(port, EC_MKBP_PCHG_DEVICE_EVENT);
+	if (rv)
+		return rv;
+
+	p.port = port;
+	rv = ec_command(EC_CMD_PCHG, 2, &p, sizeof(p), &rv2, sizeof(rv2));
+	if (rv == -EC_RES_INVALID_VERSION - EECRESULT)
+		/* We can use v2 because it's a superset of v1. */
+		rv = ec_command(EC_CMD_PCHG, 1, &p, sizeof(p),
+				&rv2, sizeof(struct ec_response_pchg));
+	if (rv < 0) {
+		fprintf(stderr, "EC_CMD_PCHG failed: %d\n", rv);
+		return rv;
+	}
+	if (rv2.state != PCHG_STATE_DOWNLOAD) {
+		fprintf(stderr, "Failed to reset to download mode: %d\n", rv);
 		return -1;
 	}
 
