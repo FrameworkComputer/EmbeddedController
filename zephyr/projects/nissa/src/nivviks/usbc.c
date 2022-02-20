@@ -156,6 +156,14 @@ void pd_power_supply_reset(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
+__override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
+{
+	if (port < 0 || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+		return;
+
+	raa489000_set_output_current(port, rp);
+}
+
 int pd_set_power_supply_ready(int port)
 {
 	int rv;
