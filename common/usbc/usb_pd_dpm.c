@@ -271,7 +271,7 @@ static void dpm_attempt_mode_entry(int port)
 		return;
 	}
 
-#ifdef HAS_TASK_CHIPSET
+#if defined(HAS_TASK_CHIPSET) || defined(CONFIG_AP_PWRSEQ)
 	/*
 	 * Do not try to enter mode while CPU is off.
 	 * CPU transitions (e.g b/158634281) can occur during the discovery
