@@ -29,6 +29,8 @@ static void nereid_subboard_init(void)
 	 * common init code does not know about them.
 	 * Remove once common code initialises all GPIOs, not just
 	 * the ones with enum-names.
+	 *
+	 * TODO(b/214858346): Enable power after AP startup.
 	 */
 	if (sb != NISSA_SB_C_A && sb != NISSA_SB_HDMI_A) {
 		/* Turn off unused USB A1 GPIOs */
@@ -44,6 +46,10 @@ static void nereid_subboard_init(void)
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
 			GPIO_INPUT);
+		/* Configure type-A port 1 VBUS, initialise it as low */
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
+			GPIO_OUTPUT_LOW);
 	}
 	if (sb == NISSA_SB_HDMI_A) {
 		/* Disable I2C_PORT_USB_C1_TCPC */
