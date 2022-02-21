@@ -504,6 +504,56 @@ static void check_chassis_open(int init)
 	}
 }
 
+void charge_psys_onoff(uint8_t enable)
+{
+	int control0 = 0x0000;
+	int control1 = 0x0000;
+	int control4 = 0x0000;
+	int data = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, &control1)) {
+		CPRINTS("read charger control1 fail");
+	}
+
+	if (enable) {
+		control0 &= ~ISL9241_CONTROL0_NGATE;
+		control1 &= ~(ISL9241_CONTROL1_IMON | ISL9241_CONTROL1_BGATE);
+		control1 |= ISL9241_CONTROL1_PSYS;
+		control4 &= ~ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0B00;		/* Set ACOK reference to 4.544V */
+		CPRINTS("Power saving disable");
+	} else {
+		control0 |= ISL9241_CONTROL0_NGATE;
+		control1 |= (ISL9241_CONTROL1_IMON | ISL9241_CONTROL1_BGATE);
+		control1 &= ~ISL9241_CONTROL1_PSYS;
+		control4 |= ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0000;		/* Set ACOK reference to 0V */
+		CPRINTS("Power saving enable");
+	}
+
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, data)) {
+		CPRINTS("Update ACOK reference fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, control0)) {
+		CPRINTS("Update charger control0 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, control1)) {
+		CPRINTS("Update charger control1 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, control4)) {
+		CPRINTS("Update charger control4 fail");
+	}
+}
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -534,6 +584,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT + 1);
 static void board_chipset_startup(void)
 {
 	CPRINTS("HOOK_CHIPSET_STARTUP - called board_chipset_startup");
+	charge_psys_onoff(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		board_chipset_startup,
@@ -547,7 +598,7 @@ static void board_chipset_shutdown(void)
 #ifdef CONFIG_EMI_REGION1
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
 #endif
-
+	charge_psys_onoff(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
@@ -586,8 +637,6 @@ void board_hibernate_late(void)
 {
 	/* put host chipset into reset */
 	gpio_set_level(GPIO_SYS_RESET_L, 0);
-
-
 }
 
 void thm_ft5399m_set_timeout_en(void)
@@ -790,7 +839,7 @@ void charger_update(void)
 		CPRINTS("update charger!!");
 
 		val = ISL9241_CONTROL1_PROCHOT_REF_6800 |
-				ISL9241_CONTROL1_SWITCH_FREQ | ISL9241_CONTROL1_PSYS;
+				ISL9241_CONTROL1_SWITCH_FREQ;
 
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_CONTROL1, val)) {
