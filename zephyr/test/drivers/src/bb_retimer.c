@@ -96,7 +96,7 @@ ZTEST_USER(bb_retimer, test_bb_set_state)
 	/* Test USB3 gen2 mode */
 	disc = pd_get_am_discovery_and_notify_access(
 					USBC_PORT_C1, TCPCI_MSG_SOP_PRIME);
-	disc->identity.product_t1.p_rev20.ss = USB_R20_SS_U31_GEN1_GEN2;
+	disc->identity.product_t1.p_rev30.ss = USB_R30_SS_U32_U40_GEN2;
 	prl_set_rev(USBC_PORT_C1, TCPCI_MSG_SOP_PRIME, PD_REV30);
 	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
 						     USB_PD_MUX_USB_ENABLED,
@@ -219,6 +219,7 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 					USBC_PORT_C1, TCPCI_MSG_SOP_PRIME);
 	disc->identity.idh.product_type = IDH_PTYPE_ACABLE;
 	disc->identity.product_t2.a2_rev30.active_elem = ACTIVE_RETIMER;
+	disc->identity.product_t1.p_rev30.ss = USB_R30_SS_U32_U40_GEN2;
 	prl_set_rev(USBC_PORT_C1, TCPCI_MSG_SOP_PRIME, PD_REV30);
 
 	/* Set cable VDO */
@@ -257,11 +258,7 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
 		   BB_RETIMER_USB_3_CONNECTION |
-		   /*
-		    * TODO(b/216307791) Need to investigate it, why this is not
-		    *   set
-		    */
-		   /* BB_RETIMER_USB_3_SPEED | */
+		   BB_RETIMER_USB_3_SPEED |
 		   BB_RETIMER_RE_TIMER_DRIVER |
 		   BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
