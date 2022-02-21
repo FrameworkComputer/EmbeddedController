@@ -2188,6 +2188,16 @@
 #undef CONFIG_RO_HDR_SIZE
 
 /*
+ * Support for saving extended reset flags in backup RAM.
+ *
+ * Please undefine it when RO firmware doesn't support extended reset flags.
+ * Otherwise, compatibility between RO and RW will be broken, because
+ * BKPDATA_INDEX_SAVED_RESET_FLAGS_2 was defined in the middle of bkpdata_index
+ * enum.
+ */
+#define CONFIG_STM32_EXTENDED_RESET_FLAGS
+
+/*
  * Write protect region offset / size. This region normally encompasses the
  * RO image, but may also contain additional images or data.
  */

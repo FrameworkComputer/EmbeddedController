@@ -15,10 +15,16 @@
 /* We use 16-bit BKP / BBRAM entries. */
 #define STM32_BKP_ENTRIES (STM32_BKP_BYTES / 2)
 
+/*
+ * Add new entries at the end of the enum. Otherwise you will break RO/RW
+ * compatibility.
+ */
 enum bkpdata_index {
 	BKPDATA_INDEX_SCRATCHPAD,	     /* General-purpose scratchpad */
 	BKPDATA_INDEX_SAVED_RESET_FLAGS,     /* Saved reset flags */
+#ifdef CONFIG_STM32_EXTENDED_RESET_FLAGS
 	BKPDATA_INDEX_SAVED_RESET_FLAGS_2,   /* Saved reset flags (cont) */
+#endif
 #ifdef CONFIG_SOFTWARE_PANIC
 	BKPDATA_INDEX_SAVED_PANIC_REASON,    /* Saved panic reason */
 	BKPDATA_INDEX_SAVED_PANIC_INFO,      /* Saved panic data */
