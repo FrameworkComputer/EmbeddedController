@@ -51,6 +51,7 @@
 #define	HAS_GPIO_SIGNALS  DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_gpio)
 #define	HAS_VW_SIGNALS	  DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_vw)
 #define	HAS_EXT_SIGNALS   DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_external)
+#define	HAS_ADC_SIGNALS   DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_adc)
 
 /**
  * @brief Definitions for AP power sequence signals.
@@ -80,6 +81,7 @@ enum power_signal {
 DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_gpio, PWR_SIGNAL_ENUM_COMMA)
 DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw, PWR_SIGNAL_ENUM_COMMA)
 DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external, PWR_SIGNAL_ENUM_COMMA)
+DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc, PWR_SIGNAL_ENUM_COMMA)
 	POWER_SIGNAL_COUNT,
 };
 

@@ -12,7 +12,7 @@
 
 #if HAS_VW_SIGNALS
 
-LOG_MODULE_DECLARE(ap_pwrseq, 3);
+LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
 #define INIT_ESPI_SIGNAL(id)					\
 {								\
@@ -136,6 +136,7 @@ void power_signal_vw_init(void)
 	espi_init_callback(&espi_vw_cb, espi_bus_vw_handler,
 				ESPI_BUS_EVENT_VWIRE_RECEIVED);
 	espi_add_callback(espi_dev, &espi_vw_cb);
+	LOG_INF("eSPI initialised");
 }
 
 #endif /* HAS_VW_SIGNALS */

@@ -1,0 +1,20 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Power sequence analog signals container.
+
+compatible: "intel,ap-pwrseq-adc"
+
+include: intel,ap-pwr-signal-base.yaml
+
+properties:
+    trigger-high:
+        description: Rising edge trigger adc comparator
+        type: phandle
+        required: true
+
+    trigger-low:
+        description: Falling edge trigger adc comparator
+        type: phandle
+        required: true

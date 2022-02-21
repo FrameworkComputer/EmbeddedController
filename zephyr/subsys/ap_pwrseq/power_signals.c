@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <errno.h>
+#include <kernel.h>
 #include <toolchain.h>
 #include <logging/log.h>
 
@@ -11,6 +11,7 @@
 
 #include "signal_gpio.h"
 #include "signal_vw.h"
+#include "signal_adc.h"
 
 LOG_MODULE_DECLARE(ap_pwrseq, 4);
 
@@ -28,6 +29,7 @@ enum signal_source {
 	PWR_SIG_SRC_GPIO,
 	PWR_SIG_SRC_VW,
 	PWR_SIG_SRC_EXT,
+	PWR_SIG_SRC_ADC,
 };
 
 struct ps_config {
@@ -65,6 +67,8 @@ DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_vw, GEN_PS_ENTRY,
 			     PWR_SIG_SRC_VW, PWR_SIG_TAG_VW)
 DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_external, GEN_PS_ENTRY_NO_ENUM,
 			     PWR_SIG_SRC_EXT)
+DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_adc, GEN_PS_ENTRY,
+			     PWR_SIG_SRC_ADC, PWR_SIG_TAG_ADC)
 };
 
 static power_signal_mask_t power_signals;
@@ -107,8 +111,8 @@ void power_signal_interrupt(void)
 	power_update_signals();
 }
 
-int power_wait_mask_signals_timeout(power_signal_mask_t want,
-				    power_signal_mask_t mask,
+int power_wait_mask_signals_timeout(power_signal_mask_t mask,
+				    power_signal_mask_t want,
 				    int timeout)
 {
 	if (mask == 0) {
@@ -119,6 +123,7 @@ int power_wait_mask_signals_timeout(power_signal_mask_t want,
 		if ((power_signals & mask) == want) {
 			return 0;
 		}
+		k_msleep(1);
 	}
 	power_update_signals();
 	return -ETIMEDOUT;
@@ -145,6 +150,11 @@ int power_signal_get(enum power_signal signal)
 #if HAS_EXT_SIGNALS
 	case PWR_SIG_SRC_EXT:
 		return board_power_signal_get(signal);
+#endif
+
+#if HAS_ADC_SIGNALS
+	case PWR_SIG_SRC_ADC:
+		return power_signal_adc_get(cp->src_enum);
 #endif
 	}
 }
@@ -215,5 +225,8 @@ void power_signal_init(void)
 	}
 	if (IS_ENABLED(HAS_VW_SIGNALS)) {
 		power_signal_vw_init();
+	}
+	if (IS_ENABLED(HAS_ADC_SIGNALS)) {
+		power_signal_adc_init();
 	}
 }
