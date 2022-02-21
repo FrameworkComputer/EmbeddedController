@@ -20,20 +20,20 @@ config CROS_EC_DATA_RAM_SIZE
 config CROS_EC_RAM_SIZE
 	default 0x0000e000
 
-# The 512KB flash space layout are as the below:
-# - RO image starts at the beginning of flash.
-# - RW image starts at the second half of flash.
+# The 768KB flash space layout are as the below:
+# - RO image starts at the first 384k of flash.
+# - RW image starts at the second 384k of flash.
 config CROS_EC_RO_MEM_OFF
 	default 0x0
 
 config CROS_EC_RO_SIZE
-	default 0x40000
+	default 0x60000
 
 config CROS_EC_RW_MEM_OFF
-	default 0x40000
+	default 0x60000
 
 config CROS_EC_RW_SIZE
-	default 0x40000
+	default 0x60000
 
 config FLASH_LOAD_OFFSET
 	default CROS_EC_RW_MEM_OFF if CROS_EC_RW

@@ -537,10 +537,10 @@
 #ifdef CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES
 /*
  * Flash size of IT81202 is 1MB.
- * We use only half space of flash to save time of erasing RW image from flash.
+ * We use only 3/4 space of flash to save time of erasing RW image from flash.
  */
 #ifdef CONFIG_SOC_IT8XXX2
-#define CONFIG_FLASH_SIZE_BYTES (CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES / 2)
+#define CONFIG_FLASH_SIZE_BYTES (CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES * 3 / 4)
 #else
 #define CONFIG_FLASH_SIZE_BYTES CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES
 #endif
