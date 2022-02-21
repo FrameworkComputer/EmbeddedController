@@ -250,3 +250,13 @@ int led_set_brightness(enum ec_led_id id, const uint8_t *brightness)
 	else
 		return set_color(id, LED_OFF, 0);
 }
+
+void board_set_charge_limit(int port, int supplier, int charge_ma,
+				int max_ma, int charge_mv)
+{
+	/* Blink alert if insufficient power per system_can_boot_ap(). */
+	int insufficient_power =
+		(charge_ma * charge_mv) <
+		(CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON * 1000);
+	led_alert(insufficient_power);
+}

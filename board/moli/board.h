@@ -154,6 +154,7 @@ enum adc_channel {
 	ADC_TEMP_SENSOR_3_WIFI,
 	ADC_TEMP_SENSOR_4_DIMM,
 	ADC_VBUS,
+	ADC_PPVAR_IMON,              /* ADC3 */
 	ADC_CH_COUNT
 };
 
