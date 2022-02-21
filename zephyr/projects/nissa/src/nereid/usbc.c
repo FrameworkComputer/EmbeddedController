@@ -160,10 +160,6 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-/*
- * TODO(b/201000844): Fill in missing functions.
- */
-
 void pd_power_supply_reset(int port)
 {
 	int prev_en;
@@ -186,11 +182,47 @@ void pd_power_supply_reset(int port)
 
 int pd_set_power_supply_ready(int port)
 {
+	enum ec_error_list rv;
+
+	if (port < 0 || port > board_get_usb_pd_port_count()) {
+		LOG_WRN("Port C%d does not exist, cannot enable VBUS", port);
+		return EC_ERROR_INVAL;
+	}
+
+	/* Disable sinking */
+	rv = sm5803_vbus_sink_enable(port, 0);
+	if (rv) {
+		LOG_WRN("C%d failed to disable sinking: %d", port, rv);
+		return rv;
+	}
+
+	/* Disable Vbus discharge */
+	rv = sm5803_set_vbus_disch(port, 0);
+	if (rv) {
+		LOG_WRN("C%d failed to clear VBUS discharge: %d", port, rv);
+		return rv;
+	}
+
+	/* Provide Vbus */
+	rv = charger_enable_otg_power(port, 1);
+	if (rv) {
+		LOG_WRN("C%d failed to enable VBUS sourcing: %d", port, rv);
+		return rv;
+	}
+
+	/* Notify host of power info change. */
+	pd_send_host_event(PD_EVENT_POWER_CHANGE);
+
 	return EC_SUCCESS;
 }
 
 void board_reset_pd_mcu(void)
 {
+	/*
+	 * Do nothing. The integrated TCPC for C0 lacks a dedicated reset
+	 * command, and C1 (if present) doesn't have a reset pin connected
+	 * to the EC.
+	 */
 }
 
 #define INT_RECHECK_US	5000
