@@ -421,7 +421,6 @@ enum power_state power_handle_state(enum power_state state)
 						CPRINTS("timeout waiting for S5");
 						power_button_enable_led(0);
 						s5_exit_tries = 0;
-						stress_test_enable = 0;
 						ap_boot_delay = 9;
 						set_hw_diagnostic(DIAGNOSTICS_SLP_S4, 1);
 
@@ -436,9 +435,14 @@ enum power_state power_handle_state(enum power_state state)
 							return POWER_G3S5;
 						}
 
+						/* clear the status */
+						stress_test_enable = 0;
+
 						/* Still can't power on, go into G3S5 state */
-						rtc_reset_tries = 0;
-						return POWER_S5G3;
+						if (rtc_reset_tries >= 6) {
+							rtc_reset_tries = 0;
+							return POWER_S5G3;
+						}
 					}
 
 					/* power up again */
