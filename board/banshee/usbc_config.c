@@ -304,23 +304,21 @@ void board_reset_pd_mcu(void)
 	 */
 	gpio_set_level(GPIO_USB_C0_C1_TCPC_RST_ODL, 0);
 	gpio_set_level(GPIO_USB_C2_C3_TCPC_RST_ODL, 0);
-	gpio_set_level(IOEX_USB_C0_RT_RST_ODL, 0);
-	gpio_set_level(IOEX_USB_C1_RT_RST_ODL, 0);
-	gpio_set_level(IOEX_USB_C2_RT_RST_ODL, 0);
-	gpio_set_level(IOEX_USB_C3_RT_RST_ODL, 0);
 	/*
 	 * delay for power-on to reset-off and min. assertion time
 	 */
-	msleep(20);
+	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_set_level(GPIO_USB_C0_C1_TCPC_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C2_C3_TCPC_RST_ODL, 1);
-	gpio_set_level(IOEX_USB_C0_RT_RST_ODL, 1);
-	gpio_set_level(IOEX_USB_C1_RT_RST_ODL, 1);
-	gpio_set_level(IOEX_USB_C2_RT_RST_ODL, 1);
-	gpio_set_level(IOEX_USB_C3_RT_RST_ODL, 1);
+
+	nct38xx_reset_notify(USBC_PORT_C0);
+	nct38xx_reset_notify(USBC_PORT_C1);
+	nct38xx_reset_notify(USBC_PORT_C2);
+	nct38xx_reset_notify(USBC_PORT_C3);
 
 	/* wait for chips to come up */
-	msleep(50);
+	if (NCT3808_RESET_POST_DELAY_MS != 0)
+		msleep(NCT3808_RESET_POST_DELAY_MS);
 }
 
 static void board_tcpc_init(void)
@@ -362,9 +360,10 @@ uint16_t tcpc_get_alert_status(void)
 	uint16_t status = 0;
 
 	if (gpio_get_level(GPIO_USB_C0_C1_TCPC_INT_ODL) == 0)
-		status |= PD_STATUS_TCPC_ALERT_0 | PD_STATUS_TCPC_ALERT_1;
+		status = PD_STATUS_TCPC_ALERT_0 | PD_STATUS_TCPC_ALERT_1;
+
 	if (gpio_get_level(GPIO_USB_C2_C3_TCPC_INT_ODL) == 0)
-		status |= PD_STATUS_TCPC_ALERT_2 | PD_STATUS_TCPC_ALERT_3;
+		status = PD_STATUS_TCPC_ALERT_2 | PD_STATUS_TCPC_ALERT_3;
 
 	return status;
 }
@@ -389,7 +388,7 @@ void tcpc_alert_event(enum gpio_signal signal)
 		schedule_deferred_pd_interrupt(USBC_PORT_C0);
 		break;
 	case GPIO_USB_C2_C3_TCPC_INT_ODL:
-		schedule_deferred_pd_interrupt(USBC_PORT_C1);
+		schedule_deferred_pd_interrupt(USBC_PORT_C2);
 		break;
 	default:
 		break;
