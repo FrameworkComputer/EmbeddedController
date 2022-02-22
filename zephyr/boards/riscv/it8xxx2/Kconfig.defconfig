@@ -13,7 +13,7 @@ config MAIN_STACK_SIZE
 	default 1536
 
 config IDLE_STACK_SIZE
-	default 256
+	default 384
 
 config ISR_STACK_SIZE
 	default 800
