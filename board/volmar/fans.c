@@ -38,9 +38,9 @@ static const struct fan_conf fan_conf_0 = {
  * boards as well.
  */
 static const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 2200,
-	.rpm_start = 2200,
-	.rpm_max = 4200,
+	.rpm_min = 0,
+	.rpm_start = 5000,
+	.rpm_max = 6500,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {

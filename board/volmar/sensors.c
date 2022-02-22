@@ -20,8 +20,8 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_2_AMBIENT] = {
-		.name = "TEMP_AMBIENT",
+	[ADC_TEMP_SENSOR_2_FAN] = {
+		.name = "TEMP_FAN",
 		.input_ch = NPCX_ADC_CH1,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -45,14 +45,14 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_1_DDR_SOC,
 	},
-	[TEMP_SENSOR_2_AMBIENT] = {
-		.name = "Ambient",
+	[TEMP_SENSOR_2_FAN] = {
+		.name = "FAN",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_AMBIENT,
+		.idx = ADC_TEMP_SENSOR_2_FAN,
 	},
 	[TEMP_SENSOR_3_CHARGER] = {
-		.name = "Charger",
+		.name = "CHARGER",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_3_CHARGER,
@@ -73,14 +73,14 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #define THERMAL_CPU \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
+		.temp_fan_off = C_TO_K(25), \
+		.temp_fan_max = C_TO_K(50), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
@@ -95,25 +95,24 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
  * PP3300 regulator: operating range -40 C to 145 C
  *
  * Inductors: limit of 125c
- * PCB: limit is 80c
+ * PCB: limit is 85c
  */
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_AMBIENT \
+#define THERMAL_FAN \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
+		.temp_fan_off = C_TO_K(25), \
+		.temp_fan_max = C_TO_K(50), \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_ambient =
-	THERMAL_AMBIENT;
+__maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 
 /*
  * Inductor limits - used for both charger and PP3300 regulator
@@ -124,7 +123,7 @@ __maybe_unused static const struct ec_thermal_config thermal_ambient =
  * PP3300 regulator: operating range -40 C to 125 C
  *
  * Inductors: limit of 125c
- * PCB: limit is 80c
+ * PCB: limit is 85c
  */
 /*
  * TODO(b/202062363): Remove when clang is fixed.
@@ -132,42 +131,22 @@ __maybe_unused static const struct ec_thermal_config thermal_ambient =
 #define THERMAL_CHARGER \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(120), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(65), \
+		.temp_fan_off = C_TO_K(25), \
+		.temp_fan_max = C_TO_K(50), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_charger =
-	THERMAL_CHARGER;
+							THERMAL_CHARGER;
 
-/*
- * TODO(b/180681346): update for brya WWAN module
- */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_WWAN \
-	{ \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(130), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(130), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_wwan =
-	THERMAL_WWAN;
-
+/* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_2_AMBIENT] = THERMAL_AMBIENT,
-	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
+	[TEMP_SENSOR_2_FAN] = THERMAL_FAN,
+	[TEMP_SENSOR_3_CHARGER]	= THERMAL_CHARGER,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
