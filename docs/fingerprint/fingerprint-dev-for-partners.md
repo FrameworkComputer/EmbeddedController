@@ -55,28 +55,26 @@ This FPMCU board is the Dartmonkey Rev 0.1. |
 Servo is a general purpose debug board that connects to a header on the FPMCU
 board. Among other things, the servo supplies power to the FPMCU and can be used
 to program the FPMCU, interact with the EC console, take power measurements, and
-debug a running program. It supports SPI, UART, I2C, as well as JTAG/SWD.
+debug a running program.
 
-There are two different servo debugger setups supported, the
-[Servo Micro](#servo-micro) and the [Servo V2 + Yoshi](#servo-v2-yoshi). The
-servo micro is recommended for its simplicity. It lacks builtin JTAG/SWD support
-for single step debugging, but Dragonclaw v0.2 has an
+There are several variants of Servo and the fingerprint team uses the
+[Servo Micro](#servo-micro) for its simplicity. It lacks builtin JTAG/SWD
+support for single step debugging, but Dragonclaw v0.2 and Icetower v0.1 have an
 [SWD connector](#servo-micro-swd) that can be used.
 
-[Servo Micro](#servo-micro) | [ServoV2 + Yoshi](#servo-v2-yoshi)
---------------------------- | ----------------------------------
-![Servo Micro]              | ServoV2 ![Servo v2] Yoshi Flex ![Standard Yoshi Flex]
+[Servo Micro](#servo-micro) |
+--------------------------- |
+![Servo Micro]              |
 
 <!-- mdformat off(b/139308852) -->
 *** note
-For more information about both servos, see [servo].
+For more information about Servo, see [servo].
 ***
 <!-- mdformat on -->
 
 ### Servo Micro
 
-Unlike the Servo V2, the newer servo micro does not require any adapters to
-interface with the FPMCU board.
+Servo Micro does not require any adapters to interface with the FPMCU board.
 
 As you can see below, one end connects to the FPMCU board and the other connect
 to the developer's computer over micro USB.
@@ -92,68 +90,6 @@ For more information about Servo Micro, see [Servo Micro Info].
 #### Using SWD (Optional) {#servo-micro-swd}
 
 Instructions for setup are described in [Fingerprint Debugging].
-
-### Servo V2 + Yoshi
-
-Servo V2 is the original full featured debugger. It requires a
-[Yoshi Flex Cable](#yoshi-flex-cable) to interface with the FPMCU.
-
-![Servo v2]
-
-<!-- mdformat off(b/139308852) -->
-*** note
-NOTE: More information on servo can be found in the [servo] documentation.
-***
-<!-- mdformat on -->
-
-#### Yoshi Flex Cable
-
-The Yoshi Flex cable is used to connect Servo v2 to the FPMCU board. The
-standard cable does not work with SWD, but a simple rework can be performed to
-support SWD.
-
-Standard Yoshi Flex    | Yoshi Flex Reworked to Support SWD
----------------------- | -------------------------------------
-![Standard Yoshi Flex] | ![Yoshi Flex Reworked to Support SWD]
-
-Rework steps:
-
-*   Remove R18 and R19
-*   Wire from Pin 6 of U21 to right side of R18
-*   Wire from Pin 6 of U21 to right side of R19
-
-#### Micro USB Cable
-
-A micro USB cable is needed to connect the the servo v2 board to your host Linux
-development machine.
-
-*   [Micro USB Cable]
-
-#### Servo V2 Hardware Setup
-
-1.  Connect the Yoshi Flex cable to servo, paying attention to the pin
-    numbering.
-
-    ![Connect Yoshi Flex] ![Another Yoshi Flex image]
-
-2.  Connect the other end of the Yoshi Flex cable to the servo header on the
-    FPMCU board.
-
-    ![Connect Yoshi Flex to FPMCU board] ![Another image]
-
-3.  Connect the fingerprint sensor to the header on the FPMCU board.
-
-4.  Connect the micro USB cable to servo's `HOST_IN` port. The other end of the
-    USB cable should be plugged into your host development machine.
-
-    ![Connect USB to Servo]
-
-5.  Optional: Connect SWD Debugger
-
-    If you want to use SWD for debugging, connect your debugger to the `JTAG`
-    header on servo v2.
-
-    ![Connect SWD Debugger]
 
 ## Software Setup
 
@@ -632,17 +568,8 @@ Make sure that this interface is disabled:
 
 [Servo Micro]: ../images/servo_micro.jpg
 [Servo Micro with Dragonclaw]: ../images/servomicro_dragonclaw.jpg
-[Servo v2]: ../images/servo_v2.jpg
-[Standard Yoshi Flex]: ../images/yoshi_flex.jpg
-[Yoshi Flex Reworked to Support SWD]: ../images/yoshi_flex_swd_rework.jpg
 [Dragonclaw board]: ../images/dragonclaw_rev_0.2.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
-[Connect USB to Servo]: ../images/servo_v2_with_micro_usb.jpg
-[Connect Yoshi Flex]: ../images/servo_v2_with_yoshi_flex.jpg
-[Another Yoshi Flex image]: ../images/servo_v2_with_yoshi_flex2.jpg
-[Connect Yoshi Flex to FPMCU board]: ../images/dragonclaw_yoshi_flex_header.jpg
-[Another image]: ../images/dragonclaw_yoshi_flex_header2.jpg
-[Connect SWD Debugger]: ../images/servo_v2_jtag_header.jpg
 [Dartmonkey board]: ../images/dartmonkey.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
