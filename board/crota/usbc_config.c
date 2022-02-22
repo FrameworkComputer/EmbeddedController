@@ -65,7 +65,7 @@ const struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C0_C2_TCPC,
-			.addr_flags = NCT38XX_I2C_ADDR2_1_FLAGS,
+			.addr_flags = NCT38XX_I2C_ADDR1_4_FLAGS,
 		},
 		.drv = &nct38xx_tcpm_drv,
 		.flags = TCPC_FLAGS_TCPCI_REV2_0,
