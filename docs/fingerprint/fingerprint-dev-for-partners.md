@@ -35,7 +35,8 @@ Download the [Dragonclaw schematics, layout, and BOM][dragonclaw schematics].
 
 <!-- mdformat off(b/139308852) -->
 *** note
-**Googlers**: You can pick up the Dragonclaw development board at Chromestop.
+**Googlers**: You can pick up a Dragonclaw development board at Chromestop.
+
 **Partners**: You can request a Dragonclaw development board from Google.
 ***
 
@@ -46,9 +47,17 @@ have already been reworked.
 ***
 <!-- mdformat on -->
 
-This FPMCU board is the Dartmonkey Rev 0.1. |
-------------------------------------------- |
-![Dartmonkey board]                         |
+This FPMCU board is Icetower Rev 0.1. |
+------------------------------------- |
+![Icetower board]                     |
+
+<!-- mdformat off(b/139308852) -->
+*** note
+**Googlers**: You can pick up an Icetower development board at Chromestop.
+
+**Partners**: You can request an Icetower development board from Google.
+***
+<!-- mdformat on -->
 
 ### Servo
 
@@ -570,7 +579,7 @@ Make sure that this interface is disabled:
 [Servo Micro with Dragonclaw]: ../images/servomicro_dragonclaw.jpg
 [Dragonclaw board]: ../images/dragonclaw_rev_0.2.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
-[Dartmonkey board]: ../images/dartmonkey.jpg
+[Icetower board]: ../images/icetower_v0.1.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/pdf" to the Google Drive link. -->
