@@ -239,6 +239,12 @@
 #define CONFIG_WP_ACTIVE_HIGH
 #define CONFIG_PANIC_STRIP_GPR
 
+/*
+ * Bloonchipper FPMCU RO has RV32I core panic data structure in their panic
+ * data structure, so expected size of the structure is 144 bytes.
+ */
+#define CONFIG_RO_PANIC_DATA_SIZE 144
+
 #ifdef SECTION_IS_RW
 #define CONFIG_LOW_POWER_IDLE
 #endif /* SECTION_IS_RW */
