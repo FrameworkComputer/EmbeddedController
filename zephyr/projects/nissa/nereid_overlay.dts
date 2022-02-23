@@ -12,7 +12,7 @@
 	};
 
 	batteries {
-		default_battery: smp_l20m3pg0 {
+		default_battery: smp {
 			compatible = "smp,l20m3pg0";
 		};
 	};
