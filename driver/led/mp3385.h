@@ -27,7 +27,7 @@ void mp3385_board_init(void);
 int mp3385_set_config(int offset, int data);
 
 #ifndef MP3385_POWER_BACKLIGHT_DELAY
-#define MP3385_POWER_BACKLIGHT_DELAY SECOND
+#define MP3385_POWER_BACKLIGHT_DELAY (15*MSEC)
 #endif
 
 void mp3385_interrupt(enum gpio_signal signal);
