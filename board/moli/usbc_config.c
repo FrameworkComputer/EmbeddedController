@@ -12,9 +12,7 @@
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/retimer/bb_retimer_public.h"
-#include "driver/retimer/kb800x.h"
 #include "driver/tcpm/nct38xx.h"
-#include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
 #include "gpio.h"
@@ -69,12 +67,6 @@ static const struct usb_mux usbc0_tcss_usb_mux = {
 	.driver = &virtual_usb_mux_driver,
 	.hpd_update = &virtual_hpd_update,
 };
-
-struct kb800x_control_t kb800x_control[] = {
-	[USBC_PORT_C0] = {
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(kb800x_control) == USBC_PORT_COUNT);
 
 const struct usb_mux usb_muxes[] = {
 	[USBC_PORT_C0] = {
