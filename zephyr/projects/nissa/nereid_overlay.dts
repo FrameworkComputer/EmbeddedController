@@ -71,7 +71,7 @@
 		 * fault, but this definition is useful for hardware testing.
 		 */
 		gpio_usb_c0_prot_fault_odl: usb_c0_prot_fault_odl {
-			gpios = <&gpiok 6 (GPIO_OPEN_DRAIN | GPIO_PULL_UP)>;
+			gpios = <&gpiok 6 GPIO_INPUT_PULL_UP>;
 		};
 
 		gpio_sb_1: sb_1 {
