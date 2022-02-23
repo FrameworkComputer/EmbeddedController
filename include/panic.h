@@ -125,6 +125,10 @@ struct panic_data {
 	uint32_t magic;           /* PANIC_SAVE_MAGIC if valid */
 };
 
+#ifdef CONFIG_RO_PANIC_DATA_SIZE
+BUILD_ASSERT(sizeof(struct panic_data) == CONFIG_RO_PANIC_DATA_SIZE);
+#endif
+
 #define PANIC_DATA_MAGIC 0x21636e50  /* "Pnc!" */
 enum panic_arch {
 	PANIC_ARCH_CORTEX_M = 1,     /* Cortex-M architecture */

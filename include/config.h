@@ -1673,6 +1673,9 @@
 /* Provide another output method of panic information by console channel */
 #undef CONFIG_PANIC_CONSOLE_OUTPUT
 
+/* When defined, it enables build assert for panic data structure size */
+#undef CONFIG_RO_PANIC_DATA_SIZE
+
 /*
  * Provide the default GPIO abstraction layer.
  * You want this unless you are doing a really tiny firmware.
