@@ -562,8 +562,9 @@ config PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
 	  This should be enabled by charger drivers which need it. It cannot
 	  be set otherwise, even in prj.conf
 
-choice "Charge-ramp method"
+choice PLATFORM_EC_CHARGE_RAMP_TYPE
 	prompt "Select the charge-ramp method"
+	optional
 	help
 	  Select the method used for ramping up charging of a battery. It is
 	  preferred to use the hardware method if the charger chip can support
@@ -587,7 +588,7 @@ config PLATFORM_EC_CHARGE_RAMP_SW
 	  current needs of the device. It handles the user plugging chargers in
 	  and removing them.
 
-endchoice  # "Charge-ramp method"
+endchoice  # PLATFORM_EC_CHARGE_RAMP_TYPE
 
 config PLATFORM_EC_CONSOLE_CMD_CHARGER_ADC_AMON_BMON
 	bool "Console command: amonbmon"
