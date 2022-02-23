@@ -20,7 +20,6 @@ config PLATFORM_EC_USB_PD_TCPM_TCPCI
 
 # TODO: Add other choices:
 #  CONFIG_USB_PD_TCPM_STUB
-#  CONFIG_USB_PD_TCPM_FUSB302
 #  CONFIG_USB_PD_TCPM_ANX3429
 #  CONFIG_USB_PD_TCPM_ANX740X
 #  CONFIG_USB_PD_TCPM_ANX741X
@@ -126,6 +125,15 @@ config PLATFORM_EC_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND
 	  Note: this is intended to be a temporary option and won't be needed
 	  when ANX7447 are put on boards with OCM already erased
 endif # PLATFORM_EC_USB_PD_TCPM_ANX7447
+
+config PLATFORM_EC_USB_PD_TCPM_FUSB302
+	bool "Fairchild's FUSB302 Type-C port controller with USB PD"
+	help
+	  This is a USB Type-C port controller which enables the USB Type-C
+	  detection including attach, and orientation. It integrates the
+	  physical layer of the USB power delivery protocol to allow
+	  up to 100 W of power and role swap. The PD block enables full
+	  support for alternative interfaces of the Type-C specification.
 
 config PLATFORM_EC_USB_PD_TCPM_NCT38XX
 	bool "Nuvoton 3807/8 Single/Dual Port Controller with Power Delivery"
