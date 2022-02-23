@@ -5,11 +5,13 @@
 
 #include <devicetree.h>
 #include "usbc_ppc.h"
+#include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_sn5s330.h"
 #include "usbc/ppc_syv682x.h"
 #include "usbc/ppc.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(SN5S330_COMPAT) || \
+#if DT_HAS_COMPAT_STATUS_OKAY(RT1739_PPC_COMPAT) || \
+	DT_HAS_COMPAT_STATUS_OKAY(SN5S330_COMPAT) || \
 	DT_HAS_COMPAT_STATUS_OKAY(SYV682X_COMPAT)
 
 #define PPC_CHIP_PRIM(id, fn)                                \
@@ -26,6 +28,8 @@
 
 /* Power Path Controller */
 struct ppc_config_t ppc_chips[] = {
+	DT_FOREACH_STATUS_OKAY_VARGS(RT1739_PPC_COMPAT, PPC_CHIP_PRIM,
+				     PPC_CHIP_RT1739)
 	DT_FOREACH_STATUS_OKAY_VARGS(SN5S330_COMPAT, PPC_CHIP_PRIM,
 				     PPC_CHIP_SN5S330)
 	DT_FOREACH_STATUS_OKAY_VARGS(SYV682X_COMPAT, PPC_CHIP_PRIM,
@@ -35,6 +39,8 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* Alt Power Path Controllers */
 struct ppc_config_t ppc_chips_alt[] = {
+	DT_FOREACH_STATUS_OKAY_VARGS(RT1739_PPC_COMPAT, PPC_CHIP_ALT,
+				     PPC_CHIP_RT1739)
 	DT_FOREACH_STATUS_OKAY_VARGS(SN5S330_COMPAT, PPC_CHIP_ALT,
 				     PPC_CHIP_SN5S330)
 	DT_FOREACH_STATUS_OKAY_VARGS(SYV682X_COMPAT, PPC_CHIP_ALT,

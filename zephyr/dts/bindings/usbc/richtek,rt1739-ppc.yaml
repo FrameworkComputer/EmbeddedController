@@ -1,0 +1,18 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USBC PPC
+
+compatible: "richtek,rt1739-ppc"
+
+include: ppc-chip.yaml
+
+properties:
+  i2c-addr-flags:
+    default: "RT1739_ADDR1_FLAGS"
+    enum:
+      - "RT1739_ADDR1_FLAGS"
+      - "RT1739_ADDR2_FLAGS"
+      - "RT1739_ADDR3_FLAGS"
+      - "RT1739_ADDR4_FLAGS"
