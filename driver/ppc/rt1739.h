@@ -11,10 +11,10 @@
 #include "usb_charge.h"
 #include "usbc_ppc.h"
 
-#define RT1739_ADDR1 0x70
-#define RT1739_ADDR2 0x71
-#define RT1739_ADDR3 0x72
-#define RT1739_ADDR4 0x73
+#define RT1739_ADDR1_FLAGS 0x70
+#define RT1739_ADDR2_FLAGS 0x71
+#define RT1739_ADDR3_FLAGS 0x72
+#define RT1739_ADDR4_FLAGS 0x73
 
 #define RT1739_REG_DEVICE_ID0		0x02
 #define RT1739_DEVICE_ID_ES1			0x11
