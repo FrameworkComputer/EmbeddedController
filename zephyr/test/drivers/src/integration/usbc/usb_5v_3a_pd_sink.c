@@ -170,3 +170,69 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_battery_discharging)
 	zassert_equal(battery_status & STATUS_DISCHARGING, STATUS_DISCHARGING,
 		      "Battery is not discharging: %d", battery_status);
 }
+
+ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_charge_state)
+{
+	struct ec_response_charge_state charge_state;
+
+	disconnect_sink_from_port(this);
+	charge_state = host_cmd_charge_state(0);
+
+	zassert_false(charge_state.get_state.ac, "AC_OK not triggered");
+	zassert_equal(charge_state.get_state.chg_current, 0,
+		      "Max charge current expected 0mA, but was %dmA",
+		      charge_state.get_state.chg_current);
+	zassert_equal(charge_state.get_state.chg_input_current,
+		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT,
+		      "Charge input current limit expected %dmA, but was %dmA",
+		      CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT,
+		      charge_state.get_state.chg_input_current);
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_typec_status)
+{
+	struct ec_response_typec_status typec_status;
+
+	disconnect_sink_from_port(this);
+	typec_status = host_cmd_typec_status(0);
+
+	zassert_false(typec_status.pd_enabled, NULL);
+	zassert_false(typec_status.dev_connected, NULL);
+	zassert_false(typec_status.sop_connected, NULL);
+	zassert_equal(typec_status.source_cap_count, 0,
+		      "Expected 0 source caps, but got %d",
+		      typec_status.source_cap_count);
+	zassert_equal(typec_status.power_role, USB_CHG_TYPE_NONE,
+		      "Expected power role to be %d, but got %d",
+		      USB_CHG_TYPE_NONE, typec_status.power_role);
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_power_info)
+{
+	struct ec_response_usb_pd_power_info power_info;
+
+	disconnect_sink_from_port(this);
+	power_info = host_cmd_power_info(0);
+
+	zassert_equal(power_info.role, USB_PD_PORT_POWER_DISCONNECTED,
+		      "Expected power role to be %d, but got %d",
+		      USB_PD_PORT_POWER_DISCONNECTED, power_info.role);
+	zassert_equal(power_info.type, USB_CHG_TYPE_NONE,
+		      "Expected charger type to be %d, but got %s",
+		      USB_CHG_TYPE_NONE, power_info.type);
+	zassert_equal(power_info.max_power, 0,
+		      "Expected the maximum power to be 0uW, but got %duW",
+		      power_info.max_power);
+	zassert_equal(power_info.meas.voltage_max, 0,
+		      "Expected maximum voltage of 0mV, but got %dmV",
+		      power_info.meas.voltage_max);
+	zassert_within(power_info.meas.voltage_now, 0, 10,
+		       "Expected present voltage near 0mV, but got %dmV",
+		       power_info.meas.voltage_now);
+	zassert_equal(power_info.meas.current_max, 0,
+		      "Expected maximum current of 0mA, but got %dmA",
+		      power_info.meas.current_max);
+	zassert_true(power_info.meas.current_lim >= 0,
+		     "Expected the PD current limit to be >= 0, but got %dmA",
+		     power_info.meas.current_lim);
+}
