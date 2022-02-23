@@ -1,0 +1,38 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+    The power signals are defined using different compatibles,
+    which configure the source of the signal (GPIO, VW, external etc.).
+    All signals use a common base enum-name so that the core code
+    can use consistent names.
+
+properties:
+    dbg-label:
+        type: string
+        required: true
+        description: Label of power signals used in debug messages
+
+    enum-name:
+        type: string
+        required: true
+        description: |
+          Enumeration values for power signals.
+          Keep in alphebetical order.
+        enum:
+        - PWR_ALL_SYS_PWRGD
+        - PWR_EC_PCH_RSMRST
+        - PWR_EC_PCH_SYS_PWROK
+        - PWR_EN_PP5000_A
+        - PWR_IMVP9_VRRDY
+        - PWR_PCH_PWROK
+        - PWR_DSW_PWROK
+        - PWR_RSMRST
+        - PWR_SLP_S0
+        - PWR_SLP_S3
+        - PWR_SLP_S4
+        - PWR_SLP_S5
+        - PWR_SLP_SUS
+        - PWR_SYS_RST
+        - PWR_VCCST_PWRGD

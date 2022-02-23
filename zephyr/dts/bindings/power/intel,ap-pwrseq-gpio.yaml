@@ -1,0 +1,30 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Node for power signal GPIO
+
+compatible: "intel,ap-pwrseq-gpio"
+
+include: intel,ap-pwr-signal-base.yaml
+properties:
+    gpios:
+        type: phandle-array
+        required: true
+        description: |
+          GPIO to be used for power signal. Input GPIOs can be
+          configured to generate an interrupt if the 'interrupt-flags'
+          property is set with the appropriate interrupt flags.
+
+    output:
+        type: boolean
+        description: Output GPIO. No interrupts used.
+
+    interrupt-flags:
+        type: int
+        required: false
+        description: GPIO interrupt configuration flags.
+
+    no-enable:
+        type: boolean
+        description: Do not enable interrupt on start-up

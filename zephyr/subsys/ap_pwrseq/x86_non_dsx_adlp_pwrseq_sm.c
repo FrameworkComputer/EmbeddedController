@@ -14,29 +14,20 @@ static const struct chipset_pwrseq_config chip_cfg = {
 	.vrrdy_timeout_ms = DT_INST_PROP(0, vrrdy_timeout),
 	.sys_reset_delay_ms = DT_INST_PROP(0, sys_reset_delay),
 	.all_sys_pwrgd_timeout = DT_INST_PROP(0, all_sys_pwrgd_timeout),
-	.vccst_pwrgd_od = GPIO_DT_SPEC_GET(DT_DRV_INST(0),
-						vccst_pwrgd_od_gpios),
-	.imvp9_vrrdy_od = GPIO_DT_SPEC_GET(DT_DRV_INST(0),
-						imvp9_vrrdy_od_gpios),
-	.pch_pwrok = GPIO_DT_SPEC_GET(DT_DRV_INST(0), pch_pwrok_gpios),
-	.ec_pch_sys_pwrok = GPIO_DT_SPEC_GET(DT_DRV_INST(0),
-						ec_pch_sys_pwrok_gpios),
-	.sys_rst_l = GPIO_DT_SPEC_GET(DT_DRV_INST(0), sys_rst_l_gpios),
 };
 
 void ap_off(void)
 {
-	/* TODO: This could be added as g3action handler */
-	gpio_pin_set_dt(&chip_cfg.vccst_pwrgd_od, 0);
-	gpio_pin_set_dt(&chip_cfg.pch_pwrok, 0);
-	gpio_pin_set_dt(&chip_cfg.ec_pch_sys_pwrok, 0);
+	power_signal_set(PWR_VCCST_PWRGD, 0);
+	power_signal_set(PWR_PCH_PWROK, 0);
+	power_signal_set(PWR_EC_PCH_SYS_PWROK, 0);
 }
 
 /* This should be overridden if there is no power sequencer chip */
 __attribute__((weak)) int intel_x86_get_pg_ec_all_sys_pwrgd(
 				const struct common_pwrseq_config *com_cfg)
 {
-	return gpio_pin_get_dt(&com_cfg->all_sys_pwrgd);
+	return power_signal_get(PWR_ALL_SYS_PWRGD);
 }
 
 /* Handle ALL_SYS_PWRGD signal
@@ -67,9 +58,9 @@ __attribute__((weak)) int all_sys_pwrgd_handler(
 
 	/* PG_EC_ALL_SYS_PWRGD is asserted, enable VCCST_PWRGD_OD. */
 
-	if (gpio_pin_get_dt(&chip_cfg.vccst_pwrgd_od) == 0) {
+	if (power_signal_get(PWR_VCCST_PWRGD) == 0) {
 		k_msleep(chip_cfg.vccst_pwrgd_delay_ms);
-		gpio_pin_set_dt(&chip_cfg.vccst_pwrgd_od, 1);
+		power_signal_set(PWR_VCCST_PWRGD, 1);
 	}
 	return 0;
 }
@@ -86,7 +77,7 @@ static int wait_for_vrrdy(void)
 	int timeout_ms = chip_cfg.vrrdy_timeout_ms;
 
 	for (; timeout_ms > 0; --timeout_ms) {
-		if (gpio_pin_get_dt(&chip_cfg.imvp9_vrrdy_od) != 0)
+		if (power_signal_get(PWR_IMVP9_VRRDY) != 0)
 			return 1;
 		k_msleep(1);
 	}
@@ -97,7 +88,7 @@ static int wait_for_vrrdy(void)
 int generate_pch_pwrok_handler(void)
 {
 	/* Enable PCH_PWROK, gated by VRRDY. */
-	if (gpio_pin_get_dt(&chip_cfg.pch_pwrok) == 0) {
+	if (power_signal_get(PWR_PCH_PWROK) == 0) {
 		if (wait_for_vrrdy() == 0) {
 			LOG_DBG("Timed out waiting for VRRDY, "
 				"shutting AP off!");
@@ -105,7 +96,7 @@ int generate_pch_pwrok_handler(void)
 			return -1;
 		}
 		k_msleep(chip_cfg.pch_pwrok_delay_ms);
-		gpio_pin_set_dt(&chip_cfg.pch_pwrok, 1);
+		power_signal_set(PWR_PCH_PWROK, 1);
 		LOG_DBG("Set PCH_PWROK\n");
 	}
 
@@ -116,7 +107,7 @@ int generate_pch_pwrok_handler(void)
 void generate_sys_pwrok_handler(const struct common_pwrseq_config *com_cfg)
 {
 	/* Enable PCH_SYS_PWROK. */
-	if (gpio_pin_get_dt(&chip_cfg.ec_pch_sys_pwrok) == 0) {
+	if (power_signal_get(PWR_EC_PCH_SYS_PWROK) == 0) {
 		k_msleep(chip_cfg.sys_pwrok_delay_ms);
 		/* Check if we lost power while waiting. */
 		if (intel_x86_get_pg_ec_all_sys_pwrgd(com_cfg) == 0) {
@@ -125,7 +116,7 @@ void generate_sys_pwrok_handler(const struct common_pwrseq_config *com_cfg)
 			ap_off();
 			return;
 		}
-		gpio_pin_set_dt(&chip_cfg.ec_pch_sys_pwrok, 1);
+		power_signal_set(PWR_EC_PCH_SYS_PWROK, 1);
 		/* PCH will now release PLT_RST */
 	}
 }
@@ -169,11 +160,7 @@ void s0_action_handler(const struct common_pwrseq_config *com_cfg)
 __attribute__((weak)) int intel_x86_get_pg_ec_dsw_pwrok(
 			const struct common_pwrseq_config *com_cfg)
 {
-#if PWRSEQ_GPIO_PRESENT(pg_ec_dsw_pwroks_gpios)
-	return gpio_pin_get_dt(&com_cfg->pg_ec_dsw_pwrok);
-#else
-	return 0;
-#endif
+	return power_signal_get(PWR_DSW_PWROK);
 }
 
 void intel_x86_sys_reset_delay(void)
@@ -202,14 +189,14 @@ void chipset_reset(enum pwrseq_chipset_shutdown_reason reason)
 	 * Toggling SYS_RESET_L will not have any impact when it's already
 	 * low (i,e. Chipset is in reset state).
 	 */
-	if (gpio_pin_get_dt(&(chip_cfg.sys_rst_l)) == 0) {
+	if (power_signal_get(PWR_SYS_RST)) {
 		LOG_DBG("Chipset is in reset state");
 		return;
 	}
 
-	gpio_pin_set_dt(&(chip_cfg.sys_rst_l), 0);
+	power_signal_set(PWR_SYS_RST, 1);
 	intel_x86_sys_reset_delay();
-	gpio_pin_set_dt(&(chip_cfg.sys_rst_l), 1);
+	power_signal_set(PWR_SYS_RST, 0);
 }
 
 void chipset_force_shutdown(enum pwrseq_chipset_shutdown_reason reason,
@@ -222,10 +209,10 @@ void chipset_force_shutdown(enum pwrseq_chipset_shutdown_reason reason,
 	 */
 
 	/* Turn off RMSRST_L  to meet tPCH12 */
-	gpio_pin_set_dt(&com_cfg->ec_pch_rsmrst_odl, 0);
+	power_signal_set(PWR_EC_PCH_RSMRST, 1);
 
 	/* Turn off S5 rails */
-	gpio_pin_set_dt(&com_cfg->enable_pp5000_a, 0);
+	power_signal_set(PWR_EN_PP5000_A, 0);
 
 	/*
 	 * TODO(b/179519791): Replace this wait with
@@ -233,7 +220,7 @@ void chipset_force_shutdown(enum pwrseq_chipset_shutdown_reason reason,
 	 */
 	/* Now wait for DSW_PWROK and  RSMRST_ODL to go away. */
 	while (intel_x86_get_pg_ec_dsw_pwrok(com_cfg) &&
-			gpio_pin_get_dt(&com_cfg->pg_ec_rsmrst_odl) &&
+			(power_signal_get(PWR_RSMRST) == 0) &&
 			(timeout_ms > 0)) {
 		k_msleep(1);
 		timeout_ms--;
@@ -246,29 +233,11 @@ void chipset_force_shutdown(enum pwrseq_chipset_shutdown_reason reason,
 
 void g3s5_action_handler(const struct common_pwrseq_config *com_cfg)
 {
-	gpio_pin_set_dt(&com_cfg->enable_pp5000_a, 1);
+	power_signal_set(PWR_EN_PP5000_A, 1);
 }
 
 void init_chipset_pwr_seq_state(void)
 {
-	int ret = 0;
-
-	/* Configure gpios specific to the chipset */
-	ret |= gpio_pin_configure_dt(&chip_cfg.vccst_pwrgd_od,
-							GPIO_OUTPUT_LOW);
-	ret |= gpio_pin_configure_dt(&chip_cfg.imvp9_vrrdy_od,
-							GPIO_INPUT);
-	ret |= gpio_pin_configure_dt(&chip_cfg.pch_pwrok,
-							GPIO_OUTPUT_LOW);
-	ret |= gpio_pin_configure_dt(&chip_cfg.ec_pch_sys_pwrok,
-							GPIO_OUTPUT_LOW);
-	ret |= gpio_pin_configure_dt(&chip_cfg.sys_rst_l,
-							GPIO_OUTPUT_HIGH);
-
-	if (!ret)
-		LOG_INF("Configuring GPIO complete");
-	else
-		LOG_ERR("Power seq gpio configuration failed\n");
 }
 
 enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state,

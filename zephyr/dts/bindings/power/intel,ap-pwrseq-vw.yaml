@@ -1,0 +1,28 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Node for eSPI virtual wire power signal
+
+compatible: "intel,ap-pwrseq-vw"
+
+include: intel,ap-pwr-signal-base.yaml
+properties:
+    virtual-wire:
+        type: string
+        required: true
+        description: |
+          Enumeration value to eSPI signals that can be sent
+          or received through virtual wire channel
+
+        enum:
+        - ESPI_VWIRE_SIGNAL_SLP_S3
+        - ESPI_VWIRE_SIGNAL_SLP_S4
+        - ESPI_VWIRE_SIGNAL_SLP_S5
+
+    vw-invert:
+        type: boolean
+        description: |
+          Only used for virtual wire nodes.
+          If set, the virtual wire signal is inverted before
+          being returned.

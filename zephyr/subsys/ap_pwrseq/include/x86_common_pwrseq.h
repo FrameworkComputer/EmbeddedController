@@ -6,10 +6,9 @@
 #ifndef __X86_COMMON_PWRSEQ_H__
 #define __X86_COMMON_PWRSEQ_H__
 
-#include <drivers/espi.h>
-#include <drivers/gpio.h>
-#include <logging/log.h>
+#include <power_signals.h>
 #include <x86_power_signals.h>
+#include <logging/log.h>
 
 /**
  * @brief System power states for Non Deep Sleep Well
@@ -79,17 +78,5 @@ struct pwrseq_context {
 	enum power_states_ndsx power_state;
 	/* Indicate should exit G3 power state or not */
 	bool want_g3_exit;
-
-	/*
-	 * Current input power signal states. Each bit represents an input
-	 * power signal that is defined by enum power_signal in same order.
-	 * 1 - signal state is asserted.
-	 * 0 - signal state is de-asserted.
-	 */
-	uint32_t in_signals;
-	/* Input signal state we're waiting for */
-	uint32_t in_want;
-	/* Signal values which print debug output */
-	uint32_t in_debug;
 };
 #endif /* __X86_COMMON_PWRSEQ_H__ */

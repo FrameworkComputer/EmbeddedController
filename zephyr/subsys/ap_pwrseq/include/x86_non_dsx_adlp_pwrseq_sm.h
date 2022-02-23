@@ -16,10 +16,6 @@ struct chipset_pwrseq_config {
 	int vccst_pwrgd_delay_ms;
 	int vrrdy_timeout_ms;
 	int all_sys_pwrgd_timeout;
-	const struct gpio_dt_spec vccst_pwrgd_od;
-	const struct gpio_dt_spec imvp9_vrrdy_od;
-	const struct gpio_dt_spec pch_pwrok;
-	const struct gpio_dt_spec ec_pch_sys_pwrok;
-	const struct gpio_dt_spec sys_rst_l;
 };
-#endif /* __X86_NON_DSX_ADLP_H__ */
+
+#endif /* __X86_NON_DSX_ADLP_PWRSEQ_SM_H__ */

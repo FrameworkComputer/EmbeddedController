@@ -28,6 +28,7 @@ static int powerindebug_handler(const struct shell *shell, size_t argc,
 {
 	int i;
 	char *e;
+	power_signal_mask_t current;
 
 	/* If one arg, set the mask */
 	if (argc == 2) {
@@ -36,23 +37,23 @@ static int powerindebug_handler(const struct shell *shell, size_t argc,
 		if (*e)
 			return -EINVAL;
 
-		pwrseq_set_debug_signals(m);
+		power_set_debug(m);
 	}
 
 	/* Print the mask */
-	shell_fprintf(shell, SHELL_INFO, "power in:   0x%04x\n",
-						pwrseq_get_input_signals());
+	current = power_get_signals();
+	shell_fprintf(shell, SHELL_INFO, "power in:   0x%04x\n", current);
 	shell_fprintf(shell, SHELL_INFO, "debug mask: 0x%04x\n",
-						pwrseq_get_debug_signals());
+						power_get_debug());
 
 	/* Print the decode */
 	shell_fprintf(shell, SHELL_INFO, "bit meanings:\n");
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++) {
-		int mask = 1 << i;
+		power_signal_mask_t mask = POWER_SIGNAL_MASK(i);
 
 		shell_fprintf(shell, SHELL_INFO, "  0x%04x %d %s\n",
-			mask, pwrseq_get_input_signals() & mask ? 1 : 0,
-			power_signal_list[i].debug_name);
+			mask, (current & mask) ? 1 : 0,
+			power_signal_name(i));
 	}
 
 	return 0;
