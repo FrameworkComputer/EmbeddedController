@@ -51,3 +51,11 @@ echo PASSED
 cat /tmp/artifact_bundle_metadata-cov
 ls -l /tmp/artifact_bundles-cov
 ```
+
+## Zmake unit tests
+
+Run the tests with `zephyr/zmake/run_tests.sh`.  You can generate a coverage
+report, but not in the chroot, as some pip modules are missing there.
+
+The [latest coverage report](https://gitlab.com/zephyr-ec/ec/-/jobs/artifacts/main/file/zephyr/zmake/htmlcov/index.html?job=zmake_coverage
+) is on gitlab.
