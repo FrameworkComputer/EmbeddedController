@@ -876,5 +876,6 @@ const struct usb_mux_driver anx7447_usb_mux_driver = {
 	.init = anx7447_mux_init,
 	.set = anx7447_mux_set,
 	.get = anx7447_mux_get,
+	.enter_low_power_mode = &tcpci_tcpm_mux_enter_low_power,
 };
 #endif /* CONFIG_USB_PD_TCPM_MUX */
