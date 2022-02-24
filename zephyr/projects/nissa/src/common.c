@@ -134,3 +134,25 @@ enum nissa_sub_board_type nissa_get_sb_type(void)
 	}
 	return sb;
 }
+
+/* Called on AP S4 -> S3 transition */
+static void board_chipset_startup(void)
+{
+	/*
+	 * Enable USB-A vbus
+	 * TODO(b/222238390):remove when BC1.2 is enabled.
+	 */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_usb_a0_vbus), 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S4 -> S5 transition */
+static void board_chipset_shutdown(void)
+{
+	/*
+	 * Disable USB-A vbus
+	 * TODO(b/222238390):remove when BC1.2 is enabled.
+	 */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_usb_a0_vbus), 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
