@@ -263,8 +263,12 @@ DECLARE_HOOK(HOOK_INIT, baseboard_x_ec_gpio2_init, HOOK_PRIO_DEFAULT);
 
 __override uint8_t get_dp_pin_mode(int port)
 {
-	if (corsola_get_db_type() == CORSOLA_DB_HDMI && port == USBC_PORT_C1)
-		return MODE_DP_PIN_E;
+	if (corsola_get_db_type() == CORSOLA_DB_HDMI && port == USBC_PORT_C1) {
+		if (usb_mux_get(USBC_PORT_C1) & USB_PD_MUX_DP_ENABLED)
+			return MODE_DP_PIN_E;
+		else
+			return 0;
+	}
 
 	return pd_dfp_dp_get_pin_mode(port, dp_status[port]);
 }
