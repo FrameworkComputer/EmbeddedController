@@ -24,6 +24,7 @@ cscope.*
 __pycache__
 *.egg-info
 .hypothesis/
+zephyr/zmake/.coverage
 
 # Clangd language server
 .cache/clangd/index/*

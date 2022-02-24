@@ -59,3 +59,17 @@ report, but not in the chroot, as some pip modules are missing there.
 
 The [latest coverage report](https://gitlab.com/zephyr-ec/ec/-/jobs/artifacts/main/file/zephyr/zmake/htmlcov/index.html?job=zmake_coverage
 ) is on gitlab.
+
+You can run the coverage report outside of the chroot easily:
+
+```
+# Install test dependencies
+cd ~/chromiumos/src/platform/ec
+python3 -m pip install 'zephyr/zmake[tests]' --user
+# Run tests with coverage
+cd ~/chromiumos/src/platform/ec/zephyr/zmake
+coverage run --source=zmake -m pytest .
+coverage report
+coverage html
+xdg-open htmlcov/index.html
+```
