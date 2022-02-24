@@ -14,3 +14,6 @@ config GPIO_EMUL
 
 config GPIO
 	default y if ARCH_POSIX
+
+config SHELL_PROMPT_UART
+	default "ec:~$ "
