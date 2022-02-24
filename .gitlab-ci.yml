@@ -298,4 +298,4 @@ zmake_coverage:
     paths:
       - zephyr/zmake/htmlcov/*
     expire_in: 1 week
-  coverage: '/TOTAL\.* \d+%/'
+  coverage: '/^TOTAL.+?(\d+\%)$/'
