@@ -140,7 +140,7 @@ def test(opts):
         cmd = [
             "/usr/bin/lcov",
             "-o",
-            build_dir / "lcov.info",
+            build_dir / "fullpaths.info",
             "--rc",
             "lcov_branch_coverage=1",
             "-a", build_dir / 'all_tests.info',
@@ -149,6 +149,20 @@ def test(opts):
         rv = subprocess.run(cmd, cwd=pathlib.Path(__file__).parent).returncode
         if rv != 0:
             return rv
+        # Make filenames relative to platform/ec
+        cmd = ["sed", "-e", "s|^SF:.*/platform/ec/|SF:|"]
+        with open(build_dir / "fullpaths.info") as infile, open(
+            build_dir / "lcov.info", "w"
+        ) as outfile:
+            rv = subprocess.run(
+                cmd,
+                cwd=pathlib.Path(__file__).parent,
+                stdin=infile,
+                stdout=outfile,
+            ).returncode
+            if rv != 0:
+                return rv
+
     return 0
 
 
