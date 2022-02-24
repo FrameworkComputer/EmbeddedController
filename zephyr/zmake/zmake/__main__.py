@@ -243,22 +243,6 @@ def get_argparser():
     )
     testall.add_argument("-B", "--build-dir", type=pathlib.Path, help="Build directory")
 
-    coverage = sub.add_parser(
-        "coverage",
-        help="Run coverage on a build directory",
-    )
-    coverage.add_argument(
-        "--clobber",
-        action="store_true",
-        dest="clobber",
-        help="Delete existing build directories, even if configuration is unchanged",
-    )
-    coverage.add_argument(
-        "build_dir",
-        type=pathlib.Path,
-        help="The build directory used during configuration",
-    )
-
     generate_readme = sub.add_parser(
         "generate-readme",
         help="Update the auto-generated markdown documentation",

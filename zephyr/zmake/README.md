@@ -137,23 +137,6 @@ Chromium OS's meta-build tool for Zephyr
 | `--clobber` | Delete existing build directories, even if configuration is unchanged |
 | `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Build directory |
 
-### zmake coverage
-
-**Usage:** `zmake coverage [-h] [--clobber] build_dir`
-
-#### Positional Arguments
-
-|   |   |
-|---|---|
-| `build_dir` | The build directory used during configuration |
-
-#### Optional Arguments
-
-|   |   |
-|---|---|
-| `-h`, `--help` | show this help message and exit |
-| `--clobber` | Delete existing build directories, even if configuration is unchanged |
-
 ### zmake generate-readme
 
 **Usage:** `zmake generate-readme [-h] [-o OUTPUT_FILE] [--diff]`
