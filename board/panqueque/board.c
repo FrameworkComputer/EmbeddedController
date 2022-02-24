@@ -111,8 +111,8 @@ const size_t board_power_seq_count = ARRAY_SIZE(board_power_seq);
  */
 const void *const usb_strings[] = {
 	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Acer"),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("D501"),
+	[USB_STR_VENDOR]       = USB_STRING_DESC("Plugable"),
+	[USB_STR_PRODUCT]      = USB_STRING_DESC("UC-MSTHDC"),
 	[USB_STR_SERIALNO]     = 0,
 	[USB_STR_VERSION]      =
 			USB_STRING_DESC(CROS_EC_SECTION ":" CROS_EC_VERSION32),
