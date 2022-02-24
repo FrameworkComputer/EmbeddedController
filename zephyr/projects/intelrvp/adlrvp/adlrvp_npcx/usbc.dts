@@ -1,0 +1,54 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc {
+				compatible = "fairchild,fusb302";
+				status = "okay";
+				port = <&typec_0>;
+				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
+			};
+		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc {
+				compatible = "fairchild,fusb302";
+				status = "okay";
+				port = <&typec_1>;
+				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
+			};
+		};
+
+		port2@2 {
+			compatible = "named-usbc-port";
+			reg = <2>;
+			tcpc {
+				compatible = "fairchild,fusb302";
+				status = "okay";
+				port = <&typec_2>;
+				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
+			};
+		};
+
+		port3@3 {
+			compatible = "named-usbc-port";
+			reg = <3>;
+			tcpc {
+				compatible = "fairchild,fusb302";
+				status = "okay";
+				port = <&typec_3>;
+				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
+			};
+		};
+	};
+};

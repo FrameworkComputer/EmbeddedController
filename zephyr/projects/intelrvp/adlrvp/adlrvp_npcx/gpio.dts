@@ -55,35 +55,35 @@
 			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
-		std-adp-prsnt {
+		std_adp_prsnt: std-adp-prsnt {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 		};
 		bc_acok: bc-acok {
 			gpios = <&gpioc 6 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
-		usbc-tcpc-alrt-p0 {
+		usbc_tcpc_alrt_p0: usbc-tcpc-alrt-p0 {
 			gpios = <&gpio4 0 GPIO_INPUT>;
 		};
-		usbc-tcpc-alrt-p1 {
+		usbc_tcpc_alrt_p1: usbc-tcpc-alrt-p1 {
 			gpios = <&gpio6 2 GPIO_INPUT>;
 		};
-		usbc-tcpc-alrt-p2 {
+		usbc_tcpc_alrt_p2: usbc-tcpc-alrt-p2 {
 			gpios = <&gpio6 3 GPIO_INPUT>;
 		};
-		usbc-tcpc-alrt-p3 {
+		usbc_tcpc_alrt_p3: usbc-tcpc-alrt-p3 {
 			gpios = <&gpio6 7 GPIO_INPUT>;
 		};
-		usbc-tcpc-ppc-alrt-p0 {
+		usbc_tcpc_ppc_alrt_p0: usbc-tcpc-ppc-alrt-p0 {
 			gpios = <&gpiof 0 GPIO_INPUT>;
 		};
-		usbc-tcpc-ppc-alrt-p1 {
+		usbc_tcpc_ppc_alrt_p1: usbc-tcpc-ppc-alrt-p1 {
 			gpios = <&gpiof 1 GPIO_INPUT>;
 		};
-		usbc-tcpc-ppc-alrt-p2 {
+		usbc_tcpc_ppc_alrt_p2: usbc-tcpc-ppc-alrt-p2 {
 			gpios = <&gpiof 2 GPIO_INPUT>;
 		};
-		usbc-tcpc-ppc-alrt-p3 {
+		usbc_tcpc_ppc_alrt_p3: usbc-tcpc-ppc-alrt-p3 {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 		};
 		gpio_ec_pch_wake_odl: smc-wake-sci-n-mecc {
@@ -147,8 +147,9 @@
 			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
-		ccd-mode-odl {
+		ccd_mode_odl: ccd-mode-odl {
 			gpios = <&gpiof 4 GPIO_INPUT>;
+			enum-name  = "GPIO_CCD_MODE_ODL";
 		};
 		bat-det {
 			gpios = <&gpio7 6 GPIO_INPUT>;
@@ -275,7 +276,7 @@
 			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
 
-		usb-c0-bb-retimer-rst {
+		usb_c0_bb_retimer_rst: usb-c0-bb-retimer-rst {
 			gpios = <&ioex_c0_port 0 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_BB_RETIMER_RST";
 		};
@@ -291,7 +292,7 @@
 			gpios = <&ioex_c0_port 5 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_USB_MUX_CNTRL_0";
 		};
-		usb-c1-bb-retimer-rst {
+		usb_c1_bb_retimer_rst: usb-c1-bb-retimer-rst {
 			gpios = <&ioex_c1_port 0 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C1_BB_RETIMER_RST";
 		};
@@ -307,7 +308,7 @@
 			gpios = <&ioex_c1_port 8 GPIO_OUTPUT_HIGH>;
 			enum-name = "IOEX_USB_C0_C1_OC";
 		};
-		usb-c2-bb-retimer-rst {
+		usb_c2_bb_retimer_rst: usb-c2-bb-retimer-rst {
 			gpios = <&ioex_c2_port 0 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C2_BB_RETIMER_RST";
 		};
@@ -323,7 +324,7 @@
 			gpios = <&ioex_c2_port 5 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C2_USB_MUX_CNTRL_0";
 		};
-		usb-c3-bb-retimer-rst {
+		usb_c3_bb_retimer_rst: usb-c3-bb-retimer-rst {
 			gpios = <&ioex_c3_port 0 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C3_BB_RETIMER_RST";
 		};

@@ -11,6 +11,10 @@
 #include "hooks.h"
 #include "tcpm/tcpci.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "intelrvp.h"
+#endif /* CONFIG_ZEPHYR */
+
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 

@@ -1506,6 +1506,8 @@ extern struct jump_data mock_jump_data;
 	DT_REG_ADDR(DT_NODELABEL(usb_c1_bb_retimer))
 #define USBC_PORT_C2_BB_RETIMER_I2C_ADDR \
 	DT_REG_ADDR(DT_NODELABEL(usb_c2_bb_retimer))
+#define USBC_PORT_C3_BB_RETIMER_I2C_ADDR \
+	DT_REG_ADDR(DT_NODELABEL(usb_c3_bb_retimer))
 #define CONFIG_USBC_RETIMER_INTEL_BB
 #endif
 

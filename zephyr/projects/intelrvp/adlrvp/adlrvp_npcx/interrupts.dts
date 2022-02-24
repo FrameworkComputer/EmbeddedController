@@ -46,5 +46,55 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
+		int_usbc_tcpc_alrt_p0: usbc-tcpc-alrt-p0 {
+			irq-pin = <&usbc_tcpc_alrt_p0>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usbc_tcpc_alrt_p1: usbc-tcpc-alrt-p1 {
+			irq-pin = <&usbc_tcpc_alrt_p1>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usbc_tcpc_alrt_p2: usbc-tcpc-alrt-p2 {
+			irq-pin = <&usbc_tcpc_alrt_p2>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usbc_tcpc_alrt_p3: usbc-tcpc-alrt-p3 {
+			irq-pin = <&usbc_tcpc_alrt_p3>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usbc_tcpc_ppc_alrt_p0: usbc-tcpc-ppc-alrt-p0 {
+			irq-pin = <&usbc_tcpc_ppc_alrt_p0>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_usbc_tcpc_ppc_alrt_p1: usbc-tcpc-ppc-alrt-p1 {
+			irq-pin = <&usbc_tcpc_ppc_alrt_p1>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_usbc_tcpc_ppc_alrt_p2: usbc-tcpc-ppc-alrt-p2 {
+			irq-pin = <&usbc_tcpc_ppc_alrt_p2>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_usbc_tcpc_ppc_alrt_p3: usbc-tcpc-ppc-alrt-p3 {
+			irq-pin = <&usbc_tcpc_ppc_alrt_p3>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_std_adp_prsnt: std-adp-prsnt {
+			irq-pin = <&std_adp_prsnt>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "board_dc_jack_interrupt";
+		};
+		int_ccd_mode_odl: ccd-mode-odl {
+			irq-pin = <&ccd_mode_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "board_connect_c0_sbu";
+		};
 	};
 };

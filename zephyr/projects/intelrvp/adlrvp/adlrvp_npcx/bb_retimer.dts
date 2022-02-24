@@ -1,0 +1,52 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&i2c0_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	usb_c0_bb_retimer: jhl8040r@56 {
+		compatible = "intel,jhl8040r";
+		reg = <0x56>;
+		label = "USB_C0_BB_RETIMER";
+		reset-pin = <&usb_c0_bb_retimer_rst>;
+	};
+};
+
+&i2c2_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	usb_c1_bb_retimer: jhl8040r@57 {
+		compatible = "intel,jhl8040r";
+		reg = <0x57>;
+		label = "USB_C1_BB_RETIMER";
+		reset-pin = <&usb_c1_bb_retimer_rst>;
+	};
+};
+
+&i2c1_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	usb_c2_bb_retimer: jhl8040r@58 {
+		compatible = "intel,jhl8040r";
+		reg = <0x58>;
+		label = "USB_C2_BB_RETIMER";
+		reset-pin = <&usb_c2_bb_retimer_rst>;
+	};
+};
+
+&i2c3_0 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	usb_c3_bb_retimer: jhl8040r@59 {
+		compatible = "intel,jhl8040r";
+		reg = <0x59>;
+		label = "USB_C3_BB_RETIMER";
+		reset-pin = <&usb_c3_bb_retimer_rst>;
+	};
+};
