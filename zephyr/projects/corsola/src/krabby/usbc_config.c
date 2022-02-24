@@ -112,7 +112,7 @@ static void board_usbc_init(void)
 DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_DEFAULT-1);
 
 /* TCPC */
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.bus_type = EC_BUS_TYPE_EMBEDDED,
 		/* TCPC is embedded within EC so no i2c config needed */
@@ -292,7 +292,7 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	return ps8743_write(me, PS8743_REG_MODE, reg);
 }
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
 		.usb_port = 0,
 		.i2c_port = I2C_PORT_USB_MUX0,
