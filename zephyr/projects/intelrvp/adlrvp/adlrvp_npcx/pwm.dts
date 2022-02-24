@@ -8,7 +8,7 @@
 		compatible = "named-pwms";
 
 		pwm_fan: fan {
-			pwms = <&pwm3 0 0>;
+			pwms = <&pwm3 0 PWM_POLARITY_NORMAL>;
 			frequency = <30000>;
 		};
 	};

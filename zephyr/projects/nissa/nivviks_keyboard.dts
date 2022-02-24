@@ -6,7 +6,7 @@
 / {
 	kblight {
 		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm6 6 0>;
+		pwms = <&pwm6 6 PWM_POLARITY_NORMAL>;
 		frequency = <10000>;
 	};
 };

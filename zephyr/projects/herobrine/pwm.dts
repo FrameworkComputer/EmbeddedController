@@ -8,7 +8,7 @@
 		compatible = "named-pwms";
 
 		displight: ecl_bl_pwm_r {
-			pwms = <&pwm5 0 0>;
+			pwms = <&pwm5 0 PWM_POLARITY_NORMAL>;
 			frequency = <4800>;
 		};
 	};
