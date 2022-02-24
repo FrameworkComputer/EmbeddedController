@@ -28,19 +28,11 @@
 			i2c-port = <&i2c3>;
 			enum-name = "I2C_PORT_SENSOR";
 		};
-		ppc0 {
-			i2c-port = <&i2c2>;
-			enum-name = "I2C_PORT_PPC0";
-		};
-		ppc1 {
-			i2c-port = <&i2c4>;
-			enum-name = "I2C_PORT_PPC1";
-		};
-		usb-c0 {
+		i2c_usb_c0: usb-c0 {
 			i2c-port = <&i2c2>;
 			enum-name = "I2C_PORT_USB_C0";
 		};
-		usb-c1 {
+		i2c_usb_c1: usb-c1 {
 			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_USB_C1";
 		};

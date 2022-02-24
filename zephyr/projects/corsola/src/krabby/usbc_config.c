@@ -36,28 +36,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-/* PPC */
-struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.i2c_port = I2C_PORT_PPC0,
-		.i2c_addr_flags = RT1739_ADDR1_FLAGS,
-		.drv = &rt1739_ppc_drv,
-		.frs_en = GPIO_SIGNAL(DT_NODELABEL(usb_c0_ppc_frsinfo)),
-	},
-	{
-		.i2c_port = I2C_PORT_PPC1,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
-		.frs_en = GPIO_SIGNAL(DT_ALIAS(gpio_usb_c1_frs_en)),
-	},
-};
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
-struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{ .drv = &rt1739_bc12_drv },
-	{ .drv = &rt9490_bc12_drv },
-};
-
 void c0_bc12_interrupt(enum gpio_signal signal)
 {
 	rt1739_interrupt(0);
@@ -86,24 +64,6 @@ static void board_usbc_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc_bc12));
 }
 DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_DEFAULT + 1);
-
-/* TCPC */
-struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		/* TCPC is embedded within EC so no i2c config needed */
-		.drv = &it8xxx2_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
-	},
-	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		/* TCPC is embedded within EC so no i2c config needed */
-		.drv = &it8xxx2_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
-	},
-};
 
 void ppc_interrupt(enum gpio_signal signal)
 {

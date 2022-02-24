@@ -1,0 +1,46 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		compatible = "named-usbc-ports";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0: usbc-port@0 {
+			reg = <0>;
+			bc12 {
+				compatible = "richtek,rt1739-bc12";
+				status = "okay";
+			};
+			ppc {
+				compatible = "richtek,rt1739-ppc";
+				status = "okay";
+				port = <&i2c_usb_c0>;
+				i2c-addr-flags = "RT1739_ADDR1_FLAGS";
+			};
+			tcpc {
+				compatible = "ite,it8xxx2-tcpc";
+			};
+		};
+
+		port1: usbc-port@1 {
+			reg = <1>;
+			bc12 {
+				compatible = "richtek,rt9490-bc12";
+				status = "okay";
+			};
+			ppc {
+				compatible = "silergy,syv682x";
+				status = "okay";
+				port = <&i2c_usb_c1>;
+				i2c-addr-flags = "SYV682X_ADDR0_FLAGS";
+				frs_en_gpio = <&gpio_ec_x_gpio1>;
+			};
+			tcpc {
+				compatible = "ite,it8xxx2-tcpc";
+			};
+		};
+	};
+};
