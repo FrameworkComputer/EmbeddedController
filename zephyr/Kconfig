@@ -659,6 +659,7 @@ config PLATFORM_EC_POWER_BUTTON
 
 config PLATFORM_EC_PWM
 	bool "PWM (Pulse Width Modulation) module"
+	default y if PWM
 	help
 	  Enable the PWM (Pulse Width Modulation) module. This module is used to
 	  support variable brightness LEDs, backlight controls, and
