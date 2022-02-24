@@ -27,6 +27,11 @@
  * in generic way using optional delay.
  */
 
+/** Timeout for other side to respond to PD message */
+#define TCPCI_PARTNER_RESPONSE_TIMEOUT_MS	K_MSEC(30)
+/** Timeout for source to transition to requested state after accept */
+#define TCPCI_PARTNER_TRANSITION_TIMEOUT_MS	K_MSEC(550)
+
 /**
  * @brief Function type that is used by TCPCI partner emulator on hard reset
  *
@@ -80,6 +85,10 @@ struct tcpci_partner_data {
 	tcpci_partner_hard_reset_func hard_reset_func;
 	/** Pointer to data passed to hard reset function */
 	void *hard_reset_data;
+	/** Delayed work which is executed when response timeout occurs */
+	struct k_work_delayable sender_response_timeout;
+	/** Number of TCPM timeouts. Test may chekck if timeout occurs */
+	int tcpm_timeouts;
 };
 
 /** Structure of message used by TCPCI partner emulator */
@@ -215,6 +224,24 @@ void tcpci_partner_common_send_hard_reset(struct tcpci_partner_data *data);
  * @param data Pointer to TCPCI partner emulator
  */
 void tcpci_partner_common_send_soft_reset(struct tcpci_partner_data *data);
+
+/**
+ * @brief Start sender response timer for TCPCI_PARTNER_RESPONSE_TIMEOUT_MS.
+ *        If @ref tcpci_partner_stop_sender_response_timer wasn't called before
+ *        timeout, @ref tcpci_partner_sender_response_timeout is called.
+ *        The wait_for_response flag is set on timer start.
+ *
+ * @param data Pointer to TCPCI partner emulator
+ */
+void tcpci_partner_start_sender_response_timer(struct tcpci_partner_data *data);
+
+/**
+ * @brief Stop sender response timer. The wait_for_response flag is unset.
+ *        Timeout handler will not execute.
+ *
+ * @param data Pointer to TCPCI partner emulator
+ */
+void tcpci_partner_stop_sender_response_timer(struct tcpci_partner_data *data);
 
 /**
  * @brief Common handler for TCPCI messages. It handles hard reset, soft reset,

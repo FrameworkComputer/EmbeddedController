@@ -287,8 +287,8 @@ static void tcpci_partner_common_reset(struct tcpci_partner_data *data)
 	tcpci_partner_clear_msg_queue(data);
 	data->msg_id = 0;
 	data->recv_msg_id = -1;
-	data->wait_for_response = false;
 	data->in_soft_reset = false;
+	tcpci_partner_stop_sender_response_timer(data);
 }
 
 /** Check description in emul_common_tcpci_partner.h */
@@ -316,8 +316,57 @@ void tcpci_partner_common_send_soft_reset(struct tcpci_partner_data *data)
 	/* Send message */
 	tcpci_partner_send_control_msg(data, PD_CTRL_SOFT_RESET, 0);
 	/* Wait for accept of soft reset */
-	data->wait_for_response = true;
 	data->in_soft_reset = true;
+	tcpci_partner_start_sender_response_timer(data);
+}
+
+/**
+ * @brief Handler for response timeout
+ *
+ * @param timer Pointer to timer which triggered timeout
+ */
+static void tcpci_partner_sender_response_timeout(struct k_work *work)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+	struct tcpci_partner_data *data =
+		CONTAINER_OF(dwork, struct tcpci_partner_data,
+			     sender_response_timeout);
+
+	if (k_mutex_lock(&data->transmit_mutex, K_NO_WAIT) != 0) {
+		/*
+		 * Emulator is probably handling received message,
+		 * try later if timer wasn't stopped.
+		 */
+		k_work_submit(work);
+		return;
+	}
+
+	/* Make sure that timer isn't stopped */
+	if (k_work_busy_get(work) & K_WORK_CANCELING) {
+		k_mutex_unlock(&data->transmit_mutex);
+		return;
+	}
+
+	data->tcpm_timeouts++;
+	tcpci_partner_common_send_hard_reset(data);
+	LOG_ERR("Timeout for TCPM response");
+
+	k_mutex_unlock(&data->transmit_mutex);
+}
+
+/** Check description in emul_common_tcpci_partner.h */
+void tcpci_partner_start_sender_response_timer(struct tcpci_partner_data *data)
+{
+	k_work_schedule(&data->sender_response_timeout,
+			TCPCI_PARTNER_RESPONSE_TIMEOUT_MS);
+	data->wait_for_response = true;
+}
+
+/** Check description in emul_common_tcpci_partner.h */
+void tcpci_partner_stop_sender_response_timer(struct tcpci_partner_data *data)
+{
+	k_work_cancel_delayable(&data->sender_response_timeout);
+	data->wait_for_response = false;
 }
 
 /** Check description in emul_common_tcpci_partner.h */
@@ -390,6 +439,7 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 
 	case PD_CTRL_REJECT:
 		if (data->in_soft_reset) {
+			tcpci_partner_stop_sender_response_timer(data);
 			tcpci_partner_common_send_hard_reset(data);
 
 			return TCPCI_PARTNER_COMMON_MSG_HARD_RESET;
@@ -402,7 +452,7 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 				 * Accept is response to soft reset send by
 				 * common code. It is handled here
 				 */
-				data->wait_for_response = false;
+				tcpci_partner_stop_sender_response_timer(data);
 				data->in_soft_reset = false;
 
 				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
@@ -442,10 +492,13 @@ void tcpci_partner_init(struct tcpci_partner_data *data,
 {
 	k_timer_init(&data->delayed_send, tcpci_partner_delayed_send_timer,
 		     NULL);
+	k_work_init_delayable(&data->sender_response_timeout,
+			      tcpci_partner_sender_response_timeout);
 	sys_slist_init(&data->to_send);
 	k_mutex_init(&data->to_send_mutex);
 	k_mutex_init(&data->transmit_mutex);
 	tcpci_partner_common_reset(data);
 	data->hard_reset_func = hard_reset_func;
 	data->hard_reset_data = data;
+	data->tcpm_timeouts = 0;
 }

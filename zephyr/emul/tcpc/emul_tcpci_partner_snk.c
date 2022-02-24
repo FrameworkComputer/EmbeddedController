@@ -289,9 +289,42 @@ static void tcpci_snk_emul_handle_source_cap(
 	}
 
 	/* Expect response for request */
-	common_data->wait_for_response = true;
+	tcpci_partner_start_sender_response_timer(common_data);
 	tcpci_partner_send_data_msg(common_data, PD_DATA_REQUEST, &rdo,
 				    1 /* = data_obj_num */, 0 /* = delay */);
+}
+
+/**
+ * @brief Start partner transition timer. If emulator doesn't receive PS_RDY
+ *        message before timeout, than
+ *        @ref tcpci_partner_sender_response_timeout is called and hard reset
+ *        is triggered. The wait_for_ps_rdy flag is set on timer start.
+ *
+ * @param data Pointer to USB-C sink device emulator data
+ * @param common_data Pointer to common TCPCI partner data
+ */
+static void tcpci_snk_emul_start_partner_transition_timer(
+	struct tcpci_snk_emul_data *data,
+	struct tcpci_partner_data *common_data)
+{
+	k_work_schedule(&common_data->sender_response_timeout,
+			TCPCI_PARTNER_TRANSITION_TIMEOUT_MS);
+	data->wait_for_ps_rdy = true;
+}
+
+/**
+ * @brief Stop partner transition timer. The wait_for_ps_rdy flag is unset.
+ *        Timeout handler will not execute.
+ *
+ * @param data Pointer to USB-C sink device emulator data
+ * @param common_data Pointer to common TCPCI partner data
+ */
+static void tcpci_snk_emul_stop_partner_transition_timer(
+	struct tcpci_snk_emul_data *data,
+	struct tcpci_partner_data *common_data)
+{
+	k_work_cancel_delayable(&common_data->sender_response_timeout);
+	data->wait_for_ps_rdy = false;
 }
 
 /** Check description in emul_tcpci_snk.h */
@@ -326,19 +359,21 @@ enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 		case PD_CTRL_PS_RDY:
 			__ASSERT(data->wait_for_ps_rdy,
 				 "Unexpected PS RDY message");
-			data->wait_for_ps_rdy = false;
+			tcpci_snk_emul_stop_partner_transition_timer(
+							data, common_data);
 			data->pd_completed = true;
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_REJECT:
+			tcpci_partner_stop_sender_response_timer(common_data);
 			/* Request rejected. Ask for capabilities again. */
 			tcpci_partner_send_control_msg(common_data,
 						       PD_CTRL_GET_SOURCE_CAP,
 						       0);
-			common_data->wait_for_response = false;
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_ACCEPT:
-			common_data->wait_for_response = false;
-			data->wait_for_ps_rdy = true;
+			tcpci_partner_stop_sender_response_timer(common_data);
+			tcpci_snk_emul_start_partner_transition_timer(
+							data, common_data);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
