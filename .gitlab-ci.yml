@@ -70,7 +70,7 @@ seed_cache:
   stage: build
   needs: ["seed_cache"]
   script:
-    - zmake --zephyr-base "${ZEPHYR_BASE}"
+    - zmake -j8 --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG build
       -B "${BUILD_DIR}" -t ${TOOLCHAIN:-zephyr}
       "${PROJECT}"
@@ -96,7 +96,7 @@ seed_cache:
   stage: test
   needs: ["merged_coverage", "zephyr_coverage", "twister_coverage"]
   script:
-    - zmake --zephyr-base "${ZEPHYR_BASE}"
+    - zmake -j8 --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG build --coverage
       -B "${BUILD_DIR}" -t ${TOOLCHAIN:-zephyr}
       "${PROJECT}"
@@ -225,7 +225,7 @@ zephyr_coverage:
   stage: test
   needs: ["seed_cache"]
   script:
-    - zmake --zephyr-base "${ZEPHYR_BASE}"
+    - zmake -j8 --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG test
       --coverage --host-tests-only
   artifacts:
@@ -256,8 +256,8 @@ testall:
   stage: test
   needs: ["seed_cache"]
   script:
-    - zmake --zephyr-base "${ZEPHYR_BASE}"
-      --modules-dir "${MODULES_DIR}" -l DEBUG test --all
+    - zmake -j8 --zephyr-base "${ZEPHYR_BASE}"
+      --modules-dir "${MODULES_DIR}" -l DEBUG test --host-tests-only
 
 twister_coverage:
   stage: test
