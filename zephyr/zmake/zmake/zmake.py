@@ -582,10 +582,6 @@ class Zmake:
                         timeout=project.config.test_timeout_secs,
                     )
                 )
-                if self._sequential:
-                    rv = self.executor.wait()
-                    if rv:
-                        return rv
         return 0
 
     def _build(
