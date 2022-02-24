@@ -45,7 +45,29 @@ static const struct ec_response_keybd_config keybd_wo_privacy_w_kblight = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-static const struct ec_response_keybd_config keybd_wo_privacy_wo_kblight = {
+static const struct ec_response_keybd_config
+	keybd_wo_privacy_wo_kblight_old = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,			/* T1 */
+		TK_REFRESH,			/* T2 */
+		TK_FULLSCREEN,			/* T3 */
+		TK_OVERVIEW,			/* T4 */
+		TK_SNAPSHOT,			/* T5 */
+		TK_BRIGHTNESS_DOWN,		/* T6 */
+		TK_BRIGHTNESS_UP,		/* T7 */
+		TK_PREV_TRACK,			/* T8 */
+		TK_PLAY_PAUSE,			/* T9 */
+		TK_MICMUTE,			/* T10 */
+		TK_VOL_MUTE,			/* T11 */
+		TK_VOL_DOWN,			/* T12 */
+		TK_VOL_UP,			/* T13 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+static const struct ec_response_keybd_config
+	keybd_wo_privacy_wo_kblight_new = {
 	.num_top_row_keys = 13,
 	.action_keys = {
 		TK_BACK,			/* T1 */
@@ -116,8 +138,12 @@ board_vivaldi_keybd_config(void)
 	} else {
 		if (ec_cfg_has_kblight())
 			return &keybd_wo_privacy_w_kblight;
-		else
-			return &keybd_wo_privacy_wo_kblight;
+		else {
+			if (get_board_id() <= 3)
+				return &keybd_wo_privacy_wo_kblight_old;
+			else
+				return &keybd_wo_privacy_wo_kblight_new;
+		}
 	}
 }
 
