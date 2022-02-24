@@ -132,19 +132,23 @@ static int cros_kb_raw_npcx_drive_column(const struct device *dev, int col)
 	/* Drive all lines to high. ie. Key detection is disabled. */
 	if (col == KEYBOARD_COLUMN_NONE) {
 		mask = ~0;
-		cros_kb_raw_set_col2(0);
+		/* Set logical level high on COL2 */
+		cros_kb_raw_set_col2(1);
 	}
 	/* Drive all lines to low for detection any key press */
 	else if (col == KEYBOARD_COLUMN_ALL) {
 		mask = ~(BIT(keyboard_cols) - 1);
-		cros_kb_raw_set_col2(1);
+		/* Set logical level low on COL2 */
+		cros_kb_raw_set_col2(0);
 	}
 	/* Drive one line to low for determining which key's state changed. */
 	else {
 		if (col == 2) {
-			cros_kb_raw_set_col2(1);
-		} else {
+			/* Set logical level low on COL2 */
 			cros_kb_raw_set_col2(0);
+		} else {
+			/* Set logical level high on COL2 */
+			cros_kb_raw_set_col2(1);
 		}
 		mask = ~BIT(col_out);
 	}

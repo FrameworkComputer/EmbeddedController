@@ -172,7 +172,7 @@
 			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 GPIO_OUT_LOW>;
+			gpios = <&gpio1 7 (GPIO_OUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
 		tablet_mode {
 			gpios = <&gpioc 1 GPIO_INPUT>;

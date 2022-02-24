@@ -174,21 +174,24 @@ static inline int z_impl_cros_kb_raw_enable_interrupt(const struct device *dev,
 }
 
 /**
- * @brief Set the physical value of the keyboard column 2 output.
+ * @brief Set the logical level of the keyboard column 2 output.
  *
- * When CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED is enabled, the keyboard
- * driver must invert the column 2 output.
+ * When CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED is enabled, the column 2
+ * output connects to the Google Security Chip and must use push-pull operation.
+ * Typically the column 2 signal is also inverted in this configuration so the
+ * board devicetree should set the GPIO_ACTIVE_LOW flag on GPIO pointed to by
+ * gpio-kbd-kso2.
  *
- * @param value Physical value to set to the pin
+ * @param value Logical level to set to the pin
  */
-static inline void cros_kb_raw_set_col2(int value)
+static inline void cros_kb_raw_set_col2(int level)
 {
 #if defined CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED && \
 	DT_NODE_EXISTS(KBD_KS02_NODE)
 	const struct gpio_dt_spec *kbd_dt_spec =
 		GPIO_DT_FROM_NODE(KBD_KS02_NODE);
 
-	gpio_pin_set_raw(kbd_dt_spec->port, kbd_dt_spec->pin, value);
+	gpio_pin_set(kbd_dt_spec->port, kbd_dt_spec->pin, level);
 #endif
 }
 

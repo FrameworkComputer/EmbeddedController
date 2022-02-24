@@ -114,6 +114,9 @@ config PLATFORM_EC_KEYBOARD_COL2_INVERTED
 	  Refresh key will also trigger T key, which is in the next scanning
 	  column line. See http://b/156007029.
 
+	  Your board file must define the node alias "gpio-kbd-kso2" that points
+	  to the GPIO pin used for the column 2 output.
+
 config PLATFORM_EC_KEYBOARD_REFRESH_ROW3
 	bool "Move the refresh key matrix to row 3 instead of row 2"
 	help

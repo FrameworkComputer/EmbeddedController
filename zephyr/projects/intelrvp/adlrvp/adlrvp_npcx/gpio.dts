@@ -271,7 +271,7 @@
 			gpios = <&gpioe 0 GPIO_INPUT>;
 		};
 		gpio_ec_kso_02_inv: ec-kso-02-inv {
-			gpios = <&gpio1 7 GPIO_OUT_LOW>;
+			gpios = <&gpio1 7 (GPIO_OUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
 	};
 };
