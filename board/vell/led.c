@@ -20,6 +20,8 @@
 #define BAT_LED_ON 0
 #define BAT_LED_OFF 1
 
+#define BATT_LOW_BCT 10
+
 #define LED_TICK_INTERVAL_MS (500 * MSEC)
 #define LED_CYCLE_TIME_MS    (2000 * MSEC)
 #define LED_TICKS_PER_CYCLE  (LED_CYCLE_TIME_MS / LED_TICK_INTERVAL_MS)
@@ -151,21 +153,38 @@ static void led_set_battery(void)
 		set_active_port_color(LED_AMBER);
 		break;
 	case PWR_STATE_DISCHARGE:
+		/*
+		 * Blinking amber LEDs slowly if battery is lower 10
+		 * percentage.
+		 */
 		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
-			if (charge_get_percent() < 10)
+			if (charge_get_percent() < BATT_LOW_BCT)
 				led_set_color_battery(RIGHT_PORT,
 					(battery_ticks % LED_TICKS_PER_CYCLE
-					 < LED_ON_TICKS) ? LED_WHITE : LED_OFF);
+					 < LED_ON_TICKS) ? LED_AMBER : LED_OFF);
 			else
 				led_set_color_battery(RIGHT_PORT, LED_OFF);
 		}
 
-		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED))
-			led_set_color_battery(LEFT_PORT, LED_OFF);
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
+			if (charge_get_percent() < BATT_LOW_BCT)
+				led_set_color_battery(LEFT_PORT,
+					(battery_ticks % LED_TICKS_PER_CYCLE
+					 < LED_ON_TICKS) ? LED_AMBER : LED_OFF);
+			else
+				led_set_color_battery(LEFT_PORT, LED_OFF);
+		}
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x1) ?
-				LED_WHITE : LED_OFF);
+		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
+			led_set_color_battery(RIGHT_PORT, (battery_ticks & 0x1)
+				? LED_AMBER : LED_OFF);
+		}
+
+		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
+			led_set_color_battery(LEFT_PORT, (battery_ticks & 0x1)
+				? LED_AMBER : LED_OFF);
+		}
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
