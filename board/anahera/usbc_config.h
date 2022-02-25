@@ -24,4 +24,9 @@ enum usbc_port {
 	USBC_PORT_COUNT
 };
 
+struct ps8811_reg_val {
+	uint8_t reg;
+	uint16_t val;
+};
+
 #endif /* __CROS_EC_USBC_CONFIG_H */
