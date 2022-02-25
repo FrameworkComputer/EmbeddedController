@@ -843,11 +843,11 @@ static int command_fpmatch(int argc, char **argv)
 	uint32_t event = atomic_clear(&fp_events);
 
 	if (rc == EC_SUCCESS && event & EC_MKBP_FP_MATCH) {
-		uint32_t errcode = EC_MKBP_FP_ERRCODE(event);
+		uint32_t match_errcode = EC_MKBP_FP_ERRCODE(event);
 
 		CPRINTS("Match: %s (%d)",
-			errcode & EC_MKBP_FP_ERR_MATCH_YES ? "YES" : "NO",
-			errcode);
+			fp_match_success(match_errcode) ? "YES" : "NO",
+			match_errcode);
 	}
 
 	return rc;
