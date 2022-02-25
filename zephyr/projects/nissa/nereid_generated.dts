@@ -69,7 +69,7 @@
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
-			gpios = <&gpioh 1 GPIO_INPUT>;
+			gpios = <&gpioh 1 GPIO_OUTPUT>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_ec_pch_wake_odl: ec_pch_wake_odl {
