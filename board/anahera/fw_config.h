@@ -24,12 +24,17 @@ enum ec_cfg_eps_type {
 	EPS_ENABLED = 1
 };
 
+enum ec_cfg_ite_type {
+	LTE_NOT_PRESENT = 0,
+	LTE_PRESENT = 1,
+};
+
 union anahera_cbi_fw_config {
 	struct {
 		uint32_t				sd_db : 2;
 		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
 		uint32_t				audio : 3;
-		uint32_t				lte_db : 2;
+		enum ec_cfg_ite_type			lte_db : 2;
 		uint32_t				ufc : 2;
 		enum ec_cfg_eps_type			eps : 1;
 		uint32_t				boot_device : 2;
@@ -60,5 +65,13 @@ bool ec_cfg_has_eps(void);
  * doesn't support it.
  */
 bool ec_cfg_has_kblight(void);
+
+/**
+ * Check if the FW_CONFIG has LTE present.
+ *
+ * @return true if board supports LTE, false if the board
+ * doesn't support it.
+ */
+bool ec_cfg_has_lte(void);
 
 #endif /* __BOARD_ANAHERA_FW_CONFIG_H_ */

@@ -58,3 +58,8 @@ bool ec_cfg_has_kblight(void)
 {
 	return (fw_config.kb_bl == KEYBOARD_BACKLIGHT_ENABLED);
 }
+
+bool ec_cfg_has_lte(void)
+{
+	return (fw_config.lte_db == LTE_PRESENT);
+}
