@@ -4,7 +4,6 @@
  */
 
 #include <dt-bindings/gpio_defines.h>
-#include <dt-bindings/wake_mask_event_defines.h>
 
 / {
 	aliases {
@@ -190,23 +189,6 @@
 		gpio-ps185-ec-dp-hpd = &gpio_x_ec_gpio2;
 		gpio-usb-c1-dp-in-hpd = &gpio_ec_x_gpio3;
 		gpio-ps185-pwrdn-odl = &gpio_ec_x_gpio3;
-	};
-
-	ec-mkbp-host-event-wakeup-mask {
-		compatible = "ec-wake-mask-event";
-		wakeup-mask = <(
-			HOST_EVENT_AC_CONNECTED |
-			HOST_EVENT_AC_DISCONNECTED |
-			HOST_EVENT_LID_OPEN |
-			HOST_EVENT_POWER_BUTTON |
-			HOST_EVENT_HANG_DETECT |
-			HOST_EVENT_MODE_CHANGE)>;
-	};
-
-	ec-mkbp-event-wakeup-mask {
-		compatible = "ec-wake-mask-event";
-		wakeup-mask = <(MKBP_EVENT_KEY_MATRIX |
-				MKBP_EVENT_HOST_EVENT)>;
 	};
 
 	hibernate-wake-pins {

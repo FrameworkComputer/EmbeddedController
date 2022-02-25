@@ -19,6 +19,7 @@ def register_corsola_project(
         project_name=project_name,
         zephyr_board=chip,
         dts_overlays=[
+            here / "common.dts",
             here / "power_signal.dts",
             here / "usba.dts",
             *extra_dts_overlays,
