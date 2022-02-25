@@ -20,7 +20,7 @@ class GenericToolchain:
         self.name = name
         self.modules = modules or {}
 
-    def probe(self):
+    def probe(self):  # pylint:disable=no-self-use
         """Probe if the toolchain is available on the system."""
         # Since the toolchain is not known to zmake, we have no way to
         # know if it's installed.  Simply return False to indicate not
@@ -43,6 +43,8 @@ class GenericToolchain:
 
 
 class CorebootSdkToolchain(GenericToolchain):
+    """Coreboot SDK toolchain installed in default location."""
+
     def probe(self):
         # For now, we always assume it's at /opt/coreboot-sdk, since
         # that's where it's installed in the chroot.  We may want to
@@ -63,6 +65,12 @@ class CorebootSdkToolchain(GenericToolchain):
 
 
 class ZephyrToolchain(GenericToolchain):
+    """Zephyr SDK toolchain.
+
+    Either set the environment var ZEPHYR_SDK_INSTALL_DIR, or install
+    the SDK in one of the common known locations.
+    """
+
     def __init__(self, *args, **kwargs):
         self.zephyr_sdk_install_dir = self._find_zephyr_sdk()
         super().__init__(*args, **kwargs)
@@ -122,6 +130,8 @@ class ZephyrToolchain(GenericToolchain):
 
 
 class LlvmToolchain(GenericToolchain):
+    """LLVM toolchain as used in the chroot."""
+
     def probe(self):
         # TODO: differentiate chroot llvm path vs. something more
         # generic?
@@ -141,6 +151,8 @@ class LlvmToolchain(GenericToolchain):
 
 
 class HostToolchain(GenericToolchain):
+    """GCC toolchain found in the PATH."""
+
     def probe(self):
         # "host" toolchain for Zephyr means GCC.
         for search_path in os.getenv("PATH", "/usr/bin").split(":"):

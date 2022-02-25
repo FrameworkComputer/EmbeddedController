@@ -9,3 +9,7 @@ disable=bad-continuation,bad-whitespace,format,fixme
 
 max-line-length=88
 string-quote=double
+
+[BASIC]
+good-names=
+    e,
