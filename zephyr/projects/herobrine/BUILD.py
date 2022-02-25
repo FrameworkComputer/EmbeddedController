@@ -19,7 +19,6 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
             here / "motionsense.dts",
             here / "pwm.dts",
             here / "switchcap.dts",
-            here / "usbc.dts",
             # Project-specific DTS customization.
             *extra_dts_overlays,
         ],
@@ -34,17 +33,26 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
 
 register_variant(
     project_name="herobrine",
+    extra_dts_overlays=[
+        here / "usbc_herobrine.dts",
+    ],
     extra_kconfig_files=[here / "prj_herobrine.conf"],
 )
 
 
 register_variant(
     project_name="hoglin",
+    extra_dts_overlays=[
+        here / "usbc_herobrine.dts",
+    ],
     extra_kconfig_files=[here / "prj_hoglin.conf"],
 )
 
 
 register_variant(
     project_name="villager",
+    extra_dts_overlays=[
+        here / "usbc_villager.dts",
+    ],
     extra_kconfig_files=[here / "prj_villager.conf"],
 )
