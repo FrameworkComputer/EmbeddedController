@@ -393,7 +393,8 @@ static const struct ec_response_keybd_config duck_kb = {
 __override
 const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
 {
-	if (IS_ENABLED(BOARD_ZED) || IS_ENABLED(BOARD_STAR))
+	if (IS_ENABLED(BOARD_ZED) || IS_ENABLED(BOARD_STAR) ||
+	    IS_ENABLED(BOARD_GELATIN))
 		return &zed_kb;
 	if (IS_ENABLED(BOARD_BLAND) || IS_ENABLED(BOARD_EEL))
 		return &bland_kb;
