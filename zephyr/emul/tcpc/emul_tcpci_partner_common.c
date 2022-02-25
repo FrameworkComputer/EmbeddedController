@@ -38,8 +38,7 @@ struct tcpci_partner_msg *tcpci_partner_alloc_msg(int data_objects)
 
 	/* Set default message type to SOP */
 	new_msg->msg.type = TCPCI_MSG_SOP;
-	/* TCPCI message size count include type byte */
-	new_msg->msg.cnt = size + 1;
+	new_msg->msg.cnt = size;
 	new_msg->data_objects = data_objects;
 
 	return new_msg;

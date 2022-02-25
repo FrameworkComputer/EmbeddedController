@@ -747,7 +747,8 @@ static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 			return 0;
 		}
 		if (bytes == 0) {
-			*val = data->rx_msg->cnt;
+			/* TCPCI message size count include type byte */
+			*val = data->rx_msg->cnt + 1;
 		} else if (is_rev1) {
 			LOG_ERR("Revision 1.0 has only byte count at 0x30");
 			tcpci_emul_set_i2c_interface_err(emul);

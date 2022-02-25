@@ -22,6 +22,20 @@ void check_tcpci_reg_f(const struct emul *emul, int reg, uint16_t exp_val,
 	check_tcpci_reg_f((emul), (reg), (exp_val), __LINE__)
 
 /**
+ * @brief Check TCPC register value with mask using zassert API
+ *
+ * @param emul Pointer to TCPCI emulator
+ * @param reg TCPC register address to check
+ * @param exp_val Expected value of register
+ * @param mask Bits that are checked
+ * @param line Line number to print in case of failure
+ */
+void check_tcpci_reg_with_mask_f(const struct emul *emul, int reg,
+				 uint16_t exp_val, uint16_t mask, int line);
+#define check_tcpci_reg_with_mask(emul, reg, exp_val, mask)		\
+	check_tcpci_reg_with_mask_f((emul), (reg), (exp_val), (mask), __LINE__)
+
+/**
  * @brief Test TCPCI init and vbus level callback
  *
  * @param emul Pointer to TCPCI emulator
