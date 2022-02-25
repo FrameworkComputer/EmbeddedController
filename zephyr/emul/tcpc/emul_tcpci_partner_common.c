@@ -44,6 +44,60 @@ struct tcpci_partner_msg *tcpci_partner_alloc_msg(int data_objects)
 	return new_msg;
 }
 
+/**
+ * @brief Alloc and append message to log if collect_msg_log flag is set
+ *
+ * @param data Pointer to TCPCI partner emulator
+ * @param msg The PD message to log
+ * @param sender Who send the message
+ * @param status If message was received/send correctly
+ */
+static void tcpci_partner_log_msg(struct tcpci_partner_data *data,
+				  const struct tcpci_emul_msg *msg,
+				  enum tcpci_partner_msg_sender sender,
+				  int status)
+{
+	struct tcpci_partner_log_msg *log_msg;
+	int cnt;
+	int ret;
+
+	if (!data->collect_msg_log) {
+		return;
+	}
+
+	log_msg = k_malloc(sizeof(struct tcpci_partner_log_msg));
+	if (log_msg == NULL) {
+		return;
+	}
+
+	/* We log length of actual buffer without SOP byte */
+	cnt = msg->cnt;
+	log_msg->buf = k_malloc(cnt);
+	if (log_msg->buf == NULL) {
+		k_free(log_msg);
+		return;
+	}
+
+	log_msg->cnt = cnt;
+	log_msg->sop = msg->type;
+	log_msg->time = k_uptime_get();
+	log_msg->sender = sender;
+	log_msg->status = status;
+
+	memcpy(log_msg->buf, msg->buf, cnt);
+
+	ret = k_mutex_lock(&data->msg_log_mutex, K_FOREVER);
+	if (ret) {
+		k_free(log_msg->buf);
+		k_free(log_msg);
+		return;
+	}
+
+	sys_slist_append(&data->msg_log, &log_msg->node);
+
+	k_mutex_unlock(&data->msg_log_mutex);
+}
+
 /** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_free_msg(struct tcpci_partner_msg *msg)
 {
@@ -94,6 +148,9 @@ static void tcpci_partner_delayed_send(void *fifo_data)
 			tcpci_partner_set_header(data, msg);
 			ret = tcpci_emul_add_rx_msg(data->tcpci_emul, &msg->msg,
 						    true /* send alert */);
+			tcpci_partner_log_msg(data, &msg->msg,
+					      TCPCI_PARTNER_SENDER_PARTNER,
+					      ret);
 			if (ret) {
 				tcpci_partner_free_msg(msg);
 			}
@@ -163,6 +220,8 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 	if (delay == 0) {
 		tcpci_partner_set_header(data, msg);
 		ret = tcpci_emul_add_rx_msg(data->tcpci_emul, &msg->msg, true);
+		tcpci_partner_log_msg(data, &msg->msg,
+				      TCPCI_PARTNER_SENDER_PARTNER, ret);
 		if (ret) {
 			tcpci_partner_free_msg(msg);
 		}
@@ -378,6 +437,9 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 	uint16_t header;
 	int msg_type;
 
+	tcpci_partner_log_msg(data, tx_msg, TCPCI_PARTNER_SENDER_TCPM,
+			      tx_status);
+
 	tcpci_emul_partner_msg_status(data->tcpci_emul, tx_status);
 	/* If receiving message was unsuccessful, abandon processing message */
 	if (tx_status != TCPCI_EMUL_TX_SUCCESS) {
@@ -485,6 +547,136 @@ void tcpci_partner_common_handler_mask_msg(struct tcpci_partner_data *data,
 }
 
 /** Check description in emul_common_tcpci_partner.h */
+int tcpci_partner_common_enable_pd_logging(struct tcpci_partner_data *data,
+					   bool enable)
+{
+	int ret;
+
+	ret = k_mutex_lock(&data->msg_log_mutex, K_FOREVER);
+	if (ret) {
+		return ret;
+	}
+
+	data->collect_msg_log = enable;
+
+	k_mutex_unlock(&data->msg_log_mutex);
+	return 0;
+}
+
+/** Names of senders used while printing logged PD messages */
+static char *tcpci_partner_sender_names[] = {
+	[TCPCI_PARTNER_SENDER_PARTNER] = "partner emulator",
+	[TCPCI_PARTNER_SENDER_TCPM] = "TCPM"
+};
+
+/**
+ * @brief Write string to the buffer starting from @p start byte.
+ *
+ * @param buf Pointer to the buffer
+ * @param buf_len Total length of the buffer
+ * @param start Byte from which start to write
+ * @param fmt Format strnig
+ * @param ... printf like arguments for format string
+ *
+ * @return Number of written bytes
+ */
+static __printf_like(4, 5) int tcpci_partner_print_to_buf(
+	char *buf, const int buf_len, int start, const char *fmt, ...)
+{
+	va_list ap;
+	int ret;
+
+	va_start(ap, fmt);
+	ret = vsnprintk(buf + start, buf_len - start, fmt, ap);
+	va_end(ap);
+
+	if (ret <= 0) {
+		LOG_ERR("vsnprintk failed %d", ret);
+		ret = 0;
+	}
+
+	return ret;
+}
+
+/** Check description in emul_common_tcpci_partner.h */
+void tcpci_partner_common_print_logged_msgs(struct tcpci_partner_data *data)
+{
+	struct tcpci_partner_log_msg *msg;
+	const int max_pd_msg_log_len = 200;
+	const int buf_len = 8192;
+	uint16_t header;
+	char buf[buf_len];
+	int chars_in = 0;
+	int ret;
+	int i;
+
+	ret = k_mutex_lock(&data->msg_log_mutex, K_FOREVER);
+	if (ret) {
+		return;
+	}
+
+	chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
+					       "===PD messages log:\n");
+
+	SYS_SLIST_FOR_EACH_CONTAINER(&data->msg_log, msg, node) {
+		/*
+		 * If there is too many messages to keep them in local buffer,
+		 * accept possibility of lines interleaving on console and print
+		 * buffer to console.
+		 */
+		if (chars_in >= buf_len - max_pd_msg_log_len) {
+			LOG_PRINTK("%s", buf);
+			chars_in = 0;
+		}
+		chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
+				"\tAt %lld Msg SOP %d from %s (status 0x%x):\n",
+				msg->time, msg->sop,
+				tcpci_partner_sender_names[msg->sender],
+				msg->status);
+		header = sys_get_le16(msg->buf);
+		chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
+				"\t\text=%d;cnt=%d;id=%d;pr=%d;dr=%d;rev=%d;type=%d\n",
+				PD_HEADER_EXT(header), PD_HEADER_CNT(header),
+				PD_HEADER_ID(header), PD_HEADER_PROLE(header),
+				PD_HEADER_DROLE(header), PD_HEADER_REV(header),
+				PD_HEADER_TYPE(header));
+		chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
+				"\t\t");
+		for (i = 0; i < msg->cnt; i++) {
+			chars_in += tcpci_partner_print_to_buf(
+					buf, buf_len, chars_in,
+					"%02x ", msg->buf[i]);
+		}
+		chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
+				"\n");
+	}
+	LOG_PRINTK("%s===\n", buf);
+
+	k_mutex_unlock(&data->msg_log_mutex);
+}
+
+/** Check description in emul_common_tcpci_partner.h */
+void tcpci_partner_common_clear_logged_msgs(struct tcpci_partner_data *data)
+{
+	struct tcpci_partner_log_msg *msg;
+	int ret;
+
+	ret = k_mutex_lock(&data->msg_log_mutex, K_FOREVER);
+	if (ret) {
+		return;
+	}
+
+	while (!sys_slist_is_empty(&data->msg_log)) {
+		msg = CONTAINER_OF(sys_slist_get_not_empty(&data->msg_log),
+				   struct tcpci_partner_log_msg, node);
+		k_free(msg->buf);
+		k_free(msg);
+	}
+
+	k_mutex_unlock(&data->msg_log_mutex);
+}
+
+/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_init(struct tcpci_partner_data *data,
 			tcpci_partner_hard_reset_func hard_reset_func,
 			void *hard_reset_data)
@@ -496,6 +688,9 @@ void tcpci_partner_init(struct tcpci_partner_data *data,
 	sys_slist_init(&data->to_send);
 	k_mutex_init(&data->to_send_mutex);
 	k_mutex_init(&data->transmit_mutex);
+	sys_slist_init(&data->msg_log);
+	k_mutex_init(&data->msg_log_mutex);
+	data->collect_msg_log = false;
 	tcpci_partner_common_reset(data);
 	data->hard_reset_func = hard_reset_func;
 	data->hard_reset_data = data;
