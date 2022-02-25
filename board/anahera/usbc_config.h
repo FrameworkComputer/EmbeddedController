@@ -10,6 +10,14 @@
 
 #define CONFIG_USB_PD_PORT_MAX_COUNT	2
 
+/* USB-A ports */
+enum usba_port {
+	USBA_PORT_A0 = 0,
+	USBA_PORT_A1,
+	USBA_PORT_COUNT
+};
+
+/* USB-C ports */
 enum usbc_port {
 	USBC_PORT_C0 = 0,
 	USBC_PORT_C1,

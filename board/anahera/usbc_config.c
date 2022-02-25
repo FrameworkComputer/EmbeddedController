@@ -12,6 +12,7 @@
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/retimer/bb_retimer_public.h"
+#include "driver/retimer/ps8811.h"
 #include "driver/tcpm/nct38xx.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
@@ -301,3 +302,38 @@ __override bool board_is_dts_port(int port)
 {
 	return port == USBC_PORT_C0;
 }
+
+const struct usb_mux usba_ps8811[] = {
+	[USBA_PORT_A0] = {
+		.usb_port = USBA_PORT_A0,
+		.i2c_port = I2C_PORT_USB_A0_RETIMER,
+		.i2c_addr_flags = PS8811_I2C_ADDR_FLAGS0,
+	},
+	[USBA_PORT_A1] = {
+		.usb_port = USBA_PORT_A1,
+		.i2c_port = I2C_PORT_USB_A1_RETIMER,
+		.i2c_addr_flags = PS8811_I2C_ADDR_FLAGS0,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usba_ps8811) == USBA_PORT_COUNT);
+
+static int usba_retimer_init(int port)
+{
+	int rv;
+	int val;
+	const struct usb_mux *me = &usba_ps8811[port];
+
+	rv = ps8811_i2c_read(me, PS8811_REG_PAGE1,
+			     PS8811_REG1_USB_BEQ_LEVEL, &val);
+
+	return rv;
+}
+
+void board_chipset_startup(void)
+{
+	int i;
+
+	for (i = 0; i < USBA_PORT_COUNT; ++i)
+		usba_retimer_init(i);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
