@@ -14,4 +14,10 @@ config BOARD_HOGLIN
 	  Build Qualcomm Hoglin reference board.  The board uses Nuvoton
 	  NPCX9 chip as the EC.
 
+config BOARD_VILLAGER
+	bool "Villager Board"
+	help
+	  Build the Villager board. The board is based on the Herobrine
+	  reference design.
+
 source "Kconfig.zephyr"

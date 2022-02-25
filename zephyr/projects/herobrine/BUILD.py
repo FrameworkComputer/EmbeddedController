@@ -42,3 +42,9 @@ register_variant(
     project_name="hoglin",
     extra_kconfig_files=[here / "prj_hoglin.conf"],
 )
+
+
+register_variant(
+    project_name="villager",
+    extra_kconfig_files=[here / "prj_villager.conf"],
+)
