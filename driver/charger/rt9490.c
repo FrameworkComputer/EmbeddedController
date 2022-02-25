@@ -643,22 +643,22 @@ static void rt9490_usb_charger_task(const int port)
 
 	while (1) {
 		uint32_t evt = task_wait_event(-1);
+		/*
+		 * b/193753475#comment33: don't trigger bc1.2 detection
+		 * after PRSwap/FRSwap.
+		 *
+		 * Note that the only scenario we want to catch is power
+		 * role swap. For other cases, `is_non_pd_sink` may have
+		 * false positive (e.g. pd_capable() is false during
+		 * initial PD negotiation). But it's okay to always
+		 * trigger bc1.2 detection for other cases.
+		 */
+		bool is_non_pd_sink = !pd_capable(port) &&
+			!usb_charger_port_is_sourcing_vbus(port) &&
+			pd_check_vbus_level(port, VBUS_PRESENT);
 
 		/* vbus change, start bc12 detection */
 		if (evt & USB_CHG_EVENT_VBUS) {
-			/*
-			 * b/193753475#comment33: don't trigger bc1.2 detection
-			 * after PRSwap/FRSwap.
-			 *
-			 * Note that the only scenario we want to catch is power
-			 * role swap. For other cases, `is_non_pd_sink` may have
-			 * false positive (e.g. pd_capable() is false during
-			 * initial PD negotiation). But it's okay to always
-			 * trigger bc1.2 detection for other cases.
-			 */
-			bool is_non_pd_sink = !pd_capable(port) &&
-				pd_get_power_role(port) == PD_ROLE_SINK &&
-				pd_snk_is_vbus_provided(port);
 
 			if (is_non_pd_sink)
 				rt9490_enable_chgdet_flow(CHARGER_SOLO, true);
@@ -669,8 +669,13 @@ static void rt9490_usb_charger_task(const int port)
 
 		/* detection done, update charge_manager and stop detection */
 		if (evt & USB_CHG_EVENT_BC12) {
-			enum charge_supplier supplier =
-				rt9490_get_bc12_device_type(CHARGER_SOLO);
+			enum charge_supplier supplier;
+
+			if (is_non_pd_sink)
+				supplier = rt9490_get_bc12_device_type(
+						CHARGER_SOLO);
+			else
+				supplier = CHARGE_SUPPLIER_NONE;
 
 			rt9490_update_charge_manager(port, supplier);
 			rt9490_enable_chgdet_flow(CHARGER_SOLO, false);
