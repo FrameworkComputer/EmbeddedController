@@ -30,7 +30,12 @@
 #define TCPCI_EMUL_LABEL2 DT_NODELABEL(tcpci_ps8xxx_emul)
 
 #define DEFAULT_VBUS_MV 5000
-#define DEFAULT_VBUS_MA 3000
+
+/* Determined by CONFIG_PLATFORM_EC_USB_PD_PULLUP */
+#define DEFAULT_VBUS_SRC_PORT_MA 1500
+
+/* SRC TCPCI Emulator attaches as TYPEC_CC_VOLT_RP_3_0 */
+#define DEFAULT_VBUS_SNK_PORT_MA 3000
 
 struct integration_usb_attach_src_then_snk_fixture {
 	/* TODO(b/217737667): Remove driver specific code. */
@@ -75,6 +80,17 @@ static void *integration_usb_src_snk_setup(void)
 	emul_state.my_src = my_src;
 	emul_state.my_snk = my_snk;
 
+	/*
+	 * TODO(b/221288815): TCPCI config flags should be compile-time
+	 * constants
+	 * TODO(b/209907615): Verify TCPCI Rev2
+	 */
+	/* Turn TCPCI rev 2 off */
+	tcpc_config[SNK_PORT].flags = tcpc_config[SNK_PORT].flags &
+				      ~TCPC_FLAGS_TCPCI_REV2_0;
+	tcpc_config[SRC_PORT].flags = tcpc_config[SRC_PORT].flags &
+				      ~TCPC_FLAGS_TCPCI_REV2_0;
+
 	return &emul_state;
 }
 
@@ -101,8 +117,8 @@ static void integration_usb_attach_snk_then_src_before(void *state)
 	tcpci_emul_set_reg(tcpci_emul_snk, PS8XXX_REG_FW_REV, 0x31);
 	zassume_ok(tcpc_config[SRC_PORT].drv->init(SRC_PORT), NULL);
 	tcpci_emul_set_rev(tcpci_emul_src, TCPCI_EMUL_REV1_0_VER1_0);
-	pd_set_suspend(SNK_PORT, 0);
-	pd_set_suspend(SRC_PORT, 0);
+	pd_set_suspend(SNK_PORT, false);
+	pd_set_suspend(SRC_PORT, false);
 	/* Reset to disconnected state. */
 	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_src), NULL);
 	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul_snk), NULL);
@@ -117,10 +133,10 @@ static void integration_usb_attach_snk_then_src_before(void *state)
 
 	/* Attach emulated sink */
 	tcpci_snk_emul_init(&my_snk);
-
-	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
-			   &my_snk.data, &my_snk.common_data, &my_snk.ops,
-			   tcpci_emul_snk),
+	tcpci_emul_set_rev(tcpci_emul_snk, TCPCI_EMUL_REV1_0_VER1_0);
+	zassume_ok(tcpci_snk_emul_connect_to_tcpci(&my_snk.data,
+						   &my_snk.common_data,
+						   &my_snk.ops, tcpci_emul_snk),
 		   NULL);
 
 	/* Wait for PD negotiation */
@@ -130,9 +146,9 @@ static void integration_usb_attach_snk_then_src_before(void *state)
 
 	/* Attach emulated charger. */
 	tcpci_src_emul_init(&my_src);
-	zassume_ok(tcpci_src_emul_connect_to_tcpci(
-			   &my_src.data, &my_src.common_data, &my_src.ops,
-			   tcpci_emul_src),
+	zassume_ok(tcpci_src_emul_connect_to_tcpci(&my_src.data,
+						   &my_src.common_data,
+						   &my_src.ops, tcpci_emul_src),
 		   NULL);
 	isl923x_emul_set_adc_vbus(charger_emul, DEFAULT_VBUS_MV);
 
@@ -174,9 +190,9 @@ static void integration_usb_attach_src_then_snk_before(void *state)
 
 	/* Attach emulated charger. */
 	tcpci_src_emul_init(&my_src);
-	zassume_ok(tcpci_src_emul_connect_to_tcpci(
-			   &my_src.data, &my_snk.common_data, &my_snk.ops,
-			   tcpci_emul_src),
+	zassume_ok(tcpci_src_emul_connect_to_tcpci(&my_src.data,
+						   &my_snk.common_data,
+						   &my_snk.ops, tcpci_emul_src),
 		   NULL);
 	isl923x_emul_set_adc_vbus(charger_emul, DEFAULT_VBUS_MV);
 
@@ -193,10 +209,10 @@ static void integration_usb_attach_src_then_snk_before(void *state)
 
 	/* Attach emulated sink */
 	tcpci_snk_emul_init(&my_snk);
-
-	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
-			   &my_snk.data, &my_snk.common_data, &my_snk.ops,
-			   tcpci_emul_snk),
+	tcpci_emul_set_rev(tcpci_emul_snk, TCPCI_EMUL_REV1_0_VER1_0);
+	zassume_ok(tcpci_snk_emul_connect_to_tcpci(&my_snk.data,
+						   &my_snk.common_data,
+						   &my_snk.ops, tcpci_emul_snk),
 		   NULL);
 
 	/* Wait for PD negotiation */
@@ -249,17 +265,19 @@ ZTEST_F(integration_usb_attach_src_then_snk, verify_snk_port_pd_info)
 		       "Actually charging at VBUS %dmV, but PD reports %dmV",
 		       DEFAULT_VBUS_MV, response.meas.voltage_now);
 
-	zassert_equal(response.meas.current_max, DEFAULT_VBUS_MA,
+	zassert_equal(response.meas.current_max, DEFAULT_VBUS_SNK_PORT_MA,
 		      "Charging at VBUS max %dmA, but PD reports %dmA",
-		      DEFAULT_VBUS_MA, response.meas.current_max);
+		      DEFAULT_VBUS_SNK_PORT_MA, response.meas.current_max);
 
-	zassert_true(response.meas.current_lim >= DEFAULT_VBUS_MA,
+	zassert_true(response.meas.current_lim >= DEFAULT_VBUS_SNK_PORT_MA,
 		     "Charging at VBUS max %dmA, but PD current limit %dmA",
-		     DEFAULT_VBUS_MA, response.meas.current_lim);
+		     DEFAULT_VBUS_SNK_PORT_MA, response.meas.current_lim);
 
-	zassert_equal(response.max_power, DEFAULT_VBUS_MV * DEFAULT_VBUS_MA,
+	zassert_equal(response.max_power,
+		      DEFAULT_VBUS_MV * DEFAULT_VBUS_SNK_PORT_MA,
 		      "Charging up to %duW, PD max power %duW",
-		      DEFAULT_VBUS_MV * DEFAULT_VBUS_MA, response.max_power);
+		      DEFAULT_VBUS_MV * DEFAULT_VBUS_SNK_PORT_MA,
+		      response.max_power);
 }
 
 ZTEST_F(integration_usb_attach_src_then_snk, verify_src_port_pd_info)
@@ -287,9 +305,9 @@ ZTEST_F(integration_usb_attach_src_then_snk, verify_src_port_pd_info)
 		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
 		       DEFAULT_VBUS_MV, response.meas.voltage_now);
 
-	zassume_equal(response.meas.current_max, DEFAULT_VBUS_MA,
+	zassume_equal(response.meas.current_max, DEFAULT_VBUS_SRC_PORT_MA,
 		      "Charging at VBUS max %dmA, but PD reports %dmA",
-		      DEFAULT_VBUS_MA, response.meas.current_max);
+		      DEFAULT_VBUS_SRC_PORT_MA, response.meas.current_max);
 
 	/* Note: We are the source so we skip checking: */
 	/* meas.voltage_max */
@@ -325,17 +343,19 @@ ZTEST_F(integration_usb_attach_snk_then_src, verify_snk_port_pd_info)
 		       "Actually charging at VBUS %dmV, but PD reports %dmV",
 		       DEFAULT_VBUS_MV, response.meas.voltage_now);
 
-	zassert_equal(response.meas.current_max, DEFAULT_VBUS_MA,
+	zassert_equal(response.meas.current_max, DEFAULT_VBUS_SNK_PORT_MA,
 		      "Charging at VBUS max %dmA, but PD reports %dmA",
-		      DEFAULT_VBUS_MA, response.meas.current_max);
+		      DEFAULT_VBUS_SNK_PORT_MA, response.meas.current_max);
 
-	zassert_true(response.meas.current_lim >= DEFAULT_VBUS_MA,
+	zassert_true(response.meas.current_lim >= DEFAULT_VBUS_SNK_PORT_MA,
 		     "Charging at VBUS max %dmA, but PD current limit %dmA",
-		     DEFAULT_VBUS_MA, response.meas.current_lim);
+		     DEFAULT_VBUS_SNK_PORT_MA, response.meas.current_lim);
 
-	zassert_equal(response.max_power, DEFAULT_VBUS_MV * DEFAULT_VBUS_MA,
+	zassert_equal(response.max_power,
+		      DEFAULT_VBUS_MV * DEFAULT_VBUS_SNK_PORT_MA,
 		      "Charging up to %duW, PD max power %duW",
-		      DEFAULT_VBUS_MV * DEFAULT_VBUS_MA, response.max_power);
+		      DEFAULT_VBUS_MV * DEFAULT_VBUS_SNK_PORT_MA,
+		      response.max_power);
 }
 
 ZTEST_F(integration_usb_attach_snk_then_src, verify_src_port_pd_info)
@@ -364,9 +384,9 @@ ZTEST_F(integration_usb_attach_snk_then_src, verify_src_port_pd_info)
 		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
 		       DEFAULT_VBUS_MV, response.meas.voltage_now);
 
-	zassume_equal(response.meas.current_max, DEFAULT_VBUS_MA,
+	zassume_equal(response.meas.current_max, DEFAULT_VBUS_SRC_PORT_MA,
 		      "Charging at VBUS max %dmA, but PD reports %dmA",
-		      DEFAULT_VBUS_MA, response.meas.current_max);
+		      DEFAULT_VBUS_SRC_PORT_MA, response.meas.current_max);
 
 	/* Note: We are the source so we skip checking: */
 	/* meas.voltage_max */
