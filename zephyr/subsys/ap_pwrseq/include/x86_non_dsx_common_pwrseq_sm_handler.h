@@ -25,7 +25,6 @@ struct common_pwrseq_config {
 /* The wait time is ~150 msec, allow for safety margin. */
 #define IN_PCH_SLP_SUS_WAIT_TIME_MS 250
 
-void power_update_signals(void);
 enum power_states_ndsx chipset_pwr_sm_run(
 				enum power_states_ndsx curr_state,
 				const struct common_pwrseq_config *com_cfg);

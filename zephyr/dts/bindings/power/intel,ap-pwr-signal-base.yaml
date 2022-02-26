@@ -22,12 +22,15 @@ properties:
           Keep in alphebetical order.
         enum:
         - PWR_ALL_SYS_PWRGD
+        - PWR_DSW_PWROK
         - PWR_EC_PCH_RSMRST
         - PWR_EC_PCH_SYS_PWROK
+        - PWR_EC_SOC_DSW_PWROK
+        - PWR_EN_PP3300_A
         - PWR_EN_PP5000_A
         - PWR_IMVP9_VRRDY
         - PWR_PCH_PWROK
-        - PWR_DSW_PWROK
+        - PWR_PG_PP1P05
         - PWR_RSMRST
         - PWR_SLP_S0
         - PWR_SLP_S3
