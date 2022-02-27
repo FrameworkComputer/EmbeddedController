@@ -27,6 +27,25 @@
 	(GPIO_INT_FROM_NODE(DT_NODELABEL(lbl)))
 
 /*
+ * Unique enum name for the interrupt.
+ */
+#define GPIO_INT_ENUM(id) DT_CAT(INT_ENUM_, id)
+
+/*
+ * Create an enum list of the interrupts
+ */
+#define GPIO_INT_ENUM_WITH_COMMA(id) GPIO_INT_ENUM(id),
+enum gpio_interrupts {
+#if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
+	DT_FOREACH_CHILD(DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_interrupts),
+		GPIO_INT_ENUM_WITH_COMMA)
+#endif
+		GPIO_INT_COUNT
+};
+
+#undef GPIO_INT_ENUM_WITH_COMMA
+
+/*
  * Forward reference to avoiding exposing internal structure
  * defined in gpio_int.c
  */
@@ -47,6 +66,12 @@ int gpio_enable_dt_interrupt(const struct gpio_int_config * const ic);
  * Disable the interrupt.
  */
 int gpio_disable_dt_interrupt(const struct gpio_int_config * const ic);
+
+/*
+ * Get the interrupt config for this interrupt.
+ */
+const struct gpio_int_config *
+	gpio_interrupt_get_config(enum gpio_interrupts intr);
 
 /*
  * Declare interrupt configuration data structures.
