@@ -545,6 +545,16 @@ void battery_compensate_params(struct batt_params *batt)
 static enum ec_status battery_display_soc(struct host_cmd_handler_args *args)
 {
 	struct ec_response_display_soc *r = args->response;
+	const struct batt_params *batt = charger_current_battery_params();
+
+	/*
+	 * BATT_FLAG_BAD_FULL_CAPACITY and BATT_FLAG_BAD_REMAINING_CAPACITY are
+	 * used to derive display_soc, so if these are bad, display_soc is also
+	 * bad.
+	 */
+	if ((batt->flags & BATT_FLAG_BAD_FULL_CAPACITY) ||
+		(batt->flags & BATT_FLAG_BAD_REMAINING_CAPACITY))
+		return EC_RES_UNAVAILABLE;
 
 	r->display_soc = charge_get_display_charge();
 	r->full_factor = batt_host_full_factor * 10;

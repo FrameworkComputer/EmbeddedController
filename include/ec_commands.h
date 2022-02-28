@@ -7028,6 +7028,14 @@ struct ec_response_pchg_update {
 } __ec_align4;
 
 
+/*****************************************************************************
+ * Get displayable charge percent
+ *
+ * Return
+ * EC_RES_SUCCESS : Values successfully read
+ * EC_RES_UNAVAILABLE : Values are currently unavailable,
+ *			e.g. unresponsive battery.
+ */
 #define EC_CMD_DISPLAY_SOC 0x0137
 
 struct ec_response_display_soc {
