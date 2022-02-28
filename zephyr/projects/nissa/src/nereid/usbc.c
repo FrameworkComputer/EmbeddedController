@@ -216,6 +216,18 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
+__override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
+{
+	int rv;
+	const int current = rp == TYPEC_RP_3A0 ? 3000 : 1500;
+
+	rv = charger_set_otg_current_voltage(port, current, 5000);
+	if (rv != EC_SUCCESS) {
+		LOG_WRN("Failed to set source ilimit on port %d to %d: %d",
+			port, current, rv);
+	}
+}
+
 void board_reset_pd_mcu(void)
 {
 	/*
