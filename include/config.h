@@ -6507,7 +6507,7 @@
  * SLP_S0 did not assert.
  */
 #ifndef CONFIG_SLEEP_TIMEOUT_MS
-#define CONFIG_SLEEP_TIMEOUT_MS 10000
+#define CONFIG_SLEEP_TIMEOUT_MS 15000
 #endif
 
 #ifdef CONFIG_PWM_KBLIGHT
