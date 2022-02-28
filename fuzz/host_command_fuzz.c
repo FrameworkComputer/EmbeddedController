@@ -56,6 +56,9 @@ struct chunk {
 static int hostcmd_fill(const uint8_t *data, size_t size)
 {
 	static int first = 1;
+	int ipos = 0;
+	int i;
+	int req_size = 0;
 
 #ifdef VALID_REQUEST_ONLY
 	const int checksum_offset = offsetof(struct ec_host_request, checksum);
@@ -74,10 +77,6 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 #else
 	struct chunk chunks[1] = { {0, sizeof(req_buf)} };
 #endif
-
-	int ipos = 0;
-	int i;
-	int req_size = 0;
 
 	/*
 	 * TODO(chromium:854975): We should probably malloc req_buf with the
