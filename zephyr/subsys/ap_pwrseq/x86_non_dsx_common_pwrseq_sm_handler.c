@@ -4,6 +4,7 @@
  */
 
 #include <init.h>
+
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
 static K_KERNEL_STACK_DEFINE(pwrseq_thread_stack,
@@ -261,11 +262,13 @@ static int common_pwr_sm_run(int state)
 		/* Notify power event that rails are up */
 		ap_power_ev_send_callbacks(AP_POWER_STARTUP);
 
-		/* TODO: S0ix
+#if CONFIG_AP_PWRSEQ_S0IX
+		/*
 		 * Clearing the S0ix flag on the path to S0
 		 * to handle any reset conditions.
 		 */
-
+		ap_power_reset_host_sleep_state();
+#endif
 		return SYS_POWER_STATE_S3;
 
 	case SYS_POWER_STATE_S3:
@@ -289,7 +292,7 @@ static int common_pwr_sm_run(int state)
 
 		/* All the power rails must be stable */
 		if (power_signal_get(PWR_ALL_SYS_PWRGD)) {
-#if defined(CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK)
+#if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 			/* Notify power event before resume */
 			ap_power_ev_send_callbacks(AP_POWER_RESUME_INIT);
 #endif
@@ -299,13 +302,82 @@ static int common_pwr_sm_run(int state)
 		}
 		break;
 
+#if CONFIG_AP_PWRSEQ_S0IX
+	case SYS_POWER_STATE_S0ix:
+		/* System in S0 only if SLP_S0 and SLP_S3 are de-asserted */
+		if (power_signals_off(IN_PCH_SLP_S0) &&
+			signals_valid_and_off(IN_PCH_SLP_S3)) {
+			/* TODO: Make sure ap reset handling is done
+			 * before leaving S0ix.
+			 */
+			return SYS_POWER_STATE_S0ixS0;
+		} else if (!power_signals_on(IN_PGOOD_ALL_CORE))
+			return SYS_POWER_STATE_S0;
+
+		break;
+
+	case SYS_POWER_STATE_S0S0ix:
+		/*
+		 * Check sleep state and notify listeners of S0ix suspend if
+		 * HC already set sleep suspend state.
+		 */
+		ap_power_sleep_notify_transition(AP_POWER_SLEEP_SUSPEND);
+
+		/*
+		 * Enable idle task deep sleep. Allow the low power idle task
+		 * to go into deep sleep in S0ix.
+		 */
+		enable_sleep(SLEEP_MASK_AP_RUN);
+
+#if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
+		ap_power_ev_send_callbacks(AP_POWER_SUSPEND_COMPLETE);
+#endif
+
+		return SYS_POWER_STATE_S0ix;
+
+	case SYS_POWER_STATE_S0ixS0:
+		if (power_get_host_sleep_state() !=
+			HOST_SLEEP_EVENT_S0IX_RESUME)
+			break;
+
+		/*
+		 * Disable idle task deep sleep. This means that the low
+		 * power idle task will not go into deep sleep while in S0.
+		 */
+		disable_sleep(SLEEP_MASK_AP_RUN);
+
+#if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
+		ap_power_ev_send_callbacks(AP_POWER_RESUME_INIT);
+#endif
+
+		return SYS_POWER_STATE_S0;
+
+#endif /* CONFIG_AP_PWRSEQ_S0IX */
+
 	case SYS_POWER_STATE_S0:
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
 			ap_power_force_shutdown(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
-		} else if (signals_valid_and_on(IN_PCH_SLP_S3))
+		} else if (signals_valid_and_on(IN_PCH_SLP_S3)) {
 			return SYS_POWER_STATE_S0S3;
-		/* TODO: S0ix */
+
+#if CONFIG_AP_PWRSEQ_S0IX
+		/*
+		 * SLP_S0 may assert in system idle scenario without a kernel
+		 * freeze call. This may cause interrupt storm since there is
+		 * no freeze/unfreeze of threads/process in the idle scenario.
+		 * Ignore the SLP_S0 assertions in idle scenario by checking
+		 * the host sleep state.
+		 */
+		} else if (power_get_host_sleep_state()
+					== HOST_SLEEP_EVENT_S0IX_SUSPEND &&
+				power_signals_on(IN_PCH_SLP_S0)) {
+
+			return SYS_POWER_STATE_S0S0ix;
+		} else {
+			ap_power_sleep_notify_transition(AP_POWER_SLEEP_RESUME);
+#endif /* CONFIG_AP_PWRSEQ_S0IX */
+		}
 
 		break;
 
@@ -325,6 +397,9 @@ static int common_pwr_sm_run(int state)
 		 * correctly handle global resets which have a bit of delay
 		 * while the SLP_Sx_L signals are asserted then deasserted.
 		 */
+		/* TODO */
+		/* power_s5_up = 0; */
+
 		return SYS_POWER_STATE_S5;
 
 	case SYS_POWER_STATE_S3S4:
@@ -333,10 +408,22 @@ static int common_pwr_sm_run(int state)
 	case SYS_POWER_STATE_S0S3:
 		/* Notify power event before we remove power rails */
 		ap_power_ev_send_callbacks(AP_POWER_SUSPEND);
-#if defined(CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK)
+#if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 		/* Notify power event after suspend */
 		ap_power_ev_send_callbacks(AP_POWER_SUSPEND_COMPLETE);
 #endif
+
+		/*
+		 * Enable idle task deep sleep. Allow the low power idle task
+		 * to go into deep sleep in S3 or lower.
+		 */
+		enable_sleep(SLEEP_MASK_AP_RUN);
+
+#if CONFIG_AP_PWRSEQ_S0IX
+		/* Re-initialize S0ix flag */
+		ap_power_reset_host_sleep_state();
+#endif
+
 		return SYS_POWER_STATE_S3;
 
 	default:
@@ -386,8 +473,10 @@ static void pwrseq_loop_thread(void *p1, void *p2, void *p3)
 		if (curr_state == new_state)
 			new_state = common_pwr_sm_run(curr_state);
 
-		if (curr_state != new_state)
+		if (curr_state != new_state) {
 			pwr_sm_set_state(new_state);
+			ap_power_set_active_wake_mask();
+		}
 
 		k_msleep(t_wait_ms);
 	}

@@ -9,9 +9,10 @@
 #include <init.h>
 #include <kernel.h>
 #include <zephyr/types.h>
+
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>
-
+#include <ap_power_host_sleep.h>
 #include <x86_common_pwrseq.h>
 
 #define DT_DRV_COMPAT	intel_ap_pwrseq
@@ -24,7 +25,7 @@ void init_chipset_pwr_seq_state(void);
 void request_exit_hardoff(bool should_exit);
 enum power_states_ndsx pwr_sm_get_state(void);
 void apshutdown(void);
-
+void ap_pwrseq_handle_chipset_reset(void);
 extern const char pwrsm_dbg[][25];
 
 #endif /* __X86_NON_DSX_COMMON_PWRSEQ_SM_HANDLER_H__ */

@@ -14,9 +14,11 @@
  * by implementation in Zephyr code.
  */
 #if CONFIG_AP_PWRSEQ
+
 #include "ec_commands.h"
 #include "host_command.h"
 #include "lpc.h"
+#include "system.h"
 
 /********************************************************************/
 /* power.h */

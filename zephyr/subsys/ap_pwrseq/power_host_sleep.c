@@ -4,7 +4,6 @@
  */
 
 #include <ap_power/ap_power_interface.h>
-#include <ap_power_host_sleep.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
