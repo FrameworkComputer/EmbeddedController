@@ -27,10 +27,18 @@ const header = `/* Copyright %d The Chromium OS Authors. All rights reserved.
 func Generate(out io.Writer, pins *Pins, chip Chip) {
 	// Write header with date.
 	fmt.Fprintf(out, header, time.Now().Year())
-	pinConfig(out, "named-adc-channels", pins.Adc, chip, adcConfig)
-	pinConfig(out, "named-gpios", pins.Gpio, chip, gpioConfig)
-	pinConfig(out, "named-i2c-ports", pins.I2c, chip, i2cConfig)
-	pinConfig(out, "named-pwms", pins.Pwm, chip, pwmConfig)
+	// Default sort function (by Signal)
+	sortSignal := func(iPin, jPin *Pin) bool {
+		return jPin.Signal > iPin.Signal
+	}
+	// Sort function for I2C (by port).
+	sortI2c := func(iPin, jPin *Pin) bool {
+		return chip.I2c(jPin.Pin) > chip.I2c(iPin.Pin)
+	}
+	pinConfig(out, "named-adc-channels", pins.Adc, chip, sortSignal, adcConfig)
+	pinConfig(out, "named-gpios", pins.Gpio, chip, sortSignal, gpioConfig)
+	pinConfig(out, "named-i2c-ports", pins.I2c, chip, sortI2c, i2cConfig)
+	pinConfig(out, "named-pwms", pins.Pwm, chip, sortSignal, pwmConfig)
 	fmt.Fprintf(out, "};\n")
 	// Retrieve the enabled nodes, sort, de-dup and
 	// generate overlays.
@@ -51,13 +59,13 @@ func Generate(out io.Writer, pins *Pins, chip Chip) {
 }
 
 // pinConfig creates the DTS for a single pin.
-func pinConfig(out io.Writer, block string, pins []*Pin, chip Chip, cfunc func(io.Writer, *Pin, Chip)) {
+func pinConfig(out io.Writer, block string, pins []*Pin, chip Chip, sortFun func(*Pin, *Pin) bool, cfunc func(io.Writer, *Pin, Chip)) {
 	if len(pins) == 0 {
 		return
 	}
-	// Sort the pins into alphbetical order.
+	// Sort the pins.
 	sort.Slice(pins, func(i, j int) bool {
-		return pins[j].Signal > pins[i].Signal
+		return sortFun(pins[i], pins[j])
 	})
 	// Generate start of block.
 	fmt.Fprintf(out, "\n\t%s {\n", block)
