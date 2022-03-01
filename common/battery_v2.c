@@ -191,7 +191,7 @@ static int is_battery_string_reliable(const char *buf)
 	 * include 0xFF.
 	 */
 	while (*buf) {
-		if ((*buf) == 0xFF)
+		if ((*buf) == '\xff')
 			return 0;
 		buf++;
 	}

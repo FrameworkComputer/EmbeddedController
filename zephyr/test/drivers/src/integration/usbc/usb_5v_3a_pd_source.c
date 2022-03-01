@@ -221,7 +221,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_power_info)
 	zassert_equal(power_info.meas.voltage_max, 0,
 		      "Expected maximum voltage of 0mV, but got %dmV",
 		      power_info.meas.voltage_max);
-	zassert_within(power_info.meas.voltage_now, 0, 10,
+	zassert_within(power_info.meas.voltage_now, 5, 5,
 		       "Expected present voltage near 0mV, but got %dmV",
 		       power_info.meas.voltage_now);
 	zassert_equal(power_info.meas.current_max, 0,
