@@ -744,6 +744,7 @@ class Zmake:
             self.logger.info("Running tests in %s.", elf_file)
             proc = self.jobserver.popen(
                 cmd,
+                stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 encoding="utf-8",
