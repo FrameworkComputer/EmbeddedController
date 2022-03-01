@@ -7,6 +7,7 @@ if PLATFORM_EC_USB_POWER_DELIVERY
 
 choice "Measuring VBUS voltage"
 	prompt "Select how VBUS voltage is measured"
+	optional
 
 config PLATFORM_EC_USB_PD_VBUS_MEASURE_NOT_PRESENT
 	bool "VBUS voltage cannot be read"
