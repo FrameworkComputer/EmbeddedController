@@ -19,14 +19,14 @@ __override struct keyboard_scan_config keyscan_config = {
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
-		0x1c, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfe, 0xff, 0xff, 0xff,  /* full set */
+		0x1c, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xa4, 0xff, 0xff, 0x55, 0xff, 0xff, 0xff, 0xff,  /* full set */
 	},
 	.ksi_threshold_mv = 1000,
 };
 
 static const struct ec_response_keybd_config taniks_kb = {
-	.num_top_row_keys = 11,
+	.num_top_row_keys = 14,
 	.action_keys = {
 		TK_BACK,		/* T1 */
 		TK_REFRESH,		/* T2 */
@@ -35,10 +35,13 @@ static const struct ec_response_keybd_config taniks_kb = {
 		TK_SNAPSHOT,		/* T5 */
 		TK_BRIGHTNESS_DOWN,	/* T6 */
 		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_MICMUTE,		/* T8 */
-		TK_VOL_MUTE,		/* T9 */
-		TK_VOL_DOWN,		/* T10 */
-		TK_VOL_UP,		/* T11 */
+		TK_ABSENT,		/* T8 */
+		TK_ABSENT,		/* T9 */
+		TK_ABSENT,		/* T10 */
+		TK_MICMUTE,		/* T11 */
+		TK_VOL_MUTE,		/* T12 */
+		TK_VOL_DOWN,		/* T13 */
+		TK_VOL_UP,		/* T14 */
 	},
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
