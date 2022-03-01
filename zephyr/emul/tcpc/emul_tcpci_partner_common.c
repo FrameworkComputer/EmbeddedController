@@ -430,6 +430,49 @@ void tcpci_partner_stop_sender_response_timer(struct tcpci_partner_data *data)
 	data->wait_for_response = false;
 }
 
+enum tcpci_partner_handler_res
+tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
+				 const struct tcpci_emul_msg *message)
+{
+	uint32_t vdm_header = sys_get_le32(message->buf + TCPCI_MSG_HEADER_LEN);
+
+	/* TCPCI r2.0: Ignore unsupported VDMs. Don't handle command types other
+	 * than REQ or unstructured VDMs.
+	 * TODO(b/225397796): Validate VDM fields more thoroughly.
+	 */
+	if (PD_VDO_CMDT(vdm_header) != CMDT_INIT || !PD_VDO_SVDM(vdm_header)) {
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	}
+
+	switch (PD_VDO_CMD(vdm_header)) {
+	case CMD_DISCOVER_IDENT:
+		if (data->identity_vdos > 0) {
+			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						    data->identity_vdm,
+						    data->identity_vdos, 0);
+		}
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case CMD_DISCOVER_SVID:
+		if (data->svids_vdos > 0) {
+			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						    data->svids_vdm,
+						    data->svids_vdos, 0);
+		}
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case CMD_DISCOVER_MODES:
+		if (data->modes_vdos > 0) {
+			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						    data->modes_vdm,
+						    data->modes_vdos, 0);
+		}
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	/* TODO(b/219562077): Support DP mode entry. */
+	default:
+		/* TCPCI r. 2.0: Ignore unsupported commands. */
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	}
+}
+
 /** Check description in emul_common_tcpci_partner.h */
 enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 	struct tcpci_partner_data *data,
@@ -488,8 +531,7 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 	if (PD_HEADER_CNT(header)) {
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_DATA_VENDOR_DEF:
-			/* VDM (vendor defined message) - ignore */
-			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+			return tcpci_partner_common_vdm_handler(data, tx_msg);
 		default:
 			/* No other common handlers for data messages */
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
@@ -554,6 +596,24 @@ void tcpci_partner_common_handler_mask_msg(struct tcpci_partner_data *data,
 	} else {
 		data->common_handler_masked &= ~BIT(type);
 	}
+}
+
+void tcpci_partner_set_discovery_info(struct tcpci_partner_data *data,
+				      int identity_vdos, uint32_t *identity_vdm,
+				      int svids_vdos, uint32_t *svids_vdm,
+				      int modes_vdos, uint32_t *modes_vdm)
+{
+	memset(data->identity_vdm, 0, sizeof(data->identity_vdm));
+	memset(data->svids_vdm, 0, sizeof(data->svids_vdm));
+	memset(data->modes_vdm, 0, sizeof(data->modes_vdm));
+
+	data->identity_vdos = identity_vdos;
+	memcpy(data->identity_vdm, identity_vdm,
+	       identity_vdos * sizeof(*identity_vdm));
+	data->svids_vdos = svids_vdos;
+	memcpy(data->svids_vdm, svids_vdm, svids_vdos * sizeof(*svids_vdm));
+	data->modes_vdos = modes_vdos;
+	memcpy(data->modes_vdm, modes_vdm, modes_vdos * sizeof(*modes_vdm));
 }
 
 /** Check description in emul_common_tcpci_partner.h */
@@ -713,4 +773,7 @@ void tcpci_partner_init(struct tcpci_partner_data *data,
 	data->hard_reset_func = hard_reset_func;
 	data->hard_reset_data = hard_reset_data;
 	data->tcpm_timeouts = 0;
+	data->identity_vdos = 0;
+	data->svids_vdos = 0;
+	data->modes_vdos = 0;
 }
