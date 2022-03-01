@@ -16,6 +16,16 @@
  * Initialize IOExpanders.
  */
 
+#define PCAL6524HE_PORT			TCA6424A_PORT
+#define PCAL6524HE_ADDR			TCA6424A_ADDR
+#define PCAL6524HE_DEVICE_ID_ADDR	0x7c
+#define PCAL6524HE_DEVICE_ID_REG	0x46
+#define PCAL6524HE_DEVICE_ID0		0
+#define PCAL6524HE_DEVICE_ID1           0x08
+#define PCAL6524HE_DEVICE_ID2           0x30
+#define PCAL6524HE_INT_MASK_REG_PORT1	0x55
+#define PCAL6524HE_INT_MASK_REG_PORT2   0x56
+
 static enum servo_board_id board_id_val = BOARD_ID_UNSET;
 
 #ifdef SECTION_IS_RO
@@ -26,16 +36,49 @@ static int bc12_charger;
 /* Enable all ioexpander outputs. */
 int init_ioexpanders(void)
 {
-	/* Clear any faults and other IRQs*/
-	read_faults();
-	read_irqs();
+	int fault, irqs;
+	uint8_t dat[3];
 
 	/*
-	 * Cache initial value for BC1.2 indicator. This is the only pin, which
-	 * notifies about event on both low and high levels, while notification
-	 * should happen only when state has changed.
+	 * Due to shortages of the TI TCA6424 device, the NXP PCAL6524HE
+	 * device has been selected as an alternative IOExpander. The two
+	 * parts are mostly compatible except for some additional initialization
+	 * of the PCAL6524HE.
+	 *
+	 * If the PCAL6524HE device is detected, the interrupt mask register for
+	 * port1 is set to 0 and the port2 is set to 0xbe.
 	 */
-	ioex_get_level(IOEX_HOST_CHRG_DET, &bc12_charger);
+
+	/* Attempt to read the device id register of the PCAL6524HE device */
+	i2c_read_block(PCAL6524HE_PORT, PCAL6524HE_DEVICE_ID_ADDR,
+					PCAL6524HE_DEVICE_ID_REG, dat, 3);
+
+	if (dat[2] == PCAL6524HE_DEVICE_ID2 &&
+			dat[1] == PCAL6524HE_DEVICE_ID1 &&
+			dat[0] == PCAL6524HE_DEVICE_ID0) {
+		ccprintf("Detected PCAL6524HE\n");
+		i2c_write8(PCAL6524HE_PORT, PCAL6524HE_ADDR,
+				PCAL6524HE_INT_MASK_REG_PORT1, 0);
+		i2c_write8(PCAL6524HE_PORT, PCAL6524HE_ADDR,
+				PCAL6524HE_INT_MASK_REG_PORT2, 0xbe);
+	} else {
+		ccprintf("Detected TCA6424A\n");
+	}
+
+	/* Clear any faults and other IRQs */
+	fault = read_faults();
+	irqs = read_irqs();
+
+	if (!(fault & USB_DUTCHG_FLT_ODL)) {
+		CPRINTF("FAULT: Overcurrent on Charger or DUT CC/SBU lines\n");
+	}
+
+	if ((!!(irqs & HOST_CHRG_DET) != bc12_charger) &&
+		(board_id_det() <= BOARD_ID_REV1)) {
+		CPRINTF("BC1.2 charger %s\n",
+			(irqs & HOST_CHRG_DET) ? "plugged" : "unplugged");
+		bc12_charger = !!(irqs & HOST_CHRG_DET);
+	}
 
 	return EC_SUCCESS;
 }
