@@ -154,10 +154,6 @@
 			 */
 			frequency = <324>;
 		};
-		pwm_fan: fan {
-			pwms = <&pwm7 PWM_CHANNEL_7 PWM_POLARITY_NORMAL>;
-			frequency = <30000>;
-		};
 	};
 
 	named-fans {
@@ -165,7 +161,8 @@
 
 		fan_0 {
 			label = "FAN_0";
-			pwm = <&pwm_fan>;
+			pwms = <&pwm7 PWM_CHANNEL_7 PWM_POLARITY_NORMAL>;
+			pwm-frequency = <30000>;
 			tach = <&tach0>;
 			rpm_min = <1500>;
 			rpm_start = <1500>;

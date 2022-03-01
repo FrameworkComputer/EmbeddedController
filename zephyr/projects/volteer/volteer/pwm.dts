@@ -6,16 +6,5 @@
 / {
 	named-pwms {
 		compatible = "named-pwms";
-
-		pwm_fan: fan_pwm {
-			pwms = <&pwm5 0 PWM_POLARITY_NORMAL>;
-			frequency = <25000>;
-		};
 	};
-};
-
-/* Fan control */
-&pwm5 {
-	status = "okay";
-	drive-open-drain;
 };

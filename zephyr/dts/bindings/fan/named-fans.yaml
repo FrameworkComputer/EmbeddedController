@@ -30,11 +30,15 @@ child-binding:
       type: int
       description:
         Maximum fan speed (in RPM)
-    pwm:
-      type: phandle
+    pwms:
+      type: phandle-array
       required: true
       description:
         PWM channel to control the fan
+    pwm-frequency:
+      type: int
+      description:
+        PWM frequency in Hz.
     tach:
       type: phandle
       required: false

@@ -79,7 +79,6 @@ endif # PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY
 
 config PLATFORM_EC_FAN
 	bool "Fan support"
-	depends on PLATFORM_EC_PWM
 	help
 	  Enables support for fans. Allows periodic thermal task to
 	  automatically set the fan speed (control temperature).
