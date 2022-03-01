@@ -11,5 +11,48 @@ zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 zephyr_include_directories("${PLATFORM_EC}/driver/ppc/")
 
-FILE(GLOB_RECURSE test_sources src/*.c)
-target_sources(app PRIVATE ${test_sources})
+target_sources(app PRIVATE
+  src/battery.c
+  src/bb_retimer.c
+  src/bc12.c
+  src/bma2x2.c
+  src/bmi160.c
+  src/bmi260.c
+  src/charge_manager.c
+  src/console_cmd/charge_manager.c
+  src/console_cmd/charge_state.c
+  src/cros_cbi.c
+  src/espi.c
+  src/gpio.c
+  src/integration/usbc/usb.c
+  src/integration/usbc/usb_20v_3a_pd_charger.c
+  src/integration/usbc/usb_5v_3a_pd_sink.c
+  src/integration/usbc/usb_5v_3a_pd_source.c
+  src/integration/usbc/usb_attach_src_snk.c
+  src/i2c_passthru.c
+  src/isl923x.c
+  src/keyboard_scan.c
+  src/lid_switch.c
+  src/lis2dw12.c
+  src/ln9310.c
+  src/main.c
+  src/panic.c
+  src/power_common.c
+  src/ppc_sn5s330.c
+  src/ppc_syv682c.c
+  src/ps8xxx.c
+  src/smart.c
+  src/stm_mems_common.c
+  src/stubs.c
+  src/tcpci.c
+  src/tcpci_test_common.c
+  src/tcs3400.c
+  src/temp_sensor.c
+  src/test_mocks.c
+  src/test_rules.c
+  src/thermistor.c
+  src/usb_mux.c
+  src/usb_pd_host_cmd.c
+  src/utils.c
+  src/watchdog.c
+)
