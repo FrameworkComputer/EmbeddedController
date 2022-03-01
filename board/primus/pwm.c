@@ -27,7 +27,7 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
-		.flags = 0,
+		.flags = PWM_CONFIG_DSLEEP,
 		/*
 		 * Set PWM frequency to multiple of 50 Hz and 60 Hz to prevent
 		 * flicker. Higher frequencies consume similar average power to
