@@ -118,10 +118,17 @@ static struct fan_control_t fan_control[] = {
  */
 static int fan_rpm(int ch)
 {
+	const struct device *dev = fan_control[ch].tach;
 	struct sensor_value val = { 0 };
 
-	sensor_sample_fetch_chan(fan_control[ch].tach, SENSOR_CHAN_RPM);
-	sensor_channel_get(fan_control[ch].tach, SENSOR_CHAN_RPM, &val);
+	if (!device_is_ready(dev)) {
+		LOG_ERR("Tach device %s not ready", dev->name);
+		return 0;
+	}
+
+	sensor_sample_fetch_chan(dev, SENSOR_CHAN_RPM);
+	sensor_channel_get(dev, SENSOR_CHAN_RPM, &val);
+
 	return (int)val.val1;
 }
 
