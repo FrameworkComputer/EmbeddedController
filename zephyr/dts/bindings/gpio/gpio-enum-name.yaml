@@ -41,6 +41,7 @@ properties:
       - GPIO_EN_PP3300_A
       - GPIO_EN_PP5000
       - GPIO_EN_PP5000_A
+      - GPIO_EN_PP5000_USB_A0_VBUS
       - GPIO_EN_PP5000_USBA
       - GPIO_EN_PP5000_USBA_R
       - GPIO_EN_PPVAR_VCCIN

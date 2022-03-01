@@ -111,6 +111,7 @@
 		};
 		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus {
 			gpios = <&gpiob 7 GPIO_OUT_LOW>;
+			enum-name = "GPIO_EN_PP5000_USB_A0_VBUS";
 		};
 		usb_c0_ppc_frsinfo: usb_c0_ppc_frsinfo {
 			gpios = <&gpiof 0 GPIO_INPUT>;
