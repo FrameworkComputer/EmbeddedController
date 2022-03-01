@@ -89,6 +89,8 @@ struct fan_status_t {
 	enum fan_mode current_fan_mode;
 	/* Actual rpm */
 	int rpm_actual;
+	/* Previous rpm */
+	int rpm_pre;
 	/* Target rpm */
 	int rpm_target;
 	/* Fan config flags */
@@ -104,7 +106,6 @@ struct fan_control_t {
 };
 
 static struct fan_status_t fan_status[FAN_CH_COUNT];
-static int rpm_pre[FAN_CH_COUNT];
 static struct fan_control_t fan_control[] = {
 	DT_INST_FOREACH_CHILD(0, FAN_CONTROL_INST)
 };
@@ -183,22 +184,22 @@ static void fan_adjust_duty(int ch, int rpm_diff, int duty)
  * The function sets the pwm duty to reach the target rpm
  *
  * @param   ch         operation channel
- * @param   rpm_actual actual operation rpm value
- * @param   rpm_target target operation rpm value
- * @return  current    fan control status
  */
-enum fan_status fan_smart_control(int ch, int rpm_actual, int rpm_target)
+enum fan_status fan_smart_control(int ch)
 {
+	struct fan_status_t *status = &fan_status[ch];
 	int duty, rpm_diff;
+	int rpm_actual = status->rpm_actual;
+	int rpm_target = status->rpm_target;
 
 	/* wait rpm is stable */
-	if (ABS(rpm_actual - rpm_pre[ch]) > RPM_MARGIN(rpm_actual)) {
-		rpm_pre[ch] = rpm_actual;
+	if (ABS(rpm_actual - status->rpm_pre) > RPM_MARGIN(rpm_actual)) {
+		status->rpm_pre = rpm_actual;
 		return FAN_STATUS_CHANGING;
 	}
 
 	/* Record previous rpm */
-	rpm_pre[ch] = rpm_actual;
+	status->rpm_pre = rpm_actual;
 
 	/* Adjust PWM duty */
 	rpm_diff = rpm_target - rpm_actual;
@@ -239,8 +240,7 @@ static void fan_tick_func_rpm(int ch)
 	status->rpm_actual = fan_rpm(ch);
 
 	/* Do smart fan stuff */
-	status->auto_status = fan_smart_control(
-			ch, status->rpm_actual, status->rpm_target);
+	status->auto_status = fan_smart_control(ch);
 }
 
 static void fan_tick_func_duty(int ch)
