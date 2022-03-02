@@ -119,7 +119,7 @@ sensor runs at 1.8V. The pin is also not connected on the current designs.
 ```bash
 # JLinkRemoteServerCLExe will listen on port 19020 (among others) by default.
 # This can be overridden with the -Port argument.
-(chroot) $ JLinkRemoteServerCLExe -select USB
+(chroot) $ sudo JLinkRemoteServerCLExe -select USB
 ```
 
 You should see the following:
