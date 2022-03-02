@@ -53,7 +53,6 @@ __attribute__((weak)) int all_sys_pwrgd_handler(
 
 	if (power_signal_get(PWR_VCCST_PWRGD) == 0) {
 		k_msleep(chip_cfg.vccst_pwrgd_delay_ms);
-		LOG_INF("Turning on PWR_VCCST_PWRGD");
 		power_signal_set(PWR_VCCST_PWRGD, 1);
 	}
 	return 0;
@@ -79,8 +78,7 @@ static int wait_for_vrrdy(void)
 }
 
 /* PCH_PWROK to PCH from EC */
-__attribute__((weak)) int generate_pch_pwrok_handler(
-				const struct chipset_pwrseq_config *chip_cfg)
+__attribute__((weak)) int generate_pch_pwrok_handler(int delay)
 {
 	/* Enable PCH_PWROK, gated by VRRDY. */
 	if (power_signal_get(PWR_PCH_PWROK) == 0) {
@@ -90,7 +88,7 @@ __attribute__((weak)) int generate_pch_pwrok_handler(
 			ap_off();
 			return -1;
 		}
-		k_msleep(chip_cfg->pch_pwrok_delay_ms);
+		k_msleep(delay);
 		power_signal_set(PWR_PCH_PWROK, 1);
 		LOG_DBG("Turning on PCH_PWROK");
 	}
@@ -139,7 +137,7 @@ void s0_action_handler(const struct common_pwrseq_config *com_cfg)
 	/* TODO: There is possibility of EC not needing to generate
 	 * this as power sequencer may do it
 	 */
-	ret = generate_pch_pwrok_handler(&chip_cfg);
+	ret = generate_pch_pwrok_handler(chip_cfg.pch_pwrok_delay_ms);
 	if (ret) {
 		LOG_DBG("PCH_PWROK handling failed err=%d", ret);
 		return;
@@ -188,9 +186,7 @@ void chipset_reset(enum pwrseq_chipset_shutdown_reason reason)
 	power_signal_set(PWR_SYS_RST, 0);
 }
 
-__attribute__((weak)) void chipset_force_shutdown(
-				enum pwrseq_chipset_shutdown_reason reason,
-				const struct common_pwrseq_config *com_cfg)
+__attribute__((weak)) void new_chipset_force_shutdown(void)
 {
 	int timeout_ms = 50;
 
@@ -222,8 +218,7 @@ __attribute__((weak)) void chipset_force_shutdown(
 		LOG_DBG("DSW_PWROK or RSMRST_ODL didn't go low!  Assuming G3.");
 }
 
-__attribute__((weak)) void g3s5_action_handler(
-				const struct common_pwrseq_config *com_cfg)
+__attribute__((weak)) void g3s5_action_handler(int delay, int signal_timeout)
 {
 	power_signal_set(PWR_EN_PP5000_A, 1);
 }
@@ -254,7 +249,8 @@ enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state,
 	/* Add chipset specific state handling if any */
 	switch (curr_state) {
 	case SYS_POWER_STATE_G3S5:
-		g3s5_action_handler(com_cfg);
+		g3s5_action_handler(com_cfg->pch_dsw_pwrok_delay_ms,
+				    com_cfg->wait_signal_timeout_ms);
 		break;
 	case SYS_POWER_STATE_S5:
 		break;

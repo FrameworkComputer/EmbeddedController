@@ -294,7 +294,7 @@ int power_wait_mask_signals_timeout(power_signal_mask_t want,
 				    int timeout);
 
 /**
- * @brief Wait until the selected power signals match
+ * @brief Wait until the selected power signals match, with timeout
  *
  * Given a set of signals, wait until all of
  * the signals are asserted.

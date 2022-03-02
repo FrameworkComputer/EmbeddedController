@@ -43,17 +43,6 @@ const char pwrsm_dbg[][25] = {
 };
 #endif
 
-int power_wait_signals(uint32_t want)
-{
-	int ret = power_wait_signals_timeout(want,
-				com_cfg.wait_signal_timeout_ms);
-
-	if (ret == -ETIMEDOUT)
-		LOG_INF("power timeout on input; wanted 0x%04x, got 0x%04x",
-			want, power_get_signals() & want);
-	return ret;
-}
-
 static int check_power_rails_enabled(void)
 {
 	int out = 1;
@@ -90,17 +79,16 @@ static bool chipset_is_exit_hardoff(void)
 void apshutdown(void)
 {
 	if (pwr_sm_get_state() != SYS_POWER_STATE_G3) {
-		chipset_force_shutdown(PWRSEQ_CHIPSET_SHUTDOWN_CONSOLE_CMD,
-								&com_cfg);
+		new_chipset_force_shutdown();
 		pwr_sm_set_state(SYS_POWER_STATE_G3);
 	}
 }
 
 /* Check RSMRST is fine to move from S5 to higher state */
-int check_rsmrst_off(void)
+int rsmrst_power_is_good(void)
 {
 	/* TODO: Check if this is still intact */
-	return !power_signal_get(PWR_RSMRST);
+	return power_signal_get(PWR_RSMRST);
 }
 
 int check_pch_out_of_suspend(void)
@@ -154,7 +142,8 @@ static int common_pwr_sm_run(int state)
 		break;
 
 	case SYS_POWER_STATE_G3S5:
-		if (power_wait_signals(IN_PGOOD_ALL_CORE))
+		if (power_wait_signals_timeout(
+			IN_PGOOD_ALL_CORE, com_cfg.wait_signal_timeout_ms))
 			break;
 		/*
 		 * Now wait for SLP_SUS_L to go high based on tPCH32. If this
@@ -167,7 +156,7 @@ static int common_pwr_sm_run(int state)
 	case SYS_POWER_STATE_S5:
 		/* In S5 make sure no more signal lost */
 		/* If A-rails are stable then move to higher state */
-		if (check_power_rails_enabled() && check_rsmrst_off()) {
+		if (check_power_rails_enabled() && rsmrst_power_is_good()) {
 			/* rsmrst is intact */
 			rsmrst_pass_thru_handler();
 			if (power_signals_on(IN_PCH_SLP_SUS)) {
@@ -196,12 +185,12 @@ static int common_pwr_sm_run(int state)
 		break;
 
 	case SYS_POWER_STATE_S5G3:
-		chipset_force_shutdown(PWRSEQ_CHIPSET_SHUTDOWN_G3, &com_cfg);
+		new_chipset_force_shutdown();
 		return SYS_POWER_STATE_G3;
 
 	case SYS_POWER_STATE_S5S4:
 		/* Check if the PCH has come out of suspend state */
-		if (check_rsmrst_off()) {
+		if (rsmrst_power_is_good()) {
 			LOG_DBG("RSMRST is ok");
 			return SYS_POWER_STATE_S4;
 		}
@@ -209,7 +198,7 @@ static int common_pwr_sm_run(int state)
 		return SYS_POWER_STATE_S5;
 
 	case SYS_POWER_STATE_S4:
-		if (power_signals_off(IN_PCH_SLP_S5))
+		if (power_signals_on(IN_PCH_SLP_S5))
 			return SYS_POWER_STATE_S4S5;
 		else if (power_signals_off(IN_PCH_SLP_S4))
 			return SYS_POWER_STATE_S4S3;
@@ -219,8 +208,7 @@ static int common_pwr_sm_run(int state)
 	case SYS_POWER_STATE_S4S3:
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away */
-			chipset_force_shutdown(
-				PWRSEQ_CHIPSET_SHUTDOWN_POWERFAIL, &com_cfg);
+			new_chipset_force_shutdown();
 			return SYS_POWER_STATE_G3;
 		}
 
@@ -237,8 +225,7 @@ static int common_pwr_sm_run(int state)
 		/* AP is out of suspend to RAM */
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away, go straight to S5 */
-			chipset_force_shutdown(
-				PWRSEQ_CHIPSET_SHUTDOWN_POWERFAIL, &com_cfg);
+			new_chipset_force_shutdown();
 			return SYS_POWER_STATE_G3;
 		} else if (power_signals_off(IN_PCH_SLP_S3))
 			return SYS_POWER_STATE_S3S0;
@@ -249,8 +236,7 @@ static int common_pwr_sm_run(int state)
 
 	case SYS_POWER_STATE_S3S0:
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
-			chipset_force_shutdown(
-				PWRSEQ_CHIPSET_SHUTDOWN_POWERFAIL, &com_cfg);
+			new_chipset_force_shutdown();
 			return SYS_POWER_STATE_G3;
 		}
 
@@ -261,8 +247,7 @@ static int common_pwr_sm_run(int state)
 
 	case SYS_POWER_STATE_S0:
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
-			chipset_force_shutdown(
-				PWRSEQ_CHIPSET_SHUTDOWN_POWERFAIL, &com_cfg);
+			new_chipset_force_shutdown();
 			return SYS_POWER_STATE_G3;
 		} else if (power_signals_on(IN_PCH_SLP_S3))
 			return SYS_POWER_STATE_S0S3;

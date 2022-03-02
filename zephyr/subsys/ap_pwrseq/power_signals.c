@@ -13,7 +13,7 @@
 #include "signal_vw.h"
 #include "signal_adc.h"
 
-LOG_MODULE_DECLARE(ap_pwrseq, 4);
+LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq)
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(intel_ap_pwrseq) == 1,
@@ -43,16 +43,20 @@ struct ps_config {
 #define PWR_ENUM(id, tag)			\
 	TAG_PWR_ENUM(tag, PWR_SIGNAL_ENUM(id))
 
+#define DBGNAME(id) \
+	"(" DT_PROP(id, enum_name) ") " \
+	    DT_PROP(id, dbg_label)
+
 #define GEN_PS_ENTRY(id, src, tag)		\
 {						\
-	.debug_name = DT_PROP(id, dbg_label),	\
+	.debug_name = DBGNAME(id),	\
 	.source = src,				\
 	.src_enum = PWR_ENUM(id, tag),		\
 },
 
 #define GEN_PS_ENTRY_NO_ENUM(id, src)		\
 {						\
-	.debug_name = DT_PROP(id, dbg_label),	\
+	.debug_name = DBGNAME(id),	\
 	.source = src,				\
 },
 
@@ -163,6 +167,7 @@ int power_signal_set(enum power_signal signal, int value)
 {
 	const struct ps_config *cp = &sig_config[signal];
 
+	LOG_DBG("Set %s to %d", power_signal_name(signal), value);
 	switch (cp->source) {
 	default:
 		return -EINVAL;
