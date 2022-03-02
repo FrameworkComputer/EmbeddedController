@@ -359,7 +359,7 @@ below:
 [subcommands]: https://github.com/zephyrproject-rtos/zephyr/blob/f4a0ea7b43eee4d2ee735ab6beccc68c9d40a7d0/drivers/i2c/i2c_shell.c#L245
 [I2C Example]: ../images/i2c_example.png
 [EC I2C]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig;?q="config%20PLATFORM_EC_I2C"&ss=chromiumos
-[CONFIG_I2C_SHELL]: https://docs.zephyrproject.org/latest/reference/kconfig/CONFIG_I2C_SHELL.html
+[CONFIG_I2C_SHELL]: https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_I2C_SHELL
 [I2C Debug]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig;?q=PLATFORM_EC_I2C_DEBUG&sq=&ss=chromiumos
 [I2C Debug Passthru]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig;?q=PLATFORM_EC_I2C_DEBUG_PASSTHRU&ss=chromiumos
 [I2C Portmap]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP&ss=chromiumos%2Fchromiumos%2Fcodesearch

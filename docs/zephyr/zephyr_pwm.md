@@ -122,10 +122,10 @@ channel per PWM on NPCX), normal polarity:
 ```
 
 [PWM]: ../ec_terms.md#pwm
-[PWM (Pulse Width Modulation) Drivers]: https://docs.zephyrproject.org/latest/reference/kconfig/CONFIG_PWM.html
+[PWM (Pulse Width Modulation) Drivers]: https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_PWM
 [PWM (Pulse Width Modulation) module]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=%22config%20PLATFORM_EC_PWM%22
 [Init priority of the PWM module]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.init_priority?q=%22config%20PLATFORM_EC_PWM_INIT_PRIORITY%22
-[CONFIG_PWM_SHELL]: https://docs.zephyrproject.org/latest/reference/kconfig/CONFIG_PWM_SHELL.html
+[CONFIG_PWM_SHELL]: https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_PWM_SHELL
 [PWM display backlight]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=%22config%20PLATFORM_EC_PWM_DISPLIGHT%22
 [PWM keyboard backlight]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=%22config%20PLATFORM_EC_PWM_KBLIGHT%22
 [dt-bindings/pwm/pwm.h]: https://github.com/zephyrproject-rtos/zephyr/blob/main/include/dt-bindings/pwm/pwm.h

@@ -446,7 +446,7 @@ project.
 
 [GPIO]: ../ec_terms.md#gpio
 [GPIO Example]: ../images/gpio_example.png
-[Include GPIO drivers in system config]: https://docs.zephyrproject.org/latest/reference/kconfig/CONFIG_GPIO.html
+[Include GPIO drivers in system config]: https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_GPIO
 [GPIO Init Priority]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.init_priority?q=%22config%20PLATFORM_EC_GPIO_INIT_PRIORITY%22&ss=chromiumos
 [nuvoton,npcx-lvolctrl-def]: https://github.com/zephyrproject-rtos/zephyr/blob/main/dts/bindings/pinctrl/nuvoton,npcx-lvolctrl-def.yaml
 [gpio-enum-name.yaml]: ../../zephyr/dts/bindings/gpio/gpio-enum-name.yaml

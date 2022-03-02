@@ -185,7 +185,7 @@ named-adc-channels {
 [EC ADC]:
 https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.adc?q=%22menuconfig%20PLATFORM_EC_ADC%22&ss=chromiumos
 [CONFIG_ADC_SHELL]:
-https://docs.zephyrproject.org/latest/reference/kconfig/CONFIG_ADC_SHELL.html
+https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_ADC_SHELL
 [ADC cmd]:
 https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.adc?q=%22config%20PLATFORM_EC_ADC_CMD%22&ss=chromiumos
 [ADC resolution]:
