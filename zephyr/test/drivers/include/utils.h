@@ -6,9 +6,11 @@
 #ifndef ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 #define ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 
+#include <drivers/emul.h>
 #include <drivers/gpio/gpio_emul.h>
 
 #include "charger.h"
+#include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "extpower.h"
 #include "host_command.h"
 
@@ -214,5 +216,30 @@ static inline void set_ac_enabled(bool enabled)
 	k_sleep(K_MSEC(CONFIG_EXTPOWER_DEBOUNCE_MS + 1));
 	zassume_equal(enabled, extpower_is_present(), NULL);
 }
+
+/**
+ * @brief Connect a power source to a given port.
+ *
+ * Note: this is function currently only supports an ISL923X charger chip.
+ *
+ * @param src Pointer to the emulated source
+ * @param pdo_index The index of the PDO object within the src to use
+ * @param tcpci_emul The TCPCI emulator that the source will connect to
+ * @param charger_emul The charger chip emulator
+ */
+void connect_source_to_port(struct tcpci_src_emul *src, int pdo_index,
+			    const struct emul *tcpci_emul,
+			    const struct emul *charger_emul);
+
+/**
+ * @brief Disconnect a power source from a given port.
+ *
+ * Note: this is function currently only supports an ISL923X charger chip.
+ *
+ * @param tcpci_emul The TCPCI emulator that will be disconnected
+ * @param charger_emul The charger chip emulator
+ */
+void disconnect_source_from_port(const struct emul *tcpci_emul,
+				 const struct emul *charger_emul);
 
 #endif /* ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_ */

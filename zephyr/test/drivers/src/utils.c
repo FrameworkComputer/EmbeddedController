@@ -10,11 +10,14 @@
 
 #include "battery.h"
 #include "battery_smart.h"
+#include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
+#include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "hooks.h"
 #include "power.h"
 #include "stubs.h"
 #include "chipset.h"
+#include "utils.h"
 
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
@@ -66,4 +69,29 @@ void test_set_chipset_to_g3(void)
 	/* Check if chipset is in correct state */
 	zassert_equal(POWER_G3, power_get_state(), "Expected G3, got %d",
 		      power_get_state());
+}
+
+void connect_source_to_port(struct tcpci_src_emul *src, int pdo_index,
+			    const struct emul *tcpci_emul,
+			    const struct emul *charger_emul)
+{
+	set_ac_enabled(true);
+	zassume_ok(tcpci_src_emul_connect_to_tcpci(&src->data,
+						   &src->common_data, &src->ops,
+						   tcpci_emul),
+		   NULL);
+
+	isl923x_emul_set_adc_vbus(charger_emul,
+				  PDO_FIXED_GET_VOLT(src->data.pdo[pdo_index]));
+
+	k_sleep(K_SECONDS(10));
+}
+
+void disconnect_source_from_port(const struct emul *tcpci_emul,
+				 const struct emul *charger_emul)
+{
+	set_ac_enabled(false);
+	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
+	isl923x_emul_set_adc_vbus(charger_emul, 0);
+	k_sleep(K_SECONDS(1));
 }

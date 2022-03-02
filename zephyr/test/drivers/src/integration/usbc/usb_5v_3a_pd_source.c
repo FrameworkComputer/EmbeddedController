@@ -21,35 +21,6 @@ struct usb_attach_5v_3a_pd_source_fixture {
 	const struct emul *charger_emul;
 };
 
-static inline void
-connect_charger_to_port(struct usb_attach_5v_3a_pd_source_fixture *fixture)
-{
-	set_ac_enabled(true);
-	zassume_ok(tcpci_src_emul_connect_to_tcpci(
-			   &fixture->source_5v_3a.data,
-			   &fixture->source_5v_3a.common_data,
-			   &fixture->source_5v_3a.ops, fixture->tcpci_emul),
-		   NULL);
-
-	isl923x_emul_set_adc_vbus(
-		fixture->charger_emul,
-		PDO_FIXED_GET_VOLT(fixture->source_5v_3a.data.pdo[1]));
-
-	/* Wait for PD negotiation and current ramp.
-	 * TODO(b/213906889): Check message timing and contents.
-	 */
-	k_sleep(K_SECONDS(10));
-}
-
-static inline void disconnect_charger_from_port(
-	struct usb_attach_5v_3a_pd_source_fixture *fixture)
-{
-	set_ac_enabled(false);
-	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul), NULL);
-	isl923x_emul_set_adc_vbus(fixture->charger_emul, 0);
-	k_sleep(K_SECONDS(1));
-}
-
 static void *usb_attach_5v_3a_pd_source_setup(void)
 {
 	static struct usb_attach_5v_3a_pd_source_fixture test_fixture;
@@ -70,14 +41,17 @@ static void *usb_attach_5v_3a_pd_source_setup(void)
 
 static void usb_attach_5v_3a_pd_source_before(void *data)
 {
-	connect_charger_to_port(
-		(struct usb_attach_5v_3a_pd_source_fixture *)data);
+	struct usb_attach_5v_3a_pd_source_fixture *fixture = data;
+
+	connect_source_to_port(&fixture->source_5v_3a, 1, fixture->tcpci_emul,
+			       fixture->charger_emul);
 }
 
 static void usb_attach_5v_3a_pd_source_after(void *data)
 {
-	disconnect_charger_from_port(
-		(struct usb_attach_5v_3a_pd_source_fixture *)data);
+	struct usb_attach_5v_3a_pd_source_fixture *fixture = data;
+
+	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
 }
 
 ZTEST_SUITE(usb_attach_5v_3a_pd_source, drivers_predicate_post_main,
@@ -158,7 +132,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_battery_not_charging)
 	struct i2c_emul *i2c_emul = sbat_emul_get_ptr(BATTERY_ORD);
 	uint16_t battery_status;
 
-	disconnect_charger_from_port(this);
+	disconnect_source_from_port(this->tcpci_emul, this->charger_emul);
 	zassert_ok(sbat_emul_get_word_val(i2c_emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
@@ -170,7 +144,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_charge_state)
 {
 	struct ec_response_charge_state charge_state;
 
-	disconnect_charger_from_port(this);
+	disconnect_source_from_port(this->tcpci_emul, this->charger_emul);
 	charge_state = host_cmd_charge_state(0);
 
 	zassert_false(charge_state.get_state.ac, "AC_OK not triggered");
@@ -188,7 +162,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_typec_status)
 {
 	struct ec_response_typec_status typec_status;
 
-	disconnect_charger_from_port(this);
+	disconnect_source_from_port(this->tcpci_emul, this->charger_emul);
 	typec_status = host_cmd_typec_status(0);
 
 	zassert_false(typec_status.pd_enabled, NULL);
@@ -206,7 +180,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_power_info)
 {
 	struct ec_response_usb_pd_power_info power_info;
 
-	disconnect_charger_from_port(this);
+	disconnect_source_from_port(this->tcpci_emul, this->charger_emul);
 	power_info = host_cmd_power_info(0);
 
 	zassert_equal(power_info.role, USB_PD_PORT_POWER_DISCONNECTED,
