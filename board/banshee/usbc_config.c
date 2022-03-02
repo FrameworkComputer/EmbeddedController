@@ -360,10 +360,10 @@ uint16_t tcpc_get_alert_status(void)
 	uint16_t status = 0;
 
 	if (gpio_get_level(GPIO_USB_C0_C1_TCPC_INT_ODL) == 0)
-		status = PD_STATUS_TCPC_ALERT_0 | PD_STATUS_TCPC_ALERT_1;
+		status |= PD_STATUS_TCPC_ALERT_0 | PD_STATUS_TCPC_ALERT_1;
 
 	if (gpio_get_level(GPIO_USB_C2_C3_TCPC_INT_ODL) == 0)
-		status = PD_STATUS_TCPC_ALERT_2 | PD_STATUS_TCPC_ALERT_3;
+		status |= PD_STATUS_TCPC_ALERT_2 | PD_STATUS_TCPC_ALERT_3;
 
 	return status;
 }
