@@ -118,7 +118,9 @@
 #define IPI_ISP_FRAME 11
 #define IPI_FD_CMD 12
 #define IPI_HOST_COMMAND 13
-#define IPI_COUNT 14
+#define SCP_IPI_VDEC_LAT 14
+#define SCP_IPI_VDEC_CORE 15
+#define IPI_COUNT 16
 
 #define IPI_NS_SERVICE 0xFF
 

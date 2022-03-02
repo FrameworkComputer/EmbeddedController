@@ -12,6 +12,7 @@ chip-y+=mt818x/gpio.o
 chip-y+=mt818x/memmap.o
 chip-y+=mt818x/system.o
 chip-y+=mt818x/uart.o
+chip-y+=mt818x/video.o
 
 # Optional chip modules
 chip-$(CONFIG_AUDIO_CODEC_WOV)+=mt818x/audio_codec_wov.o

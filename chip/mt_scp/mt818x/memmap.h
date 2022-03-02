@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_MEMMAP_H
 #define __CROS_EC_MEMMAP_H
 
+#include "stdint.h"
+
 void scp_memmap_init(void);
 
 /**

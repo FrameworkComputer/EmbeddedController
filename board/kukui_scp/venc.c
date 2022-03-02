@@ -33,9 +33,11 @@ static venc_msg_handler mtk_venc_msg_handle[VENC_MAX];
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT8183
+#ifndef HAVE_PRIVATE_MT8186
 void venc_h264_msg_handler(void *data)
 {
 }
+#endif
 #endif
 
 static void event_venc_written(struct consumer const *consumer, size_t count)

@@ -10,6 +10,10 @@
 #include "queue.h"
 #include "registers.h"
 
+#ifdef HAVE_PRIVATE_MT8186
+#include "venc_h264_srv.h"
+#endif
+
 enum venc_type {
 	VENC_H264,
 	VENC_MAX,
