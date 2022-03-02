@@ -30,11 +30,11 @@ struct accel_cal cal = {
 static bool accumulate(float x, float y, float z, float temperature)
 {
 	return accel_cal_accumulate(&cal, 0, x, y, z, temperature)
-		| accel_cal_accumulate(&cal, 200 * MSEC, x, y, z, temperature)
-		| accel_cal_accumulate(&cal, 400 * MSEC, x, y, z, temperature)
-		| accel_cal_accumulate(&cal, 600 * MSEC, x, y, z, temperature)
-		| accel_cal_accumulate(&cal, 800 * MSEC, x, y, z, temperature)
-		| accel_cal_accumulate(&cal, 1000 * MSEC, x, y, z, temperature);
+		|| accel_cal_accumulate(&cal, 200 * MSEC, x, y, z, temperature)
+		|| accel_cal_accumulate(&cal, 400 * MSEC, x, y, z, temperature)
+		|| accel_cal_accumulate(&cal, 600 * MSEC, x, y, z, temperature)
+		|| accel_cal_accumulate(&cal, 800 * MSEC, x, y, z, temperature)
+		|| accel_cal_accumulate(&cal, 1000 * MSEC, x, y, z, temperature);
 }
 
 DECLARE_EC_TEST(test_calibrated_correctly_with_kasa)
