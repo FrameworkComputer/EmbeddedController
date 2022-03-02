@@ -26,26 +26,24 @@ int test_pd_timers_bit_ops(void)
 	 */
 	pd_timer_init(port);
 	for (bit = 0; bit < PD_TIMER_COUNT; ++bit)
-		TEST_EQ(PD_CHK_ACTIVE(port, 1ULL << bit), 0ULL, "%llu");
+		TEST_EQ(PD_CHK_ACTIVE(port, bit), 0, "%d");
 	for (bit = 0; bit < PD_TIMER_COUNT; ++bit)
-		TEST_NE(PD_CHK_DISABLED(port, 1ULL << bit), 0ULL, "%llu");
+		TEST_NE(PD_CHK_DISABLED(port, bit), 0, "%d");
 
 	/*
 	 * Set one active bit at a time and verify it is the only bit set. Reset
 	 * the bit on each iteration of the bit loop.
 	 */
 	for (bit = 0; bit < PD_TIMER_COUNT; ++bit) {
-		TEST_EQ(PD_CHK_ACTIVE(port, 1ULL << bit), 0ULL, "%llu");
-		PD_SET_ACTIVE(port, 1ULL << bit);
+		TEST_EQ(PD_CHK_ACTIVE(port, bit), 0, "%d");
+		PD_SET_ACTIVE(port, bit);
 		for (int i = 0; i < PD_TIMER_COUNT; ++i) {
 			if (i != bit)
-				TEST_EQ(PD_CHK_ACTIVE(port, 1ULL << i), 0ULL,
-						"%llu");
+				TEST_EQ(PD_CHK_ACTIVE(port, i), 0, "%d");
 			else
-				TEST_NE(PD_CHK_ACTIVE(port, 1ULL << i), 0ULL,
-						"%llu");
+				TEST_NE(PD_CHK_ACTIVE(port, i), 0, "%d");
 		}
-		PD_CLR_ACTIVE(port, 1ULL << bit);
+		PD_CLR_ACTIVE(port, bit);
 	}
 
 	/*
@@ -53,17 +51,15 @@ int test_pd_timers_bit_ops(void)
 	 * Reset the bit on each iteration of the bit loop.
 	 */
 	for (bit = 0; bit < PD_TIMER_COUNT; ++bit) {
-		TEST_NE(PD_CHK_DISABLED(port, 1ULL << bit), 0ULL, "%llu");
-		PD_CLR_DISABLED(port, 1ULL << bit);
+		TEST_NE(PD_CHK_DISABLED(port, bit), 0, "%d");
+		PD_CLR_DISABLED(port, bit);
 		for (int i = 0; i < PD_TIMER_COUNT; ++i) {
 			if (i != bit)
-				TEST_NE(PD_CHK_DISABLED(port, 1ULL << i), 0ULL,
-						"%llu");
+				TEST_NE(PD_CHK_DISABLED(port, i), 0, "%d");
 			else
-				TEST_EQ(PD_CHK_DISABLED(port, 1ULL << i), 0ULL,
-						"%llu");
+				TEST_EQ(PD_CHK_DISABLED(port, i), 0, "%d");
 		}
-		PD_SET_DISABLED(port, 1ULL << bit);
+		PD_SET_DISABLED(port, bit);
 	}
 
 	return EC_SUCCESS;
