@@ -211,4 +211,6 @@ void charge_problem(enum problem_type p, int v);
 
 struct charge_state_data *charge_get_status(void);
 
+enum ec_charge_control_mode get_chg_ctrl_mode(void);
+
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */

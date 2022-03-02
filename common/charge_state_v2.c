@@ -190,7 +190,7 @@ void charge_problem(enum problem_type p, int v)
 	problems_exist = 1;
 }
 
-test_export_static enum ec_charge_control_mode get_chg_ctrl_mode(void)
+enum ec_charge_control_mode get_chg_ctrl_mode(void)
 {
 	return chg_ctl_mode;
 }
