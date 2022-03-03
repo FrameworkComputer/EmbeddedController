@@ -5,7 +5,7 @@
 
 #include <x86_non_dsx_adlp_pwrseq_sm.h>
 
-LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_DBG);
+LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_ERR);
 
 static const struct chipset_pwrseq_config chip_cfg = {
 	.pch_pwrok_delay_ms = DT_INST_PROP(0, pch_pwrok_delay),

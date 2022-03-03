@@ -64,7 +64,6 @@ static void espi_bus_vw_handler(const struct device *dev,
 	if (espi_ready == BIT_MASK(ARRAY_SIZE(vw_config))) {
 		LOG_DBG("ESPI signals ready");
 		notify_espi_ready(true);
-		power_update_signals();
 	}
 }
 

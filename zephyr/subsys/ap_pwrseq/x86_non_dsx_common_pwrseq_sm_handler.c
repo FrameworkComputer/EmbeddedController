@@ -12,7 +12,7 @@ static struct pwrseq_context pwrseq_ctx;
 /* S5 inactive timer*/
 K_TIMER_DEFINE(s5_inactive_timer, NULL, NULL);
 
-LOG_MODULE_REGISTER(ap_pwrseq, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(ap_pwrseq, LOG_LEVEL_INF);
 
 static const struct common_pwrseq_config com_cfg = {
 	.pch_dsw_pwrok_delay_ms = DT_INST_PROP(0, dsw_pwrok_delay),
@@ -42,6 +42,51 @@ const char pwrsm_dbg[][25] = {
 	[SYS_POWER_STATE_S0S3] = "STATE_S0S3",
 };
 #endif
+
+#ifdef PWRSEQ_REQUIRE_ESPI
+
+void notify_espi_ready(bool ready)
+{
+	pwrseq_ctx.espi_ready = ready;
+	if (ready) {
+		power_update_signals();
+	}
+}
+#endif
+
+/*
+ * Returns true if all signals in mask are valid.
+ */
+static inline bool signals_valid(power_signal_mask_t signals)
+{
+#ifdef PWRSEQ_REQUIRE_ESPI
+	if (!pwrseq_ctx.espi_ready) {
+#if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S3)
+		if (signals & POWER_SIGNAL_MASK(PWR_SLP_S3))
+			return false;
+#endif
+#if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S4)
+		if (signals & POWER_SIGNAL_MASK(PWR_SLP_S3))
+			return false;
+#endif
+#if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S5)
+		if (signals & POWER_SIGNAL_MASK(PWR_SLP_S3))
+			return false;
+#endif
+	}
+#endif
+	return true;
+}
+
+static inline bool signals_valid_and_on(power_signal_mask_t signals)
+{
+	return signals_valid(signals) && power_signals_on(signals);
+}
+
+static inline bool signals_valid_and_off(power_signal_mask_t signals)
+{
+	return signals_valid(signals) && power_signals_off(signals);
+}
 
 static int check_power_rails_enabled(void)
 {
@@ -163,7 +208,7 @@ static int common_pwr_sm_run(int state)
 				k_timer_stop(&s5_inactive_timer);
 				return SYS_POWER_STATE_S5G3;
 			}
-			if (power_signals_off(IN_PCH_SLP_S5)) {
+			if (signals_valid_and_off(IN_PCH_SLP_S5)) {
 				k_timer_stop(&s5_inactive_timer);
 				return SYS_POWER_STATE_S5S4;
 			}
@@ -198,9 +243,9 @@ static int common_pwr_sm_run(int state)
 		return SYS_POWER_STATE_S5;
 
 	case SYS_POWER_STATE_S4:
-		if (power_signals_on(IN_PCH_SLP_S5))
+		if (signals_valid_and_on(IN_PCH_SLP_S5))
 			return SYS_POWER_STATE_S4S5;
-		else if (power_signals_off(IN_PCH_SLP_S4))
+		else if (signals_valid_and_off(IN_PCH_SLP_S4))
 			return SYS_POWER_STATE_S4S3;
 
 		break;
@@ -227,9 +272,9 @@ static int common_pwr_sm_run(int state)
 			/* Required rail went away, go straight to S5 */
 			new_chipset_force_shutdown();
 			return SYS_POWER_STATE_G3;
-		} else if (power_signals_off(IN_PCH_SLP_S3))
+		} else if (signals_valid_and_off(IN_PCH_SLP_S3))
 			return SYS_POWER_STATE_S3S0;
-		else if (power_signals_on(IN_PCH_SLP_S4))
+		else if (signals_valid_and_on(IN_PCH_SLP_S4))
 			return SYS_POWER_STATE_S3S4;
 
 		break;
@@ -249,7 +294,7 @@ static int common_pwr_sm_run(int state)
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
 			new_chipset_force_shutdown();
 			return SYS_POWER_STATE_G3;
-		} else if (power_signals_on(IN_PCH_SLP_S3))
+		} else if (signals_valid_and_on(IN_PCH_SLP_S3))
 			return SYS_POWER_STATE_S0S3;
 		/* TODO: S0ix */
 
