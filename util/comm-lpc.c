@@ -13,6 +13,7 @@
 #include <unistd.h>
 
 #include "comm-host.h"
+#include "lock/gec_lock.h"
 
 #define INITIAL_UDELAY 5     /* 5 us */
 #define MAXIMUM_UDELAY 10000 /* 10 ms */
@@ -254,6 +255,7 @@ int comm_init_lpc(void)
 	/* Request I/O privilege */
 	if (iopl(3) < 0) {
 		perror("Error getting I/O privilege");
+		release_gec_lock();
 		return -3;
 	}
 
