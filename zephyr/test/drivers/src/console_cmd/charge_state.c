@@ -35,6 +35,15 @@ ZTEST_USER(console_cmd_charge_state, test_idle_arg_not_a_bool)
 		      EC_ERROR_PARAM2, rv);
 }
 
+ZTEST_USER(console_cmd_charge_state, test_idle_on__no_ac)
+{
+	int rv;
+
+	rv = shell_execute_cmd(get_ec_shell(), "chgstate idle on");
+	zassert_equal(rv, EC_ERROR_NOT_POWERED, "Expected %d, but got %d",
+		      EC_ERROR_NOT_POWERED, rv);
+}
+
 ZTEST_USER(console_cmd_charge_state, test_discharge_too_few_args)
 {
 	int rv;
