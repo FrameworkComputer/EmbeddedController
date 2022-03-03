@@ -21,3 +21,6 @@ zephyr_library_sources_ifdef(CONFIG_EMUL_ISL923X	emul_isl923x.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_CLOCK_CONTROL	emul_clock_control.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_SN5S330	emul_sn5s330.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_KB_RAW		emul_kb_raw.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_CROS_FLASH	emul_flash.c)
+
+cros_ec_library_include_directories_ifdef(CONFIG_EMUL_CROS_FLASH include)

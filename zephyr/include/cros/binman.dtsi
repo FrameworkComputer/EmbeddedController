@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-/dts-v1/;
-
 / {
 	#address-cells = <1>;
 	#size-cells = <1>;
