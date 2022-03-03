@@ -143,6 +143,24 @@ ZTEST_USER(console_cmd_charge_state, test_sustain_too_few_args__3_args)
 		      EC_ERROR_PARAM_COUNT, rv);
 }
 
+ZTEST_USER(console_cmd_charge_state, test_sustain_invalid_params)
+{
+	/* Verify that lower bound is less than upper bound */
+	zassert_equal(shell_execute_cmd(get_ec_shell(),
+					"chgstate sustain 50 30"),
+		      EC_ERROR_INVAL, NULL);
+
+	/* Verify that lower bound is at least 0 (when upper bound is given) */
+	zassert_equal(shell_execute_cmd(get_ec_shell(),
+					"chgstate sustain -5 30"),
+		      EC_ERROR_INVAL, NULL);
+
+	/* Verify that upper bound is at most 100 */
+	zassert_equal(shell_execute_cmd(get_ec_shell(),
+					"chgstate sustain 50 101"),
+		      EC_ERROR_INVAL, NULL);
+}
+
 struct console_cmd_charge_state_fixture {
 	struct tcpci_src_emul source_5v_3a;
 	const struct emul *tcpci_emul;
