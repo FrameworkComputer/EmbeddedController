@@ -32,53 +32,40 @@ const static struct vw_config vw_config[] = {
 DT_FOREACH_STATUS_OKAY(MY_COMPAT, INIT_ESPI_SIGNAL)
 };
 
+static bool signal_data[ARRAY_SIZE(vw_config)];
+
 #define espi_dev DEVICE_DT_GET(DT_CHOSEN(intel_ap_pwrseq_espi))
 
-struct espi_callback espi_bus_cb;
-struct espi_callback espi_chan_cb;
-struct espi_callback espi_vw_cb;
-
-uint8_t vw_get_level(enum espi_vwire_signal signal)
-{
-	uint8_t level;
-
-	if (espi_receive_vwire(espi_dev, signal, &level)) {
-		LOG_DBG("Espi: Failed to the espi GPIO level\n");
-		return 0;
-	}
-
-	LOG_DBG("Espi: GPIO level = %d\n", level);
-	return level;
-}
+/*
+ * Mask of updated signals. If the bus is reset, this is cleared,
+ * and it is only when all the signals have been updated that
+ * notification is sent that the signals are ready.
+ */
+static uint8_t espi_ready;
+BUILD_ASSERT(ARRAY_SIZE(vw_config) <= 8);
 
 static void espi_bus_vw_handler(const struct device *dev,
 				struct espi_callback *cb,
 				struct espi_event event)
 {
 	LOG_DBG("VW is triggered, event=%d, val=%d\n", event.evt_details,
-			vw_get_level(event.evt_details));
+			event.evt_data);
 
-	switch (event.evt_details) {
-#ifdef CONFIG_PLATFORM_EC_ESPI_VW_SLP_S3
-	case ESPI_VWIRE_SIGNAL_SLP_S3:
-#endif
-#ifdef CONFIG_PLATFORM_EC_ESPI_VW_SLP_S4
-	case ESPI_VWIRE_SIGNAL_SLP_S4:
-#endif
-#ifdef CONFIG_PLATFORM_EC_ESPI_VW_SLP_S5
-	case ESPI_VWIRE_SIGNAL_SLP_S5:
-#endif
-		power_update_signals();
-		break;
-	default:
-		break;
+	for (int i = 0; i < ARRAY_SIZE(vw_config); i++) {
+		if (event.evt_details == vw_config[i].espi_signal) {
+			signal_data[i] = !!event.evt_data;
+			espi_ready |= BIT(i);
+		}
 	}
-}
-
-/* This should be overridden by the chipset */
-__attribute__((weak)) void espi_bus_reset(void)
-{
-  /* Do nothing */
+	/*
+	 * When all the signals have been updated, notify that the ESPI
+	 * signals are ready.
+	 */
+	if (espi_ready == BIT_MASK(ARRAY_SIZE(vw_config))) {
+		LOG_DBG("ESPI signals ready");
+		notify_espi_ready(true);
+		power_update_signals();
+	}
 }
 
 static void espi_bus_reset_handler(const struct device *dev,
@@ -86,7 +73,12 @@ static void espi_bus_reset_handler(const struct device *dev,
 				struct espi_event event)
 {
 	LOG_DBG("ESPI bus reset");
-	espi_bus_reset();
+	/*
+	 * Notify that the bus isn't ready, and clear
+	 * the signal mask.
+	 */
+	notify_espi_ready(false);
+	espi_ready = 0;
 }
 
 static void espi_bus_channel_handler(const struct device *dev,
@@ -103,12 +95,16 @@ int power_signal_vw_get(enum pwr_sig_vw vw)
 	if (vw < 0 || vw >= ARRAY_SIZE(vw_config)) {
 		return -EINVAL;
 	}
-	value = vw_get_level(vw_config[vw].espi_signal);
+	value = signal_data[vw];
 	return vw_config[vw].invert ? !value : value;
 }
 
 void power_signal_vw_init(void)
 {
+	static struct espi_callback espi_bus_cb;
+	static struct espi_callback espi_chan_cb;
+	static struct espi_callback espi_vw_cb;
+
 	struct espi_cfg cfg = {
 		.io_caps = ESPI_IO_MODE_SINGLE_LINE,
 		.channel_caps = ESPI_CHANNEL_VWIRE |

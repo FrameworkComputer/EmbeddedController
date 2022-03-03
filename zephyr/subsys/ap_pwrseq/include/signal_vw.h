@@ -45,4 +45,11 @@ int power_signal_vw_get(enum pwr_sig_vw vw);
  */
 void power_signal_vw_init(void);
 
+/**
+ * @brief External notification when the bus is ready or not.
+ *
+ * @param ready true When signals are valid, false when bus is not ready.
+ */
+void notify_espi_ready(bool ready);
+
 #endif /* __AP_PWRSEQ_SIGNAL_VW_H__ */
