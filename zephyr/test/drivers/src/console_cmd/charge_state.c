@@ -76,6 +76,29 @@ ZTEST_USER(console_cmd_charge_state, test_discharge_arg_not_a_bool)
 		      EC_ERROR_PARAM2, rv);
 }
 
+ZTEST_USER(console_cmd_charge_state, test_debug_too_few_args)
+{
+	int rv;
+
+	rv = shell_execute_cmd(get_ec_shell(), "chgstate debug");
+	zassert_equal(rv, EC_ERROR_PARAM_COUNT, "Expected %d, but got %d",
+		      EC_ERROR_PARAM_COUNT, rv);
+}
+
+ZTEST_USER(console_cmd_charge_state, test_debug_arg_not_bool)
+{
+	int rv;
+
+	/*
+	 * There are many strings that will fail parse_bool(), just test one to
+	 * test the code path in the command, other tests for parse_bool are
+	 * done in the respective unit test.
+	 */
+	rv = shell_execute_cmd(get_ec_shell(), "chgstate debug g");
+	zassert_equal(rv, EC_ERROR_PARAM2, "Expected %d, but got %d",
+		      EC_ERROR_PARAM2, rv);
+}
+
 ZTEST_USER(console_cmd_charge_state, test_sustain_too_few_args__2_args)
 {
 	int rv;
