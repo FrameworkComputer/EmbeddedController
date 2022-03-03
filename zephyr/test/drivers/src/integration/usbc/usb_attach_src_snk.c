@@ -441,6 +441,66 @@ ZTEST_F(integration_usb_attach_src_then_snk, verify_src_port_typec_status)
 		      response.power_role);
 }
 
+ZTEST_F(integration_usb_attach_snk_then_src, verify_snk_port_typec_status)
+{
+	struct ec_response_typec_status response =
+		host_cmd_typec_status(SNK_PORT);
+
+	zassert_true(response.pd_enabled, "Source attached but PD disabled");
+
+	zassert_true(response.dev_connected,
+		     "Source attached but device disconnected");
+
+	zassert_true(response.sop_connected,
+		     "Source attached but not SOP capable");
+
+	zassert_equal(response.source_cap_count,
+		      DEFAULT_SOURCE_SENT_TO_SINK_CAP_COUNT,
+		      "Source received %d source PDOs",
+		      response.source_cap_count);
+
+	/* The source emulator is being attached to a sink port (our policy
+	 * engine) so it does not send any sink caps, so sink port received no
+	 * sink caps.
+	 */
+	zassert_equal(response.sink_cap_count, 0, "Port received %d sink PDOs",
+		      response.sink_cap_count);
+
+	zassert_equal(response.power_role, PD_ROLE_SINK,
+		      "Source attached, but TCPM power role is %d",
+		      response.power_role);
+}
+
+ZTEST_F(integration_usb_attach_snk_then_src, verify_src_port_typec_status)
+{
+	struct ec_response_typec_status response =
+		host_cmd_typec_status(SRC_PORT);
+
+	zassert_true(response.pd_enabled, "Sink attached but PD disabled");
+
+	zassert_true(response.dev_connected,
+		     "Sink attached but device disconnected");
+
+	zassert_true(response.sop_connected,
+		     "Sink attached but not SOP capable");
+
+	/* The sink emulator is being attached to a source port (our policy
+	 * engine) so it does not send any sink caps, so source port received no
+	 * sink caps.
+	 */
+	zassert_equal(response.source_cap_count, 0,
+		      "Port received %d source PDOs",
+		      response.source_cap_count);
+
+	zassert_equal(response.sink_cap_count,
+		      DEFAULT_SINK_SENT_TO_SOURCE_CAP_COUNT,
+		      "Port received %d sink PDOs", response.sink_cap_count);
+
+	zassert_equal(response.power_role, PD_ROLE_SOURCE,
+		      "Sink attached, but TCPM power role is %d",
+		      response.power_role);
+}
+
 ZTEST_SUITE(integration_usb_attach_src_then_snk, drivers_predicate_post_main,
 	    integration_usb_src_snk_setup,
 	    integration_usb_attach_src_then_snk_before,
