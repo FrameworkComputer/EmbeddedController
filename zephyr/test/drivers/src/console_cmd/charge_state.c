@@ -191,6 +191,7 @@ static void console_cmd_charge_state_after(void *data)
 
 	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
 	shell_execute_cmd(get_ec_shell(), "chgstate debug off");
+	shell_execute_cmd(get_ec_shell(), "chgstate sustain -1 -1");
 }
 
 ZTEST_SUITE(console_cmd_charge_state, drivers_predicate_post_main,
@@ -263,4 +264,17 @@ ZTEST_USER_F(console_cmd_charge_state, test_discharge_off)
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge off"),
 		   NULL);
 	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+}
+
+ZTEST_USER(console_cmd_charge_state, test_sustain)
+{
+	struct ec_response_charge_control charge_control_values;
+
+	/* Verify that lower bound is less than upper bound */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate sustain 30 50"),
+		   NULL);
+
+	charge_control_values = host_cmd_get_charge_control();
+	zassert_equal(charge_control_values.sustain_soc.lower, 30, NULL);
+	zassert_equal(charge_control_values.sustain_soc.upper, 50, NULL);
 }

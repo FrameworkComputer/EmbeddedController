@@ -191,6 +191,26 @@ static inline struct ec_response_typec_status host_cmd_typec_status(int port)
 	return response;
 }
 
+/**
+ * Run the host command to get the charge state.
+ *
+ * @return The result of the query.
+ */
+static inline struct ec_response_charge_control
+host_cmd_get_charge_control(void)
+{
+	struct ec_params_charge_control params = {
+		.cmd = EC_CHARGE_CONTROL_CMD_GET
+	};
+	struct ec_response_charge_control response;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_CHARGE_CONTROL, 2, response, params);
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to get charge control values");
+	return response;
+}
+
 #define GPIO_ACOK_OD_NODE DT_NODELABEL(gpio_acok_od)
 #define GPIO_ACOK_OD_PIN  DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
 
