@@ -152,3 +152,38 @@ ZTEST_USER_F(console_cmd_charge_state, test_normal_from_idle)
 		   NULL);
 	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
 }
+
+ZTEST_USER_F(console_cmd_charge_state, test_discharge_on)
+{
+	/* Connect a source so we start charging */
+	connect_source_to_port(&this->source_5v_3a, 1, this->tcpci_emul,
+			       this->charger_emul);
+
+	/* Verify that we're in "normal" mode */
+	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+
+	/* Enable discharge */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge on"),
+		   NULL);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_DISCHARGE, NULL);
+}
+
+ZTEST_USER_F(console_cmd_charge_state, test_discharge_off)
+{
+	/* Connect a source so we start charging */
+	connect_source_to_port(&this->source_5v_3a, 1, this->tcpci_emul,
+			       this->charger_emul);
+
+	/* Verify that we're in "normal" mode */
+	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+
+	/* Enable discharge */
+	zassume_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge on"),
+		   NULL);
+	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_DISCHARGE, NULL);
+
+	/* Disable discharge */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge off"),
+		   NULL);
+	zassert_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
+}
