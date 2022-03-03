@@ -609,8 +609,9 @@
 			alert_gpio = <&usb_c1_tcpc_int_odl>;
 		};
 
-		ps8xxx_emul: ps8xxx_emul {
+		ps8xxx_emul: ps8xxx_emul@b1 {
 			compatible = "cros,ps8xxx-emul";
+			reg = <0xb1>;
 			tcpci-i2c = <&tcpci_ps8xxx_emul>;
 			p0-i2c-addr = <0x8>;
 			p1-i2c-addr = <0x9>;
