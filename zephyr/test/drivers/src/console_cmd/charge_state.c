@@ -6,6 +6,7 @@
 #include <shell/shell.h>
 #include <ztest.h>
 
+#include "charge_state.h"
 #include "charge_state_v2.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -99,6 +100,31 @@ ZTEST_USER(console_cmd_charge_state, test_debug_arg_not_bool)
 		      EC_ERROR_PARAM2, rv);
 }
 
+ZTEST_USER(console_cmd_charge_state, test_debug_on)
+{
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate debug on"),
+		   NULL);
+}
+
+ZTEST_USER(console_cmd_charge_state, test_debug_on_show_charging_progress)
+{
+	/*
+	 * Force reset the previous display charge so the charge state task
+	 * prints on the next iteration.
+	 */
+	reset_prev_disp_charge();
+	charging_progress_displayed();
+
+	/* Enable debug printing */
+	zassume_ok(shell_execute_cmd(get_ec_shell(), "chgstate debug on"),
+		   NULL);
+
+	/* Sleep at least 1 full iteration of the charge state loop */
+	k_sleep(K_USEC(CHARGE_MAX_SLEEP_USEC + 1));
+
+	zassert_true(charging_progress_displayed(), NULL);
+}
+
 ZTEST_USER(console_cmd_charge_state, test_sustain_too_few_args__2_args)
 {
 	int rv;
@@ -146,6 +172,7 @@ static void console_cmd_charge_state_after(void *data)
 	struct console_cmd_charge_state_fixture *fixture = data;
 
 	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
+	shell_execute_cmd(get_ec_shell(), "chgstate debug off");
 }
 
 ZTEST_SUITE(console_cmd_charge_state, drivers_predicate_post_main,

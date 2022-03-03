@@ -91,6 +91,7 @@ static int manual_voltage;  /* Manual voltage override (-1 = no override) */
 static int manual_current;  /* Manual current override (-1 = no override) */
 static unsigned int user_current_limit = -1U;
 test_export_static timestamp_t shutdown_target_time;
+static bool is_charging_progress_displayed;
 static timestamp_t precharge_start_time;
 static struct sustain_soc sustain_soc;
 
@@ -193,6 +194,11 @@ void charge_problem(enum problem_type p, int v)
 enum ec_charge_control_mode get_chg_ctrl_mode(void)
 {
 	return chg_ctl_mode;
+}
+
+void reset_prev_disp_charge(void)
+{
+	prev_disp_charge = -1;
 }
 
 static int battery_sustainer_set(int8_t lower, int8_t upper)
@@ -845,11 +851,21 @@ static void dump_charge_state(void)
 #undef DUMP
 }
 
+bool charging_progress_displayed(void)
+{
+	bool rv = is_charging_progress_displayed;
+
+	is_charging_progress_displayed = false;
+	return rv;
+}
+
 static void show_charging_progress(void)
 {
 	int rv = 0, minutes, to_full, chgnum = 0;
 	int dsoc;
 
+	if (IS_ENABLED(TEST_BUILD))
+		is_charging_progress_displayed = true;
 #ifdef CONFIG_BATTERY_SMART
 	/*
 	 * Predicted remaining battery capacity based on AverageCurrent().

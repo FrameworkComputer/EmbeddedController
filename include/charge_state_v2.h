@@ -213,4 +213,14 @@ struct charge_state_data *charge_get_status(void);
 
 enum ec_charge_control_mode get_chg_ctrl_mode(void);
 
+__test_only void reset_prev_disp_charge(void);
+
+/**
+ * Whether or not the charging progress was shown. Note, calling this function
+ * will reset the value to false.
+ *
+ * @return Whether or not the charging progress was printed to the console
+ */
+__test_only bool charging_progress_displayed(void);
+
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */
