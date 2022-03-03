@@ -23,8 +23,8 @@ DT_FOREACH_STATUS_OKAY(MY_COMPAT, INIT_GPIO_SPEC)
  */
 struct ps_gpio_int {
 	gpio_flags_t flags;
-	uint8_t output;
-	uint8_t no_enable;
+	unsigned output : 1;
+	unsigned no_enable : 1;
 };
 
 #define INIT_GPIO_CONFIG(id)					\
@@ -114,7 +114,8 @@ void power_signal_gpio_init(void)
 {
 	for (int i = 0; i < ARRAY_SIZE(gpio_config); i++) {
 		if (gpio_config[i].output) {
-			gpio_pin_configure_dt(&spec[i], GPIO_OUTPUT);
+			/* Init to deasserted state */
+			gpio_pin_configure_dt(&spec[i], GPIO_OUTPUT_INACTIVE);
 		} else {
 			gpio_pin_configure_dt(&spec[i], GPIO_INPUT);
 			/* If interrupt, initialise it */
