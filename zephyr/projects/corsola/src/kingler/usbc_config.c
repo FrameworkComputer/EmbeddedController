@@ -43,8 +43,8 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 			.addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
 		},
 		.drv = &anx7447_tcpm_drv,
-		/* Alert is active-low, push-pull */
-		.flags = 0,
+		/* Alert is active-low, open-drain */
+		.flags = TCPC_FLAGS_ALERT_OD,
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -53,6 +53,8 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 			.addr_flags = RT1718S_I2C_ADDR2_FLAGS,
 		},
 		.drv = &rt1718s_tcpm_drv,
+		/* Alert is active-low, open-drain */
+		.flags = TCPC_FLAGS_ALERT_OD,
 	}
 };
 
