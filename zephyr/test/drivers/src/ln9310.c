@@ -557,8 +557,10 @@ static int mock_read_interceptor(struct i2c_emul *emul, int reg, uint8_t *val,
 {
 	struct reg_to_intercept *test_data = data;
 
-	if (test_data->reg == reg)
-		return test_data->replace_val;
+	if (test_data->reg == reg) {
+		*val = test_data->replace_val;
+		return 0;
+	}
 
 	return 1;
 }
