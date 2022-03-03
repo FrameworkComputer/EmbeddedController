@@ -44,6 +44,15 @@ ZTEST_USER(console_cmd_charge_state, test_idle_on__no_ac)
 		      EC_ERROR_NOT_POWERED, rv);
 }
 
+ZTEST_USER(console_cmd_charge_state, test_discharge_on__no_ac)
+{
+	int rv;
+
+	rv = shell_execute_cmd(get_ec_shell(), "chgstate discharge on");
+	zassert_equal(rv, EC_ERROR_NOT_POWERED, "Expected %d, but got %d",
+		      EC_ERROR_NOT_POWERED, rv);
+}
+
 ZTEST_USER(console_cmd_charge_state, test_discharge_too_few_args)
 {
 	int rv;
