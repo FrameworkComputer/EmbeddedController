@@ -229,7 +229,6 @@ void battery_customize(struct charge_state_data *emi_info)
 
 static void battery_percentage_control(void)
 {
-	static enum ec_charge_control_mode before_mode;
 	enum ec_charge_control_mode new_mode;
 	int rv;
 
@@ -250,15 +249,14 @@ static void battery_percentage_control(void)
 	else
 		new_mode = CHARGE_CONTROL_NORMAL;
 
-	if (before_mode != new_mode) {
-		before_mode = new_mode;
-		set_chg_ctrl_mode(before_mode);
+	ccprints("Charge Limit mode = %d", new_mode);
+
+	set_chg_ctrl_mode(new_mode);
 #ifdef CONFIG_CHARGER_DISCHARGE_ON_AC
-		rv = charger_discharge_on_ac(before_mode == CHARGE_CONTROL_DISCHARGE);
+	rv = charger_discharge_on_ac(new_mode == CHARGE_CONTROL_DISCHARGE);
 #endif
-		if (rv != EC_SUCCESS)
-			ccprintf("fail to discharge.");
-	}
+	if (rv != EC_SUCCESS)
+		ccprintf("fail to discharge.");
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
