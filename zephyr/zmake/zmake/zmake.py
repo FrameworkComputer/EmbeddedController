@@ -725,7 +725,9 @@ class Zmake:
 
         return 0
 
-    def _run_test(self, elf_file, coverage, gcov, build_dir, lcov_file, timeout=None):
+    def _run_test(
+        self, elf_file: pathlib.Path, coverage, gcov, build_dir, lcov_file, timeout=None
+    ):
         """Run a single test, with goma if enabled.
 
         Args:
@@ -744,6 +746,7 @@ class Zmake:
             self.logger.info("Running tests in %s.", elf_file)
             proc = self.jobserver.popen(
                 cmd,
+                cwd=elf_file.parent,
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
