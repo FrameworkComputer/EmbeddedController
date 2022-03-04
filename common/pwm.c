@@ -8,13 +8,8 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "keyboard_backlight.h"
 #include "pwm.h"
 #include "util.h"
-
-#ifdef CONFIG_ZEPHYR
-#include "pwm/pwm.h"
-#endif
 
 #ifdef CONFIG_PWM
 
@@ -32,6 +27,11 @@ static int get_target_channel(enum pwm_channel *channel, int type, int index)
 	case EC_PWM_TYPE_GENERIC:
 		*channel = index;
 		break;
+#ifdef CONFIG_PWM_KBLIGHT
+	case EC_PWM_TYPE_KB_LIGHT:
+		*channel = PWM_CH_KBLIGHT;
+		break;
+#endif
 #ifdef CONFIG_PWM_DISPLIGHT
 	case EC_PWM_TYPE_DISPLAY_LIGHT:
 		*channel = PWM_CH_DISPLIGHT;
@@ -64,14 +64,6 @@ host_command_pwm_set_duty(struct host_cmd_handler_args *args)
 	const struct ec_params_pwm_set_duty *p = args->params;
 	enum pwm_channel channel;
 
-#ifdef CONFIG_PWM_KBLIGHT
-	if (p->pwm_type == EC_PWM_TYPE_KB_LIGHT) {
-		kblight_set(PWM_RAW_TO_PERCENT(p->duty));
-		kblight_enable(p->duty > 0);
-		return EC_RES_SUCCESS;
-	}
-#endif
-
 	if (get_target_channel(&channel, p->pwm_type, p->index))
 		return EC_RES_INVALID_PARAM;
 
@@ -91,14 +83,6 @@ host_command_pwm_get_duty(struct host_cmd_handler_args *args)
 	struct ec_response_pwm_get_duty *r = args->response;
 
 	enum pwm_channel channel;
-
-#ifdef CONFIG_PWM_KBLIGHT
-	if (p->pwm_type == EC_PWM_TYPE_KB_LIGHT) {
-		r->duty = PWM_PERCENT_TO_RAW(kblight_get());
-		args->response_size = sizeof(*r);
-		return EC_RES_SUCCESS;
-	}
-#endif
 
 	if (get_target_channel(&channel, p->pwm_type, p->index))
 		return EC_RES_INVALID_PARAM;
@@ -182,7 +166,6 @@ DECLARE_CONSOLE_COMMAND(pwmduty, cc_pwm_duty,
 			"Get/set PWM duty cycles ");
 #endif /* CONFIG_PWM */
 
-#ifndef CONFIG_ZEPHYR
 /*
  * Initialize all PWM pins as functional.  This is not required under
  * Zephyr as pin configuration is automatically performed by chip driver
@@ -193,4 +176,3 @@ static void pwm_pin_init(void)
 }
 /* HOOK_PRIO_INIT_PWM may be used for chip PWM unit init, so use PRIO + 1 */
 DECLARE_HOOK(HOOK_INIT, pwm_pin_init, HOOK_PRIO_INIT_PWM + 1);
-#endif /* CONFIG_ZEPHYR */
