@@ -8,6 +8,7 @@
 
 #include <drivers/emul.h>
 #include <drivers/gpio/gpio_emul.h>
+#include <string.h>
 
 #include "charger.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
@@ -208,6 +209,7 @@ host_cmd_get_charge_control(void)
 
 	zassume_ok(host_command_process(&args),
 		   "Failed to get charge control values");
+
 	return response;
 }
 
@@ -223,6 +225,19 @@ host_cmd_get_charge_control(void)
  */
 void host_cmd_motion_sense_dump(int max_sensor_count,
 				struct ec_response_motion_sense *response);
+
+/**
+ * Run the host command to get the PD discovery responses.
+ *
+ * @param port          The USB-C port number
+ * @param partner_type  SOP, SOP', or SOP''
+ * @param response      Destination buffer for command response;
+ *                      should hold struct ec_response_typec_discovery and
+ *                      enough struct svid_mode_info for expected response.
+ * @param response_size Number of bytes in response
+ */
+void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
+			      void *response, size_t response_size);
 
 #define GPIO_ACOK_OD_NODE DT_NODELABEL(gpio_acok_od)
 #define GPIO_ACOK_OD_PIN  DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)

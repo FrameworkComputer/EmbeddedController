@@ -111,3 +111,21 @@ void host_cmd_motion_sense_dump(int max_sensor_count,
 	zassume_ok(host_command_process(&args),
 		   "Failed to get motion_sense dump");
 }
+
+void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
+			      void *response, size_t response_size)
+{
+	struct ec_params_typec_discovery params = {
+		.port = port, .partner_type = partner_type
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
+		EC_CMD_TYPEC_DISCOVERY, 0, params);
+	/* The expected response to EC_CMD_TYPEC_DISCOVERY extends beyond the
+	 * bounds of struct ec_response_typec_discovery.
+	 */
+	args.response = response;
+	args.response_max = response_size;
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to get Type-C state for port %d", port);
+}
