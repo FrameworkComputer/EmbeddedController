@@ -11,12 +11,18 @@
 #include "common.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "host_command.h"
 #include "pwm.h"
+#include "keyboard_backlight.h"
 #include "util.h"
 
 #include "pwm/pwm.h"
 
 LOG_MODULE_REGISTER(pwm_shim, LOG_LEVEL_ERR);
+
+#define PWM_RAW_TO_PERCENT(v) \
+	DIV_ROUND_NEAREST((uint32_t)(v) * 100, UINT16_MAX)
+#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v) * UINT16_MAX / 100)
 
 /*
  * Initialize the device bindings in pwm_channels.
@@ -186,3 +192,42 @@ int pwm_get_duty(enum pwm_channel ch)
 
 	return DIV_ROUND_NEAREST(pwm->pulse_us * 100, pwm->period_us);
 }
+
+static enum ec_status host_command_pwm_set_duty(
+		struct host_cmd_handler_args *args)
+{
+	__maybe_unused const struct ec_params_pwm_set_duty *p = args->params;
+
+#ifdef CONFIG_PLATFORM_EC_PWM_KBLIGHT
+	if (p->pwm_type == EC_PWM_TYPE_KB_LIGHT) {
+		kblight_set(PWM_RAW_TO_PERCENT(p->duty));
+		kblight_enable(p->duty > 0);
+		return EC_RES_SUCCESS;
+	}
+#endif
+
+	return EC_RES_INVALID_PARAM;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY,
+		     host_command_pwm_set_duty,
+		     EC_VER_MASK(0));
+
+static enum ec_status host_command_pwm_get_duty(
+		struct host_cmd_handler_args *args)
+{
+	__maybe_unused const struct ec_params_pwm_get_duty *p = args->params;
+	__maybe_unused struct ec_response_pwm_get_duty *r = args->response;
+
+#ifdef CONFIG_PLATFORM_EC_PWM_KBLIGHT
+	if (p->pwm_type == EC_PWM_TYPE_KB_LIGHT) {
+		r->duty = PWM_PERCENT_TO_RAW(kblight_get());
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	}
+#endif
+
+	return EC_RES_INVALID_PARAM;
+}
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY,
+		     host_command_pwm_get_duty,
+		     EC_VER_MASK(0));
