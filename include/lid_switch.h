@@ -9,6 +9,7 @@
 #define __CROS_EC_LID_SWITCH_H
 
 #include "common.h"
+#include "stdbool.h"
 
 /**
  * Return non-zero if lid is open.
@@ -23,5 +24,12 @@ int lid_is_open(void);
  * @param signal	Signal which triggered the interrupt.
  */
 void lid_interrupt(enum gpio_signal signal);
+
+/**
+ * Disable lid interrupt and set the lid open, when base is disconnected.
+ *
+ * @param enable    Flag that enables or disables lid interrupt.
+ */
+void enable_lid_detect(bool enable);
 
 #endif  /* __CROS_EC_LID_SWITCH_H */
