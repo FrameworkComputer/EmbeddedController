@@ -9,7 +9,7 @@
 #define __CROS_EC_ALS_CM32183_H
 
 /* I2C interface */
-#define CM32183_I2C_ADDR		(0x29 | I2C_FLAG_BIG_ENDIAN)
+#define CM32183_I2C_ADDR		0x29
 
 /* CM32183 registers */
 #define CM32183_REG_CONFIGURE		0x00
