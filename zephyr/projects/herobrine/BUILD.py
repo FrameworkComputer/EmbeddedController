@@ -10,7 +10,6 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
         dts_overlays=[
             # Common to all projects.
             here / "adc.dts",
-            here / "battery.dts",
             here / "display.dts",
             here / "gpio.dts",
             here / "common.dts",
@@ -35,6 +34,7 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
 register_variant(
     project_name="herobrine",
     extra_dts_overlays=[
+        here / "battery_herobrine.dts",
         here / "usbc_herobrine.dts",
     ],
     extra_kconfig_files=[here / "prj_herobrine.conf"],
@@ -44,6 +44,7 @@ register_variant(
 register_variant(
     project_name="hoglin",
     extra_dts_overlays=[
+        here / "battery_herobrine.dts",
         here / "usbc_herobrine.dts",
     ],
     extra_kconfig_files=[here / "prj_hoglin.conf"],
@@ -53,6 +54,7 @@ register_variant(
 register_variant(
     project_name="villager",
     extra_dts_overlays=[
+        here / "battery_villager.dts",
         here / "usbc_villager.dts",
     ],
     extra_kconfig_files=[here / "prj_villager.conf"],
