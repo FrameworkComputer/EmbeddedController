@@ -39,6 +39,28 @@ unsigned int pd_get_max_voltage(void)
 	return max_request_mv;
 }
 
+/**
+ * Return true if port is capable of communication over USB data lines.
+ *
+ * @param port USB-C port number
+ */
+static bool pd_get_usb_comm_capable(int port)
+{
+	uint32_t fixed_pdo;
+
+	/* the fixed PDO is always the first entry */
+	if (pd_get_power_role(port) == PD_ROLE_SINK) {
+		fixed_pdo = pd_snk_pdo[0];
+	} else {
+		const uint32_t *pdo;
+
+		pd_get_source_pdo(&pdo, port);
+		fixed_pdo = pdo[0];
+	}
+
+	return !!(fixed_pdo & PDO_FIXED_COMM_CAP);
+}
+
 /*
  * Zinger implements a board specific usb policy that does not define
  * PD_MAX_VOLTAGE_MV and PD_OPERATING_POWER_MW. And in turn, does not
@@ -334,12 +356,12 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 	 * 6.4.2.4 USB Communications Capable
 	 * 6.4.2.5 No USB Suspend
 	 *
-	 * If the port partner is capable of USB communication set the
-	 * USB Communications Capable flag.
+	 * If the port is capable of USB communication, set the USB
+	 * Communications Capable flag.
 	 * If the port partner is sink device do not suspend USB as the
 	 * power can be used for charging.
 	 */
-	if (pd_get_partner_usb_comm_capable(port)) {
+	if (pd_get_usb_comm_capable(port)) {
 		*rdo |= RDO_COMM_CAP;
 		if (pd_get_power_role(port) == PD_ROLE_SINK)
 			*rdo |= RDO_NO_SUSPEND;
