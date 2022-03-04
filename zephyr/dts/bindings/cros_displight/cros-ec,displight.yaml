@@ -18,3 +18,8 @@ properties:
     type: int
     required: true
     description: PWM frequency in Hz.
+
+  generic-pwm-channel:
+    type: int
+    required: false
+    description: Generic PWM channel number for legacy compatibility.
