@@ -1,0 +1,45 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+
+menuconfig PLATFORM_EC_USB_MUX
+	bool "USB muxes"
+	default y
+	help
+	  Enables support for USB muxes. These allow multiplexing
+
+if PLATFORM_EC_USB_MUX
+
+config PLATFORM_EC_USB_MUX_AMD_FP6
+	bool "AMD FP6 integrated mux"
+	help
+	  Integrated AMD FP6 mux for USB and DP.  Mux control happens over
+	  an i2c channel.
+
+config PLATFORM_EC_USB_MUX_IT5205
+	bool "ITE IT5205 USB Type-C 3:2 Alternative mode passive mux"
+	help
+	  This is a USB Type-C 3:2 Alternative mode mux, supporting USB 3.1
+	  Gen 2 10Gbps as well as DisplayPort (DP1.4) at 8Gbps. It provides a
+	  cross-point mux for low-speed Side-Band-Use (SBU) pins. The mux can
+	  be controlled via I2C.
+
+config PLATFORM_EC_USB_MUX_PS8743
+	bool "Parade PS8743 USB-C Host Switch with redriver"
+	help
+	  This is a Parade USB 3.1 Gen 1 / DisplayPort (DP) Alt Mode
+	  High-Bit-Rate 2 (HBR2) redriver. It provides control of switching
+	  modes through either GPIO or I2C.
+
+config PLATFORM_EC_USB_MUX_TUSB1044
+	bool "TI TUSB1044 USB-C 10 Gbps Linear Redriver"
+	help
+	  This is a USB Type-C Alt Mode redriver. This supports USB 3.1
+	  Gen 2 and DisplayPort 1.4 as Alternate Mode. It Provides GPIO and
+	  I2C Control for Channel Direction and Equalization.
+
+endif # PLATFORM_EC_USB_MUX
+
+endif # PLATFORM_EC_USBC
