@@ -191,26 +191,16 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-static void enable_nvme(void)
-{
-	gpio_set_level(GPIO_EN_PP3300_SSD, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enable_nvme, HOOK_PRIO_DEFAULT);
-
-static void disable_nvme(void)
-{
-	gpio_set_level(GPIO_EN_PP3300_SSD, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, disable_nvme, HOOK_PRIO_DEFAULT);
-
 static void board_do_chipset_resume(void)
 {
+	gpio_set_level(GPIO_EN_PP3300_SSD, 1);
 	gpio_set_level(GPIO_EN_KB_BL, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_do_chipset_resume, HOOK_PRIO_DEFAULT);
 
 static void board_do_chipset_suspend(void)
 {
+	gpio_set_level(GPIO_EN_PP3300_SSD, 0);
 	gpio_set_level(GPIO_EN_KB_BL, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_do_chipset_suspend, HOOK_PRIO_DEFAULT);
