@@ -8,40 +8,27 @@
 #ifndef ZEPHYR_INCLUDE_SYS_ATOMIC_H_
 #define ZEPHYR_INCLUDE_SYS_ATOMIC_H_
 
+/*
+ * EC adaptation
+ * Remove unnecessary includes.
+ */
 #include <stdbool.h>
-#include <toolchain.h>
 #include <stddef.h>
-
-#include <zephyr/types.h>
-#include <sys/util_macro.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-typedef long atomic_t;
-typedef atomic_t atomic_val_t;
-typedef void *atomic_ptr_t;
-typedef atomic_ptr_t atomic_ptr_val_t;
+/*
+ * EC adaptation
+ * Remove redefinition of atomic types.
+ */
 
-/* Low-level primitives come in several styles: */
+/*
+ * EC adaptation
+ * Remove including basic atomic operations.
+ */
 
-#if defined(CONFIG_ATOMIC_OPERATIONS_C)
-/* Generic-but-slow implementation based on kernel locking and syscalls */
-#include <sys/atomic_c.h>
-#elif defined(CONFIG_ATOMIC_OPERATIONS_ARCH)
-/* Some architectures need their own implementation */
-# ifdef CONFIG_XTENSA
-/* Not all Xtensa toolchains support GCC-style atomic intrinsics */
-# include <arch/xtensa/atomic_xtensa.h>
-# else
-/* Other arch specific implementation */
-# include <sys/atomic_arch.h>
-# endif /* CONFIG_XTENSA */
-#else
-/* Default.  See this file for the Doxygen reference: */
-#include <sys/atomic_builtin.h>
-#endif
 
 /* Portable higher-level utilities: */
 
