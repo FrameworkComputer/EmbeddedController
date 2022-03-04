@@ -57,6 +57,16 @@ This FPMCU board is Icetower Rev 0.1. |
 
 **Partners**: You can request an Icetower development board from Google.
 ***
+
+*** note
+The instructions below to flash the FPMCU using the [Servo Micro] and `flash_ec`
+do not work at the moment with the Icetower board.
+See details in this
+[bug report](https://issuetracker.google.com/177331210).
+
+The recommended workaround is to
+[use J-Link to flash the FPMCU](./fingerprint-debugging.md#flash).
+***
 <!-- mdformat on -->
 
 ### Servo
