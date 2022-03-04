@@ -73,4 +73,16 @@ static inline atomic_val_t atomic_clear(atomic_t *addr)
 	return ret;
 }
 
+static inline atomic_val_t atomic_and(atomic_t *addr, atomic_val_t bits)
+{
+	atomic_val_t ret;
+	atomic_t volatile *ptr = addr;
+	uint32_t int_mask = read_clear_int_mask();
+
+	ret = *ptr;
+	*ptr &= bits;
+	set_int_mask(int_mask);
+	return ret;
+}
+
 #endif  /* __CROS_EC_ATOMIC_H */

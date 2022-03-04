@@ -69,4 +69,9 @@ static inline atomic_val_t atomic_clear(atomic_t *addr)
 	return ret;
 }
 
+static inline atomic_val_t atomic_and(atomic_t *addr, atomic_val_t bits)
+{
+	return ATOMIC_OP(ands, addr, bits);
+}
+
 #endif  /* __CROS_EC_ATOMIC_H */

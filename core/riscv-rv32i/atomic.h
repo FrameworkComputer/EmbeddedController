@@ -48,4 +48,9 @@ static inline atomic_val_t atomic_read_sub(atomic_t *addr, atomic_val_t value)
 	return __atomic_fetch_sub(addr, value, __ATOMIC_SEQ_CST);
 }
 
+static inline atomic_val_t atomic_and(atomic_t *addr, atomic_val_t bits)
+{
+	return __atomic_fetch_and(addr, bits, __ATOMIC_SEQ_CST);
+}
+
 #endif  /* __CROS_EC_ATOMIC_H */
