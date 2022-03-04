@@ -115,7 +115,7 @@
 			gpios = <&gpio9 4 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
-		ec_disable_disp_bl {
+		gpio_ec_disable_disp_bl: ec_disable_disp_bl {
 			gpios = <&gpioa 6 GPIO_OUT_HIGH>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT_L";
 		};
