@@ -229,6 +229,14 @@ config PLATFORM_EC_BATTERY_COUNT
 	  PLATFORM_EC_BATTERY_V2 is enabled. Note this is different from
 	  BATTERY_TYPE_COUNT.
 
+config PLATFORM_EC_HOSTCMD_BATTERY_V2
+	bool "Enable host command battery API v2"
+	default y
+	help
+	  Include host commands to fetch battery information from
+	  ec_response_battery_static/dynamic_info structures, only make sense
+	  when PLATFORM_EC_BATTERY_V2 is enabled.
+
 endif # PLATFORM_EC_BATTERY_V2
 
 config PLATFORM_EC_BATTERY_TYPE_NO_AUTO_DETECT
