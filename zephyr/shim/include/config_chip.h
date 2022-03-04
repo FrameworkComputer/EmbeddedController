@@ -782,7 +782,6 @@ extern struct jump_data mock_jump_data;
 #undef CONFIG_PWM_DISPLIGHT
 #ifdef CONFIG_PLATFORM_EC_PWM_DISPLIGHT
 #define CONFIG_PWM_DISPLIGHT
-#define PWM_CH_DISPLIGHT PWM_CHANNEL(DT_NODELABEL(displight))
 #endif
 
 #undef CONFIG_CPU_PROCHOT_ACTIVE_LOW

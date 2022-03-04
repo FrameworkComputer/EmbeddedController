@@ -6,15 +6,5 @@
 / {
 	named-pwms {
 		compatible = "named-pwms";
-
-		displight: edp_bkltctl {
-			pwms = <&pwm5 0 PWM_POLARITY_NORMAL>;
-			frequency = <4800>;
-		};
 	};
-};
-
-/* Display backlight */
-&pwm5 {
-	status = "okay";
 };

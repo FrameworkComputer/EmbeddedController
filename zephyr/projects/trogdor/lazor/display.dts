@@ -4,7 +4,13 @@
  */
 
 / {
-	named-pwms {
-		compatible = "named-pwms";
+	displight {
+		compatible = "cros-ec,displight";
+		pwms = <&pwm5 0 PWM_POLARITY_NORMAL>;
+		frequency = <4800>;
 	};
+};
+
+&pwm5 {
+	status = "okay";
 };

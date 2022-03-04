@@ -11,6 +11,7 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
             # Common to all projects.
             here / "adc.dts",
             here / "battery.dts",
+            here / "display.dts",
             here / "gpio.dts",
             here / "common.dts",
             here / "i2c.dts",

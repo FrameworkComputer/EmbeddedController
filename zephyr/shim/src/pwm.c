@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "drivers/cros_displight.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "pwm.h"
@@ -205,6 +206,12 @@ static enum ec_status host_command_pwm_set_duty(
 		return EC_RES_SUCCESS;
 	}
 #endif
+#ifdef CONFIG_PLATFORM_EC_PWM_DISPLIGHT
+	if (p->pwm_type == EC_PWM_TYPE_DISPLAY_LIGHT) {
+		displight_set(PWM_RAW_TO_PERCENT(p->duty));
+		return EC_RES_SUCCESS;
+	}
+#endif
 
 	return EC_RES_INVALID_PARAM;
 }
@@ -221,6 +228,13 @@ static enum ec_status host_command_pwm_get_duty(
 #ifdef CONFIG_PLATFORM_EC_PWM_KBLIGHT
 	if (p->pwm_type == EC_PWM_TYPE_KB_LIGHT) {
 		r->duty = PWM_PERCENT_TO_RAW(kblight_get());
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	}
+#endif
+#ifdef CONFIG_PLATFORM_EC_PWM_DISPLIGHT
+	if (p->pwm_type == EC_PWM_TYPE_DISPLAY_LIGHT) {
+		r->duty = PWM_PERCENT_TO_RAW(displight_get());
 		args->response_size = sizeof(*r);
 		return EC_RES_SUCCESS;
 	}
