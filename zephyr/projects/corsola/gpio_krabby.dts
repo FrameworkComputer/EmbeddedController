@@ -178,6 +178,10 @@
 		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
 			gpios = <&gpioj 3 GPIO_INPUT>;
 		};
+		gpio_packet_mode_en: packet_mode_en {
+			gpios = <&gpiod 4 GPIO_OUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
 	};
 
 	/*
@@ -203,8 +207,6 @@
 		compatible = "unused-gpios";
 
 		unused-gpios =
-			/* packet_mode_en */
-			<&gpiod 4 GPIO_OUT_LOW>,
 			/* pg_pp5000_z2_od */
 			<&gpiod 2 GPIO_INPUT>,
 			/* pg_mt6315_proc_b_odl */
