@@ -1467,6 +1467,16 @@ unsigned pd_get_max_voltage(void);
  */
 __override_proto int pd_is_valid_input_voltage(int mv);
 
+/*
+ * Return the appropriate set of Source Capability PDOs to offer this
+ * port
+ *
+ * @param src_pdo	Will point to appropriate PDO(s) to offer
+ * @param port		USB-C port number
+ * @return		Number of PDOs
+ */
+int pd_get_source_pdo(const uint32_t **src_pdo_p, const int port);
+
 /**
  * Request a new operating voltage.
  *

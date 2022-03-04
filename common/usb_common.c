@@ -303,13 +303,8 @@ __overridable int pd_board_check_request(uint32_t rdo, int pdo_cnt)
 	return EC_SUCCESS;
 }
 
-int pd_check_requested_voltage(uint32_t rdo, const int port)
+int pd_get_source_pdo(const uint32_t **src_pdo_p, const int port)
 {
-	int max_ma = rdo & 0x3FF;
-	int op_ma = (rdo >> 10) & 0x3FF;
-	int idx = RDO_POS(rdo);
-	uint32_t pdo;
-	uint32_t pdo_ma;
 #if defined(CONFIG_USB_PD_TCPMV2) && defined(CONFIG_USB_PE_SM)
 	const uint32_t *src_pdo;
 	const int pdo_cnt = dpm_get_source_pdo(&src_pdo, port);
@@ -321,6 +316,22 @@ int pd_check_requested_voltage(uint32_t rdo, const int port)
 	const uint32_t *src_pdo = pd_src_pdo;
 	const int pdo_cnt = pd_src_pdo_cnt;
 #endif
+
+	*src_pdo_p = src_pdo;
+	return pdo_cnt;
+}
+
+int pd_check_requested_voltage(uint32_t rdo, const int port)
+{
+	int max_ma = rdo & 0x3FF;
+	int op_ma = (rdo >> 10) & 0x3FF;
+	int idx = RDO_POS(rdo);
+	uint32_t pdo;
+	uint32_t pdo_ma;
+	const uint32_t *src_pdo;
+	int pdo_cnt;
+
+	pdo_cnt = pd_get_source_pdo(&src_pdo, port);
 
 	/* Check for invalid index */
 	if (!idx || idx > pdo_cnt)
