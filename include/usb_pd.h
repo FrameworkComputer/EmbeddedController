@@ -141,7 +141,7 @@ enum pd_rx_errors {
 #define RDO_FIXED_VAR_MAX_CURR(ma) ((((ma) / 10) & 0x3FF) << 0)
 
 #define RDO_BATT_OP_POWER(mw)      ((((mw) / 250) & 0x3FF) << 10)
-#define RDO_BATT_MAX_POWER(mw)     ((((mw) / 250) & 0x3FF) << 10)
+#define RDO_BATT_MAX_POWER(mw)     ((((mw) / 250) & 0x3FF) << 0)
 
 #define RDO_FIXED(n, op_ma, max_ma, flags) \
 				(RDO_OBJ_POS(n) | (flags) | \
