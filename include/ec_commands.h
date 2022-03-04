@@ -7082,7 +7082,7 @@ struct ec_response_i2c_control {
 	} cmd_response;
 } __ec_align_size1;
 
-#define EC_CMD_RGB_KEYBOARD 0x13a
+#define EC_CMD_RGB_KEYBOARD 0x013A
 
 enum rgbkbd_state {
 	/* RGB keyboard is reset and not initialized. */
