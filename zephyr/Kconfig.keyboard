@@ -142,6 +142,12 @@ config PLATFORM_EC_VOLUME_BUTTONS
 	  Your board must define GPIO_VOLUME_UP_L and GPIO_VOLUME_DOWN_L in
 	  gpio_map.h
 
+config PLATFORM_EC_BUTTONS_RUNTIME_CONFIG
+	bool "Enable buttons runtime configuration"
+	help
+	  This command allow the runtime configuration of the buttons[]
+	  array.
+
 config PLATFORM_EC_CMD_BUTTON
 	bool "Console command: button"
 	help
