@@ -10,6 +10,10 @@
 #include <drivers/gpio.h>
 #include <drivers/i2c.h>
 #include <errno.h>
+#ifdef __REQUIRE_ZEPHYR_GPIOS__
+#undef __REQUIRE_ZEPHYR_GPIOS__
+#endif
+#include "gpio.h"
 #include <gpio/gpio_utils.h>
 #include <init.h>
 #include <kernel.h>
