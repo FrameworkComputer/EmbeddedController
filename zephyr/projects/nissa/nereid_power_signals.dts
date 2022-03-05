@@ -129,20 +129,21 @@
 		dbg-label = "Combined all power good";
 		enum-name = "PWR_ALL_SYS_PWRGD";
 	};
-	/*
-	 * TODO: Add ADC comparators
-	 * Temporary board based signals.
-	 */
-	pwr-dsw-pwrgd {
-		compatible = "intel,ap-pwrseq-external";
-		dbg-label = "ADC for 3.3V";
+	pwr-adc-pp3300 {
+		compatible = "intel,ap-pwrseq-adc";
+		dbg-label = "PP3300_PROC";
 		enum-name = "PWR_DSW_PWROK";
+		trigger-high = <&vcmp0>;
+		trigger-low = <&vcmp1>;
 	};
-	pwr-pg-pp1p05 {
-		compatible = "intel,ap-pwrseq-external";
-		dbg-label = "ADC for 1.05V";
+	pwr-adc-pp1p05 {
+		compatible = "intel,ap-pwrseq-adc";
+		dbg-label = "PP1P05_PROC";
 		enum-name = "PWR_PG_PP1P05";
+		trigger-high = <&vcmp2>;
+		trigger-low = <&vcmp3>;
 	};
+
 };
 
 /*
@@ -187,4 +188,37 @@
 };
 &gpio_sys_rst_odl {
 	no-auto-init;
+};
+&vcmp0 {
+	status = "okay";
+	scan-period = <IT8XXX2_VCMP_SCAN_PERIOD_600US>;
+	comparison = <IT8XXX2_VCMP_GREATER>;
+	/*
+	 * This is 90% of nominal voltage considering voltage
+	 * divider on ADC input.
+	 */
+	threshold-mv = <2448>;
+	io-channels = <&adc0 0>;
+};
+&vcmp1 {
+	status = "okay";
+	scan-period = <IT8XXX2_VCMP_SCAN_PERIOD_600US>;
+	comparison = <IT8XXX2_VCMP_LESS_OR_EQUAL>;
+	threshold-mv = <2448>;
+	io-channels = <&adc0 0>;
+};
+&vcmp2 {
+	status = "okay";
+	scan-period = <IT8XXX2_VCMP_SCAN_PERIOD_600US>;
+	comparison = <IT8XXX2_VCMP_GREATER>;
+	/* Setting at 90% of nominal voltage */
+	threshold-mv = <945>;
+	io-channels = <&adc0 14>;
+};
+&vcmp3 {
+	status = "okay";
+	scan-period = <IT8XXX2_VCMP_SCAN_PERIOD_600US>;
+	comparison = <IT8XXX2_VCMP_LESS_OR_EQUAL>;
+	threshold-mv = <945>;
+	io-channels = <&adc0 14>;
 };

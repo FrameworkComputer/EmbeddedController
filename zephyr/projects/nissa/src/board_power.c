@@ -116,19 +116,6 @@ int board_power_signal_get(enum power_signal signal)
 			return 0;
 		}
 		return 1;
-	/*
-	 * TODO: When upstreamed changes ready, remove.
-	 * Temporary workaround for ADC signal.
-	 * Assume always on.
-	 */
-
-#ifdef CONFIG_BOARD_NEREID
-	case PWR_DSW_PWROK:
-		return 1;
-
-	case PWR_PG_PP1P05:
-		return 1;
-#endif
 	}
 }
 
