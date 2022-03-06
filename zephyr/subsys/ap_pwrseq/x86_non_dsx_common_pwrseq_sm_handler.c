@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
+#include <init.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
 static K_KERNEL_STACK_DEFINE(pwrseq_thread_stack,
-			CONFIG_X86_NON_DSW_PWRSEQ_STACK_SIZE);
+			CONFIG_AP_PWRSEQ_STACK_SIZE);
 static struct k_thread pwrseq_thread_data;
 static struct pwrseq_context pwrseq_ctx;
 /* S5 inactive timer*/
@@ -383,12 +384,21 @@ static inline void create_pwrseq_thread(void)
 			K_KERNEL_STACK_SIZEOF(pwrseq_thread_stack),
 			(k_thread_entry_t)pwrseq_loop_thread,
 			NULL, NULL, NULL,
-			K_PRIO_COOP(8), 0, K_NO_WAIT);
+			K_PRIO_COOP(8), 0,
+			IS_ENABLED(CONFIG_AP_PWRSEQ_AUTOSTART) ? K_NO_WAIT
+							       : K_FOREVER);
 
 	k_thread_name_set(&pwrseq_thread_data, "pwrseq_task");
 }
 
-void init_pwr_seq_state(void)
+void ap_pwrseq_task_start(void)
+{
+	if (!IS_ENABLED(CONFIG_AP_PWRSEQ_AUTOSTART)) {
+		k_thread_start(&pwrseq_thread_data);
+	}
+}
+
+static void init_pwr_seq_state(void)
 {
 	init_chipset_pwr_seq_state();
 	chipset_request_exit_hardoff(false);
@@ -397,7 +407,7 @@ void init_pwr_seq_state(void)
 }
 
 /* Initialize power sequence system state */
-static int pwrseq_init(void)
+static int pwrseq_init(const struct device *dev)
 {
 	LOG_INF("Pwrseq Init");
 

@@ -18,6 +18,25 @@ module = AP_PWRSEQ
 module-str = AP power sequencing
 source "subsys/logging/Kconfig.template.log_config"
 
+config AP_PWRSEQ_AUTOSTART
+	bool "Start the power sequence thread automatically"
+	default n
+	help
+	  This option starts the AP power sequence task
+	  at initialisation. If not set, ap_pwrseq_thread_start()
+	  needs to be called to start the task.
+
+	  Disable this option if there is other board or module
+	  initialization that must occur before the AP power sequence
+	  thread is started.
+
+config AP_PWRSEQ_STACK_SIZE
+	int "AP pwrseq stack size (in bytes)"
+	default 800
+	help
+	  This option specifies the size of the stack used by the
+	  AP power sequencing state machine thread handler.
+
 config X86_NON_DSX_PWRSEQ
 	bool
 	default n
@@ -41,13 +60,5 @@ config X86_NON_DSX_PWRSEQ_CONSOLE
 	help
 	  This option enables Non Deep Sleep Well power sequencing shell
 	  console commands to debug.
-
-
-config X86_NON_DSW_PWRSEQ_STACK_SIZE
-	int "AP pwrseq stack size (in bytes)"
-	default 1024
-	help
-	  This option specifies the size of the stack used by the
-	  AP power sequencing state machine thread handler.
 
 endif
