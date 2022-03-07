@@ -128,11 +128,11 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 #define THERMAL_REGULATOR \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(52), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(55), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(53), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(56), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(47), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(48), \
 		}, \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_regulator =
