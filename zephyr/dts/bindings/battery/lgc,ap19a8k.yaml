@@ -26,6 +26,10 @@ properties:
       default: 0x0001
    fet_disconnect_val:
       default: 0x0000
+   fet_cfet_mask:
+      default: 0x0002
+   fet_cfet_off_val:
+      default: 0x0000
 
    # Battery info
    voltage_max:
