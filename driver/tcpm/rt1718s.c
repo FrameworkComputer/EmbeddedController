@@ -563,7 +563,7 @@ static int command_rt1718s_gpio(int argc, char **argv)
 				return EC_ERROR_UNKNOWN;
 
 			ccprintf("C%d GPIO%d OD=%d PU=%d PD=%d OE=%d HL=%d\n",
-				 i, j, !(flags & RT1718S_GPIO_CTRL_OD_N),
+				 i, j+1, !(flags & RT1718S_GPIO_CTRL_OD_N),
 				 !!(flags & RT1718S_GPIO_CTRL_PU),
 				 !!(flags & RT1718S_GPIO_CTRL_PD),
 				 !!(flags & RT1718S_GPIO_CTRL_OE),
