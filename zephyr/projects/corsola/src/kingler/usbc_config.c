@@ -44,7 +44,8 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		},
 		.drv = &anx7447_tcpm_drv,
 		/* Alert is active-low, open-drain */
-		.flags = TCPC_FLAGS_ALERT_OD | TCPC_FLAGS_VBUS_MONITOR,
+		.flags = TCPC_FLAGS_ALERT_OD | TCPC_FLAGS_VBUS_MONITOR |
+			 TCPC_FLAGS_CONTROL_FRS,
 	},
 	[USBC_PORT_C1] = {
 		.bus_type = EC_BUS_TYPE_I2C,
@@ -54,10 +55,10 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		},
 		.drv = &rt1718s_tcpm_drv,
 		/* Alert is active-low, open-drain */
-		.flags = TCPC_FLAGS_ALERT_OD | TCPC_FLAGS_VBUS_MONITOR,
+		.flags = TCPC_FLAGS_ALERT_OD | TCPC_FLAGS_VBUS_MONITOR |
+			 TCPC_FLAGS_CONTROL_FRS,
 	}
 };
-
 
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USBC_PORT_C0] = {
@@ -185,9 +186,9 @@ __override int board_rt1718s_init(int port)
 		gpio_initialized = true;
 	}
 
-	/* gpio 1/2 output high when receiving frs signal */
+	/* gpio1 low, gpio2 output high when receiving frs signal */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_VBUS_CTRL,
-			RT1718S_GPIO1_VBUS_CTRL_FRS_RX_VBUS, 0xFF));
+			RT1718S_GPIO1_VBUS_CTRL_FRS_RX_VBUS, 0));
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_VBUS_CTRL,
 			RT1718S_GPIO2_VBUS_CTRL_FRS_RX_VBUS, 0xFF));
 
@@ -208,6 +209,19 @@ __override int board_rt1718s_init(int port)
 			RT1718S_FRS_CTRL1_FRSWAPRX_MASK,
 			0xFF));
 
+	return EC_SUCCESS;
+}
+
+__override int board_rt1718s_set_frs_enable(int port, int enable)
+{
+	if (port == USBC_PORT_C1)
+		/*
+		 * Use set_flags (implemented by a single i2c write) instead
+		 * of set_level (= i2c_update) to save one read operation in
+		 * FRS path.
+		 */
+		rt1718s_gpio_set_flags(port, GPIO_EN_USB_C1_FRS,
+				enable ? GPIO_OUT_HIGH : GPIO_OUT_LOW);
 	return EC_SUCCESS;
 }
 
