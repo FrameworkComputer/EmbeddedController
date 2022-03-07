@@ -414,6 +414,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_MUX_TUSB1044
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_MUX_VIRTUAL
                                                 "${PLATFORM_EC}/driver/usb_mux/virtual.c")
 
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DPS
+                                                "${PLATFORM_EC}/common/dps.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_LOGGING
                                                 "${PLATFORM_EC}/common/event_log.c"
                                                 "${PLATFORM_EC}/common/pd_log.c")

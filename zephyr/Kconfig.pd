@@ -127,10 +127,12 @@ config PLATFORM_EC_USB_PD_DUAL_ROLE
 	  up its battery), or send out power to an attached device on the same
 	  port.
 
-config PLATFORM_EC_USB_PD_DPS
+menuconfig PLATFORM_EC_USB_PD_DPS
 	bool "Board can support Dynamic PDO Selection"
 	depends on PLATFORM_EC_BATTERY
+	depends on PLATFORM_EC_USB_POWER_DELIVERY
 	default n
+	select HAS_TASK_DPS
 	help
 	  Enable this if the board needs dynamic PDO selection.
 	  DPS picks a power efficient PDO regarding to the underlying battery

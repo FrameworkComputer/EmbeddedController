@@ -188,6 +188,25 @@ config TASK_PD_INT_STACK_SIZE
 
 endif # PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
 
+if HAS_TASK_DPS
+
+config TASK_DPS_STACK_SIZE
+	int "DPS task stack size"
+	default 1024
+	help
+	  The stack size of the DPS task.
+
+endif # HAS_TASK_DPS
+
+config HAS_TASK_DPS
+	bool
+	depends on PLATFORM_EC_USB_PD_DPS
+	help
+	  This turns on the DPS task which evalutes the SRCCAP from all the SNK
+	  ports and issues a new power request to the port which has the most
+	  efficient power data object (PDO).
+
+
 config HAS_TASK_PD_C0
 	bool
 	depends on PLATFORM_EC_USB_POWER_DELIVERY

@@ -47,6 +47,9 @@ typedef uint8_t task_id_t;
 	COND_CODE_1(HAS_TASK_USB_CHG_P2,                                  \
 		     (CROS_EC_TASK(USB_CHG_P2, usb_charger_task, 0,       \
 				   CONFIG_TASK_USB_CHG_STACK_SIZE)), ())  \
+	COND_CODE_1(HAS_TASK_DPS,                                         \
+		     (CROS_EC_TASK(DPS, dps_task, 0,                      \
+				   CONFIG_TASK_DPS_STACK_SIZE)), ())      \
 	COND_CODE_1(HAS_TASK_CHARGER,                                     \
 		     (CROS_EC_TASK(CHARGER, charger_task, 0,              \
 				   CONFIG_TASK_CHARGER_STACK_SIZE)), ())  \
