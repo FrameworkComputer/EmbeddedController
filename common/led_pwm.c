@@ -31,7 +31,9 @@
 
 #define PULSE_TICK (250 * MSEC)
 
+#ifndef CONFIG_LED_PWM_TASK_DISABLED
 static uint8_t led_is_pulsing;
+#endif /* CONFIG_LED_PWM_TASK_DISABLED */
 
 static int get_led_id_color(enum pwm_led_id id, int color)
 {
@@ -122,6 +124,7 @@ static void init_leds_off(void)
 }
 DECLARE_HOOK(HOOK_INIT, init_leds_off, HOOK_PRIO_INIT_PWM + 1);
 
+#ifndef CONFIG_LED_PWM_TASK_DISABLED
 static uint8_t pulse_period;
 static uint8_t pulse_ontime;
 static enum ec_led_colors pulse_color;
@@ -258,6 +261,8 @@ static void update_leds(void)
 	set_led_color(-1);
 }
 DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
+
+#endif/* CONFIG_LED_PWM_TASK_DISABLED */
 
 #ifdef CONFIG_CMD_LEDTEST
 static int command_ledtest(int argc, char **argv)

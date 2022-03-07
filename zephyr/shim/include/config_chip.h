@@ -722,6 +722,11 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_LED_PWM
 #endif
 
+#undef CONFIG_LED_PWM_TASK_DISABLED
+#ifdef CONFIG_PLATFORM_EC_LED_PWM_TASK_DISABLED
+#define CONFIG_LED_PWM_TASK_DISABLED
+#endif
+
 #undef CONFIG_LED_PWM_COUNT
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_pwm_leds)
 #define CONFIG_LED_PWM_COUNT DT_PROP_LEN(DT_INST(0, cros_ec_pwm_leds), leds)

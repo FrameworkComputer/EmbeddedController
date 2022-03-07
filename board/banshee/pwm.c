@@ -13,18 +13,18 @@
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_SIDE_LED_R] = {
 		.channel = 0,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq = 2000,
 	},
 	[PWM_CH_SIDE_LED_G] = {
 		.channel = 1,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq = 2000,
 	},
 	[PWM_CH_SIDE_LED_B] = {
 		.channel = 2,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq = 2000,
 	},
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
@@ -44,8 +44,8 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_POWER_LED_W] = {
 		.channel = 7,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
+		.flags = PWM_CONFIG_DSLEEP,
+		.freq = 2000,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
