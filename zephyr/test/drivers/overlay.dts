@@ -232,6 +232,10 @@
 			i2c-port = <&i2c1>;
 			enum-name = "I2C_PORT_SENSOR";
 		};
+		virtual-battery {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_VIRTUAL_BATTERY";
+		};
 	};
 
 	named-batteries {
