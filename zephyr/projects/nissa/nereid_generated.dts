@@ -85,7 +85,7 @@
 			gpios = <&gpiok 7 GPIO_OUTPUT>;
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
-			gpios = <&gpiod 5 GPIO_ODR_LOW>;
+			gpios = <&gpiod 5 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_soc_pch_pwrok_od: ec_soc_pch_pwrok_od {

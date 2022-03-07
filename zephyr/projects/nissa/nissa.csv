@@ -102,7 +102,7 @@ EC_SOC_PWR_BTN_ODL,SOC,Buffered power button signal from EC to SOC,OUT,,OD,N,3.3
 EC_SOC_HDMI_HPD,SOC,HPD buffer output for HDMI,OUT,,TTL,N,3.30 V,,L6,P15,OUTPUT,,,
 EC_PROCHOT_ODL,SOC,Allows us to send/read PROCHOT,I/O,both,OD,N,1.05 V,SOC,G3,H14,INPUT,,,
 EC_PCHHOT_ODL,SOC,Allows us to send/read PCHHOT,,,,,,,#N/A,#N/A,OTHER,,,Intel confirmed that this feature is not used.
-EC_SOC_INT_ODL,SOC,EC interrupt to SOC,OUT,,OD,N,,,K5,P8,OUTPUT_ODL,GPIO_EC_INT_L,,Is this needed?
+EC_SOC_INT_ODL,SOC,EC interrupt to SOC,OUT,,OD,N,,,K5,P8,OUTPUT_ODR,GPIO_EC_INT_L,,Is this needed?
 UART_GSC_DBG_RX_EC_TX,UART,UART signal from EC to debugger,OUT,,TTL,N,3.30 V,,H4,B4,OTHER,,,
 UART_GSC_DBG_TX_EC_RX,UART,UART signal from debugger to EC,IN,,--,N,3.30 V,,G4,B5,OTHER,,,
 EN_PP5000_PEN_X,MISC,Enable signal for 5V PEN charging rail,OUT,,TTL,N,3.30 V,,A11,G2,OUTPUT,,,
