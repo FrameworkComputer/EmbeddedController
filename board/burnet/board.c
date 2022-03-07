@@ -17,7 +17,7 @@
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_icm_common.h"
-#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm42607.h"
 #include "driver/battery/max17055.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
@@ -339,7 +339,7 @@ static const mat33_fp_t base_bmi160_ref = {
 	{0, 0, FLOAT_TO_FP(-1)}
 };
 
-static const mat33_fp_t base_icm426xx_ref = {
+static const mat33_fp_t base_icm42607_ref = {
 	{0, FLOAT_TO_FP(-1), 0},
 	{FLOAT_TO_FP(-1), 0, 0},
 	{0, 0, FLOAT_TO_FP(-1)}
@@ -349,7 +349,7 @@ static const mat33_fp_t base_icm426xx_ref = {
 static struct accelgyro_saved_data_t g_bma253_data;
 static struct kionix_accel_data g_kx022_data;
 static struct bmi_drv_data_t g_bmi160_data;
-static struct icm_drv_data_t g_icm426xx_data;
+static struct icm_drv_data_t g_icm42607_data;
 
 struct motion_sensor_t lid_accel_kx022 = {
 	.name = "Lid Accel",
@@ -374,21 +374,21 @@ struct motion_sensor_t lid_accel_kx022 = {
 	},
 };
 
-struct motion_sensor_t base_accel_icm426xx = {
+struct motion_sensor_t base_accel_icm42607 = {
 	.name = "Base Accel",
 	.active_mask = SENSOR_ACTIVE_S0_S3,
-	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.chip = MOTIONSENSE_CHIP_ICM42607,
 	.type = MOTIONSENSE_TYPE_ACCEL,
 	.location = MOTIONSENSE_LOC_BASE,
-	.drv = &icm426xx_drv,
+	.drv = &icm42607_drv,
 	.mutex = &g_base_mutex,
-	.drv_data = &g_icm426xx_data,
+	.drv_data = &g_icm42607_data,
 	.port = CONFIG_SPI_ACCEL_PORT,
 	.i2c_spi_addr_flags = ACCEL_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
 	.default_range = 4,
-	.rot_standard_ref = &base_icm426xx_ref,
-	.min_frequency = ICM426XX_ACCEL_MIN_FREQ,
-	.max_frequency = ICM426XX_ACCEL_MAX_FREQ,
+	.rot_standard_ref = &base_icm42607_ref,
+	.min_frequency = ICM42607_ACCEL_MIN_FREQ,
+	.max_frequency = ICM42607_ACCEL_MAX_FREQ,
 	.config = {
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S0] = {
@@ -401,21 +401,21 @@ struct motion_sensor_t base_accel_icm426xx = {
 	},
 };
 
-struct motion_sensor_t base_gyro_icm426xx = {
+struct motion_sensor_t base_gyro_icm42607 = {
 	.name = "Base Gyro",
 	.active_mask = SENSOR_ACTIVE_S0_S3,
-	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.chip = MOTIONSENSE_CHIP_ICM42607,
 	.type = MOTIONSENSE_TYPE_GYRO,
 	.location = MOTIONSENSE_LOC_BASE,
-	.drv = &icm426xx_drv,
+	.drv = &icm42607_drv,
 	.mutex = &g_base_mutex,
-	.drv_data = &g_icm426xx_data,
+	.drv_data = &g_icm42607_data,
 	.port = CONFIG_SPI_ACCEL_PORT,
 	.i2c_spi_addr_flags = ACCEL_MK_SPI_ADDR_FLAGS(CONFIG_SPI_ACCEL_PORT),
 	.default_range = 1000, /* dps */
-	.rot_standard_ref = &base_icm426xx_ref,
-	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
-	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+	.rot_standard_ref = &base_icm42607_ref,
+	.min_frequency = ICM42607_GYRO_MIN_FREQ,
+	.max_frequency = ICM42607_GYRO_MAX_FREQ,
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -500,8 +500,8 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 void sensor_interrupt(enum gpio_signal signal)
 {
 	switch (motion_sensors[BASE_ACCEL].chip) {
-	case MOTIONSENSE_CHIP_ICM426XX:
-		icm426xx_interrupt(signal);
+	case MOTIONSENSE_CHIP_ICM42607:
+		icm42607_interrupt(signal);
 		break;
 	case MOTIONSENSE_CHIP_BMI160:
 	default:
@@ -522,12 +522,12 @@ static void board_update_config(void)
 	if (rv == EC_SUCCESS)
 		motion_sensors[LID_ACCEL] = lid_accel_kx022;
 
-	/* Read icm-40608 chip content */
-	rv = icm_read8(&base_accel_icm426xx, ICM426XX_REG_WHO_AM_I, &val);
+	/* Read icm-42607 chip content */
+	rv = icm_read8(&base_accel_icm42607, ICM42607_REG_WHO_AM_I, &val);
 
-	if (rv == EC_SUCCESS && val == ICM426XX_CHIP_ICM40608) {
-		motion_sensors[BASE_ACCEL] = base_accel_icm426xx;
-		motion_sensors[BASE_GYRO] = base_gyro_icm426xx;
+	if (rv == EC_SUCCESS && val == ICM42607_CHIP_ICM42607P) {
+		motion_sensors[BASE_ACCEL] = base_accel_icm42607;
+		motion_sensors[BASE_GYRO] = base_gyro_icm42607;
 	}
 
 	CPRINTS("Lid Accel Chip: %d", motion_sensors[LID_ACCEL].chip);
