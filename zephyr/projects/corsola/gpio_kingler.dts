@@ -132,7 +132,7 @@
 			gpios = <&gpio0 2 GPIO_OUTPUT_LOW>;
 		};
 		packet_mode_en {
-			gpios = <&gpio0 2 GPIO_OUTPUT_LOW>;
+			gpios = <&gpio7 5 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_x_ec_gpio2: x_ec_gpio2 {
