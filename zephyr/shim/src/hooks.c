@@ -76,10 +76,10 @@ static int zephyr_shim_setup_hooks(const struct device *unused)
 
 	STRUCT_SECTION_FOREACH(zephyr_shim_hook_list, entry) {
 		struct zephyr_shim_hook_list **loc =
-			&hook_registry[entry->type];
+			&hook_registry[entry->info->type];
 
 		/* Find the correct place to put the entry in the registry. */
-		while (*loc && (*loc)->priority < entry->priority)
+		while (*loc && (*loc)->info->priority < entry->info->priority)
 			loc = &((*loc)->next);
 
 		entry->next = *loc;
@@ -108,7 +108,7 @@ void hook_notify(enum hook_type type)
 	struct zephyr_shim_hook_list *p;
 
 	for (p = hook_registry[type]; p; p = p->next)
-		p->routine();
+		p->info->routine();
 }
 
 int hook_call_deferred(const struct deferred_data *data, int us)
