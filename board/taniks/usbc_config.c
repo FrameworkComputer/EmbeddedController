@@ -66,7 +66,8 @@ const struct tcpc_config_t tcpc_config[] = {
 		.drv = &ps8xxx_tcpm_drv,
 		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
 			 TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
-			 TCPC_FLAGS_CONTROL_VCONN,
+			 TCPC_FLAGS_CONTROL_VCONN |
+			 TCPC_FLAGS_CONTROL_FRS,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
@@ -77,6 +78,7 @@ struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0_PPC,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.frs_en = IOEX_USB_C0_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 	[USBC_PORT_C1] = {
