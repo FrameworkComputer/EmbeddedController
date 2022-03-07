@@ -185,6 +185,7 @@ enum fp_led_brightness_level {
 	FP_LED_BRIGHTNESS_HIGH = 0,
 	FP_LED_BRIGHTNESS_MEDIUM = 1,
 	FP_LED_BRIGHTNESS_LOW = 2,
+	FP_LED_BRIGHTNESS_OFF = 3,
 };
 
 struct ec_response_fp_led_level {
