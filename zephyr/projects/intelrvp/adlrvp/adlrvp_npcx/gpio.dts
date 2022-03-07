@@ -158,10 +158,10 @@
 		edp-bklt-en-mecc {
 			gpios = <&gpioe 1 GPIO_OUTPUT_HIGH>;
 		};
-		led-1-l {
+		led_red_l: led-1-l {
 			gpios = <&gpiob 6 GPIO_OUTPUT_HIGH>;
 		};
-		led-2-l {
+		led_white_l: led-2-l {
 			gpios = <&gpiob 7 GPIO_OUTPUT_HIGH>;
 		};
 		therm-sen-mecc {

@@ -49,26 +49,56 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 void led_set_color_power(enum ec_led_colors color)
 {
 	if (color == EC_LED_COLOR_WHITE)
+#ifdef CONFIG_ZEPHYR
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_white_l),
+							LED_ON_LVL);
+#else
 		gpio_set_level(GPIO_PWR_LED_WHITE_L, LED_ON_LVL);
+#endif /* CONFIG_ZEPHYR */
 	else
 		/* LED_OFF and unsupported colors */
+#ifdef CONFIG_ZEPHYR
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_white_l),
+							LED_OFF_LVL);
+#else
 		gpio_set_level(GPIO_PWR_LED_WHITE_L, LED_OFF_LVL);
+#endif /* CONFIG_ZEPHYR */
 }
 
 void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_RED:
+#ifdef CONFIG_ZEPHYR
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l),
+							LED_ON_LVL);
+#else
 		gpio_set_level(GPIO_BAT_LED_RED_L, LED_ON_LVL);
+#endif /* CONFIG_ZEPHYR */
 		break;
 	case EC_LED_COLOR_AMBER:
+#ifdef CONFIG_ZEPHYR
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l),
+							LED_ON_LVL);
+#else
 		gpio_set_level(GPIO_BAT_LED_RED_L, LED_ON_LVL);
+#endif /* CONFIG_ZEPHYR */
 		break;
 	case EC_LED_COLOR_GREEN:
+#ifdef CONFIG_ZEPHYR
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l),
+							LED_OFF_LVL);
+#else
 		gpio_set_level(GPIO_BAT_LED_RED_L, LED_OFF_LVL);
+#endif /* CONFIG_ZEPHYR */
 		break;
 	default: /* LED_OFF and other unsupported colors */
+#ifdef CONFIG_ZEPHYR
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l),
+							LED_OFF_LVL);
+#else
 		gpio_set_level(GPIO_BAT_LED_RED_L, LED_OFF_LVL);
+#endif /* CONFIG_ZEPHYR */
 		break;
 	}
 }
