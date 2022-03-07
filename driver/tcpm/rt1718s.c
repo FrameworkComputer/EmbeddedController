@@ -254,7 +254,9 @@ static int rt1718s_init(int port)
 				MASK_SET));
 
 	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC))
-		rt1718s_frs_init(port);
+		/* Set Rx frs unmasked */
+		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_RT_MASK1,
+					 RT1718S_RT_MASK1_M_RX_FRS, 0xFF));
 
 	RETURN_ERROR(board_rt1718s_init(port));
 
@@ -356,8 +358,7 @@ void rt1718s_vendor_defined_alert(int port)
 {
 	int rv, value;
 
-	if (IS_ENABLED(CONFIG_USB_PD_FRS_PPC) &&
-	    IS_ENABLED(CONFIG_USBC_PPC_RT1718S)) {
+	if (IS_ENABLED(CONFIG_USB_PD_FRS)) {
 		int int1;
 
 		rv = rt1718s_read8(port, RT1718S_RT_INT1, &int1);
@@ -512,6 +513,29 @@ out:
 	return rv;
 }
 
+#ifdef CONFIG_USB_PD_FRS_TCPC
+int rt1718s_set_frs_enable_tcpc(int port, int enable)
+{
+	/*
+	 * Use write instead of update to save 2 i2c read.
+	 * Assume other bits are at their reset value.
+	 */
+	int frs_ctrl2 = 0x10, vbus_ctrl_en = 0x3F;
+
+	if (enable) {
+		frs_ctrl2 |= RT1718S_FRS_CTRL2_RX_FRS_EN;
+		frs_ctrl2 |= RT1718S_FRS_CTRL2_VBUS_FRS_EN;
+
+		vbus_ctrl_en |= RT1718S_VBUS_CTRL_EN_GPIO2_VBUS_PATH_EN;
+		vbus_ctrl_en |= RT1718S_VBUS_CTRL_EN_GPIO1_VBUS_PATH_EN;
+	}
+
+	RETURN_ERROR(rt1718s_write8(port, RT1718S_FRS_CTRL2, frs_ctrl2));
+	RETURN_ERROR(rt1718s_write8(port, RT1718S_VBUS_CTRL_EN, vbus_ctrl_en));
+	return EC_SUCCESS;
+}
+#endif
+
 void rt1718s_gpio_set_flags(int port, enum rt1718s_gpio signal, uint32_t flags)
 {
 	int val = 0;
@@ -609,7 +633,7 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 	.enter_low_power_mode	= &rt1718s_enter_low_power_mode,
 #endif
 #ifdef CONFIG_USB_PD_FRS_TCPC
-	.set_frs_enable		= &rt1718s_set_frs_enable,
+	.set_frs_enable		= &rt1718s_set_frs_enable_tcpc,
 #endif
 };
 

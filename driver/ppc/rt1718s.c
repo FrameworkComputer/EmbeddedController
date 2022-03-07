@@ -194,7 +194,8 @@ static int rt1718s_set_polarity(int port, int polarity)
 }
 #endif
 
-int rt1718s_set_frs_enable(int port, int enable)
+#ifdef CONFIG_USB_PD_FRS_PPC
+int rt1718s_set_frs_enable_ppc(int port, int enable)
 {
 	/*
 	 * Use write instead of update to save 2 i2c read.
@@ -214,6 +215,7 @@ int rt1718s_set_frs_enable(int port, int enable)
 	RETURN_ERROR(write_reg(port, RT1718S_VBUS_CTRL_EN, vbus_ctrl_en));
 	return EC_SUCCESS;
 }
+#endif
 
 const struct ppc_drv rt1718s_ppc_drv = {
 	.init = &rt1718s_init,
@@ -235,6 +237,6 @@ const struct ppc_drv rt1718s_ppc_drv = {
 	.set_vconn = &tcpci_tcpm_set_vconn,
 #endif
 #ifdef CONFIG_USB_PD_FRS_PPC
-	.set_frs_enable = rt1718s_set_frs_enable,
+	.set_frs_enable = rt1718s_set_frs_enable_ppc,
 #endif
 };
