@@ -558,7 +558,7 @@ static const struct cros_system_driver_api cros_system_driver_npcx_api = {
 	.chip_vendor = cros_system_npcx_get_chip_vendor,
 	.chip_name = cros_system_npcx_get_chip_name,
 	.chip_revision = cros_system_npcx_get_chip_revision,
-#ifdef CONFIG_SOC_POWER_MANAGEMENT_TRACE
+#ifdef CONFIG_NPCX_PM_TRACE
 	.deep_sleep_ticks = cros_system_npcx_deep_sleep_ticks,
 #endif
 };
