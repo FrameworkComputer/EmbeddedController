@@ -147,7 +147,7 @@
 		ambient {
 			compatible = "cros-ec,temp-sensor-thermistor";
 			thermistor = <&thermistor_3V3_51K1_47K_4050B>;
-			label = "Ambiient";
+			label = "Ambient";
 			enum-name = "TEMP_SENSOR_AMB";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
