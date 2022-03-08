@@ -11,60 +11,28 @@
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
 	{
-		/* I2C0 */
-		.name = "dp_redriver",
-		.port = I2C_PORT_DP_REDRIVER,
+		/* I2C2 C0 PPC*/
+		.name = "ppc C0",
+		.port = I2C_PORT_USB_C0_PPC,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_DP_SCL,
-		.sda = GPIO_EC_I2C_DP_SDA,
-	},
-	{
-		/* I2C1 */
-		.name = "tcpc0,2",
-		.port = I2C_PORT_USB_C0_C2_TCPC,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_TCPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_TCPC_SDA,
-	},
-	{
-		/* I2C2 */
-		.name = "ppc0,2",
-		.port = I2C_PORT_USB_C0_C2_PPC,
-		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_SCL,
 		.sda = GPIO_EC_I2C_USB_C0_C2_PPC_SDA,
 	},
 	{
-		/* I2C3 */
-		.name = "retimer0,2",
-		.port = I2C_PORT_USB_C0_C2_MUX,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_RT_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_RT_SDA,
-	},
-	{
-		/* I2C4 C1 TCPC */
-		.name = "tcpc1",
-		.port = I2C_PORT_USB_C1_TCPC,
+		/* I2C4 C0 TCPC */
+		.name = "tcpc C0",
+		.port = I2C_PORT_USB_C0_TCPC,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_C1_TCPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
+		.scl = GPIO_EC_I2C_USB_C0_TCPC_SCL,
+		.sda = GPIO_EC_I2C_USB_C0_TCPC_SDA,
 	},
 	{
-		/* I2C5 */
-		.name = "wireless_charger",
-		.port = I2C_PORT_QI,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_QI_SCL,
-		.sda = GPIO_EC_I2C_QI_SDA,
-	},
-	{
-		/* I2C6 */
-		.name = "ppc1",
-		.port = I2C_PORT_USB_C1_PPC,
+		/* I2C6 C0 BC1.2 */
+		.name = "bc12 C0",
+		.port = I2C_PORT_USB_C0_PPC,
 		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C1_MIX_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_MIX_SDA,
+		.scl = GPIO_EC_I2C_USB_C0_MIX_SCL,
+		.sda = GPIO_EC_I2C_USB_C0_MIX_SDA,
 	},
 	{
 		/* I2C7 */
