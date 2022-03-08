@@ -124,6 +124,17 @@ static void tcpci_drp_emul_transmit_op(const struct emul *emul,
 		CONTAINER_OF(ops, struct tcpci_drp_emul, ops);
 	enum tcpci_partner_handler_res processed;
 	uint16_t header;
+	int ret;
+
+	ret = k_mutex_lock(&drp_emul->common_data.transmit_mutex, K_FOREVER);
+	if (ret) {
+		LOG_ERR("Failed to get DRP mutex");
+		/* Inform TCPM that message send failed */
+		tcpci_partner_common_msg_handler(&drp_emul->common_data,
+						 tx_msg, type,
+						 TCPCI_EMUL_TX_FAILED);
+		return;
+	}
 
 	header = sys_get_le16(tx_msg->buf);
 
@@ -143,6 +154,7 @@ static void tcpci_drp_emul_transmit_op(const struct emul *emul,
 		}
 		drp_emul->snk_data.wait_for_ps_rdy = false;
 		drp_emul->snk_data.pd_completed = false;
+		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
 		return;
 	case TCPCI_PARTNER_COMMON_MSG_HANDLED:
 		if (!drp_emul->data.sink && PD_HEADER_CNT(header) == 0 &&
@@ -157,6 +169,7 @@ static void tcpci_drp_emul_transmit_op(const struct emul *emul,
 							15);
 		}
 		/* Message handled nothing to do */
+		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
 		return;
 	case TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED:
 	default:
@@ -166,6 +179,7 @@ static void tcpci_drp_emul_transmit_op(const struct emul *emul,
 
 	/* Handle only SOP messages */
 	if (type != TCPCI_MSG_SOP) {
+		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
 		return;
 	}
 
@@ -176,6 +190,7 @@ static void tcpci_drp_emul_transmit_op(const struct emul *emul,
 						  &drp_emul->common_data,
 						  ops, tx_msg);
 	if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED) {
+		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
 		return;
 	}
 
@@ -184,6 +199,7 @@ static void tcpci_drp_emul_transmit_op(const struct emul *emul,
 						  &drp_emul->common_data,
 						  tx_msg);
 	if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED) {
+		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
 		return;
 	}
 
@@ -192,12 +208,14 @@ static void tcpci_drp_emul_transmit_op(const struct emul *emul,
 						  &drp_emul->common_data,
 						  tx_msg);
 	if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED) {
+		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
 		return;
 	}
 
 	/* Send reject for not handled messages (PD rev 2.0) */
 	tcpci_partner_send_control_msg(&drp_emul->common_data,
 				       PD_CTRL_REJECT, 0);
+	k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
 }
 
 /**

@@ -95,6 +95,17 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 		CONTAINER_OF(ops, struct tcpci_src_emul, ops);
 	enum tcpci_partner_handler_res processed;
 	uint16_t header;
+	int ret;
+
+	ret = k_mutex_lock(&src_emul->common_data.transmit_mutex, K_FOREVER);
+	if (ret) {
+		LOG_ERR("Failed to get SRC mutex");
+		/* Inform TCPM that message send failed */
+		tcpci_partner_common_msg_handler(&src_emul->common_data,
+						 tx_msg, type,
+						 TCPCI_EMUL_TX_FAILED);
+		return;
+	}
 
 	processed = tcpci_partner_common_msg_handler(&src_emul->common_data,
 						     tx_msg, type,
@@ -104,12 +115,13 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 		/* Send capability after 15 ms to establish PD again */
 		tcpci_src_emul_send_capability_msg(&src_emul->data,
 						   &src_emul->common_data, 15);
-
+		k_mutex_unlock(&src_emul->common_data.transmit_mutex);
 		return;
 	}
 
 	/* Handle only SOP messages */
 	if (type != TCPCI_MSG_SOP) {
+		k_mutex_unlock(&src_emul->common_data.transmit_mutex);
 		return;
 	}
 
@@ -121,6 +133,7 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 		 * Only soft reset requires additional handling after
 		 * common handler
 		 */
+		k_mutex_unlock(&src_emul->common_data.transmit_mutex);
 		return;
 	}
 
@@ -133,6 +146,7 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 		tcpci_partner_send_control_msg(&src_emul->common_data,
 					       PD_CTRL_REJECT, 0);
 	}
+	k_mutex_unlock(&src_emul->common_data.transmit_mutex);
 }
 
 /**

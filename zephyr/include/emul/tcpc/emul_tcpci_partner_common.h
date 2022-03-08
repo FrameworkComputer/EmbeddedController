@@ -64,6 +64,11 @@ struct tcpci_partner_data {
 	 * doesn't arrive, hard reset is triggered.
 	 */
 	bool in_soft_reset;
+	/**
+	 * Mutex for TCPCI transmit handler. Should be used to synchronise
+	 * access to partner emulator with TCPCI emulator.
+	 */
+	struct k_mutex transmit_mutex;
 };
 
 /** Structure of message used by TCPCI partner emulator */

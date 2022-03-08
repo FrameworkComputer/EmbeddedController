@@ -436,5 +436,6 @@ void tcpci_partner_init(struct tcpci_partner_data *data)
 		     NULL);
 	sys_slist_init(&data->to_send);
 	k_mutex_init(&data->to_send_mutex);
+	k_mutex_init(&data->transmit_mutex);
 	tcpci_partner_common_reset(data);
 }

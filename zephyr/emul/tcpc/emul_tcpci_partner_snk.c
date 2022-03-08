@@ -367,6 +367,17 @@ static void tcpci_snk_emul_transmit_op(const struct emul *emul,
 	struct tcpci_snk_emul *snk_emul =
 		CONTAINER_OF(ops, struct tcpci_snk_emul, ops);
 	enum tcpci_partner_handler_res processed;
+	int ret;
+
+	ret = k_mutex_lock(&snk_emul->common_data.transmit_mutex, K_FOREVER);
+	if (ret) {
+		LOG_ERR("Failed to get SNK mutex");
+		/* Inform TCPM that message send failed */
+		tcpci_partner_common_msg_handler(&snk_emul->common_data,
+						 tx_msg, type,
+						 TCPCI_EMUL_TX_FAILED);
+		return;
+	}
 
 	/* Call common handler */
 	processed = tcpci_partner_common_msg_handler(&snk_emul->common_data,
@@ -377,10 +388,10 @@ static void tcpci_snk_emul_transmit_op(const struct emul *emul,
 		/* Handle hard reset */
 		snk_emul->data.wait_for_ps_rdy = false;
 		snk_emul->data.pd_completed = false;
-
-		return;
+		/* fallthrough */
 	case TCPCI_PARTNER_COMMON_MSG_HANDLED:
 		/* Message handled nothing to do */
+		k_mutex_unlock(&snk_emul->common_data.transmit_mutex);
 		return;
 	case TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED:
 	default:
@@ -390,6 +401,7 @@ static void tcpci_snk_emul_transmit_op(const struct emul *emul,
 
 	/* Handle only SOP messages */
 	if (type != TCPCI_MSG_SOP) {
+		k_mutex_unlock(&snk_emul->common_data.transmit_mutex);
 		return;
 	}
 
@@ -402,6 +414,7 @@ static void tcpci_snk_emul_transmit_op(const struct emul *emul,
 		tcpci_partner_send_control_msg(&snk_emul->common_data,
 					       PD_CTRL_REJECT, 0);
 	}
+	k_mutex_unlock(&snk_emul->common_data.transmit_mutex);
 }
 
 /**
