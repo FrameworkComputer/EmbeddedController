@@ -96,7 +96,7 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
  *                    CREATE_SENSOR_DATA_TCS3400_CLEAR)
  */
 #define CREATE_SENSOR_DATA(compat, create_data_macro)			\
-	UTIL_LISTIFY(DT_NUM_INST_STATUS_OKAY(compat), SENSOR_DATA,	\
+	LISTIFY(DT_NUM_INST_STATUS_OKAY(compat), SENSOR_DATA, (),	\
 		compat, create_data_macro)
 
 /*
@@ -293,7 +293,7 @@ DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_SENSOR_ROT_REF)
  */
 #define CREATE_MOTION_SENSOR(s_compat, s_chip, s_type, s_drv,		\
 		s_min_freq, s_max_freq)					\
-	UTIL_LISTIFY(DT_NUM_INST_STATUS_OKAY(s_compat), MK_SENSOR_ENTRY,\
+	LISTIFY(DT_NUM_INST_STATUS_OKAY(s_compat), MK_SENSOR_ENTRY, (),\
 		s_compat, s_chip, s_type, s_drv, s_min_freq, s_max_freq)
 
 /*
@@ -313,7 +313,7 @@ struct motion_sensor_t motion_sensors[] = {
 #undef CREATE_MOTION_SENSOR
 #define CREATE_MOTION_SENSOR(s_compat, s_chip, s_type, s_drv, s_min_freq,    \
 			     s_max_freq)                                     \
-	UTIL_LISTIFY(DT_NUM_INST_STATUS_OKAY(s_compat), MK_SENSOR_ALT_ENTRY, \
+	LISTIFY(DT_NUM_INST_STATUS_OKAY(s_compat), MK_SENSOR_ALT_ENTRY, (),\
 		     s_compat, s_chip, s_type, s_drv, s_min_freq, s_max_freq)
 
 /*
@@ -361,8 +361,8 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #define ALS_SENSOR_ENTRY_WITH_COMMA(i, id)		\
 	&motion_sensors[SENSOR_ID(DT_PHANDLE_BY_IDX(id, als_sensors, i))],
 const struct motion_sensor_t *motion_als_sensors[] = {
-	UTIL_LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, als_sensors),
-		     ALS_SENSOR_ENTRY_WITH_COMMA, SENSOR_INFO_NODE)
+	LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, als_sensors),
+		     ALS_SENSOR_ENTRY_WITH_COMMA, (), SENSOR_INFO_NODE)
 };
 BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 #endif
@@ -385,8 +385,8 @@ BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 		GPIO_INT_FROM_NODE(DT_PHANDLE_BY_IDX(id, sensor_irqs, i)));
 static void sensor_enable_irqs(void)
 {
-	UTIL_LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, sensor_irqs),
-		     SENSOR_GPIO_ENABLE_INTERRUPT, SENSOR_INFO_NODE)
+	LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, sensor_irqs),
+		     SENSOR_GPIO_ENABLE_INTERRUPT, (), SENSOR_INFO_NODE)
 }
 DECLARE_HOOK(HOOK_INIT, sensor_enable_irqs, HOOK_PRIO_DEFAULT);
 #endif

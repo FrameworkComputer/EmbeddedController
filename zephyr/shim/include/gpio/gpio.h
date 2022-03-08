@@ -83,7 +83,7 @@ int gpio_config_unused_pins(void) __attribute__((weak));
 
 /**
  * @brief Macro function to construct a list of unused_pin_config items by
- *        UTIL_LISTIFY func.
+ *        LISTIFY func.
  *
  * Example devicetree fragment:
  *    / {
@@ -102,7 +102,7 @@ int gpio_config_unused_pins(void) __attribute__((weak));
  * @return a list of unused_pin_config items
  */
 #define UNUSED_GPIO_CONFIG_LIST \
-	UTIL_LISTIFY(UNUSED_GPIOS_LIST_LEN, UNUSED_GPIO_CONFIG_BY_IDX, _)
+	LISTIFY(UNUSED_GPIOS_LIST_LEN, UNUSED_GPIO_CONFIG_BY_IDX, (), _)
 
 #else
 #define UNUSED_GPIO_CONFIG_LIST /* Nothing if no 'unused-pins' node */

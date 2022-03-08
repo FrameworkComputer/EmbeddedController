@@ -123,7 +123,7 @@ struct node_prop_t {
 	+ LED_PERIOD(color_num, state_id)
 
 #define ACC_PERIOD(color_num, state_id)					\
-	(0 UTIL_LISTIFY(color_num, LED_PLUS_PERIOD, state_id))
+	(0 LISTIFY(color_num, LED_PLUS_PERIOD, (), state_id))
 
 #define GET_PROP(id, prop)						\
 	COND_CODE_1(DT_NODE_HAS_PROP(id, prop),				\

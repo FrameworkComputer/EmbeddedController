@@ -93,8 +93,8 @@ enum sensor_alt_id {
 #define SENSOR_IN_FORCE_MODE(i, id)					\
 	| BIT(SENSOR_ID(DT_PHANDLE_BY_IDX(id, accel_force_mode_sensors, i)))
 #define CONFIG_ACCEL_FORCE_MODE_MASK					\
-	(0 UTIL_LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE,			\
-		accel_force_mode_sensors), SENSOR_IN_FORCE_MODE,	\
+	(0 LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE,			\
+		accel_force_mode_sensors), SENSOR_IN_FORCE_MODE, (),	\
 		SENSOR_INFO_NODE))
 #endif
 
