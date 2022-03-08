@@ -426,6 +426,7 @@ void cypd_enque_evt(int evt, int delay);
 
 /* compliance mode and fw update mode control */
 void enable_compliance_mode(int controller);
+void disable_compliance_mode(int controller);
 
 void entry_tbt_mode(int controller);
 

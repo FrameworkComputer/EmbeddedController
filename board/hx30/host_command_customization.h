@@ -161,6 +161,8 @@ enum bb_retimer_control_mode {
 	BB_EXIT_FW_UPDATE_MODE = BIT(1),
 	/* enable compliance mode */
 	BB_ENABLE_COMPLIANCE_MODE = BIT(2),
+	/* disable compliance mode */
+	BB_DISABLE_COMPLIANCE_MODE = BIT(3),
 	/* Check fw update mode */
 	BB_CHECK_STATUS	= BIT(7),
 };

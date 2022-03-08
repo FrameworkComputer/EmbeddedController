@@ -251,6 +251,9 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 	case BB_ENABLE_COMPLIANCE_MODE:
 		enable_compliance_mode(p->controller);
 		break;
+	case BB_DISABLE_COMPLIANCE_MODE:
+		disable_compliance_mode(p->controller);
+		break;
 	case BB_CHECK_STATUS:
 		r->status = check_tbt_mode(p->controller);
 		args->response_size = sizeof(*r);

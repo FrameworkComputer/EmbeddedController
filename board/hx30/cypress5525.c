@@ -302,16 +302,34 @@ int cypd_update_power_status(void)
 void enable_compliance_mode(int controller)
 {
 	int rv;
-	uint32_t debug_register = 0xD000000;
+	uint32_t debug_register = 0xD0000000;
 	int debug_ctl = 0x0100;
 
-	/* Write 0x0D000000 to address 0x0048 */
+	/* Write 0xD0000000 to address 0x0048 */
 	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_DAT_REG,
 			(void *) &debug_register, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_BB_RETIMER_DAT_REG fail");
 
 	/* Write 0x0100 to address 0x0046 */
+	rv = cypd_write_reg16(controller, CYP5525_ICL_BB_RETIMER_CMD_REG, debug_ctl);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
+}
+
+void disable_compliance_mode(int controller)
+{
+	int rv;
+	uint32_t debug_register = 0x00000000;
+	int debug_ctl = 0x0000;
+
+	/* Write 0x00000000 to address 0x0048 */
+	rv = cypd_write_reg_block(controller, CYP5525_ICL_BB_RETIMER_DAT_REG,
+			(void *) &debug_register, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_DAT_REG fail");
+
+	/* Write 0x0000 to address 0x0046 */
 	rv = cypd_write_reg16(controller, CYP5525_ICL_BB_RETIMER_CMD_REG, debug_ctl);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
