@@ -33,11 +33,22 @@ enum ec_ssfc_lid_sensor {
 	SSFC_SENSOR_LIS2DWL = 3
 };
 
+/*
+ * Audio Codec Source(Bit 8-10)
+ */
+enum ec_ssfc_audio_codec_source {
+        SSFC_AUDIO_CODEC_DEFAULT = 0,
+        SSFC_AUDIO_CODEC_VD = 1,
+        SSFC_ADUIO_CODEC_VS = 2,
+};
+
 union dedede_cbi_ssfc {
 	struct {
 		uint32_t base_sensor : 3;
 		uint32_t lid_sensor : 3;
-		uint32_t reserved_2 : 26;
+		uint32_t reserved : 2;
+		uint32_t audio_codec_source : 3;
+		uint32_t reserved_2 : 21;
 	};
 	uint32_t raw_value;
 };
