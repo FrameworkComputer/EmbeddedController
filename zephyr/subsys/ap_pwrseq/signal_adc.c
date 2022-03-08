@@ -14,7 +14,7 @@
 
 #if HAS_ADC_SIGNALS
 
-LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
+LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
 struct adc_config {
 	const struct device *dev_trig_high;

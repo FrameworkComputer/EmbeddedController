@@ -14,6 +14,10 @@ menuconfig AP_PWRSEQ
 
 if AP_PWRSEQ
 
+module = AP_PWRSEQ
+module-str = AP power sequencing
+source "subsys/logging/Kconfig.template.log_config"
+
 config X86_NON_DSX_PWRSEQ
 	bool
 	default n
@@ -47,7 +51,3 @@ config X86_NON_DSW_PWRSEQ_STACK_SIZE
 	  AP power sequencing state machine thread handler.
 
 endif
-
-module = AP_PWRSEQ
-module-str = ap_pwrseq
-source "subsys/logging/Kconfig.template.log_config"

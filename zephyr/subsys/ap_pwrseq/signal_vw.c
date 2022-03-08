@@ -12,7 +12,7 @@
 
 #if HAS_VW_SIGNALS
 
-LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
+LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
 #define INIT_ESPI_SIGNAL(id)					\
 {								\

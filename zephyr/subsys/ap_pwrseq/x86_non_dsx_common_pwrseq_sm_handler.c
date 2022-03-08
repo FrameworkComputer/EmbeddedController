@@ -12,7 +12,7 @@ static struct pwrseq_context pwrseq_ctx;
 /* S5 inactive timer*/
 K_TIMER_DEFINE(s5_inactive_timer, NULL, NULL);
 
-LOG_MODULE_REGISTER(ap_pwrseq, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
 static const struct common_pwrseq_config com_cfg = {
 	.pch_dsw_pwrok_delay_ms = DT_INST_PROP(0, dsw_pwrok_delay),
