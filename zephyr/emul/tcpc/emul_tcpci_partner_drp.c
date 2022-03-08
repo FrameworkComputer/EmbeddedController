@@ -104,6 +104,18 @@ enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 	return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 }
 
+/** Check description in emul_tcpci_partner_drp.h */
+void tcpci_drp_emul_hard_reset(void *data)
+{
+	struct tcpci_drp_emul *drp_emul = data;
+
+	if (drp_emul->data.sink) {
+		tcpci_snk_emul_hard_reset(&drp_emul->snk_data);
+	} else {
+		tcpci_src_emul_hard_reset(&drp_emul->src_data);
+	}
+}
+
 /**
  * @brief Function called when TCPM wants to transmit message. Accept received
  *        message and generate response.
@@ -144,16 +156,6 @@ static void tcpci_drp_emul_transmit_op(const struct emul *emul,
 						     TCPCI_EMUL_TX_SUCCESS);
 	switch (processed) {
 	case TCPCI_PARTNER_COMMON_MSG_HARD_RESET:
-		/* Handle hard reset */
-		if (!drp_emul->data.sink) {
-			/* As source, advertise capabilities after 15 ms */
-			tcpci_src_emul_send_capability_msg(
-							&drp_emul->src_data,
-							&drp_emul->common_data,
-							15);
-		}
-		drp_emul->snk_data.wait_for_ps_rdy = false;
-		drp_emul->snk_data.pd_completed = false;
 		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
 		return;
 	case TCPCI_PARTNER_COMMON_MSG_HANDLED:
@@ -258,7 +260,7 @@ int tcpci_drp_emul_connect_to_tcpci(struct tcpci_drp_emul_data *data,
 /** Check description in emul_tcpci_partner_drp.h */
 void tcpci_drp_emul_init(struct tcpci_drp_emul *emul)
 {
-	tcpci_partner_init(&emul->common_data);
+	tcpci_partner_init(&emul->common_data, tcpci_drp_emul_hard_reset, emul);
 
 	/* By default init as sink */
 	emul->common_data.data_role = PD_ROLE_DFP;

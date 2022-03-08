@@ -348,6 +348,15 @@ enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 	return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 }
 
+/** Check description in emul_tcpci_partner_snk.h */
+void tcpci_snk_emul_hard_reset(void *data)
+{
+	struct tcpci_snk_emul *snk_emul = data;
+
+	snk_emul->data.wait_for_ps_rdy = false;
+	snk_emul->data.pd_completed = false;
+}
+
 /**
  * @brief Function called when TCPM wants to transmit message. Accept received
  *        message and generate response.
@@ -385,10 +394,6 @@ static void tcpci_snk_emul_transmit_op(const struct emul *emul,
 						     TCPCI_EMUL_TX_SUCCESS);
 	switch (processed) {
 	case TCPCI_PARTNER_COMMON_MSG_HARD_RESET:
-		/* Handle hard reset */
-		snk_emul->data.wait_for_ps_rdy = false;
-		snk_emul->data.pd_completed = false;
-		/* fallthrough */
 	case TCPCI_PARTNER_COMMON_MSG_HANDLED:
 		/* Message handled nothing to do */
 		k_mutex_unlock(&snk_emul->common_data.transmit_mutex);
@@ -476,7 +481,7 @@ void tcpci_snk_emul_init_data(struct tcpci_snk_emul_data *data)
 /** Check description in emul_tcpci_snk.h */
 void tcpci_snk_emul_init(struct tcpci_snk_emul *emul)
 {
-	tcpci_partner_init(&emul->common_data);
+	tcpci_partner_init(&emul->common_data, tcpci_snk_emul_hard_reset, emul);
 
 	emul->common_data.data_role = PD_ROLE_DFP;
 	emul->common_data.power_role = PD_ROLE_SINK;

@@ -75,6 +75,16 @@ enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 	}
 }
 
+/** Check description in emul_tcpci_partner_src.h */
+void tcpci_src_emul_hard_reset(void *data)
+{
+	struct tcpci_src_emul *src_emul = data;
+
+	/* Send capability after 15 ms to establish PD again */
+	tcpci_src_emul_send_capability_msg(&src_emul->data,
+					   &src_emul->common_data, 15);
+}
+
 /**
  * @brief Function called when TCPM wants to transmit message. Accept received
  *        message and generate response.
@@ -112,9 +122,6 @@ static void tcpci_src_emul_transmit_op(const struct emul *emul,
 						     TCPCI_EMUL_TX_SUCCESS);
 	/* Handle hard reset */
 	if (processed == TCPCI_PARTNER_COMMON_MSG_HARD_RESET) {
-		/* Send capability after 15 ms to establish PD again */
-		tcpci_src_emul_send_capability_msg(&src_emul->data,
-						   &src_emul->common_data, 15);
 		k_mutex_unlock(&src_emul->common_data.transmit_mutex);
 		return;
 	}
@@ -302,7 +309,7 @@ void tcpci_src_emul_init_data(struct tcpci_src_emul_data *data)
 /** Check description in emul_tcpci_parnter_src.h */
 void tcpci_src_emul_init(struct tcpci_src_emul *emul)
 {
-	tcpci_partner_init(&emul->common_data);
+	tcpci_partner_init(&emul->common_data, tcpci_src_emul_hard_reset, emul);
 
 	emul->common_data.data_role = PD_ROLE_UFP;
 	emul->common_data.power_role = PD_ROLE_SOURCE;

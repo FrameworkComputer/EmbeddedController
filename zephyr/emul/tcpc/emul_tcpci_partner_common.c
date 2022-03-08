@@ -297,6 +297,9 @@ void tcpci_partner_common_send_hard_reset(struct tcpci_partner_data *data)
 	struct tcpci_partner_msg *msg;
 
 	tcpci_partner_common_reset(data);
+	if (data->hard_reset_func != NULL) {
+		data->hard_reset_func(data->hard_reset_data);
+	}
 
 	msg = tcpci_partner_alloc_msg(0);
 	msg->msg.type = TCPCI_MSG_TX_HARD_RESET;
@@ -339,6 +342,9 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 	/* Handle hard reset */
 	if (type == TCPCI_MSG_TX_HARD_RESET) {
 		tcpci_partner_common_reset(data);
+		if (data->hard_reset_func != NULL) {
+			data->hard_reset_func(data->hard_reset_data);
+		}
 
 		return TCPCI_PARTNER_COMMON_MSG_HARD_RESET;
 	}
@@ -430,7 +436,9 @@ void tcpci_partner_common_handler_mask_msg(struct tcpci_partner_data *data,
 }
 
 /** Check description in emul_common_tcpci_partner.h */
-void tcpci_partner_init(struct tcpci_partner_data *data)
+void tcpci_partner_init(struct tcpci_partner_data *data,
+			tcpci_partner_hard_reset_func hard_reset_func,
+			void *hard_reset_data)
 {
 	k_timer_init(&data->delayed_send, tcpci_partner_delayed_send_timer,
 		     NULL);
@@ -438,4 +446,6 @@ void tcpci_partner_init(struct tcpci_partner_data *data)
 	k_mutex_init(&data->to_send_mutex);
 	k_mutex_init(&data->transmit_mutex);
 	tcpci_partner_common_reset(data);
+	data->hard_reset_func = hard_reset_func;
+	data->hard_reset_data = data;
 }

@@ -27,6 +27,13 @@
  * in generic way using optional delay.
  */
 
+/**
+ * @brief Function type that is used by TCPCI partner emulator on hard reset
+ *
+ * @param data Pointer to custom function data
+ */
+typedef void (*tcpci_partner_hard_reset_func)(void *data);
+
 /** Common data for TCPCI partner device emulators */
 struct tcpci_partner_data {
 	/** Timer used to send message with delay */
@@ -69,6 +76,10 @@ struct tcpci_partner_data {
 	 * access to partner emulator with TCPCI emulator.
 	 */
 	struct k_mutex transmit_mutex;
+	/** Pointer to function called on hard reset */
+	tcpci_partner_hard_reset_func hard_reset_func;
+	/** Pointer to data passed to hard reset function */
+	void *hard_reset_data;
 };
 
 /** Structure of message used by TCPCI partner emulator */
@@ -97,8 +108,12 @@ enum tcpci_partner_handler_res {
  *        any other function.
  *
  * @param data Pointer to USB-C charger emulator
+ * @param hard_reset_func Pointer to function called on hard reset
+ * @param hard_reset_data Pointer to data passed to hard reset function
  */
-void tcpci_partner_init(struct tcpci_partner_data *data);
+void tcpci_partner_init(struct tcpci_partner_data *data,
+			tcpci_partner_hard_reset_func hard_reset_func,
+			void *hard_reset_data);
 
 /**
  * @brief Allocate message with space for header and given number of data

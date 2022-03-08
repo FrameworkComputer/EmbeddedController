@@ -149,6 +149,14 @@ enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 	const struct tcpci_emul_msg *msg);
 
 /**
+ * @brief Perform action required by source device on hard reset. Schedule
+ *        source capabilities message in 15 ms after hard reset.
+ *
+ * @param data Pointer to USB-C source device emulator data
+ */
+void tcpci_src_emul_hard_reset(void *data);
+
+/**
  * @}
  */
 

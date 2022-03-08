@@ -98,6 +98,14 @@ enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 	const struct tcpci_emul_msg *msg);
 
 /**
+ * @brief Perform action required by sink device on hard reset. Reset sink
+ *        specific flags (pd_completed and wait_for_ps_rdy).
+ *
+ * @param data Pointer to USB-C source device emulator data
+ */
+void tcpci_snk_emul_hard_reset(void *data);
+
+/**
  * @}
  */
 

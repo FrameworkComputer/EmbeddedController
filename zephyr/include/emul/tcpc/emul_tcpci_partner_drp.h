@@ -103,6 +103,15 @@ enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 	const struct tcpci_emul_msg *msg);
 
 /**
+ * @brief Perform action required by DRP device on hard reset. If device acts
+ *        as sink, sink hard reset function is called. Otherwise source hard
+ *        reset function is called.
+ *
+ * @param data Pointer to USB-C dual role device emulator data
+ */
+void tcpci_src_emul_hard_reset(void *data);
+
+/**
  * @}
  */
 
