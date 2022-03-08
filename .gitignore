@@ -12,6 +12,8 @@ cscope.*
 .failedboards/
 .sizes.txt
 .gdb_history
+# Git commit message template (see https://crbug.com/gerrit/10963)
+.gitmessage
 
 # VSCode IDE
 .vscode/*
