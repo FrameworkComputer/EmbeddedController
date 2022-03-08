@@ -34,3 +34,8 @@ enum ec_ssfc_lid_sensor get_cbi_ssfc_lid_sensor(void)
 {
 	return (enum ec_ssfc_lid_sensor) cached_ssfc.lid_sensor;
 }
+
+enum ec_ssfc_mux_redriver get_cbi_ssfc_mux_redriver(void)
+{
+	return (enum ec_ssfc_mux_redriver) cached_ssfc.mux_redriver;
+}

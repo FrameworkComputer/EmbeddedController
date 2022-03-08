@@ -88,9 +88,12 @@
 
 /* USB Mux and Retimer */
 #define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
+#define CONFIG_USB_MUX_PS8743			/* C1: PS8743 Mux */
 #define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
 
 #define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
+#define CONFIG_USB_MUX_RUNTIME_CONFIG
+#define CONFIG_USB_MUX_VIRTUAL
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_VIVALDI
