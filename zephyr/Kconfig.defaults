@@ -17,3 +17,5 @@ config GPIO
 
 config SHELL_PROMPT_UART
 	default "ec:~$ "
+
+orsource "Kconfig.defaults-$(ARCH)"
