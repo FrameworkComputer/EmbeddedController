@@ -156,7 +156,7 @@ config PLATFORM_EC_POWERSEQ_METEORLAKE
 menuconfig PLATFORM_EC_POWERSEQ_ICELAKE
 	bool "Use common Icelake code for power sequencing"
 	depends on AP_X86_INTEL_TGL
-	default y
+	default n
 	help
 	  Use the Icelake common code for power sequencing.  Note that
 	  this applies to more platforms than just Icelake.  For
