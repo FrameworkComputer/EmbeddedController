@@ -1,0 +1,276 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_wp;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		ioex_kbd_intr_n: ioex-kbd-intr-n {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+		};
+		all_sys_pwrgd: all-sys-pwrgd {
+			gpios = <&gpio7 0 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
+		};
+		rsmrst_pwrgd: rsmrst-pwrgd {
+			gpios = <&gpio6 6 GPIO_INPUT>; /* 1.8V */
+			enum-name = "GPIO_PG_EC_RSMRST_ODL";
+		};
+		pch_slp_s0_n: pch-slp-s0-n-ec {
+			gpios = <&gpioa 1 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S0_L"; /* 1.8V */
+		};
+		pm-slp-s3-n-ec {
+			gpios = <&gpiob 0 GPIO_INPUT>; /* 1.8V */
+		};
+		pm-slp-s4-n-ec {
+			gpios = <&gpioa 5 GPIO_INPUT>; /* 1.8V */
+		};
+		volume-up {
+			gpios = <&gpio6 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		vol-dn-ec-r {
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		smc_lid: smc-lid {
+			gpios = <&gpio0 1 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		smc_onoff_n: smc-onoff-n {
+			gpios = <&gpiod 2 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_wp: wp-l {
+			gpios = <&gpiod 5 GPIO_INPUT>;
+		};
+		std-adp-prsnt {
+			gpios = <&gpioc 6 GPIO_INPUT>;
+		};
+		bc_acok: bc-acok-ec {
+			gpios = <&gpio0 2 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		usbc-tcpc-alrt-p0 {
+			gpios = <&gpio4 0 GPIO_INPUT>;
+		};
+		/* NOTE: Netname is USBC_TCPC_PPC_ALRT_P0 */
+		usb-c0-c1-tcpc-rst-odl {
+			gpios = <&gpiod 0 GPIO_ODR_HIGH>;
+		};
+		/* NOTE: Netname is USBC_TCPC_ALRT_P1 */
+		usbc-tcpc-ppc-alrt-p0 {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
+		usbc-tcpc-ppc-alrt-p1 {
+			gpios = <&gpioe 4 GPIO_INPUT>;
+		};
+		usbc-tcpc-alrt-p2 {
+			gpios = <&gpio9 1 GPIO_INPUT>;
+		};
+		/* NOTE: Netname is USBC_TCPC_PPC_ALRT_P3 */
+		usbc-tcpc-ppc-alrt-p3 {
+			gpios = <&gpiof 3 GPIO_INPUT>;
+		};
+		gpio_ec_pch_wake_odl: pch-wake-n {
+			gpios = <&gpio7 4 GPIO_ODR_HIGH>;
+		};
+		espi-rst-n {
+			gpios = <&gpio5 4 GPIO_INPUT>; /* 1.8V */
+		};
+		plt-rst-l {
+			gpios = <&gpioa 2 GPIO_INPUT>; /* 1.8V */
+		};
+		slate-mode-indication {
+			gpios = <&gpio9 4 GPIO_INPUT>; /* 1.8V */
+		};
+		prochot-ec {
+			gpios = <&gpio6 0 GPIO_INPUT>;
+			enum-name = "GPIO_CPU_PROCHOT";
+		};
+		sys-rst-odl-ec {
+			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_SYS_RESET_L";
+		};
+		pm-rsmrst-r-n {
+			gpios = <&gpioa 4 GPIO_OUTPUT_LOW>; /* 1.8V */
+			enum-name = "GPIO_PCH_RSMRST_L";
+		};
+		pm-pwrbtn-n-ec {
+			gpios = <&gpiod 4 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		ec_spi_oe_mecc: ec-spi-oe-mecc-r {
+			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>; /* 1.8V */
+		};
+		ec-ds3-r {
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_EN_PP3300_A";
+		};
+		pch-pwrok-ec-r {
+			gpios = <&gpiod 3 GPIO_INPUT>;
+		};
+		sys_pwrok_ec: sys-pwrok-ec {
+			gpios = <&gpiof 5 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PCH_SYS_PWROK";
+		};
+		bat-det-ec {
+			gpios = <&gpio7 6 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		edp-bklt-en {
+			gpios = <&gpioe 1 GPIO_OUTPUT_HIGH>;
+		};
+		/* TODO: move both LEDs to PWM */
+		led-1-l-ec {
+			gpios = <&gpiob 6 GPIO_OUTPUT_HIGH>;
+		};
+		led-2-l-ec {
+			gpios = <&gpiob 7 GPIO_OUTPUT_HIGH>;
+		};
+		therm-sen-mecc-r {
+			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
+		};
+		/* NOTE: Netname is USBC_TCPC_ALRT_P3 */
+		ccd-mode-odl {
+			gpios = <&gpio9 2 GPIO_INPUT>;
+		};
+		smb-bs-clk {
+			gpios = <&gpiob 3 GPIO_INPUT>;
+		};
+		smb-bs-data {
+			gpios = <&gpiob 2 GPIO_INPUT>;
+		};
+		usbc-tcpc-i2c-clk-aic1 {
+			gpios = <&gpiob 5 GPIO_INPUT>;
+		};
+		usbc-tcpc-i2c-data-aic1 {
+			gpios = <&gpiob 4 GPIO_INPUT>;
+		};
+		usbc-tcpc-i2c-clk-aic2 {
+			gpios = <&gpio9 0 GPIO_INPUT>;
+		};
+		usbc-tcpc-i2c-data-aic2 {
+			gpios = <&gpio8 7 GPIO_INPUT>;
+		};
+		/* Unused 1.8V pins */
+		i3c-1-sda-r {
+			gpios = <&gpio5 0 GPIO_INPUT>;
+		};
+		i3c-1-scl-r {
+			gpios = <&gpio5 6 GPIO_INPUT>;
+		};
+		espi-alert0-n-r {
+			gpios = <&gpio5 7 GPIO_INPUT>;
+		};
+		tp-gpio95 {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+		};
+		cpu-c10-gate {
+			gpios = <&gpio9 6 GPIO_INPUT>;
+		};
+		slp-s0-cs-n-ec {
+			gpios = <&gpio9 7 GPIO_INPUT>;
+		};
+		rtc-rst-n-r {
+			gpios = <&gpioa 0 GPIO_INPUT>;
+		};
+		tp-gpioa6 {
+			gpios = <&gpioa 6 GPIO_INPUT>;
+		};
+		sml1-clk-mecc {
+			gpios = <&gpio3 3 GPIO_INPUT>;
+		};
+		sml1-data-mecc {
+			gpios = <&gpio3 6 GPIO_INPUT>;
+		};
+		sml1-alert {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		smb-pch-alrt {
+			gpios = <&gpioa 3 GPIO_INPUT>;
+		};
+		smb-pch-data {
+			gpios = <&gpioc 1 GPIO_INPUT>;
+		};
+		smb-pch-clk {
+			gpios = <&gpioc 2 GPIO_INPUT>;
+		};
+		/* Unused 3.3V pins */
+		cpu-cat-err-mecc {
+			gpios = <&gpio3 4 GPIO_INPUT>;
+		};
+		tp-gpio37 {
+			gpios = <&gpio3 7 GPIO_INPUT>;
+		};
+		tp-vccpdsw-3p3-ec {
+			gpios = <&gpio4 5 GPIO_INPUT>;
+		};
+		mech-pwr-btn-in-odl {
+			gpios = <&gpio6 2 GPIO_INPUT>;
+		};
+		tp-gpio63 {
+			gpios = <&gpio6 3 GPIO_INPUT>;
+		};
+		tp-gpio67 {
+			gpios = <&gpio6 7 GPIO_INPUT>;
+		};
+		tp-gpio72 {
+			gpios = <&gpio7 2 GPIO_INPUT>;
+		};
+		tp-gpio75 {
+			gpios = <&gpio7 5 GPIO_INPUT>;
+		};
+		ec-peci-ec {
+			gpios = <&gpio8 1 GPIO_INPUT>;
+		};
+		tp-gpiob1 {
+			gpios = <&gpiob 1 GPIO_INPUT>;
+		};
+		std-adpt-cntrl-GPIO_r {
+			gpios = <&gpioc 3 GPIO_INPUT>;
+		};
+		ec-packet-mode-ec {
+			gpios = <&gpioe 2 GPIO_INPUT>;
+		};
+		tp-gpioe3 {
+			gpios = <&gpioe 3 GPIO_INPUT>;
+		};
+		boot-stall-r {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+		};
+		tp-gpiof0 {
+			gpios = <&gpiof 0 GPIO_INPUT>;
+		};
+		tp-gpiof1 {
+			gpios = <&gpiof 1 GPIO_INPUT>;
+		};
+		usbc-tcpc-ppc-alrt-p2 {
+			gpios = <&gpiof 2 GPIO_INPUT>;
+		};
+		tp-gpiof4 {
+			gpios = <&gpiof 4 GPIO_INPUT>;
+		};
+	};
+
+	def-lvol-io-list {
+		compatible = "nuvoton,npcx-lvolctrl-def";
+		lvol-io-pads = <
+			&lvol_io66 /* RSMRET_PWRGD */
+			&lvol_io90 /* I2C1_SCL0 */
+			&lvol_io87 /* I2C1_SDA0 */
+			&lvol_io33 /* SML1_CLK_MECC */
+			&lvol_io36 /* SML1_DATA_MECC */
+			&lvol_ioc7 /* SML1_ALERT */
+			&lvol_ioc1 /* SMB_PCH_DATA */
+			&lvol_ioc2 /* SMB_PCH_CLK */
+		>;
+	};
+};

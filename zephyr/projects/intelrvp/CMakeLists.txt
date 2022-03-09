@@ -13,3 +13,8 @@ if(DEFINED CONFIG_BOARD_ADLRVP_NPCX)
   add_subdirectory(adlrvp)
   zephyr_library_sources("src/intelrvp.c")
 endif()
+
+if(DEFINED CONFIG_BOARD_MTLRVP_NPCX)
+  add_subdirectory(mtlrvp)
+  zephyr_library_sources("src/intelrvp.c")
+endif()

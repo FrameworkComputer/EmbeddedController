@@ -21,6 +21,9 @@ def register_intelrvp_project(
         kconfig_files.append(here / "adlrvp/prj.conf")
         dts_overlays.append(here / "adlrvp/battery.dts")
         dts_overlays.append(here / "adlrvp/ioex.dts")
+    if project_name.startswith("mtlrvp"):
+        kconfig_files.append(here / "mtlrvp/prj.conf")
+        dts_overlays.append(here / "mtlrvp/battery.dts")
     kconfig_files.extend(extra_kconfig_files)
     dts_overlays.extend(extra_dts_overlays)
 
@@ -43,4 +46,16 @@ register_intelrvp_project(
         here / "adlrvp/adlrvp_npcx/keyboard.dts",
     ],
     extra_kconfig_files=[here / "adlrvp/adlrvp_npcx/prj.conf"],
+)
+
+register_intelrvp_project(
+    project_name="mtlrvpp_npcx",
+    chip="npcx9",
+    extra_dts_overlays=[
+        here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx.dts",
+        here / "mtlrvp/mtlrvpp_npcx/fan.dts",
+        here / "mtlrvp/mtlrvpp_npcx/gpio.dts",
+        here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
+    ],
+    extra_kconfig_files=[here / "mtlrvp/mtlrvpp_npcx/prj.conf"],
 )
