@@ -258,7 +258,8 @@ static int common_pwr_sm_run(int state)
 		}
 
 		/* Call hooks now that rails are up */
-		/* TODO: hook_notify(HOOK_CHIPSET_STARTUP); */
+		ap_power_ev_send_callbacks(AP_POWER_STARTUP);
+
 		/* TODO: S0ix
 		 * Clearing the S0ix flag on the path to S0
 		 * to handle any reset conditions.

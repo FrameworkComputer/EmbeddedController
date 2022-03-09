@@ -10,6 +10,8 @@
 #include <kernel.h>
 #include <init.h>
 #include <zephyr/types.h>
+#include <ap_power/ap_power.h>
+#include <ap_power/ap_power_events.h>
 
 #define DT_DRV_COMPAT	intel_ap_pwrseq
 

@@ -184,6 +184,7 @@ void chipset_reset(enum pwrseq_chipset_shutdown_reason reason)
 	power_signal_set(PWR_SYS_RST, 1);
 	intel_x86_sys_reset_delay();
 	power_signal_set(PWR_SYS_RST, 0);
+	ap_power_ev_send_callbacks(AP_POWER_RESET);
 }
 
 __attribute__((weak)) void new_chipset_force_shutdown(void)
@@ -216,6 +217,7 @@ __attribute__((weak)) void new_chipset_force_shutdown(void)
 
 	if (!timeout_ms)
 		LOG_DBG("DSW_PWROK or RSMRST_ODL didn't go low!  Assuming G3.");
+	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
 }
 
 __attribute__((weak)) void g3s5_action_handler(int delay, int signal_timeout)
