@@ -136,6 +136,14 @@ struct charger_drv {
 	/* Enable/disable linear charging */
 	enum ec_error_list (*enable_linear_charge)(int chgnum, bool enable);
 
+	/*
+	 * Enable/disable bypass mode
+	 *
+	 * Callers are responsible for checking required conditions beforehand.
+	 * (e.g supplier == CHARGE_SUPPLIER_DEDICATED, 20 V < input_voltage)
+	 */
+	enum ec_error_list (*enable_bypass_mode)(int chgnum, bool enable);
+
 	/* Dumps charger registers */
 	void (*dump_registers)(int chgnum);
 };
@@ -363,6 +371,18 @@ enum ec_error_list charger_is_icl_reached(int chgnum, bool *reached);
  * @return EC_SUCCESS on success, error otherwise.
  */
 enum ec_error_list charger_enable_linear_charge(int chgnum, bool enable);
+
+/**
+ * Enable/disable bypass mode
+ *
+ * Bypass mode allows AC power to be supplied directly to the system rail
+ * instead of going through the charger.
+ *
+ * @param chgnum: Active charge port
+ * @param enable: Whether to enable or disable bypass mode.
+ * @return EC_SUCCESS on success, error otherwise.
+ */
+enum ec_error_list charger_enable_bypass_mode(int chgnum, int enable);
 
 /*
  * Print all charger info for debugging purposes

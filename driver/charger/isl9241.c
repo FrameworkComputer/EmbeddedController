@@ -12,6 +12,7 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "charger.h"
+#include "charge_manager.h"
 #include "charge_state.h"
 #include "console.h"
 #include "common.h"
@@ -41,7 +42,7 @@
 #define AC_CURRENT_TO_REG(CUR) (((CUR) * BOARD_RS1) / ISL9241_DEFAULT_RS1)
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 static int learn_mode;
 
@@ -70,26 +71,38 @@ static enum ec_error_list isl9241_discharge_on_ac_weak_disable(int chgnum);
 static inline enum ec_error_list isl9241_read(int chgnum, int offset,
 					      int *value)
 {
-	return i2c_read16(chg_chips[chgnum].i2c_port,
-			  chg_chips[chgnum].i2c_addr_flags,
-			  offset, value);
+	int rv = i2c_read16(chg_chips[chgnum].i2c_port,
+			    chg_chips[chgnum].i2c_addr_flags,
+			    offset, value);
+	if (rv)
+		CPRINTS("%s failed (%d)", __func__, rv);
+
+	return rv;
 }
 
 static inline enum ec_error_list isl9241_write(int chgnum, int offset,
 					       int value)
 {
-	return i2c_write16(chg_chips[chgnum].i2c_port,
-			   chg_chips[chgnum].i2c_addr_flags,
-			   offset, value);
+	int rv = i2c_write16(chg_chips[chgnum].i2c_port,
+			     chg_chips[chgnum].i2c_addr_flags,
+			     offset, value);
+	if (rv)
+		CPRINTS("%s failed (%d)", __func__, rv);
+
+	return rv;
 }
 
 static inline enum ec_error_list isl9241_update(int chgnum, int offset,
 						uint16_t mask,
 						enum mask_update_action action)
 {
-	return i2c_update16(chg_chips[chgnum].i2c_port,
-			    chg_chips[chgnum].i2c_addr_flags,
-			    offset, mask, action);
+	int rv = i2c_update16(chg_chips[chgnum].i2c_port,
+			      chg_chips[chgnum].i2c_addr_flags,
+			      offset, mask, action);
+	if (rv)
+		CPRINTS("%s failed (%d)", __func__, rv);
+
+	return rv;
 }
 
 /* chip specific interfaces */
@@ -299,7 +312,7 @@ error_restore_ctl3:
 
 error:
 	if (rv)
-		CPRINTF("Could not read VBUS ADC! Error: %d\n", rv);
+		CPRINTS("Could not read VBUS ADC! Error: %d", rv);
 
 	return rv;
 }
@@ -368,7 +381,7 @@ int isl9241_set_ac_prochot(int chgnum, int ma)
 
 	rv = isl9241_write(chgnum, ISL9241_REG_AC_PROCHOT, reg);
 	if (rv)
-		CPRINTF("set_ac_prochot failed (%d)\n", rv);
+		CPRINTS("set_ac_prochot failed (%d)", rv);
 
 	return rv;
 }
@@ -389,7 +402,283 @@ int isl9241_set_dc_prochot(int chgnum, int ma)
 
 	rv = isl9241_write(chgnum, ISL9241_REG_DC_PROCHOT, ma);
 	if (rv)
-		CPRINTF("set_dc_prochot failed (%d)\n", rv);
+		CPRINTS("set_dc_prochot failed (%d)", rv);
+
+	return rv;
+}
+
+static bool isl9241_is_ac_present(int chgnum)
+{
+	static bool ac_is_present;
+	int reg;
+	int rv;
+
+	rv = isl9241_read(chgnum, ISL9241_REG_INFORMATION2, &reg);
+	if (rv == EC_SUCCESS)
+		ac_is_present = !!(reg & ISL9241_INFORMATION2_ACOK_PIN);
+
+	return  ac_is_present;
+}
+
+/*
+ * Check whether ISL9241 is in any CHRG state, including NVDC+CHRG, Bypass+CHRG,
+ * RTB+CHRG.
+ */
+static bool isl9241_is_in_chrg(int chgnum)
+{
+	static bool trickle_charge_enabled, fast_charge_enabled;
+	int reg;
+	int rv;
+
+	rv = isl9241_read(chgnum, ISL9241_REG_MIN_SYSTEM_VOLTAGE, &reg);
+	if (rv == EC_SUCCESS)
+		trickle_charge_enabled = reg > 0;
+
+	rv = isl9241_read(chgnum, ISL9241_REG_CHG_CURRENT_LIMIT, &reg);
+	if (rv == EC_SUCCESS)
+		fast_charge_enabled = reg > 0;
+
+	return trickle_charge_enabled || fast_charge_enabled;
+}
+
+/*
+ * Transition from Bypass to BAT.
+ */
+static enum ec_error_list isl9241_bypass_to_bat(int chgnum)
+{
+	const struct battery_info *bi = battery_get_info();
+
+	/* 1: Disable force forward buck/reverse boost. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL4,
+		       ISL9241_CONTROL4_FORCE_BUCK_MODE, MASK_CLR);
+	/*
+	 * 2: Turn off BYPSG, turn on NGATE, disable charge pump 100%, disable
+	 *    Vin<Vout comparator.
+	 */
+	isl9241_write(chgnum, ISL9241_REG_CONTROL0, 0);
+	/* 3: Set MaxSysVoltage to full charge. */
+	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, bi->voltage_max);
+	/* 4: Disable ADC. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL3,
+		       ISL9241_CONTROL3_ENABLE_ADC, MASK_CLR);
+	/* 5: Set BGATE to normal operation. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL1,
+		       ISL9241_CONTROL1_BGATE_OFF, MASK_CLR);
+	/* 6: Set ACOK reference to normal value. TODO: Revisit. */
+	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+		      ISL9241_MV_TO_ACOK_REFERENCE(
+				      ISL9241_ACOK_REF_LOW_VOLTAGE_ADAPTER_MV));
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Transition from Bypass+CHRG to BAT (M).
+ */
+static enum ec_error_list isl9241_bypass_chrg_to_bat(int chgnum)
+{
+	/* 1: Disable force forward buck/reverse boost. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL4,
+		       ISL9241_CONTROL4_FORCE_BUCK_MODE, MASK_CLR);
+	/* 2: Disable fast charge. */
+	isl9241_write(chgnum, ISL9241_REG_CHG_CURRENT_LIMIT, 0);
+	/* 3: Disable trickle charge. */
+	isl9241_write(chgnum, ISL9241_REG_MIN_SYSTEM_VOLTAGE, 0);
+	/*
+	 * 4: Turn off BYPSG, turn on NGATE, disable charge pump 100%, disable
+	 *     Vin<Vout comparator.
+	 */
+	isl9241_write(chgnum, ISL9241_REG_CONTROL0, 0);
+	/* 5: Disable ADC. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL3,
+		       ISL9241_CONTROL3_ENABLE_ADC, MASK_CLR);
+	/* 6: Set BGATE to normal operation. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL1,
+		       ISL9241_CONTROL1_BGATE_OFF, MASK_CLR);
+	/* 7: Set ACOK reference to normal value. TODO: Revisit. */
+	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+		      ISL9241_MV_TO_ACOK_REFERENCE(3600));
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Transition from NVDC+CHRG to NVDC (L).
+ */
+static enum ec_error_list isl9241_nvdc_chrg_to_nvdc(int chgnum)
+{
+	enum ec_error_list rv;
+
+	/* L: If we're in NVDC+Chg, first transition to NVDC. */
+	/* 1: Disable fast charge. */
+	rv = isl9241_set_current(chgnum, 0);
+	if (rv)
+		return rv;
+
+	/* 2: Disable trickle charge. */
+	rv = isl9241_write(chgnum, ISL9241_REG_MIN_SYSTEM_VOLTAGE, 0);
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
+}
+
+static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable);
+
+/*
+ * Transition from NVDC to Bypass (A).
+ */
+static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
+{
+	int voltage;
+
+	/* 1: Set adapter current limit. */
+	isl9241_set_input_current_limit(
+			chgnum, charge_manager_get_charger_current());
+	/* 2: Set charge pumps to 100%. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+		       ISL9241_CONTROL0_EN_CHARGE_PUMPS, MASK_SET);
+	/* 3: Enable ADC. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL3,
+		       ISL9241_CONTROL3_ENABLE_ADC, MASK_SET);
+	/* 4: Turn on Vin/Vout comparator. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+		       ISL9241_CONTROL0_EN_VIN_VOUT_COMP, MASK_SET);
+	/* 5: Set ACOK reference higher than battery full voltage.
+	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+		      ISL9241_MV_TO_ACOK_REFERENCE(
+				      battery_full_voltage_mv + 800));
+	*/
+	/* 6*: Reduce system load below ACLIM. */
+	/* 7: Turn off BGATE */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL1,
+		       ISL9241_CONTROL1_BGATE_OFF, MASK_SET);
+	/* 8*: Set MaxSysVoltage to VADP. */
+	isl9241_get_vbus_voltage(chgnum, 0, &voltage);
+	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, voltage - 256);
+	/* 9*: Wait until VSYS == MaxSysVoltage. */
+	/* 10*: Turn on Bypass gate */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+		       ISL9241_CONTROL0_EN_BYPASS_GATE, MASK_SET);
+	/* 11: Wait 1 ms. */
+	msleep(1);
+	/* 12*: Turn off NGATE. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+		       ISL9241_CONTROL0_NGATE_OFF, MASK_SET);
+	/* 14*: Stop switching. */
+	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, 0);
+	/* 15: Set BGATE to normal operation. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL1,
+		       ISL9241_CONTROL1_BGATE_OFF, MASK_CLR);
+	/*
+	 * Suggestion-1: If ACOK goes low before step A16, stop here
+	 * then execute the steps for Bypass to BAT to abort.
+	 */
+	if (!isl9241_is_ac_present(chgnum))
+		return isl9241_enable_bypass_mode(chgnum, false);
+	/* 16: Enable 10 mA discharge on CSOP. */
+	/* 17: Read diode emulation active bit. */
+	/* 18: Disable 10mA discharge on CSOP. */
+	/* 19*: Force forward buck/reverse boost mode. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL4,
+		       ISL9241_CONTROL4_FORCE_BUCK_MODE, MASK_SET);
+
+	/*
+	 * Suggestion-2 and 3: If AC is removed on or after A16,
+	 * complete all steps then execute Bypass to BAT to revert.
+	 */
+	if (!isl9241_is_ac_present(chgnum))
+		return isl9241_enable_bypass_mode(chgnum, false);
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Transition from Bypass + CHRG to Bypass (J).
+ */
+static enum ec_error_list isl9241_bypass_chrg_to_bypass(int chgnum)
+{
+	/* 1: Stop switching. */
+	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, 0);
+	/* 2: Disable fast charge. */
+	isl9241_write(chgnum, ISL9241_REG_CHG_CURRENT_LIMIT, 0);
+	/* 3: Disable trickle charge. */
+	isl9241_write(chgnum, ISL9241_REG_MIN_SYSTEM_VOLTAGE, 0);
+
+	return EC_SUCCESS;
+}
+
+/*
+ * Transition from Bypass to NVDC (B).
+ */
+static enum ec_error_list isl9241_bypass_to_nvdc(int chgnum)
+{
+	const struct battery_info *bi = battery_get_info();
+	int voltage;
+
+	/* 1*: Reduce system load below ACLIM. */
+	/* 3*: Disable force forward buck/reverse boost. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL4,
+		       ISL9241_CONTROL4_FORCE_BUCK_MODE, MASK_CLR);
+	/* 6*: Set MaxSysVoltage to VADP. */
+	isl9241_get_vbus_voltage(chgnum, 0, &voltage);
+	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, voltage - 256);
+	/* 7*: Wait until VSYS == MaxSysVoltage. */
+	msleep(1);
+	/* 8*: Turn on NGATE. */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+		       ISL9241_CONTROL0_NGATE_OFF, MASK_CLR);
+	/* 10*: Turn off Bypass gate */
+	isl9241_update(chgnum, ISL9241_REG_CONTROL0,
+		       ISL9241_CONTROL0_EN_BYPASS_GATE, MASK_CLR);
+	/* 12*: Set MaxSysVoltage to full charge. */
+	isl9241_write(chgnum, ISL9241_REG_MAX_SYSTEM_VOLTAGE, bi->voltage_max);
+
+	return EC_SUCCESS;
+}
+
+static enum ec_error_list isl9241_enable_bypass_mode(int chgnum, bool enable)
+{
+	enum ec_error_list rv = EC_ERROR_UNKNOWN;
+
+	if (enable) {
+		/* We should be already in NVDC. */
+		if (isl9241_is_in_chrg(chgnum)) {
+			/* (Optional) L (then A) */
+			rv = isl9241_nvdc_chrg_to_nvdc(chgnum);
+			CPRINTS("%s nvdc_chrg -> nvdc",
+				rv ? "Failed" : "Succeeded");
+		}
+		/* A */
+		rv = isl9241_nvdc_to_bypass(chgnum);
+		CPRINTS("%s nvdc -> bypass", rv ? "Failed" : "Succeeded");
+		return rv;
+	} else if (isl9241_is_ac_present(chgnum)) {
+		/* Switch to NVDC (e.g. BJ -> Type-C) */
+		if (isl9241_is_in_chrg(chgnum)) {
+			/* J (then B) */
+			rv = isl9241_bypass_chrg_to_bypass(chgnum);
+			CPRINTS("%s bypass_chrg -> bypass",
+				rv ? "Failed" : "Succeeded");
+		}
+		/* B */
+		rv = isl9241_bypass_to_nvdc(chgnum);
+		CPRINTS("%s bypass -> nvdc", rv ? "Failed" : "Succeeded");
+		return rv;
+	} else {
+		/* AC removal */
+		if (isl9241_is_in_chrg(chgnum)) {
+			/* M */
+			rv = isl9241_bypass_chrg_to_bat(chgnum);
+			CPRINTS("%s bypass_chrg -> bat",
+				rv ? "Failed" : "Succeeded");
+			return rv;
+		}
+		/* M */
+		rv = isl9241_bypass_to_bat(chgnum);
+		CPRINTS("%s bypass -> bat", rv ? "Failed" : "Succeeded");
+		return rv;
+	}
 
 	return rv;
 }
@@ -482,7 +771,7 @@ static void isl9241_init(int chgnum)
 	return;
 
 init_fail:
-	CPRINTF("ISL9241_init failed!\n");
+	CPRINTS("Init failed!");
 }
 
 /*****************************************************************************/
@@ -561,12 +850,12 @@ static void dump_reg_range(int chgnum, int low, int high)
 	int rv;
 
 	for (reg = low; reg <= high; reg++) {
-		CPRINTF("[%Xh] = ", reg);
+		ccprintf("[%Xh] = ", reg);
 		rv = isl9241_read(chgnum, reg, &regval);
 		if (!rv)
-			CPRINTF("0x%04x\n", regval);
+			ccprintf("0x%04x\n", regval);
 		else
-			CPRINTF("ERR (%d)\n", rv);
+			ccprintf("ERR (%d)\n", rv);
 		cflush();
 	}
 }
@@ -607,6 +896,7 @@ const struct charger_drv isl9241_drv = {
 	.ramp_is_detected = &isl9241_ramp_is_detected,
 	.ramp_get_current_limit = &isl9241_ramp_get_current_limit,
 #endif
+	.enable_bypass_mode = isl9241_enable_bypass_mode,
 #ifdef CONFIG_CMD_CHARGER_DUMP
 	.dump_registers = &command_isl9241_dump,
 #endif

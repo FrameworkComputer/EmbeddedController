@@ -43,7 +43,10 @@
 #define ISL9241_REG_CONTROL0		0x39
 /* 2: Input Voltage Regulation (0 = Enable (default), 1 = Disable) */
 #define ISL9241_CONTROL0_INPUT_VTG_REGULATION	BIT(2)
-
+#define ISL9241_CONTROL0_EN_VIN_VOUT_COMP	BIT(5)
+#define ISL9241_CONTROL0_EN_CHARGE_PUMPS	BIT(6)
+#define ISL9241_CONTROL0_EN_BYPASS_GATE		BIT(11)
+#define ISL9241_CONTROL0_NGATE_OFF		BIT(12)
 
 #define ISL9241_REG_INFORMATION1	0x3A
 #define ISL9241_REG_ADAPTER_CUR_LIMIT2	0x3B
@@ -51,6 +54,7 @@
 /* Configures various charger options */
 #define ISL9241_REG_CONTROL1		0x3C
 #define ISL9241_CONTROL1_PSYS		BIT(3)
+#define ISL9241_CONTROL1_BGATE_OFF	BIT(6)
 #define ISL9241_CONTROL1_LEARN_MODE	BIT(12)
 /*
  * 9:7 - Switching Frequency
@@ -97,6 +101,8 @@
 #define ISL9241_REG_OTG_VOLTAGE		0x49
 #define ISL9241_REG_OTG_CURRENT		0x4A
 
+#define ISL9241_MV_TO_ACOK_REFERENCE(mv)	(((mv) / 96) << 6)
+
 /* VIN Voltage (ADP Min Voltage) (default 4.096V) */
 #define ISL9241_REG_VIN_VOLTAGE		0x4B
 
@@ -119,6 +125,7 @@
 #define ISL9241_INFORMATION2_ACOK_PIN		BIT(14)
 
 #define ISL9241_REG_CONTROL4		0x4E
+#define ISL9241_CONTROL4_FORCE_BUCK_MODE	BIT(10)
 /* 11: Rsense (Rs1:Rs2) ratio for PSYS (0 - 2:1, 1 - 1:1) */
 #define ISL9241_CONTROL4_PSYS_RSENSE_RATIO  BIT(11)
 /* 13: Enable VSYS slew rate control (0 - disable, 1 - enable) */
@@ -143,5 +150,11 @@
 
 #define ISL9241_VIN_ADC_BIT_OFFSET	6
 #define ISL9241_VIN_ADC_STEP_MV		96
+
+/*
+ * Used to reset ACOKref register to normal value to detect low voltage (5V or
+ * 9V) adapter during next plug in event
+ */
+#define ISL9241_ACOK_REF_LOW_VOLTAGE_ADAPTER_MV	3600
 
 #endif /* __CROS_EC_ISL9241_H */
