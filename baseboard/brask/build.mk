@@ -8,4 +8,5 @@
 
 baseboard-y=
 baseboard-y+=baseboard.o
+baseboard-y+=cbi.o
 baseboard-y+=usb_pd_policy.o
