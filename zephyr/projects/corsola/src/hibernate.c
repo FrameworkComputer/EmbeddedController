@@ -9,14 +9,14 @@
 #include "system.h"
 
 /* Corsola board specific hibernate implementation */
-__override void board_hibernate_late(void)
+__override void board_hibernate(void)
 {
-#if	defined(CONFIG_CHARGER_ISL9238C)
+#ifdef CONFIG_CHARGER_ISL9238C
 	isl9238c_hibernate(CHARGER_SOLO);
 #endif
+}
 
+__override void board_hibernate_late(void)
+{
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_ulp), 1);
-
-	/* should not reach here */
-	__builtin_unreachable();
 }
