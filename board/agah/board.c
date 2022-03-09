@@ -52,6 +52,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 static void board_init(void)
 {
 	gpio_enable_interrupt(GPIO_PG_PP3300_S5_OD);
+	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

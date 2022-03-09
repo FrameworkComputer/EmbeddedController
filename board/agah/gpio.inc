@@ -26,6 +26,7 @@ GPIO_INT(PG_PP3300_S5_OD,                PIN(B, 4), GPIO_INT_BOTH | GPIO_PULL_UP
 GPIO_INT(USB_C2_BC12_INT_ODL,            PIN(8, 3), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C2_TCPC_INT_ODL,            PIN(A, 7), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C2_PPC_INT_ODL,             PIN(7, 0), GPIO_INT_FALLING, ppc_interrupt)
+GPIO_INT(BJ_ADP_PRESENT_ODL,             PIN(5, 6), GPIO_INT_BOTH | GPIO_PULL_UP, bj_present_interrupt)
 
 /* USED GPIOs: */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -69,7 +70,6 @@ GPIO(USB_C2_FRS_EN,                  PIN(D, 4), GPIO_OUT_LOW)
 
 /* Barreljack */
 GPIO(EN_PPVAR_BJ_ADP,                PIN(A, 2), GPIO_OUT_LOW)
-GPIO(BJ_ADP_PRESENT_L,               PIN(5, 6), GPIO_INPUT)
 
 /*
  * The NPCX keyboard driver does not use named GPIOs to access
