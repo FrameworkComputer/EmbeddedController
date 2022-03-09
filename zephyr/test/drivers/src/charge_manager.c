@@ -36,3 +36,15 @@ ZTEST_USER(charge_manager, test_default_fill_power_info)
 	zassert_equal(info.meas.current_lim, 0, NULL);
 	zassert_equal(info.max_power, 0, NULL);
 }
+
+/**
+ * Test the default implementation of board_charge_port_is_connected(). This
+ * function should always return 1 regardless of input.
+ */
+ZTEST_USER(charge_manager, test_default_charge_port_is_connected)
+{
+	zassert_true(board_charge_port_is_connected(-1), NULL);
+	zassert_true(board_charge_port_is_connected(0), NULL);
+	zassert_true(board_charge_port_is_connected(1), NULL);
+	zassert_true(board_charge_port_is_connected(500), NULL);
+}
