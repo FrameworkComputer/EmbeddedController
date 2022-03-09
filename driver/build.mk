@@ -173,6 +173,7 @@ driver-$(CONFIG_USB_PD_TCPM_FUSB307)+=tcpm/fusb307.o
 driver-$(CONFIG_USB_PD_TCPM_STM32GX)+=tcpm/stm32gx.o
 
 # Type-C Retimer drivers
+driver-$(CONFIG_USBC_RETIMER_ANX7483)+=retimer/anx7483.o
 driver-$(CONFIG_USBC_RETIMER_INTEL_BB)+=retimer/bb_retimer.o
 driver-$(CONFIG_USBC_RETIMER_KB800X)+=retimer/kb800x.o
 driver-$(CONFIG_USBC_RETIMER_NB7V904M)+=retimer/nb7v904m.o
