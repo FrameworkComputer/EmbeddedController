@@ -27,11 +27,19 @@ config PLATFORM_EC_USB_PD_TCPM_TCPCI
 #  CONFIG_USB_PD_TCPM_MT6370
 #  CONFIG_USB_PD_TCPM_FUSB307
 #  CONFIG_USB_PD_TCPM_STM32GX
-#  CONFIG_USB_PD_TCPM_CCGXXF
 
 endchoice # PLATFORM_EC_USB_PD_TCPM_TYPE
 
 if PLATFORM_EC_USB_PD_TCPM_TCPCI
+
+config PLATFORM_EC_USB_PD_TCPM_CCGXXF
+	bool "Cypress CCGXXF Single/Dual USB-C Port Controller with Source PPC"
+	help
+	  CCGXXF are Single/Dual port USB Type-C controllers that comply with
+	  the USB Type-C and PD specifications. These devices include an
+	  integrated Port Protection, VBUS Source path load switch and contain
+	  a True Random Type-C Transceiver including the Type-C termination
+	  resistors Rp, Rd, and dead battery Rd termination.
 
 config PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
 	bool "Use on-chip ITE"
