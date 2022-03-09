@@ -234,13 +234,7 @@ void board_reset_pd_mcu(void)
 /* Used by Vbus discharge common code with CONFIG_USB_PD_DISCHARGE */
 int board_vbus_source_enabled(int port)
 {
-	return tcpm_get_src_ctrl(port);
-}
-
-/* Used by USB charger task with CONFIG_USB_PD_5V_EN_CUSTOM */
-int board_is_sourcing_vbus(int port)
-{
-	return board_vbus_source_enabled(port);
+	return ppc_is_sourcing_vbus(port);
 }
 
 __override int board_rt1718s_set_snk_enable(int port, int enable)
