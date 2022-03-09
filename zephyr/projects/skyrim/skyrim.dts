@@ -84,7 +84,7 @@
 		ec_espi_rst_l {
 			gpios = <&gpio5 4 GPIO_PULL_DOWN>;
 		};
-		6axis_int_l {
+		gpio_accel_gyro_int_l: accel_gyro_int_l {
 			gpios = <&gpioa 0 GPIO_INPUT>;
 		};
 	};
@@ -178,6 +178,22 @@
 				value = <1>;
 				default;
 			};
+		};
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
 		};
 	};
 };

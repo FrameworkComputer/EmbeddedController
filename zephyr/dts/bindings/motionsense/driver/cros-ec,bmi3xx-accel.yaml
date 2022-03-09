@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: motion sense sensor node for BMI260 accel
+description: motion sense sensor node for BMI3XX accel
 
 compatible: "cros-ec,bmi3xx-accel"
 

@@ -89,7 +89,7 @@
 		ec_pwm7 {
 			gpios = <&gpio6 0 GPIO_INPUT_PULL_UP>;
 		};
-		6axis_int_l {
+		gpio_accel_gyro_int_l: accel_gyro_int_l {
 			gpios = <&gpioa 0 GPIO_INPUT_PULL_UP>;
 		};
 	};
@@ -173,6 +173,22 @@
 			irq-pin = <&gpio_pg_groupc_s0_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_en_pwr_pcore_s0";
+		};
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 (-1) 0 0
+				 0 0 (-1)>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <(-1) 0 0
+				 0 1 0
+				 0 0 (-1)>;
 		};
 	};
 };

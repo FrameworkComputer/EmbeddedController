@@ -16,6 +16,7 @@ def register_variant(project_name):
             here / "i2c.dts",
             here / "interrupts.dts",
             here / "keyboard.dts",
+            here / "motionsense.dts",
             here / "pwm.dts",
             here / "usbc.dts",
             # Project-specific DTS customizations.

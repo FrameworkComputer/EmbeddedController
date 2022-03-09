@@ -87,5 +87,10 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bc12_interrupt";
 		};
+		int_accel_gyro: accel_gyro {
+			irq-pin = <&gpio_accel_gyro_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bmi3xx_interrupt";
+		};
 	};
 };
