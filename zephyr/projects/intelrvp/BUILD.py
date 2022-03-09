@@ -44,6 +44,7 @@ register_intelrvp_project(
     extra_dts_overlays=[
         here / "adlrvp/adlrvp_npcx/adlrvp_npcx.dts",
         here / "adlrvp/adlrvp_npcx/bb_retimer.dts",
+        here / "adlrvp/adlrvp_npcx/cbi_eeprom.dts",
         here / "adlrvp/adlrvp_npcx/fan.dts",
         here / "adlrvp/adlrvp_npcx/gpio.dts",
         here / "adlrvp/adlrvp_npcx/interrupts.dts",

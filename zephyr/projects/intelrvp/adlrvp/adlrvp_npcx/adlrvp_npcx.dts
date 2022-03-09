@@ -28,6 +28,10 @@
 			i2c-port = <&i2c7_0>;
 			enum-name = "I2C_PORT_CHARGER";
 		};
+		eeprom {
+			i2c-port = <&i2c7_0>;
+			enum-name = "I2C_PORT_EEPROM";
+		};
 		typec_0: typec-0 {
 			i2c-port = <&i2c0_0>;
 			enum-name = "I2C_PORT_TYPEC_0";
