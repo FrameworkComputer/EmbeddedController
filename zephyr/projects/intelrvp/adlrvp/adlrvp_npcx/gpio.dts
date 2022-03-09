@@ -141,6 +141,7 @@
 		};
 		ec-h1-packet-mode {
 			gpios = <&gpioe 2 GPIO_OUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		ec-entering-rw {
 			gpios = <&gpiod 4 GPIO_OUT_LOW>;
