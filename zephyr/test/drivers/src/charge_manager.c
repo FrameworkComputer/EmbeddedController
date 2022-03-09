@@ -48,3 +48,11 @@ ZTEST_USER(charge_manager, test_default_charge_port_is_connected)
 	zassert_true(board_charge_port_is_connected(1), NULL);
 	zassert_true(board_charge_port_is_connected(500), NULL);
 }
+
+ZTEST_USER(charge_manager, test_default_charge_port_is_sink)
+{
+	zassert_true(board_charge_port_is_sink(-1), NULL);
+	zassert_true(board_charge_port_is_sink(0), NULL);
+	zassert_true(board_charge_port_is_sink(1), NULL);
+	zassert_true(board_charge_port_is_sink(500), NULL);
+}
