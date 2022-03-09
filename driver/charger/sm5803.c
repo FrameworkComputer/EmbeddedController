@@ -1019,7 +1019,7 @@ void sm5803_restart_charging(void)
 	int act_chg = charge_manager_get_active_charge_port();
 	timestamp_t now = get_time();
 
-	if (act_chg == active_restart_port) {
+	if (act_chg != CHARGE_PORT_NONE && act_chg == active_restart_port) {
 		if (timestamp_expired(failure_tracker[act_chg].time, &now)) {
 			/*
 			 * Enough time has passed since our last failure,
