@@ -110,6 +110,12 @@ ZTEST_USER(console_cmd_charge_manager, test_chgoverride_disable_from_off)
 		      NULL);
 }
 
+ZTEST_USER(console_cmd_charge_manager, test_chgoverride_0_from_off)
+{
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgoverride 0"), NULL);
+	zassert_equal(charge_manager_get_override(), 0, NULL);
+}
+
 ZTEST_USER_F(console_cmd_charge_manager, test_chgoverride_0_from_sink)
 {
 	/* Set chipset to ON, this will set TCPM to DRP */
