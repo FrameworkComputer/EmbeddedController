@@ -30,3 +30,9 @@ ZTEST_USER(console_cmd_charge_manager, test_chgoverride_missing_port)
 {
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgoverride"), NULL);
 }
+
+ZTEST_USER(console_cmd_charge_manager, test_chgoverride_off_from_off)
+{
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgoverride -1"), NULL);
+	zassert_equal(charge_manager_get_override(), OVERRIDE_OFF, NULL);
+}
