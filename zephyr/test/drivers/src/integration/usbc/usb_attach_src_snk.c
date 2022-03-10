@@ -158,10 +158,22 @@ static void attach_emulated_snk(struct emul_state *my_emul_state)
 {
 	const struct emul *tcpci_emul_snk = my_emul_state->tcpci_ps8xxx_emul;
 	struct tcpci_snk_emul *my_snk = &my_emul_state->my_snk;
+	uint16_t power_reg_val;
 
 	/* Attach emulated sink */
 	tcpci_snk_emul_init(my_snk);
 	tcpci_emul_set_rev(tcpci_emul_snk, TCPCI_EMUL_REV1_0_VER1_0);
+
+	/* Turn on VBUS detection */
+	/*
+	 * TODO(b/223901282): integration tests should not be setting vbus
+	 * detection via registers, also this should be turned on by default.
+	 */
+	tcpci_emul_get_reg(tcpci_emul_snk, TCPC_REG_POWER_STATUS,
+			   &power_reg_val);
+	tcpci_emul_set_reg(tcpci_emul_snk, TCPC_REG_POWER_STATUS,
+			   power_reg_val | TCPC_REG_POWER_STATUS_VBUS_DET);
+
 	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
 			   &my_snk->data, &my_snk->common_data, &my_snk->ops,
 			   tcpci_emul_snk),
@@ -176,10 +188,22 @@ static void attach_emulated_src(struct emul_state *my_emul_state)
 	const struct emul *tcpci_emul_src = my_emul_state->tcpci_generic_emul;
 	const struct emul *charger_emul = my_emul_state->charger_isl923x_emul;
 	struct tcpci_src_emul *my_src = &my_emul_state->my_src;
+	uint16_t power_reg_val;
 
 	/* Attach emulated charger. */
 	tcpci_src_emul_init(my_src);
 	tcpci_emul_set_rev(tcpci_emul_src, TCPCI_EMUL_REV1_0_VER1_0);
+
+	/* Turn on VBUS detection */
+	/*
+	 * TODO(b/223901282): integration tests should not be setting vbus
+	 * detection via registers, also this should be turned on by default.
+	 */
+	tcpci_emul_get_reg(tcpci_emul_src, TCPC_REG_POWER_STATUS,
+			   &power_reg_val);
+	tcpci_emul_set_reg(tcpci_emul_src, TCPC_REG_POWER_STATUS,
+			   power_reg_val | TCPC_REG_POWER_STATUS_VBUS_DET);
+
 	zassume_ok(tcpci_src_emul_connect_to_tcpci(
 			   &my_src->data, &my_src->common_data, &my_src->ops,
 			   tcpci_emul_src),
