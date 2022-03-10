@@ -81,7 +81,8 @@ enum tcpci_emul_rev {
 enum tcpci_emul_tx_status {
 	TCPCI_EMUL_TX_SUCCESS,
 	TCPCI_EMUL_TX_DISCARDED,
-	TCPCI_EMUL_TX_FAILED
+	TCPCI_EMUL_TX_FAILED,
+	TCPCI_EMUL_TX_CABLE_HARD_RESET
 };
 
 /** TCPCI specific device operations. Not all of them need to be implemented. */

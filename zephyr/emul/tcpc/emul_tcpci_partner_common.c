@@ -440,7 +440,14 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 	tcpci_partner_log_msg(data, tx_msg, TCPCI_PARTNER_SENDER_TCPM,
 			      tx_status);
 
-	tcpci_emul_partner_msg_status(data->tcpci_emul, tx_status);
+	/*
+	 * Do not change alert register in TCPCI emulator upon receiving
+	 * hard reset or cable reset
+	 */
+	if (type != TCPCI_MSG_TX_HARD_RESET && type != TCPCI_MSG_CABLE_RESET) {
+		tcpci_emul_partner_msg_status(data->tcpci_emul, tx_status);
+	}
+
 	/* If receiving message was unsuccessful, abandon processing message */
 	if (tx_status != TCPCI_EMUL_TX_SUCCESS) {
 		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;

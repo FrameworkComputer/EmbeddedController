@@ -524,6 +524,10 @@ void tcpci_emul_partner_msg_status(const struct emul *emul,
 	case TCPCI_EMUL_TX_FAILED:
 		tx_status_alert = TCPC_REG_ALERT_TX_FAILED;
 		break;
+	case TCPCI_EMUL_TX_CABLE_HARD_RESET:
+		tx_status_alert = TCPC_REG_ALERT_TX_SUCCESS |
+				  TCPC_REG_ALERT_TX_FAILED;
+		break;
 	default:
 		__ASSERT(0, "Invalid partner TX status 0x%x", status);
 		return;
@@ -638,6 +642,23 @@ static void tcpci_emul_reset_role_ctrl(const struct emul *emul)
 }
 
 /**
+ * @brief Reset mask registers that are reset upon receiving or transmitting
+ *        Hard Reset message.
+ *
+ * @param emul Pointer to TCPCI emulator
+ */
+static void tcpci_emul_reset_mask_regs(const struct emul *emul)
+{
+	struct tcpci_emul_data *data = emul->data;
+
+	data->reg[TCPC_REG_ALERT_MASK]				= 0xff;
+	data->reg[TCPC_REG_ALERT_MASK + 1]			= 0x7f;
+	data->reg[TCPC_REG_POWER_STATUS_MASK]			= 0xff;
+	data->reg[TCPC_REG_EXT_STATUS_MASK]			= 0x01;
+	data->reg[TCPC_REG_ALERT_EXTENDED_MASK]			= 0x07;
+}
+
+/**
  * @brief Reset registers to default values. Vendor and reserved registers
  *        are not changed.
  *
@@ -650,12 +671,7 @@ static int tcpci_emul_reset(const struct emul *emul)
 
 	data->reg[TCPC_REG_ALERT]				= 0x00;
 	data->reg[TCPC_REG_ALERT + 1]				= 0x00;
-	data->reg[TCPC_REG_ALERT_MASK]				= 0xff;
-	data->reg[TCPC_REG_ALERT_MASK + 1]			= 0x7f;
-	data->reg[TCPC_REG_POWER_STATUS_MASK]			= 0xff;
 	data->reg[TCPC_REG_FAULT_STATUS_MASK]			= 0xff;
-	data->reg[TCPC_REG_EXT_STATUS_MASK]			= 0x01;
-	data->reg[TCPC_REG_ALERT_EXTENDED_MASK]			= 0x07;
 	data->reg[TCPC_REG_CONFIG_STD_OUTPUT]			= 0x60;
 	data->reg[TCPC_REG_TCPC_CTRL]				= 0x00;
 	data->reg[TCPC_REG_FAULT_CTRL]				= 0x00;
@@ -683,6 +699,7 @@ static int tcpci_emul_reset(const struct emul *emul)
 	data->reg[TCPC_REG_VBUS_NONDEFAULT_TARGET]		= 0x00;
 	data->reg[TCPC_REG_VBUS_NONDEFAULT_TARGET + 1]		= 0x00;
 
+	tcpci_emul_reset_mask_regs(emul);
 	tcpci_emul_reset_role_ctrl(emul);
 
 	if (data->dev_ops && data->dev_ops->reset) {
@@ -1097,30 +1114,6 @@ static int tcpci_emul_handle_command(const struct emul *emul)
 }
 
 /**
- * @brief Handle write to transmit register
- *
- * @param emul Pointer to TCPCI emulator
- *
- * @return 0 on success
- */
-static int tcpci_emul_handle_transmit(const struct emul *emul)
-{
-	struct tcpci_emul_data *data = emul->data;
-
-	data->tx_msg->cnt = data->tx_msg->idx;
-	data->tx_msg->type = TCPC_REG_TRANSMIT_TYPE(data->write_data);
-	data->tx_msg->idx = 0;
-
-	if (data->partner && data->partner->transmit) {
-		data->partner->transmit(emul, data->partner, data->tx_msg,
-				TCPC_REG_TRANSMIT_TYPE(data->write_data),
-				TCPC_REG_TRANSMIT_RETRY(data->write_data));
-	}
-
-	return 0;
-}
-
-/**
  * @brief Load next rx message and inform partner which message was consumed
  *        by TCPC
  *
@@ -1151,6 +1144,64 @@ static int tcpci_emul_get_next_rx_msg(const struct emul *emul)
 		data->rx_msg->idx = 0;
 
 		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * @brief Perform actions that are expected by TCPC on disabling PD message
+ *        delivery (clear RECEIVE_DETECT register, clear already received
+ *        messages in buffer and reset mask registers)
+ *
+ * @param emul Pointer to TCPCI emulator
+ */
+static void tcpci_emul_disable_pd_msg_delivery(const struct emul *emul)
+{
+	tcpci_emul_set_reg(emul, TCPC_REG_RX_DETECT, 0);
+	/* Clear received messages */
+	while (tcpci_emul_get_next_rx_msg(emul))
+		;
+	tcpci_emul_reset_mask_regs(emul);
+}
+
+/**
+ * @brief Handle write to transmit register
+ *
+ * @param emul Pointer to TCPCI emulator
+ *
+ * @return 0 on success
+ */
+static int tcpci_emul_handle_transmit(const struct emul *emul)
+{
+	struct tcpci_emul_data *data = emul->data;
+	enum tcpci_msg_type type;
+
+	data->tx_msg->cnt = data->tx_msg->idx;
+	data->tx_msg->type = TCPC_REG_TRANSMIT_TYPE(data->write_data);
+	data->tx_msg->idx = 0;
+
+	type = TCPC_REG_TRANSMIT_TYPE(data->write_data);
+
+	if (data->partner && data->partner->transmit) {
+		data->partner->transmit(emul, data->partner, data->tx_msg, type,
+				TCPC_REG_TRANSMIT_RETRY(data->write_data));
+	}
+
+	switch (type) {
+	case TCPCI_MSG_TX_HARD_RESET:
+		tcpci_emul_disable_pd_msg_delivery(emul);
+		/* fallthrough */
+	case TCPCI_MSG_CABLE_RESET:
+		/*
+		 * Cable and Hard reset are special and set success and fail
+		 * in Alert reg regardless of the outcome of the transmission
+		 */
+		tcpci_emul_partner_msg_status(emul,
+					      TCPCI_EMUL_TX_CABLE_HARD_RESET);
+		break;
+	default:
+		break;
 	}
 
 	return 0;
