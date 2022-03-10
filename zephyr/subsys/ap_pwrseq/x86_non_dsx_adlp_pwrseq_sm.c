@@ -26,8 +26,7 @@ void ap_off(void)
 /* Handle ALL_SYS_PWRGD signal
  * This will be overridden if the custom signal handler is needed
  */
-__attribute__((weak)) int all_sys_pwrgd_handler(
-				const struct common_pwrseq_config *com_cfg)
+int all_sys_pwrgd_handler(void)
 {
 	int retry = 0;
 
@@ -78,7 +77,7 @@ static int wait_for_vrrdy(void)
 }
 
 /* PCH_PWROK to PCH from EC */
-__attribute__((weak)) int generate_pch_pwrok_handler(int delay)
+int generate_pch_pwrok_handler(int delay)
 {
 	/* Enable PCH_PWROK, gated by VRRDY. */
 	if (power_signal_get(PWR_PCH_PWROK) == 0) {
@@ -127,7 +126,7 @@ void s0_action_handler(const struct common_pwrseq_config *com_cfg)
 	/* This is not needed for alderlake silego, guarded by CONFIG? */
 
 	/* Check ALL_SYS_PWRGD and take action */
-	ret = all_sys_pwrgd_handler(com_cfg);
+	ret = all_sys_pwrgd_handler();
 	if (ret) {
 		LOG_DBG("ALL_SYS_PWRGD handling failed err= %d", ret);
 		return;
@@ -159,22 +158,22 @@ void intel_x86_sys_reset_delay(void)
 	k_msleep(chip_cfg.sys_reset_delay_ms);
 }
 
-void chipset_reset(enum pwrseq_chipset_shutdown_reason reason)
+void ap_power_reset(enum ap_power_shutdown_reason reason)
 {
 	/*
 	 * Irrespective of cold_reset value, always toggle SYS_RESET_L to
-	 * perform a chipset reset. RCIN# which was used earlier to trigger
+	 * perform an AP reset. RCIN# which was used earlier to trigger
 	 * a warm reset is known to not work in certain cases where the CPU
 	 * is in a bad state (crbug.com/721853).
 	 *
-	 * The EC cannot control warm vs cold reset of the chipset using
+	 * The EC cannot control warm vs cold reset of the AP using
 	 * SYS_RESET_L; it's more of a request.
 	 */
 	LOG_DBG("%s: %d", __func__, reason);
 
 	/*
 	 * Toggling SYS_RESET_L will not have any impact when it's already
-	 * low (i,e. Chipset is in reset state).
+	 * low (i,e. AP is in reset state).
 	 */
 	if (power_signal_get(PWR_SYS_RST)) {
 		LOG_DBG("Chipset is in reset state");
@@ -187,7 +186,7 @@ void chipset_reset(enum pwrseq_chipset_shutdown_reason reason)
 	ap_power_ev_send_callbacks(AP_POWER_RESET);
 }
 
-__attribute__((weak)) void new_chipset_force_shutdown(void)
+void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
 {
 	int timeout_ms = 50;
 
@@ -220,21 +219,17 @@ __attribute__((weak)) void new_chipset_force_shutdown(void)
 	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
 }
 
-__attribute__((weak)) void g3s5_action_handler(int delay, int signal_timeout)
+void g3s5_action_handler(void)
 {
 	power_signal_set(PWR_EN_PP5000_A, 1);
 }
 
-__attribute__((weak)) void s3s0_action_handler(
-				const struct common_pwrseq_config *com_cfg)
+void s3s0_action_handler(void)
 {
 }
 
-__attribute__((weak)) void s0s3_action_handler(
-				const struct common_pwrseq_config *com_cfg)
+void s0s3_action_handler(void)
 {
-	ARG_UNUSED(com_cfg);
-
 	ap_off();
 }
 
@@ -251,16 +246,15 @@ enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state,
 	/* Add chipset specific state handling if any */
 	switch (curr_state) {
 	case SYS_POWER_STATE_G3S5:
-		g3s5_action_handler(com_cfg->pch_dsw_pwrok_delay_ms,
-				    com_cfg->wait_signal_timeout_ms);
+		g3s5_action_handler();
 		break;
 	case SYS_POWER_STATE_S5:
 		break;
 	case SYS_POWER_STATE_S3S0:
-		s3s0_action_handler(com_cfg);
+		s3s0_action_handler();
 		break;
 	case SYS_POWER_STATE_S0S3:
-		s0s3_action_handler(com_cfg);
+		s0s3_action_handler();
 		break;
 	case SYS_POWER_STATE_S0:
 		s0_action_handler(com_cfg);

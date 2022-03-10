@@ -55,23 +55,6 @@ enum power_states_ndsx {
 	SYS_POWER_STATE_S0S3,
 };
 
-/*
- * AP hard shutdowns are logged on the same path as resets.
- */
-enum pwrseq_chipset_shutdown_reason {
-	PWRSEQ_CHIPSET_SHUTDOWN_POWERFAIL,
-	/* Forcing a shutdown as part of EC initialization */
-	PWRSEQ_CHIPSET_SHUTDOWN_INIT,
-	/* Forcing shutdown with command */
-	PWRSEQ_CHIPSET_SHUTDOWN_CONSOLE_CMD,
-	/* Forcing a shutdown to effect entry to G3. */
-	PWRSEQ_CHIPSET_SHUTDOWN_G3,
-	/* Force a chipset shutdown from the power button through EC */
-	PWRSEQ_CHIPSET_SHUTDOWN_BUTTON,
-
-	PWRSEQ_CHIPSET_SHUTDOWN_COUNT,
-};
-
 /* This encapsulates the attributes of the state machine */
 struct pwrseq_context {
 	/* On power-on start boot up sequence */

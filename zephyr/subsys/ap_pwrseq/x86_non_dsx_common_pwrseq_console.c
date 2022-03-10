@@ -75,7 +75,7 @@ SHELL_CMD_REGISTER(apshutdown, NULL, NULL, apshutdown_handler);
 static int apreset_handler(const struct shell *shell, size_t argc,
 							char **argv)
 {
-	chipset_reset(PWRSEQ_CHIPSET_SHUTDOWN_CONSOLE_CMD);
+	ap_power_reset(AP_POWER_SHUTDOWN_CONSOLE_CMD);
 	return 0;
 }
 
