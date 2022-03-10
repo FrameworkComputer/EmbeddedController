@@ -1171,6 +1171,7 @@ static void tcpci_emul_disable_pd_msg_delivery(const struct emul *emul)
  * @param emul Pointer to TCPCI emulator
  *
  * @return 0 on success
+ * @return -EIO when sending SOP message with less than 2 bytes in TX buffer
  */
 static int tcpci_emul_handle_transmit(const struct emul *emul)
 {
@@ -1182,6 +1183,13 @@ static int tcpci_emul_handle_transmit(const struct emul *emul)
 	data->tx_msg->idx = 0;
 
 	type = TCPC_REG_TRANSMIT_TYPE(data->write_data);
+
+	if (type < NUM_SOP_STAR_TYPES && data->tx_msg->cnt < 2) {
+		LOG_ERR("Transmitting too short message (%d)",
+			data->tx_msg->cnt);
+		tcpci_emul_set_i2c_interface_err(emul);
+		return -EIO;
+	}
 
 	if (data->partner && data->partner->transmit) {
 		data->partner->transmit(emul, data->partner, data->tx_msg, type,
