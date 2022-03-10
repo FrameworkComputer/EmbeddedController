@@ -27,7 +27,7 @@ GPIO_INT(ON_OFF_BTN_L,    PIN(0162), GPIO_INT_BOTH, mainboard_power_button_inter
 GPIO_INT(ON_OFF_FP_L,     PIN(0163), GPIO_INT_BOTH, fingerprint_power_button_interrupt)
 GPIO_INT(PWR_3V5V_PG,     PIN(051),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,       PIN(0221), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(VCCIN_AUX_VR_PG, PIN(0227), GPIO_INT_BOTH, power_signal_interrupt)
+GPIO_INT(VCCIN_AUX_VR_PG, PIN(043), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PM_SLP_S3_L,     PIN(022),  GPIO_INT_BOTH, power_signal_interrupt)	/* eSPI signal */
 GPIO_INT(PM_SLP_S4_L,     PIN(0226), GPIO_INT_BOTH, power_signal_interrupt)	/* eSPI signal */
 GPIO_INT(PM_SLP_S0_L,     PIN(062),  GPIO_INT_BOTH, power_signal_interrupt)	/* eSPI signal */  
@@ -41,6 +41,12 @@ GPIO_INT(PLT_RST_L,       PIN(024),  GPIO_INT_BOTH, soc_plt_reset_interrupt)	/* 
 /* UART input */
 GPIO_INT(UART0_RX,        PIN(0105), GPIO_INT_BOTH_DSLEEP | GPIO_PULL_UP, \
 	 uart_deepsleep_interrupt)
+
+/* SPI
+ * Chip select must be open drain and driven high before SPI controller
+ * configuration.
+ */
+GPIO(QMSPI_CS0,		PIN(055),  GPIO_ODR_HIGH)
 
 /* Sensor */
 GPIO_INT(SOC_TP_INT_L,	PIN(0242), GPIO_INT_FALLING, touchpad_interrupt)
@@ -58,8 +64,7 @@ GPIO(EC_ACC_INT_L,	PIN(060),  GPIO_INPUT)	/* ACC interrupt */
 GPIO(EC_ON,		PIN(0250),  GPIO_INPUT | GPIO_OUT_HIGH)	/* keep +3VL_EC to power on */
 GPIO(PBTN_OUT_L,	PIN(0243),  GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(AC_PRESENT_OUT,	PIN(0240),  GPIO_INPUT | GPIO_ODR_LOW)
-GPIO(EC_RSMRST_L,	PIN(055),   GPIO_INPUT | GPIO_OUT_LOW)	/* EC bootloader ESPI mode */
-GPIO(PCH_DPWROK,	PIN(0223),  GPIO_INPUT | GPIO_ODR_LOW)
+GPIO(PCH_DPWROK,	PIN(0142),  GPIO_INPUT | GPIO_ODR_LOW)
 GPIO(PCH_PWR_EN,	PIN(0244),  GPIO_INPUT | GPIO_ODR_LOW)
 GPIO(SYSON,		PIN(0206),  GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(SUSP_L,		PIN(034),   GPIO_INPUT | GPIO_OUT_LOW)
@@ -67,7 +72,8 @@ GPIO(EC_VCCST_PG,	PIN(023),   GPIO_INPUT | GPIO_ODR_LOW)
 GPIO(VR_ON,		PIN(033),   GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(PCH_PWROK,		PIN(052),   GPIO_INPUT | GPIO_OUT_LOW)
 GPIO(SYS_PWROK,		PIN(0106),  GPIO_INPUT | GPIO_OUT_LOW)
-GPIO(EC_RTCRST,		PIN(016),   GPIO_INPUT | GPIO_OUT_LOW)	/* after reset low 5 sec */
+GPIO(EC_RTCRST,		PIN(0100),  GPIO_INPUT | GPIO_OUT_LOW)	/* after reset low 5 sec */
+GPIO(EC_RSMRST_L,	PIN(036),   GPIO_INPUT | GPIO_OUT_LOW)
 
 UNIMPLEMENTED(VS_ON)
 
@@ -91,20 +97,21 @@ GPIO(EC_I2C07_PD2_SDA,	PIN(012),	GPIO_INPUT) /* PD controller 1 */
 GPIO_INT(EC_PD_INTA_L,		PIN(0115), GPIO_INT_FALLING, pd0_chip_interrupt)
 GPIO_INT(EC_PD_INTB_L,		PIN(0127), GPIO_INT_FALLING, pd1_chip_interrupt)
 
-GPIO(AC_PRESENT_PD_L,		PIN(0224), GPIO_INPUT)
-GPIO(MUX_SBU_UART_FLIP,		PIN(0101), GPIO_OUT_LOW) /* SBU debug mux enable */
+GPIO(AC_PRESENT_PD_L,		PIN(0141), GPIO_INPUT)
+GPIO(MUX_SBU_UART_FLIP,		PIN(0255), GPIO_OUT_LOW) /* SBU debug mux enable */
 
 /* Miscellaneous */
 GPIO(EC_PROCHOT_L,	PIN(0222), GPIO_INPUT | GPIO_ODR_HIGH)
 GPIO(FAN_SPEED,         PIN(050),  GPIO_INPUT)
 GPIO(FP_CTRL,		PIN(0245), GPIO_INPUT) /* Fingerprint control */
 GPIO(CAM_SW,		PIN(067),  GPIO_INPUT) /* (UNIMPLEMENTED) Monitor to close CAM PWR */
-GPIO(MIC_SW,		PIN(0171), GPIO_INPUT) /* (UNIMPLEMENTED) DMIC function */
-
+GPIO(MIC_SW,		PIN(0175), GPIO_INPUT) /* (UNIMPLEMENTED) DMIC function */
 GPIO(SOC_EC_INT_L,	PIN(0246), GPIO_INPUT | GPIO_ODR_HIGH)    /* HID interrupt, notify host to read data */
+
+GPIO(TYPEC_G_DRV2_EN,	PIN(0101), GPIO_OUT_HIGH)    /* LED drv */
 GPIO(ME_EN,		PIN(064),  GPIO_OUT_LOW) /* PVT ME control use VTR3(1.8v) */
 GPIO(EC_BKOFF_L,	PIN(0102), GPIO_OUT_LOW) /* Panel backlight control */
-GPIO(CAM_EN,		PIN(0255), GPIO_OUT_LOW) /* Open camera power  */
+GPIO(CAM_EN,		PIN(0171), GPIO_OUT_LOW) /* Open camera power  */
 GPIO(OTG_EN,		PIN(0207), GPIO_OUT_LOW) /* Always low PWR request */
 GPIO(CAP_LED_L,		PIN(0114), GPIO_OUT_LOW)
 GPIO(EC_MUTE_L,		PIN(0253), GPIO_ODR_LOW)
@@ -215,7 +222,6 @@ ALTERNATE(PIN_MASK(4,  0x003F), 1, MODULE_ADC, GPIO_ANALOG)
 /* PWM
  * GPIO053,  FAN_PWM0,		Func1, Bank 1 bit[11],	PWM0 (open drain)
  * GPIO054,  TYPEC_R_DRV2,	Func1, Bank 1 bit[12],	PWM1
- * GPIO056,  TYPEC_G_DRV2,	Func1, Bank 1 bit[14],	PWM3
  * GPIO02,   TYPEC_R_DRV1,	Func1, Bank 0 bit[2],	PWM5
  * GPIO011,  EC_KBL_PWR_EN,	Func2, Bank 0 bit[9],	PWM4
  * GPIO014,  TYPEC_G_DRV1,	Func1, Bank 0 bit[12],	PWM6
@@ -224,10 +230,9 @@ ALTERNATE(PIN_MASK(4,  0x003F), 1, MODULE_ADC, GPIO_ANALOG)
  * GPIO156,  FPR_LED_R,		Func1, Bank 3 bit[14],	LED0 (Breath function)
  * GPIO157,  FPR_LED_G,		Func1, Bank 3 bit[15],	LED1 (Breath function)
  * GPIO153,  FPR_LED_B,		Func1, Bank 3 bit[11],	LED2 (Breath function)
- * GPIO0175, EC_BEEP,		Func3, Bank 3 bit[29],	PWM8_ALT (UNIMPLEMENTED)
  */
 ALTERNATE(PIN_MASK(1, 0x800),		1, MODULE_PWM, GPIO_ODR_HIGH)
-ALTERNATE(PIN_MASK(1, 0x5000),		1, MODULE_PWM, 0)
+ALTERNATE(PIN_MASK(1, 0x1000),		1, MODULE_PWM, 0)
 ALTERNATE(PIN_MASK(0, 0x0200),		2, MODULE_PWM, 0)
 ALTERNATE(PIN_MASK(0, 0x20003004),	1, MODULE_PWM, 0)
 ALTERNATE(PIN_MASK(3, 0xc800),		1, MODULE_PWM, 0)
@@ -242,3 +247,19 @@ ALTERNATE(PIN_MASK(1, 0x100),		1, MODULE_PWM, 0)
  *  GPIO044,  VREF_VTT,     Func1, Bank 1 bit[4]
  */
 ALTERNATE(PIN_MASK(1, 0x0014), 1, MODULE_PECI, 0)
+
+/* SHD_CLK - GPIO_0056 Function 2, Bank 1 bit[14]
+ * TYPEC_G_DRV2 - GPIO_0056 Function 1, Bank 1 bit[14]
+ * in DVT normal enable to PWM Module, need flash switch to SHD_CLK.
+ */
+ALTERNATE(PIN_MASK(1, 0x4000), 1, MODULE_PWM, 0)
+
+/* SHD_CS         - GPIO_0055 Function 2, Bank 1 bit[13] */
+/* MOSI(SHD_IO0)  - GPIO_0223 Function 1, Bank 4 bit[19] */
+/* MISO(SHD_IO1)  - GPIO_0224 Function 2, Bank 4 bit[20] */
+/* nWP(SHD_IO2)   - GPIO_0227 Function 1, Bank 4 bit[23] */
+/* nHOLD(SHD_IO3) - GPIO_0016 Function 2, Bank 0 bit[14] */
+ALTERNATE(PIN_MASK(1, 0x2000),   2, MODULE_SPI_FLASH, GPIO_ODR_HIGH)
+ALTERNATE(PIN_MASK(4, 0x880000), 1, MODULE_SPI_FLASH, 0)
+ALTERNATE(PIN_MASK(4, 0x100000), 2, MODULE_SPI_FLASH, 0)
+ALTERNATE(PIN_MASK(0, 0x4000),   2, MODULE_SPI_FLASH, 0)

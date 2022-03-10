@@ -1055,6 +1055,32 @@ void mainboard_power_button_interrupt(enum gpio_signal signal)
 			   50);
 }
 
+static int cmd_spimux(int argc, char **argv)
+{
+	int enable;
+
+	if (argc == 2) {
+		if (!parse_bool(argv[1], &enable))
+			return EC_ERROR_PARAM1;
+
+		if (enable) {
+			/* Disable LED drv */
+			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
+			/* Set GPIO56 as SPI for access SPI ROM */
+			gpio_set_alternate_function(1, 0x4000, 2);
+		} else {
+			/* Enable LED drv */
+			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
+			/* Set GPIO56 as SPI for access SPI ROM */
+			gpio_set_alternate_function(1, 0x4000, 1);
+		}
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(spimux, cmd_spimux,
+			"[enable/disable]",
+			"Set if spi CLK is in SPI mode (true) or PWM mode");
+
 #define FP_LOCKOUT_TIMEOUT (8 * SECOND)
 static void fingerprint_ctrl_detection_deferred(void);
 DECLARE_DEFERRED(fingerprint_ctrl_detection_deferred);
