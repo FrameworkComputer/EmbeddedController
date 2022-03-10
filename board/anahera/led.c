@@ -138,31 +138,10 @@ static void set_active_port_color(enum led_color color)
 static void led_set_battery(void)
 {
 	static unsigned int battery_ticks;
-	static unsigned int suspend_ticks;
+
 	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
-
-	/*
-	 * Override battery LEDs for Anahera, Anahera doesn't have power LED,
-	 * blinking both two side battery white LEDs to indicate
-	 * system suspend without charging state.
-	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-		charge_get_state() != PWR_STATE_CHARGE) {
-
-		suspend_ticks++;
-
-		led_set_color_battery(RIGHT_PORT, (suspend_ticks %
-					LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
-					LED_WHITE : LED_OFF);
-		led_set_color_battery(LEFT_PORT, (suspend_ticks %
-					LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
-					LED_WHITE : LED_OFF);
-		return;
-	}
-
-	suspend_ticks = 0;
 
 	switch (charge_get_state()) {
 	case PWR_STATE_CHARGE:
