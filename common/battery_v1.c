@@ -121,7 +121,7 @@ void update_dynamic_battery_info(void)
 		batt_present = 0;
 	}
 
-	if (curr->batt.flags & EC_BATT_FLAG_INVALID_DATA)
+	if (curr->batt.flags & BATT_FLAG_BAD_ANY)
 		tmp |= EC_BATT_FLAG_INVALID_DATA;
 
 	if (!(curr->batt.flags & BATT_FLAG_BAD_VOLTAGE))
