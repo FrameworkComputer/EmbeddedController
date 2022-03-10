@@ -121,7 +121,7 @@
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 		en_ec_id_odl: en_ec_id_odl {
-			gpios = <&gpioh 5 GPIO_ODR_LOW>;
+			gpios = <&gpioh 5 GPIO_ODR_HIGH>;
 		};
 		entering_rw: entering_rw {
 			gpios = <&gpioc 5 GPIO_OUT_LOW>;
