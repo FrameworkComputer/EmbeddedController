@@ -290,6 +290,23 @@ static int tcpci_emul_get_next_rx_msg(const struct emul *emul)
 }
 
 /**
+ * @brief Reset mask registers that are reset upon receiving or transmitting
+ *        Hard Reset message.
+ *
+ * @param emul Pointer to TCPCI emulator
+ */
+static void tcpci_emul_reset_mask_regs(const struct emul *emul)
+{
+	struct tcpci_emul_data *data = emul->data;
+
+	data->reg[TCPC_REG_ALERT_MASK]				= 0xff;
+	data->reg[TCPC_REG_ALERT_MASK + 1]			= 0x7f;
+	data->reg[TCPC_REG_POWER_STATUS_MASK]			= 0xff;
+	data->reg[TCPC_REG_EXT_STATUS_MASK]			= 0x01;
+	data->reg[TCPC_REG_ALERT_EXTENDED_MASK]			= 0x07;
+}
+
+/**
  * @brief Perform actions that are expected by TCPC on disabling PD message
  *        delivery (clear RECEIVE_DETECT register and clear already received
  *        messages in buffer)
@@ -312,6 +329,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 	uint16_t rx_detect_mask;
 	uint16_t rx_detect;
 	uint16_t dev_cap_2;
+	uint16_t alert_reg;
 	int rc;
 
 	/* Acquire lock to prevent race conditions with TCPM accessing I2C */
@@ -358,6 +376,27 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		return TCPCI_EMUL_TX_FAILED;
 	}
 
+	tcpci_emul_get_reg(emul, TCPC_REG_ALERT, &alert_reg);
+
+	/* Handle HardReset */
+	if (rx_msg->type == TCPCI_MSG_TX_HARD_RESET) {
+		tcpci_emul_disable_pd_msg_delivery(emul);
+		tcpci_emul_reset_mask_regs(emul);
+
+		alert_reg |= TCPC_REG_ALERT_RX_HARD_RST;
+		tcpci_emul_set_reg(emul, TCPC_REG_ALERT, alert_reg);
+		rc = tcpci_emul_alert_changed(emul);
+
+		i2c_common_emul_unlock_data(&data->common.emul);
+		return rc;
+	}
+
+	/* Handle CableReset */
+	if (rx_msg->type == TCPCI_MSG_CABLE_RESET) {
+		tcpci_emul_disable_pd_msg_delivery(emul);
+		/* Rest of CableReset handling is the same as SOP* message */
+	}
+
 	if (data->rx_msg == NULL) {
 		tcpci_emul_get_reg(emul, TCPC_REG_DEV_CAP_2, &dev_cap_2);
 		if ((!(dev_cap_2 & TCPC_REG_DEV_CAP_2_LONG_MSG) &&
@@ -377,8 +416,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 
 		data->rx_msg->next = rx_msg;
 		if (alert) {
-			data->reg[TCPC_REG_ALERT + 1] |=
-				TCPC_REG_ALERT_RX_BUF_OVF >> 8;
+			alert_reg |= TCPC_REG_ALERT_RX_BUF_OVF;
 		}
 	} else {
 		LOG_ERR("Cannot setup third message");
@@ -388,11 +426,11 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 
 	if (alert) {
 		if (rx_msg->cnt > 133) {
-			data->reg[TCPC_REG_ALERT + 1] |=
-				TCPC_REG_ALERT_RX_BEGINNING >> 8;
+			alert_reg |= TCPC_REG_ALERT_RX_BEGINNING;
 		}
 
-		data->reg[TCPC_REG_ALERT] |= TCPC_REG_ALERT_RX_STATUS;
+		alert_reg |= TCPC_REG_ALERT_RX_STATUS;
+		tcpci_emul_set_reg(emul, TCPC_REG_ALERT, alert_reg);
 
 		rc = tcpci_emul_alert_changed(emul);
 		if (rc != 0) {
@@ -747,23 +785,6 @@ static void tcpci_emul_reset_role_ctrl(const struct emul *emul)
 		data->reg[TCPC_REG_MSG_HDR_INFO]		= 0x04;
 		break;
 	}
-}
-
-/**
- * @brief Reset mask registers that are reset upon receiving or transmitting
- *        Hard Reset message.
- *
- * @param emul Pointer to TCPCI emulator
- */
-static void tcpci_emul_reset_mask_regs(const struct emul *emul)
-{
-	struct tcpci_emul_data *data = emul->data;
-
-	data->reg[TCPC_REG_ALERT_MASK]				= 0xff;
-	data->reg[TCPC_REG_ALERT_MASK + 1]			= 0x7f;
-	data->reg[TCPC_REG_POWER_STATUS_MASK]			= 0xff;
-	data->reg[TCPC_REG_EXT_STATUS_MASK]			= 0x01;
-	data->reg[TCPC_REG_ALERT_EXTENDED_MASK]			= 0x07;
 }
 
 /**
