@@ -9,8 +9,14 @@
 #include "console.h"
 #include "test_state.h"
 
+static void console_cmd_charge_manager_after(void *state)
+{
+	ARG_UNUSED(state);
+	shell_execute_cmd(get_ec_shell(), "chgoverride -1");
+}
+
 ZTEST_SUITE(console_cmd_charge_manager, drivers_predicate_post_main, NULL, NULL,
-	    NULL, NULL);
+	    console_cmd_charge_manager_after, NULL);
 
 /**
  * Test the chgsup (charge supplier info) command. This command only prints to
@@ -35,4 +41,11 @@ ZTEST_USER(console_cmd_charge_manager, test_chgoverride_off_from_off)
 {
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgoverride -1"), NULL);
 	zassert_equal(charge_manager_get_override(), OVERRIDE_OFF, NULL);
+}
+
+ZTEST_USER(console_cmd_charge_manager, test_chgoverride_disable_from_off)
+{
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgoverride -2"), NULL);
+	zassert_equal(charge_manager_get_override(), OVERRIDE_DONT_CHARGE,
+		      NULL);
 }
