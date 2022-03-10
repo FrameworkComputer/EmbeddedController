@@ -73,8 +73,12 @@
 #define USB_EP_CONSOLE 1
 #define USB_EP_COUNT   2
 
+/* Remove console commands / features for flash / RAM savings */
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
+#undef CONFIG_CONSOLE_HISTORY
+#undef CONFIG_HIBERNATE
+#undef CONFIG_CMD_CRASH
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
