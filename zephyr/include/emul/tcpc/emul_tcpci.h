@@ -79,7 +79,7 @@ enum tcpci_emul_rev {
 
 /** Status of TX message send to TCPCI emulator partner */
 enum tcpci_emul_tx_status {
-	TCPCI_EMUL_TX_SUCCESS,
+	TCPCI_EMUL_TX_SUCCESS = 0,
 	TCPCI_EMUL_TX_DISCARDED,
 	TCPCI_EMUL_TX_FAILED,
 	TCPCI_EMUL_TX_CABLE_HARD_RESET
@@ -236,8 +236,13 @@ int tcpci_emul_get_reg(const struct emul *emul, int reg, uint16_t *val);
  * @param rx_msg Pointer to message that is added
  * @param alert Select if alert register should be updated
  *
- * @return 0 on success
- * @return -EINVAL on error (too long message or adding third message)
+ * @return TCPCI_EMUL_TX_SUCCESS on success
+ * @return TCPCI_EMUL_TX_FAILED when TCPCI is configured to not handle
+ *                              messages of this type
+ * @return -EINVAL on error (too long message, adding third message or wrong
+ *                 message type)
+ * @return -EBUSY Failed to lock mutex for TCPCI emulator
+ * @return -EAGAIN Failed to lock mutex for TCPCI emulator
  */
 int tcpci_emul_add_rx_msg(const struct emul *emul,
 			  struct tcpci_emul_msg *rx_msg, bool alert);

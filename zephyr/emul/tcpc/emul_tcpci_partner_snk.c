@@ -45,7 +45,9 @@ static int tcpci_snk_emul_num_of_pdos(struct tcpci_snk_emul_data *data)
  * @param common_data Pointer to common TCPCI partner data
  * @param delay Optional delay
  *
- * @return 0 on success
+ * @return TCPCI_EMUL_TX_SUCCESS on success
+ * @return TCPCI_EMUL_TX_FAILED when TCPCI is configured to not handle
+ *                              messages of this type
  * @return -ENOMEM when there is no free memory for message
  * @return -EINVAL on TCPCI emulator add RX message error
  */

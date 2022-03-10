@@ -153,7 +153,7 @@ static void tcpci_partner_delayed_send(void *fifo_data)
 			tcpci_partner_log_msg(data, &msg->msg,
 					      TCPCI_PARTNER_SENDER_PARTNER,
 					      ret);
-			if (ret) {
+			if (ret != TCPCI_EMUL_TX_SUCCESS) {
 				tcpci_partner_free_msg(msg);
 			}
 
@@ -225,7 +225,7 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 		ret = tcpci_emul_add_rx_msg(data->tcpci_emul, &msg->msg, true);
 		tcpci_partner_log_msg(data, &msg->msg,
 				      TCPCI_PARTNER_SENDER_PARTNER, ret);
-		if (ret) {
+		if (ret != TCPCI_EMUL_TX_SUCCESS) {
 			tcpci_partner_free_msg(msg);
 		}
 
