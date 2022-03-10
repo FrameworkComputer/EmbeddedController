@@ -69,7 +69,7 @@ GPIO(PCH_PWROK,                      PIN(7, 2), GPIO_OUT_LOW)
 GPIO(POWER_LED_GATE,		         PIN(B, 6), GPIO_OUT_LOW)	/* Power LED: White */
 GPIO(SYS_RST_ODL,                    PIN(C, 5), GPIO_ODR_HIGH)
 GPIO(USB_C0_TCPC_RST_ODL,            PIN(A, 7), GPIO_ODR_LOW)
-GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
+GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_INPUT)
 GPIO(USB_C1_RT_RST_R_ODL,            PIN(0, 2), GPIO_ODR_HIGH)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 

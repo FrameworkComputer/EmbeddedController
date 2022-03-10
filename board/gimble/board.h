@@ -74,6 +74,7 @@
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
 #define CONFIG_USBC_PPC_NX20P3483
 
+#define CONFIG_USB_PD_FRS
 #define CONFIG_USB_PD_FRS_PPC
 
 /* measure and check these values on gimble */
