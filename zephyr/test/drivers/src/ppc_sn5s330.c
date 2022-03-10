@@ -15,6 +15,7 @@
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sn5s330.h"
 #include "usbc_ppc.h"
+#include "test_mocks.h"
 #include "test_state.h"
 
 /** This must match the index of the sn5s330 in ppc_chips[] */
@@ -329,6 +330,55 @@ ZTEST(ppc_sn5s330, test_sn5s330_set_vconn_fet)
 	sn5s330_drv.set_vconn(SN5S330_PORT, true);
 	sn5s330_emul_peek_reg(emul, SN5S330_FUNC_SET4, &func_set4_reg);
 	zassert_not_equal(func_set4_reg & SN5S330_VCONN_EN, 0, NULL);
+}
+
+/* Make an I2C emulator mock read func wrapped in FFF */
+FAKE_VALUE_FUNC(int, dump_read_fn, struct i2c_emul *, int, uint8_t *, int,
+		void *);
+
+ZTEST(ppc_sn5s330, test_dump)
+{
+	int ret;
+	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
+
+	/* Set up our fake read function to pass through to the real emul */
+	RESET_FAKE(dump_read_fn);
+	dump_read_fn_fake.return_val = 1;
+	i2c_common_emul_set_read_func(i2c_emul, dump_read_fn, NULL);
+
+	ret = sn5s330_drv.reg_dump(SN5S330_PORT);
+
+	zassert_equal(EC_SUCCESS, ret, "Expected EC_SUCCESS, got %d", ret);
+
+	/* Check that all the expected I2C reads were performed. */
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 0, SN5S330_FUNC_SET1);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 1, SN5S330_FUNC_SET2);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 2, SN5S330_FUNC_SET3);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 3, SN5S330_FUNC_SET4);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 4, SN5S330_FUNC_SET5);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 5, SN5S330_FUNC_SET6);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 6, SN5S330_FUNC_SET7);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 7, SN5S330_FUNC_SET8);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 8, SN5S330_FUNC_SET9);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 9, SN5S330_FUNC_SET10);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 10, SN5S330_FUNC_SET11);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 11, SN5S330_FUNC_SET12);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 12, SN5S330_INT_STATUS_REG1);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 13, SN5S330_INT_STATUS_REG2);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 14, SN5S330_INT_STATUS_REG3);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 15, SN5S330_INT_STATUS_REG4);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 16, SN5S330_INT_TRIP_RISE_REG1);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 17, SN5S330_INT_TRIP_RISE_REG2);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 18, SN5S330_INT_TRIP_RISE_REG3);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 19, SN5S330_INT_TRIP_FALL_REG1);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 20, SN5S330_INT_TRIP_FALL_REG2);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 21, SN5S330_INT_TRIP_FALL_REG3);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 22, SN5S330_INT_MASK_RISE_REG1);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 23, SN5S330_INT_MASK_RISE_REG2);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 24, SN5S330_INT_MASK_RISE_REG3);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 25, SN5S330_INT_MASK_FALL_REG1);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 26, SN5S330_INT_MASK_FALL_REG2);
+	MOCK_ASSERT_I2C_READ(dump_read_fn, 27, SN5S330_INT_MASK_FALL_REG3);
 }
 
 static inline void reset_sn5s330_state(void)
