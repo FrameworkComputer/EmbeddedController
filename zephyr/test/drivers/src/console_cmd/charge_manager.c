@@ -21,3 +21,12 @@ ZTEST_USER(console_cmd_charge_manager, test_chgsup)
 {
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgsup"), NULL);
 }
+
+/**
+ * Test chgoverride command with no arguments. This should just print the
+ * current override port.
+ */
+ZTEST_USER(console_cmd_charge_manager, test_chgoverride_missing_port)
+{
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgoverride"), NULL);
+}
