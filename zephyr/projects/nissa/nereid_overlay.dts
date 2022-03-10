@@ -7,6 +7,7 @@
 
 / {
 	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-wp = &gpio_ec_wp_odl;
 		int-wp = &int_wp_l;
 	};
