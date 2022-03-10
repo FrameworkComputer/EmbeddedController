@@ -1169,6 +1169,13 @@
 #undef CONFIG_CHARGER_BQ25710_PP_ACOK
 
 /*
+ * This config option sets the PP_COMP in Prochot Option 1
+ * register. Need to use EN_PROCHOT_LPWR to enable independent comparator
+ * and its PROCHOT profile.
+ */
+#undef CONFIG_CHARGER_BQ25710_PP_COMP
+
+/*
  * This config option sets the PP_IDCHG2 bit in the Charge Option 4
  * register. This causes PROCHOT to be pulsed when IDCHG_TH2 is reached.
  */

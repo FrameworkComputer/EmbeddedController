@@ -289,6 +289,16 @@ config PLATFORM_EC_CHARGER_BQ25710_BATOC_VTH_MINIMUM
           on the bq25710 and 133% of PROCHOT IDCHG_TH2 on the
           bq25720. The default threshold is 200% on both chips.
 
+config PLATFORM_EC_CHARGER_BQ25710_PP_COMP
+	bool "Enable independent comparator PROCHOT"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Sets the PP_COMP in Prochot Option 1 register. When in low power
+	  mode(Battery only), this bit will lose controllability to independent
+	  comparator PROCHOT profiles. Need to use EN_PROCHOT_LPWR to enable
+	  independent comparator and its PROCHOT profile.
+
 config PLATFORM_EC_CHARGER_BQ25710_PP_INOM
 	bool "Enable PROCHOT on adapter current exceeding INOM"
 	default n
