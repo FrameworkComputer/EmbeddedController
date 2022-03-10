@@ -5,21 +5,45 @@
 
 /* Corsola baseboard-chipset specific configuration */
 
+#include <init.h>
+#include <ap_power/ap_power.h>
 #include <drivers/gpio.h>
+#include "gpio.h"
 
-#include "common.h"
-#include "hooks.h"
-
-/* Called on AP S3 -> S0 transition */
-static void board_chipset_resume(void)
+static void board_backlight_handler(struct ap_power_ev_callback *cb,
+				    struct ap_power_ev_data data)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_bl_en_od), 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
+	int value;
 
-/* Called on AP S0 -> S3 transition */
-static void board_chipset_suspend(void)
-{
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_bl_en_od), 0);
+	switch (data.event) {
+	default:
+		return;
+
+	case AP_POWER_RESUME:
+		/* Called on AP S3 -> S0 transition */
+		value = 1;
+		break;
+
+	case AP_POWER_SUSPEND:
+		/* Called on AP S0 -> S3 transition */
+		value = 0;
+		break;
+	}
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_bl_en_od), value);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+static int install_backlight_handler(const struct device *unused)
+{
+	static struct ap_power_ev_callback cb;
+
+	/*
+	 * Add a callback for suspend/resume to
+	 * control the keyboard backlight.
+	 */
+	ap_power_ev_init_callback(&cb, board_backlight_handler,
+				  AP_POWER_RESUME | AP_POWER_SUSPEND);
+	ap_power_ev_add_callback(&cb);
+	return 0;
+}
+
+SYS_INIT(install_backlight_handler, APPLICATION, 1);

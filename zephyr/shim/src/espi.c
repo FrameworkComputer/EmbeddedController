@@ -12,6 +12,8 @@
 #include <stdint.h>
 #include <zephyr.h>
 
+#include <ap_power/ap_power.h>
+#include <ap_power/ap_power_events.h>
 #include "acpi.h"
 #include "chipset.h"
 #include "common.h"
@@ -139,7 +141,11 @@ static void espi_vwire_handler(const struct device *dev,
 #ifdef CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK
 static void espi_chipset_reset(void)
 {
-	hook_notify(HOOK_CHIPSET_RESET);
+	if (IS_ENABLED(CONFIG_AP_PWRSEQ)) {
+		ap_power_ev_send_callbacks(AP_POWER_RESET);
+	} else {
+		hook_notify(HOOK_CHIPSET_RESET);
+	}
 }
 DECLARE_DEFERRED(espi_chipset_reset);
 

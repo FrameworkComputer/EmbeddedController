@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "ap_power/ap_power.h"
 #include "chipset.h"
 #include "config.h"
 #include "gpio_signal.h"
@@ -38,14 +39,45 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-static void baseboard_interrupt_init(void)
+/* Chipset hooks */
+static void baseboard_suspend_change(struct ap_power_ev_callback *cb,
+				     struct ap_power_ev_data data)
 {
+	switch (data.event) {
+	default:
+		return;
+
+	case AP_POWER_SUSPEND:
+		/* Disable display backlight and retimer */
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl), 1);
+		ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
+		break;
+
+	case AP_POWER_RESUME:
+		/* Enable retimer and display backlight */
+		gpio_pin_set_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl), 0);
+		ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
+		/* Any retimer tuning can be done after the retimer turns on */
+		break;
+	}
+}
+
+static void baseboard_init(void)
+{
+	static struct ap_power_ev_callback cb;
+
+	/* Setup a suspend/resume callback */
+	ap_power_ev_init_callback(&cb, baseboard_suspend_change,
+				  AP_POWER_RESUME | AP_POWER_SUSPEND);
+	ap_power_ev_add_callback(&cb);
 	/* Enable Power Group interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_groupc_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s3));
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_interrupt_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_INIT_I2C + 1);
 
 /**
  * b/175324615: On G3->S5, wait for RSMRST_L to be deasserted before asserting
@@ -124,22 +156,3 @@ void baseboard_set_en_pwr_s3(enum gpio_signal signal)
 	/* Chain off the normal power signal interrupt handler */
 	power_signal_interrupt(signal);
 }
-
-/* Chipset hooks */
-static void baseboard_chipset_suspend(void)
-{
-	/* Disable display backlight and retimer */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl), 1);
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
-	     HOOK_PRIO_DEFAULT);
-
-static void baseboard_chipset_resume(void)
-{
-	/* Enable retimer and display backlight */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl), 0);
-	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
-	/* Any retimer tuning can be done after the retimer turns on */
-}
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);

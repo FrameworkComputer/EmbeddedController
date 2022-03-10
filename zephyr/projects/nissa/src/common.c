@@ -4,6 +4,7 @@
  */
 
 #include <device.h>
+#include <ap_power/ap_power.h>
 
 #include "battery.h"
 #include "charger.h"
@@ -41,12 +42,50 @@ __override uint8_t board_get_usb_pd_port_count(void)
 	return cached_usb_pd_port_count;
 }
 
+static void board_power_change(struct ap_power_ev_callback *cb,
+			       struct ap_power_ev_data data)
+{
+	int value;
+
+	switch (data.event) {
+	default:
+		return;
+
+	case AP_POWER_STARTUP:
+		/*
+		 * Called on AP S4 -> S3 transitio
+		 *
+		 * Enable USB-A vbus
+		 * TODO(b/222238390):remove when BC1.2 is enabled.
+		 */
+		value = 1;
+		break;
+
+	case AP_POWER_SHUTDOWN:
+		/*
+		 * Called on AP S4 -> S5 transition
+		 *
+		 * Disable USB-A vbus
+		 * TODO(b/222238390):remove when BC1.2 is enabled.
+		 */
+		value = 0;
+		break;
+	}
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_usb_a0_vbus), value);
+}
+
 /*
  * Initialise the USB PD port count, which
  * depends on which sub-board is attached.
  */
-static void init_usb_pd_port_count(void)
+static void board_setup_init(void)
 {
+	static struct ap_power_ev_callback cb;
+
+	ap_power_ev_init_callback(&cb, board_power_change,
+				  AP_POWER_STARTUP | AP_POWER_SHUTDOWN);
+	ap_power_ev_add_callback(&cb);
+
 	switch (nissa_get_sb_type()) {
 	default:
 		cached_usb_pd_port_count = 1;
@@ -61,7 +100,7 @@ static void init_usb_pd_port_count(void)
 /*
  * Make sure setup is done after EEPROM is readable.
  */
-DECLARE_HOOK(HOOK_INIT, init_usb_pd_port_count, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_INIT_I2C + 1);
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
@@ -134,25 +173,3 @@ enum nissa_sub_board_type nissa_get_sb_type(void)
 	}
 	return sb;
 }
-
-/* Called on AP S4 -> S3 transition */
-static void board_chipset_startup(void)
-{
-	/*
-	 * Enable USB-A vbus
-	 * TODO(b/222238390):remove when BC1.2 is enabled.
-	 */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_usb_a0_vbus), 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
-
-/* Called on AP S4 -> S5 transition */
-static void board_chipset_shutdown(void)
-{
-	/*
-	 * Disable USB-A vbus
-	 * TODO(b/222238390):remove when BC1.2 is enabled.
-	 */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_usb_a0_vbus), 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);

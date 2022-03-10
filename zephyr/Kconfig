@@ -212,16 +212,14 @@ config PLATFORM_EC_CHIPSET_RESET_HOOK
 	bool "Provide a hook for when the AP resets"
 	default y
 	help
-	  Enables support for the HOOK_CHIPSET_RESET hook. This can be used by
-	  code that needs to run before a programmatic reset actually happens.
-	  Note that these hooks don't run with a cold reset, only when the AP
-	  decides to reset itself.
+	  Enables support for the legacy HOOK_CHIPSET_RESET hook.
+	  This can be used by code that needs to run before a programmatic
+	  reset actually happens.  Note that these hooks don't run with a
+	  cold reset, only when the AP decides to reset itself.
 
-	  You can declare a hook like this:
-
-	     DECLARE_HOOK(HOOK_CHIPSET_RESET, do_something, HOOK_PRIO_DEFAULT);
-
-	  Then do_something() will be called just before the reset happens.
+	  The hook is shimmed into the AP callback API, so you can
+	  set up a ap_power_ev_callback with the AP_POWER_RESET
+	  event to call a handler when the AP is about to be reset.
 
 config PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 	bool "Enable chipset resume-init and suspend-complete hooks"
@@ -231,6 +229,10 @@ config PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 	  initialize/disable the SPI driver, which goes to sleep on suspend.
 	  Require to initialize it first such that it can receive a host resume
 	  event, that notifies the normal resume hook.
+	  The legacy hooks are shimmed into the AP callback API, so
+	  a ap_power_ev_callback can be set up with the events
+	  AP_POWER_RESUME_INIT and AP_POWER_SUSPEND_COMPLETE to
+	  call a handler when these events are triggered.
 
 config PLATFORM_EC_CHIP_INIT_ROM_REGION
 	bool "Enables the use of a dedicated init ROM region"

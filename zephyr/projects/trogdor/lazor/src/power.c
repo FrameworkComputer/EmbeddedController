@@ -3,37 +3,56 @@
  * found in the LICENSE file.
  */
 
+#include <init.h>
 #include <drivers/gpio.h>
 
-#include "hooks.h"
+#include <ap_power/ap_power.h>
 #include "power.h"
 #include "task.h"
+#include "gpio.h"
 
-void board_chipset_pre_init(void)
+static void board_power_change(struct ap_power_ev_callback *cb,
+			       struct ap_power_ev_data data)
 {
-	/* Turn on the 3.3V rail */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pp3300_a), 1);
+	switch (data.event) {
+	default:
+		return;
 
-	/* Turn on the 5V rail. */
+	case AP_POWER_PRE_INIT:
+		/* Turn on the 3.3V rail */
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pp3300_a), 1);
+
+		/* Turn on the 5V rail. */
 #ifdef CONFIG_POWER_PP5000_CONTROL
-	power_5v_enable(task_get_current(), 1);
+		power_5v_enable(task_get_current(), 1);
 #else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pp5000_a), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pp5000_a), 1);
 #endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
-}
-DECLARE_HOOK(HOOK_CHIPSET_PRE_INIT, board_chipset_pre_init, HOOK_PRIO_DEFAULT);
+		break;
 
-void board_chipset_shutdown_complete(void)
+	case AP_POWER_SHUTDOWN_COMPLETE:
+		/* Turn off the 5V rail. */
+#ifdef CONFIG_POWER_PP5000_CONTROL
+		power_5v_enable(task_get_current(), 0);
+#else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pp5000_a), 0);
+#endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
+
+		/* Turn off the 3.3V and 5V rails. */
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pp3300_a), 0);
+		break;
+	}
+}
+
+static int board_power_handler_init(const struct device *unused)
 {
-	/* Turn off the 5V rail. */
-#ifdef CONFIG_POWER_PP5000_CONTROL
-	power_5v_enable(task_get_current(), 0);
-#else /* !defined(CONFIG_POWER_PP5000_CONTROL) */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pp5000_a), 0);
-#endif /* defined(CONFIG_POWER_PP5000_CONTROL) */
+	static struct ap_power_ev_callback cb;
 
-	/* Turn off the 3.3V and 5V rails. */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pp3300_a), 0);
+	/* Setup a suspend/resume callback */
+	ap_power_ev_init_callback(&cb, board_power_change,
+				  AP_POWER_PRE_INIT |
+				  AP_POWER_SHUTDOWN_COMPLETE);
+	ap_power_ev_add_callback(&cb);
+	return 0;
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE, board_chipset_shutdown_complete,
-		HOOK_PRIO_DEFAULT);
+SYS_INIT(board_power_handler_init, APPLICATION, 1);

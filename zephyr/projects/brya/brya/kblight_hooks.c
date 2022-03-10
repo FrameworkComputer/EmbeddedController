@@ -6,6 +6,7 @@
 #include <drivers/gpio.h>
 #include <stdbool.h>
 
+#include <ap_power/ap_power.h>
 #include "cbi.h"
 #include "hooks.h"
 
@@ -20,34 +21,46 @@ static inline void kbd_backlight_enable(bool enable)
 				!enable);
 }
 
-/* Called on AP S3 -> S0 transition */
-static void board_chipset_resume(void)
+static void board_backlight_handler(struct ap_power_ev_callback *cb,
+				    struct ap_power_ev_data data)
 {
-	/* Allow keyboard backlight to be enabled */
+	bool enable;
 
-	kbd_backlight_enable(true);
+	switch (data.event) {
+	default:
+		return;
+
+	case AP_POWER_RESUME:
+		/* Called on AP S3 -> S0 transition */
+		enable = true;
+		break;
+
+	case AP_POWER_SUSPEND:
+		/* Called on AP S0 -> S3 transition */
+		enable = false;
+		break;
+	}
+	kbd_backlight_enable(enable);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
-
-/* Called on AP S0 -> S3 transition */
-static void board_chipset_suspend(void)
-{
-	/* Turn off the keyboard backlight if it's on. */
-
-	kbd_backlight_enable(false);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /*
  * Explicitly apply the board ID 1 *gpio.inc settings to pins that
  * were reassigned on current boards.
  */
-
 static void set_board_id_1_gpios(void)
 {
+	static struct ap_power_ev_callback cb;
+
+	/*
+	 * Add a callback for suspend/resume to
+	 * control the keyboard backlight.
+	 */
+	ap_power_ev_init_callback(&cb, board_backlight_handler,
+				  AP_POWER_RESUME | AP_POWER_SUSPEND);
+	ap_power_ev_add_callback(&cb);
+
 	if (get_board_id() != 1)
 		return;
-
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_id_1_ec_kb_bl_en),
 			      GPIO_OUTPUT_LOW);
 }

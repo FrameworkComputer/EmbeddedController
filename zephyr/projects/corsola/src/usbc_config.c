@@ -6,6 +6,7 @@
 /* Corsola baseboard-specific USB-C configuration */
 
 #include <drivers/gpio.h>
+#include <ap_power/ap_power.h>
 
 #include "adc.h"
 #include "baseboard_usbc_config.h"
@@ -200,23 +201,26 @@ void x_ec_interrupt(enum gpio_signal signal)
 		CPRINTS("Undetected subboard interrupt.");
 }
 
-void board_hdmi_suspend(void)
+static void board_hdmi_handler(struct ap_power_ev_callback *cb,
+			       struct ap_power_ev_data data)
 {
-	if (corsola_get_db_type() == CORSOLA_DB_HDMI) {
-		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_en_hdmi_pwr), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_pwrdn_odl), 0);
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_hdmi_suspend, HOOK_PRIO_DEFAULT);
+	int value;
 
-void board_hdmi_resume(void)
-{
-	if (corsola_get_db_type() == CORSOLA_DB_HDMI) {
-		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_en_hdmi_pwr), 1);
-		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_pwrdn_odl), 1);
+	switch (data.event) {
+	default:
+		return;
+
+	case AP_POWER_RESUME:
+		value = 1;
+		break;
+
+	case AP_POWER_SUSPEND:
+		value = 0;
+		break;
 	}
+	gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_en_hdmi_pwr), value);
+	gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_pwrdn_odl), value);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_hdmi_resume, HOOK_PRIO_DEFAULT);
 
 static void tasks_init_deferred(void)
 {
@@ -238,6 +242,13 @@ static void baseboard_x_ec_gpio2_init(void)
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_ppc_int_odl),
 			GPIO_INT_EDGE_FALLING);
 		return;
+	}
+	if (corsola_get_db_type() == CORSOLA_DB_HDMI) {
+		static struct ap_power_ev_callback cb;
+
+		ap_power_ev_init_callback(&cb, board_hdmi_handler,
+					  AP_POWER_RESUME | AP_POWER_SUSPEND);
+		ap_power_ev_add_callback(&cb);
 	}
 
 	/* drop related C1 port drivers when it's a HDMI DB. */

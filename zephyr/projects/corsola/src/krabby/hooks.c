@@ -3,18 +3,43 @@
  * found in the LICENSE file.
  */
 
+#include <init.h>
 #include <drivers/gpio.h>
 
-#include "hooks.h"
+#include <ap_power/ap_power.h>
+#include "gpio.h"
 
-static void board_suspend(void)
+static void board_suspend_handler(struct ap_power_ev_callback *cb,
+				  struct ap_power_ev_data data)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_usm), 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_suspend, HOOK_PRIO_DEFAULT);
+	int value;
 
-static void board_resume(void)
-{
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_usm), 1);
+	switch (data.event) {
+	default:
+		return;
+
+	case AP_POWER_RESUME:
+		value = 1;
+		break;
+
+	case AP_POWER_SUSPEND:
+		value = 0;
+		break;
+	}
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_usm), value);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_resume, HOOK_PRIO_DEFAULT);
+
+static int install_suspend_handler(const struct device *unused)
+{
+	static struct ap_power_ev_callback cb;
+
+	/*
+	 * Add a callback for suspend/resume.
+	 */
+	ap_power_ev_init_callback(&cb, board_suspend_handler,
+				  AP_POWER_RESUME | AP_POWER_SUSPEND);
+	ap_power_ev_add_callback(&cb);
+	return 0;
+}
+
+SYS_INIT(install_suspend_handler, APPLICATION, 1);
