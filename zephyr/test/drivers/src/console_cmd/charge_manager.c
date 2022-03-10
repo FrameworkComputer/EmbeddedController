@@ -129,3 +129,13 @@ ZTEST_USER_F(console_cmd_charge_manager, test_chgoverride_0_from_sink)
 	zassert_equal(shell_execute_cmd(get_ec_shell(), "chgoverride 0"),
 		      EC_ERROR_INVAL, NULL);
 }
+
+ZTEST_USER(console_cmd_charge_manager, test_chgoverride_invalid_port)
+{
+	char cmd[256];
+
+	zassume_true(sprintf(cmd, "chgoverride %d", CHARGE_PORT_COUNT) > 0,
+		     NULL);
+	zassert_equal(shell_execute_cmd(get_ec_shell(), cmd), EC_ERROR_PARAM1,
+		      NULL);
+}
