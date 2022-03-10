@@ -225,6 +225,15 @@
 		gpio-ps185-pwrdn-odl = &gpio_ec_x_gpio3;
 	};
 
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <
+			&int_ac_present
+			&int_power_button
+			&int_lid_open
+		>;
+	};
+
 	def-lvol-io-list {
 		compatible = "nuvoton,npcx-lvolctrl-def";
 		lvol-io-pads = <
