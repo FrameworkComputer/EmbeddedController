@@ -345,7 +345,6 @@ below:
 		};
 		eeprom {
 			i2c-port = <&i2c7_0>;
-			remote-port = <7>;
 			enum-name = "I2C_PORT_EEPROM";
 		};
 		charger {
