@@ -46,7 +46,7 @@
 			gpios = <&gpioc 6 GPIO_OUT_LOW>;
 		};
 		en_ec_id_odl {
-			gpios = <&gpio7 6 GPIO_ODR_LOW>;
+			gpios = <&gpio7 6 GPIO_ODR_HIGH>;
 		};
 		sys_rst_odl {
 			gpios = <&gpioc 5 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
