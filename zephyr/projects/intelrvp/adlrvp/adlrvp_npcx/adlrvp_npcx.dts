@@ -4,6 +4,10 @@
  */
 
 / {
+	chosen {
+		cros,rtc = &mtc;
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
