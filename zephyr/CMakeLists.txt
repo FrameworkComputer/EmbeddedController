@@ -106,6 +106,8 @@ if (DEFINED CONFIG_PLATFORM_EC)
     "${PLATFORM_EC}/third_party")
 endif()
 
+add_subdirectory("subsys")
+
 # Creates a phony target all.libraries in case you only want to build the
 # libraries and not the binaries. For example for creating the initial zero
 # coverage files.
@@ -509,5 +511,4 @@ add_subdirectory(linker)
 add_subdirectory("app")
 add_subdirectory("drivers")
 add_subdirectory("emul")
-add_subdirectory("subsys")
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
