@@ -12,6 +12,22 @@ menuconfig PLATFORM_EC_USB_MUX
 
 if PLATFORM_EC_USB_MUX
 
+config PLATFORM_EC_USB_MUX_TASK
+	bool "Run mux set operations in a dedicated thread"
+	default n
+	help
+	  Run a dedicated task to process USB mux sets and HPD, which avoids
+	  blocking the PD task on mux updates. This is useful if a mux is slow
+	  to update, since blocking PD handling during mux operations can cause
+	  timing violations.
+
+config TASK_USB_MUX_STACK_SIZE
+	int "USB mux task stack size"
+	depends on PLATFORM_EC_USB_MUX_TASK
+	default 1024
+	help
+	  Set the size of the USB mux task stack, in bytes.
+
 config PLATFORM_EC_USB_MUX_AMD_FP6
 	bool "AMD FP6 integrated mux"
 	help

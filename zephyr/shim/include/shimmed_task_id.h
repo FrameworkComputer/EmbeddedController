@@ -99,7 +99,10 @@ typedef uint8_t task_id_t;
 				   CONFIG_TASK_PD_INT_STACK_SIZE)), ())   \
 	COND_CODE_1(HAS_TASK_PD_INT_C3,                                   \
 		     (CROS_EC_TASK(PD_INT_C3, pd_interrupt_handler_task, 3, \
-				   CONFIG_TASK_PD_INT_STACK_SIZE)), ())
+				   CONFIG_TASK_PD_INT_STACK_SIZE)), ())   \
+	IF_ENABLED(HAS_TASK_USB_MUX,					  \
+		   (CROS_EC_TASK(USB_MUX, usb_mux_task, 0,		  \
+				 CONFIG_TASK_USB_MUX_STACK_SIZE)))
 #elif defined(CONFIG_HAS_TEST_TASKS)
 #include "shimmed_test_tasks.h"
 /*
