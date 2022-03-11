@@ -7,6 +7,12 @@ menuconfig PLATFORM_EC_USBA
 	help
 	  Enable USB Type A ports
 
+	  To use this your board code must provide a usb_port_enable[] array
+	  with the GPIOs to use for each port, which may be specified via
+	  device tree with "cros-ec,usba-port-enable-pins" nodes. This
+	  implements the EC_CMD_USB_CHARGE_SET_MODE host command and provides
+	  a 'usbchargemode' console command.
+
 if PLATFORM_EC_USBA
 
 config PLATFORM_EC_USB_A_PORT_COUNT
@@ -18,22 +24,62 @@ config PLATFORM_EC_USB_A_PORT_COUNT
 	  external devices (according to the USB 3 spec, not the Battery Charger
 	  standard) and to charge devices slowly if power is enabled to them.
 
-config PLATFORM_EC_USB_PORT_POWER_DUMB
-	bool "Simple control of power to USB-A ports"
+choice
+	prompt "Port power control mode"
 	depends on PLATFORM_EC_USB_A_PORT_COUNT > 0
-	default y
+
+config PLATFORM_EC_USB_PORT_POWER_DUMB
+	bool "Dumb"
 	help
-	  Enable this to provide simple control of the power to USB ports
-	  using GPIOs. To use this your board code must provide a
-	  usb_port_enable[] array with the GPIOs to use for each port. This
-	  implements the EC_CMD_USB_CHARGE_SET_MODE host command and provides
-	  a 'usbchargemode' console command.
+	  USB-A ports are controlled with a single GPIO each, where turning it
+	  on enables the port and turning it off disables the port.
+
+config PLATFORM_EC_USB_PORT_POWER_SMART
+	bool "Smart"
+	help
+	  USB-A ports are controlled via a smart switch, which allows dynamic
+	  selection of port current limits and BC1.2 charging modes as well
+	  as a signal to enable or disable power to the port.
+
+endchoice
 
 config PLATFORM_EC_USB_PORT_POWER_DUMB_CUSTOM_HOOK
-	bool "Simple control of power to USB-A ports"
+	bool "Disable default dumb port power hooks"
 	depends on PLATFORM_EC_USB_PORT_POWER_DUMB
 	help
 	  Enable this if your board does not want to use the default S3 hooks
 	  from USB_PORT_POWER_DUMB.
+
+if PLATFORM_EC_USB_PORT_POWER_SMART
+
+config PLATFORM_EC_USB_PORT_POWER_SMART_CDP_SDP_ONLY
+	bool "CDP/SDP mode only"
+	help
+	  Enable this if the USB-A smart switch mode selection is fixed and
+	  the only control is for CDP or SDP mode via current limit selection.
+	  Only the ILIM GPIOs will be controlled, not CTL*.
+
+config PLATFORM_EC_USB_PORT_POWER_SMART_SIMPLE
+	bool "Shared 2-wire control"
+	depends on !PLATFORM_EC_USB_PORT_POWER_SMART_CDP_SDP_ONLY
+	select PLATFORM_EC_USB_PORT_POWER_SMART_INVERTED
+	help
+	  Enable this if the EC has a single GPIO tied to the CTL1 line and a
+	  single ILIM signal, each shared with every USB-A port. This implies
+	  that only these lines can be manipulated (CTL2 and CTL3 are fixed in
+	  hardware) and that any configuration to one port will also adjust the
+	  others.
+
+	  If disabled, the EC controls all of ILIM and CTL1 through CTL3 for
+	  every port individually.
+
+config PLATFORM_EC_USB_PORT_POWER_SMART_INVERTED
+	bool "ILIM signal polarity is inverted"
+	help
+	  Select this option if the ILIM signal going to the port controller(s)
+	  is inverted, meaning a low value indicates a high current limit and a
+	  high value requests a low current limit.
+
+endif # PLATFORM_EC_USB_PORT_POWER_SMART
 
 endif # PLATFORM_EC_USBA
