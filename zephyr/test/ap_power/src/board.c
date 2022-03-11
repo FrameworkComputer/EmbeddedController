@@ -6,6 +6,8 @@
 #include <zephyr.h>
 #include <ztest.h>
 
+#include <ap_power_override_functions.h>
+#include <ap_power/ap_power_interface.h>
 #include <power_signals.h>
 
 static bool signal_PWR_ALL_SYS_PWRGD;
@@ -49,4 +51,17 @@ int board_power_signal_get(enum power_signal signal)
 	case PWR_PG_PP1P05:
 		return signal_PWR_PG_PP1P05;
 	}
+}
+
+void board_ap_power_force_shutdown(void)
+{
+}
+
+int board_ap_power_assert_pch_power_ok(void)
+{
+	return 0;
+}
+
+void board_ap_power_action_g3_s5(void)
+{
 }

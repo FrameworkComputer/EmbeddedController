@@ -10,11 +10,11 @@
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>
 #include <ap_power/ap_power_interface.h>
+#include <ap_power_override_functions.h>
 #include <power_signals.h>
 #include <x86_power_signals.h>
 
-#include "chipset.h"
-#include "hooks.h"
+#include "gpio_signal.h"
 #include "gpio/gpio.h"
 
 LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
@@ -32,8 +32,7 @@ static void generate_ec_soc_dsw_pwrok_handler(int delay)
 	}
 }
 
-/* Override */
-void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
+void board_ap_power_force_shutdown(void)
 {
 	int timeout_ms = X86_NON_DSX_ADLP_NONPWRSEQ_FORCE_SHUTDOWN_TO_MS;
 
@@ -65,27 +64,27 @@ void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
 
 	if (power_signal_get(PWR_DSW_PWROK))
 		LOG_WRN("DSW_PWROK didn't go low!  Assuming G3.");
-	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
 }
 
-/* Override */
-void g3s5_action_handler(int delay, int signal_timeout)
+void board_ap_power_action_g3_s5(void)
 {
 	LOG_DBG("Turning on PWR_EN_PP5000_A and PWR_EN_PP3300_A");
 	power_signal_set(PWR_EN_PP5000_A, 1);
 	power_signal_set(PWR_EN_PP3300_A, 1);
 
-	power_wait_signals_timeout(IN_PGOOD_ALL_CORE, signal_timeout);
+	power_wait_signals_timeout(IN_PGOOD_ALL_CORE,
+		AP_PWRSEQ_DT_VALUE(wait_signal_timeout));
 
-	generate_ec_soc_dsw_pwrok_handler(delay);
+	generate_ec_soc_dsw_pwrok_handler(
+		AP_PWRSEQ_DT_VALUE(dsw_pwrok_delay));
 }
 
-/* Override */
-int generate_pch_pwrok_handler(int delay)
+
+int board_ap_power_assert_pch_power_ok(void)
 {
 	/* Pass though PCH_PWROK */
 	if (power_signal_get(PWR_PCH_PWROK) == 0) {
-		k_msleep(delay);
+		k_msleep(AP_PWRSEQ_DT_VALUE(pch_pwrok_delay));
 		power_signal_set(PWR_PCH_PWROK, 1);
 	}
 
