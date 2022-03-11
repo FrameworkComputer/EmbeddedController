@@ -6,6 +6,7 @@
 #include <stdbool.h>
 #include <ztest.h>
 
+#include "ap_power/ap_power.h"
 #include "hooks.h"
 
 static bool h1_called;
@@ -141,6 +142,63 @@ static void test_deferred_func_cancel(void)
 		"The deferred function was called, but should not have been");
 }
 
+/*
+ * Structure passed to event listeners.
+ */
+struct events {
+	struct ap_power_ev_callback cb;
+	enum ap_power_events event;
+	int count;
+};
+
+/*
+ * Common handler.
+ * Increment count, and store event received.
+ */
+static void ev_handler(struct ap_power_ev_callback *callback,
+		       struct ap_power_ev_data data)
+{
+	struct events *ev = CONTAINER_OF(callback, struct events, cb);
+
+	ev->count++;
+	ev->event = data.event;
+}
+
+static void test_hook_ap_power_events(void)
+{
+	static struct events cb;
+
+	ap_power_ev_init_callback(&cb.cb, ev_handler, AP_POWER_SUSPEND);
+	ap_power_ev_add_callback(&cb.cb);
+	hook_notify(HOOK_CHIPSET_SUSPEND);
+	zassert_equal(1, cb.count, "Callback not called");
+	zassert_equal(AP_POWER_SUSPEND, cb.event, "Wrong event");
+	ap_power_ev_remove_callback(&cb.cb);
+	hook_notify(HOOK_CHIPSET_SUSPEND);
+	zassert_equal(1, cb.count, "Callback called");
+
+	cb.count = 0;
+	ap_power_ev_init_callback(&cb.cb, ev_handler,
+		AP_POWER_SUSPEND|AP_POWER_RESUME);
+	ap_power_ev_add_callback(&cb.cb);
+	hook_notify(HOOK_CHIPSET_SUSPEND);
+	zassert_equal(1, cb.count, "Callbacks not called");
+	zassert_equal(AP_POWER_SUSPEND, cb.event, "Wrong event");
+	hook_notify(HOOK_CHIPSET_RESUME);
+	zassert_equal(2, cb.count, "Callbacks not called");
+	zassert_equal(AP_POWER_RESUME, cb.event, "Wrong event");
+
+	ap_power_ev_remove_events(&cb.cb, AP_POWER_SUSPEND);
+	hook_notify(HOOK_CHIPSET_SUSPEND);
+	zassert_equal(2, cb.count, "Suspend allback called");
+
+	hook_notify(HOOK_CHIPSET_STARTUP);
+	zassert_equal(2, cb.count, "Startup callback called");
+	ap_power_ev_add_events(&cb.cb, AP_POWER_STARTUP);
+	hook_notify(HOOK_CHIPSET_STARTUP);
+	zassert_equal(3, cb.count, "Startup callback not called");
+}
+
 void test_main(void)
 {
 	ztest_test_suite(
@@ -150,7 +208,8 @@ void test_main(void)
 		ztest_unit_test(test_hook_list_empty),
 		ztest_unit_test(test_deferred_func),
 		ztest_unit_test(test_deferred_func_push_out),
-		ztest_unit_test(test_deferred_func_cancel));
+		ztest_unit_test(test_deferred_func_cancel),
+		ztest_unit_test(test_hook_ap_power_events));
 
 	ztest_run_test_suite(hooks_tests);
 }
