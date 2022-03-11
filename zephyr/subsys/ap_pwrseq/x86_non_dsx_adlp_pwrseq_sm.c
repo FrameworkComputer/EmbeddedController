@@ -3,18 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <x86_non_dsx_adlp_pwrseq_sm.h>
+#include <x86_common_pwrseq.h>
+#include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
-
-static const struct chipset_pwrseq_config chip_cfg = {
-	.pch_pwrok_delay_ms = DT_INST_PROP(0, pch_pwrok_delay),
-	.sys_pwrok_delay_ms = DT_INST_PROP(0, sys_pwrok_delay),
-	.vccst_pwrgd_delay_ms = DT_INST_PROP(0, vccst_pwrgd_delay),
-	.vrrdy_timeout_ms = DT_INST_PROP(0, vrrdy_timeout),
-	.sys_reset_delay_ms = DT_INST_PROP(0, sys_reset_delay),
-	.all_sys_pwrgd_timeout = DT_INST_PROP(0, all_sys_pwrgd_timeout),
-};
 
 void ap_off(void)
 {
@@ -31,7 +23,7 @@ int all_sys_pwrgd_handler(void)
 	int retry = 0;
 
 	/* TODO: Add condition for no power sequencer */
-	k_msleep(chip_cfg.all_sys_pwrgd_timeout);
+	k_msleep(AP_PWRSEQ_DT_VALUE(all_sys_pwrgd_timeout));
 
 	if (power_signal_get(PWR_DSW_PWROK) == 0) {
 	/* Todo: Remove workaround for the retry
@@ -51,7 +43,7 @@ int all_sys_pwrgd_handler(void)
 	/* PG_EC_ALL_SYS_PWRGD is asserted, enable VCCST_PWRGD_OD. */
 
 	if (power_signal_get(PWR_VCCST_PWRGD) == 0) {
-		k_msleep(chip_cfg.vccst_pwrgd_delay_ms);
+		k_msleep(AP_PWRSEQ_DT_VALUE(vccst_pwrgd_delay));
 		power_signal_set(PWR_VCCST_PWRGD, 1);
 	}
 	return 0;
@@ -66,7 +58,7 @@ int all_sys_pwrgd_handler(void)
 
 static int wait_for_vrrdy(void)
 {
-	int timeout_ms = chip_cfg.vrrdy_timeout_ms;
+	int timeout_ms = AP_PWRSEQ_DT_VALUE(vrrdy_timeout);
 
 	for (; timeout_ms > 0; --timeout_ms) {
 		if (power_signal_get(PWR_IMVP9_VRRDY) != 0)
@@ -96,11 +88,11 @@ __attribute__((weak)) int generate_pch_pwrok_handler(int delay)
 }
 
 /* Generate SYS_PWROK->SOC if needed by system */
-void generate_sys_pwrok_handler(const struct common_pwrseq_config *com_cfg)
+void generate_sys_pwrok_handler(void)
 {
 	/* Enable PCH_SYS_PWROK. */
 	if (power_signal_get(PWR_EC_PCH_SYS_PWROK) == 0) {
-		k_msleep(chip_cfg.sys_pwrok_delay_ms);
+		k_msleep(AP_PWRSEQ_DT_VALUE(sys_pwrok_delay));
 		/* Check if we lost power while waiting. */
 		if (power_signal_get(PWR_ALL_SYS_PWRGD) == 0) {
 			LOG_DBG("PG_EC_ALL_SYS_PWRGD deasserted, "
@@ -118,7 +110,7 @@ void generate_sys_pwrok_handler(const struct common_pwrseq_config *com_cfg)
 
 /* TODO: Separate with and without power sequencer logic here */
 
-void s0_action_handler(const struct common_pwrseq_config *com_cfg)
+void s0_action_handler(void)
 {
 	int ret;
 
@@ -136,7 +128,7 @@ void s0_action_handler(const struct common_pwrseq_config *com_cfg)
 	/* TODO: There is possibility of EC not needing to generate
 	 * this as power sequencer may do it
 	 */
-	ret = generate_pch_pwrok_handler(chip_cfg.pch_pwrok_delay_ms);
+	ret = generate_pch_pwrok_handler(AP_PWRSEQ_DT_VALUE(pch_pwrok_delay));
 	if (ret) {
 		LOG_DBG("PCH_PWROK handling failed err=%d", ret);
 		return;
@@ -146,7 +138,7 @@ void s0_action_handler(const struct common_pwrseq_config *com_cfg)
 	 * configurable as it is variable with platform
 	 */
 	/* Send SYS_PWROK->SoC if conditions met */
-	generate_sys_pwrok_handler(com_cfg);
+	generate_sys_pwrok_handler();
 }
 
 void intel_x86_sys_reset_delay(void)
@@ -155,7 +147,7 @@ void intel_x86_sys_reset_delay(void)
 	 * Debounce time for SYS_RESET_L is 16 ms. Wait twice that period
 	 * to be safe.
 	 */
-	k_msleep(chip_cfg.sys_reset_delay_ms);
+	k_msleep(AP_PWRSEQ_DT_VALUE(sys_reset_delay));
 }
 
 void ap_power_reset(enum ap_power_shutdown_reason reason)
@@ -220,7 +212,7 @@ __attribute__((weak)) void ap_power_force_shutdown(
 	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
 }
 
-__attribute__((weak)) void g3s5_action_handler(int delay, int signal_timeout)
+__attribute__((weak)) void g3s5_action_handler(int delay, int timeout)
 {
 	power_signal_set(PWR_EN_PP5000_A, 1);
 }
@@ -241,14 +233,13 @@ void init_chipset_pwr_seq_state(void)
 }
 
 
-enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state,
-				 const struct common_pwrseq_config *com_cfg)
+enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state)
 {
 	/* Add chipset specific state handling if any */
 	switch (curr_state) {
 	case SYS_POWER_STATE_G3S5:
-		g3s5_action_handler(com_cfg->pch_dsw_pwrok_delay_ms,
-				    com_cfg->wait_signal_timeout_ms);
+		g3s5_action_handler(AP_PWRSEQ_DT_VALUE(dsw_pwrok_delay),
+				    AP_PWRSEQ_DT_VALUE(wait_signal_timeout));
 		break;
 	case SYS_POWER_STATE_S5:
 		break;
@@ -259,7 +250,7 @@ enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state,
 		s0s3_action_handler();
 		break;
 	case SYS_POWER_STATE_S0:
-		s0_action_handler(com_cfg);
+		s0_action_handler();
 		break;
 	default:
 		break;

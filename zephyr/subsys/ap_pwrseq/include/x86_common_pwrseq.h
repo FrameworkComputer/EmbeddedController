@@ -66,4 +66,8 @@ struct pwrseq_context {
 #endif
 
 };
+
+#define AP_PWRSEQ_DT_VALUE(p)	\
+	DT_PROP(DT_COMPAT_GET_ANY_STATUS_OKAY(intel_ap_pwrseq), p)
+
 #endif /* __X86_COMMON_PWRSEQ_H__ */

@@ -17,21 +17,10 @@
 
 #define DT_DRV_COMPAT	intel_ap_pwrseq
 
-/* Common device tree configurable attributes */
-struct common_pwrseq_config {
-	int pch_dsw_pwrok_delay_ms;
-	int pch_pm_pwrbtn_delay_ms;
-	int pch_rsmrst_delay_ms;
-	int wait_signal_timeout_ms;
-	int s5_timeout_s;
-};
-
 /* The wait time is ~150 msec, allow for safety margin. */
 #define IN_PCH_SLP_SUS_WAIT_TIME_MS 250
 
-enum power_states_ndsx chipset_pwr_sm_run(
-				enum power_states_ndsx curr_state,
-				const struct common_pwrseq_config *com_cfg);
+enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state);
 void init_chipset_pwr_seq_state(void);
 void request_exit_hardoff(bool should_exit);
 enum power_states_ndsx pwr_sm_get_state(void);
