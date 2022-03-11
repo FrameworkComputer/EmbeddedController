@@ -15,8 +15,10 @@
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 0,
 		"No compatible USBA Port Enable instance found");
 
+#define USBA_ENABLE_PINS(inst) DT_INST_FOREACH_PROP_ELEM(inst, enable_pins, PIN)
+
 const int usb_port_enable[] = {
-	DT_FOREACH_PROP_ELEM(DT_PATH(usba_port_enable_list), enable_pins, PIN)
+	DT_INST_FOREACH_STATUS_OKAY(USBA_ENABLE_PINS)
 };
 
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */
