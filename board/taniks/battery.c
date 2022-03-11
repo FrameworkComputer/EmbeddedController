@@ -75,7 +75,7 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 8900, /* mV */
+			.voltage_max		= 8800, /* mV */
 			.voltage_normal		= 7680, /* mV */
 			.voltage_min		= 6000, /* mV */
 			.precharge_current	= 464,	/* mA */
@@ -102,7 +102,7 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 8900, /* mV */
+			.voltage_max		= 8800, /* mV */
 			.voltage_normal		= 7680, /* mV */
 			.voltage_min		= 6000, /* mV */
 			.precharge_current	= 512,	/* mA */
