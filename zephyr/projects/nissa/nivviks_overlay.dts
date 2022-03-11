@@ -151,6 +151,21 @@
 		};
 	};
 
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+		/*
+		 * sb_2 is only configured as GPIO when USB-A1 is present,
+		 * but it's still safe to control when disabled.
+		 *
+		 * ILIM_SEL pins are referred to by legacy enum name,
+		 * GPIO_USB*_ILIM_SEL. The one for port A1 is unused on
+		 * sub-boards that don't have USB-A so is safe to control
+		 * regardless of system configuration.
+		 */
+		enable-pins = <&gpio_en_usb_a0_vbus &gpio_sb_2>;
+		status = "okay";
+	};
+
 	usbc {
 		port0 {
 			bc12 {

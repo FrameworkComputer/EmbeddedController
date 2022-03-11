@@ -178,6 +178,7 @@
 		};
 		gpio_sub_usb_a1_ilimit_sdp: sub_usb_a1_ilimit_sdp {
 			gpios = <&gpiof 1 GPIO_OUTPUT>;
+			enum-name = "GPIO_USB2_ILIM_SEL";
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpiod 1 GPIO_ODR_HIGH>;
@@ -188,6 +189,7 @@
 		};
 		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
 			gpios = <&gpiol 5 GPIO_OUTPUT>;
+			enum-name = "GPIO_USB1_ILIM_SEL";
 		};
 		gpio_usb_c0_frs: usb_c0_frs {
 			gpios = <&gpioc 4 GPIO_OUTPUT>;
