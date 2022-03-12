@@ -6,6 +6,7 @@
 #include <kernel.h>
 #include <toolchain.h>
 #include <logging/log.h>
+#include <sys/atomic.h>
 
 #include <power_signals.h>
 
@@ -75,25 +76,22 @@ DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_adc, GEN_PS_ENTRY,
 			     PWR_SIG_SRC_ADC, PWR_SIG_TAG_ADC)
 };
 
-static power_signal_mask_t power_signals;
+#define PWR_SIGNAL_POLLED(id)	PWR_SIGNAL_ENUM(id),
+
+/*
+ * List of power signals that need to be polled.
+ */
+static const uint8_t polled_signals[] = {
+DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external, PWR_SIGNAL_POLLED)
+};
+
+/*
+ * Bitmask of power signals updated via interrupt.
+ */
+static atomic_t interrupt_power_signals;
+
+static power_signal_mask_t output_signals;
 static power_signal_mask_t debug_signals;
-
-void power_update_signals(void)
-{
-	power_signal_mask_t n = 0;
-
-	for (int i = 0; i < POWER_SIGNAL_COUNT; i++) {
-		if (power_signal_get(i)) {
-			n |= BIT(i);
-		}
-	}
-	/* Check if any signals flagged for debug have changed. */
-	if ((n ^ power_signals) & debug_signals) {
-		LOG_INF("power update (0x%04x -> 0x%04x, 0x%04x changed)",
-			power_signals, n, n ^ power_signals);
-	}
-	power_signals = n;
-}
 
 void power_set_debug(power_signal_mask_t debug)
 {
@@ -105,14 +103,32 @@ power_signal_mask_t power_get_debug(void)
 	return debug_signals;
 }
 
-power_signal_mask_t power_get_signals(void)
+static inline void check_debug(power_signal_mask_t mask,
+			       enum power_signal signal,
+			       int value)
 {
-	return power_signals;
+	if (debug_signals & mask) {
+		LOG_INF("%s -> %d", power_signal_name(signal), value);
+	}
 }
 
-void power_signal_interrupt(void)
+power_signal_mask_t power_get_signals(void)
 {
-	power_update_signals();
+	power_signal_mask_t mask = 0;
+
+	for (int i = 0; i < ARRAY_SIZE(polled_signals); i++) {
+		if (power_signal_get(polled_signals[i])) {
+			mask |= POWER_SIGNAL_MASK(polled_signals[i]);
+		}
+	}
+	return mask | output_signals |
+		atomic_get(&interrupt_power_signals);
+}
+
+void power_signal_interrupt(enum power_signal signal, int value)
+{
+	atomic_set_bit_to(&interrupt_power_signals, signal, value);
+	check_debug(POWER_SIGNAL_MASK(signal), signal, value);
 }
 
 int power_wait_mask_signals_timeout(power_signal_mask_t mask,
@@ -124,12 +140,11 @@ int power_wait_mask_signals_timeout(power_signal_mask_t mask,
 	}
 	want &= mask;
 	while (timeout-- > 0) {
-		if ((power_signals & mask) == want) {
+		if ((power_get_signals() & mask) == want) {
 			return 0;
 		}
 		k_msleep(1);
 	}
-	power_update_signals();
 	return -ETIMEDOUT;
 }
 
@@ -166,6 +181,7 @@ int power_signal_get(enum power_signal signal)
 int power_signal_set(enum power_signal signal, int value)
 {
 	const struct ps_config *cp = &sig_config[signal];
+	int ret;
 
 	LOG_DBG("Set %s to %d", power_signal_name(signal), value);
 	switch (cp->source) {
@@ -174,14 +190,32 @@ int power_signal_set(enum power_signal signal, int value)
 
 #if HAS_GPIO_SIGNALS
 	case PWR_SIG_SRC_GPIO:
-		return power_signal_gpio_set(cp->src_enum, value);
+		ret = power_signal_gpio_set(cp->src_enum, value);
+		break;
 #endif
 
 #if HAS_EXT_SIGNALS
 	case PWR_SIG_SRC_EXT:
-		return board_power_signal_set(signal, value);
+		ret = board_power_signal_set(signal, value);
+		break;
 #endif
 	}
+	/*
+	 * Output succeeded, update output mask.
+	 */
+	if (ret == 0) {
+		power_signal_mask_t mask = POWER_SIGNAL_MASK(signal);
+		power_signal_mask_t old = output_signals;
+
+		if (value)
+			output_signals |= mask;
+		else
+			output_signals &= ~mask;
+		if (old != output_signals) {
+			check_debug(mask, signal, value);
+		}
+	}
+	return ret;
 }
 
 int power_signal_enable_interrupt(enum power_signal signal)

@@ -23,6 +23,7 @@ DT_FOREACH_STATUS_OKAY(MY_COMPAT, INIT_GPIO_SPEC)
  */
 struct ps_gpio_int {
 	gpio_flags_t flags;
+	uint8_t signal;
 	unsigned output : 1;
 	unsigned no_enable : 1;
 };
@@ -30,6 +31,7 @@ struct ps_gpio_int {
 #define INIT_GPIO_CONFIG(id)					\
 	{							\
 		.flags = DT_PROP_OR(id, interrupt_flags, 0),	\
+		.signal = PWR_SIGNAL_ENUM(id),			\
 		.no_enable = DT_PROP(id, no_enable),		\
 		.output = DT_PROP(id, output),			\
 	 },
@@ -89,7 +91,10 @@ void power_signal_gpio_interrupt(const struct device *port,
 				 struct gpio_callback *cb,
 				 gpio_port_pins_t pins)
 {
-	power_signal_interrupt();
+	int index = cb - int_cb;
+
+	power_signal_interrupt(gpio_config[index].signal,
+			       gpio_pin_get_dt(&spec[index]));
 }
 
 int power_signal_gpio_get(enum pwr_sig_gpio index)

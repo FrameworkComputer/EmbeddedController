@@ -19,12 +19,14 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 struct adc_config {
 	const struct device *dev_trig_high;
 	const struct device *dev_trig_low;
+	enum power_signal signal;
 };
 
 #define INIT_ADC_CONFIG(id)	\
 {									\
 	.dev_trig_high = DEVICE_DT_GET(DT_PHANDLE(id, trigger_high)),	\
 	.dev_trig_low = DEVICE_DT_GET(DT_PHANDLE(id, trigger_low)),	\
+	.signal = PWR_SIGNAL_ENUM(id),					\
 },
 
 static const struct adc_config config[] = {
@@ -49,7 +51,7 @@ static void trigger_high(enum pwr_sig_adc adc)
 			SENSOR_ATTR_ALERT,
 			&val);
 	LOG_DBG("power signal adc%d is HIGH", adc);
-	power_update_signals();
+	power_signal_interrupt(config[adc].signal, 1);
 }
 
 static void trigger_low(enum pwr_sig_adc adc)
@@ -68,7 +70,7 @@ static void trigger_low(enum pwr_sig_adc adc)
 			SENSOR_ATTR_ALERT,
 			&val);
 	LOG_DBG("power signal adc%d is LOW", adc);
-	power_update_signals();
+	power_signal_interrupt(config[adc].signal, 0);
 }
 
 int power_signal_adc_get(enum pwr_sig_adc adc)

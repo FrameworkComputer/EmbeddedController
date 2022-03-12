@@ -41,9 +41,6 @@ const char pwrsm_dbg[][25] = {
 void notify_espi_ready(bool ready)
 {
 	pwrseq_ctx.espi_ready = ready;
-	if (ready) {
-		power_update_signals();
-	}
 }
 #endif
 
@@ -344,6 +341,7 @@ static void pwrseq_loop_thread(void *p1, void *p2, void *p3)
 		 * comes back by the time we update our signals.
 		 */
 		this_in_signals = power_get_signals();
+
 		if (this_in_signals != last_in_signals ||
 				curr_state != last_state) {
 			LOG_INF("power state %d = %s, in 0x%04x",

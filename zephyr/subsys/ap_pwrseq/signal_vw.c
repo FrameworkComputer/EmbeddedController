@@ -17,6 +17,7 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 #define INIT_ESPI_SIGNAL(id)					\
 {								\
 	.espi_signal = DT_STRING_UPPER_TOKEN(id, virtual_wire),	\
+	.signal = PWR_SIGNAL_ENUM(id),				\
 	.invert = DT_PROP(id, vw_invert),			\
 },
 
@@ -25,6 +26,7 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
  */
 struct vw_config {
 	uint8_t espi_signal;	/* associated VW signal */
+	uint8_t signal;		/* power signal */
 	bool invert;		/* Invert the signal value */
 };
 
@@ -41,7 +43,8 @@ static bool signal_data[ARRAY_SIZE(vw_config)];
  * and it is only when all the signals have been updated that
  * notification is sent that the signals are ready.
  */
-static uint8_t espi_ready;
+static uint8_t espi_mask;
+static bool espi_not_valid;
 BUILD_ASSERT(ARRAY_SIZE(vw_config) <= 8);
 
 static void espi_handler(const struct device *dev,
@@ -62,21 +65,32 @@ static void espi_handler(const struct device *dev,
 		 * the signal mask.
 		 */
 		notify_espi_ready(false);
-		espi_ready = 0;
+		espi_mask = 0;
+		espi_not_valid = true;
 		break;
 
 	case ESPI_BUS_EVENT_VWIRE_RECEIVED:
 		for (int i = 0; i < ARRAY_SIZE(vw_config); i++) {
 			if (event.evt_details == vw_config[i].espi_signal) {
-				signal_data[i] = !!event.evt_data;
-				espi_ready |= BIT(i);
+				int value = vw_config[i].invert
+						? !event.evt_data
+						: !!event.evt_data;
+
+				signal_data[i] = value;
+				if (espi_not_valid) {
+					espi_mask |= BIT(i);
+				}
+				power_signal_interrupt(vw_config[i].signal,
+						       value);
 			}
 		}
 		/*
 		 * When all the signals have been updated, notify that
 		 * the ESPI signals are valid.
 		 */
-		if (espi_ready == BIT_MASK(ARRAY_SIZE(vw_config))) {
+		if (espi_not_valid &&
+		    espi_mask == BIT_MASK(ARRAY_SIZE(vw_config))) {
+			espi_not_valid = false;
 			LOG_DBG("ESPI signals valid");
 			/*
 			 * TODO(b/222946923): Convert to generalised
@@ -90,13 +104,10 @@ static void espi_handler(const struct device *dev,
 
 int power_signal_vw_get(enum pwr_sig_vw vw)
 {
-	int value;
-
 	if (vw < 0 || vw >= ARRAY_SIZE(vw_config)) {
 		return -EINVAL;
 	}
-	value = signal_data[vw];
-	return vw_config[vw].invert ? !value : value;
+	return signal_data[vw];
 }
 
 void power_signal_vw_init(void)

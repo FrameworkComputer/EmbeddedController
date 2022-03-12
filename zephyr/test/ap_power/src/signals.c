@@ -262,8 +262,15 @@ ZTEST(signals, test_gpio_output)
 ZTEST(signals, test_signal_mask)
 {
 	power_signal_mask_t vm = POWER_SIGNAL_MASK(PWR_IMVP9_VRRDY);
+	power_signal_mask_t bm = POWER_SIGNAL_MASK(PWR_ALL_SYS_PWRGD);
 	power_signal_mask_t m;
 
+	/*
+	 * Set board level (polled) signal.
+	 */
+	power_signal_set(PWR_ALL_SYS_PWRGD, 1);
+	zassert_equal(bm, (power_get_signals() & bm),
+		"Expected PWR_ALL_SYS_PWRGD signal to be present in mask");
 	/*
 	 * Use GPIO that does not interrupt to confirm that a pin change
 	 * will not update the power signal mask.
@@ -273,16 +280,9 @@ ZTEST(signals, test_signal_mask)
 	zassert_equal(0, (power_get_signals() & vm), "Expected mask to be 0");
 	emul_set(PWR_IMVP9_VRRDY, 1);
 	zassert_equal(0, (power_get_signals() & vm), "Expected mask to be 0");
-	/*
-	 * Calling power_update_signals will read all the signals and
-	 * incorporate them into the mask, even the non-interrupt signals.
-	 */
-	power_update_signals();
-	zassert_equal(vm, (power_get_signals() & vm),
-		"Expected signals to be present in mask");
-	zassert_equal(true, power_signals_match(vm, vm),
+	zassert_equal(true, power_signals_match(bm, bm),
 		"Expected match of mask to signal match");
-	zassert_equal(-ETIMEDOUT, power_wait_mask_signals_timeout(vm, 0, 5),
+	zassert_equal(-ETIMEDOUT, power_wait_mask_signals_timeout(bm, 0, 5),
 		"Expected timeout waiting for mask to be 0");
 	zassert_ok(power_wait_mask_signals_timeout(0, vm, 5),
 		"expected match with a 0 mask (always true)");

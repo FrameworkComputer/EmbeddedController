@@ -203,20 +203,22 @@ void power_signal_init(void);
  * @brief Power signal interrupt handler
  *
  * Called when an input signal causes an interrupt.
+ *
+ * @param signal The power_signal that has changed.
+ * @param value The new value of the signal
  */
-void power_signal_interrupt(void);
+void power_signal_interrupt(enum power_signal signal, int value);
 
+/**
+ * Interrupt based signals update a bitfield mask, which can be
+ * used to wait for signal changes.
+ */
 typedef uint32_t power_signal_mask_t;
 
 /**
- * @brief Update the stored mask of power signals.
- */
-void power_update_signals(void);
-
-/**
- * @brief Get the current power signals as a mask.
+ * @brief Get the current interrupt bitfield
  *
- * @return Power signals as a mask.
+ * @return Interrupt power signals as a mask.
  */
 power_signal_mask_t power_get_signals(void);
 
