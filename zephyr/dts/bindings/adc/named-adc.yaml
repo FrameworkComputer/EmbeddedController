@@ -101,6 +101,7 @@ child-binding:
       - ADC_TEMP_SENSOR_1
       - ADC_TEMP_SENSOR_2
       - ADC_TEMP_SENSOR_3
+      - ADC_TEMP_SENSOR_4
       - ADC_TEMP_SENSOR_CHARGER
       - ADC_TEMP_SENSOR_DDR_SOC
       - ADC_TEMP_SENSOR_FAN

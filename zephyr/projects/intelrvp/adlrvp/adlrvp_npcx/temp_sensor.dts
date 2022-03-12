@@ -1,0 +1,88 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	named-temp-sensors {
+		ambient {
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+			label = "Ambient";
+			enum-name = "TEMP_SENSOR_1";
+			temp_fan_off = <15>;
+			temp_fan_max = <50>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			adc = <&adc_ambient>;
+		};
+
+		/*
+		 * TDB: battery temp read api is not using thermistor and
+		 * zephyr shim layer doesn't support to configure custom read
+		 * function.
+		 *
+		 * battery {
+		 *	compatible = "cros-ec,temp-sensor-thermistor",
+		 *		     "cros-ec,temp-sensor";
+		 *	thermistor = < >;
+		 *	label = "Battery";
+		 *	enum-name = "";
+		 *	temp_fan_off = <15>;
+		 *	temp_fan_max = <50>;
+		 *	temp_host_high = <75>;
+		 *	temp_host_halt = <80>;
+		 *	temp_host_release_high = <65>;
+		 *	adc = <&adc_battery>;
+		 * };
+		 */
+
+		ddr {
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+			label = "DDR";
+			enum-name = "TEMP_SENSOR_2";
+			temp_fan_off = <15>;
+			temp_fan_max = <50>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			adc = <&adc_ddr>;
+		};
+		skin {
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+			label = "Skin";
+			enum-name = "TEMP_SENSOR_3";
+			temp_fan_off = <15>;
+			temp_fan_max = <50>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			adc = <&adc_skin>;
+		};
+		vr {
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+			label = "VR";
+			enum-name = "TEMP_SENSOR_4";
+			temp_fan_off = <15>;
+			temp_fan_max = <50>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			adc = <&adc_vr>;
+		};
+	};
+};
+
+&thermistor_3V0_22K6_47K_4050B {
+	status = "okay";
+};

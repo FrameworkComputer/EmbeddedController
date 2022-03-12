@@ -25,6 +25,8 @@ properties:
       enum:
       - TEMP_SENSOR_1
       - TEMP_SENSOR_2
+      - TEMP_SENSOR_3
+      - TEMP_SENSOR_4
       - TEMP_SENSOR_AMB
       - TEMP_SENSOR_CHARGER
       - TEMP_SENSOR_CPU

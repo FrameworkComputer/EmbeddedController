@@ -7,6 +7,7 @@
 #define __ZEPHYR_GPIO_MAP_H
 
 #define GPIO_EN_PP5000                  GPIO_UNIMPLEMENTED
+#define GPIO_TEMP_SENSOR_POWER          GPIO_EN_PP3300_A
 
 /* TODO: Implement GPIO_ENTERING_RW in IOEX */
 #ifdef CONFIG_BOARD_MTLRVP_NPCX
