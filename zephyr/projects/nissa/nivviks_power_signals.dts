@@ -126,14 +126,50 @@
 		enum-name = "PWR_ALL_SYS_PWRGD";
 	};
 	pwr-adc-pp3300 {
-		compatible = "intel,ap-pwrseq-external";
-		dbg-label = "Temporary override for ADC PWR_DSW_PWROK";
+		compatible = "intel,ap-pwrseq-adc";
+		dbg-label = "PP3300 PWROK (from ADC)";
 		enum-name = "PWR_DSW_PWROK";
+		trigger-high = <&cmp_pp3300_s5_high>;
+		trigger-low = <&cmp_pp3300_s5_low>;
 	};
 	pwr-adc-pp1p05 {
-		compatible = "intel,ap-pwrseq-external";
-		dbg-label = "Temporary override for ADC PWR_PG_PP1P05";
+		compatible = "intel,ap-pwrseq-adc";
+		dbg-label = "PP1P05 PWROK (from ADC)";
 		enum-name = "PWR_PG_PP1P05";
+		trigger-high = <&cmp_pp1p05_high>;
+		trigger-low = <&cmp_pp1p05_low>;
+	};
+
+	adc-cmp {
+		cmp_pp3300_s5_high: pp3300_high {
+			compatible = "nuvoton,adc-cmp";
+			io-channels = <&adc0 6>;
+			comparison = "ADC_CMP_NPCX_GREATER";
+			/*
+			 * This is 90% of nominal voltage considering voltage
+			 * divider on ADC input.
+			 */
+			threshold-mv = <2448>;
+		};
+		cmp_pp3300_s5_low: pp3300_low {
+			compatible = "nuvoton,adc-cmp";
+			io-channels = <&adc0 6>;
+			comparison = "ADC_CMP_NPCX_LESS_OR_EQUAL";
+			threshold-mv = <2448>;
+		};
+		cmp_pp1p05_high: pp1p05_high {
+			compatible = "nuvoton,adc-cmp";
+			io-channels = <&adc0 4>;
+			comparison = "ADC_CMP_NPCX_GREATER";
+			/* Setting at 90% of nominal voltage */
+			threshold-mv = <945>;
+		};
+		cmp_pp1p05_low: pp1p05_low {
+			compatible = "nuvoton,adc-cmp";
+			io-channels = <&adc0 4>;
+			comparison = "ADC_CMP_NPCX_LESS_OR_EQUAL";
+			threshold-mv = <945>;
+		};
 	};
 };
 
