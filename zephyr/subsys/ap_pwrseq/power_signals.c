@@ -220,6 +220,9 @@ int power_signal_disable_interrupt(enum power_signal signal)
 
 const char *power_signal_name(enum power_signal signal)
 {
+	if (signal < 0 || signal >= POWER_SIGNAL_COUNT) {
+		return NULL;
+	}
 	return sig_config[signal].debug_name;
 }
 

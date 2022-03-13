@@ -53,7 +53,7 @@ static struct {
 };
 
 /*
- * Retrieve the pin number corresponding to this signal.
+ * Retrieve the GPIO pin number corresponding to this signal.
  */
 static int signal_to_pin(enum power_signal signal)
 {
@@ -95,20 +95,29 @@ ZTEST(signals, test_validate_request)
 {
 	/* Can't set output on input */
 	zassert_equal(-EINVAL, power_signal_set(PWR_SLP_S0, 1),
-		      "set succeeded");
+		      "power_signal_set on input pin should not succeed");
 	/* Can't enable interrupt on output */
 	zassert_equal(-EINVAL, power_signal_enable_interrupt(PWR_VCCST_PWRGD),
-		      "enable interrupt succeeded");
+		      "enable interrupt on output pin should not succeed");
 	/* Can't disable interrupt on output */
 	zassert_equal(-EINVAL, power_signal_disable_interrupt(PWR_VCCST_PWRGD),
-		      "disable interrupt succeeded");
+		      "disable interrupt on output pin should not succeed");
 	/* Can't enable interrupt on input with no interrupt flags */
 	zassert_equal(-EINVAL, power_signal_enable_interrupt(PWR_IMVP9_VRRDY),
-		      "enable interrupt succeeded");
+		      "enable interrupt on input pin without interrupt config");
 	/* Can't disable interrupt on input with no interrupt flags */
 	zassert_equal(-EINVAL,
 		      power_signal_disable_interrupt(PWR_IMVP9_VRRDY),
-		      "enable interrupt succeeded");
+		      "disable interrupt on input pin without interrupt config");
+	/* Invalid signal - should be rejectde */
+	zassert_equal(-EINVAL, power_signal_get(-1),
+		      "power_signal_get with -1 signal should fail");
+	zassert_equal(-EINVAL, power_signal_set(-1, 1),
+		      "power_signal_set with -1 signal should fail");
+	zassert_equal(-EINVAL, power_signal_enable_interrupt(-1),
+		      "enable interrupt with -1 signal should fail");
+	zassert_equal(-EINVAL, power_signal_disable_interrupt(-1),
+		      "disable interrupt with -1 signal should fail");
 }
 
 /**
@@ -122,10 +131,34 @@ ZTEST(signals, test_validate_request)
  */
 ZTEST(signals, test_board_signals)
 {
-	zassert_equal(0, power_signal_set(PWR_ALL_SYS_PWRGD, 1),
-		      "set failed");
+	/*
+	 * Check that the board level signals get correctly invoked.
+	 */
+	zassert_ok(power_signal_set(PWR_ALL_SYS_PWRGD, 1),
+		      "power_signal_set on board signal failed");
 	zassert_equal(1, power_signal_get(PWR_ALL_SYS_PWRGD),
-		      "get failed");
+		      "power_signal_get on board signal should return 1");
+}
+
+/**
+ * @brief TestPurpose: Check name retrieval
+ *
+ * @details
+ * Validate out of bounds request
+ *
+ * Expected Results
+ *  - Retrieve name or null for request.
+ */
+ZTEST(signals, test_signal_name)
+{
+	for (int signal = 0; signal < POWER_SIGNAL_COUNT; signal++) {
+		zassert_not_null(power_signal_name(signal),
+			"Signal name for %d should be not null", signal);
+	}
+	zassert_is_null(power_signal_name(-1),
+		"Out of bounds signal name should be null");
+	zassert_is_null(power_signal_name(POWER_SIGNAL_COUNT),
+		"Out of bounds signal name should be null");
 }
 
 /**
@@ -133,31 +166,41 @@ ZTEST(signals, test_board_signals)
  *
  * @details
  * Confirm that output signals are initialised correctly.
+ * Output pins are by default set to a de-asserted state at start-up, so
+ * signals that are active-low should be set to physical high, signals
+ * that are active-high should be set to physical low.
+ * In overlay.dts, the only output power signal that is active-low is
+ * PWR_SYS_RST
  *
  * Expected Results
  *  - Output signals are initialised as de-asserted.
  */
 ZTEST(signals, test_init_outputs)
 {
-	zassert_equal(0, emul_get(PWR_EN_PP5000_A),
-		      "PWR_EN_PP5000_A init failed");
-	zassert_equal(0, emul_get(PWR_EN_PP3300_A),
-		      "PWR_EN_PP3300_A init failed");
-	zassert_equal(0, emul_get(PWR_EC_PCH_RSMRST),
-		      "PWR_EC_PCH_RSMRST init failed");
-	zassert_equal(0, emul_get(PWR_EC_SOC_DSW_PWROK),
-		      "PWR_EC_SOC_DSW_PWROK init failed");
-	zassert_equal(0, emul_get(PWR_PCH_PWROK),
-		      "PWR_PCH_PWROK init failed");
-	zassert_equal(1, emul_get(PWR_SYS_RST),
-		      "PWR_SYS_RST init failed");
+	static const enum power_signal active_high[] = {
+		PWR_EN_PP5000_A, PWR_EN_PP3300_A, PWR_EC_PCH_RSMRST,
+		PWR_EC_SOC_DSW_PWROK, PWR_PCH_PWROK
+		};
+	static const enum power_signal active_low[] = { PWR_SYS_RST };
+
+	for (int i = 0; i < ARRAY_SIZE(active_high); i++) {
+		zassert_equal(0, emul_get(active_high[i]),
+			"Signal %d (%s) init to de-asserted state failed",
+			active_high[i], power_signal_name(active_high[i]));
+	}
+	for (int i = 0; i < ARRAY_SIZE(active_low); i++) {
+		zassert_equal(1, emul_get(active_low[i]),
+			"Signal %d (%s) init to de-asserted state failed",
+			active_low[i], power_signal_name(active_low[i]));
+	}
 }
 
 /**
  * @brief TestPurpose: Verify input signals are read correctly
  *
  * @details
- * Confirm that input signals are read correctly.
+ * Confirm that input signals are read correctly. Signal values
+ * are set via the GPIO emul driver.
  *
  * Expected Results
  *  - Input signals are read correctly.
@@ -166,17 +209,17 @@ ZTEST(signals, test_gpio_input)
 {
 	emul_set(PWR_RSMRST, 1);
 	zassert_equal(1, power_signal_get(PWR_RSMRST),
-		      "PWR_RSMRST expected 1");
+		      "power_signal_get of PWR_RSMRST should be 1");
 	emul_set(PWR_RSMRST, 0);
 	zassert_equal(0, power_signal_get(PWR_RSMRST),
-		      "PWR_RSMRST expected 0");
+	      "power_signal_get of PWR_RSMRST should be 0");
 	/* ACTIVE_LOW input */
 	emul_set(PWR_SLP_S0, 0);
 	zassert_equal(1, power_signal_get(PWR_SLP_S0),
-		      "PWR_SLP_S0 expected 1");
+	      "power_signal_get of active-low signal PWR_SLP_S0 should be 1");
 	emul_set(PWR_SLP_S0, 1);
 	zassert_equal(0, power_signal_get(PWR_SLP_S0),
-		      "PWR_SLP_S0 expected 0");
+	      "power_signal_get of active-low PWR_SLP_S0 should be 0");
 }
 
 /**
@@ -192,24 +235,26 @@ ZTEST(signals, test_gpio_output)
 {
 	power_signal_set(PWR_PCH_PWROK, 1);
 	zassert_equal(1, emul_get(PWR_PCH_PWROK),
-		      "PWR_PCH_PWROK expected 1");
+		"power_signal_set of PWR_PCH_PWROK should be 1");
 	power_signal_set(PWR_PCH_PWROK, 0);
 	zassert_equal(0, emul_get(PWR_PCH_PWROK),
-		      "PWR_PCH_PWROK expected 0");
+		"power_signal_set of PWR_PCH_PWROK should be 0");
 	/* ACTIVE_LOW output */
 	power_signal_set(PWR_SYS_RST, 0);
 	zassert_equal(1, emul_get(PWR_SYS_RST),
-		      "PWR_SYS_RST expected 1");
+		"power_signal_set of PWR_SYS_RST should be 1");
 	power_signal_set(PWR_SYS_RST, 1);
 	zassert_equal(0, emul_get(PWR_SYS_RST),
-		      "PWR_SYS_RST expected 0");
+		"power_signal_set of PWR_SYS_RST should be 0");
 }
 
 /**
  * @brief TestPurpose: Verify signal mask handling
  *
  * @details
- * Confirm that signal mask processing works.
+ * Confirm that signal mask processing works as expected,
+ * such as checking that pin changes send interrupts that
+ * modifies the power signal mask.
  *
  * Expected Results
  *  - Multiple signal mask processing works
@@ -219,19 +264,28 @@ ZTEST(signals, test_signal_mask)
 	power_signal_mask_t vm = POWER_SIGNAL_MASK(PWR_IMVP9_VRRDY);
 	power_signal_mask_t m;
 
-	/* Use non-interrupt GPIO */
+	/*
+	 * Use GPIO that does not interrupt to confirm that a pin change
+	 * will not update the power signal mask.
+	 */
 	emul_set(PWR_IMVP9_VRRDY, 0);
 	m = power_get_signals() & vm;
-	zassert_equal(0, (power_get_signals() & vm), "Expected 0 signals");
+	zassert_equal(0, (power_get_signals() & vm), "Expected mask to be 0");
 	emul_set(PWR_IMVP9_VRRDY, 1);
-	zassert_equal(0, (power_get_signals() & vm), "Expected 0 signals");
+	zassert_equal(0, (power_get_signals() & vm), "Expected mask to be 0");
+	/*
+	 * Calling power_update_signals will read all the signals and
+	 * incorporate them into the mask, even the non-interrupt signals.
+	 */
 	power_update_signals();
 	zassert_equal(vm, (power_get_signals() & vm),
-		"Expected non-zero signals");
+		"Expected signals to be present in mask");
 	zassert_equal(true, power_signals_match(vm, vm),
-		"Expected signal match");
+		"Expected match of mask to signal match");
 	zassert_equal(-ETIMEDOUT, power_wait_mask_signals_timeout(vm, 0, 5),
-		"Expected timeout");
+		"Expected timeout waiting for mask to be 0");
+	zassert_ok(power_wait_mask_signals_timeout(0, vm, 5),
+		"expected match with a 0 mask (always true)");
 }
 
 /**
@@ -248,7 +302,8 @@ ZTEST(signals, test_debug_mask)
 	power_signal_mask_t dm = 0xDEADBEEF;
 
 	power_set_debug(dm);
-	zassert_equal(dm, power_get_debug(), "Debug mask does not match");
+	zassert_equal(dm, power_get_debug(),
+		"Debug mask does not match set value");
 }
 
 /**
@@ -264,39 +319,58 @@ ZTEST(signals, test_debug_mask)
  */
 ZTEST(signals, test_gpio_interrupts)
 {
-	/* Check that changes update the signal mask. */
 	power_signal_mask_t rsm = POWER_SIGNAL_MASK(PWR_RSMRST);
 	power_signal_mask_t s3 = POWER_SIGNAL_MASK(PWR_SLP_S3);
 	power_signal_mask_t s0 = POWER_SIGNAL_MASK(PWR_SLP_S0);
 
+	/* Check that GPIO pin changes update the signal mask. */
 	emul_set(PWR_RSMRST, 1);
-	zassert_equal(true, power_signals_on(rsm), "PWR_RSMRST not updated");
+	zassert_equal(true, power_signals_on(rsm),
+		"PWR_RSMRST not updated in mask");
 	emul_set(PWR_RSMRST, 0);
-	zassert_equal(true, power_signals_off(rsm), "PWR_RSMRST not updated");
+	zassert_equal(true, power_signals_off(rsm),
+		"PWR_RSMRST not updated in mask");
 
-	/* ACTIVE_LOW */
+	/*
+	 * Check that an ACTIVE_LOW signal gets asserted in
+	 * the mask (physical value of GPIO pin 0 is set as 1 in mask)
+	 */
 	emul_set(PWR_SLP_S3, 0);
-	zassert_equal(true, power_signals_on(s3), "SLP_S3 not updated");
+	zassert_equal(true, power_signals_on(s3),
+		"SLP_S3 signal should be on in mask");
 	emul_set(PWR_SLP_S3, 1);
-	zassert_equal(true, power_signals_off(s3), "SLP_S3 not updated");
+	zassert_equal(true, power_signals_off(s3),
+		"SLP_S3 should be off in mask");
 
-	/* Check that disabled interrupt does not trigger */
+	/*
+	 * Check that disabled interrupt on the GPIO does not trigger
+	 * and update the mask.
+	 */
 	emul_set(PWR_SLP_S0, 0);
-	zassert_equal(false, power_signals_on(s0), "SLP_S0 updated");
+	zassert_equal(false, power_signals_on(s0),
+		"SLP_S0 should not have updated");
 	emul_set(PWR_SLP_S0, 1);
-	zassert_equal(false, power_signals_on(s0), "SLP_S0 updated");
+	zassert_equal(false, power_signals_on(s0),
+		"SLP_S0 should not have updated");
 
 	power_signal_enable_interrupt(PWR_SLP_S0);
 	emul_set(PWR_SLP_S0, 0);
-	zassert_equal(true, power_signals_on(s0), "SLP_S0 not updated");
+	zassert_equal(true, power_signals_on(s0),
+		"SLP_S0 should have updated the mask");
 	emul_set(PWR_SLP_S0, 1);
-	zassert_equal(true, power_signals_off(s0), "SLP_S0 not updated");
+	zassert_equal(true, power_signals_off(s0),
+		"SLP_S0 should have updated the mask");
 
+	/*
+	 * Disable the GPIO interrupt again.
+	 */
 	power_signal_disable_interrupt(PWR_SLP_S0);
 	emul_set(PWR_SLP_S0, 0);
-	zassert_equal(false, power_signals_on(s0), "SLP_S0 updated");
+	zassert_equal(false, power_signals_on(s0),
+		"SLP_S0 should not have updated the mask");
 	emul_set(PWR_SLP_S0, 1);
-	zassert_equal(true, power_signals_off(s0), "SLP_S0 updated");
+	zassert_equal(true, power_signals_off(s0),
+		"SLP_S0 should not have updated the mask");
 }
 
 /**
@@ -314,7 +388,11 @@ ZTEST(signals, test_espi_vw)
 		DEVICE_DT_GET_ANY(zephyr_espi_emul_controller);
 
 	zassert_not_null(espi, "Cannot get ESPI device");
-	/* Signal is inverted */
+	/*
+	 * Send a VW signal, and check that it is received.
+	 * The signal is configured as an inverted signal,
+	 * so sending a 0 value should be received as a signal.
+	 */
 	emul_espi_host_send_vw(espi, ESPI_VWIRE_SIGNAL_SLP_S5, 0);
 	zassert_equal(1, power_signal_get(PWR_SLP_S5),
 		"VW SLP_S5 should be 1");
