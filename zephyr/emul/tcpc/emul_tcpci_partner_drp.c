@@ -105,9 +105,9 @@ enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 }
 
 /** Check description in emul_tcpci_partner_drp.h */
-void tcpci_drp_emul_hard_reset(void *data)
+void tcpci_drp_emul_hard_reset(void *emul)
 {
-	struct tcpci_drp_emul *drp_emul = data;
+	struct tcpci_drp_emul *drp_emul = emul;
 
 	if (drp_emul->data.sink) {
 		tcpci_snk_emul_hard_reset(&drp_emul->snk_data);
@@ -273,7 +273,7 @@ void tcpci_drp_emul_init(struct tcpci_drp_emul *emul)
 
 	emul->data.sink = true;
 	emul->data.in_pwr_swap = false;
-	tcpci_src_emul_init_data(&emul->src_data);
+	tcpci_src_emul_init_data(&emul->src_data, &emul->common_data);
 	tcpci_snk_emul_init_data(&emul->snk_data);
 
 	/* Add dual role bit to sink and source PDOs */

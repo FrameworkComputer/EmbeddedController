@@ -31,6 +31,8 @@
 struct tcpci_src_emul_data {
 	/** Power data objects returned in source capabilities message */
 	uint32_t pdo[PDO_MAX_OBJECTS];
+	/** Pointer to common TCPCI partner data */
+	struct tcpci_partner_data *common_data;
 };
 
 /** Structure describing standalone source device emulator */
@@ -70,8 +72,10 @@ void tcpci_src_emul_init(struct tcpci_src_emul *emul);
  *        created with fixed unconstrained flag.
  *
  * @param data Pointer to USB-C source device emulator data
+ * @param common_data Pointer to USB-C device emulator common data
  */
-void tcpci_src_emul_init_data(struct tcpci_src_emul_data *data);
+void tcpci_src_emul_init_data(struct tcpci_src_emul_data *data,
+			      struct tcpci_partner_data *common_data);
 
 /**
  * @brief Connect emulated device to TCPCI

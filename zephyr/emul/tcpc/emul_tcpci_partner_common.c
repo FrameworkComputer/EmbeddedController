@@ -700,6 +700,6 @@ void tcpci_partner_init(struct tcpci_partner_data *data,
 	data->collect_msg_log = false;
 	tcpci_partner_common_reset(data);
 	data->hard_reset_func = hard_reset_func;
-	data->hard_reset_data = data;
+	data->hard_reset_data = hard_reset_data;
 	data->tcpm_timeouts = 0;
 }

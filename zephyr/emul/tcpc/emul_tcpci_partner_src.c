@@ -78,11 +78,11 @@ enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 /** Check description in emul_tcpci_partner_src.h */
 void tcpci_src_emul_hard_reset(void *data)
 {
-	struct tcpci_src_emul *src_emul = data;
+	struct tcpci_src_emul_data *src_emul_data = data;
 
 	/* Send capability after 15 ms to establish PD again */
-	tcpci_src_emul_send_capability_msg(&src_emul->data,
-					   &src_emul->common_data, 15);
+	tcpci_src_emul_send_capability_msg(src_emul_data,
+					   src_emul_data->common_data, 15);
 }
 
 /**
@@ -297,19 +297,23 @@ enum check_pdos_res tcpci_src_emul_check_pdos(struct tcpci_src_emul_data *data)
 }
 
 /** Check description in emul_tcpci_partner_src.h */
-void tcpci_src_emul_init_data(struct tcpci_src_emul_data *data)
+void tcpci_src_emul_init_data(struct tcpci_src_emul_data *data,
+			      struct tcpci_partner_data *common_data)
 {
 	/* By default there is only PDO 5v@3A */
 	data->pdo[0] = PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 	for (int i = 1; i < PDO_MAX_OBJECTS; i++) {
 		data->pdo[i] = 0;
 	}
+
+	data->common_data = common_data;
 }
 
 /** Check description in emul_tcpci_parnter_src.h */
 void tcpci_src_emul_init(struct tcpci_src_emul *emul)
 {
-	tcpci_partner_init(&emul->common_data, tcpci_src_emul_hard_reset, emul);
+	tcpci_partner_init(&emul->common_data, tcpci_src_emul_hard_reset,
+			   &emul->data);
 
 	emul->common_data.data_role = PD_ROLE_UFP;
 	emul->common_data.power_role = PD_ROLE_SOURCE;
@@ -319,5 +323,5 @@ void tcpci_src_emul_init(struct tcpci_src_emul *emul)
 	emul->ops.rx_consumed = tcpci_src_emul_rx_consumed_op;
 	emul->ops.control_change = NULL;
 
-	tcpci_src_emul_init_data(&emul->data);
+	tcpci_src_emul_init_data(&emul->data, &emul->common_data);
 }

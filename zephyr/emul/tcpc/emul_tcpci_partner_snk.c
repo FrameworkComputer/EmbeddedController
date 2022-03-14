@@ -386,10 +386,10 @@ enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 /** Check description in emul_tcpci_partner_snk.h */
 void tcpci_snk_emul_hard_reset(void *data)
 {
-	struct tcpci_snk_emul *snk_emul = data;
+	struct tcpci_snk_emul_data *snk_emul_data = data;
 
-	snk_emul->data.wait_for_ps_rdy = false;
-	snk_emul->data.pd_completed = false;
+	snk_emul_data->wait_for_ps_rdy = false;
+	snk_emul_data->pd_completed = false;
 }
 
 /**
@@ -516,7 +516,8 @@ void tcpci_snk_emul_init_data(struct tcpci_snk_emul_data *data)
 /** Check description in emul_tcpci_snk.h */
 void tcpci_snk_emul_init(struct tcpci_snk_emul *emul)
 {
-	tcpci_partner_init(&emul->common_data, tcpci_snk_emul_hard_reset, emul);
+	tcpci_partner_init(&emul->common_data, tcpci_snk_emul_hard_reset,
+			   &emul->data);
 
 	emul->common_data.data_role = PD_ROLE_DFP;
 	emul->common_data.power_role = PD_ROLE_SINK;
