@@ -24,6 +24,7 @@
 #include "hooks.h"
 #include "intc.h"
 #include "keyboard_8042.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power.h"
@@ -51,6 +52,20 @@ uint32_t board_version;
 /* GPIO to enable/disable the USB Type-A port. */
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A_5V,
+};
+
+/* Keyboard scan setting */
+__override struct keyboard_scan_config keyscan_config = {
+	.output_settle_us = 80,
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x1c, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xa4, 0xff, 0xfe, 0x55, 0xfe, 0xff, 0xff, 0xff,  /* full set */
+	},
 };
 
 __override void board_process_pd_alert(int port)
@@ -366,7 +381,7 @@ struct motion_sensor_t motion_sensors[] = {
 
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-static const struct ec_response_keybd_config keybd1 = {
+static const struct ec_response_keybd_config lantis_keybd_backlight = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -383,10 +398,78 @@ static const struct ec_response_keybd_config keybd1 = {
 	/* No function keys, no numeric keypad and no screenlock key */
 };
 
+static const struct ec_response_keybd_config landrid_keybd_backlight = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_KBD_BKLIGHT_TOGGLE,		/* T8 */
+		TK_PLAY_PAUSE,		/* T9 */
+		TK_MICMUTE,		/* T10 */
+		TK_VOL_MUTE,		/* T11 */
+		TK_VOL_DOWN,		/* T12 */
+		TK_VOL_UP,		/* T13 */
+	},
+	.capabilities = KEYBD_CAP_NUMERIC_KEYPAD,
+	/* No function keys and no screenlock key */
+};
+
+static const struct ec_response_keybd_config landrid_keybd = {
+	.num_top_row_keys = 13,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_PREV_TRACK,		/* T8 */
+		TK_PLAY_PAUSE,		/* T9 */
+		TK_MICMUTE,		/* T10 */
+		TK_VOL_MUTE,		/* T11 */
+		TK_VOL_DOWN,		/* T12 */
+		TK_VOL_UP,		/* T13 */
+	},
+	.capabilities = KEYBD_CAP_NUMERIC_KEYPAD,
+	/* No function keys and no screenlock key */
+};
+
 __override const struct ec_response_keybd_config
 *board_vivaldi_keybd_config(void)
 {
-	return &keybd1;
+	if (get_cbi_fw_config_numeric_pad()) {
+		if (get_cbi_fw_config_kblight())
+			return &landrid_keybd_backlight;
+		else
+			return &landrid_keybd;
+	} else {
+		return &lantis_keybd_backlight;
+	}
+}
+
+__override
+uint8_t board_keyboard_row_refresh(void)
+{
+	if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
+		return 3;
+	else
+		return 2;
+}
+
+static void board_update_no_keypad_by_fwconfig(void)
+{
+	if (!get_cbi_fw_config_numeric_pad()) {
+		/* Disable scanning KSO13 & 14 if keypad isn't present. */
+		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
+		keyscan_config.actual_key_mask[11] = 0xfa;
+		keyscan_config.actual_key_mask[12] = 0xca;
+	}
 }
 
 void board_init(void)
@@ -446,6 +529,8 @@ void board_init(void)
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
 			      CHIPSET_STATE_SOFT_OFF);
 	board_power_5v_enable(on);
+
+	board_update_no_keypad_by_fwconfig();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
