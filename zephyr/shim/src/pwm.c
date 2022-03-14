@@ -25,6 +25,11 @@ LOG_MODULE_REGISTER(pwm_shim, LOG_LEVEL_ERR);
 	DIV_ROUND_NEAREST((uint32_t)(v) * 100, UINT16_MAX)
 #define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v) * UINT16_MAX / 100)
 
+/* TODO(b/217741090): drop the PWM shim code once all callers have been
+ * converted.
+ */
+#if DT_HAS_COMPAT_STATUS_OKAY(named_pwms)
+
 /*
  * Initialize the device bindings in pwm_channels.
  * This macro is called from within DT_FOREACH_CHILD
@@ -194,6 +199,7 @@ int pwm_get_duty(enum pwm_channel ch)
 	return DIV_ROUND_NEAREST(pwm->pulse_us * 100, pwm->period_us);
 }
 
+#endif /* DT_HAS_COMPAT_STATUS_OKAY(named_pwm) */
 
 #define HAS_PWM_GENERIC_CHANNEL(compat) \
 	DT_NODE_HAS_PROP(DT_COMPAT_GET_ANY_STATUS_OKAY(compat), \

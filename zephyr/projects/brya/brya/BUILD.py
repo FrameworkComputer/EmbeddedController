@@ -14,7 +14,6 @@ register_npcx_project(
         "interrupts.dts",
         "keyboard.dts",
         "motionsense.dts",
-        "pwm.dts",
         "pwm_leds.dts",
         "usbc.dts",
     ],

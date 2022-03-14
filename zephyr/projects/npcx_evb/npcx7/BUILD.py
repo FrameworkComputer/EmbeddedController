@@ -5,5 +5,5 @@
 register_npcx_project(
     project_name="npcx7",
     zephyr_board="npcx7_evb",
-    dts_overlays=["gpio.dts", "interrupts.dts", "pwm.dts", "fan.dts", "keyboard.dts"],
+    dts_overlays=["gpio.dts", "interrupts.dts", "fan.dts", "keyboard.dts"],
 )

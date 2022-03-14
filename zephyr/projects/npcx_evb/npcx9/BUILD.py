@@ -8,7 +8,6 @@ register_npcx_project(
     dts_overlays=[
         "gpio.dts",
         "interrupts.dts",
-        "pwm.dts",
         "fan.dts",
         "keyboard.dts",
     ],
