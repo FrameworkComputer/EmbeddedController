@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#include "battery.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -173,7 +174,10 @@ void board_reset_pd_mcu(void)
 {
 	/* Port0 */
 	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 0);
-	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 0);
+
+	if (battery_hw_present())
+		gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 0);
+
 	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
 			   PS8815_PWR_H_RST_H_DELAY_MS));
 
