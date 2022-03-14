@@ -16,6 +16,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charge_state_v2.h"
+#include "ec_commands.h"
 #include "math_util.h"
 #include "task.h"
 #include "timer.h"
@@ -647,3 +648,14 @@ DECLARE_CONSOLE_COMMAND(dps, command_dps,
 			"\t\t set(tstable|tcheck) <int>\n"
 			"\t\t fakepwr [dis|<mV> <mA>]",
 			"Print/set Dynamic PDO Selection state.");
+
+static enum ec_status hc_usb_pd_dps_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_dps_control *p = args->params;
+
+	dps_enable(p->enable);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DPS_CONTROL,
+		     hc_usb_pd_dps_control,
+		     EC_VER_MASK(0));

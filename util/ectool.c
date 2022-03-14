@@ -337,6 +337,8 @@ const char help_str[] =
 			"[toggle|toggle-off|sink|source] [none|usb|dp|dock] "
 			"[dr_swap|pr_swap|vconn_swap]>\n"
 	"      Control USB PD/type-C [deprecated]\n"
+	"  usbpddps [enable | disable]\n"
+	"      Enable or disable dynamic pdo selection\n"
 	"  usbpdmuxinfo [tsv]\n"
 	"      Get USB-C SS mux info.\n"
 	"          tsv: Output as tab separated values. Columns are defined "
@@ -6356,6 +6358,37 @@ int cmd_usb_pd(int argc, char *argv[])
 	return 0;
 }
 
+int cmd_usb_pd_dps(int argc, char *argv[])
+{
+	struct ec_params_usb_pd_dps_control p;
+	int rv;
+
+	/*
+	 * Set up requested flags.  If no flags were specified, p.mask will
+	 * be 0 and nothing will change.
+	 */
+	if (argc < 1) {
+		fprintf(stderr, "Usage: %s [enable|disable]\n", argv[0]);
+		return -1;
+	}
+
+	if (!strcasecmp(argv[1], "enable")) {
+		p.enable = 1;
+	} else if (!strcasecmp(argv[1], "disable")) {
+		p.enable = 0;
+	} else {
+		fprintf(stderr, "Usage: %s [enable|disable]\n", argv[0]);
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_USB_PD_DPS_CONTROL, 0,
+			&p, sizeof(p), NULL, 0);
+	if (rv < 0)
+		return rv;
+
+	return 0;
+}
+
 static void print_pd_power_info(struct ec_response_usb_pd_power_info *r)
 {
 	switch (r->role) {
@@ -10641,6 +10674,7 @@ const struct command commands[] = {
 	{"usbchargemode", cmd_usb_charge_set_mode},
 	{"usbmux", cmd_usb_mux},
 	{"usbpd", cmd_usb_pd},
+	{"usbpddps", cmd_usb_pd_dps},
 	{"usbpdmuxinfo", cmd_usb_pd_mux_info},
 	{"usbpdpower", cmd_usb_pd_power},
 	{"version", cmd_version},

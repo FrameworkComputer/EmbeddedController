@@ -5667,6 +5667,15 @@ struct ec_response_charge_port_count {
 	uint8_t port_count;
 } __ec_align1;
 
+/*
+ * This command enable/disable dynamic PDO selection.
+ */
+#define EC_CMD_USB_PD_DPS_CONTROL 0x0106
+
+struct ec_params_usb_pd_dps_control {
+	uint8_t enable;
+} __ec_align1;
+
 /* Write USB-PD device FW */
 #define EC_CMD_USB_PD_FW_UPDATE 0x0110
 
