@@ -13,9 +13,9 @@ ZTEST_SUITE(charge_manager, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);
 
 /**
- * Test the default implementation of board_fill_source_power_info(). This
- * function should reset all the power info values. If this test overrides this
- * function, this test can be removed.
+ * Test the default implementation of board_fill_source_power_info(). The fill
+ * function should reset all the power info values. If the test binary overrides
+ * board_fill_source_power_info(), then this test can be removed.
  */
 ZTEST_USER(charge_manager, test_default_fill_power_info)
 {
