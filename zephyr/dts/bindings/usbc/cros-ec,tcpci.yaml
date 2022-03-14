@@ -1,0 +1,16 @@
+description: USBC TCPC
+
+compatible: "cros-ec,tcpci"
+
+properties:
+  port:
+    type: phandle
+    required: true
+    description: |
+      I2C port used to communicate with controller
+
+  i2c-addr-flags:
+    type: int
+    required: true
+    description: |
+      I2C address of controller
