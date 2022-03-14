@@ -41,6 +41,15 @@
 			enum-name = "GPIO_LID_OPEN";
 		};
 	};
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_lid_open_ec: lid_open_ec {
+			irq-pin = <&gpio_lid_open_ec>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+	};
 
 	common-pwrseq {
 		compatible = "intel,ap-pwrseq";
