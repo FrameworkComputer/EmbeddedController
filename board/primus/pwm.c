@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "hooks.h"
@@ -62,7 +63,8 @@ static void board_pwm_init(void)
 	pwm_set_duty(PWM_CH_TKP_A_LED_N, 0);
 	pwm_enable(PWM_CH_LED4, 1);
 	pwm_set_duty(PWM_CH_LED4, 0);
-
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
 	pwm_enable(PWM_CH_KBLIGHT, 1);
 	/* TODO(b/190518315)
 	 * Check if need to turn to 100% after with chassis.
