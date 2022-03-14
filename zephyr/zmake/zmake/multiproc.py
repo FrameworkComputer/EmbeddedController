@@ -53,7 +53,13 @@ class LogWriter:
     """
 
     def __init__(
-        self, logger, log_level, log_level_override_func, job_id, file_descriptor
+        self,
+        logger,
+        log_level,
+        log_level_override_func,
+        job_id,
+        file_descriptor,
+        tee_output=None,
     ):
         self._logger = logger
         self._log_level = log_level
@@ -62,6 +68,7 @@ class LogWriter:
         self._written_at_level = collections.defaultdict(lambda: False)
         self._job_id = job_id
         self._file_descriptor = file_descriptor
+        self._tee_output = tee_output
 
     def log_line(self, line):
         """Log a line of output
@@ -72,6 +79,9 @@ class LogWriter:
         Args:
             line: Text line to log
         """
+        if self._tee_output:
+            self._tee_output.write(line)
+            self._tee_output.write("\n")
         if self._override_func:
             # Get the new log level and update the default. The reason we
             # want to update the default is that if we hit an error, all
@@ -103,6 +113,9 @@ class LogWriter:
         """
         with _logging_cv:
             _logging_cv.wait_for(lambda: self._file_descriptor not in _logging_map)
+        if self._tee_output:
+            self._tee_output.close()
+            self._tee_output = None
 
 
 def _log_fd(fd):
@@ -182,7 +195,12 @@ _logging_thread = None
 
 
 def log_output(
-    logger, log_level, file_descriptor, log_level_override_func=None, job_id=None
+    logger,
+    log_level,
+    file_descriptor,
+    log_level_override_func=None,
+    job_id=None,
+    tee_output=None,
 ):
     """Log the output from the given file descriptor.
 
@@ -205,7 +223,12 @@ def log_output(
             _logging_thread.start()
 
         writer = LogWriter(
-            logger, log_level, log_level_override_func, job_id, file_descriptor
+            logger,
+            log_level,
+            log_level_override_func,
+            job_id,
+            file_descriptor,
+            tee_output=tee_output,
         )
         _logging_map[file_descriptor] = writer
         # Write a dummy byte to the pipe to break the select so we can add the

@@ -11,7 +11,7 @@ import pathlib
 import re
 import shutil
 import subprocess
-from typing import List
+from typing import Dict, List
 
 import zmake.build_config
 import zmake.generate_readme
@@ -622,7 +622,7 @@ class Zmake:
 
         procs = []
         log_writers = []
-        dirs = {}
+        dirs: Dict[str, pathlib.Path] = {}
 
         build_dir = build_dir.resolve()
 
@@ -667,12 +667,15 @@ class Zmake:
                     errors="replace",
                 )
                 job_id = "{}:{}".format(project.config.project_name, build_name)
+                dirs[build_name].mkdir(parents=True, exist_ok=True)
+                build_log = open(dirs[build_name] / "build.log", "w")
                 out = zmake.multiproc.log_output(
                     logger=self.logger,
                     log_level=logging.INFO,
                     file_descriptor=proc.stdout,
                     log_level_override_func=ninja_stdout_log_level_override,
                     job_id=job_id,
+                    tee_output=build_log,
                 )
                 err = zmake.multiproc.log_output(
                     self.logger,
