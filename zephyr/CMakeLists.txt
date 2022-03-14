@@ -63,6 +63,9 @@ if(DEFINED CONFIG_PLATFORM_EC)
   endif()
 endif()
 
+# Set extra compiler flags.
+zephyr_cc_option(-mno-unaligned-access)
+
 # The EC application is split into two libraries:
 #   app: contains all the legacy code
 #   ec_shim: contains all the code under platform/ec/shim
