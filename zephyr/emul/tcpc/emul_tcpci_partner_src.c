@@ -15,6 +15,44 @@ LOG_MODULE_REGISTER(tcpci_src_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include "emul/tcpc/emul_tcpci.h"
 #include "usb_pd.h"
 
+/**
+ * @brief Start source capability timer. Capability message will be send after
+ *        @p time.
+ *
+ * @param data Pointer to USB-C source device emulator data
+ * @param time Time to delay before sending capability message
+ */
+static void tcpci_src_emul_start_source_capability_custom_time(
+	struct tcpci_src_emul_data *data, k_timeout_t time)
+{
+	/* Use reschedule */
+	k_work_reschedule(&data->source_capability_timeout, time);
+}
+
+/**
+ * @brief Start source capability timer. Capability message will be send after
+ *        TCPCI_SOURCE_CAPABILITY_TIMEOUT milliseconds.
+ *
+ * @param data Pointer to USB-C source device emulator data
+ */
+static void tcpci_src_emul_start_source_capability_timer(
+	struct tcpci_src_emul_data *data)
+{
+	tcpci_src_emul_start_source_capability_custom_time(
+			data, TCPCI_SOURCE_CAPABILITY_TIMEOUT);
+}
+
+/**
+ * @brief Stop source capability timer. Capability message will not be repeated.
+ *
+ * @param data Pointer to USB-C source device emulator data
+ */
+static void tcpci_src_emul_stop_source_capability_timer(
+	struct tcpci_src_emul_data *data)
+{
+	k_work_cancel_delayable(&data->source_capability_timeout);
+}
+
 /** Check description in emul_tcpci_partner_src.h */
 int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
 				       struct tcpci_partner_data *common_data,
@@ -35,6 +73,34 @@ int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
 }
 
 /** Check description in emul_tcpci_partner_src.h */
+int tcpci_src_emul_send_capability_msg_with_timer(
+	struct tcpci_src_emul_data *data,
+	struct tcpci_partner_data *common_data,
+	uint64_t delay)
+{
+	int ret;
+
+	if (delay > 0) {
+		tcpci_src_emul_start_source_capability_custom_time(
+							data, K_MSEC(delay));
+		return TCPCI_EMUL_TX_SUCCESS;
+	}
+
+	ret = tcpci_src_emul_send_capability_msg(data, common_data, 0);
+
+	if (ret != 0) {
+		tcpci_src_emul_start_source_capability_timer(data);
+	}
+	/*
+	 * If sending message was successful, SenderResponse timer should be
+	 * started. However this will break emulation until RECEIVE_DETECT
+	 * register is properly implemented in TCPCI emulator.
+	 */
+
+	return TCPCI_EMUL_TX_SUCCESS;
+}
+
+/** Check description in emul_tcpci_partner_src.h */
 enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 	struct tcpci_src_emul_data *data,
 	struct tcpci_partner_data *common_data,
@@ -48,6 +114,8 @@ enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 		/* Handle data message */
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_DATA_REQUEST:
+			tcpci_partner_stop_sender_response_timer(common_data);
+			/* TODO(b/224925855): Validate if request can be met */
 			tcpci_partner_send_control_msg(common_data,
 						       PD_CTRL_ACCEPT, 0);
 			/* PS ready after 15 ms */
@@ -65,9 +133,9 @@ enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 							   0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_SOFT_RESET:
-			/* Send capability after 15 ms to establish PD again */
-			tcpci_src_emul_send_capability_msg(data, common_data,
-							   15);
+			/* Send capability to establish PD again */
+			tcpci_src_emul_send_capability_msg_with_timer(
+							data, common_data, 0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
@@ -75,14 +143,47 @@ enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 	}
 }
 
+/**
+ * @brief Handler for repeating SourceCapability message
+ *
+ * @param timer Pointer to timer which triggered timeout
+ */
+static void tcpci_src_emul_source_capability_timeout(struct k_work *work)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
+	struct tcpci_src_emul_data *data =
+		CONTAINER_OF(dwork, struct tcpci_src_emul_data,
+			     source_capability_timeout);
+	struct tcpci_partner_data *common_data = data->common_data;
+
+	if (k_mutex_lock(&common_data->transmit_mutex, K_NO_WAIT) != 0) {
+		/*
+		 * Emulator is probably handling received message,
+		 * try later if timer wasn't stopped.
+		 */
+		k_work_submit(work);
+		return;
+	}
+
+	/* Make sure that timer isn't stopped */
+	if (k_work_busy_get(work) & K_WORK_CANCELING) {
+		k_mutex_unlock(&common_data->transmit_mutex);
+		return;
+	}
+
+	tcpci_src_emul_send_capability_msg_with_timer(data, common_data, 0);
+
+	k_mutex_unlock(&common_data->transmit_mutex);
+}
+
 /** Check description in emul_tcpci_partner_src.h */
 void tcpci_src_emul_hard_reset(void *data)
 {
 	struct tcpci_src_emul_data *src_emul_data = data;
 
-	/* Send capability after 15 ms to establish PD again */
-	tcpci_src_emul_send_capability_msg(src_emul_data,
-					   src_emul_data->common_data, 15);
+	/* Send capability to establish PD again */
+	tcpci_src_emul_send_capability_msg_with_timer(
+			src_emul_data, src_emul_data->common_data, 0);
 }
 
 /**
@@ -176,6 +277,12 @@ static void tcpci_src_emul_rx_consumed_op(
 	tcpci_partner_free_msg(msg);
 }
 
+/** Check description in emul_tcpci_partner_src.h */
+void tcpci_src_emul_disconnect(struct tcpci_src_emul_data *data)
+{
+	tcpci_src_emul_stop_source_capability_timer(data);
+}
+
 /**
  * @brief Function called when emulator is disconnected from TCPCI
  *
@@ -190,6 +297,7 @@ static void tcpci_src_emul_disconnect_op(
 		CONTAINER_OF(ops, struct tcpci_src_emul, ops);
 
 	tcpci_partner_common_disconnect(&src_emul->common_data);
+	tcpci_src_emul_disconnect(&src_emul->data);
 }
 
 /** Check description in emul_tcpci_partner_src.h */
@@ -209,8 +317,15 @@ int tcpci_src_emul_connect_to_tcpci(struct tcpci_src_emul_data *data,
 	}
 
 	common_data->tcpci_emul = tcpci_emul;
+	/*
+	 * It is not required to wait on connection before sending source
+	 * capabilities, but it is permit. Timeout is obligatory for power swap.
+	 */
+	tcpci_src_emul_send_capability_msg_with_timer(
+					data, data->common_data,
+					TCPCI_SWAP_SOURCE_START_TIMEOUT_MS);
 
-	return tcpci_src_emul_send_capability_msg(data, common_data, 0);
+	return 0;
 }
 
 #define PDO_FIXED_FLAGS_MASK						\
@@ -322,6 +437,8 @@ void tcpci_src_emul_init_data(struct tcpci_src_emul_data *data,
 		data->pdo[i] = 0;
 	}
 
+	k_work_init_delayable(&data->source_capability_timeout,
+			      tcpci_src_emul_source_capability_timeout);
 	data->common_data = common_data;
 }
 

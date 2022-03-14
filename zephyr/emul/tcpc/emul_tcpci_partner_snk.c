@@ -308,7 +308,7 @@ static void tcpci_snk_emul_start_partner_transition_timer(
 	struct tcpci_partner_data *common_data)
 {
 	k_work_schedule(&common_data->sender_response_timeout,
-			TCPCI_PARTNER_TRANSITION_TIMEOUT_MS);
+			TCPCI_PARTNER_TRANSITION_TIMEOUT);
 	data->wait_for_ps_rdy = true;
 }
 

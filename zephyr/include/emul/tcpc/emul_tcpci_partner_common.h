@@ -28,9 +28,21 @@
  */
 
 /** Timeout for other side to respond to PD message */
-#define TCPCI_PARTNER_RESPONSE_TIMEOUT_MS	K_MSEC(30)
+#define TCPCI_PARTNER_RESPONSE_TIMEOUT_MS	30
+#define TCPCI_PARTNER_RESPONSE_TIMEOUT			\
+		K_MSEC(TCPCI_PARTNER_RESPONSE_TIMEOUT_MS)
 /** Timeout for source to transition to requested state after accept */
-#define TCPCI_PARTNER_TRANSITION_TIMEOUT_MS	K_MSEC(550)
+#define TCPCI_PARTNER_TRANSITION_TIMEOUT_MS	550
+#define TCPCI_PARTNER_TRANSITION_TIMEOUT		\
+		K_MSEC(TCPCI_PARTNER_TRANSITION_TIMEOUT_MS)
+/** Timeout for source to send capability again after failure */
+#define TCPCI_SOURCE_CAPABILITY_TIMEOUT_MS	150
+#define TCPCI_SOURCE_CAPABILITY_TIMEOUT			\
+		K_MSEC(TCPCI_SOURCE_CAPABILITY_TIMEOUT_MS)
+/** Timeout for source to send capability message after power swap */
+#define TCPCI_SWAP_SOURCE_START_TIMEOUT_MS	20
+#define TCPCI_SWAP_SOURCE_START_TIMEOUT			\
+		K_MSEC(TCPCI_SWAP_SOURCE_START_TIMEOUT_MS)
 
 /**
  * @brief Function type that is used by TCPCI partner emulator on hard reset

@@ -419,7 +419,7 @@ static void tcpci_partner_sender_response_timeout(struct k_work *work)
 void tcpci_partner_start_sender_response_timer(struct tcpci_partner_data *data)
 {
 	k_work_schedule(&data->sender_response_timeout,
-			TCPCI_PARTNER_RESPONSE_TIMEOUT_MS);
+			TCPCI_PARTNER_RESPONSE_TIMEOUT);
 	data->wait_for_response = true;
 }
 

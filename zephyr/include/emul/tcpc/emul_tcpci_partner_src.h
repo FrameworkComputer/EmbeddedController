@@ -33,6 +33,8 @@ struct tcpci_src_emul_data {
 	uint32_t pdo[PDO_MAX_OBJECTS];
 	/** Pointer to common TCPCI partner data */
 	struct tcpci_partner_data *common_data;
+	/** Delayed work which is executed on SourceCapability timeout */
+	struct k_work_delayable source_capability_timeout;
 };
 
 /** Structure describing standalone source device emulator */
@@ -137,6 +139,26 @@ int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
 				       uint64_t delay);
 
 /**
+ * @brief Send capability message constructed from source device emulator PDOs.
+ *        SourceCapability timer is started when message wasn't send
+ *        successfully. Emulator will try to send source capability message
+ *        again on timeout. Otherwise SenderResponse timer is started and
+ *        emulator will wait for Request message.
+ *
+ * @param data Pointer to USB-C source device emulator data
+ * @param common_data Pointer to common TCPCI partner data
+ * @param delay Optional delay
+ *
+ * @return TCPCI_EMUL_TX_SUCCESS on success
+ * @return -ENOMEM when there is no free memory for message
+ * @return -EINVAL on TCPCI emulator add RX message error
+ */
+int tcpci_src_emul_send_capability_msg_with_timer(
+	struct tcpci_src_emul_data *data,
+	struct tcpci_partner_data *common_data,
+	uint64_t delay);
+
+/**
  * @brief Handle SOP messages as TCPCI source device. It handles request,
  *        get source cap and soft reset messages.
  *
@@ -159,6 +181,13 @@ enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
  * @param data Pointer to USB-C source device emulator data
  */
 void tcpci_src_emul_hard_reset(void *data);
+
+/**
+ * @brief Disable source capabilities timer on disconnect
+ *
+ * @param data Pointer to USB-C source device emulator data
+ */
+void tcpci_src_emul_disconnect(struct tcpci_src_emul_data *data);
 
 /**
  * @}

@@ -161,14 +161,11 @@ static void tcpci_drp_emul_transmit_op(const struct emul *emul,
 	case TCPCI_PARTNER_COMMON_MSG_HANDLED:
 		if (!drp_emul->data.sink && PD_HEADER_CNT(header) == 0 &&
 		    PD_HEADER_TYPE(header) == PD_CTRL_SOFT_RESET) {
-			/*
-			 * As source, advertise capabilities after 15 ms after
-			 * soft reset
-			 */
-			tcpci_src_emul_send_capability_msg(
+			/* As source, advertise capabilities after soft reset */
+			tcpci_src_emul_send_capability_msg_with_timer(
 							&drp_emul->src_data,
 							&drp_emul->common_data,
-							15);
+							0);
 		}
 		/* Message handled nothing to do */
 		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
@@ -254,6 +251,7 @@ static void tcpci_drp_emul_disconnect_op(
 		CONTAINER_OF(ops, struct tcpci_drp_emul, ops);
 
 	tcpci_partner_common_disconnect(&drp_emul->common_data);
+	tcpci_src_emul_disconnect(&drp_emul->src_data);
 }
 
 /** Check description in emul_tcpci_partner_drp.h */
