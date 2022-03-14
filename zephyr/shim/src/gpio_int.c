@@ -113,6 +113,21 @@ DT_FOREACH_CHILD(DT_IRQ_NODE, INT_CONFIG_PTR_DECLARE)
 
 #undef INT_CONFIG_PTR_DECLARE
 
+/*
+ * Mapping of GPIO signal to interrupt configuration block.
+ */
+static const struct gpio_int_config *
+signal_to_interrupt(enum gpio_signal signal)
+{
+#if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
+	for (int i = 0; i < ARRAY_SIZE(gpio_int_data); i++) {
+		if (signal == gpio_int_data[i].signal)
+			return &gpio_int_data[i];
+	}
+#endif
+	return NULL;
+}
+
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
 /*
  * Callback handler.
@@ -164,32 +179,6 @@ const struct gpio_int_config *
 	return &gpio_int_data[intr];
 }
 
-#endif
-
-/*
- * Disable the interrupt by setting the GPIO_INT_DISABLE flag.
- */
-int gpio_disable_dt_interrupt(const struct gpio_int_config *conf)
-{
-	return gpio_pin_interrupt_configure(conf->port, conf->pin,
-					    GPIO_INT_DISABLE);
-}
-
-/*
- * Mapping of GPIO signal to interrupt configuration block.
- */
-static const struct gpio_int_config *
-signal_to_interrupt(enum gpio_signal signal)
-{
-#if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
-	for (int i = 0; i < ARRAY_SIZE(gpio_int_data); i++) {
-		if (signal == gpio_int_data[i].signal)
-			return &gpio_int_data[i];
-	}
-#endif
-	return NULL;
-}
-
 /*
  * Legacy API calls to enable/disable interrupts.
  */
@@ -201,6 +190,17 @@ int gpio_enable_interrupt(enum gpio_signal signal)
 		return -1;
 
 	return gpio_enable_dt_interrupt(ic);
+}
+
+#endif
+
+/*
+ * Disable the interrupt by setting the GPIO_INT_DISABLE flag.
+ */
+int gpio_disable_dt_interrupt(const struct gpio_int_config *conf)
+{
+	return gpio_pin_interrupt_configure(conf->port, conf->pin,
+					    GPIO_INT_DISABLE);
 }
 
 int gpio_disable_interrupt(enum gpio_signal signal)
