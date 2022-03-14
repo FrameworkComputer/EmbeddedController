@@ -559,7 +559,6 @@ class Zmake:
             rv = self._build(
                 build_dir=build_dir,
                 project=project,
-                fail_on_warnings=not allow_warnings,
                 coverage=coverage,
                 output_files_out=output_files,
             )
@@ -589,7 +588,6 @@ class Zmake:
         build_dir,
         project: zmake.project.Project,
         output_files_out=None,
-        fail_on_warnings=False,
         coverage=False,
     ):
         """Build a pre-configured build directory."""
@@ -620,12 +618,6 @@ class Zmake:
             # Let all output be produced before exiting
             for writer in writers:
                 writer.wait()
-            if fail_on_warnings and any(
-                w.has_written(logging.WARNING) or w.has_written(logging.ERROR)
-                for w in writers
-            ):
-                self.logger.warning("zmake: Warnings detected in build: aborting")
-                return False
             return True
 
         procs = []
