@@ -124,6 +124,22 @@
 #include "registers.h"
 #include "usbc_config.h"
 
+enum adp_id {
+	TINY = 1,
+	TIO1,
+	TIO2
+};
+
+struct adpater_id_params {
+	int min_voltage;
+	int max_voltage;
+	int charge_voltage;
+	int charge_current;
+	int watt;
+	int obp95;
+	int obp85;
+};
+
 enum charge_port {
 	CHARGE_PORT_TYPEC0,
 	CHARGE_PORT_BARRELJACK,
@@ -135,7 +151,9 @@ enum adc_channel {
 	ADC_TEMP_SENSOR_2_CPU_VR,
 	ADC_TEMP_SENSOR_3_WIFI,
 	ADC_TEMP_SENSOR_4_DIMM,
+	ADC_PWR_IN_IMON,
 	ADC_VBUS,
+	ADC_ADP_ID,
 	ADC_CH_COUNT
 };
 
