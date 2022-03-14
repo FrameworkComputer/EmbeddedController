@@ -398,6 +398,24 @@ static const struct ec_response_keybd_config lantis_keybd_backlight = {
 	/* No function keys, no numeric keypad and no screenlock key */
 };
 
+static const struct ec_response_keybd_config landia_keybd = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_FORWARD,		/* T2 */
+		TK_REFRESH,		/* T3 */
+		TK_FULLSCREEN,		/* T4 */
+		TK_OVERVIEW,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+	/* No function keys and no numeric keypad */
+};
+
 static const struct ec_response_keybd_config landrid_keybd_backlight = {
 	.num_top_row_keys = 13,
 	.action_keys = {
@@ -449,7 +467,10 @@ __override const struct ec_response_keybd_config
 		else
 			return &landrid_keybd;
 	} else {
-		return &lantis_keybd_backlight;
+		if (get_cbi_fw_config_tablet_mode())
+			return &landia_keybd;
+		else
+			return &lantis_keybd_backlight;
 	}
 }
 
