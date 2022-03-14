@@ -79,13 +79,11 @@ static void integration_usb_setup(struct emul_state *fixture)
 	/*
 	 * TODO(b/221288815): TCPCI config flags should be compile-time
 	 * constants
-	 * TODO(b/209907615): Verify TCPCI Rev2
+	 * TODO(b/209907615): Verify TCPCI rev1 on non-port partner.
 	 */
-	/* Turn TCPCI rev 2 off */
-	tcpc_config[SNK_PORT].flags = tcpc_config[SNK_PORT].flags &
-				      ~TCPC_FLAGS_TCPCI_REV2_0;
-	tcpc_config[SRC_PORT].flags = tcpc_config[SRC_PORT].flags &
-				      ~TCPC_FLAGS_TCPCI_REV2_0;
+	/* Turn TCPCI rev 2 ON */
+	tcpc_config[SNK_PORT].flags |= TCPC_FLAGS_TCPCI_REV2_0;
+	tcpc_config[SRC_PORT].flags |= TCPC_FLAGS_TCPCI_REV2_0;
 }
 
 static void *integration_usb_src_snk_setup(void)
@@ -162,7 +160,7 @@ static void attach_emulated_snk(struct emul_state *my_emul_state)
 
 	/* Attach emulated sink */
 	tcpci_snk_emul_init(my_snk);
-	tcpci_emul_set_rev(tcpci_emul_snk, TCPCI_EMUL_REV1_0_VER1_0);
+	tcpci_emul_set_rev(tcpci_emul_snk, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Turn on VBUS detection */
 	/*
@@ -173,6 +171,12 @@ static void attach_emulated_snk(struct emul_state *my_emul_state)
 			   &power_reg_val);
 	tcpci_emul_set_reg(tcpci_emul_snk, TCPC_REG_POWER_STATUS,
 			   power_reg_val | TCPC_REG_POWER_STATUS_VBUS_DET);
+
+	/* Necessary for TCPCIv2 vSave0V detection on VBUS to reach attached
+	 * state
+	 */
+	tcpci_emul_set_reg(tcpci_emul_snk, TCPC_REG_EXT_STATUS,
+			   TCPC_REG_EXT_STATUS_SAFE0V);
 
 	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
 			   &my_snk->data, &my_snk->common_data, &my_snk->ops,
@@ -192,7 +196,7 @@ static void attach_emulated_src(struct emul_state *my_emul_state)
 
 	/* Attach emulated charger. */
 	tcpci_src_emul_init(my_src);
-	tcpci_emul_set_rev(tcpci_emul_src, TCPCI_EMUL_REV1_0_VER1_0);
+	tcpci_emul_set_rev(tcpci_emul_src, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Turn on VBUS detection */
 	/*
@@ -203,6 +207,12 @@ static void attach_emulated_src(struct emul_state *my_emul_state)
 			   &power_reg_val);
 	tcpci_emul_set_reg(tcpci_emul_src, TCPC_REG_POWER_STATUS,
 			   power_reg_val | TCPC_REG_POWER_STATUS_VBUS_DET);
+
+	/* Necessary for TCPCIv2 vSave0V detection on VBUS to reach attached
+	 * state
+	 */
+	tcpci_emul_set_reg(tcpci_emul_src, TCPC_REG_EXT_STATUS,
+			   TCPC_REG_EXT_STATUS_SAFE0V);
 
 	zassume_ok(tcpci_src_emul_connect_to_tcpci(
 			   &my_src->data, &my_src->common_data, &my_src->ops,
