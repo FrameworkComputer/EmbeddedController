@@ -13,7 +13,7 @@ The EC codebase supports two build types:
 1. `cros-ec` builds are the legacy EC images built using Make (e.g. `make
    BOARD=volteer`)
 1. `zephyr-ec` builds are the EC images built using the Zephyr RTOS kernel using
-   zmake/Cmake (e.g. `zmake build volteer`)
+   zmake/Cmake (e.g. `zmake build herobrine`)
 
 ### Checking a single cros-ec build
 
@@ -88,17 +88,21 @@ By default, `zmake` will display the flash and SRAM usage of the
 board.
 
 ```
-$ zmake build volteer
+$ zmake build herobrine
     ...
-Building /mnt/host/source/src/platform/ec/build/zephyr/volteer:ro: /usr/bin/ninja -C /mnt/host/source/src/platform/ec/build/zephyr/volteer/build-ro
+Building herobrine:ro: /usr/bin/ninja -C /mnt/host/source/src/platform/ec/build/zephyr/herobrine/build-ro
+-- git describe warned: warning: tag 'upstream/v2.7.99' is externally known as 'v2.7.99'
+-- Zephyr version: 3.0.99 (/mnt/host/source/src/third_party/zephyr/main), build: v2.7.99-5035-ga17c05c7228e
 Memory region         Used Size  Region Size  %age Used
-           FLASH:      230852 B       512 KB     44.03%
-            SRAM:       51520 B        62 KB     81.15%
+           FLASH:      219920 B       256 KB     83.89%
+            SRAM:       49688 B        64 KB     75.82%
         IDT_LIST:          0 GB         2 KB      0.00%
-Building /mnt/host/source/src/platform/ec/build/zephyr/volteer:rw: /usr/bin/ninja -C /mnt/host/source/src/platform/ec/build/zephyr/volteer/build-rw
+Building herobrine:rw: /usr/bin/ninja -C /mnt/host/source/src/platform/ec/build/zephyr/herobrine/build-rw
+-- git describe warned: warning: tag 'upstream/v2.7.99' is externally known as 'v2.7.99'
+-- Zephyr version: 3.0.99 (/mnt/host/source/src/third_party/zephyr/main), build: v2.7.99-5035-ga17c05c7228e
 Memory region         Used Size  Region Size  %age Used
-           FLASH:      230852 B       512 KB     44.03%
-            SRAM:       51520 B        62 KB     81.15%
+           FLASH:      219920 B       256 KB     83.89%
+            SRAM:       49688 B        64 KB     75.82%
         IDT_LIST:          0 GB         2 KB      0.00%
 ```
 
@@ -118,14 +122,14 @@ working outside the chroot.  Follow the [instructions][1] for building zephyr-ec
 images outside chroot before running the commands below.
 
 ```
-# Configure the Volteer zephyr project, storing the build files in /tmp/zephyr-volteer
-$ zmake configure -B /tmp/zephyr-volteer volteer
+# Configure the Herobrine zephyr project, storing the build files in /tmp/zephyr-herobrine
+$ zmake configure -B /tmp/zephyr-herobrine herobrine
 
 # Build the RO image
-$ ninja -C /tmp/zephyr-volteer/volteer/build-ro
+$ ninja -C /tmp/zephyr-herobrine/herobrine/build-ro
 
 # Generate the ROM report, report sent to stdout
-$ ninja -C /tmp/zephyr-volteer/volteer/build-ro rom_report
+$ ninja -C /tmp/zephyr-herobrine/herobrine/build-ro rom_report
 ```
 
 Please refer to the [Zephyr Optimization Tools][3] documentation for details on

@@ -203,11 +203,6 @@ skyrim_coverage:
     PROJECT: "skyrim"
   <<: *coverage_template
 
-volteer:
-  variables:
-    PROJECT: "volteer"
-  <<: *build_template
-
 ec_coverage:
   stage: test
   needs: ["seed_cache"]

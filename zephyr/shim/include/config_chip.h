@@ -919,7 +919,6 @@ extern struct jump_data mock_jump_data;
 #define PD_MAX_CURRENT_MA	3000
 #define PD_MAX_VOLTAGE_MV	20000
 
-/* TODO: b/144165680 - measure and check these values on Volteer */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
 #endif
