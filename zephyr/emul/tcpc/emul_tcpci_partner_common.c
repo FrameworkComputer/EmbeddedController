@@ -146,6 +146,8 @@ static void tcpci_partner_delayed_send(void *fifo_data)
 			k_mutex_unlock(&data->to_send_mutex);
 
 			tcpci_partner_set_header(data, msg);
+			__ASSERT(data->tcpci_emul,
+				 "Disconnected partner send message");
 			ret = tcpci_emul_add_rx_msg(data->tcpci_emul, &msg->msg,
 						    true /* send alert */);
 			tcpci_partner_log_msg(data, &msg->msg,
@@ -218,6 +220,7 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 	int ret;
 
 	if (delay == 0) {
+		__ASSERT(data->tcpci_emul, "Disconnected partner send message");
 		tcpci_partner_set_header(data, msg);
 		ret = tcpci_emul_add_rx_msg(data->tcpci_emul, &msg->msg, true);
 		tcpci_partner_log_msg(data, &msg->msg,
@@ -551,6 +554,14 @@ void tcpci_partner_common_handler_mask_msg(struct tcpci_partner_data *data,
 	} else {
 		data->common_handler_masked &= ~BIT(type);
 	}
+}
+
+/** Check description in emul_common_tcpci_partner.h */
+void tcpci_partner_common_disconnect(struct tcpci_partner_data *data)
+{
+	tcpci_partner_clear_msg_queue(data);
+	tcpci_partner_stop_sender_response_timer(data);
+	data->tcpci_emul = NULL;
 }
 
 /** Check description in emul_common_tcpci_partner.h */

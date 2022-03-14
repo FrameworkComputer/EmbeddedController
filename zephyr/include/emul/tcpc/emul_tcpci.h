@@ -184,6 +184,15 @@ struct tcpci_emul_partner_ops {
 	void (*rx_consumed)(const struct emul *emul,
 			    const struct tcpci_emul_partner_ops *ops,
 			    const struct tcpci_emul_msg *rx_msg);
+
+	/**
+	 * @brief Function called when partner is disconnected from TCPCI
+	 *
+	 * @param emul Pointer to TCPCI emulator
+	 * @param ops Pointer to partner operations structure
+	 */
+	void (*disconnect)(const struct emul *emul,
+			   const struct tcpci_emul_partner_ops *ops);
 };
 
 /**

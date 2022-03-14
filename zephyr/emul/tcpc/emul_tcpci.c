@@ -253,6 +253,57 @@ static int tcpci_emul_alert_changed(const struct emul *emul)
 	return 0;
 }
 
+/**
+ * @brief Load next rx message and inform partner which message was consumed
+ *        by TCPC
+ *
+ * @param emul Pointer to TCPCI emulator
+ *
+ * @return 0 when there is no new message to load
+ * @return 1 when new rx message is loaded
+ */
+static int tcpci_emul_get_next_rx_msg(const struct emul *emul)
+{
+	struct tcpci_emul_data *data = emul->data;
+	struct tcpci_emul_msg *consumed_msg;
+
+	if (data->rx_msg == NULL) {
+		return 0;
+	}
+
+	consumed_msg = data->rx_msg;
+	data->rx_msg = consumed_msg->next;
+
+	/* Inform partner */
+	if (data->partner && data->partner->rx_consumed) {
+		data->partner->rx_consumed(emul, data->partner, consumed_msg);
+	}
+
+	/* Prepare new loaded message */
+	if (data->rx_msg) {
+		data->rx_msg->idx = 0;
+
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * @brief Perform actions that are expected by TCPC on disabling PD message
+ *        delivery (clear RECEIVE_DETECT register and clear already received
+ *        messages in buffer)
+ *
+ * @param emul Pointer to TCPCI emulator
+ */
+static void tcpci_emul_disable_pd_msg_delivery(const struct emul *emul)
+{
+	tcpci_emul_set_reg(emul, TCPC_REG_RX_DETECT, 0);
+	/* Clear received messages */
+	while (tcpci_emul_get_next_rx_msg(emul))
+		;
+}
+
 /** Check description in emul_tcpci.h */
 int tcpci_emul_add_rx_msg(const struct emul *emul,
 			  struct tcpci_emul_msg *rx_msg, bool alert)
@@ -474,7 +525,12 @@ int tcpci_emul_disconnect_partner(const struct emul *emul)
 	uint16_t term;
 	int rc;
 
+	tcpci_emul_disable_pd_msg_delivery(emul);
+	if (data->partner && data->partner->disconnect) {
+		data->partner->disconnect(emul, data->partner);
+	}
 	data->partner = NULL;
+
 	/* Set both CC lines to open to indicate disconnect. */
 	rc = tcpci_emul_get_reg(emul, TCPC_REG_CC_STATUS, &val);
 	if (rc != 0)
@@ -1114,58 +1170,6 @@ static int tcpci_emul_handle_command(const struct emul *emul)
 }
 
 /**
- * @brief Load next rx message and inform partner which message was consumed
- *        by TCPC
- *
- * @param emul Pointer to TCPCI emulator
- *
- * @return 0 when there is no new message to load
- * @return 1 when new rx message is loaded
- */
-static int tcpci_emul_get_next_rx_msg(const struct emul *emul)
-{
-	struct tcpci_emul_data *data = emul->data;
-	struct tcpci_emul_msg *consumed_msg;
-
-	if (data->rx_msg == NULL) {
-		return 0;
-	}
-
-	consumed_msg = data->rx_msg;
-	data->rx_msg = consumed_msg->next;
-
-	/* Inform partner */
-	if (data->partner && data->partner->rx_consumed) {
-		data->partner->rx_consumed(emul, data->partner, consumed_msg);
-	}
-
-	/* Prepare new loaded message */
-	if (data->rx_msg) {
-		data->rx_msg->idx = 0;
-
-		return 1;
-	}
-
-	return 0;
-}
-
-/**
- * @brief Perform actions that are expected by TCPC on disabling PD message
- *        delivery (clear RECEIVE_DETECT register, clear already received
- *        messages in buffer and reset mask registers)
- *
- * @param emul Pointer to TCPCI emulator
- */
-static void tcpci_emul_disable_pd_msg_delivery(const struct emul *emul)
-{
-	tcpci_emul_set_reg(emul, TCPC_REG_RX_DETECT, 0);
-	/* Clear received messages */
-	while (tcpci_emul_get_next_rx_msg(emul))
-		;
-	tcpci_emul_reset_mask_regs(emul);
-}
-
-/**
  * @brief Handle write to transmit register
  *
  * @param emul Pointer to TCPCI emulator
@@ -1199,6 +1203,7 @@ static int tcpci_emul_handle_transmit(const struct emul *emul)
 	switch (type) {
 	case TCPCI_MSG_TX_HARD_RESET:
 		tcpci_emul_disable_pd_msg_delivery(emul);
+		tcpci_emul_reset_mask_regs(emul);
 		/* fallthrough */
 	case TCPCI_MSG_CABLE_RESET:
 		/*

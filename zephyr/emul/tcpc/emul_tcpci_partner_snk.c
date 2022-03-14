@@ -477,6 +477,22 @@ static void tcpci_snk_emul_rx_consumed_op(
 	tcpci_partner_free_msg(msg);
 }
 
+/**
+ * @brief Function called when emulator is disconnected from TCPCI
+ *
+ * @param emul Pointer to TCPCI emulator
+ * @param ops Pointer to partner operations structure
+ */
+static void tcpci_snk_emul_disconnect_op(
+		const struct emul *emul,
+		const struct tcpci_emul_partner_ops *ops)
+{
+	struct tcpci_snk_emul *snk_emul =
+		CONTAINER_OF(ops, struct tcpci_snk_emul, ops);
+
+	tcpci_partner_common_disconnect(&snk_emul->common_data);
+}
+
 /** Check description in emul_tcpci_snk.h */
 int tcpci_snk_emul_connect_to_tcpci(struct tcpci_snk_emul_data *data,
 				    struct tcpci_partner_data *common_data,
@@ -526,6 +542,7 @@ void tcpci_snk_emul_init(struct tcpci_snk_emul *emul)
 	emul->ops.transmit = tcpci_snk_emul_transmit_op;
 	emul->ops.rx_consumed = tcpci_snk_emul_rx_consumed_op;
 	emul->ops.control_change = NULL;
+	emul->ops.disconnect = tcpci_snk_emul_disconnect_op;
 
 	tcpci_snk_emul_init_data(&emul->data);
 }

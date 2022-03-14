@@ -133,6 +133,7 @@ ZTEST(integration_usb, test_attach_drp)
 	 * TODO: Change it to examining EC_CMD_TYPEC_STATUS
 	 */
 	zassert_equal(PE_SNK_READY, get_state_pe(USBC_PORT_C0), NULL);
+	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
 }
 
 ZTEST_SUITE(integration_usb, drivers_predicate_post_main, NULL,
