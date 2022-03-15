@@ -169,21 +169,18 @@ int gpio_or_ioex_get_level(int signal, int *value)
 }
 
 /* GPIO flags which are the same in Zephyr and this codebase */
-#define GPIO_CONVERSION_SAME_BITS                                       \
-	(GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN | GPIO_INPUT | \
-	 GPIO_OUTPUT)
+#define GPIO_CONVERSION_SAME_BITS                                             \
+	(GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN | GPIO_VOLTAGE_1P8 | \
+	 GPIO_INPUT | GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW |                    \
+	GPIO_OUTPUT_INIT_HIGH)
 
-#define FLAGS_HANDLED_FROM_ZEPHYR                                              \
-	(GPIO_DISCONNECTED | GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN | \
-	 GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_HIGH | GPIO_INPUT |           \
-	 GPIO_OUTPUT | GPIO_INT_ENABLE | GPIO_INT_EDGE | GPIO_INT_HIGH_1 |     \
-	 GPIO_INT_LOW_0 | GPIO_VOLTAGE_1P8)
+#define FLAGS_HANDLED_FROM_ZEPHYR                                      \
+	(GPIO_CONVERSION_SAME_BITS | GPIO_INT_ENABLE | GPIO_INT_EDGE | \
+	GPIO_INT_HIGH_1 | GPIO_INT_LOW_0)
 
-#define FLAGS_HANDLED_TO_ZEPHYR                                                \
-	(GPIO_FLAG_NONE | GPIO_OPEN_DRAIN | GPIO_PULL_UP | GPIO_PULL_DOWN |    \
-	 GPIO_LOW | GPIO_HIGH | GPIO_INPUT | GPIO_OUTPUT | GPIO_INT_F_RISING | \
-	 GPIO_INT_F_FALLING | GPIO_INT_F_LOW | GPIO_INT_F_HIGH |               \
-	 GPIO_SEL_1P8V)
+#define FLAGS_HANDLED_TO_ZEPHYR                                               \
+	(GPIO_CONVERSION_SAME_BITS | GPIO_INT_F_RISING | GPIO_INT_F_FALLING | \
+	GPIO_INT_F_LOW | GPIO_INT_F_HIGH)
 
 int convert_from_zephyr_flags(const gpio_flags_t zephyr)
 {
@@ -196,13 +193,6 @@ int convert_from_zephyr_flags(const gpio_flags_t zephyr)
 		LOG_WRN("Unhandled GPIO bits in zephyr->ec conversion: 0x%08X",
 			unhandled_flags);
 	}
-
-	if (zephyr == GPIO_DISCONNECTED)
-		ec_flags = GPIO_FLAG_NONE;
-	if (zephyr & GPIO_OUTPUT_INIT_LOW)
-		ec_flags |= GPIO_LOW;
-	if (zephyr & GPIO_OUTPUT_INIT_HIGH)
-		ec_flags |= GPIO_HIGH;
 
 	if (zephyr & GPIO_INT_ENABLE) {
 		if (zephyr & GPIO_INT_EDGE) {
@@ -217,9 +207,6 @@ int convert_from_zephyr_flags(const gpio_flags_t zephyr)
 				ec_flags |= GPIO_INT_F_HIGH;
 		}
 	}
-
-	if (zephyr & GPIO_VOLTAGE_1P8)
-		ec_flags |= GPIO_SEL_1P8V;
 
 	return ec_flags;
 }
@@ -236,12 +223,6 @@ gpio_flags_t convert_to_zephyr_flags(int ec_flags)
 			unhandled_flags);
 	}
 
-	if (ec_flags == GPIO_FLAG_NONE)
-		zephyr_flags = GPIO_DISCONNECTED;
-	if (ec_flags & GPIO_LOW)
-		zephyr_flags |= GPIO_OUTPUT_INIT_LOW;
-	if (ec_flags & GPIO_HIGH)
-		zephyr_flags |= GPIO_OUTPUT_INIT_HIGH;
 	if (ec_flags & GPIO_INT_F_RISING)
 		zephyr_flags |= GPIO_INT_ENABLE
 			| GPIO_INT_EDGE | GPIO_INT_HIGH_1;
@@ -252,8 +233,6 @@ gpio_flags_t convert_to_zephyr_flags(int ec_flags)
 		zephyr_flags |= GPIO_INT_ENABLE | GPIO_INT_LOW_0;
 	if (ec_flags & GPIO_INT_F_HIGH)
 		zephyr_flags |= GPIO_INT_ENABLE | GPIO_INT_HIGH_1;
-	if (ec_flags & GPIO_SEL_1P8V)
-		zephyr_flags |= GPIO_VOLTAGE_1P8;
 
 	return zephyr_flags;
 }

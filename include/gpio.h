@@ -53,15 +53,42 @@
 #error GPIO_INT_DEBOUNCE values are not the same!
 #endif
 
-/* Otherwise define overlapping GPIO_ flags ourselves */
-#else /* !CONFIG_ZEPHYR */
-#define GPIO_OPEN_DRAIN    (BIT(1) | BIT(2))  /* Output type is open-drain */
-#define GPIO_PULL_UP       BIT(4)  /* Enable on-chip pullup */
-#define GPIO_PULL_DOWN     BIT(5)  /* Enable on-chip pulldown */
-#define GPIO_INPUT         BIT(8)  /* Input */
-#define GPIO_OUTPUT        BIT(9)  /* Output */
-#endif /* CONFIG_ZEPHYR */
+/*
+ * Map the legacy EC GPIO flags to the Zephyr equivalent.
+ * Refer to the descriptions below.
+ */
+#define GPIO_FLAG_NONE     GPIO_DISCONNECTED
+/* GPIO_ANALOG	           not supported by Zephyr */
+/* GPIO_OPEN_DRAIN         already defined by Zephyr */
+/* GPIO_DEFAULT            not supported by Zephyr */
+/* GPIO_PULL_UP            already defined by Zephyr */
+/* GPIO_PULL_DOWN          already defined by Zephyr */
+#define GPIO_LOW           GPIO_OUTPUT_INIT_LOW
+#define GPIO_HIGH          GPIO_OUTPUT_INIT_HIGH
+/* GPIO_INPUT              already defined by Zephyr */
+/* GPIO_OUTPUT             already defined by Zephyr */
 
+/*
+ * One to one mapping of interrupt flags isn't possible. So map these
+ * flags to not conflict with any Zephyr flags.
+ */
+#define GPIO_INT_F_RISING  BIT(28)
+#define GPIO_INT_F_FALLING BIT(29)
+#define GPIO_INT_F_LOW     BIT(30)
+#define GPIO_INT_F_HIGH    BIT(31)
+/* GPIO_INT_DSLEEP         not supported by Zephyr */
+/* GPIO_INT_SHARED         not supported by Zephyr */
+
+#define GPIO_SEL_1P8V      GPIO_VOLTAGE_1P8
+/* GPIO_ALTERNATE          not supported by Zephyr */
+/* GPIO_LOCKED             not supported by Zephyr */
+/* GPIO_HIB_WAKE_HIGH      not supported by Zephyr */
+/* GPIO_HIB_WAKE_LOW       not supported by Zephyr */
+/* GPIO_HIB_WAKE_RISING    not supported by Zephyr */
+/* GPIO_HIB_WAKE_FALLING   not supported by Zephyr */
+/* GPIO_POWER_DOWN         not supported by Zephyr */
+
+#else /* !CONFIG_ZEPHYR */
 /*
  * All flags supported by gpio_info expect GPIO_ANALOG
  *
@@ -73,14 +100,14 @@
  */
 #define GPIO_FLAG_NONE     0       /* No flag needed, default setting */
 #define GPIO_ANALOG        BIT(0)  /* Set pin to analog-mode */
-/* GPIO_OPEN_DRAIN         BIT(1) | BIT(2)  Output type is open-drain */
-#define GPIO_DEFAULT       BIT(3) /* Don't set up on boot */
-/* GPIO_PULL_UP            BIT(4)    Enable on-chip pullup */
-/* GPIO_PULL_DOWN          BIT(5)    Enable on-chip pulldown */
+#define GPIO_OPEN_DRAIN    (BIT(1) | BIT(2))  /* Output type is open-drain  */
+#define GPIO_DEFAULT       BIT(3)  /* Don't set up on boot */
+#define GPIO_PULL_UP       BIT(4)  /* Enable on-chip pullup */
+#define GPIO_PULL_DOWN     BIT(5)  /* Enable on-chip pulldown */
 #define GPIO_LOW           BIT(6)  /* If GPIO_OUTPUT, set level low */
 #define GPIO_HIGH          BIT(7)  /* If GPIO_OUTPUT, set level high */
-/* GPIO_INPUT              BIT(8)     Input */
-/* GPIO_OUTPUT             BIT(9)     Output */
+#define GPIO_INPUT         BIT(8)  /* Input */
+#define GPIO_OUTPUT        BIT(9)  /* Output */
 #define GPIO_INT_F_RISING  BIT(10) /* Interrupt on rising edge */
 #define GPIO_INT_F_FALLING BIT(11) /* Interrupt on falling edge */
 #define GPIO_INT_F_LOW     BIT(12) /* Interrupt on low level */
@@ -97,6 +124,8 @@
 #ifdef CONFIG_GPIO_POWER_DOWN
 #define GPIO_POWER_DOWN    BIT(23) /* Pin and pad is powered off */
 #endif
+
+#endif /* CONFIG_ZEPHYR */
 
 /* Common flag combinations */
 #define GPIO_OUT_LOW        (GPIO_OUTPUT | GPIO_LOW)

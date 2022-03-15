@@ -87,13 +87,19 @@ const struct gpio_flag_description gpio_descriptions[] = {
 	{GPIO_OUTPUT, "O"},
 	{GPIO_LOW, "L"},
 	{GPIO_HIGH, "H"},
+#ifndef CONFIG_ZEPHYR
 	{GPIO_ANALOG, "A"},
+#endif
 	{GPIO_OPEN_DRAIN, "ODR"},
 	{GPIO_PULL_UP, "PU"},
 	{GPIO_PULL_DOWN, "PD"},
+#ifndef CONFIG_ZEPHYR
 	{GPIO_ALTERNATE, "ALT"},
+#endif
 	{GPIO_SEL_1P8V, "1P8"},
+#ifndef CONFIG_ZEPHYR
 	{GPIO_LOCKED, "LCK"}
+#endif
 };
 
 static void print_gpio_info(int gpio)

@@ -94,7 +94,6 @@ ZTEST(gpio, test_convert_to_zephyr_flags)
 		{ GPIO_INT_F_LOW, GPIO_INT_ENABLE | GPIO_INT_LOW_0 },
 		{ GPIO_INT_F_HIGH, GPIO_INT_ENABLE | GPIO_INT_HIGH_1 },
 		{ GPIO_SEL_1P8V, GPIO_VOLTAGE_1P8 },
-		{ GPIO_LOCKED, 0 },
 	};
 	int num_tests = ARRAY_SIZE(validate);
 
