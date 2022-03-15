@@ -211,6 +211,19 @@ host_cmd_get_charge_control(void)
 	return response;
 }
 
+/**
+ * @brief Call the host command MOTION_SENSE with the dump sub-command
+ *
+ * Note: this function uses the zassume_ API. It will skip the test if the host
+ * command fails.
+ *
+ * @param max_sensor_count The maximum number of sensor data objects to populate
+ *        in the response object.
+ * @param response Pointer to the response object to fill.
+ */
+void host_cmd_motion_sense_dump(int max_sensor_count,
+				struct ec_response_motion_sense *response);
+
 #define GPIO_ACOK_OD_NODE DT_NODELABEL(gpio_acok_od)
 #define GPIO_ACOK_OD_PIN  DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
 

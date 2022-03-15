@@ -95,3 +95,19 @@ void disconnect_source_from_port(const struct emul *tcpci_emul,
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
 	k_sleep(K_SECONDS(1));
 }
+
+void host_cmd_motion_sense_dump(int max_sensor_count,
+				struct ec_response_motion_sense *response)
+{
+	struct ec_params_motion_sense params = {
+		.cmd = MOTIONSENSE_CMD_DUMP,
+		.dump = {
+			.max_sensor_count = max_sensor_count,
+		},
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_MOTION_SENSE_CMD, 4, *response, params);
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to get motion_sense dump");
+}
