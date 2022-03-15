@@ -116,6 +116,7 @@
 		};
 		gpio_en_pp3300_s5: en_pp3300_s5 {
 			gpios = <&gpioc 5 GPIO_OUTPUT>;
+			enum-name = "GPIO_TEMP_SENSOR_POWER";
 		};
 		gpio_en_pp5000_pen_x: en_pp5000_pen_x {
 			gpios = <&gpiob 5 GPIO_OUTPUT>;
