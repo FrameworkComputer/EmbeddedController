@@ -46,6 +46,10 @@ enum breath_status {
 	BREATH_OFF,
 };
 
+enum led_port {
+	RIGHT_PORT = 1,
+	LEFT_PORT
+};
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -256,10 +260,10 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 static void select_active_port_led(int port)
 {
-	if ((port == USBC_PORT_C0) || (port == USBC_PORT_C1)) {
+	if (port == RIGHT_PORT) {
 		gpio_set_level(GPIO_LEFT_SIDE, 0);
 		gpio_set_level(GPIO_RIGHT_SIDE, 1);
-	} else if ((port == USBC_PORT_C2) || (port == USBC_PORT_C3)) {
+	} else if (port == LEFT_PORT) {
 		gpio_set_level(GPIO_LEFT_SIDE, 1);
 		gpio_set_level(GPIO_RIGHT_SIDE, 0);
 	} else if ((charge_get_state() == PWR_STATE_DISCHARGE &&
@@ -275,7 +279,13 @@ static void select_active_port_led(int port)
 
 static void set_active_port_color(int color)
 {
-	int port = charge_manager_get_active_charge_port();
+	int usbc_port = charge_manager_get_active_charge_port();
+	int port = 0;
+
+	if ((usbc_port == USBC_PORT_C0) || (usbc_port == USBC_PORT_C1))
+		port = RIGHT_PORT;
+	else if ((usbc_port == USBC_PORT_C2) || (usbc_port == USBC_PORT_C3))
+		port = LEFT_PORT;
 
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
 		select_active_port_led(port);
