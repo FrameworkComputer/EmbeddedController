@@ -43,8 +43,8 @@ class FakeProject:
     @staticmethod
     def iter_builds():
         """Yield the two builds that zmake normally does"""
-        yield "build-ro", zmake.build_config.BuildConfig()
-        yield "build-rw", zmake.build_config.BuildConfig()
+        yield "ro", zmake.build_config.BuildConfig()
+        yield "rw", zmake.build_config.BuildConfig()
 
     def prune_modules(self, _):
         """Fake implementation of prune_modules."""
@@ -130,20 +130,18 @@ def do_test_with_log_level(zmake_factory_from_dir, log_level, fnames=None):
     with LogCapture(level=log_level) as cap:
         with unittest.mock.patch(
             "zmake.version.get_version_string", return_value="123"
+        ), unittest.mock.patch.object(
+            zmake.project,
+            "find_projects",
+            return_value={"fakeproject": FakeProject()},
+        ), unittest.mock.patch(
+            "zmake.version.write_version_header", autospec=True
         ):
-            with unittest.mock.patch.object(
-                zmake.project,
-                "find_projects",
-                return_value={"fakeproject": FakeProject()},
-            ):
-                with unittest.mock.patch(
-                    "zmake.version.write_version_header", autospec=True
-                ):
-                    zmk.build(
-                        ["fakeproject"],
-                        clobber=True,
-                    )
-                multiproc.wait_for_log_end()
+            zmk.build(
+                ["fakeproject"],
+                clobber=True,
+            )
+        multiproc.wait_for_log_end()
 
     recs = [rec.getMessage() for rec in cap.records]
     return recs
@@ -165,22 +163,20 @@ class TestFilters:
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
         expected = {
-            "Configuring fakeproject:build-rw.",
-            "Configuring fakeproject:build-ro.",
+            "Configuring fakeproject:rw.",
+            "Configuring fakeproject:ro.",
             "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmp_path),
-            "Building fakeproject:build-ro: /usr/bin/ninja -C {}-build-ro".format(
+            "Building fakeproject:ro: /usr/bin/ninja -C {}-ro".format(
                 tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
-            "Building fakeproject:build-rw: /usr/bin/ninja -C {}-build-rw".format(
+            "Building fakeproject:rw: /usr/bin/ninja -C {}-rw".format(
                 tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
         }
         for suffix in ["ro", "rw"]:
             with open(get_test_filepath("%s_INFO" % suffix)) as file:
                 for line in file:
-                    expected.add(
-                        "[fakeproject:build-{}]{}".format(suffix, line.strip())
-                    )
+                    expected.add("[fakeproject:{}]{}".format(suffix, line.strip()))
         # This produces an easy-to-read diff if there is a difference
         assert expected == set(recs)
 
@@ -190,13 +186,13 @@ class TestFilters:
         # TODO: Remove sets and figure out how to check the lines are in the
         # right order.
         expected = {
-            "Configuring fakeproject:build-rw.",
-            "Configuring fakeproject:build-ro.",
+            "Configuring fakeproject:rw.",
+            "Configuring fakeproject:ro.",
             "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmp_path),
-            "Building fakeproject:build-ro: /usr/bin/ninja -C {}-build-ro".format(
+            "Building fakeproject:ro: /usr/bin/ninja -C {}-ro".format(
                 tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
-            "Building fakeproject:build-rw: /usr/bin/ninja -C {}-build-rw".format(
+            "Building fakeproject:rw: /usr/bin/ninja -C {}-rw".format(
                 tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
             "Running cat {}/files/sample_ro.txt".format(OUR_PATH),
@@ -205,9 +201,7 @@ class TestFilters:
         for suffix in ["ro", "rw"]:
             with open(get_test_filepath(suffix)) as file:
                 for line in file:
-                    expected.add(
-                        "[fakeproject:build-{}]{}".format(suffix, line.strip())
-                    )
+                    expected.add("[fakeproject:{}]{}".format(suffix, line.strip()))
         # This produces an easy-to-read diff if there is a difference
         assert expected == set(recs)
 
