@@ -82,47 +82,42 @@ struct gpio_flag_description {
     const char* name;
 };
 
-const struct gpio_flag_description gpio_descriptions[] = {
+__maybe_unused static const struct gpio_flag_description gpio_descriptions[] = {
 	{GPIO_INPUT, "I"},
 	{GPIO_OUTPUT, "O"},
 	{GPIO_LOW, "L"},
 	{GPIO_HIGH, "H"},
-#ifndef CONFIG_ZEPHYR
-	{GPIO_ANALOG, "A"},
-#endif
 	{GPIO_OPEN_DRAIN, "ODR"},
 	{GPIO_PULL_UP, "PU"},
 	{GPIO_PULL_DOWN, "PD"},
-#ifndef CONFIG_ZEPHYR
-	{GPIO_ALTERNATE, "ALT"},
-#endif
 	{GPIO_SEL_1P8V, "1P8"},
 #ifndef CONFIG_ZEPHYR
+	{GPIO_ANALOG, "A"},
+	{GPIO_ALTERNATE, "ALT"},
 	{GPIO_LOCKED, "LCK"}
 #endif
 };
 
 static void print_gpio_info(int gpio)
 {
-	int changed, v, flags, i;
+	int changed, v, i;
 
 	if (!gpio_is_implemented(gpio))
 		return;  /* Skip unsupported signals */
 
 	v = gpio_get_level(gpio);
-#ifdef CONFIG_CMD_GPIO_EXTENDED
-	flags = gpio_get_flags(gpio);
-#else
-	flags = 0;
-#endif
 	changed = last_val_changed(gpio, v);
 
 	/* Split the printf call into multiple calls to reduce the stack usage. */
 	ccprintf("  %d%c ", v, (changed ? '*' : ' '));
 
-	for (i = 0; i < ARRAY_SIZE(gpio_descriptions); i++) {
-		if (flags & gpio_descriptions[i].bitfield)
-			ccprintf("%s ", gpio_descriptions[i].name);
+	if (IS_ENABLED(CONFIG_CMD_GPIO_EXTENDED)) {
+		int flags = gpio_get_flags(gpio);
+
+		for (i = 0; i < ARRAY_SIZE(gpio_descriptions); i++) {
+			if (flags & gpio_descriptions[i].bitfield)
+				ccprintf("%s ", gpio_descriptions[i].name);
+		}
 	}
 
 	ccprintf("%s\n", gpio_get_name(gpio));

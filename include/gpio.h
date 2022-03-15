@@ -285,9 +285,8 @@ void gpio_set_flags(enum gpio_signal signal, int flags);
 #define CONFIG_GPIO_GET_EXTENDED
 #endif
 
-#ifdef CONFIG_GPIO_GET_EXTENDED
 /**
- * Get the current flags for a signal.
+ * Get the current flags for a signal. Requires CONFIG_GPIO_GET_EXTENDED.
  *
  * @param signal	Signal to get flags for
  * @returns The flags that are currently defined for this signal
@@ -295,13 +294,12 @@ void gpio_set_flags(enum gpio_signal signal, int flags);
 int gpio_get_flags(enum gpio_signal signal);
 
 /**
- * Get flags for GPIO by port and mask.
+ * Get flags for GPIO by port and mask. Requires CONFIG_GPIO_GET_EXTENDED.
  *
  * @param port		GPIO port to set (GPIO_*)
  * @param mask		Bitmask of pins on that port to check: one only.
  */
 int gpio_get_flags_by_mask(uint32_t port, uint32_t mask);
-#endif
 
 #ifdef CONFIG_ZEPHYR
 
