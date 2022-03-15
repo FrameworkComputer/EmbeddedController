@@ -537,8 +537,9 @@ config PLATFORM_EC_MKBP_EVENT
       This requires a MKBP event delivery method(GPIO, HOST_EVENT, and etc)
 
 config PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK
-    bool "MKBP event wakeup mask"
+    bool
     depends on PLATFORM_EC_MKBP_EVENT
+    default $(dt_node_has_prop,/ec-mkbp-event-wakeup-mask,wakeup-mask)
     help
       Enable which MKBP events should wakeup the system in suspend.
       For example:
@@ -550,8 +551,9 @@ config PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK
       The mkbp events are defined in dt-bindings/wake_mask_event_defines.h
 
 config PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK
-    bool "MKBP host event wakeup mask"
+    bool
     depends on PLATFORM_EC_MKBP_EVENT
+    default $(dt_node_has_prop,/ec-mkbp-host-event-wakeup-mask,wakeup-mask)
     help
       Enable which host events should wakeup the system in suspend.
       For example:
