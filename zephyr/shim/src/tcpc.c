@@ -7,11 +7,13 @@
 #include <sys/util.h>
 #include "usb_pd_tcpm.h"
 #include "usb_pd.h"
+#include "usbc/tcpc_fusb302.h"
 #include "usbc/tcpc_it8xxx2.h"
 #include "usbc/tcpc_ps8xxx.h"
 #include "usbc/tcpci.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(IT8XXX2_TCPC_COMPAT) ||                          \
+#if DT_HAS_COMPAT_STATUS_OKAY(FUSB302_TCPC_COMPAT) ||                          \
+	DT_HAS_COMPAT_STATUS_OKAY(IT8XXX2_TCPC_COMPAT) ||                      \
 	DT_HAS_COMPAT_STATUS_OKAY(PS8XXX_COMPAT) ||                            \
 	DT_HAS_COMPAT_STATUS_OKAY(TCPCI_COMPAT)                                \
 
@@ -23,6 +25,8 @@
 				(), (const))
 
 MAYBE_CONST struct tcpc_config_t tcpc_config[] = {
+	DT_FOREACH_STATUS_OKAY_VARGS(FUSB302_TCPC_COMPAT, TCPC_CONFIG,
+				     TCPC_CONFIG_FUSB302)
 	DT_FOREACH_STATUS_OKAY_VARGS(IT8XXX2_TCPC_COMPAT, TCPC_CONFIG,
 				     TCPC_CONFIG_IT8XXX2)
 	DT_FOREACH_STATUS_OKAY_VARGS(PS8XXX_COMPAT, TCPC_CONFIG,
