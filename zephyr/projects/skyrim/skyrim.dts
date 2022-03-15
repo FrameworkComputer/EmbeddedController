@@ -16,7 +16,7 @@
 			gpios = <&gpio5 0 GPIO_ODR_HIGH>;
 		};
 		gpio_en_pwr_s3: en_pwr_s3 {
-			gpios = <&gpio7 4 GPIO_OUT_LOW>;
+			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
 			gpios = <&gpiof 0 GPIO_INPUT>;
@@ -30,14 +30,14 @@
 			gpios = <&gpio9 5 GPIO_INPUT>;
 		};
 		hub_rst {
-			gpios = <&gpio6 6 GPIO_OUT_LOW>;
+			gpios = <&gpio6 6 GPIO_OUTPUT_LOW>;
 		};
 		ec_soc_int_l {
-			gpios = <&gpioa 1 GPIO_OUT_HIGH>;
+			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
 			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_soc_pwr_good: ec_soc_pwr_good {
-			gpios = <&gpiod 3 GPIO_OUT_LOW>;
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
 		};
 		/* TODO: Add interrupt handler to shut down */
 		pcore_ocp_r_l {
@@ -58,7 +58,7 @@
 			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
-			gpios = <&gpioa 7 GPIO_OUT_HIGH>;
+			gpios = <&gpioa 7 GPIO_OUTPUT_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_volup_btn_odl: volup_btn_odl {
@@ -70,10 +70,10 @@
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		ec_sc_rst {
-			gpios = <&gpiob 0 GPIO_OUT_LOW>;
+			gpios = <&gpiob 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_cbi_wp: ec_cbi_wp {
-			gpios = <&gpio8 1 GPIO_OUT_LOW>;
+			gpios = <&gpio8 1 GPIO_OUTPUT_LOW>;
 		};
 		gpio_wp: ec_wp_l {
 			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;

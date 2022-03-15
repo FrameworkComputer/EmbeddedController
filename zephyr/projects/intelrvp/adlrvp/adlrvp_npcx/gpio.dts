@@ -110,7 +110,7 @@
 			enum-name = "GPIO_SYS_RESET_L";
 		};
 		pm-rsmrst-n {
-			gpios = <&gpiod 3 GPIO_OUT_LOW>;
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PCH_RSMRST_L";
 		};
 		pm-pwrbtn-n {
@@ -118,10 +118,10 @@
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		ec_spi_oe_mecc: ec-spi-oe-mecc {
-			gpios = <&gpio6 0 GPIO_OUT_LOW>;
+			gpios = <&gpio6 0 GPIO_OUTPUT_LOW>;
 		};
 		ec-ds3 {
-			gpios = <&gpioc 4 GPIO_OUT_LOW>;
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP3300_A";
 		};
 		pch-pwrok-ec {
@@ -129,22 +129,22 @@
 			enum-name = "GPIO_PCH_PWROK";
 		};
 		sys-pwrok {
-			gpios = <&gpio9 3 GPIO_OUT_LOW>;
+			gpios = <&gpio9 3 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PCH_SYS_PWROK";
 		};
 		ec-dsw-pwrok {
-			gpios = <&gpio9 5 GPIO_OUT_LOW>;
+			gpios = <&gpio9 5 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PCH_DSW_PWROK";
 		};
 		gpio_wp: ec-flash-wp-odl {
 			gpios = <&gpio9 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		ec-h1-packet-mode {
-			gpios = <&gpioe 2 GPIO_OUT_LOW>;
+			gpios = <&gpioe 2 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		ec-entering-rw {
-			gpios = <&gpiod 4 GPIO_OUT_LOW>;
+			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		ccd-mode-odl {
@@ -155,16 +155,16 @@
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 		edp-bklt-en-mecc {
-			gpios = <&gpioe 1 GPIO_OUT_HIGH>;
+			gpios = <&gpioe 1 GPIO_OUTPUT_HIGH>;
 		};
 		led-1-l {
-			gpios = <&gpiob 6 GPIO_OUT_HIGH>;
+			gpios = <&gpiob 6 GPIO_OUTPUT_HIGH>;
 		};
 		led-2-l {
-			gpios = <&gpiob 7 GPIO_OUT_HIGH>;
+			gpios = <&gpiob 7 GPIO_OUTPUT_HIGH>;
 		};
 		therm-sen-mecc {
-			gpios = <&gpioc 0 GPIO_OUT_LOW>;
+			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
 		};
 		smb-bs-clk {
 			gpios = <&gpiob 3 GPIO_INPUT>;
@@ -272,7 +272,7 @@
 			gpios = <&gpioe 0 GPIO_INPUT>;
 		};
 		gpio_ec_kso_02_inv: ec-kso-02-inv {
-			gpios = <&gpio1 7 (GPIO_OUT_LOW | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
 	};
 };

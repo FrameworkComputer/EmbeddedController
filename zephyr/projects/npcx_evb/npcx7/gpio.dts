@@ -31,17 +31,17 @@
 			enum-name = "GPIO_LID_OPEN";
 		};
 		entering_rw {
-			gpios = <&gpio3 6 GPIO_OUT_LOW>;
+			gpios = <&gpio3 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		gpio_ec_pch_wake_odl: pch_wake_l {
-			gpios = <&gpio5 0 GPIO_OUT_HIGH>;
+			gpios = <&gpio5 0 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_pgood_fan: pgood_fan {
 			gpios = <&gpioc 7 GPIO_INPUT_PULL_UP>;
 		};
 		spi_cs_l {
-			gpios = <&gpioa 5 GPIO_OUT_HIGH>;
+			gpios = <&gpioa 5 GPIO_OUTPUT_HIGH>;
 		};
 		board_version1 {
 			gpios = <&gpio6 4 GPIO_INPUT>;

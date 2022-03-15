@@ -114,7 +114,7 @@
 			gpios = <&gpio0 2 GPIO_INPUT>;
 		};
 		ec_entering_rw {
-			gpios = <&gpioe 1 GPIO_OUT_LOW>;
+			gpios = <&gpioe 1 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		ec_batt_pres_odl {
@@ -134,36 +134,36 @@
 			enum-name = "GPIO_EC_INT_L";
 		};
 		qsip_on {
-			gpios = <&gpio5 0 GPIO_OUT_LOW>;
+			gpios = <&gpio5 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_hibernate_l: hibernate_l {
-			gpios = <&gpio5 2 GPIO_OUT_HIGH>;
+			gpios = <&gpio5 2 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_switchcap_on: switchcap_on {
-			gpios = <&gpiod 5 GPIO_OUT_LOW>;
+			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_SWITCHCAP_ON";
 		};
 		gpio_vbob_en: vbob_en {
-			gpios = <&gpiod 3 GPIO_OUT_LOW>;
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_VBOB_EN";
 		};
 		gpio_en_pp3300_a: en_pp3300_a {
-			gpios = <&gpioa 6 GPIO_OUT_LOW>;
+			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP3300_A";
 		};
 		gpio_en_pp5000_a: en_pp5000_a {
-			gpios = <&gpio6 7 GPIO_OUT_LOW>;
+			gpios = <&gpio6 7 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP5000";
 		};
 		ec_bl_disable_l {
-			gpios = <&gpiob 6 GPIO_OUT_LOW>;
+			gpios = <&gpiob 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_lid_accel_int_l: lid_accel_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
 		};
 		trackpad_int_gate {
-			gpios = <&gpio7 4 GPIO_OUT_LOW>;
+			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_usb_c0_pd_rst_l: usb_c0_pd_rst_l {
 			gpios = <&gpiof 1 GPIO_ODR_HIGH>;
@@ -175,23 +175,23 @@
 			gpios = <&gpio9 6 GPIO_ODR_HIGH>;
 		};
 		gpio_dp_mux_sel: dp_mux_sel {
-			gpios = <&gpio4 5 GPIO_OUT_LOW>;
+			gpios = <&gpio4 5 GPIO_OUTPUT_LOW>;
 		};
 		gpio_dp_hot_plug_det: dp_hot_plug_det {
-			gpios = <&gpio9 5 GPIO_OUT_LOW>;
+			gpios = <&gpio9 5 GPIO_OUTPUT_LOW>;
 		};
 		en_usb_a_5v {
-			gpios = <&gpio8 6 GPIO_OUT_LOW>;
+			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_USB_A_5V";
 		};
 		usb_a_cdp_ilim_en {
-			gpios = <&gpio7 5 GPIO_OUT_HIGH>;
+			gpios = <&gpio7 5 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_ec_chg_led_y_c1: ec_chg_led_y_c1 {
-			gpios = <&gpioc 3 GPIO_OUT_LOW>;
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_chg_led_b_c1: ec_chg_led_b_c1 {
-			gpios = <&gpioc 4 GPIO_OUT_LOW>;
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_brd_id0: brd_id0 {
 			gpios = <&gpioc 7 GPIO_INPUT>;
@@ -215,10 +215,10 @@
 			gpios = <&gpiod 4 GPIO_INPUT>;
 		};
 		arm_x86 {
-			gpios = <&gpio6 6 GPIO_OUT_LOW>;
+			gpios = <&gpio6 6 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 (GPIO_OUT_LOW | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
 	};
 

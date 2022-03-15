@@ -1,7 +1,7 @@
 /*
- * Copyright 2020 Google LLC.
- *
- * SPDX-License-Identifier: Apache-2.0
+ * Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
  */
 #ifndef DT_BINDINGS_GPIO_DEFINES_H_
 #define DT_BINDINGS_GPIO_DEFINES_H_
@@ -44,17 +44,11 @@
 /* Configures GPIO pin as input with pull-down. */
 #define GPIO_INPUT_PULL_DOWN    (GPIO_INPUT | GPIO_PULL_DOWN)
 
-/** Configures GPIO pin as output and initializes it to a low state. */
-#define GPIO_OUT_LOW         (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)
-
-/** Configures GPIO pin as output and initializes it to a high state. */
-#define GPIO_OUT_HIGH        (GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH)
-
 /** Configures GPIO pin as ODR output and initializes it to a low state. */
-#define GPIO_ODR_LOW (GPIO_OUT_LOW | GPIO_OPEN_DRAIN)
+#define GPIO_ODR_LOW (GPIO_OUTPUT_LOW | GPIO_OPEN_DRAIN)
 
 /** Configures GPIO pin as ODR output and initializes it to a high state. */
-#define GPIO_ODR_HIGH (GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
+#define GPIO_ODR_HIGH (GPIO_OUTPUT_HIGH | GPIO_OPEN_DRAIN)
 
 /*
  * GPIO interrupt flags, taken from <drivers/gpio.h>

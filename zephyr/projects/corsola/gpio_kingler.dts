@@ -43,7 +43,7 @@
 			enum-name = "GPIO_AP_IN_SLEEP_L";
 		};
 		gpio_en_ulp: en_ulp {
-			gpios = <&gpioc 6 GPIO_OUT_LOW>;
+			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;
 		};
 		en_ec_id_odl {
 			gpios = <&gpio7 6 GPIO_ODR_HIGH>;
@@ -100,14 +100,14 @@
 			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 (GPIO_OUT_LOW | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
 			gpios = <&gpio8 3 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 		ec_entering_rw {
-			gpios = <&gpio0 3 GPIO_OUT_LOW>;
+			gpios = <&gpio0 3 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		charger_prochot_odl {
@@ -129,10 +129,10 @@
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_en_5v_usm: en_5v_usm {
-			gpios = <&gpio0 2 GPIO_OUT_LOW>;
+			gpios = <&gpio0 2 GPIO_OUTPUT_LOW>;
 		};
 		packet_mode_en {
-			gpios = <&gpio0 2 GPIO_OUT_LOW>;
+			gpios = <&gpio0 2 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_x_ec_gpio2: x_ec_gpio2 {
@@ -154,33 +154,33 @@
 			gpios = <&gpio7 0 GPIO_INPUT>;
 		};
 		gpio_ec_x_gpio1: ec_x_gpio1 {
-			gpios = <&gpio6 2 GPIO_OUT_LOW>;
+			gpios = <&gpio6 2 GPIO_OUTPUT_LOW>;
 		};
 		dp_aux_path_sel: dp_aux_path_sel {
-			gpios = <&gpio6 3 GPIO_OUT_LOW>;
+			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_bl_en_od: ec_bl_en_od {
 			gpios = <&gpio4 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_ec_x_gpio3: ec_x_gpio3 {
-			gpios = <&gpiod 3 GPIO_OUT_LOW>;
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
 			gpios = <&gpio7 3 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
 		gpio_usb_c0_tcpc_rst: usb_c0_tcpc_rst {
-			gpios = <&gpioc 0 GPIO_OUT_LOW>;
+			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
 		};
 		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus_x {
-			gpios = <&gpio6 0 GPIO_OUT_LOW>;
+			gpios = <&gpio6 0 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP5000_USB_A0_VBUS";
 		};
 		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
 			gpios = <&gpio3 7 GPIO_INPUT>;
 		};
 		en_pp5000_z2 {
-			gpios = <&gpio3 4 GPIO_OUT_HIGH>;
+			gpios = <&gpio3 4 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
 			gpios = <&gpioe 1 GPIO_INPUT>;

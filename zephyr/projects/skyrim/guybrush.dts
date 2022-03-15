@@ -31,25 +31,25 @@
 			gpios = <&gpio9 5 GPIO_INPUT>;
 		};
 		ec_soc_pwr_good {
-			gpios = <&gpiod 3 GPIO_OUT_LOW>;
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PCH_SYS_PWROK";
 		};
 		ec_entering_rw {
-			gpios = <&gpio6 6 GPIO_OUT_LOW>;
+			gpios = <&gpio6 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		ec_clr_cmos {
-			gpios = <&gpioa 1 GPIO_OUT_LOW>;
+			gpios = <&gpioa 1 GPIO_OUTPUT_LOW>;
 		};
 		ec_mem_event {
-			gpios = <&gpioa 5 GPIO_OUT_LOW>;
+			gpios = <&gpioa 5 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
-			gpios = <&gpio6 3 GPIO_OUT_HIGH>;
+			gpios = <&gpio6 3 GPIO_OUTPUT_HIGH>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		ec_soc_int_l {
-			gpios = <&gpio8 3 GPIO_OUT_HIGH>;
+			gpios = <&gpio8 3 GPIO_OUTPUT_HIGH>;
 		};
 		soc_thermtrip_odl {
 			gpios = <&gpioe 5 GPIO_INPUT>;

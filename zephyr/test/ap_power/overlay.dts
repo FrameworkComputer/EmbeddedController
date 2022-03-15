@@ -33,7 +33,7 @@
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_ec_pch_wake_odl: ec_pch_wake_odl {
-			gpios = <&gpio0 3 GPIO_OUT_HIGH>;
+			gpios = <&gpio0 3 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_lid_open_ec: lid_open_ec {
 			/* GPIO_PULL_UP will cause this start asserted. */

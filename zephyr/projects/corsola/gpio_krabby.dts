@@ -77,10 +77,10 @@
 			enum-name = "GPIO_EC_PMIC_EN_ODL";
 		};
 		en_pp5000_z2: en_pp5000_z2 {
-			gpios = <&gpioc 6 GPIO_OUT_HIGH>;
+			gpios = <&gpioc 6 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_en_ulp: en_ulp {
-			gpios = <&gpioe 3 GPIO_OUT_LOW>;
+			gpios = <&gpioe 3 GPIO_OUTPUT_LOW>;
 		};
 		sys_rst_odl: sys_rst_odl {
 			gpios = <&gpiog 1 GPIO_ODR_LOW>;
@@ -104,13 +104,13 @@
 			enum-name = "GPIO_EC_INT_L";
 		};
 		dp_aux_path_sel: dp_aux_path_sel {
-			gpios = <&gpiog 0 GPIO_OUT_HIGH>;
+			gpios = <&gpiog 0 GPIO_OUTPUT_HIGH>;
 		};
 		ec_ap_dp_hpd_odl: ec_ap_dp_hpd_odl {
 			gpios = <&gpioj 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 		};
 		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus {
-			gpios = <&gpiob 7 GPIO_OUT_LOW>;
+			gpios = <&gpiob 7 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP5000_USB_A0_VBUS";
 		};
 		usb_c0_ppc_frsinfo: usb_c0_ppc_frsinfo {
@@ -124,11 +124,11 @@
 			gpios = <&gpioh 5 GPIO_ODR_HIGH>;
 		};
 		entering_rw: entering_rw {
-			gpios = <&gpioc 5 GPIO_OUT_LOW>;
+			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		gpio_en_5v_usm: en_5v_usm {
-			gpios = <&gpiog 3 GPIO_OUT_LOW>;
+			gpios = <&gpiog 3 GPIO_OUTPUT_LOW>;
 		};
 		usb_a0_fault_odl: usb_a0_fault_odl {
 			gpios = <&gpioj 6 GPIO_INPUT>;
@@ -170,16 +170,16 @@
 			gpios = <&gpioa 5 GPIO_INPUT>;
 		};
 		gpio_ec_x_gpio1: ec_x_gpio1 {
-			gpios = <&gpioh 4 GPIO_OUT_LOW>;
+			gpios = <&gpioh 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_x_gpio3: ec_x_gpio3 {
-			gpios = <&gpioj 1 GPIO_OUT_LOW>;
+			gpios = <&gpioj 1 GPIO_OUTPUT_LOW>;
 		};
 		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
 			gpios = <&gpioj 3 GPIO_INPUT>;
 		};
 		gpio_packet_mode_en: packet_mode_en {
-			gpios = <&gpiod 4 GPIO_OUT_LOW>;
+			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 	};
@@ -231,10 +231,10 @@
 			/* spi_clk_gpg6 */
 			<&gpiog 6 GPIO_INPUT_PULL_UP>,
 			/* spi_mosi_gpg4 */
-			<&gpiog 4 GPIO_OUT_LOW>,
+			<&gpiog 4 GPIO_OUTPUT_LOW>,
 			/* spi_miso_gpg5 */
-			<&gpiog 5 GPIO_OUT_LOW>,
+			<&gpiog 5 GPIO_OUTPUT_LOW>,
 			/* spi_cs_gpg7 */
-			<&gpiog 7 GPIO_OUT_LOW>;
+			<&gpiog 7 GPIO_OUTPUT_LOW>;
 	};
 };

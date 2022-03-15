@@ -24,7 +24,7 @@
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		charger_vap_otg_en {
-			gpios = <&gpio7 3 GPIO_OUT_LOW>;
+			gpios = <&gpio7 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
 			gpios = <&gpioa 3 GPIO_INPUT>;
@@ -35,7 +35,7 @@
 		 * but only enabled for board id 1.
 		 */
 		gpio_id_1_ec_kb_bl_en: id_1_ec_kb_bl_en {
-			gpios = <&gpioa 3 GPIO_OUT_LOW>;
+			gpios = <&gpioa 3 GPIO_OUTPUT_LOW>;
 			no-auto-init;
 		};
 		gpio_id_1_ec_batt_pres_odl: id_1_ec_batt_pres_odl {
@@ -48,7 +48,7 @@
 			gpios = <&gpio3 6 GPIO_INPUT>;
 		};
 		gpio_ec_kb_bl_en_l: ec_kb_bl_en_l {
-			gpios = <&gpio8 6 GPIO_OUT_HIGH>;
+			gpios = <&gpio8 6 GPIO_OUTPUT_HIGH>;
 		};
 		ec_i2c_misc_scl_r {
 			gpios = <&gpiob 3 GPIO_INPUT>;
@@ -93,13 +93,13 @@
 			gpios = <&gpiof 2 GPIO_INPUT>;
 		};
 		ec_chg_led_y_c1 {
-			gpios = <&gpioc 3 GPIO_OUT_LOW>;
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 		ec_chg_led_b_c1 {
-			gpios = <&gpioc 4 GPIO_OUT_LOW>;
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 		};
 		ec_gsc_packet_mode {
-			gpios = <&gpio7 5 GPIO_OUT_LOW>;
+			gpios = <&gpio7 5 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_ec_accel_int_l: ec_accel_int_l {
@@ -120,7 +120,7 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 (GPIO_OUT_LOW | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_ec_pch_wake_odl: ec_pch_wake_r_odl {
 			gpios = <&gpioc 0 GPIO_ODR_HIGH>;
@@ -134,7 +134,7 @@
 			enum-name = "GPIO_PG_EC_DSW_PWROK";
 		};
 		en_s5_rails {
-			gpios = <&gpiob 6 GPIO_OUT_LOW>;
+			gpios = <&gpiob 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_S5_RAILS";
 		};
 		sys_rst_odl {
@@ -146,7 +146,7 @@
 			enum-name = "GPIO_PG_EC_RSMRST_ODL";
 		};
 		ec_pch_rsmrst_odl {
-			gpios = <&gpioa 6 GPIO_OUT_LOW>;
+			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PCH_RSMRST_L";
 		};
 		gpio_pg_ec_all_sys_pwrgd: pg_ec_all_sys_pwrgd {
@@ -178,11 +178,11 @@
 			enum-name = "GPIO_SLP_SUS_L";
 		};
 		pch_pwrok {
-			gpios = <&gpio7 2 GPIO_OUT_LOW>;
+			gpios = <&gpio7 2 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_PCH_PWROK";
 		};
 		ec_pch_sys_pwrok {
-			gpios = <&gpio3 7 GPIO_OUT_LOW>;
+			gpios = <&gpio3 7 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EC_PCH_SYS_PWROK";
 		};
 		imvp9_vrrdy_od {
@@ -190,14 +190,14 @@
 			enum-name = "GPIO_IMVP9_VRRDY_OD";
 		};
 		ec_edp_bl_en {
-			gpios = <&gpiod 3 GPIO_OUT_HIGH>;
+			gpios = <&gpiod 3 GPIO_OUTPUT_HIGH>;
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_prochot_in_l: ec_prochot_in_l {
 			gpios = <&gpiof 0 GPIO_INPUT>;
 		};
 		gpio_en_pp5000_fan: en_pp5000_fan {
-			gpios = <&gpio6 1 GPIO_OUT_HIGH>;
+			gpios = <&gpio6 1 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
 			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
@@ -240,7 +240,7 @@
 			enum-name = "GPIO_USB_C2_BC12_INT_ODL";
 		};
 		en_pp5000_usba_r {
-			gpios = <&gpiod 7 GPIO_OUT_LOW>;
+			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP5000_USBA_R";
 		};
 		usb_c1_rt_rst_r_odl {
@@ -281,7 +281,7 @@
 			label = "IOEX_USB_C0_OC_ODL";
 		};
 		usb_c0_frs_en {
-			gpios = <&ioex_port1 6 GPIO_OUT_LOW>;
+			gpios = <&ioex_port1 6 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_FRS_EN";
 			label = "IOEX_USB_C0_FRS_EN";
 		};
@@ -306,7 +306,7 @@
 			label = "IOEX_USB_C2_OC_ODL";
 		};
 		usb_c2_frs_en {
-			gpios = <&ioex_port2 6 GPIO_OUT_LOW>;
+			gpios = <&ioex_port2 6 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C2_FRS_EN";
 			label = "IOEX_USB_C2_FRS_EN";
 		};
