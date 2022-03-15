@@ -238,11 +238,9 @@
 		};
 	};
 
-	named-batteries {
-		compatible = "named-batteries";
-
-		lgc011 {
-			enum-name = "lgc011";
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m";
 		};
 	};
 

@@ -13,24 +13,11 @@
 #define BATTERY_TYPE_WITH_COMMA(id)	BATTERY_TYPE(id),
 
 /* This produces a list of BATTERY_<ENUM_NAME> identifiers */
+enum battery_type {
 #if DT_NODE_EXISTS(DT_PATH(batteries))
-
-enum battery_type {
 	DT_FOREACH_CHILD(DT_PATH(batteries), BATTERY_TYPE_WITH_COMMA)
-
-	BATTERY_TYPE_COUNT,
-};
-
-#else /* DT_NODE_EXISTS(DT_PATH(batteries)) */
-
-enum battery_type {
-#if DT_NODE_EXISTS(DT_PATH(named_batteries))
-	DT_FOREACH_CHILD(DT_PATH(named_batteries), BATTERY_TYPE_WITH_COMMA)
 #endif
-
 	BATTERY_TYPE_COUNT,
 };
-
-#endif /* DT_NODE_EXISTS(DT_PATH(batteries)) */
 
 #undef BATTERY_TYPE_WITH_COMMA
