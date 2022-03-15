@@ -6,8 +6,13 @@
 
 register_raw_project(
     project_name="it8xxx2_evb",
-    zephyr_board="it8xxx2_evb",
+    zephyr_board="it8xxx2",
     dts_overlays=[
+        "adc.dts",
+        "fan.dts",
+        "gpio.dts",
+        "i2c.dts",
         "interrupts.dts",
+        "pwm.dts",
     ],
 )

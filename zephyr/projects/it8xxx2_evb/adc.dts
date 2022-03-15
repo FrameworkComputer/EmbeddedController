@@ -1,0 +1,47 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_vbussa: vbussa {
+			label = "ADC_VBUSSA";
+			enum-name = "ADC_VBUS";
+			io-channels = <&adc0 0>;
+		};
+		adc_vbussb: vbussb {
+			label = "ADC_VBUSSB";
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 1>;
+		};
+		adc_evb_ch_13: evb_ch_13 {
+			label = "ADC_EVB_CH_13";
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 2>;
+		};
+		adc_evb_ch_14: evb_ch_14 {
+			label = "ADC_EVB_CH_14";
+			enum-name = "ADC_TEMP_SENSOR_FAN";
+			io-channels = <&adc0 3>;
+		};
+		adc_evb_ch_15: evb_ch_15 {
+			label = "ADC_EVB_CH_15";
+			enum-name = "ADC_TEMP_SENSOR_DDR_SOC";
+			io-channels = <&adc0 4>;
+		};
+		adc_evb_ch_16: evb_ch_16 {
+			label = "ADC_EVB_CH_16";
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			io-channels = <&adc0 5>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_ch3_gpi3_default>;
+	pinctrl-names = "default";
+};

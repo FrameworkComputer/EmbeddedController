@@ -1,9 +1,0 @@
-# Copyright 2021 The Chromium OS Authors. All rights reserved.
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
-
-config BOARD_IT8XXX2_EVB
-	bool "IT8XXX2 EV-board"
-	depends on SOC_IT8XXX2
-	# Allow generating initial 0 line coverage.
-	select HAS_COVERAGE_SUPPORT

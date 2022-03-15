@@ -1,34 +1,11 @@
-/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-/dts-v1/;
-
-#include <cros/ite/it8xxx2.dtsi>
 #include <dt-bindings/gpio_defines.h>
-#include <ite/it8xxx2.dtsi>
 
 / {
-	model = "IT8XXX2 EV-Board";
-
-	chosen {
-		zephyr,sram = &sram0;
-		zephyr,console = &uart1;
-		zephyr,shell-uart = &uart1;
-		zephyr,flash = &flash0;
-		zephyr,flash-controller = &flashctrl;
-	};
-
-	pwmleds {
-		compatible = "pwm-leds";
-
-		/* NOTE: &pwm number needs same with channel number */
-		pwm_led_test: pwm_led_test {
-			pwms = <&pwm0 PWM_CHANNEL_0 PWM_MSEC(20) PWM_POLARITY_NORMAL>;
-		};
-	};
-
 	aliases {
 		gpio-wp = &gpio_wp;
 	};
@@ -68,75 +45,6 @@
 		compatible = "cros-ec,hibernate-wake-pins";
 		wakeup-irqs = <&int_power_button
 			       &int_lid_open>;
-	};
-
-	named-adc-channels {
-		compatible = "named-adc-channels";
-
-		adc_vbussa: vbussa {
-			label = "ADC_VBUSSA";
-			enum-name = "ADC_VBUS";
-			io-channels = <&adc0 0>;
-		};
-		adc_vbussb: vbussb {
-			label = "ADC_VBUSSB";
-			enum-name = "ADC_PSYS";
-			io-channels = <&adc0 1>;
-		};
-		adc_evb_ch_13: evb_ch_13 {
-			label = "ADC_EVB_CH_13";
-			enum-name = "ADC_AMON_BMON";
-			io-channels = <&adc0 2>;
-		};
-		adc_evb_ch_14: evb_ch_14 {
-			label = "ADC_EVB_CH_14";
-			enum-name = "ADC_TEMP_SENSOR_FAN";
-			io-channels = <&adc0 3>;
-		};
-		adc_evb_ch_15: evb_ch_15 {
-			label = "ADC_EVB_CH_15";
-			enum-name = "ADC_TEMP_SENSOR_DDR_SOC";
-			io-channels = <&adc0 4>;
-		};
-		adc_evb_ch_16: evb_ch_16 {
-			label = "ADC_EVB_CH_16";
-			enum-name = "ADC_TEMP_SENSOR_CHARGER";
-			io-channels = <&adc0 5>;
-		};
-	};
-
-	named-i2c-ports {
-		compatible = "named-i2c-ports";
-
-		battery {
-			i2c-port = <&i2c2>;
-			enum-name = "I2C_PORT_BATTERY";
-		};
-		evb-1 {
-			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_EVB_1";
-		};
-		evb-2 {
-			i2c-port = <&i2c1>;
-			enum-name = "I2C_PORT_EVB_2";
-		};
-		opt-4 {
-			i2c-port = <&i2c4>;
-			enum-name = "I2C_PORT_OPT_4";
-		};
-	};
-
-	fans {
-		compatible = "cros-ec,fans";
-
-		fan_0 {
-			pwms = <&pwm7 PWM_CHANNEL_7 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
-			pwm-frequency = <30000>;
-			tach = <&tach0>;
-			rpm_min = <1500>;
-			rpm_start = <1500>;
-			rpm_max = <6500>;
-		};
 	};
 
 	unused-pins {
@@ -254,80 +162,4 @@
 			/* gpiom6 */
 			<&gpiom 6 GPIO_INPUT_PULL_DOWN>;
 	};
-};
-
-&adc0 {
-	status = "okay";
-	pinctrl-0 = <&adc0_ch3_gpi3_default>;
-	pinctrl-names = "default";
-};
-
-&i2c0 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
-	pinctrl-0 = <&i2c0_clk_gpb3_default
-		     &i2c0_data_gpb4_default>;
-	pinctrl-names = "default";
-};
-
-&i2c1 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
-	pinctrl-0 = <&i2c1_clk_gpc1_default
-		     &i2c1_data_gpc2_default>;
-	pinctrl-names = "default";
-};
-
-&i2c2 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
-	pinctrl-0 = <&i2c2_clk_gpf6_default
-		     &i2c2_data_gpf7_default>;
-	pinctrl-names = "default";
-};
-
-&i2c4 {
-	status = "okay";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
-	pinctrl-0 = <&i2c4_clk_gpe0_default
-		     &i2c4_data_gpe7_default>;
-	pinctrl-names = "default";
-};
-
-&uart1 {
-	status = "okay";
-	current-speed = <115200>;
-	clock-frequency = <1804800>;
-};
-
-&ite_uart1_wrapper {
-	status = "okay";
-	pinctrl-0 = <&uart1_rx_gpb0_default
-		     &uart1_tx_gpb1_default>;
-	pinctrl-names = "default";
-};
-
-/* pwm for test */
-&pwm0 {
-	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C6>;
-	pinctrl-0 = <&pwm0_gpa0_default>;
-	pinctrl-names = "default";
-};
-
-/* pwm for fan */
-&pwm7 {
-	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C4>;
-	pinctrl-0 = <&pwm7_gpa7_default>;
-	pinctrl-names = "default";
-};
-
-/* fan tachometer sensor */
-&tach0 {
-	status = "okay";
-	channel = <IT8XXX2_TACH_CHANNEL_A>;
-	pulses-per-round = <2>;
-	pinctrl-0 = <&tach0a_gpd6_default>;
-	pinctrl-names = "default";
 };
