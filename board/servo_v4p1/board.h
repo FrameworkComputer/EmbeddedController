@@ -229,8 +229,9 @@
  * to give the upstream charger the maximum time to respond.
  *
  * Currently tuned with the Apple 96W adapter.
+ * TODO: Change to EVENT-based PS_RDY notification (b/214216304)
  */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  (161*MSEC)
+#define PD_POWER_SUPPLY_TURN_ON_DELAY  (121*MSEC)
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY (461*MSEC)
 
 /* Define typical operating power and max power */
