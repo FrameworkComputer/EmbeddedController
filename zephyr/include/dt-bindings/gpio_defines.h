@@ -21,16 +21,19 @@
  */
 
 /** Enables pin as input. */
-#define GPIO_INPUT              (1U << 8)
+#define GPIO_INPUT              (1U << 16)
 
 /** Enables pin as output, no change to the output state. */
-#define GPIO_OUTPUT             (1U << 9)
+#define GPIO_OUTPUT             (1U << 17)
 
 /* Initializes output to a low state. */
-#define GPIO_OUTPUT_INIT_LOW    (1U << 10)
+#define GPIO_OUTPUT_INIT_LOW    (1U << 18)
 
 /* Initializes output to a high state. */
-#define GPIO_OUTPUT_INIT_HIGH   (1U << 11)
+#define GPIO_OUTPUT_INIT_HIGH   (1U << 19)
+
+/* Initializes output based on logic level */
+#define GPIO_OUTPUT_INIT_LOGICAL (1U << 20)
 
 /* Configures GPIO pin as output and initializes it to a low state. */
 #define GPIO_OUTPUT_LOW         (GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW)
@@ -58,17 +61,17 @@
  */
 
 /** Disables GPIO pin interrupt. */
-#define GPIO_INT_DISABLE               (1U << 13)
+#define GPIO_INT_DISABLE               (1U << 21)
 
 /* Enables GPIO pin interrupt. */
-#define GPIO_INT_ENABLE                (1U << 14)
+#define GPIO_INT_ENABLE                (1U << 22)
 
 /* GPIO interrupt is sensitive to logical levels.
  *
  * This is a component flag that should be combined with other
  * `GPIO_INT_*` flags to produce a meaningful configuration.
  */
-#define GPIO_INT_LEVELS_LOGICAL        (1U << 15)
+#define GPIO_INT_LEVELS_LOGICAL        (1U << 23)
 
 /* GPIO interrupt is edge sensitive.
  *
@@ -77,7 +80,7 @@
  * This is a component flag that should be combined with other
  * `GPIO_INT_*` flags to produce a meaningful configuration.
  */
-#define GPIO_INT_EDGE                  (1U << 16)
+#define GPIO_INT_EDGE                  (1U << 24)
 
 /* Trigger detection when input state is (or transitions to) physical low or
  * logical 0 level.
@@ -85,7 +88,7 @@
  * This is a component flag that should be combined with other
  * `GPIO_INT_*` flags to produce a meaningful configuration.
  */
-#define GPIO_INT_LOW_0                 (1U << 17)
+#define GPIO_INT_LOW_0                 (1U << 25)
 
 /* Trigger detection on input state is (or transitions to) physical high or
  * logical 1 level.
@@ -93,7 +96,7 @@
  * This is a component flag that should be combined with other
  * `GPIO_INT_*` flags to produce a meaningful configuration.
  */
-#define GPIO_INT_HIGH_1                (1U << 18)
+#define GPIO_INT_HIGH_1                (1U << 26)
 
 /** Configures GPIO interrupt to be triggered on pin rising edge and enables it.
  */
@@ -157,12 +160,5 @@
 #define GPIO_INT_LEVEL_ACTIVE          (GPIO_INT_ENABLE | \
 					GPIO_INT_LEVELS_LOGICAL | \
 					GPIO_INT_HIGH_1)
-
-/** Enable GPIO pin debounce.
- *
- * @note Drivers that do not support a debounce feature should ignore
- * this flag rather than rejecting the configuration with -ENOTSUP.
- */
-#define GPIO_INT_DEBOUNCE              (1U << 19)
 
 #endif /* DT_BINDINGS_GPIO_DEFINES_H_ */

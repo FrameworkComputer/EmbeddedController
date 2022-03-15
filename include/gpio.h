@@ -29,28 +29,28 @@
  * Validate that these definitions haven't changed.
  */
 /* Validate that Zephyr's definition are the same for overlapping defines */
-#if BIT(8) != GPIO_INPUT
+#if BIT(16) != GPIO_INPUT
 #error GPIO_INPUT values are not the same!
-#elif BIT(9) != GPIO_OUTPUT
+#elif BIT(17) != GPIO_OUTPUT
 #error GPIO_OUTPUT values are not the same!
-#elif BIT(10) != GPIO_OUTPUT_INIT_LOW
+#elif BIT(18) != GPIO_OUTPUT_INIT_LOW
 #error GPIO_OUTPUT_INIT_LOW values are not the same!
-#elif BIT(11) != GPIO_OUTPUT_INIT_HIGH
+#elif BIT(19) != GPIO_OUTPUT_INIT_HIGH
 #error GPIO_OUTPUT_INIT_HIGH values are not the same!
-#elif BIT(13) != GPIO_INT_DISABLE
+#elif BIT(20) != GPIO_OUTPUT_INIT_LOGICAL
+#error GPIO_OUTPUT_INIT_LOGICAL values are not the same!
+#elif BIT(21) != GPIO_INT_DISABLE
 #error GPIO_INT_DISABLE values are not the same!
-#elif BIT(14) != GPIO_INT_ENABLE
+#elif BIT(22) != GPIO_INT_ENABLE
 #error GPIO_INT_ENABLE values are not the same!
-#elif BIT(15) != GPIO_INT_LEVELS_LOGICAL
+#elif BIT(23) != GPIO_INT_LEVELS_LOGICAL
 #error GPIO_INT_LEVELS_LOGICAL values are not the same!
-#elif BIT(16) != GPIO_INT_EDGE
+#elif BIT(24) != GPIO_INT_EDGE
 #error GPIO_INT_EDGE values are not the same!
-#elif BIT(17) != GPIO_INT_LOW_0
+#elif BIT(25) != GPIO_INT_LOW_0
 #error GPIO_INT_LOW_0 values are not the same!
-#elif BIT(18) != GPIO_INT_HIGH_1
+#elif BIT(26) != GPIO_INT_HIGH_1
 #error GPIO_INT_HIGH_1 values are not the same!
-#elif BIT(19) != GPIO_INT_DEBOUNCE
-#error GPIO_INT_DEBOUNCE values are not the same!
 #endif
 
 /*
