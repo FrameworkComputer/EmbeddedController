@@ -104,6 +104,8 @@
 #define ISL9241_REG_CONTROL3		0x4C
 /* 14: ACLIM Reload (0 - reload, 1 - Do not reload */
 #define ISL9241_CONTROL3_ACLIM_RELOAD	BIT(14)
+/* 5: Input Current Limit Loop (0 - Enable, 1 - Disable */
+#define ISL9241_CONTROL3_INPUT_CURRENT_LIMIT	BIT(5)
 /* 2: Digital Reset (0 - Idle, 1 - Reset */
 #define ISL9241_CONTROL3_DIGITAL_RESET	BIT(2)
 /* 0: Enable ADC (0 - Active when charging, 1 - Active always) */
