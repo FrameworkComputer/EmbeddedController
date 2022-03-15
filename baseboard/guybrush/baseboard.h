@@ -19,6 +19,10 @@
 #define CONFIG_I2C_DEBUG /* Print i2c traces */
 #define CONFIG_CMD_S5_TIMEOUT /* Allow a user-specified timeout to exit S5 */
 
+/* Detect sleep hang after 10s */
+#undef CONFIG_SLEEP_TIMEOUT_MS
+#define CONFIG_SLEEP_TIMEOUT_MS 10000
+
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 
