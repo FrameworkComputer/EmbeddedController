@@ -37,6 +37,8 @@ static uint8_t cached_usb_pd_port_count;
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
+	__ASSERT(cached_usb_pd_port_count != 0,
+		 "sub-board detection did not run before a port count request");
 	if (cached_usb_pd_port_count == 0)
 		LOG_WRN("USB PD Port count not initialized!");
 	return cached_usb_pd_port_count;
@@ -100,7 +102,7 @@ static void board_setup_init(void)
 /*
  * Make sure setup is done after EEPROM is readable.
  */
-DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_INIT_I2C + 1);
+DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_INIT_I2C);
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
