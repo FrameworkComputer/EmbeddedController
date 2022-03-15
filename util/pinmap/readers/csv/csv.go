@@ -9,6 +9,7 @@ import (
 	"encoding/csv"
 	"fmt"
 	"os"
+	"strings"
 
 	"pinmap/pm"
 )
@@ -23,11 +24,20 @@ func (r *CSVReader) Name() string {
 	return "csv"
 }
 
-// Read reads the CSV file (provided as the argument) and extracts
+// Read reads the CSV file (provided as an argument) and extracts
 // the pin reference data. The first line is expected to be column
 // titles that are used to identify the columns.
-func (r *CSVReader) Read(chipName, arg string) (*pm.Pins, error) {
-	f, err := os.Open(arg)
+// columnKey identifies the column to use for the pin allocations,
+// such as "A", "B" etc.
+func (r *CSVReader) Read(columnKey, filepath string) (*pm.Pins, error) {
+	if len(columnKey) != 1 {
+		return nil, fmt.Errorf("illegal column name: '%s'", columnKey)
+	}
+	column := int(strings.ToLower(columnKey)[0] - 'a')
+	if column < 0 || column > 'Z'-'A' {
+		return nil, fmt.Errorf("illegal column name (should be 'A' - 'Z')")
+	}
+	f, err := os.Open(filepath)
 	if err != nil {
 		return nil, err
 	}
@@ -40,6 +50,9 @@ func (r *CSVReader) Read(chipName, arg string) (*pm.Pins, error) {
 	if len(data) < 2 {
 		return nil, fmt.Errorf("no data in file")
 	}
+	if len(data[0]) < column {
+		return nil, fmt.Errorf("Column '%s' is out of range", columnKey)
+	}
 	// Put the CSV headers into a map.
 	cmap := make(map[string]int)
 	for c, s := range data[0] {
@@ -50,10 +63,10 @@ func (r *CSVReader) Read(chipName, arg string) (*pm.Pins, error) {
 	if !ok {
 		return nil, fmt.Errorf("missing 'Signal Name' column")
 	}
-	// Find chip column
-	chip, ok := cmap[chipName]
+	chipKey := data[0][column]
+	chip, ok := cmap[chipKey]
 	if !ok {
-		return nil, fmt.Errorf("missing '%s' chip column", chipName)
+		return nil, fmt.Errorf("missing '%s' chip column", chipKey)
 	}
 	ptype, ok := cmap["Type"]
 	if !ok {
@@ -69,7 +82,7 @@ func (r *CSVReader) Read(chipName, arg string) (*pm.Pins, error) {
 		p := new(pm.Pin)
 		switch row[ptype] {
 		default:
-			fmt.Printf("%s:%d: Unknown signal type (%s) - ignored", arg, i+1, row[ptype])
+			fmt.Printf("%s:%d: Unknown signal type (%s) - ignored", filepath, i+1, row[ptype])
 			continue
 		case "OTHER":
 			// Skipped

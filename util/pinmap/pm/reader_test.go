@@ -14,8 +14,8 @@ import (
 
 type testReader struct {
 	name string
+	key  string
 	arg  string
-	chip string
 	pins pm.Pins
 }
 
@@ -23,9 +23,9 @@ func (r *testReader) Name() string {
 	return r.name
 }
 
-func (r *testReader) Read(arg, chip string) (*pm.Pins, error) {
+func (r *testReader) Read(key, arg string) (*pm.Pins, error) {
+	r.key = key
 	r.arg = arg
-	r.chip = chip
 	return &r.pins, nil
 }
 
@@ -33,14 +33,14 @@ func TestReader(t *testing.T) {
 	n := "Test1"
 	tr1 := &testReader{name: n}
 	pm.RegisterReader(tr1)
-	p, err := pm.ReadPins(n, "arg1", "chiptest")
+	p, err := pm.ReadPins(n, "key", "arg1")
 	if err != nil {
 		t.Errorf("Error %v on reading pins", err)
 	}
 	if p != &tr1.pins {
 		t.Errorf("Did not match Pins")
 	}
-	p, err = pm.ReadPins("notMine", "arg1", "chiptest")
+	p, err = pm.ReadPins("notMine", "key", "arg1")
 	if err == nil {
 		t.Errorf("Should heve returned error")
 	}

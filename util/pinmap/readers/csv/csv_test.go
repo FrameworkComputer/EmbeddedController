@@ -14,14 +14,14 @@ import (
 	"pinmap/readers/csv"
 )
 
-const chipName = "MyCHIP"
+const column = "B"
 
 func TestName(t *testing.T) {
 	var r csv.CSVReader
 	if r.Name() != "csv" {
 		t.Errorf("expected %s, got %s", "csv", r.Name())
 	}
-	pins, err := r.Read(chipName, filepath.Join("testdata", "data.csv"))
+	pins, err := r.Read(column, filepath.Join("testdata", "data.csv"))
 	if err != nil {
 		t.Fatalf("data.csv: %v", err)
 	}
