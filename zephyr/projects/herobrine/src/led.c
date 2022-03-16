@@ -23,7 +23,9 @@
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_RIGHT_LED,
+#ifndef CONFIG_BOARD_HOGLIN
 	EC_LED_ID_LEFT_LED,
+#endif
 };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
@@ -49,8 +51,13 @@ static void side_led_set_color(int port, enum led_color color)
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
+#ifndef CONFIG_BOARD_HOGLIN
 	brightness_range[EC_LED_COLOR_AMBER] = 1;
 	brightness_range[EC_LED_COLOR_WHITE] = 1;
+#else
+	brightness_range[EC_LED_COLOR_RED] = 1;
+	brightness_range[EC_LED_COLOR_BLUE] = 1;
+#endif
 }
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
