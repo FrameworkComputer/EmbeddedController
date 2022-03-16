@@ -319,16 +319,50 @@ void sleep_suspend_transition(void);
 void sleep_resume_transition(void);
 
 /**
+ * Type of sleep hang detected
+ */
+enum sleep_hang_type {
+	SLEEP_HANG_NONE,
+	SLEEP_HANG_S0IX_SUSPEND,
+	SLEEP_HANG_S0IX_RESUME
+};
+
+/**
+ * Provide callback to allow chipset to take action on host sleep hang
+ * detection.
+ *
+ * power_chipset_handle_sleep_hang will be called first.
+ * power_board_handle_sleep_hang will be called second.
+ *
+ * @param hang_type Host sleep hang type detected.
+ */
+__override_proto void power_chipset_handle_sleep_hang(
+			enum sleep_hang_type hang_type);
+
+/**
+ * Provide callback to allow board to take action on host sleep hang
+ * detection.
+ *
+ * power_chipset_handle_sleep_hang will be called first.
+ * power_board_handle_sleep_hang will be called second.
+ *
+ * @param hang_type Host sleep hang type detected.
+ */
+__override_proto void power_board_handle_sleep_hang(
+			enum sleep_hang_type hang_type);
+
+/**
  * Start the suspend process.
  *
  * It is called in power_chipset_handle_host_sleep_event(), after it receives
  * a host sleep event to hint that the suspend process starts.
  *
+ * power_chipset_handle_sleep_hang() and power_board_handle_sleep_hang() will
+ * be called when a sleep hang is detected.
+ *
  * @param ctx Possible sleep parameters and return values, depending on state.
- * @param callback Will be called if timed out, i.e. suspend hang.
  */
-void sleep_start_suspend(struct host_sleep_event_context *ctx,
-			 void (*callback)(void));
+void sleep_start_suspend(struct host_sleep_event_context *ctx);
 
 /**
  * Complete the resume process.
