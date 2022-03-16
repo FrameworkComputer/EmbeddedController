@@ -91,6 +91,10 @@ cmd_elf = $(CC) $(objs) $(libsharedobjs_elf-y) $(LDFLAGS) \
 ifeq ($(cc-name),gcc)
 cmd_elf+= -flto-partition=one
 endif
+ifneq ($(MEMSIZE_FLAGS),)
+cmd_elf+= $(MEMSIZE_FLAGS) >$@.memsize.txt
+endif
+
 cmd_fuzz_exe = $(CXX) $^ $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
 cmd_run_fuzz = build/host/$*/$*.exe -seed=1 -runs=1 $(silent) \
 	$(silent_err) || (echo "Test $* failed!" && false)
