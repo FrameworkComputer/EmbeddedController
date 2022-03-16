@@ -476,6 +476,7 @@ void dps_task(void *u)
 			flag |= DPS_FLAG_WAITING;
 			task_wait_event(timeout.val - now.val);
 			flag &= ~DPS_FLAG_WAITING;
+			continue;
 		}
 
 		if (!is_enabled) {
