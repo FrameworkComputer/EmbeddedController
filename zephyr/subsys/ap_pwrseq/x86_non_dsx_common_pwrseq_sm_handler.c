@@ -408,7 +408,6 @@ static int pwrseq_init(const struct device *dev)
 	power_signal_init();
 	/* TODO: Define initial state of power sequence */
 	LOG_DBG("Init pwr seq state");
-	power_set_debug(0xFFFFFF);
 	init_pwr_seq_state();
 	/* Create power sequence state handler core function thread */
 	create_pwrseq_thread();

@@ -299,11 +299,17 @@ ZTEST(signals, test_signal_mask)
  */
 ZTEST(signals, test_debug_mask)
 {
+	power_signal_mask_t old;
 	power_signal_mask_t dm = 0xDEADBEEF;
 
+	old = power_get_debug();
 	power_set_debug(dm);
 	zassert_equal(dm, power_get_debug(),
 		"Debug mask does not match set value");
+	/*
+	 * Reset back to default.
+	 */
+	power_set_debug(old);
 }
 
 /**
