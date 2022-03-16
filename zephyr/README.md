@@ -28,12 +28,13 @@ To test the cq builder script run these commands:
 ```
 rm -rf /tmp/artifact_bundles /tmp/artifact_bundle_metadata \
   ~/chromiumos/src/platform/ec/build
-cd ~/chromiumos/src/platform/ec/zephyr
-./firmware_builder.py --metrics /tmp/metrics build && \
-./firmware_builder.py --metrics /tmp/metrics test && \
-./firmware_builder.py --metrics /tmp/metrics bundle && \
-echo PASSED
+( cd ~/chromiumos/src/platform/ec/zephyr ; \
+./firmware_builder.py --metrics /tmp/metrics-build build && \
+./firmware_builder.py --metrics /tmp/metrics-test test && \
+./firmware_builder.py --metrics /tmp/metrics-bundle bundle && \
+echo PASSED )
 cat /tmp/artifact_bundle_metadata
+cat /tmp/metrics-build
 ls -l /tmp/artifact_bundles/
 ```
 
