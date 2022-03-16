@@ -644,3 +644,35 @@ cheese_v1.1.1755-4da9520
 ```
 
 [Firmware Write Protection]: ./docs/write_protection.md
+
+## CQ builder
+
+To test the cq builder script run these commands:
+
+### firmware-ec-cq
+```
+rm -rf /tmp/artifact_bundles /tmp/artifact_bundle_metadata \
+  ~/chromiumos/src/platform/ec/build
+./firmware_builder.py --metrics /tmp/metrics_build build && \
+./firmware_builder.py --metrics /tmp/metrics_test test && \
+./firmware_builder.py --metrics /tmp/metrics_bundle bundle && \
+echo PASSED
+cat /tmp/artifact_bundle_metadata
+cat /tmp/metrics_build
+ls -l /tmp/artifact_bundles/
+```
+
+### firmware-ec-cov-cq
+```
+rm -rf /tmp/artifact_bundles-cov /tmp/artifact_bundle_metadata-cov \
+  ~/chromiumos/src/platform/ec/build
+./firmware_builder.py --metrics /tmp/metrics_build_cov --code-coverage build && \
+./firmware_builder.py --metrics /tmp/metrics_test_cov --code-coverage test && \
+./firmware_builder.py --metrics /tmp/metrics_bundle_cov --code-coverage \
+  --output-dir=/tmp/artifact_bundles-cov \
+  --metadata=/tmp/artifact_bundle_metadata-cov bundle && \
+echo PASSED
+cat /tmp/artifact_bundle_metadata-cov
+ls -l /tmp/artifact_bundles-cov
+```
+

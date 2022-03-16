@@ -12,11 +12,13 @@ gets invoked by chromite/api/controller/firmware.py.
 import argparse
 import multiprocessing
 import os
+import pathlib
 import subprocess
 import sys
 
 # pylint: disable=import-error
 from google.protobuf import json_format
+
 # TODO(crbug/1181505): Code outside of chromite should not be importing from
 # chromite.api.gen.  Import json_format after that so we get the matching one.
 from chromite.api.gen.chromite.api import firmware_pb2
@@ -44,21 +46,58 @@ def build(opts):
     doing anything but creating the metrics file and giving an informational
     message.
     """
-    # TODO(b/169178847): Add appropriate metric information
-    metrics = firmware_pb2.FwBuildMetricList()
-    with open(opts.metrics, 'w') as f:
-        f.write(json_format.MessageToJson(metrics))
+    metric_list = firmware_pb2.FwBuildMetricList()
 
     if opts.code_coverage:
-        print("When --code-coverage is selected, 'build' is a no-op. "
-              "Run 'test' with --code-coverage instead.")
+        print(
+            "When --code-coverage is selected, 'build' is a no-op. "
+            "Run 'test' with --code-coverage instead."
+        )
+        with open(opts.metrics, 'w') as f:
+            f.write(json_format.MessageToJson(metric_list))
         return
 
-    cmd = ['make', 'buildall_only', '-j{}'.format(opts.cpus)]
-    print(f'# Running {" ".join(cmd)}.')
-    subprocess.run(cmd,
-                   cwd=os.path.dirname(__file__),
-                   check=True)
+    cmd = ['make', 'buildall_only', f'-j{opts.cpus}']
+    print(f"# Running {' '.join(cmd)}.")
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    ec_dir = os.path.dirname(__file__)
+    build_dir = os.path.join(ec_dir, 'build')
+    for build_target in sorted(os.listdir(build_dir)):
+        metric = metric_list.value.add()
+        metric.target_name = build_target
+        metric.platform_name = 'ec'
+        for variant in ['RO', 'RW']:
+            memsize_file = (
+                pathlib.Path(build_dir)
+                / build_target
+                / variant
+                / f'ec.{variant}.elf.memsize.txt'
+            )
+            if memsize_file.exists():
+                parse_memsize(memsize_file, metric, variant)
+    with open(opts.metrics, 'w') as f:
+        f.write(json_format.MessageToJson(metric_list))
+
+
+UNITS = {
+    'B': 1,
+    'KB': 1024,
+    'MB': 1024 * 1024,
+    'GB': 1024 * 1024 * 1024,
+}
+
+
+def parse_memsize(filename, metric, variant):
+    with open(filename, 'r') as infile:
+        # Skip header line
+        infile.readline()
+        for line in infile.readlines():
+            parts = line.split()
+            fw_section = metric.fw_section.add()
+            fw_section.region = variant + '_' + parts[0][:-1]
+            fw_section.used = int(parts[1]) * UNITS[parts[2]]
+            fw_section.total = int(parts[3]) * UNITS[parts[4]]
+            fw_section.track_on_gerrit = False
 
 
 def bundle(opts):
@@ -73,8 +112,10 @@ def get_bundle_dir(opts):
 
     Also create the directory if it doesn't exist.
     """
-    bundle_dir = opts.output_dir if opts.output_dir else \
-        DEFAULT_BUNDLE_DIRECTORY
+    if opts.output_dir:
+        bundle_dir = opts.output_dir
+    else:
+        bundle_dir = DEFAULT_BUNDLE_DIRECTORY
     if not os.path.isdir(bundle_dir):
         os.mkdir(bundle_dir)
     return bundle_dir
@@ -82,8 +123,9 @@ def get_bundle_dir(opts):
 
 def write_metadata(opts, info):
     """Write the metadata about the bundle."""
-    bundle_metadata_file = opts.metadata if opts.metadata else \
-        DEFAULT_BUNDLE_METADATA_FILE
+    bundle_metadata_file = (
+        opts.metadata if opts.metadata else DEFAULT_BUNDLE_METADATA_FILE
+    )
     with open(bundle_metadata_file, 'w') as f:
         f.write(json_format.MessageToJson(info))
 
@@ -101,7 +143,8 @@ def bundle_coverage(opts):
     meta = info.objects.add()
     meta.file_name = tarball_name
     meta.lcov_info.type = (
-        firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV)
+        firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV
+    )
 
     write_metadata(opts, info)
 
@@ -116,14 +159,19 @@ def bundle_firmware(opts):
         tarball_name = ''.join([build_target, '.firmware.tbz2'])
         tarball_path = os.path.join(bundle_dir, tarball_name)
         cmd = [
-            'tar', 'cvfj', tarball_path, '--exclude=*.o.d', '--exclude=*.o', '.'
+            'tar', 'cvfj', tarball_path,
+            '--exclude=*.o.d', '--exclude=*.o', '.',
         ]
         subprocess.run(
-            cmd, cwd=os.path.join(ec_dir, 'build', build_target), check=True)
+            cmd,
+            cwd=os.path.join(ec_dir, 'build', build_target),
+            check=True,
+        )
         meta = info.objects.add()
         meta.file_name = tarball_name
         meta.tarball_info.type = (
-            firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC)
+            firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC
+        )
         # TODO(kmshelton): Populate the rest of metadata contents as it gets
         # defined in infra/proto/src/chromite/api/firmware.proto.
 
@@ -144,22 +192,18 @@ def test(opts):
     # Otherwise, build the 'runtests' target, which verifies all
     # posix-based unit tests build and pass.
     target = 'coverage' if opts.code_coverage else 'runtests'
-    cmd = ['make', target, '-j{}'.format(opts.cpus)]
-    print(f'# Running {" ".join(cmd)}.')
-    subprocess.run(cmd,
-                   cwd=os.path.dirname(__file__),
-                   check=True)
+    cmd = ['make', target, f'-j{opts.cpus}']
+    print(f"# Running {' '.join(cmd)}.")
+    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
     if not opts.code_coverage:
         # Verify compilation of the on-device unit test binaries.
         # TODO(b/172501728) These should build  for all boards, but they've bit
         # rotted, so we only build the ones that compile.
-        cmd = ['make', '-j{}'.format(opts.cpus)]
+        cmd = ['make', f'-j{opts.cpus}']
         cmd.extend(['tests-' + b for b in BOARDS_UNIT_TEST])
-        print(f'# Running {" ".join(cmd)}.')
-        subprocess.run(cmd,
-                       cwd=os.path.dirname(__file__),
-                       check=True)
+        print(f"# Running {' '.join(cmd)}.")
+        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
 
 
 def main(args):
@@ -231,13 +275,14 @@ def parse_args(args):
     # Would make this required=True, but not available until 3.7
     sub_cmds = parser.add_subparsers()
 
-    build_cmd = sub_cmds.add_parser('build',
-                                    help='Builds all firmware targets')
+    build_cmd = sub_cmds.add_parser('build', help='Builds all firmware targets')
     build_cmd.set_defaults(func=build)
 
-    build_cmd = sub_cmds.add_parser('bundle',
-                                    help='Creates a tarball containing build '
-                                    'artifacts from all firmware targets')
+    build_cmd = sub_cmds.add_parser(
+        'bundle',
+        help='Creates a tarball containing build '
+        'artifacts from all firmware targets',
+    )
     build_cmd.set_defaults(func=bundle)
 
     test_cmd = sub_cmds.add_parser('test', help='Runs all firmware unit tests')
