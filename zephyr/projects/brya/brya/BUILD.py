@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-register_npcx_project(
+brya = register_npcx_project(
     project_name="brya",
     zephyr_board="brya",
     dts_overlays=[
@@ -18,3 +18,5 @@ register_npcx_project(
         "usbc.dts",
     ],
 )
+
+ghost = brya.variant(project_name="ghost")
