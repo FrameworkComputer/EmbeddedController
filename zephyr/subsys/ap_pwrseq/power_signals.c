@@ -150,8 +150,12 @@ int power_wait_mask_signals_timeout(power_signal_mask_t mask,
 
 int power_signal_get(enum power_signal signal)
 {
-	const struct ps_config *cp = &sig_config[signal];
+	const struct ps_config *cp;
 
+	if (signal < 0 || signal >= POWER_SIGNAL_COUNT) {
+		return -EINVAL;
+	}
+	cp = &sig_config[signal];
 	switch (cp->source) {
 	default:
 		return -EINVAL;  /* should never happen */
@@ -180,9 +184,13 @@ int power_signal_get(enum power_signal signal)
 
 int power_signal_set(enum power_signal signal, int value)
 {
-	const struct ps_config *cp = &sig_config[signal];
+	const struct ps_config *cp;
 	int ret;
 
+	if (signal < 0 || signal >= POWER_SIGNAL_COUNT) {
+		return -EINVAL;
+	}
+	cp = &sig_config[signal];
 	LOG_DBG("Set %s to %d", power_signal_name(signal), value);
 	switch (cp->source) {
 	default:
@@ -220,8 +228,12 @@ int power_signal_set(enum power_signal signal, int value)
 
 int power_signal_enable_interrupt(enum power_signal signal)
 {
-	const struct ps_config *cp = &sig_config[signal];
+	const struct ps_config *cp;
 
+	if (signal < 0 || signal >= POWER_SIGNAL_COUNT) {
+		return -EINVAL;
+	}
+	cp = &sig_config[signal];
 	switch (cp->source) {
 	default:
 		/*
@@ -239,8 +251,12 @@ int power_signal_enable_interrupt(enum power_signal signal)
 
 int power_signal_disable_interrupt(enum power_signal signal)
 {
-	const struct ps_config *cp = &sig_config[signal];
+	const struct ps_config *cp;
 
+	if (signal < 0 || signal >= POWER_SIGNAL_COUNT) {
+		return -EINVAL;
+	}
+	cp = &sig_config[signal];
 	switch (cp->source) {
 	default:
 		return -EINVAL;
