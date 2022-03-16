@@ -330,7 +330,7 @@ static void board_led_set_color(void)
 	led_set_color(color);
 }
 
-/* Called by hook task every TICK */
+/* Called by hook task every second */
 static void led_tick(void)
 {
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
