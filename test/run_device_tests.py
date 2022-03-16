@@ -178,6 +178,12 @@ class AllTests:
                 TestConfig(name='sha256_unrolled'),
             'static_if':
                 TestConfig(name='static_if'),
+            'system_is_locked_wp_on':
+                TestConfig(name='system_is_locked', test_args=['wp_on'],
+                           toggle_power=True, enable_hw_write_protect=True),
+            'system_is_locked_wp_off':
+                TestConfig(name='system_is_locked', test_args=['wp_off'],
+                           toggle_power=True, enable_hw_write_protect=False),
             'timer_dos':
                 TestConfig(name='timer_dos'),
             'utils':

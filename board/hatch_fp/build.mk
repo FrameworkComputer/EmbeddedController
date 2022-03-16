@@ -49,6 +49,7 @@ test-list-y=\
        sha256_unrolled \
        static_if \
        stm32f_rtc \
+       system_is_locked \
        timer_dos \
        utils \
        utils_str \
