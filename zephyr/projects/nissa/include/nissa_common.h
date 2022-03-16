@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
-/* Nissa sub board detection */
+/* Nissa common declarations */
 
-#ifndef __CROS_EC_NISSA_SUB_BOARD_H
-#define __CROS_EC_NISSA_SUB_BOARD_H
+#ifndef __CROS_EC_NISSA_NISSA_COMMON_H__
+#define __CROS_EC_NISSA_NISSA_COMMON_H__
+
+#include "usb_mux.h"
 
 enum nissa_sub_board_type {
 	NISSA_SB_UNKNOWN = -1,	/* Uninitialised */
@@ -16,6 +18,8 @@ enum nissa_sub_board_type {
 	NISSA_SB_HDMI_A = 3,	/* HDMI, USB type A */
 };
 
+extern struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 enum nissa_sub_board_type nissa_get_sb_type(void);
 
-#endif /* __CROS_EC_NISSA_SUB_BOARD_H */
+#endif /* __CROS_EC_NISSA_NISSA_COMMON_H__ */

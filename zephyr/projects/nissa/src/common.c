@@ -15,7 +15,7 @@
 #include "usb_mux.h"
 #include "system.h"
 
-#include "sub_board.h"
+#include "nissa_common.h"
 
 #include <logging/log.h>
 LOG_MODULE_REGISTER(nissa, CONFIG_NISSA_LOG_LEVEL);
@@ -30,6 +30,10 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.usb_port = 1,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
+		/*
+		 * next_mux filled in by board config code
+		 * if sub-board has type-C USB port.
+		 */
 	},
 };
 

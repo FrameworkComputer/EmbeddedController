@@ -16,7 +16,7 @@
 #include "usb_pd.h"
 #include "task.h"
 
-#include "sub_board.h"
+#include "nissa_common.h"
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 

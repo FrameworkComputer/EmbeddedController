@@ -8,7 +8,7 @@
 #include "driver/charger/sm5803.h"
 #include "extpower.h"
 #include "usb_pd.h"
-#include "sub_board.h"
+#include "nissa_common.h"
 
 const struct charger_config_t chg_chips[] = {
 	{

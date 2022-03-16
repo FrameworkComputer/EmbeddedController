@@ -11,14 +11,22 @@
 #include <sys/printk.h>
 
 #include "driver/charger/isl923x_public.h"
+#include "driver/retimer/anx7483_public.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "usb_pd.h"
 #include "task.h"
 
-#include "sub_board.h"
+#include "nissa_common.h"
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
+
+static const struct usb_mux usbc1_anx7483 = {
+	.usb_port = 1,
+	.i2c_port = I2C_PORT_USB_C1_TCPC,
+	.i2c_addr_flags = ANX7483_I2C_ADDR0_FLAGS,
+	.driver = &anx7483_usb_retimer_driver,
+};
 
 static void nivviks_subboard_init(void)
 {
@@ -50,6 +58,8 @@ static void nivviks_subboard_init(void)
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
 			GPIO_OUTPUT_LOW);
+		/* Enable redriver */
+		usb_muxes[1].next_mux = &usbc1_anx7483;
 	} else {
 		/* Disable the port 1 charger task */
 		task_disable_task(TASK_ID_USB_CHG_P1);
