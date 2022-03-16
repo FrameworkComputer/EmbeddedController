@@ -149,7 +149,7 @@ Below is an example of how programs may wish to structure this in
 # found in the LICENSE file.
 
 def register_variant(project_name, chip="it8xx2", extra_dts_overlays=()):
-    register_binman_project(
+    return register_binman_project(
         project_name=project_name,
         zephyr_board=chip,
         dts_overlays=[
@@ -172,3 +172,21 @@ register_variant(
     extra_dts_overlays=[here / "hayato_gpios.dts"],
 )
 ```
+
+If a project is going to be a simple variant of another project (e.g.,
+project `bar` is exactly identical to project `foo` but has just a few
+device-tree/Kconfig changes), you can spin a new variant using the
+return value of the register functions:
+
+``` python
+foo = register_variant(project_name="foo")
+bar = foo.variant(
+    project_name="bar",
+    dts_overlays=[here / "bar_extras.dts"],
+)
+```
+
+With this simple variant syntax, lists (like Kconfig files and DTS
+overlays) are concatenated.  This means it's not possible to remove
+files during variant registration for this syntax, so it's only
+recommended for the simple case.

@@ -192,6 +192,32 @@ def test_find_projects_name_conflict(tmp_path):
         zmake.project.find_projects(tmp_path)
 
 
+def test_register_variant(tmp_path):
+    (tmp_path / "BUILD.py").write_text(
+        """
+some = register_raw_project(
+    project_name="some",
+    zephyr_board="foo",
+    dts_overlays=[here / "gpio.dts"],
+)
+
+some_variant = some.variant(project_name="some-variant", zephyr_board="bar")
+another = some_variant.variant(
+    project_name="another",
+    dts_overlays=[here / "another.dts"],
+)
+    """
+    )
+    projects = zmake.project.find_projects(tmp_path)
+    assert projects["some"].config.zephyr_board == "foo"
+    assert projects["some-variant"].config.zephyr_board == "bar"
+    assert projects["another"].config.zephyr_board == "bar"
+    assert projects["another"].config.dts_overlays == [
+        tmp_path / "gpio.dts",
+        tmp_path / "another.dts",
+    ]
+
+
 @pytest.mark.parametrize(
     ("actual_files", "config_files", "expected_files"),
     [

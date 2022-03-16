@@ -6,7 +6,7 @@
 import dataclasses
 import logging
 import pathlib
-from typing import Dict, List
+from typing import Callable, Dict, List
 
 import zmake.build_config as build_config
 import zmake.configlib as configlib
@@ -154,6 +154,41 @@ class Project:
             )
 
 
+@dataclasses.dataclass
+class ProjectRegistrationHandler:
+    """Return value of register_project.
+
+    This is intended to be used to create simple variants of a project
+    like so::
+
+        brd = register_project(project_name="brd", ...)
+        brd_changed = brd.variant(project_name="brd-changed", ...)
+        brd_changed_again = brd_changed.variant(project_name="brd-changed-again", ...)
+    """
+
+    base_config: ProjectConfig
+    register_func: Callable[[], "ProjectRegistrationHandler"]
+
+    def variant(self, **kwargs) -> "ProjectRegistrationHandler":
+        """Register a new variant based on the base config.
+
+        Args:
+            kwargs: Any project config changes.  Note lists will be
+                concatenated.
+
+        Returns:
+            Another ProjectRegistrationHandler.
+        """
+        new_config = dataclasses.asdict(self.base_config)
+        for key, value in kwargs.items():
+            if isinstance(value, list):
+                new_config[key] = [*new_config[key], *value]
+            else:
+                new_config[key] = value
+
+        return self.register_func(**new_config)
+
+
 def load_config_file(path) -> List[Project]:
     """Load a BUILD.py config file and create associated projects.
 
@@ -165,8 +200,13 @@ def load_config_file(path) -> List[Project]:
     """
     projects: List[Project] = []
 
-    def register_project(**kwargs):
-        projects.append(Project(ProjectConfig(**kwargs)))
+    def register_project(**kwargs) -> ProjectRegistrationHandler:
+        config = ProjectConfig(**kwargs)
+        projects.append(Project(config))
+        return ProjectRegistrationHandler(
+            base_config=config,
+            register_func=register_project,
+        )
 
     # The Python environment passed to the config file.
     config_globals = {
