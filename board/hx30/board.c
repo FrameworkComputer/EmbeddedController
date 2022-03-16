@@ -295,6 +295,7 @@ const unsigned int i2c_slvs_used = ARRAY_SIZE(i2c_slv_ports);
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
+	{ QMSPI0_PORT, 4, GPIO_QMSPI_CS0},
 #if defined(CONFIG_SPI_ACCEL_PORT)
 	{ GPSPI0_PORT, 2, GPIO_SPI0_CS0 },
 #endif
