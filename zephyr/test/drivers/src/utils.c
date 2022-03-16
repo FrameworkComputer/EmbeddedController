@@ -129,3 +129,23 @@ void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 	zassume_ok(host_command_process(&args),
 		   "Failed to get Type-C state for port %d", port);
 }
+
+K_HEAP_DEFINE(test_heap, 2048);
+
+void *test_malloc(size_t bytes)
+{
+	void *mem;
+
+	mem = k_heap_alloc(&test_heap, bytes, K_NO_WAIT);
+
+	if (mem == NULL) {
+		printk("Failed to alloc %d bytes\n", bytes);
+	}
+
+	return mem;
+}
+
+void test_free(void *mem)
+{
+	k_heap_free(&test_heap, mem);
+}

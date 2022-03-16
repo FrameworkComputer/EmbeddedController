@@ -290,4 +290,20 @@ void connect_source_to_port(struct tcpci_src_emul *src, int pdo_index,
 void disconnect_source_from_port(const struct emul *tcpci_emul,
 				 const struct emul *charger_emul);
 
+/**
+ * @brief Allocate memory for a test pourpose
+ *
+ * @param bytes Number of bytes to allocate
+ *
+ * @return Pointer to valid memory or NULL
+ */
+void *test_malloc(size_t bytes);
+
+/**
+ * @brief Free memory allocated by @ref test_malloc
+ *
+ * @param mem Pointer to the memory
+ */
+void test_free(void *mem);
+
 #endif /* ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_ */

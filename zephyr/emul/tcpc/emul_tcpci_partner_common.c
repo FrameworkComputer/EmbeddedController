@@ -8,11 +8,13 @@ LOG_MODULE_REGISTER(tcpci_partner, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 #include <sys/byteorder.h>
 #include <zephyr.h>
+#include <ztest.h>
 
 #include "common.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "usb_pd.h"
+#include "utils.h"
 
 /** Length of PDO, RDO and BIST request object in SOP message in bytes */
 #define TCPCI_MSG_DO_LEN	4
@@ -25,14 +27,14 @@ struct tcpci_partner_msg *tcpci_partner_alloc_msg(int data_objects)
 	struct tcpci_partner_msg *new_msg;
 	size_t size = TCPCI_MSG_HEADER_LEN + TCPCI_MSG_DO_LEN * data_objects;
 
-	new_msg = k_malloc(sizeof(struct tcpci_partner_msg));
+	new_msg = test_malloc(sizeof(struct tcpci_partner_msg));
 	if (new_msg == NULL) {
 		return NULL;
 	}
 
-	new_msg->msg.buf = k_malloc(size);
+	new_msg->msg.buf = test_malloc(size);
 	if (new_msg->msg.buf == NULL) {
-		k_free(new_msg);
+		test_free(new_msg);
 		return NULL;
 	}
 
@@ -65,16 +67,16 @@ static void tcpci_partner_log_msg(struct tcpci_partner_data *data,
 		return;
 	}
 
-	log_msg = k_malloc(sizeof(struct tcpci_partner_log_msg));
+	log_msg = test_malloc(sizeof(struct tcpci_partner_log_msg));
 	if (log_msg == NULL) {
 		return;
 	}
 
 	/* We log length of actual buffer without SOP byte */
 	cnt = msg->cnt;
-	log_msg->buf = k_malloc(cnt);
+	log_msg->buf = test_malloc(cnt);
 	if (log_msg->buf == NULL) {
-		k_free(log_msg);
+		test_free(log_msg);
 		return;
 	}
 
@@ -88,8 +90,8 @@ static void tcpci_partner_log_msg(struct tcpci_partner_data *data,
 
 	ret = k_mutex_lock(&data->msg_log_mutex, K_FOREVER);
 	if (ret) {
-		k_free(log_msg->buf);
-		k_free(log_msg);
+		test_free(log_msg->buf);
+		test_free(log_msg);
 		return;
 	}
 
@@ -101,8 +103,8 @@ static void tcpci_partner_log_msg(struct tcpci_partner_data *data,
 /** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_free_msg(struct tcpci_partner_msg *msg)
 {
-	k_free(msg->msg.buf);
-	k_free(msg);
+	test_free(msg->msg.buf);
+	test_free(msg);
 }
 
 /** Check description in emul_common_tcpci_partner.h */
@@ -747,8 +749,8 @@ void tcpci_partner_common_clear_logged_msgs(struct tcpci_partner_data *data)
 	while (!sys_slist_is_empty(&data->msg_log)) {
 		msg = CONTAINER_OF(sys_slist_get_not_empty(&data->msg_log),
 				   struct tcpci_partner_log_msg, node);
-		k_free(msg->buf);
-		k_free(msg);
+		test_free(msg->buf);
+		test_free(msg);
 	}
 
 	k_mutex_unlock(&data->msg_log_mutex);
