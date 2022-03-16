@@ -87,10 +87,6 @@
 		};
 	};
 
-	named-pwms {
-		compatible = "named-pwms";
-	};
-
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
