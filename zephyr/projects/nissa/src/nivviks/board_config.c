@@ -10,6 +10,7 @@
 #include <kernel.h>
 #include <sys/printk.h>
 
+#include "adc.h"
 #include "driver/charger/isl923x_public.h"
 #include "driver/retimer/anx7483_public.h"
 #include "gpio/gpio_int.h"
@@ -77,6 +78,14 @@ static void nivviks_subboard_init(void)
 		/* Configure the interrupt separately */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_hpd_odl),
 				      GPIO_INPUT);
+	}
+	/*
+	 * Workaround for b/224900226.
+	 * Read all ADCs so that they are initialised.
+	 * TODO(b/224900226): Remove when fixed.
+	 */
+	for (enum adc_channel adc = 0; adc < ADC_CH_COUNT; adc++) {
+		adc_read_channel(adc);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, nivviks_subboard_init, HOOK_PRIO_FIRST+1);
