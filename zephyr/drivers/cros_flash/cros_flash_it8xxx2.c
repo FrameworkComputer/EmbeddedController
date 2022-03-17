@@ -25,6 +25,9 @@ struct cros_flash_it8xxx2_data {
 	bool all_protected;
 };
 
+#define GCTRL_IT8XXX2_REG_BASE \
+	((struct gctrl_it8xxx2_regs *)DT_REG_ADDR(DT_NODELABEL(gctrl)))
+
 /* Driver convenience defines */
 #define DRV_DATA(dev) ((struct cros_flash_it8xxx2_data *)(dev)->data)
 
@@ -265,6 +268,7 @@ static int cros_flash_it8xxx2_protect_at_boot(const struct device *dev,
 
 static int cros_flash_it8xxx2_protect_now(const struct device *dev, int all)
 {
+	struct gctrl_it8xxx2_regs *const gctrl_base = GCTRL_IT8XXX2_REG_BASE;
 	struct cros_flash_it8xxx2_data *const data = DRV_DATA(dev);
 
 	if (all) {
@@ -282,6 +286,12 @@ static int cros_flash_it8xxx2_protect_now(const struct device *dev, int all)
 			PSTATE_BANK_COUNT, FLASH_WP_EC);
 #endif
 	}
+
+	/*
+	 * Eflash protect lock register which can only be write 1 and only be
+	 * cleared by power-on reset.
+	 */
+	gctrl_base->GCTRL_EPLR |= IT8XXX2_GCTRL_EPLR_ENABLE;
 
 	return EC_SUCCESS;
 }
