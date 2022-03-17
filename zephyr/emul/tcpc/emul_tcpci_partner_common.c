@@ -351,6 +351,7 @@ static void tcpci_partner_common_reset(struct tcpci_partner_data *data)
 	data->msg_id = 0;
 	data->recv_msg_id = -1;
 	data->in_soft_reset = false;
+	data->vconn_role = PD_ROLE_VCONN_OFF;
 	tcpci_partner_stop_sender_response_timer(data);
 }
 
@@ -475,6 +476,59 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 	}
 }
 
+static void tcpci_partner_common_set_vconn(struct tcpci_partner_data *data,
+					   enum pd_vconn_role role)
+{
+	data->vconn_role = role;
+}
+
+/**
+ * @brief Handle VCONN_SWAP message
+ *
+ * @return enum tcpci_partner_handler_res
+ */
+static enum tcpci_partner_handler_res
+tcpci_partner_common_vconn_swap_handler(struct tcpci_partner_data *data)
+{
+	tcpci_partner_common_set_ams_ctrl_msg(data, PD_CTRL_VCONN_SWAP);
+
+	tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
+
+	if (data->vconn_role == PD_ROLE_VCONN_OFF) {
+		tcpci_partner_common_set_vconn(data, PD_ROLE_VCONN_SRC);
+	}
+
+	/* PS ready after 15 ms */
+	tcpci_partner_send_control_msg(data, PD_CTRL_PS_RDY, 15);
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
+tcpci_partner_common_ps_rdy_vconn_swap_handler(struct tcpci_partner_data *data)
+{
+	tcpci_partner_common_clear_ams_ctrl_msg(data);
+
+	if (data->vconn_role == PD_ROLE_VCONN_SRC) {
+		tcpci_partner_common_set_vconn(data, PD_ROLE_VCONN_OFF);
+	}
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
+tcpi_drp_emul_ps_rdy_handler(struct tcpci_partner_data *data)
+{
+	switch (data->cur_ams_ctrl_req) {
+	case PD_CTRL_VCONN_SWAP:
+		return tcpci_partner_common_ps_rdy_vconn_swap_handler(data);
+
+	default:
+		LOG_ERR("Unhandled current_req=%u in PS_RDY",
+			data->cur_ams_ctrl_req);
+		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+	}
+}
+
 /** Check description in emul_common_tcpci_partner.h */
 enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 	struct tcpci_partner_data *data,
@@ -551,6 +605,12 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 		data->msg_id = 0;
 		tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+
+	case PD_CTRL_VCONN_SWAP:
+		return tcpci_partner_common_vconn_swap_handler(data);
+
+	case PD_CTRL_PS_RDY:
+		return tcpi_drp_emul_ps_rdy_handler(data);
 
 	case PD_CTRL_REJECT:
 		if (data->in_soft_reset) {
@@ -754,6 +814,31 @@ void tcpci_partner_common_clear_logged_msgs(struct tcpci_partner_data *data)
 	}
 
 	k_mutex_unlock(&data->msg_log_mutex);
+}
+
+/**
+ * @brief Sets cur_ams_ctrl_req to msg_type to track current request
+ *
+ * @param data          Pointer to TCPCI partner data
+ * @param msg_type      enum pd_ctrl_msg_type
+ */
+void tcpci_partner_common_set_ams_ctrl_msg(struct tcpci_partner_data *data,
+				       enum pd_ctrl_msg_type msg_type)
+{
+	/* Make sure we handle one CTRL request at a time */
+	zassert_equal(data->cur_ams_ctrl_req, PD_CTRL_INVALID,
+		      "More than one CTRL msg handled in parallel");
+	data->cur_ams_ctrl_req = msg_type;
+}
+
+/**
+ * @brief Sets cur_ams_ctrl_req to INVALID
+ *
+ * @param data          Pointer to TCPCI partner data
+ */
+void tcpci_partner_common_clear_ams_ctrl_msg(struct tcpci_partner_data *data)
+{
+	data->cur_ams_ctrl_req = PD_CTRL_INVALID;
 }
 
 /** Check description in emul_common_tcpci_partner.h */

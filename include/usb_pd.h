@@ -1129,7 +1129,7 @@ void pd_resume_check_pr_swap_needed(int port);
 
 /* Control Message type */
 enum pd_ctrl_msg_type {
-	/* 0 Reserved */
+	PD_CTRL_INVALID  = 0, /* 0 Reserved - DO NOT PUT IN MESSAGES */
 	PD_CTRL_GOOD_CRC = 1,
 	PD_CTRL_GOTO_MIN = 2,
 	PD_CTRL_ACCEPT = 3,

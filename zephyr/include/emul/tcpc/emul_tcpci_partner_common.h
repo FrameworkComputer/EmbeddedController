@@ -74,6 +74,8 @@ struct tcpci_partner_data {
 	enum pd_power_role power_role;
 	/** Data role (used in message header) */
 	enum pd_data_role data_role;
+	/** VConn role (used in message header) */
+	enum pd_vconn_role vconn_role;
 	/** Revision (used in message header) */
 	enum pd_rev_type rev;
 	/**
@@ -91,6 +93,8 @@ struct tcpci_partner_data {
 	 * doesn't arrive, hard reset is triggered.
 	 */
 	bool in_soft_reset;
+	/** Current AMS Control request being handled */
+	enum pd_ctrl_msg_type  cur_ams_ctrl_req;
 	/**
 	 * Mutex for TCPCI transmit handler. Should be used to synchronise
 	 * access to partner emulator with TCPCI emulator.
@@ -402,6 +406,22 @@ void tcpci_partner_set_discovery_info(struct tcpci_partner_data *data,
 				      int identity_vdos, uint32_t *identity_vdm,
 				      int svids_vdos, uint32_t *svids_vdm,
 				      int modes_vdos, uint32_t *modes_vdm);
+
+/**
+ * @brief Sets cur_ams_ctrl_req to msg_type to track current request
+ *
+ * @param data          Pointer to TCPCI partner data
+ * @param msg_type      enum pd_ctrl_msg_type
+ */
+void tcpci_partner_common_set_ams_ctrl_msg(struct tcpci_partner_data *data,
+					   enum pd_ctrl_msg_type msg_type);
+
+/**
+ * @brief Sets cur_ams_ctrl_req to INVALID
+ *
+ * @param data          Pointer to TCPCI partner data
+ */
+void tcpci_partner_common_clear_ams_ctrl_msg(struct tcpci_partner_data *data);
 
 /**
  * @}
