@@ -86,6 +86,8 @@
 #define CYP5525_EVENT_MASK_P1_REG           0x2024
 #define CYP5525_DP_ALT_MODE_CONFIG_P1_REG   0x202B
 #define CYP5525_PORT_INTR_STATUS_P1_REG     0x2034
+/* CYPRESS vender add cmd, not common */
+#define CYP5525_CUST_C_CTRL_CONTROL_REG     0x003B
 
 /************************************************/
 /*	DEVICE MODE DEFINITION                      */
@@ -129,6 +131,14 @@
 #define CYP5525_POWERSTATE_S4	0x02
 #define CYP5525_POWERSTATE_S5	0x03
 
+/************************************************/
+/*  CYP5525_CUST_C_CTRL_CONTROL_REG DEFINITION  */
+/************************************************/
+
+#define CYP5525_P0P1_CONTROL_BY_CY		0xA0
+#define CYP5525_P0_OFF_P1_CY			0xA1
+#define CYP5525_P0_CY_P1_OFF			0xA2
+#define CYP5525_P0P1_TURN_OFF_C_CTRL	0xA3
 
 /************************************************
  *	PD COMMAND DEFINITION

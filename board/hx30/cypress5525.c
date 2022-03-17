@@ -1426,11 +1426,33 @@ DECLARE_DEFERRED(update_power_limit_deferred);
 static int prev_charge_port = -1;
 int board_set_active_charge_port(int charge_port)
 {
+	ccprintf("start change port = %d", charge_port);
+
+	/* port need change, stop all power and ready to switch. */
 	if (prev_charge_port != -1 && prev_charge_port != charge_port) {
 		update_soc_power_limit(false, true);
+		ccprintf("%s: all off", __func__);
+		cypd_write_reg8(0, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_TURN_OFF_C_CTRL);
+		cypd_write_reg8(1, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_TURN_OFF_C_CTRL);
 		usleep(250*MSEC);
 	}
+
 	prev_charge_port = charge_port;
+
+	/* turn on VBUS C-FET of chosen port */
+	if (charge_port >=0 ) {
+		int pd_controller = (charge_port & 0x02) >> 1;
+		int pd_port = charge_port & 0x01;
+
+		ccprintf("%s: choose port %d", __func__, charge_port);
+		ccprintf("%s: controller = %d, port = %d", __func__, pd_controller, pd_port);
+		cypd_write_reg8(pd_controller, CYP5525_CUST_C_CTRL_CONTROL_REG, 
+			pd_port ? CYP5525_P0_OFF_P1_CY : CYP5525_P0_CY_P1_OFF);
+	} else {
+		ccprintf("%s: else = %d, set all ports auto", __func__, charge_port);
+		cypd_write_reg8(0, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_CONTROL_BY_CY);
+		cypd_write_reg8(1, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_CONTROL_BY_CY);
+	}
 
 	cypd_enque_evt(CYPD_EVT_UPDATE_PWRSTAT, 100);
 	hook_call_deferred(&update_power_limit_deferred_data, 100 * MSEC);
@@ -1778,6 +1800,35 @@ static int cmd_cypd_control(int argc, char **argv)
 			r = strtoul(argv[3], &e, 0);
 			regval = strtoul(argv[4], &e, 0);
 			cypd_write_reg16(i, r,  regval);
+		} else if (!strncmp(argv[1], "reg8", 3)) {
+			int r;
+			int regval;
+
+			if (argc < 5)
+				return EC_ERROR_PARAM4;
+			r = strtoul(argv[3], &e, 0);
+			regval = strtoul(argv[4], &e, 0);
+			cypd_write_reg8(i, r,  regval);
+		} else if (!strncmp(argv[1], "read", 2)) {
+			int r;
+			int regval;
+
+			if (argc < 5)
+				return EC_ERROR_PARAM4;
+			r = strtoul(argv[3], &e, 0);
+			regval = strtoul(argv[4], &e, 0);
+			cypd_read_reg8(i, r,  &regval);
+			CPRINTS("data=%d", regval);
+		} else if (!strncmp(argv[1], "read8", 2)) {
+			int r;
+			int regval;
+
+			if (argc < 5)
+				return EC_ERROR_PARAM4;
+			r = strtoul(argv[3], &e, 0);
+			regval = strtoul(argv[4], &e, 0);
+			cypd_read_reg8(i, r,  &regval);
+			CPRINTS("data=%d", regval);
 		} else {
 			return EC_ERROR_PARAM1;
 		}
