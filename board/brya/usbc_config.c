@@ -107,7 +107,7 @@ struct ppc_config_t ppc_chips[] = {
 		.drv = &syv682x_drv,
 	},
 	[USBC_PORT_C1] = {
-		/* Compatible with Silicon Mitus SM536A0 */
+		/* Compatible with Silicon Mitus SM5360A */
 		.i2c_port = I2C_PORT_USB_C1_PPC,
 		.i2c_addr_flags = NX20P3483_ADDR2_FLAGS,
 		.drv = &nx20p348x_drv,
