@@ -51,9 +51,8 @@ ads_12v_interrupt)
 /* Port power control interrupts */
 GPIO_INT(HDMI_CONN0_OC_ODL,    PIN(0, 7), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(HDMI_CONN1_OC_ODL,    PIN(0, 6), GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(HDMI_CONN2_OC_ODL,    PIN(8, 3), GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A1_OC_ODL,        PIN(A, 2), GPIO_INT_BOTH, port_ocp_interrupt)
-GPIO_INT(USB_A2_OC_ODL,        PIN(F, 5), GPIO_INT_BOTH, port_ocp_interrupt)
-GPIO_INT(USB_A3_OC_ODL,        PIN(C, 2), GPIO_INT_BOTH, port_ocp_interrupt)
 
 /* PCH/CPU signals */
 GPIO(EC_PCH_PWROK,             PIN(0, 5), GPIO_OUT_LOW)
@@ -64,6 +63,9 @@ GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
 GPIO(EC_PROCHOT_IN_OD,         PIN(3, 4), GPIO_INPUT)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
 GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
+
+/* ADB Scaler signals */
+GPIO(ADB_WAKEUP_EC,            PIN(B, 1), GPIO_INPUT)
 
 /* Power control outputs */
 GPIO(EN_PP5000_A,              PIN(A, 4), GPIO_OUT_LOW)
@@ -80,16 +82,12 @@ GPIO(EN_IMVP8_VR,              PIN(F, 4), GPIO_OUT_LOW)
 GPIO(EN_PPVAR_BJ_ADP_L,        PIN(0, 4), GPIO_OUT_LOW)
 
 /* USB type A */
-GPIO(EN_PP5000_USB_VBUS,       PIN(8, 3), GPIO_OUT_LOW)
 GPIO(USB_A_LOW_PWR_OD,         PIN(9, 4), GPIO_ODR_LOW)
-GPIO(USB_A3_LOW_PWR_OD,        PIN(5, 0), GPIO_ODR_LOW)
-GPIO(USB_A1_STATUS_L,          PIN(6, 1), GPIO_INPUT)
-GPIO(USB_A2_STATUS_L,          PIN(C, 7), GPIO_INPUT)
-GPIO(USB_A3_STATUS_L,          PIN(D, 2), GPIO_INPUT)
 
 /* USB type C */
-GPIO(USB_C0_TCPC_RST,          PIN(9, 7), GPIO_OUT_LOW)
 GPIO(USB_C0_POL_L,             PIN(0, 0), GPIO_INPUT | GPIO_SEL_1P8V) /* USB-C Polarity */
+UNUSED(PIN(7, 2))              /* EN_USB_C0_5V_OUT only works if set unused */
+GPIO(SBU_C0_FAULT_ODL,         PIN(5, 6), GPIO_INPUT)
 
 /* TPU */
 GPIO(PP3300_TPU_EN,            PIN(E, 4), GPIO_OUT_HIGH)
@@ -105,22 +103,20 @@ GPIO(CCD_MODE_ODL,             PIN(E, 5), GPIO_ODR_HIGH)
 GPIO(PACKET_MODE_EN,           PIN(7, 5), GPIO_OUT_LOW)
 GPIO_INT(ADS_5VS_V2_ADP_PRESENT_L,   PIN(0, 3), GPIO_INT_FALLING | GPIO_PULL_UP,
 ads_5v_interrupt)
-GPIO(EC_AC_JACK_CHARGER_EC_L,        PIN(C, 0), GPIO_OUT_LOW)
+GPIO(EN_AC_JACK_CHARGER_EC_L,        PIN(C, 0), GPIO_OUT_LOW)
 GPIO(LAN_WAKE_ODL_EC,                PIN(8, 0), GPIO_INPUT)       /* LAN_WAKE */
 
 /* HDMI/CEC */
-GPIO(HDMI_CONN0_CEC_OUT,       PIN(B, 1), GPIO_ODR_HIGH)
 GPIO(HDMI_CONN0_CEC_IN,        PIN(4, 0), GPIO_INPUT)
 GPIO(HDMI_CONN1_CEC_OUT,       PIN(9, 5), GPIO_ODR_HIGH)
 GPIO(HDMI_CONN1_CEC_IN,        PIN(D, 3), GPIO_INPUT)
+GPIO(HDMI_DATA_EN_DB,          PIN(6, 1), GPIO_OUT_HIGH)
 
 /* I2C pins - Alternate function below configures I2C module on these pins */
 GPIO(I2C0_SCL,                 PIN(B, 5), GPIO_INPUT)           /* EC_I2C_INA_SCL */
 GPIO(I2C0_SDA,                 PIN(B, 4), GPIO_INPUT)           /* EC_I2C_INA_SDA */
-GPIO(I2C1_SCL,                 PIN(9, 0), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPPC_SCL */
-GPIO(I2C1_SDA,                 PIN(8, 7), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPPC_SDA */
-GPIO(I2C3_SCL,                 PIN(D, 1), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPC_SCL */
-GPIO(I2C3_SDA,                 PIN(D, 0), GPIO_INPUT)           /* EC_I2C_USB_C0_TCPC_SDA */
+GPIO(I2C3_SCL,                 PIN(D, 1), GPIO_INPUT)           /* EC_I2C_ADB_SCL */
+GPIO(I2C3_SDA,                 PIN(D, 0), GPIO_INPUT)           /* EC_I2C_ADB_SDA */
 GPIO(I2C4_SCL,                 PIN(F, 3), GPIO_INPUT)           /* EC_I2C_LTC_SCL */
 GPIO(I2C4_SDA,                 PIN(F, 2), GPIO_INPUT)           /* EC_I2C_LTC_SDA */
 GPIO(I2C5_SCL,                 PIN(3, 3), GPIO_INPUT)           /* EC_I2C_IMVP8_SCL */
@@ -166,7 +162,15 @@ UNUSED(PIN(8, 5))						/* L7  NC */
 UNUSED(PIN(3, 2))						/* E5  NC */
 UNUSED(PIN(D, 6))						/* F6  NC */
 UNUSED(PIN(3, 5))						/* F5  NC */
-UNUSED(PIN(5, 6))						/* M2  NC */
 UNUSED(PIN(8, 6))						/* J8  NC */
 UNUSED(PIN(9, 3))						/* M11 NC */
-UNUSED(PIN(7, 2))						/* H6  NC */
+UNUSED(PIN(C, 7))						/* B9  NC */
+UNUSED(PIN(D, 2))						/* C11 NC */
+UNUSED(PIN(F, 5))						/* E7  NC */
+UNUSED(PIN(5, 0))						/* G4  NC */
+UNUSED(PIN(9, 0))						/* J10 NC */
+UNUSED(PIN(8, 7))						/* M7  NC */
+UNUSED(PIN(6, 2))						/* J2  NC */
+UNUSED(PIN(9, 7))						/* J9  NC */
+UNUSED(PIN(0, 2))						/* D10 NC */
+UNUSED(PIN(C, 2))						/* A12 NC */

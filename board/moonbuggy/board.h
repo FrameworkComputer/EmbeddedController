@@ -114,13 +114,12 @@
 /* USB Type A Features */
 #define CONFIG_USB_PORT_POWER_DUMB
 /* There are five ports, but power enable is ganged across all of them. */
-#define USB_PORT_COUNT 1
+#define USB_PORT_COUNT 0
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_INA		NPCX_I2C_PORT0_0
-#define I2C_PORT_PPC0		NPCX_I2C_PORT1_0
 #define I2C_PORT_TCPC0		NPCX_I2C_PORT3_0
 #define I2C_PORT_PSE		NPCX_I2C_PORT4_1
 #define I2C_PORT_POWER		NPCX_I2C_PORT5_0

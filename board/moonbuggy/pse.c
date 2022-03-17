@@ -82,11 +82,10 @@ static int pse_write_hpmd(int port, int val)
 }
 
 /*
- * Port 1: 100W
- * Port 2-4: 15W
+ * Port 1-4: 15W
  */
-static int pse_port_hpmd[4] = {
-	LTC4291_HPMD_MAX,
+static int pse_port_hpmd[LTC4291_PORT_MAX] = {
+	LTC4291_HPMD_MIN,
 	LTC4291_HPMD_MIN,
 	LTC4291_HPMD_MIN,
 	LTC4291_HPMD_MIN,

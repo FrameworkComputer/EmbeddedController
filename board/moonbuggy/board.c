@@ -69,14 +69,6 @@ static void update_5v_usage(void)
 	 * Recalculate the 5V load, assuming no throttling.
 	 */
 	base_5v_power = PWR_BASE_LOAD;
-	if (!gpio_get_level(GPIO_USB_A2_OC_ODL)) {
-		front_ports++;
-		base_5v_power += PWR_FRONT_LOW;
-	}
-	if (!gpio_get_level(GPIO_USB_A3_OC_ODL)) {
-		front_ports++;
-		base_5v_power += PWR_FRONT_LOW;
-	}
 	/*
 	 * Only 1 front port can run higher power at a time.
 	 */
@@ -87,6 +79,8 @@ static void update_5v_usage(void)
 	if (!gpio_get_level(GPIO_HDMI_CONN0_OC_ODL))
 		base_5v_power += PWR_HDMI;
 	if (!gpio_get_level(GPIO_HDMI_CONN1_OC_ODL))
+		base_5v_power += PWR_HDMI;
+	if (!gpio_get_level(GPIO_HDMI_CONN2_OC_ODL))
 		base_5v_power += PWR_HDMI;
 	if (usbc_overcurrent)
 		base_5v_power += PWR_C_HIGH;
@@ -119,7 +113,7 @@ static void ads_5v_deferred(void)
 	int ads_5v_enable = !gpio_get_level(GPIO_ADS_5VS_V2_ADP_PRESENT_L);
 
 	if (ads_5v_enable)
-		gpio_set_level(GPIO_EC_AC_JACK_CHARGER_EC_L, 1);
+		gpio_set_level(GPIO_EN_AC_JACK_CHARGER_EC_L, 1);
 }
 DECLARE_DEFERRED(ads_5v_deferred);
 
@@ -137,7 +131,7 @@ static void ads_12v_deferred(void)
 	int ads_12v_enable = !gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
 
 	if (ads_12v_enable)
-		gpio_set_level(GPIO_EC_AC_JACK_CHARGER_EC_L, 0);
+		gpio_set_level(GPIO_EN_AC_JACK_CHARGER_EC_L, 0);
 }
 DECLARE_DEFERRED(ads_12v_deferred);
 
@@ -182,13 +176,6 @@ const struct i2c_port_t i2c_ports[] = {
 		.kbps = 400,
 		.scl  = GPIO_I2C0_SCL,
 		.sda  = GPIO_I2C0_SDA
-	},
-	{
-		.name = "ppc0",
-		.port = I2C_PORT_PPC0,
-		.kbps = 400,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
 	},
 	{
 		.name = "tcpc0",
@@ -401,7 +388,6 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /******************************************************************************/
 /* USB-A port control */
 const int usb_port_enable[USB_PORT_COUNT] = {
-	GPIO_EN_PP5000_USB_VBUS,
 };
 
 int64_t get_time_dsw_pwrok(void)
@@ -534,10 +520,7 @@ static void power_monitor(void)
 		 * [2] If type A not already throttled, and power still
 		 * needed, limit type A.
 		 */
-		if (!(new_state & THROT_TYPE_A) && headroom_5v < 0) {
-			headroom_5v += PWR_FRONT_HIGH - PWR_FRONT_LOW;
-			new_state |= THROT_TYPE_A;
-		}
+		/* No front USB A ports on moonbuggy. */
 		/*
 		 * [3] If still under-budget, limit type C.
 		 * No need to check if it is already throttled or not.
@@ -554,11 +537,6 @@ static void power_monitor(void)
 		int prochot = (new_state & THROT_PROCHOT) ? 0 : 1;
 
 		gpio_set_level(GPIO_EC_PROCHOT_ODL, prochot);
-	}
-	if (diff & THROT_TYPE_A) {
-		int typea_bc = (new_state & THROT_TYPE_A) ? 1 : 0;
-
-		gpio_set_level(GPIO_USB_A3_LOW_PWR_OD, typea_bc);
 	}
 	hook_call_deferred(&power_monitor_data, delay);
 }

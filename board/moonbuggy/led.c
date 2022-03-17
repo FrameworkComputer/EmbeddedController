@@ -35,7 +35,6 @@ enum led_color {
 	LED_OFF = 0,
 	LED_RED,
 	LED_BLUE,
-	LED_AMBER,
 
 	/* Number of colors, not a color itself */
 	LED_COLOR_COUNT
@@ -57,10 +56,6 @@ static int set_color_power(enum led_color color, int duty)
 		break;
 	case LED_RED:
 		red = 1;
-		break;
-	case LED_AMBER:
-		red = 1;
-		blue = 1;
 		break;
 	default:
 		return EC_ERROR_UNKNOWN;
@@ -239,8 +234,6 @@ static int command_led(int argc, char **argv)
 		set_color(id, LED_RED, 100);
 	} else if (!strcasecmp(argv[1], "blue")) {
 		set_color(id, LED_BLUE, 100);
-	} else if (!strcasecmp(argv[1], "amber")) {
-		set_color(id, LED_AMBER, 100);
 	} else if (!strcasecmp(argv[1], "alert")) {
 		led_alert(1);
 	} else if (!strcasecmp(argv[1], "crit")) {
@@ -251,14 +244,13 @@ static int command_led(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|blue|amber|off|alert|crit]",
+			"[debug|red|blue|off|alert|crit]",
 			"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	brightness_range[EC_LED_COLOR_RED] = 100;
 	brightness_range[EC_LED_COLOR_BLUE] = 100;
-	brightness_range[EC_LED_COLOR_AMBER] = 100;
 }
 
 int led_set_brightness(enum ec_led_id id, const uint8_t *brightness)
@@ -267,8 +259,6 @@ int led_set_brightness(enum ec_led_id id, const uint8_t *brightness)
 		return set_color(id, LED_RED, brightness[EC_LED_COLOR_RED]);
 	else if (brightness[EC_LED_COLOR_BLUE])
 		return set_color(id, LED_BLUE, brightness[EC_LED_COLOR_BLUE]);
-	else if (brightness[EC_LED_COLOR_AMBER])
-		return set_color(id, LED_AMBER, brightness[EC_LED_COLOR_AMBER]);
 	else
 		return set_color(id, LED_OFF, 0);
 }
