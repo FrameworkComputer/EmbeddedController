@@ -151,25 +151,6 @@ void config_usb_db_type(void)
 	CPRINTS("Configured USB DB type number is %d", db_type);
 }
 
-static void ps8815_reset(void)
-{
-	int val;
-
-	CPRINTS("%s: patching ps8815 registers", __func__);
-
-	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
-		      PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
-		CPRINTS("ps8815: reg 0x0f was %02x", val);
-
-	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
-		       PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
-		CPRINTS("ps8815: reg 0x0f set to 0x31");
-
-	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
-		      PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
-		CPRINTS("ps8815: reg 0x0f now %02x", val);
-}
-
 void board_reset_pd_mcu(void)
 {
 	/* Port0 */
@@ -183,13 +164,9 @@ void board_reset_pd_mcu(void)
 
 	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 1);
+	
 	/* wait for chips to come up */
 	msleep(PS8815_FW_INIT_DELAY_MS);
-
-	/* Port1 */
-	ps8815_reset();
-	usb_mux_hpd_update(USBC_PORT_C1, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 static void board_tcpc_init(void)
