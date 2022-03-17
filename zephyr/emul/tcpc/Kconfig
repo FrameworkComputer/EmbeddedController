@@ -63,4 +63,13 @@ config EMUL_TCPCI_PARTNER_DRP
 	  emulator. API of dual role device emulator is available in
 	  zephyr/include/emul/tcpc/emul_tcpci_partner_drp.h
 
+config EMUL_TCPCI_PARTNER_FAULTY_SNK
+	bool "USB-C malfunctioning sink device emulator"
+	select EMUL_TCPCI_PARTNER_COMMON
+	select EMUL_TCPCI_PARTNER_SNK
+	help
+	  Enable USB-C malfunctioning sink device emulator which may be attached
+	  to TCPCI emulator. API of malfunctioning sink device emulator is
+	  available in zephyr/include/emul/tcpc/emul_tcpci_partner_faulty_snk.h
+
 endif # EMUL_TCPCI
