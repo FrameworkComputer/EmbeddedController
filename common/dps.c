@@ -397,7 +397,7 @@ static bool has_new_power_request(struct pdo_candidate *cand)
 			if (mv > max_mv)
 				continue;
 
-			mw = ma * mv / 1000;
+			mw = MIN(ma, PD_MAX_CURRENT_MA) * mv / 1000;
 			efficient = is_more_efficient(mv, cand->mv, batt_mv,
 						      batt_pwr, input_pwr_avg);
 
