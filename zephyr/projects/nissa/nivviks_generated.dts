@@ -194,11 +194,11 @@
 			gpios = <&gpioe 3 GPIO_INPUT>;
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
-			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		gpio_volup_btn_odl: volup_btn_odl {
-			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
 	};

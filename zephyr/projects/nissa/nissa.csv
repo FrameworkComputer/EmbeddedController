@@ -44,8 +44,8 @@ KSO_12,Keyboard,Keyboard Output,OUT,,OD,N,3.30 V,,C11,C11,N14,OTHER,,,
 KSO_13,Keyboard,Keyboard Output,OUT,,OD,N,3.30 V,,D11,D11,M15,OTHER,,,Required only for NUM PAD
 KSO_14,Keyboard,Keyboard Output,OUT,,OD,N,3.30 V,,D6,D6,M14,OTHER,,,Required only for NUM PAD
 EN_KB_BL,MISC,Enable Keyboard backlight,OUT,,TTL,N,3.30 V,,G11,G11,D14,OUTPUT,GPIO_EN_KEYBOARD_BACKLIGHT,,
-VOLDN_BTN_ODL,MISC,Volume down signal,IN,both,--,Y,3.30 V,Button,E11,E11,G15,INPUT_PU,GPIO_VOLUME_DOWN_L,,
-VOLUP_BTN_ODL,MISC,Volume up signal,IN,both,--,Y,3.30 V,Button,F12,F12,F14,INPUT_PU,GPIO_VOLUME_UP_L,,
+VOLDN_BTN_ODL,MISC,Volume down signal,IN,both,--,Y,3.30 V,Button,F12,E11,G15,INPUT_PU,GPIO_VOLUME_DOWN_L,,
+VOLUP_BTN_ODL,MISC,Volume up signal,IN,both,--,Y,3.30 V,Button,E11,F12,F14,INPUT_PU,GPIO_VOLUME_UP_L,,
 LID_OPEN,MISC,Indicator from lid switch that lid is open,IN,both,--,N,3.30 V,,G7,G7,A11,INPUT,GPIO_LID_OPEN,,
 TABLET_MODE_L,MISC,Indicator from lid switch that lid is flipped all the way around,IN,both,--,N,3.30 V,,M12,M12,L8,INPUT,GPIO_TABLET_MODE_L,,Not required to connect to EC?
 IMU_INT_L,MISC,Interrupt from base intertial measurement unit,IN,falling,,N,1.80 V,IMU,M2,M2,F15,INPUT,,,
