@@ -160,8 +160,10 @@ static int sn5s330_pp_fet_enable(uint8_t port, enum sn5s330_pp_idx pp,
 		pp_bit = SN5S330_PP1_EN;
 	else if (pp == SN5S330_PP2)
 		pp_bit = SN5S330_PP2_EN;
+	/* LCOV_EXCL_START - this branch unreachable in unit tests. */
 	else
 		return EC_ERROR_INVAL;
+	/* LCOV_EXCL_STOP */
 
 	status = enable ? set_flags(port, SN5S330_FUNC_SET3, pp_bit)
 			: clr_flags(port, SN5S330_FUNC_SET3, pp_bit);
@@ -348,6 +350,7 @@ static int sn5s330_init(int port)
 	status = sn5s330_pp_fet_enable(port, SN5S330_PP1, 0);
 	if (status) {
 		ppc_prints("Failed to turn off PP1 FET!", port);
+		return status;
 	}
 
 	/*
