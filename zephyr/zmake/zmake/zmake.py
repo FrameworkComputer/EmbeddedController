@@ -225,6 +225,7 @@ class Zmake:
         allow_warnings=False,
         all_projects=False,
         host_tests_only=False,
+        extra_cflags=None,
     ):
         """Locate and configure the specified projects."""
         # Resolve build_dir if needed.
@@ -248,6 +249,7 @@ class Zmake:
                     bringup=bringup,
                     coverage=coverage,
                     allow_warnings=allow_warnings,
+                    extra_cflags=extra_cflags,
                 )
             )
             if self._sequential:
@@ -288,6 +290,7 @@ class Zmake:
         allow_warnings=False,
         all_projects=False,
         host_tests_only=False,
+        extra_cflags=None,
     ):
         """Locate and build the specified projects."""
         return self.configure(
@@ -300,6 +303,7 @@ class Zmake:
             allow_warnings=allow_warnings,
             all_projects=all_projects,
             host_tests_only=host_tests_only,
+            extra_cflags=extra_cflags,
             build_after_configure=True,
         )
 
@@ -314,6 +318,7 @@ class Zmake:
         allow_warnings=False,
         all_projects=False,
         host_tests_only=False,
+        extra_cflags=None,
         no_rebuild=False,
     ):
         """Locate and build the specified projects."""
@@ -328,6 +333,7 @@ class Zmake:
                 allow_warnings=allow_warnings,
                 all_projects=all_projects,
                 host_tests_only=host_tests_only,
+                extra_cflags=extra_cflags,
                 test_after_configure=True,
             )
         # Resolve build_dir if needed.
@@ -403,6 +409,7 @@ class Zmake:
         bringup=False,
         coverage=False,
         allow_warnings=False,
+        extra_cflags=None,
     ):
         """Set up a build directory to later be built by "zmake build"."""
         # Resolve build_dir if needed.
@@ -459,6 +466,10 @@ class Zmake:
         if allow_warnings:
             base_config |= zmake.build_config.BuildConfig(
                 cmake_defs={"ALLOW_WARNINGS": "ON"}
+            )
+        if extra_cflags:
+            base_config |= zmake.build_config.BuildConfig(
+                cmake_defs={"EXTRA_CFLAGS": extra_cflags},
             )
         if self.goma:
             base_config |= zmake.build_config.BuildConfig(
