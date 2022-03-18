@@ -11,6 +11,7 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "power_button.h"
@@ -19,7 +20,7 @@
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
-#include "fw_config.h"
+#include "usbc_ppc.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -39,6 +40,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
 int board_set_active_charge_port(int port)
 {
+	int rv;
+
 	CPRINTS("Requested charge port change to %d", port);
 
 	/*
@@ -61,23 +64,15 @@ int board_set_active_charge_port(int port)
 	if (board_vbus_source_enabled(port))
 		return EC_ERROR_INVAL;
 
-	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		int bj_active, bj_requested;
+	/* Don't change the charge port */
+	if (charge_manager_get_active_charge_port() != CHARGE_PORT_NONE)
+		return EC_ERROR_INVAL;
 
-		if (charge_manager_get_active_charge_port() != CHARGE_PORT_NONE)
-			/* Change is only permitted while the system is off */
-			return EC_ERROR_INVAL;
-
-		/*
-		 * Current setting is no charge port but the AP is on, so the
-		 * charge manager is out of sync (probably because we're
-		 * reinitializing after sysjump). Reject requests that aren't
-		 * in sync with our outputs.
-		 */
-		bj_active = !gpio_get_level(GPIO_EN_PPVAR_BJ_ADP_L);
-		bj_requested = port == CHARGE_PORT_BARRELJACK;
-		if (bj_active != bj_requested)
-			return EC_ERROR_INVAL;
+	/* Make sure BJ adapter is sourcing power */
+	if (port == CHARGE_PORT_BARRELJACK &&
+				gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL)) {
+		CPRINTS("BJ port selected, but not present!");
+		return EC_ERROR_INVAL;
 	}
 
 	CPRINTS("New charger p%d", port);
@@ -85,11 +80,18 @@ int board_set_active_charge_port(int port)
 	switch (port) {
 	case CHARGE_PORT_TYPEC0:
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
+		rv = ppc_vbus_sink_enable(CHARGE_PORT_TYPEC0, 1);
+		if (rv) {
+			CPRINTS("Failed to enable C0 sink path");
+			return rv;
+		}
 		break;
 	case CHARGE_PORT_BARRELJACK:
-		/* Make sure BJ adapter is sourcing power */
-		if (gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL))
-			return EC_ERROR_INVAL;
+		rv = ppc_vbus_sink_enable(CHARGE_PORT_TYPEC0, 0);
+		if (rv) {
+			CPRINTS("Failed to disable C0 sink path");
+			return rv;
+		}
 		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 0);
 		break;
 	default:
