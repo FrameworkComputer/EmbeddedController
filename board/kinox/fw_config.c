@@ -19,26 +19,7 @@ BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
  * FW_CONFIG defaults for kinox if the CBI.FW_CONFIG data is not
  * initialized.
  */
-static const union kinox_cbi_fw_config fw_config_defaults = {
-	.bj_power = BJ_135W,
-};
-
-/*
- * Barrel-jack power adapter ratings.
- */
-static const struct {
-	int voltage;
-	int current;
-} bj_power[] = {
-	[BJ_135W] = { /* 0 - 135W (also default) */
-			.voltage = 19500,
-			.current = 6920
-	},
-	[BJ_230W] = { /* 1 - 230W */
-			.voltage = 19500,
-			.current = 11800
-	}
-};
+static const union kinox_cbi_fw_config fw_config_defaults = {0};
 
 /****************************************************************************
  * Kinox FW_CONFIG access
@@ -49,17 +30,4 @@ void board_init_fw_config(void)
 		CPRINTS("CBI: Read FW_CONFIG failed, using board defaults");
 		fw_config = fw_config_defaults;
 	}
-}
-
-void ec_bj_power(uint32_t *voltage, uint32_t *current)
-{
-	unsigned int bj;
-
-	bj = fw_config.bj_power;
-	/* Out of range value defaults to 0 */
-	if (bj >= ARRAY_SIZE(bj_power))
-		bj = 0;
-
-	*voltage = bj_power[bj].voltage;
-	*current = bj_power[bj].current;
 }

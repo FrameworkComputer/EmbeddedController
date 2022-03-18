@@ -14,15 +14,9 @@
  * Source of truth is the project/brask/kinox/config.star configuration file.
  */
 
-enum ec_cfg_bj_power {
-	BJ_135W = 0,
-	BJ_230W = 1
-};
-
 union kinox_cbi_fw_config {
 	struct {
-		uint32_t bj_power : 2;
-		uint32_t reserved_1 : 30;
+		uint32_t reserved_1 : 32;
 	};
 	uint32_t raw_value;
 };
@@ -33,10 +27,5 @@ union kinox_cbi_fw_config {
  * @return the FW_CONFIG for the board.
  */
 union kinox_cbi_fw_config get_fw_config(void);
-
-/**
- * Get the barrel-jack power from FW_CONFIG.
- */
-void ec_bj_power(uint32_t *voltage, uint32_t *current);
 
 #endif /* __BOARD_KINOX_FW_CONFIG_H_ */

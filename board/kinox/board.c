@@ -104,42 +104,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 {
 }
 
-/******************************************************************************/
-/*
- * Barrel jack power supply handling
- *
- * EN_PPVAR_BJ_ADP_L must default active to ensure we can power on when the
- * barrel jack is connected, and the USB-C port can bring the EC up fine in
- * dead-battery mode. Both the USB-C and barrel jack switches do reverse
- * protection, so we're safe to turn one on then the other off- but we should
- * only do that if the system is off since it might still brown out.
- */
-
-#define ADP_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
-/* Debounced connection state of the barrel jack */
-static int8_t adp_connected = -1;
-static void adp_connect_deferred(void)
-{
-	struct charge_port_info pi = { 0 };
-	int connected = !gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL);
-
-	/* Debounce */
-	if (connected == adp_connected)
-		return;
-	if (connected)
-		ec_bj_power(&pi.voltage, &pi.current);
-	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-				     DEDICATED_CHARGE_PORT, &pi);
-	adp_connected = connected;
-}
-DECLARE_DEFERRED(adp_connect_deferred);
-
-/* IRQ for BJ plug/unplug. It shouldn't be called if BJ is the power source. */
-void adp_connect_interrupt(enum gpio_signal signal)
-{
-	hook_call_deferred(&adp_connect_deferred_data, ADP_DEBOUNCE_MS * MSEC);
-}
-
 static void adp_state_init(void)
 {
 	ASSERT(CHARGE_PORT_ENUM_COUNT == CHARGE_PORT_COUNT);
@@ -151,14 +115,10 @@ static void adp_state_init(void)
 		for (int j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
 			charge_manager_update_charge(j, i, NULL);
 	}
-
-	/* Report charge state from the barrel jack. */
-	adp_connect_deferred();
 }
 DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
 static void board_init(void)
 {
-	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
