@@ -136,6 +136,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_set_soc_pwr_pgood";
 		};
+		int_s0_pgood: s0_pgood {
+			irq-pin = <&gpio_s0_pgood>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_s0_pgood";
+		};
 	};
 
 	/*

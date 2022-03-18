@@ -113,7 +113,16 @@ void baseboard_set_soc_pwr_pgood(enum gpio_signal unused)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_good),
 	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_pcore_s0_r)) &&
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr5_s0_od)));
+	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr5_s0_od)) &&
+	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_s0_pgood)));
+}
+
+void baseboard_s0_pgood(enum gpio_signal signal)
+{
+	baseboard_set_soc_pwr_pgood(signal);
+
+	/* Chain off power signal interrupt handler for PG_PCORE_S0_R_OD */
+	power_signal_interrupt(signal);
 }
 
 /* Note: signal parameter unused */

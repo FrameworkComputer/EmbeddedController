@@ -37,11 +37,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_en_pwr_s0";
 		};
-		int_s0_pgood: s0_pgood {
-			irq-pin = <&gpio_s0_pgood>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "power_signal_interrupt";
-		};
 		int_pg_groupc_s0: pg_groupc_s0 {
 			irq-pin = <&gpio_pg_groupc_s0_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;

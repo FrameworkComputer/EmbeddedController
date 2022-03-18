@@ -174,6 +174,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_en_pwr_pcore_s0";
 		};
+		int_s0_pgood: s0_pgood {
+			irq-pin = <&gpio_s0_pgood>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
 	};
 
 	/* Rotation matrices for motion sensors. */
