@@ -21,7 +21,7 @@
  * Row Column info for Top row keys T1 - T15. This has been sourced from
  * go/vivaldi-matrix (internal link for vivaldi scan matrix spec).
  */
-static const struct key {
+__overridable const struct key {
 	uint8_t row;
 	uint8_t col;
 } vivaldi_keys[] = {
