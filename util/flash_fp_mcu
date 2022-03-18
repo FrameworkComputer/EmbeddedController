@@ -590,9 +590,14 @@ config_strongbad() {
   readonly GPIO_NRST=$((${gpiobase} + $(gpiofind FP_RST_L|cut -f2 -d" ")))
   # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
   readonly GPIO_BOOT0=$((${gpiobase} + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
-  # TODO(b/179839337): Hardware currently doesn't support PWREN, but the
-  # next revision will. Add a comment here about the power enable gpio.
-  readonly GPIO_PWREN=-1
+
+  # EN FP RAILS is $(gpiofind EN_FP_RAILS) is gpiochip0 74 (if available)
+  local en_fp_rails
+  if en_fp_rails=$(gpiofind EN_FP_RAILS); then
+    readonly GPIO_PWREN=$((${gpiobase} + $(echo $en_fp_rails|cut -f2 -d" ")))
+  else
+    readonly GPIO_PWREN=-1
+  fi
 }
 
 config_volteer() {
