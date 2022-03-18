@@ -193,6 +193,10 @@ ZTEST(ppc_sn5s330, test_vbus_source_sink_enable)
 	zassert_equal(func_set3_reg & SN5S330_PP2_EN, 0, NULL);
 }
 
+/* This test depends on EC GIPO initialization happening before I2C */
+BUILD_ASSERT(
+	CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY < CONFIG_I2C_INIT_PRIORITY,
+	"GPIO initialization must happen before I2C");
 ZTEST(ppc_sn5s330, test_vbus_discharge)
 {
 	const struct emul *emul = EMUL;
