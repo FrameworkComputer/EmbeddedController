@@ -550,7 +550,7 @@ DECLARE_HOOK(HOOK_INIT, mt6360_led_init, HOOK_PRIO_DEFAULT);
 
 int mt6360_led_enable(enum mt6360_led_id led_id, int enable)
 {
-	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT))
+	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT - 1))
 		return EC_ERROR_INVAL;
 
 	if (enable)
@@ -563,9 +563,9 @@ int mt6360_led_set_brightness(enum mt6360_led_id led_id, int brightness)
 {
 	int val;
 
-	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT))
+	if (!IN_RANGE(led_id, 0, MT6360_LED_COUNT - 1))
 		return EC_ERROR_INVAL;
-	if (!IN_RANGE(brightness, 0, 16))
+	if (!IN_RANGE(brightness, 0, 15))
 		return EC_ERROR_INVAL;
 
 	RETURN_ERROR(mt6360_read8(MT6360_REG_RGB_ISINK(led_id), &val));

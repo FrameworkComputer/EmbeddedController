@@ -77,7 +77,7 @@ extern "C" {
 
 /* Macro to check if the value is in range */
 #ifndef CONFIG_ZEPHYR
-#define IN_RANGE(x, min, max) ((x) >= (min) && (x) < (max))
+#define IN_RANGE(x, min, max) ((x) >= (min) && (x) <= (max))
 #endif
 
 /*

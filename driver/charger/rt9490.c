@@ -149,7 +149,7 @@ static enum ec_error_list rt9490_set_current(int chgnum, int current)
 	if (current == 0)
 		current = info->current_min;
 
-	if (!IN_RANGE(current, info->current_min, info->current_max + 1))
+	if (!IN_RANGE(current, info->current_min, info->current_max))
 		return EC_ERROR_PARAM2;
 	reg_ichg = current / info->current_step;
 
@@ -178,7 +178,7 @@ static enum ec_error_list rt9490_set_voltage(int chgnum, int voltage)
 	if (voltage == 0)
 		voltage = info->voltage_min;
 
-	if (!IN_RANGE(voltage, info->voltage_min, info->voltage_max + 1))
+	if (!IN_RANGE(voltage, info->voltage_min, info->voltage_max))
 		return EC_ERROR_PARAM2;
 	reg_cv = voltage / info->voltage_step;
 
@@ -198,9 +198,9 @@ enum ec_error_list rt9490_set_otg_current_voltage(int chgnum,
 {
 	uint16_t reg_cur, reg_vol;
 
-	if (!IN_RANGE(output_current, RT9490_IOTG_MIN, RT9490_IOTG_MAX + 1))
+	if (!IN_RANGE(output_current, RT9490_IOTG_MIN, RT9490_IOTG_MAX))
 		return EC_ERROR_PARAM2;
-	if (!IN_RANGE(output_voltage, RT9490_VOTG_MIN, RT9490_VOTG_MAX + 1))
+	if (!IN_RANGE(output_voltage, RT9490_VOTG_MIN, RT9490_VOTG_MAX))
 		return EC_ERROR_PARAM3;
 
 	reg_cur = (output_current - RT9490_IOTG_MIN) / RT9490_IOTG_STEP;

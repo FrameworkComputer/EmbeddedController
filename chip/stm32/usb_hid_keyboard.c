@@ -528,7 +528,7 @@ static void hid_keyboard_feature_init(void)
 	for (int i = 0; i < CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS; i++) {
 		int key = config->action_keys[i];
 
-		if (IN_RANGE(key, 0, ARRAY_SIZE(action_key)))
+		if (IN_RANGE(key, 0, ARRAY_SIZE(action_key) - 1))
 			feature_report[i] = action_key[key].usage;
 	}
 }
@@ -636,9 +636,9 @@ static uint32_t maybe_convert_function_key(int keycode)
 	if (!IS_ENABLED(CONFIG_USB_HID_KEYBOARD_VIVALDI) || !config)
 		return 0;
 
-	if (IN_RANGE(keycode, HID_F1, HID_F12 + 1))
+	if (IN_RANGE(keycode, HID_F1, HID_F12))
 		index = keycode - HID_F1;
-	else if (IN_RANGE(keycode, HID_F13, HID_F15 + 1))
+	else if (IN_RANGE(keycode, HID_F13, HID_F15))
 		index = keycode - HID_F13 + 12;
 	else
 		return 0; /* not a function key */
