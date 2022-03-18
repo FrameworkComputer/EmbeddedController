@@ -42,6 +42,40 @@ void svdm_set_hpd_gpio(int port, int en)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl), !en);
 }
 
+__override int svdm_dp_config(int port, uint32_t *payload)
+{
+	int opos = pd_alt_mode(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
+	uint8_t pin_mode = get_dp_pin_mode(port);
+	mux_state_t mux_mode = svdm_dp_get_mux_mode(port);
+	int mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
+
+	if (!pin_mode)
+		return 0;
+
+	CPRINTS("pin_mode: %x, mf: %d, mux: %d", pin_mode, mf_pref, mux_mode);
+	/*
+	 * Defer setting the usb_mux until HPD goes high, svdm_dp_attention().
+	 * The AP only supports one DP phy. An external DP mux switches between
+	 * the two ports. Should switch those muxes when it is really used,
+	 * i.e. HPD high; otherwise, the real use case is preempted, like:
+	 *  (1) plug a dongle without monitor connected to port-0,
+	 *  (2) plug a dongle without monitor connected to port-1,
+	 *  (3) plug a monitor to the port-1 dongle.
+	 */
+
+	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
+			 CMD_DP_CONFIG | VDO_OPOS(opos));
+	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
+				1,             /* DPv1.3 signaling */
+				2);            /* UFP connected */
+	return 2;
+};
+
+__override void svdm_dp_post_config(int port)
+{
+	dp_flags[port] |= DP_FLAGS_DP_ON;
+}
+
 int corsola_is_dp_muxable(int port)
 {
 	int i;
@@ -76,6 +110,14 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	if (lvl) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(dp_aux_path_sel), port);
 		CPRINTS("Set DP_AUX_PATH_SEL: %d", port);
+
+		usb_mux_set(port, USB_PD_MUX_DOCK,
+			    USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(port)));
+	} else {
+		usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
+			    USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
