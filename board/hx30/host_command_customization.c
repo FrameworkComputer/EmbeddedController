@@ -166,6 +166,10 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 	s5_power_up_control(1);
 	update_me_change(0);
 
+	/* clear ENTER_S4/S5 flag */
+	power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
+		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
+
 	/* clear ACPI ready flags for pre-os*/
 	*host_get_customer_memmap(0x00) &= ~BIT(0);
 

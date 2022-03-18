@@ -297,7 +297,7 @@ static void lpc_s0ix_resume_restore_masks(void)
 }
 
 #ifdef CONFIG_EMI_REGION1
-static void power_state_clear(int state)
+void power_state_clear(int state)
 {
 	*host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE) &= ~state;
 }
