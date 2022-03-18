@@ -353,6 +353,15 @@ def main(argv=None):
 
     logging.basicConfig(format=log_format, level=opts.log_level)
 
+    if opts.subcommand == "configure" and opts.build_after_configure:
+        logging.warning(
+            '"zmake configure -b/--build" is deprecated.  Run "zmake build" instead.'
+        )
+    if opts.subcommand == "configure" and opts.test_after_configure:
+        logging.warning(
+            '"zmake configure --test" is deprecated.  Run "zmake test" instead.'
+        )
+
     try:
         zmake = call_with_namespace(zm.Zmake, opts)
         subcommand_method = getattr(zmake, opts.subcommand.replace("-", "_"))
