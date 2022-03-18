@@ -9,11 +9,7 @@
 
 #include "baseboard.h"
 
-/* Chipset config */
-#define CONFIG_BRINGUP
-
 /* Optional features */
-#define CONFIG_SYSTEM_UNLOCKED
 #define CONFIG_LTO
 #define CONFIG_PRESERVE_LOGS
 
