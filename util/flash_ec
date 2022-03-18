@@ -1496,8 +1496,26 @@ function flash_npcx_uut() {
 		if [[ "${FLAGS_verbose}" = ${FLAGS_TRUE} ]]; then
 			echo "${UUT_MON[*]}"
 		fi
+
+		local monitor_res=0
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
-			"${UUT_MON[@]}" || die "Failed to load monitor binary."
+			"${UUT_MON[@]}" || monitor_res=$?
+
+		if [[ ${monitor_res} != 0 ]]; then
+			# Try to determine if WP is enabled
+			local dut_res=0
+			local wp_state
+			wp_state=$(dut-control fw_wp_state) || dut_res=$?
+
+			if [[ ${dut_res} = 0 ]]; then
+				if echo "${wp_state}" | grep "on"; then
+					die "Failed to load monitor binary, WP is enabled"
+				fi
+			fi
+
+			die "Failed to load monitor binary."
+		fi
+
 
 		info "Programming EC firmware image."
 		local UUT_WR=( "${NPCX_UUT}" "${UUT_ARGS[@]}"      \
