@@ -457,6 +457,66 @@ ZTEST(ppc_sn5s330, test_init_reg_fails)
 	INIT_I2C_FAIL_HELPER(i2c_emul, I2C_WRITE, SN5S330_INT_TRIP_FALL_REG3);
 }
 
+static int pp_fet_test_mock_read_fn(struct i2c_emul *emul, int reg,
+				    uint8_t *val, int bytes, void *data)
+{
+	int *counter = data;
+
+	zassert_true(counter, "data cannot be a NULL pointer");
+
+	/* Pretend to be in dead battery mode (needed for part 2 of the test) */
+	if (reg == SN5S330_INT_STATUS_REG4) {
+		*val = SN5S330_DB_BOOT;
+		return 0;
+	}
+
+	/* Fail if we try to read SN5S330_FUNC_SET3 after the counter hits 0 */
+	if (reg == SN5S330_FUNC_SET3 && (*counter)-- <= 0) {
+		printf("Failing\n");
+		return -EIO;
+	}
+
+	return 1;
+}
+
+ZTEST(ppc_sn5s330, test_pp_fet_enable_fail)
+{
+	/* We attempt to enable the PP (power path) FET at two points during
+	 * the init function, constituting the second and third accesses to the
+	 * FUNC_SET3 register. We need to allow the first N reads/writes to
+	 * succeed to test failure handling of each call to
+	 * sn5s330_pp_fet_enable(). The second call requires us to be in dead
+	 * battery mode, which we take care of in the mock read function.
+	 */
+
+	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
+	int counter;
+	int ret;
+
+	i2c_common_emul_set_read_func(i2c_emul, pp_fet_test_mock_read_fn,
+				      &counter);
+
+	/* Allow only the first access to the reg to succeed. This tests the
+	 * error handling of the first call to sn5s330_pp_fet_enable().
+	 */
+
+	counter = 1;
+	ret = sn5s330_drv.init(SN5S330_PORT);
+
+	zassert_equal(EC_ERROR_INVAL, ret, "Expected EC_ERROR_INVAL but got %d",
+		      ret);
+
+	/* Allow only the first two accesses to succeed. This tests the error
+	 * handling of the second call to sn5s330_pp_fet_enable().
+	 */
+
+	counter = 2;
+	ret = sn5s330_drv.init(SN5S330_PORT);
+
+	zassert_equal(EC_ERROR_INVAL, ret, "Expected EC_ERROR_INVAL but got %d",
+		      ret);
+}
+
 static inline void reset_sn5s330_state(void)
 {
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
