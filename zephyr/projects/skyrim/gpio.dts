@@ -39,7 +39,7 @@
 			gpios = <&gpio0 0 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
-		en_pwr_s5 {
+		gpio_en_pwr_s5: en_pwr_s5 {
 			gpios = <&gpiob 7 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PWR_A";
 		};

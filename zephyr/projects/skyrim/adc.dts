@@ -53,6 +53,7 @@
 			temp_host_halt = <105>;
 			temp_host_release_high = <80>;
 			adc = <&adc_temp_memory>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
 		};
 		sb-tsi-sensor {
 			compatible = "cros-ec,temp-sensor-sb-tsi",
@@ -65,6 +66,7 @@
 			temp_host_release_high = <80>;
 			temp_fan_off = <60>;
 			temp_fan_max = <90>;
+			power-good-pin = <&gpio_s0_pgood>;
 		};
 	};
 };

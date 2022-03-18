@@ -113,6 +113,7 @@
 			temp_host_release_high = <80>;
 			temp_fan_off = <0>;
 			temp_fan_max = <70>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
 		};
 		amb-pct2075 {
 			compatible = "cros-ec,temp-sensor-pct2075",
@@ -122,6 +123,7 @@
 			pct2075-name = "PCT2075_AMB";
 			port = <&i2c_sensor>;
 			i2c-addr-flags = "PCT2075_I2C_ADDR_FLAGS7";
+			power-good-pin = <&gpio_pg_pwr_s5>;
 		};
 	};
 
