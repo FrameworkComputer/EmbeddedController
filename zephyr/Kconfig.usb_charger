@@ -16,8 +16,15 @@ config PLATFORM_EC_USB_CHARGER
 
 if PLATFORM_EC_USB_CHARGER
 
+config PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
+	bool
+	help
+	  This is a helper symbol that indicates the BC1.2 chip needs to be
+	  triggered on data role swaps in addition to VBUS changes.
+
 config PLATFORM_EC_BC12_DETECT_PI3USB9201
 	bool "Enable support for Pericom PI3USB9201"
+	select PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
 	help
 	  This is a Dual-Role USB Charging-Type Detector. It can operate in
 	  host or client mode. It supports Battery Charging Specification, rev
