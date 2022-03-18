@@ -517,6 +517,33 @@ ZTEST(ppc_sn5s330, test_pp_fet_enable_fail)
 		      ret);
 }
 
+ZTEST(ppc_sn5s330, test_set_polarity)
+{
+	int ret;
+	uint8_t reg_val;
+
+	/* Ensure flags start cleared */
+	sn5s330_emul_peek_reg(EMUL, SN5S330_FUNC_SET4, &reg_val);
+	zassert_false(reg_val & SN5S330_CC_POLARITY,
+		      "Polarity flags should not be set after reset.");
+
+	/* Set polarity flags */
+	ret = sn5s330_drv.set_polarity(SN5S330_PORT, 1);
+	zassert_equal(EC_SUCCESS, ret, "Expected EC_SUCCESS but got %d", ret);
+
+	sn5s330_emul_peek_reg(EMUL, SN5S330_FUNC_SET4, &reg_val);
+	zassert_true(reg_val & SN5S330_CC_POLARITY,
+		     "Polarity flags should be set.");
+
+	/* Clear polarity flags */
+	ret = sn5s330_drv.set_polarity(SN5S330_PORT, 0);
+	zassert_equal(EC_SUCCESS, ret, "Expected EC_SUCCESS but got %d", ret);
+
+	sn5s330_emul_peek_reg(EMUL, SN5S330_FUNC_SET4, &reg_val);
+	zassert_false(reg_val & SN5S330_CC_POLARITY,
+		      "Polarity flags should be cleared.");
+}
+
 static inline void reset_sn5s330_state(void)
 {
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
