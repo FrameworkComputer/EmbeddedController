@@ -544,6 +544,19 @@ ZTEST(ppc_sn5s330, test_set_polarity)
 		      "Polarity flags should be cleared.");
 }
 
+ZTEST(ppc_sn5s330, test_set_vbus_source_current_limit_fail)
+{
+	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
+	int ret;
+
+	i2c_common_emul_set_read_fail_reg(i2c_emul, SN5S330_FUNC_SET1);
+
+	ret = sn5s330_drv.set_vbus_source_current_limit(SN5S330_PORT,
+							TYPEC_RP_3A0);
+	zassert_equal(EC_ERROR_INVAL, ret, "Expected EC_ERROR_INVAL but got %d",
+		      ret);
+}
+
 static inline void reset_sn5s330_state(void)
 {
 	struct i2c_emul *i2c_emul = sn5s330_emul_to_i2c_emul(EMUL);
