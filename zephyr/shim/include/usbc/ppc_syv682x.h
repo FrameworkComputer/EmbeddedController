@@ -7,12 +7,12 @@
 
 #define SYV682X_COMPAT silergy_syv682x
 
-#define PPC_CHIP_SYV682X(id)                                                 \
-	{                                                                    \
-		.i2c_port = I2C_PORT(DT_PHANDLE(id, port)),                  \
-		.i2c_addr_flags = DT_STRING_UPPER_TOKEN(id, i2c_addr_flags), \
-		.drv = &syv682x_drv,                                         \
-		.frs_en = COND_CODE_1(DT_NODE_HAS_PROP(id, irq),             \
-				      (GPIO_SIGNAL(DT_PHANDLE(id, irq))),    \
-				      (0)),                                  \
+#define PPC_CHIP_SYV682X(id)                                                \
+	{                                                                   \
+		.i2c_port = I2C_PORT(DT_PHANDLE(id, port)),                 \
+		.i2c_addr_flags = DT_STRING_UPPER_TOKEN(id, i2c_addr_flags),\
+		.drv = &syv682x_drv,                                        \
+		.frs_en = COND_CODE_1(DT_NODE_HAS_PROP(id, frs_en_gpio),    \
+				(GPIO_SIGNAL(DT_PHANDLE(id, frs_en_gpio))), \
+				(0)),                                       \
 	},

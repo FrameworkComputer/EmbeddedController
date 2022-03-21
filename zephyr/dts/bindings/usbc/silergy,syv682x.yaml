@@ -5,6 +5,11 @@ compatible: "silergy,syv682x"
 include: ppc-chip.yaml
 
 properties:
+  frs_en_gpio:
+    type: phandle
+    description: The GPIO that controls FRS enable on this device
+    required: false
+
   i2c-addr-flags:
     default: "SYV682X_ADDR0_FLAGS"
     enum:
