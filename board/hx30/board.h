@@ -769,6 +769,10 @@ void update_me_change(int change);
 
 int poweron_reason_powerbtn(void);
 
+#ifdef CONFIG_EMI_REGION1
+void power_state_clear(int state);
+#endif
+
 #ifdef CONFIG_LOW_POWER_IDLE
 void board_prepare_for_deep_sleep(void);
 void board_resume_from_deep_sleep(void);
