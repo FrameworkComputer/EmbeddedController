@@ -90,16 +90,21 @@ class TestConfig:
     """Configuration for a given test."""
 
     def __init__(self, name, image_to_use=ImageType.RW, finish_regexes=None,
-                 toggle_power=False, test_args=None, num_flash_attempts=2,
-                 timeout_secs=10, enable_hw_write_protect=False):
+                 fail_regexes=None, toggle_power=False, test_args=None,
+                 num_flash_attempts=2, timeout_secs=10,
+                 enable_hw_write_protect=False):
         if test_args is None:
             test_args = []
         if finish_regexes is None:
             finish_regexes = [ALL_TESTS_PASSED_REGEX, ALL_TESTS_FAILED_REGEX]
+        if fail_regexes is None:
+            fail_regexes = [SINGLE_CHECK_FAILED_REGEX, ALL_TESTS_FAILED_REGEX,
+                            ASSERTION_FAILURE_REGEX]
 
         self.name = name
         self.image_to_use = image_to_use
         self.finish_regexes = finish_regexes
+        self.fail_regexes = fail_regexes
         self.test_args = test_args
         self.toggle_power = toggle_power
         self.num_flash_attempts = num_flash_attempts
@@ -339,14 +344,10 @@ def process_console_output_line(line: bytes, test: TestConfig):
         if SINGLE_CHECK_PASSED_REGEX.match(line_str):
             test.num_passes += 1
 
-        if SINGLE_CHECK_FAILED_REGEX.match(line_str):
-            test.num_fails += 1
-
-        if ALL_TESTS_FAILED_REGEX.match(line_str):
-            test.num_fails += 1
-
-        if ASSERTION_FAILURE_REGEX.match(line_str):
-            test.num_fails += 1
+        for regex in test.fail_regexes:
+            if regex.match(line_str):
+                test.num_fails += 1
+                break
 
         return line_str
     except UnicodeDecodeError:
