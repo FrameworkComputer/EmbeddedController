@@ -44,7 +44,7 @@ void ipi_enable_irq(void)
 
 static int ipi_is_busy(void)
 {
-	return SCP_SCP2APMCU_IPC_SET & IPC_SCP2HOST;
+	return ipi_op_scp2ap_is_irq_set();
 }
 
 static void ipi_wake_ap(int32_t id)
@@ -53,7 +53,7 @@ static void ipi_wake_ap(int32_t id)
 		return;
 
 	if (*ipi_wakeup_table[id])
-		SCP_SCP2SPM_IPC_SET = IPC_SCP2HOST;
+		ipi_op_wake_ap();
 }
 
 int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
@@ -105,7 +105,7 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 
 	/* interrupt AP to handle the message */
 	ipi_wake_ap(id);
-	SCP_SCP2APMCU_IPC_SET = IPC_SCP2HOST;
+	ipi_op_scp2ap_irq_set();
 
 	if (wait)
 		while (ipi_is_busy())
@@ -185,9 +185,9 @@ static void irq_group7_handler(void)
 {
 	extern volatile int ec_int;
 
-	if (SCP_GIPC_IN_SET & GIPC_IN(0)) {
+	if (ipi_op_ap2scp_is_irq_set()) {
 		ipi_handler();
-		SCP_GIPC_IN_CLR = GIPC_IN(0);
+		ipi_op_ap2scp_irq_clr();
 		asm volatile("fence.i" ::: "memory");
 		task_clear_pending_irq(ec_int);
 	}
