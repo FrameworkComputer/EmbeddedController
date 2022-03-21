@@ -53,8 +53,7 @@ Example:
 Here `vendor_part` will be the default battery type. If this node label is
 present in the overlay, the [DEFAULT_BATTERY_TYPE] is set in the battery shim
 code with the labeled battery type. The `vendor` and `part` references must
-match an existing battery defined in the aforementioned [battery bindings
-directory].
+match an existing battery defined in [battery bindings directory].
 
 ##### Add the battery present GPIO node as a child of `named-gpios`
 
