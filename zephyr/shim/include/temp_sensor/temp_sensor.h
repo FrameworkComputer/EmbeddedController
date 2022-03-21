@@ -7,6 +7,7 @@
 #define ZEPHYR_SHIM_INCLUDE_TEMP_SENSOR_TEMP_SENSOR_H_
 
 #include <devicetree.h>
+#include "include/temp_sensor.h"
 
 #ifdef CONFIG_PLATFORM_EC_TEMP_SENSOR
 
@@ -52,6 +53,12 @@ enum tmp112_sensor {
 };
 
 #undef TMP112_SENSOR_ID_WITH_COMMA
+
+struct zephyr_temp_sensor {
+	/* Read sensor value in K into temp_ptr; return non-zero if error. */
+	int (*read)(const struct temp_sensor_t *sensor, int *temp_ptr);
+	struct thermistor_info *thermistor;
+};
 
 #endif /* CONFIG_PLATFORM_EC_TEMP_SENSOR */
 

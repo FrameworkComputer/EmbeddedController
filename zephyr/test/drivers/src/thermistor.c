@@ -72,7 +72,8 @@ ZTEST_USER(thermistor, test_thermistor_power_pin)
 	     sensor_idx++) {
 		const struct temp_sensor_t *sensor = &temp_sensors[sensor_idx];
 
-		zassert_equal(EC_ERROR_NOT_POWERED, sensor->read(sensor, &temp),
+		zassert_equal(EC_ERROR_NOT_POWERED,
+			      sensor->zephyr_info->read(sensor, &temp),
 			      "%s failed", sensor->name);
 	}
 
@@ -84,7 +85,8 @@ ZTEST_USER(thermistor, test_thermistor_power_pin)
 	     sensor_idx++) {
 		const struct temp_sensor_t *sensor = &temp_sensors[sensor_idx];
 
-		zassert_equal(EC_SUCCESS, sensor->read(sensor, &temp),
+		zassert_equal(EC_SUCCESS,
+			      sensor->zephyr_info->read(sensor, &temp),
 			      "%s failed", sensor->name);
 	}
 }
@@ -121,7 +123,8 @@ ZTEST_USER(thermistor, test_thermistor_adc_read_error)
 	     sensor_idx++) {
 		const struct temp_sensor_t *sensor = &temp_sensors[sensor_idx];
 
-		zassert_equal(EC_ERROR_UNKNOWN, sensor->read(sensor, &temp),
+		zassert_equal(EC_ERROR_UNKNOWN,
+			      sensor->zephyr_info->read(sensor, &temp),
 			      "%s failed", sensor->name);
 	}
 }
@@ -221,8 +224,9 @@ static void do_thermistor_test(const struct temp_sensor_t *temp_sensor,
 	/* Test whole supported range from 0*C to 100*C (273*K to 373*K) */
 	for (temp_expected = 273; temp_expected <= 373; temp_expected++) {
 		state.temp_expected = temp_expected;
-		zassert_equal(EC_SUCCESS, temp_sensor->read(temp_sensor, &temp),
-			      "failed on %s", temp_sensor->name);
+		zassert_equal(EC_SUCCESS,
+			temp_sensor->zephyr_info->read(temp_sensor, &temp),
+			"failed on %s", temp_sensor->name);
 		zassert_within(temp_expected, temp, TEMP_EPS,
 			       "Expected %d*K, got %d*K on %s", temp_expected,
 			       temp, temp_sensor->name);
@@ -230,14 +234,16 @@ static void do_thermistor_test(const struct temp_sensor_t *temp_sensor,
 
 	/* Temperatures below 0*C should be reported as 0*C */
 	state.temp_expected = -15 + 273;
-	zassert_equal(EC_SUCCESS, temp_sensor->read(temp_sensor, &temp),
+	zassert_equal(EC_SUCCESS,
+		      temp_sensor->zephyr_info->read(temp_sensor, &temp),
 		      "failed on %s", temp_sensor->name);
 	zassert_equal(273, temp, "Expected %d*K, got %d*K on %s", 273, temp,
 		      temp_sensor->name);
 
 	/* Temperatures above 100*C should be reported as 100*C */
 	state.temp_expected = 115 + 273;
-	zassert_equal(EC_SUCCESS, temp_sensor->read(temp_sensor, &temp),
+	zassert_equal(EC_SUCCESS,
+		      temp_sensor->zephyr_info->read(temp_sensor, &temp),
 		      "failed on %s", temp_sensor->name);
 	zassert_equal(373, temp, "Expected %d*K, got %d*K on %s", 373, temp,
 		      temp_sensor->name);
