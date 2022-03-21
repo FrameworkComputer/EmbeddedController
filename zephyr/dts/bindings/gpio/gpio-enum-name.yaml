@@ -95,6 +95,7 @@ properties:
       - GPIO_USB_C0_TCPC_RST_L
       - GPIO_USB_C1_BC12_INT_ODL
       - GPIO_USB_C1_DP_HPD
+      - GPIO_USB_C0_FRS_EN
       - GPIO_USB_C1_FRS_EN
       - GPIO_USB_C1_LS_EN
       - GPIO_USB_C1_OC_ODL
