@@ -163,7 +163,7 @@ void rsmrst_pass_thru_handler(void)
 
 /* TODO:
  * Add power down sequence
- * Add logic to suspend and resume the thread
+ * Add S0ix
  */
 static int common_pwr_sm_run(int state)
 {
@@ -223,7 +223,8 @@ static int common_pwr_sm_run(int state)
 
 	case SYS_POWER_STATE_S5G3:
 		ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
-		ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
+		/* Notify power event before we enter G3 */
+		ap_power_ev_send_callbacks(AP_POWER_HARD_OFF);
 		return SYS_POWER_STATE_G3;
 
 	case SYS_POWER_STATE_S5S4:
@@ -250,7 +251,7 @@ static int common_pwr_sm_run(int state)
 			return SYS_POWER_STATE_G3;
 		}
 
-		/* Call hooks now that rails are up */
+		/* Notify power event that rails are up */
 		ap_power_ev_send_callbacks(AP_POWER_STARTUP);
 
 		/* TODO: S0ix
@@ -281,6 +282,11 @@ static int common_pwr_sm_run(int state)
 
 		/* All the power rails must be stable */
 		if (power_signal_get(PWR_ALL_SYS_PWRGD)) {
+#if defined(CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK)
+			/* Notify power event before resume */
+			ap_power_ev_send_callbacks(AP_POWER_RESUME_INIT);
+#endif
+			/* Notify power event rails are up */
 			ap_power_ev_send_callbacks(AP_POWER_RESUME);
 			return SYS_POWER_STATE_S0;
 		}
@@ -297,11 +303,17 @@ static int common_pwr_sm_run(int state)
 		break;
 
 	case SYS_POWER_STATE_S4S5:
-		/* Call hooks before we remove power rails */
+		/* Notify power event before we remove power rails */
 		ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
-		/* Disable wireless */
-		/* wireless_set_state(WIRELESS_OFF); */
-		/* Call hooks after we remove power rails */
+
+		/*
+		 * If support controlling power of wifi/WWAN/BT devices
+		 * add handling here.
+		 */
+
+		/* Nofity power event after we remove power rails */
+		ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
+
 		/* Always enter into S5 state. The S5 state is required to
 		 * correctly handle global resets which have a bit of delay
 		 * while the SLP_Sx_L signals are asserted then deasserted.
@@ -312,8 +324,12 @@ static int common_pwr_sm_run(int state)
 		return SYS_POWER_STATE_S4;
 
 	case SYS_POWER_STATE_S0S3:
-		/* Call hooks before we remove power rails */
+		/* Notify power event before we remove power rails */
 		ap_power_ev_send_callbacks(AP_POWER_SUSPEND);
+#if defined(CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK)
+		/* Notify power event after suspend */
+		ap_power_ev_send_callbacks(AP_POWER_SUSPEND_COMPLETE);
+#endif
 		return SYS_POWER_STATE_S3;
 
 	default:
