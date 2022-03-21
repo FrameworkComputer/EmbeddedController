@@ -102,7 +102,7 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 8900, /* mV */
+			.voltage_max		= 8800, /* mV */
 			.voltage_normal		= 7680, /* mV */
 			.voltage_min		= 6000, /* mV */
 			.precharge_current	= 464,	/* mA */
@@ -116,7 +116,7 @@ const struct board_batt_params board_battery_info[] = {
 	},
 	[BATTERY_LGC] = {
 		.fuel_gauge = {
-			.manuf_name = "LG",
+			.manuf_name = "LGES",
 			.device_name = "L21L4PG5",
 			.ship_mode = {
 				.reg_addr = 0x34,
@@ -129,7 +129,7 @@ const struct board_batt_params board_battery_info[] = {
 			}
 		},
 		.batt_info = {
-			.voltage_max		= 8900, /* mV */
+			.voltage_max		= 8800, /* mV */
 			.voltage_normal		= 7680, /* mV */
 			.voltage_min		= 6000, /* mV */
 			.precharge_current	= 512,	/* mA */
