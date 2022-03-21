@@ -13,6 +13,7 @@ properties:
       enum:
          - "aec,5477109"
          - "as3gwrc3ka,c235-41"
+         - "ganfeng,7c01"
          - "getac,bq40z50-R3-S3"
          - "getac,bq40z50-R3-S2"
          - "lgc,ac17a8m"

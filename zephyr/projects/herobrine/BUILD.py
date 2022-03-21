@@ -46,7 +46,7 @@ register_variant(
 register_variant(
     project_name="hoglin",
     extra_dts_overlays=[
-        here / "battery_herobrine.dts",
+        here / "battery_hoglin.dts",
         here / "gpio_hoglin.dts",
         here / "motionsense_hoglin.dts",
         here / "switchcap_hoglin.dts",

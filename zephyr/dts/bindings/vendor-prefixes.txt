@@ -14,3 +14,4 @@ smp	Battery vendor
 aec	Battery vendor
 powertech	Battery vendor
 getac	Battery vendor
+ganfeng	Battery vendor
