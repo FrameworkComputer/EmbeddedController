@@ -28,7 +28,7 @@ int cm32183_read_lux(int *lux, int af)
 	/*
 	 * lux = data * 0.016
 	 */
-	*lux = (data * 16)/1000 * (af / 10);
+	*lux = (data * 16 / 1000) * af / 10;
 
 	return EC_SUCCESS;
 }

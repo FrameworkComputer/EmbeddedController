@@ -25,6 +25,7 @@
 #include "ps2mouse.h"
 #include "keyboard_8042_sharedlib.h"
 #include "diagnostics.h"
+#include "driver/als_cm32183.h"
 #include "cpu_power.h"
 #define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
 
@@ -165,6 +166,7 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 	 */
 	s5_power_up_control(1);
 	update_me_change(0);
+	cm32183_init(); /* make sure als sensor is enable */
 
 	/* clear ACPI ready flags for pre-os*/
 	*host_get_customer_memmap(0x00) &= ~BIT(0);
