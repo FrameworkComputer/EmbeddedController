@@ -39,8 +39,13 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_FAN] = {
 		.channel = 5,
-		.flags = PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_DSLEEP,
-		.freq = 1000
+		.flags = PWM_CONFIG_OPEN_DRAIN,
+		.freq = 25000
+	},
+	[PWM_CH_FAN2] = {
+		.channel = 4,
+		.flags = PWM_CONFIG_OPEN_DRAIN,
+		.freq = 25000
 	},
 	[PWM_CH_LED4] = {
 		.channel = 7,
