@@ -123,6 +123,17 @@ static int peci_over_espi_get_cpu_temp(int *cpu_temp)
 	return EC_SUCCESS;
 }
 
+int check_system_power(void)
+{
+	uint8_t host_power_state = *host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE);
+
+	if (host_power_state & (EC_PS_ENTER_S5 | EC_PS_ENTER_S4) ||
+		(!pos_get_state() && !is_non_acpi_mode()))
+		return EC_ERROR_NOT_POWERED;
+	else
+		return EC_SUCCESS;
+}
+
 /*****************************************************************************/
 /* External functions */
 
@@ -130,10 +141,8 @@ int peci_update_PL1(int watt)
 {
 	int rv;
 	uint32_t data;
-	uint8_t host_power_state = *host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE);
 
-	if (!chipset_in_state(CHIPSET_STATE_ON) ||
-		host_power_state == EC_PS_ENTER_S5)
+	if (!chipset_in_state(CHIPSET_STATE_ON) || check_system_power())
 		return EC_ERROR_NOT_POWERED;
 
 	data = PECI_PL1_CONTROL_TIME_WINDOWS | PECI_PL1_POWER_LIMIT_ENABLE |
@@ -152,10 +161,8 @@ int peci_update_PL2(int watt)
 {
 	int rv;
 	uint32_t data;
-	int host_power_state = *host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE);
 
-	if (!chipset_in_state(CHIPSET_STATE_ON) ||
-		host_power_state == EC_PS_ENTER_S5)
+	if (!chipset_in_state(CHIPSET_STATE_ON) || check_system_power())
 		return EC_ERROR_NOT_POWERED;
 
 	data = PECI_PL2_CONTROL_TIME_WINDOWS | PECI_PL2_POWER_LIMIT_ENABLE |
@@ -174,10 +181,8 @@ int peci_update_PL4(int watt)
 {
 	int rv;
 	uint32_t data;
-	int host_power_state = *host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE);
 
-	if (!chipset_in_state(CHIPSET_STATE_ON) ||
-		host_power_state == EC_PS_ENTER_S5)
+	if (!chipset_in_state(CHIPSET_STATE_ON) || check_system_power())
 		return EC_ERROR_NOT_POWERED;
 
 	data = PECI_PL4_POWER_LIMIT(watt);
@@ -195,10 +200,8 @@ int peci_update_PsysPL2(int watt)
 {
 	int rv;
 	uint32_t data;
-	int host_power_state = *host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE);
 
-	if (!chipset_in_state(CHIPSET_STATE_ON) ||
-		host_power_state == EC_PS_ENTER_S5)
+	if (!chipset_in_state(CHIPSET_STATE_ON) || check_system_power())
 		return EC_ERROR_NOT_POWERED;
 
 	data = PECI_PSYS_PL2_CONTROL_TIME_WINDOWS | PECI_PSYS_PL2_POWER_LIMIT_ENABLE |
@@ -218,12 +221,10 @@ __override int stop_read_peci_temp(void)
 	static uint64_t t;
 	static int read_count;
 	uint64_t tnow;
-	int host_power_state = *host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE);
 
 	tnow = get_time().val;
 
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
-		host_power_state == EC_PS_ENTER_S5)
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) || check_system_power())
 		return EC_ERROR_NOT_POWERED;
 	else if (chipset_in_state(CHIPSET_STATE_STANDBY)) {
 		if (tnow - t < (7 * SECOND))

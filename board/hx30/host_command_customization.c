@@ -31,6 +31,8 @@
 
 #ifdef CONFIG_EMI_REGION1
 
+static int non_acpi_mode;
+
 static void sci_enable(void);
 DECLARE_DEFERRED(sci_enable);
 
@@ -41,6 +43,16 @@ int pos_get_state(void)
 	else
 		return false;
 }
+int is_non_acpi_mode(void)
+{
+	/* check the system is in non_acpi_mode */
+	return non_acpi_mode;
+}
+
+void set_non_acpi_mode(int enable)
+{
+	non_acpi_mode = enable;
+}
 
 static void sci_enable(void)
 {
@@ -49,6 +61,7 @@ static void sci_enable(void)
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		update_soc_power_limit(true, false);
 		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, ac_boot_status());
+		set_non_acpi_mode(0);
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -174,6 +187,7 @@ static enum ec_status host_custom_command_hello(struct host_cmd_handler_args *ar
 
 	/* clear ACPI ready flags for pre-os*/
 	*host_get_customer_memmap(0x00) &= ~BIT(0);
+	set_non_acpi_mode(1);
 
 	r->out_data = d + 0x01020304;
 	args->response_size = sizeof(*r);
