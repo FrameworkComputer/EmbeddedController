@@ -256,6 +256,9 @@ uint32_t test_get_state(void);
  */
 void test_clean_up(void);
 
+/* Set the next step */
+void test_set_next_step(enum test_state_t step);
+
 /* Set the next step and reboot */
 void test_reboot_to_next_step(enum test_state_t step);
 

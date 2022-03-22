@@ -112,11 +112,16 @@ test_mockable void test_clean_up(void)
 {
 }
 
+void test_set_next_step(enum test_state_t step)
+{
+	system_set_scratchpad(TEST_STATE_MASK(step));
+}
+
 void test_reboot_to_next_step(enum test_state_t step)
 {
 	ccprintf("Rebooting to next test step...\n");
 	cflush();
-	system_set_scratchpad(TEST_STATE_MASK(step));
+	test_set_next_step(step);
 	system_reset(SYSTEM_RESET_HARD);
 }
 
