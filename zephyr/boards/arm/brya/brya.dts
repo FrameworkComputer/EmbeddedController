@@ -33,6 +33,11 @@
 		cros,rtc = &mtc;
 	};
 
+	ec-console {
+		compatible = "ec-console";
+		disabled = "events", "lpc", "hostcmd";
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 		i2c_sensor: sensor {
