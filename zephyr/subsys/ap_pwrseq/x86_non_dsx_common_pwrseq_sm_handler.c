@@ -15,7 +15,6 @@ K_TIMER_DEFINE(s5_inactive_timer, NULL, NULL);
 
 LOG_MODULE_REGISTER(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
-#ifdef CONFIG_LOG
 /**
  * @brief power_state names for debug
  */
@@ -34,7 +33,6 @@ const char pwrsm_dbg[][25] = {
 	[SYS_POWER_STATE_S3S4] = "S3S4",
 	[SYS_POWER_STATE_S0S3] = "S0S3",
 };
-#endif
 
 #ifdef PWRSEQ_REQUIRE_ESPI
 
