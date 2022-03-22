@@ -34,13 +34,23 @@ enum ec_cfg_kbnumpad {
 	KEYBOARD_NUMBER_PAD = 1
 };
 
+enum ec_cfg_nvme_status {
+	NVME_DISABLED = 0,
+	NVME_ENABLED = 1,
+};
+
+enum ec_cfg_emmc_status {
+	EMMC_DISABLED = 0,
+	EMMC_ENABLED = 1,
+};
+
 union taeko_cbi_fw_config {
 	struct {
 		enum ec_cfg_usb_db_type			usb_db : 2;
 		uint32_t				sd_db : 2;
 		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
 		uint32_t				audio : 3;
-		uint32_t				reserved_1 : 6;
+		uint32_t				reserved_1 : 4;
 		/* b/194515356 - Fw config structure
 		 * b/203630618 - Move tablet mode to bit14
 		 * bit8-9: kb_layout
@@ -48,6 +58,8 @@ union taeko_cbi_fw_config {
 		 * bit12: nvme
 		 * bit13: emmc
 		 */
+		enum ec_cfg_nvme_status			nvme_status : 1;
+		enum ec_cfg_emmc_status			emmc_status : 1;
 		enum ec_cfg_tabletmode_type		tabletmode : 1;
 		enum ec_cfg_kbnumpad                    kbnumpad : 1;
 		uint32_t				reserved_2 : 16;
