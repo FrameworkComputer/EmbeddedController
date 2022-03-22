@@ -166,10 +166,11 @@
 		usb_a_cdp_ilim_en_l {
 			gpios = <&gpio7 5 GPIO_OUTPUT_HIGH>;
 		};
-		usb_c0_frs_en {
+		gpio_usb_c0_frs_en: usb_c0_frs_en {
 			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
 		};
-		usb_c1_frs_en {
+		gpio_usb_c1_frs_en: usb_c1_frs_en {
 			gpios = <&gpioc 1 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_USB_C1_FRS_EN";
 		};
