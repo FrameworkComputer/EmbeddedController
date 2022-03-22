@@ -1,0 +1,62 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Multi-PWM LED configuration
+
+compatible: "cros-ec,multi-pwm-leds"
+
+include: base.yaml
+
+properties:
+  pwms:
+    type: phandle-array
+    required: true
+    description: |
+      List of the PWMs attached to the LEDs, up to 3 PWM devices.
+      The duration is used when multiple colors are specified
+      in a list, and indicates the duration the color is set for.
+
+      For example
+        led1 {
+                compatible = "cros-ec,multi-pwm-leds";
+
+                pwms = <&pwm1 0 PWM_POLARITY_INVERTED>,
+                       <&pwm0 0 PWM_POLARITY_INVERTED>,
+                       <&pwm2 0 PWM_POLARITY_INVERTED>;
+        };
+
+  frequency:
+    type: int
+    required: true
+    description: |
+      PWM frequency in Hz for LEDs.
+
+  color-list:
+    type: array
+    required: true
+    description: |
+      The EC LED control host command uses a fixed list
+      of colors (defined in ec_command.h). This color list
+      maps the known colors from the host command
+      to the PWM channel displaying that color. The
+      host command colors include RED, GREEN, BLUE, WHITE,
+      AMBER, YELLOW.
+
+      For convenience, the dt-bindings/colors.h include
+      defines the colors used by the host command.
+      These colors can be used in this list to indicate
+      the color of the PWM channels so that the channels
+      can be mapped to the byte array used by the
+      host command brightness API.
+
+          color-list = <RED GREEN BLUE>;
+
+      Would return the EC brightness array
+
+          [255, 255, 255, 0, 0, 0]
+
+      Indicating that the colors RED, GREEN and BLUE (as
+      defined in ec_command.h) map to channels 0, 1 and 2
+      in this handler, and that there are no channels
+      available to display WHITE, AMBER and YELLOW.

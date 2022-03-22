@@ -1,0 +1,93 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: LED inputs and triggers, used to drive LED actions
+
+compatible: "cros-ec,led-policy"
+
+include: base.yaml
+
+properties:
+  led:
+    type: phandle
+    required: true
+    description: |
+      Reference to the node of the LED handler to use for this policy.
+      The handler contains from 1 to 4 LEDs that are managed
+      as a set, and can be usually either a PWM based set or a
+      GPIO based set.
+
+  enum-name:
+    type: string
+    required: false
+    description: |
+      If set, used as the LED enum defined in ec_command.h to
+      identify this LED when being referenced as part of the
+      common LED API (used by the EC host command).
+    enum:
+      - EC_LED_ID_BATTERY_LED
+      - EC_LED_ID_POWER_LED
+      - EC_LED_ID_ADAPTER_LED
+      - EC_LED_ID_LEFT_LED
+      - EC_LED_ID_RIGHT_LED
+      - EC_LED_ID_RECOVERY_HW_REINIT_LED
+      - EC_LED_ID_SYSRQ_DEBUG_LED
+
+child-binding:
+  description: Input to check for match.
+  properties:
+    cpu:
+      type: string
+      required: false
+      default: "ANY"
+      description: |
+        The AP state to check. ANY will match any state.
+        This must be the same as enum led_ap_state.
+      enum:
+        - ANY
+        - SUSPENDED
+        - RUNNING
+        - POWER_OFF
+    charger:
+      type: string
+      required: false
+      default: "ANY"
+      description: |
+        The charger state to match. ANY will match
+        any charger state.
+        This must be the same as enum led_charger_state.
+      enum:
+        - ANY
+        - FULL
+        - CHARGING
+        - DISCHARGING
+        - IDLE
+        - ERROR
+    battery:
+      type: array
+      required: false
+      default: [0, 100]
+      description: |
+        Battery charge to match, as a percentage between 0 and 100.
+        The current battery chrge is compared as
+
+          if (charge >= battery[0] && charge <= battery[1])
+                match...
+    action:
+      type: array
+      required: true
+      description: |
+        A list of colors/duration, as sets of 8 bit values,
+        interpreted as (colors.. duration), where the number of
+        colors is the number of separate LEDs in the referenced
+        LED handler, and duration is tenths of a second.
+        Typically PWM LED colors are percentages (0-100) and
+        GPIO based LEDs are off/on coded as 0 or 1.
+        When more than one set is configured, the color sets are
+        cycled through, with the duration providing the delay
+        between changes.  For example (for a RGB PWM LED)
+
+          action = <100 0 0 10>, <0 100 0 5>;
+
+        This cycles through red (1 second) and green (1/2 second).

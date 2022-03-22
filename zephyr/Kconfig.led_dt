@@ -7,3 +7,16 @@ menuconfig PLATFORM_EC_LED_DT
 	help
 	  Enable devicetree based LED module supporting automatic control of the
 	  battery and power LEDs.
+
+menuconfig PLATFORM_EC_LED_ALT
+	bool "Alternative LED Support"
+	select PLATFORM_EC_LED_COMMON
+	help
+	  Enable alternative devicetree based LED module supporting
+	  automatic control of the both PWM and GPIO based LEDs.
+	  The actions, policy and LED selection are all configured
+	  via devicetree, using the cros-ec,led-policy compat (for
+	  defining the policy), cros-ec,multi-pwm-leds for
+	  configuring PWM based LEDs, and cros-ec,gpio-leds for
+	  supporting GPIO based LEDs.
+	  The EC host command for controlling the LEDs is supported.

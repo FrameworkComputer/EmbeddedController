@@ -1,0 +1,38 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: GPIO LED configuration
+
+compatible: "cros-ec,gpio-leds"
+
+include: base.yaml
+
+properties:
+  gpios:
+    type: phandle-array
+    required: true
+    description: |
+      List of the GPIOs controlling the LEDs. GPIO_ACTIVE_LOW
+      can be used for low-side control of the signal.
+
+      For example
+        led1 {
+                compatible = "cros-ec,gpio-leds";
+
+                pwms = <&gpioc 3 GPIO_ACTIVE_LOW>,
+                       <&gpioc 4 GPIO_ACTIVE_LOW>;
+        };
+
+  color-list:
+    type: array
+    required: true
+    description: |
+      Maps the requested colors from the EC host command
+      to the appropriate GPIO channel. So,
+
+          color-list = <BLUE YELLOW>;
+
+      Would return the EC brightness array
+
+          [0, 0, 1, 1, 0, 0]
