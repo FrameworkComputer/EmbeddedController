@@ -16,8 +16,8 @@ static int powerinfo_handler(const struct shell *shell, size_t argc,
 	int state;
 
 	state = pwr_sm_get_state();
-	shell_fprintf(shell, SHELL_INFO, "Power state = %d (%s)\n",
-					state, pwrsm_dbg[state]);
+	shell_fprintf(shell, SHELL_INFO, "power state %d = %s, in 0x%04x\n",
+		      state, pwrsm_dbg[state], power_get_signals());
 	return 0;
 }
 
