@@ -143,8 +143,7 @@ static void ps185_hdmi_hpd_deferred(void)
 				debounced_hpd);
 		CPRINTS("Set DP_AUX_PATH_SEL: %d", 1);
 	}
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl),
-			!debounced_hpd);
+	svdm_set_hpd_gpio(USBC_PORT_C1, debounced_hpd);
 	CPRINTS(debounced_hpd ? "HDMI plug" : "HDMI unplug");
 }
 DECLARE_DEFERRED(ps185_hdmi_hpd_deferred);

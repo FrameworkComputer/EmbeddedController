@@ -27,6 +27,12 @@ int pd_check_vconn_swap(int port)
 	return chipset_in_state(CHIPSET_STATE_SUSPEND | CHIPSET_STATE_ON);
 }
 
+static void set_dp_aux_path_sel(int port)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(dp_aux_path_sel), port);
+	CPRINTS("Set DP_AUX_PATH_SEL: %d", port);
+}
+
 int svdm_get_hpd_gpio(int port)
 {
 	/* HPD is low active, inverse the result */
@@ -35,11 +41,25 @@ int svdm_get_hpd_gpio(int port)
 
 void svdm_set_hpd_gpio(int port, int en)
 {
+	static int active_port = -1;
+
 	/*
-	 * HPD is low active, inverse the en
-	 * TODO: C0&C1 shares the same HPD, implement FCFS policy.
+	 * HPD is low active, inverse the en.
+	 *
+	 * Implement FCFS policy:
+	 * 1) Enable hpd if no active port.
+	 * 2) Disable hpd if active port is the given port.
 	 */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl), !en);
+	if (en && active_port < 0) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl), 0);
+		active_port = port;
+	}
+
+	if (!en && active_port == port) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl), 1);
+		active_port = -1;
+		set_dp_aux_path_sel(0);
+	}
 }
 
 __override int svdm_dp_config(int port, uint32_t *payload)
@@ -108,8 +128,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	}
 
 	if (lvl) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(dp_aux_path_sel), port);
-		CPRINTS("Set DP_AUX_PATH_SEL: %d", port);
+		set_dp_aux_path_sel(port);
 
 		usb_mux_set(port, USB_PD_MUX_DOCK,
 			    USB_SWITCH_CONNECT,
