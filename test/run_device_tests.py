@@ -26,7 +26,7 @@ import time
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
 from pathlib import Path
-from typing import Optional, BinaryIO, List
+from typing import Optional, BinaryIO, List, Dict
 
 # pylint: disable=import-error
 import colorama  # type: ignore[import]
@@ -116,7 +116,23 @@ class AllTests:
     """All possible tests."""
 
     @staticmethod
-    def get(board_config: BoardConfig):
+    def get(board_config: BoardConfig) -> Dict[str, TestConfig]:
+        public_tests = AllTests.get_public_tests(board_config)
+        private_tests = AllTests.get_private_tests()
+
+        # Make sure there are no conflicts
+        # pylint: disable=dict-keys-not-iterating
+        overwritten_tests = public_tests.keys() & private_tests.keys()
+        # pylint: enable=dict-keys-not-iterating
+        if overwritten_tests:
+            err = 'Public test overwritten by private one with the same name: '
+            err += str(overwritten_tests)
+            raise RuntimeError(err)
+
+        return {**public_tests, **private_tests}
+
+    @staticmethod
+    def get_public_tests(board_config: BoardConfig) -> Dict[str, TestConfig]:
         tests = {
             'aes':
                 TestConfig(name='aes'),
@@ -195,6 +211,27 @@ class AllTests:
         if board_config.name == BLOONCHIPPER:
             tests['stm32f_rtc'] = TestConfig(name='stm32f_rtc')
 
+        return tests
+
+    @staticmethod
+    def get_private_tests() -> Dict[str, TestConfig]:
+        # Return all private tests, if the folder exists
+        tests = {}
+        try:
+            current_dir = os.path.dirname(__file__)
+            private_dir = os.path.join(current_dir, os.pardir, 'private/test')
+            have_private = os.path.isdir(private_dir)
+            if not have_private:
+                return {}
+            sys.path.append(private_dir)
+            import private_tests  # pylint: disable=import-error
+            for test_id, test_args in private_tests.tests.items():
+                tests[test_id] = TestConfig(**test_args)
+        # Catch all exceptions to avoid disruptions in public repo
+        except BaseException as e:
+            logging.debug('Failed to get list of private tests: %s', str(e))
+            logging.debug('Ignore error and continue.')
+            return {}
         return tests
 
 

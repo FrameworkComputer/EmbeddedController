@@ -111,6 +111,7 @@ test-list-host += vboot
 test-list-host += version
 test-list-host += x25519
 test-list-host += stillness_detector
+-include private/test/build.mk
 endif
 
 # Build up the list of coverage test targets based on test-list-host, but
