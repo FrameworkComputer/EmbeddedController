@@ -14,9 +14,16 @@
  * Source of truth is the project/brask/kinox/config.star configuration file.
  */
 
+enum ec_cfg_dp_display {
+	ABSENT = 0,
+	DB_HDMI = 1,
+	DB_DP = 2
+};
+
 union kinox_cbi_fw_config {
 	struct {
-		uint32_t reserved_1 : 32;
+		uint32_t dp_display : 4;
+		uint32_t reserved_1 : 28;
 	};
 	uint32_t raw_value;
 };

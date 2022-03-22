@@ -19,7 +19,9 @@ BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
  * FW_CONFIG defaults for kinox if the CBI.FW_CONFIG data is not
  * initialized.
  */
-static const union kinox_cbi_fw_config fw_config_defaults = {0};
+static const union kinox_cbi_fw_config fw_config_defaults = {
+	.dp_display = ABSENT,
+};
 
 /****************************************************************************
  * Kinox FW_CONFIG access
