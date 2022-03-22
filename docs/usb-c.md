@@ -29,7 +29,9 @@ operate in many different modes. This includes but isn't limited to:
     *   USB SuperSpeed mode (up to 4 lanes for USB data)
     *   DisplayPort Alternate Mode (up to 4 lanes for DisplayPort data)
     *   Dock Mode (2 lanes for USB data, and 2 lanes for DisplayPort)
+    *   Thunderbolt 3 (TBT3) Alternate Mode (4 lanes for TBT3 data)
     *   Audio Accessory mode. (1 lane is used for L and R analog audio signal)
+    *   USB4 (4 lanes for USB data, but using different signaling than USB 3.2)
 
 For a more complete list of USB-C Power Delivery features, see the
 [USB-C PD spec][USB PD Spec Id].
@@ -103,6 +105,11 @@ Modes in the EC codebase.
         cables and other accessory functions (such as display dongles, and
         docks). VCONN re-uses one of the CC1/CC2 signals to provide 5 volt, 1
         watt, of power.
+*   VDM
+    * Vendor-Defined Message: A type of PD data message whose contents can be
+      specific to a particular vendor or subordinate specification. The TCPM
+      primarily uses VDMs to discover support for alternate modes and enter
+      them.
 
 ## Different PD stacks
 
@@ -113,6 +120,8 @@ Right now platform/ec has two different implementations of USB-C PD stack.
     [`usb_pd_policy.c`](../common/usb_pd_policy.c)
 2.  The newer implementation is found under [`common/usbc`](../common/usbc) and
     is broken up into multiple different files and state machines
+    *   Device policy manager files, `usb_pd_dpm.c`, `usb_mode.c`,
+        `*_alt_mode.c`.
     *   Policy engine state machine files, `usb_pe_*_sm.c`.
     *   Protocol engine state machine file, `usb_prl_*_sm.c`.
     *   State machine framework file, `usb_sm.c`.

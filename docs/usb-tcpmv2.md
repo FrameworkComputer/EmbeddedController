@@ -204,6 +204,95 @@ names are meant to track very closely with the specification so they can be
 easily searchable and understood. The PE’s primary responsibility is to send and
 process PD messages in order to implement the port’s policy.
 
+### Device Policy Manager Layer
+
+The USB PD specification defines some responsibilities of the DPM, e.g.
+selecting _Source Capabilities_ to offer and alternate modes to enter. Broadly,
+the DPM is supposed to make discretionary decisions about the behavior of the
+PE, i.e. policy decisions. However, the spec is relatively silent on the
+structure and scope of the DPM.
+
+In TCPMv2, the DPM consists of a central code module in `usb_pd_dpm.c` and
+several code modules for supported alternate or USB modes. The mode entry and
+exit logic in the DPM takes the form of a state machine, and each mode has its
+own state machine to control the specific mode entry and exit steps. The DPM
+also contains logic to choose which Source PDO to offer in _Source
+Capabilities_.
+
+The DPM state machines do not currently use the USB state machine framework.
+Additionally, there are policy decisions encoded in the lower layers and in
+board code that ought to be made by the DPM. An effort to centralize policy
+decisions and improve DPM code organization is ongoing.
+
+## Alternate modes and USB4
+
+TCPMv2 supports several modes of operation besides USB 3.2. To determine which
+modes the port partner and cable support, the TCPM sends _SOP_ and _SOP'_
+Vendor-Defined Messages, specifically _Discover Identity_, _Discover SVIDs_,
+and _Discover Modes_. The responses to these messages list supported modes. The
+AP may query this information via `EC_CMD_TYPEC_DISCOVERY`.
+
+Based on the discovery responses, the DPM decides which mode to enter (if any)
+and drives mode entry. If `CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY` is enabled, the
+AP directs the DPM to enter and exit modes via `EC_CMD_TYPEC_CONTROL`.
+
+### DisplayPort
+
+DisplayPort alternate mode repurposes the SuperSpeed lanes as video data lanes,
+all flowing from the host to the monitor. DP mode can use 2 lanes, allowing
+simultaneous USB traffic on the cable, or it can use all 4 lanes, supporting
+greater display bandwidth at the expense of USB.
+
+The sequence to enter DP alternate mode (v. 1.4) is
+*   The TCPM sends an SOP VDM _Enter Mode_ REQ with the DP VID.
+*   The TCPM sends an SOP _DP Status_ VDM REQ.
+*   The TCPM sends an SOP _DP Configure_ VDM REQ.
+*   Display sends an SOP _Attention_ VDM REQ.
+
+To exit DP alternate mode, the TCPM sends an SOP VDM _Exit Mode_ REQ.
+
+`dp_alt_mode.c` and `usb_pd_alt_mode_dfp.c` contain the majority of the DP entry
+and exit logic.
+
+### Thunderbolt 3
+
+TBT3 alternate mode repurposes all 4 SuperSpeed lanes for Thunderbolt 3, which
+is itself a bidirectional tunneling protocol supporting various types of
+hardware, most commonly docks.
+
+The sequence to enter TBT3 alternate mode depends on the cable used:
+*   If the cable supports TBT3, the TCPM sends an SOP' VDM _Enter Mode_ REQ with
+    the Intel VID.
+*   If the cable is also an active cable with SOP'' support, the TCPM sends an
+    SOP'' VDM _Enter Mode_ REQ. (The TBT3 mode VDO may identify the cable as
+    active for this purpose when the ID Header VDO does not.)
+*   The TCPM sends an SOP VDM _Enter Mode_ REQ.
+
+To exit TBT3 alternate mode, the TCPM sends VDM _Exit Mode_ REQs to SOP, SOP'',
+and SOP', as appropriate.
+
+`tbt_alt_mode.c` and `usb_pd_alt_mode_dfp.c` contain the TBT entry and exit
+logic.
+
+### USB4
+
+USB4 is not an alternate mode, but it does repurpose the SuperSpeed lines (using
+different signaling and routing than USB 3.2), so the TCPM must explicitly enter
+USB4.
+
+The sequence to enter USB4 is conceptually similar to that for TBT3:
+*   If the cable supports USB4, the TCPM sends an SOP' _Enter USB_ message.
+*   If the cable is also an active cable, the TCPM sends an SOP'' _Enter USB_.
+*   The TCPM sends an SOP _Enter USB_.
+Complicating matters, if the cable does not support USB4 but does support TBT3,
+the TCPM may enter TBT3 for the cable as above, then enter USB4 for the port
+partner.
+
+To exit USB4 (returning to a USB 3.2 mux configuration), the TCPM performs a
+_Data Reset_ sequence.
+
+`usb_mode.c` and `usb_pd_alt_mode_dfp.c` contain the USB4 entry and exit logic.
+
 ## Best Practices
 
 *   Always call return after set\_state(). Once the state has been changed,
