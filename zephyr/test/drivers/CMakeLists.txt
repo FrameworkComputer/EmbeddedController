@@ -55,5 +55,6 @@ target_sources(app PRIVATE
   src/usb_mux.c
   src/usb_pd_host_cmd.c
   src/utils.c
+  src/vboot_hash.c
   src/watchdog.c
 )
