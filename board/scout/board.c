@@ -556,22 +556,30 @@ void board_enable_s0_rails(int enable)
 	 * Toggle scaler power and its downstream USB devices.
 	 */
 	gpio_set_level(GPIO_EC_SCALER_EN, enable);
-	gpio_set_level(GPIO_EC_IMX8_EN, enable);
 	gpio_set_level(GPIO_PWR_CTRL, enable);
 	gpio_set_level(GPIO_EC_MX8M_ONOFF, enable);
 	gpio_set_level(GPIO_EC_CAM_V3P3_EN, enable);
 
-	gpio_set_level(GPIO_PP3300_TPU_A_EN, enable);
-
 	gpio_set_level(GPIO_EN_LOAD_SWITCH, enable);
 }
 
-__override void board_enable_s0ix_rails(int enable)
+/*
+ * TPU is turned on in S0, off in S0ix and lower.
+ */
+static void disable_tpu_power(void)
 {
-	/* Turn off TPU power to reduce power consumption */
-	gpio_set_level(GPIO_PP3300_TPU_A_EN, !enable);
-	gpio_set_level(GPIO_EC_IMX8_EN, !enable);
+	gpio_set_level(GPIO_PP3300_TPU_A_EN, 0);
+	gpio_set_level(GPIO_EC_IMX8_EN, 0);
 }
+
+static void enable_tpu_power(void)
+{
+	gpio_set_level(GPIO_PP3300_TPU_A_EN, 1);
+	gpio_set_level(GPIO_EC_IMX8_EN, 1);
+}
+
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, disable_tpu_power, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_tpu_power, HOOK_PRIO_DEFAULT);
 
 int ec_config_get_usb4_present(void)
 {

@@ -108,13 +108,6 @@ enum power_signal {
 void board_enable_s0_rails(int enable);
 
 /*
- * Board-specific enable for any additional rails in S0ix
- *
- * Input 0 to turn off, 1 to turn on.
- */
-__override_proto void board_enable_s0ix_rails(int enable);
-
-/*
  * Board-specific flag for whether EN_S0_RAILS can be turned off when
  * CPU_C10_GATED is asserted by the PCH.
  *
