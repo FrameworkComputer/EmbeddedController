@@ -38,8 +38,23 @@ int cm32183_read_lux(int *lux, int af)
  */
 int cm32183_init(void)
 {
+	int retry_count;
 
-	return i2c_write16(I2C_PORT_ALS, CM32183_I2C_ADDR,
-		CM32183_REG_CONFIGURE, CM32183_REG_CONFIGURE_CH_EN);
+	for (retry_count = 0; retry_count < 3; retry_count++) {
+
+		/**
+		 * The resume hook does not match the sensor power on sequence,
+		 * it will cause the sensor initial fail and disable the als task.
+		 * Add the delay time 10ms to retry again if sensor enable fail,
+		 * make sure the sensor and als task are enable.
+		 */
+		if (i2c_write16(I2C_PORT_ALS, CM32183_I2C_ADDR,
+			CM32183_REG_CONFIGURE, CM32183_REG_CONFIGURE_CH_EN))
+			msleep(10);
+		else
+			return EC_SUCCESS;
+	}
+
+	return EC_ERROR_UNKNOWN;
 
 }
