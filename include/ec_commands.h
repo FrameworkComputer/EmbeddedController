@@ -168,9 +168,9 @@ extern "C" {
 /* 0x92: Lid Angle if available, LID_ANGLE_UNRELIABLE otherwise */
 /* 0x94 - 0x99: 1st Accelerometer */
 /* 0x9a - 0x9f: 2nd Accelerometer */
+
 #define EC_MEMMAP_GYRO_DATA 0xa0 /* Gyroscope data 0xa0 - 0xa5 */
 #define EC_MEMMAP_GPU 0xa6 /* GPU-specific, 8 bits */
-/* Unused 0xa7 - 0xdf */
 
 /*
  * Bit fields for EC_MEMMAP_GPU
@@ -179,6 +179,10 @@ extern "C" {
  */
 #define EC_MEMMAP_GPU_D_NOTIFY_MASK GENMASK(2, 0)
 #define EC_MEMMAP_GPU_OVERT_BIT BIT(3)
+
+/* Power Participant related components */
+#define EC_MEMMAP_PWR_SRC 0xa7 /* Power source (8-bit) */
+/* Unused 0xa8 - 0xdf */
 
 /*
  * ACPI is unable to access memory mapped data at or above this offset due to
