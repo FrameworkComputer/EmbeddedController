@@ -21,6 +21,3 @@ zephyr_library_sources(
 # Board specific implementation
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
   "src/i2c.c")
-
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
-  "src/led.c")
