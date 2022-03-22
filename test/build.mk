@@ -192,6 +192,7 @@ kasa-y=kasa.o
 mpu-y=mpu.o
 mutex-y=mutex.o
 newton_fit-y=newton_fit.o
+panic_data-y=panic_data.o
 pingpong-y=pingpong.o
 power_button-y=power_button.o
 powerdemo-y=powerdemo.o

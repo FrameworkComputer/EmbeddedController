@@ -67,6 +67,18 @@ SERVO_MICRO = 'servo_micro'
 GCC = 'gcc'
 CLANG = 'clang'
 
+TEST_ASSETS_BUCKET = 'gs://chromiumos-test-assets-public/fpmcu/RO'
+DARTMONKEY_IMAGE_PATH = os.path.join(
+    TEST_ASSETS_BUCKET, 'dartmonkey_v2.0.2887-311310808.bin')
+NOCTURNE_FP_IMAGE_PATH = os.path.join(
+    TEST_ASSETS_BUCKET, 'nocturne_fp_v2.2.64-58cf5974e.bin')
+NAMI_FP_IMAGE_PATH = os.path.join(
+    TEST_ASSETS_BUCKET, 'nami_fp_v2.2.144-7a08e07eb.bin')
+BLOONCHIPPER_V4277_IMAGE_PATH = os.path.join(
+    TEST_ASSETS_BUCKET, 'bloonchipper_v2.0.4277-9f652bb3.bin')
+BLOONCHIPPER_V5938_IMAGE_PATH = os.path.join(
+    TEST_ASSETS_BUCKET, 'bloonchipper_v2.0.5938-197506c1.bin')
+
 
 class ImageType(Enum):
     """EC Image type to use for the test."""
@@ -78,13 +90,15 @@ class BoardConfig:
     """Board-specific configuration."""
 
     def __init__(self, name, servo_uart_name, servo_power_enable,
-                 rollback_region0_regex, rollback_region1_regex, mpu_regex):
+                 rollback_region0_regex, rollback_region1_regex, mpu_regex,
+                 variants):
         self.name = name
         self.servo_uart_name = servo_uart_name
         self.servo_power_enable = servo_power_enable
         self.rollback_region0_regex = rollback_region0_regex
         self.rollback_region1_regex = rollback_region1_regex
         self.mpu_regex = mpu_regex
+        self.variants = variants
 
 
 class TestConfig:
@@ -204,6 +218,15 @@ class AllTests:
         if board_config.name == BLOONCHIPPER:
             tests['stm32f_rtc'] = TestConfig(name='stm32f_rtc')
 
+        # Run panic data tests for all boards and RO versions.
+        for variant_name, variant_info in board_config.variants.items():
+            tests['panic_data_' + variant_name] = (
+                TestConfig(name='panic_data',
+                           fail_regexes=[SINGLE_CHECK_FAILED_REGEX,
+                                         ALL_TESTS_FAILED_REGEX],
+                           ro_image=variant_info.get('ro_image_path'),
+                           build_board=variant_info.get('build_board')))
+
         return tests
 
 
@@ -214,6 +237,14 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
+    variants={
+        'bloonchipper_v2.0.4277': {
+            'ro_image_path': BLOONCHIPPER_V4277_IMAGE_PATH
+        },
+        'bloonchipper_v2.0.5938': {
+            'ro_image_path': BLOONCHIPPER_V5938_IMAGE_PATH
+        }
+    }
 )
 
 DARTMONKEY_CONFIG = BoardConfig(
@@ -223,6 +254,21 @@ DARTMONKEY_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_80E0000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_24000000_REGEX,
+    # For dartmonkey board, run panic data test also on nocturne_fp and
+    # nami_fp boards with appropriate RO image.
+    variants={
+        'dartmonkey_v2.0.2887': {
+            'ro_image_path': DARTMONKEY_IMAGE_PATH
+        },
+        'nocturne_fp_v2.2.64': {
+            'ro_image_path': NOCTURNE_FP_IMAGE_PATH,
+            'build_board': 'nocturne_fp'
+        },
+        'nami_fp_v2.2.144': {
+            'ro_image_path': NAMI_FP_IMAGE_PATH,
+            'build_board': 'nami_fp'
+        }
+    }
 )
 
 BOARD_CONFIGS = {
