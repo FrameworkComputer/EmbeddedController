@@ -59,6 +59,8 @@ static int cm32183_read(const struct motion_sensor_t *s, intv3_t v)
 		return ret;
 
 	lux_data += drv_data->offset;
+	lux_data = lux_data * drv_data->scale +
+		lux_data * drv_data->uscale / 10000;
 
 	v[0] = lux_data;
 	v[1] = 0;
