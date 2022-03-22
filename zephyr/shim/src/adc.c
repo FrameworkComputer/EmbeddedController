@@ -82,16 +82,5 @@ int adc_read_channel(enum adc_channel ch)
 			      ADC_GAIN_1, CONFIG_PLATFORM_EC_ADC_RESOLUTION,
 			      &ret);
 	ret = (ret * adc_channels[ch].factor_mul) / adc_channels[ch].factor_div;
-#ifdef CONFIG_BOARD_NIVVIKS
-	/*
-	 * TODO(b/224900226): Remove when fixed.
-	 * Temporary workaround for b/224900226, where
-	 * the temperature ADCs sometimes read zero.
-	 */
-	if (ret == 0) {
-		LOG_ERR("Zero read on sensor %d, ignored", ch);
-		return -1;
-	}
-#endif
 	return ret;
 }
