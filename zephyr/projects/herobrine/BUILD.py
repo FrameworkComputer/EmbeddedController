@@ -58,7 +58,7 @@ register_variant(
     extra_dts_overlays=[
         here / "battery_villager.dts",
         here / "gpio_villager.dts",
-        here / "motionsense.dts",
+        here / "motionsense_villager.dts",
         here / "switchcap.dts",
         here / "usbc_villager.dts",
     ],
