@@ -22,6 +22,7 @@
 				status = "okay";
 				port = <&i2c_tcpc0>;
 				i2c-addr-flags = "SYV682X_ADDR1_FLAGS";
+				frs_en_gpio = <&gpio_usb_c0_frs_en>;
 			};
 			tcpc {
 				compatible = "parade,ps8xxx";
@@ -45,6 +46,7 @@
 				status = "okay";
 				port = <&i2c_tcpc1>;
 				i2c-addr-flags = "SYV682X_ADDR1_FLAGS";
+				frs_en_gpio = <&gpio_usb_c1_frs_en>;
 			};
 			tcpc {
 				compatible = "parade,ps8xxx";
