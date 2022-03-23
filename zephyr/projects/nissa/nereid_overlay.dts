@@ -91,20 +91,20 @@
 		};
 
 		gpio_sb_1: sb_1 {
-			gpios = <&gpioe 6 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpioe 6 0>;
 			no-auto-init;
 		};
 		gpio_sb_2: sb_2 {
-			gpios = <&gpiof 0 GPIO_OUTPUT>;
+			gpios = <&gpiof 0 0>;
 			no-auto-init;
 		};
 
 		gpio_sb_3: sb_3 {
-			gpios = <&gpioe 7 GPIO_OPEN_DRAIN>;
+			gpios = <&gpioe 7 0>;
 			no-auto-init;
 		};
 		gpio_sb_4: sb_4 {
-			gpios = <&gpioe 0 GPIO_INPUT>;
+			gpios = <&gpioe 0 0>;
 			no-auto-init;
 		};
 	};
@@ -113,21 +113,20 @@
 	 * Aliases used for sub-board GPIOs.
 	 */
 	aliases {
-		/*
-		 * Input GPIO when used with type-C port 1
-		 * Output when used with HDMI sub-board
-		 */
+	  /* USB-C: interrupt input. I2C pins are on i2c_ec_i2c_sub_usb_c1 */
 		gpio-usb-c1-int-odl = &gpio_sb_1;
-		gpio-en-rails-odl = &gpio_sb_1;
 		/*
-		 * Sub-board with type A USB, enable.
+		 * USB-A: VBUS enable output
+		 * LTE: power enable output
 		 */
 		gpio-en-usb-a1-vbus = &gpio_sb_2;
 		/*
-		 * HPD pins for HDMI sub-board.
+		 * HDMI: power enable output, HDMI enable output,
+		 * and HPD input
 		 */
-		gpio-hdmi-en-odl = &gpio_sb_3;
-		gpio-hpd-odl = &gpio_sb_4;
+		gpio-en-rails-odl = &gpio_sb_1;
+		gpio-hdmi-en-odl = &gpio_sb_4;
+		gpio-hpd-odl = &gpio_sb_3;
 	};
 
 	named-temp-sensors {

@@ -5,6 +5,7 @@
 
 /* Nereid sub-board hardware configuration */
 
+#include <ap_power/ap_power.h>
 #include <drivers/gpio.h>
 #include <init.h>
 #include <kernel.h>
@@ -19,6 +20,54 @@
 #include "nissa_common.h"
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
+
+static void hdmi_power_handler(struct ap_power_ev_callback *cb,
+			       struct ap_power_ev_data data)
+{
+	/* Enable rails for S3 */
+	const struct gpio_dt_spec *s3_rail =
+		GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl);
+	/* Enable rails for S5 */
+	const struct gpio_dt_spec *s5_rail =
+		GPIO_DT_FROM_ALIAS(gpio_en_rails_odl);
+	/* Connect DDC to sub-board */
+	const struct gpio_dt_spec *ddc_select =
+		GPIO_DT_FROM_NODELABEL(gpio_hdmi_sel);
+
+	switch (data.event) {
+	case AP_POWER_PRE_INIT:
+		LOG_DBG("Enabling HDMI+USB-A PP5000 and selecting DDC");
+		gpio_pin_set_dt(s5_rail, 1);
+		gpio_pin_set_dt(ddc_select, 1);
+		break;
+	case AP_POWER_STARTUP:
+		LOG_DBG("Enabling HDMI VCC");
+		gpio_pin_set_dt(s3_rail, 1);
+		break;
+	case AP_POWER_SHUTDOWN:
+		LOG_DBG("Disabling HDMI VCC");
+		gpio_pin_set_dt(s3_rail, 0);
+		break;
+	case AP_POWER_HARD_OFF:
+		LOG_DBG("Disabling HDMI+USB-A PP5000 and deselecting DDC");
+		gpio_pin_set_dt(ddc_select, 0);
+		gpio_pin_set_dt(s5_rail, 0);
+		break;
+	default:
+		LOG_ERR("Unhandled HDMI power event %d", data.event);
+		break;
+	}
+}
+
+static void hdmi_hpd_interrupt(const struct device *device,
+			       struct gpio_callback *callback,
+			       gpio_port_pins_t pins)
+{
+	int state = gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_hpd_odl));
+
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_hdmi_hpd), state);
+	LOG_DBG("HDMI HPD changed state to %d", state);
+}
 
 static void nereid_subboard_init(void)
 {
@@ -45,26 +94,56 @@ static void nereid_subboard_init(void)
 		/* Enable type-C port 1 */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
-			GPIO_INPUT);
+			GPIO_INPUT | GPIO_PULL_UP);
 		/* Configure type-A port 1 VBUS, initialise it as low */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
 			GPIO_OUTPUT_LOW);
 	}
 	if (sb == NISSA_SB_HDMI_A) {
-		/* Disable I2C_PORT_USB_C1_TCPC */
-		/* TODO(b:212490923): Use pinctrl to switch from I2C */
-		/* Enable HDMI GPIOs */
-		gpio_pin_configure_dt(
-			GPIO_DT_FROM_ALIAS(gpio_en_rails_odl),
-			GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH);
-		gpio_pin_configure_dt(
-			GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl),
-			GPIO_OUTPUT | GPIO_OUTPUT_INIT_HIGH);
-		/* Configure the interrupt separately */
-		gpio_pin_configure_dt(
-			GPIO_DT_FROM_ALIAS(gpio_hpd_odl),
-			GPIO_INPUT);
+		const struct gpio_dt_spec *hpd_gpio =
+			GPIO_DT_FROM_ALIAS(gpio_hpd_odl);
+		static struct ap_power_ev_callback hdmi_power_cb;
+		static struct gpio_callback hdmi_hpd_cb;
+		int rv, irq_key;
+
+		/* HDMI power enable outputs */
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_rails_odl),
+				      GPIO_OUTPUT_INACTIVE | GPIO_OPEN_DRAIN |
+					      GPIO_PULL_UP | GPIO_ACTIVE_LOW);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl),
+				      GPIO_OUTPUT_INACTIVE | GPIO_OPEN_DRAIN |
+					      GPIO_ACTIVE_LOW);
+		/* Control HDMI power in concert with AP */
+		ap_power_ev_init_callback(
+			&hdmi_power_cb, hdmi_power_handler,
+			AP_POWER_PRE_INIT | AP_POWER_HARD_OFF |
+				AP_POWER_STARTUP | AP_POWER_SHUTDOWN);
+		ap_power_ev_add_callback(&hdmi_power_cb);
+
+		/*
+		 * Configure HPD input from sub-board; it's inverted by a buffer
+		 * on the sub-board.
+		 */
+		gpio_pin_configure_dt(hpd_gpio, GPIO_INPUT | GPIO_ACTIVE_LOW);
+		/* Register interrupt handler for HPD changes */
+		gpio_init_callback(&hdmi_hpd_cb, hdmi_hpd_interrupt,
+				   BIT(hpd_gpio->pin));
+		gpio_add_callback(hpd_gpio->port, &hdmi_hpd_cb);
+		rv = gpio_pin_interrupt_configure_dt(hpd_gpio,
+						     GPIO_INT_EDGE_BOTH);
+		__ASSERT(rv == 0,
+			 "HPD interrupt configuration returned error %d", rv);
+		/*
+		 * Run the HPD handler once to ensure output is in sync.
+		 * Lock interrupts to ensure that we don't cause desync if an
+		 * HPD interrupt comes in between the internal read of the input
+		 * and write to the output.
+		 */
+		irq_key = irq_lock();
+		hdmi_hpd_interrupt(hpd_gpio->port, &hdmi_hpd_cb,
+				   BIT(hpd_gpio->pin));
+		irq_unlock(irq_key);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, nereid_subboard_init, HOOK_PRIO_FIRST+1);
