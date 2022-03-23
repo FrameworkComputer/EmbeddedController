@@ -153,18 +153,16 @@ void s5_power_up_control(int control)
 
 static void chipset_force_g3(void)
 {
-	gpio_set_level(GPIO_SUSP_L, 0);
-	gpio_set_level(GPIO_EC_VCCST_PG, 0);
 	gpio_set_level(GPIO_VR_ON, 0);
+	gpio_set_level(GPIO_EC_VCCST_PG, 0);
+	gpio_set_level(GPIO_SUSP_L, 0);
 	gpio_set_level(GPIO_PCH_PWROK, 0);
 	gpio_set_level(GPIO_SYS_PWROK, 0);
 	gpio_set_level(GPIO_SYSON, 0);
 	/* keep pch power for wake source or vpro type */
 	if (!keep_pch_power() || me_change) {
 
-
 		gpio_set_level(GPIO_PCH_RSMRST_L, 0);
-
 		gpio_set_level(GPIO_PCH_PWR_EN, 0);
 		gpio_set_level(GPIO_PCH_DPWROK, 0);
 		gpio_set_level(GPIO_PCH_PWRBTN_L, 0);
@@ -230,7 +228,8 @@ int board_chipset_power_on(void)
 	/* Deassert RSMRST# */
 	gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 
-	gpio_set_level(GPIO_AC_PRESENT_OUT, 1);
+	if (extpower_is_present())
+		gpio_set_level(GPIO_AC_PRESENT_OUT, 1);
 
 	if (want_boot_ap_at_g3 || rtc_reset_tries) {
 		CPRINTS("Assert the power button signal to power on system!");
