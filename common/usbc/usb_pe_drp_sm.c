@@ -5020,14 +5020,18 @@ __maybe_unused static void pe_frs_snk_src_start_ams_entry(int port)
 
 	print_current_state(port);
 
-	/* Contract is invalid now */
-	pe_invalidate_explicit_contract(port);
-
 	/* Inform Protocol Layer this is start of AMS */
 	PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 
 	/* Shared PRS/FRS code, indicate FRS path */
 	PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_PATH);
+
+	/*
+	 * Invalidate the contract after the FRS flags set so the
+	 * flags can be propagated to this function.
+	 */
+	pe_invalidate_explicit_contract(port);
+
 	set_state_pe(port, PE_PRS_SNK_SRC_SEND_SWAP);
 }
 
