@@ -1,0 +1,18 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC
+
+config CROS_SYSTEM_XEC_PRE_INIT_PRIORITY
+	int "System pre-initialization priority"
+	default 15
+	range 10 19
+	depends on SOC_FAMILY_MEC
+	help
+	  This sets the priority of the MCHP XEC chip system initialization.
+	  The chip system initialization verifies the integrity of the BBRAM
+	  must be a lower priority than CONFIG_BBRAM_INIT_PRIORITY and
+	  must be a higher priority than PLATFORM_EC_SYSTEM_PRE_INIT.
+
+endif # PLATFORM_EC
