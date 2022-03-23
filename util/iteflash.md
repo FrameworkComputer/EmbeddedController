@@ -116,7 +116,9 @@ kernel modules. Consult your Linux distribution's documentation and support
 forums. After installing any packages that might be missing, simply try the
 install script again.
 
-You will need to reinstall `i2c-pseudo` after each kernel upgrade.
+If DKMS is not available, you will need to reinstall `i2c-pseudo` after each
+kernel upgrade. Otherwise DKMS should automatically install the module in each
+new kernel, which you can verify with `dkms status`.
 
 There is an intention to
 [upstream i2c-pseudo](https://issuetracker.google.com/129565355), though even if
