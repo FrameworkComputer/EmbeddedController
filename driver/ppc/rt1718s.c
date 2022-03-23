@@ -10,6 +10,7 @@
 #include "console.h"
 #include "driver/ppc/rt1718s.h"
 #include "driver/tcpm/tcpci.h"
+#include "usb_pe_sm.h"
 #include "usbc_ppc.h"
 #include "util.h"
 

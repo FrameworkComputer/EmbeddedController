@@ -256,6 +256,15 @@ int rt1718s_set_frs_enable(int port, int enable);
 
 
 /**
+ * Board override for fast role swap.
+ *
+ * @param port		USB-C port
+ * @param enable	enable/disable FRS
+ * @return EC_SUCCESS if success, EC_ERROR_UNKNOWN otherwise.
+ */
+__override_proto int board_rt1718s_set_frs_enable(int port, int enable);
+
+/**
  * Software reset RT1718S
  *
  * @param port		USB-C port
