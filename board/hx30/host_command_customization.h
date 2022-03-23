@@ -210,4 +210,10 @@ struct ec_response_read_pd_version {
 	uint8_t pd1_version[8];
 } __ec_align1;
 
+#define EC_CMD_THERMAL_QEVENT 0x3E12
+
+struct ec_params_thermal_qevent_control {
+	uint8_t send_event;
+} __ec_align1;
+
 #endif /* __HOST_COMMAND_CUSTOMIZATION_H */

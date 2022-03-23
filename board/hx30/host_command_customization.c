@@ -305,3 +305,15 @@ static enum ec_status read_pd_versoin(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_READ_PD_VERSION, read_pd_versoin, EC_VER_MASK(0));
+
+static enum ec_status thermal_qevent(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_thermal_qevent_control *p = args->params;
+
+	if (p->send_event) {
+		host_set_single_event(EC_HOST_EVENT_THERMAL_QEVENT);
+		return EC_RES_SUCCESS;
+	}
+	return EC_ERROR_INVAL;
+}
+DECLARE_HOST_COMMAND(EC_CMD_THERMAL_QEVENT, thermal_qevent, EC_VER_MASK(0));
