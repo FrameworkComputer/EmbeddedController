@@ -160,6 +160,8 @@
 #define CONFIG_8042_AUX
 #define CONFIG_PS2
 #define CONFIG_CMD_PS2
+#define PRIMUS_PS2_CH		NPCX_PS2_CH1
+
 /* Button */
 #undef CONFIG_VOLUME_BUTTONS
 
