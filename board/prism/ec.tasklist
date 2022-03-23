@@ -10,4 +10,5 @@
 	TASK_ALWAYS_RO(RWSIG,    rwsig_task,   NULL, 1280) \
 	TASK_ALWAYS   (HOOKS,    hook_task,    NULL, 2048) \
 	TASK_ALWAYS_RW(RGBKBD, rgbkbd_task, NULL, 2048) \
+	TASK_ALWAYS_RW(HOSTCMD, host_command_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_ALWAYS   (CONSOLE,  console_task, NULL, 1024)

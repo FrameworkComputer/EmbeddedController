@@ -50,6 +50,7 @@ const void *const usb_strings[] = {
 	[USB_STR_VERSION]      =
 			USB_STRING_DESC(CROS_EC_SECTION ":" CROS_EC_VERSION32),
 	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
+	[USB_STR_HOSTCMD_NAME]  = USB_STRING_DESC("Host command"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);

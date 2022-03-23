@@ -108,9 +108,6 @@
 #define CONFIG_STREAM_USB
 #define CONFIG_USB_UPDATE
 
-#undef CONFIG_UPDATE_PDU_SIZE
-#define CONFIG_UPDATE_PDU_SIZE 4096
-
 #undef CONFIG_USB_MAXPOWER_MA
 #define CONFIG_USB_MAXPOWER_MA 100
 
@@ -122,13 +119,21 @@
 #define DEFAULT_SERIALNO ""
 
 /* USB interface indexes (use define rather than enum to expand them) */
+#undef  CONFIG_HOSTCMD_EVENTS
 #define USB_IFACE_UPDATE	0
+#ifdef SECTION_IS_RW
+#define CONFIG_HOST_INTERFACE_USB
+#define USB_IFACE_HOSTCMD	1
+#define USB_IFACE_COUNT		2
+#else
 #define USB_IFACE_COUNT		1
+#endif
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL		0
 #define USB_EP_UPDATE		1
-#define USB_EP_COUNT		2
+#define USB_EP_HOSTCMD		2
+#define USB_EP_COUNT		3
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
@@ -204,6 +209,7 @@ enum usb_strings {
 	USB_STR_SERIALNO,
 	USB_STR_VERSION,
 	USB_STR_UPDATE_NAME,
+	USB_STR_HOSTCMD_NAME,
 	USB_STR_COUNT
 };
 
