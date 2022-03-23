@@ -758,6 +758,9 @@ void s5_power_up_control(int control);
 
 int pos_get_state(void);
 
+int is_non_acpi_mode(void);
+void set_non_acpi_mode(int enable);
+
 void me_gpio_change(uint32_t flags);
 
 int get_hardware_id(enum adc_channel channel);
