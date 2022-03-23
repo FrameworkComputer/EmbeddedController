@@ -51,33 +51,10 @@ __override uint8_t board_get_usb_pd_port_count(void)
 static void board_power_change(struct ap_power_ev_callback *cb,
 			       struct ap_power_ev_data data)
 {
-	int value;
-
 	switch (data.event) {
 	default:
 		return;
-
-	case AP_POWER_STARTUP:
-		/*
-		 * Called on AP S4 -> S3 transitio
-		 *
-		 * Enable USB-A vbus
-		 * TODO(b/222238390):remove when BC1.2 is enabled.
-		 */
-		value = 1;
-		break;
-
-	case AP_POWER_SHUTDOWN:
-		/*
-		 * Called on AP S4 -> S5 transition
-		 *
-		 * Disable USB-A vbus
-		 * TODO(b/222238390):remove when BC1.2 is enabled.
-		 */
-		value = 0;
-		break;
 	}
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_usb_a0_vbus), value);
 }
 
 /*
