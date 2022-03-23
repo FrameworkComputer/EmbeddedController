@@ -12,7 +12,6 @@
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>
 
-#include <ap_power/ap_power_interface.h>
 #include <x86_common_pwrseq.h>
 
 #define DT_DRV_COMPAT	intel_ap_pwrseq

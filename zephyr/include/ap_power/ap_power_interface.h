@@ -9,7 +9,8 @@
  *
  * Defines the interface to the AP power sequence module,
  * which includes:
- *  - enums for the state of the AP
+ *  - enums for the power state of the AP
+ *  - enums for the power state mask of the AP
  *  - enums indicating the reason for shutdown
  *  - enums for providing control values
  *  - function declarations for getting the state of the AP
@@ -26,6 +27,49 @@
 #define __AP_POWER_AP_POWER_INTERFACE_H__
 
 #include <sys/util.h>
+
+/**
+ * @brief System power states for Non Deep Sleep Well
+ * EC is an always on device in a Non Deep Sx system except when EC
+ * is hibernated or all the VRs are turned off.
+ */
+enum power_states_ndsx {
+	/*
+	 * Actual power states
+	 */
+	/* AP is off & EC is on */
+	SYS_POWER_STATE_G3,
+	/* AP is in soft off state */
+	SYS_POWER_STATE_S5,
+	/* AP is suspended to Non-volatile disk */
+	SYS_POWER_STATE_S4,
+	/* AP is suspended to RAM */
+	SYS_POWER_STATE_S3,
+	/* AP is in active state */
+	SYS_POWER_STATE_S0,
+	/*
+	 * Intermediate power up states
+	 */
+	/* Determine if the AP's power rails are turned on */
+	SYS_POWER_STATE_G3S5,
+	/* Determine if AP is suspended from sleep */
+	SYS_POWER_STATE_S5S4,
+	/* Determine if Suspend to Disk is de-asserted */
+	SYS_POWER_STATE_S4S3,
+	/* Determine if Suspend to RAM is de-asserted */
+	SYS_POWER_STATE_S3S0,
+	/*
+	 * Intermediate power down states
+	 */
+	/* Determine if the AP's power rails are turned off */
+	SYS_POWER_STATE_S5G3,
+	/* Determine if AP is suspended to sleep */
+	SYS_POWER_STATE_S4S5,
+	/* Determine if Suspend to Disk is asserted */
+	SYS_POWER_STATE_S3S4,
+	/* Determine if Suspend to RAM is asserted */
+	SYS_POWER_STATE_S0S3,
+};
 
 /**
  * @brief Represents the state of the AP as a mask.
