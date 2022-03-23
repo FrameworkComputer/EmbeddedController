@@ -27,6 +27,8 @@ enum i2c_ports {
 #define I2C_COMPAT nuvoton_npcx_i2c_port
 #elif CONFIG_I2C_ITE_IT8XXX2
 #define I2C_COMPAT ite_it8xxx2_i2c
+#elif CONFIG_I2C_XEC_V2
+#define I2C_COMPAT microchip_xec_i2c_v2
 #elif CONFIG_I2C_EMUL
 #define I2C_COMPAT zephyr_i2c_emul_controller
 #else
