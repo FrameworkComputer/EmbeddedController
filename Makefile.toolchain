@@ -170,7 +170,10 @@ ifneq (${SYSROOT},)
 endif
 LDFLAGS=-nostdlib -g -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
 	$(LDFLAGS_EXTRA) $(CFLAGS_CPU)
-MEMSIZE_FLAGS=-Wl,--print-memory-usage
+MEMSIZE_FLAGS=
+ifeq ($(cc-name),gcc)
+MEMSIZE_FLAGS+=-Wl,--print-memory-usage
+endif
 BUILD_LDFLAGS=$(LIBFTDIUSB_LDLIBS)
 HOST_LDFLAGS=$(LIBFTDIUSB_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
