@@ -41,6 +41,12 @@ __override struct keyboard_scan_config keyscan_config = {
 	},
 };
 
+/* Vol-up key matrix at T13 */
+const struct vol_up_key vol_up_key_matrix = {
+	.row = 3,
+	.col = 5,
+};
+
 /* Temperature charging table */
 const struct temp_chg_struct temp_chg_table[] = {
 	[LEVEL_0] = {
@@ -284,6 +290,9 @@ static void board_init(void)
 	cbi_get_board_version(&board_version);
 
 	board_update_motion_sensor_config();
+
+	/* Set vol up key to T13 */
+	set_vol_up_key(vol_up_key_matrix.row, vol_up_key_matrix.col);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
