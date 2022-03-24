@@ -27,14 +27,63 @@ enum ap_power_events {
 	 * On x86 this is the transition up from G3 to S5.
 	 */
 	AP_POWER_PRE_INIT = BIT(0),
+	/**
+	 * Transitioning from soft-off to suspend.
+	 *
+	 * On x86 this is going from S5 to S3.
+	 */
 	AP_POWER_STARTUP = BIT(1),
+	/**
+	 * Transitioning from suspend to active.
+	 *
+	 * This event is emitted on all suspend-active transitions, regardless
+	 * of suspend level. In particular, on x86 it is triggered by transition
+	 * from either of S3 or S0ix to S0.
+	 */
 	AP_POWER_RESUME = BIT(2),
+	/**
+	 * Transitioning from active to suspend.
+	 *
+	 * This is the opposite of AP_POWER_RESUME. On x86, it is emitted when
+	 * leaving S0 to either of S3 or S0ix.
+	 */
 	AP_POWER_SUSPEND = BIT(3),
+	/**
+	 * Early transition from suspend to active.
+	 *
+	 * This event runs under the same conditions as AP_POWER_RESUME, but
+	 * is guaranteed to run before AP_POWER_RESUME.
+	 */
 	AP_POWER_RESUME_INIT = BIT(4),
+	/**
+	 * Late transition from active to suspend.
+	 *
+	 * This event runs under the same conditions as AP_POWER_SUSPEND, but
+	 * is guaranteed to run after AP_POWER_SUSPEND.
+	 */
 	AP_POWER_SUSPEND_COMPLETE = BIT(5),
+	/**
+	 * Transitioning from suspend to soft-off.
+	 *
+	 * This is the opposite of AP_POWER_STARTUP. On x86 it is the transition
+	 * from S3 to S5.
+	 */
 	AP_POWER_SHUTDOWN = BIT(6),
+	/**
+	 * Late transition from suspend to soft-off.
+	 *
+	 * This runs under the same conditions as AP_POWER_SHUTDOWN, but runs
+	 * after AP_POWER_SHUTDOWN.
+	 */
 	AP_POWER_SHUTDOWN_COMPLETE = BIT(7),
+	/**
+	 * Transitioning from soft-off to hard-off.
+	 *
+	 * This is the opposite of AP_POWER_PRE_INIT. On x86 it is the
+	 * transition from S5 to G3.
+	 */
 	AP_POWER_HARD_OFF = BIT(8),
+	/** Software reset occurred */
 	AP_POWER_RESET = BIT(9),
 };
 
