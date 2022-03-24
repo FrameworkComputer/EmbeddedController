@@ -383,12 +383,15 @@ BUILD_ASSERT(ARRAY_SIZE(motion_als_sensors) == ALS_COUNT);
 #define SENSOR_GPIO_ENABLE_INTERRUPT(i, id)		\
 	gpio_enable_dt_interrupt(				\
 		GPIO_INT_FROM_NODE(DT_PHANDLE_BY_IDX(id, sensor_irqs, i)));
-static void sensor_enable_irqs(void)
+static int sensor_enable_irqs(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, sensor_irqs),
 		     SENSOR_GPIO_ENABLE_INTERRUPT, (), SENSOR_INFO_NODE)
+
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, sensor_enable_irqs, HOOK_PRIO_DEFAULT);
+SYS_INIT(sensor_enable_irqs, APPLICATION, HOOK_PRIO_DEFAULT);
 #endif
 
 /* Handle the alternative motion sensors */

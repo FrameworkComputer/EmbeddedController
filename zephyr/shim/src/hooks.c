@@ -80,8 +80,9 @@ static void hook_tick_work(struct k_work *work)
 		work_queue_error(&hook_ticks_work_data, rv);
 }
 
-static void check_hook_task_priority(void)
+static int check_hook_task_priority(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	k_tid_t thread = &k_sys_work_q.thread;
 
 	/*
@@ -93,8 +94,10 @@ static void check_hook_task_priority(void)
 			"ERROR: %s has priority %d but must be >= %d\n",
 			k_thread_name_get(thread),
 			k_thread_priority_get(thread), (TASK_ID_COUNT - 1));
+
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, check_hook_task_priority, HOOK_PRIO_FIRST);
+SYS_INIT(check_hook_task_priority, APPLICATION, HOOK_PRIO_FIRST);
 
 static int zephyr_shim_setup_hooks(const struct device *unused)
 {
