@@ -52,7 +52,7 @@ static int baseboard_init(const struct device *unused)
 #endif
 	return 0;
 }
-SYS_INIT(baseboard_init, APPLICATION, HOOK_PRIO_PRE_DEFAULT);
+SYS_INIT(baseboard_init, APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT);
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {

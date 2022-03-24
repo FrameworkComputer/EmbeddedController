@@ -81,9 +81,11 @@ enum hook_priority {
 	/* Generic values across all hooks */
 #define	HOOK_PRIO_FIRST 1           /* Highest priority */
 #define	HOOK_PRIO_POST_FIRST 2
-#define	HOOK_PRIO_PRE_DEFAULT 49    /* Priority just before default */
-#define	HOOK_PRIO_DEFAULT 50        /* Default priority */
-#define	HOOK_PRIO_POST_DEFAULT 51   /* Priority just after default */
+
+#define	HOOK_PRIO_PRE_DEFAULT       CONFIG_KERNEL_INIT_PRIORITY_OBJECTS
+#define	HOOK_PRIO_DEFAULT           CONFIG_KERNEL_INIT_PRIORITY_DEFAULT
+#define	HOOK_PRIO_POST_DEFAULT      CONFIG_KERNEL_INIT_PRIORITY_DEVICE
+
 #define	HOOK_PRIO_LAST 99           /* Lowest priority */
 
 	/* LPC inits before modules which need memory-mapped I/O */

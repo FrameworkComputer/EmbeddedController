@@ -69,7 +69,7 @@ static int board_usbc_init(const struct device *unused)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc_bc12));
 	return 0;
 }
-SYS_INIT(board_usbc_init, APPLICATION, HOOK_PRIO_POST_DEFAULT);
+SYS_INIT(board_usbc_init, APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
 
 void ppc_interrupt(enum gpio_signal signal)
 {
