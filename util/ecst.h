@@ -72,7 +72,7 @@
 #define NAME_SIZE                       160
 #define BUFF_SIZE                       0x400
 #define HEADER_SIZE                     64
-#define TMP_STR_SIZE                    20
+#define TMP_STR_SIZE                    21
 #define PAD_VALUE                       0x00
 
 
