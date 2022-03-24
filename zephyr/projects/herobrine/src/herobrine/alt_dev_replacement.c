@@ -26,10 +26,13 @@ static bool board_has_syv_ppc(void)
 	return (board_version >= 1);
 }
 
-static void check_alternate_devices(void)
+static int check_alternate_devices(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	/* Configure the PPC driver */
 	if (board_has_syv_ppc())
 		PPC_ENABLE_ALTERNATE(ppc_port0_syv);
+
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, check_alternate_devices, HOOK_PRIO_DEFAULT);
+SYS_INIT(check_alternate_devices, APPLICATION, HOOK_PRIO_DEFAULT);
