@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <toolchain.h>
+
 #include "chipset.h"
 #include "ec_commands.h"
 #include "hooks.h"
@@ -91,10 +93,13 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
-void board_led_init(void)
+static int board_led_init(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	pwm_set_duty(LED_POWER_WHITE, 100);
 	pwm_set_duty(LED_BATTERY_AMBER, 100);
 	pwm_set_duty(LED_BATTERY_WHITE, 100);
+
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, board_led_init, HOOK_PRIO_DEFAULT);
+SYS_INIT(board_led_init, APPLICATION, HOOK_PRIO_DEFAULT);

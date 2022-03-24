@@ -4,6 +4,7 @@
  */
 
 /* Krabby board-specific USB-C configuration */
+#include <toolchain.h>
 
 #include "adc.h"
 #include "baseboard_usbc_config.h"
@@ -47,23 +48,28 @@ void c1_bc12_interrupt(enum gpio_signal signal)
 }
 
 
-static void board_sub_bc12_init(void)
+static int board_sub_bc12_init(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	if (corsola_get_db_type() == CORSOLA_DB_TYPEC)
 		gpio_enable_dt_interrupt(
 			GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12_charger));
 	else
 		/* If this is not a Type-C subboard, disable the task. */
 		task_disable_task(TASK_ID_USB_CHG_P1);
+
+	return 0;
 }
 /* Must be done after I2C and subboard */
-DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_POST_I2C);
+SYS_INIT(board_sub_bc12_init, APPLICATION, HOOK_PRIO_POST_I2C);
 
-static void board_usbc_init(void)
+static int board_usbc_init(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc_bc12));
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_POST_DEFAULT);
+SYS_INIT(board_usbc_init, APPLICATION, HOOK_PRIO_POST_DEFAULT);
 
 void ppc_interrupt(enum gpio_signal signal)
 {

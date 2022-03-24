@@ -7,6 +7,7 @@
 
 #include <drivers/gpio.h>
 #include <ap_power/ap_power.h>
+#include <toolchain.h>
 
 #include "adc.h"
 #include "baseboard_usbc_config.h"
@@ -43,13 +44,15 @@
 static bool tasks_inited;
 
 /* Baseboard */
-static void baseboard_init(void)
+static int baseboard_init(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 #ifdef CONFIG_VARIANT_CORSOLA_USBA
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usba));
 #endif
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_PRE_DEFAULT);
+SYS_INIT(baseboard_init, APPLICATION, HOOK_PRIO_PRE_DEFAULT);
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
@@ -227,8 +230,9 @@ static void tasks_init_deferred(void)
 }
 DECLARE_DEFERRED(tasks_init_deferred);
 
-static void baseboard_x_ec_gpio2_init(void)
+static int baseboard_x_ec_gpio2_init(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	static struct ppc_drv virtual_ppc_drv = { 0 };
 	static struct tcpm_drv virtual_tcpc_drv = { 0 };
 	static struct bc12_drv virtual_bc12_drv = { 0 };
@@ -240,7 +244,7 @@ static void baseboard_x_ec_gpio2_init(void)
 		gpio_pin_interrupt_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_ppc_int_odl),
 			GPIO_INT_EDGE_FALLING);
-		return;
+		return 0;
 	}
 	if (corsola_get_db_type() == CORSOLA_DB_HDMI) {
 		static struct ap_power_ev_callback cb;
@@ -272,8 +276,9 @@ static void baseboard_x_ec_gpio2_init(void)
 	 * mainlink direction.
 	 */
 	hook_call_deferred(&tasks_init_deferred_data, 2 * SECOND);
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_x_ec_gpio2_init, HOOK_PRIO_DEFAULT);
+SYS_INIT(baseboard_x_ec_gpio2_init, APPLICATION, HOOK_PRIO_DEFAULT);
 
 __override uint8_t get_dp_pin_mode(int port)
 {
