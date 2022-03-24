@@ -92,6 +92,24 @@ void tcpci_faulty_snk_emul_init(struct tcpci_faulty_snk_emul *emul);
 void tcpci_faulty_snk_emul_init_data(struct tcpci_faulty_snk_emul_data *data);
 
 /**
+ * @brief Add action to perform by USB-C malfunctioning sink device
+ *
+ * @param data Pointer to USB-C malfunctioning sink device emulator data
+ * @param action Non standard behavior to perform by emulator
+ */
+void tcpci_faulty_snk_emul_append_action(
+	struct tcpci_faulty_snk_emul_data *data,
+	struct tcpci_faulty_snk_action *action);
+
+/**
+ * @brief Clear all actions of USB-C malfunctioning sink device
+ *
+ * @param data Pointer to USB-C malfunctioning sink device emulator data
+ */
+void tcpci_faulty_snk_emul_clear_actions_list(
+	struct tcpci_faulty_snk_emul_data *data);
+
+/**
  * @brief Connect emulated device to TCPCI.
  *
  * @param snk_data Pointer to USB-C sink device emulator data

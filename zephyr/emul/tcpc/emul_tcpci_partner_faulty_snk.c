@@ -43,6 +43,23 @@ static void tcpci_faulty_snk_emul_reduce_action_count(
 }
 
 /** Check description in emul_tcpci_partner_faulty_snk.h */
+void tcpci_faulty_snk_emul_append_action(
+	struct tcpci_faulty_snk_emul_data *data,
+	struct tcpci_faulty_snk_action *action)
+{
+	k_fifo_put(&data->action_list, action);
+}
+
+/** Check description in emul_tcpci_partner_faulty_snk.h */
+void tcpci_faulty_snk_emul_clear_actions_list(
+	struct tcpci_faulty_snk_emul_data *data)
+{
+	while (!k_fifo_is_empty(&data->action_list)) {
+		k_fifo_get(&data->action_list, K_FOREVER);
+	}
+}
+
+/** Check description in emul_tcpci_partner_faulty_snk.h */
 enum tcpci_partner_handler_res tcpci_faulty_snk_emul_handle_sop_msg(
 	struct tcpci_faulty_snk_emul_data *data,
 	struct tcpci_snk_emul_data *snk_data,
