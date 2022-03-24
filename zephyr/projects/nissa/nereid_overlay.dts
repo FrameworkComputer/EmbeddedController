@@ -14,7 +14,7 @@
 
 	batteries {
 		default_battery: smp {
-			compatible = "smp,l20m3pg0";
+			compatible = "smp,l20m3pg0", "battery-smart";
 		};
 	};
 

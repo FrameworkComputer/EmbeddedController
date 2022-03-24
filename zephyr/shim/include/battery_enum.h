@@ -14,8 +14,8 @@
 
 /* This produces a list of BATTERY_<ENUM_NAME> identifiers */
 enum battery_type {
-#if DT_NODE_EXISTS(DT_PATH(batteries))
-	DT_FOREACH_CHILD(DT_PATH(batteries), BATTERY_TYPE_WITH_COMMA)
+#if DT_HAS_COMPAT_STATUS_OKAY(battery_smart)
+	DT_FOREACH_STATUS_OKAY(battery_smart, BATTERY_TYPE_WITH_COMMA)
 #endif
 	BATTERY_TYPE_COUNT,
 };

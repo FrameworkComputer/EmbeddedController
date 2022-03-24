@@ -6,7 +6,7 @@
 / {
 	batteries {
 		default_battery: c235 {
-			compatible = "as3gwrc3ka,c235-41";
+			compatible = "as3gwrc3ka,c235-41", "battery-smart";
 		};
 	};
 };

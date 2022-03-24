@@ -6,10 +6,10 @@
 / {
 	batteries {
 		default_battery: getac_smp_hhp_408_3s {
-			compatible = "getac,bq40z50-R3-S3";
+			compatible = "getac,bq40z50-R3-S3", "battery-smart";
 		};
 		getac_smp_hhp_408_2s {
-			compatible = "getac,bq40z50-R3-S2";
+			compatible = "getac,bq40z50-R3-S2", "battery-smart";
 		};
 	};
 };

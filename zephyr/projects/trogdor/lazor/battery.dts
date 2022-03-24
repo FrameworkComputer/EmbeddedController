@@ -6,19 +6,19 @@
 / {
 	batteries {
 		default_battery: ap16l5j {
-			compatible = "panasonic,ap16l5j";
+			compatible = "panasonic,ap16l5j", "battery-smart";
 		};
 		ap16l5j_009 {
-			compatible = "panasonic,ap16l5j-009";
+			compatible = "panasonic,ap16l5j-009", "battery-smart";
 		};
 		ap16l8j {
-			compatible = "lgc,ap16l8j";
+			compatible = "lgc,ap16l8j", "battery-smart";
 		};
 		lgc_ap18c8k {
-			compatible = "lgc,ap18c8k";
+			compatible = "lgc,ap18c8k", "battery-smart";
 		};
 		murata_ap18c4k {
-			compatible = "murata,ap18c4k";
+			compatible = "murata,ap18c4k", "battery-smart";
 		};
 	};
 };

@@ -6,10 +6,10 @@
 / {
 	batteries {
 		default_battery: batgqa05l22 {
-			compatible = "powertech,batgqa05l22";
+			compatible = "powertech,batgqa05l22", "battery-smart";
 		};
 		lgc_ac17a8m {
-			compatible = "lgc,ac17a8m";
+			compatible = "lgc,ac17a8m", "battery-smart";
 		};
 	};
 };

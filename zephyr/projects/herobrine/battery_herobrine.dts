@@ -6,7 +6,7 @@
 / {
 	batteries {
 		default_battery: ap16l5j {
-			compatible = "panasonic,ap16l5j";
+			compatible = "panasonic,ap16l5j", "battery-smart";
 		};
 	};
 };

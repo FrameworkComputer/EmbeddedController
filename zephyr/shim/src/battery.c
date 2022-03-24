@@ -6,8 +6,6 @@
 #include<devicetree.h>
 #include"battery_fuel_gauge.h"
 
-#if DT_NODE_EXISTS(DT_PATH(batteries))
-
 #define NODE_FUEL_GAUGE(node) \
 { \
 	.manuf_name = DT_PROP(node, manuf_name), \
@@ -56,8 +54,10 @@
 	.batt_info = NODE_BATT_INFO(node) \
 },
 
+#if DT_HAS_COMPAT_STATUS_OKAY(battery_smart)
+
 const struct board_batt_params board_battery_info[] = {
-	DT_FOREACH_CHILD(DT_PATH(batteries), NODE_BATT_PARAMS)
+	DT_FOREACH_STATUS_OKAY(battery_smart, NODE_BATT_PARAMS)
 };
 
 #if DT_NODE_EXISTS(DT_NODELABEL(default_battery))
@@ -66,4 +66,4 @@ const enum battery_type DEFAULT_BATTERY_TYPE =
 	BATTERY_TYPE(DT_NODELABEL(default_battery));
 #endif
 
-#endif /* DT_NODE_EXISTS(DT_PATH(batteries)) */
+#endif /* DT_HAS_COMPAT_STATUS_OKAY(battery_smart) */
