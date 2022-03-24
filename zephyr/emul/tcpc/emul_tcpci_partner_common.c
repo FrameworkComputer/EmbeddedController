@@ -501,7 +501,7 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 	}
 
-	LOG_HEXDUMP_INF(tx_msg->buf, tx_msg->cnt,
+	LOG_HEXDUMP_DBG(tx_msg->buf, tx_msg->cnt,
 			"USB-C partner emulator received message");
 
 	/* Handle hard reset */
