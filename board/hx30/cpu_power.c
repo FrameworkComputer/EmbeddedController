@@ -71,7 +71,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	} else {
 		/* ADP > 55W and Battery percentage >= 30% */
 		pl2_watt = 64;
-		pl4_watt = 121;
+		pl4_watt = 140;
 		/* psys watt = adp watt * 0.95 + battery watt(55 W) * 0.7 - pps power budget */
 		psys_watt = ((active_power * 95) / 100) + 39 - pps_power_budget;
 	}
