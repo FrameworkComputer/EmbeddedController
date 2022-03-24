@@ -5,6 +5,7 @@
 # Zephyr Kernel Configuration
 CONFIG_SOC_SERIES_NPCX9=y
 CONFIG_SOC_NPCX9M3F=y
+CONFIG_SOC_LOG_LEVEL_ERR=y
 
 # Platform Configuration
 CONFIG_BOARD_NPCX9=y

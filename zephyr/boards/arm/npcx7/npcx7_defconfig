@@ -4,6 +4,7 @@
 
 # Zephyr Kernel Configuration
 CONFIG_SOC_SERIES_NPCX7=y
+CONFIG_SOC_LOG_LEVEL_ERR=y
 
 # Platform Configuration
 CONFIG_BOARD_NPCX7=y
