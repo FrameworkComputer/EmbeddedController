@@ -76,6 +76,10 @@ endif
 ifeq ($(cc-name),clang)
 # TODO(b/172020503): Re-enabling this warning requires a large CL.
 C_WARN+= -Wno-ignored-attributes
+# TODO(b/172020503): Re-enabling this warning requires the following large CLs:
+# https://crrev.com/c/3223973
+# https://crrev.com/c/3227261
+COMMON_WARN+= -Wno-unused-function
 endif
 
 UBSAN_FLAGS=-fsanitize=array-bounds,vla-bound \
