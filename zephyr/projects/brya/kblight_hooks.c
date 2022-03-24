@@ -47,8 +47,9 @@ static void board_backlight_handler(struct ap_power_ev_callback *cb,
  * Explicitly apply the board ID 1 *gpio.inc settings to pins that
  * were reassigned on current boards.
  */
-static void set_board_id_1_gpios(void)
+static int set_board_id_1_gpios(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	static struct ap_power_ev_callback cb;
 
 	/*
@@ -60,8 +61,9 @@ static void set_board_id_1_gpios(void)
 	ap_power_ev_add_callback(&cb);
 
 	if (get_board_id() != 1)
-		return;
+		return 0;
 	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_id_1_ec_kb_bl_en),
 			      GPIO_OUTPUT_LOW);
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, set_board_id_1_gpios, HOOK_PRIO_FIRST);
+SYS_INIT(set_board_id_1_gpios, APPLICATION, HOOK_PRIO_FIRST);
