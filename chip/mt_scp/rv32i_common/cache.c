@@ -59,7 +59,7 @@ void cache_init(void)
  */
 static enum { PMU_SELECT_I = 0, PMU_SELECT_D, PMU_SELECT_C } pmu_select;
 
-int command_enable_pmu(int argc, const char **argv)
+static int command_enable_pmu(int argc, const char **argv)
 {
 	static const char *const selectors[] = {
 		[PMU_SELECT_I] = "I",
@@ -142,7 +142,7 @@ int command_enable_pmu(int argc, const char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(enable_pmu, command_enable_pmu, "[I | D | C]",
 			     "Enable PMU");
 
-int command_disable_pmu(int argc, const char **argv)
+static int command_disable_pmu(int argc, const char **argv)
 {
 	clear_csr(CSR_PMU_MPMUCTR,
 		  CSR_PMU_MPMUCTR_C | CSR_PMU_MPMUCTR_I | CSR_PMU_MPMUCTR_H3 |
@@ -152,7 +152,7 @@ int command_disable_pmu(int argc, const char **argv)
 DECLARE_SAFE_CONSOLE_COMMAND(disable_pmu, command_disable_pmu, NULL,
 			     "Disable PMU");
 
-int command_show_pmu(int argc, const char **argv)
+static int command_show_pmu(int argc, const char **argv)
 {
 	uint64_t val3, val4, val5;
 	uint32_t p;
