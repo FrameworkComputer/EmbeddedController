@@ -7,9 +7,12 @@
 #include "gpio.h"
 #include "hooks.h"
 
-static void board_init(void)
+static int board_init(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	/* Enable SOC SPI */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_spi_oe_mecc), 1);
+
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_LAST);
+SYS_INIT(board_init, APPLICATION, HOOK_PRIO_LAST);
