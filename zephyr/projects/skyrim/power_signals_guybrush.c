@@ -53,13 +53,16 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-static void baseboard_interrupt_init(void)
+static int baseboard_interrupt_init(const struct device *unused)
 {
+	ARG_UNUSED(unused);
 	/* Enable Power Group interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_groupc_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr4x_s3));
+
+	return 0;
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_interrupt_init, HOOK_PRIO_POST_I2C);
+SYS_INIT(baseboard_interrupt_init, APPLICATION, HOOK_PRIO_POST_I2C);
 
 /**
  * b/175324615: On G3->S5, wait for RSMRST_L to be deasserted before asserting
