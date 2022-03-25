@@ -41,13 +41,9 @@ into account.
 
 ### Kconfigs
 
-The following options must be enabled to use respective masks specified in
-device tree. See [Device Tree nodes](#device-tree-nodes) paragraph for details.
-
-Kconfig sub-options                             | Default     | Documentation
-:---------------------------------------------- | :---------: | :------------
-`CONFIG_PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK`     | n           | [MKBP event wake-up mask]
-`CONFIG_PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK`| n           | [MKBP host event wake-up mask]
+The Kconfigs responsible for enabling the wake-up masks are automatically
+selected if the device tree nodes are specified.
+See [Device Tree nodes](#device-tree-nodes) paragraph for details.
 
 ### Device Tree nodes
 
@@ -80,8 +76,6 @@ Possible enums to use in these nodes are specified in file: [MKBP event mask enu
 
 ## Examples
 
-[Lazor MKBP Kconfig](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/projects/trogdor/lazor/prj.conf?q=CONFIG_PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK)
-
 [Lazor wake-up masks](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/projects/trogdor/lazor/gpio.dts?q=ec-mkbp-host-event-wakeup-mask)
 
 For detailed descriptions of the MKBP and host event types, please see
@@ -95,9 +89,6 @@ Links to the documentation
 
 [MKBP input devices]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=%22config%20PLATFORM_EC_MKBP_INPUT_DEVICES%22
 [MKBP event]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=%22config%20PLATFORM_EC_MKBP_EVENT%22
-
-[MKBP event wake-up mask]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=%22config%20PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK%22
-[MKBP host event wake-up mask]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=%22config%20PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK%22
 
 [MKBP gpio]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.mkbp_event?q=%22config%20PLATFORM_EC_MKBP_USE_GPIO%22
 [MKBP host event]:https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.mkbp_event?q=%22config%20PLATFORM_EC_MKBP_USE_HOST_EVENT%22
