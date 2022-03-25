@@ -66,7 +66,7 @@ const struct board_batt_params board_battery_info[] = {
 			.vendor_param_start = 0x70,
 		},
 	},
-	/* LGC MPPHPPFO021C Battery Information */
+	/* LGC MPPHPPFO021C Battery Information, BMU RAJ240045 */
 	[BATTERY_LGC] = {
 		.fuel_gauge = {
 			.manuf_name = "313-42-14-A",
@@ -75,9 +75,9 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
+				.mfgacc_support = 0,
+				.reg_addr = 0x43,
+				.reg_mask = 0x0003,
 				.disconnect_val = 0x0,
 			},
 		},
