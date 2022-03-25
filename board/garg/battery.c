@@ -118,6 +118,34 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c = 60,
 		},
 	},
+	/* Simplo CA475778G_R 916QA152H battery information, BMU RAJ240045 */
+	[BATTERY_SIMPLO_CA475778G_R] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP-CA475778G_R",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 0,
+				.reg_addr = 0x43,
+				.reg_mask = 0x0001,
+				.disconnect_val = 0x0,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 13050,		/* mV */
+			.voltage_normal = 11430,
+			.voltage_min = 9000,
+			.precharge_current = 256,	/* mA */
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.charging_max_c = 45,
+			.discharging_min_c = -20,
+			.discharging_max_c = 60,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
