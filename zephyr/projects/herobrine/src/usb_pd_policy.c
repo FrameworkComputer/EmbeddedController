@@ -23,17 +23,9 @@ int pd_check_vconn_swap(int port)
 }
 
 static uint8_t vbus_en[CONFIG_USB_PD_PORT_MAX_COUNT];
-#if CONFIG_USB_PD_PORT_MAX_COUNT == 1
-static uint8_t vbus_rp[CONFIG_USB_PD_PORT_MAX_COUNT] = {TYPEC_RP_1A5};
-#else
-static uint8_t vbus_rp[CONFIG_USB_PD_PORT_MAX_COUNT] = {TYPEC_RP_1A5,
-							TYPEC_RP_1A5};
-#endif
 
 static void board_vbus_update_source_current(int port)
 {
-	/* Both port are controlled by PPC SN5S330. */
-	ppc_set_vbus_source_current_limit(port, vbus_rp[port]);
 	ppc_vbus_source_enable(port, vbus_en[port]);
 }
 
@@ -75,12 +67,6 @@ int pd_set_power_supply_ready(int port)
 int board_vbus_source_enabled(int port)
 {
 	return vbus_en[port];
-}
-
-__override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
-{
-	vbus_rp[port] = rp;
-	board_vbus_update_source_current(port);
 }
 
 int pd_snk_is_vbus_provided(int port)
