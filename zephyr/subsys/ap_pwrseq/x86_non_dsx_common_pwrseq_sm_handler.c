@@ -183,8 +183,10 @@ static int common_pwr_sm_run(int state)
 		 * Now wait for SLP_SUS_L to go high based on tPCH32. If this
 		 * signal doesn't go high within 250 msec then go back to G3.
 		 */
-		if (check_pch_out_of_suspend())
+		if (check_pch_out_of_suspend()) {
+			ap_power_ev_send_callbacks(AP_POWER_PRE_INIT);
 			return SYS_POWER_STATE_S5;
+		}
 		return SYS_POWER_STATE_S5G3;
 
 	case SYS_POWER_STATE_S5:
