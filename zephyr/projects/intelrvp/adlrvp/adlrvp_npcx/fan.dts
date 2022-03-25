@@ -11,10 +11,12 @@
 			label = "FAN_0";
 			pwms = <&pwm3 0 PWM_POLARITY_NORMAL>;
 			pwm-frequency = <30000>;
-			rpm_min = <2200>;
-			rpm_start = <2200>;
-			rpm_max = <4200>;
+			rpm_min = <3000>;
+			rpm_start = <3000>;
+			rpm_max = <10000>;
 			tach = <&tach2>;
+			pgood_gpio = <&all_sys_pwrgd>;
+			enable_gpio = <&gpio_fan_control>;
 		};
 	};
 };
@@ -30,5 +32,4 @@
 
 &pwm3 {
 	status = "okay";
-	drive-open-drain;
 };
