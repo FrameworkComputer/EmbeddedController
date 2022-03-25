@@ -29,7 +29,7 @@ const struct pm_state_info *pm_policy_next_state(uint8_t cpu, int32_t ticks)
 			 * To check if given power state is enabled and
 			 * could be used.
 			 */
-			if (!pm_policy_state_lock_is_active(
+			if (pm_policy_state_lock_is_active(
 				    pm_states[i].state)) {
 				continue;
 			}
