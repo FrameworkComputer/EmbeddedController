@@ -144,6 +144,7 @@ static void pendetect_deferred(void)
 		gpio_set_level(GPIO_EN_PP5000_PEN, debounced_pen_detect);
 }
 DECLARE_DEFERRED(pendetect_deferred);
+DECLARE_HOOK(HOOK_INIT, pendetect_deferred, HOOK_PRIO_DEFAULT);
 
 void pen_detect_interrupt(enum gpio_signal s)
 {
