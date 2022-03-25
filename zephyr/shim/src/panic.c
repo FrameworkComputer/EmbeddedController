@@ -43,7 +43,6 @@
 #define PANIC_ARCH PANIC_ARCH_RISCV_RV32I
 #define PANIC_REG_LIST(M)         \
 	M(ra, riscv.regs[1], ra)  \
-	M(tp, riscv.regs[3], tp)  \
 	M(a0, riscv.regs[4], a0)  \
 	M(a1, riscv.regs[5], a1)  \
 	M(a2, riscv.regs[6], a2)  \
