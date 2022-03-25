@@ -35,7 +35,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake configure
 
-**Usage:** `zmake configure [-h] [-b] [--test] [-t TOOLCHAIN] [--bringup] [--clobber] [--allow-warnings] [-B BUILD_DIR] [-c] [--extra-cflags EXTRA_CFLAGS] (-a | --host-tests-only | project_name [project_name ...])`
+**Usage:** `zmake configure [-h] [-t TOOLCHAIN] [--bringup] [--clobber] [--allow-warnings] [-B BUILD_DIR] [-c] [--extra-cflags EXTRA_CFLAGS] (-a | --host-tests-only | project_name [project_name ...])`
 
 #### Positional Arguments
 
@@ -48,8 +48,6 @@ Chromium OS's meta-build tool for Zephyr
 |   |   |
 |---|---|
 | `-h`, `--help` | show this help message and exit |
-| `-b`, `--build` | Run the build after configuration |
-| `--test` | Test the .elf file after building |
 | `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--bringup` | Enable bringup debugging features |
 | `--clobber` | Delete existing build directories, even if configuration is unchanged |

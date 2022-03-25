@@ -180,19 +180,6 @@ def get_argparser():
         "configure",
         help="Set up a build directory to be built later by the build subcommand",
     )
-    configure.add_argument(
-        "-b",
-        "--build",
-        action="store_true",
-        dest="build_after_configure",
-        help="Run the build after configuration",
-    )
-    configure.add_argument(
-        "--test",
-        action="store_true",
-        dest="test_after_configure",
-        help="Test the .elf file after building",
-    )
     add_common_configure_args(configure)
 
     build = sub.add_parser(
@@ -356,15 +343,6 @@ def main(argv=None):
         multiproc.log_job_names = False
 
     logging.basicConfig(format=log_format, level=opts.log_level)
-
-    if opts.subcommand == "configure" and opts.build_after_configure:
-        logging.warning(
-            '"zmake configure -b/--build" is deprecated.  Run "zmake build" instead.'
-        )
-    if opts.subcommand == "configure" and opts.test_after_configure:
-        logging.warning(
-            '"zmake configure --test" is deprecated.  Run "zmake test" instead.'
-        )
 
     try:
         zmake = call_with_namespace(zm.Zmake, opts)
