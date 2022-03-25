@@ -122,7 +122,7 @@
  * Useful for C functions called only from assembly or through special sections.
  */
 #ifndef __keep
-#define __keep __attribute__((used)) __visible
+#define __keep __attribute__((used))
 #endif
 
 /*
