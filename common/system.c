@@ -351,7 +351,7 @@ int system_jumped_to_this_image(void)
 	return jumped_to_image;
 }
 
-int system_jumped_late(void)
+test_mockable int system_jumped_late(void)
 {
 	return !(reset_flags & EC_RESET_FLAG_EFS) && jumped_to_image;
 }

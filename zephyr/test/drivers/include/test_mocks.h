@@ -102,3 +102,6 @@
 DECLARE_FAKE_VALUE_FUNC(const void *, init_rom_map, const void *, int);
 DECLARE_FAKE_VOID_FUNC(init_rom_unmap, const void *, int);
 DECLARE_FAKE_VALUE_FUNC(int, init_rom_copy, int, int, int);
+
+/* Mocks for common/system.c */
+DECLARE_FAKE_VALUE_FUNC(int, system_jumped_late);
