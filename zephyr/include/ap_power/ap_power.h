@@ -48,6 +48,7 @@ enum ap_power_events {
 	 * leaving S0 to either of S3 or S0ix.
 	 */
 	AP_POWER_SUSPEND = BIT(3),
+#if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 	/**
 	 * Early transition from suspend to active.
 	 *
@@ -62,6 +63,7 @@ enum ap_power_events {
 	 * is guaranteed to run after AP_POWER_SUSPEND.
 	 */
 	AP_POWER_SUSPEND_COMPLETE = BIT(5),
+#endif
 	/**
 	 * Transitioning from suspend to soft-off.
 	 *

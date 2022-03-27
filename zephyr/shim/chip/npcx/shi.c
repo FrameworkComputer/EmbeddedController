@@ -56,7 +56,7 @@ static void shi_power_change(struct ap_power_ev_callback *cb,
 	default:
 		return;
 
-#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+#if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 	case AP_POWER_RESUME_INIT:
 		shi_enable();
 		break;
@@ -82,7 +82,7 @@ static int shi_init(const struct device *unused)
 	static struct ap_power_ev_callback cb;
 
 	ap_power_ev_init_callback(&cb, shi_power_change,
-#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+#if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 				  AP_POWER_RESUME_INIT |
 				  AP_POWER_SHUTDOWN_COMPLETE
 #else
