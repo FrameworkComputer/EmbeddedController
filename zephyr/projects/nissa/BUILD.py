@@ -18,7 +18,7 @@ def register_nissa_project(
     register_func(
         project_name=project_name,
         zephyr_board=chip,
-        dts_overlays=["cbi.dts", *extra_dts_overlays],
+        dts_overlays=["cbi.dts", *extra_dts_overlays, "leds.dts"],
         kconfig_files=[here / "prj.conf", *extra_kconfig_files],
     )
 

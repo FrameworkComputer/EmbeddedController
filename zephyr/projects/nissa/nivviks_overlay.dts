@@ -4,6 +4,8 @@
  */
 
 #include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/colors.h>
+
 
 / {
 	aliases {
@@ -188,6 +190,18 @@
 				port = <&i2c_ec_i2c_sub_usb_c1>;
 			};
 		};
+	};
+
+	/*
+	 * LED PWM configuration
+	 */
+	leds: leds {
+		compatible = "cros-ec,multi-pwm-leds";
+		pwms = <&pwm2 2 PWM_POLARITY_INVERTED>,
+		       <&pwm0 0 PWM_POLARITY_INVERTED>,
+		       <&pwm1 1 PWM_POLARITY_INVERTED>;
+		frequency = <324>;
+		color-list = <RED GREEN BLUE>;
 	};
 };
 
