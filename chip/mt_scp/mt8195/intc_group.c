@@ -4,10 +4,21 @@
  */
 #include "intc_group.h"
 
+#ifdef BOARD_CHERRY_SCP_CORE1
+#define VCODEC_GRP INTC_GRP_0
+#else
+#define VCODEC_GRP INTC_GRP_8
+#endif
+
 static struct intc_irq_group irqs[SCP_INTC_IRQ_COUNT] = {
-	/* 0 */
+/* 0 */
+#ifdef BOARD_CHERRY_SCP_CORE1
+	[SCP_IRQ_GIPC_IN0] = { INTC_GRP_0 },
+	[SCP_IRQ_GIPC_IN1] = { INTC_GRP_7 },
+#else
 	[SCP_IRQ_GIPC_IN0] = { INTC_GRP_7 },
 	[SCP_IRQ_GIPC_IN1] = { INTC_GRP_0 },
+#endif
 	[SCP_IRQ_GIPC_IN2] = { INTC_GRP_0 },
 	[SCP_IRQ_GIPC_IN3] = { INTC_GRP_0 },
 	/* 4 */
@@ -51,12 +62,12 @@ static struct intc_irq_group irqs[SCP_INTC_IRQ_COUNT] = {
 	[SCP_IRQ_GCE] = { INTC_GRP_0 },
 	[SCP_IRQ_MDP_GCE] = { INTC_GRP_0 },
 	/* 36 */
-	[SCP_IRQ_VDEC] = { INTC_GRP_8 },
+	[SCP_IRQ_VDEC] = { VCODEC_GRP },
 	[SCP_IRQ_WDT] = { INTC_GRP_0 },
-	[SCP_IRQ_VDEC_LAT] = { INTC_GRP_8 },
-	[SCP_IRQ_VDEC1] = { INTC_GRP_8 },
+	[SCP_IRQ_VDEC_LAT] = { VCODEC_GRP },
+	[SCP_IRQ_VDEC1] = { VCODEC_GRP },
 	/* 40 */
-	[SCP_IRQ_VDEC1_LAT] = { INTC_GRP_8 },
+	[SCP_IRQ_VDEC1_LAT] = { VCODEC_GRP },
 	[SCP_IRQ_INFRA] = { INTC_GRP_0 },
 	[SCP_IRQ_CLK_CTRL_CORE] = { INTC_GRP_0 },
 	[SCP_IRQ_CLK_CTRL2_CORE] = { INTC_GRP_0 },
@@ -78,7 +89,7 @@ static struct intc_irq_group irqs[SCP_INTC_IRQ_COUNT] = {
 	/* 56 */
 	[SCP_IRQ_I3C0_IBI_WAKE] = { INTC_GRP_0 },
 	[SCP_IRQ_I3C1_IBI_WAKE] = { INTC_GRP_0 },
-	[SCP_IRQ_VENC] = { INTC_GRP_8 },
+	[SCP_IRQ_VENC] = { VCODEC_GRP },
 	[SCP_IRQ_APU_ENGINE] = { INTC_GRP_0 },
 	/* 60 */
 	[SCP_IRQ_MBOX0] = { INTC_GRP_0 },
@@ -114,7 +125,7 @@ static struct intc_irq_group irqs[SCP_INTC_IRQ_COUNT] = {
 	[SCP_IRQ_JPEGENC] = { INTC_GRP_0 },
 	[SCP_IRQ_JPEGDEC] = { INTC_GRP_0 },
 	[SCP_IRQ_JPEGDEC_C2] = { INTC_GRP_0 },
-	[SCP_IRQ_VENC_C1] = { INTC_GRP_8 },
+	[SCP_IRQ_VENC_C1] = { VCODEC_GRP },
 	/* 88 */
 	[SCP_IRQ_JPEGENC_C1] = { INTC_GRP_0 },
 	[SCP_IRQ_JPEGDEC_C1] = { INTC_GRP_0 },

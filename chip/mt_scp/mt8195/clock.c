@@ -21,6 +21,16 @@
 #define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
+#ifdef BOARD_CHERRY_SCP_CORE1
+
+void clock_init(void)
+{
+	/* clock is controlled by core 0 */
+	return;
+}
+
+#else
+
 enum {
 	OPP_ULPOSC2_LOW_SPEED,
 	OPP_ULPOSC2_HIGH_SPEED,
@@ -437,7 +447,7 @@ int command_ulposc(int argc, const char *argv[])
 DECLARE_CONSOLE_COMMAND(ulposc, command_ulposc, "[ulposc]",
 			"Measure ULPOSC frequency");
 #endif
-
 test_mockable void clock_enable_module(enum module_id module, int enable)
 {
 }
+#endif /* BOARD_CHERRY_SCP_CORE1 */
