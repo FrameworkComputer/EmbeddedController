@@ -24,10 +24,13 @@
 #define TEST_ADDED_PDO PDO_FIXED(10000, 3000, PDO_FIXED_UNCONSTRAINED)
 
 struct usb_pd_ctrl_msg_test_fixture {
-	struct tcpci_drp_emul partner_emul;
+	struct tcpci_partner_data partner_emul;
+	struct tcpci_snk_emul_data snk_ext;
+	struct tcpci_src_emul_data src_ext;
+	struct tcpci_drp_emul_data drp_ext;
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
-	enum pd_power_role drp_parter_pd_role;
+	enum pd_power_role drp_partner_pd_role;
 };
 
 struct usb_pd_ctrl_msg_test_sink_fixture {
@@ -38,9 +41,10 @@ struct usb_pd_ctrl_msg_test_source_fixture {
 	struct usb_pd_ctrl_msg_test_fixture fixture;
 };
 
-static void tcpci_drp_emul_connect_partner(struct tcpci_drp_emul *partner_emul,
-					   const struct emul *tcpci_emul,
-					   const struct emul *charger_emul)
+static void tcpci_drp_emul_connect_partner(
+	struct tcpci_partner_data *partner_emul,
+	const struct emul *tcpci_emul,
+	const struct emul *charger_emul)
 {
 	/*
 	 * TODO(b/221439302) Updating the TCPCI emulator registers, updating the
@@ -56,10 +60,7 @@ static void tcpci_drp_emul_connect_partner(struct tcpci_drp_emul *partner_emul,
 
 	tcpci_tcpc_alert(TEST_USB_PORT);
 
-	zassume_ok(tcpci_drp_emul_connect_to_tcpci(
-			   &partner_emul->data, &partner_emul->src_data,
-			   &partner_emul->snk_data, &partner_emul->common_data,
-			   &partner_emul->ops, tcpci_emul),
+	zassume_ok(tcpci_partner_connect_to_tcpci(partner_emul, tcpci_emul),
 		   NULL);
 }
 
@@ -89,7 +90,7 @@ static void *usb_pd_ctrl_msg_sink_setup(void)
 	struct usb_pd_ctrl_msg_test_fixture *fixture =
 		usb_pd_ctrl_msg_setup_emul();
 
-	fixture->drp_parter_pd_role = PD_ROLE_SINK;
+	fixture->drp_partner_pd_role = PD_ROLE_SINK;
 
 	return fixture;
 }
@@ -99,7 +100,7 @@ static void *usb_pd_ctrl_msg_source_setup(void)
 	struct usb_pd_ctrl_msg_test_fixture *fixture =
 		usb_pd_ctrl_msg_setup_emul();
 
-	fixture->drp_parter_pd_role = PD_ROLE_SOURCE;
+	fixture->drp_partner_pd_role = PD_ROLE_SOURCE;
 
 	return fixture;
 }
@@ -119,14 +120,22 @@ static void usb_pd_ctrl_msg_before(void *data)
 	/* TODO(b/214401892): Check why need to give time TCPM to spin */
 	k_sleep(K_SECONDS(1));
 
-	tcpci_drp_emul_init_with_pd_role(&fixture->partner_emul, PD_REV20,
-					 fixture->drp_parter_pd_role);
-
+	/* Initialized DRP */
+	tcpci_partner_init(&fixture->partner_emul, PD_REV20);
+	fixture->partner_emul.extensions =
+		tcpci_drp_emul_init(&fixture->drp_ext, &fixture->partner_emul,
+				    fixture->drp_partner_pd_role,
+				    tcpci_src_emul_init(&fixture->src_ext,
+							&fixture->partner_emul,
+							NULL),
+				    tcpci_snk_emul_init(&fixture->snk_ext,
+							&fixture->partner_emul,
+							NULL));
 	/* Add additional Sink PDO to partner to verify
 	 * PE_DR_SNK_Get_Sink_Cap/PE_SRC_Get_Sink_Cap (these are shared PE
 	 * states) state was reached
 	 */
-	fixture->partner_emul.snk_data.pdo[1] = TEST_ADDED_PDO;
+	fixture->snk_ext.pdo[1] = TEST_ADDED_PDO;
 
 	/* Turn TCPCI rev 2 ON */
 	tcpc_config[TEST_USB_PORT].flags |= TCPC_FLAGS_TCPCI_REV2_0;
@@ -167,7 +176,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, verify_vconn_swap)
 		      "SNK Returned vconn_role=%u", snk_resp.vconn_role);
 
 	/* Send VCONN_SWAP request */
-	rv = tcpci_partner_send_control_msg(&fixture->partner_emul.common_data,
+	rv = tcpci_partner_send_control_msg(&fixture->partner_emul,
 					    PD_CTRL_VCONN_SWAP, 0);
 	zassert_ok(rv, "Failed to send VCONN_SWAP request, rv=%d", rv);
 
@@ -192,16 +201,16 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, verify_pr_swap)
 	/* Ignore ACCEPT in common handler for PR Swap request,
 	 * causes soft reset
 	 */
-	tcpci_partner_common_handler_mask_msg(
-		&fixture->partner_emul.common_data, PD_CTRL_ACCEPT, true);
+	tcpci_partner_common_handler_mask_msg(&fixture->partner_emul,
+					      PD_CTRL_ACCEPT, true);
 
 	/* Send PR_SWAP request */
-	rv = tcpci_partner_send_control_msg(&fixture->partner_emul.common_data,
+	rv = tcpci_partner_send_control_msg(&fixture->partner_emul,
 					    PD_CTRL_PR_SWAP, 0);
 	zassert_ok(rv, "Failed to send PR_SWAP request, rv=%d", rv);
 
 	/* Send PS_RDY request */
-	rv = tcpci_partner_send_control_msg(&fixture->partner_emul.common_data,
+	rv = tcpci_partner_send_control_msg(&fixture->partner_emul,
 					    PD_CTRL_PS_RDY, 15);
 	zassert_ok(rv, "Failed to send PS_RDY request, rv=%d", rv);
 
@@ -255,7 +264,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, verify_dr_swap_rejected)
 		      "Returned data_role=%u", typec_status.data_role);
 
 	/* Send DR_SWAP request */
-	rv = tcpci_partner_send_control_msg(&fixture->partner_emul.common_data,
+	rv = tcpci_partner_send_control_msg(&fixture->partner_emul,
 					    PD_CTRL_DR_SWAP, 0);
 	zassert_ok(rv, "Failed to send DR_SWAP request, rv=%d", rv);
 
@@ -353,7 +362,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, verify_bist_tx_mode2)
 	struct usb_pd_ctrl_msg_test_fixture *fixture = &this->fixture;
 	uint32_t bdo = BDO(BDO_MODE_CARRIER2, 0);
 
-	tcpci_partner_send_data_msg(&fixture->partner_emul.common_data,
+	tcpci_partner_send_data_msg(&fixture->partner_emul,
 				    PD_DATA_BIST, &bdo, 1, 0);
 
 	pd_dpm_request(TEST_USB_PORT, DPM_REQUEST_BIST_TX);
@@ -380,15 +389,14 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, verify_bist_tx_test_data)
 	struct usb_pd_ctrl_msg_test_fixture *fixture = &this->fixture;
 	uint32_t bdo = BDO(BDO_MODE_TEST_DATA, 0);
 
-	tcpci_partner_send_data_msg(&fixture->partner_emul.common_data,
+	tcpci_partner_send_data_msg(&fixture->partner_emul,
 				    PD_DATA_BIST, &bdo, 1, 0);
 
 	pd_dpm_request(TEST_USB_PORT, DPM_REQUEST_BIST_TX);
 	k_sleep(K_SECONDS(5));
 	zassert_equal(get_state_pe(TEST_USB_PORT), PE_BIST_TX, NULL);
 
-	tcpci_partner_common_send_hard_reset(
-		&fixture->partner_emul.common_data);
+	tcpci_partner_common_send_hard_reset(&fixture->partner_emul);
 	k_sleep(K_SECONDS(1));
 	zassert_equal(get_state_pe(TEST_USB_PORT), PE_SNK_READY, NULL);
 }

@@ -19,31 +19,20 @@
 #include "usb_pd.h"
 
 /**
- * @brief USB-C malfunctioning sink device emulator backend API
- * @defgroup tcpci_faulty_snk_emul USB-C malfunctioning sink device emulator
+ * @brief USB-C malfunctioning sink device extension backend API
+ * @defgroup tcpci_faulty_snk_emul USB-C malfunctioning sink device extension
  * @{
  *
- * USB-C malfunctioning sink device emulator can be attached to TCPCI emulator.
- * It works as sink device, but it can be configured to not respond to source
- * capability message (by not sending GoodCRC or Request after GoodCRC).
+ * USB-C malfunctioning sink device extension can be used with TCPCI partner
+ * emulator. It can be configured to not respond to source capability message
+ * (by not sending GoodCRC or Request after GoodCRC).
  */
 
 /** Structure describing malfunctioning sink emulator data */
 struct tcpci_faulty_snk_emul_data {
+	struct tcpci_partner_extension ext;
 	/* List of action to perform */
 	struct k_fifo action_list;
-};
-
-/** Structure describing standalone malfunctioning device emulator */
-struct tcpci_faulty_snk_emul {
-	/** Common TCPCI partner data */
-	struct tcpci_partner_data common_data;
-	/** Operations used by TCPCI emulator */
-	struct tcpci_emul_partner_ops ops;
-	/** Malfunctioning sink emulator data */
-	struct tcpci_faulty_snk_emul_data data;
-	/** Sink emulator data */
-	struct tcpci_snk_emul_data snk_data;
 };
 
 /** Actions that can be performed by malfunctioning sink emulator */
@@ -77,24 +66,23 @@ struct tcpci_faulty_snk_action {
 #define TCPCI_FAULTY_SNK_INFINITE_ACTION	0
 
 /**
- * @brief Initialise USB-C malfunctioning sink device emulator. Need to be
- *        called before any other function that is using common_data.
- *
- * @param emul Pointer to USB-C malfunctioning sink device emulator
- */
-void tcpci_faulty_snk_emul_init(struct tcpci_faulty_snk_emul *emul);
-
-/**
- * @brief Initialise USB-C malfunctioning sink device data structure.
+ * @brief Initialise USB-C malfunctioning sink device data structure
  *
  * @param data Pointer to USB-C malfunctioning sink device emulator data
+ * @param common_data Pointer to USB-C device emulator common data
+ * @param ext Pointer to next USB-C emulator extension
+ *
+ * @return Pointer to USB-C malfunctioning sink extension
  */
-void tcpci_faulty_snk_emul_init_data(struct tcpci_faulty_snk_emul_data *data);
+struct tcpci_partner_extension *tcpci_faulty_snk_emul_init(
+	struct tcpci_faulty_snk_emul_data *data,
+	struct tcpci_partner_data *common_data,
+	struct tcpci_partner_extension *ext);
 
 /**
- * @brief Add action to perform by USB-C malfunctioning sink device
+ * @brief Add action to perform by USB-C malfunctioning sink extension
  *
- * @param data Pointer to USB-C malfunctioning sink device emulator data
+ * @param data Pointer to USB-C malfunctioning sink device extension data
  * @param action Non standard behavior to perform by emulator
  */
 void tcpci_faulty_snk_emul_append_action(
@@ -102,48 +90,12 @@ void tcpci_faulty_snk_emul_append_action(
 	struct tcpci_faulty_snk_action *action);
 
 /**
- * @brief Clear all actions of USB-C malfunctioning sink device
+ * @brief Clear all actions of USB-C malfunctioning sink extension
  *
- * @param data Pointer to USB-C malfunctioning sink device emulator data
+ * @param data Pointer to USB-C malfunctioning sink device extension data
  */
 void tcpci_faulty_snk_emul_clear_actions_list(
 	struct tcpci_faulty_snk_emul_data *data);
-
-/**
- * @brief Connect emulated device to TCPCI.
- *
- * @param snk_data Pointer to USB-C sink device emulator data
- * @param common_data Pointer to common TCPCI partner data
- * @param ops Pointer to TCPCI partner emulator operations
- * @param tcpci_emul Pointer to TCPCI emulator to connect
- *
- * @return 0 on success
- * @return negative on TCPCI connect error
- */
-int tcpci_faulty_snk_emul_connect_to_tcpci(
-	struct tcpci_snk_emul_data *snk_data,
-	struct tcpci_partner_data *common_data,
-	const struct tcpci_emul_partner_ops *ops,
-	const struct emul *tcpci_emul);
-
-/**
- * @brief Handle SOP messages as TCPCI dual role device
- *
- * @param data Pointer to USB-C malfunctioning sink device emulator data
- * @param snk_data Pointer to USB-C sink device emulator data
- * @param common_data Pointer to common TCPCI partner data
- * @param ops Pointer to TCPCI partner emulator operations
- * @param msg Pointer to received message
- *
- * @return TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled
- * @return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
- */
-enum tcpci_partner_handler_res tcpci_faulty_snk_emul_handle_sop_msg(
-	struct tcpci_faulty_snk_emul_data *data,
-	struct tcpci_snk_emul_data *snk_data,
-	struct tcpci_partner_data *common_data,
-	const struct tcpci_emul_partner_ops *ops,
-	const struct tcpci_emul_msg *msg);
 
 /**
  * @}

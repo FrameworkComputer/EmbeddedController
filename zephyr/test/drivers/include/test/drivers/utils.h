@@ -463,12 +463,14 @@ static inline void set_ac_enabled(bool enabled)
  *
  * Note: this is function currently only supports an ISL923X charger chip.
  *
- * @param src Pointer to the emulated source
+ * @param partner Pointer to the emulated TCPCI partner device
+ * @param src Pointer to the emulated source extension
  * @param pdo_index The index of the PDO object within the src to use
  * @param tcpci_emul The TCPCI emulator that the source will connect to
  * @param charger_emul The charger chip emulator
  */
-void connect_source_to_port(struct tcpci_src_emul *src, int pdo_index,
+void connect_source_to_port(struct tcpci_partner_data *partner,
+			    struct tcpci_src_emul_data *src, int pdo_index,
 			    const struct emul *tcpci_emul,
 			    const struct emul *charger_emul);
 

@@ -108,7 +108,10 @@ ZTEST(integration_usb, test_attach_drp)
 {
 	const struct emul *tcpci_emul =
 		emul_get_binding(DT_LABEL(TCPCI_EMUL_LABEL));
-	struct tcpci_drp_emul my_drp;
+	struct tcpci_partner_data my_drp;
+	struct tcpci_drp_emul_data drp_ext;
+	struct tcpci_src_emul_data src_ext;
+	struct tcpci_snk_emul_data snk_ext;
 
 	/* Set chipset to ON, this will set TCPM to DRP */
 	test_set_chipset_to_s0();
@@ -117,12 +120,14 @@ ZTEST(integration_usb, test_attach_drp)
 	k_sleep(K_SECONDS(1));
 
 	/* Attach emulated sink */
-	tcpci_drp_emul_init(&my_drp, PD_REV20);
-	zassert_ok(tcpci_drp_emul_connect_to_tcpci(&my_drp.data,
-						   &my_drp.src_data,
-						   &my_drp.snk_data,
-						   &my_drp.common_data,
-						   &my_drp.ops, tcpci_emul),
+	tcpci_partner_init(&my_drp, PD_REV20);
+	my_drp.extensions =
+		tcpci_drp_emul_init(
+			&drp_ext, &my_drp, PD_ROLE_SINK,
+			tcpci_src_emul_init(&src_ext, &my_drp, NULL),
+			tcpci_snk_emul_init(&snk_ext, &my_drp, NULL));
+
+	zassert_ok(tcpci_partner_connect_to_tcpci(&my_drp, tcpci_emul),
 		   NULL);
 
 	/* Wait for PD negotiation */

@@ -16,7 +16,7 @@
 
 static void connect_sink_to_port(const struct emul *charger_emul,
 				 const struct emul *tcpci_emul,
-				 struct tcpci_snk_emul *sink)
+				 struct tcpci_partner_data *partner)
 {
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
 	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS,
@@ -24,9 +24,7 @@ static void connect_sink_to_port(const struct emul *charger_emul,
 	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_EXT_STATUS,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
 	tcpci_tcpc_alert(0);
-	zassume_ok(tcpci_snk_emul_connect_to_tcpci(&sink->data,
-						   &sink->common_data,
-						   &sink->ops, tcpci_emul),
+	zassume_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul),
 		   NULL);
 
 	/* Wait for PD negotiation and current ramp.
@@ -42,7 +40,8 @@ static inline void disconnect_sink_from_port(const struct emul *tcpci_emul)
 }
 
 struct console_cmd_charge_manager_fixture {
-	struct tcpci_snk_emul sink_5v_3a;
+	struct tcpci_partner_data sink_5v_3a;
+	struct tcpci_snk_emul_data sink_ext;
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
 };
@@ -59,8 +58,11 @@ static void *console_cmd_charge_manager_setup(void)
 	tcpci_emul_set_rev(test_fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Initialized the sink to request 5V and 3A */
-	tcpci_snk_emul_init(&test_fixture.sink_5v_3a, PD_REV20);
-	test_fixture.sink_5v_3a.data.pdo[1] =
+	tcpci_partner_init(&test_fixture.sink_5v_3a, PD_REV20);
+	test_fixture.sink_5v_3a.extensions =
+		tcpci_snk_emul_init(&test_fixture.sink_ext,
+				    &test_fixture.sink_5v_3a, NULL);
+	test_fixture.sink_ext.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
 	return &test_fixture;

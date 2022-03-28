@@ -71,18 +71,16 @@ void test_set_chipset_to_g3(void)
 		      power_get_state());
 }
 
-void connect_source_to_port(struct tcpci_src_emul *src, int pdo_index,
+void connect_source_to_port(struct tcpci_partner_data *partner,
+			    struct tcpci_src_emul_data *src, int pdo_index,
 			    const struct emul *tcpci_emul,
 			    const struct emul *charger_emul)
 {
 	set_ac_enabled(true);
-	zassume_ok(tcpci_src_emul_connect_to_tcpci(&src->data,
-						   &src->common_data, &src->ops,
-						   tcpci_emul),
-		   NULL);
+	zassume_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul), NULL);
 
 	isl923x_emul_set_adc_vbus(charger_emul,
-				  PDO_FIXED_GET_VOLT(src->data.pdo[pdo_index]));
+				  PDO_FIXED_GET_VOLT(src->pdo[pdo_index]));
 
 	k_sleep(K_SECONDS(10));
 }

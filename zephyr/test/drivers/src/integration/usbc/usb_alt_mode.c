@@ -23,13 +23,14 @@
 struct usbc_alt_mode_fixture {
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
-	struct tcpci_snk_emul partner_emul;
+	struct tcpci_partner_data partner;
+	struct tcpci_snk_emul_data snk_ext;
 };
 
 static void connect_partner_to_port(struct usbc_alt_mode_fixture *fixture)
 {
 	const struct emul *tcpc_emul = fixture->tcpci_emul;
-	struct tcpci_snk_emul *partner_emul = &fixture->partner_emul;
+	struct tcpci_partner_data *partner_emul = &fixture->partner;
 
 	/* Set VBUS to vSafe0V initially. */
 	isl923x_emul_set_adc_vbus(fixture->charger_emul, 0);
@@ -38,9 +39,7 @@ static void connect_partner_to_port(struct usbc_alt_mode_fixture *fixture)
 	tcpci_emul_set_reg(fixture->tcpci_emul, TCPC_REG_EXT_STATUS,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
 	tcpci_tcpc_alert(0);
-	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
-			   &partner_emul->data, &partner_emul->common_data,
-			   &partner_emul->ops, tcpc_emul),
+	zassume_ok(tcpci_partner_connect_to_tcpci(partner_emul, tcpc_emul),
 		   NULL);
 
 	/* Wait for PD negotiation and current ramp. */
@@ -57,10 +56,11 @@ static void disconnect_partner_from_port(struct usbc_alt_mode_fixture *fixture)
 static void *usbc_alt_mode_setup(void)
 {
 	static struct usbc_alt_mode_fixture fixture;
-	struct tcpci_partner_data *partner_common =
-		&fixture.partner_emul.common_data;
+	struct tcpci_partner_data *partner = &fixture.partner;
+	struct tcpci_snk_emul_data *snk_ext = &fixture.snk_ext;
 
-	tcpci_snk_emul_init(&fixture.partner_emul, PD_REV20);
+	tcpci_partner_init(partner, PD_REV20);
+	partner->extensions = tcpci_snk_emul_init(snk_ext, partner, NULL);
 
 	/* Get references for the emulators */
 	fixture.tcpci_emul =
@@ -72,38 +72,36 @@ static void *usbc_alt_mode_setup(void)
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 
 	/* Set up SOP discovery responses for DP adapter. */
-	partner_common->identity_vdm[VDO_INDEX_HDR] =
+	partner->identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT);
-	partner_common->identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
+	partner->identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_AMA,
 		/* modal operation */ true, USB_VID_GOOGLE);
-	partner_common->identity_vdm[VDO_INDEX_CSTAT] = 0xabcdabcd;
-	partner_common->identity_vdm[VDO_INDEX_PRODUCT] =
-		VDO_PRODUCT(0x1234, 0x5678);
+	partner->identity_vdm[VDO_INDEX_CSTAT] = 0xabcdabcd;
+	partner->identity_vdm[VDO_INDEX_PRODUCT] = VDO_PRODUCT(0x1234, 0x5678);
 	/* Hardware version 1, firmware version 2 */
-	partner_common->identity_vdm[VDO_INDEX_AMA] = 0x12000000;
-	partner_common->identity_vdos = VDO_INDEX_AMA + 1;
+	partner->identity_vdm[VDO_INDEX_AMA] = 0x12000000;
+	partner->identity_vdos = VDO_INDEX_AMA + 1;
 
 	/* Support DisplayPort VID. */
-	partner_common->svids_vdm[VDO_INDEX_HDR] =
+	partner->svids_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID);
-	partner_common->svids_vdm[VDO_INDEX_HDR + 1] =
+	partner->svids_vdm[VDO_INDEX_HDR + 1] =
 		VDO_SVID(USB_SID_DISPLAYPORT, 0);
-	partner_common->svids_vdos = VDO_INDEX_HDR + 2;
+	partner->svids_vdos = VDO_INDEX_HDR + 2;
 
 	/* Support one mode for DisplayPort VID. Copied from Hoho. */
-	partner_common->modes_vdm[VDO_INDEX_HDR] =
+	partner->modes_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES);
-	partner_common->modes_vdm[VDO_INDEX_HDR + 1] = VDO_MODE_DP(
+	partner->modes_vdm[VDO_INDEX_HDR + 1] = VDO_MODE_DP(
 		0, MODE_DP_PIN_C, 1, CABLE_PLUG, MODE_DP_V13, MODE_DP_SNK);
-	partner_common->modes_vdos = VDO_INDEX_HDR + 2;
+	partner->modes_vdos = VDO_INDEX_HDR + 2;
 
 	/* Sink 5V 3A. */
-	fixture.partner_emul.data.pdo[1] =
-		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
+	snk_ext->pdo[1] = PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
 	return &fixture;
 }
@@ -134,12 +132,12 @@ ZTEST_F(usbc_alt_mode, verify_discovery)
 
 	/* The host command does not count the VDM header in identity_count. */
 	zassert_equal(discovery->identity_count,
-		      this->partner_emul.common_data.identity_vdos - 1,
+		      this->partner.identity_vdos - 1,
 		      "Expected %d identity VDOs, got %d",
-		      this->partner_emul.common_data.identity_vdos - 1,
+		      this->partner.identity_vdos - 1,
 		      discovery->identity_count);
 	zassert_mem_equal(discovery->discovery_vdo,
-			  this->partner_emul.common_data.identity_vdm + 1,
+			  this->partner.identity_vdm + 1,
 			  discovery->identity_count *
 				  sizeof(*discovery->discovery_vdo),
 			  "Discovered SOP identity ACK did not match");
@@ -152,7 +150,7 @@ ZTEST_F(usbc_alt_mode, verify_discovery)
 		      "Expected 1 DP mode, got %d",
 		      discovery->svids[0].mode_count);
 	zassert_equal(discovery->svids[0].mode_vdo[0],
-		      this->partner_emul.common_data.modes_vdm[1],
+		      this->partner.modes_vdm[1],
 		      "DP mode VDOs did not match");
 }
 

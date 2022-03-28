@@ -16,7 +16,8 @@
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
 
 struct usb_attach_20v_3a_pd_charger_fixture {
-	struct tcpci_src_emul charger_20v;
+	struct tcpci_partner_data charger_20v;
+	struct tcpci_src_emul_data src_ext;
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
 };
@@ -25,20 +26,13 @@ static inline void
 connect_charger_to_port(struct usb_attach_20v_3a_pd_charger_fixture *fixture)
 {
 	set_ac_enabled(true);
-	/* Initialize the charger to supply 20V and 3A */
-	tcpci_src_emul_init(&fixture->charger_20v, PD_REV20);
-	fixture->charger_20v.data.pdo[1] =
-		PDO_FIXED(20000, 3000, PDO_FIXED_UNCONSTRAINED);
-
-	zassume_ok(tcpci_src_emul_connect_to_tcpci(
-			   &fixture->charger_20v.data,
-			   &fixture->charger_20v.common_data,
-			   &fixture->charger_20v.ops, fixture->tcpci_emul),
+	zassume_ok(tcpci_partner_connect_to_tcpci(
+			   &fixture->charger_20v, fixture->tcpci_emul),
 		   NULL);
 
 	isl923x_emul_set_adc_vbus(
 		fixture->charger_emul,
-		PDO_FIXED_GET_VOLT(fixture->charger_20v.data.pdo[1]));
+		PDO_FIXED_GET_VOLT(fixture->src_ext.pdo[1]));
 
 	/* Wait for PD negotiation and current ramp.
 	 * TODO(b/213906889): Check message timing and contents.
@@ -65,6 +59,13 @@ static void *usb_attach_20v_3a_pd_charger_setup(void)
 	test_fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 
+	/* Initialized the charger to supply 20V and 3A */
+	tcpci_partner_init(&test_fixture.charger_20v, PD_REV20);
+	test_fixture.charger_20v.extensions =
+		tcpci_src_emul_init(&test_fixture.src_ext,
+				    &test_fixture.charger_20v, NULL);
+	test_fixture.src_ext.pdo[1] =
+		PDO_FIXED(20000, 3000, PDO_FIXED_UNCONSTRAINED);
 
 	return &test_fixture;
 }

@@ -18,15 +18,23 @@ LOG_MODULE_REGISTER(tcpci_drp_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include "tcpm/tcpci.h"
 #include "usb_pd.h"
 
-/** Check description in emul_tcpci_partner_drp.h */
-enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
-	struct tcpci_drp_emul_data *data,
-	struct tcpci_src_emul_data *src_data,
-	struct tcpci_snk_emul_data *snk_data,
+/**
+ * @brief Handle SOP messages as TCPCI dual role device
+ *
+ * @param ext Pointer to USB-C DRP device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
+ * @param msg Pointer to received message
+ *
+ * @return TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled
+ * @return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
+ */
+static enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
+	struct tcpci_partner_extension *ext,
 	struct tcpci_partner_data *common_data,
-	const struct tcpci_emul_partner_ops *ops,
 	const struct tcpci_emul_msg *msg)
 {
+	struct tcpci_drp_emul_data *data =
+		CONTAINER_OF(ext, struct tcpci_drp_emul_data, ext);
 	uint16_t pwr_status;
 	uint16_t header;
 
@@ -36,7 +44,7 @@ enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 		/* Handle data message */
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_DATA_REQUEST:
-			if (data->sink) {
+			if (common_data->power_role == PD_ROLE_SINK) {
 				/* As sink we shouldn't accept request */
 				tcpci_partner_send_control_msg(common_data,
 							       PD_CTRL_REJECT,
@@ -46,7 +54,7 @@ enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 			/* As source, let source handler to handle this */
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 		case PD_DATA_SOURCE_CAP:
-			if (!data->sink) {
+			if (common_data->power_role == PD_ROLE_SOURCE) {
 				/* As source we shouldn't respond */
 				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 			}
@@ -73,7 +81,7 @@ enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 			common_data->recv_msg_id = -1;
 
 			/* Perform power role swap */
-			if (!data->sink) {
+			if (common_data->power_role == PD_ROLE_SOURCE) {
 				/* Disable VBUS if emulator was source */
 				tcpci_emul_get_reg(common_data->tcpci_emul,
 						   TCPC_REG_POWER_STATUS,
@@ -83,19 +91,16 @@ enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 						   TCPC_REG_POWER_STATUS,
 						   pwr_status);
 				/* Reconnect as sink */
-				data->sink = true;
 				common_data->power_role = PD_ROLE_SINK;
 			} else {
 				/* Reconnect as source */
-				data->sink = false;
 				common_data->power_role = PD_ROLE_SOURCE;
 			}
 			tcpci_partner_send_control_msg(common_data,
 						       PD_CTRL_PS_RDY, 0);
 			/* Reconnect to TCPCI emulator */
-			tcpci_drp_emul_connect_to_tcpci(
-					data, src_data, snk_data, common_data,
-					ops, common_data->tcpci_emul);
+			tcpci_partner_connect_to_tcpci(common_data,
+						       common_data->tcpci_emul);
 
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		}
@@ -104,202 +109,69 @@ enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 	return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 }
 
-/**
- * @brief Function called when TCPM wants to transmit message. Accept received
- *        message and generate response.
- *
- * @param emul Pointer to TCPCI emulator
- * @param ops Pointer to partner operations structure
- * @param tx_msg Pointer to TX message buffer
- * @param type Type of message
- * @param retry Count of retries
- */
-static void tcpci_drp_emul_transmit_op(const struct emul *emul,
-				       const struct tcpci_emul_partner_ops *ops,
-				       const struct tcpci_emul_msg *tx_msg,
-				       enum tcpci_msg_type type,
-				       int retry)
+/** Check description in emul_tcpci_partner_drp.h */
+void tcpci_drp_emul_set_dr_in_first_pdo(uint32_t *pdo)
 {
-	struct tcpci_drp_emul *drp_emul =
-		CONTAINER_OF(ops, struct tcpci_drp_emul, ops);
-	enum tcpci_partner_handler_res processed;
-	uint16_t header;
-	int ret;
-
-	ret = k_mutex_lock(&drp_emul->common_data.transmit_mutex, K_FOREVER);
-	if (ret) {
-		LOG_ERR("Failed to get DRP mutex");
-		/* Inform TCPM that message send failed */
-		tcpci_partner_common_msg_handler(&drp_emul->common_data,
-						 tx_msg, type,
-						 TCPCI_EMUL_TX_FAILED);
-		return;
-	}
-
-	header = sys_get_le16(tx_msg->buf);
-
-	/* Call common handler */
-	processed = tcpci_partner_common_msg_handler(&drp_emul->common_data,
-						     tx_msg, type,
-						     TCPCI_EMUL_TX_SUCCESS);
-	switch (processed) {
-	case TCPCI_PARTNER_COMMON_MSG_HARD_RESET:
-		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
-		return;
-	case TCPCI_PARTNER_COMMON_MSG_HANDLED:
-		if (!drp_emul->data.sink && PD_HEADER_CNT(header) == 0 &&
-		    PD_HEADER_TYPE(header) == PD_CTRL_SOFT_RESET) {
-			/* As source, advertise capabilities after soft reset */
-			tcpci_src_emul_send_capability_msg_with_timer(
-							&drp_emul->src_data,
-							&drp_emul->common_data,
-							0);
-		}
-		/* Message handled nothing to do */
-		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
-		return;
-	case TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED:
-	default:
-		/* Continue */
-		break;
-	}
-
-	/* Handle only SOP messages */
-	if (type != TCPCI_MSG_SOP) {
-		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
-		return;
-	}
-
-	/* Call drp specific handler */
-	processed = tcpci_drp_emul_handle_sop_msg(&drp_emul->data,
-						  &drp_emul->src_data,
-						  &drp_emul->snk_data,
-						  &drp_emul->common_data,
-						  ops, tx_msg);
-	if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED) {
-		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
-		return;
-	}
-
-	/* Call source specific handler */
-	processed = tcpci_src_emul_handle_sop_msg(&drp_emul->src_data,
-						  &drp_emul->common_data,
-						  tx_msg);
-	if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED) {
-		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
-		return;
-	}
-
-	/* Call sink specific handler */
-	processed = tcpci_snk_emul_handle_sop_msg(&drp_emul->snk_data,
-						  &drp_emul->common_data,
-						  tx_msg);
-	if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED) {
-		k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
-		return;
-	}
-
-	/* Send reject for not handled messages (PD rev 2.0) */
-	tcpci_partner_send_control_msg(&drp_emul->common_data,
-				       PD_CTRL_REJECT, 0);
-	k_mutex_unlock(&drp_emul->common_data.transmit_mutex);
+	*pdo |= PDO_FIXED_DUAL_ROLE;
 }
 
 /**
- * @brief Function called when TCPM consumes message. Free message that is no
- *        longer needed.
+ * @brief Perform action required by DRP device on hard reset. Reset role to
+ *        initial values
  *
- * @param emul Pointer to TCPCI emulator
- * @param ops Pointer to partner operations structure
- * @param rx_msg Message that was consumed by TCPM
+ * @param ext Pointer to USB-C DRP device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
  */
-static void tcpci_drp_emul_rx_consumed_op(
-		const struct emul *emul,
-		const struct tcpci_emul_partner_ops *ops,
-		const struct tcpci_emul_msg *rx_msg)
+static void tcpci_drp_emul_hard_reset(struct tcpci_partner_extension *ext,
+				      struct tcpci_partner_data *common_data)
 {
-	struct tcpci_partner_msg *msg = CONTAINER_OF(rx_msg,
-						     struct tcpci_partner_msg,
-						     msg);
+	struct tcpci_drp_emul_data *data =
+		CONTAINER_OF(ext, struct tcpci_drp_emul_data, ext);
 
-	tcpci_partner_free_msg(msg);
+	tcpci_partner_common_hard_reset_as_role(common_data,
+						data->initial_power_role);
 }
 
-/**
- * @brief Function called when emulator is disconnected from TCPCI
- *
- * @param emul Pointer to TCPCI emulator
- * @param ops Pointer to partner operations structure
- */
-static void tcpci_drp_emul_disconnect_op(
-		const struct emul *emul,
-		const struct tcpci_emul_partner_ops *ops)
+/** USB-C DRP device extension callbacks */
+struct tcpci_partner_extension_ops tcpci_drp_emul_ops = {
+	.sop_msg_handler = tcpci_drp_emul_handle_sop_msg,
+	.hard_reset = tcpci_drp_emul_hard_reset,
+	.soft_reset = NULL,
+	.disconnect = NULL,
+	.connect = NULL,
+};
+
+/** Check description in emul_tcpci_parnter_drp.h */
+struct tcpci_partner_extension *tcpci_drp_emul_init(
+	struct tcpci_drp_emul_data *data,
+	struct tcpci_partner_data *common_data,
+	enum pd_power_role power_role,
+	struct tcpci_partner_extension *src_ext,
+	struct tcpci_partner_extension *snk_ext)
 {
-	struct tcpci_drp_emul *drp_emul =
-		CONTAINER_OF(ops, struct tcpci_drp_emul, ops);
+	struct tcpci_partner_extension *drp_ext = &data->ext;
+	struct tcpci_src_emul_data *src_data =
+		CONTAINER_OF(src_ext, struct tcpci_src_emul_data, ext);
+	struct tcpci_snk_emul_data *snk_data =
+		CONTAINER_OF(snk_ext, struct tcpci_snk_emul_data, ext);
 
-	tcpci_partner_common_disconnect(&drp_emul->common_data);
-	tcpci_src_emul_disconnect(&drp_emul->src_data);
-}
+	data->in_pwr_swap = false;
 
-/** Check description in emul_tcpci_partner_drp.h */
-int tcpci_drp_emul_connect_to_tcpci(struct tcpci_drp_emul_data *data,
-				    struct tcpci_src_emul_data *src_data,
-				    struct tcpci_snk_emul_data *snk_data,
-				    struct tcpci_partner_data *common_data,
-				    const struct tcpci_emul_partner_ops *ops,
-				    const struct emul *tcpci_emul)
-{
-	if (data->sink) {
-		return tcpci_snk_emul_connect_to_tcpci(snk_data, common_data,
-						       ops, tcpci_emul);
-	}
-
-	return tcpci_src_emul_connect_to_tcpci(src_data, common_data,
-					       ops, tcpci_emul);
-}
-
-/** Check description in emul_tcpci_partner_drp.h */
-void tcpci_drp_emul_init(struct tcpci_drp_emul *emul, enum pd_rev_type rev)
-{
-	/* By default init as sink */
-	tcpci_drp_emul_init_with_pd_role(emul, rev, PD_ROLE_SINK);
-}
-
-/** Check description in emul_tcpci_partner_drp.h */
-void tcpci_drp_emul_init_with_pd_role(struct tcpci_drp_emul *emul,
-				      enum pd_rev_type rev,
-				      enum pd_power_role power_role)
-{
-	tcpci_partner_hard_reset_func hard_reset_handler;
-	void *reset_data;
-
-	if (power_role == PD_ROLE_SINK) {
-		hard_reset_handler = &tcpci_snk_emul_hard_reset;
-		reset_data = &emul->snk_data;
-	} else {
-		hard_reset_handler = &tcpci_src_emul_hard_reset;
-		reset_data = &emul->src_data;
-	}
-
-	tcpci_partner_init(&emul->common_data, hard_reset_handler, reset_data);
+	tcpci_drp_emul_set_dr_in_first_pdo(src_data->pdo);
+	tcpci_drp_emul_set_dr_in_first_pdo(snk_data->pdo);
 
 	/* Use common handler to initialize roles */
-	tcpci_partner_common_hard_reset_as_role(&emul->common_data, power_role);
+	data->initial_power_role = power_role;
+	tcpci_partner_common_hard_reset_as_role(common_data, power_role);
 
-	emul->common_data.rev = rev;
+	drp_ext->ops = &tcpci_drp_emul_ops;
+	/* Put sink as next extension to DRP */
+	drp_ext->next = snk_ext;
+	/* Put source after last extension in sink extensions chain */
+	while (snk_ext->next != NULL) {
+		snk_ext = snk_ext->next;
+	}
+	snk_ext->next = src_ext;
 
-	emul->ops.transmit = tcpci_drp_emul_transmit_op;
-	emul->ops.rx_consumed = tcpci_drp_emul_rx_consumed_op;
-	emul->ops.control_change = NULL;
-	emul->ops.disconnect = tcpci_drp_emul_disconnect_op;
-
-	emul->data.sink = power_role == PD_ROLE_SINK;
-	emul->data.in_pwr_swap = false;
-	tcpci_src_emul_init_data(&emul->src_data, &emul->common_data);
-	tcpci_snk_emul_init_data(&emul->snk_data, &emul->common_data);
-
-	/* Add dual role bit to sink and source PDOs */
-	emul->src_data.pdo[0] |= PDO_FIXED_DUAL_ROLE;
-	emul->snk_data.pdo[0] |= PDO_FIXED_DUAL_ROLE;
+	return drp_ext;
 }

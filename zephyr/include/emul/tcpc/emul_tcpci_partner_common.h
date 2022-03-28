@@ -47,15 +47,12 @@
 #define TCPCI_SWAP_SOURCE_START_TIMEOUT			\
 		K_MSEC(TCPCI_SWAP_SOURCE_START_TIMEOUT_MS)
 
-/**
- * @brief Function type that is used by TCPCI partner emulator on hard reset
- *
- * @param data Pointer to custom function data
- */
-typedef void (*tcpci_partner_hard_reset_func)(void *data);
-
 /** Common data for TCPCI partner device emulators */
 struct tcpci_partner_data {
+	/** List of extensions used in TCPCI partner emulator */
+	struct tcpci_partner_extension *extensions;
+	/** Operations used by TCPCI emulator */
+	struct tcpci_emul_partner_ops ops;
 	/** Timer used to send message with delay */
 	struct k_timer delayed_send;
 	/** Reserved for fifo, used for scheduling messages */
@@ -78,6 +75,15 @@ struct tcpci_partner_data {
 	enum pd_vconn_role vconn_role;
 	/** Revision (used in message header) */
 	enum pd_rev_type rev;
+	/** Resistor set at the CC1 line of partner emulator */
+	enum tcpc_cc_voltage_status cc1;
+	/** Resistor set at the CC2 line of partner emulator */
+	enum tcpc_cc_voltage_status cc2;
+	/**
+	 * Polarity of the partner emulator. It controls to which CC line of
+	 * TCPC emulator the partner emulator CC1 line should be connected.
+	 */
+	enum tcpc_cc_polarity polarity;
 	/**
 	 * Mask for control message types that shouldn't be handled
 	 * in common message handler
@@ -96,14 +102,17 @@ struct tcpci_partner_data {
 	/** Current AMS Control request being handled */
 	enum pd_ctrl_msg_type  cur_ams_ctrl_req;
 	/**
+	 * If common code should send GoodCRC for each message. If false,
+	 * then one of extensions should call tcpci_emul_partner_msg_status().
+	 * If message is handled by common code, than GoodCRC is send regardless
+	 * of send_goodcrc value.
+	 */
+	bool send_goodcrc;
+	/**
 	 * Mutex for TCPCI transmit handler. Should be used to synchronise
 	 * access to partner emulator with TCPCI emulator.
 	 */
 	struct k_mutex transmit_mutex;
-	/** Pointer to function called on hard reset */
-	tcpci_partner_hard_reset_func hard_reset_func;
-	/** Pointer to data passed to hard reset function */
-	void *hard_reset_data;
 	/** Delayed work which is executed when response timeout occurs */
 	struct k_work_delayable sender_response_timeout;
 	/** Number of TCPM timeouts. Test may chekck if timeout occurs */
@@ -114,6 +123,12 @@ struct tcpci_partner_data {
 	bool collect_msg_log;
 	/** Mutex for msg_log */
 	struct k_mutex msg_log_mutex;
+	/**
+	 * Pointer to last received message status. This pointer is set only
+	 * when message logging is enabled. It used to track if partner set
+	 * any status to received message.
+	 */
+	enum tcpci_emul_tx_status *received_msg_status;
 	/* VDMs with which the partner responds to discovery REQs. The VDM
 	 * buffers include the VDM header, and the VDO counts include 1 for the
 	 * VDM header. This structure has space for the mode response for a
@@ -161,8 +176,8 @@ struct tcpci_partner_log_msg {
 	uint64_t time;
 	/** Sender of the message */
 	enum tcpci_partner_msg_sender sender;
-	/** 0 if message was successfully received/send */
-	int status;
+	/** Status of sending this message */
+	enum tcpci_emul_tx_status status;
 };
 
 /** Result of common handler */
@@ -172,17 +187,97 @@ enum tcpci_partner_handler_res {
 	TCPCI_PARTNER_COMMON_MSG_HARD_RESET
 };
 
+/** Structure of TCPCI partner extension */
+struct tcpci_partner_extension {
+	/** Pointer to next extension or NULL */
+	struct tcpci_partner_extension *next;
+	/** Pointer to callbacks of the extension */
+	struct tcpci_partner_extension_ops *ops;
+};
+
+/**
+ * Extension callbacks. They are called after the common partner emulator code
+ * starting from the extension pointed by extensions field in
+ * struct tcpci_partner_data. Rest of extensions are called in order established
+ * by next field in struct tcpci_partner_extension.
+ * If not required, each callback can be NULL. The NULL callback is ignored and
+ * next extension in chain is called.
+ * It may be useful for extension to mask message handling in common code using
+ * @ref tcpci_partner_common_handler_mask_msg to alter emulator behavior in case
+ * of receiving some messages.
+ */
+struct tcpci_partner_extension_ops {
+	/**
+	 * @brief Function called when message from TCPM is handled
+	 *
+	 * @param ext Pointer to partner extension
+	 * @param common_data Pointer to TCPCI partner emulator
+	 * @param msg Pointer to received message
+	 *
+	 * @return TCPCI_PARTNER_COMMON_MSG_HANDLED to indicate that message
+	 *         is handled and ignore other extensions sop_msg_handler
+	 * @return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED to indicate that
+	 *         message wasn't handled
+	 */
+	enum tcpci_partner_handler_res (*sop_msg_handler)(
+		struct tcpci_partner_extension *ext,
+		struct tcpci_partner_data *common_data,
+		const struct tcpci_emul_msg *msg);
+
+	/**
+	 * @brief Function called when HardReset message is received or sent
+	 *
+	 * @param ext Pointer to partner extension
+	 * @param common_data Pointer to TCPCI partner emulator
+	 */
+	void (*hard_reset)(
+		struct tcpci_partner_extension *ext,
+		struct tcpci_partner_data *common_data);
+
+	/**
+	 * @brief Function called when SoftReset message is received
+	 *
+	 * @param ext Pointer to partner extension
+	 * @param common_data Pointer to TCPCI partner emulator
+	 */
+	void (*soft_reset)(
+		struct tcpci_partner_extension *ext,
+		struct tcpci_partner_data *common_data);
+
+	/**
+	 * @brief Function called when partner emulator is disconnected from
+	 *        TCPM
+	 *
+	 * @param ext Pointer to partner extension
+	 * @param common_data Pointer to TCPCI partner emulator
+	 */
+	void (*disconnect)(
+		struct tcpci_partner_extension *ext,
+		struct tcpci_partner_data *common_data);
+
+	/**
+	 * @brief Function called when partner emulator is connected to TCPM.
+	 *        In connect callback, any message cannot be sent with 0 delay
+	 *
+	 * @param ext Pointer to partner extension
+	 * @param common_data Pointer to TCPCI partner emulator
+	 *
+	 * @return Negative value on error
+	 * @return 0 on success
+	 */
+	int (*connect)(
+		struct tcpci_partner_extension *ext,
+		struct tcpci_partner_data *common_data);
+};
+
 /**
  * @brief Initialise common TCPCI partner emulator. Need to be called before
- *        any other function.
+ *        any other tcpci_partner_* function and init functions of extensions.
  *
  * @param data Pointer to USB-C charger emulator
- * @param hard_reset_func Pointer to function called on hard reset
- * @param hard_reset_data Pointer to data passed to hard reset function
+ * @param rev PD revision of the emulator
  */
-void tcpci_partner_init(struct tcpci_partner_data *data,
-			tcpci_partner_hard_reset_func hard_reset_func,
-			void *hard_reset_data);
+void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev);
 
 /**
  * @brief Allocate message with space for header and given number of data
@@ -310,32 +405,6 @@ void tcpci_partner_start_sender_response_timer(struct tcpci_partner_data *data);
 void tcpci_partner_stop_sender_response_timer(struct tcpci_partner_data *data);
 
 /**
- * @brief Common handler for TCPCI messages. It handles hard reset, soft reset,
- *        repeated messages. It handles vendor defined messages by skipping
- *        them. Accept and reject messages are handled when soft reset is send.
- *        Accept/reject messages are skipped when wait_for_response flag is set.
- *        All control messages may be masked by
- *        @ref tcpci_partner_common_handler_mask_msg
- *        If @p tx_status isn't success, then all message handling is skipped.
- *
- * @param data Pointer to TCPCI partner emulator
- * @param tx_msg Message received by partner emulator
- * @param type Type of message
- * @param tx_status Status which should be returned to TCPCI emulator
- *
- * @param TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled by common code
- * @param TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
- * @param TCPCI_PARTNER_COMMON_MSG_HARD_RESET Message was handled by sending
- *                                            hard reset
- */
-enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
-	struct tcpci_partner_data *data,
-	const struct tcpci_emul_msg *tx_msg,
-	enum tcpci_msg_type type,
-	enum tcpci_emul_tx_status tx_status);
-
-
-/**
  * @brief Select if @ref tcpci_partner_common_msg_handler should handle specific
  *        control message type.
  *
@@ -432,6 +501,31 @@ void tcpci_partner_common_clear_ams_ctrl_msg(struct tcpci_partner_data *data);
  */
 void tcpci_partner_common_hard_reset_as_role(struct tcpci_partner_data *data,
 					     enum pd_power_role power_role);
+
+/**
+ * @brief Connect emulated device to TCPCI. The connect callback is executed on
+ *        all extensions.
+ *
+ * @param data Pointer to TCPCI partner emulator
+ * @param tcpci_emul Pointer to TCPCI emulator to connect
+ *
+ * @return 0 on success
+ * @return negative on TCPCI connect error
+ */
+int tcpci_partner_connect_to_tcpci(struct tcpci_partner_data *data,
+				   const struct emul *tcpci_emul);
+
+/**
+ * @brief Inform TCPCI about status of received message (TCPCI_EMUL_TX_SUCCESS
+ *        GoodCRC send to TCPCI, TCPCI_EMUL_TX_DISCARDED partner message send in
+ *        the same time as TCPCI message, TCPCI_EMUL_TX_FAILED GoodCRC doesn't
+ *        send to TCPCI)
+ *
+ * @param data Pointer to TCPCI partner emulator
+ * @param status Status of received message
+ */
+void tcpci_partner_received_msg_status(struct tcpci_partner_data *data,
+				       enum tcpci_emul_tx_status status);
 
 /**
  * @}

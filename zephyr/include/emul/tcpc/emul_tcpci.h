@@ -82,7 +82,12 @@ enum tcpci_emul_tx_status {
 	TCPCI_EMUL_TX_SUCCESS = 0,
 	TCPCI_EMUL_TX_DISCARDED,
 	TCPCI_EMUL_TX_FAILED,
-	TCPCI_EMUL_TX_CABLE_HARD_RESET
+	TCPCI_EMUL_TX_CABLE_HARD_RESET,
+	/*
+	 * This is not real status. It is used to log unusual situation outside
+	 * the TCPCI spec.
+	 */
+	TCPCI_EMUL_TX_UNKNOWN
 };
 
 /** TCPCI specific device operations. Not all of them need to be implemented. */

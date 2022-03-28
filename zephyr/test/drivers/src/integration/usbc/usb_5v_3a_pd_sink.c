@@ -18,7 +18,8 @@
 #include "usb_pd.h"
 
 struct usb_attach_5v_3a_pd_sink_fixture {
-	struct tcpci_snk_emul sink_5v_3a;
+	struct tcpci_partner_data sink_5v_3a;
+	struct tcpci_snk_emul_data snk_ext;
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
 };
@@ -49,10 +50,9 @@ connect_sink_to_port(struct usb_attach_5v_3a_pd_sink_fixture *fixture)
 	tcpci_tcpc_alert(0);
 	k_sleep(K_SECONDS(1));
 
-	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
-			   &fixture->sink_5v_3a.data,
-			   &fixture->sink_5v_3a.common_data,
-			   &fixture->sink_5v_3a.ops, fixture->tcpci_emul),
+	zassume_ok(tcpci_partner_connect_to_tcpci(
+			   &fixture->sink_5v_3a,
+			   fixture->tcpci_emul),
 		   NULL);
 
 	/* Wait for PD negotiation and current ramp.
@@ -93,9 +93,12 @@ static void usb_attach_5v_3a_pd_sink_before(void *data)
 	k_sleep(K_SECONDS(1));
 
 	/* Initialized the sink to request 5V and 3A */
-	tcpci_snk_emul_init(&test_fixture->sink_5v_3a, PD_REV20);
-	test_fixture->sink_5v_3a.data.pdo[0] = TEST_INITIAL_SINK_CAP;
-	test_fixture->sink_5v_3a.data.pdo[1] = TEST_ADDITIONAL_SINK_CAP;
+	tcpci_partner_init(&test_fixture->sink_5v_3a, PD_REV20);
+	test_fixture->sink_5v_3a.extensions =
+		tcpci_snk_emul_init(&test_fixture->snk_ext,
+				    &test_fixture->sink_5v_3a, NULL);
+	test_fixture->snk_ext.pdo[0] = TEST_INITIAL_SINK_CAP;
+	test_fixture->snk_ext.pdo[1] = TEST_ADDITIONAL_SINK_CAP;
 	connect_sink_to_port(test_fixture);
 }
 
@@ -112,7 +115,7 @@ ZTEST_SUITE(usb_attach_5v_3a_pd_sink, drivers_predicate_post_main,
 
 ZTEST_F(usb_attach_5v_3a_pd_sink, test_partner_pd_completed)
 {
-	zassert_true(this->sink_5v_3a.data.pd_completed, NULL);
+	zassert_true(this->snk_ext.pd_completed, NULL);
 }
 
 ZTEST(usb_attach_5v_3a_pd_sink, test_battery_is_discharging)
@@ -267,7 +270,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_goto_min)
 	pd_dpm_request(0, DPM_REQUEST_GOTO_MIN);
 	k_sleep(K_SECONDS(1));
 
-	zassert_true(this->sink_5v_3a.data.pd_completed, NULL);
+	zassert_true(this->snk_ext.pd_completed, NULL);
 }
 
 /**
@@ -283,12 +286,12 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_goto_min)
  */
 ZTEST_F(usb_attach_5v_3a_pd_sink, verify_ping_msg)
 {
-	tcpci_snk_emul_clear_ping_received(&this->sink_5v_3a.data);
+	tcpci_snk_emul_clear_ping_received(&this->snk_ext);
 
 	pd_dpm_request(0, DPM_REQUEST_SEND_PING);
 	k_sleep(K_USEC(PD_T_SOURCE_ACTIVITY));
 
-	zassert_true(this->sink_5v_3a.data.ping_received, NULL);
+	zassert_true(this->snk_ext.ping_received, NULL);
 }
 
 /**
@@ -306,10 +309,10 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_ping_msg)
  */
 ZTEST_F(usb_attach_5v_3a_pd_sink, verify_alert_msg)
 {
-	tcpci_snk_emul_clear_alert_received(&this->sink_5v_3a.data);
-	zassert_false(this->sink_5v_3a.data.alert_received, NULL);
+	tcpci_snk_emul_clear_alert_received(&this->snk_ext);
+	zassert_false(this->snk_ext.alert_received, NULL);
 	zassert_equal(pd_broadcast_alert_msg(ADO_OTP_EVENT), EC_SUCCESS, NULL);
 
 	k_sleep(K_SECONDS(2));
-	zassert_true(this->sink_5v_3a.data.alert_received, NULL);
+	zassert_true(this->snk_ext.alert_received, NULL);
 }

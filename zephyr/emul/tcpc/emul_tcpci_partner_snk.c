@@ -350,12 +350,26 @@ void tcpci_snk_emul_clear_alert_received(struct tcpci_snk_emul_data *data)
 	data->alert_received = false;
 }
 
-/** Check description in emul_tcpci_snk.h */
-enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
-	struct tcpci_snk_emul_data *data,
+/**
+ * @brief Handle SOP messages as TCPCI sink device. It handles source cap,
+ *        get sink cap and ping messages. Accept, Reject and PS_RDY are handled
+ *        only if sink emulator send request as response for source cap message
+ *        and is waiting for response.
+ *
+ * @param ext Pointer to USB-C sink device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
+ * @param msg Pointer to received message
+ *
+ * @param TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled
+ * @param TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
+ */
+static enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
+	struct tcpci_partner_extension *ext,
 	struct tcpci_partner_data *common_data,
 	const struct tcpci_emul_msg *msg)
 {
+	struct tcpci_snk_emul_data *data =
+		CONTAINER_OF(ext, struct tcpci_snk_emul_data, ext);
 	uint16_t header;
 
 	header = sys_get_le16(msg->buf);
@@ -413,145 +427,76 @@ enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 	return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 }
 
-/** Check description in emul_tcpci_partner_snk.h */
-void tcpci_snk_emul_hard_reset(void *data)
-{
-	struct tcpci_snk_emul_data *snk_emul_data = data;
-
-	tcpci_partner_common_hard_reset_as_role(snk_emul_data->common_data,
-						PD_ROLE_SINK);
-
-	snk_emul_data->wait_for_ps_rdy = false;
-	snk_emul_data->pd_completed = false;
-}
-
 /**
- * @brief Function called when TCPM wants to transmit message. Accept received
- *        message and generate response.
+ * @brief Perform action required by sink device on hard reset. Reset sink
+ *        specific flags (pd_completed and wait_for_ps_rdy).
  *
- * @param emul Pointer to TCPCI emulator
- * @param ops Pointer to partner operations structure
- * @param tx_msg Pointer to TX message buffer
- * @param type Type of message
- * @param retry Count of retries
+ * @param ext Pointer to USB-C sink device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
  */
-static void tcpci_snk_emul_transmit_op(const struct emul *emul,
-				       const struct tcpci_emul_partner_ops *ops,
-				       const struct tcpci_emul_msg *tx_msg,
-				       enum tcpci_msg_type type,
-				       int retry)
+static void tcpci_snk_emul_hard_reset(struct tcpci_partner_extension *ext,
+				      struct tcpci_partner_data *common_data)
 {
-	struct tcpci_snk_emul *snk_emul =
-		CONTAINER_OF(ops, struct tcpci_snk_emul, ops);
-	enum tcpci_partner_handler_res processed;
-	int ret;
-
-	ret = k_mutex_lock(&snk_emul->common_data.transmit_mutex, K_FOREVER);
-	if (ret) {
-		LOG_ERR("Failed to get SNK mutex");
-		/* Inform TCPM that message send failed */
-		tcpci_partner_common_msg_handler(&snk_emul->common_data,
-						 tx_msg, type,
-						 TCPCI_EMUL_TX_FAILED);
-		return;
-	}
-
-	/* Call common handler */
-	processed = tcpci_partner_common_msg_handler(&snk_emul->common_data,
-						     tx_msg, type,
-						     TCPCI_EMUL_TX_SUCCESS);
-	switch (processed) {
-	case TCPCI_PARTNER_COMMON_MSG_HARD_RESET:
-	case TCPCI_PARTNER_COMMON_MSG_HANDLED:
-		/* Message handled nothing to do */
-		k_mutex_unlock(&snk_emul->common_data.transmit_mutex);
-		return;
-	case TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED:
-	default:
-		/* Continue */
-		break;
-	}
-
-	/* Handle only SOP messages */
-	if (type != TCPCI_MSG_SOP) {
-		k_mutex_unlock(&snk_emul->common_data.transmit_mutex);
-		return;
-	}
-
-	/* Call sink specific handler */
-	processed = tcpci_snk_emul_handle_sop_msg(&snk_emul->data,
-						  &snk_emul->common_data,
-						  tx_msg);
-	if (processed == TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED) {
-		/* Send reject for not handled messages (PD rev 2.0) */
-		tcpci_partner_send_control_msg(&snk_emul->common_data,
-					       PD_CTRL_REJECT, 0);
-	}
-	k_mutex_unlock(&snk_emul->common_data.transmit_mutex);
-}
-
-/**
- * @brief Function called when TCPM consumes message. Free message that is no
- *        longer needed.
- *
- * @param emul Pointer to TCPCI emulator
- * @param ops Pointer to partner operations structure
- * @param rx_msg Message that was consumed by TCPM
- */
-static void tcpci_snk_emul_rx_consumed_op(
-		const struct emul *emul,
-		const struct tcpci_emul_partner_ops *ops,
-		const struct tcpci_emul_msg *rx_msg)
-{
-	struct tcpci_partner_msg *msg = CONTAINER_OF(rx_msg,
-						     struct tcpci_partner_msg,
-						     msg);
-
-	tcpci_partner_free_msg(msg);
-}
-
-/**
- * @brief Function called when emulator is disconnected from TCPCI
- *
- * @param emul Pointer to TCPCI emulator
- * @param ops Pointer to partner operations structure
- */
-static void tcpci_snk_emul_disconnect_op(
-		const struct emul *emul,
-		const struct tcpci_emul_partner_ops *ops)
-{
-	struct tcpci_snk_emul *snk_emul =
-		CONTAINER_OF(ops, struct tcpci_snk_emul, ops);
-
-	tcpci_partner_common_disconnect(&snk_emul->common_data);
-}
-
-/** Check description in emul_tcpci_snk.h */
-int tcpci_snk_emul_connect_to_tcpci(struct tcpci_snk_emul_data *data,
-				    struct tcpci_partner_data *common_data,
-				    const struct tcpci_emul_partner_ops *ops,
-				    const struct emul *tcpci_emul)
-{
-	int ret;
-
-	tcpci_emul_set_partner_ops(tcpci_emul, ops);
-	ret = tcpci_emul_connect_partner(tcpci_emul, PD_ROLE_SINK,
-					 TYPEC_CC_VOLT_RD,
-					 TYPEC_CC_VOLT_OPEN, POLARITY_CC1);
-	if (!ret) {
-		common_data->tcpci_emul = tcpci_emul;
-	}
+	struct tcpci_snk_emul_data *data =
+		CONTAINER_OF(ext, struct tcpci_snk_emul_data, ext);
 
 	data->wait_for_ps_rdy = false;
 	data->pd_completed = false;
 
-	return ret;
+	if (common_data->power_role != PD_ROLE_SINK) {
+		return;
+	}
+
+	tcpci_partner_common_hard_reset_as_role(common_data, PD_ROLE_SINK);
 }
 
-/** Check description in emul_tcpci_snk.h */
-void tcpci_snk_emul_init_data(struct tcpci_snk_emul_data *data,
-			      struct tcpci_partner_data *common_data)
+/**
+ * @brief Connect emulated device to TCPCI if common_data is configured as sink
+ *
+ * @param ext Pointer to USB-C sink device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
+ *
+ * @return 0 on success
+ * @return negative on TCPCI connect error
+ */
+static int tcpci_snk_emul_connect_to_tcpci(
+	struct tcpci_partner_extension *ext,
+	struct tcpci_partner_data *common_data)
 {
+	struct tcpci_snk_emul_data *data =
+		CONTAINER_OF(ext, struct tcpci_snk_emul_data, ext);
+
+	if (common_data->power_role != PD_ROLE_SINK) {
+		return 0;
+	}
+
+	common_data->cc1 = TYPEC_CC_VOLT_RD;
+	common_data->cc2 = TYPEC_CC_VOLT_OPEN;
+	common_data->polarity = POLARITY_CC1;
+
+	data->wait_for_ps_rdy = false;
+	data->pd_completed = false;
+
+	return 0;
+}
+
+/** USB-C sink device extension callbacks */
+struct tcpci_partner_extension_ops tcpci_snk_emul_ops = {
+	.sop_msg_handler = tcpci_snk_emul_handle_sop_msg,
+	.hard_reset = tcpci_snk_emul_hard_reset,
+	.soft_reset = NULL,
+	.disconnect = NULL,
+	.connect = tcpci_snk_emul_connect_to_tcpci,
+};
+
+/** Check description in emul_tcpci_parnter_snk.h */
+struct tcpci_partner_extension *tcpci_snk_emul_init(
+	struct tcpci_snk_emul_data *data,
+	struct tcpci_partner_data *common_data,
+	struct tcpci_partner_extension *ext)
+{
+	struct tcpci_partner_extension *snk_ext = &data->ext;
+
 	/* By default there is only PDO 5v@500mA */
 	data->pdo[0] = PDO_FIXED(5000, 500, 0);
 	for (int i = 1; i < PDO_MAX_OBJECTS; i++) {
@@ -560,26 +505,12 @@ void tcpci_snk_emul_init_data(struct tcpci_snk_emul_data *data,
 
 	data->wait_for_ps_rdy = false;
 	data->pd_completed = false;
-	data->common_data = common_data;
-}
-
-/** Check description in emul_tcpci_partner_snk.h */
-void tcpci_snk_emul_init(struct tcpci_snk_emul *emul, enum pd_rev_type rev)
-{
-	tcpci_partner_init(&emul->common_data, tcpci_snk_emul_hard_reset,
-			   &emul->data);
-
 
 	/* Use common handler to initialize roles */
-	tcpci_partner_common_hard_reset_as_role(&emul->common_data,
-						PD_ROLE_SINK);
+	tcpci_partner_common_hard_reset_as_role(common_data, PD_ROLE_SINK);
 
-	emul->common_data.rev = rev;
+	snk_ext->next = ext;
+	snk_ext->ops = &tcpci_snk_emul_ops;
 
-	emul->ops.transmit = tcpci_snk_emul_transmit_op;
-	emul->ops.rx_consumed = tcpci_snk_emul_rx_consumed_op;
-	emul->ops.control_change = NULL;
-	emul->ops.disconnect = tcpci_snk_emul_disconnect_op;
-
-	tcpci_snk_emul_init_data(&emul->data, &emul->common_data);
+	return snk_ext;
 }

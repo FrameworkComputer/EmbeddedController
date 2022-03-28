@@ -162,7 +162,8 @@ ZTEST_USER(console_cmd_charge_state, test_sustain_invalid_params)
 }
 
 struct console_cmd_charge_state_fixture {
-	struct tcpci_src_emul source_5v_3a;
+	struct tcpci_partner_data source_5v_3a;
+	struct tcpci_src_emul_data source_ext;
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
 };
@@ -178,8 +179,11 @@ static void *console_cmd_charge_state_setup(void)
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 
 	/* Initialized the source to supply 5V and 3A */
-	tcpci_src_emul_init(&fixture.source_5v_3a, PD_REV20);
-	fixture.source_5v_3a.data.pdo[1] =
+	tcpci_partner_init(&fixture.source_5v_3a, PD_REV20);
+	fixture.source_5v_3a.extensions =
+		tcpci_src_emul_init(&fixture.source_ext,
+				    &fixture.source_5v_3a, NULL);
+	fixture.source_ext.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
 	return &fixture;
@@ -201,8 +205,8 @@ ZTEST_SUITE(console_cmd_charge_state, drivers_predicate_post_main,
 ZTEST_USER_F(console_cmd_charge_state, test_idle_on_from_normal)
 {
 	/* Connect a source so we start charging */
-	connect_source_to_port(&this->source_5v_3a, 1, this->tcpci_emul,
-			       this->charger_emul);
+	connect_source_to_port(&this->source_5v_3a, &this->source_ext, 1,
+			       this->tcpci_emul, this->charger_emul);
 
 	/* Verify that we're in "normal" mode */
 	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
@@ -215,8 +219,8 @@ ZTEST_USER_F(console_cmd_charge_state, test_idle_on_from_normal)
 ZTEST_USER_F(console_cmd_charge_state, test_normal_from_idle)
 {
 	/* Connect a source so we start charging */
-	connect_source_to_port(&this->source_5v_3a, 1, this->tcpci_emul,
-			       this->charger_emul);
+	connect_source_to_port(&this->source_5v_3a, &this->source_ext, 1,
+			       this->tcpci_emul, this->charger_emul);
 
 	/* Verify that we're in "normal" mode */
 	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
@@ -234,8 +238,8 @@ ZTEST_USER_F(console_cmd_charge_state, test_normal_from_idle)
 ZTEST_USER_F(console_cmd_charge_state, test_discharge_on)
 {
 	/* Connect a source so we start charging */
-	connect_source_to_port(&this->source_5v_3a, 1, this->tcpci_emul,
-			       this->charger_emul);
+	connect_source_to_port(&this->source_5v_3a, &this->source_ext, 1,
+			       this->tcpci_emul, this->charger_emul);
 
 	/* Verify that we're in "normal" mode */
 	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
@@ -249,8 +253,8 @@ ZTEST_USER_F(console_cmd_charge_state, test_discharge_on)
 ZTEST_USER_F(console_cmd_charge_state, test_discharge_off)
 {
 	/* Connect a source so we start charging */
-	connect_source_to_port(&this->source_5v_3a, 1, this->tcpci_emul,
-			       this->charger_emul);
+	connect_source_to_port(&this->source_5v_3a, &this->source_ext, 1,
+			       this->tcpci_emul, this->charger_emul);
 
 	/* Verify that we're in "normal" mode */
 	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);

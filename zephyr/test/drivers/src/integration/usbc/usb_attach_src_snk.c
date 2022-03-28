@@ -44,8 +44,10 @@ struct emul_state {
 	const struct emul *tcpci_generic_emul;
 	const struct emul *tcpci_ps8xxx_emul;
 	const struct emul *charger_isl923x_emul;
-	struct tcpci_src_emul my_src;
-	struct tcpci_snk_emul my_snk;
+	struct tcpci_partner_data my_src;
+	struct tcpci_src_emul_data src_ext;
+	struct tcpci_partner_data my_snk;
+	struct tcpci_snk_emul_data snk_ext;
 };
 
 struct integration_usb_attach_src_then_snk_fixture {
@@ -74,6 +76,14 @@ static void integration_usb_setup(struct emul_state *fixture)
 	fixture->tcpci_generic_emul = tcpci_emul;
 	fixture->tcpci_ps8xxx_emul = tcpci_emul2;
 	fixture->charger_isl923x_emul = charger_emul;
+
+	tcpci_partner_init(&fixture->my_snk, PD_REV20);
+	fixture->my_snk.extensions =
+		tcpci_snk_emul_init(&fixture->snk_ext, &fixture->my_snk, NULL);
+
+	tcpci_partner_init(&fixture->my_src, PD_REV20);
+	fixture->my_src.extensions =
+		tcpci_src_emul_init(&fixture->src_ext, &fixture->my_src, NULL);
 
 	/*
 	 * TODO(b/221288815): TCPCI config flags should be compile-time
@@ -154,11 +164,10 @@ static void attach_src_snk_common_after(struct emul_state *my_emul_state)
 static void attach_emulated_snk(struct emul_state *my_emul_state)
 {
 	const struct emul *tcpci_emul_snk = my_emul_state->tcpci_ps8xxx_emul;
-	struct tcpci_snk_emul *my_snk = &my_emul_state->my_snk;
+	struct tcpci_partner_data *my_snk = &my_emul_state->my_snk;
 	uint16_t power_reg_val;
 
 	/* Attach emulated sink */
-	tcpci_snk_emul_init(my_snk, PD_REV20);
 	tcpci_emul_set_rev(tcpci_emul_snk, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Turn on VBUS detection */
@@ -177,9 +186,7 @@ static void attach_emulated_snk(struct emul_state *my_emul_state)
 	tcpci_emul_set_reg(tcpci_emul_snk, TCPC_REG_EXT_STATUS,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
 
-	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
-			   &my_snk->data, &my_snk->common_data, &my_snk->ops,
-			   tcpci_emul_snk),
+	zassume_ok(tcpci_partner_connect_to_tcpci(my_snk, tcpci_emul_snk),
 		   NULL);
 
 	/* TODO(b/214401892): Check why need to give time TCPM to spin */
@@ -190,11 +197,10 @@ static void attach_emulated_src(struct emul_state *my_emul_state)
 {
 	const struct emul *tcpci_emul_src = my_emul_state->tcpci_generic_emul;
 	const struct emul *charger_emul = my_emul_state->charger_isl923x_emul;
-	struct tcpci_src_emul *my_src = &my_emul_state->my_src;
+	struct tcpci_partner_data *my_src = &my_emul_state->my_src;
 	uint16_t power_reg_val;
 
 	/* Attach emulated charger. */
-	tcpci_src_emul_init(my_src, PD_REV20);
 	tcpci_emul_set_rev(tcpci_emul_src, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Turn on VBUS detection */
@@ -213,9 +219,7 @@ static void attach_emulated_src(struct emul_state *my_emul_state)
 	tcpci_emul_set_reg(tcpci_emul_src, TCPC_REG_EXT_STATUS,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
 
-	zassume_ok(tcpci_src_emul_connect_to_tcpci(
-			   &my_src->data, &my_src->common_data, &my_src->ops,
-			   tcpci_emul_src),
+	zassume_ok(tcpci_partner_connect_to_tcpci(my_src, tcpci_emul_src),
 		   NULL);
 	isl923x_emul_set_adc_vbus(charger_emul, DEFAULT_VBUS_MV);
 }

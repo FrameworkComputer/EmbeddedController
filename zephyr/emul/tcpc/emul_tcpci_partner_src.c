@@ -94,18 +94,30 @@ int tcpci_src_emul_send_capability_msg_with_timer(
 		/* Expect Request message before SenderResponse timeout */
 		tcpci_partner_start_sender_response_timer(common_data);
 		/* Do not expect Accept or Reject messages */
-		data->common_data->wait_for_response = false;
+		common_data->wait_for_response = false;
 	}
 
 	return TCPCI_EMUL_TX_SUCCESS;
 }
 
-/** Check description in emul_tcpci_partner_src.h */
-enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
-	struct tcpci_src_emul_data *data,
+/**
+ * @brief Handle SOP messages as TCPCI source device. It handles request
+ *        and get source cap messages.
+ *
+ * @param ext Pointer to USB-C source device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
+ * @param msg Pointer to received message
+ *
+ * @param TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled
+ * @param TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
+ */
+static enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
+	struct tcpci_partner_extension *ext,
 	struct tcpci_partner_data *common_data,
 	const struct tcpci_emul_msg *msg)
 {
+	struct tcpci_src_emul_data *data =
+		CONTAINER_OF(ext, struct tcpci_src_emul_data, ext);
 	uint16_t header;
 
 	header = sys_get_le16(msg->buf);
@@ -131,11 +143,6 @@ enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 		case PD_CTRL_GET_SOURCE_CAP:
 			tcpci_src_emul_send_capability_msg(data, common_data,
 							   0);
-			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
-		case PD_CTRL_SOFT_RESET:
-			/* Send capability to establish PD again */
-			tcpci_src_emul_send_capability_msg_with_timer(
-							data, common_data, 0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
@@ -176,156 +183,91 @@ static void tcpci_src_emul_source_capability_timeout(struct k_work *work)
 	k_mutex_unlock(&common_data->transmit_mutex);
 }
 
-/** Check description in emul_tcpci_partner_src.h */
-void tcpci_src_emul_hard_reset(void *data)
+/**
+ * @brief Perform action required by source device on hard or soft reset.
+ *        Send source capabilities message and start SourceCapability timer.
+ *
+ * @param ext Pointer to USB-C source device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
+ */
+static void tcpci_src_emul_reset(struct tcpci_partner_extension *ext,
+				 struct tcpci_partner_data *common_data)
 {
-	struct tcpci_src_emul_data *src_emul_data = data;
+	struct tcpci_src_emul_data *data =
+		CONTAINER_OF(ext, struct tcpci_src_emul_data, ext);
 
-	tcpci_partner_common_hard_reset_as_role(src_emul_data->common_data,
-						PD_ROLE_SOURCE);
+	if (common_data->power_role != PD_ROLE_SOURCE) {
+		return;
+	}
 
 	/* Send capability to establish PD again */
-	tcpci_src_emul_send_capability_msg_with_timer(
-		src_emul_data, src_emul_data->common_data, 0);
+	tcpci_src_emul_send_capability_msg_with_timer(data, common_data, 1);
 }
 
 /**
- * @brief Function called when TCPM wants to transmit message. Accept received
- *        message and generate response.
+ * @brief Ensure that there is correct role set after hard reset and perform
+ *        source reset actions.
  *
- * @param emul Pointer to TCPCI emulator
- * @param ops Pointer to partner operations structure
- * @param tx_msg Pointer to TX message buffer
- * @param type Type of message
- * @param retry Count of retries
+ * @param ext Pointer to USB-C source device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
  */
-static void tcpci_src_emul_transmit_op(const struct emul *emul,
-				       const struct tcpci_emul_partner_ops *ops,
-				       const struct tcpci_emul_msg *tx_msg,
-				       enum tcpci_msg_type type,
-				       int retry)
+static void tcpci_src_emul_hard_reset(struct tcpci_partner_extension *ext,
+				      struct tcpci_partner_data *common_data)
 {
-	struct tcpci_src_emul *src_emul =
-		CONTAINER_OF(ops, struct tcpci_src_emul, ops);
-	enum tcpci_partner_handler_res processed;
-	uint16_t header;
-	int ret;
-
-	ret = k_mutex_lock(&src_emul->common_data.transmit_mutex, K_FOREVER);
-	if (ret) {
-		LOG_ERR("Failed to get SRC mutex");
-		/* Inform TCPM that message send failed */
-		tcpci_partner_common_msg_handler(&src_emul->common_data,
-						 tx_msg, type,
-						 TCPCI_EMUL_TX_FAILED);
+	if (common_data->power_role != PD_ROLE_SOURCE) {
 		return;
 	}
 
-	processed = tcpci_partner_common_msg_handler(&src_emul->common_data,
-						     tx_msg, type,
-						     TCPCI_EMUL_TX_SUCCESS);
-	/* Handle hard reset */
-	if (processed == TCPCI_PARTNER_COMMON_MSG_HARD_RESET) {
-		k_mutex_unlock(&src_emul->common_data.transmit_mutex);
-		return;
-	}
-
-	/* Handle only SOP messages */
-	if (type != TCPCI_MSG_SOP) {
-		k_mutex_unlock(&src_emul->common_data.transmit_mutex);
-		return;
-	}
-
-	header = sys_get_le16(tx_msg->buf);
-	if (processed == TCPCI_PARTNER_COMMON_MSG_HANDLED &&
-	    !(PD_HEADER_CNT(header) == 0 &&
-	      PD_HEADER_TYPE(header) == PD_CTRL_SOFT_RESET)) {
-		/*
-		 * Only soft reset requires additional handling after
-		 * common handler
-		 */
-		k_mutex_unlock(&src_emul->common_data.transmit_mutex);
-		return;
-	}
-
-	/* Call source specific handler */
-	processed = tcpci_src_emul_handle_sop_msg(&src_emul->data,
-						  &src_emul->common_data,
-						  tx_msg);
-	if (processed == TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED) {
-		/* Send reject for not handled messages (PD rev 2.0) */
-		tcpci_partner_send_control_msg(&src_emul->common_data,
-					       PD_CTRL_REJECT, 0);
-	}
-	k_mutex_unlock(&src_emul->common_data.transmit_mutex);
+	tcpci_partner_common_hard_reset_as_role(common_data, PD_ROLE_SOURCE);
+	tcpci_src_emul_reset(ext, common_data);
 }
 
 /**
- * @brief Function called when TCPM consumes message. Free message that is no
- *        longer needed.
+ * @brief Disable source capabilities timer on disconnect
  *
- * @param emul Pointer to TCPCI emulator
- * @param ops Pointer to partner operations structure
- * @param rx_msg Message that was consumed by TCPM
+ * @param ext Pointer to USB-C source device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
  */
-static void tcpci_src_emul_rx_consumed_op(
-		const struct emul *emul,
-		const struct tcpci_emul_partner_ops *ops,
-		const struct tcpci_emul_msg *rx_msg)
+static void tcpci_src_emul_disconnect(struct tcpci_partner_extension *ext,
+				      struct tcpci_partner_data *common_data)
 {
-	struct tcpci_partner_msg *msg = CONTAINER_OF(rx_msg,
-						     struct tcpci_partner_msg,
-						     msg);
+	struct tcpci_src_emul_data *data =
+		CONTAINER_OF(ext, struct tcpci_src_emul_data, ext);
 
-	tcpci_partner_free_msg(msg);
-}
-
-/** Check description in emul_tcpci_partner_src.h */
-void tcpci_src_emul_disconnect(struct tcpci_src_emul_data *data)
-{
 	tcpci_src_emul_stop_source_capability_timer(data);
 }
 
 /**
- * @brief Function called when emulator is disconnected from TCPCI
+ * @brief Connect emulated device to TCPCI if common_data is configured as
+ *        source
  *
- * @param emul Pointer to TCPCI emulator
- * @param ops Pointer to partner operations structure
+ * @param ext Pointer to USB-C source device emulator extension
+ * @param common_data Pointer to USB-C device emulator common data
+ *
+ * @return 0 on success
+ * @return negative on TCPCI connect error
  */
-static void tcpci_src_emul_disconnect_op(
-		const struct emul *emul,
-		const struct tcpci_emul_partner_ops *ops)
+static int tcpci_src_emul_connect_to_tcpci(
+	struct tcpci_partner_extension *ext,
+	struct tcpci_partner_data *common_data)
 {
-	struct tcpci_src_emul *src_emul =
-		CONTAINER_OF(ops, struct tcpci_src_emul, ops);
+	struct tcpci_src_emul_data *data =
+		CONTAINER_OF(ext, struct tcpci_src_emul_data, ext);
 
-	tcpci_partner_common_disconnect(&src_emul->common_data);
-	tcpci_src_emul_disconnect(&src_emul->data);
-}
-
-/** Check description in emul_tcpci_partner_src.h */
-int tcpci_src_emul_connect_to_tcpci(struct tcpci_src_emul_data *data,
-				    struct tcpci_partner_data *common_data,
-				    const struct tcpci_emul_partner_ops *ops,
-				    const struct emul *tcpci_emul)
-{
-	int ec;
-
-	tcpci_emul_set_partner_ops(tcpci_emul, ops);
-	ec = tcpci_emul_connect_partner(tcpci_emul, PD_ROLE_SOURCE,
-					TYPEC_CC_VOLT_RP_3_0,
-					TYPEC_CC_VOLT_OPEN, POLARITY_CC1);
-	if (ec) {
-		return ec;
+	if (common_data->power_role != PD_ROLE_SOURCE) {
+		return 0;
 	}
 
-	common_data->tcpci_emul = tcpci_emul;
+	common_data->cc1 = TYPEC_CC_VOLT_RP_3_0;
+	common_data->cc2 = TYPEC_CC_VOLT_OPEN;
+	common_data->polarity = POLARITY_CC1;
+
 	/*
 	 * It is not required to wait on connection before sending source
 	 * capabilities, but it is permit. Timeout is obligatory for power swap.
 	 */
 	tcpci_src_emul_send_capability_msg_with_timer(
-					data, data->common_data,
+					data, common_data,
 					TCPCI_SWAP_SOURCE_START_TIMEOUT_MS);
 
 	return 0;
@@ -430,10 +372,23 @@ enum check_pdos_res tcpci_src_emul_check_pdos(struct tcpci_src_emul_data *data)
 	return TCPCI_SRC_EMUL_CHECK_PDO_OK;
 }
 
-/** Check description in emul_tcpci_partner_src.h */
-void tcpci_src_emul_init_data(struct tcpci_src_emul_data *data,
-			      struct tcpci_partner_data *common_data)
+/** USB-C source device extension callbacks */
+struct tcpci_partner_extension_ops tcpci_src_emul_ops = {
+	.sop_msg_handler = tcpci_src_emul_handle_sop_msg,
+	.hard_reset = tcpci_src_emul_hard_reset,
+	.soft_reset = tcpci_src_emul_reset,
+	.disconnect = tcpci_src_emul_disconnect,
+	.connect = tcpci_src_emul_connect_to_tcpci,
+};
+
+/** Check description in emul_tcpci_parnter_src.h */
+struct tcpci_partner_extension *tcpci_src_emul_init(
+	struct tcpci_src_emul_data *data,
+	struct tcpci_partner_data *common_data,
+	struct tcpci_partner_extension *ext)
 {
+	struct tcpci_partner_extension *src_ext = &data->ext;
+
 	/* By default there is only PDO 5v@3A */
 	data->pdo[0] = PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 	for (int i = 1; i < PDO_MAX_OBJECTS; i++) {
@@ -443,24 +398,12 @@ void tcpci_src_emul_init_data(struct tcpci_src_emul_data *data,
 	k_work_init_delayable(&data->source_capability_timeout,
 			      tcpci_src_emul_source_capability_timeout);
 	data->common_data = common_data;
-}
-
-/** Check description in emul_tcpci_partner_src.h */
-void tcpci_src_emul_init(struct tcpci_src_emul *emul, enum pd_rev_type rev)
-{
-	tcpci_partner_init(&emul->common_data, tcpci_src_emul_hard_reset,
-			   &emul->data);
 
 	/* Use common handler to initialize roles */
-	tcpci_partner_common_hard_reset_as_role(&emul->common_data,
-						PD_ROLE_SOURCE);
+	tcpci_partner_common_hard_reset_as_role(common_data, PD_ROLE_SOURCE);
 
-	emul->common_data.rev = rev;
+	src_ext->next = ext;
+	src_ext->ops = &tcpci_src_emul_ops;
 
-	emul->ops.transmit = tcpci_src_emul_transmit_op;
-	emul->ops.rx_consumed = tcpci_src_emul_rx_consumed_op;
-	emul->ops.control_change = NULL;
-	emul->ops.disconnect = tcpci_src_emul_disconnect_op;
-
-	tcpci_src_emul_init_data(&emul->data, &emul->common_data);
+	return src_ext;
 }

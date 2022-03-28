@@ -18,7 +18,9 @@
 #include "usb_pd.h"
 
 struct usb_malfunction_sink_fixture {
-	struct tcpci_faulty_snk_emul sink;
+	struct tcpci_partner_data sink;
+	struct tcpci_faulty_snk_emul_data faulty_snk_ext;
+	struct tcpci_snk_emul_data snk_ext;
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
 	struct tcpci_faulty_snk_action actions[2];
@@ -44,10 +46,8 @@ connect_sink_to_port(struct usb_malfunction_sink_fixture *fixture)
 	 *   Looking4Connection bit in CC_STATUS register.
 	 */
 	k_sleep(K_SECONDS(1));
-	zassume_ok(tcpci_faulty_snk_emul_connect_to_tcpci(
-			   &fixture->sink.snk_data,
-			   &fixture->sink.common_data,
-			   &fixture->sink.ops, fixture->tcpci_emul),
+	zassume_ok(tcpci_partner_connect_to_tcpci(&fixture->sink,
+						  fixture->tcpci_emul),
 		   NULL);
 
 	/* Wait for PD negotiation and current ramp.
@@ -76,32 +76,36 @@ static void *usb_malfunction_sink_setup(void)
 	tcpc_config[0].flags = tcpc_config[0].flags |
 			       TCPC_FLAGS_TCPCI_REV2_0;
 
+	/* Initialized the sink to request 5V and 3A */
+	tcpci_partner_init(&test_fixture.sink, PD_REV20);
+	test_fixture.sink.extensions =
+		tcpci_faulty_snk_emul_init(
+			&test_fixture.faulty_snk_ext, &test_fixture.sink,
+			tcpci_snk_emul_init(&test_fixture.snk_ext,
+					    &test_fixture.sink, NULL));
+	test_fixture.snk_ext.pdo[1] =
+		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
+
 	return &test_fixture;
 }
 
 static void usb_malfunction_sink_before(void *data)
 {
-	struct usb_malfunction_sink_fixture *test_fixture = data;
-
 	/* Set chipset to ON, this will set TCPM to DRP */
 	test_set_chipset_to_s0();
 
 	/* TODO(b/214401892): Check why need to give time TCPM to spin */
 	k_sleep(K_SECONDS(1));
 
-	/* Initialized the sink to request 5V and 3A */
-	tcpci_faulty_snk_emul_init(&test_fixture->sink);
-	test_fixture->sink.snk_data.pdo[1] =
-		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 }
 
 static void usb_malfunction_sink_after(void *data)
 {
 	struct usb_malfunction_sink_fixture *fixture = data;
 
-	tcpci_faulty_snk_emul_clear_actions_list(&fixture->sink.data);
+	tcpci_faulty_snk_emul_clear_actions_list(&fixture->faulty_snk_ext);
 	disconnect_sink_from_port(fixture);
-	tcpci_partner_common_clear_logged_msgs(&fixture->sink.common_data);
+	tcpci_partner_common_clear_logged_msgs(&fixture->sink);
 }
 
 ZTEST_SUITE(usb_malfunction_sink, drivers_predicate_post_main,
@@ -119,7 +123,7 @@ ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_disable)
 	 */
 	this->actions[0].action_mask = TCPCI_FAULTY_SNK_FAIL_SRC_CAP;
 	this->actions[0].count = TCPCI_FAULTY_SNK_INFINITE_ACTION;
-	tcpci_faulty_snk_emul_append_action(&this->sink.data,
+	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
 					    &this->actions[0]);
 
 	connect_sink_to_port(this);
@@ -143,7 +147,7 @@ ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_connect)
 	 */
 	this->actions[0].action_mask = TCPCI_FAULTY_SNK_FAIL_SRC_CAP;
 	this->actions[0].count = 3;
-	tcpci_faulty_snk_emul_append_action(&this->sink.data,
+	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
 					    &this->actions[0]);
 
 	connect_sink_to_port(this);
@@ -189,22 +193,21 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap)
 
 	this->actions[0].action_mask = TCPCI_FAULTY_SNK_IGNORE_SRC_CAP;
 	this->actions[0].count = TCPCI_FAULTY_SNK_INFINITE_ACTION;
-	tcpci_faulty_snk_emul_append_action(&this->sink.data,
+	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
 					    &this->actions[0]);
 
-	tcpci_partner_common_enable_pd_logging(&this->sink.common_data, true);
+	tcpci_partner_common_enable_pd_logging(&this->sink, true);
 	connect_sink_to_port(this);
-	tcpci_partner_common_enable_pd_logging(&this->sink.common_data, false);
+	tcpci_partner_common_enable_pd_logging(&this->sink, false);
 
 	/*
 	 * If test is failing, printing logged message may be useful to diagnose
 	 * problem:
-	 * tcpci_partner_common_print_logged_msgs(&this->sink.common_data);
+	 * tcpci_partner_common_print_logged_msgs(&this->sink);
 	 */
 
 	/* Check if SourceCapability message alternate with HardReset */
-	SYS_SLIST_FOR_EACH_CONTAINER(&this->sink.common_data.msg_log, msg,
-				     node) {
+	SYS_SLIST_FOR_EACH_CONTAINER(&this->sink.msg_log, msg, node) {
 		if (expect_hard_reset) {
 			zassert_equal(msg->sop, TCPCI_MSG_TX_HARD_RESET,
 				      "Expected message %d to be hard reset",
@@ -238,11 +241,11 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap_and_pd_disable)
 	 */
 	this->actions[0].action_mask = TCPCI_FAULTY_SNK_IGNORE_SRC_CAP;
 	this->actions[0].count = 1;
-	tcpci_faulty_snk_emul_append_action(&this->sink.data,
+	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
 					    &this->actions[0]);
 	this->actions[1].action_mask = TCPCI_FAULTY_SNK_DISCARD_SRC_CAP;
 	this->actions[1].count = TCPCI_FAULTY_SNK_INFINITE_ACTION;
-	tcpci_faulty_snk_emul_append_action(&this->sink.data,
+	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
 					    &this->actions[1]);
 
 	connect_sink_to_port(this);

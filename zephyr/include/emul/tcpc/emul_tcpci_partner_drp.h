@@ -20,111 +20,55 @@
 #include "usb_pd.h"
 
 /**
- * @brief USB-C dual role device emulator backend API
- * @defgroup tcpci_snk_emul USB-C dual role device emulator
+ * @brief USB-C dual role device extension backend API
+ * @defgroup tcpci_snk_emul USB-C dual role device extension
  * @{
  *
- * USB-C DRP device emulator can be attached to TCPCI emulator as sink or
- * source device. It is able to switch power role on PR SWAP message. It is able
- * to send both source and sink capabilities.
+ * USB-C DRP device emulator can be used with TCPCI partner emulator. It is able
+ * to switch power role on PR SWAP message. It is required to provide sink and
+ * source extensions to initialise the DRP extension. If sink or source
+ * extension first capabilities PDO is changed after initialisation, function
+ * @ref tcpci_drp_emul_set_dr_in_first_pdo should be called to select correct
+ * flag specific for DRP device.
  */
 
 /** Structure describing dual role device emulator data */
 struct tcpci_drp_emul_data {
+	/** Common extension structure */
+	struct tcpci_partner_extension ext;
 	/** Controls if device is sink or source */
 	bool sink;
 	/** If device is during power swap and is expecting PS_RDY message */
 	bool in_pwr_swap;
-};
-
-/** Structure describing standalone dual role device emulator */
-struct tcpci_drp_emul {
-	/** Common TCPCI partner data */
-	struct tcpci_partner_data common_data;
-	/** Operations used by TCPCI emulator */
-	struct tcpci_emul_partner_ops ops;
-	/** Dual role emulator data */
-	struct tcpci_drp_emul_data data;
-	/** Source emulator data */
-	struct tcpci_src_emul_data src_data;
-	/** Sink emulator data */
-	struct tcpci_snk_emul_data snk_data;
+	/** Initial power role that should be restored on hard reset */
+	enum pd_power_role initial_power_role;
 };
 
 /**
- * @brief Initialise USB-C dual role device emulator as a sink. Need to be
- *        called before any other function that is using common_data.
+ * @brief Initialise USB-C DRP device data structure
  *
- * @param emul Pointer to USB-C dual role device emulator
- * @param rev The USB-PD revision this port partner supports
+ * @param data Pointer to USB-C DRP device emulator data
+ * @param common_data Pointer to USB-C device emulator common data
+ * @param power_role Default power role used by USB-C DRP device on connection
+ * @param src_ext Pointer to source extension
+ * @param sink_ext Pointer to sink extension
+ *
+ * @return Pointer to USB-C DRP extension
  */
-void tcpci_drp_emul_init(struct tcpci_drp_emul *emul, enum pd_rev_type rev);
-
-
-/**
- * @brief Initialise USB-C dual role device emulator with a specific PD power
- *        role role. Need to be called before any other function that is using
- *        common_data.
- *
- * @param emul Pointer to USB-C dual role device emulator
- * @param rev The USB-PD revision this port partner supports
- * @param power_role The USB-PD power-role this port partner is when initialized
- */
-void tcpci_drp_emul_init_with_pd_role(struct tcpci_drp_emul *emul,
-				      enum pd_rev_type rev,
-				      enum pd_power_role power_role);
-
-/**
- * @brief Connect emulated device to TCPCI. Connect as sink or source depending
- *        on sink field in @p data structure. @p common_data power_role field
- *        should be set correctly before calling this function.
- *
- * @param data Pointer to USB-C dual role device emulator data
- * @param src_data Pointer to USB-C source device emulator data
- * @param snk_data Pointer to USB-C sink device emulator data
- * @param common_data Pointer to common TCPCI partner data
- * @param ops Pointer to TCPCI partner emulator operations
- * @param tcpci_emul Pointer to TCPCI emulator to connect
- *
- * @return 0 on success
- * @return negative on TCPCI connect error
- */
-int tcpci_drp_emul_connect_to_tcpci(struct tcpci_drp_emul_data *data,
-				    struct tcpci_src_emul_data *src_data,
-				    struct tcpci_snk_emul_data *snk_data,
-				    struct tcpci_partner_data *common_data,
-				    const struct tcpci_emul_partner_ops *ops,
-				    const struct emul *tcpci_emul);
-
-/**
- * @brief Handle SOP messages as TCPCI dual role device
- *
- * @param data Pointer to USB-C dual role device emulator data
- * @param src_data Pointer to USB-C source device emulator data
- * @param snk_data Pointer to USB-C sink device emulator data
- * @param common_data Pointer to common TCPCI partner data
- * @param ops Pointer to TCPCI partner emulator operations
- * @param msg Pointer to received message
- *
- * @return TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled
- * @return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
- */
-enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
+struct tcpci_partner_extension *tcpci_drp_emul_init(
 	struct tcpci_drp_emul_data *data,
-	struct tcpci_src_emul_data *src_data,
-	struct tcpci_snk_emul_data *snk_data,
 	struct tcpci_partner_data *common_data,
-	const struct tcpci_emul_partner_ops *ops,
-	const struct tcpci_emul_msg *msg);
+	enum pd_power_role power_role,
+	struct tcpci_partner_extension *src_ext,
+	struct tcpci_partner_extension *snk_ext);
 
 /**
- * @brief Perform action required by DRP device on hard reset. If device acts
- *        as sink, sink hard reset function is called. Otherwise source hard
- *        reset function is called.
+ * @brief Set correct flags for first capabilities PDO to indicate that this
+ *        device is power swap capable.
  *
- * @param emul Pointer to USB-C dual role device emulator
+ * @param pdo capability entry to change
  */
-void tcpci_src_emul_hard_reset(void *emul);
+void tcpci_drp_emul_set_dr_in_first_pdo(uint32_t *pdo);
 
 /**
  * @}
