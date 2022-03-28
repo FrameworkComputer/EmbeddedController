@@ -49,8 +49,13 @@
 #define CONFIG_TABLET_MODE_SWITCH
 
 /* ICM426XX Base accel/gyro */
-#define CONFIG_ACCELGYRO_ICM42607
-#define CONFIG_ACCELGYRO_ICM42607_INT_EVENT \
+#define CONFIG_ACCELGYRO_ICM426XX
+#define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
+/* BMI260 accel/gyro in base */
+#define CONFIG_ACCELGYRO_BMI260
+#define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 /* KX022 Lid accel */
@@ -125,6 +130,7 @@ struct temp_chg_struct {
 extern const struct temp_chg_struct temp_chg_table[];
 
 int board_accel_force_mode_mask(void);
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */
