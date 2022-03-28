@@ -14,7 +14,7 @@ union words {
 	uint32_t w[2];
 };
 
-uint64_t __attribute__((used)) __aeabi_llsr(uint64_t v, uint32_t shift)
+uint64_t __keep __aeabi_llsr(uint64_t v, uint32_t shift)
 {
 	union words val;
 	union words res;

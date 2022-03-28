@@ -134,7 +134,7 @@ __stdlib_compat int atoi(const char *nptr)
 	return neg ? -result : result;
 }
 
-__attribute__((used))
+__keep
 __stdlib_compat int memcmp(const void *s1, const void *s2, size_t len)
 {
 	const char *sa = s1;
@@ -151,7 +151,7 @@ __stdlib_compat int memcmp(const void *s1, const void *s2, size_t len)
 }
 
 #if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
-__attribute__((used))
+__keep
 __stdlib_compat void *memcpy(void *dest, const void *src, size_t len)
 {
 	char *d = (char *)dest;
@@ -197,7 +197,7 @@ __stdlib_compat void *memcpy(void *dest, const void *src, size_t len)
 #endif /* address_sanitizer || memory_sanitizer */
 
 #if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
-__attribute__((used))
+__keep
 __stdlib_compat __visible void *memset(void *dest, int c, size_t len)
 {
 	char *d = (char *)dest;
@@ -237,7 +237,7 @@ __stdlib_compat __visible void *memset(void *dest, int c, size_t len)
 #endif /* address_sanitizer || memory_sanitizer */
 
 #if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
-__attribute__((used))
+__keep
 __stdlib_compat void *memmove(void *dest, const void *src, size_t len)
 {
 	if ((uintptr_t)dest <= (uintptr_t)src ||
