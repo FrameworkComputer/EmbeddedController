@@ -317,11 +317,11 @@ const struct usb_mux usba_ps8811[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usba_ps8811) == USBA_PORT_COUNT);
 
-const static struct ps8811_reg_val equalizer_table[] = {
+const static struct ps8811_reg_val equalizer_wwan_table[] = {
 	{
 		/* Set channel A EQ setting */
 		.reg = PS8811_REG1_USB_AEQ_LEVEL,
-		.val = (PS8811_AEQ_I2C_LEVEL_UP_10P5DB <<
+		.val = (PS8811_AEQ_I2C_LEVEL_UP_13DB <<
 			PS8811_AEQ_I2C_LEVEL_UP_SHIFT) |
 			(PS8811_AEQ_PIN_LEVEL_UP_18DB <<
 			PS8811_AEQ_PIN_LEVEL_UP_SHIFT),
@@ -351,7 +351,18 @@ const static struct ps8811_reg_val equalizer_table[] = {
 	},
 };
 
-#define NUM_EQ_ARRAY ARRAY_SIZE(equalizer_table)
+#define NUM_EQ_WWAN_ARRAY ARRAY_SIZE(equalizer_wwan_table)
+
+const static struct ps8811_reg_val equalizer_wlan_table[] = {
+	{
+		/* Set 50ohm adjust for B channel */
+		.reg = PS8811_REG1_50OHM_ADJUST_CHAN_B,
+		.val = (PS8811_50OHM_ADJUST_CHAN_B_MINUS_9PCT <<
+			PS8811_50OHM_ADJUST_CHAN_B_SHIFT),
+	},
+};
+
+#define NUM_EQ_WLAN_ARRAY ARRAY_SIZE(equalizer_wlan_table)
 
 static int usba_retimer_init(int port)
 {
@@ -380,10 +391,36 @@ static int usba_retimer_init(int port)
 				PS8811_CHAN_A_SWING_MASK,
 				0x2 << PS8811_CHAN_A_SWING_SHIFT);
 
-			for (i = 0; i < NUM_EQ_ARRAY; i++)
+			/* Set channel B output PS level */
+			rv |= ps8811_i2c_field_update(
+				me, PS8811_REG_PAGE1,
+				PS8811_REG1_USB_CHAN_B_DE_PS_LSB,
+				PS8811_CHAN_B_DE_PS_LSB_MASK, 0x06);
+
+			/* Set channel B output DE level */
+			rv |= ps8811_i2c_field_update(
+				me, PS8811_REG_PAGE1,
+				PS8811_REG1_USB_CHAN_B_DE_PS_MSB,
+				PS8811_CHAN_B_DE_PS_MSB_MASK, 0x16);
+
+
+			for (i = 0; i < NUM_EQ_WWAN_ARRAY; i++)
 				rv |= ps8811_i2c_write(me, PS8811_REG_PAGE1,
-					equalizer_table[i].reg,
-					equalizer_table[i].val);
+					equalizer_wwan_table[i].reg,
+					equalizer_wwan_table[i].val);
+		} else {
+			/* Set channel A output swing */
+			rv = ps8811_i2c_field_update(
+				me, PS8811_REG_PAGE1,
+				PS8811_REG1_USB_CHAN_A_SWING,
+				PS8811_CHAN_A_SWING_MASK,
+				0x2 << PS8811_CHAN_A_SWING_SHIFT);
+
+
+			for (i = 0; i < NUM_EQ_WLAN_ARRAY; i++)
+				rv |= ps8811_i2c_write(me, PS8811_REG_PAGE1,
+					equalizer_wlan_table[i].reg,
+					equalizer_wlan_table[i].val);
 		}
 		break;
 	}
