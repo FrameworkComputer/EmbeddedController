@@ -4828,6 +4828,9 @@
 /* Allow run-time configuration of the Burnside Bridge driver structure */
 #undef CONFIG_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 
+/* Enable vPro support for Intel Burnside Bridge on vPro supported platform */
+#undef CONFIG_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE
+
 /* Require manual configuration of the KB800x crossbar mapping. */
 #undef CONFIG_KB800X_CUSTOM_XBAR
 

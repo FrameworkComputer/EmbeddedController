@@ -226,7 +226,8 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 * 1 - vPro Dock or DP Overdrive
 		 *     detected
 		 */
-		if (dev_resp.intel_spec_b0 == VENDOR_SPECIFIC_SUPPORTED ||
+		if ((IS_ENABLED(CONFIG_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE) &&
+		     dev_resp.intel_spec_b0 == VENDOR_SPECIFIC_SUPPORTED) ||
 		    dev_resp.vendor_spec_b1 == VENDOR_SPECIFIC_SUPPORTED)
 			*set_retimer_con |= BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE;
 
@@ -313,8 +314,9 @@ static void retimer_set_state_ufp(int port, mux_state_t mux_state,
 		 *
 		 * Set according to TBT3 Enter Mode bit 26 or bit 31
 		 */
-		if (ufp_tbt_enter_mode.intel_spec_b0 ==
-					VENDOR_SPECIFIC_SUPPORTED ||
+		if ((IS_ENABLED(CONFIG_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE) &&
+		     ufp_tbt_enter_mode.intel_spec_b0 ==
+					VENDOR_SPECIFIC_SUPPORTED) ||
 		    ufp_tbt_enter_mode.vendor_spec_b1 ==
 					VENDOR_SPECIFIC_SUPPORTED)
 			*set_retimer_con |= BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE;

@@ -411,8 +411,11 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
 		   BB_RETIMER_TBT_CONNECTION |
-		   BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE |
 		   BB_RETIMER_ACTIVE_PASSIVE;
+
+	if (IS_ENABLED(CONFIG_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE))
+		exp_conn |= BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE;
+
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 

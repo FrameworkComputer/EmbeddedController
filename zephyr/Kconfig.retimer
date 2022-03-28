@@ -39,6 +39,15 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 	  factory. Without this, multiple EC images would need to be installed
 	  depending on the board.
 
+config PLATFORM_EC_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE
+	bool "Enable vPro support for Intel Burnside Bridge"
+	depends on PLATFORM_EC_USBC_RETIMER_INTEL_BB
+	default n
+	help
+	  Enable this config for Intel vPro supported platforms. It allows to
+	  configure the Burnside Bridge retimer to support vPro, when connected
+	  dock supports vPro.
+
 config PLATFORM_EC_USBC_RETIMER_ANX7451
 	bool "Support Analogix ANX7451 10G Active Mux and Retimer"
 	help
