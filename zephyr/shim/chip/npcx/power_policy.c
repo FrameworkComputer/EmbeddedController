@@ -22,7 +22,7 @@ const struct pm_state_info *pm_policy_next_state(uint8_t cpu, int32_t ticks)
 
 	if (DEEP_SLEEP_ALLOWED) {
 		for (int i = ARRAY_SIZE(residency_info) - 1; i >= 0; i--) {
-			if (!pm_policy_state_lock_is_active(
+			if (pm_policy_state_lock_is_active(
 				    residency_info[i].state)) {
 				continue;
 			}
