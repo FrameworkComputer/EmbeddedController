@@ -11,12 +11,21 @@
 #include "i2c.h"
 #include "system.h"
 
-/* work around for IBUS ADC unstable issue */
-static int board_rt9490_workaround(const struct device *unused)
+static void enter_hidden_mode(void)
 {
-	ARG_UNUSED(unused);
+	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
+		   chg_chips[CHARGER_SOLO].i2c_addr_flags,
+		   0xF1, 0x69);
+	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
+		   chg_chips[CHARGER_SOLO].i2c_addr_flags,
+		   0xF2, 0x96);
+}
+
+/* b/194967754#comment5: work around for IBUS ADC unstable issue */
+static void ibus_adc_workaround(void)
+{
 	if (system_get_board_version() != 0)
-		return 0;
+		return;
 
 	i2c_update8(chg_chips[CHARGER_SOLO].i2c_port,
 		    chg_chips[CHARGER_SOLO].i2c_addr_flags,
@@ -24,13 +33,9 @@ static int board_rt9490_workaround(const struct device *unused)
 		    RT9490_VSYS_ADC_DIS,
 		    MASK_SET);
 
+	enter_hidden_mode();
+
 	/* undocumented registers... */
-	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
-		   chg_chips[CHARGER_SOLO].i2c_addr_flags,
-		   0xF1, 0x69);
-	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
-		   chg_chips[CHARGER_SOLO].i2c_addr_flags,
-		   0xF2, 0x96);
 	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
 		   chg_chips[CHARGER_SOLO].i2c_addr_flags,
 		   0x52, 0xC4);
@@ -40,6 +45,33 @@ static int board_rt9490_workaround(const struct device *unused)
 		    RT9490_REG_ADC_CHANNEL0,
 		    RT9490_VSYS_ADC_DIS,
 		    MASK_CLR);
+}
+
+/* b/214880220#comment44: lock i2c at 400khz */
+static void i2c_speed_workaround(void)
+{
+	/*
+	 * This workaround can be applied to all version of RT9490 in our cases
+	 * no need to identify chip version.
+	 */
+	enter_hidden_mode();
+	/* Set to Auto mode, default run at 400kHz */
+	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
+		   chg_chips[CHARGER_SOLO].i2c_addr_flags,
+		   0x71, 0x22);
+	/* Manually select for 400kHz, valid only when 0x71[7] == 1 */
+	i2c_write8(chg_chips[CHARGER_SOLO].i2c_port,
+		   chg_chips[CHARGER_SOLO].i2c_addr_flags,
+		   0xF7, 0x14);
+}
+
+static int board_rt9490_workaround(const struct device *unused)
+{
+	ARG_UNUSED(unused);
+
+	ibus_adc_workaround();
+	i2c_speed_workaround();
+
 	return 0;
 }
 SYS_INIT(board_rt9490_workaround, APPLICATION, HOOK_PRIO_DEFAULT);
