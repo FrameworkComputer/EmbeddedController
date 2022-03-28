@@ -1293,8 +1293,11 @@ static void cmd_rgbkbd_help(char *cmd)
 	fprintf(stderr,
 	"  Usage1: %s <key> <RGB>\n"
 	"          Set the color of <key> to <RGB>.\n"
+	"\n"
+	"  Usage2: %s clear <RGB>\n"
+	"          Set the color of all keys to <RGB>.\n"
 	"\n",
-	cmd);
+	cmd, cmd);
 }
 
 static int cmd_rgbkbd_parse_rgb_text(const char *text, struct rgb_s *color)
@@ -1363,7 +1366,16 @@ static int cmd_rgbkbd(int argc, char *argv[])
 		return -1;
 	}
 
-	if (2 < argc) {
+	if (argc == 3 && !strcasecmp(argv[1], "clear")) {
+		/* Usage 2 */
+		struct ec_params_rgbkbd p;
+
+		p.subcmd = EC_RGBKBD_SUBCMD_CLEAR;
+		if (cmd_rgbkbd_parse_rgb_text(argv[2], &p.color))
+			return -1;
+
+		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), NULL, 0);
+	} else if (2 < argc) {
 		/* Usage 1 */
 		rv = cmd_rgbkbd_set_color(argc, argv);
 	}

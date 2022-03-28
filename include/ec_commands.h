@@ -7083,7 +7083,8 @@ struct ec_response_i2c_control {
 	} cmd_response;
 } __ec_align_size1;
 
-#define EC_CMD_RGBKBD_SET_COLOR 0x013A
+#define EC_CMD_RGBKBD_SET_COLOR	0x013A
+#define EC_CMD_RGBKBD		0x013B
 
 #define EC_RGBKBD_MAX_KEY_COUNT		128
 #define EC_RGBKBD_MAX_RGB_COLOR		0xFFFFFF
@@ -7099,6 +7100,18 @@ enum rgbkbd_state {
 	/* Put no more entry below */
 	RGBKBD_STATE_COUNT,
 };
+
+enum ec_rgbkbd_subcmd {
+	EC_RGBKBD_SUBCMD_CLEAR = 1,
+	EC_RGBKBD_SUBCMD_COUNT
+};
+
+struct ec_params_rgbkbd {
+	uint8_t subcmd;         /* Sub-command (enum ec_rgbkbd_subcmd) */
+	union {
+		struct rgb_s color;
+	};
+} __ec_align1;
 
 struct ec_params_rgbkbd_set_color {
 	/* Specifies the starting key ID whose color is being changed. */

@@ -289,6 +289,25 @@ static enum ec_status hc_rgbkbd_set_color(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_RGBKBD_SET_COLOR, hc_rgbkbd_set_color,
 		     EC_VER_MASK(0));
 
+static enum ec_status hc_rgbkbd(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_rgbkbd *p = args->params;
+	enum ec_status rv = EC_RES_ERROR;
+
+	switch (p->subcmd) {
+	case EC_RGBKBD_SUBCMD_CLEAR:
+		rgbkbd_reset_color(p->color);
+		rv = EC_RES_SUCCESS;
+		break;
+	default:
+		rv = EC_RES_INVALID_PARAM;
+		break;
+	}
+
+	return rv;
+}
+DECLARE_HOST_COMMAND(EC_CMD_RGBKBD, hc_rgbkbd, EC_VER_MASK(0));
+
 test_export_static int cc_rgbk(int argc, char **argv)
 {
 	struct rgbkbd *ctx;
