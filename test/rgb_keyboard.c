@@ -50,6 +50,17 @@ const uint8_t rgbkbd_count = ARRAY_SIZE(rgbkbds);
 const uint8_t rgbkbd_hsize = RGB_GRID0_COL + RGB_GRID1_COL;
 const uint8_t rgbkbd_vsize = RGB_GRID0_ROW;
 
+const uint8_t rgbkbd_map[] = {
+	RGBKBD_DELM,
+	RGBKBD_COORD(1, 2), RGBKBD_DELM,
+	RGBKBD_COORD(3, 4), RGBKBD_COORD(5, 6), RGBKBD_DELM,
+	RGBKBD_DELM,
+	RGBKBD_DELM,
+};
+const size_t rgbkbd_map_size = ARRAY_SIZE(rgbkbd_map);
+
+extern const uint8_t rgbkbd_table[EC_RGBKBD_MAX_KEY_COUNT];
+
 static struct rgbkbd_mock {
 	uint32_t count_drv_reset;
 	uint32_t count_drv_init;
@@ -102,6 +113,36 @@ static int test_drv_set_gcc(struct rgbkbd *ctx, uint8_t level)
 {
 	mock_state.count_drv_set_gcc++;
 	mock_state.gcc_level = level;
+	return EC_SUCCESS;
+}
+
+static int test_rgbkbd_map(void)
+{
+	union rgbkbd_coord_u8 led;
+
+	led.u8 = rgbkbd_map[rgbkbd_table[0]];
+	zassert_equal(RGBKBD_COORD(led.coord.x, led.coord.y),
+		      RGBKBD_DELM, "key[0] -> None");
+
+	led.u8 = rgbkbd_map[rgbkbd_table[1]];
+	zassert_equal(RGBKBD_COORD(led.coord.x, led.coord.y),
+		      RGBKBD_COORD(1, 2), "key[1] -> LED(1,2)");
+
+	led.u8 = rgbkbd_map[rgbkbd_table[2]];
+	zassert_equal(RGBKBD_COORD(led.coord.x, led.coord.y),
+		      RGBKBD_COORD(3, 4), "key[2] -> LED(3,4)");
+	led.u8 = rgbkbd_map[rgbkbd_table[2] + 1];
+	zassert_equal(RGBKBD_COORD(led.coord.x, led.coord.y),
+		      RGBKBD_COORD(5, 6), "key[2] -> LED(5,6)");
+
+	led.u8 = rgbkbd_map[rgbkbd_table[3]];
+	zassert_equal(RGBKBD_COORD(led.coord.x, led.coord.y),
+		      RGBKBD_DELM, "key[3] -> None");
+
+	led.u8 = rgbkbd_map[rgbkbd_table[4]];
+	zassert_equal(RGBKBD_COORD(led.coord.x, led.coord.y),
+		      RGBKBD_DELM, "key[4] -> None");
+
 	return EC_SUCCESS;
 }
 
@@ -344,5 +385,6 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_rgbkbd_console_command);
 	RUN_TEST(test_rgbkbd_rotate_color);
 	RUN_TEST(test_rgbkbd_demo_flow);
+	RUN_TEST(test_rgbkbd_map);
 	test_print_result();
 }

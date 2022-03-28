@@ -66,6 +66,11 @@ const uint8_t rgbkbd_count = ARRAY_SIZE(rgbkbds);
 const uint8_t rgbkbd_hsize = RGB_GRID0_COL;
 const uint8_t rgbkbd_vsize = RGB_GRID0_ROW;
 
+const uint8_t rgbkbd_map[] = {
+	RGBKBD_DELM,
+};
+const size_t rgbkbd_map_size = ARRAY_SIZE(rgbkbd_map);
+
 __override const struct ec_response_keybd_config
 *board_vivaldi_keybd_config(void)
 {

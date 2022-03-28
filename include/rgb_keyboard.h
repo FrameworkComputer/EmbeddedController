@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "ec_commands.h"
+#include "stddef.h"
 
 /* Use this instead of '3' for readability where applicable. */
 #define SIZE_OF_RGB		sizeof(struct rgb_s)
@@ -79,6 +80,27 @@ struct rgbkbd_drv {
 	int (*set_gcc)(struct rgbkbd *ctx, uint8_t level);
 };
 
+/* Represents a position of an LED in RGB matrix. */
+struct rgbkbd_coord {
+	uint8_t y: 3;
+	uint8_t x: 5;
+};
+
+ /*
+  * For optimization, LED coordinates are encoded in LED IDs. This saves us one
+  * translation.
+  */
+union rgbkbd_coord_u8 {
+	uint8_t u8;
+	struct rgbkbd_coord coord;
+};
+
+#define RGBKBD_COORD(x,y)	((x) << 3 | (y))
+/* Delimiter for rgbkbd_map data */
+#define RGBKBD_DELM		0xff
+/* Non-existent entry indicator for rgbkbd_table */
+#define RGBKBD_NONE		0x00
+
 /*
  * The matrix consists of multiple grids:
  *
@@ -119,3 +141,35 @@ extern const uint8_t rgbkbd_vsize;
  * Called to power on or off the RGB keyboard module.
  */
 __override_proto void board_enable_rgb_keyboard(bool enable);
+
+/*
+ * rgbkbd_map describes a mapping from key IDs to LED IDs.
+ *
+ * Multiple keys can be mapped to one LED and one key can be mapped to multiple
+ * LEDs. For example, if the keyboard is divided into zones, multiple keys point
+ * to the same LED(s). Also, typically larger keys (e.g. space key) should be
+ * allocated multiple LEDs.
+ *
+ * This mapping data (rgbkbd_map[]) is encoded as follows:
+ *
+ *   FF 01 FF 02 03 FF ... FF xx FF
+ *
+ * where LED IDs are in groups, separated by a delimiter (0xff). There are
+ * supposed to be 127 groups, placed in the order of key ID. The first group
+ * (KEY0) is always empty. The above example is interpreted as:
+ *
+ *   KEY0 = {}, KEY1 = {LED1}, KEY2 = {LED2, LED3}, ..., KEY127 = {LEDxx}
+ *
+ * Note the size of rgbkbd_map varies because one key can have multiple LEDs.
+ *
+ * At run time, a translation table is created. This table is an array of the
+ * rgbkbd_map indexes and the table itself is indexed by the key IDs. This
+ * allows a KBMCU to quickly look up LEDs for a given key ID as follows:
+ *
+ *   rgbkbd_map[rgbkbd_table[0]] = FF
+ *   rgbkbd_map[rgbkbd_table[1]] = 01 (followed by FF)
+ *   rgbkbd_map[rgbkbd_table[2]] = 02 (followed by 03 FF)
+ *                   ...
+ */
+extern const uint8_t rgbkbd_map[];
+extern const size_t rgbkbd_map_size;

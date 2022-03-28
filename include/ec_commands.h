@@ -7083,7 +7083,10 @@ struct ec_response_i2c_control {
 	} cmd_response;
 } __ec_align_size1;
 
-#define EC_CMD_RGB_KEYBOARD 0x013A
+#define EC_CMD_RGBKBD_SET_COLOR 0x013A
+
+#define EC_RGBKBD_MAX_KEY_COUNT		128
+#define EC_RGBKBD_MAX_RGB_COLOR		0xFFFFFF
 
 enum rgbkbd_state {
 	/* RGB keyboard is reset and not initialized. */
@@ -7097,6 +7100,14 @@ enum rgbkbd_state {
 	RGBKBD_STATE_COUNT,
 };
 
+struct ec_params_rgbkbd_set_color {
+	/* Specifies the starting key ID whose color is being changed. */
+	uint8_t start_key;
+	/* Specifies # of elements in <color>. */
+	uint8_t length;
+	/* RGB color data array of length up to MAX_KEY_COUNT. */
+	struct rgb_s color[];
+} __ec_align1;
 
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */

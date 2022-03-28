@@ -103,6 +103,32 @@ const uint8_t rgbkbd_count = ARRAY_SIZE(rgbkbds);
 const uint8_t rgbkbd_hsize = RGB_GRID0_COL + RGB_GRID1_COL;
 const uint8_t rgbkbd_vsize = RGB_GRID0_ROW;
 
+const uint8_t rgbkbd_map[] = {
+	RGBKBD_DELM,
+	RGBKBD_COORD( 0, 0), RGBKBD_DELM,	/* `~ */
+	RGBKBD_COORD( 1, 0), RGBKBD_DELM,	/* 1! */
+	RGBKBD_COORD( 2, 0), RGBKBD_DELM,	/* 2@ */
+	RGBKBD_COORD( 3, 0), RGBKBD_DELM,	/* 3# */
+	RGBKBD_COORD( 4, 0), RGBKBD_DELM,	/* 4$ */
+	RGBKBD_COORD( 5, 0), RGBKBD_DELM,
+	RGBKBD_COORD( 6, 0), RGBKBD_DELM,
+	RGBKBD_COORD( 7, 0), RGBKBD_DELM,
+	RGBKBD_COORD( 8, 0), RGBKBD_DELM,
+	RGBKBD_COORD( 9, 0), RGBKBD_DELM,
+	RGBKBD_COORD(10, 0), RGBKBD_DELM,
+	RGBKBD_COORD(11, 0), RGBKBD_DELM,
+	RGBKBD_COORD(12, 0), RGBKBD_DELM,
+	RGBKBD_COORD(13, 0), RGBKBD_DELM,
+	RGBKBD_COORD(14, 0), RGBKBD_DELM,
+	RGBKBD_COORD(15, 0), RGBKBD_DELM,
+	RGBKBD_DELM,
+	RGBKBD_DELM,
+	RGBKBD_DELM,
+	RGBKBD_DELM,
+	RGBKBD_DELM,
+};
+const size_t rgbkbd_map_size = ARRAY_SIZE(rgbkbd_map);
+
 __override void board_enable_rgb_keyboard(bool enable)
 {
 	gpio_set_level(GPIO_RGBKBD_POWER, 1);
