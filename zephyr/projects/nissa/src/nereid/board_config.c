@@ -12,6 +12,8 @@
 #include <sys/printk.h>
 
 #include "driver/charger/sm5803.h"
+#include "driver/tcpm/ps8xxx_public.h"
+#include "driver/tcpm/tcpci.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "usb_pd.h"
@@ -91,6 +93,14 @@ static void nereid_subboard_init(void)
 			GPIO_DISCONNECTED);
 	}
 	if (sb == NISSA_SB_C_A || sb == NISSA_SB_C_LTE) {
+		static const struct usb_mux usbc1_tcpc_mux = {
+			.usb_port = 1,
+			.i2c_port = I2C_PORT_USB_C1_TCPC,
+			.i2c_addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		};
+
 		/* Enable type-C port 1 */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
@@ -99,6 +109,11 @@ static void nereid_subboard_init(void)
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
 			GPIO_OUTPUT_LOW);
+		/*
+		 * Use TCPC-integrated mux via CONFIG_STANDARD_OUTPUT register
+		 * in PS8745.
+		 */
+		usb_muxes[1].next_mux = &usbc1_tcpc_mux;
 	}
 	if (sb == NISSA_SB_HDMI_A) {
 		const struct gpio_dt_spec *hpd_gpio =
