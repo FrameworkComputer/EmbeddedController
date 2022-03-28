@@ -8,10 +8,11 @@
 #ifndef __CROS_EC_USBC_CONFIG_H
 #define __CROS_EC_USBC_CONFIG_H
 
-#define CONFIG_USB_PD_PORT_MAX_COUNT	1
+#define CONFIG_USB_PD_PORT_MAX_COUNT	2
 
 enum usbc_port {
 	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
 	USBC_PORT_COUNT
 };
 
