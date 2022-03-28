@@ -134,6 +134,23 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 }
 
 /*
+ * lantis use old led policy.
+ * Use cbi fw_config to distinguish lantis from other boards.
+ *		numeric_pad	tablet mode
+ * lantis	N		N
+ * landrid	Y		N
+ * landia	N		Y
+ */
+static bool is_led_old_policy(void)
+{
+	if (get_cbi_fw_config_numeric_pad() == NUMERIC_PAD_ABSENT &&
+		get_cbi_fw_config_tablet_mode() == TABLET_MODE_ABSENT)
+		return 1;
+	else
+		return 0;
+}
+
+/*
  * Set active charge port color to the parameter, turn off all others.
  * If no port is active (-1), turn off all LEDs.
  */
@@ -190,18 +207,39 @@ static void led_set_battery(void)
 		/* Intentional fall-through */
 	case PWR_STATE_DISCHARGE:
 		/*
-		 * Blink white light (1 sec on, 1 sec off)
+		 * Blink white/amber light (1 sec on, 1 sec off)
 		 * when battery capacity is less than 10%
 		 */
-		if (charge_get_percent() < 10)
-			led_set_color_battery(RIGHT_PORT,
-				(battery_ticks & 0x2) ? LED_WHITE : LED_OFF);
-		else
+		if (charge_get_percent() < 10) {
+			if (is_led_old_policy()) {
+				led_set_color_battery(
+					RIGHT_PORT, (battery_ticks & 0x2) ?
+					LED_WHITE : LED_OFF);
+			} else {
+				if (led_auto_control_is_enabled(
+					EC_LED_ID_RIGHT_LED))
+					led_set_color_battery(
+						RIGHT_PORT,
+						(battery_ticks & 0x2) ?
+						LED_AMBER : LED_OFF);
+				if (led_auto_control_is_enabled(
+					EC_LED_ID_LEFT_LED))
+					led_set_color_battery(
+						LEFT_PORT,
+						(battery_ticks & 0x2) ?
+						LED_AMBER : LED_OFF);
+			}
+		} else {
 			set_active_port_color(LED_OFF);
+		}
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color(
-			(battery_ticks % 0x2) ? LED_WHITE : LED_OFF);
+		if (is_led_old_policy())
+			set_active_port_color(
+				(battery_ticks % 0x2) ? LED_WHITE : LED_OFF);
+		else
+			set_active_port_color(
+				(battery_ticks % 0x2) ? LED_AMBER : LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
