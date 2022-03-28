@@ -59,7 +59,7 @@ i2c_pwr_cbi: &i2c0 {
 	/* EC_I2C_BATTERY */
 	label = "I2C_BATTERY";
 	status = "okay";
-	clock-frequency = <I2C_BITRATE_STANDARD>;
+	clock-frequency = <50000>;
 };
 
 &i2c2 {
