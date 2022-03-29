@@ -46,7 +46,15 @@ bool ap_power_in_state(
 	case SYS_POWER_STATE_S0:
 		need_mask = AP_POWER_STATE_ON;
 		break;
-	/* TODO: b/203446865 S0ix */
+#if CONFIG_AP_PWRSEQ_S0IX
+	case SYS_POWER_STATE_S0ixS0:
+	case SYS_POWER_STATE_S0S0ix:
+		need_mask = AP_POWER_STATE_ON | AP_POWER_STATE_STANDBY;
+		break;
+	case SYS_POWER_STATE_S0ix:
+		need_mask = AP_POWER_STATE_STANDBY;
+		break;
+#endif
 	}
 	/* Return non-zero if all needed bits are present */
 	return (state_mask & need_mask) == need_mask;
@@ -70,10 +78,17 @@ bool ap_power_in_or_transitioning_to_state(
 	case SYS_POWER_STATE_S4S3:
 	case SYS_POWER_STATE_S0S3:
 		return state_mask & AP_POWER_STATE_SUSPEND;
+#if CONFIG_AP_PWRSEQ_S0IX
+	case SYS_POWER_STATE_S0ix:
+	case SYS_POWER_STATE_S0S0ix:
+		return state_mask & AP_POWER_STATE_STANDBY;
+#endif
 	case SYS_POWER_STATE_S0:
 	case SYS_POWER_STATE_S3S0:
+#if CONFIG_AP_PWRSEQ_S0IX
+	case SYS_POWER_STATE_S0ixS0:
+#endif
 		return state_mask & AP_POWER_STATE_ON;
-	/* TODO: b/203446865 S0ix */
 	}
 	/* Unknown power state; return false. */
 	return 0;

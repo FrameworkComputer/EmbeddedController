@@ -23,6 +23,9 @@ const char pwrsm_dbg[][25] = {
 	[SYS_POWER_STATE_S5] = "S5",
 	[SYS_POWER_STATE_S4] = "S4",
 	[SYS_POWER_STATE_S3] = "S3",
+#if CONFIG_AP_PWRSEQ_S0IX
+	[SYS_POWER_STATE_S0ix] = "S0ix",
+#endif
 	[SYS_POWER_STATE_S0] = "S0",
 	[SYS_POWER_STATE_G3S5] = "G3S5",
 	[SYS_POWER_STATE_S5S4] = "S5S4",
@@ -32,6 +35,10 @@ const char pwrsm_dbg[][25] = {
 	[SYS_POWER_STATE_S4S5] = "S4S5",
 	[SYS_POWER_STATE_S3S4] = "S3S4",
 	[SYS_POWER_STATE_S0S3] = "S0S3",
+#if CONFIG_AP_PWRSEQ_S0IX
+	[SYS_POWER_STATE_S0ixS0] = "S0ixS0",
+	[SYS_POWER_STATE_S0S0ix] = "S0S0ix",
+#endif
 };
 
 #ifdef PWRSEQ_REQUIRE_ESPI

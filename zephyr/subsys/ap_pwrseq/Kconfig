@@ -64,4 +64,10 @@ config X86_NON_DSX_PWRSEQ_CONSOLE
 	  This option enables Non Deep Sleep Well power sequencing shell
 	  console commands to debug.
 
+config AP_PWRSEQ_S0IX
+	bool "Enable S0ix power state"
+	default n
+	help
+	  This option enables power state S0ix for Intel x86 chipset.
+
 endif

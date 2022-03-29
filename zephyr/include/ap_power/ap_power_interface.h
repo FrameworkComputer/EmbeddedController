@@ -45,6 +45,10 @@ enum power_states_ndsx {
 	SYS_POWER_STATE_S4,
 	/* AP is suspended to RAM */
 	SYS_POWER_STATE_S3,
+#if CONFIG_AP_PWRSEQ_S0IX
+	/* AP is in idle standby; cache is flushed to RAM */
+	SYS_POWER_STATE_S0ix,
+#endif
 	/* AP is in active state */
 	SYS_POWER_STATE_S0,
 	/*
@@ -58,6 +62,10 @@ enum power_states_ndsx {
 	SYS_POWER_STATE_S4S3,
 	/* Determine if Suspend to RAM is de-asserted */
 	SYS_POWER_STATE_S3S0,
+#if CONFIG_AP_PWRSEQ_S0IX
+	/* Determine if Suspend to idle is de-asserted */
+	SYS_POWER_STATE_S0ixS0,
+#endif
 	/*
 	 * Intermediate power down states
 	 */
@@ -69,6 +77,10 @@ enum power_states_ndsx {
 	SYS_POWER_STATE_S3S4,
 	/* Determine if Suspend to RAM is asserted */
 	SYS_POWER_STATE_S0S3,
+#if CONFIG_AP_PWRSEQ_S0IX
+	/* Determine if Suspend to idle is asserted */
+	SYS_POWER_STATE_S0S0ix,
+#endif
 };
 
 /**
