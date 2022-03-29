@@ -6,6 +6,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_icm42607.h"
@@ -20,6 +21,8 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+
+uint32_t board_version;
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
@@ -208,6 +211,9 @@ static void board_init(void)
 	/* Enable motion sensor interrupt */
 	gpio_enable_interrupt(GPIO_BASE_IMU_INT_L);
 	gpio_enable_interrupt(GPIO_LID_ACCEL_INT_L);
+
+	/* Store board version for use of something */
+	cbi_get_board_version(&board_version);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
