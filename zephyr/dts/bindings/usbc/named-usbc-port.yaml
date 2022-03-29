@@ -1,0 +1,33 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Named USB-C port node
+
+compatible: "named-usbc-port"
+
+include: base.yaml
+
+# Example:
+#	usbc {
+#		#address-cells = <1>;
+#		#size-cells = <0>;
+#
+#		/* Reg property is used to assign a port number */
+#		port0@0 {
+#			compatible = "named-usbc-port";
+#			reg = <0>;
+#			bc12 {
+#				compatible = "pericom,pi3usb9201";
+#				port = <&i2c_ec_i2c_usb_c0>;
+#			};
+#		};
+#		port1@1 {
+#			compatible = "named-usbc-port";
+#			reg = <1>;
+#			bc12 {
+#				compatible = "pericom,pi3usb9201";
+#				port = <&i2c_ec_i2c_sub_usb_c1>;
+#			};
+#		};
+#	};
