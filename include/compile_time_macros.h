@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_COMPILE_TIME_MACROS_H
 #define __CROS_EC_COMPILE_TIME_MACROS_H
 
-#ifdef __cplusplus
+#if defined(__cplusplus) && !defined(CONFIG_ZEPHYR)
 #include <type_traits>
 #endif
 
