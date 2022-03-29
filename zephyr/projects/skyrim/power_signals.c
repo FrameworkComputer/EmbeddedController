@@ -83,30 +83,32 @@ static int baseboard_init(const struct device *unused)
 SYS_INIT(baseboard_init, APPLICATION, HOOK_PRIO_POST_I2C);
 
 /**
- * b/175324615: On G3->S5, wait for RSMRST_L to be deasserted before asserting
- * PCH_PWRBTN_L.
+ * b/227296844: On G3->S5, wait for RSMRST_L to be deasserted before asserting
+ * PCH_PWRBTN_L.  This typically takes 32-35 ms in testing.  Then wait an
+ * additional delay of T1a defined in the EDS before changing the power button.
  */
+#define RSMRST_WAIT_DELAY	     40
+#define EDS_PWR_BTN_RSMRST_T1A_DELAY 16
 void board_pwrbtn_to_pch(int level)
 {
 	timestamp_t start;
-	const uint32_t timeout_rsmrst_rise_us = 30 * MSEC;
 
 	/* Add delay for G3 exit if asserting PWRBTN_L and RSMRST_L is low. */
 	if (!level &&
 	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l))) {
 		start = get_time();
 		do {
-			usleep(200);
+			usleep(500);
 			if (gpio_pin_get_dt(
 				GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l)))
 				break;
-		} while (time_since32(start) < timeout_rsmrst_rise_us);
+		} while (time_since32(start) < (RSMRST_WAIT_DELAY * MSEC));
 
 		if (!gpio_pin_get_dt(
 			GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l)))
 			ccprints("Error pwrbtn: RSMRST_L still low");
 
-		msleep(16);
+		msleep(EDS_PWR_BTN_RSMRST_T1A_DELAY);
 	}
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_btn_l), level);
 }
