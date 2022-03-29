@@ -6,6 +6,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "board.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "peci.h"
 #include "peci_customization.h"
@@ -15,6 +16,8 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
 #define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+
+static int peci_temp;
 
 /*****************************************************************************/
 /* Internal functions */
@@ -250,22 +253,36 @@ __override int stop_read_peci_temp(void)
 
 int peci_over_espi_temp_sensor_get_val(int idx, int *temp_ptr)
 {
-	int i, rv;
+	if (peci_temp == 0xfffe)
+		return EC_ERROR_NOT_POWERED;
+
+	if (peci_temp == 0xffff)
+		return EC_ERROR_INVAL;
+
+	*temp_ptr = peci_temp;
+
+	return EC_SUCCESS;
+}
+
+void read_peci_over_espi_gettemp(void)
+{
+	int rv;
+	int i;
 
 	rv = stop_read_peci_temp();
 
-	if (rv != EC_SUCCESS)
-		return rv;
+	if (rv != EC_SUCCESS) {
+		peci_temp = 0xfffe;
+	} else {
+		for (i = 0; i < 2; i++) {
+			rv = peci_over_espi_get_cpu_temp(&peci_temp);
+			if (!rv)
+				break;
+			msleep(10);
+		}
 
-	/*
-	 * Retry reading PECI CPU temperature if the first sample is
-	 * invalid or failed to obtain.
-	 */
-	for (i = 0; i < 2; i++) {
-		rv = peci_over_espi_get_cpu_temp(temp_ptr);
-		if (!rv)
-			break;
+		if (rv != EC_SUCCESS)
+			peci_temp = 0xffff;
 	}
-
-	return rv;
 }
+DECLARE_HOOK(HOOK_SECOND, read_peci_over_espi_gettemp, HOOK_PRIO_DEFAULT);
