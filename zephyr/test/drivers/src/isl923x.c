@@ -685,12 +685,28 @@ ZTEST(isl923x, test_init)
 		   NULL);
 	zassert_equal(0, input_current,
 		      "Expected input current 0mV but got %dmV", input_current);
+}
 
-	/*
-	 * TODO(b/219520539): Test system_jumped_late being true (will not call
-	 * set_input_current_limit). It isn't clear how to stimulate the
-	 * code in system.c to cause a late jump.
+ZTEST(isl923x, test_init_late_jump)
+{
+	int input_current;
+
+	isl923x_drv.init(CHARGER_NUM);
+
+	/* Init again with system_jumped_late() returning true and make sure
+	 * the input current limit is still correct.
 	 */
+
+	system_jumped_late_fake.return_val = 1;
+	isl923x_drv.init(CHARGER_NUM);
+
+	zassert_equal(EC_SUCCESS,
+		      isl923x_drv.get_input_current_limit(CHARGER_NUM,
+							  &input_current),
+		      "Could not read input current limit.");
+	zassert_equal(CONFIG_CHARGER_INPUT_CURRENT, input_current,
+		      "Input current (%d) not at (%d)", input_current,
+		      CONFIG_CHARGER_INPUT_CURRENT);
 }
 
 ZTEST(isl923x, test_isl923x_is_acok)
