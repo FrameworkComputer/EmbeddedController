@@ -282,7 +282,7 @@ static void notify_c1_chips(void)
 {
 	schedule_deferred_pd_interrupt(1);
 	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
-	sm5803_interrupt(1);
+	/* Charger is handled in board_process_pd_alert */
 }
 
 static void check_c1_line(void)
@@ -307,6 +307,28 @@ void usb_c1_interrupt(enum gpio_signal s)
 
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
+}
+
+/*
+ * Handle charger interrupts in the PD task. Not doing so can lead to a priority
+ * inversion where we fail to respond to TCPC alerts quickly enough because we
+ * don't get another edge on a shared IRQ until the charger interrupt is cleared
+ * (or the IRQ is polled again), which happens in the low-priority charger task:
+ * the high-priority type-C handler is thus blocked on the lower-priority
+ * charger.
+ *
+ * To avoid that, we run charger interrupts at the same priority.
+ */
+void board_process_pd_alert(int port)
+{
+	/*
+	 * Port 0 doesn't use an external TCPC, so its interrupts don't need
+	 * this special handling.
+	 */
+	if (port == 1 &&
+	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
+		sm5803_handle_interrupt(port);
+	}
 }
 
 int pd_snk_is_vbus_provided(int port)
