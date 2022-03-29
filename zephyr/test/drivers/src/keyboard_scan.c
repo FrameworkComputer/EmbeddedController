@@ -8,7 +8,7 @@
 #include <drivers/gpio/gpio_emul.h>
 #include <emul/emul_kb_raw.h>
 
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 int emulate_keystate(int row, int col, int pressed)
 {

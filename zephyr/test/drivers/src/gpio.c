@@ -20,9 +20,9 @@
 #include "gpio.h"
 #include "gpio/gpio.h"
 #include "gpio/gpio_int.h"
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "util.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 extern bool gpio_test_interrupt_triggered;
 /**

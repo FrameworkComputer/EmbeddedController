@@ -13,7 +13,7 @@
 #include "emul/emul_ln9310.h"
 #include "emul/emul_common_i2c.h"
 #include "timer.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 /*
  * TODO(b/201420132): Implement approach for tests to immediately schedule work

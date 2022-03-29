@@ -6,12 +6,12 @@
 
 #include <ztest.h>
 
-#include "charger_utils.h"
 #include "driver/charger/isl923x.h"
 #include "driver/charger/isl923x_public.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_isl923x.h"
-#include "test_state.h"
+#include "test/drivers/charger_utils.h"
+#include "test/drivers/test_state.h"
 
 #define CHARGER_NUM get_charger_num(&isl923x_drv)
 #define ISL923X_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)))

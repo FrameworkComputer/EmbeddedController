@@ -6,7 +6,7 @@
 #include <ztest.h>
 
 #include "motion_sense.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 ZTEST_SUITE(motion_sense, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
 

@@ -12,13 +12,13 @@
 #include "emul/tcpc/emul_ps8xxx.h"
 #include "timer.h"
 #include "i2c.h"
-#include "stubs.h"
-#include "tcpci_test_common.h"
+#include "test/drivers/stubs.h"
+#include "test/drivers/tcpci_test_common.h"
 
 #include "tcpm/tcpci.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/ps8xxx_public.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 #define PS8XXX_EMUL_LABEL	DT_LABEL(DT_NODELABEL(ps8xxx_emul))
 

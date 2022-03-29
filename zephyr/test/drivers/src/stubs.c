@@ -19,7 +19,7 @@
 #include "ppc/sn5s330_public.h"
 #include "ppc/syv682x_public.h"
 #include "retimer/bb_retimer_public.h"
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
 #include "usb_mux.h"

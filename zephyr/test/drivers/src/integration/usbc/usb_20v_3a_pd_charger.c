@@ -9,8 +9,8 @@
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
-#include "test_state.h"
-#include "utils.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "usb_pd.h"
 
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))

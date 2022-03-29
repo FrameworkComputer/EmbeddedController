@@ -14,7 +14,7 @@
 #include "accelgyro.h"
 #include "motion_sense.h"
 #include "driver/accel_bma2x2.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 /** How accurate comparision of vectors should be. */
 #define V_EPS 8

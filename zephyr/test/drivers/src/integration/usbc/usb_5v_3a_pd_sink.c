@@ -11,8 +11,8 @@
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "tcpm/tcpci.h"
-#include "test_state.h"
-#include "utils.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "usb_pd.h"
 
 struct usb_attach_5v_3a_pd_sink_fixture {

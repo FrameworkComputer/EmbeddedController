@@ -17,11 +17,11 @@
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "host_command.h"
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "tcpm/tcpci.h"
 #include "test/usb_pe.h"
-#include "utils.h"
-#include "test_state.h"
+#include "test/drivers/utils.h"
+#include "test/drivers/test_state.h"
 
 #define SNK_PORT USBC_PORT_C0
 #define SRC_PORT USBC_PORT_C1

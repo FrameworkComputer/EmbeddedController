@@ -7,7 +7,7 @@
 #include <ztest.h>
 
 #include "cros_cbi.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 ZTEST(cros_cbi, test_check_match)
 {

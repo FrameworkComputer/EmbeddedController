@@ -10,14 +10,14 @@
 
 #include "adc.h"
 #include "console.h"
-#include "charger_utils.h"
 #include "driver/charger/isl923x.h"
 #include "driver/charger/isl923x_public.h"
 #include "ec_commands.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_isl923x.h"
-#include "test_state.h"
-#include "utils.h"
+#include "test/drivers/charger_utils.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 #define ADC_DEVICE_NODE DT_NODELABEL(adc0)
 #define CHARGER_NUM get_charger_num(&isl923x_drv)

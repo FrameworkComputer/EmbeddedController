@@ -15,8 +15,8 @@
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sn5s330.h"
 #include "usbc_ppc.h"
-#include "test_mocks.h"
-#include "test_state.h"
+#include "test/drivers/test_mocks.h"
+#include "test/drivers/test_state.h"
 
 /** This must match the index of the sn5s330 in ppc_chips[] */
 #define SN5S330_PORT 0

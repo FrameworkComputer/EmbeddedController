@@ -9,7 +9,7 @@
 
 #include "ec_commands.h"
 #include "host_command.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 ZTEST_USER(vboot_hash, test_hostcmd)
 {

@@ -10,8 +10,8 @@
 #include "charge_state_v2.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "test_state.h"
-#include "utils.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 ZTEST_USER(console_cmd_charge_state, test_idle_too_few_args)
 {

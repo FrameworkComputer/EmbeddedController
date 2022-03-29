@@ -14,7 +14,7 @@
 #include "motion_sense.h"
 #include "motion_sense_fifo.h"
 #include "driver/als_tcs3400.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 #define TCS_ORD			DT_DEP_ORD(DT_NODELABEL(tcs_emul))
 #define TCS_CLR_SENSOR_ID	SENSOR_ID(DT_NODELABEL(tcs3400_clear))

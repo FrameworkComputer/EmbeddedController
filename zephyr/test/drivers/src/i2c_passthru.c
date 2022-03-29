@@ -8,7 +8,7 @@
 
 #include "ec_commands.h"
 #include "host_command.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 ZTEST_USER(i2c_passthru, test_read_without_write)
 {

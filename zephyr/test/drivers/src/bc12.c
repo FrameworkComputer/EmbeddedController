@@ -14,8 +14,8 @@
 #include "usb_charge.h"
 #include "battery.h"
 #include "extpower.h"
-#include "stubs.h"
-#include "test_state.h"
+#include "test/drivers/stubs.h"
+#include "test/drivers/test_state.h"
 
 #include <logging/log.h>
 LOG_MODULE_REGISTER(test_drivers_bc12, LOG_LEVEL_DBG);

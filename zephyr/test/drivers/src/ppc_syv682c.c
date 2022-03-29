@@ -12,10 +12,10 @@
 
 #include "emul/emul_syv682x.h"
 
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "syv682x.h"
 #include "timer.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 #include "usbc_ppc.h"
 
 #define SYV682X_ORD DT_DEP_ORD(DT_NODELABEL(syv682x_emul))

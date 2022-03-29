@@ -15,17 +15,17 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "power.h"
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "task.h"
 #include "ec_tasks.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_smart_battery.h"
 
 #include "battery.h"
 #include "battery_smart.h"
-#include "utils.h"
+#include "test/drivers/utils.h"
 
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
 

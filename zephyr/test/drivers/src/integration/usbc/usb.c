@@ -19,11 +19,11 @@
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "host_command.h"
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "tcpm/tcpci.h"
 #include "test/usb_pe.h"
-#include "utils.h"
-#include "test_state.h"
+#include "test/drivers/utils.h"
+#include "test/drivers/test_state.h"
 
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
 #define TCPCI_EMUL_LABEL2 DT_NODELABEL(tcpci_ps8xxx_emul)

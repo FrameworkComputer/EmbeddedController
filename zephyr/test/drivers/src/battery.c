@@ -9,7 +9,7 @@
 #include <drivers/gpio/gpio_emul.h>
 
 #include "battery.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)

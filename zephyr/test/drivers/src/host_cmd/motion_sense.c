@@ -6,8 +6,8 @@
 #include <ztest.h>
 
 #include "motion_sense.h"
-#include "test_state.h"
-#include "utils.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 /**
  * Get the size needed for a struct ec_response_motion_sense

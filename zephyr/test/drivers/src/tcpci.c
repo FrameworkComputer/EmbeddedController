@@ -14,11 +14,11 @@
 #include "emul/tcpc/emul_tcpci.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "stubs.h"
-#include "tcpci_test_common.h"
+#include "test/drivers/stubs.h"
+#include "test/drivers/tcpci_test_common.h"
 
 #include "tcpm/tcpci.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 #define EMUL_LABEL DT_NODELABEL(tcpci_emul)
 

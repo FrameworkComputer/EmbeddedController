@@ -8,7 +8,7 @@
 
 #include "ec_commands.h"
 #include "host_command.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 ZTEST_USER(usb_pd_host_cmd, test_host_command_hc_pd_ports)
 {

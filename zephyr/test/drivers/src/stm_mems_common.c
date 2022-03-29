@@ -13,7 +13,7 @@
 #include "emul/emul_common_i2c.h"
 #include "emul/i2c_mock.h"
 #include "i2c/i2c.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 #define MOCK_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(i2c_mock)))
 

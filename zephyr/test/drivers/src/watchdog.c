@@ -19,9 +19,9 @@
 #include "ec_tasks.h"
 #include "fff.h"
 #include "hooks.h"
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "watchdog.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 /**
  * @brief Default watchdog timeout plus some time for it to expire.

@@ -18,7 +18,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "task.h"
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
@@ -26,8 +26,8 @@
 #include "usb_tc_sm.h"
 
 #include "usb_mux.h"
-#include "test_state.h"
-#include "utils.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 /** Copy of original usb_muxes[USB_PORT_C1] */
 struct usb_mux usb_mux_c1;

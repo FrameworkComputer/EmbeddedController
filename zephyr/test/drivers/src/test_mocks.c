@@ -5,7 +5,7 @@
 
 #include <ztest.h>
 
-#include "test_mocks.h"
+#include "test/drivers/test_mocks.h"
 
 DEFINE_FFF_GLOBALS;
 

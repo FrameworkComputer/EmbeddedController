@@ -9,14 +9,14 @@
 
 #include "battery.h"
 #include "battery_smart.h"
-#include "charger_utils.h"
+#include "test/drivers/charger_utils.h"
 #include "driver/charger/isl923x.h"
 #include "driver/charger/isl923x_public.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_isl923x.h"
 #include "system.h"
-#include "test_mocks.h"
-#include "test_state.h"
+#include "test/drivers/test_mocks.h"
+#include "test/drivers/test_state.h"
 
 BUILD_ASSERT(CONFIG_CHARGER_SENSE_RESISTOR == 10 ||
 	     CONFIG_CHARGER_SENSE_RESISTOR == 5);

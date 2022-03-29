@@ -15,10 +15,10 @@
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "host_command.h"
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "tcpm/tcpci.h"
-#include "utils.h"
-#include "test_state.h"
+#include "test/drivers/utils.h"
+#include "test/drivers/test_state.h"
 
 struct usbc_alt_mode_fixture {
 	const struct emul *tcpci_emul;

@@ -11,7 +11,7 @@
 #include <shell/shell_dummy.h>
 #include <console.h>
 
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 #include "ec_commands.h"
 #include "host_command.h"
 

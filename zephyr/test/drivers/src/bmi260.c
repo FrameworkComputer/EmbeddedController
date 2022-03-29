@@ -15,8 +15,8 @@
 #include "motion_sense_fifo.h"
 #include "driver/accelgyro_bmi260.h"
 #include "driver/accelgyro_bmi_common.h"
-#include "test_mocks.h"
-#include "test_state.h"
+#include "test/drivers/test_mocks.h"
+#include "test/drivers/test_state.h"
 
 #define BMI_ORD			DT_DEP_ORD(DT_NODELABEL(accel_bmi260))
 #define BMI_ACC_SENSOR_ID	SENSOR_ID(DT_NODELABEL(ms_bmi260_accel))

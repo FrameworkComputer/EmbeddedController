@@ -16,7 +16,7 @@
 
 #include "battery.h"
 #include "battery_smart.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 #define BATTERY_ORD	DT_DEP_ORD(DT_NODELABEL(battery))
 

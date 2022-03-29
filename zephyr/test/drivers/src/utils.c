@@ -15,9 +15,9 @@
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "hooks.h"
 #include "power.h"
-#include "stubs.h"
+#include "test/drivers/stubs.h"
 #include "chipset.h"
-#include "utils.h"
+#include "test/drivers/utils.h"
 
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)

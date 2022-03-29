@@ -11,8 +11,8 @@
 #include "emul/emul_isl923x.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "tcpm/tcpci.h"
-#include "test_state.h"
-#include "utils.h"
+#include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 static void connect_sink_to_port(const struct emul *charger_emul,
 				 const struct emul *tcpci_emul,

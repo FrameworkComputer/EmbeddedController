@@ -15,7 +15,7 @@
 #include "common.h"
 #include "temp_sensor.h"
 #include "temp_sensor/temp_sensor.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)

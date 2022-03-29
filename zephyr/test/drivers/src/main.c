@@ -6,7 +6,7 @@
 #include <zephyr.h>
 #include <ztest.h>
 #include "ec_app_main.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 bool drivers_predicate_pre_main(const void *state)
 {

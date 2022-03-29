@@ -7,7 +7,7 @@
 
 #include "charge_manager.h"
 #include "ec_commands.h"
-#include "test_state.h"
+#include "test/drivers/test_state.h"
 
 ZTEST_SUITE(charge_manager, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);

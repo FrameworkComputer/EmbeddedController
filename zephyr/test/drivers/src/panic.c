@@ -17,8 +17,8 @@
 #include "common.h"
 #include "ec_tasks.h"
 #include "panic.h"
-#include "stubs.h"
-#include "test_state.h"
+#include "test/drivers/stubs.h"
+#include "test/drivers/test_state.h"
 
 /**
  * @brief Test Suite: Verifies panic functionality.
