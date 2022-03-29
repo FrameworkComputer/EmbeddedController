@@ -25,6 +25,22 @@
 		gpio-wp = &gpio_wp_l;
 		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+		};
+	};
+
 	/*
 	 * Keep these GPIOs in pin order.
 	 * If you need to add one, make sure you increase
