@@ -8,6 +8,15 @@
 		cros,rtc = &mtc;
 	};
 
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <
+			&int_ac_present
+			&int_lid_open
+			&int_power_button
+		>;
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
