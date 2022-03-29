@@ -304,7 +304,6 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent)
 }
 
 ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt)
-#ifdef CONFIG_USBC_PPC_VCONN
 {
 	const struct emul *emul = EMUL;
 
@@ -314,14 +313,14 @@ ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt)
 	sn5s330_emul_lower_vbus_below_minv(emul);
 	zassert_equal(sn5s330_emul_interrupt_set_stub_fake.call_count, 0, NULL);
 }
-#else
-{
-	ztest_test_skip();
-}
-#endif /* CONFIG_USBC_PPC_VCONN */
 
 ZTEST(ppc_sn5s330, test_sn5s330_set_vconn_fet)
 {
+	if (!IS_ENABLED(CONFIG_USBC_PPC_VCONN)) {
+		ztest_test_skip();
+		return;
+	}
+
 	const struct emul *emul = EMUL;
 	uint8_t func_set4_reg;
 
