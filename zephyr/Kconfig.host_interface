@@ -54,6 +54,12 @@ config PLATFORM_EC_HOST_INTERFACE_SHI
 	  peripheral interface), where the AP is the SPI controller and the EC
 	  is the SPI peripheral.
 
+config PLATFORM_EC_HOST_INTERFACE_USB
+	bool "USB"
+	depends on AP
+	help
+	  Enable the USB host interface.
+
 endchoice # PLATFORM_EC_HOST_INTERFACE_TYPE
 
 endif # PLATFORM_EC_HOSTCMD

@@ -139,4 +139,11 @@ extern int (*usb_iface_request[]) (usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
 	__attribute__ ((alias(STRINGIFY(handler))));
 
 #endif
+
+/*
+ * In and out buffer sizes for host command over USB.
+ */
+#define USBHC_MAX_REQUEST_SIZE	0x200
+#define USBHC_MAX_RESPONSE_SIZE 0x100
+
 #endif	/* __CROS_EC_USB_HW_H */

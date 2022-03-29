@@ -165,6 +165,7 @@ common-$(CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT)+=throttle_ap.o
 common-$(CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE)+=throttle_ap.o
 common-$(CONFIG_USB_CHARGER)+=usb_charger.o
 common-$(CONFIG_USB_CONSOLE_STREAM)+=usb_console_stream.o
+common-$(CONFIG_HOST_INTERFACE_USB)+=usb_host_command.o
 common-$(CONFIG_USB_I2C)+=usb_i2c.o
 common-$(CONFIG_USB_PORT_POWER_DUMB)+=usb_port_power_dumb.o
 common-$(CONFIG_USB_PORT_POWER_SMART)+=usb_port_power_smart.o

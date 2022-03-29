@@ -3223,6 +3223,8 @@
 #undef CONFIG_HOST_INTERFACE_LPC
 /* Support host command interface over eSPI bus. */
 #undef CONFIG_HOST_INTERFACE_ESPI
+/* Support host command interface over USB. */
+#undef CONFIG_HOST_INTERFACE_USB
 
 /*
  * SLP signals (SLP_S3, SLP_S4, and SLP_S5) use virtual wires instead of
