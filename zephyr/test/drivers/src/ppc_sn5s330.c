@@ -303,12 +303,61 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent)
 	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0, NULL);
 }
 
+ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent_late_jump)
+{
+	const struct emul *emul = EMUL;
+	uint8_t int_trip_rise_reg1;
+
+	/* Simulate the system jumping late. The second call to init() will
+	 * skip certain interrupt setup work. Make sure the interrupt continues
+	 * to function.
+	 */
+
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	system_jumped_late_fake.return_val = 1;
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+
+	sn5s330_emul_make_vbus_overcurrent(emul);
+	/*
+	 * TODO(b/201420132): Replace arbitrary sleeps.
+	 */
+	/* Make sure interrupt happens first. */
+	k_msleep(SN5S330_INTERRUPT_DELAYMS);
+	zassert_true(sn5s330_emul_interrupt_set_stub_fake.call_count > 0, NULL);
+
+	/*
+	 * Verify we cleared vbus overcurrent interrupt trip rise bit so the
+	 * driver can detect future overcurrent clamping interrupts.
+	 */
+	sn5s330_emul_peek_reg(emul, SN5S330_INT_TRIP_RISE_REG1,
+			      &int_trip_rise_reg1);
+	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0, NULL);
+}
+
 ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt)
 {
 	const struct emul *emul = EMUL;
 
 	/* Interrupt disabled here */
 	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	/* Would normally cause a vbus low interrupt */
+	sn5s330_emul_lower_vbus_below_minv(emul);
+	zassert_equal(sn5s330_emul_interrupt_set_stub_fake.call_count, 0, NULL);
+}
+
+ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt_late_jump)
+{
+	const struct emul *emul = EMUL;
+
+	/* Simulate the system jumping late. The second call to init() will
+	 * skip certain interrupt setup work. Make sure the interrupt continues
+	 * to function.
+	 */
+
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+	system_jumped_late_fake.return_val = 1;
+	zassert_ok(sn5s330_drv.init(SN5S330_PORT), NULL);
+
 	/* Would normally cause a vbus low interrupt */
 	sn5s330_emul_lower_vbus_below_minv(emul);
 	zassert_equal(sn5s330_emul_interrupt_set_stub_fake.call_count, 0, NULL);
