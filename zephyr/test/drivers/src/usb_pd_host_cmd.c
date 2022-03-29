@@ -20,8 +20,7 @@ ZTEST_USER(usb_pd_host_cmd, test_host_command_hc_pd_ports)
 	zassert_ok(host_command_process(&args), NULL);
 	zassert_ok(args.result, NULL);
 	zassert_equal(args.response_size, sizeof(response), NULL);
-	zassert_equal(response.num_ports,
-		      CONFIG_PLATFORM_EC_USB_PD_PORT_MAX_COUNT, NULL);
+	zassert_equal(response.num_ports, CONFIG_USB_PD_PORT_MAX_COUNT, NULL);
 }
 
 ZTEST_SUITE(usb_pd_host_cmd, drivers_predicate_post_main, NULL, NULL, NULL,

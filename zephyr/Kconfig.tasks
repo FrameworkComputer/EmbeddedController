@@ -172,7 +172,7 @@ config TASK_POWERBTN_STACK_SIZE
 
 endif # HAS_TASK_POWERBTN
 
-if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
+if PLATFORM_EC_USB_POWER_DELIVERY
 
 config TASK_PD_STACK_SIZE
 	int "PD task stack size"
@@ -186,7 +186,7 @@ config TASK_PD_INT_STACK_SIZE
 	help
 	  The stack size of the PD_Cn_INT tasks.
 
-endif # PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
+endif # PLATFORM_EC_USB_POWER_DELIVERY
 
 if HAS_TASK_DPS
 
@@ -207,79 +207,14 @@ config HAS_TASK_DPS
 	  efficient power data object (PDO).
 
 
-config HAS_TASK_PD_C0
-	bool
-	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
-	help
-	  This turns on the PD_C0 task which handles the rather complex USB
-	  Power Delivery protocol for port 0. There is one of these tasks for
-	  each USB-C port on the device, but they are enabled separately
-	  depending on how many ports are present.
-
-config HAS_TASK_PD_C1
-	bool
-	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 1
-	help
-	  This turns on the PD_C1 task for devices with >=2 ports.
-
-config HAS_TASK_PD_C2
-	bool
-	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 2
-	help
-	  This turns on the PD_C2 task for devices with >=3 ports.
-
-config HAS_TASK_PD_C3
-	bool
-	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 3
-	help
-	  This turns on the PD_C3 task for devices with 4 ports.
-
 config HAS_TASK_PD_INT_SHARED
 	bool # Selected by PLATFORM_EC_USB_PD_INT_SHARED
 	help
 	  This turns on the PD_INT_SHARED task which services PD message
 	  interrupts for any port which has a shared IRQ enabled.
 
-config HAS_TASK_PD_INT_C0
-	bool
-	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	depends on !PLATFORM_EC_USB_PD_PORT_0_SHARED
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
-	help
-	  This turns on the PD_INT_C0 task which handles servicing of Power
-	  Delivery (PD) message interrupts for port 0. There is one of these
-	  tasks for each USB-C port on the device, but they are enabled
-	  separately depending on how many ports are present.
 
-config HAS_TASK_PD_INT_C1
-	bool
-	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	depends on !PLATFORM_EC_USB_PD_PORT_1_SHARED
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 1
-	help
-	  This turns on the PD_INT_C1 task for devices with >=2 ports.
-
-config HAS_TASK_PD_INT_C2
-	bool
-	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	depends on !PLATFORM_EC_USB_PD_PORT_2_SHARED
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 2
-	help
-	  This turns on the PD_INT_C2 task for devices with >=3 ports.
-
-config HAS_TASK_PD_INT_C3
-	bool
-	depends on PLATFORM_EC_USB_POWER_DELIVERY
-	depends on !PLATFORM_EC_USB_PD_PORT_2_SHARED
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 3
-	help
-	  This turns on the PD_INT_C3 task for devices with 4 ports.
-
-if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
+if PLATFORM_EC_USB_POWER_DELIVERY
 
 config TASK_USB_CHG_STACK_SIZE
 	int "(all ports) task stack size"
@@ -290,39 +225,6 @@ config TASK_USB_CHG_STACK_SIZE
 
 	  See b/176180736 for checking these stack sizes.
 
-endif # HAS_TASK_USB_CHG_P0
-
-config HAS_TASK_USB_CHG_P0
-	bool
-	depends on PLATFORM_EC_USB_CHARGER
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 0
-	help
-	  This turns on the USB charger task for port 0. This handles
-	  negotiating power from an attached charger, trying to get the maximum
-	  available power consistent with the needs of the device.
-
-	  There is one of these tasks for each USB-C port on the device.
-
-config HAS_TASK_USB_CHG_P1
-	bool
-	depends on PLATFORM_EC_USB_CHARGER
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 1
-	help
-	  This turns on the USB charger task for port 1. This handles
-	  negotiating power from an attached charger, trying to get the maximum
-	  available power consistent with the needs of the device.
-
-	  There is one of these tasks for each USB-C port on the device.
-
-config HAS_TASK_USB_CHG_P2
-	bool
-	depends on PLATFORM_EC_USB_CHARGER
-	default y if PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 2
-	help
-	  This turns on the USB charger task for port 2. This handles
-	  negotiating power from an attached charger, trying to get the maximum
-	  available power consistent with the needs of the device.
-
-	  There is one of these tasks for each USB-C port on the device.
+endif # PLATFORM_EC_USB_POWER_DELIVERY
 
 endmenu # Tasks

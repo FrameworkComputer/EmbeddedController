@@ -7,7 +7,6 @@ if PLATFORM_EC_USBC
 menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 	bool "USB Type-C Power Delivery (PD)"
 	default y
-	select HAS_TASK_PD_C0
 	help
 	  USB has always provided basic power to an attached peripheral. USB-C
 	  PD is part of the USB 3.0 standard and allows a lot more functionality
@@ -29,18 +28,6 @@ config PLATFORM_EC_USB_PD_HOST_CMD
 	  of USB PD, checking is status and controlling how it operates. For
 	  devices which support firmware update, this is provided as well,
 	  with the firmware being sent from the AP.
-
-config PLATFORM_EC_USB_PD_PORT_MAX_COUNT
-	int "Maximum number of USB PD ports supported"
-	default 2
-	help
-	  This sets the limit on the number of PD ports supported on the
-	  device. This is used to set the size for tables used by devices.
-
-	  TODO(b/176237074): Can we calculate this from the devicetree at some
-	  point? Or update the sn5S330 driver to use an 8-bit flag byte for
-	  source_enabled[] so that plenty of ports are supported without this
-	  configuration option?
 
 config PLATFORM_EC_CONSOLE_CMD_MFALLOW
 	bool "Console command: mfallow"

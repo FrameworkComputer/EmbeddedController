@@ -7,7 +7,6 @@ if PLATFORM_EC_USBC
 config PLATFORM_EC_USB_CHARGER
 	bool "Support charging from a USB-C port"
 	default y
-	select HAS_TASK_USB_CHG_P0
 	help
 	  This enables common BC1.2 (Battery-Charging Specification Rev1.2)
 	  charger-detection routines. With this is possible to negotiate a

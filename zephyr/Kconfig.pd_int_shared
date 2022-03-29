@@ -23,21 +23,18 @@ config PLATFORM_EC_USB_PD_PORT_0_SHARED
 
 config PLATFORM_EC_USB_PD_PORT_1_SHARED
 	bool "Port 1 IRQ is shared"
-	depends on PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 1
 	help
 	  Enable handling of port 1 PD interrupts signalled by an IRQ that is
 	  shared by every other port enabled in this section.
 
 config PLATFORM_EC_USB_PD_PORT_2_SHARED
 	bool "Port 2 IRQ is shared"
-	depends on PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 2
 	help
 	  Enable handling of port 2 PD interrupts signalled by an IRQ that is
 	  shared by every other port enabled in this section.
 
 config PLATFORM_EC_USB_PD_PORT_3_SHARED
 	bool "Port 3 IRQ is shared"
-	depends on PLATFORM_EC_USB_PD_PORT_MAX_COUNT > 3
 	help
 	  Enable handling of port 3 PD interrupts signalled by an IRQ that is
 	  shared by every other port enabled in this section.
