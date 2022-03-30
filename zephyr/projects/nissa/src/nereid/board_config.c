@@ -71,21 +71,30 @@ static void hdmi_hpd_interrupt(const struct device *device,
 	LOG_DBG("HDMI HPD changed state to %d", state);
 }
 
+/**
+ * Configure GPIOs (and other pin functions) that vary with present sub-board.
+ *
+ * The functions of some pins vary according to which sub-board is present
+ * (indicated by CBI fw_config); this function configures them according to the
+ * needs of the present sub-board.
+ */
 static int nereid_subboard_init(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 	enum nissa_sub_board_type sb = nissa_get_sb_type();
 
 	/*
-	 * Need to initialise board specific GPIOs since the
-	 * common init code does not know about them.
-	 * Remove once common code initialises all GPIOs, not just
-	 * the ones with enum-names.
-	 *
-	 * TODO(b/214858346): Enable power after AP startup.
+	 * USB-A port: current limit output is configured by default and unused
+	 * if this port is not present. VBUS enable must be configured if
+	 * needed and is controlled by the usba-port-enable-pins driver.
 	 */
-	if (sb != NISSA_SB_C_A && sb != NISSA_SB_HDMI_A) {
-		/* Turn off unused USB A1 GPIOs */
+	if (sb == NISSA_SB_C_A || sb == NISSA_SB_HDMI_A) {
+		/* Configure VBUS enable, default off */
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
+			GPIO_OUTPUT_LOW);
+	} else {
+		/* Turn off unused pins */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_NODELABEL(gpio_sub_usb_a1_ilimit_sdp),
 			GPIO_DISCONNECTED);
@@ -93,6 +102,11 @@ static int nereid_subboard_init(const struct device *unused)
 			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
 			GPIO_DISCONNECTED);
 	}
+	/*
+	 * USB-C port: the default configuration has I2C on the I2C pins,
+	 * but the interrupt line needs to be configured and USB mux
+	 * configuration provided.
+	 */
 	if (sb == NISSA_SB_C_A || sb == NISSA_SB_C_LTE) {
 		static const struct usb_mux usbc1_tcpc_mux = {
 			.usb_port = 1,
@@ -102,20 +116,21 @@ static int nereid_subboard_init(const struct device *unused)
 			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
 		};
 
-		/* Enable type-C port 1 */
+		/* Configure interrupt input */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
 			GPIO_INPUT | GPIO_PULL_UP);
-		/* Configure type-A port 1 VBUS, initialise it as low */
-		gpio_pin_configure_dt(
-			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
-			GPIO_OUTPUT_LOW);
 		/*
 		 * Use TCPC-integrated mux via CONFIG_STANDARD_OUTPUT register
 		 * in PS8745.
 		 */
 		usb_muxes[1].next_mux = &usbc1_tcpc_mux;
 	}
+	/*
+	 * HDMI: two outputs control power which must be configured to
+	 * non-default settings, and HPD must be forwarded to the AP on
+	 * another output pin.
+	 */
 	if (sb == NISSA_SB_HDMI_A) {
 		const struct gpio_dt_spec *hpd_gpio =
 			GPIO_DT_FROM_ALIAS(gpio_hpd_odl);
