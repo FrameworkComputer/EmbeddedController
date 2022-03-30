@@ -413,11 +413,13 @@ def get_test_list(config: BoardConfig, test_args) -> List[TestConfig]:
     test_list = []
     for t in test_args:
         logging.debug('test: %s', t)
-        test_config = AllTests.get(config).get(t)
-        if test_config is None:
+        test_regex = re.compile(t)
+        tests = [v for k, v in AllTests.get(config).items()
+                 if test_regex.fullmatch(k)]
+        if not tests:
             logging.error('Unable to find test config for "%s"', t)
             sys.exit(1)
-        test_list.append(test_config)
+        test_list += tests
 
     return test_list
 
