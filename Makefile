@@ -150,7 +150,6 @@ endif
 _tsk_lst_flags+=-I$(BDIR) -DBOARD_$(UC_BOARD)=$(EMPTY) -I$(BASEDIR) \
 		-DBASEBOARD_$(UC_BASEBOARD)=$(EMPTY) \
 		-D_MAKEFILE=$(EMPTY) -imacros $(_tsk_lst_file)
--include private/task_list_flags.mk
 
 _tsk_lst_ro:=$(shell $(CPP) -P -DSECTION_IS_RO=$(EMPTY) \
 	$(_tsk_lst_flags) include/task_filter.h)

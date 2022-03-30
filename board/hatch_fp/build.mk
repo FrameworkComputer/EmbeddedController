@@ -53,7 +53,3 @@ test-list-y=\
        timer_dos \
        utils \
        utils_str \
-
-# Note that this variable includes the trailing "/"
-_hatch_fp_cur_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
--include $(_hatch_fp_cur_dir)../../private/board/hatch_fp/build.mk
