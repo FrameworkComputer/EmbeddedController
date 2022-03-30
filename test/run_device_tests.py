@@ -93,7 +93,8 @@ class TestConfig:
     def __init__(self, name, image_to_use=ImageType.RW, finish_regexes=None,
                  fail_regexes=None, toggle_power=False, test_args=None,
                  num_flash_attempts=2, timeout_secs=10,
-                 enable_hw_write_protect=False, ro_image=None):
+                 enable_hw_write_protect=False, ro_image=None,
+                 build_board=None):
         if test_args is None:
             test_args = []
         if finish_regexes is None:
@@ -116,6 +117,7 @@ class TestConfig:
         self.num_fails = 0
         self.num_passes = 0
         self.ro_image = ro_image
+        self.build_board = build_board
 
 
 # All possible tests.
@@ -361,7 +363,7 @@ def build(test_name: str, board_name: str, compiler: str) -> None:
     subprocess.run(cmd).check_returncode()  # pylint: disable=subprocess-run-check
 
 
-def flash(test_name: str, board: str, flasher: str, remote: str) -> bool:
+def flash(image_path: str, board: str, flasher: str, remote: str) -> bool:
     """Flash specified test to specified board."""
     logging.info('Flashing test')
 
@@ -377,8 +379,7 @@ def flash(test_name: str, board: str, flasher: str, remote: str) -> bool:
         return False
     cmd.extend([
         '--board', board,
-        '--image', os.path.join(EC_DIR, 'build', board, test_name,
-                                test_name + '.bin'),
+        '--image', image_path,
     ])
     logging.debug('Running command: "%s"', ' '.join(cmd))
     completed_process = subprocess.run(cmd)  # pylint: disable=subprocess-run-check
@@ -562,10 +563,16 @@ def main():
     logging.debug('Running tests: %s', [t.name for t in test_list])
 
     for test in test_list:
-        # build test binary
-        build(test.name, args.board, args.compiler)
+        build_board = args.board
+        # If test provides this information, build image for board specified
+        # by test.
+        if test.build_board is not None:
+            build_board = test.build_board
 
-        image_path = os.path.join(EC_DIR, 'build', args.board, test.name,
+        # build test binary
+        build(test.name, build_board, args.compiler)
+
+        image_path = os.path.join(EC_DIR, 'build', build_board, test.name,
                                   test.name + '.bin')
 
         if test.ro_image is not None:
@@ -583,7 +590,7 @@ def main():
         flash_succeeded = False
         for i in range(0, test.num_flash_attempts):
             logging.debug('Flash attempt %d', i + 1)
-            if flash(test.name, args.board, args.flasher, args.remote):
+            if flash(image_path, args.board, args.flasher, args.remote):
                 flash_succeeded = True
                 break
             time.sleep(1)
