@@ -3,12 +3,17 @@
  * found in the LICENSE file.
  */
 
+#include <logging/log.h>
+
 #include "battery.h"
 #include "charger.h"
 #include "charger/isl923x_public.h"
+#include "console.h"
 #include "extpower.h"
 #include "usb_pd.h"
 #include "nissa_common.h"
+
+LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 const struct charger_config_t chg_chips[] = {
 	{
@@ -52,4 +57,14 @@ __override void board_check_extpower(void)
 		extpower_handle_update(extpower_present);
 
 	last_extpower_present = extpower_present;
+}
+
+__override void board_hibernate(void)
+{
+	/* Shut down the chargers */
+	if (board_get_usb_pd_port_count() == 2)
+		raa489000_hibernate(CHARGER_SECONDARY, true);
+	raa489000_hibernate(CHARGER_PRIMARY, true);
+	LOG_INF("Charger(s) hibernated");
+	cflush();
 }

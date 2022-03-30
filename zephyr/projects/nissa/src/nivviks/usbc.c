@@ -10,6 +10,7 @@
 #include "hooks.h"
 #include "usb_mux.h"
 #include "system.h"
+#include "driver/retimer/anx7483_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/raa489000.h"
 
@@ -268,4 +269,15 @@ void usb_interrupt(enum gpio_signal signal)
 	usbc_interrupt_trigger(port);
 	/* Check for lost interrupts in a bit */
 	hook_call_deferred(ud, USBC_INT_POLL_DELAY_US);
+}
+
+const struct usb_mux *nissa_get_c1_sb_mux(void)
+{
+	static const struct usb_mux usbc1_anx7483 = {
+		.usb_port = 1,
+		.i2c_port = I2C_PORT_USB_C1_TCPC,
+		.i2c_addr_flags = ANX7483_I2C_ADDR0_FLAGS,
+		.driver = &anx7483_usb_retimer_driver,
+	};
+	return &usbc1_anx7483;
 }

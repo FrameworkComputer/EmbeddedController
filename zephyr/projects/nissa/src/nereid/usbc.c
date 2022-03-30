@@ -339,3 +339,21 @@ int pd_snk_is_vbus_provided(int port)
 
 	return chg_det;
 }
+
+
+const struct usb_mux *nissa_get_c1_sb_mux(void)
+{
+	/*
+	 * Use TCPC-integrated mux via CONFIG_STANDARD_OUTPUT register
+	 * in PS8745.
+	 */
+	static const struct usb_mux usbc1_tcpc_mux = {
+		.usb_port = 1,
+		.i2c_port = I2C_PORT_USB_C1_TCPC,
+		.i2c_addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
+		.driver = &tcpci_tcpm_usb_mux_driver,
+		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+	};
+
+	return &usbc1_tcpc_mux;
+}
