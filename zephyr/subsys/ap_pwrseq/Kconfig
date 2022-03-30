@@ -64,10 +64,19 @@ config X86_NON_DSX_PWRSEQ_CONSOLE
 	  This option enables Non Deep Sleep Well power sequencing shell
 	  console commands to debug.
 
+config AP_PWRSEQ_HOST_SLEEP
+	bool "Handle host sleep state changes"
+	help
+	  Enable AP power sequencing to receive and process host command
+	  host sleep state changes.
+
 config AP_PWRSEQ_S0IX
-	bool "Enable S0ix power state"
+	bool "Enable power state S0ix for Intel x86 chipset"
+	select AP_PWRSEQ_HOST_SLEEP
 	default n
 	help
-	  This option enables power state S0ix for Intel x86 chipset.
+	  This option enables power state S0ix for Intel x86 chipset. As
+	  required, AP_PWRSEQ_HOST_SLEEP for host sleep event handling is
+	  enabled.
 
 endif

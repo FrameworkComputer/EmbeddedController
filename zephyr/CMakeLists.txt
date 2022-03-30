@@ -516,7 +516,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RTC
 						"${PLATFORM_EC}/common/rtc.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MATH_UTIL
 						"${PLATFORM_EC}/common/math_util.c")
-
+zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_HOST_SLEEP
+						"${PLATFORM_EC}/power/host_sleep.c")
 # Switch to ec_shim library for all Zephyr sources
 set(ZEPHYR_CURRENT_LIBRARY ec_shim)
 

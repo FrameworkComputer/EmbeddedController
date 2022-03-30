@@ -804,7 +804,8 @@ extern struct jump_data mock_jump_data;
 #endif
 
 #undef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
-#ifdef CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP
+#if defined(CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP) || \
+	defined(CONFIG_AP_PWRSEQ_HOST_SLEEP)
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 #endif
 
@@ -840,7 +841,8 @@ extern struct jump_data mock_jump_data;
 #endif
 
 #undef CONFIG_POWER_S0IX
-#ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
+#if defined(CONFIG_PLATFORM_EC_POWERSEQ_S0IX) || \
+	defined(CONFIG_AP_PWRSEQ_S0IX)
 #define CONFIG_POWER_S0IX
 #endif
 

@@ -6,6 +6,7 @@ zephyr_library_sources(
 	)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ
 	ap_power_interface.c
+	power_host_sleep.c
 	power_signals.c
 	signal_gpio.c
 	signal_vw.c
