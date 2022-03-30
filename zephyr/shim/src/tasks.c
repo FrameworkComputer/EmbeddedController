@@ -289,10 +289,9 @@ ZTEST_RULE(set_test_runner_tid, set_test_runner_tid_rule_before, NULL);
 #endif /* CONFIG_SET_TEST_RUNNER_TID_RULE */
 #endif /* TEST_BUILD */
 
-#if K_PRIO_PREEMPT(TASK_ID_COUNT - 1) >= K_IDLE_PRIO
-#error CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at idle \
-	priority
-#endif
+BUILD_ASSERT((K_PRIO_PREEMPT(TASK_ID_COUNT - 1) < K_IDLE_PRIO),
+	"CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at "
+	"idle priority");
 
 void start_ec_tasks(void)
 {
