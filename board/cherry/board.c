@@ -11,12 +11,15 @@
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_icm42607.h"
 #include "driver/accelgyro_icm_common.h"
+#include "driver/retimer/ps8802.h"
+#include "driver/usb_mux/anx3443.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "system.h"
+#include "usb_mux.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -194,6 +197,72 @@ const struct pwm_t pwm_channels[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
+
+/* USB Mux */
+
+static int board_ps8762_mux_set(const struct usb_mux *me,
+				mux_state_t mux_state)
+{
+	/* Make sure the PS8802 is awake */
+	RETURN_ERROR(ps8802_i2c_wake(me));
+
+	/* USB specific config */
+	if (mux_state & USB_PD_MUX_USB_ENABLED) {
+		/* Boost the USB gain */
+		RETURN_ERROR(ps8802_i2c_field_update16(me,
+					PS8802_REG_PAGE2,
+					PS8802_REG2_USB_SSEQ_LEVEL,
+					PS8802_USBEQ_LEVEL_UP_MASK,
+					PS8802_USBEQ_LEVEL_UP_12DB));
+	}
+
+	/* DP specific config */
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
+		/* Boost the DP gain */
+		RETURN_ERROR(ps8802_i2c_field_update8(me,
+					PS8802_REG_PAGE2,
+					PS8802_REG2_DPEQ_LEVEL,
+					PS8802_DPEQ_LEVEL_UP_MASK,
+					PS8802_DPEQ_LEVEL_UP_12DB));
+	}
+
+	return EC_SUCCESS;
+}
+
+static int board_ps8762_mux_init(const struct usb_mux *me)
+{
+	return ps8802_i2c_field_update8(
+			me, PS8802_REG_PAGE1,
+			PS8802_REG_DCIRX,
+			PS8802_AUTO_DCI_MODE_DISABLE | PS8802_FORCE_DCI_MODE,
+			PS8802_AUTO_DCI_MODE_DISABLE);
+}
+
+static int board_anx3443_mux_set(const struct usb_mux *me,
+				 mux_state_t mux_state)
+{
+	gpio_set_level(GPIO_USB_C1_DP_IN_HPD,
+		       mux_state & USB_PD_MUX_DP_ENABLED);
+	return EC_SUCCESS;
+}
+
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	{
+		.usb_port = 0,
+		.i2c_port = I2C_PORT_USB_MUX0,
+		.i2c_addr_flags = PS8802_I2C_ADDR_FLAGS,
+		.driver = &ps8802_usb_mux_driver,
+		.board_init = &board_ps8762_mux_init,
+		.board_set = &board_ps8762_mux_set,
+	},
+	{
+		.usb_port = 1,
+		.i2c_port = I2C_PORT_USB_MUX1,
+		.i2c_addr_flags = ANX3443_I2C_ADDR0_FLAGS,
+		.driver = &anx3443_usb_mux_driver,
+		.board_set = &board_anx3443_mux_set,
+	},
+};
 
 /* Initialize board. */
 static void board_init(void)
