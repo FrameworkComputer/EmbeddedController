@@ -74,14 +74,6 @@ void ec_app_main(void)
 	}
 
 	/*
-	 * Hooks run from the system workqueue and must be the lowest priority
-	 * thread. By default, the system workqueue is run at the lowest
-	 * cooperative thread priority, blocking all preemptive threads until
-	 * the deferred work is completed.
-	 */
-	k_thread_priority_set(&k_sys_work_q.thread, LOWEST_THREAD_PRIORITY);
-
-	/*
 	 * Print the init time.  Not completely accurate because it can't take
 	 * into account the time before timer_init(), but it'll at least catch
 	 * the majority of the time.
