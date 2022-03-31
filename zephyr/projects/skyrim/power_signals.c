@@ -64,9 +64,8 @@ static void baseboard_suspend_change(struct ap_power_ev_callback *cb,
 	}
 }
 
-static int baseboard_init(const struct device *unused)
+static void baseboard_init(void)
 {
-	ARG_UNUSED(unused);
 	static struct ap_power_ev_callback cb;
 
 	/* Setup a suspend/resume callback */
@@ -77,10 +76,8 @@ static int baseboard_init(const struct device *unused)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_groupc_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s3));
-
-	return 0;
 }
-SYS_INIT(baseboard_init, APPLICATION, HOOK_PRIO_POST_I2C);
+DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_POST_I2C);
 
 /**
  * b/227296844: On G3->S5, wait for RSMRST_L to be deasserted before asserting

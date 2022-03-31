@@ -94,12 +94,9 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
-static int pwm_led_duty_init(const struct device *unused)
+static void pwm_led_duty_init(void)
 {
-	ARG_UNUSED(unused);
 	pwm_set_duty(PWM_CH_LED_CHRG, 100);
 	pwm_set_duty(PWM_CH_LED_FULL, 100);
-
-	return 0;
 }
-SYS_INIT(pwm_led_duty_init, APPLICATION, HOOK_PRIO_POST_PWM);
+DECLARE_HOOK(HOOK_INIT, pwm_led_duty_init, HOOK_PRIO_POST_PWM);

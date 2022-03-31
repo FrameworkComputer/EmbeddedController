@@ -82,9 +82,8 @@ const struct tcpc_config_t tcpc_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
-static int usbc_interrupt_init(const struct device *unused)
+static void usbc_interrupt_init(void)
 {
-	ARG_UNUSED(unused);
 	/* Enable PPC interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
@@ -98,9 +97,8 @@ static int usbc_interrupt_init(const struct device *unused)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
 
 	/* TODO: Enable SBU fault interrupts (io expander )*/
-	return 0;
 }
-SYS_INIT(usbc_interrupt_init, APPLICATION, HOOK_PRIO_POST_I2C);
+DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_POST_I2C);
 
 struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
@@ -211,9 +209,8 @@ static int ioex_set_flip(const struct usb_mux *me, mux_state_t mux_state,
 	return EC_SUCCESS;
 }
 
-static int setup_mux(const struct device *unused)
+static void setup_mux(void)
 {
-	ARG_UNUSED(unused);
 	uint32_t val;
 
 	if (cros_cbi_get_fw_config(FW_IO_DB, &val) != 0)
@@ -229,10 +226,8 @@ static int setup_mux(const struct device *unused)
 	} else {
 		CPRINTSUSB("Unexpected DB_IO board: %d", val);
 	}
-
-	return 0;
 }
-SYS_INIT(setup_mux, APPLICATION, HOOK_PRIO_INIT_I2C);
+DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_INIT_I2C);
 
 int board_set_active_charge_port(int port)
 {
@@ -370,14 +365,11 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
 #define GUYBRUSH_AC_PROCHOT_CURRENT_MA 3328
-static int set_ac_prochot(const struct device *unused)
+static void set_ac_prochot(void)
 {
-	ARG_UNUSED(unused);
 	isl9241_set_ac_prochot(CHARGER_SOLO, GUYBRUSH_AC_PROCHOT_CURRENT_MA);
-
-	return 0;
 }
-SYS_INIT(set_ac_prochot, APPLICATION, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, set_ac_prochot, HOOK_PRIO_DEFAULT);
 
 void tcpc_alert_event(enum gpio_signal signal)
 {
