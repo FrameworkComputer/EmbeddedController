@@ -388,9 +388,13 @@ power_chipset_handle_host_sleep_event(enum host_sleep_event state,
 				      struct host_sleep_event_context *ctx)
 {
 	if (state == HOST_SLEEP_EVENT_S3_SUSPEND) {
+		CPRINTS("AP suspend");
+		clock_select_clock(SCP_CLK_ULPOSC2_LOW_SPEED);
 		task_set_event(TASK_ID_SR, TASK_EVENT_SUSPEND);
 	} else if (state == HOST_SLEEP_EVENT_S3_RESUME) {
 		task_set_event(TASK_ID_SR, TASK_EVENT_RESUME);
+		clock_select_clock(SCP_CLK_ULPOSC2_HIGH_SPEED);
+		CPRINTS("AP resume");
 	}
 }
 
@@ -435,7 +439,7 @@ void sr_task(void *u)
 			clock_select_clock(SCP_CLK_SYSTEM);
 
 			/* 26M is back */
-			clock_select_clock(SCP_CLK_ULPOSC2_HIGH_SPEED);
+			clock_select_clock(SCP_CLK_ULPOSC2_LOW_SPEED);
 
 			watchdog_enable();
 			interrupt_enable();
