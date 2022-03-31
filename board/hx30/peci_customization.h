@@ -60,4 +60,13 @@ int peci_update_PL1(int watt);
 int peci_update_PL2(int watt);
 int peci_update_PL4(int watt);
 int peci_update_PsysPL2(int watt);
+
+/**
+ * This function return the peci gettemp value from global variant, the
+ * actually value is read from read_peci_over_espi_gettemp();
+ *
+ * @param idx		no used
+ * @param temp_ptr	return temp value pointer
+ * @return int		return get value status
+ */
 int peci_over_espi_temp_sensor_get_val(int idx, int *temp_ptr);
