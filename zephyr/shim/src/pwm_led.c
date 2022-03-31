@@ -208,15 +208,12 @@ static void led_set_charge_port_tick(void)
 }
 DECLARE_HOOK(HOOK_TICK, led_set_charge_port_tick, HOOK_PRIO_DEFAULT);
 
-static int board_led_init(const struct device *unused)
+static void board_led_init(void)
 {
-	ARG_UNUSED(unused);
 	/* Illuminate motherboard and daughter board LEDs equally to start. */
 	pwm_led_set_duty(&_pwm_led_dt_sidesel, 50);
-
-	return 0;
 }
-SYS_INIT(board_led_init, APPLICATION, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_led_init, HOOK_PRIO_DEFAULT);
 
 #endif /* DT_INST_NODE_HAS_PROP(0, sidesel) */
 

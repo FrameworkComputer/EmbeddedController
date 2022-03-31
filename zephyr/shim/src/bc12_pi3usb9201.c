@@ -36,14 +36,11 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 			GPIO_INT_FROM_NODE(DT_INST_PHANDLE(inst, irq)))) \
 		   );
 
-static int bc12_enable_irqs(const struct device *unused)
+static void bc12_enable_irqs(void)
 {
-	ARG_UNUSED(unused);
 	DT_INST_FOREACH_STATUS_OKAY(BC12_GPIO_ENABLE_INTERRUPT)
-
-	return 0;
 }
-SYS_INIT(bc12_enable_irqs, APPLICATION, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, bc12_enable_irqs, HOOK_PRIO_DEFAULT);
 
 #if DT_INST_NODE_HAS_PROP(0, irq)
 void usb0_evt(enum gpio_signal signal)

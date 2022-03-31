@@ -307,9 +307,8 @@ void lpc_update_host_event_status(void)
 		lpc_generate_sci();
 }
 
-static int host_command_init(const struct device *unused)
+static void host_command_init(void)
 {
-	ARG_UNUSED(unused);
 	/* We support LPC args and version 3 protocol */
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
 		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
@@ -319,10 +318,9 @@ static int host_command_init(const struct device *unused)
 	init_done = 1;
 
 	lpc_update_host_event_status();
-
-	return 0;
 }
-SYS_INIT(host_command_init, APPLICATION, HOOK_PRIO_INIT_LPC);
+
+DECLARE_HOOK(HOOK_INIT, host_command_init, HOOK_PRIO_INIT_LPC);
 
 static void handle_acpi_write(uint32_t data)
 {
