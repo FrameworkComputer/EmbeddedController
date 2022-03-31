@@ -563,10 +563,11 @@ void i2c_end_xfer_notify(const int port,
  * @param out_size: size of data written
  * @param in_data: pointer to data read
  * @param in_size: size of data read
+ * @param ret: return of i2c transaction (EC_SUCCESS or otherwise on failure)
  */
 void i2c_trace_notify(int port, uint16_t addr_flags,
 		      const uint8_t *out_data, size_t out_size,
-		      const uint8_t *in_data, size_t in_size);
+		      const uint8_t *in_data, size_t in_size, int ret);
 
 /**
  * Convert an enum i2c_freq constant to numeric frequency in kHz.

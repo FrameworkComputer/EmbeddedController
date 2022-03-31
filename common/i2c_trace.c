@@ -25,7 +25,7 @@ static struct i2c_trace_range trace_entries[8];
 
 void i2c_trace_notify(int port, uint16_t addr_flags,
 		      const uint8_t *out_data, size_t out_size,
-		      const uint8_t *in_data, size_t in_size)
+		      const uint8_t *in_data, size_t in_size, int ret)
 {
 	size_t i;
 	uint16_t addr = I2C_STRIP_FLAGS(addr_flags);
@@ -45,7 +45,9 @@ trace_enabled:
 		for (i = 0; i < out_size; i++)
 			CPRINTF("0x%02X ", out_data[i]);
 	}
-	if (in_size) {
+	if (ret != EC_SUCCESS) {
+		CPRINTF(" error: %d", ret);
+	} else if (in_size) {
 		CPRINTF("  rd ");
 		for (i = 0; i < in_size; i++)
 			CPRINTF("0x%02X ", in_data[i]);
