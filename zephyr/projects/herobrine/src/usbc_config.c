@@ -148,14 +148,12 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 /* Initialize board USC-C things */
-static int board_init_usbc(const struct device *unused)
+static void board_init_usbc(void)
 {
-	ARG_UNUSED(unused);
 	/* Enable USB-A overcurrent interrupt */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_a0_oc));
-	return 0;
 }
-SYS_INIT(board_init_usbc, APPLICATION, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
 
 void board_tcpc_init(void)
 {
@@ -180,14 +178,7 @@ void board_tcpc_init(void)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
 					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-static int herobrine_tcpc_init(const struct device *unused)
-{
-	ARG_UNUSED(unused);
-
-	board_tcpc_init();
-	return 0;
-}
-SYS_INIT(herobrine_tcpc_init, APPLICATION, HOOK_PRIO_POST_I2C);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_POST_I2C);
 
 void board_reset_pd_mcu(void)
 {

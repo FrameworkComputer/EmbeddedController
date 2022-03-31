@@ -62,9 +62,8 @@ static void board_power_change(struct ap_power_ev_callback *cb,
  * Initialise the USB PD port count, which
  * depends on which sub-board is attached.
  */
-static INT board_setup_init(const struct device *unused)
+static void board_setup_init(void)
 {
-	ARG_UNUSED(unused);
 	static struct ap_power_ev_callback cb;
 
 	ap_power_ev_init_callback(&cb, board_power_change,
@@ -81,12 +80,11 @@ static INT board_setup_init(const struct device *unused)
 		cached_usb_pd_port_count = 2;
 		break;
 	}
-	return 0;
 }
 /*
  * Make sure setup is done after EEPROM is readable.
  */
-SYS_INIT(board_setup_init, APPLICATION, HOOK_PRIO_INIT_I2C);
+DECLARE_HOOK(HOOK_INIT, board_setup_init, HOOK_PRIO_INIT_I2C);
 
 void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
