@@ -21,9 +21,13 @@
 
 #define HID_SLAVE_CTRL 3
 
-#define REPORT_ID_RADIO				0x01
-#define REPORT_ID_CONSUMER		    0x02
-#define REPORT_ID_SENSOR			0x03
+#define REPORT_ID_RADIO		0x01
+#define REPORT_ID_CONSUMER	0x02
+#define REPORT_ID_SENSOR	0x03
+
+#define ALS_REPORT_STOP		0x00
+#define ALS_REPORT_POLLING	0x01
+#define ALS_REPORT_THRES	0x02
 
 /*
  * See hid usage tables for consumer page
@@ -346,11 +350,39 @@ void i2c_hid_als_init(void)
 	als_sensor.illuminanceValue = 0x0000;
 }
 
+void report_illuminance_value(void)
+{
+	/* bypass the EC_MEMMAP_ALS value to input report */
+	als_sensor.illuminanceValue = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
+
+	/* wait 6s to change mode from polling to threshold */
+
+
+	task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) |
+		EVENT_REPORT_ILLUMINANCE_VALUE), 0);
+}
+DECLARE_DEFERRED(report_illuminance_value);
+
 static void i2c_hid_send_response(void)
 {
-		task_set_event(TASK_ID_HID,
-			EVENT_HID_HOST_IRQ | EVENT_REPORT_ILLUMINANCE_VALUE, 0);
+		task_set_event(TASK_ID_HID, EVENT_HID_HOST_IRQ, 0);
 }
+
+static void als_report_control(uint8_t report_mode)
+{
+	if (report_mode == 0x01) {
+		/* als report mode = polling */
+		hook_call_deferred(&report_illuminance_value_data,
+			((int) als_feature.report_interval) * MSEC);
+	} else if (report_mode == 0x02) {
+		/* als report mode = threshold */
+		;
+	} else {
+		/* stop report als value */
+		hook_call_deferred(&report_illuminance_value_data, -1);
+	}
+}
+
 static size_t fill_report(uint8_t *buffer, uint8_t report_id, const void *data,
 			  size_t data_len)
 {
@@ -384,7 +416,6 @@ static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer)
 	switch (command) {
 	case I2C_HID_CMD_RESET:
 		i2c_hid_mediakeys_init();
-		i2c_hid_als_init();
 
 		/* Wait for the 2-bytes I2C read following the protocol reset. */
 		pending_probe = false;
@@ -442,6 +473,13 @@ static int i2c_hid_touchpad_command_process(size_t len, uint8_t *buffer)
 		 */
 		*buffer = power_state;
 		response_len = 1;
+
+		if (power_state == 0x00) {
+			i2c_hid_als_init();
+			als_report_control(ALS_REPORT_POLLING);
+		} else
+			als_report_control(ALS_REPORT_STOP);
+
 		break;
 	default:
 		return 0;
@@ -557,15 +595,6 @@ void hid_irq_to_host(void)
 	usleep(10);
 }
 
-void report_illuminance_value(void)
-{
-	/* bypass the EC_MEMMAP_ALS value to input report */
-	als_sensor.illuminanceValue = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
-
-   	task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) | 0x4000), 0);
-}
-DECLARE_DEFERRED(report_illuminance_value);
-
 void hid_handler_task(void *p)
 {
 	uint32_t event;
@@ -589,7 +618,11 @@ void hid_handler_task(void *p)
 		if (event & 0xFFFF) {
 
 			for (i = 0; i < 15; i++) {
-				if (event & (1<<i)) {
+				/**
+				 * filter EVENT_REPORT_ILLUMINANCE_VALUE
+				 * this event only call deferred
+				 */
+				if ((event & 0xBFFF) & (1<<i)) {
 					update_key = i;
 					switch (i) {
 					case HID_KEY_DISPLAY_BRIGHTNESS_UP:
