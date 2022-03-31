@@ -833,15 +833,20 @@ void charger_update(void)
 {
 	static int pre_ac_state;
 	static int pre_dc_state;
-	uint16_t val = 0x0000;
+	int val = 0x0000;
 
 	if (pre_ac_state != extpower_is_present() ||
 		pre_dc_state != battery_is_present())
 	{
 		CPRINTS("update charger!!");
 
-		val = ISL9241_CONTROL1_PROCHOT_REF_6800 |
-				ISL9241_CONTROL1_SWITCH_FREQ;
+		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL1, &val)) {
+			CPRINTS("read charger control1 fail");
+		}
+
+		val |= (ISL9241_CONTROL1_PROCHOT_REF_6800 |
+				ISL9241_CONTROL1_SWITCH_FREQ);
 
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_CONTROL1, val)) {
