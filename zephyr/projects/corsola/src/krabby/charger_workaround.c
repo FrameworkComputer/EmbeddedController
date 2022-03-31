@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <toolchain.h>
-
 #include "charger.h"
 #include "driver/charger/rt9490.h"
 #include "hooks.h"
@@ -65,13 +63,9 @@ static void i2c_speed_workaround(void)
 		   0xF7, 0x14);
 }
 
-static int board_rt9490_workaround(const struct device *unused)
+static void board_rt9490_workaround(void)
 {
-	ARG_UNUSED(unused);
-
 	ibus_adc_workaround();
 	i2c_speed_workaround();
-
-	return 0;
 }
-SYS_INIT(board_rt9490_workaround, APPLICATION, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_rt9490_workaround, HOOK_PRIO_DEFAULT);

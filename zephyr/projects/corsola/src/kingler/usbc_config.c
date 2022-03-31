@@ -4,7 +4,6 @@
  */
 
 /* Kingler board-specific USB-C configuration */
-#include <toolchain.h>
 
 #include "charger.h"
 #include "console.h"
@@ -166,15 +165,7 @@ void board_tcpc_init(void)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
 					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-
-static int kingler_tcpc_init(const struct device *unused)
-{
-	ARG_UNUSED(unused);
-
-	board_tcpc_init();
-	return 0;
-}
-SYS_INIT(kingler_tcpc_init, APPLICATION, HOOK_PRIO_POST_I2C);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_POST_I2C);
 
 __override int board_rt1718s_init(int port)
 {

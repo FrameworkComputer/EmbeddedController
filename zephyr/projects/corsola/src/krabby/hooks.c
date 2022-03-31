@@ -5,7 +5,6 @@
 
 #include <init.h>
 #include <drivers/gpio.h>
-#include <toolchain.h>
 
 #include <ap_power/ap_power.h>
 #include "gpio.h"
@@ -64,7 +63,6 @@ static void board_suspend_handler(struct ap_power_ev_callback *cb,
 
 static int install_suspend_handler(const struct device *unused)
 {
-	ARG_UNUSED(unused);
 	static struct ap_power_ev_callback cb;
 
 	/*
@@ -75,4 +73,5 @@ static int install_suspend_handler(const struct device *unused)
 	ap_power_ev_add_callback(&cb);
 	return 0;
 }
+
 SYS_INIT(install_suspend_handler, APPLICATION, 1);

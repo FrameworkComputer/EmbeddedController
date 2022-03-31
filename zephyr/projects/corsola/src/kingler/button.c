@@ -4,20 +4,18 @@
  */
 
 /* kingler button */
-#include <toolchain.h>
 
 #include "button.h"
 #include "cros_board_info.h"
 #include "gpio.h"
 #include "hooks.h"
 
-static int buttons_hook(const struct device *unused)
+static void buttons_hook(void)
 {
-	ARG_UNUSED(unused);
 	int version;
 
 	if (cbi_get_board_version(&version))
-		return 0;
+		return;
 
 	/* b:219891339: drop this workaround when we deprecate rev0 */
 	if (version == 0) {
@@ -32,6 +30,5 @@ static int buttons_hook(const struct device *unused)
 		 */
 		gpio_enable_interrupt(GPIO_VOLUME_UP_L);
 	}
-	return 0;
 }
-SYS_INIT(buttons_hook, APPLICATION, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, buttons_hook, HOOK_PRIO_DEFAULT);

@@ -5,7 +5,6 @@
 
 /* Corsola daughter board detection */
 #include <drivers/gpio.h>
-#include <toolchain.h>
 
 #include "console.h"
 #include "gpio/gpio_int.h"
@@ -70,10 +69,8 @@ enum corsola_db_type corsola_get_db_type(void)
 	return db;
 }
 
-static int corsola_db_init(const struct device *unused)
+static void corsola_db_init(void)
 {
-	ARG_UNUSED(unused);
 	corsola_get_db_type();
-	return 0;
 }
-SYS_INIT(corsola_db_init, APPLICATION, HOOK_PRIO_PRE_I2C);
+DECLARE_HOOK(HOOK_INIT, corsola_db_init, HOOK_PRIO_PRE_I2C);

@@ -8,7 +8,6 @@
 #include <init.h>
 #include <ap_power/ap_power.h>
 #include <drivers/gpio.h>
-#include <toolchain.h>
 #include "gpio.h"
 
 static void board_backlight_handler(struct ap_power_ev_callback *cb,
@@ -35,7 +34,6 @@ static void board_backlight_handler(struct ap_power_ev_callback *cb,
 
 static int install_backlight_handler(const struct device *unused)
 {
-	ARG_UNUSED(unused);
 	static struct ap_power_ev_callback cb;
 
 	/*
@@ -47,4 +45,5 @@ static int install_backlight_handler(const struct device *unused)
 	ap_power_ev_add_callback(&cb);
 	return 0;
 }
+
 SYS_INIT(install_backlight_handler, APPLICATION, 1);
