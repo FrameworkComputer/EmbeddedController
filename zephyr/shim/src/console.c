@@ -185,9 +185,22 @@ void uart_shell_set_priority(int prio)
 	k_thread_priority_set(shell_zephyr->ctx->tid, shell_priority);
 }
 
+#ifdef CONFIG_SHELL_HELP
+static void print_console_help(char *name,
+			       const struct zephyr_console_command *command)
+{
+	if (command->help)
+		printk("%s\n", command->help);
+	if (command->argdesc)
+		printk("Usage: %s %s\n", name, command->argdesc);
+}
+#endif
+
 int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 				 size_t argc, char **argv)
 {
+	int ret;
+
 	/*
 	 * The Zephyr shell only displays the help string and not
 	 * the argument descriptor when passing "-h" or "--help".  Mimic the
@@ -198,16 +211,28 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 		if (!command->help && !command->argdesc)
 			break;
 		if (!strcmp(argv[i], "help")) {
-			if (command->help)
-				printk("%s\n", command->help);
-			if (command->argdesc)
-				printk("Usage: %s\n", command->argdesc);
+			print_console_help(argv[0], command);
 			return 0;
 		}
 	}
 #endif
 
-	return command->handler(argc, argv);
+	ret = command->handler(argc, argv);
+	if (ret == EC_SUCCESS)
+		return ret;
+
+	/* Print common parameter error conditions and help on error */
+	if (ret >= EC_ERROR_PARAM1 && ret < EC_ERROR_PARAM_COUNT)
+		printk("Parameter %d invalid\n", ret - EC_ERROR_PARAM1 + 1);
+	else if (ret == EC_ERROR_PARAM_COUNT)
+		printk("Wrong number of parameters\n");
+	else
+		printk("Command returned error: %d\n", ret);
+
+#ifdef CONFIG_SHELL_HELP
+	print_console_help(argv[0], command);
+#endif
+	return ret;
 }
 
 #if defined(CONFIG_CONSOLE_CHANNEL) && DT_NODE_EXISTS(DT_PATH(ec_console))
