@@ -5,3 +5,9 @@
 description: USBC BC1.2
 
 compatible: "richtek,rt9490-bc12"
+
+properties:
+  irq:
+    type: phandles
+    description: |
+        GPIO interrupt from BC1.2

@@ -25,4 +25,12 @@
  */
 #define USBC_PORT(id) DT_REG_ADDR(DT_PARENT(id))
 
+/*
+ * Get the port number from a child of `named-usbc-port` node.
+ *
+ * @param inst: instance number of the node
+ */
+#define USBC_PORT_FROM_INST(inst) USBC_PORT(DT_DRV_INST(inst))
+
+
 #endif /* __CROS_EC_ZEPHYR_SHIM_USBC_UTIL */
