@@ -76,9 +76,8 @@ static void hdmi_hpd_interrupt(const struct device *device,
  * (indicated by CBI fw_config); this function configures them according to the
  * needs of the present sub-board.
  */
-static int nissa_subboard_config(const struct device *unused)
+static void nereid_subboard_config(void)
 {
-	ARG_UNUSED(unused);
 	enum nissa_sub_board_type sb = nissa_get_sb_type();
 
 	/*
@@ -165,27 +164,22 @@ static int nissa_subboard_config(const struct device *unused)
 				   BIT(hpd_gpio->pin));
 		irq_unlock(irq_key);
 	}
-
-	return 0;
 }
-SYS_INIT(nissa_subboard_config, APPLICATION, HOOK_PRIO_POST_FIRST);
+DECLARE_HOOK(HOOK_INIT, nereid_subboard_config, HOOK_PRIO_POST_FIRST);
 
 /*
  * Enable interrupts
  */
-static int board_init(const struct device *unused)
+static void board_init(void)
 {
-	ARG_UNUSED(unused);
 	/*
 	 * Enable USB-C interrupts.
 	 */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0));
 	if (board_get_usb_pd_port_count() == 2)
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1));
-
-	return 0;
 }
-SYS_INIT(board_init, APPLICATION, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* Trigger shutdown by enabling the Z-sleep circuit */
 __override void board_hibernate_late(void)

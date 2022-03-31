@@ -62,7 +62,7 @@ static void board_power_change(struct ap_power_ev_callback *cb,
  * Initialise the USB PD port count, which
  * depends on which sub-board is attached.
  */
-static int board_setup_init(const struct device *unused)
+static INT board_setup_init(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 	static struct ap_power_ev_callback cb;
@@ -81,7 +81,6 @@ static int board_setup_init(const struct device *unused)
 		cached_usb_pd_port_count = 2;
 		break;
 	}
-
 	return 0;
 }
 /*
