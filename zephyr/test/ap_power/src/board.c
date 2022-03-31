@@ -65,3 +65,8 @@ int board_ap_power_assert_pch_power_ok(void)
 void board_ap_power_action_g3_s5(void)
 {
 }
+
+int extpower_is_present(void)
+{
+	return 0;
+}

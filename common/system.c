@@ -1068,8 +1068,9 @@ void system_enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	 * this is to prevent an action triggered by developers.
 	 * See: b/192259035
 	 */
-	if (IS_ENABLED(CONFIG_EXTPOWER) && IS_ENABLED(HAS_TASK_CHIPSET)
-			&& extpower_is_present()) {
+	if (IS_ENABLED(CONFIG_EXTPOWER) &&
+	    (IS_ENABLED(HAS_TASK_CHIPSET) || IS_ENABLED(CONFIG_AP_PWRSEQ)) &&
+	    extpower_is_present()) {
 		CPRINTS("AC on, skip hibernate");
 		return;
 	}
