@@ -1,0 +1,84 @@
+# Tests run on fingerprint boards.
+per-file run_device_tests.py=set noparent
+per-file run_device_tests.py=file:../common/fpsensor/OWNERS
+
+per-file aes.*=set noparent
+per-file aes.*=file:../common/fpsensor/OWNERS
+
+per-file cec.*=set noparent
+per-file cec.*=file:../common/fpsensor/OWNERS
+
+per-file compile_time_macros.*=set noparent
+per-file compile_time_macros.*=file:../common/fpsensor/OWNERS
+
+per-file cortexm_fpu.*=set noparent
+per-file cortexm_fpu.*=file:../common/fpsensor/OWNERS
+
+per-file crc.*=set noparent
+per-file crc.*=file:../common/fpsensor/OWNERS
+
+per-file flash_physical.*=set noparent
+per-file flash_physical.*=file:../common/fpsensor/OWNERS
+
+per-file flash_write_protect.*=set noparent
+per-file flash_write_protect.*=file:../common/fpsensor/OWNERS
+
+per-file fpsensor.*=set noparent
+per-file fpsensor.*=file:../common/fpsensor/OWNERS
+
+per-file fpsensor_hw.*=set noparent
+per-file fpsensor_hw.*=file:../common/fpsensor/OWNERS
+
+per-file mpu.*=set noparent
+per-file mpu.*=file:../common/fpsensor/OWNERS
+
+per-file mutex.*=set noparent
+per-file mutex.*=file:../common/fpsensor/OWNERS
+
+per-file pingpong.*=set noparent
+per-file pingpong.*=file:../common/fpsensor/OWNERS
+
+per-file printf.*=set noparent
+per-file printf.*=file:../common/fpsensor/OWNERS
+
+per-file queue.*=set noparent
+per-file queue.*=file:../common/fpsensor/OWNERS
+
+per-file rollback.*=set noparent
+per-file rollback.*=file:../common/fpsensor/OWNERS
+
+per-file rollback_entropy.*=set noparent
+per-file rollback_entropy.*=file:../common/fpsensor/OWNERS
+
+per-file rsa3.*=set noparent
+per-file rsa3.*=file:../common/fpsensor/OWNERS
+
+per-file rtc.*=set noparent
+per-file rtc.*=file:../common/fpsensor/OWNERS
+
+per-file scratchpad.*=set noparent
+per-file scratchpad.*=file:../common/fpsensor/OWNERS
+
+per-file sha256.*=set noparent
+per-file sha256.*=file:../common/fpsensor/OWNERS
+
+per-file sha256_unrolled.*=set noparent
+per-file sha256_unrolled.*=file:../common/fpsensor/OWNERS
+
+per-file static_if.*=set noparent
+per-file static_if.*=file:../common/fpsensor/OWNERS
+
+per-file stm32f_rtc.*=set noparent
+per-file stm32f_rtc.*=file:../common/fpsensor/OWNERS
+
+per-file system_is_locked.*=set noparent
+per-file system_is_locked.*=file:../common/fpsensor/OWNERS
+
+per-file timer_dos.*=set noparent
+per-file timer_dos.*=file:../common/fpsensor/OWNERS
+
+per-file utils.*=set noparent
+per-file utils.*=file:../common/fpsensor/OWNERS
+
+per-file utils_str.*=set noparent
+per-file utils_str.*=file:../common/fpsensor/OWNERS

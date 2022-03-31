@@ -1,0 +1,15 @@
+# Fingerprint-related utilities
+per-file fingerprint-relevant-paths.txt=set noparent
+per-file fingerprint-relevant-paths.txt=file:../common/fpsensor/OWNERS
+
+per-file flash_fp_mcu=set noparent
+per-file flash_fp_mcu=file:../common/fpsensor/OWNERS
+
+per-file flash_jlink.py=set noparent
+per-file flash_jlink.py=file:../common/fpsensor/OWNERS
+
+per-file fptool.py=set noparent
+per-file fptool.py=file:../common/fpsensor/OWNERS
+
+per-file stm32mon.c=set noparent
+per-file stm32mon.c=file:../common/fpsensor/OWNERS
