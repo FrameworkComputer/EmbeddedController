@@ -281,3 +281,8 @@ const struct usb_mux *nissa_get_c1_sb_mux(void)
 	};
 	return &usbc1_anx7483;
 }
+
+void nissa_configure_c1_sb_i2c(void)
+{
+	/* Default configuration from dts is I2C. Do nothing. */
+}

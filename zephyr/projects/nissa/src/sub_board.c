@@ -101,11 +101,11 @@ static int nissa_subboard_config(const struct device *unused)
 			GPIO_DISCONNECTED);
 	}
 	/*
-	 * USB-C port: the default configuration has I2C on the I2C pins,
-	 * but the interrupt line needs to be configured and USB mux
-	 * configuration provided.
+	 * USB-C port: I2C runs over two of the sub-board lines, the interrupt
+	 * input needs to be configured, and USB mux configuration provided.
 	 */
 	if (sb == NISSA_SB_C_A || sb == NISSA_SB_C_LTE) {
+		nissa_configure_c1_sb_i2c();
 		/* Configure interrupt input */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),

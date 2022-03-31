@@ -23,6 +23,10 @@ extern struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT];
 enum nissa_sub_board_type nissa_get_sb_type(void);
 
 /**
+ * Configure the I2C lines for the USB-C sub-board as needed.
+ */
+void nissa_configure_c1_sb_i2c(void);
+/**
  * Return any necessary mux configuration for the sub-board USB-C port.
  */
 const struct usb_mux *nissa_get_c1_sb_mux(void);
