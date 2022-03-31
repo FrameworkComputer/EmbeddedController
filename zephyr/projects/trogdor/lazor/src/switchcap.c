@@ -25,9 +25,8 @@ const struct ln9310_config_t ln9310_config = {
 	.i2c_addr_flags = LN9310_I2C_ADDR_0_FLAGS,
 };
 
-static int switchcap_init(const struct device *unused)
+static void switchcap_init(void)
 {
-	ARG_UNUSED(unused);
 	if (board_has_da9313()) {
 		CPRINTS("Use switchcap: DA9313");
 
@@ -93,10 +92,8 @@ static int switchcap_init(const struct device *unused)
 	} else {
 		CPRINTS("ERROR: No switchcap solution");
 	}
-
-	return 0;
 }
-SYS_INIT(switchcap_init, APPLICATION, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, switchcap_init, HOOK_PRIO_DEFAULT);
 
 void board_set_switchcap_power(int enable)
 {

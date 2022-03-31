@@ -234,9 +234,8 @@ __override int board_get_default_battery_type(void)
 }
 
 /* Initialize board USC-C things */
-static int board_init_usbc(const struct device *unused)
+static void board_init_usbc(void)
 {
-	ARG_UNUSED(unused);
 	/* Enable BC1.2 interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
@@ -249,10 +248,8 @@ static int board_init_usbc(const struct device *unused)
 	 * the CCD_MODE_ODL interrupt to make sure the SBU FETs are connected.
 	 */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_ccd_mode));
-
-	return 0;
 }
-SYS_INIT(board_init_usbc, APPLICATION, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_init_usbc, HOOK_PRIO_DEFAULT);
 
 void board_tcpc_init(void)
 {
@@ -277,16 +274,7 @@ void board_tcpc_init(void)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
 					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-
-static int lazor_tcpc_init(const struct device *unused)
-{
-	ARG_UNUSED(unused);
-
-	board_tcpc_init();
-	return 0;
-}
-SYS_INIT(lazor_tcpc_init, APPLICATION, HOOK_PRIO_POST_I2C);
-
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_POST_I2C);
 
 void board_reset_pd_mcu(void)
 {

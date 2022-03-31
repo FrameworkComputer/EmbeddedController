@@ -40,15 +40,12 @@ static enum board_model get_model(void)
 }
 
 /* Read SKU ID from GPIO and initialize variables for board variants */
-static int sku_init(const struct device *unused)
+static void sku_init(void)
 {
-	ARG_UNUSED(unused);
 	sku_id = system_get_sku_id();
 	CPRINTS("SKU: %u (%s)", sku_id, model_name[get_model()]);
-
-	return 0;
 }
-SYS_INIT(sku_init, APPLICATION, HOOK_PRIO_POST_I2C);
+DECLARE_HOOK(HOOK_INIT, sku_init, HOOK_PRIO_POST_I2C);
 
 enum battery_cell_type board_get_battery_cell_type(void)
 {
