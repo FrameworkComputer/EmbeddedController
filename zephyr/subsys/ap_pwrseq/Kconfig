@@ -32,10 +32,13 @@ config AP_PWRSEQ_AUTOSTART
 
 config AP_PWRSEQ_STACK_SIZE
 	int "AP pwrseq stack size (in bytes)"
-	default 1024
 	help
 	  This option specifies the size of the stack used by the
 	  AP power sequencing state machine thread handler.
+	  This must be set in a board configuration. If a default
+	  is set here, it cannot be overridden (if necessary), since
+	  this Kconfig appears before the EC chip specific stack
+	  sizes.
 
 config X86_NON_DSX_PWRSEQ
 	bool
