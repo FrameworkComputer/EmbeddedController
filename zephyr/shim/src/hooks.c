@@ -80,26 +80,24 @@ static void hook_tick_work(struct k_work *work)
 		work_queue_error(&hook_ticks_work_data, rv);
 }
 
-/*
- * Hooks run from the system workqueue and must be the lowest priority
- * thread. The system workqueue priority is initialized by
- * CONFIG_SYSTEM_WORKQUEUE_PRIORITY, but it's not possible to set this option
- * based on another Kconfig symbol (e.g. CONFIG_NUM_PREEMPT_PRIORITIES - 1).
- *
- * Override the system workqueue priority as the last item at the POST_KERNEL
- * initialization level, which runs before all SYS_INIT calls at the
- * APPLICATION initialization level.
- */
-static int set_system_workqueue_priority(const struct device *unused)
+static int check_hook_task_priority(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 	k_tid_t thread = &k_sys_work_q.thread;
 
-	k_thread_priority_set(thread, K_LOWEST_APPLICATION_THREAD_PRIO);
+	/*
+	 * Numerically lower priorities take precedence, so verify the hook
+	 * related threads cannot preempt any of the shimmed tasks.
+	 */
+	if (k_thread_priority_get(thread) < (TASK_ID_COUNT - 1))
+		cprintf(CC_HOOK,
+			"ERROR: %s has priority %d but must be >= %d\n",
+			k_thread_name_get(thread),
+			k_thread_priority_get(thread), (TASK_ID_COUNT - 1));
 
 	return 0;
 }
-SYS_INIT(set_system_workqueue_priority, POST_KERNEL, 99);
+SYS_INIT(check_hook_task_priority, APPLICATION, HOOK_PRIO_FIRST);
 
 static int zephyr_shim_setup_hooks(const struct device *unused)
 {
@@ -117,6 +115,7 @@ static int zephyr_shim_setup_hooks(const struct device *unused)
 
 	return 0;
 }
+
 SYS_INIT(zephyr_shim_setup_hooks, APPLICATION, 1);
 
 void hook_notify(enum hook_type type)
