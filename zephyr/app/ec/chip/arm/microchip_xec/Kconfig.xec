@@ -1,0 +1,22 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+#
+# This file defines the default config values shared by all MEC chipsets
+#
+
+if SOC_FAMILY_MEC
+
+# ADC
+config PLATFORM_EC_ADC_RESOLUTION
+	default 10
+
+config PLATFORM_EC_ADC_OVERSAMPLING
+	default 0
+
+# Set the system clock
+config SYS_CLOCK_HW_CYCLES_PER_SEC
+	default 32768
+
+endif # SOC_FAMILY_MEC

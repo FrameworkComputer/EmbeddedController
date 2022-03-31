@@ -1,0 +1,51 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+#
+# This file defines the correct defaults when using the MEC172x series chipset
+#
+
+if SOC_SERIES_MEC172X
+
+#
+# MEC1727NSZ: 416KB total SRAM as 352 KiB Code and 64 KiB data.
+#             Top 2KB of data SRAM used by Boot-ROM and a 1KB persistent
+#             region for customer use.
+#             512 KiB internal SPI flash
+
+# Code RAM base for MEC172x series
+# First 4KB reserved for SRAM based EC LFW functionality
+# Experiment remove reserve of first 4KB and use ROM load API
+config CROS_EC_PROGRAM_MEMORY_BASE
+	default 0xc0000
+
+config CROS_EC_RAM_BASE
+	default 0xc0000
+
+# Data size: 64K - 2K, top 1KB is persistent
+config CROS_EC_DATA_RAM_SIZE
+	default 0x00F800
+
+# Code + Data: Top 1KB is peristent
+config CROS_EC_RAM_SIZE
+	default 0x067800
+
+config FLASH_SIZE
+	default 512
+
+config CROS_EC_RO_MEM_OFF
+	default 0x0
+
+config CROS_EC_RO_SIZE
+	default 0x40000
+
+# RW firmware in program memory - Identical to RO, only one image loaded at a
+# time.
+config CROS_EC_RW_MEM_OFF
+	default 0x0
+
+config CROS_EC_RW_SIZE
+	default 0x40000
+
+endif # SOC_SERIES_MEC172X

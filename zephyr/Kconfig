@@ -34,6 +34,7 @@ menuconfig PLATFORM_EC
 if PLATFORM_EC
 
 rsource "shim/chip/npcx/Kconfig.npcx"
+rsource "shim/chip/mchp/Kconfig.xec"
 rsource "Kconfig.adc"
 rsource "Kconfig.ap_power"
 rsource "Kconfig.battery"
