@@ -11,6 +11,7 @@ zephyr_library_sources(gpio_int.c)
 zephyr_library_sources(power.c)
 
 add_subdirectory("cbi")
+add_subdirectory("led_driver")
 
 if (DEFINED CONFIG_ARCH_POSIX)
   zephyr_library_sources(ztest_system.c)
@@ -36,7 +37,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_CROS_DRV
                                                             ioex_drv.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD    keyboard_raw.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD    keyscan.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_DT      led.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_EVENT  mkbp_event.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
                                                             motionsense_sensors.c)

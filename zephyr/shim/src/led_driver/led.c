@@ -14,6 +14,7 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "led.h"
 #include "led_common.h"
 #include "power.h"
 #include "system.h"
@@ -28,23 +29,13 @@ LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 #define BAT_LED_ON 1
 #define BAT_LED_OFF 0
 
-#define GPIO_LED_COLOR_NODE  DT_PATH(gpio_led, gpio_led_colors)
-#define GPIO_LED_PINS_NODE   DT_PATH(gpio_led, gpio_led_pins)
+#define LED_COLOR_NODE  DT_PATH(led, led_colors)
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_BATTERY_LED,
 };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
-
-enum led_color {
-	LED_OFF = 0,
-	LED_AMBER,
-	LED_BLUE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
-};
-
-#define LED_PIN_COUNT	(LED_COLOR_COUNT - 1)
 
 struct led_color_node_t {
 	int led_color;
@@ -102,11 +93,6 @@ struct node_prop_t {
 #define ACC_PERIOD(color_num, state_id)					\
 	(0 LISTIFY(color_num, LED_PLUS_PERIOD, (), state_id))
 
-#define GET_PROP(id, prop)						\
-	COND_CODE_1(DT_NODE_HAS_PROP(id, prop),				\
-		    (DT_STRING_UPPER_TOKEN(id, prop)),			\
-		    (0))
-
 #define LED_COLOR_INIT(color_num, color_num_plus_one, state_id)		\
 {									\
 	.led_color = GET_PROP(DT_CHILD(state_id, color_##color_num),	\
@@ -114,7 +100,9 @@ struct node_prop_t {
 	.acc_period = ACC_PERIOD(color_num_plus_one, state_id)		\
 }
 
-/* Initialize node_array struct with prop listed in dts */
+/*
+ * Initialize node_array struct with prop listed in dts
+ */
 #define SET_LED_VALUES(state_id)					\
 {									\
 	.pwr_state = GET_PROP(state_id, charge_state),			\
@@ -128,52 +116,8 @@ struct node_prop_t {
 },
 
 struct node_prop_t node_array[] = {
-	DT_FOREACH_CHILD(GPIO_LED_COLOR_NODE, SET_LED_VALUES)
+	DT_FOREACH_CHILD(LED_COLOR_NODE, SET_LED_VALUES)
 };
-
-struct gpio_pins_t {
-	enum gpio_signal signal;
-	int val;
-};
-
-struct led_pins_node_t {
-	int led_color;
-	struct gpio_pins_t gpio_pins[LED_PIN_COUNT];
-};
-
-#define SET_PIN(node_id, prop, i)					\
-{									\
-	.signal = GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, i)),	\
-	.val = DT_PHA_BY_IDX(node_id, prop, i, value)			\
-},
-
-#define SET_GPIO_PIN(node_id)						\
-{									\
-	DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN)		\
-}
-
-#define SET_PIN_NODE(node_id)						\
-{									\
-	.led_color = GET_PROP(node_id, led_color),			\
-	.gpio_pins = SET_GPIO_PIN(node_id)				\
-},
-
-struct led_pins_node_t pins_node[LED_COLOR_COUNT] = {
-	DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, SET_PIN_NODE)
-};
-
-static void led_set_color(enum led_color color)
-{
-	for (int i = 0; i < LED_COLOR_COUNT; i++) {
-		if (pins_node[i].led_color == color) {
-			for (int j = 0; j < LED_PIN_COUNT; j++) {
-				gpio_pin_set_dt(gpio_get_dt_spec(
-					pins_node[i].gpio_pins[j].signal),
-					pins_node[i].gpio_pins[j].val);
-			}
-		}
-	}
-}
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {

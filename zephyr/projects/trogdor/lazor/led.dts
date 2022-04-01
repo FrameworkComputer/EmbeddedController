@@ -1,6 +1,6 @@
 / {
-	gpio-led {
-		compatible = "gpio-led-behavior";
+	led {
+		compatible = "led-behavior";
 
 		gpio-led-pins {
 			compatible = "cros-ec,gpio-led-pins";
@@ -24,8 +24,8 @@
 			};
 		};
 
-		gpio-led-colors {
-			compatible = "cros-ec,gpio-led-colors";
+		led-colors {
+			compatible = "cros-ec,led-colors";
 
 			power-state-charge {
 				charge-state = "PWR_STATE_CHARGE";

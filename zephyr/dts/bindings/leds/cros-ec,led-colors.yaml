@@ -2,12 +2,23 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: GPIO LED colors parent node
+description: LED colors parent node
 
-compatible: "cros-ec,gpio-led-colors"
+compatible: "cros-ec,led-colors"
 
 child-binding:
-    description: LED Color nodes
+    description: LED Color nodes to describe the policy combination a node
+                 depends on, and the color to set to for that combination.
+                 Eg. If Blue color needs to be set for charge state discharge
+                 in S0, a node looks like
+                 power-state-discharge-s0 {
+                    charge-state = "PWR_STATE_DISCHARGE";
+                    chipset-state = "POWER_S0";
+                    color-0 {
+                      led-color = "LED_BLUE";
+                    };
+                 };
+
     properties:
         charge-state:
             description: If the LED color depends on charge state, this
@@ -58,6 +69,13 @@ child-binding:
                     - LED_AMBER
             period:
                 description: In case of blinking LEDs, amount of time in secs
-                             the LED color is active
+                             the LED color is active. Eg.
+                             power-state-error {
+                                charge-state = "PWR_STATE_ERROR";
+                                color-0 {
+                                  led-color = "LED_AMBER";
+                                  period = <1>;
+                                };
+                             };
                 type: int
                 required: false
