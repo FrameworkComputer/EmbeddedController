@@ -6,5 +6,4 @@
 /**
  * See CONFIG_TASK_LIST in config.h for details.
  */
-#define CONFIG_TEST_TASK_LIST \
-	TASK_TEST(MOTIONSENSE, motion_sense_task, NULL, TASK_STACK_SIZE)
+#define CONFIG_TEST_TASK_LIST

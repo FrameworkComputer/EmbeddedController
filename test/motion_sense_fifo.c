@@ -10,9 +10,12 @@
 #include "test_util.h"
 #include "util.h"
 #include "hwtimer.h"
+#include "task.h"
 #include "timer.h"
 #include "accelgyro.h"
 #include <sys/types.h>
+
+mutex_t g_sensor_mutex;
 
 struct motion_sensor_t motion_sensors[] = {
 	[BASE] = {},
