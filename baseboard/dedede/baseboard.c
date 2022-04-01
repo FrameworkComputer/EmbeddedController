@@ -12,6 +12,7 @@
 #include "charger/sm5803.h"
 #include "chipset.h"
 #include "common.h"
+#include "console.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -20,6 +21,10 @@
 #include "power/intel_x86.h"
 #include "system.h"
 #include "usb_pd.h"
+
+/* Console output macros */
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
 /******************************************************************************/
 /*
@@ -127,6 +132,16 @@ __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 	 * read the ADC values during an interrupt, therefore, this power good
 	 * value is updated via ADC threshold interrupts.
 	 */
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_SUSPEND)) {
+		/*
+		 * The ADC interrupts are disabled in suspend for PP3000_A,
+		 * therefore this value may be stale. Assume that the PGOOD
+		 * follows the enable signal for this case only.
+		 */
+		if (!gpio_get_level(GPIO_EN_PP3300_A))
+			CPRINTS("EN_PP3300_A is low, assuming PG is low!");
+		return gpio_get_level(GPIO_EN_PP3300_A);
+	}
 	return pp3300_a_pgood;
 }
 

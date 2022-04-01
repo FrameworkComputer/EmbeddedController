@@ -120,6 +120,15 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 		GPIO_SET_LEVEL(GPIO_EN_PP5000, 0);
 
 	/*
+	 * For JSL, we may not catch the DSW power good transitioning if this
+	 * occurs in suspend as our ADC interrupts are disabled for power
+	 * reasons. Therefore, kick the chipset state machine in order to catch
+	 * up with the current state of affairs.
+	 */
+	if (IS_ENABLED(CONFIG_CHIPSET_JASPERLAKE))
+		power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);
+
+	/*
 	 * TODO(b/111810925): Replace this wait with
 	 * power_wait_signals_timeout()
 	 */
