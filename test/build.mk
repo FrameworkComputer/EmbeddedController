@@ -138,8 +138,7 @@ cov-dont-test += accel_cal aes compile_time_macros fp mag_cal rsa
 cov-dont-test += stillness_detector usb_pe_drp_noextended charge_manager
 cov-dont-test += timer_dos cec float queue x25519 usb_pd_timer
 cov-dont-test += kb_scan_strict entropy kb_mkbp cbi_wp gyro_cal newton_fit
-cov-dont-test += shmalloc usb_common usb_ppc utils_str battery_get_params_smart
-cov-dont-test += rtc charge_ramp kasa motion_angle_tablet usb_prl usb_pd_console
+cov-dont-test += motion_angle_tablet
 
 cov-test-list-host = $(filter-out $(cov-dont-test), $(test-list-host))
 
