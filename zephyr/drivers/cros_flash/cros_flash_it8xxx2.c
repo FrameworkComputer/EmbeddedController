@@ -31,7 +31,7 @@ struct cros_flash_it8xxx2_data {
 /* Driver convenience defines */
 #define DRV_DATA(dev) ((struct cros_flash_it8xxx2_data *)(dev)->data)
 
-#define FLASH_DEV_NAME DT_CHOSEN_ZEPHYR_FLASH_CONTROLLER_LABEL
+#define FLASH_DEV_NAME DT_LABEL(DT_CHOSEN(zephyr_flash_controller))
 static const struct device *flash_controller;
 
 #define FWP_REG(bank) (bank / 8)
