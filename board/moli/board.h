@@ -174,9 +174,9 @@ enum ioex_port {
 };
 
 enum pwm_channel {
-	PWM_CH_LED_GREEN,		/* PWM0 */
+	PWM_CH_LED_AMBER,		/* PWM0 */
 	PWM_CH_FAN,                     /* PWM5 */
-	PWM_CH_LED_RED,                 /* PWM2 */
+	PWM_CH_LED_BLUE,                /* PWM2 */
 	PWM_CH_COUNT
 };
 
