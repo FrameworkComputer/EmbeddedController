@@ -5,6 +5,7 @@
 
 #include <cros/binman.dtsi>
 #include <it8xxx2.dtsi>
+#include <ite/it8xxx2-pinctrl-map.dtsi>
 
 / {
 	chosen {
@@ -66,10 +67,11 @@
 			label = "SHI";
 			interrupts = <171 0>;
 			interrupt-parent = <&intc>;
-			pinctrl-0 = <&pinctrl_shi_mosi  /* GPM0 */
-				     &pinctrl_shi_miso  /* GPM1 */
-				     &pinctrl_shi_clk   /* GPM4 */
-				     &pinctrl_shi_cs>;  /* GPM5 */
+			pinctrl-0 = <&shi_mosi_gpm0_default
+				     &shi_miso_gpm1_default
+				     &shi_clk_gpm4_default
+				     &shi_cs_gpm5_default>;
+			pinctrl-names = "default";
 		};
 
 		fiu0: cros-flash@80000000 {

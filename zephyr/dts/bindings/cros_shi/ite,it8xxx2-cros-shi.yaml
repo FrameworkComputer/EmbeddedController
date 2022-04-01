@@ -6,13 +6,14 @@ description: ITE, IT8XXX2 Serial Host Interface (SHI) node
 
 compatible: "ite,it8xxx2-cros-shi"
 
-include: base.yaml
+include: [base.yaml, pinctrl-device.yaml]
 
 properties:
     reg:
       required: true
 
     pinctrl-0:
-        type: phandles
-        required: true
-        description: Configuration of SHI pinmux controller
+      required: true
+
+    pinctrl-names:
+      required: true

@@ -12,7 +12,7 @@
 #include <zephyr/logging/log.h>
 #include <soc.h>
 #include <soc_dt.h>
-#include <zephyr/drivers/pinmux.h>
+#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/dt-bindings/pinctrl/it8xxx2-pinctrl.h>
 
 #include "chipset.h"
@@ -33,12 +33,8 @@ LOG_MODULE_REGISTER(cros_shi, LOG_LEVEL_ERR);
  * this config will be used at initial time
  */
 struct cros_shi_it8xxx2_cfg {
-	/* Pinmux control group */
-	const struct device *pinctrls;
-	/* GPIO pin */
-	uint8_t pin;
-	/* Alternate function */
-	uint8_t alt_fun;
+	/* SHI alternate configuration */
+	const struct pinctrl_dev_config *pcfg;
 };
 
 #define SPI_RX_MAX_FIFO_SIZE 256
@@ -308,6 +304,7 @@ static int cros_shi_ite_init(const struct device *dev)
 	const struct cros_shi_it8xxx2_cfg *const config = DRV_CONFIG(dev);
 	/* Set FIFO data target count */
 	struct ec_host_request cmd_head;
+	int status;
 
 	/*
 	 * Target count means the size of host request.
@@ -360,10 +357,11 @@ static int cros_shi_ite_init(const struct device *dev)
 	/* SPI peripheral controller enable (after settings are ready) */
 	IT83XX_SPI_SPISGCR = IT83XX_SPI_SPISCEN;
 
-	/* Ensure spi chip select alt function is enabled. */
-	for (int i = 0; i < DT_INST_PROP_LEN(0, pinctrl_0); i++) {
-		pinmux_pin_set(config[i].pinctrls, config[i].pin,
-			       config[i].alt_fun);
+	/* Set the pin to SHI alternate function. */
+	status = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+	if (status < 0) {
+		LOG_ERR("Failed to configure SHI pins");
+		return status;
 	}
 
 	/* Enable SPI peripheral interrupt */
@@ -376,8 +374,11 @@ static int cros_shi_ite_init(const struct device *dev)
 	return 0;
 }
 
-static const struct cros_shi_it8xxx2_cfg cros_shi_cfg[] =
-	IT8XXX2_DT_ALT_ITEMS_LIST(0);
+PINCTRL_DT_INST_DEFINE(0);
+
+static const struct cros_shi_it8xxx2_cfg cros_shi_cfg = {
+	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
+};
 
 #if CONFIG_CROS_SHI_IT8XXX2_INIT_PRIORITY <= \
 	CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY
