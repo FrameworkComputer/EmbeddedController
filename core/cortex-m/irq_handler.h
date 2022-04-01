@@ -9,9 +9,10 @@
 #define __CROS_EC_IRQ_HANDLER_H
 
 #ifdef CONFIG_TASK_PROFILING
-#define bl_task_start_irq_handler "bl task_start_irq_handler\n"
+#define TASK_START_IRQ_HANDLER(excep_return) \
+	task_start_irq_handler(excep_return)
 #else
-#define bl_task_start_irq_handler ""
+#define TASK_START_IRQ_HANDLER(excep_return)
 #endif
 
 /* Helper macros to build the IRQ handler and priority struct names */
@@ -23,20 +24,17 @@
  */
 #define DECLARE_IRQ(irq, routine, priority) DECLARE_IRQ_(irq, routine, priority)
 #define DECLARE_IRQ_(irq, routine, priority)                    \
-	void IRQ_HANDLER(irq)(void) __attribute__((naked));	\
+	void IRQ_HANDLER(irq)(void);				\
 	typedef struct {					\
 		int fake[irq >= CONFIG_IRQ_COUNT ? -1 : 1];	\
 	} irq_num_check_##irq;					\
 	static void __keep routine(void);			\
 	void IRQ_HANDLER(irq)(void)				\
 	{							\
-		asm volatile("mov r0, lr\n"			\
-			     "push {r0, lr}\n"			\
-			     bl_task_start_irq_handler		\
-			     "bl "#routine"\n"			\
-			     "pop {r0, lr}\n"			\
-			     "b task_resched_if_needed\n"	\
-			    );					\
+		void *ret = __builtin_return_address(0);	\
+		TASK_START_IRQ_HANDLER(ret);			\
+		routine();					\
+		task_resched_if_needed(ret);			\
 	}							\
 	const struct irq_priority __keep IRQ_PRIORITY(irq)	\
 	__attribute__((section(".rodata.irqprio")))		\
