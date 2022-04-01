@@ -17,15 +17,15 @@
 #include "watchdog.h"
 
 /*
- * Trigger select mapping for slave timer from master timer.  This is
+ * Trigger select mapping for secondary timer from primary timer.  This is
  * unfortunately not very straightforward; there's no tidy way to do this
  * algorithmically.  To avoid burning memory for a lookup table, use macros to
  * compute the offset.  This also has the benefit that compilation will fail if
- * an unsupported master/slave pairing is used.
+ * an unsupported primary/secondary pairing is used.
  */
 #ifdef CHIP_FAMILY_STM32F0
 /*
- * Slave        Master
+ * Secondary    Primary
  *     1    15  2  3 17
  *     2     1 15  3 14
  *     3     1  2 15 14
@@ -33,25 +33,25 @@
  *     --------------------
  *     ts =  0  1  2  3
  */
-#define STM32_TIM_TS_SLAVE_1_MASTER_15  0
-#define STM32_TIM_TS_SLAVE_1_MASTER_2   1
-#define STM32_TIM_TS_SLAVE_1_MASTER_3   2
-#define STM32_TIM_TS_SLAVE_1_MASTER_17  3
-#define STM32_TIM_TS_SLAVE_2_MASTER_1   0
-#define STM32_TIM_TS_SLAVE_2_MASTER_15  1
-#define STM32_TIM_TS_SLAVE_2_MASTER_3   2
-#define STM32_TIM_TS_SLAVE_2_MASTER_14  3
-#define STM32_TIM_TS_SLAVE_3_MASTER_1   0
-#define STM32_TIM_TS_SLAVE_3_MASTER_2   1
-#define STM32_TIM_TS_SLAVE_3_MASTER_15  2
-#define STM32_TIM_TS_SLAVE_3_MASTER_14  3
-#define STM32_TIM_TS_SLAVE_15_MASTER_2  0
-#define STM32_TIM_TS_SLAVE_15_MASTER_3  1
-#define STM32_TIM_TS_SLAVE_15_MASTER_16 2
-#define STM32_TIM_TS_SLAVE_15_MASTER_17 3
+#define STM32_TIM_TS_SECONDARY_1_PRIMARY_15  0
+#define STM32_TIM_TS_SECONDARY_1_PRIMARY_2   1
+#define STM32_TIM_TS_SECONDARY_1_PRIMARY_3   2
+#define STM32_TIM_TS_SECONDARY_1_PRIMARY_17  3
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_1   0
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_15  1
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_3   2
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_14  3
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_1   0
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_2   1
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_15  2
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_14  3
+#define STM32_TIM_TS_SECONDARY_15_PRIMARY_2  0
+#define STM32_TIM_TS_SECONDARY_15_PRIMARY_3  1
+#define STM32_TIM_TS_SECONDARY_15_PRIMARY_16 2
+#define STM32_TIM_TS_SECONDARY_15_PRIMARY_17 3
 #elif defined(CHIP_FAMILY_STM32F3)
 /*
- * Slave        Master
+ * Secondary    Primary
  *     2    19 15  3 14
  *     3    19  2  5 14
  *     4    19  2  3 15
@@ -61,33 +61,33 @@
  *    ---------------------
  *     ts =  0  1  2  3
  */
-#define STM32_TIM_TS_SLAVE_2_MASTER_19  0
-#define STM32_TIM_TS_SLAVE_2_MASTER_15  1
-#define STM32_TIM_TS_SLAVE_2_MASTER_3   2
-#define STM32_TIM_TS_SLAVE_2_MASTER_14  3
-#define STM32_TIM_TS_SLAVE_3_MASTER_19  0
-#define STM32_TIM_TS_SLAVE_3_MASTER_2   1
-#define STM32_TIM_TS_SLAVE_3_MASTER_5   2
-#define STM32_TIM_TS_SLAVE_3_MASTER_14  3
-#define STM32_TIM_TS_SLAVE_4_MASTER_19  0
-#define STM32_TIM_TS_SLAVE_4_MASTER_2   1
-#define STM32_TIM_TS_SLAVE_4_MASTER_3   2
-#define STM32_TIM_TS_SLAVE_4_MASTER_15  3
-#define STM32_TIM_TS_SLAVE_5_MASTER_2   0
-#define STM32_TIM_TS_SLAVE_5_MASTER_3   1
-#define STM32_TIM_TS_SLAVE_5_MASTER_4   2
-#define STM32_TIM_TS_SLAVE_5_MASTER_15  3
-#define STM32_TIM_TS_SLAVE_12_MASTER_4  0
-#define STM32_TIM_TS_SLAVE_12_MASTER_5  1
-#define STM32_TIM_TS_SLAVE_12_MASTER_13 2
-#define STM32_TIM_TS_SLAVE_12_MASTER_14 3
-#define STM32_TIM_TS_SLAVE_19_MASTER_2  0
-#define STM32_TIM_TS_SLAVE_19_MASTER_3  1
-#define STM32_TIM_TS_SLAVE_19_MASTER_15 2
-#define STM32_TIM_TS_SLAVE_19_MASTER_16 3
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_19  0
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_15  1
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_3   2
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_14  3
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_19  0
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_2   1
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_5   2
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_14  3
+#define STM32_TIM_TS_SECONDARY_4_PRIMARY_19  0
+#define STM32_TIM_TS_SECONDARY_4_PRIMARY_2   1
+#define STM32_TIM_TS_SECONDARY_4_PRIMARY_3   2
+#define STM32_TIM_TS_SECONDARY_4_PRIMARY_15  3
+#define STM32_TIM_TS_SECONDARY_5_PRIMARY_2   0
+#define STM32_TIM_TS_SECONDARY_5_PRIMARY_3   1
+#define STM32_TIM_TS_SECONDARY_5_PRIMARY_4   2
+#define STM32_TIM_TS_SECONDARY_5_PRIMARY_15  3
+#define STM32_TIM_TS_SECONDARY_12_PRIMARY_4  0
+#define STM32_TIM_TS_SECONDARY_12_PRIMARY_5  1
+#define STM32_TIM_TS_SECONDARY_12_PRIMARY_13 2
+#define STM32_TIM_TS_SECONDARY_12_PRIMARY_14 3
+#define STM32_TIM_TS_SECONDARY_19_PRIMARY_2  0
+#define STM32_TIM_TS_SECONDARY_19_PRIMARY_3  1
+#define STM32_TIM_TS_SECONDARY_19_PRIMARY_15 2
+#define STM32_TIM_TS_SECONDARY_19_PRIMARY_16 3
 #else /* !CHIP_FAMILY_STM32F0 && !CHIP_FAMILY_STM32F3 */
 /*
- * Slave        Master
+ * Secondary    Primary
  *     1    15  2  3  4  (STM32F100 only)
  *     2     9 10  3  4
  *     3     9  2 11  4
@@ -96,29 +96,29 @@
  *     --------------------
  *     ts =  0  1  2  3
  */
-#define STM32_TIM_TS_SLAVE_1_MASTER_15 0
-#define STM32_TIM_TS_SLAVE_1_MASTER_2  1
-#define STM32_TIM_TS_SLAVE_1_MASTER_3  2
-#define STM32_TIM_TS_SLAVE_1_MASTER_4  3
-#define STM32_TIM_TS_SLAVE_2_MASTER_9  0
-#define STM32_TIM_TS_SLAVE_2_MASTER_10 1
-#define STM32_TIM_TS_SLAVE_2_MASTER_3  2
-#define STM32_TIM_TS_SLAVE_2_MASTER_4  3
-#define STM32_TIM_TS_SLAVE_3_MASTER_9  0
-#define STM32_TIM_TS_SLAVE_3_MASTER_2  1
-#define STM32_TIM_TS_SLAVE_3_MASTER_11 2
-#define STM32_TIM_TS_SLAVE_3_MASTER_4  3
-#define STM32_TIM_TS_SLAVE_4_MASTER_10 0
-#define STM32_TIM_TS_SLAVE_4_MASTER_2  1
-#define STM32_TIM_TS_SLAVE_4_MASTER_3  2
-#define STM32_TIM_TS_SLAVE_4_MASTER_9  3
-#define STM32_TIM_TS_SLAVE_9_MASTER_2  0
-#define STM32_TIM_TS_SLAVE_9_MASTER_3  1
-#define STM32_TIM_TS_SLAVE_9_MASTER_10 2
-#define STM32_TIM_TS_SLAVE_9_MASTER_11 3
+#define STM32_TIM_TS_SECONDARY_1_PRIMARY_15 0
+#define STM32_TIM_TS_SECONDARY_1_PRIMARY_2  1
+#define STM32_TIM_TS_SECONDARY_1_PRIMARY_3  2
+#define STM32_TIM_TS_SECONDARY_1_PRIMARY_4  3
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_9  0
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_10 1
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_3  2
+#define STM32_TIM_TS_SECONDARY_2_PRIMARY_4  3
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_9  0
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_2  1
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_11 2
+#define STM32_TIM_TS_SECONDARY_3_PRIMARY_4  3
+#define STM32_TIM_TS_SECONDARY_4_PRIMARY_10 0
+#define STM32_TIM_TS_SECONDARY_4_PRIMARY_2  1
+#define STM32_TIM_TS_SECONDARY_4_PRIMARY_3  2
+#define STM32_TIM_TS_SECONDARY_4_PRIMARY_9  3
+#define STM32_TIM_TS_SECONDARY_9_PRIMARY_2  0
+#define STM32_TIM_TS_SECONDARY_9_PRIMARY_3  1
+#define STM32_TIM_TS_SECONDARY_9_PRIMARY_10 2
+#define STM32_TIM_TS_SECONDARY_9_PRIMARY_11 3
 #endif /* !CHIP_FAMILY_STM32F0 */
-#define TSMAP(slave, master) \
-	CONCAT4(STM32_TIM_TS_SLAVE_, slave, _MASTER_, master)
+#define TSMAP(secondary, primary) \
+	CONCAT4(STM32_TIM_TS_SECONDARY_, secondary, _PRIMARY_, primary)
 
 /*
  * Timers are defined per board.  This gives us flexibility to work around
@@ -336,8 +336,8 @@ int __hw_clock_source_init(uint32_t start_t)
 {
 	/*
 	 * we use 2 chained 16-bit counters to emulate a 32-bit one :
-	 * TIM_CLOCK_MSB is the MSB (Slave)
-	 * TIM_CLOCK_LSB is the LSB (Master)
+	 * TIM_CLOCK_MSB is the MSB (Secondary)
+	 * TIM_CLOCK_LSB is the LSB (Primary)
 	 */
 
 	/* Enable TIM_CLOCK_MSB and TIM_CLOCK_LSB clocks */
@@ -354,7 +354,7 @@ int __hw_clock_source_init(uint32_t start_t)
 	STM32_TIM_CR1(TIM_CLOCK_MSB) = 0x0004;
 	STM32_TIM_CR1(TIM_CLOCK_LSB) = 0x0004;
 	/*
-	 * TIM_CLOCK_LSB (master mode) generates a periodic trigger signal on
+	 * TIM_CLOCK_LSB (primary mode) generates a periodic trigger signal on
 	 * each UEV
 	 */
 	STM32_TIM_CR2(TIM_CLOCK_MSB) = 0x0000;
@@ -439,7 +439,7 @@ void hwtimer_setup_watchdog(void)
 	 */
 	timer->cr1 = 0x0014 | BIT(7);
 
-	/* TIM (slave mode) uses TIM_CLOCK_LSB as internal trigger */
+	/* TIM (secondary mode) uses TIM_CLOCK_LSB as internal trigger */
 	timer->smcr = 0x0007 | (TSMAP(TIM_WATCHDOG, TIM_CLOCK_LSB) << 4);
 
 	/*
