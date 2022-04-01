@@ -12,6 +12,24 @@
 extern struct motion_sensor_t motion_sensors_alt[];
 
 /*
+ * Common macros.
+ */
+#define SENSOR_ROT_STD_REF_NAME(id)	DT_CAT(ROT_REF_, id)
+#define SENSOR_ROT_REF_NODE		DT_PATH(motionsense_rotation_ref)
+
+/*
+ * Declare rotation parameters, since they may be
+ * dynamically selected.
+ */
+#define DECLARE_EXTERN_SENSOR_ROT_REF(id)				\
+	extern const mat33_fp_t SENSOR_ROT_STD_REF_NAME(id);
+
+#if DT_NODE_EXISTS(SENSOR_ROT_REF_NODE)
+DT_FOREACH_CHILD(SENSOR_ROT_REF_NODE, DECLARE_EXTERN_SENSOR_ROT_REF)
+#endif
+#undef DECLARE_EXTERN_SENSOR_ROT_REF
+
+/*
  * Performs probing of an alternate sensor.
  * @param alt_idx Index in motion_sensors_alt of the sensor to be probed.
  *		  It should be gained with SENSOR_ID,

@@ -42,6 +42,12 @@
 				 0 0 (-1)>;
 		};
 
+		base_rot_inverted: base-rot-inverted {
+			mat33 = <(-1) 0 0
+				 0 1 0
+				 0 0 (-1)>;
+		};
+
 		base_rot_ref: base-rotation-ref {
 			mat33 = <1 0 0
 				 0 (-1) 0
@@ -85,6 +91,10 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&base_mutex>;
 			port = <&i2c_ec_i2c_sensor>;
+			/*
+			 * May be replaced by alternate depending
+			 * on board config.
+			 */
 			rot-standard-ref = <&base_rot_ref>;
 			drv-data = <&lsm6dso_data>;
 			configs {

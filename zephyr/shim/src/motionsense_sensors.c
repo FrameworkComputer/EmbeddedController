@@ -28,11 +28,9 @@ LOG_MODULE_REGISTER(shim_cros_motionsense_sensors);
 DT_FOREACH_CHILD(SENSOR_MUTEX_NODE, DECLARE_SENSOR_MUTEX)
 #endif /* DT_NODE_EXISTS(SENSOR_MUTEX_NODE) */
 
-#define SENSOR_ROT_REF_NODE		DT_PATH(motionsense_rotation_ref)
-#define SENSOR_ROT_STD_REF_NAME(id)	DT_CAT(ROT_REF_, id)
 #define MAT_ITEM(i, id)	FLOAT_TO_FP((int32_t)(DT_PROP_BY_IDX(id, mat33, i)))
 #define DECLARE_SENSOR_ROT_REF(id)					\
-	static const mat33_fp_t SENSOR_ROT_STD_REF_NAME(id) = {	\
+	const mat33_fp_t SENSOR_ROT_STD_REF_NAME(id) = {	\
 		{							\
 			FOR_EACH_FIXED_ARG(MAT_ITEM, (,), id, 0, 1, 2)	\
 		},							\
