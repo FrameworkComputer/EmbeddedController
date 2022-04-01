@@ -865,8 +865,6 @@ DECLARE_DEFERRED(baseboard_a1_retimer_setup);
 
 static void baseboard_chipset_suspend(void)
 {
-	/* Disable display and keyboard backlights. */
-	gpio_set_level(GPIO_EC_DISABLE_DISP_BL, 1);
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
@@ -874,8 +872,6 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_chipset_suspend,
 
 static void baseboard_chipset_resume(void)
 {
-	/* Enable display and keyboard backlights. */
-	gpio_set_level(GPIO_EC_DISABLE_DISP_BL, 0);
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
 	/* Some retimers take several ms to be ready, so defer setup call */
 	hook_call_deferred(&baseboard_a1_retimer_setup_data, 20 * MSEC);
