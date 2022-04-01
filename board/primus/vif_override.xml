@@ -21,7 +21,7 @@
         <vif:USB4_Num_Unused_Adapters value="0" />
         <vif:USB4_TBT3_VID value="32903">8087</vif:USB4_TBT3_VID>
         <vif:USB4_PCIe_Switch_Vendor_ID value="32902">8086</vif:USB4_PCIe_Switch_Vendor_ID>
-        <vif:USB4_PCIe_Switch_Device_ID value="39451">9A1B</vif:USB4_PCIe_Switch_Device_ID>
+        <vif:USB4_PCIe_Switch_Device_ID value="17982">463E</vif:USB4_PCIe_Switch_Device_ID>
       </vif:Usb4Router>
     </vif:USB4RouterList>
   </vif:Product>
