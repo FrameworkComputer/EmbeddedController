@@ -145,7 +145,6 @@ void baseboard_set_en_pwr_pcore(enum gpio_signal unused)
 
 void baseboard_en_pwr_s0(enum gpio_signal signal)
 {
-
 	/* EC must AND signals SLP_S3_L and PG_PWR_S5 */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0_r),
 	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) &&
@@ -156,6 +155,24 @@ void baseboard_en_pwr_s0(enum gpio_signal signal)
 
 	/* Now chain off to the normal power signal interrupt handler. */
 	power_signal_interrupt(signal);
+}
+
+void baseboard_enable_hub(void)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_rst), 0);
+}
+DECLARE_DEFERRED(baseboard_enable_hub);
+
+void baseboard_s5_pgood(enum gpio_signal signal)
+{
+	/* We must enable the USB hub at least 30ms after S5 PGOOD */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_pwr_s5)))
+		hook_call_deferred(&baseboard_enable_hub_data, 30 * MSEC);
+	else
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_rst), 1);
+
+	/* Continue to our signal AND-ing and power interrupt */
+	baseboard_en_pwr_s0(signal);
 }
 
 void baseboard_set_en_pwr_s3(enum gpio_signal signal)

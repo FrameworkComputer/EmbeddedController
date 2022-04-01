@@ -35,7 +35,7 @@
 		int_s5_pgood: s5_pgood {
 			irq-pin = <&gpio_pg_pwr_s5>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "baseboard_en_pwr_s0";
+			handler = "baseboard_s5_pgood";
 		};
 		int_pg_groupc_s0: pg_groupc_s0 {
 			irq-pin = <&gpio_pg_groupc_s0_od>;

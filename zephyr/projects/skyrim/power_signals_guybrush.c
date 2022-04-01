@@ -111,6 +111,11 @@ void baseboard_en_pwr_s0(enum gpio_signal signal)
 	power_signal_interrupt(signal);
 }
 
+void baseboard_s5_pgood(enum gpio_signal signal)
+{
+	baseboard_en_pwr_s0(signal);
+}
+
 void baseboard_set_en_pwr_s3(enum gpio_signal signal)
 {
 	/* EC has no EN_PWR_S3 on this board */

@@ -29,8 +29,8 @@
 		soc_thermtrip_odl {
 			gpios = <&gpio9 5 GPIO_INPUT>;
 		};
-		hub_rst {
-			gpios = <&gpio6 6 GPIO_OUTPUT_LOW>;
+		gpio_hub_rst: hub_rst {
+			gpios = <&gpio6 6 GPIO_OUTPUT_HIGH>;
 		};
 		ec_soc_int_l {
 			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
