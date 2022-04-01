@@ -13,6 +13,7 @@
 #include "timer.h"
 #include "chipset.h"
 #include "hwtimer.h"
+#include "math_util.h"
 #include "util.h"
 #include "i2c_hid.h"
 #include "i2c_hid_mediakeys.h"
@@ -350,16 +351,29 @@ void i2c_hid_als_init(void)
 	als_sensor.illuminanceValue = 0x0000;
 }
 
+static int als_polling_mode_count;
 void report_illuminance_value(void)
 {
-	/* bypass the EC_MEMMAP_ALS value to input report */
-	als_sensor.illuminanceValue = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
+	uint16_t newIlluminaceValue = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
 
-	/* wait 6s to change mode from polling to threshold */
+	/* We need to polling the ALS value at least 6 seconds */
+	if (als_polling_mode_count <= 60) {
+		als_polling_mode_count++; /* time base 100ms */
 
+		/* bypass the EC_MEMMAP_ALS value to input report */
+		als_sensor.illuminanceValue = newIlluminaceValue;
+		task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) |
+			EVENT_REPORT_ILLUMINANCE_VALUE), 0);
+	} else {
+		if (ABS(als_sensor.illuminanceValue - newIlluminaceValue) > 5) {
+			als_sensor.illuminanceValue = newIlluminaceValue;
+			task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) |
+				EVENT_REPORT_ILLUMINANCE_VALUE), 0);
+		} else {
+			task_set_event(TASK_ID_HID, EVENT_REPORT_ILLUMINANCE_VALUE, 0);
+		}
+	}
 
-	task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) |
-		EVENT_REPORT_ILLUMINANCE_VALUE), 0);
 }
 DECLARE_DEFERRED(report_illuminance_value);
 
@@ -380,6 +394,7 @@ static void als_report_control(uint8_t report_mode)
 	} else {
 		/* stop report als value */
 		hook_call_deferred(&report_illuminance_value_data, -1);
+		als_polling_mode_count = 0;
 	}
 }
 
