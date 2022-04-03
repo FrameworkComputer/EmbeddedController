@@ -6,6 +6,9 @@
 #ifndef __CROS_EC_LED_H__
 #define __CROS_EC_LED_H__
 
+#define COMPAT_GPIO_LED cros_ec_gpio_led_pins
+#define COMPAT_PWM_LED  cros_ec_pwm_led_pins
+
 #define GET_PROP(id, prop)						\
 	COND_CODE_1(DT_NODE_HAS_PROP(id, prop),				\
 		    (DT_STRING_UPPER_TOKEN(id, prop)),			\

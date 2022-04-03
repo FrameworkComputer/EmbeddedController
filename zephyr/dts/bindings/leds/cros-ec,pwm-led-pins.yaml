@@ -1,0 +1,39 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: PWM LED pins parent node
+
+compatible: "cros-ec,pwm-led-pins"
+
+properties:
+  pwm-frequency:
+    type: int
+    required: true
+    description: PWM frequency in Hz.
+
+child-binding:
+    description: Each child node describes all the PWM pins that need to be
+                 altered to set a specific color. Eg. For blue and amber PWM
+                 channels, in order to set color amber, a node looks like
+                 this where 100 is PWM duty cycle in percentage
+                 color-amber {
+                              led-color = "LED_AMBER";
+                              led-pins = <&pwm_led_y 100>,
+                                         <&pwm_led_b 0>;
+                             };
+    properties:
+        led-color:
+            type: string
+            required: true
+            enum:
+                - LED_OFF
+                - LED_RED
+                - LED_GREEN
+                - LED_BLUE
+                - LED_YELLOW
+                - LED_WHITE
+                - LED_AMBER
+        led-pins:
+            type: phandle-array
+            required: false

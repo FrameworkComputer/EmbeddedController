@@ -12,6 +12,8 @@
 #include <drivers/gpio.h>
 #include <logging/log.h>
 
+#if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_GPIO_LED)
+
 LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 
 #define GPIO_LED_PINS_NODE	DT_PATH(gpio_led_pins)
@@ -72,3 +74,4 @@ void led_set_color(enum led_color color)
 		}
 	}
 }
+#endif /* DT_HAS_COMPAT_STATUS_OKAY(COMPAT_GPIO_LED) */

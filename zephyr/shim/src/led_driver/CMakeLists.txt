@@ -4,3 +4,4 @@
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_DT      led.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_DT      led_gpio.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_DT      led_pwm.c)

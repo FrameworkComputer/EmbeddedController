@@ -1,0 +1,19 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: PWM LED pin configuration
+
+compatible: "cros-ec,pwm-pin-config"
+
+child-binding:
+  description: PWMs associated with LEDs
+  properties:
+    pwms:
+      type: phandle-array
+      required: true
+    "#led-pin-cells":
+      type: int
+      required: false
+  led-pin-cells:
+    - value

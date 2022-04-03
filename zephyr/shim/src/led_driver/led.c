@@ -245,7 +245,8 @@ static int find_color(int node_idx, int ticks)
 	/* If period value at index 0 is not 0, it's a blinking LED */
 	if (GET_PERIOD(node_idx, 0) != 0) {
 		/*  Period is accumulated at the last index */
-		ticks = ticks % GET_PERIOD(node_idx, MAX_COLOR - 1);
+		ticks = (ticks * LED_ONE_SEC) %
+			GET_PERIOD(node_idx, MAX_COLOR - 1);
 
 		for (color_idx = 0; color_idx < MAX_COLOR; color_idx++) {
 			if (ticks < GET_PERIOD(node_idx, color_idx))
