@@ -3,12 +3,28 @@
  * found in the LICENSE file.
  */
 
-#include "chipset.h"
-#include "ec_commands.h"
-#include "hooks.h"
+#include <drivers/pwm.h>
+#include <logging/log.h>
+
+#include "board_led.h"
+#include "common.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
-#include "pwm.h"
+#include "util.h"
+
+LOG_MODULE_REGISTER(board_led, LOG_LEVEL_ERR);
+
+/*If we need pwm output in ITE chip power saving mode, then we should set
+ * frequency <= 324Hz.
+ */
+#define BOARD_LED_PWM_PERIOD_US BOARD_LED_HZ_TO_PERIOD_US(324)
+
+static const struct board_led_pwm_dt_channel board_led_power_white =
+	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(DT_NODELABEL(led_power_white));
+static const struct board_led_pwm_dt_channel board_led_battery_amber =
+	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(DT_NODELABEL(led_battery_amber));
+static const struct board_led_pwm_dt_channel board_led_battery_white =
+	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(DT_NODELABEL(led_battery_white));
 
 __override const int led_charge_lvl_1 = 5;
 __override const int led_charge_lvl_2 = 95;
@@ -39,7 +55,6 @@ __override const struct led_descriptor
 	[PWR_LED_STATE_OFF]           = {{LED_OFF, LED_INDEFINITE} },
 };
 
-
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_BATTERY_LED,
 	EC_LED_ID_POWER_LED,
@@ -47,19 +62,57 @@ const enum ec_led_id supported_led_ids[] = {
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
-const enum pwm_channel LED_POWER_WHITE = NAMED_PWM(ec_led1_odl);
-const enum pwm_channel LED_BATTERY_AMBER = NAMED_PWM(ec_led2_odl);
-const enum pwm_channel LED_BATTERY_WHITE = NAMED_PWM(ec_led3_odl);
+static void board_led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
+				   int percent)
+{
+	uint32_t pulse_us;
+	int rv;
+
+	if (!device_is_ready(ch->dev)) {
+		LOG_ERR("PWM device %s not ready", ch->dev->name);
+		return;
+	}
+
+	pulse_us = DIV_ROUND_NEAREST(BOARD_LED_PWM_PERIOD_US * percent, 100);
+
+	LOG_DBG("Board LED PWM %s set percent (%d), pulse %d",
+		ch->dev->name, percent, pulse_us);
+
+	rv = pwm_pin_set_usec(ch->dev, ch->channel, BOARD_LED_PWM_PERIOD_US,
+			      pulse_us, ch->flags);
+	if (rv) {
+		LOG_ERR("pwm_pin_set_usec() failed %s (%d)", ch->dev->name, rv);
+	}
+}
 
 __override void led_set_color_battery(enum ec_led_colors color)
 {
-	pwm_enable(LED_BATTERY_AMBER, color == EC_LED_COLOR_AMBER);
-	pwm_enable(LED_BATTERY_WHITE, color == EC_LED_COLOR_WHITE);
+	switch (color) {
+	case EC_LED_COLOR_AMBER:
+		board_led_pwm_set_duty(&board_led_battery_amber, 100);
+		board_led_pwm_set_duty(&board_led_battery_white, 0);
+		break;
+	case EC_LED_COLOR_WHITE:
+		board_led_pwm_set_duty(&board_led_battery_amber, 0);
+		board_led_pwm_set_duty(&board_led_battery_white, 100);
+		break;
+	default:
+		board_led_pwm_set_duty(&board_led_battery_amber, 0);
+		board_led_pwm_set_duty(&board_led_battery_white, 0);
+		break;
+	}
 }
 
 __override void led_set_color_power(enum ec_led_colors color)
 {
-	pwm_enable(LED_POWER_WHITE, color == EC_LED_COLOR_WHITE);
+	switch (color) {
+	case EC_LED_COLOR_WHITE:
+		board_led_pwm_set_duty(&board_led_power_white, 100);
+		break;
+	default:
+		board_led_pwm_set_duty(&board_led_power_white, 0);
+		break;
+	}
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -90,11 +143,3 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	return EC_SUCCESS;
 }
-
-void board_led_init(void)
-{
-	pwm_set_duty(LED_POWER_WHITE, 100);
-	pwm_set_duty(LED_BATTERY_AMBER, 100);
-	pwm_set_duty(LED_BATTERY_WHITE, 100);
-}
-DECLARE_HOOK(HOOK_INIT, board_led_init, HOOK_PRIO_DEFAULT);
