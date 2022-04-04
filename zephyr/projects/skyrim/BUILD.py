@@ -17,7 +17,7 @@ def register_variant(project_name):
             here / "interrupts.dts",
             here / "keyboard.dts",
             here / "motionsense.dts",
-            here / "pwm.dts",
+            here / "pwm_leds.dts",
             here / "usbc.dts",
             # Project-specific DTS customizations.
             here / f"{project_name}.dts",

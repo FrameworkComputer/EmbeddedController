@@ -1,0 +1,46 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm2 0 PWM_POLARITY_INVERTED
+				&pwm3 0 PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	cros-pwmleds {
+		compatible = "cros-ec,pwm-leds";
+
+		leds = <&pwm_led0>;
+		frequency = <100>;
+
+		color-map-white  = <  0 100>;
+		color-map-amber  = <100   0>;
+
+		brightness-range = <0 0 0 0 255 255>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pwm_led_0@0 {
+			reg = <0>;
+			ec-led-name = "EC_LED_ID_BATTERY_LED";
+		};
+	};
+};
+
+/* Amber "battery charging" LED */
+&pwm2 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* White "battery full" LED */
+&pwm3 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
