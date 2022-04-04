@@ -31,8 +31,8 @@ struct cros_flash_it8xxx2_data {
 /* Driver convenience defines */
 #define DRV_DATA(dev) ((struct cros_flash_it8xxx2_data *)(dev)->data)
 
-#define FLASH_DEV_NAME DT_LABEL(DT_CHOSEN(zephyr_flash_controller))
-static const struct device *flash_controller;
+static const struct device *const flash_controller =
+	DEVICE_DT_GET(DT_CHOSEN(zephyr_flash_controller));
 
 #define FWP_REG(bank) (bank / 8)
 #define FWP_MASK(bank) (1 << (bank % 8))
@@ -311,9 +311,9 @@ static int flash_it8xxx2_init(const struct device *dev)
 {
 	ARG_UNUSED(dev);
 
-	flash_controller = device_get_binding(FLASH_DEV_NAME);
-	if (!flash_controller) {
-		LOG_ERR("Fail to find %s", FLASH_DEV_NAME);
+	if (!device_is_ready(flash_controller)) {
+		LOG_ERR("Selected flash device %s is not ready",
+			flash_controller->name);
 		return -ENODEV;
 	}
 
