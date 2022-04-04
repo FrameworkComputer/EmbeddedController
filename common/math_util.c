@@ -60,12 +60,9 @@ fp_t arc_cos(fp_t x)
 
 	/*
 	 * Shouldn't be possible to get here because inputs are clipped to
-	 * [-1, 1] and the cos_lut[] table goes over the same range. If we
-	 * are here, throw an assert.
+	 * [-1, 1] and the cos_lut[] table goes over the same range.
 	 */
-	ASSERT(0);
-
-	return 0;
+	__builtin_unreachable();
 }
 
 /**
