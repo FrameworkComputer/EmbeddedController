@@ -26,7 +26,7 @@ import time
 from concurrent.futures.thread import ThreadPoolExecutor
 from enum import Enum
 from pathlib import Path
-from typing import Optional, BinaryIO, List, Dict
+from typing import Optional, BinaryIO, List
 
 # pylint: disable=import-error
 import colorama  # type: ignore[import]
@@ -104,11 +104,11 @@ class BoardConfig:
 class TestConfig:
     """Configuration for a given test."""
 
-    def __init__(self, name, image_to_use=ImageType.RW, finish_regexes=None,
-                 fail_regexes=None, toggle_power=False, test_args=None,
-                 num_flash_attempts=2, timeout_secs=10,
-                 enable_hw_write_protect=False, ro_image=None,
-                 build_board=None):
+    def __init__(self, test_name, image_to_use=ImageType.RW,
+                 finish_regexes=None, fail_regexes=None, toggle_power=False,
+                 test_args=None, num_flash_attempts=2, timeout_secs=10,
+                 enable_hw_write_protect=False, ro_image=None, build_board=None,
+                 config_name=None):
         if test_args is None:
             test_args = []
         if finish_regexes is None:
@@ -116,8 +116,11 @@ class TestConfig:
         if fail_regexes is None:
             fail_regexes = [SINGLE_CHECK_FAILED_REGEX, ALL_TESTS_FAILED_REGEX,
                             ASSERTION_FAILURE_REGEX]
+        if config_name is None:
+            config_name = test_name
 
-        self.name = name
+        self.test_name = test_name
+        self.config_name = config_name
         self.image_to_use = image_to_use
         self.finish_regexes = finish_regexes
         self.fail_regexes = fail_regexes
@@ -139,105 +142,72 @@ class AllTests:
     """All possible tests."""
 
     @staticmethod
-    def get(board_config: BoardConfig) -> Dict[str, TestConfig]:
+    def get(board_config: BoardConfig) -> List[TestConfig]:
         public_tests = AllTests.get_public_tests(board_config)
         private_tests = AllTests.get_private_tests()
 
-        # Make sure there are no conflicts
-        # pylint: disable=dict-keys-not-iterating
-        overwritten_tests = public_tests.keys() & private_tests.keys()
-        # pylint: enable=dict-keys-not-iterating
-        if overwritten_tests:
-            err = 'Public test overwritten by private one with the same name: '
-            err += str(overwritten_tests)
-            raise RuntimeError(err)
-
-        return {**public_tests, **private_tests}
+        return public_tests + private_tests
 
     @staticmethod
-    def get_public_tests(board_config: BoardConfig) -> Dict[str, TestConfig]:
-        tests = {
-            'aes':
-                TestConfig(name='aes'),
-            'cec':
-                TestConfig(name='cec'),
-            'cortexm_fpu':
-                TestConfig(name='cortexm_fpu'),
-            'crc':
-                TestConfig(name='crc'),
-            'flash_physical':
-                TestConfig(name='flash_physical', image_to_use=ImageType.RO,
-                           toggle_power=True),
-            'flash_write_protect':
-                TestConfig(name='flash_write_protect',
-                           image_to_use=ImageType.RO,
-                           toggle_power=True, enable_hw_write_protect=True),
-            'fpsensor_hw':
-                TestConfig(name='fpsensor_hw'),
-            'fpsensor_spi_ro':
-                TestConfig(name='fpsensor', image_to_use=ImageType.RO,
-                           test_args=['spi']),
-            'fpsensor_spi_rw':
-                TestConfig(name='fpsensor', test_args=['spi']),
-            'fpsensor_uart_ro':
-                TestConfig(name='fpsensor', image_to_use=ImageType.RO,
-                           test_args=['uart']),
-            'fpsensor_uart_rw':
-                TestConfig(name='fpsensor', test_args=['uart']),
-            'mpu_ro':
-                TestConfig(name='mpu',
-                           image_to_use=ImageType.RO,
-                           finish_regexes=[board_config.mpu_regex]),
-            'mpu_rw':
-                TestConfig(name='mpu',
-                           finish_regexes=[board_config.mpu_regex]),
-            'mutex':
-                TestConfig(name='mutex'),
-            'pingpong':
-                TestConfig(name='pingpong'),
-            'printf':
-                TestConfig(name='printf'),
-            'queue':
-                TestConfig(name='queue'),
-            'rollback_region0':
-                TestConfig(name='rollback', finish_regexes=[
-                    board_config.rollback_region0_regex],
-                           test_args=['region0']),
-            'rollback_region1':
-                TestConfig(name='rollback', finish_regexes=[
-                    board_config.rollback_region1_regex],
-                           test_args=['region1']),
-            'rollback_entropy':
-                TestConfig(name='rollback_entropy', image_to_use=ImageType.RO),
-            'rtc':
-                TestConfig(name='rtc'),
-            'sha256':
-                TestConfig(name='sha256'),
-            'sha256_unrolled':
-                TestConfig(name='sha256_unrolled'),
-            'static_if':
-                TestConfig(name='static_if'),
-            'system_is_locked_wp_on':
-                TestConfig(name='system_is_locked', test_args=['wp_on'],
-                           toggle_power=True, enable_hw_write_protect=True),
-            'system_is_locked_wp_off':
-                TestConfig(name='system_is_locked', test_args=['wp_off'],
-                           toggle_power=True, enable_hw_write_protect=False),
-            'timer_dos':
-                TestConfig(name='timer_dos'),
-            'utils':
-                TestConfig(name='utils', timeout_secs=20),
-            'utils_str':
-                TestConfig(name='utils_str'),
-        }
+    def get_public_tests(board_config: BoardConfig) -> List[TestConfig]:
+        tests = [
+            TestConfig(test_name='aes'),
+            TestConfig(test_name='cec'),
+            TestConfig(test_name='cortexm_fpu'),
+            TestConfig(test_name='crc'),
+            TestConfig(test_name='flash_physical', image_to_use=ImageType.RO,
+                       toggle_power=True),
+            TestConfig(test_name='flash_write_protect',
+                       image_to_use=ImageType.RO,
+                       toggle_power=True, enable_hw_write_protect=True),
+            TestConfig(test_name='fpsensor_hw'),
+            TestConfig(config_name='fpsensor_spi_ro', test_name='fpsensor',
+                       image_to_use=ImageType.RO, test_args=['spi']),
+            TestConfig(config_name='fpsensor_spi_rw', test_name='fpsensor',
+                       test_args=['spi']),
+            TestConfig(config_name='fpsensor_uart_ro', test_name='fpsensor',
+                       image_to_use=ImageType.RO, test_args=['uart']),
+            TestConfig(config_name='fpsensor_uart_rw', test_name='fpsensor',
+                       test_args=['uart']),
+            TestConfig(config_name='mpu_ro', test_name='mpu',
+                       image_to_use=ImageType.RO,
+                       finish_regexes=[board_config.mpu_regex]),
+            TestConfig(config_name='mpu_rw', test_name='mpu',
+                       finish_regexes=[board_config.mpu_regex]),
+            TestConfig(test_name='mutex'),
+            TestConfig(test_name='pingpong'),
+            TestConfig(test_name='printf'),
+            TestConfig(test_name='queue'),
+            TestConfig(config_name='rollback_region0', test_name='rollback',
+                       finish_regexes=[board_config.rollback_region0_regex],
+                       test_args=['region0']),
+            TestConfig(config_name='rollback_region1', test_name='rollback',
+                       finish_regexes=[board_config.rollback_region1_regex],
+                       test_args=['region1']),
+            TestConfig(test_name='rollback_entropy', image_to_use=ImageType.RO),
+            TestConfig(test_name='rtc'),
+            TestConfig(test_name='sha256'),
+            TestConfig(test_name='sha256_unrolled'),
+            TestConfig(test_name='static_if'),
+            TestConfig(config_name='system_is_locked_wp_on',
+                       test_name='system_is_locked', test_args=['wp_on'],
+                       toggle_power=True, enable_hw_write_protect=True),
+            TestConfig(config_name='system_is_locked_wp_off',
+                       test_name='system_is_locked', test_args=['wp_off'],
+                       toggle_power=True, enable_hw_write_protect=False),
+            TestConfig(test_name='timer_dos'),
+            TestConfig(test_name='utils', timeout_secs=20),
+            TestConfig(test_name='utils_str'),
+        ]
 
         if board_config.name == BLOONCHIPPER:
-            tests['stm32f_rtc'] = TestConfig(name='stm32f_rtc')
+            tests.append(TestConfig(test_name='stm32f_rtc'))
 
         # Run panic data tests for all boards and RO versions.
         for variant_name, variant_info in board_config.variants.items():
-            tests['panic_data_' + variant_name] = (
-                TestConfig(name='panic_data',
+            tests.append(
+                TestConfig(config_name='panic_data_' + variant_name,
+                           test_name='panic_data',
                            fail_regexes=[SINGLE_CHECK_FAILED_REGEX,
                                          ALL_TESTS_FAILED_REGEX],
                            ro_image=variant_info.get('ro_image_path'),
@@ -246,24 +216,24 @@ class AllTests:
         return tests
 
     @staticmethod
-    def get_private_tests() -> Dict[str, TestConfig]:
+    def get_private_tests() -> List[TestConfig]:
         # Return all private tests, if the folder exists
-        tests = {}
+        tests = []
         try:
             current_dir = os.path.dirname(__file__)
             private_dir = os.path.join(current_dir, os.pardir, 'private/test')
             have_private = os.path.isdir(private_dir)
             if not have_private:
-                return {}
+                return []
             sys.path.append(private_dir)
             import private_tests  # pylint: disable=import-error
-            for test_id, test_args in private_tests.tests.items():
-                tests[test_id] = TestConfig(**test_args)
+            for test_args in private_tests.tests:
+                tests.append(TestConfig(**test_args))
         # Catch all exceptions to avoid disruptions in public repo
         except BaseException as e:
             logging.debug('Failed to get list of private tests: %s', str(e))
             logging.debug('Ignore error and continue.')
-            return {}
+            return []
         return tests
 
 
@@ -572,14 +542,14 @@ def run_test(test: TestConfig, console: str, executor: ThreadPoolExecutor) ->\
 def get_test_list(config: BoardConfig, test_args) -> List[TestConfig]:
     """Get a list of tests to run."""
     if test_args == 'all':
-        return list(AllTests.get(config).values())
+        return AllTests.get(config)
 
     test_list = []
     for t in test_args:
         logging.debug('test: %s', t)
         test_regex = re.compile(t)
-        tests = [v for k, v in AllTests.get(config).items()
-                 if test_regex.fullmatch(k)]
+        tests = [test for test in AllTests.get(config)
+                 if test_regex.fullmatch(test.config_name)]
         if not tests:
             logging.error('Unable to find test config for "%s"', t)
             sys.exit(1)
@@ -643,7 +613,9 @@ def main():
     e = ThreadPoolExecutor(max_workers=1)
 
     test_list = get_test_list(board_config, args.tests)
-    logging.debug('Running tests: %s', [t.name for t in test_list])
+    logging.debug(
+        'Running tests: %s', [
+            test.config_name for test in test_list])
 
     for test in test_list:
         build_board = args.board
@@ -653,10 +625,10 @@ def main():
             build_board = test.build_board
 
         # build test binary
-        build(test.name, build_board, args.compiler)
+        build(test.test_name, build_board, args.compiler)
 
-        image_path = os.path.join(EC_DIR, 'build', build_board, test.name,
-                                  test.name + '.bin')
+        image_path = os.path.join(EC_DIR, 'build', build_board, test.test_name,
+                                  test.test_name + '.bin')
 
         if test.ro_image is not None:
             try:
@@ -692,7 +664,7 @@ def main():
         hw_write_protect(test.enable_hw_write_protect)
 
         # run the test
-        logging.info('Running test: "%s"', test.name)
+        logging.info('Running test: "%s"', test.config_name)
         console = get_console(board_config)
         test.passed = run_test(test, console, executor=e)
 
@@ -700,7 +672,7 @@ def main():
     exit_code = 0
     for test in test_list:
         # print results
-        print('Test "' + test.name + '": ', end='')
+        print('Test "' + test.config_name + '": ', end='')
         if test.passed:
             print(colorama.Fore.GREEN + 'PASSED')
         else:
