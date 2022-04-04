@@ -433,6 +433,10 @@
 	 */
 	motionsense-mutex {
 		compatible = "cros-ec,motionsense-mutex";
+		mutex_bma255: bma255-mutex {
+			label = "BMA255_MUTEX";
+		};
+
 		mutex_bmi260: bmi260-mutex {
 			label = "BMI260_MUTEX";
 		};
@@ -451,6 +455,11 @@
 	 * different motion sensors while they are using the same driver.
 	 */
 	motionsense-sensor-data {
+		bma255_data: bma255-drv-data {
+			compatible = "cros-ec,drvdata-bma255";
+			status = "okay";
+		};
+
 		bmi260_data: bmi260-drv-data {
 			compatible = "cros-ec,drvdata-bmi260";
 			status = "okay";
@@ -537,6 +546,35 @@
 	 * motion sensor IDs for lid angle calculation.
 	 */
 	motionsense-sensor {
+		ms_bma255: ms-bma255 {
+			compatible = "cros-ec,bma255";
+			status = "okay";
+
+			label = "BMA255";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&mutex_bma255>;
+			port = <&i2c_accel>;
+			default-range = <2>;
+			drv-data = <&bma255_data>;
+			i2c-spi-addr-flags = "BMA2x2_I2C_ADDR1_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					/* Run ALS sensor in S0 */
+					label = "SENSOR_CONFIG_EC_S0";
+					odr = <1000>;
+				};
+				ec-s3 {
+					label = "SENSOR_CONFIG_EC_S3";
+					odr = <10000>;
+				};
+				ec-s5 {
+					label = "SENSOR_CONFIG_EC_S5";
+					odr = <10000>;
+				};
+			};
+		};
 		ms_bmi260_accel: ms-bmi260-accel {
 			compatible = "cros-ec,bmi260-accel";
 			status = "okay";
@@ -568,6 +606,7 @@
 			status = "okay";
 
 			label = "BMI160 emul accel";
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi160>;
 			port = <&i2c_sensor>;
@@ -632,6 +671,11 @@
 			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
 			drv-data = <&tcs_rgb_data>;
 		};
+	};
+
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+		accel-force-mode-sensors = <&ms_bma255>;
 	};
 
 	/*
