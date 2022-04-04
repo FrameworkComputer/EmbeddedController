@@ -49,6 +49,7 @@ rsource "Kconfig.espi"
 rsource "Kconfig.flash"
 rsource "Kconfig.header"
 rsource "Kconfig.host_interface"
+rsource "Kconfig.i2c"
 rsource "Kconfig.init_priority"
 rsource "Kconfig.ioex"
 rsource "Kconfig.keyboard"
@@ -421,81 +422,6 @@ config HCDEBUG_PARAMS
 
 endchoice # PLATFORM_EC_HOSTCMD_DEBUG_MODE
 
-config PLATFORM_EC_I2C
-	bool "I2C shim"
-	default n if ARCH_POSIX
-	default y
-	imply I2C
-	help
-	  Enable compilation of the EC i2c module. Once enabled, it will be
-	  possible to make calls using the old platform/ec i2c APIs defined
-	  in include/i2c.h and implemented in common/i2c_controller.c. Doing so
-	  should make shimming other platform/ec modules which rely on i2c
-	  communication "just work" without requiring any further code changes.
-
-config PLATFORM_EC_I2C_DEBUG
-	bool "I2C Tracing"
-	default n if ARCH_POSIX
-	depends on PLATFORM_EC_I2C
-	help
-	  This option enables I2C bus communication tracing. Use the console
-	  command "i2ctrace" to enable and disable tracing on specific I2C
-	  peripherals.
-
-	  Please see the I2C debugging documentation for more details:
-
-	  https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/docs/i2c-debugging.md
-
-config PLATFORM_EC_I2C_DEBUG_PASSTHRU
-	bool "I2C Passthru Debug"
-	default n if ARCH_POSIX
-	depends on PLATFORM_EC_I2C
-	help
-	  This option enables extra debug for I2C passthru operations initiated
-	  by the AP.
-
-config PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP
-	bool "Console command: i2c_portmap"
-	default y
-	depends on PLATFORM_EC_I2C
-	help
-	  Enable the 'i2c_portmap' console command. This comamnd is used to
-	  display the mapping of the I2C ports defined by the named-i2c-ports
-	  node to the physical port and remote port indexes.
-
-config PLATFORM_EC_CONSOLE_CMD_I2C_SPEED
-	bool "Console command: i2cspeed"
-	default n
-	depends on PLATFORM_EC_I2C
-	help
-	  Enable the 'i2cspeed' console command. This comamnd is used to
-	  display an I2C port's bus speed. Additionally, for ports with
-	  the DYNAMIC_SPEED port flag set, the speed can be set. In all
-	  cases, the bus speed is in units of kHz.
-
-config PLATFORM_EC_HOSTCMD_I2C_CONTROL
-	bool "Host command: i2c_control"
-	default n
-	depends on PLATFORM_EC_I2C
-	help
-	  Enable the I2C_CONTROL host command. This comamnd is used to
-	  display an I2C port's bus speed. Additionally, for ports with
-	  the DYNAMIC_SPEED port flag set, the speed can be set. In all
-	  cases, the bus speed is in units of kHz. More functionality of
-	  the command may be added in the future.
-
-config PLATFORM_EC_SMBUS_PEC
-	bool "Packet error checking support for SMBus"
-	help
-	  If enabled, adds error checking support for i2c_readN, i2c_writeN,
-	  i2c_read_string and i2c_write_block. Where
-	  - write operation appends an error checking byte at end of transfer, and
-	  - read operatoin verifies the correctness of error checking byte from the
-	  peripheral.
-	  Set I2C_FLAG on addr_flags parameter to use this feature.
-
-	  This option also enables error checking function on smart batteries.
-
 config PLATFORM_EC_LID_SWITCH
 	bool "Lid switch"
 	help
@@ -836,14 +762,6 @@ config PLATFORM_EC_CCD_USBC_PORT_NUMBER
 	default 0
 	help
 	  USB port number of the CCD enabled USBC port.
-
-config PLATFORM_EC_I2C_PASSTHRU_RESTRICTED
-	bool "Restrict I2C PASSTHRU command"
-	depends on PLATFORM_EC_I2C
-	help
-	  Enables board-specific restrictions for the I2C PASSTHRU host command.
-	  Once enabled, board_allow_i2c_passthru function has to be implemented,
-	  which defines the allowed usage of the command.
 
 config PLATFORM_EC_HOST_COMMAND_STATUS
 	bool "Return in-progress status for slow host commands"

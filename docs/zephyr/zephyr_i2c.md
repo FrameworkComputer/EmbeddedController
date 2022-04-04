@@ -9,21 +9,11 @@ USB-C chips, battery, charging IC, and sensors.
 
 ## Kconfig Options
 
-Kconfig Option                     | Default state | Documentation
-:--------------------------------- | :-----------: | :------------
-`CONFIG_PLATFORM_EC_I2C`           | y             | [EC I2C]
+The Kconfig option `CONFIG_PLATFORM_EC_I2C` enables I2C support in the EC
+application.  Refer to [Kconfig.i2c] for all sub-options related to I2C support.
 
-The following options are available only when `CONFIG_PLATFORM_EC_I2C=y`.
-
-Kconfig sub-option                            | Default | Documentation
-:-------------------------------------------- | :-----: | :------------
-`CONFIG_I2C_SHELL`                            | y       | [CONFIG_I2C_SHELL]
-`CONFIG_PLATFORM_EC_I2C_DEBUG`                | n       | [I2C Debug]
-`CONFIG_PLATFORM_EC_I2C_DEBUG_PASSTHRU`       | n       | [I2C Debug Passthru]
-`CONFIG_PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP`  | n       | [I2C Portmap]
-`CONFIG_PLATFORM_EC_CONSOLE_CMD_I2C_SPEED`    | n       | [I2C Speed]
-`CONFIG_PLATFORM_EC_HOSTCMD_I2C_CONTROL`      | n       | [I2C Control]
-`CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED`  | n       | [I2C Passthru Restricted]
+The upstream Zephyr I2C driver also provides I2C shell commands with the
+[`CONFIG_I2C_SHELL`] option.
 
 ## Devicetree Nodes
 
@@ -357,13 +347,7 @@ below:
 [I2C]: ../ec_terms.md#i2c
 [subcommands]: https://github.com/zephyrproject-rtos/zephyr/blob/f4a0ea7b43eee4d2ee735ab6beccc68c9d40a7d0/drivers/i2c/i2c_shell.c#L245
 [I2C Example]: ../images/i2c_example.png
-[EC I2C]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig;?q="config%20PLATFORM_EC_I2C"&ss=chromiumos
-[CONFIG_I2C_SHELL]: https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_I2C_SHELL
-[I2C Debug]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig;?q=PLATFORM_EC_I2C_DEBUG&sq=&ss=chromiumos
-[I2C Debug Passthru]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig;?q=PLATFORM_EC_I2C_DEBUG_PASSTHRU&ss=chromiumos
-[I2C Portmap]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP&ss=chromiumos%2Fchromiumos%2Fcodesearch
-[I2C Speed]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=PLATFORM_EC_CONSOLE_CMD_I2C_SPEED&ss=chromiumos
-[I2C Control]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=PLATFORM_EC_HOSTCMD_I2C_CONTROL&ss=chromiumos
-[I2C Passthru Restricted]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig?q=PLATFORM_EC_I2C_PASSTHRU_RESTRICTED&ss=chromiumos
+[Kconfig.i2c]: ../../zephyr/Kconfig.i2c
+[`CONFIG_I2C_SHELL`]: https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_I2C_SHELL
 [cros-ec-i2c-port-base.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/i2c/cros-ec-i2c-port-base.yaml
 [volteer.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/boards/arm/volteer/volteer.dts;
