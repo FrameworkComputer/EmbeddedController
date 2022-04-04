@@ -20,6 +20,15 @@
 		zephyr,flash-controller = &flashctrl;
 	};
 
+	pwmleds {
+		compatible = "pwm-leds";
+
+		/* NOTE: &pwm number needs same with channel number */
+		pwm_led_test: pwm_led_test {
+			pwms = <&pwm0 PWM_CHANNEL_0 PWM_POLARITY_NORMAL>;
+		};
+	};
+
 	aliases {
 		gpio-wp = &gpio_wp;
 	};
@@ -139,20 +148,6 @@
 		opt-4 {
 			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_OPT_4";
-		};
-	};
-
-	named-pwms {
-		compatible = "named-pwms";
-
-		/* NOTE: &pwm number needs same with channel number */
-		pwm_test: test {
-			pwms = <&pwm0 PWM_CHANNEL_0 PWM_POLARITY_NORMAL>;
-			/*
-			 * If we need pwm output in ITE chip power saving
-			 * mode, then we should set frequency <=324Hz.
-			 */
-			frequency = <324>;
 		};
 	};
 
