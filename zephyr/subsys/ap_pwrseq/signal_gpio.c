@@ -6,6 +6,7 @@
 #include <power_signals.h>
 #include <signal_gpio.h>
 #include <drivers/gpio.h>
+#include "system.h"
 
 #define MY_COMPAT	intel_ap_pwrseq_gpio
 
@@ -117,10 +118,16 @@ int power_signal_gpio_set(enum pwr_sig_gpio index, int value)
 }
 void power_signal_gpio_init(void)
 {
+	/*
+	 * If there has been a sysjump, do not set the output
+	 * to the deasserted state.
+	 */
+	gpio_flags_t out_flags = system_jumped_late() ?
+				 GPIO_OUTPUT : GPIO_OUTPUT_INACTIVE;
+
 	for (int i = 0; i < ARRAY_SIZE(gpio_config); i++) {
 		if (gpio_config[i].output) {
-			/* Init to deasserted state */
-			gpio_pin_configure_dt(&spec[i], GPIO_OUTPUT_INACTIVE);
+			gpio_pin_configure_dt(&spec[i], out_flags);
 		} else {
 			gpio_pin_configure_dt(&spec[i], GPIO_INPUT);
 			/* If interrupt, initialise it */
