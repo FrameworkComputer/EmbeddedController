@@ -278,30 +278,11 @@ static int init_gpios(const struct device *unused)
 		flags = configs[i].init_flags;
 
 		/*
-		 * For warm boot, retrieve the current value of any
-		 * output pins so that no changes are made.
+		 * For warm boot, do not set the output state.
 		 */
 		if (is_sys_jumped && (flags & GPIO_OUTPUT)) {
-			int current = gpio_pin_get_dt(&configs[i].spec);
-
 			flags &=
 			    ~(GPIO_OUTPUT_INIT_LOW | GPIO_OUTPUT_INIT_HIGH);
-
-			/*
-			 * For an open drain output, its current value
-			 * doesn't imply the previous output state.
-			 *
-			 * The current low state is either
-			 *  1) the EC previously drove the pin low;
-			 *  2) the EC previously high-Z'ed the pin.
-			 *
-			 * These 2 cases can't be differentiated, so
-			 * skip overriding the output state.
-			 */
-			if ((flags & GPIO_OPEN_DRAIN) != GPIO_OPEN_DRAIN) {
-				flags |= current ? GPIO_OUTPUT_INIT_HIGH
-						 : GPIO_OUTPUT_INIT_LOW;
-			}
 		}
 
 		rv = gpio_pin_configure_dt(&configs[i].spec, flags);
