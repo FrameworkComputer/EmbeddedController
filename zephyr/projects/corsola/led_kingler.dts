@@ -34,3 +34,24 @@
 		};
 	};
 };
+
+/* Red LED */
+&pwm0 {
+	status = "okay";
+	drive-open-drain;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* Green LED */
+&pwm1 {
+	status = "okay";
+	drive-open-drain;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+/* Blue LED */
+&pwm2 {
+	status = "okay";
+	drive-open-drain;
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
