@@ -8,6 +8,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 zephyr_include_directories(include)
 zephyr_library_sources("src/common.c")
+zephyr_library_sources("src/led.c")
 zephyr_library_sources("src/sub_board.c")
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 
