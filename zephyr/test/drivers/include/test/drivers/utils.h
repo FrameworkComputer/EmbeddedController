@@ -15,9 +15,6 @@
 #include "extpower.h"
 #include "host_command.h"
 
-/** @brief Set battery level to percentage */
-void test_set_battery_level(int);
-
 /** @brief Set chipset to S0 state. Call all necessary hooks. */
 void test_set_chipset_to_s0(void);
 

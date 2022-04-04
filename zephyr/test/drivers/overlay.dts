@@ -5,7 +5,6 @@
 
 #include <cros/binman.dtsi>
 #include <cros/thermistor/thermistor.dtsi>
-#include <dt-bindings/colors.h>
 #include <dt-bindings/gpio_defines.h>
 #include <freq.h>
 
@@ -160,18 +159,6 @@
 		};
 		gpio_no_init: no_init {
 			gpios = <&gpio0 29 (GPIO_ACTIVE_LOW | GPIO_INPUT)>;
-			no-auto-init;
-		};
-		/*
-		 * Duplicate GPIO reference to allow
-		 * access to LED driven output.
-		 */
-		gpio_led_amber: led_amber {
-			gpios = <&gpio0 30 GPIO_ACTIVE_LOW>;
-			no-auto-init;
-		};
-		gpio_led_blue: led_blue {
-			gpios = <&gpio0 31 0>;
 			no-auto-init;
 		};
 	};
@@ -772,49 +759,6 @@
 		compatible = "cros-ec,flash-emul";
 		label = "FLASH";
 	};
-	/*
-	 * GPIO based LEDs
-	 */
-	gpio_leds: gpio-leds {
-		compatible = "cros-ec,gpio-leds";
-
-		gpios = <&gpio0 30 GPIO_ACTIVE_LOW>, <&gpio0 31 0>;
-		color-list = <AMBER BLUE>;
-	};
-	/*
-	 * TODO: PWM LEDs.
-	 * No PWM emulator exists yet.
-	 */
-
-	 /*
-	  * Policy for GPIO LEDs
-	  */
-	 gpio-led-policy {
-		compatible = "cros-ec,led-policy";
-
-		led = <&gpio_leds>;
-		enum-name = "EC_LED_ID_BATTERY_LED";
-
-		policy-1 {
-			battery = <0 10>;
-			/* Amber on, blue on */
-			action = <1 1 0>;
-		};
-		policy-2 {
-			cpu = "POWER_OFF";
-			/* Amber on, blue off */
-			action = <1 0 0>;
-		};
-		policy-3 {
-			charger = "DISCHARGING";
-			/* Amber off, blue on */
-			action = <0 1 0>;
-		};
-		default-policy {
-			/* All off */
-			action = <0 0 0>;
-		};
-	 };
 };
 
 &espi0 {
@@ -827,7 +771,7 @@
 };
 
 &gpio0 {
-	ngpios = <32>;
+	ngpios = <30>;
 };
 
 &i2c0 {

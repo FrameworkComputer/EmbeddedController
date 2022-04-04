@@ -260,22 +260,22 @@ static void get_led_brightness_max(const struct led_policy *lp, uint8_t *br)
 /*
  * Set the brightness range. Turn on the selected color.
  */
-static int set_led_brightness(const struct led_policy *lp, const uint8_t *br)
+static void set_led_brightness(const struct led_policy *lp, const uint8_t *br)
 {
 	switch (lp->driver) {
 	default:
 		__ASSERT(false, "Unknown driver type %d", lp->driver);
-		return -1;
+		break;
 
 #if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_GPIO)
 	case LED_DRIVER_GPIO:
 		gpio_set_led_brightness(lp->index, br);
-		return 0;
+		break;
 #endif
 #if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM)
 	case LED_DRIVER_PWM:
 		pwm_set_led_brightness(lp->index, br);
-		return 0;
+		break;
 #endif
 	}
 }
@@ -409,6 +409,32 @@ static void update_leds(void)
 	}
 }
 
+/*
+ * Callback for detecting changes to the AP state.
+ * Update the cpu state and update the LEDs.
+ */
+static void cpu_update(struct ap_power_ev_callback *cb,
+		       struct ap_power_ev_data data)
+{
+	switch (data.event) {
+	default:
+		break;
+
+	case AP_POWER_RESUME:
+		cpu_state = LED_AP_RUNNING;
+		break;
+
+	case AP_POWER_SUSPEND:
+		cpu_state = LED_AP_SUSPENDED;
+		break;
+
+	case AP_POWER_SHUTDOWN:
+		cpu_state = LED_AP_POWER_OFF;
+		break;
+	}
+	update_leds();
+}
+
 #if defined(CONFIG_CHARGER) || defined(CONFIG_BATTERY)
 /*
  * Poll the battery and charger every second and update
@@ -445,37 +471,6 @@ static void led_poll_inputs(void)
 
 DECLARE_HOOK(HOOK_SECOND, led_poll_inputs, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_CHARGER || CONFIG_BATTERY */
-
-/*
- * Callback for detecting changes to the AP state.
- * Update the cpu state and update the LEDs.
- */
-static void cpu_update(struct ap_power_ev_callback *cb,
-		       struct ap_power_ev_data data)
-{
-	switch (data.event) {
-	default:
-		break;
-
-	case AP_POWER_RESUME:
-		cpu_state = LED_AP_RUNNING;
-		break;
-
-	case AP_POWER_SUSPEND:
-		cpu_state = LED_AP_SUSPENDED;
-		break;
-
-	case AP_POWER_SHUTDOWN:
-		cpu_state = LED_AP_POWER_OFF;
-		break;
-	}
-	/*
-	 * Poll charger and battery so that they are
-	 * up to date. led_poll_inputs() then calls
-	 * update_leds().
-	 */
-	led_poll_inputs();
-}
 
 /*
  * Initialise the LED policy processing.
@@ -556,7 +551,6 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	if (lp != NULL) {
 		set_led_brightness(lp, brightness);
-		return 0;
 	}
-	return -1;
+	return 0;
 }

@@ -34,7 +34,6 @@ target_sources(app PRIVATE
   src/i2c_passthru.c
   src/isl923x.c
   src/keyboard_scan.c
-  src/leds.c
   src/lid_switch.c
   src/lis2dw12.c
   src/ln9310.c
