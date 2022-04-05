@@ -66,6 +66,7 @@ CONFIG_CTS_TASK_LIST
 #undef TASK
 
 /* usleep that uses OS functions, instead of emulated timer. */
+/* LCOV_EXCL_START */
 void _usleep(int usec)
 {
 	struct timespec req;
@@ -75,6 +76,7 @@ void _usleep(int usec)
 
 	nanosleep(&req, NULL);
 }
+/* LCOV_EXCL_STOP */
 
 /* msleep that uses OS functions, instead of emulated timer. */
 void _msleep(int msec)
@@ -177,8 +179,10 @@ void task_trigger_test_interrupt(void (*isr)(void))
 
 	/* Wait for ISR to complete */
 	sem_wait(&interrupt_sem);
+	/* LCOV_EXCL_START */
 	while (in_interrupt)
 		_usleep(10);
+	/* LCOV_EXCL_STOP */
 	pending_isr = NULL;
 
 	pthread_mutex_unlock(&interrupt_lock);
