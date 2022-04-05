@@ -158,10 +158,6 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	}
 };
 
-const int usb_port_enable[USB_PORT_COUNT] = {
-	GPIO_EN_USB_A_5V,
-};
-
 __override int board_get_default_battery_type(void)
 {
 	/*

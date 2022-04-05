@@ -239,7 +239,7 @@
 			gpios = <&gpio8 3 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C2_BC12_INT_ODL";
 		};
-		en_pp5000_usba_r {
+		gpio_en_pp5000_usba_r: en_pp5000_usba_r {
 			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP5000_USBA_R";
 		};
@@ -300,6 +300,10 @@
 		};
 	};
 
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_pp5000_usba_r>;
+	};
 };
 
 &i2c1_0 {

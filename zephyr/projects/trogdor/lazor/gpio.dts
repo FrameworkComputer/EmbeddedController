@@ -180,7 +180,7 @@
 		gpio_dp_hot_plug_det: dp_hot_plug_det {
 			gpios = <&gpio9 5 GPIO_OUTPUT_LOW>;
 		};
-		en_usb_a_5v {
+		gpio_en_usb_a_5v: en_usb_a_5v {
 			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_USB_A_5V";
 		};
@@ -222,6 +222,11 @@
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
+	};
+
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_usb_a_5v>;
 	};
 
 	def-lvol-io-list {
