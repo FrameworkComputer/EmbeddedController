@@ -1053,7 +1053,11 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_USB_CHARGER
 #endif
 
-#define USB_PORT_COUNT	CONFIG_PLATFORM_EC_USB_A_PORT_COUNT
+#define USB_PORT_COUNT                                                         \
+	COND_CODE_1(DT_NODE_EXISTS(DT_INST(0, cros_ec_usba_port_enable_pins)), \
+		    (DT_PROP_LEN(DT_INST(0, cros_ec_usba_port_enable_pins),    \
+				 enable_pins)),                                \
+		    (0))
 
 #undef CONFIG_USB_PORT_POWER_DUMB
 #ifdef CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB

@@ -15,18 +15,8 @@ menuconfig PLATFORM_EC_USBA
 
 if PLATFORM_EC_USBA
 
-config PLATFORM_EC_USB_A_PORT_COUNT
-	int "Number of USB-A ports"
-	default 0
-	help
-	  This sets the number of USB-A ports on the device. These ports do
-	  not support USB Power Delivery features but can be used to power
-	  external devices (according to the USB 3 spec, not the Battery Charger
-	  standard) and to charge devices slowly if power is enabled to them.
-
 choice
 	prompt "Port power control mode"
-	depends on PLATFORM_EC_USB_A_PORT_COUNT > 0
 
 config PLATFORM_EC_USB_PORT_POWER_DUMB
 	bool "Dumb"
