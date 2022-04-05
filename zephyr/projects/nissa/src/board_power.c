@@ -21,6 +21,8 @@ LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
 #define  X86_NON_DSX_ADLP_NONPWRSEQ_FORCE_SHUTDOWN_TO_MS	5
 
+static bool s0_stable;
+
 static void generate_ec_soc_dsw_pwrok_handler(int delay)
 {
 	int in_sig_val = power_signal_get(PWR_DSW_PWROK);
@@ -35,6 +37,12 @@ static void generate_ec_soc_dsw_pwrok_handler(int delay)
 void board_ap_power_force_shutdown(void)
 {
 	int timeout_ms = X86_NON_DSX_ADLP_NONPWRSEQ_FORCE_SHUTDOWN_TO_MS;
+
+	if (s0_stable) {
+		/* Enable these power signals in case of sudden shutdown */
+		power_signal_enable(PWR_DSW_PWROK);
+		power_signal_enable(PWR_PG_PP1P05);
+	}
 
 	power_signal_set(PWR_EC_PCH_RSMRST, 1);
 	power_signal_set(PWR_EC_SOC_DSW_PWROK, 0);
@@ -64,10 +72,17 @@ void board_ap_power_force_shutdown(void)
 
 	if (power_signal_get(PWR_DSW_PWROK))
 		LOG_WRN("DSW_PWROK didn't go low!  Assuming G3.");
+
+	power_signal_disable(PWR_DSW_PWROK);
+	power_signal_disable(PWR_PG_PP1P05);
+	s0_stable = false;
 }
 
 void board_ap_power_action_g3_s5(void)
 {
+	power_signal_enable(PWR_DSW_PWROK);
+	power_signal_enable(PWR_PG_PP1P05);
+
 	LOG_DBG("Turning on PWR_EN_PP5000_A and PWR_EN_PP3300_A");
 	power_signal_set(PWR_EN_PP5000_A, 1);
 	power_signal_set(PWR_EN_PP3300_A, 1);
@@ -77,8 +92,31 @@ void board_ap_power_action_g3_s5(void)
 
 	generate_ec_soc_dsw_pwrok_handler(
 		AP_PWRSEQ_DT_VALUE(dsw_pwrok_delay));
+	s0_stable = false;
 }
 
+void board_ap_power_action_s3_s0(void)
+{
+	s0_stable = false;
+}
+
+void board_ap_power_action_s0_s3(void)
+{
+	power_signal_enable(PWR_DSW_PWROK);
+	power_signal_enable(PWR_PG_PP1P05);
+	s0_stable = false;
+}
+
+void board_ap_power_action_s0(void)
+{
+	if (s0_stable) {
+		return;
+	}
+	LOG_INF("Reaching S0");
+	power_signal_disable(PWR_DSW_PWROK);
+	power_signal_disable(PWR_PG_PP1P05);
+	s0_stable = true;
+}
 
 int board_ap_power_assert_pch_power_ok(void)
 {

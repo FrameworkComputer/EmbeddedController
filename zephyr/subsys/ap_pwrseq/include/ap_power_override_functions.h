@@ -38,6 +38,25 @@ void board_ap_power_force_shutdown(void);
 void board_ap_power_action_g3_s5(void);
 
 /**
+ * @brief Called to transition from S3 to S0
+ *
+ * Action to start transition from S3 to S0.
+ */
+void board_ap_power_action_s3_s0(void);
+
+/* @brief Called to transition from S0 to S3
+ *
+ * Action to start transition from S0 to S3.
+ */
+void board_ap_power_action_s0_s3(void);
+
+/* @brief Called on S0 state
+ *
+ * Action to handle S0 state.
+ */
+void board_ap_power_action_s0(void);
+
+/**
  * @brief Assert PCH power OK signal to AP
  *
  * @return 0 Success

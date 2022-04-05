@@ -66,6 +66,18 @@ void board_ap_power_action_g3_s5(void)
 {
 }
 
+void board_ap_power_action_s3_s0(void)
+{
+}
+
+void board_ap_power_action_s0_s3(void)
+{
+}
+
+void board_ap_power_action_s0(void)
+{
+}
+
 int extpower_is_present(void)
 {
 	return 0;
