@@ -111,6 +111,11 @@ def main(argv):
         print(f'No test named {opts.test_name} exists!')
         return 1
 
+    # Host tests that use persistence.c leave these files laying around.
+    for persist in pathlib.Path('/dev/shm').glob(
+            f'EC_persist_*_{opts.test_name}.exe_*'):
+        persist.unlink()
+
     start_time = time.monotonic()
     result, output = run_test(exec_path, timeout=opts.timeout)
     elapsed_time = time.monotonic() - start_time
