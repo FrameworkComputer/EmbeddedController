@@ -81,10 +81,10 @@ DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_POST_I2C);
 
 /**
  * b/227296844: On G3->S5, wait for RSMRST_L to be deasserted before asserting
- * PCH_PWRBTN_L.  This typically takes 32-35 ms in testing.  Then wait an
+ * PCH_PWRBTN_L.  This can be as long as ~65ms after cold boot.  Then wait an
  * additional delay of T1a defined in the EDS before changing the power button.
  */
-#define RSMRST_WAIT_DELAY	     40
+#define RSMRST_WAIT_DELAY	     70
 #define EDS_PWR_BTN_RSMRST_T1A_DELAY 16
 void board_pwrbtn_to_pch(int level)
 {
