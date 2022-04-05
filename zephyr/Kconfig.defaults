@@ -15,6 +15,9 @@ config GPIO_EMUL
 config GPIO
 	default y if ARCH_POSIX
 
+config THREAD_MAX_NAME_LEN
+	default 16
+
 config SHELL_PROMPT_UART
 	default "ec:~$ "
 
