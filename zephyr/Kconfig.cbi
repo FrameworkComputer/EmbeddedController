@@ -34,12 +34,10 @@ choice PLATFORM_EC_CBI_STORAGE_TYPE
 
 config PLATFORM_EC_CBI_EEPROM
 	bool "CBI EEPROM support"
-	depends on PLATFORM_EC_I2C
+	depends on EEPROM
 	help
-	  Enables Chromium OS Board Info (CBI) from EEPROM.
-
-	  One must specify both I2C_PORT_EEPROM and I2C_ADDR_EEPROM_FLAGS to the
-	  CBI EEPROM's i2c port and 7-bit i2c address.
+	  Enables full Chromium OS Board Info (CBI) support, with CBI data
+	  stored in an on-board EEPROM.
 
 config PLATFORM_EC_CBI_GPIO
 	bool "CBI GPIO support"

@@ -26,14 +26,14 @@ config CROS_RTC_XEC
 
 config CROS_RTC_NXP_PCF85063A
 	bool "NXP PCF85063A Real-Time Clock (RTC) driver for the Zephyr shim"
-	depends on PLATFORM_EC_I2C
+	depends on I2C
 	help
 	  This option enables a driver for providing the support of NXP
 	  Real-Time Clock (RTC) on the the I2C bus.
 
 config CROS_RTC_RENESAS_IDT1337AG
 	bool "RENESAS IDT1337AG Real-Time Clock (RTC) driver for the Zephyr shim"
-	depends on PLATFORM_EC_I2C
+	depends on I2C
 	help
 	  This option enables a driver for providing the support of RENESAS
 	  Real-Time Clock (RTC) on the the I2C bus.
