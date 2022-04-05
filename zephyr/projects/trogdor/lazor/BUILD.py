@@ -10,6 +10,7 @@ register_npcx_project(
         "battery.dts",
         "display.dts",
         "gpio.dts",
+        "gpio_led.dts",
         "i2c.dts",
         "interrupts.dts",
         "keyboard.dts",
