@@ -14,10 +14,11 @@ config PLATFORM_EC_I2C
 	  should make shimming other platform/ec modules which rely on i2c
 	  communication "just work" without requiring any further code changes.
 
+if PLATFORM_EC_I2C
+
 config PLATFORM_EC_I2C_DEBUG
 	bool "I2C Tracing"
 	default n if ARCH_POSIX
-	depends on PLATFORM_EC_I2C
 	help
 	  This option enables I2C bus communication tracing. Use the console
 	  command "i2ctrace" to enable and disable tracing on specific I2C
@@ -29,7 +30,6 @@ config PLATFORM_EC_I2C_DEBUG
 
 config PLATFORM_EC_I2C_PASSTHRU_RESTRICTED
 	bool "Restrict I2C PASSTHRU command"
-	depends on PLATFORM_EC_I2C
 	help
 	  Enables board-specific restrictions for the I2C PASSTHRU host command.
 	  Once enabled, board_allow_i2c_passthru function has to be implemented,
@@ -38,7 +38,6 @@ config PLATFORM_EC_I2C_PASSTHRU_RESTRICTED
 config PLATFORM_EC_I2C_DEBUG_PASSTHRU
 	bool "I2C Passthru Debug"
 	default n if ARCH_POSIX
-	depends on PLATFORM_EC_I2C
 	help
 	  This option enables extra debug for I2C passthru operations initiated
 	  by the AP.
@@ -46,7 +45,6 @@ config PLATFORM_EC_I2C_DEBUG_PASSTHRU
 config PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP
 	bool "Console command: i2c_portmap"
 	default y
-	depends on PLATFORM_EC_I2C
 	help
 	  Enable the 'i2c_portmap' console command. This comamnd is used to
 	  display the mapping of the I2C ports defined by the named-i2c-ports
@@ -54,8 +52,6 @@ config PLATFORM_EC_CONSOLE_CMD_I2C_PORTMAP
 
 config PLATFORM_EC_CONSOLE_CMD_I2C_SPEED
 	bool "Console command: i2cspeed"
-	default n
-	depends on PLATFORM_EC_I2C
 	help
 	  Enable the 'i2cspeed' console command. This comamnd is used to
 	  display an I2C port's bus speed. Additionally, for ports with
@@ -64,8 +60,6 @@ config PLATFORM_EC_CONSOLE_CMD_I2C_SPEED
 
 config PLATFORM_EC_HOSTCMD_I2C_CONTROL
 	bool "Host command: i2c_control"
-	default n
-	depends on PLATFORM_EC_I2C
 	help
 	  Enable the I2C_CONTROL host command. This comamnd is used to
 	  display an I2C port's bus speed. Additionally, for ports with
@@ -84,3 +78,5 @@ config PLATFORM_EC_SMBUS_PEC
 	  Set I2C_FLAG on addr_flags parameter to use this feature.
 
 	  This option also enables error checking function on smart batteries.
+
+endif # PLATFORM_EC_I2C
