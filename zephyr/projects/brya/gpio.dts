@@ -304,6 +304,12 @@
 		compatible = "cros-ec,usba-port-enable-pins";
 		enable-pins = <&gpio_en_pp5000_usba_r>;
 	};
+
+	vsby-psl-in-list {
+		/* Use PSL_IN1/2/3 as detection pins from hibernate mode */
+		psl-in-pads = <&psl_in1 &psl_in2 &psl_in3>;
+		status = "okay";
+	};
 };
 
 &i2c1_0 {
@@ -353,4 +359,20 @@
 		nct38xx-dev = <&nct3808_0_P1 &nct3808_0_P2>;
 		label = "NCT3808_ALERT_1";
 	};
+};
+
+/* Power switch logic input pads */
+/* LID_OPEN_OD */
+&psl_in1 {
+	flag = <NPCX_PSL_RISING_EDGE>;
+};
+
+/* ACOK_EC_OD */
+&psl_in2 {
+	flag = <NPCX_PSL_RISING_EDGE>;
+};
+
+/* GSC_EC_PWR_BTN_ODL */
+&psl_in3 {
+	flag = <NPCX_PSL_FALLING_EDGE>;
 };

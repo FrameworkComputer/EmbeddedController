@@ -1,0 +1,67 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	named-temp-sensors {
+		ddr_soc {
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "DDR and SOC";
+			enum-name = "TEMP_SENSOR_1_DDR_SOC";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_ddr_soc>;
+		};
+		ambient {
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "Ambient";
+			enum-name = "TEMP_SENSOR_2_AMBIENT";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			adc = <&adc_ambient>;
+		};
+		charger {
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "Charger";
+			enum-name = "TEMP_SENSOR_3_CHARGER";
+			temp_fan_off = <35>;
+			temp_fan_max = <65>;
+			temp_host_high = <105>;
+			temp_host_halt = <120>;
+			temp_host_release_high = <90>;
+			adc = <&adc_charger>;
+		};
+		wwan {
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
+			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
+			label = "WWAN";
+			enum-name = "TEMP_SENSOR_4_WWAN";
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <130>;
+			temp_host_halt = <130>;
+			temp_host_release_high = <100>;
+			adc = <&adc_wwan>;
+		};
+	};
+};
+
+&thermistor_3V3_30K9_47K_4050B {
+	status = "okay";
+};
