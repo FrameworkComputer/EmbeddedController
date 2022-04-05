@@ -101,7 +101,8 @@
 
 	named-temp-sensors {
 		soc-pct2075 {
-			compatible = "cros-ec,temp-sensor-pct2075";
+			compatible = "cros-ec,temp-sensor-pct2075",
+				     "cros-ec,temp-sensor";
 			label = "SOC";
 			enum-name = "TEMP_SENSOR_SOC";
 			pct2075-name = "PCT2075_SOC";
@@ -114,7 +115,8 @@
 			temp_fan_max = <70>;
 		};
 		amb-pct2075 {
-			compatible = "cros-ec,temp-sensor-pct2075";
+			compatible = "cros-ec,temp-sensor-pct2075",
+			             "cros-ec,temp-sensor";
 			label = "Ambient";
 			enum-name = "TEMP_SENSOR_AMB";
 			pct2075-name = "PCT2075_AMB";

@@ -113,7 +113,8 @@
 
 	named-temp-sensors {
 		soc-tmp112 {
-			compatible = "cros-ec,temp-sensor-tmp112";
+			compatible = "cros-ec,temp-sensor-tmp112",
+				     "cros-ec,temp-sensor";
 			label = "SOC";
 			enum-name = "TEMP_SENSOR_SOC";
 			tmp112-name = "TMP112_SOC";
@@ -126,7 +127,8 @@
 			temp_fan_max = <70>;
 		};
 		amb-tmp112 {
-			compatible = "cros-ec,temp-sensor-tmp112";
+			compatible = "cros-ec,temp-sensor-tmp112",
+				     "cros-ec,temp-sensor";
 			label = "Ambient";
 			enum-name = "TEMP_SENSOR_AMB";
 			tmp112-name = "TMP112_AMB";
@@ -134,7 +136,8 @@
 			i2c-addr-flags = "TMP112_I2C_ADDR_FLAGS1";
 		};
 		sb-tsi-sensor {
-			compatible = "cros-ec,temp-sensor-sb-tsi";
+			compatible = "cros-ec,temp-sensor-sb-tsi",
+				     "cros-ec,temp-sensor";
 			label = "CPU";
 			enum-name = "TEMP_SENSOR_CPU";
 			port = <&i2c_soc_thermal>;

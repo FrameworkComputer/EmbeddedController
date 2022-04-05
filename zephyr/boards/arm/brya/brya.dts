@@ -119,7 +119,8 @@
 
 	named-temp-sensors {
 		ddr_soc {
-			compatible = "cros-ec,temp-sensor-thermistor";
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
 			label = "DDR and SOC";
 			enum-name = "TEMP_SENSOR_1_DDR_SOC";
@@ -131,7 +132,8 @@
 			adc = <&adc_ddr_soc>;
 		};
 		ambient {
-			compatible = "cros-ec,temp-sensor-thermistor";
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
 			label = "Ambient";
 			enum-name = "TEMP_SENSOR_2_AMBIENT";
@@ -143,7 +145,8 @@
 			adc = <&adc_ambient>;
 		};
 		charger {
-			compatible = "cros-ec,temp-sensor-thermistor";
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
 			label = "Charger";
 			enum-name = "TEMP_SENSOR_3_CHARGER";
@@ -155,7 +158,8 @@
 			adc = <&adc_charger>;
 		};
 		wwan {
-			compatible = "cros-ec,temp-sensor-thermistor";
+			compatible = "cros-ec,temp-sensor-thermistor",
+				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
 			label = "WWAN";
 			enum-name = "TEMP_SENSOR_4_WWAN";
