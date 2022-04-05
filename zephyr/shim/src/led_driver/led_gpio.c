@@ -14,7 +14,7 @@
 
 LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 
-#define GPIO_LED_PINS_NODE	DT_PATH(led, gpio_led_pins)
+#define GPIO_LED_PINS_NODE	DT_PATH(gpio_led_pins)
 #define LED_PIN_COUNT		(LED_COLOR_COUNT - 1)
 
 /*

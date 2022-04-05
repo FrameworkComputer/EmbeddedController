@@ -29,7 +29,7 @@ LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 #define BAT_LED_ON 1
 #define BAT_LED_OFF 0
 
-#define LED_COLOR_NODE  DT_PATH(led, led_colors)
+#define LED_COLOR_NODE  DT_PATH(led_colors)
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_BATTERY_LED,
