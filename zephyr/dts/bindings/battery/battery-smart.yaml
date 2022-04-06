@@ -23,6 +23,7 @@ properties:
          - "murata,ap18c4k"
          - "panasonic,ap16l5j"
          - "panasonic,ap16l5j-009"
+         - "panasonic,ap19a5k"
          - "powertech,batgqa05l22"
          - "smp,l20m3pg0"
          - "smp,l20m3pg1"
