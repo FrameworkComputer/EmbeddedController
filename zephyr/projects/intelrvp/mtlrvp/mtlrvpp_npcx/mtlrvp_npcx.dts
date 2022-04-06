@@ -15,11 +15,11 @@
 			i2c-port = <&i2c7_0>;
 			enum-name = "I2C_PORT_CHARGER";
 		};
-		typec_aic1 {
+		typec_aic1: typec-aic1{
 			i2c-port = <&i2c0_0>;
 			enum-name = "I2C_PORT_TYPEC_AIC_1";
 		};
-		typec_aic2 {
+		typec_aic2: typec-aic2{
 			i2c-port = <&i2c2_0>;
 			enum-name = "I2C_PORT_TYPEC_AIC_2";
 		};

@@ -258,6 +258,28 @@
 		tp-gpiof4 {
 			gpios = <&gpiof 4 GPIO_INPUT>;
 		};
+		/* USB C IOEX configuration */
+		usb-c0-hbr-ls-en {
+			gpios = <&ioex_c0 2 GPIO_OUTPUT_LOW>;
+		};
+		usb-c0-hbr-rst {
+			gpios = <&ioex_c0 3 GPIO_OUTPUT_LOW>;
+		};
+		usb-c1-hbr-ls-en {
+			gpios = <&ioex_c1 2 GPIO_OUTPUT_LOW>;
+		};
+		usb-c1-hbr-rst {
+			gpios = <&ioex_c1 3 GPIO_OUTPUT_LOW>;
+		};
+		usb-c0-mux-oe-n {
+			gpios = <&ioex_c0 4 GPIO_OUTPUT_LOW>;
+		};
+		usb-c0-mux-sbu-sel-0 {
+			gpios = <&ioex_c0 6 GPIO_OUTPUT_HIGH>;
+		};
+		usb-c0-mux-sbu-sel-1 {
+			gpios = <&ioex_c1 4 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	def-lvol-io-list {
@@ -273,4 +295,44 @@
 			&lvol_ioc2 /* SMB_PCH_CLK */
 		>;
 	};
+};
+
+&i2c0_0 {
+	nct38xx_C0:nct38xx_C0@70 {
+	#address-cells = <1>;
+	#size-cells = <0>;
+	compatible = "nuvoton,nct38xx-gpio";
+	reg = <0x70>;
+	label = "NCT38XX_C0";
+
+	ioex_c0:gpio@0 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x0>;
+			label = "NCT38XX_C0_GPIO0";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+			pinmux_mask = <0xf7>;
+		};
+	};
+
+	nct38xx_C1:nct38xx_C1@70 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "nuvoton,nct38xx-gpio";
+		reg = <0x70>;
+		label = "NCT38XX_C1";
+
+		ioex_c1:gpio@0 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x0>;
+			label = "NCT38XX_C1_GPIO0";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+			pinmux_mask = <0xf7>;
+		};
+        };
 };
