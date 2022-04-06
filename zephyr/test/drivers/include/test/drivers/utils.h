@@ -192,6 +192,20 @@ static inline struct ec_response_typec_status host_cmd_typec_status(int port)
 	return response;
 }
 
+static inline struct ec_response_usb_pd_control
+host_cmd_usb_pd_control(int port, enum usb_pd_control_swap swap)
+{
+	struct ec_params_usb_pd_control params = { .port = port, .swap = swap };
+	struct ec_response_usb_pd_control response;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_USB_PD_CONTROL, 0, response, params);
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to process usb_pd_control_swap for port %d, swap %d",
+		   port, swap);
+	return response;
+}
+
 /**
  * Run the host command to get the charge state.
  *
