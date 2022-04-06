@@ -48,20 +48,20 @@ struct task_ctx_cfg {
 	intptr_t parameter;
 };
 
+struct task_ctx_base_data {
+	/** A wait-able event that is raised when a new task event is posted */
+	struct k_poll_signal new_event;
+	/** The current platform/ec events set for this task/thread */
+	atomic_t event_mask;
+};
+
 struct task_ctx_data {
 	/** Zephyr thread structure that hosts EC tasks */
 	struct k_thread zephyr_thread;
 	/** Zephyr thread id for above thread */
 	k_tid_t zephyr_tid;
-	/** A wait-able event that is raised when a new task event is posted */
-	struct k_poll_signal new_event;
-	/** The current platform/ec events set for this task/thread */
-	atomic_t event_mask;
-	/**
-	 * The timer associated with this task, which can be set using
-	 * timer_arm().
-	 */
-	struct k_timer timer;
+	/** Base context data */
+	struct task_ctx_base_data base;
 };
 
 #define CROS_EC_TASK(_name, _entry, _parameter, _size)                 \
@@ -74,7 +74,6 @@ struct task_ctx_data {
 	},
 #define TASK_TEST(_name, _entry, _parameter, _size) \
 	CROS_EC_TASK(_name, _entry, _parameter, _size)
-/* Note: no static entry is required for sysworkq, as it isn't started here */
 const static struct task_ctx_cfg shimmed_tasks_cfg[TASK_ID_COUNT] = {
 	CROS_EC_TASK_LIST
 #ifdef TEST_BUILD
@@ -82,8 +81,13 @@ const static struct task_ctx_cfg shimmed_tasks_cfg[TASK_ID_COUNT] = {
 #endif
 };
 
-/* In tasks data, allocate one extra spot for the sysworkq */
-static struct task_ctx_data shimmed_tasks_data[TASK_ID_COUNT + 1];
+static struct task_ctx_data shimmed_tasks_data[TASK_ID_COUNT];
+static struct task_ctx_base_data sysworkq_task_data;
+/* Task timer structures, one extra for TASK_ID_SYSWORKQ. Keep separate from
+ * the context ones to avoid memory holes due to int64_t fields in struct
+ * _timeout.
+ */
+static struct k_timer shimmed_tasks_timers[TASK_ID_COUNT + 1];
 
 #define TASK_ID_SYSWORKQ TASK_ID_COUNT
 
@@ -91,10 +95,22 @@ static int tasks_started;
 #undef CROS_EC_TASK
 #undef TASK_TEST
 
+static struct task_ctx_base_data *task_get_base_data(task_id_t cros_task_id)
+{
+	if (cros_task_id == TASK_ID_SYSWORKQ) {
+		return &sysworkq_task_data;
+	}
+
+	return &shimmed_tasks_data[cros_task_id].base;
+}
+
 task_id_t task_get_current(void)
 {
-	/* Include sysworkq entry in search for the task ID */
-	for (size_t i = 0; i < TASK_ID_COUNT + 1; ++i) {
+	if (in_deferred_context()) {
+		return TASK_ID_SYSWORKQ;
+	}
+
+	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
 		if (shimmed_tasks_data[i].zephyr_tid == k_current_get())
 			return i;
 	}
@@ -110,14 +126,18 @@ __test_only k_tid_t task_get_zephyr_tid(size_t cros_tid)
 
 atomic_t *task_get_event_bitmap(task_id_t cros_task_id)
 {
-	struct task_ctx_data *const data = &shimmed_tasks_data[cros_task_id];
+	struct task_ctx_base_data *data;
+
+	data = task_get_base_data(cros_task_id);
 
 	return &data->event_mask;
 }
 
 uint32_t task_set_event(task_id_t cros_task_id, uint32_t event)
 {
-	struct task_ctx_data *const data = &shimmed_tasks_data[cros_task_id];
+	struct task_ctx_base_data *data;
+
+	data = task_get_base_data(cros_task_id);
 
 	atomic_or(&data->event_mask, event);
 	k_poll_signal_raise(&data->new_event, 0);
@@ -127,8 +147,10 @@ uint32_t task_set_event(task_id_t cros_task_id, uint32_t event)
 
 uint32_t task_wait_event(int timeout_us)
 {
-	struct task_ctx_data *const data =
-		&shimmed_tasks_data[task_get_current()];
+	struct task_ctx_base_data *data;
+
+	data = task_get_base_data(task_get_current());
+
 	const k_timeout_t timeout = (timeout_us == -1) ? K_FOREVER :
 							 K_USEC(timeout_us);
 	const int64_t tick_deadline =
@@ -170,8 +192,10 @@ uint32_t task_wait_event(int timeout_us)
 
 uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 {
-	struct task_ctx_data *const data =
-		&shimmed_tasks_data[task_get_current()];
+	struct task_ctx_base_data *data;
+
+	data = task_get_base_data(task_get_current());
+
 	uint32_t events = 0;
 	const int64_t tick_deadline =
 		k_uptime_ticks() + k_us_to_ticks_near64(timeout_us);
@@ -228,17 +252,17 @@ static void task_entry(void *task_context_cfg,
  */
 static void timer_expire(struct k_timer *timer_id)
 {
-	struct task_ctx_data *const data =
-		CONTAINER_OF(timer_id, struct task_ctx_data, timer);
-	task_id_t cros_ec_task_id = data - shimmed_tasks_data;
+	task_id_t cros_ec_task_id = timer_id - shimmed_tasks_timers;
 
 	task_set_event(cros_ec_task_id, TASK_EVENT_TIMER);
 }
 
 int timer_arm(timestamp_t event, task_id_t cros_ec_task_id)
 {
+	struct k_timer *timer;
 	timestamp_t now = get_time();
-	struct task_ctx_data *const data = &shimmed_tasks_data[cros_ec_task_id];
+
+	timer = &shimmed_tasks_timers[cros_ec_task_id];
 
 	if (event.val <= now.val) {
 		/* Timer requested for now or in the past, fire right away */
@@ -247,18 +271,20 @@ int timer_arm(timestamp_t event, task_id_t cros_ec_task_id)
 	}
 
 	/* Check for a running timer */
-	if (k_timer_remaining_get(&data->timer))
+	if (k_timer_remaining_get(timer))
 		return EC_ERROR_BUSY;
 
-	k_timer_start(&data->timer, K_USEC(event.val - now.val), K_NO_WAIT);
+	k_timer_start(timer, K_USEC(event.val - now.val), K_NO_WAIT);
 	return EC_SUCCESS;
 }
 
 void timer_cancel(task_id_t cros_ec_task_id)
 {
-	struct task_ctx_data *const data = &shimmed_tasks_data[cros_ec_task_id];
+	struct k_timer *timer;
 
-	k_timer_stop(&data->timer);
+	timer = &shimmed_tasks_timers[cros_ec_task_id];
+
+	k_timer_stop(timer);
 }
 
 #ifdef TEST_BUILD
@@ -288,12 +314,13 @@ void start_ec_tasks(void)
 {
 	int priority;
 
-	/* Initialize all EC tasks, which does not include the sysworkq entry */
+	for (size_t i = 0; i < TASK_ID_COUNT + 1; ++i) {
+		k_timer_init(&shimmed_tasks_timers[i], timer_expire, NULL);
+	}
+
 	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
 		struct task_ctx_data *const data = &shimmed_tasks_data[i];
 		const struct task_ctx_cfg *const cfg = &shimmed_tasks_cfg[i];
-
-		k_timer_init(&data->timer, timer_expire, NULL);
 
 		priority = K_PRIO_PREEMPT(TASK_ID_COUNT - i - 1);
 
@@ -342,9 +369,6 @@ void start_ec_tasks(void)
 #endif
 	}
 
-	/* Create an entry for sysworkq we can send events to */
-	shimmed_tasks_data[TASK_ID_COUNT].zephyr_tid = &k_sys_work_q.thread;
-
 	tasks_started = 1;
 }
 
@@ -357,12 +381,13 @@ int init_signals(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
-	/* Initialize event structures for all entries, including sysworkq */
-	for (size_t i = 0; i < TASK_ID_COUNT + 1; ++i) {
+	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
 		struct task_ctx_data *const data = &shimmed_tasks_data[i];
 
-		k_poll_signal_init(&data->new_event);
+		k_poll_signal_init(&data->base.new_event);
 	}
+
+	k_poll_signal_init(&sysworkq_task_data.new_event);
 
 	return 0;
 }
