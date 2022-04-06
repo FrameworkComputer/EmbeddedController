@@ -575,6 +575,7 @@ void motion_sense_fifo_get_info(
 		fifo_lost = 0;
 }
 
+/* LCOV_EXCL_START - function cannot be tested due to limitations with mkbp */
 static int motion_sense_get_next_event(uint8_t *out)
 {
 	union ec_response_get_next_data *data =
@@ -583,7 +584,7 @@ static int motion_sense_get_next_event(uint8_t *out)
 	motion_sense_fifo_get_info(&data->sensor_fifo.info, 0);
 	return sizeof(data->sensor_fifo);
 }
-
+/* LCOV_EXCL_STOP */
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_SENSOR_FIFO, motion_sense_get_next_event);
 
 inline int motion_sense_fifo_over_thres(void)

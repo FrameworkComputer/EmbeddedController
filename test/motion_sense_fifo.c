@@ -5,6 +5,7 @@
  * Test motion_sense_fifo.
  */
 
+#include "ec_commands.h"
 #include "stdio.h"
 #include "motion_sense_fifo.h"
 #include "test_util.h"
@@ -152,6 +153,7 @@ static int test_stage_data_removed_oversample(void)
 
 static int test_stage_data_remove_all_oversampling(void)
 {
+	struct ec_response_motion_sense_fifo_info fifo_info;
 	int read_count;
 
 	motion_sensors->oversampling_ratio = 0;
@@ -165,6 +167,15 @@ static int test_stage_data_remove_all_oversampling(void)
 	data->data[1] = 5;
 	data->data[2] = 6;
 	motion_sense_fifo_stage_data(data, motion_sensors, 3, 110);
+
+	/*
+	 * Check that count is 0 and total_lost is 0, oversampling should be
+	 * removing the data before it touches the FIFO.
+	 */
+	motion_sense_fifo_get_info(&fifo_info, /*reset=*/false);
+	TEST_EQ(fifo_info.count, 0, "%d");
+	TEST_EQ(fifo_info.total_lost, 0, "%d");
+
 	motion_sense_fifo_commit_data();
 
 	read_count = motion_sense_fifo_read(
@@ -180,6 +191,7 @@ static int test_stage_data_remove_all_oversampling(void)
 
 static int test_stage_data_evicts_data_with_timestamp(void)
 {
+	struct ec_response_motion_sense_fifo_info fifo_info;
 	int i, read_count;
 
 	/* Fill the fifo */
@@ -189,6 +201,15 @@ static int test_stage_data_evicts_data_with_timestamp(void)
 
 	/* Add a single entry (should evict 2) */
 	motion_sense_fifo_add_timestamp(CONFIG_ACCEL_FIFO_SIZE * 100);
+
+	/*
+	 * Check that count is 1 smaller than the total size and total_lost is 2
+	 * because 2 entries were evicted together.
+	 */
+	motion_sense_fifo_get_info(&fifo_info, /*reset=*/false);
+	TEST_EQ(fifo_info.count, CONFIG_ACCEL_FIFO_SIZE - 1, "%d");
+	TEST_EQ(fifo_info.total_lost, 2, "%d");
+
 	read_count = motion_sense_fifo_read(
 		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
 	TEST_EQ(read_count, CONFIG_ACCEL_FIFO_SIZE - 1, "%d");
@@ -351,14 +372,27 @@ static int test_commit_non_data_or_timestamp_entries(void)
 	return EC_SUCCESS;
 }
 
+static int test_get_info_size(void)
+{
+	struct ec_response_motion_sense_fifo_info fifo_info;
+
+	motion_sense_fifo_get_info(&fifo_info, /*reset=*/false);
+	TEST_EQ(fifo_info.size, CONFIG_ACCEL_FIFO_SIZE, "%d");
+
+	return EC_SUCCESS;
+}
+
 void before_test(void)
 {
+	static struct ec_response_motion_sense_fifo_info fifo_info;
+
 	motion_sense_fifo_commit_data();
 	motion_sense_fifo_read(sizeof(data), CONFIG_ACCEL_FIFO_SIZE, &data,
 			       &data_bytes_read);
 	motion_sense_fifo_reset_needed_flags();
 	memset(data, 0, sizeof(data));
 	motion_sense_fifo_reset();
+	motion_sense_fifo_get_info(&fifo_info, /*reset=*/true);
 }
 
 void run_test(int argc, char **argv)
@@ -380,6 +414,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_spread_data_by_collection_rate);
 	RUN_TEST(test_spread_double_commit_same_timestamp);
 	RUN_TEST(test_commit_non_data_or_timestamp_entries);
+	RUN_TEST(test_get_info_size);
 
 	test_print_result();
 }
