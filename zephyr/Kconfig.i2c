@@ -3,10 +3,7 @@
 # found in the LICENSE file.
 
 config PLATFORM_EC_I2C
-	bool "I2C shim"
-	default n if ARCH_POSIX
-	default y
-	imply I2C
+	def_bool I2C
 	help
 	  Enable compilation of the EC i2c module. Once enabled, it will be
 	  possible to make calls using the old platform/ec i2c APIs defined
@@ -18,7 +15,6 @@ if PLATFORM_EC_I2C
 
 config PLATFORM_EC_I2C_DEBUG
 	bool "I2C Tracing"
-	default n if ARCH_POSIX
 	help
 	  This option enables I2C bus communication tracing. Use the console
 	  command "i2ctrace" to enable and disable tracing on specific I2C
@@ -37,7 +33,6 @@ config PLATFORM_EC_I2C_PASSTHRU_RESTRICTED
 
 config PLATFORM_EC_I2C_DEBUG_PASSTHRU
 	bool "I2C Passthru Debug"
-	default n if ARCH_POSIX
 	help
 	  This option enables extra debug for I2C passthru operations initiated
 	  by the AP.

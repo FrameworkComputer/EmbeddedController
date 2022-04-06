@@ -9,7 +9,7 @@ USB-C chips, battery, charging IC, and sensors.
 
 ## Kconfig Options
 
-The Kconfig option `CONFIG_PLATFORM_EC_I2C` enables I2C support in the EC
+The Kconfig option [`CONFIG_I2C`] enables I2C support in the EC
 application.  Refer to [Kconfig.i2c] for all sub-options related to I2C support.
 
 The upstream Zephyr I2C driver also provides I2C shell commands with the
@@ -348,6 +348,7 @@ below:
 [subcommands]: https://github.com/zephyrproject-rtos/zephyr/blob/f4a0ea7b43eee4d2ee735ab6beccc68c9d40a7d0/drivers/i2c/i2c_shell.c#L245
 [I2C Example]: ../images/i2c_example.png
 [Kconfig.i2c]: ../../zephyr/Kconfig.i2c
+[`CONFIG_I2C`]: https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_I2C
 [`CONFIG_I2C_SHELL`]: https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_I2C_SHELL
 [cros-ec-i2c-port-base.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/i2c/cros-ec-i2c-port-base.yaml
 [volteer.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/boards/arm/volteer/volteer.dts;
