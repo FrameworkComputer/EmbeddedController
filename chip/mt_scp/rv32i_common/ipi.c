@@ -118,6 +118,17 @@ error:
 	return ret;
 }
 
+#ifndef HAVE_PRIVATE_MT_SCP
+__overridable uint32_t video_get_dec_capability(void)
+{
+	return 0;
+}
+__overridable uint32_t video_get_enc_capability(void)
+{
+	return 0;
+}
+#endif
+
 static void ipi_enable_deferred(void)
 {
 	struct scp_run_t scp_run;
