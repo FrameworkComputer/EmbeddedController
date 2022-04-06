@@ -75,6 +75,9 @@
 /* I2C control host command */
 #define CONFIG_HOSTCMD_I2C_CONTROL
 
+/* Disable console commands to help save space */
+#undef CONFIG_CMD_POWERINDEBUG
+
 #define CONFIG_USBC_PPC_SYV682X
 #define CONFIG_USBC_PPC_NX20P3483
 
