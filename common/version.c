@@ -40,7 +40,7 @@ const char build_info[] __keep __attribute__((section(".rodata.buildinfo"))) =
 	VERSION " " DATE " " BUILDER;
 #endif
 
-/* LCOV_EXCL_LINE - this function doesn't work in GitLab */
+/* LCOV_EXCL_START - this function doesn't work in GitLab */
 static int get_num_commits(const struct image_data *data)
 {
 	int numperiods = 0;
@@ -73,7 +73,7 @@ static int get_num_commits(const struct image_data *data)
 }
 /* LCOV_EXCL_STOP */
 
-/* LCOV_EXCL_LINE - this function doesn't work in GitLab */
+/* LCOV_EXCL_START - this function doesn't work in GitLab */
 int ver_get_num_commits(enum ec_image copy)
 {
 	const struct image_data *data;
