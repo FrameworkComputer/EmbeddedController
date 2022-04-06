@@ -225,7 +225,11 @@ void z_ztest_run_test_suite(const char *name, struct unit_test *suite)
 		suite++;
 	}
 
+	/* Sometimes the console task doesn't start until the test is done. */
+	sleep(1);
+
 	ccprintf("%s: ", name);
+
 	test_print_result();
 }
 #endif /* CONFIG_ZEPHYR */
