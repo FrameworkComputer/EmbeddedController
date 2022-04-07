@@ -12,6 +12,8 @@
 /* Use this instead of '3' for readability where applicable. */
 #define SIZE_OF_RGB		sizeof(struct rgb_s)
 
+#define RGBKBD_MAX_GCC_LEVEL	0xff
+
 enum rgbkbd_demo {
 	RGBKBD_DEMO_OFF = 0,
 	RGBKBD_DEMO_FLOW = 1,
@@ -37,6 +39,8 @@ struct rgbkbd {
 	const struct rgbkbd_cfg * const cfg;
 	/* Current state of the port */
 	enum rgbkbd_state state;
+	/* Global current control (a.k.a. backlight brightness) */
+	uint8_t gcc;
 	/* Buffer containing color info for each dot. */
 	struct rgb_s *buf;
 };
@@ -173,3 +177,12 @@ __override_proto void board_enable_rgb_keyboard(bool enable);
  */
 extern const uint8_t rgbkbd_map[];
 extern const size_t rgbkbd_map_size;
+
+/**
+ * Set/get global brightness of the RGB keyboard.
+ *
+ * @param  gcc  Brightness level 0 ~ RGBKBD_MAX_GCC_LEVEL.
+ * @return enum ec_error_list;
+ */
+int rgbkbd_set_global_brightness(uint8_t gcc);
+int rgbkbd_get_global_brightness(uint8_t *gcc);
