@@ -61,7 +61,7 @@ static void shi_power_change(struct ap_power_ev_callback *cb,
 		shi_enable();
 		break;
 
-	case AP_POWER_SHUTDOWN_COMPLETE:
+	case AP_POWER_SUSPEND_COMPLETE:
 		shi_disable();
 		break;
 #else
@@ -69,7 +69,7 @@ static void shi_power_change(struct ap_power_ev_callback *cb,
 		shi_enable();
 		break;
 
-	case AP_POWER_SHUTDOWN:
+	case AP_POWER_SUSPEND:
 		shi_disable();
 		break;
 #endif
