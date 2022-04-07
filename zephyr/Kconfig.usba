@@ -15,8 +15,9 @@ menuconfig PLATFORM_EC_USBA
 
 if PLATFORM_EC_USBA
 
-choice
+choice PLATFORM_EC_USBA_PORT_POWER_TYPE
 	prompt "Port power control mode"
+	default PLATFORM_EC_USB_PORT_POWER_DUMB
 
 config PLATFORM_EC_USB_PORT_POWER_DUMB
 	bool "Dumb"
