@@ -7094,6 +7094,8 @@ enum rgbkbd_state {
 	RGBKBD_STATE_RESET = 0,
 	/* RGB keyboard is initialized but not enabled. */
 	RGBKBD_STATE_INITIALIZED,
+	/* RGB keyboard is disabled. */
+	RGBKBD_STATE_DISABLED,
 	/* RGB keyboard is enabled and ready to receive a command. */
 	RGBKBD_STATE_ENABLED,
 

@@ -143,11 +143,6 @@ static int aw20198_init(struct rgbkbd *ctx)
 
 	rv = aw20198_reset(ctx);
 	msleep(3);
-	rv |= aw20198_enable(ctx, true);
-	if (rv) {
-		CPRINTS("Failed to enable or reset (%d)", rv);
-		return rv;
-	}
 
 	/* Read chip ID, assuming page is still 0. */
 	rv = aw20198_read(ctx, AW20198_REG_RSTN, &id);

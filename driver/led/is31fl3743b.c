@@ -164,11 +164,6 @@ static int is31fl3743b_init(struct rgbkbd *ctx)
 
 	rv = is31fl3743b_reset(ctx);
 	msleep(3);
-	rv |= is31fl3743b_enable(ctx, true);
-	if (rv) {
-		CPRINTS("Failed to enable or reset (%d)", rv);
-		return rv;
-	}
 
 	if (IS_ENABLED(CONFIG_RGB_KEYBOARD_DEBUG)) {
 		uint8_t val;
