@@ -183,6 +183,14 @@ static int rt1739_workaround(int port)
 
 	case RT1739_DEVICE_ID_ES2:
 		CPRINTS("RT1739 ES2");
+		/* enter hidden mode */
+		RETURN_ERROR(write_reg(port, 0xF1, 0x62));
+		RETURN_ERROR(write_reg(port, 0xF0, 0x86));
+		/* turn off SWENB output */
+		RETURN_ERROR(write_reg(port, 0xE0, 0x07));
+		/* leave hidden mode */
+		RETURN_ERROR(write_reg(port, 0xF1, 0));
+		RETURN_ERROR(write_reg(port, 0xF0, 0));
 		break;
 
 	default:
