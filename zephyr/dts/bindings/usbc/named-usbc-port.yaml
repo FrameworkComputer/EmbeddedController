@@ -8,6 +8,16 @@ compatible: "named-usbc-port"
 
 include: base.yaml
 
+properties:
+  usb-muxes:
+    type: phandles
+    required: false
+    description: |
+      List of USB-C muxes and retimers for the USB-C port. The USB-C subsystem
+      traverses this list in the order specified. The phandles are references to
+      cros-ec,usbc-mux nodes.
+
+
 # Example:
 #	usbc {
 #		#address-cells = <1>;

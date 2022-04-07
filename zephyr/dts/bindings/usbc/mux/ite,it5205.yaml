@@ -1,0 +1,23 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: ITE IT5205 USB Type-C 3:2 alternate mode MUX
+
+include: cros-ec,usbc-mux.yaml
+
+compatible: "ite,it5205"
+
+properties:
+  port:
+    type: phandle
+    required: true
+    description: phandle to the named i2c port
+
+  i2c-addr-flags:
+    type: string
+    required: true
+    description: I2C address of chip
+    enum:
+      - IT5205_I2C_ADDR1_FLAGS
+      - IT5205_I2C_ADDR2_FLAGS
