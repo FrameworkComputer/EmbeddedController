@@ -52,18 +52,7 @@ static const struct bc12_status bc12_chg_limits[] = {
 	[CHG_RESERVED] = {CHARGE_SUPPLIER_NONE, 0},
 	[CHG_CDP] = {CHARGE_SUPPLIER_BC12_CDP, USB_CHARGER_MAX_CURR_MA},
 	[CHG_SDP] = {CHARGE_SUPPLIER_BC12_SDP, 500},
-#if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
-	/*
-	 * If ramping is supported, then for DCP set the current limit to be the
-	 * max supported for the port by the board or 1.5A (whichever is lower).
-	 * Although, the BC 1.2 specification allows DCP suppliers to ramp to
-	 * much higher currents, the USB Type-C specification limits the
-	 * maximum current allowed for BC 1.2 suppliers to 1.5A.
-	 */
 	[CHG_DCP] = {CHARGE_SUPPLIER_BC12_DCP, USB_CHARGER_MAX_CURR_MA},
-#else
-	[CHG_DCP] = {CHARGE_SUPPLIER_BC12_DCP, 500},
-#endif
 };
 
 static inline int raw_read8(int port, int offset, int *value)
@@ -368,6 +357,7 @@ static int pi3usb9201_ramp_allowed(int supplier)
 	/* Don't allow ramp if charge supplier is OTHER, SDP, or NONE */
 	return !(supplier == CHARGE_SUPPLIER_OTHER ||
 		 supplier == CHARGE_SUPPLIER_BC12_SDP ||
+		 supplier == CHARGE_SUPPLIER_BC12_DCP ||
 		 supplier == CHARGE_SUPPLIER_NONE);
 }
 
