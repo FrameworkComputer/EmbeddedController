@@ -5,6 +5,7 @@
  * PWM LED control.
  */
 
+#include "ec_commands.h"
 #include "led.h"
 #include "util.h"
 
@@ -34,7 +35,13 @@ struct pwm_pin_t {
  * to alter in order to enable the given color.
  */
 struct led_pins_node_t {
+	/* Link between color and pins node */
 	int led_color;
+
+	/* Brightness Range color, only used by ectool funcs for testing */
+	enum ec_led_colors br_color;
+
+	/* Array of PWM pins to set to enable particular color */
 	struct pwm_pin_t pwm_pins[LED_PIN_COUNT];
 };
 
@@ -70,10 +77,11 @@ const uint32_t period_us =
 #define SET_PIN_NODE(node_id)						\
 {									\
 	.led_color = GET_PROP(node_id, led_color),			\
+	.br_color = GET_BR_COLOR(node_id, br_color),			\
 	.pwm_pins = SET_PWM_PIN(node_id)				\
 },
 
-struct led_pins_node_t pins_node[LED_COLOR_COUNT] = {
+struct led_pins_node_t pins_node[] = {
 	DT_FOREACH_CHILD(PWM_LED_PINS_NODE, SET_PIN_NODE)
 };
 
@@ -98,5 +106,35 @@ void led_set_color(enum led_color color)
 			break; /* Found the matching pin node, break here */
 		}
 	}
+}
+
+void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
+{
+	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
+		int br_color = pins_node[i].br_color;
+
+		if (br_color != -1)
+			brightness_range[br_color] = 100;
+	}
+}
+
+int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
+{
+	bool color_set = false;
+
+	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
+		int br_color = pins_node[i].br_color;
+
+		if ((br_color != -1) && (brightness[br_color] != 0)) {
+			color_set = true;
+			led_set_color(pins_node[i].led_color);
+		}
+	}
+
+	/* If no color was set, turn off the LED */
+	if (!color_set)
+		led_set_color(LED_OFF);
+
+	return EC_SUCCESS;
 }
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED) */

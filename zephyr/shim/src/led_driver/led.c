@@ -119,24 +119,6 @@ struct node_prop_t node_array[] = {
 	DT_FOREACH_CHILD(LED_COLOR_NODE, SET_LED_VALUES)
 };
 
-void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
-{
-	brightness_range[EC_LED_COLOR_AMBER] = 1;
-	brightness_range[EC_LED_COLOR_BLUE] = 1;
-}
-
-int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
-{
-	if (brightness[EC_LED_COLOR_BLUE] != 0)
-		led_set_color(LED_BLUE);
-	else if (brightness[EC_LED_COLOR_AMBER] != 0)
-		led_set_color(LED_AMBER);
-	else
-		led_set_color(LED_OFF);
-
-	return EC_SUCCESS;
-}
-
 static enum power_state get_chipset_state(void)
 {
 	enum power_state chipset_state = 0;

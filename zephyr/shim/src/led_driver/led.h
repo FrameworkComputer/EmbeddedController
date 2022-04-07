@@ -14,6 +14,11 @@
 		    (DT_STRING_UPPER_TOKEN(id, prop)),			\
 		    (0))
 
+#define GET_BR_COLOR(id, prop)						\
+	COND_CODE_1(DT_NODE_HAS_PROP(id, prop),				\
+		    (DT_STRING_UPPER_TOKEN(id, prop)),			\
+		    (-1))
+
 /* TODO(b/227798487): Use DT to generate this enum instead of hardcoding */
 enum led_color {
 	LED_OFF = 0,
