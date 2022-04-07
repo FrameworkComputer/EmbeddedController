@@ -293,6 +293,58 @@ static int test_spread_data_in_window(void)
 	return EC_SUCCESS;
 }
 
+static int test_spread_data_on_overflow(void)
+{
+	const uint32_t now = __hw_clock_source_read();
+	const int fill_count = (CONFIG_ACCEL_FIFO_SIZE / 2) - 1;
+	int i, read_count;
+
+	/* Set up the sensors */
+	motion_sensors[0].collection_rate = 20; /* us */
+	motion_sensors[0].oversampling_ratio = 1;
+	motion_sensors[1].oversampling_ratio = 1;
+
+	/* Add 1 sample for sensor [1]. This will be evicted. */
+	data->sensor_num = 1;
+	motion_sense_fifo_stage_data(data, motion_sensors + 1, 3, 0);
+
+	/*
+	 * Fill the rest of the fifo, every 2 entries will have the same
+	 * timestamp simulating have 2 entries on the hardware FIFO per read.
+	 */
+	data->sensor_num = 0;
+	for (i = 0; i < fill_count; i++) {
+		int ts = now - ((fill_count - i) / 2) * 10;
+
+		motion_sense_fifo_stage_data(data, motion_sensors, 3, ts);
+	}
+
+	/* Insert an async event which also causes a commit */
+	motion_sense_fifo_insert_async_event(motion_sensors, ASYNC_EVENT_FLUSH);
+
+	read_count =
+		motion_sense_fifo_read(sizeof(data), 4, data, &data_bytes_read);
+
+	/* Verify that we read 4 entries */
+	TEST_EQ(read_count, 4, "%d");
+
+	/* Verify that entries 0 and 2 are timestamps (1 and 3 are data) */
+	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
+	TEST_BITS_SET(data[2].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
+
+	/*
+	 * Verify that the first read entry is the first one added in the for
+	 * loop above.
+	 */
+	TEST_EQ(data[0].sensor_num, 0, "%u");
+	TEST_EQ(data[0].timestamp, now - ((fill_count - 1) / 2) * 10, "%u");
+
+	/* Verify that the timestamp was spread */
+	TEST_NE(data[0].timestamp, data[2].timestamp, "%u");
+
+	return EC_SUCCESS;
+}
+
 static int test_spread_data_by_collection_rate(void)
 {
 	const uint32_t now = __hw_clock_source_read();
@@ -411,6 +463,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_add_data_no_spreading_when_different_sensors);
 	RUN_TEST(test_add_data_no_spreading_different_timestamps);
 	RUN_TEST(test_spread_data_in_window);
+	RUN_TEST(test_spread_data_on_overflow);
 	RUN_TEST(test_spread_data_by_collection_rate);
 	RUN_TEST(test_spread_double_commit_same_timestamp);
 	RUN_TEST(test_commit_non_data_or_timestamp_entries);
