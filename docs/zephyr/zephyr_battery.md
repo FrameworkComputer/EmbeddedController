@@ -137,6 +137,10 @@ requires the battery module for correct operation.
 
 ## Testing and Debugging
 
+### EC Console Commands
+
+#### battery
+
 The `battery` [EC console command] may be invoked to check battery information
 on a flashed board.
 
@@ -167,6 +171,72 @@ Time-full: 0h:0
   Empty:   0h:0
 full_factor:0.97
 shutdown_soc:4 %
+```
+
+#### pwr_avg
+
+The `pwr_avg` [EC console command] logs the battery charging rate by querying
+the battery fuel gauge driver.
+
+Example output of `uart:~$ pwr_avg`:
+
+Charging
+
+```
+mv = 13073
+ma = 439
+mw = 573
+```
+
+Discharging
+
+```
+mv = 12824
+ma = -146
+mw = -1872
+```
+
+Note: A fully charged board may report `ma = 0` and `mw = 0` average rates.
+
+#### chgstate
+
+The `chgstate` [EC console command] may be invoked to debug and manipulate machine
+charging state.
+
+Example output of `uart:~$ chgstate`:
+
+```
+state = charge
+ac = 1
+batt_is_charging = 1
+chg.*:
+	voltage = 13200mV
+	current = 0mA
+	input_current = 3000mA
+	status = 0xc010
+	option = 0x2830004
+	flags = 0x0
+batt.*:
+	temperature = 26C
+	state_of_charge = 100%
+	voltage = 13037mV
+	current = 0mA
+	desired_voltage = 0mV
+	desired_current = 0mA
+	flags = 0x2
+	remaining_capacity = 4436mAh
+	full_capacity = 4436mAh
+	is_present = YES
+requested_voltage = 0mV
+requested_current = 0mA
+chg_ctl_mode = 0
+manual_voltage = -1
+manual_current = -1
+user_current_limit = -1mA
+battery_seems_to_be_dead = 0
+battery_seems_to_be_disconnected = 0
+battery_was_removed = 0
+debug output = off
 ```
 
 <!-- Reference Links -->
