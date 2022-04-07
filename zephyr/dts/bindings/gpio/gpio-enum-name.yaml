@@ -27,6 +27,7 @@ properties:
       - GPIO_CCD_MODE_ODL
       - GPIO_CPU_PROCHOT
       - GPIO_DA9313_GPIO0
+      - GPIO_DC_JACK_PRESENT
       - GPIO_DEPRECATED_AP_RST_REQ
       - GPIO_EC_INT_L
       - GPIO_EC_KB_BL_EN_L

@@ -57,6 +57,7 @@
 		};
 		std_adp_prsnt: std-adp-prsnt {
 			gpios = <&gpio0 2 GPIO_INPUT>;
+			enum-name= "GPIO_DC_JACK_PRESENT";
 		};
 		bc_acok: bc-acok {
 			gpios = <&gpioc 6 GPIO_INPUT>;
