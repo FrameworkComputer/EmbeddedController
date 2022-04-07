@@ -9,8 +9,7 @@ menuconfig PLATFORM_EC_CHARGER
 	select PLATFORM_EC_EXTPOWER
 	depends on PLATFORM_EC_BATTERY
 	help
-	  Enable the EC charging task.  This enables compilation of the
-          charge_state_v2 code.
+	  Enable the EC charging task.
 
 if PLATFORM_EC_CHARGER
 
@@ -57,7 +56,8 @@ config PLATFORM_EC_CHARGE_MANAGER
 	  barrel jack connector), BC1.2 (Battery Charging 1.2) sources, and
 	  USB-C sources. When multiple charge sources are connected to a
 	  Chromebook simultaneously, the charge manager is responsible for
-	  picking the best source.
+	  picking the best source. This also enables compilation of the
+	  charge_state_v2 code.
 
 	  Note that the charge manager assumes that at least one USB-C power
 	  source is available on the hardware, so cannot be built without
