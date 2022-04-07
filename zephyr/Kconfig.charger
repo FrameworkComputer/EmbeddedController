@@ -638,4 +638,10 @@ config PLATFORM_EC_CONSOLE_CMD_CHARGER_DUMP
 	  Enable the "charger dump" subcommand. If the charger driver provides
 	  a dump_registers() function, this command shows its register dump.
 
+# TODO(b/229236582): Move this to devicetree
+config PLATFORM_EC_DEDICATED_CHARGE_PORT
+	bool "Dedicated charging port"
+	help
+	  Enable if there is a dedicated charging port on the system.
+
 endif # PLATFORM_EC_CHARGER
