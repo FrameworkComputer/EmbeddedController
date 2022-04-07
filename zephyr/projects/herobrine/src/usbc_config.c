@@ -119,26 +119,6 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 	return EC_RES_INVALID_PARAM;
 }
 
-/*
- * Port-0/1 USB mux driver.
- *
- * The USB mux is handled by TCPC chip and the HPD update is through a GPIO
- * to AP. But the TCPC chip is also needed to know the HPD status; otherwise,
- * the mux misbehaves.
- */
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.usb_port = 0,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	},
-	{
-		.usb_port = 1,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	}
-};
-
 /* Initialize board USC-C things */
 static void board_init_usbc(void)
 {

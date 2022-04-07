@@ -36,6 +36,10 @@
 				status = "okay";
 				port = <&i2c_charger>;
 			};
+			usb-muxes = <&usb_mux_0>;
+		};
+		usb_mux_0: usb-mux-0 {
+			compatible = "parade,usbc-mux-ps8xxx";
 		};
 
 		port1@1 {
@@ -61,6 +65,10 @@
 				port = <&i2c_tcpc1>;
 				i2c-addr-flags = "PS8XXX_I2C_ADDR2_FLAGS";
 			};
+			usb-muxes = <&usb_mux_1>;
+		};
+		usb_mux_1: usb-mux-1 {
+			compatible = "parade,usbc-mux-ps8xxx";
 		};
 	};
 };
