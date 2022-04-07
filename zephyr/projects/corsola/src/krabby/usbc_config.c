@@ -165,35 +165,6 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-const struct usb_mux usbc0_virtual_mux = {
-	.usb_port = 0,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-const struct usb_mux usbc1_virtual_mux = {
-	.usb_port = 1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_MUX0,
-		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
-		.driver = &it5205_usb_mux_driver,
-		.next_mux = &usbc0_virtual_mux,
-	},
-	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_USB_MUX1,
-		.i2c_addr_flags = TUSB1064_I2C_ADDR0_FLAGS,
-		.driver = &tusb1064_usb_mux_driver,
-		.hpd_update = &tusb1044_hpd_update,
-		.next_mux = &usbc1_virtual_mux,
-	},
-};
-
 #ifdef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 enum adc_channel board_get_vbus_adc(int port)
 {

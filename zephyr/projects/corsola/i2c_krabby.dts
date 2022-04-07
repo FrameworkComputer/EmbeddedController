@@ -36,11 +36,11 @@
 			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_USB_C1";
 		};
-		usb-mux0 {
+		i2c_usb_mux0: usb-mux0 {
 			i2c-port = <&i2c2>;
 			enum-name = "I2C_PORT_USB_MUX0";
 		};
-		usb-mux1 {
+		i2c_usb_mux1: usb-mux1 {
 			i2c-port = <&i2c4>;
 			enum-name = "I2C_PORT_USB_MUX1";
 		};
