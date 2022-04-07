@@ -238,23 +238,6 @@
 			enum-name = "I2C_PORT_USB_C0_TCPC";
 		};
 	};
-
-	named-pwms {
-		compatible = "named-pwms";
-
-		pwm_pwm_kb_bl: pwm_kb_bl {
-			pwms = <&pwm0 0 0>;
-		};
-		pwm_pwm_led_1_odl: pwm_led_1_odl {
-			pwms = <&pwm1 1 1>;
-		};
-		pwm_pwm_led_2_odl: pwm_led_2_odl {
-			pwms = <&pwm2 2 1>;
-		};
-		pwm_pwm_led_3_odl: pwm_led_3_odl {
-			pwms = <&pwm3 3 1>;
-		};
-	};
 };
 
 &adc0 {
@@ -278,21 +261,5 @@
 };
 
 &i2c5 {
-	status = "okay";
-};
-
-&pwm0 {
-	status = "okay";
-};
-
-&pwm1 {
-	status = "okay";
-};
-
-&pwm2 {
-	status = "okay";
-};
-
-&pwm3 {
 	status = "okay";
 };

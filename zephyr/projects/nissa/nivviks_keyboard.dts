@@ -10,3 +10,7 @@
 		frequency = <10000>;
 	};
 };
+
+&pwm6 {
+	status = "okay";
+};

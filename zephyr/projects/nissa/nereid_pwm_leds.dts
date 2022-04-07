@@ -38,3 +38,18 @@
 		};
 	};
 };
+
+&pwm1 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&pwm2 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&pwm3 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};

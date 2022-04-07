@@ -264,36 +264,3 @@
 	label = "I2C_USB_C0_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 };
-
-/* PWM config */
-&pwm0 {
-	prescaler-cx = <PWM_PRESCALER_C4>;
-};
-
-&pwm1 {
-	prescaler-cx = <PWM_PRESCALER_C4>;
-};
-
-&pwm2 {
-	prescaler-cx = <PWM_PRESCALER_C4>;
-};
-
-&pwm3 {
-	prescaler-cx = <PWM_PRESCALER_C4>;
-};
-
-&pwm_pwm_kb_bl {
-	frequency = <10000>;
-};
-
-&pwm_pwm_led_1_odl {
-	frequency = <324>;
-};
-
-&pwm_pwm_led_2_odl {
-	frequency = <324>;
-};
-
-&pwm_pwm_led_3_odl {
-	frequency = <324>;
-};

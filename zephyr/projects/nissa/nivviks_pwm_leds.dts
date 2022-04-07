@@ -38,3 +38,20 @@
 		};
 	};
 };
+
+/* Enable LEDs to work while CPU suspended */
+
+&pwm0 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+&pwm2 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};

@@ -227,23 +227,6 @@
 			enum-name = "I2C_PORT_BATTERY";
 		};
 	};
-
-	named-pwms {
-		compatible = "named-pwms";
-
-		pwm_pwm_kb_bl: pwm_kb_bl {
-			pwms = <&pwm6 6 0>;
-		};
-		pwm_pwm_led_1_odl: pwm_led_1_odl {
-			pwms = <&pwm2 2 1>;
-		};
-		pwm_pwm_led_2_odl: pwm_led_2_odl {
-			pwms = <&pwm0 0 1>;
-		};
-		pwm_pwm_led_3_odl: pwm_led_3_odl {
-			pwms = <&pwm1 1 1>;
-		};
-	};
 };
 
 &adc0 {
@@ -287,21 +270,5 @@
 };
 
 &i2c_ctrl7 {
-	status = "okay";
-};
-
-&pwm0 {
-	status = "okay";
-};
-
-&pwm1 {
-	status = "okay";
-};
-
-&pwm2 {
-	status = "okay";
-};
-
-&pwm6 {
 	status = "okay";
 };

@@ -10,3 +10,8 @@
 		frequency = <10000>;
 	};
 };
+
+&pwm0 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};

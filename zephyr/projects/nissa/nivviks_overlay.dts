@@ -287,37 +287,6 @@
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 };
 
-/* PWM frequencies */
-
-&pwm_pwm_kb_bl {
-	frequency = <10000>;
-};
-
-&pwm_pwm_led_1_odl {
-	frequency = <324>;
-};
-
-&pwm_pwm_led_2_odl {
-	frequency = <324>;
-};
-
-&pwm_pwm_led_3_odl {
-	frequency = <324>;
-};
-
-/* Enable LEDs to work while CPU suspended */
-&pwm0 {
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-};
-
-&pwm1 {
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-};
-
-&pwm2 {
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-};
-
 &pwm5 {
 	status = "okay";
 	drive-open-drain;
