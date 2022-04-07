@@ -186,3 +186,8 @@ extern const size_t rgbkbd_map_size;
  */
 int rgbkbd_set_global_brightness(uint8_t gcc);
 int rgbkbd_get_global_brightness(uint8_t *gcc);
+
+/*
+ * Driver for keyboard_backlight.
+ */
+extern const struct kblight_drv kblight_rgbkbd;

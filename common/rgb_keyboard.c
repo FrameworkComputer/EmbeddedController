@@ -11,6 +11,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "keyboard_backlight.h"
 #include "registers.h"
 #include "rgb_keyboard.h"
 #include "task.h"
@@ -335,6 +336,40 @@ static int rgbkbd_enable(int enable)
 	return rv;
 }
 
+static int rgbkbd_kblight_set(int percent)
+{
+	uint8_t gcc = DIV_ROUND_NEAREST(percent * RGBKBD_MAX_GCC_LEVEL, 100);
+	return rgbkbd_set_global_brightness(gcc);
+}
+
+static int rgbkbd_kblight_get(void)
+{
+	uint8_t gcc;
+
+	if (rgbkbd_get_global_brightness(&gcc))
+		return 0;
+
+	return DIV_ROUND_NEAREST(gcc * 100, RGBKBD_MAX_GCC_LEVEL);
+}
+
+static int rgbkbd_get_enabled(void)
+{
+	return rgbkbds[0].state >= RGBKBD_STATE_ENABLED;
+}
+
+const struct kblight_drv kblight_rgbkbd = {
+	.init = rgbkbd_init,
+	.set = rgbkbd_kblight_set,
+	.get = rgbkbd_kblight_get,
+	/*
+	 * We need to let RGBKBD manage enable/disable the backlight to keep
+	 * the LEDs under the control of RGBKBD. Registering NULL also avoids
+	 * ASSERT(!in_interrupt_context()) failure in task.c called from
+	 * rgbkbd_enable API.
+	 */
+	.enable = NULL,
+	.get_enabled = rgbkbd_get_enabled,
+};
 
 void rgbkbd_task(void *u)
 {
