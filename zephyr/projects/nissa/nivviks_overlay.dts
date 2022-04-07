@@ -101,6 +101,10 @@
 			gpios = <&gpiof 5 GPIO_INPUT>;
 			no-auto-init;
 		};
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+			no-auto-init;
+		};
 	};
 
 	/*
@@ -198,6 +202,21 @@
 			};
 		};
 	};
+
+	named-fans {
+		compatible = "named-fans";
+
+		fan_0 {
+			label = "FAN_0";
+			pwms = <&pwm5 5 PWM_POLARITY_NORMAL>;
+			pwm-frequency = <1000>;
+			rpm_min = <2200>;
+			rpm_start = <2200>;
+			rpm_max = <4200>;
+			tach = <&tach2>;
+			enable_gpio = <&gpio_fan_enable>;
+		};
+	};
 };
 
 &thermistor_3V3_51K1_47K_4050B {
@@ -281,4 +300,18 @@
 
 &pwm2 {
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+&pwm5 {
+	status = "okay";
+	drive-open-drain;
+};
+
+/* Tachometer for fan speed measurement */
+&tach2 {
+	status = "okay";
+	pinctrl-0 = <&alt3_ta2_sl1>; /* Use TA2 as input pin */
+	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
+	pulses-per-round = <2>; /* number of pulses per round of encoder */
 };

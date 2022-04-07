@@ -312,7 +312,7 @@ void fan_tick_func(void)
 {
 	int ch;
 
-	for (ch = 0; ch < FAN_CH_COUNT; ch++) {
+	for (ch = 0; ch < fan_get_count(); ch++) {
 		switch (fan_data[ch].current_fan_mode) {
 		case FAN_RPM:
 			fan_tick_func_rpm(ch);

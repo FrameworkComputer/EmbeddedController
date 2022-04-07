@@ -14,6 +14,7 @@ zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 
 if(DEFINED CONFIG_BOARD_NIVVIKS)
 	project(nivviks)
+	zephyr_library_sources("src/nivviks/fan.c")
 	zephyr_library_sources("src/nivviks/form_factor.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/nivviks/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/nivviks/charger.c")
