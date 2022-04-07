@@ -138,9 +138,12 @@ __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 		 * therefore this value may be stale. Assume that the PGOOD
 		 * follows the enable signal for this case only.
 		 */
-		if (!gpio_get_level(GPIO_EN_PP3300_A))
+		if (!gpio_get_level(GPIO_EN_PP3300_A)) {
 			CPRINTS("EN_PP3300_A is low, assuming PG is low!");
-		return gpio_get_level(GPIO_EN_PP3300_A);
+			atomic_clear(&pp3300_a_pgood);
+		} else {
+			atomic_or(&pp3300_a_pgood, 1);
+		}
 	}
 	return pp3300_a_pgood;
 }
