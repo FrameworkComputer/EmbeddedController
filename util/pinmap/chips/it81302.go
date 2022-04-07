@@ -228,21 +228,3 @@ func (c *It81302) I2c(p string) string {
 		return ""
 	}
 }
-
-// Pwm returns the configuration of this pin as a PWM.
-func (c *It81302) Pwm(p string) string {
-	s, ok := it81302_pins[p]
-	if ok {
-		// Found the pin, now find the PWM name.
-		for _, ss := range strings.Split(s, "/") {
-			if strings.HasPrefix(ss, "PWM") && len(ss) > 3 {
-				pwm := fmt.Sprintf("pwm%s", ss[3:])
-				c.okay = append(c.okay, pwm)
-				return fmt.Sprintf("%s %s", pwm, ss[3:])
-			}
-		}
-		return ""
-	} else {
-		return ""
-	}
-}

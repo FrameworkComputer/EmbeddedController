@@ -228,21 +228,3 @@ func (c *Npcx993) I2c(p string) string {
 		return ""
 	}
 }
-
-// Pwm returns the PWM config associated with this pin.
-func (c *Npcx993) Pwm(p string) string {
-	s, ok := npcx993_pins[p]
-	if ok {
-		// Found the pin, now find the PWM name.
-		for _, ss := range strings.Split(s, ",") {
-			if strings.HasPrefix(ss, "PWM") && len(ss) > 3 {
-				ch := ss[3:]
-				c.okay = append(c.okay, fmt.Sprintf("pwm%s", ch))
-				return fmt.Sprintf("pwm%s %s", ch, ch)
-			}
-		}
-		return ""
-	} else {
-		return ""
-	}
-}

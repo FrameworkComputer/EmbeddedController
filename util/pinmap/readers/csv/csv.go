@@ -82,20 +82,16 @@ func (r *CSVReader) Read(columnKey, filepath string) (*pm.Pins, error) {
 		p := new(pm.Pin)
 		switch row[ptype] {
 		default:
-			fmt.Printf("%s:%d: Unknown signal type (%s) - ignored", filepath, i+1, row[ptype])
+			fmt.Printf("%s:%d: Unknown signal type (%s) - ignored\n", filepath, i+1, row[ptype])
 			continue
 		case "OTHER":
+		case "PWM":
+		case "PWM_INVERT":
 			// Skipped
 			continue
 		case "ADC":
 			p.PinType = pm.ADC
 			pins.Adc = append(pins.Adc, p)
-		case "PWM":
-			p.PinType = pm.PWM
-			pins.Pwm = append(pins.Pwm, p)
-		case "PWM_INVERT":
-			p.PinType = pm.PWM_INVERT
-			pins.Pwm = append(pins.Pwm, p)
 		case "I2C_DATA":
 			// Only the clock pin is used for the config
 			continue

@@ -7,8 +7,6 @@ package pm
 // Pin types enum constants
 const (
 	ADC = iota
-	PWM
-	PWM_INVERT
 	I2C
 	Input
 	InputL
@@ -34,5 +32,4 @@ type Pins struct {
 	Adc  []*Pin // Analogue to digital converters
 	I2c  []*Pin // I2C busses
 	Gpio []*Pin // GPIO pins
-	Pwm  []*Pin // Pwm pins
 }

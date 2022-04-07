@@ -5,13 +5,13 @@
 This program reads a CSV (comma separated values) file and generates
 Zephyr Device Tree entries for GPIOs and other configuration.
 
-A basic Device Tree configuration is generated for I2C buses, ADC pins, GPIO pins
-and PWM pins, with labels and nodes generated for each of the signals in the
+A basic Device Tree configuration is generated for I2C buses, ADC pins and GPIO
+pins with labels and nodes generated for each of the signals in the
 spreadsheet.
 
-A separate overlay Device Tree file can be used to modify the generated DTS
-to allow specific properties and parameters to be set e.g bus speeds for I2C, conversion parameters
-for ADCs, frequencies for PWM etc.
+A separate overlay Device Tree file can be used to modify the generated DTS to
+allow specific properties and parameters to be set e.g bus speeds for I2C,
+conversion parameters for ADCs etc.
 
 ## Building
 
@@ -70,8 +70,6 @@ generate the GPIO or other configuration flags in the DTS.
 | Type Name | Description |
 | ----------- | ----------- |
 | `ADC` | An analogue to digital converter signal |
-| `PWM` | A pulse width modulator signal |
-| `PWM_INVERT` | A pulse width modulator signal with inverted output |
 | `I2C_CLOCK` | The clock signal for an I2C bus |
 | `I2C_DATA` | The data signal for an I2C bus (ignored) |
 | `INPUT` | A GPIO input signal |

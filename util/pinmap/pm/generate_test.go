@@ -23,7 +23,7 @@ func (c *genChip) Name() string {
 }
 
 func (c *genChip) EnabledNodes() []string {
-	return []string{"adc0", "i2c0", "i2c1", "i2c2", "pwm1"}
+	return []string{"adc0", "i2c0", "i2c1", "i2c2"}
 }
 
 func (c *genChip) Adc(pin string) string {
@@ -47,10 +47,6 @@ func (c *genChip) I2c(pin string) string {
 	panic(fmt.Sprintf("Unknown I2C: %s", pin))
 }
 
-func (c *genChip) Pwm(pin string) string {
-	return "pwm1"
-}
-
 func TestGenerate(t *testing.T) {
 	pins := &pm.Pins{
 		Adc: []*pm.Pin{
@@ -66,10 +62,6 @@ func TestGenerate(t *testing.T) {
 			&pm.Pin{pm.Output, "D4", "EC_OUT_2", "ENUM_OUT_2"},
 			&pm.Pin{pm.InputPU, "G7", "EC_IN_3", "ENUM_IN_3"},
 			&pm.Pin{pm.InputPD, "H8", "EC_IN_4", "ENUM_IN_4"},
-		},
-		Pwm: []*pm.Pin{
-			&pm.Pin{pm.PWM, "E5", "EC_LED_1", "ENUM_LED_1"},
-			&pm.Pin{pm.PWM_INVERT, "F6", "EC_LED_2", "ENUM_LED_2"},
 		},
 	}
 	var out bytes.Buffer
@@ -136,19 +128,6 @@ func TestGenerate(t *testing.T) {
 			enum-name = "ENUM_I2C_2";
 		};
 	};
-
-	named-pwms {
-		compatible = "named-pwms";
-
-		pwm_ec_led_1: ec_led_1 {
-			pwms = <&pwm1 0>;
-			enum-name = "ENUM_LED_1";
-		};
-		pwm_ec_led_2: ec_led_2 {
-			pwms = <&pwm1 1>;
-			enum-name = "ENUM_LED_2";
-		};
-	};
 };
 
 &adc0 {
@@ -164,10 +143,6 @@ func TestGenerate(t *testing.T) {
 };
 
 &i2c2 {
-	status = "okay";
-};
-
-&pwm1 {
 	status = "okay";
 };
 

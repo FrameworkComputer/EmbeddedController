@@ -36,11 +36,6 @@ type Chip interface {
 	 * the I2C clock pin of the 2 wire bus.
 	 */
 	I2c(pin string) string
-	/*
-	 * Pwm will return a DTS reference to the appropriate PWM
-	 * that is connected to this pin.
-	 */
-	Pwm(pin string) string
 }
 
 // chipList contains a list of registered chips.

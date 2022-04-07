@@ -38,15 +38,10 @@ func TestName(t *testing.T) {
 			&pm.Pin{pm.OutputODL, "F6", "EC_GPIO_3", ""},
 			&pm.Pin{pm.InputPU, "K10", "EC_GPIO_4", ""},
 		},
-		Pwm: []*pm.Pin{
-			&pm.Pin{pm.PWM, "C3", "EC_PWM_1", "FAN_1"},
-			&pm.Pin{pm.PWM_INVERT, "J9", "EC_PWM_2", "LED_1"},
-		},
 	}
 	check(t, "ADc", exp.Adc, pins.Adc)
 	check(t, "I2c", exp.I2c, pins.I2c)
 	check(t, "Gpio", exp.Gpio, pins.Gpio)
-	check(t, "Pwm", exp.Pwm, pins.Pwm)
 }
 
 func check(t *testing.T, name string, exp, got []*pm.Pin) {

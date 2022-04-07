@@ -20,7 +20,6 @@ type testChip struct {
 	gc    string
 	gp    int
 	i2c   string
-	pwm   string
 }
 
 func (c *testChip) Name() string {
@@ -41,10 +40,6 @@ func (c *testChip) Gpio(pin string) (string, int) {
 
 func (c *testChip) I2c(pin string) string {
 	return c.i2c
-}
-
-func (c *testChip) Pwm(pin string) string {
-	return c.pwm
 }
 
 func TestName(t *testing.T) {
