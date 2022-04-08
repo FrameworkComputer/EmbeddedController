@@ -64,3 +64,26 @@ ZTEST_USER(host_cmd_motion_sense, test_dump__large_max_sensor_count)
 
 	zassert_equal(result->dump.sensor_count, ALL_MOTION_SENSORS, NULL);
 }
+
+ZTEST_USER(host_cmd_motion_sense, test_read_data__invalid_sensor_num)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_equal(host_cmd_motion_sense_data(UINT8_MAX, &response),
+		      EC_RES_INVALID_PARAM, NULL);
+}
+
+ZTEST_USER(host_cmd_motion_sense, test_read_data)
+{
+	struct ec_response_motion_sense response;
+
+	motion_sensors[0].xyz[0] = 1;
+	motion_sensors[0].xyz[1] = 2;
+	motion_sensors[0].xyz[2] = 3;
+
+	zassert_ok(host_cmd_motion_sense_data(0, &response), NULL);
+	zassert_equal(response.data.flags, 0, NULL);
+	zassert_equal(response.data.data[0], 1, NULL);
+	zassert_equal(response.data.data[1], 2, NULL);
+	zassert_equal(response.data.data[2], 3, NULL);
+}

@@ -227,6 +227,16 @@ void host_cmd_motion_sense_dump(int max_sensor_count,
 				struct ec_response_motion_sense *response);
 
 /**
+ * @brief Call the host command MOTION_SENSE with the data sub-command
+ *
+ * @param sensor_num The sensor index in the motion_sensors array to query
+ * @param response Pointer to the response data structure to fill on success
+ * @return The result code from the host command
+ */
+int host_cmd_motion_sense_data(uint8_t sensor_num,
+			       struct ec_response_motion_sense *response);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number
