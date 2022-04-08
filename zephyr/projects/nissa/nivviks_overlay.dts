@@ -217,6 +217,18 @@
 			enable_gpio = <&gpio_fan_enable>;
 		};
 	};
+
+	/*
+	 * Set I2C pins for type C sub-board to be
+	 * low voltage (I2C5_1).
+	 * We do this for all boards, since the pins are
+	 * 3.3V tolerant, and the only 2 types of sub-boards
+	 * used on nivviks both have type-C ports on them.
+	 */
+	 def-lvol-io-list {
+		compatible = "nuvoton,npcx-lvolctrl-def";
+		lvol-io-pads = <&lvol_iof5 &lvol_iof4>;
+	 };
 };
 
 &thermistor_3V3_51K1_47K_4050B {
