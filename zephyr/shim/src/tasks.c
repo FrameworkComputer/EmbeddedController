@@ -119,11 +119,6 @@ task_id_t task_get_current(void)
 	return 0;
 }
 
-__test_only k_tid_t task_get_zephyr_tid(size_t cros_tid)
-{
-	return shimmed_tasks_data[cros_tid].zephyr_tid;
-}
-
 atomic_t *task_get_event_bitmap(task_id_t cros_task_id)
 {
 	struct task_ctx_base_data *data;
