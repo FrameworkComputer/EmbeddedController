@@ -26,16 +26,7 @@ LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 
 #define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
 
-#define BAT_LED_ON 1
-#define BAT_LED_OFF 0
-
 #define LED_COLOR_NODE  DT_PATH(led_colors)
-
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
-};
-
-const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 struct led_color_node_t {
 	int led_color;
@@ -247,6 +238,13 @@ static void board_led_set_color(void)
 
 	ticks++;
 
+	/*
+	 * Find a node that matches the current state of the system. Depending
+	 * on the policy defined in led.dts, a node could depend on power-state,
+	 * chipset-state, extra flags like battery percentage etc.
+	 * We should always find a node that indicates the LED Behavior for
+	 * current system state.
+	 */
 	node = find_node();
 
 	if (node < 0)

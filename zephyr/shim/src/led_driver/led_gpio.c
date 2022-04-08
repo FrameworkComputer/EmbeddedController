@@ -35,6 +35,12 @@ struct led_pins_node_t {
 	/* Link between color and pins node */
 	int led_color;
 
+	/*
+	 * Link between color and pins node in case of multiple LEDs
+	 * Also required for ectool funcs support
+	 */
+	enum ec_led_id led_id;
+
 	/* Brightness Range color, only used by ectool funcs for testing */
 	enum ec_led_colors br_color;
 
@@ -56,6 +62,7 @@ struct led_pins_node_t {
 #define SET_PIN_NODE(node_id)						\
 {									\
 	.led_color = GET_PROP(node_id, led_color),			\
+	.led_id = GET_PROP(node_id, led_id),				\
 	.br_color = GET_BR_COLOR(node_id, br_color),			\
 	.gpio_pins = SET_GPIO_PIN(node_id)				\
 },
@@ -110,5 +117,19 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 		led_set_color(LED_OFF);
 
 	return EC_SUCCESS;
+}
+
+__override int led_is_supported(enum ec_led_id led_id)
+{
+	static int supported_leds = -1;
+
+	if (supported_leds == -1) {
+		supported_leds = 0;
+
+		for (int i = 0; i < ARRAY_SIZE(pins_node); i++)
+			supported_leds |= (1 << pins_node[i].led_id);
+	}
+
+	return ((1 << (int)led_id) & supported_leds);
 }
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(COMPAT_GPIO_LED) */

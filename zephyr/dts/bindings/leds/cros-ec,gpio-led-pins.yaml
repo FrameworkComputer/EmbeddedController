@@ -29,6 +29,21 @@ child-binding:
                 - LED_YELLOW
                 - LED_WHITE
                 - LED_AMBER
+        led-id:
+            type: string
+            required: true
+            description: Used to link the color nodes with the pin nodes in
+                         case of multiple LEDs. Also required by ectool to
+                         identify led-ids supported. It needs to match the
+                         enum names defined in ec_commands.h
+            enum:
+                - EC_LED_ID_BATTERY_LED
+                - EC_LED_ID_POWER_LED
+                - EC_LED_ID_ADAPTER_LED
+                - EC_LED_ID_LEFT_LED
+                - EC_LED_ID_RIGHT_LED
+                - EC_LED_ID_RECOVERY_HW_REINIT_LED
+                - EC_LED_ID_SYSRQ_DEBUG_LED
         br-color:
             type: string
             required: false
