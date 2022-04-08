@@ -65,6 +65,11 @@
     switching, sensor management, and other functions, offloading these tasks
     from the [AP](#ap).
 
+*   **ectool** {#ectool}
+
+    The [ectool] is the [AP](#ap) console's CLI for sending commands to the
+    [EC](#ec).
+
 *   **EC-3PO** {#ec-3po}
 
     A replacement of the current UART-based console which moves much of the code
@@ -237,12 +242,13 @@
     See the [USB-C documentation](./usb-c.md#vconn) for more details.
 
 [BC 1.2 Specification]: <https://www.usb.org/document-library/battery-charging-v12-spec-and-adopters-agreement>
-[CrOS Board Info]: <https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md>
 [CEC Wikipedia page]: <https://en.wikipedia.org/wiki/Consumer_Electronics_Control>
+[CrOS Board Info]: <https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md>
 [DPTF Readme]: <https://github.com/intel/dptf/blob/HEAD/README.txt>
-[eSPI Specification]: <https://www.intel.com/content/dam/support/us/en/documents/software/chipset-software/327432-004_espi_base_specification_rev1.0.pdf>
+[EC MKBP driver]: <https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/common/keyboard_mkbp.c>
 [FAFT design doc]: <https://chromium.googlesource.com/chromiumos/third_party/autotest/+/HEAD/docs/faft-design-doc.md>
 [I2C Specification]: <https://www.nxp.com/docs/en/user-guide/UM10204.pdf>
-[RS-232]: <https://en.wikipedia.org/wiki/RS-232>
-[EC MKBP driver]: <https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/common/keyboard_mkbp.c>
 [Low Pin Count bus]: https://en.wikipedia.org/wiki/Low_Pin_Count
+[RS-232]: <https://en.wikipedia.org/wiki/RS-232>
+[eSPI Specification]: <https://www.intel.com/content/dam/support/us/en/documents/software/chipset-software/327432-004_espi_base_specification_rev1.0.pdf>
+[ectool]: ../docs/ap-ec-comm.md
