@@ -4,7 +4,6 @@
  */
 
 #include <devicetree.h>
-#include <init.h>
 #include <logging/log.h>
 
 #include "accelgyro.h"
@@ -23,7 +22,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 #define ALT_MAT		SENSOR_ROT_STD_REF_NAME(DT_NODELABEL(base_rot_inverted))
 #define BASE_SENSOR	SENSOR_ID(DT_NODELABEL(base_accel))
 
-static int form_factor_init(const struct device *unused)
+static void form_factor_init(void)
 {
 	int ret;
 	uint32_t val;
@@ -36,13 +35,11 @@ static int form_factor_init(const struct device *unused)
 	if (ret != 0) {
 		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
 			FW_BASE_INVERSION);
-		return 0;
+		return;
 	}
 	if (val == FW_BASE_INVERTED) {
 		LOG_INF("Switching to inverted base");
 		motion_sensors[BASE_SENSOR].rot_standard_ref = &ALT_MAT;
 	}
-	return 0;
 }
-
-SYS_INIT(form_factor_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+DECLARE_HOOK(HOOK_INIT, form_factor_init, HOOK_PRIO_POST_I2C);
