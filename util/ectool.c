@@ -8033,8 +8033,9 @@ int cmd_battery(int argc, char *argv[])
 	printf("  Present voltage         %u mV\n", val);
 
 	val = read_mapped_mem32(EC_MEMMAP_BATT_RATE);
-	/* Current can be negative */
-	printf("  Present current         %d mA\n", val);
+	if (!is_battery_range(val))
+		goto cmd_error;
+	printf("  Present current         %u mA\n", val);
 
 	val = read_mapped_mem32(EC_MEMMAP_BATT_CAP);
 	if (!is_battery_range(val))
