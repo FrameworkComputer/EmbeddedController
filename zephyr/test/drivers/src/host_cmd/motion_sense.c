@@ -87,3 +87,64 @@ ZTEST_USER(host_cmd_motion_sense, test_read_data)
 	zassert_equal(response.data.data[1], 2, NULL);
 	zassert_equal(response.data.data[2], 3, NULL);
 }
+
+ZTEST_USER(host_cmd_motion_sense, test_get_info__invalid_sensor_num)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_equal(host_cmd_motion_sense_info(/*cmd_version=*/1,
+						 /*sensor_num=*/UINT8_MAX,
+						 &response),
+		      EC_RES_INVALID_PARAM, NULL);
+}
+
+ZTEST_USER(host_cmd_motion_sense, test_get_info_v1)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_ok(host_cmd_motion_sense_info(/*cmd_version=*/1,
+					      /*sensor_num=*/0, &response),
+		   NULL);
+	zassert_equal(response.info.type, motion_sensors[0].type, NULL);
+	zassert_equal(response.info.location, motion_sensors[0].location, NULL);
+	zassert_equal(response.info.chip, motion_sensors[0].chip, NULL);
+}
+
+ZTEST_USER(host_cmd_motion_sense, test_get_info_v3)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_ok(host_cmd_motion_sense_info(/*cmd_version=*/3,
+					      /*sensor_num=*/0, &response),
+		   NULL);
+	zassert_equal(response.info.type, motion_sensors[0].type, NULL);
+	zassert_equal(response.info.location, motion_sensors[0].location, NULL);
+	zassert_equal(response.info.chip, motion_sensors[0].chip, NULL);
+	zassert_equal(response.info_3.min_frequency,
+		      motion_sensors[0].min_frequency, NULL);
+	zassert_equal(response.info_3.max_frequency,
+		      motion_sensors[0].max_frequency, NULL);
+	zassert_equal(response.info_3.fifo_max_event_count,
+		      CONFIG_ACCEL_FIFO_SIZE, NULL);
+}
+
+ZTEST_USER(host_cmd_motion_sense, test_get_info_v4__no_read_temp)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_ok(host_cmd_motion_sense_info(/*cmd_version=*/4,
+					      /*sensor_num=*/0, &response),
+		   NULL);
+	zassert_equal(response.info.type, motion_sensors[0].type, NULL);
+	zassert_equal(response.info.location, motion_sensors[0].location, NULL);
+	zassert_equal(response.info.chip, motion_sensors[0].chip, NULL);
+	if (IS_ENABLED(CONFIG_ONLINE_CALIB)) {
+		zassert_true(response.info_4.flags &
+				     MOTION_SENSE_CMD_INFO_FLAG_ONLINE_CALIB,
+			     NULL);
+	} else {
+		zassert_false(response.info_4.flags &
+				      MOTION_SENSE_CMD_INFO_FLAG_ONLINE_CALIB,
+			      NULL);
+	}
+}
