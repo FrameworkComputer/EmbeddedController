@@ -85,21 +85,25 @@ struct ppc_config_t ppc_chips[] = {
 	[USBC_PORT_C0] = {
 		.i2c_port = I2C_PORT_USB_C0_C1_PPC,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.frs_en = IOEX_USB_C0_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 	[USBC_PORT_C1] = {
 		.i2c_port = I2C_PORT_USB_C0_C1_PPC,
 		.i2c_addr_flags = SYV682X_ADDR1_FLAGS,
+		.frs_en = IOEX_USB_C1_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 	[USBC_PORT_C2] = {
 		.i2c_port = I2C_PORT_USB_C2_C3_PPC,
 		.i2c_addr_flags = SYV682X_ADDR2_FLAGS,
+		.frs_en = IOEX_USB_C2_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 	[USBC_PORT_C3] = {
 		.i2c_port = I2C_PORT_USB_C2_C3_PPC,
 		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+		.frs_en = IOEX_USB_C3_FRS_EN,
 		.drv = &syv682x_drv,
 	},
 };
@@ -110,6 +114,7 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 struct ppc_config_t ppc_chips_old_c3 = {
 	.i2c_port = I2C_PORT_USB_C2_C3_PPC,
 	.i2c_addr_flags = SYV682X_ADDR3_FLAGS,
+	.frs_en = IOEX_USB_C3_FRS_EN,
 	.drv = &syv682x_drv,
 };
 
