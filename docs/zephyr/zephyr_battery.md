@@ -50,7 +50,7 @@ Example:
 
 ```
 
-Here `vendor_part` will be the default battery type. If this node label is
+Here `vendor_part` will be the default battery type. If this [*node label*] is
 present in the overlay, the [DEFAULT_BATTERY_TYPE] is set in the battery shim
 code with the labeled battery type. The `vendor` and `part` references must
 match an existing battery defined in [battery bindings directory].
@@ -183,3 +183,4 @@ shutdown_soc:4 %
 [battery-smart enum]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/battery/battery-smart.yaml?q=%22enum:%22&ss=chromiumos
 [cros-ec-i2c-port-base.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/i2c/cros-ec-i2c-port-base.yaml
 [task]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/shim/include/shimmed_task_id.h
+[*node label*]: https://docs.zephyrproject.org/latest/build/dts/intro.html#dt-node-labels

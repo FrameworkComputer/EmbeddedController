@@ -24,7 +24,7 @@ the devicetree node with
 all GPIOs from this node (unless the `no-auto-init` property is present).
 Legacy C source code accesses GPIOs using the specified
 `enum-name` property as an enum name of the GPIO.
-Zephyr based code uses the node label, an alias, or other node reference
+Zephyr based code uses the [*node label*], an alias, or other node reference
 to identify the GPIO.
 
 Named GPIO properties:
@@ -41,7 +41,7 @@ initialization time, and selectively enabled by code at some later time.
 The file [gpio-enum-name.yaml] defines the list of valid `enum-name` values.
 
 In the GPIO declaration use the lowercase net name from the schematic as the
-*node name*, and the same net name prefixed with `gpio_` as *node label*.
+*node name*, and the same net name prefixed with `gpio_` as [*node label*].
 For example:
 
 ```
@@ -87,7 +87,7 @@ GPIOs references that are not in legacy common code should use the
 to access the GPIO.
 
 GPIOs are referenced in the `named-gpios` child nodes using the
-node label (if one exists), an alias to a node label, or
+[*node label*] (if one exists), an alias to a [*node label*], or
 indirectly as a node reference via as a `phandle` in another node.
 
 To facilitate this, all GPIO child nodes in `named-gpios`
@@ -97,7 +97,7 @@ These pointers are accessible via the following macros:
 
 Macro | Argument | Description
 :------- | :---------- | :-------
-`GPIO_DT_FROM_NODELABEL` | nodelabel | Uses a node label to reference the GPIO node.
+`GPIO_DT_FROM_NODELABEL` | nodelabel | Uses a [*node label*] to reference the GPIO node.
 `GPIO_DT_FROM_NODE` | node | Uses a node id (referenced as a `phandle` in another node).
 `GPIO_DT_FROM_ALIAS` | alias | Uses an alias to a label on the GPIO node.
 
@@ -279,7 +279,7 @@ Child nodes of this single node contain the following properties:
 
 Property | Description | Settings
 :------- | :---------- | :-------
-`irq-pin` | A reference via a node label to the named-gpio that is associated with this interrupt. | `<&gpio_label>`
+`irq-pin` | A reference via a [*node label*] to the named-gpio that is associated with this interrupt. | `<&gpio_label>`
 `flags` | The GPIO [interrupt flags](https://docs.zephyrproject.org/latest/reference/peripherals/gpio.html) that define how the interrupt is generated. | `GPIO_INT_<flags>`
 `handler` | The C name of the interrupt handler that handles the interrupt. | C function name.
 
@@ -431,7 +431,7 @@ property `GPIO_ENTERING_RW`.
     val = gpio_get_level(GPIO_ENTERING_RW);
 ```
 
-Use the `node label` to reference the GPIO in other devicetree nodes:
+Use the [*node label*] to reference the GPIO in other devicetree nodes:
 
 ```
 my_node: my-node {
@@ -456,3 +456,4 @@ project.
 [gpio.dts]: ../../zephyr/projects/volteer/volteer/gpio.dts
 [interrupts.dts]: ../../zephyr/projects/volteer/volteer/interrupts.dts
 [BUILD.py]: ../../zephyr/projects/volteer/volteer/BUILD.py
+[*node label*]: https://docs.zephyrproject.org/latest/build/dts/intro.html#dt-node-labels

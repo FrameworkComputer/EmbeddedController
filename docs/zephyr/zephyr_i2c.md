@@ -47,7 +47,7 @@ Example enabling I2C0 and I2C3 at 100 KHz and 1 MHz, respectively.
 Nuvoton ECs use two devicetree nodes to describe the I2C buses used, an I2C
 controller and an I2C port.
 
-Nuvoton I2C node labels use the following pattern:
+Nuvoton I2C [*node labels*] use the following pattern:
 - I2C controller: `&i2c_ctrl<controller>`
 - I2C port: `&i2c<controller>_<port>`
 
@@ -352,3 +352,4 @@ below:
 [`CONFIG_I2C_SHELL`]: https://docs.zephyrproject.org/latest/kconfig.html#CONFIG_I2C_SHELL
 [cros-ec-i2c-port-base.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/i2c/cros-ec-i2c-port-base.yaml
 [volteer.dts]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/boards/arm/volteer/volteer.dts;
+[*node labels*]: https://docs.zephyrproject.org/latest/build/dts/intro.html#dt-node-labels
