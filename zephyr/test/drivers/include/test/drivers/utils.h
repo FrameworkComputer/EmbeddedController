@@ -248,6 +248,21 @@ int host_cmd_motion_sense_info(uint8_t cmd_version, uint8_t sensor_num,
 			       struct ec_response_motion_sense *response);
 
 /**
+ * @brief Call the host command MOTION_SENSE with the ec_rate sub-command
+ *
+ * This function performs a read of the current rate by passing
+ * EC_MOTION_SENSE_NO_VALUE as the data rate. Otherwise, the data rate should be
+ * updated.
+ *
+ * @param sensor_num The sensor index in the motion_sensors array to query
+ * @param data_rate_ms The new data rate or EC_MOTION_SENSE_NO_VALUE to read
+ * @param response Pointer to the response data structure to fill on success
+ * @return The result code from the host command
+ */
+int host_cmd_motion_sense_ec_rate(uint8_t sensor_num, int data_rate_ms,
+				  struct ec_response_motion_sense *response);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number

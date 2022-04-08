@@ -1154,7 +1154,7 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 
 	case MOTIONSENSE_CMD_EC_RATE:
 		sensor = host_sensor_id_to_real_sensor(
-				in->sensor_odr.sensor_num);
+				in->ec_rate.sensor_num);
 		if (sensor == NULL)
 			return EC_RES_INVALID_PARAM;
 
