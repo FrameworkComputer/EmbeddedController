@@ -239,18 +239,35 @@ battery_was_removed = 0
 debug output = off
 ```
 
+### AP Console Commands (ectool)
+
+#### chargestate
+
+The `chargestate` [ectool] command may be invoked to debug and manipulate
+machine charging state.
+
+Usage output of `uart: # ectool chargestate`:
+
+```
+Usage:
+  chargestate show                  - show current state
+  chargestate param NUM [VALUE]     - get/set param NUM
+  chargestate param help            - show known param NUMs
+```
+
 <!-- Reference Links -->
 
+[CONFIG_PLATFORM_EC_BATTERY_PRESENT_CUSTOM]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.battery?q=%22PLATFORM_EC_BATTERY_PRESENT_CUSTOM%22&ss=chromiumos
 [DEFAULT_BATTERY_TYPE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/shim/src/battery.c?q=%22DEFAULT_BATTERY_TYPE%22&ss=chromiumos
 [EC console command]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/README.md#useful-ec-console-commands
 [Example CL adding a new battery]: https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/3312506/
 [Example CL enabling batteries on a board]: https://chromium-review.googlesource.com/c/chromiumos/platform/ec/+/3200068/
 [Kconfig.battery]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.battery
-[CONFIG_PLATFORM_EC_BATTERY_PRESENT_CUSTOM]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.battery?q=%22PLATFORM_EC_BATTERY_PRESENT_CUSTOM%22&ss=chromiumos
 [Zephyr I2C]: zephyr_i2c.md#Mapping-legacy-I2C-port-numbers-to-Zephyr-devicetree-nodes
 [Zephyr gpios]: zephyr_gpio.md#Devicetree-Nodes
 [battery bindings directory]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/battery/
 [battery-smart enum]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/battery/battery-smart.yaml?q=%22enum:%22&ss=chromiumos
 [cros-ec-i2c-port-base.yaml]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/dts/bindings/i2c/cros-ec-i2c-port-base.yaml
+[ectool]: ../ap-ec-comm.md
 [task]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/shim/include/shimmed_task_id.h
 [*node label*]: https://docs.zephyrproject.org/latest/build/dts/intro.html#dt-node-labels
