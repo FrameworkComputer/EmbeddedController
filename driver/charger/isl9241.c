@@ -63,6 +63,9 @@ static const struct charger_info isl9241_charger_info = {
 };
 
 static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable);
+static enum ec_error_list isl9241_discharge_on_ac_unsafe(int chgnum,
+						int enable);
+static enum ec_error_list isl9241_discharge_on_ac_weak_disable(int chgnum);
 
 static inline enum ec_error_list isl9241_read(int chgnum, int offset,
 					      int *value)
@@ -199,14 +202,12 @@ static enum ec_error_list isl9241_set_mode(int chgnum, int mode)
 	int rv;
 
 	/*
-	 * See crosbug.com/p/51196. Always disable learn mode unless it was set
-	 * explicitly.
+	 * See crosbug.com/p/51196.
+	 * Disable learn mode if it wasn't explicitly enabled.
 	 */
-	if (!learn_mode) {
-		rv = isl9241_discharge_on_ac(chgnum, 0);
-		if (rv)
-			return rv;
-	}
+	rv = isl9241_discharge_on_ac_weak_disable(chgnum);
+	if (rv)
+		return rv;
 
 	/*
 	 * Charger inhibit
@@ -308,18 +309,42 @@ static enum ec_error_list isl9241_post_init(int chgnum)
 	return EC_SUCCESS;
 }
 
-static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable)
+/*
+ * Writes to ISL9241_REG_CONTROL1, unsafe as it does not lock
+ * control1_mutex_isl9241.
+ */
+static enum ec_error_list isl9241_discharge_on_ac_unsafe(int chgnum,
+						int enable)
 {
-	int rv;
-
-	mutex_lock(&control1_mutex_isl9241);
-
-	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL1,
+	int rv = isl9241_update(chgnum, ISL9241_REG_CONTROL1,
 			    ISL9241_CONTROL1_LEARN_MODE,
 			    (enable) ? MASK_SET : MASK_CLR);
 	if (!rv)
 		learn_mode = enable;
 
+	return rv;
+}
+
+/* Disables discharge on ac only if it wasn't explicitly enabled. */
+static enum ec_error_list isl9241_discharge_on_ac_weak_disable(int chgnum)
+{
+	int rv = 0;
+
+	mutex_lock(&control1_mutex_isl9241);
+	if (!learn_mode) {
+		rv = isl9241_discharge_on_ac_unsafe(chgnum, 0);
+	}
+
+	mutex_unlock(&control1_mutex_isl9241);
+	return rv;
+}
+
+static enum ec_error_list isl9241_discharge_on_ac(int chgnum, int enable)
+{
+	int rv = 0;
+
+	mutex_lock(&control1_mutex_isl9241);
+	rv = isl9241_discharge_on_ac_unsafe(chgnum, enable);
 	mutex_unlock(&control1_mutex_isl9241);
 	return rv;
 }
