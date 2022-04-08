@@ -24,12 +24,14 @@
 
 		color-off {
 			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&pwm_y 0>,
 				   <&pwm_b 0>;
 		};
 
 		color-amber {
 			led-color = "LED_AMBER";
+			led-id = "EC_LED_ID_BATTERY_LED";
 			br-color = "EC_LED_COLOR_AMBER";
 			led-pins = <&pwm_y 100>,
 				   <&pwm_b 0>;
@@ -37,6 +39,7 @@
 
 		color-blue {
 			led-color = "LED_BLUE";
+			led-id = "EC_LED_ID_BATTERY_LED";
 			br-color = "EC_LED_COLOR_BLUE";
 			led-pins = <&pwm_y 0>,
 				   <&pwm_b 100>;
