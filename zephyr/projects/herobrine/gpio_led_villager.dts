@@ -9,12 +9,14 @@
 
 		color-off {
 			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&gpio_ec_chg_led_y_c0 0>,
 				   <&gpio_ec_chg_led_b_c0 0>;
 		};
 
 		color-amber {
 			led-color = "LED_AMBER";
+			led-id = "EC_LED_ID_BATTERY_LED";
 			br-color = "EC_LED_COLOR_AMBER";
 			led-pins = <&gpio_ec_chg_led_y_c0 1>,
 				   <&gpio_ec_chg_led_b_c0 0>;
@@ -22,6 +24,7 @@
 
 		color-blue {
 			led-color = "LED_BLUE";
+			led-id = "EC_LED_ID_BATTERY_LED";
 			br-color = "EC_LED_COLOR_BLUE";
 			led-pins = <&gpio_ec_chg_led_y_c0 0>,
 				   <&gpio_ec_chg_led_b_c0 1>;
