@@ -226,14 +226,21 @@ int pd_get_saved_port_flags(int port, uint8_t *flags);
 void pd_update_saved_port_flags(int port, uint8_t flag, uint8_t do_set);
 
 /**
- * Build PD alert message
+ * Sets up and sends PD alert message with given ADO on all ports.
  *
- * @param msg pointer where message is stored
- * @param len pointer where length of message is stored in bytes
- * @param pr  current PD power role
+ * @param ado - Alert Data Object defining alert sent to the PD partner
  * @return EC_SUCCESS on success else EC_ERROR_INVAL
  */
-int pd_build_alert_msg(uint32_t *msg, uint32_t *len, enum pd_power_role pr);
+int pd_broadcast_alert_msg(uint32_t ado);
+
+/**
+ * Sets up and sends PD alert message with given ADO on one port.
+ *
+ * @param port - the port to send the alert message on
+ * @param ado - Alert Data Object defining alert sent to the PD partner
+ * @return EC_SUCCESS on success else EC_ERROR_INVAL
+ */
+int pd_send_alert_msg(int port, uint32_t ado);
 
 /**
  * During USB retimer firmware update, process operation
