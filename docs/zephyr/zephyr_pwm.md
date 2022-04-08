@@ -12,7 +12,6 @@ Kconfig Option | Default | Documentation
 :------------- | :------ | :------------
 `CONFIG_PWM` | n | [PWM (Pulse Width Modulation) Drivers]
 `CONFIG_PWM_<platform>` | n | Platform specific PWM driver
-`CONFIG_PLATFORM_EC_PWM` | y if `CONFIG_PWM=y` | [PWM (Pulse Width Modulation) module]
 
 Kconfig sub-option | Default | Documentation
 :----------------- | :------ | :------------
