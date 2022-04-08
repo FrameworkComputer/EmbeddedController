@@ -22,7 +22,7 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C1 */
 		.name = "tcpc0,1",
 		.port = I2C_PORT_USB_C0_C1_TCPC,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C0_C1_TCPC_SCL,
 		.sda = GPIO_EC_I2C_USB_C0_C1_TCPC_SDA,
 	},
@@ -30,7 +30,7 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C2 */
 		.name = "ppc0,1",
 		.port = I2C_PORT_USB_C0_C1_PPC,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C0_C1_PPC_BC_SCL,
 		.sda = GPIO_EC_I2C_USB_C0_C1_PPC_BC_SDA,
 	},
@@ -38,7 +38,7 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C3 */
 		.name = "retimer0,1,2,3",
 		.port = I2C_PORT_USB_C0_C1_MUX,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_RT_SCL,
 		.sda = GPIO_EC_I2C_USB_RT_SDA,
 	},
@@ -46,7 +46,7 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C4 */
 		.name = "tcpc2,3",
 		.port = I2C_PORT_USB_C2_C3_TCPC,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C2_C3_TCPC_SCL,
 		.sda = GPIO_EC_I2C_USB_C2_C3_TCPC_SDA,
 	},
@@ -62,7 +62,7 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C6 */
 		.name = "ppc2,3",
 		.port = I2C_PORT_USB_C2_C3_PPC,
-		.kbps = 400,
+		.kbps = 1000,
 		.scl = GPIO_EC_I2C_USB_C2_C3_PPC_BC_RT_SCL,
 		.sda = GPIO_EC_I2C_USB_C2_C3_PPC_BC_RT_SDA,
 	},
