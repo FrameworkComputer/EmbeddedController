@@ -15,12 +15,14 @@
 
 		color-amber {
 			led-color = "LED_AMBER";
+			br-color = "EC_LED_COLOR_AMBER";
 			led-pins = <&gpio_ec_chg_led_y_c0 1>,
 				   <&gpio_ec_chg_led_b_c0 0>;
 		};
 
 		color-blue {
 			led-color = "LED_BLUE";
+			br-color = "EC_LED_COLOR_BLUE";
 			led-pins = <&gpio_ec_chg_led_y_c0 0>,
 				   <&gpio_ec_chg_led_b_c0 1>;
 		};
