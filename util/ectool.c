@@ -7957,6 +7957,7 @@ int cmd_battery(int argc, char *argv[])
 	int rv, val;
 	char *e;
 	int index = 0;
+	uint8_t flags;
 
 	if (argc > 2) {
 		fprintf(stderr, "Usage: %s [index]\n", argv[0]);
@@ -7982,6 +7983,8 @@ int cmd_battery(int argc, char *argv[])
 		fprintf(stderr, "Battery version %d is not supported\n", val);
 		return -1;
 	}
+
+	flags = read_mapped_mem8(EC_MEMMAP_BATT_FLAG);
 
 	printf("Battery info:\n");
 
@@ -8035,15 +8038,15 @@ int cmd_battery(int argc, char *argv[])
 	val = read_mapped_mem32(EC_MEMMAP_BATT_RATE);
 	if (!is_battery_range(val))
 		goto cmd_error;
-	printf("  Present current         %u mA\n", val);
+	printf("  Present current         %u mA%s\n", val,
+	       flags & EC_BATT_FLAG_DISCHARGING ? " (discharging)" : "");
 
 	val = read_mapped_mem32(EC_MEMMAP_BATT_CAP);
 	if (!is_battery_range(val))
 		goto cmd_error;
 	printf("  Remaining capacity      %u mAh\n", val);
 
-	val = read_mapped_mem8(EC_MEMMAP_BATT_FLAG);
-	print_battery_flags(val);
+	print_battery_flags(flags);
 
 	return 0;
 cmd_error:
