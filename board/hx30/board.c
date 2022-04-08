@@ -956,11 +956,11 @@ static const struct ec_thermal_config thermal_inductor_local = {
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
 	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(62),
+	.temp_fan_max = C_TO_K(69),
 };
 
 static const struct ec_thermal_config thermal_inductor_cpu = {
@@ -971,7 +971,7 @@ static const struct ec_thermal_config thermal_inductor_cpu = {
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
 	.temp_fan_off = C_TO_K(40),
@@ -985,11 +985,11 @@ static const struct ec_thermal_config thermal_inductor_ddr = {
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(67),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(77),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
 	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(62),
+	.temp_fan_max = C_TO_K(69),
 };
 
 static const struct ec_thermal_config thermal_battery = {
@@ -1009,19 +1009,34 @@ static const struct ec_thermal_config thermal_battery = {
 #ifdef CONFIG_PECI
 static const struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_WARN] = C_TO_K(95),
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(103),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(105),
+		[EC_TEMP_THRESH_WARN] = C_TO_K(115),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(120),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(127),
 	},
 	.temp_host_release = {
 		[EC_TEMP_THRESH_WARN] = 0,
 		[EC_TEMP_THRESH_HIGH] = 0,
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(104),
-	.temp_fan_max = C_TO_K(105),
+	.temp_fan_off = C_TO_K(55),
+	.temp_fan_max = C_TO_K(98),
 };
 #endif
+
+static const struct ec_thermal_config thermal_inductor2_vccgt = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(88),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(98),
+};
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
@@ -1034,6 +1049,7 @@ static void setup_fans(void)
 #ifdef CONFIG_PECI
 	thermal_params[TEMP_SENSOR_PECI] = thermal_cpu;
 #endif
+	thermal_params[TEMP_SENSOR2_REMOTE] = thermal_inductor2_vccgt;
 }
 DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
 #endif
