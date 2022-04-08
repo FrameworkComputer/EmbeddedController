@@ -871,11 +871,6 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_FAKE_SHMEM
 #endif
 
-#undef CONFIG_PWM
-#ifdef CONFIG_PLATFORM_EC_PWM
-#define CONFIG_PWM
-#endif
-
 #undef CONFIG_CMD_S5_TIMEOUT
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_S5_TIMEOUT
 #define CONFIG_CMD_S5_TIMEOUT

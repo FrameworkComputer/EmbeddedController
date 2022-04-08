@@ -189,6 +189,7 @@ choice
 
 config PLATFORM_EC_PWM_KBLIGHT
 	bool "PWM keyboard backlight"
+	select PLATFORM_EC_PWM_HC
 	help
 	  Enables a PWM-controlled keyboard backlight controlled by a PWM signal
 	  connected directly to the EC chipset. The board devicetree file must

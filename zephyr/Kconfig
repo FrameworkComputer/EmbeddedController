@@ -543,17 +543,15 @@ config PLATFORM_EC_POWER_BUTTON
 
 	  This requires a GPIO named GPIO_POWER_BUTTON_L in gpio_map.h.
 
-config PLATFORM_EC_PWM
+config PLATFORM_EC_PWM_HC
 	bool
-	default y if PWM
 	help
-	  Enable the PWM (Pulse Width Modulation) module. This module is used to
-	  support variable brightness LEDs, backlight controls, and
-	  variable-speed fans.
+	  Enable the PWM (Pulse Width Modulation) host command support. This
+	  implements EC_CMD_PWM_SET_DUTY and EC_CMD_PWM_GET_DUTY.
 
 config PLATFORM_EC_PWM_DISPLIGHT
 	bool "PWM display backlight"
-	depends on PLATFORM_EC_PWM
+	select PLATFORM_EC_PWM_HC
 	help
 	  Enables display backlight controlled by a PWM signal connected
 	  directly to the EC chipset. The board devicetree file must define a
