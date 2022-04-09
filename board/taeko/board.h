@@ -152,6 +152,7 @@
 
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
+#undef CONFIG_MKBP_INPUT_DEVICES
 
 /* I2C Bus Configuration */
 #define I2C_PORT_SENSOR		NPCX_I2C_PORT0_0
