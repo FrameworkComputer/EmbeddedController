@@ -88,6 +88,7 @@ GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
 GPIO(USB_C1_RT_RST_R_ODL,            PIN(0, 2), GPIO_ODR_HIGH)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 GPIO(KBMCU_INT_ODL,                  PIN(7, 0), GPIO_ODR_HIGH)
+GPIO(EMMC_SKU_DET,                   PIN(D, 4), GPIO_INPUT)
 
 /* KB Outputs */
 #define GPIO_KB_OUTPUT               (GPIO_OUT_HIGH)
@@ -138,7 +139,6 @@ ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH) 
 
 /* Unused Pins */
 UNUSED(PIN(B, 1))       /* KSO17/GPIOB1/CR_SIN4 */
-UNUSED(PIN(D, 4))       /* GPIOD4/CR_SIN3 */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
