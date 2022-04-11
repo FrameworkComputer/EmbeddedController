@@ -690,6 +690,12 @@ __overridable enum pd_dual_role_states pd_get_drp_state_in_suspend(void)
 	return PD_DRP_TOGGLE_OFF;
 }
 
+__overridable enum pd_dual_role_states pd_get_drp_state_in_s0(void)
+{
+	/* Enable dual role when chipset on */
+	return PD_DRP_TOGGLE_ON;
+}
+
 __overridable void pd_try_execute_vconn_swap(int port, int flags)
 {
 	/*

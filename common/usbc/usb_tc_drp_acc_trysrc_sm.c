@@ -1578,7 +1578,7 @@ void tc_state_init(int port)
 	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
 		pd_set_dual_role_and_event(port, pd_get_drp_state_in_suspend(), 0);
 	else /* CHIPSET_STATE_ON */
-		pd_set_dual_role_and_event(port, PD_DRP_TOGGLE_ON, 0);
+		pd_set_dual_role_and_event(port, pd_get_drp_state_in_s0(), 0);
 #else
 	pd_set_dual_role_and_event(port, board_tc_get_initial_drp_mode(port), 0);
 #endif
@@ -3945,7 +3945,7 @@ static void pd_chipset_resume(void)
 			pd_resume_check_pr_swap_needed(i);
 
 		pd_set_dual_role_and_event(i,
-					   PD_DRP_TOGGLE_ON,
+					   pd_get_drp_state_in_s0(),
 					   PD_EVENT_UPDATE_DUAL_ROLE
 					   | PD_EVENT_POWER_STATE_CHANGE);
 	}
