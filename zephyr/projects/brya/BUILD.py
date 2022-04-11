@@ -2,8 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Define zmake projects for brya."""
+
 
 def register_npcx9_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()):
+    """Register a variant of a brya, even though this is not named as such."""
     return register_npcx_project(
         project_name=project_name,
         zephyr_board="npcx9",

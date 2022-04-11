@@ -1,0 +1,21 @@
+[MASTER]
+init-hook='import sys; sys.path.append("/usr/lib64/python3.6/site-packages")'
+
+[MESSAGES CONTROL]
+
+disable=bad-continuation,bad-whitespace,format,fixme
+
+[format]
+
+max-line-length=88
+string-quote=double
+
+[BASIC]
+additional-builtins=
+    here,
+    register_binman_project,
+    register_host_project,
+    register_host_test,
+    register_npcx_project,
+    register_raw_project,
+good-names=BUILD

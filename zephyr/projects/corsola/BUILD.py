@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Define zmake projects for corsola."""
+
 # Default chip is it8xxx2, some variants will use NPCX9X.
 
 
@@ -11,6 +13,7 @@ def register_corsola_project(
     extra_dts_overlays=(),
     extra_kconfig_files=(),
 ):
+    """Register a variant of corsola."""
     register_func = register_binman_project
     if chip.startswith("npcx9"):
         register_func = register_npcx_project

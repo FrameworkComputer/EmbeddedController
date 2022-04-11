@@ -2,4 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Register zmake project for crc test."""
+
 register_host_test("crc")
