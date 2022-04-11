@@ -769,13 +769,13 @@ ZTEST_F(usb_detach_test, verify_detach_sink)
 ZTEST_F(usb_detach_test, verify_detach_source)
 {
 	struct emul_state *fixture = &this->fixture;
-	struct ec_response_usb_pd_power_info pd_power_info = { 0 };
+	struct ec_response_usb_pd_power_info pd_power_info = { SNK_PORT };
 
 	integration_usb_test_source_detach(fixture);
 	k_sleep(K_SECONDS(10));
 	isl923x_emul_set_adc_vbus(fixture->charger_isl923x_emul, 0);
 
-	pd_power_info = host_cmd_power_info(SRC_PORT);
+	pd_power_info = host_cmd_power_info(SNK_PORT);
 
 	/* Assert */
 	zassert_equal(pd_power_info.role, USB_PD_PORT_POWER_DISCONNECTED,
