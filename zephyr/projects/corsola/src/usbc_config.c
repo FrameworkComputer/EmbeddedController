@@ -71,20 +71,36 @@ void usb_a0_interrupt(enum gpio_signal signal)
 		GPIO_DT_FROM_NODELABEL(gpio_ap_xhci_init_done)) ?
 		USB_CHARGE_MODE_ENABLED : USB_CHARGE_MODE_DISABLED;
 
+	const int xhci_stat = gpio_get_level(signal);
+
 	for (int i = 0; i < USB_PORT_COUNT; i++) {
 		usb_charge_set_mode(i, mode, USB_ALLOW_SUSPEND_CHARGE);
 	}
 
-	/*
-	 * Trigger hard reset to cycle Vbus on Type-C ports, recommended by
-	 * USB 3.2 spec 10.3.1.1.
-	 */
-	if (gpio_get_level(signal)) {
-		for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-			if (tc_is_attached_src(i)) {
-				pd_dpm_request(i, DPM_REQUEST_HARD_RESET_SEND);
-			}
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		/*
+		 * Enable DRP toggle after XHCI inited. This is used to follow
+		 * USB 3.2 spec 10.3.1.1.
+		 */
+		if (xhci_stat) {
+			pd_set_dual_role(i, PD_DRP_TOGGLE_ON);
+		} else if (tc_is_attached_src(i)) {
+			/*
+			 * This is a AP reset S0->S0 transition.
+			 * We should set the role back to sink.
+			 */
+			pd_set_dual_role(i, PD_DRP_FORCE_SINK);
 		}
+	}
+}
+
+__override enum pd_dual_role_states pd_get_drp_state_in_s0(void)
+{
+	if (gpio_pin_get_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_ap_xhci_init_done))) {
+		return PD_DRP_TOGGLE_ON;
+	} else {
+		return PD_DRP_FORCE_SINK;
 	}
 }
 
