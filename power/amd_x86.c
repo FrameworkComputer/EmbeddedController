@@ -252,13 +252,6 @@ __override void power_chipset_handle_sleep_hang(
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 
-static void handle_chipset_suspend(void)
-{
-	/* Clear masks before any hooks are run for suspend. */
-	lpc_s0ix_suspend_clear_masks();
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, handle_chipset_suspend, HOOK_PRIO_FIRST);
-
 static void handle_chipset_reset(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_STANDBY)) {
@@ -295,6 +288,11 @@ __override void power_chipset_handle_host_sleep_event(
 
 #ifdef CONFIG_POWER_S0IX
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND) {
+		/*
+		 * Clear event mask for SMI and SCI first to avoid host being
+		 * interrupted while suspending.
+		 */
+		lpc_s0ix_suspend_clear_masks();
 		/*
 		 * Indicate to power state machine that a new host event for
 		 * s0ix/s3 suspend has been received and so chipset suspend
