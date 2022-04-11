@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Tests for zmake util."""
+
 import pathlib
 import tempfile
 
@@ -19,12 +21,13 @@ version_tuples = st.tuples(version_integers, version_integers, version_integers)
 @hypothesis.given(version_tuples)
 @hypothesis.settings(deadline=60000)
 def test_read_zephyr_version(version_tuple):
+    """Test reading the zephyr version."""
     with tempfile.TemporaryDirectory() as zephyr_base:
-        with open(pathlib.Path(zephyr_base) / "VERSION", "w") as f:
+        with open(pathlib.Path(zephyr_base) / "VERSION", "w") as file:
             for name, value in zip(
                 ("VERSION_MAJOR", "VERSION_MINOR", "PATCHLEVEL"), version_tuple
             ):
-                f.write("{} = {}\n".format(name, value))
+                file.write("{} = {}\n".format(name, value))
 
         assert util.read_zephyr_version(zephyr_base) == version_tuple
 
@@ -32,10 +35,11 @@ def test_read_zephyr_version(version_tuple):
 @hypothesis.given(st.integers())
 @hypothesis.settings(deadline=60000)
 def test_read_kconfig_autoconf_value(value):
-    with tempfile.TemporaryDirectory() as dir:
-        path = pathlib.Path(dir)
-        with open(path / "autoconf.h", "w") as f:
-            f.write("#define TEST {}".format(value))
+    """Test reading the kconfig autoconf."""
+    with tempfile.TemporaryDirectory() as temp_dir:
+        path = pathlib.Path(temp_dir)
+        with open(path / "autoconf.h", "w") as file:
+            file.write("#define TEST {}".format(value))
         read_value = util.read_kconfig_autoconf_value(path, "TEST")
         assert int(read_value) == value
 
@@ -52,4 +56,5 @@ def test_read_kconfig_autoconf_value(value):
     ],
 )
 def test_c_str(input_str, expected_result):
+    """Test the util.c_str function."""
     assert util.c_str(input_str) == expected_result

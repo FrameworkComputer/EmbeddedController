@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Tests for zmake version code."""
+
 import datetime
 import subprocess
 import unittest.mock as mock
@@ -11,6 +13,8 @@ import pytest
 import zmake.output_packers
 import zmake.project
 import zmake.version as version
+
+# pylint:disable=redefined-outer-name,unused-argument
 
 
 def _git_init(repo):
@@ -88,6 +92,7 @@ def _setup_example_repos(tmp_path):
 
 
 def test_version_string(tmp_path):
+    """Test a that version string is as expected."""
     project, zephyr_base, modules = _setup_example_repos(tmp_path)
     assert (
         version.get_version_string(project, zephyr_base, modules)
@@ -96,6 +101,7 @@ def test_version_string(tmp_path):
 
 
 def test_version_string_static(tmp_path):
+    """Test a that version string with no git hashes."""
     project, zephyr_base, modules = _setup_example_repos(tmp_path)
     assert (
         version.get_version_string(project, zephyr_base, modules, static=True)
@@ -105,6 +111,7 @@ def test_version_string_static(tmp_path):
 
 @pytest.fixture
 def fake_user_hostname():
+    """Fixture to provide a fake user and hostname."""
     with mock.patch("getpass.getuser", return_value="toukmond", autospec=True):
         with mock.patch("platform.node", return_value="pokey", autospec=True):
             yield
@@ -112,6 +119,7 @@ def fake_user_hostname():
 
 @pytest.fixture
 def fake_date():
+    """Fixture to provide a fake date."""
     fixed_date = datetime.datetime(2021, 6, 28, 3, 18, 53)
     with mock.patch("datetime.datetime") as mock_datetime:
         mock_datetime.now.return_value = fixed_date
@@ -141,6 +149,7 @@ EXPECTED_HEADER_STATIC = (
 
 
 def test_header_gen(fake_user_hostname, fake_date, tmp_path):
+    """Test generating the version header."""
     # Test the simple case (static=False, no existing header).
     output_file = tmp_path / "ec_version.h"
     version.write_version_header(HEADER_VERSION_STR, output_file)
@@ -148,6 +157,7 @@ def test_header_gen(fake_user_hostname, fake_date, tmp_path):
 
 
 def test_header_gen_reproducible_build(tmp_path):
+    """Test that reproducible builds produce the right header."""
     # With static=True this time.
     output_file = tmp_path / "ec_version.h"
     version.write_version_header(HEADER_VERSION_STR_STATIC, output_file, static=True)
@@ -155,6 +165,7 @@ def test_header_gen_reproducible_build(tmp_path):
 
 
 def test_header_gen_exists_not_changed(fake_user_hostname, fake_date, tmp_path):
+    """Test that the version file is not changed."""
     # Test we don't overwrite if no changes needed.
     output_file = tmp_path / "ec_version.h"
 
@@ -170,6 +181,7 @@ def test_header_gen_exists_not_changed(fake_user_hostname, fake_date, tmp_path):
 
 
 def test_header_gen_exists_needs_changes(fake_user_hostname, fake_date, tmp_path):
+    """Test that the version file is changed, when needed."""
     # Test we overwrite when it exists already and changes are needed.
     output_file = tmp_path / "ec_version.h"
 

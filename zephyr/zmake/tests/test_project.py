@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Test zmake project module."""
+
 import pathlib
 import string
 import tempfile
@@ -193,6 +195,7 @@ def test_find_projects_name_conflict(tmp_path):
 
 
 def test_register_variant(tmp_path):
+    """Test registering a variant."""
     (tmp_path / "BUILD.py").write_text(
         """
 some = register_raw_project(
@@ -236,6 +239,7 @@ another = some_variant.variant(
     ],
 )
 def test_kconfig_files(tmp_path, actual_files, config_files, expected_files):
+    """Test for setting kconfig_files property."""
     for name in actual_files:
         (tmp_path / name).write_text("")
 

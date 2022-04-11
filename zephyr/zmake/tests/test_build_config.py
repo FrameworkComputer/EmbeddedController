@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Tests of zmake's build config system."""
+
 import argparse
 import os
 import pathlib
@@ -15,6 +17,8 @@ import pytest
 import zmake.jobserver
 import zmake.util as util
 from zmake.build_config import BuildConfig
+
+# pylint:disable=redefined-outer-name,unused-argument
 
 # Strategies for use with hypothesis
 filenames = st.text(
@@ -71,13 +75,13 @@ def test_merge(coins, combined):
     kconf1, kconf2 = split(combined.kconfig_defs.items())
     files1, files2 = split(combined.kconfig_files)
 
-    c1 = BuildConfig(
+    config1 = BuildConfig(
         environ_defs=dict(env1),
         cmake_defs=dict(cmake1),
         kconfig_defs=dict(kconf1),
         kconfig_files=files1,
     )
-    c2 = BuildConfig(
+    config2 = BuildConfig(
         environ_defs=dict(env2),
         cmake_defs=dict(cmake2),
         kconfig_defs=dict(kconf2),
@@ -85,7 +89,7 @@ def test_merge(coins, combined):
     )
 
     # Merge the split configs
-    merged = c1 | c2
+    merged = config1 | config2
 
     # Assert that the merged split configs is the original config
     assert merged.environ_defs == combined.environ_defs
@@ -104,9 +108,10 @@ class FakeJobClient(zmake.jobserver.JobClient):
     def get_job(self):
         return zmake.jobserver.JobHandle(lambda: None)
 
-    def popen(self, argv, env={}, **kwargs):
+    def popen(self, argv, **kwargs):
+        kwargs.setdefault("env", {})
         self.captured_argv = [str(arg) for arg in argv]
-        self.captured_env = {str(k): str(v) for k, v in env.items()}
+        self.captured_env = {str(k): str(v) for k, v in kwargs["env"].items()}
 
 
 def parse_cmake_args(argv):
@@ -150,7 +155,7 @@ def test_popen_cmake_no_kconfig(conf, project_dir, build_dir):
     job_client = FakeJobClient()
     conf.popen_cmake(job_client, project_dir, build_dir)
 
-    args, cmake_defs = parse_cmake_args(job_client.captured_argv)
+    _, cmake_defs = parse_cmake_args(job_client.captured_argv)
 
     assert cmake_defs == conf.cmake_defs
     assert job_client.captured_env == conf.environ_defs
@@ -171,17 +176,18 @@ def test_popen_cmake_kconfig_but_no_file(conf, project_dir, build_dir):
 @hypothesis.given(build_configs, paths, paths)
 @hypothesis.settings(deadline=60000)
 def test_popen_cmake_kconfig(conf, project_dir, build_dir):
+    """Test calling popen_cmake and verifying the kconfig_files."""
     job_client = FakeJobClient()
 
-    with tempfile.NamedTemporaryFile("w", delete=False) as f:
-        temp_path = f.name
+    with tempfile.NamedTemporaryFile("w", delete=False) as file:
+        temp_path = file.name
 
     try:
         conf.popen_cmake(
             job_client, project_dir, build_dir, kconfig_path=pathlib.Path(temp_path)
         )
 
-        args, cmake_defs = parse_cmake_args(job_client.captured_argv)
+        _, cmake_defs = parse_cmake_args(job_client.captured_argv)
 
         expected_kconfig_files = set(str(f) for f in conf.kconfig_files)
         expected_kconfig_files.add(temp_path)
@@ -215,9 +221,10 @@ def fake_kconfig_files(tmp_path):
 
 
 def test_build_config_json_stability(fake_kconfig_files):
-    # as_json() should return equivalent strings for two equivalent
-    # build configs.
-    a = BuildConfig(
+    """as_json() should return equivalent strings for two equivalent
+    build configs.
+    """
+    config_a = BuildConfig(
         environ_defs={
             "A": "B",
             "B": "C",
@@ -234,7 +241,7 @@ def test_build_config_json_stability(fake_kconfig_files):
     )
 
     # Dict ordering is intentionally reversed in b.
-    b = BuildConfig(
+    config_b = BuildConfig(
         environ_defs={
             "B": "C",
             "A": "B",
@@ -250,20 +257,21 @@ def test_build_config_json_stability(fake_kconfig_files):
         kconfig_files=list(fake_kconfig_files),
     )
 
-    assert a.as_json() == b.as_json()
+    assert config_a.as_json() == config_b.as_json()
 
 
 def test_build_config_json_inequality():
-    # Two differing build configs should not have the same json
-    # representation.
-    a = BuildConfig(cmake_defs={"A": "B"})
-    b = BuildConfig(environ_defs={"A": "B"})
+    """Two differing build configs should not have the same json
+    representation.
+    """
+    config_a = BuildConfig(cmake_defs={"A": "B"})
+    config_b = BuildConfig(environ_defs={"A": "B"})
 
-    assert a.as_json() != b.as_json()
+    assert config_a.as_json() != config_b.as_json()
 
 
 def test_build_config_json_inequality_dtc_changes(tmp_path):
-    # When DTC overlay files change, so should the JSON.
+    """When DTC overlay files change, so should the JSON."""
     dts_file_1 = tmp_path / "overlay1.dts"
     dts_file_1.write_text("/* blah */\n")
 
@@ -287,8 +295,8 @@ def test_build_config_json_inequality_dtc_changes(tmp_path):
 
 
 def test_kconfig_file_duplicates(fake_kconfig_files):
-    # Kconfig files should be like the "uniq" command.  Repeats should
-    # be removed, but not duplicates.
+    """Kconfig files should be like the "uniq" command.  Repeats should
+    be removed, but not duplicates."""
     cfg = BuildConfig(
         kconfig_files=[
             fake_kconfig_files[0],
