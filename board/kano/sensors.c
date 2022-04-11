@@ -12,6 +12,7 @@
 #include "driver/accelgyro_icm426xx.h"
 #include "driver/accelgyro_icm_common.h"
 #include "driver/accel_kionix.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
@@ -354,10 +355,28 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 		.temp_host_release = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(68), \
 		}, \
-		.temp_fan_off = C_TO_K(25), \
+		.temp_fan_off = C_TO_K(37), \
 		.temp_fan_max = C_TO_K(90), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
+
+/*
+ * TODO(b/202062363): Remove when clang is fixed.
+ */
+#define THERMAL_FAN_28W \
+	{ \
+		.temp_host = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
+		}, \
+		.temp_host_release = { \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(68), \
+		}, \
+		.temp_fan_off = C_TO_K(37), \
+		.temp_fan_max = C_TO_K(62), \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_fan_28w =
+							THERMAL_FAN_28W;
 
 /*
  * Set value to zero to disable charger thermal control.
@@ -387,3 +406,23 @@ struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_3_CHARGER]	= THERMAL_CHARGER,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
+
+static void setup_thermal(void)
+{
+	unsigned int table = ec_cfg_thermal_solution();
+	/* Configure Fan */
+	switch (table) {
+	/* 28w CPU fan table */
+	case THERMAL_SOLUTION_28W:
+		cprints(CC_THERMAL, "Fan table set to 28w CPU scheme");
+		thermal_params[TEMP_SENSOR_2_FAN] = thermal_fan_28w;
+		break;
+	/* Default fan table */
+	case THERMAL_SOLUTION_15W:
+	default:
+		cprints(CC_THERMAL, "Fan table set to 15w CPU scheme");
+		break;
+	}
+}
+/* setup_thermal should be called before HOOK_INIT/HOOK_PRIO_DEFAULT */
+DECLARE_HOOK(HOOK_INIT, setup_thermal, HOOK_PRIO_DEFAULT - 1);

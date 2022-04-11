@@ -37,9 +37,9 @@ static const struct fan_conf fan_conf_0 = {
  * Set minimum at around 30% PWM.
  */
 static const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3000,
-	.rpm_start = 3000,
-	.rpm_max = 6200,
+	.rpm_min = 2400,
+	.rpm_start = 2400,
+	.rpm_max = 6000,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {

@@ -19,12 +19,19 @@ enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
+enum ec_cfg_thermal_solution_type {
+	THERMAL_SOLUTION_15W = 0,
+	THERMAL_SOLUTION_28W = 1
+};
+
 union kano_cbi_fw_config {
 	struct {
 		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
 		uint32_t				audio : 3;
 		uint32_t				ufc : 2;
-		uint32_t				reserved_1 : 26;
+		uint32_t				stylus : 1;
+		enum ec_cfg_thermal_solution_type	thermal_solution : 1;
+		uint32_t				reserved_1 : 24;
 	};
 	uint32_t raw_value;
 };
@@ -43,5 +50,12 @@ union kano_cbi_fw_config get_fw_config(void);
  * doesn't support it.
  */
 bool ec_cfg_has_kblight(void);
+
+/**
+ * Read the thermal solution config.
+ *
+ * @return thermal solution config.
+ */
+enum ec_cfg_thermal_solution_type ec_cfg_thermal_solution(void);
 
 #endif /* __BOARD_KANO_FW_CONFIG_H_ */
