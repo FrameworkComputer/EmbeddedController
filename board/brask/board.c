@@ -158,11 +158,11 @@ static void update_5v_usage(void)
 		base_5v_power_s5 += PWR_S5_FRONT_HIGH - PWR_S5_FRONT_LOW;
 
 	if (!gpio_get_level(GPIO_USB_A2_OC_ODL)) {
-		front_ports++;
+		rear_ports++;
 		base_5v_power_s5 += PWR_S5_REAR_LOW;
 	}
 	if (!gpio_get_level(GPIO_USB_A3_OC_ODL)) {
-		front_ports++;
+		rear_ports++;
 		base_5v_power_s5 += PWR_S5_REAR_LOW;
 	}
 	/*

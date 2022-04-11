@@ -59,12 +59,7 @@
 /* Support Barrel Jack */
 #undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
 #define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
-/*
- * TODO(b/197475210): Don't allow the system to boot to S0 when
- * the power is lower than CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
- * since there is no battery.
- */
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		30000
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		45000
 
 /* Chipset config */
 #define CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540
