@@ -32,6 +32,7 @@
 			bc12 {
 				compatible = "richtek,rt9490-bc12";
 				status = "okay";
+				irq = <&int_usb_c1_bc12_charger>;
 			};
 			ppc {
 				compatible = "silergy,syv682x";

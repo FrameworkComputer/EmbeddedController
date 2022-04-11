@@ -104,7 +104,7 @@
 		int_usb_c1_bc12_charger: usb_c1_bc12_charger {
 			irq-pin = <&usb_c1_bc12_charger_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "c1_bc12_interrupt";
+			handler = "rt9490_bc12_dt_interrupt";
 		};
 	};
 };
