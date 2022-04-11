@@ -424,8 +424,10 @@ static void nx20p348x_handle_interrupt(int port)
 	}
 
 	/* Check for Vbus reverse current protection */
-	if (reg & NX20P348X_INT1_RCP_5VSRC)
+	if (reg & NX20P348X_INT1_RCP_5VSRC) {
 		ppc_prints("detected Vbus reverse current!", port);
+		pd_handle_overcurrent(port);
+	}
 
 	/* Check for Vbus short protection */
 	if (reg & NX20P348X_INT1_SC_5VSRC)
