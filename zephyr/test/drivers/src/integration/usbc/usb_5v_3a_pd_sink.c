@@ -34,7 +34,10 @@ connect_sink_to_port(struct usb_attach_5v_3a_pd_sink_fixture *fixture)
 			   TCPC_REG_POWER_STATUS_VBUS_DET);
 	tcpci_emul_set_reg(fixture->tcpci_emul, TCPC_REG_EXT_STATUS,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
+
 	tcpci_tcpc_alert(0);
+	k_sleep(K_SECONDS(1));
+
 	zassume_ok(tcpci_snk_emul_connect_to_tcpci(
 			   &fixture->sink_5v_3a.data,
 			   &fixture->sink_5v_3a.common_data,
