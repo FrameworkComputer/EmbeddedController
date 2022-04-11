@@ -12,6 +12,7 @@
 #include "task.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+#include "usbc/utils.h"
 
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
@@ -29,12 +30,6 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 0,
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	DT_INST_FOREACH_STATUS_OKAY(USBC_PORT_BC12)
 };
-
-#define BC12_GPIO_ENABLE_INTERRUPT(inst)                          \
-	IF_ENABLED(DT_INST_NODE_HAS_PROP(inst, irq),		  \
-		   (gpio_enable_dt_interrupt(			  \
-			GPIO_INT_FROM_NODE(DT_INST_PHANDLE(inst, irq)))) \
-		   );
 
 static void bc12_enable_irqs(void)
 {

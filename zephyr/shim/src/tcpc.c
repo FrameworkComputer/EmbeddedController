@@ -11,13 +11,12 @@
 #include "usbc/tcpc_it8xxx2.h"
 #include "usbc/tcpc_ps8xxx.h"
 #include "usbc/tcpci.h"
+#include "usbc/utils.h"
 
 #if DT_HAS_COMPAT_STATUS_OKAY(FUSB302_TCPC_COMPAT) ||                          \
 	DT_HAS_COMPAT_STATUS_OKAY(IT8XXX2_TCPC_COMPAT) ||                      \
 	DT_HAS_COMPAT_STATUS_OKAY(PS8XXX_COMPAT) ||                            \
 	DT_HAS_COMPAT_STATUS_OKAY(TCPCI_COMPAT)                                \
-
-#define USBC_PORT(id) DT_REG_ADDR(DT_PARENT(id))
 
 #define TCPC_CONFIG(id, fn) [USBC_PORT(id)] = fn(id)
 

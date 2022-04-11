@@ -22,7 +22,7 @@
 	COND_CODE_1(DT_NODE_HAS_PROP(id, alternate_for), \
 		    (PPC_CHIP_ELE_ALT(id, fn)), ())
 
-#define PPC_CHIP_ELE_PRIM(id, fn) [PPC_USBC_PORT(id)] = fn(id)
+#define PPC_CHIP_ELE_PRIM(id, fn) [USBC_PORT(id)] = fn(id)
 
 #define PPC_CHIP_ELE_ALT(id, fn) [PPC_ID(id)] = fn(id)
 

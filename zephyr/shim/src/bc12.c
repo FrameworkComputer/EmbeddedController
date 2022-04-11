@@ -7,13 +7,12 @@
 #include "usbc/bc12_pi3usb9201.h"
 #include "usbc/bc12_rt1739.h"
 #include "usbc/bc12_rt9490.h"
+#include "usbc/utils.h"
 #include "usb_charge.h"
 
 #if DT_HAS_COMPAT_STATUS_OKAY(RT1739_BC12_COMPAT) || \
 	DT_HAS_COMPAT_STATUS_OKAY(RT9490_BC12_COMPAT) || \
 	DT_HAS_COMPAT_STATUS_OKAY(PI3USB9201_COMPAT)
-
-#define USBC_PORT(id) DT_REG_ADDR(DT_PARENT(id))
 
 #define BC12_CHIP(id, fn) [USBC_PORT(id)] = fn(id)
 

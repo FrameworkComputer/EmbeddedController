@@ -11,12 +11,12 @@
 #include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_sn5s330.h"
 #include "usbc/ppc_syv682x.h"
+#include "usbc/utils.h"
 #include "usbc_ppc.h"
 
 #define PPC_ID(id) DT_CAT(PPC_, id)
 #define PPC_ID_WITH_COMMA(id) PPC_ID(id),
-#define PPC_USBC_PORT(id) DT_REG_ADDR(DT_PARENT(id))
-#define PPC_ALT_FOR(alt_id) PPC_USBC_PORT(DT_PHANDLE(alt_id, alternate_for))
+#define PPC_ALT_FOR(alt_id) USBC_PORT(DT_PHANDLE(alt_id, alternate_for))
 
 #define PPC_ALT_ENUM(id)                                 \
 	COND_CODE_1(DT_NODE_HAS_PROP(id, alternate_for), \
