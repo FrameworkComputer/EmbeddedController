@@ -8,21 +8,19 @@
 
 ## Kconfig Options
 
-*List the Kconfig options that enable the feature and list any sub-configuration
-options that control the behavior of the feature.*
+*Link to the file providing all the Kconfig options related to the feature.  If
+the Kconfig options are not currently in a standalone file, consider moving the
+related Kconfigs into their own file.*
 
-Kconfig Option                         | Default | Documentation
-:------------------------------------- | :-----: | :------------
-`CONFIG_PLATFORM_EC_<option>`          | y/n     | [zephyr/Kconfig](../zephyr/Kconfig)
-
-Kconfig sub-option                     | Default | Documentation
-:------------------------------------- | :-----: | :------------
-`CONFIG_PLATFORM_EC_<option>`          | y/n     | [zephyr/Kconfig](../zephyr/Kconfig)
-
+*Example CL moving I2C related configs into a new file: https://crrev.com/c/3575081*
 
 *Note - Avoid documenting `CONFIG_` options in the markdown as the relevant
-`Kconfig*` contains the authoritative definition. Link directly to the Kconfig
-option in source like this: [I2C Passthru Restricted].*
+`Kconfig*` contains the authoritative definition. If there is one main Kconfig
+that must be enabled for the feature, mention it in this section. See the [I2C
+documentation](zephyr_i2c.md#kconfig-options) for an example.*
+
+*If the `Kconfig` file does not provide sufficient help descriptions, please fix
+them.*
 
 ## Devicetree Nodes
 
@@ -43,6 +41,9 @@ compile and run. For many features, this can section can be empty.*
 ## Testing and Debugging
 
 *Provide any tips for testing and debugging the EC feature.*
+
+*It's especially helpful to document EC console commands and `ectool` commands
+from the AP in this section.  Please provide example output.*
 
 ## Example
 
