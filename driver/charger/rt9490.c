@@ -338,6 +338,12 @@ static int rt9490_init_setting(int chgnum)
 	RETURN_ERROR(rt9490_set_bit(chgnum, RT9490_REG_CHG_IRQ_MASK5,
 				    RT9490_CHG_IRQ_MASK5_ALL));
 
+	/* Reduce SW freq from 1.5MHz to 1MHz
+	 * for 10% higher current rating b/215294785
+	 */
+	RETURN_ERROR(rt9490_set_bit(chgnum, RT9490_REG_ADD_CTRL1,
+				    RT9490_PWM_1MHZ_EN));
+
 	return EC_SUCCESS;
 }
 
