@@ -69,6 +69,27 @@ static void hdmi_hpd_interrupt(const struct device *device,
 	LOG_DBG("HDMI HPD changed state to %d", state);
 }
 
+static void lte_power_handler(struct ap_power_ev_callback *cb,
+			       struct ap_power_ev_data data)
+{
+	/* Enable rails for S5 */
+	const struct gpio_dt_spec *s5_rail =
+		GPIO_DT_FROM_ALIAS(gpio_en_sub_s5_rails);
+	switch (data.event) {
+	case AP_POWER_PRE_INIT:
+		LOG_DBG("Enabling LTE sub-board power rails");
+		gpio_pin_set_dt(s5_rail, 1);
+		break;
+	case AP_POWER_SHUTDOWN:
+		LOG_DBG("Disabling LTE sub-board power rails");
+		gpio_pin_set_dt(s5_rail, 0);
+		break;
+	default:
+		LOG_ERR("Unhandled LTE power event %d", data.event);
+		break;
+	}
+}
+
 /**
  * Configure GPIOs (and other pin functions) that vary with present sub-board.
  *
@@ -79,6 +100,7 @@ static void hdmi_hpd_interrupt(const struct device *device,
 static void nereid_subboard_config(void)
 {
 	enum nissa_sub_board_type sb = nissa_get_sb_type();
+	static struct ap_power_ev_callback power_cb;
 
 	/*
 	 * USB-A port: current limit output is configured by default and unused
@@ -114,15 +136,16 @@ static void nereid_subboard_config(void)
 		/* Disable the port 1 charger task */
 		task_disable_task(TASK_ID_USB_CHG_P1);
 	}
-	/*
-	 * HDMI: two outputs control power which must be configured to
-	 * non-default settings, and HPD must be forwarded to the AP on
-	 * another output pin.
-	 */
-	if (sb == NISSA_SB_HDMI_A) {
+
+	switch (sb) {
+	case NISSA_SB_HDMI_A:
+		/*
+		 * HDMI: two outputs control power which must be configured to
+		 * non-default settings, and HPD must be forwarded to the AP
+		 * on another output pin.
+		 */
 		const struct gpio_dt_spec *hpd_gpio =
 			GPIO_DT_FROM_ALIAS(gpio_hpd_odl);
-		static struct ap_power_ev_callback hdmi_power_cb;
 		static struct gpio_callback hdmi_hpd_cb;
 		int rv, irq_key;
 
@@ -135,10 +158,10 @@ static void nereid_subboard_config(void)
 					      GPIO_ACTIVE_LOW);
 		/* Control HDMI power in concert with AP */
 		ap_power_ev_init_callback(
-			&hdmi_power_cb, hdmi_power_handler,
+			&power_cb, hdmi_power_handler,
 			AP_POWER_PRE_INIT | AP_POWER_HARD_OFF |
 				AP_POWER_STARTUP | AP_POWER_SHUTDOWN);
-		ap_power_ev_add_callback(&hdmi_power_cb);
+		ap_power_ev_add_callback(&power_cb);
 
 		/*
 		 * Configure HPD input from sub-board; it's inverted by a buffer
@@ -163,6 +186,26 @@ static void nereid_subboard_config(void)
 		hdmi_hpd_interrupt(hpd_gpio->port, &hdmi_hpd_cb,
 				   BIT(hpd_gpio->pin));
 		irq_unlock(irq_key);
+		break;
+
+	case NISSA_SB_C_LTE:
+		/*
+		 * LTE: Set up callbacks for enabling/disabling
+		 * sub-board power on S5 state.
+		 */
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_sub_s5_rails),
+				      GPIO_OUTPUT_INACTIVE);
+		/* Control LTE power when CPU entering or
+		 * exiting S5 state.
+		 */
+		ap_power_ev_init_callback(
+			&power_cb, lte_power_handler,
+			AP_POWER_SHUTDOWN | AP_POWER_PRE_INIT);
+		ap_power_ev_add_callback(&power_cb);
+		break;
+
+	default:
+		break;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, nereid_subboard_config, HOOK_PRIO_POST_FIRST);

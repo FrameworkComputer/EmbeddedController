@@ -126,6 +126,10 @@
 		 */
 		gpio-hdmi-en-odl = &gpio_sb_3;
 		gpio-hpd-odl = &gpio_sb_4;
+		/*
+		 * Enable S5 rails for LTE sub-board
+		 */
+		gpio-en-sub-s5-rails = &gpio_sb_2;
 	};
 
 	named-temp-sensors {
