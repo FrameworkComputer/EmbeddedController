@@ -287,6 +287,13 @@ int tcpci_partner_send_control_msg(struct tcpci_partner_data *data,
 
 	msg->type = type;
 
+	if (msg->type == PD_CTRL_DR_SWAP) {
+		/* Remember the control request initiated, so we can
+		 * handle the responses
+		 */
+		tcpci_partner_common_set_ams_ctrl_msg(data, msg->type);
+	}
+
 	return tcpci_partner_send_msg(data, msg, delay);
 }
 
@@ -353,6 +360,7 @@ static void tcpci_partner_common_reset(struct tcpci_partner_data *data)
 	data->in_soft_reset = false;
 	data->vconn_role = PD_ROLE_VCONN_OFF;
 	tcpci_partner_stop_sender_response_timer(data);
+	tcpci_partner_common_clear_ams_ctrl_msg(data);
 }
 
 /** Check description in emul_common_tcpci_partner.h */
@@ -377,6 +385,9 @@ void tcpci_partner_common_send_soft_reset(struct tcpci_partner_data *data)
 	/* Reset counters */
 	data->msg_id = 0;
 	data->recv_msg_id = -1;
+
+	tcpci_partner_common_clear_ams_ctrl_msg(data);
+
 	/* Send message */
 	tcpci_partner_send_control_msg(data, PD_CTRL_SOFT_RESET, 0);
 	/* Wait for accept of soft reset */
@@ -515,6 +526,41 @@ tcpci_partner_common_ps_rdy_vconn_swap_handler(struct tcpci_partner_data *data)
 	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 }
 
+void tcpci_partner_common_swap_data_role(struct tcpci_partner_data *data)
+{
+	if (data->data_role == PD_ROLE_UFP) {
+		data->data_role = PD_ROLE_DFP;
+	} else if (data->data_role == PD_ROLE_DFP) {
+		data->data_role = PD_ROLE_UFP;
+	} else {
+		/* PD_ROLE_DISCONNECTED - do nothing */
+	}
+}
+
+/**
+ * @brief Handle Incoming DR_SWAP request
+ *
+ * @return enum tcpci_partner_handler_res
+ */
+static enum tcpci_partner_handler_res
+tcpci_partner_common_dr_swap_handler(struct tcpci_partner_data *data)
+{
+	tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
+	tcpci_partner_common_swap_data_role(data);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
+tcpci_partner_common_accept_dr_swap_handler(struct tcpci_partner_data *data)
+{
+	tcpci_partner_common_clear_ams_ctrl_msg(data);
+
+	tcpci_partner_common_swap_data_role(data);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
 static enum tcpci_partner_handler_res
 tcpi_drp_emul_ps_rdy_handler(struct tcpci_partner_data *data)
 {
@@ -524,6 +570,20 @@ tcpi_drp_emul_ps_rdy_handler(struct tcpci_partner_data *data)
 
 	default:
 		LOG_ERR("Unhandled current_req=%u in PS_RDY",
+			data->cur_ams_ctrl_req);
+		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+	}
+}
+
+static enum tcpci_partner_handler_res
+tcpi_partner_common_handle_accept(struct tcpci_partner_data *data)
+{
+	switch (data->cur_ams_ctrl_req) {
+	case PD_CTRL_DR_SWAP:
+		return tcpci_partner_common_accept_dr_swap_handler(data);
+
+	default:
+		LOG_ERR("Unhandled current_req=%u in ACCEPT",
 			data->cur_ams_ctrl_req);
 		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 	}
@@ -609,6 +669,9 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 	case PD_CTRL_VCONN_SWAP:
 		return tcpci_partner_common_vconn_swap_handler(data);
 
+	case PD_CTRL_DR_SWAP:
+		return tcpci_partner_common_dr_swap_handler(data);
+
 	case PD_CTRL_PS_RDY:
 		return tcpi_drp_emul_ps_rdy_handler(data);
 
@@ -619,6 +682,9 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 
 			return TCPCI_PARTNER_COMMON_MSG_HARD_RESET;
 		}
+
+		tcpci_partner_common_clear_ams_ctrl_msg(data);
+
 		/* Fall through */
 	case PD_CTRL_ACCEPT:
 		if (data->wait_for_response) {
@@ -637,6 +703,13 @@ enum tcpci_partner_handler_res tcpci_partner_common_msg_handler(
 			 * should handle it
 			 */
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+		}
+
+		if (data->cur_ams_ctrl_req != PD_CTRL_INVALID) {
+			if (tcpi_partner_common_handle_accept(data) ==
+			    TCPCI_PARTNER_COMMON_MSG_HANDLED) {
+				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+			}
 		}
 
 		/* Unexpected message - trigger soft reset */
@@ -823,11 +896,14 @@ void tcpci_partner_common_clear_logged_msgs(struct tcpci_partner_data *data)
  * @param msg_type      enum pd_ctrl_msg_type
  */
 void tcpci_partner_common_set_ams_ctrl_msg(struct tcpci_partner_data *data,
-				       enum pd_ctrl_msg_type msg_type)
+					   enum pd_ctrl_msg_type msg_type)
 {
 	/* Make sure we handle one CTRL request at a time */
-	zassert_equal(data->cur_ams_ctrl_req, PD_CTRL_INVALID,
-		      "More than one CTRL msg handled in parallel");
+	zassert_equal(
+		data->cur_ams_ctrl_req, PD_CTRL_INVALID,
+		"More than one CTRL msg handled in parallel"
+		" cur_ams_ctrl_req=%d, msg_type=%d",
+		data->cur_ams_ctrl_req, msg_type);
 	data->cur_ams_ctrl_req = msg_type;
 }
 
@@ -863,4 +939,6 @@ void tcpci_partner_init(struct tcpci_partner_data *data,
 	data->identity_vdos = 0;
 	data->svids_vdos = 0;
 	data->modes_vdos = 0;
+
+	tcpci_partner_common_clear_ams_ctrl_msg(data);
 }
