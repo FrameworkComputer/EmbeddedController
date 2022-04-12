@@ -354,7 +354,7 @@ static int find_interface(struct usb_endpoint *uep)
 		for (j = 0; j < iface0->num_altsetting; j++) {
 			iface = &iface0->altsetting[j];
 			if (find_endpoint(iface, uep)) {
-				iface_num = i;
+				iface_num = iface->bInterfaceNumber;
 				goto out;
 			}
 		}
