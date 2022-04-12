@@ -1405,6 +1405,11 @@ extern struct jump_data mock_jump_data;
 	CONFIG_PLATFORM_EC_USB_PD_ITE_ACTIVE_PORT_COUNT
 #endif
 
+#undef CONFIG_USB_PD_PPC
+#ifdef CONFIG_PLATFORM_EC_USB_PD_PPC
+#define CONFIG_USB_PD_PPC
+#endif
+
 #undef CONFIG_USBC_PPC
 #ifdef CONFIG_PLATFORM_EC_USBC_PPC
 #define CONFIG_USBC_PPC
