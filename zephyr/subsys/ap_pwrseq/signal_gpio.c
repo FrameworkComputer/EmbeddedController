@@ -43,7 +43,7 @@ DT_FOREACH_STATUS_OKAY(MY_COMPAT, INIT_GPIO_CONFIG)
 
 static struct gpio_callback int_cb[ARRAY_SIZE(gpio_config)];
 
-int power_signal_gpio_enable_int(enum pwr_sig_gpio index)
+int power_signal_gpio_enable(enum pwr_sig_gpio index)
 {
 	gpio_flags_t flags;
 
@@ -65,7 +65,7 @@ int power_signal_gpio_enable_int(enum pwr_sig_gpio index)
 	return -EINVAL;
 }
 
-int power_signal_gpio_disable_int(enum pwr_sig_gpio index)
+int power_signal_gpio_disable(enum pwr_sig_gpio index)
 {
 	gpio_flags_t flags;
 
@@ -141,7 +141,7 @@ void power_signal_gpio_init(void)
 				 * startup, enable the interrupt.
 				 */
 				if (!gpio_config[i].no_enable) {
-					power_signal_gpio_enable_int(i);
+					power_signal_gpio_enable(i);
 				}
 			}
 		}

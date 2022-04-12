@@ -54,7 +54,7 @@ int power_signal_gpio_set(enum pwr_sig_gpio gpio, int value);
  * @return 0 if successful
  * @return -error if failed
  */
-int power_signal_gpio_enable_int(enum pwr_sig_gpio gpio);
+int power_signal_gpio_enable(enum pwr_sig_gpio gpio);
 
 /**
  * @brief Disable the GPIO interrupt
@@ -63,7 +63,7 @@ int power_signal_gpio_enable_int(enum pwr_sig_gpio gpio);
  * @return 0 if successful
  * @return -error if failed
  */
-int power_signal_gpio_disable_int(enum pwr_sig_gpio gpio);
+int power_signal_gpio_disable(enum pwr_sig_gpio gpio);
 
 /**
  * @brief Initialize the GPIOs for the power signals.

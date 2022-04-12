@@ -160,28 +160,36 @@ int power_signal_get(enum power_signal signal);
 int power_signal_set(enum power_signal signal, int value);
 
 /**
- * @brief Enable interrupts for this power signal
+ * @brief Enable this power signal
  *
- * For signals that allow an interrupt to be used,
- * enable the interrupt.
+ * Enable this signal to be used as a power_signal.
+ * Typically this means the interrupt associated with this
+ * signal is enabled.
  *
- * @param signal The power_signal to enable interrupts for.
+ * Power signals are enabled by default at startup, and if
+ * a power signal is disabled via power_signal_disable(), it will
+ * need to be re-enabled before the signal is included in the
+ * input handling again.
+ *
+ * @param signal The power_signal to enable.
  * @return 0 is successful
- * @return negative If interrupt cannot be enabled.
+ * @return negative If unsuccessful
  */
-int power_signal_enable_interrupt(enum power_signal signal);
+int power_signal_enable(enum power_signal signal);
 
 /**
- * @brief Disable interrupts for this power signal
+ * @brief Disable this power signal
  *
- * For signals that allow an interrupt to be used,
- * disable the interrupt.
+ * Disable the signal so that it does not update the
+ * input handling (i.e does not call power_signal_interrupt() etc.)
+ * Once disabled, a signal must be re-enabled using
+ * power_signal_enable() to allow the signal to be used again.
  *
- * @param signal The power_signal to disable interrupts for.
+ * @param signal The power_signal to disable.
  * @return 0 is successful
- * @return negative If interrupt are not available on this signal.
+ * @return negative If unsuccessful
  */
-int power_signal_disable_interrupt(enum power_signal signal);
+int power_signal_disable(enum power_signal signal);
 
 /**
  * @brief Get the debug name associated with this signal.
@@ -202,7 +210,8 @@ void power_signal_init(void);
 /**
  * @brief Power signal interrupt handler
  *
- * Called when an input signal causes an interrupt.
+ * Called when an input signal has changed.
+ * May be called from interrupt context.
  *
  * @param signal The power_signal that has changed.
  * @param value The new value of the signal

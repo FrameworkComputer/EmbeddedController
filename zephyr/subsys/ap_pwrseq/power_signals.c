@@ -226,7 +226,7 @@ int power_signal_set(enum power_signal signal, int value)
 	return ret;
 }
 
-int power_signal_enable_interrupt(enum power_signal signal)
+int power_signal_enable(enum power_signal signal)
 {
 	const struct ps_config *cp;
 
@@ -244,16 +244,16 @@ int power_signal_enable_interrupt(enum power_signal signal)
 
 #if HAS_GPIO_SIGNALS
 	case PWR_SIG_SRC_GPIO:
-		return power_signal_gpio_enable_int(cp->src_enum);
+		return power_signal_gpio_enable(cp->src_enum);
 #endif
 #if HAS_ADC_SIGNALS
 	case PWR_SIG_SRC_ADC:
-		return power_signal_adc_enable_int(cp->src_enum);
+		return power_signal_adc_enable(cp->src_enum);
 #endif
 	}
 }
 
-int power_signal_disable_interrupt(enum power_signal signal)
+int power_signal_disable(enum power_signal signal)
 {
 	const struct ps_config *cp;
 
@@ -267,11 +267,11 @@ int power_signal_disable_interrupt(enum power_signal signal)
 
 #if HAS_GPIO_SIGNALS
 	case PWR_SIG_SRC_GPIO:
-		return power_signal_gpio_disable_int(cp->src_enum);
+		return power_signal_gpio_disable(cp->src_enum);
 #endif
 #if HAS_ADC_SIGNALS
 	case PWR_SIG_SRC_ADC:
-		return power_signal_adc_disable_int(cp->src_enum);
+		return power_signal_adc_disable(cp->src_enum);
 #endif
 	}
 }

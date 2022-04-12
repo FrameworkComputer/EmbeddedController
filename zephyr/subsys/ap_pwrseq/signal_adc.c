@@ -109,7 +109,7 @@ int power_signal_adc_get(enum pwr_sig_adc adc)
 	return atomic_test_bit(&adc_state[adc], ADC_BIT_VALUE);
 }
 
-int power_signal_adc_enable_int(enum pwr_sig_adc adc)
+int power_signal_adc_enable(enum pwr_sig_adc adc)
 {
 	if (adc < 0 || adc >= ARRAY_SIZE(config)) {
 		return -EINVAL;
@@ -124,7 +124,7 @@ int power_signal_adc_enable_int(enum pwr_sig_adc adc)
 	return 0;
 }
 
-int power_signal_adc_disable_int(enum pwr_sig_adc adc)
+int power_signal_adc_disable(enum pwr_sig_adc adc)
 {
 	if (adc < 0 || adc >= ARRAY_SIZE(config)) {
 		return -EINVAL;
@@ -175,7 +175,7 @@ void power_signal_adc_init(void)
 		/* Set high and low trigger callbacks */
 		sensor_trigger_set(config[i].dev_trig_high, &trig, high_cb[i]);
 		sensor_trigger_set(config[i].dev_trig_low, &trig, low_cb[i]);
-		power_signal_adc_enable_int(i);
+		power_signal_adc_enable(i);
 	}
 }
 

@@ -97,26 +97,26 @@ ZTEST(signals, test_validate_request)
 	zassert_equal(-EINVAL, power_signal_set(PWR_SLP_S0, 1),
 		      "power_signal_set on input pin should not succeed");
 	/* Can't enable interrupt on output */
-	zassert_equal(-EINVAL, power_signal_enable_interrupt(PWR_VCCST_PWRGD),
+	zassert_equal(-EINVAL, power_signal_enable(PWR_VCCST_PWRGD),
 		      "enable interrupt on output pin should not succeed");
 	/* Can't disable interrupt on output */
-	zassert_equal(-EINVAL, power_signal_disable_interrupt(PWR_VCCST_PWRGD),
+	zassert_equal(-EINVAL, power_signal_disable(PWR_VCCST_PWRGD),
 		      "disable interrupt on output pin should not succeed");
 	/* Can't enable interrupt on input with no interrupt flags */
-	zassert_equal(-EINVAL, power_signal_enable_interrupt(PWR_IMVP9_VRRDY),
+	zassert_equal(-EINVAL, power_signal_enable(PWR_IMVP9_VRRDY),
 		      "enable interrupt on input pin without interrupt config");
 	/* Can't disable interrupt on input with no interrupt flags */
 	zassert_equal(-EINVAL,
-		      power_signal_disable_interrupt(PWR_IMVP9_VRRDY),
+		      power_signal_disable(PWR_IMVP9_VRRDY),
 		      "disable interrupt on input pin without interrupt config");
 	/* Invalid signal - should be rejectde */
 	zassert_equal(-EINVAL, power_signal_get(-1),
 		      "power_signal_get with -1 signal should fail");
 	zassert_equal(-EINVAL, power_signal_set(-1, 1),
 		      "power_signal_set with -1 signal should fail");
-	zassert_equal(-EINVAL, power_signal_enable_interrupt(-1),
+	zassert_equal(-EINVAL, power_signal_enable(-1),
 		      "enable interrupt with -1 signal should fail");
-	zassert_equal(-EINVAL, power_signal_disable_interrupt(-1),
+	zassert_equal(-EINVAL, power_signal_disable(-1),
 		      "disable interrupt with -1 signal should fail");
 }
 
@@ -359,7 +359,7 @@ ZTEST(signals, test_gpio_interrupts)
 	zassert_equal(false, power_signals_on(s0),
 		"SLP_S0 should not have updated");
 
-	power_signal_enable_interrupt(PWR_SLP_S0);
+	power_signal_enable(PWR_SLP_S0);
 	emul_set(PWR_SLP_S0, 0);
 	zassert_equal(true, power_signals_on(s0),
 		"SLP_S0 should have updated the mask");
@@ -370,7 +370,7 @@ ZTEST(signals, test_gpio_interrupts)
 	/*
 	 * Disable the GPIO interrupt again.
 	 */
-	power_signal_disable_interrupt(PWR_SLP_S0);
+	power_signal_disable(PWR_SLP_S0);
 	emul_set(PWR_SLP_S0, 0);
 	zassert_equal(false, power_signals_on(s0),
 		"SLP_S0 should not have updated the mask");

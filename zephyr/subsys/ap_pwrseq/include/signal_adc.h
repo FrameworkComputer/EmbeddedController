@@ -41,7 +41,7 @@ DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc, PWR_ADC_ENUM)
 int power_signal_adc_get(enum pwr_sig_adc adc);
 
 /**
- * @brief Enable the ADC interrupt
+ * @brief Enable the ADC signal.
  *
  * This will not only enable the interrupt driven update
  * of this signal, but will also enable the ADC itself.
@@ -50,10 +50,10 @@ int power_signal_adc_get(enum pwr_sig_adc adc);
  * @return 0 if successful
  * @return -error if failed
  */
-int power_signal_adc_enable_int(enum pwr_sig_adc adc);
+int power_signal_adc_enable(enum pwr_sig_adc adc);
 
 /**
- * @brief Disable the ADC interrupt
+ * @brief Disable the ADC signal.
  *
  * This will disable the interrupt updating of this signal, and will
  * also disable the ADC from running.
@@ -62,7 +62,7 @@ int power_signal_adc_enable_int(enum pwr_sig_adc adc);
  * @return 0 if successful
  * @return -error if failed
  */
-int power_signal_adc_disable_int(enum pwr_sig_adc adc);
+int power_signal_adc_disable(enum pwr_sig_adc adc);
 
 /**
  * @brief Initialize the ADCs for the power signals.
