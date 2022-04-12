@@ -125,8 +125,9 @@ static int find_interface_with_endpoint(struct usb_endpoint *uep)
 				ep = &iface->endpoint[k];
 				if (ep->bEndpointAddress == uep->ep_num) {
 					uep->chunk_len = ep->wMaxPacketSize;
+					r = iface->bInterfaceNumber;
 					libusb_free_config_descriptor(conf);
-					return i;
+					return r;
 				}
 			}
 		}
