@@ -232,10 +232,23 @@ class NpcxPacker(BinmanPacker):
         yield ro_dir / self.npcx_monitor, self.npcx_monitor
 
 
+# MCHP all we do is set binman's ro file to zephyr.mchp.bin
+class MchpPacker(BinmanPacker):
+    """Packer for RO/RW image to generate a .bin build using FMAP.
+
+    This expects that the build is setup to generate a
+    zephyr.npcx.bin for the RO image, which should be packed using
+    Microchip's loader format.
+    """
+
+    ro_file = "zephyr.mchp.bin"
+
+
 # A dictionary mapping packer config names to classes.
 packer_registry = {
     "binman": BinmanPacker,
     "elf": ElfPacker,
     "npcx": NpcxPacker,
     "raw": RawBinPacker,
+    "mchp": MchpPacker,
 }
