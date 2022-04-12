@@ -25,8 +25,8 @@ class MarkdownHelpFormatter(argparse.HelpFormatter):
                 lst = self._section_contents
             lst.append(text)
 
-    def start_section(self, title):
-        self._section_title = title.title()
+    def start_section(self, heading):
+        self._section_title = heading.title()
         self._section_contents = []
 
     def end_section(self):
@@ -35,7 +35,7 @@ class MarkdownHelpFormatter(argparse.HelpFormatter):
             self._paragraphs.extend(self._section_contents)
         self._section_title = None
 
-    def add_usage(self, usage, actions, groups):
+    def add_usage(self, usage, actions, groups, prefix=None):
         if not usage:
             usage = self._prog
         self.add_text(
@@ -55,8 +55,7 @@ class MarkdownHelpFormatter(argparse.HelpFormatter):
                     else:
                         parts.append(f"{option_string} {_get_metavar(action).upper()}")
                 return ", ".join(f"`{part}`" for part in parts)
-            else:
-                return f"`{_get_metavar(action)}`"
+            return f"`{_get_metavar(action)}`"
 
         def _get_table_line(action):
             return f"| {_format_invocation(action)} | {action.help} |"
@@ -89,7 +88,7 @@ def generate_readme():
     # Normally, this would not be required, since we don't use from
     # imports.  But runpy's import machinery essentially does the
     # equivalent of a from import on __main__.py.
-    import zmake.__main__
+    import zmake.__main__  # pylint: disable=import-outside-toplevel
 
     output = io.StringIO()
     parser, sub_action = zmake.__main__.get_argparser()

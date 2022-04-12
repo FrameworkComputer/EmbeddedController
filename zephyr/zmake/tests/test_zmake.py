@@ -26,7 +26,7 @@ OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 class FakeProject:
     """A fake project which requests two builds and does no packing"""
 
-    # pylint: disable=too-few-public-methods,no-self-use
+    # pylint: disable=too-few-public-methods
 
     def __init__(self):
         self.packer = unittest.mock.Mock()
@@ -46,15 +46,18 @@ class FakeProject:
         yield "ro", zmake.build_config.BuildConfig()
         yield "rw", zmake.build_config.BuildConfig()
 
-    def prune_modules(self, _):
+    @staticmethod
+    def prune_modules(_):
         """Fake implementation of prune_modules."""
         return {}  # pathlib.Path('path')]
 
-    def find_dts_overlays(self, _):
+    @staticmethod
+    def find_dts_overlays(_):
         """Fake implementation of find_dts_overlays."""
         return zmake.build_config.BuildConfig()
 
-    def get_toolchain(self, module_paths, override=None):
+    @staticmethod
+    def get_toolchain(module_paths, override=None):
         """Fake implementation of get_toolchain."""
         return zmake.toolchains.GenericToolchain(
             override or "foo",
@@ -141,7 +144,7 @@ def do_test_with_log_level(zmake_factory_from_dir, log_level, fnames=None):
                 ["fakeproject"],
                 clobber=True,
             )
-        multiproc.wait_for_log_end()
+        multiproc.LogWriter.wait_for_log_end()
 
     recs = [rec.getMessage() for rec in cap.records]
     return recs
@@ -150,14 +153,14 @@ def do_test_with_log_level(zmake_factory_from_dir, log_level, fnames=None):
 class TestFilters:
     """Test filtering of stdout and stderr"""
 
-    # pylint: disable=no-self-use
-
-    def test_filter_normal(self, zmake_factory_from_dir):
+    @staticmethod
+    def test_filter_normal(zmake_factory_from_dir):
         """Test filtering of a normal build (with no errors)"""
         recs = do_test_with_log_level(zmake_factory_from_dir, logging.ERROR)
         assert not recs
 
-    def test_filter_info(self, zmake_factory_from_dir, tmp_path):
+    @staticmethod
+    def test_filter_info(zmake_factory_from_dir, tmp_path):
         """Test what appears on the INFO level"""
         recs = do_test_with_log_level(zmake_factory_from_dir, logging.INFO)
         # TODO: Remove sets and figure out how to check the lines are in the
@@ -180,7 +183,8 @@ class TestFilters:
         # This produces an easy-to-read diff if there is a difference
         assert expected == set(recs)
 
-    def test_filter_debug(self, zmake_factory_from_dir, tmp_path):
+    @staticmethod
+    def test_filter_debug(zmake_factory_from_dir, tmp_path):
         """Test what appears on the DEBUG level"""
         recs = do_test_with_log_level(zmake_factory_from_dir, logging.DEBUG)
         # TODO: Remove sets and figure out how to check the lines are in the
@@ -205,7 +209,8 @@ class TestFilters:
         # This produces an easy-to-read diff if there is a difference
         assert expected == set(recs)
 
-    def test_filter_devicetree_error(self, zmake_factory_from_dir):
+    @staticmethod
+    def test_filter_devicetree_error(zmake_factory_from_dir):
         """Test that devicetree errors appear"""
         recs = do_test_with_log_level(
             zmake_factory_from_dir,
@@ -278,7 +283,7 @@ def test_list_projects(
         autospec=True,
         return_value=fake_projects,
     ):
-        zmake_from_dir.list_projects(format=fmt, search_dir=search_dir)
+        zmake_from_dir.list_projects(fmt=fmt, search_dir=search_dir)
 
     captured = capsys.readouterr()
     assert captured.out == expected_output

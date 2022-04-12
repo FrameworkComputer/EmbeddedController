@@ -11,7 +11,7 @@ import pathlib
 import re
 import shutil
 import subprocess
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 import zmake.build_config
 import zmake.generate_readme
@@ -37,6 +37,7 @@ def ninja_stdout_log_level_override(line, current_log_level):
         current_log_level: The active logging level that would be used for the
           line.
     """
+    # pylint: disable=too-many-return-statements
     # Output lines from Zephyr that are not normally useful
     # Send any lines that start with these strings to INFO
     cmake_suppress = [
@@ -105,7 +106,7 @@ def cmake_log_level_override(line, default_log_level):
     # Strange output from Zephyr that we normally ignore
     if line.startswith("Including boilerplate"):
         return logging.DEBUG
-    elif line.startswith("devicetree error:"):
+    if line.startswith("devicetree error:"):
         return logging.ERROR
     if ninja_warnings.match(line):
         return logging.WARNING
@@ -149,17 +150,19 @@ class Zmake:
             before launching more, False to just do this after all jobs complete
     """
 
-    def __init__(
+    # pylint: disable=too-many-instance-attributes
+
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         checkout=None,
-        jobserver=None,
+        jobserver: Optional[zmake.jobserver.JobClient] = None,
         jobs=0,
         goma=False,
         gomacc="/mnt/host/depot_tools/.cipd_bin/gomacc",
         modules_dir=None,
         zephyr_base=None,
     ):
-        zmake.multiproc.reset()
+        zmake.multiproc.LogWriter.reset()
         self.logger = logging.getLogger(self.__class__.__name__)
         self._checkout = checkout
         self.goma = goma
@@ -187,6 +190,7 @@ class Zmake:
 
     @property
     def checkout(self):
+        """Returns the location of the cros checkout."""
         if not self._checkout:
             self._checkout = util.locate_cros_checkout()
         return self._checkout.resolve()
@@ -200,7 +204,7 @@ class Zmake:
         """
         found_projects = zmake.project.find_projects(self.module_paths["ec"] / "zephyr")
         if all_projects:
-            projects = found_projects.values()
+            projects = list(found_projects.values())
         elif host_tests_only:
             projects = [p for p in found_projects.values() if p.config.is_test]
         else:
@@ -212,7 +216,7 @@ class Zmake:
                     raise KeyError("No project named {}".format(project_name)) from e
         return projects
 
-    def configure(
+    def configure(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         project_names,
         build_dir=None,
@@ -253,33 +257,33 @@ class Zmake:
                 )
             )
             if self._sequential:
-                rv = self.executor.wait()
-                if rv:
-                    return rv
-        rv = self.executor.wait()
-        if rv:
-            return rv
+                result = self.executor.wait()
+                if result:
+                    return result
+        result = self.executor.wait()
+        if result:
+            return result
         test_projects = [p for p in projects if p.config.is_test]
         if len(test_projects) > 1 and coverage and test_after_configure:
-            rv = self._merge_lcov_files(
+            result = self._merge_lcov_files(
                 projects=test_projects,
                 build_dir=build_dir,
                 output_file=build_dir / "all_tests.info",
             )
-            if rv:
-                return rv
+            if result:
+                return result
         non_test_projects = [p for p in projects if not p.config.is_test]
         if len(non_test_projects) > 1 and coverage and build_after_configure:
-            rv = self._merge_lcov_files(
+            result = self._merge_lcov_files(
                 projects=non_test_projects,
                 build_dir=build_dir,
                 output_file=build_dir / "all_builds.info",
             )
-            if rv:
-                return rv
+            if result:
+                return result
         return 0
 
-    def build(
+    def build(  # pylint: disable=too-many-arguments
         self,
         project_names,
         build_dir=None,
@@ -307,7 +311,7 @@ class Zmake:
             build_after_configure=True,
         )
 
-    def test(
+    def test(  # pylint: disable=too-many-arguments,too-many-locals
         self,
         project_names,
         build_dir=None,
@@ -362,23 +366,23 @@ class Zmake:
                 )
             )
             if self._sequential:
-                rv = self.executor.wait()
-                if rv:
-                    return rv
-        rv = self.executor.wait()
-        if rv:
-            return rv
+                result = self.executor.wait()
+                if result:
+                    return result
+        result = self.executor.wait()
+        if result:
+            return result
         if len(test_projects) > 1 and coverage:
-            rv = self._merge_lcov_files(
+            result = self._merge_lcov_files(
                 projects=test_projects,
                 build_dir=build_dir,
                 output_file=build_dir / "all_tests.info",
             )
-            if rv:
-                return rv
+            if result:
+                return result
         return 0
 
-    def testall(
+    def testall(  # pylint: disable=too-many-arguments
         self,
         build_dir=None,
         toolchain=None,
@@ -387,6 +391,7 @@ class Zmake:
         coverage=False,
         allow_warnings=False,
     ):
+        """Locate and build all the projects."""
         return self.test(
             [],
             build_dir=build_dir,
@@ -411,6 +416,8 @@ class Zmake:
         allow_warnings=False,
         extra_cflags=None,
     ):
+        # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
+        # pylint: disable=too-many-statements
         """Set up a build directory to later be built by "zmake build"."""
         # Resolve build_dir if needed.
         if not build_dir:
@@ -487,7 +494,7 @@ class Zmake:
         files_to_write = []
         self.logger.info("Building %s in %s.", project.config.project_name, build_dir)
         for build_name, build_config in project.iter_builds():
-            config = (
+            config: zmake.build_config.BuildConfig = (
                 base_config
                 | toolchain_config
                 | module_config
@@ -507,8 +514,7 @@ class Zmake:
                         build_name,
                     )
                     continue
-                else:
-                    config_json_file.unlink()
+                config_json_file.unlink()
 
             files_to_write.append((config_json_file, config_json))
 
@@ -534,14 +540,14 @@ class Zmake:
                 errors="replace",
             )
             job_id = "{}:{}".format(project.config.project_name, build_name)
-            zmake.multiproc.log_output(
+            zmake.multiproc.LogWriter.log_output(
                 self.logger,
                 logging.DEBUG,
                 proc.stdout,
                 log_level_override_func=cmake_log_level_override,
                 job_id=job_id,
             )
-            zmake.multiproc.log_output(
+            zmake.multiproc.LogWriter.log_output(
                 self.logger,
                 logging.ERROR,
                 proc.stderr,
@@ -567,14 +573,14 @@ class Zmake:
 
         output_files = []
         if build_after_configure or test_after_configure:
-            rv = self._build(
+            result = self._build(
                 build_dir=build_dir,
                 project=project,
                 coverage=coverage,
                 output_files_out=output_files,
             )
-            if rv:
-                return rv
+            if result:
+                return result
         if test_after_configure and project.config.is_test:
             gcov = "gcov.sh-not-found"
             for build_name, _ in project.iter_builds():
@@ -601,6 +607,7 @@ class Zmake:
         output_files_out=None,
         coverage=False,
     ):
+        # pylint: disable=too-many-locals,too-many-branches
         """Build a pre-configured build directory."""
 
         def wait_and_check_success(procs, writers):
@@ -668,7 +675,7 @@ class Zmake:
                     "Building %s:%s: %s",
                     project.config.project_name,
                     build_name,
-                    zmake.util.repr_command(cmd),
+                    util.repr_command(cmd),
                 )
                 proc = self.jobserver.popen(
                     cmd,
@@ -680,7 +687,7 @@ class Zmake:
                 job_id = "{}:{}".format(project.config.project_name, build_name)
                 dirs[build_name].mkdir(parents=True, exist_ok=True)
                 build_log = open(dirs[build_name] / "build.log", "w")
-                out = zmake.multiproc.log_output(
+                out = zmake.multiproc.LogWriter.log_output(
                     logger=self.logger,
                     log_level=logging.INFO,
                     file_descriptor=proc.stdout,
@@ -688,7 +695,7 @@ class Zmake:
                     job_id=job_id,
                     tee_output=build_log,
                 )
-                err = zmake.multiproc.log_output(
+                err = zmake.multiproc.LogWriter.log_output(
                     self.logger,
                     logging.ERROR,
                     proc.stderr,
@@ -708,9 +715,9 @@ class Zmake:
         # Run the packer.
         packer_work_dir = build_dir / "packer"
         output_dir = build_dir / "output"
-        for d in output_dir, packer_work_dir:
-            if not d.exists():
-                d.mkdir()
+        for newdir in output_dir, packer_work_dir:
+            if not newdir.exists():
+                newdir.mkdir()
 
         if output_files_out is None:
             output_files_out = []
@@ -723,7 +730,7 @@ class Zmake:
                 )
         else:
             for output_file, output_name in project.packer.pack_firmware(
-                packer_work_dir, self.jobserver, version_string=version_string, **dirs
+                packer_work_dir, self.jobserver, dirs, version_string=version_string
             ):
                 shutil.copy2(output_file, output_dir / output_name)
                 self.logger.debug("Output file '%s' created.", output_file)
@@ -731,7 +738,7 @@ class Zmake:
 
         return 0
 
-    def _run_test(
+    def _run_test(  # pylint: disable=too-many-arguments
         self, elf_file: pathlib.Path, coverage, gcov, build_dir, lcov_file, timeout=None
     ):
         """Run a single test, with goma if enabled.
@@ -760,13 +767,13 @@ class Zmake:
                 errors="replace",
             )
             job_id = "test {}".format(elf_file)
-            zmake.multiproc.log_output(
+            zmake.multiproc.LogWriter.log_output(
                 self.logger,
                 logging.DEBUG,
                 proc.stdout,
                 job_id=job_id,
             )
-            zmake.multiproc.log_output(
+            zmake.multiproc.LogWriter.log_output(
                 self.logger,
                 logging.ERROR,
                 proc.stderr,
@@ -791,7 +798,9 @@ class Zmake:
             with self.jobserver.get_job():
                 _run()
 
-    def _run_lcov(self, build_dir, lcov_file, initial=False, gcov=""):
+    def _run_lcov(
+        self, build_dir, lcov_file, initial=False, gcov: Union[os.PathLike, str] = ""
+    ):
         gcov = os.path.abspath(gcov)
         if initial:
             self.logger.info("Running (initial) lcov on %s.", build_dir)
@@ -821,7 +830,7 @@ class Zmake:
             encoding="utf-8",
             errors="replace",
         )
-        zmake.multiproc.log_output(
+        zmake.multiproc.LogWriter.log_output(
             self.logger,
             logging.WARNING,
             proc.stderr,
@@ -864,21 +873,21 @@ class Zmake:
                 encoding="utf-8",
                 errors="replace",
             )
-            zmake.multiproc.log_output(
+            zmake.multiproc.LogWriter.log_output(
                 self.logger, logging.ERROR, proc.stderr, job_id="lcov"
             )
-            zmake.multiproc.log_output(
+            zmake.multiproc.LogWriter.log_output(
                 self.logger, logging.DEBUG, proc.stdout, job_id="lcov"
             )
             if proc.wait():
                 raise OSError(get_process_failure_msg(proc))
             return 0
 
-    def list_projects(self, format, search_dir):
+    def list_projects(self, fmt, search_dir):
         """List project names known to zmake on stdout.
 
         Args:
-            format: The formatting string to print projects with.
+            fmt: The formatting string to print projects with.
             search_dir: Directory to start the search for
                 BUILD.py files at.
         """
@@ -886,7 +895,7 @@ class Zmake:
             search_dir = self.module_paths["ec"] / "zephyr"
 
         for project in zmake.project.find_projects(search_dir).values():
-            print(format.format(config=project.config), end="")
+            print(fmt.format(config=project.config), end="")
 
         return 0
 

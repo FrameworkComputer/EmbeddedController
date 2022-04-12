@@ -1,9 +1,9 @@
 [MASTER]
-init-hook='import sys; sys.path.append("/usr/lib64/python3.6/site-packages")'
+init-hook='import sys; sys.path.extend(["zephyr/zmake", "/usr/lib64/python3.6/site-packages"])'
 
 [MESSAGES CONTROL]
 
-disable=bad-continuation,bad-whitespace,format,fixme
+disable=bad-continuation,bad-whitespace,format,fixme,wrong-import-order
 
 [format]
 

@@ -195,6 +195,7 @@ def get_argparser():
     list_projects.add_argument(
         "--format",
         default="{config.project_name}\n",
+        dest="fmt",
         help=(
             "Output format to print projects (str.format(config=project.config) is "
             "called on this for each project)."
@@ -351,7 +352,7 @@ def main(argv=None):
         wait_rv = zmake.executor.wait()
         return result or wait_rv
     finally:
-        multiproc.wait_for_log_end()
+        multiproc.LogWriter.wait_for_log_end()
 
 
 if __name__ == "__main__":

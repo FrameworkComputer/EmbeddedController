@@ -20,14 +20,19 @@ absolute_path = st.from_regex(regex=r"\A/[\w/]*\Z")
 class FakePacker(packers.BasePacker):
     """Fake packer to expose protected methods."""
 
-    def check_packed_file_size(self, file, dirs):
+    def __init__(self, max_size):
+        super().__init__(project=None)
+        self.max_size = max_size
+
+    def check_packed_file_size(self, file, dir_map):
         """Expose the _check_packed_file_size method."""
-        return self._check_packed_file_size(file, dirs)
+        return self._check_packed_file_size(file, dir_map)
 
-    def _get_max_image_bytes(self):
-        return 100
+    def _get_max_image_bytes(self, dir_map):
+        return self.max_size
 
-    def pack_firmware(self, work_dir, jobclient, version_string=""):
+    def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
+        del version_string
         assert False
 
 
@@ -35,34 +40,34 @@ class FakePacker(packers.BasePacker):
 @hypothesis.settings(deadline=60000)
 def test_file_size_unbounded(data):
     """Test with file size unbounded."""
-    packer = FakePacker(project=None)
+    packer = FakePacker(None)
     with tempfile.TemporaryDirectory() as temp_dir_name:
         file = pathlib.Path(temp_dir_name) / "zephyr.elf"
         with open(file, "wb") as outfile:
             outfile.write(data)
-        assert packer.check_packed_file_size(file=file, dirs={}) == file
+        assert packer.check_packed_file_size(file=file, dir_map={}) == file
 
 
 @hypothesis.given(st.binary(min_size=5, max_size=100))
 @hypothesis.settings(deadline=60000)
 def test_file_size_in_bounds(data):
     """Test with file size limited."""
-    packer = FakePacker(project=None)
+    packer = FakePacker(100)
     with tempfile.TemporaryDirectory() as temp_dir_name:
         file = pathlib.Path(temp_dir_name) / "zephyr.bin"
         with open(file, "wb") as outfile:
             outfile.write(data)
-        assert packer.check_packed_file_size(file=file, dirs={}) == file
+        assert packer.check_packed_file_size(file=file, dir_map={}) == file
 
 
 @hypothesis.given(st.binary(min_size=101, max_size=200))
 @hypothesis.settings(deadline=60000)
 def test_file_size_out_of_bounds(data):
     """Test with file size limited, and file exceeds limit."""
-    packer = FakePacker(project=None)
+    packer = FakePacker(100)
     with tempfile.TemporaryDirectory() as temp_dir_name:
         file = pathlib.Path(temp_dir_name) / "zephyr.bin"
         with open(file, "wb") as outfile:
             outfile.write(data)
         with pytest.raises(RuntimeError):
-            packer.check_packed_file_size(file=file, dirs={})
+            packer.check_packed_file_size(file=file, dir_map={})

@@ -1,11 +1,6 @@
 # Copyright 2020 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-import collections
-import logging
-import os
-import select
-import threading
 
 """Zmake multiprocessing utility module.
 
@@ -15,22 +10,16 @@ process does not need to finish before the output is available to the developer
 on the screen.
 """
 
-# A local pipe use to signal the look that a new file descriptor was added and
-# should be included in the select statement.
-_logging_interrupt_pipe = os.pipe()
-# A condition variable used to synchronize logging operations.
-_logging_cv = threading.Condition()
-# A map of file descriptors to their LogWriter
-_logging_map = {}
+import collections
+import io
+import logging
+import os
+import select
+import threading
+from typing import Any, ClassVar, Dict, List
+
 # Should we log job names or not
-log_job_names = True
-
-
-def reset():
-    """Reset this module to its starting state (useful for tests)"""
-    global _logging_map
-
-    _logging_map = {}
+LOG_JOB_NAMES = True
 
 
 class LogWriter:
@@ -52,7 +41,22 @@ class LogWriter:
         _file_descriptor: The file descriptor being logged.
     """
 
-    def __init__(
+    # A local pipe use to signal the look that a new file descriptor was added and
+    # should be included in the select statement.
+    _logging_interrupt_pipe = os.pipe()
+    # A condition variable used to synchronize logging operations.
+    _logging_cv = threading.Condition()
+    # A map of file descriptors to their LogWriter
+    _logging_map: ClassVar[Dict[io.TextIOBase, "LogWriter"]] = {}
+    # The thread that handles the reading from pipes and writing to log.
+    _logging_thread = None
+
+    @classmethod
+    def reset(cls):
+        """Reset this module to its starting state (useful for tests)"""
+        LogWriter._logging_map.clear()
+
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         logger,
         log_level,
@@ -89,7 +93,7 @@ class LogWriter:
             # greatly simplifies the logic that is needed to update the log
             # level.
             self._log_level = self._override_func(line, self._log_level)
-        if self._job_id and log_job_names:
+        if self._job_id and LOG_JOB_NAMES:
             self._logger.log(self._log_level, "[%s]%s", self._job_id, line)
         else:
             self._logger.log(self._log_level, line)
@@ -111,141 +115,150 @@ class LogWriter:
 
         This method will block execution until all the logs have been flushed out.
         """
-        with _logging_cv:
-            _logging_cv.wait_for(lambda: self._file_descriptor not in _logging_map)
+        with LogWriter._logging_cv:
+            LogWriter._logging_cv.wait_for(
+                lambda: self._file_descriptor not in LogWriter._logging_map
+            )
         if self._tee_output:
             self._tee_output.close()
             self._tee_output = None
 
+    @classmethod
+    def _log_fd(cls, file_descriptor: io.TextIOBase):
+        """Log information from a single file descriptor.
 
-def _log_fd(fd):
-    """Log information from a single file descriptor.
+        This function is BLOCKING. It will read from the given file descriptor until
+        either the end of line is read or EOF. Once EOF is read it will remove the
+        file descriptor from _logging_map so it will no longer be used.
+        Additionally, in some cases, the file descriptor will be closed (caused by
+        a call to Popen.wait()). In these cases, the file descriptor will also be
+        removed from the map as it is no longer valid.
+        """
+        with LogWriter._logging_cv:
+            writer = LogWriter._logging_map[file_descriptor]
+            if file_descriptor.closed:
+                del LogWriter._logging_map[file_descriptor]
+                LogWriter._logging_cv.notify_all()
+                return
+            line = file_descriptor.readline()
+            if not line:
+                # EOF
+                del LogWriter._logging_map[file_descriptor]
+                LogWriter._logging_cv.notify_all()
+                return
+            line = line.rstrip("\n")
+            if line:
+                writer.log_line(line)
 
-    This function is BLOCKING. It will read from the given file descriptor until
-    either the end of line is read or EOF. Once EOF is read it will remove the
-    file descriptor from _logging_map so it will no longer be used.
-    Additionally, in some cases, the file descriptor will be closed (caused by
-    a call to Popen.wait()). In these cases, the file descriptor will also be
-    removed from the map as it is no longer valid.
-    """
-    with _logging_cv:
-        writer = _logging_map[fd]
-        if fd.closed:
-            del _logging_map[fd]
-            _logging_cv.notify_all()
-            return
-        line = fd.readline()
-        if not line:
-            # EOF
-            del _logging_map[fd]
-            _logging_cv.notify_all()
-            return
-        line = line.rstrip("\n")
-        if line:
-            writer.log_line(line)
+    @classmethod
+    def _prune_logging_fds(cls):
+        """Prune the current file descriptors under _logging_map.
 
+        This function will iterate over the logging map and check for closed file
+        descriptors. Every closed file descriptor will be removed.
+        """
+        with LogWriter._logging_cv:
+            remove = [
+                file_descriptor
+                for file_descriptor in LogWriter._logging_map
+                if file_descriptor.closed
+            ]
+            for file_descriptor in remove:
+                del LogWriter._logging_map[file_descriptor]
+            if remove:
+                LogWriter._logging_cv.notify_all()
 
-def _prune_logging_fds():
-    """Prune the current file descriptors under _logging_map.
+    @classmethod
+    def _logging_loop(cls):
+        """The primary logging thread loop.
 
-    This function will iterate over the logging map and check for closed file
-    descriptors. Every closed file descriptor will be removed.
-    """
-    with _logging_cv:
-        remove = [fd for fd in _logging_map.keys() if fd.closed]
-        for fd in remove:
-            del _logging_map[fd]
-        if remove:
-            _logging_cv.notify_all()
+        This is the entry point of the logging thread. It will listen for (1) any
+        new data on the output file descriptors that were added via log_output() and
+        (2) any new file descriptors being added by log_output(). Once a file
+        descriptor is ready to be read, this function will call _log_fd to perform
+        the actual read and logging.
+        """
+        while True:
+            with LogWriter._logging_cv:
+                LogWriter._logging_cv.wait_for(lambda: LogWriter._logging_map)
+                keys: List[Any] = list(LogWriter._logging_map.keys())
+                keys.append(LogWriter._logging_interrupt_pipe[0])
+            try:
+                fds, _, _ = select.select(keys, [], [])
+            except ValueError:
+                # One of the file descriptors must be closed, prune them and try
+                # again.
+                LogWriter._prune_logging_fds()
+                continue
+            if LogWriter._logging_interrupt_pipe[0] in fds:
+                # We got a sentinel byte sent by log_output(), this is a signal used to
+                # break out of the blocking select.select call to tell us that the
+                # file descriptor set has changed. We just need to read the byte and
+                # remove this descriptor from the list. If we actually have data
+                # that should be read it will be read in the for loop below.
+                os.read(LogWriter._logging_interrupt_pipe[0], 1)
+                fds.remove(LogWriter._logging_interrupt_pipe[0])
+            for file in fds:
+                LogWriter._log_fd(file)
 
+    @classmethod
+    def log_output(  # pylint: disable=too-many-arguments
+        cls,
+        logger,
+        log_level,
+        file_descriptor,
+        log_level_override_func=None,
+        job_id=None,
+        tee_output=None,
+    ):
+        """Log the output from the given file descriptor.
 
-def _logging_loop():
-    """The primary logging thread loop.
+        Args:
+            logger: The logger object to use.
+            log_level: The logging level to use.
+            file_descriptor: The file descriptor to read from.
+            log_level_override_func: A function used to override the log level. The
+            function will be called once per line prior to logging and will be
+            passed the arguments of the line and the default log level.
 
-    This is the entry point of the logging thread. It will listen for (1) any
-    new data on the output file descriptors that were added via log_output() and
-    (2) any new file descriptors being added by log_output(). Once a file
-    descriptor is ready to be read, this function will call _log_fd to perform
-    the actual read and logging.
-    """
-    while True:
-        with _logging_cv:
-            _logging_cv.wait_for(lambda: _logging_map)
-            keys = list(_logging_map.keys()) + [_logging_interrupt_pipe[0]]
-        try:
-            fds, _, _ = select.select(keys, [], [])
-        except ValueError:
-            # One of the file descriptors must be closed, prune them and try
-            # again.
-            _prune_logging_fds()
-            continue
-        if _logging_interrupt_pipe[0] in fds:
-            # We got a dummy byte sent by log_output(), this is a signal used to
-            # break out of the blocking select.select call to tell us that the
-            # file descriptor set has changed. We just need to read the byte and
-            # remove this descriptor from the list. If we actually have data
-            # that should be read it will be read in the for loop below.
-            os.read(_logging_interrupt_pipe[0], 1)
-            fds.remove(_logging_interrupt_pipe[0])
-        for fd in fds:
-            _log_fd(fd)
+        Returns:
+            LogWriter object for the resulting output
+        """
+        with LogWriter._logging_cv:
+            if (
+                LogWriter._logging_thread is None
+                or not LogWriter._logging_thread.is_alive()
+            ):
+                # First pass or thread must have died, create a new one.
+                LogWriter._logging_thread = threading.Thread(
+                    target=LogWriter._logging_loop, daemon=True
+                )
+                LogWriter._logging_thread.start()
 
+            writer = LogWriter(
+                logger,
+                log_level,
+                log_level_override_func,
+                job_id,
+                file_descriptor,
+                tee_output=tee_output,
+            )
+            LogWriter._logging_map[file_descriptor] = writer
+            # Write a sentinel byte to the pipe to break the select so we can add the
+            # new fd.
+            os.write(LogWriter._logging_interrupt_pipe[1], b"x")
+            # Notify the condition so we can run the select on the current fds.
+            LogWriter._logging_cv.notify_all()
+        return writer
 
-_logging_thread = None
+    @classmethod
+    def wait_for_log_end(cls):
+        """Wait for all the logs to be printed.
 
-
-def log_output(
-    logger,
-    log_level,
-    file_descriptor,
-    log_level_override_func=None,
-    job_id=None,
-    tee_output=None,
-):
-    """Log the output from the given file descriptor.
-
-    Args:
-        logger: The logger object to use.
-        log_level: The logging level to use.
-        file_descriptor: The file descriptor to read from.
-        log_level_override_func: A function used to override the log level. The
-          function will be called once per line prior to logging and will be
-          passed the arguments of the line and the default log level.
-
-    Returns:
-        LogWriter object for the resulting output
-    """
-    with _logging_cv:
-        global _logging_thread
-        if _logging_thread is None or not _logging_thread.is_alive():
-            # First pass or thread must have died, create a new one.
-            _logging_thread = threading.Thread(target=_logging_loop, daemon=True)
-            _logging_thread.start()
-
-        writer = LogWriter(
-            logger,
-            log_level,
-            log_level_override_func,
-            job_id,
-            file_descriptor,
-            tee_output=tee_output,
-        )
-        _logging_map[file_descriptor] = writer
-        # Write a dummy byte to the pipe to break the select so we can add the
-        # new fd.
-        os.write(_logging_interrupt_pipe[1], b"x")
-        # Notify the condition so we can run the select on the current fds.
-        _logging_cv.notify_all()
-    return writer
-
-
-def wait_for_log_end():
-    """Wait for all the logs to be printed.
-
-    This method will block execution until all the logs have been flushed out.
-    """
-    with _logging_cv:
-        _logging_cv.wait_for(lambda: not _logging_map)
+        This method will block execution until all the logs have been flushed out.
+        """
+        with LogWriter._logging_cv:
+            LogWriter._logging_cv.wait_for(lambda: not LogWriter._logging_map)
 
 
 class Executor:
@@ -315,8 +328,8 @@ class Executor:
         """
         try:
             result = func()
-        except Exception as ex:
-            self.logger.exception(ex)
+        except Exception as e:  # pylint: disable=broad-except
+            self.logger.exception(e)
             result = -1
         with self.lock:
             self.results.append(result)

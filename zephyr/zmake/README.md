@@ -85,7 +85,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake list-projects
 
-**Usage:** `zmake list-projects [-h] [--format FORMAT] [search_dir]`
+**Usage:** `zmake list-projects [-h] [--format FMT] [search_dir]`
 
 #### Positional Arguments
 
@@ -98,7 +98,7 @@ Chromium OS's meta-build tool for Zephyr
 |   |   |
 |---|---|
 | `-h`, `--help` | show this help message and exit |
-| `--format FORMAT` | Output format to print projects (str.format(config=project.config) is called on this for each project). |
+| `--format FMT` | Output format to print projects (str.format(config=project.config) is called on this for each project). |
 
 ### zmake test
 

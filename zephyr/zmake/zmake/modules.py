@@ -95,5 +95,4 @@ def setup_module_symlinks(output_dir, modules):
         return build_config.BuildConfig(
             cmake_defs={"ZEPHYR_MODULES": ";".join(map(str, module_links))}
         )
-    else:
-        return build_config.BuildConfig()
+    return build_config.BuildConfig()

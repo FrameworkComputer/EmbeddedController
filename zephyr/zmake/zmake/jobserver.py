@@ -35,7 +35,8 @@ class JobClient:
         """Claim a job."""
         raise NotImplementedError("Abstract method not implemented")
 
-    def env(self):
+    @staticmethod
+    def env():
         """Get the environment variables necessary to share the job server."""
         return {}
 
@@ -54,35 +55,10 @@ class JobClient:
         logger.debug("Running %s", zmake.util.repr_command(argv))
         return subprocess.Popen(argv, **kwargs)
 
-    def run(self, *args, claim_job=True, **kwargs):
-        """Run a process using subprocess.run, optionally claiming a job.
-
-        Args:
-            claim_job: True if a job should be claimed.
-
-        All other arguments are passed to subprocess.run.
-
-        Returns:
-            A CompletedProcess object.
-        """
-        if claim_job:
-            with self.get_job():
-                return self.run(*args, claim_job=False, **kwargs)
-
-        kwargs.setdefault("env", os.environ)
-        kwargs["env"].update(self.env())
-
-        return subprocess.run(*args, **kwargs)
-
-
-class JobServer(JobClient):
-    """Abstract Job Server."""
-
-    def __init__(self, jobs=0):
-        raise NotImplementedError("Abstract method not implemented")
-
 
 class GNUMakeJobClient(JobClient):
+    """A job client for GNU make."""
+
     def __init__(self, read_fd, write_fd):
         self._pipe = [read_fd, write_fd]
 
@@ -127,7 +103,7 @@ class GNUMakeJobClient(JobClient):
         return {"MAKEFLAGS": "--jobserver-auth={},{}".format(*self._pipe)}
 
 
-class GNUMakeJobServer(JobServer, GNUMakeJobClient):
+class GNUMakeJobServer(GNUMakeJobClient):
     """Implements a GNU Make POSIX Job Server.
 
     See https://www.gnu.org/software/make/manual/html_node/POSIX-Jobserver.html
@@ -135,10 +111,11 @@ class GNUMakeJobServer(JobServer, GNUMakeJobClient):
     """
 
     def __init__(self, jobs=0):
+        [read_fd, write_fd] = os.pipe()
+        super().__init__(read_fd, write_fd)
         if not jobs:
             jobs = multiprocessing.cpu_count()
         elif jobs > select.PIPE_BUF:
             jobs = select.PIPE_BUF
 
-        self._pipe = os.pipe()
         os.write(self._pipe[1], b"+" * jobs)

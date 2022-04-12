@@ -5,8 +5,11 @@
 import logging
 import shutil
 import subprocess
+from pathlib import Path
+from typing import Dict, Optional
 
 import zmake.build_config as build_config
+import zmake.jobserver
 import zmake.multiproc
 import zmake.util as util
 
@@ -17,7 +20,8 @@ class BasePacker:
     def __init__(self, project):
         self.project = project
 
-    def configs(self):
+    @staticmethod
+    def configs():
         """Get all of the build configurations necessary.
 
         Yields:
@@ -25,7 +29,13 @@ class BasePacker:
         """
         yield "singleimage", build_config.BuildConfig()
 
-    def pack_firmware(self, work_dir, jobclient, version_string=""):
+    def pack_firmware(
+        self,
+        work_dir,
+        jobclient: zmake.jobserver.JobClient,
+        dir_map: Dict[str, Path],
+        version_string="",
+    ):
         """Pack a firmware image.
 
         Config names from the configs generator are passed as keyword
@@ -36,6 +46,7 @@ class BasePacker:
             work_dir: A directory to write outputs and temporary files
             into.
             jobclient: A JobClient object to use.
+            dir_map: A dict of build dirs such as {'ro': path_to_ro_dir}.
             version_string: The version string, which may end up in
                certain parts of the outputs.
 
@@ -46,44 +57,38 @@ class BasePacker:
         """
         raise NotImplementedError("Abstract method not implemented")
 
-    def _get_max_image_bytes(self):
+    @staticmethod
+    def _get_max_image_bytes(dir_map) -> Optional[int]:
         """Get the maximum allowed image size (in bytes).
 
         This value will generally be found in CONFIG_FLASH_SIZE but may vary
         depending on the specific way things are being packed.
 
-        Returns:
-            The maximum allowed size of the image in bytes.
-        """
-        raise NotImplementedError("Abstract method not implemented")
-
-    def _is_size_bound(self, path):
-        """Check whether the given path should be constrained by size.
-
-        Generally, .elf files will be unconstrained while .bin files will be
-        constrained.
-
         Args:
-            path: A file's path to test.
+            file: A file to test.
+            dir_map: A dict of build dirs such as {'ro': path_to_ro_dir}.
 
         Returns:
-            True if the file size should be checked. False otherwise.
+            The maximum allowed size of the image in bytes, or None if the size
+            is not limited.
         """
-        return path.suffix == ".bin"
+        del dir_map
 
-    def _check_packed_file_size(self, file, dirs):
+    def _check_packed_file_size(self, file, dir_map):
         """Check that a packed file passes size constraints.
 
         Args:
             file: A file to test.
-            dirs: A map of the arguments to pass to _get_max_image_bytes
+            dir_map: A dict of build dirs such as {'ro': path_to_ro_dir}.
+
 
         Returns:
             The file if it passes the test.
         """
-        if not self._is_size_bound(
-            file
-        ) or file.stat().st_size <= self._get_max_image_bytes(**dirs):
+        max_size = self._get_max_image_bytes(  # pylint: disable=assignment-from-none
+            dir_map
+        )
+        if max_size is None or file.stat().st_size <= max_size:
             return file
         raise RuntimeError("Output file ({}) too large".format(file))
 
@@ -91,15 +96,17 @@ class BasePacker:
 class ElfPacker(BasePacker):
     """Raw proxy for ELF output of a single build."""
 
-    def pack_firmware(self, work_dir, jobclient, singleimage, version_string=""):
-        yield singleimage / "zephyr" / "zephyr.elf", "zephyr.elf"
+    def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
+        del version_string
+        yield dir_map["singleimage"] / "zephyr" / "zephyr.elf", "zephyr.elf"
 
 
 class RawBinPacker(BasePacker):
     """Raw proxy for zephyr.bin output of a single build."""
 
-    def pack_firmware(self, work_dir, jobclient, singleimage, version_string=""):
-        yield singleimage / "zephyr" / "zephyr.bin", "zephyr.bin"
+    def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
+        del version_string
+        yield dir_map["singleimage"] / "zephyr" / "zephyr.bin", "zephyr.bin"
 
 
 class BinmanPacker(BasePacker):
@@ -116,7 +123,9 @@ class BinmanPacker(BasePacker):
         yield "ro", build_config.BuildConfig(kconfig_defs={"CONFIG_CROS_EC_RO": "y"})
         yield "rw", build_config.BuildConfig(kconfig_defs={"CONFIG_CROS_EC_RW": "y"})
 
-    def pack_firmware(self, work_dir, jobclient, ro, rw, version_string=""):
+    def pack_firmware(
+        self, work_dir, jobclient: zmake.jobserver.JobClient, dir_map, version_string=""
+    ):
         """Pack RO and RW sections using Binman.
 
         Binman configuration is expected to be found in the RO build
@@ -125,8 +134,7 @@ class BinmanPacker(BasePacker):
         Args:
             work_dir: The directory used for packing.
             jobclient: The client used to run subprocesses.
-            ro: Directory containing the RO image build.
-            rw: Directory containing the RW image build.
+            dir_map: A dict of build dirs such as {'ro': path_to_ro_dir}.
             version_string: The version string to use in FRID/FWID.
 
         Yields:
@@ -134,12 +142,14 @@ class BinmanPacker(BasePacker):
             should be copied into the output directory, and the output
             filename.
         """
-        dts_file_path = ro / "zephyr" / "zephyr.dts"
+        ro_dir = dir_map["ro"]
+        rw_dir = dir_map["rw"]
+        dts_file_path = ro_dir / "zephyr" / "zephyr.dts"
 
         # Copy the inputs into the work directory so that Binman can
         # find them under a hard-coded name.
-        shutil.copy2(ro / "zephyr" / self.ro_file, work_dir / "zephyr_ro.bin")
-        shutil.copy2(rw / "zephyr" / self.rw_file, work_dir / "zephyr_rw.bin")
+        shutil.copy2(ro_dir / "zephyr" / self.ro_file, work_dir / "zephyr_ro.bin")
+        shutil.copy2(rw_dir / "zephyr" / self.rw_file, work_dir / "zephyr_rw.bin")
 
         # Version in FRID/FWID can be at most 31 bytes long (32, minus
         # one for null character).
@@ -166,14 +176,14 @@ class BinmanPacker(BasePacker):
             encoding="utf-8",
         )
 
-        zmake.multiproc.log_output(self.logger, logging.DEBUG, proc.stdout)
-        zmake.multiproc.log_output(self.logger, logging.ERROR, proc.stderr)
+        zmake.multiproc.LogWriter.log_output(self.logger, logging.DEBUG, proc.stdout)
+        zmake.multiproc.LogWriter.log_output(self.logger, logging.ERROR, proc.stderr)
         if proc.wait(timeout=60):
             raise OSError("Failed to run binman")
 
         yield work_dir / "zephyr.bin", "zephyr.bin"
-        yield ro / "zephyr" / "zephyr.elf", "zephyr.ro.elf"
-        yield rw / "zephyr" / "zephyr.elf", "zephyr.rw.elf"
+        yield ro_dir / "zephyr" / "zephyr.elf", "zephyr.ro.elf"
+        yield rw_dir / "zephyr" / "zephyr.elf", "zephyr.rw.elf"
 
 
 class NpcxPacker(BinmanPacker):
@@ -187,37 +197,39 @@ class NpcxPacker(BinmanPacker):
     ro_file = "zephyr.npcx.bin"
     npcx_monitor = "npcx_monitor.bin"
 
-    def _get_max_image_bytes(self, ro, rw):
+    def _get_max_image_bytes(self, dir_map):
+        ro_dir = dir_map["ro"]
+        rw_dir = dir_map["rw"]
         ro_size = util.read_kconfig_autoconf_value(
-            ro / "zephyr" / "include" / "generated",
+            ro_dir / "zephyr" / "include" / "generated",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         rw_size = util.read_kconfig_autoconf_value(
-            ro / "zephyr" / "include" / "generated",
+            rw_dir / "zephyr" / "include" / "generated",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         return max(int(ro_size, 0), int(rw_size, 0))
 
     # This can probably be removed too and just rely on binman to
     # check the sizes... see the comment above.
-    def pack_firmware(self, work_dir, jobclient, ro, rw, version_string=""):
+    def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
+        ro_dir = dir_map["ro"]
         for path, output_file in super().pack_firmware(
             work_dir,
             jobclient,
-            ro,
-            rw,
+            dir_map,
             version_string=version_string,
         ):
             if output_file == "zephyr.bin":
                 yield (
-                    self._check_packed_file_size(path, {"ro": ro, "rw": rw}),
+                    self._check_packed_file_size(path, dir_map),
                     "zephyr.bin",
                 )
             else:
                 yield path, output_file
 
         # Include the NPCX monitor file as an output artifact.
-        yield ro / self.npcx_monitor, self.npcx_monitor
+        yield ro_dir / self.npcx_monitor, self.npcx_monitor
 
 
 # A dictionary mapping packer config names to classes.

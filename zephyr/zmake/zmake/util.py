@@ -74,8 +74,8 @@ def read_kconfig_file(path):
         A dictionary of kconfig items to their values.
     """
     result = {}
-    with open(path) as f:
-        for line in f:
+    with open(path) as file:
+        for line in file:
             line, _, _ = line.partition("#")
             line = line.strip()
             if line:
@@ -95,11 +95,12 @@ def read_kconfig_autoconf_value(path, key):
         The value associated with the key or nothing if the key wasn't found.
     """
     prog = re.compile(r"^#define\s{}\s(\S+)$".format(key))
-    with open(path / "autoconf.h") as f:
-        for line in f:
-            m = prog.match(line)
-            if m:
-                return m.group(1)
+    with open(path / "autoconf.h") as file:
+        for line in file:
+            match = prog.match(line)
+            if match:
+                return match.group(1)
+    return None
 
 
 def write_kconfig_file(path, config, only_if_changed=True):
@@ -114,9 +115,9 @@ def write_kconfig_file(path, config, only_if_changed=True):
     if only_if_changed:
         if path.exists() and read_kconfig_file(path) == config:
             return
-    with open(path, "w") as f:
+    with open(path, "w") as file:
         for name, value in config.items():
-            f.write("{}={}\n".format(name, value))
+            file.write("{}={}\n".format(name, value))
 
 
 def read_zephyr_version(zephyr_base):
@@ -131,9 +132,9 @@ def read_zephyr_version(zephyr_base):
     version_file = pathlib.Path(zephyr_base) / "VERSION"
 
     file_vars = {}
-    with open(version_file) as f:
-        for line in f:
-            key, sep, value = line.partition("=")
+    with open(version_file) as file:
+        for line in file:
+            key, _, value = line.partition("=")
             file_vars[key.strip()] = value.strip()
 
     return (

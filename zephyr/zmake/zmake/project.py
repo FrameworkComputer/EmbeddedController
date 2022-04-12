@@ -6,11 +6,12 @@
 import dataclasses
 import logging
 import pathlib
-from typing import Callable, Dict, List
+import typing
 
 import zmake.build_config as build_config
 import zmake.configlib as configlib
 import zmake.modules
+import zmake.output_packers
 import zmake.toolchains as toolchains
 
 
@@ -29,11 +30,14 @@ def module_dts_overlay_name(modpath, board_name):
 
 @dataclasses.dataclass
 class ProjectConfig:
+    """All the information needed to define a project."""
+
+    # pylint: disable=too-many-instance-attributes
     project_name: str
     zephyr_board: str
     supported_toolchains: "list[str]"
     output_packer: type
-    modules: "list[str]" = dataclasses.field(
+    modules: "dict[str, typing.Any]" = dataclasses.field(
         default_factory=lambda: zmake.modules.known_modules,
     )
     is_test: bool = dataclasses.field(default=False)
@@ -48,7 +52,7 @@ class Project:
 
     def __init__(self, config: ProjectConfig):
         self.config = config
-        self.packer = self.config.output_packer(self)
+        self.packer: zmake.output_packers.BasePacker = self.config.output_packer(self)
 
     def iter_builds(self):
         """Iterate thru the build combinations provided by the project's packer.
@@ -94,8 +98,7 @@ class Project:
             return build_config.BuildConfig(
                 cmake_defs={"DTC_OVERLAY_FILE": ";".join(map(str, overlays))}
             )
-        else:
-            return build_config.BuildConfig()
+        return build_config.BuildConfig()
 
     def prune_modules(self, module_paths):
         """Reduce a modules dict to the ones required by this project.
@@ -129,6 +132,7 @@ class Project:
         return result
 
     def get_toolchain(self, module_paths, override=None):
+        """Get the first supported toolchain that is actually available."""
         if override:
             if override not in self.config.supported_toolchains:
                 logging.warning(
@@ -139,19 +143,18 @@ class Project:
                 override, toolchains.GenericToolchain
             )
             return support_class(name=override, modules=module_paths)
-        else:
-            for name in self.config.supported_toolchains:
-                support_class = toolchains.support_classes[name]
-                toolchain = support_class(name=name, modules=module_paths)
-                if toolchain.probe():
-                    logging.info("Toolchain %r selected by probe function.", toolchain)
-                    return toolchain
-            raise OSError(
-                "No supported toolchains could be found on your system. If you see "
-                "this message in the chroot, it indicates a bug. Otherwise, you'll "
-                "either want to setup your system with a supported toolchain, or "
-                "manually select an unsupported toolchain with the -t flag."
-            )
+        for name in self.config.supported_toolchains:
+            support_class = toolchains.support_classes[name]
+            toolchain = support_class(name=name, modules=module_paths)
+            if toolchain.probe():
+                logging.info("Toolchain %r selected by probe function.", toolchain)
+                return toolchain
+        raise OSError(
+            "No supported toolchains could be found on your system. If you see "
+            "this message in the chroot, it indicates a bug. Otherwise, you'll "
+            "either want to setup your system with a supported toolchain, or "
+            "manually select an unsupported toolchain with the -t flag."
+        )
 
 
 @dataclasses.dataclass
@@ -167,7 +170,7 @@ class ProjectRegistrationHandler:
     """
 
     base_config: ProjectConfig
-    register_func: Callable[[], "ProjectRegistrationHandler"]
+    register_func: typing.Callable[[], "ProjectRegistrationHandler"]
 
     def variant(self, **kwargs) -> "ProjectRegistrationHandler":
         """Register a new variant based on the base config.
@@ -189,7 +192,7 @@ class ProjectRegistrationHandler:
         return self.register_func(**new_config)
 
 
-def load_config_file(path) -> List[Project]:
+def load_config_file(path) -> typing.List[Project]:
     """Load a BUILD.py config file and create associated projects.
 
     Args:
@@ -198,7 +201,7 @@ def load_config_file(path) -> List[Project]:
     Returns:
         A list of Project objects specified by the file.
     """
-    projects: List[Project] = []
+    projects: typing.List[Project] = []
 
     def register_project(**kwargs) -> ProjectRegistrationHandler:
         config = ProjectConfig(**kwargs)
@@ -220,17 +223,17 @@ def load_config_file(path) -> List[Project]:
         configlib.__file__,
         "exec",
     )
-    exec(code, config_globals)
+    exec(code, config_globals)  # pylint: disable=exec-used
 
     # Next, load the BUILD.py
     logging.debug("Loading config file %s", path)
     code = compile(path.read_bytes(), str(path), "exec")
-    exec(code, config_globals)
+    exec(code, config_globals)  # pylint: disable=exec-used
     logging.debug("Config file %s defines %s projects", path, len(projects))
     return projects
 
 
-def find_projects(root_dir) -> Dict[str, Project]:
+def find_projects(root_dir) -> typing.Dict[str, Project]:
     """Finds all zmake projects in root_dir.
 
     Args:
