@@ -1018,8 +1018,8 @@ static const struct ec_thermal_config thermal_cpu = {
 		[EC_TEMP_THRESH_HIGH] = 0,
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(55),
-	.temp_fan_max = C_TO_K(98),
+	.temp_fan_off = C_TO_K(103),
+	.temp_fan_max = C_TO_K(105),
 };
 #endif
 
