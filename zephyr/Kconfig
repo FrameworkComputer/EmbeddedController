@@ -549,8 +549,11 @@ config PLATFORM_EC_PWM_HC
 	  Enable the PWM (Pulse Width Modulation) host command support. This
 	  implements EC_CMD_PWM_SET_DUTY and EC_CMD_PWM_GET_DUTY.
 
+DT_COMPAT_CROS_EC_DISPLIGHT := cros-ec,displight
+
 config PLATFORM_EC_PWM_DISPLIGHT
 	bool "PWM display backlight"
+	default $(dt_compat_enabled,$(DT_COMPAT_CROS_EC_DISPLIGHT))
 	select PLATFORM_EC_PWM_HC
 	help
 	  Enables display backlight controlled by a PWM signal connected
