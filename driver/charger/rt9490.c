@@ -264,7 +264,7 @@ static inline int rt9490_enable_jeita(int chgnum, bool en)
 			      en ? MASK_CLR : MASK_SET);
 }
 
-static inline int rt9490_enable_adc(int chgnum, bool en)
+int rt9490_enable_adc(int chgnum, bool en)
 {
 	return rt9490_update8(chgnum, RT9490_REG_ADC_CTRL, RT9490_ADC_EN,
 			      en ? MASK_SET : MASK_CLR);
