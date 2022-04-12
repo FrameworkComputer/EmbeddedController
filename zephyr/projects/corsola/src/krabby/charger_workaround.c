@@ -22,8 +22,9 @@ static void enter_hidden_mode(void)
 /* b/194967754#comment5: work around for IBUS ADC unstable issue */
 static void ibus_adc_workaround(void)
 {
-	if (system_get_board_version() != 0)
+	if (system_get_board_version() != 0) {
 		return;
+	}
 
 	i2c_update8(chg_chips[CHARGER_SOLO].i2c_port,
 		    chg_chips[CHARGER_SOLO].i2c_addr_flags,

@@ -22,10 +22,11 @@ static void board_i2c3_ctrl(bool enable)
 			(struct gctrl_it8xxx2_regs *)
 				DT_REG_ADDR(DT_NODELABEL(gctrl));
 
-		if (enable)
+		if (enable) {
 			gctrl_base->GCTRL_PMER3 |= IT8XXX2_GCTRL_SMB3PSEL;
-		else
+		} else {
 			gctrl_base->GCTRL_PMER3 &= ~IT8XXX2_GCTRL_SMB3PSEL;
+		}
 	}
 }
 

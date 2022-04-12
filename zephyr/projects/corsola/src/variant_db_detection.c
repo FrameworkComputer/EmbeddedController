@@ -55,13 +55,15 @@ enum corsola_db_type corsola_get_db_type(void)
 {
 	static enum corsola_db_type db = CORSOLA_DB_NONE;
 
-	if (db != CORSOLA_DB_NONE)
+	if (db != CORSOLA_DB_NONE) {
 		return db;
+	}
 
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hdmi_prsnt_odl)))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hdmi_prsnt_odl))) {
 		db = CORSOLA_DB_HDMI;
-	else
+	} else {
 		db = CORSOLA_DB_TYPEC;
+	}
 
 	corsola_db_config(db);
 

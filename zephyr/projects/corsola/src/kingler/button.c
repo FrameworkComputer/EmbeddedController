@@ -14,8 +14,9 @@ static void buttons_hook(void)
 {
 	int version;
 
-	if (cbi_get_board_version(&version))
+	if (cbi_get_board_version(&version)) {
 		return;
+	}
 
 	/* b:219891339: drop this workaround when we deprecate rev0 */
 	if (version == 0) {

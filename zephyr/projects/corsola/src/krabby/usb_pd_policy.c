@@ -27,13 +27,15 @@ int pd_snk_is_vbus_provided(int port)
 	 * There's no PPC to inform VBUS change for usb_charger, so inform
 	 * the usb_charger now.
 	 */
-	if (!!(vbus_prev[port] != vbus))
+	if (!!(vbus_prev[port] != vbus)) {
 		usb_charger_vbus_change(port, vbus);
+	}
 
-	if (vbus)
+	if (vbus) {
 		atomic_or(&vbus_prev[port], 1);
-	else
+	} else {
 		atomic_clear(&vbus_prev[port]);
+	}
 #endif
 	return vbus;
 }
@@ -48,8 +50,9 @@ void pd_power_supply_reset(int port)
 	ppc_vbus_source_enable(port, 0);
 
 	/* Enable discharge if we were previously sourcing 5V */
-	if (prev_en)
+	if (prev_en) {
 		pd_set_vbus_discharge(port, 1);
+	}
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -61,15 +64,17 @@ int pd_set_power_supply_ready(int port)
 
 	/* Disable charging. */
 	rv = ppc_vbus_sink_enable(port, 0);
-	if (rv)
+	if (rv) {
 		return rv;
+	}
 
 	pd_set_vbus_discharge(port, 0);
 
 	/* Provide Vbus. */
 	rv = ppc_vbus_source_enable(port, 1);
-	if (rv)
+	if (rv) {
 		return rv;
+	}
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);

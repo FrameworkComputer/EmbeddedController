@@ -128,17 +128,19 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	if (led_id == EC_LED_ID_BATTERY_LED) {
-		if (brightness[EC_LED_COLOR_AMBER] != 0)
+		if (brightness[EC_LED_COLOR_AMBER] != 0) {
 			led_set_color_battery(EC_LED_COLOR_AMBER);
-		else if (brightness[EC_LED_COLOR_WHITE] != 0)
+		} else if (brightness[EC_LED_COLOR_WHITE] != 0) {
 			led_set_color_battery(EC_LED_COLOR_WHITE);
-		else
+		} else {
 			led_set_color_battery(LED_OFF);
+		}
 	} else if (led_id == EC_LED_ID_POWER_LED) {
-		if (brightness[EC_LED_COLOR_WHITE] != 0)
+		if (brightness[EC_LED_COLOR_WHITE] != 0) {
 			led_set_color_power(EC_LED_COLOR_WHITE);
-		else
+		} else {
 			led_set_color_power(LED_OFF);
+		}
 	}
 
 	return EC_SUCCESS;

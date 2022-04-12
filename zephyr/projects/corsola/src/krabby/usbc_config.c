@@ -43,9 +43,10 @@ void c0_bc12_interrupt(enum gpio_signal signal)
 
 static void board_sub_bc12_init(void)
 {
-	if (corsola_get_db_type() == CORSOLA_DB_HDMI)
+	if (corsola_get_db_type() == CORSOLA_DB_HDMI) {
 		/* If this is not a Type-C subboard, disable the task. */
 		task_disable_task(TASK_ID_USB_CHG_P1);
+	}
 }
 /* Must be done after I2C and subboard */
 DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_POST_I2C);
@@ -58,18 +59,21 @@ DECLARE_HOOK(HOOK_INIT, board_usbc_init, HOOK_PRIO_POST_DEFAULT);
 
 void ppc_interrupt(enum gpio_signal signal)
 {
-	if (signal == GPIO_SIGNAL(DT_ALIAS(gpio_usb_c1_ppc_int_odl)))
+	if (signal == GPIO_SIGNAL(DT_ALIAS(gpio_usb_c1_ppc_int_odl))) {
 		syv682x_interrupt(1);
+	}
 }
 
 int ppc_get_alert_status(int port)
 {
-	if (port == 0)
+	if (port == 0) {
 		return gpio_pin_get_dt(
 			GPIO_DT_FROM_NODELABEL(usb_c0_ppc_bc12_int_odl)) == 0;
-	if (port == 1 && corsola_get_db_type() == CORSOLA_DB_TYPEC)
+	}
+	if (port == 1 && corsola_get_db_type() == CORSOLA_DB_TYPEC) {
 		return gpio_pin_get_dt(
 			GPIO_DT_FROM_ALIAS(gpio_usb_c1_ppc_int_odl)) == 0;
+	}
 
 	return 0;
 }
@@ -118,8 +122,9 @@ int board_set_active_charge_port(int port)
 	int i;
 	int is_valid_port = (port >= 0 && port < board_get_usb_pd_port_count());
 
-	if (!is_valid_port && port != CHARGE_PORT_NONE)
+	if (!is_valid_port && port != CHARGE_PORT_NONE) {
 		return EC_ERROR_INVAL;
+	}
 
 	if (port == CHARGE_PORT_NONE) {
 		CPRINTS("Disabling all charger ports");
@@ -130,8 +135,9 @@ int board_set_active_charge_port(int port)
 			 * Do not return early if one fails otherwise we can
 			 * get into a boot loop assertion failure.
 			 */
-			if (ppc_vbus_sink_enable(i, 0))
+			if (ppc_vbus_sink_enable(i, 0)) {
 				CPRINTS("Disabling C%d as sink failed.", i);
+			}
 		}
 
 		return EC_SUCCESS;
@@ -150,11 +156,13 @@ int board_set_active_charge_port(int port)
 	 * requested charge port.
 	 */
 	for (i = 0; i < ppc_cnt; i++) {
-		if (i == port)
+		if (i == port) {
 			continue;
+		}
 
-		if (ppc_vbus_sink_enable(i, 0))
+		if (ppc_vbus_sink_enable(i, 0)) {
 			CPRINTS("C%d: sink path disable failed.", i);
+		}
 	}
 
 	/* Enable requested charge port. */
@@ -198,10 +206,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 #ifdef CONFIG_USB_PD_VBUS_MEASURE_ADC_EACH_PORT
 enum adc_channel board_get_vbus_adc(int port)
 {
-	if (port == 0)
+	if (port == 0) {
 		return  ADC_VBUS_C0;
-	if (port == 1)
+	}
+	if (port == 1) {
 		return  ADC_VBUS_C1;
+	}
 	CPRINTSUSB("Unknown vbus adc port id: %d", port);
 	return ADC_VBUS_C0;
 }

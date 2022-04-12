@@ -54,10 +54,11 @@ DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_PRE_DEFAULT);
 __override uint8_t board_get_usb_pd_port_count(void)
 {
 	if (corsola_get_db_type() == CORSOLA_DB_HDMI) {
-		if (tasks_inited)
+		if (tasks_inited) {
 			return CONFIG_USB_PD_PORT_MAX_COUNT;
-		else
+		} else {
 			return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
+		}
 	}
 
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
@@ -70,8 +71,9 @@ void usb_a0_interrupt(enum gpio_signal signal)
 		GPIO_DT_FROM_NODELABEL(gpio_ap_xhci_init_done)) ?
 		USB_CHARGE_MODE_ENABLED : USB_CHARGE_MODE_DISABLED;
 
-	for (int i = 0; i < USB_PORT_COUNT; i++)
+	for (int i = 0; i < USB_PORT_COUNT; i++) {
 		usb_charge_set_mode(i, mode, USB_ALLOW_SUSPEND_CHARGE);
+	}
 
 	/*
 	 * Trigger hard reset to cycle Vbus on Type-C ports, recommended by
@@ -79,8 +81,9 @@ void usb_a0_interrupt(enum gpio_signal signal)
 	 */
 	if (gpio_get_level(signal)) {
 		for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-			if (tc_is_attached_src(i))
+			if (tc_is_attached_src(i)) {
 				pd_dpm_request(i, DPM_REQUEST_HARD_RESET_SEND);
+			}
 		}
 	}
 }
@@ -112,14 +115,16 @@ static void ps185_hdmi_hpd_deferred(void)
 				GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd));
 
 	/* HPD status not changed, probably a glitch, just return. */
-	if (debounced_hpd == new_hpd)
+	if (debounced_hpd == new_hpd) {
 		return;
+	}
 
 	debounced_hpd = new_hpd;
 
 	if (!corsola_is_dp_muxable(USBC_PORT_C1)) {
-		if (debounced_hpd)
+		if (debounced_hpd) {
 			CPRINTS("C0 port is already muxed.");
+		}
 		return;
 	}
 
@@ -178,12 +183,13 @@ static void hdmi_hpd_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&ps185_hdmi_hpd_deferred_data, PS185_HPD_DEBOUCE);
 
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd)))
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd))) {
 		hook_call_deferred(&ps185_hdmi_hpd_disconnect_deferred_data,
 				   HPD_SINK_ABSENCE_DEBOUNCE);
-	else
+	} else {
 		hook_call_deferred(&ps185_hdmi_hpd_disconnect_deferred_data,
 				   -1);
+	}
 }
 
 /* HDMI/TYPE-C function shared subboard interrupt */
@@ -191,13 +197,14 @@ void x_ec_interrupt(enum gpio_signal signal)
 {
 	int sub = corsola_get_db_type();
 
-	if (sub == CORSOLA_DB_TYPEC)
+	if (sub == CORSOLA_DB_TYPEC) {
 		/* C1: PPC interrupt */
 		ppc_interrupt(signal);
-	else if (sub == CORSOLA_DB_HDMI)
+	} else if (sub == CORSOLA_DB_HDMI) {
 		hdmi_hpd_interrupt(signal);
-	else
+	} else {
 		CPRINTS("Undetected subboard interrupt.");
+	}
 }
 
 static void board_hdmi_handler(struct ap_power_ev_callback *cb,
@@ -278,10 +285,11 @@ DECLARE_HOOK(HOOK_INIT, baseboard_x_ec_gpio2_init, HOOK_PRIO_DEFAULT);
 __override uint8_t get_dp_pin_mode(int port)
 {
 	if (corsola_get_db_type() == CORSOLA_DB_HDMI && port == USBC_PORT_C1) {
-		if (usb_mux_get(USBC_PORT_C1) & USB_PD_MUX_DP_ENABLED)
+		if (usb_mux_get(USBC_PORT_C1) & USB_PD_MUX_DP_ENABLED) {
 			return MODE_DP_PIN_E;
-		else
+		} else {
 			return 0;
+		}
 	}
 
 	return pd_dfp_dp_get_pin_mode(port, dp_status[port]);

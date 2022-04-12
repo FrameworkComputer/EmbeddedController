@@ -23,15 +23,17 @@ void pd_power_supply_reset(int port)
 
 	prev_en = ppc_is_sourcing_vbus(port);
 
-	if (port == USBC_PORT_C1)
+	if (port == USBC_PORT_C1) {
 		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SOURCE, 0);
+	}
 
 	/* Disable VBUS. */
 	ppc_vbus_source_enable(port, 0);
 
 	/* Enable discharge if we were previously sourcing 5V */
-	if (prev_en)
+	if (prev_en) {
 		pd_set_vbus_discharge(port, 1);
+	}
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -44,18 +46,21 @@ int pd_set_power_supply_ready(int port)
 
 	/* Disable charging. */
 	rv = ppc_vbus_sink_enable(port, 0);
-	if (rv)
+	if (rv) {
 		return rv;
+	}
 
 	pd_set_vbus_discharge(port, 0);
 
 	/* Provide Vbus. */
-	if (port == USBC_PORT_C1)
+	if (port == USBC_PORT_C1) {
 		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_SOURCE, 1);
+	}
 
 	rv = ppc_vbus_source_enable(port, 1);
-	if (rv)
+	if (rv) {
 		return rv;
+	}
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
