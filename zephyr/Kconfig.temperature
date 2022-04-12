@@ -77,8 +77,11 @@ config PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY_MS
 
 endif # PLATFORM_EC_TEMP_SENSOR_FIRST_READ_DELAY
 
+DT_COMPAT_NAMED_FANS := named-fans
+
 config PLATFORM_EC_FAN
 	bool "Fan support"
+	default $(dt_compat_enabled,$(DT_COMPAT_NAMED_FANS))
 	help
 	  Enables support for fans. Allows periodic thermal task to
 	  automatically set the fan speed (control temperature).
