@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT named_fans
+#define DT_DRV_COMPAT cros_ec_fans
 
 #include <drivers/gpio.h>
 #include <drivers/pwm.h>
@@ -21,7 +21,7 @@
 LOG_MODULE_REGISTER(fan_shim, LOG_LEVEL_ERR);
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
-	     "Exactly one instance of named-fan should be defined.");
+	     "Exactly one instance of cros-ec,fans should be defined.");
 
 #define FAN_CONFIGS(node_id)                                                   \
 	const struct fan_conf node_id##_conf = {                               \

@@ -14,9 +14,9 @@
 #include <devicetree.h>
 #define NODE_ID_AND_COMMA(node_id) node_id,
 enum fan_channel {
-#if DT_NODE_EXISTS(DT_INST(0, named_fans))
-	DT_FOREACH_CHILD(DT_INST(0, named_fans), NODE_ID_AND_COMMA)
-#endif /* named_fans */
+#if DT_NODE_EXISTS(DT_INST(0, cros_ec_fans))
+	DT_FOREACH_CHILD(DT_INST(0, cros_ec_fans), NODE_ID_AND_COMMA)
+#endif /* cros_ec_fans */
 	FAN_CH_COUNT
 };
 

@@ -4,11 +4,10 @@
  */
 
 / {
-	named-fans {
-		compatible = "named-fans";
+	fans {
+		compatible = "cros-ec,fans";
 
 		fan_0 {
-			label = "FAN_0";
 			pwms = <&pwm3 0 PWM_POLARITY_NORMAL>;
 			pwm-frequency = <30000>;
 			rpm_min = <3000>;

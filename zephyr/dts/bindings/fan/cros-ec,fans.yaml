@@ -4,17 +4,11 @@
 
 description: Fan parent node
 
-compatible: "named-fans"
+compatible: "cros-ec,fans"
 
 child-binding:
-  description: Named fan's child node
+  description: Fan's child node
   properties:
-    label:
-      required: true
-      type: string
-      description:
-        Human-readable string describing the device (used as
-        device_get_binding() argument)
     rpm_min:
       required: true
       type: int

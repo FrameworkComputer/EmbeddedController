@@ -151,11 +151,10 @@
 		};
 	};
 
-	named-fans {
-		compatible = "named-fans";
+	fans {
+		compatible = "cros-ec,fans";
 
 		fan_0 {
-			label = "FAN_0";
 			pwms = <&pwm7 PWM_CHANNEL_7 PWM_POLARITY_NORMAL>;
 			pwm-frequency = <30000>;
 			tach = <&tach0>;
