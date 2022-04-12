@@ -1113,6 +1113,14 @@
  */
 #undef CONFIG_CHARGER_BQ25710_CMP_REF_1P2
 
+/*
+ * This config option is used to change the charger's independent comparator
+ * output polarity. The default setting is CMPIN is above internal threshold,
+ * CMPOUT is LOW (internal hysteresis).
+ */
+#undef CONFIG_CHARGER_BQ25710_CMP_POL_EXTERNAL
+
+
 /* Enable if CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG should be applied */
 #undef CONFIG_CHARGER_BQ25710_PKPWR_TOVLD_DEG_CUSTOM
 

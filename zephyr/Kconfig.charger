@@ -242,6 +242,15 @@ config PLATFORM_EC_CHARGER_BQ25710_CMP_REF_1P2
 	  voltage to 1.2 V. The power-on default is 2.3 V. This must be
 	  enabled if the board was designed for 1.2 V instead of 2.3 V.
 
+config PLATFORM_EC_CHARGER_BQ25710_CMP_POL_EXTERNAL
+	bool "independent comparator output polarity"
+	default n
+	depends on PLATFORM_EC_CHARGER_BQ25710 || PLATFORM_EC_CHARGER_BQ25720
+	help
+	  Set the CMP_POL register. When CMPIN is above internal threshold,
+	  CMPOUT is LOW setting value is 0. When CMPIN is below internal threshold,
+	  CMPOUT is LOW setting value is 1.
+
 config PLATFORM_EC_CHARGER_BQ25710_PKPWR_TOVLD_DEG_CUSTOM
 	bool "PKPWR_TOVLD_DEG override"
 	default n
