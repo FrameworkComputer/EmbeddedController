@@ -174,28 +174,16 @@ config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
 	    kblog	- Print or toggle keyboard event log (current disabled)
 	    typematic	- Get/set typematic delays
 
-choice PLATFORM_EC_KBLIGHT_MODE
-	prompt "Keyboard backlight"
-	optional
-	help
-	  Enable support for EC control of a keyboard backlight. This enables
-	  the "kblight" console command for manual control of the keyboard
-	  backlight. This also enables the EC_CMD_PWM_SET_KEYBOARD_BACKLIGHT and
-	  EC_CMD_PWM_GET_KEYBOARD_BACKLIGHT host commands for automatic control
-	  by the AP.
-
-	  TODO: support CONFIG_IO_EXPANDER_IT8801 driver which provides
-	  PWM keyboard support.
+DT_COMPAT_CROS_EC_KBLIGHT_PWM := cros-ec,kblight-pwm
 
 config PLATFORM_EC_PWM_KBLIGHT
 	bool "PWM keyboard backlight"
+	default $(dt_compat_enabled,$(DT_COMPAT_CROS_EC_KBLIGHT_PWM))
 	select PLATFORM_EC_PWM_HC
 	help
 	  Enables a PWM-controlled keyboard backlight controlled by a PWM signal
 	  connected directly to the EC chipset. The board devicetree file must
 	  define a "cros-ec,kblight-pwm" compatible device node.
-
-endchoice # PLATFORM_EC_KBLIGHT_MODE
 
 config PLATFORM_EC_KBLIGHT_ENABLE_PIN
 	bool "Keyboard backlight enable pin"
