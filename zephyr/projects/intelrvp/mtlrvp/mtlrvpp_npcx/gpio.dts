@@ -29,6 +29,7 @@
 		};
 		pm-slp-s3-n-ec {
 			gpios = <&gpiob 0 GPIO_INPUT>; /* 1.8V */
+			enum-name = "GPIO_PCH_SLP_S3_L";
 		};
 		pm-slp-s4-n-ec {
 			gpios = <&gpioa 5 GPIO_INPUT>; /* 1.8V */
@@ -116,10 +117,11 @@
 			enum-name = "GPIO_EN_PP3300_A";
 		};
 		pch-pwrok-ec-r {
-			gpios = <&gpiod 3 GPIO_INPUT>;
+			gpios = <&gpiod 3 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWROK";
 		};
 		sys_pwrok_ec: sys-pwrok-ec {
-			gpios = <&gpiof 5 GPIO_OUTPUT_LOW>;
+			gpios = <&gpiof 5 GPIO_ODR_LOW>;
 			enum-name = "GPIO_PCH_SYS_PWROK";
 		};
 		bat-det-ec {
