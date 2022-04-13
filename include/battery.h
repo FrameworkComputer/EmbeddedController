@@ -395,6 +395,15 @@ int battery_device_chemistry(char *dest, int size);
 int battery_manufacturer_date(int *year, int *month, int *day);
 
 /**
+ * Read battery manufacturer data.
+ *
+ * @param dest		Destination buffer.
+ * @param size		Length of destination buffer.
+ * @return non-zero if error.
+ */
+int battery_manufacturer_data(char *data, int size);
+
+/**
  * Report the absolute difference between the highest and lowest cell voltage in
  * the battery pack, in millivolts.  On error or unimplemented, returns '0'.
  */

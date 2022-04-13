@@ -321,6 +321,11 @@ test_mockable int battery_device_chemistry(char *dest, int size)
 	return sb_read_string(SB_DEVICE_CHEMISTRY, dest, size);
 }
 
+int battery_manufacturer_data(char *data, int size)
+{
+	return sb_read_string(SB_MANUFACTURER_DATA, data, size);
+}
+
 int battery_get_avg_current(void)
 {
 	int current;
