@@ -27,92 +27,150 @@ typedef uint8_t task_id_t;
 #define HAS_CONSOLE_STUB_TASK 1
 #endif
 
+/* Highest priority on bottom -- same as in platform/ec. */
+enum {
+	EC_TASK_PRIO_LOWEST = 0,
+	EC_TASK_CHG_RAMP_PRIO = EC_TASK_PRIO_LOWEST,
+	EC_TASK_USB_CHG_P0_PRIO,
+	EC_TASK_USB_CHG_P1_PRIO,
+	EC_TASK_USB_CHG_P2_PRIO,
+	EC_TASK_USB_CHG_P3_PRIO,
+	EC_TASK_DPS_PRIO,
+	EC_TASK_CHARGER_PRIO,
+	EC_TASK_CHIPSET_PRIO,
+	EC_TASK_MOTIONSENSE_PRIO,
+	EC_TASK_HOSTCMD_PRIO,
+	EC_TASK_SHELL_STUB_PRIO,
+	EC_TASK_KEYPROTO_PRIO,
+	EC_TASK_POWERBTN_PRIO,
+	EC_TASK_KEYSCAN_PRIO,
+	EC_TASK_PD_C0_PRIO,
+	EC_TASK_PD_C1_PRIO,
+	EC_TASK_PD_C2_PRIO,
+	EC_TASK_PD_C3_PRIO,
+	EC_TASK_PD_INT_SHARED_PRIO,
+	EC_TASK_PD_INT_C0_PRIO,
+	EC_TASK_PD_INT_C1_PRIO,
+	EC_TASK_PD_INT_C2_PRIO,
+	EC_TASK_PD_INT_C3_PRIO,
+	EC_TASK_USB_MUX_PRIO,
+	EC_TASK_PRIO_COUNT,
+};
+
+/* Helper macro to set tasks priorities */
+#define EC_TASK_PRIORITY(prio) K_PRIO_PREEMPT(EC_TASK_PRIO_COUNT - prio - 1)
+
 /*
- * Highest priority on bottom -- same as in platform/ec. List of CROS_EC_TASK
- * items. See CONFIG_TASK_LIST in platform/ec's config.h for more information.
- * For tests that want their own custom tasks, use CONFIG_HAS_TEST_TASKS and not
- * CONFIG_SHIMMED_TASKS.
+ * List of CROS_EC_TASK items. See CONFIG_TASK_LIST in platform/ec's config.h
+ * for more information.  For tests that want their own custom tasks, use
+ * CONFIG_HAS_TEST_TASKS and not CONFIG_SHIMMED_TASKS.
  */
 #ifdef CONFIG_SHIMMED_TASKS
 #define CROS_EC_TASK_LIST                                                 \
 	COND_CODE_1(HAS_TASK_CHG_RAMP,                                    \
 		     (CROS_EC_TASK(CHG_RAMP, chg_ramp_task, 0,            \
-				   CONFIG_TASK_CHG_RAMP_STACK_SIZE)), ()) \
+				   CONFIG_TASK_CHG_RAMP_STACK_SIZE,       \
+				   EC_TASK_CHG_RAMP_PRIO)), ())           \
 	COND_CODE_1(HAS_TASK_USB_CHG_P0,                                  \
 		     (CROS_EC_TASK(USB_CHG_P0, usb_charger_task, 0,       \
-				   CONFIG_TASK_USB_CHG_STACK_SIZE)), ())  \
+				   CONFIG_TASK_USB_CHG_STACK_SIZE,        \
+				   EC_TASK_USB_CHG_P0_PRIO)), ())         \
 	COND_CODE_1(HAS_TASK_USB_CHG_P1,                                  \
 		     (CROS_EC_TASK(USB_CHG_P1, usb_charger_task, 0,       \
-				   CONFIG_TASK_USB_CHG_STACK_SIZE)), ())  \
+				   CONFIG_TASK_USB_CHG_STACK_SIZE,        \
+				   EC_TASK_USB_CHG_P1_PRIO)), ())         \
 	COND_CODE_1(HAS_TASK_USB_CHG_P2,                                  \
 		     (CROS_EC_TASK(USB_CHG_P2, usb_charger_task, 0,       \
-				   CONFIG_TASK_USB_CHG_STACK_SIZE)), ())  \
+				   CONFIG_TASK_USB_CHG_STACK_SIZE,        \
+				   EC_TASK_USB_CHG_P2_PRIO)), ())         \
+	COND_CODE_1(HAS_TASK_USB_CHG_P3,                                  \
+		     (CROS_EC_TASK(USB_CHG_P3, usb_charger_task, 0,       \
+				   CONFIG_TASK_USB_CHG_STACK_SIZE,        \
+				   EC_TASK_USB_CHG_P3_PRIO)), ())         \
 	COND_CODE_1(HAS_TASK_DPS,                                         \
 		     (CROS_EC_TASK(DPS, dps_task, 0,                      \
-				   CONFIG_TASK_DPS_STACK_SIZE)), ())      \
+				   CONFIG_TASK_DPS_STACK_SIZE,            \
+				   EC_TASK_DPS_PRIO)), ())                \
 	COND_CODE_1(HAS_TASK_CHARGER,                                     \
 		     (CROS_EC_TASK(CHARGER, charger_task, 0,              \
-				   CONFIG_TASK_CHARGER_STACK_SIZE)), ())  \
+				   CONFIG_TASK_CHARGER_STACK_SIZE,        \
+				   EC_TASK_CHARGER_PRIO)), ())            \
 	COND_CODE_1(HAS_TASK_CHIPSET,                                     \
 		     (CROS_EC_TASK(CHIPSET, chipset_task, 0,              \
-				   CONFIG_TASK_CHIPSET_STACK_SIZE)), ())  \
-	COND_CODE_1(HAS_TASK_MOTIONSENSE,                                     \
-		     (CROS_EC_TASK(MOTIONSENSE, motion_sense_task, 0,         \
-				   CONFIG_TASK_MOTIONSENSE_STACK_SIZE)), ())  \
+				   CONFIG_TASK_CHIPSET_STACK_SIZE,        \
+				   EC_TASK_CHIPSET_PRIO)), ())            \
+	COND_CODE_1(HAS_TASK_MOTIONSENSE,                                 \
+		     (CROS_EC_TASK(MOTIONSENSE, motion_sense_task, 0,     \
+				   CONFIG_TASK_MOTIONSENSE_STACK_SIZE,    \
+				   EC_TASK_MOTIONSENSE_PRIO)), ())        \
 	COND_CODE_1(HAS_TASK_HOSTCMD,                                     \
 		     (CROS_EC_TASK(HOSTCMD, host_command_task, 0,         \
-				   CONFIG_TASK_HOSTCMD_STACK_SIZE)), ())  \
+				   CONFIG_TASK_HOSTCMD_STACK_SIZE,        \
+				   EC_TASK_HOSTCMD_PRIO)), ())            \
 	/* Placeholder to set the shell task priority */                  \
 	COND_CODE_1(HAS_CONSOLE_STUB_TASK,                                \
 		     (CROS_EC_TASK(CONSOLE_STUB, console_task_nop, 0,     \
-				   0)), ())                               \
+				   0, EC_TASK_SHELL_STUB_PRIO)), ())      \
 	COND_CODE_1(HAS_TASK_KEYPROTO,                                    \
 		     (CROS_EC_TASK(KEYPROTO, keyboard_protocol_task, 0,   \
-				   CONFIG_TASK_KEYPROTO_STACK_SIZE)), ()) \
+				   CONFIG_TASK_KEYPROTO_STACK_SIZE,       \
+				   EC_TASK_KEYPROTO_PRIO)), ())           \
 	COND_CODE_1(HAS_TASK_POWERBTN,                                    \
 		     (CROS_EC_TASK(POWERBTN, power_button_task, 0,        \
-				   CONFIG_TASK_POWERBTN_STACK_SIZE)), ()) \
+				   CONFIG_TASK_POWERBTN_STACK_SIZE,       \
+				   EC_TASK_POWERBTN_PRIO)), ())           \
 	COND_CODE_1(HAS_TASK_KEYSCAN,                                     \
 		     (CROS_EC_TASK(KEYSCAN, keyboard_scan_task, 0,        \
-				   CONFIG_TASK_KEYSCAN_STACK_SIZE)), ())  \
+				   CONFIG_TASK_KEYSCAN_STACK_SIZE,        \
+				   EC_TASK_KEYSCAN_PRIO)), ())            \
 	COND_CODE_1(HAS_TASK_PD_C0,                                       \
 		     (CROS_EC_TASK(PD_C0, pd_task, 0,                     \
-				   CONFIG_TASK_PD_STACK_SIZE)), ())       \
+				   CONFIG_TASK_PD_STACK_SIZE,             \
+				   EC_TASK_PD_C0_PRIO)), ())              \
 	COND_CODE_1(HAS_TASK_PD_C1,                                       \
 		     (CROS_EC_TASK(PD_C1, pd_task, 0,                     \
-				   CONFIG_TASK_PD_STACK_SIZE)), ())       \
+				   CONFIG_TASK_PD_STACK_SIZE,             \
+				   EC_TASK_PD_C1_PRIO)), ())              \
 	COND_CODE_1(HAS_TASK_PD_C2,                                       \
 		     (CROS_EC_TASK(PD_C2, pd_task, 0,                     \
-				   CONFIG_TASK_PD_STACK_SIZE)), ())       \
+				   CONFIG_TASK_PD_STACK_SIZE,             \
+				   EC_TASK_PD_C2_PRIO)), ())              \
 	COND_CODE_1(HAS_TASK_PD_C3,                                       \
 		     (CROS_EC_TASK(PD_C3, pd_task, 0,                     \
-				   CONFIG_TASK_PD_STACK_SIZE)), ())       \
+				   CONFIG_TASK_PD_STACK_SIZE,             \
+				   EC_TASK_PD_C3_PRIO)), ())              \
 	IF_ENABLED(CONFIG_HAS_TASK_PD_INT_SHARED,			  \
 		   (CROS_EC_TASK(PD_INT_SHARED, pd_shared_alert_task,	  \
 				 PD_INT_SHARED_PORT_MASK,		  \
-				 CONFIG_TASK_PD_INT_STACK_SIZE)))	  \
+				 CONFIG_TASK_PD_INT_STACK_SIZE,           \
+				 EC_TASK_PD_INT_SHARED_PRIO)))	          \
 	COND_CODE_1(HAS_TASK_PD_INT_C0,                                   \
 		     (CROS_EC_TASK(PD_INT_C0, pd_interrupt_handler_task, 0, \
-				   CONFIG_TASK_PD_INT_STACK_SIZE)), ())   \
+				   CONFIG_TASK_PD_INT_STACK_SIZE,         \
+				   EC_TASK_PD_INT_C0_PRIO)), ())          \
 	COND_CODE_1(HAS_TASK_PD_INT_C1,                                   \
 		     (CROS_EC_TASK(PD_INT_C1, pd_interrupt_handler_task, 1, \
-				   CONFIG_TASK_PD_INT_STACK_SIZE)), ())   \
+				   CONFIG_TASK_PD_INT_STACK_SIZE,         \
+				   EC_TASK_PD_INT_C1_PRIO)), ())          \
 	COND_CODE_1(HAS_TASK_PD_INT_C2,                                   \
 		     (CROS_EC_TASK(PD_INT_C2, pd_interrupt_handler_task, 2, \
-				   CONFIG_TASK_PD_INT_STACK_SIZE)), ())   \
+				   CONFIG_TASK_PD_INT_STACK_SIZE,         \
+				   EC_TASK_PD_INT_C2_PRIO)), ())          \
 	COND_CODE_1(HAS_TASK_PD_INT_C3,                                   \
 		     (CROS_EC_TASK(PD_INT_C3, pd_interrupt_handler_task, 3, \
-				   CONFIG_TASK_PD_INT_STACK_SIZE)), ())   \
+				   CONFIG_TASK_PD_INT_STACK_SIZE,         \
+				   EC_TASK_PD_INT_C3_PRIO)), ())          \
 	IF_ENABLED(HAS_TASK_USB_MUX,					  \
 		   (CROS_EC_TASK(USB_MUX, usb_mux_task, 0,		  \
-				 CONFIG_TASK_USB_MUX_STACK_SIZE)))
+				 CONFIG_TASK_USB_MUX_STACK_SIZE,          \
+				 EC_TASK_USB_MUX_PRIO)))
 #elif defined(CONFIG_HAS_TEST_TASKS)
 #include "shimmed_test_tasks.h"
 /*
  * There are two different ways to define a task list (because historical
  * reasons). Applications use CROS_EC_TASK_LIST to define their tasks, while
  * unit tests that need additional tasks use CONFIG_TEST_TASK_LIST. For
- * shimming a unit test, define CROS_EC_TASk_LIST as whatever
+ * shimming a unit test, define CROS_EC_TASK_LIST as whatever
  * CONFIG_TEST_TASK_LIST expands to.
  */
 #if defined(CONFIG_TEST_TASK_LIST) && !defined(CROS_EC_TASK_LIST)

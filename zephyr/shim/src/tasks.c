@@ -13,12 +13,20 @@
 #include "timer.h"
 #include "task.h"
 
-/* We need to ensure that is one lower priority for the deferred task */
-BUILD_ASSERT(CONFIG_NUM_PREEMPT_PRIORITIES + 1 >= TASK_ID_COUNT,
+/* Ensure that there are enough priorities for all the EC tasks plus the
+ * sysworkq, which is used to handle HOOK_DEFERRED calls.
+ */
+BUILD_ASSERT(CONFIG_NUM_PREEMPT_PRIORITIES + 1 >= EC_TASK_PRIO_COUNT,
 	     "Must increase number of available preempt priorities");
 
+/* Ensure that the idle task is at lower priority than lowest priority task. */
+BUILD_ASSERT(EC_TASK_PRIORITY(EC_TASK_PRIO_LOWEST) < K_IDLE_PRIO,
+	"CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at "
+	"idle priority");
+
+
 /* Declare all task stacks here */
-#define CROS_EC_TASK(name, e, p, size) \
+#define CROS_EC_TASK(name, e, p, size, pr) \
 	K_THREAD_STACK_DEFINE(name##_STACK, size);
 #define TASK_TEST(name, e, p, size) CROS_EC_TASK(name, e, p, size)
 CROS_EC_TASK_LIST
@@ -46,6 +54,8 @@ struct task_ctx_cfg {
 	void (*entry)(void *p);
 	/** The parameter that is passed into the task entry point */
 	intptr_t parameter;
+	/** The task priority */
+	int priority;
 };
 
 struct task_ctx_base_data {
@@ -64,12 +74,13 @@ struct task_ctx_data {
 	struct task_ctx_base_data base;
 };
 
-#define CROS_EC_TASK(_name, _entry, _parameter, _size)                 \
+#define CROS_EC_TASK(_name, _entry, _parameter, _size, _prio)          \
 	{                                                              \
 		.entry = _entry,                                       \
 		.parameter = _parameter,                               \
 		.stack = _name##_STACK,                                \
 		.stack_size = _size,                                   \
+		.priority = EC_TASK_PRIORITY(_prio),                   \
 		COND_CODE_1(CONFIG_THREAD_NAME, (.name = #_name,), ()) \
 	},
 #define TASK_TEST(_name, _entry, _parameter, _size) \
@@ -301,14 +312,8 @@ ZTEST_RULE(set_test_runner_tid, set_test_runner_tid_rule_before, NULL);
 #endif /* CONFIG_SET_TEST_RUNNER_TID_RULE */
 #endif /* TEST_BUILD */
 
-BUILD_ASSERT((K_PRIO_PREEMPT(TASK_ID_COUNT - 1) < K_IDLE_PRIO),
-	"CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at "
-	"idle priority");
-
 void start_ec_tasks(void)
 {
-	int priority;
-
 	for (size_t i = 0; i < TASK_ID_COUNT + 1; ++i) {
 		k_timer_init(&shimmed_tasks_timers[i], timer_expire, NULL);
 	}
@@ -316,8 +321,6 @@ void start_ec_tasks(void)
 	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
 		struct task_ctx_data *const data = &shimmed_tasks_data[i];
 		const struct task_ctx_cfg *const cfg = &shimmed_tasks_cfg[i];
-
-		priority = K_PRIO_PREEMPT(TASK_ID_COUNT - i - 1);
 
 #ifdef TEST_BUILD
 		/* Do not create thread for test runner; it will be set later */
@@ -336,7 +339,7 @@ void start_ec_tasks(void)
 		 */
 		if (i == TASK_ID_CONSOLE_STUB) {
 			data->zephyr_tid = NULL;
-			uart_shell_set_priority(priority);
+			uart_shell_set_priority(cfg->priority);
 			continue;
 		}
 #endif
@@ -354,7 +357,7 @@ void start_ec_tasks(void)
 			(void *)cfg,
 			data,
 			NULL,
-			priority,
+			cfg->priority,
 			0,
 			K_NO_WAIT);
 
