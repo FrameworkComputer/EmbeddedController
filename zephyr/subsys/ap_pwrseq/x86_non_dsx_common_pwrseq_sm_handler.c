@@ -526,4 +526,8 @@ static int pwrseq_init(const struct device *dev)
 	return 0;
 }
 
+/*
+ * The initialisation must occur after system I/O initialisation that
+ * the signals depend upon, such as GPIO, ADC etc.
+ */
 SYS_INIT(pwrseq_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);

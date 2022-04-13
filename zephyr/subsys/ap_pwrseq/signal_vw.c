@@ -44,7 +44,7 @@ static bool signal_data[ARRAY_SIZE(vw_config)];
  * notification is sent that the signals are ready.
  */
 static uint8_t espi_mask;
-static bool espi_not_valid;
+static bool espi_valid;
 BUILD_ASSERT(ARRAY_SIZE(vw_config) <= 8);
 
 static void espi_handler(const struct device *dev,
@@ -66,7 +66,7 @@ static void espi_handler(const struct device *dev,
 		 */
 		notify_espi_ready(false);
 		espi_mask = 0;
-		espi_not_valid = true;
+		espi_valid = false;
 		break;
 
 	case ESPI_BUS_EVENT_VWIRE_RECEIVED:
@@ -77,7 +77,7 @@ static void espi_handler(const struct device *dev,
 						: !!event.evt_data;
 
 				signal_data[i] = value;
-				if (espi_not_valid) {
+				if (!espi_valid) {
 					espi_mask |= BIT(i);
 				}
 				power_signal_interrupt(vw_config[i].signal,
@@ -88,9 +88,9 @@ static void espi_handler(const struct device *dev,
 		 * When all the signals have been updated, notify that
 		 * the ESPI signals are valid.
 		 */
-		if (espi_not_valid &&
+		if (!espi_valid &&
 		    espi_mask == BIT_MASK(ARRAY_SIZE(vw_config))) {
-			espi_not_valid = false;
+			espi_valid = true;
 			LOG_DBG("ESPI signals valid");
 			/*
 			 * TODO(b/222946923): Convert to generalised
@@ -138,6 +138,26 @@ void power_signal_vw_init(void)
 			   ESPI_BUS_RESET |
 			   ESPI_BUS_EVENT_VWIRE_RECEIVED);
 	espi_add_callback(espi_dev, &espi_cb);
+	/*
+	 * Check whether the bus is ready, and if so,
+	 * initialise the current values of the signals.
+	 */
+	if (espi_get_channel_status(espi_dev, ESPI_CHANNEL_VWIRE)) {
+		espi_valid = true;
+
+		for (int i = 0; i < ARRAY_SIZE(vw_config); i++) {
+			uint8_t vw_value;
+
+			if (espi_receive_vwire(espi_dev,
+					   vw_config[i].espi_signal,
+					   &vw_value) == 0) {
+				signal_data[i] = vw_config[i].invert
+						? !vw_value
+						: !!vw_value;
+			}
+		}
+		notify_espi_ready(true);
+	}
 }
 
 #endif /* HAS_VW_SIGNALS */

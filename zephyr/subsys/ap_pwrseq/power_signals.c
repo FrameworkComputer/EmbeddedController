@@ -86,16 +86,18 @@ DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external, PWR_SIGNAL_POLLED)
 };
 
 /*
- * Bitmask of power signals updated via interrupt.
+ * Bitmasks of power signals. A previous copy is held so that
+ * logging of changes can occur if the signal is in the debug mask.
  */
-static atomic_t interrupt_power_signals;
+static atomic_t power_signals, prev_power_signals;
 
-static power_signal_mask_t output_signals;
 static power_signal_mask_t debug_signals;
 
 void power_set_debug(power_signal_mask_t debug)
 {
 	debug_signals = debug;
+	/* Copy the current values */
+	atomic_set(&prev_power_signals, atomic_get(&power_signals));
 }
 
 power_signal_mask_t power_get_debug(void)
@@ -103,12 +105,19 @@ power_signal_mask_t power_get_debug(void)
 	return debug_signals;
 }
 
-static inline void check_debug(power_signal_mask_t mask,
-			       enum power_signal signal,
-			       int value)
+static inline void check_debug(enum power_signal signal)
 {
-	if (debug_signals & mask) {
-		LOG_INF("%s -> %d", power_signal_name(signal), value);
+	/*
+	 * Only check for debug display if the logging level requires it.
+	 */
+	if ((CONFIG_AP_PWRSEQ_LOG_LEVEL >= LOG_LEVEL_INF) &&
+	    (debug_signals & POWER_SIGNAL_MASK(signal))) {
+		bool value =  atomic_test_bit(&power_signals, signal);
+
+		if (value != atomic_test_bit(&prev_power_signals, signal)) {
+			LOG_INF("%s -> %d", power_signal_name(signal), value);
+			atomic_set_bit_to(&prev_power_signals, signal, value);
+		}
 	}
 }
 
@@ -121,14 +130,13 @@ power_signal_mask_t power_get_signals(void)
 			mask |= POWER_SIGNAL_MASK(polled_signals[i]);
 		}
 	}
-	return mask | output_signals |
-		atomic_get(&interrupt_power_signals);
+	return mask | atomic_get(&power_signals);
 }
 
 void power_signal_interrupt(enum power_signal signal, int value)
 {
-	atomic_set_bit_to(&interrupt_power_signals, signal, value);
-	check_debug(POWER_SIGNAL_MASK(signal), signal, value);
+	atomic_set_bit_to(&power_signals, signal, value);
+	check_debug(signal);
 }
 
 int power_wait_mask_signals_timeout(power_signal_mask_t mask,
@@ -209,19 +217,11 @@ int power_signal_set(enum power_signal signal, int value)
 #endif
 	}
 	/*
-	 * Output succeeded, update output mask.
+	 * Output succeeded, update mask.
 	 */
 	if (ret == 0) {
-		power_signal_mask_t mask = POWER_SIGNAL_MASK(signal);
-		power_signal_mask_t old = output_signals;
-
-		if (value)
-			output_signals |= mask;
-		else
-			output_signals &= ~mask;
-		if (old != output_signals) {
-			check_debug(mask, signal, value);
-		}
+		atomic_set_bit_to(&power_signals, signal, value);
+		check_debug(signal);
 	}
 	return ret;
 }
@@ -295,4 +295,26 @@ void power_signal_init(void)
 	if (IS_ENABLED(HAS_ADC_SIGNALS)) {
 		power_signal_adc_init();
 	}
+	/*
+	 * Initialise the mask with the current values.
+	 * This includes the outputs as well.
+	 */
+	for (int i = 0; i < POWER_SIGNAL_COUNT; i++) {
+		if (power_signal_get(i) == 1) {
+			atomic_set_bit(&power_signals, i);
+		}
+	}
+	/*
+	 * Some signals are polled (such as the board external signals),
+	 * so clear these values from the initial state so they
+	 * don't get OR'ed in later on.
+	 */
+	for (int i = 0; i < ARRAY_SIZE(polled_signals); i++) {
+		atomic_clear_bit(&power_signals, i);
+	}
+	/*
+	 * Save the current state so that new changes can be
+	 * checked against the debug mask.
+	 */
+	atomic_set(&prev_power_signals, atomic_get(&power_signals));
 }

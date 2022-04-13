@@ -175,6 +175,10 @@ void power_signal_adc_init(void)
 		/* Set high and low trigger callbacks */
 		sensor_trigger_set(config[i].dev_trig_high, &trig, high_cb[i]);
 		sensor_trigger_set(config[i].dev_trig_low, &trig, low_cb[i]);
+		/*
+		 * TODO: Get current value and initialise adc_state.
+		 *
+		 */
 		power_signal_adc_enable(i);
 	}
 }
