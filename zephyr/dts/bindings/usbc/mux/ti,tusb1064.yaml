@@ -3,8 +3,8 @@
 # found in the LICENSE file.
 
 description: |
-  TI TUSB1064 and TUSB1044 USB-C MUX, device variant depends on
-  CONFIG_USB_MUX_TUSB1044
+  TI TUSB546, TUSB1044, or TUSB1064 USB-C MUX, device variant depends on
+  CONFIG_PLATFORM_EC_USB_MUX_TUSB_TYPE Kconfig choice
 
 include: cros-ec,usbc-mux.yaml
 
