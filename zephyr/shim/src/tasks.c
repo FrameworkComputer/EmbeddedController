@@ -9,7 +9,6 @@
 #include <shell/shell.h>
 
 #include "common.h"
-#include "console.h"
 #include "timer.h"
 #include "task.h"
 
@@ -326,20 +325,6 @@ void start_ec_tasks(void)
 		/* Do not create thread for test runner; it will be set later */
 		if (i == TASK_ID_TEST_RUNNER) {
 			data->zephyr_tid = NULL;
-			continue;
-		}
-#endif
-
-#ifdef HAS_CONSOLE_STUB_TASK
-		/*
-		 * The console is run on the built-in Zephyr shell thread.
-		 * The TASK_ID_CONSOLE_STUB is a placeholder to determine
-		 * the correct priority of the shell thread based on the
-		 * enabled cros-ec tasks.
-		 */
-		if (i == TASK_ID_CONSOLE_STUB) {
-			data->zephyr_tid = NULL;
-			uart_shell_set_priority(cfg->priority);
 			continue;
 		}
 #endif

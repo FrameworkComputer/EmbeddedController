@@ -23,10 +23,6 @@ typedef uint8_t task_id_t;
 	) 0 \
 )
 
-#if defined CONFIG_SHELL && !defined TEST_BUILD
-#define HAS_CONSOLE_STUB_TASK 1
-#endif
-
 /* Highest priority on bottom -- same as in platform/ec. */
 enum {
 	EC_TASK_PRIO_LOWEST = 0,
@@ -40,7 +36,7 @@ enum {
 	EC_TASK_CHIPSET_PRIO,
 	EC_TASK_MOTIONSENSE_PRIO,
 	EC_TASK_HOSTCMD_PRIO,
-	EC_TASK_SHELL_STUB_PRIO,
+	EC_SHELL_PRIO,
 	EC_TASK_KEYPROTO_PRIO,
 	EC_TASK_POWERBTN_PRIO,
 	EC_TASK_KEYSCAN_PRIO,
@@ -107,10 +103,6 @@ enum {
 		     (CROS_EC_TASK(HOSTCMD, host_command_task, 0,         \
 				   CONFIG_TASK_HOSTCMD_STACK_SIZE,        \
 				   EC_TASK_HOSTCMD_PRIO)), ())            \
-	/* Placeholder to set the shell task priority */                  \
-	COND_CODE_1(HAS_CONSOLE_STUB_TASK,                                \
-		     (CROS_EC_TASK(CONSOLE_STUB, console_task_nop, 0,     \
-				   0, EC_TASK_SHELL_STUB_PRIO)), ())      \
 	COND_CODE_1(HAS_TASK_KEYPROTO,                                    \
 		     (CROS_EC_TASK(KEYPROTO, keyboard_protocol_task, 0,   \
 				   CONFIG_TASK_KEYPROTO_STACK_SIZE,       \
