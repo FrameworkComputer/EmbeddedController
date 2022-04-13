@@ -533,8 +533,10 @@ __override bool board_is_tbt_usb4_port(int port)
 	return tbt_usb4;
 }
 
-__override void board_pre_task_i2c_peripheral_init(void)
+static int board_pre_task_peripheral_init(const struct device *unused)
 {
+	ARG_UNUSED(unused);
+
 	/* Initialized IOEX-0 to access IOEX-GPIOs needed pre-task */
 	ioex_init(IOEX_C0_PCA9675);
 
@@ -549,4 +551,8 @@ __override void board_pre_task_i2c_peripheral_init(void)
 
 	/* Configure board specific retimer & mux */
 	configure_retimer_usbmux();
+
+	return 0;
 }
+SYS_INIT(board_pre_task_peripheral_init, APPLICATION,
+			CONFIG_APPLICATION_INIT_PRIORITY);
