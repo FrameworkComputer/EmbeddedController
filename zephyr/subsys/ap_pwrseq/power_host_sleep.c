@@ -203,7 +203,7 @@ void ap_power_chipset_handle_host_sleep_event(
 		 * notification needs to be sent to listeners.
 		 */
 		ap_power_sleep_set_notify(AP_POWER_SLEEP_SUSPEND);
-		power_signal_enable_interrupt(PWR_SLP_S0);
+		power_signal_enable(PWR_SLP_S0);
 
 	} else if (state == HOST_SLEEP_EVENT_S0IX_RESUME) {
 		/*
@@ -212,7 +212,7 @@ void ap_power_chipset_handle_host_sleep_event(
 		 */
 		ap_power_sleep_set_notify(AP_POWER_SLEEP_RESUME);
 		power_s0ix_resume_restore_masks();
-		power_signal_disable_interrupt(PWR_SLP_S0);
+		power_signal_disable(PWR_SLP_S0);
 
 		/*
 		 * If the sleep signal timed out and never transitioned, then
@@ -223,7 +223,7 @@ void ap_power_chipset_handle_host_sleep_event(
 		power_update_wake_mask();
 
 	} else if (state == HOST_SLEEP_EVENT_DEFAULT_RESET) {
-		power_signal_disable_interrupt(PWR_SLP_S0);
+		power_signal_disable(PWR_SLP_S0);
 	}
 #endif /* CONFIG_AP_PWRSEQ_S0IX */
 }
