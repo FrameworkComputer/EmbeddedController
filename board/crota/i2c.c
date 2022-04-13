@@ -24,26 +24,26 @@ const struct i2c_port_t i2c_ports[] = {
 	{
 		/* I2C1 */
 		.name = "tcpc0,2",
-		.port = I2C_PORT_USB_C0_C2_TCPC,
+		.port = I2C_PORT_USB_C0_C1_TCPC,
 		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_TCPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_TCPC_SDA,
+		.scl = GPIO_EC_I2C_USB_C0_C1_TCPC_SCL,
+		.sda = GPIO_EC_I2C_USB_C0_C1_TCPC_SDA,
 	},
 	{
 		/* I2C2 */
 		.name = "ppc0,2",
-		.port = I2C_PORT_USB_C0_C2_PPC,
+		.port = I2C_PORT_USB_C0_C1_PPC,
 		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_PPC_BC_SDA,
+		.scl = GPIO_EC_I2C_USB_C0_C1_PPC_BC_SCL,
+		.sda = GPIO_EC_I2C_USB_C0_C1_PPC_BC_SDA,
 	},
 	{
 		/* I2C3 */
 		.name = "retimer0,2",
-		.port = I2C_PORT_USB_C0_C2_MUX,
+		.port = I2C_PORT_USB_C0_C1_MUX,
 		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_RT_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_RT_SDA,
+		.scl = GPIO_EC_I2C_USB_C0_C1_RT_SCL,
+		.sda = GPIO_EC_I2C_USB_C0_C1_RT_SDA,
 	},
 	{
 		/* I2C5 */
@@ -75,7 +75,7 @@ static void set_board_legacy_i2c_speeds(void)
 
 	ccprints("setting USB DB I2C buses to 400 kHz\n");
 
-	i2c_set_freq(I2C_PORT_USB_C0_C2_TCPC, I2C_FREQ_400KHZ);
-	i2c_set_freq(I2C_PORT_USB_C0_C2_PPC, I2C_FREQ_400KHZ);
+	i2c_set_freq(I2C_PORT_USB_C0_C1_TCPC, I2C_FREQ_400KHZ);
+	i2c_set_freq(I2C_PORT_USB_C0_C1_PPC, I2C_FREQ_400KHZ);
 }
 DECLARE_HOOK(HOOK_INIT, set_board_legacy_i2c_speeds, HOOK_PRIO_INIT_I2C - 1);
