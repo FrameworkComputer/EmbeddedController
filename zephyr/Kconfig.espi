@@ -31,4 +31,11 @@ config PLATFORM_EC_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
 	  maintain these pins' states per request. Note that this is
 	  currently unimplemented for Zephyr. Please see b/183148073.
 
+config PLATFORM_EC_ESPI_DEFAULT_SCI_WIDTH_US
+	int "SCI# signal pulse width (microseconds)"
+	default 65
+	help
+	  The minimum pulse width of an SCI# signal to the host. May vary by
+	  host chipset.
+
 endif # PLATFORM_EC_HOST_INTERFACE_ESPI

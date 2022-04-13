@@ -151,11 +151,11 @@ static void lpc_generate_sci(void)
 {
 #ifdef CONFIG_HOST_INTERFACE_ESPI
 	espi_vw_set_wire(VW_SCI_L, 0);
-	udelay(65);
+	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
 	espi_vw_set_wire(VW_SCI_L, 1);
 #else
 	gpio_set_level(GPIO_PCH_SCI_L, 0);
-	udelay(65);
+	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
 	gpio_set_level(GPIO_PCH_SCI_L, 1);
 #endif
 }

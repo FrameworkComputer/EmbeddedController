@@ -250,9 +250,9 @@ static void lpc_generate_sci(void)
 {
 	/* Enforce signal-high for long enough to debounce high */
 	espi_vw_set_wire(VW_SCI_L, 1);
-	udelay(VWIRE_PULSE_TRIGGER_TIME);
+	udelay(CONFIG_PLATFORM_EC_ESPI_DEFAULT_SCI_WIDTH_US);
 	espi_vw_set_wire(VW_SCI_L, 0);
-	udelay(VWIRE_PULSE_TRIGGER_TIME);
+	udelay(CONFIG_PLATFORM_EC_ESPI_DEFAULT_SCI_WIDTH_US);
 	espi_vw_set_wire(VW_SCI_L, 1);
 }
 

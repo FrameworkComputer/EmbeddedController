@@ -5641,6 +5641,12 @@
  */
 #define CONFIG_CCD_USBC_PORT_NUMBER	0
 
+/*
+ * The historical default SCI pulse width to the host is 65 microseconds, but
+ * some chipsets may require different widths.
+ */
+#define CONFIG_ESPI_DEFAULT_SCI_WIDTH_US	65
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a

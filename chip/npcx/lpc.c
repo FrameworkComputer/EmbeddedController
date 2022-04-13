@@ -177,10 +177,10 @@ static void lpc_generate_sci(void)
 #ifdef CONFIG_SCI_GPIO
 	/* Enforce signal-high for long enough to debounce high */
 	gpio_set_level(CONFIG_SCI_GPIO, 1);
-	udelay(65);
+	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
 	/* Generate a falling edge */
 	gpio_set_level(CONFIG_SCI_GPIO, 0);
-	udelay(65);
+	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
 	/* Set signal high, now that we've generated the edge */
 	gpio_set_level(CONFIG_SCI_GPIO, 1);
 #elif defined(CONFIG_HOST_INTERFACE_ESPI)
@@ -192,19 +192,19 @@ static void lpc_generate_sci(void)
 	 * status should be read from bit 1/0 in eSPI VMEVSM(2) register.
 	 */
 	NPCX_HIPMIC(PMC_ACPI) = NPCX_VW_SCI(1);
-	udelay(65);
+	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
 	/* Generate a falling edge */
 	NPCX_HIPMIC(PMC_ACPI) = NPCX_VW_SCI(0);
-	udelay(65);
+	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
 	/* Set signal high */
 	NPCX_HIPMIC(PMC_ACPI) = NPCX_VW_SCI(1);
 #else
 	/* Set SCIB bit to pull SCI_L to high.*/
 	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
-	udelay(65);
+	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
 	/* Generate a falling edge */
 	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
-	udelay(65);
+	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
 	/* Set signal high */
 	SET_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SCIB);
 #endif
