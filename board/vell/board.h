@@ -19,7 +19,8 @@
  */
 #define CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
 
-/* Buttons */
+/* No side buttons */
+#undef CONFIG_MKBP_INPUT_DEVICES
 #undef CONFIG_VOLUME_BUTTONS
 
 /* Sensors */

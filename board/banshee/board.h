@@ -21,7 +21,11 @@
 #undef CONFIG_TABLET_MODE
 #undef CONFIG_TABLET_MODE_SWITCH
 #undef CONFIG_GMR_TABLET_MODE
+
+/* No side buttons */
+#undef CONFIG_MKBP_INPUT_DEVICES
 #undef CONFIG_VOLUME_BUTTONS
+
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
  * until we can confirm all earlier chips are out of service.

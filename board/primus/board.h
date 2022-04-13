@@ -26,6 +26,10 @@
 #undef CONFIG_TABLET_MODE_SWITCH
 #undef CONFIG_GMR_TABLET_MODE
 
+/* No side buttons */
+#undef CONFIG_MKBP_INPUT_DEVICES
+#undef CONFIG_VOLUME_BUTTONS
+
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -161,9 +165,6 @@
 #define CONFIG_PS2
 #define CONFIG_CMD_PS2
 #define PRIMUS_PS2_CH		NPCX_PS2_CH1
-
-/* Button */
-#undef CONFIG_VOLUME_BUTTONS
 
 #ifndef __ASSEMBLER__
 
