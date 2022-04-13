@@ -48,6 +48,15 @@
 
 };
 
+&pinctrl {
+	i2c3_clk_gpf2_sleep: i2c3_clk_gpf2_sleep {
+		pinmuxs = <&pinctrlf 2 IT8XXX2_ALT_DEFAULT>;
+	};
+	i2c3_data_gpf3_sleep: i2c3_data_gpf3_sleep {
+		pinmuxs = <&pinctrlf 3 IT8XXX2_ALT_DEFAULT>;
+	};
+};
+
 i2c_pwr_cbi: &i2c0 {
 	/* EC_I2C_PWR_CBI */
 	label = "I2C_PWR_CBI";
@@ -87,7 +96,9 @@ i2c_pwr_cbi: &i2c0 {
 	sda-gpios = <&gpiof 3 0>;
 	pinctrl-0 = <&i2c3_clk_gpf2_default
 		     &i2c3_data_gpf3_default>;
-	pinctrl-names = "default";
+	pinctrl-1 = <&i2c3_clk_gpf2_sleep
+		     &i2c3_data_gpf3_sleep>;
+	pinctrl-names = "default", "sleep";
 	prescale-scl-low = <1>;
 };
 

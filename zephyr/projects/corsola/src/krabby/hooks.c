@@ -5,6 +5,7 @@
 
 #include <zephyr/init.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pinctrl.h>
 
 #include <ap_power/ap_power.h>
 #include "charger.h"
@@ -13,23 +14,21 @@
 #include "gpio.h"
 #include "hooks.h"
 
+#define I2C3_NODE DT_NODELABEL(i2c3)
+PINCTRL_DT_DEFINE(I2C3_NODE);
+
 static void board_i2c3_ctrl(bool enable)
 {
 	if (DEVICE_DT_GET(
 		    DT_GPIO_CTLR_BY_IDX(DT_NODELABEL(i2c3), scl_gpios, 0)) ==
 	    DEVICE_DT_GET(DT_NODELABEL(gpiof))) {
-		/*
-		 * TODO(b/226296649):
-		 * Use pinctrl APIs to enable/disable an interface.
-		 */
-		struct gctrl_it8xxx2_regs *const gctrl_base =
-			(struct gctrl_it8xxx2_regs *)DT_REG_ADDR(
-				DT_NODELABEL(gctrl));
+		const struct pinctrl_dev_config *pcfg =
+			PINCTRL_DT_DEV_CONFIG_GET(I2C3_NODE);
 
 		if (enable) {
-			gctrl_base->GCTRL_PMER3 |= IT8XXX2_GCTRL_SMB3PSEL;
+			pinctrl_apply_state(pcfg, PINCTRL_STATE_DEFAULT);
 		} else {
-			gctrl_base->GCTRL_PMER3 &= ~IT8XXX2_GCTRL_SMB3PSEL;
+			pinctrl_apply_state(pcfg, PINCTRL_STATE_SLEEP);
 		}
 	}
 }
