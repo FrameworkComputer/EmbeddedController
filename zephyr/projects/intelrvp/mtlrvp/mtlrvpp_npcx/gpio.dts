@@ -136,7 +136,7 @@
 		led-2-l-ec {
 			gpios = <&gpiob 7 GPIO_OUTPUT_HIGH>;
 		};
-		therm-sen-mecc-r {
+		gpio_fan_control: therm-sen-mecc-r {
 			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
 		};
 		/* NOTE: Netname is USBC_TCPC_ALRT_P3 */
