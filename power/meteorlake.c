@@ -73,6 +73,8 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	CPRINTS("%s() %d", __func__, reason);
 	report_ap_reset(reason);
 
+	gpio_set_level(GPIO_PCH_PWROK, 0);
+
 	/* Turn off RMSRST_L  to meet tPCH12 */
 	board_before_rsmrst(0);
 	GPIO_SET_LEVEL(GPIO_PCH_RSMRST_L, 0);
@@ -163,6 +165,10 @@ static void all_sys_pwrgd_pass_thru(void)
 
 		pwrok_signal_set(pwrok_signal, all_sys_pwrgd_in);
 	}
+
+	/* PCH_PWROK is combination of ALL_SYS_PWRGD and SLP_S3 */
+	gpio_set_level(GPIO_PCH_PWROK, all_sys_pwrgd_in &&
+				power_signal_get_level(SLP_S3_SIGNAL_L));
 }
 
 enum power_state power_handle_state(enum power_state state)
