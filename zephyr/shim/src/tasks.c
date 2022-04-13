@@ -86,14 +86,11 @@ const static struct task_ctx_cfg shimmed_tasks_cfg[TASK_ID_COUNT] = {
 };
 
 static struct task_ctx_data shimmed_tasks_data[TASK_ID_COUNT];
-static struct task_ctx_base_data sysworkq_task_data;
-/* Task timer structures, one extra for TASK_ID_SYSWORKQ. Keep separate from
- * the context ones to avoid memory holes due to int64_t fields in struct
- * _timeout.
+static struct task_ctx_base_data extra_tasks_data[EXTRA_TASK_COUNT];
+/* Task timer structures. Keep separate from the context ones to avoid memory
+ * holes due to int64_t fields in struct _timeout.
  */
-static struct k_timer shimmed_tasks_timers[TASK_ID_COUNT + 1];
-
-#define TASK_ID_SYSWORKQ TASK_ID_COUNT
+static struct k_timer shimmed_tasks_timers[TASK_ID_COUNT + EXTRA_TASK_COUNT];
 
 static int tasks_started;
 #undef CROS_EC_TASK
@@ -101,8 +98,12 @@ static int tasks_started;
 
 static struct task_ctx_base_data *task_get_base_data(task_id_t cros_task_id)
 {
-	if (cros_task_id == TASK_ID_SYSWORKQ) {
-		return &sysworkq_task_data;
+	if (cros_task_id >= TASK_ID_COUNT + EXTRA_TASK_COUNT) {
+		return NULL;
+	}
+
+	if (cros_task_id >= TASK_ID_COUNT) {
+		return &extra_tasks_data[cros_task_id - TASK_ID_COUNT];
 	}
 
 	return &shimmed_tasks_data[cros_task_id].base;
@@ -307,7 +308,7 @@ ZTEST_RULE(set_test_runner_tid, set_test_runner_tid_rule_before, NULL);
 
 void start_ec_tasks(void)
 {
-	for (size_t i = 0; i < TASK_ID_COUNT + 1; ++i) {
+	for (size_t i = 0; i < TASK_ID_COUNT + EXTRA_TASK_COUNT; ++i) {
 		k_timer_init(&shimmed_tasks_timers[i], timer_expire, NULL);
 	}
 
@@ -358,13 +359,11 @@ int init_signals(const struct device *unused)
 {
 	ARG_UNUSED(unused);
 
-	for (size_t i = 0; i < TASK_ID_COUNT; ++i) {
-		struct task_ctx_data *const data = &shimmed_tasks_data[i];
+	for (size_t i = 0; i < TASK_ID_COUNT + EXTRA_TASK_COUNT; ++i) {
+		struct task_ctx_base_data *const data = task_get_base_data(i);
 
-		k_poll_signal_init(&data->base.new_event);
+		k_poll_signal_init(&data->new_event);
 	}
-
-	k_poll_signal_init(&sysworkq_task_data.new_event);
 
 	return 0;
 }
