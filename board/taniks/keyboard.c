@@ -24,7 +24,7 @@ __override struct keyboard_scan_config keyscan_config = {
 		0x1c, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 		0xa4, 0xff, 0xff, 0x55, 0xff, 0xff, 0xff, 0xff,  /* full set */
 	},
-	.ksi_threshold_mv = 1000,
+	.ksi_threshold_mv = 250,
 };
 
 static const struct ec_response_keybd_config taniks_kb = {
