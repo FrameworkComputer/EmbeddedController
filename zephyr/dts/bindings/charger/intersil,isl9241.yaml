@@ -6,13 +6,4 @@ description: Intersil ISL9241 Charger IC
 
 compatible: "intersil,isl9241"
 
-include: i2c-device.yaml
-
-properties:
-    switching-frequency:
-      type: int
-      required: false
-      description:
-        Sets the charger switching frequency. If not defined then the switching
-        frequency is configured by the resistor connected to the PROG pin on
-        the board.
+include: chg-chip.yaml

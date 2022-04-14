@@ -116,6 +116,20 @@ config PLATFORM_EC_CHARGER_ISL9241
 	  control. It supports an input voltage range of 3.9-23.4V and output
 	  of 3.9-18.3V. It provides an I2C interface for configuration.
 
+if PLATFORM_EC_CHARGER_ISL9241
+
+config PLATFORM_EC_ISL9241_SWITCHING_FREQ
+	int "ISL9241 switching frequency"
+	default -1
+	help
+	  Switching frequency for all ISL9241 chips. ISL9241 configures the
+	  switching frequency and overrides the default one set by PROG pin.
+	  Setting -1 means the no-override option, the default value is not
+	  changed. The valid frequency settings are listed in
+	  driver/charger/isl9241.h
+
+endif
+
 config PLATFORM_EC_CHARGER_BQ25710
 	bool "Use the BQ25710 charger"
 	depends on PLATFORM_EC_I2C

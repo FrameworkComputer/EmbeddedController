@@ -51,12 +51,6 @@
 &i2c0_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
-
-	isl9238: isl9238@9 {
-		compatible = "intersil,isl9238";
-		reg = <0x09>;
-		label = "ISL9238_CHARGER";
-	};
 };
 
 &i2c_ctrl0 {

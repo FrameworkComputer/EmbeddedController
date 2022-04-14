@@ -307,14 +307,11 @@
 
 /*
  * Note - ISL9241 chargers for all channels are configured with the same
- * switching frequency. Use the first ISL9241 instance found in the device tree.
+ * switching frequency set with the Kconfig config.
  */
 #undef CONFIG_ISL9241_SWITCHING_FREQ
-#define ISL9241_NODE	DT_INST(0, intersil_isl9241)
-#if DT_NODE_EXISTS(ISL9241_NODE) && \
-	DT_NODE_HAS_PROP(ISL9241_NODE, switching_frequency)
-#define CONFIG_ISL9241_SWITCHING_FREQ \
-	DT_PROP(ISL9241_NODE, switching_frequency)
+#if CONFIG_PLATFORM_EC_ISL9241_SWITCHING_FREQ != -1
+#define CONFIG_ISL9241_SWITCHING_FREQ CONFIG_PLATFORM_EC_ISL9241_SWITCHING_FREQ
 #endif
 
 #undef CONFIG_CHARGER_ISL9237

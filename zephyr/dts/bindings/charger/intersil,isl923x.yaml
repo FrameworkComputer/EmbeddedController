@@ -2,8 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: Intersil ISL9238 Charger IC
+description: Intersil ISL923x Charger IC
 
-compatible: "intersil,isl9238"
+compatible: "intersil,isl923x"
 
-include: i2c-device.yaml
+include: chg-chip.yaml
