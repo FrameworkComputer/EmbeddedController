@@ -27,7 +27,7 @@ config HAS_TASK_CHARGER
 if HAS_TASK_CHARGER
 
 config TASK_CHARGER_STACK_SIZE
-	int "Stack size"
+	int "CHARGER task stack size"
 	default 1024	# EC uses VENTI_TASK_STACK_SIZE which is 896
 	help
 	  The stack size of the charger task.
@@ -48,7 +48,7 @@ config HAS_TASK_CHG_RAMP
 if HAS_TASK_CHG_RAMP
 
 config TASK_CHG_RAMP_STACK_SIZE
-	int "Stack size"
+	int "CHG_RAMP task stack size"
 	default 768	# EC uses TASK_STACK_SIZE which is 512 for npcx
 	help
 	  The stack size of the charger task.
@@ -70,7 +70,7 @@ config HAS_TASK_CHIPSET
 if HAS_TASK_CHIPSET
 
 config TASK_CHIPSET_STACK_SIZE
-	int "Stack size"
+	int "CHIPSET task stack size"
 	default 1024
 	help
 	  The stack size of the power button task.
@@ -89,7 +89,7 @@ config HAS_TASK_HOSTCMD
 if HAS_TASK_HOSTCMD
 
 config TASK_HOSTCMD_STACK_SIZE
-	int "Stack size"
+	int "HOSTCMD task stack size"
 	default 1024
 	help
 	  The size of the host-command task stack.
@@ -108,7 +108,7 @@ config HAS_TASK_KEYPROTO
 if HAS_TASK_KEYPROTO
 
 config TASK_KEYPROTO_STACK_SIZE
-	int "Stack size"
+	int "KEYPROTO task stack size"
 	default 768
 	help
 	  The stack size of the keyproto task.
@@ -127,7 +127,7 @@ config HAS_TASK_KEYSCAN
 if HAS_TASK_KEYSCAN
 
 config TASK_KEYSCAN_STACK_SIZE
-	int "Stack size"
+	int "KEYSCAN task stack size"
 	default 768
 	help
 	  The stack size of the keyscan task.
@@ -144,7 +144,7 @@ config HAS_TASK_MOTIONSENSE
 if HAS_TASK_MOTIONSENSE
 
 config TASK_MOTIONSENSE_STACK_SIZE
-	int "motionsense task stack size"
+	int "MOTIONSENSE task stack size"
 	default 4096
 	help
 	  The size of the motion sense task stack.
@@ -165,7 +165,7 @@ config HAS_TASK_POWERBTN
 if HAS_TASK_POWERBTN
 
 config TASK_POWERBTN_STACK_SIZE
-	int "Stack size"
+	int "POWERBTN task stack size"
 	default 1024
 	help
 	  The stack size of the power-button task.
@@ -175,13 +175,13 @@ endif # HAS_TASK_POWERBTN
 if PLATFORM_EC_USB_POWER_DELIVERY
 
 config TASK_PD_STACK_SIZE
-	int "PD task stack size"
+	int "PD tasks stack size"
 	default 1024	# EC uses VENTI_TASK_STACK_SIZE which is 896
 	help
 	  The stack size of the PD_Cx tasks.
 
 config TASK_PD_INT_STACK_SIZE
-	int "PD interrupts task stack size"
+	int "PD_INT task stack size"
 	default 1280
 	help
 	  The stack size of the PD_Cn_INT tasks.
@@ -217,7 +217,7 @@ config HAS_TASK_PD_INT_SHARED
 if PLATFORM_EC_USB_POWER_DELIVERY
 
 config TASK_USB_CHG_STACK_SIZE
-	int "(all ports) task stack size"
+	int "USB_CHG tasks stack size"
 	default 1280	# EC uses VENTI_TASK_STACK_SIZE which is 896
 	help
 	  The stack size of the USB charger task. If there are multiple tasks,
