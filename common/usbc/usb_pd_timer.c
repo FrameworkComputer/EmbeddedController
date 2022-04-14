@@ -131,12 +131,11 @@ void pd_timer_init(int port)
 		count[port] = 0;
 
 	/*
-	 * timer_active and timer_disabled are atomic_t global arrays.
-	 * Set them to the initial state.
+	 * Set timers to init state for "port".
 	 */
-	for (int i = 0; i < ARRAY_SIZE(timer_active); i++) {
-		*(timer_active + i) = 0;
-		*(timer_disabled + i) = ~0;
+	for (int bit = 0; bit < PD_TIMER_COUNT; bit++) {
+		PD_CLR_ACTIVE(port, bit);
+		PD_SET_DISABLED(port, bit);
 	}
 }
 
