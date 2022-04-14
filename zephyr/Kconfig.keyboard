@@ -19,7 +19,7 @@ menuconfig PLATFORM_EC_KEYBOARD
 
 if PLATFORM_EC_KEYBOARD
 
-choice "Protocol select"
+choice PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
 	prompt "Select the keyboard protocol to use"
 	help
 	  Select the keyboard protocol used to communicate key presses to the
@@ -46,7 +46,7 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
 	  (row, col), to the AP and the kernel driver will map this scan code to
 	  a key.
 
-endchoice # PLATFORM_EC_KEYBOARD
+endchoice # PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
 
 config PLATFORM_EC_KEYBOARD_DEBUG
 	bool "Enable keyboard debug prints"
@@ -76,7 +76,7 @@ config PLATFORM_EC_KEYBOARD_VIVALDI
 	  - A response to EC_CMD_GET_KEYBD_CONFIG command.
 	  - Boards can specify their custom layout for top keys.
 
-choice "Power button interference"
+choice PLATFORM_EC_KEYBOARD_PWRBTN_MODE
 	prompt "Select the impact of pressing the power button"
 	help
 	  On some boards one of the keyboard-scan inputs is affected by pressing
@@ -103,7 +103,7 @@ config PLATFORM_EC_KEYBOARD_PWRBTN_ASSERTS_KSI3
 	  power button is held. We must be aware of this case in order to
 	  correctly handle recovery-mode key combinations.
 
-endchoice # "Power button interference"
+endchoice # PLATFORM_EC_KEYBOARD_PWRBTN_MODE
 
 config PLATFORM_EC_KEYBOARD_COL2_INVERTED
 	bool "A mechanism for passing KSO2 to H1 which inverts the signal"
@@ -174,7 +174,7 @@ config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
 	    kblog	- Print or toggle keyboard event log (current disabled)
 	    typematic	- Get/set typematic delays
 
-choice
+choice PLATFORM_EC_KBLIGHT_MODE
 	prompt "Keyboard backlight"
 	optional
 	help
@@ -195,7 +195,7 @@ config PLATFORM_EC_PWM_KBLIGHT
 	  connected directly to the EC chipset. The board devicetree file must
 	  define a "cros-ec,kblight-pwm" compatible device node.
 
-endchoice  # Keyboard backlight
+endchoice # PLATFORM_EC_KBLIGHT_MODE
 
 config PLATFORM_EC_KBLIGHT_ENABLE_PIN
 	bool "Keyboard backlight enable pin"
@@ -240,7 +240,7 @@ config PLATFORM_EC_RGBKBD_DEMO_DOT
 	  left to right. After the entire matrix is traversed, it's repeated with
 	  a new color.
 
-endchoice  # PLATFORM_EC_RGBKBD_DEMO
+endchoice # PLATFORM_EC_RGBKBD_DEMO
 
 config PLATFORM_EC_LED_DRIVER_IS31FL3743B
 	bool "Driver for IS31FL3743B LED controller"

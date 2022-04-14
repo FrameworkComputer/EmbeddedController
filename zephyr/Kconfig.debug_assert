@@ -3,7 +3,8 @@
 # found in the LICENSE file.
 
 if PLATFORM_EC_DEBUG_ASSERT
-choice "Behaviour on assertion failure"
+
+choice PLATFORM_EC_DEBUG_ASSERT_MODE
 	prompt "Select behaviour on assertion failure"
 	help
 	  This selects the action taken when the board hits an assertion
@@ -26,7 +27,7 @@ config PLATFORM_EC_DEBUG_ASSERT_BREAKPOINT
 	  from there. If there is no debugger connected then the breakpoint
 	  instruction will cause the board to reboot immediately.
 
-endchoice # "Behaviour on assertion failure"
+endchoice # PLATFORM_EC_DEBUG_ASSERT_MODE
 
 config PLATFORM_EC_DEBUG_ASSERT_BRIEF
 	bool "Use brief assertion-failure messages"

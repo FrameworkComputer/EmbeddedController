@@ -5,7 +5,7 @@
 if PLATFORM_EC_USBC
 if PLATFORM_EC_USB_POWER_DELIVERY
 
-choice "Measuring VBUS voltage"
+choice PLATFORM_EC_USB_PD_VBUS_MEASURE_MODE
 	prompt "Select how VBUS voltage is measured"
 	optional
 
@@ -39,7 +39,7 @@ config PLATFORM_EC_USB_PD_VBUS_MEASURE_BY_BOARD
 	  Enable this if there are different VBUS measurement approaches on
 	  the board, and also `board_get_vbus_voltage()` has to be implemented.
 
-endchoice  # Measuring VBUS voltage
+endchoice # PLATFORM_EC_USB_PD_VBUS_MEASURE_MODE
 
 endif # PLATFORM_EC_USB_POWER_DELIVERY
 endif # PLATFORM_EC_USBC

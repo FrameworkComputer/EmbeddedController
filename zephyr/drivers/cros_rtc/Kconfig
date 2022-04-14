@@ -38,6 +38,6 @@ config CROS_RTC_RENESAS_IDT1337AG
 	  This option enables a driver for providing the support of RENESAS
 	  Real-Time Clock (RTC) on the the I2C bus.
 
-endchoice  # RTC Select
+endchoice # CROS_RTC_TYPE
 
 endif # PLATFORM_EC_RTC

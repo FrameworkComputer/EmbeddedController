@@ -22,7 +22,7 @@ config PLATFORM_EC_USB_PD_FRS
 
 if PLATFORM_EC_USB_PD_FRS
 
-choice "Trigger implementation"
+choice PLATFORM_EC_USB_PD_FRS_MODE
 	prompt "Select where the trigger is implemented"
 	help
 	  The Fast Role Swap (protocol requires that a trigger be implemented to
@@ -42,7 +42,7 @@ config PLATFORM_EC_USB_PD_FRS_TCPC
 	  Enable this if the Fast Role Swap trigger is implemented in the
 	  Type-C Port Controller (TCPC).
 
-endchoice # Trigger implementation
+endchoice # PLATFORM_EC_USB_PD_FRS_MODE
 
 endif # PLATFORM_EC_USB_PD_FRS
 

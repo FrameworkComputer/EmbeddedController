@@ -13,7 +13,7 @@ config PLATFORM_EC_USB_PD_DISCHARGE
 	  GPIO-controlled discharge circuit, or through port controller
 	  registers) to discharge VBUS rapidly on disconnect
 
-choice "Discharge method"
+choice PLATFORM_EC_USB_PD_DISCHARGE_MODE
 	prompt "Select the discharge method"
 	depends on PLATFORM_EC_USB_PD_DISCHARGE
 
@@ -36,7 +36,7 @@ config PLATFORM_EC_USB_PD_DISCHARGE_PPC
 	  Enable this if the discharge circuit is using Power Delivery
 	  resistors on the Power Path Controller.
 
-endchoice  # Discharge method
+endchoice # PLATFORM_EC_USB_PD_DISCHARGE_MODE
 
 endif # PLATFORM_EC_USB_POWER_DELIVERY
 endif # PLATFORM_EC_USBC

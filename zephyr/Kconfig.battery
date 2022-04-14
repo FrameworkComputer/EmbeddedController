@@ -14,7 +14,7 @@ menuconfig PLATFORM_EC_BATTERY
 
 if PLATFORM_EC_BATTERY
 
-choice "Battery select"
+choice PLATFORM_EC_BATTERY_SELECT
 	prompt "Select the battery to use"
 	help
 	  Select the battery used on the board. If you are ensure, select the
@@ -30,9 +30,9 @@ config PLATFORM_EC_BATTERY_SMART
 
 	  See here for the spec: http://sbs-forum.org/specs/sbdat110.pdf
 
-endchoice
+endchoice # PLATFORM_EC_BATTERY_SELECT
 
-choice "Battery presence detection"
+choice PLATFORM_EC_BATTERY_PRESENT_MODE
 	prompt "Method to use to detect the battery"
 	help
 	  This selects the method to use to detect the presence of a battery.
@@ -70,7 +70,7 @@ config PLATFORM_EC_BATTERY_PRESENT_GPIO
 	    /* gpio_map.h */
 	    #define GPIO_BATT_PRES_ODL		NAMED_GPIO(ec_batt_pres_odl)
 
-endchoice  # battery presence
+endchoice # PLATFORM_EC_BATTERY_PRESENT_MODE
 
 config PLATFORM_EC_USE_BATTERY_DEVICE_CHEMISTRY
 	bool "Provide information about battery chemistry"

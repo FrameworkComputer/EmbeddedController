@@ -32,7 +32,7 @@ config PLATFORM_EC_USB_PD_VBUS_DETECT_PPC
 	  Choose this option if the Power-Path Controller (PPC) can detect the
 	  presence of VBUS
 
-endchoice  # PLATFORM_EC_USB_PD_VBUS_DETECTION_TYPE
+endchoice # PLATFORM_EC_USB_PD_VBUS_DETECTION_TYPE
 
 endif # PLATFORM_EC_USB_POWER_DELIVERY
 endif # PLATFORM_EC_USBC

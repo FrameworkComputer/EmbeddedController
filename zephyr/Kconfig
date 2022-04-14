@@ -570,7 +570,7 @@ config PLATFORM_EC_RTC
 	  to the outside world and can often obtain the current time when
 	  desired.
 
-choice "SHA256 method"
+choice PLATFORM_EC_SHA256_MODE
 	prompt "Select method to use for computing SHA256 hashes"
 	help
 	  The verified boot mechanism requests the hash of the entire read-write
@@ -594,7 +594,7 @@ config PLATFORM_EC_SHA256_HW_ACCELERATE
 
 	  The chip support must implement the functions in sha256.h
 
-endchoice # SHA256 method
+endchoice # PLATFORM_EC_SHA256_MODE
 
 config PLATFORM_EC_SWITCH
 	bool "Memory mapped switches"

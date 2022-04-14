@@ -4,7 +4,7 @@
 
 if PLATFORM_EC_USBC
 
-choice "Type-C Port Manager (TCPM)"
+choice PLATFORM_EC_USB_PD_TCPM_TYPE
 	prompt "Choose a Type-C Port Manager (TCPM) to manage TCPC"
 
 config PLATFORM_EC_USB_PD_TCPM_TCPCI
@@ -29,7 +29,7 @@ config PLATFORM_EC_USB_PD_TCPM_TCPCI
 #  CONFIG_USB_PD_TCPM_STM32GX
 #  CONFIG_USB_PD_TCPM_CCGXXF
 
-endchoice  # Type-C Port Manager (TCPM)
+endchoice # PLATFORM_EC_USB_PD_TCPM_TYPE
 
 if PLATFORM_EC_USB_PD_TCPM_TCPCI
 

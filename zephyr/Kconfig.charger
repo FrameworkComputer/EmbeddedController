@@ -35,7 +35,7 @@ config PLATFORM_EC_OCPC
 	  Additionally, `chgnum` is assumed to be the same as the
 	  charge port index.
 
-endchoice  # PLATFORM_EC_CHARGER_TYPE
+endchoice # PLATFORM_EC_CHARGER_TYPE
 
 config PLATFORM_EC_CHARGER_RUNTIME_CONFIG
 	bool "Allow charger configuration at runtime"
@@ -190,7 +190,7 @@ config PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
 
 if PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
 
-choice "Discharge control method"
+choice PLATFORM_EC_CHARGER_DISCHARGE_MODE
 	prompt "Select the method of controlling discharge"
 	help
 	  Select which method is provided to enable and disable the discharge
@@ -218,9 +218,9 @@ config PLATFORM_EC_CHARGER_DISCHARGE_ON_AC_CUSTOM
 	  It should enable this feature if enabled is true, else disable it.
 	  The function should return EC_SUCCESS
 
-endchoice  # "Discharge control method"
+endchoice # PLATFORM_EC_CHARGER_DISCHARGE_MODE
 
-endif  # PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
+endif # PLATFORM_EC_CHARGER_DISCHARGE_ON_AC
 
 config PLATFORM_EC_CHARGER_BQ25710_PSYS_SENSING
 	bool "Charger monitors PSYS"
@@ -598,7 +598,7 @@ config PLATFORM_EC_CHARGE_RAMP_SW
 	  current needs of the device. It handles the user plugging chargers in
 	  and removing them.
 
-endchoice  # PLATFORM_EC_CHARGE_RAMP_TYPE
+endchoice # PLATFORM_EC_CHARGE_RAMP_TYPE
 
 config PLATFORM_EC_CONSOLE_CMD_CHARGER_ADC_AMON_BMON
 	bool "Console command: amonbmon"

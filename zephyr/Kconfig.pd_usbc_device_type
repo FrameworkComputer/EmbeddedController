@@ -5,7 +5,7 @@
 if PLATFORM_EC_USBC
 if PLATFORM_EC_USB_POWER_DELIVERY
 
-choice "USB-C device type"
+choice PLATFORM_EC_USB_DEVICE_TYPE
 	prompt "Select the USB-C device type"
 	default PLATFORM_EC_USB_DRP_ACC_TRYSRC
 
@@ -33,7 +33,7 @@ config PLATFORM_EC_USB_DRP_ACC_TRYSRC
 	  a dual-role capacity, so that power can be accepted or supplied on
 	  a port.
 
-endchoice  # USB-C device type
+endchoice # PLATFORM_EC_USB_DEVICE_TYPE
 
 endif # PLATFORM_EC_USB_POWER_DELIVERY
 endif # PLATFORM_EC_USBC
