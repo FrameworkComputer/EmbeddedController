@@ -100,7 +100,7 @@ enum {
 		     (CROS_EC_TASK(MOTIONSENSE, motion_sense_task, 0,     \
 				   CONFIG_TASK_MOTIONSENSE_STACK_SIZE,    \
 				   EC_TASK_MOTIONSENSE_PRIO)), ())        \
-	COND_CODE_1(HAS_TASK_HOSTCMD,                                     \
+	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_DEDICATED,                 \
 		     (CROS_EC_TASK(HOSTCMD, host_command_task, 0,         \
 				   CONFIG_TASK_HOSTCMD_STACK_SIZE,        \
 				   EC_TASK_HOSTCMD_PRIO)), ())            \
@@ -195,9 +195,11 @@ enum {
 #undef TASK_TEST
 
 /*
- * Additional task IDs for features that runs on non shimmed threads.
+ * Additional task IDs for features that runs on non shimmed threads,
+ * task_get_current() needs to be updated to identify these ones.
  */
 #define CROS_EC_EXTRA_TASKS(fn) \
+	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_MAIN, (fn(HOSTCMD)), ()) \
 	fn(SYSWORKQ)
 
 #define EXTRA_TASK_INTERNAL_ID(name) EXTRA_TASK_##name,

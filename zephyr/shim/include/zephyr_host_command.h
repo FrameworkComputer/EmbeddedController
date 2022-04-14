@@ -11,6 +11,16 @@
 #define __CROS_EC_ZEPHYR_HOST_COMMAND_H
 
 #include <init.h>
+#include <stdbool.h>
+
+/* Initializes and runs the host command handler loop.  */
+void host_command_task(void *u);
+
+/* Takes over the main thread and runs the host command loop. */
+void host_command_main(void);
+
+/* True if running in the main thread. */
+bool in_host_command_main(void);
 
 #ifdef CONFIG_PLATFORM_EC_HOSTCMD
 
