@@ -60,7 +60,7 @@ static inline bool signals_valid(power_signal_mask_t signals)
 #endif
 #if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S5)
 	if ((signals & POWER_SIGNAL_MASK(PWR_SLP_S5)) &&
-	    power_signal_get(PWR_SLP_S4) < 0)
+	    power_signal_get(PWR_SLP_S5) < 0)
 		return false;
 #endif
 	return true;
