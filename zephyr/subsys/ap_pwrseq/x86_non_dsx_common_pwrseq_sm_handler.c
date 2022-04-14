@@ -421,13 +421,56 @@ static int common_pwr_sm_run(int state)
 	return state;
 }
 
+/*
+ * Determine the current CPU state and ensure it
+ * is matching what is required.
+ */
+static void pwr_seq_set_initial_state(void)
+{
+	uint32_t reset_flags = system_get_reset_flags();
+	/* Determine current state using chipset specific handler */
+	enum power_states_ndsx state = chipset_pwr_seq_get_state();
+
+	/*
+	 * Check reset flags, and ensure CPU is in correct state.
+	 */
+	if (reset_flags & EC_RESET_FLAG_AP_OFF) {
+		/*
+		 * AP is expected to be off.
+		 * If it isn't, force shutdown.
+		 */
+		if (state != SYS_POWER_STATE_G3) {
+			ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
+		}
+		pwr_sm_set_state(SYS_POWER_STATE_G3);
+		return;
+	}
+	/*
+	 * Not in warm boot, but CPU is not shutdown.
+	 */
+	if (((reset_flags & EC_RESET_FLAG_SYSJUMP) == 0) &&
+	    (state != SYS_POWER_STATE_G3)) {
+		ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
+		state = SYS_POWER_STATE_G3;
+	}
+	/*
+	 * If CPU is off, set the state to start powering it up.
+	 */
+	if (state == SYS_POWER_STATE_G3) {
+		state = SYS_POWER_STATE_G3S5;
+	}
+	pwr_sm_set_state(state);
+}
+
 static void pwrseq_loop_thread(void *p1, void *p2, void *p3)
 {
 	int32_t t_wait_ms = 10;
 	enum power_states_ndsx curr_state, new_state;
 	power_signal_mask_t this_in_signals;
 	power_signal_mask_t last_in_signals = 0;
-	enum power_states_ndsx last_state = pwr_sm_get_state();
+	enum power_states_ndsx last_state = -1;
+
+	pwr_seq_set_initial_state();
 
 	while (1) {
 		curr_state = pwr_sm_get_state();
@@ -495,8 +538,6 @@ static void init_pwr_seq_state(void)
 {
 	init_chipset_pwr_seq_state();
 	request_exit_hardoff(false);
-
-	pwr_sm_set_state(SYS_POWER_STATE_G3S5);
 }
 
 /* Initialize power sequence system state */
@@ -506,7 +547,6 @@ static int pwrseq_init(const struct device *dev)
 
 	/* Initialize signal handlers */
 	power_signal_init();
-	/* TODO: Define initial state of power sequence */
 	LOG_DBG("Init pwr seq state");
 	init_pwr_seq_state();
 	/* Create power sequence state handler core function thread */
