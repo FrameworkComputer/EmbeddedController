@@ -98,17 +98,17 @@ static void set_high_trigger(enum pwr_sig_adc adc, bool enable)
 
 static void trigger_high(enum pwr_sig_adc adc)
 {
+	set_high_trigger(adc, false);
 	atomic_set_bit(&adc_state[adc], ADC_BIT_VALUE);
 	set_low_trigger(adc, true);
-	set_high_trigger(adc, false);
 	LOG_DBG("power signal adc%d is HIGH", adc);
 	power_signal_interrupt(config[adc].signal, 1);
 }
 
 static void trigger_low(enum pwr_sig_adc adc)
 {
-	atomic_clear_bit(&adc_state[adc], ADC_BIT_VALUE);
 	set_low_trigger(adc, false);
+	atomic_clear_bit(&adc_state[adc], ADC_BIT_VALUE);
 	set_high_trigger(adc, true);
 	LOG_DBG("power signal adc%d is LOW", adc);
 	power_signal_interrupt(config[adc].signal, 0);
