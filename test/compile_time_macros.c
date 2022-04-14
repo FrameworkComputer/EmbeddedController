@@ -29,6 +29,45 @@ static int test_BIT_ULL(void)
 	return EC_SUCCESS;
 }
 
+static int test_WRITE_BIT(void)
+{
+	uint8_t r8 __maybe_unused;
+	uint16_t r16 __maybe_unused;
+	uint32_t r32 __maybe_unused;
+
+	r8 = 0;
+	WRITE_BIT(r8, 0, true);
+	TEST_EQ(r8, 0x01, "%u");
+	WRITE_BIT(r8, 1, true);
+	TEST_EQ(r8, 0x03, "%u");
+	WRITE_BIT(r8, 5, true);
+	TEST_EQ(r8, 0x23, "%u");
+	WRITE_BIT(r8, 0, false);
+	TEST_EQ(r8, 0x22, "%u");
+
+	r16 = 0;
+	WRITE_BIT(r16, 0, true);
+	TEST_EQ(r16, 0x0001, "%u");
+	WRITE_BIT(r16, 9, true);
+	TEST_EQ(r16, 0x0201, "%u");
+	WRITE_BIT(r16, 15, true);
+	TEST_EQ(r16, 0x8201, "%u");
+	WRITE_BIT(r16, 0, false);
+	TEST_EQ(r16, 0x8200, "%u");
+
+	r32 = 0;
+	WRITE_BIT(r32, 0, true);
+	TEST_EQ(r32, 0x00000001, "%u");
+	WRITE_BIT(r32, 25, true);
+	TEST_EQ(r32, 0x02000001, "%u");
+	WRITE_BIT(r32, 31, true);
+	TEST_EQ(r32, 0x82000001, "%u");
+	WRITE_BIT(r32, 0, false);
+	TEST_EQ(r32, 0x82000000, "%u");
+
+	return EC_SUCCESS;
+}
+
 static int test_GENMASK(void)
 {
 	TEST_EQ(GENMASK(0, 0),   0x00000001U, "%u");
@@ -73,6 +112,7 @@ void run_test(int argc, char **argv)
 
 	RUN_TEST(test_BIT);
 	RUN_TEST(test_BIT_ULL);
+	RUN_TEST(test_WRITE_BIT);
 	RUN_TEST(test_GENMASK);
 	RUN_TEST(test_GENMASK_ULL);
 	RUN_TEST(test_IS_ARRAY);
