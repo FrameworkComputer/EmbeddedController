@@ -99,24 +99,7 @@ void power_signal_vw_init(void)
 {
 	static struct espi_callback espi_cb;
 
-	struct espi_cfg cfg = {
-		.io_caps = ESPI_IO_MODE_SINGLE_LINE,
-		.channel_caps = ESPI_CHANNEL_VWIRE |
-			ESPI_CHANNEL_PERIPHERAL |
-			ESPI_CHANNEL_OOB,
-		/* ESPI_FREQ_MHZ */
-		.max_freq = DT_INST_PROP(0, pwrseq_espi_max_freq),
-	};
-
-	if (!device_is_ready(espi_dev))	{
-		LOG_ERR("Espi device is not ready");
-		return;
-	}
-
-	if (espi_config(espi_dev, &cfg)) {
-		LOG_ERR("Failed to configure eSPI");
-		return;
-	}
+	/* Assumes ESPI device is already configured. */
 
 	/* Configure handler for eSPI events */
 	espi_init_callback(&espi_cb, espi_handler,

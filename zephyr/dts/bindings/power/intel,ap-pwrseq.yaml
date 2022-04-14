@@ -88,10 +88,3 @@ properties:
       default: 10
       description: |
         Timeout in seconds for dropping back from S5 to G3.
-
-    pwrseq-espi-max-freq:
-      type: int
-      required: false
-      default: 20
-      description: |
-        Maximum configured frequency for espi channel.

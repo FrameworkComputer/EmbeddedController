@@ -13,7 +13,6 @@
 
 		sys-pwrok-delay = <10>;
 		all-sys-pwrgd-timeout = <20>;
-		pwrseq-espi-max-freq = <50>;
 	};
 
 	pwr-en-pp5000-s5 {
