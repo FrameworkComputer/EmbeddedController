@@ -10,9 +10,9 @@
 		fan_0 {
 			pwms = <&pwm0 0 0 PWM_POLARITY_NORMAL>;
 			pwm-frequency = <25000>;
-			rpm_min = <1000>;
-			rpm_start = <1000>;
-			rpm_max = <6500>;
+			rpm_min = <3100>;
+			rpm_start = <3100>;
+			rpm_max = <8000>;
 			tach = <&tach1>;
 			pgood_gpio = <&gpio_s0_pgood>;
 		};

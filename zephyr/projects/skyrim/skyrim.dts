@@ -111,6 +111,7 @@
 			temp_host_high = <100>;
 			temp_host_halt = <105>;
 			temp_host_release_high = <80>;
+			temp_host_release_halt = <80>;
 			temp_fan_off = <0>;
 			temp_fan_max = <70>;
 			power-good-pin = <&gpio_pg_pwr_s5>;
