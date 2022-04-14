@@ -24,16 +24,6 @@
 #define IN_ALL_S0_VALUE IN_PGOOD_ALL_CORE
 #define CHIPSET_G3S5_POWERUP_SIGNAL IN_PCH_SLP_SUS_DEASSERTED
 
-#if	defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S3) || \
-	defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S4) || \
-	defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S5)
-/*
- * Set if ESPI signals are required, so need to check
- * whether ESPI is ready or not
- */
-#define PWRSEQ_REQUIRE_ESPI
-#endif
-
 #else
 #warning("Input power signals state flags not defined");
 #endif

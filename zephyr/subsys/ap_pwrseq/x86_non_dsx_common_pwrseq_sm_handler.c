@@ -42,34 +42,26 @@ const char pwrsm_dbg[][25] = {
 #endif
 };
 
-#ifdef PWRSEQ_REQUIRE_ESPI
-
-void notify_espi_ready(bool ready)
-{
-	pwrseq_ctx.espi_ready = ready;
-}
-#endif
-
 /*
  * Returns true if all signals in mask are valid.
+ * This is only done for virtual wire signals.
  */
 static inline bool signals_valid(power_signal_mask_t signals)
 {
-#ifdef PWRSEQ_REQUIRE_ESPI
-	if (!pwrseq_ctx.espi_ready) {
 #if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S3)
-		if (signals & POWER_SIGNAL_MASK(PWR_SLP_S3))
-			return false;
+	if ((signals & POWER_SIGNAL_MASK(PWR_SLP_S3)) &&
+	    power_signal_get(PWR_SLP_S3) < 0)
+		return false;
 #endif
 #if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S4)
-		if (signals & POWER_SIGNAL_MASK(PWR_SLP_S3))
-			return false;
+	if ((signals & POWER_SIGNAL_MASK(PWR_SLP_S4)) &&
+	    power_signal_get(PWR_SLP_S4) < 0)
+		return false;
 #endif
 #if defined(CONFIG_PLATFORM_EC_ESPI_VW_SLP_S5)
-		if (signals & POWER_SIGNAL_MASK(PWR_SLP_S3))
-			return false;
-#endif
-	}
+	if ((signals & POWER_SIGNAL_MASK(PWR_SLP_S5)) &&
+	    power_signal_get(PWR_SLP_S4) < 0)
+		return false;
 #endif
 	return true;
 }

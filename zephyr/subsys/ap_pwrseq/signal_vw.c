@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <atomic.h>
 #include <drivers/espi.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
@@ -34,18 +35,20 @@ const static struct vw_config vw_config[] = {
 DT_FOREACH_STATUS_OKAY(MY_COMPAT, INIT_ESPI_SIGNAL)
 };
 
-static bool signal_data[ARRAY_SIZE(vw_config)];
+/*
+ * Current signal value.
+ */
+static atomic_t signal_data;
+/*
+ * Mask of valid signals. If the bus is reset, this is cleared,
+ * and when a signal is updated the associated bit is set to indicate
+ * the signal is valid.
+ */
+static atomic_t signal_valid;
 
 #define espi_dev DEVICE_DT_GET(DT_CHOSEN(intel_ap_pwrseq_espi))
 
-/*
- * Mask of updated signals. If the bus is reset, this is cleared,
- * and it is only when all the signals have been updated that
- * notification is sent that the signals are ready.
- */
-static uint8_t espi_mask;
-static bool espi_valid;
-BUILD_ASSERT(ARRAY_SIZE(vw_config) <= 8);
+BUILD_ASSERT(ARRAY_SIZE(vw_config) <= (sizeof(atomic_t) * 8));
 
 static void espi_handler(const struct device *dev,
 			 struct espi_callback *cb,
@@ -61,42 +64,23 @@ static void espi_handler(const struct device *dev,
 
 	case ESPI_BUS_RESET:
 		/*
-		 * Notify that the bus isn't ready, and clear
-		 * the signal mask.
+		 * Clear the signal valid mask.
 		 */
-		notify_espi_ready(false);
-		espi_mask = 0;
-		espi_valid = false;
+		atomic_clear(&signal_valid);
 		break;
 
 	case ESPI_BUS_EVENT_VWIRE_RECEIVED:
 		for (int i = 0; i < ARRAY_SIZE(vw_config); i++) {
 			if (event.evt_details == vw_config[i].espi_signal) {
-				int value = vw_config[i].invert
+				bool value = vw_config[i].invert
 						? !event.evt_data
 						: !!event.evt_data;
 
-				signal_data[i] = value;
-				if (!espi_valid) {
-					espi_mask |= BIT(i);
-				}
+				atomic_set_bit_to(&signal_data, i, value);
+				atomic_set_bit(&signal_valid, i);
 				power_signal_interrupt(vw_config[i].signal,
 						       value);
 			}
-		}
-		/*
-		 * When all the signals have been updated, notify that
-		 * the ESPI signals are valid.
-		 */
-		if (!espi_valid &&
-		    espi_mask == BIT_MASK(ARRAY_SIZE(vw_config))) {
-			espi_valid = true;
-			LOG_DBG("ESPI signals valid");
-			/*
-			 * TODO(b/222946923): Convert to generalised
-			 * callback pattern.
-			 */
-			notify_espi_ready(true);
 		}
 		break;
 	}
@@ -104,10 +88,11 @@ static void espi_handler(const struct device *dev,
 
 int power_signal_vw_get(enum pwr_sig_vw vw)
 {
-	if (vw < 0 || vw >= ARRAY_SIZE(vw_config)) {
+	if (vw < 0 || vw >= ARRAY_SIZE(vw_config) ||
+	    !atomic_test_bit(&signal_valid, vw)) {
 		return -EINVAL;
 	}
-	return signal_data[vw];
+	return atomic_test_bit(&signal_data, vw);
 }
 
 void power_signal_vw_init(void)
@@ -143,20 +128,18 @@ void power_signal_vw_init(void)
 	 * initialise the current values of the signals.
 	 */
 	if (espi_get_channel_status(espi_dev, ESPI_CHANNEL_VWIRE)) {
-		espi_valid = true;
-
 		for (int i = 0; i < ARRAY_SIZE(vw_config); i++) {
 			uint8_t vw_value;
 
 			if (espi_receive_vwire(espi_dev,
 					   vw_config[i].espi_signal,
 					   &vw_value) == 0) {
-				signal_data[i] = vw_config[i].invert
+				atomic_set_bit_to(&signal_data, i,
+					vw_config[i].invert
 						? !vw_value
-						: !!vw_value;
+						: !!vw_value);
 			}
 		}
-		notify_espi_ready(true);
 	}
 }
 

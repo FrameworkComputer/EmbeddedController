@@ -18,9 +18,6 @@ struct pwrseq_context {
 	enum power_states_ndsx power_state;
 	/* Indicate should exit G3 power state or not */
 	bool want_g3_exit;
-#if defined(PWRSEQ_REQUIRE_ESPI)
-	bool espi_ready;
-#endif
 
 };
 
