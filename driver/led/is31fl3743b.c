@@ -91,8 +91,10 @@ static int is31fl3743b_enable(struct rgbkbd *ctx, bool enable)
 		return rv;
 	}
 
-	return is31fl3743b_write(ctx, IS31FL3743B_REG_CONFIG,
-				 u8 | BIT(3) | (enable ? BIT(0) : 0));
+	WRITE_BIT(u8, 3, 1);
+	WRITE_BIT(u8, 0, enable);
+
+	return is31fl3743b_write(ctx, IS31FL3743B_REG_CONFIG, u8);
 }
 
 static int is31fl3743b_set_color(struct rgbkbd *ctx, uint8_t offset,
