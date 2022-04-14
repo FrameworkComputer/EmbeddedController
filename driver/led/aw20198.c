@@ -75,8 +75,8 @@ static int aw20198_enable(struct rgbkbd *ctx, bool enable)
 		return rv;
 	}
 
-	return aw20198_write(ctx, AW20198_REG_GCR,
-			      cfg | (enable ? BIT(0) : 0));
+	WRITE_BIT(cfg, 0, enable);
+	return aw20198_write(ctx, AW20198_REG_GCR, cfg);
 }
 
 static int aw20198_set_color(struct rgbkbd *ctx, uint8_t offset,
