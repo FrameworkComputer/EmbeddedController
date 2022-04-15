@@ -384,7 +384,6 @@ enum power_state power_handle_state(enum power_state state)
 		if (resume_ms_flag > 0)
 			resume_ms_flag--;
 		CPRINTS("PH S0ixS0->S0");
-		cypd_set_power_active(POWER_S0);
 		return POWER_S0;
 
 		break;
@@ -396,7 +395,6 @@ enum power_state power_handle_state(enum power_state state)
 		if (enter_ms_flag > 0)
 			enter_ms_flag--;
 		CPRINTS("PH S0S0ix->S0ix");
-		cypd_set_power_active(POWER_S3);
 		return POWER_S0ix;
 
 		break;
