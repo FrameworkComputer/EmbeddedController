@@ -389,7 +389,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #endif
 
 #if defined(TEST_USB_PD_TIMER)
-#define CONFIG_USB_PD_PORT_MAX_COUNT 1
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_MATH_UTIL
 #define CONFIG_TEST_USB_PD_TIMER
 #endif
