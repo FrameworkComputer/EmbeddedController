@@ -1,0 +1,69 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USBC TCPC USB MUX
+
+include: cros-ec,usbc-mux.yaml
+
+compatible: "cros-ec,usbc-mux-tcpci"
+
+properties:
+  hpd-update:
+    type: string
+    required: false
+    description: |
+      Name of function used as hpd_update callback
+    enum:
+      - ps8xxx_tcpc_update_hpd_status
+
+  port:
+    type: phandle
+    required: false
+    description: |
+      If the TCPC in your design is used to manage both the power-delivery
+      interface and configure the mux for the USB superspeed signals, this
+      property, and the i2c-addr-flags should be omitted. The driver uses
+      the I2C configuration specified in the corresponding TCPC node.
+
+      Example below
+
+      port0@0 {
+          compatible = "named-usbc-port";
+          reg = <0>;
+          tcpc {
+              compatible = "parade,ps8xxx";
+              status = "okay";
+              port = <&i2c_tcpc0>;
+              i2c-addr-flags = "PS8XXX_I2C_ADDR1_FLAGS";
+          };
+          usb-muxes = <&usb_mux_0>;
+      };
+      usb_mux_0 usb-mux-0 {
+          compatible = "parade,usbc-mux-ps8xxx";
+          /* I2C configuration provide by TCPC node */
+      };
+
+      If the TCPC in your design only configures the USB superspeed signals,
+      for instance when the EC chip contains an embedded TCPC controller,
+      then port and i2c-addr-flags are required.
+
+      port0@0 {
+          compatible = "named-usbc-port";
+          reg = <0>;
+          tcpc {
+              compatible = "ite,it8xxx2-tcpc";
+          };
+      };
+      usb_mux_0 usb-mux-0 {
+          compatible = "parade,usbc-mux-ps8xxx";
+          port = <i2c_usbc0>;
+          i2c-addr-flags = "PS8XXX_I2C_ADDR1_FLAGS";
+      };
+
+  i2c-addr-flags:
+    type: int
+    required: false
+    description: |
+      I2C address of chip. If provided, port property has to be present too.
+      Please check description of port property for more information.

@@ -1,0 +1,15 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USBC PS8xxx USB MUX
+
+include: cros-ec,usbc-mux-tcpci.yaml
+
+compatible: "parade,usbc-mux-ps8xxx"
+
+properties:
+  hpd-update:
+    description: |
+      PS8xxx USB MUX almost always use this hdp_update callback
+    default: "ps8xxx_tcpc_update_hpd_status"
