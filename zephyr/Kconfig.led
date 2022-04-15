@@ -154,3 +154,18 @@ config PLATFORM_EC_LED_ONOFF_STATES_BAT_LOW
 endif # PLATFORM_EC_LED_ONOFF_STATES
 
 endif # PLATFORM_EC_LED_COMMON
+
+config PLATFORM_EC_MAX695X_SEVEN_SEGMENT_DISPLAY
+	bool "MAX695X Seven Segment Display"
+	help
+	  Enable this to support MAX6958/MAX6959 7-Segment LED Display.
+	  The MAX6958/MAX6959 is a compact multiplexed common - cathode display
+	  designed to interface microprocessors with seven - segment numerical
+	  LED digits or to discrete LEDs via a 2-wire serial interface
+	  compatible with SMBusTM and I2C.
+
+config PLATFORM_EC_CONSOLE_CMD_SEVEN_SEGMENT_DISPLAY
+	bool "Console command: seg"
+	help
+	  Enable the "seg" console command. This command allow the user to write
+	  on seven segment display.
