@@ -64,9 +64,18 @@ static void i2c_speed_workaround(void)
 		   0xF7, 0x14);
 }
 
+static void pwm_freq_workaround(void)
+{
+	/* Reduce SW freq from 1.5MHz to 1MHz
+	 * for 10% higher current rating b/215294785
+	 */
+	rt9490_enable_pwm_1mhz(CHARGER_SOLO, true);
+}
+
 static void board_rt9490_workaround(void)
 {
 	ibus_adc_workaround();
 	i2c_speed_workaround();
+	pwm_freq_workaround();
 }
 DECLARE_HOOK(HOOK_INIT, board_rt9490_workaround, HOOK_PRIO_DEFAULT);

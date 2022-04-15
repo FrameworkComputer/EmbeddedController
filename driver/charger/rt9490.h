@@ -247,5 +247,7 @@ extern const struct bc12_drv rt9490_bc12_drv;
 void rt9490_interrupt(int port);
 
 int rt9490_enable_adc(int chgnum, bool en);
+/* enable pwm frequency 1MHz mode */
+int rt9490_enable_pwm_1mhz(int chgnum, bool en);
 
 #endif /* __CROS_EC_RT9490_H */
