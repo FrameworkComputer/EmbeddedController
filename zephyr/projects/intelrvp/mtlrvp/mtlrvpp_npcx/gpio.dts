@@ -13,6 +13,7 @@
 
 		ioex_kbd_intr_n: ioex-kbd-intr-n {
 			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_KB_DISCRETE_INT";
 		};
 		all_sys_pwrgd: all-sys-pwrgd {
 			gpios = <&gpio7 0 GPIO_INPUT>;
@@ -258,6 +259,29 @@
 		tp-gpiof4 {
 			gpios = <&gpiof 4 GPIO_INPUT>;
 		};
+
+		/* KBD IOEX configuration */
+		srtc-rst {
+			gpios = <&ioex_it8801_port0 3 GPIO_OUTPUT_LOW>;
+		};
+		ec-h1-packet-mode {
+			gpios = <&ioex_it8801_port0 4 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		rtc-rst {
+			gpios = <&ioex_it8801_port0 6 GPIO_OUTPUT_LOW>;
+		};
+		ec-entering-rw {
+			gpios = <&ioex_it8801_port0 7 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		ioex-sys-rst-odl-ec {
+			gpios = <&ioex_it8801_port1 0 GPIO_INPUT>;
+		};
+		ioex-slate-mode-indication {
+			gpios = <&ioex_it8801_port1 2 GPIO_INPUT>;
+		};
+
 		/* USB C IOEX configuration */
 		usb-c0-hbr-ls-en {
 			gpios = <&ioex_c0 2 GPIO_OUTPUT_LOW>;

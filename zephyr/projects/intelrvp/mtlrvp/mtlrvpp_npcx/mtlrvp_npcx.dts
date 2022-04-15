@@ -28,6 +28,10 @@
 			i2c-port = <&i2c7_0>;
 			enum-name = "I2C_PORT_EEPROM";
 		};
+		keyboard {
+			i2c-port = <&i2c7_0>;
+			enum-name = "I2C_PORT_KB_DISCRETE";
+		};
 		typec_aic1: typec-aic1{
 			i2c-port = <&i2c0_0>;
 			enum-name = "I2C_PORT_TYPEC_AIC_1";
@@ -97,6 +101,12 @@
 		 */
 		board-gpios = <&pca95xx 13 0>, <&pca95xx 12 0>, <&pca95xx 11 0>,
 			      <&pca95xx 10 0>, <&pca95xx 9 0>, <&pca95xx 8 0>;
+	};
+
+	kb_discrete: ite-it8801@39 {
+		compatible = "ite,it8801";
+		reg = <0x39>;
+		label = "KEYBOARD_DISCRETE";
 	};
 };
 

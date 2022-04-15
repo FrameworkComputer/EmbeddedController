@@ -9,12 +9,19 @@
 #include "i2c.h"
 #include "intelrvp.h"
 #include "intel_rvp_board_id.h"
+#include "keyboard_raw.h"
 #include "power/meteorlake.h"
 
 #define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_COMMAND, format, ## args)
 
 /******************************************************************************/
+/* KSO mapping for discrete keyboard */
+__override const uint8_t it8801_kso_mapping[] = {
+	0, 1, 20, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16,
+};
+BUILD_ASSERT(ARRAY_SIZE(it8801_kso_mapping) == KEYBOARD_COLS_MAX);
+
 /* PWROK signal configuration */
 /*
  * On MTLRVP, SYS_PWROK_EC is an output controlled by EC and uses ALL_SYS_PWRGD

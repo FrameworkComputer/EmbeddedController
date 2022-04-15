@@ -36,5 +36,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
+		int_ioex_kbd_intr_n: ioex_kbd_intr_n {
+			irq-pin = <&ioex_kbd_intr_n>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "io_expander_it8801_interrupt";
+		};
 	};
 };
