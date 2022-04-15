@@ -16,7 +16,7 @@
 
 static uint32_t led_auto_control_flags = ~0x00;
 
-static int led_is_supported(enum ec_led_id led_id)
+__overridable int led_is_supported(enum ec_led_id led_id)
 {
 	int i;
 	static int supported_leds = -1;
