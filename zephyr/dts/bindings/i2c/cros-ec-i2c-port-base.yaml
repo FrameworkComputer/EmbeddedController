@@ -30,6 +30,7 @@ properties:
     - I2C_PORT_EVB_7
     - I2C_PORT_MP2964
     - I2C_PORT_OPT_4
+    - I2C_PORT_PORT80
     - I2C_PORT_POWER
     - I2C_PORT_PPC0
     - I2C_PORT_PPC1
