@@ -253,7 +253,7 @@ static int rt1718s_init(int port)
 				TCPC_REG_ALERT_MASK_VENDOR_DEF,
 				MASK_SET));
 
-	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC))
+	if (IS_ENABLED(CONFIG_USB_PD_FRS))
 		/* Set Rx frs unmasked */
 		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_RT_MASK1,
 					 RT1718S_RT_MASK1_M_RX_FRS, 0xFF));
@@ -518,8 +518,8 @@ out:
 	return rv;
 }
 
-#ifdef CONFIG_USB_PD_FRS_TCPC
-int rt1718s_set_frs_enable_tcpc(int port, int enable)
+#ifdef CONFIG_USB_PD_FRS
+int rt1718s_set_frs_enable(int port, int enable)
 {
 	/*
 	 * Use write instead of update to save 2 i2c read.
@@ -638,7 +638,7 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 	.enter_low_power_mode	= &rt1718s_enter_low_power_mode,
 #endif
 #ifdef CONFIG_USB_PD_FRS_TCPC
-	.set_frs_enable		= &rt1718s_set_frs_enable_tcpc,
+	.set_frs_enable		= &rt1718s_set_frs_enable,
 #endif
 };
 

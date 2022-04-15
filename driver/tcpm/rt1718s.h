@@ -253,14 +253,6 @@ int rt1718s_gpio_get_level(int port, enum rt1718s_gpio signal);
  */
 int rt1718s_set_frs_enable(int port, int enable);
 
-/**
- * Initialize RT1718S FRS function
- *
- * @param port		USB-C port
- * @return EC_SUCCESS if success, EC_ERROR_UNKNOWN otherwise.
- */
-int rt1718s_frs_init(int port);
-
 
 /**
  * Software reset RT1718S
