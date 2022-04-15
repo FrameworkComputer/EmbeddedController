@@ -6,6 +6,7 @@
 #include "atomic.h"
 #include "console.h"
 #include "chipset.h"
+#include "hooks.h"
 #include "timer.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_mux.h"
@@ -20,6 +21,8 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+
+static int active_aux_port = -1;
 
 int pd_check_vconn_swap(int port)
 {
@@ -39,10 +42,16 @@ int svdm_get_hpd_gpio(int port)
 	return !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl));
 }
 
+static void reset_aux_deferred(void)
+{
+	if (active_aux_port == -1)
+		/* reset to 1 for lower power consumption. */
+		set_dp_aux_path_sel(1);
+}
+DECLARE_DEFERRED(reset_aux_deferred);
+
 void svdm_set_hpd_gpio(int port, int en)
 {
-	static int active_port = -1;
-
 	/*
 	 * HPD is low active, inverse the en.
 	 *
@@ -50,17 +59,24 @@ void svdm_set_hpd_gpio(int port, int en)
 	 * 1) Enable hpd if no active port.
 	 * 2) Disable hpd if active port is the given port.
 	 */
-	if (en && active_port < 0) {
+	if (en && active_aux_port < 0) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl), 0);
-		active_port = port;
+		active_aux_port = port;
+		hook_call_deferred(&reset_aux_deferred_data, -1);
 	}
 
-	if (!en && active_port == port) {
+	if (!en && active_aux_port == port) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_ap_dp_hpd_odl), 1);
-		active_port = -1;
-		set_dp_aux_path_sel(0);
+		active_aux_port = -1;
+		/*
+		 * This might be a HPD debounce to send a HPD IRQ (500us), so
+		 * do not reset the aux path immediately. Defer this call and
+		 * re-check if this is a real disable.
+		 */
+		hook_call_deferred(&reset_aux_deferred_data, 1 * MSEC);
 	}
 }
+
 
 __override int svdm_dp_config(int port, uint32_t *payload)
 {
