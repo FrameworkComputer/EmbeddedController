@@ -3,17 +3,12 @@
  * found in the LICENSE file.
  */
 
-/* Brya board configuration */
+/* Crota board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
 #include "compile_time_macros.h"
-
-/*
- * Early brya boards are not set up for vivaldi
- */
-#undef CONFIG_KEYBOARD_VIVALDI
 
 /* Baseboard features */
 #include "baseboard.h"
@@ -152,6 +147,9 @@
 
 /* System has back-lit keyboard */
 #define CONFIG_PWM_KBLIGHT
+
+/* Keyboard features */
+#define CONFIG_KEYBOARD_REFRESH_ROW3
 
 /* I2C Bus Configuration */
 
