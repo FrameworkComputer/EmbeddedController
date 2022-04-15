@@ -161,11 +161,16 @@ static int rt1739_set_vconn(int port, int enable)
 }
 #endif
 
+static int rt1739_get_device_id(int port, int *device_id)
+{
+	return read_reg(port, RT1739_REG_DEVICE_ID0, device_id);
+}
+
 static int rt1739_workaround(int port)
 {
 	int device_id;
 
-	RETURN_ERROR(read_reg(port, RT1739_REG_DEVICE_ID0, &device_id));
+	RETURN_ERROR(rt1739_get_device_id(port, &device_id));
 
 	switch (device_id) {
 	case RT1739_DEVICE_ID_ES1:
@@ -183,6 +188,7 @@ static int rt1739_workaround(int port)
 
 	case RT1739_DEVICE_ID_ES2:
 		CPRINTS("RT1739 ES2");
+		/* Disable SWENB test output */
 		/* enter hidden mode */
 		RETURN_ERROR(write_reg(port, 0xF1, 0x62));
 		RETURN_ERROR(write_reg(port, 0xF0, 0x86));
@@ -191,6 +197,25 @@ static int rt1739_workaround(int port)
 		/* leave hidden mode */
 		RETURN_ERROR(write_reg(port, 0xF1, 0));
 		RETURN_ERROR(write_reg(port, 0xF0, 0));
+
+		/* Set VBUS to VIN_LV leakage remove setting */
+		RETURN_ERROR(write_reg(port, RT1739_VBUS_FAULT_DIS, 0));
+		RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_CTRL1, 0));
+		RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_SWITCH_CTRL, 0));
+		msleep(5);
+		RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_SWITCH_CTRL,
+				       RT1739_LV_SRC_EN));
+		msleep(5);
+		RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_SWITCH_CTRL, 0));
+		msleep(5);
+		RETURN_ERROR(write_reg(port, RT1739_VBUS_FAULT_DIS,
+				       RT1739_OVP_DISVBUS_EN |
+				       RT1739_UVLO_DISVBUS_EN |
+				       RT1739_RCP_DISVBUS_EN |
+				       RT1739_SCP_DISVBUS_EN));
+		RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_CTRL1,
+				       RT1739_HVLV_SCP_EN |
+				       RT1739_HVLV_OCRC_EN));
 		break;
 
 	default:
@@ -231,6 +256,8 @@ static int rt1739_set_frs_enable(int port, int enable)
 
 static int rt1739_init(int port)
 {
+	int device_id, oc_setting;
+
 	atomic_clear(&flags[port]);
 
 	RETURN_ERROR(write_reg(port, RT1739_REG_SW_RESET, RT1739_SW_RESET));
@@ -257,10 +284,15 @@ static int rt1739_init(int port)
 	RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_OV_SETTING,
 		(RT1739_OVP_SEL_23_0V << RT1739_VBUS_OVP_SEL_SHIFT) |
 		(RT1739_OVP_SEL_23_0V << RT1739_VIN_HV_OVP_SEL_SHIFT)));
-	/* VBUS OCP -> 3.3A */
-	RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_OC_SETTING,
-		(RT1739_LV_SRC_OCP_SEL_3_3A << RT1739_LV_SRC_OCP_SEL_SHIFT) |
-		(RT1739_HV_SINK_OCP_SEL_3_3A << RT1739_HV_SINK_OCP_SEL_SHIFT)));
+	/* VBUS OCP -> 3.3A (or 5.5A for ES2 HV Sink) */
+	RETURN_ERROR(rt1739_get_device_id(port, &device_id));
+	if (device_id == RT1739_DEVICE_ID_ES2)
+		oc_setting = (RT1739_LV_SRC_OCP_SEL_3_3A |
+			      RT1739_HV_SINK_OCP_SEL_5_5A);
+	else
+		oc_setting = (RT1739_LV_SRC_OCP_SEL_3_3A |
+			      RT1739_HV_SINK_OCP_SEL_3_3A);
+	RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_OC_SETTING, oc_setting));
 
 	return EC_SUCCESS;
 }
