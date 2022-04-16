@@ -84,7 +84,6 @@
 
 #define PE_SET_MASK(port, mask) atomic_or(&pe[port].flags, (mask))
 #define PE_CLR_MASK(port, mask) atomic_clear_bits(&pe[port].flags, (mask))
-#define PE_CHK_MASK(port, mask) (pe[port].flags & (mask))
 
 /*
  * These macros SET, CLEAR, and CHECK, a DPM (Device Policy Manager)
@@ -7687,17 +7686,17 @@ const struct test_sm_data test_pe_sm_data[] = {
 BUILD_ASSERT(ARRAY_SIZE(pe_states) == ARRAY_SIZE(pe_state_names));
 const int test_pe_sm_data_size = ARRAY_SIZE(test_pe_sm_data);
 
-void pe_set_flag(int port, int mask)
+void pe_set_fn(int port, int fn)
 {
-	PE_SET_MASK(port, mask);
+	PE_SET_FN(port, fn);
 }
-void pe_clr_flag(int port, int mask)
+void pe_clr_fn(int port, int fn)
 {
-	PE_CLR_MASK(port, mask);
+	PE_CLR_FN(port, fn);
 }
-int pe_chk_flag(int port, int mask)
+int pe_chk_fn(int port, int fn)
 {
-	return PE_CHK_MASK(port, mask);
+	return PE_CHK_FN(port, fn);
 }
 void pe_clr_dpm_requests(int port)
 {

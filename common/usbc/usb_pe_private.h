@@ -82,4 +82,11 @@ enum {
 	PE_FLAGS_DATA_RESET_COMPLETE_FN,
 };
 
+#ifdef TEST_BUILD
+void pe_set_fn(int port, int fn);
+void pe_clr_fn(int port, int fn);
+int pe_chk_fn(int port, int fn);
+void pe_clr_dpm_requests(int port);
+#endif /* TEST_BUILD */
+
 #endif /* __CROS_EC_USB_PE_PRIVATE_H */

@@ -14,60 +14,6 @@
  */
 #define PORT0 0
 
-/**
- * usb_pe_drp_sm.c locally defined.  If it changes there, it must
- * be changed here as well.
- */
-
-/*
- * Policy Engine Layer Flags
- */
-
-/* At least one successful PD communication packet received from port partner */
-#define PE_FLAGS_PD_CONNECTION               BIT(0)
-/* Accept message received from port partner */
-#define PE_FLAGS_ACCEPT                      BIT(1)
-/* Power Supply Ready message received from port partner */
-#define PE_FLAGS_PS_READY                    BIT(2)
-/* Protocol Error was determined based on error recovery current state */
-#define PE_FLAGS_PROTOCOL_ERROR              BIT(3)
-/* Set if we are in Modal Operation */
-#define PE_FLAGS_MODAL_OPERATION             BIT(4)
-/* A message we requested to be sent has been transmitted */
-#define PE_FLAGS_TX_COMPLETE                 BIT(5)
-/* A message sent by a port partner has been received */
-#define PE_FLAGS_MSG_RECEIVED                BIT(6)
-/* A hard reset has been requested but has not been sent, not currently used */
-#define PE_FLAGS_HARD_RESET_PENDING          BIT(7)
-/* Port partner sent a Wait message. Wait before we resend our message */
-#define PE_FLAGS_WAIT                        BIT(8)
-/* An explicit contract is in place with our port partner */
-#define PE_FLAGS_EXPLICIT_CONTRACT           BIT(9)
-/* Waiting for Sink Capabailities timed out.  Used for retry error handling */
-#define PE_FLAGS_SNK_WAIT_CAP_TIMEOUT        BIT(10)
-/* Power Supply voltage/current transition timed out */
-#define PE_FLAGS_PS_TRANSITION_TIMEOUT       BIT(11)
-/* Flag to note current Atomic Message Sequence is interruptible */
-#define PE_FLAGS_INTERRUPTIBLE_AMS           BIT(12)
-/* Flag to note Power Supply reset has completed */
-#define PE_FLAGS_PS_RESET_COMPLETE           BIT(13)
-/* VCONN swap operation has completed */
-#define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(14)
-/* Flag to note no more setup VDMs (discovery, etc.) should be sent */
-#define PE_FLAGS_VDM_SETUP_DONE              BIT(15)
-/* Flag to note Swap Source Start timer should be set at PE_SRC_Startup entry */
-#define PE_FLAGS_RUN_SOURCE_START_TIMER      BIT(16)
-/* Flag to note Port Discovery port partner replied with BUSY */
-#define PE_FLAGS_VDM_REQUEST_BUSY            BIT(17)
-/* Flag to note Port Discovery port partner replied with NAK */
-#define PE_FLAGS_VDM_REQUEST_NAKED           BIT(18)
-/* Flag to note FRS/PRS context in shared state machine path */
-#define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(19)
-/* Flag to note if FRS listening is enabled */
-#define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(20)
-/* Flag to note TCPC passed on FRS signal from port partner */
-#define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(21)
-
 /* List of all Policy Engine level states */
 enum usb_pe_state {
 	/* Super States */
@@ -146,10 +92,5 @@ enum usb_pe_state {
 
 void set_state_pe(const int port, const enum usb_pe_state new_state);
 enum usb_pe_state get_state_pe(const int port);
-
-void pe_set_flag(int port, int flag);
-void pe_clr_flag(int port, int flag);
-int pe_chk_flag(int port, int flag);
-void pe_clr_dpm_requests(int port);
 
 #endif /* __CROS_TEST_USB_PE_H */

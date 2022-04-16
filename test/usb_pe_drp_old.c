@@ -14,11 +14,16 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pe.h"
+#include "usb_pe_private.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
 #include "usb_sm_checks.h"
 #include "usb_tc_sm.h"
 #include "mock/usb_prl_mock.h"
+
+#define pe_set_flag(_p, name) pe_set_fn((_p), (name ## _FN))
+#define pe_clr_flag(_p, name) pe_clr_fn((_p), (name ## _FN))
+#define pe_chk_flag(_p, name) pe_chk_fn((_p), (name ## _FN))
 
 /**
  * STUB Section
