@@ -7774,14 +7774,6 @@ int pe_chk_flag(int port, int flag)
 {
 	return PE_CHK_FLAG(port, flag);
 }
-int pe_get_all_flags(int port)
-{
-	return pe[port].flags;
-}
-void pe_set_all_flags(int port, int flags)
-{
-	pe[port].flags = flags;
-}
 void pe_clr_dpm_requests(int port)
 {
 	pe[port].dpm_request = 0;

@@ -150,8 +150,6 @@ enum usb_pe_state get_state_pe(const int port);
 void pe_set_flag(int port, int flag);
 void pe_clr_flag(int port, int flag);
 int pe_chk_flag(int port, int flag);
-int pe_get_all_flags(int port);
-void pe_set_all_flags(int port, int flags);
 void pe_clr_dpm_requests(int port);
 
 #endif /* __CROS_TEST_USB_PE_H */
