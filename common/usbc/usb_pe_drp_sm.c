@@ -30,6 +30,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_timer.h"
+#include "usb_pe_private.h"
 #include "usb_pe_sm.h"
 #include "usb_tbt_alt_mode.h"
 #include "usb_prl_sm.h"
@@ -71,9 +72,19 @@
 #define CPRINTS_L2(format, args...) CPRINTS_LX(2, format, ## args)
 #define CPRINTS_L3(format, args...) CPRINTS_LX(3, format, ## args)
 
-#define PE_SET_FLAG(port, flag) atomic_or(&pe[port].flags, (flag))
-#define PE_CLR_FLAG(port, flag) atomic_clear_bits(&pe[port].flags, (flag))
-#define PE_CHK_FLAG(port, flag) (pe[port].flags & (flag))
+#define PE_SET_FN(port, _fn) atomic_or(&pe[port].flags,	\
+				       BIT(_fn))
+#define PE_CLR_FN(port, _fn) atomic_clear_bits(&pe[port].flags,	\
+					       BIT(_fn))
+#define PE_CHK_FN(port, _fn) (pe[port].flags & BIT(_fn))
+
+#define PE_SET_FLAG(port, name) PE_SET_FN(port, (name ## _FN))
+#define PE_CLR_FLAG(port, name) PE_CLR_FN(port, (name ## _FN))
+#define PE_CHK_FLAG(port, name) PE_CHK_FN(port, (name ## _FN))
+
+#define PE_SET_MASK(port, mask) atomic_or(&pe[port].flags, (mask))
+#define PE_CLR_MASK(port, mask) atomic_clear_bits(&pe[port].flags, (mask))
+#define PE_CHK_MASK(port, mask) (pe[port].flags & (mask))
 
 /*
  * These macros SET, CLEAR, and CHECK, a DPM (Device Policy Manager)
@@ -84,85 +95,11 @@
 	atomic_clear_bits(&pe[port].dpm_request, (req))
 #define PE_CHK_DPM_REQUEST(port, req) (pe[port].dpm_request & (req))
 
-/*
- * Policy Engine Layer Flags
- * These are reproduced in test/usb_pe.h. If they change here, they must change
- * there.
- */
-
-/* At least one successful PD communication packet received from port partner */
-#define PE_FLAGS_PD_CONNECTION               BIT(0)
-/* Accept message received from port partner */
-#define PE_FLAGS_ACCEPT                      BIT(1)
-/* Power Supply Ready message received from port partner */
-#define PE_FLAGS_PS_READY                    BIT(2)
-/* Protocol Error was determined based on error recovery current state */
-#define PE_FLAGS_PROTOCOL_ERROR              BIT(3)
-/* Set if we are in Modal Operation */
-#define PE_FLAGS_MODAL_OPERATION             BIT(4)
-/* A message we requested to be sent has been transmitted */
-#define PE_FLAGS_TX_COMPLETE                 BIT(5)
-/* A message sent by a port partner has been received */
-#define PE_FLAGS_MSG_RECEIVED                BIT(6)
-/* A hard reset has been requested but has not been sent, not currently used */
-#define PE_FLAGS_HARD_RESET_PENDING          BIT(7)
-/* Port partner sent a Wait message. Wait before we resend our message */
-#define PE_FLAGS_WAIT                        BIT(8)
-/* An explicit contract is in place with our port partner */
-#define PE_FLAGS_EXPLICIT_CONTRACT           BIT(9)
-/* Waiting for Sink Capabailities timed out.  Used for retry error handling */
-#define PE_FLAGS_SNK_WAIT_CAP_TIMEOUT        BIT(10)
-/* Power Supply voltage/current transition timed out */
-#define PE_FLAGS_PS_TRANSITION_TIMEOUT       BIT(11)
-/* Flag to note current Atomic Message Sequence is interruptible */
-#define PE_FLAGS_INTERRUPTIBLE_AMS           BIT(12)
-/* Flag to note Power Supply reset has completed */
-#define PE_FLAGS_PS_RESET_COMPLETE           BIT(13)
-/* VCONN swap operation has completed */
-#define PE_FLAGS_VCONN_SWAP_COMPLETE         BIT(14)
-/* Flag to note no more setup VDMs (discovery, etc.) should be sent */
-#define PE_FLAGS_VDM_SETUP_DONE              BIT(15)
-/* Flag to note PR Swap just completed for Startup entry */
-#define PE_FLAGS_PR_SWAP_COMPLETE	     BIT(16)
-/* Flag to note Port Discovery port partner replied with BUSY */
-#define PE_FLAGS_VDM_REQUEST_BUSY            BIT(17)
-/* Flag to note Port Discovery port partner replied with NAK */
-#define PE_FLAGS_VDM_REQUEST_NAKED           BIT(18)
-/* Flag to note FRS/PRS context in shared state machine path */
-#define PE_FLAGS_FAST_ROLE_SWAP_PATH         BIT(19)
-/* Flag to note if FRS listening is enabled */
-#define PE_FLAGS_FAST_ROLE_SWAP_ENABLED      BIT(20)
-/* Flag to note TCPC passed on FRS signal from port partner */
-#define PE_FLAGS_FAST_ROLE_SWAP_SIGNALED     BIT(21)
-/* TODO: POLICY decision: Triggers a DR SWAP attempt from UFP to DFP */
-#define PE_FLAGS_DR_SWAP_TO_DFP              BIT(22)
-/*
- * TODO: POLICY decision
- * Flag to trigger a message resend after receiving a WAIT from port partner
- */
-#define PE_FLAGS_WAITING_PR_SWAP             BIT(23)
-/* FLAG is set when an AMS is initiated locally. ie. AP requested a PR_SWAP */
-#define PE_FLAGS_LOCALLY_INITIATED_AMS       BIT(24)
-/* Flag to note the first message sent in PE_SRC_READY and PE_SNK_READY */
-#define PE_FLAGS_FIRST_MSG                   BIT(25)
-/* Flag to continue a VDM request if it was interrupted */
-#define PE_FLAGS_VDM_REQUEST_CONTINUE        BIT(26)
-/* TODO: POLICY decision: Triggers a Vconn SWAP attempt to on */
-#define PE_FLAGS_VCONN_SWAP_TO_ON	     BIT(27)
-/* FLAG to track that VDM request to port partner timed out */
-#define PE_FLAGS_VDM_REQUEST_TIMEOUT	     BIT(28)
-/* FLAG to note message was discarded due to incoming message */
-#define PE_FLAGS_MSG_DISCARDED		     BIT(29)
-/* FLAG to note that hard reset can't be performed due to battery low */
-#define PE_FLAGS_SNK_WAITING_BATT	     BIT(30)
-/* FLAG to note that a data reset is complete */
-#define PE_FLAGS_DATA_RESET_COMPLETE         BIT(31)
-
 /* Message flags which should not persist on returning to ready state */
-#define PE_FLAGS_READY_CLR		     (PE_FLAGS_LOCALLY_INITIATED_AMS \
-					     | PE_FLAGS_MSG_DISCARDED \
-					     | PE_FLAGS_VDM_REQUEST_TIMEOUT \
-					     | PE_FLAGS_INTERRUPTIBLE_AMS)
+#define PE_MASK_READY_CLR	(BIT(PE_FLAGS_LOCALLY_INITIATED_AMS_FN) | \
+				 BIT(PE_FLAGS_MSG_DISCARDED_FN) |	\
+				 BIT(PE_FLAGS_VDM_REQUEST_TIMEOUT_FN) |	\
+				 BIT(PE_FLAGS_INTERRUPTIBLE_AMS_FN))
 
 /*
  * Combination to check whether a reply to a message was received.  Our message
@@ -2637,7 +2574,7 @@ static void pe_src_ready_entry(int port)
 	print_current_state(port);
 
 	/* Ensure any message send flags are cleaned up */
-	PE_CLR_FLAG(port, PE_FLAGS_READY_CLR);
+	PE_CLR_MASK(port, PE_MASK_READY_CLR);
 
 	/* Clear DPM Current Request */
 	pe[port].dpm_curr_request = 0;
@@ -2908,9 +2845,10 @@ static void pe_src_hard_reset_entry(int port)
 	pd_timer_enable(port, PE_TIMER_PS_HARD_RESET, PD_T_PS_HARD_RESET);
 
 	/* Clear error flags */
-	PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_NAKED |
-			  PE_FLAGS_PROTOCOL_ERROR |
-			  PE_FLAGS_VDM_REQUEST_BUSY);
+	PE_CLR_MASK(port,
+		    BIT(PE_FLAGS_VDM_REQUEST_NAKED_FN) |
+		    BIT(PE_FLAGS_PROTOCOL_ERROR_FN) |
+		    BIT(PE_FLAGS_VDM_REQUEST_BUSY_FN));
 }
 
 static void pe_src_hard_reset_run(int port)
@@ -3448,7 +3386,7 @@ static void pe_snk_ready_entry(int port)
 	print_current_state(port);
 
 	/* Ensure any message send flags are cleaned up */
-	PE_CLR_FLAG(port, PE_FLAGS_READY_CLR);
+	PE_CLR_MASK(port, PE_MASK_READY_CLR);
 
 	/* Clear DPM Current Request */
 	pe[port].dpm_curr_request = 0;
@@ -3705,10 +3643,11 @@ static void pe_snk_hard_reset_entry(int port)
 	}
 #endif
 
-	PE_CLR_FLAG(port, PE_FLAGS_SNK_WAIT_CAP_TIMEOUT |
-			  PE_FLAGS_VDM_REQUEST_NAKED |
-			  PE_FLAGS_PROTOCOL_ERROR |
-			  PE_FLAGS_VDM_REQUEST_BUSY);
+	PE_CLR_MASK(port,
+		    BIT(PE_FLAGS_SNK_WAIT_CAP_TIMEOUT_FN) |
+		    BIT(PE_FLAGS_VDM_REQUEST_NAKED_FN) |
+		    BIT(PE_FLAGS_PROTOCOL_ERROR_FN) |
+		    BIT(PE_FLAGS_VDM_REQUEST_BUSY_FN));
 
 	/* Request the generation of Hard Reset Signaling by the PHY Layer */
 	prl_execute_hard_reset(port);
@@ -5328,14 +5267,15 @@ static void pe_vdm_send_request_entry(int port)
 	if ((pe[port].tx_type == TCPCI_MSG_SOP_PRIME ||
 	     pe[port].tx_type == TCPCI_MSG_SOP_PRIME_PRIME) &&
 	    !tc_is_vconn_src(port) && port_discovery_vconn_swap_policy(port,
-		PE_FLAGS_VCONN_SWAP_TO_ON)) {
+					BIT(PE_FLAGS_VCONN_SWAP_TO_ON_FN))) {
 		if (port_try_vconn_swap(port))
 			return;
 	}
 
 	/* All VDM sequences are Interruptible */
-	PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS |
-			PE_FLAGS_INTERRUPTIBLE_AMS);
+	PE_SET_MASK(port,
+		    BIT(PE_FLAGS_LOCALLY_INITIATED_AMS_FN) |
+		    BIT(PE_FLAGS_INTERRUPTIBLE_AMS_FN));
 }
 
 static void pe_vdm_send_request_run(int port)
@@ -6167,9 +6107,10 @@ static void pe_vdm_response_run(int port)
 	    PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR) ||
 	    PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
 
-		PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE |
-			    PE_FLAGS_PROTOCOL_ERROR |
-			    PE_FLAGS_MSG_DISCARDED);
+		PE_CLR_MASK(port,
+			    BIT(PE_FLAGS_TX_COMPLETE_FN) |
+			    BIT(PE_FLAGS_PROTOCOL_ERROR_FN) |
+			    BIT(PE_FLAGS_MSG_DISCARDED_FN));
 
 		pe_set_ready_state(port);
 	}
@@ -7299,8 +7240,9 @@ void pd_dfp_mode_init(int port)
 	 * Clear the VDM Setup Done and Modal Operation flags so we will
 	 * have a fresh discovery
 	 */
-	PE_CLR_FLAG(port, PE_FLAGS_VDM_SETUP_DONE |
-			  PE_FLAGS_MODAL_OPERATION);
+	PE_CLR_MASK(port,
+		    BIT(PE_FLAGS_VDM_SETUP_DONE_FN) |
+		    BIT(PE_FLAGS_MODAL_OPERATION_FN));
 
 	memset(pe[port].partner_amodes, 0, sizeof(pe[port].partner_amodes));
 
@@ -7762,17 +7704,17 @@ const struct test_sm_data test_pe_sm_data[] = {
 BUILD_ASSERT(ARRAY_SIZE(pe_states) == ARRAY_SIZE(pe_state_names));
 const int test_pe_sm_data_size = ARRAY_SIZE(test_pe_sm_data);
 
-void pe_set_flag(int port, int flag)
+void pe_set_flag(int port, int mask)
 {
-	PE_SET_FLAG(port, flag);
+	PE_SET_MASK(port, mask);
 }
-void pe_clr_flag(int port, int flag)
+void pe_clr_flag(int port, int mask)
 {
-	PE_CLR_FLAG(port, flag);
+	PE_CLR_MASK(port, mask);
 }
-int pe_chk_flag(int port, int flag)
+int pe_chk_flag(int port, int mask)
 {
-	return PE_CHK_FLAG(port, flag);
+	return PE_CHK_MASK(port, mask);
 }
 void pe_clr_dpm_requests(int port)
 {
