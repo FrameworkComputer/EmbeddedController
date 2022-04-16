@@ -403,12 +403,15 @@ static enum ec_status hc_rgbkbd_set_color(struct host_cmd_handler_args *args)
 		uint8_t j = rgbkbd_table[p->start_key + i];
 		union rgbkbd_coord_u8 led;
 
-		if (j == RGBKBD_NONE || rgbkbd_map[j] == RGBKBD_DELM)
-			/* Empty entry */
+		if (j == RGBKBD_NONE)
+			/* Null or uninitialized entry */
 			continue;
 
 		do {
 			led.u8 = rgbkbd_map[j++];
+			if (led.u8 == RGBKBD_DELM)
+				/* Reached end of the group. */
+				break;
 			if (set_color_single(p->color[i],
 					     led.coord.x, led.coord.y))
 				return EC_RES_ERROR;
