@@ -104,7 +104,6 @@ ALTERNATE(PIN_MASK(C, 0x1c), 0, MODULE_PWM, 0)               /* GPIOC4/PWM2, GPI
 /* ADC alternate functions */
 ALTERNATE(PIN_MASK(3, 0x10), 0, MODULE_ADC, 0)               /* GPIO34/PS2_DAT2/ADC6 */
 ALTERNATE(PIN_MASK(4, 0x34), 0, MODULE_ADC, 0)               /* GPIO42/ADC3/RI_L, GPIO45/ADC0, GPIO44/ADC1 */
-ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)               /* GPIOE1/ADC7 */
 
 /* KB alternate functions */
 ALTERNATE(PIN_MASK(0, 0xf0), 0, MODULE_KB, GPIO_ODR_HIGH)    /* KSO10&P80_CLK/GPIO07, KSO11&P80_DAT/GPIO06, KSO12/GPIO05, KSO13/GPIO04 */
@@ -120,8 +119,10 @@ ALTERNATE(PIN_MASK(0, 0x02), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW) /
 ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH) /* PSL_IN1_L&GPID2/GPIOD2 */
 
 /* Unused Pins */
+UNUSED(PIN(E, 1))       /* GPIOE1 */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
+UNUSED(PIN(3, 4))       /* GPIO34 */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
@@ -136,23 +137,6 @@ UNUSED(PIN(D, 4))       /* GPIOD4 */
  * KEYBOARD_COL2_INVERTED is defined, this name is required.
  */
 GPIO(EC_KSO_02_INV,               PIN(1, 7), GPIO_OUT_LOW)
-
-/*
- * GPIOE1 is an ALT function ADC INPUT on board ID 2 and a GPIO INPUT on
- * board ID 1. This declaration gives us a signal name to use on board
- * ID 1.
- */
-GPIO(ID_1_EC_BATT_PRES_ODL,       PIN(E, 1), GPIO_INPUT)
-
-/*
- * GPIO34 is an INPUT on board ID 2 and ODR_LOW on board ID 1.
- *
- * Since this pin is pulled up to 3.3V through a 30.9K ohm resistor on
- * board ID 2, we will leak about 0.3mW until the pin is put in ALT mode
- * when MODULE_ADC configuration runs. Initializing the pin to ODR_LOW
- * gives us full control on both boards.
- */
-GPIO(ID_1_USB_C0_C2_TCPC_RST_ODL, PIN(3, 4), GPIO_ODR_LOW)
 
 /* Board ID 1 IO expander configuration */
 

@@ -341,13 +341,7 @@ void board_reset_pd_mcu(void)
 {
 	enum gpio_signal tcpc_rst;
 
-	if (get_board_id() == 1)
-/* TODO: explore how to handle board id in zephyr*/
-#ifndef CONFIG_ZEPHYR
-		tcpc_rst = GPIO_ID_1_USB_C0_C2_TCPC_RST_ODL;
-	else
-#endif /* !CONFIG_ZEPHYR */
-		tcpc_rst = GPIO_USB_C0_C2_TCPC_RST_ODL;
+	tcpc_rst = GPIO_USB_C0_C2_TCPC_RST_ODL;
 
 	/*
 	 * TODO(b/179648104): figure out correct timing
