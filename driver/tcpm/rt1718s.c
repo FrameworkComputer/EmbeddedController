@@ -640,6 +640,7 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 #ifdef CONFIG_USB_PD_FRS_TCPC
 	.set_frs_enable		= &rt1718s_set_frs_enable,
 #endif
+	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 };
 
 const struct bc12_drv rt1718s_bc12_drv = {
