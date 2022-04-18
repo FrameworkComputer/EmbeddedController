@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Brya board configuration */
+/* Osiris board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -11,7 +11,7 @@
 #include "compile_time_macros.h"
 
 /*
- * Early brya boards are not set up for vivaldi
+ * Early osiris boards are not set up for vivaldi
  */
 #undef CONFIG_KEYBOARD_VIVALDI
 
@@ -103,7 +103,7 @@
 #define CONFIG_USBC_PPC_SYV682X
 #define CONFIG_USBC_PPC_NX20P3483
 
-/* TODO: b/177608416 - measure and check these values on brya */
+/* TODO: b/177608416 - measure and check these values on osiris */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
 #define PD_VCONN_SWAP_DELAY		5000 /* us */
