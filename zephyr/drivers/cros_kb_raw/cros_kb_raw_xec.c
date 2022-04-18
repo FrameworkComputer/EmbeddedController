@@ -8,9 +8,8 @@
 #include <assert.h>
 #include <drivers/cros_kb_raw.h>
 #include <drivers/clock_control.h>
-#include <drivers/gpio.h>
 #include <drivers/pinctrl.h>
-#include <kernel.h>
+#include <drivers/interrupt_controller/intc_mchp_xec_ecia.h>
 #include <soc.h>
 #include <soc/microchip_xec/reg_def_cros.h>
 
@@ -40,10 +39,6 @@ struct cros_kb_raw_xec_config {
 	const struct pinctrl_dev_config *pcfg;
 };
 
-/* Driver convenience defines */
-#define KB_RAW_XEC_CONFIG(dev)						\
-	((struct cros_kb_raw_xec_config const *)(dev)->config)
-
 static int kb_raw_xec_init(const struct device *dev)
 {
 	ARG_UNUSED(dev);
@@ -52,35 +47,52 @@ static int kb_raw_xec_init(const struct device *dev)
 	return 0;
 }
 
+/* Clear keyboard source bits: hw status, block source and NVIC pending */
+static void kb_raw_xec_clr_src(const struct device *dev)
+{
+	struct cros_kb_raw_xec_config const *cfg = dev->config;
+	struct kscan_regs *const inst = (struct kscan_regs *)cfg->base;
+
+	inst->KSI_STS = 0xff;
+	mchp_soc_ecia_girq_src_clr(MCHP_GIRQ21_ID, MCHP_KEYSCAN_GIRQ_POS);
+	mchp_xec_ecia_nvic_clr_pend(MCHP_KEYSCAN_GIRQ_NVIC_DIRECT);
+}
+
 /* Cros ec keyboard raw api functions */
 static int cros_kb_raw_xec_enable_interrupt(const struct device *dev,
 					    int enable)
 {
-	ARG_UNUSED(dev);
-	ARG_UNUSED(enable);
+	struct cros_kb_raw_xec_config const *cfg = dev->config;
 
-	/* TODO(b/216111514): need to implement code per kscan hardware */
+	if (enable) {
+		kb_raw_xec_clr_src(dev);
+		/* Enable Kscan NVIC interrupt */
+		irq_enable(cfg->irq);
+	} else {
+		/* Disable Kscan NVIC interrupt */
+		irq_disable(cfg->irq);
+	}
 
 	return 0;
 }
 
 static int cros_kb_raw_xec_read_row(const struct device *dev)
 {
-	struct kscan_regs *const inst =		\
-		(struct kscan_regs *)(KB_RAW_XEC_CONFIG(dev)->base);
+	struct cros_kb_raw_xec_config const *cfg = dev->config;
+	struct kscan_regs *const inst = (struct kscan_regs *)cfg->base;
 	int val;
 
 	val = inst->KSI_IN;
 	LOG_DBG("rows raw %02x", val);
 
 	/* 1 means key pressed, otherwise means key released. */
-	return ~(val & 0xFF);
+	return (~val & 0xFF);
 }
 
 static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 {
-	struct kscan_regs *const inst =		\
-		(struct kscan_regs *)(KB_RAW_XEC_CONFIG(dev)->base);
+	struct cros_kb_raw_xec_config const *cfg = dev->config;
+	struct kscan_regs *const inst = (struct kscan_regs *)cfg->base;
 
 	/* Drive all lines to high. i.e. Key detection is disabled. */
 	if (col == KEYBOARD_COLUMN_NONE) {
@@ -90,11 +102,31 @@ static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 	}
 	/* Drive all lines to low for detection any key press */
 	else if (col == KEYBOARD_COLUMN_ALL) {
+		mchp_soc_ecia_girq_src_dis(MCHP_GIRQ21_ID,
+			MCHP_KEYSCAN_GIRQ_POS);
 		inst->KSO_SEL = MCHP_KSCAN_KSO_ALL;
 		/* Set logical level low on COL2 */
 		cros_kb_raw_set_col2(0);
+
+		/*
+		 * Fix glitches on KSIs pins as all KSOs are driven low
+		 * As keyboard is enabled, either in POR initialization
+		 * or after previous key's break scan code sent to host,
+		 * EC will drive all KSOs low for ready next key press
+		 * detection. KSIs may have glitches based on differnt
+		 * hardward design, this source bit checking and clean
+		 * can prevent one faulty interrupt occurring, thought
+		 * this faulty interrupt is harmless.
+		 */
+		if (inst->KSI_IN != 0xff) {
+			kb_raw_xec_clr_src(dev);
+		}
+		mchp_soc_ecia_girq_src_en(MCHP_GIRQ21_ID,
+			MCHP_KEYSCAN_GIRQ_POS);
 	}
-	/* Drive one line to low for determining which key's state changed. */
+	/* Drive one line to low for determining
+	 * which key's state changed.
+	 */
 	else if (IS_ENABLED(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED)) {
 		if (col == 2) {
 			inst->KSO_SEL = MCHP_KSCAN_KSO_EN;
@@ -114,15 +146,15 @@ static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 
 static void cros_kb_raw_xec_ksi_isr(const struct device *dev)
 {
-	ARG_UNUSED(dev);
-
-	/* TODO(b/216111514): need to implement code per kscan hardware */
+	kb_raw_xec_clr_src(dev);
+	/* Wake-up keyboard scan task */
+	task_wake(TASK_ID_KEYSCAN);
 }
 
-/* TODO(b/216111514): need to implement code per kscan hardware */
 static int cros_kb_raw_xec_init(const struct device *dev)
 {
-	struct cros_kb_raw_xec_config const *cfg = KB_RAW_XEC_CONFIG(dev);
+	struct cros_kb_raw_xec_config const *cfg = dev->config;
+	struct kscan_regs *const inst = (struct kscan_regs *)cfg->base;
 
 	/* Use zephyr pinctrl to initialize pins */
 	int ret = pinctrl_apply_state(cfg->pcfg, PINCTRL_STATE_DEFAULT);
@@ -130,7 +162,18 @@ static int cros_kb_raw_xec_init(const struct device *dev)
 	if (ret)
 		return ret;
 
-	IRQ_CONNECT(DT_INST_IRQN(0), 0, cros_kb_raw_xec_ksi_isr, NULL, 0);
+	/* Set up Kscan IRQ and ISR */
+	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
+		cros_kb_raw_xec_ksi_isr, DEVICE_DT_INST_GET(0), 0);
+
+	/* Disable Kscan NVIC and source interrupts */
+	irq_disable(cfg->irq);
+	mchp_soc_ecia_girq_src_dis(MCHP_GIRQ21_ID, MCHP_KEYSCAN_GIRQ_POS);
+	kb_raw_xec_clr_src(dev);
+	/* Enable all Kscan KSIs interrupt */
+	inst->KSI_IEN = 0xff;
+	/* Enable Kscan source interrupt */
+	mchp_soc_ecia_girq_src_en(MCHP_GIRQ21_ID, MCHP_KEYSCAN_GIRQ_POS);
 
 	return 0;
 }
@@ -143,7 +186,7 @@ static const struct cros_kb_raw_driver_api cros_kb_raw_xec_driver_api = {
 };
 
 /* instantiate zephyr pinctrl constant info */
-PINCTRL_DT_INST_DEFINE(0)
+PINCTRL_DT_INST_DEFINE(0);
 
 static const struct cros_kb_raw_xec_config cros_kb_raw_cfg = {
 	.base = DT_INST_REG_ADDR(0),
