@@ -19,6 +19,7 @@ __override void intel_x86_sys_reset_delay(void)
 	/*
 	 * From MAX6818 Data sheet, Range of 'Debounce Duaration' is
 	 * Minimum - 20 ms, Typical - 40 ms, Maximum - 80 ms.
+	 * See b/153128296.
 	 */
 	udelay(60 * MSEC);
 }
