@@ -709,6 +709,14 @@ static void pe_set_ready_state(int port)
 		set_state_pe(port, PE_SNK_READY);
 }
 
+static void pe_set_hard_reset(int port)
+{
+	if (pe[port].power_role == PD_ROLE_SOURCE)
+		set_state_pe(port, PE_SRC_HARD_RESET);
+	else
+		set_state_pe(port, PE_SNK_HARD_RESET);
+}
+
 static inline void send_data_msg(int port, enum tcpci_msg_type type,
 				 enum pd_data_msg_type msg)
 {
@@ -1548,6 +1556,18 @@ static bool common_src_snk_dpm_requests(int port)
 		pe[port].tx_type = TCPCI_MSG_SOP_PRIME;
 		set_state_pe(port, PE_VCS_CBL_SEND_SOFT_RESET);
 		return true;
+	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DR_SWAP)) {
+		pe_set_dpm_curr_request(port, DPM_REQUEST_DR_SWAP);
+		/* 6.3.9 DR_Swap Message in Revision 3.1, Version 1.3
+		 * If there are any Active Modes between the Port Partners when
+		 * a DR_Swap Message is a received, then a Hard Reset Shall be
+		 * performed
+		 */
+		if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION))
+			pe_set_hard_reset(port);
+		else
+			set_state_pe(port, PE_DRS_SEND_SWAP);
+		return true;
 	}
 #ifdef CONFIG_USB_PD_DATA_RESET_MSG
 	else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DATA_RESET)) {
@@ -1591,23 +1611,11 @@ static bool source_dpm_requests(int port)
 
 		PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 
-		if (PE_CHK_DPM_REQUEST(port,
-				       DPM_REQUEST_DR_SWAP)) {
-			pe_set_dpm_curr_request(port,
-						DPM_REQUEST_DR_SWAP);
-			if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION))
-				set_state_pe(port, PE_SRC_HARD_RESET);
-			else
-				set_state_pe(port, PE_DRS_SEND_SWAP);
-			return true;
-		} else if (PE_CHK_DPM_REQUEST(port,
-					      DPM_REQUEST_PR_SWAP)) {
-			pe_set_dpm_curr_request(port,
-						DPM_REQUEST_PR_SWAP);
+		if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP)) {
+			pe_set_dpm_curr_request(port, DPM_REQUEST_PR_SWAP);
 			set_state_pe(port, PE_PRS_SRC_SNK_SEND_SWAP);
 			return true;
-		} else if (PE_CHK_DPM_REQUEST(port,
-					      DPM_REQUEST_GOTO_MIN)) {
+		} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_GOTO_MIN)) {
 			pe_set_dpm_curr_request(port,
 						DPM_REQUEST_GOTO_MIN);
 			set_state_pe(port, PE_SRC_TRANSITION_SUPPLY);
@@ -1618,14 +1626,12 @@ static bool source_dpm_requests(int port)
 						DPM_REQUEST_SRC_CAP_CHANGE);
 			set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
 			return true;
-		} else if (PE_CHK_DPM_REQUEST(port,
-					      DPM_REQUEST_GET_SRC_CAPS)) {
+		} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_GET_SRC_CAPS)) {
 			pe_set_dpm_curr_request(port,
 						DPM_REQUEST_GET_SRC_CAPS);
 			set_state_pe(port, PE_DR_SRC_GET_SOURCE_CAP);
 			return true;
-		} else if (PE_CHK_DPM_REQUEST(port,
-					      DPM_REQUEST_SEND_PING)) {
+		} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_SEND_PING)) {
 			pe_set_dpm_curr_request(port,
 						DPM_REQUEST_SEND_PING);
 			set_state_pe(port, PE_SRC_PING);
@@ -1664,23 +1670,11 @@ static bool sink_dpm_requests(int port)
 
 		PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 
-		if (PE_CHK_DPM_REQUEST(port,
-				       DPM_REQUEST_DR_SWAP)) {
-			pe_set_dpm_curr_request(port,
-						DPM_REQUEST_DR_SWAP);
-			if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION))
-				set_state_pe(port, PE_SNK_HARD_RESET);
-			else
-				set_state_pe(port, PE_DRS_SEND_SWAP);
-			return true;
-		} else if (PE_CHK_DPM_REQUEST(port,
-					      DPM_REQUEST_PR_SWAP)) {
-			pe_set_dpm_curr_request(port,
-						DPM_REQUEST_PR_SWAP);
+		if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP)) {
+			pe_set_dpm_curr_request(port, DPM_REQUEST_PR_SWAP);
 			set_state_pe(port, PE_PRS_SNK_SRC_SEND_SWAP);
 			return true;
-		} else if (PE_CHK_DPM_REQUEST(port,
-					      DPM_REQUEST_SOURCE_CAP)) {
+		} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_SOURCE_CAP)) {
 			pe_set_dpm_curr_request(port,
 						DPM_REQUEST_SOURCE_CAP);
 			set_state_pe(port, PE_SNK_GET_SOURCE_CAP);
