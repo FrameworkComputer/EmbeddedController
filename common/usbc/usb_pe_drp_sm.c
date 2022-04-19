@@ -709,10 +709,7 @@ static void set_cable_rev(int port)
 
 static void pe_init(int port)
 {
-	/*
-	 * TODO(b/229655319): support more than 32 bits
-	 */
-	pe[port].flags_a[0] = 0;
+	memset(&pe[port].flags_a, 0, sizeof(pe[port].flags_a));
 	pe[port].dpm_request = 0;
 	pe[port].dpm_curr_request = 0;
 	pd_timer_disable_range(port, PE_TIMER_RANGE);
@@ -2903,10 +2900,7 @@ static void pe_src_transition_to_default_entry(int port)
 	print_current_state(port);
 
 	/* Reset flags */
-	/*
-	 * TODO(b/229655319): support more than 32 bits
-	 */
-	pe[port].flags_a[0] = 0;
+	memset(&pe[port].flags_a, 0, sizeof(pe[port].flags_a));
 
 	/* Reset DPM Request */
 	pe[port].dpm_request = 0;
@@ -3695,10 +3689,7 @@ static void pe_snk_transition_to_default_entry(int port)
 	print_current_state(port);
 
 	/* Reset flags */
-	/*
-	 * TODO(b/229655319): support more than 32 bits
-	 */
-	pe[port].flags_a[0] = 0;
+	memset(&pe[port].flags_a, 0, sizeof(pe[port].flags_a));
 
 	/* Reset DPM Request */
 	pe[port].dpm_request = 0;
