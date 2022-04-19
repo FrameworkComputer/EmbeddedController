@@ -61,6 +61,10 @@ void dpm_add_non_pd_sink(int port)
 {
 }
 
+void dpm_evaluate_request_rdo(int port, uint32_t rdo)
+{
+}
+
 void dpm_remove_sink(int port)
 {
 }

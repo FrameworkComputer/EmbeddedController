@@ -720,6 +720,32 @@ void dpm_add_non_pd_sink(int port)
 	balance_source_ports();
 }
 
+void dpm_evaluate_request_rdo(int port, uint32_t rdo)
+{
+	int idx;
+	int op_ma;
+
+	if (CONFIG_USB_PD_3A_PORTS == 0)
+		return;
+
+	idx = RDO_POS(rdo);
+	/* Check for invalid index */
+	if (!idx)
+		return;
+
+	op_ma = (rdo >> 10) & 0x3FF;
+	if ((BIT(port) && sink_max_pdo_requested) && (op_ma <= 150)) {
+		/*
+		 * sink_max_pdo_requested will be set when we get 5V/3A sink
+		 * capability from port partner. If port partner only request
+		 * 5V/1.5A, we need to provide 5V/1.5A.
+		 */
+		atomic_clear_bits(&sink_max_pdo_requested, BIT(port));
+
+		balance_source_ports();
+	}
+}
+
 void dpm_remove_sink(int port)
 {
 	if (CONFIG_USB_PD_3A_PORTS == 0)

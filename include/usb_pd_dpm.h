@@ -91,6 +91,14 @@ void dpm_evaluate_sink_fixed_pdo(int port, uint32_t vsafe5v_pdo);
 void dpm_add_non_pd_sink(int port);
 
 /*
+ * Evaluates the request from port partner
+ *
+ * @param port		USB-C port number
+ * @param rdo		Request from port partner
+ */
+void dpm_evaluate_request_rdo(int port, uint32_t rdo);
+
+/*
  * Remove this port as a sink, and reallocate maximum current as needed.
  *
  * @param port		USB-C port number
