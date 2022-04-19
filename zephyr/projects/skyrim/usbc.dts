@@ -22,6 +22,11 @@
 				compatible = "nuvoton,nct38xx";
 				gpio-dev = <&nct3807_C0>;
 			};
+			chg {
+				compatible = "intersil,isl9241";
+				status = "okay";
+				port = <&i2c_charger>;
+			};
 		};
 
 		port1@1 {
