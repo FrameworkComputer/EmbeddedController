@@ -81,14 +81,6 @@ void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
-const struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-	},
-};
-
 int charger_profile_override(struct charge_state_data *curr)
 {
 	int usb_mv;
