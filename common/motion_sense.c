@@ -1807,7 +1807,7 @@ static int command_display_accel_info(int argc, char **argv)
 {
 	int val, i, j;
 
-	if (argc > 3)
+	if (argc >= 3)
 		return EC_ERROR_PARAM_COUNT;
 
 	ccprintf("Motion sensors count = %d\n", motion_sensor_count);
@@ -1845,9 +1845,8 @@ static int command_display_accel_info(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(accelinfo, command_display_accel_info,
-	"on/off [interval]",
-	"Print motion sensor info, lid angle calculations"
-	" and set calculation frequency.");
+	"on/off",
+	"Print motion sensor info, lid angle calculations.");
 #endif /* CONFIG_CMD_ACCEL_INFO */
 
 #endif /* CONFIG_CMD_ACCELS */
