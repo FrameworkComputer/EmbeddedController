@@ -22,8 +22,13 @@ static uint8_t charge_mode[USB_PORT_COUNT];
 
 static void usb_port_set_enabled(int port_id, int en)
 {
-	gpio_or_ioex_set_level(usb_port_enable[port_id], en);
-	charge_mode[port_id] = en;
+	/*
+	 * Only enable valid ports.
+	 */
+	if (usb_port_enable[port_id] >= 0) {
+		gpio_or_ioex_set_level(usb_port_enable[port_id], en);
+		charge_mode[port_id] = en;
+	}
 }
 
 __maybe_unused static void usb_port_all_ports_on(void)

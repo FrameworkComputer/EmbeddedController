@@ -15,6 +15,16 @@ menuconfig PLATFORM_EC_USBA
 
 if PLATFORM_EC_USBA
 
+config PLATFORM_EC_USB_PORT_ENABLE_DYNAMIC
+	bool "USB Type-A dynamic port count"
+	help
+	  Allow the USB Type-A port array to be dynamically
+	  modified by board specific code.
+
+	  This allows boards to selectively disable any of the
+	  USB Type-A ports by setting the enable entry to
+	  a negative value.
+
 choice PLATFORM_EC_USBA_PORT_POWER_TYPE
 	prompt "Port power control mode"
 	default PLATFORM_EC_USB_PORT_POWER_DUMB

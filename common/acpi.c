@@ -284,7 +284,8 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			 */
 			result = 0;
 			for (i = 0; i < port_count; ++i) {
-				if (gpio_get_level(usb_port_enable[i]) != 0)
+				if ((usb_port_enable[i] >= 0) &&
+				    (gpio_get_level(usb_port_enable[i]) != 0))
 					result |= 1 << i;
 			}
 			break;

@@ -62,7 +62,12 @@ static void usb_charge_set_control_mode(int port_id, int mode)
 static void usb_charge_set_enabled(int port_id, int en)
 {
 	ASSERT(port_id < CONFIG_USB_PORT_POWER_SMART_PORT_COUNT);
-	gpio_or_ioex_set_level(usb_port_enable[port_id], en);
+	/*
+	 * Only enable valid ports.
+	 */
+	if (usb_port_enable[port_id] >= 0) {
+		gpio_or_ioex_set_level(usb_port_enable[port_id], en);
+	}
 }
 
 static void usb_charge_set_ilim(int port_id, int sel)

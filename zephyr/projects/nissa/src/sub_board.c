@@ -14,6 +14,7 @@
 #include "driver/tcpm/tcpci.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "usb_charge.h"
 #include "usb_pd.h"
 #include "task.h"
 
@@ -120,6 +121,10 @@ static void nereid_subboard_config(void)
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
 			GPIO_DISCONNECTED);
+		/* Disable second USB-A port enable GPIO */
+		__ASSERT(USB_PORT_ENABLE_COUNT == 2,
+		       "USB A port count != 2 (%d)", USB_PORT_ENABLE_COUNT);
+		usb_port_enable[1] = -1;
 	}
 	/*
 	 * USB-C port: the default configuration has I2C on the I2C pins,

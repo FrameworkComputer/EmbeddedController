@@ -1056,6 +1056,11 @@ extern struct jump_data mock_jump_data;
 				 enable_pins)),                                \
 		    (0))
 
+#undef CONFIG_USB_PORT_ENABLE_DYNAMIC
+#ifdef CONFIG_PLATFORM_EC_USB_PORT_ENABLE_DYNAMIC
+#define CONFIG_USB_PORT_ENABLE_DYNAMIC
+#endif
+
 #undef CONFIG_USB_PORT_POWER_DUMB
 #ifdef CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB
 #define CONFIG_USB_PORT_POWER_DUMB
