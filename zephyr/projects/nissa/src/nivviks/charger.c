@@ -15,20 +15,6 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-const struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_USB_C0_TCPC,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-	},
-	/* Sub-board */
-	{
-		.i2c_port = I2C_PORT_USB_C1_TCPC,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-	},
-};
-
 int extpower_is_present(void)
 {
 	int port;

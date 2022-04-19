@@ -201,12 +201,22 @@
 				compatible = "pericom,pi3usb9201";
 				port = <&i2c_ec_i2c_usb_c0>;
 			};
+			chg {
+				compatible = "siliconmitus,sm5803";
+				status = "okay";
+				port = <&i2c_ec_i2c_usb_c0>;
+			};
 		};
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
 			bc12 {
 				compatible = "pericom,pi3usb9201";
+				port = <&i2c_ec_i2c_sub_usb_c1>;
+			};
+			chg {
+				compatible = "siliconmitus,sm5803";
+				status = "okay";
 				port = <&i2c_ec_i2c_sub_usb_c1>;
 			};
 		};

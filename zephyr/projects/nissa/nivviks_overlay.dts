@@ -192,6 +192,11 @@
 				 * usb_c0_interrupt.
 				 */
 			};
+			chg {
+				compatible = "intersil,isl923x";
+				status = "okay";
+				port = <&i2c_ec_i2c_usb_c0>;
+			};
 		};
 		/*
 		 * TODO(b:211693800): port1 may not be present on some
@@ -202,6 +207,11 @@
 			reg = <1>;
 			bc12 {
 				compatible = "pericom,pi3usb9201";
+				port = <&i2c_ec_i2c_sub_usb_c1>;
+			};
+			chg {
+				compatible = "intersil,isl923x";
+				status = "okay";
 				port = <&i2c_ec_i2c_sub_usb_c1>;
 			};
 		};
