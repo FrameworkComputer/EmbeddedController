@@ -16,6 +16,11 @@
 				port = <&typec_0>;
 				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
 			};
+			chg {
+				compatible = "intersil,isl9241";
+				status = "okay";
+				port = <&i2c_charger>;
+			};
 		};
 
 		port1@1 {

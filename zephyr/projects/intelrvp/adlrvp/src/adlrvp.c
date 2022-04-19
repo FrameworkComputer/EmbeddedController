@@ -216,15 +216,6 @@ BUILD_ASSERT(ARRAY_SIZE(bb_controls) == CONFIG_USB_PD_PORT_MAX_COUNT);
 /* Cache BB retimer power state */
 static bool cache_bb_enable[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-/* Charger Chips */
-struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
-		.drv = &isl9241_drv,
-	},
-};
-
 void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* Port 0 & 1 and 2 & 3 share same line for over current indication */
