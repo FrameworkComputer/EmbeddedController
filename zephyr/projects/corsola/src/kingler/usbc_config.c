@@ -93,6 +93,18 @@ static int ps8743_tune_mux(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
+void board_usb_mux_init(void)
+{
+	if (corsola_get_db_type() == CORSOLA_DB_TYPEC) {
+		/* Disable DCI function. This is not needed for ARM. */
+		ps8743_field_update(&usb_muxes[1],
+				   PS8743_REG_DCI_CONFIG_2,
+				   PS8743_AUTO_DCI_MODE_MASK,
+				   PS8743_AUTO_DCI_MODE_FORCE_USB);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
+
 const struct usb_mux usbc0_virtual_mux = {
 	.usb_port = USBC_PORT_C0,
 	.driver = &virtual_usb_mux_driver,
