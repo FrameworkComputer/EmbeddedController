@@ -9,6 +9,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/sys/util_macro.h>
 #include "usb_mux.h"
+#include "usbc/anx7483_usb_mux.h"
 #include "usbc/it5205_usb_mux.h"
 #include "usbc/tcpci_usb_mux.h"
 #include "usbc/tusb1064_usb_mux.h"
@@ -19,6 +20,7 @@
  *        element of list has to have (compatible, config) format.
  */
 #define USB_MUX_DRIVERS						\
+	(ANX7483_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7483),	\
 	(IT5205_USB_MUX_COMPAT, USB_MUX_CONFIG_IT5205),		\
 	(PS8XXX_USB_MUX_COMPAT, USB_MUX_CONFIG_TCPCI_TCPM),	\
 	(TCPCI_TCPM_USB_MUX_COMPAT, USB_MUX_CONFIG_TCPCI_TCPM),	\

@@ -1,0 +1,26 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  Analogix re-timing MUX
+
+include: cros-ec,usbc-mux.yaml
+
+compatible: "analogix,anx7483"
+
+properties:
+  port:
+    type: phandle
+    required: true
+    description: phandle to the named i2c port
+
+  i2c-addr-flags:
+    type: string
+    required: true
+    description: I2C address of chip
+    enum:
+      - ANX7483_I2C_ADDR0_FLAGS
+      - ANX7483_I2C_ADDR1_FLAGS
+      - ANX7483_I2C_ADDR2_FLAGS
+      - ANX7483_I2C_ADDR3_FLAGS
