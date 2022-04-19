@@ -216,6 +216,12 @@
 				status = "okay";
 				port = <&i2c_ec_i2c_usb_c0>;
 			};
+			usb-muxes = <&virtual_mux_0>;
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
 		};
 		port1@1 {
 			compatible = "named-usbc-port";
@@ -228,6 +234,19 @@
 				compatible = "siliconmitus,sm5803";
 				status = "okay";
 				port = <&i2c_ec_i2c_sub_usb_c1>;
+			};
+			/*
+			 * Some sub-boards may disable all usb muxes in chain
+			 * except virtual_mux_1
+			 */
+			usb-muxes = <&virtual_mux_1 &tcpci_mux_1>;
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+			tcpci_mux_1: tcpci-mux-1 {
+				compatible = "parade,usbc-mux-ps8xxx";
 			};
 		};
 	};

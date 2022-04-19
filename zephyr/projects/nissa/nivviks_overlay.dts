@@ -197,6 +197,12 @@
 				status = "okay";
 				port = <&i2c_ec_i2c_usb_c0>;
 			};
+			usb-muxes = <&virtual_mux_0>;
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
 		};
 		/*
 		 * TODO(b:211693800): port1 may not be present on some
@@ -213,6 +219,21 @@
 				compatible = "intersil,isl923x";
 				status = "okay";
 				port = <&i2c_ec_i2c_sub_usb_c1>;
+			};
+			/*
+			 * Some sub-boards may disable all usb muxes in chain
+			 * except virtual_mux_1
+			 */
+			usb-muxes = <&virtual_mux_1 &anx7483_mux_1>;
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+			anx7483_mux_1: anx7483-mux-1 {
+				compatible = "analogix,anx7483";
+				port = <&i2c_ec_i2c_sub_usb_c1>;
+				i2c-addr-flags = "ANX7483_I2C_ADDR0_FLAGS";
 			};
 		};
 	};
