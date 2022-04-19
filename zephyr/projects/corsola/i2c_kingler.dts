@@ -31,7 +31,7 @@
 			i2c-port = <&i2c3_0>;
 			enum-name = "I2C_PORT_EEPROM";
 		};
-		charger {
+		i2c_charger: charger {
 			i2c-port = <&i2c3_0>;
 			enum-name = "I2C_PORT_POWER";
 		};

@@ -24,6 +24,11 @@
 			tcpc {
 				compatible = "ite,it8xxx2-tcpc";
 			};
+			chg {
+				compatible = "richtek,rt9490";
+				status = "okay";
+				port = <&i2c_charger>;
+			};
 		};
 
 		port1@1 {

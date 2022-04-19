@@ -27,15 +27,6 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
-/* charger */
-const struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = RT9490_ADDR_FLAGS,
-		.drv = &rt9490_drv,
-	},
-};
-
 void c0_bc12_interrupt(enum gpio_signal signal)
 {
 	rt1739_interrupt(0);

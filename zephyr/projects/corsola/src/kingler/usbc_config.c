@@ -73,14 +73,6 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-const struct charger_config_t chg_chips[] = {
-	{
-		.i2c_port = I2C_PORT_POWER,
-		.i2c_addr_flags = ISL923X_ADDR_FLAGS,
-		.drv = &isl923x_drv,
-	}
-};
-
 /* USB Mux */
 
 /* USB Mux C1 : board_init of PS8743 */
