@@ -34,6 +34,11 @@ GPIO_INT(USB_A0_OC_ODL,              PIN(3, 1), GPIO_INPUT | GPIO_PULL_UP | GPIO
 GPIO_INT(USB_A1_OC_ODL,              PIN(3, 0), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A2_OC_ODL,              PIN(2, 7), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A3_OC_ODL,              PIN(2, 6), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
+#ifdef SECTION_IS_RW
+GPIO_INT(QI_INT_ODL,                 PIN(9, 6), GPIO_INT_FALLING, pchg_irq)
+#else
+UNIMPLEMENTED(QI_INT_ODL)
+#endif
 
 /* CCD */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -82,10 +87,8 @@ GPIO(NFC_CARD_DET_L,                 PIN(A, 3), GPIO_INPUT)
 GPIO(EN_NFC_BUZZER,                  PIN(0, 5), GPIO_OUT_LOW)
 
 /* Wireless Charger */
-/* TODO(b/191418683): Implement Qi Driver */
-GPIO(EC_QI_PWR,                      PIN(D, 2), GPIO_OUT_HIGH)
-GPIO(EC_I2C_QI_RESET_L,              PIN(9, 3), GPIO_OUT_HIGH)
-GPIO(EC_I2C_QI_INT_ODL,              PIN(9, 6), GPIO_INPUT)
+GPIO(EC_QI_PWR,                      PIN(D, 2), GPIO_OUT_LOW)
+GPIO(QI_RESET_L,                     PIN(9, 3), GPIO_OUT_HIGH)
 
 /* HDMI CEC */
 /* TODO(b/197474873): Enable HDMI CEC */
