@@ -781,10 +781,7 @@ void pe_run(int port, int evt, int en)
 		 */
 		if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND)) {
 			pe_set_dpm_curr_request(port, DPM_REQUEST_HARD_RESET_SEND);
-			if (pd_get_power_role(port) == PD_ROLE_SOURCE)
-				set_state_pe(port, PE_SRC_HARD_RESET);
-			else
-				set_state_pe(port, PE_SNK_HARD_RESET);
+			pe_set_hard_reset(port);
 		}
 
 		/*
@@ -1108,10 +1105,7 @@ void pe_report_error(int port, enum pe_error e, enum tcpci_msg_type type)
 	 * while in PE_Send_Soft_Reset state.
 	 */
 	if (get_state_pe(port) == PE_SEND_SOFT_RESET) {
-		if (pe[port].power_role == PD_ROLE_SINK)
-			set_state_pe(port, PE_SNK_HARD_RESET);
-		else
-			set_state_pe(port, PE_SRC_HARD_RESET);
+		pe_set_hard_reset(port);
 		return;
 	}
 
@@ -2385,7 +2379,7 @@ static void pe_src_send_capabilities_run(int port)
 	 */
 	if (pd_timer_is_expired(port, PE_TIMER_NO_RESPONSE)) {
 		if (pe[port].hard_reset_counter <= N_HARD_RESET_COUNT)
-			set_state_pe(port, PE_SRC_HARD_RESET);
+			pe_set_hard_reset(port);
 		else if (PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION))
 			set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
 		else
@@ -2398,7 +2392,7 @@ static void pe_src_send_capabilities_run(int port)
 	 *  1) The SenderResponseTimer times out.
 	 */
 	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE)) {
-		set_state_pe(port, PE_SRC_HARD_RESET);
+		pe_set_hard_reset(port);
 		return;
 	}
 }
@@ -2535,7 +2529,7 @@ static void pe_src_transition_supply_run(int port)
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
-		set_state_pe(port, PE_SRC_HARD_RESET);
+		pe_set_hard_reset(port);
 	}
 }
 
@@ -2667,7 +2661,7 @@ static void pe_src_ready_run(int port)
 			case PD_CTRL_DR_SWAP:
 				if (PE_CHK_FLAG(port,
 						PE_FLAGS_MODAL_OPERATION)) {
-					set_state_pe(port, PE_SRC_HARD_RESET);
+					pe_set_hard_reset(port);
 					return;
 				}
 
@@ -3087,7 +3081,7 @@ static void pe_snk_wait_for_capabilities_run(int port)
 	/* When the SinkWaitCapTimer times out, perform a Hard Reset. */
 	if (pd_timer_is_expired(port, PE_TIMER_TIMEOUT)) {
 		PE_SET_FLAG(port, PE_FLAGS_SNK_WAIT_CAP_TIMEOUT);
-		set_state_pe(port, PE_SNK_HARD_RESET);
+		pe_set_hard_reset(port);
 	}
 }
 
@@ -3275,7 +3269,7 @@ static void pe_snk_select_capability_run(int port)
 
 	/* SenderResponsetimer timeout */
 	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE))
-		set_state_pe(port, PE_SNK_HARD_RESET);
+		pe_set_hard_reset(port);
 }
 
 void pe_snk_select_capability_exit(int port)
@@ -3343,7 +3337,7 @@ static void pe_snk_transition_sink_run(int port)
 			/*
 			 * Protocol Error
 			 */
-			set_state_pe(port, PE_SNK_HARD_RESET);
+			pe_set_hard_reset(port);
 		}
 		return;
 	}
@@ -3355,7 +3349,7 @@ static void pe_snk_transition_sink_run(int port)
 	    pe[port].hard_reset_counter <= N_HARD_RESET_COUNT) {
 		PE_SET_FLAG(port, PE_FLAGS_PS_TRANSITION_TIMEOUT);
 
-		set_state_pe(port, PE_SNK_HARD_RESET);
+		pe_set_hard_reset(port);
 	}
 }
 
@@ -3489,7 +3483,7 @@ static void pe_snk_ready_run(int port)
 				return;
 			case PD_CTRL_DR_SWAP:
 				if (PE_CHK_FLAG(port, PE_FLAGS_MODAL_OPERATION))
-					set_state_pe(port, PE_SNK_HARD_RESET);
+					pe_set_hard_reset(port);
 				else
 					set_state_pe(port,
 							PE_DRS_EVALUATE_SWAP);
@@ -3825,11 +3819,7 @@ static void pe_send_soft_reset_run(int port)
 	if (pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE) ||
 			PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
-
-		if (pe[port].power_role == PD_ROLE_SINK)
-			set_state_pe(port, PE_SNK_HARD_RESET);
-		else
-			set_state_pe(port, PE_SRC_HARD_RESET);
+		pe_set_hard_reset(port);
 		return;
 	}
 }
@@ -3861,11 +3851,7 @@ static void  pe_soft_reset_run(int port)
 			set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
 	} else if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
-
-		if (pe[port].power_role == PD_ROLE_SINK)
-			set_state_pe(port, PE_SNK_HARD_RESET);
-		else
-			set_state_pe(port, PE_SRC_HARD_RESET);
+		pe_set_hard_reset(port);
 	}
 }
 
@@ -4429,7 +4415,7 @@ static void pe_prs_src_snk_transition_to_off_run(int port)
 		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 
 		tc_pr_swap_complete(port, 0);
-		set_state_pe(port, PE_SRC_HARD_RESET);
+		pe_set_hard_reset(port);
 	}
 
 	/* Give time for supply to power off */
@@ -4867,7 +4853,7 @@ static void pe_prs_snk_src_send_swap_run(int port)
 	 */
 	if (msg_check & PE_MSG_DISCARDED) {
 		if (pe_in_frs_mode(port))
-			set_state_pe(port, PE_SNK_HARD_RESET);
+			pe_set_hard_reset(port);
 		else
 			set_state_pe(port, PE_SNK_READY);
 		return;
@@ -6470,10 +6456,7 @@ static void pe_vcs_wait_for_vconn_swap_run(int port)
 	 *   1) The VCONNOnTimer times out.
 	 */
 	if (pd_timer_is_expired(port, PE_TIMER_VCONN_ON)) {
-		if (pe[port].power_role == PD_ROLE_SOURCE)
-			set_state_pe(port, PE_SRC_HARD_RESET);
-		else
-			set_state_pe(port, PE_SNK_HARD_RESET);
+		pe_set_hard_reset(port);
 	}
 }
 
