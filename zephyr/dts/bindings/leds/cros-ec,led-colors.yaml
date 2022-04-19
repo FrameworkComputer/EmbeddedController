@@ -9,7 +9,7 @@ compatible: "cros-ec,led-colors"
 child-binding:
     description: LED Color nodes to describe the policy combination a node
                  depends on, and the color to set to for that combination.
-                 Eg. If Blue color needs to be set for charge state discharge
+                 e.g. If Blue color needs to be set for charge state discharge
                  in S0, a node looks like
                  power-state-discharge-s0 {
                     charge-state = "PWR_STATE_DISCHARGE";
@@ -67,14 +67,21 @@ child-binding:
                     - LED_YELLOW
                     - LED_WHITE
                     - LED_AMBER
-            period:
-                description: In case of blinking LEDs, amount of time in secs
-                             the LED color is active. Eg.
+            period-ms:
+                description: In case of blinking LEDs, amount of time in msecs
+                             the LED color is active. This value must be a
+                             multiple of HOOK_TICK_INTERVAL_MS
+                             e.g.
                              power-state-error {
                                 charge-state = "PWR_STATE_ERROR";
+                                /* One sec Amber, one sec Off */
                                 color-0 {
                                   led-color = "LED_AMBER";
-                                  period = <1>;
+                                  period-ms = <1000>;
+                                };
+                                color-1 {
+                                  led-color = "LED_OFF";
+                                  period-ms = <1000>;
                                 };
                              };
                 type: int
