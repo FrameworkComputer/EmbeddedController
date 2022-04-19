@@ -260,4 +260,12 @@ void pchg_irq(enum gpio_signal signal);
  */
 void pchg_task(void *u);
 
+/**
+ * Turn on/off power for a PCHG charger.
+ *
+ * @param port  Port number of the PCHG charger.
+ * @param on
+ */
+__override_proto void board_pchg_power_on(int port, bool on);
+
 #endif /* __CROS_EC_PERIPHERAL_CHARGER_H */

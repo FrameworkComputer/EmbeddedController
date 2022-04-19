@@ -117,6 +117,9 @@ static void _clear_port(struct pchg *ctx)
 	ctx->update.data_ready = 0;
 }
 
+__overridable void board_pchg_power_on(int port, bool on)
+{}
+
 static enum pchg_state pchg_reset(struct pchg *ctx)
 {
 	enum pchg_state state = PCHG_STATE_RESET;
@@ -552,6 +555,7 @@ static void pchg_startup(void)
 		ctx = &pchgs[p];
 		_clear_port(ctx);
 		ctx->mode = PCHG_MODE_NORMAL;
+		board_pchg_power_on(p, 1);
 		ctx->cfg->drv->reset(ctx);
 		gpio_enable_interrupt(ctx->cfg->irq_pin);
 	}
@@ -570,6 +574,7 @@ static void pchg_shutdown(void)
 	for (p = 0; p < pchg_count; p++) {
 		ctx = &pchgs[0];
 		gpio_disable_interrupt(ctx->cfg->irq_pin);
+		board_pchg_power_on(p, 0);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pchg_shutdown, HOOK_PRIO_DEFAULT);
