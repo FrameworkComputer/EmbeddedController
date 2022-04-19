@@ -47,16 +47,16 @@
  *                         v |                      |
  *                  +--------+------+               |
  *   +------------->|    ENABLED    |               |
- *   |              +-----+-+-------+               |
- *   |                    | |                       |
- *   |   DEVICE_CONNECTED | | DEVICE_DOCKED         |
- *   |                    | v                       |
- *   | DEVICE_LOST  +---------------+               |
- *   +--------------+     DOCKED    +---------------+
- *   |              +-------+-------+               |
- *   |                    | |                       |
- *   |                    | | DEVICE_CONNECTED      |
- *   |                    v v                       |
+ *   |              +-----+------+--+               |
+ *   |                    |      |                  |
+ *   |    DEVICE_DETECTED |      | DEVICE_CONNECTED |
+ *   |                    v      |                  |
+ *   | DEVICE_LOST  +----------+ |                  |
+ *   +--------------+ DETECTED +-|------------------+
+ *   |              +-----+----+ |     ERROR        |
+ *   |                    |      |                  |
+ *   |    DEVICE_CONNECTED|      |                  |
+ *   |                    v      v                  |
  *   |              +---------------+               |
  *   +--------------+   CONNECTED   +---------------+
  *   | DEVICE_LOST  +------+--------+  ERROR        |
@@ -69,7 +69,7 @@
  *     DEVICE_LOST  +---------------+  ERROR
  *
  *
- * In download (update firmware) mode, the state machine transitions as follows:
+ * In download (firmware update) mode, the state machine transitions as follows:
  *
  *                  +---------------+
  *                  |   DOWNLOAD    |
