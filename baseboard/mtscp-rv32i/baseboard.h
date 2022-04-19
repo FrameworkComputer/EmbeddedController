@@ -45,15 +45,75 @@
 
 #define SCP_IPI_NS_SERVICE 0xFF
 
-/* Access DRAM through cached access */
+/*
+ * (1) DRAM cacheable region
+ * (2) DRAM non-cacheable region
+ * (3) Panic data region
+ * (4) Kernel DMA allocable region
+ * (5) DRAM end address
+ *
+ *                              base (size)
+ * ---+-------------------- (1) CONFIG_DRAM_BASE (CONFIG_DRAM_SIZE)
+ * C  | DRAM .text, .rodata
+ *    | DRAM .data LMA
+ *    | DRAM .bss, .data
+ * ---+-------------------- (2) DRAM_NC_BASE (DRAM_NC_SIZE)
+ * NC | .dramnc
+ *    +-------------------- (3) CONFIG_PANIC_DRAM_BASE (CONFIG_PANIC_DRAM_SIZE)
+ *    | Panic Data
+ *    +-------------------- (4) KERNEL_BASE (KERNEL_SIZE)
+ *    | Kernel DMA allocable
+ *    | for MDP, etc.
+ * ---+-------------------- (5) CONFIG_DRAM_SIZE + DRAM_TOTAL_SIZE (NA)
+ *
+ *     base       size
+ * MT8192
+ * (1) 0x10000000 0x500000
+ * (2) 0x10500000 0
+ * (3) 0x10500000 0
+ * (4) 0x10500000 0xF00000
+ * (5) 0x11400000
+ * MT8195
+ * (1) 0x10000000 0x4FF000
+ * (2) 0x104FF000 0
+ * (3) 0x104FF000 0x1000
+ * (4) 0x10500000 0xF00000
+ * (5) 0x11400000
+ */
+
+/* size of (1) */
+#define CONFIG_DRAM_SIZE \
+	(DRAM_TOTAL_SIZE - CONFIG_PANIC_DRAM_SIZE - DRAM_NC_SIZE - KERNEL_SIZE)
+/* base of (2) */
+#define DRAM_NC_BASE (CONFIG_DRAM_BASE + CONFIG_DRAM_SIZE)
+/* base of (3) */
+#define CONFIG_PANIC_DRAM_BASE (DRAM_NC_BASE + DRAM_NC_SIZE)
+/* base of (4) */
+#define KERNEL_BASE (CONFIG_PANIC_DRAM_BASE + CONFIG_PANIC_DRAM_SIZE)
+
+#if defined(CHIP_VARIANT_MT8192)
+/* base of (1) */
 #define CONFIG_DRAM_BASE 0x10000000
 /* Shared memory address in AP physical address space. */
 #define CONFIG_DRAM_BASE_LOAD 0x50000000
-#define CONFIG_DRAM_SIZE 0x01400000 /* 20 MB */
+/* size of (2) */
+#define DRAM_NC_SIZE 0
+/* size of (3) */
+#define CONFIG_PANIC_DRAM_SIZE 0
+/* size of (4) */
+#define KERNEL_SIZE 0xF00000
+/* DRAM total size for (5) */
+#define DRAM_TOTAL_SIZE 0x01400000 /* 20 MB */
+#endif /* CHIP_VARIANT_MT8192 */
 
-/* Add some space (0x100) before panic for jump data */
+#if defined(CHIP_VARIANT_MT8195)
+#define CONFIG_DRAM_BASE 0x10000000
+#define CONFIG_DRAM_BASE_LOAD 0x50000000
+#define DRAM_NC_SIZE 0
 #define CONFIG_PANIC_DRAM_SIZE 0x00001000 /* 4K */
-#define CONFIG_PANIC_DRAM_BASE (CONFIG_DRAM_BASE + CONFIG_DRAM_SIZE - CONFIG_PANIC_DRAM_SIZE)
+#define KERNEL_SIZE 0xF00000
+#define DRAM_TOTAL_SIZE 0x01400000 /* 20 MB */
+#endif /* CHIP_VARIANT_MT8195 */
 
 /* MPU settings */
 #define NR_MPU_ENTRIES 16
