@@ -1,0 +1,18 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_PERIPHERAL_CHARGER
+	bool "Enable peripheral charger task"
+	help
+	  Enable peripheral charger task.
+
+if PLATFORM_EC_PERIPHERAL_CHARGER
+
+config PLATFORM_EC_CPS8100
+	bool "Use CPS8100 driver"
+	help
+	  Use CPS8100 driver. CPS8100 is a Qi wireless power transmitter.
+
+
+endif # PLATFORM_EC_PERIPHERAL_CHARGER

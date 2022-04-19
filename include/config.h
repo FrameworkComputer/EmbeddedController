@@ -1336,6 +1336,7 @@
 
 /* Wireless chargers */
 #undef CONFIG_WIRELESS_CHARGER_P9221_R7
+#undef CONFIG_CPS8100
 
 /*****************************************************************************/
 

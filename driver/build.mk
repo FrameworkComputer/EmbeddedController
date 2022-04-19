@@ -226,6 +226,7 @@ driver-$(CONFIG_LN9310)+=ln9310.o
 driver-$(CONFIG_MCDP28X0)+=mcdp28x0.o
 
 # Wireless Power Chargers
+driver-$(CONFIG_CPS8100)+=wpc/cps8100.o
 driver-$(HAS_TASK_WPC) += wpc/p9221.o
 
 # Buck-Boost converters
