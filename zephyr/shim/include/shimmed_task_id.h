@@ -26,7 +26,8 @@ typedef uint8_t task_id_t;
 /* Highest priority on bottom -- same as in platform/ec. */
 enum {
 	EC_TASK_PRIO_LOWEST = 0,
-	EC_TASK_CHG_RAMP_PRIO = EC_TASK_PRIO_LOWEST,
+	EC_SYSWORKQ_PRIO = EC_TASK_PRIO_LOWEST,
+	EC_TASK_CHG_RAMP_PRIO,
 	EC_TASK_USB_CHG_P0_PRIO,
 	EC_TASK_USB_CHG_P1_PRIO,
 	EC_TASK_USB_CHG_P2_PRIO,

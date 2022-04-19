@@ -24,7 +24,7 @@ orsource "chip/$(ARCH)/*/Kconfig.*"
 # Override the maximum number of preemptive priority levels.
 #
 config NUM_PREEMPT_PRIORITIES
-	default 24
+	default 25
 
 config LTO
 	bool "Link Time Optimization (LTO)"

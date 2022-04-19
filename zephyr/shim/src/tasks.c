@@ -12,12 +12,6 @@
 #include "timer.h"
 #include "task.h"
 
-/* Ensure that there are enough priorities for all the EC tasks plus the
- * sysworkq, which is used to handle HOOK_DEFERRED calls.
- */
-BUILD_ASSERT(CONFIG_NUM_PREEMPT_PRIORITIES + 1 >= EC_TASK_PRIO_COUNT,
-	     "Must increase number of available preempt priorities");
-
 /* Ensure that the idle task is at lower priority than lowest priority task. */
 BUILD_ASSERT(EC_TASK_PRIORITY(EC_TASK_PRIO_LOWEST) < K_IDLE_PRIO,
 	"CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at "
