@@ -409,18 +409,38 @@ void rt1718s_vendor_defined_alert(int port)
 		if (rv)
 			return;
 
-		if ((int1 & RT1718S_RT_INT1_INT_RX_FRS)) {
-			atomic_or(&frs_flag[port], FLAG_FRS_RX_SIGNALLED);
-			/* notify TCPM we got FRS signal */
-			pd_got_frs_signal(port);
+		if ((int1 & RT1718S_RT_INT1_INT_RX_FRS) &&
+		    frs_flag[port] & FLAG_FRS_ENABLED) {
+			/*
+			 * 1. Sometimes we get Rx signalled even if the
+			 * FRS is disabled, so filter it.
+			 * 2. Only call pd_got_frs_signal when this is the first
+			 * Rx interrupt for this FRS swap, and the FRS is
+			 * enabled.  The Rx interrupt may re-send when the
+			 * sink voltage is 5V, and this will make us re-entry
+			 * the FRS states.
+			 * 3. When a FRS hub detached, RT1718S will
+			 * raise FRS RX alert as well. In this case,
+			 * we are unable to audit the errors in time,
+			 * we will still enter the FRS AMS, but it will
+			 * fail eventually, and back to CC open state.
+			 */
+			if (!(frs_flag[port] & FLAG_FRS_RX_SIGNALLED)) {
+				atomic_or(&frs_flag[port],
+					  FLAG_FRS_RX_SIGNALLED);
+				/* notify TCPM we got FRS signal */
+				pd_got_frs_signal(port);
+			}
 		}
 
 		if ((int1 & RT1718S_RT_INT1_INT_VBUS_FRS_LOW)) {
 			/*
-			 * VBUS_FRS_LOW alert could be sent multiple times,
-			 * filter it here.
+			 * Only process if have had rx signalled.
+			 * VBUS_FRS_LOW alert could be raised multiple times
+			 * if VBUS 5V is glitched.
 			 */
-			if (!(frs_flag[port] & FLAG_FRS_VBUS_VALID_FALL)) {
+			if ((frs_flag[port] & FLAG_FRS_RX_SIGNALLED) &&
+			    !(frs_flag[port] & FLAG_FRS_VBUS_VALID_FALL)) {
 				atomic_or(&frs_flag[port],
 					  FLAG_FRS_VBUS_VALID_FALL);
 				/*
