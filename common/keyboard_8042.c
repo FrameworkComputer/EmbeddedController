@@ -1032,6 +1032,8 @@ test_mockable void keyboard_update_button(enum keyboard_button_type button,
 	}
 
 	if (keystroke_enabled) {
+		CPRINTS5("KB UPDATE BTN");
+
 		i8042_send_to_host(len, scan_code, CHAN_KBD);
 		task_wake(TASK_ID_KEYPROTO);
 	}
