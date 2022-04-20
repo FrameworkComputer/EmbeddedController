@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "chipset.h"
 #include "common.h"
-
 #include "compile_time_macros.h"
 #include "hooks.h"
 #include "pwm.h"
@@ -13,11 +13,6 @@
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED2] = {
 		.channel = 0,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
-	},
-	[PWM_CH_LED3] = {
-		.channel = 1,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 		.freq = 4800,
 	},
@@ -42,11 +37,6 @@ const struct pwm_t pwm_channels[] = {
 		.flags = PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_DSLEEP,
 		.freq = 1000
 	},
-	[PWM_CH_LED4] = {
-		.channel = 7,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
-	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -60,10 +50,6 @@ static void board_pwm_init(void)
 	pwm_set_duty(PWM_CH_LED1, 0);
 	pwm_enable(PWM_CH_LED2, 1);
 	pwm_set_duty(PWM_CH_LED2, 0);
-	pwm_enable(PWM_CH_LED3, 1);
-	pwm_set_duty(PWM_CH_LED3, 0);
-	pwm_enable(PWM_CH_LED4, 1);
-	pwm_set_duty(PWM_CH_LED4, 0);
 
 	pwm_enable(PWM_CH_KBLIGHT, 1);
 	pwm_set_duty(PWM_CH_KBLIGHT, 50);
