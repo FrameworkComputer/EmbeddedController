@@ -1410,6 +1410,22 @@ extern struct jump_data mock_jump_data;
 	CONFIG_PLATFORM_EC_USB_PD_ITE_ACTIVE_PORT_COUNT
 #endif
 
+/* Remove PD_INT_C* task for ports managed by ITE embedded TCPC */
+#ifdef CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT
+#if CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT >= 1
+#undef HAS_TASK_PD_INT_C0
+#endif
+#if CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT >= 2
+#undef HAS_TASK_PD_INT_C1
+#endif
+#if CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT >= 3
+#undef HAS_TASK_PD_INT_C2
+#endif
+#if CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT >= 4
+#undef HAS_TASK_PD_INT_C3
+#endif
+#endif /* CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT */
+
 #undef CONFIG_USB_PD_PPC
 #ifdef CONFIG_PLATFORM_EC_USB_PD_PPC
 #define CONFIG_USB_PD_PPC
