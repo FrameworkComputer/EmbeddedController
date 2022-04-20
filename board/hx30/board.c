@@ -369,6 +369,23 @@ void board_reset_pd_mcu(void)
 
 }
 
+/**
+ * Check the plug-in AC then power on system setting.
+ */
+bool ac_poweron_check(void)
+{
+	uint8_t memcap;
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
+
+	return memcap ? true : false;
+}
+
+int poweron_reason_acin(void)
+{
+	return extpower_is_present() && ac_poweron_check();
+}
+
 static int power_button_pressed_on_boot;
 int poweron_reason_powerbtn(void)
 {

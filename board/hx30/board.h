@@ -772,6 +772,7 @@ void thm_ft5399m_set_timeout_en(void);
 void update_me_change(int change);
 
 int poweron_reason_powerbtn(void);
+int poweron_reason_acin(void);
 
 #ifdef CONFIG_EMI_REGION1
 void power_state_clear(int state);
