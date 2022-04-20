@@ -326,6 +326,11 @@ int battery_manufacturer_data(char *data, int size)
 	return sb_read_string(SB_MANUFACTURER_DATA, data, size);
 }
 
+int battery_manufacturer_access(int cmd)
+{
+	return sb_write(SB_MANUFACTURER_ACCESS, cmd);
+}
+
 int battery_get_avg_current(void)
 {
 	int current;

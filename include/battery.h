@@ -404,6 +404,14 @@ int battery_manufacturer_date(int *year, int *month, int *day);
 int battery_manufacturer_data(char *data, int size);
 
 /**
+ * Write battery manufacturer access.
+ *
+ * @param cmd		Destiation for battery manufacturer access command.
+ * @retun non-zeor if error.
+ */
+int battery_manufacturer_access(int cmd);
+
+/**
  * Report the absolute difference between the highest and lowest cell voltage in
  * the battery pack, in millivolts.  On error or unimplemented, returns '0'.
  */

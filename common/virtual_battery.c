@@ -396,7 +396,14 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		break;
 #endif
 	case SB_MANUFACTURER_ACCESS:
-		/* No manuf. access reg access allowed over VB interface */
+#ifdef CONFIG_BATTERY_SMART
+		if ((write_len >= 2) && (write_len <= 3)) {
+			val = batt_cmd_head[1] | batt_cmd_head[2] << 8;
+			/* This may cause an i2c transaction */
+			if (!battery_manufacturer_access(val))
+				return EC_SUCCESS;
+		}
+#endif
 		return EC_ERROR_INVAL;
 	case SB_SPECIFICATION_INFO:
 		/* v1.1 without PEC, no scale factor to voltage and current */
