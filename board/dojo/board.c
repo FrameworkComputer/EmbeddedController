@@ -88,6 +88,12 @@ static const mat33_fp_t lid_standard_ref = {
 	{ 0, 0, FLOAT_TO_FP(-1)}
 };
 
+static const mat33_fp_t bmi260_standard_ref = {
+	{ 0, FLOAT_TO_FP(-1), 0},
+	{ FLOAT_TO_FP(1), 0, 0},
+	{ 0, 0, FLOAT_TO_FP(1)}
+};
+
 struct motion_sensor_t motion_sensors[] = {
 	/*
 	 * Note: bmi160: supports accelerometer and gyro sensor
@@ -177,7 +183,7 @@ struct motion_sensor_t bmi260_base_accel = {
 	.drv_data = &g_bmi260_data,
 	.port = I2C_PORT_ACCEL,
 	.i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
-	.rot_standard_ref = &base_standard_ref,
+	.rot_standard_ref = &bmi260_standard_ref,
 	.min_frequency = BMI_ACCEL_MIN_FREQ,
 	.max_frequency = BMI_ACCEL_MAX_FREQ,
 	.default_range = 4, /* g */
@@ -207,7 +213,7 @@ struct motion_sensor_t bmi260_base_gyro = {
 	.port = I2C_PORT_ACCEL,
 	.i2c_spi_addr_flags = BMI260_ADDR0_FLAGS,
 	.default_range = 1000, /* dps */
-	.rot_standard_ref = &base_standard_ref,
+	.rot_standard_ref = &bmi260_standard_ref,
 	.min_frequency = BMI_GYRO_MIN_FREQ,
 	.max_frequency = BMI_GYRO_MAX_FREQ,
 };
