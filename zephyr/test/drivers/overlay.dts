@@ -32,6 +32,12 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
+
+			chg {
+				compatible = "intersil,isl923x";
+				status = "okay";
+				port = <&i2c_charger>;
+			};
 		};
 
 		port1@1 {
@@ -232,7 +238,7 @@
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_POWER";
 		};
-		charger {
+		i2c_charger: charger {
 			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_CHARGER";
 		};
