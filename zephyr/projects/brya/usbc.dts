@@ -22,6 +22,11 @@
 				compatible = "nuvoton,nct38xx";
 				gpio-dev = <&nct3808_0_P1>;
 			};
+			chg {
+				compatible = "ti,bq25710";
+				status = "okay";
+				port = <&i2c_charger>;
+			};
 		};
 
 		port1@1 {
