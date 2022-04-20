@@ -194,8 +194,11 @@ static uint32_t fp_process_match(void)
 static void fp_process_finger(void)
 {
 	timestamp_t t0 = get_time();
-	int res = fp_sensor_acquire_image_with_mode(fp_buffer,
-			FP_CAPTURE_TYPE(sensor_mode));
+	int res;
+
+	CPRINTS("Capturing ...");
+	res = fp_sensor_acquire_image_with_mode(fp_buffer,
+						FP_CAPTURE_TYPE(sensor_mode));
 	capture_time_us = time_since32(t0);
 	if (!res) {
 		uint32_t evt = EC_MKBP_FP_IMAGE_READY;
