@@ -137,6 +137,7 @@
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_REFRESH_ROW3
+#define CONFIG_KEYBOARD_FACTORY_TEST
 
 #ifndef __ASSEMBLER__
 
@@ -179,6 +180,11 @@ enum mft_channel {
 	MFT_CH_0 = 0,
 	MFT_CH_COUNT
 };
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
