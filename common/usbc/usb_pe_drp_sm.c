@@ -4401,11 +4401,7 @@ static void pe_prs_src_snk_transition_to_off_entry(int port)
 	/* Contract is invalid */
 	pe_invalidate_explicit_contract(port);
 
-	/* Tell TypeC to power off the source */
-	tc_src_power_off(port);
-
-	pd_timer_enable(port, PE_TIMER_PS_SOURCE,
-			PD_POWER_SUPPLY_TURN_OFF_DELAY);
+	pd_timer_enable(port, PE_TIMER_SRC_TRANSITION, PD_T_SRC_TRANSITION);
 }
 
 static void pe_prs_src_snk_transition_to_off_run(int port)
@@ -4419,6 +4415,21 @@ static void pe_prs_src_snk_transition_to_off_run(int port)
 
 		tc_pr_swap_complete(port, 0);
 		pe_set_hard_reset(port);
+		return;
+	}
+
+	/* Wait tSrcTransition (~ 25ms) before turning off VBUS */
+	if (!pd_timer_is_expired(port, PE_TIMER_SRC_TRANSITION))
+		return;
+
+	if (!PE_CHK_FLAG(port, PE_FLAGS_SRC_SNK_SETTLE)) {
+		PE_SET_FLAG(port, PE_FLAGS_SRC_SNK_SETTLE);
+		/* Tell TypeC to power off the source */
+		tc_src_power_off(port);
+
+		pd_timer_enable(port, PE_TIMER_PS_SOURCE,
+				PD_POWER_SUPPLY_TURN_OFF_DELAY);
+		return;
 	}
 
 	/* Give time for supply to power off */
@@ -4429,6 +4440,8 @@ static void pe_prs_src_snk_transition_to_off_run(int port)
 
 static void pe_prs_src_snk_transition_to_off_exit(int port)
 {
+	PE_CLR_FLAG(port, PE_FLAGS_SRC_SNK_SETTLE);
+	pd_timer_disable(port, PE_TIMER_SRC_TRANSITION);
 	pd_timer_disable(port, PE_TIMER_PS_SOURCE);
 }
 
