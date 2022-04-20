@@ -656,6 +656,7 @@ static enum ec_error_list ocpc_precharge_enable(bool enable)
 void ocpc_reset(struct ocpc_data *ocpc)
 {
 	struct batt_params batt;
+	int voltage;
 
 	battery_get_params(&batt);
 	ocpc->integral = 0;
@@ -666,12 +667,14 @@ void ocpc_reset(struct ocpc_data *ocpc)
 	 * Initialize the VSYS target on the aux chargers to the current battery
 	 * voltage to avoid a large spike.
 	 */
-	if (ocpc->active_chg_chip > CHARGER_PRIMARY && batt.voltage > 0) {
+	if (ocpc->active_chg_chip > CHARGER_PRIMARY) {
+		voltage = (batt.voltage > 0 &&
+			  !(batt.flags & BATT_FLAG_BAD_VOLTAGE)) ?
+			  batt.voltage : battery_get_info()->voltage_normal;
 		CPRINTS("OCPC: C%d Init VSYS to %dmV", ocpc->active_chg_chip,
-			batt.voltage);
-		charger_set_voltage(ocpc->active_chg_chip, batt.voltage);
+			voltage);
+		charger_set_voltage(ocpc->active_chg_chip, voltage);
 	}
-
 	/*
 	 * See(b:191347747) When linear precharge is enabled, it may affect
 	 * the charging behavior from the primary charger IC. Therefore as
