@@ -11,11 +11,6 @@
 #include "charger/chg_rt9490.h"
 #include "charger/chg_sm5803.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(ISL923X_CHG_COMPAT) ||     \
-	DT_HAS_COMPAT_STATUS_OKAY(ISL9241_CHG_COMPAT) || \
-	DT_HAS_COMPAT_STATUS_OKAY(RT9490_CHG_COMPAT) ||  \
-	DT_HAS_COMPAT_STATUS_OKAY(SM5803_CHG_COMPAT)
-
 #define CHG_CHIP(id, fn) [DT_REG_ADDR(DT_PARENT(id))] = fn(id)
 
 /* Charger chips */
@@ -45,5 +40,3 @@ BUILD_ASSERT(ARRAY_SIZE(chg_chips) == CONFIG_USB_PD_PORT_MAX_COUNT,
 	"For the OCPC config, the number of defined charger chips must equal "
 	"the number of USB-C ports.");
 #endif
-
-#endif /* #if DT_HAS_COMPAT_STATUS_OKAY */
