@@ -262,18 +262,6 @@ int power_button_batt_cutoff(void)
 }
 
 /**
- * Check the plug-in AC then power on system setting.
- */
-bool ac_poweron_check(void)
-{
-	uint8_t memcap;
-
-	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
-
-	return memcap ? true : false;
-}
-
-/**
  * Power button state machine.
  *
  * @param tnow		Current time from usec counter
@@ -396,9 +384,8 @@ static void state_machine(uint64_t tnow)
 			tnext_state = tnow + PWRBTN_DELAY_INITIAL;
 			initial_delay--;
 		} else {
-			if ((poweron_reason_powerbtn() || (system_get_reset_flags() &
-				EC_RESET_FLAG_HARD) == EC_RESET_FLAG_HARD) ||
-				(extpower_is_present() && ac_poweron_check())) {
+			if (poweron_reason_powerbtn() || poweron_reason_acin() ||
+			 ((system_get_reset_flags() & EC_RESET_FLAG_HARD) == EC_RESET_FLAG_HARD)) {
 
 				reset_diagnostics();
 
@@ -429,8 +416,8 @@ static void state_machine(uint64_t tnow)
 		 * button until it's released, so that holding down the
 		 * recovery combination doesn't cause the chipset to shut back
 		 * down. */
-		if (poweron_reason_powerbtn() || (system_get_reset_flags() &
-			EC_RESET_FLAG_HARD) == EC_RESET_FLAG_HARD)
+		if (poweron_reason_powerbtn() || poweron_reason_acin() ||
+			((system_get_reset_flags() & EC_RESET_FLAG_HARD) == EC_RESET_FLAG_HARD))
 			set_pwrbtn_to_pch(1, 1);
 
 		if (power_button_is_pressed())

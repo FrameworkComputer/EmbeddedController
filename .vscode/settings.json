@@ -1,2 +1,6 @@
 {
+    "files.associations": {
+        "*.inc": "c",
+        "battery_smart.h": "c"
+    }
 }
