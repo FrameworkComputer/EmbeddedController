@@ -188,6 +188,7 @@ class Zmake:
 
         self.executor = zmake.multiproc.Executor()
         self._sequential = jobs == 1 and not goma
+        self.failed_projects = []
 
     @property
     def checkout(self):
@@ -238,7 +239,9 @@ class Zmake:
             build_dir = self.module_paths["ec"] / "build" / "zephyr"
 
         projects = self._resolve_projects(
-            project_names, all_projects=all_projects, host_tests_only=host_tests_only
+            project_names,
+            all_projects=all_projects,
+            host_tests_only=host_tests_only,
         )
         for project in projects:
             project_build_dir = pathlib.Path(build_dir) / project.config.project_name
@@ -272,6 +275,7 @@ class Zmake:
                 output_file=build_dir / "all_tests.info",
             )
             if result:
+                self.failed_projects.append(str(build_dir / "all_tests.info"))
                 return result
         non_test_projects = [p for p in projects if not p.config.is_test]
         if len(non_test_projects) > 1 and coverage and build_after_configure:
@@ -281,6 +285,7 @@ class Zmake:
                 output_file=build_dir / "all_builds.info",
             )
             if result:
+                self.failed_projects.append(str(build_dir / "all_builds.info"))
                 return result
         return 0
 
@@ -346,7 +351,9 @@ class Zmake:
             build_dir = self.module_paths["ec"] / "build" / "zephyr"
 
         projects = self._resolve_projects(
-            project_names, all_projects=all_projects, host_tests_only=host_tests_only
+            project_names,
+            all_projects=all_projects,
+            host_tests_only=host_tests_only,
         )
         test_projects = [p for p in projects if p.config.is_test]
         for project in test_projects:
@@ -380,6 +387,7 @@ class Zmake:
                 output_file=build_dir / "all_tests.info",
             )
             if result:
+                self.failed_projects.append(str(build_dir / "all_tests.info"))
                 return result
         return 0
 
@@ -420,185 +428,196 @@ class Zmake:
         # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         # pylint: disable=too-many-statements
         """Set up a build directory to later be built by "zmake build"."""
-        # Resolve build_dir if needed.
-        if not build_dir:
-            build_dir = (
-                self.module_paths["ec"]
-                / "build"
-                / "zephyr"
-                / project.config.project_name
-            )
+        try:
+            # Resolve build_dir if needed.
+            if not build_dir:
+                build_dir = (
+                    self.module_paths["ec"]
+                    / "build"
+                    / "zephyr"
+                    / project.config.project_name
+                )
 
-        # Clobber build directory if requested.
-        if clobber and build_dir.exists():
-            self.logger.info("Clearing build directory %s due to --clobber", build_dir)
-            shutil.rmtree(build_dir)
+            # Clobber build directory if requested.
+            if clobber and build_dir.exists():
+                self.logger.info(
+                    "Clearing build directory %s due to --clobber", build_dir
+                )
+                shutil.rmtree(build_dir)
 
-        generated_include_dir = (build_dir / "include").resolve()
-        base_config = zmake.build_config.BuildConfig(
-            environ_defs={"ZEPHYR_BASE": str(self.zephyr_base), "PATH": "/usr/bin"},
-            cmake_defs={
-                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "DTS_ROOT": str(self.module_paths["ec"] / "zephyr"),
-                "SYSCALL_INCLUDE_DIRS": str(
-                    self.module_paths["ec"] / "zephyr" / "include" / "drivers"
-                ),
-                "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
-            },
-        )
-
-        # Prune the module paths to just those required by the project.
-        module_paths = project.prune_modules(self.module_paths)
-
-        module_config = zmake.modules.setup_module_symlinks(
-            build_dir / "modules", module_paths
-        )
-
-        # Symlink the Zephyr base into the build directory so it can
-        # be used in the build phase.
-        util.update_symlink(self.zephyr_base, build_dir / "zephyr_base")
-
-        dts_overlay_config = project.find_dts_overlays(module_paths)
-
-        toolchain_support = project.get_toolchain(module_paths, override=toolchain)
-        toolchain_config = toolchain_support.get_build_config()
-
-        if bringup:
-            base_config |= zmake.build_config.BuildConfig(
-                kconfig_defs={"CONFIG_PLATFORM_EC_BRINGUP": "y"}
-            )
-        if coverage:
-            base_config |= zmake.build_config.BuildConfig(
-                kconfig_defs={"CONFIG_COVERAGE": "y"}
-            )
-        if allow_warnings:
-            base_config |= zmake.build_config.BuildConfig(
-                cmake_defs={"ALLOW_WARNINGS": "ON"}
-            )
-        if extra_cflags:
-            base_config |= zmake.build_config.BuildConfig(
-                cmake_defs={"EXTRA_CFLAGS": extra_cflags},
-            )
-        if self.goma:
-            base_config |= zmake.build_config.BuildConfig(
+            generated_include_dir = (build_dir / "include").resolve()
+            base_config = zmake.build_config.BuildConfig(
+                environ_defs={"ZEPHYR_BASE": str(self.zephyr_base), "PATH": "/usr/bin"},
                 cmake_defs={
-                    "CMAKE_C_COMPILER_LAUNCHER": self.gomacc,
-                    "CMAKE_CXX_COMPILER_LAUNCHER": self.gomacc,
+                    "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                    "DTS_ROOT": str(self.module_paths["ec"] / "zephyr"),
+                    "SYSCALL_INCLUDE_DIRS": str(
+                        self.module_paths["ec"] / "zephyr" / "include" / "drivers"
+                    ),
+                    "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
                 },
             )
 
-        if not build_dir.exists():
-            build_dir = build_dir.mkdir()
-        if not generated_include_dir.exists():
-            generated_include_dir.mkdir()
-        processes = []
-        files_to_write = []
-        self.logger.info("Building %s in %s.", project.config.project_name, build_dir)
-        for build_name, build_config in project.iter_builds():
-            config: zmake.build_config.BuildConfig = (
-                base_config
-                | toolchain_config
-                | module_config
-                | dts_overlay_config
-                | build_config
+            # Prune the module paths to just those required by the project.
+            module_paths = project.prune_modules(self.module_paths)
+
+            module_config = zmake.modules.setup_module_symlinks(
+                build_dir / "modules", module_paths
             )
 
-            config_json = config.as_json()
-            config_json_file = build_dir / f"cfg-{build_name}.json"
-            if config_json_file.is_file():
-                if config_json_file.read_text() == config_json:
-                    self.logger.info(
-                        "Skip reconfiguring %s:%s due to previous cmake run of "
-                        "equivalent configuration.  Run with --clobber if this "
-                        "optimization is undesired.",
-                        project.config.project_name,
-                        build_name,
-                    )
-                    continue
-                config_json_file.unlink()
+            # Symlink the Zephyr base into the build directory so it can
+            # be used in the build phase.
+            util.update_symlink(self.zephyr_base, build_dir / "zephyr_base")
 
-            files_to_write.append((config_json_file, config_json))
+            dts_overlay_config = project.find_dts_overlays(module_paths)
 
-            output_dir = build_dir / "build-{}".format(build_name)
-            if output_dir.exists():
-                self.logger.info("Clobber %s due to configuration changes.", output_dir)
-                shutil.rmtree(output_dir)
+            toolchain_support = project.get_toolchain(module_paths, override=toolchain)
+            toolchain_config = toolchain_support.get_build_config()
 
+            if bringup:
+                base_config |= zmake.build_config.BuildConfig(
+                    kconfig_defs={"CONFIG_PLATFORM_EC_BRINGUP": "y"}
+                )
+            if coverage:
+                base_config |= zmake.build_config.BuildConfig(
+                    kconfig_defs={"CONFIG_COVERAGE": "y"}
+                )
+            if allow_warnings:
+                base_config |= zmake.build_config.BuildConfig(
+                    cmake_defs={"ALLOW_WARNINGS": "ON"}
+                )
+            if extra_cflags:
+                base_config |= zmake.build_config.BuildConfig(
+                    cmake_defs={"EXTRA_CFLAGS": extra_cflags},
+                )
+            if self.goma:
+                base_config |= zmake.build_config.BuildConfig(
+                    cmake_defs={
+                        "CMAKE_C_COMPILER_LAUNCHER": self.gomacc,
+                        "CMAKE_CXX_COMPILER_LAUNCHER": self.gomacc,
+                    },
+                )
+
+            if not build_dir.exists():
+                build_dir = build_dir.mkdir()
+            if not generated_include_dir.exists():
+                generated_include_dir.mkdir()
+            processes = []
+            files_to_write = []
             self.logger.info(
-                "Configuring %s:%s.", project.config.project_name, build_name
+                "Building %s in %s.", project.config.project_name, build_dir
             )
+            for build_name, build_config in project.iter_builds():
+                config: zmake.build_config.BuildConfig = (
+                    base_config
+                    | toolchain_config
+                    | module_config
+                    | dts_overlay_config
+                    | build_config
+                )
 
-            kconfig_file = build_dir / "kconfig-{}.conf".format(build_name)
-            proc = config.popen_cmake(
-                self.jobserver,
-                project.config.project_dir,
-                output_dir,
-                kconfig_file,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                encoding="utf-8",
-                errors="replace",
-            )
-            job_id = "{}:{}".format(project.config.project_name, build_name)
-            zmake.multiproc.LogWriter.log_output(
-                self.logger,
-                logging.DEBUG,
-                proc.stdout,
-                log_level_override_func=cmake_log_level_override,
-                job_id=job_id,
-            )
-            zmake.multiproc.LogWriter.log_output(
-                self.logger,
-                logging.ERROR,
-                proc.stderr,
-                log_level_override_func=cmake_log_level_override,
-                job_id=job_id,
-            )
-            if self._sequential:
+                config_json = config.as_json()
+                config_json_file = build_dir / f"cfg-{build_name}.json"
+                if config_json_file.is_file():
+                    if config_json_file.read_text() == config_json:
+                        self.logger.info(
+                            "Skip reconfiguring %s:%s due to previous cmake run of "
+                            "equivalent configuration.  Run with --clobber if this "
+                            "optimization is undesired.",
+                            project.config.project_name,
+                            build_name,
+                        )
+                        continue
+                    config_json_file.unlink()
+
+                files_to_write.append((config_json_file, config_json))
+
+                output_dir = build_dir / "build-{}".format(build_name)
+                if output_dir.exists():
+                    self.logger.info(
+                        "Clobber %s due to configuration changes.", output_dir
+                    )
+                    shutil.rmtree(output_dir)
+
+                self.logger.info(
+                    "Configuring %s:%s.", project.config.project_name, build_name
+                )
+
+                kconfig_file = build_dir / "kconfig-{}.conf".format(build_name)
+                proc = config.popen_cmake(
+                    self.jobserver,
+                    project.config.project_dir,
+                    output_dir,
+                    kconfig_file,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                job_id = "{}:{}".format(project.config.project_name, build_name)
+                zmake.multiproc.LogWriter.log_output(
+                    self.logger,
+                    logging.DEBUG,
+                    proc.stdout,
+                    log_level_override_func=cmake_log_level_override,
+                    job_id=job_id,
+                )
+                zmake.multiproc.LogWriter.log_output(
+                    self.logger,
+                    logging.ERROR,
+                    proc.stderr,
+                    log_level_override_func=cmake_log_level_override,
+                    job_id=job_id,
+                )
+                if self._sequential:
+                    if proc.wait():
+                        raise OSError(get_process_failure_msg(proc))
+                else:
+                    processes.append(proc)
+            for proc in processes:
                 if proc.wait():
                     raise OSError(get_process_failure_msg(proc))
-            else:
-                processes.append(proc)
-        for proc in processes:
-            if proc.wait():
-                raise OSError(get_process_failure_msg(proc))
 
-        for path, contents in files_to_write:
-            path.write_text(contents)
+            for path, contents in files_to_write:
+                path.write_text(contents)
 
-        # To reconstruct a Project object later, we need to know the
-        # name and project directory.
-        (build_dir / "project_name.txt").write_text(project.config.project_name)
-        util.update_symlink(project.config.project_dir, build_dir / "project")
+            # To reconstruct a Project object later, we need to know the
+            # name and project directory.
+            (build_dir / "project_name.txt").write_text(project.config.project_name)
+            util.update_symlink(project.config.project_dir, build_dir / "project")
 
-        output_files = []
-        if build_after_configure or test_after_configure:
-            result = self._build(
-                build_dir=build_dir,
-                project=project,
-                coverage=coverage,
-                output_files_out=output_files,
-            )
-            if result:
-                return result
-        if test_after_configure and project.config.is_test:
-            gcov = "gcov.sh-not-found"
-            for build_name, _ in project.iter_builds():
-                target_build_dir = build_dir / "build-{}".format(build_name)
-                gcov = target_build_dir / "gcov.sh"
-            self.executor.append(
-                func=functools.partial(
-                    self._run_test,
+            output_files = []
+            if build_after_configure or test_after_configure:
+                result = self._build(
+                    build_dir=build_dir,
                     project=project,
                     coverage=coverage,
-                    gcov=gcov,
-                    build_dir=build_dir,
-                    lcov_file=build_dir / "output" / "zephyr.info",
-                    timeout=project.config.test_timeout_secs,
+                    output_files_out=output_files,
                 )
-            )
-        return 0
+                if result:
+                    self.failed_projects.append(project.config.project_name)
+                    return result
+            if test_after_configure and project.config.is_test:
+                gcov = "gcov.sh-not-found"
+                for build_name, _ in project.iter_builds():
+                    target_build_dir = build_dir / "build-{}".format(build_name)
+                    gcov = target_build_dir / "gcov.sh"
+                self.executor.append(
+                    func=functools.partial(
+                        self._run_test,
+                        project=project,
+                        coverage=coverage,
+                        gcov=gcov,
+                        build_dir=build_dir,
+                        lcov_file=build_dir / "output" / "zephyr.info",
+                        timeout=project.config.test_timeout_secs,
+                    )
+                )
+            return 0
+        except Exception:
+            self.failed_projects.append(project.config.project_name)
+            raise
 
     def _build(
         self,
@@ -739,7 +758,13 @@ class Zmake:
         return 0
 
     def _run_test(  # pylint: disable=too-many-arguments
-        self, project, coverage, gcov, build_dir, lcov_file, timeout=None
+        self,
+        project: zmake.project.Project,
+        coverage,
+        gcov,
+        build_dir,
+        lcov_file,
+        timeout=None,
     ):
         """Run a single test, with goma if enabled.
 
@@ -751,60 +776,64 @@ class Zmake:
             lcov_file: Output path for the generated lcov file.
         """
 
-        cmd = []
-        if self.goma:
-            cmd.append(self.gomacc)
+        try:
+            cmd = []
+            if self.goma:
+                cmd.append(self.gomacc)
 
-        elf_file = build_dir / "output" / "zephyr.elf"
-        cmd.append(elf_file)
+            elf_file = build_dir / "output" / "zephyr.elf"
+            cmd.append(elf_file)
 
-        execution_tmp_dir = build_dir / "tmp" / str(uuid.uuid4())
-        execution_tmp_dir.mkdir(parents=True, exist_ok=True)
-        for arg in project.config.test_args:
-            cmd.append(arg.format(test_temp_dir=execution_tmp_dir))
+            execution_tmp_dir = build_dir / "tmp" / str(uuid.uuid4())
+            execution_tmp_dir.mkdir(parents=True, exist_ok=True)
+            for arg in project.config.test_args:
+                cmd.append(arg.format(test_temp_dir=execution_tmp_dir))
 
-        def _run():
-            self.logger.info("Running tests in %s.", elf_file)
-            proc = self.jobserver.popen(
-                cmd,
-                cwd=elf_file.parent,
-                stdin=subprocess.DEVNULL,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                encoding="utf-8",
-                errors="replace",
-            )
-            job_id = "test {}".format(elf_file)
-            zmake.multiproc.LogWriter.log_output(
-                self.logger,
-                logging.DEBUG,
-                proc.stdout,
-                job_id=job_id,
-            )
-            zmake.multiproc.LogWriter.log_output(
-                self.logger,
-                logging.ERROR,
-                proc.stderr,
-                job_id=job_id,
-            )
-            try:
-                if proc.wait(timeout=timeout):
-                    raise OSError(get_process_failure_msg(proc))
-                if coverage:
-                    self._run_lcov(build_dir, lcov_file, initial=False, gcov=gcov)
-            except subprocess.TimeoutExpired as e:
-                proc.terminate()
+            def _run():
+                self.logger.info("Running tests in %s.", elf_file)
+                proc = self.jobserver.popen(
+                    cmd,
+                    cwd=elf_file.parent,
+                    stdin=subprocess.DEVNULL,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                    encoding="utf-8",
+                    errors="replace",
+                )
+                job_id = "test {}".format(elf_file)
+                zmake.multiproc.LogWriter.log_output(
+                    self.logger,
+                    logging.DEBUG,
+                    proc.stdout,
+                    job_id=job_id,
+                )
+                zmake.multiproc.LogWriter.log_output(
+                    self.logger,
+                    logging.ERROR,
+                    proc.stderr,
+                    job_id=job_id,
+                )
                 try:
-                    proc.wait(timeout=1)
-                except subprocess.TimeoutExpired:
-                    proc.kill()
-                raise e
+                    if proc.wait(timeout=timeout):
+                        raise OSError(get_process_failure_msg(proc))
+                    if coverage:
+                        self._run_lcov(build_dir, lcov_file, initial=False, gcov=gcov)
+                except subprocess.TimeoutExpired as e:
+                    proc.terminate()
+                    try:
+                        proc.wait(timeout=1)
+                    except subprocess.TimeoutExpired:
+                        proc.kill()
+                    raise e
 
-        if self.goma:
-            _run()
-        else:
-            with self.jobserver.get_job():
+            if self.goma:
                 _run()
+            else:
+                with self.jobserver.get_job():
+                    _run()
+        except Exception:
+            self.failed_projects.append(project.config.project_name)
+            raise
 
     def _run_lcov(
         self, build_dir, lcov_file, initial=False, gcov: Union[os.PathLike, str] = ""
