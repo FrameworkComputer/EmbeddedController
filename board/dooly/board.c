@@ -769,6 +769,8 @@ static void board_init(void)
 	else
 		oz554_board_init();
 	gpio_enable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
+	/* set low to disable EC_PCH_RTCRST */
+	gpio_set_level(GPIO_EC_PCH_RTCRST, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
