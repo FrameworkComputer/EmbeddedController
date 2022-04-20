@@ -334,7 +334,7 @@ ZTEST_F(integration_usb_attach_src_then_snk, verify_src_port_pd_info)
 		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
 		       DEFAULT_VBUS_MV, response.meas.voltage_now);
 
-	zassume_equal(response.meas.current_max, DEFAULT_VBUS_SRC_PORT_MA,
+	zassert_equal(response.meas.current_max, DEFAULT_VBUS_SRC_PORT_MA,
 		      "Charging at VBUS max %dmA, but PD reports %dmA",
 		      DEFAULT_VBUS_SRC_PORT_MA, response.meas.current_max);
 
@@ -405,7 +405,7 @@ ZTEST_F(integration_usb_attach_snk_then_src, verify_src_port_pd_info)
 		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
 		       DEFAULT_VBUS_MV, response.meas.voltage_now);
 
-	zassume_equal(response.meas.current_max, DEFAULT_VBUS_SRC_PORT_MA,
+	zassert_equal(response.meas.current_max, DEFAULT_VBUS_SRC_PORT_MA,
 		      "Charging at VBUS max %dmA, but PD reports %dmA",
 		      DEFAULT_VBUS_SRC_PORT_MA, response.meas.current_max);
 
@@ -657,7 +657,7 @@ ZTEST_F(usb_detach_test, verify_detach_src_snk)
 		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
 		       DEFAULT_VBUS_MV, src_power_info.meas.voltage_now);
 
-	zassume_equal(src_power_info.meas.current_max, 0,
+	zassert_equal(src_power_info.meas.current_max, 0,
 		      "Charging at VBUS max %dmA, but PD reports %dmA", 0,
 		      src_power_info.meas.current_max);
 }
@@ -719,7 +719,7 @@ ZTEST_F(usb_detach_test, verify_detach_snk_src)
 		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
 		       DEFAULT_VBUS_MV, src_power_info.meas.voltage_now);
 
-	zassume_equal(src_power_info.meas.current_max, 0,
+	zassert_equal(src_power_info.meas.current_max, 0,
 		      "Charging at VBUS max %dmA, but PD reports %dmA", 0,
 		      src_power_info.meas.current_max);
 }
@@ -791,7 +791,7 @@ ZTEST_F(usb_detach_test, verify_detach_source)
 		       "Expected Charging at VBUS %dmV, but PD reports %dmV",
 		       DEFAULT_VBUS_MV, pd_power_info.meas.voltage_now);
 
-	zassume_equal(pd_power_info.meas.current_max, 0,
+	zassert_equal(pd_power_info.meas.current_max, 0,
 		      "Charging at VBUS max %dmA, but PD reports %dmA", 0,
 		      pd_power_info.meas.current_max);
 }
