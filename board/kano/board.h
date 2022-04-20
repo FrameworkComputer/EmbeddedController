@@ -60,6 +60,7 @@
 /* Keyboard */
 #define CONFIG_KEYBOARD_VIVALDI
 #define CONFIG_KEYBOARD_REFRESH_ROW3
+#define CONFIG_KEYBOARD_FACTORY_TEST
 
 
 /* USB Type A Features */
@@ -232,6 +233,11 @@ enum mft_channel {
 };
 
 void motion_interrupt(enum gpio_signal signal);
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
