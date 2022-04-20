@@ -394,6 +394,12 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 			return EC_ERROR_INVAL;
 		memcpy(dest, &str, read_len);
 		break;
+
+	case SB_MANUFACTURE_INFO:
+		if (sb_read_string(*batt_cmd_head, str, sizeof(str)))
+			return EC_ERROR_INVAL;
+		memcpy(dest, &str, MIN(read_len, sizeof(str)));
+		break;
 #endif
 	case SB_MANUFACTURER_ACCESS:
 #ifdef CONFIG_BATTERY_SMART
@@ -410,6 +416,16 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
 		val = 0x0011;
 		memcpy(dest, &val, bounded_read_len);
 		break;
+#ifdef CONFIG_SMART_BATTERY_OPTIONAL_MFG_FUNC
+	case SB_OPTIONAL_MFG_FUNC1:
+	case SB_OPTIONAL_MFG_FUNC2:
+	case SB_OPTIONAL_MFG_FUNC3:
+	case SB_OPTIONAL_MFG_FUNC4:
+		if (sb_read(*batt_cmd_head, &val))
+			return EC_ERROR_INVAL;
+		memcpy(dest, &val, bounded_read_len);
+		break;
+#endif
 	default:
 		CPRINTS("Unhandled VB reg %x", *batt_cmd_head);
 		return EC_ERROR_INVAL;

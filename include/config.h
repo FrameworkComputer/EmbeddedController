@@ -2633,6 +2633,12 @@
 #undef CONFIG_I2C_VIRTUAL_BATTERY
 
 /*
+ * Define this configuration to support smart battery MFG function
+ * for virtual battery.
+ */
+#undef CONFIG_SMART_BATTERY_OPTIONAL_MFG_FUNC
+
+/*
  * Define this option if an i2c bus may be unpowered at a certain point during
  * runtime.  An example could be, a sensor bus which is not needed in lower
  * power states so the power rail for those sensors is completely disabled.
