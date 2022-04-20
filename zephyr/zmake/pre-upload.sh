@@ -8,7 +8,7 @@ AFFECTED_FILES=()
 
 for path in "$@"; do
     case "${path}" in
-        *zephyr/zmake/*.py )
+        *zephyr/zmake/*.py | *zephyr/projects/*.py)
             AFFECTED_FILES+=("${path}")
             ;;
     esac
