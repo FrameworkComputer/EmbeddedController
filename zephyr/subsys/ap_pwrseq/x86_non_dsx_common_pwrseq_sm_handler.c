@@ -481,7 +481,7 @@ static inline void create_pwrseq_thread(void)
 			K_KERNEL_STACK_SIZEOF(pwrseq_thread_stack),
 			(k_thread_entry_t)pwrseq_loop_thread,
 			NULL, NULL, NULL,
-			K_PRIO_COOP(8), 0,
+			CONFIG_AP_PWRSEQ_THREAD_PRIORITY, 0,
 			IS_ENABLED(CONFIG_AP_PWRSEQ_AUTOSTART) ? K_NO_WAIT
 							       : K_FOREVER);
 
