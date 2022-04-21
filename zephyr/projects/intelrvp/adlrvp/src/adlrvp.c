@@ -25,6 +25,7 @@
 #include "task.h"
 #include "tusb1064.h"
 #include "usb_mux.h"
+#include "usbc/usb_muxes.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -95,81 +96,10 @@ struct ppc_config_t ppc_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
-/* USB-C retimer Configuration */
-struct usb_mux usbc0_tcss_usb_mux = {
-	.usb_port = TYPE_C_PORT_0,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-#if defined(HAS_TASK_PD_C1)
-struct usb_mux usbc1_tcss_usb_mux = {
-	.usb_port = TYPE_C_PORT_1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-#endif
-#if defined(HAS_TASK_PD_C2)
-struct usb_mux usbc2_tcss_usb_mux = {
-	.usb_port = TYPE_C_PORT_2,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-#endif
-#if defined(HAS_TASK_PD_C3)
-struct usb_mux usbc3_tcss_usb_mux = {
-	.usb_port = TYPE_C_PORT_3,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
-};
-#endif
-
-/* USB muxes Configuration */
-struct usb_mux usb_muxes[] = {
-	[TYPE_C_PORT_0] = {
-		.usb_port = TYPE_C_PORT_0,
-		.next_mux = &usbc0_tcss_usb_mux,
-		.driver = &bb_usb_retimer,
-		.hpd_update = bb_retimer_hpd_update,
-		.i2c_port = I2C_PORT_TYPEC_0,
-		.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
-	},
-#if defined(HAS_TASK_PD_C1)
-	[TYPE_C_PORT_1] = {
-		.usb_port = TYPE_C_PORT_1,
-		.next_mux = &usbc1_tcss_usb_mux,
-		.driver = &bb_usb_retimer,
-		.hpd_update = bb_retimer_hpd_update,
-		.i2c_port = I2C_PORT_TYPEC_1,
-		.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
-	},
-#endif
-#if defined(HAS_TASK_PD_C2)
-	[TYPE_C_PORT_2] = {
-		.usb_port = TYPE_C_PORT_2,
-		.next_mux = &usbc2_tcss_usb_mux,
-		.driver = &bb_usb_retimer,
-		.hpd_update = bb_retimer_hpd_update,
-		.i2c_port = I2C_PORT_TYPEC_2,
-		.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
-	},
-#endif
-#if defined(HAS_TASK_PD_C3)
-	[TYPE_C_PORT_3] = {
-		.usb_port = TYPE_C_PORT_3,
-		.next_mux = &usbc3_tcss_usb_mux,
-		.driver = &bb_usb_retimer,
-		.hpd_update = bb_retimer_hpd_update,
-		.i2c_port = I2C_PORT_TYPEC_3,
-		.i2c_addr_flags = USBC_PORT_C3_BB_RETIMER_I2C_ADDR,
-	},
-#endif
-};
-BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
-
 /* USB Mux Configuration for Soc side BB-Retimers for Dual retimer config */
-struct usb_mux soc_side_bb_retimer0_usb_mux = {
+static struct usb_mux soc_side_bb_retimer0_usb_mux = {
 	.usb_port = TYPE_C_PORT_0,
-	.next_mux = &usbc0_tcss_usb_mux,
+	.next_mux = USB_MUX_NEXT_POINTER(DT_NODELABEL(usbc_port0), 0),
 	.driver = &bb_usb_retimer,
 	.hpd_update = bb_retimer_hpd_update,
 	.i2c_port = I2C_PORT_TYPEC_0,
@@ -177,41 +107,15 @@ struct usb_mux soc_side_bb_retimer0_usb_mux = {
 };
 
 #if defined(HAS_TASK_PD_C1)
-struct usb_mux soc_side_bb_retimer1_usb_mux = {
+static struct usb_mux soc_side_bb_retimer1_usb_mux = {
 	.usb_port = TYPE_C_PORT_1,
-	.next_mux = &usbc1_tcss_usb_mux,
+	.next_mux = USB_MUX_NEXT_POINTER(DT_NODELABEL(usbc_port1), 0),
 	.driver = &bb_usb_retimer,
 	.hpd_update = bb_retimer_hpd_update,
 	.i2c_port = I2C_PORT_TYPEC_1,
 	.i2c_addr_flags = I2C_PORT1_BB_RETIMER_SOC_ADDR,
 };
 #endif
-
-const struct bb_usb_control bb_controls[] = {
-	[TYPE_C_PORT_0] = {
-		.retimer_rst_gpio = IOEX_USB_C0_BB_RETIMER_RST,
-		.usb_ls_en_gpio = IOEX_USB_C0_BB_RETIMER_LS_EN,
-	},
-#if defined(HAS_TASK_PD_C1)
-	[TYPE_C_PORT_1] = {
-		.retimer_rst_gpio = IOEX_USB_C1_BB_RETIMER_RST,
-		.usb_ls_en_gpio = IOEX_USB_C1_BB_RETIMER_LS_EN,
-	},
-#endif
-#if defined(HAS_TASK_PD_C2)
-	[TYPE_C_PORT_2] = {
-		.retimer_rst_gpio = IOEX_USB_C2_BB_RETIMER_RST,
-		.usb_ls_en_gpio = IOEX_USB_C2_BB_RETIMER_LS_EN,
-	},
-#endif
-#if defined(HAS_TASK_PD_C3)
-	[TYPE_C_PORT_3] = {
-		.retimer_rst_gpio = IOEX_USB_C3_BB_RETIMER_RST,
-		.usb_ls_en_gpio = IOEX_USB_C3_BB_RETIMER_LS_EN,
-	},
-#endif
-};
-BUILD_ASSERT(ARRAY_SIZE(bb_controls) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 /* Cache BB retimer power state */
 static bool cache_bb_enable[CONFIG_USB_PD_PORT_MAX_COUNT];

@@ -281,7 +281,7 @@
 			gpios = <&ioex_c0_port 0 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_BB_RETIMER_RST";
 		};
-		usb-c0-bb-retimer-ls-en {
+		usb_c0_bb_retimer_ls_en: usb-c0-bb-retimer-ls-en {
 			gpios = <&ioex_c0_port 1 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_BB_RETIMER_LS_EN";
 		};
@@ -297,7 +297,7 @@
 			gpios = <&ioex_c1_port 0 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C1_BB_RETIMER_RST";
 		};
-		usb-c1-bb-retimer-ls-en {
+		usb_c1_bb_retimer_ls_en: usb-c1-bb-retimer-ls-en {
 			gpios = <&ioex_c1_port 1 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C1_BB_RETIMER_LS_EN";
 		};
@@ -313,7 +313,7 @@
 			gpios = <&ioex_c2_port 0 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C2_BB_RETIMER_RST";
 		};
-		usb-c2-bb-retimer-ls-en {
+		usb_c2_bb_retimer_ls_en: usb-c2-bb-retimer-ls-en {
 			gpios = <&ioex_c2_port 1 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C2_BB_RETIMER_LS_EN";
 		};
@@ -329,7 +329,7 @@
 			gpios = <&ioex_c3_port 0 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C3_BB_RETIMER_RST";
 		};
-		usb-c3-bb-retimer-ls-en {
+		usb_c3_bb_retimer_ls_en: usb-c3-bb-retimer-ls-en {
 			gpios = <&ioex_c3_port 1 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C3_BB_RETIMER_LS_EN";
 		};

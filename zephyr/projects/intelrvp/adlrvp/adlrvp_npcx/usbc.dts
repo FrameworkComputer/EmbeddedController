@@ -7,7 +7,7 @@
 	usbc {
 		#address-cells = <1>;
 		#size-cells = <0>;
-		port0@0 {
+		usbc_port0: port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
 			tcpc {
@@ -21,6 +21,7 @@
 				status = "okay";
 				port = <&i2c_charger>;
 			};
+			usb-muxes = <&usb_c0_bb_retimer &virtual_mux_c0>;
 		};
 		port0-muxes {
 			usb_c0_bb_retimer: jhl8040r-c0 {
@@ -28,10 +29,14 @@
 				port = <&typec_0>;
 				i2c-addr-flags = <0x56>;
 				reset-pin = <&usb_c0_bb_retimer_rst>;
+				ls-en-pin = <&usb_c0_bb_retimer_ls_en>;
+			};
+			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};
 
-		port1@1 {
+		usbc_port1: port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
 			tcpc {
@@ -40,6 +45,7 @@
 				port = <&typec_1>;
 				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
 			};
+			usb-muxes = <&usb_c1_bb_retimer &virtual_mux_c1>;
 		};
 		port1-muxes {
 			usb_c1_bb_retimer: jhl8040r-c1 {
@@ -47,6 +53,10 @@
 				port = <&typec_1>;
 				i2c-addr-flags = <0x57>;
 				reset-pin = <&usb_c1_bb_retimer_rst>;
+				ls-en-pin = <&usb_c1_bb_retimer_ls_en>;
+			};
+			virtual_mux_c1: virtual-mux-c1 {
+				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};
 
@@ -59,6 +69,7 @@
 				port = <&typec_2>;
 				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
 			};
+			usb-muxes = <&usb_c2_bb_retimer &virtual_mux_c2>;
 		};
 		port2-muxes {
 			usb_c2_bb_retimer: jhl8040r-c2 {
@@ -66,6 +77,10 @@
 				port = <&typec_2>;
 				i2c-addr-flags = <0x58>;
 				reset-pin = <&usb_c2_bb_retimer_rst>;
+				ls-en-pin = <&usb_c2_bb_retimer_ls_en>;
+			};
+			virtual_mux_c2: virtual-mux-c2 {
+				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};
 
@@ -78,6 +93,7 @@
 				port = <&typec_3>;
 				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
 			};
+			usb-muxes = <&usb_c3_bb_retimer &virtual_mux_c3>;
 		};
 		port3-muxes {
 			usb_c3_bb_retimer: jhl8040r-c3 {
@@ -85,6 +101,10 @@
 				port = <&typec_3>;
 				i2c-addr-flags = <0x59>;
 				reset-pin = <&usb_c3_bb_retimer_rst>;
+				ls-en-pin = <&usb_c3_bb_retimer_ls_en>;
+			};
+			virtual_mux_c3: virtual-mux-c3 {
+				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};
 	};
