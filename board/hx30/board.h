@@ -160,6 +160,7 @@
 /* Optional features */
 #define CONFIG_ALS
 #define CONFIG_CMD_ALS
+#define ALS_POLL_PERIOD (50 * MSEC)
 
 #define CONFIG_BATTERY_CUT_OFF
 #define CONFIG_BATTERY_SMART
