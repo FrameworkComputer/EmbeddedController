@@ -11,4 +11,4 @@ CHIP_FAMILY:=it8xxx2
 CHIP_VARIANT:=it81202bx_1024
 BASEBOARD:=cherry
 
-board-y+=led.o battery.o board.o
+board-y+=led.o battery.o board.o cbi_fw_config.o
