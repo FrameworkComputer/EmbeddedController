@@ -189,8 +189,11 @@
 /* Enabling USB4 mode */
 #define CONFIG_USB_PD_USB4
 
+/*
+ * TODO: b/229934138, Disable BBR firmware update temporarily.
+ */
 /* Retimer */
-#define CONFIG_USBC_RETIMER_FW_UPDATE
+#undef CONFIG_USBC_RETIMER_FW_UPDATE
 
 /* Thermal features */
 #define CONFIG_THERMISTOR
