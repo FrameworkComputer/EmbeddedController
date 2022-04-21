@@ -52,6 +52,15 @@
 
 /* 64-bit timer support */
 #define NPCX_ITIM64_SUPPORT
+
+/*
+ * Workaound the issue 3.10 in the NPCX99nF errata rev1.2
+ * Enabling an eSPI channel (e.g. Peripheral Channel, Virtual Wire Channel, etc.
+ * ) during an eSPI transaction might (with low probability) cause the eSPI_SIF
+ * module to transition to a wrong state and therefore response with FATAL_ERROR
+ * on an incoming transaction.
+ */
+#define NPCX_ESPI_BYPASS_CH_ENABLE_FATAL_ERROR
 #else
 #define UART_MODULE_COUNT 1
 #endif
