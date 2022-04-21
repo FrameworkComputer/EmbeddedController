@@ -26,8 +26,6 @@
 			0x55	/* C10 */
 			0xfa	/* C11 */
 			0xca	/* C12 */
-			0	/* C13 - for keypad */
-			0	/* C14 - for keypad */
 			>;
 	};
 };
