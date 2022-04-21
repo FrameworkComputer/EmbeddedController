@@ -79,7 +79,8 @@ static void board_led_set_battery(void)
 		color = LED_AMBER;
 		break;
 	case PWR_STATE_DISCHARGE:
-		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+		if (chipset_in_or_transitioning_to_state(
+		    CHIPSET_STATE_ANY_SUSPEND)) {
 			/* Discharging in S3: Amber 1 sec, off 3 sec */
 			period = (1 + 3) * LED_ONE_SEC;
 			battery_ticks = battery_ticks % period;
@@ -87,7 +88,8 @@ static void board_led_set_battery(void)
 				color = LED_AMBER;
 			else
 				color = LED_OFF;
-		} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		} else if (chipset_in_or_transitioning_to_state(
+			   CHIPSET_STATE_ANY_OFF)) {
 			/* Discharging in S5: off */
 			color = LED_OFF;
 		} else {
