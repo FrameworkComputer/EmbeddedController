@@ -1,0 +1,19 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: IT8801 discrete Keyboard matrix with PWM & GPIO
+
+compatible: "ite,it8801"
+
+include: i2c-device.yaml
+
+#
+# examples:
+#
+# kb_not_raw: ite-it8801@38 {
+#         compatible = "ite,it8801";
+#         reg = <0x38>;
+#         label = "KEYBOARD_DISCRETE";
+# };
+#

@@ -19,10 +19,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ## args)
 
-#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
-#error "This driver doesn't support get_port function"
-#endif
-
 static int it8801_ioex_set_level(int ioex, int port, int mask, int value);
 static void it8801_ioex_event_handler(void);
 DECLARE_DEFERRED(it8801_ioex_event_handler);
@@ -82,7 +78,9 @@ static void it8801_muxed_kbd_gpio_intr_enable(void)
 	 * IOEX init code whichever gets called first.
 	 */
 	if (!intr_enabled) {
+#ifndef CONFIG_ZEPHYR
 		gpio_clear_pending_interrupt(GPIO_KB_DISCRETE_INT);
+#endif
 		gpio_enable_interrupt(GPIO_KB_DISCRETE_INT);
 		intr_enabled = true;
 	}
@@ -259,7 +257,7 @@ static const int it8801_valid_gpio_group[] = {
 };
 
 /* Mutexes */
-static struct mutex ioex_mutex;
+K_MUTEX_DEFINE(ioex_mutex);
 
 static uint8_t it8801_gpio_sov[ARRAY_SIZE(it8801_valid_gpio_group)];
 
@@ -462,6 +460,12 @@ static int it8801_ioex_enable_interrupt(int ioex, int port, int mask,
 				mask, enable ? MASK_SET : MASK_CLR);
 }
 
+#ifdef CONFIG_ZEPHYR
+static void it8801_ioex_irq(int ioex, int port)
+{
+	/* TODO (b/230008245): Handle interrupts in Zephyr Shim */
+}
+#else
 static void it8801_ioex_irq(int ioex, int port)
 {
 	int rv, data, i;
@@ -486,6 +490,7 @@ static void it8801_ioex_irq(int ioex, int port)
 		}
 	}
 }
+#endif /* CONFIG_ZEPHYR */
 
 static void it8801_ioex_event_handler(void)
 {
@@ -521,6 +526,14 @@ static void it8801_ioex_event_handler(void)
 	}
 }
 
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+/* Read levels for whole IO expander port */
+static int it8801_ioex_get_port(int ioex, int port, int *val)
+{
+	return it8801_ioex_read(ioex, IT8801_REG_GPIO_IPSR(port), val);
+}
+#endif
+
 const struct ioexpander_drv it8801_ioexpander_drv = {
 	.init              = &it8801_ioex_init,
 	.get_level         = &it8801_ioex_get_level,
@@ -528,6 +541,9 @@ const struct ioexpander_drv it8801_ioexpander_drv = {
 	.get_flags_by_mask = &it8801_ioex_get_flags_by_mask,
 	.set_flags_by_mask = &it8801_ioex_set_flags_by_mask,
 	.enable_interrupt  = &it8801_ioex_enable_interrupt,
+#ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
+	.get_port          = &it8801_ioex_get_port,
+#endif
 };
 
 static void dump_register(int reg)
