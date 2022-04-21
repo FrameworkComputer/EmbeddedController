@@ -229,6 +229,10 @@ static int rt1718s_init(int port)
 				RT1718S_RT2_VBUS_VOL_CTRL_VOL_SEL,
 				RT1718S_VBUS_VOL_TO_REG(20)));
 
+	/* Set VCONN_OCP_SEL to 400mA */
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_VCONN_CONTROL_3,
+				RT1718S_VCONN_CONTROL_3_VCONN_OCP_SEL, 0x7F));
+
 	/* Disable FOD function */
 	RETURN_ERROR(rt1718s_update_bits8(port, 0xCF, 0x40, 0x00));
 
