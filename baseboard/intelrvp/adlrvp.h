@@ -33,6 +33,10 @@
 /* Chipset */
 #define CONFIG_CHIPSET_ALDERLAKE
 
+/* ADL has new low-power features that require an extra-wide SCI pulse. */
+#undef CONFIG_ESPI_DEFAULT_SCI_WIDTH_US
+#define CONFIG_ESPI_DEFAULT_SCI_WIDTH_US	150
+
 /* USB PD config */
 #if defined(HAS_TASK_PD_C3)
 #define CONFIG_USB_PD_PORT_MAX_COUNT 4
