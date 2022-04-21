@@ -20,6 +20,8 @@
 
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
 
+#define TEST_ADDED_PDO PDO_FIXED(10000, 3000, PDO_FIXED_UNCONSTRAINED)
+
 struct usb_pd_ctrl_msg_test_fixture {
 	struct tcpci_drp_emul partner_emul;
 	const struct emul *tcpci_emul;
@@ -117,6 +119,12 @@ static void usb_pd_ctrl_msg_before(void *data)
 	k_sleep(K_SECONDS(1));
 
 	tcpci_drp_emul_init(&fixture->partner_emul);
+
+	/* Add additional Sink PDO to partner to verify
+	 * PE_DR_SNK_Get_Sink_Cap/PE_SRC_Get_Sink_Cap (these are shared PE
+	 * states) state was reached
+	 */
+	fixture->partner_emul.snk_data.pdo[1] = TEST_ADDED_PDO;
 
 	fixture->partner_emul.data.sink = fixture->drp_partner_is_sink;
 
@@ -289,4 +297,46 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, verify_dpm_dr_swap)
 	typec_status = host_cmd_typec_status(TEST_USB_PORT);
 	zassert_equal(PD_ROLE_UFP, typec_status.data_role,
 		      "Returned data_role=%u", typec_status.data_role);
+}
+
+/**
+ * @brief TestPurpose: Verify TCPM initiates Get_Sink_Cap message during a typec
+ * status host command and receives sink_capabilities message.
+ *
+ * @details
+ *  - TCPM is configured initially as Sink
+ *  - TypeC Status Host Command is Invoked
+ *
+ * Expected Results
+ *  - TypeC Status Host Command reveals sink capabilility PDOs.
+ */
+ZTEST(usb_pd_ctrl_msg_test_source, verify_dpm_get_sink_cap)
+{
+	struct ec_response_typec_status typec_status = { 0 };
+
+	typec_status = host_cmd_typec_status(TEST_USB_PORT);
+
+	zassert_true(typec_status.sink_cap_count > 1, NULL);
+	zassert_equal(typec_status.sink_cap_pdos[1], TEST_ADDED_PDO, NULL);
+}
+
+/**
+ * @brief TestPurpose: Verify TCPM initiates Get_Sink_Cap message during a typec
+ * status host command and receives sink_capabilities message.
+ *
+ * @details
+ *  - TCPM is configured initially as Source
+ *  - TypeC Status Host Command is Invoked
+ *
+ * Expected Results
+ *  - TypeC Status Host Command reveals sink capabilility PDOs.
+ */
+ZTEST(usb_pd_ctrl_msg_test_sink, verify_get_sink_cap)
+{
+	struct ec_response_typec_status typec_status = { 0 };
+
+	typec_status = host_cmd_typec_status(TEST_USB_PORT);
+
+	zassert_true(typec_status.sink_cap_count > 1, NULL);
+	zassert_equal(typec_status.sink_cap_pdos[1], TEST_ADDED_PDO, NULL);
 }
