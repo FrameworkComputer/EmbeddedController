@@ -108,6 +108,8 @@ Reflashing with Servo Micro also requires the
     *   `$ cd src/platform/ec/extra/i2c_pseudo`
     *   `$ ./install`
 
+**NOTE**: You will need to restart servod after installation.
+
 If the above fails, your system may be missing packages necessary for building
 kernel modules. Consult your Linux distribution's documentation and support
 forums. After installing any packages that might be missing, simply try the
