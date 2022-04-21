@@ -124,6 +124,21 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 	pd_handle_cc_overvoltage(0);
 }
 
+__override void board_pulse_entering_rw(void)
+{
+	/*
+	 * On the ITE variants, the EC_ENTERING_RW signal was connected to a pin
+	 * which is active high by default.  This causes Cr50 to think that the
+	 * EC has jumped to its RW image even though this may not be the case.
+	 * The pin is changed to GPIO_EC_ENTERING_RW2.
+	 */
+	gpio_set_level(GPIO_EC_ENTERING_RW, 1);
+	gpio_set_level(GPIO_EC_ENTERING_RW2, 1);
+	usleep(MSEC);
+	gpio_set_level(GPIO_EC_ENTERING_RW, 0);
+	gpio_set_level(GPIO_EC_ENTERING_RW2, 0);
+}
+
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
