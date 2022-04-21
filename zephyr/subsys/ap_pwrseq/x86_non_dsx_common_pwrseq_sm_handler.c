@@ -328,10 +328,6 @@ static int common_pwr_sm_run(int state)
 		return SYS_POWER_STATE_S0ix;
 
 	case SYS_POWER_STATE_S0ixS0:
-		if (power_get_host_sleep_state() !=
-			HOST_SLEEP_EVENT_S0IX_RESUME)
-			break;
-
 		/*
 		 * Disable idle task deep sleep. This means that the low
 		 * power idle task will not go into deep sleep while in S0.
