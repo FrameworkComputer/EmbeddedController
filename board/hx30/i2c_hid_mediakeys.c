@@ -355,6 +355,7 @@ static int als_polling_mode_count;
 void report_illuminance_value(void)
 {
 	uint16_t newIlluminaceValue = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
+	static int granularity;
 
 	/* We need to polling the ALS value at least 6 seconds */
 	if (als_polling_mode_count <= 60) {
@@ -365,7 +366,7 @@ void report_illuminance_value(void)
 		task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) |
 			EVENT_REPORT_ILLUMINANCE_VALUE), 0);
 	} else {
-		if (ABS(als_sensor.illuminanceValue - newIlluminaceValue) > 5) {
+		if (ABS(als_sensor.illuminanceValue - newIlluminaceValue) > granularity) {
 			als_sensor.illuminanceValue = newIlluminaceValue;
 			task_set_event(TASK_ID_HID, ((1 << HID_ALS_REPORT_LUX) |
 				EVENT_REPORT_ILLUMINANCE_VALUE), 0);
@@ -373,6 +374,18 @@ void report_illuminance_value(void)
 			task_set_event(TASK_ID_HID, EVENT_REPORT_ILLUMINANCE_VALUE, 0);
 		}
 	}
+
+	/**
+	 * To ensure the best experience the ALS should have a granularity of
+	 * at most 1 lux when the ambient light is below 25 lux and a granularity
+	 * of at most 4% of the ambient light when it is above 25 lux.
+	 * This enable the adaptive brightness algorithm to perform smooth screen
+	 * brightness transitions.
+	 */
+	if (newIlluminaceValue < 25)
+		granularity = 1;
+	else
+		granularity = newIlluminaceValue*4/100;
 
 }
 DECLARE_DEFERRED(report_illuminance_value);
