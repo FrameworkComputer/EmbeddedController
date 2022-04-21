@@ -24,6 +24,7 @@ target_sources(app PRIVATE
   src/console_cmd/accelinfo.c
   src/console_cmd/accelspoof.c
   src/console_cmd/accelrange.c
+  src/console_cmd/accelres.c
   src/cros_cbi.c
   src/espi.c
   src/gpio.c
