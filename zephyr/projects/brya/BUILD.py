@@ -13,7 +13,6 @@ def register_npcx9_variant(project_name, extra_dts_overlays=(), extra_kconfig_fi
         dts_overlays=[
             "adc.dts",
             "battery.dts",
-            "bb_retimer.dts",
             "cbi_eeprom.dts",
             "fan.dts",
             "gpio.dts",

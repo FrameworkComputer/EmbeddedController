@@ -28,7 +28,7 @@
 			enum-name = "I2C_PORT_USB_C1_PPC";
 			dynamic-speed;
 		};
-		retimer0_2 {
+		retimer0_2: retimer0_2 {
 			i2c-port = <&i2c3_0>;
 			enum-name = "I2C_PORT_USB_C0_C2_MUX";
 		};

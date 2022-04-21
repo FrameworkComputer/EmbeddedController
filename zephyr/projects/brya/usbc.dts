@@ -35,6 +35,15 @@
 				port = <&i2c_charger>;
 			};
 		};
+		port0-muxes {
+			usb_c0_bb_retimer: jhl8040r-c0 {
+				compatible = "intel,jhl8040r";
+				port = <&retimer0_2>;
+				i2c-addr-flags = <0x56>;
+				int-pin = <&usb_c0_rt_int_odl>;
+				reset-pin = <&usb_c0_rt_rst_odl>;
+			};
+		};
 
 		port1@1 {
 			compatible = "named-usbc-port";
@@ -74,6 +83,15 @@
 				port = <&tcpc0_2>;
 				i2c-addr-flags = "NCT38XX_I2C_ADDR2_1_FLAGS";
 				tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+			};
+		};
+		port2-muxes {
+			usb_c2_bb_retimer: jhl8040r-c2 {
+				compatible = "intel,jhl8040r";
+				port = <&retimer0_2>;
+				i2c-addr-flags = <0x57>;
+				int-pin = <&usb_c2_rt_int_odl>;
+				reset-pin = <&usb_c2_rt_rst_odl>;
 			};
 		};
 	};

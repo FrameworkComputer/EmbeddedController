@@ -10,6 +10,7 @@
 #include <zephyr/sys/util_macro.h>
 #include "usb_mux.h"
 #include "usbc/anx7483_usb_mux.h"
+#include "usbc/bb_retimer_usb_mux.h"
 #include "usbc/it5205_usb_mux.h"
 #include "usbc/tcpci_usb_mux.h"
 #include "usbc/tusb1064_usb_mux.h"
@@ -21,6 +22,7 @@
  */
 #define USB_MUX_DRIVERS						\
 	(ANX7483_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7483),	\
+	(BB_RETIMER_USB_MUX_COMPAT, USB_MUX_CONFIG_BB_RETIMER),	\
 	(IT5205_USB_MUX_COMPAT, USB_MUX_CONFIG_IT5205),		\
 	(PS8XXX_USB_MUX_COMPAT, USB_MUX_CONFIG_TCPCI_TCPM),	\
 	(TCPCI_TCPM_USB_MUX_COMPAT, USB_MUX_CONFIG_TCPCI_TCPM),	\
@@ -196,8 +198,7 @@
  * @param op Operation to perform on USB muxes
  */
 #define USB_MUX_DO(port_id, idx, op)					\
-	USB_MUX_CALL_OP(DT_PHANDLE_BY_IDX(port_id, usb_muxes, idx),	\
-			port_id, idx, op)
+	USB_MUX_CALL_OP(USB_MUX_GET_CHAIN_N(idx, port_id), port_id, idx, op)
 
 /**
  * @brief Declare USB mux structure
@@ -265,6 +266,33 @@
 #define USB_MUX_NO_FIRST(port_id, op)					\
 	DT_FOREACH_PROP_ELEM_VARGS(port_id, usb_muxes,			\
 				   USB_MUX_DO_SKIP_FIRST, op)
+
+/**
+ * @brief Call @p op if @p idx mux in chain has BB retimer compatible
+ *
+ * @param port_id USBC node ID
+ * @param unused2 This argument is expected by DT_FOREACH_PROP_ELEM_VARGS
+ * @param idx Position of USB mux in chain
+ * @param op Operation to perform on BB retimer
+ */
+#define USB_MUX_ONLY_BB_RETIMER(port_id, unused2, idx, op)		\
+	COND_CODE_1(USB_MUX_IS_COMPATIBLE(				\
+			USB_MUX_GET_CHAIN_N(idx, port_id),		\
+			BB_RETIMER_USB_MUX_COMPAT),			\
+			(op(USB_MUX_GET_CHAIN_N(idx, port_id), port_id, \
+			    idx, BB_RETIMER_CONTROLS_CONFIG)), ())
+
+/**
+ * @brief Call @p op with every BB retimer in chain
+ *
+ * @param port_id USBC node ID
+ * @param op Operation to perform on BB retimers. Needs to accept USB mux node
+ *           ID, USBC port node ID, position in chain, and driver config as
+ *           arguments.
+ */
+#define USB_MUX_BB_RETIMERS(port_id, op)				\
+	DT_FOREACH_PROP_ELEM_VARGS(port_id, usb_muxes,			\
+				   USB_MUX_ONLY_BB_RETIMER, op)
 
 /**
  * @brief If @p port_id has usb_muxes property, call @p op with every mux in

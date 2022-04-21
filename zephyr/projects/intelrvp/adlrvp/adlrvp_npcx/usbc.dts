@@ -22,6 +22,14 @@
 				port = <&i2c_charger>;
 			};
 		};
+		port0-muxes {
+			usb_c0_bb_retimer: jhl8040r-c0 {
+				compatible = "intel,jhl8040r";
+				port = <&typec_0>;
+				i2c-addr-flags = <0x56>;
+				reset-pin = <&usb_c0_bb_retimer_rst>;
+			};
+		};
 
 		port1@1 {
 			compatible = "named-usbc-port";
@@ -31,6 +39,14 @@
 				status = "okay";
 				port = <&typec_1>;
 				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
+			};
+		};
+		port1-muxes {
+			usb_c1_bb_retimer: jhl8040r-c1 {
+				compatible = "intel,jhl8040r";
+				port = <&typec_1>;
+				i2c-addr-flags = <0x57>;
+				reset-pin = <&usb_c1_bb_retimer_rst>;
 			};
 		};
 
@@ -44,6 +60,14 @@
 				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
 			};
 		};
+		port2-muxes {
+			usb_c2_bb_retimer: jhl8040r-c2 {
+				compatible = "intel,jhl8040r";
+				port = <&typec_2>;
+				i2c-addr-flags = <0x58>;
+				reset-pin = <&usb_c2_bb_retimer_rst>;
+			};
+		};
 
 		port3@3 {
 			compatible = "named-usbc-port";
@@ -53,6 +77,14 @@
 				status = "okay";
 				port = <&typec_3>;
 				i2c-addr-flags = "FUSB302_I2C_ADDR_FLAGS";
+			};
+		};
+		port3-muxes {
+			usb_c3_bb_retimer: jhl8040r-c3 {
+				compatible = "intel,jhl8040r";
+				port = <&typec_3>;
+				i2c-addr-flags = <0x59>;
+				reset-pin = <&usb_c3_bb_retimer_rst>;
 			};
 		};
 	};

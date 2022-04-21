@@ -58,4 +58,28 @@ MAYBE_CONST struct usb_mux usb_muxes[] = {
  */
 USB_MUX_FOREACH_USBC_PORT(USB_MUX_NO_FIRST, USB_MUX_DEFINE)
 
+/* Create bb_controls only if BB retimer driver is enabled */
+#ifdef CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
+/**
+ * @brief bb_controls array should be constant only if configuration cannot
+ *        change in runtime
+ */
+#define BB_CONTROLS_CONST						\
+	COND_CODE_1(							\
+		CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG,\
+		(), (const))
+
+/**
+ * Define bb_controls for BB retimers in USB muxes chain e.g.
+ * [0] = {
+ *         .retimer_rst_gpio = IOEX_USB_C0_BB_RETIMER_RST,
+ *         .usb_ls_en_gpio = IOEX_USB_C0_BB_RETIMER_LS_EN,
+ * },
+ * [1] = { ... },
+ */
+BB_CONTROLS_CONST struct bb_usb_control bb_controls[] = {
+	USB_MUX_FOREACH_USBC_PORT(USB_MUX_BB_RETIMERS, USB_MUX_ARRAY)
+};
+#endif /* CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB */
+
 #endif /* #if USB_MUX_FOREACH_USBC_PORT(USB_MUX_PORT_HAS_MUX, _) */
