@@ -21,6 +21,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 #define ALT_MAT		SENSOR_ROT_STD_REF_NAME(DT_NODELABEL(base_rot_inverted))
 #define BASE_SENSOR	SENSOR_ID(DT_NODELABEL(base_accel))
+#define BASE_GYRO	SENSOR_ID(DT_NODELABEL(base_gyro))
 
 static void form_factor_init(void)
 {
@@ -40,6 +41,7 @@ static void form_factor_init(void)
 	if (val == FW_BASE_INVERTED) {
 		LOG_INF("Switching to inverted base");
 		motion_sensors[BASE_SENSOR].rot_standard_ref = &ALT_MAT;
+		motion_sensors[BASE_GYRO].rot_standard_ref = &ALT_MAT;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, form_factor_init, HOOK_PRIO_POST_I2C);
