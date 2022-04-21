@@ -125,6 +125,7 @@ BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == USBC_PORT_COUNT);
 
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
+#ifndef CONFIG_ZEPHYR
 /* USBC mux configuration - Alder Lake includes internal mux */
 static const struct usb_mux usbc0_tcss_usb_mux = {
 	.usb_port = USBC_PORT_C0,
@@ -175,7 +176,6 @@ const struct usb_mux usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
-#ifndef CONFIG_ZEPHYR
 /* BC1.2 charger detect configuration */
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	[USBC_PORT_C0] = {
@@ -286,16 +286,22 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		if (get_board_id() == 1)
 			rst_signal = IOEX_ID_1_USB_C0_RT_RST_ODL;
 		else
-#endif /* !CONFIG_ZEPHYR */
 			rst_signal = IOEX_USB_C0_RT_RST_ODL;
+#else
+		/* On Zephyr use bb_controls generated from DTS */
+		rst_signal = bb_controls[me->usb_port].retimer_rst_gpio;
+#endif /* !CONFIG_ZEPHYR */
 	} else if (me->usb_port == USBC_PORT_C2) {
 /* TODO: explore how to handle board id in zephyr*/
 #ifndef CONFIG_ZEPHYR
 		if (get_board_id() == 1)
 			rst_signal = IOEX_ID_1_USB_C2_RT_RST_ODL;
 		else
-#endif /* !CONFIG_ZEPHYR */
 			rst_signal = IOEX_USB_C2_RT_RST_ODL;
+#else
+		/* On Zephyr use bb_controls generated from DTS */
+		rst_signal = bb_controls[me->usb_port].retimer_rst_gpio;
+#endif /* !CONFIG_ZEPHYR */
 	} else {
 		return EC_ERROR_INVAL;
 	}
