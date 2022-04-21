@@ -6,12 +6,13 @@
 #include <device.h>
 #include <devicetree/gpio.h>
 #include <drivers/gpio/gpio_emul.h>
+#include <fff.h>
 #include <zephyr.h>
 #include <ztest.h>
 #include <ztest_assert.h>
 
+#include "emul/emul_common_i2c.h"
 #include "emul/emul_syv682x.h"
-
 #include "test/drivers/stubs.h"
 #include "syv682x.h"
 #include "timer.h"
@@ -23,7 +24,28 @@
 
 #define GPIO_USB_C1_FRS_EN_PORT DT_GPIO_PIN(GPIO_USB_C1_FRS_EN_PATH, gpios)
 
+/* Configuration for a mock I2C access function that sometimes fails. */
+struct reg_to_fail_data {
+	int reg_access_to_fail;
+	int reg_access_fail_countdown;
+};
+
 static const int syv682x_port = 1;
+
+static void syv682x_test_after(void *data)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+
+	ARG_UNUSED(data);
+
+	/* Clear the mock read/write functions */
+	i2c_common_emul_set_read_func(emul, NULL, NULL);
+	i2c_common_emul_set_write_func(emul, NULL, NULL);
+
+	/* Don't fail on any register access */
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+}
 
 ZTEST(ppc_syv682c, test_syv682x_board_is_syv682c)
 {
@@ -533,4 +555,150 @@ ZTEST(ppc_syv682c, test_syv682x_ppc_dump)
 	zassert_ok(drv->reg_dump(syv682x_port), "ppc_dump command failed");
 }
 
-ZTEST_SUITE(ppc_syv682c, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+/* Intercepts I2C reads as a mock. Fails to read for the register at offset
+ * reg_access_to_fail on read number N, where N is the initial value of
+ * reg_access_fail_countdown.
+ */
+static int mock_read_intercept_reg_fail(struct i2c_emul *emul, int reg,
+					uint8_t *val, int bytes, void *data)
+{
+	struct reg_to_fail_data *test_data = data;
+
+	if (reg == test_data->reg_access_to_fail) {
+		test_data->reg_access_fail_countdown--;
+		if (test_data->reg_access_fail_countdown <= 0)
+			return -1;
+	}
+	return 1;
+}
+
+ZTEST(ppc_syv682c, test_syv682x_i2c_error_status)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+
+	/* Failed STATUS read should cause init to fail. */
+	i2c_common_emul_set_read_fail_reg(emul, SYV682X_STATUS_REG);
+	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
+			  "STATUS read error, but init succeeded");
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+}
+
+ZTEST(ppc_syv682c, test_syv682x_i2c_error_control_1)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+	const struct ppc_drv *drv = ppc_chips[syv682x_port].drv;
+	struct reg_to_fail_data reg_fail = {
+		.reg_access_to_fail = 0,
+		.reg_access_fail_countdown = 0,
+	};
+
+	/* Failed CONTROL_1 read */
+	i2c_common_emul_set_read_fail_reg(emul, SYV682X_CONTROL_1_REG);
+	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
+			  "CONTROL_1 read error, but init succeeded");
+	zassert_not_equal(ppc_vbus_source_enable(syv682x_port, true),
+			  EC_SUCCESS,
+			  "CONTROL_1 read error, but VBUS source enable "
+			  "succeeded");
+	zassert_not_equal(ppc_vbus_sink_enable(syv682x_port, true), EC_SUCCESS,
+			  "CONTROL_1 read error, but VBUS sink enable "
+			  "succeeded");
+	zassert_not_equal(ppc_set_vbus_source_current_limit(syv682x_port,
+							    TYPEC_RP_USB),
+			  EC_SUCCESS,
+			  "CONTROL_1 read error, but set current limit "
+			  "succeeded");
+	zassert_ok(drv->reg_dump(syv682x_port),
+		   "CONTROL_1 read error, and ppc_dump failed");
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Init reads CONTROL_1 several times. The 3rd read happens while
+	 * setting the source current limit. Check that init fails when that
+	 * read fails.
+	 */
+	i2c_common_emul_set_read_func(emul, &mock_read_intercept_reg_fail,
+				      &reg_fail);
+	reg_fail.reg_access_to_fail = SYV682X_CONTROL_1_REG;
+	reg_fail.reg_access_fail_countdown = 3;
+	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
+			  "CONTROL_1 read error, but init succeeded");
+	i2c_common_emul_set_read_func(emul, NULL, NULL);
+
+	/* Failed CONTROL_1 write */
+	i2c_common_emul_set_write_fail_reg(emul, SYV682X_CONTROL_1_REG);
+
+	/* During init, the driver will write CONTROL_1 either to disable all
+	 * power paths (normal case) or to enable the sink path (dead battery
+	 * case). vSafe0V in STATUS is one indication of the normal case.
+	 */
+	syv682x_emul_set_condition(emul, SYV682X_STATUS_VSAFE_0V,
+				   SYV682X_CONTROL_4_NONE);
+	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
+			  "CONTROL_1 write error, but init succeeded");
+	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
+				   SYV682X_CONTROL_4_NONE);
+	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
+			  "CONTROL_1 write error, but init succeeded");
+
+	zassert_not_equal(ppc_vbus_source_enable(syv682x_port, true),
+			  EC_SUCCESS,
+			  "CONTROL_1 write error, but VBUS source "
+			  "enable succeeded");
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+}
+
+ZTEST(ppc_syv682c, test_syv682x_i2c_error_control_2)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+
+	/* Failed CONTROL_2 read */
+	i2c_common_emul_set_read_fail_reg(emul, SYV682X_CONTROL_2_REG);
+	zassert_not_equal(ppc_discharge_vbus(syv682x_port, true), EC_SUCCESS,
+			  "CONTROL_2 read error, but VBUS discharge succeeded");
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Failed CONTROL_2 write */
+	i2c_common_emul_set_write_fail_reg(emul, SYV682X_CONTROL_2_REG);
+	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
+			  "CONTROL_2 write error, but init succeeded");
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+}
+
+ZTEST(ppc_syv682c, test_syv682x_i2c_error_control_3)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+
+	/* Failed CONTROL_3 read */
+	i2c_common_emul_set_read_fail_reg(emul, SYV682X_CONTROL_3_REG);
+	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
+			  "CONTROL_3 read error, but VBUS discharge succeeded");
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Failed CONTROL_3 write */
+	i2c_common_emul_set_write_fail_reg(emul, SYV682X_CONTROL_3_REG);
+	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
+			  "CONTROL_3 write error, but init succeeded");
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+}
+
+ZTEST(ppc_syv682c, test_syv682x_i2c_error_control_4)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+
+	/* Failed CONTROL_4 read */
+	i2c_common_emul_set_read_fail_reg(emul, SYV682X_CONTROL_4_REG);
+	zassert_not_equal(ppc_set_vconn(syv682x_port, true), EC_SUCCESS,
+			  "CONTROL_2 read error, but VCONN set succeeded");
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Failed CONTROL_4 write */
+	i2c_common_emul_set_write_fail_reg(emul, SYV682X_CONTROL_4_REG);
+	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
+			  "CONTROL_4 write error, but init succeeded");
+	zassert_not_equal(ppc_set_vconn(syv682x_port, true), EC_SUCCESS,
+			  "CONTROL_4 write error, but VCONN set succeeded");
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+}
+
+ZTEST_SUITE(ppc_syv682c, drivers_predicate_post_main, NULL, NULL,
+	    syv682x_test_after, NULL);
