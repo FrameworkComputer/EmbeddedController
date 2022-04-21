@@ -48,6 +48,12 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
 
 endchoice # PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
 
+config PLATFORM_EC_KEYBOARD_DISCRETE
+	bool "Support discrete Keyboard"
+	help
+	  Enable support for a discrete Keyboard if the platform needs one
+	  or the raw Keyboard support is not built-in in the EC.
+
 config PLATFORM_EC_KEYBOARD_DEBUG
 	bool "Enable keyboard debug prints"
 	depends on PLATFORM_EC_SYSTEM_UNLOCKED

@@ -28,6 +28,7 @@ properties:
     - I2C_PORT_EVB_2
     - I2C_PORT_EVB_3
     - I2C_PORT_EVB_7
+    - I2C_PORT_KB_DISCRETE
     - I2C_PORT_MP2964
     - I2C_PORT_OPT_4
     - I2C_PORT_PORT80

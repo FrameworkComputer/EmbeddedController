@@ -38,7 +38,10 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX        ioex.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_CROS_DRV
                                                             ioex_drv.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD    keyboard_raw.c)
+if (NOT DEFINED CONFIG_PLATFORM_EC_KEYBOARD_DISCRETE)
+  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD
+                                                            keyboard_raw.c)
+endif()
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD    keyscan.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MKBP_EVENT  mkbp_event.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_MOTIONSENSE
