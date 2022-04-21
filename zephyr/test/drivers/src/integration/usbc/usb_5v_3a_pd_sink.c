@@ -21,6 +21,15 @@ struct usb_attach_5v_3a_pd_sink_fixture {
 	const struct emul *charger_emul;
 };
 
+/* Chromebooks only charge PD partners at 5v */
+#define TEST_SRC_PORT_VBUS_MV 5000
+#define TEST_SRC_PORT_TARGET_MA 3000
+
+#define TEST_INITIAL_SINK_CAP \
+	PDO_FIXED(TEST_SRC_PORT_VBUS_MV, TEST_SRC_PORT_TARGET_MA, 0)
+/* Only used to verify sink capabilities being received by SRC port */
+#define TEST_ADDITIONAL_SINK_CAP PDO_FIXED(TEST_SRC_PORT_VBUS_MV, 5000, 0)
+
 static void
 connect_sink_to_port(struct usb_attach_5v_3a_pd_sink_fixture *fixture)
 {
@@ -83,8 +92,8 @@ static void usb_attach_5v_3a_pd_sink_before(void *data)
 
 	/* Initialized the sink to request 5V and 3A */
 	tcpci_snk_emul_init(&test_fixture->sink_5v_3a);
-	test_fixture->sink_5v_3a.data.pdo[1] =
-		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
+	test_fixture->sink_5v_3a.data.pdo[0] = TEST_INITIAL_SINK_CAP;
+	test_fixture->sink_5v_3a.data.pdo[1] = TEST_ADDITIONAL_SINK_CAP;
 	connect_sink_to_port(test_fixture);
 }
 
@@ -146,10 +155,10 @@ ZTEST(usb_attach_5v_3a_pd_sink, test_power_info)
 		      "Expected charge voltage max of 0mV, but got %dmV",
 		      info.meas.voltage_max);
 	zassert_within(
-		info.meas.voltage_now, 5000, 500,
+		info.meas.voltage_now, TEST_SRC_PORT_VBUS_MV, 500,
 		"Charging voltage expected to be near 5000mV, but was %dmV",
 		info.meas.voltage_now);
-	zassert_equal(info.meas.current_max, 1500,
+	zassert_equal(info.meas.current_max, TEST_SRC_PORT_TARGET_MA,
 		      "Current max expected to be 1500mV, but was %dmV",
 		      info.meas.current_max);
 	zassert_equal(info.meas.current_lim, 0,
