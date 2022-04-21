@@ -67,27 +67,10 @@ void board_init(void)
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 
-/* Called on AP S3 -> S0 transition */
-static void board_chipset_resume(void)
+__override void board_kblight_init(void)
 {
-	/* Allow keyboard backlight to be enabled */
-	if (ec_cfg_has_keyboard_backlight() == 1) {
-		/* GPIO_EC_KB_BL_EN_L is low active pin */
-		gpio_set_level(GPIO_EC_KB_BL_EN_L, 0);
-	}
+	gpio_set_level(GPIO_EC_KB_BL_EN_L, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
-
-/* Called on AP S0 -> S3 transition */
-static void board_chipset_suspend(void)
-{
-	/* Turn off the keyboard backlight if it's on. */
-	if (ec_cfg_has_keyboard_backlight() == 1) {
-		/* GPIO_EC_KB_BL_EN_L is low active pin */
-		gpio_set_level(GPIO_EC_KB_BL_EN_L, 1);
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_CHARGE_RAMP_SW
 
