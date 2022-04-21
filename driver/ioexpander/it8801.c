@@ -29,14 +29,14 @@ DECLARE_DEFERRED(it8801_ioex_event_handler);
 
 static int it8801_read(int reg, int *data)
 {
-	return i2c_read8(IT8801_KEYBOARD_PWM_I2C_PORT,
-		IT8801_KEYBOARD_PWM_I2C_ADDR_FLAGS, reg, data);
+	return i2c_read8(I2C_PORT_KB_DISCRETE,
+		KB_DISCRETE_I2C_ADDR_FLAGS, reg, data);
 }
 
 __maybe_unused static int it8801_write(int reg, int data)
 {
-	return i2c_write8(IT8801_KEYBOARD_PWM_I2C_PORT,
-		IT8801_KEYBOARD_PWM_I2C_ADDR_FLAGS, reg, data);
+	return i2c_write8(I2C_PORT_KB_DISCRETE,
+		KB_DISCRETE_I2C_ADDR_FLAGS, reg, data);
 }
 
 struct it8801_vendor_id_t {
@@ -82,13 +82,13 @@ static void it8801_muxed_kbd_gpio_intr_enable(void)
 	 * IOEX init code whichever gets called first.
 	 */
 	if (!intr_enabled) {
-		gpio_clear_pending_interrupt(GPIO_IT8801_SMB_INT);
-		gpio_enable_interrupt(GPIO_IT8801_SMB_INT);
+		gpio_clear_pending_interrupt(GPIO_KB_DISCRETE_INT);
+		gpio_enable_interrupt(GPIO_KB_DISCRETE_INT);
 		intr_enabled = true;
 	}
 }
 
-#ifdef CONFIG_KEYBOARD_NOT_RAW
+#ifdef CONFIG_KEYBOARD_DISCRETE
 void keyboard_raw_init(void)
 {
 	int ret;
@@ -220,7 +220,7 @@ void keyboard_raw_enable_interrupt(int enable)
 
 	it8801_write(IT8801_REG_KSIIER, enable ? 0xff : 0x00);
 }
-#endif /* CONFIG_KEYBOARD_NOT_RAW */
+#endif /* CONFIG_KEYBOARD_DISCRETE */
 
 void io_expander_it8801_interrupt(enum gpio_signal signal)
 {
@@ -496,7 +496,7 @@ static void it8801_ioex_event_handler(void)
 		return;
 
 	/* Wake the keyboard scan task if KSI interrupts are triggered */
-	if (IS_ENABLED(CONFIG_KEYBOARD_NOT_RAW) &&
+	if (IS_ENABLED(CONFIG_KEYBOARD_DISCRETE) &&
 		data & IT8801_REG_MASK_GISR_GKSIIS)
 		task_wake(TASK_ID_KEYSCAN);
 

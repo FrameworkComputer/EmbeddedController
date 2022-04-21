@@ -65,7 +65,7 @@ chip-$(CONFIG_CMD_USART_INFO)+=usart_info_command.o
 chip-$(CONFIG_FINGERPRINT_MCU)+=host_command_common.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
 chip-$(HAS_TASK_CONSOLE)+=uart.o
-ifndef CONFIG_KEYBOARD_NOT_RAW
+ifndef CONFIG_KEYBOARD_DISCRETE
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 chip-$(HAS_TASK_POWERLED)+=power_led.o

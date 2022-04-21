@@ -25,7 +25,7 @@ chip-$(CONFIG_I2C)+=i2c.o
 chip-$(CONFIG_HOST_INTERFACE_LPC)+=lpc.o
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
-ifndef CONFIG_KEYBOARD_NOT_RAW
+ifndef CONFIG_KEYBOARD_DISCRETE
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 chip-$(CONFIG_DMA)+=dma.o

@@ -43,7 +43,7 @@ chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o qmspi.o
 chip-$(CONFIG_TFDP)+=tfdp.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
-ifndef CONFIG_KEYBOARD_NOT_RAW
+ifndef CONFIG_KEYBOARD_DISCRETE
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 

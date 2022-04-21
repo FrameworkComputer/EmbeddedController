@@ -2784,8 +2784,8 @@
 /*
  * Support IT8801 I/O expander.
  *
- * I2C address IT8801_KEYBOARD_PWM_I2C_ADDR_FLAGS and I2C port
- * IT8801_KEYBOARD_PWM_I2C_PORT must be defined as well.
+ * I2C address KB_DISCRETE_I2C_ADDR_FLAGS and I2C port
+ * I2C_PORT_KB_DISCRETE must be defined as well.
  * Note: these values are only used when accessing the keyboard and PWM
  * function of the IT8801 chip.  I/O expander functions are accessed using
  * the ioex_config[] array.
@@ -2920,7 +2920,7 @@
  * chip. You might want this enabled if the keyboard is indirectly connected
  * to the EC, perhaps through an I2C controller.
  */
-#undef CONFIG_KEYBOARD_NOT_RAW
+#undef CONFIG_KEYBOARD_DISCRETE
 
 /* The board uses a negative edge-triggered GPIO for keyboard interrupts. */
 #undef CONFIG_KEYBOARD_IRQ_GPIO

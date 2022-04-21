@@ -11,7 +11,7 @@ CORE:=host
 chip-y=system.o gpio.o uart.o persistence.o flash.o lpc.o reboot.o \
 	clock.o spi_controller.o trng.o
 
-ifndef CONFIG_KEYBOARD_NOT_RAW
+ifndef CONFIG_KEYBOARD_DISCRETE
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
 chip-$(CONFIG_USB_PD_TCPC)+=usb_pd_phy.o
