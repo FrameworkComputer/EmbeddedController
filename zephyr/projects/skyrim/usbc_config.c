@@ -140,6 +140,14 @@ struct usb_mux usbc1_sbu_mux = {
 	.driver = &ioex_sbu_mux_driver,
 };
 
+struct usb_mux usbc0_anx7483 = {
+	.usb_port = USBC_PORT_C0,
+	.i2c_port = I2C_PORT_TCPC0,
+	.i2c_addr_flags = ANX7483_I2C_ADDR0_FLAGS,
+	.driver = &anx7483_usb_retimer_driver,
+	.next_mux = &usbc0_sbu_mux,
+};
+
 __overridable int board_c1_ps8818_mux_set(const struct usb_mux *me,
 					  mux_state_t mux_state)
 {
@@ -170,7 +178,7 @@ struct usb_mux usb_muxes[] = {
 		.i2c_port = I2C_PORT_USB_MUX,
 		.i2c_addr_flags = AMD_FP6_C0_MUX_I2C_ADDR,
 		.driver = &amd_fp6_usb_mux_driver,
-		.next_mux = &usbc0_sbu_mux,
+		.next_mux = &usbc0_anx7483,
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
