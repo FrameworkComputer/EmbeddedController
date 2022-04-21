@@ -278,7 +278,6 @@ static inline int tcpm_transmit(int port, enum tcpci_msg_type type,
 	return tcpc_config[port].drv->transmit(port, type, header, data);
 }
 
-#ifdef CONFIG_USB_PD_PPC
 static inline bool tcpm_get_snk_ctrl(int port)
 {
 	return tcpc_config[port].drv->get_snk_ctrl ?
@@ -305,7 +304,6 @@ static inline int tcpm_set_src_ctrl(int port, int enable)
 	else
 		return EC_ERROR_UNIMPLEMENTED;
 }
-#endif
 
 static inline void tcpc_alert(int port)
 {

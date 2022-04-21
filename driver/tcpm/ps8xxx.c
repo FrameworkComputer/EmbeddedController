@@ -981,11 +981,9 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	.drp_toggle		= ps8xxx_tcpc_drp_toggle,
 #endif
-#ifdef CONFIG_USB_PD_PPC
+	.get_chip_info		= ps8xxx_get_chip_info,
 	.set_snk_ctrl		= tcpci_tcpm_set_snk_ctrl,
 	.set_src_ctrl		= tcpci_tcpm_set_src_ctrl,
-#endif
-	.get_chip_info		= ps8xxx_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= ps8xxx_enter_low_power_mode,
 #endif

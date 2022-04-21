@@ -220,10 +220,8 @@ const struct tcpm_drv mock_tcpc_driver = {
 	.drp_toggle = &mock_drp_toggle,
 #endif
 	.get_chip_info = &mock_get_chip_info,
-#ifdef CONFIG_USB_PD_PPC
 	.set_snk_ctrl = &mock_set_snk_ctrl,
 	.set_src_ctrl = &mock_set_src_ctrl,
-#endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &mock_enter_low_power_mode,
 	.wake_low_power_mode = &mock_wake_low_power_mode,

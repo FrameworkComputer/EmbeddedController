@@ -351,12 +351,10 @@ int tcpci_tcpm_mux_enter_low_power(const struct usb_mux *me);
 int tcpci_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 *chip_info);
 int tcpci_get_vbus_voltage(int port, int *vbus);
-#ifdef CONFIG_USB_PD_PPC
 bool tcpci_tcpm_get_snk_ctrl(int port);
 int tcpci_tcpm_set_snk_ctrl(int port, int enable);
 bool tcpci_tcpm_get_src_ctrl(int port);
 int tcpci_tcpm_set_src_ctrl(int port, int enable);
-#endif
 
 int tcpci_tcpc_fast_role_swap_enable(int port, int enable);
 

@@ -751,10 +751,8 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 #endif
 	.get_chip_info		= &tcpci_get_chip_info,
-#ifdef CONFIG_USB_PD_PPC
 	.set_snk_ctrl		= &rt1718s_tcpm_set_snk_ctrl,
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
-#endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &rt1718s_enter_low_power_mode,
 #endif

@@ -604,7 +604,6 @@ int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 					? MASK_SET : MASK_CLR);
 }
 
-#ifdef CONFIG_USB_PD_PPC
 bool tcpci_tcpm_get_snk_ctrl(int port)
 {
 	int rv;
@@ -642,7 +641,6 @@ int tcpci_tcpm_set_src_ctrl(int port, int enable)
 
 	return tcpc_write(port, TCPC_REG_COMMAND, cmd);
 }
-#endif
 
 __maybe_unused int tcpci_tcpm_sop_prime_enable(int port, bool enable)
 {
@@ -1863,12 +1861,10 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.drp_toggle		= &tcpci_tcpc_drp_toggle,
 #endif
 	.get_chip_info		= &tcpci_get_chip_info,
-#ifdef CONFIG_USB_PD_PPC
 	.get_snk_ctrl		= &tcpci_tcpm_get_snk_ctrl,
 	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
 	.get_src_ctrl		= &tcpci_tcpm_get_src_ctrl,
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
-#endif
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
 #endif
