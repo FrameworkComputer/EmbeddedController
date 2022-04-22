@@ -2195,6 +2195,29 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	    PD_HEADER_PROLE(header) == PD_PLUG_FROM_DFP_UFP)
 		return;
 
+	/*
+	 * From 6.2.1.1.6 Port Data Role in USB PD Rev 3.1, Ver 1.3
+	 * "If a USB Type-C Port receives a Message with the Port Data Role
+	 * field set to the same Data Role as its current Data Role, except
+	 * for the GoodCRC Message, USB Type-C Error Recovery actions as
+	 * defined in [USB Type-C 2.0] Shall be performed."
+	 *
+	 * The spec lists no required state for this check, so centralize it by
+	 * processing this requirement in the PRL RX.
+	 */
+	if (PD_HEADER_GET_SOP(header) == TCPCI_MSG_SOP &&
+			PD_HEADER_DROLE(header) == pd_get_data_role(port)) {
+		CPRINTS("C%d Error: Data role mismatch (0x%08x)", port, header);
+		/*
+		 * TODO(b/230656752): Ensure emulated test partners send
+		 * correct data roles
+		 */
+		if (!IS_ENABLED(CONFIG_ZTEST)) {
+			tc_start_error_recovery(port);
+			return;
+		}
+	}
+
 	/* Handle incoming soft reset as special case */
 	if (cnt == 0 && type == PD_CTRL_SOFT_RESET) {
 		/* Clear MessageIdCounter */
