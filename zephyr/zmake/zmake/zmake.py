@@ -11,6 +11,7 @@ import pathlib
 import re
 import shutil
 import subprocess
+import uuid
 from typing import Dict, List, Optional, Union
 
 import zmake.build_config
@@ -357,7 +358,7 @@ class Zmake:
             self.executor.append(
                 func=functools.partial(
                     self._run_test,
-                    elf_file=project_build_dir / "output" / "zephyr.elf",
+                    project=project,
                     coverage=coverage,
                     gcov=gcov,
                     build_dir=project_build_dir,
@@ -586,18 +587,17 @@ class Zmake:
             for build_name, _ in project.iter_builds():
                 target_build_dir = build_dir / "build-{}".format(build_name)
                 gcov = target_build_dir / "gcov.sh"
-            for output_file in output_files:
-                self.executor.append(
-                    func=functools.partial(
-                        self._run_test,
-                        elf_file=output_file,
-                        coverage=coverage,
-                        gcov=gcov,
-                        build_dir=build_dir,
-                        lcov_file=build_dir / "output" / "zephyr.info",
-                        timeout=project.config.test_timeout_secs,
-                    )
+            self.executor.append(
+                func=functools.partial(
+                    self._run_test,
+                    project=project,
+                    coverage=coverage,
+                    gcov=gcov,
+                    build_dir=build_dir,
+                    lcov_file=build_dir / "output" / "zephyr.info",
+                    timeout=project.config.test_timeout_secs,
                 )
+            )
         return 0
 
     def _build(
@@ -739,21 +739,29 @@ class Zmake:
         return 0
 
     def _run_test(  # pylint: disable=too-many-arguments
-        self, elf_file: pathlib.Path, coverage, gcov, build_dir, lcov_file, timeout=None
+        self, project, coverage, gcov, build_dir, lcov_file, timeout=None
     ):
         """Run a single test, with goma if enabled.
 
         Args:
-            elf_file: The path to the ELF to run.
+            project: The project to run the test from.
             coverage: True if coverage is enabled.
             gcov: Path to the gcov binary.
             build_dir: Path to the build directory
             lcov_file: Output path for the generated lcov file.
         """
+
         cmd = []
         if self.goma:
             cmd.append(self.gomacc)
+
+        elf_file = build_dir / "output" / "zephyr.elf"
         cmd.append(elf_file)
+
+        execution_tmp_dir = build_dir / "tmp" / str(uuid.uuid4())
+        execution_tmp_dir.mkdir(parents=True, exist_ok=True)
+        for arg in project.config.test_args:
+            cmd.append(arg.format(test_temp_dir=execution_tmp_dir))
 
         def _run():
             self.logger.info("Running tests in %s.", elf_file)

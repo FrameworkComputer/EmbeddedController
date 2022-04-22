@@ -41,6 +41,7 @@ class ProjectConfig:
         default_factory=lambda: zmake.modules.known_modules,
     )
     is_test: bool = dataclasses.field(default=False)
+    test_args: typing.List[str] = dataclasses.field(default_factory=list)
     dts_overlays: "list[str]" = dataclasses.field(default_factory=list)
     kconfig_files: "list[pathlib.Path]" = dataclasses.field(default_factory=list)
     project_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)

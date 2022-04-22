@@ -73,6 +73,10 @@ When `BUILD.py` is sourced, the following two globals are defined:
   build in a limited environment where not all modules are available.
 - `is_test` (optional): `True` if the code should be executed as a
   test after compilation, `False` otherwise.  Defaults to `False`.
+- `test_args` (optional): A list of command line arguments that should
+  be used when running the test.  Instances of `{test_temp_dir}`
+  inside of an argument will be replaced with a path to a temporary
+  directory guaranteed to be unique for the current execution.
 - `dts_overlays` (optional): A list of files which should be
   concatenated together and applied as a Zephyr device-tree overlay.
   Defaults to no overlays (empty list).

@@ -4,4 +4,8 @@
 
 """Register zmake project for drivers test."""
 
-register_host_test("drivers", dts_overlays=["overlay.dts"])
+register_host_test(
+    "drivers",
+    dts_overlays=["overlay.dts"],
+    test_args=["-flash={test_temp_dir}/flash.bin"],
+)
