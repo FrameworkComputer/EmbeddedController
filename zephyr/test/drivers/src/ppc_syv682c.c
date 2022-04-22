@@ -547,6 +547,16 @@ ZTEST(ppc_syv682c, test_syv682x_vbus_sink_oc_limit)
 			"Sink disable failed");
 }
 
+ZTEST(ppc_syv682c, test_syv682x_set_vconn)
+{
+	struct i2c_emul *emul = syv682x_emul_get(SYV682X_ORD);
+
+	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
+			SYV682X_CONTROL_4_VBAT_OVP);
+	zassert_not_equal(ppc_set_vconn(syv682x_port, true), EC_SUCCESS,
+			"VBAT OVP, but ppc_set_vconn succeeded");
+}
+
 ZTEST(ppc_syv682c, test_syv682x_ppc_dump)
 {
 	/*
