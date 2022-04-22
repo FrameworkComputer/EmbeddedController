@@ -7186,22 +7186,28 @@ struct ec_params_fp_passthru {
 /* Capture types defined in bits [30..28] */
 #define FP_MODE_CAPTURE_TYPE_SHIFT 28
 #define FP_MODE_CAPTURE_TYPE_MASK  (0x7 << FP_MODE_CAPTURE_TYPE_SHIFT)
-/*
- * This enum must remain ordered, if you add new values you must ensure that
- * FP_CAPTURE_TYPE_MAX is still the last one.
+/**
+ * enum fp_capture_type - Specifies the "mode" when capturing images.
+ *
+ * @FP_CAPTURE_VENDOR_FORMAT: Capture 1-3 images and choose the best quality
+ * image (produces 'frame_size' bytes)
+ * @FP_CAPTURE_SIMPLE_IMAGE: Simple raw image capture (produces width x height x
+ * bpp bits)
+ * @FP_CAPTURE_PATTERN0: Self test pattern (e.g. checkerboard)
+ * @FP_CAPTURE_PATTERN1: Self test pattern (e.g. inverted checkerboard)
+ * @FP_CAPTURE_QUALITY_TEST: Capture for Quality test with fixed contrast
+ * @FP_CAPTURE_RESET_TEST: Capture for pixel reset value test
+ * @FP_CAPTURE_TYPE_MAX: End of enum
+ *
+ * @note This enum must remain ordered, if you add new values you must ensure
+ * that FP_CAPTURE_TYPE_MAX is still the last one.
  */
 enum fp_capture_type {
-	/* Full blown vendor-defined capture (produces 'frame_size' bytes) */
 	FP_CAPTURE_VENDOR_FORMAT = 0,
-	/* Simple raw image capture (produces width x height x bpp bits) */
 	FP_CAPTURE_SIMPLE_IMAGE = 1,
-	/* Self test pattern (e.g. checkerboard) */
 	FP_CAPTURE_PATTERN0 = 2,
-	/* Self test pattern (e.g. inverted checkerboard) */
 	FP_CAPTURE_PATTERN1 = 3,
-	/* Capture for Quality test with fixed contrast */
 	FP_CAPTURE_QUALITY_TEST = 4,
-	/* Capture for pixel reset value test */
 	FP_CAPTURE_RESET_TEST = 5,
 	FP_CAPTURE_TYPE_MAX,
 };
