@@ -28,8 +28,7 @@ For example for a keyboard backlight device:
 ```
 kblight {
         compatible = "cros-ec,kblight-pwm";
-        pwms = <&pwm3 0 0 PWM_POLARITY_NORMAL>;
-        frequency = <2400>;
+        pwms = <&pwm3 0 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
 };
 ```
 
@@ -110,8 +109,7 @@ channel per PWM on NPCX), normal polarity:
 / {
         kblight {
                 compatible = "cros-ec,kblight-pwm";
-                pwms = <&pwm3 0 0 PWM_POLARITY_NORMAL>;
-                frequency = <2400>;
+                pwms = <&pwm3 0 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
         };
 };
 

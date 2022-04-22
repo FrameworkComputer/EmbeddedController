@@ -21,10 +21,9 @@ properties:
         pwmleds {
                 compatible = "pwm-leds";
                 pwm_led0: pwm_led_0 {
-                        pwms = <&pwm1 0 0 PWM_POLARITY_INVERTED
-                                &pwm0 0 0 PWM_POLARITY_INVERTED
-                                &pwm2 0 0 PWM_POLARITY_INVERTED>;
-
+                        pwms = <&pwm1 0 PWM_HZ(4800) PWM_POLARITY_INVERTED
+                                &pwm0 0 PWM_HZ(4800) PWM_POLARITY_INVERTED
+                                &pwm2 0 PWM_HZ(4800) PWM_POLARITY_INVERTED>;
                 };
         };
         cros-pwmleds {
@@ -42,8 +41,7 @@ properties:
         pwmleds {
                 compatible = "pwm-leds";
                 pwm_sidesel: pwm_sidesel {
-                        pwms = <&pwm7 0 0 PWM_POLARITY_INVERTED>;
-
+                        pwms = <&pwm7 0 PWM_HZ(4800) PWM_POLARITY_INVERTED>;
                 };
         };
         cros-pwmleds {

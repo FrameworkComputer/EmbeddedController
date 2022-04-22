@@ -7,8 +7,8 @@
 	pwmleds {
 		compatible = "pwm-leds";
 		pwm_led0: pwm_led_0 {
-			pwms = <&pwm2 0 0 PWM_POLARITY_INVERTED
-				&pwm3 0 0 PWM_POLARITY_INVERTED>;
+			pwms = <&pwm2 0 PWM_HZ(100) PWM_POLARITY_INVERTED
+				&pwm3 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 		};
 	};
 
