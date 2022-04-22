@@ -61,6 +61,7 @@
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB
+#define CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY

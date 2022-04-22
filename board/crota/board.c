@@ -10,6 +10,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
@@ -55,3 +56,23 @@ static void board_chipset_suspend(void)
 	gpio_set_level(GPIO_EC_KB_BL_EN_L, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+#ifdef CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK
+static void usb_port_startup(void)
+{
+	gpio_set_level(GPIO_EN_PP5000_USBA_R, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, usb_port_startup, HOOK_PRIO_DEFAULT);
+
+static void usba_power(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		if (extpower_is_present())
+			gpio_set_level(GPIO_EN_PP5000_USBA_R, 1);
+		else
+			gpio_set_level(GPIO_EN_PP5000_USBA_R, 0);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usba_power, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, usba_power, HOOK_PRIO_DEFAULT);
+#endif  /* CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK */
