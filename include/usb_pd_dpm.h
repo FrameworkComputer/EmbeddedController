@@ -122,6 +122,15 @@ int dpm_get_source_pdo(const uint32_t **src_pdo, const int port);
  */
 int dpm_get_source_current(const int port);
 
+/*
+ * Build SOP Status Data Block (SDB)
+ *
+ * @param port		USB-C port number
+ * @param *msg		pointer to pd message
+ * @param *len		pointer to uint32_t holding length of SDB
+ */
+int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len);
+
 /* Enum for modules to describe to the DPM their setup status */
 enum dpm_msg_setup_status {
 	MSG_SETUP_SUCCESS,

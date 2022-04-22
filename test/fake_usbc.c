@@ -314,6 +314,11 @@ int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 	return pd_src_pdo_cnt;
 }
 
+int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
+{
+	return EC_SUCCESS;
+}
+
 static enum tcpc_rp_value lcl_rp;
 __overridable void typec_select_src_current_limit_rp(int port,
 						  enum tcpc_rp_value rp)

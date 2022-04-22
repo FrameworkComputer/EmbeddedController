@@ -786,3 +786,35 @@ int dpm_get_source_current(const int port)
 	else
 		return 500;
 }
+
+int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
+{
+	struct pd_sdb sdb;
+
+	/* TODO(b/227236917): Fill in fields of Status message */
+
+	/* Internal Temp */
+	sdb.internal_temp = 0x0;
+
+	/* Present Input */
+	sdb.present_input = 0x0;
+
+	/* Present Battery Input */
+	sdb.present_battery_input = 0x0;
+
+	/* Event Flags */
+	sdb.event_flags = 0x0;
+
+	/* Temperature Status */
+	sdb.temperature_status = PD_SDB_TEMPERATURE_STATUS_NOT_SUPPORTED;
+
+	/* Power Status */
+	sdb.power_status = 0x0;
+
+	/* USB PD Rev 3.0: 6.5.2 Status Message */
+	*len = 6;
+
+	memcpy(msg, &sdb, *len);
+
+	return EC_SUCCESS;
+}
