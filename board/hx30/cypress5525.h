@@ -457,4 +457,6 @@ int cypd_get_active_charging_port(void);
 void set_pd_fw_update(bool update);
 
 void cypd_charger_init_complete(void);
+
+void cypd_aconly_reconnect(void);
 #endif	/* __CROS_EC_CYPRESS5525_H */

@@ -1311,6 +1311,72 @@ void cypd_interrupt_handler_task(void *p)
 	}
 }
 
+
+
+int cypd_reconnect_port(int controller, int port)
+{
+	int rv;
+	uint8_t pd_status_reg[4];
+	int port_idx = (controller << 1) + port;
+	int port_pd_state, port_power_role, data;
+
+	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), pd_status_reg, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_PD_STATUS_REG failed");
+
+	port_pd_state = pd_status_reg[1] & BIT(2);
+	port_power_role = pd_status_reg[1] & BIT(0);
+
+	if (port_power_role == PD_ROLE_SINK && port_pd_state)
+		return EC_SUCCESS;
+
+	rv = cypd_read_reg8(controller, CYP5525_PDPORT_ENABLE_REG, &data);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	CPRINTS("Port data0: %d", data);
+
+	data &= ~BIT(port);
+
+	CPRINTS("Port data1: %d", data);
+
+	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, data);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	cyp5225_wait_for_ack(controller, 1 * SECOND);
+
+	data |= BIT(port);
+
+	CPRINTS("Port data2: %d", data);
+
+	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, data);
+	if (rv != EC_SUCCESS)
+		return rv;
+
+	cyp5225_wait_for_ack(controller, 200 * MSEC);
+
+	CPRINTS("PD Re connect controller: %d, Port: %d", controller, port_idx);
+	return rv;
+}
+
+void cypd_aconly_reconnect(void)
+{
+	int batt_status;
+
+	battery_status(&batt_status);
+
+	if (extpower_is_present() && battery_is_present() != BP_YES) {
+		cypd_reconnect_port(0, 0);
+		msleep(20);
+		cypd_reconnect_port(0, 1);
+		cypd_reconnect_port(1, 0);
+		msleep(20);
+		cypd_reconnect_port(1, 1);
+	}
+}
+
+
 int cypd_get_pps_power_budget(void)
 {
 	/* TODO:
