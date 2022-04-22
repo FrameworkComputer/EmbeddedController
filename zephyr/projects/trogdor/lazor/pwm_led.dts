@@ -9,12 +9,12 @@
 
 		pwm_y: pwm_y {
 			#led-pin-cells = <1>;
-			pwms = <&pwm0 0 0>;
+			pwms = <&pwm0 0 PWM_POLARITY_NORMAL>;
 		};
 
 		pwm_b: pwm_b {
 			#led-pin-cells = <1>;
-			pwms = <&pwm2 0 0>;
+			pwms = <&pwm2 0 PWM_POLARITY_NORMAL>;
 		};
 	};
 
