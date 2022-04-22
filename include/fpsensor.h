@@ -25,21 +25,36 @@
 
 /* --- functions provided by the sensor-specific driver --- */
 
-/* Initialize the connected sensor hardware and put it in a low power mode. */
+/**
+ * Initialize the connected sensor hardware and put it in a low power mode.
+ *
+ * @return EC_SUCCESS always
+ */
 int fp_sensor_init(void);
 
-/* De-initialize the sensor hardware. */
+/**
+ * De-initialize the sensor hardware.
+ *
+ * @return 0 on success
+ * @return negative value on error
+ */
 int fp_sensor_deinit(void);
 
-/*
- * Fill the 'ec_response_fp_info' buffer with the sensor information
+/**
+ * Fill the @p ec_response_fp_info buffer with the sensor information
  * as required by the EC_CMD_FP_INFO host command.
  *
- * Put both the static information and the ones read from the sensor at runtime.
+ * Fills both the static information and information read from the sensor at
+ * runtime.
+ *
+ * @param[out] resp sensor info
+ *
+ * @return EC_SUCCESS on success
+ * @return EC_RES_ERROR on error
  */
 int fp_sensor_get_info(struct ec_response_fp_info *resp);
 
-/*
+/**
  * Put the sensor in its lowest power state.
  *
  * fp_sensor_configure_detect needs to be called to restore finger detection
@@ -47,7 +62,7 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp);
  */
 void fp_sensor_low_power(void);
 
-/*
+/**
  * Configure finger detection.
  *
  * Send the settings to the sensor, so it is properly configured to detect
@@ -55,36 +70,50 @@ void fp_sensor_low_power(void);
  */
 void fp_sensor_configure_detect(void);
 
-/*
- * Returns the status of the finger on the sensor.
- * (assumes fp_sensor_configure_detect was called before)
- */
 enum finger_state {
 	FINGER_NONE = 0,
 	FINGER_PARTIAL = 1,
 	FINGER_PRESENT = 2,
 };
+
+/**
+ * Returns the status of the finger on the sensor.
+ * (assumes fp_sensor_configure_detect was called before)
+ *
+ * @return finger_state
+ */
 enum finger_state fp_sensor_finger_status(void);
 
-/*
+/**
+ * Image captured but quality is too low
+ */
+#define FP_SENSOR_LOW_IMAGE_QUALITY 1
+/**
+ * Finger removed before image was captured
+ */
+#define FP_SENSOR_TOO_FAST 2
+
+/**
+ * Sensor not fully covered by finger
+ */
+#define FP_SENSOR_LOW_SENSOR_COVERAGE 3
+
+/**
  * Acquires a fingerprint image.
  *
  * This function is called once the finger has been detected and cover enough
- * area of the sensor (ie fp_sensor_finger_status returned FINGER_PRESENT).
+ * area of the sensor (i.e., fp_sensor_finger_status returned FINGER_PRESENT).
  * It does the acquisition immediately.
- * The image_data parameter points to an image data buffer of size
  *
- * FP_SENSOR_IMAGE_SIZE allocated by the caller.
- * Returns:
- * - 0 on success
- * - negative value on error
- * - FP_SENSOR_LOW_IMAGE_QUALITY on image captured but quality is too low
- * - FP_SENSOR_TOO_FAST on finger removed before image was captured
- * - FP_SENSOR_LOW_SENSOR_COVERAGE on sensor not fully covered by finger
+ * @param[out] image_data Image from sensor. Buffer must be allocated by
+ * caller with size FP_SENSOR_IMAGE_SIZE.
+ *
+ * @return 0 on success
+ * @return negative value on error
+ * @return FP_SENSOR_LOW_IMAGE_QUALITY on image captured but quality is too low
+ * @return FP_SENSOR_TOO_FAST on finger removed before image was captured
+ * @return FP_SENSOR_LOW_SENSOR_COVERAGE on sensor not fully covered by finger
  */
-#define FP_SENSOR_LOW_IMAGE_QUALITY 1
-#define FP_SENSOR_TOO_FAST 2
-#define FP_SENSOR_LOW_SENSOR_COVERAGE 3
 int fp_sensor_acquire_image(uint8_t *image_data);
 
 /**
@@ -103,61 +132,68 @@ int fp_sensor_acquire_image(uint8_t *image_data);
  */
 int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode);
 
-/*
+/**
  * Compares given finger image against enrolled templates.
  *
  * The matching algorithm can update the template with additional biometric data
  * from the image, if it chooses to do so.
  *
- * @param templ a pointer to the array of template buffers.
+ * @param[in,out] templ a pointer to the array of template buffers.
  * @param templ_count the number of buffers in the array of templates.
- * @param image the buffer containing the finger image
+ * @param[in] image the buffer containing the finger image
  * @param match_index index of the matched finger in the template array if any.
- * @param update_bitmap contains one bit per template, the bit is set if the
- * match has updated the given template.
- * @return negative value on error, else one of the following code :
- * - EC_MKBP_FP_ERR_MATCH_NO on non-match
- * - EC_MKBP_FP_ERR_MATCH_YES for match when template was not updated with
- *   new data
- * - EC_MKBP_FP_ERR_MATCH_YES_UPDATED for match when template was updated
- * - EC_MKBP_FP_ERR_MATCH_YES_UPDATE_FAILED match, but update failed (not saved)
- * - EC_MKBP_FP_ERR_MATCH_LOW_QUALITY when matching could not be performed due
- *   to low image quality
- * - EC_MKBP_FP_ERR_MATCH_LOW_COVERAGE when matching could not be performed
- *   due to finger covering too little area of the sensor
+ * @param[out] update_bitmap contains one bit per template, the bit is set if
+ * the match has updated the given template.
+ *
+ * @return EC_MKBP_FP_ERR_MATCH_NO on non-match
+ * @return EC_MKBP_FP_ERR_MATCH_YES for match when template was not updated with
+ * new data
+ * @return EC_MKBP_FP_ERR_MATCH_YES_UPDATED for match when template was updated
+ * @return EC_MKBP_FP_ERR_MATCH_YES_UPDATE_FAILED match, but update failed (not
+ * saved)
+ * @return EC_MKBP_FP_ERR_MATCH_LOW_QUALITY when matching could not be performed
+ * due to low image quality
+ * @return EC_MKBP_FP_ERR_MATCH_LOW_COVERAGE when matching could not be
+ * performed due to finger covering too little area of the sensor
+ * @return negative value on error
  */
 int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
 		    int32_t *match_index, uint32_t *update_bitmap);
 
-/*
+/**
  * Start a finger enrollment session.
  *
- * @return 0 on success or a negative error code.
+ * @return 0 on success
+ * @return negative value on error
  */
 int fp_enrollment_begin(void);
 
-/*
+/**
  * Generate a template from the finger whose enrollment has just being
  * completed.
  *
- * @param templ the buffer which will receive the template.
- * templ can be set to NULL to abort the current enrollment process.
+ * @param[out] templ template buffer, which can be set to NULL to abort current
+ * enrollment process.
  *
- * @return 0 on success or a negative error code.
+ * @return 0 on success, negative value on error
  */
 int fp_enrollment_finish(void *templ);
 
-/*
+/**
  * Adds fingerprint image to the current enrollment session.
  *
- * @return a negative value on error or one of the following codes:
- * - EC_MKBP_FP_ERR_ENROLL_OK when image was successfully enrolled
- * - EC_MKBP_FP_ERR_ENROLL_IMMOBILE when image added, but user should be
- *   advised to move finger
- * - EC_MKBP_FP_ERR_ENROLL_LOW_QUALITY when image could not be used due to low
- *   image quality
- * - EC_MKBP_FP_ERR_ENROLL_LOW_COVERAGE when image could not be used due to
- *   finger covering too little area of the sensor
+ * @param[in] image Image to add to enrollment
+ * @param[out] completion The percentage of the enrollment process that is
+ * complete: [0-100].
+ *
+ * @return 0 on success
+ * @return EC_MKBP_FP_ERR_ENROLL_OK when image was successfully enrolled
+ * @return EC_MKBP_FP_ERR_ENROLL_IMMOBILE when image added, but user should be
+ * advised to move finger
+ * @return EC_MKBP_FP_ERR_ENROLL_LOW_QUALITY when image could not be used due to
+ * low image quality
+ * @return EC_MKBP_FP_ERR_ENROLL_LOW_COVERAGE when image could not be used
+ * due to finger covering too little area of the sensor
  */
 int fp_finger_enroll(uint8_t *image, int *completion);
 
