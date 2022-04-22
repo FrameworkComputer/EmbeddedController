@@ -118,6 +118,9 @@ ZTEST_USER(console_cmd_charge_manager, test_chgoverride_0_from_off)
 
 ZTEST_USER_F(console_cmd_charge_manager, test_chgoverride_0_from_sink)
 {
+	test_set_chipset_to_g3();
+	k_sleep(K_SECONDS(1));
+
 	/* Set chipset to ON, this will set TCPM to DRP */
 	test_set_chipset_to_s0();
 
