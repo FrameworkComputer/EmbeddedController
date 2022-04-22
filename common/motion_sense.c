@@ -1759,7 +1759,7 @@ static int command_accel_read_xyz(int argc, char **argv)
 
 	sensor = &motion_sensors[id];
 
-	while ((n == -1) || (n-- > 0)) {
+	while ((n-- > 0)) {
 		ret = sensor->drv->read(sensor, v);
 		if (ret == 0)
 			ccprintf("Current data %d: %-5d %-5d %-5d\n",
