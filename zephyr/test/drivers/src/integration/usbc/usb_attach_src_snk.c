@@ -159,7 +159,7 @@ static void attach_emulated_snk(struct emul_state *my_emul_state)
 	uint16_t power_reg_val;
 
 	/* Attach emulated sink */
-	tcpci_snk_emul_init(my_snk);
+	tcpci_snk_emul_init(my_snk, PD_REV20);
 	tcpci_emul_set_rev(tcpci_emul_snk, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Turn on VBUS detection */
@@ -195,7 +195,7 @@ static void attach_emulated_src(struct emul_state *my_emul_state)
 	uint16_t power_reg_val;
 
 	/* Attach emulated charger. */
-	tcpci_src_emul_init(my_src);
+	tcpci_src_emul_init(my_src, PD_REV20);
 	tcpci_emul_set_rev(tcpci_emul_src, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Turn on VBUS detection */

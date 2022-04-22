@@ -272,14 +272,14 @@ int tcpci_drp_emul_connect_to_tcpci(struct tcpci_drp_emul_data *data,
 }
 
 /** Check description in emul_tcpci_partner_drp.h */
-void tcpci_drp_emul_init(struct tcpci_drp_emul *emul)
+void tcpci_drp_emul_init(struct tcpci_drp_emul *emul, enum pd_rev_type rev)
 {
 	tcpci_partner_init(&emul->common_data, tcpci_drp_emul_hard_reset, emul);
 
 	/* By default init as sink */
 	emul->common_data.data_role = PD_ROLE_DFP;
 	emul->common_data.power_role = PD_ROLE_SINK;
-	emul->common_data.rev = PD_REV20;
+	emul->common_data.rev = rev;
 
 	emul->ops.transmit = tcpci_drp_emul_transmit_op;
 	emul->ops.rx_consumed = tcpci_drp_emul_rx_consumed_op;

@@ -66,8 +66,9 @@ enum check_pdos_res {
  *        any other function that use @p emul or it's components.
  *
  * @param emul Pointer to USB-C source device emulator
+ * @param rev The USB-PD revision this port partner supports
  */
-void tcpci_src_emul_init(struct tcpci_src_emul *emul);
+void tcpci_src_emul_init(struct tcpci_src_emul *emul, enum pd_rev_type rev);
 
 /**
  * @brief Initialise USB-C source device data structure. Single PDO 5V@3A is

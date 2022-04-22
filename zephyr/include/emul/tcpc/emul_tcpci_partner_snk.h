@@ -52,8 +52,9 @@ struct tcpci_snk_emul {
  *        any other function that is using common_data.
  *
  * @param emul Pointer to USB-C sink device emulator
+ * @param rev The USB-PD revision this port partner supports
  */
-void tcpci_snk_emul_init(struct tcpci_snk_emul *emul);
+void tcpci_snk_emul_init(struct tcpci_snk_emul *emul, enum pd_rev_type rev);
 
 /**
  * @brief Initialise USB-C sink device data structure. Single PDO 5V@500mA is

@@ -56,8 +56,9 @@ struct tcpci_drp_emul {
  *        any other function that is using common_data.
  *
  * @param emul Pointer to USB-C dual role device emulator
+ * @param rev The USB-PD revision this port partner supports
  */
-void tcpci_drp_emul_init(struct tcpci_drp_emul *emul);
+void tcpci_drp_emul_init(struct tcpci_drp_emul *emul, enum pd_rev_type rev);
 
 /**
  * @brief Connect emulated device to TCPCI. Connect as sink or source depending

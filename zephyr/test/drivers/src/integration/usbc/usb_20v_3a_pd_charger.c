@@ -61,7 +61,7 @@ static void *usb_attach_20v_3a_pd_charger_setup(void)
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 
 	/* Initialized the charger to supply 20V and 3A */
-	tcpci_src_emul_init(&test_fixture.charger_20v);
+	tcpci_src_emul_init(&test_fixture.charger_20v, PD_REV20);
 	test_fixture.charger_20v.data.pdo[1] =
 		PDO_FIXED(20000, 3000, PDO_FIXED_UNCONSTRAINED);
 

@@ -178,7 +178,7 @@ static void *console_cmd_charge_state_setup(void)
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 
 	/* Initialized the source to supply 5V and 3A */
-	tcpci_src_emul_init(&fixture.source_5v_3a);
+	tcpci_src_emul_init(&fixture.source_5v_3a, PD_REV20);
 	fixture.source_5v_3a.data.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 

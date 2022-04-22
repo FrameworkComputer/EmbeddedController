@@ -117,7 +117,7 @@ ZTEST(integration_usb, test_attach_drp)
 	k_sleep(K_SECONDS(1));
 
 	/* Attach emulated sink */
-	tcpci_drp_emul_init(&my_drp);
+	tcpci_drp_emul_init(&my_drp, PD_REV20);
 	zassert_ok(tcpci_drp_emul_connect_to_tcpci(&my_drp.data,
 						   &my_drp.src_data,
 						   &my_drp.snk_data,

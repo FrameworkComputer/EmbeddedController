@@ -60,7 +60,7 @@ static void *usbc_alt_mode_setup(void)
 	struct tcpci_partner_data *partner_common =
 		&fixture.partner_emul.common_data;
 
-	tcpci_snk_emul_init(&fixture.partner_emul);
+	tcpci_snk_emul_init(&fixture.partner_emul, PD_REV20);
 
 	/* Get references for the emulators */
 	fixture.tcpci_emul =

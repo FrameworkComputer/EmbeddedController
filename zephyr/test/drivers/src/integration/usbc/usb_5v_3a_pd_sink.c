@@ -91,7 +91,7 @@ static void usb_attach_5v_3a_pd_sink_before(void *data)
 	k_sleep(K_SECONDS(1));
 
 	/* Initialized the sink to request 5V and 3A */
-	tcpci_snk_emul_init(&test_fixture->sink_5v_3a);
+	tcpci_snk_emul_init(&test_fixture->sink_5v_3a, PD_REV20);
 	test_fixture->sink_5v_3a.data.pdo[0] = TEST_INITIAL_SINK_CAP;
 	test_fixture->sink_5v_3a.data.pdo[1] = TEST_ADDITIONAL_SINK_CAP;
 	connect_sink_to_port(test_fixture);

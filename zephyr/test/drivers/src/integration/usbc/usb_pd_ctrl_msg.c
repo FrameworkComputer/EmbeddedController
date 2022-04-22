@@ -118,7 +118,7 @@ static void usb_pd_ctrl_msg_before(void *data)
 	/* TODO(b/214401892): Check why need to give time TCPM to spin */
 	k_sleep(K_SECONDS(1));
 
-	tcpci_drp_emul_init(&fixture->partner_emul);
+	tcpci_drp_emul_init(&fixture->partner_emul, PD_REV20);
 
 	/* Add additional Sink PDO to partner to verify
 	 * PE_DR_SNK_Get_Sink_Cap/PE_SRC_Get_Sink_Cap (these are shared PE
