@@ -9,15 +9,15 @@
 
 # Note: This is a py2/3 compatible file.
 
+"""USB updater tool for servo and similar boards."""
+
 from __future__ import print_function
 
 import argparse
-import errno
 import os
 import re
 import subprocess
 import time
-import tempfile
 
 import json
 
@@ -62,14 +62,15 @@ TEST_IMAGE_BASE_PATH = '/usr/local/'
 
 COMMON_PATH = 'share/servo_updater'
 
-FIRMWARE_DIR = "firmware/"
-CONFIGS_DIR = "configs/"
+FIRMWARE_DIR = 'firmware/'
+CONFIGS_DIR = 'configs/'
 
 RETRIES_COUNT = 10
 RETRIES_DELAY = 1
 
 def do_with_retries(func, *args):
-  """
+  """Try a function several times
+
   Call function passed as argument and check if no error happened.
   If exception was raised by function,
   it will be retried up to RETRIES_COUNT times.
@@ -88,21 +89,21 @@ def do_with_retries(func, *args):
     try:
       return func(*args)
     except Exception as e:
-      print("Retrying function %s: %s" % (func.__name__, e))
+      print('Retrying function %s: %s' % (func.__name__, e))
       retry = retry + 1
       time.sleep(RETRIES_DELAY)
       continue
 
-  raise Exception("'{}' failed after {} retries".format(func.__name__, RETRIES_COUNT))
+  raise Exception("'{}' failed after {} retries".format(
+      func.__name__, RETRIES_COUNT))
 
 def flash(brdfile, serialno, binfile):
-  """
-  Call fw_update to upload to updater USB endpoint.
+  """Call fw_update to upload to updater USB endpoint.
 
   Args:
-    brdfile:  path to board configuration file
+    brdfile: path to board configuration file
     serialno: device serial number
-    binfile:  firmware file
+    binfile: firmware file
   """
 
   p = fw_update.Supdate()
@@ -113,29 +114,28 @@ def flash(brdfile, serialno, binfile):
   # Start transfer and erase.
   p.start()
   # Upload the bin file
-  print("Uploading %s" % binfile)
+  print('Uploading %s' % binfile)
   p.write_file()
 
   # Finalize
-  print("Done. Finalizing.")
+  print('Done. Finalizing.')
   p.stop()
 
 def flash2(vidpid, serialno, binfile):
-  """
-  Call fw update via usb_updater2 commandline.
+  """Call fw update via usb_updater2 commandline.
 
   Args:
-    vidpid:   vendor id and product id of device
+    vidpid: vendor id and product id of device
     serialno: device serial number (optional)
-    binfile:  firmware file
+    binfile: firmware file
   """
 
   tool = 'usb_updater2'
-  cmd = "%s -d %s" % (tool, vidpid)
+  cmd = '%s -d %s' % (tool, vidpid)
   if serialno:
-    cmd += " -S %s" % serialno
-  cmd += " -n"
-  cmd += " %s" % binfile
+    cmd += ' -S %s' % serialno
+  cmd += ' -n'
+  cmd += ' %s' % binfile
 
   print(cmd)
   help_cmd = '%s --help' % tool
@@ -151,27 +151,28 @@ def flash2(vidpid, serialno, binfile):
   if res in (0, 1, 2):
     return res
   else:
-    raise ServoUpdaterException("%s exit with res = %d" % (cmd, res))
+    raise ServoUpdaterException('%s exit with res = %d' % (cmd, res))
 
 def select(tinys, region):
-  """
+  """Jump to specified boot region
+
   Ensure the servo is in the expected ro/rw region.
   This function jumps to the required region and verify if jump was
   successful by executing 'sysinfo' command and reading current region.
   If response was not received or region is invalid, exception is raised.
 
   Args:
-    tinys:  TinyServod object
+    tinys: TinyServod object
     region: region to jump to, only "rw" and "ro" is allowed
   """
 
-  if region not in ["rw", "ro"]:
-    raise Exception("Region must be ro or rw")
+  if region not in ['rw', 'ro']:
+    raise Exception('Region must be ro or rw')
 
-  if region is "ro":
-    cmd = "reboot"
+  if region == 'ro':
+    cmd = 'reboot'
   else:
-    cmd = "sysjump %s" % region
+    cmd = 'sysjump %s' % region
 
   tinys.pty._issue_cmd(cmd)
 
@@ -179,10 +180,10 @@ def select(tinys, region):
   time.sleep(2)
   tinys.reinitialize()
 
-  res = tinys.pty._issue_cmd_get_results("sysinfo", ["Copy:[\s]+(RO|RW)"])
+  res = tinys.pty._issue_cmd_get_results('sysinfo', [r'Copy:[\s]+(RO|RW)'])
   current_region = res[0][1].lower()
   if current_region != region:
-    raise Exception("Invalid region: %s/%s" % (current_region, region))
+    raise Exception('Invalid region: %s/%s' % (current_region, region))
 
 def do_version(tinys):
   """Check version via ec console 'pty'.
@@ -198,8 +199,8 @@ def do_version(tinys):
   # ...
   # Build:   tigertail_v1.1.6749-74d1a312e
   """
-  cmd = '\r\nversion\r\n'
-  regex = 'Build:\s+(\S+)[\r\n]+'
+  cmd = 'version'
+  regex = r'Build:\s+(\S+)[\r\n]+'
 
   results = tinys.pty._issue_cmd_get_results(cmd, [regex])[0]
 
@@ -219,9 +220,9 @@ def do_updater_version(tinys):
   # Servo versions below 58 are from servo-9040.B. Versions starting with _v2
   # are newer than anything _v1, no need to check the exact number. Updater
   # version is not directly queryable.
-  if re.search('_v[2-9]\.\d', vers):
+  if re.search(r'_v[2-9]\.\d', vers):
     return 6
-  m = re.search('_v1\.1\.(\d\d\d\d)', vers)
+  m = re.search(r'_v1\.1\.(\d\d\d\d)', vers)
   if m:
     version_number = int(m.group(1))
     if version_number < 5800:
@@ -310,7 +311,7 @@ def get_files_and_version(cname, fname=None, channel=DEFAULT_CHANNEL):
       cname = newname
     else:
       # Try appending ".json" to convert board name to config file.
-      cname = newname + ".json"
+      cname = newname + '.json'
     if not os.path.isfile(cname):
       raise ServoUpdaterException("Can't find config file: %s." % cname)
 
@@ -344,26 +345,26 @@ def get_files_and_version(cname, fname=None, channel=DEFAULT_CHANNEL):
   return cname, fname, binvers
 
 def main():
-  parser = argparse.ArgumentParser(description="Image a servo device")
+  parser = argparse.ArgumentParser(description='Image a servo device')
   parser.add_argument('-p', '--print', dest='print_only', action='store_true',
                       default=False,
                       help='only print available firmware for board/channel')
   parser.add_argument('-s', '--serialno', type=str,
-                      help="serial number to program", default=None)
+                      help='serial number to program', default=None)
   parser.add_argument('-b', '--board', type=str,
-                      help="Board configuration json file",
+                      help='Board configuration json file',
                       default=DEFAULT_BOARD, choices=BOARDS)
   parser.add_argument('-c', '--channel', type=str,
-                      help="Firmware channel to use",
+                      help='Firmware channel to use',
                       default=DEFAULT_CHANNEL, choices=CHANNELS)
   parser.add_argument('-f', '--file', type=str,
-                      help="Complete ec.bin file", default=None)
-  parser.add_argument('--force', action="store_true",
-                      help="Update even if version match", default=False)
-  parser.add_argument('-v', '--verbose', action="store_true",
-                      help="Chatty output")
-  parser.add_argument('-r', '--reboot', action="store_true",
-                      help="Always reboot, even after probe.")
+                      help='Complete ec.bin file', default=None)
+  parser.add_argument('--force', action='store_true',
+                      help='Update even if version match', default=False)
+  parser.add_argument('-v', '--verbose', action='store_true',
+                      help='Chatty output')
+  parser.add_argument('-r', '--reboot', action='store_true',
+                      help='Always reboot, even after probe.')
 
   args = parser.parse_args()
 
@@ -384,34 +385,34 @@ def main():
   with open(brdfile) as data_file:
       data = json.load(data_file)
   vid, pid = int(data['vid'], 0), int(data['pid'], 0)
-  vidpid = "%04x:%04x" % (vid, pid)
+  vidpid = '%04x:%04x' % (vid, pid)
   iface = int(data['console'], 0)
   boardname = data['board']
 
   # Make sure device is up.
-  print("===== Waiting for USB device =====")
+  print('===== Waiting for USB device =====')
   c.wait_for_usb(vidpid, serialname=serialno)
   # We need a tiny_servod to query some information. Set it up first.
   tinys = tiny_servod.TinyServod(vid, pid, iface, serialno, args.verbose)
 
   if not args.force:
     vers = do_version(tinys)
-    print("Current %s version is   %s" % (boardname, vers))
-    print("Available %s version is %s" % (boardname, newvers))
+    print('Current %s version is   %s' % (boardname, vers))
+    print('Available %s version is %s' % (boardname, newvers))
 
     if newvers == vers:
-      print("No version update needed")
+      print('No version update needed')
       if args.reboot:
         select(tinys, 'ro')
       return
     else:
-      print("Updating to recommended version.")
+      print('Updating to recommended version.')
 
   # Make sure the servo MCU is in RO
-  print("===== Jumping to RO =====")
+  print('===== Jumping to RO =====')
   do_with_retries(select, tinys, 'ro')
 
-  print("===== Flashing RW =====")
+  print('===== Flashing RW =====')
   vers = do_with_retries(do_updater_version, tinys)
   # To make sure that the tiny_servod here does not interfere with other
   # processes, close it out.
@@ -430,10 +431,10 @@ def main():
   tinys.reinitialize()
 
   # Make sure the servo MCU is in RW
-  print("===== Jumping to RW =====")
+  print('===== Jumping to RW =====')
   do_with_retries(select, tinys, 'rw')
 
-  print("===== Flashing RO =====")
+  print('===== Flashing RO =====')
   vers = do_with_retries(do_updater_version, tinys)
 
   if vers == 2:
@@ -444,13 +445,13 @@ def main():
     raise ServoUpdaterException("Can't detect updater version")
 
   # Make sure the servo MCU is in RO
-  print("===== Rebooting =====")
+  print('===== Rebooting =====')
   do_with_retries(select, tinys, 'ro')
   # Perform additional reboot to free USB/UART resources, taken by tiny servod.
   # See https://issuetracker.google.com/196021317 for background.
-  tinys.pty._issue_cmd("reboot")
+  tinys.pty._issue_cmd('reboot')
 
-  print("===== Finished =====")
+  print('===== Finished =====')
 
-if __name__ == "__main__":
+if __name__ == '__main__':
   main()

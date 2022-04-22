@@ -11,15 +11,11 @@
 # Note: This is a py2/3 compatible file.
 
 import datetime
-import errno
-import os
-import re
-import subprocess
 import sys
 import time
-import usb
 
 import six
+import usb
 
 from . import pty_driver
 from . import stm32uart
@@ -52,20 +48,13 @@ def check_usb(vidpid, serialname=None):
     vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
     serialname: serialname if specified.
 
-  Returns: True if found, False, otherwise.
+  Returns:
+    True if found, False, otherwise.
   """
-  if serialname:
-    output = subprocess.check_output(['lsusb', '-v', '-d', vidpid],
-                                     **get_subprocess_args())
-    m = re.search(r'^\s*iSerial\s+\d+\s+%s$' % serialname, output, flags=re.M)
-    if m:
-      return True
+  if get_usb_dev(vidpid, serialname):
+    return True
 
-    return False
-  else:
-    if subprocess.call(['lsusb', '-d', vidpid], stdout=open('/dev/null', 'w')):
-      return False
-  return True
+  return False
 
 def check_usb_sn(vidpid):
   """Return the serial number
@@ -77,13 +66,15 @@ def check_usb_sn(vidpid):
   Args:
     vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
 
-  Returns: string serial number if found, None otherwise.
+  Returns:
+    string serial number if found, None otherwise.
   """
-  output = subprocess.check_output(['lsusb', '-v', '-d', vidpid],
-                                   **get_subprocess_args())
-  m = re.search(r'^\s*iSerial\s+(.*)$', output, flags=re.M)
-  if m:
-    return m.group(1)
+  dev = get_usb_dev(vidpid)
+
+  if dev:
+    dev_serial = usb.util.get_string(dev, dev.iSerialNumber)
+
+    return dev_serial
 
   return None
 
@@ -98,12 +89,12 @@ def get_usb_dev(vidpid, serialname=None):
     vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
     serialname: serialname if specified.
 
-  Returns: pyusb device if found, None otherwise.
+  Returns:
+    pyusb device if found, None otherwise.
   """
   vidpidst = vidpid.split(':')
   vid = int(vidpidst[0], 16)
   pid = int(vidpidst[1], 16)
-
 
   dev_g = usb.core.find(idVendor=vid, idProduct=pid, find_all=True)
   dev_list = list(dev_g)
@@ -140,7 +131,8 @@ def check_usb_dev(vidpid, serialname=None):
     vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
     serialname: serialname if specified.
 
-  Returns: usb device number if found, None otherwise.
+  Returns:
+    usb device number if found, None otherwise.
   """
   dev = get_usb_dev(vidpid, serialname=serialname)
 
@@ -173,7 +165,7 @@ def wait_for_usb(vidpid, serialname=None, timeout=None, desiredpresence=True):
   if timeout:
     finish = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
   while check_usb(vidpid, serialname) != desiredpresence:
-    time.sleep(.01)
+    time.sleep(.1)
     if timeout:
       if datetime.datetime.now() > finish:
         raise TinyServoError('Timeout', 'Timeout waiting for USB %s' % vidpid)
@@ -194,8 +186,8 @@ def do_serialno(serialno, pty):
     TinyServoError: on failure to set.
     ptyError: on command interface error.
   """
-  cmd = 'serialno set %s' % serialno
-  regex = 'Serial number:\s+(\S+)'
+  cmd = r'serialno set %s' % serialno
+  regex = r'Serial number:\s+(\S+)'
 
   results = pty._issue_cmd_get_results(cmd, [regex])[0]
   sn = results[1].strip().strip('\n\r')
@@ -221,7 +213,8 @@ def setup_tinyservod(vidpid, interface, serialname=None, debuglog=False):
     serialname: string serial name of device requested, optional.
     debuglog: chatty printout (boolean)
 
-  Returns: pty object
+  Returns:
+    pty object
 
   Raises:
     UsbError, SusbError: on device not found
