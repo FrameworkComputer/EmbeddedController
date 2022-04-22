@@ -334,7 +334,7 @@ static inline int motion_sense_init(struct motion_sensor_t *sensor)
 #if defined(HAS_TASK_CONSOLE)
 	ASSERT((in_deferred_context()) ||
 	       (task_get_current() == TASK_ID_CONSOLE));
-#else
+#elif !defined(CONFIG_ZTEST)
 	ASSERT(in_deferred_context());
 #endif /* HAS_TASK_CONSOLE */
 
