@@ -490,6 +490,23 @@ static enum ec_error_list isl923x_post_init(int chgnum)
 	return EC_SUCCESS;
 }
 
+static enum ec_error_list isl923x_set_hw_ramp(int chgnum, int enable)
+{
+	int rv, reg;
+
+	rv = raw_read16(chgnum, ISL923X_REG_CONTROL0, &reg);
+	if (rv)
+		return rv;
+
+	/* HW ramp is controlled by input voltage regulation reference bits */
+	if (enable)
+		reg &= ~ISL923X_C0_DISABLE_VREG;
+	else
+		reg |= ISL923X_C0_DISABLE_VREG;
+
+	return raw_write16(chgnum, ISL923X_REG_CONTROL0, reg);
+}
+
 int isl923x_set_ac_prochot(int chgnum, uint16_t ma)
 {
 	int rv;
@@ -650,13 +667,8 @@ static void isl923x_init(int chgnum)
 				goto init_fail;
 		}
 	} else {
-		if (raw_read16(chgnum, ISL923X_REG_CONTROL0, &reg))
-			goto init_fail;
-
 		/* Disable voltage regulation loop to disable charge ramp */
-		reg |= ISL923X_C0_DISABLE_VREG;
-
-		if (raw_write16(chgnum, ISL923X_REG_CONTROL0, reg))
+		if (isl923x_set_hw_ramp(chgnum, 0))
 			goto init_fail;
 	}
 
@@ -979,23 +991,6 @@ enum ec_error_list isl9238c_resume(int chgnum)
 /* Hardware current ramping */
 
 #ifdef CONFIG_CHARGE_RAMP_HW
-static enum ec_error_list isl923x_set_hw_ramp(int chgnum, int enable)
-{
-	int rv, reg;
-
-	rv = raw_read16(chgnum, ISL923X_REG_CONTROL0, &reg);
-	if (rv)
-		return rv;
-
-	/* HW ramp is controlled by input voltage regulation reference bits */
-	if (enable)
-		reg &= ~ISL923X_C0_DISABLE_VREG;
-	else
-		reg |= ISL923X_C0_DISABLE_VREG;
-
-	return raw_write16(chgnum, ISL923X_REG_CONTROL0, reg);
-}
-
 static int isl923x_ramp_is_stable(int chgnum)
 {
 	/*
