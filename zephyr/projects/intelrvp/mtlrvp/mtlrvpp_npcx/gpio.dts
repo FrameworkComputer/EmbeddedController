@@ -334,5 +334,5 @@
 			pin_mask = <0xff>;
 			pinmux_mask = <0xf7>;
 		};
-        };
+	};
 };
