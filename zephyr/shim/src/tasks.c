@@ -300,7 +300,8 @@ void set_test_runner_tid(void)
 	shimmed_tasks_data[TASK_ID_TEST_RUNNER].zephyr_tid = k_current_get();
 }
 
-#ifdef CONFIG_SET_TEST_RUNNER_TID_RULE
+#ifdef CONFIG_TASKS_SET_TEST_RUNNER_TID_RULE
+#include <ztest.h>
 static void set_test_runner_tid_rule_before(const struct ztest_unit_test *test,
 					    void *data)
 {
@@ -310,7 +311,7 @@ static void set_test_runner_tid_rule_before(const struct ztest_unit_test *test,
 }
 
 ZTEST_RULE(set_test_runner_tid, set_test_runner_tid_rule_before, NULL);
-#endif /* CONFIG_SET_TEST_RUNNER_TID_RULE */
+#endif /* CONFIG_TASKS_SET_TEST_RUNNER_TID_RULE */
 #endif /* TEST_BUILD */
 
 void start_ec_tasks(void)
