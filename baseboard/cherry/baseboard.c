@@ -568,7 +568,7 @@ static void baseboard_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT - 1);
 
-__override int board_pd_set_frs_enable(int port, int enable)
+__override int board_rt1718s_set_frs_enable(int port, int enable)
 {
 	if (port == 1)
 		/*
