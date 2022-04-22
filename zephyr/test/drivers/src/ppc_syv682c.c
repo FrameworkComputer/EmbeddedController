@@ -38,6 +38,9 @@ static void syv682x_test_after(void *data)
 
 	ARG_UNUSED(data);
 
+	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
+			SYV682X_CONTROL_4_NONE);
+
 	/* Clear the mock read/write functions */
 	i2c_common_emul_set_read_func(emul, NULL, NULL);
 	i2c_common_emul_set_write_func(emul, NULL, NULL);
