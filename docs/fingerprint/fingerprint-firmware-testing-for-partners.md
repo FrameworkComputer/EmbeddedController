@@ -1,7 +1,7 @@
 # Fingerprint Firmware Testing Instructions for Partners
 
 This document is intended to help partners (sensor vendors, MCU vendors, etc)
-run the Chrome OS fingerprint team's firmware tests, as part of the AVL process.
+run the ChromeOS fingerprint team's firmware tests, as part of the AVL process.
 The document assumes that you‘re using Linux to do the development; preferably a
 recent version of Ubuntu or Debian. It may be possible to use a virtual machine,
 but that is not a configuration we test.

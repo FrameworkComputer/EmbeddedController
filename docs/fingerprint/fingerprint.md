@@ -45,14 +45,14 @@ Sensor     | Fingerprint Template Size
 
 ### Determining Hardware {#chromeos-config-fingerprint}
 
-If you have access to a shell on your Chromebook, you can use [Chrome OS Config]
+If you have access to a shell on your Chromebook, you can use [ChromeOS Config]
 to determine the FPMCU that it contains:
 
 ```bash
 (dut) $ cros_config /fingerprint board
 ```
 
-Alternatively, if you have a Chromium OS build, you can use [Chrome OS Config]
+Alternatively, if you have a Chromium OS build, you can use [ChromeOS Config]
 in the chroot to determine the FPMCU:
 
 ```bash
@@ -62,8 +62,8 @@ in the chroot to determine the FPMCU:
 <!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: If you get an empty response when running these commands, the
-[Chrome OS Config] properties for fingerprint may not have been set up yet. See
-the [section on updating Chrome OS Config](#update-chromeos-config).
+[ChromeOS Config] properties for fingerprint may not have been set up yet. See
+the [section on updating ChromeOS Config](#update-chromeos-config).
 ***
 <!-- mdformat on -->
 
@@ -411,25 +411,25 @@ measure releases before that point.
 @@   pp3300_dx_mcu_mw    174     5.47    0.10     5.48     4.17
 ```
 
-## Chrome OS Build (portage / ebuild)
+## ChromeOS Build (portage / ebuild)
 
-In order to use the fingerprint sensor with a given [Chrome OS board], a few
-things need to be configured for the [Chrome OS board].
+In order to use the fingerprint sensor with a given [ChromeOS board], a few
+things need to be configured for the [ChromeOS board].
 
 ### Enable biod USE flag
 
-The biod [`USE` flag] needs to be enabled for the [Chrome OS board]. This `USE`
+The biod [`USE` flag] needs to be enabled for the [ChromeOS board]. This `USE`
 flag
 [determines whether the `biod` daemon is built and installed][biod chromium-os].
 
-To enable the `USE` flag, update the `make.defaults` for the [Chrome OS board].
+To enable the `USE` flag, update the `make.defaults` for the [ChromeOS board].
 See the [`make.defaults` for the Hatch board][hatch make.defaults] as an
 example.
 
 #### Verifying biod is installed in the rootfs
 
 After enabling the `biod` [`USE` flag] and building the `biod` package for your
-target [Chrome OS board], the `biod` binary should be in the build directory:
+target [ChromeOS board], the `biod` binary should be in the build directory:
 
 ```bash
 (chroot) $ emerge-<BOARD> biod
@@ -443,7 +443,7 @@ target [Chrome OS board], the `biod` binary should be in the build directory:
 ### Update FPMCU_FIRMWARE
 
 `FPMCU_FIRMWARE` should be set to the set of fingerprint firmware that should be
-built and installed for the [Chrome OS board].
+built and installed for the [ChromeOS board].
 
 `FPMCU_FIRMWARE` is a [`USE_EXPAND` variable][`USE` flag],
 [defined in the base `make.defaults`][FPMCU_FIRMWARE make.defaults].
@@ -485,18 +485,18 @@ firmware by setting `FPMCU_FIRMWARE="bloonchipper dartmonkey"`. The actual
 version numbers displayed will not necessarily match since the firmware is
 constantly updated.
 
-### Update Chrome OS Config {#update-chromeos-config}
+### Update ChromeOS Config {#update-chromeos-config}
 
-With "unibuild", the same OS image (build) for a given [Chrome OS board] is used
+With "unibuild", the same OS image (build) for a given [ChromeOS board] is used
 across multiple devices. Often there will be some devices that have a
 fingerprint sensor, some that do not, and even different sensors for the same
 board.
 
-Determining what fingerprint hardware is on a given [Chrome OS board] is thus
-done at runtime, using [Chrome OS Config].
+Determining what fingerprint hardware is on a given [ChromeOS board] is thus
+done at runtime, using [ChromeOS Config].
 
 The `fingerprint` config needs to be in the `model.yaml` for the given
-[Chrome OS board]. The [Chrome OS Config fingerprint] section describes the
+[ChromeOS board]. The [ChromeOS Config fingerprint] section describes the
 attributes for the `fingerprint` config in more detail.
 
 The [`ec_extras` attribute] needs to be set to the list of fingerprint firmware
@@ -505,7 +505,7 @@ that should be built as part of the build.
 See the [`model.yaml` for the Hatch board][hatch model.yaml] as an example.
 
 Instead of crafting the `model.yaml` by hand, newer boards are moving to the
-[Chrome OS Project Configuration] model, where the config is generated using
+[ChromeOS Project Configuration] model, where the config is generated using
 [Starlark]. The common [`create_fingerprint`] function can be used across models
 to configure the fingerprint settings. See the [Morphius `config.star`] for an
 example of how to call `create_fingerprint`. After you modify a `config.star`
@@ -514,18 +514,18 @@ projects (e.g., modifying [`create_fingerprint`]), you can use the [`CLFactory`]
 tool.
 
 Once you have updated the config, you can test your changes by
-[running `cros_config`](#chromeos-config-fingerprint). The Chrome OS Config
+[running `cros_config`](#chromeos-config-fingerprint). The ChromeOS Config
 documentation has a [section on testing properties] that describes this in more
 detail.
 
 ### SKUs
 
 The fingerprint sensor may only be included on certain SKUs for a given device.
-The fingerprint code uses [Chrome OS Config] to determine whether a device has a
+The fingerprint code uses [ChromeOS Config] to determine whether a device has a
 fingerprint sensor or not. For each SKU, there is an associated
-[fingerprint config][Chrome OS Config fingerprint]. [Chrome OS Config]
-determines the [SKU information][Chrome OS Config SKU] (and thus the
-[fingerprint config][Chrome OS Config fingerprint]) from [CBI Info]. The SKU for
+[fingerprint config][ChromeOS Config fingerprint]. [ChromeOS Config]
+determines the [SKU information][ChromeOS Config SKU] (and thus the
+[fingerprint config][ChromeOS Config fingerprint]) from [CBI Info]. The SKU for
 a given device can be found by viewing `chrome://system/#platform_identity_sku`.
 
 ## Kernel Driver
@@ -560,10 +560,10 @@ that are connected via UART use [`cros_ec_uart.c`].
 [cros_ec_debugfs]: https://chromium.googlesource.com/chromiumos/third_party/kernel/+/9db44685934a2e4bc9180ea2de87a6c429672395/drivers/platform/chrome/cros_ec_debugfs.c
 [Fingerprint Factory Requirements]: ./fingerprint-factory-requirements.md
 [Chromium OS test image]: https://chromium.googlesource.com/chromiumos/platform/factory/+/HEAD/README.md#building-test-image
-[Chrome OS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md
-[Chrome OS Config fingerprint]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#fingerprint
+[ChromeOS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md
+[ChromeOS Config fingerprint]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#fingerprint
 [section on testing properties]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#adding-and-testing-new-properties
-[Chrome OS board]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Select-a-board
+[ChromeOS board]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Select-a-board
 [biod chromium-os]: https://chromium.googlesource.com/chromiumos/overlays/chromiumos-overlay/+/4ea72b588af3394cb9fd1c330dcf726472183dfd/virtual/target-chromium-os/target-chromium-os-1.ebuild#154
 [hatch make.defaults]: https://chromium.googlesource.com/chromiumos/overlays/board-overlays/+/2f075f0e7ce09d3eb460f3c529da463a6201276c/overlay-hatch/profiles/base/make.defaults#22
 [Hatch baseboard `make.defaults`]: https://chrome-internal.googlesource.com/chromeos/overlays/baseboard-hatch-private/+/HEAD/profiles/base/make.defaults#17
@@ -590,8 +590,8 @@ that are connected via UART use [`cros_ec_uart.c`].
 [Nucleo F412ZG]: https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-F412ZG/6137573
 [Nucleo H743ZI2]: https://www.digikey.com/en/products/detail/stmicroelectronics/NUCLEO-H743ZI2/10130892
 [CBI Info]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md
-[Chrome OS Config SKU]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#identity
-[Chrome OS Project Configuration]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md
+[ChromeOS Config SKU]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md#identity
+[ChromeOS Project Configuration]: https://chromium.googlesource.com/chromiumos/config/+/HEAD/README.md
 [Starlark]: https://docs.bazel.build/versions/main/skylark/language.html
 [`create_fingerprint`]: https://chromium.googlesource.com/chromiumos/config/+/e1fa0d7f56eb3dd6e9378e4326de086ada46b7d3/util/hw_topology.star#444
 [Morphius `config.star`]: https://chrome-internal.googlesource.com/chromeos/project/zork/morphius/+/593b657a776ed6b320c826916adc9cd845faf709/config.star#85

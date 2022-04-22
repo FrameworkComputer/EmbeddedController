@@ -366,7 +366,7 @@ some docs to help you get started:
 *   [Git: Concepts and Workflow]: Good overview of how `git` actually works.
 *   [Gerrit: Concepts and Workflow]: Good overview of how Gerrit works; assumes
     you understand `git` basics.
-*   [Life of a patch]: Android workflow, but similar to Chrome OS.
+*   [Life of a patch]: Android workflow, but similar to ChromeOS.
 
 The Gerrit dashboard that will show your pending reviews (and ones we have for
 you):
@@ -433,7 +433,7 @@ from the UI.
 
 ### Developer Mode and Write Protection
 
-Make sure that your fingerprint-equipped Chrome OS device is in [developer mode]
+Make sure that your fingerprint-equipped ChromeOS device is in [developer mode]
 with a *test* image flashed and [hardware write protection] disabled. Using the
 test image will allow you to SSH into the device and disabling hardware write
 protection allows you to have full access to flashing the FPMCU firmware.

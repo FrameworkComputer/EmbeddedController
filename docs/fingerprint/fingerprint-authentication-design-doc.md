@@ -1,4 +1,4 @@
-# Fingerprint Authentication on Chrome OS
+# Fingerprint Authentication on ChromeOS
 
 Authors: norvez@google.com, vpalatin@google.com
 
@@ -31,7 +31,7 @@ Last Updated: 2019-01-14
 
 To unlock their Chromebook users have to enter their password or a PIN.
 [Windows] and [macOS] let the user authenticate with their fingerprint for
-faster unlocking, we want to bring that capability to Chrome OS.
+faster unlocking, we want to bring that capability to ChromeOS.
 
 ### Fingerprint matching basics
 
@@ -379,7 +379,7 @@ used to protect the EC in detachable keyboards as described in
 
 The SBP has a minimalistic RO firmware that contains the public part of an
 RSA-3072 exponent 3 key pair. The corresponding private key is only accessible
-by the Chrome OS signers and is used to sign SBP firmwares. On boot the RO
+by the ChromeOS signers and is used to sign SBP firmwares. On boot the RO
 firmware verifies the signature of the RW firmware. If the RW signature is
 valid, the RO firmware protects itself by setting the WP bit of the Flash then
 jumps to RW.

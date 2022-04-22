@@ -1,7 +1,7 @@
-# Chrome OS Fingerprint Sensor: Quick Factory Guide
+# ChromeOS Fingerprint Sensor: Quick Factory Guide
 
 The goal of this document is to outline how ODM partners can make use of the
-existing Chrome OS factory scripts to meet Chrome OS FPS factory requirements.
+existing ChromeOS factory scripts to meet ChromeOS FPS factory requirements.
 
 [TOC]
 

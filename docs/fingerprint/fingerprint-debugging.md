@@ -32,7 +32,7 @@ used for JTAG and SWD for ARM devices.
     is the only software required for flashing.
 *   In order to perform breakpoint debugging, you will need a tool that supports
     connecting `gdbserver`. This document will assume [CLion] \(Googlers see
-    [CLion for Chrome OS]) and was tested with `JLink v6.94a`. Alternatively,
+    [CLion for ChromeOS]) and was tested with `JLink v6.94a`. Alternatively,
     you can use [Ozone], a standalone debugger from Segger.
 
 ## JLink Software {#software}
@@ -243,7 +243,7 @@ STM32F412 package that does not have the synchronous trace pins, but the
 [SWD Cable]: https://www.adafruit.com/product/1675
 [Ozone]: https://www.segger.com/products/development-tools/ozone-j-link-debugger/
 [CLion]: https://www.jetbrains.com/clion/
-[CLion for Chrome OS]: http://go/clion-for-chromeos
+[CLion for ChromeOS]: http://go/clion-for-chromeos
 [GDB Remote Debug Configuration]: https://www.jetbrains.com/help/clion/remote-debug.html#remote-config
 [CLion Start Remote Debug]: https://www.jetbrains.com/help/clion/remote-debug.html#start-remote-debug
 [Nucleo STM32F412ZG]: https://www.st.com/en/evaluation-tools/nucleo-f412zg.html

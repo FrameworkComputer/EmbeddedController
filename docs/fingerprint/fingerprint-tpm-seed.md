@@ -18,7 +18,7 @@ TPM during boot in mount-encrypted.
 
 ## Background
 
-Fingerprint authorization in Chrome OS, relies on encrypted FP templates which
+Fingerprint authorization in ChromeOS, relies on encrypted FP templates which
 are stored in each user’s mount directory. These templates are created and
 encrypted by the FPMCU during FP enrollment, before being sent back to the AP
 (Application Processor). When the user logs in, these templates are sent to the
@@ -30,7 +30,7 @@ obtained by and attacker from the user mount directory, they cannot be
 decrypted, since the attacker will not have access to the MCU entropy. This
 entropy gets reset on every powerwash/recovery.
 
-The complete design doc is [Fingerprint Authentication on Chrome OS].
+The complete design doc is [Fingerprint Authentication on ChromeOS].
 
 ## Requirements and Scale
 
@@ -303,10 +303,10 @@ then set TPM.
 ## Privacy Considerations
 
 This implementation should not have any adverse implications on Privacy (over
-and above existing functionality on Chrome OS). This provides security hardening
+and above existing functionality on ChromeOS). This provides security hardening
 for the fingerprint templates to prevent their retrieval and mis-use.
 
-[Fingerprint Authentication on Chrome OS]: ../fingerprint/fingerprint-authentication-design-doc.md
+[Fingerprint Authentication on ChromeOS]: ../fingerprint/fingerprint-authentication-design-doc.md
 [`SBP_Src_Key`]: ../fingerprint/fingerprint-authentication-design-doc.md#sbp-secret-generation
 [IPC Mechanism]: #ipc
 [minijail0 arguments]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform2/biod/init/bio_crypto_init.conf;l=36;drc=1fcefaa166e868069ad1b81091333ff75e0657f6

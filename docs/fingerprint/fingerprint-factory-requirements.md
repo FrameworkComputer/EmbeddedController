@@ -1,4 +1,4 @@
-# Chrome OS Fingerprint Factory Requirements
+# ChromeOS Fingerprint Factory Requirements
 
 This document provides an overview of factory requirements and testing for the
 fingerprint sensor.
@@ -8,7 +8,7 @@ fingerprint sensor.
 ## Contact
 
 For questions regarding this document, please contact the
-[Chrome OS Fingerprint Team].
+[ChromeOS Fingerprint Team].
 
 ## Terminology
 
@@ -39,12 +39,12 @@ For questions regarding this document, please contact the
 ## FPMCU Firmware Location
 
 The binaries for the FPMCU firmware are located in `/opt/google/biod/fw`. Now
-that Chrome OS supports unibuild, there may be multiple firmware binaries in the
+that ChromeOS supports unibuild, there may be multiple firmware binaries in the
 directory since multiple sensors may be used across a single "board" (e.g., the
 `hatch` board can use either `bloonchipper` or `dartmonkey`).
 
 The correct firmware type to use for a given board can be discovered with the
-[Chrome OS Config] tool:
+[ChromeOS Config] tool:
 
 ```bash
 (dut) $ cros_config /fingerprint board
@@ -64,8 +64,8 @@ The corresponding firmware for the above command would be
 <!-- mdformat off(b/139308852) -->
 *** note
 **NOTE**: If you get an empty response when running the above commands, the
-Chrome OS Config settings may not have been updated for the Chrome OS board.
-See the instructions on [updating Chrome OS Config] for fingerprint.
+ChromeOS Config settings may not have been updated for the ChromeOS board.
+See the instructions on [updating ChromeOS Config] for fingerprint.
 ***
 <!-- mdformat on -->
 
@@ -146,7 +146,7 @@ In-device tests are run during the `FATP` process once the device has been fully
 assembled. Google provides source code for these tests in
 [`fingerprint_mcu.py`].
 
-Hardware Required: Chrome OS DUT before finalization.
+Hardware Required: ChromeOS DUT before finalization.
 
 Documentation: [FPC In-Device Test Specification]
 
@@ -494,9 +494,9 @@ Wrote /tmp/fp.1.png (14025 bytes)
 [GetSensorId]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/utils/fpmcu_utils.py#65
 [ProcessResetPixelImage]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#268
 [rubber_finger_present]: https://chromium.googlesource.com/chromiumos/platform/factory/+/d23ebc7eeb074760e8a720e3acac4cfe4073b2ae/py/test/pytests/fingerprint_mcu.py#330
-[Chrome OS Fingerprint Team]: http://go/cros-fingerprint-docs
+[ChromeOS Fingerprint Team]: http://go/cros-fingerprint-docs
 [Factory Fingerprint Sensor Testing for `nocturne`]: http://go/fingerprint-factory-testing-nocturne
 [`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/flash_fp_mcu
 [Fingerprint flashing documentation]: ./fingerprint.md#factory-rma-dev-updates
-[Chrome OS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md
-[updating Chrome OS Config]: ./fingerprint.md#update-chromeos-config
+[ChromeOS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md
+[updating ChromeOS Config]: ./fingerprint.md#update-chromeos-config
