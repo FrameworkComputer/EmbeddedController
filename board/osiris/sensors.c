@@ -16,7 +16,7 @@
 #include "temp_sensor/thermistor.h"
 
 /* ADC configuration */
-struct adc_t adc_channels[] = {
+const struct adc_t adc_channels[] = {
 	[ADC_TEMP_SENSOR_1_DDR_SOC] = {
 		.name = "TEMP_DDR_SOC",
 		.input_ch = NPCX_ADC_CH0,
