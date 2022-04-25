@@ -5,6 +5,7 @@
 
 #include <ztest.h>
 
+#include "driver/accel_bma2x2.h"
 #include "motion_sense.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
@@ -18,6 +19,7 @@
 
 static void host_cmd_motion_sense_before(void *state)
 {
+	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 0;
 	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 1000 * MSEC;
 }
 
@@ -185,8 +187,61 @@ ZTEST_USER(host_cmd_motion_sense, test_set_ec_rate)
 			   /*sensor_num=*/0, /*data_rate_ms=*/2000, &response),
 		   NULL);
 	/* The command should return the previous rate */
-	zassert_equal(response.ec_rate.ret, 1000, NULL);
+	zassert_equal(response.ec_rate.ret, 1000, "Expected 1000, but got %d",
+		      response.ec_rate.ret);
 	/* The sensor's AP config value should be updated */
 	zassert_equal(motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate,
 		      2000 * MSEC, NULL);
+}
+
+ZTEST_USER(host_cmd_motion_sense, test_odr_invalid_sensor_num)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      host_cmd_motion_sense_odr(
+			      /*sensor_num=*/0xff,
+			      /*odr=*/EC_MOTION_SENSE_NO_VALUE,
+			      /*round_up=*/false, &response),
+		      NULL);
+}
+
+ZTEST_USER(host_cmd_motion_sense, test_odr_get)
+{
+	struct ec_response_motion_sense response;
+
+	zassume_ok(motion_sensors[0].drv->set_data_rate(&motion_sensors[0],
+							1000000, false),
+		   NULL);
+	zassert_ok(host_cmd_motion_sense_odr(/*sensor_num=*/0,
+					     /*odr=*/EC_MOTION_SENSE_NO_VALUE,
+					     /*round_up=*/false, &response),
+		   NULL);
+	zassert_equal(BMA2x2_REG_TO_BW(BMA2x2_BW_1000HZ),
+		      response.sensor_odr.ret, "Expected %d, but got %d",
+		      BMA2x2_REG_TO_BW(BMA2x2_BW_1000HZ),
+		      response.sensor_odr.ret);
+}
+
+ZTEST_USER(host_cmd_motion_sense, test_odr_set)
+{
+	struct ec_response_motion_sense response;
+
+	zassume_ok(motion_sensors[0].drv->set_data_rate(&motion_sensors[0], 0,
+							false),
+		   NULL);
+	zassert_ok(host_cmd_motion_sense_odr(/*sensor_num=*/0,
+					     /*odr=*/1000000,
+					     /*round_up=*/true, &response),
+		   NULL);
+	/* Check the set value */
+	zassert_equal(1000000 | ROUND_UP_FLAG,
+		      motion_sensors[0].config[SENSOR_CONFIG_AP].odr,
+		      "Expected %d, but got %d", 1000000 | ROUND_UP_FLAG,
+		      motion_sensors[0].config[SENSOR_CONFIG_AP].odr);
+	/* Check the returned value */
+	zassert_equal(BMA2x2_REG_TO_BW(BMA2x2_BW_7_81HZ),
+		      response.sensor_odr.ret, "Expected %d, but got %d",
+		      BMA2x2_REG_TO_BW(BMA2x2_BW_7_81HZ),
+		      response.sensor_odr.ret);
 }

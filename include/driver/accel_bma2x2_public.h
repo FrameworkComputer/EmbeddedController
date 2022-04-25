@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_DRIVER_ACCEL_BMA2x2_PUBLIC_H
 #define __CROS_EC_DRIVER_ACCEL_BMA2x2_PUBLIC_H
 
+#include "accelgyro.h"
+
 extern const struct accelgyro_drv bma2x2_accel_drv;
 
 /* I2C ADDRESS DEFINITIONS    */

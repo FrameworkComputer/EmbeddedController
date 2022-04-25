@@ -155,7 +155,23 @@ int host_cmd_motion_sense_ec_rate(uint8_t sensor_num, int data_rate_ms,
 	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
 		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
 
-	printk("sensor_num=%u/%u\n", params.sensor_odr.sensor_num, sensor_num);
+	return host_command_process(&args);
+}
+
+int host_cmd_motion_sense_odr(uint8_t sensor_num, int32_t odr, bool round_up,
+			      struct ec_response_motion_sense *response)
+{
+	struct ec_params_motion_sense params = {
+		.cmd = MOTIONSENSE_CMD_SENSOR_ODR,
+		.sensor_odr = {
+			.sensor_num = sensor_num,
+			.data = odr,
+			.roundup = round_up,
+		},
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
+
 	return host_command_process(&args);
 }
 
@@ -165,8 +181,8 @@ void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 	struct ec_params_typec_discovery params = {
 		.port = port, .partner_type = partner_type
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_TYPEC_DISCOVERY, 0, params);
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_DISCOVERY, 0, params);
 	/* The expected response to EC_CMD_TYPEC_DISCOVERY extends beyond the
 	 * bounds of struct ec_response_typec_discovery.
 	 */
