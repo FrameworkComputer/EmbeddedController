@@ -73,18 +73,16 @@
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB
 
-/* USB Type C and USB PD defines */
-#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
-
-#define CONFIG_IO_EXPANDER
-#define CONFIG_IO_EXPANDER_NCT38XX
-#define CONFIG_IO_EXPANDER_PORT_COUNT		4
+#undef CONFIG_USB_PD_TCPM_NCT38XX
+#define CONFIG_USB_PD_TCPM_PS8815 /* C0 and C1 */
 
 #define CONFIG_USB_PD_FRS_PPC
 
 #define CONFIG_USB_PD_TCPM_PS8815
 #define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
-#define CONFIG_USBC_RETIMER_INTEL_BB
+
+/* Retimer */
+#undef CONFIG_USBC_RETIMER_INTEL_BB
 
 /* I2C speed console command */
 #define CONFIG_CMD_I2C_SPEED
@@ -93,7 +91,6 @@
 #define CONFIG_HOSTCMD_I2C_CONTROL
 
 #define CONFIG_USBC_PPC_SYV682X
-#define CONFIG_USBC_PPC_NX20P3483
 
 /* TODO: b/177608416 - measure and check these values on osiris */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
@@ -172,21 +169,6 @@
 
 #define I2C_ADDR_MP2964_FLAGS	0x20
 
-/*
- * see b/174768555#comment22
- */
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x56
-#define USBC_PORT_C2_BB_RETIMER_I2C_ADDR	0x57
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-
-/* Retimer */
-#define CONFIG_USBC_RETIMER_FW_UPDATE
-
 /* Thermal features */
 #define CONFIG_THERMISTOR
 #define CONFIG_TEMP_SENSOR
@@ -226,14 +208,6 @@ enum sensor_id {
 	BASE_ACCEL,
 	BASE_GYRO,
 	SENSOR_COUNT
-};
-
-enum ioex_port {
-	IOEX_C0_NCT38XX = 0,
-	IOEX_C2_NCT38XX,
-	IOEX_ID_1_C0_NCT38XX,
-	IOEX_ID_1_C2_NCT38XX,
-	IOEX_PORT_COUNT
 };
 
 enum battery_type {
