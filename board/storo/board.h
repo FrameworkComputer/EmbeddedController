@@ -18,6 +18,7 @@
 
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
+#define CONFIG_SMBUS_PEC
 
 /* BC 1.2 */
 #define CONFIG_BC12_DETECT_PI3USB9201
