@@ -40,7 +40,6 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HECI
 
-#define CONFIG_ACCEL_INTERRUPTS
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO

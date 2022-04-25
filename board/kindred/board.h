@@ -31,7 +31,6 @@
 
 /* Sensors */
 /* BMI160 Base accel/gyro */
-#define CONFIG_ACCEL_INTERRUPTS
 
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \

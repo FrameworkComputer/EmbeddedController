@@ -118,7 +118,6 @@
 #define CONFIG_ACCEL_FIFO_SIZE 1024
 /* Depends on how fast the AP boots and typical ODRs. */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-#define CONFIG_ACCEL_INTERRUPTS
 
 /* USB */
 #define CONFIG_USB_PD_ALT_MODE

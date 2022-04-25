@@ -52,7 +52,6 @@
 /* Sensor */
 #undef  CONFIG_MOTION_SENSE_RESUME_DELAY_US
 #define CONFIG_MOTION_SENSE_RESUME_DELAY_US (1000 * MSEC)
-#define CONFIG_ACCEL_INTERRUPTS
 #define CONFIG_CMD_ACCEL_INFO
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO

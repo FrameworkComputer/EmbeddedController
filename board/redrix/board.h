@@ -51,7 +51,6 @@
 #define CONFIG_ACCEL_FORCE_MODE_MASK \
 	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
 
-#define CONFIG_ACCEL_INTERRUPTS
 
 /* Sensor console commands */
 #define CONFIG_CMD_ACCELS

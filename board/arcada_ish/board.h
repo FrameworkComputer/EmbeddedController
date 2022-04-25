@@ -33,7 +33,6 @@
 #define CONFIG_MAG_LIS2MDL		/* Lid sensor: LIS2DML */
 #define CONFIG_MAG_CALIBRATE
 
-#define CONFIG_ACCEL_INTERRUPTS
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
 /* FIFO size is a power of 2. */

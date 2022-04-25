@@ -29,7 +29,6 @@
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 
 /* Sensor */
-#define CONFIG_ACCEL_INTERRUPTS
 /*
  * Reduce maximal sensor speed: lid accelerometer is not interrupt driven,
  * so EC does not timestamp sensor events as accurately as interrupt

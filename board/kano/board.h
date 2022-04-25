@@ -51,7 +51,6 @@
 #define CONFIG_ACCEL_KX022
 #define CONFIG_ACCEL_BMA4XX
 
-#define CONFIG_ACCEL_INTERRUPTS
 
 /* Sensor console commands */
 #define CONFIG_CMD_ACCELS

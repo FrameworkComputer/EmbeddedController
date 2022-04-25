@@ -47,7 +47,6 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
-#define CONFIG_ACCEL_INTERRUPTS
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
 /* Power of 2 - Too large of a fifo causes too much timestamp jitter */

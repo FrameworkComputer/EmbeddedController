@@ -295,7 +295,6 @@
  * Interrupt and fifo are only used for base accelerometer
  * and the lid sensor is polled real-time (in forced mode).
  */
-#define CONFIG_ACCEL_INTERRUPTS
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
 /* Power of 2 - Too large of a fifo causes too much timestamp jitter */

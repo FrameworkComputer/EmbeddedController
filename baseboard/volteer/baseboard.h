@@ -81,7 +81,6 @@
 #define CONFIG_MKBP_USE_GPIO
 #define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
-#define CONFIG_ACCEL_INTERRUPTS
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
