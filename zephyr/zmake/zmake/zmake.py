@@ -255,7 +255,6 @@ class Zmake:
                     coverage=coverage,
                     allow_warnings=allow_warnings,
                     extra_cflags=extra_cflags,
-                    multiproject=len(projects) > 1,
                 )
             )
             if self._sequential:
@@ -417,7 +416,6 @@ class Zmake:
         coverage=False,
         allow_warnings=False,
         extra_cflags=None,
-        multiproject=False,
     ):
         # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         # pylint: disable=too-many-statements
@@ -581,7 +579,6 @@ class Zmake:
                 project=project,
                 coverage=coverage,
                 output_files_out=output_files,
-                multiproject=multiproject,
             )
             if result:
                 return result
@@ -603,13 +600,12 @@ class Zmake:
             )
         return 0
 
-    def _build(  # pylint: disable=too-many-arguments
+    def _build(
         self,
         build_dir,
         project: zmake.project.Project,
         output_files_out=None,
         coverage=False,
-        multiproject=False,
     ):
         # pylint: disable=too-many-locals,too-many-branches
         """Build a pre-configured build directory."""
@@ -672,8 +668,6 @@ class Zmake:
                 if self.goma:
                     # Go nuts ninja, goma does the heavy lifting!
                     cmd.append("-j1024")
-                elif multiproject:
-                    cmd.append("-j1")
                 # Only tests will actually build with coverage enabled.
                 if coverage and not project.config.is_test:
                     cmd.append("all.libraries")
