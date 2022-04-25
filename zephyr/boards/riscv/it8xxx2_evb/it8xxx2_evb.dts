@@ -25,7 +25,7 @@
 
 		/* NOTE: &pwm number needs same with channel number */
 		pwm_led_test: pwm_led_test {
-			pwms = <&pwm0 PWM_CHANNEL_0 PWM_POLARITY_NORMAL>;
+			pwms = <&pwm0 PWM_CHANNEL_0 0 PWM_POLARITY_NORMAL>;
 		};
 	};
 
@@ -155,7 +155,7 @@
 		compatible = "cros-ec,fans";
 
 		fan_0 {
-			pwms = <&pwm7 PWM_CHANNEL_7 PWM_POLARITY_NORMAL>;
+			pwms = <&pwm7 PWM_CHANNEL_7 0 PWM_POLARITY_NORMAL>;
 			pwm-frequency = <30000>;
 			tach = <&tach0>;
 			rpm_min = <1500>;

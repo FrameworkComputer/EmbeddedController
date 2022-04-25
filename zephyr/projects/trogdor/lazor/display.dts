@@ -6,7 +6,7 @@
 / {
 	displight {
 		compatible = "cros-ec,displight";
-		pwms = <&pwm5 0 PWM_POLARITY_NORMAL>;
+		pwms = <&pwm5 0 0 PWM_POLARITY_NORMAL>;
 		frequency = <4800>;
 		generic-pwm-channel = <1>;
 	};
