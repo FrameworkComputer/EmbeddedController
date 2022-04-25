@@ -430,6 +430,14 @@ void cypd_set_error_recovery(void)
 	}
 }
 
+static bool reconnect_flag;
+
+static void reconnect_port_deferred(void)
+{
+	cypd_aconly_reconnect();
+}
+DECLARE_DEFERRED(reconnect_port_deferred);
+
 void update_system_power_state(void)
 {
 
@@ -440,6 +448,7 @@ void update_system_power_state(void)
 	case POWER_S5G3:
 	case POWER_S3S5:
 		cypd_set_power_state(CYP5525_POWERSTATE_S5);
+		reconnect_flag = true;
 		break;
 	/* wait PD FW stable */
 	/*case POWER_S0S0ix:
@@ -449,9 +458,12 @@ void update_system_power_state(void)
 	default:
 		cypd_set_error_recovery();
 		cypd_set_power_state(CYP5525_POWERSTATE_S0);
+		if (reconnect_flag) {
+			reconnect_flag = false;
+			CPRINTS("CYPD reconnect");
+			cypd_aconly_reconnect();
+		}
 		break;
-
-
 	}
 
 }
@@ -1232,7 +1244,7 @@ void cypd_reinitialize(void)
 
 void cypd_interrupt_handler_task(void *p)
 {
-	int i, j, evt;
+	int i, j, evt, events;
 	cypd_int_task_id = task_get_current();
 
 	/* Initialize all charge suppliers to 0 */
@@ -1268,6 +1280,25 @@ void cypd_interrupt_handler_task(void *p)
 			if (saved_bb_power_state == POWER_G3) {
 					cypd_bb_retimer_cmd(RT_EVT_VSYS_REMOVED);
 			}
+		}
+
+		if (evt & CYPD_EVT_PORT_DISABLE) {
+			CPRINTS("CYPD_EVT_PORT_DISABLE");
+			cypd_reconnect_port_disable(0, 0);
+			cypd_reconnect_port_disable(1, 0);
+			cypd_reconnect_port_disable(0, 1);
+			cypd_reconnect_port_disable(1, 1);
+			events = task_wait_event_mask(TASK_EVENT_TIMER, 300*MSEC);
+			if (events & TASK_EVENT_TIMER)
+				cypd_enque_evt(CYPD_EVT_PORT_ENABLE, 0);
+		}
+
+		if (evt & CYPD_EVT_PORT_ENABLE) {
+			CPRINTS("CYPD_EVT_PORT_ENABLE");
+			cypd_reconnect_port_enable(0, 0);
+			cypd_reconnect_port_enable(1, 0);
+			cypd_reconnect_port_enable(0, 1);
+			cypd_reconnect_port_enable(1, 1);
 		}
 
 		if (evt & CYPD_EVT_S_CHANGE) {
@@ -1311,13 +1342,10 @@ void cypd_interrupt_handler_task(void *p)
 	}
 }
 
-
-
-int cypd_reconnect_port(int controller, int port)
+int cypd_reconnect_port_disable(int controller, int port)
 {
 	int rv;
 	uint8_t pd_status_reg[4];
-	int port_idx = (controller << 1) + port;
 	int port_pd_state, port_power_role, data;
 
 	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), pd_status_reg, 4);
@@ -1334,48 +1362,60 @@ int cypd_reconnect_port(int controller, int port)
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	CPRINTS("Port data0: %d", data);
-
 	data &= ~BIT(port);
-
-	CPRINTS("Port data1: %d", data);
 
 	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, data);
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	cyp5225_wait_for_ack(controller, 1 * SECOND);
+	CPRINTS("disable controller: %d, Port: %d", controller, port);
+
+	return rv;
+}
+
+int cypd_reconnect_port_enable(int controller, int port)
+{
+	int rv;
+	uint8_t pd_status_reg[4];
+	int port_pd_state, port_power_role, data;
+
+	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), pd_status_reg, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_PD_STATUS_REG failed");
+
+	port_pd_state = pd_status_reg[1] & BIT(2);
+	port_power_role = pd_status_reg[1] & BIT(0);
+
+	if (port_power_role == PD_ROLE_SINK && port_pd_state)
+		return EC_SUCCESS;
+
+	rv = cypd_read_reg8(controller, CYP5525_PDPORT_ENABLE_REG, &data);
+	if (rv != EC_SUCCESS)
+		return rv;
 
 	data |= BIT(port);
 
-	CPRINTS("Port data2: %d", data);
-
 	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, data);
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	cyp5225_wait_for_ack(controller, 200 * MSEC);
+	CPRINTS("enable controller: %d, Port: %d", controller, port);
 
-	CPRINTS("PD Re connect controller: %d, Port: %d", controller, port_idx);
 	return rv;
 }
 
 void cypd_aconly_reconnect(void)
 {
-	int batt_status;
+	int batt_status, events;
 
 	battery_status(&batt_status);
 
 	if (extpower_is_present() && battery_is_present() != BP_YES) {
-		cypd_reconnect_port(0, 0);
-		msleep(20);
-		cypd_reconnect_port(0, 1);
-		cypd_reconnect_port(1, 0);
-		msleep(20);
-		cypd_reconnect_port(1, 1);
+		events = task_wait_event_mask(TASK_EVENT_TIMER, 100*MSEC);
+		if (events & TASK_EVENT_TIMER)
+			cypd_enque_evt(CYPD_EVT_PORT_DISABLE, 0);
 	}
 }
-
 
 int cypd_get_pps_power_budget(void)
 {

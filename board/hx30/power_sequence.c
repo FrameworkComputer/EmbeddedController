@@ -563,7 +563,6 @@ enum power_state power_handle_state(enum power_state state)
 		me_gpio_change(GPIO_FLAG_NONE);
 
 		cypd_set_power_active(POWER_S0);
-		cypd_aconly_reconnect();
 		CPRINTS("PH S3S0->S0");
         return POWER_S0;
 

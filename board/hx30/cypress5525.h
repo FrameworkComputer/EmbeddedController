@@ -404,7 +404,9 @@ enum pd_task_evt {
 	CYPD_EVT_UCSI_POLL_CTRL_0 = BIT(7),
 	CYPD_EVT_UCSI_POLL_CTRL_1 = BIT(8),
 	CYPD_EVT_RETIMER_PWR = BIT(9),
-	CYPD_EVT_UPDATE_PWRSTAT = BIT(10)
+	CYPD_EVT_UPDATE_PWRSTAT = BIT(10),
+	CYPD_EVT_PORT_ENABLE = BIT(11),
+	CYPD_EVT_PORT_DISABLE = BIT(12)
 };
 
 /* PD CHIP */
@@ -459,4 +461,8 @@ void set_pd_fw_update(bool update);
 void cypd_charger_init_complete(void);
 
 void cypd_aconly_reconnect(void);
+
+int cypd_reconnect_port_enable(int controller, int port);
+
+int cypd_reconnect_port_disable(int controller, int port);
 #endif	/* __CROS_EC_CYPRESS5525_H */
