@@ -429,7 +429,6 @@ static void dpm_attempt_mode_exit(int port)
 		} else if (!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
 			return;
 		}
-		/* TODO(b/209625351): Check for Not Supported case. */
 	}
 
 	/* TODO(b/209625351): Data Reset is the only real way to exit from USB4
@@ -452,7 +451,6 @@ static void dpm_attempt_mode_exit(int port)
 		/*
 		 * When the port is in USB4 mode and receives an exit request,
 		 * it leaves USB4 SOP in active state.
-		 * TODO(b/156749387): Support Data Reset for exiting USB4 SOP.
 		 */
 		CPRINTS("C%d: TBT teardown", port);
 		tbt_exit_mode_request(port);

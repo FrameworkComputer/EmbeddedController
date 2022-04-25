@@ -262,13 +262,10 @@ enum usb_pe_state {
 	PE_DR_SRC_GET_SOURCE_CAP,
 
 	/* PD3.0 only states below here*/
-#ifdef CONFIG_USB_PD_DATA_RESET_MSG
 	/* DFP Data Reset States */
 	PE_DDR_SEND_DATA_RESET,
 	PE_DDR_WAIT_FOR_VCONN_OFF,
 	PE_DDR_PERFORM_DATA_RESET,
-#endif /* CONFIG_USB_PD_DATA_RESET_MSG */
-
 	PE_FRS_SNK_SRC_START_AMS,
 	PE_GIVE_BATTERY_CAP,
 	PE_GIVE_BATTERY_STATUS,
@@ -456,6 +453,15 @@ GEN_NOT_SUPPORTED(PE_SRC_CHUNK_RECEIVED);
 GEN_NOT_SUPPORTED(PE_SNK_CHUNK_RECEIVED);
 #define PE_SNK_CHUNK_RECEIVED PE_SNK_CHUNK_RECEIVED_NOT_SUPPORTED
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
+
+#ifndef CONFIG_USB_PD_DATA_RESET_MSG
+GEN_NOT_SUPPORTED(PE_DDR_SEND_DATA_RESET);
+#define PE_DDR_SEND_DATA_RESET PE_DDR_SEND_DATA_RESET_NOT_SUPPORTED
+GEN_NOT_SUPPORTED(PE_DDR_WAIT_FOR_VCONN_OFF);
+#define PE_DDR_WAIT_FOR_VCONN_OFF PE_DDR_WAIT_FOR_VCONN_OFF_NOT_SUPPORTED
+GEN_NOT_SUPPORTED(PE_DDR_PERFORM_DATA_RESET);
+#define PE_DDR_PERFORM_DATA_RESET PE_DDR_PERFORM_DATA_RESET_NOT_SUPPORTED
+#endif /* CONFIG_USB_PD_DATA_RESET_MSG */
 
 static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -1133,11 +1139,10 @@ void pe_report_error(int port, enum pe_error e, enum tcpci_msg_type type)
 			get_state_pe(port) == PE_SRC_DISCOVERY ||
 			get_state_pe(port) == PE_VCS_CBL_SEND_SOFT_RESET ||
 			get_state_pe(port) == PE_VDM_IDENTITY_REQUEST_CBL) ||
-#ifdef CONFIG_USB_PD_DATA_RESET_MSG
-			get_state_pe(port) == PE_DDR_SEND_DATA_RESET ||
-			get_state_pe(port) == PE_DDR_WAIT_FOR_VCONN_OFF ||
-			get_state_pe(port) == PE_DDR_PERFORM_DATA_RESET ||
-#endif
+			(IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
+			 (get_state_pe(port) == PE_DDR_SEND_DATA_RESET ||
+			  get_state_pe(port) == PE_DDR_WAIT_FOR_VCONN_OFF ||
+			  get_state_pe(port) == PE_DDR_PERFORM_DATA_RESET)) ||
 			(pe_in_frs_mode(port) &&
 			    get_state_pe(port) == PE_PRS_SNK_SRC_SEND_SWAP)
 			) {
@@ -1531,9 +1536,8 @@ static bool common_src_snk_dpm_requests(int port)
 		else
 			set_state_pe(port, PE_DRS_SEND_SWAP);
 		return true;
-	}
-#ifdef CONFIG_USB_PD_DATA_RESET_MSG
-	else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DATA_RESET)) {
+	} else if (IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
+			PE_CHK_DPM_REQUEST(port, DPM_REQUEST_DATA_RESET)) {
 		if (prl_get_rev(port, TCPCI_MSG_SOP) < PD_REV30) {
 			dpm_data_reset_complete(port);
 			return false;
@@ -1546,7 +1550,7 @@ static bool common_src_snk_dpm_requests(int port)
 			return false;
 		return true;
 	}
-#endif /* CONFIG_USB_PD_DATA_RESET_MSG */
+
 	return false;
 }
 
