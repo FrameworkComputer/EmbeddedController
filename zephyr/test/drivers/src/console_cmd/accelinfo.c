@@ -6,9 +6,11 @@
 #include <shell/shell.h>
 #include <ztest.h>
 
+#include "config.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "test/drivers/test_state.h"
+#include "timer.h"
 
 static void console_cmd_accelinfo_after(void *fixture)
 {
@@ -47,5 +49,7 @@ ZTEST_USER(console_cmd_accelinfo, test_enable_disable)
 	 * just assert that the command executed and returned 0.
 	 */
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelinfo on"), NULL);
+	k_msleep(CONFIG_MOTION_MIN_SENSE_WAIT_TIME * MSEC * 2);
+
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelinfo off"), NULL);
 }
