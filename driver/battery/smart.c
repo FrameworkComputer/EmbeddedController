@@ -92,7 +92,28 @@ int sb_read_string(int offset, uint8_t *data, int len)
 	if (battery_supports_pec())
 		addr_flags |= I2C_FLAG_PEC;
 
-	return i2c_read_string(I2C_PORT_BATTERY, addr_flags, offset, data, len);
+	return i2c_read_string(I2C_PORT_BATTERY, addr_flags, offset, data,
+			       len);
+}
+
+int sb_read_sized_block(int offset, uint8_t *data, int len)
+{
+	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
+	int read_len = 0;
+
+	if (IS_ENABLED(CONFIG_BATTERY_CUT_OFF)) {
+		/*
+		 * Some batteries would wake up after cut-off if we talk to it.
+		 */
+		if (battery_is_cut_off())
+			return EC_RES_ACCESS_DENIED;
+	}
+
+	if (battery_supports_pec())
+		addr_flags |= I2C_FLAG_PEC;
+
+	return i2c_read_sized_block(I2C_PORT_BATTERY, addr_flags, offset, data,
+				    len, &read_len);
 }
 
 int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len)
@@ -116,7 +137,7 @@ int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len)
 	 * First two bytes returned are command sent,
 	 * rest are actual data LSB to MSB.
 	 */
-	rv = sb_read_string(block, data, len);
+	rv = sb_read_sized_block(block, data, len);
 	if (rv)
 		return rv;
 	if ((data[0] | data[1] << 8) != cmd)

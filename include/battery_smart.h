@@ -169,8 +169,21 @@
 /* Read from battery */
 int sb_read(int cmd, int *param);
 
-/* Read sequence from battery */
+/**
+ * Read null-terminated string from battery
+ * @param offset	Battery register to read from
+ * @param data		Buffer to hold the string
+ * @param len		Length of data buffer
+ */
 int sb_read_string(int offset, uint8_t *data, int len);
+
+/**
+ * Read sized block of data from battery
+ * @param offset	Battery register to read from
+ * @param data		Buffer to hold read data
+ * @param len		Length of data buffer
+ */
+int sb_read_sized_block(int offset, uint8_t *data, int len);
 
 /* Write to battery */
 int sb_write(int cmd, int param);
