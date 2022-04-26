@@ -395,15 +395,6 @@ const struct pwm_t pwm_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-int board_accel_force_mode_mask(void)
-{
-	int version = board_get_version();
-
-	if (version == -1 || version >= 2)
-		return 0;
-	return BIT(LID_ACCEL);
-}
-
 static void board_suspend(void)
 {
 	if (board_get_version() >= 3)
