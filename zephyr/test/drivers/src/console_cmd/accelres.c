@@ -21,30 +21,31 @@ struct console_cmd_accelres_fixture {
 	struct accelgyro_drv mock_drv;
 };
 
-static struct console_cmd_accelres_fixture fixture = {
-	.mock_drv = {
-		.set_resolution = set_resolution,
-	},
-};
-
 void *console_cmd_accelres_setup(void)
 {
+	static struct console_cmd_accelres_fixture fixture = {
+		.mock_drv = {
+			.set_resolution = set_resolution,
+		},
+	};
+
 	fixture.sensor_0_drv = motion_sensors[0].drv;
 
 	return &fixture;
 }
 
-void console_cmd_accelres_before(void *state)
+void console_cmd_accelres_before(void *fixture)
 {
-	ARG_UNUSED(state);
+	ARG_UNUSED(fixture);
 	RESET_FAKE(set_resolution);
 	FFF_RESET_HISTORY();
 }
 
-void console_cmd_accelres_after(void *state)
+void console_cmd_accelres_after(void *fixture)
 {
-	ARG_UNUSED(state);
-	motion_sensors[0].drv = fixture.sensor_0_drv;
+	struct console_cmd_accelres_fixture *this = fixture;
+
+	motion_sensors[0].drv = this->sensor_0_drv;
 }
 
 ZTEST_SUITE(console_cmd_accelres, drivers_predicate_post_main,

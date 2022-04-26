@@ -20,29 +20,29 @@ struct console_cmd_accelinit_fixture {
 	struct accelgyro_drv mock_drv;
 };
 
-static struct console_cmd_accelinit_fixture fixture = {
-	.mock_drv = {
-		.init = mock_init,
-	},
-};
-
 static void *console_cmd_accelinit_setup(void)
 {
+	static struct console_cmd_accelinit_fixture fixture = {
+		.mock_drv = {
+			.init = mock_init,
+		},
+	};
 	fixture.sensor_0_drv = motion_sensors[0].drv;
 
 	return &fixture;
 }
 
-static void console_cmd_accelinit_before(void *state)
+static void console_cmd_accelinit_before(void *fixture)
 {
-	ARG_UNUSED(state);
+	ARG_UNUSED(fixture);
 	RESET_FAKE(mock_init);
 	FFF_RESET_HISTORY();
 }
-static void console_cmd_accelinit_after(void *state)
+static void console_cmd_accelinit_after(void *fixture)
 {
-	ARG_UNUSED(state);
-	motion_sensors[0].drv = fixture.sensor_0_drv;
+	struct console_cmd_accelinit_fixture *this = fixture;
+
+	motion_sensors[0].drv = this->sensor_0_drv;
 	motion_sensors[0].drv->init(&motion_sensors[0]);
 }
 

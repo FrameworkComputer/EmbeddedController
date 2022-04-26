@@ -34,27 +34,27 @@ struct host_cmd_motion_sense_fixture {
 	struct accelgyro_drv mock_drv;
 };
 
-static struct host_cmd_motion_sense_fixture fixture = {
-	.mock_drv = {
-		.set_range = mock_set_range,
-		.set_offset = mock_set_offset,
-		.get_offset = mock_get_offset,
-		.set_scale = mock_set_scale,
-		.get_scale = mock_get_scale,
-		.perform_calib = mock_perform_calib,
-	},
-};
-
 static void *host_cmd_motion_sense_setup(void)
 {
+	static struct host_cmd_motion_sense_fixture fixture = {
+		.mock_drv = {
+			.set_range = mock_set_range,
+			.set_offset = mock_set_offset,
+			.get_offset = mock_get_offset,
+			.set_scale = mock_set_scale,
+			.get_scale = mock_get_scale,
+			.perform_calib = mock_perform_calib,
+		},
+	};
+
 	fixture.sensor_0_drv = motion_sensors[0].drv;
 
 	return &fixture;
 }
 
-static void host_cmd_motion_sense_before(void *state)
+static void host_cmd_motion_sense_before(void *fixture)
 {
-	ARG_UNUSED(state);
+	ARG_UNUSED(fixture);
 	RESET_FAKE(mock_set_range);
 	RESET_FAKE(mock_set_offset);
 	RESET_FAKE(mock_get_offset);
@@ -67,10 +67,11 @@ static void host_cmd_motion_sense_before(void *state)
 	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 1000 * MSEC;
 }
 
-static void host_cmd_motion_sense_after(void *state)
+static void host_cmd_motion_sense_after(void *fixture)
 {
-	ARG_UNUSED(state);
-	motion_sensors[0].drv = fixture.sensor_0_drv;
+	struct host_cmd_motion_sense_fixture *this = fixture;
+
+	motion_sensors[0].drv = this->sensor_0_drv;
 }
 
 ZTEST_SUITE(host_cmd_motion_sense, drivers_predicate_post_main,

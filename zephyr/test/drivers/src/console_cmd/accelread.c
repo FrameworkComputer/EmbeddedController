@@ -24,38 +24,38 @@ struct console_cmd_accelread_fixture {
 	struct accelgyro_drv mock_drv;
 };
 
-static struct console_cmd_accelread_fixture fixture = {
-	.mock_drv = {
-		.read = mock_read,
-		/*
-		 * Data rate functions are required so that motion_sense task
-		 * doesn't segfault.
-		 */
-		.set_data_rate = mock_set_data_rate,
-		.get_data_rate = mock_get_data_rate,
-	},
-};
-
 static void *console_cmd_accelread_setup(void)
 {
+	static struct console_cmd_accelread_fixture fixture = {
+		.mock_drv = {
+			.read = mock_read,
+			/*
+			 * Data rate functions are required so that motion_sense
+			 * task doesn't segfault.
+			 */
+			.set_data_rate = mock_set_data_rate,
+			.get_data_rate = mock_get_data_rate,
+		},
+	};
 	fixture.sensor_0_drv = motion_sensors[0].drv;
 
 	return &fixture;
 }
 
-static void console_cmd_accelread_before(void *state)
+static void console_cmd_accelread_before(void *fixture)
 {
-	ARG_UNUSED(state);
+	ARG_UNUSED(fixture);
 	RESET_FAKE(mock_read);
 	RESET_FAKE(mock_set_data_rate);
 	RESET_FAKE(mock_get_data_rate);
 	FFF_RESET_HISTORY();
 }
 
-static void console_cmd_accelread_after(void *state)
+static void console_cmd_accelread_after(void *fixture)
 {
-	ARG_UNUSED(state);
-	motion_sensors[0].drv = fixture.sensor_0_drv;
+	struct console_cmd_accelread_fixture *this = fixture;
+
+	motion_sensors[0].drv = this->sensor_0_drv;
 }
 
 ZTEST_SUITE(console_cmd_accelread, drivers_predicate_post_main,
@@ -87,13 +87,16 @@ ZTEST_USER(console_cmd_accelread, test_invalid_sensor_num)
 		      EC_ERROR_PARAM1, rv);
 }
 
+static struct console_cmd_accelread_fixture *current_fixture;
+
 int mock_read_call_super(const struct motion_sensor_t *s, int *v)
 {
-	return fixture.sensor_0_drv->read(s, v);
+	return current_fixture->sensor_0_drv->read(s, v);
 }
 
 ZTEST_USER_F(console_cmd_accelread, test_read)
 {
+	current_fixture = this;
 	mock_read_fake.custom_fake = mock_read_call_super;
 	motion_sensors[0].drv = &this->mock_drv;
 
