@@ -310,6 +310,28 @@ int host_cmd_motion_sense_range(uint8_t sensor_num, int32_t range,
 				struct ec_response_motion_sense *response);
 
 /**
+ * @brief Call the host command MOTION_SENSE with the sensor offset sub-command
+ *
+ * This function attempts to set the offset if the flags field includes
+ * MOTION_SENSE_SET_OFFSET. Otherwise, the temperature and offsets are ignored.
+ * The response field will include the current (after modification) offsets and
+ * temperature.
+ *
+ * @param sensor_num The sensor index in the motion_sensors array to query
+ * @param flags The flags to pass to the host command
+ * @param temperature The temperature at which the offsets were attained (set)
+ * @param offset_x The X offset to set
+ * @param offset_y The Y offset to set
+ * @param offset_z The Z offset to set
+ * @param response Pointer to the response data structure to fill on success
+ * @return The result code from the host command
+ */
+int host_cmd_motion_sense_offset(uint8_t sensor_num, uint16_t flags,
+				 int16_t temperature, int16_t offset_x,
+				 int16_t offset_y, int16_t offset_z,
+				 struct ec_response_motion_sense *response);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number
