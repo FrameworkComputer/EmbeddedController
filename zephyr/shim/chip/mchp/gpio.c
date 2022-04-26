@@ -4,10 +4,9 @@
  */
 
 #include <device.h>
+#include <drivers/gpio.h>
 #include <kernel.h>
 #include <logging/log.h>
-
-#include "gpio.h"
 #include "gpio/gpio.h"
 
 LOG_MODULE_REGISTER(shim_cros_gpio, LOG_LEVEL_ERR);
