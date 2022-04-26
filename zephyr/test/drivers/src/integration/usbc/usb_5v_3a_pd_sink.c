@@ -248,3 +248,22 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_power_info)
 		     "Expected the PD current limit to be >= 0, but got %dmA",
 		     power_info.meas.current_lim);
 }
+
+/**
+ * @brief TestPurpose: Verify GotoMin message.
+ *
+ * @details
+ *  - TCPM is configured initially as Source
+ *  - Initiate Goto_Min request
+ *  - Verify emulated sink PD negotiation is completed
+ *
+ * Expected Results
+ *  - Sink completes Goto Min PD negotiation
+ */
+ZTEST_F(usb_attach_5v_3a_pd_sink, verify_goto_min)
+{
+	pd_dpm_request(0, DPM_REQUEST_GOTO_MIN);
+	k_sleep(K_SECONDS(1));
+
+	zassert_true(this->sink_5v_3a.data.pd_completed, NULL);
+}
