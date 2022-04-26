@@ -374,20 +374,26 @@ int bmi_decode_header(struct motion_sensor_t *accel, enum fifo_header hdr,
 			struct motion_sensor_t *s = accel + i;
 
 			if (hdr & (1 << (i + BMI_FH_PARM_OFFSET))) {
-				struct ec_response_motion_sensor_data vector;
 				int *v = s->raw_xyz;
 
-				vector.flags = 0;
 				bmi_normalize(s, v, *bp);
 				if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
 				    s->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
 					v = s->spoof_xyz;
-				vector.data[X] = v[X];
-				vector.data[Y] = v[Y];
-				vector.data[Z] = v[Z];
-				vector.sensor_num = s - motion_sensors;
-				motion_sense_fifo_stage_data(&vector, s, 3,
-							     last_ts);
+				if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+					struct ec_response_motion_sensor_data vector;
+
+					vector.flags = 0;
+					vector.data[X] = v[X];
+					vector.data[Y] = v[Y];
+					vector.data[Z] = v[Z];
+					vector.sensor_num = s - motion_sensors;
+					motion_sense_fifo_stage_data(&vector, s,
+								     3,
+								     last_ts);
+				} else {
+					motion_sense_push_raw_xyz(s);
+				}
 				*bp += (i == MOTIONSENSE_TYPE_MAG ? 8 : 6);
 			}
 		}

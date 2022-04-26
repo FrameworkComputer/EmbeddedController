@@ -23,6 +23,11 @@
 #include "util.h"
 #include "watchdog.h"
 
+
+#ifdef CONFIG_ACCELGYRO_BMI260_INT_EVENT
+#define ACCELGYRO_BMI260_INT_ENABLE
+#endif
+
 /* BMI220/BMI260 firmware binary */
 #if defined(CONFIG_ACCELGYRO_BMI220)
 #include "bmi220/accelgyro_bmi220_config_tbin.h"
@@ -37,7 +42,8 @@
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
+STATIC_IF(ACCELGYRO_BMI260_INT_ENABLE)
+	volatile uint32_t last_interrupt_timestamp;
 
 /*
  * The gyro start-up time is 45ms in normal mode
@@ -84,7 +90,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 
 	if (rate == 0) {
 		/* FIFO stop collecting events */
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		if (IS_ENABLED(ACCELGYRO_BMI260_INT_ENABLE))
 			bmi_enable_fifo(s, 0);
 		/* disable sensor */
 		ret = enable_sensor(s, 0);
@@ -123,7 +129,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	 * FIFO start collecting events.
 	 * They will be discarded if AP does not want them.
 	 */
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+	if (IS_ENABLED(ACCELGYRO_BMI260_INT_ENABLE))
 		bmi_enable_fifo(s, 1);
 accel_cleanup:
 	mutex_unlock(s->mutex);
@@ -279,29 +285,13 @@ end_perform_calib:
 	return ret;
 }
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
-
-/**
- * bmi260_interrupt - called when the sensor activates the interrupt line.
- *
- * This is a "top half" interrupt handler, it just asks motion sense ask
- * to schedule the "bottom half", ->irq_handler().
- */
-void bmi260_interrupt(enum gpio_signal signal)
-{
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
-		last_interrupt_timestamp = __hw_clock_source_read();
-
-	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCELGYRO_BMI260_INT_EVENT);
-}
-
 /**
  * config_interrupt - sets up the interrupt request output pin on the BMI260
  *
  * Note: this function only supports motion_sensor_t structs of type
  * MOTIONSENSE_TYPE_ACCEL and expects the caller to verify this.
  */
-static int config_interrupt(const struct motion_sensor_t *s)
+static __maybe_unused int config_interrupt(const struct motion_sensor_t *s)
 {
 	int ret;
 
@@ -317,45 +307,57 @@ static int config_interrupt(const struct motion_sensor_t *s)
 		/* TODO(chingkang): Test it if we want int2 as an interrupt */
 		/* configure int2 as an interrupt */
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				BMI260_INT2_IO_CTRL,
-				BMI260_INT2_OUTPUT_EN);
+				 BMI260_INT2_IO_CTRL,
+				 BMI260_INT2_OUTPUT_EN);
 	else
 		/* configure int2 as an external input. */
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				BMI260_INT2_IO_CTRL,
-				BMI260_INT2_INPUT_EN);
+				 BMI260_INT2_IO_CTRL,
+				 BMI260_INT2_INPUT_EN);
 
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
-		/* map fifo water mark to int 1 */
-		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				 BMI260_INT_MAP_DATA,
-				 BMI260_INT_MAP_DATA_REG(1, FWM) |
-				 BMI260_INT_MAP_DATA_REG(1, FFULL));
+	/* map fifo water mark to int 1 */
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
+			 BMI260_INT_MAP_DATA,
+			 BMI260_INT_MAP_DATA_REG(1, FWM) |
+			 BMI260_INT_MAP_DATA_REG(1, FFULL));
 
-		/*
-		 * Configure fifo watermark to int whenever there's any data in
-		 * there
-		 */
+	/*
+	 * Configure fifo watermark to int whenever there's any data in
+	 * there
+	 */
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
+			 BMI260_FIFO_WTM_0, 1);
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
+			 BMI260_FIFO_WTM_1, 0);
+	if (IS_ENABLED(CONFIG_ACCELGYRO_BMI260_INT2_OUTPUT))
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				 BMI260_FIFO_WTM_0, 1);
+				 BMI260_FIFO_CONFIG_1,
+				 BMI260_FIFO_HEADER_EN);
+	else
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				 BMI260_FIFO_WTM_1, 0);
-		if (IS_ENABLED(CONFIG_ACCELGYRO_BMI260_INT2_OUTPUT))
-			ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-					BMI260_FIFO_CONFIG_1,
-					BMI260_FIFO_HEADER_EN);
-		else
-			ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-					BMI260_FIFO_CONFIG_1,
-					(BMI260_FIFO_TAG_INT_LEVEL <<
-					 BMI260_FIFO_TAG_INT2_EN_OFFSET) |
-					BMI260_FIFO_HEADER_EN);
-		/* disable FIFO sensortime frame */
-		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				 BMI260_FIFO_CONFIG_0, 0);
-	}
+				 BMI260_FIFO_CONFIG_1,
+				 (BMI260_FIFO_TAG_INT_LEVEL <<
+				  BMI260_FIFO_TAG_INT2_EN_OFFSET) |
+				 BMI260_FIFO_HEADER_EN);
+	/* disable FIFO sensortime frame */
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
+			BMI260_FIFO_CONFIG_0, 0);
 	mutex_unlock(s->mutex);
 	return ret;
+}
+
+#ifdef ACCELGYRO_BMI260_INT_ENABLE
+/**
+ * bmi260_interrupt - called when the sensor activates the interrupt line.
+ *
+ * This is a "top half" interrupt handler, it just asks motion sense ask
+ * to schedule the "bottom half", ->irq_handler().
+ */
+void bmi260_interrupt(enum gpio_signal signal)
+{
+	last_interrupt_timestamp = __hw_clock_source_read();
+
+	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCELGYRO_BMI260_INT_EVENT);
 }
 
 /**
@@ -385,8 +387,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		if (rv)
 			return rv;
 
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO) &&
-			interrupt & (BMI260_FWM_INT | BMI260_FFULL_INT)) {
+		if (interrupt & (BMI260_FWM_INT | BMI260_FFULL_INT)) {
 			bmi_load_fifo(s, last_interrupt_timestamp);
 			has_read_fifo = 1;
 		}
@@ -397,7 +398,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 	return EC_SUCCESS;
 }
-#endif  /* CONFIG_ACCEL_INTERRUPTS */
+#endif  /* ACCELGYRO_BMI260_INT_ENABLE */
 
 /*
  * If the .init_rom section is not memory mapped, we need a static
@@ -590,7 +591,7 @@ static int init(struct motion_sensor_t *s)
 	 */
 	saved_data->odr = 0;
 
-	if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS) &&
+	if (IS_ENABLED(ACCELGYRO_BMI260_INT_ENABLE) &&
 	    (s->type == MOTIONSENSE_TYPE_ACCEL))
 		ret = config_interrupt(s);
 
@@ -610,7 +611,7 @@ const struct accelgyro_drv bmi260_drv = {
 	.get_offset = bmi_get_offset,
 	.perform_calib = perform_calib,
 	.read_temp = bmi_read_temp,
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#ifdef ACCELGYRO_BMI260_INT_ENABLE
 	.irq_handler = irq_handler,
 #endif
 #ifdef CONFIG_GESTURE_HOST_DETECTION
