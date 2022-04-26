@@ -16,5 +16,7 @@ zephyr_library_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ
 	x86_non_dsx_common_pwrseq_sm_handler.c)
 zephyr_library_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_CONSOLE
 	x86_non_dsx_common_pwrseq_console.c)
+zephyr_library_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_HOST_CMD
+	x86_non_dsx_common_pwrseq_host_command.c)
 zephyr_library_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_ADL
 	x86_non_dsx_adlp_pwrseq_sm.c)

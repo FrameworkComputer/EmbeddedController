@@ -72,6 +72,14 @@ config X86_NON_DSX_PWRSEQ_CONSOLE
 	  This option enables Non Deep Sleep Well power sequencing shell
 	  console commands to debug.
 
+config X86_NON_DSX_PWRSEQ_HOST_CMD
+	bool "Host commands for x86 Non Deep Sx power sequencing"
+	depends on X86_NON_DSX_PWRSEQ
+	default y
+	help
+	  This option enables Non Deep Sleep Well power sequencing host
+	  commands to debug.
+
 config AP_PWRSEQ_HOST_SLEEP
 	bool "Handle host sleep state changes"
 	help

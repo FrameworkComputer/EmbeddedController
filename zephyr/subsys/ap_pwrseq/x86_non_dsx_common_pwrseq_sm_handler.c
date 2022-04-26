@@ -122,6 +122,11 @@ static void shutdown_and_notify(enum ap_power_shutdown_reason reason)
 	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
 }
 
+void set_reboot_ap_at_g3_delay_seconds(uint32_t d_time)
+{
+	pwrseq_ctx.reboot_ap_at_g3_delay_ms = d_time * MSEC;
+}
+
 void apshutdown(void)
 {
 	if (pwr_sm_get_state() != SYS_POWER_STATE_G3) {
@@ -153,12 +158,21 @@ void rsmrst_pass_thru_handler(void)
 	}
 }
 
+/* Common power sequencing */
 static int common_pwr_sm_run(int state)
 {
 	switch (state) {
 	case SYS_POWER_STATE_G3:
 		if (chipset_is_exit_hardoff()) {
 			request_exit_hardoff(false);
+			/*
+			 * G3->S0 transition should happen only after the
+			 * user specified delay. Hence, wait until the
+			 * user specified delay times out.
+			 */
+			k_msleep(pwrseq_ctx.reboot_ap_at_g3_delay_ms);
+			pwrseq_ctx.reboot_ap_at_g3_delay_ms = 0;
+
 			return SYS_POWER_STATE_G3S5;
 		}
 
