@@ -1,0 +1,57 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwmleds {
+		compatible = "pwm-leds";
+		pwm_led0: pwm_led_0 {
+			pwms = <&pwm2 2 0 PWM_POLARITY_INVERTED>,
+			       <&pwm0 0 0 PWM_POLARITY_INVERTED>,
+			       <&pwm1 1 0 PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	cros-pwmleds {
+		compatible = "cros-ec,pwm-leds";
+
+		leds = <&pwm_led0>;
+		frequency = <324>;
+
+				/*<red green blue>*/
+		color-map-red    = <100   0    0>;
+		color-map-green  = <  0 100    0>;
+		color-map-blue   = <  0   0  100>;
+		color-map-yellow = <  0  50   50>;
+		color-map-white  = <100 100  100>;
+		color-map-amber  = <100  20  100>;
+
+		brightness-range = <100 100 100 0 0 0>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pwm_led_0@0 {
+			reg = <0>;
+			ec-led-name = "EC_LED_ID_BATTERY_LED";
+		};
+	};
+};
+
+/* Enable LEDs to work while CPU suspended */
+
+&pwm0 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};
+
+&pwm2 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+};

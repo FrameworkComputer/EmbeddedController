@@ -14,6 +14,12 @@ config BOARD_NEREID
 	  Build Google Nereid reference board. Nereid has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_CRAASK
+	bool "Google Craask Board"
+	help
+	  Build Google Craask board. Craask has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"
