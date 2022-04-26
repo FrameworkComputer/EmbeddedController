@@ -1192,6 +1192,7 @@ void tcpci_tcpc_alert(int port)
 	int failed_attempts;
 	uint32_t pd_event = 0;
 	int retval = 0;
+	bool bist_mode;
 
 	/* Read the Alert register from the TCPC */
 	if (tcpm_alert_status(port, &alert)) {
@@ -1223,9 +1224,20 @@ void tcpci_tcpc_alert(int port)
 						   TCPC_TX_COMPLETE_SUCCESS :
 						   TCPC_TX_COMPLETE_FAILED);
 
+	tcpc_get_bist_test_mode(port, &bist_mode);
+
 	/* Pull all RX messages from TCPC into EC memory */
 	failed_attempts = 0;
 	while (alert & TCPC_REG_ALERT_RX_STATUS) {
+		/*
+		 * Some TCPCs do not properly disable interrupts during BIST
+		 * test mode. For reducing I2C access time,
+		 * there is no need to read out BIST data, just break.
+		 * (see b/229812911).
+		 */
+		if (bist_mode)
+			break;
+
 		retval = tcpm_enqueue_message(port);
 		if (retval)
 			++failed_attempts;
@@ -1319,8 +1331,12 @@ void tcpci_tcpc_alert(int port)
 	/*
 	 * Check registers to see if we can tell that the TCPC has reset. If
 	 * so, perform a tcpc_init.
+	 *
+	 * Some TCPCs do not properly disable interrupts during BIST test mode.
+	 * As TCPC not reset at this moment, no need to check pd reset status to
+	 * reduce I2C access time.(see b/229812911)
 	 */
-	if (register_mask_reset(port))
+	if (!bist_mode && register_mask_reset(port))
 		pd_event |= PD_EVENT_TCPC_RESET;
 
 	/*
