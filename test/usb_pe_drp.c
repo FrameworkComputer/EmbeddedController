@@ -97,6 +97,15 @@ test_static int finish_src_discovery(int startup_cable_probes)
 	rx_message(TCPCI_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0,
 		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
 
+	/* Expect GET_REVISION, reply NOT_SUPPORTED. */
+	TEST_EQ(mock_prl_wait_for_tx_msg(PORT0, TCPCI_MSG_SOP,
+					 PD_CTRL_GET_REVISION, 0, 10 * MSEC),
+		EC_SUCCESS, "%d");
+	mock_prl_message_sent(PORT0);
+	task_wait_event(10 * MSEC);
+	rx_message(TCPCI_MSG_SOP, PD_CTRL_NOT_SUPPORTED, 0,
+		   PD_ROLE_SINK, PD_ROLE_UFP, 0);
+
 	/*
 	 * Cable identity discovery is attempted 6 times total. 1 was done
 	 * above, so expect 5 more now.

@@ -275,6 +275,7 @@ enum usb_pe_state {
 	PE_SRC_CHUNK_RECEIVED,
 	PE_SNK_CHUNK_RECEIVED,
 	PE_VCS_FORCE_VCONN,
+	PE_GET_REVISION,
 };
 
 /*
@@ -390,6 +391,7 @@ __maybe_unused static __const_data const char * const pe_state_names[] = {
 	/* PD3.0 only states below here*/
 #ifdef CONFIG_USB_PD_REV30
 	[PE_FRS_SNK_SRC_START_AMS] = "PE_FRS_SNK_SRC_Start_Ams",
+	[PE_GET_REVISION] = "PE_Get_Revision",
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 	[PE_GIVE_BATTERY_CAP] = "PE_Give_Battery_Cap",
 	[PE_GIVE_BATTERY_STATUS] = "PE_Give_Battery_Status",
@@ -435,6 +437,8 @@ GEN_NOT_SUPPORTED(PE_SRC_CHUNK_RECEIVED);
 #define PE_SRC_CHUNK_RECEIVED PE_SRC_CHUNK_RECEIVED_NOT_SUPPORTED
 GEN_NOT_SUPPORTED(PE_SNK_CHUNK_RECEIVED);
 #define PE_SNK_CHUNK_RECEIVED PE_SNK_CHUNK_RECEIVED_NOT_SUPPORTED
+GEN_NOT_SUPPORTED(PE_GET_REVISION);
+#define PE_GET_REVISION PE_GET_REVISION_NOT_SUPPORTED
 #endif /* CONFIG_USB_PD_REV30 */
 
 #if !defined(CONFIG_USBC_VCONN) || !defined(CONFIG_USB_PD_REV30)
@@ -621,6 +625,9 @@ static struct policy_engine {
 	/* Last received sink cap */
 	uint32_t snk_caps[PDO_MAX_OBJECTS];
 	int snk_cap_cnt;
+
+	/* Last received Revision Message Data Object (RMDO) from the partner */
+	struct rmdo partner_rmdo;
 
 	/* Attached ChromeOS device id, RW hash, and current RO / RW image */
 	uint16_t dev_id;
@@ -1353,6 +1360,15 @@ static void pe_clear_port_data(int port)
 	pd_set_src_caps(port, 0, NULL);
 	pe_set_snk_caps(port, 0, NULL);
 
+	/*
+	 * Saved Revision responses are no longer valid on disconnect
+	 */
+	pe[port].partner_rmdo.reserved = 0;
+	pe[port].partner_rmdo.minor_ver = 0;
+	pe[port].partner_rmdo.major_ver = 0;
+	pe[port].partner_rmdo.minor_rev = 0;
+	pe[port].partner_rmdo.major_rev = 0;
+
 	/* Clear any stored discovery data, but leave modes for alt mode exit */
 	pd_dfp_discovery_init(port);
 
@@ -1557,6 +1573,11 @@ static bool common_src_snk_dpm_requests(int port)
 			set_state_pe(port, PE_DDR_SEND_DATA_RESET);
 		else
 			return false;
+		return true;
+	} else if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+		   PE_CHK_DPM_REQUEST(port, DPM_REQUEST_GET_REVISION)) {
+		pe_set_dpm_curr_request(port, DPM_REQUEST_GET_REVISION);
+		set_state_pe(port, PE_GET_REVISION);
 		return true;
 	}
 
@@ -2190,6 +2211,14 @@ static void pe_src_startup_entry(int port)
 						CONFIG_USB_PD_3A_PORTS > 0 ||
 						IS_ENABLED(CONFIG_USB_PD_FRS))
 			pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
+
+		/*
+		 * Request partner's revision information. The PE_Get_Revision
+		 * state will only send Get_Revision to partners with major
+		 * revision 3.0
+		 */
+		pd_dpm_request(port, DPM_REQUEST_GET_REVISION);
+
 	}
 }
 
@@ -3079,6 +3108,13 @@ static void pe_snk_startup_entry(int port)
 					CONFIG_USB_PD_3A_PORTS > 0 ||
 					IS_ENABLED(CONFIG_USB_PD_FRS))
 		pd_dpm_request(port, DPM_REQUEST_GET_SNK_CAPS);
+
+	/*
+	 * Request partner's revision information. The PE_Get_Revision
+	 * state will only send Get_Revision to partners with major
+	 * revision 3.0
+	 */
+	pd_dpm_request(port, DPM_REQUEST_GET_REVISION);
 
 }
 
@@ -7072,6 +7108,79 @@ static void pe_dr_src_get_source_cap_exit(int port)
 	pe_sender_response_msg_exit(port);
 }
 
+/*
+ * PE_Get_Revision
+ */
+__maybe_unused static void pe_get_revision_entry(int port)
+{
+	print_current_state(port);
+
+	/*
+	 * Only USB PD partners with major revision 3.0 could potentially
+	 * respond to Get_Revision.
+	 */
+	if (prl_get_rev(port, TCPCI_MSG_SOP) != PD_REV30)
+		return;
+
+	/* Send a Get_Revision message */
+	send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_GET_REVISION);
+	pe_sender_response_msg_entry(port);
+}
+
+__maybe_unused static void pe_get_revision_run(int port)
+{
+	int type;
+	int cnt;
+	int ext;
+	enum pe_msg_check msg_check;
+
+	if (prl_get_rev(port, TCPCI_MSG_SOP) != PD_REV30) {
+		pe_set_ready_state(port);
+		return;
+	}
+
+	/* Check the state of the message sent */
+	msg_check = pe_sender_response_msg_run(port);
+
+	if ((msg_check & PE_MSG_SENT) &&
+	     PE_CHK_FLAG(port, PE_FLAGS_MSG_RECEIVED)) {
+		PE_CLR_FLAG(port, PE_FLAGS_MSG_RECEIVED);
+
+		type = PD_HEADER_TYPE(rx_emsg[port].header);
+		cnt = PD_HEADER_CNT(rx_emsg[port].header);
+		ext = PD_HEADER_EXT(rx_emsg[port].header);
+
+		if (ext == 0 && cnt == 1 && type == PD_DATA_REVISION) {
+			/* Revision returned by partner */
+			pe[port].partner_rmdo =
+			    *((struct rmdo *) rx_emsg[port].buf);
+		}
+
+		/*
+		 * Get_Revision is an interruptible AMS. Return to ready state
+		 * after response whether or not there was a protocol error.
+		 */
+		pe_set_ready_state(port);
+		return;
+	}
+
+	/*
+	 * Return to ready state if the message was discarded or timer expires
+	 */
+	if ((msg_check & PE_MSG_DISCARDED) ||
+	    pd_timer_is_expired(port, PE_TIMER_SENDER_RESPONSE))
+		pe_set_ready_state(port);
+
+}
+
+__maybe_unused static void pe_get_revision_exit(int port)
+{
+	if (prl_get_rev(port, TCPCI_MSG_SOP) != PD_REV30)
+		return;
+
+	pe_sender_response_msg_exit(port);
+}
+
 #ifdef CONFIG_USB_PD_DATA_RESET_MSG
 /*
  * PE_DDR_Send_Data_Reset
@@ -7796,6 +7905,11 @@ static __const_data const struct usb_state pe_states[] = {
 	[PE_FRS_SNK_SRC_START_AMS] = {
 		.entry = pe_frs_snk_src_start_ams_entry,
 		.parent = &pe_states[PE_PRS_FRS_SHARED],
+	},
+	[PE_GET_REVISION] = {
+		.entry = pe_get_revision_entry,
+		.run   = pe_get_revision_run,
+		.exit  = pe_get_revision_exit,
 	},
 #ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
 	[PE_GIVE_BATTERY_CAP] = {

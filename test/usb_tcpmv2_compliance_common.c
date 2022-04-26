@@ -385,9 +385,13 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 		possible[3].ctrl_msg = 0;
 		possible[3].data_msg = PD_DATA_VENDOR_DEF;
 
+		possible[4].tx_type = TCPCI_MSG_SOP;
+		possible[4].ctrl_msg = PD_CTRL_GET_REVISION;
+		possible[4].data_msg = 0;
+
 		do {
 			rv = verify_tcpci_possible_tx(possible,
-						 4,
+						 5,
 						 &found_index,
 						 NULL,
 						 0,
@@ -422,6 +426,11 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 						 PD_CTRL_NOT_SUPPORTED,
 						 0, 0, NULL);
 				break;
+			case 4: /* TCPCI_MSG_SOP PD_CTRL_GET_REVISION */
+				partner_send_msg(TCPCI_MSG_SOP,
+						 PD_CTRL_NOT_SUPPORTED,
+						 0, 0, NULL);
+				break;
 			default:
 				TEST_ASSERT(0);
 				break;
@@ -446,9 +455,13 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 		possible[3].ctrl_msg = PD_CTRL_VCONN_SWAP;
 		possible[3].data_msg = 0;
 
+		possible[4].tx_type = TCPCI_MSG_SOP;
+		possible[4].ctrl_msg = PD_CTRL_GET_REVISION;
+		possible[4].data_msg = 0;
+
 		do {
 			rv = verify_tcpci_possible_tx(possible,
-						 4,
+						 5,
 						 &found_index,
 						 NULL,
 						 0,
@@ -482,6 +495,11 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 				TEST_LT(vcs++, 4, "%d");
 				partner_send_msg(TCPCI_MSG_SOP,
 						 PD_CTRL_REJECT,
+						 0, 0, NULL);
+				break;
+			case 4: /* TCPCI_MSG_SOP PD_CTRL_GET_REVISION */
+				partner_send_msg(TCPCI_MSG_SOP,
+						 PD_CTRL_NOT_SUPPORTED,
 						 0, 0, NULL);
 				break;
 			default:
