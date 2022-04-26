@@ -16,7 +16,7 @@
 #define CONFIG_MP2964
 
 /* Barrel Jack */
-#define DEDICATED_CHARGE_PORT 3
+#define DEDICATED_CHARGE_PORT 2
 
 /* HDMI CEC */
 #define CONFIG_CEC
