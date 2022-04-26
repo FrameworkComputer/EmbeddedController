@@ -19,6 +19,10 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef CONFIG_ALS_SI114X_INT_EVENT
+#define ALS_SI114X_INT_ENABLE
+#endif
+
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
@@ -144,24 +148,10 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 	if (i == nb)
 		return EC_ERROR_UNCHANGED;
 
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
-		struct ec_response_motion_sensor_data vector;
+	for (i = nb; i < 3; i++)
+		s->raw_xyz[i] = 0;
 
-		vector.flags = 0;
-		for (i = 0; i < nb; i++)
-			vector.data[i] = s->raw_xyz[i];
-		for (i = nb; i < 3; i++)
-			vector.data[i] = 0;
-		vector.sensor_num = s - motion_sensors;
-		motion_sense_fifo_stage_data(&vector, s, nb,
-					     __hw_clock_source_read());
-		motion_sense_fifo_commit_data();
-		/*
-		 * TODO: get time at a more accurate spot.
-		 * Like in si114x_interrupt
-		 */
-	}
-	/* Otherwise, we need to copy raw_xyz into xyz with mutex */
+	motion_sense_push_raw_xyz(s);
 	return EC_SUCCESS;
 }
 
@@ -590,7 +580,7 @@ const struct accelgyro_drv si114x_drv = {
 	.get_data_rate = get_data_rate,
 	.set_offset = set_offset,
 	.get_offset = get_offset,
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#ifdef ALS_SI114X_INT_ENABLE
 	.irq_handler = irq_handler,
 #endif
 };
