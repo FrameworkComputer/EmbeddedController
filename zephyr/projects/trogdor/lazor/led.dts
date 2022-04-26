@@ -7,6 +7,7 @@
 
 			color-0 {
 				led-color = "LED_AMBER";
+				led-id = "EC_LED_ID_BATTERY_LED";
 			};
 		};
 
@@ -16,6 +17,7 @@
 
 			color-0 {
 				led-color = "LED_BLUE";
+				led-id = "EC_LED_ID_BATTERY_LED";
 			};
 		};
 
@@ -26,10 +28,12 @@
 			/* Amber 1 sec, off 3 sec */
 			color-0 {
 				led-color = "LED_AMBER";
+				led-id = "EC_LED_ID_BATTERY_LED";
 				period-ms = <1000>;
 			};
 			color-1 {
 				led-color = "LED_OFF";
+				led-id = "EC_LED_ID_BATTERY_LED";
 				period-ms = <3000>;
 			};
 		};
@@ -40,6 +44,7 @@
 
 			color-0 {
 				led-color = "LED_OFF";
+				led-id = "EC_LED_ID_BATTERY_LED";
 			};
 		};
 
@@ -49,10 +54,12 @@
 			/* Amber 1 sec, off 1 sec */
 			color-0 {
 				led-color = "LED_AMBER";
+				led-id = "EC_LED_ID_BATTERY_LED";
 				period-ms = <1000>;
 			};
 			color-1 {
 				led-color = "LED_OFF";
+				led-id = "EC_LED_ID_BATTERY_LED";
 				period-ms = <1000>;
 			};
 		};
@@ -62,6 +69,7 @@
 
 			color-0 {
 				led-color = "LED_BLUE";
+				led-id = "EC_LED_ID_BATTERY_LED";
 			};
 		};
 
@@ -72,10 +80,12 @@
 			/* Blue 2 sec, Amber 2 sec */
 			color-0 {
 				led-color = "LED_BLUE";
+				led-id = "EC_LED_ID_BATTERY_LED";
 				period-ms = <2000>;
 			};
 			color-1 {
 				led-color = "LED_AMBER";
+				led-id = "EC_LED_ID_BATTERY_LED";
 				period-ms = <2000>;
 			};
 		};
@@ -86,6 +96,7 @@
 
 			color-0 {
 				led-color = "LED_BLUE";
+				led-id = "EC_LED_ID_BATTERY_LED";
 			};
 		};
 	};
