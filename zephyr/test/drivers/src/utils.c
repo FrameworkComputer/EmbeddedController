@@ -213,6 +213,26 @@ int host_cmd_motion_sense_offset(uint8_t sensor_num, uint16_t flags,
 	return host_command_process(&args);
 }
 
+int host_cmd_motion_sense_scale(uint8_t sensor_num, uint16_t flags,
+				 int16_t temperature, int16_t scale_x,
+				 int16_t scale_y, int16_t scale_z,
+				struct ec_response_motion_sense *response)
+{
+	struct ec_params_motion_sense params = {
+		.cmd = MOTIONSENSE_CMD_SENSOR_SCALE,
+		.sensor_scale = {
+			.sensor_num = sensor_num,
+			.flags = flags,
+			.temp = temperature,
+			.scale = { scale_x, scale_y, scale_z },
+		},
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
+
+	return host_command_process(&args);
+}
+
 void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 			      void *response, size_t response_size)
 {

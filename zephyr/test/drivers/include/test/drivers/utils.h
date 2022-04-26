@@ -332,6 +332,28 @@ int host_cmd_motion_sense_offset(uint8_t sensor_num, uint16_t flags,
 				 struct ec_response_motion_sense *response);
 
 /**
+ * @brief Call the host command MOTION_SENSE with the sensor scale sub-command
+ *
+ * This function attempts to set the scale if the flags field includes
+ * MOTION_SENSE_SET_OFFSET. Otherwise, the temperature and scales are ignored.
+ * The response field will include the current (after modification) scales and
+ * temperature.
+ *
+ * @param sensor_num The sensor index in the motion_sensors array to query
+ * @param flags The flags to pass to the host command
+ * @param temperature The temperature at which the scales were attained (set)
+ * @param scale_x The X scale to set
+ * @param scale_y The Y scale to set
+ * @param scale_z The Z scale to set
+ * @param response Pointer to the response data structure to fill on success
+ * @return The result code from the host command
+ */
+int host_cmd_motion_sense_scale(uint8_t sensor_num, uint16_t flags,
+				int16_t temperature, int16_t scale_x,
+				int16_t scale_y, int16_t scale_z,
+				struct ec_response_motion_sense *response);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number
