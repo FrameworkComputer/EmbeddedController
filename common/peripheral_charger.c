@@ -6,7 +6,6 @@
 #include "atomic.h"
 #include "chipset.h"
 #include "common.h"
-#include "device_event.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "mkbp_event.h"
@@ -534,14 +533,6 @@ void pchg_irq(enum gpio_signal signal)
 	}
 }
 
-
-static void pchg_suspend_complete(void)
-{
-	CPRINTS("%s", __func__);
-	device_enable_event(EC_DEVICE_EVENT_WLC);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND_COMPLETE, pchg_suspend_complete,
-	     HOOK_PRIO_DEFAULT);
 
 static void pchg_startup(void)
 {
