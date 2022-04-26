@@ -830,8 +830,9 @@ function servo_restore() {
 
 function claim_pty() {
 	if grep -q cros_sdk /proc/1/cmdline; then
-		die "You must run this tool in a chroot that was entered with" \
-		    "'cros_sdk --no-ns-pid' (see crbug.com/444931 for details)"
+		warn "You might want to run this tool in a chroot that was" \
+		     "entered with 'cros_sdk --no-ns-pid'" \
+		     "(see crbug.com/444931 for details)"
 	fi
 
 	if [[ -z "$1" ]]; then
