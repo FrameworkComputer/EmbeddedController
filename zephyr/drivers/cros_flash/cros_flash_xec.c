@@ -392,14 +392,6 @@ static int cros_flash_xec_init(const struct device *dev)
 	return 0;
 }
 
-/* TODO(b/205175314): Migrate cros-flash driver to Zephyr flash driver) */
-static int cros_flash_xec_read(const struct device *dev, int offset, int size,
-				char *dst_data)
-{
-	struct cros_flash_xec_data *data = dev->data;
-
-	return flash_read(data->flash_dev, offset, dst_data, size);
-}
 
 static int cros_flash_xec_write(const struct device *dev, int offset, int size,
 				const char *src_data)
@@ -565,7 +557,6 @@ static int cros_flash_xec_get_status(const struct device *dev, uint8_t *sr1,
 /* cros ec flash driver registration */
 static const struct cros_flash_driver_api cros_flash_xec_driver_api = {
 	.init = cros_flash_xec_init,
-	.physical_read = cros_flash_xec_read,
 	.physical_write = cros_flash_xec_write,
 	.physical_erase = cros_flash_xec_erase,
 	.physical_get_protect = cros_flash_xec_get_protect,

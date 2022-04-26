@@ -13,7 +13,8 @@
 		cros-ec,adc = &adc0;
 		cros-ec,bbram = &bbram;
 		cros-ec,espi = &espi0;
-		cros-ec,flash = &fiu0;
+		cros-ec,flash = &int_flash;
+		cros-ec,flash-controller = &fiu0;
 		cros-ec,raw-kb = &cros_kb_raw;
 		cros-ec,watchdog = &wdog;
 		cros,rtc = &crtc;
