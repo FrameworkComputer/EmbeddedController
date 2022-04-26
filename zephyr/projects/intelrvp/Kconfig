@@ -2,6 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config BOARD_ADLRVP_MCHP
+	bool "Intel ADLRVP_MCHP board"
+	depends on SOC_MEC172X_NSZ
+	help
+	  Build Intel ADLRVP_MCHP reference board. This board has Intel ADL RVP
+	  SoC with MEC1727 EC.
+
 config BOARD_ADLRVP_NPCX
 	bool "Intel ADLRVP_NPCX board"
 	depends on SOC_NPCX9M7F
