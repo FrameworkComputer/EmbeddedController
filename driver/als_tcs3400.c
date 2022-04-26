@@ -16,29 +16,13 @@
 #include "task.h"
 #include "util.h"
 
+#ifdef CONFIG_ALS_TCS3400_INT_EVENT
+#define ALS_TCS3400_INT_ENABLE
+#endif
+
 #define CPRINTS(fmt, args...) cprints(CC_ACCEL, "%s "fmt, __func__, ## args)
 
-#if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
-/*
- * Get the mostion sensor ID of the TCS3400 sensor that
- * generates the interrupt.
- * The interrupt is converted to the event and transferred to motion
- * sense task that actually handles the interrupt.
- *
- * Here, we use alias to get the motion sensor ID
- *
- * e.g) als_clear below is the label of a child node in /motionsense-sensors
- * aliases {
- *     tcs3400-int = &als_clear;
- * };
- */
-#if DT_NODE_EXISTS(DT_ALIAS(tcs3400_int))
-#define CONFIG_ALS_TCS3400_INT_EVENT	\
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(tcs3400_int)))
-#endif
-#endif
-
-STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
+volatile uint32_t last_interrupt_timestamp;
 
 #ifdef CONFIG_TCS_USE_LUX_TABLE
 /*
@@ -103,8 +87,7 @@ static void tcs3400_read_deferred(void)
 void tcs3400_interrupt(enum gpio_signal signal)
 #endif
 {
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
-		last_interrupt_timestamp = __hw_clock_source_read();
+	last_interrupt_timestamp = __hw_clock_source_read();
 
 	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ALS_TCS3400_INT_EVENT);
 }
@@ -417,7 +400,6 @@ static int tcs3400_post_events(struct motion_sensor_t *s,
 	struct motion_sensor_t *rgb_s = s + 1;
 	const uint8_t is_calibration =
 			TCS3400_RGB_DRV_DATA(rgb_s)->calibration_mode;
-	struct ec_response_motion_sensor_data vector = { .flags = 0, };
 	uint8_t buf[TCS_RGBC_DATA_SIZE]; /* holds raw data read from chip */
 	int32_t xyz_data[3] = { 0, 0, 0 };
 	uint16_t raw_data[CRGB_COUNT]; /* holds raw CRGB assembled from buf[] */
@@ -470,13 +452,19 @@ static int tcs3400_post_events(struct motion_sensor_t *s,
 		else
 			last_v[X] = is_calibration ? raw_data[CLEAR_CRGB_IDX] : lux;
 
-		vector.udata[X] = ec_motion_sensor_clamp_u16(last_v[X]);
-		vector.udata[Y] = 0;
-		vector.udata[Z] = 0;
-
 		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+			struct ec_response_motion_sensor_data vector = {
+				.flags = 0,
+			};
+
+			vector.udata[X] = ec_motion_sensor_clamp_u16(last_v[X]);
+			vector.udata[Y] = 0;
+			vector.udata[Z] = 0;
+
 			vector.sensor_num = s - motion_sensors;
 			motion_sense_fifo_stage_data(&vector, s, 3, last_ts);
+		} else {
+			motion_sense_push_raw_xyz(s);
 		}
 	}
 
@@ -491,9 +479,6 @@ static int tcs3400_post_events(struct motion_sensor_t *s,
 	     ((raw_data[RED_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
 	      (raw_data[BLUE_CRGB_IDX] != TCS_SATURATION_LEVEL) &&
 	      (raw_data[GREEN_CRGB_IDX] != TCS_SATURATION_LEVEL)))) {
-
-		void *udata = vector.udata;
-
 		if (is_spoof(rgb_s)) {
 			memcpy(last_v, rgb_s->spoof_xyz, sizeof(rgb_s->spoof_xyz));
 		} else if (is_calibration) {
@@ -504,11 +489,18 @@ static int tcs3400_post_events(struct motion_sensor_t *s,
 			memcpy(last_v, xyz_data, sizeof(xyz_data));
 		}
 
-		ec_motion_sensor_clamp_u16s(udata, last_v);
-
 		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+			struct ec_response_motion_sensor_data vector = {
+				.flags = 0,
+			};
+			void *udata = vector.udata;
+
+			ec_motion_sensor_clamp_u16s(udata, last_v);
+
 			vector.sensor_num = rgb_s - motion_sensors;
 			motion_sense_fifo_stage_data(&vector, rgb_s, 3, last_ts);
+		} else {
+			motion_sense_push_raw_xyz(rgb_s);
 		}
 	}
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
@@ -795,7 +787,7 @@ const struct accelgyro_drv tcs3400_drv = {
 	.set_data_rate = tcs3400_set_data_rate,
 	.get_data_rate = tcs3400_get_data_rate,
 	.perform_calib = tcs3400_perform_calib,
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#ifdef ALS_TCS3400_INT_ENABLE
 	.irq_handler = tcs3400_irq_handler,
 #endif
 };

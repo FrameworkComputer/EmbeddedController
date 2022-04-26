@@ -119,4 +119,24 @@ enum crbg_index {
 	CRGB_COUNT,
 };
 
+#if defined(CONFIG_ZEPHYR)
+#if DT_NODE_EXISTS(DT_ALIAS(tcs3400_int))
+/*
+ * Get the mostion sensor ID of the TCS3400 sensor that
+ * generates the interrupt.
+ * The interrupt is converted to the event and transferred to motion
+ * sense task that actually handles the interrupt.
+ *
+ * Here, we use alias to get the motion sensor ID
+ *
+ * e.g) als_clear below is the label of a child node in /motionsense-sensors
+ * aliases {
+ *     tcs3400-int = &als_clear;
+ * };
+ */
+#define CONFIG_ALS_TCS3400_INT_EVENT	\
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(tcs3400_int)))
+#endif
+#endif  /* CONFIG_ZEPHYR */
+
 #endif /* __CROS_EC_ALS_TCS3400_H */
