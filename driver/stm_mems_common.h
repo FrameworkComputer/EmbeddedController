@@ -19,7 +19,6 @@
 
 #define ST_NORMALIZE_RATE(_fs)    (1 << __fls(_fs))
 
-#ifdef CONFIG_ACCEL_FIFO
 #define FIFO_BUFFER_NUM_PATTERN		8
 /* Define number of data to be read from FIFO each time
  * It must be a multiple of OUT_XYZ_SIZE.
@@ -28,8 +27,6 @@
  * FIFO_BUFFER_NUM_PATTERNpattern
  */
 #define FIFO_READ_LEN			(FIFO_BUFFER_NUM_PATTERN * OUT_XYZ_SIZE)
-
-#endif /* CONFIG_ACCEL_FIFO */
 
 /**
  * Read single register
