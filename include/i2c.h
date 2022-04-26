@@ -447,7 +447,6 @@ int i2c_unwedge(int port);
  *     [length_N] [byte_0] [byte_1] ... [byte_N]
  *
  * <len>      : the max length of receiving buffer
- * <len> == 0 : buffer size > 255
  */
 int i2c_read_sized_block(const int port,
 			 const uint16_t addr_flags,
@@ -462,7 +461,6 @@ int i2c_read_sized_block(const int port,
  *              ascii, len should be at least N+1 to include the
  *              terminating 0.  Similar to strlcpy, the terminating null is
  *              always written into the output buffer.
- * <len> == 0 : buffer size > 255
  */
 int i2c_read_string(const int port,
 		    const uint16_t addr_flags,

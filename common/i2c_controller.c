@@ -782,7 +782,7 @@ int i2c_read_sized_block(const int port,
 	i2c_lock(port, 1);
 
 	for (i = 0; i <= CONFIG_I2C_NACK_RETRY_COUNT; i++) {
-		int data_length;
+		int data_length = 0;
 
 		/*
 		 * Send device reg space offset, and read back block length.
@@ -794,7 +794,7 @@ int i2c_read_sized_block(const int port,
 		if (rv)
 			continue;
 
-		if (max_len && block_length > max_len)
+		if (block_length > max_len)
 			data_length = max_len;
 		else
 			data_length = block_length;
