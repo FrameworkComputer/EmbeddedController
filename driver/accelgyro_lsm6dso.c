@@ -19,28 +19,14 @@
 #include "task.h"
 #include "timer.h"
 
+#ifdef CONFIG_ACCEL_LSM6DSO_INT_EVENT
+#define ACCEL_LSM6DSO_INT_ENABLE
+#endif
+
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
-STATIC_IF(CONFIG_ACCEL_INTERRUPTS) int config_interrupt(
-		const struct motion_sensor_t *s);
-
-#if defined(CONFIG_ZEPHYR) && defined(CONFIG_ACCEL_INTERRUPTS)
-/* Get the motion sensor ID of the LSM6DSO sensor that generates the
- * interrupt. The interrupt is converted to the event and transferred to
- * motion sense task that actually handles the interrupt.
- *
- * Here we use an alias (lsm6dso_int) to get the motion sensor ID. This alias
- * MUST be defined for this driver to work.
- * aliases {
- *   lsm6dso-int = &lid_accel;
- * };
- */
-#if DT_NODE_EXISTS(DT_ALIAS(lsm6dso_int))
-#define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(lsm6dso_int)))
-#endif
-#endif
+STATIC_IF(ACCEL_LSM6DSO_INT_ENABLE)
+	volatile uint32_t last_interrupt_timestamp;
 
 /*
  * When ODR change, the sensor filters need settling time;
@@ -58,7 +44,7 @@ static inline int get_xyz_reg(enum motionsensor_type type)
 	       (LSM6DSO_ACCEL_OUT_X_L_ADDR - LSM6DSO_GYRO_OUT_X_L_ADDR) * type;
 }
 
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#ifdef ACCEL_LSM6DSO_INT_ENABLE
 /**
  * Configure interrupt int 1 to fire handler for:
  *
@@ -70,9 +56,6 @@ static int config_interrupt(const struct motion_sensor_t *s)
 {
 	int ret = EC_SUCCESS;
 	int int1_ctrl_val;
-
-	if (!IS_ENABLED(CONFIG_ACCEL_FIFO))
-		return ret;
 
 	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DSO_INT1_CTRL,
 			   &int1_ctrl_val);
@@ -130,7 +113,6 @@ static int fifo_enable(const struct motion_sensor_t *s)
 static void push_fifo_data(struct motion_sensor_t *main_s, uint8_t *fifo,
 			   uint32_t saved_ts)
 {
-	struct ec_response_motion_sensor_data vect;
 	struct motion_sensor_t *sensor;
 	uint8_t tag;
 	int id;
@@ -167,28 +149,32 @@ static void push_fifo_data(struct motion_sensor_t *main_s, uint8_t *fifo,
 
 	/* Apply precision, sensitivity and rotation. */
 	st_normalize(sensor, axis, ptr);
-	vect.data[X] = axis[X];
-	vect.data[Y] = axis[Y];
-	vect.data[Z] = axis[Z];
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		struct ec_response_motion_sensor_data vect;
 
-	vect.flags = 0;
-	vect.sensor_num = sensor - motion_sensors;
-	motion_sense_fifo_stage_data(&vect, sensor, 3, saved_ts);
+		vect.data[X] = axis[X];
+		vect.data[Y] = axis[Y];
+		vect.data[Z] = axis[Z];
+
+		vect.flags = 0;
+		vect.sensor_num = sensor - motion_sensors;
+		motion_sense_fifo_stage_data(&vect, sensor, 3, saved_ts);
+	} else {
+		motion_sense_push_raw_xyz(sensor);
+	}
 }
 
 static inline int load_fifo(struct motion_sensor_t *main_s,
 			    const uint16_t fifo_len)
 {
 	uint8_t fifo[LSM6DSO_FIFO_SAMPLE_SIZE];
-	int i, err;
+	int i;
 
 	for (i = 0; i < fifo_len; i++) {
-		err = st_raw_read_n_noinc(main_s->port,
-					  main_s->i2c_spi_addr_flags,
-					  LSM6DSO_FIFO_DATA_ADDR_TAG,
-					  fifo, LSM6DSO_FIFO_SAMPLE_SIZE);
-		if (err != EC_SUCCESS)
-			return err;
+		RETURN_ERROR(st_raw_read_n_noinc(main_s->port,
+						 main_s->i2c_spi_addr_flags,
+						 LSM6DSO_FIFO_DATA_ADDR_TAG,
+						 fifo, sizeof(fifo)));
 
 		push_fifo_data(main_s, fifo, last_interrupt_timestamp);
 	}
@@ -232,8 +218,7 @@ static int accelgyro_config_fifo(const struct motion_sensor_t *s)
  */
 void lsm6dso_interrupt(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
-		last_interrupt_timestamp = __hw_clock_source_read();
+	last_interrupt_timestamp = __hw_clock_source_read();
 
 	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LSM6DSO_INT_EVENT);
 }
@@ -251,9 +236,6 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	    (!(*event & CONFIG_ACCEL_LSM6DSO_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-	if (!IS_ENABLED(CONFIG_ACCEL_FIFO))
-		return EC_SUCCESS;
-
 	do {
 		/* Read how many data patterns on FIFO to read. */
 		RETURN_ERROR(st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
@@ -269,12 +251,12 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		}
 	} while (fifo_len != 0);
 
-	if (has_read_fifo)
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO) && has_read_fifo)
 		motion_sense_fifo_commit_data();
 
 	return EC_SUCCESS;
 }
-#endif /* CONFIG_ACCEL_INTERRUPTS */
+#endif /* ACCEL_LSM6DSO_INT_ENABLE */
 
 /**
  * set_range - set full scale range
@@ -353,7 +335,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	ret = st_write_data_with_mask(s, ctrl_reg, LSM6DSO_ODR_MASK, reg_val);
 	if (ret == EC_SUCCESS) {
 		data->base.odr = normalized_rate;
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
+		if (IS_ENABLED(ACCEL_LSM6DSO_INT_ENABLE))
 			accelgyro_config_fifo(s);
 	}
 
@@ -463,13 +445,13 @@ static int init(struct motion_sensor_t *s)
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		if (IS_ENABLED(ACCEL_LSM6DSO_INT_ENABLE)) {
 			ret = fifo_disable(s);
 			if (ret != EC_SUCCESS)
 				goto err_unlock;
 		}
 
-		if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS))
+		if (IS_ENABLED(ACCEL_LSM6DSO_INT_ENABLE))
 			ret = config_interrupt(s);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
@@ -520,13 +502,13 @@ const struct accelgyro_drv lsm6dso_drv = {
 	.get_data_rate = st_get_data_rate,
 	.set_offset = st_set_offset,
 	.get_offset = st_get_offset,
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#ifdef ACCEL_LSM6DSO_INT_ENABLE
 	.irq_handler = irq_handler,
-#endif /* CONFIG_ACCEL_INTERRUPTS */
 #ifdef CONFIG_BODY_DETECTION
 	.get_rms_noise = get_rms_noise,
 #endif
 #ifdef CONFIG_GESTURE_HOST_DETECTION
 	.list_activities = lsm_list_activities,
 #endif
+#endif /* ACCEL_LSM6DSO_INT_ENABLE */
 };

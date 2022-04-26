@@ -209,4 +209,21 @@ extern const struct accelgyro_drv lsm6dso_drv;
 
 void lsm6dso_interrupt(enum gpio_signal signal);
 
+#if defined(CONFIG_ZEPHYR)
+#if DT_NODE_EXISTS(DT_ALIAS(lsm6dso_int))
+/* Get the motion sensor ID of the LSM6DSO sensor that generates the
+ * interrupt. The interrupt is converted to the event and transferred to
+ * motion sense task that actually handles the interrupt.
+ *
+ * Here we use an alias (lsm6dso_int) to get the motion sensor ID. This alias
+ * MUST be defined for this driver to work.
+ * aliases {
+ *   lsm6dso-int = &lid_accel;
+ * };
+ */
+#define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(lsm6dso_int)))
+#endif
+#endif  /* CONFIG_ZEPHYR */
+
 #endif /* __CROS_EC_ACCELGYRO_LSM6DSO_H */
