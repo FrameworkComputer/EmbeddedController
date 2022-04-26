@@ -38,7 +38,6 @@ GPIO_INT(VOLUP_BTN_ODL,          PIN(7, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button
 GPIO_INT(LID_OPEN,		 PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)
 GPIO_INT(EC_WP_OD,		 PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(BASE_SIXAXIS_INT_L,	 PIN(5, 6), GPIO_INT_FALLING | GPIO_SEL_1P8V, motion_interrupt)
-GPIO_INT(LID_360_L,		 PIN(9, 5), GPIO_INT_FALLING | GPIO_SEL_1P8V, lis2ds_interrupt)
 GPIO_INT(EN_PP1800_PANEL_S0,     PIN(4, 1), GPIO_INT_BOTH, panel_power_change_interrupt)
 GPIO_INT(DDI0_DDC_SCL,		 PIN(6, 0), GPIO_INT_FALLING, lcd_reset_change_interrupt)
 
@@ -56,6 +55,7 @@ GPIO(EC_I2C_LCD_SCL,			PIN(D, 1), GPIO_INPUT)
 GPIO(EC_I2C_LCD_SDA,			PIN(D, 0), GPIO_INPUT)
 
 /* Misc Enables */
+GPIO(LID_360_L,		 PIN(9, 5), GPIO_INPUT)
 GPIO(EN_VCCIO_EXT,   PIN(6, 1), GPIO_OUT_LOW)
 /* TODO(b:149775160) - Modify if needed if we ever use this signal. */
 GPIO(EN_VCCST,		PIN(A, 7), GPIO_INPUT)
