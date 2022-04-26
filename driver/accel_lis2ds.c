@@ -24,9 +24,14 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef CONFIG_ACCEL_LIS2DS_INT_EVENT
+#define ACCEL_LIS2DS_INT_ENABLE
+#endif
+
 #define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
 
-STATIC_IF(CONFIG_ACCEL_FIFO) volatile uint32_t last_interrupt_timestamp;
+STATIC_IF(ACCEL_LIS2DS_INT_ENABLE)
+	volatile uint32_t last_interrupt_timestamp;
 
 /**
  * lis2ds_enable_fifo - Enable/Disable FIFO in LIS2DS12
@@ -39,6 +44,34 @@ static int lis2ds_enable_fifo(const struct motion_sensor_t *s, int mode)
 				       LIS2DS_FIFO_MODE_MASK, mode);
 }
 
+static int lis2ds_config_interrupt(const struct motion_sensor_t *s)
+{
+	int ret = EC_SUCCESS;
+
+	/* Interrupt trigger level of power-on-reset is HIGH */
+	RETURN_ERROR(st_write_data_with_mask(s, LIS2DS_H_ACTIVE_ADDR,
+				LIS2DS_H_ACTIVE_MASK, LIS2DS_EN_BIT));
+
+	/*
+	 * Configure FIFO threshold to 1 sample: interrupt on watermark
+	 * will be generated every time a new data sample will be stored
+	 * in FIFO. The interrupr on watermark is cleared only when the
+	 * number or samples still present in FIFO exceeds the
+	 * configured threshold.
+	 */
+	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
+			LIS2DS_FIFO_THS_ADDR, 1);
+	if (ret != EC_SUCCESS)
+		return ret;
+
+	/* Enable interrupt on FIFO watermark and route to int1. */
+	ret = st_write_data_with_mask(s, LIS2DS_CTRL4_ADDR,
+			LIS2DS_INT1_FTH, LIS2DS_EN_BIT);
+
+	return ret;
+}
+
+#ifdef ACCEL_LIS2DS_INT_ENABLE
 /**
  * Load data from internal sensor FIFO
  * DIFF8 bits set means FIFO Full because 256 samples -> 0x100
@@ -47,7 +80,6 @@ static int lis2ds_load_fifo(struct motion_sensor_t *s, uint16_t nsamples,
 			    uint32_t saved_ts)
 {
 	int ret, read_len, fifo_len, chunk_len, i;
-	struct ec_response_motion_sensor_data vect;
 	int *axis = s->raw_xyz;
 	uint8_t fifo[FIFO_READ_LEN];
 
@@ -66,13 +98,20 @@ static int lis2ds_load_fifo(struct motion_sensor_t *s, uint16_t nsamples,
 			/* Apply precision, sensitivity and rotation vector */
 			st_normalize(s, axis, &fifo[i]);
 
-			/* Fill vector array */
-			vect.data[0] = axis[0];
-			vect.data[1] = axis[1];
-			vect.data[2] = axis[2];
-			vect.flags = 0;
-			vect.sensor_num = s - motion_sensors;
-			motion_sense_fifo_stage_data(&vect, s, 3, saved_ts);
+			if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+				struct ec_response_motion_sensor_data vect;
+
+				/* Fill vector array */
+				vect.data[0] = axis[0];
+				vect.data[1] = axis[1];
+				vect.data[2] = axis[2];
+				vect.flags = 0;
+				vect.sensor_num = s - motion_sensors;
+				motion_sense_fifo_stage_data(&vect, s, 3,
+							     saved_ts);
+			} else {
+				motion_sense_push_raw_xyz(s);
+			}
 		}
 
 		read_len += chunk_len;
@@ -84,45 +123,13 @@ static int lis2ds_load_fifo(struct motion_sensor_t *s, uint16_t nsamples,
 	return EC_SUCCESS;
 }
 
-__maybe_unused static int lis2ds_config_interrupt(const struct motion_sensor_t *s)
-{
-	int ret = EC_SUCCESS;
-
-	/* Interrupt trigger level of power-on-reset is HIGH */
-	RETURN_ERROR(st_write_data_with_mask(s, LIS2DS_H_ACTIVE_ADDR,
-				LIS2DS_H_ACTIVE_MASK, LIS2DS_EN_BIT));
-
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
-		/*
-		 * Configure FIFO threshold to 1 sample: interrupt on watermark
-		 * will be generated every time a new data sample will be stored
-		 * in FIFO. The interrupr on watermark is cleared only when the
-		 * number or samples still present in FIFO exceeds the
-		 * configured threshold.
-		 */
-		ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-				    LIS2DS_FIFO_THS_ADDR, 1);
-		if (ret != EC_SUCCESS)
-			return ret;
-
-		/* Enable interrupt on FIFO watermark and route to int1. */
-		ret = st_write_data_with_mask(s, LIS2DS_CTRL4_ADDR,
-					      LIS2DS_INT1_FTH, LIS2DS_EN_BIT);
-		if (ret != EC_SUCCESS)
-			return ret;
-	}
-
-	return ret;
-}
-
 /**
  * lis2ds_interrupt - interrupt from int1 pin of sensor
  * Schedule Motion Sense Task to manage Interrupts
  */
 void lis2ds_interrupt(enum gpio_signal signal)
 {
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO))
-		last_interrupt_timestamp = __hw_clock_source_read();
+	last_interrupt_timestamp = __hw_clock_source_read();
 
 	task_set_event(TASK_ID_MOTIONSENSE, CONFIG_ACCEL_LIS2DS_INT_EVENT);
 }
@@ -130,41 +137,39 @@ void lis2ds_interrupt(enum gpio_signal signal)
 /**
  * lis2ds_irq_handler - bottom half of the interrupt stack.
  */
-__maybe_unused static int lis2ds_irq_handler(struct motion_sensor_t *s,
+static int lis2ds_irq_handler(struct motion_sensor_t *s,
 					     uint32_t *event)
 {
 	int ret = EC_SUCCESS;
+	uint16_t nsamples = 0;
+	uint8_t fifo_src_samples[2];
+
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCEL_LIS2DS_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
-		uint16_t nsamples = 0;
-		uint8_t fifo_src_samples[2];
+	ret = st_raw_read_n_noinc(s->port,
+				  s->i2c_spi_addr_flags,
+				  LIS2DS_FIFO_SRC_ADDR,
+				  (uint8_t *)fifo_src_samples,
+				  sizeof(fifo_src_samples));
+	if (ret != EC_SUCCESS)
+		return ret;
 
-		ret = st_raw_read_n_noinc(s->port,
-					  s->i2c_spi_addr_flags,
-					  LIS2DS_FIFO_SRC_ADDR,
-					  (uint8_t *)fifo_src_samples,
-					  sizeof(fifo_src_samples));
-		if (ret != EC_SUCCESS)
-			return ret;
+	/* Check if FIFO is full. */
+	if (fifo_src_samples[0] & LIS2DS_FIFO_OVR_MASK)
+		CPRINTS("%s FIFO Overrun", s->name);
 
-		/* Check if FIFO is full. */
-		if (fifo_src_samples[0] & LIS2DS_FIFO_OVR_MASK)
-			CPRINTS("%s FIFO Overrun", s->name);
+	/* DIFF8 = 1 FIFO FULL, 256 unread samples. */
+	nsamples = fifo_src_samples[1] & LIS2DS_FIFO_DIFF_MASK;
+	if (fifo_src_samples[0] & LIS2DS_FIFO_DIFF8_MASK)
+		nsamples = 256;
 
-		/* DIFF8 = 1 FIFO FULL, 256 unread samples. */
-		nsamples = fifo_src_samples[1] & LIS2DS_FIFO_DIFF_MASK;
-		if (fifo_src_samples[0] & LIS2DS_FIFO_DIFF8_MASK)
-			nsamples = 256;
-
-		ret = lis2ds_load_fifo(s, nsamples, last_interrupt_timestamp);
-	}
-
-	return ret;
+	return lis2ds_load_fifo(s, nsamples, last_interrupt_timestamp);
 }
+
+#endif  /* ACCEL_LIS2DS_INT_ENABLE */
 
 /**
  * set_range - set full scale range
@@ -207,13 +212,11 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	uint8_t reg_val = 0;
 
 	mutex_lock(s->mutex);
-	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+	if (IS_ENABLED(ACCEL_LIS2DS_INT_ENABLE)) {
 		/* FIFO stop collecting events. Restart FIFO in Bypass mode */
 		ret = lis2ds_enable_fifo(s, LIS2DS_FIFO_BYPASS_MODE);
-		if (ret != EC_SUCCESS) {
-			CPRINTS("Failed to disable FIFO. Error: %d", ret);
+		if (ret != EC_SUCCESS)
 			goto unlock_rate;
-		}
 	}
 
 	/* Avoid LIS2DS_ODR_TO_REG to manage 0 mHz rate */
@@ -238,12 +241,9 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	if (ret == EC_SUCCESS) {
 		data->base.odr = normalized_rate;
 
-		if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		if (IS_ENABLED(ACCEL_LIS2DS_INT_ENABLE)) {
 			/* FIFO restart collecting events in Cont. mode. */
 			ret = lis2ds_enable_fifo(s, LIS2DS_FIFO_CONT_MODE);
-			if (ret != EC_SUCCESS)
-				CPRINTS("Failed to enable FIFO. Error: %d",
-					ret);
 		}
 	}
 
@@ -347,7 +347,7 @@ static int init(struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS))
+	if (IS_ENABLED(ACCEL_LIS2DS_INT_ENABLE))
 		ret = lis2ds_config_interrupt(s);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
@@ -375,7 +375,7 @@ const struct accelgyro_drv lis2ds_drv = {
 	.get_data_rate = st_get_data_rate,
 	.set_offset = st_set_offset,
 	.get_offset = st_get_offset,
-#ifdef CONFIG_ACCEL_INTERRUPTS
+#ifdef ACCEL_LIS2DS_INT_ENABLE
 	.irq_handler = lis2ds_irq_handler,
 #endif /* CONFIG_ACCEL_INTERRUPTS */
 };
