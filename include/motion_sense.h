@@ -290,6 +290,14 @@ int sensor_init_done(struct motion_sensor_t *sensor);
  */
 void sensor_board_proc_double_tap(void);
 
+/**
+ * Commit the data in a sensor's raw_xyz vector. This operation might have
+ * different meanings depending on the CONFIG_ACCEL_FIFO flag.
+ *
+ * @param s Pointer to the sensor.
+ */
+void motion_sense_push_raw_xyz(struct motion_sensor_t *s);
+
 /*
  * There are 4 variables that represent the number of sensors:
  * SENSOR_COUNT: The number of available motion sensors in board.

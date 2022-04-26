@@ -680,7 +680,7 @@ static inline void increment_sensor_collection(struct motion_sensor_t *sensor,
  *
  * @param s Pointer to the sensor.
  */
-static void motion_sense_push_raw_xyz(struct motion_sensor_t *s)
+void motion_sense_push_raw_xyz(struct motion_sensor_t *s)
 {
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 		struct ec_response_motion_sensor_data vector;
