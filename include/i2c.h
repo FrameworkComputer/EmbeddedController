@@ -442,6 +442,18 @@ int i2c_is_busy(int port);
 int i2c_unwedge(int port);
 
 /**
+ * Read read using  smbus read block protocol.
+ * Read bytestream from <addr_flags>:<offset> with format:
+ *     [length_N] [byte_0] [byte_1] ... [byte_N]
+ *
+ * <len>      : the max length of receiving buffer
+ * <len> == 0 : buffer size > 255
+ */
+int i2c_read_sized_block(const int port,
+			 const uint16_t addr_flags,
+			 int offset, uint8_t *data, int max_len, int *read_len);
+
+/**
  * Read ascii string using smbus read block protocol.
  * Read bytestream from <addr_flags>:<offset> with format:
  *     [length_N] [byte_0] [byte_1] ... [byte_N-1]
