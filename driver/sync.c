@@ -24,10 +24,6 @@
 #error This driver needs CONFIG_ACCEL_FIFO
 #endif
 
-#ifndef CONFIG_ACCEL_INTERRUPTS
-#error This driver needs CONFIG_ACCEL_INTERRUPTS
-#endif
-
 struct sync_event_t {
 	uint32_t timestamp;
 	int counter;
