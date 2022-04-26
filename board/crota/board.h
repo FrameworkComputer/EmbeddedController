@@ -33,9 +33,6 @@
 /* Depends on how fast the AP boots and typical ODRs */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
-
 /* Lid accel */
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
