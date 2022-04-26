@@ -354,6 +354,17 @@ int host_cmd_motion_sense_scale(uint8_t sensor_num, uint16_t flags,
 				struct ec_response_motion_sense *response);
 
 /**
+ * @brief Enable/disable sensor calibration via host command
+ *
+ * @param sensor_num The sensor index in the motion_sensors array to query
+ * @param enable Whether to enable or disable the calibration
+ * @param response Pointer to the response data structure to fill on success
+ * @return The result code from the host command
+ */
+int host_cmd_motion_sense_calib(uint8_t sensor_num, bool enable,
+				struct ec_response_motion_sense *response);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number

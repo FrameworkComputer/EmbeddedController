@@ -20,6 +20,7 @@ FAKE_VALUE_FUNC(int, mock_set_scale, const struct motion_sensor_t *,
 		const uint16_t *, int16_t);
 FAKE_VALUE_FUNC(int, mock_get_scale, const struct motion_sensor_t *, uint16_t *,
 		int16_t *);
+FAKE_VALUE_FUNC(int, mock_perform_calib, struct motion_sensor_t *, int);
 
 /**
  * Get the size needed for a struct ec_response_motion_sense
@@ -40,6 +41,7 @@ static struct host_cmd_motion_sense_fixture fixture = {
 		.get_offset = mock_get_offset,
 		.set_scale = mock_set_scale,
 		.get_scale = mock_get_scale,
+		.perform_calib = mock_perform_calib,
 	},
 };
 
@@ -58,6 +60,7 @@ static void host_cmd_motion_sense_before(void *state)
 	RESET_FAKE(mock_get_offset);
 	RESET_FAKE(mock_set_scale);
 	RESET_FAKE(mock_get_scale);
+	RESET_FAKE(mock_perform_calib);
 	FFF_RESET_HISTORY();
 
 	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 0;
@@ -569,4 +572,74 @@ ZTEST_USER_F(host_cmd_motion_sense, test_set_get_scale)
 	zassert_equal(2, mock_set_scale_fake.arg1_history[0][0], NULL);
 	zassert_equal(3, mock_set_scale_fake.arg1_history[0][1], NULL);
 	zassert_equal(4, mock_set_scale_fake.arg1_history[0][2], NULL);
+}
+
+ZTEST_USER(host_cmd_motion_sense, test_calib_invalid_sensor_num)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      host_cmd_motion_sense_calib(/*sensor_num=*/0xff,
+						  /*enable=*/false, &response),
+		      NULL);
+}
+
+ZTEST_USER(host_cmd_motion_sense, test_calib_not_in_driver)
+{
+	struct ec_response_motion_sense response;
+	struct accelgyro_drv drv = { 0 };
+
+	motion_sensors[0].drv = &drv;
+	zassert_equal(EC_RES_INVALID_COMMAND,
+		      host_cmd_motion_sense_calib(/*sensor_num=*/0,
+						  /*enable=*/false, &response),
+		      NULL);
+}
+
+ZTEST_USER_F(host_cmd_motion_sense, test_calib_fail)
+{
+	struct ec_response_motion_sense response;
+
+	motion_sensors[0].drv = &this->mock_drv;
+	mock_perform_calib_fake.return_val = 1;
+
+	zassert_equal(1,
+		      host_cmd_motion_sense_calib(/*sensor_num=*/0,
+						  /*enable=*/false, &response),
+		      NULL);
+	zassert_equal(1, mock_perform_calib_fake.call_count, NULL);
+	zassert_false(mock_perform_calib_fake.arg1_history[0], NULL);
+}
+
+ZTEST_USER_F(host_cmd_motion_sense, test_calib_success__fail_get_offset)
+{
+	struct ec_response_motion_sense response;
+
+	motion_sensors[0].drv = &this->mock_drv;
+	mock_perform_calib_fake.return_val = 0;
+	mock_get_offset_fake.return_val = 1;
+
+	zassert_equal(1,
+		      host_cmd_motion_sense_calib(/*sensor_num=*/0,
+						  /*enable=*/false, &response),
+		      NULL);
+	zassert_equal(1, mock_perform_calib_fake.call_count, NULL);
+	zassert_equal(1, mock_get_offset_fake.call_count, NULL);
+	zassert_false(mock_perform_calib_fake.arg1_history[0], NULL);
+}
+
+ZTEST_USER_F(host_cmd_motion_sense, test_calib)
+{
+	struct ec_response_motion_sense response;
+
+	motion_sensors[0].drv = &this->mock_drv;
+	mock_perform_calib_fake.return_val = 0;
+	mock_get_offset_fake.return_val = 0;
+
+	zassert_ok(host_cmd_motion_sense_calib(/*sensor_num=*/0,
+					       /*enable=*/true, &response),
+		   NULL);
+	zassert_equal(1, mock_perform_calib_fake.call_count, NULL);
+	zassert_equal(1, mock_get_offset_fake.call_count, NULL);
+	zassert_true(mock_perform_calib_fake.arg1_history[0], NULL);
 }
