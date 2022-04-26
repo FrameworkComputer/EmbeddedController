@@ -307,9 +307,7 @@ static void board_detect_motionsensor(void)
 	ret = i2c_read8(I2C_PORT_SENSOR, LIS2DW12_ADDR1,
 			LIS2DW12_WHO_AM_I_REG, &val);
 	if (ret == 0 && val == LIS2DW12_WHO_AM_I) {
-		CPRINTS("LID_ACCEL is IS2DW12");
-		/* Enable gpio interrupt for lid accel sensor */
-		gpio_enable_interrupt(GPIO_EC_ACCEL_INT_R_L);
+		CPRINTS("LID_ACCEL is LIS2DW12");
 		return;
 	}
 
@@ -373,25 +371,6 @@ static void baseboard_sensors_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
-
-void motion_interrupt(enum gpio_signal signal)
-{
-	if (motion_sensors[LID_ACCEL].chip == MOTIONSENSE_CHIP_LIS2DW12) {
-		lis2dw12_interrupt(signal);
-		CPRINTS("IS2DW12 interrupt");
-		return;
-	}
-
-	/*
-	 * From other project, ex. guybrush, it seem BMA422 doesn't have
-	 * interrupt handler when EC_ACCEL_INT_R_L is asserted.
-	 * However, I don't see BMA422 assert EC_ACCEL_INT_R_L when it has
-	 * power. That could be the reason EC code doesn't register any
-	 * interrupt handler.
-	 */
-	CPRINTS("BMA422 interrupt");
-
-}
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
