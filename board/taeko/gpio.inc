@@ -9,8 +9,7 @@
 
 /* INTERRUPT GPIOs: */
 GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
-GPIO_INT(EC_ACCEL_INT_R_L,               PIN(8, 1), GPIO_SEL_1P8V | GPIO_INT_FALLING, motion_interrupt)
-GPIO_INT(EC_IMU_INT_R_L,                 PIN(5, 6), GPIO_SEL_1P8V | GPIO_INT_FALLING, motion_interrupt)
+GPIO_INT(EC_IMU_INT_R_L,                 PIN(5, 6), GPIO_SEL_1P8V | GPIO_INT_FALLING, lsm6dsm_interrupt)
 GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
 GPIO_INT(EC_VOLDN_BTN_ODL,               PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_VOLUP_BTN_ODL,               PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
@@ -35,6 +34,7 @@ GPIO_INT(USB_C1_PPC_INT_ODL,             PIN(F, 5), GPIO_INT_FALLING, ppc_interr
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
 GPIO(CHARGER_VAP_OTG_EN,             PIN(7, 3), GPIO_OUT_LOW)
 GPIO(CPU_C10_GATE_L,                 PIN(6, 7), GPIO_INPUT)
+GPIO(EC_ACCEL_INT_R_L,               PIN(8, 1), GPIO_INPUT)
 GPIO(EC_BATT_PRES_ODL,               PIN(A, 3), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,                 PIN(0, 3), GPIO_OUT_LOW)
 GPIO(EC_EN_EDP_BL,                   PIN(D, 3), GPIO_OUT_HIGH)

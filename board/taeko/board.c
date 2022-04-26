@@ -16,6 +16,7 @@
 #include "gpio_signal.h"
 #include "hooks.h"
 #include "driver/accel_lis2dw12.h"
+#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/accelgyro_lsm6dso.h"
 #include "driver/als_tcs3400.h"
 #include "fw_config.h"
