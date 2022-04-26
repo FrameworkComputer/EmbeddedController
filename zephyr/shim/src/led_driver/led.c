@@ -168,49 +168,10 @@ static bool find_node_with_extra_flag(int i)
 	return found_node;
 }
 
-static int find_node(void)
-{
-	int i = 0;
-
-	for (i = 0; i < ARRAY_SIZE(node_array); i++) {
-		/* Check if this node depends on power state */
-		if (node_array[i].pwr_state != PWR_STATE_UNCHANGE) {
-			enum charge_state pwr_state = charge_get_state();
-
-			if (node_array[i].pwr_state != pwr_state)
-				continue;
-		}
-
-		/* Check if this node depends on chipset state */
-		if (node_array[i].chipset_state != 0) {
-			enum power_state chipset_state =
-						get_chipset_state();
-
-			/* Continue at current index as nodes are in sequence */
-			if (node_array[i].chipset_state != chipset_state)
-				continue;
-		}
-
-		/* Check if the node depends on any special flags */
-		if (node_array[i].led_extra_flag != NONE)
-			if (!find_node_with_extra_flag(i))
-				continue;
-
-		/* We found the node */
-		return i;
-	}
-
-	/*
-	 * Didn't find a valid node that matches all the properties
-	 * Return -1 to signify error
-	 */
-	return -1;
-}
-
 #define GET_PERIOD(n_idx, c_idx)  node_array[n_idx].led_colors[c_idx].acc_period
 #define GET_COLOR(n_idx, c_idx)   node_array[n_idx].led_colors[c_idx].led_color
 
-static int find_color(int node_idx, uint32_t ticks)
+static void set_color(int node_idx, uint32_t ticks)
 {
 	int color_idx = 0;
 
@@ -229,35 +190,64 @@ static int find_color(int node_idx, uint32_t ticks)
 		}
 	}
 
-	return GET_COLOR(node_idx, color_idx);
+	led_set_color(GET_COLOR(node_idx, color_idx));
+}
+
+static int match_node(int node_idx)
+{
+	/* Check if this node depends on power state */
+	if (node_array[node_idx].pwr_state != PWR_STATE_UNCHANGE) {
+		enum charge_state pwr_state = charge_get_state();
+
+		if (node_array[node_idx].pwr_state != pwr_state)
+			return -1;
+	}
+
+	/* Check if this node depends on chipset state */
+	if (node_array[node_idx].chipset_state != 0) {
+		enum power_state chipset_state =
+					get_chipset_state();
+
+		if (node_array[node_idx].chipset_state != chipset_state)
+			return -1;
+	}
+
+	/* Check if the node depends on any special flags */
+	if (node_array[node_idx].led_extra_flag != NONE)
+		if (!find_node_with_extra_flag(node_idx))
+			return -1;
+
+	/* We found the node that matches the current system state */
+	return node_idx;
 }
 
 static void board_led_set_color(void)
 {
-	int color = LED_OFF;
-	int node = 0;
 	static uint32_t ticks;
+	bool found_node = false;
 
 	ticks++;
 
 	/*
-	 * Find a node that matches the current state of the system. Depending
-	 * on the policy defined in led.dts, a node could depend on power-state,
-	 * chipset-state, extra flags like battery percentage etc.
-	 * We should always find a node that indicates the LED Behavior for
+	 * Find all the nodes that match the current state of the system and
+	 * set color for these nodes. Depending on the policy defined in
+	 * led.dts, a node could depend on power-state, chipset-state, extra
+	 * flags like battery percentage etc.
+	 * We must find at least one node that indicates the LED Behavior for
 	 * current system state.
 	 */
-	node = find_node();
+	for (int i = 0; i < ARRAY_SIZE(node_array); i++) {
+		if (match_node(i) != -1) {
+			found_node = true;
+			set_color(i, ticks);
+		}
+	}
 
-	if (node < 0)
-		LOG_ERR("Invalid node id, node with matching prop not found");
-	else
-		color = find_color(node, ticks);
-
-	led_set_color(color);
+	if (!found_node)
+		LOG_ERR("Node with matching prop not found");
 }
 
-/* Called by hook task every second */
+/* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
 	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
