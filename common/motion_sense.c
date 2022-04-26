@@ -728,9 +728,8 @@ static int motion_sense_process(struct motion_sensor_t *sensor,
 		atomic_or(&odr_event_required, odr_pending);
 	}
 
-	if (IS_ENABLED(CONFIG_ACCEL_INTERRUPTS) &&
-	    ((*event & TASK_EVENT_MOTION_INTERRUPT_MASK || is_odr_pending) &&
-	     (sensor->drv->irq_handler != NULL))) {
+	if ((*event & TASK_EVENT_MOTION_INTERRUPT_MASK || is_odr_pending) &&
+	    (sensor->drv->irq_handler != NULL)) {
 		ret = sensor->drv->irq_handler(sensor, event);
 		if (ret == EC_SUCCESS)
 			has_data_read = 1;
