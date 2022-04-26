@@ -293,6 +293,23 @@ int host_cmd_motion_sense_odr(uint8_t sensor_num, int32_t odr, bool round_up,
 			      struct ec_response_motion_sense *response);
 
 /**
+ * @brief Call the host command MOTION_SENSE with the sensor range sub-command
+ *
+ * This function attempts to set the sensor range and returns the range value.
+ * If the range value is EC_MOTION_SENSE_NO_VALUE, then the host command will
+ * not attempt to update the range.
+ *
+ * @param sensor_num The sensor index in the motion_sensors array to query
+ * @param range The new range to set
+ * @param round_up Whether or not to round up the range.
+ * @param response Pointer to the response data structure to fill on success
+ * @return The result code from the host command
+ */
+int host_cmd_motion_sense_range(uint8_t sensor_num, int32_t range,
+				bool round_up,
+				struct ec_response_motion_sense *response);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number
