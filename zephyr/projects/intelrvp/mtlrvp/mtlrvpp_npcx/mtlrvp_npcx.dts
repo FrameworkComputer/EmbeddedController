@@ -4,6 +4,10 @@
  */
 
 / {
+	chosen {
+		cros,rtc = &mtc;
+	};
+
 	hibernate-wake-pins {
 		compatible = "cros-ec,hibernate-wake-pins";
 		wakeup-irqs = <
