@@ -44,7 +44,7 @@ void board_ap_power_force_shutdown(void)
 		power_signal_enable(PWR_PG_PP1P05);
 	}
 
-	power_signal_set(PWR_EC_PCH_RSMRST, 1);
+	power_signal_set(PWR_EC_PCH_RSMRST, 0);
 	power_signal_set(PWR_EC_SOC_DSW_PWROK, 0);
 
 	while (power_signal_get(PWR_RSMRST) == 0 &&
