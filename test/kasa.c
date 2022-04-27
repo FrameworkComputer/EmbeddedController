@@ -71,3 +71,11 @@ void run_test(int argc, char **argv)
 
 	test_print_result();
 }
+
+/* Mock out mkbp_send_event. Rarely, but occasionally, mkbp_send_event gets
+ * called and the coverage is thrown off.
+ */
+int mkbp_send_event(uint8_t event_type)
+{
+	return 1;
+}
