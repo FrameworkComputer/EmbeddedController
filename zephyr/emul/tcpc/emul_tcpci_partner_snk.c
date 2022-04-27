@@ -340,6 +340,11 @@ tcpci_snk_emul_handle_goto_min_req(struct tcpci_snk_emul_data *data,
 	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 }
 
+void tcpci_snk_emul_clear_ping_received(struct tcpci_snk_emul_data *data)
+{
+	data->ping_received = false;
+}
+
 /** Check description in emul_tcpci_snk.h */
 enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 	struct tcpci_snk_emul_data *data,
@@ -368,6 +373,7 @@ enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 							   0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_PING:
+			data->ping_received = true;
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_GOTO_MIN:
 			return tcpci_snk_emul_handle_goto_min_req(data,
