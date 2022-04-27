@@ -74,17 +74,18 @@ int peci_Wr_Pkg_Config(uint8_t index, uint16_t parameter, uint32_t data, int wle
 	for (clen = 4; clen < wlen - 1; clen++)
 		out[clen] = ((data >> ((clen - 4) * 8)) & 0xFF);
 
-	if (board_get_version() >= BOARD_VERSION_7)
+/*	if (board_get_version() >= BOARD_VERSION_7)
 		espi_oob_peci_transaction(&peci);
 	else {
-		/* DVT1 is HW PECI pin */
-		rv = peci_transaction(&peci);
-		if (rv)
-			return rv;
-	}
+		 DVT1 is HW PECI pin
+*/
+	rv = peci_transaction(&peci);
+	if (rv)
+		return rv;
+	/*}*/
 	return EC_SUCCESS;
 }
-
+/*
 static int peci_over_espi_get_cpu_temp(int *cpu_temp)
 {
 	int rv;
@@ -111,21 +112,21 @@ static int peci_over_espi_get_cpu_temp(int *cpu_temp)
 		return rv;
 
 
-	/* Get relative raw data of temperature. */
+	 Get relative raw data of temperature.
 	*cpu_temp = (r_buf[1] << 8) | r_buf[0];
 
-	/* Convert relative raw data to degrees C. */
+	 Convert relative raw data to degrees C.
 	*cpu_temp = ((*cpu_temp ^ 0xFFFF) + 1) >> 6;
 
 	if (*cpu_temp >= CONFIG_PECI_TJMAX)
 		return EC_ERROR_INVAL;
 
-	/* temperature in K */
+	 temperature in K
 	*cpu_temp = CONFIG_PECI_TJMAX - *cpu_temp + 273;
 
 	return EC_SUCCESS;
 }
-
+*/
 int check_system_power(void)
 {
 	uint8_t host_power_state = *host_get_customer_memmap(EC_EMEMAP_ER1_POWER_STATE);
@@ -264,6 +265,7 @@ int peci_over_espi_temp_sensor_get_val(int idx, int *temp_ptr)
 	return EC_SUCCESS;
 }
 
+/*
 void read_peci_over_espi_gettemp(void)
 {
 	int rv;
@@ -286,3 +288,4 @@ void read_peci_over_espi_gettemp(void)
 	}
 }
 DECLARE_HOOK(HOOK_SECOND, read_peci_over_espi_gettemp, HOOK_PRIO_DEFAULT);
+*/
