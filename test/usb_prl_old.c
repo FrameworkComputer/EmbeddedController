@@ -108,6 +108,9 @@ void pd_set_error_recovery(int port)
 {
 }
 
+static enum pd_power_role get_partner_power_role(int port);
+static enum pd_data_role get_partner_data_role(int port);
+
 static struct pd_prl {
 	int rev;
 	int pd_enable;
@@ -208,8 +211,8 @@ static void cycle_through_state_machine(int port, uint32_t num, uint32_t time)
 static int simulate_request_chunk(int port, enum pd_data_msg_type msg_type,
 							int chunk_num, int len)
 {
-	uint16_t header = PD_HEADER(msg_type, pd_port[port].power_role,
-					pd_port[port].data_role,
+	uint16_t header = PD_HEADER(msg_type, get_partner_power_role(port),
+					get_partner_data_role(port),
 					pd_port[port].msg_rx_id,
 					1, pd_port[port].rev, 1);
 	uint32_t msg = PD_EXT_HEADER(chunk_num, 1, len);
@@ -226,8 +229,8 @@ static int simulate_request_chunk(int port, enum pd_data_msg_type msg_type,
 
 static int simulate_receive_ctrl_msg(int port, enum pd_ctrl_msg_type msg_type)
 {
-	uint16_t header = PD_HEADER(msg_type, pd_port[port].power_role,
-			pd_port[port].data_role, pd_port[port].msg_rx_id,
+	uint16_t header = PD_HEADER(msg_type, get_partner_power_role(port),
+			get_partner_data_role(port), pd_port[port].msg_rx_id,
 			0, pd_port[port].rev, 0);
 
 	simulate_rx_msg(port, header, 0, NULL);
@@ -314,8 +317,8 @@ static int simulate_receive_data(int port, enum pd_data_msg_type msg_type,
 	int i;
 	int nw = (len + 3) >> 2;
 	uint8_t td[28];
-	uint16_t header = PD_HEADER(msg_type, pd_port[port].power_role,
-		pd_port[port].data_role, pd_port[port].msg_rx_id,
+	uint16_t header = PD_HEADER(msg_type, get_partner_power_role(port),
+		get_partner_data_role(port), pd_port[port].msg_rx_id,
 		nw, pd_port[port].rev, 0);
 
 	pd_port[port].mock_pe_error = -1;
@@ -381,8 +384,8 @@ static int simulate_receive_extended_data(int port,
 			td[i + 2] = *(expected_data + data_offset++);
 
 		nw = (byte_len + 2 + 3) >> 2;
-		header = PD_HEADER(msg_type, pd_port[port].power_role,
-			pd_port[port].data_role, pd_port[port].msg_rx_id,
+		header = PD_HEADER(msg_type, get_partner_power_role(port),
+			get_partner_data_role(port), pd_port[port].msg_rx_id,
 			nw, pd_port[port].rev, 1);
 
 		if (pd_port[port].mock_pe_error >= 0) {
@@ -471,7 +474,7 @@ static int simulate_receive_extended_data(int port,
 		cycle_through_state_machine(port, 1, MSEC);
 
 		/* Request next chunk packet was good. Send GoodCRC */
-		simulate_goodcrc(port, pd_port[port].power_role,
+		simulate_goodcrc(port, get_partner_power_role(port),
 					pd_port[port].msg_tx_id);
 
 		cycle_through_state_machine(port, 1, MSEC);
@@ -674,7 +677,7 @@ static int verify_extended_data_msg_transmission(int port,
 		cycle_through_state_machine(port, 1, MSEC);
 
 		/* Send GoodCRC */
-		simulate_goodcrc(port, pd_port[port].power_role,
+		simulate_goodcrc(port, get_partner_power_role(port),
 						pd_port[port].msg_tx_id);
 		cycle_through_state_machine(port, 1, MSEC);
 		inc_tx_id(port);
@@ -748,9 +751,21 @@ enum pd_power_role pd_get_power_role(int port)
 	return pd_port[port].power_role;
 }
 
+static enum pd_power_role get_partner_power_role(int port)
+{
+	return pd_port[port].power_role == PD_ROLE_SINK ?
+				PD_ROLE_SOURCE : PD_ROLE_SINK;
+}
+
 enum pd_data_role pd_get_data_role(int port)
 {
 	return pd_port[port].data_role;
+}
+
+static enum pd_data_role get_partner_data_role(int port)
+{
+	return pd_port[port].data_role == PD_ROLE_UFP ?
+				PD_ROLE_DFP : PD_ROLE_UFP;
 }
 
 enum pd_cable_plug tc_get_cable_plug(int port)
@@ -848,7 +863,7 @@ static int test_send_ctrl_msg(void)
 
 		cycle_through_state_machine(port, 1, MSEC);
 
-		simulate_goodcrc(port, pd_port[port].power_role,
+		simulate_goodcrc(port, get_partner_power_role(port),
 						pd_port[port].msg_tx_id);
 		inc_tx_id(port);
 
@@ -886,7 +901,7 @@ static int test_send_data_msg(void)
 
 		cycle_through_state_machine(port, 1, MSEC);
 
-		simulate_goodcrc(port, pd_port[port].power_role,
+		simulate_goodcrc(port, get_partner_power_role(port),
 						pd_port[port].msg_tx_id);
 		inc_tx_id(port);
 
@@ -1023,8 +1038,8 @@ static int test_receive_control_msg(void)
 {
 	int port = PORT0;
 	int expected_header = PD_HEADER(PD_CTRL_DR_SWAP,
-				pd_port[port].power_role,
-				pd_port[port].data_role,
+				get_partner_power_role(port),
+				get_partner_data_role(port),
 				pd_port[port].msg_rx_id,
 				0, pd_port[port].rev, 0);
 
@@ -1153,7 +1168,7 @@ static int test_send_soft_reset_msg(void)
 	task_wake(PD_PORT_TO_TASK_ID(port));
 	task_wait_event(30 * MSEC);
 
-	simulate_goodcrc(port, pd_port[port].power_role,
+	simulate_goodcrc(port, get_partner_power_role(port),
 						pd_port[port].msg_tx_id);
 	inc_tx_id(port);
 
