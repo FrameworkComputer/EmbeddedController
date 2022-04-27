@@ -13,6 +13,7 @@
 static char console_buf[CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_BUF_SIZE];
 static uint32_t previous_snapshot_idx;
 static uint32_t current_snapshot_idx;
+static uint32_t read_next_idx;
 static uint32_t head_idx;
 static uint32_t tail_idx;
 
@@ -51,6 +52,8 @@ void console_buf_notify_chars(const char *s, size_t len)
 		if (new_tail == current_snapshot_idx)
 			current_snapshot_idx =
 				next_idx(current_snapshot_idx);
+		if (new_tail == read_next_idx)
+			read_next_idx = next_idx(read_next_idx);
 
 		console_buf[tail_idx] = *s++;
 		tail_idx = new_tail;
@@ -64,8 +67,18 @@ enum ec_status uart_console_read_buffer_init(void)
 		/* Failed to acquire console buffer mutex */
 		return EC_RES_TIMEOUT;
 
+	/* For read next, start reading at the beginning of the buffer */
+	read_next_idx = head_idx;
+	/*
+	 * For read recent, start reading at the beginning of the previous
+	 * snapshot
+	 */
 	previous_snapshot_idx = current_snapshot_idx;
-	current_snapshot_idx = head_idx;
+	/*
+	 * Limit read command to characters available at the moment of creating
+	 * snapshot
+	 */
+	current_snapshot_idx = tail_idx;
 
 	k_mutex_unlock(&console_write_lock);
 
@@ -80,8 +93,11 @@ int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 
 	switch (type) {
 	case CONSOLE_READ_NEXT:
-		/* Start from beginning of latest snapshot */
-		head = &current_snapshot_idx;
+		/*
+		 * Start where we left or from the beginning of the buffer after
+		 * snapshot
+		 */
+		head = &read_next_idx;
 		break;
 	case CONSOLE_READ_RECENT:
 		/* Start from end of previous snapshot */
@@ -99,7 +115,7 @@ int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 		/* Failed to acquire console buffer mutex */
 		return EC_RES_TIMEOUT;
 
-	if (*head == tail_idx) {
+	if (*head == current_snapshot_idx) {
 		/* No new data, return empty response */
 		k_mutex_unlock(&console_write_lock);
 		return EC_RES_SUCCESS;
@@ -113,7 +129,7 @@ int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 		dest[write_count] = console_buf[*head];
 		write_count++;
 		*head = next_idx(*head);
-	} while (*head != tail_idx);
+	} while (*head != current_snapshot_idx);
 
 	dest[write_count] = '\0';
 	write_count++;
