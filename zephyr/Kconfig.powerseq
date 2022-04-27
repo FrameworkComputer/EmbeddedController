@@ -104,6 +104,15 @@ config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
 	  If CPU_PROCHOT should be treated as active-low, enable this
 	  configuration option.
 
+config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_GATE_ON_C10
+	bool "Gate PROCHOT detection based on the AP C10 state"
+	default y if PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
+	help
+	  When the AP enters C10, the power rails VCCIO, VCCSTG, and VCCPLL_OC
+	  may be turned off by the board.  If the PROCHOT# signal is pulled up
+	  by any of these rails, PROCHOT is not valid while the AP is in C10,
+	  Enable this option to gate PROCHOT detection when C10 is active.
+
 config PLATFORM_EC_POWERSEQ_RTC_RESET
 	bool "Board has an RTC reset"
 	help

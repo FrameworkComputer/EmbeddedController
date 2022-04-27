@@ -6,6 +6,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "power/icelake.h"
+#include "throttle_ap.h"
 
 /*
  * PWROK signal configuration, see the PWROK Generation Flow Diagram (Figure
@@ -48,9 +49,14 @@ const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[] = {
 };
 const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_deassert_list);
 
+static const struct prochot_cfg volteer_prochot_cfg = {
+	.gpio_prochot_in = GPIO_EC_PROCHOT_IN_L,
+};
+
 static void baseboard_init(void)
 {
 	/* Enable monitoring of the PROCHOT input to the EC */
+	throttle_ap_config_prochot(&volteer_prochot_cfg);
 	gpio_enable_interrupt(GPIO_EC_PROCHOT_IN_L);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);

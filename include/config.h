@@ -3623,6 +3623,14 @@
  */
 #undef CONFIG_CPU_PROCHOT_ACTIVE_LOW
 
+/*
+ * When the AP enters C10, the power rails VCCIO, VCCSTG, and VCCPLL_OC may be
+ * turned off by the board.  If the PROCHOT# signal is pulled up by any of
+ * these rails, PROCHOT cannot be relied upon while C10 is active.
+ * Enable this option to gate PROCHOT detection when C10 is active.
+ */
+#undef CONFIG_CPU_PROCHOT_GATE_ON_C10
+
 /* Support PS/2 interface */
 #undef CONFIG_PS2
 

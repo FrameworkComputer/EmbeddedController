@@ -35,6 +35,19 @@ enum throttle_sources {
 };
 
 /**
+ * PROCHOT detection GPIOs.  PROCHOT in assumed to be active high unless
+ * CONFIG_CPU_PROCHOT_ACTIVE_LOW is enabled.
+ * C10 input polarity is explicitly specified in the struct below.
+ */
+struct prochot_cfg {
+	enum gpio_signal gpio_prochot_in;
+#ifdef CONFIG_CPU_PROCHOT_GATE_ON_C10
+	enum gpio_signal gpio_c10_in;
+	bool c10_active_high;
+#endif
+};
+
+/**
  * Enable/disable CPU throttling.
  *
  * This is a virtual "OR" operation. Any caller can enable CPU throttling of
@@ -53,6 +66,14 @@ void throttle_ap(enum throttle_level level,
 		 enum throttle_sources source);
 
 /**
+ * Configure the GPIOs used to monitor the PROCHOT signal.
+ *
+ * @param cfg	GPIO configuration for the PROCHOT and optional C10
+ *		signals.
+ */
+void throttle_ap_config_prochot(const struct prochot_cfg *cfg);
+
+/**
  * Interrupt handler to monitor PROCHOT input to the EC. The PROCHOT signal
  * can be asserted by the AP or by other devices on the board, such as chargers
  * and voltage regulators.
@@ -64,6 +85,18 @@ void throttle_ap(enum throttle_level level,
  *                  is defined.
  */
 void throttle_ap_prochot_input_interrupt(enum gpio_signal signal);
+
+/**
+ * Interrupt handler to monitor the C10 input to the EC. The C10 signal
+ * can be asserted by the AP when entering an idle state. This interrupt
+ * is configured for the edge indicating C10 is de-asserting (GPIO_INT_RISING
+ * if the signal is active low, GPIO_INT_FALLING for an active high signal).
+ *
+ * The board initialization is responsible for enabling the interrupt.
+ *
+ * @param signal    GPIO signal connected to C10 input.
+ */
+void throttle_ap_c10_input_interrupt(enum gpio_signal signal);
 
 #else
 static inline void throttle_ap(enum throttle_level level,
