@@ -43,15 +43,6 @@ Kconfig choice                              | Documentation
 `CONFIG_PLATFORM_EC_ACCELGYRO_ICM_COMM_SPI` | [ICM COMM SPI]
 `CONFIG_PLATFORM_EC_ACCELGYRO_ICM_COMM_I2C` | [ICM COMM I2C]
 
-### CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO sub configs
-
-The following options are available only when
-`CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO=y`.
-
-Kconfig option                                  | Default | Documentation
-:---------------------------------------------- | :-----: | :------------
-`CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO_AS_BASE`  | n       | [LSM6DSO AS BASE]
-
 ## Devicetree Nodes
 
 *Detail the devicetree nodes that configure the feature.*
@@ -89,7 +80,6 @@ all code that must be created to enable this feature.*
 [ICM COMM I2C]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.accelgyro_bmi?q=%22config%20PLATFORM_EC_ACCELGYRO_ICM_COMM_I2C%22&ss=chromiumos
 
 [LSM6DSO]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.sensor_devices?q=%22config%20PLATFORM_EC_ACCELGYRO_LSM6DSO%22&ss=chromiumos
-[LSM6DSO AS BASE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.sensor_devices?q=%22config%20PLATFORM_EC_ACCELGYRO_LSM6DSO_AS_BASE%22&ss=chromiumos
 
 [BMA255]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.sensor_devices?q=%22config%20PLATFORM_EC_ACCEL_BMA255%22&ss=chromiumos
 [BMA4XX]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.sensor_devices?q=%22config%20PLATFORM_EC_ACCEL_BMA4XX%22&ss=chromiumos
