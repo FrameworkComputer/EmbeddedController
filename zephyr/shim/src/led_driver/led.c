@@ -27,7 +27,8 @@ LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 #define LED_COLOR_NODE  DT_PATH(led_colors)
 
 struct led_color_node_t {
-	int led_color;
+	enum led_color color;
+	enum ec_led_id led_id;
 	int acc_period;
 };
 
@@ -58,6 +59,7 @@ struct node_prop_t {
 	enum charge_state pwr_state;
 	enum power_state chipset_state;
 	enum led_extra_flag_t led_extra_flag;
+	int charge_port;
 	struct led_color_node_t led_colors[MAX_COLOR];
 };
 
@@ -85,8 +87,10 @@ struct node_prop_t {
 
 #define LED_COLOR_INIT(color_num, color_num_plus_one, state_id)		\
 {									\
-	.led_color = GET_PROP(DT_CHILD(state_id, color_##color_num),	\
+	.color = GET_PROP(DT_CHILD(state_id, color_##color_num),	\
 							led_color),	\
+	.led_id = GET_PROP_NVE(DT_CHILD(state_id, color_##color_num),	\
+							led_id),	\
 	.acc_period = ACC_PERIOD(color_num_plus_one, state_id)		\
 }
 
@@ -97,6 +101,9 @@ struct node_prop_t {
 {									\
 	.pwr_state = GET_PROP(state_id, charge_state),			\
 	.chipset_state = GET_PROP(state_id, chipset_state),		\
+	.charge_port = COND_CODE_1(					\
+			DT_NODE_HAS_PROP(state_id, charge_port),	\
+			(DT_PROP(state_id, charge_port)), (-1)),	\
 	.led_extra_flag = GET_PROP(state_id, extra_flag),		\
 	.led_colors = {LED_COLOR_INIT(0, 1, state_id),			\
 		       LED_COLOR_INIT(1, 2, state_id),			\
@@ -169,28 +176,52 @@ static bool find_node_with_extra_flag(int i)
 }
 
 #define GET_PERIOD(n_idx, c_idx)  node_array[n_idx].led_colors[c_idx].acc_period
-#define GET_COLOR(n_idx, c_idx)   node_array[n_idx].led_colors[c_idx].led_color
+#define GET_COLOR(n_idx, c_idx)   node_array[n_idx].led_colors[c_idx].color
+#define GET_ID(n_idx, c_idx)	  node_array[n_idx].led_colors[c_idx].led_id
 
 static void set_color(int node_idx, uint32_t ticks)
 {
 	int color_idx = 0;
 
-	/* If period value at index 0 is not 0, it's a blinking LED */
-	if (GET_PERIOD(node_idx, 0) != 0) {
+	/* If accumulated period value is not 0, it's a blinking LED */
+	if (GET_PERIOD(node_idx, MAX_COLOR - 1) != 0) {
 		/*  Period is accumulated at the last index */
 		ticks = ticks % GET_PERIOD(node_idx, MAX_COLOR - 1);
-
-		for (color_idx = 0; color_idx < MAX_COLOR; color_idx++) {
-			/*
-			 * Period value that we use here is in terms of number
-			 * of ticks stored during initialization of the struct
-			 */
-			if (ticks < GET_PERIOD(node_idx, color_idx))
-				break;
-		}
 	}
 
-	led_set_color(GET_COLOR(node_idx, color_idx));
+	/*
+	 * Period value of 0 indicates solid LED color (non-blinking)
+	 * In case of dual port battery LEDs, period value of 0 is
+	 * also used to turn-off non-active port LED
+	 * Nodes with period value of 0 strictly need to be listed before
+	 * nodes with non-zero period values as we are accumulating the
+	 * period at each node.
+	 *
+	 * TODO: Remove the strict sequence requirement for listing the
+	 * zero-period value nodes.
+	 */
+	for (color_idx = 0; color_idx < MAX_COLOR; color_idx++) {
+		enum ec_led_id led_id = GET_ID(node_idx, color_idx);
+		enum led_color color = GET_COLOR(node_idx, color_idx);
+		int period = GET_PERIOD(node_idx, color_idx);
+
+		if (led_id == 0xFF)
+			break; /* No more valid color nodes, break here */
+
+		if (!led_auto_control_is_enabled(led_id))
+			break; /* Auto control is disabled */
+
+		/*
+		 * Period value that we use here is in terms of number
+		 * of ticks stored during initialization of the struct
+		 */
+		if (period == 0)
+			led_set_color(color, led_id);
+		else if (ticks < period) {
+			led_set_color(color, led_id);
+			break;
+		}
+	}
 }
 
 static int match_node(int node_idx)
@@ -201,12 +232,19 @@ static int match_node(int node_idx)
 
 		if (node_array[node_idx].pwr_state != pwr_state)
 			return -1;
+
+		/* Check if this node depends on charge port */
+		if (node_array[node_idx].charge_port != -1) {
+			int port = charge_manager_get_active_charge_port();
+
+			if (node_array[node_idx].charge_port != port)
+				return -1;
+		}
 	}
 
 	/* Check if this node depends on chipset state */
 	if (node_array[node_idx].chipset_state != 0) {
-		enum power_state chipset_state =
-					get_chipset_state();
+		enum power_state chipset_state = get_chipset_state();
 
 		if (node_array[node_idx].chipset_state != chipset_state)
 			return -1;
@@ -250,8 +288,7 @@ static void board_led_set_color(void)
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
-	if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
-		board_led_set_color();
+	board_led_set_color();
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 
@@ -273,5 +310,5 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 
 	led_auto_control(EC_LED_ID_BATTERY_LED, 0);
 
-	led_set_color(color);
+	led_set_color(color, led_id);
 }
