@@ -708,6 +708,9 @@ int espi_vw_pulse_wire(enum espi_vw_signal signal, int pulse_level)
 	if (rc != EC_SUCCESS)
 		return rc;
 
+	/* Ensure a minimum pulse width is met. */
+	udelay(CONFIG_ESPI_DEFAULT_VW_WIDTH_US);
+
 	/* drive to requested active state */
 	rc = espi_vw_s2m_set_w4m(ridx, src_num, level);
 	if (rc != EC_SUCCESS)

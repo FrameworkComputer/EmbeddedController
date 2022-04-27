@@ -5666,7 +5666,7 @@
  * The historical default SCI pulse width to the host is 65 microseconds, but
  * some chipsets may require different widths.
  */
-#define CONFIG_ESPI_DEFAULT_SCI_WIDTH_US	65
+#define CONFIG_ESPI_DEFAULT_VW_WIDTH_US	65
 
 /*****************************************************************************/
 /*

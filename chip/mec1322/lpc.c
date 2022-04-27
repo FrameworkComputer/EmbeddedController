@@ -79,11 +79,11 @@ static void lpc_generate_sci(void)
 {
 #ifdef CONFIG_SCI_GPIO
 	gpio_set_level(CONFIG_SCI_GPIO, 0);
-	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
+	udelay(65);
 	gpio_set_level(CONFIG_SCI_GPIO, 1);
 #else
 	MEC1322_ACPI_PM_STS |= 1;
-	udelay(CONFIG_ESPI_DEFAULT_SCI_WIDTH_US);
+	udelay(CONFIG_ESPI_DEFAULT_VW_WIDTH_US);
 	MEC1322_ACPI_PM_STS &= ~1;
 #endif
 }
