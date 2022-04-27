@@ -11,6 +11,8 @@
 #define COMPAT_GPIO_LED cros_ec_gpio_led_pins
 #define COMPAT_PWM_LED  cros_ec_pwm_led_pins
 
+#define PINS_ARRAY(id)	DT_CAT(PINS_ARRAY_, id)
+
 #define GET_PROP(id, prop)						\
 	COND_CODE_1(DT_NODE_HAS_PROP(id, prop),				\
 		    (DT_STRING_UPPER_TOKEN(id, prop)),			\

@@ -17,8 +17,6 @@
 
 LOG_MODULE_REGISTER(pwm_led, LOG_LEVEL_ERR);
 
-#define LED_PIN_COUNT		(LED_COLOR_COUNT - 1)
-
 /*
  * Struct defining LED PWM pin and duty cycle to set.
  */
@@ -47,7 +45,10 @@ struct led_pins_node_t {
 	enum ec_led_colors br_color;
 
 	/* Array of PWM pins to set to enable particular color */
-	struct pwm_pin_t pwm_pins[LED_PIN_COUNT];
+	struct pwm_pin_t *pwm_pins;
+
+	/* Number of pins per color */
+	uint8_t pins_count;
 };
 
 /*
@@ -77,13 +78,19 @@ const uint32_t period_us =
 #define SET_PWM_PIN(node_id)						\
 {									\
 	DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN)		\
-}
+};
+
+#define GEN_PINS_ARRAY(id)						\
+struct pwm_pin_t PINS_ARRAY(id)[] = SET_PWM_PIN(id)
+
+DT_FOREACH_CHILD(PWM_LED_PINS_NODE, GEN_PINS_ARRAY)
 
 #define SET_PIN_NODE(node_id)						\
 {									\
 	.led_color = GET_PROP(node_id, led_color),			\
 	.br_color = GET_BR_COLOR(node_id, br_color),			\
-	.pwm_pins = SET_PWM_PIN(node_id)				\
+	.pwm_pins = PINS_ARRAY(node_id),				\
+	.pins_count = DT_PROP_LEN(node_id, led_pins)			\
 },
 
 struct led_pins_node_t pins_node[] = {
@@ -100,7 +107,7 @@ void led_set_color(enum led_color color)
 {
 	for (int i = 0; i < LED_COLOR_COUNT; i++) {
 		if (pins_node[i].led_color == color) {
-			for (int j = 0; j < LED_PIN_COUNT; j++) {
+			for (int j = 0; j < pins_node[i].pins_count; j++) {
 				pwm_pin_set_usec(
 					pins_node[i].pwm_pins[j].pwm,
 					pins_node[i].pwm_pins[j].channel,
