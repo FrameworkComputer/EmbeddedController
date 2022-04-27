@@ -392,3 +392,14 @@ __override int board_get_vbus_voltage(int port)
 	}
 	return voltage;
 }
+
+__override int board_nx20p348x_init(int port)
+{
+	int rv;
+
+	rv = i2c_update8(ppc_chips[port].i2c_port,
+			 ppc_chips[port].i2c_addr_flags,
+			 NX20P348X_DEVICE_CONTROL_REG, NX20P348X_CTRL_LDO_SD,
+			 MASK_SET);
+	return rv;
+}
