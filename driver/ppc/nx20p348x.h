@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_NX20P348X_H
 #define __CROS_EC_NX20P348X_H
 
+#include "common.h"
+
 #define NX20P3483_ADDR0_FLAGS 0x70
 #define NX20P3483_ADDR1_FLAGS 0x71
 #define NX20P3483_ADDR2_FLAGS 0x72
@@ -128,5 +130,12 @@ extern const struct ppc_drv nx20p348x_drv;
  * @param port: The Type-C port which triggered the interrupt.
  */
 void nx20p348x_interrupt(int port);
+
+/**
+ * Board override for NX20P348X init.
+ *
+ * @param port: The Type-C port which triggered the interrupt.
+ */
+__override_proto int board_nx20p348x_init(int port);
 
 #endif /* defined(__CROS_EC_NX20P348X_H) */

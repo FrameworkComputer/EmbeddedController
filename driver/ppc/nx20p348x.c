@@ -293,6 +293,11 @@ __maybe_unused static int nx20p3483_vbus_source_enable(int port, int enable)
 	return EC_ERROR_TIMEOUT;
 }
 
+__overridable int board_nx20p348x_init(int port)
+{
+	return EC_SUCCESS;
+}
+
 static int nx20p348x_init(int port)
 {
 	int reg;
@@ -370,6 +375,10 @@ static int nx20p348x_init(int port)
 
 	/* Restore power-on reset value */
 	rv = write_reg(port, NX20P348X_DEVICE_CONTROL_REG, 0);
+	if (rv)
+		return rv;
+
+	rv = board_nx20p348x_init(port);
 	if (rv)
 		return rv;
 
