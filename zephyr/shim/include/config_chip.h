@@ -1866,11 +1866,6 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_SENSOR_TIGHT_TIMESTAMPS
 #endif
 
-#undef CONFIG_ACCEL_INTERRUPTS
-#ifdef CONFIG_PLATFORM_EC_ACCEL_INTERRUPTS
-#define CONFIG_ACCEL_INTERRUPTS
-#endif
-
 #undef CONFIG_ALS
 #undef CONFIG_ALS_COUNT
 #if DT_NODE_HAS_PROP(SENSOR_INFO_NODE, als_sensors)

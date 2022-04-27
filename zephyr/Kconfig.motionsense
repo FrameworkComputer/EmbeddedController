@@ -57,13 +57,6 @@ config PLATFORM_EC_SENSOR_TIGHT_TIMESTAMPS
       The former format enables improved filtering of sensor event
       timestamps on the AP, but comes with stricter jitter requirements.
 
-config PLATFORM_EC_ACCEL_INTERRUPTS
-    bool "Accelerometer Interrupts"
-    help
-      Enable this to allow a sensor driver to send an event to motion task when
-      the sensor gets the data ready interrupt. On the event, motion task calls
-      the driver's irq_handler to collect data.
-
 # TODO(b/173507858) config PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA
 # if PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA
 #endif # PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA

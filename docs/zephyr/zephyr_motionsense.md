@@ -17,7 +17,6 @@ Kconfig Option                                   | Default | Documentation
 `CONFIG_PLATFORM_EC_MOTIONSENSE`                 | n       | [MOTIONSENSE]
 `CONFIG_PLATFORM_EC_ACCEL_FIFO`                  | n       | [ACCEL FIFO]
 `CONFIG_PLATFORM_EC_SENSOR_TIGHT_TIMESTAMPS`     | n       | [TIGHT TIMESTAMPS]
-`CONFIG_PLATFORM_EC_ACCEL_INTERRUPTS`            | n       | [ACCEL INTERRUPTS]
 `CONFIG_PLATFORM_EC_ALS`                         | n       | [ALS]
 `CONFIG_PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT` | n       | [DYNAMIC SENSOR COUNT]
 `CONFIG_PLATFORM_EC_LID_ANGLE`                   | n       | [LID ANGLE]
@@ -269,7 +268,6 @@ lid_accel: lid-accel {
 [MOTIONSENSE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_MOTIONSENSE"&ss=chromiumos
 [ACCEL FIFO]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_ACCEL_FIFO"&ss=chromiumos
 [TIGHT TIMESTAMPS]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_SENSOR_TIGHT_TIMESTAMPS"&ss=chromiumos
-[ACCEL INTERRUPTS]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_ACCEL_INTERRUPTS"&ss=chromiumos
 [ALS]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_ALS"&ss=chromiumos
 [DYNAMIC SENSOR COUNT]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT"&ss=chromiumos
 [LID ANGLE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_LID_ANGLE"&ss=chromiumos
