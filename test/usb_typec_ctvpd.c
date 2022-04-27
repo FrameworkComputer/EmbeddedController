@@ -337,7 +337,7 @@ static void simulate_goodcrc(int port, int role, int id)
 static void simulate_discovery_identity(int port)
 {
 	uint16_t header = PD_HEADER(PD_DATA_VENDOR_DEF, PD_ROLE_SOURCE,
-					0, pd_port[port].msg_rx_id,
+					1, pd_port[port].msg_rx_id,
 					1, pd_port[port].rev, 0);
 	uint32_t msg = VDO(USB_SID_PD,
 			1, /* Structured VDM */
