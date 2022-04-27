@@ -13,7 +13,6 @@
 #include "emul/emul_isl923x.h"
 #include "emul/tcpc/emul_ps8xxx.h"
 #include "emul/tcpc/emul_tcpci.h"
-#include "emul/tcpc/emul_tcpci_partner_drp.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "host_command.h"
