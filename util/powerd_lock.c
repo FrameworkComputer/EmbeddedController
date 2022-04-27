@@ -37,7 +37,7 @@
 static const char lock_file_path[] =
 	"/run/lock/power_override/battery_tool.lock";
 
-int disable_power_management()
+int disable_power_management(void)
 {
 	FILE *lock_file;
 	int rc = 0;
@@ -53,7 +53,7 @@ int disable_power_management()
 	return rc;
 }
 
-int restore_power_management()
+int restore_power_management(void)
 {
 	int result = 0;
 	result = unlink(lock_file_path);
