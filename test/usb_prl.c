@@ -32,6 +32,18 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
+static enum pd_power_role get_partner_power_role(int port)
+{
+	return pd_get_power_role(port) == PD_ROLE_SINK ?
+				PD_ROLE_SOURCE : PD_ROLE_SINK;
+}
+
+static enum pd_data_role get_partner_data_role(int port)
+{
+	return pd_get_data_role(port) == PD_ROLE_UFP ?
+				PD_ROLE_DFP : PD_ROLE_UFP;
+}
+
 static void enable_prl(int port, int en)
 {
 	tcpm_set_rx_enable(port, en);
@@ -47,8 +59,8 @@ static int test_receive_control_msg(void)
 {
 	int port = PORT0;
 	uint16_t header = PD_HEADER(PD_CTRL_DR_SWAP,
-		pd_get_power_role(port),
-		pd_get_data_role(port),
+		get_partner_power_role(port),
+		get_partner_data_role(port),
 		mock_tc_port[port].msg_rx_id,
 		0, mock_tc_port[port].rev, 0);
 
@@ -99,8 +111,8 @@ static int test_discard_queued_tx_when_rx_happens(void)
 {
 	int port = PORT0;
 	uint16_t header = PD_HEADER(PD_CTRL_DR_SWAP,
-		pd_get_power_role(port),
-		pd_get_data_role(port),
+		get_partner_power_role(port),
+		get_partner_data_role(port),
 		mock_tc_port[port].msg_rx_id,
 		0, mock_tc_port[port].rev, 0);
 	uint8_t *buf = tx_emsg[port].buf;
