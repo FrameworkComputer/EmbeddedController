@@ -77,6 +77,7 @@ GPIO(EC_PCH_WAKE_ODL,          PIN(7, 4), GPIO_ODR_HIGH)
 GPIO(EC_ENTERING_RW,           PIN(E, 3), GPIO_OUT_LOW)
 GPIO(EC_PROCHOT_ODL,           PIN(6, 3), GPIO_ODR_HIGH)
 GPIO_INT(EC_PROCHOT_IN_L,      PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
+GPIO_INT(CPU_C10_GATE_L,       PIN(6, 7), GPIO_INT_RISING, throttle_ap_c10_input_interrupt)
 GPIO(SYS_RST_ODL,              PIN(C, 5), GPIO_ODR_HIGH)
 
 GPIO(EC_PCH_INT_ODL,           PIN(B, 0), GPIO_ODR_HIGH)
@@ -109,7 +110,6 @@ GPIO(EC_SLP_S0IX,		PIN(7, 2), GPIO_INPUT | GPIO_PULL_UP)
 /* Unused signals */
 GPIO(CHARGER_INT_L,		PIN(7, 3), GPIO_INPUT)		/* Interrupt not used from ISL9241, on board pull-up */
 GPIO(EC_GP_SEL0_ODL,		PIN(B, 6), GPIO_OUT_LOW) 	/* Cannot be configured as input, drive output low, don't rely on the default setting of PxDOUT register */
-GPIO(CPU_C10_GATE_L, 		PIN(6, 7), GPIO_INPUT)		/* Unused power sequence signal from AP. Has an on-board pull-down. */
 GPIO(EN_PP5000_USB_AG,		PIN(A, 7), GPIO_INPUT | GPIO_PULL_UP) /* Unconnected power sequencing signal */
 GPIO(UNUSED_GPIO41,		PIN(4, 1), GPIO_INPUT | GPIO_PULL_UP)
 GPIO(UNUSED_GPIOF2,		PIN(F, 2), GPIO_INPUT | GPIO_PULL_UP)
@@ -185,4 +185,3 @@ ALTERNATE(PIN_MASK(0, BIT(0) | BIT(1) | BIT(2)), 0, MODULE_PMU, 0)  /* GPIO00 = 
 /* Temperature sensors */
 ALTERNATE(PIN_MASK(4, BIT(2) | BIT(4) | BIT(5)), 0, MODULE_ADC, 0) /* TEMP_SENSOR1,2,4 */
 ALTERNATE(PIN_MASK(F, BIT(1)), 0, MODULE_ADC, 0) /* TEMP_SENSOR3 */
-

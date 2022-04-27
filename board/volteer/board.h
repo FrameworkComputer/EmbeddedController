@@ -34,6 +34,7 @@
 
 /* Chipset features */
 #define CONFIG_POWER_PP5000_CONTROL
+#define CONFIG_CPU_PROCHOT_GATE_ON_C10
 
 /* LED defines */
 #define CONFIG_LED_PWM

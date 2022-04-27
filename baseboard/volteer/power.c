@@ -51,6 +51,10 @@ const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_deassert_list);
 
 static const struct prochot_cfg volteer_prochot_cfg = {
 	.gpio_prochot_in = GPIO_EC_PROCHOT_IN_L,
+#ifdef CONFIG_CPU_PROCHOT_GATE_ON_C10
+	.gpio_c10_in = GPIO_CPU_C10_GATE_L,
+	.c10_active_high = false,
+#endif
 };
 
 static void baseboard_init(void)
@@ -58,5 +62,9 @@ static void baseboard_init(void)
 	/* Enable monitoring of the PROCHOT input to the EC */
 	throttle_ap_config_prochot(&volteer_prochot_cfg);
 	gpio_enable_interrupt(GPIO_EC_PROCHOT_IN_L);
+
+#ifdef CONFIG_CPU_PROCHOT_GATE_ON_C10
+	gpio_enable_interrupt(GPIO_CPU_C10_GATE_L);
+#endif
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT);
