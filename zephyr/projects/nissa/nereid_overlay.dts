@@ -249,7 +249,15 @@
 	div = <(589820 / 2)>;
 };
 
-/* Set bus speeds for I2C */
+&adc0 {
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch2_gpi2_default
+		     &adc0_ch3_gpi3_default
+		     &adc0_ch13_gpl0_default
+		     &adc0_ch14_gpl1_default>;
+	pinctrl-names = "default";
+};
+
 &i2c0 {
 	label = "I2C_EEPROM";
 	clock-frequency = <I2C_BITRATE_FAST>;
@@ -263,24 +271,39 @@
 		address-width = <8>;
 		timeout = <5>;
 	};
+	pinctrl-0 = <&i2c0_clk_gpb3_default
+		     &i2c0_data_gpb4_default>;
+	pinctrl-names = "default";
 };
 
 &i2c1 {
 	label = "I2C_BATTERY";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c1_clk_gpc1_default
+		     &i2c1_data_gpc2_default>;
+	pinctrl-names = "default";
 };
 
 &i2c2 {
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c2_clk_gpf6_default
+		     &i2c2_data_gpf7_default>;
+	pinctrl-names = "default";
 };
 
 &i2c4 {
 	label = "I2C_SUB_C1_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		     &i2c4_data_gpe7_default>;
+	pinctrl-names = "default";
 };
 
 &i2c5 {
 	label = "I2C_USB_C0_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	pinctrl-0 = <&i2c5_clk_gpa4_default
+		     &i2c5_data_gpa5_default>;
+	pinctrl-names = "default";
 };

@@ -14,4 +14,6 @@
 &pwm0 {
 	status = "okay";
 	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm0_gpa0_default>;
+	pinctrl-names = "default";
 };
