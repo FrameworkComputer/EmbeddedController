@@ -72,10 +72,25 @@ static void pwm_freq_workaround(void)
 	rt9490_enable_pwm_1mhz(CHARGER_SOLO, true);
 }
 
+static void eoc_deglitch_workaround(void)
+{
+	if (system_get_board_version() != 1) {
+		return;
+	}
+
+	/* set end-of-charge deglitch time to 2ms */
+	i2c_update8(chg_chips[CHARGER_SOLO].i2c_port,
+		    chg_chips[CHARGER_SOLO].i2c_addr_flags,
+		    RT9490_REG_ADD_CTRL0,
+		    RT9490_TD_EOC,
+		    MASK_CLR);
+}
+
 static void board_rt9490_workaround(void)
 {
 	ibus_adc_workaround();
 	i2c_speed_workaround();
 	pwm_freq_workaround();
+	eoc_deglitch_workaround();
 }
 DECLARE_HOOK(HOOK_INIT, board_rt9490_workaround, HOOK_PRIO_DEFAULT);

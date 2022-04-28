@@ -235,6 +235,7 @@ struct rt9490_init_setting {
 
 /* ADD CTRL0 */
 #define RT9490_AUTO_AICR			BIT(5)
+#define RT9490_TD_EOC				BIT(4)
 #define RT9490_AUTO_MIVR			BIT(2)
 #define RT9490_JEITA_COLD_HOT			BIT(0)
 
