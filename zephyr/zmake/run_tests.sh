@@ -36,9 +36,3 @@ flake8 .
 
 # Check auto-generated README.md is as expected.
 python -m zmake generate-readme --diff
-
-# Check that cros lint has no errors, we can't actually call cros lint
-# because there is no way to pass the -E flag to pylint.
-# When there are no warnings, switch this to `cros lint`
-find . -name '*.py' -print0 | xargs -0 \
-  /mnt/host/source/chromite/cli/cros/pylint-2 '--rcfile=.pylintrc' -E

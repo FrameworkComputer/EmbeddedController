@@ -1,5 +1,5 @@
 [MASTER]
-init-hook='import sys; sys.path.extend(["zephyr/zmake", "/usr/lib64/python3.6/site-packages"])'
+init-hook='import sys; sys.path.extend(["zephyr/zmake"])'
 
 [MESSAGES CONTROL]
 
