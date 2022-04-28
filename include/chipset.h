@@ -94,6 +94,13 @@ void chipset_throttle_cpu(int throttle);
 void chipset_force_shutdown(enum chipset_shutdown_reason reason);
 
 /**
+ * Attempt to power on the chipset if it's in S4/S5/G3.
+ *
+ * This does nothing if in S3/S0ix/S0.
+ */
+void chipset_power_on(void);
+
+/**
  * Reset the CPU and/or chipset.
  */
 void chipset_reset(enum chipset_shutdown_reason reason);

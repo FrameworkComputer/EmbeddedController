@@ -824,6 +824,14 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	task_wake(TASK_ID_CHIPSET);
 }
 
+void chipset_power_on(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		power_request = POWER_REQ_ON;
+		task_wake(TASK_ID_CHIPSET);
+	}
+}
+
 /**
  * Warm reset the AP
  *
