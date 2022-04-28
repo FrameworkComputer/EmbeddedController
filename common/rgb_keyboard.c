@@ -234,7 +234,7 @@ void rgbkbd_init_lookup_table(void)
 	 */
 }
 
-int rgbkbd_set_global_brightness(uint8_t gcc)
+static int rgbkbd_set_global_brightness(uint8_t gcc)
 {
 	int e, grid;
 	int rv = EC_SUCCESS;
@@ -249,8 +249,6 @@ int rgbkbd_set_global_brightness(uint8_t gcc)
 			rv = e;
 			continue;
 		}
-
-		ctx->gcc = gcc;
 	}
 
 	CPRINTS("Set GCC to %u", gcc);
@@ -259,20 +257,13 @@ int rgbkbd_set_global_brightness(uint8_t gcc)
 	return rv;
 }
 
-int rgbkbd_get_global_brightness(uint8_t *gcc)
-{
-	*gcc = rgbkbds[0].gcc;
-
-	return EC_SUCCESS;
-}
-
-__overridable void board_enable_rgb_keyboard(bool enable) {}
-
 static int rgbkbd_init(void)
 {
 	int rv = EC_SUCCESS;
 	int e, i;
 	bool updated = false;
+
+	rgbkbd_init_lookup_table();
 
 	for (i = 0; i < rgbkbd_count; i++) {
 		struct rgbkbd *ctx = &rgbkbds[i];
@@ -342,16 +333,6 @@ static int rgbkbd_kblight_set(int percent)
 	return rgbkbd_set_global_brightness(gcc);
 }
 
-static int rgbkbd_kblight_get(void)
-{
-	uint8_t gcc;
-
-	if (rgbkbd_get_global_brightness(&gcc))
-		return 0;
-
-	return DIV_ROUND_NEAREST(gcc * 100, RGBKBD_MAX_GCC_LEVEL);
-}
-
 static int rgbkbd_get_enabled(void)
 {
 	return rgbkbds[0].state >= RGBKBD_STATE_ENABLED;
@@ -360,27 +341,14 @@ static int rgbkbd_get_enabled(void)
 const struct kblight_drv kblight_rgbkbd = {
 	.init = rgbkbd_init,
 	.set = rgbkbd_kblight_set,
-	.get = rgbkbd_kblight_get,
-	/*
-	 * We need to let RGBKBD manage enable/disable the backlight to keep
-	 * the LEDs under the control of RGBKBD. Registering NULL also avoids
-	 * ASSERT(!in_interrupt_context()) failure in task.c called from
-	 * rgbkbd_enable API.
-	 */
-	.enable = NULL,
+	.get = NULL,
+	.enable = rgbkbd_enable,
 	.get_enabled = rgbkbd_get_enabled,
 };
 
 void rgbkbd_task(void *u)
 {
 	uint32_t event;
-
-	board_enable_rgb_keyboard(true);
-
-	rgbkbd_init_lookup_table();
-	rgbkbd_init();
-	rgbkbd_enable(1);
-	rgbkbd_set_global_brightness(0x80);
 
 	while (1) {
 		event = task_wait_event(100 * MSEC);

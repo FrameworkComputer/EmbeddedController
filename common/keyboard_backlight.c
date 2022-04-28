@@ -19,6 +19,7 @@
 
 static struct kblight_conf kblight;
 static int current_percent;
+static uint8_t current_enable;
 
 void __attribute__((weak)) board_kblight_init(void)
 { }
@@ -56,14 +57,23 @@ int kblight_get(void)
 	return current_percent;
 }
 
-int kblight_enable(int enable)
+static void kblight_enable_deferred(void)
 {
 #ifdef CONFIG_KBLIGHT_ENABLE_PIN
-	gpio_set_level(GPIO_EN_KEYBOARD_BACKLIGHT, enable);
+	gpio_set_level(GPIO_EN_KEYBOARD_BACKLIGHT, current_enable);
 #endif
 	if (!kblight.drv || !kblight.drv->enable)
-		return -1;
-	return kblight.drv->enable(enable);
+		return;
+	kblight.drv->enable(current_enable);
+}
+DECLARE_DEFERRED(kblight_enable_deferred);
+
+int kblight_enable(int enable)
+{
+	current_enable = enable;
+	/* Need to defer i2c in case it's called from an interrupt handler. */
+	hook_call_deferred(&kblight_enable_deferred_data, 0);
+	return EC_SUCCESS;
 }
 
 int kblight_get_enabled(void)
@@ -104,6 +114,7 @@ static void keyboard_backlight_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_backlight_init, HOOK_PRIO_DEFAULT);
 
+#ifdef HAS_TASK_CHIPSET
 static void kblight_suspend(void)
 {
 	kblight_enable(0);
@@ -118,12 +129,15 @@ static void kblight_resume(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, kblight_resume, HOOK_PRIO_DEFAULT);
+#endif  // HAS_TASK_CHIPSET
 
+#ifdef CONFIG_LID_SWITCH
 static void kblight_lid_change(void)
 {
 	kblight_enable(lid_is_open() && current_percent);
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, kblight_lid_change, HOOK_PRIO_DEFAULT);
+#endif
 
 /*
  * Console and host commands

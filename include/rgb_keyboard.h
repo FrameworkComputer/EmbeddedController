@@ -39,8 +39,6 @@ struct rgbkbd {
 	const struct rgbkbd_cfg * const cfg;
 	/* Current state of the port */
 	enum rgbkbd_state state;
-	/* Global current control (a.k.a. backlight brightness) */
-	uint8_t gcc;
 	/* Buffer containing color info for each dot. */
 	struct rgb_s *buf;
 };
@@ -142,11 +140,6 @@ extern const uint8_t rgbkbd_hsize;
 extern const uint8_t rgbkbd_vsize;
 
 /*
- * Called to power on or off the RGB keyboard module.
- */
-__override_proto void board_enable_rgb_keyboard(bool enable);
-
-/*
  * rgbkbd_map describes a mapping from key IDs to LED IDs.
  *
  * Multiple keys can be mapped to one LED and one key can be mapped to multiple
@@ -177,15 +170,6 @@ __override_proto void board_enable_rgb_keyboard(bool enable);
  */
 extern const uint8_t rgbkbd_map[];
 extern const size_t rgbkbd_map_size;
-
-/**
- * Set/get global brightness of the RGB keyboard.
- *
- * @param  gcc  Brightness level 0 ~ RGBKBD_MAX_GCC_LEVEL.
- * @return enum ec_error_list;
- */
-int rgbkbd_set_global_brightness(uint8_t gcc);
-int rgbkbd_get_global_brightness(uint8_t *gcc);
 
 /*
  * Driver for keyboard_backlight.

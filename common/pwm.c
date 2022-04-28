@@ -9,7 +9,6 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "pwm.h"
-#include "rgb_keyboard.h"
 #include "util.h"
 
 #ifdef CONFIG_PWM
@@ -65,18 +64,10 @@ host_command_pwm_set_duty(struct host_cmd_handler_args *args)
 	const struct ec_params_pwm_set_duty *p = args->params;
 	enum pwm_channel channel;
 
-	if (IS_ENABLED(CONFIG_RGB_KEYBOARD) &&
-			(p->pwm_type == EC_PWM_TYPE_KB_LIGHT)) {
-		uint8_t gcc = DIV_ROUND_NEAREST(p->duty * RGBKBD_MAX_GCC_LEVEL,
-						EC_PWM_MAX_DUTY);
-		if (rgbkbd_set_global_brightness(gcc))
-			return EC_RES_ERROR;
-	} else {
-		if (get_target_channel(&channel, p->pwm_type, p->index))
-			return EC_RES_INVALID_PARAM;
-		pwm_set_raw_duty(channel, p->duty);
-		pwm_enable(channel, p->duty > 0);
-	}
+	if (get_target_channel(&channel, p->pwm_type, p->index))
+		return EC_RES_INVALID_PARAM;
+	pwm_set_raw_duty(channel, p->duty);
+	pwm_enable(channel, p->duty > 0);
 
 	return EC_RES_SUCCESS;
 }
@@ -90,22 +81,12 @@ host_command_pwm_get_duty(struct host_cmd_handler_args *args)
 	const struct ec_params_pwm_get_duty *p = args->params;
 	struct ec_response_pwm_get_duty *r = args->response;
 
-	if (IS_ENABLED(CONFIG_RGB_KEYBOARD) &&
-			(p->pwm_type == EC_PWM_TYPE_KB_LIGHT)) {
-		uint8_t gcc;
+	enum pwm_channel channel;
 
-		if (rgbkbd_get_global_brightness(&gcc))
-			return EC_RES_ERROR;
-		r->duty = DIV_ROUND_NEAREST(gcc * EC_PWM_MAX_DUTY,
-					    RGBKBD_MAX_GCC_LEVEL);
-	} else {
-		enum pwm_channel channel;
+	if (get_target_channel(&channel, p->pwm_type, p->index))
+		return EC_RES_INVALID_PARAM;
 
-		if (get_target_channel(&channel, p->pwm_type, p->index))
-			return EC_RES_INVALID_PARAM;
-
-		r->duty = pwm_get_raw_duty(channel);
-	}
+	r->duty = pwm_get_raw_duty(channel);
 
 	args->response_size = sizeof(*r);
 

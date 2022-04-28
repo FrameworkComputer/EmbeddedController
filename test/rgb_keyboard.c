@@ -116,9 +116,13 @@ static int test_drv_set_gcc(struct rgbkbd *ctx, uint8_t level)
 	return EC_SUCCESS;
 }
 
+void rgbkbd_init_lookup_table(void);
+
 static int test_rgbkbd_map(void)
 {
 	union rgbkbd_coord_u8 led;
+
+	rgbkbd_init_lookup_table();
 
 	led.u8 = rgbkbd_map[rgbkbd_table[0]];
 	zassert_equal(RGBKBD_COORD(led.coord.x, led.coord.y),
@@ -163,13 +167,6 @@ static int test_rgbkbd_startup(void)
 
 	/* Let RGBKBD task run. */
 	task_wait_event(-1);
-
-	zassert_equal(mock_state.count_drv_init, rgbkbd_count,
-		      "init() called");
-	zassert_equal(mock_state.count_drv_set_gcc, rgbkbd_count,
-		      "set_gcc() called");
-	zassert_equal(mock_state.count_drv_set_scale, rgbkbd_count,
-		      "set_scale() called");
 
 	/* Check 'DOT' demo. */
 	for (x = 0; x < rgbkbd_hsize; x++) {
