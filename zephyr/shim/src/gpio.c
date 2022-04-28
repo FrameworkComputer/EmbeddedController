@@ -14,7 +14,7 @@
 #include "gpio.h"
 #include "gpio/gpio.h"
 #include "ioexpander.h"
-#include "sysjump.h"
+#include "system.h"
 #include "cros_version.h"
 
 LOG_MODULE_REGISTER(gpio_shim, LOG_LEVEL_ERR);
@@ -255,8 +255,7 @@ const struct gpio_dt_spec *gpio_get_dt_spec(enum gpio_signal signal)
 static int init_gpios(const struct device *unused)
 {
 	gpio_flags_t flags;
-	struct jump_data *jdata = get_jump_data();
-	bool is_sys_jumped = (jdata && jdata->magic == JUMP_DATA_MAGIC);
+	bool is_sys_jumped = system_jumped_to_this_image();
 
 	ARG_UNUSED(unused);
 

@@ -26,8 +26,6 @@
  */
 void ec_app_main(void)
 {
-	system_common_pre_init();
-
 	/*
 	 * Initialize reset logs. This needs to be done before any updates of
 	 * reset logs because we need to verify if the values remain the same

@@ -369,6 +369,7 @@ static int system_preinitialize(const struct device *unused)
 			arch_nop();
 	}
 #endif
+	system_common_pre_init();
 	return 0;
 }
 
