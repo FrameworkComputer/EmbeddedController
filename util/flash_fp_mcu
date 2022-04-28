@@ -656,9 +656,8 @@ config_zork() {
   readonly GPIO_NRST=267
   # FPMCU BOOT0 is on AGPIO 69 = 256 + 69 = 325
   readonly GPIO_BOOT0=325
-  # FPMCU PWR_EN is on AGPIO 32 = 256 + 32 = 288, but should not be
-  # necessary for flashing. Set invalid value.
-  readonly GPIO_PWREN=-1
+  # FPMCU PWR_EN is on AGPIO 32 = 256 + 32 = 288
+  readonly GPIO_PWREN=288
 }
 
 config_guybrush() {
@@ -671,9 +670,8 @@ config_guybrush() {
   readonly GPIO_NRST=267
   # FPMCU BOOT0 is on AGPIO 144 = 256 + 144 = 400
   readonly GPIO_BOOT0=400
-  # FPMCU PWR_EN is on AGPIO 32 = 256 + 32 = 288, but should not be
-  # necessary for flashing. Set invalid value.
-  readonly GPIO_PWREN=-1
+  # FPMCU PWR_EN is on AGPIO 3 = 256 + 3 = 259
+  readonly GPIO_PWREN=259
 }
 
 main() {
