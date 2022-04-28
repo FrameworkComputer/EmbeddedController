@@ -133,7 +133,7 @@ test_mockable struct panic_data *panic_get_data(void)
 		(__ram_data + RAM_DATA_SIZE - sizeof(struct panic_data));
 }
 
-test_mockable uintptr_t get_panic_data_start()
+test_mockable uintptr_t get_panic_data_start(void)
 {
 	return (uintptr_t)
 		(__ram_data + RAM_DATA_SIZE - sizeof(struct panic_data));
