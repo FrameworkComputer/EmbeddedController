@@ -56,6 +56,12 @@ config PLATFORM_EC_USB_MUX_TUSB1044
 	  Gen 2 and DisplayPort 1.4 as Alternate Mode. It Provides GPIO and
 	  I2C Control for Channel Direction and Equalization.
 
+config PLATFORM_EC_USB_MUX_TUSB546
+	bool "TI TUSB546 USB-C DP ALT Mode Linear Redriver Crosspoint Switch"
+	help
+	  This is a USB Type-C Alt Mode redriving switch supporting USB 3.1 data
+	  rates up to 5 Gbps and DisplayPort 1.4 up to 8.1 Gbps for downstream
+	  facing port.
 endif # PLATFORM_EC_USB_MUX
 
 endif # PLATFORM_EC_USBC

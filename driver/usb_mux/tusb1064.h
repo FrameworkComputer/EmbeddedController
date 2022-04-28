@@ -39,7 +39,7 @@
 #define REG_GENERAL_CTLSEL_USB3         BIT(0)
 #define REG_GENERAL_CTLSEL_ANYDP        BIT(1)
 #define REG_GENERAL_FLIPSEL             BIT(2)
-#if defined(CONFIG_USB_MUX_TUSB1044)
+#if defined(CONFIG_USB_MUX_TUSB1044) || defined(CONFIG_USB_MUX_TUSB546)
 #define REG_GENERAL_HPDIN_OVERRIDE      BIT(3)
 #else
 #define REG_GENERAL_DP_EN_CTRL          BIT(3)

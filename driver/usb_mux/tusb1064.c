@@ -10,8 +10,9 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
-#if defined(CONFIG_USB_MUX_TUSB1044) && defined(CONFIG_USB_MUX_TUSB1064)
-#error "Must choose CONFIG_USB_MUX_TUSB1044 or CONFIG_USB_MUX_TUSB1064"
+#if defined(CONFIG_USB_MUX_TUSB1044) + defined(CONFIG_USB_MUX_TUSB1064) + \
+	defined(CONFIG_USB_MUX_TUSB546) != 1
+#error "Must choose exactly one of CONFIG_USB_MUX_TUSB{546,1044,1064}"
 #endif
 
 static int tusb1064_read(const struct usb_mux *me, uint8_t reg, uint8_t *val)
@@ -102,7 +103,7 @@ static int tusb1064_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	/* Mask bits that may be set in this function */
 	mask = REG_GENERAL_CTLSEL_USB3 | REG_GENERAL_CTLSEL_ANYDP |
 		REG_GENERAL_FLIPSEL;
-#ifdef CONFIG_USB_MUX_TUSB1044
+#if defined(CONFIG_USB_MUX_TUSB1044) || defined(CONFIG_USB_MUX_TUSB546)
 	mask |= REG_GENERAL_HPDIN_OVERRIDE;
 #endif
 	reg &= ~mask;
@@ -112,8 +113,12 @@ static int tusb1064_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		reg |= REG_GENERAL_CTLSEL_USB3;
-	if (mux_state & USB_PD_MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		reg |= REG_GENERAL_CTLSEL_ANYDP;
+#ifdef CONFIG_USB_MUX_TUSB546
+		reg |= REG_GENERAL_HPDIN_OVERRIDE;
+#endif
+	}
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		reg |= REG_GENERAL_FLIPSEL;
 #if defined(CONFIG_USB_MUX_TUSB1044)
