@@ -80,8 +80,38 @@
 	 * List of motion sensors that creates motion_sensors array.
 	 * The label "lid_accel" and "base_accel" are used to indicate
 	 * motion sensor IDs for lid angle calculation.
+	 * TODO:(b/229577857) The first entries of the array must be
+	 * accelerometers,then gyroscope. Fix this dependency in the DTS
+	 * processing which makes the devicetree entries independent.
 	 */
 	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,lis2dw12";
+			status = "okay";
+
+			label = "Lid Accel";
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			default-range = <2>;
+			drv-data = <&lis2dw12_data>;
+			i2c-spi-addr-flags = "LIS2DWL_ADDR0_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					label = "SENSOR_CONFIG_EC_S0";
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					label = "SENSOR_CONFIG_EC_S3";
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
 		base_accel: base-accel {
 			compatible = "cros-ec,lsm6dso-accel";
 			status = "okay";
@@ -122,33 +152,6 @@
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
 			drv-data = <&lsm6dso_data>;
-		};
-
-		lid_accel: lid-accel {
-			compatible = "cros-ec,lis2dw12";
-			status = "okay";
-
-			label = "Lid Accel";
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_LID";
-			mutex = <&lid_mutex>;
-			port = <&i2c_ec_i2c_sensor>;
-			rot-standard-ref = <&lid_rot_ref>;
-			default-range = <2>;
-			drv-data = <&lis2dw12_data>;
-			i2c-spi-addr-flags = "LIS2DWL_ADDR0_FLAGS";
-			configs {
-				compatible =
-					"cros-ec,motionsense-sensor-config";
-				ec-s0 {
-					label = "SENSOR_CONFIG_EC_S0";
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
-				ec-s3 {
-					label = "SENSOR_CONFIG_EC_S3";
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
-			};
 		};
 	};
 
