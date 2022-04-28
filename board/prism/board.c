@@ -105,70 +105,76 @@ const uint8_t rgbkbd_vsize = RGB_GRID0_ROW;
 
 const uint8_t rgbkbd_map[] = {
 	RGBKBD_DELM,				/* 0: (null) */
-	RGBKBD_COORD( 0, 1), RGBKBD_DELM,	/* 1: ~ */
-	RGBKBD_COORD( 1, 1), RGBKBD_DELM,	/* 2: ! */
-	RGBKBD_COORD( 2, 1), RGBKBD_DELM,	/* 3: @ */
-	RGBKBD_COORD( 3, 1), RGBKBD_DELM,	/* 4: # */
-	RGBKBD_COORD( 4, 1), RGBKBD_DELM,	/* 5: $ */
-	RGBKBD_COORD( 5, 1), RGBKBD_DELM,	/* 6: ^ */
-	RGBKBD_COORD( 6, 1), RGBKBD_DELM,	/* 7: ^ */
-	RGBKBD_COORD( 7, 1), RGBKBD_DELM,	/* 8: & */
-	RGBKBD_COORD( 8, 1), RGBKBD_DELM,	/* 9: * */
-	RGBKBD_COORD( 9, 1), RGBKBD_DELM,	/* 10: ( */
-	RGBKBD_COORD(10, 1), RGBKBD_DELM,	/* 11: ) */
-	RGBKBD_COORD(11, 1), RGBKBD_DELM,	/* 12: _ */
-	RGBKBD_COORD(12, 1), RGBKBD_DELM,	/* 13: + */
+	RGBKBD_COORD( 0, 1), RGBKBD_DELM,	/* 1: ~ ` */
+	RGBKBD_COORD( 1, 1), RGBKBD_COORD( 1, 2), RGBKBD_DELM,	/* 2: ! 1 */
+	RGBKBD_COORD( 2, 1), RGBKBD_COORD( 2, 2), RGBKBD_DELM,	/* 3: @ 2 */
+	RGBKBD_COORD( 3, 1), RGBKBD_COORD( 3, 2), RGBKBD_DELM,	/* 4: # 3 */
+	RGBKBD_COORD( 4, 1), RGBKBD_COORD( 4, 2), RGBKBD_DELM,	/* 5: $ 4 */
+	RGBKBD_COORD( 5, 1), RGBKBD_COORD( 5, 2), RGBKBD_DELM,	/* 6: % 5 */
+	RGBKBD_COORD( 6, 1), RGBKBD_COORD( 6, 2), RGBKBD_DELM,	/* 7: ^ 6 */
+	RGBKBD_COORD( 7, 1), RGBKBD_COORD( 7, 2), RGBKBD_DELM,	/* 8: & 7 */
+	RGBKBD_COORD( 8, 1), RGBKBD_COORD( 8, 2), RGBKBD_DELM,	/* 9: * 8 */
+	RGBKBD_COORD( 9, 1), RGBKBD_COORD( 9, 2), RGBKBD_DELM,	/* 10: ( 9 */
+	RGBKBD_COORD(10, 1), RGBKBD_COORD(10, 2), RGBKBD_DELM,	/* 11: ) 0 */
+	RGBKBD_COORD(11, 1), RGBKBD_COORD(11, 2), RGBKBD_DELM,	/* 12: _ - */
+	RGBKBD_COORD(12, 1), RGBKBD_COORD(12, 2), RGBKBD_DELM,	/* 13: + = */
 	RGBKBD_DELM,				/* 14: (null) */
-	RGBKBD_COORD(13, 1), RGBKBD_DELM,	/* 15: backspace */
-	RGBKBD_COORD( 0, 2), RGBKBD_DELM,	/* 16: tab */
-	RGBKBD_COORD( 1, 2), RGBKBD_DELM,	/* 17: q */
-	RGBKBD_COORD( 2, 2), RGBKBD_DELM,	/* 18: w */
-	RGBKBD_COORD( 3, 2), RGBKBD_DELM,	/* 19: e */
-	RGBKBD_COORD( 4, 2), RGBKBD_DELM,	/* 20: r */
-	RGBKBD_COORD( 5, 2), RGBKBD_DELM,	/* 21: t */
-	RGBKBD_COORD( 6, 2), RGBKBD_DELM,	/* 22: y */
-	RGBKBD_COORD( 7, 2), RGBKBD_DELM,	/* 23: u */
-	RGBKBD_COORD( 8, 2), RGBKBD_DELM,	/* 24: i */
-	RGBKBD_COORD( 9, 2), RGBKBD_DELM,	/* 25: o */
-	RGBKBD_COORD(10, 2), RGBKBD_DELM,	/* 26: p */
-	RGBKBD_COORD(11, 2), RGBKBD_DELM,	/* 27: [ */
-	RGBKBD_COORD(12, 2), RGBKBD_DELM,	/* 28: ] */
-	RGBKBD_COORD(13, 2), RGBKBD_DELM,	/* 29: \ */
-	RGBKBD_COORD( 0, 3), RGBKBD_DELM,	/* 30: caps lock */
-	RGBKBD_COORD( 1, 3), RGBKBD_DELM,	/* 31: a */
-	RGBKBD_COORD( 2, 3), RGBKBD_DELM,	/* 32: s */
-	RGBKBD_COORD( 3, 3), RGBKBD_DELM,	/* 33: d */
-	RGBKBD_COORD( 4, 3), RGBKBD_DELM,	/* 34: f */
-	RGBKBD_COORD( 5, 3), RGBKBD_DELM,	/* 35: g */
-	RGBKBD_COORD( 6, 3), RGBKBD_DELM,	/* 36: h */
-	RGBKBD_COORD( 7, 3), RGBKBD_DELM,	/* 37: j */
-	RGBKBD_COORD( 8, 3), RGBKBD_DELM,	/* 38: k */
-	RGBKBD_COORD( 9, 3), RGBKBD_DELM,	/* 39: l */
-	RGBKBD_COORD(10, 3), RGBKBD_DELM,	/* 40: ; */
-	RGBKBD_COORD(11, 3), RGBKBD_DELM,	/* 41: " */
+	RGBKBD_COORD(13, 1), RGBKBD_COORD(13, 2), RGBKBD_DELM,	/* 15: backspace */
+	RGBKBD_COORD( 0, 3), RGBKBD_DELM,	/* 16: tab */
+	RGBKBD_COORD( 1, 3), RGBKBD_DELM,	/* 17: q */
+	RGBKBD_COORD( 2, 3), RGBKBD_DELM,	/* 18: w */
+	RGBKBD_COORD( 3, 3), RGBKBD_DELM,	/* 19: e */
+	RGBKBD_COORD( 4, 3), RGBKBD_DELM,	/* 20: r */
+	RGBKBD_COORD( 5, 3), RGBKBD_DELM,	/* 21: t */
+	RGBKBD_COORD( 6, 3), RGBKBD_DELM,	/* 22: y */
+	RGBKBD_COORD( 7, 3), RGBKBD_DELM,	/* 23: u */
+	RGBKBD_COORD( 8, 3), RGBKBD_DELM,	/* 24: i */
+	RGBKBD_COORD( 9, 3), RGBKBD_DELM,	/* 25: o */
+	RGBKBD_COORD(10, 3), RGBKBD_DELM,	/* 26: p */
+	RGBKBD_COORD(11, 3), RGBKBD_COORD(12, 3), RGBKBD_DELM,	/* 27: [ { */
+	RGBKBD_COORD(13, 3), RGBKBD_COORD(14, 3), RGBKBD_DELM,	/* 28: ] } */
+	RGBKBD_COORD(15, 3), RGBKBD_COORD(16, 3), RGBKBD_DELM,	/* 29: \ | */
+	RGBKBD_COORD( 0, 4), RGBKBD_COORD( 1, 4), RGBKBD_DELM,	/* 30: caps lock */
+	RGBKBD_COORD( 2, 4), RGBKBD_DELM,	/* 31: a */
+	RGBKBD_COORD( 3, 4), RGBKBD_DELM,	/* 32: s */
+	RGBKBD_COORD( 4, 4), RGBKBD_DELM,	/* 33: d */
+	RGBKBD_COORD( 5, 4), RGBKBD_DELM,	/* 34: f */
+	RGBKBD_COORD( 6, 4), RGBKBD_DELM,	/* 35: g */
+	RGBKBD_COORD( 7, 4), RGBKBD_DELM,	/* 36: h */
+	RGBKBD_COORD( 8, 4), RGBKBD_DELM,	/* 37: j */
+	RGBKBD_COORD( 9, 4), RGBKBD_DELM,	/* 38: k */
+	RGBKBD_COORD(10, 4), RGBKBD_DELM,	/* 39: l */
+	RGBKBD_COORD(11, 4), RGBKBD_COORD(12, 4), RGBKBD_DELM,	/* 40: ; : */
+	RGBKBD_COORD(13, 4), RGBKBD_COORD(14, 4), RGBKBD_DELM,	/* 41: " ' */
 	RGBKBD_DELM,				/* 42: (null) */
-	RGBKBD_COORD(12, 3), RGBKBD_DELM,	/* 43: enter */
-	RGBKBD_COORD( 0, 4), RGBKBD_DELM,	/* 44: L-shift */
+	RGBKBD_COORD(15, 4), RGBKBD_COORD(16, 4), RGBKBD_DELM,	/* 43: enter */
+	RGBKBD_COORD( 0, 5), RGBKBD_COORD( 1, 5),
+	RGBKBD_COORD( 2, 5), RGBKBD_DELM,	/* 44: L-shift */
 	RGBKBD_DELM,				/* 45: (null) */
-	RGBKBD_COORD( 1, 4), RGBKBD_DELM,	/* 46: z */
-	RGBKBD_COORD( 2, 4), RGBKBD_DELM,	/* 47: x */
-	RGBKBD_COORD( 3, 4), RGBKBD_DELM,	/* 48: c */
-	RGBKBD_COORD( 4, 4), RGBKBD_DELM,	/* 49: v */
-	RGBKBD_COORD( 5, 4), RGBKBD_DELM,	/* 50: b */
-	RGBKBD_COORD( 6, 4), RGBKBD_DELM,	/* 51: n */
-	RGBKBD_COORD( 7, 4), RGBKBD_DELM,	/* 52: m */
-	RGBKBD_COORD( 8, 4), RGBKBD_DELM,	/* 53: , */
-	RGBKBD_COORD( 9, 4), RGBKBD_DELM,	/* 54: . */
-	RGBKBD_COORD(10, 4), RGBKBD_DELM,	/* 55: / */
+	RGBKBD_COORD( 3, 5), RGBKBD_DELM,	/* 46: z */
+	RGBKBD_COORD( 4, 5), RGBKBD_DELM,	/* 47: x */
+	RGBKBD_COORD( 5, 5), RGBKBD_DELM,	/* 48: c */
+	RGBKBD_COORD( 6, 5), RGBKBD_DELM,	/* 49: v */
+	RGBKBD_COORD( 7, 5), RGBKBD_DELM,	/* 50: b */
+	RGBKBD_COORD( 8, 5), RGBKBD_DELM,	/* 51: n */
+	RGBKBD_COORD( 9, 5), RGBKBD_DELM,	/* 52: m */
+	RGBKBD_COORD(10, 5), RGBKBD_COORD(11, 5), RGBKBD_DELM,	/* 53: , < */
+	RGBKBD_COORD(12, 5), RGBKBD_COORD(13, 5), RGBKBD_DELM,	/* 54: . > */
+	RGBKBD_COORD(14, 5), RGBKBD_COORD(15, 5), RGBKBD_DELM,	/* 55: / ? */
 	RGBKBD_DELM,				/* 56: (null) */
-	RGBKBD_COORD(11, 4), RGBKBD_DELM,	/* 57: R-shift */
-	RGBKBD_COORD( 0, 5), RGBKBD_DELM,	/* 58: L-ctrl */
-	RGBKBD_DELM,				/* 59: (null) */
-	RGBKBD_COORD( 1, 5), RGBKBD_DELM,	/* 60: L-alt */
-	RGBKBD_COORD( 2, 5), RGBKBD_DELM,	/* 61: space */
-	RGBKBD_COORD( 7, 5), RGBKBD_DELM,	/* 62: R-alt */
+	RGBKBD_COORD(16, 5), RGBKBD_COORD(17, 5),
+	RGBKBD_COORD(18, 5), RGBKBD_DELM,	/* 57: R-shift */
+	RGBKBD_COORD(17, 4), RGBKBD_COORD(18, 4),
+	RGBKBD_COORD(19, 4), RGBKBD_DELM,	/* 58: L-ctrl */
+	RGBKBD_COORD(15, 0), RGBKBD_DELM,	/* 59: power */
+	RGBKBD_COORD(17, 2), RGBKBD_COORD(18, 2),
+	RGBKBD_COORD(19, 2), RGBKBD_DELM,	/* 60: L-alt */
+	RGBKBD_COORD(17, 3), RGBKBD_COORD(18, 3),
+	RGBKBD_COORD(19, 3), RGBKBD_COORD(20, 3),
+	RGBKBD_COORD(21, 3), RGBKBD_DELM,	/* 61: space */
+	RGBKBD_COORD(20, 2), RGBKBD_DELM,	/* 62: R-alt */
 	RGBKBD_DELM,				/* 63: (null) */
-	RGBKBD_COORD( 8, 5), RGBKBD_DELM,	/* 64: R-ctrl */
+	RGBKBD_COORD(21, 2), RGBKBD_DELM,	/* 64: R-ctrl */
 	RGBKBD_DELM,				/* 65: (null) */
 	RGBKBD_DELM,				/* 66: (null) */
 	RGBKBD_DELM,				/* 67: (null) */
@@ -183,17 +189,17 @@ const uint8_t rgbkbd_map[] = {
 	RGBKBD_DELM,				/* 76: (null) */
 	RGBKBD_DELM,				/* 77: (null) */
 	RGBKBD_DELM,				/* 78: (null) */
-	RGBKBD_COORD( 9, 5), RGBKBD_DELM,	/* 79: left */
+	RGBKBD_COORD(19, 5), RGBKBD_DELM,	/* 79: left */
 	RGBKBD_DELM,				/* 80: (null) */
 	RGBKBD_DELM,				/* 81: (null) */
 	RGBKBD_DELM,				/* 82: (null) */
-	RGBKBD_COORD(10, 5), RGBKBD_DELM,	/* 83: up */
-	RGBKBD_COORD(10, 6), RGBKBD_DELM,	/* 84: down */
+	RGBKBD_COORD(20, 4), RGBKBD_DELM,	/* 83: up */
+	RGBKBD_COORD(20, 5), RGBKBD_DELM,	/* 84: down */
 	RGBKBD_DELM,				/* 85: (null) */
 	RGBKBD_DELM,				/* 86: (null) */
 	RGBKBD_DELM,				/* 87: (null) */
 	RGBKBD_DELM,				/* 88: (null) */
-	RGBKBD_COORD(11, 5), RGBKBD_DELM,	/* 89: right */
+	RGBKBD_COORD(21, 5), RGBKBD_DELM,	/* 89: right */
 	RGBKBD_DELM,				/* 90: (null) */
 	RGBKBD_DELM,				/* 91: (null) */
 	RGBKBD_DELM,				/* 92: (null) */
@@ -229,7 +235,7 @@ const uint8_t rgbkbd_map[] = {
 	RGBKBD_COORD(12, 0), RGBKBD_DELM,	/* T12: volume down */
 	RGBKBD_COORD(13, 0), RGBKBD_DELM,	/* T13: volume up */
 	RGBKBD_DELM,				/* T14: (null) */
-	RGBKBD_COORD(14, 0), RGBKBD_DELM,	/* T15: power */
+	RGBKBD_DELM,				/* T15: (null) */
 	RGBKBD_DELM,				/* 126: (null) */
 	RGBKBD_DELM,				/* 127: (null) */
 };
