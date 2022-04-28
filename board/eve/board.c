@@ -85,7 +85,6 @@ static void tcpc_alert_event(enum gpio_signal signal)
 static void enable_input_devices(void);
 DECLARE_DEFERRED(enable_input_devices);
 
-#define LID_DEBOUNCE_US	(30 * MSEC)
 void tablet_mode_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);

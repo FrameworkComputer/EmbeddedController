@@ -116,7 +116,6 @@ void anx74xx_cable_det_interrupt(enum gpio_signal signal)
 static void enable_input_devices(void);
 DECLARE_DEFERRED(enable_input_devices);
 
-#define LID_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for lid switch */
 void tablet_mode_interrupt(enum gpio_signal signal)
 {
 	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
