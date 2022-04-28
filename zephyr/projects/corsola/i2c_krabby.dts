@@ -53,6 +53,9 @@ i2c_pwr_cbi: &i2c0 {
 	label = "I2C_PWR_CBI";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_clk_gpb3_default
+		     &i2c0_data_gpb4_default>;
+	pinctrl-names = "default";
 };
 
 &i2c1 {
@@ -60,6 +63,9 @@ i2c_pwr_cbi: &i2c0 {
 	label = "I2C_BATTERY";
 	status = "okay";
 	clock-frequency = <50000>;
+	pinctrl-0 = <&i2c1_clk_gpc1_default
+		     &i2c1_data_gpc2_default>;
+	pinctrl-names = "default";
 };
 
 &i2c2 {
@@ -67,6 +73,9 @@ i2c_pwr_cbi: &i2c0 {
 	label = "I2C_USB_C0";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c2_clk_gpf6_default
+		     &i2c2_data_gpf7_default>;
+	pinctrl-names = "default";
 };
 
 &i2c3 {
@@ -74,9 +83,11 @@ i2c_pwr_cbi: &i2c0 {
 	label = "I2C_SENSOR";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	gpio-dev = <&gpiof>;
-	pinctrl-0 = <&pinctrl_i2c_clk3_gpf2    /* GPF2 */
-		     &pinctrl_i2c_data3_gpf3>; /* GPF3 */
+	scl-gpios = <&gpiof 2 0>;
+	sda-gpios = <&gpiof 3 0>;
+	pinctrl-0 = <&i2c3_clk_gpf2_default
+		     &i2c3_data_gpf3_default>;
+	pinctrl-names = "default";
 	prescale-scl-low = <1>;
 };
 
@@ -85,5 +96,8 @@ i2c_pwr_cbi: &i2c0 {
 	label = "I2C_USB_C1";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		     &i2c4_data_gpe7_default>;
+	pinctrl-names = "default";
 	prescale-scl-low = <1>;
 };

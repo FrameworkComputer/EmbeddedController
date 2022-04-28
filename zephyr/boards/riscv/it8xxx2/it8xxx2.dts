@@ -34,6 +34,9 @@
 
 &ite_uart1_wrapper {
 	status = "okay";
+	pinctrl-0 = <&uart1_rx_gpb0_default
+		     &uart1_tx_gpb1_default>;
+	pinctrl-names = "default";
 };
 
 &cros_kb_raw {

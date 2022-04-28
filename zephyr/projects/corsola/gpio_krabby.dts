@@ -133,42 +133,6 @@
 		usb_a0_fault_odl: usb_a0_fault_odl {
 			gpios = <&gpioj 6 GPIO_INPUT>;
 		};
-		i2c_a_scl: i2c_a_scl {
-			gpios = <&gpiob 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-		};
-		i2c_a_sda: i2c_a_sda {
-			gpios = <&gpiob 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-		};
-		i2c_b_scl: i2c_b_scl {
-			gpios = <&gpioc 1 GPIO_INPUT>;
-		};
-		i2c_b_sda: i2c_b_sda {
-			gpios = <&gpioc 2 GPIO_INPUT>;
-		};
-		i2c_c_scl: i2c_c_scl {
-			gpios = <&gpiof 6 GPIO_INPUT>;
-		};
-		i2c_c_sda: i2c_c_sda {
-			gpios = <&gpiof 7 GPIO_INPUT>;
-		};
-		i2c_d_scl: i2c_d_scl {
-			gpios = <&gpiof 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-		};
-		i2c_d_sda: i2c_d_sda {
-			gpios = <&gpiof 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-		};
-		i2c_e_scl: i2c_e_scl {
-			gpios = <&gpioe 0 GPIO_INPUT>;
-		};
-		i2c_e_sda: i2c_e_sda {
-			gpios = <&gpioe 7 GPIO_INPUT>;
-		};
-		i2c_f_scl: i2c_f_scl {
-			gpios = <&gpioa 4 GPIO_INPUT>;
-		};
-		i2c_f_sda: i2c_f_sda {
-			gpios = <&gpioa 5 GPIO_INPUT>;
-		};
 		gpio_ec_x_gpio1: ec_x_gpio1 {
 			gpios = <&gpioh 4 GPIO_OUTPUT_LOW>;
 		};
@@ -236,5 +200,34 @@
 			<&gpiog 5 GPIO_OUTPUT_LOW>,
 			/* spi_cs_gpg7 */
 			<&gpiog 7 GPIO_OUTPUT_LOW>;
+	};
+};
+
+&pinctrl {
+	/* I2C property setting */
+	i2c0_clk_gpb3_default: i2c0_clk_gpb3_default {
+		gpio-voltage = "1v8";
+	};
+	i2c0_data_gpb4_default: i2c0_data_gpb4_default {
+		gpio-voltage = "1v8";
+	};
+	i2c3_clk_gpf2_default: i2c3_clk_gpf2_default {
+		gpio-voltage = "1v8";
+	};
+	i2c3_data_gpf3_default: i2c3_data_gpf3_default {
+		gpio-voltage = "1v8";
+	};
+	/* SHI property setting */
+	shi_mosi_gpm0_default: shi_mosi_gpm0_default {
+		gpio-voltage = "1v8";
+	};
+	shi_miso_gpm1_default: shi_miso_gpm1_default {
+		gpio-voltage = "1v8";
+	};
+	shi_clk_gpm4_default: shi_clk_gpm4_default {
+		gpio-voltage = "1v8";
+	};
+	shi_cs_gpm5_default: shi_cs_gpm5_default {
+		gpio-voltage = "1v8";
 	};
 };
