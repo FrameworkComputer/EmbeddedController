@@ -22,6 +22,7 @@
 
 /* For RGB keyboard control */
 #ifdef SECTION_IS_RW
+#define CONFIG_KEYBOARD_BACKLIGHT
 #define CONFIG_RGB_KEYBOARD
 #define GPIO_RGBKBD_SDB_L	GPIO_SDB_L
 #define GPIO_RGBKBD_POWER	GPIO_L_POWER

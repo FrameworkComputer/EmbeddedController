@@ -235,7 +235,7 @@ const uint8_t rgbkbd_map[] = {
 };
 const size_t rgbkbd_map_size = ARRAY_SIZE(rgbkbd_map);
 
-__override void board_enable_rgb_keyboard(bool enable)
+__override void board_kblight_init(void)
 {
 	gpio_set_level(GPIO_RGBKBD_POWER, 1);
 	msleep(10);
