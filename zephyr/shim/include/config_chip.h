@@ -612,6 +612,11 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_TEMP_SENSOR_TMP112
 #endif
 
+#undef CONFIG_FANS
+#ifdef CONFIG_PLATFORM_EC_NUM_FANS
+#define CONFIG_FANS CONFIG_PLATFORM_EC_NUM_FANS
+#endif
+
 #ifdef CONFIG_PLATFORM_EC_I2C
 /* Also see shim/include/i2c/i2c.h which defines the ports enum */
 #define CONFIG_I2C_CONTROLLER

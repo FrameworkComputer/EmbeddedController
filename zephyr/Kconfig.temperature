@@ -90,3 +90,14 @@ config PLATFORM_EC_FAN
 	  EC_CMD_PWM_SET_FAN_DUTY, EC_CMD_THERMAL_AUTO_FAN_CTRL are
 	  available. Also enables a periodic task (1s) to verify fan is
 	  running (is not stalled).
+
+if PLATFORM_EC_FAN
+
+config PLATFORM_EC_NUM_FANS
+	int "Number of fans"
+	default 1
+	help
+	  Declare the number of fans supported on this board and avilable
+	  for control through fan APIs.
+
+endif # PLATFORM_EC_FAN
