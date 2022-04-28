@@ -57,7 +57,8 @@
 #define CONFIG_GMR_TABLET_MODE
 
 #define CONFIG_MKBP_EVENT
-#define CONFIG_MKBP_USE_HOST_EVENT
+/* GPIO is needed for EC events to show up in eventlog - b/222375516 */
+#define CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT
 #define CONFIG_MKBP_INPUT_DEVICES
 
 /* LED */
