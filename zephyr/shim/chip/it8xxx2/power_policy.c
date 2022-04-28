@@ -30,7 +30,7 @@ const struct pm_state_info *pm_policy_next_state(uint8_t cpu, int32_t ticks)
 			 * could be used.
 			 */
 			if (pm_policy_state_lock_is_active(
-				    pm_states[i].state)) {
+				    pm_states[i].state, PM_ALL_SUBSTATES)) {
 				continue;
 			}
 
