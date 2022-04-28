@@ -28,17 +28,13 @@ static void hdmi_power_handler(struct ap_power_ev_callback *cb,
 	/* Enable rails for S3 */
 	const struct gpio_dt_spec *s3_rail =
 		GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl);
-	/* Enable rails for S5 */
-	const struct gpio_dt_spec *s5_rail =
-		GPIO_DT_FROM_ALIAS(gpio_en_rails_odl);
-	/* Connect DDC to sub-board */
+	/* Connect AP's DDC to sub-board (default is USB-C aux) */
 	const struct gpio_dt_spec *ddc_select =
 		GPIO_DT_FROM_NODELABEL(gpio_hdmi_sel);
 
 	switch (data.event) {
 	case AP_POWER_PRE_INIT:
-		LOG_DBG("Enabling HDMI+USB-A PP5000 and selecting DDC");
-		gpio_pin_set_dt(s5_rail, 1);
+		LOG_DBG("Connecting HDMI DDC to sub-board");
 		gpio_pin_set_dt(ddc_select, 1);
 		break;
 	case AP_POWER_STARTUP:
@@ -50,9 +46,8 @@ static void hdmi_power_handler(struct ap_power_ev_callback *cb,
 		gpio_pin_set_dt(s3_rail, 0);
 		break;
 	case AP_POWER_HARD_OFF:
-		LOG_DBG("Disabling HDMI+USB-A PP5000 and deselecting DDC");
+		LOG_DBG("Disconnecting HDMI sub-board DDC");
 		gpio_pin_set_dt(ddc_select, 0);
-		gpio_pin_set_dt(s5_rail, 0);
 		break;
 	default:
 		LOG_ERR("Unhandled HDMI power event %d", data.event);
