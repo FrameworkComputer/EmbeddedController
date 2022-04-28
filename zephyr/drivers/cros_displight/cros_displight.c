@@ -21,14 +21,14 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 #define DISPLIGHT_PWM_NODE DT_INST_PWMS_CTLR(0)
 #define DISPLIGHT_PWM_CHANNEL DT_INST_PWMS_CHANNEL(0)
 #define DISPLIGHT_PWM_FLAGS DT_INST_PWMS_FLAGS(0)
-#define DISPLIGHT_PWM_PERIOD_US (USEC_PER_SEC/DT_INST_PROP(0, frequency))
+#define DISPLIGHT_PWM_PERIOD_NS (NSEC_PER_SEC/DT_INST_PROP(0, frequency))
 
 static int displight_percent;
 
 static void displight_set_duty(int percent)
 {
 	const struct device *pwm_dev = DEVICE_DT_GET(DISPLIGHT_PWM_NODE);
-	uint32_t pulse_us;
+	uint32_t pulse_ns;
 	int rv;
 
 	if (!device_is_ready(pwm_dev)) {
@@ -36,17 +36,15 @@ static void displight_set_duty(int percent)
 		return;
 	}
 
-	pulse_us = DIV_ROUND_NEAREST(DISPLIGHT_PWM_PERIOD_US * percent, 100);
+	pulse_ns = DIV_ROUND_NEAREST(DISPLIGHT_PWM_PERIOD_NS * percent, 100);
 
 	LOG_DBG("displight PWM %s set percent (%d), pulse %d",
-		pwm_dev->name, percent, pulse_us);
+		pwm_dev->name, percent, pulse_ns);
 
-	rv = pwm_pin_set_usec(pwm_dev, DISPLIGHT_PWM_CHANNEL,
-			      DISPLIGHT_PWM_PERIOD_US, pulse_us,
-			      DISPLIGHT_PWM_FLAGS);
+	rv = pwm_set(pwm_dev, DISPLIGHT_PWM_CHANNEL, DISPLIGHT_PWM_PERIOD_NS,
+		     pulse_ns, DISPLIGHT_PWM_FLAGS);
 	if (rv) {
-		LOG_ERR("pwm_pin_set_usec() failed %s (%d)",
-			pwm_dev->name, rv);
+		LOG_ERR("pwm_set() failed %s (%d)", pwm_dev->name, rv);
 	}
 }
 

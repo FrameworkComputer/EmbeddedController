@@ -19,6 +19,6 @@ struct board_led_pwm_dt_channel {
 		.flags = DT_PWMS_FLAGS(node_id), \
 	}
 
-#define BOARD_LED_HZ_TO_PERIOD_US(freq_hz) (USEC_PER_SEC / freq_hz)
+#define BOARD_LED_HZ_TO_PERIOD_NS(freq_hz) (NSEC_PER_SEC / freq_hz)
 
 #endif  /* __BOARD_LED_H */

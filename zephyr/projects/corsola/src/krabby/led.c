@@ -17,7 +17,7 @@ LOG_MODULE_REGISTER(board_led, LOG_LEVEL_ERR);
 /*If we need pwm output in ITE chip power saving mode, then we should set
  * frequency <= 324Hz.
  */
-#define BOARD_LED_PWM_PERIOD_US BOARD_LED_HZ_TO_PERIOD_US(324)
+#define BOARD_LED_PWM_PERIOD_NS BOARD_LED_HZ_TO_PERIOD_NS(324)
 
 static const struct board_led_pwm_dt_channel board_led_power_white =
 	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(DT_NODELABEL(led_power_white));
@@ -65,7 +65,7 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 static void board_led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
 				   int percent)
 {
-	uint32_t pulse_us;
+	uint32_t pulse_ns;
 	int rv;
 
 	if (!device_is_ready(ch->dev)) {
@@ -73,15 +73,15 @@ static void board_led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
 		return;
 	}
 
-	pulse_us = DIV_ROUND_NEAREST(BOARD_LED_PWM_PERIOD_US * percent, 100);
+	pulse_ns = DIV_ROUND_NEAREST(BOARD_LED_PWM_PERIOD_NS * percent, 100);
 
 	LOG_DBG("Board LED PWM %s set percent (%d), pulse %d",
-		ch->dev->name, percent, pulse_us);
+		ch->dev->name, percent, pulse_ns);
 
-	rv = pwm_pin_set_usec(ch->dev, ch->channel, BOARD_LED_PWM_PERIOD_US,
-			      pulse_us, ch->flags);
+	rv = pwm_set(ch->dev, ch->channel, BOARD_LED_PWM_PERIOD_NS, pulse_ns,
+		     ch->flags);
 	if (rv) {
-		LOG_ERR("pwm_pin_set_usec() failed %s (%d)", ch->dev->name, rv);
+		LOG_ERR("pwm_set() failed %s (%d)", ch->dev->name, rv);
 	}
 }
 

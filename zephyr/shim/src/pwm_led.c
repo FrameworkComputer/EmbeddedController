@@ -25,8 +25,8 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 BUILD_ASSERT(DT_INST_PROP_LEN(0, leds) <= 2,
 	     "Unsupported number of LEDs defined");
 
-#define PWM_LED_PERIOD_US (USEC_PER_SEC/DT_INST_PROP(0, frequency))
-#define PWM_SIDESEL_PERIOD_US (PWM_LED_PERIOD_US * 2)
+#define PWM_LED_PERIOD_NS (NSEC_PER_SEC/DT_INST_PROP(0, frequency))
+#define PWM_SIDESEL_PERIOD_NS (PWM_LED_PERIOD_NS * 2)
 
 #define PWM_LED_NAME(node_id) DT_STRING_UPPER_TOKEN(node_id, ec_led_name)
 #define PWM_LED_NAME_WITH_COMMA(node_id) PWM_LED_NAME(node_id),
@@ -41,7 +41,7 @@ BUILD_ASSERT(ARRAY_SIZE(supported_led_ids) == DT_INST_PROP_LEN(0, leds),
 
 static void pwm_led_set_duty(const struct pwm_led_dt_channel *ch, int percent)
 {
-	uint32_t pulse_us;
+	uint32_t pulse_ns;
 	int rv;
 
 	if (!device_is_ready(ch->dev)) {
@@ -49,31 +49,30 @@ static void pwm_led_set_duty(const struct pwm_led_dt_channel *ch, int percent)
 		return;
 	}
 
-	pulse_us = DIV_ROUND_NEAREST(ch->period_us * percent, 100);
+	pulse_ns = DIV_ROUND_NEAREST(ch->period_ns * percent, 100);
 
 	LOG_DBG("LED PWM %s set percent (%d), pulse %d", ch->dev->name, percent,
-		pulse_us);
+		pulse_ns);
 
-	rv = pwm_pin_set_usec(ch->dev, ch->channel, ch->period_us, pulse_us,
-			      ch->flags);
+	rv = pwm_set(ch->dev, ch->channel, ch->period_ns, pulse_ns, ch->flags);
 	if (rv) {
-		LOG_ERR("pwm_pin_set_usec() failed %s (%d)", ch->dev->name, rv);
+		LOG_ERR("pwm_set() failed %s (%d)", ch->dev->name, rv);
 	}
 }
 
-#define PWM_CHANNEL_DT_BY_IDX_INIT(node_id, led_ch, _period_us)             \
+#define PWM_CHANNEL_DT_BY_IDX_INIT(node_id, led_ch, _period_ns)             \
 	{                                                                   \
 		.dev = DEVICE_DT_GET(DT_PWMS_CTLR_BY_IDX(node_id, led_ch)), \
 		.channel = DT_PWMS_CHANNEL_BY_IDX(node_id, led_ch),         \
 		.flags = DT_PWMS_FLAGS_BY_IDX(node_id, led_ch),             \
-		.period_us = _period_us, \
+		.period_ns = _period_ns, \
 	}
 
 #define PWM_CHANNEL_DT_BY_IDX(node_id, prop, idx, led_ch)                      \
 	static const struct pwm_led_dt_channel _pwm_led_dt_##idx##_ch_##led_ch = \
 		PWM_CHANNEL_DT_BY_IDX_INIT(                                    \
 			DT_PHANDLE_BY_IDX(node_id, prop, idx), led_ch,         \
-			PWM_LED_PERIOD_US);
+			PWM_LED_PERIOD_NS);
 
 #define PWM_CHANNEL_DT_BY_IDX_COND(node_id, prop, idx, led_ch)        \
 	IF_ENABLED(DT_PROP_HAS_IDX(                                   \
@@ -181,7 +180,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 static const struct pwm_led_dt_channel _pwm_led_dt_sidesel =
 	PWM_CHANNEL_DT_BY_IDX_INIT(DT_INST_PROP(0, sidesel), 0,
-				   PWM_SIDESEL_PERIOD_US);
+				   PWM_SIDESEL_PERIOD_NS);
 
 /* Illuminates the LED on the side of the active charging port. If not charging,
  * illuminates both LEDs.
