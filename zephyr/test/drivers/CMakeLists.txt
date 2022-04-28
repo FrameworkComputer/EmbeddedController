@@ -19,6 +19,7 @@ target_sources(app PRIVATE
   src/bmi160.c
   src/bmi260.c
   src/charge_manager.c
+  src/chargesplash.c
   src/console_cmd/charge_manager.c
   src/console_cmd/charge_state.c
   src/console_cmd/accelinit.c

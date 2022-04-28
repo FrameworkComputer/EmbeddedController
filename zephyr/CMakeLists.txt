@@ -213,6 +213,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_RT9490
                                                 "${PLATFORM_EC}/driver/charger/rt9490.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_SM5803
                                                 "${PLATFORM_EC}/driver/charger/sm5803.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGESPLASH
+                                                "${PLATFORM_EC}/common/chargesplash.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
                                                 "${PLATFORM_EC}/common/charger.c"
                                                 "${PLATFORM_EC}/common/charge_manager.c"

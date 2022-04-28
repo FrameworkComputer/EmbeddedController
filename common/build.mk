@@ -63,6 +63,7 @@ common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
 endif
 common-$(CONFIG_CHARGE_RAMP_HW)+=charge_ramp.o
 common-$(CONFIG_CHARGE_RAMP_SW)+=charge_ramp.o charge_ramp_sw.o
+common-$(CONFIG_CHARGESPLASH)+=chargesplash.o
 common-$(CONFIG_CHIP_INIT_ROM_REGION)+=init_rom.o
 common-$(CONFIG_CMD_CHARGEN) += chargen.o
 common-$(CONFIG_CHARGER)+=charger.o charge_state_v2.o

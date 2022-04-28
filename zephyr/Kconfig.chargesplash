@@ -1,0 +1,46 @@
+# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_CHARGESPLASH
+	bool "Charging splashscreen support"
+	depends on PLATFORM_EC_CHARGER
+	help
+	  Enable visual charging indicator to display on-screen when
+	  AC is initially connected.
+
+if PLATFORM_EC_CHARGESPLASH
+
+config PLATFORM_EC_CHARGESPLASH_PERIOD
+	int "Seconds for which chargesplash requests are tracked"
+	default 900
+	help
+	  A charger which is connecting and disconnecting frequently
+	  can indicate damage to the charger or port.  To prevent
+	  excessive power usage on a device plugged in and
+	  experiencing frequent AC connects, we monitor the number of
+	  AC connects over a period of time.  If the number of AC
+	  connects exceeds a defined value during that period of time,
+	  we inhibit all chargesplash requests until an entire period
+	  passes with no new AC connections.
+
+	  This config option defines the length of the period, in
+	  seconds.
+
+config PLATFORM_EC_CHARGESPLASH_MAX_REQUESTS_PER_PERIOD
+	int "Number of chargesplash requests per period which triggers lockout"
+	default 5
+	help
+	  A charger which is connecting and disconnecting frequently
+	  can indicate damage to the charger or port.  To prevent
+	  excessive power usage on a device plugged in and
+	  experiencing frequent AC connects, we monitor the number of
+	  AC connects over a period of time.  If the number of AC
+	  connects exceeds a defined value during that period of time,
+	  we inhibit all chargesplash requests until an entire period
+	  passes with no new AC connections.
+
+	  This config option defines the number of requests that must
+	  happen in one period to trigger the lockout condition.
+
+endif  # PLATFORM_EC_CHARGESPLASH

@@ -63,6 +63,12 @@ config PLATFORM_EC_CHARGE_MANAGER
 	  source is available on the hardware, so cannot be built without
 	  PLATFORM_EC_USBC.
 
+config PLATFORM_EC_CHARGESPLASH
+	bool "Charging splashscreen support"
+	help
+	  Enable visual charging indicator to display on-screen when
+	  AC is initially connected.
+
 config PLATFORM_EC_CHARGER_ISL9237
 	bool "Use the ISL9237 charger"
 	depends on PLATFORM_EC_I2C

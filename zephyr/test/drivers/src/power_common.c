@@ -496,6 +496,9 @@ ZTEST(power_common_hibernation, test_power_hc_hibernation_delay)
 	uint32_t h_delay;
 	int sleep_time;
 
+	/* Ensure the lid is closed so AC connect does not boot system */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "lidclose"), NULL);
+
 	zassert_equal(power_get_state(), POWER_G3,
 		"Power state is %d, expected G3", power_get_state());
 	/* This is a no-op, but it will reset the last_shutdown_time. */
