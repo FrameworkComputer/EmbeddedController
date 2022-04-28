@@ -19,7 +19,7 @@ LOG_MODULE_REGISTER(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 /**
  * @brief power_state names for debug
  */
-const char pwrsm_dbg[][25] = {
+static const char * const pwrsm_dbg[] = {
 	[SYS_POWER_STATE_G3] = "G3",
 	[SYS_POWER_STATE_S5] = "S5",
 	[SYS_POWER_STATE_S4] = "S4",
@@ -91,11 +91,17 @@ enum power_states_ndsx pwr_sm_get_state(void)
 	return pwrseq_ctx.power_state;
 }
 
+const char * const pwr_sm_get_state_name(enum power_states_ndsx state)
+{
+	return pwrsm_dbg[state];
+}
+
 void pwr_sm_set_state(enum power_states_ndsx new_state)
 {
 	/* Add locking mechanism if multiple thread can update it */
-	LOG_DBG("Power state: %s --> %s", pwrsm_dbg[pwrseq_ctx.power_state],
-					pwrsm_dbg[new_state]);
+	LOG_DBG("Power state: %s --> %s",
+		pwr_sm_get_state_name(pwrseq_ctx.power_state),
+		pwr_sm_get_state_name(new_state));
 	pwrseq_ctx.power_state = new_state;
 }
 
@@ -486,7 +492,8 @@ static void pwrseq_loop_thread(void *p1, void *p2, void *p3)
 		if (this_in_signals != last_in_signals ||
 				curr_state != last_state) {
 			LOG_INF("power state %d = %s, in 0x%04x",
-				curr_state, pwrsm_dbg[curr_state],
+				curr_state,
+				pwr_sm_get_state_name(curr_state),
 				this_in_signals);
 			last_in_signals = this_in_signals;
 			last_state = curr_state;
