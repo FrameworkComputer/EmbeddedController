@@ -61,6 +61,9 @@
 /* SYV682 isn't connected to CC, so TCPC must provide VCONN */
 #define CONFIG_USBC_PPC_SYV682X_NO_CC
 
+/* prevent pd reset when battery soc under 2% */
+#define CONFIG_USB_PD_RESET_MIN_BATT_SOC 2
+
 
 #ifndef __ASSEMBLER__
 
