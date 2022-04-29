@@ -144,6 +144,7 @@ static int validate_mode_request(struct svdm_amode_data *modep,
 
 void pd_prepare_sysjump(void)
 {
+#ifndef CONFIG_ZEPHYR
 	int i;
 
 	/* Exit modes before sysjump so we can cleanly enter again later */
@@ -160,6 +161,7 @@ void pd_prepare_sysjump(void)
 		task_wait_event_mask(TASK_EVENT_SYSJUMP_READY, -1);
 		sysjump_task_waiting = TASK_ID_INVALID;
 	}
+#endif /* CONFIG_ZEPHYR */
 }
 
 /*
