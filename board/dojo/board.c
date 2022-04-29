@@ -343,7 +343,7 @@ static int board_ps8762_mux_set(const struct usb_mux *me,
 					PS8802_REG_PAGE2,
 					PS8802_REG2_DPEQ_LEVEL,
 					PS8802_DPEQ_LEVEL_UP_MASK,
-					PS8802_DPEQ_LEVEL_UP_12DB));
+					PS8802_DPEQ_LEVEL_UP_9DB));
 	}
 
 	return EC_SUCCESS;
