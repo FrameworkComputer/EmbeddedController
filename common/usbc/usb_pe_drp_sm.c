@@ -4134,107 +4134,111 @@ static void pe_give_battery_cap_entry(int port)
 	/* Set PID */
 	msg[BCDB_PID] = CONFIG_USB_PID;
 
-	if (battery_is_present()) {
+	/*
+	 * We only have one fixed battery,
+	 * so make sure batt cap ref is 0.
+	 * This value is the first byte after the headers.
+	 */
+	if (payload[0] != 0) {
 		/*
-		 * We only have one fixed battery,
-		 * so make sure batt cap ref is 0.
-		 * This value is the first byte after the headers.
+		 * If the Battery Cap Ref field in the Get_Battery_Cap
+		 * Message is Invalid, this VID field Shall be 0xFFFF.
+		 *
+		 * When the VID Is 0xFFFF the PID field Shall be set to
+		 * 0x0000.
 		 */
-		if (payload[0] != 0) {
-			/* Invalid battery reference */
-			msg[BCDB_DESIGN_CAP] = 0;
-			msg[BCDB_FULL_CAP] = 0;
-			/* Set invalid battery bit in response bit 0, byte 8 */
-			msg[BCDB_BATT_TYPE] = 1;
+		msg[BCDB_VID] = 0xffff;
+		msg[BCDB_PID] = 0;
+		/* Invalid battery reference */
+		msg[BCDB_DESIGN_CAP] = 0;
+		msg[BCDB_FULL_CAP] = 0;
+		/* Set invalid battery bit in response bit 0, byte 8 */
+		msg[BCDB_BATT_TYPE] = 1;
+	} else if (battery_is_present()) {
+		/*
+		 * The Battery Design Capacity field shall return the
+		 * Battery’s design capacity in tenths of Wh. If the
+		 * Battery is Hot Swappable and is not present, the
+		 * Battery Design Capacity field shall be set to 0. If
+		 * the Battery is unable to report its Design Capacity,
+		 * it shall return 0xFFFF
+		 */
+		msg[BCDB_DESIGN_CAP] = 0xffff;
+
+		/*
+		 * The Battery Last Full Charge Capacity field shall
+		 * return the Battery’s last full charge capacity in
+		 * tenths of Wh. If the Battery is Hot Swappable and
+		 * is not present, the Battery Last Full Charge Capacity
+		 * field shall be set to 0. If the Battery is unable to
+		 * report its Design Capacity, the Battery Last Full
+		 * Charge Capacity field shall be set to 0xFFFF.
+		 */
+		msg[BCDB_FULL_CAP] = 0xffff;
+
+
+		if (IS_ENABLED(HAS_TASK_HOSTCMD) &&
+		    *host_get_memmap(EC_MEMMAP_BATTERY_VERSION) != 0) {
+			int design_volt, design_cap, full_cap;
+
+			design_volt = *(int *)host_get_memmap(
+						EC_MEMMAP_BATT_DVLT);
+			design_cap = *(int *)host_get_memmap(
+						EC_MEMMAP_BATT_DCAP);
+			full_cap = *(int *)host_get_memmap(
+						EC_MEMMAP_BATT_LFCC);
+
+			/*
+			 * Wh = (c * v) / 1000000
+			 * 10th of a Wh = Wh * 10
+			 */
+			msg[BCDB_DESIGN_CAP] = DIV_ROUND_NEAREST(
+					(design_cap * design_volt),
+					 100000);
+			/*
+			 * Wh = (c * v) / 1000000
+			 * 10th of a Wh = Wh * 10
+			 */
+			msg[BCDB_FULL_CAP] = DIV_ROUND_NEAREST(
+					(design_cap * full_cap),
+					 100000);
 		} else {
-			/*
-			 * The Battery Design Capacity field shall return the
-			 * Battery’s design capacity in tenths of Wh. If the
-			 * Battery is Hot Swappable and is not present, the
-			 * Battery Design Capacity field shall be set to 0. If
-			 * the Battery is unable to report its Design Capacity,
-			 * it shall return 0xFFFF
-			 */
-			msg[BCDB_DESIGN_CAP] = 0xffff;
+			uint32_t v;
+			uint32_t c;
 
-			/*
-			 * The Battery Last Full Charge Capacity field shall
-			 * return the Battery’s last full charge capacity in
-			 * tenths of Wh. If the Battery is Hot Swappable and
-			 * is not present, the Battery Last Full Charge Capacity
-			 * field shall be set to 0. If the Battery is unable to
-			 * report its Design Capacity, the Battery Last Full
-			 * Charge Capacity field shall be set to 0xFFFF.
-			 */
-			msg[BCDB_FULL_CAP] = 0xffff;
-
-
-			if (IS_ENABLED(HAS_TASK_HOSTCMD) &&
-			    *host_get_memmap(EC_MEMMAP_BATTERY_VERSION) != 0) {
-				int design_volt, design_cap, full_cap;
-
-				design_volt = *(int *)host_get_memmap(
-							EC_MEMMAP_BATT_DVLT);
-				design_cap = *(int *)host_get_memmap(
-							EC_MEMMAP_BATT_DCAP);
-				full_cap = *(int *)host_get_memmap(
-							EC_MEMMAP_BATT_LFCC);
-
-				/*
-				 * Wh = (c * v) / 1000000
-				 * 10th of a Wh = Wh * 10
-				 */
-				msg[BCDB_DESIGN_CAP] = DIV_ROUND_NEAREST(
-						(design_cap * design_volt),
+			if (battery_design_voltage(&v) == 0) {
+				if (battery_design_capacity(&c) == 0) {
+					/*
+					 * Wh = (c * v) / 1000000
+					 * 10th of a Wh = Wh * 10
+					 */
+					msg[BCDB_DESIGN_CAP] =
+						DIV_ROUND_NEAREST(
+						(c * v),
 						 100000);
-				/*
-				 * Wh = (c * v) / 1000000
-				 * 10th of a Wh = Wh * 10
-				 */
-				msg[BCDB_FULL_CAP] = DIV_ROUND_NEAREST(
-						(design_cap * full_cap),
-						 100000);
-			} else {
-				uint32_t v;
-				uint32_t c;
-
-				if (battery_design_voltage(&v) == 0) {
-					if (battery_design_capacity(&c) == 0) {
-						/*
-						 * Wh = (c * v) / 1000000
-						 * 10th of a Wh = Wh * 10
-						 */
-						msg[BCDB_DESIGN_CAP] =
-							DIV_ROUND_NEAREST(
-							(c * v),
-							 100000);
-					}
-
-					if (battery_full_charge_capacity(&c)
-									== 0) {
-						/*
-						 * Wh = (c * v) / 1000000
-						 * 10th of a Wh = Wh * 10
-						 */
-						msg[BCDB_FULL_CAP] =
-							DIV_ROUND_NEAREST(
-							(c * v),
-							 100000);
-					}
 				}
 
+				if (battery_full_charge_capacity(&c)
+								== 0) {
+					/*
+					 * Wh = (c * v) / 1000000
+					 * 10th of a Wh = Wh * 10
+					 */
+					msg[BCDB_FULL_CAP] =
+						DIV_ROUND_NEAREST(
+						(c * v),
+						 100000);
+				}
 			}
-			/* Valid battery selected */
-			msg[BCDB_BATT_TYPE] = 0;
+
 		}
+		/* Valid battery selected */
+		msg[BCDB_BATT_TYPE] = 0;
 	} else {
 		/* Battery not present indicated by 0's in the capacity */
 		msg[BCDB_DESIGN_CAP] = 0;
 		msg[BCDB_FULL_CAP] = 0;
-		if (payload[0] != 0)
-			msg[BCDB_BATT_TYPE] = 1;
-		else
-			msg[BCDB_BATT_TYPE] = 0;
+		msg[BCDB_BATT_TYPE] = 0;
 	}
 
 	/* Extended Battery Cap data is 9 bytes */
