@@ -249,6 +249,21 @@ int host_cmd_motion_sense_calib(uint8_t sensor_num, bool enable,
 	return host_command_process(&args);
 }
 
+int host_cmd_motion_sense_fifo_flush(uint8_t sensor_num,
+				     struct ec_response_motion_sense *response)
+{
+	struct ec_params_motion_sense params = {
+		.cmd = MOTIONSENSE_CMD_FIFO_FLUSH,
+		.sensor_odr = {
+			.sensor_num = sensor_num,
+		},
+	};
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_MOTION_SENSE_CMD, 1, *response, params);
+
+	return host_command_process(&args);
+}
+
 void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 			      void *response, size_t response_size)
 {
