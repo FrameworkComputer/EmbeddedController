@@ -52,13 +52,27 @@ struct tcpci_drp_emul {
 };
 
 /**
- * @brief Initialise USB-C dual role device emulator. Need to be called before
- *        any other function that is using common_data.
+ * @brief Initialise USB-C dual role device emulator as a sink. Need to be
+ *        called before any other function that is using common_data.
  *
  * @param emul Pointer to USB-C dual role device emulator
  * @param rev The USB-PD revision this port partner supports
  */
 void tcpci_drp_emul_init(struct tcpci_drp_emul *emul, enum pd_rev_type rev);
+
+
+/**
+ * @brief Initialise USB-C dual role device emulator with a specific PD power
+ *        role role. Need to be called before any other function that is using
+ *        common_data.
+ *
+ * @param emul Pointer to USB-C dual role device emulator
+ * @param rev The USB-PD revision this port partner supports
+ * @param power_role The USB-PD power-role this port partner is when initialized
+ */
+void tcpci_drp_emul_init_with_pd_role(struct tcpci_drp_emul *emul,
+				      enum pd_rev_type rev,
+				      enum pd_power_role power_role);
 
 /**
  * @brief Connect emulated device to TCPCI. Connect as sink or source depending

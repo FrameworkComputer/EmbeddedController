@@ -26,7 +26,7 @@ struct usb_pd_ctrl_msg_test_fixture {
 	struct tcpci_drp_emul partner_emul;
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
-	bool drp_partner_is_sink;
+	enum pd_power_role drp_parter_pd_role;
 };
 
 struct usb_pd_ctrl_msg_test_sink_fixture {
@@ -88,7 +88,7 @@ static void *usb_pd_ctrl_msg_sink_setup(void)
 	struct usb_pd_ctrl_msg_test_fixture *fixture =
 		usb_pd_ctrl_msg_setup_emul();
 
-	fixture->drp_partner_is_sink = true;
+	fixture->drp_parter_pd_role = PD_ROLE_SINK;
 
 	return fixture;
 }
@@ -98,7 +98,7 @@ static void *usb_pd_ctrl_msg_source_setup(void)
 	struct usb_pd_ctrl_msg_test_fixture *fixture =
 		usb_pd_ctrl_msg_setup_emul();
 
-	fixture->drp_partner_is_sink = false;
+	fixture->drp_parter_pd_role = PD_ROLE_SOURCE;
 
 	return fixture;
 }
@@ -118,7 +118,8 @@ static void usb_pd_ctrl_msg_before(void *data)
 	/* TODO(b/214401892): Check why need to give time TCPM to spin */
 	k_sleep(K_SECONDS(1));
 
-	tcpci_drp_emul_init(&fixture->partner_emul, PD_REV20);
+	tcpci_drp_emul_init_with_pd_role(&fixture->partner_emul, PD_REV20,
+					 fixture->drp_parter_pd_role);
 
 	/* Add additional Sink PDO to partner to verify
 	 * PE_DR_SNK_Get_Sink_Cap/PE_SRC_Get_Sink_Cap (these are shared PE
@@ -126,13 +127,8 @@ static void usb_pd_ctrl_msg_before(void *data)
 	 */
 	fixture->partner_emul.snk_data.pdo[1] = TEST_ADDED_PDO;
 
-	fixture->partner_emul.data.sink = fixture->drp_partner_is_sink;
-
 	/* Turn TCPCI rev 2 ON */
 	tcpc_config[TEST_USB_PORT].flags |= TCPC_FLAGS_TCPCI_REV2_0;
-
-	/* Reset to disconnected state */
-	disconnect_partner(fixture);
 
 	tcpci_drp_emul_connect_partner(&fixture->partner_emul,
 				       fixture->tcpci_emul,
