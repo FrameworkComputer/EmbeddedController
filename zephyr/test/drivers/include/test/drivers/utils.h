@@ -383,6 +383,16 @@ int host_cmd_motion_sense_fifo_flush(uint8_t sensor_num,
 int host_cmd_motion_sense_fifo_info(struct ec_response_motion_sense *response);
 
 /**
+ * @brief Get the current fifo data
+ *
+ * @param buffer_length The number of entries available on the response pointer
+ * @param response Pointer to the response data structure to fill on success
+ * @return The result code from the host command
+ */
+int host_cmd_motion_sense_fifo_read(uint8_t buffer_length,
+				    struct ec_response_motion_sense *response);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number

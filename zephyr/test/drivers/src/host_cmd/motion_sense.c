@@ -9,6 +9,7 @@
 #include "atomic.h"
 #include "driver/accel_bma2x2.h"
 #include "motion_sense.h"
+#include "motion_sense_fifo.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
@@ -679,4 +680,59 @@ ZTEST(host_cmd_motion_sense, test_fifo_info)
 	zassert_ok(host_cmd_motion_sense_fifo_info(response), NULL);
 	zassert_equal(4, response->fifo_info.lost[0], NULL);
 	zassert_equal(0, motion_sensors[0].lost, NULL);
+}
+
+ZTEST(host_cmd_motion_sense, test_fifo_read)
+{
+	struct ec_response_motion_sensor_data data;
+	uint8_t response_buffer[RESPONSE_MOTION_SENSE_BUFFER_SIZE(2)];
+	struct ec_response_motion_sense *response =
+		(struct ec_response_motion_sense *)response_buffer;
+
+	motion_sensors[0].oversampling_ratio = 1;
+	motion_sensors[1].oversampling_ratio = 1;
+
+	data = (struct ec_response_motion_sensor_data){
+		.flags = 0,
+		.sensor_num = 0,
+		.data = { 0, 1, 2 },
+	};
+	motion_sense_fifo_stage_data(&data, &motion_sensors[0], 1, 0);
+
+	data = (struct ec_response_motion_sensor_data){
+		.flags = 0,
+		.sensor_num = 1,
+		.data = { 3, 4, 5 },
+	};
+	motion_sense_fifo_stage_data(&data, &motion_sensors[1], 1, 5);
+	motion_sense_fifo_commit_data();
+
+	/* Read 2 samples */
+	zassert_ok(host_cmd_motion_sense_fifo_read(4, response), NULL);
+	zassert_equal(2, response->fifo_read.number_data, NULL);
+
+	zassert_equal(MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
+		      response->fifo_read.data[0].flags, NULL);
+	zassert_equal(0, response->fifo_read.data[0].sensor_num, NULL);
+	zassert_equal(0, response->fifo_read.data[0].timestamp, NULL);
+
+	zassert_equal(0, response->fifo_read.data[1].flags, NULL);
+	zassert_equal(0, response->fifo_read.data[1].sensor_num, NULL);
+	zassert_equal(0, response->fifo_read.data[1].data[0], NULL);
+	zassert_equal(1, response->fifo_read.data[1].data[1], NULL);
+	zassert_equal(2, response->fifo_read.data[1].data[2], NULL);
+
+	/* Read the next 2 samples */
+	zassert_ok(host_cmd_motion_sense_fifo_read(4, response), NULL);
+	zassert_equal(2, response->fifo_read.number_data, NULL);
+	zassert_equal(MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
+		      response->fifo_read.data[0].flags, NULL);
+	zassert_equal(1, response->fifo_read.data[0].sensor_num, NULL);
+	zassert_equal(5, response->fifo_read.data[0].timestamp, NULL);
+
+	zassert_equal(0, response->fifo_read.data[1].flags, NULL);
+	zassert_equal(1, response->fifo_read.data[1].sensor_num, NULL);
+	zassert_equal(3, response->fifo_read.data[1].data[0], NULL);
+	zassert_equal(4, response->fifo_read.data[1].data[1], NULL);
+	zassert_equal(5, response->fifo_read.data[1].data[2], NULL);
 }
