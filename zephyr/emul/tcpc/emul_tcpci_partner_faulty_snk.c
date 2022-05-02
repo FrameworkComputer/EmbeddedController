@@ -262,7 +262,7 @@ void tcpci_faulty_snk_emul_init(struct tcpci_faulty_snk_emul *emul)
 			   &emul->snk_data);
 
 	/* Init as sink */
-	emul->common_data.data_role = PD_ROLE_DFP;
+	emul->common_data.data_role = PD_ROLE_UFP;
 	emul->common_data.power_role = PD_ROLE_SINK;
 	emul->common_data.rev = PD_REV20;
 

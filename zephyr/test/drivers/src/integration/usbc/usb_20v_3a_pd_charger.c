@@ -25,6 +25,11 @@ static inline void
 connect_charger_to_port(struct usb_attach_20v_3a_pd_charger_fixture *fixture)
 {
 	set_ac_enabled(true);
+	/* Initialize the charger to supply 20V and 3A */
+	tcpci_src_emul_init(&fixture->charger_20v, PD_REV20);
+	fixture->charger_20v.data.pdo[1] =
+		PDO_FIXED(20000, 3000, PDO_FIXED_UNCONSTRAINED);
+
 	zassume_ok(tcpci_src_emul_connect_to_tcpci(
 			   &fixture->charger_20v.data,
 			   &fixture->charger_20v.common_data,
@@ -60,10 +65,6 @@ static void *usb_attach_20v_3a_pd_charger_setup(void)
 	test_fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 
-	/* Initialized the charger to supply 20V and 3A */
-	tcpci_src_emul_init(&test_fixture.charger_20v, PD_REV20);
-	test_fixture.charger_20v.data.pdo[1] =
-		PDO_FIXED(20000, 3000, PDO_FIXED_UNCONSTRAINED);
 
 	return &test_fixture;
 }

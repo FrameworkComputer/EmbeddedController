@@ -557,7 +557,7 @@ void tcpci_snk_emul_init(struct tcpci_snk_emul *emul, enum pd_rev_type rev)
 	tcpci_partner_init(&emul->common_data, tcpci_snk_emul_hard_reset,
 			   &emul->data);
 
-	emul->common_data.data_role = PD_ROLE_DFP;
+	emul->common_data.data_role = PD_ROLE_UFP;
 	emul->common_data.power_role = PD_ROLE_SINK;
 	emul->common_data.rev = rev;
 
