@@ -467,9 +467,6 @@ ZTEST_USER_F(host_cmd_motion_sense, test_get_offset)
 	zassert_equal((int16_t *)&response.sensor_offset.offset,
 		      mock_get_offset_fake.arg1_history[0], NULL);
 	zassert_equal(1, mock_set_offset_fake.arg2_history[0], NULL);
-	zassert_equal(2, mock_set_offset_fake.arg1_history[0][0], NULL);
-	zassert_equal(3, mock_set_offset_fake.arg1_history[0][1], NULL);
-	zassert_equal(4, mock_set_offset_fake.arg1_history[0][2], NULL);
 }
 
 ZTEST_USER(host_cmd_motion_sense, test_scale_invalid_sensor_num)
@@ -570,9 +567,6 @@ ZTEST_USER_F(host_cmd_motion_sense, test_set_get_scale)
 	zassert_equal(1, mock_set_scale_fake.call_count, NULL);
 	zassert_equal(1, mock_get_scale_fake.call_count, NULL);
 	zassert_equal(1, mock_set_scale_fake.arg2_history[0], NULL);
-	zassert_equal(2, mock_set_scale_fake.arg1_history[0][0], NULL);
-	zassert_equal(3, mock_set_scale_fake.arg1_history[0][1], NULL);
-	zassert_equal(4, mock_set_scale_fake.arg1_history[0][2], NULL);
 }
 
 ZTEST_USER(host_cmd_motion_sense, test_calib_invalid_sensor_num)
