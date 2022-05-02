@@ -668,3 +668,15 @@ ZTEST(host_cmd_motion_sense, test_fifo_flush)
 	zassert_equal(5, response->fifo_info.lost[0], NULL);
 	zassert_equal(0, motion_sensors[0].lost, NULL);
 }
+
+ZTEST(host_cmd_motion_sense, test_fifo_info)
+{
+	uint8_t response_buffer[RESPONSE_SENSOR_FIFO_SIZE(ALL_MOTION_SENSORS)];
+	struct ec_response_motion_sense *response =
+		(struct ec_response_motion_sense *)response_buffer;
+
+	motion_sensors[0].lost = 4;
+	zassert_ok(host_cmd_motion_sense_fifo_info(response), NULL);
+	zassert_equal(4, response->fifo_info.lost[0], NULL);
+	zassert_equal(0, motion_sensors[0].lost, NULL);
+}
