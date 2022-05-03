@@ -249,7 +249,7 @@ enum pd_rx_errors {
 #define PD_T_PR_SWAP_WAIT          (100*MSEC) /* tPRSwapWait 100ms */
 #define PD_T_DATA_RESET            (225*MSEC) /* between 200ms and 250ms */
 #define PD_T_DATA_RESET_FAIL       (300*MSEC) /* 300ms */
-#define PD_T_VCONN_REAPPLIED        (15*MSEC) /* between 10ms and 20ms */
+#define PD_T_VCONN_REAPPLIED        (10*MSEC) /* between 10ms and 20ms */
 #define PD_T_VCONN_DISCHARGE       (240*MSEC) /* between 160ms and 240ms */
 
 /*
