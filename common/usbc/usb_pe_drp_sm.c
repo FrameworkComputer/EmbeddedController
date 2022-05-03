@@ -7607,8 +7607,14 @@ static void pe_ddr_perform_data_reset_run(int port)
 	if (IS_ENABLED(CONFIG_USBC_VCONN) && !tc_is_vconn_src(port) &&
 			PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE)) {
 		PE_CLR_FLAG(port, PE_FLAGS_VCONN_SWAP_COMPLETE);
+		/* Wait until VCONN has discharged to start tVconnReapplied. */
+		pd_timer_enable(port, PE_TIMER_TIMEOUT,
+			CONFIG_USBC_VCONN_SWAP_DELAY_US);
+	} else if (IS_ENABLED(CONFIG_USBC_VCONN) &&
+			pd_timer_is_expired(port, PE_TIMER_TIMEOUT)) {
+		pd_timer_disable(port, PE_TIMER_TIMEOUT);
 		pd_timer_enable(port, PE_TIMER_VCONN_REAPPLIED,
-			PD_T_VCONN_REAPPLIED);
+				PD_T_VCONN_REAPPLIED);
 	} else if (IS_ENABLED(CONFIG_USBC_VCONN) &&
 			pd_timer_is_expired(port, PE_TIMER_VCONN_REAPPLIED)) {
 		pd_request_vconn_swap_on(port);
@@ -7616,9 +7622,9 @@ static void pe_ddr_perform_data_reset_run(int port)
 
 		/*
 		 * 4) After tDataReset the DFP shall:
-		 *    a) Reconnect the [USB 2.0] D+/D- signals
-		 *    b) If the Port was operating in [USB 3.2] or [USB4]
-		 *       reapply the port’s Rx Terminations
+		 *    a) Reconnect the USB 2.0 D+/D- signals.
+		 *    b) If the Port was operating in USB 3.2 or USB4 reapply
+		 *       the port’s Rx Terminations.
 		 * TODO: Section 6.3.14 implies that tDataReset is a minimum
 		 * time for the DFP to leave the lines disconnected during Data
 		 * Reset, possibly starting after the cable reset. Section
