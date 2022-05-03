@@ -48,3 +48,26 @@ static void board_chipset_suspend(void)
 	gpio_set_level(GPIO_EC_KB_BL_EN, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+static void board_init(void)
+{
+	gpio_enable_interrupt(GPIO_PG_PP3300_S5_OD);
+}
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+/**
+ * Deferred function to handle GPIO PG_PP3300_S5_OD change
+ */
+static void bypass_pp3300_s5_deferred(void)
+{
+	int pg_pp3300_s5 = gpio_get_level(GPIO_PG_PP3300_S5_OD);
+
+	gpio_set_level(GPIO_PG_PP3300_S5_EC_SEQ_OD, pg_pp3300_s5);
+}
+DECLARE_DEFERRED(bypass_pp3300_s5_deferred);
+
+void board_power_interrupt(enum gpio_signal signal)
+{
+	/* Trigger deferred notification of gpio PG_PP3300_S5_OD change */
+	hook_call_deferred(&bypass_pp3300_s5_deferred_data, 0);
+}

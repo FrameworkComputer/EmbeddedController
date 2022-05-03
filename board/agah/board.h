@@ -198,6 +198,13 @@ enum mft_channel {
 	MFT_CH_COUNT
 };
 
+/**
+ * Interrupt handler for PG_PP3300_S5_OD changes.
+ *
+ * @param signal	Signal which triggered the interrupt.
+ */
+void board_power_interrupt(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
