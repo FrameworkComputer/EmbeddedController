@@ -7644,10 +7644,13 @@ static void pe_ddr_perform_data_reset_run(int port)
 		 * make sure the port partner receives it before returning to a
 		 * ready state.
 		 */
-		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED))
+		if (PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
+			PE_CLR_FLAG(port, PE_FLAGS_MSG_DISCARDED);
 			set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
-		else if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE))
+		} else if (PE_CHK_FLAG(port, PE_FLAGS_TX_COMPLETE)) {
+			PE_CLR_FLAG(port, PE_FLAGS_TX_COMPLETE);
 			pe_set_ready_state(port);
+		}
 		return;
 	} else if (pd_timer_is_expired(port, PE_TIMER_DATA_RESET_FAIL) ||
 				PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
