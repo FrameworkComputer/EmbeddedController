@@ -194,10 +194,10 @@ enum mft_channel {
  * firmware config fields
  */
 /*
- * Barrel-jack power (4 bits).
+ * Barrel-jack power (2 bits).
  */
 #define EC_CFG_BJ_POWER_L		0
-#define EC_CFG_BJ_POWER_H		3
+#define EC_CFG_BJ_POWER_H		1
 #define EC_CFG_BJ_POWER_MASK GENMASK(EC_CFG_BJ_POWER_H, EC_CFG_BJ_POWER_L)
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
