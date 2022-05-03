@@ -204,4 +204,9 @@
 
 #endif /* SECTION_IS_RW */
 
+/* Enable if the touchpad has >= 128 bytes per page */
+#if defined(BOARD_ZED) || defined(BOARD_DUCK)
+#define VARIANT_HAMMER_TP_LARGE_PAGE
+#endif
+
 #endif /* __CROS_EC_VARIANTS_H */
