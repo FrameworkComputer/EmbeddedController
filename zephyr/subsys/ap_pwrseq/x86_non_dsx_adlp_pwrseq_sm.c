@@ -15,6 +15,23 @@ void ap_off(void)
 	power_signal_set(PWR_EC_PCH_SYS_PWROK, 0);
 }
 
+static int check_pch_out_of_suspend(void)
+{
+	int ret;
+	/*
+	 * Wait for SLP_SUS deasserted.
+	 */
+	ret = power_wait_mask_signals_timeout(IN_PCH_SLP_SUS,
+					      0,
+					      IN_PCH_SLP_SUS_WAIT_TIME_MS);
+	if (ret == 0) {
+		LOG_DBG("SLP_SUS now %d", power_signal_get(PWR_SLP_SUS));
+		return 1;
+	}
+	LOG_ERR("wait SLP_SUS deassertion timeout");
+	return 0; /* timeout */
+}
+
 /* Handle ALL_SYS_PWRGD signal
  * This will be overridden if the custom signal handler is needed
  */
@@ -156,6 +173,19 @@ void s0s3_action_handler(void)
 	ap_off();
 }
 
+enum power_states_ndsx g3s5_action_handler(void)
+{
+	/*
+	 * Now wait for SLP_SUS_L to go high based on tPCH32. If this
+	 * signal doesn't go high within 250 msec then go back to G3.
+	 */
+	if (check_pch_out_of_suspend()) {
+		ap_power_ev_send_callbacks(AP_POWER_PRE_INIT);
+		return SYS_POWER_STATE_G3S5;
+	}
+	return SYS_POWER_STATE_S5G3;
+}
+
 void init_chipset_pwr_seq_state(void)
 {
 	/* Deassert reset pin */
@@ -262,6 +292,7 @@ enum power_states_ndsx chipset_pwr_sm_run(enum power_states_ndsx curr_state)
 	switch (curr_state) {
 	case SYS_POWER_STATE_G3S5:
 		board_ap_power_action_g3_s5();
+		curr_state = g3s5_action_handler();
 		break;
 	case SYS_POWER_STATE_S5:
 		break;

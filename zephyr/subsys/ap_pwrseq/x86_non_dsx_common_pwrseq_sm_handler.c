@@ -130,25 +130,6 @@ int rsmrst_power_is_good(void)
 	return power_signal_get(PWR_RSMRST);
 }
 
-int check_pch_out_of_suspend(void)
-{
-	int ret;
-
-	/*
-	 * Wait for SLP_SUS deasserted.
-	 */
-	ret = power_wait_mask_signals_timeout(IN_PCH_SLP_SUS,
-					      0,
-					      IN_PCH_SLP_SUS_WAIT_TIME_MS);
-
-	if (ret == 0) {
-		LOG_DBG("SLP_SUS now %d", power_signal_get(PWR_SLP_SUS));
-		return 1;
-	}
-	LOG_ERR("wait SLP_SUS deassertion timeout");
-	return 0; /* timeout */
-}
-
 /* Handling RSMRST signal is mostly common across x86 chipsets */
 void rsmrst_pass_thru_handler(void)
 {
@@ -165,10 +146,6 @@ void rsmrst_pass_thru_handler(void)
 	}
 }
 
-/* TODO:
- * Add power down sequence
- * Add S0ix
- */
 static int common_pwr_sm_run(int state)
 {
 	switch (state) {
@@ -181,19 +158,11 @@ static int common_pwr_sm_run(int state)
 		break;
 
 	case SYS_POWER_STATE_G3S5:
-		if (power_wait_signals_timeout(
-			IN_PGOOD_ALL_CORE,
-			AP_PWRSEQ_DT_VALUE(wait_signal_timeout)))
-			break;
-		/*
-		 * Now wait for SLP_SUS_L to go high based on tPCH32. If this
-		 * signal doesn't go high within 250 msec then go back to G3.
-		 */
-		if (check_pch_out_of_suspend()) {
-			ap_power_ev_send_callbacks(AP_POWER_PRE_INIT);
+		if ((power_get_signals() & PWRSEQ_G3S5_UP_SIGNAL) ==
+				PWRSEQ_G3S5_UP_VALUE)
 			return SYS_POWER_STATE_S5;
-		}
-		return SYS_POWER_STATE_S5G3;
+		else
+			return SYS_POWER_STATE_S5G3;
 
 	case SYS_POWER_STATE_S5:
 		/* In S5 make sure no more signal lost */
@@ -201,10 +170,6 @@ static int common_pwr_sm_run(int state)
 		if (check_power_rails_enabled() && rsmrst_power_is_good()) {
 			/* rsmrst is intact */
 			rsmrst_pass_thru_handler();
-			if (power_signals_on(IN_PCH_SLP_SUS)) {
-				k_timer_stop(&s5_inactive_timer);
-				return SYS_POWER_STATE_S5G3;
-			}
 			if (signals_valid_and_off(IN_PCH_SLP_S5)) {
 				k_timer_stop(&s5_inactive_timer);
 				return SYS_POWER_STATE_S5S4;
