@@ -82,9 +82,14 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-__overridable void board_set_charge_limit(int port, int supplier, int charge_ma,
+void board_set_charge_limit(int port, int supplier, int charge_ma,
 					  int max_ma, int charge_mv)
 {
+	/*
+	 * Limit the input current to 96% negotiated limit,
+	 * to account for the charger chip margin.
+	 */
+	charge_ma = charge_ma * 96 / 100;
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT),
 				       charge_mv);
