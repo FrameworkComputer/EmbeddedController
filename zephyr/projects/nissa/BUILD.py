@@ -62,6 +62,7 @@ craask = register_nissa_project(
         here / "craask_generated.dts",
         here / "craask_overlay.dts",
         here / "craask_motionsense.dts",
+        here / "craask_keyboard.dts",
         here / "craask_power_signals.dts",
         here / "craask_pwm_leds.dts",
     ],

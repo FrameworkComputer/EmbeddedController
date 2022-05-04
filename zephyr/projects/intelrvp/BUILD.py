@@ -65,6 +65,7 @@ register_intelrvp_project(
         here / "adlrvp/adlrvp_npcx/cbi_eeprom.dts",
         here / "mtlrvp/mtlrvpp_npcx/fan.dts",
         here / "mtlrvp/mtlrvpp_npcx/gpio.dts",
+        here / "mtlrvp/mtlrvpp_npcx/keyboard.dts",
         here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
         here / "mtlrvp/ioex.dts",
         here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx.dts",
