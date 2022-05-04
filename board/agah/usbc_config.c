@@ -14,7 +14,6 @@
 #include "console.h"
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/syv682x_public.h"
-#include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
@@ -46,17 +45,13 @@ const struct tcpc_config_t tcpc_config[] = {
 		},
 		.drv = &rt1715_tcpm_drv,
 	},
-	[USBC_PORT_C1] = {
+	[USBC_PORT_C2] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
-			.port = I2C_PORT_USB_C1_TCPC,
-			.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
+			.port = I2C_PORT_USB_C2_TCPC,
+			.addr_flags = RT1715_I2C_ADDR_FLAGS,
 		},
-		.drv = &ps8xxx_tcpm_drv,
-		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
-			TCPC_FLAGS_CONTROL_VCONN,
-
+		.drv = &rt1715_tcpm_drv,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
@@ -80,6 +75,12 @@ struct ppc_config_t ppc_chips[] = {
 		.frs_en = GPIO_USB_C0_FRS_EN,
 		.drv = &syv682x_drv,
 	},
+	[USBC_PORT_C2] = {
+		.i2c_port = I2C_PORT_USB_C2_PPC,
+		.i2c_addr_flags = SYV682X_ADDR2_FLAGS,
+		.frs_en = GPIO_USB_C2_FRS_EN,
+		.drv = &syv682x_drv,
+	},
 };
 
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
@@ -90,8 +91,8 @@ static const struct usb_mux usbc0_tcss_usb_mux = {
 	.driver = &virtual_usb_mux_driver,
 	.hpd_update = &virtual_hpd_update,
 };
-static const struct usb_mux usbc1_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C1,
+static const struct usb_mux usbc2_tcss_usb_mux = {
+	.usb_port = USBC_PORT_C2,
 	.driver = &virtual_usb_mux_driver,
 	.hpd_update = &virtual_hpd_update,
 };
@@ -103,11 +104,11 @@ const struct usb_mux usb_muxes[] = {
 		.hpd_update = &virtual_hpd_update,
 		.next_mux = &usbc0_tcss_usb_mux,
 	},
-	[USBC_PORT_C1] = {
-		.usb_port = USBC_PORT_C1,
+	[USBC_PORT_C2] = {
+		.usb_port = USBC_PORT_C2,
 		.driver = &virtual_usb_mux_driver,
 		.hpd_update = &virtual_hpd_update,
-		.next_mux = &usbc1_tcss_usb_mux,
+		.next_mux = &usbc2_tcss_usb_mux,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
@@ -118,8 +119,8 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 		.i2c_port = I2C_PORT_USB_C0_BC12,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1_BC12,
+	[USBC_PORT_C2] = {
+		.i2c_port = I2C_PORT_USB_C2_BC12,
 		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
 	},
 };
@@ -157,26 +158,7 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 void board_reset_pd_mcu(void)
 {
-	/*
-	 * No reset pin on USBC0 TCPC RT1716
-	 */
-
-	/*
-	 * TODO(b/216411445): figure out correct timing
-	 */
-
-		gpio_set_level(GPIO_EN_USB_C1_TCPC_RST_R, 0);
-	/*
-	 * delay for power-on to reset-off and min. assertion time
-	 */
-
-	msleep(20);
-
-	gpio_set_level(GPIO_EN_USB_C1_TCPC_RST_R, 1);
-
-	/* wait for chips to come up */
-
-	msleep(50);
+ /* There's no reset pin on TCPC */
 }
 
 static void board_tcpc_init(void)
@@ -187,13 +169,15 @@ static void board_tcpc_init(void)
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C2_PPC_INT_ODL);
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C2_TCPC_INT_ODL);
 
 	/* Enable BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C2_BC12_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
@@ -204,7 +188,7 @@ uint16_t tcpc_get_alert_status(void)
 	if (gpio_get_level(GPIO_USB_C0_TCPC_INT_ODL) == 0)
 		status |= PD_STATUS_TCPC_ALERT_0;
 
-	if (gpio_get_level(GPIO_USB_C1_TCPC_INT_ODL) == 0)
+	if (gpio_get_level(GPIO_USB_C2_TCPC_INT_ODL) == 0)
 		status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;
@@ -214,6 +198,10 @@ int ppc_get_alert_status(int port)
 {
 	if (port == USBC_PORT_C0)
 		return gpio_get_level(GPIO_USB_C0_PPC_INT_ODL) == 0;
+
+	if (port == USBC_PORT_C2)
+		return gpio_get_level(GPIO_USB_C2_PPC_INT_ODL) == 0;
+
 	return 0;
 }
 
@@ -223,8 +211,8 @@ void tcpc_alert_event(enum gpio_signal signal)
 	case GPIO_USB_C0_TCPC_INT_ODL:
 		schedule_deferred_pd_interrupt(USBC_PORT_C0);
 		break;
-	case GPIO_USB_C1_TCPC_INT_ODL:
-		schedule_deferred_pd_interrupt(USBC_PORT_C1);
+	case GPIO_USB_C2_TCPC_INT_ODL:
+		schedule_deferred_pd_interrupt(USBC_PORT_C2);
 		break;
 	default:
 		break;
@@ -237,7 +225,7 @@ void bc12_interrupt(enum gpio_signal signal)
 	case GPIO_USB_C0_BC12_INT_ODL:
 		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
 		break;
-	case GPIO_USB_C1_BC12_INT_ODL:
+	case GPIO_USB_C2_BC12_INT_ODL:
 		task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
 		break;
 	default:
@@ -250,6 +238,9 @@ void ppc_interrupt(enum gpio_signal signal)
 	switch (signal) {
 	case GPIO_USB_C0_PPC_INT_ODL:
 		syv682x_interrupt(USBC_PORT_C0);
+		break;
+	case GPIO_USB_C2_PPC_INT_ODL:
+		syv682x_interrupt(USBC_PORT_C2);
 		break;
 	default:
 		break;

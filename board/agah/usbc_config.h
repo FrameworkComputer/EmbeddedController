@@ -12,7 +12,7 @@
 
 enum usbc_port {
 	USBC_PORT_C0 = 0,
-	USBC_PORT_C1,
+	USBC_PORT_C2,
 	USBC_PORT_COUNT
 };
 
