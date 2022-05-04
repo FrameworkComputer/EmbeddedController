@@ -29,37 +29,6 @@
 /* LED */
 #define CONFIG_LED_ONOFF_STATES
 
-/* Sensors */
-#define CONFIG_ACCELGYRO_LSM6DSO	/* Base accel */
-#define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
-/* Enable sensor fifo, must also define the _SIZE and _THRES */
-#define CONFIG_ACCEL_FIFO
-/* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO_SIZE 256
-/* Depends on how fast the AP boots and typical ODRs */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
-
-/* Lid accel */
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE	BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID	LID_ACCEL
-#define CONFIG_ACCEL_LIS2DWL
-#define CONFIG_ACCEL_LIS2DW_AS_BASE
-#define CONFIG_ACCEL_LIS2DW12_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
-
-#define CONFIG_ACCEL_INTERRUPTS
-
-/* Sensor console commands */
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
-
 /* USB Type A Features */
 #define USB_PORT_COUNT			1
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -190,13 +159,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_2_AMBIENT,
 	TEMP_SENSOR_3_CHARGER,
 	TEMP_SENSOR_COUNT
-};
-
-enum sensor_id {
-	LID_ACCEL = 0,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
 };
 
 enum battery_type {
