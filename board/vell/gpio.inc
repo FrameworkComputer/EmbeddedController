@@ -78,10 +78,10 @@ GPIO(USB_C2_C3_TCPC_RST_ODL,         PIN(9, 6), GPIO_ODR_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 
 /* LED */
-GPIO(LED_1_L,                        PIN(C, 4), GPIO_OUT_HIGH)
-GPIO(LED_2_L,                        PIN(C, 3), GPIO_OUT_HIGH)
-GPIO(LED_3_L,                        PIN(C, 2), GPIO_OUT_HIGH)
-GPIO(LED_4_L,                        PIN(6, 0), GPIO_OUT_HIGH)
+GPIO(LED_1_L,                        PIN(C, 4), GPIO_OUT_LOW)
+GPIO(LED_2_L,                        PIN(C, 3), GPIO_OUT_LOW)
+GPIO(LED_3_L,                        PIN(C, 2), GPIO_OUT_LOW)
+GPIO(LED_4_L,                        PIN(6, 0), GPIO_OUT_LOW)
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */

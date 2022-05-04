@@ -7,18 +7,17 @@
 
 #include <stdint.h>
 
+#include "cbi.h"
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "ec_commands.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
 #include "task.h"
 #include "util.h"
-
-#define BAT_LED_ON 0
-#define BAT_LED_OFF 1
 
 #define BATT_LOW_BCT 10
 
@@ -47,6 +46,21 @@ enum led_port {
 	LEFT_PORT
 };
 
+uint8_t bat_led_on;
+uint8_t bat_led_off;
+
+static void led_init(void)
+{
+	if (get_board_id() < 2) {
+		bat_led_on = 0;
+		bat_led_off = 1;
+	} else {
+		bat_led_on = 1;
+		bat_led_off = 0;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
+
 static void led_set_color_battery(int port, enum led_color color)
 {
 	enum gpio_signal amber_led, white_led;
@@ -58,16 +72,16 @@ static void led_set_color_battery(int port, enum led_color color)
 
 	switch (color) {
 	case LED_WHITE:
-		gpio_set_level(white_led, BAT_LED_ON);
-		gpio_set_level(amber_led, BAT_LED_OFF);
+		gpio_set_level(white_led, bat_led_on);
+		gpio_set_level(amber_led, bat_led_off);
 		break;
 	case LED_AMBER:
-		gpio_set_level(white_led, BAT_LED_OFF);
-		gpio_set_level(amber_led, BAT_LED_ON);
+		gpio_set_level(white_led, bat_led_off);
+		gpio_set_level(amber_led, bat_led_on);
 		break;
 	case LED_OFF:
-		gpio_set_level(white_led, BAT_LED_OFF);
-		gpio_set_level(amber_led, BAT_LED_OFF);
+		gpio_set_level(white_led, bat_led_off);
+		gpio_set_level(amber_led, bat_led_off);
 		break;
 	default:
 		break;
