@@ -115,10 +115,17 @@ static bool chipset_is_exit_hardoff(void)
 	return pwrseq_ctx.want_g3_exit;
 }
 
+static void shutdown_and_notify(enum ap_power_shutdown_reason reason)
+{
+	ap_power_force_shutdown(reason);
+	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
+	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
+}
+
 void apshutdown(void)
 {
 	if (pwr_sm_get_state() != SYS_POWER_STATE_G3) {
-		ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
+		shutdown_and_notify(AP_POWER_SHUTDOWN_G3);
 		pwr_sm_set_state(SYS_POWER_STATE_G3);
 	}
 }
@@ -193,7 +200,7 @@ static int common_pwr_sm_run(int state)
 		break;
 
 	case SYS_POWER_STATE_S5G3:
-		ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
+		shutdown_and_notify(AP_POWER_SHUTDOWN_G3);
 		/* Notify power event before we enter G3 */
 		ap_power_ev_send_callbacks(AP_POWER_HARD_OFF);
 		return SYS_POWER_STATE_G3;
@@ -218,7 +225,7 @@ static int common_pwr_sm_run(int state)
 	case SYS_POWER_STATE_S4S3:
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away */
-			ap_power_force_shutdown(AP_POWER_SHUTDOWN_POWERFAIL);
+			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
 		}
 
@@ -238,7 +245,7 @@ static int common_pwr_sm_run(int state)
 		/* AP is out of suspend to RAM */
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
 			/* Required rail went away, go straight to S5 */
-			ap_power_force_shutdown(AP_POWER_SHUTDOWN_POWERFAIL);
+			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
 		} else if (signals_valid_and_off(IN_PCH_SLP_S3))
 			return SYS_POWER_STATE_S3S0;
@@ -249,7 +256,7 @@ static int common_pwr_sm_run(int state)
 
 	case SYS_POWER_STATE_S3S0:
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
-			ap_power_force_shutdown(AP_POWER_SHUTDOWN_POWERFAIL);
+			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
 		}
 
@@ -315,7 +322,7 @@ static int common_pwr_sm_run(int state)
 
 	case SYS_POWER_STATE_S0:
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
-			ap_power_force_shutdown(AP_POWER_SHUTDOWN_POWERFAIL);
+			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
 		} else if (signals_valid_and_on(IN_PCH_SLP_S3)) {
 			return SYS_POWER_STATE_S0S3;
@@ -403,32 +410,12 @@ static void pwr_seq_set_initial_state(void)
 	enum power_states_ndsx state = chipset_pwr_seq_get_state();
 
 	/*
-	 * Check reset flags, and ensure CPU is in correct state.
-	 */
-	if (reset_flags & EC_RESET_FLAG_AP_OFF) {
-		/*
-		 * AP is expected to be off.
-		 * If it isn't, force shutdown.
-		 */
-		if (state != SYS_POWER_STATE_G3) {
-			ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
-		}
-		pwr_sm_set_state(SYS_POWER_STATE_G3);
-		return;
-	}
-	/*
 	 * Not in warm boot, but CPU is not shutdown.
 	 */
 	if (((reset_flags & EC_RESET_FLAG_SYSJUMP) == 0) &&
 	    (state != SYS_POWER_STATE_G3)) {
 		ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
 		state = SYS_POWER_STATE_G3;
-	}
-	/*
-	 * If CPU is off, set the state to start powering it up.
-	 */
-	if (state == SYS_POWER_STATE_G3) {
-		state = SYS_POWER_STATE_G3S5;
 	}
 	pwr_sm_set_state(state);
 }
@@ -440,8 +427,6 @@ static void pwrseq_loop_thread(void *p1, void *p2, void *p3)
 	power_signal_mask_t this_in_signals;
 	power_signal_mask_t last_in_signals = 0;
 	enum power_states_ndsx last_state = -1;
-
-	pwr_seq_set_initial_state();
 
 	while (1) {
 		curr_state = pwr_sm_get_state();
@@ -510,6 +495,12 @@ static void init_pwr_seq_state(void)
 {
 	init_chipset_pwr_seq_state();
 	request_exit_hardoff(false);
+	/*
+	 * The state of the CPU needs to be determined now
+	 * so that init routines can check the state of
+	 * the CPU.
+	 */
+	pwr_seq_set_initial_state();
 }
 
 /* Initialize power sequence system state */

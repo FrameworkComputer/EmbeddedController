@@ -160,8 +160,6 @@ void ap_power_reset(enum ap_power_shutdown_reason reason)
 void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
 {
 	board_ap_power_force_shutdown();
-	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
-	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
 }
 
 void s3s0_action_handler(void)
