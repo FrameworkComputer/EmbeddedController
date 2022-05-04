@@ -29,6 +29,8 @@
 
 /** Structure describing sink device emulator data */
 struct tcpci_snk_emul_data {
+	/** Pointer to common TCPCI partner data */
+	struct tcpci_partner_data *common_data;
 	/** Power data objects returned in sink capabilities message */
 	uint32_t pdo[PDO_MAX_OBJECTS];
 	/** Emulator is waiting for PS RDY message */
@@ -65,8 +67,10 @@ void tcpci_snk_emul_init(struct tcpci_snk_emul *emul, enum pd_rev_type rev);
  *        created and all flags are cleared.
  *
  * @param data Pointer to USB-C sink device emulator data
+ * @param common_data Pointer to common TCPCI partner data
  */
-void tcpci_snk_emul_init_data(struct tcpci_snk_emul_data *data);
+void tcpci_snk_emul_init_data(struct tcpci_snk_emul_data *data,
+			      struct tcpci_partner_data *common_data);
 
 /**
  * @brief Connect emulated device to TCPCI

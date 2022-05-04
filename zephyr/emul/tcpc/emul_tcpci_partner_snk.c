@@ -546,7 +546,8 @@ int tcpci_snk_emul_connect_to_tcpci(struct tcpci_snk_emul_data *data,
 }
 
 /** Check description in emul_tcpci_snk.h */
-void tcpci_snk_emul_init_data(struct tcpci_snk_emul_data *data)
+void tcpci_snk_emul_init_data(struct tcpci_snk_emul_data *data,
+			      struct tcpci_partner_data *common_data)
 {
 	/* By default there is only PDO 5v@500mA */
 	data->pdo[0] = PDO_FIXED(5000, 500, 0);
@@ -556,7 +557,7 @@ void tcpci_snk_emul_init_data(struct tcpci_snk_emul_data *data)
 
 	data->wait_for_ps_rdy = false;
 	data->pd_completed = false;
-
+	data->common_data = common_data;
 }
 
 /** Check description in emul_tcpci_partner_snk.h */
@@ -574,5 +575,5 @@ void tcpci_snk_emul_init(struct tcpci_snk_emul *emul, enum pd_rev_type rev)
 	emul->ops.control_change = NULL;
 	emul->ops.disconnect = tcpci_snk_emul_disconnect_op;
 
-	tcpci_snk_emul_init_data(&emul->data);
+	tcpci_snk_emul_init_data(&emul->data, &emul->common_data);
 }

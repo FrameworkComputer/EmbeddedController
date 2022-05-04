@@ -272,5 +272,5 @@ void tcpci_faulty_snk_emul_init(struct tcpci_faulty_snk_emul *emul)
 	emul->ops.disconnect = tcpci_faulty_snk_emul_disconnect_op;
 
 	tcpci_faulty_snk_emul_init_data(&emul->data);
-	tcpci_snk_emul_init_data(&emul->snk_data);
+	tcpci_snk_emul_init_data(&emul->snk_data, &emul->common_data);
 }

@@ -299,7 +299,7 @@ void tcpci_drp_emul_init_with_pd_role(struct tcpci_drp_emul *emul,
 	emul->data.sink = power_role == PD_ROLE_SINK;
 	emul->data.in_pwr_swap = false;
 	tcpci_src_emul_init_data(&emul->src_data, &emul->common_data);
-	tcpci_snk_emul_init_data(&emul->snk_data);
+	tcpci_snk_emul_init_data(&emul->snk_data, &emul->common_data);
 
 	/* Add dual role bit to sink and source PDOs */
 	emul->src_data.pdo[0] |= PDO_FIXED_DUAL_ROLE;
