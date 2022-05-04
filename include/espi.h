@@ -93,5 +93,12 @@ const char *espi_vw_get_wire_name(enum espi_vw_signal signal);
  */
 int espi_signal_is_vw(int signal);
 
+/**
+ * Wait for the specified VW's DIRTY bit to be cleared.
+ * @param signal VW to poll DIRTY bit for
+ * @param timeout max time in microseconds to poll.
+ */
+void espi_wait_vw_not_dirty(enum espi_vw_signal signal,
+	unsigned int timeout_us);
 
 #endif  /* __CROS_EC_ESPI_H */

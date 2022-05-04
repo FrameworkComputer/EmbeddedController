@@ -269,6 +269,31 @@ void espi_vw_power_signal_interrupt(enum espi_vw_signal signal)
 		power_signal_interrupt((enum gpio_signal) signal);
 }
 
+void espi_wait_vw_not_dirty(enum espi_vw_signal signal, unsigned int timeout_us)
+{
+	int sig_idx;
+	uint8_t offset;
+	uint64_t timeout;
+
+	sig_idx = espi_vw_get_signal_index(signal);
+
+	for (offset = 0; offset < ESPI_VWEVSM_NUM; offset++) {
+		uint8_t vw_idx = VWEVSM_IDX_GET(NPCX_VWEVSM(offset));
+
+		if (vw_idx == vw_events_list[sig_idx].evt_idx)
+			break;
+	}
+
+	if (offset == ESPI_VWEVSM_NUM)
+		return;
+
+	timeout = get_time().val + (uint64_t)timeout_us;
+	while ((NPCX_VWEVSM(offset) & VWEVSM_DIRTY(1)) &&
+		(get_time().val < timeout)) {
+		udelay(10);
+	}
+}
+
 /*****************************************************************************/
 /* IC specific low-level driver */
 
