@@ -418,6 +418,9 @@ void tcpci_snk_emul_hard_reset(void *data)
 {
 	struct tcpci_snk_emul_data *snk_emul_data = data;
 
+	tcpci_partner_common_hard_reset_as_role(snk_emul_data->common_data,
+						PD_ROLE_SINK);
+
 	snk_emul_data->wait_for_ps_rdy = false;
 	snk_emul_data->pd_completed = false;
 }
@@ -566,8 +569,11 @@ void tcpci_snk_emul_init(struct tcpci_snk_emul *emul, enum pd_rev_type rev)
 	tcpci_partner_init(&emul->common_data, tcpci_snk_emul_hard_reset,
 			   &emul->data);
 
-	emul->common_data.data_role = PD_ROLE_UFP;
-	emul->common_data.power_role = PD_ROLE_SINK;
+
+	/* Use common handler to initialize roles */
+	tcpci_partner_common_hard_reset_as_role(&emul->common_data,
+						PD_ROLE_SINK);
+
 	emul->common_data.rev = rev;
 
 	emul->ops.transmit = tcpci_snk_emul_transmit_op;

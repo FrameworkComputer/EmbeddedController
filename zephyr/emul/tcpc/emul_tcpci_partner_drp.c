@@ -104,18 +104,6 @@ enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 	return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 }
 
-/** Check description in emul_tcpci_partner_drp.h */
-void tcpci_drp_emul_hard_reset(void *emul)
-{
-	struct tcpci_drp_emul *drp_emul = emul;
-
-	if (drp_emul->data.sink) {
-		tcpci_snk_emul_hard_reset(&drp_emul->snk_data);
-	} else {
-		tcpci_src_emul_hard_reset(&drp_emul->src_data);
-	}
-}
-
 /**
  * @brief Function called when TCPM wants to transmit message. Accept received
  *        message and generate response.
@@ -283,11 +271,21 @@ void tcpci_drp_emul_init_with_pd_role(struct tcpci_drp_emul *emul,
 				      enum pd_rev_type rev,
 				      enum pd_power_role power_role)
 {
-	tcpci_partner_init(&emul->common_data, tcpci_drp_emul_hard_reset, emul);
+	tcpci_partner_hard_reset_func hard_reset_handler;
+	void *reset_data;
 
-	emul->common_data.power_role = power_role;
-	emul->common_data.data_role =
-		(power_role == PD_ROLE_SINK) ? PD_ROLE_UFP : PD_ROLE_DFP;
+	if (power_role == PD_ROLE_SINK) {
+		hard_reset_handler = &tcpci_snk_emul_hard_reset;
+		reset_data = &emul->snk_data;
+	} else {
+		hard_reset_handler = &tcpci_src_emul_hard_reset;
+		reset_data = &emul->src_data;
+	}
+
+	tcpci_partner_init(&emul->common_data, hard_reset_handler, reset_data);
+
+	/* Use common handler to initialize roles */
+	tcpci_partner_common_hard_reset_as_role(&emul->common_data, power_role);
 
 	emul->common_data.rev = rev;
 

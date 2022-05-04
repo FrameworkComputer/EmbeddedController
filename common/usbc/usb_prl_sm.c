@@ -2206,16 +2206,10 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	 * processing this requirement in the PRL RX.
 	 */
 	if (PD_HEADER_GET_SOP(header) == TCPCI_MSG_SOP &&
-			PD_HEADER_DROLE(header) == pd_get_data_role(port)) {
+	    PD_HEADER_DROLE(header) == pd_get_data_role(port)) {
 		CPRINTS("C%d Error: Data role mismatch (0x%08x)", port, header);
-		/*
-		 * TODO(b/230656752): Ensure emulated test partners send
-		 * correct data roles
-		 */
-		if (!IS_ENABLED(CONFIG_ZTEST)) {
-			tc_start_error_recovery(port);
-			return;
-		}
+		tc_start_error_recovery(port);
+		return;
 	}
 
 	/* Handle incoming soft reset as special case */

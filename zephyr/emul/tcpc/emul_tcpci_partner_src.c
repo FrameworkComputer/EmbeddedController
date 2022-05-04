@@ -181,9 +181,12 @@ void tcpci_src_emul_hard_reset(void *data)
 {
 	struct tcpci_src_emul_data *src_emul_data = data;
 
+	tcpci_partner_common_hard_reset_as_role(src_emul_data->common_data,
+						PD_ROLE_SOURCE);
+
 	/* Send capability to establish PD again */
 	tcpci_src_emul_send_capability_msg_with_timer(
-			src_emul_data, src_emul_data->common_data, 0);
+		src_emul_data, src_emul_data->common_data, 0);
 }
 
 /**
@@ -448,8 +451,10 @@ void tcpci_src_emul_init(struct tcpci_src_emul *emul, enum pd_rev_type rev)
 	tcpci_partner_init(&emul->common_data, tcpci_src_emul_hard_reset,
 			   &emul->data);
 
-	emul->common_data.data_role = PD_ROLE_DFP;
-	emul->common_data.power_role = PD_ROLE_SOURCE;
+	/* Use common handler to initialize roles */
+	tcpci_partner_common_hard_reset_as_role(&emul->common_data,
+						PD_ROLE_SOURCE);
+
 	emul->common_data.rev = rev;
 
 	emul->ops.transmit = tcpci_src_emul_transmit_op;
