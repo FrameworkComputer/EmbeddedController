@@ -61,7 +61,16 @@ config X86_NON_DSX_PWRSEQ_ADL
 	select X86_NON_DSX_PWRSEQ
 	default n
 	help
-	  This enables AP power sequecing support for Intel Alderlake
+	  This enables AP power sequencing support for Intel Alderlake
+	  family of chipset.
+
+config X86_NON_DSX_PWRSEQ_MTL
+	bool "x86 Non Deep Sx power sequencing on MTL"
+	depends on AP_X86_INTEL_MTL
+	select X86_NON_DSX_PWRSEQ
+	default n
+	help
+	  This enables AP power sequencing support for Intel Meteorlake
 	  family of chipset.
 
 config X86_NON_DSX_PWRSEQ_CONSOLE
