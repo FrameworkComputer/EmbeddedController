@@ -2675,19 +2675,14 @@ static void pe_src_ready_run(int port)
 		/* Extended Message Requests */
 		if (ext > 0) {
 			switch (type) {
-#if defined(CONFIG_USB_PD_EXTENDED_MESSAGES)
-#if defined(CONFIG_BATTERY)
+#if defined(CONFIG_USB_PD_EXTENDED_MESSAGES) && defined(CONFIG_BATTERY)
 			case PD_EXT_GET_BATTERY_CAP:
 				set_state_pe(port, PE_GIVE_BATTERY_CAP);
 				break;
 			case PD_EXT_GET_BATTERY_STATUS:
 				set_state_pe(port, PE_GIVE_BATTERY_STATUS);
 				break;
-#endif /* CONFIG_BATTERY */
-			case PD_CTRL_GET_STATUS:
-				set_state_pe(port, PE_GIVE_STATUS);
-				return;
-#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES && CONFIG_BATTERY */
 			default:
 				extended_message_not_supported(port, payload);
 			}
@@ -2783,6 +2778,11 @@ static void pe_src_ready_run(int port)
 						PE_SEND_NOT_SUPPORTED);
 				return;
 #endif /* CONFIG_USB_PD_DATA_RESET_MSG */
+#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
+			case PD_CTRL_GET_STATUS:
+				set_state_pe(port, PE_GIVE_STATUS);
+				return;
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 			/*
 			 * Receiving an unknown or unsupported message
 			 * shall be responded to with a not supported message.
@@ -3526,19 +3526,14 @@ static void pe_snk_ready_run(int port)
 		/* Extended Message Request */
 		if (ext > 0) {
 			switch (type) {
-#if defined(CONFIG_USB_PD_EXTENDED_MESSAGES)
-#if defined(CONFIG_BATTERY)
+#if defined(CONFIG_USB_PD_EXTENDED_MESSAGES) && defined(CONFIG_BATTERY)
 			case PD_EXT_GET_BATTERY_CAP:
 				set_state_pe(port, PE_GIVE_BATTERY_CAP);
 				break;
 			case PD_EXT_GET_BATTERY_STATUS:
 				set_state_pe(port, PE_GIVE_BATTERY_STATUS);
 				break;
-#endif /* CONFIG_BATTERY */
-			case PD_CTRL_GET_STATUS:
-				set_state_pe(port, PE_GIVE_STATUS);
-				return;
-#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES && CONFIG_BATTERY */
 			default:
 				extended_message_not_supported(port, payload);
 			}
@@ -3620,6 +3615,11 @@ static void pe_snk_ready_run(int port)
 						PE_SEND_NOT_SUPPORTED);
 				return;
 #endif /* CONFIG_USB_PD_DATA_RESET_MSG */
+#ifdef CONFIG_USB_PD_EXTENDED_MESSAGES
+			case PD_CTRL_GET_STATUS:
+				set_state_pe(port, PE_GIVE_STATUS);
+				return;
+#endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 			case PD_CTRL_NOT_SUPPORTED:
 				/* Do nothing */
 				break;
@@ -4302,8 +4302,10 @@ static void pe_give_status_entry(int port)
 	uint32_t *len = &tx_emsg[port].len;
 
 	print_current_state(port);
-	if (dpm_get_status_msg(port, msg, len) != EC_SUCCESS)
+	if (dpm_get_status_msg(port, msg, len) != EC_SUCCESS) {
 		pe_set_ready_state(port);
+		return;
+	}
 
 	send_ext_data_msg(port, TCPCI_MSG_SOP, PD_EXT_STATUS);
 }
