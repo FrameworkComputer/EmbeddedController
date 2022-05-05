@@ -112,12 +112,6 @@
 #undef CONFIG_ACCEL_LIS2DWL
 #undef CONFIG_ACCEL_LIS2DW_COMMON
 
-/* lis2dw driver support fifo and interrupt, but letting lid accel sensor work
- * at polling mode is a common selection in current usage model. We need get a
- * option to be able to select interrupt or polling (foced mode).
- */
-#undef CONFIG_ACCEL_LIS2DW_AS_BASE
-
 #undef CONFIG_ACCELGYRO_BMI160
 #undef CONFIG_ACCELGYRO_BMI220
 #undef CONFIG_ACCELGYRO_BMI260
