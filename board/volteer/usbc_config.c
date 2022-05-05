@@ -22,7 +22,8 @@
 #include "driver/tcpm/tusb422_public.h"
 #include "driver/tcpm/tcpci.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+/* Disable debug messages to save flash space */
+#define CPRINTS(format, args...)
 
 /* USBC TCPC configuration for USB3 daughter board */
 static const struct tcpc_config_t tcpc_config_p1_usb3 = {
@@ -111,7 +112,6 @@ static void config_port_discrete_tcpc(int port)
 	CPRINTS("C%d: Default to TUSB422", port);
 }
 
-static const char *db_type_prefix = "USB DB type: ";
 void config_usb3_db_type(void)
 {
 	enum ec_cfg_usb_db_type usb_db = ec_cfg_usb_db_type();
@@ -119,27 +119,27 @@ void config_usb3_db_type(void)
 	config_port_discrete_tcpc(0);
 	switch (usb_db) {
 	case DB_USB_ABSENT:
-		CPRINTS("%sNone", db_type_prefix);
+		CPRINTS("USB DB Type: None");
 		break;
 	case DB_USB4_GEN2:
 		config_port_discrete_tcpc(1);
-		CPRINTS("%sUSB4 Gen1/2", db_type_prefix);
+		CPRINTS("USB DB Type: USB4 Gen1/2");
 		break;
 	case DB_USB4_GEN3:
 		config_port_discrete_tcpc(1);
-		CPRINTS("%sUSB4 Gen3", db_type_prefix);
+		CPRINTS("USB DB Type: USB4 Gen3");
 		break;
 	case DB_USB3_ACTIVE:
 		config_db_usb3_active();
-		CPRINTS("%sUSB3 Active", db_type_prefix);
+		CPRINTS("USB DB Type: USB3 Active");
 		break;
 	case DB_USB3_PASSIVE:
 		config_db_usb3_passive();
 		config_port_discrete_tcpc(1);
-		CPRINTS("%sUSB3 Passive", db_type_prefix);
+		CPRINTS("USB DB Type: USB3 Passive");
 		break;
 	default:
-		CPRINTS("%sID %d not supported", db_type_prefix, usb_db);
+		CPRINTS("USB DB Type: ID %d not supported", usb_db);
 	}
 }
 

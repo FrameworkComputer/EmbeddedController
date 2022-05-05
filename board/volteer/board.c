@@ -39,7 +39,8 @@
 
 #include "gpio_list.h" /* Must come after other header files. */
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+/* Disable debug messages to save flash space */
+#define CPRINTS(format, args...)
 
 /******************************************************************************/
 /* Keyboard scan setting */
