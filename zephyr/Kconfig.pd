@@ -334,6 +334,15 @@ config PLATFORM_EC_CONFIG_USB_PD_3A_PORTS
 	 To turn off the TCPMv2 3.0 A current allocation from the DPM, set
 	 CONFIG_USB_PD_3A_PORTS to 0.
 
+config PLATFORM_EC_USB_PD_TEMP_SENSOR
+	int "Temperature sensor used in PD messages"
+	depends on PLATFORM_EC_TEMP_SENSOR
+	default 0
+	help
+	 Temperature related fields in USB PD messages assume a device only has
+	 one temperature. But, Chromebooks can have multiple temperature sensors.
+	 This option selects which temperature sensor is used for USB PD.
+
 endif  # PLATFORM_EC_USB_POWER_DELIVERY
 
 endif # PLATFORM_EC_USBC

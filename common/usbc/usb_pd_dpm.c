@@ -16,6 +16,7 @@
 #include "system.h"
 #include "task.h"
 #include "tcpm/tcpm.h"
+#include "temp_sensor.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_mode.h"
 #include "usb_mux.h"
@@ -24,6 +25,10 @@
 #include "usb_pd_tcpm.h"
 #include "usb_pd_pdo.h"
 #include "usb_tbt_alt_mode.h"
+
+#ifdef CONFIG_ZEPHYR
+#include "temp_sensor/temp_sensor.h"
+#endif
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
@@ -813,6 +818,51 @@ int dpm_get_source_current(const int port)
 		return 500;
 }
 
+static uint8_t get_status_internal_temp(void)
+{
+	/*
+	 * Internal Temp
+	 */
+#ifdef CONFIG_TEMP_SENSOR
+	int temp_k, temp_c;
+
+	if (temp_sensor_read(CONFIG_USB_PD_TEMP_SENSOR, &temp_k) != EC_SUCCESS)
+		return 0;
+
+	/* Check temp is in expected range (<255°C) */
+	temp_c = K_TO_C(temp_k);
+	if (temp_c > 255)
+		return 0;
+	else if (temp_c < 2)
+		temp_c = 1;
+
+	return (uint8_t) temp_c;
+#else
+	return 0;
+#endif
+}
+
+static enum pd_sdb_temperature_status get_status_temp_status(void)
+{
+	/*
+	 * Temperature Status
+	 *
+	 * OTP events are currently unsupported by the EC, the temperature
+	 * status will be reported as "not supported" on temp sensor read
+	 * failures and "Normal" otherwise.
+	 */
+#ifdef CONFIG_TEMP_SENSOR
+	int temp_k;
+
+	if (temp_sensor_read(CONFIG_USB_PD_TEMP_SENSOR, &temp_k) != EC_SUCCESS)
+		return PD_SDB_TEMPERATURE_STATUS_NOT_SUPPORTED;
+
+	return PD_SDB_TEMPERATURE_STATUS_NORMAL;
+#else
+	return PD_SDB_TEMPERATURE_STATUS_NOT_SUPPORTED;
+#endif
+}
+
 int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 {
 	struct pd_sdb sdb;
@@ -820,7 +870,7 @@ int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 	/* TODO(b/227236917): Fill in fields of Status message */
 
 	/* Internal Temp */
-	sdb.internal_temp = 0x0;
+	sdb.internal_temp = get_status_internal_temp();
 
 	/* Present Input */
 	sdb.present_input = 0x0;
@@ -832,7 +882,7 @@ int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 	sdb.event_flags = 0x0;
 
 	/* Temperature Status */
-	sdb.temperature_status = PD_SDB_TEMPERATURE_STATUS_NOT_SUPPORTED;
+	sdb.temperature_status = get_status_temp_status();
 
 	/* Power Status */
 	sdb.power_status = 0x0;
