@@ -1134,7 +1134,7 @@ static const struct ec_thermal_config thermal_inductor2_vccgt = {
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
 	.temp_fan_off = C_TO_K(40),
-	.temp_fan_max = C_TO_K(98),
+	.temp_fan_max = C_TO_K(69),
 };
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
