@@ -727,6 +727,8 @@ void board_reset_pd_mcu(void);
 /* P sensor */
 void psensor_interrupt(enum gpio_signal signal);
 
+void board_spi_read_byte(uint8_t offset, uint8_t *data);
+void board_spi_write_byte(uint8_t offset, uint8_t data);
 
 /* SOC */
 void soc_signal_interrupt(enum gpio_signal signal);

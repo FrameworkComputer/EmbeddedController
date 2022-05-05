@@ -53,6 +53,7 @@
 #include "pwm_chip.h"
 #include "spi.h"
 #include "spi_chip.h"
+#include "spi_flash.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -368,6 +369,58 @@ void board_resume_from_deep_sleep(void)
 void board_reset_pd_mcu(void)
 {
 
+}
+
+#define SPI_BLANK_OFFSET 0x3A000
+
+void spi_mux_control(int enable)
+{
+	if (enable) {
+		CPRINTS("switch to spi mode");
+		/* Disable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 2);
+	} else {
+		CPRINTS("switch to pwm mode");
+		/* Enable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 1);
+	}
+}
+
+
+void board_spi_read_byte(uint8_t offset, uint8_t *data)
+{
+	int rv;
+
+	spi_mux_control(1);
+
+	rv = spi_flash_read(data, SPI_BLANK_OFFSET + offset, 0x01);
+	if (rv != EC_SUCCESS)
+		CPRINTS("SPI fail to read");
+
+	spi_mux_control(0);
+}
+
+void board_spi_write_byte(uint8_t offset, uint8_t data)
+{
+	int rv;
+
+	spi_mux_control(1);
+
+	rv = spi_flash_erase(SPI_BLANK_OFFSET, 0x1000);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("SPI fail to erase");
+
+	rv = spi_flash_write(SPI_BLANK_OFFSET + offset, 0x01, &data);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("SPI fail to write");
+
+	spi_mux_control(0);
 }
 
 /**
@@ -1191,23 +1244,31 @@ static int cmd_spimux(int argc, char **argv)
 		if (!parse_bool(argv[1], &enable))
 			return EC_ERROR_PARAM1;
 
-		if (enable) {
-			/* Disable LED drv */
-			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
-			/* Set GPIO56 as SPI for access SPI ROM */
-			gpio_set_alternate_function(1, 0x4000, 2);
-		} else {
-			/* Enable LED drv */
-			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
-			/* Set GPIO56 as SPI for access SPI ROM */
-			gpio_set_alternate_function(1, 0x4000, 1);
-		}
+		spi_mux_control(enable);
 	}
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(spimux, cmd_spimux,
 			"[enable/disable]",
 			"Set if spi CLK is in SPI mode (true) or PWM mode");
+
+
+static int cmd_boardspicontrol(int argc, char **argv)
+{
+	uint8_t data;
+
+	if (!strcasecmp(argv[1], "read")) {
+		board_spi_read_byte(0x00, &data);
+		CPRINTS("DEBUG: cmd get data:0x%02x", data);
+	} else if (!strcasecmp(argv[1], "write")) {
+		board_spi_write_byte(0x00, 0xAA);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(boardspi, cmd_boardspicontrol,
+			"[read/write]",
+			"test");
 
 #define FP_LOCKOUT_TIMEOUT (8 * SECOND)
 static void fingerprint_ctrl_detection_deferred(void);
