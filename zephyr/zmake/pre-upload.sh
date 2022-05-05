@@ -4,15 +4,21 @@
 # found in the LICENSE file.
 set -e
 
-AFFECTED_FILES=()
+ZMAKE_FILES=()
+BUILD_PY_FILES=()
 
 for path in "$@"; do
     case "${path}" in
-        *zephyr/zmake/*.py | *zephyr/projects/*.py)
-            AFFECTED_FILES+=("${path}")
+        *zephyr/zmake/*.py )
+            ZMAKE_FILES+=("${path}")
+            ;;
+        */BUILD.py )
+            BUILD_PY_FILES+=("${path}")
             ;;
     esac
 done
+
+AFFECTED_FILES=("${ZMAKE_FILES[@]}" "${BUILD_PY_FILES[@]}")
 
 if [ "${#AFFECTED_FILES}" -eq 0 ]; then
     # No zmake changes made, do nothing.
@@ -46,7 +52,9 @@ if [ -f /etc/cros_chroot_version ]; then
     cd "$(dirname "$(realpath -e "${BASH_SOURCE[0]}")")"
     wrap_fix_msg black --check --diff "${AFFECTED_FILES[@]}"
     wrap_fix_msg isort --check "${AFFECTED_FILES[@]}"
-    flake8 "${AFFECTED_FILES[@]}" || EXIT_STATUS=1
+    if [ "${#ZMAKE_FILES[@]}" -gt 0 ]; then
+        flake8 "${ZMAKE_FILES[@]}" || EXIT_STATUS=1
+    fi
     exit "${EXIT_STATUS}"
 else
     cat <<EOF >&2
