@@ -151,6 +151,11 @@ static void ap_power_sleep_set_notify(enum ap_power_sleep_type new_state)
 	sleep_state = new_state;
 }
 
+enum ap_power_sleep_type ap_power_sleep_get_notify(void)
+{
+	return sleep_state;
+}
+
 void ap_power_sleep_notify_transition(enum ap_power_sleep_type check_state)
 {
 	if (sleep_state != check_state)

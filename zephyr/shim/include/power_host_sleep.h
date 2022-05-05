@@ -62,7 +62,6 @@ struct host_sleep_event_context {
 void ap_power_chipset_handle_host_sleep_event(
 		enum host_sleep_event state,
 		struct host_sleep_event_context *ctx);
-enum host_sleep_event power_get_host_sleep_state(void);
 void power_set_host_sleep_state(enum host_sleep_event state);
 #endif /* CONFIG_AP_PWRSEQ_HOST_SLEEP */
 

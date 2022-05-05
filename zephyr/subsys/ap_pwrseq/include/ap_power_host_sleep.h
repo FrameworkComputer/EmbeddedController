@@ -39,6 +39,13 @@ enum ap_power_sleep_type {
 void ap_power_reset_host_sleep_state(void);
 
 /*
+ * Get current sleep type notified.
+ *
+ * @return enum ap_power_sleep_type
+ */
+enum ap_power_sleep_type ap_power_sleep_get_notify(void);
+
+/*
  * Check if the sleep type current power transition indicates is the same
  * as what is notified. If same, means host sleep event notified by AP
  * through Host Command and SLP_S0 are consistent. Process

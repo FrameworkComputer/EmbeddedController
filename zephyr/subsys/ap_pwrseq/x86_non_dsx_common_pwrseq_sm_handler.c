@@ -328,12 +328,12 @@ static int common_pwr_sm_run(int state)
 		 * Ignore the SLP_S0 assertions in idle scenario by checking
 		 * the host sleep state.
 		 */
-		} else if (power_get_host_sleep_state()
-					== HOST_SLEEP_EVENT_S0IX_SUSPEND &&
-				power_signals_on(IN_PCH_SLP_S0)) {
-
+		} else if (ap_power_sleep_get_notify() ==
+					AP_POWER_SLEEP_SUSPEND &&
+					power_signals_on(IN_PCH_SLP_S0)) {
 			return SYS_POWER_STATE_S0S0ix;
-		} else {
+		} else if (ap_power_sleep_get_notify() ==
+					AP_POWER_SLEEP_RESUME) {
 			ap_power_sleep_notify_transition(AP_POWER_SLEEP_RESUME);
 #endif /* CONFIG_AP_PWRSEQ_S0IX */
 		}
