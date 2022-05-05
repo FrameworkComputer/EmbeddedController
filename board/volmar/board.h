@@ -160,6 +160,7 @@ enum temp_sensor_id {
 enum battery_type {
 	BATTERY_COSMX_AP20CBL,
 	BATTERY_LGC_AP18C8K,
+	BATTERY_AP19B8M,
 	BATTERY_TYPE_COUNT
 };
 
