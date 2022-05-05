@@ -60,7 +60,7 @@ static void sci_enable(void)
 	/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		update_soc_power_limit(true, false);
-		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, ac_boot_status());
+		board_spi_write_byte(SPI_AC_BOOT_OFFSET, ac_boot_status());
 		set_non_acpi_mode(0);
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
@@ -149,7 +149,7 @@ static enum ec_status factory_mode(struct host_cmd_handler_args *args)
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_MAGIC, EC_PARAM_CHASSIS_BBRAM_MAGIC);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, 0);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 0);
-		system_set_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, 0);
+		board_spi_write_byte(SPI_AC_BOOT_OFFSET, 0);
 		system_set_bbram(STSTEM_BBRAM_IDX_FP_LED_LEVEL, 0);
 	}
 

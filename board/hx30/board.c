@@ -430,7 +430,7 @@ bool ac_poweron_check(void)
 {
 	uint8_t memcap;
 
-	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
+	board_spi_read_byte(SPI_AC_BOOT_OFFSET, &memcap);
 
 	return memcap ? true : false;
 }
@@ -701,7 +701,7 @@ static void board_init(void)
 {
 	uint8_t memcap;
 
-	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
+	board_spi_read_byte(SPI_AC_BOOT_OFFSET, &memcap);
 
 	if (memcap && !ac_boot_status())
 		*host_get_customer_memmap(0x48) = (memcap & BIT(0));
@@ -1258,10 +1258,10 @@ static int cmd_boardspicontrol(int argc, char **argv)
 	uint8_t data;
 
 	if (!strcasecmp(argv[1], "read")) {
-		board_spi_read_byte(0x00, &data);
+		board_spi_read_byte(0x01, &data);
 		CPRINTS("DEBUG: cmd get data:0x%02x", data);
 	} else if (!strcasecmp(argv[1], "write")) {
-		board_spi_write_byte(0x00, 0xAA);
+		board_spi_write_byte(0x01, 0xAA);
 	}
 
 	return EC_SUCCESS;
