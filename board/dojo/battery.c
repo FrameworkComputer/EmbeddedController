@@ -8,6 +8,7 @@
 #include "battery_smart.h"
 #include "charge_state.h"
 #include "console.h"
+#include "gpio.h"
 #include "temp_sensor.h"
 #include "util.h"
 
@@ -205,4 +206,58 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 						  uint32_t value)
 {
 	return EC_RES_INVALID_PARAM;
+}
+
+enum battery_present batt_pres_prev = BP_NOT_SURE;
+
+/*
+ * Physical detection of battery.
+ */
+static enum battery_present battery_check_present_status(void)
+{
+	enum battery_present batt_pres = BP_NOT_SURE;
+
+	/* Get the physical hardware status */
+	batt_pres = battery_hw_present();
+
+	/*
+	 * If the battery is not physically connected, then no need to perform
+	 * any more checks.
+	 */
+	if (batt_pres == BP_NO)
+		return batt_pres;
+
+	/*
+	 * If the battery is present now and was present last time we checked,
+	 * return early.
+	 */
+	if (batt_pres == batt_pres_prev)
+		return batt_pres;
+
+	/*
+	 * Check battery disconnect status. If we are unable to read battery
+	 * disconnect status, then return BP_NOT_SURE. Battery could be in ship
+	 * mode and might require pre-charge current to wake it up. BP_NO is not
+	 * returned here because charger state machine will not provide
+	 * pre-charge current assuming that battery is not present.
+	 */
+	if (battery_get_disconnect_state() == BATTERY_DISCONNECT_ERROR)
+		return BP_NOT_SURE;
+
+	/* Ensure the battery is not in cutoff state */
+	if (battery_is_cut_off() != BATTERY_CUTOFF_STATE_NORMAL)
+		return BP_NO;
+
+	return batt_pres;
+}
+
+enum battery_present battery_is_present(void)
+{
+	batt_pres_prev = battery_check_present_status();
+	return batt_pres_prev;
+}
+
+enum battery_present battery_hw_present(void)
+{
+	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
 }
