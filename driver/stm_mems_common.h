@@ -118,6 +118,8 @@ void st_normalize(const struct motion_sensor_t *s, intv3_t v, uint8_t *data);
 /* Internal data structure for sensors */
 struct stprivate_data {
 	struct accelgyro_saved_data_t base;
+	uint8_t              enabled_activities;
+	uint8_t              disabled_activities;
 	int16_t offset[3];
 	uint8_t resol;
 };
