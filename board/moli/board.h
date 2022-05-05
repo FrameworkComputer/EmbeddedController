@@ -128,11 +128,9 @@
 /* ADC */
 #define CONFIG_ADC
 
-/*
- * TODO(b/197478860): Enable the fan control. We need
- * to check the sensor value and adjust the fan speed.
- */
- #define CONFIG_FANS			FAN_CH_COUNT
+/* Fan */
+#define CONFIG_FANS			FAN_CH_COUNT
+#define RPM_DEVIATION		1
 
 /* Include math_util for bitmask_uint64 used in pd_timers */
 #define CONFIG_MATH_UTIL
