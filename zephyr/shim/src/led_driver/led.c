@@ -27,8 +27,7 @@ LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 #define LED_COLOR_NODE  DT_PATH(led_colors)
 
 struct led_color_node_t {
-	enum led_color color;
-	enum ec_led_id led_id;
+	struct led_pins_node_t *pins_node;
 	int acc_period;
 };
 
@@ -39,6 +38,15 @@ enum led_extra_flag_t {
 	LED_BATT_BELOW_10_PCT,
 	LED_BATT_ABOVE_10_PCT,
 };
+
+#define DECLARE_PINS_NODE(id)						\
+extern struct led_pins_node_t PINS_NODE(id);
+
+#if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED)
+DT_FOREACH_CHILD(PWM_LED_PINS_NODE, DECLARE_PINS_NODE)
+#elif DT_HAS_COMPAT_STATUS_OKAY(COMPAT_GPIO_LED)
+DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, DECLARE_PINS_NODE)
+#endif
 
 /*
  * Currently 4 different colors are supported for blinking LED, each of which
@@ -85,12 +93,14 @@ struct node_prop_t {
 #define ACC_PERIOD(color_num, state_id)					\
 	(0 LISTIFY(color_num, LED_PLUS_PERIOD, (), state_id))
 
+#define PINS_NODE_ADDR(id)	DT_PHANDLE(id, led_color)
 #define LED_COLOR_INIT(color_num, color_num_plus_one, state_id)		\
 {									\
-	.color = GET_PROP(DT_CHILD(state_id, color_##color_num),	\
-							led_color),	\
-	.led_id = GET_PROP_NVE(DT_CHILD(state_id, color_##color_num),	\
-							led_id),	\
+	.pins_node = COND_CODE_1(					\
+		DT_NODE_EXISTS(DT_CHILD(state_id, color_##color_num)),	\
+		(&PINS_NODE(PINS_NODE_ADDR(				\
+			DT_CHILD(state_id, color_##color_num)))),	\
+		(NULL)),						\
 	.acc_period = ACC_PERIOD(color_num_plus_one, state_id)		\
 }
 
@@ -112,7 +122,7 @@ struct node_prop_t {
 		      }							\
 },
 
-struct node_prop_t node_array[] = {
+static const struct node_prop_t node_array[] = {
 	DT_FOREACH_CHILD(LED_COLOR_NODE, SET_LED_VALUES)
 };
 
@@ -161,7 +171,7 @@ static bool find_node_with_extra_flag(int i)
 					LED_BATT_BELOW_10_PCT)
 				found_node = true;
 		} else {
-			if (node_array[i].led_extra_flag !=
+			if (node_array[i].led_extra_flag ==
 					LED_BATT_ABOVE_10_PCT)
 				found_node = true;
 		}
@@ -176,8 +186,7 @@ static bool find_node_with_extra_flag(int i)
 }
 
 #define GET_PERIOD(n_idx, c_idx)  node_array[n_idx].led_colors[c_idx].acc_period
-#define GET_COLOR(n_idx, c_idx)   node_array[n_idx].led_colors[c_idx].color
-#define GET_ID(n_idx, c_idx)	  node_array[n_idx].led_colors[c_idx].led_id
+#define GET_PIN_NODE(n_idx, c_idx) node_array[n_idx].led_colors[c_idx].pins_node
 
 static void set_color(int node_idx, uint32_t ticks)
 {
@@ -201,14 +210,14 @@ static void set_color(int node_idx, uint32_t ticks)
 	 * zero-period value nodes.
 	 */
 	for (color_idx = 0; color_idx < MAX_COLOR; color_idx++) {
-		enum ec_led_id led_id = GET_ID(node_idx, color_idx);
-		enum led_color color = GET_COLOR(node_idx, color_idx);
+		struct led_pins_node_t *pins_node =
+			GET_PIN_NODE(node_idx, color_idx);
 		int period = GET_PERIOD(node_idx, color_idx);
 
-		if (led_id == 0xFF)
+		if (pins_node == NULL)
 			break; /* No more valid color nodes, break here */
 
-		if (!led_auto_control_is_enabled(led_id))
+		if (!led_auto_control_is_enabled(pins_node->led_id))
 			break; /* Auto control is disabled */
 
 		/*
@@ -216,9 +225,9 @@ static void set_color(int node_idx, uint32_t ticks)
 		 * of ticks stored during initialization of the struct
 		 */
 		if (period == 0)
-			led_set_color(color, led_id);
+			led_set_color_with_node(pins_node);
 		else if (ticks < period) {
-			led_set_color(color, led_id);
+			led_set_color_with_node(pins_node);
 			break;
 		}
 	}

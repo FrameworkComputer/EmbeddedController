@@ -62,29 +62,10 @@ child-binding:
         description: Color enum
         properties:
             led-color:
-                type: string
+                description: Handle to LED pins node that describes pins to set
+                             to enable a particular color
+                type: phandle
                 required: true
-                enum:
-                    - LED_OFF
-                    - LED_RED
-                    - LED_GREEN
-                    - LED_BLUE
-                    - LED_YELLOW
-                    - LED_WHITE
-                    - LED_AMBER
-            led-id:
-                description: Used to link the color nodes with the pin nodes in
-                             case of multiple LEDs.
-                type: string
-                required: true
-                enum:
-                    - EC_LED_ID_BATTERY_LED
-                    - EC_LED_ID_POWER_LED
-                    - EC_LED_ID_ADAPTER_LED
-                    - EC_LED_ID_LEFT_LED
-                    - EC_LED_ID_RIGHT_LED
-                    - EC_LED_ID_RECOVERY_HW_REINIT_LED
-                    - EC_LED_ID_SYSRQ_DEBUG_LED
             period-ms:
                 description: In case of blinking LEDs, amount of time in msecs
                              the LED color is active. This value must be a
