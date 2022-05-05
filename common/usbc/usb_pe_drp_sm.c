@@ -7122,8 +7122,10 @@ __maybe_unused static void pe_get_revision_entry(int port)
 	 * Only USB PD partners with major revision 3.0 could potentially
 	 * respond to Get_Revision.
 	 */
-	if (prl_get_rev(port, TCPCI_MSG_SOP) != PD_REV30)
+	if (prl_get_rev(port, TCPCI_MSG_SOP) != PD_REV30) {
+		pe_set_ready_state(port);
 		return;
+	}
 
 	/* Send a Get_Revision message */
 	send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_GET_REVISION);
@@ -7137,10 +7139,8 @@ __maybe_unused static void pe_get_revision_run(int port)
 	int ext;
 	enum pe_msg_check msg_check;
 
-	if (prl_get_rev(port, TCPCI_MSG_SOP) != PD_REV30) {
-		pe_set_ready_state(port);
+	if (prl_get_rev(port, TCPCI_MSG_SOP) != PD_REV30)
 		return;
-	}
 
 	/* Check the state of the message sent */
 	msg_check = pe_sender_response_msg_run(port);
@@ -7157,6 +7157,14 @@ __maybe_unused static void pe_get_revision_run(int port)
 			/* Revision returned by partner */
 			pe[port].partner_rmdo =
 			    *((struct rmdo *) rx_emsg[port].buf);
+		} else if (type != PD_CTRL_NOT_SUPPORTED) {
+			/*
+			 * If the partner response with a message other than
+			 * Revision or Not_Supported, there was an interrupt.
+			 * Setting PE_FLAGS_MSG_RECEIVED to handle unexpected
+			 * message.
+			 */
+			PE_SET_FLAG(port, PE_FLAGS_MSG_RECEIVED);
 		}
 
 		/*
