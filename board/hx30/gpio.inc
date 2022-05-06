@@ -30,7 +30,7 @@ GPIO_INT(SLP_SUS_L,       PIN(0221), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(VCCIN_AUX_VR_PG, PIN(043), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(PM_SLP_S3_L,     PIN(022),  GPIO_INT_BOTH, power_signal_interrupt)	/* eSPI signal */
 GPIO_INT(PM_SLP_S4_L,     PIN(0226), GPIO_INT_BOTH, power_signal_interrupt)	/* eSPI signal */
-GPIO_INT(PM_SLP_S0_L,     PIN(062),  GPIO_INT_BOTH, power_signal_interrupt)	/* eSPI signal */  
+GPIO(PM_SLP_S0_L,         PIN(062),  GPIO_OUT_LOW)
 GPIO_INT(VR_PWRGD,        PIN(057),  GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SOC_ENBKL,       PIN(0165), GPIO_INT_BOTH, soc_signal_interrupt)
 GPIO_INT(LID_SW_L,        PIN(0254), GPIO_INT_BOTH, lid_interrupt)

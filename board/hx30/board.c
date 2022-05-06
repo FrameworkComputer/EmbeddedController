@@ -666,6 +666,10 @@ static void board_init(void)
 	 */
 	if (!extpower_is_present())
 		board_power_off();
+
+	/* GPIO062 for DVT2 or the older boards need to set the input. */
+	if (board_get_version() <= BOARD_VERSION_8)
+		gpio_set_flags(GPIO_PM_SLP_S0_L, GPIO_INPUT);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT + 1);
 
@@ -711,6 +715,10 @@ static void board_chipset_resume(void)
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_CAM_EN, 1);
 	charge_psys_onoff(1);
+
+	/* Enable BB retimer power, for MP boards. */
+	if (board_get_version() > BOARD_VERSION_10)
+		gpio_set_level(GPIO_PM_SLP_S0_L, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -725,6 +733,10 @@ static void board_chipset_suspend(void)
 		gpio_set_level(GPIO_CAM_EN, 0);
 	}
 	charge_psys_onoff(0);
+
+	/* Disable BB retimer power, for MP boards. */
+	if (board_get_version() > BOARD_VERSION_10)
+		gpio_set_level(GPIO_PM_SLP_S0_L, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
 		board_chipset_suspend,
