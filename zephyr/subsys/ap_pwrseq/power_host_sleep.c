@@ -4,6 +4,7 @@
  */
 
 #include <ap_power/ap_power_interface.h>
+#include <ap_power/ap_pwrseq.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
@@ -232,6 +233,7 @@ void ap_power_chipset_handle_host_sleep_event(
 		power_signal_disable(PWR_SLP_S0);
 	}
 #endif /* CONFIG_AP_PWRSEQ_S0IX */
+	ap_pwrseq_wake();
 }
 
 #endif /* CONFIG_AP_PWRSEQ_HOST_SLEEP */

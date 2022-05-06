@@ -8,6 +8,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
 
+#include <ap_power/ap_pwrseq.h>
 #include <power_signals.h>
 
 #include "signal_gpio.h"
@@ -134,6 +135,7 @@ void power_signal_interrupt(enum power_signal signal, int value)
 {
 	atomic_set_bit_to(&power_signals, signal, value);
 	check_debug(signal);
+	ap_pwrseq_wake();
 }
 
 int power_wait_mask_signals_timeout(power_signal_mask_t mask,

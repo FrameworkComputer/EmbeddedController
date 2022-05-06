@@ -9,4 +9,5 @@
 /** Starts the AP power sequence thread */
 void ap_pwrseq_task_start(void);
 
+void ap_pwrseq_wake(void);
 #endif /* __AP_POWER_AP_PWRSEQ_H__ */

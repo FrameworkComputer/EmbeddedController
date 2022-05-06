@@ -13,8 +13,11 @@ static struct k_thread pwrseq_thread_data;
 static struct pwrseq_context pwrseq_ctx = {
 	.power_state = SYS_POWER_STATE_UNINIT,
 };
+static struct k_sem pwrseq_sem;
+
+static void s5_inactive_timer_handler(struct k_timer *timer);
 /* S5 inactive timer*/
-K_TIMER_DEFINE(s5_inactive_timer, NULL, NULL);
+K_TIMER_DEFINE(s5_inactive_timer, s5_inactive_timer_handler, NULL);
 /*
  * Flags, may be set/cleared from other threads.
  */
@@ -109,6 +112,11 @@ void pwr_sm_set_state(enum power_states_ndsx new_state)
 	pwrseq_ctx.power_state = new_state;
 }
 
+void ap_pwrseq_wake(void)
+{
+	k_sem_give(&pwrseq_sem);
+}
+
 /*
  * Set a flag to enable starting the AP once it is in G3.
  * This is called from ap_power_exit_hardoff() which checks
@@ -131,11 +139,17 @@ void request_start_from_g3(void)
 	if (pwr_sm_get_state() == SYS_POWER_STATE_S5) {
 		atomic_clear_bit(flags, S5_INACTIVE_TIMER_RUNNING);
 	}
+	ap_pwrseq_wake();
 }
 
 void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
 {
 	board_ap_power_force_shutdown();
+}
+
+static void s5_inactive_timer_handler(struct k_timer *timer)
+{
+	ap_pwrseq_wake();
 }
 
 static void shutdown_and_notify(enum ap_power_shutdown_reason reason)
@@ -520,7 +534,6 @@ static void pwr_seq_set_initial_state(void)
 
 static void pwrseq_loop_thread(void *p1, void *p2, void *p3)
 {
-	int32_t t_wait_ms = 10;
 	enum power_states_ndsx curr_state, new_state;
 	power_signal_mask_t this_in_signals;
 	power_signal_mask_t last_in_signals = 0;
@@ -566,9 +579,13 @@ static void pwrseq_loop_thread(void *p1, void *p2, void *p3)
 		if (curr_state != new_state) {
 			pwr_sm_set_state(new_state);
 			ap_power_set_active_wake_mask();
+		} else {
+			/*
+			 * No state transition, we can go to sleep and wait
+			 * for any event to wake us up.
+			 */
+			k_sem_take(&pwrseq_sem, K_FOREVER);
 		}
-
-		k_msleep(t_wait_ms);
 	}
 }
 
@@ -607,6 +624,7 @@ static int pwrseq_init(const struct device *dev)
 {
 	LOG_INF("Pwrseq Init");
 
+	k_sem_init(&pwrseq_sem, 0, 1);
 	/* Initialize signal handlers */
 	power_signal_init();
 	LOG_DBG("Init pwr seq state");
