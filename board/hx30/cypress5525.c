@@ -898,7 +898,7 @@ void cypd_update_port_state(int controller, int port)
 
 	/*Todo make this better to enable debug accessory mode */
 	if (pd_port_states[0].c_state == CYPD_STATUS_DEBUG ||
-		pd_port_states[1].c_state == CYPD_STATUS_DEBUG ) {
+		pd_port_states[3].c_state == CYPD_STATUS_DEBUG) {
 			gpio_set_level(GPIO_MUX_SBU_UART_FLIP, 1);
 	} else {
 			gpio_set_level(GPIO_MUX_SBU_UART_FLIP, 0);
