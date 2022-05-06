@@ -201,11 +201,9 @@ void online_calibration_init(void)
 		struct motion_sensor_t *s = motion_sensors + i;
 		void *type_specific_data = NULL;
 
-		if (s->online_calib_data) {
-			s->online_calib_data->last_temperature = -1;
-			type_specific_data =
-				s->online_calib_data->type_specific_data;
-		}
+		s->online_calib_data->last_temperature = -1;
+		type_specific_data =
+			s->online_calib_data->type_specific_data;
 
 		if (!type_specific_data)
 			continue;

@@ -116,7 +116,7 @@ __override void print_current_state(const int port)
 	state_printed = 1;
 }
 
-static int test_all_states_named(const struct test_sm_data * const sm_data)
+static int test_all_states_named(const struct test_sm_data *const sm_data)
 {
 	int i;
 
@@ -125,12 +125,10 @@ static int test_all_states_named(const struct test_sm_data * const sm_data)
 
 		state_printed = 0;
 
-		if (current->entry)
+		if (current->entry &&
+		    (i >= sm_data->names_size || sm_data->names[i] == NULL)) {
 			current->entry(0);
-
-		if (state_printed) {
-			if (i >= sm_data->names_size ||
-			    sm_data->names[i] == NULL) {
+			if (state_printed) {
 				ccprintf("State %d does not have a name!\n", i);
 				TEST_ASSERT(0);
 			}

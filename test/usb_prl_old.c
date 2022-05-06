@@ -208,7 +208,7 @@ static void cycle_through_state_machine(int port, uint32_t num, uint32_t time)
 	}
 }
 
-static int simulate_request_chunk(int port, enum pd_data_msg_type msg_type,
+static int simulate_request_chunk(int port, enum pd_ext_msg_type msg_type,
 							int chunk_num, int len)
 {
 	uint16_t header = PD_HEADER(msg_type, get_partner_power_role(port),
@@ -568,7 +568,7 @@ static int verify_data_msg_transmission(int port,
 }
 
 static int simulate_send_data_msg_request_from_pe(int port,
-	enum tcpci_msg_type type, enum pd_ctrl_msg_type msg_type, int len)
+	enum tcpci_msg_type type, enum pd_data_msg_type msg_type, int len)
 {
 	int i;
 	uint8_t *buf = tx_emsg[port].buf;
@@ -590,7 +590,7 @@ static int simulate_send_data_msg_request_from_pe(int port,
 }
 
 static int verify_extended_data_msg_transmission(int port,
-			enum pd_data_msg_type msg_type, int len)
+			enum pd_ext_msg_type msg_type, int len)
 {
 	int i;
 	int j;
@@ -703,7 +703,7 @@ static int verify_extended_data_msg_transmission(int port,
 }
 
 static int simulate_send_extended_data_msg(int port,
-		enum tcpci_msg_type type, enum pd_ctrl_msg_type msg_type,
+		enum tcpci_msg_type type, enum pd_ext_msg_type msg_type,
 		int len)
 {
 	int i;

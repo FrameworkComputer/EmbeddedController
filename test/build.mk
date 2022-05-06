@@ -47,7 +47,10 @@ test-list-host += inductive_charging
 # test-list-host += interrupt
 test-list-host += irq_locking
 test-list-host += is_enabled
+ifeq ($(TEST_ASAN),)
+# is_enabled_error fails with TEST_ASAN
 test-list-host += is_enabled_error
+endif
 test-list-host += kasa
 test-list-host += kb_8042
 test-list-host += kb_mkbp
