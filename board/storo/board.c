@@ -235,6 +235,15 @@ enum tusb544_conf {
 	DP_INV
 };
 
+/*
+ * Registers we care about of are all the same between NCS8510 and TUSB544,
+ * so we leverage the driver of TUSB544 to control both of them.
+ *
+ * For EQ settings, these two chips are also almost the same, so we have one
+ * set of EQ settings here for both of them as well. When you need to modify
+ * the EQ settings, please make sure that both configurations are correct;
+ * otherwise you need to separate EQ settings then.
+ */
 static int board_tusb544_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int  rv = EC_SUCCESS;
