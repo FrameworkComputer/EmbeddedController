@@ -16,6 +16,16 @@ menuconfig PLATFORM_EC_BOOT_AP_POWER_REQUIREMENTS
 
 if PLATFORM_EC_BOOT_AP_POWER_REQUIREMENTS
 
+config PLATFORM_EC_POWER_BUTTON_INIT_TIMEOUT
+	int "Timeout before power button task gives up starting system"
+	depends on HAS_TASK_POWERBTN
+	default 1
+	help
+	  Sets the maximum time, in seconds, before the power button
+	  task stops waiting for conditions to be OK to start
+	  the system. If the timeout is reached, the AP is
+	  not started, and the power task's state is set to idle.
+
 config PLATFORM_EC_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
 	int "Minimal battery level to boot AP without AC"
 	depends on PLATFORM_EC_BATTERY
