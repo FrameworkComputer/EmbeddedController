@@ -450,11 +450,9 @@ void update_system_power_state(void)
 		cypd_set_power_state(CYP5525_POWERSTATE_S5);
 		reconnect_flag = true;
 		break;
-	/* wait PD FW stable */
-	/*case POWER_S0S0ix:
+	case POWER_S0S0ix:
 		cypd_set_power_state(CYP5525_POWERSTATE_S3);
 		break;
-	*/
 	default:
 		cypd_set_error_recovery();
 		cypd_set_power_state(CYP5525_POWERSTATE_S0);
