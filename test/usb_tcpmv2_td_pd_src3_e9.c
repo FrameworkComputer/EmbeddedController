@@ -82,7 +82,7 @@ int test_td_pd_src3_e9(void)
 
 	possible[1].tx_type = TCPCI_MSG_SOP;
 	possible[1].ctrl_msg = 0;
-	possible[1].data_msg = PD_EXT_SOURCE_CAP;
+	possible[1].data_msg = PD_DATA_SOURCE_CAP;
 
 	TEST_EQ(verify_tcpci_possible_tx(possible,
 					 2,

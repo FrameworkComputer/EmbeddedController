@@ -366,7 +366,7 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 {
 	int rv;
 	int found_index;
-	struct possible_tx possible[4];
+	struct possible_tx possible[5];
 
 	if (data_role == PD_ROLE_DFP) {
 		possible[0].tx_type = TCPCI_MSG_SOP;
