@@ -1,4 +1,4 @@
-/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -15,7 +15,6 @@
 	TASK_ALWAYS(CHG_RAMP, chg_ramp_task, NULL, BASEBOARD_CHG_RAMP_TASK_STACK_SIZE) \
 	TASK_ALWAYS(USB_CHG_P0, usb_charger_task, 0, TASK_STACK_SIZE) \
 	TASK_ALWAYS(USB_CHG_P1, usb_charger_task, 0, TASK_STACK_SIZE) \
-	TASK_ALWAYS(USB_CHG_P2, usb_charger_task, 0, TASK_STACK_SIZE) \
 	TASK_ALWAYS(CHARGER, charger_task, NULL, BASEBOARD_CHARGER_TASK_STACK_SIZE) \
 	TASK_ALWAYS(MOTIONSENSE, motion_sense_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_NOTEST(KEYPROTO, keyboard_protocol_task, NULL, LARGER_TASK_STACK_SIZE) \
@@ -27,6 +26,5 @@
 	TASK_NOTEST(KEYSCAN, keyboard_scan_task, NULL, VENTI_TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_C0, pd_task, NULL, BASEBOARD_PD_TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_C1, pd_task, NULL, BASEBOARD_PD_TASK_STACK_SIZE) \
-	TASK_ALWAYS(PD_C2, pd_task, NULL, BASEBOARD_PD_TASK_STACK_SIZE) \
-	TASK_ALWAYS(PD_INT_C0, pd_shared_alert_task, (BIT(2) | BIT(0)), BASEBOARD_PD_INT_TASK_STACK_SIZE) \
+	TASK_ALWAYS(PD_INT_C0, pd_interrupt_handler_task, 0, BASEBOARD_PD_INT_TASK_STACK_SIZE) \
 	TASK_ALWAYS(PD_INT_C1, pd_interrupt_handler_task, 1, BASEBOARD_PD_INT_TASK_STACK_SIZE)

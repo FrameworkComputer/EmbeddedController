@@ -1,4 +1,4 @@
-/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -10,7 +10,7 @@
 #include "charger.h"
 #include "compile_time_macros.h"
 #include "console.h"
-#include "driver/charger/bq25710.h"
+#include "driver/charger/isl9241.h"
 #include "usbc_ppc.h"
 #include "usb_pd.h"
 #include "util.h"
@@ -23,8 +23,8 @@
 const struct charger_config_t chg_chips[] = {
 	{
 		.i2c_port = I2C_PORT_CHARGER,
-		.i2c_addr_flags = BQ25710_SMBUS_ADDR1_FLAGS,
-		.drv = &bq25710_drv,
+		.i2c_addr_flags = ISL9241_ADDR_FLAGS,
+		.drv = &isl9241_drv,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(chg_chips) == CHARGER_NUM);
@@ -84,6 +84,7 @@ int board_set_active_charge_port(int port)
 __overridable void board_set_charge_limit(int port, int supplier, int charge_ma,
 					  int max_ma, int charge_mv)
 {
+	charge_ma = (charge_ma * 90) / 100;
 	charge_set_input_current_limit(MAX(charge_ma,
 					   CONFIG_CHARGER_INPUT_CURRENT),
 				       charge_mv);

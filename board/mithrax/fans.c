@@ -1,4 +1,4 @@
-/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -30,17 +30,10 @@ static const struct fan_conf fan_conf_0 = {
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
 
-/*
- * TOOD(b/181271666): thermistor placement and calibration
- *
- * Prototype fan spins at about 4200 RPM at 100% PWM, this
- * is specific to board ID 2 and might also apears in later
- * boards as well.
- */
 static const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 2200,
-	.rpm_start = 2200,
-	.rpm_max = 4200,
+	.rpm_min = 1100,
+	.rpm_start = 2000,
+	.rpm_max = 5000,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
