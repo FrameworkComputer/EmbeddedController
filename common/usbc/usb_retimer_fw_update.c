@@ -53,6 +53,8 @@ static int cur_port;
 static int last_op; /* Operation received from AP via ACPI_WRITE */
 /* Operation result returned to ACPI_READ */
 static int last_result;
+/* Track port state: SUSPEND or RESUME */
+static int port_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 int usb_retimer_fw_update_get_result(void)
 {
@@ -85,9 +87,35 @@ int usb_retimer_fw_update_get_result(void)
 	return result;
 }
 
+static void retimer_fw_update_set_port_state(int port, int state)
+{
+	port_state[port] = state;
+}
+
+static int retimer_fw_update_get_port_state(int port)
+{
+	return port_state[port];
+}
+
+/**
+ * @brief Suspend or resume PD task and update the state of the port.
+ *
+ * @param port PD port
+ * @param state
+ * SUSPEND: suspend PD task for firmware update; and set state to SUSPEND
+ * RESUME: resume PD task after firmware update is done; and set state
+ * to RESUME.
+ *
+ */
+static void retimer_fw_update_port_handler(int port, int state)
+{
+	pd_set_suspend(port, state);
+	retimer_fw_update_set_port_state(port, state);
+}
+
 static void deferred_pd_suspend(void)
 {
-	pd_set_suspend(cur_port, SUSPEND);
+	retimer_fw_update_port_handler(cur_port, SUSPEND);
 }
 DECLARE_DEFERRED(deferred_pd_suspend);
 
@@ -141,7 +169,7 @@ void usb_retimer_fw_update_process_op_cb(int port)
 		hook_call_deferred(&deferred_pd_suspend_data, 0);
 		break;
 	case USB_RETIMER_FW_UPDATE_RESUME_PD:
-		pd_set_suspend(port, RESUME);
+		retimer_fw_update_port_handler(port, RESUME);
 		break;
 	case USB_RETIMER_FW_UPDATE_GET_MUX:
 		result_mux_get = true;
@@ -215,3 +243,19 @@ void usb_retimer_fw_update_process_op(int port, int op)
 		break;
 	}
 }
+
+/*
+ * If due to any reason system shuts down during firmware update, resume
+ * the PD port; otherwise, PD port is suspended even system powers up again.
+ * In normal case, system should not allow shutdown during firmware update.
+ */
+static void restore_port(void)
+{
+	int port;
+
+	for  (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
+		if (retimer_fw_update_get_port_state(port))
+			retimer_fw_update_port_handler(port, RESUME);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, restore_port, HOOK_PRIO_DEFAULT);
