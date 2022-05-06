@@ -562,6 +562,7 @@ void sbu_fault_interrupt(enum ioex_signal signal)
 {
 	int port = (signal == IOEX_USB_C0_SBU_FAULT_ODL) ? 0 : 1;
 
+	CPRINTSUSB("C%d: SBU fault", port);
 	pd_handle_overcurrent(port);
 }
 
