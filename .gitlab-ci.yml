@@ -92,6 +92,8 @@ seed_cache:
 # Builds the project with coverage enabled, removes the non-ec files.
 # Then merges with the tests, excludes all files not used by this project,
 # and generates a report.
+# NOTE: If you change the lcov -r command below, also edit the one in
+# merged_coverage
 .coverage_template: &coverage_template
   stage: test
   needs: ["merged_coverage", "zephyr_coverage", "twister_coverage"]
@@ -114,12 +116,24 @@ seed_cache:
       -a "${BUILD_DIR}/${PROJECT}/output/zephyr.info" -a build/merged.info
     - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/output/no_zephyr.info"
       -r "${BUILD_DIR}/${PROJECT}/output/zephyr.info" "${ZEPHYR_BASE}/**"
-      "${MODULES_DIR}/*" "${EC_DIR}/zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
-      "${EC_DIR}/build/*/build-*/zephyr/*/generated/**"
+      "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
+      "${EC_DIR}/zephyr/drivers/**" "${EC_DIR}/zephyr/include/drivers/**"
+      "${EC_DIR}/zephyr/shim/chip/**" "${EC_DIR}/zephyr/shim/core/**"
+      "${EC_DIR}/zephyr/projects/**" "/usr/include/x86_64-linux-gnu/**"
+      "${EC_DIR}/build/*/build-*/zephyr/*/generated/**" "${EC_DIR}/test/**"
+      "${EC_DIR}/zephyr/shim/chip/npcx/npcx_monitor/**"
+      "${EC_DIR}/zephyr/emul/**" "${EC_DIR}/zephyr/test/**"
+      "**/testsuite/**" "**/subsys/emul/**"
     - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/output/merged_no_zephyr.info"
-      -r "${BUILD_DIR}/${PROJECT}/output/merged.info" "${ZEPHYR_BASE}/**"
-      "${MODULES_DIR}/*" "${EC_DIR}/zephyr/drivers/*" '/usr/include/x86_64-linux-gnu/*'
-      "${EC_DIR}/build/*/build-*/zephyr/*/generated/**"
+      -r "${BUILD_DIR}/${PROJECT}/output/merged.info"
+      "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
+      "${EC_DIR}/zephyr/drivers/**" "${EC_DIR}/zephyr/include/drivers/**"
+      "${EC_DIR}/zephyr/shim/chip/**" "${EC_DIR}/zephyr/shim/core/**"
+      "${EC_DIR}/zephyr/projects/**" "/usr/include/x86_64-linux-gnu/**"
+      "${EC_DIR}/build/*/build-*/zephyr/*/generated/**" "${EC_DIR}/test/**"
+      "${EC_DIR}/zephyr/shim/chip/npcx/npcx_monitor/**"
+      "${EC_DIR}/zephyr/emul/**" "${EC_DIR}/zephyr/test/**"
+      "**/testsuite/**" "**/subsys/emul/**"
     - grep "SF:" "${BUILD_DIR}/${PROJECT}/output/no_zephyr.info" | sort -u |
       sed -e 's|^SF:||' | xargs lcov --rc lcov_branch_coverage=1
       -o "${BUILD_DIR}/${PROJECT}/output/filtered_no_zephyr.info"
@@ -231,6 +245,8 @@ zephyr_coverage:
     expire_in: 1 week
   coverage: '/lines\.*: \d+\.\d+%/'
 
+# NOTE: If you change the lcov -r command below, also edit the one in
+# .coverage_template
 merged_coverage:
   stage: test
   needs: ["ec_coverage", "zephyr_coverage"]
