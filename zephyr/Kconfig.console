@@ -31,6 +31,10 @@ config SHELL_PRINTF_BUFF_SIZE
 config SHELL_BACKEND_SERIAL_TX_RING_BUFFER_SIZE
 	default 1024
 
+# For FAFT, need a larger RX ring
+config SHELL_BACKEND_SERIAL_RX_RING_BUFFER_SIZE
+	default 192
+
 menuconfig PLATFORM_EC_HOSTCMD_CONSOLE
 	bool "Console Host Command"
 	depends on PLATFORM_EC_HOSTCMD
