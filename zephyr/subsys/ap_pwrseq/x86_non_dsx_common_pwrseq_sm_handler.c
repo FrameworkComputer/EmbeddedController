@@ -76,16 +76,6 @@ static inline bool signals_valid_and_off(power_signal_mask_t signals)
 	return signals_valid(signals) && power_signals_off(signals);
 }
 
-static int check_power_rails_enabled(void)
-{
-	int out = 1;
-
-	out &= power_signal_get(PWR_EN_PP3300_A);
-	out &= power_signal_get(PWR_EN_PP5000_A);
-	out &= power_signal_get(PWR_EC_SOC_DSW_PWROK);
-	return out;
-}
-
 enum power_states_ndsx pwr_sm_get_state(void)
 {
 	return pwrseq_ctx.power_state;
@@ -225,7 +215,8 @@ static int common_pwr_sm_run(int state)
 	case SYS_POWER_STATE_S5:
 		/* In S5 make sure no more signal lost */
 		/* If A-rails are stable then move to higher state */
-		if (check_power_rails_enabled() && rsmrst_power_is_good()) {
+		if (board_ap_power_check_power_rails_enabled()
+					&& rsmrst_power_is_good()) {
 			/* rsmrst is intact */
 			rsmrst_pass_thru_handler();
 			if (signals_valid_and_off(IN_PCH_SLP_S5)) {

@@ -65,6 +65,14 @@ void board_ap_power_action_s0(void);
 int board_ap_power_assert_pch_power_ok(void);
 
 /**
+ * @brief Check board power rails enabled or not
+ *
+ * @return true Enabled
+ * @return false Not enabled
+ */
+bool board_ap_power_check_power_rails_enabled(void);
+
+/**
  * @brief macro to access configuration properties from DTS
  */
 #define AP_PWRSEQ_DT_VALUE(p)					\
