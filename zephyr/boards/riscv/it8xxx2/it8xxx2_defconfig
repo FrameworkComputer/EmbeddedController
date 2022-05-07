@@ -25,6 +25,11 @@ CONFIG_SHELL_HISTORY=y
 # GPIO Controller
 CONFIG_GPIO=y
 CONFIG_GPIO_ITE_IT8XXX2=y
+# For IT81202, the GPIO group k/l are not brought out to pins,
+# so by default they can be set to pull down inputs.
+# However with the IT81302, they are available on pins,
+# and should not be set to pull down inputs by default.
+CONFIG_SOC_IT8XXX2_GPIO_GROUP_K_L_DEFAULT_PULL_DOWN=n
 
 # ADC Driver
 CONFIG_ADC_ITE_IT8XXX2=y
