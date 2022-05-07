@@ -8,7 +8,7 @@
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
-void ap_off(void)
+static void ap_off(void)
 {
 	power_signal_set(PWR_VCCST_PWRGD, 0);
 	power_signal_set(PWR_PCH_PWROK, 0);
@@ -120,48 +120,6 @@ void s0_action_handler(void)
 	generate_sys_pwrok_handler();
 }
 
-void intel_x86_sys_reset_delay(void)
-{
-	/*
-	 * Debounce time for SYS_RESET_L is 16 ms. Wait twice that period
-	 * to be safe.
-	 */
-	k_msleep(AP_PWRSEQ_DT_VALUE(sys_reset_delay));
-}
-
-void ap_power_reset(enum ap_power_shutdown_reason reason)
-{
-	/*
-	 * Irrespective of cold_reset value, always toggle SYS_RESET_L to
-	 * perform an AP reset. RCIN# which was used earlier to trigger
-	 * a warm reset is known to not work in certain cases where the CPU
-	 * is in a bad state (crbug.com/721853).
-	 *
-	 * The EC cannot control warm vs cold reset of the AP using
-	 * SYS_RESET_L; it's more of a request.
-	 */
-	LOG_DBG("%s: %d", __func__, reason);
-
-	/*
-	 * Toggling SYS_RESET_L will not have any impact when it's already
-	 * low (i,e. AP is in reset state).
-	 */
-	if (power_signal_get(PWR_SYS_RST)) {
-		LOG_DBG("Chipset is in reset state");
-		return;
-	}
-
-	power_signal_set(PWR_SYS_RST, 1);
-	intel_x86_sys_reset_delay();
-	power_signal_set(PWR_SYS_RST, 0);
-	ap_power_ev_send_callbacks(AP_POWER_RESET);
-}
-
-void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
-{
-	board_ap_power_force_shutdown();
-}
-
 void s3s0_action_handler(void)
 {
 }
@@ -182,12 +140,6 @@ enum power_states_ndsx g3s5_action_handler(void)
 		return SYS_POWER_STATE_G3S5;
 	}
 	return SYS_POWER_STATE_S5G3;
-}
-
-void init_chipset_pwr_seq_state(void)
-{
-	/* Deassert reset pin */
-	power_signal_set(PWR_SYS_RST, 0);
 }
 
 /**
