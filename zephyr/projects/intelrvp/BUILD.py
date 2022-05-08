@@ -52,7 +52,10 @@ register_intelrvp_project(
         here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
         here / "adlrvp/adlrvp_npcx/usbc.dts",
     ],
-    extra_kconfig_files=[here / "adlrvp/adlrvp_npcx/prj.conf"],
+    extra_kconfig_files=[
+        here / "legacy_ec_pwrseq.conf",
+        here / "adlrvp/adlrvp_npcx/prj.conf",
+    ],
 )
 
 register_intelrvp_project(
@@ -67,5 +70,8 @@ register_intelrvp_project(
         here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx.dts",
         here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
     ],
-    extra_kconfig_files=[here / "mtlrvp/mtlrvpp_npcx/prj.conf"],
+    extra_kconfig_files=[
+        here / "legacy_ec_pwrseq.conf",
+        here / "mtlrvp/mtlrvpp_npcx/prj.conf",
+    ],
 )
