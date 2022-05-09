@@ -14,13 +14,19 @@ zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 
 if(DEFINED CONFIG_BOARD_NIVVIKS)
 	project(nivviks)
+	zephyr_library_sources(
+			"src/nivviks/form_factor.c"
+			"src/nivviks/keyboard.c"
+	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/nivviks/fan.c")
-	zephyr_library_sources("src/nivviks/form_factor.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/nivviks/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/nivviks/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_NEREID)
 	project(nereid)
+	zephyr_library_sources(
+			"src/nereid/keyboard.c"
+	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/nereid/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/nereid/charger.c")
 endif()

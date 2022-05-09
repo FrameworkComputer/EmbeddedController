@@ -12,7 +12,6 @@
 #include "chipset.h"
 #include "cros_cbi.h"
 #include "hooks.h"
-#include "keyboard_scan.h"
 #include "usb_mux.h"
 #include "system.h"
 
@@ -156,27 +155,4 @@ enum nissa_sub_board_type nissa_get_sb_type(void)
 		break;
 	}
 	return sb;
-}
-
-static const struct ec_response_keybd_config nissa_kb = {
-	.num_top_row_keys = 10,
-	.action_keys = {
-		TK_BACK,		/* T1 */
-		TK_REFRESH,		/* T2 */
-		TK_FULLSCREEN,		/* T3 */
-		TK_OVERVIEW,		/* T4 */
-		TK_SNAPSHOT,		/* T5 */
-		TK_BRIGHTNESS_DOWN,	/* T6 */
-		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_VOL_MUTE,		/* T8 */
-		TK_VOL_DOWN,		/* T9 */
-		TK_VOL_UP,		/* T10 */
-	},
-	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
-};
-
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
-{
-	return &nissa_kb;
 }
