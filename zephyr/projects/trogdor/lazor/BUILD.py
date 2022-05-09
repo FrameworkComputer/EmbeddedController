@@ -19,5 +19,6 @@ register_npcx_project(
         "motionsense.dts",
         "pwm_led.dts",
         "usbc.dts",
+        "default_gpio_pinctrl.dts",
     ],
 )
