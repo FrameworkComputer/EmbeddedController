@@ -56,11 +56,20 @@ void set_non_acpi_mode(int enable)
 
 static void sci_enable(void)
 {
+	uint8_t dataInSPI;
+	int dataInEMI;
+
 	if (*host_get_customer_memmap(0x00) & BIT(0)) {
 	/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		update_soc_power_limit(true, false);
-		board_spi_write_byte(SPI_AC_BOOT_OFFSET, ac_boot_status());
+
+	/* check the Flag in EEPROM and EMI, if values are different, write the value in EEPROM */
+		board_spi_read_byte(SPI_AC_BOOT_OFFSET, &dataInSPI);
+		dataInEMI = ac_boot_status();
+		if ((int)dataInSPI != dataInEMI)
+			board_spi_write_byte(SPI_AC_BOOT_OFFSET, (uint8_t)dataInEMI);
+
 		set_non_acpi_mode(0);
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);

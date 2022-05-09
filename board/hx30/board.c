@@ -376,13 +376,11 @@ void board_reset_pd_mcu(void)
 void spi_mux_control(int enable)
 {
 	if (enable) {
-		CPRINTS("switch to spi mode");
 		/* Disable LED drv */
 		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
 		/* Set GPIO56 as SPI for access SPI ROM */
 		gpio_set_alternate_function(1, 0x4000, 2);
 	} else {
-		CPRINTS("switch to pwm mode");
 		/* Enable LED drv */
 		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
 		/* Set GPIO56 as SPI for access SPI ROM */
@@ -400,6 +398,8 @@ void board_spi_read_byte(uint8_t offset, uint8_t *data)
 	rv = spi_flash_read(data, SPI_FLAGS_REGION + offset, 0x01);
 	if (rv != EC_SUCCESS)
 		CPRINTS("SPI fail to read");
+
+	CPRINTS("%s, offset:0x%02x, data:0x%02x", __func__, offset, *data);
 
 	spi_mux_control(0);
 }
@@ -419,6 +419,8 @@ void board_spi_write_byte(uint8_t offset, uint8_t data)
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("SPI fail to write");
+
+	CPRINTS("%s, offset:0x%02x, data:0x%02x", __func__, offset, data);
 
 	spi_mux_control(0);
 }
