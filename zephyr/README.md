@@ -41,8 +41,8 @@ ls -l /tmp/artifact_bundles/
 ### firmware-zephyr-cov-cq
 ```
 rm -rf /tmp/artifact_bundles-cov /tmp/artifact_bundle_metadata-cov \
-  ~/chromiumos/src/platform/ec/build
-cd ~/chromiumos/src/platform/ec/zephyr
+  ~/chromiumos/src/platform/ec/build && \
+cd ~/chromiumos/src/platform/ec/zephyr && \
 ./firmware_builder.py --metrics /tmp/metrics --code-coverage build && \
 ./firmware_builder.py --metrics /tmp/metrics --code-coverage test && \
 ./firmware_builder.py --metrics /tmp/metrics --code-coverage \
