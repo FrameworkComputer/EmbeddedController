@@ -151,8 +151,7 @@ enum charge_port {
 enum adc_channel {
 	ADC_TEMP_SENSOR_1_CPU,
 	ADC_TEMP_SENSOR_2_CPU_VR,
-	ADC_TEMP_SENSOR_3_WIFI,
-	ADC_TEMP_SENSOR_4_DIMM,
+	ADC_TEMP_SENSOR_3_DIMM,
 	ADC_VBUS,
 	ADC_PPVAR_IMON,              /* ADC3 */
 	ADC_CH_COUNT
@@ -161,8 +160,7 @@ enum adc_channel {
 enum temp_sensor_id {
 	TEMP_SENSOR_1_CPU,
 	TEMP_SENSOR_2_CPU_VR,
-	TEMP_SENSOR_3_WIFI,
-	TEMP_SENSOR_4_DIMM,
+	TEMP_SENSOR_3_DIMM,
 	TEMP_SENSOR_COUNT
 };
 
