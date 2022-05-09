@@ -18,6 +18,7 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
             here / "i2c.dts",
             here / "interrupts.dts",
             here / "keyboard.dts",
+            here / "default_gpio_pinctrl.dts",
             # Project-specific DTS customization.
             *extra_dts_overlays,
         ],
