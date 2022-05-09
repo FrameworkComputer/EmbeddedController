@@ -1,0 +1,6 @@
+[MASTER]
+init-hook='import sys; sys.path.extend(["zephyr/zmake"])'
+
+[MESSAGES CONTROL]
+
+disable=fixme
