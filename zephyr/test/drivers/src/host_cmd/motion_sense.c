@@ -32,8 +32,7 @@ FAKE_VALUE_FUNC(int, mock_perform_calib, struct motion_sensor_t *, int);
 	 n * sizeof(struct ec_response_motion_sensor_data))
 
 #define RESPONSE_SENSOR_FIFO_SIZE(n) \
-	(sizeof(struct ec_response_motion_sense) + \
-	 n * sizeof(uint16_t))
+	(sizeof(struct ec_response_motion_sense) + n * sizeof(uint16_t))
 
 struct host_cmd_motion_sense_fixture {
 	const struct accelgyro_drv *sensor_0_drv;
@@ -662,8 +661,7 @@ ZTEST(host_cmd_motion_sense, test_fifo_flush)
 		(struct ec_response_motion_sense *)response_buffer;
 
 	motion_sensors[0].lost = 5;
-	zassert_ok(host_cmd_motion_sense_fifo_flush(/*sensor_num=*/0,
-						    response),
+	zassert_ok(host_cmd_motion_sense_fifo_flush(/*sensor_num=*/0, response),
 		   NULL);
 	zassert_equal(1, motion_sensors[0].flush_pending, NULL);
 	zassert_equal(5, response->fifo_info.lost[0], NULL);
