@@ -6,7 +6,7 @@
 #ifndef __ZEPHYR_GPIO_MAP_H
 #define __ZEPHYR_GPIO_MAP_H
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include <gpio_signal.h>
 
 #define GPIO_ENTERING_RW	GPIO_UNIMPLEMENTED

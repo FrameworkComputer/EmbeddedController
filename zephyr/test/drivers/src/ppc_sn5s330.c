@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
-#include <device.h>
-#include <devicetree.h>
-#include <drivers/emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/emul.h>
 #include <ztest.h>
 #include <fff.h>
 

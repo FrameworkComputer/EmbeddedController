@@ -5,14 +5,14 @@
 
 #define DT_DRV_COMPAT zephyr_syv682x_emul
 
-#include <device.h>
-#include <devicetree/gpio.h>
-#include <drivers/gpio/gpio_emul.h>
-#include <drivers/emul.h>
-#include <drivers/i2c.h>
-#include <drivers/i2c_emul.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(syv682x);
 #include <stdint.h>
 #include <string.h>

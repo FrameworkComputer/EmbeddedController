@@ -5,7 +5,7 @@
 
 #include <power_signals.h>
 #include <signal_gpio.h>
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 #include "system.h"
 
 #define MY_COMPAT	intel_ap_pwrseq_gpio

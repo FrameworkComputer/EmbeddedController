@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <logging/log.h>
-#include <kernel.h>
-#include <zephyr.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/kernel.h>
+#include <zephyr/zephyr.h>
 
 #include "console.h"
 #include "drivers/cros_rtc.h"

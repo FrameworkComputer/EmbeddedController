@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <sys/util.h>
+#include <zephyr/sys/util.h>
 
 #include "console.h"
 #include "power.h"

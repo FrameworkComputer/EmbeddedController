@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 
 #include "driver/tcpm/tcpci.h"
 

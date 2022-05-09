@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
-#include <shell/shell.h>
-#include <shell/shell_uart.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_uart.h>
 
 #include "common.h"
 #include "console.h"

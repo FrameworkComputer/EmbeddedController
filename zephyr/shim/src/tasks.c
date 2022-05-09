@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
-#include <init.h>
-#include <sys/atomic.h>
-#include <shell/shell.h>
+#include <zephyr/kernel.h>
+#include <zephyr/init.h>
+#include <zephyr/sys/atomic.h>
+#include <zephyr/shell/shell.h>
 
 #include "common.h"
 #include "host_command.h"

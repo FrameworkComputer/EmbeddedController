@@ -8,13 +8,13 @@
  * @brief Unit Tests for power signals API
  */
 
-#include <device.h>
+#include <zephyr/device.h>
 
-#include <drivers/espi.h>
-#include <drivers/espi_emul.h>
-#include <drivers/gpio/gpio_emul.h>
-#include <logging/log.h>
-#include <zephyr.h>
+#include <zephyr/drivers/espi.h>
+#include <zephyr/drivers/espi_emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
 
 #include "power_signals.h"

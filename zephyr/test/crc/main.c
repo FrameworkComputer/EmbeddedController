@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
+#include <zephyr/kernel.h>
 #include <ztest.h>
 
 #include "crc8.h"

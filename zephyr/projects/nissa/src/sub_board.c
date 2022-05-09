@@ -6,10 +6,10 @@
 /* Nissa sub-board hardware configuration */
 
 #include <ap_power/ap_power.h>
-#include <drivers/gpio.h>
-#include <init.h>
-#include <kernel.h>
-#include <sys/printk.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+#include <zephyr/sys/printk.h>
 
 #include "driver/tcpm/tcpci.h"
 #include "gpio/gpio_int.h"

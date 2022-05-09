@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
+#include <zephyr/kernel.h>
 #include <stdbool.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/shell/shell.h>

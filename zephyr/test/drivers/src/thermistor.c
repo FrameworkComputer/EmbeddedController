@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
-#include <drivers/adc.h>
-#include <drivers/adc/adc_emul.h>
-#include <drivers/gpio.h>
-#include <drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/adc.h>
+#include <zephyr/drivers/adc/adc_emul.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <temp_sensor.h>
 
 #include "common.h"

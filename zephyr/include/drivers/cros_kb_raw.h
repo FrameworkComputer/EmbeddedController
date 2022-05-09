@@ -22,9 +22,9 @@
 #ifndef ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
 #define ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
 
-#include <kernel.h>
-#include <device.h>
-#include <drivers/gpio.h>
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
 
 #include "gpio_signal.h"
 

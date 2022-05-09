@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
-#include <drivers/clock_control.h>
-#include <kernel.h>
-#include <logging/log.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/clock_control.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <soc.h>
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <soc/ite_it8xxx2/reg_def_cros.h>
-#include <sys/util.h>
+#include <zephyr/sys/util.h>
 
 #include "module_id.h"
 

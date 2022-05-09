@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <arch/cpu.h>
-#include <fatal.h>
-#include <logging/log.h>
-#include <logging/log_ctrl.h>
-#include <zephyr.h>
+#include <zephyr/arch/cpu.h>
+#include <zephyr/fatal.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/logging/log_ctrl.h>
+#include <zephyr/zephyr.h>
 
 #include "common.h"
 #include "panic.h"

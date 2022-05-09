@@ -6,7 +6,7 @@
 #ifndef DT_BINDINGS_GPIO_DEFINES_H_
 #define DT_BINDINGS_GPIO_DEFINES_H_
 
-#include <dt-bindings/gpio/gpio.h>
+#include <zephyr/dt-bindings/gpio/gpio.h>
 
 /*
  * The GPIO_INPUT and GPIO_OUTPUT defines are normally not available to

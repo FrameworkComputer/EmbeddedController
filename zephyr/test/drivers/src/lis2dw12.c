@@ -4,7 +4,7 @@
  */
 
 #include <ztest.h>
-#include <drivers/emul.h>
+#include <zephyr/drivers/emul.h>
 #include "driver/accel_lis2dw12.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_lis2dw12.h"

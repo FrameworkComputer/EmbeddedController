@@ -6,7 +6,7 @@
 #define DT_DRV_COMPAT cros_keyscan
 
 #include <assert.h>
-#include <kernel.h>
+#include <zephyr/kernel.h>
 #include <soc.h>
 
 #include "keyboard_scan.h"

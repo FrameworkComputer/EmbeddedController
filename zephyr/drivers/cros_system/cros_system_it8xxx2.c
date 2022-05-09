@@ -5,9 +5,9 @@
 
 #define DT_DRV_COMPAT ite_it8xxx2_gctrl
 
-#include <device.h>
-#include <drivers/gpio.h>
-#include <logging/log.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
 #include <soc.h>
 #include <soc/ite_it8xxx2/reg_def_cros.h>
 

@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree/io-channels.h>
-#include <drivers/adc.h>
-#include <logging/log.h>
+#include <zephyr/devicetree/io-channels.h>
+#include <zephyr/drivers/adc.h>
+#include <zephyr/logging/log.h>
 #include "adc.h"
 #include "zephyr_adc.h"
 

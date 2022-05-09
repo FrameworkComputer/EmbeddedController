@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
 
 #include <ap_power_override_functions.h>

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 #include <stdbool.h>
 
 #include <ap_power/ap_power.h>

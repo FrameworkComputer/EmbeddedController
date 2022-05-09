@@ -8,9 +8,9 @@
 #endif
 #define __CROS_EC_ZEPHYR_HOOKS_SHIM_H
 
-#include <init.h>
-#include <kernel.h>
-#include <zephyr.h>
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+#include <zephyr/zephyr.h>
 
 #include "common.h"
 #include "cros_version.h"

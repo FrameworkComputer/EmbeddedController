@@ -5,10 +5,10 @@
 
 #define DT_DRV_COMPAT cros_ec_displight
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include <drivers/cros_displight.h>
-#include <drivers/pwm.h>
-#include <logging/log.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/logging/log.h>
 
 #include "common.h"
 #include "util.h"

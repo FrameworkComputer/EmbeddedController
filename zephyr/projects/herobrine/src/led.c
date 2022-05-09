@@ -5,7 +5,7 @@
  * Power and battery LED control.
  */
 
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 
 #include "battery.h"
 #include "charge_manager.h"

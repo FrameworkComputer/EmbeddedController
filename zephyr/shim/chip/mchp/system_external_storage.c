@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
-#include <drivers/syscon.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/syscon.h>
 
 #include "clock_chip.h"
 #include "common.h"

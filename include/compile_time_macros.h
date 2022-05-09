@@ -14,7 +14,7 @@
 
 /* sys/util.h in zephyr provides equivalents to most of these macros */
 #ifdef CONFIG_ZEPHYR
-#include <sys/util.h>
+#include <zephyr/sys/util.h>
 #endif
 
 #ifdef __cplusplus

@@ -15,8 +15,8 @@
 #include "usb_common.h"
 
 #ifdef CONFIG_ZEPHYR
-#include <device.h>
-#include <drivers/gpio/gpio_nct38xx.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/gpio/gpio_nct38xx.h>
 #include "usbc/tcpc_nct38xx.h"
 #endif
 

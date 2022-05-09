@@ -39,7 +39,7 @@
 #ifndef __AP_PWRSEQ_POWER_SIGNALS_H__
 #define __AP_PWRSEQ_POWER_SIGNALS_H__
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq)
 

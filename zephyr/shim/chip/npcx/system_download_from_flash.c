@@ -2,9 +2,9 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <dt-bindings/clock/npcx_clock.h>
+#include <zephyr/dt-bindings/clock/npcx_clock.h>
 #include <stdnoreturn.h>
-#include <sys/__assert.h>
+#include <zephyr/sys/__assert.h>
 
 #include "common.h"
 #include "soc.h"

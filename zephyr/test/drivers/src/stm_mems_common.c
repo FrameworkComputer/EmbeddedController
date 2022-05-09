@@ -4,8 +4,8 @@
  */
 
 #include <ztest.h>
-#include <device.h>
-#include <devicetree.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 #include <errno.h>
 
 #include "common.h"

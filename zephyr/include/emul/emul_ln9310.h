@@ -12,7 +12,7 @@
 #ifndef ZEPHYR_INCLUDE_EMUL_EMUL_LN9310_H_
 #define ZEPHYR_INCLUDE_EMUL_EMUL_LN9310_H_
 
-#include <drivers/emul.h>
+#include <zephyr/drivers/emul.h>
 #include "driver/ln9310.h"
 #include <stdbool.h>
 

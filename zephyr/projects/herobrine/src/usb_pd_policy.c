@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 
 #include "charge_manager.h"
 #include "chipset.h"

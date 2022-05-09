@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 #include <ztest.h>
-#include <drivers/emul.h>
-#include <drivers/gpio.h>
-#include <drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <emul/emul_kb_raw.h>
 
 #include "test/drivers/test_state.h"

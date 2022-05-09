@@ -4,7 +4,7 @@
  */
 
 /* Corsola daughter board detection */
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 
 #include "console.h"
 #include "gpio/gpio_int.h"

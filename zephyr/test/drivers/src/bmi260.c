@@ -4,7 +4,7 @@
  */
 
 #include <fff.h>
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
 
 #include "common.h"

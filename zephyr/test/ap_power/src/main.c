@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
 #include "ec_app_main.h"
 #include "test_state.h"

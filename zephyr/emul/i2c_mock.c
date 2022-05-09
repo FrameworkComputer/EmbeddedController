@@ -5,10 +5,10 @@
 
 #define DT_DRV_COMPAT cros_i2c_mock
 
-#include <device.h>
+#include <zephyr/device.h>
 #include "emul/emul_common_i2c.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(i2c_mock, CONFIG_I2C_MOCK_LOG_LEVEL);
 
 struct i2c_emul *i2c_mock_to_i2c_emul(const struct emul *emul)

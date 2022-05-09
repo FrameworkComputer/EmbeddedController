@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
+#include <zephyr/kernel.h>
 #include <stdint.h>
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 
 #include "hwtimer.h"
 

@@ -6,7 +6,7 @@
  */
 
 #include <stdint.h>
-#include <sys/util.h>
+#include <zephyr/sys/util.h>
 #include "config_chip.h"
 #include "npcx_monitor.h"
 #include "registers.h"

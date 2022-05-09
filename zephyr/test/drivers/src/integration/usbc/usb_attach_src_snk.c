@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
-#include <drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 
 #include "ec_commands.h"
 #include "ec_tasks.h"

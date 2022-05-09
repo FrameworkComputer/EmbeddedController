@@ -4,7 +4,7 @@
  */
 
 #include <fff.h>
-#include <shell/shell.h>
+#include <zephyr/shell/shell.h>
 #include <ztest.h>
 
 #include "accelgyro.h"

@@ -8,7 +8,7 @@
 
 #include "gpio/gpio_int.h"
 #include "gpio_signal.h"
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 
 /**
  * Check the WP state. The function depends on the alias 'gpio_wp'. It is used

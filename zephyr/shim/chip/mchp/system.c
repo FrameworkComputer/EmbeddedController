@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <drivers/bbram.h>
-#include <logging/log.h>
+#include <zephyr/drivers/bbram.h>
+#include <zephyr/logging/log.h>
 
 #include "system.h"
 #include "system_chip.h"

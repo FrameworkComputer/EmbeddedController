@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <drivers/pwm.h>
-#include <logging/log.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/logging/log.h>
 
 #include "board_led.h"
 #include "common.h"

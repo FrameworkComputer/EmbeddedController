@@ -12,9 +12,9 @@
 #ifndef __EMUL_PI3USB9201_H
 #define __EMUL_PI3USB9201_H
 
-#include <drivers/emul.h>
-#include <drivers/i2c.h>
-#include <drivers/i2c_emul.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 
 #define PI3USB9201_REG_CTRL_1 0x0
 #define PI3USB9201_REG_CTRL_2 0x1

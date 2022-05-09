@@ -26,7 +26,7 @@
 #ifndef __AP_POWER_AP_POWER_INTERFACE_H__
 #define __AP_POWER_AP_POWER_INTERFACE_H__
 
-#include <sys/util.h>
+#include <zephyr/sys/util.h>
 
 /**
  * @brief System power states for Non Deep Sleep Well

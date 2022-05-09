@@ -4,7 +4,7 @@
  */
 
 #include <stdint.h>
-#include <sys/byteorder.h>
+#include <zephyr/sys/byteorder.h>
 #include <ztest.h>
 
 #include "battery_smart.h"

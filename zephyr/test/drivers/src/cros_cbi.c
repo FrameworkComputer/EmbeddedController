@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
+#include <zephyr/device.h>
 #include <ztest.h>
 
 #include "cros_cbi.h"

@@ -6,11 +6,11 @@
 #define DT_DRV_COMPAT microchip_xec_cros_flash
 
 #include <drivers/cros_flash.h>
-#include <drivers/flash.h>
-#include <drivers/gpio.h>
-#include <drivers/spi.h>
-#include <kernel.h>
-#include <logging/log.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/spi.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <soc.h>
 
 #include "flash.h"

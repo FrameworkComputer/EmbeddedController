@@ -4,10 +4,10 @@
  */
 
 #include <ztest.h>
-#include <drivers/gpio.h>
-#include <drivers/gpio/gpio_emul.h>
-#include <shell/shell.h>
-#include <shell/shell_uart.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_uart.h>
 
 #include "chipset.h"
 #include "common.h"

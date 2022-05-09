@@ -7,11 +7,11 @@
 
 #include <assert.h>
 #include <drivers/cros_kb_raw.h>
-#include <drivers/clock_control.h>
-#include <drivers/gpio.h>
-#include <drivers/interrupt_controller/wuc_ite_it8xxx2.h>
-#include <dt-bindings/interrupt-controller/it8xxx2-wuc.h>
-#include <kernel.h>
+#include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/interrupt_controller/wuc_ite_it8xxx2.h>
+#include <zephyr/dt-bindings/interrupt-controller/it8xxx2-wuc.h>
+#include <zephyr/kernel.h>
 #include <soc.h>
 #include <soc_dt.h>
 #include <soc/ite_it8xxx2/reg_def_cros.h>
@@ -20,7 +20,7 @@
 #include "keyboard_raw.h"
 #include "task.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
 #define KEYBOARD_KSI_PIN_COUNT IT8XXX2_DT_INST_WUCCTRL_LEN(0)

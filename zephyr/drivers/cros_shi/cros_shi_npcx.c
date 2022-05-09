@@ -5,14 +5,14 @@
 
 #define DT_DRV_COMPAT nuvoton_npcx_cros_shi
 
-#include <arch/arm/aarch32/cortex_m/cmsis.h>
+#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
 #include <assert.h>
-#include <dt-bindings/clock/npcx_clock.h>
-#include <drivers/clock_control.h>
+#include <zephyr/dt-bindings/clock/npcx_clock.h>
+#include <zephyr/drivers/clock_control.h>
 #include <drivers/cros_shi.h>
-#include <drivers/gpio.h>
-#include <logging/log.h>
-#include <kernel.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/kernel.h>
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
 

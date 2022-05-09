@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
-#include <sys/util.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/sys/util.h>
 #include "usb_pd_tcpm.h"
 #include "usb_pd.h"
 #include "usbc/tcpc_fusb302.h"

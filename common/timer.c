@@ -17,7 +17,7 @@
 #include "watchdog.h"
 
 #ifdef CONFIG_ZEPHYR
-#include <kernel.h> /* For k_usleep() */
+#include <zephyr/kernel.h> /* For k_usleep() */
 #else
 extern __error("k_usleep() should only be called from Zephyr code")
 int32_t k_usleep(int32_t);

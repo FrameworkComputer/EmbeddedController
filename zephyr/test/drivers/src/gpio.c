@@ -8,11 +8,11 @@
  * @brief Unit Tests for GPIO.
  */
 
-#include <device.h>
+#include <zephyr/device.h>
 
-#include <drivers/gpio/gpio_emul.h>
-#include <logging/log.h>
-#include <zephyr.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
 
 #include "common.h"

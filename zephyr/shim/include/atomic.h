@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_ATOMIC_H
 #define __CROS_EC_ATOMIC_H
 
-#include <sys/atomic.h>
+#include <zephyr/sys/atomic.h>
 
 static inline atomic_val_t atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 {

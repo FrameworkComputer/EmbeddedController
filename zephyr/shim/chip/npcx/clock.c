@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
-#include <drivers/clock_control.h>
-#include <dt-bindings/clock/npcx_clock.h>
-#include <kernel.h>
-#include <logging/log.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/clock_control.h>
+#include <zephyr/dt-bindings/clock/npcx_clock.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <soc.h>
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 
 #include "clock_chip.h"
 #include "module_id.h"

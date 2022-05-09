@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
-#include <drivers/gpio.h>
-#include <drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 
 #include "emul/emul_pi3usb9201.h"
 
@@ -17,7 +17,7 @@
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(test_drivers_bc12, LOG_LEVEL_DBG);
 
 #define EMUL_LABEL DT_NODELABEL(pi3usb9201_emul)

@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_ASSERT_H
 #define __CROS_EC_ASSERT_H
 
-#include <sys/__assert.h>
+#include <zephyr/sys/__assert.h>
 
 #undef ASSERT
 #undef assert

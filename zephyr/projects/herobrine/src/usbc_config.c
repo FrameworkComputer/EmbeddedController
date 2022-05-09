@@ -5,7 +5,7 @@
 
 /* Herobrine board-specific USB-C configuration */
 
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 
 #include "charger.h"
 #include "charger/isl923x_public.h"

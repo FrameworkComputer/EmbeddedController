@@ -4,13 +4,13 @@
  */
 
 #include <atomic.h>
-#include <device.h>
-#include <drivers/espi.h>
-#include <drivers/gpio.h>
-#include <logging/log.h>
-#include <kernel.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/espi.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/kernel.h>
 #include <stdint.h>
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>

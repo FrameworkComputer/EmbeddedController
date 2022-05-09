@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 
 #include "battery.h"
 #include "charger.h"

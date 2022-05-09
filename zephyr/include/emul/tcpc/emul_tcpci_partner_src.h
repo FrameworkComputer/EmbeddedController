@@ -12,7 +12,7 @@
 #ifndef __EMUL_TCPCI_PARTNER_SRC_H
 #define __EMUL_TCPCI_PARTNER_SRC_H
 
-#include <drivers/emul.h>
+#include <zephyr/drivers/emul.h>
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "usb_pd.h"

@@ -4,7 +4,7 @@
  */
 
 #include "charger.h"
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "charger/chg_bq25710.h"
 #include "charger/chg_isl923x.h"
 #include "charger/chg_isl9241.h"

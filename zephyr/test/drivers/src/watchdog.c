@@ -8,11 +8,11 @@
  * @brief Unit Tests for watchdog.
  */
 
-#include <device.h>
-#include <drivers/watchdog.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/watchdog.h>
 
-#include <logging/log.h>
-#include <zephyr.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
 
 #include "common.h"

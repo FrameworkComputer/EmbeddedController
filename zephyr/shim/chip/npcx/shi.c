@@ -5,11 +5,11 @@
 
 /* Functions needed by Serial Host Interface module for Chrome EC */
 
-#include <device.h>
-#include <dt-bindings/clock/npcx_clock.h>
-#include <logging/log.h>
+#include <zephyr/device.h>
+#include <zephyr/dt-bindings/clock/npcx_clock.h>
+#include <zephyr/logging/log.h>
 #include <soc.h>
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 
 #include <ap_power/ap_power.h>
 #include "chipset.h"

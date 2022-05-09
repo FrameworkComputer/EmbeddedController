@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <init.h>
+#include <zephyr/init.h>
 
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 

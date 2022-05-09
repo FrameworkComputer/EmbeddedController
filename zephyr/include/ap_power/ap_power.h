@@ -15,7 +15,7 @@
 #ifndef __AP_POWER_AP_POWER_H__
 #define __AP_POWER_AP_POWER_H__
 
-#include <kernel.h>
+#include <zephyr/kernel.h>
 
 /**
  * @brief AP power events for callback notification.

@@ -4,11 +4,11 @@
  */
 
 #include <ztest.h>
-#include <drivers/emul.h>
-#include <drivers/gpio.h>
-#include <drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <lid_switch.h>
-#include <shell/shell_dummy.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <console.h>
 
 #include "test/drivers/test_state.h"

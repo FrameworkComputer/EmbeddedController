@@ -5,7 +5,7 @@
 #ifndef __CROS_EC_HOOK_TYPES_H_
 #define __CROS_EC_HOOK_TYPES_H_
 
-#include <sys/util_macro.h>
+#include <zephyr/sys/util_macro.h>
 
 /*
  * Some config macros are defined but without any value for some boards, so

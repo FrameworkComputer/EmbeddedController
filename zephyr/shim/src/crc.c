@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <sys/crc.h>
+#include <zephyr/sys/crc.h>
 
 #include "crc8.h"
 

@@ -6,8 +6,8 @@
 #ifndef ZEPHYR_CHROME_USBC_USB_MUXES_H
 #define ZEPHYR_CHROME_USBC_USB_MUXES_H
 
-#include <devicetree.h>
-#include <sys/util_macro.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/sys/util_macro.h>
 #include "usb_mux.h"
 #include "usbc/it5205_usb_mux.h"
 #include "usbc/tcpci_usb_mux.h"

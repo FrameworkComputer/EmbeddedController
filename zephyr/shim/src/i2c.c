@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <sys/util.h>
-#include <drivers/i2c.h>
+#include <zephyr/sys/util.h>
+#include <zephyr/drivers/i2c.h>
 
 #include "console.h"
 #include "i2c.h"

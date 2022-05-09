@@ -8,8 +8,8 @@
 #endif
 #define __CROS_EC_ZEPHYR_GPIO_SIGNAL_H
 
-#include <devicetree.h>
-#include <toolchain.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/toolchain.h>
 
 /** @brief Returns the enum-name property as a token
  *

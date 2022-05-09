@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <sys/atomic.h>
-#include <logging/log.h>
-#include <drivers/gpio.h>
+#include <zephyr/sys/atomic.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/drivers/gpio.h>
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>

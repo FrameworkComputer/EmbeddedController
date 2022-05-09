@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
-#include <toolchain.h>
-#include <logging/log.h>
-#include <sys/atomic.h>
+#include <zephyr/kernel.h>
+#include <zephyr/toolchain.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/atomic.h>
 
 #include <power_signals.h>
 

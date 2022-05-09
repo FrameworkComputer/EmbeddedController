@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_LED_H__
 #define __CROS_EC_LED_H__
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 
 #define COMPAT_GPIO_LED cros_ec_gpio_led_pins
 #define COMPAT_PWM_LED  cros_ec_pwm_led_pins

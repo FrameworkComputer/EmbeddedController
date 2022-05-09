@@ -6,7 +6,7 @@
 #ifndef __ZEPHYR_CHROME_I2C_MAP_H
 #define __ZEPHYR_CHROME_I2C_MAP_H
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 
 #include "config.h"
 

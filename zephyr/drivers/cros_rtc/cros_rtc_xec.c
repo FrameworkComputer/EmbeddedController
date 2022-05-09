@@ -7,15 +7,15 @@
 
 #include <assert.h>
 #include <drivers/cros_rtc.h>
-#include <drivers/gpio.h>
-#include <kernel.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
 #include <soc.h>
 #include <soc/microchip_xec/reg_def_cros.h>
 
 #include "ec_tasks.h"
 #include "task.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(cros_rtc, LOG_LEVEL_ERR);
 
 /* Driver config */

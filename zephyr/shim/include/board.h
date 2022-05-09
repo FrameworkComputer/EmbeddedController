@@ -6,7 +6,7 @@
 #ifndef __BOARD_H
 #define __BOARD_H
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "common.h"
 
 /* Included shimed version of gpio signal. */

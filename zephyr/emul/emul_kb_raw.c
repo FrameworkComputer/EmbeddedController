@@ -5,11 +5,11 @@
 
 #define DT_DRV_COMPAT cros_ec_kb_raw_emul
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(emul_kb_raw);
 
-#include <device.h>
-#include <drivers/emul.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/emul.h>
 #include <drivers/cros_kb_raw.h>
 #include <keyboard_raw.h>
 

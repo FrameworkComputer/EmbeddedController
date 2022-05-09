@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(tcpci_partner, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 #include <stdlib.h>
-#include <sys/byteorder.h>
-#include <zephyr.h>
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
 
 #include "common.h"

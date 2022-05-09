@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
-#include <drivers/gpio.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 #include "common.h"
 #include "ln9310.h"
 

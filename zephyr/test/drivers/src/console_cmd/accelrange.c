@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <shell/shell.h>
-#include <devicetree.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/devicetree.h>
 #include <ztest.h>
 
 #include "console.h"

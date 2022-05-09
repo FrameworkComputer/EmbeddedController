@@ -6,8 +6,8 @@
 #ifndef ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 #define ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_
 
-#include <drivers/emul.h>
-#include <drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <string.h>
 
 #include "charger.h"

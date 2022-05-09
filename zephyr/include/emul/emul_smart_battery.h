@@ -12,9 +12,9 @@
 #ifndef __EMUL_SMART_BATTERY_H
 #define __EMUL_SMART_BATTERY_H
 
-#include <drivers/emul.h>
-#include <drivers/i2c.h>
-#include <drivers/i2c_emul.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 #include <stdint.h>
 
 /**

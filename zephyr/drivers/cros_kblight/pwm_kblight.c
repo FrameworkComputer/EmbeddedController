@@ -5,9 +5,9 @@
 
 #define DT_DRV_COMPAT cros_ec_kblight_pwm
 
-#include <devicetree.h>
-#include <drivers/pwm.h>
-#include <logging/log.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/logging/log.h>
 
 #include "common.h"
 #include "keyboard_backlight.h"

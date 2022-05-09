@@ -6,9 +6,9 @@
 #ifndef ZEPHYR_SHIM_INCLUDE_GPIO_GPIO_INT_H_
 #define ZEPHYR_SHIM_INCLUDE_GPIO_GPIO_INT_H_
 
-#include <device.h>
-#include <devicetree.h>
-#include <drivers/gpio.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
 
 /*
  * Zephyr based interrupt handling.

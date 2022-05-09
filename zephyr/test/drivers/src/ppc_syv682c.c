@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
-#include <devicetree/gpio.h>
-#include <drivers/gpio/gpio_emul.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <fff.h>
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
 #include <ztest_assert.h>
 

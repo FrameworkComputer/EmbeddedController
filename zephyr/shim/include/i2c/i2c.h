@@ -6,8 +6,8 @@
 #ifndef ZEPHYR_CHROME_I2C_I2C_H
 #define ZEPHYR_CHROME_I2C_I2C_H
 
-#include <device.h>
-#include <devicetree.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 
 #ifdef CONFIG_PLATFORM_EC_I2C
 #if DT_NODE_EXISTS(DT_PATH(named_i2c_ports))

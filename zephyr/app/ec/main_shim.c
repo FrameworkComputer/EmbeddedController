@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
+#include <zephyr/kernel.h>
 #include "ec_app_main.h"
 #include "host_command.h"
 

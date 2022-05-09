@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "driver/tcpm/it8xxx2_pd_public.h"
 
 #define IT8XXX2_TCPC_COMPAT ite_it8xxx2_tcpc

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 #include "common.h"
 #include "accelgyro.h"
 #include "cros_cbi.h"

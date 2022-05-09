@@ -11,7 +11,7 @@
 #ifdef CONFIG_ZEPHYR
 #ifdef CONFIG_PLATFORM_EC_FAN
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #define NODE_ID_AND_COMMA(node_id) node_id,
 enum fan_channel {
 #if DT_NODE_EXISTS(DT_INST(0, cros_ec_fans))

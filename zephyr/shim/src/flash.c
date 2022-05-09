@@ -4,9 +4,9 @@
  */
 
 #include <flash.h>
-#include <kernel.h>
-#include <logging/log.h>
-#include <drivers/flash.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/drivers/flash.h>
 
 #include "console.h"
 #include "drivers/cros_flash.h"

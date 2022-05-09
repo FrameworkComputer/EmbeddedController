@@ -12,9 +12,9 @@
 #ifndef __EMUL_PS8XXX_H
 #define __EMUL_PS8XXX_H
 
-#include <drivers/emul.h>
-#include <drivers/i2c.h>
-#include <drivers/i2c_emul.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 
 /**
  * @brief PS8xxx emulator backend API

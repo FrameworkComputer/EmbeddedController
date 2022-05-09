@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
-#include <devicetree.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 
 #include "config.h"
 #include "usbc/tcpc_nct38xx.h"

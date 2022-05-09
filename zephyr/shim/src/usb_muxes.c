@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
-#include <sys/util_macro.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/sys/util_macro.h>
 #include "usb_mux.h"
 #include "usbc/usb_muxes.h"
 

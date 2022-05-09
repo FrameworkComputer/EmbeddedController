@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
-#include <zephyr.h>
+#include <zephyr/kernel.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
-#include <drivers/gpio.h>
-#include <drivers/gpio/gpio_emul.h>
-#include <shell/shell.h>
-#include <shell/shell_uart.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_uart.h>
 
 #include "common.h"
 #include "ec_commands.h"

@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
-#include <drivers/watchdog.h>
-#include <logging/log.h>
-#include <zephyr.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/watchdog.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/zephyr.h>
 
 #include "config.h"
 #include "hooks.h"

@@ -5,12 +5,12 @@
 
 #define DT_DRV_COMPAT cros_isl923x_emul
 
-#include <device.h>
-#include <drivers/i2c.h>
-#include <drivers/i2c_emul.h>
-#include <drivers/emul.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/drivers/emul.h>
 #include <errno.h>
-#include <sys/__assert.h>
+#include <zephyr/sys/__assert.h>
 #include <ztest.h>
 
 #include "driver/charger/isl923x.h"
@@ -20,7 +20,7 @@
 #include "emul/emul_smart_battery.h"
 #include "i2c.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 
 #define ISL923X_DATA_FROM_I2C_EMUL(_emul)                                    \

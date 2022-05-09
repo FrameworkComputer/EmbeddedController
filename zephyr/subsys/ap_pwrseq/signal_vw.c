@@ -4,7 +4,7 @@
  */
 
 #include <atomic.h>
-#include <drivers/espi.h>
+#include <zephyr/drivers/espi.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
 #include "signal_vw.h"

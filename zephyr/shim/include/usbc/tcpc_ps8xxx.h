@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "driver/tcpm/ps8xxx_public.h"
 
 #define PS8XXX_COMPAT parade_ps8xxx

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "intel_rvp_board_id.h"
 
 #define DT_DRV_COMPAT intel_rvp_board_id

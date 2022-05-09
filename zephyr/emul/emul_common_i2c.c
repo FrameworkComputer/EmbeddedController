@@ -4,13 +4,13 @@
  */
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(emul_common_i2c);
 
-#include <device.h>
-#include <drivers/emul.h>
-#include <drivers/i2c.h>
-#include <drivers/i2c_emul.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 
 #include "emul/emul_common_i2c.h"
 

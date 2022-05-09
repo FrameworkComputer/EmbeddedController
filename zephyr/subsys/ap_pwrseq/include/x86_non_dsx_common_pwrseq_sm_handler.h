@@ -6,8 +6,8 @@
 #ifndef __X86_NON_DSX_COMMON_PWRSEQ_SM_HANDLER_H__
 #define __X86_NON_DSX_COMMON_PWRSEQ_SM_HANDLER_H__
 
-#include <init.h>
-#include <kernel.h>
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
 #include <zephyr/types.h>
 
 #include <ap_power/ap_power.h>

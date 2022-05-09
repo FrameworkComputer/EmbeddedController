@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <init.h>
-#include <drivers/pinmux.h>
-#include <dt-bindings/pinctrl/it8xxx2-pinctrl.h>
+#include <zephyr/init.h>
+#include <zephyr/drivers/pinmux.h>
+#include <zephyr/dt-bindings/pinctrl/it8xxx2-pinctrl.h>
 #include <soc.h>
 
 #define SCL 0

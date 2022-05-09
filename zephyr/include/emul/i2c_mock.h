@@ -6,8 +6,8 @@
 #ifndef ZEPHYR_INCLUDE_EMUL_I2C_MOCK_H_
 #define ZEPHYR_INCLUDE_EMUL_I2C_MOCK_H_
 
-#include <drivers/emul.h>
-#include <drivers/i2c_emul.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c_emul.h>
 
 /**
  * @brief reset the I2C mock.

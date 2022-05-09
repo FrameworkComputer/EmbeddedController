@@ -5,7 +5,7 @@
 
 /* Corsola baseboard-specific USB-C configuration */
 
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 #include <ap_power/ap_power.h>
 
 #include "adc.h"

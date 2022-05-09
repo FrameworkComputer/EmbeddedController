@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "usbc_ppc.h"
 #include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_sn5s330.h"

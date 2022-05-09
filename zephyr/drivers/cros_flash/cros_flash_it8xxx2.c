@@ -6,9 +6,9 @@
 #define DT_DRV_COMPAT ite_it8xxx2_cros_flash
 
 #include <drivers/cros_flash.h>
-#include <drivers/flash.h>
-#include <kernel.h>
-#include <logging/log.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <soc.h>
 
 #include "flash.h"

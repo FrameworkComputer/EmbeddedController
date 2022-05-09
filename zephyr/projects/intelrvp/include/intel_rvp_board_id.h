@@ -6,7 +6,7 @@
 #ifndef __INTEL_RVP_BOARD_ID_H
 #define __INTEL_RVP_BOARD_ID_H
 
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 
 extern const struct gpio_dt_spec bom_id_config[];
 

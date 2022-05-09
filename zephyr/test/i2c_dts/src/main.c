@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
-#include <devicetree.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 #include <ztest.h>
 
 static void test_i2c_get_device(void)

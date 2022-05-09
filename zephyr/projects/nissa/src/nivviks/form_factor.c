@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
-#include <logging/log.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/logging/log.h>
 
 #include "accelgyro.h"
 #include "cros_cbi.h"

@@ -5,15 +5,15 @@
 
 #define DT_DRV_COMPAT ite_it8xxx2_cros_shi
 
-#include <device.h>
+#include <zephyr/device.h>
 #include <errno.h>
-#include <init.h>
-#include <kernel.h>
-#include <logging/log.h>
+#include <zephyr/init.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 #include <soc.h>
 #include <soc_dt.h>
-#include <drivers/pinmux.h>
-#include <dt-bindings/pinctrl/it8xxx2-pinctrl.h>
+#include <zephyr/drivers/pinmux.h>
+#include <zephyr/dt-bindings/pinctrl/it8xxx2-pinctrl.h>
 
 #include "chipset.h"
 #include "console.h"

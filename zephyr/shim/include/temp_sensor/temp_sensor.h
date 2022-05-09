@@ -6,7 +6,7 @@
 #ifndef ZEPHYR_SHIM_INCLUDE_TEMP_SENSOR_TEMP_SENSOR_H_
 #define ZEPHYR_SHIM_INCLUDE_TEMP_SENSOR_TEMP_SENSOR_H_
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "include/temp_sensor.h"
 
 #ifdef CONFIG_PLATFORM_EC_TEMP_SENSOR

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "driver/charger/isl923x_public.h"
 
 #define ISL923X_CHG_COMPAT intersil_isl923x

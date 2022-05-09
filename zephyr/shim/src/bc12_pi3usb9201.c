@@ -5,7 +5,7 @@
 
 #define DT_DRV_COMPAT pericom_pi3usb9201
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "bc12/pi3usb9201_public.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"

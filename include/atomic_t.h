@@ -16,7 +16,7 @@ typedef long atomic_t;
 #endif
 typedef atomic_t atomic_val_t;
 #else
-#include <sys/atomic.h>
+#include <zephyr/sys/atomic.h>
 #endif
 
 #endif  /* __CROS_EC_ATOMIC_T_H */

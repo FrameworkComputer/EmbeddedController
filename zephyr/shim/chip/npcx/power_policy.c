@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr.h>
-#include <pm/pm.h>
-#include <pm/policy.h>
+#include <zephyr/zephyr.h>
+#include <zephyr/pm/pm.h>
+#include <zephyr/pm/policy.h>
 #include <soc.h>
 
 #include "console.h"

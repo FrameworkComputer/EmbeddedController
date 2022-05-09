@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <shell/shell.h>
+#include <zephyr/shell/shell.h>
 #include <ztest.h>
 
 #include "config.h"

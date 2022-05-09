@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
-#include <shell/shell_uart.h>
-#include <drivers/gpio/gpio_emul.h>
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 
 #include "battery.h"
 #include "battery_smart.h"

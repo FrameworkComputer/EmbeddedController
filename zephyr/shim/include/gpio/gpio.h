@@ -6,8 +6,8 @@
 #ifndef ZEPHYR_SHIM_INCLUDE_GPIO_GPIO_H_
 #define ZEPHYR_SHIM_INCLUDE_GPIO_GPIO_H_
 
-#include <device.h>
-#include <devicetree.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 
 /*
  * Validate interrupt flags are valid for the Zephyr GPIO driver.

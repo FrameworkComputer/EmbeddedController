@@ -16,8 +16,8 @@
 #ifndef ZEPHYR_INCLUDE_DRIVERS_CROS_FLASH_H_
 #define ZEPHYR_INCLUDE_DRIVERS_CROS_FLASH_H_
 
-#include <kernel.h>
-#include <device.h>
+#include <zephyr/kernel.h>
+#include <zephyr/device.h>
 
 /**
  * @brief CROS Flash Driver APIs

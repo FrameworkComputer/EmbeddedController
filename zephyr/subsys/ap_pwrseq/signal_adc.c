@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <sys/atomic.h>
-#include <drivers/adc.h>
-#include <logging/log.h>
+#include <zephyr/sys/atomic.h>
+#include <zephyr/drivers/adc.h>
+#include <zephyr/logging/log.h>
 
 #include <power_signals.h>
 #include <signal_adc.h>

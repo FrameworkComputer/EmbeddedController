@@ -24,7 +24,7 @@
 #include "virtual_battery.h"
 
 #ifdef CONFIG_ZEPHYR
-#include <drivers/i2c.h>
+#include <zephyr/drivers/i2c.h>
 #include "i2c/i2c.h"
 #endif /* CONFIG_ZEPHYR */
 

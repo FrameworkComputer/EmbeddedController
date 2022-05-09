@@ -6,7 +6,7 @@
 #ifndef __ZEPHYR_I2C_MAP_H
 #define __ZEPHYR_I2C_MAP_H
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 
 #include "i2c/i2c.h"
 

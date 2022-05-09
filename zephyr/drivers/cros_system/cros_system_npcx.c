@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <arch/arm/aarch32/cortex_m/cmsis.h>
-#include <drivers/gpio.h>
-#include <drivers/watchdog.h>
-#include <logging/log.h>
+#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/watchdog.h>
+#include <zephyr/logging/log.h>
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
-#include <sys/util.h>
+#include <zephyr/sys/util.h>
 
 #include "drivers/cros_system.h"
 #include "gpio/gpio_int.h"

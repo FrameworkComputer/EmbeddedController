@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 #include "usbc/bc12_pi3usb9201.h"
 #include "usbc/bc12_rt1739.h"
 #include "usbc/bc12_rt9490.h"

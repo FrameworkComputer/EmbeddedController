@@ -6,8 +6,8 @@
 #ifndef ZEPHYR_CHROME_USBC_PPC_H
 #define ZEPHYR_CHROME_USBC_PPC_H
 
-#include <device.h>
-#include <devicetree.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
 #include "usbc/ppc_rt1739.h"
 #include "usbc/ppc_sn5s330.h"
 #include "usbc/ppc_syv682x.h"

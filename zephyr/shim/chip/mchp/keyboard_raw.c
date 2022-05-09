@@ -5,10 +5,10 @@
 
 /* Functions needed by keyboard scanner module for Chrome EC */
 
-#include <device.h>
-#include <logging/log.h>
+#include <zephyr/device.h>
+#include <zephyr/logging/log.h>
 #include <soc.h>
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 
 #include "drivers/cros_kb_raw.h"
 #include "keyboard_raw.h"

@@ -20,7 +20,7 @@
 #ifndef __AP_PWRSEQ_AP_POWER_BOARD_FUNCTIONS_H__
 #define __AP_PWRSEQ_AP_POWER_BOARD_FUNCTIONS_H__
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 
 /**
  * @brief Force AP shutdown

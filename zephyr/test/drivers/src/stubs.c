@@ -27,7 +27,7 @@
 #include "usbc_ppc.h"
 #include "charge_state_v2.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(stubs);
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)

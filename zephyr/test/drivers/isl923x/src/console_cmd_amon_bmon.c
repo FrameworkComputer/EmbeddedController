@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <drivers/adc.h>
-#include <drivers/adc/adc_emul.h>
-#include <shell/shell.h>
+#include <zephyr/drivers/adc.h>
+#include <zephyr/drivers/adc/adc_emul.h>
+#include <zephyr/shell/shell.h>
 #include <ztest.h>
 
 #include "adc.h"

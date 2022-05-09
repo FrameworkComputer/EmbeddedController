@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
+#include <zephyr/kernel.h>
 #include <stdbool.h>
 #include <ztest.h>
 

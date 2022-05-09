@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <kernel.h>
-#include <zephyr.h>
+#include <zephyr/kernel.h>
+#include <zephyr/zephyr.h>
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>

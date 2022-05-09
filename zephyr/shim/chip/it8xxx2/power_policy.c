@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <pm/pm.h>
-#include <pm/policy.h>
+#include <zephyr/pm/pm.h>
+#include <zephyr/pm/policy.h>
 #include <soc.h>
-#include <zephyr.h>
+#include <zephyr/zephyr.h>
 
 #include "system.h"
 

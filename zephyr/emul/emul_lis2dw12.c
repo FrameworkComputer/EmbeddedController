@@ -5,19 +5,19 @@
 
 #define DT_DRV_COMPAT cros_lis2dw12_emul
 
-#include <device.h>
-#include <drivers/i2c.h>
-#include <drivers/i2c_emul.h>
-#include <drivers/emul.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/drivers/emul.h>
 #include <errno.h>
-#include <sys/__assert.h>
+#include <zephyr/sys/__assert.h>
 
 #include "driver/accel_lis2dw12.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_lis2dw12.h"
 #include "i2c.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(lis2dw12_emul, CONFIG_LIS2DW12_EMUL_LOG_LEVEL);
 
 #define LIS2DW12_DATA_FROM_I2C_EMUL(_emul)                                   \

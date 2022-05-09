@@ -16,7 +16,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #ifdef CONFIG_ZEPHYR
-#include <sys/util.h>
+#include <zephyr/sys/util.h>
 #endif
 
 #ifdef __cplusplus

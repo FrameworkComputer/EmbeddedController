@@ -4,10 +4,10 @@
  */
 
 #include <ztest.h>
-#include <drivers/emul.h>
-#include <kernel.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/kernel.h>
 #include <ztest_assert.h>
-#include <drivers/i2c_emul.h>
+#include <zephyr/drivers/i2c_emul.h>
 
 #include "driver/ln9310.h"
 #include "emul/emul_ln9310.h"

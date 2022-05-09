@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 #include "usbc/ppc.h"
 #include "hooks.h"
 #include "cros_board_info.h"

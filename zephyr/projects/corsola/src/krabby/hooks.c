@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <init.h>
-#include <drivers/gpio.h>
+#include <zephyr/init.h>
+#include <zephyr/drivers/gpio.h>
 
 #include <ap_power/ap_power.h>
 #include "charger.h"

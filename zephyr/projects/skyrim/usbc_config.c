@@ -5,7 +5,7 @@
 
 /* Guybrush family-specific USB-C configuration */
 
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 
 #include "cros_board_info.h"
 #include "cros_cbi.h"

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <devicetree.h>
+#include <zephyr/devicetree.h>
 
 #ifdef __REQUIRE_ZEPHYR_GPIOS__
 #undef __REQUIRE_ZEPHYR_GPIOS__

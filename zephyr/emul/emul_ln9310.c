@@ -5,21 +5,21 @@
 
 #define DT_DRV_COMPAT cros_ln9310_emul
 
-#include <device.h>
-#include <devicetree/gpio.h>
-#include <drivers/gpio/gpio_emul.h>
-#include <drivers/i2c.h>
-#include <drivers/i2c_emul.h>
-#include <drivers/emul.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/drivers/emul.h>
 #include <errno.h>
-#include <sys/__assert.h>
+#include <zephyr/sys/__assert.h>
 
 #include "driver/ln9310.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_ln9310.h"
 #include "i2c.h"
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ln9310_emul, CONFIG_LN9310_EMUL_LOG_LEVEL);
 
 #define LN9310_DATA_FROM_I2C_EMUL(_emul)                                     \

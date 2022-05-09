@@ -8,10 +8,10 @@
  * @brief Unit Tests for AP power events
  */
 
-#include <device.h>
+#include <zephyr/device.h>
 
-#include <logging/log.h>
-#include <zephyr.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/zephyr.h>
 #include <ztest.h>
 
 #include "ap_power/ap_power.h"

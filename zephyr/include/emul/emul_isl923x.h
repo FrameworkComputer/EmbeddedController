@@ -6,9 +6,9 @@
 #ifndef ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_
 #define ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_
 
-#include <device.h>
-#include <drivers/i2c_emul.h>
-#include <drivers/emul.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/drivers/emul.h>
 
 /**
  * @brief Get the emulator's parent bus device

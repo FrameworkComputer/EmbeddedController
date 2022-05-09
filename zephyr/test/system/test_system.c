@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
-#include <drivers/bbram.h>
-#include <logging/log.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/bbram.h>
+#include <zephyr/logging/log.h>
 #include <ztest.h>
 
 #include "system.h"

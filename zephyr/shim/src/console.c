@@ -3,19 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
-#include <drivers/uart.h>
-#include <shell/shell.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/uart.h>
+#include <zephyr/shell/shell.h>
 #ifdef CONFIG_SHELL_BACKEND_DUMMY /* nocheck */
-#include <shell/shell_dummy.h> /* nocheck */
+#include <zephyr/shell/shell_dummy.h> /* nocheck */
 #endif
-#include <shell/shell_uart.h>
+#include <zephyr/shell/shell_uart.h>
 #include <stdbool.h>
 #include <string.h>
-#include <sys/printk.h>
-#include <sys/ring_buffer.h>
-#include <zephyr.h>
-#include <logging/log.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/ring_buffer.h>
+#include <zephyr/zephyr.h>
+#include <zephyr/logging/log.h>
 
 #include "console.h"
 #include "printf.h"

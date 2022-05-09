@@ -6,9 +6,9 @@
 #include "config.h"
 #include "mpu.h"
 #include "logging/log.h"
-#include <arch/arm/aarch32/cortex_m/cmsis.h>
-#include <arch/cpu.h>
-#include <init.h>
+#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+#include <zephyr/arch/cpu.h>
+#include <zephyr/init.h>
 
 LOG_MODULE_REGISTER(shim_mpu, LOG_LEVEL_ERR);
 

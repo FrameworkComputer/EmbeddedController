@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <kernel.h>
+#include <zephyr/kernel.h>
 
 #include <ap_power/ap_power_interface.h>
 #include <power_host_sleep.h>

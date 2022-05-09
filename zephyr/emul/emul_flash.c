@@ -5,14 +5,14 @@
 
 #define DT_DRV_COMPAT cros_ec_flash_emul
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(emul_flash);
 
-#include <device.h>
-#include <drivers/emul.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/emul.h>
 #include <ec_commands.h>
 #include <drivers/cros_flash.h>
-#include <sys/__assert.h>
+#include <zephyr/sys/__assert.h>
 
 struct flash_emul_data {};
 

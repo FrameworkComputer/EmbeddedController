@@ -6,8 +6,8 @@
 #ifndef ZEPHYR_INCLUDE_EMUL_EMUL_SN5S330_H_
 #define ZEPHYR_INCLUDE_EMUL_EMUL_SN5S330_H_
 
-#include <drivers/emul.h>
-#include <drivers/i2c_emul.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c_emul.h>
 
 /**
  * @brief The i2c emulator pointer from the top level emul.

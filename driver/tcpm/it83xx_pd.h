@@ -383,7 +383,7 @@
 
 #if defined(CONFIG_USB_PD_TCPM_ITE_ON_CHIP) && defined(CONFIG_ZEPHYR)
 /* Use the Zephyr names here. When upstreaming we can update this */
-#include <dt-bindings/interrupt-controller/ite-intc.h>
+#include <zephyr/dt-bindings/interrupt-controller/ite-intc.h>
 
 #define IT83XX_GPIO_GPCRF4	GPCRF4
 #define IT83XX_GPIO_GPCRF5	GPCRF5

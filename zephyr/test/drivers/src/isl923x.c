@@ -4,7 +4,7 @@
  */
 
 #include <ztest.h>
-#include <drivers/emul.h>
+#include <zephyr/drivers/emul.h>
 #include <fff.h>
 
 #include "battery.h"

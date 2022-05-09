@@ -5,13 +5,13 @@
 
 #define DT_DRV_COMPAT cros_ps8xxx_emul
 
-#include <logging/log.h>
+#include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(ps8xxx_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
-#include <device.h>
-#include <drivers/emul.h>
-#include <drivers/i2c.h>
-#include <drivers/i2c_emul.h>
+#include <zephyr/device.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c.h>
+#include <zephyr/drivers/i2c_emul.h>
 
 #include "tcpm/tcpci.h"
 

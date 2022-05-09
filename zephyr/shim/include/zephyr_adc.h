@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_ZEPHYR_ADC_H
 #define __CROS_EC_ZEPHYR_ADC_H
 
-#include <drivers/adc.h>
+#include <zephyr/drivers/adc.h>
 
 #ifdef CONFIG_PLATFORM_EC_ADC
 

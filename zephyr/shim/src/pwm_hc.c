@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <device.h>
-#include <devicetree.h>
-#include <drivers/pwm.h>
-#include <logging/log.h>
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/logging/log.h>
 
 #include "common.h"
 #include "console.h"

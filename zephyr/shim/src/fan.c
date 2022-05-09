@@ -5,11 +5,11 @@
 
 #define DT_DRV_COMPAT cros_ec_fans
 
-#include <drivers/gpio.h>
-#include <drivers/pwm.h>
-#include <drivers/sensor.h>
-#include <logging/log.h>
-#include <sys/util_macro.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/drivers/sensor.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/util_macro.h>
 
 #include "fan.h"
 #include "gpio_signal.h"

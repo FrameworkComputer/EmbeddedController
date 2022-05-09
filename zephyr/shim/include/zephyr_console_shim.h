@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_ZEPHYR_CONSOLE_SHIM_H
 #define __CROS_EC_ZEPHYR_CONSOLE_SHIM_H
 
-#include <shell/shell.h>
+#include <zephyr/shell/shell.h>
 
 struct zephyr_console_command {
 	/* Handler for the command.  argv[0] will be the command name. */

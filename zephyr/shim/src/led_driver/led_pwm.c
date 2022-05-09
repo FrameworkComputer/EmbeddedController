@@ -9,9 +9,9 @@
 #include "led.h"
 #include "util.h"
 
-#include <devicetree.h>
-#include <drivers/pwm.h>
-#include <logging/log.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/logging/log.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED)
 

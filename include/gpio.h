@@ -20,7 +20,7 @@
  * conflicts
  */
 #ifdef CONFIG_ZEPHYR
-#include <drivers/gpio.h>
+#include <zephyr/drivers/gpio.h>
 
 /*
  * Some flag definitions are duplicated by our private devicetree binding
