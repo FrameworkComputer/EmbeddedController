@@ -30,7 +30,7 @@ GPIO_INT(USB_C1_TCPC_INT_ODL,            PIN(A, 2), GPIO_INT_FALLING, tcpc_alert
 
 /* USED GPIOs: */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
-GPIO(CHARGER_VAP_OTG_EN,             PIN(7, 3), GPIO_OUT_LOW)
+GPIO(CHARGER_VAP_OTG_EN,             PIN(4, 1), GPIO_OUT_LOW)
 GPIO(CPU_C10_GATE_L,                 PIN(6, 7), GPIO_INPUT)
 GPIO(EC_BATT_PRES_ODL,               PIN(A, 3), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,                 PIN(0, 3), GPIO_OUT_LOW)
@@ -120,7 +120,7 @@ UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(8, 3))       /* GPIO83 */
 UNUSED(PIN(7, 0))       /* GPIO70 */
-UNUSED(PIN(4, 1))       /* GPIO41 */
+UNUSED(PIN(7, 3))       /* GPIO73 */
 UNUSED(PIN(8, 1))       /* GPIO81 */
 UNUSED(PIN(5, 6))       /* GPIO56 */
 UNUSED(PIN(9, 3))       /* GPIO93 */
