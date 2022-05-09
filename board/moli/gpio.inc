@@ -152,7 +152,6 @@ ALTERNATE(PIN_MASK(B, 0x80), 0, MODULE_PWM, 0)               /* GPIOB7/PWM5 */
 ALTERNATE(PIN_MASK(C, 0x18), 0, MODULE_PWM, 0)               /* GPIOC4/PWM2, GPIOC3/PWM0 */
 
 /* ADC alternate functions */
-ALTERNATE(PIN_MASK(3, 0x10), 0, MODULE_ADC, 0)               /* GPIO34/PS2_DAT2/ADC6 */
 ALTERNATE(PIN_MASK(4, 0x38), 0, MODULE_ADC, 0)               /* GPIO45/ADC0, GPIO44/ADC1, GPIO43/ADC2 */
 ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)               /* GPIOE1/ADC7 */
 
@@ -173,3 +172,4 @@ UNUSED(PIN(A, 2))       /* F_SCLK/GPIOA2 */
 UNUSED(PIN(5, 0))       /* GPIO50 */
 UNUSED(PIN(9, 4))       /* GPIO94 */
 UNUSED(PIN(A, 0))       /* F_CS0_L/GPIOA0 */
+UNUSED(PIN(3, 4))       /* GPIO34/PS2_DAT2/ADC6 */
