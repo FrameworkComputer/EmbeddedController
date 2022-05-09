@@ -403,6 +403,23 @@ int host_cmd_motion_sense_int_enable(int8_t enable,
 				     struct ec_response_motion_sense *response);
 
 /**
+ * @brief Call the spoof motion_sense subcommand
+ *
+ * @param sensor_num The sensor index in motion_sensors
+ * @param enable The enable field, for normal operations this will be one of
+ * enum motionsense_spoof_mode
+ * @param values0 The X value to set if using custom mode
+ * @param values1 The Y value to set if using custom mode
+ * @param values2 The Z value to set if using custom mode
+ * @param response Pointer to the response data structure to fill on success
+ * @return The result code from the host command
+ */
+int host_cmd_motion_sense_spoof(uint8_t sensor_num, uint8_t enable,
+				int16_t values0, int16_t values1,
+				int16_t values2,
+				struct ec_response_motion_sense *response);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number

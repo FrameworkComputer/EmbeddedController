@@ -80,6 +80,7 @@ static void host_cmd_motion_sense_after(void *fixture)
 
 	motion_sensors[0].drv = this->sensor_0_drv;
 	host_cmd_motion_sense_int_enable(0, &response);
+	motion_sensors[0].flags &= ~MOTIONSENSE_FLAG_IN_SPOOF_MODE;
 }
 
 ZTEST_SUITE(host_cmd_motion_sense, drivers_predicate_post_main,
@@ -760,4 +761,85 @@ ZTEST(host_cmd_motion_sense, test_int_enable)
 						    &response),
 		   NULL);
 	zassert_equal(0, response.fifo_int_enable.ret, NULL);
+}
+
+ZTEST(host_cmd_motion_sense, test_spoof_invalid_sensor_num)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      host_cmd_motion_sense_spoof(0xff, 0, 0, 0, 0, &response),
+		      NULL);
+}
+
+ZTEST(host_cmd_motion_sense, test_spoof_disable)
+{
+	struct ec_response_motion_sense response;
+
+	motion_sensors[0].flags |= MOTIONSENSE_FLAG_IN_SPOOF_MODE;
+	zassert_ok(host_cmd_motion_sense_spoof(0,
+					       MOTIONSENSE_SPOOF_MODE_DISABLE,
+					       0, 0, 0, &response),
+		   NULL);
+	zassert_equal(0,
+		      motion_sensors[0].flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE,
+		      NULL);
+
+	zassert_ok(host_cmd_motion_sense_spoof(0, MOTIONSENSE_SPOOF_MODE_QUERY,
+					       0, 0, 0, &response),
+		   NULL);
+	zassert_false(response.spoof.ret, NULL);
+}
+
+ZTEST(host_cmd_motion_sense, test_spoof_custom)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_ok(host_cmd_motion_sense_spoof(0, MOTIONSENSE_SPOOF_MODE_CUSTOM,
+					       -8, 16, -32, &response),
+		   NULL);
+	zassert_equal(MOTIONSENSE_FLAG_IN_SPOOF_MODE,
+		      motion_sensors[0].flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE,
+		      NULL);
+	zassert_equal(-8, motion_sensors[0].spoof_xyz[0], NULL);
+	zassert_equal(16, motion_sensors[0].spoof_xyz[1], NULL);
+	zassert_equal(-32, motion_sensors[0].spoof_xyz[2], NULL);
+
+	zassert_ok(host_cmd_motion_sense_spoof(0, MOTIONSENSE_SPOOF_MODE_QUERY,
+					       0, 0, 0, &response),
+		   NULL);
+	zassert_true(response.spoof.ret, NULL);
+}
+
+ZTEST(host_cmd_motion_sense, test_spoof_lock_current)
+{
+	struct ec_response_motion_sense response;
+
+	motion_sensors[0].raw_xyz[0] = 64;
+	motion_sensors[0].raw_xyz[1] = 48;
+	motion_sensors[0].raw_xyz[2] = 32;
+	zassert_ok(host_cmd_motion_sense_spoof(
+			   0, MOTIONSENSE_SPOOF_MODE_LOCK_CURRENT, 0, 0, 0,
+			   &response),
+		   NULL);
+	zassert_equal(MOTIONSENSE_FLAG_IN_SPOOF_MODE,
+		      motion_sensors[0].flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE,
+		      NULL);
+	zassert_equal(64, motion_sensors[0].spoof_xyz[0], NULL);
+	zassert_equal(48, motion_sensors[0].spoof_xyz[1], NULL);
+	zassert_equal(32, motion_sensors[0].spoof_xyz[2], NULL);
+
+	zassert_ok(host_cmd_motion_sense_spoof(0, MOTIONSENSE_SPOOF_MODE_QUERY,
+					       0, 0, 0, &response),
+		   NULL);
+	zassert_true(response.spoof.ret, NULL);
+}
+
+ZTEST(host_cmd_motion_sense, test_spoof_invalid_mode)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      host_cmd_motion_sense_spoof(0, 0xff, 0, 0, 0, &response),
+		      NULL);
 }
