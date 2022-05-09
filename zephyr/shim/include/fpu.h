@@ -47,9 +47,25 @@ static inline float fabsf(float v)
 
 	return root;
 }
+#elif CONFIG_RISCV
+static inline float sqrtf(float v)
+{
+	float root;
+
+	__asm__("fsqrt.s %0, %1" : "=f"(root) : "f"(v));
+	return root;
+}
+
+static inline float fabsf(float v)
+{
+	float abs;
+
+	__asm__("fabs.s %0, %1" : "=f"(abs) : "f"(v));
+	return abs;
+}
 #else
 #error "Unsupported core: please add an implementation"
-#endif /* CONFIG_CPU_CORTEX_M */
+#endif
 
 #endif  /* CONFIG_PLATFORM_EC_FPU */
 
