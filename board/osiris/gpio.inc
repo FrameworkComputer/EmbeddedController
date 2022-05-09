@@ -10,8 +10,6 @@
 /* INTERRUPT GPIOs: */
 GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
-GPIO_INT(EC_VOLDN_BTN_ODL,               PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
-GPIO_INT(EC_VOLUP_BTN_ODL,               PIN(9, 7), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
 GPIO_INT(EC_WP_ODL,                      PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)
 GPIO_INT(GSC_EC_PWR_BTN_ODL,             PIN(0, 1), GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW, power_button_interrupt)
 GPIO_INT(LID_OPEN,                       PIN(D, 2), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, lid_interrupt)
@@ -125,7 +123,8 @@ UNUSED(PIN(7, 0))       /* GPIO70 */
 UNUSED(PIN(4, 1))       /* GPIO41 */
 UNUSED(PIN(8, 1))       /* GPIO81 */
 UNUSED(PIN(5, 6))       /* GPIO56 */
-
+UNUSED(PIN(9, 3))       /* GPIO93 */
+UNUSED(PIN(9, 7))       /* GPIO97 */
 /* Pre-configured PSL balls:  J8  K6 */
 
 /*
