@@ -239,6 +239,7 @@ int extpower_is_present(void)
 	 * so exclude such ports.
 	 */
 	int usb_c_extpower_present;
+	static int prev_usb_c_extpower_present;
 
 	if (board_vbus_source_enabled(CHARGE_PORT_USB_C))
 		usb_c_extpower_present = 0;
@@ -246,6 +247,14 @@ int extpower_is_present(void)
 		usb_c_extpower_present = tcpm_check_vbus_level(
 							CHARGE_PORT_USB_C,
 							VBUS_PRESENT);
+
+	if (prev_usb_c_extpower_present != usb_c_extpower_present) {
+		if (usb_c_extpower_present)
+			host_set_single_event(EC_HOST_EVENT_AC_CONNECTED);
+		else
+			host_set_single_event(EC_HOST_EVENT_AC_DISCONNECTED);
+		prev_usb_c_extpower_present = usb_c_extpower_present;
+	}
 
 	return usb_c_extpower_present;
 }
