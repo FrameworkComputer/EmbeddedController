@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/sys/atomic.h>
 #include <zephyr/drivers/adc.h>
+#include <zephyr/drivers/sensor.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/sys/atomic.h>
 
 #include <power_signals.h>
 #include <signal_adc.h>
-#include "drivers/sensor.h"
 
 #define MY_COMPAT	intel_ap_pwrseq_adc
 

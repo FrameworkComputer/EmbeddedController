@@ -9,7 +9,7 @@
 #include "ec_commands.h"
 
 #ifdef CONFIG_ZEPHYR
-#include "drivers/pwm.h"
+#include <zephyr/drivers/pwm.h>
 #endif
 
 #ifdef CONFIG_ZEPHYR

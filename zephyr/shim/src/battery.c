@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include<devicetree.h>
-#include"battery_fuel_gauge.h"
+#include <zephyr/devicetree.h>
+
+#include "battery_fuel_gauge.h"
 
 #define NODE_FUEL_GAUGE(node) \
 { \
