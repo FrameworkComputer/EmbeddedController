@@ -20,17 +20,15 @@
 #include "util.h"
 
 /*
- * TODO(b/178011288): use persistent storage for panic data in
- * Zephyr OS
+ * For host tests, use a static area for panic data.
  */
-#ifdef CONFIG_ZEPHYR
+#ifdef CONFIG_BOARD_NATIVE_POSIX
 static struct panic_data zephyr_panic_data;
 #undef PANIC_DATA_PTR
 #undef CONFIG_PANIC_DATA_BASE
 #define PANIC_DATA_PTR (&zephyr_panic_data)
 #define CONFIG_PANIC_DATA_BASE (&zephyr_panic_data)
 #endif
-
 /* Panic data goes at the end of RAM. */
 static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
 
@@ -178,7 +176,7 @@ uintptr_t get_panic_data_start(void)
 	if (pdata_ptr->magic != PANIC_DATA_MAGIC)
 		return 0;
 
-	if (IS_ENABLED(CONFIG_ZEPHYR))
+	if (IS_ENABLED(CONFIG_BOARD_NATIVE_POSIX))
 		return (uintptr_t)pdata_ptr;
 
 	return ((uintptr_t)CONFIG_PANIC_DATA_BASE
@@ -199,11 +197,8 @@ static uint32_t get_panic_data_size(void)
  * Please note that this function can move jump data and jump tags.
  * It can also delete panic data from previous boot, so this function
  * should be used when we are sure that we don't need it.
- *
- * TODO(b/178011288): figure out an appropriate implementation for
- * Zephyr.
  */
-#ifdef CONFIG_ZEPHYR
+#ifdef CONFIG_BOARD_NATIVE_POSIX
 struct panic_data *get_panic_data_write(void)
 {
 	return pdata_ptr;
@@ -291,7 +286,7 @@ struct panic_data *get_panic_data_write(void)
 
 	return pdata_ptr;
 }
-#endif /* CONFIG_ZEPHYR */
+#endif /* CONFIG_BOARD_NATIVE_POSIX */
 
 static void panic_init(void)
 {

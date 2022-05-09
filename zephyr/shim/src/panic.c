@@ -40,24 +40,30 @@
 #define PANIC_REG_REASON(pdata) pdata->cm.regs[3]
 #define PANIC_REG_INFO(pdata) pdata->cm.regs[4]
 #elif defined(CONFIG_RISCV) && !defined(CONFIG_64BIT)
+/*
+ * Not all registers are passed in the context from Zephyr
+ * (see include/zephyr/arch/riscv/exp.h), in particular
+ * the mcause register is not saved (mstatus is saved instead).
+ * The assignments must match util/ec_panicinfo.c
+ */
 #define PANIC_ARCH PANIC_ARCH_RISCV_RV32I
 #define PANIC_REG_LIST(M)         \
-	M(ra, riscv.regs[1], ra)  \
-	M(a0, riscv.regs[4], a0)  \
-	M(a1, riscv.regs[5], a1)  \
-	M(a2, riscv.regs[6], a2)  \
-	M(a3, riscv.regs[7], a3)  \
-	M(a4, riscv.regs[8], a4)  \
-	M(a5, riscv.regs[9], a5)  \
-	M(a6, riscv.regs[10], a6) \
-	M(a7, riscv.regs[11], a7) \
-	M(t0, riscv.regs[12], t0) \
-	M(t1, riscv.regs[13], t1) \
-	M(t2, riscv.regs[14], t2) \
+	M(ra, riscv.regs[29], ra)  \
+	M(a0, riscv.regs[26], a0)  \
+	M(a1, riscv.regs[25], a1)  \
+	M(a2, riscv.regs[24], a2)  \
+	M(a3, riscv.regs[23], a3)  \
+	M(a4, riscv.regs[22], a4)  \
+	M(a5, riscv.regs[21], a5)  \
+	M(a6, riscv.regs[20], a6) \
+	M(a7, riscv.regs[19], a7) \
+	M(t0, riscv.regs[18], t0) \
+	M(t1, riscv.regs[17], t1) \
+	M(t2, riscv.regs[16], t2) \
 	M(t3, riscv.regs[15], t3) \
-	M(t4, riscv.regs[16], t4) \
-	M(t5, riscv.regs[17], t5) \
-	M(t6, riscv.regs[18], t6) \
+	M(t4, riscv.regs[14], t4) \
+	M(t5, riscv.regs[13], t5) \
+	M(t6, riscv.regs[12], t6) \
 	M(mepc, riscv.mepc, mepc) \
 	M(mstatus, riscv.mcause, mstatus)
 #define PANIC_REG_EXCEPTION(pdata) (pdata->riscv.mcause)
@@ -88,13 +94,13 @@ void panic_data_print(const struct panic_data *pdata)
 	PANIC_REG_LIST(PANIC_PRINT_REGS);
 }
 
-#ifndef CONFIG_LOG
 static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
 				   struct panic_data *pdata)
 {
 	pdata->arch = PANIC_ARCH;
 	pdata->struct_version = 2;
-	pdata->flags = 0;
+	pdata->flags = (PANIC_ARCH == PANIC_ARCH_CORTEX_M)
+		? PANIC_DATA_FLAG_FRAME_VALID : 0;
 	pdata->reserved = 0;
 	pdata->struct_size = sizeof(*pdata);
 	pdata->magic = PANIC_DATA_MAGIC;
@@ -104,18 +110,29 @@ static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
 
 void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 {
-	panic_printf("Fatal error: %u\n", reason);
+	/*
+	 * If CONFIG_LOG is on, the exception details
+	 * have already been logged to the console.
+	 */
+	if (!IS_ENABLED(CONFIG_LOG)) {
+		panic_printf("Fatal error: %u\n", reason);
+	}
 
 	if (PANIC_ARCH && esf) {
 		copy_esf_to_panic_data(esf, get_panic_data_write());
-		panic_data_print(panic_get_data());
+		if (!IS_ENABLED(CONFIG_LOG)) {
+			panic_data_print(panic_get_data());
+		}
 	}
 
 	LOG_PANIC();
-	k_fatal_halt(reason);
+	/*
+	 * Reboot immediately, don't wait for watchdog, otherwise
+	 * the watchdog will overwrite this panic.
+	 */
+	panic_reboot();
 	CODE_UNREACHABLE;
 }
-#endif /* CONFIG_LOG */
 
 #ifdef CONFIG_PLATFORM_EC_SOFTWARE_PANIC
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)

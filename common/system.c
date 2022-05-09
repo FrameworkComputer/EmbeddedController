@@ -330,17 +330,9 @@ struct jump_data *get_jump_data(void)
 	 * Put the jump data before the panic data, or at the end of RAM if
 	 * panic data is not present.
 	 */
-	if (IS_ENABLED(CONFIG_ZEPHYR)) {
-		/*
-		 * For Zephyr, the panic data is not at the end of RAM so
-		 * the jump data is always at the end of RAM.
-		 */
+	addr = get_panic_data_start();
+	if (!addr)
 		addr = CONFIG_RAM_BASE + CONFIG_RAM_SIZE;
-	} else {
-		addr = get_panic_data_start();
-		if (!addr)
-			addr = CONFIG_RAM_BASE + CONFIG_RAM_SIZE;
-	}
 
 	return (struct jump_data *)(addr - sizeof(struct jump_data));
 }
