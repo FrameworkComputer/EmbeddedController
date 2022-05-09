@@ -175,15 +175,19 @@
 			enum-name = "GPIO_USB_C1_FRS_EN";
 		};
 		gpio_ec_chg_led_y_c0: ec_chg_led_y_c0 {
+			#led-pin-cells = <1>;
 			gpios = <&gpio6 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_chg_led_w_c0: ec_chg_led_w_c0 {
+			#led-pin-cells = <1>;
 			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_chg_led_y_c1: ec_chg_led_y_c1 {
+			#led-pin-cells = <1>;
 			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_chg_led_w_c1: ec_chg_led_w_c1 {
+			#led-pin-cells = <1>;
 			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 		};
 		ap_ec_spi_mosi {

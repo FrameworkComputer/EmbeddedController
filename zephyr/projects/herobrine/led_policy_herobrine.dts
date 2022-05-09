@@ -1,0 +1,202 @@
+/ {
+	led-colors {
+		compatible = "cros-ec,led-colors";
+
+		power-state-charge-left {
+			charge-state = "PWR_STATE_CHARGE";
+			charge-port = <1>; /* Left port */
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED to Amber */
+			color-1 {
+				led-color = <&color_amber_left>;
+			};
+		};
+
+		power-state-charge-right {
+			charge-state = "PWR_STATE_CHARGE";
+			charge-port = <0>; /* Right port */
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED to Amber */
+			color-1 {
+				led-color = <&color_amber_right>;
+			};
+		};
+
+		power-state-discharge-right-0 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			extra-flag = "LED_BATT_BELOW_10_PCT";
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED - White 1 sec, off 3 sec */
+			color-1 {
+				led-color = <&color_white_right>;
+				period-ms = <1000>;
+			};
+			color-2 {
+				led-color = <&color_off_right>;
+				period-ms = <3000>;
+			};
+		};
+
+		power-state-discharge-right-1 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			extra-flag = "LED_BATT_ABOVE_10_PCT";
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Turn off the right LED */
+			color-1 {
+				led-color = <&color_off_right>;
+			};
+		};
+
+		power-state-error-left {
+			charge-state = "PWR_STATE_ERROR";
+			charge-port = <1>; /* Left port */
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED - White 2 sec, off 2 sec */
+			color-1 {
+				led-color = <&color_white_left>;
+				period-ms = <2000>;
+			};
+			color-2 {
+				led-color = <&color_off_right>;
+				period-ms = <2000>;
+			};
+		};
+
+		power-state-error-right {
+			charge-state = "PWR_STATE_ERROR";
+			charge-port = <0>; /* Right port */
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED - White 2 sec, off 2 sec */
+			color-1 {
+				led-color = <&color_white_right>;
+				period-ms = <2000>;
+			};
+			color-2 {
+				led-color = <&color_off_right>;
+				period-ms = <2000>;
+			};
+		};
+
+		power-state-near-full-left {
+			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-port = <1>; /* Left port */
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED to White */
+			color-1 {
+				led-color = <&color_white_left>;
+			};
+		};
+
+		power-state-near-full-right {
+			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-port = <0>; /* Right port */
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED to White */
+			color-1 {
+				led-color = <&color_white_right>;
+			};
+		};
+
+		power-state-idle-forced-left {
+			charge-state = "PWR_STATE_IDLE";
+			charge-port = <1>; /* Left port */
+			extra-flag = "LED_CHFLAG_FORCE_IDLE";
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED - Amber 3 sec, Off 1 sec */
+			color-1 {
+				led-color = <&color_amber_left>;
+				period-ms = <3000>;
+			};
+			color-2 {
+				led-color = <&color_off_left>;
+				period-ms = <1000>;
+			};
+		};
+
+		power-state-idle-forced-right {
+			charge-state = "PWR_STATE_IDLE";
+			charge-port = <0>; /* Right port */
+			extra-flag = "LED_CHFLAG_FORCE_IDLE";
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED - Amber 3 sec, Off 1 sec */
+			color-1 {
+				led-color = <&color_amber_right>;
+				period-ms = <3000>;
+			};
+			color-2 {
+				led-color = <&color_off_right>;
+				period-ms = <1000>;
+			};
+		};
+
+		power-state-idle-default-left {
+			charge-state = "PWR_STATE_IDLE";
+			charge-port = <1>; /* Left port */
+			extra-flag = "LED_CHFLAG_DEFAULT";
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED to White */
+			color-1 {
+				led-color = <&color_white_left>;
+			};
+		};
+
+		power-state-idle-default-right {
+			charge-state = "PWR_STATE_IDLE";
+			charge-port = <0>; /* Right port */
+			extra-flag = "LED_CHFLAG_DEFAULT";
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED to White */
+			color-1 {
+				led-color = <&color_white_right>;
+			};
+		};
+	};
+};

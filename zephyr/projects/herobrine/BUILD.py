@@ -36,6 +36,8 @@ register_variant(
         here / "display.dts",
         here / "battery_herobrine.dts",
         here / "gpio.dts",
+        here / "led_pins_herobrine.dts",
+        here / "led_policy_herobrine.dts",
         here / "motionsense.dts",
         here / "switchcap.dts",
         here / "usbc_herobrine.dts",
