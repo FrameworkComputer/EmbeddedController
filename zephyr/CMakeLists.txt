@@ -65,6 +65,10 @@ endif()
 
 # Set extra compiler flags.
 zephyr_cc_option(-mno-unaligned-access)
+if (DEFINED CONFIG_RISCV)
+  zephyr_cc_option(-fsanitize=integer-divide-by-zero)
+  zephyr_cc_option(-fsanitize-undefined-trap-on-error)
+endif()
 
 # The EC application is split into two libraries:
 #   app: contains all the legacy code
