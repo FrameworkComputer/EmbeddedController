@@ -60,6 +60,7 @@ register_corsola_project(
         here / "led_kingler.dts",
         here / "motionsense_kingler.dts",
         here / "usbc_kingler.dts",
+        here / "default_gpio_pinctrl_kingler.dts",
     ],
     extra_kconfig_files=[here / "prj_kingler.conf"],
 )
