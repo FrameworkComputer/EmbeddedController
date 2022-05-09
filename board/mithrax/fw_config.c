@@ -1,4 +1,4 @@
-/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,20 +11,20 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-static union brya_cbi_fw_config fw_config;
+static union mithrax_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
 
 /*
- * FW_CONFIG defaults for brya if the CBI.FW_CONFIG data is not
+ * FW_CONFIG defaults for mithrax if the CBI.FW_CONFIG data is not
  * initialized.
  */
-static const union brya_cbi_fw_config fw_config_defaults = {
+static const union mithrax_cbi_fw_config fw_config_defaults = {
 	.usb_db = DB_USB3_PS8815,
 	.kb_bl = KEYBOARD_BACKLIGHT_ENABLED,
 };
 
 /****************************************************************************
- * Brya FW_CONFIG access
+ * Mithrax FW_CONFIG access
  */
 void board_init_fw_config(void)
 {
@@ -34,7 +34,7 @@ void board_init_fw_config(void)
 	}
 }
 
-union brya_cbi_fw_config get_fw_config(void)
+union mithrax_cbi_fw_config get_fw_config(void)
 {
 	return fw_config;
 }

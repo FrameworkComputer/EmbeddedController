@@ -1,17 +1,17 @@
-/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
-#ifndef __BOARD_BRYA_FW_CONFIG_H_
-#define __BOARD_BRYA_FW_CONFIG_H_
+#ifndef __BOARD_MITHRAX_FW_CONFIG_H_
+#define __BOARD_MITHRAX_FW_CONFIG_H_
 
 #include <stdint.h>
 
 /****************************************************************************
- * CBI FW_CONFIG layout for felwinter board.
+ * CBI FW_CONFIG layout for mithrax board.
  *
- * Source of truth is the project/brya/felwinter/config.star configuration file.
+ * Source of truth is the project/brya/mithrax/config.star configuration file.
  */
 
 enum ec_cfg_usb_db_type {
@@ -34,7 +34,7 @@ enum ec_cfg_stylus_type {
 	STYLUS_PRSENT = 1
 };
 
-union brya_cbi_fw_config {
+union mithrax_cbi_fw_config {
 	struct {
 		enum ec_cfg_usb_db_type			usb_db : 3;
 		uint32_t				wifi : 2;
@@ -54,7 +54,7 @@ union brya_cbi_fw_config {
  *
  * @return the FW_CONFIG for the board.
  */
-union brya_cbi_fw_config get_fw_config(void);
+union mithrax_cbi_fw_config get_fw_config(void);
 
 /**
  * Get the USB daughter board type from FW_CONFIG.
@@ -70,7 +70,7 @@ enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
  */
 enum ec_cfg_usb_mb_type ec_cfg_usb_mb_type(void);
 
-#endif /* __BOARD_BRYA_FW_CONFIG_H_ */
+#endif /* __BOARD_MITHRAX_FW_CONFIG_H_ */
 
 /**
  * Get the stylus type from FW_CONFIG.

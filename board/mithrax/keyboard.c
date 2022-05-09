@@ -1,4 +1,4 @@
-/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -24,7 +24,7 @@ __override struct keyboard_scan_config keyscan_config = {
 	},
 };
 
-static const struct ec_response_keybd_config felwinter_kb = {
+static const struct ec_response_keybd_config mithrax_kb = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -44,5 +44,5 @@ static const struct ec_response_keybd_config felwinter_kb = {
 __override const struct ec_response_keybd_config
 *board_vivaldi_keybd_config(void)
 {
-	return &felwinter_kb;
+	return &mithrax_kb;
 }
