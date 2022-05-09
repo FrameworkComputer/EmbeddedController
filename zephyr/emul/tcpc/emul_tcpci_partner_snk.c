@@ -345,6 +345,11 @@ void tcpci_snk_emul_clear_ping_received(struct tcpci_snk_emul_data *data)
 	data->ping_received = false;
 }
 
+void tcpci_snk_emul_clear_alert_received(struct tcpci_snk_emul_data *data)
+{
+	data->alert_received = false;
+}
+
 /** Check description in emul_tcpci_snk.h */
 enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 	struct tcpci_snk_emul_data *data,
@@ -361,6 +366,9 @@ enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 		case PD_DATA_SOURCE_CAP:
 			tcpci_snk_emul_handle_source_cap(data, common_data,
 							 msg);
+			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+		case PD_DATA_ALERT:
+			data->alert_received = true;
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;

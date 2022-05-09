@@ -37,6 +37,8 @@ struct tcpci_snk_emul_data {
 	bool pd_completed;
 	/** PD_CTRL_PING message received  */
 	bool ping_received;
+	/** PD_DATA_ALERT message received  */
+	bool alert_received;
 };
 
 /** Structure describing standalone sink device emulator */
@@ -114,6 +116,13 @@ void tcpci_snk_emul_hard_reset(void *data);
  * @param sink_data
  */
 void tcpci_snk_emul_clear_ping_received(struct tcpci_snk_emul_data *sink_data);
+
+/**
+ * @brief Clear the alert received flag.
+ *
+ * @param sink_data
+ */
+void tcpci_snk_emul_clear_alert_received(struct tcpci_snk_emul_data *sink_data);
 
 /**
  * @}

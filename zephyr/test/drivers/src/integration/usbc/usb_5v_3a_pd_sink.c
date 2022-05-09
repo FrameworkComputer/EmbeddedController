@@ -14,6 +14,7 @@
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "timer.h"
+#include "usb_common.h"
 #include "usb_pd.h"
 
 struct usb_attach_5v_3a_pd_sink_fixture {
@@ -288,4 +289,27 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_ping_msg)
 	k_sleep(K_USEC(PD_T_SOURCE_ACTIVITY));
 
 	zassert_true(this->sink_5v_3a.data.ping_received, NULL);
+}
+
+/**
+ * @brief TestPurpose: Verify Alert message.
+ *
+ * @details
+ *  - Clear alert_received in emulated partner
+ *  - Broadcast PD Alert
+ *  - Check pd_broadcast_alert_msg can set the ADO and run pd_dpm_request
+ *  - Check that emulated partner received a PD_DATA_ALERT message
+ *
+ * Expected Results
+ *  - EC_SUCCESS returned from pd_broadcast_alert_msg
+ *  - sink_5v_3a.data.alert_received is true
+ */
+ZTEST_F(usb_attach_5v_3a_pd_sink, verify_alert_msg)
+{
+	tcpci_snk_emul_clear_alert_received(&this->sink_5v_3a.data);
+	zassert_false(this->sink_5v_3a.data.alert_received, NULL);
+	zassert_equal(pd_broadcast_alert_msg(ADO_OTP_EVENT), EC_SUCCESS, NULL);
+
+	k_sleep(K_SECONDS(2));
+	zassert_true(this->sink_5v_3a.data.alert_received, NULL);
 }
