@@ -371,7 +371,7 @@ void board_reset_pd_mcu(void)
 
 }
 
-#define SPI_BLANK_OFFSET 0x3A000
+#define SPI_FLAGS_REGION 0x80000
 
 void spi_mux_control(int enable)
 {
@@ -397,7 +397,7 @@ void board_spi_read_byte(uint8_t offset, uint8_t *data)
 
 	spi_mux_control(1);
 
-	rv = spi_flash_read(data, SPI_BLANK_OFFSET + offset, 0x01);
+	rv = spi_flash_read(data, SPI_FLAGS_REGION + offset, 0x01);
 	if (rv != EC_SUCCESS)
 		CPRINTS("SPI fail to read");
 
@@ -410,12 +410,12 @@ void board_spi_write_byte(uint8_t offset, uint8_t data)
 
 	spi_mux_control(1);
 
-	rv = spi_flash_erase(SPI_BLANK_OFFSET, 0x1000);
+	rv = spi_flash_erase(SPI_FLAGS_REGION, 0x1000);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("SPI fail to erase");
 
-	rv = spi_flash_write(SPI_BLANK_OFFSET + offset, 0x01, &data);
+	rv = spi_flash_write(SPI_FLAGS_REGION + offset, 0x01, &data);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("SPI fail to write");
