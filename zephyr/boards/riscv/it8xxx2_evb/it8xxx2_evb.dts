@@ -59,31 +59,6 @@
 		gpio_ec_pch_wake_odl: pch_wake_l {
 			gpios = <&gpiob 7 GPIO_OUTPUT_HIGH>;
 		};
-		i2c_a_scl {
-			gpios = <&gpiob 3 GPIO_INPUT>;
-		};
-		i2c_a_sda {
-			gpios = <&gpiob 4 GPIO_INPUT>;
-		};
-		i2c_b_scl {
-			gpios = <&gpioc 1 GPIO_INPUT>;
-		};
-		i2c_b_sda {
-			gpios = <&gpioc 2 GPIO_INPUT>;
-		};
-		i2c_c_scl {
-			gpios = <&gpiof 6 GPIO_INPUT>;
-		};
-		i2c_c_sda {
-			gpios = <&gpiof 7 GPIO_INPUT>;
-		};
-		i2c_e_scl {
-			gpios = <&gpioe 0 GPIO_INPUT>;
-		};
-		i2c_e_sda {
-			gpios = <&gpioe 7 GPIO_INPUT>;
-		};
-
 		spi0_cs: spi0_cs {
 			gpios = <&gpiom 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
@@ -283,26 +258,40 @@
 
 &adc0 {
 	status = "okay";
+	pinctrl-0 = <&adc0_ch3_gpi3_default>;
+	pinctrl-names = "default";
 };
 
 &i2c0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c0_clk_gpb3_default
+		     &i2c0_data_gpb4_default>;
+	pinctrl-names = "default";
 };
 
 &i2c1 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c1_clk_gpc1_default
+		     &i2c1_data_gpc2_default>;
+	pinctrl-names = "default";
 };
 
 &i2c2 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c2_clk_gpf6_default
+		     &i2c2_data_gpf7_default>;
+	pinctrl-names = "default";
 };
 
 &i2c4 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		     &i2c4_data_gpe7_default>;
+	pinctrl-names = "default";
 };
 
 &uart1 {
@@ -313,18 +302,25 @@
 
 &ite_uart1_wrapper {
 	status = "okay";
+	pinctrl-0 = <&uart1_rx_gpb0_default
+		     &uart1_tx_gpb1_default>;
+	pinctrl-names = "default";
 };
 
 /* pwm for test */
 &pwm0 {
 	status = "okay";
 	prescaler-cx = <PWM_PRESCALER_C6>;
+	pinctrl-0 = <&pwm0_gpa0_default>;
+	pinctrl-names = "default";
 };
 
 /* pwm for fan */
 &pwm7 {
 	status = "okay";
 	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm7_gpa7_default>;
+	pinctrl-names = "default";
 };
 
 /* fan tachometer sensor */
@@ -332,4 +328,6 @@
 	status = "okay";
 	channel = <IT8XXX2_TACH_CHANNEL_A>;
 	pulses-per-round = <2>;
+	pinctrl-0 = <&tach0a_gpd6_default>;
+	pinctrl-names = "default";
 };
