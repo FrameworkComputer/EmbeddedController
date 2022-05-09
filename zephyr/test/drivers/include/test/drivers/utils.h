@@ -393,6 +393,16 @@ int host_cmd_motion_sense_fifo_read(uint8_t buffer_length,
 				    struct ec_response_motion_sense *response);
 
 /**
+ * @brief Call the int_enable motionsense host command
+ *
+ * @param enable 0 for disable, 1 for enable. All others are invalid
+ * @param response Pointer to the response data structure to fill on success
+ * @return The result code from the host command
+ */
+int host_cmd_motion_sense_int_enable(int8_t enable,
+				     struct ec_response_motion_sense *response);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number

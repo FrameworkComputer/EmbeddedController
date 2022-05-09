@@ -76,8 +76,10 @@ static void host_cmd_motion_sense_before(void *fixture)
 static void host_cmd_motion_sense_after(void *fixture)
 {
 	struct host_cmd_motion_sense_fixture *this = fixture;
+	struct ec_response_motion_sense response;
 
 	motion_sensors[0].drv = this->sensor_0_drv;
+	host_cmd_motion_sense_int_enable(0, &response);
 }
 
 ZTEST_SUITE(host_cmd_motion_sense, drivers_predicate_post_main,
@@ -733,4 +735,29 @@ ZTEST(host_cmd_motion_sense, test_fifo_read)
 	zassert_equal(3, response->fifo_read.data[1].data[0], NULL);
 	zassert_equal(4, response->fifo_read.data[1].data[1], NULL);
 	zassert_equal(5, response->fifo_read.data[1].data[2], NULL);
+}
+
+ZTEST(host_cmd_motion_sense, test_int_enable)
+{
+	struct ec_response_motion_sense response;
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      host_cmd_motion_sense_int_enable(2, &response), NULL);
+
+	/* Make sure we start off disabled */
+	zassume_ok(host_cmd_motion_sense_int_enable(0, &response), NULL);
+
+	/* Test enable */
+	zassert_ok(host_cmd_motion_sense_int_enable(1, &response), NULL);
+	zassert_ok(host_cmd_motion_sense_int_enable(EC_MOTION_SENSE_NO_VALUE,
+						    &response),
+		   NULL);
+	zassert_equal(1, response.fifo_int_enable.ret, NULL);
+
+	/* Test disable */
+	zassert_ok(host_cmd_motion_sense_int_enable(0, &response), NULL);
+	zassert_ok(host_cmd_motion_sense_int_enable(EC_MOTION_SENSE_NO_VALUE,
+						    &response),
+		   NULL);
+	zassert_equal(0, response.fifo_int_enable.ret, NULL);
 }
