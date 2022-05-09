@@ -12,7 +12,7 @@ import re
 import shutil
 import subprocess
 import uuid
-from typing import Dict, List, Optional, Union
+from typing import Dict, Optional, Set, Union
 
 import zmake.build_config
 import zmake.generate_readme
@@ -199,21 +199,21 @@ class Zmake:
 
     def _resolve_projects(
         self, project_names, all_projects=False, host_tests_only=False
-    ) -> List[zmake.project.Project]:
+    ) -> Set[zmake.project.Project]:
         """Finds all projects for the specified command line flags.
 
         Returns a list of projects.
         """
         found_projects = zmake.project.find_projects(self.module_paths["ec"] / "zephyr")
         if all_projects:
-            projects = list(found_projects.values())
+            projects = set(found_projects.values())
         elif host_tests_only:
-            projects = [p for p in found_projects.values() if p.config.is_test]
+            projects = {p for p in found_projects.values() if p.config.is_test}
         else:
-            projects = []
+            projects = set()
             for project_name in project_names:
                 try:
-                    projects.append(found_projects[project_name])
+                    projects.add(found_projects[project_name])
                 except KeyError as e:
                     raise KeyError("No project named {}".format(project_name)) from e
         return projects
