@@ -21,4 +21,7 @@ config THREAD_MAX_NAME_LEN
 config SHELL_PROMPT_UART
 	default "ec:~$ "
 
+config LEGACY_INCLUDE_PATH
+	default n
+
 orsource "Kconfig.defaults-$(ARCH)"
