@@ -13,12 +13,12 @@ import multiprocessing
 import pathlib
 import subprocess
 import sys
+
+from google.protobuf import json_format
 import zmake.project
 
-# TODO(crbug/1181505): Code outside of chromite should not be importing from
-# chromite.api.gen.  Import json_format after that so we get the matching one.
-from chromite.api.gen.chromite.api import firmware_pb2
-from google.protobuf import json_format
+from chromite.api.gen_sdk.chromite.api import firmware_pb2
+
 
 DEFAULT_BUNDLE_DIRECTORY = '/tmp/artifact_bundles'
 DEFAULT_BUNDLE_METADATA_FILE = '/tmp/artifact_bundle_metadata'
