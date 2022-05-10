@@ -190,10 +190,22 @@ static int is31fl3733b_set_gcc(struct rgbkbd *ctx, uint8_t level)
 
 static int is31fl3733b_init(struct rgbkbd *ctx)
 {
-	int rv;
+	int i, rv;
 
 	rv = is31fl3733b_reset(ctx);
 	msleep(3);
+
+	/* enable all led */
+	rv = is31fl3733b_set_page(ctx, IS31FL3733B_PAGE_CTRL);
+	if (rv) {
+		return rv;
+	}
+
+	for (i = 0; i < 0x18; i++) {
+		rv = is31fl3733b_write(ctx, i, 0xff);
+		if (rv)
+			CPRINTS("LED 0x%02x init fail (rv=%d)", i, rv);
+	}
 
 	if (IS_ENABLED(CONFIG_RGB_KEYBOARD_DEBUG)) {
 
