@@ -11,6 +11,9 @@
 #include "keyboard_protocol.h"
 #include "keyboard_raw.h"
 
+enum gpio_signal signal;
+static int colinv;
+
 static uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{0x0021, 0x007B, 0x0079, 0x0072, 0x007A, 0x0071, 0x0069, 0xe04A},
 	{0x002f, 0xe070, 0x007D, 0xe01f, 0x006c, 0xe06c, 0xe07d, 0x0077},
@@ -44,22 +47,35 @@ void set_scancode_set2(uint8_t row, uint8_t col, uint16_t val)
 		scancode_set2[col][row] = val;
 }
 
+void board_id_keyboard_col_inverted(int board_id)
+{
+	if (board_id == 0) {
+		/* keyboard_col2_inverted on board id 0 */
+		signal = GPIO_EC_KSO_02_INV;
+		colinv = 2;
+	} else {
+		/* keyboard_col4_inverted on board id 1 and later */
+		signal = GPIO_EC_KSO_04_INV;
+		colinv = 4;
+	}
+}
+
 void board_keyboard_drive_col(int col)
 {
 	/* Drive all lines to high */
 	if (col == KEYBOARD_COLUMN_NONE)
-		gpio_set_level(GPIO_KBD_KSO2, 0);
+		gpio_set_level(signal, 0);
 
 	/* Set KBSOUT to zero to detect key-press */
 	else if (col == KEYBOARD_COLUMN_ALL)
-		gpio_set_level(GPIO_KBD_KSO2, 1);
+		gpio_set_level(signal, 1);
 
 	/* Drive one line for detection */
 	else {
-		if (col == 2)
-			gpio_set_level(GPIO_KBD_KSO2, 1);
+		if (col == colinv)
+			gpio_set_level(signal, 1);
 		else
-			gpio_set_level(GPIO_KBD_KSO2, 0);
+			gpio_set_level(signal, 0);
 	}
 }
 

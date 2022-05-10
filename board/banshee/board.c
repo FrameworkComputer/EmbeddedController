@@ -17,6 +17,7 @@
 #include "driver/charger/isl9241.h"
 #include "fw_config.h"
 #include "hooks.h"
+#include "keyboard_customization.h"
 #include "lid_switch.h"
 #include "power_button.h"
 #include "power.h"
@@ -76,7 +77,23 @@ void battery_present_interrupt(enum gpio_signal signal)
 
 void board_init(void)
 {
+	int board_id = get_board_id();
+
 	gpio_enable_interrupt(GPIO_EC_BATT_PRES_ODL);
 	hook_call_deferred(&board_set_charger_current_limit_deferred_data, 0);
+
+	if (board_id == 0) {
+		/* keyboard_col2_inverted on board id 0 */
+		gpio_set_flags(GPIO_EC_KSO_04_INV, GPIO_ODR_HIGH);
+		gpio_set_alternate_function(GPIO_PORT_1, BIT(5),
+			GPIO_ALT_FUNC_DEFAULT);
+	} else {
+		/* keyboard_col4_inverted on board id 1 and later */
+		gpio_set_flags(GPIO_EC_KSO_02_INV, GPIO_ODR_HIGH);
+		gpio_set_alternate_function(GPIO_PORT_1, BIT(7),
+			GPIO_ALT_FUNC_DEFAULT);
+	}
+
+	board_id_keyboard_col_inverted(board_id);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

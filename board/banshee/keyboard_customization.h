@@ -70,4 +70,7 @@ extern uint8_t keyboard_cols;
 #define KEYBOARD_ROW_LEFT_SHIFT 1
 #define KEYBOARD_MASK_LEFT_SHIFT KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_LEFT_SHIFT)
 
+void board_id_keyboard_col_inverted(int board_id);
+
+
 #endif /* __KEYBOARD_CUSTOMIZATION_H */
