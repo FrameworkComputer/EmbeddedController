@@ -18,5 +18,9 @@
 #define ANX7483_I2C_ADDR2_FLAGS		0x40
 #define ANX7483_I2C_ADDR3_FLAGS		0x44
 
+/* Configure datasheet defaults for tuning registers at this mux setting */
+enum ec_error_list anx7483_set_default_tuning(const struct usb_mux *me,
+					      mux_state_t mux_state);
+
 extern const struct usb_mux_driver anx7483_usb_retimer_driver;
 #endif /* __CROS_EC_USB_RETIMER_ANX7483_PUBLIC_H */
