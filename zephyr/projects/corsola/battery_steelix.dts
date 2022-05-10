@@ -1,0 +1,15 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+		default_battery: smp_l20m3pg2 {
+			compatible = "smp,l20m3pg2", "battery-smart";
+		};
+		lgc_l20l3pg2 {
+			compatible = "lgc,l20l3pg2", "battery-smart";
+		};
+	};
+};

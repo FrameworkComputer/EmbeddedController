@@ -3,6 +3,10 @@
  * found in the LICENSE file.
  */
 
+/*
+ * Kingler and Steelix use the same dts, take care of this when modify it.
+ */
+
 / {
 	aliases {
 		int-wp = &int_wp;

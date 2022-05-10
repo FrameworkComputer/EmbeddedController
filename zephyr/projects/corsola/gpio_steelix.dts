@@ -1,0 +1,244 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_ec_wp_l;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		base_imu_int_l: base_imu_int_l {
+			gpios = <&gpio5 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		spi_ap_clk_ec {
+			gpios = <&gpio5 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		spi_ap_cs_ec_l {
+			gpios = <&gpio5 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		spi_ap_do_ec_di {
+			gpios = <&gpio4 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		spi_ap_di_ec_do {
+			gpios = <&gpio4 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ap_ec_warm_rst_req: ap_ec_warm_rst_req {
+			gpios = <&gpio5 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+				 GPIO_ACTIVE_HIGH)>;
+			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
+		};
+		ap_ec_wdtrst_l: ap_ec_wdtrst_l {
+			gpios = <&gpio5 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+				 GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_AP_EC_WDTRST_L";
+		};
+		ap_in_sleep_l: ap_in_sleep_l {
+			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+				 GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_AP_IN_SLEEP_L";
+		};
+		gpio_en_ulp: en_ulp {
+			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;
+		};
+		en_ec_id_odl {
+			gpios = <&gpio7 6 GPIO_ODR_HIGH>;
+		};
+		sys_rst_odl {
+			gpios = <&gpioc 5 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_SYS_RST_ODL";
+		};
+		ec_i2c_sensor_scl {
+			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_i2c_sensor_sda {
+			gpios = <&gpiob 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_i2c_usb_c0_scl {
+			gpios = <&gpio9 0 GPIO_INPUT>;
+		};
+		ec_i2c_usb_c0_sda {
+			gpios = <&gpio8 7 GPIO_INPUT>;
+		};
+		ec_i2c_usb_c1_scl {
+			gpios = <&gpio9 2 GPIO_INPUT>;
+		};
+		ec_i2c_usb_c1_sda {
+			gpios = <&gpio9 1 GPIO_INPUT>;
+		};
+		ec_i2c_pwr_cbi_scl {
+			gpios = <&gpiod 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_i2c_pwr_cbi_sda {
+			gpios = <&gpiod 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_i2c_batt_scl {
+			gpios = <&gpio3 3 GPIO_INPUT>;
+		};
+		ec_i2c_batt_sda {
+			gpios = <&gpio3 6 GPIO_INPUT>;
+		};
+		ec_pen_chg_dis_odl {
+			gpios = <&gpioe 4 GPIO_INPUT>;
+		};
+		gpio_ec_wp_l: ec_wp_odl {
+			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		lid_accel_int_l {
+			gpios = <&gpiob 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		tablet_mode_l {
+			gpios = <&gpiob 2 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		ec_ap_int_odl {
+			gpios = <&gpioc 1 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
+			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
+			gpios = <&gpio8 3 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
+		};
+		ec_entering_rw {
+			gpios = <&gpio0 3 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		charger_prochot_odl {
+			gpios = <&gpiob 1 GPIO_INPUT>;
+		};
+		ec_rst_odl {
+			gpios = <&gpio7 7 GPIO_INPUT>;
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpiod 2 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_acok_od: acok_od {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_en_5v_usm: en_5v_usm {
+			gpios = <&gpio0 2 GPIO_OUTPUT_LOW>;
+		};
+		packet_mode_en {
+			gpios = <&gpio7 5 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		gpio_x_ec_gpio2: x_ec_gpio2 {
+			gpios = <&gpiod 4 GPIO_INPUT>;
+		};
+		ap_sysrst_odl_r: ap_sysrst_odl_r {
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+				 GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_AP_EC_SYSRST_ODL";
+		};
+		gpio_ap_xhci_init_done: ap_xhci_init_done {
+			gpios = <&gpioa 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpio6 7 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+		pg_pp5000_z2_od {
+			gpios = <&gpio7 0 GPIO_INPUT>;
+		};
+		gpio_ec_x_gpio1: ec_x_gpio1 {
+			gpios = <&gpio6 2 GPIO_OUTPUT_LOW>;
+		};
+		dp_aux_path_sel: dp_aux_path_sel {
+			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_bl_en_od: ec_bl_en_od {
+			gpios = <&gpio4 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ec_x_gpio3: ec_x_gpio3 {
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
+			gpios = <&gpio7 3 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
+		};
+		gpio_usb_c0_tcpc_rst: usb_c0_tcpc_rst {
+			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
+		};
+		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus_x {
+			gpios = <&gpio6 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_EN_PP5000_USB_A0_VBUS";
+		};
+		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
+			gpios = <&gpio3 7 GPIO_INPUT>;
+		};
+		en_pp5000_z2 {
+			gpios = <&gpio3 4 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+		};
+		ec_batt_pres_odl {
+			gpios = <&gpioe 0 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		usb_a0_fault_odl {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		ec_ap_dp_hpd_odl: ec_ap_dp_hpd_odl {
+			gpios = <&gpio6 1 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_pmic_en_odl {
+			gpios = <&gpio7 4 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_EC_PMIC_EN_ODL";
+		};
+		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
+			gpios = <&gpiod 5 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
+			gpios = <&gpioe 2 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		ccd_mode_odl {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+			enum-name = "GPIO_CCD_MODE_ODL";
+		};
+	};
+
+	/*
+	 * aliases for sub-board GPIOs
+	 */
+	aliases {
+		gpio-en-hdmi-pwr = &gpio_ec_x_gpio1;
+		gpio-usb-c1-frs-en = &gpio_ec_x_gpio1;
+		gpio-usb-c1-ppc-int-odl = &gpio_x_ec_gpio2;
+		gpio-ps185-ec-dp-hpd = &gpio_x_ec_gpio2;
+		gpio-usb-c1-dp-in-hpd = &gpio_ec_x_gpio3;
+		gpio-ps185-pwrdn-odl = &gpio_ec_x_gpio3;
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <
+			&int_ac_present
+			&int_power_button
+			&int_lid_open
+		>;
+	};
+
+	def-lvol-io-list {
+		compatible = "nuvoton,npcx-lvolctrl-def";
+		lvol-io-pads = <
+			&lvol_ioe3 /*  GPIOE3 GPIO_EC_WP_L */
+			&lvol_io40 /*  GPIO40 GPIO_EC_BL_EN_OD */
+		>;
+	};
+};

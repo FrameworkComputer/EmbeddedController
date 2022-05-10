@@ -64,3 +64,24 @@ register_corsola_project(
     ],
     extra_kconfig_files=[here / "prj_kingler.conf"],
 )
+
+register_corsola_project(
+    project_name="steelix",
+    chip="npcx9m3f",
+    extra_dts_overlays=[
+        here / "adc_kingler.dts",
+        here / "battery_steelix.dts",
+        here / "i2c_kingler.dts",
+        here / "interrupts_kingler.dts",
+        here / "cbi_eeprom.dts",
+        here / "gpio_steelix.dts",
+        here / "led_steelix.dts",
+        here / "motionsense_kingler.dts",
+        here / "usbc_kingler.dts",
+        here / "default_gpio_pinctrl_kingler.dts",
+    ],
+    extra_kconfig_files=[
+        here / "prj_kingler.conf",
+        here / "prj_steelix.conf",
+    ],
+)

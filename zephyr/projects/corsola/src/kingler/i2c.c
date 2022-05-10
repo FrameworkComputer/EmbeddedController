@@ -6,7 +6,7 @@
 #include "i2c/i2c.h"
 #include "i2c.h"
 
-/* Kingler board specific i2c implementation */
+/* Kingler and Steelix board specific i2c implementation */
 
 #ifdef CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED
 int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)

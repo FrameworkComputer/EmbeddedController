@@ -3,6 +3,10 @@
  * found in the LICENSE file.
  */
 
+/*
+ * Kingler and Steelix use the same dts, take care of this when modify it.
+ */
+
 / {
 	named-i2c-ports {
 		compatible = "named-i2c-ports";

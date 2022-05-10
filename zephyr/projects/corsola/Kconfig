@@ -14,6 +14,12 @@ config BOARD_KINGLER
 	  Build Google Kingler reference board. Krabby has MediaTek MT8186 SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_STEELIX
+	bool "Google Steelix Board"
+	help
+	  Build Google Steelix variant board. Steelix is a variant of Kingler
+	  and has MediaTek MT8186 SoC with NPCX993FA0BX EC.
+
 config VARIANT_CORSOLA_DB_DETECTION
 	bool "Corsola Platform Runtime Daughter Board Detection"
 	depends on PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG
