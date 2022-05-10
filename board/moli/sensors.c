@@ -39,11 +39,11 @@ const struct adc_t adc_channels[] = {
 		.factor_mul = ADC_MAX_VOLT * 39,
 		.factor_div = (ADC_READ_MAX + 1) * 5,
 	},
-	[ADC_PPVAR_IMON] = {  /* 20/(20+8.66) */
+	[ADC_PPVAR_IMON] = {  /* 20/(20+8.66)*50/200 current divider */
 		.name = "PPVAR_IMON",
 		.input_ch = NPCX_ADC_CH3,
 		.factor_mul = ADC_MAX_VOLT * 1433,
-		.factor_div = (ADC_READ_MAX + 1) * 1000,
+		.factor_div = (ADC_READ_MAX + 1) * 250,
 	},
 
 };
