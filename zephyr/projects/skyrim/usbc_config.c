@@ -110,11 +110,18 @@ struct usb_mux usbc1_sbu_mux = {
 	.driver = &ioex_sbu_mux_driver,
 };
 
+int baseboard_anx7483_mux_set(const struct usb_mux *me,
+			      mux_state_t mux_state)
+{
+	return anx7483_set_default_tuning(me, mux_state);
+}
+
 struct usb_mux usbc0_anx7483 = {
 	.usb_port = USBC_PORT_C0,
 	.i2c_port = I2C_PORT_TCPC0,
 	.i2c_addr_flags = ANX7483_I2C_ADDR0_FLAGS,
 	.driver = &anx7483_usb_retimer_driver,
+	.board_set = &baseboard_anx7483_mux_set,
 	.next_mux = &usbc0_sbu_mux,
 };
 
@@ -139,6 +146,7 @@ struct usb_mux usbc1_anx7483 = {
 	.i2c_port = I2C_PORT_TCPC1,
 	.i2c_addr_flags = ANX7483_I2C_ADDR0_FLAGS,
 	.driver = &anx7483_usb_retimer_driver,
+	.board_set = &baseboard_anx7483_mux_set,
 	.next_mux = &usbc1_sbu_mux,
 };
 
