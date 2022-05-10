@@ -329,6 +329,9 @@ void read_touchpad_in_report(void)
 	int xfer_len = 0;
 	int16_t x, y;
 	uint8_t response_byte = 0x08;
+
+	/* Make sure report id is set to an invalid value */
+	data[2] = 0;
 	/*dont trigger disable state during our own transactions*/
 	gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
 	i2c_lock(I2C_PORT_TOUCHPAD, 1);
@@ -338,6 +341,11 @@ void read_touchpad_in_report(void)
 	if (rv != EC_SUCCESS)
 		goto read_failed;
 	xfer_len = (data[1]<<8) + data[0];
+	if (xfer_len == 0) {
+		/* touchpad has reset per i2c-hid-protocol 7.3 */
+		CPRINTS("PS2M Touchpad Reset");
+		goto read_failed;
+	}
 	xfer_len = MIN(126, xfer_len-2);
 	rv = i2c_xfer_unlocked(I2C_PORT_TOUCHPAD,
 							TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
@@ -354,6 +362,10 @@ read_failed:
 			/* try again some other time later if the TP keeps interrupting us */
 			detected_host_packet = true;
 			inreport_retries = 0;
+			MCHP_I2C_CTRL(MCHP_I2C_CTRL4) = BIT(7) |
+				BIT(6) |
+				BIT(3) |
+				BIT(0);
 			CPRINTS("PS2M Too many retries");
 		} else {
 			hook_call_deferred(&retry_tp_read_evt_deferred_data, 25*MSEC);
