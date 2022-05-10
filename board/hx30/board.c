@@ -53,6 +53,7 @@
 #include "pwm_chip.h"
 #include "spi.h"
 #include "spi_chip.h"
+#include "spi_flash.h"
 #include "switch.h"
 #include "system.h"
 #include "task.h"
@@ -370,6 +371,60 @@ void board_reset_pd_mcu(void)
 
 }
 
+#define SPI_FLAGS_REGION 0x80000
+
+void spi_mux_control(int enable)
+{
+	if (enable) {
+		/* Disable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 2);
+	} else {
+		/* Enable LED drv */
+		gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
+		/* Set GPIO56 as SPI for access SPI ROM */
+		gpio_set_alternate_function(1, 0x4000, 1);
+	}
+}
+
+
+void board_spi_read_byte(uint8_t offset, uint8_t *data)
+{
+	int rv;
+
+	spi_mux_control(1);
+
+	rv = spi_flash_read(data, SPI_FLAGS_REGION + offset, 0x01);
+	if (rv != EC_SUCCESS)
+		CPRINTS("SPI fail to read");
+
+	CPRINTS("%s, offset:0x%02x, data:0x%02x", __func__, offset, *data);
+
+	spi_mux_control(0);
+}
+
+void board_spi_write_byte(uint8_t offset, uint8_t data)
+{
+	int rv;
+
+	spi_mux_control(1);
+
+	rv = spi_flash_erase(SPI_FLAGS_REGION, 0x1000);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("SPI fail to erase");
+
+	rv = spi_flash_write(SPI_FLAGS_REGION + offset, 0x01, &data);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("SPI fail to write");
+
+	CPRINTS("%s, offset:0x%02x, data:0x%02x", __func__, offset, data);
+
+	spi_mux_control(0);
+}
+
 /**
  * Check the plug-in AC then power on system setting.
  */
@@ -377,7 +432,7 @@ bool ac_poweron_check(void)
 {
 	uint8_t memcap;
 
-	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
+	board_spi_read_byte(SPI_AC_BOOT_OFFSET, &memcap);
 
 	return memcap ? true : false;
 }
@@ -648,7 +703,7 @@ static void board_init(void)
 {
 	uint8_t memcap;
 
-	system_get_bbram(SYSTEM_BBRAM_IDX_AC_BOOT, &memcap);
+	board_spi_read_byte(SPI_AC_BOOT_OFFSET, &memcap);
 
 	if (memcap && !ac_boot_status())
 		*host_get_customer_memmap(0x48) = (memcap & BIT(0));
@@ -1203,23 +1258,31 @@ static int cmd_spimux(int argc, char **argv)
 		if (!parse_bool(argv[1], &enable))
 			return EC_ERROR_PARAM1;
 
-		if (enable) {
-			/* Disable LED drv */
-			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 0);
-			/* Set GPIO56 as SPI for access SPI ROM */
-			gpio_set_alternate_function(1, 0x4000, 2);
-		} else {
-			/* Enable LED drv */
-			gpio_set_level(GPIO_TYPEC_G_DRV2_EN, 1);
-			/* Set GPIO56 as SPI for access SPI ROM */
-			gpio_set_alternate_function(1, 0x4000, 1);
-		}
+		spi_mux_control(enable);
 	}
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(spimux, cmd_spimux,
 			"[enable/disable]",
 			"Set if spi CLK is in SPI mode (true) or PWM mode");
+
+
+static int cmd_boardspicontrol(int argc, char **argv)
+{
+	uint8_t data;
+
+	if (!strcasecmp(argv[1], "read")) {
+		board_spi_read_byte(0x01, &data);
+		CPRINTS("DEBUG: cmd get data:0x%02x", data);
+	} else if (!strcasecmp(argv[1], "write")) {
+		board_spi_write_byte(0x01, 0xAA);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(boardspi, cmd_boardspicontrol,
+			"[read/write]",
+			"test");
 
 #define FP_LOCKOUT_TIMEOUT (8 * SECOND)
 static void fingerprint_ctrl_detection_deferred(void);

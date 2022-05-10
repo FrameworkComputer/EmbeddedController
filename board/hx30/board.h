@@ -336,6 +336,7 @@
  */
 #define CONFIG_FLASH_SIZE 0x100000
 #define CONFIG_SPI_FLASH_W25Q80
+#define SPI_AC_BOOT_OFFSET 0x00
 
 /*
  * Enable extra SPI flash and generic SPI
@@ -727,6 +728,8 @@ void board_reset_pd_mcu(void);
 /* P sensor */
 void psensor_interrupt(enum gpio_signal signal);
 
+void board_spi_read_byte(uint8_t offset, uint8_t *data);
+void board_spi_write_byte(uint8_t offset, uint8_t data);
 
 /* SOC */
 void soc_signal_interrupt(enum gpio_signal signal);
