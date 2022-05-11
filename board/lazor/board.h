@@ -82,6 +82,9 @@
 #define GPIO_SWITCHCAP_PG_INT_L GPIO_DA9313_GPIO0
 #define GPIO_SWITCHCAP_ON_L GPIO_SWITCHCAP_ON
 
+/* Disable console commands to help save space */
+#undef CONFIG_CMD_BATTFAKE
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
