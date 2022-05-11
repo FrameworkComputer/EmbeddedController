@@ -228,6 +228,7 @@ __override int board_rt1718s_set_frs_enable(int port, int enable)
 void board_reset_pd_mcu(void)
 {
 
+	CPRINTS("Resetting TCPCs...");
 	/* reset C0 ANX3447 */
 	/* Assert reset */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst), 1);
