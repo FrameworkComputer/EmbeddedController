@@ -870,6 +870,10 @@ static int anx7447_get_chip_info(int port, int live,
 
 	chip_info->fw_version_number = (main_version << 8) | build_version;
 
+	/* The minimum OCM firmware version to support FRS. */
+	if (IS_ENABLED(CONFIG_USB_PD_FRS))
+		chip_info->min_req_fw_version_number = 0x0115;
+
 	return EC_SUCCESS;
 }
 
