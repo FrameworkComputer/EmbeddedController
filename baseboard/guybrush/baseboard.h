@@ -155,6 +155,8 @@
 #define CONFIG_BATTERY_COUNT 1
 #define CONFIG_HOSTCMD_BATTERY_V2
 #define CONFIG_BC12_DETECT_PI3USB9201
+/* Enable PEC to detect potential corruption on read (b/230520109) */
+#define CONFIG_SMBUS_PEC
 
 /* Charger Config */
 #define CONFIG_CHARGER
