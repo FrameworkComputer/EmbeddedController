@@ -13,7 +13,10 @@
 #include "usb_pd.h"
 #include "util.h"
 
-test_export_static int command_pd(int argc, char **argv)
+#ifndef TEST_USB_PD_CONSOLE
+static
+#endif
+int command_pd(int argc, char **argv)
 {
 	int port;
 	char *e;
@@ -191,7 +194,7 @@ test_export_static int command_pd(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-#ifndef TEST_BUILD
+#ifndef TEST_USB_PD_CONSOLE
 DECLARE_CONSOLE_COMMAND(pd, command_pd,
 	 "version"
 	 "\ndump [0|1|2|3]"
