@@ -396,6 +396,11 @@ void chipset_do_shutdown(void)
 		;
 }
 
+void board_reset_pd_mcu(void)
+{
+	/* do nothing */
+}
+
 void board_hibernate_late(void)
 {
 	int i;

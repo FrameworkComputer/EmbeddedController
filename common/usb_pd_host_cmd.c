@@ -522,11 +522,7 @@ static enum ec_status pd_control(struct host_cmd_handler_args *args)
 	} else if (cmd->subcmd == PD_RESUME) {
 		enable = 1;
 	} else if (cmd->subcmd == PD_RESET) {
-#ifdef HAS_TASK_PDCMD
 		board_reset_pd_mcu();
-#else
-		return EC_RES_INVALID_COMMAND;
-#endif
 	} else if (cmd->subcmd == PD_CHIP_ON && board_set_tcpc_power_mode) {
 		board_set_tcpc_power_mode(cmd->chip, 1);
 		return EC_RES_SUCCESS;
