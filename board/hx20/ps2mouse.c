@@ -46,7 +46,7 @@ void send_data_byte(uint8_t data) {
 	int timeout = 0;
 
 		/* sometimes the host will get behind */
-	while (aux_buffer_available() < 1 && timeout++ < 25)
+	while (aux_buffer_available() < 1 && timeout++ < AUX_BUFFER_FULL_RETRIES)
 		usleep(10*MSEC);
 	send_aux_data_to_host_interrupt(data);
 }
@@ -59,12 +59,13 @@ void send_movement_packet(void)
 	if (five_button_mode)
 		max = 4;
 	/* sometimes the host will get behind */
-	while (aux_buffer_available() < max && timeout++ < 25 &&
+	while (aux_buffer_available() < max && timeout++ < AUX_BUFFER_FULL_RETRIES &&
 			(*task_get_event_bitmap(emumouse_task_id) & PS2MOUSE_EVT_AUX_DATA) == 0) {
 		usleep(10*MSEC);
 	}
 
-	if (timeout == 25 || (*task_get_event_bitmap(emumouse_task_id) & PS2MOUSE_EVT_AUX_DATA)) {
+	if (timeout == AUX_BUFFER_FULL_RETRIES ||
+		(*task_get_event_bitmap(emumouse_task_id) & PS2MOUSE_EVT_AUX_DATA)) {
 		CPRINTS("PS2M Dropping");
 		/*drop mouse packet - host is too far behind */
 		return;
@@ -332,8 +333,14 @@ void read_touchpad_in_report(void)
 
 	/* Make sure report id is set to an invalid value */
 	data[2] = 0;
+
+	if (power_get_state() == POWER_S5) {
+		return;
+	}
+
 	/*dont trigger disable state during our own transactions*/
 	gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
+	i2c_set_timeout(I2C_PORT_TOUCHPAD, 25*MSEC);
 	i2c_lock(I2C_PORT_TOUCHPAD, 1);
 	rv = i2c_xfer_unlocked(I2C_PORT_TOUCHPAD,
 							TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
@@ -362,11 +369,13 @@ read_failed:
 			/* try again some other time later if the TP keeps interrupting us */
 			detected_host_packet = true;
 			inreport_retries = 0;
+			usleep(10*MSEC);
+			/*The EC SMB controller sometimes gets in a bad state, so try to recover */
 			MCHP_I2C_CTRL(MCHP_I2C_CTRL4) = BIT(7) |
 				BIT(6) |
 				BIT(3) |
 				BIT(0);
-			CPRINTS("PS2M Too many retries");
+			CPRINTS("PS2M  %d Too many retries", rv);
 		} else {
 			hook_call_deferred(&retry_tp_read_evt_deferred_data, 25*MSEC);
 		}
@@ -413,6 +422,7 @@ read_failed:
 			setup_touchpad();
 		}
 	}
+
 }
 /*
  * Looking at timing it takes the SOC about 2ms to grab a tp packet from start of
@@ -423,6 +433,7 @@ void mouse_interrupt_handler_task(void *p)
 {
 	int power_state = 0;
 	int evt;
+	int i;
 
 	emumouse_task_id = task_get_current();
 	while (1) {
@@ -445,14 +456,18 @@ void mouse_interrupt_handler_task(void *p)
 			if (evt & PS2MOUSE_EVT_AUX_DATA) {
 				process_request(aux_data);
 			} else if  (evt & PS2MOUSE_EVT_INTERRUPT) {
-				usleep(4*MSEC);
 				/* at the expensive of a slight additional latency
 				 * check to see if the soc has grabbed this out from under us
 				 */
-				if (gpio_get_level(GPIO_SOC_TP_INT_L) == 1) {
-					CPRINTS("PS2M Detected host packet during interrupt handling");
-					detected_host_packet = true;
-				} else {
+				for (i = 0; i < 4; i++) {
+					usleep(MSEC);
+					if (gpio_get_level(GPIO_SOC_TP_INT_L) == 1) {
+						CPRINTS("PS2M Detected host packet during interrupt handling");
+						detected_host_packet = true;
+						break;
+					}
+				}
+				if (detected_host_packet != true) {
 					read_touchpad_in_report();
 				}
 			}
@@ -479,7 +494,7 @@ void mouse_interrupt_handler_task(void *p)
 				if ((power_state == POWER_S3S0) && gpio_get_level(GPIO_SOC_TP_INT_L) == 0) {
 					read_touchpad_in_report();
 				}
-				if (power_state == POWER_S0S3) {
+				if (power_state == POWER_S0S3 || power_state == POWER_S5) {
 					/* Power Down */
 					gpio_disable_interrupt(GPIO_SOC_TP_INT_L);
 					gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
