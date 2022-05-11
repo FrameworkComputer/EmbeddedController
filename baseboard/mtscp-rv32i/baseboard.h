@@ -60,7 +60,10 @@
 #define CONFIG_PANIC_DRAM_SIZE 0x00001000 /* 4K */
 
 #define CONFIG_PANIC_BASE_OFFSET 0x100 /* reserved for jump data */
+
+#ifdef CHIP_VARIANT_MT8195
 #define CONFIG_PANIC_DATA_BASE (CONFIG_PANIC_DRAM_BASE + CONFIG_PANIC_BASE_OFFSET)
+#endif
 
 /* MPU settings */
 #define NR_MPU_ENTRIES 16
