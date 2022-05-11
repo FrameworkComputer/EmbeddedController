@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+ #include <dt-bindings/usb_pd_tcpm.h>
+
 / {
 	usbc {
 		#address-cells = <1>;
@@ -21,6 +23,11 @@
 			tcpc {
 				compatible = "nuvoton,nct38xx";
 				gpio-dev = <&nct3808_0_P1>;
+				port = <&tcpc0_2>;
+				i2c-addr-flags = "NCT38XX_I2C_ADDR1_1_FLAGS";
+				tcpc-flags = <(
+					TCPC_FLAGS_TCPCI_REV2_0 |
+					TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
 			};
 			chg {
 				compatible = "ti,bq25710";
@@ -39,6 +46,16 @@
 				port = <&c1_bc12>;
 				i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
 			};
+			tcpc {
+				compatible = "parade,ps8xxx";
+				port = <&tcpc1>;
+				i2c-addr-flags = "PS8XXX_I2C_ADDR1_FLAGS";
+				tcpc-flags = <(
+					TCPC_FLAGS_TCPCI_REV2_0 |
+					TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
+					TCPC_FLAGS_CONTROL_VCONN |
+					TCPC_FLAGS_CONTROL_FRS)>;
+			};
 		};
 
 		port2@2 {
@@ -54,6 +71,9 @@
 			tcpc {
 				compatible = "nuvoton,nct38xx";
 				gpio-dev = <&nct3808_0_P2>;
+				port = <&tcpc0_2>;
+				i2c-addr-flags = "NCT38XX_I2C_ADDR2_1_FLAGS";
+				tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
 			};
 		};
 	};

@@ -49,6 +49,7 @@ enum ioex_port {
 };
 #endif /* CONFIG_ZEPHYR */
 
+#ifndef CONFIG_ZEPHYR
 /* USBC TCPC configuration */
 const struct tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
@@ -85,6 +86,7 @@ const struct tcpc_config_t tcpc_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT == USBC_PORT_COUNT);
+#endif  /* !CONFIG_ZEPHYR */
 
 /******************************************************************************/
 /* USB-A charging control */

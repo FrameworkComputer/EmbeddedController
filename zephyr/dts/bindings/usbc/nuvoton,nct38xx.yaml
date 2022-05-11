@@ -12,3 +12,29 @@ properties:
     description: |
       Pointer to the NCT38XX GPIO device. This is used to binding the Cros TCPC
       port index to Zephyr NCT38XX GPIO device.
+
+  port:
+    type: phandle
+    description: |
+      I2C port used to communicate with controller
+
+  i2c-addr-flags:
+    type: string
+    default: "NCT38XX_I2C_ADDR1_1_FLAGS"
+    enum:
+      - "NCT38XX_I2C_ADDR1_1_FLAGS"
+      - "NCT38XX_I2C_ADDR1_2_FLAGS"
+      - "NCT38XX_I2C_ADDR1_3_FLAGS"
+      - "NCT38XX_I2C_ADDR1_4_FLAGS"
+      - "NCT38XX_I2C_ADDR2_1_FLAGS"
+      - "NCT38XX_I2C_ADDR2_2_FLAGS"
+      - "NCT38XX_I2C_ADDR2_3_FLAGS"
+      - "NCT38XX_I2C_ADDR2_4_FLAGS"
+    description: |
+      I2C address of controller
+
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags
