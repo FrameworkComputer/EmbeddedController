@@ -23,7 +23,7 @@
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 
 /* Remove PRL state names to free flash space */
-#define CONFIG_USB_PD_DEBUG_LEVEL 2
+#define CONFIG_USB_PD_DEBUG_LEVEL 1
 
 #define CONFIG_VBOOT_EFS2
 
