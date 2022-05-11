@@ -18,10 +18,6 @@
 /* I2C bus configuraiton */
 #define I2C_PORT_ACCEL	I2C_PORT_SENSOR
 
-/* EC console commands  */
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
-
 #define CONFIG_LED_COMMON
 
 /* Sensors */
