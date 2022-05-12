@@ -406,7 +406,8 @@ enum pd_task_evt {
 	CYPD_EVT_RETIMER_PWR = BIT(9),
 	CYPD_EVT_UPDATE_PWRSTAT = BIT(10),
 	CYPD_EVT_PORT_ENABLE = BIT(11),
-	CYPD_EVT_PORT_DISABLE = BIT(12)
+	CYPD_EVT_PORT_DISABLE = BIT(12),
+	CYPD_EVT_UCSI_PPM_RESET = BIT(13),
 };
 
 /* PD CHIP */
@@ -465,4 +466,13 @@ void cypd_aconly_reconnect(void);
 int cypd_reconnect_port_enable(int controller);
 
 int cypd_reconnect_port_disable(int controller);
+
+void cypd_set_typec_profile(int controller, int port);
+
+void cypd_usci_ppm_reset(void);
+
+void cypd_port_current_setting(void);
+
+void cypd_port_3a_release(int controller, int port);
+
 #endif	/* __CROS_EC_CYPRESS5525_H */

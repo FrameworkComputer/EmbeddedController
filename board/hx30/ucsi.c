@@ -94,6 +94,7 @@ int ucsi_write_tunnel(void)
 			cypd_print_buff("UCSI Msg Out: ", message_out, 6);
 	}
 	if (*command == UCSI_CMD_PPM_RESET) {
+		cypd_usci_ppm_reset();
 		CPRINTS("UCSI PPM_RESET");
 	}
 
