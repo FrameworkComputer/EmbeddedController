@@ -6,6 +6,7 @@
 /dts-v1/;
 
 #include <cros/nuvoton/npcx7.dtsi>
+#include <nuvoton/npcx/npcx7/npcx7-pinctrl.dtsi>
 
 /*
  * #include <nuvoton/npcx7m6fb.dtsi>
@@ -18,5 +19,6 @@
 &uart1 {
 	status = "okay";
 	current-speed = <115200>;
-	pinctrl-0 = <&altc_uart1_sl2>; /* Use UART1_SL2 ie. PIN64.65 */
+	pinctrl-0 = <&uart1_2_sin_sout_gp64_65>;
+	pinctrl-names = "default";
 };
