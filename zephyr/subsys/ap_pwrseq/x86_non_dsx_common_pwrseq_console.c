@@ -66,7 +66,7 @@ SHELL_CMD_REGISTER(powerindebug, NULL,
 static int apshutdown_handler(const struct shell *shell, size_t argc,
 							char **argv)
 {
-	apshutdown();
+	ap_power_force_shutdown(AP_POWER_SHUTDOWN_CONSOLE_CMD);
 	return 0;
 }
 
