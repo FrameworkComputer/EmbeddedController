@@ -9,6 +9,7 @@
 #include <zephyr/dt-bindings/clock/npcx_clock.h>
 #include <drivers/cros_kb_raw.h>
 #include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/kernel.h>
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
@@ -37,9 +38,8 @@ struct cros_kb_raw_npcx_config {
 	uintptr_t base;
 	/* clock configuration */
 	struct npcx_clk_cfg clk_cfg;
-	/* pinmux configuration */
-	const uint8_t alts_size;
-	const struct npcx_alt *alts_list;
+	/* Pin control configuration */
+	const struct pinctrl_dev_config *pcfg;
 	/* Keyboard scan input (KSI) wake-up irq */
 	int irq;
 	/* Size of keyboard inputs-wui mapping array */
@@ -175,6 +175,7 @@ static int cros_kb_raw_npcx_init(const struct device *dev)
 {
 	const struct cros_kb_raw_npcx_config *const config = DRV_CONFIG(dev);
 	struct kbs_reg *const inst = HAL_INSTANCE(dev);
+	int ret;
 
 	/* Pull-up KBSIN0-7 internally */
 	inst->KBSINPU = 0xFF;
@@ -198,8 +199,12 @@ static int cros_kb_raw_npcx_init(const struct device *dev)
 		SET_FIELD(inst->KBSCTL, NPCX_KBSCTL_KBHDRV_FIELD, 0x01);
 	}
 
-	/* Configure pin-mux for kscan device */
-	npcx_pinctrl_mux_configure(config->alts_list, config->alts_size, 1);
+	/* Configure pin control for kscan device */
+	ret = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+	if (ret < 0) {
+		LOG_ERR("KB Raw pinctrl setup failed (%d)", ret);
+		return ret;
+	}
 
 	/* Drive all column lines to low for detection any key press */
 	cros_kb_raw_npcx_drive_column(dev, KEYBOARD_COLUMN_ALL);
@@ -220,16 +225,15 @@ static const struct cros_kb_raw_driver_api cros_kb_raw_npcx_driver_api = {
 	.enable_interrupt = cros_kb_raw_npcx_enable_interrupt,
 };
 
-static const struct npcx_alt cros_kb_raw_alts[] = NPCX_DT_ALT_ITEMS_LIST(0);
+PINCTRL_DT_INST_DEFINE(0);
 
 static const struct cros_kb_raw_npcx_config cros_kb_raw_cfg = {
 	.base = DT_INST_REG_ADDR(0),
-	.alts_size = ARRAY_SIZE(cros_kb_raw_alts),
-	.alts_list = cros_kb_raw_alts,
 	.clk_cfg = NPCX_DT_CLK_CFG_ITEM(0),
 	.irq = DT_INST_IRQN(0),
 	.wui_size = NPCX_DT_WUI_ITEMS_LEN(0),
 	.wui_maps = NPCX_DT_WUI_ITEMS_LIST(0),
+	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
 };
 
 /* Verify there's exactly 1 enabled cros,kb-raw-npcx node. */

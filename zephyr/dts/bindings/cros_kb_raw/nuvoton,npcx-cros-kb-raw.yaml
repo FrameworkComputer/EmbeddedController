@@ -5,7 +5,7 @@ description: Nuvoton, NPCX-cros-kb-raw node
 
 compatible: "nuvoton,npcx-cros-kb-raw"
 
-include: cros-kb-raw-controller.yaml
+include: [cros-kb-raw-controller.yaml, pinctrl-device.yaml]
 
 properties:
     reg:
@@ -15,9 +15,10 @@ properties:
         required: true
 
     pinctrl-0:
-        type: phandles
         required: true
-        description: configurations of pinmux controllers
+
+    pinctrl-names:
+        required: true
 
     wui_maps:
         type: phandles
