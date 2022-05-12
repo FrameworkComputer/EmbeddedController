@@ -7156,13 +7156,24 @@ enum rgbkbd_state {
 
 enum ec_rgbkbd_subcmd {
 	EC_RGBKBD_SUBCMD_CLEAR = 1,
+	EC_RGBKBD_SUBCMD_DEMO = 2,
 	EC_RGBKBD_SUBCMD_COUNT
 };
+
+enum ec_rgbkbd_demo {
+	EC_RGBKBD_DEMO_OFF = 0,
+	EC_RGBKBD_DEMO_FLOW = 1,
+	EC_RGBKBD_DEMO_DOT = 2,
+	EC_RGBKBD_DEMO_COUNT,
+};
+
+BUILD_ASSERT(EC_RGBKBD_DEMO_COUNT <= 255);
 
 struct ec_params_rgbkbd {
 	uint8_t subcmd;         /* Sub-command (enum ec_rgbkbd_subcmd) */
 	union {
-		struct rgb_s color;
+		struct rgb_s color;	/* EC_RGBKBD_SUBCMD_CLEAR */
+		uint8_t demo;		/* EC_RGBKBD_SUBCMD_DEMO */
 	};
 } __ec_align1;
 

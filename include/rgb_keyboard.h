@@ -15,13 +15,6 @@
 #define RGBKBD_MAX_GCC_LEVEL	0xff
 #define RGBKBD_MAX_SCALE	0xff
 
-enum rgbkbd_demo {
-	RGBKBD_DEMO_OFF = 0,
-	RGBKBD_DEMO_FLOW = 1,
-	RGBKBD_DEMO_DOT = 2,
-	RGBKBD_DEMO_COUNT
-};
-
 struct rgbkbd_cfg {
 	/* Driver for LED IC */
 	const struct rgbkbd_drv * const drv;

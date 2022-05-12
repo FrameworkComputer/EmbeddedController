@@ -23,15 +23,14 @@
 #define CPRINTF(fmt, args...) cprintf(CC_RGBKBD, "RGBKBD: " fmt, ##args)
 #define CPRINTS(fmt, args...) cprints(CC_RGBKBD, "RGBKBD: " fmt, ##args)
 
-test_export_static enum rgbkbd_demo demo =
+test_export_static enum ec_rgbkbd_demo demo =
 #if   defined(CONFIG_RGBKBD_DEMO_FLOW)
-	RGBKBD_DEMO_FLOW
+	EC_RGBKBD_DEMO_FLOW;
 #elif defined(CONFIG_RGBKBD_DEMO_DOT)
-	RGBKBD_DEMO_DOT
+	EC_RGBKBD_DEMO_DOT;
 #else
-	RGBKBD_DEMO_OFF
+	EC_RGBKBD_DEMO_OFF;
 #endif
-	;
 
 const int default_demo_interval_ms = 250;
 test_export_static int demo_interval_ms = -1;
@@ -183,16 +182,16 @@ static void rgbkbd_demo_dot(void)
 #endif
 }
 
-static void rgbkbd_demo_run(enum rgbkbd_demo id)
+static void rgbkbd_demo_run(enum ec_rgbkbd_demo id)
 {
 	switch (id) {
-	case RGBKBD_DEMO_FLOW:
+	case EC_RGBKBD_DEMO_FLOW:
 		rgbkbd_demo_flow();
 		break;
-	case RGBKBD_DEMO_DOT:
+	case EC_RGBKBD_DEMO_DOT:
 		rgbkbd_demo_dot();
 		break;
-	case RGBKBD_DEMO_OFF:
+	case EC_RGBKBD_DEMO_OFF:
 	default:
 		break;
 	}
@@ -383,7 +382,7 @@ static int rgbkbd_enable(int enable)
 	return rv;
 }
 
-static void rgbkbd_demo_set(enum rgbkbd_demo new_demo)
+static void rgbkbd_demo_set(enum ec_rgbkbd_demo new_demo)
 {
 	CPRINTS("Setting demo %d with %d ms interval", demo, demo_interval_ms);
 
@@ -394,7 +393,7 @@ static void rgbkbd_demo_set(enum rgbkbd_demo new_demo)
 	rgbkbd_init();
 	rgbkbd_enable(1);
 
-	if (demo == RGBKBD_DEMO_OFF)
+	if (demo == EC_RGBKBD_DEMO_OFF)
 		return;
 
 	demo_interval_ms = default_demo_interval_ms;
@@ -484,7 +483,7 @@ DECLARE_HOST_COMMAND(EC_CMD_RGBKBD_SET_COLOR, hc_rgbkbd_set_color,
 static enum ec_status hc_rgbkbd(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_rgbkbd *p = args->params;
-	enum ec_status rv = EC_RES_ERROR;
+	enum ec_status rv = EC_RES_SUCCESS;
 
 	if (rgbkbd_late_init())
 		return EC_RES_ERROR;
@@ -492,7 +491,11 @@ static enum ec_status hc_rgbkbd(struct host_cmd_handler_args *args)
 	switch (p->subcmd) {
 	case EC_RGBKBD_SUBCMD_CLEAR:
 		rgbkbd_reset_color(p->color);
-		rv = EC_RES_SUCCESS;
+		break;
+	case EC_RGBKBD_SUBCMD_DEMO:
+		if (p->demo >= EC_RGBKBD_DEMO_COUNT)
+			return EC_RES_INVALID_PARAM;
+		rgbkbd_demo_set(p->demo);
 		break;
 	default:
 		rv = EC_RES_INVALID_PARAM;
@@ -532,7 +535,7 @@ test_export_static int cc_rgb(int argc, char **argv)
 	} else if (!strcasecmp(argv[1], "demo")) {
 		/* Usage 4 */
 		val = strtoi(argv[2], &end, 0);
-		if (*end || val >= RGBKBD_DEMO_COUNT)
+		if (*end || val >= EC_RGBKBD_DEMO_COUNT)
 			return EC_ERROR_PARAM1;
 		rgbkbd_demo_set(val);
 		return EC_SUCCESS;
@@ -584,7 +587,7 @@ test_export_static int cc_rgb(int argc, char **argv)
 		return EC_ERROR_PARAM4;
 	color.b = val;
 
-	rgbkbd_demo_set(RGBKBD_DEMO_OFF);
+	rgbkbd_demo_set(EC_RGBKBD_DEMO_OFF);
 	if (y < 0 && x < 0) {
 		/* Usage 3 */
 		rgbkbd_reset_color(color);

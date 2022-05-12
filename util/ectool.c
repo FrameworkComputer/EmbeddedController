@@ -1293,13 +1293,17 @@ int cmd_reboot_ap_on_g3(int argc, char *argv[])
 static void cmd_rgbkbd_help(char *cmd)
 {
 	fprintf(stderr,
-	"  Usage1: %s <key> <RGB>\n"
-	"          Set the color of <key> to <RGB>.\n"
+	"  Usage1: %s <key> <RGB> [<RGB> ...]\n"
+	"          Set the color of <key> to <RGB>. Multiple colors for\n"
+	"          adjacent keys can be set at once.\n"
 	"\n"
 	"  Usage2: %s clear <RGB>\n"
 	"          Set the color of all keys to <RGB>.\n"
+	"\n"
+	"  Usage3: %s demo <num>\n"
+	"          Run demo-<num>. 0: Off, 1: Flow, 2: Dot.\n"
 	"\n",
-	cmd, cmd);
+	cmd, cmd, cmd);
 }
 
 static int cmd_rgbkbd_parse_rgb_text(const char *text, struct rgb_s *color)
@@ -1361,6 +1365,8 @@ out:
 
 static int cmd_rgbkbd(int argc, char *argv[])
 {
+	int val;
+	char *e;
 	int rv = -1;;
 
 	if (argc < 3) {
@@ -1377,7 +1383,19 @@ static int cmd_rgbkbd(int argc, char *argv[])
 			return -1;
 
 		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), NULL, 0);
-	} else if (2 < argc) {
+	} else if (argc == 3 && !strcasecmp(argv[1], "demo")) {
+		/* Usage 3 */
+		struct ec_params_rgbkbd p;
+
+		val = strtol(argv[2], &e, 0);
+		if ((e && *e) || val >= EC_RGBKBD_DEMO_COUNT) {
+			fprintf(stderr, "Invalid demo id: %s\n", argv[2]);
+			return -1;
+		}
+		p.subcmd = EC_RGBKBD_SUBCMD_DEMO;
+		p.demo = val;
+		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), NULL, 0);
+	} else {
 		/* Usage 1 */
 		rv = cmd_rgbkbd_set_color(argc, argv);
 	}
