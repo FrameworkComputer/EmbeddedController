@@ -762,6 +762,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
 		HOOK_PRIO_DEFAULT);
 
+static int force_gpio6_rework;
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
@@ -772,7 +773,7 @@ static void board_chipset_resume(void)
 	charge_psys_onoff(1);
 
 	/* Enable BB retimer power, for MP boards. */
-	if (board_get_version() > BOARD_VERSION_10)
+	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework)
 		gpio_set_level(GPIO_PM_SLP_S0_L, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
@@ -790,12 +791,31 @@ static void board_chipset_suspend(void)
 	charge_psys_onoff(0);
 
 	/* Disable BB retimer power, for MP boards. */
-	if (board_get_version() > BOARD_VERSION_10)
+	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework)
 		gpio_set_level(GPIO_PM_SLP_S0_L, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
 		board_chipset_suspend,
 		HOOK_PRIO_DEFAULT);
+
+
+static int cmd_forcegpio6(int argc, char **argv)
+{
+	if (argc == 2 && !strcasecmp(argv[1], "enable")) {
+		force_gpio6_rework = 1;
+		gpio_set_flags(GPIO_PM_SLP_S0_L, GPIO_OUTPUT);
+	} else if (argc == 2 && !strcasecmp(argv[1], "disable")) {
+		force_gpio6_rework = 0;
+		if (board_get_version() <= BOARD_VERSION_8)
+			gpio_set_flags(GPIO_PM_SLP_S0_L, GPIO_INPUT);
+	} else {
+		return EC_ERROR_PARAM1;
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(forcegpio6, cmd_forcegpio6,
+			"[enable/disable]",
+			"Force retimer GPIO6 control on early boards with rework");
 
 void board_hibernate(void)
 {
