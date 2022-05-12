@@ -9,6 +9,7 @@
 #include <assert.h>
 #include <zephyr/dt-bindings/clock/npcx_clock.h>
 #include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/pinctrl.h>
 #include <drivers/cros_shi.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
@@ -134,9 +135,8 @@ struct cros_shi_npcx_config {
 	uintptr_t base;
 	/* clock configuration */
 	struct npcx_clk_cfg clk_cfg;
-	/* pinmux configuration */
-	const uint8_t alts_size;
-	const struct npcx_alt *alts_list;
+	/* Pin control configuration */
+	const struct pinctrl_dev_config *pcfg;
 	/* SHI IRQ */
 	int irq;
 	struct npcx_wui shi_cs_wui;
@@ -155,13 +155,12 @@ struct shi_bus_parameters {
 	uint64_t rx_deadline; /* deadline of receiving            */
 } shi_params;
 
-static const struct npcx_alt cros_shi_alts[] = NPCX_DT_ALT_ITEMS_LIST(0);
+PINCTRL_DT_INST_DEFINE(0);
 
 static const struct cros_shi_npcx_config cros_shi_cfg = {
 	.base = DT_INST_REG_ADDR(0),
 	.clk_cfg = NPCX_DT_CLK_CFG_ITEM(0),
-	.alts_size = ARRAY_SIZE(cros_shi_alts),
-	.alts_list = cros_shi_alts,
+	.pcfg = PINCTRL_DT_INST_DEV_CONFIG_GET(0),
 	.irq = DT_INST_IRQN(0),
 	.shi_cs_wui = NPCX_DT_WUI_ITEM_BY_NAME(0, shi_cs_wui),
 };
@@ -778,8 +777,12 @@ static int cros_shi_npcx_enable(const struct device *dev)
 	cros_shi_npcx_reset_prepare(inst);
 	npcx_miwu_irq_disable(&config->shi_cs_wui);
 
-	/* Configure pin-mux from GPIO to SHI. */
-	npcx_pinctrl_mux_configure(config->alts_list, config->alts_size, 1);
+	/* Configure pin control for SHI */
+	ret = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_DEFAULT);
+	if (ret < 0) {
+		LOG_ERR("cros_shi_npcx pinctrl setup failed (%d)", ret);
+		return ret;
+	}
 
 	NVIC_ClearPendingIRQ(DT_INST_IRQN(0));
 	npcx_miwu_irq_enable(&config->shi_cs_wui);
@@ -799,8 +802,12 @@ static int cros_shi_npcx_disable(const struct device *dev)
 	irq_disable(DT_INST_IRQN(0));
 	npcx_miwu_irq_disable(&config->shi_cs_wui);
 
-	/* Configure pin-mux from SHI to GPIO. */
-	npcx_pinctrl_mux_configure(config->alts_list, config->alts_size, 0);
+	/* Configure pin control back to GPIO */
+	ret = pinctrl_apply_state(config->pcfg, PINCTRL_STATE_SLEEP);
+	if (ret < 0) {
+		LOG_ERR("KB Raw pinctrl setup failed (%d)", ret);
+		return ret;
+	}
 
 	ret = clock_control_off(clk_dev,
 			       (clock_control_subsys_t *)&config->clk_cfg);
