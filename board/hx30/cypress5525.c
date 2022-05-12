@@ -86,6 +86,10 @@ struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 bool verbose_msg_logging;
 static bool firmware_update;
+static int pd_3a_flag;
+static int pd_3a_controller;
+static int pd_3a_port;
+
 
 void set_pd_fw_update(bool update)
 {
@@ -478,13 +482,15 @@ int cyp5525_setup(int controller)
 	 */
 
 	int rv, data, i;
-	#define CYPD_SETUP_CMDS_LEN  5
+	#define CYPD_SETUP_CMDS_LEN  7
 	struct {
 		int reg;
 		int value;
 		int length;
 		int status_reg;
 	} const cypd_setup_cmds[] = {
+		{ CYP5525_PD_CONTROL_REG(0), CYPD_PD_CMD_SET_TYPEC_1_5A, CYP5525_PORT0_INTR},	/* Set the port 0 PDO 1.5A */
+		{ CYP5525_PD_CONTROL_REG(1), CYPD_PD_CMD_SET_TYPEC_1_5A, CYP5525_PORT1_INTR},	/* Set the port 1 PDO 1.5A */
 		{ CYP5525_EVENT_MASK_REG(0), 0x7ffff, 4, CYP5525_PORT0_INTR},	/* Set the port 0 event mask */
 		{ CYP5525_EVENT_MASK_REG(1), 0x7ffff, 4, CYP5525_PORT1_INTR },	/* Set the port 1 event mask */
 		{ CYP5525_VDM_EC_CONTROL_REG(0), CYP5525_EXTEND_MSG_CTRL_EN, 1, CYP5525_PORT0_INTR},	/* Set the port 0 event mask */
@@ -971,6 +977,8 @@ void cyp5525_port_int(int controller, int port)
 		pd_port_states[port_idx].current = 0;
 		pd_port_states[port_idx].voltage = 0;
 		pd_set_input_current_limit(port_idx, 0, 0);
+		cypd_port_3a_release(controller, port);
+		cypd_set_typec_profile(controller, port);
 		cypd_update_port_state(controller, port);
 
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
@@ -979,10 +987,12 @@ void cyp5525_port_int(int controller, int port)
 	case CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
 		/*todo we can probably clean this up to remove some of this*/
+		cypd_set_typec_profile(controller, port);
 		cypd_update_port_state(controller, port);
 		break;
 	case CYPD_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
+		cypd_set_typec_profile(controller, port);
 		cypd_update_port_state(controller, port);
 		break;
 	case CYPD_RESPONSE_EXT_MSG_SOP_RX:
@@ -1300,6 +1310,14 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_reconnect_port_enable(1);
 		}
 
+		/*
+		 * USCI PPM RESET will make PD current setting to default
+		 * need setting port current again
+		 */
+		if (evt & CYPD_EVT_UCSI_PPM_RESET) {
+			cypd_port_current_setting();
+		}
+
 		if (evt & CYPD_EVT_S_CHANGE) {
 			update_system_power_state();
 		}
@@ -1403,6 +1421,119 @@ void cypd_aconly_reconnect(void)
 			cypd_enque_evt(CYPD_EVT_PORT_DISABLE, 0);
 	}
 }
+
+void cypd_usci_ppm_reset(void)
+{
+	int events;
+
+	events = task_wait_event_mask(TASK_EVENT_TIMER, 50*MSEC);
+	if (events & TASK_EVENT_TIMER)
+		cypd_enque_evt(CYPD_EVT_UCSI_PPM_RESET, 0);
+}
+
+void cypd_port_current_setting(void)
+{
+	for (int i = 0; i < PD_CHIP_COUNT; i++) {
+		cypd_set_typec_profile(i, 0);
+		cypd_set_typec_profile(i, 1);
+	}
+}
+
+int cypd_port_3a_status(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	if (pd_3a_flag &&
+		controller == pd_3a_controller &&
+		port_idx == pd_3a_port)
+		return true;
+	return false;
+}
+
+void cypd_port_3a_release(int controller, int port)
+{
+	if (cypd_port_3a_status(controller, port)) {
+		pd_3a_flag = 0;
+		CPRINTS("CYPD release 3A");
+	}
+}
+
+void cypd_set_port_3a(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	pd_3a_flag = 1;
+	pd_3a_controller = controller;
+	pd_3a_port = port_idx;
+}
+
+void cypd_set_typec_profile(int controller, int port)
+{
+	int rv;
+	uint8_t pd_status_reg[4];
+	uint8_t rdo_reg[4];
+
+	int typec_status_reg;
+	int rdo_max_current = 0;
+	int port_idx = (controller << 1) + port;
+
+	rv = cypd_read_reg8(controller, CYP5525_TYPE_C_STATUS_REG(port), &typec_status_reg);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_TYPE_C_STATUS_REG failed");
+	pd_port_states[port_idx].c_state = (typec_status_reg >> 2) & 0x7;
+
+	/* if port no device connect set type c profile to 1.5A */
+	if (pd_port_states[port_idx].c_state == CYPD_STATUS_NOTHING) {
+		cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
+		return;
+	}
+
+	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), pd_status_reg, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_PD_STATUS_REG failed");
+	pd_port_states[port_idx].pd_state = pd_status_reg[1] & BIT(2) ? 1 : 0; /*do we have a valid PD contract*/
+	pd_port_states[port_idx].power_role = pd_status_reg[1] & BIT(0) ? PD_ROLE_SOURCE : PD_ROLE_SINK;
+	pd_port_states[port_idx].data_role = pd_status_reg[0] & BIT(6) ? PD_ROLE_DFP : PD_ROLE_UFP;
+	pd_port_states[port_idx].vconn =  pd_status_reg[1] & BIT(5) ? PD_ROLE_VCONN_SRC : PD_ROLE_VCONN_OFF;
+
+	if (pd_port_states[port_idx].power_role == PD_ROLE_SINK)
+		return;
+
+	if (pd_port_states[port_idx].power_role == PD_ROLE_SOURCE) {
+		if (pd_port_states[port_idx].pd_state) {
+			/*
+			 * first time set 3A PDO to device
+			 * when device request RDO <= 1.5A
+			 * resend 1.5A pdo to device
+			 */
+			if (!pd_3a_flag)
+				cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_3A);
+			else
+				cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
+
+			cypd_read_reg_block(controller, CYP5525_CURRENT_RDO_REG(port), rdo_reg, 4);
+			rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
+
+			if (rdo_max_current <= 1500) {
+				cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
+				cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
+			} else if (!pd_3a_flag) {
+				cypd_set_port_3a(controller, port);
+				cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_3A);
+				cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_3A);
+			} else if (cypd_port_3a_status(controller, port)) {
+				cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_3A);
+				cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_3A);
+			} else {
+				cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
+				cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
+			}
+		} else {
+			cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
+		}
+	}
+}
+
 
 int cypd_get_pps_power_budget(void)
 {
