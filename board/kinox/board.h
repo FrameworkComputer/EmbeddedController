@@ -128,9 +128,11 @@
 #include "usbc_config.h"
 
 enum adp_id {
-	TINY = 1,
+	UNKNOWN,
+	TINY,
 	TIO1,
-	TIO2
+	TIO2,
+	TYPEC
 };
 
 struct adpater_id_params {

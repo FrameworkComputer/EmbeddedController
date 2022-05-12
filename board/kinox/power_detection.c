@@ -27,6 +27,7 @@ static const char * const adp_id_names[] = {
 	"tiny",
 	"tio1",
 	"tio2",
+	"typec",
 };
 
 /* ADP_ID control */
@@ -183,6 +184,51 @@ struct adpater_id_params tiny_power[] = {
 	},
 };
 
+struct adpater_id_params typec_power[] = {
+	{
+	.charge_voltage = 20000,
+	.charge_current = 1500,
+	.watt = 30,
+	.obp95 = 500,
+	.obp85 = 440,
+	},
+	{
+	.charge_voltage = 15000,
+	.charge_current = 2000,
+	.watt = 30,
+	.obp95 = 660,
+	.obp85 = 590,
+	},
+	{
+	.charge_voltage = 20000,
+	.charge_current = 2250,
+	.watt = 45,
+	.obp95 = 750,
+	.obp85 = 670,
+	},
+	{
+	.charge_voltage = 15000,
+	.charge_current = 3000,
+	.watt = 45,
+	.obp95 = 990,
+	.obp85 = 890,
+	},
+	{
+	.charge_voltage = 20000,
+	.charge_current = 3250,
+	.watt = 65,
+	.obp95 = 1080,
+	.obp85 = 960,
+	},
+	{
+	.charge_voltage = 20000,
+	.charge_current = 5000,
+	.watt = 100,
+	.obp95 = 1660,
+	.obp85 = 1480,
+	},
+};
+
 struct adpater_id_params power_type[8];
 static int adp_id_value_debounce;
 
@@ -234,6 +280,25 @@ static void set_up_adc_irqs(void)
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH2, 1);
 }
 
+void set_the_obp(int power_type_index, int adp_type)
+{
+	struct charge_port_info pi = { 0 };
+
+	adc_obp_point_95.thresh_assert = power_type[power_type_index].obp95;
+	adc_obp_point_85.thresh_assert = power_type[power_type_index].obp85;
+	set_up_adc_irqs();
+	if (adp_type != TYPEC) {
+		/* Only the TIO and Tiny need to update */
+		pi.voltage = power_type[power_type_index].charge_voltage;
+		pi.current = power_type[power_type_index].charge_current;
+		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+					DEDICATED_CHARGE_PORT, &pi);
+	}
+
+	CPRINTS("Power type %s, %dW", adp_id_names[adp_type],
+		power_type[power_type_index].watt);
+}
+
 /*
  *       Scalar change to   Scalar change to
  *      downgrade voltage    3.3V voltage
@@ -255,7 +320,6 @@ static void adp_id_deferred(void);
 DECLARE_DEFERRED(adp_id_deferred);
 void adp_id_deferred(void)
 {
-	struct charge_port_info pi = { 0 };
 	int i = 0;
 	int adp_type = 0;
 	int adp_id_value;
@@ -279,11 +343,10 @@ void adp_id_deferred(void)
 		adp_type = TINY;
 	} else {
 		CPRINTS("ADP_ID mismatch anything!");
-		/* Set the default shipping adaptor max ADC value */
+		/* Set the default 65w adaptor max ADC value */
 		adp_finial_adc_value = 0x69;
 		adp_type = TINY;
 	}
-
 
 	switch (adp_type) {
 	case TIO1:
@@ -305,23 +368,42 @@ void adp_id_deferred(void)
 
 	for (i = 0; (i < power_type_len) && adp_type; i++) {
 		if (adp_finial_adc_value <= power_type[i].max_voltage) {
-			adc_obp_point_95.thresh_assert = power_type[i].obp95;
-			adc_obp_point_85.thresh_assert = power_type[i].obp85;
-			pi.voltage = power_type[i].charge_voltage;
-			pi.current = power_type[i].charge_current;
-			set_up_adc_irqs();
-			charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-						DEDICATED_CHARGE_PORT, &pi);
-			CPRINTS("Power type %s, %dW", adp_id_names[adp_type],
-				power_type[i].watt);
+			set_the_obp(i, adp_type);
 			break;
 		}
 	}
 }
 
-static void adp_id_init(void)
+static void barrel_jack_setting(void)
 {
-	/* Delay 220ms to get the first ADP_ID value */
-	hook_call_deferred(&adp_id_deferred_data, 220 * MSEC);
+	/* Check ADP_ID when barrel jack is present */
+	if (!gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL))
+		/* Delay 220ms to get the first ADP_ID value */
+		hook_call_deferred(&adp_id_deferred_data, 220 * MSEC);
 }
-DECLARE_HOOK(HOOK_INIT, adp_id_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, barrel_jack_setting, HOOK_PRIO_DEFAULT);
+
+static void typec_adapter_setting(void)
+{
+	int i = 0;
+	int adp_type = TYPEC;
+	int adapter_current_ma;
+	int power_type_len;
+
+	/* Check the barrel jack is not present */
+	if (gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL)) {
+		adapter_current_ma = charge_manager_get_charger_current();
+		power_type_len = sizeof(typec_power) /
+					sizeof(struct adpater_id_params);
+
+		memcpy(&power_type, &typec_power, sizeof(typec_power));
+		for (i = (power_type_len - 1); i >= 0; i--) {
+			if (adapter_current_ma >=
+				power_type[i].charge_current) {
+				set_the_obp(i, adp_type);
+				break;
+			}
+		}
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, typec_adapter_setting, HOOK_PRIO_DEFAULT);
