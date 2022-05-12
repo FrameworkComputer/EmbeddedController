@@ -17,4 +17,5 @@
 					id, i2c_addr_flags),                  \
 		},                                                            \
 		.drv = &ps8xxx_tcpm_drv,                                      \
+		.flags = DT_PROP(id, tcpc_flags),                             \
 	},

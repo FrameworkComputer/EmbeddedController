@@ -21,3 +21,9 @@ properties:
       - "PS8XXX_I2C_ADDR4_FLAGS"
     description: |
       I2C address of controller
+
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags
