@@ -1282,21 +1282,22 @@ void cypd_interrupt_handler_task(void *p)
 
 		if (evt & CYPD_EVT_PORT_DISABLE) {
 			CPRINTS("CYPD_EVT_PORT_DISABLE");
-			cypd_reconnect_port_disable(0, 0);
-			cypd_reconnect_port_disable(1, 0);
-			cypd_reconnect_port_disable(0, 1);
-			cypd_reconnect_port_disable(1, 1);
-			events = task_wait_event_mask(TASK_EVENT_TIMER, 300*MSEC);
+			cypd_reconnect_port_disable(0);
+			cypd_reconnect_port_disable(1);
+			/*
+			 * In the specification section 4.2.3.14, stopping an active
+			 * PD port can take a long time (~1 second) in case VBus is
+			 * being provided andneeds to be discharged
+			 */
+			events = task_wait_event_mask(TASK_EVENT_TIMER, 1000*MSEC);
 			if (events & TASK_EVENT_TIMER)
 				cypd_enque_evt(CYPD_EVT_PORT_ENABLE, 0);
 		}
 
 		if (evt & CYPD_EVT_PORT_ENABLE) {
 			CPRINTS("CYPD_EVT_PORT_ENABLE");
-			cypd_reconnect_port_enable(0, 0);
-			cypd_reconnect_port_enable(1, 0);
-			cypd_reconnect_port_enable(0, 1);
-			cypd_reconnect_port_enable(1, 1);
+			cypd_reconnect_port_enable(0);
+			cypd_reconnect_port_enable(1);
 		}
 
 		if (evt & CYPD_EVT_S_CHANGE) {
@@ -1340,64 +1341,52 @@ void cypd_interrupt_handler_task(void *p)
 	}
 }
 
-int cypd_reconnect_port_disable(int controller, int port)
+int cypd_reconnect_port_disable(int controller)
 {
 	int rv;
 	uint8_t pd_status_reg[4];
-	int port_pd_state, port_power_role, data;
+	int port_power_role;
+	int portEnable = 0; /* default disable all port*/
 
-	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), pd_status_reg, 4);
+	/* check the first port's status */
+	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(0), pd_status_reg, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("CYP5525_PD_STATUS_REG failed");
 
-	port_pd_state = pd_status_reg[1] & BIT(2);
 	port_power_role = pd_status_reg[1] & BIT(0);
+	/* Does not disable the source port */
+	if (port_power_role == PD_ROLE_SINK && (pd_status_reg[1] & BIT(2)) == BIT(2))
+		portEnable |= BIT(0);
 
-	if (port_power_role == PD_ROLE_SINK && port_pd_state)
-		return EC_SUCCESS;
+	/* check the second port's status */
+	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(1), pd_status_reg, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("CYP5525_PD_STATUS_REG failed");
 
-	rv = cypd_read_reg8(controller, CYP5525_PDPORT_ENABLE_REG, &data);
+	port_power_role = pd_status_reg[1] & BIT(0);
+	/* Does not disable the source port */
+	if (port_power_role == PD_ROLE_SINK && (pd_status_reg[1] & BIT(2)) == BIT(2))
+		portEnable |= BIT(1);
+
+
+	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, portEnable);
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	data &= ~BIT(port);
-
-	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, data);
-	if (rv != EC_SUCCESS)
-		return rv;
-
-	CPRINTS("disable controller: %d, Port: %d", controller, port);
+	CPRINTS("disable controller: %d, Port: 0x%02x", controller, portEnable);
 
 	return rv;
 }
 
-int cypd_reconnect_port_enable(int controller, int port)
+int cypd_reconnect_port_enable(int controller)
 {
 	int rv;
-	uint8_t pd_status_reg[4];
-	int port_pd_state, port_power_role, data;
 
-	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), pd_status_reg, 4);
-	if (rv != EC_SUCCESS)
-		CPRINTS("CYP5525_PD_STATUS_REG failed");
-
-	port_pd_state = pd_status_reg[1] & BIT(2);
-	port_power_role = pd_status_reg[1] & BIT(0);
-
-	if (port_power_role == PD_ROLE_SINK && port_pd_state)
-		return EC_SUCCESS;
-
-	rv = cypd_read_reg8(controller, CYP5525_PDPORT_ENABLE_REG, &data);
+	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, 3);
 	if (rv != EC_SUCCESS)
 		return rv;
 
-	data |= BIT(port);
-
-	rv = cypd_write_reg8(controller, CYP5525_PDPORT_ENABLE_REG, data);
-	if (rv != EC_SUCCESS)
-		return rv;
-
-	CPRINTS("enable controller: %d, Port: %d", controller, port);
+	CPRINTS("enable controller: %d", controller);
 
 	return rv;
 }
