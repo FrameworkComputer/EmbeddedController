@@ -30,6 +30,11 @@ static void *usb_attach_5v_3a_pd_source_setup(void)
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
 	test_fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
+
+	/* Configure TCPCI revision in board config and emulator */
+	tcpc_config[0].flags |= TCPC_FLAGS_TCPCI_REV2_0;
+	tcpci_emul_set_rev(test_fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
+
 	return &test_fixture;
 }
 
