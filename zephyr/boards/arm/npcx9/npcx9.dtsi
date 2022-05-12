@@ -3,11 +3,7 @@
  * found in the LICENSE file.
  */
 
-/dts-v1/;
-
-#include <cros/nuvoton/npcx9.dtsi>
 #include <dt-bindings/gpio_defines.h>
-#include <nuvoton/npcx9m3f.dtsi>
 
 / {
 	model = "NPCX9";

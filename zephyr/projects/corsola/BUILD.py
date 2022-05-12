@@ -15,7 +15,7 @@ def register_corsola_project(
 ):
     """Register a variant of corsola."""
     register_func = register_binman_project
-    if chip.startswith("npcx9"):
+    if chip.startswith("npcx"):
         register_func = register_npcx_project
 
     register_func(
@@ -49,7 +49,7 @@ register_corsola_project(
 
 register_corsola_project(
     project_name="kingler",
-    chip="npcx9",
+    chip="npcx9m3f",
     extra_dts_overlays=[
         here / "adc_kingler.dts",
         here / "battery_kingler.dts",

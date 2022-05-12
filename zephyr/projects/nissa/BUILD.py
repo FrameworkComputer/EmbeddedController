@@ -15,7 +15,7 @@ def register_nissa_project(
 ):
     """Register a variant of nissa."""
     register_func = register_binman_project
-    if chip.startswith("npcx9"):
+    if chip.startswith("npcx"):
         register_func = register_npcx_project
 
     register_func(
@@ -28,7 +28,7 @@ def register_nissa_project(
 
 register_nissa_project(
     project_name="nivviks",
-    chip="npcx9",
+    chip="npcx9m3f",
     extra_dts_overlays=[
         here / "nivviks_generated.dts",
         here / "nivviks_overlay.dts",
@@ -56,7 +56,7 @@ register_nissa_project(
 
 register_nissa_project(
     project_name="craask",
-    chip="npcx9",
+    chip="npcx9m3f",
     extra_dts_overlays=[
         here / "craask_generated.dts",
         here / "craask_overlay.dts",

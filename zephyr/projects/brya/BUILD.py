@@ -9,7 +9,7 @@ def register_npcx9_variant(project_name, extra_dts_overlays=(), extra_kconfig_fi
     """Register a variant of a brya, even though this is not named as such."""
     return register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9",
+        zephyr_board="npcx9m3f",
         dts_overlays=[
             "adc.dts",
             "battery.dts",
