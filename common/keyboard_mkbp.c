@@ -80,19 +80,6 @@ static int keyboard_get_next_event(uint8_t *out)
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_KEY_MATRIX, keyboard_get_next_event);
 
-void keyboard_send_battery_key(void)
-{
-	uint8_t state[KEYBOARD_COLS_MAX];
-
-	/* Copy debounced state and add battery pseudo-key */
-	memcpy(state, keyboard_scan_get_state(), sizeof(state));
-	state[BATTERY_KEY_COL] ^= BATTERY_KEY_ROW_MASK;
-
-	/* Add to FIFO only if AP is on or else it will wake from suspend */
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		mkbp_keyboard_add(state);
-}
-
 void clear_typematic_key(void)
 { }
 
