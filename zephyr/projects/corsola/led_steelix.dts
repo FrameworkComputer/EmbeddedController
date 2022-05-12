@@ -36,22 +36,37 @@
 };
 
 /* Red LED */
+&pwm0_gpc3 {
+	drive-open-drain;
+};
+
 &pwm0 {
 	status = "okay";
-	drive-open-drain;
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
 };
 
 /* Green LED */
+&pwm1_gpc2 {
+	drive-open-drain;
+};
+
 &pwm1 {
 	status = "okay";
-	drive-open-drain;
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
 };
 
 /* Blue LED */
+&pwm2_gpc4 {
+	drive-open-drain;
+};
+
 &pwm2 {
 	status = "okay";
-	drive-open-drain;
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
 };
