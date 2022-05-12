@@ -5,6 +5,7 @@
 
 #include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/logging/log.h>
 #include <soc.h>
@@ -590,22 +591,25 @@ DEVICE_DEFINE(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init, NULL,
 #define DBG_PINCTRL_PH     DT_PHANDLE_BY_IDX(DBG_NODE, pinctrl_0, 0)
 #define DBG_ALT_FILED(f)   DT_PHA_BY_IDX(DBG_PINCTRL_PH, alts, 0, f)
 
+PINCTRL_DT_DEFINE(DBG_NODE);
+
 static int jtag_init(const struct device *dev)
 {
 	ARG_UNUSED(dev);
 	struct dbg_reg *const dbg_reg_base = HAL_DBG_REG_BASE_ADDR;
-	const struct npcx_alt jtag_alts[] = {
-		{
-			.group = DBG_ALT_FILED(group),
-			.bit = DBG_ALT_FILED(bit),
-			.inverted = DBG_ALT_FILED(inv)
-		}
-	};
-
+	const struct pinctrl_dev_config *pcfg =
+		PINCTRL_DT_DEV_CONFIG_GET(DBG_NODE);
 	dbg_reg_base->DBGCTRL = 0x04;
 	dbg_reg_base->DBGFRZEN3 &= ~BIT(NPCX_DBGFRZEN3_GLBL_FRZ_DIS);
-	if (DT_NODE_HAS_STATUS(DT_NODELABEL(dbg), okay))
-		npcx_pinctrl_mux_configure(jtag_alts, 1, 1);
+	if (DT_NODE_HAS_STATUS(DT_NODELABEL(dbg), okay)) {
+		int ret;
+
+		ret = pinctrl_apply_state(pcfg, PINCTRL_STATE_DEFAULT);
+		if (ret < 0) {
+			LOG_ERR("DBG pinctrl setup failed (%d)", ret);
+		}
+		return ret;
+	}
 
 	return 0;
 }

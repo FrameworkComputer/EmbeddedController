@@ -5,13 +5,15 @@ description: Nuvoton, NPCX Debug Interface
 
 compatible: "nuvoton,npcx-cros-dbg"
 
-include: base.yaml
+include: [base.yaml, pinctrl-device.yaml]
+
 
 properties:
     reg:
         required: true
 
     pinctrl-0:
-        type: phandles
         required: true
-        description: configurations of pinmux controllers
+
+    pinctrl-names:
+        required: true
