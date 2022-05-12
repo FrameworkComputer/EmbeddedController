@@ -1125,7 +1125,7 @@ static const struct ec_thermal_config thermal_inductor_local = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(40),
+	.temp_fan_off = C_TO_K(51),
 	.temp_fan_max = C_TO_K(69),
 };
 
@@ -1140,7 +1140,7 @@ static const struct ec_thermal_config thermal_inductor_cpu = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(40),
+	.temp_fan_off = C_TO_K(51),
 	.temp_fan_max = C_TO_K(69),
 };
 static const struct ec_thermal_config thermal_inductor_ddr = {
@@ -1200,7 +1200,7 @@ static const struct ec_thermal_config thermal_inductor2_vccgt = {
 		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
 		[EC_TEMP_THRESH_HALT] = 0,
 	},
-	.temp_fan_off = C_TO_K(40),
+	.temp_fan_off = C_TO_K(51),
 	.temp_fan_max = C_TO_K(69),
 };
 
