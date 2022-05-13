@@ -13,4 +13,6 @@
 
 &pwm6 {
 	status = "okay";
+	pinctrl-0 = <&pwm6_gpc0>;
+	pinctrl-names = "default";
 };
