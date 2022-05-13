@@ -202,8 +202,6 @@ int board_chipset_power_on(void)
 	gpio_set_level(GPIO_PCH_PWR_EN, 1);
 
 	msleep(10);
-	/* Need to configure the retimer recovery path before RSMRST is released but after PCH_PWR_EN is up */
-	cypd_set_retimer_power(POWER_G3S5);
 
 	gpio_set_level(GPIO_PCH_PWRBTN_L, 1);
 
