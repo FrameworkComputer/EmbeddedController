@@ -53,6 +53,7 @@ register_corsola_project(
     extra_dts_overlays=[
         here / "adc_kingler.dts",
         here / "battery_kingler.dts",
+        here / "host_kingler.dts",
         here / "i2c_kingler.dts",
         here / "interrupts_kingler.dts",
         here / "cbi_eeprom.dts",

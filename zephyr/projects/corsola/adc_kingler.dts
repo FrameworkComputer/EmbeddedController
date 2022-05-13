@@ -42,4 +42,9 @@
 
 &adc0 {
 	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44
+		     &adc0_chan2_gp43
+		     &adc0_chan3_gp42>;
+	pinctrl-names = "default";
 };
