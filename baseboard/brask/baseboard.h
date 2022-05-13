@@ -100,7 +100,7 @@
 /* Matrix Keyboard Protocol */
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_INPUT_DEVICES
-#define CONFIG_MKBP_USE_HOST_EVENT
+#define CONFIG_MKBP_USE_GPIO_AND_HOST_EVENT
 
 /* Thermal features */
 #define CONFIG_DPTF
