@@ -53,3 +53,8 @@ enum ec_cfg_stylus_type ec_cfg_stylus(void)
 {
 	return fw_config.stylus;
 }
+
+enum ec_cfg_kb_backlight_type ec_cfg_kb_backlight(void)
+{
+	return fw_config.rgb;
+}
