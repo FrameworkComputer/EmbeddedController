@@ -83,7 +83,7 @@ static void shi_init(void)
 	ap_power_ev_init_callback(&cb, shi_power_change,
 #if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
 				  AP_POWER_RESUME_INIT |
-				  AP_POWER_SHUTDOWN_COMPLETE
+				  AP_POWER_SUSPEND_COMPLETE
 #else
 				  AP_POWER_RESUME |
 				  AP_POWER_SUSPEND
