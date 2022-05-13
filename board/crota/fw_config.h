@@ -16,7 +16,6 @@
 
 enum ec_cfg_usb_db_type {
 	DB_USB_ABSENT = 0,
-	DB_USB3_PS8815 = 1,
 	DB_USB_ABSENT2 = 15
 };
 

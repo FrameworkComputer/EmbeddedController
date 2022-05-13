@@ -69,8 +69,6 @@
 #define CONFIG_IO_EXPANDER_NCT38XX
 #define CONFIG_IO_EXPANDER_PORT_COUNT		2
 
-#define CONFIG_USB_PD_TCPM_PS8815
-#define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 #define CONFIG_USBC_RETIMER_INTEL_BB
 
 /* I2C speed console command */
@@ -80,7 +78,6 @@
 #define CONFIG_HOSTCMD_I2C_CONTROL
 
 #define CONFIG_USBC_PPC_SYV682X
-#define CONFIG_USBC_PPC_NX20P3483
 
 /* TODO: b/177608416 - measure and check these values on brya */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
