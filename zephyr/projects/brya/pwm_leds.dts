@@ -51,22 +51,30 @@
 &pwm0 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
 };
 
 /* LED3 */
 &pwm1 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
 };
 
 /* LED1 */
 &pwm2 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
 };
 
 /* LED4 */
 &pwm7 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm7_gp60>;
+	pinctrl-names = "default";
 };

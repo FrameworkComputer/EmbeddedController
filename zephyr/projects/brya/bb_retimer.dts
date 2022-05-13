@@ -6,6 +6,8 @@
 &i2c3_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
 
 	usb_c0_bb_retimer: jhl8040r@56 {
 		compatible = "intel,jhl8040r";

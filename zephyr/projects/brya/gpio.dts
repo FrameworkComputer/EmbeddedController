@@ -314,6 +314,8 @@
 
 &i2c1_0 {
 	status = "okay";
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
 
 	nct3808_0_P1: nct3808_0_P1@70 {
 		#address-cells = <1>;
