@@ -67,6 +67,7 @@ GPIO(EC_PCH_SYS_PWROK,               PIN(3, 7), GPIO_OUT_LOW)
 GPIO(EC_PCH_WAKE_R_ODL,              PIN(C, 0), GPIO_ODR_HIGH)
 GPIO(EC_PROCHOT_ODL,                 PIN(6, 3), GPIO_ODR_HIGH)
 GPIO(EN_PP5000_FAN,                  PIN(6, 1), GPIO_OUT_HIGH)
+GPIO(EN_PP5000_LED,                  PIN(C, 6), GPIO_OUT_LOW)
 GPIO(EN_PP5000_USBA_R,               PIN(D, 7), GPIO_OUT_LOW)
 GPIO(EN_PP5000_PEN,                  PIN(E, 1), GPIO_OUT_LOW)
 GPIO(EN_S5_RAILS,                    PIN(B, 6), GPIO_OUT_LOW)
@@ -126,7 +127,6 @@ UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(C, 3))       /* GPIOC3 */
-UNUSED(PIN(C, 6))       /* GPIOC6 */
 UNUSED(PIN(6, 2))       /* GPIO62 */
 UNUSED(PIN(B, 1))       /* GPIOB1 */
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
