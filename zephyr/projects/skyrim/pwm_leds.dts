@@ -37,10 +37,14 @@
 &pwm2 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
 };
 
 /* White "battery full" LED */
 &pwm3 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm3_gp80>;
+	pinctrl-names = "default";
 };

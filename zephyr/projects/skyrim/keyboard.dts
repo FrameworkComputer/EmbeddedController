@@ -14,4 +14,6 @@
 &pwm1 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
 };

@@ -290,8 +290,6 @@
 };
 
 &i2c0_0 {
-	status = "okay";
-
 	nct3807_C0:nct3807_C0@70 {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -329,8 +327,6 @@
 };
 
 &i2c1_0 {
-	status = "okay";
-
 	nct3807_C1:nct3807_C1@70 {
 		#address-cells = <1>;
 		#size-cells = <0>;
