@@ -6,6 +6,8 @@
 &i2c0_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
 
 	usb_c0_bb_retimer: jhl8040r@56 {
 		compatible = "intel,jhl8040r";
@@ -18,6 +20,8 @@
 &i2c2_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
 
 	usb_c1_bb_retimer: jhl8040r@57 {
 		compatible = "intel,jhl8040r";
@@ -30,6 +34,8 @@
 &i2c1_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
 
 	usb_c2_bb_retimer: jhl8040r@58 {
 		compatible = "intel,jhl8040r";
@@ -42,6 +48,8 @@
 &i2c3_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
 
 	usb_c3_bb_retimer: jhl8040r@59 {
 		compatible = "intel,jhl8040r";
