@@ -157,6 +157,7 @@
 /* Manufacturer Access parameters */
 #define PARAM_SAFETY_STATUS             0x51
 #define PARAM_OPERATION_STATUS          0x54
+#define PARAM_FIRMWARE_RUNTIME          0x62
 /* Operation status masks -- 6 byte reply */
 /* reply[3] */
 #define BATTERY_DISCHARGING_DISABLED    0x20
@@ -170,6 +171,7 @@
 #define MANUFACTURE_DATE_YEAR_MASK	0xFE00
 #define MANUFACTURE_DATE_YEAR_SHIFT	9
 #define MANUFACTURE_DATE_YEAR_OFFSET	1980
+#define MANUFACTURE_RUNTIME_SIZE	4
 
 /* Read from battery */
 int sb_read(int cmd, int *param);

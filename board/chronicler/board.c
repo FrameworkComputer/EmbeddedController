@@ -4,7 +4,10 @@
  */
 
 /* Chronicler board-specific configuration */
+#include "battery.h"
+#include "battery_smart.h"
 #include "button.h"
+#include "charge_state_v2.h"
 #include "common.h"
 #include "accelgyro.h"
 #include "cbi_ec_fw_config.h"
@@ -309,4 +312,143 @@ const int keyboard_factory_scan_pins[][2] = {
 
 const int keyboard_factory_scan_pins_used =
 			ARRAY_SIZE(keyboard_factory_scan_pins);
+#endif
+
+/******************************************************************************/
+/* drop battery charging voltage depending on battery run time */
+
+#ifdef BATTERY_RUNTIME_TEST
+static int manual_run_time = -1;
+#endif
+
+struct drop_step {
+	int run_time;	/* battery run time (day) */
+	int drop_volt;	/* drop voltage (mV) */
+};
+
+/* voltage drop table */
+static const struct drop_step voltage_drop_table[] = {
+	{.run_time =   90, .drop_volt = 13200 },	/* drop level 0 */
+	{.run_time =  198, .drop_volt = 13125 },	/* drop level 1 */
+	{.run_time =  305, .drop_volt = 13050 },	/* drop level 2 */
+	{.run_time =  412, .drop_volt = 12975 },	/* drop level 3 */
+	{.run_time =  519, .drop_volt = 12900 },	/* drop level 4 */
+	{.run_time =  626, .drop_volt = 12825 },	/* drop level 5 */
+	{.run_time =  __INT_MAX__, .drop_volt = 12750 },/* drop level 6 */
+};
+
+#define NUM_DROP_LEVELS ARRAY_SIZE(voltage_drop_table)
+
+static int get_battery_run_time_day(uint32_t *battery_run_time)
+{
+	int rv;
+	uint32_t run_time;
+	uint8_t data[6];
+
+	/* get battery run time */
+	rv = sb_read_mfgacc(PARAM_FIRMWARE_RUNTIME,
+			SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+
+	if (rv)
+		return EC_ERROR_UNKNOWN;
+	/*
+	 * The response is 6 bytes; the runtime in seconds is the last 4 bytes.
+	 */
+	run_time = *(int32_t *) (&data[2]);
+
+#ifdef BATTERY_RUNTIME_TEST
+	cprints(CC_CHARGER, "run_time : 0x%08x (%d day)",
+				run_time, (run_time / 86400));
+
+	/* manual battery run time fot test */
+	if (manual_run_time != -1)
+		run_time = manual_run_time;
+#endif
+	/* second to day */
+	*battery_run_time = run_time / 86400;
+
+	return EC_SUCCESS;
+}
+
+/* charger profile override */
+int charger_profile_override(struct charge_state_data *curr)
+{
+	int i;
+	uint32_t batt_run_time = 0;
+
+	/* Should not do anything if battery not present */
+	if (battery_hw_present() != BP_YES)
+		return 0;
+
+	if (get_battery_run_time_day(&batt_run_time))
+		return EC_ERROR_UNKNOWN;
+
+	for (i = 0; i < NUM_DROP_LEVELS; i++) {
+		if (batt_run_time <= voltage_drop_table[i].run_time)
+			break;
+	}
+
+	curr->requested_voltage = MIN(curr->requested_voltage,
+					voltage_drop_table[i].drop_volt);
+#ifdef BATTERY_RUNTIME_TEST
+	cprints(CC_CHARGER,
+		"Charger: run time(day): %d, drop level: %d, CV: %d",
+		batt_run_time, i, curr->requested_voltage);
+#endif
+	return 0;
+}
+
+enum ec_status charger_profile_override_get_param(uint32_t param,
+				uint32_t *value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+enum ec_status charger_profile_override_set_param(uint32_t param,
+				uint32_t value)
+{
+	return EC_RES_INVALID_PARAM;
+}
+
+static void battery_runtime_init(void)
+{
+	uint32_t batt_run_time = 0;
+
+	/* Should not do anything if battery not present */
+	if (battery_hw_present() != BP_YES)
+		return;
+
+	if (get_battery_run_time_day(&batt_run_time))
+		return;
+
+	cprints(CC_CHARGER, "battery run time(day): %d", batt_run_time);
+}
+DECLARE_HOOK(HOOK_INIT, battery_runtime_init, HOOK_PRIO_LAST);
+
+#ifdef BATTERY_RUNTIME_TEST
+/* test command */
+static int command_manual_run_time(int argc, char **argv)
+{
+	char *e = NULL;
+
+	if (argc < 2) {
+		manual_run_time = -1;
+		cprints(CC_CHARGER, "manual run time reset");
+		return EC_SUCCESS;
+	}
+
+	if (argc != 2)
+		return EC_ERROR_PARAM_COUNT;
+
+	manual_run_time = strtoi(argv[1], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM1;
+
+	cprints(CC_CHARGER, "manual run time set to %d sec (%d day)",
+				manual_run_time, (manual_run_time/86400));
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(rt, command_manual_run_time, "<battery_run_time_sec>",
+					"Set manual run time for test");
 #endif

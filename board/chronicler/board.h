@@ -74,6 +74,7 @@
 /* charger defines */
 #define CONFIG_CHARGER_SENSE_RESISTOR		10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC	10
+#define CONFIG_CHARGER_PROFILE_OVERRIDE
 
 /* Retimer */
 #undef CONFIG_USBC_RETIMER_INTEL_BB
@@ -129,6 +130,9 @@
 
 /* Disable volume button in ectool */
 #undef CONFIG_HOSTCMD_BUTTON
+
+/* battery runtime test */
+#undef BATTERY_RUNTIME_TEST
 
 #ifndef __ASSEMBLER__
 
