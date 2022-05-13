@@ -34,4 +34,6 @@
 
 &pwm3 {
 	status = "okay";
+	pinctrl-0 = <&pwm3_gp80>;
+	pinctrl-names = "default";
 };

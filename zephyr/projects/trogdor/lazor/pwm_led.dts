@@ -49,8 +49,12 @@
 
 &pwm0 {
 	status = "okay";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
 };
 
 &pwm2 {
 	status = "okay";
+	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
 };

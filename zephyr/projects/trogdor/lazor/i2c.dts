@@ -51,6 +51,8 @@
 &i2c0_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
 };
 
 &i2c_ctrl0 {
@@ -60,6 +62,8 @@
 &i2c1_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
 };
 
 &i2c_ctrl1 {
@@ -69,6 +73,8 @@
 &i2c2_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
 };
 
 &i2c_ctrl2 {
@@ -87,6 +93,8 @@
 &i2c5_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+	pinctrl-names = "default";
 };
 
 &i2c_ctrl5 {
@@ -96,6 +104,8 @@
 &i2c7_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-names = "default";
 };
 
 &i2c_ctrl7 {
