@@ -81,6 +81,16 @@
 		};
 	};
 
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios = <&gpioc 3 0>,
+			       <&gpiod 4 0>,
+			       <&gpiod 7 0>,
+			       <&gpioh 2 0>,
+			       <&gpioj 7 0>,
+			       <&gpiol 4 0>;
+	};
+
 	named-gpios {
 		/*
 		 * EC doesn't take any specific action on CC/SBU disconnect due to
