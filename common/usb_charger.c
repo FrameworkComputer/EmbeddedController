@@ -75,7 +75,7 @@ void usb_charger_vbus_change(int port, int vbus_level)
 
 #ifdef HAS_TASK_USB_CHG_P0
 	/* USB Charger task(s) */
-	task_set_event(USB_CHG_PORT_TO_TASK_ID(port), USB_CHG_EVENT_VBUS);
+	usb_charger_task_set_event(port, USB_CHG_EVENT_VBUS);
 
 	/* If we swapped to sourcing, drop any related charge suppliers */
 	if (usb_charger_port_is_sourcing_vbus(port))
@@ -114,6 +114,11 @@ void usb_charger_reset_charge(int port)
 				     port, NULL);
 #endif
 
+}
+
+uint32_t usb_charger_task_set_event(int port, uint32_t event)
+{
+	return task_set_event(USB_CHG_PORT_TO_TASK_ID(port), event);
 }
 
 static void usb_charger_init(void)

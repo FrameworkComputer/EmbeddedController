@@ -221,7 +221,7 @@ DECLARE_DEFERRED(poll_c1_int);
 static void usbc_interrupt_trigger(int port)
 {
 	schedule_deferred_pd_interrupt(port);
-	task_set_event(USB_CHG_PORT_TO_TASK_ID(port), USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
 }
 
 static inline void poll_usb_gpio(int port,

@@ -711,8 +711,7 @@ void rt9490_deferred_interrupt(void)
 			return;
 
 		if (irq_flag & RT9490_BC12_DONE_FLAG)
-			task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-					USB_CHG_EVENT_BC12);
+			usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
 	}
 }
 DECLARE_DEFERRED(rt9490_deferred_interrupt);

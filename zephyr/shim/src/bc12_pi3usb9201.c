@@ -40,14 +40,14 @@ DECLARE_HOOK(HOOK_INIT, bc12_enable_irqs, HOOK_PRIO_DEFAULT);
 #if DT_INST_NODE_HAS_PROP(0, irq)
 void usb0_evt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 #endif
 
 #if DT_INST_NODE_HAS_PROP(1, irq)
 void usb1_evt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 }
 #endif
 

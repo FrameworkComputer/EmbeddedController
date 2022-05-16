@@ -167,6 +167,14 @@ static inline int usb_charger_ramp_max(int port, int supplier, int sup_curr)
 }
 
 /**
+ * Set a task event for a specific usb charger port
+ *
+ * @param port port number
+ * @param event event bits (USB_CHG_EVENT_*)
+ */
+uint32_t usb_charger_task_set_event(int port, uint32_t event);
+
+/**
  * Reset available BC 1.2 chargers on all ports
  *
  * @param port

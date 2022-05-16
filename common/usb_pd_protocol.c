@@ -808,8 +808,7 @@ static inline void set_state(int port, enum pd_states next_state)
 		 * detach events are used to notify BC1.2 that it can be powered
 		 * down.
 		 */
-		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-			       USB_CHG_EVENT_CC_OPEN);
+		usb_charger_task_set_event(port, USB_CHG_EVENT_CC_OPEN);
 #endif /* CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER */
 #ifdef CONFIG_USBC_VCONN
 		set_vconn(port, 0);
@@ -1341,11 +1340,9 @@ static void pd_set_data_role(int port, enum pd_data_role role)
 	 * task and indicate the current data role.
 	 */
 	if (role == PD_ROLE_UFP)
-		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-			       USB_CHG_EVENT_DR_UFP);
+		usb_charger_task_set_event(port, USB_CHG_EVENT_DR_UFP);
 	else if (role == PD_ROLE_DFP)
-		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-			       USB_CHG_EVENT_DR_DFP);
+		usb_charger_task_set_event(port, USB_CHG_EVENT_DR_DFP);
 #endif /* CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER */
 }
 

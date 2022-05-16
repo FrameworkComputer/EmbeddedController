@@ -369,7 +369,7 @@ void ppc_interrupt(enum gpio_signal signal)
 
 void bc12_interrupt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 
 __override int board_get_vbus_voltage(int port)

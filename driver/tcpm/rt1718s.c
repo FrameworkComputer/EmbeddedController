@@ -487,8 +487,7 @@ void rt1718s_vendor_defined_alert(int port)
 
 	/* check snk done */
 	if (value & RT1718S_RT_INT6_INT_BC12_SNK_DONE)
-		task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-			       USB_CHG_EVENT_BC12);
+		usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
 
 	/* clear the alerts from rt1718s_workaround() */
 	rv = rt1718s_write8(port, RT1718S_RT_INT2, 0xFF);

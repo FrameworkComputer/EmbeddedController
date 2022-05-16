@@ -107,12 +107,12 @@ void vbus1_evt(enum gpio_signal signal)
 
 void usb0_evt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 
 void usb1_evt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 }
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER

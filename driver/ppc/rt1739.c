@@ -416,8 +416,7 @@ void rt1739_deferred_interrupt(void)
 			continue;
 
 		if (event5 & RT1739_BC12_SNK_DONE_INT)
-			task_set_event(USB_CHG_PORT_TO_TASK_ID(port),
-				       USB_CHG_EVENT_BC12);
+			usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
 
 		/* write to clear EVENT4 since FRS interrupt has been handled */
 		write_reg(port, RT1739_REG_INT_EVENT4, event4);

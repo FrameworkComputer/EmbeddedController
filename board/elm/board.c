@@ -66,7 +66,7 @@ DECLARE_DEFERRED(deferred_reset_pd_mcu);
 void usb_evt(enum gpio_signal signal)
 {
 	if (!gpio_get_level(GPIO_BC12_WAKE_L))
-		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+		usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 
 #include "gpio_list.h"

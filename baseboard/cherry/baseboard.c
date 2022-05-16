@@ -177,7 +177,7 @@ struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 static void bc12_interrupt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 
 static void ppc_interrupt(enum gpio_signal signal)

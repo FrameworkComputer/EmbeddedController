@@ -60,7 +60,7 @@ static void notify_c0_chips(void)
 	 * chip.  Therefore we'll need to check both ICs.
 	 */
 	schedule_deferred_pd_interrupt(0);
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 
 static void check_c0_line(void)
@@ -95,7 +95,7 @@ DECLARE_DEFERRED(check_c1_line);
 static void notify_c1_chips(void)
 {
 	schedule_deferred_pd_interrupt(1);
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 }
 
 static void check_c1_line(void)

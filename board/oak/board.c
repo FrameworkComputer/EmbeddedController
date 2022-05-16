@@ -67,8 +67,8 @@ void pd_mcu_interrupt(enum gpio_signal signal)
 #if BOARD_REV >= OAK_REV4
 void usb_evt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_INTR);
-	task_set_event(TASK_ID_USB_CHG_P1, USB_CHG_EVENT_INTR);
+	usb_charger_task_set_event(0, USB_CHG_EVENT_INTR);
+	usb_charger_task_set_event(1, USB_CHG_EVENT_INTR);
 }
 #endif /* BOARD_REV >= OAK_REV4 */
 
@@ -552,9 +552,8 @@ void vbus_task(void *u)
 			}
 
 			if (wake)
-				task_set_event(port ? TASK_ID_USB_CHG_P1 :
-						      TASK_ID_USB_CHG_P0,
-					       USB_CHG_EVENT_BC12);
+				usb_charger_task_set_event(
+						port, USB_CHG_EVENT_BC12);
 		}
 		task_wait_event(-1);
 	}

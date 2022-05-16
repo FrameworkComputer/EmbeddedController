@@ -64,7 +64,7 @@ static void tcpc_alert_event(enum gpio_signal signal)
 
 static void usb0_evt(enum gpio_signal signal)
 {
-	task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
+	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
 }
 
 static void usba_oc_deferred(void)
