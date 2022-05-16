@@ -258,18 +258,22 @@ int cypd_write_reg16_wait_ack(int controller, int reg, int data)
 	return rv;
 }
 
-int cypd_set_power_state(int power_state)
+int cypd_set_power_state(int power_state, int controller)
 {
 	int i;
 	int rv = EC_SUCCESS;
 
-	CPRINTS("%s pwr state %d", __func__, power_state);
+	CPRINTS("C%d, %s pwr state %d", controller, __func__, power_state);
 
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
+	if (controller < 2)
+		rv = cypd_write_reg8_wait_ack(controller, CYP5525_SYS_PWR_STATE, power_state);
+	else {
+		for (i = 0; i < PD_CHIP_COUNT; i++) {
 
-		rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, power_state);
-		if (rv != EC_SUCCESS)
-			break;
+			rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, power_state);
+			if (rv != EC_SUCCESS)
+				break;
+		}
 	}
 	return rv;
 }
@@ -281,7 +285,7 @@ void cypd_charger_init_complete(void)
 }
 
 
-int cypd_update_power_status(void)
+int cypd_update_power_status(int controller)
 {
 	int i;
 	int rv = EC_SUCCESS;
@@ -293,12 +297,16 @@ int cypd_update_power_status(void)
 		power_stat |= BIT(1) + BIT(2);
 	}
 
-	CPRINTS("%s power_stat 0x%x", __func__, power_stat);
 
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		rv = cypd_write_reg8_wait_ack(i, CYP5525_POWER_STAT, power_stat);
-		if (rv != EC_SUCCESS)
-			break;
+	CPRINTS("C%d, %s power_stat 0x%x", controller, __func__, power_stat);
+	if (controller < 2) {
+		rv = cypd_write_reg8_wait_ack(controller, CYP5525_POWER_STAT, power_stat);
+	} else {
+		for (i = 0; i < PD_CHIP_COUNT; i++) {
+			rv = cypd_write_reg8_wait_ack(i, CYP5525_POWER_STAT, power_stat);
+			if (rv != EC_SUCCESS)
+				break;
+		}
 	}
 	return rv;
 }
@@ -432,7 +440,7 @@ static void reconnect_port_deferred(void)
 }
 DECLARE_DEFERRED(reconnect_port_deferred);
 
-void update_system_power_state(void)
+void update_system_power_state(int controller)
 {
 
 	enum power_state ps = power_get_state();
@@ -441,15 +449,15 @@ void update_system_power_state(void)
 	case POWER_S5:
 	case POWER_S5G3:
 	case POWER_S3S5:
-		cypd_set_power_state(CYP5525_POWERSTATE_S5);
+		cypd_set_power_state(CYP5525_POWERSTATE_S5, controller);
 		reconnect_flag = true;
 		break;
 	case POWER_S0S0ix:
-		cypd_set_power_state(CYP5525_POWERSTATE_S3);
+		cypd_set_power_state(CYP5525_POWERSTATE_S3, controller);
 		break;
 	default:
 		cypd_set_error_recovery();
-		cypd_set_power_state(CYP5525_POWERSTATE_S0);
+		cypd_set_power_state(CYP5525_POWERSTATE_S0, controller);
 		if (reconnect_flag) {
 			reconnect_flag = false;
 			CPRINTS("CYPD reconnect");
@@ -1089,10 +1097,10 @@ void cypd_handle_state(int controller)
 			gpio_disable_interrupt(pd_chip_config[controller].gpio);
 			cyp5525_get_version(controller);
 			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
+			/* We should update the power status and system power state by pd chip at initial*/
+			cypd_update_power_status(controller);
 
-			cypd_update_power_status();
-
-			cypd_set_power_state(CYP5525_POWERSTATE_S5);
+			cypd_set_power_state(CYP5525_POWERSTATE_S5, controller);
 			
 
 			cyp5525_setup(controller);
@@ -1101,8 +1109,7 @@ void cypd_handle_state(int controller)
 
 			cyp5525_ucsi_startup(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
-			cypd_write_reg16_wait_ack(controller, CYP5225_USER_BB_POWER_EVT,  RT_EVT_VSYS_ADDED);
-			update_system_power_state();
+			update_system_power_state(controller);
 
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CYP5525_STATE_READY;
@@ -1158,7 +1165,7 @@ static uint8_t cypd_int_task_id;
 
 void cypd_enque_evt(int evt, int delay)
 {
-	task_set_event(TASK_ID_CYPD, evt, delay);
+	task_set_event(TASK_ID_CYPD, evt, 0);
 }
 
 
@@ -1305,7 +1312,7 @@ void cypd_interrupt_handler_task(void *p)
 		}
 
 		if (evt & CYPD_EVT_S_CHANGE) {
-			update_system_power_state();
+			update_system_power_state(2);
 		}
 
 		if (evt & CYPD_EVT_INT_CTRL_0) {
@@ -1323,7 +1330,7 @@ void cypd_interrupt_handler_task(void *p)
 			task_wait_event_mask(TASK_EVENT_TIMER,10);
 		}
 		if (evt & CYPD_EVT_UPDATE_PWRSTAT) {
-			cypd_update_power_status();
+			cypd_update_power_status(2);
 		}
 
 		if (evt & (CYPD_EVT_INT_CTRL_0 | CYPD_EVT_INT_CTRL_1 |
@@ -2007,7 +2014,7 @@ static int cmd_cypd_control(int argc, char **argv)
 			pwrstate = strtoul(argv[3], &e, 0);
 			if (*e)
 				return EC_ERROR_PARAM3;
-			cypd_set_power_state(pwrstate);
+			cypd_set_power_state(pwrstate, 2);
 		} else if (!strncmp(argv[1], "reg", 3)) {
 			int r;
 			int regval;
