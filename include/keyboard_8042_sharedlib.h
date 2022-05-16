@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_KEYBOARD_8042_SHAREDLIB_H
 #define __CROS_EC_KEYBOARD_8042_SHAREDLIB_H
 
+#include <stddef.h>
+
 #include "button.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
@@ -16,6 +18,14 @@ struct button_8042_t {
 	uint16_t scancode;
 	int repeat;
 };
+
+/**
+ * Register scancode set for the standard ChromeOS keyboard matrix set 2.
+ *
+ * @param scancode_set	Scancode set to register.
+ * @param size		Size of the scancode set in bytes.
+ */
+void register_scancode_set2(uint16_t **scancode_set, size_t size);
 
 /**
  * Get the standard Chrome OS keyboard matrix set 2 scanset

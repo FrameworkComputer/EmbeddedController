@@ -5,6 +5,8 @@
  * Objects which can be shared between RO and RW for 8042 keyboard protocol.
  */
 
+#include <stddef.h>
+
 #include "button.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
@@ -36,6 +38,12 @@ static uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{0x006c, 0x0075, 0x007d, 0x0079, 0x007a, 0x0072, 0x0069, 0xe05a},
 #endif
 };
+
+void register_scancode_set2(uint16_t **scancode_set, size_t size)
+{
+	ASSERT(size == sizeof(scancode_set2));
+	memcpy(scancode_set2, scancode_set, size);
+}
 
 uint16_t get_scancode_set2(uint8_t row, uint8_t col)
 {
