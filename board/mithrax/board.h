@@ -222,6 +222,7 @@ enum ioex_port {
 
 enum battery_type {
 	BATTERY_C536,
+	BATTERY_C490,
 	BATTERY_TYPE_COUNT
 };
 
