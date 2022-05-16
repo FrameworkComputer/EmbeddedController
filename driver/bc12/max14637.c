@@ -174,9 +174,8 @@ static void detect_or_power_down_ic(const int port)
 	}
 }
 
-static void max14637_usb_charger_task(const int port)
+static void max14637_usb_charger_task_init(const int port)
 {
-	uint32_t evt;
 	const struct max14637_config_t * const cfg = &max14637_config[port];
 
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
@@ -188,13 +187,12 @@ static void max14637_usb_charger_task(const int port)
 	activate_chip_enable(cfg, 1);
 	/* Check whether bc1.2 client mode detection needs to be triggered */
 	detect_or_power_down_ic(port);
+}
 
-	while (1) {
-		evt = task_wait_event(-1);
-
-		if (evt & USB_CHG_EVENT_VBUS)
-			detect_or_power_down_ic(port);
-	}
+static void max14637_usb_charger_task_event(const int port, uint32_t evt)
+{
+	if (evt & USB_CHG_EVENT_VBUS)
+		detect_or_power_down_ic(port);
 }
 
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
@@ -236,7 +234,8 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, bc12_chipset_startup, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, bc12_chipset_startup, HOOK_PRIO_DEFAULT);
 
 const struct bc12_drv max14637_drv = {
-	.usb_charger_task = max14637_usb_charger_task,
+	.usb_charger_task_init = max14637_usb_charger_task_init,
+	.usb_charger_task_event = max14637_usb_charger_task_event,
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
 	.ramp_allowed = max14637_ramp_allowed,
 	.ramp_max = max14637_ramp_max,

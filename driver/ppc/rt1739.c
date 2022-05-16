@@ -362,36 +362,36 @@ static enum charge_supplier rt1739_bc12_get_device_type(int port)
 	}
 }
 
-static void rt1739_usb_charger_task(const int port)
+static void rt1739_usb_charger_task_init(const int port)
 {
 	rt1739_enable_bc12_detection(port, false);
+}
 
-	while (1) {
-		uint32_t evt = task_wait_event(-1);
-		bool is_non_pd_sink = !pd_capable(port) &&
-			!usb_charger_port_is_sourcing_vbus(port) &&
-			pd_check_vbus_level(port, VBUS_PRESENT);
+static void rt1739_usb_charger_task_event(const int port, uint32_t evt)
+{
+	bool is_non_pd_sink = !pd_capable(port) &&
+		!usb_charger_port_is_sourcing_vbus(port) &&
+		pd_check_vbus_level(port, VBUS_PRESENT);
 
-		/* vbus change, start bc12 detection */
-		if (evt & USB_CHG_EVENT_VBUS) {
-			if (is_non_pd_sink)
-				rt1739_enable_bc12_detection(port, true);
-			else
-				rt1739_update_charge_manager(
-						port, CHARGE_SUPPLIER_NONE);
-		}
+	/* vbus change, start bc12 detection */
+	if (evt & USB_CHG_EVENT_VBUS) {
+		if (is_non_pd_sink)
+			rt1739_enable_bc12_detection(port, true);
+		else
+			rt1739_update_charge_manager(
+					port, CHARGE_SUPPLIER_NONE);
+	}
 
-		/* detection done, update charge_manager and stop detection */
-		if (evt & USB_CHG_EVENT_BC12) {
-			enum charge_supplier supplier;
+	/* detection done, update charge_manager and stop detection */
+	if (evt & USB_CHG_EVENT_BC12) {
+		enum charge_supplier supplier;
 
-			if (is_non_pd_sink)
-				supplier = rt1739_bc12_get_device_type(port);
-			else
-				supplier = CHARGE_SUPPLIER_NONE;
-			rt1739_update_charge_manager(port, supplier);
-			rt1739_enable_bc12_detection(port, false);
-		}
+		if (is_non_pd_sink)
+			supplier = rt1739_bc12_get_device_type(port);
+		else
+			supplier = CHARGE_SUPPLIER_NONE;
+		rt1739_update_charge_manager(port, supplier);
+		rt1739_enable_bc12_detection(port, false);
 	}
 }
 
@@ -457,7 +457,8 @@ const struct ppc_drv rt1739_ppc_drv = {
 };
 
 const struct bc12_drv rt1739_bc12_drv = {
-	.usb_charger_task = rt1739_usb_charger_task,
+	.usb_charger_task_init = rt1739_usb_charger_task_init,
+	.usb_charger_task_event = rt1739_usb_charger_task_event,
 };
 
 #ifdef CONFIG_BC12_SINGLE_DRIVER

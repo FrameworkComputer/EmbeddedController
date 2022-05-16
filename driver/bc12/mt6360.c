@@ -156,41 +156,37 @@ static void mt6360_handle_bc12_irq(int port)
 	mt6360_write8(MT6360_REG_DPDMIRQ, reg);
 }
 
-static void mt6360_usb_charger_task(const int port)
+static void mt6360_usb_charger_task_init(const int port)
 {
 	mt6360_clr_bit(MT6360_REG_DPDM_MASK1,
 		       MT6360_REG_DPDM_MASK1_CHGDET_DONEI_M);
 	mt6360_enable_bc12_detection(0);
+}
 
-	while (1) {
-		uint32_t evt = task_wait_event(-1);
+static void mt6360_usb_charger_task_event(const int port, uint32_t evt)
+{
+	/* vbus change, start bc12 detection */
+	if (evt & USB_CHG_EVENT_VBUS) {
+		bool is_sink = pd_get_power_role(port) == PD_ROLE_SINK;
+		bool is_non_pd_sink = !pd_capable(port) &&
+			is_sink &&
+			pd_snk_is_vbus_provided(port);
 
-		/* vbus change, start bc12 detection */
-		if (evt & USB_CHG_EVENT_VBUS) {
-			bool is_sink = pd_get_power_role(port) == PD_ROLE_SINK;
-			bool is_non_pd_sink = !pd_capable(port) &&
-				is_sink &&
-				pd_snk_is_vbus_provided(port);
+		if (is_sink)
+			mt6360_clr_bit(MT6360_REG_CHG_CTRL1, MT6360_MASK_HZ);
+		else
+			mt6360_set_bit(MT6360_REG_CHG_CTRL1, MT6360_MASK_HZ);
 
-			if (is_sink)
-				mt6360_clr_bit(MT6360_REG_CHG_CTRL1,
-					       MT6360_MASK_HZ);
-			else
-				mt6360_set_bit(MT6360_REG_CHG_CTRL1,
-					       MT6360_MASK_HZ);
+		if (is_non_pd_sink)
+			mt6360_enable_bc12_detection(1);
+		else
+			mt6360_update_charge_manager(0, CHARGE_SUPPLIER_NONE);
+	}
 
-			if (is_non_pd_sink)
-				mt6360_enable_bc12_detection(1);
-			else
-				mt6360_update_charge_manager(
-						0, CHARGE_SUPPLIER_NONE);
-		}
-
-		/* detection done, update charge_manager and stop detection */
-		if (evt & USB_CHG_EVENT_BC12) {
-			mt6360_handle_bc12_irq(port);
-			mt6360_enable_bc12_detection(0);
-		}
+	/* detection done, update charge_manager and stop detection */
+	if (evt & USB_CHG_EVENT_BC12) {
+		mt6360_handle_bc12_irq(port);
+		mt6360_enable_bc12_detection(0);
 	}
 }
 
@@ -576,7 +572,8 @@ int mt6360_led_set_brightness(enum mt6360_led_id led_id, int brightness)
 }
 
 const struct bc12_drv mt6360_drv = {
-	.usb_charger_task = mt6360_usb_charger_task,
+	.usb_charger_task_init = mt6360_usb_charger_task_init,
+	.usb_charger_task_event = mt6360_usb_charger_task_event,
 };
 
 #ifdef CONFIG_BC12_SINGLE_DRIVER

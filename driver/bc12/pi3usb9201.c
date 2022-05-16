@@ -226,10 +226,8 @@ static void bc12_power_up(int port)
 	pi3usb9201_interrupt_mask(port, 1);
 }
 
-static void pi3usb9201_usb_charger_task(const int port)
+static void pi3usb9201_usb_charger_task_init(const int port)
 {
-	uint32_t evt;
-
 	/*
 	 * Set most recent bc1.2 detection supplier result to
 	 * CHARGE_SUPPLIER_NONE for the port.
@@ -241,112 +239,106 @@ static void pi3usb9201_usb_charger_task(const int port)
 	 * than enabling the interrupt mask.
 	 */
 	pi3usb9201_interrupt_mask(port, 1);
+}
 
-	while (1) {
-		/* Wait for interrupt */
-		evt = task_wait_event(-1);
+static void pi3usb9201_usb_charger_task_event(const int port, uint32_t evt)
+{
+	/* Interrupt from the Pericom chip, determine charger type */
+	if (evt & USB_CHG_EVENT_BC12) {
+		int client;
+		int host;
+		int rv;
 
-		/* Interrupt from the Pericom chip, determine charger type */
-		if (evt & USB_CHG_EVENT_BC12) {
-			int client;
-			int host;
-			int rv;
-
-			rv = pi3usb9201_get_status(port, &client, &host);
-			if (!rv && client)
-				/*
-				 * Any bit set in client status register
-				 * indicates that BC1.2 detection has
-				 * completed.
-				 */
-				bc12_update_charge_manager(port, client);
-			if (!rv && host) {
-				/*
-				 * Switch to SDP after device is plugged in to
-				 * avoid noise (pulse on D-) causing USB
-				 * disconnect (b/156014140).
-				 */
-				if (host & PI3USB9201_REG_HOST_STS_DEV_PLUG)
-					pi3usb9201_set_mode(port,
-						PI3USB9201_SDP_HOST_MODE);
-				/*
-				 * Switch to CDP after device is unplugged so
-				 * we advertise higher power available for next
-				 * device.
-				 */
-				if (host & PI3USB9201_REG_HOST_STS_DEV_UNPLUG)
-					pi3usb9201_set_mode(port,
-						PI3USB9201_CDP_HOST_MODE);
-			}
+		rv = pi3usb9201_get_status(port, &client, &host);
+		if (!rv && client)
 			/*
-			 * TODO(b/124061702): Use host status to allocate power
-			 * more intelligently.
+			 * Any bit set in client status register indicates that
+			 * BC1.2 detection has completed.
 			 */
-		}
-
-#ifndef CONFIG_USB_PD_VBUS_DETECT_TCPC
-		if (evt & USB_CHG_EVENT_VBUS)
-			CPRINTS("VBUS p%d %d", port,
-				pd_snk_is_vbus_provided(port));
-#endif
-
-		if (evt & USB_CHG_EVENT_DR_UFP) {
-			bc12_power_up(port);
-			if (bc12_detect_start(port)) {
-				struct charge_port_info new_chg;
-
-				/*
-				 * VBUS is present, but starting bc1.2 detection
-				 * failed for some reason. So limit charge
-				 * current to default 500 mA for this case.
-				 */
-
-				new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
-				new_chg.current = USB_CHARGER_MIN_CURR_MA;
-				/* Save supplier type and notify chg manager */
-				bc12_update_supplier(CHARGE_SUPPLIER_OTHER,
-						     port, &new_chg);
-				CPRINTS("pi3usb9201[p%d]: bc1.2 failed use "
-					"defaults", port);
-			}
-		}
-
-		if (evt & USB_CHG_EVENT_DR_DFP) {
-			int mode;
-			int rv;
-
+			bc12_update_charge_manager(port, client);
+		if (!rv && host) {
 			/*
-			 * Update the charge manager if bc1.2 client mode is
-			 * currently active.
+			 * Switch to SDP after device is plugged in to avoid
+			 * noise (pulse on D-) causing USB disconnect
+			 * (b/156014140).
 			 */
-			bc12_update_supplier(CHARGE_SUPPLIER_NONE, port, NULL);
+			if (host & PI3USB9201_REG_HOST_STS_DEV_PLUG)
+				pi3usb9201_set_mode(port,
+						    PI3USB9201_SDP_HOST_MODE);
 			/*
-			 * If the port is in DFP mode, then need to set mode to
-			 * CDP_HOST which will auto close D+/D- switches.
+			 * Switch to CDP after device is unplugged so we
+			 * advertise higher power available for next device.
 			 */
-			bc12_power_up(port);
-			rv = pi3usb9201_get_mode(port, &mode);
-			if (!rv && (mode != PI3USB9201_CDP_HOST_MODE)) {
-				CPRINTS("pi3usb9201[p%d]: CDP_HOST mode", port);
-				/*
-				 * Read both status registers to ensure that all
-				 * interrupt indications are cleared prior to
-				 * starting DFP CDP host mode.
-				 */
-				pi3usb9201_get_status(port, NULL, NULL);
+			if (host & PI3USB9201_REG_HOST_STS_DEV_UNPLUG)
 				pi3usb9201_set_mode(port,
 						    PI3USB9201_CDP_HOST_MODE);
-				/*
-				 * Unmask interrupt to wake task when host
-				 * status changes.
-				 */
-				pi3usb9201_interrupt_mask(port, 0);
-			}
 		}
-
-		if (evt & USB_CHG_EVENT_CC_OPEN)
-			bc12_power_down(port);
+		/*
+		 * TODO(b/124061702): Use host status to allocate power more
+		 * intelligently.
+		 */
 	}
+
+	if (!IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_TCPC) &&
+	    (evt & USB_CHG_EVENT_VBUS))
+		CPRINTS("VBUS p%d %d", port,
+			pd_snk_is_vbus_provided(port));
+
+	if (evt & USB_CHG_EVENT_DR_UFP) {
+		bc12_power_up(port);
+		if (bc12_detect_start(port)) {
+			struct charge_port_info new_chg;
+
+			/*
+			 * VBUS is present, but starting bc1.2 detection failed
+			 * for some reason. So limit charge current to default
+			 * 500 mA for this case.
+			 */
+
+			new_chg.voltage = USB_CHARGER_VOLTAGE_MV;
+			new_chg.current = USB_CHARGER_MIN_CURR_MA;
+			/* Save supplier type and notify chg manager */
+			bc12_update_supplier(CHARGE_SUPPLIER_OTHER,
+					     port, &new_chg);
+			CPRINTS("pi3usb9201[p%d]: bc1.2 failed use defaults",
+				port);
+		}
+	}
+
+	if (evt & USB_CHG_EVENT_DR_DFP) {
+		int mode;
+		int rv;
+
+		/*
+		 * Update the charge manager if bc1.2 client mode is currently
+		 * active.
+		 */
+		bc12_update_supplier(CHARGE_SUPPLIER_NONE, port, NULL);
+		/*
+		 * If the port is in DFP mode, then need to set mode to
+		 * CDP_HOST which will auto close D+/D- switches.
+		 */
+		bc12_power_up(port);
+		rv = pi3usb9201_get_mode(port, &mode);
+		if (!rv && (mode != PI3USB9201_CDP_HOST_MODE)) {
+			CPRINTS("pi3usb9201[p%d]: CDP_HOST mode", port);
+			/*
+			 * Read both status registers to ensure that all
+			 * interrupt indications are cleared prior to starting
+			 * DFP CDP host mode.
+			 */
+			pi3usb9201_get_status(port, NULL, NULL);
+			pi3usb9201_set_mode(port, PI3USB9201_CDP_HOST_MODE);
+			/*
+			 * Unmask interrupt to wake task when host status
+			 * changes.
+			 */
+			pi3usb9201_interrupt_mask(port, 0);
+		}
+	}
+
+	if (evt & USB_CHG_EVENT_CC_OPEN)
+		bc12_power_down(port);
 }
 
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
@@ -381,7 +373,8 @@ static int pi3usb9201_ramp_max(int supplier, int sup_curr)
 #endif /* CONFIG_CHARGE_RAMP_SW || CONFIG_CHARGE_RAMP_HW */
 
 const struct bc12_drv pi3usb9201_drv = {
-	.usb_charger_task = pi3usb9201_usb_charger_task,
+	.usb_charger_task_init = pi3usb9201_usb_charger_task_init,
+	.usb_charger_task_event = pi3usb9201_usb_charger_task_event,
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
 	.ramp_allowed = pi3usb9201_ramp_allowed,
 	.ramp_max = pi3usb9201_ramp_max,

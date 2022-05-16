@@ -1528,7 +1528,7 @@ static void rt946x_bc12_workaround(void)
 }
 DECLARE_DEFERRED(rt946x_bc12_workaround);
 
-static void rt946x_usb_charger_task(const int unused)
+static void rt946x_usb_charger_task_init(const int unused_port)
 {
 	struct charge_port_info chg;
 	int bc12_type = CHARGE_SUPPLIER_NONE;
@@ -1911,7 +1911,9 @@ const struct charger_drv rt946x_drv = {
 
 #ifdef HAS_TASK_USB_CHG
 const struct bc12_drv rt946x_bc12_drv = {
-	.usb_charger_task = rt946x_usb_charger_task,
+	.usb_charger_task_init = rt946x_usb_charger_task_init,
+	/* events handled in init */
+	.usb_charger_task_event = NULL,
 	.ramp_allowed = rt946x_ramp_allowed,
 	.ramp_max = rt946x_ramp_max,
 };

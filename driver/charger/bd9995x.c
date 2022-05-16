@@ -1301,7 +1301,7 @@ void bd9995x_vbus_interrupt(enum gpio_signal signal)
 	task_wake(TASK_ID_USB_CHG);
 }
 
-static void bd9995x_usb_charger_task(const int unused)
+static void bd9995x_usb_charger_task_init(const int unused)
 {
 	static int initialized;
 	int changed, port, interrupts;
@@ -1742,7 +1742,9 @@ const struct charger_drv bd9995x_drv = {
 struct bc12_config bc12_ports[BD9995X_CHARGE_PORT_COUNT] = {
 	{
 		.drv = &(const struct bc12_drv) {
-			.usb_charger_task = bd9995x_usb_charger_task,
+			.usb_charger_task_init = bd9995x_usb_charger_task_init,
+			/* events handled in init */
+			.usb_charger_task_event = NULL,
 			.set_switches = bd9995x_set_switches,
 #if defined(CONFIG_CHARGE_RAMP_SW)
 			.ramp_allowed = bd9995x_ramp_allowed,
@@ -1753,7 +1755,8 @@ struct bc12_config bc12_ports[BD9995X_CHARGE_PORT_COUNT] = {
 	{
 		.drv = &(const struct bc12_drv) {
 			/* bd9995x uses a single task thread for both ports */
-			.usb_charger_task = NULL,
+			.usb_charger_task_init = NULL,
+			.usb_charger_task_event = NULL,
 			.set_switches = bd9995x_set_switches,
 #if defined(CONFIG_CHARGE_RAMP_SW)
 			.ramp_allowed = bd9995x_ramp_allowed,

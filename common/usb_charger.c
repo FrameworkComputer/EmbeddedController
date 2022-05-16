@@ -135,6 +135,8 @@ DECLARE_HOOK(HOOK_INIT, usb_charger_init, HOOK_PRIO_POST_CHARGE_MANAGER);
 void usb_charger_task(void *u)
 {
 	int port = TASK_ID_TO_USB_CHG_PORT(task_get_current());
+	uint32_t evt;
+	struct bc12_config *bc12_port;
 
 	/*
 	 * The actual number of ports may be less than the maximum
@@ -143,6 +145,15 @@ void usb_charger_task(void *u)
 	if (port >= board_get_usb_pd_port_count())
 		return;
 
-	ASSERT(bc12_ports[port].drv->usb_charger_task);
-	bc12_ports[port].drv->usb_charger_task(port);
+	bc12_port = &bc12_ports[port];
+
+	ASSERT(bc12_port->drv->usb_charger_task_init);
+	bc12_port->drv->usb_charger_task_init(port);
+
+	while (1) {
+		evt = task_wait_event(-1);
+
+		ASSERT(bc12_port->drv->usb_charger_task_event);
+		bc12_port->drv->usb_charger_task_event(port, evt);
+	}
 }

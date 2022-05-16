@@ -93,8 +93,10 @@ enum usb_switch {
 struct bc12_drv {
 	/* All fields below are optional */
 
-	/* BC1.2 detection task for this chip */
-	void (*usb_charger_task)(int port);
+	/* BC1.2 detection task init for this chip */
+	void (*usb_charger_task_init)(int port);
+	/* BC1.2 detection task process for this chip */
+	void (*usb_charger_task_event)(int port, uint32_t evt);
 	/* Configure USB data switches on type-C port */
 	void (*set_switches)(int port, enum usb_switch setting);
 	/* Check if ramping is allowed for given supplier */

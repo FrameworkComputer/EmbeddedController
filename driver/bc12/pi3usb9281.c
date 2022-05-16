@@ -416,49 +416,47 @@ static uint32_t bc12_detect(int port)
 	return evt;
 }
 
-static void pi3usb9281_usb_charger_task(const int port)
+static void pi3usb9281_usb_charger_task_event(const int port, uint32_t evt)
+{
+
+	/* Interrupt from the Pericom chip, determine charger type */
+	if (evt & USB_CHG_EVENT_BC12) {
+		/* Read interrupt register to clear on chip */
+		pi3usb9281_get_interrupts(port);
+		evt = bc12_detect(port);
+	} else if (evt & USB_CHG_EVENT_INTR) {
+		/* USB_CHG_EVENT_INTR & _BC12 are mutually exclusive */
+		/* Check the interrupt register, and clear on chip */
+		if (pi3usb9281_get_interrupts(port) &
+		    PI3USB9281_INT_ATTACH_DETACH)
+			evt = bc12_detect(port);
+	}
+
+	if (evt & USB_CHG_EVENT_MUX)
+		pi3usb9281_set_switches_impl(port, usb_switch_state[port]);
+
+	/*
+	 * Re-enable interrupts on pericom charger detector since the chip may
+	 * periodically reset itself, and come back up with registers in
+	 * default state. TODO(crosbug.com/p/33823): Fix these unwanted resets.
+	 */
+	if (evt & USB_CHG_EVENT_VBUS) {
+		pi3usb9281_enable_interrupts(port);
+		if (!IS_ENABLED(CONFIG_USB_PD_VBUS_DETECT_TCPC))
+		    CPRINTS("VBUS p%d %d", port, pd_snk_is_vbus_provided(port));
+	}
+}
+
+static void pi3usb9281_usb_charger_task_init(const int port)
 {
 	uint32_t evt;
 
 	/* Initialize chip and enable interrupts */
 	pi3usb9281_init(port);
 
+	/* Set the initial state */
 	evt = bc12_detect(port);
-
-	while (1) {
-		/* Interrupt from the Pericom chip, determine charger type */
-		if (evt & USB_CHG_EVENT_BC12) {
-			/* Read interrupt register to clear on chip */
-			pi3usb9281_get_interrupts(port);
-			evt = bc12_detect(port);
-		} else if (evt & USB_CHG_EVENT_INTR) {
-			/* USB_CHG_EVENT_INTR & _BC12 are mutually exclusive */
-			/* Check the interrupt register, and clear on chip */
-			if (pi3usb9281_get_interrupts(port) &
-					PI3USB9281_INT_ATTACH_DETACH)
-				evt = bc12_detect(port);
-		}
-
-		if (evt & USB_CHG_EVENT_MUX)
-			pi3usb9281_set_switches_impl(
-					port, usb_switch_state[port]);
-
-		/*
-		 * Re-enable interrupts on pericom charger detector since the
-		 * chip may periodically reset itself, and come back up with
-		 * registers in default state. TODO(crosbug.com/p/33823): Fix
-		 * these unwanted resets.
-		 */
-		if (evt & USB_CHG_EVENT_VBUS) {
-			pi3usb9281_enable_interrupts(port);
-#ifndef CONFIG_USB_PD_VBUS_DETECT_TCPC
-			CPRINTS("VBUS p%d %d", port,
-				pd_snk_is_vbus_provided(port));
-#endif
-		}
-
-		evt = task_wait_event(-1);
-	}
+	pi3usb9281_usb_charger_task_event(port, evt);
 }
 
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
@@ -487,7 +485,8 @@ static int pi3usb9281_ramp_max(int supplier, int sup_curr)
 #endif /* CONFIG_CHARGE_RAMP_SW || CONFIG_CHARGE_RAMP_HW */
 
 const struct bc12_drv pi3usb9281_drv = {
-	.usb_charger_task = pi3usb9281_usb_charger_task,
+	.usb_charger_task_init = pi3usb9281_usb_charger_task_init,
+	.usb_charger_task_event = pi3usb9281_usb_charger_task_event,
 	.set_switches = pi3usb9281_set_switches,
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
 	.ramp_allowed = pi3usb9281_ramp_allowed,
