@@ -6612,7 +6612,7 @@ int cmd_usb_pd_mux_info(int argc, char *argv[])
 			printf("USB=%d ",
 				!!(r.flags & USB_PD_MUX_USB_ENABLED));
 			printf("DP=%d ", !!(r.flags & USB_PD_MUX_DP_ENABLED));
-			printf("POLARITY=%s",
+			printf("POLARITY=%s ",
 				r.flags & USB_PD_MUX_POLARITY_INVERTED ?
 							"INVERTED" : "NORMAL");
 			printf("HPD_IRQ=%d ",
