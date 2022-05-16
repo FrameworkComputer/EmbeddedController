@@ -99,6 +99,15 @@ static int battery_check_disconnect(void)
 	return BATTERY_NOT_DISCONNECTED;
 }
 
+enum battery_present board_batt_is_present(void)
+{
+	/*
+	 * Due to adc_read_channel() will clear the task event,
+	 * we should get the battery status without read adc channel again.
+	 */
+	return batt_pres_prev;
+}
+
 enum battery_present battery_is_present(void)
 {
 	enum battery_present batt_pres;

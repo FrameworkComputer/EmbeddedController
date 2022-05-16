@@ -27,6 +27,7 @@
 #include "cpu_power.h"
 #include "power_sequence.h"
 #include "extpower.h"
+#include "board.h"
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
@@ -290,7 +291,7 @@ int cypd_update_power_status(int controller)
 	int i;
 	int rv = EC_SUCCESS;
 	int power_stat = 0;
-	if (battery_is_present() == BP_YES) {
+	if (board_batt_is_present() == BP_YES) {
 		power_stat |= BIT(3);
 	}
 	if (extpower_is_present()) {
@@ -638,7 +639,7 @@ void cypd_response_get_battery_capability(int controller, int port,
 	/* Set PID */
 	msg[1] = PRODUCT_ID;
 
-	if (battery_is_present() == BP_YES) {
+	if (board_batt_is_present() == BP_YES) {
 		/*
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
@@ -703,7 +704,7 @@ int cypd_response_get_battery_status(int controller, int port, uint32_t pd_heade
 	uint32_t header = PD_DATA_BATTERY_STATUS + PD_HEADER_SOP(sop_type);
 	int port_idx = (controller << 1) + port;
 
-	if (battery_is_present() == BP_YES) {
+	if (board_batt_is_present() == BP_YES) {
 		/*
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
@@ -1408,7 +1409,7 @@ void cypd_aconly_reconnect(void)
 
 	battery_status(&batt_status);
 
-	if (extpower_is_present() && battery_is_present() != BP_YES) {
+	if (extpower_is_present() && board_batt_is_present() != BP_YES) {
 		events = task_wait_event_mask(TASK_EVENT_TIMER, 100*MSEC);
 		if (events & TASK_EVENT_TIMER)
 			cypd_enque_evt(CYPD_EVT_PORT_DISABLE, 0);
