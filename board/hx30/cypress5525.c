@@ -27,6 +27,7 @@
 #include "cpu_power.h"
 #include "power_sequence.h"
 #include "extpower.h"
+#include "board.h"
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
@@ -258,18 +259,22 @@ int cypd_write_reg16_wait_ack(int controller, int reg, int data)
 	return rv;
 }
 
-int cypd_set_power_state(int power_state)
+int cypd_set_power_state(int power_state, int controller)
 {
 	int i;
 	int rv = EC_SUCCESS;
 
-	CPRINTS("%s pwr state %d", __func__, power_state);
+	CPRINTS("C%d, %s pwr state %d", controller, __func__, power_state);
 
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
+	if (controller < 2)
+		rv = cypd_write_reg8_wait_ack(controller, CYP5525_SYS_PWR_STATE, power_state);
+	else {
+		for (i = 0; i < PD_CHIP_COUNT; i++) {
 
-		rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, power_state);
-		if (rv != EC_SUCCESS)
-			break;
+			rv = cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, power_state);
+			if (rv != EC_SUCCESS)
+				break;
+		}
 	}
 	return rv;
 }
@@ -281,24 +286,27 @@ void cypd_charger_init_complete(void)
 }
 
 
-int cypd_update_power_status(void)
+int cypd_update_power_status(int controller)
 {
 	int i;
 	int rv = EC_SUCCESS;
 	int power_stat = 0;
-	if (battery_is_present() == BP_YES) {
+	if (board_batt_is_present() == BP_YES)
 		power_stat |= BIT(3);
-	}
 	if (extpower_is_present()) {
 		power_stat |= BIT(1) + BIT(2);
 	}
 
-	CPRINTS("%s power_stat 0x%x", __func__, power_stat);
 
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		rv = cypd_write_reg8_wait_ack(i, CYP5525_POWER_STAT, power_stat);
-		if (rv != EC_SUCCESS)
-			break;
+	CPRINTS("C%d, %s power_stat 0x%x", controller, __func__, power_stat);
+	if (controller < 2) {
+		rv = cypd_write_reg8_wait_ack(controller, CYP5525_POWER_STAT, power_stat);
+	} else {
+		for (i = 0; i < PD_CHIP_COUNT; i++) {
+			rv = cypd_write_reg8_wait_ack(i, CYP5525_POWER_STAT, power_stat);
+			if (rv != EC_SUCCESS)
+				break;
+		}
 	}
 	return rv;
 }
@@ -398,16 +406,6 @@ void cypd_reset_source_ports(void)
 	}
 }
 
-enum power_state saved_bb_power_state = POWER_S0;
-
-void cypd_set_retimer_power(enum power_state power)
-{
-	if (power != saved_bb_power_state) {
-			saved_bb_power_state = power;
-			cypd_enque_evt(CYPD_EVT_RETIMER_PWR, 0);
-	}
-}
-
 
 void cypd_set_power_active(enum power_state power)
 {
@@ -442,7 +440,7 @@ static void reconnect_port_deferred(void)
 }
 DECLARE_DEFERRED(reconnect_port_deferred);
 
-void update_system_power_state(void)
+void update_system_power_state(int controller)
 {
 
 	enum power_state ps = power_get_state();
@@ -451,15 +449,15 @@ void update_system_power_state(void)
 	case POWER_S5:
 	case POWER_S5G3:
 	case POWER_S3S5:
-		cypd_set_power_state(CYP5525_POWERSTATE_S5);
+		cypd_set_power_state(CYP5525_POWERSTATE_S5, controller);
 		reconnect_flag = true;
 		break;
 	case POWER_S0S0ix:
-		cypd_set_power_state(CYP5525_POWERSTATE_S3);
+		cypd_set_power_state(CYP5525_POWERSTATE_S3, controller);
 		break;
 	default:
 		cypd_set_error_recovery();
-		cypd_set_power_state(CYP5525_POWERSTATE_S0);
+		cypd_set_power_state(CYP5525_POWERSTATE_S0, controller);
 		if (reconnect_flag) {
 			reconnect_flag = false;
 			CPRINTS("CYPD reconnect");
@@ -640,7 +638,7 @@ void cypd_response_get_battery_capability(int controller, int port,
 	/* Set PID */
 	msg[1] = PRODUCT_ID;
 
-	if (battery_is_present() == BP_YES) {
+	if (board_batt_is_present() == BP_YES) {
 		/*
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
@@ -705,7 +703,7 @@ int cypd_response_get_battery_status(int controller, int port, uint32_t pd_heade
 	uint32_t header = PD_DATA_BATTERY_STATUS + PD_HEADER_SOP(sop_type);
 	int port_idx = (controller << 1) + port;
 
-	if (battery_is_present() == BP_YES) {
+	if (board_batt_is_present() == BP_YES) {
 		/*
 		 * We only have one fixed battery,
 		 * so make sure batt cap ref is 0.
@@ -1046,6 +1044,20 @@ int cyp5525_device_int(int controller)
 	return EC_SUCCESS;
 }
 
+
+void pd0_update_state_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CYPD_EVT_STATE_CTRL_0, 0);
+}
+DECLARE_DEFERRED(pd0_update_state_deferred);
+
+void pd1_update_state_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CYPD_EVT_STATE_CTRL_1, 0);
+
+}
+DECLARE_DEFERRED(pd1_update_state_deferred);
+
 void cypd_handle_state(int controller)
 {
 	int data;
@@ -1070,28 +1082,23 @@ void cypd_handle_state(int controller)
 			}
 		}
 		/*try again in a while*/
-		cypd_enque_evt(4<<controller, delay);
+		if (delay) {
+			if (controller == 0)
+				hook_call_deferred(&pd0_update_state_deferred_data, delay);
+			else
+				hook_call_deferred(&pd1_update_state_deferred_data, delay);
+		} else
+			cypd_enque_evt(CYPD_EVT_STATE_CTRL_0<<controller, 0);
 		break;
 
 	case CYP5525_STATE_APP_SETUP:
 			gpio_disable_interrupt(pd_chip_config[controller].gpio);
 			cyp5525_get_version(controller);
 			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
+			/* We should update the power status and system power state by pd chip at initial*/
+			cypd_update_power_status(controller);
 
-			/*for(i=0; i < 50;i++) {
-				if (gpio_get_level(GPIO_PWR_3V5V_PG) && 
-						((charger_current_battery_params()->is_present == BP_YES && 
-							!(charger_current_battery_params()->flags & BATT_FLAG_BAD_ANY))
-						)
-					)
-					break;
-				usleep(MSEC);
-				
-			}*/
-
-			cypd_update_power_status();
-
-			cypd_set_power_state(CYP5525_POWERSTATE_S5);
+			cypd_set_power_state(CYP5525_POWERSTATE_S5, controller);
 			
 
 			cyp5525_setup(controller);
@@ -1100,14 +1107,7 @@ void cypd_handle_state(int controller)
 
 			cyp5525_ucsi_startup(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
-			cypd_write_reg16_wait_ack(controller, CYP5225_USER_BB_POWER_EVT,  RT_EVT_VSYS_ADDED);
-			update_system_power_state();
-
-			//if (power_get_state() == POWER_S0 || 
-			//	power_get_state() == POWER_S0ix) {
-				/*Handle unexpected PD controller resets when we are powered on*/
-			//	cypd_enque_evt(CYPD_EVT_RETIMER_PWR, 0);
-			//}
+			update_system_power_state(controller);
 
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CYP5525_STATE_READY;
@@ -1163,7 +1163,7 @@ static uint8_t cypd_int_task_id;
 
 void cypd_enque_evt(int evt, int delay)
 {
-	task_set_event(TASK_ID_CYPD, evt, delay);
+	task_set_event(TASK_ID_CYPD, evt, 0);
 }
 
 
@@ -1281,15 +1281,6 @@ void cypd_interrupt_handler_task(void *p)
 			CPRINTS("PD Event Platform Reset!");
 		}
 
-		if (evt & CYPD_EVT_RETIMER_PWR) {
-			if (saved_bb_power_state == POWER_G3S5) {
-					cypd_bb_retimer_cmd(RT_EVT_VSYS_ADDED);
-			}
-			if (saved_bb_power_state == POWER_G3) {
-					cypd_bb_retimer_cmd(RT_EVT_VSYS_REMOVED);
-			}
-		}
-
 		if (evt & CYPD_EVT_PORT_DISABLE) {
 			CPRINTS("CYPD_EVT_PORT_DISABLE");
 			cypd_reconnect_port_disable(0);
@@ -1319,7 +1310,7 @@ void cypd_interrupt_handler_task(void *p)
 		}
 
 		if (evt & CYPD_EVT_S_CHANGE) {
-			update_system_power_state();
+			update_system_power_state(2);
 		}
 
 		if (evt & CYPD_EVT_INT_CTRL_0) {
@@ -1337,7 +1328,7 @@ void cypd_interrupt_handler_task(void *p)
 			task_wait_event_mask(TASK_EVENT_TIMER,10);
 		}
 		if (evt & CYPD_EVT_UPDATE_PWRSTAT) {
-			cypd_update_power_status();
+			cypd_update_power_status(2);
 		}
 
 		if (evt & (CYPD_EVT_INT_CTRL_0 | CYPD_EVT_INT_CTRL_1 |
@@ -1415,7 +1406,7 @@ void cypd_aconly_reconnect(void)
 
 	battery_status(&batt_status);
 
-	if (extpower_is_present() && battery_is_present() != BP_YES) {
+	if (extpower_is_present() && board_batt_is_present() != BP_YES) {
 		events = task_wait_event_mask(TASK_EVENT_TIMER, 100*MSEC);
 		if (events & TASK_EVENT_TIMER)
 			cypd_enque_evt(CYPD_EVT_PORT_DISABLE, 0);
@@ -1640,6 +1631,7 @@ int pd_port_configuration_change(int port, enum pd_port_role port_role)
 
 static void update_power_limit_deferred(void)
 {
+	cypd_enque_evt(CYPD_EVT_UPDATE_PWRSTAT, 0);
 	update_soc_power_limit(false, false);
 }
 DECLARE_DEFERRED(update_power_limit_deferred);
@@ -1685,7 +1677,6 @@ int board_set_active_charge_port(int charge_port)
 		cypd_write_reg8(1, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_CONTROL_BY_CY);
 	}
 
-	cypd_enque_evt(CYPD_EVT_UPDATE_PWRSTAT, 100);
 	hook_call_deferred(&update_power_limit_deferred_data, 100 * MSEC);
 	CPRINTS("Updating %s port %d", __func__, charge_port);
 
@@ -2021,7 +2012,7 @@ static int cmd_cypd_control(int argc, char **argv)
 			pwrstate = strtoul(argv[3], &e, 0);
 			if (*e)
 				return EC_ERROR_PARAM3;
-			cypd_set_power_state(pwrstate);
+			cypd_set_power_state(pwrstate, 2);
 		} else if (!strncmp(argv[1], "reg", 3)) {
 			int r;
 			int regval;
