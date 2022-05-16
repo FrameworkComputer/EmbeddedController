@@ -291,9 +291,8 @@ int cypd_update_power_status(int controller)
 	int i;
 	int rv = EC_SUCCESS;
 	int power_stat = 0;
-	if (board_batt_is_present() == BP_YES) {
+	if (board_batt_is_present() == BP_YES)
 		power_stat |= BIT(3);
-	}
 	if (extpower_is_present()) {
 		power_stat |= BIT(1) + BIT(2);
 	}
@@ -1084,14 +1083,12 @@ void cypd_handle_state(int controller)
 		}
 		/*try again in a while*/
 		if (delay) {
-			if (controller == 0 ) {
-					hook_call_deferred(&pd0_update_state_deferred_data, delay);
-			} else {
-					hook_call_deferred(&pd1_update_state_deferred_data, delay);
-			}
-		} else {
+			if (controller == 0)
+				hook_call_deferred(&pd0_update_state_deferred_data, delay);
+			else
+				hook_call_deferred(&pd1_update_state_deferred_data, delay);
+		} else
 			cypd_enque_evt(CYPD_EVT_STATE_CTRL_0<<controller, 0);
-		}
 		break;
 
 	case CYP5525_STATE_APP_SETUP:
