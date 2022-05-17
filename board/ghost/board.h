@@ -245,7 +245,7 @@ enum sensor_id {
 
 enum ioex_port {
 	IOEX_C0_NCT38XX = 0,
-	IOEX_C2_NCT38XX,
+	IOEX_C1_NCT38XX,
 	IOEX_PORT_COUNT
 };
 
