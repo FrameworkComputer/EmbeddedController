@@ -50,6 +50,7 @@
 		};
 		ec_soc_int_l {
 			gpios = <&gpio8 3 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
 		};
 		soc_thermtrip_odl {
 			gpios = <&gpioe 5 GPIO_INPUT>;
