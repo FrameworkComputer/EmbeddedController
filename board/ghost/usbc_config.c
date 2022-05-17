@@ -172,23 +172,6 @@ const struct usb_mux usb_muxes[] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
 #ifndef CONFIG_ZEPHYR
-/* BC1.2 charger detect configuration */
-const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0_C2_BC12,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1_BC12,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-	[USBC_PORT_C2] = {
-		.i2c_port = I2C_PORT_USB_C0_C2_BC12,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_1_FLAGS,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
-
 /*
  * USB C0 and C2 uses burnside bridge chips and have their reset
  * controlled by their respective TCPC chips acting as GPIO expanders.
@@ -331,12 +314,6 @@ static void board_tcpc_init(void)
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_C2_TCPC_INT_ODL);
-
-#ifndef CONFIG_ZEPHYR
-	/* Enable BC1.2 interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C2_BC12_INT_ODL);
-#endif /* !CONFIG_ZEPHYR */
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
@@ -364,20 +341,6 @@ void tcpc_alert_event(enum gpio_signal signal)
 	switch (signal) {
 	case GPIO_USB_C0_C2_TCPC_INT_ODL:
 		schedule_deferred_pd_interrupt(USBC_PORT_C0);
-		break;
-	default:
-		break;
-	}
-}
-
-void bc12_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P0, USB_CHG_EVENT_BC12);
-		break;
-	case GPIO_USB_C2_BC12_INT_ODL:
-		task_set_event(TASK_ID_USB_CHG_P2, USB_CHG_EVENT_BC12);
 		break;
 	default:
 		break;
