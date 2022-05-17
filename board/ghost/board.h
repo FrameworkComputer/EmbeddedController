@@ -18,6 +18,11 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Tablet mode is not supported */
+#undef CONFIG_TABLET_MODE
+#undef CONFIG_TABLET_MODE_SWITCH
+#undef CONFIG_LID_ANGLE
+
 /* BC1.2 is not supported */
 #undef CONFIG_USB_CHARGER
 #undef CONFIG_BC12_SINGLE_DRIVER
@@ -38,9 +43,6 @@
 #define CONFIG_LED_PWM_LOW_BATT_COLOR EC_LED_COLOR_AMBER
 
 /* Sensors */
-#define CONFIG_ACCELGYRO_LSM6DSO	/* Base accel */
-#define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
 /* TCS3400 ALS */
 #define CONFIG_ALS
@@ -57,18 +59,7 @@
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(LID_ACCEL) | BIT(CLEAR_ALS))
-
-/* Lid accel */
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE	BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID	LID_ACCEL
-#define CONFIG_ACCEL_LIS2DWL
-#define CONFIG_ACCEL_LIS2DW_AS_BASE
-#define CONFIG_ACCEL_LIS2DW12_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(LID_ACCEL)
+#define CONFIG_ACCEL_FORCE_MODE_MASK	(BIT(CLEAR_ALS))
 
 #define CONFIG_ACCEL_INTERRUPTS
 
@@ -235,10 +226,7 @@ enum temp_sensor_id {
 };
 
 enum sensor_id {
-	LID_ACCEL = 0,
-	BASE_ACCEL,
-	BASE_GYRO,
-	CLEAR_ALS,
+	CLEAR_ALS = 0,
 	RGB_ALS,
 	SENSOR_COUNT
 };
