@@ -18,12 +18,6 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-/*
- * This will happen automatically on NPCX9 ES2 and later. Do not remove
- * until we can confirm all earlier chips are out of service.
- */
-#define CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
-
 #define CONFIG_MP2964
 
 /* LED */
