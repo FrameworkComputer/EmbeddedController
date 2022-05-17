@@ -12,8 +12,8 @@
 
 /* ADC configuration */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_1_CPU] = {
-		.name = "TEMP_CPU",
+	[ADC_TEMP_SENSOR_1_SSD] = {
+		.name = "TEMP_SSD",
 		.input_ch = NPCX_ADC_CH0,
 		.factor_mul = ADC_MAX_VOLT,
 		.factor_div = ADC_READ_MAX + 1,
@@ -26,7 +26,7 @@ const struct adc_t adc_channels[] = {
 		.factor_div = ADC_READ_MAX + 1,
 		.shift = 0,
 	},
-	[ADC_TEMP_SENSOR_3_DIMM] = {
+	[ADC_TEMP_SENSOR_4_DIMM] = {
 		.name = "TEMP_DIMM",
 		.input_ch = NPCX_ADC_CH7,
 		.factor_mul = ADC_MAX_VOLT,
@@ -51,11 +51,11 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_CPU] = {
-		.name = "CPU",
+	[TEMP_SENSOR_1_SSD] = {
+		.name = "SSD",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_CPU
+		.idx = ADC_TEMP_SENSOR_1_SSD
 	},
 	[TEMP_SENSOR_2_CPU_VR] = {
 		.name = "CPU VR",
@@ -63,11 +63,11 @@ const struct temp_sensor_t temp_sensors[] = {
 		.read = get_temp_3v3_30k9_47k_4050b,
 		.idx = ADC_TEMP_SENSOR_2_CPU_VR
 	},
-	[TEMP_SENSOR_3_DIMM] = {
+	[TEMP_SENSOR_4_DIMM] = {
 		.name = "DIMM",
 		.type = TEMP_SENSOR_TYPE_BOARD,
 		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_3_DIMM
+		.idx = ADC_TEMP_SENSOR_4_DIMM
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
@@ -101,8 +101,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
  */
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_CPU] = THERMAL_CPU,
+	[TEMP_SENSOR_1_SSD] = THERMAL_CPU,
 	[TEMP_SENSOR_2_CPU_VR] = THERMAL_CPU,
-	[TEMP_SENSOR_3_DIMM] = THERMAL_CPU,
+	[TEMP_SENSOR_4_DIMM] = THERMAL_CPU,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
