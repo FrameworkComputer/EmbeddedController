@@ -1,0 +1,100 @@
+/ {
+	led-colors {
+		compatible = "cros-ec,led-colors";
+
+		power-state-charge {
+			charge-state = "PWR_STATE_CHARGE";
+
+			color-0 {
+				led-color = <&color_amber>;
+			};
+		};
+
+		power-state-discharge-s0 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S0";
+			extra-flag = "LED_BATT_ABOVE_10_PCT";
+
+			color-0 {
+				led-color = <&color_white>;
+			};
+		};
+
+		power-state-discharge-s0-batt-low {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S0";
+			extra-flag = "LED_BATT_BELOW_10_PCT";
+
+			/* White 2 sec, off 1 sec */
+			color-0 {
+				led-color = <&color_white>;
+				period-ms = <2000>;
+			};
+			color-1 {
+				led-color = <&color_off>;
+				period-ms = <1000>;
+			};
+		};
+
+		power-state-discharge-s3 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			/* White 1 sec, off 1 sec */
+			color-0 {
+				led-color = <&color_white>;
+				period-ms = <1000>;
+			};
+			color-1 {
+				led-color = <&color_off>;
+				period-ms = <1000>;
+			};
+		};
+
+		power-state-discharge-s5 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S5";
+
+			color-0 {
+				led-color = <&color_off>;
+			};
+		};
+
+		power-state-error {
+			charge-state = "PWR_STATE_ERROR";
+
+			/* Amber 1 sec, off 1 sec */
+			color-0 {
+				led-color = <&color_amber>;
+				period-ms = <1000>;
+			};
+			color-1 {
+				led-color = <&color_off>;
+				period-ms = <1000>;
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+
+			color-0 {
+				led-color = <&color_white>;
+			};
+		};
+
+		power-state-idle-forced {
+			charge-state = "PWR_STATE_IDLE";
+			extra-flag = "LED_CHFLAG_FORCE_IDLE";
+
+			/* Amber 2 sec, White 2 sec */
+			color-0 {
+				led-color = <&color_amber>;
+				period-ms = <2000>;
+			};
+			color-1 {
+				led-color = <&color_white>;
+				period-ms = <2000>;
+			};
+		};
+	};
+};
