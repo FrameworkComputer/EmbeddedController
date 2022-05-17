@@ -6,8 +6,7 @@
 			charge-state = "PWR_STATE_CHARGE";
 
 			color-0 {
-				led-color = "LED_AMBER";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_amber>;
 			};
 		};
 
@@ -16,8 +15,7 @@
 			chipset-state = "POWER_S0";
 
 			color-0 {
-				led-color = "LED_BLUE";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_blue>;
 			};
 		};
 
@@ -27,13 +25,11 @@
 
 			/* Amber 1 sec, off 3 sec */
 			color-0 {
-				led-color = "LED_AMBER";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_amber>;
 				period-ms = <1000>;
 			};
 			color-1 {
-				led-color = "LED_OFF";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_off>;
 				period-ms = <3000>;
 			};
 		};
@@ -43,8 +39,7 @@
 			chipset-state = "POWER_S5";
 
 			color-0 {
-				led-color = "LED_OFF";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_off>;
 			};
 		};
 
@@ -53,13 +48,11 @@
 
 			/* Amber 1 sec, off 1 sec */
 			color-0 {
-				led-color = "LED_AMBER";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_amber>;
 				period-ms = <1000>;
 			};
 			color-1 {
-				led-color = "LED_OFF";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_off>;
 				period-ms = <1000>;
 			};
 		};
@@ -68,8 +61,7 @@
 			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
 
 			color-0 {
-				led-color = "LED_BLUE";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_blue>;
 			};
 		};
 
@@ -79,13 +71,11 @@
 
 			/* Blue 2 sec, Amber 2 sec */
 			color-0 {
-				led-color = "LED_BLUE";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_blue>;
 				period-ms = <2000>;
 			};
 			color-1 {
-				led-color = "LED_AMBER";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_amber>;
 				period-ms = <2000>;
 			};
 		};
@@ -95,8 +85,7 @@
 			extra-flag = "LED_CHFLAG_DEFAULT";
 
 			color-0 {
-				led-color = "LED_BLUE";
-				led-id = "EC_LED_ID_BATTERY_LED";
+				led-color = <&color_blue>;
 			};
 		};
 	};
