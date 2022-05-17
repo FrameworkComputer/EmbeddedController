@@ -138,7 +138,7 @@ static void nereid_subboard_config(void)
 	}
 
 	switch (sb) {
-	case NISSA_SB_HDMI_A:
+	case NISSA_SB_HDMI_A: {
 		/*
 		 * HDMI: two outputs control power which must be configured to
 		 * non-default settings, and HPD must be forwarded to the AP
@@ -187,7 +187,7 @@ static void nereid_subboard_config(void)
 				   BIT(hpd_gpio->pin));
 		irq_unlock(irq_key);
 		break;
-
+	}
 	case NISSA_SB_C_LTE:
 		/*
 		 * LTE: Set up callbacks for enabling/disabling
