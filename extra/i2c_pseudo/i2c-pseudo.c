@@ -22,12 +22,12 @@
 #include <linux/mutex.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
+#include <linux/stdarg.h>
 #include <linux/string.h>
 #include <linux/time64.h>
 #include <linux/types.h>
 #include <linux/uaccess.h>
 #include <linux/wait.h>
-#include <stdarg.h>
 
 /* Minimum i2cp_limit module parameter value. */
 #define I2CP_ADAPTERS_MIN	0
