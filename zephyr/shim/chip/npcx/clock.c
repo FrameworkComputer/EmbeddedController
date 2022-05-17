@@ -41,11 +41,20 @@ void clock_turbo(void)
 {
 	struct cdcg_reg *const cdcg_base = HAL_CDCG_REG_BASE_ADDR;
 
+#if defined(CONFIG_SOC_SERIES_NPCX9)
+	/* For NPCX9:
+	 * Increase CORE_CLK (CPU) as the same as OSC_CLK. Since
+	 * CORE_CLK > 66MHz, we also need to set FIUDIV as 1 but
+	 * can keep AHB6DIV to 0.
+	 */
+	cdcg_base->HFCGP = 0x00;
+#else
 	/* For NPCX7:
 	 * Increase CORE_CLK (CPU) as the same as OSC_CLK. Since
 	 * CORE_CLK > 66MHz, we also need to set AHB6DIV and FIUDIV as 1.
 	 */
 	cdcg_base->HFCGP = 0x01;
+#endif
 	cdcg_base->HFCBCD = BIT(4);
 }
 
