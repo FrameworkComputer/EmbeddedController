@@ -7,7 +7,7 @@
 
 #include <dt-bindings/gpio_defines.h>
 #include <cros/ite/it8xxx2.dtsi>
-#include <it8xxx2.dtsi>
+#include <ite/it8xxx2.dtsi>
 
 / {
 	model = "Google IT8XXX2 Baseboard";

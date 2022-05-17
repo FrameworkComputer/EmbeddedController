@@ -4,7 +4,7 @@
  */
 
 #include <cros/binman.dtsi>
-#include <it8xxx2.dtsi>
+#include <ite/it8xxx2.dtsi>
 #include <ite/it8xxx2-pinctrl-map.dtsi>
 
 / {
