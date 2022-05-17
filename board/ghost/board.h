@@ -18,6 +18,10 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Buttons are not supported */
+#undef CONFIG_VOLUME_BUTTONS
+#undef CONFIG_MKBP_INPUT_DEVICES
+
 /* Tablet mode is not supported */
 #undef CONFIG_TABLET_MODE
 #undef CONFIG_TABLET_MODE_SWITCH
