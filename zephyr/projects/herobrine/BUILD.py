@@ -13,7 +13,6 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
         dts_overlays=[
             # Common to all projects.
             here / "adc.dts",
-            here / "display.dts",
             here / "common.dts",
             here / "i2c.dts",
             here / "interrupts.dts",
@@ -34,6 +33,7 @@ def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()
 register_variant(
     project_name="herobrine",
     extra_dts_overlays=[
+        here / "display.dts",
         here / "battery_herobrine.dts",
         here / "gpio.dts",
         here / "motionsense.dts",
