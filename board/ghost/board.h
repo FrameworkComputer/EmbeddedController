@@ -76,9 +76,6 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
-/* USB Type A Features */
-#define USB_PORT_COUNT			1
-
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
 
