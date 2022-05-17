@@ -19,6 +19,11 @@
  */
 #define CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
 
+/*
+ * Agah blocks PG_PP3300_S5_OD instead to control AP power-on.
+ */
+#undef CONFIG_CHIPSET_X86_RSMRST_AFTER_S5
+
 /* LED */
 #define CONFIG_LED_PWM
 #define CONFIG_LED_PWM_COUNT 1
