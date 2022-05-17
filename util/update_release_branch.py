@@ -11,12 +11,14 @@ http://go/cros-fingerprint-firmware-branching-and-signing and now used by other
 boards.
 """
 from __future__ import print_function
+
 import argparse
 import os
 import re
 import subprocess
 import sys
 import textwrap
+
 
 BUG_NONE_PATTERN = re.compile('none', flags=re.IGNORECASE)
 
