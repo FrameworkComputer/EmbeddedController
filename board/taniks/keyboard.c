@@ -58,6 +58,7 @@ struct rgbkbd rgbkbds[] = {
 			.col_len = RGB_GRID0_COL,
 			.row_len = RGB_GRID0_ROW,
 		},
+		.init = &rgbkbd_default,
 		.buf = grid0,
 	},
 };

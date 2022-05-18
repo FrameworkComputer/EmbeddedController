@@ -38,6 +38,12 @@ uint8_t rgbkbd_table[EC_RGBKBD_MAX_KEY_COUNT];
 
 static enum rgbkbd_state rgbkbd_state;
 
+const struct rgbkbd_init rgbkbd_default = {
+	.gcc = RGBKBD_MAX_GCC_LEVEL / 2,
+	.scale = RGBKBD_MAX_SCALE,
+	.color = { .r = 0xff, .g = 0xff, .b = 0xff },  /* white */
+};
+
 static int set_color_single(struct rgb_s color, int x, int y)
 {
 	struct rgbkbd *ctx = &rgbkbds[0];
@@ -286,6 +292,8 @@ static int rgbkbd_init(void)
 
 	for (i = 0; i < rgbkbd_count; i++) {
 		struct rgbkbd *ctx = &rgbkbds[i];
+		uint8_t scale = ctx->init->scale;
+		uint8_t gcc = ctx->init->gcc;
 
 		e = ctx->cfg->drv->init(ctx);
 		if (e) {
@@ -294,11 +302,23 @@ static int rgbkbd_init(void)
 			continue;
 		}
 
-		e = ctx->cfg->drv->set_scale(ctx, 0, 0x80, get_grid_size(ctx));
+		e = ctx->cfg->drv->set_scale(ctx, 0, scale, get_grid_size(ctx));
 		if (e) {
-			CPRINTS("Failed to set scale of GRID%d (%d)", i, e);
+			CPRINTS("Failed to set scale of GRID%d to %d (%d)",
+				i, scale, rv);
 			rv = e;
+			continue;
 		}
+
+		e = ctx->cfg->drv->set_gcc(ctx, gcc);
+		if (e) {
+			CPRINTS("Failed to set GCC to %u for grid=%d (%d)",
+				gcc, i, e);
+			rv = e;
+			continue;
+		}
+
+		rgbkbd_reset_color(ctx->init->color);
 
 		CPRINTS("Initialized GRID%d", i);
 	}
