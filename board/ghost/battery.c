@@ -35,6 +35,9 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
+	/*
+	 * TODO(b/233120385): update for ghost, this is the brya battery
+	 */
 	/* POW-TECH GQA05 Battery Information */
 	[BATTERY_POWER_TECH] = {
 		/* BQ40Z50 Fuel Gauge */
