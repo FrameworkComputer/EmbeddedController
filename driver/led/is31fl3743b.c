@@ -33,6 +33,10 @@
 #define IS31FL3743B_REG_SPREAD_SPECTRUM	0x25
 #define IS31FL3743B_REG_RSTN		0x2f
 
+#define IS31FL3743B_CFG_SWS_1_11	0b0000
+#define IS31FL3743B_CONFIG(sws, osde, ssd) \
+	((sws) << 4 | BIT(3) | (osde) << 1 | (ssd) << 0)
+
 struct is31fl3743b_cmd {
 	uint8_t page: 4;
 	uint8_t id: 3;
@@ -82,15 +86,9 @@ static int is31fl3743b_reset(struct rgbkbd *ctx)
 
 static int is31fl3743b_enable(struct rgbkbd *ctx, bool enable)
 {
-	uint8_t u8;
-	int rv;
-
-	gpio_set_level(GPIO_RGBKBD_SDB_L, enable ? 1 : 0);
-
-	u8 = 0;
-	WRITE_BIT(u8, 3, 1);
-	WRITE_BIT(u8, 0, enable);
-
+	uint8_t u8 = IS31FL3743B_CONFIG(IS31FL3743B_CFG_SWS_1_11, 0,
+					enable ? 1 : 0);
+	CPRINTS("Setting config register to 0b%pb", BINARY_VALUE(u8, 8));
 	return is31fl3743b_write(ctx, IS31FL3743B_REG_CONFIG, u8);
 }
 
