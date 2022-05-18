@@ -79,11 +79,6 @@ static int is31fl3743b_write(struct rgbkbd *ctx, uint8_t addr, uint8_t value)
 	return spi_transaction(SPI(ctx->cfg->spi), buf, frame_len, NULL, 0);
 }
 
-static int is31fl3743b_reset(struct rgbkbd *ctx)
-{
-	return is31fl3743b_write(ctx, IS31FL3743B_REG_RSTN, 0xae);
-}
-
 static int is31fl3743b_enable(struct rgbkbd *ctx, bool enable)
 {
 	uint8_t u8 = IS31FL3743B_CONFIG(IS31FL3743B_CFG_SWS_1_11, 0,
@@ -159,14 +154,16 @@ static int is31fl3743b_init(struct rgbkbd *ctx)
 {
 	int rv;
 
-	rv = is31fl3743b_reset(ctx);
+	/* Reset registers to the default values. */
+	rv = is31fl3743b_write(ctx, IS31FL3743B_REG_RSTN, 0xae);
+	if (rv)
+		return rv;
 	msleep(3);
 
 	return EC_SUCCESS;
 }
 
 const struct rgbkbd_drv is31fl3743b_drv = {
-	.reset = is31fl3743b_reset,
 	.init = is31fl3743b_init,
 	.enable = is31fl3743b_enable,
 	.set_color = is31fl3743b_set_color,
