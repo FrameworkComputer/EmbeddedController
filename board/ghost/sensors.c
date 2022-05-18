@@ -4,16 +4,9 @@
  */
 
 #include "common.h"
-#include "accelgyro.h"
-#include "adc.h"
-#include "driver/accel_lis2dw12.h"
-#include "driver/accelgyro_lsm6dso.h"
-#include "driver/als_tcs3400_public.h"
-#include "gpio.h"
-#include "hooks.h"
-#include "motion_sense.h"
+#include "adc_chip.h"
+#include "ec_commands.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
 
 /* ADC configuration */

@@ -5,11 +5,13 @@
  * Battery pack vendor provided charging profile
  */
 
+#include "battery.h"
 #include "battery_fuel_gauge.h"
-#include "cbi.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "gpio.h"
+#include "gpio_signal.h"
+
 /*
  * Battery info for all Brya battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
