@@ -66,10 +66,16 @@ void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+__override void board_kblight_shutdown(void)
+{
+	gpio_set_level(GPIO_EC_KB_BL_EN_L, 1);
+}
 
 __override void board_kblight_init(void)
 {
+	gpio_set_level(GPIO_RGBKBD_SDB_L, 1);
 	gpio_set_level(GPIO_EC_KB_BL_EN_L, 0);
+	msleep(10);
 }
 
 #ifdef CONFIG_CHARGE_RAMP_SW
