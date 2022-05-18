@@ -21,8 +21,9 @@ static struct kblight_conf kblight;
 static int current_percent;
 static uint8_t current_enable;
 
-void __attribute__((weak)) board_kblight_init(void)
-{ }
+__overridable void board_kblight_init(void) {}
+
+__overridable void board_kblight_shutdown(void) {}
 
 static int kblight_init(void)
 {

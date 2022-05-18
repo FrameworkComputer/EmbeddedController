@@ -8,6 +8,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "keyboard_backlight.h"
 #include "rgb_keyboard.h"
 #include "task.h"
 #include "test_util.h"
@@ -70,6 +71,10 @@ static struct rgbkbd_mock {
 	uint32_t count_drv_set_gcc;
 	uint32_t gcc_level;
 } mock_state;
+
+__override void board_kblight_init(void) {}
+
+__override void board_kblight_shutdown(void) {}
 
 void before_test(void)
 {
@@ -201,7 +206,7 @@ static int test_rgbkbd_startup(void)
 	return EC_SUCCESS;
 }
 
-int cc_rgbk(int argc, char **argv);
+int cc_rgb(int argc, char **argv);
 extern enum rgbkbd_demo demo;
 
 static int test_rgbkbd_console_command(void)
@@ -220,13 +225,13 @@ static int test_rgbkbd_console_command(void)
 	before_test();
 	argc = ARRAY_SIZE(argv_demo);
 	zassert_equal(demo, 2, "demo == 2");
-	zassert_equal(cc_rgbk(argc, argv_demo), EC_SUCCESS, "rgbk demo 0");
+	zassert_equal(cc_rgb(argc, argv_demo), EC_SUCCESS, "rgbk demo 0");
 	zassert_equal(demo, 0, "demo == 0");
 
 	/* Test 'rgbk 100'. */
 	before_test();
 	argc = ARRAY_SIZE(argv_gcc);
-	zassert_equal(cc_rgbk(argc, argv_gcc), EC_SUCCESS, "rgbk 100");
+	zassert_equal(cc_rgb(argc, argv_gcc), EC_SUCCESS, "rgbk 100");
 	zassert_equal(mock_state.count_drv_set_gcc, rgbkbd_count,
 		      "set_gcc() called");
 	zassert_equal(mock_state.gcc_level, 100, "gcc == 100");
@@ -239,7 +244,7 @@ static int test_rgbkbd_console_command(void)
 	offset = rgbkbd_vsize * x + y;
 	sprintf(buf, "%d,%d", x, y);
 	argc = ARRAY_SIZE(argv_color);
-	zassert_equal(cc_rgbk(argc, argv_color), EC_SUCCESS,
+	zassert_equal(cc_rgb(argc, argv_color), EC_SUCCESS,
 		      "rgbk %s 1 2 3", buf);
 	zassert_equal(ctx->buf[offset].r, 1, "R = 1");
 	zassert_equal(ctx->buf[offset].g, 2, "G = 2");
@@ -252,7 +257,7 @@ static int test_rgbkbd_console_command(void)
 	y = -1;
 	sprintf(buf, "%d,%d", x, y);
 	argc = ARRAY_SIZE(argv_color);
-	zassert_equal(cc_rgbk(argc, argv_color), EC_SUCCESS,
+	zassert_equal(cc_rgb(argc, argv_color), EC_SUCCESS,
 		      "rgbk %s 1 2 3", buf);
 	for (r = 0; r < rgbkbd_vsize; r++) {
 		offset = rgbkbd_vsize * x + r;
@@ -267,7 +272,7 @@ static int test_rgbkbd_console_command(void)
 	y = 1;
 	sprintf(buf, "%d,%d", x, y);
 	argc = ARRAY_SIZE(argv_color);
-	zassert_equal(cc_rgbk(argc, argv_color), EC_SUCCESS,
+	zassert_equal(cc_rgb(argc, argv_color), EC_SUCCESS,
 		      "rgbk %s 1 2 3", buf);
 	for (c = 0; c < rgbkbd_hsize; c++) {
 		ctx = &rgbkbds[c / rgbkbds[0].cfg->col_len];
@@ -280,7 +285,7 @@ static int test_rgbkbd_console_command(void)
 	/* Test 'rgbk all 1 2 3'. */
 	before_test();
 	argc = ARRAY_SIZE(argv_all);
-	zassert_equal(cc_rgbk(argc, argv_all), EC_SUCCESS, "rgbk all 1 2 3");
+	zassert_equal(cc_rgb(argc, argv_all), EC_SUCCESS, "rgbk all 1 2 3");
 	for (i = 0; i < rgbkbd_count; i++) {
 		ctx = &rgbkbds[i];
 		for (c = 0; c < ctx->cfg->col_len; c++) {
@@ -341,7 +346,7 @@ static int test_rgbkbd_demo_flow(void)
 	int i, j, g;
 
 	argc = ARRAY_SIZE(argv_demo);
-	zassert_equal(cc_rgbk(argc, argv_demo), EC_SUCCESS, "rgbk demo flow");
+	zassert_equal(cc_rgb(argc, argv_demo), EC_SUCCESS, "rgbk demo flow");
 
 	for (j = 0; j < 0x100 / step; j++) {
 		/* Take a snapshot. */

@@ -257,6 +257,24 @@ static int rgbkbd_set_global_brightness(uint8_t gcc)
 	return rv;
 }
 
+static int rgbkbd_set_scale(uint8_t scale)
+{
+	int e, i, rv = EC_SUCCESS;
+
+	for (i = 0; i < rgbkbd_count; i++) {
+		struct rgbkbd *ctx = &rgbkbds[i];
+
+		e = ctx->cfg->drv->set_scale(ctx, 0, scale, get_grid_size(ctx));
+		if (e) {
+			CPRINTS("Failed to set scale of GRID%d to %d (%d)",
+				i, scale, e);
+			rv = e;
+		}
+	}
+
+	return rv;
+}
+
 static int rgbkbd_init(void)
 {
 	int rv = EC_SUCCESS;
@@ -338,6 +356,12 @@ static int rgbkbd_get_enabled(void)
 	return rgbkbds[0].state >= RGBKBD_STATE_ENABLED;
 }
 
+static void rgbkbd_reset(void)
+{
+	board_kblight_shutdown();
+	board_kblight_init();
+}
+
 const struct kblight_drv kblight_rgbkbd = {
 	.init = rgbkbd_init,
 	.set = rgbkbd_kblight_set,
@@ -410,7 +434,7 @@ static enum ec_status hc_rgbkbd(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_RGBKBD, hc_rgbkbd, EC_VER_MASK(0));
 
-test_export_static int cc_rgbk(int argc, char **argv)
+test_export_static int cc_rgb(int argc, char **argv)
 {
 	char *end, *comma;
 	struct rgb_s color;
@@ -444,6 +468,28 @@ test_export_static int cc_rgbk(int argc, char **argv)
 		demo = val;
 		rgbkbd_reset_color((struct rgb_s){.r = 0, .g = 0, .b = 0});
 		ccprintf("Demo set to %d\n", demo);
+		return EC_SUCCESS;
+	} else if (!strcasecmp(argv[1], "reset")) {
+		rgbkbd_reset();
+		rv = rgbkbd_init();
+		if (rv)
+			return rv;
+		return rgbkbd_enable(0);
+	} else if (!strcasecmp(argv[1], "enable")) {
+		return rgbkbd_enable(1);
+	} else if (!strcasecmp(argv[1], "disable")) {
+		return rgbkbd_enable(0);
+	} else if (!strcasecmp(argv[1], "scale")) {
+		/* Usage 6 */
+		val = strtoi(argv[2], &end, 0);
+		if (*end || val > RGBKBD_MAX_SCALE)
+			return EC_ERROR_PARAM2;
+		return rgbkbd_set_scale(val);
+	} else if (!strcasecmp(argv[1], "red")) {
+		color.r = 255;
+		color.g = 0;
+		color.b = 0;
+		rgbkbd_reset_color(color);
 		return EC_SUCCESS;
 	} else {
 		/* Usage 1 */
@@ -497,12 +543,14 @@ test_export_static int cc_rgbk(int argc, char **argv)
 	return rv;
 }
 #ifndef TEST_BUILD
-DECLARE_CONSOLE_COMMAND(rgbk, cc_rgbk,
+DECLARE_CONSOLE_COMMAND(rgb, cc_rgb,
 			"\n"
 			"1. rgbk <global-brightness>\n"
 			"2. rgbk <col,row> <r-bright> <g-bright> <b-bright>\n"
 			"3. rgbk all <r-bright> <g-bright> <b-bright>\n"
-			"4. rgbk demo <id>\n",
+			"4. rgbk demo <id>\n"
+			"5. rgbk reset/enable/disable/red\n"
+			"6. rgbk scale <val>\n",
 			"Set color of RGB keyboard"
 			);
 #endif

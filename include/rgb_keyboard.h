@@ -13,6 +13,7 @@
 #define SIZE_OF_RGB		sizeof(struct rgb_s)
 
 #define RGBKBD_MAX_GCC_LEVEL	0xff
+#define RGBKBD_MAX_SCALE	0xff
 
 enum rgbkbd_demo {
 	RGBKBD_DEMO_OFF = 0,
