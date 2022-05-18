@@ -1497,7 +1497,7 @@ void cypd_set_typec_profile(int controller, int port)
 			 * when device request RDO <= 1.5A
 			 * resend 1.5A pdo to device
 			 */
-			if (!pd_3a_flag)
+			if (cypd_port_3a_status(controller, port) || !pd_3a_flag)
 				cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_3A);
 			else
 				cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
