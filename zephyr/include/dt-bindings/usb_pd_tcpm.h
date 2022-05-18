@@ -6,6 +6,10 @@
 #ifndef DT_BINDINGS_USB_PD_TCPM_H_
 #define DT_BINDINGS_USB_PD_TCPM_H_
 
+#ifndef BIT
+#define BIT(n) (1U << n)
+#endif
+
 /*
  * Macros for tcpc_config_t flags field.
  *
