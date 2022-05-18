@@ -3155,6 +3155,9 @@
 #undef CONFIG_LED_DRIVER_IS31FL3743B /* Lumissil IS31FL3743B on SPI */
 #undef CONFIG_LED_DRIVER_AW20198     /* Awinic AW20198 on I2C */
 
+/* Enable late init for is31fl3743b. Work around b:232443638. */
+#undef CONFIG_IS31FL3743B_LATE_INIT
+
 /* Offset in flash where little firmware will live. */
 #undef CONFIG_LFW_OFFSET
 

@@ -329,6 +329,24 @@ static int rgbkbd_init(void)
 	return rv;
 }
 
+/* This is used to re-init on the first enable. */
+static bool reinitialized;
+static int rgbkbd_late_init(void)
+{
+	if (IS_ENABLED(CONFIG_IS31FL3743B_LATE_INIT)) {
+		if (!reinitialized) {
+			int rv;
+
+			CPRINTS("Re-initializing");
+			rv = rgbkbd_init();
+			if (rv)
+				return rv;
+			reinitialized = true;
+		}
+	}
+	return EC_SUCCESS;
+}
+
 static int rgbkbd_enable(int enable)
 {
 	int rv = EC_SUCCESS;
@@ -337,6 +355,9 @@ static int rgbkbd_enable(int enable)
 	if (enable) {
 		if (rgbkbd_state == RGBKBD_STATE_ENABLED)
 			return EC_SUCCESS;
+		rv = rgbkbd_late_init();
+		if (rv)
+			return rv;
 	} else {
 		if (rgbkbd_state == RGBKBD_STATE_DISABLED)
 			return EC_SUCCESS;
@@ -368,6 +389,11 @@ static int rgbkbd_enable(int enable)
 static int rgbkbd_kblight_set(int percent)
 {
 	uint8_t gcc = DIV_ROUND_NEAREST(percent * RGBKBD_MAX_GCC_LEVEL, 100);
+	int rv = rgbkbd_late_init();
+
+	if (rv)
+		return rv;
+
 	return rgbkbd_set_global_brightness(gcc);
 }
 
@@ -381,6 +407,7 @@ static void rgbkbd_reset(void)
 	board_kblight_shutdown();
 	board_kblight_init();
 	rgbkbd_state = RGBKBD_STATE_RESET;
+	reinitialized = false;
 }
 
 const struct kblight_drv kblight_rgbkbd = {
@@ -412,6 +439,9 @@ static enum ec_status hc_rgbkbd_set_color(struct host_cmd_handler_args *args)
 	if (p->start_key + p->length > EC_RGBKBD_MAX_KEY_COUNT)
 		return EC_RES_INVALID_PARAM;
 
+	if (rgbkbd_late_init())
+		return EC_RES_ERROR;
+
 	for (i = 0; i < p->length; i++) {
 		uint8_t j = rgbkbd_table[p->start_key + i];
 		union rgbkbd_coord_u8 led;
@@ -440,6 +470,9 @@ static enum ec_status hc_rgbkbd(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_rgbkbd *p = args->params;
 	enum ec_status rv = EC_RES_ERROR;
+
+	if (rgbkbd_late_init())
+		return EC_RES_ERROR;
 
 	switch (p->subcmd) {
 	case EC_RGBKBD_SUBCMD_CLEAR:
