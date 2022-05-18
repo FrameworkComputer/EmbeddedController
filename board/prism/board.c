@@ -243,8 +243,18 @@ const uint8_t rgbkbd_map[] = {
 };
 const size_t rgbkbd_map_size = ARRAY_SIZE(rgbkbd_map);
 
+__override void board_kblight_shutdown(void)
+{
+	gpio_set_level(GPIO_RGBKBD_POWER, 0);
+}
+
 __override void board_kblight_init(void)
 {
+	/*
+	 * Keep hardware stand-by always on since it doesn't allow scale and PWM
+	 * registers to be written. We use software stand-by for enable/disable.
+	 */
+	gpio_set_level(GPIO_RGBKBD_SDB_L, 1);
 	gpio_set_level(GPIO_RGBKBD_POWER, 1);
 	msleep(10);
 }
