@@ -41,6 +41,9 @@
 #define CONFIG_CMD_SPI_XFER
 
 #define CONFIG_SPI_RGB_PORT 0
+
+#define CONFIG_IS31FL3743B_LATE_INIT
+
 #endif /* SECTION_IS_RW */
 
 /*
