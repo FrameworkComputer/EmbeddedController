@@ -45,6 +45,7 @@ struct is31fl3743b_msg {
 	uint8_t payload[];
 } __packed;
 
+__maybe_unused
 static int is31fl3743b_read(struct rgbkbd *ctx, uint8_t addr, uint8_t *value)
 {
 	uint8_t buf[8];
@@ -86,11 +87,7 @@ static int is31fl3743b_enable(struct rgbkbd *ctx, bool enable)
 
 	gpio_set_level(GPIO_RGBKBD_SDB_L, enable ? 1 : 0);
 
-	rv = is31fl3743b_read(ctx, IS31FL3743B_REG_CONFIG, &u8);
-	if (rv) {
-		return rv;
-	}
-
+	u8 = 0;
 	WRITE_BIT(u8, 3, 1);
 	WRITE_BIT(u8, 0, enable);
 
@@ -166,12 +163,6 @@ static int is31fl3743b_init(struct rgbkbd *ctx)
 
 	rv = is31fl3743b_reset(ctx);
 	msleep(3);
-
-	if (IS_ENABLED(CONFIG_RGB_KEYBOARD_DEBUG)) {
-		uint8_t val;
-		rv = is31fl3743b_read(ctx, IS31FL3743B_REG_PD_PU, &val);
-		CPRINTS("PD/PU. val=0x%02x (rv=%d)", val, rv);
-	}
 
 	return EC_SUCCESS;
 }
