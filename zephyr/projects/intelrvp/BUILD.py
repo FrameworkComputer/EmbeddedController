@@ -51,6 +51,7 @@ register_intelrvp_project(
         here / "adlrvp/adlrvp_npcx/keyboard.dts",
         here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
         here / "adlrvp/adlrvp_npcx/usbc.dts",
+        here / "adlrvp/adlrvp_npcx/pwm_leds.dts",
     ],
     extra_kconfig_files=[
         here / "legacy_ec_pwrseq.conf",
