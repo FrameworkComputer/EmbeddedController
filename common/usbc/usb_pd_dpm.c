@@ -13,6 +13,7 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "power.h"
 #include "system.h"
 #include "task.h"
 #include "tcpm/tcpm.h"
@@ -24,6 +25,7 @@
 #include "usb_pd_dpm.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_pdo.h"
+#include "usb_pe_sm.h"
 #include "usb_tbt_alt_mode.h"
 
 #ifdef CONFIG_ZEPHYR
@@ -818,6 +820,24 @@ int dpm_get_source_current(const int port)
 		return 500;
 }
 
+__overridable enum pd_sdb_power_indicator board_get_pd_sdb_power_indicator(
+enum pd_sdb_power_state power_state)
+{
+	/*
+	 *  LED on for S0 and blinking for S0ix/S3.
+	 *  LED off for all other power states (S4, S5, G3, NOT_SUPPORTED)
+	 */
+	switch (power_state) {
+	case PD_SDB_POWER_STATE_S0:
+		return PD_SDB_POWER_INDICATOR_ON;
+	case PD_SDB_POWER_STATE_MODERN_STANDBY:
+	case PD_SDB_POWER_STATE_S3:
+		return PD_SDB_POWER_INDICATOR_BLINKING;
+	default:
+		return PD_SDB_POWER_INDICATOR_OFF;
+	}
+}
+
 static uint8_t get_status_internal_temp(void)
 {
 	/*
@@ -863,9 +883,56 @@ static enum pd_sdb_temperature_status get_status_temp_status(void)
 #endif
 }
 
+static uint8_t get_status_power_state_change(void)
+{
+	enum pd_sdb_power_state ret = PD_SDB_POWER_STATE_NOT_SUPPORTED;
+
+#ifdef HAS_TASK_CHIPSET
+	switch (power_get_state()) {
+	case POWER_G3:
+	case POWER_S5G3:
+		ret = PD_SDB_POWER_STATE_G3;
+		break;
+	case POWER_S5:
+	case POWER_G3S5:
+	case POWER_S3S5:
+	case POWER_S4S5:
+		ret = PD_SDB_POWER_STATE_S5;
+		break;
+	case POWER_S4:
+	case POWER_S3S4:
+	case POWER_S5S4:
+		ret = PD_SDB_POWER_STATE_S4;
+		break;
+	case POWER_S3:
+	case POWER_S5S3:
+	case POWER_S0S3:
+	case POWER_S4S3:
+		ret = PD_SDB_POWER_STATE_S3;
+		break;
+	case POWER_S0:
+	case POWER_S3S0:
+#ifdef CONFIG_POWER_S0IX
+	case POWER_S0ixS0:
+#endif /* CONFIG_POWER_S0IX */
+		ret = PD_SDB_POWER_STATE_S0;
+		break;
+#ifdef CONFIG_POWER_S0IX
+	case POWER_S0ix:
+	case POWER_S0S0ix:
+		ret = PD_SDB_POWER_STATE_MODERN_STANDBY;
+		break;
+#endif /* CONFIG_POWER_S0IX */
+	}
+#endif /* HAS_TASK_CHIPSET */
+
+	return ret | board_get_pd_sdb_power_indicator(ret);
+}
+
 int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 {
 	struct pd_sdb sdb;
+	struct rmdo partner_rmdo;
 
 	/* TODO(b/227236917): Fill in fields of Status message */
 
@@ -887,10 +954,18 @@ int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 	/* Power Status */
 	sdb.power_status = 0x0;
 
-	/* USB PD Rev 3.0: 6.5.2 Status Message */
-	*len = 6;
+	partner_rmdo = pe_get_partner_rmdo(port);
+	if ((partner_rmdo.major_rev == 3 && partner_rmdo.minor_rev >= 1) ||
+	    partner_rmdo.major_rev > 3) {
+		/* USB PD Rev 3.1: 6.5.2 Status Message */
+		sdb.power_state_change = get_status_power_state_change();
+		*len = 7;
+	} else {
+		/* USB PD Rev 3.0: 6.5.2 Status Message */
+		sdb.power_state_change = 0;
+		*len = 6;
+	}
 
 	memcpy(msg, &sdb, *len);
-
 	return EC_SUCCESS;
 }

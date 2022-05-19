@@ -1433,6 +1433,11 @@ void pe_clear_ado(int port)
 	mutex_unlock(&pe[port].ado_lock);
 }
 
+struct rmdo pe_get_partner_rmdo(int port)
+{
+	return pe[port].partner_rmdo;
+}
+
 static void pe_handle_detach(void)
 {
 	const int port = TASK_ID_TO_PD_PORT(task_get_current());

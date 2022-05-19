@@ -1217,12 +1217,32 @@ enum pd_sdb_temperature_status {
 BUILD_ASSERT(sizeof(enum pd_sdb_temperature_status) == 1);
 
 struct pd_sdb {
+	/* SDB Fields for PD REV 3.0 */
 	uint8_t internal_temp;
 	uint8_t present_input;
 	uint8_t present_battery_input;
 	uint8_t event_flags;
 	enum pd_sdb_temperature_status temperature_status;
 	uint8_t power_status;
+	/* SDB Fields for PD REV 3.1 */
+	uint8_t power_state_change;
+};
+
+enum pd_sdb_power_state {
+	PD_SDB_POWER_STATE_NOT_SUPPORTED = 0,
+	PD_SDB_POWER_STATE_S0 = 1,
+	PD_SDB_POWER_STATE_MODERN_STANDBY = 2,
+	PD_SDB_POWER_STATE_S3 = 3,
+	PD_SDB_POWER_STATE_S4 = 4,
+	PD_SDB_POWER_STATE_S5 = 5,
+	PD_SDB_POWER_STATE_G3 = 6,
+};
+
+enum pd_sdb_power_indicator {
+	PD_SDB_POWER_INDICATOR_OFF = (0 << 3),
+	PD_SDB_POWER_INDICATOR_ON = (1 << 3),
+	PD_SDB_POWER_INDICATOR_BLINKING = (2 << 3),
+	PD_SDB_POWER_INDICATOR_BREATHING = (3 << 3),
 };
 
 /* Extended message type for REV 3.0 */
@@ -3515,6 +3535,17 @@ void typec_select_src_collision_rp(int port, enum tcpc_rp_value rp);
  * @return 0 on success else failure
  */
 int typec_update_cc(int port);
+
+/**
+ * Defines the New power state indicator bits in the Power State Change
+ * field of the Status Data Block (SDB) in USB PD Revision 3.1 and above.
+ *
+ * @param pd_sdb_power_state enum defining the New Power State field of the SDB
+ * @return pd_sdb_power_indicator enum for the SDB
+ */
+__override_proto enum pd_sdb_power_indicator board_get_pd_sdb_power_indicator(
+enum pd_sdb_power_state power_state);
+
 /****************************************************************************/
 
 #endif  /* __CROS_EC_USB_PD_H */
