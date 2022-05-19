@@ -1129,8 +1129,9 @@ static void do_cc(int cc_config_new)
 
 	if (cc_config_new != cc_config) {
 		if (!(cc_config & CC_DETACH)) {
-			/* Force detach */
-			pd_power_supply_reset(DUT);
+			/* Force detach by disabling VBUS */
+			chg_power_select(CHG_POWER_OFF);
+			dut_chg_en(0);
 			/* Always set to 0 here so both CC lines are changed */
 			cc_config &= ~(CC_DISABLE_DTS & CC_ALLOW_SRC);
 
