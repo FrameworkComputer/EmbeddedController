@@ -4,6 +4,7 @@
  */
 
 #include <dt-bindings/gpio_defines.h>
+#include <nuvoton/npcx/npcx9/npcx9-pinctrl.dtsi>
 
 / {
 	model = "NPCX9";
@@ -41,7 +42,8 @@
 &uart1 {
 	status = "okay";
 	current-speed = <115200>;
-	pinctrl-0 = <&altj_cr_sin1_sl2 &altj_cr_sout1_sl2>;
+	pinctrl-0 = <&uart1_2_sin_gp64 &uart1_2_sout_gp65>;
+	pinctrl-names = "default";
 };
 
 &cros_kb_raw {

@@ -19,6 +19,9 @@ CONFIG_UART_CONSOLE=y
 # Pinmux Driver
 CONFIG_PINMUX=y
 
+# Pinctrl Driver
+CONFIG_PINCTRL=y
+
 # GPIO Controller
 CONFIG_GPIO=y
 

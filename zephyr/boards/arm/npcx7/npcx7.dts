@@ -8,6 +8,7 @@
 #include <cros/nuvoton/npcx7.dtsi>
 #include <dt-bindings/gpio_defines.h>
 #include <nuvoton/npcx7m7fc.dtsi>
+#include <nuvoton/npcx/npcx7/npcx7-pinctrl.dtsi>
 
 / {
 	model = "NPCX7";
@@ -46,7 +47,8 @@
 &uart1 {
 	status = "okay";
 	current-speed = <115200>;
-	pinctrl-0 = <&altc_uart1_sl2>; /* Use UART1_SL2 ie. PIN64.65 */
+	pinctrl-0 = <&uart1_2_sin_sout_gp64_65>;
+	pinctrl-names = "default";
 };
 
 &cros_kb_raw {
