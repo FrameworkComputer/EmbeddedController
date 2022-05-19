@@ -316,6 +316,15 @@ void gpio_reset(enum gpio_signal signal)
 			      configs[signal].init_flags);
 }
 
+void gpio_reset_port(const struct device *port)
+{
+	for (size_t i = 0; i < ARRAY_SIZE(configs); ++i) {
+		if (port == configs[i].spec.port)
+			gpio_pin_configure_dt(&configs[i].spec,
+					      configs[i].init_flags);
+	}
+}
+
 void gpio_set_flags(enum gpio_signal signal, int flags)
 {
 	if (!gpio_is_implemented(signal))
