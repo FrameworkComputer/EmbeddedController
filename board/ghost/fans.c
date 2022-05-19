@@ -31,6 +31,8 @@ static void fan_slow(void)
 
 	pwm_enable(PWM_CH_FAN1, 1);
 	pwm_set_duty(PWM_CH_FAN1, duty_pct);
+	pwm_enable(PWM_CH_FAN2, 1);
+	pwm_set_duty(PWM_CH_FAN2, duty_pct);
 }
 
 static void fan_max(void)
@@ -41,6 +43,8 @@ static void fan_max(void)
 
 	pwm_enable(PWM_CH_FAN1, 1);
 	pwm_set_duty(PWM_CH_FAN1, duty_pct);
+	pwm_enable(PWM_CH_FAN2, 1);
+	pwm_set_duty(PWM_CH_FAN2, duty_pct);
 }
 
 DECLARE_HOOK(HOOK_INIT, fan_slow, HOOK_PRIO_DEFAULT);
