@@ -48,13 +48,12 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 static void board_pwm_init(void)
 {
 	/*
-	 * Turn off all the LEDs.
-	 * Turn on the fan at 100%.
+	 * Turn on all the LEDs at 50%.
 	 */
 	pwm_enable(PWM_CH_LED1, 1);
-	pwm_set_duty(PWM_CH_LED1, 0);
+	pwm_set_duty(PWM_CH_LED1, 50);
 	pwm_enable(PWM_CH_LED2, 1);
-	pwm_set_duty(PWM_CH_LED2, 0);
+	pwm_set_duty(PWM_CH_LED2, 50);
 
 	pwm_enable(PWM_CH_KBLIGHT, 1);
 	pwm_set_duty(PWM_CH_KBLIGHT, 50);
