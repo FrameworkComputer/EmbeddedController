@@ -152,14 +152,8 @@ static int is31fl3733b_enable(struct rgbkbd *ctx, bool enable)
 static int is31fl3733b_set_color(struct rgbkbd *ctx, uint8_t offset,
 			     struct rgb_s *color, uint8_t len)
 {
-	uint8_t buf[sizeof(offset) + IS31FL3733B_BUF_SIZE];
-	const int frame_len = len * SIZE_OF_RGB + sizeof(offset);
-	const int frame_offset = offset * SIZE_OF_RGB;
+	int led_addr, led_addr_row, led_addr_col;
 	int i, rv;
-
-	if (frame_offset + frame_len > sizeof(buf)) {
-		return EC_ERROR_OVERFLOW;
-	}
 
 	rv = is31fl3733b_set_page(ctx, IS31FL3733B_PAGE_PWM);
 	if (rv) {
@@ -167,13 +161,20 @@ static int is31fl3733b_set_color(struct rgbkbd *ctx, uint8_t offset,
 	}
 
 	for (i = 0; i < len; i++) {
-		buf[i * SIZE_OF_RGB + 0] = color[i].r;
-		buf[i * SIZE_OF_RGB + 1] = color[i].g;
-		buf[i * SIZE_OF_RGB + 2] = color[i].b;
+		led_addr_row = (offset + i) % ctx->cfg->row_len;
+		led_addr_col = (offset + i) / ctx->cfg->row_len;
+		led_addr = led_addr_row * 0x30 + led_addr_col;
+
+		rv  = is31fl3733b_write(ctx, led_addr + 0x00, color[i].r);
+		rv |= is31fl3733b_write(ctx, led_addr + 0x10, color[i].g);
+		rv |= is31fl3733b_write(ctx, led_addr + 0x20, color[i].b);
+
+		if (rv) {
+			return rv;
+		}
 	}
 
-	return i2c_xfer(ctx->cfg->i2c, IS31FL3733B_ADDR_FLAGS,
-			buf, frame_len, NULL, 0);
+	return EC_SUCCESS;
 }
 
 static int is31fl3733b_set_scale(struct rgbkbd *ctx, uint8_t offset,
