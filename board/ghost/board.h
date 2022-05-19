@@ -208,12 +208,11 @@ enum battery_type {
 };
 
 enum pwm_channel {
-	PWM_CH_LED2 = 0,		/* PWM0 (white charger) */
-	PWM_CH_LED3,			/* PWM1 (orange on DB) */
-	PWM_CH_LED1,			/* PWM2 (orange charger) */
+	PWM_CH_LED1 = 0,		/* PWM0 */
+	PWM_CH_LED2,			/* PWM1 */
+	PWM_CH_FAN2,			/* PWM2 */
 	PWM_CH_KBLIGHT,			/* PWM3 */
-	PWM_CH_FAN,			/* PWM5 */
-	PWM_CH_LED4,			/* PWM7 (white on DB) */
+	PWM_CH_FAN1,			/* PWM5 */
 	PWM_CH_COUNT
 };
 
