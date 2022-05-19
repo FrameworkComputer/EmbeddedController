@@ -35,9 +35,6 @@
  * address, mask, and disconnect value need to be provided.
  */
 const struct board_batt_params board_battery_info[] = {
-	/*
-	 * TODO(b/233120385): update for ghost, this is the brya battery
-	 */
 	/* POW-TECH GQA05 Battery Information */
 	[BATTERY_POWER_TECH] = {
 		/* BQ40Z50 Fuel Gauge */
@@ -65,6 +62,38 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_min_c		= 0,
 			.charging_max_c		= 45,
 			.discharging_min_c	= -10,
+			.discharging_max_c	= 60,
+		},
+	},
+	/*
+	 * TODO(b/233120385): verify these
+	 */
+	[BATTERY_SWD_ATL] = {
+		/* BQ40Z50-R3 Fuel Gauge */
+		.fuel_gauge = {
+			.manuf_name = "SWD",
+			.device_name = "1163985013",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x00,
+				.reg_mask = 0x2000,		/* XDSG */
+				.disconnect_val = 0x2000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= TARGET_WITH_MARGIN(8960, 5),
+			.voltage_normal		= 7780, /* mV */
+			.voltage_min		= 6000, /* mV */
+			.precharge_current	= 570,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 60,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
 			.discharging_max_c	= 60,
 		},
 	},
