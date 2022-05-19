@@ -166,8 +166,6 @@
 #define CONFIG_TEMP_SENSOR_POWER
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 
-#define CONFIG_FANS			FAN_CH_COUNT
-
 /* Charger defines */
 #define CONFIG_CHARGER_BQ25720
 #define CONFIG_CHARGER_BQ25720_VSYS_TH2_CUSTOM
@@ -229,16 +227,6 @@ enum pwm_channel {
 	PWM_CH_FAN,			/* PWM5 */
 	PWM_CH_LED4,			/* PWM7 (white on DB) */
 	PWM_CH_COUNT
-};
-
-enum fan_channel {
-	FAN_CH_0 = 0,
-	FAN_CH_COUNT
-};
-
-enum mft_channel {
-	MFT_CH_0 = 0,
-	MFT_CH_COUNT
 };
 
 #endif /* !__ASSEMBLER__ */
