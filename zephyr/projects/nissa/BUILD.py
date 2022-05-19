@@ -31,6 +31,7 @@ register_nissa_project(
     chip="npcx9m3f",
     extra_dts_overlays=[
         here / "nivviks_generated.dts",
+        here / "nivviks_cbi.dts",
         here / "nivviks_overlay.dts",
         here / "nivviks_motionsense.dts",
         here / "nivviks_keyboard.dts",
