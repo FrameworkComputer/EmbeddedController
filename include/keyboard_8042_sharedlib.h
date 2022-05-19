@@ -25,7 +25,7 @@ struct button_8042_t {
  * @param scancode_set	Scancode set to register.
  * @param size		Size of the scancode set in bytes.
  */
-void register_scancode_set2(uint16_t **scancode_set, size_t size);
+void register_scancode_set2(uint16_t *scancode_set, size_t size);
 
 /**
  * Get the standard Chrome OS keyboard matrix set 2 scanset

@@ -39,7 +39,7 @@ static uint16_t scancode_set2[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 #endif
 };
 
-void register_scancode_set2(uint16_t **scancode_set, size_t size)
+void register_scancode_set2(uint16_t *scancode_set, size_t size)
 {
 	ASSERT(size == sizeof(scancode_set2));
 	memcpy(scancode_set2, scancode_set, size);
