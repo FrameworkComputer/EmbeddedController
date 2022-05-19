@@ -360,9 +360,7 @@ DECLARE_IRQ(STM32_IRQ_DMA_CHANNEL_2_3, dma_event_interrupt_channel_2_3, 1);
 static void dma_event_interrupt_channel_4_7(void)
 {
 	int i;
-	const unsigned int max_chan = MIN(STM32_DMAC_CH7, STM32_DMAC_COUNT);
-
-	for (i = STM32_DMAC_CH4; i <= max_chan; i++) {
+	for (i = STM32_DMAC_CH4; i < STM32_DMAC_COUNT; i++) {
 		if (STM32_DMA1_REGS->isr & STM32_DMA_ISR_TCIF(i)) {
 			dma_clear_isr(i);
 			if (dma_irq[i].cb != NULL)

@@ -675,19 +675,19 @@ enum dma_channel {
 	STM32_DMAC_CH3 = 2,
 	STM32_DMAC_CH4 = 3,
 	STM32_DMAC_CH5 = 4,
+#if defined(CHIP_VARIANT_STM32F07X) || defined(CHIP_VARIANT_STM32F09X)
 	STM32_DMAC_CH6 = 5,
 	STM32_DMAC_CH7 = 6,
-	/*
-	 * Skip CH8, it should belong to DMA engine 1.
-	 * Sharing code with STM32s that have 16 engines will be easier.
-	 */
+#endif
+/* STM32F09 has two DMAs with 7 & 5 channels, respectively */
+#ifdef CHIP_VARIANT_STM32F09X
 	STM32_DMAC_CH9 = 8,
 	STM32_DMAC_CH10 = 9,
 	STM32_DMAC_CH11 = 10,
 	STM32_DMAC_CH12 = 11,
 	STM32_DMAC_CH13 = 12,
 	STM32_DMAC_CH14 = 13,
-
+#endif
 	/* Channel functions */
 	STM32_DMAC_ADC = STM32_DMAC_CH1,
 	STM32_DMAC_SPI1_RX = STM32_DMAC_CH2,
@@ -715,7 +715,10 @@ enum dma_channel {
 	STM32_DMAC_COUNT = 5,
 #endif
 };
-
+/*
+ * TODO(b/233369173): This file was originally shared by many MCUs,
+ *  8 is assumed to be the max number of channels for all chips.
+ */
 #define STM32_DMAC_PER_CTLR 8
 
 /* Registers for a single channel of the DMA controller */
