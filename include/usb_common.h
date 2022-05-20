@@ -243,6 +243,13 @@ int pd_broadcast_alert_msg(uint32_t ado);
 int pd_send_alert_msg(int port, uint32_t ado);
 
 /**
+ * Sets up a hard reset to send on the port
+ *
+ * @param port - the port to send the hard reset on
+ */
+void pd_send_hard_reset(int port);
+
+/**
  * During USB retimer firmware update, process operation
  * requested by AP
  *

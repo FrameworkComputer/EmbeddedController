@@ -584,40 +584,12 @@ void usb_mux_set_safe_mode_exit(int port)
 		ppc_set_sbu(port, 0);
 }
 
-static void pd_send_hard_reset(int port)
+void pd_send_hard_reset(int port)
 {
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_SEND_HARD_RESET);
 }
 
 #ifdef CONFIG_USBC_OCP
-
-static atomic_t port_oc_reset_req;
-
-static void re_enable_ports(void)
-{
-	uint32_t ports = atomic_clear(&port_oc_reset_req);
-
-	while (ports) {
-		int port = __fls(ports);
-
-		ports &= ~BIT(port);
-
-		/*
-		 * Let the board know that the overcurrent is
-		 * over since we're going to attempt re-enabling
-		 * the port.
-		 */
-		board_overcurrent_event(port, 0);
-
-		pd_send_hard_reset(port);
-		/*
-		 * TODO(b/117854867): PD3.0 to send an alert message
-		 * indicating OCP after explicit contract.
-		 */
-	}
-}
-DECLARE_DEFERRED(re_enable_ports);
-
 void pd_handle_overcurrent(int port)
 {
 	if ((port < 0) || (port >= board_get_usb_pd_port_count())) {
@@ -635,15 +607,11 @@ void pd_handle_overcurrent(int port)
 	if (pd_is_disconnected(port))
 		return;
 
-	/* Keep track of the overcurrent events. */
+	/*
+	 * Keep track of the overcurrent events and allow the module to perform
+	 * the spec-dictated recovery actions.
+	 */
 	usbc_ocp_add_event(port);
-
-	/* Let the board specific code know about the OC event. */
-	board_overcurrent_event(port, 1);
-
-	/* Wait 1s before trying to re-enable the port. */
-	atomic_or(&port_oc_reset_req, BIT(port));
-	hook_call_deferred(&re_enable_ports_data, SECOND);
 }
 
 #endif /* CONFIG_USBC_OCP */

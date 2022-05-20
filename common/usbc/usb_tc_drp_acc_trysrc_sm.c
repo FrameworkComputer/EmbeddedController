@@ -1042,8 +1042,14 @@ void tc_src_power_off(int port)
 					CHARGE_CEIL_NONE);
 }
 
+enum ocp_action {
+	OCP_CLEAR,
+	OCP_NO_ACTION,
+};
+
 /* Set what role the partner is right now, for the PPC and OCP module */
-static void tc_set_partner_role(int port, enum ppc_device_role role)
+static void tc_set_partner_role(int port, enum ppc_device_role role,
+				enum ocp_action ocp_command)
 {
 	if (IS_ENABLED(CONFIG_USBC_PPC))
 		ppc_dev_is_connected(port, role);
@@ -1052,9 +1058,9 @@ static void tc_set_partner_role(int port, enum ppc_device_role role)
 		usbc_ocp_snk_is_connected(port, role == PPC_DEV_SNK);
 		/*
 		 * Clear the overcurrent event counter
-		 * since we've detected a disconnect.
+		 * if we're not in ErrorRecovery due to OCP
 		 */
-		if (role == PPC_DEV_DISCONNECTED)
+		if (ocp_command == OCP_CLEAR)
 			usbc_ocp_clear_event_counter(port);
 	}
 }
@@ -2274,7 +2280,7 @@ static void tc_unattached_snk_entry(const int port)
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
 
-	tc_set_partner_role(port, PPC_DEV_DISCONNECTED);
+	tc_set_partner_role(port, PPC_DEV_DISCONNECTED, OCP_CLEAR);
 
 	/*
 	 * Indicate that the port is disconnected so the board
@@ -2485,7 +2491,7 @@ static void tc_attached_snk_entry(const int port)
 	typec_select_pull(port, TYPEC_CC_RD);
 
 	/* Inform the PPC and OCP module that a source is connected */
-	tc_set_partner_role(port, PPC_DEV_SRC);
+	tc_set_partner_role(port, PPC_DEV_SRC, OCP_NO_ACTION);
 
 	if (IS_ENABLED(CONFIG_USB_PE_SM) &&
 	    TC_CHK_FLAG(port, TC_FLAGS_PR_SWAP_IN_PROGRESS)) {
@@ -2828,7 +2834,7 @@ static void tc_unattached_src_entry(const int port)
 	 */
 	bc12_role_change_handler(port, prev_data_role, tc[port].data_role);
 
-	tc_set_partner_role(port, PPC_DEV_DISCONNECTED);
+	tc_set_partner_role(port, PPC_DEV_DISCONNECTED, OCP_CLEAR);
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 		charge_manager_update_dualrole(port, CAP_UNKNOWN);
@@ -3125,7 +3131,7 @@ static void tc_attached_src_entry(const int port)
 	}
 
 	/* Inform PPC and OCP module that a sink is connected. */
-	tc_set_partner_role(port, PPC_DEV_SNK);
+	tc_set_partner_role(port, PPC_DEV_SNK, OCP_NO_ACTION);
 
 	/* Initialize type-C supplier to seed the charge manger */
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
@@ -3881,7 +3887,11 @@ static void tc_cc_open_entry(const int port)
 	typec_select_pull(port, TYPEC_CC_OPEN);
 	typec_update_cc(port);
 
-	tc_set_partner_role(port, PPC_DEV_DISCONNECTED);
+	/*
+	 * While we've disconnected the partner, leave any OCP counts in place
+	 * to persist over ErrorRecovery
+	 */
+	tc_set_partner_role(port, PPC_DEV_DISCONNECTED, OCP_NO_ACTION);
 	tc_detached(port);
 }
 

@@ -5002,6 +5002,11 @@ int pd_is_port_enabled(int port)
 	}
 }
 
+void pd_set_error_recovery(int port)
+{
+	/* No-op for linking.  Can be implemented later if necessary */
+}
+
 #if defined(CONFIG_USB_PD_ALT_MODE) && !defined(CONFIG_USB_PD_ALT_MODE_DFP)
 void pd_send_hpd(int port, enum hpd_event hpd)
 {
