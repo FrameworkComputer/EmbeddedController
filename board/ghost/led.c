@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
-/* Brya specific PWM LED settings: there are 2 LEDs on each side of the board,
- * each one can be controlled separately. The LED colors are white or amber,
- * and the default behavior is tied to the charging process: both sides are
- * amber while charging the battery and white when the battery is charged.
+/*
+ * Ghost specific PWM LED settings.
+ *
+ * Early boards have 2 PWM LEDs which we simply treat as power
+ * indicators.
  */
 
 #include <stdint.h>

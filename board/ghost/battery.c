@@ -13,7 +13,7 @@
 #include "gpio_signal.h"
 
 /*
- * Battery info for all Brya battery types. Note that the fields
+ * Battery info for all Ghost battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
  * The effective temperature limits are given by discharging_min/max_c.
  *
