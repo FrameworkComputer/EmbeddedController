@@ -28,6 +28,15 @@ config PLATFORM_EC_LED_PWM
 
 if PLATFORM_EC_LED_PWM
 
+config PLATFORM_EC_LED_PWM_TASK_DISABLED
+	bool "Disable common PWM LEDs Task"
+	help
+	  Support common PWM (Pulse Width Modulation) controlled LEDs that do
+	  not conform to the Chromium OS LED behavior specification.
+
+	  Your board code must define and enable it's own task for managing the
+	  LEDs.
+
 config PLATFORM_EC_CONSOLE_CMD_LEDTEST
 	bool "Console command: ledtest"
 	default y
