@@ -743,7 +743,7 @@ static void cros_shi_npcx_reset_prepare(struct shi_reg *const inst)
 	 */
 	for (i = 1; i < SHI_OBUF_FULL_SIZE; i++)
 		inst->OBUF[i] = EC_SPI_RECEIVING;
-	inst->OBUF[0] = EC_SPI_OLD_READY;
+	inst->OBUF[0] = EC_SPI_RX_READY;
 
 	/* SHI/Host Write/input buffer wrap-around enable */
 	inst->SHICFG1 = BIT(NPCX_SHICFG1_IWRAP) | BIT(NPCX_SHICFG1_WEN) |
