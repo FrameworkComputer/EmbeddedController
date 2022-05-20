@@ -1693,6 +1693,10 @@ enum ec_feature_code {
 	 * The EC supports DP2.1 capability
 	 */
 	EC_FEATURE_TYPEC_DP2_1 = 52,
+	/*
+	 * The MCU is System Companion Processor Core 1
+	 */
+	EC_FEATURE_SCP_C1 = 53,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
