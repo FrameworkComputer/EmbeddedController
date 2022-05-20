@@ -12,19 +12,19 @@
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 
-static union brya_cbi_fw_config fw_config;
+static union ghost_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
 
 /*
- * FW_CONFIG defaults for brya if the CBI.FW_CONFIG data is not
+ * FW_CONFIG defaults for ghost if the CBI.FW_CONFIG data is not
  * initialized.
  */
-static const union brya_cbi_fw_config fw_config_defaults = {
+static const union ghost_cbi_fw_config fw_config_defaults = {
 	.kb_bl = KEYBOARD_BACKLIGHT_ENABLED,
 };
 
 /****************************************************************************
- * Brya FW_CONFIG access
+ * Ghost FW_CONFIG access
  */
 void board_init_fw_config(void)
 {
@@ -34,7 +34,7 @@ void board_init_fw_config(void)
 	}
 }
 
-union brya_cbi_fw_config get_fw_config(void)
+union ghost_cbi_fw_config get_fw_config(void)
 {
 	return fw_config;
 }

@@ -3,13 +3,15 @@
  * found in the LICENSE file.
  */
 
-#ifndef __BOARD_BRYA_FW_CONFIG_H_
-#define __BOARD_BRYA_FW_CONFIG_H_
+#ifndef __BOARD_GHOST_FW_CONFIG_H_
+#define __BOARD_GHOST_FW_CONFIG_H_
 
 #include <stdint.h>
 
-/****************************************************************************
- * CBI FW_CONFIG layout for Brya board.
+/*
+ * TODO(b/233319598): what needs to go into FW_CONFIG
+ *
+ * CBI FW_CONFIG layout for Ghost board.
  *
  * Source of truth is the project/brya/brya/config.star configuration file.
  */
@@ -19,7 +21,7 @@ enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
-union brya_cbi_fw_config {
+union ghost_cbi_fw_config {
 	struct {
 		uint32_t				reserved_1 : 4;
 		uint32_t				sd_db : 2;
@@ -36,7 +38,7 @@ union brya_cbi_fw_config {
  *
  * @return the FW_CONFIG for the board.
  */
-union brya_cbi_fw_config get_fw_config(void);
+union ghost_cbi_fw_config get_fw_config(void);
 
 /**
  * Get the USB daughter board type from FW_CONFIG.
@@ -45,4 +47,4 @@ union brya_cbi_fw_config get_fw_config(void);
  */
 enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
 
-#endif /* __BOARD_BRYA_FW_CONFIG_H_ */
+#endif /* __BOARD_GHOST_FW_CONFIG_H_ */
