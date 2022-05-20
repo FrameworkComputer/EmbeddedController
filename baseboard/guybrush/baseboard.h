@@ -278,7 +278,6 @@
 
 /* Fan Config */
 #define CONFIG_FANS FAN_CH_COUNT
-/* TODO: Set CONFIG_FAN_INIT_SPEED, defaults to 100 */
 
 /* LED Config */
 #define CONFIG_PWM
