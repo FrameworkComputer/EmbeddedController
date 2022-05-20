@@ -35,6 +35,7 @@ struct rgbkbd rgbkbds[] = {
 			.col_len = RGB_GRID0_COL,
 			.row_len = RGB_GRID0_ROW,
 		},
+		.init = &rgbkbd_default,
 		.buf = grid0,
 	},
 	[1] = {
@@ -44,6 +45,7 @@ struct rgbkbd rgbkbds[] = {
 			.col_len = RGB_GRID1_COL,
 			.row_len = RGB_GRID1_ROW,
 		},
+		.init = &rgbkbd_default,
 		.buf = grid1,
 	},
 };
@@ -164,11 +166,15 @@ const struct rgbkbd_drv test_drv = {
 	.set_gcc = test_drv_set_gcc,
 };
 
+extern int demo_interval_ms;
+
 static int test_rgbkbd_startup(void)
 {
 	struct rgbkbd *ctx;
 	struct rgb_s color;
 	int g, x, y, c, r;
+
+	demo_interval_ms = 1;
 
 	/* Let RGBKBD task run. */
 	task_wait_event(-1);

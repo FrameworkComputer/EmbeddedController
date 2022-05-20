@@ -33,6 +33,9 @@ test_export_static enum rgbkbd_demo demo =
 #endif
 	;
 
+const int default_demo_interval_ms = 250;
+test_export_static int demo_interval_ms = -1;
+
 test_export_static
 uint8_t rgbkbd_table[EC_RGBKBD_MAX_KEY_COUNT];
 
@@ -149,8 +152,6 @@ static void rgbkbd_demo_flow(void)
 
 #ifdef TEST_BUILD
 	task_wake(TASK_ID_TEST_RUNNER);
-#else
-	msleep(250);
 #endif
 }
 
@@ -179,12 +180,10 @@ static void rgbkbd_demo_dot(void)
 
 #ifdef TEST_BUILD
 	task_wake(TASK_ID_TEST_RUNNER);
-#else
-	msleep(250);
 #endif
 }
 
-static void rgbkbd_demo(enum rgbkbd_demo id)
+static void rgbkbd_demo_run(enum rgbkbd_demo id)
 {
 	switch (id) {
 	case RGBKBD_DEMO_FLOW:
@@ -384,6 +383,26 @@ static int rgbkbd_enable(int enable)
 	return rv;
 }
 
+static void rgbkbd_demo_set(enum rgbkbd_demo new_demo)
+{
+	CPRINTS("Setting demo %d with %d ms interval", demo, demo_interval_ms);
+
+	demo = new_demo;
+
+	/* suspend demo task */
+	demo_interval_ms = -1;
+	rgbkbd_init();
+	rgbkbd_enable(1);
+
+	if (demo == RGBKBD_DEMO_OFF)
+		return;
+
+	demo_interval_ms = default_demo_interval_ms;
+
+	/* start demo */
+	task_wake(TASK_ID_RGBKBD);
+}
+
 static int rgbkbd_kblight_set(int percent)
 {
 	uint8_t gcc = DIV_ROUND_NEAREST(percent * RGBKBD_MAX_GCC_LEVEL, 100);
@@ -418,16 +437,12 @@ const struct kblight_drv kblight_rgbkbd = {
 
 void rgbkbd_task(void *u)
 {
-	uint32_t event;
-
 	rgbkbd_init_lookup_table();
 
 	while (1) {
-		event = task_wait_event(100 * MSEC);
-		if (IS_ENABLED(CONFIG_RGB_KEYBOARD_DEBUG))
-			CPRINTS("event=0x%08x", event);
+		task_wait_event(demo_interval_ms * MSEC);
 		if (demo)
-			rgbkbd_demo(demo);
+			rgbkbd_demo_run(demo);
 	}
 }
 
@@ -519,9 +534,7 @@ test_export_static int cc_rgb(int argc, char **argv)
 		val = strtoi(argv[2], &end, 0);
 		if (*end || val >= RGBKBD_DEMO_COUNT)
 			return EC_ERROR_PARAM1;
-		demo = val;
-		rgbkbd_reset_color((struct rgb_s){.r = 0, .g = 0, .b = 0});
-		ccprintf("Demo set to %d\n", demo);
+		rgbkbd_demo_set(val);
 		return EC_SUCCESS;
 	} else if (!strcasecmp(argv[1], "reset")) {
 		rgbkbd_reset();
@@ -571,7 +584,7 @@ test_export_static int cc_rgb(int argc, char **argv)
 		return EC_ERROR_PARAM4;
 	color.b = val;
 
-	demo = RGBKBD_DEMO_OFF;
+	rgbkbd_demo_set(RGBKBD_DEMO_OFF);
 	if (y < 0 && x < 0) {
 		/* Usage 3 */
 		rgbkbd_reset_color(color);
