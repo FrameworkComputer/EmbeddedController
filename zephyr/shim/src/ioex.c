@@ -14,20 +14,8 @@
 
 LOG_MODULE_REGISTER(ioex_shim, LOG_LEVEL_ERR);
 
-#ifndef CONFIG_PLATFORM_EC_IOEX_CROS_DRV
-/*
- * If no legacy cros-ec IOEX drivers are used, we need a stub
- * symbol for ioex_config[].  Set the IOEX_IS_CROS_DRV to constant 0
- * which will cause all these checks to compile out.
- */
-struct ioexpander_config_t ioex_config[0];
-#endif
-
 int ioex_init(int ioex)
 {
-	if (!IS_ENABLED(CONFIG_PLATFORM_EC_IOEX_CROS_DRV))
-		return EC_SUCCESS;
-
 	const struct ioexpander_drv *drv = ioex_config[ioex].drv;
 	int rv;
 
@@ -45,7 +33,6 @@ int ioex_init(int ioex)
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_PLATFORM_EC_IOEX_CROS_DRV
 static int ioex_init_default(const struct device *unused)
 {
 	int ret;
@@ -67,4 +54,3 @@ static int ioex_init_default(const struct device *unused)
 	return 0;
 }
 SYS_INIT(ioex_init_default, POST_KERNEL, CONFIG_PLATFORM_EC_IOEX_INIT_PRIORITY);
-#endif

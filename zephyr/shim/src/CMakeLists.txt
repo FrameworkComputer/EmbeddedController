@@ -35,8 +35,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOOKS       hooks.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD     host_command.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE
                                                             console_buffer.c)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX        ioex.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_IOEX_CROS_DRV
+                                                            ioex.c
                                                             ioex_drv.c)
 if (NOT DEFINED CONFIG_PLATFORM_EC_KEYBOARD_DISCRETE)
   zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD

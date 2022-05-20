@@ -390,6 +390,7 @@ static void board_tcpc_init(void)
 	 * C0/C2 TCPC, so they must be set up after the TCPC has
 	 * been taken out of reset.
 	 */
+#ifndef CONFIG_ZEPHYR
 	if (get_board_id() == 1) {
 		ioex_init(IOEX_ID_1_C0_NCT38XX);
 		ioex_init(IOEX_ID_1_C2_NCT38XX);
@@ -397,6 +398,10 @@ static void board_tcpc_init(void)
 		ioex_init(IOEX_C0_NCT38XX);
 		ioex_init(IOEX_C2_NCT38XX);
 	}
+#else
+	gpio_reset_port(DEVICE_DT_GET(DT_NODELABEL(ioex_port1)));
+	gpio_reset_port(DEVICE_DT_GET(DT_NODELABEL(ioex_port2)));
+#endif
 
 	/* Enable PPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_PPC_INT_ODL);
