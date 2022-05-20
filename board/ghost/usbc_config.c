@@ -218,23 +218,23 @@ void board_reset_pd_mcu(void)
 
 	tcpc_rst = GPIO_USB_C0_C2_TCPC_RST_ODL;
 
-	/*
-	 * TODO(b/179648104): figure out correct timing
-	 */
-
 	gpio_set_level(tcpc_rst, 0);
 
 	/*
-	 * delay for power-on to reset-off and min. assertion time
+	 * delay for power-on to reset-off and min. assertion time.
+	 * the nct380x needs a 100 ns reset pulse.
 	 */
 
-	msleep(20);
+	msleep(1);
 
 	gpio_set_level(tcpc_rst, 1);
 
-	/* wait for chips to come up */
+	/*
+	 * wait for chips to come up.
+	 * the nct3808 needs 3 ms.
+	 */
 
-	msleep(50);
+	msleep(5);
 }
 
 static void board_tcpc_init(void)
