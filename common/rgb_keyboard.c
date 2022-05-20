@@ -288,8 +288,6 @@ static int rgbkbd_init(void)
 	int rv = EC_SUCCESS;
 	int e, i;
 
-	rgbkbd_init_lookup_table();
-
 	for (i = 0; i < rgbkbd_count; i++) {
 		struct rgbkbd *ctx = &rgbkbds[i];
 		uint8_t scale = ctx->init->scale;
@@ -421,6 +419,8 @@ const struct kblight_drv kblight_rgbkbd = {
 void rgbkbd_task(void *u)
 {
 	uint32_t event;
+
+	rgbkbd_init_lookup_table();
 
 	while (1) {
 		event = task_wait_event(100 * MSEC);
