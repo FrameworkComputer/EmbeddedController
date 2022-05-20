@@ -177,11 +177,6 @@ board_a1_ps8811_retimer_init(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-/*
- * PS8818 set mux board tuning.
- * Adds in board specific gain and DP lane count configuration
- * TODO(b/179036200): Adjust PS8818 tuning for guybrush reference
- */
 __override int board_c1_ps8818_mux_set(const struct usb_mux *me,
 				    mux_state_t mux_state)
 {
