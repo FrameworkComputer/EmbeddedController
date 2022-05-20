@@ -23,7 +23,7 @@
 /* Tachemeter for fan speed measurement */
 &tach2 {
 	status = "okay";
-	pinctrl-0 = <&altc_ta2_sl2>; /* Use TA2 as input pin */
+	pinctrl-0 = <&alt3_ta2_sl1>; /* Use TA2 as input pin */
 	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
 	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
 	pulses-per-round = <2>; /* number of pulses per round of encoder */
