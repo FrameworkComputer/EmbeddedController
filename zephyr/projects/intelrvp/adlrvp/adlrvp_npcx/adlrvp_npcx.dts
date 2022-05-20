@@ -81,16 +81,6 @@
 
 };
 
-/* TODO b/217436680: remove the flash jedec-id override once the upstream
- * change lands.
- */
-&spi_fiu0 {
-	int_flash: w25q40@0 {
-		compatible ="jedec,spi-nor";
-		jedec-id = [ef 40 14];
-	};
-};
-
 /* host interface */
 &espi0 {
 	status = "okay";

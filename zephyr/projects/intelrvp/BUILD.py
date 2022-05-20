@@ -40,7 +40,7 @@ def register_intelrvp_project(
 
 register_intelrvp_project(
     project_name="adlrvp_npcx",
-    chip="npcx9m3f",
+    chip="npcx9m7f",
     extra_dts_overlays=[
         here / "adlrvp/adlrvp_npcx/adlrvp_npcx.dts",
         here / "adlrvp/adlrvp_npcx/bb_retimer.dts",
