@@ -307,7 +307,7 @@ void ppc_interrupt(enum gpio_signal signal)
 void retimer_interrupt(enum gpio_signal signal)
 {
 	/*
-	 * TODO(b/179513527): add USB-C support
+	 * TODO(b/233317538): do we need this interrupt
 	 */
 }
 
