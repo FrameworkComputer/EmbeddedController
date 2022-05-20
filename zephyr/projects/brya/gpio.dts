@@ -273,30 +273,37 @@
 		usb_c0_oc_odl {
 			gpios = <&ioex_port1 4 GPIO_ODR_HIGH>;
 			enum-name = "IOEX_USB_C0_OC_ODL";
+			no-auto-init;
 		};
 		usb_c0_frs_en {
 			gpios = <&ioex_port1 6 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C0_FRS_EN";
+			no-auto-init;
 		};
 		usb_c0_rt_rst_odl: usb_c0_rt_rst_odl {
 			gpios = <&ioex_port1 7 GPIO_ODR_LOW>;
 			enum-name = "IOEX_USB_C0_RT_RST_ODL";
+			no-auto-init;
 		};
 		usb_c2_rt_rst_odl: usb_c2_rt_rst_odl {
 			gpios = <&ioex_port2 2 GPIO_ODR_LOW>;
 			enum-name = "IOEX_USB_C2_RT_RST_ODL";
+			no-auto-init;
 		};
 		usb_c1_oc_odl {
 			gpios = <&ioex_port2 3 GPIO_ODR_HIGH>;
 			enum-name = "IOEX_USB_C1_OC_ODL";
+			no-auto-init;
 		};
 		usb_c2_oc_odl {
 			gpios = <&ioex_port2 4 GPIO_ODR_HIGH>;
 			enum-name = "IOEX_USB_C2_OC_ODL";
+			no-auto-init;
 		};
 		usb_c2_frs_en {
 			gpios = <&ioex_port2 6 GPIO_OUTPUT_LOW>;
 			enum-name = "IOEX_USB_C2_FRS_EN";
+			no-auto-init;
 		};
 	};
 
