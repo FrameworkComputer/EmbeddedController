@@ -60,9 +60,22 @@ __override uint8_t board_get_usb_pd_port_count(void)
 static void board_power_change(struct ap_power_ev_callback *cb,
 			       struct ap_power_ev_data data)
 {
+	/*
+	 * Enable power to pen garage when system is active (safe even if no
+	 * pen is present).
+	 */
+	const struct gpio_dt_spec *const pen_power_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_en_pp5000_pen_x);
+
 	switch (data.event) {
+	case AP_POWER_STARTUP:
+		gpio_pin_set_dt(pen_power_gpio, 1);
+		break;
+	case AP_POWER_SHUTDOWN:
+		gpio_pin_set_dt(pen_power_gpio, 0);
+		break;
 	default:
-		return;
+		break;
 	}
 }
 
