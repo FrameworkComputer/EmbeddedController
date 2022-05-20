@@ -105,142 +105,146 @@ const uint8_t rgbkbd_count = ARRAY_SIZE(rgbkbds);
 const uint8_t rgbkbd_hsize = RGB_GRID0_COL + RGB_GRID1_COL;
 const uint8_t rgbkbd_vsize = RGB_GRID0_ROW;
 
+#define LED(x, y)	RGBKBD_COORD((x), (y))
+#define DELM		RGBKBD_DELM
 const uint8_t rgbkbd_map[] = {
-	RGBKBD_DELM,				/* 0: (null) */
-	RGBKBD_COORD( 0, 1), RGBKBD_DELM,	/* 1: ~ ` */
-	RGBKBD_COORD( 1, 1), RGBKBD_COORD( 1, 2), RGBKBD_DELM,	/* 2: ! 1 */
-	RGBKBD_COORD( 2, 1), RGBKBD_COORD( 2, 2), RGBKBD_DELM,	/* 3: @ 2 */
-	RGBKBD_COORD( 3, 1), RGBKBD_COORD( 3, 2), RGBKBD_DELM,	/* 4: # 3 */
-	RGBKBD_COORD( 4, 1), RGBKBD_COORD( 4, 2), RGBKBD_DELM,	/* 5: $ 4 */
-	RGBKBD_COORD( 5, 1), RGBKBD_COORD( 5, 2), RGBKBD_DELM,	/* 6: % 5 */
-	RGBKBD_COORD( 6, 1), RGBKBD_COORD( 6, 2), RGBKBD_DELM,	/* 7: ^ 6 */
-	RGBKBD_COORD( 7, 1), RGBKBD_COORD( 7, 2), RGBKBD_DELM,	/* 8: & 7 */
-	RGBKBD_COORD( 8, 1), RGBKBD_COORD( 8, 2), RGBKBD_DELM,	/* 9: * 8 */
-	RGBKBD_COORD( 9, 1), RGBKBD_COORD( 9, 2), RGBKBD_DELM,	/* 10: ( 9 */
-	RGBKBD_COORD(10, 1), RGBKBD_COORD(10, 2), RGBKBD_DELM,	/* 11: ) 0 */
-	RGBKBD_COORD(11, 1), RGBKBD_COORD(11, 2), RGBKBD_DELM,	/* 12: _ - */
-	RGBKBD_COORD(12, 1), RGBKBD_COORD(12, 2), RGBKBD_DELM,	/* 13: + = */
-	RGBKBD_DELM,				/* 14: (null) */
-	RGBKBD_COORD(13, 1), RGBKBD_COORD(13, 2), RGBKBD_DELM,	/* 15: backspace */
-	RGBKBD_COORD( 0, 3), RGBKBD_DELM,	/* 16: tab */
-	RGBKBD_COORD( 1, 3), RGBKBD_DELM,	/* 17: q */
-	RGBKBD_COORD( 2, 3), RGBKBD_DELM,	/* 18: w */
-	RGBKBD_COORD( 3, 3), RGBKBD_DELM,	/* 19: e */
-	RGBKBD_COORD( 4, 3), RGBKBD_DELM,	/* 20: r */
-	RGBKBD_COORD( 5, 3), RGBKBD_DELM,	/* 21: t */
-	RGBKBD_COORD( 6, 3), RGBKBD_DELM,	/* 22: y */
-	RGBKBD_COORD( 7, 3), RGBKBD_DELM,	/* 23: u */
-	RGBKBD_COORD( 8, 3), RGBKBD_DELM,	/* 24: i */
-	RGBKBD_COORD( 9, 3), RGBKBD_DELM,	/* 25: o */
-	RGBKBD_COORD(10, 3), RGBKBD_DELM,	/* 26: p */
-	RGBKBD_COORD(11, 3), RGBKBD_COORD(12, 3), RGBKBD_DELM,	/* 27: [ { */
-	RGBKBD_COORD(13, 3), RGBKBD_COORD(14, 3), RGBKBD_DELM,	/* 28: ] } */
-	RGBKBD_COORD(15, 3), RGBKBD_COORD(16, 3), RGBKBD_DELM,	/* 29: \ | */
-	RGBKBD_COORD( 0, 4), RGBKBD_COORD( 1, 4), RGBKBD_DELM,	/* 30: caps lock */
-	RGBKBD_COORD( 2, 4), RGBKBD_DELM,	/* 31: a */
-	RGBKBD_COORD( 3, 4), RGBKBD_DELM,	/* 32: s */
-	RGBKBD_COORD( 4, 4), RGBKBD_DELM,	/* 33: d */
-	RGBKBD_COORD( 5, 4), RGBKBD_DELM,	/* 34: f */
-	RGBKBD_COORD( 6, 4), RGBKBD_DELM,	/* 35: g */
-	RGBKBD_COORD( 7, 4), RGBKBD_DELM,	/* 36: h */
-	RGBKBD_COORD( 8, 4), RGBKBD_DELM,	/* 37: j */
-	RGBKBD_COORD( 9, 4), RGBKBD_DELM,	/* 38: k */
-	RGBKBD_COORD(10, 4), RGBKBD_DELM,	/* 39: l */
-	RGBKBD_COORD(11, 4), RGBKBD_COORD(12, 4), RGBKBD_DELM,	/* 40: ; : */
-	RGBKBD_COORD(13, 4), RGBKBD_COORD(14, 4), RGBKBD_DELM,	/* 41: " ' */
-	RGBKBD_DELM,				/* 42: (null) */
-	RGBKBD_COORD(15, 4), RGBKBD_COORD(16, 4), RGBKBD_DELM,	/* 43: enter */
-	RGBKBD_COORD( 0, 5), RGBKBD_COORD( 1, 5),
-	RGBKBD_COORD( 2, 5), RGBKBD_DELM,	/* 44: L-shift */
-	RGBKBD_DELM,				/* 45: (null) */
-	RGBKBD_COORD( 3, 5), RGBKBD_DELM,	/* 46: z */
-	RGBKBD_COORD( 4, 5), RGBKBD_DELM,	/* 47: x */
-	RGBKBD_COORD( 5, 5), RGBKBD_DELM,	/* 48: c */
-	RGBKBD_COORD( 6, 5), RGBKBD_DELM,	/* 49: v */
-	RGBKBD_COORD( 7, 5), RGBKBD_DELM,	/* 50: b */
-	RGBKBD_COORD( 8, 5), RGBKBD_DELM,	/* 51: n */
-	RGBKBD_COORD( 9, 5), RGBKBD_DELM,	/* 52: m */
-	RGBKBD_COORD(10, 5), RGBKBD_COORD(11, 5), RGBKBD_DELM,	/* 53: , < */
-	RGBKBD_COORD(12, 5), RGBKBD_COORD(13, 5), RGBKBD_DELM,	/* 54: . > */
-	RGBKBD_COORD(14, 5), RGBKBD_COORD(15, 5), RGBKBD_DELM,	/* 55: / ? */
-	RGBKBD_DELM,				/* 56: (null) */
-	RGBKBD_COORD(16, 5), RGBKBD_COORD(17, 5),
-	RGBKBD_COORD(18, 5), RGBKBD_DELM,	/* 57: R-shift */
-	RGBKBD_COORD(17, 4), RGBKBD_COORD(18, 4),
-	RGBKBD_COORD(19, 4), RGBKBD_DELM,	/* 58: L-ctrl */
-	RGBKBD_COORD(15, 0), RGBKBD_DELM,	/* 59: power */
-	RGBKBD_COORD(17, 2), RGBKBD_COORD(18, 2),
-	RGBKBD_COORD(19, 2), RGBKBD_DELM,	/* 60: L-alt */
-	RGBKBD_COORD(17, 3), RGBKBD_COORD(18, 3),
-	RGBKBD_COORD(19, 3), RGBKBD_COORD(20, 3),
-	RGBKBD_COORD(21, 3), RGBKBD_DELM,	/* 61: space */
-	RGBKBD_COORD(20, 2), RGBKBD_DELM,	/* 62: R-alt */
-	RGBKBD_DELM,				/* 63: (null) */
-	RGBKBD_COORD(21, 2), RGBKBD_DELM,	/* 64: R-ctrl */
-	RGBKBD_DELM,				/* 65: (null) */
-	RGBKBD_DELM,				/* 66: (null) */
-	RGBKBD_DELM,				/* 67: (null) */
-	RGBKBD_DELM,				/* 68: (null) */
-	RGBKBD_DELM,				/* 69: (null) */
-	RGBKBD_DELM,				/* 70: (null) */
-	RGBKBD_DELM,				/* 71: (null) */
-	RGBKBD_DELM,				/* 72: (null) */
-	RGBKBD_DELM,				/* 73: (null) */
-	RGBKBD_DELM,				/* 74: (null) */
-	RGBKBD_DELM,				/* 75: (null) */
-	RGBKBD_DELM,				/* 76: (null) */
-	RGBKBD_DELM,				/* 77: (null) */
-	RGBKBD_DELM,				/* 78: (null) */
-	RGBKBD_COORD(19, 5), RGBKBD_DELM,	/* 79: left */
-	RGBKBD_DELM,				/* 80: (null) */
-	RGBKBD_DELM,				/* 81: (null) */
-	RGBKBD_DELM,				/* 82: (null) */
-	RGBKBD_COORD(20, 4), RGBKBD_DELM,	/* 83: up */
-	RGBKBD_COORD(20, 5), RGBKBD_DELM,	/* 84: down */
-	RGBKBD_DELM,				/* 85: (null) */
-	RGBKBD_DELM,				/* 86: (null) */
-	RGBKBD_DELM,				/* 87: (null) */
-	RGBKBD_DELM,				/* 88: (null) */
-	RGBKBD_COORD(21, 5), RGBKBD_DELM,	/* 89: right */
-	RGBKBD_DELM,				/* 90: (null) */
-	RGBKBD_DELM,				/* 91: (null) */
-	RGBKBD_DELM,				/* 92: (null) */
-	RGBKBD_DELM,				/* 93: (null) */
-	RGBKBD_DELM,				/* 94: (null) */
-	RGBKBD_DELM,				/* 95: (null) */
-	RGBKBD_DELM,				/* 96: (null) */
-	RGBKBD_DELM,				/* 97: (null) */
-	RGBKBD_DELM,				/* 98: (null) */
-	RGBKBD_DELM,				/* 99: (null) */
-	RGBKBD_DELM,				/* 100: (null) */
-	RGBKBD_DELM,				/* 101: (null) */
-	RGBKBD_DELM,				/* 102: (null) */
-	RGBKBD_DELM,				/* 103: (null) */
-	RGBKBD_DELM,				/* 104: (null) */
-	RGBKBD_DELM,				/* 105: (null) */
-	RGBKBD_DELM,				/* 106: (null) */
-	RGBKBD_DELM,				/* 107: (null) */
-	RGBKBD_DELM,				/* 108: (null) */
-	RGBKBD_DELM,				/* 109: (null) */
-	RGBKBD_COORD( 0, 0), RGBKBD_DELM,	/* 110: esc */
-	RGBKBD_COORD( 1, 0), RGBKBD_DELM,	/* T1: previous page */
-	RGBKBD_COORD( 2, 0), RGBKBD_DELM,	/* T2: refresh */
-	RGBKBD_COORD( 3, 0), RGBKBD_DELM,	/* T3: full screen */
-	RGBKBD_COORD( 4, 0), RGBKBD_DELM,	/* T4: windows */
-	RGBKBD_COORD( 5, 0), RGBKBD_DELM,	/* T5: screenshot */
-	RGBKBD_COORD( 6, 0), RGBKBD_DELM,	/* T6: brightness down */
-	RGBKBD_COORD( 7, 0), RGBKBD_DELM,	/* T7: brightness up */
-	RGBKBD_COORD( 8, 0), RGBKBD_DELM,	/* T8: KB backlight off */
-	RGBKBD_COORD( 9, 0), RGBKBD_DELM,	/* T9: play/pause */
-	RGBKBD_COORD(10, 0), RGBKBD_DELM,	/* T10: mute microphone */
-	RGBKBD_COORD(11, 0), RGBKBD_DELM,	/* T11: mute speakers */
-	RGBKBD_COORD(12, 0), RGBKBD_DELM,	/* T12: volume down */
-	RGBKBD_COORD(13, 0), RGBKBD_DELM,	/* T13: volume up */
-	RGBKBD_DELM,				/* T14: (null) */
-	RGBKBD_DELM,				/* T15: (null) */
-	RGBKBD_DELM,				/* 126: (null) */
-	RGBKBD_DELM,				/* 127: (null) */
+	DELM,				/* 0: (null) */
+	LED( 0, 1), DELM,		/* 1: ~ ` */
+	LED( 1, 1), LED( 1, 2), DELM,	/* 2: ! 1 */
+	LED( 2, 1), LED( 2, 2), DELM,	/* 3: @ 2 */
+	LED( 3, 1), LED( 3, 2), DELM,	/* 4: # 3 */
+	LED( 4, 1), LED( 4, 2), DELM,	/* 5: $ 4 */
+	LED( 5, 1), LED( 5, 2), DELM,	/* 6: % 5 */
+	LED( 6, 1), LED( 6, 2), DELM,	/* 7: ^ 6 */
+	LED( 7, 1), LED( 7, 2), DELM,	/* 8: & 7 */
+	LED( 8, 1), LED( 8, 2), DELM,	/* 9: * 8 */
+	LED( 9, 1), LED( 9, 2), DELM,	/* 10: ( 9 */
+	LED(10, 1), LED(10, 2), DELM,	/* 11: ) 0 */
+	LED(11, 1), LED(11, 2), DELM,	/* 12: _ - */
+	LED(12, 1), LED(12, 2), DELM,	/* 13: + = */
+	DELM,				/* 14: (null) */
+	LED(13, 1), LED(13, 2), DELM,	/* 15: backspace */
+	LED( 0, 3), DELM,		/* 16: tab */
+	LED( 1, 3), DELM,		/* 17: q */
+	LED( 2, 3), DELM,		/* 18: w */
+	LED( 3, 3), DELM,		/* 19: e */
+	LED( 4, 3), DELM,		/* 20: r */
+	LED( 5, 3), DELM,		/* 21: t */
+	LED( 6, 3), DELM,		/* 22: y */
+	LED( 7, 3), DELM,		/* 23: u */
+	LED( 8, 3), DELM,		/* 24: i */
+	LED( 9, 3), DELM,		/* 25: o */
+	LED(10, 3), DELM,		/* 26: p */
+	LED(11, 3), LED(12, 3), DELM,	/* 27: [ { */
+	LED(13, 3), LED(14, 3), DELM,	/* 28: ] } */
+	LED(15, 3), LED(16, 3), DELM,	/* 29: \ | */
+	LED( 0, 4), LED( 1, 4), DELM,	/* 30: caps lock */
+	LED( 2, 4), DELM,		/* 31: a */
+	LED( 3, 4), DELM,		/* 32: s */
+	LED( 4, 4), DELM,		/* 33: d */
+	LED( 5, 4), DELM,		/* 34: f */
+	LED( 6, 4), DELM,		/* 35: g */
+	LED( 7, 4), DELM,		/* 36: h */
+	LED( 8, 4), DELM,		/* 37: j */
+	LED( 9, 4), DELM,		/* 38: k */
+	LED(10, 4), DELM,		/* 39: l */
+	LED(11, 4), LED(12, 4), DELM,	/* 40: ; : */
+	LED(13, 4), LED(14, 4), DELM,	/* 41: " ' */
+	DELM,				/* 42: (null) */
+	LED(15, 4), LED(16, 4), DELM,	/* 43: enter */
+	LED( 0, 5), LED( 1, 5),
+	LED( 2, 5), DELM,		/* 44: L-shift */
+	DELM,				/* 45: (null) */
+	LED( 3, 5), DELM,		/* 46: z */
+	LED( 4, 5), DELM,		/* 47: x */
+	LED( 5, 5), DELM,		/* 48: c */
+	LED( 6, 5), DELM,		/* 49: v */
+	LED( 7, 5), DELM,		/* 50: b */
+	LED( 8, 5), DELM,		/* 51: n */
+	LED( 9, 5), DELM,		/* 52: m */
+	LED(10, 5), LED(11, 5), DELM,	/* 53: , < */
+	LED(12, 5), LED(13, 5), DELM,	/* 54: . > */
+	LED(14, 5), LED(15, 5), DELM,	/* 55: / ? */
+	DELM,				/* 56: (null) */
+	LED(16, 5), LED(17, 5),
+	LED(18, 5), DELM,		/* 57: R-shift */
+	LED(17, 4), LED(18, 4),
+	LED(19, 4), DELM,		/* 58: L-ctrl */
+	LED(15, 0), DELM,		/* 59: power */
+	LED(17, 2), LED(18, 2),
+	LED(19, 2), DELM,		/* 60: L-alt */
+	LED(17, 3), LED(18, 3),
+	LED(19, 3), LED(20, 3),
+	LED(21, 3), DELM,		/* 61: space */
+	LED(20, 2), DELM,		/* 62: R-alt */
+	DELM,				/* 63: (null) */
+	LED(21, 2), DELM,		/* 64: R-ctrl */
+	DELM,				/* 65: (null) */
+	DELM,				/* 66: (null) */
+	DELM,				/* 67: (null) */
+	DELM,				/* 68: (null) */
+	DELM,				/* 69: (null) */
+	DELM,				/* 70: (null) */
+	DELM,				/* 71: (null) */
+	DELM,				/* 72: (null) */
+	DELM,				/* 73: (null) */
+	DELM,				/* 74: (null) */
+	DELM,				/* 75: (null) */
+	DELM,				/* 76: (null) */
+	DELM,				/* 77: (null) */
+	DELM,				/* 78: (null) */
+	LED(19, 5), DELM,		/* 79: left */
+	DELM,				/* 80: (null) */
+	DELM,				/* 81: (null) */
+	DELM,				/* 82: (null) */
+	LED(20, 4), DELM,		/* 83: up */
+	LED(20, 5), DELM,		/* 84: down */
+	DELM,				/* 85: (null) */
+	DELM,				/* 86: (null) */
+	DELM,				/* 87: (null) */
+	DELM,				/* 88: (null) */
+	LED(21, 5), DELM,		/* 89: right */
+	DELM,				/* 90: (null) */
+	DELM,				/* 91: (null) */
+	DELM,				/* 92: (null) */
+	DELM,				/* 93: (null) */
+	DELM,				/* 94: (null) */
+	DELM,				/* 95: (null) */
+	DELM,				/* 96: (null) */
+	DELM,				/* 97: (null) */
+	DELM,				/* 98: (null) */
+	DELM,				/* 99: (null) */
+	DELM,				/* 100: (null) */
+	DELM,				/* 101: (null) */
+	DELM,				/* 102: (null) */
+	DELM,				/* 103: (null) */
+	DELM,				/* 104: (null) */
+	DELM,				/* 105: (null) */
+	DELM,				/* 106: (null) */
+	DELM,				/* 107: (null) */
+	DELM,				/* 108: (null) */
+	DELM,				/* 109: (null) */
+	LED( 0, 0), DELM,		/* 110: esc */
+	LED( 1, 0), DELM,		/* T1: previous page */
+	LED( 2, 0), DELM,		/* T2: refresh */
+	LED( 3, 0), DELM,		/* T3: full screen */
+	LED( 4, 0), DELM,		/* T4: windows */
+	LED( 5, 0), DELM,		/* T5: screenshot */
+	LED( 6, 0), DELM,		/* T6: brightness down */
+	LED( 7, 0), DELM,		/* T7: brightness up */
+	LED( 8, 0), DELM,		/* T8: KB backlight off */
+	LED( 9, 0), DELM,		/* T9: play/pause */
+	LED(10, 0), DELM,		/* T10: mute microphone */
+	LED(11, 0), DELM,		/* T11: mute speakers */
+	LED(12, 0), DELM,		/* T12: volume down */
+	LED(13, 0), DELM,		/* T13: volume up */
+	DELM,				/* T14: (null) */
+	DELM,				/* T15: (null) */
+	DELM,				/* 126: (null) */
+	DELM,				/* 127: (null) */
 };
+#undef LED
+#undef DELM
 const size_t rgbkbd_map_size = ARRAY_SIZE(rgbkbd_map);
 
 __override void board_kblight_shutdown(void)
