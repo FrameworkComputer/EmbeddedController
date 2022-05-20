@@ -162,7 +162,6 @@ def write_version_header(version_str, output_path, static=False):
         add_def("BUILDER", "{}@{}".format(getpass.getuser(), platform.node()))
         add_def("DATE", datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
-    add_def("CROS_FWID_MISSING_STR", "CROS_FWID_MISSING")
     # TODO(b/198475757): Add zmake support for getting CROS_FWID32
     add_def_unquoted("CROS_FWID32", "CROS_FWID_MISSING_STR")
 

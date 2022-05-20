@@ -12,7 +12,6 @@
 #include "console.h"
 #include "cpu.h"
 #include "cros_board_info.h"
-#include "ec_version.h"
 #include "dma.h"
 #include "extpower.h"
 #include "flash.h"

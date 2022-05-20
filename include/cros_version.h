@@ -17,6 +17,8 @@
 #define CROS_EC_IMAGE_DATA_COOKIE3_MASK		GENMASK(31, 8)
 #define CROS_EC_IMAGE_DATA_COOKIE3_VERSION	GENMASK(7, 0)
 
+#define CROS_FWID_MISSING_STR "CROS_FWID_MISSING"
+
 struct image_data {
 	uint32_t cookie1;
 	char version[32];
