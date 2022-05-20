@@ -109,7 +109,6 @@ static enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 	return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 }
 
-/** Check description in emul_tcpci_partner_drp.h */
 void tcpci_drp_emul_set_dr_in_first_pdo(uint32_t *pdo)
 {
 	*pdo |= PDO_FIXED_DUAL_ROLE;
@@ -141,7 +140,6 @@ struct tcpci_partner_extension_ops tcpci_drp_emul_ops = {
 	.connect = NULL,
 };
 
-/** Check description in emul_tcpci_parnter_drp.h */
 struct tcpci_partner_extension *tcpci_drp_emul_init(
 	struct tcpci_drp_emul_data *data,
 	struct tcpci_partner_data *common_data,

@@ -53,7 +53,6 @@ static void tcpci_src_emul_stop_source_capability_timer(
 	k_work_cancel_delayable(&data->source_capability_timeout);
 }
 
-/** Check description in emul_tcpci_partner_src.h */
 int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
 				       struct tcpci_partner_data *common_data,
 				       uint64_t delay)
@@ -72,7 +71,6 @@ int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
 					   data->pdo, pdos, delay);
 }
 
-/** Check description in emul_tcpci_partner_src.h */
 int tcpci_src_emul_send_capability_msg_with_timer(
 	struct tcpci_src_emul_data *data,
 	struct tcpci_partner_data *common_data,
@@ -277,7 +275,6 @@ static int tcpci_src_emul_connect_to_tcpci(
 	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_UNCONSTRAINED |		\
 	 PDO_FIXED_COMM_CAP | PDO_FIXED_DATA_SWAP)
 
-/** Check description in emul_tcpci_parnter_src.h */
 enum check_pdos_res tcpci_src_emul_check_pdos(struct tcpci_src_emul_data *data)
 {
 	int volt_i_min;
@@ -381,7 +378,6 @@ struct tcpci_partner_extension_ops tcpci_src_emul_ops = {
 	.connect = tcpci_src_emul_connect_to_tcpci,
 };
 
-/** Check description in emul_tcpci_parnter_src.h */
 struct tcpci_partner_extension *tcpci_src_emul_init(
 	struct tcpci_src_emul_data *data,
 	struct tcpci_partner_data *common_data,

@@ -42,7 +42,6 @@ static void tcpci_faulty_snk_emul_reduce_action_count(
 	k_fifo_get(&data->action_list, K_FOREVER);
 }
 
-/** Check description in emul_tcpci_partner_faulty_snk.h */
 void tcpci_faulty_snk_emul_append_action(
 	struct tcpci_faulty_snk_emul_data *data,
 	struct tcpci_faulty_snk_action *action)
@@ -50,7 +49,6 @@ void tcpci_faulty_snk_emul_append_action(
 	k_fifo_put(&data->action_list, action);
 }
 
-/** Check description in emul_tcpci_partner_faulty_snk.h */
 void tcpci_faulty_snk_emul_clear_actions_list(
 	struct tcpci_faulty_snk_emul_data *data)
 {
@@ -142,7 +140,6 @@ struct tcpci_partner_extension_ops tcpci_faulty_snk_emul_ops = {
 	.connect = NULL,
 };
 
-/** Check description in emul_tcpci_parnter_faulty_snk.h */
 struct tcpci_partner_extension *tcpci_faulty_snk_emul_init(
 	struct tcpci_faulty_snk_emul_data *data,
 	struct tcpci_partner_data *common_data,

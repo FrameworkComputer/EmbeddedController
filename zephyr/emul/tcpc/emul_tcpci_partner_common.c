@@ -21,7 +21,6 @@ LOG_MODULE_REGISTER(tcpci_partner, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 /** Length of header in SOP message in bytes  */
 #define TCPCI_MSG_HEADER_LEN	2
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_common_hard_reset_as_role(struct tcpci_partner_data *data,
 					     enum pd_power_role power_role)
 {
@@ -30,7 +29,6 @@ void tcpci_partner_common_hard_reset_as_role(struct tcpci_partner_data *data,
 							 PD_ROLE_UFP;
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 struct tcpci_partner_msg *tcpci_partner_alloc_msg(int data_objects)
 {
 	struct tcpci_partner_msg *new_msg;
@@ -114,14 +112,12 @@ static enum tcpci_emul_tx_status *tcpci_partner_log_msg(
 	return &log_msg->status;
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_free_msg(struct tcpci_partner_msg *msg)
 {
 	free(msg->msg.buf);
 	free(msg);
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_set_header(struct tcpci_partner_data *data,
 			      struct tcpci_partner_msg *msg)
 {
@@ -248,7 +244,6 @@ static void tcpci_partner_delayed_send_timer(struct k_timer *timer)
 	k_fifo_put(&delayed_send_fifo, &data->fifo_data);
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 			   struct tcpci_partner_msg *msg, uint64_t delay)
 {
@@ -310,7 +305,6 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 	return -1;
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 int tcpci_partner_send_control_msg(struct tcpci_partner_data *data,
 				   enum pd_ctrl_msg_type type,
 				   uint64_t delay)
@@ -334,7 +328,6 @@ int tcpci_partner_send_control_msg(struct tcpci_partner_data *data,
 	return tcpci_partner_send_msg(data, msg, delay);
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 int tcpci_partner_send_data_msg(struct tcpci_partner_data *data,
 				enum pd_data_msg_type type,
 				uint32_t *data_obj, int data_obj_num,
@@ -359,7 +352,6 @@ int tcpci_partner_send_data_msg(struct tcpci_partner_data *data,
 	return tcpci_partner_send_msg(data, msg, delay);
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 int tcpci_partner_clear_msg_queue(struct tcpci_partner_data *data)
 {
 	struct tcpci_partner_msg *msg;
@@ -418,7 +410,6 @@ static void tcpci_partner_common_hard_reset(struct tcpci_partner_data *data)
 	}
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_common_send_hard_reset(struct tcpci_partner_data *data)
 {
 	struct tcpci_partner_msg *msg;
@@ -431,7 +422,6 @@ void tcpci_partner_common_send_hard_reset(struct tcpci_partner_data *data)
 	tcpci_partner_send_msg(data, msg, 0);
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_common_send_soft_reset(struct tcpci_partner_data *data)
 {
 	/* Reset counters */
@@ -481,7 +471,6 @@ static void tcpci_partner_sender_response_timeout(struct k_work *work)
 	k_mutex_unlock(&data->transmit_mutex);
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_start_sender_response_timer(struct tcpci_partner_data *data)
 {
 	k_work_schedule(&data->sender_response_timeout,
@@ -489,7 +478,6 @@ void tcpci_partner_start_sender_response_timer(struct tcpci_partner_data *data)
 	data->wait_for_response = true;
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_stop_sender_response_timer(struct tcpci_partner_data *data)
 {
 	k_work_cancel_delayable(&data->sender_response_timeout);
@@ -759,7 +747,6 @@ static enum tcpci_partner_handler_res tcpci_partner_common_sop_msg_handler(
 	return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_common_handler_mask_msg(struct tcpci_partner_data *data,
 					   enum pd_ctrl_msg_type type,
 					   bool enable)
@@ -771,7 +758,6 @@ void tcpci_partner_common_handler_mask_msg(struct tcpci_partner_data *data,
 	}
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_set_discovery_info(struct tcpci_partner_data *data,
 				      int identity_vdos, uint32_t *identity_vdm,
 				      int svids_vdos, uint32_t *svids_vdm,
@@ -790,7 +776,6 @@ void tcpci_partner_set_discovery_info(struct tcpci_partner_data *data,
 	memcpy(data->modes_vdm, modes_vdm, modes_vdos * sizeof(*modes_vdm));
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_common_disconnect(struct tcpci_partner_data *data)
 {
 	tcpci_partner_clear_msg_queue(data);
@@ -798,7 +783,6 @@ void tcpci_partner_common_disconnect(struct tcpci_partner_data *data)
 	data->tcpci_emul = NULL;
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 int tcpci_partner_common_enable_pd_logging(struct tcpci_partner_data *data,
 					   bool enable)
 {
@@ -850,7 +834,6 @@ static __printf_like(4, 5) int tcpci_partner_print_to_buf(
 	return ret;
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_common_print_logged_msgs(struct tcpci_partner_data *data)
 {
 	struct tcpci_partner_log_msg *msg;
@@ -907,7 +890,6 @@ void tcpci_partner_common_print_logged_msgs(struct tcpci_partner_data *data)
 	k_mutex_unlock(&data->msg_log_mutex);
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_common_clear_logged_msgs(struct tcpci_partner_data *data)
 {
 	struct tcpci_partner_log_msg *msg;
@@ -956,7 +938,6 @@ void tcpci_partner_common_clear_ams_ctrl_msg(struct tcpci_partner_data *data)
 	data->cur_ams_ctrl_req = PD_CTRL_INVALID;
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_received_msg_status(struct tcpci_partner_data *data,
 				       enum tcpci_emul_tx_status status)
 {
@@ -1104,7 +1085,6 @@ static void tcpci_partner_disconnect_op(
 	}
 }
 
-/** Check description in emul_tcpci_partner_common.h */
 int tcpci_partner_connect_to_tcpci(struct tcpci_partner_data *data,
 				   const struct emul *tcpci_emul)
 {
@@ -1136,7 +1116,6 @@ int tcpci_partner_connect_to_tcpci(struct tcpci_partner_data *data,
 	return ret;
 }
 
-/** Check description in emul_common_tcpci_partner.h */
 void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 {
 	k_timer_init(&data->delayed_send, tcpci_partner_delayed_send_timer,

@@ -489,7 +489,6 @@ struct tcpci_partner_extension_ops tcpci_snk_emul_ops = {
 	.connect = tcpci_snk_emul_connect_to_tcpci,
 };
 
-/** Check description in emul_tcpci_parnter_snk.h */
 struct tcpci_partner_extension *tcpci_snk_emul_init(
 	struct tcpci_snk_emul_data *data,
 	struct tcpci_partner_data *common_data,
