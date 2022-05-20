@@ -72,7 +72,7 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
+ * TODO(b/233311897): update temps for ghost
  *
  * Alder Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
@@ -96,7 +96,7 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
+ * TODO(b/233311897): update temps for ghost
  *
  * Inductor limits - used for both charger and PP3300 regulator
  *
@@ -127,6 +127,8 @@ __maybe_unused static const struct ec_thermal_config thermal_ambient =
 	THERMAL_AMBIENT;
 
 /*
+ * TODO(b/233311897): update temps for ghost
+ *
  * Inductor limits - used for both charger and PP3300 regulator
  *
  * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
@@ -156,7 +158,7 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 	THERMAL_CHARGER;
 
 /*
- * TODO(b/180681346): update for brya WWAN module
+ * TODO(b/233311897): update temps for ghost
  */
 /*
  * TODO(b/202062363): Remove when clang is fixed.
