@@ -89,6 +89,7 @@
  * GPIO_EC_PCH_INT_ODL is used for MKBP events as well as a PCH wakeup
  * signal.
  */
+#define GPIO_IMVP9_VRRDY_OD		GPIO_IMVP91_VRRDY_OD
 #define GPIO_PCH_WAKE_L			GPIO_EC_PCH_INT_ODL
 #define GPIO_PG_EC_ALL_SYS_PWRGD	GPIO_SEQ_EC_ALL_SYS_PG
 #define GPIO_PG_EC_DSW_PWROK		GPIO_SEQ_EC_DSW_PWROK

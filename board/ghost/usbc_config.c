@@ -182,7 +182,7 @@ void board_reset_pd_mcu(void)
 {
 	enum gpio_signal tcpc_rst;
 
-	tcpc_rst = GPIO_USB_C0_C2_TCPC_RST_ODL;
+	tcpc_rst = GPIO_USB_C0_C1_TCPC_RST_ODL;
 
 	gpio_set_level(tcpc_rst, 0);
 
@@ -222,7 +222,7 @@ static void board_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
 
 	/* Enable TCPC interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_C2_TCPC_INT_ODL);
+	gpio_enable_interrupt(GPIO_USB_C0_C1_TCPC_INT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
@@ -230,7 +230,7 @@ uint16_t tcpc_get_alert_status(void)
 {
 	uint16_t status = 0;
 
-	if (gpio_get_level(GPIO_USB_C0_C2_TCPC_INT_ODL) == 0)
+	if (gpio_get_level(GPIO_USB_C0_C1_TCPC_INT_ODL) == 0)
 		status |= PD_STATUS_TCPC_ALERT_0 | PD_STATUS_TCPC_ALERT_1;
 
 	return status;
@@ -248,7 +248,7 @@ int ppc_get_alert_status(int port)
 void tcpc_alert_event(enum gpio_signal signal)
 {
 	switch (signal) {
-	case GPIO_USB_C0_C2_TCPC_INT_ODL:
+	case GPIO_USB_C0_C1_TCPC_INT_ODL:
 		schedule_deferred_pd_interrupt(USBC_PORT_C0);
 		break;
 	default:
