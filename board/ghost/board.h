@@ -143,12 +143,6 @@
 #define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC	10
 #define CONFIG_CHARGER_BQ25710_PSYS_SENSING
 
-/*
- * Older boards have a different ADC assignment.
- */
-
-#define CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
-
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"	/* needed by registers.h */
