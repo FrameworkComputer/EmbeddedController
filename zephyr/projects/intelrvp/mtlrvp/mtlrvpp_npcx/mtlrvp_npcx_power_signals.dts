@@ -43,11 +43,18 @@
 		gpios = <&gpioa 1 GPIO_ACTIVE_LOW>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
+	pwr-pch-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PCH_PWROK output to PCH";
+		enum-name = "PWR_PCH_PWROK";
+		gpios = <&gpiod 3 GPIO_OPEN_DRAIN>;
+		output;
+	};
 	pwr-ec-pch-sys-pwrok {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SYS_PWROK output to PCH";
 		enum-name = "PWR_EC_PCH_SYS_PWROK";
-		gpios = <&gpiof 5 0>;
+		gpios = <&gpiof 5 GPIO_OPEN_DRAIN>;
 		output;
 	};
 	pwr-sys-rst-l {
