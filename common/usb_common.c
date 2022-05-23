@@ -22,6 +22,7 @@
 #include "host_command.h"
 #include "system.h"
 #include "task.h"
+#include "typec_control.h"
 #include "usb_api.h"
 #include "usb_common.h"
 #include "usb_mux.h"
@@ -289,14 +290,6 @@ bool pd_is_debug_acc(int port)
 
 	return cc_state == PD_CC_UFP_DEBUG_ACC ||
 		cc_state == PD_CC_DFP_DEBUG_ACC;
-}
-
-void pd_set_polarity(int port, enum tcpc_cc_polarity polarity)
-{
-	tcpm_set_polarity(port, polarity);
-
-	if (IS_ENABLED(CONFIG_USBC_PPC_POLARITY))
-		ppc_set_polarity(port, polarity);
 }
 
 __overridable int pd_board_check_request(uint32_t rdo, int pdo_cnt)
@@ -569,8 +562,7 @@ void usb_mux_set_safe_mode(int port)
 	}
 
 	/* Isolate the SBU lines. */
-	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
-		ppc_set_sbu(port, 0);
+	typec_set_sbu(port, false);
 }
 
 void usb_mux_set_safe_mode_exit(int port)
@@ -580,8 +572,7 @@ void usb_mux_set_safe_mode_exit(int port)
 			    polarity_rm_dts(pd_get_polarity(port)));
 
 	/* Isolate the SBU lines. */
-	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
-		ppc_set_sbu(port, 0);
+	typec_set_sbu(port, false);
 }
 
 void pd_send_hard_reset(int port)
@@ -684,12 +675,6 @@ __overridable int pd_is_valid_input_voltage(int mv)
 __overridable void pd_transition_voltage(int idx)
 {
 	/* Most devices are fixed 5V output. */
-}
-
-__overridable void typec_set_source_current_limit(int p, enum tcpc_rp_value rp)
-{
-	if (IS_ENABLED(CONFIG_USBC_PPC))
-		ppc_set_vbus_source_current_limit(p, rp);
 }
 
 /* ----------------- Vendor Defined Messages ------------------ */

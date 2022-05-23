@@ -12,6 +12,7 @@
 #include "system.h"
 #include "task.h"
 #include "tcpm/tcpm.h"
+#include "typec_control.h"
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -1854,40 +1855,7 @@ static void set_vconn(int port, int enable)
 	else
 		TC_CLR_FLAG(port, TC_FLAGS_VCONN_ON);
 
-	/*
-	 * Check our OC event counter.  If we've exceeded our threshold, then
-	 * let's latch our source path off to prevent continuous cycling.  When
-	 * the PD state machine detects a disconnection on the CC lines, we will
-	 * reset our OC event counter.
-	 */
-	if (IS_ENABLED(CONFIG_USBC_OCP) &&
-	    enable && usbc_ocp_is_port_latched_off(port))
-		return;
-
-	/*
-	 * Disable PPC Vconn first then TCPC in case the voltage feeds back
-	 * to TCPC and damages.
-	 */
-	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN) && !enable)
-		ppc_set_vconn(port, 0);
-
-	/*
-	 * Some TCPCs/PPC combinations can trigger OVP if the TCPC doesn't
-	 * source VCONN. This happens if the TCPC will trip OVP with 5V, and the
-	 * PPC doesn't isolate the TCPC from VCONN when sourcing. But, some PPCs
-	 * which do isolate the TCPC can't handle 5V on its host-side CC pins,
-	 * so the TCPC shouldn't source VCONN in those cases.
-	 *
-	 * In the first case, both TCPC and PPC will potentially source Vconn,
-	 * but that should be okay since Vconn has "make before break"
-	 * electrical requirements when swapping anyway.
-	 *
-	 * See b/72961003 and b/180973460
-	 */
-	tcpm_set_vconn(port, enable);
-
-	if (IS_ENABLED(CONFIG_USBC_PPC_VCONN) && enable)
-		ppc_set_vconn(port, 1);
+	typec_set_vconn(port, enable);
 }
 
 /* This must only be called from the PD task */
@@ -2516,7 +2484,7 @@ static void tc_attached_snk_entry(const int port)
 		/* Get connector orientation */
 		tcpm_get_cc(port, &cc1, &cc2);
 		tc[port].polarity = get_snk_polarity(cc1, cc2);
-		pd_set_polarity(port, tc[port].polarity);
+		typec_set_polarity(port, tc[port].polarity);
 
 		tc_set_data_role(port, PD_ROLE_UFP);
 
@@ -3042,7 +3010,7 @@ static void tc_attached_src_entry(const int port)
 			/* Get connector orientation */
 			tcpm_get_cc(port, &cc1, &cc2);
 			tc[port].polarity = get_src_polarity(cc1, cc2);
-			pd_set_polarity(port, tc[port].polarity);
+			typec_set_polarity(port, tc[port].polarity);
 
 			/* Attached.SRC - enable AutoDischargeDisconnect */
 			tcpm_enable_auto_discharge_disconnect(port, 1);
@@ -3094,7 +3062,7 @@ static void tc_attached_src_entry(const int port)
 		/* Get connector orientation */
 		tcpm_get_cc(port, &cc1, &cc2);
 		tc[port].polarity = get_src_polarity(cc1, cc2);
-		pd_set_polarity(port, tc[port].polarity);
+		typec_set_polarity(port, tc[port].polarity);
 
 		/* Attached.SRC - enable AutoDischargeDisconnect */
 		tcpm_enable_auto_discharge_disconnect(port, 1);

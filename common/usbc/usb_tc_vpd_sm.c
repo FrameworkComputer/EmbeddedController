@@ -8,6 +8,7 @@
 #include "system.h"
 #include "task.h"
 #include "tcpm/tcpm.h"
+#include "typec_control.h"
 #include "usb_pd.h"
 #include "usb_tc_sm.h"
 #include "usb_sm.h"
@@ -307,7 +308,7 @@ static void tc_attached_snk_entry(const int port)
 
 	/* Enable PD */
 	tc[port].pd_enable = 1;
-	pd_set_polarity(port, 0);
+	typec_set_polarity(port, 0);
 }
 
 static void tc_attached_snk_run(const int port)

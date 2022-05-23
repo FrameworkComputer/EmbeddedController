@@ -1656,14 +1656,6 @@ __override_proto void typec_set_input_current_limit(int port,
 						    uint32_t supply_voltage);
 
 /**
- * Set the type-C current limit when sourcing current..
- *
- * @param port USB-C port number
- * @param rp One of enum tcpc_rp_value (eg TYPEC_RP_3A0) defining the limit.
- */
-void typec_set_source_current_limit(int port, enum tcpc_rp_value rp);
-
-/**
  * Verify board specific health status : current, voltages...
  *
  * @return EC_SUCCESS if the board is good, <0 else.
@@ -3228,14 +3220,6 @@ void board_reset_pd_mcu(void);
  * @param port USB-C port number
  */
 bool pd_is_debug_acc(int port);
-
-/**
- * Sets the polarity of the port
- *
- * @param port USB-C port number
- * @param polarity 0 for CC1, else 1 for CC2
- */
-void pd_set_polarity(int port, enum tcpc_cc_polarity polarity);
 
 /*
  * Notify the AP that we have entered into DisplayPort Alternate Mode.  This

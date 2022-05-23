@@ -19,6 +19,7 @@
 #include "system.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
+#include "typec_control.h"
 #include "usb_common.h"
 #include "usb_pd.h"
 #include "usb_pd_dpm.h"
