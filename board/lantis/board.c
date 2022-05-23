@@ -464,7 +464,7 @@ static const struct ec_response_keybd_config landrid_keybd_backlight = {
 		TK_SNAPSHOT,		/* T5 */
 		TK_BRIGHTNESS_DOWN,	/* T6 */
 		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_KBD_BKLIGHT_TOGGLE,		/* T8 */
+		TK_KBD_BKLIGHT_TOGGLE,	/* T8 */
 		TK_PLAY_PAUSE,		/* T9 */
 		TK_MICMUTE,		/* T10 */
 		TK_VOL_MUTE,		/* T11 */
@@ -485,12 +485,12 @@ static const struct ec_response_keybd_config landrid_keybd = {
 		TK_SNAPSHOT,		/* T5 */
 		TK_BRIGHTNESS_DOWN,	/* T6 */
 		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_PREV_TRACK,		/* T8 */
-		TK_PLAY_PAUSE,		/* T9 */
-		TK_MICMUTE,		/* T10 */
-		TK_VOL_MUTE,		/* T11 */
-		TK_VOL_DOWN,		/* T12 */
-		TK_VOL_UP,		/* T13 */
+		TK_PLAY_PAUSE,		/* T8 */
+		TK_MICMUTE,		/* T9 */
+		TK_VOL_MUTE,		/* T10 */
+		TK_VOL_DOWN,		/* T11 */
+		TK_VOL_UP,		/* T12 */
+		TK_MENU,		/* T13 */
 	},
 	.capabilities = KEYBD_CAP_NUMERIC_KEYPAD,
 	/* No function keys and no screenlock key */
