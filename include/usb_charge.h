@@ -64,7 +64,7 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
 #define USB_CHG_EVENT_MUX	TASK_EVENT_CUSTOM_BIT(6)
 
 /*
- * Define USB_CHG_PORT_TO_TASK_ID() and TASK_ID_TO_USB_CHG__PORT() macros to
+ * Define USB_CHG_PORT_TO_TASK_ID() and TASK_ID_TO_USB_CHG_PORT() macros to
  * go between USB_CHG port number and task ID. Assume that TASK_ID_USB_CHG_P0,
  * is the lowest task ID and IDs are on a continuous range.
  */
@@ -139,7 +139,7 @@ void usb_charger_vbus_change(int port, int vbus_level);
  * Check if ramping is allowed for given supplier
  *
  * @param port port number.
- * @supplier Supplier to check
+ * @param supplier Supplier to check
  *
  * @return Ramping is allowed for given supplier
  */
@@ -154,8 +154,8 @@ static inline int usb_charger_ramp_allowed(int port, int supplier)
  * Get the maximum current limit that we are allowed to ramp to
  *
  * @param port port number.
- * @supplier Active supplier type
- * @sup_curr Input current limit based on supplier
+ * @param supplier Active supplier type
+ * @param sup_curr Input current limit based on supplier
  *
  * @return Maximum current in mA
  */
@@ -168,6 +168,7 @@ static inline int usb_charger_ramp_max(int port, int supplier, int sup_curr)
 
 /**
  * Reset available BC 1.2 chargers on all ports
+ *
  * @param port
  */
 void usb_charger_reset_charge(int port);
