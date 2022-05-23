@@ -40,12 +40,20 @@ int ppc_err_prints(const char *string, int port, int error)
 #endif
 }
 
+__overridable bool board_port_has_ppc(int port)
+{
+	return true;
+}
+
 /* Simple wrappers to dispatch to the drivers. */
 
 int ppc_init(int port)
 {
 	int rv = EC_ERROR_UNIMPLEMENTED;
 	const struct ppc_config_t *ppc;
+
+	if (!board_port_has_ppc(port))
+		return EC_SUCCESS;
 
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
@@ -87,6 +95,9 @@ int ppc_set_polarity(int port, int polarity)
 	int rv = EC_ERROR_UNIMPLEMENTED;
 	const struct ppc_config_t *ppc;
 
+	if (!board_port_has_ppc(port))
+		return EC_SUCCESS;
+
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
 		return EC_ERROR_INVAL;
@@ -104,6 +115,9 @@ int ppc_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv = EC_ERROR_UNIMPLEMENTED;
 	const struct ppc_config_t *ppc;
+
+	if (!board_port_has_ppc(port))
+		return EC_SUCCESS;
 
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
@@ -140,6 +154,9 @@ int ppc_set_sbu(int port, int enable)
 	int rv = EC_ERROR_UNIMPLEMENTED;
 	const struct ppc_config_t *ppc;
 
+	if (!board_port_has_ppc(port))
+		return EC_SUCCESS;
+
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
 		return EC_ERROR_INVAL;
@@ -159,6 +176,9 @@ int ppc_set_vconn(int port, int enable)
 	int rv = EC_ERROR_UNIMPLEMENTED;
 	const struct ppc_config_t *ppc;
 
+	if (!board_port_has_ppc(port))
+		return EC_SUCCESS;
+
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);
 		return EC_ERROR_INVAL;
@@ -176,6 +196,9 @@ int ppc_dev_is_connected(int port, enum ppc_device_role dev)
 {
 	int rv = EC_SUCCESS;
 	const struct ppc_config_t *ppc;
+
+	if (!board_port_has_ppc(port))
+		return EC_SUCCESS;
 
 	if ((port < 0) || (port >= ppc_cnt)) {
 		CPRINTS("%s(%d) Invalid port!", __func__, port);

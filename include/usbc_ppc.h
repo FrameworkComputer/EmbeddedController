@@ -318,4 +318,17 @@ int ppc_get_alert_status(int port);
  */
 int ppc_set_frs_enable(int port, int enable);
 
+/**
+ * Board specific function to check if the Type-C port has PPC
+ *
+ * Some PD/TCPC chips have integrated power path control. If the board is
+ * using combination of chips with discrete PPC and integrated PPC add an
+ * overridable board function to return false for integrated PPC ports and
+ * true for discrete PPC port.
+ *
+ * @param port: The Type-C port number to check
+ * @return true if Type-C port has PPC else false
+ */
+__override_proto bool board_port_has_ppc(int port);
+
 #endif /* !defined(__CROS_EC_USBC_PPC_H) */
