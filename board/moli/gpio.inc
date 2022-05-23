@@ -115,6 +115,10 @@ GPIO(USB_C0_C1_TCPC_RST_ODL,         PIN(F, 5), GPIO_ODR_LOW)
 /* LAN */
 GPIO(LAN_PWR_GOOD,                   PIN(0, 2), GPIO_INPUT)
 
+/* LED */
+GPIO(LED_ORANGE_CONTROL,             PIN(3, 1), GPIO_ODR_LOW)
+GPIO(LED_BLUE_CONTROL,               PIN(2, 5), GPIO_ODR_LOW)
+
 /* Option Board */
 GPIO(HDMI1_MONITOR_ON,               PIN(B, 4), GPIO_INPUT)
 GPIO(HDMI1_MONON_SIO,                PIN(1, 6), GPIO_ODR_LOW)
@@ -153,7 +157,6 @@ ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)               /* GPIOE1/ADC7 */
 
 /* Unused Pins */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
-UNUSED(PIN(3, 1))       /* KSI0/GPIO31/TRACEDATA3/GP_MOSI */
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
@@ -169,7 +172,6 @@ UNUSED(PIN(5, 0))       /* GPIO50 */
 UNUSED(PIN(9, 4))       /* GPIO94 */
 UNUSED(PIN(A, 0))       /* F_CS0_L/GPIOA0 */
 UNUSED(PIN(3, 4))       /* GPIO34/PS2_DAT2/ADC6 */
-UNUSED(PIN(2, 5))       /* KSI4/GPIO25/TRACECLK/GP_SCLK */
 UNUSED(PIN(F, 3))       /* GPIOF3/I2C4_SCL1 */
 UNUSED(PIN(F, 2))       /* GPIOF2/I2C4_SDA1 */
 UNUSED(PIN(A, 7))       /* GPIOA7/PS2_DAT3/TB2/F_DIO3 */
