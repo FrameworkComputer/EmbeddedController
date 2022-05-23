@@ -67,7 +67,6 @@ GPIO(EN_S5_RAILS,                    PIN(B, 6), GPIO_OUT_LOW)
 GPIO(IMVP9_VRRDY_OD,                 PIN(4, 3), GPIO_INPUT)
 GPIO(PCH_PWROK,                      PIN(7, 2), GPIO_OUT_LOW)
 GPIO(SYS_RST_ODL,                    PIN(C, 5), GPIO_ODR_HIGH)
-GPIO(USB_C0_C2_TCPC_RST_ODL,         PIN(A, 7), GPIO_ODR_LOW)
 GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
 GPIO(USB_C1_RST_ODL,                 PIN(9, 6), GPIO_ODR_LOW)
 GPIO(USB_C1_RT_INT_ODL,              PIN(A, 0), GPIO_INPUT)
@@ -75,6 +74,8 @@ GPIO(USB_C1_RT_RST_R_ODL,            PIN(0, 2), GPIO_ODR_LOW)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 GPIO(LED_1_L,                        PIN(C, 4), GPIO_OUT_HIGH)
 GPIO(LED_2_L,                        PIN(C, 3), GPIO_OUT_HIGH)
+GPIO(KYBL_EN,                        PIN(A, 7), GPIO_ODR_LOW)
+GPIO(AMP_PWR_EN,                     PIN(5, 7), GPIO_ODR_LOW)
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -117,7 +118,6 @@ UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 4))       /* GPIO34 */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
-UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(8, 3))       /* GPIO83 */
 UNUSED(PIN(7, 0))       /* GPIO70 */
 UNUSED(PIN(7, 3))       /* GPIO73 */
