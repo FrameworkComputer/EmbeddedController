@@ -315,14 +315,14 @@
 &i2c1_0 {
 	status = "okay";
 
-	nct3808_0_P1:nct3808_0_P1@70 {
+	nct3808_0_P1: nct3808_0_P1@70 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		compatible = "nuvoton,nct38xx-gpio";
 		reg = <0x70>;
 		label = "NCT3808_0_P1";
 
-		ioex_port1:gpio@0 {
+		ioex_port1: gpio@0 {
 			compatible = "nuvoton,nct38xx-gpio-port";
 			reg = <0x0>;
 			label = "NCT3808_0_P1_GPIO0";
@@ -334,14 +334,14 @@
 		};
 	};
 
-	nct3808_0_P2:nct3808_0_P2@74 {
+	nct3808_0_P2: nct3808_0_P2@74 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		compatible = "nuvoton,nct38xx-gpio";
 		reg = <0x74>;
 		label = "NCT3808_0_P2";
 
-		ioex_port2:gpio@0 {
+		ioex_port2: gpio@0 {
 			compatible = "nuvoton,nct38xx-gpio-port";
 			reg = <0x0>;
 			label = "NCT3808_0_P2_GPIO0";
