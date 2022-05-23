@@ -180,7 +180,7 @@ uint32_t task_wait_event(int timeout_us)
 	}
 
 	/* If we didn't get an event, we need to wait again. There is a very
-	 * small change of us reading the event_mask one signaled event too
+	 * small chance of us reading the event_mask one signaled event too
 	 * early. In that case, just wait again for the remaining timeout
 	 */
 	if (events == 0) {
