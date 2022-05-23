@@ -63,17 +63,6 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
 #define USB_CHG_EVENT_CC_OPEN	TASK_EVENT_CUSTOM_BIT(5)
 #define USB_CHG_EVENT_MUX	TASK_EVENT_CUSTOM_BIT(6)
 
-/* Number of USB_CHG_* tasks */
-#ifdef HAS_TASK_USB_CHG_P2
-#define USB_CHG_TASK_COUNT 3
-#elif defined(HAS_TASK_USB_CHG_P1)
-#define USB_CHG_TASK_COUNT 2
-#elif defined(HAS_TASK_USB_CHG_P0) || defined(HAS_TASK_USB_CHG)
-#define USB_CHG_TASK_COUNT 1
-#else
-#define USB_CHG_TASK_COUNT 0
-#endif
-
 /*
  * Define USB_CHG_PORT_TO_TASK_ID() and TASK_ID_TO_USB_CHG__PORT() macros to
  * go between USB_CHG port number and task ID. Assume that TASK_ID_USB_CHG_P0,
