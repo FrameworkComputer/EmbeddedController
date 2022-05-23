@@ -84,7 +84,6 @@ GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 /* LED */
 GPIO(LED_4_L,                        PIN(6, 0), GPIO_OUT_HIGH) /* battery led white */
 GPIO(LED_3_L,                        PIN(C, 2), GPIO_OUT_HIGH) /* battery led amber */
-GPIO(LED_1_L,                        PIN(C, 4), GPIO_OUT_HIGH) /* power led white */
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -127,6 +126,7 @@ UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(C, 3))       /* GPIOC3 */
+UNUSED(PIN(C, 4))       /* GPIOC4 */
 UNUSED(PIN(6, 2))       /* GPIO62 */
 UNUSED(PIN(B, 1))       /* GPIOB1 */
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
