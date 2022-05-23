@@ -19,7 +19,8 @@
 
 /* Only track BC1.2 charge current if we support BC1.2 charging */
 #if defined(HAS_TASK_USB_CHG) || defined(HAS_TASK_USB_CHG_P0) || \
-defined(TEST_BUILD)
+	defined(CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK) || \
+	defined(TEST_BUILD)
 #define CHARGE_MANAGER_BC12
 #endif
 

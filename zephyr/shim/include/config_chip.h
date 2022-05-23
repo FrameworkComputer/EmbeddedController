@@ -1447,6 +1447,7 @@ extern struct jump_data mock_jump_data;
 #endif /* CONFIG_PLATFORM_EC_USB_POWER_DELIVERY */
 
 #ifdef CONFIG_PLATFORM_EC_USB_CHARGER
+#ifndef CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK
 #define HAS_TASK_USB_CHG_P0 1
 
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
@@ -1461,6 +1462,7 @@ extern struct jump_data mock_jump_data;
 #define HAS_TASK_USB_CHG_P3 1
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT > 3 */
 
+#endif /* !PLATFORM_EC_USB_CHARGER_SINGLE_TASK */
 #endif /* CONFIG_PLATFORM_EC_USB_CHARGER */
 
 #undef CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT

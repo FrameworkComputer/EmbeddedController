@@ -28,6 +28,7 @@ enum {
 	EC_TASK_PRIO_LOWEST = 0,
 	EC_SYSWORKQ_PRIO = EC_TASK_PRIO_LOWEST,
 	EC_TASK_CHG_RAMP_PRIO,
+	EC_TASK_USB_CHG_PRIO,
 	EC_TASK_USB_CHG_P0_PRIO,
 	EC_TASK_USB_CHG_P1_PRIO,
 	EC_TASK_USB_CHG_P2_PRIO,
@@ -68,6 +69,10 @@ enum {
 		     (CROS_EC_TASK(CHG_RAMP, chg_ramp_task, 0,            \
 				   CONFIG_TASK_CHG_RAMP_STACK_SIZE,       \
 				   EC_TASK_CHG_RAMP_PRIO)), ())           \
+	COND_CODE_1(CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK,           \
+		     (CROS_EC_TASK(USB_CHG, usb_charger_task_shared, 0,   \
+				   CONFIG_TASK_USB_CHG_STACK_SIZE,        \
+				   EC_TASK_USB_CHG_PRIO)), ())            \
 	COND_CODE_1(HAS_TASK_USB_CHG_P0,                                  \
 		     (CROS_EC_TASK(USB_CHG_P0, usb_charger_task, 0,       \
 				   CONFIG_TASK_USB_CHG_STACK_SIZE,        \

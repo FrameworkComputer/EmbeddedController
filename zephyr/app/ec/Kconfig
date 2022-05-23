@@ -24,7 +24,7 @@ orsource "chip/$(ARCH)/*/Kconfig.*"
 # Override the maximum number of preemptive priority levels.
 #
 config NUM_PREEMPT_PRIORITIES
-	default 25
+	default 26
 
 #
 # In Zephyr, the default system workqueue thread priority level is the lowest
