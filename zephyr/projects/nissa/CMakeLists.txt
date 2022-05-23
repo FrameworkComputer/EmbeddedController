@@ -8,13 +8,13 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 zephyr_include_directories(include)
 zephyr_library_sources("src/common.c")
-zephyr_library_sources("src/led.c")
 zephyr_library_sources("src/sub_board.c")
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 
 if(DEFINED CONFIG_BOARD_NIVVIKS)
 	project(nivviks)
 	zephyr_library_sources(
+			"src/led.c"
 			"src/nivviks/form_factor.c"
 			"src/nivviks/keyboard.c"
 	)
@@ -25,12 +25,16 @@ endif()
 if(DEFINED CONFIG_BOARD_NEREID)
 	project(nereid)
 	zephyr_library_sources(
+			"src/led.c"
 			"src/nereid/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/nereid/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/nereid/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_CRAASK)
+	zephyr_library_sources(
+			"src/craask/led.c"
+	)
 	project(nivviks)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/craask/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/craask/charger.c")
