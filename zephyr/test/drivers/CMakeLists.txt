@@ -74,5 +74,6 @@ target_sources(app PRIVATE
 )
 
 add_subdirectory(isl923x)
+add_subdirectory(led_driver)
 
 set_compiler_property(APPEND PROPERTY coverage -O0)

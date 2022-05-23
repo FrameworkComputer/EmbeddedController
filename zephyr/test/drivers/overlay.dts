@@ -166,6 +166,22 @@
 			gpios = <&gpio0 29 (GPIO_ACTIVE_LOW | GPIO_INPUT)>;
 			no-auto-init;
 		};
+		gpio_ec_chg_led_y_c0: ec_chg_led_y_c0 {
+			#led-pin-cells = <1>;
+			gpios = <&gpio0 30 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
+		};
+		gpio_ec_chg_led_w_c0: ec_chg_led_w_c0 {
+			#led-pin-cells = <1>;
+			gpios = <&gpio0 31 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
+		};
+		gpio_ec_chg_led_y_c1: ec_chg_led_y_c1 {
+			#led-pin-cells = <1>;
+			gpios = <&gpio0 32 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
+		};
+		gpio_ec_chg_led_w_c1: ec_chg_led_w_c1 {
+			#led-pin-cells = <1>;
+			gpios = <&gpio0 33 (GPIO_INPUT | GPIO_OUTPUT_LOW)>;
+		};
 	};
 
 	gpio-interrupts {
@@ -776,7 +792,7 @@
 };
 
 &gpio0 {
-	ngpios = <30>;
+	ngpios = <34>;
 };
 
 &i2c0 {

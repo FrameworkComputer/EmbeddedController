@@ -128,4 +128,23 @@ __override int led_is_supported(enum ec_led_id led_id)
 
 	return ((1 << (int)led_id) & supported_leds);
 }
+
+#ifdef TEST_BUILD
+const struct led_pins_node_t *led_get_node(enum led_color color,
+					   enum ec_led_id led_id)
+{
+	const struct led_pins_node_t *pin_node = NULL;
+
+	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
+		if (pins_node[i]->led_id == led_id &&
+		    pins_node[i]->led_color == color) {
+			pin_node = pins_node[i];
+			break;
+		}
+	}
+
+	return pin_node;
+}
+#endif /* TEST_BUILD */
+
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(COMPAT_GPIO_LED) */
