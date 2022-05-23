@@ -94,6 +94,9 @@
 
 #define USBC_PORT_C0_BB_RETIMER_I2C_ADDR	0x58
 
+/* I2C control host command */
+#define CONFIG_HOSTCMD_I2C_CONTROL
+
 /* Enabling Thunderbolt-compatible mode */
 #define CONFIG_USB_PD_TBT_COMPAT_MODE
 
