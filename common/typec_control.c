@@ -21,6 +21,10 @@ void typec_set_sbu(int port, bool enable)
 {
 	if (IS_ENABLED(CONFIG_USBC_PPC_SBU))
 		ppc_set_sbu(port, enable);
+
+#ifdef CONFIG_USB_PD_TCPM_SBU
+	tcpc_set_sbu(port, enable);
+#endif
 }
 
 __overridable void typec_set_source_current_limit(int port,

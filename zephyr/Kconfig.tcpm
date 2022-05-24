@@ -249,6 +249,13 @@ config PLATFORM_EC_USB_PD_TCPM_MUX
 	  Controller Interface Specification, Revision 2.0, Version 1.2 for more
 	  information.
 
+config PLATFORM_EC_USB_PD_TCPM_SBU
+	bool "PD chip has integrated port protection for SBU lines"
+	help
+	  Some PD chips have integrated port protection for SBU lines.
+	  If the switches to enable those SBU lines are controlled by the PD
+	  chip, enable this config.
+
 config PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP
 	bool "Console command: tcpc_dump"
 	# anx7447 also supports this command, but is not yet enabled

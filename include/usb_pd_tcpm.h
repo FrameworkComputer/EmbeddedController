@@ -426,6 +426,25 @@ struct tcpm_drv {
 	 */
 	int (*set_src_ctrl)(int port, int enable);
 
+#ifdef CONFIG_USB_PD_TCPM_SBU
+	/*
+	 * Enable SBU lines.
+	 *
+	 * Some PD chips have integrated port protection for SBU lines and the
+	 * switches to enable the SBU lines coming out of the PD chips are
+	 * controlled by vendor specific registers. Hence, this function has to
+	 * be written in vendor specific driver code and the board specific
+	 * tcpc_config[] has to initialize the function with vendor specific
+	 * function at board level.
+	 *
+	 * @param port Type-C port number
+	 * @enable true for enable, false for disable
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*set_sbu)(int port, bool enable);
+#endif /* CONFIG_USB_PD_TCPM_SBU */
+
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	/**
 	 * Instructs the TCPC to enter into low power mode.

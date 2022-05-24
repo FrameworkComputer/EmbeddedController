@@ -4903,6 +4903,13 @@
 #undef CONFIG_USB_PD_TCPM_MUX
 
 /*
+ * Some PD chips have integrated port protection for SBU lines.
+ * If the switches to enable those SBU lines are controlled by the PD
+ * chip, enable this config.
+ */
+#undef CONFIG_USB_PD_TCPM_SBU
+
+/*
  * The TCPM must know whether VBUS is present in order to make proper state
  * transitions. In addition, charge_manager must know about VBUS presence in
  * order to make charging decisions. VBUS state can be determined by various

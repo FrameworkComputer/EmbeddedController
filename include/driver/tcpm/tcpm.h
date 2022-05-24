@@ -432,6 +432,23 @@ static inline int tcpm_set_frs_enable(int port, int enable)
 }
 #endif /* defined(CONFIG_USB_PD_FRS) */
 
+#ifdef CONFIG_USB_PD_TCPM_SBU
+/**
+ * Turn on/off the SBU FETs
+ *
+ * @param port Type-C port number
+ * @param enable true:enable, false:disable
+ *
+ * @return EC_SUCCESS or error
+ */
+static inline int tcpc_set_sbu(int port, bool enable)
+{
+	return tcpc_config[port].drv->set_sbu ?
+		tcpc_config[port].drv->set_sbu(port, enable) :
+		EC_SUCCESS;
+}
+#endif /* CONFIG_USB_PD_TCPM_SBU */
+
 #else /* CONFIG_USB_PD_TCPC */
 
 /**
@@ -564,7 +581,6 @@ int tcpm_transmit(int port, enum tcpci_msg_type type, uint16_t header,
  * @param port Type-C port number
  */
 void tcpc_alert(int port);
-
 #endif /* CONFIG_USB_PD_TCPC */
 
 /**
