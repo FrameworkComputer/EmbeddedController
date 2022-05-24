@@ -34,7 +34,7 @@ BUILD_ASSERT(ARRAY_SIZE(chg_chips) == CHARGER_NUM);
 
 static int board_disable_bj_port(void)
 {
-	gpio_set_level(GPIO_EN_PPVAR_BJ_ADP, 0);
+	gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
 	/* If the current port is BJ, disable bypass mode. */
 	if (charge_manager_get_supplier() == CHARGE_SUPPLIER_DEDICATED)
 		return charger_enable_bypass_mode(0, 0);
@@ -48,7 +48,7 @@ static int board_enable_bj_port(void)
 {
 	if (gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL))
 		return EC_ERROR_INVAL;
-	gpio_set_level(GPIO_EN_PPVAR_BJ_ADP, 1);
+	gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 0);
 
 	CPRINTS("BJ power is enabled");
 

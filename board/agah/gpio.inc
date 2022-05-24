@@ -69,7 +69,7 @@ GPIO(PG_PP3300_S5_EC_SEQ_OD,         PIN(B, 5), GPIO_OUT_LOW)
 GPIO(USB_C2_FRS_EN,                  PIN(D, 4), GPIO_OUT_LOW)
 
 /* Barreljack */
-GPIO(EN_PPVAR_BJ_ADP,                PIN(A, 2), GPIO_OUT_LOW)
+GPIO(EN_PPVAR_BJ_ADP_L,              PIN(A, 2), GPIO_OUT_LOW)
 
 /*
  * The NPCX keyboard driver does not use named GPIOs to access
