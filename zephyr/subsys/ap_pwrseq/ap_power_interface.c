@@ -118,3 +118,10 @@ void ap_power_exit_hardoff(void)
 void ap_power_init_reset_log(void)
 {
 }
+
+#if !defined(CONFIG_CHARGER)
+bool ap_power_is_ok_to_power_up(void)
+{
+	return true;
+}
+#endif
