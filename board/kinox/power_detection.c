@@ -291,8 +291,20 @@ void set_the_obp(int power_type_index, int adp_type)
 		/* Only the TIO and Tiny need to update */
 		pi.voltage = power_type[power_type_index].charge_voltage;
 		pi.current = power_type[power_type_index].charge_current;
-		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-					DEDICATED_CHARGE_PORT, &pi);
+
+		switch (adp_type) {
+		case TIO1:
+		case TIO2:
+			charge_manager_update_charge(
+						CHARGE_SUPPLIER_PROPRIETARY,
+						DEDICATED_CHARGE_PORT, &pi);
+			break;
+		case TINY:
+			charge_manager_update_charge(
+						CHARGE_SUPPLIER_DEDICATED,
+						DEDICATED_CHARGE_PORT, &pi);
+			break;
+		}
 	}
 
 	CPRINTS("Power type %s, %dW", adp_id_names[adp_type],
