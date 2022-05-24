@@ -104,7 +104,7 @@ PWM_LED_3_ODL,PWM,LED 3,OUT,,PWM,N,3.30 V,,H10,H10,P7,PWM_INVERT,,,
 EC_PSYS,PWM,System power monitoring output,OUT,,PWM,N,ANA,"Charger, IMVP9.1",G6,G6,E15,OTHER,,,
 EC_SOC_PWR_BTN_ODL,SOC,Buffered power button signal from EC to SOC,OUT,,OD,N,3.30 V,SOC,H9,H9,J5,OUTPUT_ODR,GPIO_PCH_PWRBTN_L,,
 EC_SOC_HDMI_HPD,SOC,HPD buffer output for HDMI,OUT,,TTL,N,3.30 V,,L6,L6,P15,OUTPUT,,,
-EC_PROCHOT_ODL,SOC,Allows us to send/read PROCHOT,I/O,both,OD,N,1.05 V,SOC,G3,G3,H14,INPUT,,,
+EC_PROCHOT_ODL,SOC,Allows us to send/read PROCHOT,I/O,both,OD,N,1.05 V,SOC,G3,G3,H14,OUTPUT_ODR,,,
 EC_PCHHOT_ODL,SOC,Allows us to send/read PCHHOT,,,,,,,#N/A,#N/A,#N/A,OTHER,,,Intel confirmed that this feature is not used.
 EC_SOC_INT_ODL,SOC,EC interrupt to SOC,OUT,,OD,N,,,K5,K5,P8,OUTPUT_ODR,GPIO_EC_INT_L,,Is this needed?
 UART_GSC_DBG_RX_EC_TX,UART,UART signal from EC to debugger,OUT,,TTL,N,3.30 V,,H4,H4,B4,OTHER,,,

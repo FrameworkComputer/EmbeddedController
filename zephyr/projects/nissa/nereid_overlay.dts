@@ -79,11 +79,6 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_c1_interrupt";
 		};
-		int_prochot: ap_prochot {
-			irq-pin = <&gpio_ec_prochot_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "throttle_ap_prochot_input_interrupt";
-		};
 	};
 
 	unused-pins {

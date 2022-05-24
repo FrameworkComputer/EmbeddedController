@@ -11,23 +11,14 @@
 #include "charge_state_v2.h"
 #include "chipset.h"
 #include "cros_cbi.h"
-#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "usb_mux.h"
 #include "system.h"
-#include "throttle_ap.h"
 
 #include "nissa_common.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(nissa, CONFIG_NISSA_LOG_LEVEL);
-
-#define PROCHOT_GPIO_ENUM \
-	GPIO_SIGNAL(DT_PROP(DT_NODELABEL(int_prochot), irq_pin))
-
-static const struct prochot_cfg nissa_prochot_cfg = {
-	.gpio_prochot_in = PROCHOT_GPIO_ENUM,
-};
 
 struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -101,10 +92,6 @@ static void board_setup_init(void)
 		cached_usb_pd_port_count = 2;
 		break;
 	}
-
-	/* Enable PROCHOT monitoring */
-	throttle_ap_config_prochot(&nissa_prochot_cfg);
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_prochot));
 }
 /*
  * Make sure setup is done after EEPROM is readable.
