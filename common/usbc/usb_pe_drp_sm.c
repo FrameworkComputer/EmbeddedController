@@ -729,7 +729,15 @@ static inline void send_ctrl_msg(int port, enum tcpci_msg_type type,
 	prl_send_ctrl_msg(port, type, msg);
 }
 
-static void set_cable_rev(int port)
+/* Set both the SOP' and SOP'' revisions to the given value */
+static void set_cable_rev(int port, enum pd_rev_type rev)
+{
+	prl_set_rev(port, TCPCI_MSG_SOP_PRIME, rev);
+	prl_set_rev(port, TCPCI_MSG_SOP_PRIME_PRIME, rev);
+}
+
+/* Initialize the cable revision based only on the partner SOP revision */
+static void init_cable_rev(int port)
 {
 	/*
 	 * If port partner runs PD 2.0, cable communication must
@@ -746,7 +754,7 @@ static void set_cable_rev(int port)
 			pd_set_identity_discovery(port, TCPCI_MSG_SOP_PRIME,
 					PD_DISC_NEEDED);
 		}
-		prl_set_rev(port, TCPCI_MSG_SOP_PRIME, PD_REV20);
+		set_cable_rev(port, PD_REV20);
 	}
 }
 
@@ -2430,7 +2438,7 @@ static void pe_src_send_capabilities_run(int port)
 			prl_set_rev(port, TCPCI_MSG_SOP,
 			MIN(PD_REVISION, PD_HEADER_REV(rx_emsg[port].header)));
 
-			set_cable_rev(port);
+			init_cable_rev(port);
 
 			/* We are PD connected */
 			PE_SET_FLAG(port, PE_FLAGS_PD_CONNECTION);
@@ -3245,7 +3253,7 @@ static void pe_snk_evaluate_capability_entry(int port)
 	prl_set_rev(port, TCPCI_MSG_SOP,
 			MIN(PD_REVISION, PD_HEADER_REV(rx_emsg[port].header)));
 
-	set_cable_rev(port);
+	init_cable_rev(port);
 
 	/* Parse source caps if they have changed */
 	if (pe[port].src_cap_cnt != num ||
@@ -5622,8 +5630,8 @@ static void pe_vdm_identity_request_cbl_run(int port)
 		 * Explicit Contract
 		 */
 		if (prl_get_rev(port, TCPCI_MSG_SOP) != PD_REV20)
-			prl_set_rev(port, sop,
-					PD_HEADER_REV(rx_emsg[port].header));
+			set_cable_rev(port,
+				      PD_HEADER_REV(rx_emsg[port].header));
 		break;
 	case VDM_RESULT_NAK:
 		/* PE_INIT_PORT_VDM_IDENTITY_NAKed embedded here */
@@ -5651,7 +5659,7 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 	 */
 	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT)) {
 		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT);
-		prl_set_rev(port, TCPCI_MSG_SOP_PRIME, PD_REV20);
+		set_cable_rev(port, PD_REV20);
 	}
 
 	/*
@@ -5673,7 +5681,7 @@ static void pe_vdm_identity_request_cbl_exit(int port)
 		 * all retries are exhausted in case the cable is
 		 * non-compliant about GoodCRC-ing higher revisions
 		 */
-		prl_set_rev(port, TCPCI_MSG_SOP_PRIME, PD_REV20);
+		set_cable_rev(port, PD_REV20);
 
 	/*
 	 * Set discover identity timer unless BUSY case already did so.
@@ -6893,8 +6901,8 @@ static void pe_vcs_cbl_send_soft_reset_run(int port)
 		 * Explicit Contract
 		 */
 		if (prl_get_rev(port, TCPCI_MSG_SOP) != PD_REV20)
-			prl_set_rev(port, TCPCI_MSG_SOP_PRIME,
-					PD_HEADER_REV(rx_emsg[port].header));
+			set_cable_rev(port,
+				      PD_HEADER_REV(rx_emsg[port].header));
 	}
 
 	/* No GoodCRC received, cable is not present */
