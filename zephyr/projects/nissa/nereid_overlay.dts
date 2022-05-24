@@ -12,6 +12,11 @@
 		int-wp = &int_wp_l;
 	};
 
+	ec-console {
+		compatible = "ec-console";
+		disabled = "events", "lpc", "hostcmd";
+	};
+
 	batteries {
 		default_battery: smp {
 			compatible = "smp,l20m3pg0", "battery-smart";
