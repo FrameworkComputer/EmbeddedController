@@ -7,8 +7,8 @@
 #define __CROS_EC_LED_H__
 
 #include <zephyr/devicetree.h>
-#include <drivers/gpio.h>
-#include <drivers/pwm.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pwm.h>
 
 #define COMPAT_GPIO_LED cros_ec_gpio_led_pins
 #define COMPAT_PWM_LED  cros_ec_pwm_led_pins
