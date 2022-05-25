@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_scan.h"
@@ -15,6 +16,50 @@
 #define CPRINTF(format, args...) cprintf(CC_KEYBOARD, format, ## args)
 #define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
 
+const struct key {
+	uint8_t row;
+	uint8_t col;
+} vivaldi_keys[] = {
+	{.row = 4, .col = 2},	/* T1 */
+	{.row = 3, .col = 2},	/* T2 */
+	{.row = 2, .col = 2},	/* T3 */
+	{.row = 1, .col = 2},	/* T4 */
+	{.row = 4, .col = 4},	/* T5 */
+	{.row = 3, .col = 4},	/* T6 */
+	{.row = 2, .col = 4},	/* T7 */
+	{.row = 2, .col = 9},	/* T8 */
+	{.row = 1, .col = 9},	/* T9 */
+	{.row = 1, .col = 4},	/* T10 */
+	{.row = 0, .col = 4},	/* T11 */
+	{.row = 1, .col = 5},	/* T12 */
+	{.row = 3, .col = 5},	/* T13 */
+	{.row = 2, .col = 1},	/* T14 */
+	{.row = 0, .col = 1},	/* T15 */
+};
+BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
+
+static const struct ec_response_keybd_config osiris_vivaldi_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
+__override const struct ec_response_keybd_config
+*board_vivaldi_keybd_config(void)
+{
+	return &osiris_vivaldi_kb;
+}
 
 extern struct rgbkbd_drv is31fl3733b_drv;
 
@@ -216,4 +261,4 @@ static void keyboard_matrix_init(void)
 	register_scancode_set2((uint16_t *) &scancode_set2_rgb,
 					sizeof(scancode_set2_rgb));
 }
-DECLARE_HOOK(HOOK_INIT, keyboard_matrix_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, keyboard_matrix_init, HOOK_PRIO_PRE_DEFAULT);
