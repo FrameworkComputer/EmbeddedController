@@ -138,10 +138,12 @@ static int is31fl3733b_enable(struct rgbkbd *ctx, bool enable)
 
 	gpio_set_level(GPIO_RGBKBD_SDB_L, enable ? 1 : 0);
 
-	rv = is31fl3733b_get_config(ctx, IS31FL3733B_FUNC_CFG, &u8);
+	rv = is31fl3733b_set_page(ctx, IS31FL3733B_PAGE_FUNC);
 	if (rv) {
 		return rv;
 	}
+
+	u8 = 0;
 
 	WRITE_BIT(u8, 4, 1);
 	WRITE_BIT(u8, 0, enable);
