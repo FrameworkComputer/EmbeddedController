@@ -61,6 +61,12 @@ config PLATFORM_EC_SENSOR_TIGHT_TIMESTAMPS
 # if PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA
 #endif # PLATFORM_EC_MOTION_FILL_LPC_SENSE_DATA
 
+config PLATFORM_EC_MAX_SENSOR_FREQ_MILLIHZ
+    int "Maximal EC sampling rate"
+    default 250000
+    help
+       Lower this limit for slower EC (in mHz).
+
 config PLATFORM_EC_ALS
     bool "Ambient Light Sensor(ALS)"
     help

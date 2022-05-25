@@ -22,6 +22,7 @@ Kconfig Option                                   | Default | Documentation
 `CONFIG_PLATFORM_EC_LID_ANGLE`                   | n       | [LID ANGLE]
 `CONFIG_PLATFORM_EC_CONSOLE_CMD_ACCELS`          | n       | [ACCELS CMD]
 `CONFIG_PLATFORM_EC_ACCEL_SPOOF_MODE`            | n       | [ACCEL SPOOF MODE]
+`CONFIG_PLATFORM_EC_MAX_SENSOR_FREQ_MILLIHZ`     | n       | [MAX SENSOR FREQUENCY]
 
 Additional Kconfig options are available at
 [Kconfig.sensor_devices](./zephyr_sensor_devices.md).
@@ -282,4 +283,5 @@ lid_accel: lid-accel {
 [GMR TABLET MODE]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_GMR_TABLET_MODE"&ss=chromiumos
 [ACCEL INFO CMD]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_CONSOLE_CMD_ACCEL_INFO"&ss=chromiumos
 [ACCEL SPOOF CMD]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF"&ss=chromiumos
+[MAX SENSOR FREQUENCY ]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/zephyr/Kconfig.motionsense;?q="config%20PLATFORM_EC_MAX_SENSOR_FREQ_MILLIHZ"&ss=chromiumos
 [ectool]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/util/ectool.c;?q=function:ms_help&ss=chromiumos
