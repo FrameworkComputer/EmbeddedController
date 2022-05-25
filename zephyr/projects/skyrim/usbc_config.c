@@ -378,15 +378,21 @@ void tcpc_alert_event(enum gpio_signal signal)
 static void reset_nct38xx_port(int port)
 {
 	const struct gpio_dt_spec *reset_gpio_l;
+	const struct device *ioex_port0, *ioex_port1;
 
-	/* TODO: Save and restore ioex signals */
-	if (port == USBC_PORT_C0)
+	/* TODO(b/225189538): Save and restore ioex signals */
+	if (port == USBC_PORT_C0) {
 		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_l);
-	else if (port == USBC_PORT_C1)
+		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
+		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port1));
+	} else if (port == USBC_PORT_C1) {
 		reset_gpio_l = GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_rst_l);
-	else
+		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port0));
+		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port1));
+	} else {
 		/* Invalid port: do nothing */
 		return;
+	}
 
 	gpio_pin_set_dt(reset_gpio_l, 0);
 	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
@@ -394,6 +400,10 @@ static void reset_nct38xx_port(int port)
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
 		msleep(NCT3807_RESET_POST_DELAY_MS);
+
+	/* Re-enable the IO expander pins */
+	gpio_reset_port(ioex_port0);
+	gpio_reset_port(ioex_port1);
 }
 
 
