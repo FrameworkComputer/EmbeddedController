@@ -22,6 +22,12 @@
 #endif
 
 /*
+ * Update retimer firmware of no device attached (NDA) ports
+ *
+ * https://docs.kernel.org/admin-guide/thunderbolt.html#
+ * upgrading-on-board-retimer-nvm-when-there-is-no-cable-connected
+ *
+ * On EC side:
  * Retimer firmware update is initiated by AP.
  * The operations requested by AP are:
  * 0 - USB_RETIMER_FW_UPDATE_QUERY_PORT
@@ -43,10 +49,52 @@
  * If 4/5/6/7 is received, TC_FLAGS_USB_RETIMER_FW_UPDATE_LTD_RUN is
  * set, PD task should be in suspended mode and process it.
  *
+ * On host side:
+ * 1. Put NDA ports into offline mode.
+ *    This forces retimer to power on, and requests EC to suspend
+ *    PD port, set USB mux to USB, Safe then TBT.
+ * 2. Scan for retimers
+ * 3. Update retimer NVM firmware.
+ * 4. Authenticate.
+ * 5. Wait 5 or more seconds for retimer to come back.
+ * 6. Put NDA ports into online mode -- the functional state.
+ *    This requestes EC to disconnect(set USB mux to 0), resume PD port.
+ *
+ * Error recovery:
+ * As mentioned above, to put port online, host sends two requests to EC
+ * 1. Disconnect USB MUX: USB_RETIMER_FW_UPDATE_DISCONNECT
+ * if step 1 is successful, then
+ * 2. Resume PD port: USB_RETIMER_FW_UPDATE_RESUME_PD
+ *
+ * If step 1 fails, host will not send step 2. This means no
+ * resume request from host. PD port stays in suspended state.
+ * EC needs an error recovery to resume PD port by itself.
+ *
+ * Below is how error recovery works:
+ * PD port state is set to RETIMER_ONLINE_REQUESTED when receives
+ * "Disconnect USB MUX"; a deferred call is set up too. When EC resumes
+ * port upon host's request, port state will be set to RETIMER_ONLINE;
+ * or port state stays RETIMER_ONLINE_REQUESTED if host doesn't request.
+ * By the time the deferrred call is fired, it will check if any port is
+ * still in RETIMER_ONLINE_REQUESTED state. If true, EC will put the
+ * port online by itself. That is, retry disconnect and unconditionally
+ * resume the port.
  */
 
 #define SUSPEND 1
 #define RESUME 0
+
+enum retimer_port_state {
+	RETIMER_ONLINE,
+	RETIMER_OFFLINE,
+	RETIMER_ONLINE_REQUESTED
+};
+
+/*
+ * Two seconds buffer is added on top of required 5 seconds;
+ * to cover the time to disconnect and resume.
+ */
+#define RETIMTER_ONLINE_DELAY (7 * SECOND)
 
 /* Track current port AP requested to update retimer firmware */
 static int cur_port;
@@ -54,7 +102,7 @@ static int last_op; /* Operation received from AP via ACPI_WRITE */
 /* Operation result returned to ACPI_READ */
 static int last_result;
 /* Track port state: SUSPEND or RESUME */
-static int port_state[CONFIG_USB_PD_PORT_MAX_COUNT];
+static enum retimer_port_state port_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 int usb_retimer_fw_update_get_result(void)
 {
@@ -87,12 +135,13 @@ int usb_retimer_fw_update_get_result(void)
 	return result;
 }
 
-static void retimer_fw_update_set_port_state(int port, int state)
+static void retimer_fw_update_set_port_state(int port,
+					     enum retimer_port_state state)
 {
 	port_state[port] = state;
 }
 
-static int retimer_fw_update_get_port_state(int port)
+static enum retimer_port_state retimer_fw_update_get_port_state(int port)
 {
 	return port_state[port];
 }
@@ -101,16 +150,16 @@ static int retimer_fw_update_get_port_state(int port)
  * @brief Suspend or resume PD task and update the state of the port.
  *
  * @param port PD port
- * @param state
- * SUSPEND: suspend PD task for firmware update; and set state to SUSPEND
- * RESUME: resume PD task after firmware update is done; and set state
- * to RESUME.
+ * @param suspend
+ * SUSPEND: suspend PD task; set state to RETIMER_OFFLINE
+ * RESUME: resume PD task; set state to RETIMER_ONLINE.
  *
  */
-static void retimer_fw_update_port_handler(int port, int state)
+static void retimer_fw_update_port_handler(int port, bool suspend)
 {
-	pd_set_suspend(port, state);
-	retimer_fw_update_set_port_state(port, state);
+	pd_set_suspend(port, suspend);
+	retimer_fw_update_set_port_state(
+		port, suspend == SUSPEND ? RETIMER_OFFLINE : RETIMER_ONLINE);
 }
 
 static void deferred_pd_suspend(void)
@@ -124,14 +173,74 @@ static inline mux_state_t retimer_fw_update_usb_mux_get(int port)
 	return usb_mux_get(port) & USB_RETIMER_FW_UPDATE_MUX_MASK;
 }
 
+/*
+ * Host will wait maximum 300ms for result; otherwise it's error.
+ * so the polling takes 300ms too.
+ */
+#define POLLING_CYCLE 15
+#define POLLING_TIME_MS 20
+
+static bool query_usb_mux_set_completed_timeout(int port)
+{
+	int i;
+
+	for (i = 0; i < POLLING_CYCLE; i++) {
+		if (!usb_mux_set_completed(port))
+			msleep(POLLING_TIME_MS);
+		else
+			return false;
+	}
+
+	return true;
+}
+
+static void retry_online(int port)
+{
+	usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_DISCONNECT,
+		    pd_get_polarity(port));
+	/* Wait maximum 300 ms for USB mux to be set */
+	query_usb_mux_set_completed_timeout(port);
+	/* Resume the port unconditionally */
+	retimer_fw_update_port_handler(port, RESUME);
+}
+
+/*
+ * After NVM update, if AP skips step 5, not wait 5+ seconds for retimer
+ * to come back; then do step 6 immediately, requesting EC to put
+ * retimer online. Step 6 will fail; port is still offline afterwards.
+ *
+ * This deferred function monitors if any port has this problem and retry
+ * online one more time.
+ */
+static void retimer_check_online(void)
+{
+	int i;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		if (retimer_fw_update_get_port_state(i) ==
+		    RETIMER_ONLINE_REQUESTED) {
+			/*
+			 * Now the time has passed RETIMTER_ONLINE_DELAY;
+			 * retry online.
+			 * The port is suspended; if the port is not
+			 * suspended, DISCONNECT request won't go through,
+			 * we couldn't be here.
+			 */
+			retry_online(i);
+			/* PD port is resumed */
+		}
+	}
+}
+DECLARE_DEFERRED(retimer_check_online);
+
 /* Allow mux results to be filled in during HOOKS if needed */
 static void last_result_mux_get(void);
 DECLARE_DEFERRED(last_result_mux_get);
 
 static void last_result_mux_get(void)
 {
-	if (!usb_mux_set_completed(cur_port)) {
-		hook_call_deferred(&last_result_mux_get_data, 20 * MSEC);
+	if (query_usb_mux_set_completed_timeout(cur_port)) {
+		last_result = USB_RETIMER_FW_UPDATE_ERR;
 		return;
 	}
 
@@ -192,6 +301,14 @@ void usb_retimer_fw_update_process_op_cb(int port)
 		usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_DISCONNECT,
 			    pd_get_polarity(port));
 		result_mux_get = true;
+		/*
+		 * Host decides to put retimer online; now disconnects USB MUX
+		 * and sets port state to "RETIMER_ONLINE_REQUESTED".
+		 */
+		retimer_fw_update_set_port_state(port,
+						 RETIMER_ONLINE_REQUESTED);
+		hook_call_deferred(&retimer_check_online_data,
+				   RETIMTER_ONLINE_DELAY);
 		break;
 	default:
 		break;
@@ -210,11 +327,31 @@ void usb_retimer_fw_update_process_op(int port, int op)
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 
 	/*
-	 * TODO(b/179220036): check not overlapping requests;
-	 * not change cur_port if retimer scan is in progress
+	 * The order of requests from host are:
+	 *
+	 * Port 0 offline
+	 * Port 0 rescan retimers
+	 * Port 1 offline
+	 * Port 1 rescan retimers
+	 * ...
+	 * Port 0 online
+	 * Port 1 online
+	 * ...
 	 */
 	last_op = op;
 	cur_port = port;
+
+	/*
+	 * Host has requested to put this port back online, and haven't
+	 * finished online process. During this period, don't accept any
+	 * requests, except USB_RETIMER_FW_UPDATE_RESUME_PD.
+	 */
+	if (port_state[port] == RETIMER_ONLINE_REQUESTED) {
+		if (op != USB_RETIMER_FW_UPDATE_RESUME_PD) {
+			last_result = USB_RETIMER_FW_UPDATE_ERR;
+			return;
+		}
+	}
 
 	switch (op) {
 	case USB_RETIMER_FW_UPDATE_QUERY_PORT:
@@ -259,3 +396,4 @@ static void restore_port(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, restore_port, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESET, restore_port, HOOK_PRIO_DEFAULT);
