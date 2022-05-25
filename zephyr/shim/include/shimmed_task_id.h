@@ -36,6 +36,7 @@ enum {
 	EC_TASK_CHARGER_PRIO,
 	EC_TASK_CHIPSET_PRIO,
 	EC_TASK_MOTIONSENSE_PRIO,
+	EC_TASK_USB_MUX_PRIO,
 	EC_TASK_HOSTCMD_PRIO,
 	EC_SHELL_PRIO,
 	EC_TASK_KEYPROTO_PRIO,
@@ -50,7 +51,6 @@ enum {
 	EC_TASK_PD_INT_C1_PRIO,
 	EC_TASK_PD_INT_C2_PRIO,
 	EC_TASK_PD_INT_C3_PRIO,
-	EC_TASK_USB_MUX_PRIO,
 	EC_TASK_PRIO_COUNT,
 };
 
@@ -100,6 +100,10 @@ enum {
 		     (CROS_EC_TASK(MOTIONSENSE, motion_sense_task, 0,     \
 				   CONFIG_TASK_MOTIONSENSE_STACK_SIZE,    \
 				   EC_TASK_MOTIONSENSE_PRIO)), ())        \
+	IF_ENABLED(HAS_TASK_USB_MUX,					  \
+		   (CROS_EC_TASK(USB_MUX, usb_mux_task, 0,		  \
+				 CONFIG_TASK_USB_MUX_STACK_SIZE,          \
+				 EC_TASK_USB_MUX_PRIO)))		  \
 	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_DEDICATED,                 \
 		     (CROS_EC_TASK(HOSTCMD, host_command_task, 0,         \
 				   CONFIG_TASK_HOSTCMD_STACK_SIZE,        \
@@ -152,11 +156,7 @@ enum {
 	COND_CODE_1(HAS_TASK_PD_INT_C3,                                   \
 		     (CROS_EC_TASK(PD_INT_C3, pd_interrupt_handler_task, 3, \
 				   CONFIG_TASK_PD_INT_STACK_SIZE,         \
-				   EC_TASK_PD_INT_C3_PRIO)), ())          \
-	IF_ENABLED(HAS_TASK_USB_MUX,					  \
-		   (CROS_EC_TASK(USB_MUX, usb_mux_task, 0,		  \
-				 CONFIG_TASK_USB_MUX_STACK_SIZE,          \
-				 EC_TASK_USB_MUX_PRIO)))
+				   EC_TASK_PD_INT_C3_PRIO)), ())
 #elif defined(CONFIG_HAS_TEST_TASKS)
 #include "shimmed_test_tasks.h"
 /*
