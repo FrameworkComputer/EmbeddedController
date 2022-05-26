@@ -174,6 +174,7 @@ void gmr_tablet_switch_disable(void)
 }
 #endif
 
+#ifdef CONFIG_TABLET_MODE
 static int command_settabletmode(int argc, char **argv)
 {
 	static uint32_t tablet_mode_store;
@@ -208,3 +209,4 @@ static int command_settabletmode(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(tabletmode, command_settabletmode,
 	"[on | off | reset]",
 	"Manually force tablet mode to on, off or reset.");
+#endif
