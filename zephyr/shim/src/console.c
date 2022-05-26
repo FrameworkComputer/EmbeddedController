@@ -41,6 +41,12 @@ static const struct device *uart_shell_dev =
 static const struct shell *shell_zephyr;
 static struct k_poll_signal shell_uninit_signal;
 static struct k_poll_signal shell_init_signal;
+/*
+ * A flag is kept to indicate if the shell has been (or is about
+ * to be) stopped, so that output won't be sent via zephyr_fprintf()
+ * (which requires locking the shell).
+ */
+static bool shell_stopped;
 RING_BUF_DECLARE(rx_buffer, CONFIG_UART_RX_BUF_SIZE);
 
 static void uart_rx_handle(const struct device *dev)
@@ -103,6 +109,11 @@ int uart_shell_stop(void)
 		K_POLL_TYPE_SIGNAL, K_POLL_MODE_NOTIFY_ONLY,
 		&shell_uninit_signal);
 
+	/*
+	 * Set the shell_stopped flag so that no output will
+	 * be sent to the uart via zephyr_fprintf after this point.
+	 */
+	shell_stopped = true;
 	/* Clear all pending input */
 	uart_clear_input();
 
@@ -178,6 +189,7 @@ void uart_shell_start(void)
 
 	/* Wait for initialization to be run, the signal will wake us */
 	k_poll(&event, 1, K_FOREVER);
+	shell_stopped = false;
 }
 
 #ifdef CONFIG_SHELL_HELP
@@ -288,7 +300,6 @@ void uart_write_char(char c)
 
 void uart_flush_output(void)
 {
-	shell_process(shell_zephyr);
 	uart_tx_flush();
 }
 
@@ -310,8 +321,7 @@ int uart_getc(void)
 
 void uart_clear_input(void)
 {
-	/* Clear any remaining shell processing. */
-	shell_process(shell_zephyr);
+	/* Reset the input ring buffer */
 	ring_buf_reset(&rx_buffer);
 }
 
@@ -329,10 +339,12 @@ static void zephyr_print(const char *buff, size_t size)
 {
 	/*
 	 * shell_* functions can not be used in ISRs so use printk instead.
+	 * If the shell is about to be (or is) stopped, use printk, since the
+	 * output may be stalled and the shell mutex held.
 	 * Also, console_buf_notify_chars uses a mutex, which may not be
 	 * locked in ISRs.
 	 */
-	if (k_is_in_isr() || shell_zephyr->ctx->state != SHELL_STATE_ACTIVE) {
+	if (k_is_in_isr() || shell_stopped) {
 		printk("%s", buff);
 	} else {
 		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
