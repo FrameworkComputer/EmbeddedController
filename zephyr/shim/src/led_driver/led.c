@@ -35,8 +35,6 @@ enum led_extra_flag_t {
 	NONE = 0,
 	LED_CHFLAG_FORCE_IDLE,
 	LED_CHFLAG_DEFAULT,
-	LED_BATT_BELOW_10_PCT,
-	LED_BATT_ABOVE_10_PCT,
 };
 
 #define DECLARE_PINS_NODE(id)						\
@@ -67,7 +65,8 @@ struct node_prop_t {
 	enum charge_state pwr_state;
 	enum power_state chipset_state;
 	enum led_extra_flag_t led_extra_flag;
-	int charge_port;
+	int8_t batt_lvl[2];
+	int8_t charge_port;
 	struct led_color_node_t led_colors[MAX_COLOR];
 };
 
@@ -111,10 +110,13 @@ struct node_prop_t {
 {									\
 	.pwr_state = GET_PROP(state_id, charge_state),			\
 	.chipset_state = GET_PROP(state_id, chipset_state),		\
+	.led_extra_flag = GET_PROP(state_id, extra_flag),		\
+	.batt_lvl = COND_CODE_1(					\
+			DT_NODE_HAS_PROP(state_id, batt_lvl),		\
+			(DT_PROP(state_id, batt_lvl)), ({-1, -1})),	\
 	.charge_port = COND_CODE_1(					\
 			DT_NODE_HAS_PROP(state_id, charge_port),	\
 			(DT_PROP(state_id, charge_port)), (-1)),	\
-	.led_extra_flag = GET_PROP(state_id, extra_flag),		\
 	.led_colors = {LED_COLOR_INIT(0, 1, state_id),			\
 		       LED_COLOR_INIT(1, 2, state_id),			\
 		       LED_COLOR_INIT(2, 3, state_id),			\
@@ -161,18 +163,6 @@ static bool find_node_with_extra_flag(int i)
 				found_node = true;
 		} else {
 			if (node_array[i].led_extra_flag == LED_CHFLAG_DEFAULT)
-				found_node = true;
-		}
-		break;
-	case LED_BATT_BELOW_10_PCT:
-	case LED_BATT_ABOVE_10_PCT:
-		if (charge_get_percent() < 10) {
-			if (node_array[i].led_extra_flag ==
-					LED_BATT_BELOW_10_PCT)
-				found_node = true;
-		} else {
-			if (node_array[i].led_extra_flag ==
-					LED_BATT_ABOVE_10_PCT)
 				found_node = true;
 		}
 		break;
@@ -256,6 +246,15 @@ static int match_node(int node_idx)
 		enum power_state chipset_state = get_chipset_state();
 
 		if (node_array[node_idx].chipset_state != chipset_state)
+			return -1;
+	}
+
+	/* Check if this node depends on battery level */
+	if (node_array[node_idx].batt_lvl[0] != -1) {
+		int curr_batt_lvl = charge_get_percent();
+
+		if ((curr_batt_lvl < node_array[node_idx].batt_lvl[0]) ||
+		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1]))
 			return -1;
 	}
 

@@ -47,6 +47,15 @@ child-binding:
                 - POWER_S3
                 - POWER_S5
 
+        batt-lvl:
+            description: If the LED color depends on current battery level, this property
+                         is used to describe the batt_lvl range using closed interval [x,y].
+                         Use the macros defined in dt-bindings/battery.h.
+                         e.g. <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW> describes battery level
+                         range of BATTERY_LEVEL_EMPTY to BATTERY_LEVEL_LOW inclusive.
+            type: array
+            required: false
+
         extra-flag:
             description: If the LED color depends on additional factors
             type: string
@@ -55,8 +64,6 @@ child-binding:
                 - NONE
                 - LED_CHFLAG_FORCE_IDLE
                 - LED_CHFLAG_DEFAULT
-                - LED_BATT_BELOW_10_PCT
-                - LED_BATT_ABOVE_10_PCT
 
     child-binding:
         description: Color enum

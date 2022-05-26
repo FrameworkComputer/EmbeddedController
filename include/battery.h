@@ -12,12 +12,15 @@
 #include "compiler.h"
 #include "host_command.h"
 
-/* Battery index, only used with CONFIG_BATTERY_V2. */
-enum battery_index {
-	BATT_IDX_INVALID = -1,
-	BATT_IDX_MAIN = 0,
-	BATT_IDX_BASE = 1,
-};
+/*
+ * If compiling with Zephyr, include the BATTERY_LEVEL_ definitions that are
+ * shared with device tree
+ */
+#ifdef CONFIG_ZEPHYR
+
+#include "dt-bindings/battery.h"
+
+#else /* !CONFIG_ZEPHYR */
 
 /* Stop charge when charging and battery level >= this percentage */
 #define BATTERY_LEVEL_FULL		100
@@ -47,8 +50,17 @@ enum battery_index {
  */
 #define BATTERY_LEVEL_SHUTDOWN		  3
 
+#endif /* CONFIG_ZEPHYR */
+
 /* Full-capacity change reqd for host event */
 #define LFCC_EVENT_THRESH 5
+
+/* Battery index, only used with CONFIG_BATTERY_V2. */
+enum battery_index {
+	BATT_IDX_INVALID = -1,
+	BATT_IDX_MAIN = 0,
+	BATT_IDX_BASE = 1,
+};
 
 /*
  * Sometimes we have hardware to detect battery present, sometimes we have to
