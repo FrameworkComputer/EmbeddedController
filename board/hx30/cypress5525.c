@@ -412,13 +412,16 @@ void cypd_set_power_active(enum power_state power)
 	cypd_enque_evt(CYPD_EVT_S_CHANGE, 0);
 }
 
+static bool reconnect_flag;
+
 void cypd_set_error_recovery(void)
 {
 	int i;
 
 	for (i = 0;  i < PD_CHIP_COUNT; i++) {
 		if (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE &&
-				charger_current_battery_params()->state_of_charge > 0)
+				charger_current_battery_params()->state_of_charge > 0 &&
+				board_batt_is_present() == BP_YES) {
 			/* CYPD firmware will issue error recovery when we change the system
 			 * power state to S0, if battery can't provide the power, it will cause
 			 * power loss.
@@ -427,18 +430,11 @@ void cypd_set_error_recovery(void)
 			 * change the system power state
 			 */
 			cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC1);
-		else
+			reconnect_flag = false;
+		} else
 			cypd_write_reg8_wait_ack(i, CYP5525_SYS_PWR_STATE, 0xC0);
 	}
 }
-
-static bool reconnect_flag;
-
-static void reconnect_port_deferred(void)
-{
-	cypd_aconly_reconnect();
-}
-DECLARE_DEFERRED(reconnect_port_deferred);
 
 void update_system_power_state(int controller)
 {
@@ -459,9 +455,9 @@ void update_system_power_state(int controller)
 		cypd_set_error_recovery();
 		cypd_set_power_state(CYP5525_POWERSTATE_S0, controller);
 		if (reconnect_flag) {
-			reconnect_flag = false;
 			CPRINTS("CYPD reconnect");
 			cypd_aconly_reconnect();
+			reconnect_flag = false;
 		}
 		break;
 	}
@@ -1402,15 +1398,11 @@ int cypd_reconnect_port_enable(int controller)
 
 void cypd_aconly_reconnect(void)
 {
-	int batt_status, events;
+	int events;
 
-	battery_status(&batt_status);
-
-	if (extpower_is_present() && board_batt_is_present() != BP_YES) {
-		events = task_wait_event_mask(TASK_EVENT_TIMER, 100*MSEC);
-		if (events & TASK_EVENT_TIMER)
-			cypd_enque_evt(CYPD_EVT_PORT_DISABLE, 0);
-	}
+	events = task_wait_event_mask(TASK_EVENT_TIMER, 100*MSEC);
+	if (events & TASK_EVENT_TIMER)
+		cypd_enque_evt(CYPD_EVT_PORT_DISABLE, 0);
 }
 
 void cypd_usci_ppm_reset(void)
@@ -1473,7 +1465,7 @@ void cypd_set_typec_profile(int controller, int port)
 		CPRINTS("CYP5525_TYPE_C_STATUS_REG failed");
 	pd_port_states[port_idx].c_state = (typec_status_reg >> 2) & 0x7;
 
-	/* if port no device connect set type c profile to 1.5A */
+	/* if port no device connect set type c current to 1.5A */
 	if (pd_port_states[port_idx].c_state == CYPD_STATUS_NOTHING) {
 		cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
 		return;
