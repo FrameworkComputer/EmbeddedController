@@ -270,7 +270,7 @@ then set TPM.
     to produce the TPM-seed).
 *   In the unlikely event of the contents of the tmp file being modified before
     they are programmed into the FPMCU, FP unlock would fail (since the
-    encrypted templates would not longer be decrypted correctly, since the FPMCU
+    encrypted templates would no longer be decrypted correctly, since the FPMCU
     encryption key would have changed). The FP templates encryption key is a
     combination of both the `TPM_seed` as well as the internal `SBP_Src_Key`
     combined with a random salt, and since only the encrypted templates are
