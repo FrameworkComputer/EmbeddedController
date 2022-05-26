@@ -1,3 +1,5 @@
+#include <dt-bindings/battery.h>
+
 / {
 	led-colors {
 		compatible = "cros-ec,led-colors";
@@ -13,7 +15,8 @@
 		power-state-discharge-s0 {
 			charge-state = "PWR_STATE_DISCHARGE";
 			chipset-state = "POWER_S0";
-			extra-flag = "LED_BATT_ABOVE_10_PCT";
+			/* Battery percent range (> Low, <= Full) */
+			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
 			color-0 {
 				led-color = <&color_white>;
@@ -23,7 +26,8 @@
 		power-state-discharge-s0-batt-low {
 			charge-state = "PWR_STATE_DISCHARGE";
 			chipset-state = "POWER_S0";
-			extra-flag = "LED_BATT_BELOW_10_PCT";
+			/* Battery percent range (>= Empty, <= Low) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
 			/* White 2 sec, off 1 sec */
 			color-0 {
