@@ -122,9 +122,10 @@
 #define CONFIG_CMD_AP_RESET_LOG
 #define CONFIG_HOSTCMD_AP_RESET
 
-/* ADL has new lower-power features that require extra-wide virtual wire pulses. */
+/* ADL has new lower-power features that require extra-wide virtual wire
+ * pulses. The EDS specifies 100 microseconds. */
 #undef CONFIG_ESPI_DEFAULT_VW_WIDTH_US
-#define CONFIG_ESPI_DEFAULT_VW_WIDTH_US 150
+#define CONFIG_ESPI_DEFAULT_VW_WIDTH_US 100
 
 /* Buttons / Switches */
 #define CONFIG_VOLUME_BUTTONS

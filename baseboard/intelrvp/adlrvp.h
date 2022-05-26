@@ -33,9 +33,10 @@
 /* Chipset */
 #define CONFIG_CHIPSET_ALDERLAKE
 
-/* ADL has new low-power features that require extra-wide virtual wire pulses. */
+/* ADL has new low-power features that require extra-wide virtual wire
+ * pulses. The EDS specifies 100 microseconds. */
 #undef CONFIG_ESPI_DEFAULT_VW_WIDTH_US
-#define CONFIG_ESPI_DEFAULT_VW_WIDTH_US	150
+#define CONFIG_ESPI_DEFAULT_VW_WIDTH_US	100
 
 /* USB PD config */
 #if defined(HAS_TASK_PD_C3)
