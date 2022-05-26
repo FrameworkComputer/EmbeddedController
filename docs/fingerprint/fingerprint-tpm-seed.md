@@ -11,8 +11,8 @@ Last Updated: 2018-11-01
 
 ## Objective
 
-Increase security for Fingerprint (FP) templates by using a TPM-sourced seed in
-addition to internal FPMCU entropy while encrypting FP templates. The
+Increase security for Fingerprint (FP) templates by using a [TPM]-sourced seed
+in addition to internal FPMCU entropy while encrypting FP templates. The
 TPM-sourced seed will be derived from the system key which is loaded from the
 TPM during boot in mount-encrypted.
 
@@ -313,6 +313,7 @@ for the fingerprint templates to prevent their retrieval and mis-use.
 [Design Ideas]: #design-ideas
 [TPM seed generation]: #seed-generation
 [Alternatives Considered]: #alt-considered
+[TPM]: https://www.chromium.org/developers/design-documents/tpm-usage/
 
 <!-- Images -->
 

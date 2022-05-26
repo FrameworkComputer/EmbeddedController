@@ -184,7 +184,7 @@ replace this post-launch with a mechanism similar to
 FP templates are AES-encrypted with `HW_Key`. `HW_Key` is bound to this specific
 SBP so encrypted templates can only be deciphered by this specific SBP. To
 ensure that a powerwash/recovery/WP toggle/.../ makes the encryption key
-impossible to recover, `HW_Key` also depends on a secret held by the TPM.
+impossible to recover, `HW_Key` also depends on a secret held by the [TPM].
 
 We use an AEAD cipher (AES-GCM) to detect if the encrypted templates have been
 tampered with by an attacker controlling the AP.
@@ -753,6 +753,7 @@ The log file is `/var/log/cros_fp.log`.
 [Windows]: https://www.microsoft.com/en-us/windows/windows-hello
 [wrappers functions]: https://chrome-internal.googlesource.com/chromeos/platform/ec-private/+/9ebb3f10c611afff695f679aaeed1a35551a116b/fpc_sensor_pal.c#52
 [TPM Seed for Fingerprint MCU]: ../fingerprint/fingerprint-tpm-seed.md
+[TPM]: https://www.chromium.org/developers/design-documents/tpm-usage/
 
 <!-- Images -->
 
