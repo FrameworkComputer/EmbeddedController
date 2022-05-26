@@ -856,9 +856,9 @@ static int anx7447_get_chip_info(int port, int live,
 
 	if (chip_info->fw_version_number == -1 || live) {
 		/*
-		 * Before reading ANX7447 SPI slave address 0x7e for
+		 * Before reading ANX7447 SPI target address 0x7e for
 		 * new added FW version, need to read ANX7447 I2c
-		 * slave address 0x58 first to wake up ANX7447.
+		 * target address 0x58 first to wake up ANX7447.
 		 */
 		tcpc_read(port, ANX7447_REG_OCM_MAIN_VERSION, &main_version);
 
