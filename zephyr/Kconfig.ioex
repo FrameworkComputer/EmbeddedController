@@ -2,15 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-menuconfig PLATFORM_EC_IOEX
+menuconfig PLATFORM_EC_IOEX_CROS_DRV
 	bool "IO expander support"
 	depends on I2C
 	help
-	  Enable support for IO expanders subsystem.
-	  This will allow to use CrOS EC calls to ioex_* functions. It supports
-	  both CrOS EC ioex drivers and Zephyr GPIO drivers.
+	  Enable support for CrOS EC ioex drivers.
 
-if PLATFORM_EC_IOEX
+if PLATFORM_EC_IOEX_CROS_DRV
 
 config PLATFORM_EC_IOEX_INIT_PRIORITY
 	int "IO expander init priority"
@@ -20,44 +18,33 @@ config PLATFORM_EC_IOEX_INIT_PRIORITY
 	  Sets the priority of function that initializes
 	  the IO expander subsystem
 
-config PLATFORM_EC_IOEX_CROS_DRV
-	bool
-	help
-	  Enable support for CrOS EC IO expander drivers
-
 config PLATFORM_EC_IOEX_CCGXXF
 	bool "Cypress CCGXXF"
-	select PLATFORM_EC_IOEX_CROS_DRV
 	help
 	  Enables driver for Cypress CCGXXF IO expander (built inside PD chip)
 
 config PLATFORM_EC_IOEX_IT8801
 	bool "IT8801"
-	select PLATFORM_EC_IOEX_CROS_DRV
 	help
 	  Enables support for IT8801 IO expander with keyboard matrix controller
 
 config PLATFORM_EC_IOEX_NCT38XX
 	bool "Nuvoton NCT38xx"
-	select PLATFORM_EC_IOEX_CROS_DRV
 	help
 	  Enables support for IO expander built inside Nuvoton NCT38xx TCPC
 
 config PLATFORM_EC_IOEX_PCA9675
 	bool "NXP PCA9675PW"
-	select PLATFORM_EC_IOEX_CROS_DRV
 	help
 	  Enables support for NXP PCA9675PW IO expander
 
 config PLATFORM_EC_IOEX_PCAL6408
 	bool "NXP PCA(L)6408"
-	select PLATFORM_EC_IOEX_CROS_DRV
 	help
 	  Enables support for NXP PCA(L)6408 IO expander
 
 config PLATFORM_EC_IOEX_TCA64XXA
 	bool "TI TCA64xA"
-	select PLATFORM_EC_IOEX_CROS_DRV
 	help
 	  Enables support for Texas Instruments TCA64xxA IO expanders family
 

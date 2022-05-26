@@ -124,11 +124,6 @@ inline const char *ioex_get_name(enum ioex_signal signal)
 	return gpio_get_name(signal);
 }
 
-inline int signal_is_ioex(int signal)
-{
-	return 0;
-}
-
 #else
 
 /*

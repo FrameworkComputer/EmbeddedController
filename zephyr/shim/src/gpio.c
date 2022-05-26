@@ -154,16 +154,11 @@ void gpio_set_level_verbose(enum console_channel channel,
 
 void gpio_or_ioex_set_level(int signal, int value)
 {
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_IOEX) && signal_is_ioex(signal))
-		ioex_set_level(signal, value);
-	else
-		gpio_set_level(signal, value);
+	gpio_set_level(signal, value);
 }
 
 int gpio_or_ioex_get_level(int signal, int *value)
 {
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_IOEX) && signal_is_ioex(signal))
-		return ioex_get_level(signal, value);
 	*value = gpio_get_level(signal);
 	return EC_SUCCESS;
 }
