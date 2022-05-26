@@ -1055,13 +1055,12 @@ void system_enter_hibernate(uint32_t seconds, uint32_t microseconds)
 	 * On ChromeOS devices, if AC is present, don't hibernate.
 	 * It might trigger an immediate wake up (since AC is present),
 	 * resulting in an AP reboot.
-	 * Hibernate when AC is present never occurs in normal circumstantces,
+	 * Hibernate when AC is present never occurs in normal circumstances,
 	 * this is to prevent an action triggered by developers.
 	 * See: b/192259035
 	 */
-	if (IS_ENABLED(CONFIG_EXTPOWER) &&
-	    (IS_ENABLED(HAS_TASK_CHIPSET) || IS_ENABLED(CONFIG_AP_PWRSEQ)) &&
-	    extpower_is_present()) {
+	if (IS_ENABLED(CONFIG_EXTPOWER) && IS_ENABLED(CONFIG_AP_POWER_CONTROL)
+	    && extpower_is_present()) {
 		CPRINTS("AC on, skip hibernate");
 		return;
 	}

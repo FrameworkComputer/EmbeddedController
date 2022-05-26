@@ -7,7 +7,6 @@
 
 #include "common.h"
 
-#if defined(CONFIG_AP_PWRSEQ)
 #include "ap_power/ap_power_interface.h"
 #include "chipset_state_check.h"
 
@@ -45,34 +44,3 @@ void init_reset_log(void)
 {
 	ap_power_init_reset_log();
 }
-
-#else
-
-#if !defined(HAS_TASK_CHIPSET)
-#include "chipset.h"
-
-/* When no chipset is present, assume it is always off. */
-int chipset_in_state(int state_mask)
-{
-	return state_mask & CHIPSET_STATE_ANY_OFF;
-}
-int chipset_in_or_transitioning_to_state(int state_mask)
-{
-	return state_mask & CHIPSET_STATE_ANY_OFF;
-}
-void chipset_exit_hard_off(void) { }
-void chipset_throttle_cpu(int throttle) { }
-void chipset_force_shutdown(enum chipset_shutdown_reason reason) { }
-void chipset_reset(enum chipset_shutdown_reason reason) { }
-void power_interrupt(enum gpio_signal signal) { }
-void chipset_handle_espi_reset_assert(void) { }
-void chipset_handle_reboot(void) { }
-void chipset_reset_request_interrupt(enum gpio_signal signal) { }
-void chipset_warm_reset_interrupt(enum gpio_signal signal) { }
-void chipset_ap_rst_interrupt(enum gpio_signal signal) { }
-void chipset_power_good_interrupt(enum gpio_signal signal) { }
-void chipset_watchdog_interrupt(enum gpio_signal signal) { }
-void init_reset_log(void) { }
-
-#endif /* !defined(HAS_TASK_CHIPSET) */
-#endif /*defined(CONFIG_AP_PWRSEQ) */

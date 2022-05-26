@@ -5,6 +5,9 @@
 
 /* Chipset module for emulator */
 
+/* Does not run a chipset task, but does emulate an AP chipset */
+#define CONFIG_AP_POWER_CONTROL
+
 #include <stdio.h>
 #include "chipset.h"
 #include "common.h"

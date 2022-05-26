@@ -5,6 +5,7 @@
 
 /* Host event commands for Chrome EC */
 
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"

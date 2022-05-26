@@ -278,7 +278,7 @@ static void dpm_attempt_mode_entry(int port)
 		return;
 	}
 
-#if defined(HAS_TASK_CHIPSET) || defined(CONFIG_AP_PWRSEQ)
+#ifdef CONFIG_AP_POWER_CONTROL
 	/*
 	 * Do not try to enter mode while CPU is off.
 	 * CPU transitions (e.g b/158634281) can occur during the discovery
@@ -887,7 +887,7 @@ static uint8_t get_status_power_state_change(void)
 {
 	enum pd_sdb_power_state ret = PD_SDB_POWER_STATE_NOT_SUPPORTED;
 
-#ifdef HAS_TASK_CHIPSET
+#ifdef CONFIG_AP_POWER_CONTROL
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_HARD_OFF)) {
 		ret = PD_SDB_POWER_STATE_G3;
 	} else if (chipset_in_or_transitioning_to_state(
@@ -906,7 +906,7 @@ static uint8_t get_status_power_state_change(void)
 			   CHIPSET_STATE_STANDBY)) {
 		ret = PD_SDB_POWER_STATE_MODERN_STANDBY;
 	}
-#endif /* HAS_TASK_CHIPSET */
+#endif /* CONFIG_AP_POWER_CONTROL */
 
 	return ret | board_get_pd_sdb_power_indicator(ret);
 }

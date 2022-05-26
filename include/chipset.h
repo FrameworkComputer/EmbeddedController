@@ -48,7 +48,7 @@ enum critical_shutdown {
 	CRITICAL_SHUTDOWN_CUTOFF,
 };
 
-#if defined(HAS_TASK_CHIPSET) || defined(CONFIG_ZEPHYR)
+#ifdef CONFIG_AP_POWER_CONTROL
 
 /**
  * Check if chipset is in a given state.
@@ -125,7 +125,7 @@ void chipset_pre_init_callback(void);
  */
 void init_reset_log(void);
 
-#else /* !HAS_TASK_CHIPSET */
+#else /* !CONFIG_AP_POWER_CONTROL */
 
 /* When no chipset is present, assume it is always off. */
 static inline int chipset_in_state(int state_mask)
@@ -156,7 +156,7 @@ static inline void chipset_watchdog_interrupt(enum gpio_signal signal) { }
 
 static inline void init_reset_log(void) { }
 
-#endif /* !HAS_TASK_CHIPSET */
+#endif /* !CONFIG_AP_POWER_CONTROL */
 
 /**
  * Optional chipset check if PLTRST# is valid.

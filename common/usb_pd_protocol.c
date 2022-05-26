@@ -2754,7 +2754,7 @@ static void pd_init_tasks(void)
 	if (initialized)
 		return;
 
-#if defined(HAS_TASK_CHIPSET) && defined(CONFIG_USB_PD_DUAL_ROLE)
+#if defined(CONFIG_AP_POWER_CONTROL) && defined(CONFIG_USB_PD_DUAL_ROLE)
 	/* Set dual-role state based on chipset power state */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		for (i = 0; i < board_get_usb_pd_port_count(); i++)

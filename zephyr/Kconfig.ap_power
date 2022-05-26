@@ -2,6 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config AP_POWER_CONTROL
+    bool
+    default y if PLATFORM_EC_POWERSEQ || AP_PWRSEQ
+    help
+      Whether the EC has control over AP power states.
+
+      This is automatically enabled if an implementation of AP power
+      sequencing is enabled.
+
 menuconfig PLATFORM_EC_BOOT_AP_POWER_REQUIREMENTS
 	bool "Power requirements to boot AP"
 	default y

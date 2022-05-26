@@ -6279,6 +6279,17 @@
 #endif
 
 /*
+ * If the chipset task is enabled, this implies there is an AP to manage power
+ * for. In Zephyr this can be implied by multiple options, so we provide the
+ * same symbol here instead of making code examine HAS_TASK_CHIPSET.
+ */
+#ifndef CONFIG_AP_POWER_CONTROL
+#ifdef HAS_TASK_CHIPSET
+#define CONFIG_AP_POWER_CONTROL
+#endif	/* HAS_TASK_CHIPSET */
+#endif /* CONFIG_AP_POWER_CONTROL */
+
+/*
  * If a board has a chipset task, set the minimum charger power required for
  * powering on to 15W.  This is also the highest power discovered over Type-C by
  * analog signaling.  The EC normally does not communicate using USB PD when the

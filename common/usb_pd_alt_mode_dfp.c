@@ -1174,7 +1174,7 @@ __overridable int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 	 * could cause a wake up.)  When in S5->S3 transition state, we
 	 * should treat it as a SoC off state.
 	 */
-#if defined(HAS_TASK_CHIPSET) || defined(CONFIG_AP_PWRSEQ)
+#ifdef CONFIG_AP_POWER_CONTROL
 	if (!chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON))
 		return -1;
 #endif

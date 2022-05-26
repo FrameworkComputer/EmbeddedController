@@ -547,7 +547,7 @@ int pd_get_rev(int port, enum tcpci_msg_type type)
 
 #endif /* !CONFIG_USB_PR_SM */
 
-#if !defined(HAS_TASK_CHIPSET) && !defined(CONFIG_AP_PWRSEQ)
+#ifndef CONFIG_AP_POWER_CONTROL
 __overridable enum pd_dual_role_states board_tc_get_initial_drp_mode(int port)
 {
 	/*
@@ -1577,7 +1577,7 @@ void tc_state_init(int port)
 	 */
 	tc_policy_pd_enable(port, pd_comm_allowed_by_policy());
 
-#if defined(HAS_TASK_CHIPSET) || defined(CONFIG_AP_PWRSEQ)
+#ifdef CONFIG_AP_POWER_CONTROL
 	/* Set dual-role state based on chipset power state */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		pd_set_dual_role_and_event(port, PD_DRP_FORCE_SINK, 0);

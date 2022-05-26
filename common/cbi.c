@@ -5,6 +5,7 @@
  * Cros Board Info
  */
 
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "crc8.h"
@@ -546,7 +547,7 @@ DECLARE_CONSOLE_COMMAND(cbi, cc_cbi, "[set <tag> <value> <size> | "
 			"Print or change Cros Board Info from flash");
 #endif /* CONFIG_CMD_CBI */
 
-#ifndef HAS_TASK_CHIPSET
+#ifndef CONFIG_AP_POWER_CONTROL
 int cbi_set_fw_config(uint32_t fw_config)
 {
 	/* Check write protect status */

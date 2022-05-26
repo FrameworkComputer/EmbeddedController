@@ -147,7 +147,7 @@ static void detect_or_power_down_ic(const int port)
 #endif /* !defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) */
 
 	if (vbus_present) {
-#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
+#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(CONFIG_AP_POWER_CONTROL)
 		/* Turn on the 5V rail to allow the chip to be powered. */
 		power_5v_enable(task_get_current(), 1);
 #endif
@@ -167,7 +167,7 @@ static void detect_or_power_down_ic(const int port)
 		 * switch of USB2.0 can be kept close from now on.
 		 */
 		bc12_detect(port);
-#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(HAS_TASK_CHIPSET)
+#if defined(CONFIG_POWER_PP5000_CONTROL) && defined(CONFIG_AP_POWER_CONTROL)
 		/* Issue a request to turn off the rail. */
 		power_5v_enable(task_get_current(), 0);
 #endif

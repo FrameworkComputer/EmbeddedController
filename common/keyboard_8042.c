@@ -5,8 +5,8 @@
  * 8042 keyboard protocol
  */
 
-#include "chipset.h"
 #include "button.h"
+#include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "device_event.h"
