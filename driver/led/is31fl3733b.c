@@ -180,7 +180,7 @@ static int is31fl3733b_set_scale(struct rgbkbd *ctx, uint8_t offset,
 						uint8_t scale, uint8_t len)
 {
 	/* is31fl3733b not support scale function */
-	return EC_ERROR_UNIMPLEMENTED;
+	return EC_SUCCESS;
 }
 
 static int is31fl3733b_set_gcc(struct rgbkbd *ctx, uint8_t level)
