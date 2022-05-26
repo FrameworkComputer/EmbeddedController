@@ -16,6 +16,10 @@
 /* SBU FET control register */
 #define CCGXXF_REG_SBU_MUX_CTL	0xBB
 
+/* F/W info register */
+#define CCGXXF_REG_FW_VERSION		0x94
+#define CCGXXF_REG_FW_VERSION_BUILD	0x96
+
 extern const struct tcpm_drv ccgxxf_tcpm_drv;
 
 /* CCGXXF built in I/O expander definitions */

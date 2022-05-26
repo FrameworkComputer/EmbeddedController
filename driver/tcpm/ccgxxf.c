@@ -6,12 +6,29 @@
  */
 
 #include "ccgxxf.h"
+#include "console.h"
 #include "tcpm/tcpci.h"
 
 #ifdef CONFIG_USB_PD_TCPM_SBU
 static int ccgxxf_tcpc_set_sbu(int port, bool enable)
 {
 	return tcpc_write(port, CCGXXF_REG_SBU_MUX_CTL, enable);
+}
+#endif
+
+#ifdef CONFIG_CMD_TCPC_DUMP
+static void ccgxxf_dump_registers(int port)
+{
+	int fw_ver, fw_build;
+
+	tcpc_dump_std_registers(port);
+
+	/* Get the F/W version and build ID */
+	if (!tcpc_read16(port, CCGXXF_REG_FW_VERSION, &fw_ver) &&
+		!tcpc_read16(port, CCGXXF_REG_FW_VERSION_BUILD, &fw_build)) {
+		ccprintf("  FW_VERSION(build.major.minor)        = %d.%d.%d\n",
+			fw_build & 0xFF, (fw_ver >> 8) & 0xFF, fw_ver & 0xFF);
+	}
 }
 #endif
 
@@ -57,6 +74,6 @@ const struct tcpm_drv ccgxxf_tcpm_drv = {
 #endif
 	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
-	.dump_registers		= &tcpc_dump_std_registers,
+	.dump_registers		= &ccgxxf_dump_registers,
 #endif
 };
