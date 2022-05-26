@@ -839,8 +839,21 @@ void pe_run(int port, int evt, int en)
 		 * Reset path depending on current power role.
 		 */
 		if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_HARD_RESET_SEND)) {
-			pe_set_dpm_curr_request(port, DPM_REQUEST_HARD_RESET_SEND);
-			pe_set_hard_reset(port);
+			/*
+			 * If a hard reset condition came up during FRS, we must
+			 * go into ErrorRecovery.  Performing a hard reset could
+			 * leave us assuming our own FRS Vbus is coming from the
+			 * partner and leave the port stuck as Attached.SNK
+			 */
+			if (pe_in_frs_mode(port)) {
+				PE_CLR_DPM_REQUEST(port,
+						   DPM_REQUEST_HARD_RESET_SEND);
+				set_state_pe(port, PE_WAIT_FOR_ERROR_RECOVERY);
+			} else {
+				pe_set_dpm_curr_request(port,
+						DPM_REQUEST_HARD_RESET_SEND);
+				pe_set_hard_reset(port);
+			}
 		}
 
 		/*
