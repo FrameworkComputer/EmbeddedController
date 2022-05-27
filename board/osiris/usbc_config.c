@@ -17,7 +17,6 @@
 #include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
-#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
@@ -179,17 +178,6 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 }
 
 #endif /* CONFIG_CHARGE_RAMP_SW */
-
-void config_usb_db_type(void)
-{
-	enum ec_cfg_usb_db_type db_type = ec_cfg_usb_db_type();
-
-	/*
-	 * TODO(b/180434685): implement multiple DB types
-	 */
-
-	CPRINTS("Configured USB DB type number is %d", db_type);
-}
 
 void board_reset_pd_mcu(void)
 {
