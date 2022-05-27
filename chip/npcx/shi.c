@@ -891,7 +891,7 @@ static void shi_reset_prepare(void)
 	 */
 	for (i = 1; i < SHI_OBUF_FULL_SIZE; i++)
 		NPCX_OBUF(i) = EC_SPI_RECEIVING;
-	NPCX_OBUF(0) = EC_SPI_OLD_READY;
+	NPCX_OBUF(0) = EC_SPI_RX_READY;
 
 	/* Enable SHI & WEN functionality */
 	NPCX_SHICFG1 = 0x85;
