@@ -88,6 +88,7 @@ struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 bool verbose_msg_logging;
 static bool firmware_update;
 static int pd_3a_flag;
+static int pd_3a_set;
 static int pd_3a_controller;
 static int pd_3a_port;
 static int pd_port0_1_5A;
@@ -982,12 +983,12 @@ void cyp5525_port_int(int controller, int port)
 		break;
 	case CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
-		/*todo we can probably clean this up to remove some of this*/
 		cypd_set_typec_profile(controller, port);
 		cypd_update_port_state(controller, port);
 		break;
 	case CYPD_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
+		cypd_set_typec_profile(controller, port);
 		cypd_update_port_state(controller, port);
 		break;
 	case CYPD_RESPONSE_EXT_MSG_SOP_RX:
@@ -1407,13 +1408,15 @@ void cypd_aconly_reconnect(void)
 		cypd_enque_evt(CYPD_EVT_PORT_DISABLE, 0);
 }
 
+static void cypd_ucsi_wait_delay_deferred(void)
+{
+	cypd_enque_evt(CYPD_EVT_UCSI_PPM_RESET, 0);
+}
+DECLARE_DEFERRED(cypd_ucsi_wait_delay_deferred);
+
 void cypd_usci_ppm_reset(void)
 {
-	int events;
-
-	events = task_wait_event_mask(TASK_EVENT_TIMER, 50*MSEC);
-	if (events & TASK_EVENT_TIMER)
-		cypd_enque_evt(CYPD_EVT_UCSI_PPM_RESET, 0);
+	hook_call_deferred(&cypd_ucsi_wait_delay_deferred_data, 1);
 }
 
 void cypd_port_current_setting(void)
@@ -1435,13 +1438,19 @@ int cypd_port_3a_status(int controller, int port)
 	return false;
 }
 
-void cypd_port_3a_set(int controller, int port)
+int cypd_port_3a_set(int controller, int port)
 {
 	int port_idx = (controller << 1) + port;
 
+	if (pd_3a_set)
+		return false;
+
+	pd_3a_set = 1;
 	pd_3a_flag = 1;
 	pd_3a_controller = controller;
 	pd_3a_port = port_idx;
+
+	return true;
 }
 
 void cypd_port_1_5a_set(int controller, int port)
@@ -1464,16 +1473,34 @@ void cypd_port_1_5a_set(int controller, int port)
 	}
 }
 
-int cypd_port_force_3A(void) {
-
+int cypd_port_force_3A(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
 	int port_1_5A_idx;
 
 	port_1_5A_idx = pd_port0_1_5A + pd_port1_1_5A + pd_port2_1_5A + pd_port3_1_5A;
 
-	if (port_1_5A_idx > 3)
-		return true;
-	else
-		return false;
+	if (port_1_5A_idx >= 3) {
+		switch (port_idx) {
+		case 0:
+			if (!pd_port0_1_5A)
+				return true;
+			break;
+		case 1:
+			if (!pd_port1_1_5A)
+				return true;
+			break;
+		case 2:
+			if (!pd_port2_1_5A)
+				return true;
+			break;
+		case 3:
+			if (!pd_port3_1_5A)
+				return true;
+			break;
+		}
+	}
+	return false;
 }
 
 void cypd_profile_setting(int controller, int port, int profile)
@@ -1488,6 +1515,7 @@ void cypd_ppm_port_clear(void)
 	pd_port1_1_5A = 0;
 	pd_port2_1_5A = 0;
 	pd_port3_1_5A = 0;
+	pd_3a_set = 0;
 }
 
 void cypd_release_port(int controller, int port)
@@ -1495,11 +1523,13 @@ void cypd_release_port(int controller, int port)
 	int port_idx = (controller << 1) + port;
 
 	/* if port disconnect should set RP and PDO to default */
-	cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
-	cypd_write_reg8(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_3A);
+	cypd_write_reg8_wait_ack(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
+	cypd_write_reg8_wait_ack(controller, CYP5525_SELECT_SOURCE_PDO_REG(port), CYPD_PD_CMD_SET_TYPEC_3A);
 
-	if (cypd_port_3a_status(controller, port))
+	if (cypd_port_3a_status(controller, port)) {
+		pd_3a_set = 0;
 		pd_3a_flag = 0;
+	}
 
 	switch (port_idx) {
 	case 0:
@@ -1523,10 +1553,8 @@ int cypd_profile_wait_check(int controller, int port)
 
 	/*
 	 * according PD vendor suggest after PD NEGOTIATION COMPLETE
-	 * need to wait 280ms before send Profile
+	 * need to wait 420ms before send Profile
 	 */
-	task_wait_event_mask(TASK_EVENT_TIMER, 280*MSEC);
-
 	switch (port_idx) {
 	case 0:
 		 if (pd_port0_1_5A)
@@ -1545,6 +1573,8 @@ int cypd_profile_wait_check(int controller, int port)
 			return true;
 		break;
 	}
+
+	task_wait_event_mask(TASK_EVENT_TIMER, 420*MSEC);
 	return false;
 }
 
@@ -1555,15 +1585,8 @@ void cypd_set_typec_profile(int controller, int port)
 	uint8_t pd_status_reg[4];
 	uint8_t rdo_reg[4];
 
-	int typec_status_reg;
 	int rdo_max_current = 0;
 	int port_idx = (controller << 1) + port;
-
-	rv = cypd_read_reg8(controller, CYP5525_TYPE_C_STATUS_REG(port), &typec_status_reg);
-	if (rv != EC_SUCCESS)
-		CPRINTS("CYP5525_TYPE_C_STATUS_REG failed");
-
-	pd_port_states[port_idx].c_state = (typec_status_reg >> 2) & 0x7;
 
 	rv = cypd_read_reg_block(controller, CYP5525_PD_STATUS_REG(port), pd_status_reg, 4);
 	if (rv != EC_SUCCESS)
@@ -1582,24 +1605,28 @@ void cypd_set_typec_profile(int controller, int port)
 			cypd_read_reg_block(controller, CYP5525_CURRENT_RDO_REG(port), rdo_reg, 4);
 			rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
 
-			if (cypd_port_force_3A() && !pd_3a_flag) {
-				cypd_port_3a_set(controller, port);
+			if ((cypd_port_force_3A(controller, port) && !pd_3a_flag) ||
+				cypd_port_3a_status(controller, port)) {
+				if (!cypd_port_3a_set(controller, port))
+					return;
 				cypd_profile_setting(controller, port, CYPD_PD_CMD_SET_TYPEC_3A);
 			} else if (rdo_max_current <= 1500) {
 				if (cypd_profile_wait_check(controller, port))
 					return;
 				cypd_port_1_5a_set(controller, port);
 				cypd_profile_setting(controller, port, CYPD_PD_CMD_SET_TYPEC_1_5A);
-			} else if (cypd_port_3a_status(controller, port) || !pd_3a_flag) {
-				cypd_port_3a_set(controller, port);
+			} else if (!pd_3a_flag) {
+				if (!cypd_port_3a_set(controller, port))
+					return;
 				cypd_profile_setting(controller, port, CYPD_PD_CMD_SET_TYPEC_3A);
 			} else {
-				cypd_profile_wait_check(controller, port);
+				if (cypd_profile_wait_check(controller, port))
+					return;
 				cypd_port_1_5a_set(controller, port);
 				cypd_profile_setting(controller, port, CYPD_PD_CMD_SET_TYPEC_1_5A);
 			}
 		} else
-			cypd_profile_setting(controller, port, CYPD_PD_CMD_SET_TYPEC_1_5A);
+			cypd_write_reg8(controller, CYP5525_PD_CONTROL_REG(port), CYPD_PD_CMD_SET_TYPEC_1_5A);
 	}
 }
 
