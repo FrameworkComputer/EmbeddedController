@@ -85,12 +85,20 @@ void board_init(void)
 	if (board_id == 0) {
 		/* keyboard_col2_inverted on board id 0 */
 		gpio_set_flags(GPIO_EC_KSO_04_INV, GPIO_ODR_HIGH);
-		gpio_set_alternate_function(GPIO_PORT_1, BIT(5),
+		gpio_set_flags(GPIO_EC_KSO_05_INV, GPIO_ODR_HIGH);
+		gpio_set_alternate_function(GPIO_PORT_1, (BIT(4) | BIT(5)),
+			GPIO_ALT_FUNC_DEFAULT);
+	} else if (board_id == 1) {
+		/* keyboard_col4_inverted on board id 1 */
+		gpio_set_flags(GPIO_EC_KSO_02_INV, GPIO_ODR_HIGH);
+		gpio_set_flags(GPIO_EC_KSO_05_INV, GPIO_ODR_HIGH);
+		gpio_set_alternate_function(GPIO_PORT_1, (BIT(4) | BIT(7)),
 			GPIO_ALT_FUNC_DEFAULT);
 	} else {
-		/* keyboard_col4_inverted on board id 1 and later */
+		/* keyboard_col5_inverted on board id 2 and later */
 		gpio_set_flags(GPIO_EC_KSO_02_INV, GPIO_ODR_HIGH);
-		gpio_set_alternate_function(GPIO_PORT_1, BIT(7),
+		gpio_set_flags(GPIO_EC_KSO_04_INV, GPIO_ODR_HIGH);
+		gpio_set_alternate_function(GPIO_PORT_1, (BIT(5) | BIT(7)),
 			GPIO_ALT_FUNC_DEFAULT);
 	}
 

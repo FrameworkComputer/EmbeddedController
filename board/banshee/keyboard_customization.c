@@ -53,10 +53,14 @@ void board_id_keyboard_col_inverted(int board_id)
 		/* keyboard_col2_inverted on board id 0 */
 		signal = GPIO_EC_KSO_02_INV;
 		colinv = 2;
-	} else {
-		/* keyboard_col4_inverted on board id 1 and later */
+	} else if (board_id == 1) {
+		/* keyboard_col4_inverted on board id 1 */
 		signal = GPIO_EC_KSO_04_INV;
 		colinv = 4;
+	} else {
+		/* keyboard_col5_inverted on board id 2 and later */
+		signal = GPIO_EC_KSO_05_INV;
+		colinv = 5;
 	}
 }
 

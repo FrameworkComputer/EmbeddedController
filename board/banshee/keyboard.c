@@ -25,7 +25,7 @@ __override struct keyboard_scan_config keyscan_config = {
 	},
 };
 
-static const struct ec_response_keybd_config banshee_kb = {
+static const struct ec_response_keybd_config banshee_kb_id1 = {
 	.num_top_row_keys = 12,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -44,10 +44,32 @@ static const struct ec_response_keybd_config banshee_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+static const struct ec_response_keybd_config banshee_kb_id2 = {
+	.num_top_row_keys = 12,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_KBD_BKLIGHT_TOGGLE,	/* T8 */
+		TK_PLAY_PAUSE,		/* T9 */
+		TK_VOL_MUTE,		/* T10 */
+		TK_VOL_DOWN,		/* T11 */
+		TK_VOL_UP,		/* T12 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
+};
+
 __override const struct ec_response_keybd_config
 *board_vivaldi_keybd_config(void)
 {
-	return &banshee_kb;
+	if (get_board_id() <= 1)
+		return &banshee_kb_id1;
+	else
+		return &banshee_kb_id2;
 }
 
 /*
