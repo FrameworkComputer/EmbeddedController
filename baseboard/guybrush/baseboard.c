@@ -235,25 +235,7 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
-/*
- * .init is not necessary here because it has nothing
- * to do. Primary mux will handle mux state so .get is
- * not needed as well. usb_mux.c can handle the situation
- * properly.
- */
-static int fsusb42umx_set_mux(const struct usb_mux*, mux_state_t, bool *);
-struct usb_mux_driver usbc0_sbu_mux_driver = {
-	.set = fsusb42umx_set_mux,
-};
-
-/*
- * Since FSUSB42UMX is not a i2c device, .i2c_port and
- * .i2c_addr_flags are not required here.
- */
-struct usb_mux usbc0_sbu_mux = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &usbc0_sbu_mux_driver,
-};
+static int fsusb42umx_set_mux(const struct usb_mux*, mux_state_t);
 
 __overridable int board_c1_ps8818_mux_set(const struct usb_mux *me,
 					  mux_state_t mux_state)
@@ -293,7 +275,7 @@ struct usb_mux usb_muxes[] = {
 		.i2c_port = I2C_PORT_USB_MUX,
 		.i2c_addr_flags = AMD_FP6_C0_MUX_I2C_ADDR,
 		.driver = &amd_fp6_usb_mux_driver,
-		.next_mux = &usbc0_sbu_mux,
+		.board_set = &fsusb42umx_set_mux,
 	},
 	[USBC_PORT_C1] = {
 		.usb_port = USBC_PORT_C1,
@@ -376,14 +358,10 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 /*
  * USB C0 port SBU mux use standalone FSUSB42UMX
  * chip and it needs a board specific driver.
- * Overall, it will use chained mux framework.
+ * It is called through the C0 mux's board_set.
  */
-static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state,
-			      bool *ack_required)
+static int fsusb42umx_set_mux(const struct usb_mux *me, mux_state_t mux_state)
 {
-	/* This driver does not use host command ACKs */
-	*ack_required = false;
-
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		ioex_set_level(IOEX_USB_C0_SBU_FLIP, 1);
 	else
