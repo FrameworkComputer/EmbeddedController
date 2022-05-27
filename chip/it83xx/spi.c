@@ -63,7 +63,7 @@ enum spi_peripheral_state_machine {
 } spi_peripheral_state;
 
 static const int spi_response_state[] = {
-	[SPI_STATE_READY_TO_RECV] = EC_SPI_OLD_READY,
+	[SPI_STATE_READY_TO_RECV] = EC_SPI_RX_READY,
 	[SPI_STATE_RECEIVING]     = EC_SPI_RECEIVING,
 	[SPI_STATE_PROCESSING]    = EC_SPI_PROCESSING,
 	[SPI_STATE_RX_BAD]        = EC_SPI_RX_BAD_DATA,
