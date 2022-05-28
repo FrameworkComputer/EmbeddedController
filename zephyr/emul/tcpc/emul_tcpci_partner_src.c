@@ -98,6 +98,16 @@ int tcpci_src_emul_send_capability_msg_with_timer(
 	return TCPCI_EMUL_TX_SUCCESS;
 }
 
+void tcpci_src_emul_clear_alert_received(struct tcpci_src_emul_data *data)
+{
+	data->alert_received = false;
+}
+
+void tcpci_src_emul_clear_status_received(struct tcpci_src_emul_data *data)
+{
+	data->status_received = false;
+}
+
 /**
  * @brief Handle SOP messages as TCPCI source device. It handles request
  *        and get source cap messages.
@@ -118,9 +128,21 @@ static enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 		CONTAINER_OF(ext, struct tcpci_src_emul_data, ext);
 	uint16_t header;
 
+	/* Data used for responses */
+	uint32_t rmdo;
+
 	header = sys_get_le16(msg->buf);
 
-	if (PD_HEADER_CNT(header)) {
+	if (PD_HEADER_EXT(header)) {
+		/* Handle extended message */
+		switch (PD_HEADER_TYPE(header)) {
+		case PD_EXT_STATUS:
+			data->status_received = true;
+			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+		default:
+			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+		}
+	} else if (PD_HEADER_CNT(header)) {
 		/* Handle data message */
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_DATA_REQUEST:
@@ -132,6 +154,11 @@ static enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 			tcpci_partner_send_control_msg(common_data,
 						       PD_CTRL_PS_RDY, 15);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+		case PD_DATA_ALERT:
+			data->alert_received = true;
+			tcpci_partner_send_control_msg(common_data,
+						       PD_CTRL_GET_STATUS, 0);
+			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
 		}
@@ -141,6 +168,12 @@ static enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 		case PD_CTRL_GET_SOURCE_CAP:
 			tcpci_src_emul_send_capability_msg(data, common_data,
 							   0);
+			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+		case PD_CTRL_GET_REVISION:
+			rmdo = 0x31000000;
+			tcpci_partner_send_data_msg(common_data,
+						    PD_DATA_REVISION,
+						    &rmdo, 1, 0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;

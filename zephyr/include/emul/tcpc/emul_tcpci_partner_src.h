@@ -37,6 +37,10 @@ struct tcpci_src_emul_data {
 	struct tcpci_partner_data *common_data;
 	/** Delayed work which is executed on SourceCapability timeout */
 	struct k_work_delayable source_capability_timeout;
+	/** Flag tracking if partner has received an Alert message */
+	bool alert_received;
+	/** Flag tracking if partner has received a Status message */
+	bool status_received;
 };
 
 /** Return values of @ref tcpci_src_emul_check_pdos function */
@@ -132,6 +136,21 @@ int tcpci_src_emul_send_capability_msg_with_timer(
 	struct tcpci_src_emul_data *data,
 	struct tcpci_partner_data *common_data,
 	uint64_t delay);
+
+
+/**
+ * @brief Clear the alert received flag.
+ *
+ * @param data - pointer to source emulator partner data
+ */
+void tcpci_src_emul_clear_alert_received(struct tcpci_src_emul_data *data);
+
+/**
+ * @brief Clear the status received flag.
+ *
+ * @param data - pointer to source emulator partner data
+ */
+void tcpci_src_emul_clear_status_received(struct tcpci_src_emul_data *data);
 
 /**
  * @}
