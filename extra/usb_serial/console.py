@@ -192,7 +192,7 @@ class Suart():
           try:
             r = self._susb._read_ep.read(64, self._susb.TIMEOUT_MS)
             if r:
-              GetBuffer(sys.stdout).write(r.tostring())
+              GetBuffer(sys.stdout).write(r.tobytes())
               GetBuffer(sys.stdout).flush()
 
           except Exception as e:
