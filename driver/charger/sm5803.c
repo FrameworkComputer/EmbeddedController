@@ -282,6 +282,8 @@ enum ec_error_list sm5803_set_vbus_disch(int chgnum, int enable)
 	return rv;
 }
 
+static int validate_sink_safety(int chgnum);
+
 enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable)
 {
 	enum ec_error_list rv;
@@ -292,6 +294,16 @@ enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable)
 		return rv;
 
 	if (enable) {
+		/*
+		 * Incorrect value for some registers can cause hardware
+		 * damage; verify current configuration is safe before
+		 * enabling sinking to prevent damage and allow debugging.
+		 *
+		 * TODO(b:230712704) remove this check when cause of
+		 * incorrect behavior is understood.
+		 */
+		rv |= validate_sink_safety(chgnum);
+
 		if (chgnum == CHARGER_PRIMARY) {
 			/* Magic for new silicon */
 			if (dev_id >= 3) {
@@ -1902,6 +1914,25 @@ static void command_sm5803_dump(int chgnum)
 	}
 }
 #endif /* CONFIG_CMD_CHARGER_DUMP */
+
+static int validate_sink_safety(int chgnum)
+{
+	int regval = 0;
+	int out = chg_read8(chgnum, 0x5C, &regval);
+
+	if (regval != 0x7A) {
+		CPRINTS("Register 0x5C had unexpected value 0x%02X"
+			" when enabling sinking", regval);
+#ifdef CONFIG_CMD_CHARGER_DUMP
+		CPRINTS("Dumping all registers:");
+		command_sm5803_dump(chgnum);
+#endif
+		CPRINTS("Updating register 5C to expected 0x7A"
+			" and continuing..");
+		out |= chg_write8(chgnum, 0x5C, 0x7A);
+	}
+	return out;
+}
 
 const struct charger_drv sm5803_drv = {
 	.init = &sm5803_init,
