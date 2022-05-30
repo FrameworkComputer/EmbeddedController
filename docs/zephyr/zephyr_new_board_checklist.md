@@ -64,7 +64,7 @@ EC Feature                                                                  | Ne
 [Configure Batteries](./zephyr_battery.md)                                  | no
 [Configure CrOS Board Information (CBI)](./zephyr_cbi.md)                   | no
 [Configure Keyboard (TODO)](./zephyr_template.md)                           | no
-[Configure LEDs (TODO)](./zephyr_template.md)                               | no
+[Configure LEDs](./zephyr_leds.md)                                          | no
 [Configure Motion Sensors](./zephyr_motionsense.md)                         | no
 [Configure BC1.2 Charger Detector (TODO)](./zephyr_template.md)             | no
 [Configure ADC](./zephyr_adc.md)                                            | no
