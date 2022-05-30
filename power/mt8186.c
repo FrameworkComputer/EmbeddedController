@@ -430,11 +430,19 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
-		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
 
 		return POWER_S5;
 
 	case POWER_S5G3:
+		/*
+		 * Normally, this is called in S3S5, but if it's a shutdown
+		 * triggered by EC side, then EC is unable to set up PMIC
+		 * registers for a graceful shutdown. What we can do instead
+		 * is a force shutdown by asserting EC_PMIC_EN_ODL for 8
+		 * seconds, and all the rails are forced off, and the system
+		 * will enter G3 after EC_PMIC_EN_ODL is released.
+		 */
+		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
 		return POWER_G3;
 	default:
 		CPRINTS("Unexpected power state %d", state);
