@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_tcpci_emul
-
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
@@ -13,58 +11,13 @@ LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/sys/byteorder.h>
 #include <ztest.h>
 
 #include "tcpm/tcpci.h"
 
 #include "emul/emul_common_i2c.h"
 #include "emul/tcpc/emul_tcpci.h"
-
-#define TCPCI_DATA_FROM_I2C_EMUL(_emul)					     \
-	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
-		     struct tcpci_emul_data, common)
-
-/**
- * Number of emulated register. This include vendor registers defined in TCPCI
- * specification
- */
-#define TCPCI_EMUL_REG_COUNT		0x100
-
-
-/** Run-time data used by the emulator */
-struct tcpci_emul_data {
-	/** Common I2C data */
-	struct i2c_common_emul_data common;
-
-	/** Current state of all emulated TCPCI registers */
-	uint8_t reg[TCPCI_EMUL_REG_COUNT];
-
-	/** Structures representing TX and RX buffers */
-	struct tcpci_emul_msg *rx_msg;
-	struct tcpci_emul_msg *tx_msg;
-
-	/** Data that should be written to register (except TX_BUFFER) */
-	uint16_t write_data;
-
-	/** Return error when trying to write to RO register */
-	bool error_on_ro_write;
-	/** Return error when trying to write 1 to reserved bit */
-	bool error_on_rsvd_write;
-
-	/** User function called when alert line could change */
-	tcpci_emul_alert_state_func alert_callback;
-	/** Data passed to alert_callback */
-	void *alert_callback_data;
-
-	/** Callbacks for specific TCPCI device emulator */
-	struct tcpci_emul_dev_ops *dev_ops;
-	/** Callbacks for TCPCI partner */
-	const struct tcpci_emul_partner_ops *partner;
-
-	/** Reference to Alert# GPIO emulator. */
-	const struct device *alert_gpio_port;
-	gpio_pin_t alert_gpio_pin;
-};
 
 /**
  * @brief Returns number of bytes in specific register
@@ -101,10 +54,58 @@ static int tcpci_emul_reg_bytes(int reg)
 	return 1;
 }
 
-/** Check description in emul_tcpci.h */
-int tcpci_emul_set_reg(const struct emul *emul, int reg, uint16_t val)
+/**
+ * @brief Get value of given register of TCPCI
+ *
+ * @param ctx Pointer to TCPCI context
+ * @param reg Register address
+ * @param val Pointer where value should be stored
+ *
+ * @return 0 on success
+ * @return -EINVAL when register is out of range defined in TCPCI specification
+ *                 or val is NULL
+ */
+static int get_reg(const struct tcpci_ctx *ctx, int reg, uint16_t *val)
 {
-	struct tcpci_emul_data *data = emul->data;
+	int byte;
+
+	if (reg < 0 || reg > TCPCI_EMUL_REG_COUNT || val == NULL) {
+		return -EINVAL;
+	}
+
+	*val = 0;
+
+	byte = tcpci_emul_reg_bytes(reg);
+	if (byte == 2) {
+		*val = sys_get_le16(&ctx->reg[reg]);
+	} else {
+		*val = ctx->reg[reg];
+	}
+
+	return 0;
+}
+
+/** Check description in emul_tcpci.h */
+int tcpci_emul_get_reg(const struct emul *emul, int reg, uint16_t *val)
+{
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+
+	return get_reg(ctx, reg, val);
+}
+
+/**
+ * @brief Set value of given register of TCPCI
+ *
+ * @param ctx Pointer to TCPCI context
+ * @param reg Register address which value will be changed
+ * @param val New value of the register
+ *
+ * @return 0 on success
+ * @return -EINVAL when register is out of range defined in TCPCI specification
+ */
+static int set_reg(struct tcpci_ctx *ctx, int reg, uint16_t val)
+{
 	uint16_t update_alert = 0;
 	uint16_t alert;
 	int byte;
@@ -130,82 +131,70 @@ int tcpci_emul_set_reg(const struct emul *emul, int reg, uint16_t val)
 	}
 
 	if (update_alert != 0) {
-		tcpci_emul_get_reg(emul, TCPC_REG_ALERT, &alert);
-		tcpci_emul_set_reg(emul, TCPC_REG_ALERT, alert | update_alert);
+		get_reg(ctx, TCPC_REG_ALERT, &alert);
+		set_reg(ctx, TCPC_REG_ALERT, alert | update_alert);
 	}
 
-	for (byte = tcpci_emul_reg_bytes(reg); byte > 0; byte--) {
-		data->reg[reg] = val & 0xff;
-		val >>= 8;
-		reg++;
+	byte = tcpci_emul_reg_bytes(reg);
+	if (byte == 2) {
+		sys_put_le16(val, &ctx->reg[reg]);
+	} else {
+		ctx->reg[reg] = val;
 	}
 
 	return 0;
 }
 
 /** Check description in emul_tcpci.h */
-int tcpci_emul_get_reg(const struct emul *emul, int reg, uint16_t *val)
+int tcpci_emul_set_reg(const struct emul *emul, int reg, uint16_t val)
 {
-	struct tcpci_emul_data *data = emul->data;
-	int byte;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
-	if (reg < 0 || reg > TCPCI_EMUL_REG_COUNT || val == NULL) {
-		return -EINVAL;
-	}
-
-	*val = 0;
-
-	byte = tcpci_emul_reg_bytes(reg);
-	for (byte -= 1; byte >= 0; byte--) {
-		*val <<= 8;
-		*val |= data->reg[reg + byte];
-	}
-
-	return 0;
+	return set_reg(ctx, reg, val);
 }
 
 /**
  * @brief Check if alert line should be active based on alert registers and
  *        masks
  *
- * @param emul Pointer to TCPCI emulator
+ * @param ctx Pointer to TCPCI context
  *
  * @return State of alert line
  */
-static bool tcpci_emul_check_int(const struct emul *emul)
+static bool tcpci_emul_check_int(const struct tcpci_ctx *ctx)
 {
-	struct tcpci_emul_data *data = emul->data;
 	uint16_t alert_mask;
 	uint16_t alert;
 
-	tcpci_emul_get_reg(emul, TCPC_REG_ALERT, &alert);
-	tcpci_emul_get_reg(emul, TCPC_REG_ALERT_MASK, &alert_mask);
+	get_reg(ctx, TCPC_REG_ALERT, &alert);
+	get_reg(ctx, TCPC_REG_ALERT_MASK, &alert_mask);
 
 	/*
 	 * For nested interrupts alert group bit and alert register bit has to
 	 * be unmasked
 	 */
 	if (alert & alert_mask & TCPC_REG_ALERT_ALERT_EXT &&
-	    data->reg[TCPC_REG_ALERT_EXT] &
-	    data->reg[TCPC_REG_ALERT_EXTENDED_MASK]) {
+	    ctx->reg[TCPC_REG_ALERT_EXT] &
+		    ctx->reg[TCPC_REG_ALERT_EXTENDED_MASK]) {
 		return true;
 	}
 
 	if (alert & alert_mask & TCPC_REG_ALERT_EXT_STATUS &&
-	    data->reg[TCPC_REG_EXT_STATUS] &
-	    data->reg[TCPC_REG_EXT_STATUS_MASK]) {
+	    ctx->reg[TCPC_REG_EXT_STATUS] &
+		    ctx->reg[TCPC_REG_EXT_STATUS_MASK]) {
 		return true;
 	}
 
 	if (alert & alert_mask & TCPC_REG_ALERT_FAULT &&
-	    data->reg[TCPC_REG_FAULT_STATUS] &
-	    data->reg[TCPC_REG_FAULT_STATUS_MASK]) {
+	    ctx->reg[TCPC_REG_FAULT_STATUS] &
+		    ctx->reg[TCPC_REG_FAULT_STATUS_MASK]) {
 		return true;
 	}
 
 	if (alert & alert_mask & TCPC_REG_ALERT_POWER_STATUS &&
-	    data->reg[TCPC_REG_POWER_STATUS] &
-	    data->reg[TCPC_REG_POWER_STATUS_MASK]) {
+	    ctx->reg[TCPC_REG_POWER_STATUS] &
+		    ctx->reg[TCPC_REG_POWER_STATUS_MASK]) {
 		return true;
 	}
 
@@ -222,34 +211,34 @@ static bool tcpci_emul_check_int(const struct emul *emul)
 /**
  * @brief If alert callback is provided, call it with current alert line state
  *
- * @param emul Pointer to TCPCI emulator
+ * @param emul Pointer to TCPC emulator
  *
  * @return 0 for success, or non-0 for errors.
  */
 static int tcpci_emul_alert_changed(const struct emul *emul)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	int rc;
-	bool alert_is_active = tcpci_emul_check_int(emul);
+	bool alert_is_active = tcpci_emul_check_int(ctx);
 
 	/** Trigger GPIO. */
-	if (data->alert_gpio_port != NULL) {
+	if (ctx->alert_gpio_port != NULL) {
 		/* Triggers on edge falling, so set to 0 when there is an alert.
 		 */
-		rc = gpio_emul_input_set(data->alert_gpio_port,
-					 data->alert_gpio_pin,
+		rc = gpio_emul_input_set(ctx->alert_gpio_port,
+					 ctx->alert_gpio_pin,
 					 alert_is_active ? 0 : 1);
 		if (rc != 0)
 			return rc;
 	}
 
 	/* Nothing to do */
-	if (data->alert_callback == NULL) {
+	if (ctx->alert_callback == NULL) {
 		return 0;
 	}
 
-	data->alert_callback(emul, alert_is_active,
-			     data->alert_callback_data);
+	ctx->alert_callback(emul, alert_is_active, ctx->alert_callback_data);
 	return 0;
 }
 
@@ -257,31 +246,32 @@ static int tcpci_emul_alert_changed(const struct emul *emul)
  * @brief Load next rx message and inform partner which message was consumed
  *        by TCPC
  *
- * @param emul Pointer to TCPCI emulator
+ * @param emul Pointer to TCPC emulator
  *
  * @return 0 when there is no new message to load
  * @return 1 when new rx message is loaded
  */
 static int tcpci_emul_get_next_rx_msg(const struct emul *emul)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	struct tcpci_emul_msg *consumed_msg;
 
-	if (data->rx_msg == NULL) {
+	if (ctx->rx_msg == NULL) {
 		return 0;
 	}
 
-	consumed_msg = data->rx_msg;
-	data->rx_msg = consumed_msg->next;
+	consumed_msg = ctx->rx_msg;
+	ctx->rx_msg = consumed_msg->next;
 
 	/* Inform partner */
-	if (data->partner && data->partner->rx_consumed) {
-		data->partner->rx_consumed(emul, data->partner, consumed_msg);
+	if (ctx->partner && ctx->partner->rx_consumed) {
+		ctx->partner->rx_consumed(emul, ctx->partner, consumed_msg);
 	}
 
 	/* Prepare new loaded message */
-	if (data->rx_msg) {
-		data->rx_msg->idx = 0;
+	if (ctx->rx_msg) {
+		ctx->rx_msg->idx = 0;
 
 		return 1;
 	}
@@ -293,17 +283,15 @@ static int tcpci_emul_get_next_rx_msg(const struct emul *emul)
  * @brief Reset mask registers that are reset upon receiving or transmitting
  *        Hard Reset message.
  *
- * @param emul Pointer to TCPCI emulator
+ * @param ctx Pointer to TCPCI context
  */
-static void tcpci_emul_reset_mask_regs(const struct emul *emul)
+static void tcpci_emul_reset_mask_regs(struct tcpci_ctx *ctx)
 {
-	struct tcpci_emul_data *data = emul->data;
-
-	data->reg[TCPC_REG_ALERT_MASK]				= 0xff;
-	data->reg[TCPC_REG_ALERT_MASK + 1]			= 0x7f;
-	data->reg[TCPC_REG_POWER_STATUS_MASK]			= 0xff;
-	data->reg[TCPC_REG_EXT_STATUS_MASK]			= 0x01;
-	data->reg[TCPC_REG_ALERT_EXTENDED_MASK]			= 0x07;
+	ctx->reg[TCPC_REG_ALERT_MASK] = 0xff;
+	ctx->reg[TCPC_REG_ALERT_MASK + 1] = 0x7f;
+	ctx->reg[TCPC_REG_POWER_STATUS_MASK] = 0xff;
+	ctx->reg[TCPC_REG_EXT_STATUS_MASK] = 0x01;
+	ctx->reg[TCPC_REG_ALERT_EXTENDED_MASK] = 0x07;
 }
 
 /**
@@ -311,11 +299,14 @@ static void tcpci_emul_reset_mask_regs(const struct emul *emul)
  *        delivery (clear RECEIVE_DETECT register and clear already received
  *        messages in buffer)
  *
- * @param emul Pointer to TCPCI emulator
+ * @param emul Pointer to TCPC emulator
  */
 static void tcpci_emul_disable_pd_msg_delivery(const struct emul *emul)
 {
-	tcpci_emul_set_reg(emul, TCPC_REG_RX_DETECT, 0);
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
+
+	set_reg(ctx, TCPC_REG_RX_DETECT, 0);
 	/* Clear received messages */
 	while (tcpci_emul_get_next_rx_msg(emul))
 		;
@@ -325,7 +316,8 @@ static void tcpci_emul_disable_pd_msg_delivery(const struct emul *emul)
 int tcpci_emul_add_rx_msg(const struct emul *emul,
 			  struct tcpci_emul_msg *rx_msg, bool alert)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	uint16_t rx_detect_mask;
 	uint16_t rx_detect;
 	uint16_t dev_cap_2;
@@ -333,7 +325,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 	int rc;
 
 	/* Acquire lock to prevent race conditions with TCPM accessing I2C */
-	rc = i2c_common_emul_lock_data(&data->common.emul, K_FOREVER);
+	rc = i2c_common_emul_lock_data(&ctx->common.emul, K_FOREVER);
 	if (rc != 0) {
 		LOG_ERR("Failed to acquire TCPCI lock");
 		return rc;
@@ -362,32 +354,32 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		rx_detect_mask = TCPC_REG_RX_DETECT_CABLE_RST;
 		break;
 	default:
-		i2c_common_emul_unlock_data(&data->common.emul);
+		i2c_common_emul_unlock_data(&ctx->common.emul);
 		return -EINVAL;
 	}
 
-	tcpci_emul_get_reg(emul, TCPC_REG_RX_DETECT, &rx_detect);
+	get_reg(ctx, TCPC_REG_RX_DETECT, &rx_detect);
 	if (!(rx_detect & rx_detect_mask)) {
 		/*
 		 * TCPCI will not respond with GoodCRC, so from partner emulator
 		 * point of view it failed to send message
 		 */
-		i2c_common_emul_unlock_data(&data->common.emul);
+		i2c_common_emul_unlock_data(&ctx->common.emul);
 		return TCPCI_EMUL_TX_FAILED;
 	}
 
-	tcpci_emul_get_reg(emul, TCPC_REG_ALERT, &alert_reg);
+	get_reg(ctx, TCPC_REG_ALERT, &alert_reg);
 
 	/* Handle HardReset */
 	if (rx_msg->type == TCPCI_MSG_TX_HARD_RESET) {
 		tcpci_emul_disable_pd_msg_delivery(emul);
-		tcpci_emul_reset_mask_regs(emul);
+		tcpci_emul_reset_mask_regs(ctx);
 
 		alert_reg |= TCPC_REG_ALERT_RX_HARD_RST;
-		tcpci_emul_set_reg(emul, TCPC_REG_ALERT, alert_reg);
+		set_reg(ctx, TCPC_REG_ALERT, alert_reg);
 		rc = tcpci_emul_alert_changed(emul);
 
-		i2c_common_emul_unlock_data(&data->common.emul);
+		i2c_common_emul_unlock_data(&ctx->common.emul);
 		return rc;
 	}
 
@@ -397,30 +389,30 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		/* Rest of CableReset handling is the same as SOP* message */
 	}
 
-	if (data->rx_msg == NULL) {
-		tcpci_emul_get_reg(emul, TCPC_REG_DEV_CAP_2, &dev_cap_2);
+	if (ctx->rx_msg == NULL) {
+		get_reg(ctx, TCPC_REG_DEV_CAP_2, &dev_cap_2);
 		if ((!(dev_cap_2 & TCPC_REG_DEV_CAP_2_LONG_MSG) &&
 		       rx_msg->cnt > 31) || rx_msg->cnt > 265) {
 			LOG_ERR("Too long first message (%d)", rx_msg->cnt);
-			i2c_common_emul_unlock_data(&data->common.emul);
+			i2c_common_emul_unlock_data(&ctx->common.emul);
 			return -EINVAL;
 		}
 
-		data->rx_msg = rx_msg;
-	} else if (data->rx_msg->next == NULL) {
+		ctx->rx_msg = rx_msg;
+	} else if (ctx->rx_msg->next == NULL) {
 		if (rx_msg->cnt > 31) {
 			LOG_ERR("Too long second message (%d)", rx_msg->cnt);
-			i2c_common_emul_unlock_data(&data->common.emul);
+			i2c_common_emul_unlock_data(&ctx->common.emul);
 			return -EINVAL;
 		}
 
-		data->rx_msg->next = rx_msg;
+		ctx->rx_msg->next = rx_msg;
 		if (alert) {
 			alert_reg |= TCPC_REG_ALERT_RX_BUF_OVF;
 		}
 	} else {
 		LOG_ERR("Cannot setup third message");
-		i2c_common_emul_unlock_data(&data->common.emul);
+		i2c_common_emul_unlock_data(&ctx->common.emul);
 		return -EINVAL;
 	}
 
@@ -430,11 +422,11 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		}
 
 		alert_reg |= TCPC_REG_ALERT_RX_STATUS;
-		tcpci_emul_set_reg(emul, TCPC_REG_ALERT, alert_reg);
+		set_reg(ctx, TCPC_REG_ALERT, alert_reg);
 
 		rc = tcpci_emul_alert_changed(emul);
 		if (rc != 0) {
-			i2c_common_emul_unlock_data(&data->common.emul);
+			i2c_common_emul_unlock_data(&ctx->common.emul);
 			return rc;
 		}
 	}
@@ -442,16 +434,17 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 	rx_msg->next = NULL;
 	rx_msg->idx = 0;
 
-	i2c_common_emul_unlock_data(&data->common.emul);
+	i2c_common_emul_unlock_data(&ctx->common.emul);
 	return TCPCI_EMUL_TX_SUCCESS;
 }
 
 /** Check description in emul_tcpci.h */
 struct tcpci_emul_msg *tcpci_emul_get_tx_msg(const struct emul *emul)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
-	return data->tx_msg;
+	return ctx->tx_msg;
 }
 
 /** Check description in emul_tcpci.h */
@@ -472,32 +465,25 @@ void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev)
 }
 
 /** Check description in emul_tcpci.h */
-void tcpci_emul_set_dev_ops(const struct emul *emul,
-			    struct tcpci_emul_dev_ops *dev_ops)
-{
-	struct tcpci_emul_data *data = emul->data;
-
-	data->dev_ops = dev_ops;
-}
-
-/** Check description in emul_tcpci.h */
 void tcpci_emul_set_alert_callback(const struct emul *emul,
 				   tcpci_emul_alert_state_func alert_callback,
 				   void *alert_callback_data)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
-	data->alert_callback = alert_callback;
-	data->alert_callback_data = alert_callback_data;
+	ctx->alert_callback = alert_callback;
+	ctx->alert_callback_data = alert_callback_data;
 }
 
 /** Check description in emul_tcpci.h */
 void tcpci_emul_set_partner_ops(const struct emul *emul,
 				const struct tcpci_emul_partner_ops *partner)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
-	data->partner = partner;
+	ctx->partner = partner;
 }
 
 /**
@@ -545,6 +531,8 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 			       enum tcpc_cc_voltage_status partner_cc2,
 			       enum tcpc_cc_polarity polarity)
 {
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	uint16_t cc_status, alert, role_ctrl, power_status;
 	enum tcpc_cc_voltage_status cc1_v, cc2_v;
 	enum tcpc_cc_pull cc1_r, cc2_r;
@@ -557,7 +545,7 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 		cc2_v = partner_cc1;
 	}
 
-	tcpci_emul_get_reg(emul, TCPC_REG_CC_STATUS, &cc_status);
+	get_reg(ctx, TCPC_REG_CC_STATUS, &cc_status);
 	if (TCPC_REG_CC_STATUS_LOOK4CONNECTION(cc_status)) {
 		/* Change resistors values in case of DRP toggling */
 		if (partner_power_role == PD_ROLE_SOURCE) {
@@ -571,7 +559,7 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 		}
 	} else {
 		/* Use role control resistors values otherwise */
-		tcpci_emul_get_reg(emul, TCPC_REG_ROLE_CTRL, &role_ctrl);
+		get_reg(ctx, TCPC_REG_ROLE_CTRL, &role_ctrl);
 		cc1_r = TCPC_REG_ROLE_CTRL_CC1(role_ctrl);
 		cc2_r = TCPC_REG_ROLE_CTRL_CC2(role_ctrl);
 	}
@@ -583,21 +571,19 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 	cc_status = TCPC_REG_CC_STATUS_SET(
 				partner_power_role == PD_ROLE_SOURCE ? 1 : 0,
 				cc2_v, cc1_v);
-	tcpci_emul_set_reg(emul, TCPC_REG_CC_STATUS, cc_status);
-	tcpci_emul_get_reg(emul, TCPC_REG_ALERT, &alert);
-	tcpci_emul_set_reg(emul, TCPC_REG_ALERT,
-			   alert | TCPC_REG_ALERT_CC_STATUS);
+	set_reg(ctx, TCPC_REG_CC_STATUS, cc_status);
+	get_reg(ctx, TCPC_REG_ALERT, &alert);
+	set_reg(ctx, TCPC_REG_ALERT, alert | TCPC_REG_ALERT_CC_STATUS);
 
 	if (partner_power_role == PD_ROLE_SOURCE) {
-		tcpci_emul_get_reg(emul, TCPC_REG_POWER_STATUS, &power_status);
+		get_reg(ctx, TCPC_REG_POWER_STATUS, &power_status);
 		if (power_status & TCPC_REG_POWER_STATUS_VBUS_DET) {
 			/*
 			 * Set TCPCI emulator VBUS to present (connected,
 			 * above 4V) only if VBUS detection is enabled
 			 */
-			tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
-					   TCPC_REG_POWER_STATUS_VBUS_PRES |
-					   power_status);
+			set_reg(ctx, TCPC_REG_POWER_STATUS,
+				TCPC_REG_POWER_STATUS_VBUS_PRES | power_status);
 		}
 	}
 
@@ -609,32 +595,33 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 /** Check description in emul_tcpci.h */
 int tcpci_emul_disconnect_partner(const struct emul *emul)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	uint16_t power_status;
 	uint16_t val;
 	uint16_t term;
 	int rc;
 
 	tcpci_emul_disable_pd_msg_delivery(emul);
-	if (data->partner && data->partner->disconnect) {
-		data->partner->disconnect(emul, data->partner);
+	if (ctx->partner && ctx->partner->disconnect) {
+		ctx->partner->disconnect(emul, ctx->partner);
 	}
-	data->partner = NULL;
+	ctx->partner = NULL;
 
 	/* Set both CC lines to open to indicate disconnect. */
-	rc = tcpci_emul_get_reg(emul, TCPC_REG_CC_STATUS, &val);
+	rc = get_reg(ctx, TCPC_REG_CC_STATUS, &val);
 	if (rc != 0)
 		return rc;
 
 	term = TCPC_REG_CC_STATUS_TERM(val);
 
-	rc = tcpci_emul_set_reg(emul, TCPC_REG_CC_STATUS,
-				TCPC_REG_CC_STATUS_SET(term, TYPEC_CC_VOLT_OPEN,
-						       TYPEC_CC_VOLT_OPEN));
+	rc = set_reg(ctx, TCPC_REG_CC_STATUS,
+		     TCPC_REG_CC_STATUS_SET(term, TYPEC_CC_VOLT_OPEN,
+					    TYPEC_CC_VOLT_OPEN));
 	if (rc != 0)
 		return rc;
 
-	data->reg[TCPC_REG_ALERT] |= TCPC_REG_ALERT_CC_STATUS;
+	ctx->reg[TCPC_REG_ALERT] |= TCPC_REG_ALERT_CC_STATUS;
 	rc = tcpci_emul_alert_changed(emul);
 	if (rc != 0)
 		return rc;
@@ -644,10 +631,10 @@ int tcpci_emul_disconnect_partner(const struct emul *emul)
 	 */
 
 	/* Clear VBUS present in case if source partner is disconnected */
-	tcpci_emul_get_reg(emul, TCPC_REG_POWER_STATUS, &power_status);
+	get_reg(ctx, TCPC_REG_POWER_STATUS, &power_status);
 	if (power_status & TCPC_REG_POWER_STATUS_VBUS_PRES) {
 		power_status &= ~TCPC_REG_POWER_STATUS_VBUS_PRES;
-		tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS, power_status);
+		set_reg(ctx, TCPC_REG_POWER_STATUS, power_status);
 	}
 
 	return 0;
@@ -657,6 +644,8 @@ int tcpci_emul_disconnect_partner(const struct emul *emul)
 void tcpci_emul_partner_msg_status(const struct emul *emul,
 				   enum tcpci_emul_tx_status status)
 {
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	uint16_t alert;
 	uint16_t tx_status_alert;
 
@@ -679,8 +668,8 @@ void tcpci_emul_partner_msg_status(const struct emul *emul,
 		return;
 	}
 
-	tcpci_emul_get_reg(emul, TCPC_REG_ALERT, &alert);
-	tcpci_emul_set_reg(emul, TCPC_REG_ALERT, alert | tx_status_alert);
+	get_reg(ctx, TCPC_REG_ALERT, &alert);
+	set_reg(ctx, TCPC_REG_ALERT, alert | tx_status_alert);
 	tcpci_emul_alert_changed(emul);
 }
 
@@ -749,40 +738,38 @@ static const uint8_t tcpci_emul_rsvd_mask[] = {
 	[0x80 ... TCPCI_EMUL_REG_COUNT - 1]		= 0x00,
 };
 
-
 /**
  * @brief Reset role control and header info registers to default values.
  *
- * @param emul Pointer to TCPCI emulator
+ * @param ctx Pointer to TCPCI context
  */
-static void tcpci_emul_reset_role_ctrl(const struct emul *emul)
+static void tcpci_emul_reset_role_ctrl(struct tcpci_ctx *ctx)
 {
-	struct tcpci_emul_data *data = emul->data;
 	uint16_t dev_cap_1;
 
-	tcpci_emul_get_reg(emul, TCPC_REG_DEV_CAP_1, &dev_cap_1);
+	get_reg(ctx, TCPC_REG_DEV_CAP_1, &dev_cap_1);
 	switch (dev_cap_1 & TCPC_REG_DEV_CAP_1_PWRROLE_MASK) {
 	case TCPC_REG_DEV_CAP_1_PWRROLE_SRC_OR_SNK:
 	case TCPC_REG_DEV_CAP_1_PWRROLE_SNK:
 	case TCPC_REG_DEV_CAP_1_PWRROLE_SNK_ACC:
-		data->reg[TCPC_REG_ROLE_CTRL]			= 0x0a;
-		data->reg[TCPC_REG_MSG_HDR_INFO]		= 0x04;
+		ctx->reg[TCPC_REG_ROLE_CTRL] = 0x0a;
+		ctx->reg[TCPC_REG_MSG_HDR_INFO] = 0x04;
 		break;
 	case TCPC_REG_DEV_CAP_1_PWRROLE_SRC:
 		/* Dead batter */
-		data->reg[TCPC_REG_ROLE_CTRL]			= 0x05;
-		data->reg[TCPC_REG_MSG_HDR_INFO]		= 0x0d;
+		ctx->reg[TCPC_REG_ROLE_CTRL] = 0x05;
+		ctx->reg[TCPC_REG_MSG_HDR_INFO] = 0x0d;
 		break;
 	case TCPC_REG_DEV_CAP_1_PWRROLE_DRP:
 		/* Dead batter and dbg acc ind */
-		data->reg[TCPC_REG_ROLE_CTRL]			= 0x4a;
-		data->reg[TCPC_REG_MSG_HDR_INFO]		= 0x04;
+		ctx->reg[TCPC_REG_ROLE_CTRL] = 0x4a;
+		ctx->reg[TCPC_REG_MSG_HDR_INFO] = 0x04;
 		break;
 	case TCPC_REG_DEV_CAP_1_PWRROLE_SRC_SNK_DRP_ADPT_CBL:
 	case TCPC_REG_DEV_CAP_1_PWRROLE_SRC_SNK_DRP:
 		/* Dead batter and dbg acc ind */
-		data->reg[TCPC_REG_ROLE_CTRL]			= 0x4a;
-		data->reg[TCPC_REG_MSG_HDR_INFO]		= 0x04;
+		ctx->reg[TCPC_REG_ROLE_CTRL] = 0x4a;
+		ctx->reg[TCPC_REG_MSG_HDR_INFO] = 0x04;
 		break;
 	}
 }
@@ -794,46 +781,43 @@ static void tcpci_emul_reset_role_ctrl(const struct emul *emul)
  * @param emul Pointer to TCPCI emulator
  * @return 0 if successful
  */
-static int tcpci_emul_reset(const struct emul *emul)
+int tcpci_emul_reset(const struct emul *emul)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
-	data->reg[TCPC_REG_ALERT]				= 0x00;
-	data->reg[TCPC_REG_ALERT + 1]				= 0x00;
-	data->reg[TCPC_REG_FAULT_STATUS_MASK]			= 0xff;
-	data->reg[TCPC_REG_CONFIG_STD_OUTPUT]			= 0x60;
-	data->reg[TCPC_REG_TCPC_CTRL]				= 0x00;
-	data->reg[TCPC_REG_FAULT_CTRL]				= 0x00;
-	data->reg[TCPC_REG_POWER_CTRL]				= 0x60;
-	data->reg[TCPC_REG_CC_STATUS]				= 0x00;
-	data->reg[TCPC_REG_POWER_STATUS]			= 0x08;
-	data->reg[TCPC_REG_FAULT_STATUS]			= 0x80;
-	data->reg[TCPC_REG_EXT_STATUS]				= 0x00;
-	data->reg[TCPC_REG_ALERT_EXT]				= 0x00;
-	data->reg[TCPC_REG_COMMAND]				= 0x00;
-	data->reg[TCPC_REG_CONFIG_EXT_1]			= 0x00;
-	data->reg[TCPC_REG_GENERIC_TIMER]			= 0x00;
-	data->reg[TCPC_REG_GENERIC_TIMER + 1]			= 0x00;
-	data->reg[TCPC_REG_RX_DETECT]				= 0x00;
-	data->reg[TCPC_REG_VBUS_VOLTAGE]			= 0x00;
-	data->reg[TCPC_REG_VBUS_VOLTAGE + 1]			= 0x00;
-	data->reg[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH]		= 0x8c;
-	data->reg[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH + 1]	= 0x00;
-	data->reg[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH]		= 0x20;
-	data->reg[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH + 1]	= 0x00;
-	data->reg[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG]		= 0x00;
-	data->reg[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG + 1]	= 0x00;
-	data->reg[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG]		= 0x00;
-	data->reg[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG + 1]	= 0x00;
-	data->reg[TCPC_REG_VBUS_NONDEFAULT_TARGET]		= 0x00;
-	data->reg[TCPC_REG_VBUS_NONDEFAULT_TARGET + 1]		= 0x00;
+	ctx->reg[TCPC_REG_ALERT] = 0x00;
+	ctx->reg[TCPC_REG_ALERT + 1] = 0x00;
+	ctx->reg[TCPC_REG_FAULT_STATUS_MASK] = 0xff;
+	ctx->reg[TCPC_REG_CONFIG_STD_OUTPUT] = 0x60;
+	ctx->reg[TCPC_REG_TCPC_CTRL] = 0x00;
+	ctx->reg[TCPC_REG_FAULT_CTRL] = 0x00;
+	ctx->reg[TCPC_REG_POWER_CTRL] = 0x60;
+	ctx->reg[TCPC_REG_CC_STATUS] = 0x00;
+	ctx->reg[TCPC_REG_POWER_STATUS] = 0x08;
+	ctx->reg[TCPC_REG_FAULT_STATUS] = 0x80;
+	ctx->reg[TCPC_REG_EXT_STATUS] = 0x00;
+	ctx->reg[TCPC_REG_ALERT_EXT] = 0x00;
+	ctx->reg[TCPC_REG_COMMAND] = 0x00;
+	ctx->reg[TCPC_REG_CONFIG_EXT_1] = 0x00;
+	ctx->reg[TCPC_REG_GENERIC_TIMER] = 0x00;
+	ctx->reg[TCPC_REG_GENERIC_TIMER + 1] = 0x00;
+	ctx->reg[TCPC_REG_RX_DETECT] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_VOLTAGE] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_VOLTAGE + 1] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH] = 0x8c;
+	ctx->reg[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH + 1] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH] = 0x20;
+	ctx->reg[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH + 1] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG + 1] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG + 1] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_NONDEFAULT_TARGET] = 0x00;
+	ctx->reg[TCPC_REG_VBUS_NONDEFAULT_TARGET + 1] = 0x00;
 
-	tcpci_emul_reset_mask_regs(emul);
-	tcpci_emul_reset_role_ctrl(emul);
-
-	if (data->dev_ops && data->dev_ops->reset) {
-		data->dev_ops->reset(emul, data->dev_ops);
-	}
+	tcpci_emul_reset_mask_regs(ctx);
+	tcpci_emul_reset_role_ctrl(ctx);
 
 	return tcpci_emul_alert_changed(emul);
 }
@@ -841,16 +825,18 @@ static int tcpci_emul_reset(const struct emul *emul)
 /**
  * @brief Set alert and fault registers to indicate i2c interface fault
  *
- * @param emul Pointer to TCPCI emulator
+ * @param emul Pointer to TCPC emulator
  * @return 0 if successful
  */
 static int tcpci_emul_set_i2c_interface_err(const struct emul *emul)
 {
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	uint16_t fault_status;
 
-	tcpci_emul_get_reg(emul, TCPC_REG_FAULT_STATUS, &fault_status);
+	get_reg(ctx, TCPC_REG_FAULT_STATUS, &fault_status);
 	fault_status |= TCPC_REG_FAULT_STATUS_I2C_INTERFACE_ERR;
-	tcpci_emul_set_reg(emul, TCPC_REG_FAULT_STATUS, fault_status);
+	set_reg(ctx, TCPC_REG_FAULT_STATUS, fault_status);
 
 	return tcpci_emul_alert_changed(emul);
 }
@@ -858,7 +844,7 @@ static int tcpci_emul_set_i2c_interface_err(const struct emul *emul)
 /**
  * @brief Handle read from RX buffer registers for TCPCI rev 1.0 and rev 2.0
  *
- * @param emul Pointer to TCPCI emulator
+ * @param emul Pointer to TCPC emulator
  * @param reg First byte of last i2c write message
  * @param val Pointer where byte to read should be stored
  * @param bytes Number of bytes already readded
@@ -869,10 +855,11 @@ static int tcpci_emul_set_i2c_interface_err(const struct emul *emul)
 static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 				    uint8_t *val, int bytes)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	int is_rev1;
 
-	is_rev1 = data->reg[TCPC_REG_PD_INT_REV] == TCPC_REG_PD_INT_REV_REV_1_0;
+	is_rev1 = ctx->reg[TCPC_REG_PD_INT_REV] == TCPC_REG_PD_INT_REV_REV_1_0;
 
 	if (!is_rev1 && reg != TCPC_REG_RX_BUFFER) {
 		LOG_ERR("Register 0x%x defined only for revision 1.0", reg);
@@ -882,7 +869,7 @@ static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 
 	switch (reg) {
 	case TCPC_REG_RX_BUFFER:
-		if (data->rx_msg == NULL) {
+		if (ctx->rx_msg == NULL) {
 			if (bytes < 2) {
 				*val = 0;
 			} else {
@@ -894,16 +881,16 @@ static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 		}
 		if (bytes == 0) {
 			/* TCPCI message size count include type byte */
-			*val = data->rx_msg->cnt + 1;
+			*val = ctx->rx_msg->cnt + 1;
 		} else if (is_rev1) {
 			LOG_ERR("Revision 1.0 has only byte count at 0x30");
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		} else if (bytes == 1) {
-			*val = data->rx_msg->type;
-		} else if (data->rx_msg->idx < data->rx_msg->cnt) {
-			*val = data->rx_msg->buf[data->rx_msg->idx];
-			data->rx_msg->idx++;
+			*val = ctx->rx_msg->type;
+		} else if (ctx->rx_msg->idx < ctx->rx_msg->cnt) {
+			*val = ctx->rx_msg->buf[ctx->rx_msg->idx];
+			ctx->rx_msg->idx++;
 		} else {
 			LOG_ERR("Reading past RX buffer");
 			tcpci_emul_set_i2c_interface_err(emul);
@@ -918,10 +905,10 @@ static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		}
-		if (data->rx_msg == NULL) {
+		if (ctx->rx_msg == NULL) {
 			*val = 0;
 		} else {
-			*val = data->rx_msg->type;
+			*val = ctx->rx_msg->type;
 		}
 		break;
 
@@ -932,24 +919,24 @@ static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		}
-		if (data->rx_msg == NULL) {
+		if (ctx->rx_msg == NULL) {
 			LOG_ERR("Accessing RX buffer with no msg");
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		}
-		*val = data->rx_msg->buf[bytes];
+		*val = ctx->rx_msg->buf[bytes];
 		break;
 
 	case TCPC_REG_RX_DATA:
-		if (data->rx_msg == NULL) {
+		if (ctx->rx_msg == NULL) {
 			LOG_ERR("Accessing RX buffer with no msg");
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		}
-		if (bytes < data->rx_msg->cnt - 2) {
+		if (bytes < ctx->rx_msg->cnt - 2) {
 			/* rx_msg cnt include two bytes of header */
-			*val = data->rx_msg->buf[bytes + 2];
-			data->rx_msg->idx++;
+			*val = ctx->rx_msg->buf[bytes + 2];
+			ctx->rx_msg->idx++;
 		} else {
 			LOG_ERR("Reading past RX buffer");
 			tcpci_emul_set_i2c_interface_err(emul);
@@ -961,39 +948,12 @@ static int tcpci_emul_handle_rx_buf(const struct emul *emul, int reg,
 	return 0;
 }
 
-/**
- * @brief Function called for each byte of read message
- *
- * @param i2c_emul Pointer to TCPCI emulator
- * @param reg First byte of last write message
- * @param val Pointer where byte to read should be stored
- * @param bytes Number of bytes already readded
- *
- * @return 0 on success
- */
-static int tcpci_emul_read_byte(struct i2c_emul *i2c_emul, int reg,
-				uint8_t *val, int bytes)
+/** Check description in emul_tcpci.h */
+int tcpci_emul_read_byte(const struct emul *emul, int reg, uint8_t *val,
+			 int bytes)
 {
-	struct tcpci_emul_data *data;
-	const struct emul *emul;
-
-	emul = i2c_emul->parent;
-	data = TCPCI_DATA_FROM_I2C_EMUL(i2c_emul);
-
-	LOG_DBG("TCPCI 0x%x: read reg 0x%x", i2c_emul->addr, reg);
-
-	if (data->dev_ops && data->dev_ops->read_byte) {
-		switch (data->dev_ops->read_byte(emul, data->dev_ops, reg, val,
-						 bytes)) {
-		case TCPCI_EMUL_CONTINUE:
-			break;
-		case TCPCI_EMUL_DONE:
-			return 0;
-		case TCPCI_EMUL_ERROR:
-		default:
-			return -EIO;
-		}
-	}
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
 	switch (reg) {
 	/* 16 bits values */
@@ -1019,7 +979,7 @@ static int tcpci_emul_read_byte(struct i2c_emul *i2c_emul, int reg,
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		}
-		*val = data->reg[reg + bytes];
+		*val = ctx->reg[reg + bytes];
 		break;
 
 	/* 8 bits values */
@@ -1048,7 +1008,7 @@ static int tcpci_emul_read_byte(struct i2c_emul *i2c_emul, int reg,
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		}
-		*val = data->reg[reg];
+		*val = ctx->reg[reg];
 		break;
 
 	case TCPC_REG_RX_BUFFER:
@@ -1066,43 +1026,15 @@ static int tcpci_emul_read_byte(struct i2c_emul *i2c_emul, int reg,
 	return 0;
 }
 
-/**
- * @brief Function called for each byte of write message. Data are stored
- *        in write_data field of tcpci_emul_data or in tx_msg in case of
- *        writing to TX buffer.
- *
- * @param i2c_emul Pointer to TCPCI emulator
- * @param reg First byte of write message
- * @param val Received byte of write message
- * @param bytes Number of bytes already received
- *
- * @return 0 on success
- * @return -EIO on invalid write to TX buffer
- */
-static int tcpci_emul_write_byte(struct i2c_emul *i2c_emul, int reg,
-				 uint8_t val, int bytes)
+/** Check description in emul_tcpci.h */
+int tcpci_emul_write_byte(const struct emul *emul, int reg, uint8_t val,
+			  int bytes)
 {
-	struct tcpci_emul_data *data;
-	const struct emul *emul;
 	int is_rev1;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
-	emul = i2c_emul->parent;
-	data = TCPCI_DATA_FROM_I2C_EMUL(i2c_emul);
-
-	if (data->dev_ops && data->dev_ops->write_byte) {
-		switch (data->dev_ops->write_byte(emul, data->dev_ops, reg, val,
-						  bytes)) {
-		case TCPCI_EMUL_CONTINUE:
-			break;
-		case TCPCI_EMUL_DONE:
-			return 0;
-		case TCPCI_EMUL_ERROR:
-		default:
-			return -EIO;
-		}
-	}
-
-	is_rev1 = data->reg[TCPC_REG_PD_INT_REV] == TCPC_REG_PD_INT_REV_REV_1_0;
+	is_rev1 = ctx->reg[TCPC_REG_PD_INT_REV] == TCPC_REG_PD_INT_REV_REV_1_0;
 	switch (reg) {
 	case TCPC_REG_TX_BUFFER:
 		if (is_rev1) {
@@ -1111,16 +1043,16 @@ static int tcpci_emul_write_byte(struct i2c_emul *i2c_emul, int reg,
 				tcpci_emul_set_i2c_interface_err(emul);
 				return -EIO;
 			}
-			data->tx_msg->idx = val;
+			ctx->tx_msg->idx = val;
 		}
 
 		if (bytes == 1) {
-			data->tx_msg->cnt = val;
+			ctx->tx_msg->cnt = val;
 		} else {
-			if (data->tx_msg->cnt > 0) {
-				data->tx_msg->cnt--;
-				data->tx_msg->buf[data->tx_msg->idx] = val;
-				data->tx_msg->idx++;
+			if (ctx->tx_msg->cnt > 0) {
+				ctx->tx_msg->cnt--;
+				ctx->tx_msg->buf[ctx->tx_msg->idx] = val;
+				ctx->tx_msg->idx++;
 			} else {
 				LOG_ERR("Writing past TX buffer");
 				tcpci_emul_set_i2c_interface_err(emul);
@@ -1146,7 +1078,7 @@ static int tcpci_emul_write_byte(struct i2c_emul *i2c_emul, int reg,
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		}
-		data->tx_msg->buf[bytes] = val;
+		ctx->tx_msg->buf[bytes] = val;
 		return 0;
 
 	case TCPC_REG_TX_HDR:
@@ -1166,14 +1098,14 @@ static int tcpci_emul_write_byte(struct i2c_emul *i2c_emul, int reg,
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		}
-		data->tx_msg->buf[bytes] = val;
+		ctx->tx_msg->buf[bytes] = val;
 		return 0;
 	}
 
 	if (bytes == 1) {
-		data->write_data = val;
+		ctx->write_data = val;
 	} else if (bytes == 2) {
-		data->write_data |= (uint16_t)val << 8;
+		ctx->write_data |= (uint16_t)val << 8;
 	}
 
 	return 0;
@@ -1182,29 +1114,30 @@ static int tcpci_emul_write_byte(struct i2c_emul *i2c_emul, int reg,
 /**
  * @brief Handle writes to command register
  *
- * @param emul Pointer to TCPCI emulator
+ * @param emul Pointer to TCPC emulator
  *
  * @return 0 on success
  * @return -EIO on unknown command value
  */
 static int tcpci_emul_handle_command(const struct emul *emul)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	uint16_t role_ctrl;
 	uint16_t pwr_ctrl;
 
-	switch (data->write_data & 0xff) {
+	switch (ctx->write_data & 0xff) {
 	case TCPC_REG_COMMAND_RESET_TRANSMIT_BUF:
-		data->tx_msg->idx = 0;
+		ctx->tx_msg->idx = 0;
 		break;
 	case TCPC_REG_COMMAND_RESET_RECEIVE_BUF:
-		if (data->rx_msg) {
-			data->rx_msg->idx = 0;
+		if (ctx->rx_msg) {
+			ctx->rx_msg->idx = 0;
 		}
 		break;
 	case TCPC_REG_COMMAND_LOOK4CONNECTION:
-		tcpci_emul_get_reg(emul, TCPC_REG_ROLE_CTRL, &role_ctrl);
-		tcpci_emul_get_reg(emul, TCPC_REG_POWER_CTRL, &pwr_ctrl);
+		get_reg(ctx, TCPC_REG_ROLE_CTRL, &role_ctrl);
+		get_reg(ctx, TCPC_REG_POWER_CTRL, &pwr_ctrl);
 
 		/*
 		 * Start DRP toggling only if auto discharge is disabled,
@@ -1217,8 +1150,7 @@ static int tcpci_emul_handle_command(const struct emul *emul)
 		    (TCPC_REG_ROLE_CTRL_CC1(role_ctrl) == TYPEC_CC_RP ||
 		     TCPC_REG_ROLE_CTRL_CC1(role_ctrl) == TYPEC_CC_RD)) {
 			/* Set Look4Connection and clear CC1/2 state */
-			tcpci_emul_set_reg(
-				emul, TCPC_REG_CC_STATUS,
+			set_reg(ctx, TCPC_REG_CC_STATUS,
 				TCPC_REG_CC_STATUS_LOOK4CONNECTION_MASK);
 		}
 		break;
@@ -1238,45 +1170,47 @@ static int tcpci_emul_handle_command(const struct emul *emul)
 	 * Set command register to allow easier inspection of last
 	 * command sent
 	 */
-	tcpci_emul_set_reg(emul, TCPC_REG_COMMAND, data->write_data & 0xff);
+	set_reg(ctx, TCPC_REG_COMMAND, ctx->write_data & 0xff);
 	return 0;
 }
 
 /**
  * @brief Handle write to transmit register
  *
- * @param emul Pointer to TCPCI emulator
+ * @param emul Pointer to TCPC emulator
  *
  * @return 0 on success
  * @return -EIO when sending SOP message with less than 2 bytes in TX buffer
  */
 static int tcpci_emul_handle_transmit(const struct emul *emul)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	enum tcpci_msg_type type;
 
-	data->tx_msg->cnt = data->tx_msg->idx;
-	data->tx_msg->type = TCPC_REG_TRANSMIT_TYPE(data->write_data);
-	data->tx_msg->idx = 0;
+	ctx->tx_msg->cnt = ctx->tx_msg->idx;
+	ctx->tx_msg->type = TCPC_REG_TRANSMIT_TYPE(ctx->write_data);
+	ctx->tx_msg->idx = 0;
 
-	type = TCPC_REG_TRANSMIT_TYPE(data->write_data);
+	type = TCPC_REG_TRANSMIT_TYPE(ctx->write_data);
 
-	if (type < NUM_SOP_STAR_TYPES && data->tx_msg->cnt < 2) {
+	if (type < NUM_SOP_STAR_TYPES && ctx->tx_msg->cnt < 2) {
 		LOG_ERR("Transmitting too short message (%d)",
-			data->tx_msg->cnt);
+			ctx->tx_msg->cnt);
 		tcpci_emul_set_i2c_interface_err(emul);
 		return -EIO;
 	}
 
-	if (data->partner && data->partner->transmit) {
-		data->partner->transmit(emul, data->partner, data->tx_msg, type,
-				TCPC_REG_TRANSMIT_RETRY(data->write_data));
+	if (ctx->partner && ctx->partner->transmit) {
+		ctx->partner->transmit(
+			emul, ctx->partner, ctx->tx_msg, type,
+			TCPC_REG_TRANSMIT_RETRY(ctx->write_data));
 	}
 
 	switch (type) {
 	case TCPCI_MSG_TX_HARD_RESET:
 		tcpci_emul_disable_pd_msg_delivery(emul);
-		tcpci_emul_reset_mask_regs(emul);
+		tcpci_emul_reset_mask_regs(ctx);
 		/* fallthrough */
 	case TCPCI_MSG_CABLE_RESET:
 		/*
@@ -1293,22 +1227,11 @@ static int tcpci_emul_handle_transmit(const struct emul *emul)
 	return 0;
 }
 
-/**
- * @brief Handle I2C write message. It is checked if accessed register isn't RO
- *        and reserved bits are set to 0.
- *
- * @param i2c_emul Pointer to TCPCI emulator
- * @param reg Register which is written
- * @param msg_len Length of handled I2C message
- *
- * @return 0 on success
- * @return -EIO on error
- */
-static int tcpci_emul_handle_write(struct i2c_emul *i2c_emul, int reg,
-				   int msg_len)
+/** Check description in emul_tcpci.h */
+int tcpci_emul_handle_write(const struct emul *emul, int reg, int msg_len)
 {
-	struct tcpci_emul_data *data;
-	const struct emul *emul;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 	uint16_t rsvd_mask = 0;
 	uint16_t alert_val;
 	bool inform_partner = false;
@@ -1324,43 +1247,24 @@ static int tcpci_emul_handle_write(struct i2c_emul *i2c_emul, int reg,
 	/* Exclude register address byte from message length */
 	msg_len--;
 
-	emul = i2c_emul->parent;
-	data = TCPCI_DATA_FROM_I2C_EMUL(i2c_emul);
-
-	LOG_DBG("TCPCI 0x%x: write reg 0x%x val 0x%x", i2c_emul->addr, reg,
-		data->write_data);
-
-	if (data->dev_ops && data->dev_ops->handle_write) {
-		switch (data->dev_ops->handle_write(emul, data->dev_ops, reg,
-						    msg_len)) {
-		case TCPCI_EMUL_CONTINUE:
-			break;
-		case TCPCI_EMUL_DONE:
-			return 0;
-		case TCPCI_EMUL_ERROR:
-		default:
-			return -EIO;
-		}
-	}
-
 	switch (reg) {
 	/* Alert registers */
 	case TCPC_REG_ALERT:
 		/* Overflow is cleared by Receive SOP message status */
-		data->write_data &= ~TCPC_REG_ALERT_RX_BUF_OVF;
-		if (data->write_data & TCPC_REG_ALERT_RX_STATUS) {
-			data->write_data |= TCPC_REG_ALERT_RX_BUF_OVF;
+		ctx->write_data &= ~TCPC_REG_ALERT_RX_BUF_OVF;
+		if (ctx->write_data & TCPC_REG_ALERT_RX_STATUS) {
+			ctx->write_data |= TCPC_REG_ALERT_RX_BUF_OVF;
 			/* Do not clear RX status if there is new message */
 			if (tcpci_emul_get_next_rx_msg(emul)) {
-				data->write_data &= ~TCPC_REG_ALERT_RX_STATUS;
+				ctx->write_data &= ~TCPC_REG_ALERT_RX_STATUS;
 			}
 		}
 	/* fallthrough */
 	case TCPC_REG_FAULT_STATUS:
 	case TCPC_REG_ALERT_EXT:
 		/* Clear bits where TCPM set 1 */
-		tcpci_emul_get_reg(emul, reg, &alert_val);
-		data->write_data = alert_val & (~data->write_data);
+		get_reg(ctx, reg, &alert_val);
+		ctx->write_data = alert_val & (~ctx->write_data);
 	/* fallthrough */
 	case TCPC_REG_ALERT_MASK:
 	case TCPC_REG_POWER_STATUS_MASK:
@@ -1390,11 +1294,11 @@ static int tcpci_emul_handle_write(struct i2c_emul *i2c_emul, int reg,
 		break;
 
 	case TCPC_REG_CONFIG_EXT_1:
-		if (data->write_data & TCPC_REG_CONFIG_EXT_1_FR_SWAP_SNK_DIR &&
-		    ((data->reg[TCPC_REG_STD_INPUT_CAP] &
+		if (ctx->write_data & TCPC_REG_CONFIG_EXT_1_FR_SWAP_SNK_DIR &&
+		    ((ctx->reg[TCPC_REG_STD_INPUT_CAP] &
 		      TCPC_REG_STD_INPUT_CAP_SRC_FR_SWAP) == BIT(4)) &&
-		    data->reg[TCPC_REG_STD_OUTPUT_CAP] &
-		    TCPC_REG_STD_OUTPUT_CAP_SNK_DISC_DET) {
+		    ctx->reg[TCPC_REG_STD_OUTPUT_CAP] &
+			    TCPC_REG_STD_OUTPUT_CAP_SNK_DISC_DET) {
 			tcpci_emul_set_i2c_interface_err(emul);
 			return 0;
 		}
@@ -1447,10 +1351,10 @@ static int tcpci_emul_handle_write(struct i2c_emul *i2c_emul, int reg,
 	}
 
 	/* Check reserved bits */
-	if (data->error_on_rsvd_write && rsvd_mask & data->write_data) {
+	if (ctx->error_on_rsvd_write && rsvd_mask & ctx->write_data) {
 		tcpci_emul_set_i2c_interface_err(emul);
 		LOG_ERR("Writing 0x%x to reg 0x%x with rsvd bits mask 0x%x",
-			data->write_data, reg, rsvd_mask);
+			ctx->write_data, reg, rsvd_mask);
 		return -EIO;
 	}
 
@@ -1463,7 +1367,7 @@ static int tcpci_emul_handle_write(struct i2c_emul *i2c_emul, int reg,
 	}
 
 	/* Set new value of register */
-	tcpci_emul_set_reg(emul, reg, data->write_data);
+	set_reg(ctx, reg, ctx->write_data);
 
 	if (alert_changed) {
 		rc = tcpci_emul_alert_changed(emul);
@@ -1471,119 +1375,33 @@ static int tcpci_emul_handle_write(struct i2c_emul *i2c_emul, int reg,
 			return rc;
 	}
 
-	if (inform_partner && data->partner && data->partner->control_change) {
-		data->partner->control_change(emul, data->partner);
+	if (inform_partner && ctx->partner && ctx->partner->control_change) {
+		ctx->partner->control_change(emul, ctx->partner);
 	}
 
 	return 0;
 }
 
-/**
- * @brief Get currently accessed register, which always equals to selected
- *        register.
- *
- * @param i2c_emul Pointer to TCPCI emulator
- * @param reg First byte of last write message
- * @param bytes Number of bytes already handled from current message
- * @param read If currently handled is read message
- *
- * @return Currently accessed register
- */
-static int tcpci_emul_access_reg(struct i2c_emul *i2c_emul, int reg, int bytes,
-				 bool read)
-{
-	return reg;
-}
-
-/* Device instantiation */
-
 /** Check description in emul_tcpci.h */
 struct i2c_emul *tcpci_emul_get_i2c_emul(const struct emul *emul)
 {
-	struct tcpci_emul_data *data = emul->data;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
-	return &data->common.emul;
+	return &ctx->common.emul;
 }
 
-/**
- * @brief Set up a new TCPCI emulator
- *
- * This should be called for each TCPCI device that needs to be
- * emulated. It registers it with the I2C emulation controller.
- *
- * @param emul Emulation information
- * @param parent Device to emulate
- *
- * @return 0 indicating success (always)
- */
-static int tcpci_emul_init(const struct emul *emul, const struct device *parent)
+/** Check description in emul_tcpci.h */
+void tcpci_emul_i2c_init(const struct emul *emul, const struct device *i2c_dev)
 {
-	const struct i2c_common_emul_cfg *cfg = emul->cfg;
-	struct tcpci_emul_data *data = emul->data;
-	int ret;
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
-	data->common.emul.api = &i2c_common_emul_api;
-	data->common.emul.addr = cfg->addr;
-	data->common.emul.parent = emul;
-	data->common.i2c = parent;
-	data->common.cfg = cfg;
-	i2c_common_emul_init(&data->common);
+	ctx->common.emul.api = &i2c_common_emul_api;
+	ctx->common.emul.addr = tcpc_data->i2c_cfg.addr;
+	ctx->common.emul.parent = emul;
+	ctx->common.i2c = i2c_dev;
+	ctx->common.cfg = &tcpc_data->i2c_cfg;
 
-	ret = i2c_emul_register(parent, emul->dev_label, &data->common.emul);
-	if (ret != 0)
-		return ret;
-
-	return tcpci_emul_reset(emul);
+	i2c_common_emul_init(&ctx->common);
 }
-
-#define TCPCI_EMUL(n)							\
-	uint8_t tcpci_emul_tx_buf_##n[128];				\
-	static struct tcpci_emul_msg tcpci_emul_tx_msg_##n = {		\
-		.buf = tcpci_emul_tx_buf_##n,				\
-	};								\
-									\
-	static struct tcpci_emul_data tcpci_emul_data_##n = {		\
-		.tx_msg = &tcpci_emul_tx_msg_##n,			\
-		.error_on_ro_write = true,				\
-		.error_on_rsvd_write = true,				\
-		.common = {						\
-			.write_byte = tcpci_emul_write_byte,		\
-			.finish_write = tcpci_emul_handle_write,	\
-			.read_byte = tcpci_emul_read_byte,		\
-			.access_reg = tcpci_emul_access_reg,		\
-		},							\
-		.alert_gpio_port = COND_CODE_1(				\
-			DT_INST_NODE_HAS_PROP(n, alert_gpio),		\
-			(DEVICE_DT_GET(DT_GPIO_CTLR(			\
-				DT_INST_PROP(n, alert_gpio), gpios))),	\
-			(NULL)),					\
-		.alert_gpio_pin = COND_CODE_1(				\
-			DT_INST_NODE_HAS_PROP(n, alert_gpio),		\
-			(DT_GPIO_PIN(DT_INST_PROP(n, alert_gpio),	\
-				gpios)),				\
-			(0)),						\
-	};								\
-									\
-	static const struct i2c_common_emul_cfg tcpci_emul_cfg_##n = {	\
-		.i2c_label = DT_INST_BUS_LABEL(n),			\
-		.dev_label = DT_INST_LABEL(n),                          \
-		.data = &tcpci_emul_data_##n.common,			\
-		.addr = DT_INST_REG_ADDR(n),				\
-	};								\
-	EMUL_DEFINE(tcpci_emul_init, DT_DRV_INST(n),			\
-		    &tcpci_emul_cfg_##n, &tcpci_emul_data_##n)
-
-DT_INST_FOREACH_STATUS_OKAY(TCPCI_EMUL)
-
-#ifdef CONFIG_ZTEST_NEW_API
-#define TCPCI_EMUL_RESET_RULE_BEFORE(n) \
-	tcpci_emul_reset(&EMUL_REG_NAME(DT_DRV_INST(n)));
-static void tcpci_emul_reset_rule_before(const struct ztest_unit_test *test,
-					 void *data)
-{
-	ARG_UNUSED(test);
-	ARG_UNUSED(data);
-	DT_INST_FOREACH_STATUS_OKAY(TCPCI_EMUL_RESET_RULE_BEFORE);
-}
-ZTEST_RULE(tcpci_emul_reset, tcpci_emul_reset_rule_before, NULL);
-#endif /* CONFIG_ZTEST_NEW_API */

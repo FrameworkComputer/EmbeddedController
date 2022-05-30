@@ -6,15 +6,9 @@ description: Zephyr PS8xxx emulator
 
 compatible: "cros,ps8xxx-emul"
 
-include: base.yaml
+include: tcpci.yaml
 
 properties:
-    tcpci-i2c:
-      type: phandle
-      required: true
-      description:
-        Base TCPCI emulator. Has to be sibling of PS8xxx emulator.
-
     p0-i2c-addr:
       type: int
       required: true

@@ -26,7 +26,7 @@
 #include "test/drivers/test_state.h"
 
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
-#define TCPCI_EMUL_LABEL2 DT_NODELABEL(tcpci_ps8xxx_emul)
+#define TCPCI_EMUL_LABEL2 DT_NODELABEL(ps8xxx_emul)
 
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
 

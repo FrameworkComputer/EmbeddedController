@@ -4,6 +4,7 @@
 
 zephyr_library_sources_ifdef(CONFIG_EMUL_PS8XXX		emul_ps8xxx.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI		emul_tcpci.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI		emul_tcpci_generic.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI_PARTNER_COMMON	emul_tcpci_partner_common.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI_PARTNER_DRP	emul_tcpci_partner_drp.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_TCPCI_PARTNER_SNK	emul_tcpci_partner_snk.c)

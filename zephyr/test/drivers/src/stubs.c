@@ -133,8 +133,7 @@ struct tcpc_config_t tcpc_config[] = {
 		.bus_type = EC_BUS_TYPE_I2C,
 		.i2c_info = {
 			.port = I2C_PORT_USB_C1,
-			.addr_flags = DT_REG_ADDR(DT_NODELABEL(
-							tcpci_ps8xxx_emul)),
+			.addr_flags = DT_REG_ADDR(DT_NODELABEL(ps8xxx_emul)),
 		},
 		.drv = &ps8xxx_tcpm_drv,
 	},

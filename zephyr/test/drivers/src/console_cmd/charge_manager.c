@@ -9,6 +9,7 @@
 #include "charge_manager.h"
 #include "console.h"
 #include "emul/emul_isl923x.h"
+#include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "tcpm/tcpci.h"
 #include "test/drivers/test_state.h"

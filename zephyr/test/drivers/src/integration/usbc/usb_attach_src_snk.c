@@ -26,7 +26,7 @@
 #define SRC_PORT USBC_PORT_C1
 
 #define TCPCI_EMUL_LABEL DT_NODELABEL(tcpci_emul)
-#define TCPCI_PS8XXX_EMUL_LABEL DT_NODELABEL(tcpci_ps8xxx_emul)
+#define TCPCI_PS8XXX_EMUL_LABEL DT_NODELABEL(ps8xxx_emul)
 
 #define DEFAULT_VBUS_MV 5000
 

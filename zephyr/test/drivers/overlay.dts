@@ -704,18 +704,10 @@
 		reg = <0x400 4>;
 		label = "I2C_1";
 
-		tcpci_ps8xxx_emul: tcpci_ps8xxx_emul@b {
-			compatible = "cros,tcpci-emul";
-			status = "okay";
-			reg = <0xb>;
-			label = "TCPCI_PS8XXX_EMUL";
-			alert_gpio = <&usb_c1_tcpc_int_odl>;
-		};
-
-		ps8xxx_emul: ps8xxx_emul@b1 {
+		ps8xxx_emul: ps8xxx_emul@b {
 			compatible = "cros,ps8xxx-emul";
-			reg = <0xb1>;
-			tcpci-i2c = <&tcpci_ps8xxx_emul>;
+			reg = <0xb>;
+			alert_gpio = <&usb_c1_tcpc_int_odl>;
 			p0-i2c-addr = <0x8>;
 			p1-i2c-addr = <0x9>;
 			gpio-i2c-addr = <0x1a>;
@@ -883,12 +875,13 @@
 	};
 
 	tcpci_emul: tcpci_emul@82 {
-		compatible = "cros,tcpci-emul";
+		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
 		reg = <0x82>;
 		label = "TCPCI_EMUL";
 		alert_gpio = <&usb_c0_tcpc_int_odl>;
 	};
+
 };
 
 /* Enable all thermistors for testing */
