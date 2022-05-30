@@ -12,16 +12,26 @@
 #include "keyboard_config.h"
 #include "keyboard_mkbp.h"
 #include "keyboard_scan.h"
+#include "mkbp_info.h"
 #include "mkbp_input_devices.h"
 #include "util.h"
+
+__overridable int mkbp_support_volume_buttons(void)
+{
+#ifdef CONFIG_VOLUME_BUTTONS
+	return 1;
+#else
+	return 0;
+#endif
+}
 
 static uint32_t get_supported_buttons(void)
 {
 	uint32_t val = 0;
 
-#ifdef CONFIG_VOLUME_BUTTONS
-	val |= BIT(EC_MKBP_VOL_UP) | BIT(EC_MKBP_VOL_DOWN);
-#endif /* defined(CONFIG_VOLUME_BUTTONS) */
+	if (mkbp_support_volume_buttons()) {
+		val |= BIT(EC_MKBP_VOL_UP) | BIT(EC_MKBP_VOL_DOWN);
+	}
 
 #ifdef CONFIG_DEDICATED_RECOVERY_BUTTON
 	val |= BIT(EC_MKBP_RECOVERY);
