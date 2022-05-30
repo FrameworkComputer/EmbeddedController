@@ -83,6 +83,11 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 static bool is_resetting;
 /* indicate MT8186 is processing a AP shutdown. */
 static bool is_shutdown;
+/*
+ * indicate exiting off state, and don't respect the power signals until chipset
+ * on.
+ */
+static bool is_exiting_off = true;
 
 static void reset_request_interrupt_deferred(void)
 {
@@ -124,7 +129,7 @@ void chipset_watchdog_interrupt(enum gpio_signal signal)
 
 static void release_power_button(void)
 {
-	CPRINTS("release power button after 8 seconds.");
+	CPRINTS("release power button");
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
 }
 DECLARE_DEFERRED(release_power_button);
@@ -154,6 +159,12 @@ void chipset_force_shutdown_button(void)
 }
 DECLARE_DEFERRED(chipset_force_shutdown_button);
 
+static void mt8186_exit_off(void)
+{
+	is_exiting_off = true;
+	chipset_exit_hard_off();
+}
+
 void chipset_exit_hard_off_button(void)
 {
 	/*
@@ -163,7 +174,7 @@ void chipset_exit_hard_off_button(void)
 	hook_call_deferred(&release_power_button_data, -1);
 	release_power_button();
 	/* Power up from off */
-	chipset_exit_hard_off();
+	mt8186_exit_off();
 }
 DECLARE_DEFERRED(chipset_exit_hard_off_button);
 
@@ -233,8 +244,14 @@ static enum power_state power_get_signal_state(void)
 	 */
 	if (is_resetting)
 		return POWER_S0;
-	if (is_shutdown)
-		return POWER_G3;
+	if (is_shutdown) {
+		/* We are in S5 and pressing the powerkey to shutdown PMIC. */
+		if (!gpio_get_level(GPIO_EC_PMIC_EN_ODL))
+			return POWER_S5;
+		/* Powerkey released, PMIC full off. */
+		else
+			return POWER_G3;
+	}
 	if (power_get_signals() & IN_AP_RST)
 		return POWER_G3;
 	if (power_get_signals() & IN_SUSPEND_ASSERTED)
@@ -282,7 +299,7 @@ enum power_state power_chipset_init(void)
 
 	if (exit_hard_off)
 		/* Auto-power on */
-		chipset_exit_hard_off();
+		mt8186_exit_off();
 
 	if (init_state != POWER_G3 && !exit_hard_off)
 		/* Force shutdown from S5 if the PMIC is already up. */
@@ -303,10 +320,17 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5:
-		return POWER_S5S3;
+		if (is_exiting_off)
+			return POWER_S5S3;
+		else if (next_state == POWER_S5)
+			return POWER_S5;
+		else if (next_state == POWER_G3)
+			return POWER_S5G3;
+		else
+			return POWER_S5S3;
 
 	case POWER_S3:
-		if (next_state == POWER_G3)
+		if (next_state == POWER_G3 || next_state == POWER_S5)
 			return POWER_S3S5;
 		else if (next_state == POWER_S0)
 			return POWER_S3S0;
@@ -323,6 +347,8 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S5;
 
 	case POWER_S5S3:
+		/* Off state exited. */
+		is_exiting_off = false;
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
 		gpio_enable_interrupt(GPIO_AP_EC_WARM_RST_REQ);
@@ -406,8 +432,7 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
 
-		/* Skip S5 */
-		return POWER_S5G3;
+		return POWER_S5;
 
 	case POWER_S5G3:
 		return POWER_G3;
@@ -478,7 +503,7 @@ static void lid_changed(void)
 {
 	/* Power-up from off on lid open */
 	if (lid_is_open() && chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		chipset_exit_hard_off();
+		mt8186_exit_off();
 }
 DECLARE_HOOK(HOOK_LID_CHANGE, lid_changed, HOOK_PRIO_DEFAULT);
 #endif
