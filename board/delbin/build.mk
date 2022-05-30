@@ -16,3 +16,4 @@ board-y=board.o
 board-y+=battery.o
 board-y+=led.o
 board-y+=sensors.o
+board-$(CONFIG_KEYBOARD_CUSTOMIZATION)+=keyboard_customization.o

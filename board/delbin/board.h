@@ -39,6 +39,9 @@
 /* Keyboard features */
 #define CONFIG_KEYBOARD_VIVALDI
 #define CONFIG_KEYBOARD_REFRESH_ROW3
+#define CONFIG_KEYBOARD_CUSTOMIZATION
+#define CONFIG_KEYBOARD_MULTIPLE
+
 
 /* Sensors */
 /* BMA253 accelerometer in base */

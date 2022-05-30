@@ -8,6 +8,7 @@
 #include "common.h"
 #include "accelgyro.h"
 #include "cbi_ec_fw_config.h"
+#include "cbi_ssfc.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi260.h"
 #include "driver/bc12/pi3usb9201.h"
@@ -22,6 +23,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
+#include "keyboard_customization.h"
 #include "lid_switch.h"
 #include "power.h"
 #include "power_button.h"
@@ -60,6 +62,28 @@ __override struct keyboard_scan_config keyscan_config = {
 	},
 };
 
+__override struct key {
+	uint8_t row;
+	uint8_t col;
+} vivaldi_keys[] = {
+	{.row = 0, .col = 2},	/* T1 */
+	{.row = 3, .col = 2},	/* T2 */
+	{.row = 2, .col = 2},	/* T3 */
+	{.row = 1, .col = 2},	/* T4 */
+	{.row = 3, .col = 4},	/* T5 */
+	{.row = 2, .col = 4},	/* T6 */
+	{.row = 1, .col = 4},	/* T7 */
+	{.row = 2, .col = 9},	/* T8 */
+	{.row = 1, .col = 9},	/* T9 */
+	{.row = 0, .col = 4},	/* T10 */
+	{.row = 0, .col = 1},	/* T11 */
+	{.row = 1, .col = 5},	/* T12 */
+	{.row = 3, .col = 5},	/* T13 */
+	{.row = 0, .col = 9},	/* T14 */
+	{.row = 0, .col = 11},	/* T15 */
+};
+BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
+
 /******************************************************************************/
 /*
  * FW_CONFIG defaults for Delbin if the CBI data is not initialized.
@@ -70,8 +94,28 @@ union volteer_cbi_fw_config fw_config_defaults = {
 
 static void board_init(void)
 {
+	key_choose();
+
+	if (get_cbi_ssfc_keyboard() == SSFC_KEYBOARD_GAMING) {
+		keyscan_config.actual_key_mask[1] = 0xfa;
+		keyscan_config.actual_key_mask[4] = 0xfe;
+		keyscan_config.actual_key_mask[7] = 0x86;
+		keyscan_config.actual_key_mask[9] = 0xff;
+		keyscan_config.actual_key_mask[11] = 0xff;
+
+		vivaldi_keys[0].row = 4;
+		vivaldi_keys[0].col = 2;
+		vivaldi_keys[4].row = 4;
+		vivaldi_keys[4].col = 4;
+		vivaldi_keys[5].row = 3;
+		vivaldi_keys[5].col = 4;
+		vivaldi_keys[6].row = 2;
+		vivaldi_keys[6].col = 4;
+		vivaldi_keys[9].row = 1;
+		vivaldi_keys[9].col = 4;
+	}
 }
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_PRE_DEFAULT);
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */

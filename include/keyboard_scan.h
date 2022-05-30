@@ -38,6 +38,13 @@ struct keyboard_scan_config {
 #endif
 };
 
+/* Boot key list.  Must be in same order as enum boot_key. */
+struct boot_key_entry {
+	uint8_t col;
+	uint8_t row;
+};
+
+
 /**
  * Initializes the module.
  */
@@ -152,4 +159,29 @@ extern const int keyboard_factory_scan_pins[][2];
 extern const int keyboard_factory_scan_pins_used;
 #endif
 
-#endif /* __CROS_EC_KEYBOARD_SCAN_H */
+#ifdef CONFIG_KEYBOARD_MULTIPLE
+extern struct boot_key_entry boot_key_list[3];
+
+struct keyboard_type {
+	int col_esc;
+	int row_esc;
+	int col_down;
+	int row_down;
+	int col_left_shift;
+	int row_left_shift;
+	int col_refresh;
+	int row_refresh;
+	int col_right_alt;
+	int row_right_alt;
+	int col_left_alt;
+	int row_left_alt;
+	int col_key_r;
+	int row_key_r;
+	int col_key_h;
+	int row_key_h;
+};
+
+extern struct keyboard_type key_typ;
+#endif
+
+#endif  /* __CROS_EC_KEYBOARD_SCAN_H */

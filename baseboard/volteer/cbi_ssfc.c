@@ -39,3 +39,8 @@ enum ec_ssfc_lightbar get_cbi_ssfc_lightbar(void)
 {
 	return cached_ssfc.lightbar;
 }
+
+enum ec_ssfc_keyboard get_cbi_ssfc_keyboard(void)
+{
+	return cached_ssfc.keyboard;
+}

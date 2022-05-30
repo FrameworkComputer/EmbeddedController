@@ -27,6 +27,10 @@
 #include "usb_api.h"
 #include "util.h"
 
+#ifdef CONFIG_KEYBOARD_MULTIPLE
+#include "keyboard_customization.h"
+#endif
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ## args)
@@ -78,18 +82,20 @@ __overridable struct keyboard_scan_config keyscan_config = {
 	},
 };
 
-/* Boot key list.  Must be in same order as enum boot_key. */
-struct boot_key_entry {
-	uint8_t col;
-	uint8_t row;
-};
-
 #ifdef CONFIG_KEYBOARD_BOOT_KEYS
+#ifndef CONFIG_KEYBOARD_MULTIPLE
 static const struct boot_key_entry boot_key_list[] = {
 	{KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC},   /* Esc */
 	{KEYBOARD_COL_DOWN, KEYBOARD_ROW_DOWN}, /* Down-arrow */
 	{KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_ROW_LEFT_SHIFT}, /* Left-Shift */
 };
+#else
+struct boot_key_entry boot_key_list[] = {
+	{KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC},   /* Esc */
+	{KEYBOARD_COL_DOWN, KEYBOARD_ROW_DOWN}, /* Down-arrow */
+	{KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_ROW_LEFT_SHIFT}, /* Left-Shift */
+};
+#endif
 static uint32_t boot_key_value = BOOT_KEY_NONE;
 #endif
 
@@ -226,10 +232,17 @@ static int keyboard_read_adc_rows(void)
  */
 static void keyboard_read_refresh_key(uint8_t *state)
 {
+	#ifndef CONFIG_KEYBOARD_MULTIPLE
 	if (!gpio_get_level(GPIO_RFR_KEY_L))
 		state[KEYBOARD_COL_REFRESH] |= BIT(KEYBOARD_ROW_REFRESH);
 	else
 		state[KEYBOARD_COL_REFRESH] &= ~BIT(KEYBOARD_ROW_REFRESH);
+	#else
+	if (!gpio_get_level(GPIO_RFR_KEY_L))
+		state[key_typ.col_refresh] |= BIT(key_typ.row_refresh);
+	else
+		state[key_typ.col_refresh] &= ~BIT(key_typ.row_refresh);
+	#endif
 }
 #endif
 
@@ -437,9 +450,15 @@ static int check_runtime_keys(const uint8_t *state)
 	if (state[key_vol_up_col] != KEYBOARD_ROW_TO_MASK(key_vol_up_row))
 		return 0;
 
+	#ifndef CONFIG_KEYBOARD_MULTIPLE
 	if (state[KEYBOARD_COL_RIGHT_ALT] != KEYBOARD_MASK_RIGHT_ALT &&
 	    state[KEYBOARD_COL_LEFT_ALT] != KEYBOARD_MASK_LEFT_ALT)
 		return 0;
+	#else
+	if (state[key_typ.col_right_alt] != KEYBOARD_MASK_RIGHT_ALT &&
+	    state[key_typ.col_left_alt] != KEYBOARD_MASK_LEFT_ALT)
+		return 0;
+	#endif
 
 	/*
 	 * Count number of columns with keys pressed.  We know two columns are
@@ -454,6 +473,7 @@ static int check_runtime_keys(const uint8_t *state)
 	if (num_press != 3)
 		return 0;
 
+	#ifndef CONFIG_KEYBOARD_MULTIPLE
 	/* Check individual keys */
 	if (state[KEYBOARD_COL_KEY_R] == KEYBOARD_MASK_KEY_R) {
 		/* R = reboot */
@@ -467,6 +487,21 @@ static int check_runtime_keys(const uint8_t *state)
 		system_enter_hibernate(0, 0);
 		return 1;
 	}
+	#else
+	/* Check individual keys */
+	if (state[key_typ.col_key_r] == KEYBOARD_MASK_KEY_R) {
+		/* R = reboot */
+		CPRINTS("KB warm reboot");
+		keyboard_clear_buffer();
+		chipset_reset(CHIPSET_RESET_KB_WARM_REBOOT);
+		return 1;
+	} else if (state[key_typ.col_key_h] == KEYBOARD_MASK_KEY_H) {
+		/* H = hibernate */
+		CPRINTS("KB hibernate");
+		system_enter_hibernate(0, 0);
+		return 1;
+	}
+	#endif
 
 	return 0;
 }
@@ -680,7 +715,11 @@ static uint32_t check_key_list(const uint8_t *state)
 			curr_state[c] &= ~KEYBOARD_MASK_PWRBTN;
 #endif
 
+	#ifndef CONFIG_KEYBOARD_MULTIPLE
 	curr_state[KEYBOARD_COL_REFRESH] &= ~keyboard_mask_refresh;
+	#else
+	curr_state[key_typ.col_refresh] &= ~keyboard_mask_refresh;
+	#endif
 
 	/* Update mask with all boot keys that were pressed. */
 	k = boot_key_list;
@@ -746,9 +785,15 @@ static uint32_t check_boot_key(const uint8_t *state)
 		return BOOT_KEY_NONE;
 
 	/* If reset was not caused by reset pin, refresh must be held down */
+	#ifndef CONFIG_KEYBOARD_MULTIPLE
 	if (!(system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN) &&
 	    !(state[KEYBOARD_COL_REFRESH] & keyboard_mask_refresh))
 		return BOOT_KEY_NONE;
+	#else
+	if (!(system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN) &&
+	    !(state[key_typ.col_refresh] & keyboard_mask_refresh))
+		return BOOT_KEY_NONE;
+	#endif
 
 	return check_key_list(state);
 }
