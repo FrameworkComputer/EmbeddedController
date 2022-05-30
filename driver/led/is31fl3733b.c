@@ -136,8 +136,6 @@ static int is31fl3733b_enable(struct rgbkbd *ctx, bool enable)
 	uint8_t u8;
 	int rv;
 
-	gpio_set_level(GPIO_RGBKBD_SDB_L, enable ? 1 : 0);
-
 	rv = is31fl3733b_set_page(ctx, IS31FL3733B_PAGE_FUNC);
 	if (rv) {
 		return rv;
