@@ -268,7 +268,7 @@ config PLATFORM_EC_CONSOLE_CMD_SHMEM
 
 config PLATFORM_EC_CROS_FWID_VERSION
 	bool "Include CrOS FWID version"
-	default y
+	default n
 	help
 	  Include Chrome OS FWID in version output. The CrOS FWID will be common
 	  across OS, AP firmware and EC firmware when built together.
