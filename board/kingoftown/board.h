@@ -38,6 +38,9 @@
 #define USB_PORT_COUNT 1
 #define CONFIG_USB_PORT_POWER_DUMB
 
+/* No side volume button */
+#undef CONFIG_VOLUME_BUTTONS
+
 /* Sensors */
 /* BMI160 Base accel/gyro */
 #define CONFIG_ACCELGYRO_BMI160

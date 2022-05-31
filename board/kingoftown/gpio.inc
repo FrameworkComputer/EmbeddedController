@@ -20,8 +20,6 @@ GPIO_INT(USB_A0_OC_ODL,        PIN(D, 1), GPIO_INT_BOTH | GPIO_PULL_UP, usba_oc_
 /* System interrupts */
 GPIO_INT(CHG_ACOK_OD,       PIN(0, 0), GPIO_INT_BOTH, extpower_interrupt)  /* ACOK */
 GPIO_INT(EC_PWR_BTN_ODL,    PIN(0, 1), GPIO_INT_BOTH, power_button_interrupt)  /* Power button */
-GPIO_INT(EC_VOLDN_BTN_ODL,  PIN(7, 0), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Up button */
-GPIO_INT(EC_VOLUP_BTN_ODL,  PIN(F, 2), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)  /* Volume Down button */
 GPIO_INT(EC_WP_ODL,         PIN(A, 1), GPIO_INT_BOTH, switch_interrupt)  /* Write protection */
 GPIO_INT(LID_OPEN_EC,       PIN(D, 2), GPIO_INT_BOTH, lid_interrupt)  /* Lid open */
 GPIO_INT(AP_RST_L,          PIN(C, 1), GPIO_INT_BOTH | GPIO_SEL_1P8V, chipset_ap_rst_interrupt)  /* PMIC to signal AP reset */
@@ -159,6 +157,8 @@ UNUSED(PIN(B, 1))
 UNUSED(PIN(5, 0))
 UNUSED(PIN(D, 3))
 UNUSED(PIN(C, 6))
+UNUSED(PIN(7, 0))
+UNUSED(PIN(F, 2))
 
 /* Alternate functions GPIO definitions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)            /* UART (GPIO64/65) */
