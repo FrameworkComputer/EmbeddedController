@@ -135,5 +135,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_not_still_one_axis);
 	RUN_TEST(test_resets);
 
+	/* Wait for all background tasks to start. */
+	sleep(2);
 	test_print_result();
 }
