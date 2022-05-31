@@ -12,8 +12,11 @@ $(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_riscv),\
 
 # Enable FPU extension if config option of FPU is enabled.
 _FPU_EXTENSION=$(if $(CONFIG_FPU),f,)
+# Enable the 'M' extension if config option of RISCV_EXTENSION_M is enabled.
+_M_EXTENSION=$(if $(CONFIG_RISCV_EXTENSION_M),m,)
 # CPU specific compilation flags
-CFLAGS_CPU+=-march=rv32ima$(_FPU_EXTENSION)c -mabi=ilp32$(_FPU_EXTENSION) -Os
+CFLAGS_CPU+=-march=rv32i$(_M_EXTENSION)a$(_FPU_EXTENSION)c
+CFLAGS_CPU+=-mabi=ilp32$(_FPU_EXTENSION) -Os
 # RISC-V does not trap division by zero, enable the sanitizer to check those.
 # With `-fsanitize-undefined-trap-on-error`, we lose a bit of specificity on the
 # exact issue, but the added code is as small as it gets.

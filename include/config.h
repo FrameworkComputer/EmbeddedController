@@ -2879,6 +2879,12 @@
 #undef CONFIG_IT83XX_VCC_3P3V
 
 /*
+ * Support the standard integer multiplication and division instruction
+ * extension.
+ */
+#define CONFIG_RISCV_EXTENSION_M
+
+/*
  * If this is not defined, the firmware will revert the JTAG selection
  * triggered by the hardware strap pin.
  * Un-define this flag by default for all real platforms. see (b/129908668)
