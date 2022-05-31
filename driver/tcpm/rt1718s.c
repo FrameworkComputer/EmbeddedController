@@ -722,6 +722,22 @@ static int command_rt1718s_gpio(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(rt1718s_gpio, command_rt1718s_gpio, "", "RT1718S GPIO");
 
+#ifdef CONFIG_USB_PD_TCPM_SBU
+static int rt1718s_set_sbu(int port, bool enable)
+{
+	/*
+	 * The `enable` here means to enable the SBU line (set 1)
+	 * - true: connect SBU lines from outer to the host
+	 * - false: isolate the SBU lines
+	 */
+	return rt1718s_update_bits8(port, RT1718S_RT2_SBU_CTRL_01,
+				    RT1718S_RT2_SBU_CTRL_01_SBU_VIEN |
+					    RT1718S_RT2_SBU_CTRL_01_SBU1_SWEN |
+					    RT1718S_RT2_SBU_CTRL_01_SBU2_SWEN,
+				    enable ? 0xFF : 0);
+}
+#endif
+
 /* RT1718S is a TCPCI compatible port controller */
 const struct tcpm_drv rt1718s_tcpm_drv = {
 	.init			= &rt1718s_init,
@@ -758,6 +774,9 @@ const struct tcpm_drv rt1718s_tcpm_drv = {
 	.set_frs_enable		= &rt1718s_set_frs_enable,
 #endif
 	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
+#ifdef CONFIG_USB_PD_TCPM_SBU
+	.set_sbu		= &rt1718s_set_sbu,
+#endif
 };
 
 const struct bc12_drv rt1718s_bc12_drv = {
