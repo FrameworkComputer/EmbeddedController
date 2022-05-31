@@ -192,12 +192,6 @@ __override int board_rt1718s_init(int port)
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_VBUS_CTRL,
 			RT1718S_GPIO2_VBUS_CTRL_FRS_RX_VBUS, 0xFF));
 
-	/* Turn on SBU switch */
-	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_RT2_SBU_CTRL_01,
-				RT1718S_RT2_SBU_CTRL_01_SBU_VIEN |
-				RT1718S_RT2_SBU_CTRL_01_SBU2_SWEN |
-				RT1718S_RT2_SBU_CTRL_01_SBU1_SWEN,
-				0xFF));
 	/* Trigger GPIO 1/2 change when FRS signal received */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_FRS_CTRL3,
 			RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO2 |
