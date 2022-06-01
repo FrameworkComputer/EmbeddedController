@@ -449,7 +449,7 @@ static uint32_t __wait_evt(int timeout_us, task_id_t resched)
 	return evt;
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event)
+void task_set_event(task_id_t tskid, uint32_t event)
 {
 	task_ *receiver = __task_id_to_ptr(tskid);
 	ASSERT(receiver);
@@ -468,8 +468,6 @@ uint32_t task_set_event(task_id_t tskid, uint32_t event)
 	} else {
 		__schedule(0, tskid);
 	}
-
-	return 0;
 }
 
 uint32_t task_wait_event(int timeout_us)

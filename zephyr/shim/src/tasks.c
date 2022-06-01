@@ -140,7 +140,7 @@ atomic_t *task_get_event_bitmap(task_id_t cros_task_id)
 	return &data->event_mask;
 }
 
-uint32_t task_set_event(task_id_t cros_task_id, uint32_t event)
+void task_set_event(task_id_t cros_task_id, uint32_t event)
 {
 	struct task_ctx_base_data *data;
 
@@ -148,8 +148,6 @@ uint32_t task_set_event(task_id_t cros_task_id, uint32_t event)
 
 	atomic_or(&data->event_mask, event);
 	k_poll_signal_raise(&data->new_event, 0);
-
-	return 0;
 }
 
 uint32_t task_wait_event(int timeout_us)

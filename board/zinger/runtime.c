@@ -68,11 +68,9 @@ void interrupt_enable(void)
 	asm("cpsie i");
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event)
+void task_set_event(task_id_t tskid, uint32_t event)
 {
 	last_event = event;
-
-	return 0;
 }
 
 static void tim2_interrupt(void)

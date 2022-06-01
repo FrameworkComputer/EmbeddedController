@@ -207,10 +207,9 @@ pthread_t task_get_thread(task_id_t tskid)
 	return tasks[tskid].thread;
 }
 
-uint32_t task_set_event(task_id_t tskid, uint32_t event)
+void task_set_event(task_id_t tskid, uint32_t event)
 {
 	atomic_or(&tasks[tskid].event, event);
-	return 0;
 }
 
 atomic_t *task_get_event_bitmap(task_id_t tskid)

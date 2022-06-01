@@ -116,9 +116,9 @@ void usb_charger_reset_charge(int port)
 
 }
 
-uint32_t usb_charger_task_set_event(int port, uint32_t event)
+void usb_charger_task_set_event(int port, uint32_t event)
 {
-	return task_set_event(USB_CHG_PORT_TO_TASK_ID(port), event);
+	task_set_event(USB_CHG_PORT_TO_TASK_ID(port), event);
 }
 
 static void usb_charger_init(void)

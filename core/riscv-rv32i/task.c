@@ -408,7 +408,7 @@ static uint32_t __ram_code __wait_evt(int timeout_us, task_id_t resched)
 	return evt;
 }
 
-uint32_t __ram_code task_set_event(task_id_t tskid, uint32_t event)
+void __ram_code task_set_event(task_id_t tskid, uint32_t event)
 {
 	task_ *receiver = __task_id_to_ptr(tskid);
 
@@ -426,8 +426,6 @@ uint32_t __ram_code task_set_event(task_id_t tskid, uint32_t event)
 	} else {
 		__schedule(0, tskid, 0);
 	}
-
-	return 0;
 }
 
 uint32_t __ram_code task_wait_event(int timeout_us)

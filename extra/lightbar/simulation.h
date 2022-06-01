@@ -97,7 +97,7 @@ struct host_cmd_handler_args {
 
 /* EC functions that we have to provide */
 uint32_t task_wait_event(int timeout_us);
-uint32_t task_set_event(task_id_t tskid, uint32_t event);
+void task_set_event(task_id_t tskid, uint32_t event);
 timestamp_t get_time(void);
 int system_add_jump_tag(uint16_t tag, int version, int size, const void *data);
 uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size);
