@@ -20,12 +20,12 @@ const struct pwm_t pwm_channels[] = {
 		 * lower PWM frequencies, but higher frequencies record a much
 		 * lower maximum power.
 		 */
-		.freq = 2400,
+		.freq = 25000,
 	},
 	[PWM_CH_FAN] = {
 		.channel = 5,
-		.flags = PWM_CONFIG_OPEN_DRAIN | PWM_CONFIG_DSLEEP,
-		.freq = 1000
+		.flags = PWM_CONFIG_OPEN_DRAIN,
+		.freq = 25000
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
