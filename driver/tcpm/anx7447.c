@@ -370,6 +370,11 @@ static int anx7447_init(int port)
 	if (rv)
 		return rv;
 
+	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC))
+		/* Unmask FRSWAP signal detect */
+		tcpc_write(port, ANX7447_REG_VD_ALERT_MASK,
+			   ANX7447_FRSWAP_SIGNAL_DETECTED);
+
 #ifdef CONFIG_USB_PD_TCPM_MUX
 	/*
 	 * Run mux_set() here for considering CCD(Case-Closed Debugging) case
@@ -460,11 +465,54 @@ int anx7447_board_charging_enable(int port, int enable)
 	return tcpc_write(port, TCPC_REG_COMMAND, enable ? 0x55 : 0x44);
 }
 
+static void anx7447_vendor_defined_alert(int port)
+{
+	int alert;
+
+	tcpc_read(port, ANX7447_REG_VD_ALERT, &alert);
+
+	/* write to clear alerts */
+	tcpc_write(port, ANX7447_REG_VD_ALERT, alert);
+
+	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC) &&
+	    alert & ANX7447_FRSWAP_SIGNAL_DETECTED)
+		pd_got_frs_signal(port);
+}
+
 static void anx7447_tcpc_alert(int port)
 {
+	int alert;
+
+	tcpc_read16(port, TCPC_REG_ALERT, &alert);
+	if (alert & TCPC_REG_ALERT_VENDOR_DEF)
+		anx7447_vendor_defined_alert(port);
+
 	/* process and clear alert status */
 	tcpci_tcpc_alert(port);
 }
+
+#ifdef CONFIG_USB_PD_FRS_TCPC
+static int anx7447_set_frs_enable(int port, int enable)
+{
+	int val;
+
+	RETURN_ERROR(tcpc_update8(port, ANX7447_REG_FRSWAP_CTRL,
+				  ANX7447_FRSWAP_DETECT_ENABLE,
+				  enable ? MASK_SET : MASK_CLR));
+
+	RETURN_ERROR(
+		anx7447_reg_read(port, ANX7447_REG_ADDR_GPIO_CTRL_1, &val));
+
+	if (enable)
+		val |= ANX7447_ADDR_GPIO_CTRL_1_FRS_EN_DATA;
+	else
+		val &= ~ANX7447_ADDR_GPIO_CTRL_1_FRS_EN_DATA;
+
+	RETURN_ERROR(
+		anx7447_reg_write(port, ANX7447_REG_ADDR_GPIO_CTRL_1, val));
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_USB_PD_FRS_TCPC */
 
 /*
  * timestamp of the next possible toggle to ensure the 2-ms spacing
@@ -933,6 +981,9 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+#endif
+#ifdef CONFIG_USB_PD_FRS_TCPC
+	.set_frs_enable		= &anx7447_set_frs_enable,
 #endif
 	.set_bist_test_mode	= &anx7447_set_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
