@@ -660,11 +660,11 @@ static void host_command_debug_request(struct host_cmd_handler_args *args)
 	}
 
 	if (hcdebug >= HCDEBUG_PARAMS && args->params_size)
-		CPRINTS("HC 0x%02x.%d:%ph", args->command,
+		CPRINTS("HC 0x%04x.%d:%ph", args->command,
 			args->version,
 			HEX_BUF(args->params, args->params_size));
 	else
-		CPRINTS("HC 0x%02x", args->command);
+		CPRINTS("HC 0x%04x", args->command);
 }
 
 uint16_t host_command_process(struct host_cmd_handler_args *args)
@@ -717,7 +717,7 @@ uint16_t host_command_process(struct host_cmd_handler_args *args)
 	}
 
 	if (rv != EC_RES_SUCCESS)
-		CPRINTS("HC 0x%02x err %d", args->command, rv);
+		CPRINTS("HC 0x%04x err %d", args->command, rv);
 
 	if (hcdebug >= HCDEBUG_PARAMS && args->response_size)
 		CPRINTS("HC resp:%ph",

@@ -119,7 +119,7 @@ static int pd_host_command_internal(int command, int version,
 	/* Check for host command error code */
 	ret = resp_buf[0];
 	if (ret) {
-		CPRINTS("command 0x%02x returned error %d", command, ret);
+		CPRINTS("command 0x%04x returned error %d", command, ret);
 		return -ret;
 	}
 
@@ -154,7 +154,7 @@ static int pd_host_command_internal(int command, int version,
 
 
 	if ((uint8_t)sum) {
-		CPRINTS("command 0x%02x bad checksum returned: %d",
+		CPRINTS("command 0x%04x bad checksum returned: %d",
 			command, sum);
 		return -EC_RES_INVALID_CHECKSUM;
 	}
