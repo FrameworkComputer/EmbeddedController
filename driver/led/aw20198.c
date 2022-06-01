@@ -142,18 +142,28 @@ static int aw20198_set_gcc(struct rgbkbd *ctx, uint8_t level)
 
 static int aw20198_init(struct rgbkbd *ctx)
 {
-	uint8_t id;
+	uint8_t u8;
 	int rv;
 
 	rv = aw20198_reset(ctx);
 	msleep(3);
 
 	/* Read chip ID, assuming page is still 0. */
-	rv = aw20198_read(ctx, AW20198_REG_RSTN, &id);
+	rv = aw20198_read(ctx, AW20198_REG_RSTN, &u8);
 	if (rv) {
 		return rv;
 	}
-	CPRINTS("ID=0x%02x", id);
+	CPRINTS("ID=0x%02x", u8);
+
+	/* Modify SWSEL bit4-7 to match the LED layout */
+	rv = aw20198_get_config(ctx, AW20198_REG_GCR, &u8);
+	if (rv) {
+		return rv;
+	}  
+	u8 &= ~AW20198_REG_GCR_SWSEL_MASK;
+	u8 |= ((ctx->cfg->col_len - 1) << AW20198_REG_GCR_SWSEL_SHIFT);
+	rv = aw20198_write(ctx, AW20198_REG_GCR, u8);
+	CPRINTS("GCR=0x%02x", u8);
 
 	return rv;
 }
