@@ -244,7 +244,7 @@
 #define CONFIG_RGB_KEYBOARD
 #define CONFIG_LED_DRIVER_AW20198     /* Awinic AW20198 on I2C */
 #endif
-#define RGB_GRID0_COL		11
+#define RGB_GRID0_COL		8
 #define RGB_GRID0_ROW		6
 
 #ifndef __ASSEMBLER__
