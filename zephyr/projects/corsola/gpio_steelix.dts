@@ -82,6 +82,13 @@
 		ec_i2c_batt_sda {
 			gpios = <&gpio3 6 GPIO_INPUT>;
 		};
+		en_pp5000_usb_a1_vbus: en_pp5000_usb_a1_vbus_x {
+			gpios = <&gpiof 5 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_EN_PP5000_USB_A1_VBUS";
+		};
+		usb_a1_fault_odl {
+			gpios = <&gpiof 4 GPIO_INPUT>;
+		};
 		ec_pen_chg_dis_odl {
 			gpios = <&gpioe 4 GPIO_INPUT>;
 		};

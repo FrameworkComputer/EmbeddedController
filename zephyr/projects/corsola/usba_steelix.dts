@@ -3,9 +3,8 @@
  * found in the LICENSE file.
  */
 
-/ {
-	usba_port_enable_list: usba-port-enable-list {
-		compatible = "cros-ec,usba-port-enable-pins";
-		enable-pins = <&en_pp5000_usb_a0_vbus>;
-	};
+/* steelix usba port enable config */
+&usba_port_enable_list {
+	enable-pins = <&en_pp5000_usb_a0_vbus
+		       &en_pp5000_usb_a1_vbus>;
 };

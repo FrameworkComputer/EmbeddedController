@@ -78,6 +78,7 @@ register_corsola_project(
         here / "gpio_steelix.dts",
         here / "led_steelix.dts",
         here / "motionsense_kingler.dts",
+        here / "usba_steelix.dts",
         here / "usbc_kingler.dts",
         here / "default_gpio_pinctrl_kingler.dts",
     ],
