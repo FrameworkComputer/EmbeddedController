@@ -69,11 +69,12 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT] = {
 	},
 	[TEMP_SENSOR_CPU] = {
 		.temp_host = {
-			[EC_TEMP_THRESH_HIGH] = 0,
-			[EC_TEMP_THRESH_HALT] = 0,
+			[EC_TEMP_THRESH_WARN] = C_TO_K(100),
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(105),
+			[EC_TEMP_THRESH_HALT] = C_TO_K(108),
 		},
 		.temp_host_release = {
-			[EC_TEMP_THRESH_HIGH] = 0,
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
 		},
 		.temp_fan_off = 0,
 		.temp_fan_max = 0,
