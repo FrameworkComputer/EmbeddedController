@@ -71,15 +71,6 @@ void ec_app_main(void)
 		vboot_main();
 	}
 
-	/*
-	 * Hooks run from the system workqueue and must be the lowest priority
-	 * thread. By default, the system workqueue is run at the lowest
-	 * cooperative thread priority, blocking all preemptive threads until
-	 * the deferred work is completed.
-	 */
-	k_thread_priority_set(&k_sys_work_q.thread,
-			      EC_TASK_PRIORITY(EC_SYSWORKQ_PRIO));
-
 	/* Call init hooks before main tasks start */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOOKS)) {
 		hook_notify(HOOK_INIT);
