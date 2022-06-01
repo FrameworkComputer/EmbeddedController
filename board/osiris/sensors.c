@@ -63,11 +63,9 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/180681346): update for Alder Lake/brya
+ * TODO(b/234545460): update for Alder Lake/brya
  *
- * Alder Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
- * 130 C.  However, sensor is located next to DDR, so we need to use the lower
- * DDR temperature limit (85 C)
+ * temperature limit, See thermal table in b/234545460#comment2
  */
 /*
  * TODO(b/202062363): Remove when clang is fixed.
@@ -75,101 +73,36 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #define THERMAL_CPU \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(78), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
+		.temp_fan_off = C_TO_K(25), \
+		.temp_fan_max = C_TO_K(89), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
-/*
- * TODO(b/180681346): update for Alder Lake/brya
- *
- * Inductor limits - used for both charger and PP3300 regulator
- *
- * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
- *
- * Charger max recommended temperature 100C, max absolute temperature 125C
- * PP3300 regulator: operating range -40 C to 145 C
- *
- * Inductors: limit of 125c
- * PCB: limit is 80c
- */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_AMBIENT \
-	{ \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_ambient =
-	THERMAL_AMBIENT;
 
-/*
- * Inductor limits - used for both charger and PP3300 regulator
- *
- * Need to use the lower of the charger IC, PP3300 regulator, and the inductors
- *
- * Charger max recommended temperature 125C, max absolute temperature 150C
- * PP3300 regulator: operating range -40 C to 125 C
- *
- * Inductors: limit of 125c
- * PCB: limit is 80c
- */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CHARGER \
+#define THERMAL_UNUSED \
 	{ \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(120), \
+			[EC_TEMP_THRESH_HIGH] = 0, \
+			[EC_TEMP_THRESH_HALT] = 0, \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HIGH] = 0, \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(65), \
+		.temp_fan_off = 0, \
+		.temp_fan_max = 0, \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_charger =
-	THERMAL_CHARGER;
-
-/*
- * TODO(b/180681346): update for brya WWAN module
- */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_WWAN \
-	{ \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(130), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(130), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_wwan =
-	THERMAL_WWAN;
+__maybe_unused static const struct ec_thermal_config thermal_unused =
+	THERMAL_UNUSED;
 
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_2_AMBIENT] = THERMAL_AMBIENT,
-	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
+	[TEMP_SENSOR_2_AMBIENT] = THERMAL_UNUSED,
+	[TEMP_SENSOR_3_CHARGER] = THERMAL_UNUSED,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
