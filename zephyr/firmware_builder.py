@@ -193,7 +193,7 @@ def test(opts):
         cmd = [
             '/usr/bin/lcov',
             '-o',
-            build_dir / 'fullpaths.info',
+            build_dir / 'lcov.info',
             '--rc',
             'lcov_branch_coverage=1',
             '-a',
@@ -211,18 +211,6 @@ def test(opts):
             cwd=pathlib.Path(__file__).parent, check=True,
             stdout=subprocess.PIPE, universal_newlines=True).stdout
         _extract_lcov_summary('EC_ZEPHYR_TESTS', metrics, output)
-        # Make filenames relative to platform/ec
-        cmd = ['sed', '-e', 's|^SF:.*/platform/ec/|SF:|']
-        with open(build_dir / 'fullpaths.info') as infile, open(
-                build_dir / 'lcov.info', 'w'
-        ) as outfile:
-            subprocess.run(
-                cmd,
-                cwd=pathlib.Path(__file__).parent,
-                stdin=infile,
-                stdout=outfile,
-                check=True,
-            )
 
     with open(opts.metrics, 'w') as file:
         file.write(json_format.MessageToJson(metrics))
