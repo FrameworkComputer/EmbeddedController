@@ -28,6 +28,13 @@ config TASK_USB_MUX_STACK_SIZE
 	help
 	  Set the size of the USB mux task stack, in bytes.
 
+config PLATFORM_EC_USB_MUX_AP_CONTROL
+	bool "AP USB mux control"
+	depends on PLATFORM_EC_USB_MUX_TASK
+	help
+	  Allows the AP to send commands in order to control any muxes and
+	  retimers for the board.
+
 config PLATFORM_EC_USB_MUX_AMD_FP6
 	bool "AMD FP6 integrated mux"
 	help

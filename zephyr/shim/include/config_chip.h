@@ -1651,6 +1651,11 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_USBC_SS_MUX_DFP_ONLY
 #endif
 
+#undef CONFIG_USB_MUX_AP_CONTROL
+#ifdef CONFIG_PLATFORM_EC_USB_MUX_AP_CONTROL
+#define CONFIG_USB_MUX_AP_CONTROL
+#endif
+
 #undef CONFIG_USB_MUX_AMD_FP6
 #ifdef CONFIG_PLATFORM_EC_USB_MUX_AMD_FP6
 #define CONFIG_USB_MUX_AMD_FP6

@@ -5302,6 +5302,9 @@
 /* Allow run-time completion of the usb mux driver structure */
 #undef CONFIG_USB_MUX_RUNTIME_CONFIG
 
+/* Allow the AP to send commands for mux control */
+#undef CONFIG_USB_MUX_AP_CONTROL
+
 /* Support the AMD FP5 USB/DP Mux */
 #undef CONFIG_USB_MUX_AMD_FP5
 
