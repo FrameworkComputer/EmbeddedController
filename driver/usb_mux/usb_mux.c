@@ -332,6 +332,16 @@ static int configure_mux(int port, int index,
 			if (mux_ptr->board_set)
 				rv = mux_ptr->board_set(mux_ptr, lcl_state);
 
+			/* Inform the AP its selected mux is set */
+			if (IS_ENABLED(CONFIG_USB_MUX_AP_CONTROL)) {
+				if (chip == 0)
+					pd_notify_event(port,
+						PD_STATUS_EVENT_MUX_0_SET_DONE);
+				else if (chip == 1)
+					pd_notify_event(port,
+						PD_STATUS_EVENT_MUX_1_SET_DONE);
+			}
+
 			break;
 
 		case USB_MUX_GET_MODE:
