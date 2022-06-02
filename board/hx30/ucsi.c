@@ -72,7 +72,6 @@ const char *command_names(uint8_t command)
 	return "";
 }
 
-static int is_delay;
 int ucsi_write_tunnel(void)
 {
 	uint8_t *message_out = host_get_customer_memmap(EC_MEMMAP_UCSI_MESSAGE_OUT);
@@ -100,17 +99,7 @@ int ucsi_write_tunnel(void)
 
 	switch (*command) {
 	case UCSI_CMD_GET_CONNECTOR_STATUS:
-		/**
-		 * try to delay 500 msec to wait PD negotiation complete then send command
-		 * to PD chip
-		 */
-		if (!is_delay) {
-			is_delay = 1;
-			return EC_ERROR_BUSY;
-		}
-
-		CPRINTS("Already delay 500ms, send command to PD chip");
-		is_delay = 0;
+		CPRINTS("Send command to PD chip");
 	case UCSI_CMD_GET_CONNECTOR_CAPABILITY:
 	case UCSI_CMD_CONNECTOR_RESET:
 	case UCSI_CMD_SET_UOM:

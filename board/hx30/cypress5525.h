@@ -473,6 +473,10 @@ void cypd_usci_ppm_reset(void);
 
 void cypd_port_current_setting(void);
 
-void cypd_port_3a_release(int controller, int port);
+void cypd_release_port(int controller, int port);
+
+void cypd_ppm_port_clear(void);
+
+int cypd_check_typec_port(int controller, int port);
 
 #endif	/* __CROS_EC_CYPRESS5525_H */
