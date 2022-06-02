@@ -53,7 +53,7 @@ int get_temp_R19ME4070(int idx, int *temp_ptr)
 	 * We shouldn't read the GPU temperature when the state
 	 * is not in S0, because GPU is enabled in S0.
 	 */
-	if ((power_get_state()) != POWER_S0) {
+	if (!chipset_in_state(CHIPSET_STATE_ON)) {
 		*temp_ptr = C_TO_K(0);
 		return EC_ERROR_BUSY;
 	}

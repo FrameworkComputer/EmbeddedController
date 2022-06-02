@@ -888,41 +888,23 @@ static uint8_t get_status_power_state_change(void)
 	enum pd_sdb_power_state ret = PD_SDB_POWER_STATE_NOT_SUPPORTED;
 
 #ifdef HAS_TASK_CHIPSET
-	switch (power_get_state()) {
-	case POWER_G3:
-	case POWER_S5G3:
+	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_HARD_OFF)) {
 		ret = PD_SDB_POWER_STATE_G3;
-		break;
-	case POWER_S5:
-	case POWER_G3S5:
-	case POWER_S3S5:
-	case POWER_S4S5:
+	} else if (chipset_in_or_transitioning_to_state(
+			   CHIPSET_STATE_SOFT_OFF)) {
+		/*
+		 * SOFT_OFF includes S4; chipset_state API doesn't support S4
+		 * specifically, so fold S4 to S5
+		 */
 		ret = PD_SDB_POWER_STATE_S5;
-		break;
-	case POWER_S4:
-	case POWER_S3S4:
-	case POWER_S5S4:
-		ret = PD_SDB_POWER_STATE_S4;
-		break;
-	case POWER_S3:
-	case POWER_S5S3:
-	case POWER_S0S3:
-	case POWER_S4S3:
+	} else if (chipset_in_or_transitioning_to_state(
+			   CHIPSET_STATE_SUSPEND)) {
 		ret = PD_SDB_POWER_STATE_S3;
-		break;
-	case POWER_S0:
-	case POWER_S3S0:
-#ifdef CONFIG_POWER_S0IX
-	case POWER_S0ixS0:
-#endif /* CONFIG_POWER_S0IX */
+	} else if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)) {
 		ret = PD_SDB_POWER_STATE_S0;
-		break;
-#ifdef CONFIG_POWER_S0IX
-	case POWER_S0ix:
-	case POWER_S0S0ix:
+	} else if (chipset_in_or_transitioning_to_state(
+			   CHIPSET_STATE_STANDBY)) {
 		ret = PD_SDB_POWER_STATE_MODERN_STANDBY;
-		break;
-#endif /* CONFIG_POWER_S0IX */
 	}
 #endif /* HAS_TASK_CHIPSET */
 
