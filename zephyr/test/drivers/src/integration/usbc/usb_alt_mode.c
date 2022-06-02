@@ -20,6 +20,8 @@
 #include "test/drivers/utils.h"
 #include "test/drivers/test_state.h"
 
+#define TEST_PORT USBC_PORT_C0
+
 struct usbc_alt_mode_fixture {
 	const struct emul *tcpci_emul;
 	const struct emul *charger_emul;
@@ -66,7 +68,7 @@ static void *usbc_alt_mode_setup(void)
 	fixture.tcpci_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
 	/* The configured TCPCI rev must match the emulator's supported rev. */
-	tcpc_config[0].flags |= TCPC_FLAGS_TCPCI_REV2_0;
+	tcpc_config[TEST_PORT].flags |= TCPC_FLAGS_TCPCI_REV2_0;
 	tcpci_emul_set_rev(fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
 	fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
@@ -127,7 +129,7 @@ ZTEST_F(usbc_alt_mode, verify_discovery)
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
 	struct ec_response_typec_discovery *discovery =
 		(struct ec_response_typec_discovery *)response_buffer;
-	host_cmd_typec_discovery(USBC_PORT_C0, TYPEC_PARTNER_SOP,
+	host_cmd_typec_discovery(TEST_PORT, TYPEC_PARTNER_SOP,
 			response_buffer, sizeof(response_buffer));
 
 	/* The host command does not count the VDM header in identity_count. */
