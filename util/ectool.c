@@ -10091,6 +10091,7 @@ int cmd_typec_control(int argc, char *argv[])
 			return -1;
 		}
 		p.mode_to_enter = conversion_result;
+		break;
 	case TYPEC_CONTROL_COMMAND_TBT_UFP_REPLY:
 		if (argc < 4) {
 			fprintf(stderr, "Missing reply\n");
