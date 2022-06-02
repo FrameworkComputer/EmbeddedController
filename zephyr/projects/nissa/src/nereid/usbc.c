@@ -4,6 +4,7 @@
  */
 
 #include <zephyr/logging/log.h>
+#include <ap_power/ap_power.h>
 
 #include "charge_state_v2.h"
 #include "chipset.h"
@@ -79,6 +80,52 @@ __override bool pd_check_vbus_level(int port, enum vbus_level level)
 	LOG_WRN("Unrecognized vbus_level value: %d", level);
 	return false;
 }
+
+/*
+ * Putting chargers into LPM when in suspend reduces power draw by about 8mW
+ * per charger, but also seems critical to correct operation in source mode:
+ * if chargers are not in LPM when a sink is first connected, VBUS sourcing
+ * works even if the partner is later removed (causing LPM entry) and
+ * reconnected (causing LPM exit). If in LPM initially, sourcing VBUS
+ * consistently causes the charger to report (apparently spurious) overcurrent
+ * failures.
+ *
+ * In short, this is important to making things work correctly but we don't
+ * understand why.
+ */
+static void board_chargers_suspend(struct ap_power_ev_callback *const cb,
+				   const struct ap_power_ev_data data)
+{
+	void (*fn)(int chgnum);
+
+	switch (data.event) {
+	case AP_POWER_SUSPEND:
+		fn = sm5803_enable_low_power_mode;
+		break;
+	case AP_POWER_RESUME:
+		fn = sm5803_disable_low_power_mode;
+		break;
+	default:
+		LOG_WRN("%s: power event %d is not recognized",
+			__func__, data.event);
+		return;
+	}
+
+	fn(CHARGER_PRIMARY);
+	if (board_get_charger_chip_count() > 1)
+		fn(CHARGER_SECONDARY);
+}
+
+static int board_chargers_suspend_init(const struct device *unused)
+{
+	static struct ap_power_ev_callback cb = {
+		.handler = board_chargers_suspend,
+		.events = AP_POWER_SUSPEND | AP_POWER_RESUME,
+	};
+	ap_power_ev_add_callback(&cb);
+	return 0;
+}
+SYS_INIT(board_chargers_suspend_init, APPLICATION, 0);
 
 int board_set_active_charge_port(int port)
 {
