@@ -1,0 +1,110 @@
+# Copyright 2021 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: LED policy parent node
+
+compatible: "cros-ec,led-policy"
+
+child-binding:
+    description: |
+      LED policy nodes to describe the policy combination a node depends on, and
+      the color to set to for that combination.
+      e.g. If Blue color needs to be set for charge state discharge in S0, a
+      node looks like
+      power-state-discharge-s0 {
+         charge-state = "PWR_STATE_DISCHARGE";
+         chipset-state = "POWER_S0";
+         charge-port = <0>;
+         color-0 {
+           led-color = <&color_blue>;
+         };
+      };
+
+    properties:
+        charge-state:
+            description: |
+              If the LED color depends on charge state, this property is used
+              to describe it.
+            type: string
+            required: false
+            enum:
+                - PWR_STATE_CHARGE
+                - PWR_STATE_DISCHARGE
+                - PWR_STATE_ERROR
+                - PWR_STATE_IDLE
+                - PWR_STATE_CHARGE_NEAR_FULL
+
+        charge-port:
+            description: |
+              If the LED color depends on the charging port (left or right).
+            type: int
+            required: false
+
+        chipset-state:
+            description: |
+              If the LED color depends on chipset state, this property is used
+              to describe it.
+            type: string
+            required: false
+            enum:
+                - POWER_S0
+                - POWER_S3
+                - POWER_S5
+
+        batt-lvl:
+            description: |
+              If the LED color depends on current battery level, this property
+              is used to describe batt_lvl range using closed interval [x,y].
+              Use the macros defined in dt-bindings/battery.h.
+              e.g. <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW> describes battery level
+                   range of BATTERY_LEVEL_EMPTY to BATTERY_LEVEL_LOW inclusive.
+            type: array
+            required: false
+
+        extra-flag:
+            description: |
+              This property is used if the LED color depends on additional
+              factors.
+              e.g.
+              LED_CHFLAG_FORCE_IDLE - The LED policy is only applied when battery
+              charging is disabled.
+              LED_CHFLAG_DEFAULT - The LED policy is only applied when battery
+              charging is allowed.
+              NONE - extra-flag is ignored and LED policy is always applied.
+            type: string
+            required: false
+            enum:
+                - NONE
+                - LED_CHFLAG_FORCE_IDLE
+                - LED_CHFLAG_DEFAULT
+
+    child-binding:
+        description: Color enum
+        properties:
+            led-color:
+                description: |
+                  Handle to LED pins node that describes pins to set to enable a
+                  particular color.
+                type: phandle
+                required: true
+            period-ms:
+                description: |
+                  In case of blinking LEDs, amount of time in msecs the LED
+                  color is active. This value must be a multiple of
+                  HOOK_TICK_INTERVAL_MS.
+                  e.g.
+                  power-state-error {
+                     charge-state = "PWR_STATE_ERROR";
+                     /* One sec Amber, one sec Off */
+                     color-0 {
+                       led-color = <&color_amber>;
+                       period-ms = <1000>;
+                     };
+                     color-1 {
+                       led-color = <&color_off>;
+                       period-ms = <1000>;
+                     };
+                  };
+                type: int
+                required: false
