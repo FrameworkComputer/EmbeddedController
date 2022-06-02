@@ -77,10 +77,7 @@ factory branch.
 
 When the FPMCU is completely blank a low-level flashing tool must be used to
 program an initial version of the FPMCU firmware. It’s possible to use the
-[`flash_fp_mcu`] script as this low-level flashing tool, though since it
-requires the AP and is not necessarily robust against failures, it is not
-recommended for mass-production. More details about [`flash_fp_mcu`] are in the
-[Fingerprint flashing documentation].
+factory script [`update_fpmcu_firmware.py`] as this low-level flashing tool.
 
 The initial version of the FPMCU firmware should be flashed either by the module
 house or by the factory. Once an initial version of the FPMCU firmware has been
@@ -497,6 +494,6 @@ Wrote /tmp/fp.1.png (14025 bytes)
 [ChromeOS Fingerprint Team]: http://go/cros-fingerprint-docs
 [Factory Fingerprint Sensor Testing for `nocturne`]: http://go/fingerprint-factory-testing-nocturne
 [`flash_fp_mcu`]: https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/flash_fp_mcu
-[Fingerprint flashing documentation]: ./fingerprint.md#factory-rma-dev-updates
 [ChromeOS Config]: https://chromium.googlesource.com/chromiumos/platform2/+/HEAD/chromeos-config/README.md
 [updating ChromeOS Config]: ./fingerprint.md#update-chromeos-config
+[`update_fpmcu_firmware.py`]: https://crsrc.org/o/src/platform/factory/py/test/pytests/update_fpmcu_firmware.py;drc=672e24bb3e2dd0dec7578dcd4c52805d022662d1
