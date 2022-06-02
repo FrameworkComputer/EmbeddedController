@@ -10,6 +10,10 @@
 #include "system_chip.h"
 
 /* Modules Map */
+#define WDT_NODE		DT_INST(0, microchip_xec_watchdog)
+#define STRUCT_WDT_REG_BASE_ADDR \
+			((struct wdt_regs *)(DT_REG_ADDR(WDT_NODE)))
+
 #define PCR_NODE		DT_INST(0, microchip_xec_pcr)
 #define STRUCT_PCR_REG_BASE_ADDR \
 			((struct pcr_regs *)DT_REG_ADDR_BY_IDX(PCR_NODE, 0))
@@ -26,15 +30,15 @@
 	(MCHP_QMSPI_STS_DONE | MCHP_QMSPI_STS_DMA_DONE)
 
 #define QSPI_STATUS_ERR							\
-	(MCHP_QMSPI_STS_TXB_ERR | MCHP_QMSPI_STS_RXB_ERR |		\
+	(MCHP_QMSPI_STS_TXB_ERR | MCHP_QMSPI_STS_RXB_ERR |	\
 	 MCHP_QMSPI_STS_PROG_ERR | MCHP_QMSPI_STS_LDMA_RX_ERR)
-
 
 noreturn void __keep __attribute__ ((section(".code_in_sram2")))
 __start_qspi(uint32_t resetVectAddr)
 {
 	struct pcr_regs *pcr = STRUCT_PCR_REG_BASE_ADDR;
 	struct qmspi_regs *qspi = STRUCT_QSPI_REG_BASE_ADDR;
+	struct wdt_regs *wdt = STRUCT_WDT_REG_BASE_ADDR;
 	uint32_t qsts = 0;
 	uint32_t exeAddr = 0;
 
@@ -46,6 +50,9 @@ __start_qspi(uint32_t resetVectAddr)
 		if (qsts & QSPI_STATUS_ERR)
 			break;
 	}
+
+	/* Stop the watchdog */
+	wdt->CTRL &= ~MCHP_WDT_CTRL_EN;
 
 	qspi->MODE &= ~(MCHP_QMSPI_M_ACTIVATE);
 	if (qsts & QSPI_STATUS_ERR) {
@@ -67,8 +74,7 @@ __start_qspi(uint32_t resetVectAddr)
 		;
 }
 
-/* PK SCM */
-uintptr_t __lfw_sram_start = 0x127800;
+uintptr_t __lfw_sram_start = CONFIG_CROS_EC_RAM_BASE + CONFIG_CROS_EC_RAM_SIZE;
 
 typedef void (*START_QSPI_IN_SRAM_FP)(uint32_t);
 
@@ -85,9 +91,9 @@ void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 
 	/* Check valid address for jumpiing */
 	__ASSERT_NO_MSG(exeAddr != 0x0);
-
+	/* Configure QMSPI controller */
 	qspi->MODE = MCHP_QMSPI_M_SRST;
-	fdiv = 4;
+	fdiv = 2;
 	if (pcr->TURBO_CLK & MCHP_PCR_TURBO_CLK_96M)
 		fdiv *= 2;
 

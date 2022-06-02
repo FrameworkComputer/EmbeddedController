@@ -4,13 +4,35 @@
  */
 
 #include <zephyr/devicetree.h>
-#include <zephyr/drivers/syscon.h>
+#include <zephyr/drivers/bbram.h>
+#include <soc.h>
 
 #include "clock_chip.h"
 #include "common.h"
 #include "system.h"
 #include "system_chip.h"
+#include "config_chip.h"
 
+#define MCHP_ECRO_WORD		0x4F524345u /* ASCII ECRO */
+#define MCHP_ECRW_WORD		0x57524345u /* ASCII ECRW */
+#define MCHP_PCR_NODE		DT_INST(0, microchip_xec_pcr)
+
+#define GET_BBRAM_OFS(node) \
+	DT_PROP(DT_PATH(named_bbram_regions, node), offset)
+#define GET_BBRAM_SZ(node) DT_PROP(DT_PATH(named_bbram_regions, node), size)
+
+static const struct device *const bbram_dev =
+	COND_CODE_1(DT_HAS_CHOSEN(cros_ec_bbram),
+		    DEVICE_DT_GET(DT_CHOSEN(cros_ec_bbram)), NULL);
+
+/* Build image type string in RO/RW image */
+#ifdef CONFIG_CROS_EC_RO
+const uint32_t mchp_image_type = MCHP_ECRO_WORD;
+#elif CONFIG_CROS_EC_RW
+const uint32_t mchp_image_type = MCHP_ECRW_WORD;
+#else
+#error "Unsupported image type!"
+#endif
 
 /*
  * Make sure CONFIG_XXX flash offsets are correct for MEC172x 512KB SPI flash.
@@ -29,19 +51,12 @@ void system_jump_to_booter(void)
 	case EC_IMAGE_RW:
 		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
 				CONFIG_RW_STORAGE_OFF;
-		flash_used = CONFIG_RW_SIZE;
+		flash_used = CONFIG_CROS_EC_RW_SIZE;
 		break;
-#ifdef CONFIG_RW_B
-	case EC_IMAGE_RW_B:
-		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
-				CONFIG_RW_B_STORAGE_OFF;
-		flash_used = CONFIG_RW_SIZE;
-		break;
-#endif
 	case EC_IMAGE_RO:
 	default: /* Jump to RO by default */
-		flash_offset = 0x100; /* 256 bytes */
-		flash_used = (352 * 1024);
+		flash_offset = CONFIG_PLATFORM_EC_RO_HEADER_OFFSET;
+		flash_used = CONFIG_CROS_EC_RO_SIZE;
 		break;
 	}
 
@@ -53,9 +68,11 @@ void system_jump_to_booter(void)
 
 	/* MCHP Read selected image from SPI flash into SRAM
 	 * Need a jump to little-fw (LFW).
-	 * MEC172x Boot-ROM load API is probably not usuable for this.
 	 */
-	system_download_from_flash(flash_offset, 0xC0000u, flash_used, 0xC0004);
+	system_download_from_flash(flash_offset,
+				   CONFIG_CROS_EC_PROGRAM_MEMORY_BASE,
+				   flash_used,
+				   (CONFIG_CROS_EC_PROGRAM_MEMORY_BASE + 4u));
 }
 
 uint32_t system_get_lfw_address(void)
@@ -66,13 +83,51 @@ uint32_t system_get_lfw_address(void)
 
 enum ec_image system_get_shrspi_image_copy(void)
 {
-	return EC_IMAGE_RO;
+	enum ec_image img = EC_IMAGE_UNKNOWN;
+	uint32_t value = 0u;
+
+	if (bbram_dev) {
+		if (!bbram_read(bbram_dev, GET_BBRAM_OFS(ec_img_load),
+				GET_BBRAM_SZ(ec_img_load), (uint8_t *)&value)) {
+			img = (enum ec_image)(value & 0x7fu);
+		}
+	}
+
+	if (img == EC_IMAGE_UNKNOWN) {
+		img = EC_IMAGE_RO;
+		if (mchp_image_type == MCHP_ECRW_WORD) {
+			img = EC_IMAGE_RW;
+		}
+		system_set_image_copy(img);
+	}
+
+	return img;
 }
 
-/*
- * This configures HW to point to EC_RW or EC_RO.
+/* Flash is not memory mapped. Store a flag indicating the image.
+ * ECS WDT_CNT is register available to applications. It implements bits[3:0]
+ * which are not reset by a watch dog event only by VTR/chip reset.
+ * VBAT memory is safer only if the board has a stable VBAT power rail.
  */
 void system_set_image_copy(enum ec_image copy)
 {
-	/* TODO(b/226599277): check if further development is requested */
+	uint32_t value = (uint32_t)copy;
+
+	if (!bbram_dev) {
+		return;
+	}
+
+	switch (copy) {
+	case EC_IMAGE_RW:
+	case EC_IMAGE_RW_B:
+		value = EC_IMAGE_RW;
+		break;
+	case EC_IMAGE_RO:
+	default:
+		value = EC_IMAGE_RO;
+		break;
+	}
+
+	bbram_write(bbram_dev, GET_BBRAM_OFS(ec_img_load),
+		    GET_BBRAM_SZ(ec_img_load), (uint8_t *)&value);
 }

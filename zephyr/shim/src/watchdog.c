@@ -27,6 +27,11 @@ static void wdt_warning_handler(const struct device *wdt_dev, int channel_id)
 	#ifdef TEST_BUILD
 	wdt_warning_triggered = true;
 	#endif
+#ifdef CONFIG_SOC_SERIES_MEC172X
+	extern void cros_chip_wdt_handler(const struct device *wdt_dev,
+				int channel_id);
+	cros_chip_wdt_handler(wdt_dev, channel_id);
+#endif
 }
 
 int watchdog_init(void)
