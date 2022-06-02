@@ -71,8 +71,6 @@ ZTEST_USER(espi, test_host_command_usb_pd_get_amode)
 	zassert_ok(args.result, NULL);
 	/* Note: with no SVIDs the response size is the size of the svid field.
 	 * See the usb alt mode test for verifying larger struct sizes
-	 *
-	 * TODO(b/219562077): Add the above described test.
 	 */
 	zassert_equal(args.response_size, sizeof(response.svid), NULL);
 }

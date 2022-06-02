@@ -356,6 +356,17 @@ int host_cmd_motion_sense_spoof(uint8_t sensor_num, uint8_t enable,
  */
 void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 			      void *response, size_t response_size);
+/**
+ * @brief Run the host command to get the PD alternative mode response.
+ *
+ * @param port          The USB-C port number
+ * @param response      Destination for command response.
+ * @param response_size Destination of response size from request params.
+ */
+void host_cmd_usb_pd_get_amode(
+	uint8_t port, uint16_t svid_idx,
+	struct ec_params_usb_pd_get_mode_response *response,
+	int *response_size);
 
 /**
  * Run the host command to control PD port behavior. For now, this function only
