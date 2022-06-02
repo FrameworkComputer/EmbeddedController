@@ -1,0 +1,124 @@
+ # Copyright 2022 The ChromiumOS Authors
+ # Use of this source code is governed by a BSD-style license that can be
+ # found in the LICENSE file.
+
+description: |
+  Power Signal Emulator Node
+
+  Power signal emulator allows executing AP Power Sequence in a virtual
+  environment by simulating power signals behavior.
+
+  This file defines a node to bind two or more power signals. A node connects
+  one input-signal with one or more output-signals. When a node is loaded and
+  initialized by power signal emulator, its input-signal state will control
+  the value of its children output-signals. Behavior of output-signals are
+  configurable to meet AP power sequence test cases.
+
+  Power Signals direction is determined from emulator node perspective. An input
+  signal in a node, is the one to be monitored by the emulator, while an output
+  signal gets its value altered when corresponding input signal's state changes.
+
+compatible: "intel,ap-pwr-signal-emul"
+
+properties:
+  input-signal:
+    type: phandle
+    required: true
+    description: |
+      Input signal whose value is monitored to control children output-signal`s
+      value.
+
+  assert-value:
+    type: int
+    required: false
+    default: 1
+    description: |
+      Value that indicates `input-signal` must be ASSERTED.
+
+      A power signal state can be ASSERTED or DEASSERTED.`input-signal` is only
+      considered asserted if its new value is equal to `assert-value`, any
+      other value makes it deasserted.
+
+  edge:
+    type: string
+    required: false
+    description: |
+      Controls when to trigger children value change, based on `input-signal`
+      new state.
+
+      EDGE_ACTIVE_ON_ASSERT: Children value changes only when `input-signal`
+        state changes into asserted.
+
+      EDGE_ACTIVE_ON_DEASSERT: Children value changes only when `input-signal`
+        state changes into deasserted.
+
+      EDGE_ACTIVE_ON_DEASSERT: Children value changes everytime `input-signal`
+        state changes.
+
+    default: EDGE_ACTIVE_ON_BOTH
+    enum:
+      - EDGE_ACTIVE_ON_ASSERT
+      - EDGE_ACTIVE_ON_DEASSERT
+      - EDGE_ACTIVE_ON_BOTH
+
+  init-value:
+    type: int
+    required: false
+    description: |
+      Initial value of `input-signal`.
+
+child-binding:
+  description: |
+    Child power signals configuration.
+
+  properties:
+    output-signal:
+      type: phandle
+      required: true
+      description: |
+        Output signal whose value will be controlled by parent `input-signal`
+        state.
+
+    assert-value:
+      type: int
+      required: false
+      default: 1
+      description: |
+        Value that will be assigned to this signal when parent `input-signal`
+        state is asserted.
+
+    assert-delay-ms:
+      type: int
+      required: false
+      default: 10
+      description: |
+        Milliseconds to delay setting this signal to its `assert-value`
+        after `input-signal` is asserted.
+
+    deassert-value:
+      type: int
+      required: false
+      default: 0
+      description: |
+        Value that will be assigned to this signal when parent `input-signal`
+        state is deasserted.
+
+    deassert-delay-ms:
+      type: int
+      required: false
+      default: 10
+      description: |
+        Milliseconds to delay setting this signal to its `deassert-value`
+        after `input-signal` is deasserted.
+
+    init-value:
+      type: int
+      required: false
+      description: |
+        Value set to this power signal when initializing this node.
+
+    invert-value:
+      type: boolean
+      description: |
+        Invert this power signal assertion logic, this applies to both values
+        and delays.
