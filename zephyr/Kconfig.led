@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 menuconfig PLATFORM_EC_LED_COMMON
+	depends on !PLATFORM_EC_LED_DT
 	bool "LED Support"
 	help
 	  Enable the common LED module supporting automatic control of the
