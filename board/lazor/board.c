@@ -19,6 +19,7 @@
 #include "hooks.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "mkbp_info.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
@@ -453,4 +454,9 @@ __override uint32_t board_get_sku_id(void)
 	}
 
 	return (uint32_t)sku_id;
+}
+
+__override int mkbp_support_volume_buttons(void)
+{
+	return board_has_side_volume_buttons();
 }
