@@ -420,7 +420,7 @@ def main():
   if vers == 2:
     flash(brdfile, serialno, binfile)
   elif vers == 6:
-    flash2(vidpid, serialno, binfile)
+    do_with_retries(flash2, vidpid, serialno, binfile)
   else:
     raise ServoUpdaterException("Can't detect updater version")
 
@@ -439,7 +439,7 @@ def main():
   if vers == 2:
     flash(brdfile, serialno, binfile)
   elif vers == 6:
-    flash2(vidpid, serialno, binfile)
+    do_with_retries(flash2, vidpid, serialno, binfile)
   else:
     raise ServoUpdaterException("Can't detect updater version")
 
