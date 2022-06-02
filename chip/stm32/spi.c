@@ -341,7 +341,7 @@ static void setup_for_transaction(void)
 
 	/* Ready to receive */
 	state = SPI_STATE_READY_TO_RX;
-	tx_status(EC_SPI_OLD_READY);
+	tx_status(EC_SPI_RX_READY);
 
 #ifdef CHIP_FAMILY_STM32H7
 	spi->cr1 |= STM32_SPI_CR1_SPE;
