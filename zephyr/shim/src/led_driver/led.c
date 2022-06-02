@@ -22,7 +22,7 @@
 
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
+LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 
 #define LED_COLOR_NODE  DT_PATH(led_colors)
 
