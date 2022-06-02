@@ -10048,7 +10048,11 @@ int cmd_typec_control(int argc, char *argv[])
 			"    2: Enter mode\n"
 			"        args: <0: DP, 1:TBT, 2:USB4>\n"
 			"    3: Set TBT UFP Reply\n"
-			"        args: <0: NAK, 1: ACK>\n",
+			"        args: <0: NAK, 1: ACK>\n"
+			"    4: Set USB mux mode\n"
+			"        args: <mux_index> <mux_mode>\n"
+			"        <mux_mode> is one of: dp, dock, usb, tbt,\n"
+			"                              usb4, none, safe\n",
 			argv[0]);
 		return -1;
 	}
@@ -10105,6 +10109,39 @@ int cmd_typec_control(int argc, char *argv[])
 			return -1;
 		}
 		p.tbt_ufp_reply = conversion_result;
+		break;
+	case TYPEC_CONTROL_COMMAND_USB_MUX_SET:
+		if (argc < 5) {
+			fprintf(stderr, "Missing index or mode\n");
+			return -1;
+		}
+
+		conversion_result = strtol(argv[3], &endptr, 0);
+		if ((endptr && *endptr) || conversion_result > UINT8_MAX ||
+						conversion_result < 0) {
+			fprintf(stderr, "Bad index\n");
+			return -1;
+		}
+		p.mux_params.mux_index = conversion_result;
+		if (!strcmp(argv[4], "dp")) {
+			p.mux_params.mux_flags = USB_PD_MUX_DP_ENABLED;
+		} else if (!strcmp(argv[4], "dock")) {
+			p.mux_params.mux_flags = USB_PD_MUX_DOCK;
+		} else if (!strcmp(argv[4], "usb")) {
+			p.mux_params.mux_flags = USB_PD_MUX_USB_ENABLED;
+		} else if (!strcmp(argv[4], "tbt")) {
+			p.mux_params.mux_flags = USB_PD_MUX_TBT_COMPAT_ENABLED;
+		} else if (!strcmp(argv[4], "usb4")) {
+			p.mux_params.mux_flags = USB_PD_MUX_USB4_ENABLED;
+		} else if (!strcmp(argv[4], "none")) {
+			p.mux_params.mux_flags = USB_PD_MUX_NONE;
+		} else if (!strcmp(argv[4], "safe")) {
+			p.mux_params.mux_flags = USB_PD_MUX_SAFE_MODE;
+		} else {
+			fprintf(stderr, "Bad mux mode\n");
+			return -1;
+		}
+		break;
 	}
 
 	rv = ec_command(EC_CMD_TYPEC_CONTROL, 0, &p, sizeof(p),

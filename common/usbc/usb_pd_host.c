@@ -126,6 +126,15 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 		return pd_request_enter_mode(p->port, p->mode_to_enter);
 	case TYPEC_CONTROL_COMMAND_TBT_UFP_REPLY:
 		return board_set_tbt_ufp_reply(p->port, p->tbt_ufp_reply);
+	case TYPEC_CONTROL_COMMAND_USB_MUX_SET:
+		if (!IS_ENABLED(CONFIG_USB_MUX_AP_CONTROL))
+			return EC_RES_INVALID_PARAM;
+		/* TODO: Check if AP wants to set usb mode or polarity */
+		usb_mux_set_single(p->port, p->mux_params.mux_index,
+				   p->mux_params.mux_flags,
+				   USB_SWITCH_CONNECT,
+				   polarity_rm_dts(pd_get_polarity(p->port)));
+		return EC_RES_SUCCESS;
 	default:
 		return EC_RES_INVALID_PARAM;
 	}
