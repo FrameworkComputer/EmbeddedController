@@ -16,6 +16,7 @@ config PLATFORM_EC_RO_HEADER
 
 config PLATFORM_EC_RO_HEADER_OFFSET
 	hex "Offset in memory for the location of the header"
+	default 0x1000 if SOC_SERIES_MEC172X
 	default 0x0
 	help
 	  The offset (in bytes) of the header relative to the start address of
@@ -24,7 +25,6 @@ config PLATFORM_EC_RO_HEADER_OFFSET
 config PLATFORM_EC_RO_HEADER_SIZE
 	hex "Size of the RO header"
 	default 0x40 if SOC_FAMILY_NPCX
-	default 0x140 if SOC_SERIES_MEC172X
 	default 0x0
 	help
 	  The size of the RO header in bytes. This values should come from the

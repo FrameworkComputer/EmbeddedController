@@ -20,16 +20,18 @@ if SOC_SERIES_MEC172X
 config CROS_EC_PROGRAM_MEMORY_BASE
 	default 0xc0000
 
+# Data SRAM base
 config CROS_EC_RAM_BASE
-	default 0xc0000
+	default 0x118000
 
-# Data size: 64K - 2K, top 1KB is persistent
+# Total data SRAM size
 config CROS_EC_DATA_RAM_SIZE
-	default 0x00F800
+	default 0x010000
 
-# Code + Data: Top 1KB is peristent
+# Top 2KB reserved for PUF leaving 62KB
+# 61KB for data + 1KB persistent across chip reset.
 config CROS_EC_RAM_SIZE
-	default 0x067800
+	default 0x00f800
 
 config FLASH_SIZE
 	default 512
@@ -37,8 +39,9 @@ config FLASH_SIZE
 config CROS_EC_RO_MEM_OFF
 	default 0x0
 
+# was 0x40000
 config CROS_EC_RO_SIZE
-	default 0x40000
+	default 0x3F000
 
 # RW firmware in program memory - Identical to RO, only one image loaded at a
 # time.

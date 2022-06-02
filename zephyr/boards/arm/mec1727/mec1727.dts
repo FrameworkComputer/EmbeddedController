@@ -8,8 +8,7 @@
 #include <cros/microchip/mec1727.dtsi>
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/gpio_defines.h>
-#include <microchip/mec172xnsz.dtsi>
-#include <microchip/mec172x/mec172xnsz-pinctrl.dtsi>
+#include <microchip/mec1727nsz.dtsi>
 
 / {
 	model = "MEC1727";
