@@ -23,7 +23,7 @@
 #define SYV682X_ORD DT_DEP_ORD(DT_NODELABEL(syv682x_emul))
 #define GPIO_USB_C1_FRS_EN_PATH DT_PATH(named_gpios, usb_c1_frs_en)
 
-struct ppc_syv682c_fixture {
+struct ppc_syv682x_fixture {
 	struct i2c_emul *ppc_emul;
 	const struct device *frs_en_gpio_port;
 	int frs_en_gpio_pin;
@@ -37,9 +37,9 @@ struct reg_to_fail_data {
 
 static const int syv682x_port = 1;
 
-static void *syv682c_test_setup(void)
+static void *syv682x_test_setup(void)
 {
-	static struct ppc_syv682c_fixture fixture;
+	static struct ppc_syv682x_fixture fixture;
 
 	fixture.ppc_emul = syv682x_emul_get(SYV682X_ORD);
 	fixture.frs_en_gpio_port =
@@ -51,7 +51,7 @@ static void *syv682c_test_setup(void)
 
 static void syv682x_test_after(void *data)
 {
-	struct ppc_syv682c_fixture *fixture = data;
+	struct ppc_syv682x_fixture *fixture = data;
 	struct i2c_emul *emul = fixture->ppc_emul;
 
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
@@ -66,11 +66,15 @@ static void syv682x_test_after(void *data)
 	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-ZTEST_SUITE(ppc_syv682c, drivers_predicate_post_main, syv682c_test_setup, NULL,
+ZTEST_SUITE(ppc_syv682x, drivers_predicate_post_main, syv682x_test_setup, NULL,
 	    syv682x_test_after, NULL);
 
-ZTEST_F(ppc_syv682c, test_syv682x_board_is_syv682c)
+ZTEST_F(ppc_syv682x, test_syv682x_board_is_syv682c)
 {
+	/*
+	 * The SYV682x driver should assume a version-C part in the absence of a
+	 * board override.
+	 */
 	zassert_true(syv682x_board_is_syv682c(syv682x_port), NULL);
 }
 
@@ -95,7 +99,7 @@ static void check_control_1_default_init(uint8_t control_1)
 		     "Default init, but 5V power path selected");
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_init)
+ZTEST_F(ppc_syv682x, test_syv682x_init)
 {
 	uint8_t reg;
 	int ilim;
@@ -187,7 +191,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_init)
 				   SYV682X_CONTROL_4_NONE);
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_vbus_enable)
+ZTEST_F(ppc_syv682x, test_syv682x_vbus_enable)
 {
 	uint8_t reg;
 
@@ -210,7 +214,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_vbus_enable)
 		     "PPC is not sourcing VBUS after VBUS enabled");
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_interrupt)
+ZTEST_F(ppc_syv682x, test_syv682x_interrupt)
 {
 	uint8_t reg;
 
@@ -364,7 +368,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_interrupt)
 				   SYV682X_CONTROL_4_NONE);
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_frs)
+ZTEST_F(ppc_syv682x, test_syv682x_frs)
 {
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_USB_C1_FRS_EN_PATH, gpios));
@@ -422,7 +426,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_frs)
 				   SYV682X_CONTROL_4_NONE);
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_source_current_limit)
+ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit)
 {
 	uint8_t reg;
 	int ilim_val;
@@ -458,7 +462,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_source_current_limit)
 		      "Set 3.0A Rp value, but 5V_ILIM is %d", ilim_val);
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_write_busy)
+ZTEST_F(ppc_syv682x, test_syv682x_write_busy)
 {
 	/*
 	 * Writes should fail while the BUSY bit is set, except that writes to
@@ -486,7 +490,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_write_busy)
 	syv682x_emul_set_busy_reads(this->ppc_emul, 0);
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_dev_is_connected)
+ZTEST_F(ppc_syv682x, test_syv682x_dev_is_connected)
 {
 	uint8_t reg;
 
@@ -510,7 +514,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_dev_is_connected)
 		   "Could not connect device as source");
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_vbus_sink_enable)
+ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_enable)
 {
 	uint8_t reg;
 	int ilim;
@@ -554,7 +558,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_vbus_sink_enable)
 		     "Sink disabled, but power path enabled");
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_vbus_sink_oc_limit)
+ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_oc_limit)
 {
 	zassert_ok(ppc_vbus_sink_enable(syv682x_port, true),
 		   "Sink enable failed");
@@ -582,7 +586,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_vbus_sink_oc_limit)
 		   "Sink disable failed");
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_set_vconn)
+ZTEST_F(ppc_syv682x, test_syv682x_set_vconn)
 {
 	syv682x_emul_set_condition(this->ppc_emul, SYV682X_STATUS_NONE,
 				   SYV682X_CONTROL_4_VBAT_OVP);
@@ -590,7 +594,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_set_vconn)
 			  "VBAT OVP, but ppc_set_vconn succeeded");
 }
 
-ZTEST(ppc_syv682c, test_syv682x_ppc_dump)
+ZTEST(ppc_syv682x, test_syv682x_ppc_dump)
 {
 	/*
 	 * The ppc_dump command should succeed for this port. Don't check the
@@ -618,7 +622,7 @@ static int mock_read_intercept_reg_fail(struct i2c_emul *emul, int reg,
 	return 1;
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_i2c_error_status)
+ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_status)
 {
 	/* Failed STATUS read should cause init to fail. */
 	i2c_common_emul_set_read_fail_reg(this->ppc_emul, SYV682X_STATUS_REG);
@@ -628,7 +632,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_i2c_error_status)
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_i2c_error_control_1)
+ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_1)
 {
 	const struct ppc_drv *drv = ppc_chips[syv682x_port].drv;
 	struct reg_to_fail_data reg_fail = {
@@ -695,7 +699,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_i2c_error_control_1)
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_i2c_error_control_2)
+ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_2)
 {
 	/* Failed CONTROL_2 read */
 	i2c_common_emul_set_read_fail_reg(this->ppc_emul,
@@ -714,7 +718,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_i2c_error_control_2)
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_i2c_error_control_3)
+ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_3)
 {
 	/* Failed CONTROL_3 read */
 	i2c_common_emul_set_read_fail_reg(this->ppc_emul,
@@ -733,7 +737,7 @@ ZTEST_F(ppc_syv682c, test_syv682x_i2c_error_control_3)
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-ZTEST_F(ppc_syv682c, test_syv682x_i2c_error_control_4)
+ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_4)
 {
 	/* Failed CONTROL_4 read */
 	i2c_common_emul_set_read_fail_reg(this->ppc_emul,
