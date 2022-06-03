@@ -54,6 +54,10 @@ static void syv682x_test_after(void *data)
 	struct ppc_syv682x_fixture *fixture = data;
 	struct i2c_emul *emul = fixture->ppc_emul;
 
+	/* Disable the power path and clear interrupt conditions. */
+	zassert_ok(syv682x_emul_set_reg(emul, SYV682X_CONTROL_1_REG,
+					SYV682X_CONTROL_1_PWR_ENB),
+		   NULL);
 	syv682x_emul_set_condition(emul, SYV682X_STATUS_NONE,
 				   SYV682X_CONTROL_4_NONE);
 
@@ -99,10 +103,9 @@ static void check_control_1_default_init(uint8_t control_1)
 		     "Default init, but 5V power path selected");
 }
 
-ZTEST_F(ppc_syv682x, test_syv682x_init)
+ZTEST_F(ppc_syv682x, test_syv682x_init_dead_battery)
 {
 	uint8_t reg;
-	int ilim;
 
 	/*
 	 * With a dead battery, the device powers up sinking VBUS, and the
@@ -124,6 +127,11 @@ ZTEST_F(ppc_syv682x, test_syv682x_init)
 		      "Dead battery init, but CONTROL_1 is 0x%x", reg);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 		      "Dead battery init, but VBUS source enabled");
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_init_vsafe0v)
+{
+	uint8_t reg;
 
 	/* With VBUS at vSafe0V, init should set the default configuration. */
 	zassert_ok(syv682x_emul_set_reg(this->ppc_emul, SYV682X_CONTROL_1_REG,
@@ -136,6 +144,11 @@ ZTEST_F(ppc_syv682x, test_syv682x_init)
 					&reg),
 		   NULL);
 	check_control_1_default_init(reg);
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_init_sink_disabled)
+{
+	uint8_t reg;
 
 	/* With sink disabled, init should do the same thing. */
 	zassert_ok(syv682x_emul_set_reg(this->ppc_emul, SYV682X_CONTROL_1_REG,
@@ -148,6 +161,17 @@ ZTEST_F(ppc_syv682x, test_syv682x_init)
 					&reg),
 		   NULL);
 	check_control_1_default_init(reg);
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_init_common)
+{
+	uint8_t reg;
+	int ilim;
+
+	zassert_ok(ppc_init(syv682x_port), "PPC init failed");
+	zassert_ok(syv682x_emul_get_reg(this->ppc_emul, SYV682X_CONTROL_1_REG,
+					&reg),
+		   NULL);
 
 	/*
 	 * Any init sequence should also disable the FRS GPIO, set the 5V
@@ -182,13 +206,6 @@ ZTEST_F(ppc_syv682x, test_syv682x_init)
 	zassert_equal(reg & ~SYV682X_CONTROL_4_INT_MASK,
 		      SYV682X_CONTROL_4_CC1_BPS | SYV682X_CONTROL_4_CC2_BPS,
 		      "Default init, but CONTROL_4 is 0x%x", reg);
-
-	/* Disable the power path again. */
-	zassert_ok(syv682x_emul_set_reg(this->ppc_emul, SYV682X_CONTROL_1_REG,
-					SYV682X_CONTROL_1_PWR_ENB),
-		   NULL);
-	syv682x_emul_set_condition(this->ppc_emul, SYV682X_STATUS_NONE,
-				   SYV682X_CONTROL_4_NONE);
 }
 
 ZTEST_F(ppc_syv682x, test_syv682x_vbus_enable)
@@ -214,10 +231,8 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_enable)
 		     "PPC is not sourcing VBUS after VBUS enabled");
 }
 
-ZTEST_F(ppc_syv682x, test_syv682x_interrupt)
+ZTEST_F(ppc_syv682x, test_syv682x_interrupt_source_oc)
 {
-	uint8_t reg;
-
 	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
 		   "VBUS enable failed");
 	/* An OC event less than 100 ms should not cause VBUS to turn off. */
@@ -230,17 +245,10 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt)
 	msleep(60);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 		      "PPC is sourcing VBUS after 100 ms OC");
+}
 
-	syv682x_emul_set_condition(this->ppc_emul, SYV682X_STATUS_NONE,
-				   SYV682X_CONTROL_4_NONE);
-	/*
-	 * TODO(b/190519131): Organize the tests to be more hermetic and avoid
-	 * the following issue: The driver triggers overcurrent protection. If
-	 * overcurrent protection is triggered 3 times, the TC won't turn the
-	 * port back on without a detach. This could frustrate efforts to test
-	 * the TC.
-	 */
-
+ZTEST_F(ppc_syv682x, test_syv682x_interrupt_tsd)
+{
 	/*
 	 * A TSD event should cause the driver to disable source and sink paths.
 	 * (The device will have already physically disabled them.) The state of
@@ -253,9 +261,10 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt)
 	msleep(1);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 		      "PPC is sourcing power after TSD");
-	syv682x_emul_set_condition(this->ppc_emul, SYV682X_STATUS_NONE,
-				   SYV682X_CONTROL_4_NONE);
+}
 
+ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_ovp)
+{
 	/* An OVP event should cause the driver to disable the source path. */
 	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
 		   "Source enable failed");
@@ -264,8 +273,11 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt)
 	msleep(1);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 		      "PPC is sourcing power after OVP");
-	syv682x_emul_set_condition(this->ppc_emul, SYV682X_STATUS_NONE,
-				   SYV682X_CONTROL_4_NONE);
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_hv_oc)
+{
+	uint8_t reg;
 
 	/*
 	 * A high-voltage OC while sinking should cause the driver to try to
@@ -301,8 +313,11 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt)
 	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB,
 		      SYV682X_CONTROL_1_PWR_ENB,
 		      "Power path enabled after HV_OC handled 3 times");
-	syv682x_emul_set_condition(this->ppc_emul, SYV682X_STATUS_NONE,
-				   SYV682X_CONTROL_4_NONE);
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vconn_oc)
+{
+	uint8_t reg;
 
 	/*
 	 * A VCONN OC event less than 100 ms should not cause the driver to turn
@@ -336,8 +351,11 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt)
 	zassert_false(reg & (SYV682X_CONTROL_4_VCONN1 |
 			     SYV682X_CONTROL_4_VCONN2),
 		      "VCONN enabled after long VCONN OC");
-	syv682x_emul_set_condition(this->ppc_emul, SYV682X_STATUS_NONE,
-				   SYV682X_CONTROL_4_NONE);
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vconn_ov)
+{
+	uint8_t reg;
 
 	/*
 	 * A VCONN over-voltage (VBAT_OVP) event will cause the device to
@@ -359,16 +377,9 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt)
 	zassert_false(reg & (SYV682X_CONTROL_4_VCONN1 |
 			     SYV682X_CONTROL_4_VCONN2),
 		      "VCONN enabled after handling VBAT_OVP");
-	/*
-	 * TODO(b/190519131): The PD stack should generate a Reset in response
-	 * to a CC over-voltage event. There is currently no easy way to test
-	 * that a Hard Reset occurred.
-	 */
-	syv682x_emul_set_condition(this->ppc_emul, SYV682X_STATUS_NONE,
-				   SYV682X_CONTROL_4_NONE);
 }
 
-ZTEST_F(ppc_syv682x, test_syv682x_frs)
+ZTEST_F(ppc_syv682x, test_syv682x_frs_enable)
 {
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_USB_C1_FRS_EN_PATH, gpios));
@@ -392,6 +403,19 @@ ZTEST_F(ppc_syv682x, test_syv682x_frs)
 		reg & (SYV682X_CONTROL_4_CC1_BPS | SYV682X_CONTROL_4_CC2_BPS),
 		SYV682X_CONTROL_4_CC1_BPS,
 		"FRS enabled with CC1 polarity, but CONTROL_4 is 0x%x", reg);
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_frs_disable)
+{
+	const struct device *gpio_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_USB_C1_FRS_EN_PATH, gpios));
+	uint8_t reg;
+
+	ppc_vbus_sink_enable(syv682x_port, true);
+	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
+		      "PPC is sourcing VBUS after sink enabled");
+	ppc_set_polarity(syv682x_port, 0 /* CC1 */);
+
 	ppc_set_frs_enable(syv682x_port, false);
 	zassert_equal(gpio_emul_output_get(gpio_dev, this->frs_en_gpio_pin), 0,
 		      "FRS disabled, but FRS GPIO not deasserted");
@@ -401,18 +425,11 @@ ZTEST_F(ppc_syv682x, test_syv682x_frs)
 	zassert_equal(
 		reg & (SYV682X_CONTROL_4_CC1_BPS | SYV682X_CONTROL_4_CC2_BPS),
 		SYV682X_CONTROL_4_CC1_BPS | SYV682X_CONTROL_4_CC2_BPS,
-		"FRS enabled with CC1 polarity, but CONTROL_4 is 0x%x", reg);
+		"FRS disabled with CC1 polarity, but CONTROL_4 is 0x%x", reg);
+}
 
-	ppc_set_polarity(syv682x_port, 1 /* CC2 */);
-	ppc_set_frs_enable(syv682x_port, true);
-	zassert_ok(syv682x_emul_get_reg(this->ppc_emul, SYV682X_CONTROL_4_REG,
-					&reg),
-		   "Reading CONTROL_4 failed");
-	zassert_equal(
-		reg & (SYV682X_CONTROL_4_CC1_BPS | SYV682X_CONTROL_4_CC2_BPS),
-		SYV682X_CONTROL_4_CC2_BPS,
-		"FRS enabled with CC2 polarity, but CONTROL_4 is 0x%x", reg);
-
+ZTEST_F(ppc_syv682x, test_syv682x_frs_trigger)
+{
 	/*
 	 * An FRS event when the PPC is Sink should cause the PPC to switch from
 	 * Sink to Source.
@@ -426,7 +443,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_frs)
 				   SYV682X_CONTROL_4_NONE);
 }
 
-ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit)
+ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit_usb_default)
 {
 	uint8_t reg;
 	int ilim_val;
@@ -440,6 +457,12 @@ ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit)
 	ilim_val = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
 	zassert_equal(reg & SYV682X_5V_ILIM_MASK, SYV682X_5V_ILIM_1_25,
 		      "Set USB Rp value, but 5V_ILIM is %d", ilim_val);
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit_1500ma)
+{
+	uint8_t reg;
+	int ilim_val;
 
 	zassert_ok(ppc_set_vbus_source_current_limit(syv682x_port,
 						     TYPEC_RP_1A5),
@@ -450,6 +473,12 @@ ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit)
 	ilim_val = (reg & SYV682X_5V_ILIM_MASK) >> SYV682X_5V_ILIM_BIT_SHIFT;
 	zassert_equal(ilim_val, SYV682X_5V_ILIM_1_75,
 		      "Set 1.5A Rp value, but 5V_ILIM is %d", ilim_val);
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_source_current_limit_3000ma)
+{
+	uint8_t reg;
+	int ilim_val;
 
 	zassert_ok(ppc_set_vbus_source_current_limit(syv682x_port,
 						     TYPEC_RP_3A0),
@@ -514,11 +543,8 @@ ZTEST_F(ppc_syv682x, test_syv682x_dev_is_connected)
 		   "Could not connect device as source");
 }
 
-ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_enable)
+ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_enable_trivial)
 {
-	uint8_t reg;
-	int ilim;
-
 	/*
 	 * If VBUS source is already enabled, disabling VBUS sink should
 	 * trivially succeed.
@@ -527,6 +553,12 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_enable)
 		   "VBUS enable failed");
 	zassert_ok(ppc_vbus_sink_enable(syv682x_port, false),
 		   "Sink disable failed");
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_enable_power_path)
+{
+	uint8_t reg;
+	int ilim;
 
 	/*
 	 * After enabling VBUS sink, the HV power path should be enabled in sink
@@ -548,6 +580,16 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_enable)
 	ilim = (reg & SYV682X_HV_ILIM_MASK) >> SYV682X_HV_ILIM_BIT_SHIFT;
 	zassert_equal(ilim, CONFIG_PLATFORM_EC_USBC_PPC_SYV682X_HV_ILIM,
 		      "Sink enabled, but HV current limit set to %d", ilim);
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_disable)
+{
+	uint8_t reg;
+
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, false),
+		   "VBUS enable failed");
+	zassert_ok(ppc_vbus_sink_enable(syv682x_port, true),
+		   "Sink disable failed");
 
 	zassert_ok(ppc_vbus_sink_enable(syv682x_port, false),
 		   "Sink disable failed");
