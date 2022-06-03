@@ -61,6 +61,75 @@ static void disconnect_partner_from_port(struct usbc_alt_mode_fixture *fixture)
 	k_sleep(K_SECONDS(1));
 }
 
+static void add_discovery_responses(struct tcpci_partner_data *partner)
+{
+	/* Add Discover Identity response */
+	partner->identity_vdm[VDO_INDEX_HDR] =
+		VDO(USB_SID_PD, /* structured VDM */ true,
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT);
+	partner->identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
+		/* USB host */ false, /* USB device */ false, IDH_PTYPE_AMA,
+		/* modal operation */ true, USB_VID_GOOGLE);
+	partner->identity_vdm[VDO_INDEX_CSTAT] = 0xabcdabcd;
+	partner->identity_vdm[VDO_INDEX_PRODUCT] = VDO_PRODUCT(0x1234, 0x5678);
+	/* Hardware version 1, firmware version 2 */
+	partner->identity_vdm[VDO_INDEX_AMA] = 0x12000000;
+	partner->identity_vdos = VDO_INDEX_AMA + 1;
+
+	/* Add Discover Modes response */
+	/* Support one mode for DisplayPort VID. Copied from Hoho. */
+	partner->modes_vdm[VDO_INDEX_HDR] =
+		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES);
+	partner->modes_vdm[VDO_INDEX_HDR + 1] = VDO_MODE_DP(
+		0, MODE_DP_PIN_C, 1, CABLE_PLUG, MODE_DP_V13, MODE_DP_SNK);
+	partner->modes_vdos = VDO_INDEX_HDR + 2;
+
+	/* Add Discover SVIDs response */
+	/* Support DisplayPort VID. */
+	partner->svids_vdm[VDO_INDEX_HDR] =
+		VDO(USB_SID_PD, /* structured VDM */ true,
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID);
+	partner->svids_vdm[VDO_INDEX_HDR + 1] =
+		VDO_SVID(USB_SID_DISPLAYPORT, 0);
+	partner->svids_vdos = VDO_INDEX_HDR + 2;
+}
+
+static void add_displayport_mode_responses(struct tcpci_partner_data *partner)
+{
+	/* DisplayPort alt mode setup remains in the same suite as discovery
+	 * setup because DisplayPort is picked from the Discovery VDOs offered.
+	 */
+
+	/* Add DisplayPort EnterMode response */
+	partner->dp_enter_mode_vdm[VDO_INDEX_HDR] =
+		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_ENTER_MODE);
+	partner->dp_enter_mode_vdos = VDO_INDEX_HDR + 1;
+
+	/* Add DisplayPort StatusUpdate response */
+	partner->dp_status_vdm[VDO_INDEX_HDR] =
+		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DP_STATUS);
+	partner->dp_status_vdm[VDO_INDEX_HDR + 1] =
+		/* Mainly copied from hoho */
+		VDO_DP_STATUS(0, /* IRQ_HPD */
+			      false, /* HPD_HI|LOW - Changed*/
+			      0, /* request exit DP */
+			      0, /* request exit USB */
+			      0, /* MF pref */
+			      true, /* DP Enabled */
+			      0, /* power low e.g. normal */
+			      0x2 /* Connected as Sink */);
+	partner->dp_status_vdos = VDO_INDEX_HDR + 2;
+
+	/* Add DisplayPort Configure Response */
+	partner->dp_config_vdm[VDO_INDEX_HDR] =
+		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
+		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DP_CONFIG);
+	partner->dp_config_vdos = VDO_INDEX_HDR + 1;
+}
+
 static void *usbc_alt_mode_setup(void)
 {
 	static struct usbc_alt_mode_fixture fixture;
@@ -79,34 +148,8 @@ static void *usbc_alt_mode_setup(void)
 	fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 
-	/* Set up SOP discovery responses for DP adapter. */
-	partner->identity_vdm[VDO_INDEX_HDR] =
-		VDO(USB_SID_PD, /* structured VDM */ true,
-		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT);
-	partner->identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
-		/* USB host */ false, /* USB device */ false, IDH_PTYPE_AMA,
-		/* modal operation */ true, USB_VID_GOOGLE);
-	partner->identity_vdm[VDO_INDEX_CSTAT] = 0xabcdabcd;
-	partner->identity_vdm[VDO_INDEX_PRODUCT] = VDO_PRODUCT(0x1234, 0x5678);
-	/* Hardware version 1, firmware version 2 */
-	partner->identity_vdm[VDO_INDEX_AMA] = 0x12000000;
-	partner->identity_vdos = VDO_INDEX_AMA + 1;
-
-	/* Support DisplayPort VID. */
-	partner->svids_vdm[VDO_INDEX_HDR] =
-		VDO(USB_SID_PD, /* structured VDM */ true,
-		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID);
-	partner->svids_vdm[VDO_INDEX_HDR + 1] =
-		VDO_SVID(USB_SID_DISPLAYPORT, 0);
-	partner->svids_vdos = VDO_INDEX_HDR + 2;
-
-	/* Support one mode for DisplayPort VID. Copied from Hoho. */
-	partner->modes_vdm[VDO_INDEX_HDR] =
-		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
-		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES);
-	partner->modes_vdm[VDO_INDEX_HDR + 1] = VDO_MODE_DP(
-		0, MODE_DP_PIN_C, 1, CABLE_PLUG, MODE_DP_V13, MODE_DP_SNK);
-	partner->modes_vdos = VDO_INDEX_HDR + 2;
+	add_discovery_responses(partner);
+	add_displayport_mode_responses(partner);
 
 	/* Sink 5V 3A. */
 	snk_ext->pdo[1] = PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
@@ -160,6 +203,31 @@ ZTEST_F(usbc_alt_mode, verify_discovery)
 	zassert_equal(discovery->svids[0].mode_vdo[0],
 		      fixture->partner.modes_vdm[1],
 		      "DP mode VDOs did not match");
+}
+
+ZTEST_F(usbc_alt_mode, verify_displayport_mode_entry)
+{
+	/* Verify host command when VDOs are present. */
+	struct ec_params_usb_pd_get_mode_request params = {
+		.port = TEST_PORT,
+		.svid_idx = 0,
+	};
+	struct ec_params_usb_pd_get_mode_response response;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_USB_PD_GET_AMODE, 0, response, params);
+
+	zassume_ok(host_command_process(&args), NULL);
+	zassume_ok(args.result, NULL);
+
+	/* Response should be populated with a DisplayPort VDO */
+	zassert_equal(args.response_size, sizeof(response), NULL);
+	zassert_equal(response.svid, USB_SID_DISPLAYPORT, NULL);
+	zassert_equal(response.vdo[0],
+		      fixture->partner.modes_vdm[response.opos], NULL);
+
+	/* DPM configures the partner on DP mode entry */
+	/* Verify port partner thinks its configured for DisplayPort */
+	zassert_true(fixture->partner.displayport_configured, NULL);
 }
 
 ZTEST_SUITE(usbc_alt_mode, drivers_predicate_post_main, usbc_alt_mode_setup,

@@ -30,6 +30,7 @@ void tcpci_partner_common_hard_reset_as_role(struct tcpci_partner_data *data,
 	data->power_role = power_role;
 	data->data_role = power_role == PD_ROLE_SOURCE ? PD_ROLE_DFP :
 							 PD_ROLE_UFP;
+	data->displayport_configured = false;
 }
 
 /**
@@ -616,7 +617,33 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 						    data->modes_vdos, 0);
 		}
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
-	/* TODO(b/219562077): Support DP mode entry. */
+	case CMD_ENTER_MODE:
+		/* Partner emulator only supports entering DP mode */
+		if (data->dp_enter_mode_vdos > 0 &&
+		    (PD_VDO_VID(vdm_header) == USB_SID_DISPLAYPORT)) {
+			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						    data->dp_enter_mode_vdm,
+						    data->dp_enter_mode_vdos,
+						    0);
+		}
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case CMD_DP_STATUS:
+		if (data->dp_status_vdos > 0 &&
+		    (PD_VDO_VID(vdm_header) == USB_SID_DISPLAYPORT)) {
+			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						    data->dp_status_vdm,
+						    data->dp_status_vdos, 0);
+		}
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case CMD_DP_CONFIG:
+		if (data->dp_config_vdos > 0 &&
+		    (PD_VDO_VID(vdm_header) == USB_SID_DISPLAYPORT)) {
+			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						    data->dp_config_vdm,
+						    data->dp_config_vdos, 0);
+			data->displayport_configured = true;
+		}
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	default:
 		/* TCPCI r. 2.0: Ignore unsupported commands. */
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
@@ -877,6 +904,7 @@ void tcpci_partner_common_disconnect(struct tcpci_partner_data *data)
 	tcpci_partner_clear_msg_queue(data);
 	tcpci_partner_stop_sender_response_timer(data);
 	data->tcpci_emul = NULL;
+	data->displayport_configured = false;
 }
 
 int tcpci_partner_common_enable_pd_logging(struct tcpci_partner_data *data,
@@ -1240,4 +1268,5 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->ops.rx_consumed = tcpci_partner_rx_consumed_op;
 	data->ops.control_change = NULL;
 	data->ops.disconnect = tcpci_partner_disconnect_op;
+	data->displayport_configured = false;
 }
