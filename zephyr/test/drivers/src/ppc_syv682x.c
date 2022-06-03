@@ -211,17 +211,9 @@ ZTEST_F(ppc_syv682x, test_syv682x_init_common)
 		      "Default init, but CONTROL_4 is 0x%x", reg);
 }
 
-ZTEST_F(ppc_syv682x, test_syv682x_vbus_enable)
+ZTEST_F(ppc_syv682x, test_syv682x_vbus_source_enable)
 {
 	uint8_t reg;
-
-	zassume_ok(syv682x_emul_get_reg(this->ppc_emul, SYV682X_CONTROL_1_REG,
-					&reg),
-		   "Reading CONTROL_1 failed");
-	zassert_not_equal(reg & SYV682X_CONTROL_1_PWR_ENB,
-			  SYV682X_CONTROL_1_PWR_ENB, "VBUS sourcing disabled");
-	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
-		      "PPC sourcing VBUS at beginning of test");
 
 	zassert_ok(ppc_vbus_source_enable(syv682x_port, true),
 		   "VBUS enable failed");
@@ -229,9 +221,17 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_enable)
 					&reg),
 		   "Reading CONTROL_1 failed");
 	zassert_equal(reg & SYV682X_CONTROL_1_PWR_ENB, 0,
-		      "VBUS sourcing disabled");
+		      "VBUS sourcing enabled but power path disabled");
 	zassert_true(ppc_is_sourcing_vbus(syv682x_port),
 		     "PPC is not sourcing VBUS after VBUS enabled");
+}
+
+ZTEST_F(ppc_syv682x, test_syv682x_vbus_source_disable)
+{
+	zassert_ok(ppc_vbus_source_enable(syv682x_port, false),
+		   "VBUS disable failed");
+	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
+		      "PPC sourcing VBUS after disable");
 }
 
 ZTEST_F(ppc_syv682x, test_syv682x_interrupt_source_oc)
