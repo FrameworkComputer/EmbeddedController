@@ -6,6 +6,7 @@
  */
 
 #include "anx7483.h"
+#include "retimer/anx7483_public.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -313,6 +314,34 @@ enum ec_error_list anx7483_set_default_tuning(const struct usb_mux *me,
 	}
 
 	return EC_SUCCESS;
+}
+
+enum ec_error_list anx7483_set_eq(const struct usb_mux *me,
+				  enum anx7483_tune_pin pin,
+				  enum anx7483_eq_setting eq)
+{
+	int reg, value;
+
+	if (pin == ANX7483_PIN_UTX1)
+		reg = ANX7483_UTX1_PORT_CFG0_REG;
+	else if (pin ==  ANX7483_PIN_UTX2)
+		reg = ANX7483_UTX2_PORT_CFG0_REG;
+	else if (pin == ANX7483_PIN_URX1)
+		reg = ANX7483_URX1_PORT_CFG0_REG;
+	else if (pin == ANX7483_PIN_URX2)
+		reg = ANX7483_URX2_PORT_CFG0_REG;
+	else if (pin == ANX7483_PIN_DRX1)
+		reg = ANX7483_DRX1_PORT_CFG0_REG;
+	else if (pin == ANX7483_PIN_DRX2)
+		reg = ANX7483_DRX2_PORT_CFG0_REG;
+	else
+		return EC_ERROR_INVAL;
+
+	RETURN_ERROR(anx7483_read(me, reg, &value));
+	value &= ~ANX7483_CFG0_EQ_MASK;
+	value |= eq << ANX7483_CFG0_EQ_SHIFT;
+
+	return anx7483_write(me, reg, value);
 }
 
 const struct usb_mux_driver anx7483_usb_retimer_driver = {

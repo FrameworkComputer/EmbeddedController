@@ -50,6 +50,9 @@
 #define ANX7483_DRX1_PORT_CFG0_REG	0x5C
 #define ANX7483_DRX2_PORT_CFG0_REG	0x20
 
+#define ANX7483_CFG0_EQ_SHIFT		4
+#define ANX7483_CFG0_EQ_MASK		GENMASK(7, 4)
+
 /*
  * Default CFG0 value to apply: 9.2 dB with optimized tuning step
  */
