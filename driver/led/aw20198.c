@@ -107,13 +107,13 @@ static int aw20198_set_color(struct rgbkbd *ctx, uint8_t offset,
 			buf, frame_len, NULL, 0);
 }
 
-static int aw20198_set_scale(struct rgbkbd *ctx, uint8_t offset, uint8_t scale,
-			     uint8_t len)
+static int aw20198_set_scale(struct rgbkbd *ctx, uint8_t offset,
+			     struct rgb_s scale, uint8_t len)
 {
 	uint8_t buf[sizeof(offset) + BUF_SIZE];
 	const int frame_len = len * SIZE_OF_RGB + sizeof(offset);
 	const int frame_offset = offset * SIZE_OF_RGB;
-	int rv;
+	int i, rv;
 
 	if (frame_offset + frame_len > sizeof(buf)) {
 		return EC_ERROR_OVERFLOW;
@@ -124,8 +124,12 @@ static int aw20198_set_scale(struct rgbkbd *ctx, uint8_t offset, uint8_t scale,
 		return rv;
 	}
 
-	buf[0] = offset * SIZE_OF_RGB;
-	memset(&buf[1], scale, len * SIZE_OF_RGB);
+	buf[0] = frame_offset;
+	for (i = 0; i < len; i++) {
+		buf[i * SIZE_OF_RGB + 1] = scale.r;
+		buf[i * SIZE_OF_RGB + 2] = scale.g;
+		buf[i * SIZE_OF_RGB + 3] = scale.b;
+	}
 
 	return i2c_xfer(ctx->cfg->i2c, AW20198_I2C_ADDR_FLAG,
 			buf, frame_len, NULL, 0);

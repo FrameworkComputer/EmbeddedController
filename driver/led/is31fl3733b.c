@@ -178,7 +178,7 @@ static int is31fl3733b_set_color(struct rgbkbd *ctx, uint8_t offset,
 }
 
 static int is31fl3733b_set_scale(struct rgbkbd *ctx, uint8_t offset,
-						uint8_t scale, uint8_t len)
+				 struct rgb_s scale, uint8_t len)
 {
 	/* is31fl3733b not support scale function */
 	return EC_SUCCESS;

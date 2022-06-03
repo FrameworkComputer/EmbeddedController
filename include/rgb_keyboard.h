@@ -15,6 +15,8 @@
 #define RGBKBD_MAX_GCC_LEVEL	0xff
 #define RGBKBD_MAX_SCALE	0xff
 
+#define RGBKBD_CTX_TO_GRID(ctx)	((ctx) - &rgbkbds[0])
+
 struct rgbkbd_cfg {
 	/* Driver for LED IC */
 	const struct rgbkbd_drv * const drv;
@@ -32,18 +34,23 @@ struct rgbkbd_init {
 	/* Global current control */
 	const uint8_t gcc;
 	/* LED brightness  */
-	const uint8_t scale;
+	const struct rgb_s scale;
 	/* Color */
 	const struct rgb_s color;
 };
 
-extern const struct rgbkbd_init rgbkbd_default;
+/**
+ * Register init settings.
+ *
+ * Must be called before rgbkbd_drv->init() is called.
+ *
+ * @param setting
+ */
+void rgbkbd_register_init_setting(const struct rgbkbd_init *setting);
 
 struct rgbkbd {
 	/* Static configuration */
 	const struct rgbkbd_cfg * const cfg;
-	/* Start-up settings */
-	const struct rgbkbd_init * const init;
 	/* Current state of the port */
 	enum rgbkbd_state state;
 	/* Buffer containing color info for each dot. */
@@ -79,7 +86,7 @@ struct rgbkbd_drv {
 	 * @return enum ec_error_list
 	 */
 	int (*set_scale)(struct rgbkbd *ctx, uint8_t offset,
-			 uint8_t scale, uint8_t len);
+			 struct rgb_s scale, uint8_t len);
 	/**
 	 * Set global current control.
 	 *

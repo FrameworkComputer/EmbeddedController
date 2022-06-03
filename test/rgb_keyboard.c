@@ -35,7 +35,6 @@ struct rgbkbd rgbkbds[] = {
 			.col_len = RGB_GRID0_COL,
 			.row_len = RGB_GRID0_ROW,
 		},
-		.init = &rgbkbd_default,
 		.buf = grid0,
 	},
 	[1] = {
@@ -45,7 +44,6 @@ struct rgbkbd rgbkbds[] = {
 			.col_len = RGB_GRID1_COL,
 			.row_len = RGB_GRID1_ROW,
 		},
-		.init = &rgbkbd_default,
 		.buf = grid1,
 	},
 };
@@ -110,7 +108,7 @@ static int test_drv_set_color(struct rgbkbd *ctx, uint8_t offset,
 
 
 static int test_drv_set_scale(struct rgbkbd *ctx, uint8_t offset,
-			      uint8_t scale, uint8_t len)
+			      struct rgb_s scale, uint8_t len)
 {
 	mock_state.count_drv_set_scale++;
 	return EC_SUCCESS;
@@ -224,8 +222,8 @@ static int test_rgbkbd_console_command(void)
 	uint8_t offset;
 	char *argv_demo[] = {"rgbk", "demo", "0"};
 	char *argv_gcc[] = {"rgbk", "100"};
-	char *argv_color[] = {"rgbk", buf, "1", "2", "3"};
-	char *argv_all[] = {"rgbk", "all", "1", "2", "3"};
+	char *argv_color[] = {"rgbk", buf, "0x010203"};
+	char *argv_all[] = {"rgbk", "all", "0x010203"};
 
 	/* Test 'rgbk demo 0'. */
 	before_test();
@@ -251,7 +249,7 @@ static int test_rgbkbd_console_command(void)
 	sprintf(buf, "%d,%d", x, y);
 	argc = ARRAY_SIZE(argv_color);
 	zassert_equal(cc_rgb(argc, argv_color), EC_SUCCESS,
-		      "rgbk %s 1 2 3", buf);
+		      "rgbk %s 0x010203", buf);
 	zassert_equal(ctx->buf[offset].r, 1, "R = 1");
 	zassert_equal(ctx->buf[offset].g, 2, "G = 2");
 	zassert_equal(ctx->buf[offset].b, 3, "B = 3");
