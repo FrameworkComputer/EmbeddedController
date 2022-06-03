@@ -53,11 +53,35 @@ test_static int test_rtc_alarm(void)
 	return EC_SUCCESS;
 }
 
+static const int rtc_match_delay_iterations = 5000;
+
+test_static int test_rtc_match_delay(void)
+{
+	struct rtc_time_reg rtc;
+	int i;
+
+	atomic_clear(&rtc_fired);
+	for (i = 0; i < rtc_match_delay_iterations; i++) {
+		set_rtc_alarm(0, SET_RTC_MATCH_DELAY, &rtc, 0);
+		usleep(2 * SET_RTC_MATCH_DELAY);
+	}
+
+	ccprintf("Expected number of RTC alarm interrupts %d\n",
+	    rtc_match_delay_iterations);
+	ccprintf("Actual number of RTC alarm interrupts %d\n", rtc_fired);
+
+	/* Make sure each set_rtc_alarm() generated the interrupt. */
+	TEST_EQ(rtc_match_delay_iterations, atomic_clear(&rtc_fired), "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
 
 	RUN_TEST(test_rtc_alarm);
+	RUN_TEST(test_rtc_match_delay);
 
 	test_print_result();
 }

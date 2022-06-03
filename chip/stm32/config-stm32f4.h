@@ -73,3 +73,14 @@
 
 /* DFU Address */
 #define STM32_DFU_BASE              0x1fff0000
+
+/*
+ * SET_RTC_MATCH_DELAY: max time to set RTC match alarm. If we set the alarm
+ * in the past, it will never wake up and cause a watchdog.
+ *
+ * This value is minimal time for which we can set RTC match alarm. It was
+ * obtained by setting the alarm and checking if the alarm interrupt was
+ * triggered. Unit test test_rtc_match_delay is responsible for verifying if
+ * setting the RTC match alarm with this value will generate the interrupt.
+ */
+#define SET_RTC_MATCH_DELAY 200 /* us */

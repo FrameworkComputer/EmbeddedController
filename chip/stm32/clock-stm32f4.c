@@ -438,12 +438,6 @@ static int dsleep_recovery_margin_us = 1000000;
 #define STOP_MODE_LATENCY 50 /* us */
 /* PLL_LOCK_LATENCY: delay to switch from HSI to PLL */
 #define PLL_LOCK_LATENCY 150 /* us */
-/*
- * SET_RTC_MATCH_DELAY: max time to set RTC match alarm. If we set the alarm
- * in the past, it will never wake up and cause a watchdog.
- */
-#define SET_RTC_MATCH_DELAY 120 /* us */
-
 
 void low_power_init(void)
 {
