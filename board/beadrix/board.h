@@ -44,20 +44,6 @@
 /* PWM */
 #define CONFIG_PWM
 
-/* Sensors */
-#define CONFIG_ACCEL_KX022		/* Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
-#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
-
-/* Enable sensor fifo, must also define the _SIZE and _THRES */
-#define CONFIG_ACCEL_FIFO
-/* Power of 2 - Too large of a fifo causes too much timestamp jitter */
-#define CONFIG_ACCEL_FIFO_SIZE 256
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-
 /* TCPC */
 #define CONFIG_USB_PD_TCPM_ANX7447	/* C1: MUX  only*/
 #define CONFIG_USB_PD_TCPM_MUX
@@ -113,14 +99,6 @@ enum chg_id {
 enum pwm_channel {
 	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT,
-};
-
-/* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
 };
 
 /* ADC channels */

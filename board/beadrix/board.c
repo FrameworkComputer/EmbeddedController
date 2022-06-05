@@ -10,8 +10,6 @@
 #include "charge_manager.h"
 #include "charge_state_v2.h"
 #include "charger.h"
-#include "driver/accel_kionix.h"
-#include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/nb7v904m.h"
@@ -358,8 +356,6 @@ void board_init(void)
 	check_c1_line();
 
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
-	/* Enable Base Accel interrupt */
-	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 
 	/* Turn on 5V if the system is on, otherwise turn it off. */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
@@ -562,89 +558,6 @@ const struct pwm_t pwm_channels[] = {
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
-
-/* Sensor Mutexes */
-static struct mutex g_lid_mutex;
-static struct mutex g_base_mutex;
-
-/* Sensor Data */
-static struct kionix_accel_data  g_kx022_data;
-static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
-
-/* Drivers */
-struct motion_sensor_t motion_sensors[] = {
-	[LID_ACCEL] = {
-		.name = "Lid Accel",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_KX022,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_LID,
-		.drv = &kionix_accel_drv,
-		.mutex = &g_lid_mutex,
-		.drv_data = &g_kx022_data,
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = KX022_ADDR1_FLAGS,
-		.rot_standard_ref = NULL,
-		.default_range = 2, /* g */
-		/* We only use 2g because its resolution is only 8-bits */
-		.min_frequency = KX022_ACCEL_MIN_FREQ,
-		.max_frequency = KX022_ACCEL_MAX_FREQ,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-			},
-		},
-	},
-	[BASE_ACCEL] = {
-		.name = "Base Accel",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LSM6DSM,
-		.type = MOTIONSENSE_TYPE_ACCEL,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &lsm6dsm_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
-				MOTIONSENSE_TYPE_ACCEL),
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-		.rot_standard_ref = NULL,
-		.default_range = 4,  /* g */
-		.min_frequency = LSM6DSM_ODR_MIN_VAL,
-		.max_frequency = LSM6DSM_ODR_MAX_VAL,
-		.config = {
-			[SENSOR_CONFIG_EC_S0] = {
-				.odr = 13000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-			[SENSOR_CONFIG_EC_S3] = {
-				.odr = 10000 | ROUND_UP_FLAG,
-				.ec_rate = 100 * MSEC,
-			},
-		},
-	},
-	[BASE_GYRO] = {
-		.name = "Base Gyro",
-		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_LSM6DSM,
-		.type = MOTIONSENSE_TYPE_GYRO,
-		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &lsm6dsm_drv,
-		.mutex = &g_base_mutex,
-		.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
-				MOTIONSENSE_TYPE_GYRO),
-		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
-		.default_range = 1000 | ROUND_UP_FLAG, /* dps */
-		.rot_standard_ref = NULL,
-		.min_frequency = LSM6DSM_ODR_MIN_VAL,
-		.max_frequency = LSM6DSM_ODR_MAX_VAL,
-	},
-};
-
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
