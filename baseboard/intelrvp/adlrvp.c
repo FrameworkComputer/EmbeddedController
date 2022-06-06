@@ -540,3 +540,20 @@ __override void board_pre_task_i2c_peripheral_init(void)
 	/* Configure board specific retimer & mux */
 	configure_retimer_usbmux();
 }
+
+/*
+ * ADL RVP has both ITE and FUSB based TCPC chips. By default, the PD
+ * state of a non-attached port remains in PD_DRP_TOGGLE_ON in active
+ * state. Also, FUSB TCPC chip does not support dual role auto toggle
+ * which contradicts the default set S0 state of PD_DRP_TOGGLE_ON,
+ * while ITE  based TCPC can support dual role auto toggle. The
+ * default PD_DRP_TOGGLE_ON state in Active state doesnot allow TCPC
+ * ports to enter Low power mode. To fix the issue, added board
+ * specific code to disable the dual role toggle in S0.
+ * Note:For ITE based TCPC, low power mode entry does makes no
+ * difference, as it is controlled by ITE TCPC clk in deep sleepmode.
+ */
+__override enum pd_dual_role_states pd_get_drp_state_in_s0(void)
+{
+	return PD_DRP_TOGGLE_OFF;
+}
