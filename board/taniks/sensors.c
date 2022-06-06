@@ -337,38 +337,8 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
 static void baseboard_sensors_init(void)
 {
 	CPRINTS("baseboard_sensors_init");
-	/* b/194765820
-	 * Dynamic motion sensor count
-	 * All board supports tablet mode if board id > 0
-	 */
-	if (ec_cfg_has_tabletmode()) {
-		/*
-		 * GPIO_EC_ACCEL_INT_R_L
-		 * The interrupt of lid accel is disabled by default.
-		 * We'll enable it later if lid accel is LIS2DW12.
-		 */
 
-		/* Change Request (b/199529373)
-		 * GYRO sensor change from ST LSM6DSOETR3TR to ST LSM6DS3TR-C
-		 *	LSM6DSOETR3TR base accel/gyro if board id = 0
-		 *	LSM6DS3TR-C Base accel/gyro if board id > 0
-		 */
-		if (get_board_id() > 0) {
-			motion_sensors[BASE_ACCEL] = lsm6dsm_base_accel;
-			motion_sensors[BASE_GYRO] = lsm6dsm_base_gyro;
-		}
-
-		/* Enable gpio interrupt for base accelgyro sensor */
-		gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
-	} else {
-		CPRINTS("Clamshell");
-		motion_sensor_count = 0;
-		gmr_tablet_switch_disable();
-		gpio_set_flags(GPIO_TABLET_MODE_L, GPIO_INPUT | GPIO_PULL_DOWN);
-		/* Gyro is not present, don't allow line to float */
-		gpio_set_flags(GPIO_EC_IMU_INT_R_L, GPIO_INPUT |
-				GPIO_PULL_DOWN);
-	}
+	CPRINTS("Clamshell");
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
 
