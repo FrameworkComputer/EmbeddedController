@@ -526,7 +526,6 @@ enum power_state power_handle_state(enum power_state state)
         gpio_set_level(GPIO_SUSP_L, 1);
 
         msleep(10);
-		thm_ft5399m_set_timeout_en();
 		f75303_set_enabled(1);
 		f75397_set_enabled(1);
 
