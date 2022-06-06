@@ -492,6 +492,19 @@ struct tcpm_drv {
 	int (*handle_fault)(int port, int fault);
 
 	/**
+	 * Re-initialize registers during hard reset
+	 *
+	 * NOTE: If the function alters the alert mask and power status mask,
+	 * this indicates the chip does not require a full TCPCI re-init after
+	 * a hard reset.
+	 *
+	 * @param port Type-C port number
+	 *
+	 * @return EC_SUCCESS or error
+	 */
+	int (*hard_reset_reinit)(int port);
+
+	/**
 	 * Controls BIST Test Mode (or analogous functionality) in the TCPC and
 	 * associated behavior changes. Disables message Rx alerts while the
 	 * port is in Test Mode.

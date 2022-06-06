@@ -327,6 +327,8 @@ int tcpci_tcpc_drp_toggle(int port);
 int tcpci_enter_low_power_mode(int port);
 void tcpci_wake_low_power_mode(int port);
 #endif
+int tcpci_hard_reset_reinit(int port);
+
 enum ec_error_list tcpci_set_bist_test_mode(const int port, const bool enable);
 void tcpci_tcpc_discharge_vbus(int port, int enable);
 void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable);

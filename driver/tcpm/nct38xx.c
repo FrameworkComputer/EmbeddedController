@@ -393,4 +393,5 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.set_frs_enable = &nct38xx_set_frs_enable,
 #endif
 	.handle_fault = &nct3807_handle_fault,
+	.hard_reset_reinit = &tcpci_hard_reset_reinit,
 };

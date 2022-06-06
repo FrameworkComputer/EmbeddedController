@@ -382,6 +382,13 @@ static inline int tcpm_get_chip_info(int port, int live,
 	return EC_ERROR_UNIMPLEMENTED;
 }
 
+static inline int tcpm_hard_reset_reinit(int port)
+{
+	if (tcpc_config[port].drv->hard_reset_reinit)
+		return tcpc_config[port].drv->hard_reset_reinit(port);
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
 static inline enum ec_error_list tcpc_set_bist_test_mode(int port, bool enable)
 {
 	const struct tcpm_drv *tcpc;
