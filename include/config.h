@@ -2879,6 +2879,12 @@
 #undef CONFIG_IT83XX_VCC_3P3V
 
 /*
+ * Overwrite integer multiplication and division arithmetic library routines
+ * with using hardware multiplication and division and nop instructions.
+ */
+#undef CONFIG_IT8XXX2_MUL_WORKAROUND
+
+/*
  * Support the standard integer multiplication and division instruction
  * extension.
  */

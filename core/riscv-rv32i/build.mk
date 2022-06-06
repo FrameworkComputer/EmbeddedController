@@ -30,3 +30,4 @@ LDFLAGS_EXTRA+=-flto
 endif
 
 core-y=cpu.o init.o panic.o task.o switch.o __builtin.o math.o
+core-$(CONFIG_IT8XXX2_MUL_WORKAROUND)+=__it8xxx2_arithmetic.o

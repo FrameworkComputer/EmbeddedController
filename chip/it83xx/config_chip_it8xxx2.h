@@ -87,6 +87,13 @@
 || defined(CHIP_VARIANT_IT81302BX_512) \
 || defined(CHIP_VARIANT_IT81202BX_1024)
 
+/*
+ * Workaround mul instruction bug, see:
+ * https://www.ite.com.tw/uploads/product_download/it81202-bx-chip-errata.pdf
+ */
+#undef CONFIG_RISCV_EXTENSION_M
+#define CONFIG_IT8XXX2_MUL_WORKAROUND
+
 #if defined(CHIP_VARIANT_IT81302BX_512)
 #define CONFIG_FLASH_SIZE_BYTES     0x00080000
 #define CONFIG_RAM_BASE             0x80080000

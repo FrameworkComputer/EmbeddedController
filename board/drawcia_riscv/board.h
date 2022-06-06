@@ -19,6 +19,13 @@
 
 #define CONFIG_LTO
 
+/*
+ * The workaround can be enabled on a chip variant with 1MB flash.
+ * (There is relocation truncated to fit error when building this board)
+ */
+#define CONFIG_RISCV_EXTENSION_M
+#undef CONFIG_IT8XXX2_MUL_WORKAROUND
+
 #undef GPIO_VOLUME_UP_L
 #define GPIO_VOLUME_UP_L GPIO_VOLUP_BTN_ODL_HDMI_HPD
 
