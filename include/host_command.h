@@ -273,7 +273,7 @@ struct host_command *zephyr_find_host_command(int command);
 	static enum ec_status(routine)(struct host_cmd_handler_args *args); \
 	const struct host_command __keep __no_sanitize_address		\
 	EXPAND(0x0000, command)						\
-	__attribute__((section(".rodata.hcmds."EXPANDSTR(0x0000, command)))) \
+	__attribute__((section(".rodata.hcmds." EXPANDSTR(0x0000, command)))) \
 		= {routine, command, version_mask}
 
 /*
