@@ -34,7 +34,7 @@ config AP_X86_INTEL_ADL
 
 config AP_X86_AMD
 	bool "AP is an AMD chipset"
-	select AP_x86
+	select AP_X86
 	help
 	  The application processor is a product of AMD.
 
