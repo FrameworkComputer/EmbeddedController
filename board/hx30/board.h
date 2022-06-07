@@ -512,7 +512,6 @@
 #define I2C_PORT_TCPC           MCHP_I2C_PORT3
 #define I2C_PORT_BATTERY        MCHP_I2C_PORT1
 #define I2C_PORT_CHARGER        MCHP_I2C_PORT1
-#define I2C_PORT_THERMAL_2		MCHP_I2C_PORT1
 #define I2C_PORT_THERMAL		MCHP_I2C_PORT3
 #define I2C_PORT_ALS			MCHP_I2C_PORT4
 
@@ -770,8 +769,6 @@ void me_gpio_change(uint32_t flags);
 int get_hardware_id(enum adc_channel channel);
 
 int ac_boot_status(void);
-
-void thm_ft5399m_set_timeout_en(void);
 
 void update_me_change(int change);
 
