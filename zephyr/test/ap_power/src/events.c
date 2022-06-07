@@ -173,6 +173,7 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, hook_startup, HOOK_PRIO_DEFAULT);
  */
 ZTEST(events, test_hooks)
 {
+	count_hook_startup = count_hook_shutdown = 0;
 	ap_power_ev_send_callbacks(AP_POWER_STARTUP);
 	zassert_equal(0, count_hook_shutdown, "shutdown hook called");
 	zassert_equal(1, count_hook_startup, "startup hook not called");
