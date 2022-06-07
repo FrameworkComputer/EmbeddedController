@@ -498,13 +498,25 @@ config_hatch() {
   # for pin name to number mapping.
   # Examine `cat /sys/kernel/debug/pinctrl/INT34BB:00/gpio-ranges` on a hatch
   # device to determine gpio number from pin number.
-  readonly GPIO_CHIP="gpiochip200"
-  # FPMCU RST_ODL is on GPP_A12 = 200 + 12 = 212
-  readonly GPIO_NRST=212
-  # FPMCU BOOT0 is on GPP_A22 = 200 + 22 = 222
-  readonly GPIO_BOOT0=222
-  # FP_PWR_EN is on GPP_C11 = 456 + (192 - 181) = 456 + 11 = 467
-  readonly GPIO_PWREN=467
+ 
+  local gpiochip="gpiochip712"
+  # Support kernel version 4.x, 5.4 and 5.10 during transition to 5.15+
+  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\.))" && gpiochip="gpiochip200"
+  readonly GPIO_CHIP="${gpiochip}"
+  local offset=0
+  # Support kernel version 4.x, 5.4 and 5.10 during transition to 5.15+
+  # v4.4 has GPIOs that are offset by -512
+  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\.))" && offset=512
+  
+  # FPMCU RST_ODL is on GPP_A12 = 712 + 12 = 724
+  local gpionrst=724
+  readonly GPIO_NRST=$(( gpionrst - offset ))
+  # FPMCU BOOT0 is on GPP_A22 = 712 + 22 = 734
+  local gpioboot=734
+  readonly GPIO_BOOT0=$(( gpioboot - offset ))
+  # FP_PWR_EN is on GPP_C11 = 968 + (192 - 181) = 968 + 11 = 979
+  local gpiopwren=979
+  readonly GPIO_PWREN=$(( gpiopwren - offset ))
 }
 
 config_herobrine() {
