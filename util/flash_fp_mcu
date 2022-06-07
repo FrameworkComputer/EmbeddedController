@@ -623,15 +623,26 @@ config_volteer() {
   # volteer device to determine gpio number from pin number.
   # For example: GPP_C23 is UART2_CTS which can be queried from EDS
   # the pin number is 194. From the gpio-ranges, the gpio value is
-  # 408 + (194-171) = 431
+  # 920 + (194-171) = 943
 
-  readonly GPIO_CHIP="gpiochip152"
-  # FPMCU RST_ODL is on GPP_C23 = 408 + (194 - 171) = 431
-  readonly GPIO_NRST=431
-  # FPMCU BOOT0 is on GPP_C22 = 408 + (193 - 171) = 430
-  readonly GPIO_BOOT0=430
-  # FP_PWR_EN is on GPP_A21 = 216 + (63 - 42) = 237
-  readonly GPIO_PWREN=237
+  local gpiochip="gpiochip664"
+  # Support kernel version 4.x, 5.4, 5.10 during transition to 5.15+
+  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\..))" && gpiochip="gpiochip152"
+  readonly GPIO_CHIP="${gpiochip}"
+  local offset=0
+  # Support kernel version 4.x, 5.4, 5.10 during transition to 5.15+
+  # v4.4 has GPIOs that are offset by -512
+  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\.))" && offset=512
+
+  # FPMCU RST_ODL is on GPP_C23 = 920 + (194 - 171) = 943
+  local gpionrst=943
+  readonly GPIO_NRST=$(( gpionrst - offset ))
+  # FPMCU BOOT0 is on GPP_C22 = 920 + (193 - 171) = 942
+  local gpioboot=942
+  readonly GPIO_BOOT0=$(( gpioboot - offset ))
+  # FP_PWR_EN is on GPP_A21 = 728 + (63 - 42) = 749
+  local gpiopwren=749
+  readonly GPIO_PWREN=$(( gpiopwren - offset ))
 }
 
 config_brya() {
