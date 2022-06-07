@@ -6,31 +6,14 @@
 / {
 	pwmleds {
 		compatible = "pwm-leds";
-		pwm_led0: pwm_led_0 {
-			pwms = <&pwm0 0 PWM_HZ(100) PWM_POLARITY_INVERTED
-				&pwm1 0 PWM_HZ(100) PWM_POLARITY_INVERTED
-				&pwm2 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		led_battery_red: ec_led1_odl {
+			pwms = <&pwm0 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 		};
-	};
-
-	cros-pwmleds {
-		compatible = "cros-ec,pwm-leds";
-
-		leds = <&pwm_led0>;
-		frequency = <100>;
-
-		color-map-red    = <100   0   0>;
-		color-map-green  = <  0 100   0>;
-		color-map-amber  = <100  20   0>;
-
-		brightness-range = <255 255 0 0 0 255>;
-
-		#address-cells = <1>;
-		#size-cells = <0>;
-
-		pwm_led_0@0 {
-			reg = <0>;
-			ec-led-name = "EC_LED_ID_BATTERY_LED";
+		led_battery_green: ec_led2_odl {
+			pwms = <&pwm1 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		led_power_white: ec_led3_odl {
+			pwms = <&pwm4 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 		};
 	};
 };
@@ -59,14 +42,14 @@
 	pinctrl-names = "default";
 };
 
-/* Blue LED */
-&pwm2_gpc4 {
+/* White LED */
+&pwm4_gpb6 {
 	drive-open-drain;
 };
 
-&pwm2 {
+&pwm4 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
-	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-0 = <&pwm4_gpb6>;
 	pinctrl-names = "default";
 };
