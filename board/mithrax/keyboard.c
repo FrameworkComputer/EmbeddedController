@@ -21,8 +21,8 @@ __override struct keyboard_scan_config keyscan_config = {
 	.min_post_scan_delay_us = 1000,
 	.poll_timeout_us = 100 * MSEC,
 	.actual_key_mask = {
-		0x1c, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfe, 0xff, 0xff, 0xff,  /* full set */
+		0x1c, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0x86, 0xff, 0xff, 0x55, 0xff, 0xff, 0xff, 0xff,  /* full set */
 	},
 };
 
@@ -40,7 +40,7 @@ static const struct ec_response_keybd_config mithrax_kb = {
 		TK_VOL_DOWN,		/* T9 */
 		TK_VOL_UP,		/* T10 */
 	},
-	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
 static struct rgb_s grid0[RGB_GRID0_COL * RGB_GRID0_ROW];
@@ -203,3 +203,30 @@ __override const struct ec_response_keybd_config
 {
 	return &mithrax_kb;
 }
+
+/*
+ * Row Column info for Top row keys T1 - T15.
+ * on mithrax_kb keyboard Row Column is customization
+ * need define row col to mapping matrix layout.
+ */
+__override const struct key {
+	uint8_t row;
+	uint8_t col;
+} vivaldi_keys[] = {
+	{.row = 4, .col = 2},	/* T1 */
+	{.row = 3, .col = 2},	/* T2 */
+	{.row = 2, .col = 2},	/* T3 */
+	{.row = 1, .col = 2},	/* T4 */
+	{.row = 4, .col = 4},	/* T5 */
+	{.row = 3, .col = 4},	/* T6 */
+	{.row = 2, .col = 4},	/* T7 */
+	{.row = 2, .col = 9},	/* T8 */
+	{.row = 1, .col = 9},	/* T9 */
+	{.row = 1, .col = 4},	/* T10 */
+	{.row = 0, .col = 4},	/* T11 */
+	{.row = 1, .col = 5},	/* T12 */
+	{.row = 3, .col = 5},	/* T13 */
+	{.row = 2, .col = 1},	/* T14 */
+	{.row = 0, .col = 1},	/* T15 */
+};
+BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
