@@ -36,6 +36,11 @@ static int anx7447_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 static struct anx_state anx[CONFIG_USB_PD_PORT_MAX_COUNT];
 static struct anx_usb_mux mux[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+#ifdef CONFIG_USB_PD_FRS_TCPC
+/* an array to indicate which port is waiting for FRS disablement. */
+static bool anx_frs_dis[CONFIG_USB_PD_PORT_MAX_COUNT];
+#endif /* CONFIG_USB_PD_FRS_TCPC */
+
 /*
  * ANX7447 has two co-existence I2C addresses, TCPC address and
  * SPI address. The registers of TCPC address are partly compliant
@@ -492,6 +497,22 @@ static void anx7447_tcpc_alert(int port)
 }
 
 #ifdef CONFIG_USB_PD_FRS_TCPC
+static void anx7447_disable_frs_deferred(void)
+{
+	int i, val;
+
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		if (!anx_frs_dis[i])
+			continue;
+
+		anx_frs_dis[i] = false;
+		anx7447_reg_read(i, ANX7447_REG_ADDR_GPIO_CTRL_1, &val);
+		val &= ~ANX7447_ADDR_GPIO_CTRL_1_FRS_EN_DATA;
+		anx7447_reg_write(i, ANX7447_REG_ADDR_GPIO_CTRL_1, val);
+	}
+}
+DECLARE_DEFERRED(anx7447_disable_frs_deferred);
+
 static int anx7447_set_frs_enable(int port, int enable)
 {
 	int val;
@@ -500,14 +521,25 @@ static int anx7447_set_frs_enable(int port, int enable)
 				  ANX7447_FRSWAP_DETECT_ENABLE,
 				  enable ? MASK_SET : MASK_CLR));
 
+	if (!enable) {
+		/*
+		 * b/223087277#comment52: delay to disable FRS output to the
+		 * PPC. Some PPCs need the FRS_EN pin to stay asserted until the
+		 * VBUS dropped to a threshold under 5V to successfully source.
+		 * However, on some hubs with a larger cap, the VBUS might take
+		 * more than 10 ms.  This workaround is to delay the FRS_EN
+		 * deassertion to PPC for 30 ms, which should be enough for
+		 * most cases.
+		 */
+		anx_frs_dis[port] = true;
+		hook_call_deferred(&anx7447_disable_frs_deferred_data,
+				   30 * MSEC);
+		return EC_SUCCESS;
+	}
+
 	RETURN_ERROR(
 		anx7447_reg_read(port, ANX7447_REG_ADDR_GPIO_CTRL_1, &val));
-
-	if (enable)
-		val |= ANX7447_ADDR_GPIO_CTRL_1_FRS_EN_DATA;
-	else
-		val &= ~ANX7447_ADDR_GPIO_CTRL_1_FRS_EN_DATA;
-
+	val |= ANX7447_ADDR_GPIO_CTRL_1_FRS_EN_DATA;
 	RETURN_ERROR(
 		anx7447_reg_write(port, ANX7447_REG_ADDR_GPIO_CTRL_1, val));
 	return EC_SUCCESS;
