@@ -6,10 +6,17 @@
 # Cortex-M0 core OS files build
 #
 
-# Use coreboot-sdk
+ifeq ($(cc-name),gcc)
+# coreboot sdk
+CROSS_COMPILE_ARM_DEFAULT:=/opt/coreboot-sdk/bin/arm-eabi-
+else
+# llvm sdk
+CROSS_COMPILE_ARM_DEFAULT:=arm-none-eabi-
+endif
+
 $(call set-option,CROSS_COMPILE,\
 	$(CROSS_COMPILE_arm),\
-	/opt/coreboot-sdk/bin/arm-eabi-)
+	$(CROSS_COMPILE_ARM_DEFAULT))
 
 # CPU specific compilation flags
 CFLAGS_CPU+=-mthumb

@@ -31,7 +31,6 @@ ifeq ($(cc-name),gcc)
 cxx-name:=g++
 else
 cxx-name:=clang++
-CROSS_COMPILE_arm:=arm-none-eabi-
 endif
 
 # Try not to assume too much about optional tools and prefixes
