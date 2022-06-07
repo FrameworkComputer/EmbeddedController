@@ -11,6 +11,7 @@
 #include "ap_power/ap_pwrseq.h"
 #include "button.h"
 #include "chipset.h"
+#include "cros_board_info.h"
 #include "ec_tasks.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
@@ -75,6 +76,14 @@ void ec_app_main(void)
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOOKS)) {
 		hook_notify(HOOK_INIT);
 	}
+
+	/*
+	 * If the EC has exclusive control over the CBI EEPROM WP signal, have
+	 * the EC set the WP if appropriate.  Note that once the WP is set, the
+	 * EC must be reset via EC_RST_ODL in order for the WP to become unset.
+	 */
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_EEPROM_CBI_WP) && system_is_locked())
+		cbi_latch_eeprom_wp();
 
 	/*
 	 * Print the init time.  Not completely accurate because it can't take

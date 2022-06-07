@@ -2108,6 +2108,11 @@ extern struct jump_data mock_jump_data;
 #define I2C_ADDR_EEPROM_FLAGS DT_REG_ADDR(DT_NODELABEL(cbi_eeprom))
 #endif
 
+#undef CONFIG_EEPROM_CBI_WP
+#ifdef CONFIG_PLATFORM_EC_EEPROM_CBI_WP
+#define CONFIG_EEPROM_CBI_WP
+#endif
+
 #undef CONFIG_CBI_GPIO
 #ifdef CONFIG_PLATFORM_EC_CBI_GPIO
 #define CONFIG_CBI_GPIO
