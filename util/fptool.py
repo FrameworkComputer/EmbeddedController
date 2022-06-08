@@ -3,7 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""A tool to manage the fingerprint system on Chrome OS."""
+"""A tool to manage the fingerprint system on ChromeOS."""
 
 import argparse
 import os
