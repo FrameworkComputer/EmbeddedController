@@ -84,6 +84,81 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 	pd_handle_cc_overvoltage(0);
 }
 
+/******************************************************************************/
+/*
+ * Barrel jack power supply handling
+ *
+ * EN_PPVAR_BJ_ADP_L must default active to ensure we can power on when the
+ * barrel jack is connected, and the USB-C port can bring the EC up fine in
+ * dead-battery mode. Both the USB-C and barrel jack switches do reverse
+ * protection, so we're safe to turn one on then the other off- but we should
+ * only do that if the system is off since it might still brown out.
+ */
+
+static int barrel_jack_adapter_is_present(void)
+{
+	/* Shotzo barrel jack adapter present pin is active low. */
+	return !gpio_get_level(GPIO_BJ_ADP_PRESENT_L);
+}
+
+/*
+ * Barrel-jack power adapter ratings.
+ */
+
+#define BJ_ADP_RATING_DEFAULT 0 /* BJ power ratings default */
+static const struct {
+	int voltage;
+	int current;
+} bj_power[] = {
+	{ /* 0 - 90W (also default) */
+	  .voltage = 19500,
+	  .current = 4500 },
+};
+
+/* Debounced connection state of the barrel jack */
+static int8_t adp_connected = -1;
+static void adp_connect_deferred(void)
+{
+	struct charge_port_info pi = { 0 };
+	int connected = barrel_jack_adapter_is_present();
+
+	/* Debounce */
+	if (connected == adp_connected)
+		return;
+	if (connected) {
+		unsigned int bj = BJ_ADP_RATING_DEFAULT;
+
+		pi.voltage = bj_power[bj].voltage;
+		pi.current = bj_power[bj].current;
+	}
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+				     DEDICATED_CHARGE_PORT, &pi);
+	adp_connected = connected;
+}
+DECLARE_DEFERRED(adp_connect_deferred);
+
+#define ADP_DEBOUNCE_MS 1000 /* Debounce time for BJ plug/unplug */
+/* IRQ for BJ plug/unplug. It shouldn't be called if BJ is the power source. */
+static void adp_connect_interrupt(enum gpio_signal signal)
+{
+	hook_call_deferred(&adp_connect_deferred_data, ADP_DEBOUNCE_MS * MSEC);
+}
+static void adp_state_init(void)
+{
+	/*
+	 * Initialize all charge suppliers to 0. The charge manager waits until
+	 * all ports have reported in before doing anything.
+	 */
+	for (int i = 0; i < CHARGE_PORT_COUNT; i++) {
+		for (int j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
+			charge_manager_update_charge(j, i, NULL);
+	}
+
+	/* Report charge state from the barrel jack. */
+	adp_connect_deferred();
+}
+DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
+
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
@@ -147,6 +222,8 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = { {
 void board_init(void)
 {
 	int on;
+
+	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 
@@ -235,30 +312,85 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 {
 }
 
-int board_set_active_charge_port(int port)
+__override int extpower_is_present(void)
 {
-	int is_valid_port = (port >= 0 && port < board_get_usb_pd_port_count());
+	int port;
+	int rv;
+	bool acok;
 
-	if (!is_valid_port && port != CHARGE_PORT_NONE)
-		return EC_ERROR_INVAL;
-
-	if (port == CHARGE_PORT_NONE) {
-		CPRINTUSB("Disabling all charge ports");
-
-		sm5803_vbus_sink_enable(CHARGER_SOLO, 0);
-
-		return EC_SUCCESS;
+	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
+		rv = sm5803_is_acok(port, &acok);
+		if ((rv == EC_SUCCESS) && acok)
+			return 1;
 	}
 
-	CPRINTUSB("New chg p%d", port);
+	if (!gpio_get_level(GPIO_EN_PPVAR_BJ_ADP_L))
+		return 1;
+
+	CPRINTUSB("No external power present.");
+
+	return 0;
+}
+
+int board_set_active_charge_port(int port)
+{
+	CPRINTUSB("Requested charge port change to %d", port);
 
 	/*
-	 * Ensure other port is turned off, then enable new charge port
+	 * The charge manager may ask us to switch to no charger if we're
+	 * running off USB-C only but upstream doesn't support PD. It requires
+	 * that we accept this switch otherwise it triggers an assert and EC
+	 * reset; it's not possible to boot the AP anyway, but we want to avoid
+	 * resetting the EC so we can continue to do the "low power" LED blink.
 	 */
-	if (port == 0) {
+	if (port == CHARGE_PORT_NONE)
+		return EC_SUCCESS;
+
+	if (port < 0 || CHARGE_PORT_COUNT <= port)
+		return EC_ERROR_INVAL;
+
+	if (port == charge_manager_get_active_charge_port())
+		return EC_SUCCESS;
+
+	/* Don't charge from a source port */
+	if (board_vbus_source_enabled(port))
+		return EC_ERROR_INVAL;
+
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		int bj_active, bj_requested;
+
+		if (charge_manager_get_active_charge_port() != CHARGE_PORT_NONE)
+			/* Change is only permitted while the system is off */
+			return EC_ERROR_INVAL;
+
+		/*
+		 * Current setting is no charge port but the AP is on, so the
+		 * charge manager is out of sync (probably because we're
+		 * reinitializing after sysjump). Reject requests that aren't
+		 * in sync with our outputs.
+		 */
+		bj_active = !gpio_get_level(GPIO_EN_PPVAR_BJ_ADP_L);
+		bj_requested = port == CHARGE_PORT_BARRELJACK;
+		if (bj_active != bj_requested)
+			return EC_ERROR_INVAL;
+	}
+
+	CPRINTUSB("New charger p%d", port);
+
+	switch (port) {
+	case CHARGE_PORT_TYPEC0:
 		sm5803_vbus_sink_enable(CHARGER_SOLO, 1);
-	} else {
+		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
+		break;
+	case CHARGE_PORT_BARRELJACK:
+		/* Make sure BJ adapter is sourcing power */
+		if (!barrel_jack_adapter_is_present())
+			return EC_ERROR_INVAL;
+		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 0);
 		sm5803_vbus_sink_enable(CHARGER_SOLO, 0);
+		break;
+	default:
+		return EC_ERROR_INVAL;
 	}
 
 	return EC_SUCCESS;

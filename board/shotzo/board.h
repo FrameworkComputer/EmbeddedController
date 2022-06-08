@@ -48,6 +48,11 @@
 /* Buttons */
 #define CONFIG_POWER_BUTTON_IGNORE_LID
 
+/* Dedicated barreljack charger port */
+#undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
+#define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
+#define DEDICATED_CHARGE_PORT 1
+
 /* Unused Features */
 #undef CONFIG_BACKLIGHT_LID
 #undef CONFIG_CMD_KEYBOARD
@@ -100,6 +105,14 @@ enum battery_type {
 	BATTERY_ATL,
 	BATTERY_TYPE_COUNT,
 };
+
+enum charge_port {
+	CHARGE_PORT_TYPEC0,
+	CHARGE_PORT_BARRELJACK,
+};
+
+/* Pin renaming */
+#define GPIO_AC_PRESENT GPIO_BJ_ADP_PRESENT_L
 
 #endif /* !__ASSEMBLER__ */
 

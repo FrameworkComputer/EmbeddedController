@@ -294,7 +294,7 @@ int board_is_i2c_port_powered(int port)
 	return chipset_in_state(CHIPSET_STATE_ANY_OFF) ? 0 : 1;
 }
 
-int extpower_is_present(void)
+__overridable int extpower_is_present(void)
 {
 	int port;
 	int rv;
