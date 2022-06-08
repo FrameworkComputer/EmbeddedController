@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Drawcia board configuration */
+/* Shotzo board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H

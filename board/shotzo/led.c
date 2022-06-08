@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Drawcia specific LED settings. */
+/* Shotzo specific LED settings. */
 
 #include "cbi_fw_config.h"
 #include "charge_state.h"

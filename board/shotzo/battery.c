@@ -10,7 +10,7 @@
 #include "common.h"
 
 /*
- * Battery info for all drawcia battery types. Note that the fields
+ * Battery info for all shotzo battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
  * The effective temperature limits are given by discharging_min/max_c.
  *
