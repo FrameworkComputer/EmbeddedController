@@ -8,8 +8,8 @@
 #include "config.h"
 #include "cpu.h"
 
-#ifdef __RAM_CODE_SECTION_NAME
-.section __RAM_CODE_SECTION_NAME
+#ifdef __RAM_CODE_ILM0_SECTION_NAME
+.section __RAM_CODE_ILM0_SECTION_NAME
 #endif
 
 /**
