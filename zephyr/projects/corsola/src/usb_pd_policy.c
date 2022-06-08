@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "hooks.h"
 #include "timer.h"
+#include "typec_control.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -111,6 +112,8 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 __override void svdm_dp_post_config(int port)
 {
 	mux_state_t mux_mode = svdm_dp_get_mux_mode(port);
+
+	typec_set_sbu(port, true);
 
 	/*
 	 * Prior to post-config, the mux will be reset to safe mode, and this
