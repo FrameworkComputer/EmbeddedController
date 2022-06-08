@@ -326,6 +326,7 @@ static int inreport_retries;
 void read_touchpad_in_report(void)
 {
 	int rv = EC_SUCCESS;
+	int need_reset = 0;
 	uint8_t data[128];
 	int xfer_len = 0;
 	int16_t x, y;
@@ -339,6 +340,8 @@ void read_touchpad_in_report(void)
 
 	/*dont trigger disable state during our own transactions*/
 	gpio_disable_interrupt(GPIO_EC_I2C_3_SDA);
+	/* need to disable SOC_TP_INT_L if we need to setup touchpad */
+	gpio_disable_interrupt(GPIO_SOC_TP_INT_L);
 	i2c_set_timeout(I2C_PORT_TOUCHPAD, 25*MSEC);
 	i2c_lock(I2C_PORT_TOUCHPAD, 1);
 	rv = i2c_xfer_unlocked(I2C_PORT_TOUCHPAD,
@@ -348,16 +351,19 @@ void read_touchpad_in_report(void)
 		goto read_failed;
 	xfer_len = (data[1]<<8) + data[0];
 	if (xfer_len == 0) {
-		/* touchpad has reset per i2c-hid-protocol 7.3 */
-		CPRINTS("PS2M Touchpad Reset");
-		goto read_failed;
+		/**
+		 * touchpad has reset per i2c-hid-protocol 7.3
+		 * We need to complete the read protocol to make sure i2c state machine
+		 * is correct.
+		 */
+		CPRINTS("PS2M Touchpad need to reset");
+		xfer_len = 6;
+		need_reset = 1;
 	}
 	xfer_len = MIN(126, xfer_len-2);
 	rv = i2c_xfer_unlocked(I2C_PORT_TOUCHPAD,
 							TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
 							NULL, 0, data+2, xfer_len, I2C_XFER_STOP);
-	if (rv != EC_SUCCESS)
-		goto read_failed;
 read_failed:
 	if (rv != EC_SUCCESS) {
 		/* sometimes we get a read failed for unknown reason to try again in a while
@@ -384,6 +390,7 @@ read_failed:
 	}
 	i2c_lock(I2C_PORT_TOUCHPAD, 0);
 	gpio_enable_interrupt(GPIO_EC_I2C_3_SDA);
+	gpio_enable_interrupt(GPIO_SOC_TP_INT_L);
 
 	 if (mouse_state == PS2MSTATE_RESET) {
 		 return;
@@ -415,13 +422,13 @@ read_failed:
 		current_pos[1] = x;
 		current_pos[2] = y;
 		send_movement_packet();
-	} else {
-		if (rv == EC_SUCCESS) {
-			CPRINTS("PS2M Unexpected Report ID %d reconfiguring", data[2]);
-			setup_touchpad();
-		}
 	}
 
+	if (need_reset) {
+		CPRINTS("PS2M Unexpected Report ID %d reconfiguring", data[2]);
+		setup_touchpad();
+		need_reset = 0;
+	}
 }
 /*
  * Looking at timing it takes the SOC about 2ms to grab a tp packet from start of
