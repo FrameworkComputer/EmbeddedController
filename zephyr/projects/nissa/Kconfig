@@ -20,6 +20,12 @@ config BOARD_CRAASK
 	  Build Google Craask board. Craask has Intel ADL-N SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_PUJJO
+	bool "Google Pujjo Board"
+	help
+	  Build Google Pujjo board. Pujjo has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"

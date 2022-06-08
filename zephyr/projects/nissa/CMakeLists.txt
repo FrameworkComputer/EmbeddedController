@@ -39,3 +39,13 @@ if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/craask/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/craask/charger.c")
 endif()
+if(DEFINED CONFIG_BOARD_PUJJO)
+	project(pujjo)
+	zephyr_library_sources(
+			"src/led.c"
+			"src/pujjo/keyboard.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/pujjo/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/pujjo/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/pujjo/charger.c")
+endif()
