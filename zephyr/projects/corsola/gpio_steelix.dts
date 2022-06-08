@@ -98,7 +98,7 @@
 		lid_accel_int_l {
 			gpios = <&gpiob 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
-		tablet_mode_l {
+		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpiob 2 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
