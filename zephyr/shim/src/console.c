@@ -34,6 +34,9 @@
 #error Must select only one shell backend
 #endif
 
+BUILD_ASSERT(EC_TASK_PRIORITY(EC_SHELL_PRIO) == CONFIG_SHELL_THREAD_PRIORITY,
+	     "EC_SHELL_PRIO does not match CONFIG_SHELL_THREAD_PRIORITY.");
+
 LOG_MODULE_REGISTER(shim_console, LOG_LEVEL_ERR);
 
 static const struct device *uart_shell_dev =

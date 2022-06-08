@@ -21,4 +21,10 @@ config THREAD_MAX_NAME_LEN
 config SHELL_PROMPT_UART
 	default "ec:~$ "
 
+config SHELL_THREAD_PRIORITY_OVERRIDE
+	default y
+
+config SHELL_THREAD_PRIORITY
+	default 12  # track EC_SHELL_PRIO
+
 orsource "Kconfig.defaults-$(ARCH)"
