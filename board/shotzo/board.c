@@ -13,6 +13,7 @@
 #include "charger.h"
 #include "cros_board_info.h"
 #include "driver/charger/sm5803.h"
+#include "driver/led/oz554.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx.h"
@@ -219,6 +220,45 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = { {
 	.driver = &it5205_usb_mux_driver,
 } };
 
+void oz554_board_init(void)
+{
+	int panel_id = 0;
+	int oz554_id;
+
+	oz554_id = gpio_get_level(GPIO_BL_OZ554_ID);
+	panel_id |= gpio_get_level(GPIO_PANEL_ID0) << 0;
+	panel_id |= gpio_get_level(GPIO_PANEL_ID1) << 1;
+	panel_id |= gpio_get_level(GPIO_PANEL_ID2) << 2;
+	panel_id |= gpio_get_level(GPIO_PANEL_ID3) << 3;
+
+	if (oz554_id == 0)
+		CPRINTUSB("OZ554ELN");
+	else if (oz554_id == 1)
+		CPRINTUSB("OZ554ALN");
+	else
+		CPRINTUSB("OZ554A UNKNOWN");
+
+	switch (panel_id) {
+	case 0x00:
+		CPRINTUSB("PANEL M238HAN");
+		oz554_set_config(0, 0xF1);
+		oz554_set_config(1, 0x43);
+		oz554_set_config(2, 0x44);
+		oz554_set_config(5, 0xBF);
+		break;
+	case 0x08:
+		CPRINTUSB("PANEL MV238FHM");
+		oz554_set_config(0, 0xF1);
+		oz554_set_config(1, 0x43);
+		oz554_set_config(2, 0x3C);
+		oz554_set_config(5, 0xD7);
+		break;
+	default:
+		CPRINTUSB("PANEL UNKNOWN");
+		break;
+	}
+}
+
 void board_init(void)
 {
 	int on;
@@ -238,6 +278,9 @@ void board_init(void)
 		hook_call_deferred(&check_c0_line_data, 0);
 
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
+
+	oz554_board_init();
+	gpio_enable_interrupt(GPIO_PANEL_BACKLIGHT_EN);
 
 	/* Charger on the MB will be outputting PROCHOT_ODL and OD CHG_DET */
 	sm5803_configure_gpio0(CHARGER_SOLO, GPIO0_MODE_PROCHOT, 1);

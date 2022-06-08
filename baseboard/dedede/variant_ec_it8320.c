@@ -86,7 +86,7 @@ const struct i2c_port_t i2c_ports[] = {
 	  .kbps = 100,
 	  .scl = GPIO_EC_I2C_BATTERY_SCL,
 	  .sda = GPIO_EC_I2C_BATTERY_SDA },
-#ifdef HAS_TASK_MOTIONSENSE
+#if defined(HAS_TASK_MOTIONSENSE) || defined(BOARD_SHOTZO)
 	{ .name = "sensor",
 	  .port = I2C_PORT_SENSOR,
 	  .kbps = 400,
