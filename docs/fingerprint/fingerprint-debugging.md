@@ -32,8 +32,8 @@ used for JTAG and SWD for ARM devices.
     is the only software required for flashing.
 *   In order to perform breakpoint debugging, you will need a tool that supports
     connecting `gdbserver`. This document will assume [CLion] \(Googlers see
-    [CLion for ChromeOS]) and was tested with `JLink v6.94a`. Alternatively,
-    you can use [Ozone], a standalone debugger from Segger.
+    [CLion for ChromeOS]) and was tested with `JLink v6.94a`. Alternatively, you
+    can use [Ozone], a standalone debugger from Segger.
 
 ## JLink Software {#software}
 

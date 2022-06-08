@@ -52,8 +52,8 @@ to determine the FPMCU that it contains:
 (dut) $ cros_config /fingerprint board
 ```
 
-Alternatively, if you have a Chromium OS build, you can use [ChromeOS Config]
-in the chroot to determine the FPMCU:
+Alternatively, if you have a Chromium OS build, you can use [ChromeOS Config] in
+the chroot to determine the FPMCU:
 
 ```bash
 (chroot) $  cros_config_host -c /build/<BOARD>/usr/share/chromeos-config/yaml/config.yaml -m <MODEL> get /fingerprint board
@@ -529,8 +529,8 @@ detail.
 The fingerprint sensor may only be included on certain SKUs for a given device.
 The fingerprint code uses [ChromeOS Config] to determine whether a device has a
 fingerprint sensor or not. For each SKU, there is an associated
-[fingerprint config][ChromeOS Config fingerprint]. [ChromeOS Config]
-determines the [SKU information][ChromeOS Config SKU] (and thus the
+[fingerprint config][ChromeOS Config fingerprint]. [ChromeOS Config] determines
+the [SKU information][ChromeOS Config SKU] (and thus the
 [fingerprint config][ChromeOS Config fingerprint]) from [CBI Info]. The SKU for
 a given device can be found by viewing `chrome://system/#platform_identity_sku`.
 
