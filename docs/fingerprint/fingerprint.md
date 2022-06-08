@@ -121,6 +121,12 @@ See the [Unit Tests] documentation for details on how to [run the unit tests].
 
 ## Build and run the `host_command` fuzz test
 
+<!-- mdformat off(b/139308852) -->
+*** note
+NOTE: For more details on fuzzing, see [Fuzz Testing in ChromeOS].
+***
+<!-- mdformat on -->
+
 ```bash
 (chroot) ~/trunk/src/platform/ec $ make run-host_command_fuzz
 ```
@@ -602,3 +608,4 @@ that are connected via UART use [`cros_ec_uart.c`].
 [`cros_ec`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/kernel/upstream/drivers/platform/chrome/cros_ec.c
 [`cros_ec_spi.c`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/kernel/upstream/drivers/platform/chrome/cros_ec_spi.c
 [`cros_ec_uart.c`]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/kernel/upstream/drivers/platform/chrome/cros_ec_uart.c
+[Fuzz Testing in ChromeOS]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/testing/fuzzing.md
