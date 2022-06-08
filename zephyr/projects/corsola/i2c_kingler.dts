@@ -17,6 +17,7 @@
 		};
 		i2c_usb_c0: usb-c0 {
 			i2c-port = <&i2c1_0>;
+			remote-port = <7>;
 			enum-name = "I2C_PORT_USB_C0";
 		};
 		i2c_usb_c1: usb-c1 {
