@@ -16,3 +16,4 @@ powertech	Battery vendor
 getac	Battery vendor
 ganfeng	Battery vendor
 byd	Battery vendor
+celxpert	Battery vendor
