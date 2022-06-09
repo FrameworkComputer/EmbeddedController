@@ -232,6 +232,30 @@
  *
  *     packet id:         2 byte enum USB_SPI_PKT_ID_CMD_RESTART_RESPONSE
  *
+ * Command chip select Packet (Host to Device):
+ *
+ *     +----------------+-------------+
+ *     | packet id : 2B | action : 2B |
+ *     +----------------+-------------+
+ *
+ *     packet id:         2 byte enum USB_SPI_PKT_ID_CMD_CHIP_SELECT
+ *
+ *     action:            2 byte, current options:
+ *                            0: Deassert chip select
+ *                            1: Assert chip select
+ *
+ * Response chip select Packet (Device to Host):
+ *
+ *     +----------------+------------------+
+ *     | packet id : 2B | status code : 2B |
+ *     +----------------+------------------+
+ *
+ *     packet id:     2 byte enum USB_SPI_PKT_ID_RSP_CHIP_SELECT
+ *
+ *     status code: 2 byte status code
+ *         0x0000: Success
+ *         others: Error
+ *
  * USB Error Codes:
  *
  * send_command return codes have the following format:
@@ -280,6 +304,12 @@ enum packet_id_type {
 	USB_SPI_PKT_ID_RSP_TRANSFER_START     = 5,
 	/* Additional packets containing read payload. */
 	USB_SPI_PKT_ID_RSP_TRANSFER_CONTINUE  = 6,
+	/*
+	 * Request assertion or deassertion of chip select
+	 */
+	USB_SPI_PKT_ID_CMD_CHIP_SELECT        = 7,
+	/* Response to above request. */
+	USB_SPI_PKT_ID_RSP_CHIP_SELECT        = 8,
 };
 
 enum feature_bitmap {
@@ -314,6 +344,21 @@ struct usb_spi_continue_v2 {
 	uint8_t data[USB_SPI_PAYLOAD_SIZE_V2_CONTINUE];
 } __packed;
 
+enum chip_select_flags {
+	/* Indicates chip select should be asserted. */
+	USB_SPI_CHIP_SELECT = BIT(0)
+};
+
+struct usb_spi_chip_select_command {
+	uint16_t packet_id;
+	uint16_t flags;
+} __packed;
+
+struct usb_spi_chip_select_response {
+	uint16_t packet_id;
+	uint16_t status_code;
+} __packed;
+
 struct usb_spi_packet_ctx {
 	union {
 		uint8_t bytes[USB_MAX_PACKET_SIZE];
@@ -323,6 +368,8 @@ struct usb_spi_packet_ctx {
 		struct usb_spi_response_configuration_v2 rsp_config;
 		struct usb_spi_response_v2 rsp_start;
 		struct usb_spi_continue_v2 rsp_continue;
+		struct usb_spi_chip_select_command cmd_cs;
+		struct usb_spi_chip_select_response rsp_cs;
 	} __packed;
 	/*
 	 * By storing the number of bytes in the header and knowing that the
@@ -392,6 +439,8 @@ enum usb_spi_mode {
 	USB_SPI_MODE_IDLE = 0,
 	/* Indicates the device needs to send it's USB SPI configuration.*/
 	USB_SPI_MODE_SEND_CONFIGURATION,
+	/* Indicates the device needs to respond to chip select. */
+	USB_SPI_MODE_SEND_CHIP_SELECT_RESPONSE,
 	/* Indicates we device needs start the SPI transfer. */
 	USB_SPI_MODE_START_SPI,
 	/* Indicates we should start a transfer response. */

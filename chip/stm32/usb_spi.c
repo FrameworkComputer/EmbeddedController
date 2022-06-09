@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "gpio.h"
 #include "link_defs.h"
 #include "registers.h"
 #include "spi.h"
@@ -178,6 +179,15 @@ static void create_spi_config_response(struct usb_spi_config const *config,
 		sizeof(struct usb_spi_response_configuration_v2);
 }
 
+static void create_spi_chip_select_response(struct usb_spi_config const *config,
+					    struct usb_spi_packet_ctx *packet)
+{
+	/* Construct the response packet. */
+	packet->rsp_cs.packet_id = USB_SPI_PKT_ID_RSP_CHIP_SELECT;
+	packet->rsp_cs.status_code = 0;
+	packet->packet_size = sizeof(packet->rsp_cs);
+}
+
 /*
  * If we have a transfer response in progress, this will construct the
  * next entry. If no transfer is in progress or if we are unable to
@@ -334,6 +344,24 @@ static void usb_spi_process_rx_packet(struct usb_spi_config const *config,
 
 		break;
 	}
+	case USB_SPI_PKT_ID_CMD_CHIP_SELECT:
+	{
+		/*
+		 * The host is requesting the chip select line be
+		 * asserted or deasserted.
+		 */
+		uint16_t flags = packet->cmd_cs.flags;
+
+		if (flags & USB_SPI_CHIP_SELECT) {
+			/* Set chip select low (asserted). */
+			gpio_set_level(SPI_FLASH_DEVICE->gpio_cs, 0);
+		} else {
+			/* Set chip select high (adesserted). */
+			gpio_set_level(SPI_FLASH_DEVICE->gpio_cs, 1);
+		}
+		config->state->mode = USB_SPI_MODE_SEND_CHIP_SELECT_RESPONSE;
+		break;
+	}
 	default:
 	{
 		/* An unknown USB packet was delivered. */
@@ -384,6 +412,13 @@ void usb_spi_deferred(struct usb_spi_config const *config)
 	/* Need to send the USB SPI configuration */
 	if (config->state->mode == USB_SPI_MODE_SEND_CONFIGURATION) {
 		create_spi_config_response(config, transmit_packet);
+		usb_spi_write_packet(config, transmit_packet);
+		config->state->mode = USB_SPI_MODE_IDLE;
+		return;
+	}
+	/* Need to send response to USB SPI chip select. */
+	if (config->state->mode == USB_SPI_MODE_SEND_CHIP_SELECT_RESPONSE) {
+		create_spi_chip_select_response(config, transmit_packet);
 		usb_spi_write_packet(config, transmit_packet);
 		config->state->mode = USB_SPI_MODE_IDLE;
 		return;
