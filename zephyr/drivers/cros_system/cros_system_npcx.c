@@ -412,11 +412,42 @@ static const char *cros_system_npcx_get_chip_revision(const struct device *dev)
 	return rev;
 }
 
+#define PSL_NODE DT_INST(0, nuvoton_npcx_power_psl)
+#if DT_NODE_HAS_STATUS(PSL_NODE, okay)
+PINCTRL_DT_DEFINE(PSL_NODE);
+static int cros_system_npcx_configure_psl_in(void)
+{
+	const struct pinctrl_dev_config *pcfg =
+		PINCTRL_DT_DEV_CONFIG_GET(PSL_NODE);
+
+	return pinctrl_apply_state(pcfg, PINCTRL_STATE_SLEEP);
+}
+
+static void cros_system_npcx_psl_out_inactive(void)
+{
+	struct gpio_dt_spec enable = GPIO_DT_SPEC_GET(PSL_NODE, enable_gpios);
+
+	gpio_pin_set_dt(&enable, 1);
+}
+#else
+static int cros_system_npcx_configure_psl_in(void)
+{
+	return -EINVAL;
+}
+
+static void cros_system_npcx_psl_out_inactive(void)
+{
+	return;
+}
+#endif
+
 static void system_npcx_hibernate_by_psl(const struct device *dev,
 					 uint32_t seconds,
 					 uint32_t microseconds)
 {
 	ARG_UNUSED(dev);
+	int ret;
+
 	/*
 	 * TODO(b/178230662): RTC wake-up in PSL mode only support in npcx9
 	 * series. Nuvoton will introduce CLs for it later.
@@ -424,11 +455,12 @@ static void system_npcx_hibernate_by_psl(const struct device *dev,
 	ARG_UNUSED(seconds);
 	ARG_UNUSED(microseconds);
 
-	/*
-	 * Configure PSL input pads from "psl-in-pads" property in device tree
-	 * file.
-	 */
-	npcx_pinctrl_psl_input_configure();
+	/* Configure detection settings of PSL_IN pads first */
+	ret = cros_system_npcx_configure_psl_in();
+	if (ret < 0) {
+		LOG_ERR("PSL_IN pinctrl setup failed (%d)", ret);
+		return;
+	}
 
 	/*
 	 * Give the board a chance to do any late stage hibernation work.  This
@@ -439,8 +471,12 @@ static void system_npcx_hibernate_by_psl(const struct device *dev,
 	if (board_hibernate_late)
 		board_hibernate_late();
 
-	/* Turn off VCC1 to enter ultra-low-power mode for hibernating */
-	npcx_pinctrl_psl_output_set_inactive();
+	/*
+	 * A transition from 0 to 1 of specific IO (GPIO85) data-out bit
+	 * set PSL_OUT to inactive state. Then, it will turn Core Domain
+	 * power supply (VCC1) off for better power consumption.
+	 */
+	cros_system_npcx_psl_out_inactive();
 }
 
 static int cros_system_npcx_get_reset_cause(const struct device *dev)
@@ -526,8 +562,8 @@ static int cros_system_npcx_soc_reset(const struct device *dev)
 #error "cros-ec,hibernate-wake-pins cannot be used with HIBERNATE_PSL"
 #endif
 #else
-#if DT_HAS_COMPAT_STATUS_OKAY(nuvoton_npcx_pslctrl_def)
-#error "vsby-psl-in-list cannot be used with non-HIBERNATE_PSL"
+#if DT_NODE_HAS_STATUS(PSL_NODE, okay)
+#error "power_ctrl_psl cannot be used with non-HIBERNATE_PSL"
 #endif
 #endif
 

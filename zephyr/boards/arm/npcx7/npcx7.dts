@@ -88,3 +88,8 @@
 		     >;
 	pinctrl-names = "default";
 };
+
+/* PSL_OUT is fixed to GPIO85 in npcx7 series. */
+&power_ctrl_psl {
+	enable-gpios = <&gpio8 5 0>;
+};

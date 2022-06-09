@@ -56,3 +56,8 @@
 		pinmux-gpio;
 	};
 };
+
+/* PSL_OUT is fixed to GPIO85 in npcx9 series. */
+&power_ctrl_psl {
+	enable-gpios = <&gpio8 5 0>;
+};
