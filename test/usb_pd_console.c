@@ -241,6 +241,11 @@ enum try_src_override_t tc_get_try_src_override(void)
 	return try_src_override;
 }
 
+enum pd_cc_states pd_get_task_cc_state(int port)
+{
+	return PD_CC_NONE;
+}
+
 static int test_command_pd_dump(void)
 {
 	int argc = 3;

@@ -185,6 +185,8 @@ int command_pd(int argc, char **argv)
 		cflush();
 	} else if (!strcasecmp(argv[2], "srccaps")) {
 		pd_srccaps_dump(port);
+	} else if (!strcasecmp(argv[2], "cc")) {
+		ccprintf("Port C%d CC%d\n", port, pd_get_task_cc_state(port));
 	}
 
 	if (IS_ENABLED(CONFIG_CMD_PD_TIMER) &&
@@ -203,6 +205,7 @@ DECLARE_CONSOLE_COMMAND(pd, command_pd,
 #endif
 	"\n\t<port> state"
 	"\n\t<port> srccaps"
+	"\n\t<port> cc"
 #ifdef CONFIG_CMD_PD_TIMER
 	"\n\t<port> timer"
 #endif /* CONFIG_CMD_PD_TIMER */
