@@ -334,6 +334,8 @@ static int spi_dma_wait(int port)
 	return rv;
 }
 
+static uint8_t spi_chip_select_already_asserted[ARRAY_SIZE(SPI_REGS)];
+
 int spi_transaction_async(const struct spi_device_t *spi_device,
 			  const uint8_t *txdata, int txlen,
 			  uint8_t *rxdata, int rxlen)
@@ -359,6 +361,11 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 			return rv;
 	}
 #endif
+
+	if (IS_ENABLED(CONFIG_USB_SPI)) {
+		spi_chip_select_already_asserted[port] =
+			!gpio_get_level(spi_device->gpio_cs);
+	}
 
 	/* Drive SS low */
 	gpio_set_level(spi_device->gpio_cs, 0);
@@ -403,8 +410,11 @@ int spi_transaction_flush(const struct spi_device_t *spi_device)
 {
 	int rv = spi_dma_wait(spi_device->port);
 
-	/* Drive SS high */
-	gpio_set_level(spi_device->gpio_cs, 1);
+	if (!IS_ENABLED(CONFIG_USB_SPI)
+	    || !spi_chip_select_already_asserted[spi_device->port]) {
+		/* Drive SS high */
+		gpio_set_level(spi_device->gpio_cs, 1);
+	}
 
 	return rv;
 }
