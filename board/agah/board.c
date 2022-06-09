@@ -26,6 +26,8 @@
 #include "usbc_config.h"
 #include "util.h"
 
+#include "driver/nvidia_gpu.h"
+
 #include "gpio_list.h" /* Must come after other header files. */
 
 /* Console output macros */
@@ -33,6 +35,15 @@
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 
 static int block_sequence;
+
+struct d_notify_policy d_notify_policies[] = {
+	AC_ATLEAST_W(100),
+	AC_ATLEAST_W(65),
+	AC_DC,
+	DC_ATLEAST_SOC(20),
+	DC_ATLEAST_SOC(5),
+};
+BUILD_ASSERT(ARRAY_SIZE(d_notify_policies) == D_NOTIFY_COUNT);
 
 __override void board_cbi_init(void)
 {
@@ -63,6 +74,8 @@ static void board_init(void)
 	}
 	gpio_enable_interrupt(GPIO_PG_PP3300_S5_OD);
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_ODL);
+
+	nvidia_gpu_init_policy(d_notify_policies);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

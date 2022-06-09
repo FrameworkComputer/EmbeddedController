@@ -14,6 +14,11 @@
 #include "baseboard.h"
 
 /*
+ * Nvidia GPU
+ */
+#define CONFIG_GPU_NVIDIA
+
+/*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
  * until we can confirm all earlier chips are out of service.
  */
