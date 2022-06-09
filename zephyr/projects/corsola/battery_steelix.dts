@@ -5,11 +5,20 @@
 
 / {
 	batteries {
-		default_battery: smp_l20m3pg2 {
-			compatible = "smp,l20m3pg2", "battery-smart";
+		default_battery: byd_l22b3pg0 {
+			compatible = "byd,l22b3pg0", "battery-smart";
 		};
-		lgc_l20l3pg2 {
-			compatible = "lgc,l20l3pg2", "battery-smart";
+		celxpert_l22c3pg0 {
+			compatible = "celxpert,l22c3pg0", "battery-smart";
+		};
+		cosmx_l22x3pg0 {
+			compatible = "cosmx,l22x3pg0", "battery-smart";
+		};
+		smp_l22m3pg0 {
+			compatible = "smp,l22m3pg0", "battery-smart";
+		};
+		sunwoda_l22d3pg0 {
+			compatible = "sunwoda,l22d3pg0", "battery-smart";
 		};
 	};
 };
