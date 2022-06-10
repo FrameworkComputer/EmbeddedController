@@ -12,7 +12,7 @@
 
 	named-gpios {
 		/* Skyrim-specific GPIO customizations */
-		usb_fault_odl {
+		gpio_usb_fault_odl: usb_fault_odl {
 			gpios = <&gpio5 0 GPIO_ODR_HIGH>;
 		};
 		gpio_en_pwr_s3: en_pwr_s3 {
@@ -43,8 +43,7 @@
 		pcore_ocp_r_l {
 			gpios = <&gpioa 5 GPIO_INPUT>;
 		};
-		/* TODO: Add interrupt handler */
-		usb_hub_fault_q_odl {
+		gpio_usb_hub_fault_q_odl: usb_hub_fault_q_odl {
 			gpios = <&gpioe 5 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_pg_lpddr5_s3_od: pg_lpddr5_s3_od {
