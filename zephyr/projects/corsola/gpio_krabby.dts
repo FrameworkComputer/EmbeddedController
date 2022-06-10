@@ -7,6 +7,7 @@
 
 / {
 	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-wp = &ec_flash_wp_odl;
 	};
 
@@ -55,6 +56,9 @@
 		ac_present: ac_present {
 			gpios = <&gpioe 5 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 		ec_flash_wp_odl: ec_flash_wp_odl {
 			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
@@ -183,7 +187,6 @@
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
-			<&gpioc 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,

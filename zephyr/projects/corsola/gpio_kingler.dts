@@ -5,6 +5,7 @@
 
 / {
 	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-wp = &gpio_ec_wp_l;
 		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
@@ -84,6 +85,9 @@
 		};
 		ec_pen_chg_dis_odl {
 			gpios = <&gpioe 4 GPIO_INPUT>;
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpio8 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_wp_l: ec_wp_odl {
 			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
