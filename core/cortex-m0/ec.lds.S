@@ -317,6 +317,17 @@ SECTIONS
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
 
 	/*
+	 * Relocations are not supported, so make sure that there is no GOT
+	 * section. See http://issuetracker.google.com/234507656#comment15.
+	 */
+	.got (NOLOAD) :
+	{
+		KEEP(*(.got*));
+	}
+	ASSERT(SIZEOF(.got) == 0, "GOT section found, but not supported.\
+ Make sure that all code is compiled without -fPIC.")
+
+	/*
 	 * __flash_used and __flash_size is used in flash free calculations by
 	 * the makefile. Note the difference between __flash_size and
 	 * __config_flash_size. __flash_size is the flash size for the given
