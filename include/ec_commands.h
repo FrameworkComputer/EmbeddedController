@@ -4727,7 +4727,7 @@ struct ec_params_dedicated_charger_limit {
 /*
  * Get and set charging splashscreen variables
  */
-#define EC_CMD_CHARGESPLASH 0x00A4
+#define EC_CMD_CHARGESPLASH 0x00A5
 
 enum ec_chargesplash_cmd {
 	/* Get the current state variables */
