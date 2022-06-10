@@ -6,9 +6,12 @@
  */
 
 #include "common.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "ps8743.h"
 #include "usb_mux.h"
+#include "usb_mux/ps8743_public.h"
+#include "usb_pd.h"
 #include "util.h"
 
 int ps8743_read(const struct usb_mux *me, uint8_t reg, int *val)
@@ -164,3 +167,47 @@ const struct usb_mux_driver ps8743_usb_mux_driver = {
 	.set = ps8743_set_mux,
 	.get = ps8743_get_mux,
 };
+
+static bool ps8743_port_is_usb2_only(const struct usb_mux *me)
+{
+	int val;
+
+	if (ps8743_read(me, PS8743_MISC_DCI_SS_MODES, &val))
+		return false;
+
+	val &= (PS8743_SSTX_NORMAL_OPERATION_MODE |
+		PS8743_SSTX_POWER_SAVING_MODE | PS8743_SSTX_SUSPEND_MODE);
+
+	return (val != PS8743_SSTX_NORMAL_OPERATION_MODE &&
+		val != PS8743_SSTX_POWER_SAVING_MODE);
+}
+
+static void ps8743_update_usb_mode_all(bool is_resume)
+{
+	for (int i = 0; i < board_get_usb_pd_port_count(); i++) {
+		const struct usb_mux *mux = &usb_muxes[i];
+
+		if (mux->driver != &ps8743_usb_mux_driver)
+			continue;
+
+		if (is_resume) {
+			ps8743_field_update(mux, PS8743_REG_MODE,
+					    PS8743_MODE_USB_ENABLE, 0xFF);
+		} else if (ps8743_port_is_usb2_only(mux)) {
+			ps8743_field_update(mux, PS8743_REG_MODE,
+					    PS8743_MODE_USB_ENABLE, 0);
+		}
+	}
+}
+
+static void ps8743_suspend(void)
+{
+	ps8743_update_usb_mode_all(false);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, ps8743_suspend, HOOK_PRIO_DEFAULT);
+
+static void ps8743_resume(void)
+{
+	ps8743_update_usb_mode_all(true);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, ps8743_resume, HOOK_PRIO_DEFAULT);
