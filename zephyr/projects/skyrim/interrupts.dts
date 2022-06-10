@@ -62,6 +62,16 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "usb_fault_interrupt";
 		};
+		int_usb_c0_sbu_fault: c0_sbu_fault {
+			irq-pin = <&ioex_usb_c0_sbu_fault_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "sbu_fault_interrupt";
+		};
+		int_usb_c1_sbu_fault: c1_sbu_fault {
+			irq-pin = <&ioex_usb_c1_sbu_fault_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "sbu_fault_interrupt";
+		};
 		int_usb_c0_tcpc: usb_c0_tcpc {
 			irq-pin = <&gpio_usb_c0_tcpc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;

@@ -66,7 +66,9 @@ static void usbc_interrupt_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
 
-	/* TODO: Enable SBU fault interrupts (io expander )*/
+	/* Enable SBU fault interrupts */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_sbu_fault));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_sbu_fault));
 }
 DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_POST_I2C);
 
@@ -422,7 +424,13 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 				       charge_mv);
 }
 
-/* TODO: sbu_fault_interrupt from io expander */
+void sbu_fault_interrupt(enum gpio_signal signal)
+{
+	int port = signal == IOEX_USB_C1_FAULT_ODL ? 1 : 0;
+
+	CPRINTSUSB("C%d: SBU fault", port);
+	pd_handle_overcurrent(port);
+}
 
 void usb_fault_interrupt(enum gpio_signal signal)
 {
