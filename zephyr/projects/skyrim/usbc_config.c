@@ -180,6 +180,13 @@ __overridable int board_c1_ps8818_mux_set(const struct usb_mux *me,
 					  mux_state_t mux_state)
 {
 	CPRINTSUSB("C1: PS8818 mux using default tuning");
+
+	/* Once a DP connection is established, we need to set IN_HPD */
+	if (mux_state & USB_PD_MUX_DP_ENABLED)
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 1);
+	else
+		ioex_set_level(IOEX_USB_C1_HPD_IN_DB, 0);
+
 	return 0;
 }
 
@@ -218,8 +225,6 @@ struct usb_mux usb_muxes[] = {
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
-
-/* TODO: HPD signal on PS8818 DB */
 
 /*
  * USB C0 (general) and C1 (just ANX DB) use IOEX pins to
