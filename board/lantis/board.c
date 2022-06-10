@@ -26,6 +26,7 @@
 #include "hooks.h"
 #include "intc.h"
 #include "keyboard_8042.h"
+#include "keyboard_8042_sharedlib.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -531,6 +532,17 @@ static void board_update_no_keypad_by_fwconfig(void)
 	}
 }
 
+static void board_update_keyboard_layout(void)
+{
+	if (get_cbi_fw_config_keyboard() == KB_LAYOUT_1) {
+		/*
+		 * If keyboard is UK(KB_LAYOUT_1), we need translate right ctrl
+		 * to backslash(\|) key.
+		 */
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+	}
+}
+
 void board_init(void)
 {
 	int on;
@@ -592,6 +604,7 @@ void board_init(void)
 	board_power_5v_enable(on);
 
 	board_update_no_keypad_by_fwconfig();
+	board_update_keyboard_layout();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

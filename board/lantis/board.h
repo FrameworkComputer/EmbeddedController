@@ -143,6 +143,11 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
+enum ec_cfg_keyboard_layout {
+	KB_LAYOUT_DEFAULT = 0,
+	KB_LAYOUT_1 = 1
+};
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
