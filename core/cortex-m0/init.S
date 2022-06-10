@@ -111,15 +111,6 @@ _data_end:
 _data_lma_start:
 .long __data_lma_start
 
-/* Mock functions to avoid linker complaints */
-.global __aeabi_unwind_cpp_pr0
-.global __aeabi_unwind_cpp_pr1
-.global __aeabi_unwind_cpp_pr2
-__aeabi_unwind_cpp_pr0:
-__aeabi_unwind_cpp_pr1:
-__aeabi_unwind_cpp_pr2:
-	bx lr
-
 /* Reserve space for system stack */
 .section .bss.system_stack
 stack_start:
