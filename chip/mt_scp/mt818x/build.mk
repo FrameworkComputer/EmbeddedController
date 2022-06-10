@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 CORE:=cortex-m
-CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
+CFLAGS_CPU+=-mcpu=cortex-m4
 
 # Required chip modules
 chip-y+=mt818x/clock_$(CHIP_VARIANT).o

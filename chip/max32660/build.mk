@@ -9,7 +9,7 @@
 # MAX32660 SoC has a Cortex-M4F ARM core
 CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
-CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
+CFLAGS_CPU+=-mcpu=cortex-m4
 
 # Required chip modules
 chip-y=clock_chip.o gpio_chip.o system_chip.o hwtimer_chip.o uart_chip.o

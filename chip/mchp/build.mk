@@ -15,7 +15,7 @@ endif
 # MCHP MEC SoC's have a Cortex-M4 ARM core
 CORE:=cortex-m
 # Allow the full Cortex-M4 instruction set
-CFLAGS_CPU+=-march=armv7e-m -mcpu=cortex-m4
+CFLAGS_CPU+=-mcpu=cortex-m4
 
 # JTAG debug with Keil ARM MDK debugger
 # do not allow GCC dwarf debug extensions
