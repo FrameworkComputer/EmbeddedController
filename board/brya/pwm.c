@@ -35,7 +35,7 @@ const struct pwm_t pwm_channels[] = {
 		 * lower PWM frequencies, but higher frequencies record a much
 		 * lower maximum power.
 		 */
-		.freq = 2400,
+		.freq = 12000,
 	},
 	[PWM_CH_FAN] = {
 		.channel = 5,
