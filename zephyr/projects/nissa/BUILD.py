@@ -18,7 +18,7 @@ def register_nissa_project(
     if chip.startswith("npcx"):
         register_func = register_npcx_project
 
-    register_func(
+    return register_func(
         project_name=project_name,
         zephyr_board=chip,
         dts_overlays=["cbi.dts", *extra_dts_overlays],
@@ -26,7 +26,7 @@ def register_nissa_project(
     )
 
 
-register_nissa_project(
+nivviks = register_nissa_project(
     project_name="nivviks",
     chip="npcx9m3f",
     extra_dts_overlays=[
@@ -41,7 +41,7 @@ register_nissa_project(
     extra_kconfig_files=[here / "prj_nivviks.conf"],
 )
 
-register_nissa_project(
+nereid = register_nissa_project(
     project_name="nereid",
     chip="it8xxx2",
     extra_dts_overlays=[
@@ -55,7 +55,7 @@ register_nissa_project(
     extra_kconfig_files=[here / "prj_nereid.conf"],
 )
 
-register_nissa_project(
+craask = register_nissa_project(
     project_name="craask",
     chip="npcx9m3f",
     extra_dts_overlays=[
