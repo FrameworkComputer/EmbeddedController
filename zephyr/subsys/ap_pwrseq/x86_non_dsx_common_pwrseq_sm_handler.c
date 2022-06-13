@@ -11,6 +11,7 @@ static K_KERNEL_STACK_DEFINE(pwrseq_thread_stack,
 			CONFIG_AP_PWRSEQ_STACK_SIZE);
 static struct k_thread pwrseq_thread_data;
 static struct pwrseq_context pwrseq_ctx;
+static bool s5_inactive_tmr_running;
 /* S5 inactive timer*/
 K_TIMER_DEFINE(s5_inactive_timer, NULL, NULL);
 
@@ -221,6 +222,7 @@ static int common_pwr_sm_run(int state)
 			rsmrst_pass_thru_handler();
 			if (signals_valid_and_off(IN_PCH_SLP_S5)) {
 				k_timer_stop(&s5_inactive_timer);
+				s5_inactive_tmr_running = false;
 				return SYS_POWER_STATE_S5S4;
 			}
 		}
@@ -228,16 +230,18 @@ static int common_pwr_sm_run(int state)
 		if (AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) == 0)
 			return SYS_POWER_STATE_S5G3;
 		else if (AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) > 0) {
-			if (k_timer_status_get(&s5_inactive_timer) > 0)
-				/* Timer is expired */
-				return SYS_POWER_STATE_S5G3;
-			else if (k_timer_remaining_get(
-						&s5_inactive_timer) == 0)
-				/* Timer is not started or stopped */
+			if (!s5_inactive_tmr_running) {
+				/* Timer is not started */
 				k_timer_start(&s5_inactive_timer,
 					K_SECONDS(AP_PWRSEQ_DT_VALUE(
 						s5_inactivity_timeout)),
 					K_NO_WAIT);
+				s5_inactive_tmr_running = true;
+			} else if (k_timer_status_get(&s5_inactive_timer) > 0) {
+				/* Timer is expired */
+				s5_inactive_tmr_running = false;
+				return SYS_POWER_STATE_S5G3;
+			}
 		}
 		break;
 
