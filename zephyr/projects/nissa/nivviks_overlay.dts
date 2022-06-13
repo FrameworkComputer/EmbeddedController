@@ -261,7 +261,14 @@
 	 */
 	 def-lvol-io-list {
 		compatible = "nuvoton,npcx-lvolctrl-def";
-		lvol-io-pads = <&lvol_iof5 &lvol_iof4>;
+		lvol-io-pads = <
+			&lvol_iof5
+			&lvol_iof4
+			&lvol_io90 /* EC_I2C_SENSOR_SCL */
+			&lvol_io87 /* EC_I2C_SENSOR_SDA */
+			&lvol_ioe3 /* VCCIN_AUX_VID1 */
+			&lvol_io92 /* VCCIN_AUX_VID0 */
+		>;
 	 };
 	 /*
 	  * Declare unused GPIOs so that they are shut down
