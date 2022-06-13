@@ -23,9 +23,7 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-#define CONFIG_SYSTEM_UNLOCKED
-#define CONFIG_BYPASS_CBI_EEPROM_WP_CHECK
-
+#undef CONFIG_CMD_POWERINDEBUG
 #undef CONFIG_MKBP_INPUT_DEVICES
 
 /*
