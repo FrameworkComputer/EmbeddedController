@@ -18,7 +18,6 @@ config PLATFORM_EC_EEPROM_CBI_WP
 	   Define this if the EC can independently set the CBI EEPROM WP
 	   signal. The accompanying hardware must ensure that the CBI WP gets
 	   latched and is only reset when EC_RST_ODL is asserted.
-	select PLATFORM_EC_BYPASS_CBI_EEPROM_WP_CHECK
 
 choice PLATFORM_EC_CBI_STORAGE_TYPE
 	prompt "Select CBI storage Type"
