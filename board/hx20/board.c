@@ -767,22 +767,26 @@ BUILD_ASSERT(ARRAY_SIZE(hx20_board_versions) == BOARD_VERSION_COUNT);
 
 int get_hardware_id(enum adc_channel channel)
 {
-	int version = BOARD_VERSION_UNKNOWN;
+	int version[ADC_CH_COUNT] = {BOARD_VERSION_UNKNOWN};
 	int mv;
 	int i;
 
-	mv = adc_read_channel(ADC_AD_BID);
+	if (channel >= ADC_CH_COUNT) {
+		return BOARD_VERSION_UNKNOWN;
+	}
+
+	mv = adc_read_channel(channel);
 
 	if (mv == ADC_READ_ERROR)
 		return BOARD_VERSION_UNKNOWN;
 
 	for (i = 0; i < BOARD_VERSION_COUNT; i++)
 		if (mv < hx20_board_versions[i].thresh_mv) {
-			version = hx20_board_versions[i].version;
-			return version;
+			version[channel] = hx20_board_versions[i].version;
+			return version[channel];
 		}
 
-	return version;
+	return version[channel];
 }
 
 int board_get_version(void)
