@@ -53,32 +53,33 @@
 		gpio_wp: wp-l {
 			gpios = <&gpiod 5 GPIO_INPUT>;
 		};
-		std-adp-prsnt {
+		std_adp_prsnt: std-adp-prsnt {
 			gpios = <&gpioc 6 GPIO_INPUT>;
+			enum-name = "GPIO_DC_JACK_PRESENT";
 		};
 		bc_acok: bc-acok-ec {
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
-		usbc-tcpc-alrt-p0 {
+		usbc_tcpc_alrt_p0: usbc-tcpc-alrt-p0 {
 			gpios = <&gpio4 0 GPIO_INPUT>;
 		};
 		/* NOTE: Netname is USBC_TCPC_PPC_ALRT_P0 */
-		usb-c0-c1-tcpc-rst-odl {
+		usb_c0_c1_tcpc_rst_odl: usb-c0-c1-tcpc-rst-odl {
 			gpios = <&gpiod 0 GPIO_ODR_HIGH>;
 		};
 		/* NOTE: Netname is USBC_TCPC_ALRT_P1 */
-		usbc-tcpc-ppc-alrt-p0 {
+		usbc_tcpc_ppc_alrt_p0: usbc-tcpc-ppc-alrt-p0 {
 			gpios = <&gpiod 1 GPIO_INPUT>;
 		};
-		usbc-tcpc-ppc-alrt-p1 {
+		usbc_tcpc_ppc_alrt_p1: usbc-tcpc-ppc-alrt-p1 {
 			gpios = <&gpioe 4 GPIO_INPUT>;
 		};
-		usbc-tcpc-alrt-p2 {
+		usbc_tcpc_alrt_p2: usbc-tcpc-alrt-p2 {
 			gpios = <&gpio9 1 GPIO_INPUT>;
 		};
 		/* NOTE: Netname is USBC_TCPC_PPC_ALRT_P3 */
-		usbc-tcpc-ppc-alrt-p3 {
+		usbc_tcpc_alrt_p3: usbc-tcpc-alrt-p3 {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 		};
 		gpio_ec_pch_wake_odl: pch-wake-n {
@@ -143,8 +144,9 @@
 			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
 		};
 		/* NOTE: Netname is USBC_TCPC_ALRT_P3 */
-		ccd-mode-odl {
+		ccd_mode_odl: ccd-mode-odl {
 			gpios = <&gpio9 2 GPIO_INPUT>;
+			enum-name = "GPIO_CCD_MODE_ODL";
 		};
 		smb-bs-clk {
 			gpios = <&gpiob 3 GPIO_INPUT>;
@@ -256,7 +258,7 @@
 		tp-gpiof1 {
 			gpios = <&gpiof 1 GPIO_INPUT>;
 		};
-		usbc-tcpc-ppc-alrt-p2 {
+		usbc_tcpc_ppc_alrt_p2: usbc-tcpc-ppc-alrt-p2 {
 			gpios = <&gpiof 2 GPIO_INPUT>;
 		};
 		tp-gpiof4 {
@@ -286,26 +288,43 @@
 		};
 
 		/* USB C IOEX configuration */
-		usb-c0-hbr-ls-en {
+		usb_c0_hb_retimer_ls_en: usb-c0-hbr-ls-en {
 			gpios = <&ioex_c0 2 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_HBR_LS_EN";
+			no-auto-init;
 		};
-		usb-c0-hbr-rst {
+		usb_c0_hb_retimer_rst: usb-c0-hbr-rst {
 			gpios = <&ioex_c0 3 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_HBR_RST";
+			no-auto-init;
 		};
-		usb-c1-hbr-ls-en {
+		usb_c1_hb_retimer_ls_en: usb-c1-hbr-ls-en {
 			gpios = <&ioex_c1 2 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_HBR_LS_EN";
+			no-auto-init;
 		};
-		usb-c1-hbr-rst {
+		usb_c1_hb_retimer_rst: usb-c1-hbr-rst {
 			gpios = <&ioex_c1 3 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C1_HBR_RST";
+			no-auto-init;
 		};
 		usb-c0-mux-oe-n {
 			gpios = <&ioex_c0 4 GPIO_OUTPUT_LOW>;
+			no-auto-init;
 		};
 		usb-c0-mux-sbu-sel-0 {
 			gpios = <&ioex_c0 6 GPIO_OUTPUT_HIGH>;
+			enum-name = "IOEX_USB_C0_MUX_SBU_SEL_0";
+			no-auto-init;
 		};
 		usb-c0-mux-sbu-sel-1 {
 			gpios = <&ioex_c1 4 GPIO_OUTPUT_LOW>;
+			enum-name = "IOEX_USB_C0_MUX_SBU_SEL_1";
+			no-auto-init;
+		};
+		usb-c0-c1-prochot-n {
+			gpios = <&ioex_c1 6 GPIO_INPUT>;
+			no-auto-init;
 		};
 		/* unimplemented GPIOs */
 		en-pp5000 {
@@ -329,30 +348,32 @@
 };
 
 &i2c0_0 {
-	nct38xx_C0:nct38xx_C0@70 {
-	#address-cells = <1>;
-	#size-cells = <0>;
-	compatible = "nuvoton,nct38xx-gpio";
-	reg = <0x70>;
-	label = "NCT38XX_C0";
+	status = "okay";
 
-	ioex_c0:gpio@0 {
+	nct38xx_c0: nct38xx_c0@73 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "nuvoton,nct38xx-gpio";
+		reg = <0x73>;
+		label = "NCT38XX_C0";
+
+		ioex_c0:gpio@0 {
 			compatible = "nuvoton,nct38xx-gpio-port";
 			reg = <0x0>;
 			label = "NCT38XX_C0_GPIO0";
 			gpio-controller;
 			#gpio-cells = <2>;
 			ngpios = <8>;
-			pin_mask = <0xff>;
-			pinmux_mask = <0xf7>;
+			pin_mask = <0xdc>;
+			pinmux_mask = <0xff>;
 		};
 	};
 
-	nct38xx_C1:nct38xx_C1@70 {
+	nct38xx_c1: nct38xx_c1@77 {
 		#address-cells = <1>;
 		#size-cells = <0>;
 		compatible = "nuvoton,nct38xx-gpio";
-		reg = <0x70>;
+		reg = <0x77>;
 		label = "NCT38XX_C1";
 
 		ioex_c1:gpio@0 {
@@ -362,8 +383,15 @@
 			gpio-controller;
 			#gpio-cells = <2>;
 			ngpios = <8>;
-			pin_mask = <0xff>;
-			pinmux_mask = <0xf7>;
+			pin_mask = <0xdc>;
+			pinmux_mask = <0xff>;
 		};
+	};
+
+	nct38xx_alert_0 {
+		compatible = "nuvoton,nct38xx-gpio-alert";
+		irq-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+		nct38xx-dev = <&nct38xx_c0 &nct38xx_c1>;
+		label = "NCT38XX_ALERT_1";
 	};
 };

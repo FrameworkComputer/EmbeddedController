@@ -1,0 +1,70 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ #include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc {
+				compatible = "nuvoton,nct38xx";
+				gpio-dev = <&nct38xx_c0>;
+				port = <&typec_aic1>;
+				i2c-addr-flags = "NCT38XX_I2C_ADDR1_4_FLAGS";
+				tcpc-flags = <(
+					TCPC_FLAGS_TCPCI_REV2_0 |
+					TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
+			};
+			chg {
+				compatible = "intersil,isl9241";
+				status = "okay";
+				port = <&i2c_charger>;
+			};
+			usb-muxes = <&usb_c0_hb_retimer &virtual_mux_c0>;
+		};
+		port0-muxes {
+			usb_c0_hb_retimer: jhl8040r-c0 {
+				compatible = "intel,jhl8040r";
+				port = <&typec_aic1>;
+				i2c-addr-flags = <0x56>;
+				reset-pin = <&usb_c0_hb_retimer_rst>;
+				ls-en-pin = <&usb_c0_hb_retimer_ls_en>;
+			};
+			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc {
+				compatible = "nuvoton,nct38xx";
+				gpio-dev = <&nct38xx_c1>;
+				port = <&typec_aic1>;
+				i2c-addr-flags = "NCT38XX_I2C_ADDR2_4_FLAGS";
+				tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+			};
+			usb-muxes = <&usb_c1_hb_retimer &virtual_mux_c1>;
+		};
+		port1-muxes {
+			usb_c1_hb_retimer: jhl8040r-c1 {
+				compatible = "intel,jhl8040r";
+				port = <&typec_aic1>;
+				i2c-addr-flags = <0x57>;
+				reset-pin = <&usb_c1_hb_retimer_rst>;
+				ls-en-pin = <&usb_c1_hb_retimer_ls_en>;
+			};
+			virtual_mux_c1: virtual-mux-c1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
