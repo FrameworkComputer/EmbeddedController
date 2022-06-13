@@ -35,4 +35,9 @@
 #define PS8743_SSTX_POWER_SAVING_MODE     BIT(5)
 #define PS8743_SSTX_SUSPEND_MODE          BIT(6)
 
+/* Misc resiger for checking HPD / DP / USB / FLIP mode status */
+#define PS8743_MISC_HPD_DP_USB_FLIP 0x09
+#define PS8743_USB_MODE_STATUS      BIT(3)
+#define PS8743_DP_MODE_STATUS       BIT(4)
+
 #endif /* __CROS_EC_PS8743_H */
