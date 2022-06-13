@@ -382,6 +382,11 @@ static void board_init(void)
 	 */
 	if (board_version < 2)
 		button_disable_gpio(BUTTON_RECOVERY);
+
+	/* ADS GPIO interrupt enable*/
+	gpio_enable_interrupt(GPIO_ADS_5VS_V2_ADP_PRESENT_L);
+	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
+
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
