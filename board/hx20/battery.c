@@ -269,7 +269,7 @@ static void fix_single_param(int flag, int *cached, int *curr)
 		*cached = *curr;
 }
 
-#define CACHE_INVALIDATION_TIME_US (5 * SECOND)
+#define CACHE_INVALIDATION_TIME_US (3 * SECOND)
 
 /*
  * f any value in batt_params is bad, replace it with a cached
@@ -282,14 +282,42 @@ __override void board_battery_compensate_params(struct batt_params *batt)
 	static timestamp_t deadline;
 
 	/*
-	 * If battery keeps failing for 5 seconds, stop hiding the error and
+	 * If battery keeps failing for 3 seconds, stop hiding the error and
 	 * report back to host.
 	 */
-	if (batt->flags & BATT_FLAG_BAD_ANY) {
-		if (timestamp_expired(deadline, NULL))
+	if (batt->flags & BATT_FLAG_RESPONSIVE) {
+		if (batt->flags & BATT_FLAG_BAD_ANY) {
+			if (timestamp_expired(deadline, NULL))
+				return;
+		} else
+			deadline.val = get_time().val + CACHE_INVALIDATION_TIME_US;
+	} else if (!(batt->flags & BATT_FLAG_RESPONSIVE)) {
+		/**
+		 * There are 4 situations for battery is not repsonsed
+		 * 1. Darin battery (first time)
+		 * 2. Dead battery (first time)
+		 * 3. No battery (is preset)
+		 * 4. Others
+		 */
+		/* we don't need to cache the value when battery is not present */
+		if (!batt->is_present) {
+			batt_cache.flags &= ~BATT_FLAG_RESPONSIVE;
 			return;
-	} else {
-		deadline.val = get_time().val + CACHE_INVALIDATION_TIME_US;
+		}
+
+		/* we don't need to cache the value when we read the battery first time*/
+		if (!(batt_cache.flags & BATT_FLAG_RESPONSIVE))
+			return;
+
+		/**
+		 * If battery keeps no responsing for 3 seconds, stop hiding the error and
+		 * back to host.
+		 */
+		if (timestamp_expired(deadline, NULL)) {
+			batt_cache.flags &= ~BATT_FLAG_RESPONSIVE;
+			return;
+		}
+
 	}
 
 	/* return cached values for at most CACHE_INVALIDATION_TIME_US */
@@ -330,6 +358,8 @@ __override void board_battery_compensate_params(struct batt_params *batt)
 
 	/* remove bad flags after applying cached values */
 	batt->flags &= ~BATT_FLAG_BAD_ANY;
+	batt->flags |= BATT_FLAG_RESPONSIVE;
+	batt_cache.flags |= BATT_FLAG_RESPONSIVE;
 }
 
 /*****************************************************************************/
