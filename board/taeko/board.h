@@ -111,6 +111,8 @@
 /* The lower the input voltage, the higher the power efficiency. */
 #define PD_PREFER_LOW_VOLTAGE
 
+#undef CONFIG_CMD_POWERINDEBUG
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
