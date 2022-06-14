@@ -5,6 +5,7 @@
 menuconfig PLATFORM_EC_POWERSEQ
 	bool "Power sequencing"
 	depends on AP
+	depends on !AP_PWRSEQ
 	select HAS_TASK_CHIPSET
 	help
 	  Enable shimming the platform/ec AP power sequencing code. This
