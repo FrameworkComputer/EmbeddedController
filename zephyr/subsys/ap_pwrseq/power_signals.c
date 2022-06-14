@@ -310,7 +310,7 @@ void power_signal_init(void)
 	 * don't get OR'ed in later on.
 	 */
 	for (int i = 0; i < ARRAY_SIZE(polled_signals); i++) {
-		atomic_clear_bit(&power_signals, i);
+		atomic_clear_bit(&power_signals, polled_signals[i]);
 	}
 	/*
 	 * Save the current state so that new changes can be
