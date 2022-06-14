@@ -12,8 +12,6 @@ cros_ec_library_include_directories(include)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
   "src/usbc_config.c"
   "src/usb_pd_policy.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
-  "src/led.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C
   "src/i2c.c")
 
