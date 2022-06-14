@@ -1,3 +1,12 @@
 {
-   "signedContributors": []
+  "signedContributors": [
+    {
+      "name": "DHowett",
+      "id": 189190,
+      "comment_id": 1155462955,
+      "created_at": "2022-06-14T17:03:10Z",
+      "repoId": 447021040,
+      "pullRequestNo": 7
+    }
+  ]
 }
