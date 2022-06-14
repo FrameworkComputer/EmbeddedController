@@ -48,7 +48,6 @@
 
 #include "aes-gcm.h"
 #include "common.h"
-#include "endian.h"
 #include "util.h"
 
 #define STRICT_ALIGNMENT 1

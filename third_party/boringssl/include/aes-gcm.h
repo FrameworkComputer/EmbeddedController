@@ -50,7 +50,6 @@
 #define __CROS_EC_AES_GCM_H
 
 #include "common.h"
-#include "endian.h"
 #include "util.h"
 
 // block128_f is the type of a 128-bit, block cipher.

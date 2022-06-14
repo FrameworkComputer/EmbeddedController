@@ -6,7 +6,6 @@
 #include <stddef.h>
 #include "common.h"
 #include "console.h"
-#include "endian.h"
 #include "fpc_bio_algorithm.h"
 #include "fpc_private.h"
 #include "fpsensor.h"
