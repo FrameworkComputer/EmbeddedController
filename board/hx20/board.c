@@ -15,6 +15,7 @@
 #include "als.h"
 #include "bd99992gw.h"
 #include "button.h"
+#include "battery.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
@@ -496,6 +497,123 @@ static void check_chassis_open(int init)
 	}
 }
 
+void charge_gate_onoff(uint8_t enable)
+{
+	int control0 = 0x0000;
+	int control1 = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, &control0)) {
+		CPRINTS("read gate control1 fail");
+	}
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, &control1)) {
+		CPRINTS("read gate control1 fail");
+	}
+
+	if (enable) {
+		control0 &= ~ISL9241_CONTROL0_NGATE;
+		control1 &= ~ISL9241_CONTROL1_BGATE;
+		CPRINTS("B&N Gate off");
+	} else {
+		control0 |= ISL9241_CONTROL0_NGATE;
+		control1 |= ISL9241_CONTROL1_BGATE;
+		CPRINTS("B&N Gate on");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, control0)) {
+		CPRINTS("Update gate control0 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, control1)) {
+		CPRINTS("Update gate control1 fail");
+	}
+
+}
+
+
+void charge_psys_onoff(uint8_t enable)
+{
+	int control1 = 0x0000;
+	int control4 = 0x0000;
+	int data = 0x0000;
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, &control1)) {
+		CPRINTS("read psys control1 fail");
+	}
+
+	if (enable) {
+		control1 &= ~ISL9241_CONTROL1_IMON;
+		control1 |= ISL9241_CONTROL1_PSYS;
+		control4 &= ~ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0B00;		/* Set ACOK reference to 4.544V */
+		CPRINTS("Power saving disable");
+	} else {
+		control1 |= ISL9241_CONTROL1_IMON;
+		control1 &= ~ISL9241_CONTROL1_PSYS;
+		control4 |= ISL9241_CONTROL4_GP_COMPARATOR;
+		data = 0x0000;		/* Set ACOK reference to 0V */
+		CPRINTS("Power saving enable");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, data)) {
+		CPRINTS("Update ACOK reference fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL1, control1)) {
+		CPRINTS("Update psys control1 fail");
+	}
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, control4)) {
+		CPRINTS("Update psys control4 fail");
+	}
+}
+
+
+/*
+ * Charger Low Power Mode Process
+ * modern standby should not turn off Bfet and Nfet
+ * DC only at S5 need enable
+ * AC+DC at S5 & Fully charge need enable
+ * AC+DC at Modern standby & Fully charge need enable
+ * AC only need disable
+ */
+void charger_low_power_update(void)
+{
+	static int ac_state;
+	static int dc_state;
+	int batt_status;
+
+	ac_state = extpower_is_present();
+	dc_state = battery_is_present();
+	battery_status(&batt_status);
+
+	if (dc_state && !ac_state &&
+		chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		charge_gate_onoff(0);
+		charge_psys_onoff(0);
+	} else if (ac_state && dc_state &&
+		batt_status & STATUS_FULLY_CHARGED) {
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			charge_gate_onoff(0);
+			charge_psys_onoff(0);
+		} else if (chipset_in_state(CHIPSET_STATE_STANDBY))
+			charge_psys_onoff(0);
+	} else if (ac_state && !dc_state) {
+		charge_gate_onoff(1);
+		charge_psys_onoff(1);
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, charger_low_power_update, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_low_power_update, HOOK_PRIO_DEFAULT);
+
 /* Initialize board. */
 static void board_init(void)
 {
@@ -529,6 +647,8 @@ static void board_chipset_startup(void)
 	if (version > 6)
 		gpio_set_level(GPIO_EN_INVPWR, 1);
 
+	charge_gate_onoff(1);
+	charge_psys_onoff(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		board_chipset_startup,
@@ -537,16 +657,21 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
-	int version = board_get_version();
+	int batt_status;
+
+	battery_status(&batt_status);
 
 	CPRINTS(" HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
 
 #ifdef CONFIG_EMI_REGION1
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
 #endif
-	if (version > 6)
-		gpio_set_level(GPIO_EN_INVPWR, 0);
 
+	/* avoid AC mode enable charger LPM when charging*/
+	if (!extpower_is_present() || (batt_status & STATUS_FULLY_CHARGED)) {
+		charge_gate_onoff(0);
+		charge_psys_onoff(0);
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
@@ -559,6 +684,7 @@ static void board_chipset_resume(void)
 	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_CAM_EN, 1);
+	charge_psys_onoff(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
@@ -572,6 +698,7 @@ static void board_chipset_suspend(void)
 		gpio_set_level(GPIO_EC_MUTE_L, 0);
 		gpio_set_level(GPIO_CAM_EN, 0);
 	}
+	charge_psys_onoff(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
 		board_chipset_suspend,
@@ -640,22 +767,26 @@ BUILD_ASSERT(ARRAY_SIZE(hx20_board_versions) == BOARD_VERSION_COUNT);
 
 int get_hardware_id(enum adc_channel channel)
 {
-	int version = BOARD_VERSION_UNKNOWN;
+	int version[ADC_CH_COUNT] = {BOARD_VERSION_UNKNOWN};
 	int mv;
 	int i;
 
-	mv = adc_read_channel(ADC_AD_BID);
+	if (channel >= ADC_CH_COUNT) {
+		return BOARD_VERSION_UNKNOWN;
+	}
+
+	mv = adc_read_channel(channel);
 
 	if (mv == ADC_READ_ERROR)
 		return BOARD_VERSION_UNKNOWN;
 
 	for (i = 0; i < BOARD_VERSION_COUNT; i++)
 		if (mv < hx20_board_versions[i].thresh_mv) {
-			version = hx20_board_versions[i].version;
-			return version;
+			version[channel] = hx20_board_versions[i].version;
+			return version[channel];
 		}
 
-	return version;
+	return version[channel];
 }
 
 int board_get_version(void)
@@ -775,15 +906,20 @@ void charger_update(void)
 {
 	static int pre_ac_state;
 	static int pre_dc_state;
-	uint16_t val = 0x0000;
+	int val = 0x0000;
 
 	if (pre_ac_state != extpower_is_present() ||
 		pre_dc_state != battery_is_present())
 	{
 		CPRINTS("update charger!!");
 
-		val = ISL9241_CONTROL1_PROCHOT_REF_6800 |
-				ISL9241_CONTROL1_SWITCH_FREQ | ISL9241_CONTROL1_PSYS;
+		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL1, &val)) {
+			CPRINTS("read charger control1 fail");
+		}
+
+		val |= (ISL9241_CONTROL1_PROCHOT_REF_6800 |
+				ISL9241_CONTROL1_SWITCH_FREQ);
 
 		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_CONTROL1, val)) {

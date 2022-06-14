@@ -41,6 +41,7 @@
 #define ISL9241_REG_CONTROL0		0x39
 /* 2: Input Voltage Regulation (0 = Enable (default), 1 = Disable) */
 #define ISL9241_CONTROL0_INPUT_VTG_REGULATION	BIT(2)
+#define ISL9241_CONTROL0_NGATE	        BIT(12)
 
 
 #define ISL9241_REG_INFORMATION1	0x3A
@@ -52,6 +53,8 @@
 #define ISL9241_CONTROL1_PROCHOT_REF_6800   (7 << 0)
 #define ISL9241_CONTROL1_SWITCH_FREQ        (5 << 7)
 #define ISL9241_CONTROL1_PSYS           BIT(3)
+#define ISL9241_CONTROL1_IMON           BIT(5)
+#define ISL9241_CONTROL1_BGATE          BIT(6)
 #define ISL9241_CONTROL1_SUPPLEMENTAL_SUPPORT_MODE  BIT(10)
 
 /* Configures various charger options */
@@ -112,6 +115,7 @@
 /* 13: Enable VSYS slew rate control (0 - disable, 1 - enable) */
 #define ISL9241_CONTROL4_ACOK_PROCHOT       BIT(5)
 #define ISL9241_CONTROL4_OTG_CURR_PROCHOT   BIT(7)
+#define ISL9241_CONTROL4_GP_COMPARATOR      BIT(12)
 #define ISL9241_CONTROL4_SLEW_RATE_CTRL     BIT(13)
 
 #define ISL9241_REG_CONTROL5		0x4F
