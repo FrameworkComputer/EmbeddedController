@@ -18,6 +18,12 @@
  */
 enum pd_task_timer {
 	/*
+	 * Timer to wait for a button release alert after receiving a button
+	 * press alert.
+	 */
+	DPM_TIMER_PD_BUTTON_PRESS,
+
+	/*
 	 * In BIST_TX mode, this timer is used by a UUT to ensure that a
 	 * Continuous BIST Mode (i.e. BIST Carrier Mode) is exited in a timely
 	 * fashion.

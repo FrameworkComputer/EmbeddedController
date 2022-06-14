@@ -83,3 +83,7 @@ int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 {
 	return EC_SUCCESS;
 }
+
+void dpm_handle_alert(int port, uint32_t ado)
+{
+}

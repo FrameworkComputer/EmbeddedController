@@ -78,7 +78,6 @@ __maybe_unused static __const_data const char *const pd_timer_names[] = {
 	[PR_TIMER_HARD_RESET_COMPLETE] = "PR-HARD_RESET_COMPLETE",
 	[PR_TIMER_SINK_TX] = "PR-SINK_TX",
 	[PR_TIMER_TCPC_TX_TIMEOUT] = "PR-TCPC_TX_TIMEOUT",
-
 	[TC_TIMER_CC_DEBOUNCE] = "TC-CC_DEBOUNCE",
 	[TC_TIMER_LOW_POWER_EXIT_TIME] = "TC-LOW_POWER_EXIT_TIME",
 	[TC_TIMER_LOW_POWER_TIME] = "TC-LOW_POWER_TIME",
@@ -87,6 +86,7 @@ __maybe_unused static __const_data const char *const pd_timer_names[] = {
 	[TC_TIMER_TIMEOUT] = "TC-TIMEOUT",
 	[TC_TIMER_TRY_WAIT_DEBOUNCE] = "TC-TRY_WAIT_DEBOUNCE",
 	[TC_TIMER_VBUS_DEBOUNCE] = "TC-VBUS_DEBOUNCE",
+	[DPM_TIMER_PD_BUTTON_PRESS] = "DPM-PD_BUTTON_PRESS",
 };
 
 /*****************************************************************************

@@ -4974,6 +4974,9 @@
 /* Index for temperature sensor used in PD messages. Defaults to 0. */
 #define CONFIG_USB_PD_TEMP_SENSOR 0
 
+/* Time limit in ms for a USB PD power button press to be considered valid. */
+#define CONFIG_USB_PD_LONG_PRESS_MAX_MS 8000
+
 /*
  * Set the minimum battery percentage to allow a PD port to send resets as a
  * sink (and risk a hard reset, losing Vbus).  Note this may cause a high-power

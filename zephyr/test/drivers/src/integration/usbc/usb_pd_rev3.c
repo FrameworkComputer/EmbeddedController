@@ -44,12 +44,6 @@ static void *usb_attach_5v_3a_pd_source_setup(void)
 	test_fixture.src_ext.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
-	/* Clear Alert and Status receive checks */
-	tcpci_src_emul_clear_alert_received(&test_fixture.src_ext);
-	tcpci_src_emul_clear_status_received(&test_fixture.src_ext);
-	zassume_false(test_fixture.src_ext.alert_received, NULL);
-	zassume_false(test_fixture.src_ext.status_received, NULL);
-
 	return &test_fixture;
 }
 
@@ -59,6 +53,12 @@ static void usb_attach_5v_3a_pd_source_before(void *data)
 
 	connect_source_to_port(&fixture->source_5v_3a, &fixture->src_ext, 1,
 			       fixture->tcpci_emul, fixture->charger_emul);
+
+	/* Clear Alert and Status receive checks */
+	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
+	tcpci_src_emul_clear_status_received(&fixture->src_ext);
+	zassume_false(fixture->src_ext.alert_received, NULL);
+	zassume_false(fixture->src_ext.status_received, NULL);
 }
 
 static void usb_attach_5v_3a_pd_source_after(void *data)
@@ -169,7 +169,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_msg)
 	zassert_true(fixture->src_ext.alert_received, NULL);
 }
 
-ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_dock_with_power_button)
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_alert_on_power_state_change)
 {
 	/* Suspend and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_SUSPEND);
@@ -203,6 +203,83 @@ ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_dock_with_power_button)
 
 	/* Resume and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_RESUME);
+	k_sleep(K_SECONDS(2));
+	zassert_true(fixture->src_ext.alert_received, NULL);
+	zassert_true(fixture->src_ext.status_received, NULL);
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
+	verify_inaction_on_pd_button_press_while_awake)
+{
+	uint32_t ado;
+
+	/* While awake expect nothing on valid press */
+	ado = ADO_EXTENDED_ALERT_EVENT | ADO_POWER_BUTTON_PRESS;
+	tcpci_partner_send_data_msg(&fixture->source_5v_3a, PD_DATA_ALERT, &ado,
+				    1, 0);
+	k_sleep(K_SECONDS(2));
+	ado = ADO_EXTENDED_ALERT_EVENT | ADO_POWER_BUTTON_RELEASE;
+	tcpci_partner_send_data_msg(&fixture->source_5v_3a, PD_DATA_ALERT, &ado,
+				    1, 0);
+	k_sleep(K_SECONDS(2));
+	zassert_false(fixture->src_ext.alert_received, NULL);
+	zassert_false(fixture->src_ext.status_received, NULL);
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3,
+	verify_inaction_on_invalid_pd_button_press)
+{
+	uint32_t ado;
+
+	/* Shutdown device to test wake from USB PD power button */
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_BUTTON);
+	k_sleep(K_SECONDS(10));
+
+	/* Clear alert and status flags set during shutdown */
+	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
+	tcpci_src_emul_clear_status_received(&fixture->src_ext);
+	zassume_false(fixture->src_ext.alert_received, NULL);
+	zassume_false(fixture->src_ext.status_received, NULL);
+
+	/* While in S5/G3 expect nothing on invalid (too long) press */
+	ado = ADO_EXTENDED_ALERT_EVENT | ADO_POWER_BUTTON_PRESS;
+	tcpci_partner_send_data_msg(&fixture->source_5v_3a, PD_DATA_ALERT, &ado,
+				    1, 0);
+	k_sleep(K_SECONDS(10));
+	ado = ADO_EXTENDED_ALERT_EVENT | ADO_POWER_BUTTON_RELEASE;
+	tcpci_partner_send_data_msg(&fixture->source_5v_3a, PD_DATA_ALERT, &ado,
+				    1, 0);
+	k_sleep(K_SECONDS(2));
+	zassert_false(fixture->src_ext.alert_received, NULL);
+	zassert_false(fixture->src_ext.status_received, NULL);
+
+	/* Wake device to setup for subsequent tests */
+	chipset_power_on();
+	k_sleep(K_SECONDS(10));
+}
+
+ZTEST_F(usb_attach_5v_3a_pd_source_rev3, verify_startup_on_pd_button_press)
+{
+	uint32_t ado;
+
+	/* Shutdown device to test wake from USB PD power button */
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_BUTTON);
+	k_sleep(K_SECONDS(10));
+
+	/* Clear alert and status flags set during shutdown */
+	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
+	tcpci_src_emul_clear_status_received(&fixture->src_ext);
+	zassume_false(fixture->src_ext.alert_received, NULL);
+	zassume_false(fixture->src_ext.status_received, NULL);
+
+	/* While in S5/G3 expect Alert->Get_Status->Status on valid press */
+	ado = ADO_EXTENDED_ALERT_EVENT | ADO_POWER_BUTTON_PRESS;
+	tcpci_partner_send_data_msg(&fixture->source_5v_3a, PD_DATA_ALERT, &ado,
+				    1, 0);
+	k_sleep(K_SECONDS(2));
+	ado = ADO_EXTENDED_ALERT_EVENT | ADO_POWER_BUTTON_RELEASE;
+	tcpci_partner_send_data_msg(&fixture->source_5v_3a, PD_DATA_ALERT, &ado,
+				    1, 0);
 	k_sleep(K_SECONDS(2));
 	zassert_true(fixture->src_ext.alert_received, NULL);
 	zassert_true(fixture->src_ext.status_received, NULL);
