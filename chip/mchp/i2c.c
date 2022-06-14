@@ -80,6 +80,10 @@
 #define CFG_ENABLE	BIT(10) /* enable controller */
 #define CFG_GC_DIS	BIT(14) /* disable general call address */
 #define CFG_PROM_EN BIT(15) /* enable Promiscuous mode */
+#define CFG_FLUSH_SXBUF (16) /* clear slave Tx buffer */
+#define CFG_FLUSH_SRBUF (17) /* clear slave Rx buffer */
+#define CFG_FLUSH_MXBUF (18) /* clear master Tx buffer */
+#define CFG_FLUSH_MRBUF (19) /* clear master Rx buffer */
 #define CFG_ENIDI	BIT(29) /* Enable I2C idle interrupt */
 /* Enable network layer master done interrupt */
 #define CFG_ENMI	BIT(30)
@@ -617,6 +621,21 @@ static int i2c_mtx(int ctrl)
 		cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
 	}
 
+	/* Workaround to revocer the LAB flag error */
+	while (MCHP_I2C_STATUS(ctrl) & STS_LAB) {
+		CPRINTS("I2C%d wSTS LAB error, doing reset!", ctrl);
+		MCHP_I2C_CONFIG(ctrl) |= CFG_FLUSH_MRBUF | CFG_FLUSH_MXBUF |
+					CFG_FLUSH_SRBUF | CFG_FLUSH_SXBUF;
+		reset_controller(ctrl);
+		usleep(1000);
+
+		MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr_8bit;
+		/* Clock out the slave address, sending START bit */
+		MCHP_I2C_CTRL(ctrl) = CTRL_PIN | CTRL_ESO | CTRL_ENI |
+			CTRL_ACK | CTRL_STA;
+		cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
+	}
+
 	for (i = 0; i < cdata[ctrl].out_size; ++i) {
 		rv = wait_byte_done(ctrl, 0xff, 0x00);
 		if (rv) {
@@ -700,6 +719,29 @@ static int i2c_mrx_start(int ctrl)
 		/* address then START */
 		MCHP_I2C_CTRL(ctrl) = u8 | CTRL_PIN;
 	}
+
+	/* Workaround to revocer the LAB flag error */
+	while (MCHP_I2C_STATUS(ctrl) & STS_LAB) {
+		CPRINTS("I2C%d rSTS LAB error, doing reset!", ctrl);
+		MCHP_I2C_CONFIG(ctrl) |= CFG_FLUSH_MRBUF | CFG_FLUSH_MXBUF |
+					CFG_FLUSH_SRBUF | CFG_FLUSH_SXBUF;
+		reset_controller(ctrl);
+		usleep(1000);
+
+		if (cdata[ctrl].transaction_state == I2C_TRANSACTION_OPEN) {
+			cdata[ctrl].flags |= (1ul << 5);
+			/* Repeated-START then address */
+			MCHP_I2C_CTRL(ctrl) = u8;
+		}
+
+		MCHP_I2C_DATA(ctrl) = cdata[ctrl].slv_addr_8bit | 0x01;
+		if (cdata[ctrl].transaction_state == I2C_TRANSACTION_STOPPED) {
+			cdata[ctrl].flags |= (1ul << 6);
+			/* address then START */
+			MCHP_I2C_CTRL(ctrl) = u8 | CTRL_PIN;
+		}
+	}
+
 	cdata[ctrl].transaction_state = I2C_TRANSACTION_OPEN;
 	/* Controller generates START, transmits data(address) capturing
 	 * 9-bits from SDA (8-bit address + (N)Ack bit).
@@ -841,8 +883,10 @@ int chip_i2c_xfer(int port, uint16_t slave_addr_flags,
 
 	cdata[ctrl].flags |= (1ul << 15);
 	/* MCHP wait for STOP to complete */
-	if (cdata[ctrl].xflags & I2C_XFER_STOP)
+	if (cdata[ctrl].xflags & I2C_XFER_STOP) {
+		cdata[ctrl].transaction_state = I2C_TRANSACTION_STOPPED;
 		wait_idle(ctrl);
+	}
 
 	/* Check for error conditions */
 	if (MCHP_I2C_STATUS(ctrl) & (STS_LAB | STS_BER)) {
