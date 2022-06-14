@@ -305,7 +305,7 @@ void setup_touchpad(void)
 	/* These are touchpad firmware dependent
 	 * They set the touchpad into the mouse device mode, instead of PTP mode
 	 * And are based on the HID descriptor for our unique device */
-	const static uint16_t cmd[5] = {0x0336, 0x0023, 0x0004, 0x0006};
+	const static uint16_t cmd[4] = {0x0336, 0x0023, 0x0004, 0x0006};
 
 	rv = i2c_write_offset16_block(I2C_PORT_TOUCHPAD,
 									TOUCHPAD_I2C_HID_EP | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
