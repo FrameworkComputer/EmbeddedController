@@ -7978,6 +7978,8 @@ void print_battery_flags(int flags)
 		printf(" CHARGING");
 	if (flags & EC_BATT_FLAG_LEVEL_CRITICAL)
 		printf(" LEVEL_CRITICAL");
+	if (flags & EC_BATT_FLAG_CUT_OFF)
+		printf(" CUT_OFF");
 	printf("\n");
 }
 
