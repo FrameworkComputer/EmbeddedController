@@ -10,3 +10,4 @@ baseboard-y+=baseboard.o
 baseboard-$(HAS_TASK_VDEC_SERVICE)+=vdec.o
 baseboard-$(HAS_TASK_VENC_SERVICE)+=venc.o
 baseboard-$(HAS_TASK_MDP_SERVICE)+=mdp.o
+baseboard-$(HAS_TASK_CAM_SERVICE)+=cam.o
