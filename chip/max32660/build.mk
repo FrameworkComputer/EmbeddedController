@@ -18,4 +18,3 @@ chip-$(CONFIG_I2C)+=i2c_chip.o
 # Optional chip modules
 chip-$(CONFIG_FLASH_PHYSICAL)+=flash_chip.o
 chip-$(CONFIG_WATCHDOG)+=wdt_chip.o
-

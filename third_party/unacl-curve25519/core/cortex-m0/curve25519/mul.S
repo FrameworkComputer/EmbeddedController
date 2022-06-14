@@ -1108,4 +1108,3 @@ multiply256x256_asm:
 	pop {r4-r7,pc}
 	bx	lr
 .size	multiply256x256_asm, .-multiply256x256_asm
-

@@ -106,4 +106,3 @@ __task_start:
 	/* we should never return here: set code to EC_ERROR_UNKNOWN */
 	movi55 $r0, 0x1
 	ret5   $lp
-

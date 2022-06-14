@@ -98,4 +98,3 @@ __task_start:
   /* we should never return here */
   mov r0, #1             @ set to EC_ERROR_UNKNOWN
   bx lr
-

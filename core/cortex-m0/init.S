@@ -117,4 +117,3 @@ stack_start:
 .space CONFIG_STACK_SIZE, 0
 stack_end:
 .global stack_end
-

@@ -160,4 +160,3 @@ fe25519_reduceTo256Bits_asm:
     pop {r4,r5,r6,r7,r15}
 
 	.size	fe25519_reduceTo256Bits_asm, .-fe25519_reduceTo256Bits_asm
-
