@@ -6,10 +6,6 @@
 # RISC-V core OS files build
 #
 
-# Select RISC-V bare-metal toolchain
-$(call set-option,CROSS_COMPILE,$(CROSS_COMPILE_riscv),\
-	/opt/coreboot-sdk/bin/riscv64-elf-)
-
 # Enable FPU extension if config option of FPU is enabled.
 _FPU_EXTENSION=$(if $(CONFIG_FPU),f,)
 # Enable the 'M' extension if config option of RISCV_EXTENSION_M is enabled.

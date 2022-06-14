@@ -6,19 +6,6 @@
 # Cortex-M4 core OS files build
 #
 
-
-ifeq ($(cc-name),gcc)
-# coreboot sdk
-CROSS_COMPILE_ARM_DEFAULT:=/opt/coreboot-sdk/bin/arm-eabi-
-else
-# llvm sdk
-CROSS_COMPILE_ARM_DEFAULT:=armv7m-cros-eabi-
-endif
-
-$(call set-option,CROSS_COMPILE,\
-	$(CROSS_COMPILE_arm),\
-	$(CROSS_COMPILE_ARM_DEFAULT))
-
 # FPU compilation flags
 CFLAGS_FPU-$(CONFIG_FPU)=-mfloat-abi=hard
 ifeq ($(cc-name),gcc)
