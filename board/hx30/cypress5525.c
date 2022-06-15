@@ -591,8 +591,9 @@ void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hd
 	cypd_write_reg_block(controller, CYP5525_WRITE_DATA_MEMORY_REG(port, 0),
 		(void *)header, 4);
 
-	cypd_write_reg_block(controller, CYP5525_WRITE_DATA_MEMORY_REG(port, 4),
-		data, data_size);
+	if (data_size != 0)
+		cypd_write_reg_block(controller, CYP5525_WRITE_DATA_MEMORY_REG(port, 4),
+			data, data_size);
 
 	/**
 	 * The DM_CONTROL register should then be written to in the following format:
@@ -613,7 +614,8 @@ void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hd
 		dm_control_data |= CYP5525_DM_CTRL_PD3_DATA_REQUEST;
 	if (!response_timer)
 		dm_control_data |= CYP5525_DM_CTRL_SENDER_RESPONSE_TIMER_DISABLE;
-	dm_control_data += ((data_size + 4) << 8);
+	if (data_size != 0)
+		dm_control_data += ((data_size + 4) << 8);
 
 	cypd_write_reg16(controller, CYP5525_DM_CONTROL_REG(port), dm_control_data);
 }
@@ -756,6 +758,15 @@ int cypd_response_get_battery_status(int controller, int port, uint32_t pd_heade
 	return rv;
 }
 
+void cypd_response_no_support_msg(int controller, int port, uint32_t pd_header,
+	enum pd_msg_type sop_type)
+{
+	uint32_t msg = 0;
+	uint32_t header = PD_CTRL_NOT_SUPPORTED + PD_HEADER_SOP(sop_type);
+
+	cypd_send_msg(controller, port, header, 0,  false, false, &msg, 0);
+}
+
 int cypd_handle_extend_msg(int controller, int port, int len, enum pd_msg_type sop_type)
 {
 	/**
@@ -804,6 +815,7 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum pd_msg_type s
 			CPRINTF("%02x", rx_emsg[port_idx].buf[i]);
 		}
 		CPRINTF("\n");
+		cypd_response_no_support_msg(controller, port, pd_header, sop_type);
 		rv = EC_ERROR_INVAL;
 		break;
 	}
@@ -2221,6 +2233,8 @@ static int cmd_cypd_msg(int argc, char **argv)
 
 		} else if (!strncmp(argv[2], "batterystatus", 13)) {
 			data[0] = PD_EXT_GET_BATTERY_STATUS; /*ext msg type*/
+		} else if (!strncmp(argv[2], "test", 4)) {
+			data[0] = 256; /*test for not_support command*/
 		}
 		/* ext msg header*/
 		data[1] = 0x01; /*data size*/
@@ -2243,5 +2257,5 @@ static int cmd_cypd_msg(int argc, char **argv)
 
 }
 DECLARE_CONSOLE_COMMAND(cypdmsg, cmd_cypd_msg,
-			"port [batterycap|batterystatus] chunked=1,0",
+			"port [batterycap|batterystatus|test] chunked=1,0",
 			"Trigger extended message ams");
