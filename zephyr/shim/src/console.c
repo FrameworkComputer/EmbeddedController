@@ -344,7 +344,8 @@ static void zephyr_print(const char *buff, size_t size)
 	 * Also, console_buf_notify_chars uses a mutex, which may not be
 	 * locked in ISRs.
 	 */
-	if (k_is_in_isr() || shell_stopped) {
+	if (k_is_in_isr() || shell_stopped ||
+			shell_zephyr->ctx->state != SHELL_STATE_ACTIVE) {
 		printk("%s", buff);
 	} else {
 		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
