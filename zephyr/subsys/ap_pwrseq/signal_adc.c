@@ -183,7 +183,7 @@ void power_signal_adc_init(void)
 		DT_FOREACH_STATUS_OKAY_VARGS(MY_COMPAT, ADC_CB_COMMA, high)
 	};
 	int i, rv;
-	int32_t val;
+	int32_t val = 0;
 
 	for (i = 0; i < ARRAY_SIZE(low_cb); i++) {
 		/*
