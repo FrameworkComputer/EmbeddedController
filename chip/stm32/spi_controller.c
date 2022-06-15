@@ -19,6 +19,7 @@
 
 #if defined(CHIP_VARIANT_STM32F373)  || \
 	defined(CHIP_FAMILY_STM32L4) || \
+	defined(CHIP_FAMILY_STM32L5) || \
 	defined(CHIP_VARIANT_STM32F76X)
 #define HAS_SPI3
 #else
@@ -36,14 +37,26 @@ static stm32_spi_regs_t *SPI_REGS[] = {
 #endif
 };
 
-#ifdef CHIP_FAMILY_STM32L4
 /* DMA request mapping on channels */
-static uint8_t dma_req[ARRAY_SIZE(SPI_REGS)] = {
+struct dma_req_t {
+	uint8_t tx_req;
+	uint8_t rx_req;
+};
+#ifdef CHIP_FAMILY_STM32L4
+static struct dma_req_t dma_req[ARRAY_SIZE(SPI_REGS)] = {
 #ifdef CONFIG_STM32_SPI1_CONTROLLER
-	/* SPI1 */ 1,
+	/* SPI1 */ { 1, 1 },
 #endif
-	/* SPI2 */ 1,
-	/* SPI3 */ 3,
+	/* SPI2 */ { 1, 1 },
+	/* SPI3 */ { 3, 3 },
+};
+#elif defined(CHIP_FAMILY_STM32L5)
+static struct dma_req_t dma_req[ARRAY_SIZE(SPI_REGS)] = {
+#ifdef CONFIG_STM32_SPI1_CONTROLLER
+	/* SPI1 */ { DMAMUX_REQ_SPI1_TX, DMAMUX_REQ_SPI1_RX },
+#endif
+	/* SPI2 */ { DMAMUX_REQ_SPI2_TX, DMAMUX_REQ_SPI2_RX },
+	/* SPI3 */ { DMAMUX_REQ_SPI3_TX, DMAMUX_REQ_SPI3_RX },
 };
 #endif
 
@@ -203,9 +216,9 @@ static int spi_controller_initialize(const struct spi_device_t *spi_device)
 	spi->cr1 = STM32_SPI_CR1_MSTR | STM32_SPI_CR1_SSM | STM32_SPI_CR1_SSI |
 		   (spi_device->div << 3);
 
-#ifdef CHIP_FAMILY_STM32L4
-	dma_select_channel(dma_tx_option[port].channel, dma_req[port]);
-	dma_select_channel(dma_rx_option[port].channel, dma_req[port]);
+#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
+	dma_select_channel(dma_tx_option[port].channel, dma_req[port].tx_req);
+	dma_select_channel(dma_rx_option[port].channel, dma_req[port].rx_req);
 #endif
 	/*
 	 * Configure 8-bit datasize, set FRXTH, enable DMA,
