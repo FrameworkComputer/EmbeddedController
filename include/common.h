@@ -238,6 +238,22 @@
 		return error; \
 } while (0)
 
+/*
+ * Define test_mockable and test_mockable_static for mocking
+ * functions.
+ */
+#ifdef TEST_BUILD
+#define test_mockable __attribute__((weak))
+#define test_mockable_static __attribute__((weak))
+#define test_mockable_static_inline __attribute__((weak))
+#define test_export_static
+#else
+#define test_mockable
+#define test_mockable_static static
+#define test_mockable_static_inline static inline
+#define test_export_static static
+#endif
+
 /* Include top-level configuration file */
 #include "config.h"
 
@@ -334,22 +350,6 @@ enum ec_error_list {
 	EC_ERROR_INTERNAL_FIRST = 0x10000,
 	EC_ERROR_INTERNAL_LAST = 0x1FFFF
 };
-
-/*
- * Define test_mockable and test_mockable_static for mocking
- * functions.
- */
-#ifdef TEST_BUILD
-#define test_mockable __attribute__((weak))
-#define test_mockable_static __attribute__((weak))
-#define test_mockable_static_inline __attribute__((weak))
-#define test_export_static
-#else
-#define test_mockable
-#define test_mockable_static static
-#define test_mockable_static_inline static inline
-#define test_export_static static
-#endif
 
 /*
  * Attribute to define functions to only be used in test code, causing
