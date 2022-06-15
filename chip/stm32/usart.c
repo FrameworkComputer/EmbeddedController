@@ -92,6 +92,11 @@ void usart_set_baud_f0_l(struct usart_config const *config, int baud,
 	int div = DIV_ROUND_NEAREST(frequency_hz, baud);
 	intptr_t base = config->hw->base;
 
+#ifdef STM32_USART9_BASE
+	if (config->hw->base == STM32_USART9_BASE) /* LPUART */
+		div *= 256;
+#endif
+
 	if (div / 16 > 0) {
 		/*
 		 * CPU clock is high enough to support x16 oversampling.
@@ -113,6 +118,11 @@ void usart_set_baud_f(struct usart_config const *config, int baud,
 		      int frequency_hz)
 {
 	int div = DIV_ROUND_NEAREST(frequency_hz, baud);
+
+#ifdef STM32_USART9_BASE
+	if (config->hw->base == STM32_USART9_BASE) /* LPUART */
+		div *= 256;
+#endif
 
 	/* STM32F only supports x16 oversampling */
 	STM32_USART_BRR(config->hw->base) = div;

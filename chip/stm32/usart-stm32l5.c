@@ -17,7 +17,7 @@
  * each USART, an entry will be NULL if no USART driver is initialized for the
  * corresponding hardware instance.
  */
-#define STM32_USARTS_MAX 5
+#define STM32_USARTS_MAX 6
 
 static struct usart_config const *configs[STM32_USARTS_MAX];
 
@@ -165,4 +165,22 @@ static void usart5_interrupt(void)
 }
 
 DECLARE_IRQ(STM32_IRQ_USART5, usart5_interrupt, 2);
+#endif
+
+#if defined(CONFIG_STREAM_USART9)
+struct usart_hw_config const usart9_hw = {
+	.index          = 5,
+	.base           = STM32_USART9_BASE,
+	.irq            = STM32_IRQ_USART9,
+	.clock_register = &STM32_RCC_APB1ENR2,
+	.clock_enable   = STM32_RCC_APB1ENR2_LPUART1EN,
+	.ops            = &usart_variant_hw_ops,
+};
+
+static void usart9_interrupt(void)
+{
+	usart_interrupt(configs[5]);
+}
+
+DECLARE_IRQ(STM32_IRQ_USART9, usart9_interrupt, 2);
 #endif
