@@ -35,7 +35,7 @@ if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources(
 			"src/craask/led.c"
 	)
-	project(nivviks)
+	project(craask)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/craask/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/craask/charger.c")
 endif()
