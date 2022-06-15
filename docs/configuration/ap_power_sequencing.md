@@ -15,7 +15,7 @@ states (G3, S5, S3, S0, S0iX, etc). This includes the following tasks:
 
 The AP chipset options are grouped together in [config.h]. Select exactly one of
 the available AP chipset options (e.g. `CONFIG_CHIPSET_APOLLOLAKE`,
-`CONFIG_CHIPSET_BRASWELL`, etc). If the AP chipset support is not available,
+`CONFIG_CHIPSET_COMETLAKE`, etc). If the AP chipset support is not available,
 select `CONFIG_CHIPSET_ECDRIVEN` to enable basic support for handling S3 and S0
 power states.
 
