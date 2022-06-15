@@ -347,7 +347,7 @@ int tcpci_partner_send_control_msg(struct tcpci_partner_data *data,
  * @param type Type of message
  * @param data_obj Pointer to array of data objects
  * @param data_obj_num Number of data objects
- * @param delay Optional delay
+ * @param delay Optional delay in milliseconds
  *
  * @return TCPCI_EMUL_TX_SUCCESS on success
  * @return TCPCI_EMUL_TX_FAILED when TCPCI is configured to not handle
