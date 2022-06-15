@@ -73,8 +73,9 @@ GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 GPIO(LED_1_L,                        PIN(C, 4), GPIO_OUT_HIGH)
 GPIO(LED_2_L,                        PIN(C, 3), GPIO_OUT_HIGH)
 GPIO(KYBL_EN,                        PIN(A, 7), GPIO_OUT_LOW)
-GPIO(AMP_PWR_EN,                     PIN(5, 7), GPIO_ODR_LOW)
+GPIO(AMP_PWR_EN,                     PIN(5, 7), GPIO_OUT_LOW)
 GPIO(EC_FAN_TACH_2,                  PIN(7, 3), GPIO_INPUT)
+GPIO(RGB_KB_INT,                     PIN(5, 6), GPIO_INPUT)
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -120,7 +121,6 @@ UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(8, 3))       /* GPIO83 */
 UNUSED(PIN(7, 0))       /* GPIO70 */
 UNUSED(PIN(8, 1))       /* GPIO81 */
-UNUSED(PIN(5, 6))       /* GPIO56 */
 UNUSED(PIN(9, 3))       /* GPIO93 */
 UNUSED(PIN(9, 7))       /* GPIO97 */
 UNUSED(PIN(D, 0))       /* GPIOD0/I2C3_SDA0 */
