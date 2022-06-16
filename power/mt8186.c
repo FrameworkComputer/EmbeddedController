@@ -379,6 +379,8 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S0:
+		hook_notify(HOOK_CHIPSET_RESUME_INIT);
+
 		if (power_wait_mask_signals_timeout(0, IN_AP_RST, SECOND)) {
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S0S3;
