@@ -11,11 +11,15 @@
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "tcpm/tcpci.h"
+#include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 #include "timer.h"
 #include "usb_common.h"
 #include "usb_pd.h"
+#include "usb_prl_sm.h"
+
+#define TEST_USB_PORT USBC_PORT_C0
 
 struct usb_attach_5v_3a_pd_sink_fixture {
 	struct tcpci_partner_data sink_5v_3a;
@@ -309,6 +313,10 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_ping_msg)
  */
 ZTEST_F(usb_attach_5v_3a_pd_sink, verify_alert_msg)
 {
+	/* Setting partner PD Rev to 3.0 to ungate Alert DPM request */
+	/* TODO(b/236975670): move to dedicated USB PD Rev 3.0 test file */
+	prl_set_rev(TEST_USB_PORT, TCPCI_MSG_SOP, PD_REV30);
+
 	tcpci_snk_emul_clear_alert_received(&fixture->snk_ext);
 	zassert_false(fixture->snk_ext.alert_received, NULL);
 	zassert_equal(pd_broadcast_alert_msg(ADO_OTP_EVENT), EC_SUCCESS, NULL);
