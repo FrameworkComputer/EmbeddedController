@@ -14,10 +14,11 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
  */
 enum power_states_ndsx chipset_pwr_seq_get_state(void)
 {
+	power_signal_mask_t sig = power_get_signals() & MASK_ALL_POWER_GOOD;
 	/*
 	 * Chip is shut down.
 	 */
-	if ((power_get_signals() & MASK_ALL_POWER_GOOD) == 0) {
+	if (sig == 0) {
 		LOG_DBG("Power rails off, G3 state");
 		return SYS_POWER_STATE_G3;
 	}
@@ -25,10 +26,11 @@ enum power_states_ndsx chipset_pwr_seq_get_state(void)
 	 * If not all the power rails are available,
 	 * then force shutdown to G3 to get to known state.
 	 */
-	if ((power_get_signals() & MASK_ALL_POWER_GOOD)
-			!= MASK_ALL_POWER_GOOD) {
+	if (sig != MASK_ALL_POWER_GOOD) {
+		LOG_INF("Not all power rails up (missing %#x),"
+			" forcing shutdown",
+			sig ^ MASK_ALL_POWER_GOOD);
 		ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
-		LOG_INF("Not all power rails up, forcing shutdown");
 		return SYS_POWER_STATE_G3;
 	}
 
@@ -56,17 +58,18 @@ enum power_states_ndsx chipset_pwr_seq_get_state(void)
 		LOG_DBG("All VW signals valid after %d ms", delay * 10);
 		break;
 	}
+	sig = power_get_signals();
 	/*
 	 * S0, all power OK, no suspend or sleep on.
 	 */
-	if ((power_get_signals() & MASK_S0) == MASK_ALL_POWER_GOOD) {
+	if ((sig & MASK_S0) == MASK_ALL_POWER_GOOD) {
 		LOG_DBG("CPU in S0 state");
 		return SYS_POWER_STATE_S0;
 	}
 	/*
 	 * S3, all power OK, PWR_SLP_S3 on.
 	 */
-	if ((power_get_signals() & MASK_S0) ==
+	if ((sig & MASK_S0) ==
 		(MASK_ALL_POWER_GOOD | POWER_SIGNAL_MASK(PWR_SLP_S3))) {
 		LOG_DBG("CPU in S3 state");
 		return SYS_POWER_STATE_S3;
@@ -74,14 +77,15 @@ enum power_states_ndsx chipset_pwr_seq_get_state(void)
 	/*
 	 * S5, all power OK, PWR_SLP_S5 on.
 	 */
-	if ((power_get_signals() & MASK_S5) == MASK_S5) {
+	if ((sig & MASK_S5) == MASK_S5) {
 		LOG_DBG("CPU in S5 state");
 		return SYS_POWER_STATE_S5;
 	}
 	/*
 	 * Unable to determine state, force to G3.
 	 */
+	LOG_INF("Unable to determine CPU state (%#x), forcing shutdown",
+		sig);
 	ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
-	LOG_INF("Unable to determine CPU state, forcing shutdown");
 	return SYS_POWER_STATE_G3;
 }
