@@ -83,6 +83,7 @@
 
 /* Disable console commands to help save space */
 #undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_CHARGE_SUPPLIER_INFO
 
 #ifndef __ASSEMBLER__
 
