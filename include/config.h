@@ -3639,10 +3639,12 @@
 #undef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
 
 /*
- * Implement the '%li' printf format as a *32-bit* integer format,
- * as it might be expected by non-EC code.
+ * Allow the use of the "long" printf length modifier ('l') to be in 32-bit
+ * systems along with any supported conversion specifiers. Note that this also
+ * reenables support for the 'i' printf format. This config will only take
+ * effect if sizeof(long) == sizeof(uint32_t).
  */
-#undef CONFIG_PRINTF_LEGACY_LI_FORMAT
+#undef CONFIG_PRINTF_LONG_IS_32BITS
 
 /*
  * On x86 systems, define this option if the CPU_PROCHOT signal is active low.

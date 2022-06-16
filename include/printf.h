@@ -51,7 +51,7 @@
  *   - 'c' - character
  *   - 's' - null-terminated ASCII string
  *   - 'd' - signed integer
- *   - 'i' - signed integer if CONFIG_PRINTF_LEGACY_LI_FORMAT is set (ignore l)
+ *   - 'i' - signed integer (if CONFIG_PRINTF_LONG_IS_32BITS is enabled)
  *   - 'u' - unsigned integer
  *   - 'x' - unsigned integer, print as lower-case hexadecimal
  *   - 'X' - unsigned integer, print as upper-case hexadecimal

@@ -171,21 +171,116 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success("5e", "%x", 0X5E));
 	T(expect_success("5E", "%X", 0X5E));
 
+	return EC_SUCCESS;
+}
+
+test_static int test_printf_long32_enabled(void)
+{
+	bool use_l32 = IS_ENABLED(CONFIG_PRINTF_LONG_IS_32BITS);
+
+	if (IS_ENABLED(BOARD_BLOONCHIPPER) || IS_ENABLED(BOARD_DARTMONKEY))
+		TEST_ASSERT(use_l32);
+	else
+		TEST_ASSERT(!use_l32);
+	return EC_SUCCESS;
+}
+
+test_static int test_vsnprintf_32bit_long_supported(void)
+{
+	long long_min = INT32_MIN;
+	long long_max = INT32_MAX;
+	unsigned long ulong_max = UINT32_MAX;
+	char const *long_min_str = "-2147483648";
+	char const *long_max_str = "2147483647";
+	char const *ulong_max_str = "4294967295";
+	char const *long_min_hexstr = "80000000";
+	char const *long_max_hexstr = "7fffffff";
+	char const *ulong_max_hexstr = "ffffffff";
+
+	T(expect_success(long_min_str, "%ld", long_min));
+	T(expect_success(long_min_hexstr, "%lx", long_min));
+	T(expect_success(long_max_str, "%ld", long_max));
+	T(expect_success(long_max_hexstr, "%lx", long_max));
+	T(expect_success(ulong_max_str, "%lu", ulong_max));
+	T(expect_success(ulong_max_hexstr, "%lx", ulong_max));
+	T(expect_success(long_max_str, "%ld", long_max));
+
+	T(expect_success(" +123", "%+*ld", 5, 123));
+	T(expect_success("00000123", "%08lu", 123));
+	T(expect_success("131415", "%d%lu%d", 13, 14L, 15));
+
 	/*
-	 * %l is deprecated on 32-bit systems (see crbug.com/984041), but is
-	 * is still functional on 64-bit systems.
+	 * %i and %li are only supported via the CONFIG_PRINTF_LONG_IS_32BITS
+	 * configuration (see https://issuetracker.google.com/issues/172210614).
 	 */
-	if (sizeof(long) == sizeof(uint32_t)) {
-		T(expect_success(err_str, "%lx", 0x7b));
-		T(expect_success(err_str, "%08lu", 0x7b));
-		T(expect_success("13ERROR", "%d%lu", 13, 14));
-	} else {
-		T(expect_success("7b", "%lx", 0x7b));
-		T(expect_success("00000123", "%08lu", 123));
-		T(expect_success("131415", "%d%lu%d", 13, 14L, 15));
-	}
+	T(expect_success("123", "%i", 123));
+	T(expect_success("123", "%li", 123));
 
 	return EC_SUCCESS;
+}
+
+test_static int test_vsnprintf_64bit_long_supported(void)
+{
+	/* These lines are only executed when sizeof(long) is 64-bits but are
+	 * still compiled by systems with 32-bit longs, so the casts are needed
+	 * to avoid compilation errors.
+	 */
+	long long_min = (long)INT64_MIN;
+	long long_max = (long)INT64_MAX;
+	unsigned long ulong_max = (unsigned long)UINT64_MAX;
+	char const *long_min_str = "-9223372036854775808";
+	char const *long_max_str = "9223372036854775807";
+	char const *ulong_max_str = "18446744073709551615";
+	char const *long_min_hexstr = "8000000000000000";
+	char const *long_max_hexstr = "7fffffffffffffff";
+	char const *ulong_max_hexstr = "ffffffffffffffff";
+
+	T(expect_success(long_min_str, "%ld", long_min));
+	T(expect_success(long_min_hexstr, "%lx", long_min));
+	T(expect_success(long_max_str, "%ld", long_max));
+	T(expect_success(long_max_hexstr, "%lx", long_max));
+	T(expect_success(ulong_max_str, "%lu", ulong_max));
+	T(expect_success(ulong_max_hexstr, "%lx", ulong_max));
+	T(expect_success(long_max_str, "%ld", long_max));
+
+	T(expect_success(" +123", "%+*ld", 5, 123));
+	T(expect_success("00000123", "%08lu", 123));
+	T(expect_success("131415", "%d%lu%d", 13, 14L, 15));
+
+	T(expect_success(err_str, "%i", 123));
+	T(expect_success(err_str, "%li", 123));
+
+	return EC_SUCCESS;
+}
+
+test_static int test_vsnprintf_long_not_supported(void)
+{
+	T(expect_success(err_str, "%ld", 0x7b));
+	T(expect_success(err_str, "%li", 0x7b));
+	T(expect_success(err_str, "%lu", 0x7b));
+	T(expect_success(err_str, "%lx", 0x7b));
+	T(expect_success(err_str, "%08lu", 123));
+	T(expect_success("13ERROR", "%d%lu%d", 13, 14L, 15));
+
+	T(expect_success(err_str, "%i", 123));
+	T(expect_success(err_str, "%li", 123));
+
+	return EC_SUCCESS;
+}
+
+test_static int test_vsnprintf_long(void)
+{
+	/*
+	 * %l is functional on 64-bit systems but is not supported on 32-bit
+	 * systems (see https://issuetracker.google.com/issues/172210614) unless
+	 * explicitly enabled via configuration.
+	 */
+	if (IS_ENABLED(CONFIG_PRINTF_LONG_IS_32BITS))
+		return test_vsnprintf_32bit_long_supported();
+	else if (sizeof(long) == sizeof(uint64_t))
+		return test_vsnprintf_64bit_long_supported();
+	else
+		return test_vsnprintf_long_not_supported();
 }
 
 test_static int test_vsnprintf_pointers(void)
@@ -288,12 +383,13 @@ void run_test(int argc, char **argv)
 
 	RUN_TEST(test_vsnprintf_args);
 	RUN_TEST(test_vsnprintf_int);
+	RUN_TEST(test_printf_long32_enabled);
+	RUN_TEST(test_vsnprintf_long);
 	RUN_TEST(test_vsnprintf_pointers);
 	RUN_TEST(test_vsnprintf_chars);
 	RUN_TEST(test_vsnprintf_strings);
 	RUN_TEST(test_vsnprintf_timestamps);
 	RUN_TEST(test_vsnprintf_hexdump);
 	RUN_TEST(test_vsnprintf_combined);
-
 	test_print_result();
 }

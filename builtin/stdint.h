@@ -67,6 +67,9 @@ typedef int64_t int_fast64_t;
 #ifndef INT32_MAX
 #define INT32_MAX (2147483647U)
 #endif
+#ifndef INT32_MIN
+#define INT32_MIN (-2147483648)
+#endif
 
 #ifndef UINT64_C
 #define UINT64_C(c) c##ULL
@@ -80,6 +83,9 @@ typedef int64_t int_fast64_t;
 #endif
 #ifndef INT64_MAX
 #define INT64_MAX INT64_C(9223372036854775807)
+#endif
+#ifndef INT64_MIN
+#define INT64_MIN (INT64_C(-9223372036854775807) - 1)
 #endif
 
 #endif /* __CROS_EC_STDINT_H__ */
