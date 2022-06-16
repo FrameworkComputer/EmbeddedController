@@ -23,6 +23,8 @@
 #include "watchdog.h"
 #include "test/drivers/test_state.h"
 
+#define wdt DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog))
+
 /**
  * @brief Default watchdog timeout plus some time for it to expire.
  */
@@ -47,6 +49,12 @@ static void watchdog_before(void *state)
 	ARG_UNUSED(state);
 	set_test_runner_tid();
 	wdt_warning_triggered = false;
+
+	/* When shuffling need watchdog initialized and running
+	 * for other tests.
+	 */
+	(void) watchdog_init();
+	(void) wdt_setup(wdt, 0);
 }
 
 /**
@@ -72,12 +80,7 @@ ZTEST(watchdog, test_watchdog_init)
 {
 	int retval = EC_SUCCESS;
 
-	/* Test successful initialization */
-	retval = watchdog_init();
-	zassert_equal(EC_SUCCESS, retval, "Expected EC_SUCCESS, returned %d.",
-		      retval);
-
-	/* Test already initialized */
+	/* Test already initialized (initialized in watchdog_before) */
 	retval = watchdog_init();
 	zassert_equal(-ENOMEM, retval, "Expected -ENOMEM, returned %d.",
 		      retval);
@@ -120,6 +123,9 @@ ZTEST(watchdog, test_watchdog_reload)
  */
 ZTEST(watchdog, test_wdt_warning_handler)
 {
+	/* Feed the dog so timer is reset */
+	watchdog_reload();
+
 	zassert_false(wdt_warning_triggered, "Watchdog timer expired early.");
 
 	k_timer_start(&ktimer, K_MSEC(DEFAULT_WDT_EXPIRY_MS), K_NO_WAIT);
