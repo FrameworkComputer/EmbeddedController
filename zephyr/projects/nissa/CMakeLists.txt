@@ -57,4 +57,12 @@ if(DEFINED CONFIG_BOARD_XIVU)
         zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/xivu/usbc.c")
         zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/xivu/charger.c")
 endif()
-
+if(DEFINED CONFIG_BOARD_JOXER)
+	project(joxer)
+	zephyr_library_sources(
+			"src/led.c"
+			"src/joxer/keyboard.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/joxer/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/joxer/charger.c")
+endif()
