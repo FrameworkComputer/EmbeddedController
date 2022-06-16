@@ -672,28 +672,6 @@ static int check_chipid(struct common_hnd *chnd)
 	return 0;
 }
 
-/* DBGR Reset */
-static int dbgr_reset(struct common_hnd *chnd, unsigned char val)
-{
-	int ret = 0;
-
-	/* Reset CPU only, and we keep power state until flashing is done. */
-	if (chnd->dbgr_addr_3bytes)
-		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
-
-	ret |= i2c_write_byte(chnd, 0x2f, 0x20);
-	ret |= i2c_write_byte(chnd, 0x2e, 0x06);
-
-	/* Enable the Reset Status by val */
-	ret |= i2c_write_byte(chnd, 0x30, val);
-
-	ret |= i2c_write_byte(chnd, 0x27, 0x80);
-	if (ret < 0)
-		fprintf(stderr, "DBGR RESET FAILED\n");
-
-	return 0;
-}
-
 /* Exit DBGR mode */
 static int exit_dbgr_mode(struct common_hnd *chnd)
 {
@@ -2386,8 +2364,6 @@ int main(int argc, char **argv)
 			command_erase2(&chnd, chnd.flash_size, 0, 0);
 		else
 			command_erase(&chnd, chnd.flash_size, 0);
-		/* Call DBGR Rest to clear the EC lock status after erasing */
-		dbgr_reset(&chnd, RSTS_VCCDO_PW_ON|RSTS_HGRST|RSTS_GRST);
 	}
 
 	if (chnd.conf.output_filename) {
