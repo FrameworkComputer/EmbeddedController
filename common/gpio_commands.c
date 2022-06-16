@@ -67,8 +67,13 @@ static enum ec_error_list set(const char *name, int value)
 	if (!gpio_is_implemented(signal))
 		return EC_ERROR_INVAL;
 
-	if (!(gpio_get_default_flags(signal) & GPIO_OUTPUT))
-		return EC_ERROR_INVAL;
+	if (IS_ENABLED(CONFIG_GPIO_GET_EXTENDED)) {
+		if (!(gpio_get_flags(signal) & GPIO_OUTPUT))
+			return EC_ERROR_INVAL;
+	} else {
+		if (!(gpio_get_default_flags(signal) & GPIO_OUTPUT))
+			return EC_ERROR_INVAL;
+	}
 
 	gpio_set_level(signal, value);
 
