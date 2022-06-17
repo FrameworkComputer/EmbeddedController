@@ -101,7 +101,7 @@ cmd_run_fuzz = build/host/$*/$*.exe -seed=1 -runs=1 $(silent) \
 cmd_exe = $(CC) $(ro-objs) $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
 cmd_c_to_o = $(CC) -std=gnu11 $(C_WARN) $(CFLAGS) -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
-cmd_cxx_to_o = $(CXX) -std=c++11 $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d -c $< \
+cmd_cxx_to_o = $(CXX) -std=gnu++17 $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d -c $< \
 		      -MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) \
