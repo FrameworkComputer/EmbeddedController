@@ -107,6 +107,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "usb_fault_interrupt";
 		};
+		int_usb_pd_soc: usb_pd_soc {
+			irq-pin = <&gpio_ec_i2c_usbc_pd_int>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_pd_soc_interrupt";
+		};
 		int_accel_gyro: accel_gyro {
 			irq-pin = <&gpio_accel_gyro_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;

@@ -21,8 +21,7 @@
 		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
 			gpios = <&gpiof 0 GPIO_INPUT>;
 		};
-		/* TODO: Add interrupt handler */
-		ec_i2c_usbc_pd_int {
+		gpio_ec_i2c_usbc_pd_int: ec_i2c_usbc_pd_int {
 			gpios = <&gpioa 3 GPIO_INPUT>;
 		};
 		/* TODO: Add interrupt handler */

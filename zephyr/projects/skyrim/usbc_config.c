@@ -445,6 +445,15 @@ void usb_fault_interrupt(enum gpio_signal signal)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_fault_odl), out);
 }
 
+void usb_pd_soc_interrupt(enum gpio_signal signal)
+{
+	/*
+	 * This interrupt is unexpected with our use of the SoC mux, so just log
+	 * it as a point of interest.
+	 */
+	CPRINTSUSB("SOC PD Interrupt");
+}
+
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
 #define SKYRIM_AC_PROCHOT_CURRENT_MA 3328
 static void set_ac_prochot(void)
