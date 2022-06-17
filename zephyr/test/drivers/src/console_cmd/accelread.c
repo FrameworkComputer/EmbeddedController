@@ -98,6 +98,7 @@ ZTEST_USER_F(console_cmd_accelread, test_read)
 {
 	current_fixture = fixture;
 	mock_read_fake.custom_fake = mock_read_call_super;
+	mock_get_data_rate_fake.return_val = 100;
 	motion_sensors[0].drv = &fixture->mock_drv;
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelread 0"), NULL);
