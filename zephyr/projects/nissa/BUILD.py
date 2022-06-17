@@ -4,7 +4,7 @@
 
 """Define zmake projects for nissa."""
 
-# Nivviks and Craask, Pujjo has NPCX993F, Nereid has ITE81302
+# Nivviks and Craask, Pujjo, Xivu has NPCX993F, Nereid has ITE81302
 
 
 def register_nissa_project(
@@ -81,4 +81,18 @@ pujjo = register_nissa_project(
         here / "pujjo_pwm_leds.dts",
     ],
     extra_kconfig_files=[here / "prj_pujjo.conf"],
+)
+
+xivu = register_nissa_project(
+    project_name="xivu",
+    chip="npcx9m3f",
+    extra_dts_overlays=[
+        here / "xivu_generated.dts",
+        here / "xivu_overlay.dts",
+        here / "xivu_motionsense.dts",
+        here / "xivu_keyboard.dts",
+        here / "xivu_power_signals.dts",
+        here / "xivu_pwm_leds.dts",
+    ],
+    extra_kconfig_files=[here / "prj_xivu.conf"],
 )

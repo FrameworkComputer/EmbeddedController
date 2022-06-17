@@ -26,6 +26,12 @@ config BOARD_PUJJO
 	  Build Google Pujjo board. Pujjo has Intel ADL-N SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_XIVU
+        bool "Google Xivu Board"
+        help
+          Build Google Xivu board. Xivu has Intel ADL-N SoC
+          with NPCX993FA0BX EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"
