@@ -110,14 +110,15 @@ void gpio_set_flags(enum gpio_signal signal, int flags)
 	gpio_set_flags_by_mask(g->port, g->mask, flags);
 }
 
-#ifdef CONFIG_GPIO_GET_EXTENDED
 int gpio_get_flags(enum gpio_signal signal)
 {
 	const struct gpio_info *g = gpio_list + signal;
 
-	return gpio_get_flags_by_mask(g->port, g->mask);
+	if (IS_ENABLED(CONFIG_GPIO_GET_EXTENDED))
+		return gpio_get_flags_by_mask(g->port, g->mask);
+	else
+		return gpio_get_default_flags(signal);
 }
-#endif
 
 int gpio_get_default_flags(enum gpio_signal signal)
 {

@@ -240,6 +240,11 @@ gpio_flags_t convert_to_zephyr_flags(int ec_flags)
 	return zephyr_flags;
 }
 
+int gpio_get_flags(enum gpio_signal signal)
+{
+	return gpio_get_default_flags(signal);
+}
+
 int gpio_get_default_flags(enum gpio_signal signal)
 {
 	if (!gpio_is_implemented(signal))
