@@ -46,6 +46,9 @@
 #define CONFIG_USB_PORT_POWER_DUMB
 
 /* Buttons */
+#define CONFIG_DEDICATED_RECOVERY_BUTTON
+#define CONFIG_DEDICATED_RECOVERY_BUTTON_2
+#define CONFIG_EMULATED_SYSRQ
 #define CONFIG_POWER_BUTTON_IGNORE_LID
 
 /* Dedicated barreljack charger port */
@@ -123,6 +126,8 @@ void led_alert(int enable);
 
 /* Pin renaming */
 #define GPIO_AC_PRESENT GPIO_BJ_ADP_PRESENT_L
+#define GPIO_RECOVERY_L GPIO_EC_RECOVERY_BTN_ODL
+#define GPIO_RECOVERY_L_2 GPIO_H1_EC_RECOVERY_BTN_ODL
 
 #endif /* !__ASSEMBLER__ */
 
