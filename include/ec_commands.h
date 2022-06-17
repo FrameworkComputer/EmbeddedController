@@ -1518,6 +1518,10 @@ enum ec_feature_code {
 	 * The EC supports entering and residing in S4.
 	 */
 	EC_FEATURE_S4_RESIDENCY = 44,
+	/*
+	 * The EC supports the AP directing mux sets for the board.
+	 */
+	EC_FEATURE_TYPEC_AP_MUX_SET = 45,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
