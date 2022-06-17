@@ -93,6 +93,7 @@ void watchdog_reload(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, watchdog_reload, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SYSJUMP, watchdog_reload, HOOK_PRIO_LAST);
 
 int watchdog_init(void)
 {
