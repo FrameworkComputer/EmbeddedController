@@ -8,6 +8,16 @@
 #include "common.h"
 #include "console.h"
 #include "util.h"
+/*
+ * The following macros are defined in stdlib.h in the C standard library, which
+ * conflict with the definitions in this file.
+ */
+#undef isspace
+#undef isdigit
+#undef isalpha
+#undef isupper
+#undef isprint
+#undef tolower
 
 /*
  * TODO(b/237712836): Zephyr's libc should provide strcasecmp. For now we'll

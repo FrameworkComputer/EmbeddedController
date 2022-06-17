@@ -13,10 +13,18 @@
 #include "panic.h"
 
 #include "builtin/assert.h" /* For ASSERT(). */
+#include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
 #ifdef CONFIG_ZEPHYR
 #include <zephyr/sys/util.h>
+/**
+ * TODO(b/237712836): Remove once Zephyr's libc has strcasecmp.
+ */
+#include "builtin/strings.h"
 #endif
 
 #ifdef __cplusplus
@@ -101,52 +109,6 @@ extern "C" {
 		b = __t__;       \
 	} while (0)
 
-#ifndef HIDE_EC_STDLIB
-
-/* Standard library functions */
-int atoi(const char *nptr);
-
-#ifdef CONFIG_ZEPHYR
-#include <ctype.h>
-#include <string.h>
-#else
-int isdigit(int c);
-int isspace(int c);
-int isalpha(int c);
-int isupper(int c);
-int isprint(int c);
-int tolower(int c);
-
-int memcmp(const void *s1, const void *s2, size_t len);
-void *memcpy(void *dest, const void *src, size_t len);
-void *memset(void *dest, int c, size_t len);
-void *memmove(void *dest, const void *src, size_t len);
-void *memchr(const void *buffer, int c, size_t n);
-
-/**
- * Find the first occurrence of the substring <s2> in the string <s1>
- *
- * @param s1	String where <s2> is searched.
- * @param s2	Substring to be located in <s1>
- * @return	Pointer to the located substring or NULL if not found.
- */
-char *strstr(const char *s1, const char *s2);
-
-/**
- * Calculates the length of the initial segment of s which consists
- * entirely of bytes not in reject.
- */
-size_t strcspn(const char *s, const char *reject);
-
-size_t strlen(const char *s);
-char *strncpy(char *dest, const char *src, size_t n);
-int strncmp(const char *s1, const char *s2, size_t n);
-#endif
-
-int strcasecmp(const char *s1, const char *s2);
-int strncasecmp(const char *s1, const char *s2, size_t size);
-size_t strnlen(const char *s, size_t maxlen);
-
 /* Like strtol(), but for integers. */
 int strtoi(const char *nptr, char **endptr, int base);
 
@@ -173,7 +135,6 @@ char *strzcpy(char *dest, const char *src, int len);
  * Other strings return 0 and leave *dest unchanged.
  */
 int parse_bool(const char *s, int *dest);
-#endif /* !HIDE_EC_STDLIB */
 
 /**
  * Constant time implementation of memcmp to avoid timing side channels.
