@@ -17,6 +17,12 @@
 #include <zephyr/zephyr.h>
 #include <zephyr/logging/log.h>
 
+/*
+ * TODO(b/238433667): Include EC printf functions
+ * (crec_vsnprintf/crec_snprintf) until we switch to the standard
+ * vsnprintf/snprintf.
+ */
+#include "builtin/stdio.h"
 #include "console.h"
 #include "printf.h"
 #include "task.h"
