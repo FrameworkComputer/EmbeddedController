@@ -111,6 +111,7 @@ __overridable enum ec_status
 static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_typec_control *p = args->params;
+	mux_state_t mode;
 
 	if (p->port >= board_get_usb_pd_port_count())
 		return EC_RES_INVALID_PARAM;
@@ -127,12 +128,14 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 	case TYPEC_CONTROL_COMMAND_TBT_UFP_REPLY:
 		return board_set_tbt_ufp_reply(p->port, p->tbt_ufp_reply);
 	case TYPEC_CONTROL_COMMAND_USB_MUX_SET:
+		/* The EC will fill in polarity, so filter flip out */
+		mode = p->mux_params.mux_flags & ~USB_PD_MUX_POLARITY_INVERTED;
+
 		if (!IS_ENABLED(CONFIG_USB_MUX_AP_CONTROL))
 			return EC_RES_INVALID_PARAM;
-		/* TODO: Check if AP wants to set usb mode or polarity */
+
 		usb_mux_set_single(p->port, p->mux_params.mux_index,
-				   p->mux_params.mux_flags,
-				   USB_SWITCH_CONNECT,
+				   mode, USB_SWITCH_CONNECT,
 				   polarity_rm_dts(pd_get_polarity(p->port)));
 		return EC_RES_SUCCESS;
 	default:
