@@ -20,6 +20,28 @@
 #define CCGXXF_REG_FW_VERSION 0x94
 #define CCGXXF_REG_FW_VERSION_BUILD 0x96
 
+/* Firmware update / reset control register */
+#define CCGXXF_REG_FWU_COMMAND		0x92
+#define CCGXXF_FWU_CMD_RESET		0x0077
+
+/**
+ * Reset CCGXXF chip
+ *
+ * CCGXXF's reset line is connected to an internal LDO hence external GPIOs
+ * should not control the reset line as it can prevent it booting from dead
+ * battery, instead a software mechanism can be used to reset the chip.
+ * Care must be taken by board level function in below scenarios;
+ * 1. During dead battery boot from CCGXXF ports, do not reset the chip as
+ *    it will lose the dead battery boot scenario content.
+ * 2. If dual port solution chip is used, resetting one port resets other port
+ *    as well.
+ * 3. Built-in I/O expander also gets reset.
+ *
+ * @param port Type-C port number
+ * @return EC_SUCCESS or error
+ */
+int ccgxxf_reset(int port);
+
 extern const struct tcpm_drv ccgxxf_tcpm_drv;
 
 /* CCGXXF built in I/O expander definitions */

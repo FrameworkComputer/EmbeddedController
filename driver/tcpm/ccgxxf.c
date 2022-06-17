@@ -32,6 +32,11 @@ static void ccgxxf_dump_registers(int port)
 }
 #endif
 
+int ccgxxf_reset(int port)
+{
+	return tcpc_write16(port, CCGXXF_REG_FWU_COMMAND, CCGXXF_FWU_CMD_RESET);
+}
+
 const struct tcpm_drv ccgxxf_tcpm_drv = {
 	.init = &tcpci_tcpm_init,
 	.release = &tcpci_tcpm_release,
