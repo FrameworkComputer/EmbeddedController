@@ -160,7 +160,7 @@ ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_battery_not_charging)
 	struct i2c_emul *i2c_emul = sbat_emul_get_ptr(BATTERY_ORD);
 	uint16_t battery_status;
 
-	disconnect_charger_from_port(this);
+	disconnect_charger_from_port(fixture);
 	zassert_ok(sbat_emul_get_word_val(i2c_emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
@@ -172,7 +172,7 @@ ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_charge_state)
 {
 	struct ec_response_charge_state charge_state;
 
-	disconnect_charger_from_port(this);
+	disconnect_charger_from_port(fixture);
 	charge_state = host_cmd_charge_state(0);
 
 	zassert_false(charge_state.get_state.ac, "AC_OK not triggered");
@@ -190,7 +190,7 @@ ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_typec_status)
 {
 	struct ec_response_typec_status typec_status;
 
-	disconnect_charger_from_port(this);
+	disconnect_charger_from_port(fixture);
 	typec_status = host_cmd_typec_status(0);
 
 	zassert_false(typec_status.pd_enabled, NULL);
@@ -208,7 +208,7 @@ ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_power_info)
 {
 	struct ec_response_usb_pd_power_info power_info;
 
-	disconnect_charger_from_port(this);
+	disconnect_charger_from_port(fixture);
 	power_info = host_cmd_power_info(0);
 
 	zassert_equal(power_info.role, USB_PD_PORT_POWER_DISCONNECTED,

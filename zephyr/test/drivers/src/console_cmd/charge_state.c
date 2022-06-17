@@ -205,8 +205,8 @@ ZTEST_SUITE(console_cmd_charge_state, drivers_predicate_post_main,
 ZTEST_USER_F(console_cmd_charge_state, test_idle_on_from_normal)
 {
 	/* Connect a source so we start charging */
-	connect_source_to_port(&this->source_5v_3a, &this->source_ext, 1,
-			       this->tcpci_emul, this->charger_emul);
+	connect_source_to_port(&fixture->source_5v_3a, &fixture->source_ext, 1,
+			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
 	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
@@ -219,8 +219,8 @@ ZTEST_USER_F(console_cmd_charge_state, test_idle_on_from_normal)
 ZTEST_USER_F(console_cmd_charge_state, test_normal_from_idle)
 {
 	/* Connect a source so we start charging */
-	connect_source_to_port(&this->source_5v_3a, &this->source_ext, 1,
-			       this->tcpci_emul, this->charger_emul);
+	connect_source_to_port(&fixture->source_5v_3a, &fixture->source_ext, 1,
+			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
 	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
@@ -238,8 +238,8 @@ ZTEST_USER_F(console_cmd_charge_state, test_normal_from_idle)
 ZTEST_USER_F(console_cmd_charge_state, test_discharge_on)
 {
 	/* Connect a source so we start charging */
-	connect_source_to_port(&this->source_5v_3a, &this->source_ext, 1,
-			       this->tcpci_emul, this->charger_emul);
+	connect_source_to_port(&fixture->source_5v_3a, &fixture->source_ext, 1,
+			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
 	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);
@@ -253,8 +253,8 @@ ZTEST_USER_F(console_cmd_charge_state, test_discharge_on)
 ZTEST_USER_F(console_cmd_charge_state, test_discharge_off)
 {
 	/* Connect a source so we start charging */
-	connect_source_to_port(&this->source_5v_3a, &this->source_ext, 1,
-			       this->tcpci_emul, this->charger_emul);
+	connect_source_to_port(&fixture->source_5v_3a, &fixture->source_ext, 1,
+			       fixture->tcpci_emul, fixture->charger_emul);
 
 	/* Verify that we're in "normal" mode */
 	zassume_equal(get_chg_ctrl_mode(), CHARGE_CONTROL_NORMAL, NULL);

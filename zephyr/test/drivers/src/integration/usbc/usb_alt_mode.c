@@ -134,12 +134,12 @@ ZTEST_F(usbc_alt_mode, verify_discovery)
 
 	/* The host command does not count the VDM header in identity_count. */
 	zassert_equal(discovery->identity_count,
-		      this->partner.identity_vdos - 1,
+		      fixture->partner.identity_vdos - 1,
 		      "Expected %d identity VDOs, got %d",
-		      this->partner.identity_vdos - 1,
+		      fixture->partner.identity_vdos - 1,
 		      discovery->identity_count);
 	zassert_mem_equal(discovery->discovery_vdo,
-			  this->partner.identity_vdm + 1,
+			  fixture->partner.identity_vdm + 1,
 			  discovery->identity_count *
 				  sizeof(*discovery->discovery_vdo),
 			  "Discovered SOP identity ACK did not match");
@@ -152,7 +152,7 @@ ZTEST_F(usbc_alt_mode, verify_discovery)
 		      "Expected 1 DP mode, got %d",
 		      discovery->svids[0].mode_count);
 	zassert_equal(discovery->svids[0].mode_vdo[0],
-		      this->partner.modes_vdm[1],
+		      fixture->partner.modes_vdm[1],
 		      "DP mode VDOs did not match");
 }
 

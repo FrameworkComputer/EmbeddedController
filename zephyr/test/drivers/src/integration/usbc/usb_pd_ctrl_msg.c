@@ -166,7 +166,7 @@ ZTEST_SUITE(usb_pd_ctrl_msg_test_source, drivers_predicate_post_main,
 
 ZTEST_F(usb_pd_ctrl_msg_test_sink, verify_vconn_swap)
 {
-	struct usb_pd_ctrl_msg_test_fixture *fixture = &this->fixture;
+	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	struct ec_response_typec_status snk_resp = { 0 };
 	int rv = 0;
 
@@ -176,7 +176,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, verify_vconn_swap)
 		      "SNK Returned vconn_role=%u", snk_resp.vconn_role);
 
 	/* Send VCONN_SWAP request */
-	rv = tcpci_partner_send_control_msg(&fixture->partner_emul,
+	rv = tcpci_partner_send_control_msg(&super_fixture->partner_emul,
 					    PD_CTRL_VCONN_SWAP, 0);
 	zassert_ok(rv, "Failed to send VCONN_SWAP request, rv=%d", rv);
 
@@ -189,7 +189,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, verify_vconn_swap)
 
 ZTEST_F(usb_pd_ctrl_msg_test_sink, verify_pr_swap)
 {
-	struct usb_pd_ctrl_msg_test_fixture *fixture = &this->fixture;
+	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	struct ec_response_typec_status snk_resp = { 0 };
 	int rv = 0;
 
@@ -201,16 +201,16 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, verify_pr_swap)
 	/* Ignore ACCEPT in common handler for PR Swap request,
 	 * causes soft reset
 	 */
-	tcpci_partner_common_handler_mask_msg(&fixture->partner_emul,
+	tcpci_partner_common_handler_mask_msg(&super_fixture->partner_emul,
 					      PD_CTRL_ACCEPT, true);
 
 	/* Send PR_SWAP request */
-	rv = tcpci_partner_send_control_msg(&fixture->partner_emul,
+	rv = tcpci_partner_send_control_msg(&super_fixture->partner_emul,
 					    PD_CTRL_PR_SWAP, 0);
 	zassert_ok(rv, "Failed to send PR_SWAP request, rv=%d", rv);
 
 	/* Send PS_RDY request */
-	rv = tcpci_partner_send_control_msg(&fixture->partner_emul,
+	rv = tcpci_partner_send_control_msg(&super_fixture->partner_emul,
 					    PD_CTRL_PS_RDY, 15);
 	zassert_ok(rv, "Failed to send PS_RDY request, rv=%d", rv);
 
@@ -255,7 +255,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_sink, verify_dr_swap)
  */
 ZTEST_F(usb_pd_ctrl_msg_test_source, verify_dr_swap_rejected)
 {
-	struct usb_pd_ctrl_msg_test_fixture *fixture = &this->fixture;
+	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	struct ec_response_typec_status typec_status = { 0 };
 	int rv = 0;
 
@@ -264,7 +264,7 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, verify_dr_swap_rejected)
 		      "Returned data_role=%u", typec_status.data_role);
 
 	/* Send DR_SWAP request */
-	rv = tcpci_partner_send_control_msg(&fixture->partner_emul,
+	rv = tcpci_partner_send_control_msg(&super_fixture->partner_emul,
 					    PD_CTRL_DR_SWAP, 0);
 	zassert_ok(rv, "Failed to send DR_SWAP request, rv=%d", rv);
 
@@ -359,10 +359,10 @@ ZTEST(usb_pd_ctrl_msg_test_sink, verify_get_sink_cap)
  */
 ZTEST_F(usb_pd_ctrl_msg_test_source, verify_bist_tx_mode2)
 {
-	struct usb_pd_ctrl_msg_test_fixture *fixture = &this->fixture;
+	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	uint32_t bdo = BDO(BDO_MODE_CARRIER2, 0);
 
-	tcpci_partner_send_data_msg(&fixture->partner_emul,
+	tcpci_partner_send_data_msg(&super_fixture->partner_emul,
 				    PD_DATA_BIST, &bdo, 1, 0);
 
 	pd_dpm_request(TEST_USB_PORT, DPM_REQUEST_BIST_TX);
@@ -386,17 +386,17 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, verify_bist_tx_mode2)
  */
 ZTEST_F(usb_pd_ctrl_msg_test_source, verify_bist_tx_test_data)
 {
-	struct usb_pd_ctrl_msg_test_fixture *fixture = &this->fixture;
+	struct usb_pd_ctrl_msg_test_fixture *super_fixture = &fixture->fixture;
 	uint32_t bdo = BDO(BDO_MODE_TEST_DATA, 0);
 
-	tcpci_partner_send_data_msg(&fixture->partner_emul,
+	tcpci_partner_send_data_msg(&super_fixture->partner_emul,
 				    PD_DATA_BIST, &bdo, 1, 0);
 
 	pd_dpm_request(TEST_USB_PORT, DPM_REQUEST_BIST_TX);
 	k_sleep(K_SECONDS(5));
 	zassert_equal(get_state_pe(TEST_USB_PORT), PE_BIST_TX, NULL);
 
-	tcpci_partner_common_send_hard_reset(&fixture->partner_emul);
+	tcpci_partner_common_send_hard_reset(&super_fixture->partner_emul);
 	k_sleep(K_SECONDS(1));
 	zassert_equal(get_state_pe(TEST_USB_PORT), PE_SNK_READY, NULL);
 }

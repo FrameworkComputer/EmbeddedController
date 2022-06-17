@@ -129,8 +129,8 @@ ZTEST_USER_F(console_cmd_charge_manager, test_chgoverride_0_from_sink)
 	/* TODO(b/214401892): Check why need to give time TCPM to spin */
 	k_sleep(K_SECONDS(1));
 
-	connect_sink_to_port(this->charger_emul, this->tcpci_emul,
-			     &this->sink_5v_3a);
+	connect_sink_to_port(fixture->charger_emul, fixture->tcpci_emul,
+			     &fixture->sink_5v_3a);
 	zassert_equal(shell_execute_cmd(get_ec_shell(), "chgoverride 0"),
 		      EC_ERROR_INVAL, NULL);
 }

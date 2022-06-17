@@ -115,7 +115,7 @@ ZTEST_SUITE(usb_attach_5v_3a_pd_sink, drivers_predicate_post_main,
 
 ZTEST_F(usb_attach_5v_3a_pd_sink, test_partner_pd_completed)
 {
-	zassert_true(this->snk_ext.pd_completed, NULL);
+	zassert_true(fixture->snk_ext.pd_completed, NULL);
 }
 
 ZTEST(usb_attach_5v_3a_pd_sink, test_battery_is_discharging)
@@ -180,7 +180,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_battery_discharging)
 		sbat_emul_get_ptr(DT_DEP_ORD(DT_NODELABEL(battery)));
 	uint16_t battery_status;
 
-	disconnect_sink_from_port(this);
+	disconnect_sink_from_port(fixture);
 	zassert_ok(sbat_emul_get_word_val(i2c_emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
@@ -192,7 +192,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_charge_state)
 {
 	struct ec_response_charge_state charge_state;
 
-	disconnect_sink_from_port(this);
+	disconnect_sink_from_port(fixture);
 	charge_state = host_cmd_charge_state(0);
 
 	zassert_false(charge_state.get_state.ac, "AC_OK not triggered");
@@ -210,7 +210,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_typec_status)
 {
 	struct ec_response_typec_status typec_status;
 
-	disconnect_sink_from_port(this);
+	disconnect_sink_from_port(fixture);
 	typec_status = host_cmd_typec_status(0);
 
 	zassert_false(typec_status.pd_enabled, NULL);
@@ -228,7 +228,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_power_info)
 {
 	struct ec_response_usb_pd_power_info power_info;
 
-	disconnect_sink_from_port(this);
+	disconnect_sink_from_port(fixture);
 	power_info = host_cmd_power_info(0);
 
 	zassert_equal(power_info.role, USB_PD_PORT_POWER_DISCONNECTED,
@@ -270,7 +270,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_goto_min)
 	pd_dpm_request(0, DPM_REQUEST_GOTO_MIN);
 	k_sleep(K_SECONDS(1));
 
-	zassert_true(this->snk_ext.pd_completed, NULL);
+	zassert_true(fixture->snk_ext.pd_completed, NULL);
 }
 
 /**
@@ -286,12 +286,12 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_goto_min)
  */
 ZTEST_F(usb_attach_5v_3a_pd_sink, verify_ping_msg)
 {
-	tcpci_snk_emul_clear_ping_received(&this->snk_ext);
+	tcpci_snk_emul_clear_ping_received(&fixture->snk_ext);
 
 	pd_dpm_request(0, DPM_REQUEST_SEND_PING);
 	k_sleep(K_USEC(PD_T_SOURCE_ACTIVITY));
 
-	zassert_true(this->snk_ext.ping_received, NULL);
+	zassert_true(fixture->snk_ext.ping_received, NULL);
 }
 
 /**
@@ -309,10 +309,10 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, verify_ping_msg)
  */
 ZTEST_F(usb_attach_5v_3a_pd_sink, verify_alert_msg)
 {
-	tcpci_snk_emul_clear_alert_received(&this->snk_ext);
-	zassert_false(this->snk_ext.alert_received, NULL);
+	tcpci_snk_emul_clear_alert_received(&fixture->snk_ext);
+	zassert_false(fixture->snk_ext.alert_received, NULL);
 	zassert_equal(pd_broadcast_alert_msg(ADO_OTP_EVENT), EC_SUCCESS, NULL);
 
 	k_sleep(K_SECONDS(2));
-	zassert_true(this->snk_ext.alert_received, NULL);
+	zassert_true(fixture->snk_ext.alert_received, NULL);
 }

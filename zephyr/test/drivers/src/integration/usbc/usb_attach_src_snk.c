@@ -605,15 +605,15 @@ static void usb_detach_test_after(void *state)
 
 ZTEST_F(usb_detach_test, verify_detach_src_snk)
 {
-	struct emul_state *fixture = &this->fixture;
+	struct emul_state *emul_state = &fixture->fixture;
 	struct ec_response_usb_pd_power_info src_power_info = { 0 };
 	struct ec_response_usb_pd_power_info snk_power_info = { 0 };
 
-	integration_usb_test_source_detach(fixture);
-	integration_usb_test_sink_detach(fixture);
+	integration_usb_test_source_detach(emul_state);
+	integration_usb_test_sink_detach(emul_state);
 
 	k_sleep(K_SECONDS(10));
-	isl923x_emul_set_adc_vbus(fixture->charger_isl923x_emul, 0);
+	isl923x_emul_set_adc_vbus(emul_state->charger_isl923x_emul, 0);
 
 	snk_power_info = host_cmd_power_info(SNK_PORT);
 	src_power_info = host_cmd_power_info(SRC_PORT);
@@ -667,15 +667,15 @@ ZTEST_F(usb_detach_test, verify_detach_src_snk)
 
 ZTEST_F(usb_detach_test, verify_detach_snk_src)
 {
-	struct emul_state *fixture = &this->fixture;
+	struct emul_state *emul_state = &fixture->fixture;
 	struct ec_response_usb_pd_power_info src_power_info = { 0 };
 	struct ec_response_usb_pd_power_info snk_power_info = { 0 };
 
-	integration_usb_test_sink_detach(fixture);
-	integration_usb_test_source_detach(fixture);
+	integration_usb_test_sink_detach(emul_state);
+	integration_usb_test_source_detach(emul_state);
 
 	k_sleep(K_SECONDS(10));
-	isl923x_emul_set_adc_vbus(fixture->charger_isl923x_emul, 0);
+	isl923x_emul_set_adc_vbus(emul_state->charger_isl923x_emul, 0);
 
 	snk_power_info = host_cmd_power_info(SNK_PORT);
 	src_power_info = host_cmd_power_info(SRC_PORT);
@@ -729,12 +729,12 @@ ZTEST_F(usb_detach_test, verify_detach_snk_src)
 
 ZTEST_F(usb_detach_test, verify_detach_sink)
 {
-	struct emul_state *fixture = &this->fixture;
+	struct emul_state *emul_state = &fixture->fixture;
 	struct ec_response_usb_pd_power_info pd_power_info = { 0 };
 
-	integration_usb_test_sink_detach(fixture);
+	integration_usb_test_sink_detach(emul_state);
 	k_sleep(K_SECONDS(10));
-	isl923x_emul_set_adc_vbus(fixture->charger_isl923x_emul, 0);
+	isl923x_emul_set_adc_vbus(emul_state->charger_isl923x_emul, 0);
 
 	pd_power_info = host_cmd_power_info(SNK_PORT);
 
@@ -771,12 +771,12 @@ ZTEST_F(usb_detach_test, verify_detach_sink)
 
 ZTEST_F(usb_detach_test, verify_detach_source)
 {
-	struct emul_state *fixture = &this->fixture;
+	struct emul_state *emul_state = &fixture->fixture;
 	struct ec_response_usb_pd_power_info pd_power_info = { SNK_PORT };
 
-	integration_usb_test_source_detach(fixture);
+	integration_usb_test_source_detach(emul_state);
 	k_sleep(K_SECONDS(10));
-	isl923x_emul_set_adc_vbus(fixture->charger_isl923x_emul, 0);
+	isl923x_emul_set_adc_vbus(emul_state->charger_isl923x_emul, 0);
 
 	pd_power_info = host_cmd_power_info(SNK_PORT);
 

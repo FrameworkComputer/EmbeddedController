@@ -145,7 +145,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_battery_not_charging)
 	struct i2c_emul *i2c_emul = sbat_emul_get_ptr(BATTERY_ORD);
 	uint16_t battery_status;
 
-	disconnect_source_from_port(this->tcpci_emul, this->charger_emul);
+	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
 	zassert_ok(sbat_emul_get_word_val(i2c_emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
@@ -157,7 +157,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_charge_state)
 {
 	struct ec_response_charge_state charge_state;
 
-	disconnect_source_from_port(this->tcpci_emul, this->charger_emul);
+	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
 	charge_state = host_cmd_charge_state(0);
 
 	zassert_false(charge_state.get_state.ac, "AC_OK not triggered");
@@ -175,7 +175,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_typec_status)
 {
 	struct ec_response_typec_status typec_status;
 
-	disconnect_source_from_port(this->tcpci_emul, this->charger_emul);
+	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
 	typec_status = host_cmd_typec_status(0);
 
 	zassert_false(typec_status.pd_enabled, NULL);
@@ -193,7 +193,7 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_power_info)
 {
 	struct ec_response_usb_pd_power_info power_info;
 
-	disconnect_source_from_port(this->tcpci_emul, this->charger_emul);
+	disconnect_source_from_port(fixture->tcpci_emul, fixture->charger_emul);
 	power_info = host_cmd_power_info(0);
 
 	zassert_equal(power_info.role, USB_PD_PORT_POWER_DISCONNECTED,
@@ -222,10 +222,10 @@ ZTEST_F(usb_attach_5v_3a_pd_source, test_disconnect_power_info)
 ZTEST_F(usb_attach_5v_3a_pd_source, verify_dock_with_power_button)
 {
 	/* Clear Alert and Status receive checks */
-	tcpci_src_emul_clear_alert_received(&this->src_ext);
-	tcpci_src_emul_clear_status_received(&this->src_ext);
-	zassert_false(this->src_ext.alert_received, NULL);
-	zassert_false(this->src_ext.status_received, NULL);
+	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
+	tcpci_src_emul_clear_status_received(&fixture->src_ext);
+	zassert_false(fixture->src_ext.alert_received, NULL);
+	zassert_false(fixture->src_ext.status_received, NULL);
 
 	/* Setting up revision for the full Status message */
 	prl_set_rev(TEST_USB_PORT, TCPCI_MSG_SOP, PD_REV30);
@@ -236,40 +236,40 @@ ZTEST_F(usb_attach_5v_3a_pd_source, verify_dock_with_power_button)
 	/* Suspend and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_SUSPEND);
 	k_sleep(K_SECONDS(2));
-	zassert_true(this->src_ext.alert_received, NULL);
-	zassert_true(this->src_ext.status_received, NULL);
-	tcpci_src_emul_clear_alert_received(&this->src_ext);
-	tcpci_src_emul_clear_status_received(&this->src_ext);
-	zassert_false(this->src_ext.alert_received, NULL);
-	zassert_false(this->src_ext.status_received, NULL);
+	zassert_true(fixture->src_ext.alert_received, NULL);
+	zassert_true(fixture->src_ext.status_received, NULL);
+	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
+	tcpci_src_emul_clear_status_received(&fixture->src_ext);
+	zassert_false(fixture->src_ext.alert_received, NULL);
+	zassert_false(fixture->src_ext.status_received, NULL);
 
 	/* Shutdown and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	k_sleep(K_SECONDS(2));
-	zassert_true(this->src_ext.alert_received, NULL);
-	zassert_true(this->src_ext.status_received, NULL);
-	tcpci_src_emul_clear_alert_received(&this->src_ext);
-	tcpci_src_emul_clear_status_received(&this->src_ext);
-	zassert_false(this->src_ext.alert_received, NULL);
-	zassert_false(this->src_ext.status_received, NULL);
+	zassert_true(fixture->src_ext.alert_received, NULL);
+	zassert_true(fixture->src_ext.status_received, NULL);
+	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
+	tcpci_src_emul_clear_status_received(&fixture->src_ext);
+	zassert_false(fixture->src_ext.alert_received, NULL);
+	zassert_false(fixture->src_ext.status_received, NULL);
 
 	/* Startup and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_STARTUP);
 	k_sleep(K_SECONDS(2));
-	zassert_true(this->src_ext.alert_received, NULL);
-	zassert_true(this->src_ext.status_received, NULL);
-	tcpci_src_emul_clear_alert_received(&this->src_ext);
-	tcpci_src_emul_clear_status_received(&this->src_ext);
-	zassert_false(this->src_ext.alert_received, NULL);
-	zassert_false(this->src_ext.status_received, NULL);
+	zassert_true(fixture->src_ext.alert_received, NULL);
+	zassert_true(fixture->src_ext.status_received, NULL);
+	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
+	tcpci_src_emul_clear_status_received(&fixture->src_ext);
+	zassert_false(fixture->src_ext.alert_received, NULL);
+	zassert_false(fixture->src_ext.status_received, NULL);
 
 	/* Resume and check partner received Alert and Status messages */
 	hook_notify(HOOK_CHIPSET_RESUME);
 	k_sleep(K_SECONDS(2));
-	zassert_true(this->src_ext.alert_received, NULL);
-	zassert_true(this->src_ext.status_received, NULL);
-	tcpci_src_emul_clear_alert_received(&this->src_ext);
-	tcpci_src_emul_clear_status_received(&this->src_ext);
-	zassert_false(this->src_ext.alert_received, NULL);
-	zassert_false(this->src_ext.status_received, NULL);
+	zassert_true(fixture->src_ext.alert_received, NULL);
+	zassert_true(fixture->src_ext.status_received, NULL);
+	tcpci_src_emul_clear_alert_received(&fixture->src_ext);
+	tcpci_src_emul_clear_status_received(&fixture->src_ext);
+	zassert_false(fixture->src_ext.alert_received, NULL);
+	zassert_false(fixture->src_ext.status_received, NULL);
 }

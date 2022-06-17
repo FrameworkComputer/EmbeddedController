@@ -112,7 +112,7 @@ ZTEST_USER_F(console_cmd_accelres, test_set_res__bad_res_value)
 	int rv;
 
 	set_resolution_fake.return_val = EC_ERROR_INVAL;
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	rv = shell_execute_cmd(get_ec_shell(), "accelres 0 0");
 	zassert_equal(EC_ERROR_PARAM2, rv, "Expected %d, but got %d",
 		      EC_ERROR_PARAM2, rv);

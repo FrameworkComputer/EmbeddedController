@@ -121,12 +121,12 @@ ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_disable)
 	 * Fail on SourceCapabilities message to make TCPM change PD port state
 	 * to disabled
 	 */
-	this->actions[0].action_mask = TCPCI_FAULTY_SNK_FAIL_SRC_CAP;
-	this->actions[0].count = TCPCI_FAULTY_SNK_INFINITE_ACTION;
-	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
-					    &this->actions[0]);
+	fixture->actions[0].action_mask = TCPCI_FAULTY_SNK_FAIL_SRC_CAP;
+	fixture->actions[0].count = TCPCI_FAULTY_SNK_INFINITE_ACTION;
+	tcpci_faulty_snk_emul_append_action(&fixture->faulty_snk_ext,
+					    &fixture->actions[0]);
 
-	connect_sink_to_port(this);
+	connect_sink_to_port(fixture);
 
 	typec_status = host_cmd_typec_status(0);
 
@@ -145,12 +145,12 @@ ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_connect)
 	 * Fail only few times on SourceCapabilities message to prevent entering
 	 * PE_SRC_Disabled state by TCPM
 	 */
-	this->actions[0].action_mask = TCPCI_FAULTY_SNK_FAIL_SRC_CAP;
-	this->actions[0].count = 3;
-	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
-					    &this->actions[0]);
+	fixture->actions[0].action_mask = TCPCI_FAULTY_SNK_FAIL_SRC_CAP;
+	fixture->actions[0].count = 3;
+	tcpci_faulty_snk_emul_append_action(&fixture->faulty_snk_ext,
+					    &fixture->actions[0]);
 
-	connect_sink_to_port(this);
+	connect_sink_to_port(fixture);
 
 	typec_status = host_cmd_typec_status(0);
 
@@ -191,23 +191,23 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap)
 	bool expect_hard_reset = false;
 	int msg_cnt = 0;
 
-	this->actions[0].action_mask = TCPCI_FAULTY_SNK_IGNORE_SRC_CAP;
-	this->actions[0].count = TCPCI_FAULTY_SNK_INFINITE_ACTION;
-	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
-					    &this->actions[0]);
+	fixture->actions[0].action_mask = TCPCI_FAULTY_SNK_IGNORE_SRC_CAP;
+	fixture->actions[0].count = TCPCI_FAULTY_SNK_INFINITE_ACTION;
+	tcpci_faulty_snk_emul_append_action(&fixture->faulty_snk_ext,
+					    &fixture->actions[0]);
 
-	tcpci_partner_common_enable_pd_logging(&this->sink, true);
-	connect_sink_to_port(this);
-	tcpci_partner_common_enable_pd_logging(&this->sink, false);
+	tcpci_partner_common_enable_pd_logging(&fixture->sink, true);
+	connect_sink_to_port(fixture);
+	tcpci_partner_common_enable_pd_logging(&fixture->sink, false);
 
 	/*
 	 * If test is failing, printing logged message may be useful to diagnose
 	 * problem:
-	 * tcpci_partner_common_print_logged_msgs(&this->sink);
+	 * tcpci_partner_common_print_logged_msgs(&fixture->sink);
 	 */
 
 	/* Check if SourceCapability message alternate with HardReset */
-	SYS_SLIST_FOR_EACH_CONTAINER(&this->sink.msg_log, msg, node) {
+	SYS_SLIST_FOR_EACH_CONTAINER(&fixture->sink.msg_log, msg, node) {
 		if (expect_hard_reset) {
 			zassert_equal(msg->sop, TCPCI_MSG_TX_HARD_RESET,
 				      "Expected message %d to be hard reset",
@@ -239,16 +239,16 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap_and_pd_disable)
 	 * Ignore first SourceCapabilities message and discard others by sending
 	 * different messages. This will lead to PD disable.
 	 */
-	this->actions[0].action_mask = TCPCI_FAULTY_SNK_IGNORE_SRC_CAP;
-	this->actions[0].count = 1;
-	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
-					    &this->actions[0]);
-	this->actions[1].action_mask = TCPCI_FAULTY_SNK_DISCARD_SRC_CAP;
-	this->actions[1].count = TCPCI_FAULTY_SNK_INFINITE_ACTION;
-	tcpci_faulty_snk_emul_append_action(&this->faulty_snk_ext,
-					    &this->actions[1]);
+	fixture->actions[0].action_mask = TCPCI_FAULTY_SNK_IGNORE_SRC_CAP;
+	fixture->actions[0].count = 1;
+	tcpci_faulty_snk_emul_append_action(&fixture->faulty_snk_ext,
+					    &fixture->actions[0]);
+	fixture->actions[1].action_mask = TCPCI_FAULTY_SNK_DISCARD_SRC_CAP;
+	fixture->actions[1].count = TCPCI_FAULTY_SNK_INFINITE_ACTION;
+	tcpci_faulty_snk_emul_append_action(&fixture->faulty_snk_ext,
+					    &fixture->actions[1]);
 
-	connect_sink_to_port(this);
+	connect_sink_to_port(fixture);
 
 	typec_status = host_cmd_typec_status(0);
 

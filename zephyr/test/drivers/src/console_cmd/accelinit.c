@@ -80,7 +80,7 @@ ZTEST_USER(console_cmd_accelinit, test_state_was_set)
 ZTEST_USER_F(console_cmd_accelinit, test_fail_3_times)
 {
 	mock_init_fake.return_val = 1;
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	motion_sensors[0].state = SENSOR_INITIALIZED;
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelinit 0"), NULL);

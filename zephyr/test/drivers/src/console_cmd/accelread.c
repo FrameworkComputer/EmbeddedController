@@ -96,9 +96,9 @@ int mock_read_call_super(const struct motion_sensor_t *s, int *v)
 
 ZTEST_USER_F(console_cmd_accelread, test_read)
 {
-	current_fixture = this;
+	current_fixture = fixture;
 	mock_read_fake.custom_fake = mock_read_call_super;
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelread 0"), NULL);
 	zassert_equal(1, mock_read_fake.call_count,
@@ -114,7 +114,7 @@ ZTEST_USER_F(console_cmd_accelread, test_read)
 ZTEST_USER_F(console_cmd_accelread, test_read_fail)
 {
 	mock_read_fake.return_val = 1;
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelread 0"), NULL);
 	zassert_equal(1, mock_read_fake.call_count,

@@ -351,7 +351,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_set_range_error)
 	struct ec_response_motion_sense response;
 
 	mock_set_range_fake.return_val = 1;
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 
 	zassert_equal(EC_RES_INVALID_PARAM,
 		      host_cmd_motion_sense_range(/*sensor_num=*/0, /*range=*/4,
@@ -366,7 +366,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_set_range)
 	struct ec_response_motion_sense response;
 
 	mock_set_range_fake.return_val = 0;
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 
 	zassert_ok(host_cmd_motion_sense_range(/*sensor_num=*/0, /*range=*/4,
 					       /*round_up=*/false, &response),
@@ -423,7 +423,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_offset_fail_to_set)
 {
 	struct ec_response_motion_sense response;
 
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_set_offset_fake.return_val = EC_RES_ERROR;
 
 	zassert_equal(EC_RES_ERROR,
@@ -440,7 +440,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_offset_fail_to_get)
 {
 	struct ec_response_motion_sense response;
 
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_set_offset_fake.return_val = EC_RES_SUCCESS;
 	mock_get_offset_fake.return_val = EC_RES_ERROR;
 
@@ -461,7 +461,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_get_offset)
 {
 	struct ec_response_motion_sense response;
 
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_get_offset_fake.return_val = EC_RES_SUCCESS;
 	mock_set_offset_fake.return_val = EC_RES_SUCCESS;
 
@@ -529,7 +529,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_get_scale_fail)
 {
 	struct ec_response_motion_sense response;
 
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_get_scale_fake.return_val = 1;
 
 	zassert_equal(1,
@@ -546,7 +546,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_set_scale_fail)
 {
 	struct ec_response_motion_sense response;
 
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_set_scale_fake.return_val = 1;
 
 	zassert_equal(1,
@@ -563,7 +563,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_set_get_scale)
 {
 	struct ec_response_motion_sense response;
 
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_set_scale_fake.return_val = 0;
 	mock_get_scale_fake.return_val = 0;
 
@@ -604,7 +604,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_calib_fail)
 {
 	struct ec_response_motion_sense response;
 
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_perform_calib_fake.return_val = 1;
 
 	zassert_equal(1,
@@ -619,7 +619,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_calib_success__fail_get_offset)
 {
 	struct ec_response_motion_sense response;
 
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_perform_calib_fake.return_val = 0;
 	mock_get_offset_fake.return_val = 1;
 
@@ -636,7 +636,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_calib)
 {
 	struct ec_response_motion_sense response;
 
-	motion_sensors[0].drv = &this->mock_drv;
+	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_perform_calib_fake.return_val = 0;
 	mock_get_offset_fake.return_val = 0;
 
