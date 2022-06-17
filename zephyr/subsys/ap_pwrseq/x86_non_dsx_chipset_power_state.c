@@ -14,28 +14,28 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
  */
 enum power_states_ndsx chipset_pwr_seq_get_state(void)
 {
-	power_signal_mask_t sig = power_get_signals() & MASK_ALL_POWER_GOOD;
+	power_signal_mask_t sig = power_get_signals();
+
 	/*
-	 * Chip is shut down.
+	 * Chip is shut down, G3 state.
 	 */
-	if (sig == 0) {
-		LOG_DBG("Power rails off, G3 state");
+	if ((sig & MASK_ALL_POWER_GOOD) == 0) {
+		LOG_DBG("All power rails off, G3 state");
 		return SYS_POWER_STATE_G3;
 	}
 	/*
-	 * If not all the power rails are available,
-	 * then force shutdown to G3 to get to known state.
+	 * Not enough power rails up to read VW signals.
+	 * Force a shutdown.
 	 */
-	if (sig != MASK_ALL_POWER_GOOD) {
-		LOG_INF("Not all power rails up (missing %#x),"
-			" forcing shutdown",
-			sig ^ MASK_ALL_POWER_GOOD);
+	if ((sig & MASK_VW_POWER) != VALUE_VW_POWER) {
+		LOG_ERR("Not enough power signals on (%#x), forcing shutdown",
+			sig);
 		ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
 		return SYS_POWER_STATE_G3;
 	}
 
 	/*
-	 * All the power rails are good, so
+	 * Enough power signals are up, so
 	 * wait for virtual wire signals to become available.
 	 * Not sure how long to wait? 5 seconds total.
 	 */
@@ -58,26 +58,27 @@ enum power_states_ndsx chipset_pwr_seq_get_state(void)
 		LOG_DBG("All VW signals valid after %d ms", delay * 10);
 		break;
 	}
+	/* Re-read the power signals */
 	sig = power_get_signals();
+
 	/*
 	 * S0, all power OK, no suspend or sleep on.
 	 */
-	if ((sig & MASK_S0) == MASK_ALL_POWER_GOOD) {
+	if ((sig & MASK_S0) == VALUE_S0) {
 		LOG_DBG("CPU in S0 state");
 		return SYS_POWER_STATE_S0;
 	}
 	/*
 	 * S3, all power OK, PWR_SLP_S3 on.
 	 */
-	if ((sig & MASK_S0) ==
-		(MASK_ALL_POWER_GOOD | POWER_SIGNAL_MASK(PWR_SLP_S3))) {
+	if ((sig & MASK_S3) == VALUE_S3) {
 		LOG_DBG("CPU in S3 state");
 		return SYS_POWER_STATE_S3;
 	}
 	/*
-	 * S5, all power OK, PWR_SLP_S5 on.
+	 * S5, some power signals on, PWR_SLP_S5 on.
 	 */
-	if ((sig & MASK_S5) == MASK_S5) {
+	if ((sig & MASK_S5) == VALUE_S5) {
 		LOG_DBG("CPU in S5 state");
 		return SYS_POWER_STATE_S5;
 	}
