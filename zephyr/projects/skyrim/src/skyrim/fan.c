@@ -44,3 +44,19 @@ static void fan_init(void)
 	}
 }
 DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_POST_FIRST);
+
+/*
+ * Pcore OCP support
+ * Note: early boards should note enable this interrupt as they are not
+ * correctly configured for it.
+ */
+__override bool board_supports_pcore_ocp(void)
+{
+	uint32_t board_version;
+
+	if (cbi_get_board_version(&board_version) == EC_SUCCESS &&
+	    board_version > 3)
+		return true;
+
+	return false;
+}

@@ -151,8 +151,7 @@
 		gpio_ec_soc_pwr_good: ec_soc_pwr_good {
 			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
 		};
-		/* TODO: Add interrupt handler to shut down */
-		pcore_ocp_r_l {
+		gpio_pcore_ocp_r_l: pcore_ocp_r_l {
 			gpios = <&gpioa 5 GPIO_INPUT>;
 		};
 		gpio_usb_hub_fault_q_odl: usb_hub_fault_q_odl {
