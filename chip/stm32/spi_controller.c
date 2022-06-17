@@ -385,13 +385,14 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 
 	spi_clear_rx_fifo(spi);
 
-	rv = spi_dma_start(port, txdata, buf, txlen);
-	if (rv != EC_SUCCESS)
-		goto err_free;
-
+	if (txlen) {
+		rv = spi_dma_start(port, txdata, buf, txlen);
+		if (rv != EC_SUCCESS)
+			goto err_free;
 #ifdef CONFIG_SPI_HALFDUPLEX
-	spi->cr1 |= STM32_SPI_CR1_BIDIOE;
+		spi->cr1 |= STM32_SPI_CR1_BIDIOE;
 #endif
+	}
 
 	if (full_readback)
 		return EC_SUCCESS;
