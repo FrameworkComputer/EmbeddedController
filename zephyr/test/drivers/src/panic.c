@@ -20,10 +20,42 @@
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 
+struct panic_test_fixture {
+	struct panic_data saved_pdata;
+};
+
+static void *panic_test_setup(void)
+{
+	static struct panic_test_fixture panic_fixture = {0};
+
+	return &panic_fixture;
+}
+
+static void panic_before(void *state)
+{
+	struct panic_test_fixture *fixture = state;
+	struct panic_data *pdata = get_panic_data_write();
+
+	ARG_UNUSED(state);
+
+	fixture->saved_pdata = *pdata;
+}
+
+static void panic_after(void *state)
+{
+	struct panic_test_fixture *fixture = state;
+	struct panic_data *pdata = get_panic_data_write();
+
+	ARG_UNUSED(state);
+
+	*pdata = fixture->saved_pdata;
+}
+
 /**
  * @brief Test Suite: Verifies panic functionality.
  */
-ZTEST_SUITE(panic, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(panic, drivers_predicate_post_main, panic_test_setup, panic_before,
+	    panic_after, NULL);
 
 /**
  * @brief TestPurpose: Verify panic set/get reason.
