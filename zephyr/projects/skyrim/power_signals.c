@@ -76,8 +76,25 @@ static void baseboard_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_groupc_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s3));
+
+	/* Enable thermtrip interrupt */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_thermtrip));
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_POST_I2C);
+
+static void baseboard_resume(void)
+{
+	/* Enable Pcore OCP interrupt, which is powered in S0 */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_pcore_ocp));
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_resume, HOOK_PRIO_DEFAULT);
+
+static void baseboard_suspend(void)
+{
+	/* Disable Pcore OCP interrupt */
+	gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_pcore_ocp));
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_suspend, HOOK_PRIO_DEFAULT);
 
 /**
  * b/227296844: On G3->S5, wait for RSMRST_L to be deasserted before asserting
@@ -183,4 +200,16 @@ void baseboard_set_en_pwr_s3(enum gpio_signal signal)
 
 	/* Chain off the normal power signal interrupt handler */
 	power_signal_interrupt(signal);
+}
+
+void baseboard_soc_thermtrip(enum gpio_signal signal)
+{
+	ccprints("SoC thermtrip reported, shutting down");
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_THERMAL);
+}
+
+void baseboard_soc_pcore_ocp(enum gpio_signal signal)
+{
+	ccprints("SoC Pcore OCP reported, shutting down");
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_BOARD_CUSTOM);
 }
