@@ -11030,7 +11030,10 @@ int main(int argc, char *argv[])
 	/* Prefer /dev method, which supports built-in mutex */
 	if (!(interfaces & COMM_DEV) || comm_init_dev(device_name)) {
 		/* If dev is excluded or isn't supported, find alternative */
-		if (acquire_gec_lock(GEC_LOCK_TIMEOUT_SECS) < 0) {
+
+		/* Lock is not needed for COMM_USB */
+		if (!(interfaces & COMM_USB) &&
+				acquire_gec_lock(GEC_LOCK_TIMEOUT_SECS) < 0) {
 			fprintf(stderr, "Could not acquire GEC lock.\n");
 			exit(1);
 		}
