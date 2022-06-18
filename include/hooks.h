@@ -253,6 +253,11 @@ enum hook_type {
 	 */
 	HOOK_USB_PD_CONNECT,
 
+	/*
+	 * Power supply change event.
+	 */
+	HOOK_POWER_SUPPLY_CHANGE,
+
 #ifdef TEST_BUILD
 	/*
 	 * Special hook types to be used by unit tests of the hooks

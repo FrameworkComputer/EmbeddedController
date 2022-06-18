@@ -156,6 +156,10 @@ SECTIONS
 		KEEP(*(.rodata.HOOK_USB_PD_CONNECT))
 		__hooks_usb_pd_connect_end = .;
 
+		__hooks_power_supply_change = .;
+		KEEP(*(.rodata.HOOK_POWER_SUPPLY_CHANGE))
+		__hooks_power_supply_change_end = .;
+
 		__deferred_funcs = .;
 		KEEP(*(.rodata.deferred))
 		__deferred_funcs_end = .;
