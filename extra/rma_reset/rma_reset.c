@@ -97,7 +97,7 @@ static const struct option long_opts[] = {
 };
 
 void panic_assert_fail(const char *fname, int linenum);
-void rand_bytes(void *buffer, size_t len);
+void trng_rand_bytes(void *buffer, size_t len);
 int safe_memcmp(const void *s1, const void *s2, size_t size);
 
 void panic_assert_fail(const char *fname, int linenum)
@@ -120,7 +120,7 @@ int safe_memcmp(const void *s1, const void *s2, size_t size)
 	return result != 0;
 }
 
-void rand_bytes(void *buffer, size_t len)
+void trng_rand_bytes(void *buffer, size_t len)
 {
 	RAND_bytes(buffer, len);
 }

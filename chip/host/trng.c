@@ -21,17 +21,17 @@
 
 static unsigned int seed;
 
-test_mockable void init_trng(void)
+test_mockable void trng_init(void)
 {
 	seed = 0;
 	srand(seed);
 }
 
-test_mockable void exit_trng(void)
+test_mockable void trng_exit(void)
 {
 }
 
-test_mockable void rand_bytes(void *buffer, size_t len)
+test_mockable void trng_rand_bytes(void *buffer, size_t len)
 {
 	uint8_t *b, *end;
 
