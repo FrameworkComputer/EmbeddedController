@@ -142,6 +142,41 @@ static inline enum ec_error_list test_update8(int chgnum, const int offset,
 			   SM5803_ADDR_TEST_FLAGS, offset, mask, action);
 }
 
+/*
+ * Ensure the charger clocks are at normal operating speed, setting them to
+ * that speed if not already.
+ *
+ * The SM5803 runs multiple digital control loops that are important to correct
+ * operation. The CLOCK_SEL_LOW register reduced their speed by about 10x, which
+ * is dangerous when either sinking or sourcing is to be enabled because the
+ * control loops will respond much more slowly. Leaving clocks at low speed can
+ * cause incorrect operation or even hardware damage.
+ *
+ * This function is used by the functions that enable sinking or sourcing to
+ * ensure the control loops are running at full speed before enabling switching
+ * on the charger.
+ */
+static int sm5803_set_full_clock_speed(int chgnum)
+{
+	int rv, val;
+
+	rv = main_read8(chgnum, SM5803_REG_CLOCK_SEL, &val);
+	if (rv) {
+		goto out;
+	}
+	if (val & SM5803_CLOCK_SEL_LOW) {
+		rv = main_write8(chgnum, SM5803_REG_CLOCK_SEL,
+				     val & ~SM5803_CLOCK_SEL_LOW);
+	}
+
+out:
+	if (rv) {
+		CPRINTS("%s %d: failed to set clocks to full speed: %d",
+			CHARGER_NAME, chgnum, rv);
+	}
+	return rv;
+}
+
 static enum ec_error_list sm5803_flow1_update(int chgnum, const uint8_t mask,
 					const enum mask_update_action action)
 {
@@ -292,6 +327,11 @@ enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable)
 		return rv;
 
 	if (enable) {
+		rv = sm5803_set_full_clock_speed(chgnum);
+		if (rv) {
+			return rv;
+		}
+
 		if (chgnum == CHARGER_PRIMARY) {
 			/* Magic for new silicon */
 			if (dev_id >= 3) {
@@ -1696,6 +1736,11 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 
 	if (enabled) {
 		int selected_current;
+
+		rv = sm5803_set_full_clock_speed(chgnum);
+		if (rv) {
+			return rv;
+		}
 
 		rv = chg_read8(chgnum, SM5803_REG_ANA_EN1, &reg);
 		if (rv)
