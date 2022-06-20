@@ -92,3 +92,23 @@ register_corsola_project(
         here / "prj_steelix.conf",
     ],
 )
+
+
+register_corsola_project(
+    "tentacruel",
+    extra_dts_overlays=[
+        here / "adc_krabby.dts",
+        here / "battery_tentacruel.dts",
+        here / "gpio_tentacruel.dts",
+        here / "i2c_krabby.dts",
+        here / "interrupts_krabby.dts",
+        here / "cbi_eeprom.dts",
+        here / "led_tentacruel.dts",
+        here / "motionsense_krabby.dts",
+        here / "usbc_krabby.dts",
+    ],
+    extra_kconfig_files=[
+        here / "prj_krabby.conf",
+        here / "prj_tentacruel.conf",
+    ],
+)
