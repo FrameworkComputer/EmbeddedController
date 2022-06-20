@@ -431,22 +431,23 @@ int board_set_active_charge_port(int port)
 	 * Turn off the other ports' sink path FETs, before enabling the
 	 * requested charge port.
 	 */
-	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
-		if (i == port)
-			continue;
+	if (old_port != CHARGE_PORT_NONE && old_port != port) {
+		for (i = 0; i < board_get_usb_pd_port_count(); i++) {
+			if (i == port)
+				continue;
 
-		if (tcpc_write(i, TCPC_REG_COMMAND,
-			       TCPC_REG_COMMAND_SNK_CTRL_LOW))
-			CPRINTS("p%d: sink path disable failed.", i);
-		raa489000_enable_asgate(i, false);
-	}
+			if (tcpc_write(i, TCPC_REG_COMMAND,
+				       TCPC_REG_COMMAND_SNK_CTRL_LOW))
+				CPRINTS("p%d: sink path disable failed.", i);
+			raa489000_enable_asgate(i, false);
+		}
 
-	/*
-	 * Stop the charger IC from switching while changing ports.  Otherwise,
-	 * we can overcurrent the adapter we're switching to. (crbug.com/926056)
-	 */
-	if (old_port != CHARGE_PORT_NONE)
+		/*
+		 * Stop the charger IC from switching while changing ports.  Otherwise,
+		 * we can overcurrent the adapter we're switching to. (crbug.com/926056)
+		 */
 		charger_discharge_on_ac(1);
+	}
 
 	/* Enable requested charge port. */
 	if (raa489000_enable_asgate(port, true) ||
