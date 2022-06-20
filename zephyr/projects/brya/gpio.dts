@@ -312,12 +312,6 @@
 		compatible = "cros-ec,usba-port-enable-pins";
 		enable-pins = <&gpio_en_pp5000_usba_r>;
 	};
-
-	vsby-psl-in-list {
-		/* Use PSL_IN1/2/3 as detection pins from hibernate mode */
-		psl-in-pads = <&psl_in1 &psl_in2 &psl_in3>;
-		status = "okay";
-	};
 };
 
 &i2c1_0 {
@@ -373,16 +367,26 @@
 
 /* Power switch logic input pads */
 /* LID_OPEN_OD */
-&psl_in1 {
-	flag = <NPCX_PSL_RISING_EDGE>;
+&psl_in1_gpd2 {
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
 };
 
 /* ACOK_EC_OD */
-&psl_in2 {
-	flag = <NPCX_PSL_RISING_EDGE>;
+&psl_in2_gp00 {
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
 };
 
 /* GSC_EC_PWR_BTN_ODL */
-&psl_in3 {
-	flag = <NPCX_PSL_FALLING_EDGE>;
+&psl_in3_gp01 {
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+/* Power domain device controlled by PSL (Power Switch Logic) IO pads */
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00 &psl_in3_gp01>;
 };
