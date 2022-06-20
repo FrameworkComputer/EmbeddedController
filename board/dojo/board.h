@@ -13,6 +13,10 @@
 #define CONFIG_LTO
 #define CONFIG_PRESERVE_LOGS
 
+/* Watchdog period in ms */
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 2500
+
 /*
  * TODO: Remove this option once the VBAT no longer keeps high when
  * system's power isn't presented.
