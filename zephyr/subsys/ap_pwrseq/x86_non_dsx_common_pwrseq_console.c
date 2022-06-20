@@ -42,17 +42,19 @@ static int powerindebug_handler(const struct shell *shell, size_t argc,
 
 	/* Print the mask */
 	current = power_get_signals();
-	shell_fprintf(shell, SHELL_INFO, "power in:   0x%04x\n", current);
-	shell_fprintf(shell, SHELL_INFO, "debug mask: 0x%04x\n",
+	shell_fprintf(shell, SHELL_INFO, "power in:   0x%05x\n", current);
+	shell_fprintf(shell, SHELL_INFO, "debug mask: 0x%05x\n",
 						power_get_debug());
 
 	/* Print the decode */
 	shell_fprintf(shell, SHELL_INFO, "bit meanings:\n");
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++) {
 		power_signal_mask_t mask = POWER_SIGNAL_MASK(i);
+		bool valid = (power_signal_get(i) >= 0);
 
-		shell_fprintf(shell, SHELL_INFO, "  0x%04x %d %s\n",
+		shell_fprintf(shell, SHELL_INFO, "  0x%05x %d%s %s\n",
 			mask, (current & mask) ? 1 : 0,
+			valid ? " " : "!",
 			power_signal_name(i));
 	}
 
