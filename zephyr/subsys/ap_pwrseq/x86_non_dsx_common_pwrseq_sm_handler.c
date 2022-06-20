@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <atomic.h>
 #include <zephyr/init.h>
 
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
@@ -11,9 +12,20 @@ static K_KERNEL_STACK_DEFINE(pwrseq_thread_stack,
 			CONFIG_AP_PWRSEQ_STACK_SIZE);
 static struct k_thread pwrseq_thread_data;
 static struct pwrseq_context pwrseq_ctx;
-static bool s5_inactive_tmr_running;
 /* S5 inactive timer*/
 K_TIMER_DEFINE(s5_inactive_timer, NULL, NULL);
+/*
+ * Flags, may be set/cleared from other threads.
+ */
+enum {
+	S5_INACTIVE_TIMER_RUNNING,
+	START_FROM_G3,
+	FLAGS_MAX,
+};
+static ATOMIC_DEFINE(flags, FLAGS_MAX);
+/* Delay in ms when starting from G3 */
+static uint32_t start_from_g3_delay_ms;
+
 
 LOG_MODULE_REGISTER(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
@@ -96,14 +108,28 @@ void pwr_sm_set_state(enum power_states_ndsx new_state)
 	pwrseq_ctx.power_state = new_state;
 }
 
-void request_exit_hardoff(bool should_exit)
+/*
+ * Set a flag to enable starting the AP once it is in G3.
+ * This is called from ap_power_exit_hardoff() which checks
+ * to ensure that the AP is in S5 or G3 state before calling
+ * this function.
+ * It can also be called via a hostcmd, which allows the flag
+ * to be set in any AP state.
+ */
+void request_start_from_g3(void)
 {
-	pwrseq_ctx.want_g3_exit = should_exit;
-}
-
-static bool chipset_is_exit_hardoff(void)
-{
-	return pwrseq_ctx.want_g3_exit;
+	LOG_INF("Request start from G3");
+	atomic_set_bit(flags, START_FROM_G3);
+	/*
+	 * If in S5, restart the timer to give the CPU more time
+	 * to respond to a power button press (which is presumably
+	 * why we are being called). This avoids having the S5
+	 * inactivity timer expiring before the AP can process
+	 * the power button press and start up.
+	 */
+	if (pwr_sm_get_state() == SYS_POWER_STATE_S5) {
+		atomic_clear_bit(flags, S5_INACTIVE_TIMER_RUNNING);
+	}
 }
 
 void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
@@ -118,9 +144,9 @@ static void shutdown_and_notify(enum ap_power_shutdown_reason reason)
 	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
 }
 
-void set_reboot_ap_at_g3_delay_seconds(uint32_t d_time)
+void set_start_from_g3_delay_seconds(uint32_t d_time)
 {
-	pwrseq_ctx.reboot_ap_at_g3_delay_ms = d_time * MSEC;
+	start_from_g3_delay_ms = d_time * MSEC;
 }
 
 void apshutdown(void)
@@ -191,15 +217,16 @@ static int common_pwr_sm_run(int state)
 {
 	switch (state) {
 	case SYS_POWER_STATE_G3:
-		if (chipset_is_exit_hardoff()) {
-			request_exit_hardoff(false);
-			/*
-			 * G3->S0 transition should happen only after the
-			 * user specified delay. Hence, wait until the
-			 * user specified delay times out.
-			 */
-			k_msleep(pwrseq_ctx.reboot_ap_at_g3_delay_ms);
-			pwrseq_ctx.reboot_ap_at_g3_delay_ms = 0;
+		/*
+		 * If the START_FROM_G3 flag is set, begin starting
+		 * the AP. There may be a delay set, so only start
+		 * after that delay.
+		 */
+		if (atomic_test_and_clear_bit(flags, START_FROM_G3)) {
+			LOG_INF("Starting from G3, delay %d ms",
+				start_from_g3_delay_ms);
+			k_msleep(start_from_g3_delay_ms);
+			start_from_g3_delay_ms = 0;
 
 			return SYS_POWER_STATE_G3S5;
 		}
@@ -222,24 +249,48 @@ static int common_pwr_sm_run(int state)
 			rsmrst_pass_thru_handler();
 			if (signals_valid_and_off(IN_PCH_SLP_S5)) {
 				k_timer_stop(&s5_inactive_timer);
-				s5_inactive_tmr_running = false;
+				/* Clear the timer running flag */
+				atomic_clear_bit(flags,
+					 S5_INACTIVE_TIMER_RUNNING);
+				/* Clear any request to exit hard-off */
+				atomic_clear_bit(flags, START_FROM_G3);
+				LOG_INF("Clearing request to exit G3");
 				return SYS_POWER_STATE_S5S4;
 			}
 		}
-		/* S5 inactivity timeout, go to S5G3 */
+		/*
+		 * S5 state has an inactivity timer, so moving
+		 * to S5G3 (where the power rails are turned off) is
+		 * delayed for some time, usually ~10 seconds or so.
+		 * The purpose of this delay is:
+		 *  - to handle AP initiated cold boot, where the AP
+		 *    will go to S5 for a short time and then restart.
+		 *  - give time for the power button to be pressed,
+		 *    which may set the START_FROM_G3 flag.
+		 */
 		if (AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) == 0)
 			return SYS_POWER_STATE_S5G3;
 		else if (AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) > 0) {
-			if (!s5_inactive_tmr_running) {
-				/* Timer is not started */
+			/*
+			 * Test and set timer running flag.
+			 * If it was 0, then the timer wasn't running
+			 * and it is started (and the flag is set),
+			 * otherwise it is already set, so no change.
+			 */
+			if (!atomic_test_and_set_bit(flags,
+				S5_INACTIVE_TIMER_RUNNING)) {
+				/*
+				 * Timer is not started, or needs
+				 * restarting.
+				 */
 				k_timer_start(&s5_inactive_timer,
 					K_SECONDS(AP_PWRSEQ_DT_VALUE(
 						s5_inactivity_timeout)),
 					K_NO_WAIT);
-				s5_inactive_tmr_running = true;
 			} else if (k_timer_status_get(&s5_inactive_timer) > 0) {
 				/* Timer is expired */
-				s5_inactive_tmr_running = false;
+				atomic_clear_bit(flags,
+					 S5_INACTIVE_TIMER_RUNNING);
 				return SYS_POWER_STATE_S5G3;
 			}
 		}
@@ -539,7 +590,7 @@ void ap_pwrseq_task_start(void)
 
 static void init_pwr_seq_state(void)
 {
-	request_exit_hardoff(false);
+	atomic_clear_bit(flags, START_FROM_G3);
 	/*
 	 * The state of the CPU needs to be determined now
 	 * so that init routines can check the state of

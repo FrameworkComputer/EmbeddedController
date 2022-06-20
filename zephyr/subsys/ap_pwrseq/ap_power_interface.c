@@ -107,7 +107,7 @@ void ap_power_exit_hardoff(void)
 	    power_state != SYS_POWER_STATE_S5G3 &&
 	    power_state != SYS_POWER_STATE_S5)
 		return;
-	request_exit_hardoff(true);
+	request_start_from_g3();
 }
 
 void ap_power_init_reset_log(void)
