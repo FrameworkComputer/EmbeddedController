@@ -901,6 +901,14 @@ def all_targets():
         board = "geralt",
     )
     ec_target(
+        name = "geralt_scp",
+        baseboard = "mtscp-rv32i",
+        board = "geralt_scp",
+        chip = "mt_scp",
+        core = "riscv-rv32i",
+        zephyr = False,
+    )
+    ec_target(
         name = "gimble",
         baseboard = "brya",
         board = "gimble",
