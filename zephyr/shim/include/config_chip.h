@@ -943,18 +943,21 @@ extern struct jump_data mock_jump_data;
 /*
  * Define these here for now. They are not actually CONFIG options in the EC
  * code base. Ideally they would be defined in the devicetree (perhaps for a
- * 'board' driver if not in the USB chip driver itself).
+ * 'board' driver if not in the USB chip driver itself). Use Kconfig to allow
+ * projects to overwrite the power configurations.
  *
  * SN5S30 PPC supports up to 24V VBUS source and sink, however passive USB-C
  * cables only support up to 60W.
  */
-#define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW 60000
-#define PD_MAX_CURRENT_MA 3000
-#define PD_MAX_VOLTAGE_MV 20000
+#define PD_OPERATING_POWER_MW CONFIG_PLATFORM_EC_PD_OPERATING_POWER_MW
+#define PD_MAX_POWER_MW CONFIG_PLATFORM_EC_PD_MAX_POWER_MW
+#define PD_MAX_CURRENT_MA CONFIG_PLATFORM_EC_PD_MAX_CURRENT_MA
+#define PD_MAX_VOLTAGE_MV CONFIG_PLATFORM_EC_PD_MAX_VOLTAGE_MV
 
-#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 30000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY \
+	CONFIG_PLATFORM_EC_PD_POWER_SUPPLY_TURN_ON_DELAY
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY \
+	CONFIG_PLATFORM_EC_PD_POWER_SUPPLY_TURN_OFF_DELAY
 #endif
 
 #undef CONFIG_CMD_PPC_DUMP
