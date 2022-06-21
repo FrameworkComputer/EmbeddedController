@@ -114,7 +114,7 @@ static host_event_t lpc_get_all_host_event_masks(void)
 	return or_mask;
 }
 
-static void lpc_set_host_event_state(host_event_t events)
+test_export_static void lpc_set_host_event_state(host_event_t events)
 {
 	if (events == lpc_host_events)
 		return;
