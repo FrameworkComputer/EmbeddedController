@@ -110,3 +110,6 @@ CONSOLE_CHANNEL(CC_USBPD,        "usbpd")
 #endif
 CONSOLE_CHANNEL(CC_VBOOT,        "vboot")
 CONSOLE_CHANNEL(CC_HOOK,         "hook")
+#ifdef HAS_GPU_DRIVER
+CONSOLE_CHANNEL(CC_GPU,          "gpu")
+#endif

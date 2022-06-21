@@ -118,6 +118,9 @@ driver-$(CONFIG_LED_DRIVER_TLC59116F)+=led/tlc59116f.o
 # 7-segment display
 driver-$(CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY)+=led/max695x.o
 
+# Nvidia GPU D-Notify driver
+driver-$(CONFIG_GPU_NVIDIA)+=nvidia_gpu.o
+
 # Voltage regulators
 driver-$(CONFIG_REGULATOR_IR357X)+=regulator_ir357x.o
 

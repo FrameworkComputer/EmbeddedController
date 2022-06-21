@@ -235,7 +235,7 @@ int charge_manager_get_selected_charge_port(void);
  *
  * @return	Power limit (uW).
  */
-int charge_manager_get_power_limit_uw(void);
+test_mockable int charge_manager_get_power_limit_uw(void);
 
 /**
  * Get the charger current (mA) value.

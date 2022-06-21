@@ -21,7 +21,7 @@ __override_proto void board_check_extpower(void);
 /**
  * Return non-zero if external power is present.
  */
-int extpower_is_present(void);
+test_mockable int extpower_is_present(void);
 
 /**
  * Interrupt handler for external power GPIOs.

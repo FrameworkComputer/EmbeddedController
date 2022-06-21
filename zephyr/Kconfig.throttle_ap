@@ -58,4 +58,14 @@ config PLATFORM_EC_THROTTLE_AP_ON_BAT_LOW_VOLTAGE_THRESH
 	default 0
 endif
 
+config PLATFORM_EC_GPU_NVIDIA
+	bool "Nvidia GPU supports throttling"
+	default n
+	help
+	  Enable GPU throttling. When the GPU is throttled, a software (D-Notify)
+	  and a hardware throttle (GPIO_NVIDIA_GPU_ACOFF_ODL) are enabled. A
+	  hardware throttle will be automatically disabled after a fixed period
+	  of time but a software throttle may remain and keep changing as the
+	  situation changes.
+
 endif # PLATFORM_EC_THROTTLE_AP

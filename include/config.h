@@ -2338,6 +2338,11 @@
 /* Support getting gpio flags. */
 #undef CONFIG_GPIO_GET_EXTENDED
 
+/*
+ * GPU Drivers
+ */
+#undef CONFIG_GPU_NVIDIA
+
 /* Do we want to detect the lid angle? */
 #undef CONFIG_LID_ANGLE
 
@@ -6862,4 +6867,9 @@
 #define CONFIG_S5_EXIT_WAIT 4
 #endif
 
-#endif /* __CROS_EC_CONFIG_H */
+/* HAS_GPU_DRIVER enables D-Notify and throttling. */
+#if defined(CONFIG_GPU_NVIDIA)
+#define HAS_GPU_DRIVER
+#endif
+
+#endif  /* __CROS_EC_CONFIG_H */
