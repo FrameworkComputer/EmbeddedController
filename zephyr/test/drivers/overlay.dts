@@ -563,6 +563,7 @@
 			status = "okay";
 
 			label = "BMA255";
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&mutex_bma255>;
 			port = <&i2c_accel>;
