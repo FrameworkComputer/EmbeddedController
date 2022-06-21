@@ -4,9 +4,11 @@
  */
 
 #include <fff.h>
+#include <zephyr/shell/shell.h>
 #include <ztest.h>
 
 #include "atomic.h"
+#include "console.h"
 #include "driver/accel_bma2x2.h"
 #include "motion_sense.h"
 #include "motion_sense_fifo.h"
@@ -67,6 +69,8 @@ static void host_cmd_motion_sense_before(void *fixture)
 	RESET_FAKE(mock_get_scale);
 	RESET_FAKE(mock_perform_calib);
 	FFF_RESET_HISTORY();
+
+	zassume_ok(shell_execute_cmd(get_ec_shell(), "accelinit 0"), NULL);
 
 	atomic_clear(&motion_sensors[0].flush_pending);
 	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 0;
