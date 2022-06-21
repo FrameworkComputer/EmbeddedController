@@ -14,9 +14,28 @@
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "extpower.h"
 #include "host_command.h"
+#include "power.h"
 
 /** @brief Set chipset to S0 state. Call all necessary hooks. */
 void test_set_chipset_to_s0(void);
+
+/**
+ * @brief Set the chipset to any stable state. Call all necessary hooks.
+ *
+ * Supported states are:
+ * <ul>
+ *   <li>POWER_G3 (same as calling test_set_chipset_to_g3())</li>
+ *   <li>POWER_S5</li>
+ *   <li>POWER_S4</li>
+ *   <li>POWER_S3</li>
+ *   <li>POWER_S0 (same as calling test_set_chipset_to_s0()</li>
+ *   <li>POWER_S0ix (if either CONFIG_PLATFORM_EC_POWERSEQ_S0IX or
+ *       CONFIG_AP_PWRSEQ_S0IX are enabled)</li>
+ * </ul>
+ *
+ * @param new_state The new state. Must be a steady state (see above).
+ */
+void test_set_chipset_to_power_level(enum power_state new_state);
 
 /** @brief Set chipset to G3 state. Call all necessary hooks. */
 void test_set_chipset_to_g3(void);

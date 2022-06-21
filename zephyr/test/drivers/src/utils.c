@@ -61,6 +61,33 @@ void test_set_chipset_to_s0(void)
 		      power_get_state());
 }
 
+void test_set_chipset_to_power_level(enum power_state new_state)
+{
+	zassert_true(new_state == POWER_G3 || new_state == POWER_S5 ||
+			     new_state == POWER_S4 || new_state == POWER_S3 ||
+			     new_state == POWER_S0
+#ifdef CONFIG_POWER_S0IX
+			     || new_state == POWER_S0ix
+#endif
+		     ,
+		     "Power state must be one of the steady states");
+
+	if (new_state == POWER_G3) {
+		test_set_chipset_to_g3();
+		return;
+	}
+
+	test_set_chipset_to_s0();
+
+	power_set_state(new_state);
+
+	k_sleep(K_SECONDS(1));
+
+	/* Check if chipset is in correct state */
+	zassert_equal(new_state, power_get_state(), "Expected %d, got %d",
+		      new_state, power_get_state());
+}
+
 void test_set_chipset_to_g3(void)
 {
 	printk("%s: Forcing shutdown\n", __func__);
