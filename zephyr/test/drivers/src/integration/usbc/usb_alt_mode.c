@@ -34,6 +34,11 @@ static void connect_partner_to_port(struct usbc_alt_mode_fixture *fixture)
 	const struct emul *tcpc_emul = fixture->tcpci_emul;
 	struct tcpci_partner_data *partner_emul = &fixture->partner;
 
+	/*
+	 * TODO(b/221439302) Updating the TCPCI emulator registers, updating the
+	 *   vbus, as well as alerting should all be a part of the connect
+	 *   function.
+	 */
 	/* Set VBUS to vSafe0V initially. */
 	isl923x_emul_set_adc_vbus(fixture->charger_emul, 0);
 	tcpci_emul_set_reg(fixture->tcpci_emul, TCPC_REG_POWER_STATUS,
@@ -41,6 +46,7 @@ static void connect_partner_to_port(struct usbc_alt_mode_fixture *fixture)
 	tcpci_emul_set_reg(fixture->tcpci_emul, TCPC_REG_EXT_STATUS,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
 	tcpci_tcpc_alert(0);
+	k_sleep(K_SECONDS(1));
 	zassume_ok(tcpci_partner_connect_to_tcpci(partner_emul, tcpc_emul),
 		   NULL);
 
