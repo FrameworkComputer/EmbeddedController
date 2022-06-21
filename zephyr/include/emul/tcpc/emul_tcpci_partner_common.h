@@ -150,10 +150,17 @@ struct tcpci_partner_msg {
 	struct tcpci_emul_msg msg;
 	/** Time when message should be sent if message is delayed */
 	uint64_t time;
-	/** Type of the message */
+	/** Message type that is placed in the Message Header. Its meaning
+	 *  depends on the class of message:
+	 *   - for Control Messages, see `enum pd_ctrl_msg_type`
+	 *   - for Data Messages, see `enum pd_data_msg_type`
+	 *   - for Extended Messages, see `enum pd_ext_msg_type`
+	 */
 	int type;
 	/** Number of data objects */
 	int data_objects;
+	/** True if this is an extended message */
+	bool extended;
 };
 
 /** Identify sender of logged PD message */
@@ -280,17 +287,6 @@ struct tcpci_partner_extension_ops {
 void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev);
 
 /**
- * @brief Allocate message with space for header and given number of data
- *        objects. Type of message is set to TCPCI_MSG_SOP by default.
- *
- * @param data_objects Number of data objects in message
- *
- * @return Pointer to new message on success
- * @return NULL on error
- */
-struct tcpci_partner_msg *tcpci_partner_alloc_msg(int data_objects);
-
-/**
  * @brief Free message's memory
  *
  * @param msg Pointer to message
@@ -359,6 +355,20 @@ int tcpci_partner_send_data_msg(struct tcpci_partner_data *data,
 				enum pd_data_msg_type type,
 				uint32_t *data_obj, int data_obj_num,
 				uint64_t delay);
+
+/**
+ * @brief Send an extended PD message to the port partner
+ *
+ * @param data Pointer to TCPCI partner emulator
+ * @param type Extended message type
+ * @param delay Message send delay in milliseconds, or zero for no delay.
+ * @param payload Pointer to data payload. Does not include any headers.
+ * @param payload_size Number of bytes in above payload
+ * @return negative on failure, 0 on success
+ */
+int tcpci_partner_send_extended_msg(struct tcpci_partner_data *data,
+				   enum pd_ext_msg_type type, uint64_t delay,
+				   uint8_t *payload, size_t payload_size);
 
 /**
  * @brief Remove all messages that are in delayed message queue

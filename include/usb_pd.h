@@ -1140,7 +1140,7 @@ bool pd_get_partner_unconstr_power(int port);
  */
 void pd_resume_check_pr_swap_needed(int port);
 
-/* Control Message type */
+/* Control Message type - USB-PD Spec Rev 3.0, Ver 1.1, Table 6-5 */
 enum pd_ctrl_msg_type {
 	PD_CTRL_INVALID  = 0, /* 0 Reserved - DO NOT PUT IN MESSAGES */
 	PD_CTRL_GOOD_CRC = 1,
@@ -1245,7 +1245,7 @@ enum pd_sdb_power_indicator {
 	PD_SDB_POWER_INDICATOR_BREATHING = (3 << 3),
 };
 
-/* Extended message type for REV 3.0 */
+/* Extended message type for REV 3.0 - USB-PD Spec 3.0, Ver 1.1, Table 6-42 */
 enum pd_ext_msg_type {
 	/* 0 Reserved */
 	PD_EXT_SOURCE_CAP = 1,
@@ -1292,7 +1292,7 @@ enum ado_extended_alert_event_type {
 	ADO_CONTROLLER_INITIATED_WAKE = 0x4,
 };
 
-/* Data message type */
+/* Data message type - USB-PD Spec Rev 3.0, Ver 1.1, Table 6-6 */
 enum pd_data_msg_type {
 	/* 0 Reserved */
 	PD_DATA_SOURCE_CAP = 1,
@@ -1359,11 +1359,13 @@ enum cable_outlet {
 #define PD_DEFAULT_STATE(port) PD_STATE_SRC_DISCONNECTED
 #endif
 
-/* build extended message header */
-/* All extended messages are chunked, so set bit 15 */
+/* Build extended message header with chunking */
 #define PD_EXT_HEADER(cnum, rchk, dsize) \
 	 (BIT(15) | ((cnum) << 11) | \
 	 ((rchk) << 10) | (dsize))
+
+/* Build extended message header without chunking */
+#define PD_EXT_HEADER_UNCHUNKED(dsize) (dsize)
 
 /* build message header */
 #define PD_HEADER(type, prole, drole, id, cnt, rev, ext) \
