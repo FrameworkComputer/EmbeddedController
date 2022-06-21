@@ -542,10 +542,6 @@ config_nami() {
   readonly GPIO_PWREN=395
 }
 
-config_nami-kernelnext() {
-  config_nami
-}
-
 config_nocturne() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev32765.0"
