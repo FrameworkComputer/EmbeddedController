@@ -104,10 +104,15 @@ ZTEST_USER(host_cmd_motion_sense, test_dump)
 		motion_sensors[i].xyz[1] = i + 1;
 		motion_sensors[i].xyz[2] = i + 2;
 	}
+
+	/* Make sure that the accelerometer status presence bit is off */
+	*host_get_memmap(EC_MEMMAP_ACC_STATUS) &=
+		~(EC_MEMMAP_ACC_STATUS_PRESENCE_BIT);
+
+	/* Dump all the sensors info */
 	host_cmd_motion_sense_dump(ALL_MOTION_SENSORS, result);
 
-	zassert_equal(result->dump.module_flags, MOTIONSENSE_MODULE_FLAG_ACTIVE,
-		      NULL);
+	zassert_equal(result->dump.module_flags, 0, NULL);
 	zassert_equal(result->dump.sensor_count, ALL_MOTION_SENSORS, NULL);
 
 	/*
@@ -123,6 +128,16 @@ ZTEST_USER(host_cmd_motion_sense, test_dump)
 		zassert_equal(result->dump.sensor[i].data[1], i + 1, NULL);
 		zassert_equal(result->dump.sensor[i].data[2], i + 2, NULL);
 	}
+
+	/* Make sure that the accelerometer status presence bit is on */
+	*host_get_memmap(EC_MEMMAP_ACC_STATUS) |=
+		EC_MEMMAP_ACC_STATUS_PRESENCE_BIT;
+
+	/* Dump all the sensors info */
+	host_cmd_motion_sense_dump(ALL_MOTION_SENSORS, result);
+
+	zassert_equal(result->dump.module_flags, MOTIONSENSE_MODULE_FLAG_ACTIVE,
+		      NULL);
 }
 
 ZTEST_USER(host_cmd_motion_sense, test_dump__large_max_sensor_count)
