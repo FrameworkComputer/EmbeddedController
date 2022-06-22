@@ -311,6 +311,14 @@ int cbi_get_rework_id(uint64_t *id)
 	return cbi_get_board_info(CBI_TAG_REWORK_ID, (uint8_t *)id, &size);
 }
 
+int cbi_get_factory_calibration_data(uint32_t *calibration_data)
+{
+	uint8_t size = sizeof(*calibration_data);
+
+	return cbi_get_board_info(CBI_TAG_FACTORY_CALIBRATION_DATA,
+				  (uint8_t *)calibration_data, &size);
+}
+
 static enum ec_status hc_cbi_get(struct host_cmd_handler_args *args)
 {
 	const struct __ec_align4 ec_params_get_cbi *p = args->params;
