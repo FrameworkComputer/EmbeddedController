@@ -152,6 +152,22 @@ struct tcpci_partner_data {
 	/* VDMs sent when responding to DisplayPort config command */
 	uint32_t dp_config_vdm[VDO_MAX_SIZE];
 	int dp_config_vdos;
+	struct {
+		/* Index of the last battery we requested capabilities for. The
+		 * BCDB response does not include the index so we need to track
+		 * it manually. -1 indicates no outstanding request.
+		 */
+		int index;
+		/* Stores Battery Capability Data Blocks (BCDBs) requested and
+		 * received from the TCPM for later analysis. See USB-PD spec
+		 * Rev 3.1, Ver 1.3 section 6.5.5
+		 */
+		struct pd_bcdb bcdb[PD_BATT_MAX];
+		/* Stores a boolean status for each battery index indicating
+		 * whether we have received a BCDB response for that battery.
+		 */
+		bool have_response[PD_BATT_MAX];
+	} battery_capabilities;
 };
 
 /** Structure of message used by TCPCI partner emulator */
@@ -407,6 +423,25 @@ void tcpci_partner_common_send_hard_reset(struct tcpci_partner_data *data);
  * @param data Pointer to TCPCI partner emulator
  */
 void tcpci_partner_common_send_soft_reset(struct tcpci_partner_data *data);
+
+/**
+ * @brief Send a Get Battery Capabilities request to the TCPM
+ *
+ * @param data Pointer to TCPCI partner emulator
+ * @param battery_index Request capability info on this battery. Must
+ *        be (0 <= battery_index < PD_BATT_MAX)
+ */
+void tcpci_partner_common_send_get_battery_capabilities(
+	struct tcpci_partner_data *data, int battery_index);
+
+/**
+ * @brief Resets the data structure used for tracking battery capability
+ *        requests and responses.
+ *
+ * @param data Emulator state
+ */
+void tcpci_partner_reset_battery_capability_state(
+	struct tcpci_partner_data *data);
 
 /**
  * @brief Start sender response timer for TCPCI_PARTNER_RESPONSE_TIMEOUT_MS.

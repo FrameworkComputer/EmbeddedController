@@ -534,6 +534,30 @@ int tcpci_partner_send_extended_msg(struct tcpci_partner_data *data,
 	return tcpci_partner_send_msg(data, msg, delay);
 }
 
+/** Check description in emul_common_tcpci_partner.h */
+void tcpci_partner_common_send_get_battery_capabilities(
+	struct tcpci_partner_data *data, int battery_index)
+{
+	__ASSERT(battery_index >= 0 && battery_index < PD_BATT_MAX,
+		 "Battery index out of range");
+	__ASSERT(data->battery_capabilities.index < 0,
+		 "Get Battery Capabilities request already in progress");
+
+	LOG_INF("Send battery cap request");
+
+	/* Get_Battery_Cap message payload */
+	uint8_t payload[1] = { [0] = battery_index };
+
+	/* Keep track which battery we requested capabilities for */
+	data->battery_capabilities.index = battery_index;
+	int ret = tcpci_partner_send_extended_msg(data, PD_EXT_GET_BATTERY_CAP,
+						  0, payload, sizeof(payload));
+	if (ret) {
+		LOG_ERR("Send battery capacity result: %d", ret);
+	}
+	tcpci_partner_start_sender_response_timer(data);
+}
+
 /**
  * @brief Handler for response timeout
  *
@@ -648,6 +672,60 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 		/* TCPCI r. 2.0: Ignore unsupported commands. */
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	}
+}
+
+/**
+ * @brief Handle a received Battery Capability message from the TCPC. Save the
+ *        contents to the emulator data struct for analysis.
+ *
+ * @param data Emulator state
+ * @param message Received PD message
+ * @return enum tcpci_partner_handler_res
+ */
+static enum tcpci_partner_handler_res
+tcpci_partner_common_battery_capability_handler(
+	struct tcpci_partner_data *data, const struct tcpci_emul_msg *message)
+{
+	uint16_t header = sys_get_le16(&message->buf[0]);
+	uint16_t ext_header = sys_get_le16(&message->buf[2]);
+
+	/* Validate message header */
+	__ASSERT(PD_HEADER_TYPE(header) == PD_EXT_BATTERY_CAP,
+		 "wrong message type");
+	__ASSERT(PD_EXT_HEADER_DATA_SIZE(ext_header) == 9,
+		 "Data size mismatch");
+
+	int index = data->battery_capabilities.index;
+
+	data->battery_capabilities.index = -1;
+
+	if (index < 0) {
+		LOG_ERR("Received a Battery Capability message but it was "
+			"never requested");
+		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+	}
+
+	__ASSERT(index < PD_BATT_MAX, "Battery index out of range");
+
+	data->battery_capabilities.bcdb[index] = (struct pd_bcdb){
+		.vid = sys_get_le16(&message->buf[4]),
+		.pid = sys_get_le16(&message->buf[6]),
+		.design_cap = sys_get_le16(&message->buf[8]),
+		.last_full_charge_cap = sys_get_le16(&message->buf[10]),
+		.battery_type = message->buf[12],
+	};
+
+	data->battery_capabilities.have_response[index] = true;
+
+	LOG_INF("Saved data for battery index (%d): vid=%04x, pid=%04x, "
+		"cap=%u, last_cap=%u, type=%02x",
+		index, data->battery_capabilities.bcdb[index].vid,
+		data->battery_capabilities.bcdb[index].pid,
+		data->battery_capabilities.bcdb[index].design_cap,
+		data->battery_capabilities.bcdb[index].last_full_charge_cap,
+		data->battery_capabilities.bcdb[index].battery_type);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 }
 
 static void tcpci_partner_common_set_vconn(struct tcpci_partner_data *data,
@@ -786,7 +864,34 @@ static enum tcpci_partner_handler_res tcpci_partner_common_sop_msg_handler(
 
 	data->recv_msg_id = PD_HEADER_ID(header);
 
+	if (PD_HEADER_EXT(header)) {
+		/* Extended message */
+
+		if (PD_HEADER_REV(header) < PD_REV30) {
+			LOG_ERR("Received extended message but current PD rev "
+				"(0x%x) does not support them.",
+				PD_HEADER_REV(header));
+			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+		}
+
+		switch (PD_HEADER_TYPE(header)) {
+		case PD_EXT_GET_BATTERY_CAP:
+			/* Not implemented */
+			LOG_INF("Got PD_EXT_GET_BATTERY_CAP");
+			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+		case PD_EXT_BATTERY_CAP:
+			/* Received a Battery Capabilities response */
+			LOG_INF("Got PD_EXT_BATTERY_CAP");
+
+			return tcpci_partner_common_battery_capability_handler(
+				data, tx_msg);
+		default:
+			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+		}
+	}
+
 	if (PD_HEADER_CNT(header)) {
+		/* Data message */
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_DATA_VENDOR_DEF:
 			return tcpci_partner_common_vdm_handler(data, tx_msg);
@@ -1237,7 +1342,18 @@ int tcpci_partner_connect_to_tcpci(struct tcpci_partner_data *data,
 		data->tcpci_emul = NULL;
 	}
 
+	/* Clear any received battery capability info */
+	tcpci_partner_reset_battery_capability_state(data);
+
 	return ret;
+}
+
+void tcpci_partner_reset_battery_capability_state(
+	struct tcpci_partner_data *data)
+{
+	memset(&data->battery_capabilities, 0,
+	       sizeof(data->battery_capabilities));
+	data->battery_capabilities.index = -1;
 }
 
 void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
@@ -1269,4 +1385,8 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->ops.control_change = NULL;
 	data->ops.disconnect = tcpci_partner_disconnect_op;
 	data->displayport_configured = false;
+
+	/* Reset the data structure used to store battery capability responses
+	 */
+	tcpci_partner_reset_battery_capability_state(data);
 }
