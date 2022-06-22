@@ -1201,6 +1201,34 @@ enum pd_ctrl_msg_type {
 #define BCDB_FULL_CAP	3
 #define BCDB_BATT_TYPE	4
 
+/* Battery Capability Data Block (BCDB) in struct format.
+ * See USB-PD spec Rev 3.1, V 1.3 section 6.5.5
+ */
+struct pd_bcdb {
+	/* Vendor ID*/
+	uint16_t vid;
+	/* Product ID */
+	uint16_t pid;
+	/* Battery’s design capacity in 0.1 Wh (0 = no batt, 0xFFFF = unknown)
+	 */
+	uint16_t design_cap;
+	/* Battery’s last full charge capacity in 0.1 Wh (0 = no batt,
+	 * 0xFFFF = unknown)
+	 */
+	uint16_t last_full_charge_cap;
+	/* Bit 0 indicates if the request was invalid. Other bits reserved. */
+	uint8_t battery_type;
+} __packed;
+
+/* Maximum number of different batteries that can be queried through Get Battery
+ * Status and Get Battery Capability requests. Indices 0 to 3 are fixed
+ * batteries and indices 4 to 7 are hot-swappable batteries. Not all are
+ * necessarily present.
+ *
+ * See USB-PD spec Rev 3.1, V 1.3 sections 6.5.4 - .5
+ */
+#define PD_BATT_MAX (8)
+
 /*
  * Get Battery Cap Message fields for REV 3.0 (assumes extended header is
  * present in first two bytes)
