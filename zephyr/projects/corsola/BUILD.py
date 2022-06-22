@@ -77,6 +77,7 @@ register_corsola_project(
         here / "i2c_kingler.dts",
         here / "interrupts_kingler.dts",
         here / "cbi_eeprom.dts",
+        here / "cbi_steelix.dts",
         here / "gpio_steelix.dts",
         here / "npcx_keyboard.dts",
         here / "led_steelix.dts",

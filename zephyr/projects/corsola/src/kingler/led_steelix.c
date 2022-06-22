@@ -10,6 +10,7 @@
 
 #include "board_led.h"
 #include "common.h"
+#include "cros_cbi.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
 #include "util.h"
@@ -82,6 +83,21 @@ static void board_led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
 	}
 }
 
+static bool device_is_clamshell(void)
+{
+	int ret;
+	uint32_t val;
+
+	ret = cros_cbi_get_fw_config(FROM_FACTOR, &val);
+	if (ret != 0) {
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
+			FROM_FACTOR);
+		return false;
+	}
+
+	return val == CLAMSHELL;
+}
+
 __override void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
@@ -106,13 +122,17 @@ __override void led_set_color_battery(enum ec_led_colors color)
 
 __override void led_set_color_power(enum ec_led_colors color)
 {
-	switch (color) {
-	case EC_LED_COLOR_WHITE:
-		board_led_pwm_set_duty(&board_led_power_white, 100);
-		break;
-	default:
+	if (device_is_clamshell()) {
 		board_led_pwm_set_duty(&board_led_power_white, 0);
-		break;
+	} else {
+		switch (color) {
+		case EC_LED_COLOR_WHITE:
+			board_led_pwm_set_duty(&board_led_power_white, 100);
+			break;
+		default:
+			board_led_pwm_set_duty(&board_led_power_white, 0);
+			break;
+		}
 	}
 }
 
@@ -123,7 +143,11 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 		brightness_range[EC_LED_COLOR_GREEN] = 1;
 		brightness_range[EC_LED_COLOR_AMBER] = 1;
 	} else if (led_id == EC_LED_ID_POWER_LED) {
-		brightness_range[EC_LED_COLOR_WHITE] = 1;
+		if (device_is_clamshell()) {
+			brightness_range[EC_LED_COLOR_WHITE] = 0;
+		} else {
+			brightness_range[EC_LED_COLOR_WHITE] = 1;
+		}
 	}
 }
 
