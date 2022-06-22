@@ -399,6 +399,9 @@ SERVO_TYPE="$(dut_control_get servo_type || :)"
 
 if [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_.*$ ]]; then
 	ACTIVE_DEVICE="$(dut_control_get active_dut_controller)"
+	if [[ ${ACTIVE_DEVICE} == neither ]]; then
+          die "Could not determine servo V4 active device"
+        fi
 else
 	ACTIVE_DEVICE="${SERVO_TYPE}"
 fi
@@ -1260,7 +1263,7 @@ function dut_i2c_dev() {
 	local has_i2c_pseudo="$(dut_control_get_or_die \
 		"${ACTIVE_DEVICE}_i2c_pseudo_is_running")"
 	if [[ "${has_i2c_pseudo}" == False ]]; then
-		error "i2c-pseudo module is not running."
+		error "i2c-pseudo module is not running on ${ACTIVE_DEVICE}."
 		error "Please follow https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/iteflash.md#i2c-pseudo"
 		die "to install i2c-pseudo module."
 	fi
