@@ -99,7 +99,11 @@ SECTIONS
 		OUTDIR/chip/it83xx/hwtimer.o (.rodata)
 		. = ALIGN(16);
 #endif
+#if SCP_CORE_SN == 1
+		EXCLUDE_FILE (STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o)) *(.text*)
+#else
 		*(.text*)
+#endif
 		. = ALIGN(4);
 #if defined(CONFIG_FLASH_PHYSICAL)
 #	if defined(CHIP_FAMILY_IT8XXX2)
@@ -261,7 +265,12 @@ SECTIONS
 		__deferred_funcs_end = .;
 
 		. = ALIGN(4);
+
+#if SCP_CORE_SN == 1
+		EXCLUDE_FILE (STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o)) *(.rodata*)
+#else
 		*(.rodata*)
+#endif
 
 #ifdef CONFIG_CHIP_INIT_ROM_REGION
 	ASSERT(0, "CONFIG_CHIP_INIT_ROM_REGION not supported by linker script")
@@ -317,7 +326,11 @@ SECTIONS
 	.data : {
 		. = ALIGN(4);
 		__data_start = .;
+#if SCP_CORE_SN == 1
+		EXCLUDE_FILE (STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o)) *(.data)
+#else
 		*(.data)
+#endif
 		*(.sdata)
 		. = ALIGN(4);
 		__data_end = .;
@@ -341,7 +354,11 @@ SECTIONS
 		*(.sbss)
 		. = ALIGN(4);
 		/* Rest of .bss takes care of its own alignment */
+#if SCP_CORE_SN == 1
+		EXCLUDE_FILE (STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o)) *(.bss)
+#else
 		*(.bss)
+#endif
 
 		/*
 		 * Reserve space for deferred function firing times.
@@ -444,6 +461,9 @@ SECTIONS
 		. = ALIGN(4);
 		KEEP(*(SORT(.dram.text.keep.*)))
 		*(SORT(.dram.text.*))
+#if SCP_CORE_SN == 1
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) (.text*)
+#endif
 		. = ALIGN(4);
 	} > DRAM
 
@@ -451,6 +471,9 @@ SECTIONS
 		. = ALIGN(4);
 		KEEP(*(SORT(.dram.rodata.keep.*)))
 		*(SORT(.dram.rodata.*))
+#if SCP_CORE_SN == 1
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) (.rodata*)
+#endif
 		. = ALIGN(4);
 	} > DRAM
 
@@ -462,6 +485,9 @@ SECTIONS
 		. = ALIGN(4);
 		__dram_data_start = .;
 		*(.dram.data*)
+#if SCP_CORE_SN == 1
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) (.data)
+#endif
 		. = ALIGN(4);
 		__dram_data_end = .;
 
@@ -483,6 +509,9 @@ SECTIONS
 		. = ALIGN(4);
 		__dram_bss_start = .;
 		*(SORT(.dram.bss*))
+#if SCP_CORE_SN == 1
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) (.bss)
+#endif
 		. = ALIGN(4);
 		__dram_bss_end = .;
 	} > DRAM
