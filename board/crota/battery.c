@@ -63,7 +63,7 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 	/* BYD 13076993-009 Battery Information */
-	[BATTERY_BYD] = {
+	[BATTERY_BYD_GSL4] = {
 		.fuel_gauge = {
 			.manuf_name = "BYD",
 			.device_name = "DELL WV3K8",
@@ -320,6 +320,35 @@ const struct board_batt_params board_battery_info[] = {
 			.charging_min_c		= 0,
 			.charging_max_c		= 50,
 			.discharging_min_c	= -14,
+			.discharging_max_c	= 70,
+		},
+	},
+	/* BYD 13148981-00 Battery Information */
+	[BATTERY_BYD_CSL4] = {
+		.fuel_gauge = {
+			.manuf_name = "BYD",
+			.device_name = "DELL JGCCT",
+			.ship_mode = {
+				.reg_addr = 0x00,
+				.reg_data = { 0x0010, 0x0010 },
+			},
+			.fet = {
+				.mfgacc_support = 0,
+				.reg_addr = 0x00,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 17400,  /* mV */
+			.voltage_normal		= 15000,  /* mV */
+			.voltage_min		= 12000,  /* mV */
+			.precharge_current	= 256,	  /* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 60,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= 0,
 			.discharging_max_c	= 70,
 		},
 	},
