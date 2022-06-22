@@ -232,6 +232,10 @@ ZTEST_USER(host_cmd_motion_sense, test_get_ec_rate)
 {
 	struct ec_response_motion_sense response;
 
+	/* Set the power level to S3, the default config from device-tree is for
+	 * 100ms
+	 */
+	test_set_chipset_to_power_level(POWER_S3);
 	zassert_ok(host_cmd_motion_sense_ec_rate(
 			   /*sensor_num=*/0,
 			   /*data_rate_ms=*/EC_MOTION_SENSE_NO_VALUE,
@@ -244,6 +248,10 @@ ZTEST_USER(host_cmd_motion_sense, test_set_ec_rate)
 {
 	struct ec_response_motion_sense response;
 
+	/* Set the power level to S3, the default config from device-tree is for
+	 * 100ms
+	 */
+	test_set_chipset_to_power_level(POWER_S3);
 	zassert_ok(host_cmd_motion_sense_ec_rate(
 			   /*sensor_num=*/0, /*data_rate_ms=*/2000, &response),
 		   NULL);
