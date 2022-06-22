@@ -2336,6 +2336,17 @@ static void pe_src_discovery_run(int port)
 			set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
 			return;
 		} else if (!PE_CHK_FLAG(port, PE_FLAGS_PD_CONNECTION)) {
+			/*
+			 * Cable identity may be discovered without a PD
+			 * contract in place. If it has been discovered, notify
+			 * the AP.
+			 */
+			if (pd_get_identity_discovery(
+			    port, TCPCI_MSG_SOP_PRIME) == PD_DISC_COMPLETE) {
+				pd_notify_event(
+				    port, PD_STATUS_EVENT_SOP_PRIME_DISC_DONE);
+			}
+
 			set_state_pe(port, PE_SRC_DISABLED);
 			return;
 		}
