@@ -126,7 +126,7 @@ static void prochot_input_deferred(void)
 	 * asserting low is normal behavior and not a concern
 	 * for PROCHOT# event.  Ignore all PROCHOT changes while the AP is off
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF | CHIPSET_STATE_ANY_SUSPEND))
 		return;
 
 	/*
