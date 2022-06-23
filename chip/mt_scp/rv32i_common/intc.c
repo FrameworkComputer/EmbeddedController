@@ -16,7 +16,8 @@
  * Lower group has higher priority.
  * Higher INT number has higher priority.
  */
-#define EC_INT_MAGIC_DUMP_GROUP BIT(15)
+#define EC_INT_MAGIC_NO_IRQ_OUT BIT(15)
+#define EC_INT_MAGIC_NO_STA BIT(14)
 int chip_get_ec_int(void)
 {
 	extern volatile int ec_int;
@@ -26,7 +27,7 @@ int chip_get_ec_int(void)
 	group = read_csr(CSR_VIC_MICAUSE);
 
 	if (!SCP_CORE0_INTC_IRQ_OUT) {
-		ec_int = EC_INT_MAGIC_DUMP_GROUP | group;
+		ec_int = EC_INT_MAGIC_NO_IRQ_OUT | group;
 		goto error;
 	}
 
@@ -38,6 +39,7 @@ int chip_get_ec_int(void)
 		}
 	}
 
+	ec_int = EC_INT_MAGIC_NO_STA | group;
 error:
 	/* unreachable, SCP crashes and dumps registers after returning */
 	return -1;
