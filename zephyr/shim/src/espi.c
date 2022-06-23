@@ -32,6 +32,24 @@
 
 LOG_MODULE_REGISTER(espi_shim, CONFIG_ESPI_LOG_LEVEL);
 
+/*
+ * Some functions are compiled depending on combinations of
+ * CONFIG_PLATFORM_EC_POWERSEQ, CONFIG_AP_PWRSEQ and
+ * CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK.
+ *
+ * Tests are compiled without CONFIG_PLATFORM_EC_POWERSEQ and
+ * CONFIG_AP_PWRSEQ defined, but use the lpc functions.
+ *
+ * Legacy vwire power signal handling is required
+ * by CONFIG_PLATFORM_EC_POWERSEQ.
+ *
+ * CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK is used to handle
+ * the PLTRST# vwire signal separate to the legacy power signal handling.
+ *
+ * Where !defined(CONFIG_AP_PWRSEQ) is used, the code is required either
+ * by the tests, or by the legacy power signal handling.
+ */
+
 /* host command packet handler structure */
 static struct host_packet lpc_packet;
 /*
@@ -95,6 +113,7 @@ static enum espi_vwire_signal signal_to_zephyr_vwire(enum espi_vw_signal signal)
 	}
 }
 
+#if defined(CONFIG_PLATFORM_EC_POWERSEQ)
 /* Translate a Zephyr vwire to a platform/ec signal */
 static enum espi_vw_signal zephyr_vwire_to_signal(enum espi_vwire_signal vwire)
 {
@@ -105,6 +124,7 @@ static enum espi_vw_signal zephyr_vwire_to_signal(enum espi_vwire_signal vwire)
 		return -1;
 	}
 }
+#endif /* defined(CONFIG_PLATFORM_EC_POWERSEQ) */
 
 /*
  * Bit field for each signal which can have an interrupt enabled.
@@ -126,22 +146,12 @@ static uint32_t signal_to_interrupt_bit(enum espi_vw_signal signal)
 	}
 }
 
-/* Callback for vwire received */
-static void espi_vwire_handler(const struct device *dev,
-			       struct espi_callback *cb,
-			       struct espi_event event)
-{
-	int ec_signal = zephyr_vwire_to_signal(event.evt_details);
-
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_POWERSEQ) &&
-	    (signal_interrupt_enabled & signal_to_interrupt_bit(ec_signal))) {
-		power_signal_interrupt(ec_signal);
-	}
-}
-
 #endif /* !defined(CONFIG_AP_PWRSEQ) */
 
 #ifdef CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK
+/*
+ * Deferred handler for PLTRST processing.
+ */
 static void espi_chipset_reset(void)
 {
 	if (IS_ENABLED(CONFIG_AP_PWRSEQ)) {
@@ -151,16 +161,35 @@ static void espi_chipset_reset(void)
 	}
 }
 DECLARE_DEFERRED(espi_chipset_reset);
+#endif /* CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK */
 
-/* Callback for reset */
-static void espi_reset_handler(const struct device *dev,
+/*
+ * Callback for vwire received.
+ * PLTRST (platform reset) is handled specially by
+ * invoking HOOK_CHIPSET_RESET.
+ */
+#if defined(CONFIG_PLATFORM_EC_POWERSEQ) || \
+	defined(CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK)
+static void espi_vwire_handler(const struct device *dev,
 			       struct espi_callback *cb,
 			       struct espi_event event)
 {
-	hook_call_deferred(&espi_chipset_reset_data, MSEC);
+#if defined(CONFIG_PLATFORM_EC_POWERSEQ)
+	int ec_signal = zephyr_vwire_to_signal(event.evt_details);
 
+	if (signal_interrupt_enabled & signal_to_interrupt_bit(ec_signal)) {
+		power_signal_interrupt(ec_signal);
+	}
+#endif
+#if defined(CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK)
+	/* If PLTRST# asserted (low) then send reset hook */
+	if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
+	    event.evt_data == 0) {
+		hook_call_deferred(&espi_chipset_reset_data, MSEC);
+	}
+#endif
 }
-#endif /* CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK */
+#endif
 
 #define espi_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_espi))
 
@@ -558,7 +587,8 @@ static int zephyr_shim_setup_espi(const struct device *unused)
 		espi_callback_handler_t handler;
 		enum espi_bus_event event_type;
 	} callbacks[] = {
-#if !defined(CONFIG_AP_PWRSEQ)
+#if defined(CONFIG_PLATFORM_EC_POWERSEQ) || \
+	defined(CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK)
 		{
 			.handler = espi_vwire_handler,
 			.event_type = ESPI_BUS_EVENT_VWIRE_RECEIVED,
@@ -568,12 +598,6 @@ static int zephyr_shim_setup_espi(const struct device *unused)
 			.handler = espi_peripheral_handler,
 			.event_type = ESPI_BUS_PERIPHERAL_NOTIFICATION,
 		},
-#ifdef CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK
-		{
-			.handler = espi_reset_handler,
-			.event_type = ESPI_BUS_RESET,
-		},
-#endif
 	};
 
 	struct espi_cfg cfg = {
