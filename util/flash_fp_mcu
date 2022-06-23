@@ -670,6 +670,20 @@ config_guybrush() {
   readonly GPIO_PWREN=259
 }
 
+config_skyrim() {
+  readonly TRANSPORT="UART"
+
+  readonly DEVICE="/dev/ttyS1"
+
+  readonly GPIO_CHIP="gpiochip768"
+  # FPMCU RST_ODL is on AGPIO 12 = 768 + 12 = 780
+  readonly GPIO_NRST=780
+  # FPMCU BOOT0 is on AGPIO 130 = 768 + 130 = 898
+  readonly GPIO_BOOT0=898
+  # FPMCU PWR_EN is on AGPIO 4 = 768 + 4 = 772
+  readonly GPIO_PWREN=772
+}
+
 main() {
   local filename="$1"
 
