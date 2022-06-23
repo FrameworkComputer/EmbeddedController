@@ -45,7 +45,7 @@
 			enum-name = "I2C_PORT_TYPEC_AIC_1";
 		};
 		typec_aic2: typec-aic2{
-			i2c-port = <&i2c2_0>;
+			i2c-port = <&i2c1_0>;
 			enum-name = "I2C_PORT_TYPEC_AIC_2";
 		};
 	};
@@ -150,14 +150,14 @@
 };
 
 /* typec_aic2 */
-&i2c2_0 {
+&i2c1_0 {
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
 };
 
-&i2c_ctrl2 {
+&i2c_ctrl1 {
 	status = "okay";
 };
 

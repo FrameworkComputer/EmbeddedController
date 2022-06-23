@@ -9,7 +9,9 @@
 #include "common.h"
 #include "console.h"
 #include "driver/retimer/bb_retimer_public.h"
+#include "driver/tcpm/ccgxxf.h"
 #include "driver/tcpm/nct38xx.h"
+#include "driver/tcpm/tcpci.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
@@ -39,8 +41,25 @@
 #define I2C_ADDR_SN5S330_P0 0x40
 #define I2C_ADDR_SN5S330_P1 0x41
 
+/* IOEX ports */
+enum ioex_port {
+	IOEX_KBD = 0,
+#if defined(HAS_TASK_PD_C2)
+	IOEX_C2_CCGXXF,
+#endif
+	IOEX_COUNT
+};
+
 /* USB-C ports */
-enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
+enum usbc_port {
+	USBC_PORT_C0 = 0,
+	USBC_PORT_C1,
+#if defined(HAS_TASK_PD_C2)
+	USBC_PORT_C2,
+	USBC_PORT_C3,
+#endif
+	USBC_PORT_COUNT
+};
 BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 /* USB-C PPC configuration */
@@ -56,7 +75,6 @@ struct ppc_config_t ppc_chips[] = {
 		.drv = &sn5s330_drv,
 	},
 };
-BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* TCPC AIC GPIO Configuration */
@@ -71,6 +89,16 @@ const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
 		.ppc_alert = GPIO_SIGNAL(DT_NODELABEL(usbc_tcpc_ppc_alrt_p1)),
 		.ppc_intr_handler = sn5s330_interrupt,
 	},
+#if defined(HAS_TASK_PD_C2)
+	[USBC_PORT_C2] = {
+		.tcpc_alert = GPIO_SIGNAL(DT_NODELABEL(usbc_tcpc_alrt_p2)),
+		/* No PPC alert for CCGXXF */
+	},
+	[USBC_PORT_C3] = {
+		.tcpc_alert = GPIO_SIGNAL(DT_NODELABEL(usbc_tcpc_alrt_p3)),
+		/* No PPC alert for CCGXXF */
+	},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_aic_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
@@ -125,6 +153,14 @@ void board_reset_pd_mcu(void)
 	/* NCT38XX chip uses gpio ioex */
 	gpio_reset_port(DEVICE_DT_GET(DT_NODELABEL(ioex_c0)));
 	gpio_reset_port(DEVICE_DT_GET(DT_NODELABEL(ioex_c1)));
+
+#if defined(HAS_TASK_PD_C2)
+	/* Reset the ccgxxf ports only resetting 1 is required */
+	ccgxxf_reset(USBC_PORT_C2);
+
+	/* CCGXXF has ioex on port 2 */
+	ioex_init(IOEX_C2_CCGXXF);
+#endif
 }
 
 void board_connect_c0_sbu(enum gpio_signal signal)
@@ -232,6 +268,10 @@ static void board_int_init(void)
 
 	/* Enable TCPC interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_c1_tcpc));
+#if defined(HAS_TASK_PD_C2)
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c2_tcpc));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c3_tcpc));
+#endif
 
 	/* Enable CCD Mode interrupt */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_ccd_mode));
@@ -257,3 +297,35 @@ static int board_pre_task_peripheral_init(const struct device *unused)
 }
 SYS_INIT(board_pre_task_peripheral_init, APPLICATION,
 	 CONFIG_APPLICATION_INIT_PRIORITY);
+
+/*
+ * Since MTLRVP has both PPC and TCPC ports override to check if the port
+ * is a PPC or non PPC port
+ */
+__override bool pd_check_vbus_level(int port, enum vbus_level level)
+{
+	if (!board_port_has_ppc(port)) {
+		return tcpm_check_vbus_level(port, level);
+	} else if (level == VBUS_PRESENT) {
+		return pd_snk_is_vbus_provided(port);
+	} else {
+		return !pd_snk_is_vbus_provided(port);
+	}
+}
+
+__override bool board_port_has_ppc(int port)
+{
+	bool ppc_port;
+
+	switch (port) {
+	case USBC_PORT_C0:
+	case USBC_PORT_C1:
+		ppc_port = true;
+		break;
+	default:
+		ppc_port = false;
+		break;
+	}
+
+	return ppc_port;
+}

@@ -41,6 +41,16 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "ppc_interrupt";
 		};
+		int_usb_c2_tcpc: usb_c2_tcpc {
+			irq-pin = <&usbc_tcpc_alrt_p2>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usb_c3_tcpc: usb_c3_tcpc {
+			irq-pin = <&usbc_tcpc_alrt_p3>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
 		int_ccd_mode: ccd_mode {
 			irq-pin = <&ccd_mode_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
