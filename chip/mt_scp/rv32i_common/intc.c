@@ -82,7 +82,11 @@ void chip_clear_pending_irq(int irq)
 	unsigned int group = intc_irq_group_get(irq);
 
 	/* must clear interrupt source before writing this */
+#ifdef CHIP_FAMILY_RV55
+	write_csr(CSR_VIC_MILMS_G, group);
+#else
 	write_csr(CSR_VIC_MIEMS, group);
+#endif
 }
 
 int chip_trigger_irq(int irq)

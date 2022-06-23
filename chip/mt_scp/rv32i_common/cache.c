@@ -21,6 +21,11 @@ void cache_init(void)
 	set_csr(CSR_MCTREN, CSR_MCTREN_ICACHE);
 	set_csr(CSR_MCTREN, CSR_MCTREN_DCACHE);
 
+#ifdef CHIP_FAMILY_RV55
+	set_csr(CSR_MCTREN, CSR_MCTREN_BTB);
+	set_csr(CSR_MCTREN, CSR_MCTREN_TLP);
+#endif
+
 	/* invalidate icache and dcache */
 	cache_invalidate_icache();
 	cache_invalidate_dcache();
