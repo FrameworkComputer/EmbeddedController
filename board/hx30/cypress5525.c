@@ -1766,8 +1766,10 @@ int board_set_active_charge_port(int charge_port)
 {
 	CPRINTS("start change port = %d, prev_charge_port = %d", charge_port, prev_charge_port);
 
-	if (board_batt_is_present() != BP_YES)
+	if (board_batt_is_present() != BP_YES) {
+		CPRINTS("No batt, no change");
 		return EC_ERROR_NOT_POWERED;
+	}
 
 	/* port need change, stop all power and ready to switch. */
 	if (prev_charge_port != -1 && prev_charge_port != charge_port) {
@@ -1785,16 +1787,16 @@ int board_set_active_charge_port(int charge_port)
 		int pd_controller = (charge_port & 0x02) >> 1;
 		int pd_port = charge_port & 0x01;
 
-		CPRINTS("choose p %d, ctrler = %d, p = %d", charge_port, pd_controller, pd_port);
-		cypd_write_reg8(pd_controller, CYP5525_CUST_C_CTRL_CONTROL_REG, 
-			pd_port ? CYP5525_P0_OFF_P1_CY : CYP5525_P0_CY_P1_OFF);
 		CPRINTS("force off ctrler = %d", (~pd_controller) & 0x01);
 		cypd_write_reg8((~pd_controller) & 0x01, CYP5525_CUST_C_CTRL_CONTROL_REG,
 			CYP5525_P0P1_TURN_OFF_C_CTRL);
+		CPRINTS("choose p %d, ctrler = %d, p = %d", charge_port, pd_controller, pd_port);
+		cypd_write_reg8(pd_controller, CYP5525_CUST_C_CTRL_CONTROL_REG,
+			pd_port ? CYP5525_P0_OFF_P1_CY : CYP5525_P0_CY_P1_OFF);
 	} else {
 		CPRINTS("else = %d, set all ports auto", charge_port);
-		cypd_write_reg8(0, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_CONTROL_BY_CY);
-		cypd_write_reg8(1, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_CONTROL_BY_CY);
+		cypd_write_reg8(0, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_TURN_OFF_C_CTRL);
+		cypd_write_reg8(1, CYP5525_CUST_C_CTRL_CONTROL_REG, CYP5525_P0P1_TURN_OFF_C_CTRL);
 	}
 
 	hook_call_deferred(&update_power_limit_deferred_data, 100 * MSEC);
