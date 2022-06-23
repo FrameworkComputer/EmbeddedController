@@ -38,6 +38,29 @@
 #define REMAP_ADDR_MSB_MASK ((~0) << REMAP_ADDR_SHIFT)
 #define MAP_INVALID 0xff
 
+#ifdef CHIP_VARIANT_MT8188
+static const uint8_t addr_map[16] = {
+	MAP_INVALID, /* SRAM */
+	0x1, /* ext_addr_0x1 */
+	MAP_INVALID, /* ext_addr_0x2 */
+	MAP_INVALID, /* ext_addr_0x3 */
+
+	0x4, /* ext_addr_0x4 */
+	0x5, /* ext_addr_0x5 */
+	0x6, /* ext_addr_0x6 */
+	0x7, /* ext_addr_0x7 */
+
+	0x8, /* ext_addr_0x8 */
+	0x9, /* ext_addr_0x9 */
+	0xa, /* ext_addr_0xa */
+	0xb, /* ext_addr_0xb */
+
+	0xc, /* ext_addr_0xc */
+	0xd, /* ext_addr_0xd */
+	0xe, /* ext_addr_0xe */
+	0xf, /* ext_addr_0xf */
+};
+#else
 static const uint8_t addr_map[16] = {
 	MAP_INVALID, /* SRAM */
 	0x5, /* ext_addr_0x1 */
@@ -59,9 +82,20 @@ static const uint8_t addr_map[16] = {
 	0x3, /* ext_addr_0xe */
 	0x6, /* ext_addr_0xf */
 };
+#endif
 
 void memmap_init(void)
 {
+#ifdef CHIP_VARIANT_MT8188
+	SCP_R_REMAP_0X4567 =
+		(uint32_t)addr_map[0x4] | (uint32_t)addr_map[0x5] << 8 |
+		(uint32_t)addr_map[0x6] << 16 | (uint32_t)addr_map[0x7] << 24;
+
+	SCP_R_REMAP_0X89AB =
+		(uint32_t)addr_map[0x8] | (uint32_t)addr_map[0x9] << 8 |
+		(uint32_t)addr_map[0xa] << 16 | (uint32_t)addr_map[0xb] << 24;
+
+#else
 	SCP_R_REMAP_0X0123 = (uint32_t)addr_map[0x1] << 8 |
 			     (uint32_t)addr_map[0x2] << 16;
 
@@ -71,6 +105,7 @@ void memmap_init(void)
 
 	SCP_R_REMAP_0X89AB = (uint32_t)addr_map[0x9] << 8 |
 			     (uint32_t)addr_map[0xa] << 16;
+#endif
 
 	SCP_R_REMAP_0XCDEF =
 		(uint32_t)addr_map[0xc] | (uint32_t)addr_map[0xd] << 8 |
