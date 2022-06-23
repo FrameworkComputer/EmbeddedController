@@ -155,7 +155,7 @@ enum charge_manager_change_type {
 	CHANGE_DUALROLE,
 };
 
-static int is_pd_port(int port)
+int is_pd_port(int port)
 {
 	return port >= 0 && port < board_get_usb_pd_port_count();
 }

@@ -372,4 +372,7 @@ board_fill_source_power_info(int port, struct ec_response_usb_pd_power_info *r);
  * @param port  Dedicated charge port.
  */
 __override_proto int board_get_vbus_voltage(int port);
+
+int is_pd_port(int port);
+
 #endif /* __CROS_EC_CHARGE_MANAGER_H */
