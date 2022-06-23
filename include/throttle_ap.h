@@ -32,6 +32,7 @@ enum throttle_sources {
 	THROTTLE_SRC_THERMAL = 0,
 	THROTTLE_SRC_BAT_DISCHG_CURRENT,
 	THROTTLE_SRC_BAT_VOLTAGE,
+	THROTTLE_SRC_AC,
 };
 
 /**
@@ -104,5 +105,9 @@ static inline void throttle_ap(enum throttle_level level,
 			       enum throttle_sources source)
 {}
 #endif
+
+void throttle_gpu(enum throttle_level level,
+		  enum throttle_type type,
+		  enum throttle_sources source);
 
 #endif	/* __CROS_EC_THROTTLE_AP_H */
