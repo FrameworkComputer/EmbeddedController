@@ -35,7 +35,7 @@ static int find_base(int base, int *c, const char **nptr)
 }
 
 /* Like strtol(), but for integers */
-__stdlib_compat int strtoi(const char *nptr, char **endptr, int base)
+int strtoi(const char *nptr, char **endptr, int base)
 {
 	int result = 0;
 	int neg = 0;
@@ -111,7 +111,7 @@ __stdlib_compat unsigned long long int strtoull(const char *nptr, char **endptr,
 #endif /* !CONFIG_ZEPHYR */
 BUILD_ASSERT(sizeof(unsigned long long int) == sizeof(uint64_t));
 
-__stdlib_compat int parse_bool(const char *s, int *dest)
+int parse_bool(const char *s, int *dest)
 {
 	/* off, disable, false, no */
 	if (!strcasecmp(s, "off") || !strncasecmp(s, "dis", 3) ||
@@ -166,7 +166,7 @@ void reverse(void *dest, size_t len)
 	}
 }
 
-__stdlib_compat char *strzcpy(char *dest, const char *src, int len)
+char *strzcpy(char *dest, const char *src, int len)
 {
 	char *d = dest;
 	if (len <= 0)
