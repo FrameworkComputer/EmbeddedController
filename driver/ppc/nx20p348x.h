@@ -9,16 +9,7 @@
 #define __CROS_EC_NX20P348X_H
 
 #include "common.h"
-
-#define NX20P3483_ADDR0_FLAGS 0x70
-#define NX20P3483_ADDR1_FLAGS 0x71
-#define NX20P3483_ADDR2_FLAGS 0x72
-#define NX20P3483_ADDR3_FLAGS 0x73
-
-#define NX20P3481_ADDR0_FLAGS 0x74
-#define NX20P3481_ADDR1_FLAGS 0x75
-#define NX20P3481_ADDR2_FLAGS 0x76
-#define NX20P3481_ADDR3_FLAGS 0x77
+#include "ppc/nx20p348x_public.h"
 
 /*
  * This PPC hard-codes the over voltage protect of Vbus at 6.8V in dead-battery
@@ -120,16 +111,6 @@
 #define NX20P348X_INT2_SC_HVSRC BIT(2)
 #define NX20P348X_INT2_OC_HVSRC BIT(1)
 #define NX20P348X_INT2_OV_HVSRC BIT(0)
-
-struct ppc_drv;
-extern const struct ppc_drv nx20p348x_drv;
-
-/**
- * Interrupt Handler for the NX20P348x.
- *
- * @param port: The Type-C port which triggered the interrupt.
- */
-void nx20p348x_interrupt(int port);
 
 /**
  * Board override for NX20P348X init.
