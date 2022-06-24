@@ -145,6 +145,9 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC "${PLATFORM_EC}/common/base32.c"
                                                 "${PLATFORM_EC}/common/system.c"
                                                 "${PLATFORM_EC}/common/uart_printf.c"
                                                 "${PLATFORM_EC}/common/util.c"
+                                                # TODO(b/237712836): Remove once
+                                                # Zephyr's libc has strcasecmp.
+                                                "${PLATFORM_EC}/common/util_stdlib.c"
                                                 "${PLATFORM_EC}/common/version.c")
 
 # Now include files that depend on or relate to other CONFIG options, sorted by

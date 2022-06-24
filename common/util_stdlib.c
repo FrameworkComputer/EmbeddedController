@@ -9,6 +9,27 @@
 #include "console.h"
 #include "util.h"
 
+/*
+ * TODO(b/237712836): Zephyr's libc should provide strcasecmp. For now we'll
+ * use the EC implementation.
+ */
+__stdlib_compat int strcasecmp(const char *s1, const char *s2)
+{
+	int diff;
+
+	do {
+		diff = tolower(*s1) - tolower(*s2);
+		if (diff)
+			return diff;
+	} while (*(s1++) && *(s2++));
+	return 0;
+}
+
+/*
+ * TODO(b/237712836): Remove this conditional once strcasecmp is added to
+ * Zephyr's libc.
+ */
+#ifndef CONFIG_ZEPHYR
 __stdlib_compat size_t strlen(const char *s)
 {
 	int len = 0;
@@ -111,6 +132,44 @@ __stdlib_compat char *strstr(const char *s1, const char *s2)
 	}
 	return NULL;
 }
+
+__stdlib_compat unsigned long long int strtoull(const char *nptr, char **endptr,
+						int base)
+{
+	uint64_t result = 0;
+	int c = '\0';
+
+	while ((c = *nptr++) && isspace(c))
+		;
+
+	if (c == '+') {
+		c = *nptr++;
+	} else if (c == '-') {
+		if (endptr)
+			*endptr = (char *)nptr - 1;
+		return result;
+	}
+
+	base = find_base(base, &c, &nptr);
+
+	while (c) {
+		if (c >= '0' && c < '0' + MIN(base, 10))
+			result = result * base + (c - '0');
+		else if (c >= 'A' && c < 'A' + base - 10)
+			result = result * base + (c - 'A' + 10);
+		else if (c >= 'a' && c < 'a' + base - 10)
+			result = result * base + (c - 'a' + 10);
+		else
+			break;
+
+		c = *nptr++;
+	}
+
+	if (endptr)
+		*endptr = (char *)nptr - 1;
+	return result;
+}
+BUILD_ASSERT(sizeof(unsigned long long int) == sizeof(uint64_t));
 
 __stdlib_compat int atoi(const char *nptr)
 {
@@ -325,3 +384,4 @@ __stdlib_compat int strncmp(const char *s1, const char *s2, size_t n)
 	}
 	return 0;
 }
+#endif /* !CONFIG_ZEPHYR */

@@ -234,6 +234,7 @@ int alignment_log2(unsigned int x);
  */
 void reverse(void *dest, size_t len);
 
+int find_base(int base, int *c, const char **nptr);
 /****************************************************************************/
 /* Conditional stuff.
  *
