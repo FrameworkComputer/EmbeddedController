@@ -126,6 +126,8 @@ enum ec_status pd_request_enter_mode(int port, enum typec_mode mode)
 
 	switch (mode) {
 	case TYPEC_MODE_DP:
+		if (dp_is_idle(port))
+			dp_init(port);
 		DPM_SET_FLAG(port, DPM_FLAG_ENTER_DP);
 		break;
 #ifdef CONFIG_USB_PD_TBT_COMPAT_MODE

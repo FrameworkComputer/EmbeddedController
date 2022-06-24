@@ -72,6 +72,11 @@ bool dp_is_active(int port)
 	return dp_state[port] == DP_ACTIVE || dp_state[port] == DP_PREPARE_EXIT;
 }
 
+bool dp_is_idle(int port)
+{
+	return dp_state[port] == DP_INACTIVE || dp_state[port] == DP_START;
+}
+
 void dp_init(int port)
 {
 	dp_state[port] = DP_START;
@@ -126,8 +131,7 @@ static void dp_exit_to_usb_mode(int port)
 	 * the EC to enter again later, so leave the state machine ready for
 	 * that possibility.
 	 */
-	dp_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
-		? DP_START : DP_INACTIVE;
+	dp_state[port] = DP_INACTIVE;
 }
 
 void dp_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
