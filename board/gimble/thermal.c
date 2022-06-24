@@ -17,8 +17,6 @@
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
 #define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
 
-
-
 struct fan_step {
 	/*
 	 * Sensor 1~4 trigger point, set -1 if we're not using this
@@ -115,9 +113,9 @@ int fan_table_to_rpm(int fan, int *temp, enum temp_sensor_id temp_sensor)
 	} else if (temp[temp_sensor] >
 		prev_temp[temp_sensor]) {
 		for (i = current_level; i < num_fan_levels; i++) {
-			if (temp[temp_sensor] >
+			if (temp[temp_sensor] >=
 				fan_table[i].on[temp_sensor])
-				current_level = i + 1;
+				current_level = i;
 			else
 				break;
 		}
