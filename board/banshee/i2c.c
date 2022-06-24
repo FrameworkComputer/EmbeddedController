@@ -40,7 +40,7 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C3 */
 		.name = "retimer0,1",
 		.port = I2C_PORT_USB_C0_C1_MUX,
-		.kbps = 1000,
+		.kbps = 400,
 		.scl = GPIO_EC_I2C_USB_C0_C1_RT_SCL,
 		.sda = GPIO_EC_I2C_USB_C0_C1_RT_SDA,
 	},
@@ -64,7 +64,7 @@ const struct i2c_port_t i2c_ports[] = {
 		/* I2C6 */
 		.name = "retimer2,3",
 		.port = I2C_PORT_USB_C2_C3_MUX,
-		.kbps = 1000,
+		.kbps = 400,
 		.scl = GPIO_EC_I2C_USB_C2_C3_RT_SCL,
 		.sda = GPIO_EC_I2C_USB_C2_C3_RT_SDA,
 	},
