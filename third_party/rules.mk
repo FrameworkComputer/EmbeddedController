@@ -23,7 +23,9 @@ cmd_libcryptoc = $(MAKE) -C $(CRYPTOC_DIR) \
 cmd_libcryptoc_clean = $(cmd_libcryptoc) -q && echo clean
 
 ifneq ($(BOARD),host)
+ifeq ($(USE_BUILTIN_STDLIB), 1)
 CPPFLAGS += -I$(abspath ./builtin)
+endif
 endif
 CPPFLAGS += -I$(CRYPTOC_DIR)/include
 CRYPTOC_LDFLAGS := -L$(out)/cryptoc -lcryptoc

@@ -23,6 +23,12 @@ ifneq ($(TEST_FUZZ)$(TEST_ASAN)$(TEST_MSAN)$(TEST_UBSAN),)
 CC=clang
 endif
 
+# When set to 1, use the subset of the C standard library implemented in EC
+# (the "builtin" directory).
+# When set to 0, link against the toolchain's implementation of the C standard
+# library.
+USE_BUILTIN_STDLIB:=1
+
 # Extract cc-name
 cc-name:=$(shell $(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
 
@@ -124,8 +130,11 @@ HOST_CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(CFLAGS_HOSTTEST) $(LATE_CFLAGS_DEFINE) \
 	 -DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
 ifneq ($(BOARD),host)
-CPPFLAGS+=-ffreestanding -fno-builtin -nostdinc -nostdlib -fno-PIC
+CPPFLAGS+=-fno-PIC
+ifeq ($(USE_BUILTIN_STDLIB), 1)
+CPPFLAGS+=-ffreestanding -fno-builtin -nostdinc -nostdlib
 CPPFLAGS+=-Ibuiltin/
+endif
 else
 CPPFLAGS+=-Og
 endif
@@ -139,6 +148,9 @@ CFLAGS+= -ffat-lto-objects
 CFLAGS+= -fconserve-stack
 endif
 CXXFLAGS+=-DPROTOBUF_INLINE_NOT_IN_HEADERS=0
+ifeq ($(USE_BUILTIN_STDLIB), 1)
+CPPFLAGS+=-DUSE_BUILTIN_STDLIB
+endif
 
 ifeq ($(LIBFTDI_NAME),)
 FTDIVERSION:=$(shell $(PKG_CONFIG) --modversion libftdi1 2>/dev/null)
@@ -173,8 +185,13 @@ HOST_CXXFLAGS=$(HOST_CFLAGS)
 ifneq (${SYSROOT},)
   LDFLAGS_EXTRA+=--sysroot=${SYSROOT}
 endif
-LDFLAGS=-nostdlib -g -no-pie -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
+LDFLAGS=-g -no-pie -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
 	$(LDFLAGS_EXTRA) $(CFLAGS_CPU)
+ifeq ($(USE_BUILTIN_STDLIB), 1)
+LDFLAGS+=-nostdlib
+else
+LDFLAGS+=-lnosys
+endif
 MEMSIZE_FLAGS=
 ifeq ($(cc-name),gcc)
 MEMSIZE_FLAGS+=-Wl,--print-memory-usage
