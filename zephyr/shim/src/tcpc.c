@@ -12,6 +12,7 @@
 #include "usbc/tcpc_it8xxx2.h"
 #include "usbc/tcpc_nct38xx.h"
 #include "usbc/tcpc_ps8xxx.h"
+#include "usbc/tcpc_rt1718s.h"
 #include "usbc/tcpci.h"
 #include "usbc/utils.h"
 
@@ -20,6 +21,7 @@
 	DT_HAS_COMPAT_STATUS_OKAY(IT8XXX2_TCPC_COMPAT) || \
 	DT_HAS_COMPAT_STATUS_OKAY(PS8XXX_COMPAT) ||       \
 	DT_HAS_COMPAT_STATUS_OKAY(NCT38XX_TCPC_COMPAT) || \
+	DT_HAS_COMPAT_STATUS_OKAY(RT1718S_TCPC_COMPAT) || \
 	DT_HAS_COMPAT_STATUS_OKAY(TCPCI_COMPAT)
 
 #define TCPC_CONFIG(id, fn) [USBC_PORT(id)] = fn(id)
@@ -40,6 +42,8 @@ MAYBE_CONST struct tcpc_config_t tcpc_config[] = {
 				     TCPC_CONFIG_PS8XXX)
 	DT_FOREACH_STATUS_OKAY_VARGS(NCT38XX_TCPC_COMPAT, TCPC_CONFIG,
 				     TCPC_CONFIG_NCT38XX)
+	DT_FOREACH_STATUS_OKAY_VARGS(RT1718S_TCPC_COMPAT, TCPC_CONFIG,
+				     TCPC_CONFIG_RT1718S)
 	DT_FOREACH_STATUS_OKAY_VARGS(TCPCI_COMPAT, TCPC_CONFIG,
 				     TCPC_CONFIG_TCPCI)
 };

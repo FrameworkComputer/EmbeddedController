@@ -22,6 +22,12 @@ A BC1.2 device node should be child of an USBC port node with a compatible
 property equals to "named-usbc-port". The USBC port node should have only one
 BC1.2 device node.
 
+### Richtek RT1718S
+
+There are two nodes describing the Richtek RT1718, one for BC1.2
+[richtek,rt1718-bc12.yaml] and one for TCPC[richtek,rt1718s-tcpc.yaml]. The node
+for the TCPC contains information about I2C bus and address.
+
 ### Richtek RT1739
 
 There are two nodes describing the Richtek RT1739, one for BC1.2

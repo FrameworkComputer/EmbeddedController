@@ -1,0 +1,30 @@
+# Copyright 2022 The ChromiumOS Authors.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USBC RT1718S TCPC
+
+compatible: "richtek,rt1718s-tcpc"
+
+properties:
+  port:
+    type: phandle
+    required: true
+    description: |
+      I2C port used to communicate with controller
+
+  i2c-addr-flags:
+    type: string
+    default: "RT1718S_I2C_ADDR1_FLAGS"
+    enum:
+      - "RT1718S_I2C_ADDR1_FLAGS"
+      - "RT1718S_I2C_ADDR2_FLAGS"
+    description: |
+      I2C address of controller
+
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags
+
