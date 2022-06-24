@@ -27,6 +27,16 @@
 #if USB_MUX_FOREACH_USBC_PORT(USB_MUX_PORT_HAS_MUX, _) 0
 
 /**
+ * Forward declarations for board_init and board_set callbacks. e.g.
+ * int c0_mux0_board_init(const struct usb_mux *);
+ * int c1_mux0_board_set(const struct usb_mux *, mux_state_t);
+ */
+USB_MUX_FOREACH_USBC_PORT(USB_MUX_HAS_CB_BOARD_INIT,
+			  USB_MUX_CB_BOARD_INIT_DECLARE)
+USB_MUX_FOREACH_USBC_PORT(USB_MUX_HAS_CB_BOARD_SET,
+			  USB_MUX_CB_BOARD_SET_DECLARE)
+
+/**
  * Define root of each USB muxes chain e.g.
  * [0] = {
  *         .usb_port = 0,
