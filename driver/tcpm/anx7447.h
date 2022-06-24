@@ -4,6 +4,7 @@
  */
 
 #include "usb_mux.h"
+#include "driver/tcpm/anx7447_public.h"
 
 /* USB Power delivery port management */
 
@@ -150,16 +151,6 @@ struct anx7447_i2c_addr {
 	uint16_t spi_addr_flags;
 };
 
-#define AN7447_TCPC0_I2C_ADDR_FLAGS 0x2C
-#define AN7447_TCPC1_I2C_ADDR_FLAGS 0x2B
-#define AN7447_TCPC2_I2C_ADDR_FLAGS 0x2A
-#define AN7447_TCPC3_I2C_ADDR_FLAGS 0x29
-
-#define AN7447_SPI0_I2C_ADDR_FLAGS 0x3F
-#define AN7447_SPI1_I2C_ADDR_FLAGS 0x37
-#define AN7447_SPI2_I2C_ADDR_FLAGS 0x32
-#define AN7447_SPI3_I2C_ADDR_FLAGS 0x31
-
 /*
  * Time TEST_R must be held high for a reset
  */
@@ -176,8 +167,6 @@ int anx7447_board_charging_enable(int port, int enable);
 void anx7447_hpd_mode_en(int port);
 void anx7447_hpd_output_en(int port);
 
-extern const struct tcpm_drv anx7447_tcpm_drv;
-extern const struct usb_mux_driver anx7447_usb_mux_driver;
 void anx7447_tcpc_clear_hpd_status(int port);
 void anx7447_tcpc_update_hpd_status(const struct usb_mux *me,
 				    mux_state_t mux_state, bool *ack_required);
