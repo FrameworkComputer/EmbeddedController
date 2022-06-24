@@ -20,6 +20,9 @@ config LINK_TEST_SUITE_AP_VDM_CONTROL
 config LINK_TEST_SUITE_BUTTON
 	bool "Link tests for common/button.c"
 
+config LINK_TEST_SUITE_BUTTON_CONFIG
+	bool "Link tests for common/button_config"
+
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
 
