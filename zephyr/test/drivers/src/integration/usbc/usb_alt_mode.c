@@ -236,5 +236,45 @@ ZTEST_F(usbc_alt_mode, verify_displayport_mode_entry)
 	zassert_true(fixture->partner.displayport_configured, NULL);
 }
 
+ZTEST_F(usbc_alt_mode, verify_displayport_mode_reentry)
+{
+	host_cmd_typec_control(TEST_PORT, TYPEC_CONTROL_COMMAND_ENTER_MODE,
+			       TYPEC_MODE_DP);
+	k_sleep(K_SECONDS(1));
+
+	/* DPM configures the partner on DP mode entry */
+	/* Verify port partner thinks its configured for DisplayPort */
+	zassert_true(fixture->partner.displayport_configured, NULL);
+
+	host_cmd_typec_control(TEST_PORT, TYPEC_CONTROL_COMMAND_EXIT_MODES, 0);
+	k_sleep(K_SECONDS(1));
+	zassert_false(fixture->partner.displayport_configured, NULL);
+
+	host_cmd_typec_control(TEST_PORT, TYPEC_CONTROL_COMMAND_ENTER_MODE,
+			       TYPEC_MODE_DP);
+	k_sleep(K_SECONDS(1));
+	zassert_true(fixture->partner.displayport_configured, NULL);
+
+	/* Verify that DisplayPort is the active alternate mode. */
+	/* TODO(b/235984702): Wrap EC_CMD_USB_PD_GET_AMODE in a function. */
+	struct ec_params_usb_pd_get_mode_request params = {
+		.port = TEST_PORT,
+		.svid_idx = 0,
+	};
+	struct ec_params_usb_pd_get_mode_response response;
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
+		EC_CMD_USB_PD_GET_AMODE, 0, response, params);
+
+	zassume_ok(host_command_process(&args), NULL);
+	zassume_ok(args.result, NULL);
+
+	/* Response should be populated with a DisplayPort VDO */
+	zassert_equal(args.response_size, sizeof(response), NULL);
+	zassert_equal(response.svid, USB_SID_DISPLAYPORT, NULL);
+	zassert_equal(response.vdo[0],
+		      fixture->partner.modes_vdm[response.opos], NULL);
+
+}
+
 ZTEST_SUITE(usbc_alt_mode, drivers_predicate_post_main, usbc_alt_mode_setup,
 	    usbc_alt_mode_before, usbc_alt_mode_after, NULL);
