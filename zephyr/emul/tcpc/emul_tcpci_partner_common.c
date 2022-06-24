@@ -647,6 +647,24 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 						    0);
 		}
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case CMD_EXIT_MODE:
+		if (PD_VDO_VID(vdm_header) == USB_SID_DISPLAYPORT) {
+			uint32_t response_vdm_header;
+
+			if (data->displayport_configured) {
+				data->displayport_configured = false;
+				response_vdm_header = VDO(
+					USB_SID_DISPLAYPORT, true,
+					VDO_CMDT(CMDT_RSP_ACK) | CMD_EXIT_MODE);
+			} else {
+				response_vdm_header = VDO(
+					USB_SID_DISPLAYPORT, true,
+					VDO_CMDT(CMDT_RSP_NAK) | CMD_EXIT_MODE);
+			}
+			tcpci_partner_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						    &response_vdm_header, 1, 0);
+		}
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	case CMD_DP_STATUS:
 		if (data->dp_status_vdos > 0 &&
 		    (PD_VDO_VID(vdm_header) == USB_SID_DISPLAYPORT)) {
