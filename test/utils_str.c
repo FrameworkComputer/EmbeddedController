@@ -13,46 +13,6 @@
 #include "timer.h"
 #include "util.h"
 
-static int test_isalpha(void)
-{
-	TEST_CHECK(isalpha('a'));
-	TEST_CHECK(isalpha('z'));
-	TEST_CHECK(isalpha('A'));
-	TEST_CHECK(isalpha('Z'));
-	TEST_CHECK(!isalpha('0'));
-	TEST_CHECK(!isalpha('~'));
-	TEST_CHECK(!isalpha(' '));
-	TEST_CHECK(!isalpha('\0'));
-	TEST_CHECK(!isalpha('\n'));
-}
-
-static int test_isprint(void)
-{
-	TEST_CHECK(isprint('a'));
-	TEST_CHECK(isprint('z'));
-	TEST_CHECK(isprint('A'));
-	TEST_CHECK(isprint('Z'));
-	TEST_CHECK(isprint('0'));
-	TEST_CHECK(isprint('~'));
-	TEST_CHECK(isprint(' '));
-	TEST_CHECK(!isprint('\0'));
-	TEST_CHECK(!isprint('\n'));
-}
-
-static int test_strstr(void)
-{
-	const char s1[] = "abcde";
-
-	TEST_ASSERT(strstr(s1, "ab") == s1);
-	TEST_ASSERT(strstr(s1, "") == NULL);
-	TEST_ASSERT(strstr("", "ab") == NULL);
-	TEST_ASSERT(strstr("", "x") == NULL);
-	TEST_ASSERT(strstr(s1, "de") == &s1[3]);
-	TEST_ASSERT(strstr(s1, "def") == NULL);
-
-	return EC_SUCCESS;
-}
-
 static int test_strtoi(void)
 {
 	char *e;
@@ -111,64 +71,6 @@ static int test_strtoi(void)
 	return EC_SUCCESS;
 }
 
-static int test_strtoull(void)
-{
-	char *e;
-
-	TEST_ASSERT(strtoull("10", &e, 0) == 10);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("010", &e, 0) == 8);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("+010", &e, 0) == 8);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-010", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoull("0x1f z", &e, 0) == 31);
-	TEST_ASSERT(e && (*e == ' '));
-	TEST_ASSERT(strtoull("0X1f z", &e, 0) == 31);
-	TEST_ASSERT(e && (*e == ' '));
-	TEST_ASSERT(strtoull("10a", &e, 16) == 266);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("0x02C", &e, 16) == 44);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("+0x02C", &e, 16) == 44);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0);
-	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoull("0x02C", &e, 0) == 44);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("+0x02C", &e, 0) == 44);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoull("0X02C", &e, 16) == 44);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("+0X02C", &e, 16) == 44);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0);
-	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoull("0X02C", &e, 0) == 44);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("+0X02C", &e, 0) == 44);
-	TEST_ASSERT(e && (*e == '\0'));
-	TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoull("   -12", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '-'));
-	TEST_ASSERT(strtoull("!", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '!'));
-	TEST_ASSERT(strtoull("+!", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '!'));
-	TEST_ASSERT(strtoull("+0!", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '!'));
-	TEST_ASSERT(strtoull("+0x!", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '!'));
-	TEST_ASSERT(strtoull("+0X!", &e, 0) == 0);
-	TEST_ASSERT(e && (*e == '!'));
-
-	return EC_SUCCESS;
-}
-
 static int test_parse_bool(void)
 {
 	int v;
@@ -202,123 +104,14 @@ static int test_strzcpy(void)
 	return EC_SUCCESS;
 }
 
-static int test_strncpy(void)
-{
-	char dest[10];
-
-	strncpy(dest, "test", 10);
-	TEST_ASSERT_ARRAY_EQ("test", dest, 5);
-	strncpy(dest, "12345", 6);
-	TEST_ASSERT_ARRAY_EQ("12345", dest, 6);
-	strncpy(dest, "testtesttest", 10);
-	TEST_ASSERT_ARRAY_EQ("testtestte", dest, 10);
-
-	return EC_SUCCESS;
-}
-
-static int test_strncmp(void)
-{
-	TEST_ASSERT(strncmp("123", "123", 8) == 0);
-	TEST_ASSERT(strncmp("789", "456", 8) > 0);
-	TEST_ASSERT(strncmp("abc", "abd", 4) < 0);
-	TEST_ASSERT(strncmp("abc", "abd", 2) == 0);
-	return EC_SUCCESS;
-}
-
-static int test_strlen(void)
-{
-	TEST_CHECK(strlen("this is a string") == 16);
-}
-
-static int test_strnlen(void)
-{
-	TEST_ASSERT(strnlen("this is a string", 17) == 16);
-	TEST_ASSERT(strnlen("this is a string", 16) == 16);
-	TEST_ASSERT(strnlen("this is a string", 5) == 5);
-
-	return EC_SUCCESS;
-}
-
-static int test_strcasecmp(void)
-{
-	TEST_CHECK(strcasecmp("test string", "TEST strIng") == 0);
-	TEST_CHECK(strcasecmp("test123!@#", "TesT123!@#") == 0);
-	TEST_CHECK(strcasecmp("lower", "UPPER") != 0);
-}
-
-static int test_strncasecmp(void)
-{
-	TEST_CHECK(strncasecmp("test string", "TEST str", 4) == 0);
-	TEST_CHECK(strncasecmp("test string", "TEST str", 8) == 0);
-	TEST_CHECK(strncasecmp("test123!@#", "TesT321!@#", 5) != 0);
-	TEST_CHECK(strncasecmp("test123!@#", "TesT321!@#", 4) == 0);
-	TEST_CHECK(strncasecmp("1test123!@#", "1TesT321!@#", 5) == 0);
-	TEST_CHECK(strncasecmp("1test123", "teststr", 0) == 0);
-}
-
-static int test_atoi(void)
-{
-	TEST_CHECK(atoi("  901") == 901);
-	TEST_CHECK(atoi("-12c") == -12);
-	TEST_CHECK(atoi("   0  ") == 0);
-	TEST_CHECK(atoi("\t111") == 111);
-}
-
-static int test_snprintf(void)
-{
-	char buffer[32];
-
-	TEST_CHECK(snprintf(buffer, sizeof(buffer), "%u", 1234) == 4);
-	TEST_CHECK(strncmp(buffer, "1234", sizeof(buffer)));
-}
-
-static int test_strcspn(void)
-{
-	const char str1[] = "abc";
-	const char str2[] = "This is a string\nwith newlines!";
-
-	TEST_EQ(strcspn(str1, "a"), (size_t)0, "%zu");
-	TEST_EQ(strcspn(str1, "b"), (size_t)1, "%zu");
-	TEST_EQ(strcspn(str1, "c"), (size_t)2, "%zu");
-	TEST_EQ(strcspn(str1, "ccc"), (size_t)2, "%zu");
-	TEST_EQ(strcspn(str1, "cba"), (size_t)0, "%zu");
-	TEST_EQ(strcspn(str1, "cb"), (size_t)1, "%zu");
-	TEST_EQ(strcspn(str1, "bc"), (size_t)1, "%zu");
-	TEST_EQ(strcspn(str1, "cbc"), (size_t)1, "%zu");
-	TEST_EQ(strcspn(str1, "z"), strlen(str1), "%zu");
-	TEST_EQ(strcspn(str1, "xyz"), strlen(str1), "%zu");
-	TEST_EQ(strcspn(str1, ""), strlen(str1), "%zu");
-
-	TEST_EQ(strcspn(str2, " "), (size_t)4, "%zu");
-	TEST_EQ(strcspn(str2, "\n"), (size_t)16, "%zu");
-	TEST_EQ(strcspn(str2, "\n "), (size_t)4, "%zu");
-	TEST_EQ(strcspn(str2, "!"), strlen(str2) - 1, "%zu");
-	TEST_EQ(strcspn(str2, "z"), strlen(str2), "%zu");
-	TEST_EQ(strcspn(str2, "z!"), strlen(str2) - 1, "%zu");
-
-	return EC_SUCCESS;
-}
 
 void run_test(int argc, char **argv)
 {
 	test_reset();
 
-	RUN_TEST(test_isalpha);
-	RUN_TEST(test_isprint);
-	RUN_TEST(test_strstr);
 	RUN_TEST(test_strtoi);
-	RUN_TEST(test_strtoull);
 	RUN_TEST(test_parse_bool);
 	RUN_TEST(test_strzcpy);
-	RUN_TEST(test_strncpy);
-	RUN_TEST(test_strncmp);
-	RUN_TEST(test_strlen);
-	RUN_TEST(test_strnlen);
-	RUN_TEST(test_strcasecmp);
-	RUN_TEST(test_strncasecmp);
-	RUN_TEST(test_atoi);
-	RUN_TEST(test_snprintf);
-	RUN_TEST(test_strcspn);
 
 	test_print_result();
 }

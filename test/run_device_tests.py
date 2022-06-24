@@ -215,6 +215,7 @@ class AllTests:
             TestConfig(test_name='sha256'),
             TestConfig(test_name='sha256_unrolled'),
             TestConfig(test_name='static_if'),
+            TestConfig(test_name='stdlib'),
             TestConfig(config_name='system_is_locked_wp_on',
                        test_name='system_is_locked', test_args=['wp_on'],
                        toggle_power=True, enable_hw_write_protect=True),

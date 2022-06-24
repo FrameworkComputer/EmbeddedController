@@ -68,6 +68,9 @@ per-file sha256_unrolled.*=file:../common/fpsensor/OWNERS
 per-file static_if.*=set noparent
 per-file static_if.*=file:../common/fpsensor/OWNERS
 
+per-file stdlib.*=set noparent
+per-file stdlib.*=file:../common/fpsensor/OWNERS
+
 per-file stm32f_rtc.*=set noparent
 per-file stm32f_rtc.*=file:../common/fpsensor/OWNERS
 

@@ -1,0 +1,393 @@
+/* Copyright 2022 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Test standard library functions.
+ */
+
+#include "common.h"
+#include "console.h"
+#include "system.h"
+#include "printf.h"
+#include "shared_mem.h"
+#include "test_util.h"
+#include "timer.h"
+#include "util.h"
+
+static int test_isalpha(void)
+{
+	TEST_CHECK(isalpha('a'));
+	TEST_CHECK(isalpha('z'));
+	TEST_CHECK(isalpha('A'));
+	TEST_CHECK(isalpha('Z'));
+	TEST_CHECK(!isalpha('0'));
+	TEST_CHECK(!isalpha('~'));
+	TEST_CHECK(!isalpha(' '));
+	TEST_CHECK(!isalpha('\0'));
+	TEST_CHECK(!isalpha('\n'));
+}
+
+static int test_isprint(void)
+{
+	TEST_CHECK(isprint('a'));
+	TEST_CHECK(isprint('z'));
+	TEST_CHECK(isprint('A'));
+	TEST_CHECK(isprint('Z'));
+	TEST_CHECK(isprint('0'));
+	TEST_CHECK(isprint('~'));
+	TEST_CHECK(isprint(' '));
+	TEST_CHECK(!isprint('\0'));
+	TEST_CHECK(!isprint('\n'));
+}
+
+static int test_strstr(void)
+{
+	const char s1[] = "abcde";
+
+	TEST_ASSERT(strstr(s1, "ab") == s1);
+	TEST_ASSERT(strstr(s1, "") == NULL);
+	TEST_ASSERT(strstr("", "ab") == NULL);
+	TEST_ASSERT(strstr("", "x") == NULL);
+	TEST_ASSERT(strstr(s1, "de") == &s1[3]);
+	TEST_ASSERT(strstr(s1, "def") == NULL);
+
+	return EC_SUCCESS;
+}
+
+static int test_strtoull(void)
+{
+	char *e;
+
+	TEST_ASSERT(strtoull("10", &e, 0) == 10);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("010", &e, 0) == 8);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("+010", &e, 0) == 8);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("-010", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '-'));
+	TEST_ASSERT(strtoull("0x1f z", &e, 0) == 31);
+	TEST_ASSERT(e && (*e == ' '));
+	TEST_ASSERT(strtoull("0X1f z", &e, 0) == 31);
+	TEST_ASSERT(e && (*e == ' '));
+	TEST_ASSERT(strtoull("10a", &e, 16) == 266);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("0x02C", &e, 16) == 44);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("+0x02C", &e, 16) == 44);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0);
+	TEST_ASSERT(e && (*e == '-'));
+	TEST_ASSERT(strtoull("0x02C", &e, 0) == 44);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("+0x02C", &e, 0) == 44);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '-'));
+	TEST_ASSERT(strtoull("0X02C", &e, 16) == 44);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("+0X02C", &e, 16) == 44);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0);
+	TEST_ASSERT(e && (*e == '-'));
+	TEST_ASSERT(strtoull("0X02C", &e, 0) == 44);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("+0X02C", &e, 0) == 44);
+	TEST_ASSERT(e && (*e == '\0'));
+	TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '-'));
+	TEST_ASSERT(strtoull("   -12", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '-'));
+	TEST_ASSERT(strtoull("!", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '!'));
+	TEST_ASSERT(strtoull("+!", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '!'));
+	TEST_ASSERT(strtoull("+0!", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '!'));
+	TEST_ASSERT(strtoull("+0x!", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '!'));
+	TEST_ASSERT(strtoull("+0X!", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '!'));
+
+	return EC_SUCCESS;
+}
+
+static int test_strncpy(void)
+{
+	char dest[10];
+
+	strncpy(dest, "test", 10);
+	TEST_ASSERT_ARRAY_EQ("test", dest, 5);
+	strncpy(dest, "12345", 6);
+	TEST_ASSERT_ARRAY_EQ("12345", dest, 6);
+	strncpy(dest, "testtesttest", 10);
+	TEST_ASSERT_ARRAY_EQ("testtestte", dest, 10);
+
+	return EC_SUCCESS;
+}
+
+static int test_strncmp(void)
+{
+	TEST_ASSERT(strncmp("123", "123", 8) == 0);
+	TEST_ASSERT(strncmp("789", "456", 8) > 0);
+	TEST_ASSERT(strncmp("abc", "abd", 4) < 0);
+	TEST_ASSERT(strncmp("abc", "abd", 2) == 0);
+	return EC_SUCCESS;
+}
+
+static int test_strlen(void)
+{
+	TEST_CHECK(strlen("this is a string") == 16);
+}
+
+static int test_strnlen(void)
+{
+	TEST_ASSERT(strnlen("this is a string", 17) == 16);
+	TEST_ASSERT(strnlen("this is a string", 16) == 16);
+	TEST_ASSERT(strnlen("this is a string", 5) == 5);
+
+	return EC_SUCCESS;
+}
+
+static int test_strcasecmp(void)
+{
+	TEST_CHECK(strcasecmp("test string", "TEST strIng") == 0);
+	TEST_CHECK(strcasecmp("test123!@#", "TesT123!@#") == 0);
+	TEST_CHECK(strcasecmp("lower", "UPPER") != 0);
+}
+
+static int test_strncasecmp(void)
+{
+	TEST_CHECK(strncasecmp("test string", "TEST str", 4) == 0);
+	TEST_CHECK(strncasecmp("test string", "TEST str", 8) == 0);
+	TEST_CHECK(strncasecmp("test123!@#", "TesT321!@#", 5) != 0);
+	TEST_CHECK(strncasecmp("test123!@#", "TesT321!@#", 4) == 0);
+	TEST_CHECK(strncasecmp("1test123!@#", "1TesT321!@#", 5) == 0);
+	TEST_CHECK(strncasecmp("1test123", "teststr", 0) == 0);
+}
+
+static int test_atoi(void)
+{
+	TEST_CHECK(atoi("  901") == 901);
+	TEST_CHECK(atoi("-12c") == -12);
+	TEST_CHECK(atoi("   0  ") == 0);
+	TEST_CHECK(atoi("\t111") == 111);
+}
+
+static int test_snprintf(void)
+{
+	char buffer[32];
+
+	TEST_CHECK(snprintf(buffer, sizeof(buffer), "%u", 1234) == 4);
+	TEST_CHECK(strncmp(buffer, "1234", sizeof(buffer)));
+}
+
+static int test_strcspn(void)
+{
+	const char str1[] = "abc";
+	const char str2[] = "This is a string\nwith newlines!";
+
+	TEST_EQ(strcspn(str1, "a"), (size_t)0, "%zu");
+	TEST_EQ(strcspn(str1, "b"), (size_t)1, "%zu");
+	TEST_EQ(strcspn(str1, "c"), (size_t)2, "%zu");
+	TEST_EQ(strcspn(str1, "ccc"), (size_t)2, "%zu");
+	TEST_EQ(strcspn(str1, "cba"), (size_t)0, "%zu");
+	TEST_EQ(strcspn(str1, "cb"), (size_t)1, "%zu");
+	TEST_EQ(strcspn(str1, "bc"), (size_t)1, "%zu");
+	TEST_EQ(strcspn(str1, "cbc"), (size_t)1, "%zu");
+	TEST_EQ(strcspn(str1, "z"), strlen(str1), "%zu");
+	TEST_EQ(strcspn(str1, "xyz"), strlen(str1), "%zu");
+	TEST_EQ(strcspn(str1, ""), strlen(str1), "%zu");
+
+	TEST_EQ(strcspn(str2, " "), (size_t)4, "%zu");
+	TEST_EQ(strcspn(str2, "\n"), (size_t)16, "%zu");
+	TEST_EQ(strcspn(str2, "\n "), (size_t)4, "%zu");
+	TEST_EQ(strcspn(str2, "!"), strlen(str2) - 1, "%zu");
+	TEST_EQ(strcspn(str2, "z"), strlen(str2), "%zu");
+	TEST_EQ(strcspn(str2, "z!"), strlen(str2) - 1, "%zu");
+
+	return EC_SUCCESS;
+}
+
+static int test_memmove(void)
+{
+	int i;
+	timestamp_t t0, t1, t2, t3;
+	char *buf;
+	const int buf_size = 1000;
+	const int len = 400;
+	const int iteration = 1000;
+
+	TEST_ASSERT(shared_mem_acquire(buf_size, &buf) == EC_SUCCESS);
+
+	for (i = 0; i < len; ++i)
+		buf[i] = i & 0x7f;
+	for (i = len; i < buf_size; ++i)
+		buf[i] = 0;
+
+	t0 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memmove(buf + 101, buf, len); /* unaligned */
+	t1 = get_time();
+	TEST_ASSERT_ARRAY_EQ(buf + 101, buf, len);
+	ccprintf(" (speed gain: %" PRId64 " ->", t1.val - t0.val);
+
+	t2 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memmove(buf + 100, buf, len); /* aligned */
+	t3 = get_time();
+	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
+	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
+
+	if (!IS_ENABLED(EMU_BUILD))
+		TEST_ASSERT((t1.val - t0.val) > (t3.val - t2.val));
+
+	/* Test small moves */
+	memmove(buf + 1, buf, 1);
+	TEST_ASSERT_ARRAY_EQ(buf + 1, buf, 1);
+	memmove(buf + 5, buf, 4);
+	memmove(buf + 1, buf, 4);
+	TEST_ASSERT_ARRAY_EQ(buf + 1, buf + 5, 4);
+
+	shared_mem_release(buf);
+	return EC_SUCCESS;
+}
+
+static int test_memcpy(void)
+{
+	int i;
+	timestamp_t t0, t1, t2, t3;
+	char *buf;
+	const int buf_size = 1000;
+	const int len = 400;
+	const int dest_offset = 500;
+	const int iteration = 1000;
+
+	TEST_ASSERT(shared_mem_acquire(buf_size, &buf) == EC_SUCCESS);
+
+	for (i = 0; i < len; ++i)
+		buf[i] = i & 0x7f;
+	for (i = len; i < buf_size; ++i)
+		buf[i] = 0;
+
+	t0 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memcpy(buf + dest_offset + 1, buf, len); /* unaligned */
+	t1 = get_time();
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf, len);
+	ccprintf(" (speed gain: %" PRId64 " ->", t1.val - t0.val);
+
+	t2 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memcpy(buf + dest_offset, buf, len); /* aligned */
+	t3 = get_time();
+	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, len);
+
+	if (!IS_ENABLED(EMU_BUILD))
+		TEST_ASSERT((t1.val - t0.val) > (t3.val - t2.val));
+
+	memcpy(buf + dest_offset + 1, buf + 1, len - 1);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf + 1, len - 1);
+
+	/* Test small copies */
+	memcpy(buf + dest_offset, buf, 1);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, 1);
+	memcpy(buf + dest_offset, buf, 4);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, 4);
+	memcpy(buf + dest_offset + 1, buf, 1);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf, 1);
+	memcpy(buf + dest_offset + 1, buf, 4);
+	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf, 4);
+
+	shared_mem_release(buf);
+	return EC_SUCCESS;
+}
+
+/* Plain memset, used as a reference to measure speed gain */
+static void *dumb_memset(void *dest, int c, int len)
+{
+	char *d = (char *)dest;
+	while (len > 0) {
+		*(d++) = c;
+		len--;
+	}
+	return dest;
+}
+
+static int test_memset(void)
+{
+	int i;
+	timestamp_t t0, t1, t2, t3;
+	char *buf;
+	const int buf_size = 1000;
+	const int len = 400;
+	const int iteration = 1000;
+
+	TEST_ASSERT(shared_mem_acquire(buf_size, &buf) == EC_SUCCESS);
+
+	t0 = get_time();
+	for (i = 0; i < iteration; ++i)
+		dumb_memset(buf, 1, len);
+	t1 = get_time();
+	TEST_ASSERT_MEMSET(buf, (char)1, len);
+	ccprintf(" (speed gain: %" PRId64 " ->", t1.val - t0.val);
+
+	t2 = get_time();
+	for (i = 0; i < iteration; ++i)
+		memset(buf, 1, len);
+	t3 = get_time();
+	TEST_ASSERT_MEMSET(buf, (char)1, len);
+	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
+
+	if (!IS_ENABLED(EMU_BUILD))
+		TEST_ASSERT((t1.val - t0.val) > (t3.val - t2.val));
+
+	memset(buf, 128, len);
+	TEST_ASSERT_MEMSET(buf, (char)128, len);
+
+	memset(buf, -2, len);
+	TEST_ASSERT_MEMSET(buf, (char)-2, len);
+
+	memset(buf + 1, 1, len - 2);
+	TEST_ASSERT_MEMSET(buf + 1, (char)1, len - 2);
+
+	shared_mem_release(buf);
+	return EC_SUCCESS;
+}
+
+static int test_memchr(void)
+{
+	char *buf = "1234";
+
+	TEST_ASSERT(memchr("123567890", '4', 8) == NULL);
+	TEST_ASSERT(memchr("123", '3', 2) == NULL);
+	TEST_ASSERT(memchr(buf, '3', 4) == buf + 2);
+	TEST_ASSERT(memchr(buf, '4', 4) == buf + 3);
+	return EC_SUCCESS;
+}
+
+void run_test(int argc, char **argv)
+{
+	test_reset();
+
+	RUN_TEST(test_isalpha);
+	RUN_TEST(test_isprint);
+	RUN_TEST(test_strstr);
+	RUN_TEST(test_strtoull);
+	RUN_TEST(test_strncpy);
+	RUN_TEST(test_strncmp);
+	RUN_TEST(test_strlen);
+	RUN_TEST(test_strnlen);
+	RUN_TEST(test_strcasecmp);
+	RUN_TEST(test_strncasecmp);
+	RUN_TEST(test_atoi);
+	RUN_TEST(test_snprintf);
+	RUN_TEST(test_strcspn);
+	RUN_TEST(test_memmove);
+	RUN_TEST(test_memcpy);
+	RUN_TEST(test_memset);
+	RUN_TEST(test_memchr);
+
+	test_print_result();
+}

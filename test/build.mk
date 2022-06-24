@@ -4,7 +4,15 @@
 # found in the LICENSE file.
 
 # Device test binaries
-test-list-y ?= flash_write_protect pingpong timer_calib timer_dos timer_jump mutex utils utils_str
+test-list-y ?= flash_write_protect \
+	pingpong \
+	stdlib \
+	timer_calib \
+	timer_dos \
+	timer_jump \
+	mutex \
+	utils \
+	utils_str
 #disable: powerdemo
 
 # Emulator tests
@@ -83,6 +91,7 @@ test-list-host += sha256_unrolled
 test-list-host += shmalloc
 test-list-host += static_if
 test-list-host += static_if_error
+test-list-host += stdlib
 test-list-host += system
 test-list-host += thermal
 test-list-host += timer_dos
@@ -218,6 +227,7 @@ sha256-y=sha256.o
 sha256_unrolled-y=sha256.o
 shmalloc-y=shmalloc.o
 static_if-y=static_if.o
+stdlib-y=stdlib.o
 stm32f_rtc-y=stm32f_rtc.o
 stress-y=stress.o
 system-y=system.o

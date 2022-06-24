@@ -29,6 +29,7 @@ test-list-y=\
        sha256 \
        sha256_unrolled \
        static_if \
+       stdlib \
        timer_dos \
        utils \
        utils_str \
