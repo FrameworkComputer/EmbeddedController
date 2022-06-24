@@ -120,7 +120,15 @@ static int test_strncpy(void)
 	TEST_ASSERT_ARRAY_EQ("test", dest, 5);
 	strncpy(dest, "12345", 6);
 	TEST_ASSERT_ARRAY_EQ("12345", dest, 6);
+	/*
+	 * gcc complains:
+	 * error: ‘__builtin_strncpy’ output truncated copying 10 bytes from a
+	 * string of length 12 [-Werror=stringop-truncation]
+	 */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wstringop-truncation"
 	strncpy(dest, "testtesttest", 10);
+#pragma GCC diagnostic pop
 	TEST_ASSERT_ARRAY_EQ("testtestte", dest, 10);
 
 	return EC_SUCCESS;
