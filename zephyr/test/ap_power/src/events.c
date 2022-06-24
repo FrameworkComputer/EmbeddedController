@@ -10,6 +10,8 @@
 
 #include <zephyr/device.h>
 
+#include <zephyr/drivers/espi.h>
+#include <zephyr/drivers/espi_emul.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/zephyr.h>
 #include <ztest.h>
@@ -77,6 +79,36 @@ ZTEST(events, test_registration)
 	ap_power_ev_remove_callback(&cb.cb);
 	/* Second remove should be no-op */
 	ap_power_ev_remove_callback(&cb.cb);
+}
+
+/**
+ * @brief TestPurpose: Verify reset callback from ESPI
+ *
+ * @details
+ * Validate that the reset callback is sent with ESPI PLTRST#
+ *
+ * Expected Results
+ *  - The AP_POWER_RESET event is sent
+ */
+ZTEST(events, test_pltrst)
+{
+	static struct events cb;
+	const struct device *espi =
+		DEVICE_DT_GET_ANY(zephyr_espi_emul_controller);
+
+	zassert_not_null(espi, "Cannot get ESPI device");
+
+	ap_power_ev_init_callback(&cb.cb, ev_handler, AP_POWER_RESET);
+	ap_power_ev_add_callback(&cb.cb);
+
+	emul_espi_host_send_vw(espi, ESPI_VWIRE_SIGNAL_PLTRST, 0);
+	/*
+	 * Since the event is being sent via a deferred function,
+	 * wait for the deferral time.
+	 */
+	k_usleep(2 * 1000);
+	zassert_equal(1, cb.count, "Callback not called");
+	zassert_equal(AP_POWER_RESET, cb.event, "Wrong event");
 }
 
 /**
