@@ -5,21 +5,12 @@
 #ifndef __CROS_EC_USB_PD_TCPM_RT1718S_H
 #define __CROS_EC_USB_PD_TCPM_RT1718S_H
 
+#include "tcpm/rt1718s_public.h"
 #include "util.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
 
 /* RT1718S Private RegMap */
-#define RT1718S_I2C_ADDR1_FLAGS 0x43
-#define RT1718S_I2C_ADDR2_FLAGS 0x40
-
-#define RT1718S_VID 0x29CF
-#define RT1718S_PID 0x1718
-
-#define RT1718S_DEVICE_ID 0x04
-#define RT1718S_DEVICE_ID_ES1 0x4511
-#define RT1718S_DEVICE_ID_ES2 0x4513
-
 #define RT1718S_PHYCTRL1 0x80
 #define RT1718S_PHYCTRL2 0x81
 #define RT1718S_PHYCTRL3 0x82
@@ -183,9 +174,6 @@
 #define RT1718S_ADC_CTRL_02 0xF2A1
 #define RT1718S_ADC_CHX_VOL_L(ch) (0xF2A6 + (ch)*2)
 #define RT1718S_ADC_CHX_VOL_H(ch) (0xF2A7 + (ch)*2)
-
-extern const struct tcpm_drv rt1718s_tcpm_drv;
-extern const struct bc12_drv rt1718s_bc12_drv;
 
 int rt1718s_write8(int port, int reg, int val);
 int rt1718s_read8(int port, int reg, int *val);
