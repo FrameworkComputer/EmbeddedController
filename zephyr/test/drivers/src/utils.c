@@ -367,6 +367,19 @@ void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 		   "Failed to get Type-C state for port %d", port);
 }
 
+void host_cmd_typec_control(int port, enum typec_control_command command,
+			    enum typec_mode mode)
+{
+	struct ec_params_typec_control params = { .port = port,
+						  .command = command,
+						  .mode_to_enter = mode };
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to send Type-C control for port %d", port);
+}
+
 K_HEAP_DEFINE(test_heap, 2048);
 
 void *test_malloc(size_t bytes)

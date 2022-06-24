@@ -8,6 +8,7 @@
 
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
+#include <stddef.h>
 #include <string.h>
 
 #include "charger.h"
@@ -450,6 +451,19 @@ int host_cmd_motion_sense_spoof(uint8_t sensor_num, uint8_t enable,
  */
 void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 			      void *response, size_t response_size);
+
+/**
+ * Run the host command to control PD port behavior. For now, this function only
+ * supports entering and exiting modes.
+ *
+ * @param port      The USB-C port number
+ * @param command   Sub-command to perform on the port
+ * @param mode      The mode to enter if command is
+ *                  TYPEC_CONTROL_COMMAND_ENTER_MODE.
+ * @param response_size Number of bytes in response
+ */
+void host_cmd_typec_control(int port, enum typec_control_command command,
+			    enum typec_mode mode);
 
 #define GPIO_ACOK_OD_NODE DT_NODELABEL(gpio_acok_od)
 #define GPIO_ACOK_OD_PIN  DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
