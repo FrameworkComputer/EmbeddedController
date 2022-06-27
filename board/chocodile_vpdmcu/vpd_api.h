@@ -12,34 +12,18 @@
 #include "gpio.h"
 #include "usb_pd.h"
 
-enum vpd_pin {
-	PIN_ADC,
-	PIN_CMP,
-	PIN_GPO
-};
+enum vpd_pin { PIN_ADC, PIN_CMP, PIN_GPO };
 
-enum vpd_gpo {
-	GPO_HZ,
-	GPO_HIGH,
-	GPO_LOW
-};
+enum vpd_gpo { GPO_HZ, GPO_HIGH, GPO_LOW };
 
 enum vpd_pwr {
 	PWR_VCONN,
 	PWR_VBUS,
 };
 
-enum vpd_cc {
-	CT_OPEN,
-	CT_CC1,
-	CT_CC2
-};
+enum vpd_cc { CT_OPEN, CT_CC1, CT_CC2 };
 
-enum vpd_billboard {
-	BB_NONE,
-	BB_SRC,
-	BB_SNK
-};
+enum vpd_billboard { BB_NONE, BB_SRC, BB_SNK };
 
 /**
  * Set Charge-Through Rp or Rd on CC lines
