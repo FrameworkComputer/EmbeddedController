@@ -7,7 +7,8 @@
 
 const struct mkbp_event_source *zephyr_find_mkbp_event_source(uint8_t type)
 {
-	STRUCT_SECTION_FOREACH(mkbp_event_source, evtsrc) {
+	STRUCT_SECTION_FOREACH(mkbp_event_source, evtsrc)
+	{
 		if (evtsrc->event_type == type)
 			return evtsrc;
 	}
