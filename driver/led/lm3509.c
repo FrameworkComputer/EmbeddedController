@@ -12,22 +12,19 @@
 
 static inline int lm3509_write(uint8_t reg, uint8_t val)
 {
-	return i2c_write8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS,
-			  reg, val);
+	return i2c_write8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS, reg, val);
 }
 
 static inline int lm3509_read(uint8_t reg, int *val)
 {
-	return i2c_read8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS,
-			 reg, val);
+	return i2c_read8(I2C_PORT_KBLIGHT, LM3509_I2C_ADDR_FLAGS, reg, val);
 }
 
 /* Brightness level (0.0 to 100.0%) to brightness register conversion table */
 static const uint16_t lm3509_brightness[32] = {
-	  0,   1,   6,  10,  11,  13,  16,  20,
-	 24,  28,  31,  37,  43,  52,  62,  75,
-	 87, 100, 125, 150, 168, 187, 225, 262,
-	312, 375, 437, 525, 612, 700, 875, 1000
+	0,   1,	  6,   10,  11,	 13,  16,  20,	24,  28,  31,
+	37,  43,  52,  62,  75,	 87,  100, 125, 150, 168, 187,
+	225, 262, 312, 375, 437, 525, 612, 700, 875, 1000
 };
 
 static int brightness_to_bmain(int percent)
