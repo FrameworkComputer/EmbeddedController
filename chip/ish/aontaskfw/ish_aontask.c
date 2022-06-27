@@ -64,9 +64,9 @@
  * AON_IDT_ENTRY_VEC_FIRST ~  AON_IDT_ENTRY_VEC_LAST
  */
 #ifdef CONFIG_ISH_NEW_PM
-#define AON_IDT_ENTRY_VEC_LAST		ISH_PMU_WAKEUP_VEC
+#define AON_IDT_ENTRY_VEC_LAST ISH_PMU_WAKEUP_VEC
 #else
-#define AON_IDT_ENTRY_VEC_FIRST		ISH_PMU_WAKEUP_VEC
+#define AON_IDT_ENTRY_VEC_FIRST ISH_PMU_WAKEUP_VEC
 #endif
 
 #ifdef CONFIG_ISH_PM_RESET_PREP
@@ -76,16 +76,16 @@
  * (if CONFIG_ISH_PM_RESET_PREP defined)
  */
 #ifdef CONFIG_ISH_NEW_PM
-#define AON_IDT_ENTRY_VEC_FIRST		ISH_RESET_PREP_VEC
+#define AON_IDT_ENTRY_VEC_FIRST ISH_RESET_PREP_VEC
 #else
-#define AON_IDT_ENTRY_VEC_LAST		ISH_RESET_PREP_VEC
+#define AON_IDT_ENTRY_VEC_LAST ISH_RESET_PREP_VEC
 #endif
 #else
 /* only need handle single PMU wakeup interrupt */
 #ifdef CONFIG_ISH_NEW_PM
-#define AON_IDT_ENTRY_VEC_FIRST		ISH_PMU_WAKEUP_VEC
+#define AON_IDT_ENTRY_VEC_FIRST ISH_PMU_WAKEUP_VEC
 #else
-#define AON_IDT_ENTRY_VEC_LAST		ISH_PMU_WAKEUP_VEC
+#define AON_IDT_ENTRY_VEC_LAST ISH_PMU_WAKEUP_VEC
 #endif
 #endif
 
@@ -101,7 +101,7 @@ static void pmu_wakeup_isr(void)
 	IOAPIC_EOI_REG = ISH_PMU_WAKEUP_VEC;
 	LAPIC_EOI_REG = 0x0;
 
-	__asm__ volatile ("iret;");
+	__asm__ volatile("iret;");
 
 	__builtin_unreachable();
 }
@@ -157,14 +157,15 @@ static void reset_prep_isr(void)
  *                     ---------------------------
  */
 
-static struct idt_entry aon_idt[AON_IDT_ENTRY_VEC_LAST -
-				AON_IDT_ENTRY_VEC_FIRST + 1];
+static struct idt_entry
+	aon_idt[AON_IDT_ENTRY_VEC_LAST - AON_IDT_ENTRY_VEC_FIRST + 1];
 
 static struct idt_header aon_idt_hdr = {
 
 	.limit = (sizeof(struct idt_entry) * (AON_IDT_ENTRY_VEC_LAST + 1)) - 1,
 	.entries = (struct idt_entry *)((uint32_t)&aon_idt -
-			(sizeof(struct idt_entry) * AON_IDT_ENTRY_VEC_FIRST))
+					(sizeof(struct idt_entry) *
+					 AON_IDT_ENTRY_VEC_FIRST))
 };
 
 /**
@@ -245,13 +246,9 @@ static ldt_entry aon_ldt[2] = {
 	 * limit: 0xFFFFFFFF
 	 * flag: 0x9B, Present = 1, DPL = 0, code segment
 	 */
-	{
-		.dword_lo = GEN_GDT_DESC_LO(0x0, 0xFFFFFFFF,
-				GDT_DESC_CODE_FLAGS),
+	{ .dword_lo = GEN_GDT_DESC_LO(0x0, 0xFFFFFFFF, GDT_DESC_CODE_FLAGS),
 
-		.dword_up = GEN_GDT_DESC_UP(0x0, 0xFFFFFFFF,
-				GDT_DESC_CODE_FLAGS)
-	},
+	  .dword_up = GEN_GDT_DESC_UP(0x0, 0xFFFFFFFF, GDT_DESC_CODE_FLAGS) },
 
 	/**
 	 * entry 1 for data segment
@@ -259,15 +256,10 @@ static ldt_entry aon_ldt[2] = {
 	 * limit: 0xFFFFFFFF
 	 * flag: 0x93, Present = 1, DPL = 0, data segment
 	 */
-	{
-		.dword_lo = GEN_GDT_DESC_LO(0x0, 0xFFFFFFFF,
-				GDT_DESC_DATA_FLAGS),
+	{ .dword_lo = GEN_GDT_DESC_LO(0x0, 0xFFFFFFFF, GDT_DESC_DATA_FLAGS),
 
-		.dword_up = GEN_GDT_DESC_UP(0x0, 0xFFFFFFFF,
-				GDT_DESC_DATA_FLAGS)
-	}
+	  .dword_up = GEN_GDT_DESC_UP(0x0, 0xFFFFFFFF, GDT_DESC_DATA_FLAGS) }
 };
-
 
 /* shared data structure between main FW and aon task */
 struct ish_aon_share aon_share = {
@@ -282,14 +274,13 @@ struct ish_aon_share aon_share = {
 /* snowball structure */
 #if defined(CHIP_FAMILY_ISH3)
 /* on ISH3, reused ISH2PMC IPC message registers */
-#define SNOWBALL_BASE	IPC_ISH2PMC_MSG_BASE
+#define SNOWBALL_BASE IPC_ISH2PMC_MSG_BASE
 #else
 /* from ISH4, used reserved rom part of AON memory */
-#define SNOWBALL_BASE	(CONFIG_AON_PERSISTENT_BASE + 256)
+#define SNOWBALL_BASE (CONFIG_AON_PERSISTENT_BASE + 256)
 #endif
 
 struct snowball_struct *snowball = (void *)SNOWBALL_BASE;
-
 
 /* In IMR DDR, ISH FW image has a manifest header */
 #define ISH_FW_IMAGE_MANIFEST_HEADER_SIZE (0x1000)
@@ -324,30 +315,24 @@ static int store_main_fw(void)
 	uint64_t imr_fw_rw_addr;
 
 	imr_fw_addr = (((uint64_t)snowball->uma_base_hi << 32) +
-		       snowball->uma_base_lo +
-		       snowball->fw_offset +
+		       snowball->uma_base_lo + snowball->fw_offset +
 		       ISH_FW_IMAGE_MANIFEST_HEADER_SIZE);
 
-	imr_fw_rw_addr = (imr_fw_addr
-			  + aon_share.main_fw_rw_addr
-			  - CONFIG_RAM_BASE);
+	imr_fw_rw_addr =
+		(imr_fw_addr + aon_share.main_fw_rw_addr - CONFIG_RAM_BASE);
 
 	/* disable BCG (Block Clock Gating) for DMA, DMA can be accessed now */
 	disable_dma_bcg();
 
 	/* store main FW's read and write data region to IMR/UMA DDR */
-	ret = ish_dma_copy(
-		PAGING_CHAN,
-		imr_fw_rw_addr,
-		aon_share.main_fw_rw_addr,
-		aon_share.main_fw_rw_size,
-		SRAM_TO_UMA);
+	ret = ish_dma_copy(PAGING_CHAN, imr_fw_rw_addr,
+			   aon_share.main_fw_rw_addr, aon_share.main_fw_rw_size,
+			   SRAM_TO_UMA);
 
 	/* enable BCG for DMA, DMA can't be accessed now */
 	enable_dma_bcg();
 
 	if (ret != DMA_RC_OK) {
-
 		aon_share.last_error = AON_ERROR_DMA_FAILED;
 		aon_share.error_count++;
 
@@ -365,31 +350,24 @@ static int restore_main_fw(void)
 	uint64_t imr_fw_rw_addr;
 
 	imr_fw_addr = (((uint64_t)snowball->uma_base_hi << 32) +
-		       snowball->uma_base_lo +
-		       snowball->fw_offset +
+		       snowball->uma_base_lo + snowball->fw_offset +
 		       ISH_FW_IMAGE_MANIFEST_HEADER_SIZE);
 
-	imr_fw_ro_addr = (imr_fw_addr
-			  + aon_share.main_fw_ro_addr
-			  - CONFIG_RAM_BASE);
+	imr_fw_ro_addr =
+		(imr_fw_addr + aon_share.main_fw_ro_addr - CONFIG_RAM_BASE);
 
-	imr_fw_rw_addr = (imr_fw_addr
-			  + aon_share.main_fw_rw_addr
-			  - CONFIG_RAM_BASE);
+	imr_fw_rw_addr =
+		(imr_fw_addr + aon_share.main_fw_rw_addr - CONFIG_RAM_BASE);
 
 	/* disable BCG (Block Clock Gating) for DMA, DMA can be accessed now */
 	disable_dma_bcg();
 
 	/* restore main FW's read only code and data region from IMR/UMA DDR */
-	ret = ish_dma_copy(
-		PAGING_CHAN,
-		aon_share.main_fw_ro_addr,
-		imr_fw_ro_addr,
-		aon_share.main_fw_ro_size,
-		UMA_TO_SRAM);
+	ret = ish_dma_copy(PAGING_CHAN, aon_share.main_fw_ro_addr,
+			   imr_fw_ro_addr, aon_share.main_fw_ro_size,
+			   UMA_TO_SRAM);
 
 	if (ret != DMA_RC_OK) {
-
 		aon_share.last_error = AON_ERROR_DMA_FAILED;
 		aon_share.error_count++;
 
@@ -400,19 +378,14 @@ static int restore_main_fw(void)
 	}
 
 	/* restore main FW's read and write data region from IMR/UMA DDR */
-	ret = ish_dma_copy(
-			PAGING_CHAN,
-			aon_share.main_fw_rw_addr,
-			imr_fw_rw_addr,
-			aon_share.main_fw_rw_size,
-			UMA_TO_SRAM
-			);
+	ret = ish_dma_copy(PAGING_CHAN, aon_share.main_fw_rw_addr,
+			   imr_fw_rw_addr, aon_share.main_fw_rw_size,
+			   UMA_TO_SRAM);
 
 	/* enable BCG for DMA, DMA can't be accessed now */
 	enable_dma_bcg();
 
 	if (ret != DMA_RC_OK) {
-
 		aon_share.last_error = AON_ERROR_DMA_FAILED;
 		aon_share.error_count++;
 
@@ -424,10 +397,10 @@ static int restore_main_fw(void)
 
 #if defined(CHIP_FAMILY_ISH3)
 /* on ISH3, the last SRAM bank is reserved for AON use */
-#define SRAM_POWER_OFF_BANKS	(CONFIG_RAM_BANKS - 1)
+#define SRAM_POWER_OFF_BANKS (CONFIG_RAM_BANKS - 1)
 #elif defined(CHIP_FAMILY_ISH4) || defined(CHIP_FAMILY_ISH5)
 /* ISH4 and ISH5 have separate AON memory, can power off entire main SRAM */
-#define SRAM_POWER_OFF_BANKS	CONFIG_RAM_BANKS
+#define SRAM_POWER_OFF_BANKS CONFIG_RAM_BANKS
 #else
 #error "CHIP_FAMILY_ISH(3|4|5) must be defined"
 #endif
@@ -436,33 +409,33 @@ static int restore_main_fw(void)
  * check SRAM bank i power gated status in PMU_SRAM_PG_EN register
  * 1: power gated 0: not power gated
  */
-#define BANK_PG_STATUS(i)	(PMU_SRAM_PG_EN & (0x1 << (i)))
+#define BANK_PG_STATUS(i) (PMU_SRAM_PG_EN & (0x1 << (i)))
 
 /* enable power gate of a SRAM bank */
-#define BANK_PG_ENABLE(i)	(PMU_SRAM_PG_EN |= (0x1 << (i)))
+#define BANK_PG_ENABLE(i) (PMU_SRAM_PG_EN |= (0x1 << (i)))
 
 /* disable power gate of a SRAM bank */
-#define BANK_PG_DISABLE(i)	(PMU_SRAM_PG_EN &= ~(0x1 << (i)))
+#define BANK_PG_DISABLE(i) (PMU_SRAM_PG_EN &= ~(0x1 << (i)))
 
 /**
  * check SRAM bank i disabled status in ISH_SRAM_CTRL_CSFGR register
  * 1: disabled 0: enabled
  */
-#define BANK_DISABLE_STATUS(i)	(ISH_SRAM_CTRL_CSFGR & (0x1 << ((i) + 4)))
+#define BANK_DISABLE_STATUS(i) (ISH_SRAM_CTRL_CSFGR & (0x1 << ((i) + 4)))
 
 /* enable a SRAM bank in ISH_SRAM_CTRL_CSFGR register */
-#define BANK_ENABLE(i)		(ISH_SRAM_CTRL_CSFGR &= ~(0x1 << ((i) + 4)))
+#define BANK_ENABLE(i) (ISH_SRAM_CTRL_CSFGR &= ~(0x1 << ((i) + 4)))
 
 /* disable a SRAM bank in ISH_SRAM_CTRL_CSFGR register */
-#define BANK_DISABLE(i)		(ISH_SRAM_CTRL_CSFGR |= (0x1 << ((i) + 4)))
+#define BANK_DISABLE(i) (ISH_SRAM_CTRL_CSFGR |= (0x1 << ((i) + 4)))
 
 /* SRAM needs time to warm up after power on */
-#define SRAM_WARM_UP_DELAY_CNT		10
+#define SRAM_WARM_UP_DELAY_CNT 10
 
 /* SRAM needs time to enter retention mode */
-#define CYCLES_PER_US                  100
-#define SRAM_RETENTION_US_DELAY	       5
-#define SRAM_RETENTION_CYCLES_DELAY    (SRAM_RETENTION_US_DELAY * CYCLES_PER_US)
+#define CYCLES_PER_US 100
+#define SRAM_RETENTION_US_DELAY 5
+#define SRAM_RETENTION_CYCLES_DELAY (SRAM_RETENTION_US_DELAY * CYCLES_PER_US)
 
 static void sram_power(int on)
 {
@@ -485,10 +458,9 @@ static void sram_power(int on)
 		erase_cfg = (((bank_size - 4) >> 2) << 2) | 0x1;
 
 	for (i = 0; i < SRAM_POWER_OFF_BANKS; i++) {
-
-		if (on && (BANK_PG_STATUS(i) || (!IS_ENABLED(CONFIG_ISH_NEW_PM)
-						&& BANK_DISABLE_STATUS(i)))) {
-
+		if (on &&
+		    (BANK_PG_STATUS(i) || (!IS_ENABLED(CONFIG_ISH_NEW_PM) &&
+					   BANK_DISABLE_STATUS(i)))) {
 			/* power on and enable a bank */
 			BANK_PG_DISABLE(i);
 
@@ -519,13 +491,12 @@ static void sram_power(int on)
 		 * booting ISH
 		 */
 		ISH_SRAM_CTRL_INTR = 0xFFFFFFFF;
-
 	}
 }
 
 #define RTC_TICKS_IN_SECOND 32768
 
-static  __maybe_unused uint64_t get_rtc(void)
+static __maybe_unused uint64_t get_rtc(void)
 {
 	uint32_t lower;
 	uint32_t upper;
@@ -645,8 +616,7 @@ static void handle_d0i2(void)
 	}
 
 	/* set main SRAM into retention mode*/
-	PMU_LDO_CTRL = PMU_LDO_ENABLE_BIT
-		| PMU_LDO_RETENTION_BIT;
+	PMU_LDO_CTRL = PMU_LDO_ENABLE_BIT | PMU_LDO_RETENTION_BIT;
 
 	/* delay some cycles before halt */
 	delay(SRAM_RETENTION_CYCLES_DELAY);
@@ -670,7 +640,8 @@ static void handle_d0i2(void)
 
 	clear_vnnred_aoncg();
 
-	if (IS_ENABLED(CONFIG_ISH_NEW_PM) && (PMU_RST_PREP & PMU_RST_PREP_AVAIL))
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM) &&
+	    (PMU_RST_PREP & PMU_RST_PREP_AVAIL))
 		handle_reset(ISH_PM_STATE_RESET_PREP);
 
 	/* set main SRAM intto normal mode */
@@ -728,7 +699,8 @@ static void handle_d0i3(void)
 
 	clear_vnnred_aoncg();
 
-	if (IS_ENABLED(CONFIG_ISH_NEW_PM) && (PMU_RST_PREP & PMU_RST_PREP_AVAIL))
+	if (IS_ENABLED(CONFIG_ISH_NEW_PM) &&
+	    (PMU_RST_PREP & PMU_RST_PREP_AVAIL))
 		handle_reset(ISH_PM_STATE_RESET_PREP);
 
 	/* power on main SRAM */
@@ -809,7 +781,6 @@ static void handle_reset(enum ish_pm_state pm_state)
 		 */
 		if (IS_ENABLED(CONFIG_ISH_NEW_PM) ||
 		    (IPC_ISH_RMP2 & DMA_ENABLED_MASK)) {
-
 			/* clear ISH2HOST doorbell register */
 			*IPC_ISH2HOST_DOORBELL_ADDR = 0;
 
@@ -834,7 +805,6 @@ static void handle_reset(enum ish_pm_state pm_state)
 
 		ish_mia_halt();
 	}
-
 }
 
 static void handle_unknown_state(void)
@@ -847,22 +817,21 @@ static void handle_unknown_state(void)
 
 void ish_aon_main(void)
 {
-
 	/* set PMU wakeup interrupt gate using LDT code segment selector(0x4) */
 	if (IS_ENABLED(CONFIG_ISH_NEW_PM)) {
-		aon_idt[AON_IDT_ENTRY_VEC_LAST -
-			AON_IDT_ENTRY_VEC_FIRST].dword_lo =
+		aon_idt[AON_IDT_ENTRY_VEC_LAST - AON_IDT_ENTRY_VEC_FIRST]
+			.dword_lo =
 			GEN_IDT_DESC_LO(&pmu_wakeup_isr, 0x4, IDT_DESC_FLAGS);
 
-		aon_idt[AON_IDT_ENTRY_VEC_LAST -
-			AON_IDT_ENTRY_VEC_FIRST].dword_up =
+		aon_idt[AON_IDT_ENTRY_VEC_LAST - AON_IDT_ENTRY_VEC_FIRST]
+			.dword_up =
 			GEN_IDT_DESC_UP(&pmu_wakeup_isr, 0x4, IDT_DESC_FLAGS);
 	} else {
-		aon_idt[0].dword_lo = GEN_IDT_DESC_LO(&pmu_wakeup_isr, 0x4,
-			IDT_DESC_FLAGS);
+		aon_idt[0].dword_lo =
+			GEN_IDT_DESC_LO(&pmu_wakeup_isr, 0x4, IDT_DESC_FLAGS);
 
-		aon_idt[0].dword_up = GEN_IDT_DESC_UP(&pmu_wakeup_isr, 0x4,
-			IDT_DESC_FLAGS);
+		aon_idt[0].dword_up =
+			GEN_IDT_DESC_UP(&pmu_wakeup_isr, 0x4, IDT_DESC_FLAGS);
 	}
 
 	if (IS_ENABLED(CONFIG_ISH_PM_RESET_PREP)) {
@@ -871,39 +840,34 @@ void ish_aon_main(void)
 		 * selector(0x4)
 		 */
 		if (IS_ENABLED(CONFIG_ISH_NEW_PM)) {
-			aon_idt[0].dword_lo = GEN_IDT_DESC_LO(&reset_prep_isr,
-				0x4, IDT_DESC_FLAGS);
+			aon_idt[0].dword_lo = GEN_IDT_DESC_LO(
+				&reset_prep_isr, 0x4, IDT_DESC_FLAGS);
 
-			aon_idt[0].dword_up = GEN_IDT_DESC_UP(&reset_prep_isr,
-				0x4, IDT_DESC_FLAGS);
+			aon_idt[0].dword_up = GEN_IDT_DESC_UP(
+				&reset_prep_isr, 0x4, IDT_DESC_FLAGS);
 		} else {
-			aon_idt[AON_IDT_ENTRY_VEC_LAST -
-				AON_IDT_ENTRY_VEC_FIRST].dword_lo =
-				GEN_IDT_DESC_LO(&reset_prep_isr, 0x4,
-				IDT_DESC_FLAGS);
+			aon_idt[AON_IDT_ENTRY_VEC_LAST - AON_IDT_ENTRY_VEC_FIRST]
+				.dword_lo = GEN_IDT_DESC_LO(
+				&reset_prep_isr, 0x4, IDT_DESC_FLAGS);
 
-			aon_idt[AON_IDT_ENTRY_VEC_LAST -
-				AON_IDT_ENTRY_VEC_FIRST].dword_up =
-				GEN_IDT_DESC_UP(&reset_prep_isr, 0x4,
-				IDT_DESC_FLAGS);
+			aon_idt[AON_IDT_ENTRY_VEC_LAST - AON_IDT_ENTRY_VEC_FIRST]
+				.dword_up = GEN_IDT_DESC_UP(
+				&reset_prep_isr, 0x4, IDT_DESC_FLAGS);
 		}
 	}
 
 	while (1) {
-
 		/**
 		 *  will start to run from here when switched to aontask from
 		 *  the second time
 		 */
 
 		/* save main FW's IDT and load aontask's IDT */
-		__asm__ volatile (
-				"sidtl %0;\n"
-				"lidtl %1;\n"
-				:
-				: "m" (aon_share.main_fw_idt_hdr),
-				  "m" (aon_idt_hdr)
-				);
+		__asm__ volatile("sidtl %0;\n"
+				 "lidtl %1;\n"
+				 :
+				 : "m"(aon_share.main_fw_idt_hdr),
+				   "m"(aon_idt_hdr));
 
 		aon_share.last_error = AON_SUCCESS;
 
@@ -934,11 +898,9 @@ void ish_aon_main(void)
 		}
 
 		/* restore main FW's IDT and switch back to main FW */
-		__asm__ volatile(
-				"lidtl %0;\n"
-				:
-				: "m" (aon_share.main_fw_idt_hdr)
-				);
+		__asm__ volatile("lidtl %0;\n"
+				 :
+				 : "m"(aon_share.main_fw_idt_hdr));
 
 		if (IS_ENABLED(CONFIG_ISH_IPAPG) && aon_share.pg_exit) {
 			mainfw_gdt.entries[tr / sizeof(struct gdt_entry)]
@@ -946,6 +908,6 @@ void ish_aon_main(void)
 			pg_exit_restore_ctx();
 		}
 
-		__asm__ volatile ("iret;");
+		__asm__ volatile("iret;");
 	}
 }
