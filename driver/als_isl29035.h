@@ -11,4 +11,4 @@
 int isl29035_init(void);
 int isl29035_read_lux(int *lux, int af);
 
-#endif	/* __CROS_EC_ALS_ISL29035_H */
+#endif /* __CROS_EC_ALS_ISL29035_H */
