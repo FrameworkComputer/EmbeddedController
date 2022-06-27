@@ -8,7 +8,7 @@
 #include "ec_commands.h"
 #include "wov_chip.h"
 
-#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ##args)
 
 int audio_codec_i2s_rx_enable(void)
 {
