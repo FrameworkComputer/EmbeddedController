@@ -78,7 +78,7 @@ bool tbt_is_active(int port);
  * @param vdm       VDM from ACK
  */
 void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
-		uint32_t *vdm);
+		     uint32_t *vdm);
 
 /*
  * Handles NAKed (or Not Supported or timed out) Thunderbolt VDM requests.
