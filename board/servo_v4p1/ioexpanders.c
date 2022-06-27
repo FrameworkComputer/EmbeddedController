@@ -9,22 +9,22 @@
 #include "ioexpander.h"
 #include "ioexpanders.h"
 
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /******************************************************************************
  * Initialize IOExpanders.
  */
 
-#define PCAL6524HE_PORT			TCA6424A_PORT
-#define PCAL6524HE_ADDR			TCA6424A_ADDR
-#define PCAL6524HE_DEVICE_ID_ADDR	0x7c
-#define PCAL6524HE_DEVICE_ID_REG	0x46
-#define PCAL6524HE_DEVICE_ID0		0
-#define PCAL6524HE_DEVICE_ID1           0x08
-#define PCAL6524HE_DEVICE_ID2           0x30
-#define PCAL6524HE_INT_MASK_REG_PORT1	0x55
-#define PCAL6524HE_INT_MASK_REG_PORT2   0x56
+#define PCAL6524HE_PORT TCA6424A_PORT
+#define PCAL6524HE_ADDR TCA6424A_ADDR
+#define PCAL6524HE_DEVICE_ID_ADDR 0x7c
+#define PCAL6524HE_DEVICE_ID_REG 0x46
+#define PCAL6524HE_DEVICE_ID0 0
+#define PCAL6524HE_DEVICE_ID1 0x08
+#define PCAL6524HE_DEVICE_ID2 0x30
+#define PCAL6524HE_INT_MASK_REG_PORT1 0x55
+#define PCAL6524HE_INT_MASK_REG_PORT2 0x56
 
 static enum servo_board_id board_id_val = BOARD_ID_UNSET;
 
@@ -51,16 +51,16 @@ int init_ioexpanders(void)
 
 	/* Attempt to read the device id register of the PCAL6524HE device */
 	i2c_read_block(PCAL6524HE_PORT, PCAL6524HE_DEVICE_ID_ADDR,
-					PCAL6524HE_DEVICE_ID_REG, dat, 3);
+		       PCAL6524HE_DEVICE_ID_REG, dat, 3);
 
 	if (dat[2] == PCAL6524HE_DEVICE_ID2 &&
-			dat[1] == PCAL6524HE_DEVICE_ID1 &&
-			dat[0] == PCAL6524HE_DEVICE_ID0) {
+	    dat[1] == PCAL6524HE_DEVICE_ID1 &&
+	    dat[0] == PCAL6524HE_DEVICE_ID0) {
 		ccprintf("Detected PCAL6524HE\n");
 		i2c_write8(PCAL6524HE_PORT, PCAL6524HE_ADDR,
-				PCAL6524HE_INT_MASK_REG_PORT1, 0);
+			   PCAL6524HE_INT_MASK_REG_PORT1, 0);
 		i2c_write8(PCAL6524HE_PORT, PCAL6524HE_ADDR,
-				PCAL6524HE_INT_MASK_REG_PORT2, 0xbe);
+			   PCAL6524HE_INT_MASK_REG_PORT2, 0xbe);
 	} else {
 		ccprintf("Detected TCA6424A\n");
 	}
@@ -74,7 +74,7 @@ int init_ioexpanders(void)
 	}
 
 	if ((!!(irqs & HOST_CHRG_DET) != bc12_charger) &&
-		(board_id_det() <= BOARD_ID_REV1)) {
+	    (board_id_det() <= BOARD_ID_REV1)) {
 		CPRINTF("BC1.2 charger %s\n",
 			(irqs & HOST_CHRG_DET) ? "plugged" : "unplugged");
 		bc12_charger = !!(irqs & HOST_CHRG_DET);
@@ -220,8 +220,7 @@ inline int board_id_det(void)
 
 		/* Cache board ID at init */
 		if (ioex_get_port(IOEX_GET_INFO(IOEX_BOARD_ID_DET0)->ioex,
-		    IOEX_GET_INFO(IOEX_BOARD_ID_DET0)->port,
-		    &id))
+				  IOEX_GET_INFO(IOEX_BOARD_ID_DET0)->port, &id))
 			return id;
 
 		/* Board ID consists of bits 5, 4, and 3 */
@@ -296,8 +295,7 @@ inline int read_faults(void)
 	int val;
 
 	ioex_get_port(IOEX_GET_INFO(IOEX_USERVO_FAULT_L)->ioex,
-		      IOEX_GET_INFO(IOEX_USERVO_FAULT_L)->port,
-		      &val);
+		      IOEX_GET_INFO(IOEX_USERVO_FAULT_L)->port, &val);
 
 	return val;
 }
@@ -307,8 +305,7 @@ inline int read_irqs(void)
 	int val;
 
 	ioex_get_port(IOEX_GET_INFO(IOEX_SYS_PWR_IRQ_ODL)->ioex,
-		      IOEX_GET_INFO(IOEX_SYS_PWR_IRQ_ODL)->port,
-		      &val);
+		      IOEX_GET_INFO(IOEX_SYS_PWR_IRQ_ODL)->port, &val);
 
 	return val;
 }
@@ -343,9 +340,7 @@ inline int board_id_det(void)
 		int res;
 
 		/* Cache board ID at init */
-		res = i2c_read8(TCA6416A_PORT,
-				TCA6416A_ADDR,
-				BOARD_ID_DET_PORT,
+		res = i2c_read8(TCA6416A_PORT, TCA6416A_ADDR, BOARD_ID_DET_PORT,
 				&id);
 		if (res != EC_SUCCESS)
 			return res;
