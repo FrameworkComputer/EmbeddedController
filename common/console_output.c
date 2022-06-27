@@ -27,14 +27,14 @@ static uint32_t channel_mask_saved = CC_DEFAULT;
  * might also become more important if we have >32 channels - for example, if
  * we decide to replace enum console_channel with enum module_id.
  */
-static const char * const channel_names[] = {
-	#define CONSOLE_CHANNEL(enumeration, string) string,
-	#include "console_channel.inc"
-	#undef CONSOLE_CHANNEL
+static const char *const channel_names[] = {
+#define CONSOLE_CHANNEL(enumeration, string) string,
+#include "console_channel.inc"
+#undef CONSOLE_CHANNEL
 };
 BUILD_ASSERT(ARRAY_SIZE(channel_names) == CC_CHANNEL_COUNT);
 /* ensure that we are not silently masking additional channels */
-BUILD_ASSERT(CC_CHANNEL_COUNT <= 8*sizeof(uint32_t));
+BUILD_ASSERT(CC_CHANNEL_COUNT <= 8 * sizeof(uint32_t));
 
 static int console_channel_name_to_index(const char *name)
 {
@@ -178,15 +178,13 @@ static int command_ch(int argc, char **argv)
 	/* Print the list of channels */
 	ccputs(" # Mask     E Channel\n");
 	for (i = 0; i < CC_CHANNEL_COUNT; i++) {
-		ccprintf("%2d %08x %c %s\n",
-			 i, CC_MASK(i),
+		ccprintf("%2d %08x %c %s\n", i, CC_MASK(i),
 			 (channel_mask & CC_MASK(i)) ? '*' : ' ',
 			 channel_names[i]);
 		cflush();
 	}
 	return EC_SUCCESS;
 };
-DECLARE_SAFE_CONSOLE_COMMAND(chan, command_ch,
-			     "[ save | restore | <mask> ]",
+DECLARE_SAFE_CONSOLE_COMMAND(chan, command_ch, "[ save | restore | <mask> ]",
 			     "Save, restore, get or set console channel mask");
 #endif /* CONFIG_CONSOLE_CHANNEL */
