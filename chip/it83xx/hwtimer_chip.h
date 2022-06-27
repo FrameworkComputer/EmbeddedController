@@ -8,17 +8,17 @@
 #ifndef __CROS_EC_HWTIMER_CHIP_H
 #define __CROS_EC_HWTIMER_CHIP_H
 
-#define TIMER_COUNT_1US_SHIFT      3
+#define TIMER_COUNT_1US_SHIFT 3
 
 /* Microseconds to event timer counter setting register */
-#define EVENT_TIMER_US_TO_COUNT(us)  ((us) << TIMER_COUNT_1US_SHIFT)
+#define EVENT_TIMER_US_TO_COUNT(us) ((us) << TIMER_COUNT_1US_SHIFT)
 /* Event timer counter observation value to microseconds */
 #define EVENT_TIMER_COUNT_TO_US(cnt) ((cnt) >> TIMER_COUNT_1US_SHIFT)
 
-#define FREE_EXT_TIMER_L     EXT_TIMER_3
-#define FREE_EXT_TIMER_H     EXT_TIMER_4
-#define FAN_CTRL_EXT_TIMER   EXT_TIMER_5
-#define EVENT_EXT_TIMER      EXT_TIMER_6
+#define FREE_EXT_TIMER_L EXT_TIMER_3
+#define FREE_EXT_TIMER_H EXT_TIMER_4
+#define FAN_CTRL_EXT_TIMER EXT_TIMER_5
+#define EVENT_EXT_TIMER EXT_TIMER_6
 /*
  * The low power timer is used to continue system time when EC goes into low
  * power in idle task. Timer 7 is 24bit timer and configured at 32.768khz.
@@ -30,15 +30,15 @@
  * mask of observation register in clock_sleep_mode_wakeup_isr() or EC will get
  * wrong system time after resume.
  */
-#define LOW_POWER_EXT_TIMER  EXT_TIMER_7
+#define LOW_POWER_EXT_TIMER EXT_TIMER_7
 #define LOW_POWER_TIMER_MASK (BIT(24) - 1)
-#define WDT_EXT_TIMER        EXT_TIMER_8
+#define WDT_EXT_TIMER EXT_TIMER_8
 
 enum ext_timer_clock_source {
 	EXT_PSR_32P768K_HZ = 0,
-	EXT_PSR_1P024K_HZ  = 1,
-	EXT_PSR_32_HZ      = 2,
-	EXT_PSR_8M_HZ      = 3
+	EXT_PSR_1P024K_HZ = 1,
+	EXT_PSR_32_HZ = 2,
+	EXT_PSR_8M_HZ = 3
 };
 
 /*
@@ -83,11 +83,7 @@ void update_exc_start_time(void);
  * @param raw	(!=0) timer count equal to param "ms" no conversion.
  */
 int ext_timer_ms(enum ext_timer_sel ext_timer,
-		enum ext_timer_clock_source ext_timer_clock,
-		int start,
-		int et_int,
-		int32_t ms,
-		int first_time_enable,
-		int raw);
+		 enum ext_timer_clock_source ext_timer_clock, int start,
+		 int et_int, int32_t ms, int first_time_enable, int raw);
 
 #endif /* __CROS_EC_HWTIMER_CHIP_H */
