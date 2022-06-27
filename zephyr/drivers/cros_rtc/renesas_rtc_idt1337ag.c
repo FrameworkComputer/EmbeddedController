@@ -43,8 +43,8 @@ enum timer_type {
  * type == RTC_TIMER: Reads time registers SECONDS, MINUTES, HOURS, DAYS, and
  *			MONTHS, YEARS
  */
-static int idt1337ag_read_time_regs(const struct device *dev,
-				    uint8_t *time_reg, enum timer_type type)
+static int idt1337ag_read_time_regs(const struct device *dev, uint8_t *time_reg,
+				    enum timer_type type)
 {
 	const struct renesas_rtc_idt1337ag_config *const config = dev->config;
 	uint8_t start_reg;
@@ -58,12 +58,12 @@ static int idt1337ag_read_time_regs(const struct device *dev,
 		num_reg = NUM_TIMER_REGS;
 	}
 
-	return i2c_burst_read(config->bus,
-		config->i2c_addr_flags, start_reg, time_reg, num_reg);
+	return i2c_burst_read(config->bus, config->i2c_addr_flags, start_reg,
+			      time_reg, num_reg);
 }
 
-static int idt1337ag_read_reg(const struct device *dev,
-			      uint8_t reg, uint8_t *val)
+static int idt1337ag_read_reg(const struct device *dev, uint8_t reg,
+			      uint8_t *val)
 {
 	const struct renesas_rtc_idt1337ag_config *const config = dev->config;
 
@@ -97,12 +97,12 @@ static int idt1337ag_write_time_regs(const struct device *dev,
 		num_reg = NUM_TIMER_REGS;
 	}
 
-	return i2c_burst_write(config->bus,
-			config->i2c_addr_flags, start_reg, time_reg, num_reg);
+	return i2c_burst_write(config->bus, config->i2c_addr_flags, start_reg,
+			       time_reg, num_reg);
 }
 
-static int idt1337ag_write_reg(const struct device *dev,
-			       uint8_t reg, uint8_t val)
+static int idt1337ag_write_reg(const struct device *dev, uint8_t reg,
+			       uint8_t val)
 {
 	const struct renesas_rtc_idt1337ag_config *const config = dev->config;
 	uint8_t tx_buf[2];
@@ -110,8 +110,8 @@ static int idt1337ag_write_reg(const struct device *dev,
 	tx_buf[0] = reg;
 	tx_buf[1] = val;
 
-	return i2c_write(config->bus,
-		tx_buf, sizeof(tx_buf), config->i2c_addr_flags);
+	return i2c_write(config->bus, tx_buf, sizeof(tx_buf),
+			 config->i2c_addr_flags);
 }
 
 /*
@@ -139,7 +139,8 @@ static uint8_t dec_to_bcd(uint32_t val, enum bcd_mask mask)
 }
 
 static int renesas_rtc_idt1337ag_read_seconds(const struct device *dev,
-					uint32_t *value, enum timer_type type)
+					      uint32_t *value,
+					      enum timer_type type)
 {
 	uint8_t time_reg[NUM_TIMER_REGS];
 	struct calendar_date time;
@@ -152,12 +153,12 @@ static int renesas_rtc_idt1337ag_read_seconds(const struct device *dev,
 	}
 
 	if (type == ALARM_TIMER) {
-		*value = (bcd_to_dec(time_reg[DAYS], DAYS_MASK) *
-				SECS_PER_DAY) +
+		*value =
+			(bcd_to_dec(time_reg[DAYS], DAYS_MASK) * SECS_PER_DAY) +
 			(bcd_to_dec(time_reg[HOURS], HOURS24_MASK) *
-				SECS_PER_HOUR) +
+			 SECS_PER_HOUR) +
 			(bcd_to_dec(time_reg[MINUTES], MINUTES_MASK) *
-				SECS_PER_MINUTE) +
+			 SECS_PER_MINUTE) +
 			bcd_to_dec(time_reg[SECONDS], SECONDS_MASK);
 	} else {
 		time.year = bcd_to_dec(time_reg[YEARS], YEARS_MASK);
@@ -165,18 +166,19 @@ static int renesas_rtc_idt1337ag_read_seconds(const struct device *dev,
 		time.day = bcd_to_dec(time_reg[DAYS], DAYS_MASK);
 
 		*value = date_to_sec(time) - SECS_TILL_YEAR_2K +
-			(bcd_to_dec(time_reg[HOURS], HOURS24_MASK) *
-				SECS_PER_HOUR) +
-			(bcd_to_dec(time_reg[MINUTES], MINUTES_MASK) *
-				SECS_PER_MINUTE) +
-			bcd_to_dec(time_reg[SECONDS], SECONDS_MASK);
+			 (bcd_to_dec(time_reg[HOURS], HOURS24_MASK) *
+			  SECS_PER_HOUR) +
+			 (bcd_to_dec(time_reg[MINUTES], MINUTES_MASK) *
+			  SECS_PER_MINUTE) +
+			 bcd_to_dec(time_reg[SECONDS], SECONDS_MASK);
 	}
 
 	return ret;
 }
 
 static int renesas_rtc_idt1337ag_write_seconds(const struct device *dev,
-					uint32_t value, enum timer_type type)
+					       uint32_t value,
+					       enum timer_type type)
 {
 	uint8_t time_reg[NUM_TIMER_REGS];
 	struct calendar_date time;
@@ -206,7 +208,7 @@ static int renesas_rtc_idt1337ag_write_seconds(const struct device *dev,
 }
 
 static int renesas_rtc_idt1337ag_configure(const struct device *dev,
-				   cros_rtc_alarm_callback_t callback)
+					   cros_rtc_alarm_callback_t callback)
 {
 	struct renesas_rtc_idt1337ag_data *data = dev->data;
 
@@ -232,7 +234,8 @@ static int renesas_rtc_idt1337ag_set_value(const struct device *dev,
 }
 
 static int renesas_rtc_idt1337ag_get_alarm(const struct device *dev,
-				uint32_t *seconds, uint32_t *microseconds)
+					   uint32_t *seconds,
+					   uint32_t *microseconds)
 {
 	*microseconds = 0;
 	return renesas_rtc_idt1337ag_read_seconds(dev, seconds, ALARM_TIMER);
@@ -283,7 +286,8 @@ static int renesas_rtc_idt1337ag_reset_alarm(const struct device *dev)
 }
 
 static int renesas_rtc_idt1337ag_set_alarm(const struct device *dev,
-				uint32_t seconds, uint32_t microseconds)
+					   uint32_t seconds,
+					   uint32_t microseconds)
 {
 	int ret;
 	uint8_t val;
@@ -429,8 +433,8 @@ static int renesas_rtc_idt1337ag_init(const struct device *dev)
 		return ret;
 	}
 
-	gpio_init_callback(&data->gpio_cb,
-			renesas_rtc_idt1337ag_isr, BIT(config->gpio_alert.pin));
+	gpio_init_callback(&data->gpio_cb, renesas_rtc_idt1337ag_isr,
+			   BIT(config->gpio_alert.pin));
 
 	ret = gpio_add_callback(config->gpio_alert.port, &data->gpio_cb);
 
@@ -445,8 +449,7 @@ static int renesas_rtc_idt1337ag_init(const struct device *dev)
 					       GPIO_INT_EDGE_FALLING);
 }
 
-#define IDT1337AG_INT_PIN \
-	DT_PHANDLE(DT_NODELABEL(idt1337ag), int_pin)
+#define IDT1337AG_INT_PIN DT_PHANDLE(DT_NODELABEL(idt1337ag), int_pin)
 
 /*
  * dt_flags is a uint8_t type.  However, for platform/ec
@@ -455,12 +458,11 @@ static int renesas_rtc_idt1337ag_init(const struct device *dev)
  * Cast back to a gpio_dt_flags to compile, discarding the bits
  * that are not supported by the Zephyr GPIO API.
  */
-#define CROS_EC_GPIO_DT_SPEC_GET(node_id, prop)                     \
-	{                                                           \
-		.port = DEVICE_DT_GET(DT_GPIO_CTLR(node_id, prop)), \
-		.pin = DT_GPIO_PIN(node_id, prop),                  \
-		.dt_flags =                                         \
-		(gpio_dt_flags_t)DT_GPIO_FLAGS(node_id, prop),      \
+#define CROS_EC_GPIO_DT_SPEC_GET(node_id, prop)                            \
+	{                                                                  \
+		.port = DEVICE_DT_GET(DT_GPIO_CTLR(node_id, prop)),        \
+		.pin = DT_GPIO_PIN(node_id, prop),                         \
+		.dt_flags = (gpio_dt_flags_t)DT_GPIO_FLAGS(node_id, prop), \
 	}
 
 static const struct renesas_rtc_idt1337ag_config renesas_rtc_idt1337ag_cfg_0 = {
@@ -473,6 +475,6 @@ static struct renesas_rtc_idt1337ag_data renesas_rtc_idt1337ag_data_0;
 
 DEVICE_DT_INST_DEFINE(0, renesas_rtc_idt1337ag_init, /* pm_control_fn= */ NULL,
 		      &renesas_rtc_idt1337ag_data_0,
-		      &renesas_rtc_idt1337ag_cfg_0,
-		      POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
+		      &renesas_rtc_idt1337ag_cfg_0, POST_KERNEL,
+		      CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
 		      &renesas_rtc_idt1337ag_driver_api);
