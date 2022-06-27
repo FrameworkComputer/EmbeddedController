@@ -40,21 +40,21 @@ struct kbs_reg {
 };
 
 /* KBS register fields */
-#define NPCX_KBSBUFINDX                  0
-#define NPCX_KBSEVT_KBSDONE              0
-#define NPCX_KBSEVT_KBSERR               1
-#define NPCX_KBSCTL_START                0
-#define NPCX_KBSCTL_KBSMODE              1
-#define NPCX_KBSCTL_KBSIEN               2
-#define NPCX_KBSCTL_KBSINC               3
-#define NPCX_KBSCTL_KBHDRV_FIELD         FIELD(6, 2)
-#define NPCX_KBSCFGINDX                  0
+#define NPCX_KBSBUFINDX 0
+#define NPCX_KBSEVT_KBSDONE 0
+#define NPCX_KBSEVT_KBSERR 1
+#define NPCX_KBSCTL_START 0
+#define NPCX_KBSCTL_KBSMODE 1
+#define NPCX_KBSCTL_KBSIEN 2
+#define NPCX_KBSCTL_KBSINC 3
+#define NPCX_KBSCTL_KBHDRV_FIELD FIELD(6, 2)
+#define NPCX_KBSCFGINDX 0
 /* Index of 'Automatic Scan' configuration register */
-#define KBS_CFG_INDX_DLY1                0 /* Keyboard Scan Delay T1 Byte */
-#define KBS_CFG_INDX_DLY2                1 /* Keyboard Scan Delay T2 Byte */
-#define KBS_CFG_INDX_RTYTO               2 /* Keyboard Scan Retry Timeout */
-#define KBS_CFG_INDX_CNUM                3 /* Keyboard Scan Columns Number */
-#define KBS_CFG_INDX_CDIV                4 /* Keyboard Scan Clock Divisor */
+#define KBS_CFG_INDX_DLY1 0 /* Keyboard Scan Delay T1 Byte */
+#define KBS_CFG_INDX_DLY2 1 /* Keyboard Scan Delay T2 Byte */
+#define KBS_CFG_INDX_RTYTO 2 /* Keyboard Scan Retry Timeout */
+#define KBS_CFG_INDX_CNUM 3 /* Keyboard Scan Columns Number */
+#define KBS_CFG_INDX_CDIV 4 /* Keyboard Scan Clock Divisor */
 
 /*
  * Monotonic Counter (MTC) device registers
@@ -67,8 +67,8 @@ struct mtc_reg {
 };
 
 /* MTC register fields */
-#define NPCX_WTC_PTO                     30
-#define NPCX_WTC_WIE                     31
+#define NPCX_WTC_PTO 30
+#define NPCX_WTC_WIE 31
 
 /* SHI (Serial Host Interface) registers */
 struct shi_reg {
@@ -109,48 +109,48 @@ struct shi_reg {
 };
 
 /* SHI register fields */
-#define NPCX_SHICFG1_EN                  0
-#define NPCX_SHICFG1_MODE                1
-#define NPCX_SHICFG1_WEN                 2
-#define NPCX_SHICFG1_AUTIBF              3
-#define NPCX_SHICFG1_AUTOBE              4
-#define NPCX_SHICFG1_DAS                 5
-#define NPCX_SHICFG1_CPOL                6
-#define NPCX_SHICFG1_IWRAP               7
-#define NPCX_SHICFG2_SIMUL               0
-#define NPCX_SHICFG2_BUSY                1
-#define NPCX_SHICFG2_ONESHOT             2
-#define NPCX_SHICFG2_SLWU                3
-#define NPCX_SHICFG2_REEN                4
-#define NPCX_SHICFG2_RESTART             5
-#define NPCX_SHICFG2_REEVEN              6
-#define NPCX_EVENABLE_OBEEN              0
-#define NPCX_EVENABLE_OBHEEN             1
-#define NPCX_EVENABLE_IBFEN              2
-#define NPCX_EVENABLE_IBHFEN             3
-#define NPCX_EVENABLE_EOREN              4
-#define NPCX_EVENABLE_EOWEN              5
-#define NPCX_EVENABLE_STSREN             6
-#define NPCX_EVENABLE_IBOREN             7
-#define NPCX_EVSTAT_OBE                  0
-#define NPCX_EVSTAT_OBHE                 1
-#define NPCX_EVSTAT_IBF                  2
-#define NPCX_EVSTAT_IBHF                 3
-#define NPCX_EVSTAT_EOR                  4
-#define NPCX_EVSTAT_EOW                  5
-#define NPCX_EVSTAT_STSR                 6
-#define NPCX_EVSTAT_IBOR                 7
-#define NPCX_STATUS_OBES                 6
-#define NPCX_STATUS_IBFS                 7
-#define NPCX_SHICFG3_OBUFLVLDIS          7
-#define NPCX_SHICFG4_IBUFLVLDIS          7
-#define NPCX_SHICFG5_IBUFLVL2            FIELD(0, 6)
-#define NPCX_SHICFG5_IBUFLVL2DIS         7
-#define NPCX_EVSTAT2_IBHF2               0
-#define NPCX_EVSTAT2_CSNRE               1
-#define NPCX_EVSTAT2_CSNFE               2
-#define NPCX_EVENABLE2_IBHF2EN           0
-#define NPCX_EVENABLE2_CSNREEN           1
-#define NPCX_EVENABLE2_CSNFEEN           2
+#define NPCX_SHICFG1_EN 0
+#define NPCX_SHICFG1_MODE 1
+#define NPCX_SHICFG1_WEN 2
+#define NPCX_SHICFG1_AUTIBF 3
+#define NPCX_SHICFG1_AUTOBE 4
+#define NPCX_SHICFG1_DAS 5
+#define NPCX_SHICFG1_CPOL 6
+#define NPCX_SHICFG1_IWRAP 7
+#define NPCX_SHICFG2_SIMUL 0
+#define NPCX_SHICFG2_BUSY 1
+#define NPCX_SHICFG2_ONESHOT 2
+#define NPCX_SHICFG2_SLWU 3
+#define NPCX_SHICFG2_REEN 4
+#define NPCX_SHICFG2_RESTART 5
+#define NPCX_SHICFG2_REEVEN 6
+#define NPCX_EVENABLE_OBEEN 0
+#define NPCX_EVENABLE_OBHEEN 1
+#define NPCX_EVENABLE_IBFEN 2
+#define NPCX_EVENABLE_IBHFEN 3
+#define NPCX_EVENABLE_EOREN 4
+#define NPCX_EVENABLE_EOWEN 5
+#define NPCX_EVENABLE_STSREN 6
+#define NPCX_EVENABLE_IBOREN 7
+#define NPCX_EVSTAT_OBE 0
+#define NPCX_EVSTAT_OBHE 1
+#define NPCX_EVSTAT_IBF 2
+#define NPCX_EVSTAT_IBHF 3
+#define NPCX_EVSTAT_EOR 4
+#define NPCX_EVSTAT_EOW 5
+#define NPCX_EVSTAT_STSR 6
+#define NPCX_EVSTAT_IBOR 7
+#define NPCX_STATUS_OBES 6
+#define NPCX_STATUS_IBFS 7
+#define NPCX_SHICFG3_OBUFLVLDIS 7
+#define NPCX_SHICFG4_IBUFLVLDIS 7
+#define NPCX_SHICFG5_IBUFLVL2 FIELD(0, 6)
+#define NPCX_SHICFG5_IBUFLVL2DIS 7
+#define NPCX_EVSTAT2_IBHF2 0
+#define NPCX_EVSTAT2_CSNRE 1
+#define NPCX_EVSTAT2_CSNFE 2
+#define NPCX_EVENABLE2_IBHF2EN 0
+#define NPCX_EVENABLE2_CSNREEN 1
+#define NPCX_EVENABLE2_CSNFEEN 2
 
 #endif /* _NUVOTON_NPCX_REG_DEF_CROS_H */
