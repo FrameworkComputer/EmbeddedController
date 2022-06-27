@@ -26,15 +26,15 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 
 /* Index values for hibernate data registers (RAM backed by VBAT) */
 enum hibdata_index {
-	HIBDATA_INDEX_SCRATCHPAD = 0,    /* General-purpose scratch pad */
+	HIBDATA_INDEX_SCRATCHPAD = 0, /* General-purpose scratch pad */
 	HIBDATA_INDEX_SAVED_RESET_FLAGS, /* Saved reset flags */
-	HIBDATA_INDEX_PD0,		/* USB-PD0 saved port state */
-	HIBDATA_INDEX_PD1,		/* USB-PD1 saved port state */
-	HIBDATA_INDEX_PD2,		/* USB-PD2 saved port state */
+	HIBDATA_INDEX_PD0, /* USB-PD0 saved port state */
+	HIBDATA_INDEX_PD1, /* USB-PD1 saved port state */
+	HIBDATA_INDEX_PD2, /* USB-PD2 saved port state */
 };
 
 /*
@@ -47,7 +47,7 @@ enum hibdata_index {
 #ifdef CHIP_FAMILY_MEC172X
 static void vtr3_voltage_select(int use18v)
 {
-	(void) use18v;
+	(void)use18v;
 }
 #else
 static void vtr3_voltage_select(int use18v)
@@ -58,7 +58,6 @@ static void vtr3_voltage_select(int use18v)
 		MCHP_EC_GPIO_BANK_PWR &= ~(MCHP_EC_GPIO_BANK_PWR_VTR3_18);
 }
 #endif
-
 
 /*
  * The current logic will set EC_RESET_FLAG_RESET_PIN flag
@@ -76,8 +75,7 @@ static void check_reset_cause(void)
 	uint32_t status = MCHP_VBAT_STS;
 	uint32_t flags = 0;
 	uint32_t rst_sts = MCHP_PCR_PWR_RST_STS &
-				(MCHP_PWR_RST_STS_SYS |
-				MCHP_PWR_RST_STS_VBAT);
+			   (MCHP_PWR_RST_STS_SYS | MCHP_PWR_RST_STS_VBAT);
 
 	/* Clear the reset causes now that we've read them */
 	MCHP_VBAT_STS |= status;
@@ -92,13 +90,12 @@ static void check_reset_cause(void)
 	if (rst_sts & MCHP_PWR_RST_STS_SYS)
 		flags |= EC_RESET_FLAG_RESET_PIN;
 
-
 	flags |= chip_read_reset_flags();
 	chip_save_reset_flags(0);
 
-	if ((status & MCHP_VBAT_STS_WDT) && !(flags & (EC_RESET_FLAG_SOFT |
-					    EC_RESET_FLAG_HARD |
-					    EC_RESET_FLAG_HIBERNATE)))
+	if ((status & MCHP_VBAT_STS_WDT) &&
+	    !(flags & (EC_RESET_FLAG_SOFT | EC_RESET_FLAG_HARD |
+		       EC_RESET_FLAG_HIBERNATE)))
 		flags |= EC_RESET_FLAG_WATCHDOG;
 
 	system_set_reset_flags(flags);
@@ -115,10 +112,10 @@ int system_is_reboot_warm(void)
 	reset_flags = system_get_reset_flags();
 
 	if ((reset_flags & EC_RESET_FLAG_RESET_PIN) ||
-		(reset_flags & EC_RESET_FLAG_POWER_ON) ||
-		(reset_flags & EC_RESET_FLAG_WATCHDOG) ||
-		(reset_flags & EC_RESET_FLAG_HARD) ||
-		(reset_flags & EC_RESET_FLAG_SOFT))
+	    (reset_flags & EC_RESET_FLAG_POWER_ON) ||
+	    (reset_flags & EC_RESET_FLAG_WATCHDOG) ||
+	    (reset_flags & EC_RESET_FLAG_HARD) ||
+	    (reset_flags & EC_RESET_FLAG_SOFT))
 		return 0;
 	else
 		return 1;
@@ -174,7 +171,7 @@ void system_pre_init(void)
 	 * Signals bus fault to Cortex-M4 core if an address presented
 	 * to AHB is not claimed by any HW block.
 	 */
-	MCHP_EC_AHB_ERR = 0;	/* write any value to clear */
+	MCHP_EC_AHB_ERR = 0; /* write any value to clear */
 	MCHP_EC_AHB_ERR_EN = 0; /* enable capture of address on error */
 
 	/* Manual voltage selection only required for MEC170x and MEC152x */
@@ -435,12 +432,11 @@ static void disable_host_ifc_clocks(void)
 #else
 static void disable_host_ifc_clocks(void)
 {
-	#ifdef CHIP_FAMILY_MEC170X
+#ifdef CHIP_FAMILY_MEC170X
 	MCHP_LPC_ACT &= ~0x1;
-	#endif
+#endif
 }
 #endif
-
 
 /*
  * Called when hibernation timer is not used in deep sleep.
@@ -450,7 +446,9 @@ static void disable_host_ifc_clocks(void)
  * oscillator.
  */
 #ifdef CHIP_FAMILY_MEC172X
-static void switch_32k_pin2sil(void) {}
+static void switch_32k_pin2sil(void)
+{
+}
 #else
 static void switch_32k_pin2sil(void)
 {
@@ -483,7 +481,7 @@ void system_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	for (i = MCHP_INT_GIRQ_FIRST; i <= MCHP_INT_GIRQ_LAST; ++i) {
 		MCHP_INT_DISABLE(i) = 0xffffffff;
-		MCHP_INT_SOURCE(i)  = 0xffffffff;
+		MCHP_INT_SOURCE(i) = 0xffffffff;
 	}
 
 	/* Disable UART */
@@ -577,14 +575,14 @@ enum ec_image system_get_shrspi_image_copy(void)
 
 uint32_t system_get_lfw_address(void)
 {
-	uint32_t * const lfw_vector =
-		(uint32_t * const)CONFIG_PROGRAM_MEMORY_BASE;
+	uint32_t *const lfw_vector =
+		(uint32_t *const)CONFIG_PROGRAM_MEMORY_BASE;
 
 	return *(lfw_vector + 1);
 }
 
 void system_set_image_copy(enum ec_image copy)
 {
-	MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) = (copy == EC_IMAGE_RW) ?
-				EC_IMAGE_RW : EC_IMAGE_RO;
+	MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) =
+		(copy == EC_IMAGE_RW) ? EC_IMAGE_RW : EC_IMAGE_RO;
 }
