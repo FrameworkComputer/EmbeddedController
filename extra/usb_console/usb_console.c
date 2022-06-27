@@ -18,12 +18,12 @@
 #include <libusb.h>
 
 /* Options */
-static uint16_t vid = 0x18d1;			/* Google */
-static uint16_t pid = 0x500f;			/* discovery-stm32f072 */
-static uint8_t ep_num = 4;			/* console endpoint */
+static uint16_t vid = 0x18d1; /* Google */
+static uint16_t pid = 0x500f; /* discovery-stm32f072 */
+static uint8_t ep_num = 4; /* console endpoint */
 
-static unsigned char rx_buf[1024];		/* much too big */
-static unsigned char tx_buf[1024];		/* much too big */
+static unsigned char rx_buf[1024]; /* much too big */
+static unsigned char tx_buf[1024]; /* much too big */
 static const struct libusb_pollfd **usb_fds;
 static struct libusb_device_handle *devh;
 static struct libusb_transfer *rx_transfer;
@@ -40,9 +40,8 @@ static void request_exit(const char *format, ...)
 	do_exit++;
 }
 
-#define BOO(msg, r)							\
-	request_exit("%s: line %d, %s\n", msg, __LINE__,		\
-		     libusb_error_name(r))
+#define BOO(msg, r) \
+	request_exit("%s: line %d, %s\n", msg, __LINE__, libusb_error_name(r))
 
 static void sighandler(int signum)
 {
@@ -105,8 +104,8 @@ static void send_tx(int len)
 {
 	int r;
 
-	libusb_fill_bulk_transfer(tx_transfer, devh,
-				  ep_num, tx_buf, len, cb_tx, NULL, 0);
+	libusb_fill_bulk_transfer(tx_transfer, devh, ep_num, tx_buf, len, cb_tx,
+				  NULL, 0);
 
 	r = libusb_submit_transfer(tx_transfer);
 	if (r < 0)
@@ -185,7 +184,7 @@ static int wait_for_stuff_to_happen(void)
 		return -1;
 	}
 
-	if (r == 0)				/* timed out */
+	if (r == 0) /* timed out */
 		return 0;
 
 	/* Ignore stdin until we've finished sending the current line */
@@ -235,11 +234,9 @@ static char *progname;
 static char *short_opts = ":v:p:e:h";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
-	{"vid",      1,   NULL, 'v'},
-	{"pid",      1,   NULL, 'p'},
-	{"ep",       1,   NULL, 'e'},
-	{"help",     0,   NULL, 'h'},
-	{NULL,       0,   NULL, 0},
+	{ "vid", 1, NULL, 'v' }, { "pid", 1, NULL, 'p' },
+	{ "ep", 1, NULL, 'e' },	 { "help", 0, NULL, 'h' },
+	{ NULL, 0, NULL, 0 },
 };
 
 static void usage(int errs)
@@ -254,7 +251,8 @@ static void usage(int errs)
 	       "  -p,--pid    HEXVAL      Product ID (default %04x)\n"
 	       "  -e,--ep     NUM         Endpoint (default %d)\n"
 	       "  -h,--help               Show this message\n"
-	       "\n", progname, vid, pid, ep_num);
+	       "\n",
+	       progname, vid, pid, ep_num);
 
 	exit(!!errs);
 }
@@ -275,25 +273,25 @@ int main(int argc, char *argv[])
 	else
 		progname = argv[0];
 
-	opterr = 0;				/* quiet, you */
+	opterr = 0; /* quiet, you */
 	while ((i = getopt_long(argc, argv, short_opts, long_opts, 0)) != -1) {
 		switch (i) {
 		case 'p':
-			pid = (uint16_t) strtoull(optarg, &e, 16);
+			pid = (uint16_t)strtoull(optarg, &e, 16);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
 			}
 			break;
 		case 'v':
-			vid = (uint16_t) strtoull(optarg, &e, 16);
+			vid = (uint16_t)strtoull(optarg, &e, 16);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
 			}
 			break;
 		case 'e':
-			ep_num = (uint8_t) strtoull(optarg, &e, 0);
+			ep_num = (uint8_t)strtoull(optarg, &e, 0);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
@@ -302,7 +300,7 @@ int main(int argc, char *argv[])
 		case 'h':
 			usage(errorcnt);
 			break;
-		case 0:				/* auto-handled option */
+		case 0: /* auto-handled option */
 			break;
 		case '?':
 			if (optopt)
@@ -368,9 +366,8 @@ int main(int argc, char *argv[])
 		printf("can't alloc rx_transfer");
 		goto out;
 	}
-	libusb_fill_bulk_transfer(rx_transfer, devh,
-				  0x80 | ep_num,
-				  rx_buf, sizeof(rx_buf), cb_rx, NULL, 0);
+	libusb_fill_bulk_transfer(rx_transfer, devh, 0x80 | ep_num, rx_buf,
+				  sizeof(rx_buf), cb_rx, NULL, 0);
 
 	tx_transfer = libusb_alloc_transfer(0);
 	if (!tx_transfer) {
@@ -396,14 +393,14 @@ int main(int argc, char *argv[])
 	while (!do_exit) {
 		r = wait_for_stuff_to_happen();
 		switch (r) {
-		case 0:	/* timed out */
+		case 0: /* timed out */
 			/* printf("."); */
 			/* fflush(stdout); */
 			break;
-		case 1:	/* stdin ready */
+		case 1: /* stdin ready */
 			handle_stdin();
 			break;
-		case 2:	/* libusb ready */
+		case 2: /* libusb ready */
 			handle_libusb();
 			break;
 		}
@@ -440,7 +437,7 @@ int main(int argc, char *argv[])
 
 	printf("bye\n");
 	r = 0;
- out:
+out:
 	if (tx_transfer)
 		libusb_free_transfer(tx_transfer);
 	if (rx_transfer)
