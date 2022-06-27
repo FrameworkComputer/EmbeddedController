@@ -20,12 +20,11 @@
 static int rt1715_polarity[CONFIG_USB_PD_PORT_MAX_COUNT];
 static bool rt1715_initialized[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-
 static int rt1715_enable_ext_messages(int port, int enable)
 {
 	return tcpc_update8(port, RT1715_REG_VENDOR_5,
-		  RT1715_REG_VENDOR_5_ENEXTMSG,
-		  enable ? MASK_SET : MASK_CLR);
+			    RT1715_REG_VENDOR_5_ENEXTMSG,
+			    enable ? MASK_SET : MASK_CLR);
 }
 
 static int rt1715_tcpci_tcpm_init(int port)
@@ -40,7 +39,7 @@ static int rt1715_tcpci_tcpm_init(int port)
 	if (!(rt1715_initialized[port])) {
 		/* RT1715 has a vendor-defined register reset */
 		rv = tcpc_update8(port, RT1715_REG_VENDOR_7,
-			RT1715_REG_VENDOR_7_SOFT_RESET, MASK_SET);
+				  RT1715_REG_VENDOR_7_SOFT_RESET, MASK_SET);
 		if (rv)
 			return rv;
 		rt1715_initialized[port] = true;
@@ -48,7 +47,7 @@ static int rt1715_tcpci_tcpm_init(int port)
 	}
 
 	rv = tcpc_update8(port, RT1715_REG_VENDOR_5,
-		  RT1715_REG_VENDOR_5_SHUTDOWN_OFF, MASK_SET);
+			  RT1715_REG_VENDOR_5_SHUTDOWN_OFF, MASK_SET);
 	if (rv)
 		return rv;
 
@@ -56,8 +55,8 @@ static int rt1715_tcpci_tcpm_init(int port)
 		rt1715_enable_ext_messages(port, 1);
 
 	rv = tcpc_write(port, RT1715_REG_I2CRST_CTRL,
-		  (RT1715_REG_I2CRST_CTRL_EN |
-		  RT1715_REG_I2CRST_CTRL_TOUT_200MS));
+			(RT1715_REG_I2CRST_CTRL_EN |
+			 RT1715_REG_I2CRST_CTRL_TOUT_200MS));
 	if (rv)
 		return rv;
 
@@ -71,27 +70,27 @@ static int rt1715_tcpci_tcpm_init(int port)
 	 * (min 250 us, max 500 us).
 	 */
 	rv = tcpc_write(port, RT1715_REG_TTCPC_FILTER,
-		  RT1715_REG_TTCPC_FILTER_400US);
+			RT1715_REG_TTCPC_FILTER_400US);
 	if (rv)
 		return rv;
 
 	rv = tcpc_write(port, RT1715_REG_DRP_TOGGLE_CYCLE,
-		  RT1715_REG_DRP_TOGGLE_CYCLE_76MS);
+			RT1715_REG_DRP_TOGGLE_CYCLE_76MS);
 	if (rv)
 		return rv;
 
 	/* PHY control */
 	/* Set PHY control registers to Richtek recommended values */
 	rv = tcpc_write(port, RT1715_REG_PHY_CTRL1,
-		  (RT1715_REG_PHY_CTRL1_ENRETRY |
-		  RT1715_REG_PHY_CTRL1_TRANSCNT_7 |
-		  RT1715_REG_PHY_CTRL1_TRXFILTER_125NS));
+			(RT1715_REG_PHY_CTRL1_ENRETRY |
+			 RT1715_REG_PHY_CTRL1_TRANSCNT_7 |
+			 RT1715_REG_PHY_CTRL1_TRXFILTER_125NS));
 	if (rv)
 		return rv;
 
 	/* Set PHY control registers to Richtek recommended values */
 	rv = tcpc_write(port, RT1715_REG_PHY_CTRL2,
-		  RT1715_REG_PHY_CTRL2_CDRTHRESH_2_58US);
+			RT1715_REG_PHY_CTRL2_CDRTHRESH_2_58US);
 	if (rv)
 		return rv;
 
@@ -113,14 +112,14 @@ static inline int rt1715_init_cc_params(int port, int cc_level)
 		/* RXCC threshold : 0.55V */
 		en = RT1715_REG_BMCIO_RXDZEN_DISABLE;
 
-		sel = RT1715_REG_BMCIO_RXDZSEL_OCCTRL_600MA
-		  | RT1715_REG_BMCIO_RXDZSEL_SEL;
+		sel = RT1715_REG_BMCIO_RXDZSEL_OCCTRL_600MA |
+		      RT1715_REG_BMCIO_RXDZSEL_SEL;
 	} else {
 		/* RD threshold : 0.35V & RP threshold : 0.75V */
 		en = RT1715_REG_BMCIO_RXDZEN_ENABLE;
 
-		sel = RT1715_REG_BMCIO_RXDZSEL_OCCTRL_600MA
-		  | RT1715_REG_BMCIO_RXDZSEL_SEL;
+		sel = RT1715_REG_BMCIO_RXDZSEL_OCCTRL_600MA |
+		      RT1715_REG_BMCIO_RXDZSEL_SEL;
 	}
 
 	rv = tcpc_write(port, RT1715_REG_BMCIO_RXDZEN, en);
@@ -131,7 +130,7 @@ static inline int rt1715_init_cc_params(int port, int cc_level)
 }
 
 static int rt1715_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+			 enum tcpc_cc_voltage_status *cc2)
 {
 	int rv;
 
@@ -235,7 +234,7 @@ const struct tcpm_drv rt1715_tcpm_drv = {
 	.set_cc = &tcpci_tcpm_set_cc,
 	.set_polarity = &rt1715_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable   = &tcpci_tcpm_sop_prime_enable,
+	.sop_prime_enable = &tcpci_tcpm_sop_prime_enable,
 #endif
 	.set_vconn = &rt1715_set_vconn,
 	.set_msg_header = &tcpci_tcpm_set_msg_header,
@@ -257,5 +256,5 @@ const struct tcpm_drv rt1715_tcpm_drv = {
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	.enter_low_power_mode = &rt1715_enter_low_power_mode,
 #endif
-	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
+	.set_bist_test_mode = &tcpci_set_bist_test_mode,
 };
