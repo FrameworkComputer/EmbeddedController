@@ -19,35 +19,35 @@ const enum ec_led_id supported_led_ids[] = {
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 struct pwm_led_color_map led_color_map_v3[EC_LED_COLOR_COUNT] = {
-				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED]    = {  36,   0,   0 },
-	[EC_LED_COLOR_GREEN]  = {   0,  15,   0 },
-	[EC_LED_COLOR_BLUE]   = {   0,   0, 100 },
-	[EC_LED_COLOR_YELLOW] = {  36,  15,   0 },
-	[EC_LED_COLOR_WHITE]  = {  30,   9,  15 },
-	[EC_LED_COLOR_AMBER]  = {  30,   1,   0 },
+	/* Red, Green, Blue */
+	[EC_LED_COLOR_RED] = { 36, 0, 0 },
+	[EC_LED_COLOR_GREEN] = { 0, 15, 0 },
+	[EC_LED_COLOR_BLUE] = { 0, 0, 100 },
+	[EC_LED_COLOR_YELLOW] = { 36, 15, 0 },
+	[EC_LED_COLOR_WHITE] = { 30, 9, 15 },
+	[EC_LED_COLOR_AMBER] = { 30, 1, 0 },
 };
 
 /* Map for board rev 2 */
 struct pwm_led_color_map led_color_map_v2[EC_LED_COLOR_COUNT] = {
-				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED]    = {  62,   0,   0 },
-	[EC_LED_COLOR_GREEN]  = {   0,  31,   0 },
-	[EC_LED_COLOR_BLUE]   = {   0,   0, 100 },
-	[EC_LED_COLOR_YELLOW] = { 100,  54,   0 },
-	[EC_LED_COLOR_WHITE]  = {  70,  54, 100 },
-	[EC_LED_COLOR_AMBER]  = { 100,  15,   0 },
+	/* Red, Green, Blue */
+	[EC_LED_COLOR_RED] = { 62, 0, 0 },
+	[EC_LED_COLOR_GREEN] = { 0, 31, 0 },
+	[EC_LED_COLOR_BLUE] = { 0, 0, 100 },
+	[EC_LED_COLOR_YELLOW] = { 100, 54, 0 },
+	[EC_LED_COLOR_WHITE] = { 70, 54, 100 },
+	[EC_LED_COLOR_AMBER] = { 100, 15, 0 },
 };
 
 /* Map for board rev 0 and 1 */
 struct pwm_led_color_map led_color_map_v0_1[EC_LED_COLOR_COUNT] = {
-				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED]    = {   1,   0,   0 },
-	[EC_LED_COLOR_GREEN]  = {   0,   1,   0 },
-	[EC_LED_COLOR_BLUE]   = {   0,   0,   1 },
-	[EC_LED_COLOR_YELLOW] = {   1,   1,   0 },
-	[EC_LED_COLOR_WHITE]  = {   9,  15,  15 },
-	[EC_LED_COLOR_AMBER]  = {  15,   1,   0 },
+	/* Red, Green, Blue */
+	[EC_LED_COLOR_RED] = { 1, 0, 0 },
+	[EC_LED_COLOR_GREEN] = { 0, 1, 0 },
+	[EC_LED_COLOR_BLUE] = { 0, 0, 1 },
+	[EC_LED_COLOR_YELLOW] = { 1, 1, 0 },
+	[EC_LED_COLOR_WHITE] = { 9, 15, 15 },
+	[EC_LED_COLOR_AMBER] = { 15, 1, 0 },
 };
 
 struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = { { 0 } };
@@ -135,4 +135,4 @@ static void select_color_map(void)
 		break;
 	}
 }
-DECLARE_HOOK(HOOK_INIT, select_color_map, HOOK_PRIO_INIT_PWM-1);
+DECLARE_HOOK(HOOK_INIT, select_color_map, HOOK_PRIO_INIT_PWM - 1);
