@@ -131,19 +131,18 @@ ZTEST(isl923x, test_isl923x_set_input_current_limit)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
-	int expected_current_milli_amps[] = {
-		EXPECTED_INPUT_CURRENT_MA(0),
-		EXPECTED_INPUT_CURRENT_MA(4),
-		EXPECTED_INPUT_CURRENT_MA(8),
-		EXPECTED_INPUT_CURRENT_MA(16),
-		EXPECTED_INPUT_CURRENT_MA(32),
-		EXPECTED_INPUT_CURRENT_MA(64),
-		EXPECTED_INPUT_CURRENT_MA(128),
-		EXPECTED_INPUT_CURRENT_MA(256),
-		EXPECTED_INPUT_CURRENT_MA(512),
-		EXPECTED_INPUT_CURRENT_MA(1024),
-		EXPECTED_INPUT_CURRENT_MA(2048),
-		EXPECTED_INPUT_CURRENT_MA(4096) };
+	int expected_current_milli_amps[] = { EXPECTED_INPUT_CURRENT_MA(0),
+					      EXPECTED_INPUT_CURRENT_MA(4),
+					      EXPECTED_INPUT_CURRENT_MA(8),
+					      EXPECTED_INPUT_CURRENT_MA(16),
+					      EXPECTED_INPUT_CURRENT_MA(32),
+					      EXPECTED_INPUT_CURRENT_MA(64),
+					      EXPECTED_INPUT_CURRENT_MA(128),
+					      EXPECTED_INPUT_CURRENT_MA(256),
+					      EXPECTED_INPUT_CURRENT_MA(512),
+					      EXPECTED_INPUT_CURRENT_MA(1024),
+					      EXPECTED_INPUT_CURRENT_MA(2048),
+					      EXPECTED_INPUT_CURRENT_MA(4096) };
 	int current_milli_amps;
 
 	/* Test failing to write to current limit 1 reg */
@@ -230,10 +229,9 @@ ZTEST(isl923x, test_device_id)
 	zassert_equal(0x5678, id, NULL);
 
 	/* Test read error */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
-					  ISL923X_REG_DEVICE_ID);
-	zassert_equal(EC_ERROR_INVAL,
-		      isl923x_drv.device_id(CHARGER_NUM, &id), NULL);
+	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_DEVICE_ID);
+	zassert_equal(EC_ERROR_INVAL, isl923x_drv.device_id(CHARGER_NUM, &id),
+		      NULL);
 
 	/* Reset fail register */
 	i2c_common_emul_set_read_fail_reg(i2c_emul,
@@ -576,8 +574,8 @@ ZTEST(isl923x, test_get_vbus_voltage)
 		 * VBUS.
 		 */
 		zassert_within(expected_voltage_mv, voltage, 100,
-			      "Expected %dmV but got %dmV", expected_voltage_mv,
-			      voltage);
+			       "Expected %dmV but got %dmV",
+			       expected_voltage_mv, voltage);
 	}
 }
 
@@ -622,8 +620,7 @@ ZTEST(isl923x, test_init)
 		   NULL);
 
 	zassert_equal(0, input_current,
-			      "Expected input current 0mA but got %dmA",
-			      input_current);
+		      "Expected input current 0mA but got %dmA", input_current);
 
 	/* Test failed CTRL 0 write */
 	isl923x_emul_reset_registers(isl923x_emul);
@@ -636,8 +633,7 @@ ZTEST(isl923x, test_init)
 		   NULL);
 
 	zassert_equal(0, input_current,
-			      "Expected input current 0mA but got %dmA",
-			      input_current);
+		      "Expected input current 0mA but got %dmA", input_current);
 
 	/* Test failed CTRL 3 read */
 	isl923x_emul_reset_registers(isl923x_emul);
@@ -832,8 +828,9 @@ ZTEST(isl923x_hibernate, test_isl923x_hibernate__happy_path)
 	/* Check ISL923X_REG_CONTROL1 */
 	actual = isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1);
 
-	zassert_false(actual & RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE,
-		      "RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE should not be set");
+	zassert_false(
+		actual & RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE,
+		"RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE should not be set");
 	zassert_false(actual & ISL923X_C1_ENABLE_PSYS,
 		      "ISL923X_C1_ENABLE_PSYS should not be set");
 	zassert_true(actual & RAA489000_C1_BGATE_FORCE_OFF,
@@ -1004,7 +1001,7 @@ ZTEST(isl923x_hibernate, test_isl9238c_hibernate)
 	/* Part 1: Happy path */
 	control1_expected =
 		(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1) &
-			~ISL923X_C1_ENABLE_PSYS) |
+		 ~ISL923X_C1_ENABLE_PSYS) |
 		ISL923X_C1_DISABLE_MON;
 	control2_expected =
 		isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2) |
