@@ -15,13 +15,13 @@
  * By default, enable all console messages except HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
  */
-#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
 /* NPCX7 config */
-#define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
-#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
+#define NPCX7_PWM1_SEL 0 /* GPIO C2 is not used as PWM1. */
+#define NPCX_UART_MODULE2 1 /* GPIO64/65 are used as UART pins. */
 
 /* Internal SPI flash on NPCX796FC is 512 kB */
 #define CONFIG_FLASH_SIZE_BYTES (512 * 1024)
@@ -49,14 +49,13 @@
 
 /* TCS3400 ALS */
 #define CONFIG_ALS
-#define ALS_COUNT	1
+#define ALS_COUNT 1
 #define CONFIG_ALS_TCS3400
-#define CONFIG_ALS_TCS3400_INT_EVENT\
+#define CONFIG_ALS_TCS3400_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
 
 /* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
-	(BIT(SCREEN_ACCEL) | BIT(CLEAR_ALS))
+#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(SCREEN_ACCEL) | BIT(CLEAR_ALS))
 
 /* EC Defines */
 #define CONFIG_ADC
@@ -74,7 +73,7 @@
 #undef CONFIG_HIBERNATE
 #define CONFIG_HOST_INTERFACE_ESPI
 #define CONFIG_LED_COMMON
-#undef  CONFIG_LID_SWITCH
+#undef CONFIG_LID_SWITCH
 #define CONFIG_LTO
 #define CONFIG_PWM
 #define CONFIG_VBOOT_EFS2
@@ -82,7 +81,6 @@
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
 #define CONFIG_SHA256
-
 
 /* EC Commands */
 #define CONFIG_CMD_BUTTON
@@ -120,7 +118,7 @@
 #define CONFIG_CPU_PROCHOT_ACTIVE_LOW
 
 /* Dedicated barreljack charger port */
-#undef  CONFIG_DEDICATED_CHARGE_PORT_COUNT
+#undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
 #define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
 #define DEDICATED_CHARGE_PORT 2
 
@@ -141,15 +139,15 @@
 #define CONFIG_INA3221
 
 /* b/143501304 */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	4000	/* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	2000	/* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 4000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 2000 /* us */
 #undef CONFIG_USBC_VCONN_SWAP_DELAY_US
-#define CONFIG_USBC_VCONN_SWAP_DELAY_US		8000	/* us */
+#define CONFIG_USBC_VCONN_SWAP_DELAY_US 8000 /* us */
 
-#define PD_OPERATING_POWER_MW	CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#define PD_MAX_POWER_MW		100000
-#define PD_MAX_CURRENT_MA	5000
-#define PD_MAX_VOLTAGE_MV	20000
+#define PD_OPERATING_POWER_MW CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
+#define PD_MAX_POWER_MW 100000
+#define PD_MAX_CURRENT_MA 5000
+#define PD_MAX_VOLTAGE_MV 20000
 
 /* Fan and temp. */
 #define CONFIG_FANS 1
@@ -173,7 +171,7 @@
 #define CONFIG_USB_PD_DECODE_SOP
 #undef CONFIG_USB_CHARGER
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_USB_PID		0x5040
+#define CONFIG_USB_PID 0x5040
 #define CONFIG_USB_PD_ALT_MODE
 #define CONFIG_USB_PD_ALT_MODE_DFP
 #define CONFIG_USB_PD_DISCHARGE_PPC
@@ -193,10 +191,10 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 
-#define USB_PD_PORT_TCPC_0	0
+#define USB_PD_PORT_TCPC_0 0
 #define BOARD_TCPC_C0_RESET_HOLD_DELAY ANX74XX_RESET_HOLD_MS
 #define BOARD_TCPC_C0_RESET_POST_DELAY ANX74XX_RESET_HOLD_MS
-#define USB_PD_PORT_TCPC_1	1
+#define USB_PD_PORT_TCPC_1 1
 #define BOARD_TCPC_C1_RESET_HOLD_DELAY ANX74XX_RESET_HOLD_MS
 #define BOARD_TCPC_C1_RESET_POST_DELAY ANX74XX_RESET_HOLD_MS
 
@@ -208,16 +206,16 @@
 /* I2C Bus Configuration */
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
-#define I2C_PORT_INA		NPCX_I2C_PORT0_0
-#define I2C_PORT_SENSORS	NPCX_I2C_PORT0_0
-#define I2C_PORT_PPC0		NPCX_I2C_PORT1_0
-#define I2C_PORT_PPC1		NPCX_I2C_PORT2_0
-#define I2C_PORT_TCPC0		NPCX_I2C_PORT3_0
-#define I2C_PORT_TCPC1		NPCX_I2C_PORT4_1
-#define I2C_PORT_POWER		NPCX_I2C_PORT5_0
-#define I2C_PORT_EEPROM		NPCX_I2C_PORT7_0
-#define I2C_ADDR_EEPROM_FLAGS	0x50
-#define I2C_PORT_BACKLIGHT	NPCX_I2C_PORT7_0
+#define I2C_PORT_INA NPCX_I2C_PORT0_0
+#define I2C_PORT_SENSORS NPCX_I2C_PORT0_0
+#define I2C_PORT_PPC0 NPCX_I2C_PORT1_0
+#define I2C_PORT_PPC1 NPCX_I2C_PORT2_0
+#define I2C_PORT_TCPC0 NPCX_I2C_PORT3_0
+#define I2C_PORT_TCPC1 NPCX_I2C_PORT4_1
+#define I2C_PORT_POWER NPCX_I2C_PORT5_0
+#define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
+#define I2C_ADDR_EEPROM_FLAGS 0x50
+#define I2C_PORT_BACKLIGHT NPCX_I2C_PORT7_0
 
 /*
  * LED backlight controller
@@ -239,11 +237,11 @@ enum charge_port {
 };
 
 enum adc_channel {
-	ADC_SNS_PP3300,     /* ADC2 */
-	ADC_SNS_PP1050,     /* ADC7 */
-	ADC_VBUS,           /* ADC4 */
-	ADC_PPVAR_IMON,     /* ADC9 */
-	ADC_TEMP_SENSOR_1,  /* ADC0 */
+	ADC_SNS_PP3300, /* ADC2 */
+	ADC_SNS_PP1050, /* ADC7 */
+	ADC_VBUS, /* ADC4 */
+	ADC_PPVAR_IMON, /* ADC9 */
+	ADC_TEMP_SENSOR_1, /* ADC0 */
 	/* Number of ADC channels */
 	ADC_CH_COUNT
 };
@@ -268,10 +266,7 @@ enum mft_channel {
 	MFT_CH_COUNT,
 };
 
-enum temp_sensor_id {
-	TEMP_SENSOR_1,
-	TEMP_SENSOR_COUNT
-};
+enum temp_sensor_id { TEMP_SENSOR_1, TEMP_SENSOR_COUNT };
 
 enum sensor_id {
 	SCREEN_ACCEL = 0,
@@ -286,7 +281,6 @@ enum ssfc_led_id {
 	SSFC_LED_COUNT,
 };
 
-
 /* Board specific handlers */
 void board_reset_pd_mcu(void);
 void board_set_tcpc_power_mode(int port, int mode);
@@ -299,20 +293,20 @@ void show_critical_error(void);
 /*
  * Barrel-jack power (4 bits).
  */
-#define EC_CFG_BJ_POWER_L		0
-#define EC_CFG_BJ_POWER_H		3
+#define EC_CFG_BJ_POWER_L 0
+#define EC_CFG_BJ_POWER_H 3
 #define EC_CFG_BJ_POWER_MASK GENMASK(EC_CFG_BJ_POWER_H, EC_CFG_BJ_POWER_L)
 /*
  * USB Connector 4 not present (1 bit) (not used).
  */
-#define EC_CFG_NO_USB4_L		4
-#define EC_CFG_NO_USB4_H		4
+#define EC_CFG_NO_USB4_L 4
+#define EC_CFG_NO_USB4_H 4
 #define EC_CFG_NO_USB4_MASK GENMASK(EC_CFG_NO_USB4_H, EC_CFG_NO_USB4_L)
 /*
  * Thermal solution config (3 bits).
  */
-#define EC_CFG_THERMAL_L		5
-#define EC_CFG_THERMAL_H		7
+#define EC_CFG_THERMAL_L 5
+#define EC_CFG_THERMAL_H 7
 #define EC_CFG_THERMAL_MASK GENMASK(EC_CFG_THERMAL_H, EC_CFG_THERMAL_L)
 
 /*
@@ -321,10 +315,9 @@ void show_critical_error(void);
 /*
  * Led driver IC (2 bits).
  */
-#define EC_SSFC_LED_L		0
-#define EC_SSFC_LED_H		1
+#define EC_SSFC_LED_L 0
+#define EC_SSFC_LED_H 1
 #define EC_SSFC_LED_MASK GENMASK(EC_SSFC_LED_H, EC_SSFC_LED_L)
-
 
 unsigned int ec_config_get_bj_power(void);
 unsigned int ec_config_get_thermal_solution(void);
@@ -335,31 +328,31 @@ void board_backlight_enable_interrupt(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
 
 /* Pin renaming */
-#define GPIO_WP_L               GPIO_EC_WP_ODL
-#define GPIO_PP5000_A_PG_OD     GPIO_PG_PP5000_A_OD
-#define GPIO_EN_PP5000		GPIO_EN_PP5000_A
-#define GPIO_RECOVERY_L         GPIO_EC_RECOVERY_BTN_ODL
-#define GPIO_POWER_BUTTON_L	GPIO_H1_EC_PWR_BTN_ODL
-#define GPIO_VOLUME_UP_L	GPIO_EC_VOLUP_BTN_ODL
-#define GPIO_VOLUME_DOWN_L	GPIO_EC_VOLDN_BTN_ODL
-#define GPIO_PCH_WAKE_L		GPIO_EC_PCH_WAKE_ODL
-#define GPIO_PCH_PWRBTN_L	GPIO_EC_PCH_PWR_BTN_ODL
-#define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
-#define GPIO_SYS_RESET_L	GPIO_SYS_RST_ODL
-#define GPIO_PCH_RSMRST_L	GPIO_EC_PCH_RSMRST_L
-#define GPIO_CPU_PROCHOT	GPIO_EC_PROCHOT_ODL
-#define GPIO_PCH_RTCRST		GPIO_EC_PCH_RTCRST
-#define GPIO_PCH_SYS_PWROK	GPIO_EC_PCH_SYS_PWROK
-#define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L
-#define GPIO_PCH_SLP_S3_L	GPIO_SLP_S3_L
-#define GPIO_PCH_SLP_S4_L	GPIO_SLP_S4_L
-#define GPIO_TEMP_SENSOR_POWER	GPIO_EN_ROA_RAILS
-#define GPIO_AC_PRESENT		GPIO_BJ_ADP_PRESENT_L
+#define GPIO_WP_L GPIO_EC_WP_ODL
+#define GPIO_PP5000_A_PG_OD GPIO_PG_PP5000_A_OD
+#define GPIO_EN_PP5000 GPIO_EN_PP5000_A
+#define GPIO_RECOVERY_L GPIO_EC_RECOVERY_BTN_ODL
+#define GPIO_POWER_BUTTON_L GPIO_H1_EC_PWR_BTN_ODL
+#define GPIO_VOLUME_UP_L GPIO_EC_VOLUP_BTN_ODL
+#define GPIO_VOLUME_DOWN_L GPIO_EC_VOLDN_BTN_ODL
+#define GPIO_PCH_WAKE_L GPIO_EC_PCH_WAKE_ODL
+#define GPIO_PCH_PWRBTN_L GPIO_EC_PCH_PWR_BTN_ODL
+#define GPIO_ENTERING_RW GPIO_EC_ENTERING_RW
+#define GPIO_SYS_RESET_L GPIO_SYS_RST_ODL
+#define GPIO_PCH_RSMRST_L GPIO_EC_PCH_RSMRST_L
+#define GPIO_CPU_PROCHOT GPIO_EC_PROCHOT_ODL
+#define GPIO_PCH_RTCRST GPIO_EC_PCH_RTCRST
+#define GPIO_PCH_SYS_PWROK GPIO_EC_PCH_SYS_PWROK
+#define GPIO_PCH_SLP_S0_L GPIO_SLP_S0_L
+#define GPIO_PCH_SLP_S3_L GPIO_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L GPIO_SLP_S4_L
+#define GPIO_TEMP_SENSOR_POWER GPIO_EN_ROA_RAILS
+#define GPIO_AC_PRESENT GPIO_BJ_ADP_PRESENT_L
 
 /*
  * There is no RSMRST input, so alias it to the output. This short-circuits
  * common_intel_x86_handle_rsmrst.
  */
-#define GPIO_PG_EC_RSMRST_ODL	GPIO_PCH_RSMRST_L
+#define GPIO_PG_EC_RSMRST_ODL GPIO_PCH_RSMRST_L
 
 #endif /* __CROS_EC_BOARD_H */
