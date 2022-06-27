@@ -15,13 +15,14 @@
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
-#define CONFIG_FLASH_SIZE_BYTES          0x00800000 /* 8MB spi flash */
+#define CONFIG_FLASH_SIZE_BYTES 0x00800000 /* 8MB spi flash */
 #define CONFIG_SPI_FLASH_REGS
 #define CONFIG_SPI_FLASH_W25Q64
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 
-#define CONFIG_KEYBOARD_PROTOCOL_MKBP /* Instead of 8042 protocol of keyboard */
+#define CONFIG_KEYBOARD_PROTOCOL_MKBP /* Instead of 8042 protocol of keyboard \
+				       */
 #define CONFIG_MKBP_USE_GPIO
 #define CONFIG_POWER_BUTTON
 #define CONFIG_VBOOT_HASH
@@ -38,34 +39,29 @@
 #define CONFIG_CMD_SCRATCHPAD
 #define CONFIG_CMD_I2CWEDGE
 
-#define CONFIG_UART_HOST                0
-#define CONFIG_FANS                     1
+#define CONFIG_UART_HOST 0
+#define CONFIG_FANS 1
 
 /* Optional feature - used by nuvoton */
-#define NPCX_UART_MODULE2    0 /* 0:GPIO10/11 1:GPIO64/65 as UART */
-#define NPCX_JTAG_MODULE2    0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG*/
-#define NPCX_TACH_SEL2       0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
+#define NPCX_UART_MODULE2 0 /* 0:GPIO10/11 1:GPIO64/65 as UART */
+#define NPCX_JTAG_MODULE2 0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG*/
+#define NPCX_TACH_SEL2 0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
 /* Enable SHI PU on transition to S0. Disable the PU otherwise for leakage. */
 #define NPCX_SHI_CS_PU
 /* Enable bypass since shi outputs invalid data when across 256B boundary */
 #define NPCX_SHI_BYPASS_OVER_256B
 
 /* Optional for testing */
-#undef  CONFIG_PSTORE
-#undef  CONFIG_LOW_POWER_IDLE           /* Deep Sleep Support */
+#undef CONFIG_PSTORE
+#undef CONFIG_LOW_POWER_IDLE /* Deep Sleep Support */
 
 /* Single I2C port, where the EC is the master. */
-#define I2C_PORT_MASTER         NPCX_I2C_PORT0_0
-#define I2C_PORT_HOST           0
+#define I2C_PORT_MASTER NPCX_I2C_PORT0_0
+#define I2C_PORT_HOST 0
 
 #ifndef __ASSEMBLER__
 
-enum adc_channel {
-	ADC_CH_0 = 0,
-	ADC_CH_1,
-	ADC_CH_2,
-	ADC_CH_COUNT
-};
+enum adc_channel { ADC_CH_0 = 0, ADC_CH_1, ADC_CH_2, ADC_CH_COUNT };
 
 enum pwm_channel {
 	PWM_CH_FAN,
