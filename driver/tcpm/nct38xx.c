@@ -30,8 +30,8 @@
 #error "Please upgrade your board configuration"
 #endif
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 static enum nct38xx_boot_type boot_type[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -74,9 +74,10 @@ static int nct38xx_init(int port)
 	 * accessory and change this bit (see b/186799392).
 	 */
 	if ((boot_type[port] == NCT38XX_BOOT_DEAD_BATTERY) &&
-				(reg & TCPC_REG_POWER_STATUS_DEBUG_ACC_CON))
+	    (reg & TCPC_REG_POWER_STATUS_DEBUG_ACC_CON))
 		CPRINTS("C%d: Booted in dead battery mode, not changing debug"
-			" control", port);
+			" control",
+			port);
 	else if (tcpc_config[port].flags & TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)
 		CPRINTS("C%d: NO_DEBUG_ACC_CONTROL", port);
 	else
@@ -90,8 +91,7 @@ static int nct38xx_init(int port)
 	 * [2] - SNKEN     : VBUS sink enable output enable
 	 * [0] - SRCEN     : VBUS source voltage enable output enable
 	 */
-	reg = NCT38XX_REG_CTRL_OUT_EN_SRCEN |
-	      NCT38XX_REG_CTRL_OUT_EN_SNKEN |
+	reg = NCT38XX_REG_CTRL_OUT_EN_SRCEN | NCT38XX_REG_CTRL_OUT_EN_SNKEN |
 	      NCT38XX_REG_CTRL_OUT_EN_CONNDIREN;
 
 	rv = tcpc_write(port, NCT38XX_REG_CTRL_OUT_EN, reg);
@@ -99,16 +99,13 @@ static int nct38xx_init(int port)
 		return rv;
 
 	/* Disable OVP */
-	rv = tcpc_update8(port,
-			  TCPC_REG_FAULT_CTRL,
-			  TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS,
-			  MASK_SET);
+	rv = tcpc_update8(port, TCPC_REG_FAULT_CTRL,
+			  TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS, MASK_SET);
 	if (rv)
 		return rv;
 
 	/* Enable VBus monitor and Disable FRS */
-	rv = tcpc_update8(port,
-			  TCPC_REG_POWER_CTRL,
+	rv = tcpc_update8(port, TCPC_REG_POWER_CTRL,
 			  (TCPC_REG_POWER_CTRL_VBUS_VOL_MONITOR_DIS |
 			   TCPC_REG_POWER_CTRL_FRS_ENABLE),
 			  MASK_CLR);
@@ -159,10 +156,7 @@ static int nct38xx_init(int port)
 		reg |= TCPC_REG_ALERT_VENDOR_DEF;
 	}
 
-	rv = tcpc_update16(port,
-			   TCPC_REG_ALERT_MASK,
-			   reg,
-			   MASK_SET);
+	rv = tcpc_update16(port, TCPC_REG_ALERT_MASK, reg, MASK_SET);
 
 	if (rv)
 		return rv;
@@ -172,10 +166,7 @@ static int nct38xx_init(int port)
 	      NCT38XX_REG_VBC_FAULT_CTL_VC_SCP_EN |
 	      NCT38XX_REG_VBC_FAULT_CTL_FAULT_VC_OFF;
 
-	rv = tcpc_update8(port,
-			  NCT38XX_REG_VBC_FAULT_CTL,
-			  reg,
-			  MASK_SET);
+	rv = tcpc_update8(port, NCT38XX_REG_VBC_FAULT_CTL, reg, MASK_SET);
 
 	return rv;
 }
@@ -218,13 +209,11 @@ static int nct38xx_tcpm_set_cc(int port, int pull)
 	 */
 	int rv;
 	enum mask_update_action action =
-			pull == TYPEC_CC_OPEN && tcpm_get_snk_ctrl(port) ?
-				MASK_CLR : MASK_SET;
+		pull == TYPEC_CC_OPEN && tcpm_get_snk_ctrl(port) ? MASK_CLR :
+								   MASK_SET;
 
-	rv = tcpc_update8(port,
-			  NCT38XX_REG_CTRL_OUT_EN,
-			  NCT38XX_REG_CTRL_OUT_EN_SNKEN,
-			  action);
+	rv = tcpc_update8(port, NCT38XX_REG_CTRL_OUT_EN,
+			  NCT38XX_REG_CTRL_OUT_EN_SNKEN, action);
 	if (rv)
 		return rv;
 
@@ -240,10 +229,8 @@ static int nct38xx_tcpm_set_snk_ctrl(int port, int enable)
 	 * USB_Cx_TCPC_VBSNK_EN_L will be driven high.
 	 */
 	if (!enable) {
-		rv = tcpc_update8(port,
-				  NCT38XX_REG_CTRL_OUT_EN,
-				  NCT38XX_REG_CTRL_OUT_EN_SNKEN,
-				  MASK_SET);
+		rv = tcpc_update8(port, NCT38XX_REG_CTRL_OUT_EN,
+				  NCT38XX_REG_CTRL_OUT_EN_SNKEN, MASK_SET);
 		if (rv)
 			return rv;
 	}
@@ -253,9 +240,9 @@ static int nct38xx_tcpm_set_snk_ctrl(int port, int enable)
 
 static inline int tcpc_read_alert_no_lpm_exit(int port, int *val)
 {
-	return tcpc_addr_read16_no_lpm_exit(port,
-					tcpc_config[port].i2c_info.addr_flags,
-					TCPC_REG_ALERT, val);
+	return tcpc_addr_read16_no_lpm_exit(
+		port, tcpc_config[port].i2c_info.addr_flags, TCPC_REG_ALERT,
+		val);
 }
 
 /* Map Type-C port to IOEX port */
@@ -326,10 +313,10 @@ static int nct3807_handle_fault(int port, int fault)
 		/* We don't use TCPC OVP, so just disable it */
 		if (fault & TCPC_REG_FAULT_STATUS_VBUS_OVER_VOLTAGE) {
 			/* Disable OVP */
-			rv = tcpc_update8(port,
-				  TCPC_REG_FAULT_CTRL,
-				  TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS,
-				  MASK_SET);
+			rv = tcpc_update8(
+				port, TCPC_REG_FAULT_CTRL,
+				TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS,
+				MASK_SET);
 			if (rv)
 				return rv;
 		}
@@ -354,57 +341,56 @@ __maybe_unused static int nct38xx_set_frs_enable(int port, int enable)
 	 * 2. Enable the FRS interrupt (already done in TCPCI alert init)
 	 * 3. Set POWER_CONTORL.FastRoleSwapEnable to 1
 	 */
-	RETURN_ERROR(tcpc_write16(port,
-				TCPC_REG_VBUS_SINK_DISCONNECT_THRESH,
-				enable ? 0x0000 :
-				TCPC_REG_VBUS_SINK_DISCONNECT_THRESH_DEFAULT));
+	RETURN_ERROR(tcpc_write16(
+		port, TCPC_REG_VBUS_SINK_DISCONNECT_THRESH,
+		enable ? 0x0000 :
+			 TCPC_REG_VBUS_SINK_DISCONNECT_THRESH_DEFAULT));
 
-	return tcpc_update8(port,
-			    TCPC_REG_POWER_CTRL,
+	return tcpc_update8(port, TCPC_REG_POWER_CTRL,
 			    TCPC_REG_POWER_CTRL_FRS_ENABLE,
 			    enable ? MASK_SET : MASK_CLR);
 }
 
 const struct tcpm_drv nct38xx_tcpm_drv = {
-	.init			= &nct38xx_tcpm_init,
-	.release		= &tcpci_tcpm_release,
-	.get_cc			= &tcpci_tcpm_get_cc,
+	.init = &nct38xx_tcpm_init,
+	.release = &tcpci_tcpm_release,
+	.get_cc = &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
+	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
 #endif
-	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &nct38xx_tcpm_set_cc,
-	.set_polarity		= &tcpci_tcpm_set_polarity,
+	.select_rp_value = &tcpci_tcpm_select_rp_value,
+	.set_cc = &nct38xx_tcpm_set_cc,
+	.set_polarity = &tcpci_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable	= &tcpci_tcpm_sop_prime_enable,
+	.sop_prime_enable = &tcpci_tcpm_sop_prime_enable,
 #endif
-	.set_vconn		= &tcpci_tcpm_set_vconn,
-	.set_msg_header		= &tcpci_tcpm_set_msg_header,
-	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
-	.get_message_raw	= &tcpci_tcpm_get_message_raw,
-	.transmit		= &tcpci_tcpm_transmit,
-	.tcpc_alert		= &nct38xx_tcpc_alert,
+	.set_vconn = &tcpci_tcpm_set_vconn,
+	.set_msg_header = &tcpci_tcpm_set_msg_header,
+	.set_rx_enable = &tcpci_tcpm_set_rx_enable,
+	.get_message_raw = &tcpci_tcpm_get_message_raw,
+	.transmit = &tcpci_tcpm_transmit,
+	.tcpc_alert = &nct38xx_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+	.tcpc_discharge_vbus = &tcpci_tcpc_discharge_vbus,
 #endif
 	.tcpc_enable_auto_discharge_disconnect =
-				  &tcpci_tcpc_enable_auto_discharge_disconnect,
-	.debug_accessory	= &tcpci_tcpc_debug_accessory,
+		&tcpci_tcpc_enable_auto_discharge_disconnect,
+	.debug_accessory = &tcpci_tcpc_debug_accessory,
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+	.drp_toggle = &tcpci_tcpc_drp_toggle,
 #endif
-	.get_snk_ctrl		= &tcpci_tcpm_get_snk_ctrl,
-	.set_snk_ctrl		= &nct38xx_tcpm_set_snk_ctrl,
-	.get_src_ctrl		= &tcpci_tcpm_get_src_ctrl,
-	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
-	.get_chip_info		= &tcpci_get_chip_info,
+	.get_snk_ctrl = &tcpci_tcpm_get_snk_ctrl,
+	.set_snk_ctrl = &nct38xx_tcpm_set_snk_ctrl,
+	.get_src_ctrl = &tcpci_tcpm_get_src_ctrl,
+	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
+	.get_chip_info = &tcpci_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+	.enter_low_power_mode = &tcpci_enter_low_power_mode,
 #endif
-	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
+	.set_bist_test_mode = &tcpci_set_bist_test_mode,
 #ifdef CONFIG_USB_PD_FRS
-	.set_frs_enable         = &nct38xx_set_frs_enable,
+	.set_frs_enable = &nct38xx_set_frs_enable,
 #endif
-	.handle_fault		= &nct3807_handle_fault,
+	.handle_fault = &nct3807_handle_fault,
 };
