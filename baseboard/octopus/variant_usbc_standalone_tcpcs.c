@@ -21,8 +21,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 /******************************************************************************/
 /* USB-C TPCP Configuration */
