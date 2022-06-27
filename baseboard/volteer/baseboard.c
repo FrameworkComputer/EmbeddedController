@@ -23,8 +23,8 @@
 #include "usbc_config.h"
 #endif
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
 
 /******************************************************************************/
 /* ADC configuration */
@@ -73,21 +73,21 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 /******************************************************************************/
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_1_CHARGER},
-	[TEMP_SENSOR_2_PP3300_REGULATOR] = {.name = "PP3300 Regulator",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_2_PP3300_REGULATOR},
-	[TEMP_SENSOR_3_DDR_SOC] = {.name = "DDR and SOC",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_3_DDR_SOC},
-	[TEMP_SENSOR_4_FAN] = {.name = "Fan",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_4_FAN},
+	[TEMP_SENSOR_1_CHARGER] = { .name = "Charger",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_1_CHARGER },
+	[TEMP_SENSOR_2_PP3300_REGULATOR] = { .name = "PP3300 Regulator",
+					     .type = TEMP_SENSOR_TYPE_BOARD,
+					     .read = get_temp_3v3_30k9_47k_4050b,
+					     .idx = ADC_TEMP_SENSOR_2_PP3300_REGULATOR },
+	[TEMP_SENSOR_3_DDR_SOC] = { .name = "DDR and SOC",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_3_DDR_SOC },
+	[TEMP_SENSOR_4_FAN] = { .name = "Fan",
+				.type = TEMP_SENSOR_TYPE_BOARD,
+				.read = get_temp_3v3_30k9_47k_4050b,
+				.idx = ADC_TEMP_SENSOR_4_FAN },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
