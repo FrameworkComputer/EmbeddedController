@@ -18,16 +18,11 @@
 
 /* Charge supplier priority: lower number indicates higher priority. */
 const int supplier_priority[] = {
-	[CHARGE_SUPPLIER_TEST1] = 0,
-	[CHARGE_SUPPLIER_TEST2] = 1,
-	[CHARGE_SUPPLIER_TEST3] = 1,
-	[CHARGE_SUPPLIER_TEST4] = 1,
-	[CHARGE_SUPPLIER_TEST5] = 3,
-	[CHARGE_SUPPLIER_TEST6] = 3,
-	[CHARGE_SUPPLIER_TEST7] = 5,
-	[CHARGE_SUPPLIER_TEST8] = 6,
-	[CHARGE_SUPPLIER_TEST9] = 6,
-	[CHARGE_SUPPLIER_TEST10] = 7,
+	[CHARGE_SUPPLIER_TEST1] = 0, [CHARGE_SUPPLIER_TEST2] = 1,
+	[CHARGE_SUPPLIER_TEST3] = 1, [CHARGE_SUPPLIER_TEST4] = 1,
+	[CHARGE_SUPPLIER_TEST5] = 3, [CHARGE_SUPPLIER_TEST6] = 3,
+	[CHARGE_SUPPLIER_TEST7] = 5, [CHARGE_SUPPLIER_TEST8] = 6,
+	[CHARGE_SUPPLIER_TEST9] = 6, [CHARGE_SUPPLIER_TEST10] = 7,
 };
 BUILD_ASSERT((int)CHARGE_SUPPLIER_COUNT == (int)CHARGE_SUPPLIER_TEST_COUNT);
 BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
@@ -39,8 +34,8 @@ static int new_power_request[CONFIG_USB_PD_PORT_MAX_COUNT];
 static enum pd_power_role power_role[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Callback functions called by CM on state change */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	active_charge_limit = charge_ma;
 }
@@ -156,8 +151,8 @@ static int test_initialization(void)
 	TEST_ASSERT(active_charge_port == CHARGE_PORT_NONE);
 
 	/* Update last pair and verify a charge port has been selected */
-	charge_manager_update_charge(CHARGE_SUPPLIER_COUNT-1,
-				     board_get_usb_pd_port_count()-1,
+	charge_manager_update_charge(CHARGE_SUPPLIER_COUNT - 1,
+				     board_get_usb_pd_port_count() - 1,
 				     &charge);
 	wait_for_charge_manager_refresh();
 	TEST_ASSERT(active_charge_port != CHARGE_PORT_NONE);
