@@ -31,8 +31,8 @@
 #include "gpio_list.h" /* Must come after other header files. */
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* Battery discharging over-current limit is 8A */
 #define BATT_OC_LIMIT -8000
