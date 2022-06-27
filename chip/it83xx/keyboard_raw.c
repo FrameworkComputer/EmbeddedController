@@ -111,7 +111,7 @@ test_mockable void keyboard_raw_drive_column(int col)
 	 * we are using).
 	 */
 	IT83XX_KBS_KSOH1 = (IT83XX_KBS_KSOH1 & ~KSOH_PIN_MASK) |
-		((mask >> 8) & KSOH_PIN_MASK);
+			   ((mask >> 8) & KSOH_PIN_MASK);
 	/* restore interrupts */
 	set_int_mask(int_mask);
 }
