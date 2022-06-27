@@ -24,32 +24,30 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#define CPRINTS(format, args...) cprints(CC_LOGOLED, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LOGOLED, format, ##args)
 
-#define LED_ON_LVL		100
-#define LED_OFF_LVL		0
-#define LED_BAT_S3_OFF_TIME_MS	3000
-#define LED_BAT_S3_TICK_MS	50
-#define LED_BAT_S3_PWM_RESCALE	5
-#define LED_TOTAL_TICKS		6
-#define TICKS_STEP1_BRIGHTER	0
-#define TICKS_STEP2_DIMMER	(1000 / LED_BAT_S3_TICK_MS)
-#define TICKS_STEP3_OFF		(2 * TICKS_STEP2_DIMMER)
-#define LED_ONE_SEC		(1000 / HOOK_TICK_INTERVAL_MS)
-#define LED_LOGO_TICK_SEC	(LED_ONE_SEC / 4)
+#define LED_ON_LVL 100
+#define LED_OFF_LVL 0
+#define LED_BAT_S3_OFF_TIME_MS 3000
+#define LED_BAT_S3_TICK_MS 50
+#define LED_BAT_S3_PWM_RESCALE 5
+#define LED_TOTAL_TICKS 6
+#define TICKS_STEP1_BRIGHTER 0
+#define TICKS_STEP2_DIMMER (1000 / LED_BAT_S3_TICK_MS)
+#define TICKS_STEP3_OFF (2 * TICKS_STEP2_DIMMER)
+#define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
+#define LED_LOGO_TICK_SEC (LED_ONE_SEC / 4)
 /* Total on/off duration in a period */
-#define PERIOD			(LED_LOGO_TICK_SEC * 2)
-#define LED_ON			1
-#define LED_OFF			EC_LED_COLOR_COUNT
-#define LED_EVENT_SUSPEND	TASK_EVENT_CUSTOM_BIT(0)
-#define LED_EVENT_200MS_TICK	TASK_EVENT_CUSTOM_BIT(1)
+#define PERIOD (LED_LOGO_TICK_SEC * 2)
+#define LED_ON 1
+#define LED_OFF EC_LED_COLOR_COUNT
+#define LED_EVENT_SUSPEND TASK_EVENT_CUSTOM_BIT(0)
+#define LED_EVENT_200MS_TICK TASK_EVENT_CUSTOM_BIT(1)
 
 static int tick;
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
-	EC_LED_ID_POWER_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
+					     EC_LED_ID_POWER_LED };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 static void led_set_color_battery(enum ec_led_colors color)
@@ -94,11 +92,11 @@ void led_set_color_power(int onoff_status)
 	/* primus logo led and power led have same behavior. */
 	if (onoff_status == LED_ON) {
 		pwm_set_duty(PWM_CH_TKP_A_LED_N, LED_ON_LVL);
-		pwm_set_duty(PWM_CH_LED4,        LED_ON_LVL);
+		pwm_set_duty(PWM_CH_LED4, LED_ON_LVL);
 	} else {
 		/* LED_OFF and unsupported colors */
 		pwm_set_duty(PWM_CH_TKP_A_LED_N, LED_OFF_LVL);
-		pwm_set_duty(PWM_CH_LED4,        LED_OFF_LVL);
+		pwm_set_duty(PWM_CH_LED4, LED_OFF_LVL);
 	}
 }
 
@@ -176,7 +174,7 @@ static void suspend_led_update(void)
 		 * if we are not transitioning to suspend, we should break here.
 		 */
 		if (!chipset_in_or_transitioning_to_state(
-			CHIPSET_STATE_ANY_SUSPEND))
+			    CHIPSET_STATE_ANY_SUSPEND))
 			break;
 
 		/* 1s gradual on, 1s gradual off, 3s off */
@@ -187,9 +185,9 @@ static void suspend_led_update(void)
 			 * behavior.
 			 */
 			pwm_set_duty(PWM_CH_TKP_A_LED_N,
-				tick * LED_BAT_S3_PWM_RESCALE);
+				     tick * LED_BAT_S3_PWM_RESCALE);
 			pwm_set_duty(PWM_CH_LED4,
-				tick * LED_BAT_S3_PWM_RESCALE);
+				     tick * LED_BAT_S3_PWM_RESCALE);
 			msleep(LED_BAT_S3_TICK_MS);
 		} else if (tick <= TICKS_STEP3_OFF) {
 			/* decrease 5 duty every 50ms until PWM=0
@@ -197,10 +195,12 @@ static void suspend_led_update(void)
 			 * A-cover and power button led are shared same
 			 * behavior.
 			 */
-			pwm_set_duty(PWM_CH_TKP_A_LED_N, (TICKS_STEP3_OFF
-				- tick) * LED_BAT_S3_PWM_RESCALE);
-			pwm_set_duty(PWM_CH_LED4, (TICKS_STEP3_OFF
-				- tick) * LED_BAT_S3_PWM_RESCALE);
+			pwm_set_duty(PWM_CH_TKP_A_LED_N,
+				     (TICKS_STEP3_OFF - tick) *
+					     LED_BAT_S3_PWM_RESCALE);
+			pwm_set_duty(PWM_CH_LED4,
+				     (TICKS_STEP3_OFF - tick) *
+					     LED_BAT_S3_PWM_RESCALE);
 			msleep(LED_BAT_S3_TICK_MS);
 		} else {
 			tick = TICKS_STEP1_BRIGHTER;
