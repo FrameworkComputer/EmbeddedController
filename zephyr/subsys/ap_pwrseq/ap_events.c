@@ -71,7 +71,8 @@ void ap_power_ev_send_callbacks(enum ap_power_events event)
 		return;
 	}
 	data.event = event;
-	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&callbacks, cb, tmp, node) {
+	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&callbacks, cb, tmp, node)
+	{
 		if (cb->events & event) {
 			cb->handler(cb, data);
 		}
