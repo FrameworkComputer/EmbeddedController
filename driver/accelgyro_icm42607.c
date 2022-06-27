@@ -27,11 +27,11 @@
 #endif
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
 STATIC_IF(ACCELGYRO_ICM42607_INT_ENABLE)
-	volatile uint32_t last_interrupt_timestamp;
+volatile uint32_t last_interrupt_timestamp;
 
 static int icm_switch_on_mclk(const struct motion_sensor_t *s)
 {
@@ -156,8 +156,7 @@ static int icm42607_normalize(const struct motion_sensor_t *s, intv3_t v,
 	v[Z] = (int16_t)UINT16_FROM_BYTE_ARRAY_LE(raw, 4);
 
 	/* check if data is valid */
-	if (v[X] == ICM42607_INVALID_DATA &&
-	    v[Y] == ICM42607_INVALID_DATA &&
+	if (v[X] == ICM42607_INVALID_DATA && v[Y] == ICM42607_INVALID_DATA &&
 	    v[Z] == ICM42607_INVALID_DATA) {
 		return EC_ERROR_INVAL;
 	}
@@ -212,8 +211,8 @@ static int __maybe_unused icm42607_flush_fifo(const struct motion_sensor_t *s)
 }
 
 /* use FIFO threshold interrupt on INT1 */
-#define ICM42607_FIFO_INT_EN		ICM42607_FIFO_THS_INT1_EN
-#define ICM42607_FIFO_INT_STATUS	ICM42607_FIFO_THS_INT
+#define ICM42607_FIFO_INT_EN ICM42607_FIFO_THS_INT1_EN
+#define ICM42607_FIFO_INT_STATUS ICM42607_FIFO_THS_INT
 
 static int __maybe_unused icm42607_enable_fifo(const struct motion_sensor_t *s,
 					       int enable)
@@ -363,8 +362,8 @@ static int __maybe_unused icm42607_load_fifo(struct motion_sensor_t *s,
 		return ret;
 
 	for (i = 0; i < count; i += size) {
-		size = icm_fifo_decode_packet(&st->fifo_buffer[i],
-				&accel, &gyro);
+		size = icm_fifo_decode_packet(&st->fifo_buffer[i], &accel,
+					      &gyro);
 		/* exit if error or FIFO is empty */
 		if (size <= 0)
 			return -size;
@@ -464,7 +463,7 @@ static int icm42607_config_interrupt(const struct motion_sensor_t *s)
 	return EC_SUCCESS;
 }
 
-#endif	/* ACCELGYRO_ICM42607_INT_ENABLE */
+#endif /* ACCELGYRO_ICM42607_INT_ENABLE */
 
 static int icm42607_enable_sensor(const struct motion_sensor_t *s, int enable)
 {
@@ -571,7 +570,7 @@ static int icm42607_set_data_rate(const struct motion_sensor_t *s, int rate,
 
 	if (rate > 0) {
 		if ((normalized_rate < min_rate) ||
-				(normalized_rate > max_rate))
+		    (normalized_rate > max_rate))
 			return EC_RES_INVALID_PARAM;
 	}
 
@@ -612,8 +611,7 @@ out_unlock:
 	return ret;
 }
 
-static int icm42607_set_range(struct motion_sensor_t *s, int range,
-			      int rnd)
+static int icm42607_set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int reg, ret, reg_val;
 	int newrange;
@@ -1016,7 +1014,7 @@ static int icm42607_init_config(const struct motion_sensor_t *s)
 	if (ret)
 		return ret;
 
-	ret = icm_write8(s, ICM42607_REG_APEX_CONFIG1,  0x02);
+	ret = icm_write8(s, ICM42607_REG_APEX_CONFIG1, 0x02);
 	if (ret)
 		return ret;
 
