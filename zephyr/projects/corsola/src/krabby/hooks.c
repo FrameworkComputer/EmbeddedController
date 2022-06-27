@@ -15,15 +15,16 @@
 
 static void board_i2c3_ctrl(bool enable)
 {
-	if (DEVICE_DT_GET(DT_GPIO_CTLR_BY_IDX(DT_NODELABEL(i2c3),
-	    scl_gpios, 0)) == DEVICE_DT_GET(DT_NODELABEL(gpiof))) {
+	if (DEVICE_DT_GET(
+		    DT_GPIO_CTLR_BY_IDX(DT_NODELABEL(i2c3), scl_gpios, 0)) ==
+	    DEVICE_DT_GET(DT_NODELABEL(gpiof))) {
 		/*
 		 * TODO(b/226296649):
 		 * Use pinctrl APIs to enable/disable an interface.
 		 */
 		struct gctrl_it8xxx2_regs *const gctrl_base =
-			(struct gctrl_it8xxx2_regs *)
-				DT_REG_ADDR(DT_NODELABEL(gctrl));
+			(struct gctrl_it8xxx2_regs *)DT_REG_ADDR(
+				DT_NODELABEL(gctrl));
 
 		if (enable) {
 			gctrl_base->GCTRL_PMER3 |= IT8XXX2_GCTRL_SMB3PSEL;
