@@ -7,4 +7,7 @@
 
 #define RT1739_BC12_COMPAT richtek_rt1739_bc12
 
-#define BC12_CHIP_RT1739(id) { .drv = &rt1739_bc12_drv, },
+#define BC12_CHIP_RT1739(id)             \
+	{                                \
+		.drv = &rt1739_bc12_drv, \
+	},
