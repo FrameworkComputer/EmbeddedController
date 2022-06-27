@@ -12,15 +12,15 @@
 #include "util.h"
 
 static const struct charger_info mock_charger_info = {
-	.name         = "MockCharger",
-	.voltage_max  = 19200,
-	.voltage_min  = 1024,
+	.name = "MockCharger",
+	.voltage_max = 19200,
+	.voltage_min = 1024,
 	.voltage_step = 16,
-	.current_max  = 8192,
-	.current_min  = 128,
+	.current_max = 8192,
+	.current_min = 128,
 	.current_step = 128,
-	.input_current_max  = 8064,
-	.input_current_min  = 128,
+	.input_current_max = 8064,
+	.input_current_min = 128,
 	.input_current_step = 128,
 };
 
@@ -37,7 +37,6 @@ static const struct charger_info *mock_get_info(int chgnum)
 	return &mock_charger_info;
 }
 
-
 static enum ec_error_list mock_get_status(int chgnum, int *status)
 {
 	*status = CHARGER_LEVEL_2;
@@ -46,7 +45,6 @@ static enum ec_error_list mock_get_status(int chgnum, int *status)
 
 	return EC_SUCCESS;
 }
-
 
 static enum ec_error_list mock_set_mode(int chgnum, int mode)
 {
@@ -57,13 +55,11 @@ static enum ec_error_list mock_set_mode(int chgnum, int mode)
 	return EC_SUCCESS;
 }
 
-
 static enum ec_error_list mock_get_current(int chgnum, int *current)
 {
 	*current = mock_current;
 	return EC_SUCCESS;
 }
-
 
 static enum ec_error_list mock_set_current(int chgnum, int current)
 {
@@ -86,7 +82,6 @@ static enum ec_error_list mock_get_voltage(int chgnum, int *voltage)
 	return EC_SUCCESS;
 }
 
-
 static enum ec_error_list mock_set_voltage(int chgnum, int voltage)
 {
 	mock_voltage = voltage;
@@ -94,13 +89,11 @@ static enum ec_error_list mock_set_voltage(int chgnum, int voltage)
 	return EC_SUCCESS;
 }
 
-
 static enum ec_error_list mock_get_option(int chgnum, int *option)
 {
 	*option = mock_option;
 	return EC_SUCCESS;
 }
-
 
 static enum ec_error_list mock_set_option(int chgnum, int option)
 {
@@ -108,12 +101,10 @@ static enum ec_error_list mock_set_option(int chgnum, int option)
 	return EC_SUCCESS;
 }
 
-
 static enum ec_error_list mock_manufacturer_id(int chgnum, int *id)
 {
 	return EC_SUCCESS;
 }
-
 
 static enum ec_error_list mock_device_id(int chgnum, int *id)
 {
@@ -126,7 +117,6 @@ static enum ec_error_list mock_get_input_current_limit(int chgnum,
 	*input_current = mock_input_current;
 	return EC_SUCCESS;
 }
-
 
 static enum ec_error_list mock_set_input_current_limit(int chgnum, int current)
 {
@@ -143,7 +133,6 @@ static enum ec_error_list mock_set_input_current_limit(int chgnum, int current)
 	mock_input_current = current;
 	return EC_SUCCESS;
 }
-
 
 static enum ec_error_list mock_post_init(int chgnum)
 {
