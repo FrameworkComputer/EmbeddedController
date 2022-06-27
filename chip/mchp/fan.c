@@ -38,7 +38,6 @@ static int rpm_setting;
 static int duty_setting;
 static int in_rpm_mode = 1;
 
-
 static void clear_status(void)
 {
 	/* Clear DRIVE_FAIL, FAN_SPIN, and FAN_STALL bits */
@@ -78,14 +77,14 @@ void fan_set_duty(int ch, int percent)
 
 	duty_setting = percent;
 	MCHP_FAN_SETTING(0) = (percent * MAX_FAN_DRIVER_SETTING / 100)
-		<< FAN_DRIVER_SETTING_SHIFT;
+			      << FAN_DRIVER_SETTING_SHIFT;
 	clear_status();
 }
 
 int fan_get_duty(int ch)
 {
-	duty_setting = (MCHP_FAN_SETTING(0) >> FAN_DRIVER_SETTING_SHIFT)
-		* 100 / MAX_FAN_DRIVER_SETTING;
+	duty_setting = (MCHP_FAN_SETTING(0) >> FAN_DRIVER_SETTING_SHIFT) * 100 /
+		       MAX_FAN_DRIVER_SETTING;
 	return duty_setting;
 }
 
