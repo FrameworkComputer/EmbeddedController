@@ -16,22 +16,16 @@
 #include "tfdp_chip.h"
 
 #define CPUTS(outstr) cputs(CC_PWM, outstr)
-#define CPRINTS(format, args...) cprints(CC_PWM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_PWM, format, ##args)
 
 /* Bit map of PWM channels that must remain active during low power idle. */
 static uint32_t pwm_keep_awake_mask;
 
 /* Table of PWM PCR sleep enable register index and bit position. */
 static const uint16_t pwm_pcr[] = {
-	MCHP_PCR_PWM0,
-	MCHP_PCR_PWM1,
-	MCHP_PCR_PWM2,
-	MCHP_PCR_PWM3,
-	MCHP_PCR_PWM4,
-	MCHP_PCR_PWM5,
-	MCHP_PCR_PWM6,
-	MCHP_PCR_PWM7,
-	MCHP_PCR_PWM8,
+	MCHP_PCR_PWM0, MCHP_PCR_PWM1, MCHP_PCR_PWM2,
+	MCHP_PCR_PWM3, MCHP_PCR_PWM4, MCHP_PCR_PWM5,
+	MCHP_PCR_PWM6, MCHP_PCR_PWM7, MCHP_PCR_PWM8,
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_pcr) == MCHP_PWM_ID_MAX);
 
@@ -90,8 +84,8 @@ void pwm_keep_awake(void)
 static void pwm_configure(int ch, int active_low, int clock_low)
 {
 	MCHP_PWM_CFG(ch) = (15 << 3) /* divider = 16 */
-		| (active_low ? BIT(2) : 0)
-		| (clock_low  ? BIT(1) : 0);
+			   | (active_low ? BIT(2) : 0) |
+			   (clock_low ? BIT(1) : 0);
 }
 
 static void pwm_slp_en(int pwm_id, int sleep_en)
