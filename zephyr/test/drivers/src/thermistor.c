@@ -16,11 +16,10 @@
 #include "temp_sensor/temp_sensor.h"
 #include "test/drivers/test_state.h"
 
-
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)
 
-#define ADC_DEVICE_NODE		DT_NODELABEL(adc0)
+#define ADC_DEVICE_NODE DT_NODELABEL(adc0)
 
 /* TODO replace counting macros with DT macro when
  * https://github.com/zephyrproject-rtos/zephyr/issues/38715 lands
@@ -33,7 +32,7 @@
 	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor, _ACCUMULATOR) 0
 
 /* Conversion of temperature doesn't need to be 100% accurate */
-#define TEMP_EPS	2
+#define TEMP_EPS 2
 
 #define A_VALID_VOLTAGE 1000
 /**
@@ -57,9 +56,8 @@ ZTEST_USER(thermistor, test_thermistor_power_pin)
 	     sensor_idx++) {
 		const struct temp_sensor_t *sensor = &temp_sensors[sensor_idx];
 
-		zassert_ok(adc_emul_const_value_set(adc_dev,
-						   sensor->idx,
-						   A_VALID_VOLTAGE),
+		zassert_ok(adc_emul_const_value_set(adc_dev, sensor->idx,
+						    A_VALID_VOLTAGE),
 			   "adc_emul_value_func_set() failed on %s",
 			   sensor->name);
 	}
@@ -135,26 +133,26 @@ static int resistance_47kohm_B4050(int t)
 	/* Thermistor manufacturer resistance lookup table*/
 	int r_table[] = {
 		155700, 147900, 140600, 133700, 127200, /* 0*C  - 4*C */
-		121000, 115100, 109600, 104300, 99310,  /* 5*C  - 9*C */
-		94600,  90130,  85890,  81870,  78070,  /* 10*C - 14*C */
-		74450,  71020,  67770,  64680,  61750,  /* 15*C - 19*C */
-		58970,  56320,  53810,  51430,  49160,  /* 20*C - 24*C */
-		47000,  44950,  42990,  41130,  39360,  /* 25*C - 29*C */
-		37680,  36070,  34540,  33080,  31690,  /* 30*C - 34*C */
-		30360,  29100,  27900,  26750,  25650,  /* 35*C - 39*C */
-		24610,  23610,  22660,  21750,  20880,  /* 40*C - 44*C */
-		20050,  19260,  18500,  17780,  17090,  /* 45*C - 49*C */
-		16430,  15800,  15200,  14620,  14070,  /* 50*C - 54*C */
-		13540,  13030,  12550,  12090,  11640,  /* 55*C - 59*C */
-		11210,  10800,  10410,  10040,  9676,   /* 60*C - 64*C */
-		9331,   8999,   8680,   8374,   8081,   /* 65*C - 69*C */
-		7799,   7528,   7268,   7018,   6777,   /* 70*C - 74*C */
-		6546,   6324,   6111,   5906,   5708,   /* 75*C - 79*C */
-		5518,   5335,   5160,   4990,   4827,   /* 80*C - 84*C */
-		4671,   4519,   4374,   4233,   4098,   /* 85*C - 89*C */
-		3968,   3842,   3721,   3605,   3492,   /* 90*C - 94*C */
-		3384,   3279,   3179,   3082,   2988,   /* 95*C - 99*C */
-		2898                                    /* 100*C */
+		121000, 115100, 109600, 104300, 99310, /* 5*C  - 9*C */
+		94600,	90130,	85890,	81870,	78070, /* 10*C - 14*C */
+		74450,	71020,	67770,	64680,	61750, /* 15*C - 19*C */
+		58970,	56320,	53810,	51430,	49160, /* 20*C - 24*C */
+		47000,	44950,	42990,	41130,	39360, /* 25*C - 29*C */
+		37680,	36070,	34540,	33080,	31690, /* 30*C - 34*C */
+		30360,	29100,	27900,	26750,	25650, /* 35*C - 39*C */
+		24610,	23610,	22660,	21750,	20880, /* 40*C - 44*C */
+		20050,	19260,	18500,	17780,	17090, /* 45*C - 49*C */
+		16430,	15800,	15200,	14620,	14070, /* 50*C - 54*C */
+		13540,	13030,	12550,	12090,	11640, /* 55*C - 59*C */
+		11210,	10800,	10410,	10040,	9676, /* 60*C - 64*C */
+		9331,	8999,	8680,	8374,	8081, /* 65*C - 69*C */
+		7799,	7528,	7268,	7018,	6777, /* 70*C - 74*C */
+		6546,	6324,	6111,	5906,	5708, /* 75*C - 79*C */
+		5518,	5335,	5160,	4990,	4827, /* 80*C - 84*C */
+		4671,	4519,	4374,	4233,	4098, /* 85*C - 89*C */
+		3968,	3842,	3721,	3605,	3492, /* 90*C - 94*C */
+		3384,	3279,	3179,	3082,	2988, /* 95*C - 99*C */
+		2898 /* 100*C */
 	};
 
 	t -= 273;
@@ -188,8 +186,7 @@ static int adc_temperature_func(const struct device *dev, unsigned int channel,
 {
 	struct thermistor_state *s = (struct thermistor_state *)param;
 
-	*result = volt_divider(s->v,
-			       s->r,
+	*result = volt_divider(s->v, s->r,
 			       resistance_47kohm_B4050(s->temp_expected));
 
 	return 0;
@@ -211,8 +208,7 @@ static void do_thermistor_test(const struct temp_sensor_t *temp_sensor,
 	zassert_not_null(adc_dev, "Cannot get ADC device");
 
 	/* Setup ADC channel */
-	zassert_ok(adc_emul_value_func_set(adc_dev,
-					   temp_sensor->idx,
+	zassert_ok(adc_emul_value_func_set(adc_dev, temp_sensor->idx,
 					   adc_temperature_func, &state),
 		   "adc_emul_value_func_set() failed on %s", temp_sensor->name);
 
@@ -225,8 +221,9 @@ static void do_thermistor_test(const struct temp_sensor_t *temp_sensor,
 	for (temp_expected = 273; temp_expected <= 373; temp_expected++) {
 		state.temp_expected = temp_expected;
 		zassert_equal(EC_SUCCESS,
-			temp_sensor->zephyr_info->read(temp_sensor, &temp),
-			"failed on %s", temp_sensor->name);
+			      temp_sensor->zephyr_info->read(temp_sensor,
+							     &temp),
+			      "failed on %s", temp_sensor->name);
 		zassert_within(temp_expected, temp, TEMP_EPS,
 			       "Expected %d*K, got %d*K on %s", temp_expected,
 			       temp, temp_sensor->name);
