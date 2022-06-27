@@ -12,7 +12,7 @@
 #include "i2c.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /*
  * Authenticate the battery connected.
@@ -26,8 +26,8 @@ static bool authenticate_battery_type(int index, char *manuf_name)
 {
 	char device_name[32];
 
-	const struct fuel_gauge_info * const fuel_gauge =
-			&board_battery_info[index].fuel_gauge;
+	const struct fuel_gauge_info *const fuel_gauge =
+		&board_battery_info[index].fuel_gauge;
 	int len = 0;
 
 	/* check for valid index */
@@ -40,17 +40,14 @@ static bool authenticate_battery_type(int index, char *manuf_name)
 
 	/* device name is specified in table */
 	if (fuel_gauge->device_name != NULL) {
-
 		/* Get the device name */
-		if (battery_device_name(device_name,
-				sizeof(device_name)))
+		if (battery_device_name(device_name, sizeof(device_name)))
 			return false;
 
 		len = strlen(fuel_gauge->device_name);
 
 		/* device name mismatch */
-		if (strncasecmp(device_name, fuel_gauge->device_name,
-					len))
+		if (strncasecmp(device_name, fuel_gauge->device_name, len))
 			return false;
 	}
 
@@ -70,7 +67,7 @@ static int battery_get_fixed_battery_type(void)
 {
 	if (fixed_battery_type == BATTERY_TYPE_UNINITIALIZED) {
 		CPRINTS("Warning: Battery type is not Initialized! "
-				"Setting to default battery type.\n");
+			"Setting to default battery type.\n");
 		fixed_battery_type = DEFAULT_BATTERY_TYPE;
 	}
 
@@ -144,7 +141,8 @@ static inline const struct board_batt_params *get_batt_params(void)
 	int type = get_battery_type();
 
 	return &board_battery_info[type == BATTERY_TYPE_COUNT ?
-		board_get_default_battery_type() : type];
+					   board_get_default_battery_type() :
+					   type];
 }
 
 const struct battery_info *battery_get_info(void)
@@ -202,10 +200,10 @@ int board_cut_off_battery(void)
 
 	if (board_battery_info[type].fuel_gauge.ship_mode.wb_support)
 		rv = cut_off_battery_block_write(
-			  &board_battery_info[type].fuel_gauge.ship_mode);
+			&board_battery_info[type].fuel_gauge.ship_mode);
 	else
 		rv = cut_off_battery_sb_write(
-			  &board_battery_info[type].fuel_gauge.ship_mode);
+			&board_battery_info[type].fuel_gauge.ship_mode);
 
 	return rv ? EC_RES_ERROR : EC_RES_SUCCESS;
 }
@@ -308,8 +306,7 @@ enum battery_disconnect_state battery_get_disconnect_state(void)
 	if ((reg & board_battery_info[type].fuel_gauge.fet.reg_mask) ==
 	    board_battery_info[type].fuel_gauge.fet.disconnect_val) {
 		CPRINTS("Batt disconnected: reg 0x%04x mask 0x%04x disc 0x%04x",
-			reg,
-			board_battery_info[type].fuel_gauge.fet.reg_mask,
+			reg, board_battery_info[type].fuel_gauge.fet.reg_mask,
 			board_battery_info[type].fuel_gauge.fet.disconnect_val);
 		return BATTERY_DISCONNECTED;
 	}
@@ -326,8 +323,9 @@ int battery_imbalance_mv(void)
 	 * If battery type is unknown, we cannot safely access non-standard
 	 * registers.
 	 */
-	return (type == BATTERY_TYPE_COUNT) ? 0 :
-		board_battery_info[type].fuel_gauge.imbalance_mv();
+	return (type == BATTERY_TYPE_COUNT) ?
+		       0 :
+		       board_battery_info[type].fuel_gauge.imbalance_mv();
 }
 
 int battery_default_imbalance_mv(void)
