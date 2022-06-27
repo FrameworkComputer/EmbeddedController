@@ -16,22 +16,22 @@
  *
  * There is no load/store exclusive on ARMv6-M, just disable interrupts
  */
-#define ATOMIC_OP(asm_op, a, v)					\
-({								\
-	uint32_t reg0, reg1;					\
-								\
-	__asm__ __volatile__(".syntax unified\n"		\
-			     "   cpsid i\n"			\
-			     "   ldr  %0, [%2]\n"		\
-			     "   mov  %1, %0\n"			\
-			     #asm_op" %0, %0, %3\n"		\
-			     "   str  %0, [%2]\n"		\
-			     "   cpsie i\n"			\
-			     : "=&l"(reg0), "=&l"(reg1)		\
-			     : "l"(a), "r"(v)			\
-			     : "cc", "memory");			\
-	reg1;							\
-})
+#define ATOMIC_OP(asm_op, a, v)                                 \
+	({                                                      \
+		uint32_t reg0, reg1;                            \
+                                                                \
+		__asm__ __volatile__(".syntax unified\n"        \
+				     "   cpsid i\n"             \
+				     "   ldr  %0, [%2]\n"       \
+				     "   mov  %1, %0\n" #asm_op \
+				     " %0, %0, %3\n"            \
+				     "   str  %0, [%2]\n"       \
+				     "   cpsie i\n"             \
+				     : "=&l"(reg0), "=&l"(reg1) \
+				     : "l"(a), "r"(v)           \
+				     : "cc", "memory");         \
+		reg1;                                           \
+	})
 
 static inline atomic_val_t atomic_clear_bits(atomic_t *addr, atomic_val_t bits)
 {
@@ -62,8 +62,8 @@ static inline atomic_val_t atomic_clear(atomic_t *addr)
 			     "   ldr     %0, [%1]\n"
 			     "   str     %2, [%1]\n"
 			     "   cpsie   i\n"
-			     : "=&l" (ret)
-			     : "l" (addr), "r" (0)
+			     : "=&l"(ret)
+			     : "l"(addr), "r"(0)
 			     : "cc", "memory");
 
 	return ret;
@@ -74,4 +74,4 @@ static inline atomic_val_t atomic_and(atomic_t *addr, atomic_val_t bits)
 	return ATOMIC_OP(ands, addr, bits);
 }
 
-#endif  /* __CROS_EC_ATOMIC_H */
+#endif /* __CROS_EC_ATOMIC_H */
