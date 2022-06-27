@@ -23,8 +23,8 @@
 #include "system.h"
 #include "usb_mux.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* Sensor */
 static struct mutex g_base_mutex;
@@ -35,17 +35,13 @@ static struct kionix_accel_data g_kx022_data;
 static struct accelgyro_saved_data_t g_bma422_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					      { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(-1) } };
 
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -201,8 +197,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* USB Mux */
 
-static int board_ps8762_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+static int board_ps8762_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	/* Make sure the PS8802 is awake */
 	RETURN_ERROR(ps8802_i2c_wake(me));
@@ -210,21 +205,18 @@ static int board_ps8762_mux_set(const struct usb_mux *me,
 	/* USB specific config */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/* Boost the USB gain */
-		RETURN_ERROR(ps8802_i2c_field_update16(me,
-					PS8802_REG_PAGE2,
-					PS8802_REG2_USB_SSEQ_LEVEL,
-					PS8802_USBEQ_LEVEL_UP_MASK,
-					PS8802_USBEQ_LEVEL_UP_12DB));
+		RETURN_ERROR(ps8802_i2c_field_update16(
+			me, PS8802_REG_PAGE2, PS8802_REG2_USB_SSEQ_LEVEL,
+			PS8802_USBEQ_LEVEL_UP_MASK,
+			PS8802_USBEQ_LEVEL_UP_12DB));
 	}
 
 	/* DP specific config */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Boost the DP gain */
-		RETURN_ERROR(ps8802_i2c_field_update8(me,
-					PS8802_REG_PAGE2,
-					PS8802_REG2_DPEQ_LEVEL,
-					PS8802_DPEQ_LEVEL_UP_MASK,
-					PS8802_DPEQ_LEVEL_UP_12DB));
+		RETURN_ERROR(ps8802_i2c_field_update8(
+			me, PS8802_REG_PAGE2, PS8802_REG2_DPEQ_LEVEL,
+			PS8802_DPEQ_LEVEL_UP_MASK, PS8802_DPEQ_LEVEL_UP_12DB));
 	}
 
 	return EC_SUCCESS;
@@ -232,11 +224,10 @@ static int board_ps8762_mux_set(const struct usb_mux *me,
 
 static int board_ps8762_mux_init(const struct usb_mux *me)
 {
-	return ps8802_i2c_field_update8(
-			me, PS8802_REG_PAGE1,
-			PS8802_REG_DCIRX,
-			PS8802_AUTO_DCI_MODE_DISABLE | PS8802_FORCE_DCI_MODE,
-			PS8802_AUTO_DCI_MODE_DISABLE);
+	return ps8802_i2c_field_update8(me, PS8802_REG_PAGE1, PS8802_REG_DCIRX,
+					PS8802_AUTO_DCI_MODE_DISABLE |
+						PS8802_FORCE_DCI_MODE,
+					PS8802_AUTO_DCI_MODE_DISABLE);
 }
 
 static int board_anx3443_mux_set(const struct usb_mux *me,
