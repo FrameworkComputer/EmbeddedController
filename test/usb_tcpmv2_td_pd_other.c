@@ -57,7 +57,7 @@ int test_retry_count_sop(void)
 	 * The retry count for PD3 should be 2.
 	 */
 	TEST_EQ(verify_tcpci_tx_retry_count(TCPCI_MSG_SOP, 0,
-				PD_DATA_SOURCE_CAP, 2),
+					    PD_DATA_SOURCE_CAP, 2),
 		EC_SUCCESS, "%d");
 	return EC_SUCCESS;
 }
