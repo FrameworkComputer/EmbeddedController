@@ -6,8 +6,8 @@
 #ifndef __CROS_EC_VIRTUAL_BATTERY_H
 #define __CROS_EC_VIRTUAL_BATTERY_H
 
-#if defined(CONFIG_I2C_VIRTUAL_BATTERY) && defined(CONFIG_BATTERY_SMART) \
-	&& !defined(VIRTUAL_BATTERY_ADDR_FLAGS)
+#if defined(CONFIG_I2C_VIRTUAL_BATTERY) && defined(CONFIG_BATTERY_SMART) && \
+	!defined(VIRTUAL_BATTERY_ADDR_FLAGS)
 #define VIRTUAL_BATTERY_ADDR_FLAGS BATTERY_ADDR_FLAGS
 #endif
 
@@ -21,10 +21,8 @@
  * @return EC_SUCCESS if successful, non-zero if error.
  *
  */
-int virtual_battery_operation(const uint8_t *batt_cmd_head,
-			      uint8_t *dest,
-			      int read_len,
-			      int write_len);
+int virtual_battery_operation(const uint8_t *batt_cmd_head, uint8_t *dest,
+			      int read_len, int write_len);
 
 /**
  * Parse a command for virtual battery function.
@@ -39,10 +37,9 @@ int virtual_battery_operation(const uint8_t *batt_cmd_head,
  * @param out		Data to send
  * @return EC_SUCCESS if successful, non-zero if error.
  */
-int virtual_battery_handler(struct ec_response_i2c_passthru *resp,
-				   int in_len, int *err_code, int xferflags,
-				   int read_len, int write_len,
-				   const uint8_t *out);
+int virtual_battery_handler(struct ec_response_i2c_passthru *resp, int in_len,
+			    int *err_code, int xferflags, int read_len,
+			    int write_len, const uint8_t *out);
 
 /* Reset the state machine and static variables. */
 void reset_parse_state(void);
