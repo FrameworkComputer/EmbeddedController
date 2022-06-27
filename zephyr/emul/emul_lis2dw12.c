@@ -295,21 +295,21 @@ void lis2dw12_emul_clear_accel_reading(const struct emul *emul)
 	data->status_reg &= ~LIS2DW12_STS_DRDY_UP;
 }
 
-#define INIT_LIS2DW12(n)                                                  \
+#define INIT_LIS2DW12(n)                                                    \
 	static struct lis2dw12_emul_data lis2dw12_emul_data_##n = {       \
 		.common = {                                               \
 			.write_byte = lis2dw12_emul_write_byte,           \
 			.read_byte = lis2dw12_emul_read_byte,             \
 		},                                                        \
-	};                                                                \
+	}; \
 	static const struct lis2dw12_emul_cfg lis2dw12_emul_cfg_##n = {   \
 		.common = {                                               \
 			.i2c_label = DT_INST_BUS_LABEL(n),                \
 			.dev_label = DT_INST_LABEL(n),                    \
 			.addr = DT_INST_REG_ADDR(n),                      \
 		},                                                        \
-	};                                                                \
-	EMUL_DEFINE(emul_lis2dw12_init, DT_DRV_INST(n),                   \
+	}; \
+	EMUL_DEFINE(emul_lis2dw12_init, DT_DRV_INST(n),                     \
 		    &lis2dw12_emul_cfg_##n, &lis2dw12_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_LIS2DW12)
