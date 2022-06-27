@@ -40,14 +40,13 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #define INT_RECHECK_US 5000
 
-#define ADC_VOL_UP_MASK     BIT(0)
-#define ADC_VOL_DOWN_MASK   BIT(1)
-
+#define ADC_VOL_UP_MASK BIT(0)
+#define ADC_VOL_DOWN_MASK BIT(1)
 
 /******************************************************************************/
 /* USB-A Configuration */
@@ -73,8 +72,8 @@ static const struct ec_response_keybd_config corori_keybd = {
 	/* No function keys, no numeric keypad, no screenlock key */
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &corori_keybd;
 }
@@ -115,7 +114,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
-
 }
 
 static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
@@ -154,22 +152,22 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Memory",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Charger",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_2},
+	[TEMP_SENSOR_1] = { .name = "Memory",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Charger",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_A \
-	{ \
+#define THERMAL_A                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
@@ -186,8 +184,8 @@ __maybe_unused static const struct ec_thermal_config thermal_a = THERMAL_A;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_B \
-	{ \
+#define THERMAL_B                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(73), \
@@ -249,13 +247,11 @@ int board_is_sourcing_vbus(int port)
 
 	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
 	return !!(regval & TCPC_REG_POWER_STATUS_SOURCING_VBUS);
-
 }
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 	int old_port;
 
@@ -315,8 +311,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
@@ -353,9 +349,8 @@ void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-__override void ocpc_get_pid_constants(int *kp, int *kp_div,
-				       int *ki, int *ki_div,
-				       int *kd, int *kd_div)
+__override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+				       int *ki_div, int *kd, int *kd_div)
 {
 	*kp = 1;
 	*kp_div = 20;
@@ -446,46 +441,36 @@ static void board_extpower(void)
 DECLARE_HOOK(HOOK_AC_CHANGE, board_extpower, HOOK_PRIO_DEFAULT);
 
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "eeprom",
-		.port = I2C_PORT_EEPROM,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_EEPROM_SCL,
-		.sda  = GPIO_EC_I2C_EEPROM_SDA
-	},
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_EEPROM_SCL,
+	  .sda = GPIO_EC_I2C_EEPROM_SDA },
 
-	{
-		.name = "battery",
-		.port = I2C_PORT_BATTERY,
-		.kbps = 100,
-		.scl  = GPIO_EC_I2C_BATTERY_SCL,
-		.sda  = GPIO_EC_I2C_BATTERY_SDA
-	},
+	{ .name = "battery",
+	  .port = I2C_PORT_BATTERY,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_BATTERY_SCL,
+	  .sda = GPIO_EC_I2C_BATTERY_SDA },
 
 #ifdef HAS_TASK_MOTIONSENSE
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_SENSOR_SCL,
-		.sda  = GPIO_EC_I2C_SENSOR_SDA
-	},
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_SENSOR_SCL,
+	  .sda = GPIO_EC_I2C_SENSOR_SDA },
 #endif
 
-	{
-		.name = "usbc0",
-		.port = I2C_PORT_USB_C0,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_USB_C0_SCL,
-		.sda  = GPIO_EC_I2C_USB_C0_SDA
-	},
+	{ .name = "usbc0",
+	  .port = I2C_PORT_USB_C0,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_USB_C0_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_SDA },
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-	{
-		.name = "sub_usbc1",
-		.port = I2C_PORT_SUB_USB_C1,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_SUB_USB_C1_SCL,
-		.sda  = GPIO_EC_I2C_SUB_USB_C1_SDA
-	},
+	{ .name = "sub_usbc1",
+	  .port = I2C_PORT_SUB_USB_C1,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_SUB_USB_C1_SCL,
+	  .sda = GPIO_EC_I2C_SUB_USB_C1_SDA },
 #endif
 };
