@@ -16,8 +16,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_HOSTCMD, outstr)
-#define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
 
 /* Number of attempts for each PD host command */
 #define PD_HOST_COMMAND_ATTEMPTS 3
@@ -81,8 +81,7 @@ static int pd_host_command_internal(int command, int version,
 	 */
 	i2c_lock(I2C_PORT_PD_MCU, 1);
 	i2c_set_timeout(I2C_PORT_PD_MCU, PD_HOST_COMMAND_TIMEOUT_US);
-	ret = i2c_xfer_unlocked(I2C_PORT_PD_MCU,
-				CONFIG_USB_PD_I2C_ADDR_FLAGS,
+	ret = i2c_xfer_unlocked(I2C_PORT_PD_MCU, CONFIG_USB_PD_I2C_ADDR_FLAGS,
 				&req_buf[0], outsize + sizeof(rq) + 1,
 				&resp_buf[0], 2, I2C_XFER_START);
 	i2c_set_timeout(I2C_PORT_PD_MCU, 0);
@@ -96,20 +95,17 @@ static int pd_host_command_internal(int command, int version,
 
 	if (resp_len > (insize + sizeof(rs))) {
 		/* Do a read to generate stop condition */
-		i2c_xfer_unlocked(I2C_PORT_PD_MCU,
-				  CONFIG_USB_PD_I2C_ADDR_FLAGS,
+		i2c_xfer_unlocked(I2C_PORT_PD_MCU, CONFIG_USB_PD_I2C_ADDR_FLAGS,
 				  0, 0, &resp_buf[2], 1, I2C_XFER_STOP);
 		i2c_lock(I2C_PORT_PD_MCU, 0);
-		CPRINTS("response size is too large %d > %d",
-			resp_len, insize + sizeof(rs));
+		CPRINTS("response size is too large %d > %d", resp_len,
+			insize + sizeof(rs));
 		return -EC_RES_RESPONSE_TOO_BIG;
 	}
 
 	/* Receive remaining data */
-	ret = i2c_xfer_unlocked(I2C_PORT_PD_MCU,
-				CONFIG_USB_PD_I2C_ADDR_FLAGS,
-				0, 0,
-				&resp_buf[2], resp_len, I2C_XFER_STOP);
+	ret = i2c_xfer_unlocked(I2C_PORT_PD_MCU, CONFIG_USB_PD_I2C_ADDR_FLAGS,
+				0, 0, &resp_buf[2], resp_len, I2C_XFER_STOP);
 	i2c_lock(I2C_PORT_PD_MCU, 0);
 	if (ret) {
 		CPRINTS("i2c transaction 2 failed: %d", ret);
@@ -152,10 +148,9 @@ static int pd_host_command_internal(int command, int version,
 		sum += *d;
 	}
 
-
 	if ((uint8_t)sum) {
-		CPRINTS("command 0x%04x bad checksum returned: %d",
-			command, sum);
+		CPRINTS("command 0x%04x bad checksum returned: %d", command,
+			sum);
 		return -EC_RES_INVALID_CHECKSUM;
 	}
 
@@ -163,8 +158,7 @@ static int pd_host_command_internal(int command, int version,
 	return resp_len;
 }
 
-int pd_host_command(int command, int version,
-		    const void *outdata, int outsize,
+int pd_host_command(int command, int version, const void *outdata, int outsize,
 		    void *indata, int insize)
 {
 	int rv;
@@ -183,7 +177,7 @@ int pd_host_command(int command, int version,
 		/* If host command error due to i2c bus error, try again. */
 		if (rv != -EC_RES_BUS_ERROR)
 			break;
-		task_wait_event(50*MSEC);
+		task_wait_event(50 * MSEC);
 	}
 
 	return rv;
@@ -212,11 +206,11 @@ static int command_pd_mcu(int argc, char **argv)
 		tmp = strtoi(argv[i], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM3;
-		outbuf[i-3] = tmp;
+		outbuf[i - 3] = tmp;
 	}
 
 	ret = pd_host_command(command, version, &outbuf, argc - 3, &inbuf,
-			sizeof(inbuf));
+			      sizeof(inbuf));
 
 	ccprintf("Host command 0x%02x, returned %d\n", command, ret);
 	for (i = 0; i < ret; i++)
@@ -224,6 +218,5 @@ static int command_pd_mcu(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(pdcmd, command_pd_mcu,
-			"cmd ver [params]",
+DECLARE_CONSOLE_COMMAND(pdcmd, command_pd_mcu, "cmd ver [params]",
 			"Send PD host command");
