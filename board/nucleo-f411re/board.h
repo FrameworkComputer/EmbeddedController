@@ -12,7 +12,6 @@
 #define CPU_CLOCK 84000000
 #define CONFIG_FLASH_WRITE_SIZE STM32_FLASH_WRITE_SIZE_3300
 
-
 /* the UART console is on USART2 (PA2/PA3) */
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 2
@@ -43,7 +42,7 @@
 #define CONFIG_I2C_CONTROLLER
 #define CONFIG_I2C_DEBUG
 #define I2C_PORT_MASTER 1
-#define I2C_PORT_SLAVE 0        /* needed for DMAC macros (ugh) */
+#define I2C_PORT_SLAVE 0 /* needed for DMAC macros (ugh) */
 #define I2C_PORT_ACCEL I2C_PORT_MASTER
 
 #ifndef __ASSEMBLER__
