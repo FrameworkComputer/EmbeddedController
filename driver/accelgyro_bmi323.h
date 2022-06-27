@@ -10,6 +10,6 @@
 
 #include "accelgyro_bmi3xx.h"
 
-#define BMI323_CHIP_ID			0x43
+#define BMI323_CHIP_ID 0x43
 
 #endif /* __CROS_EC_ACCELGYRO_BMI323_H */
