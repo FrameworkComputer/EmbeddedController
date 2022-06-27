@@ -23,8 +23,8 @@
 #define SCEDB_NUM_BATTERY_OFFSET 22
 #define SCEDB_NUM_BYTES 24
 
-#define BSDO_INV_BATTERY_REF(bsdo)	(((bsdo) >> 8) & 1)
-#define BSDO_BATTERY_INFO(bsdo)		(((bsdo) >> 8) & 0xFF)
+#define BSDO_INV_BATTERY_REF(bsdo) (((bsdo) >> 8) & 1)
+#define BSDO_BATTERY_INFO(bsdo) (((bsdo) >> 8) & 0xFF)
 
 static int number_of_fixed_batteries(void)
 {
@@ -84,33 +84,26 @@ int test_td_pd_src3_e9(void)
 	possible[1].ctrl_msg = 0;
 	possible[1].data_msg = PD_DATA_SOURCE_CAP;
 
-	TEST_EQ(verify_tcpci_possible_tx(possible,
-					 2,
-					 &found_index,
-					 data,
-					 sizeof(data),
-					 &msg_len,
-					 0),
+	TEST_EQ(verify_tcpci_possible_tx(possible, 2, &found_index, data,
+					 sizeof(data), &msg_len, 0),
 		EC_SUCCESS, "%d");
 	if (found_index == 1) {
 		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 		task_wait_event(10 * MSEC);
 
-		TEST_EQ(msg_len, HEADER_BYTE_OFFSET +
-				 HEADER_NUM_BYTES +
-				 SCEDB_NUM_BYTES,
+		TEST_EQ(msg_len,
+			HEADER_BYTE_OFFSET + HEADER_NUM_BYTES + SCEDB_NUM_BYTES,
 			"%d");
 
 		num_fixed_batteries =
-				data[HEADER_BYTE_OFFSET +
-				     HEADER_NUM_BYTES +
-				     SCEDB_NUM_BATTERY_OFFSET] &
-				0x0F;
+			data[HEADER_BYTE_OFFSET + HEADER_NUM_BYTES +
+			     SCEDB_NUM_BATTERY_OFFSET] &
+			0x0F;
 		num_swappable_battery_slots =
-				(data[HEADER_BYTE_OFFSET +
-				      HEADER_NUM_BYTES +
-				      SCEDB_NUM_BATTERY_OFFSET] >> 4) &
-				0x0F;
+			(data[HEADER_BYTE_OFFSET + HEADER_NUM_BYTES +
+			      SCEDB_NUM_BATTERY_OFFSET] >>
+			 4) &
+			0x0F;
 	}
 	/*
 	 *    If a Not_Supported message is received, the Tester reads the
@@ -133,8 +126,7 @@ int test_td_pd_src3_e9(void)
 	 *    to 8, to the UUT.
 	 */
 	ref = 8;
-	ext_msg = EXT_MSG_CHUNKED | EXT_MSG_DATA_SIZE_1 |
-		  (ref << 16);
+	ext_msg = EXT_MSG_CHUNKED | EXT_MSG_DATA_SIZE_1 | (ref << 16);
 	partner_send_msg(TCPCI_MSG_SOP, PD_EXT_GET_BATTERY_STATUS, 1, 1,
 			 &ext_msg);
 
@@ -153,13 +145,8 @@ int test_td_pd_src3_e9(void)
 	possible[1].ctrl_msg = 0;
 	possible[1].data_msg = PD_DATA_BATTERY_STATUS;
 
-	TEST_EQ(verify_tcpci_possible_tx(possible,
-					 2,
-					 &found_index,
-					 data,
-					 sizeof(data),
-					 &msg_len,
-					 0),
+	TEST_EQ(verify_tcpci_possible_tx(possible, 2, &found_index, data,
+					 sizeof(data), &msg_len, 0),
 		EC_SUCCESS, "%d");
 	if (found_index == 0) {
 		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
@@ -210,8 +197,8 @@ int test_td_pd_src3_e9(void)
 		 *    6. Invalid Battery Reference field (Bit 0) of the
 		 *       Battery Info field in the BSDO is 1
 		 */
-		bsdo = UINT32_FROM_BYTE_ARRAY_LE(data, HEADER_BYTE_OFFSET +
-						       HEADER_NUM_BYTES);
+		bsdo = UINT32_FROM_BYTE_ARRAY_LE(
+			data, HEADER_BYTE_OFFSET + HEADER_NUM_BYTES);
 		TEST_EQ(BSDO_INV_BATTERY_REF(bsdo), 1, "%d");
 
 		/*
