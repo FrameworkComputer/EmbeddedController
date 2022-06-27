@@ -120,7 +120,7 @@ static int cros_kb_raw_ite_drive_column(const struct device *dev, int col)
 	 * we are using).
 	 */
 	inst->KBS_KSOH1 = ((inst->KBS_KSOH1) & ~KSOH_PIN_MASK) |
-		      ((mask >> 8) & KSOH_PIN_MASK);
+			  ((mask >> 8) & KSOH_PIN_MASK);
 	/* restore interrupts */
 	irq_unlock(key);
 
@@ -208,7 +208,7 @@ static int cros_kb_raw_ite_init(const struct device *dev)
 		 */
 		if (IS_ENABLED(CONFIG_LOG)) {
 			if (config->wuc_map_list[i].wucs !=
-				config->wuc_map_list[0].wucs) {
+			    config->wuc_map_list[0].wucs) {
 				LOG_ERR("KSI%d isn't in the same wuc node!", i);
 			}
 		}
