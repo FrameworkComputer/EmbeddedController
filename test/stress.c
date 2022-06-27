@@ -46,8 +46,7 @@ struct i2c_test_param_t {
 /* period between 500us and 32ms */
 #define RAND_US() (((prng_no_seed() % 64) + 1) * 500)
 
-static int stress(const char *name,
-		  int (*test_routine)(void),
+static int stress(const char *name, int (*test_routine)(void),
 		  const int iteration)
 {
 	int i;
@@ -65,12 +64,12 @@ static int stress(const char *name,
 	return EC_SUCCESS;
 }
 
-#define RUN_STRESS_TEST(n, r, iter) \
-	do { \
+#define RUN_STRESS_TEST(n, r, iter)                     \
+	do {                                            \
 		if (stress(n, r, iter) != EC_SUCCESS) { \
-			ccputs("Fail\n"); \
-			error_count++; \
-		} \
+			ccputs("Fail\n");               \
+			error_count++;                  \
+		}                                       \
 	} while (0)
 
 /*****************************************************************************/
@@ -81,26 +80,27 @@ static int test_i2c(void)
 	int res = EC_ERROR_UNKNOWN;
 	int mock_data;
 	struct i2c_test_param_t *param;
-	param = i2c_test_params + (prng_no_seed() % (sizeof(i2c_test_params) /
-				   sizeof(struct i2c_test_param_t)));
+	param = i2c_test_params +
+		(prng_no_seed() %
+		 (sizeof(i2c_test_params) / sizeof(struct i2c_test_param_t)));
 	if (param->width == 8 && param->data == -1)
-		res = i2c_read8(param->port, param->addr,
-				param->offset, &mock_data);
+		res = i2c_read8(param->port, param->addr, param->offset,
+				&mock_data);
 	else if (param->width == 8 && param->data >= 0)
-		res = i2c_write8(param->port, param->addr,
-				 param->offset, param->data);
+		res = i2c_write8(param->port, param->addr, param->offset,
+				 param->data);
 	else if (param->width == 16 && param->data == -1)
-		res = i2c_read16(param->port, param->addr,
-				 param->offset, &mock_data);
+		res = i2c_read16(param->port, param->addr, param->offset,
+				 &mock_data);
 	else if (param->width == 16 && param->data >= 0)
-		res = i2c_write16(param->port, param->addr,
-				  param->offset, param->data);
+		res = i2c_write16(param->port, param->addr, param->offset,
+				  param->data);
 	else if (param->width == 32 && param->data == -1)
-		res = i2c_read32(param->port, param->addr,
-				 param->offset, &mock_data);
+		res = i2c_read32(param->port, param->addr, param->offset,
+				 &mock_data);
 	else if (param->width == 32 && param->data >= 0)
-		res = i2c_write32(param->port, param->addr,
-				  param->offset, param->data);
+		res = i2c_write32(param->port, param->addr, param->offset,
+				  param->data);
 
 	return res;
 }
