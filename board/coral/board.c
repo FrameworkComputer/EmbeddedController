@@ -53,15 +53,15 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define IN_ALL_SYS_PG	POWER_SIGNAL_MASK(X86_ALL_SYS_PG)
-#define IN_PGOOD_PP3300	POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
-#define IN_PGOOD_PP5000	POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
+#define IN_ALL_SYS_PG POWER_SIGNAL_MASK(X86_ALL_SYS_PG)
+#define IN_PGOOD_PP3300 POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
+#define IN_PGOOD_PP5000 POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
 
-#define USB_PD_PORT_ANX74XX	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX74XX 0
+#define USB_PD_PORT_PS8751 1
 
 static int sku_id;
 
@@ -128,66 +128,51 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vfs = Vref = 2.816V, 10-bit unsigned reading */
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
-	[ADC_TEMP_SENSOR_AMB] = {
-		"AMBIENT", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
-	[ADC_BOARD_ID] = {
-		"BRD_ID", NPCX_ADC_CH2, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
-	[ADC_BOARD_SKU_1] = {
-		"BRD_SKU_1", NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
-	[ADC_BOARD_SKU_0] = {
-		"BRD_SKU_0", NPCX_ADC_CH4, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
+	[ADC_TEMP_SENSOR_CHARGER] = { "CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				      ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_AMB] = { "AMBIENT", NPCX_ADC_CH1, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_BOARD_ID] = { "BRD_ID", NPCX_ADC_CH2, ADC_MAX_VOLT,
+			   ADC_READ_MAX + 1, 0 },
+	[ADC_BOARD_SKU_1] = { "BRD_SKU_1", NPCX_ADC_CH3, ADC_MAX_VOLT,
+			      ADC_READ_MAX + 1, 0 },
+	[ADC_BOARD_SKU_0] = { "BRD_SKU_0", NPCX_ADC_CH4, ADC_MAX_VOLT,
+			      ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] =   { 4, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_KBLIGHT] = { 4, PWM_CONFIG_DSLEEP, 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
-const struct i2c_port_t i2c_ports[]  = {
-	{
-		.name = "tcpc0",
-		.port = NPCX_I2C_PORT0_0,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_USB_C0_PD_SCL,
-		.sda  = GPIO_EC_I2C_USB_C0_PD_SDA
-	},
-	{
-		.name = "tcpc1",
-		.port = NPCX_I2C_PORT0_1,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_USB_C1_PD_SCL,
-		.sda  = GPIO_EC_I2C_USB_C1_PD_SDA
-	},
-	{
-		.name = "accelgyro",
-		.port = I2C_PORT_GYRO,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_GYRO_SCL,
-		.sda  = GPIO_EC_I2C_GYRO_SDA
-	},
-	{
-		.name = "sensors",
-		.port = NPCX_I2C_PORT2,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_SENSOR_SCL,
-		.sda  = GPIO_EC_I2C_SENSOR_SDA
-	},
-	{
-		.name = "batt",
-		.port = NPCX_I2C_PORT3,
-		.kbps = 100,
-		.scl  = GPIO_EC_I2C_POWER_SCL,
-		.sda  = GPIO_EC_I2C_POWER_SDA
-	},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "tcpc0",
+	  .port = NPCX_I2C_PORT0_0,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_USB_C0_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_PD_SDA },
+	{ .name = "tcpc1",
+	  .port = NPCX_I2C_PORT0_1,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_USB_C1_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C1_PD_SDA },
+	{ .name = "accelgyro",
+	  .port = I2C_PORT_GYRO,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_GYRO_SCL,
+	  .sda = GPIO_EC_I2C_GYRO_SDA },
+	{ .name = "sensors",
+	  .port = NPCX_I2C_PORT2,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_SENSOR_SCL,
+	  .sda = GPIO_EC_I2C_SENSOR_SDA },
+	{ .name = "batt",
+	  .port = NPCX_I2C_PORT3,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_POWER_SCL,
+	  .sda = GPIO_EC_I2C_POWER_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -419,28 +404,28 @@ static void board_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_CABLE_DET);
 #endif
 	/*
-	* Initialize HPD to low; after sysjump SOC needs to see
-	* HPD pulse to enable video path
-	*/
+	 * Initialize HPD to low; after sysjump SOC needs to see
+	 * HPD pulse to enable video path
+	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_DEFAULT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -564,8 +549,8 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Enable charging trigger by BC1.2 detection */
 	int bc12_enable = (supplier == CHARGE_SUPPLIER_BC12_CDP ||
@@ -577,8 +562,8 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		return;
 
 	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /**
@@ -688,17 +673,17 @@ void board_hibernate_late(void)
 	int i;
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs in hibernate */
-		{GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN},
+		{ GPIO_BAT_LED_BLUE, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_BAT_LED_AMBER, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_LID_OPEN, GPIO_INT_RISING | GPIO_PULL_DOWN },
 
 		/*
 		 * BD99956 handles charge input automatically. We'll disable
 		 * charge output in hibernate. Charger will assert ACOK_OD
 		 * when VBUS or VCC are plugged in.
 		 */
-		{GPIO_USB_C0_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
-		{GPIO_USB_C1_5V_EN,       GPIO_INPUT  | GPIO_PULL_DOWN},
+		{ GPIO_USB_C0_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN },
+		{ GPIO_USB_C1_5V_EN, GPIO_INPUT | GPIO_PULL_DOWN },
 	};
 
 	/* Change GPIOs' state in hibernate for better power consumption */
@@ -725,17 +710,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t mag_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t mag_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
@@ -845,8 +826,8 @@ static void board_set_motion_sensor_count(uint8_t sku_id)
 	 * sensor. If a new SKU id is used that is not in the table, then the
 	 * number of motion sensors will remain as ARRAY_SIZE(motion_sensors).
 	 */
-	motion_sensor_count = SKU_IS_CONVERTIBLE(sku_id) ?
-		ARRAY_SIZE(motion_sensors) : 0;
+	motion_sensor_count =
+		SKU_IS_CONVERTIBLE(sku_id) ? ARRAY_SIZE(motion_sensors) : 0;
 
 	CPRINTS("Motion Sensor Count = %d", motion_sensor_count);
 }
@@ -857,11 +838,11 @@ struct {
 } const coral_board_versions[] = {
 	/* Vin = 3.3V, Ideal voltage, R2 values listed below */
 	/* R1 = 51.1 kOhm */
-	{ BOARD_VERSION_1, 200 },  /* 124 mV, 2.0 Kohm */
-	{ BOARD_VERSION_2, 366 },  /* 278 mV, 4.7 Kohm */
-	{ BOARD_VERSION_3, 550 },  /* 456 mV, 8.2  Kohm */
-	{ BOARD_VERSION_4, 752 },  /* 644 mV, 12.4 Kohm */
-	{ BOARD_VERSION_5, 927},   /* 860 mV, 18.0 Kohm */
+	{ BOARD_VERSION_1, 200 }, /* 124 mV, 2.0 Kohm */
+	{ BOARD_VERSION_2, 366 }, /* 278 mV, 4.7 Kohm */
+	{ BOARD_VERSION_3, 550 }, /* 456 mV, 8.2  Kohm */
+	{ BOARD_VERSION_4, 752 }, /* 644 mV, 12.4 Kohm */
+	{ BOARD_VERSION_5, 927 }, /* 860 mV, 18.0 Kohm */
 	{ BOARD_VERSION_6, 1073 }, /* 993 mV, 22.0 Kohm */
 	{ BOARD_VERSION_7, 1235 }, /* 1152 mV, 27.4 Kohm */
 	{ BOARD_VERSION_8, 1386 }, /* 1318 mV, 34.0 Kohm */
@@ -948,8 +929,8 @@ static void print_form_factor_list(int low, int high)
 	if (high > 255)
 		high = 255;
 	for (id = low; id <= high; id++) {
-		ccprintf("SKU ID %03d: %s\n", id, SKU_IS_CONVERTIBLE(id) ?
-			 "Convertible" : "Clamshell");
+		ccprintf("SKU ID %03d: %s\n", id,
+			 SKU_IS_CONVERTIBLE(id) ? "Convertible" : "Clamshell");
 		/* Don't print too many lines at once */
 		if (!(++count % 5))
 			msleep(20);
@@ -999,8 +980,7 @@ static int command_sku(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sku, command_sku,
-			"<board|line0|line1|form [low high]>",
+DECLARE_CONSOLE_COMMAND(sku, command_sku, "<board|line0|line1|form [low high]>",
 			"Get board id, sku, form factor");
 
 __override uint32_t board_get_sku_id(void)
