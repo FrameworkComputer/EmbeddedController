@@ -22,13 +22,13 @@
 #include "usb_pd_tcpc.h"
 #include "usbc_ppc.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
-#define AOZ1380_FLAGS_SOURCE_ENABLED    BIT(0)
-#define AOZ1380_FLAGS_SINK_ENABLED      BIT(1)
+#define AOZ1380_FLAGS_SOURCE_ENABLED BIT(0)
+#define AOZ1380_FLAGS_SINK_ENABLED BIT(1)
 #define AOZ1380_FLAGS_INT_ON_DISCONNECT BIT(2)
 static atomic_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -157,7 +157,6 @@ const struct ppc_drv aoz1380_drv = {
 	.is_sourcing_vbus = &aoz1380_is_sourcing_vbus,
 	.vbus_sink_enable = &aoz1380_vbus_sink_enable,
 	.vbus_source_enable = &aoz1380_vbus_source_enable,
-	.set_vbus_source_current_limit =
-		&aoz1380_set_vbus_source_current_limit,
+	.set_vbus_source_current_limit = &aoz1380_set_vbus_source_current_limit,
 	.interrupt = &aoz1380_interrupt,
 };
