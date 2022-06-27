@@ -16,9 +16,9 @@
 
 LOG_MODULE_REGISTER(shim_clock, LOG_LEVEL_ERR);
 
-#define CDCG_NODE		DT_INST(0, nuvoton_npcx_pcc)
+#define CDCG_NODE DT_INST(0, nuvoton_npcx_pcc)
 #define HAL_CDCG_REG_BASE_ADDR \
-			((struct cdcg_reg *)DT_REG_ADDR_BY_IDX(CDCG_NODE, 1))
+	((struct cdcg_reg *)DT_REG_ADDR_BY_IDX(CDCG_NODE, 1))
 
 int clock_get_freq(void)
 {
@@ -63,7 +63,7 @@ void clock_normal(void)
 	struct cdcg_reg *const cdcg_base = HAL_CDCG_REG_BASE_ADDR;
 
 	cdcg_base->HFCGP = ((FPRED_VAL << 4) | AHB6DIV_VAL);
-	cdcg_base->HFCBCD  = (FIUDIV_VAL << 4);
+	cdcg_base->HFCBCD = (FIUDIV_VAL << 4);
 }
 
 void clock_enable_module(enum module_id module, int enable)
