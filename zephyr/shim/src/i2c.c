@@ -24,8 +24,7 @@
 #define INIT_DEV_BINDING(id) \
 	[I2C_PORT(id)] = DEVICE_DT_GET(DT_PHANDLE(id, i2c_port)),
 
-#define INIT_REMOTE_PORTS(id) \
-	[I2C_PORT(id)] = DT_PROP_OR(id, remote_port, -1),
+#define INIT_REMOTE_PORTS(id) [I2C_PORT(id)] = DT_PROP_OR(id, remote_port, -1),
 
 #define I2C_PORT_FLAGS(id)                                                     \
 	COND_CODE_1(DT_PROP(id, dynamic_speed), (I2C_PORT_FLAG_DYNAMIC_SPEED), \
@@ -44,18 +43,15 @@
  * Since all the ports will eventually be handled by device tree. This will
  * be removed at that point.
  */
-const struct i2c_port_t i2c_ports[] = {
-	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), I2C_PORT_INIT)
-};
+const struct i2c_port_t i2c_ports[] = { DT_FOREACH_CHILD(
+	DT_PATH(named_i2c_ports), I2C_PORT_INIT) };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-static const int i2c_remote_ports[I2C_PORT_COUNT] = {
-	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), INIT_REMOTE_PORTS)
-};
+static const int i2c_remote_ports[I2C_PORT_COUNT] = { DT_FOREACH_CHILD(
+	DT_PATH(named_i2c_ports), INIT_REMOTE_PORTS) };
 static int i2c_physical_ports[I2C_PORT_COUNT];
 
-static const struct device *i2c_devices[I2C_PORT_COUNT] = {
-	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), INIT_DEV_BINDING)
-};
+static const struct device *i2c_devices[I2C_PORT_COUNT] = { DT_FOREACH_CHILD(
+	DT_PATH(named_i2c_ports), INIT_DEV_BINDING) };
 
 static int init_device_bindings(const struct device *device)
 {
