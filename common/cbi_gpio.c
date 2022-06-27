@@ -11,7 +11,7 @@
 #include "system.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ##args)
 
 static int cbi_gpio_read(uint8_t offset, uint8_t *data, int len)
 {
@@ -39,8 +39,8 @@ static int cbi_gpio_read(uint8_t offset, uint8_t *data, int len)
 	}
 
 	sku_id = system_get_sku_id();
-	rv = cbi_set_board_info(CBI_TAG_SKU_ID,
-				(uint8_t *)&sku_id, sizeof(int));
+	rv = cbi_set_board_info(CBI_TAG_SKU_ID, (uint8_t *)&sku_id,
+				sizeof(int));
 	if (rv) {
 		CPRINTS("Failed (%d) to set SKU_ID tag", rv);
 		err++;
