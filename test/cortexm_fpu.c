@@ -33,11 +33,7 @@ static float divf(float a, float b)
 {
 	float result;
 
-	asm volatile(
-		"fdivs %0, %1, %2"
-		: "=w"(result)
-		: "w"(a), "w"(b)
-	);
+	asm volatile("fdivs %0, %1, %2" : "=w"(result) : "w"(a), "w"(b));
 
 	return result;
 }
