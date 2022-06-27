@@ -12,13 +12,12 @@
 #include "wov_chip.h"
 
 static struct apm_config apm_conf;
-static struct apm_auto_gain_config	apm_gain_conf;
-
+static struct apm_auto_gain_config apm_gain_conf;
 
 static uint32_t apm_indirect_reg[][3] = {
-	{(NPCX_APM_BASE_ADDR + 0x034), (NPCX_APM_BASE_ADDR + 0x038)},
-	{(NPCX_APM_BASE_ADDR + 0x04C), (NPCX_APM_BASE_ADDR + 0x050)},
-	{(NPCX_APM_BASE_ADDR + 0x05C), (NPCX_APM_BASE_ADDR + 0x060)}
+	{ (NPCX_APM_BASE_ADDR + 0x034), (NPCX_APM_BASE_ADDR + 0x038) },
+	{ (NPCX_APM_BASE_ADDR + 0x04C), (NPCX_APM_BASE_ADDR + 0x050) },
+	{ (NPCX_APM_BASE_ADDR + 0x05C), (NPCX_APM_BASE_ADDR + 0x060) }
 };
 
 #define APM_CNTRL_REG 0
@@ -37,11 +36,11 @@ static uint8_t apm_read_indirect_data(enum apm_indirect_reg_offset reg_offset,
 {
 	/* Set the indirect access address. */
 	SET_FIELD(REG8(apm_indirect_reg[reg_offset][APM_CNTRL_REG]),
-			NPCX_APM_CONTROL_ADD, indirect_addr);
+		  NPCX_APM_CONTROL_ADD, indirect_addr);
 
 	/* Read command. */
 	CLEAR_BIT(REG8(apm_indirect_reg[reg_offset][APM_CNTRL_REG]),
-			NPCX_APM_CONTROL_LOAD);
+		  NPCX_APM_CONTROL_LOAD);
 
 	/* Get the data. */
 	return REG8(apm_indirect_reg[reg_offset][APM_DATA_REG]);
@@ -57,20 +56,20 @@ static uint8_t apm_read_indirect_data(enum apm_indirect_reg_offset reg_offset,
  * @return  None
  */
 static void apm_write_indirect_data(enum apm_indirect_reg_offset reg_offset,
-				uint8_t indirect_addr, uint8_t value)
+				    uint8_t indirect_addr, uint8_t value)
 {
 	/* Set the data. */
 	REG8(apm_indirect_reg[reg_offset][APM_DATA_REG]) = value;
 
 	/* Set the indirect access address. */
 	SET_FIELD(REG8(apm_indirect_reg[reg_offset][APM_CNTRL_REG]),
-			NPCX_APM_CONTROL_ADD, indirect_addr);
+		  NPCX_APM_CONTROL_ADD, indirect_addr);
 
 	/* Write command. */
 	SET_BIT(REG8(apm_indirect_reg[reg_offset][APM_CNTRL_REG]),
-			NPCX_APM_CONTROL_LOAD);
+		NPCX_APM_CONTROL_LOAD);
 	CLEAR_BIT(REG8(apm_indirect_reg[reg_offset][APM_CNTRL_REG]),
-			NPCX_APM_CONTROL_LOAD);
+		  NPCX_APM_CONTROL_LOAD);
 }
 
 /**
@@ -83,13 +82,13 @@ void apm_set_adc_dmic_config_l(enum apm_dmic_rate rate)
 {
 	if (rate == APM_DMIC_RATE_0_75)
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_RATE,
-			APM_DMIC_RATE_3_0);
+			  APM_DMIC_RATE_3_0);
 	else if (rate == APM_DMIC_RATE_1_2)
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_RATE,
-			APM_DMIC_RATE_2_4);
+			  APM_DMIC_RATE_2_4);
 	else
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_RATE,
-			rate);
+			  rate);
 }
 
 /**
@@ -108,7 +107,7 @@ void apm_set_vad_dmic_rate_l(enum apm_dmic_rate rate)
 	/* Set VAD_0 register. */
 	if (rate == APM_DMIC_RATE_0_75)
 		SET_FIELD(vad_data, NPCX_VAD_0_VAD_DMIC_FREQ,
-				APM_DMIC_RATE_3_0);
+			  APM_DMIC_RATE_3_0);
 	else if (rate == APM_DMIC_RATE_1_2)
 		SET_FIELD(vad_data, NPCX_VAD_0_VAD_DMIC_FREQ,
 			  APM_DMIC_RATE_2_4);
@@ -172,15 +171,15 @@ void apm_init(void)
 	apm_conf.left_chan_gain = 0;
 	apm_conf.right_chan_gain = 0;
 
-	apm_gain_conf.stereo_enable	 = 0;
-	apm_gain_conf.agc_target	 = APM_ADC_MAX_TARGET_LEVEL_19_5;
-	apm_gain_conf.nois_gate_en	 = 0;
+	apm_gain_conf.stereo_enable = 0;
+	apm_gain_conf.agc_target = APM_ADC_MAX_TARGET_LEVEL_19_5;
+	apm_gain_conf.nois_gate_en = 0;
 	apm_gain_conf.nois_gate_thold = APM_MIN_NOISE_GET_THRESHOLD;
-	apm_gain_conf.hold_time	 = APM_HOLD_TIME_128;
-	apm_gain_conf.attack_time	 = APM_GAIN_RAMP_TIME_160;
-	apm_gain_conf.decay_time	 = APM_GAIN_RAMP_TIME_160;
-	apm_gain_conf.gain_max	 = APM_GAIN_VALUE_42_5;
-	apm_gain_conf.gain_min	 = APM_GAIN_VALUE_0_0;
+	apm_gain_conf.hold_time = APM_HOLD_TIME_128;
+	apm_gain_conf.attack_time = APM_GAIN_RAMP_TIME_160;
+	apm_gain_conf.decay_time = APM_GAIN_RAMP_TIME_160;
+	apm_gain_conf.gain_max = APM_GAIN_VALUE_42_5;
+	apm_gain_conf.gain_min = APM_GAIN_VALUE_0_0;
 }
 
 /**
@@ -226,11 +225,11 @@ void apm_enable_vad_interrupt(int enable)
 void apm_adc_wov_enable(int enable)
 {
 	if (enable) {
-		SET_FIELD(NPCX_APM_AICR_ADC,
-				NPCX_APM_AICR_ADC_ADC_AUDIOIF, 0x00);
+		SET_FIELD(NPCX_APM_AICR_ADC, NPCX_APM_AICR_ADC_ADC_AUDIOIF,
+			  0x00);
 	} else {
-		SET_FIELD(NPCX_APM_AICR_ADC,
-				NPCX_APM_AICR_ADC_ADC_AUDIOIF, 0x03);
+		SET_FIELD(NPCX_APM_AICR_ADC, NPCX_APM_AICR_ADC_ADC_AUDIOIF,
+			  0x03);
 	}
 }
 
@@ -244,12 +243,12 @@ void apm_adc_enable(int enable)
 {
 	if (enable) {
 		CLEAR_BIT(NPCX_APM_AICR_ADC, NPCX_APM_AICR_ADC_PD_AICR_ADC);
-		SET_FIELD(NPCX_APM_AICR_ADC,
-				NPCX_APM_AICR_ADC_ADC_AUDIOIF, 0x00);
+		SET_FIELD(NPCX_APM_AICR_ADC, NPCX_APM_AICR_ADC_ADC_AUDIOIF,
+			  0x00);
 	} else {
 		SET_BIT(NPCX_APM_AICR_ADC, NPCX_APM_AICR_ADC_PD_AICR_ADC);
-		SET_FIELD(NPCX_APM_AICR_ADC,
-				NPCX_APM_AICR_ADC_ADC_AUDIOIF, 0x03);
+		SET_FIELD(NPCX_APM_AICR_ADC, NPCX_APM_AICR_ADC_ADC_AUDIOIF,
+			  0x03);
 	}
 }
 
@@ -273,8 +272,8 @@ void apm_adc_set_freq(enum apm_adc_frequency adc_freq)
  * @return  None
  */
 void apm_adc_config(int hpf_enable,
-		enum apm_adc_wind_noise_filter_mode filter_mode,
-		enum apm_adc_frequency adc_freq)
+		    enum apm_adc_wind_noise_filter_mode filter_mode,
+		    enum apm_adc_frequency adc_freq)
 {
 	if (hpf_enable)
 		SET_BIT(NPCX_APM_FCR_ADC, NPCX_APM_FCR_ADC_ADC_HPF);
@@ -491,7 +490,8 @@ void apm_vad_restart(void)
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
 enum ec_error_list apm_adc_gain_config(enum apm_adc_gain_coupling gain_coupling,
-		uint8_t left_chan_gain, uint8_t right_chan_gain)
+				       uint8_t left_chan_gain,
+				       uint8_t right_chan_gain)
 {
 	/* Check parameters validity. */
 	if ((left_chan_gain > 0x2B) || (right_chan_gain > 0x2B))
@@ -538,8 +538,8 @@ void apm_auto_gain_cntrl_enable(int enable)
  * @param   gain_cfg - struct of apm auto gain config
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
-enum ec_error_list apm_adc_auto_gain_config(
-				struct apm_auto_gain_config *gain_cfg)
+enum ec_error_list
+apm_adc_auto_gain_config(struct apm_auto_gain_config *gain_cfg)
 {
 	uint8_t gain_data = 0;
 
@@ -668,9 +668,8 @@ void apm_set_mode(enum wov_modes wov_mode)
 		break;
 	}
 
-	apm_adc_gain_config(apm_conf.gain_coupling,
-				apm_conf.left_chan_gain,
-				apm_conf.right_chan_gain);
+	apm_adc_gain_config(apm_conf.gain_coupling, apm_conf.left_chan_gain,
+			    apm_conf.right_chan_gain);
 
 	apm_adc_auto_gain_config(&apm_gain_conf);
 
