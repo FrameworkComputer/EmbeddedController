@@ -71,10 +71,11 @@
 #ifndef CONFIG_ZEPHYR
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_AP_EC_SYSRST_ODL, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_RST"},
-	{GPIO_AP_IN_SLEEP_L, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_S3"},
-	{GPIO_AP_EC_WDTRST_L, POWER_SIGNAL_ACTIVE_LOW, "AP_WDT_ASSERTED"},
-	{GPIO_AP_EC_WARM_RST_REQ, POWER_SIGNAL_ACTIVE_HIGH, "AP_WARM_RST_REQ"},
+	{ GPIO_AP_EC_SYSRST_ODL, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_RST" },
+	{ GPIO_AP_IN_SLEEP_L, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_S3" },
+	{ GPIO_AP_EC_WDTRST_L, POWER_SIGNAL_ACTIVE_LOW, "AP_WDT_ASSERTED" },
+	{ GPIO_AP_EC_WARM_RST_REQ, POWER_SIGNAL_ACTIVE_HIGH,
+	  "AP_WARM_RST_REQ" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 #endif /* CONFIG_ZEPHYR */
@@ -278,7 +279,7 @@ enum power_state power_chipset_init(void)
 	} else if (system_get_reset_flags() & EC_RESET_FLAG_AP_OFF) {
 		exit_hard_off = 0;
 	} else if ((system_get_reset_flags() & EC_RESET_FLAG_HIBERNATE) &&
-			gpio_get_level(GPIO_AC_PRESENT)) {
+		   gpio_get_level(GPIO_AC_PRESENT)) {
 		/*
 		 * If AC present, assume this is a wake-up by AC insert.
 		 * Boot EC only.
@@ -473,16 +474,15 @@ static void power_button_changed(void)
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_changed, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
-__override void power_chipset_handle_sleep_hang(
-		enum sleep_hang_type hang_type)
+__override void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
 	CPRINTS("Warning: Detected sleep hang! Waking host up!");
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 
-__override void power_chipset_handle_host_sleep_event(
-		enum host_sleep_event state,
-		struct host_sleep_event_context *ctx)
+__override void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx)
 {
 	CPRINTS("Handle sleep: %d", state);
 
@@ -503,7 +503,6 @@ __override void power_chipset_handle_host_sleep_event(
 		sleep_set_notify(SLEEP_NOTIFY_RESUME);
 		task_wake(TASK_ID_CHIPSET);
 		sleep_complete_resume(ctx);
-
 	}
 }
 #endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
