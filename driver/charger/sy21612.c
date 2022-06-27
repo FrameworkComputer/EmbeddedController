@@ -5,7 +5,6 @@
  * SILERGY SY21612 buck-boost converter driver.
  */
 
-
 #include "console.h"
 #include "hooks.h"
 #include "i2c.h"
@@ -15,8 +14,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 static int sy21612_clear_set_reg(int reg, int clear, int set)
 {
@@ -31,8 +30,7 @@ static int sy21612_clear_set_reg(int reg, int clear, int set)
 	val |= set;
 
 	if (val != old_val || clear || set)
-		rv = i2c_write8(I2C_PORT_SY21612, SY21612_ADDR_FLAGS,
-				reg, val);
+		rv = i2c_write8(I2C_PORT_SY21612, SY21612_ADDR_FLAGS, reg, val);
 
 	return rv;
 }
@@ -44,64 +42,62 @@ static int sy21612_read(int reg, int *val)
 
 int sy21612_enable_regulator(int enable)
 {
-	return enable ?
-		sy21612_clear_set_reg(SY21612_CTRL1, 0, SY21612_CTRL1_REG_EN) :
-		sy21612_clear_set_reg(SY21612_CTRL1, SY21612_CTRL1_REG_EN, 0);
+	return enable ? sy21612_clear_set_reg(SY21612_CTRL1, 0,
+					      SY21612_CTRL1_REG_EN) :
+			sy21612_clear_set_reg(SY21612_CTRL1,
+					      SY21612_CTRL1_REG_EN, 0);
 }
 
 int sy21612_enable_adc(int enable)
 {
-	return enable ?
-		sy21612_clear_set_reg(SY21612_CTRL1, 0, SY21612_CTRL1_ADC_EN) :
-		sy21612_clear_set_reg(SY21612_CTRL1, SY21612_CTRL1_ADC_EN, 0);
+	return enable ? sy21612_clear_set_reg(SY21612_CTRL1, 0,
+					      SY21612_CTRL1_ADC_EN) :
+			sy21612_clear_set_reg(SY21612_CTRL1,
+					      SY21612_CTRL1_ADC_EN, 0);
 }
 
 int sy21612_set_adc_mode(int auto_mode)
 {
 	return auto_mode ?
-		sy21612_clear_set_reg(SY21612_CTRL1,
-				      0, SY21612_CTRL1_ADC_AUTO_MODE) :
-		sy21612_clear_set_reg(SY21612_CTRL1,
-				      SY21612_CTRL1_ADC_AUTO_MODE, 0);
+		       sy21612_clear_set_reg(SY21612_CTRL1, 0,
+					     SY21612_CTRL1_ADC_AUTO_MODE) :
+		       sy21612_clear_set_reg(SY21612_CTRL1,
+					     SY21612_CTRL1_ADC_AUTO_MODE, 0);
 }
 
 int sy21612_set_vbus_discharge(int auto_discharge)
 {
 	return auto_discharge ?
-		sy21612_clear_set_reg(SY21612_CTRL1,
-				      SY21612_CTRL1_VBUS_NDISCHG, 0) :
-		sy21612_clear_set_reg(SY21612_CTRL1,
-				      0, SY21612_CTRL1_VBUS_NDISCHG);
+		       sy21612_clear_set_reg(SY21612_CTRL1,
+					     SY21612_CTRL1_VBUS_NDISCHG, 0) :
+		       sy21612_clear_set_reg(SY21612_CTRL1, 0,
+					     SY21612_CTRL1_VBUS_NDISCHG);
 }
 
 int sy21612_set_switching_freq(enum sy21612_switching_freq freq)
 {
-	return sy21612_clear_set_reg(SY21612_CTRL2,
-				     SY21612_CTRL2_FREQ_MASK,
+	return sy21612_clear_set_reg(SY21612_CTRL2, SY21612_CTRL2_FREQ_MASK,
 				     freq << SY21612_CTRL2_FREQ_SHIFT);
 }
 
 int sy21612_set_vbus_volt(enum sy21612_vbus_volt volt)
 {
-	return sy21612_clear_set_reg(SY21612_CTRL2,
-				     SY21612_CTRL2_VBUS_MASK,
+	return sy21612_clear_set_reg(SY21612_CTRL2, SY21612_CTRL2_VBUS_MASK,
 				     volt << SY21612_CTRL2_VBUS_SHIFT);
 }
 
 int sy21612_set_vbus_adj(enum sy21612_vbus_adj adj)
 {
-	return sy21612_clear_set_reg(SY21612_CTRL2,
-				     SY21612_CTRL2_VBUS_ADJ_MASK,
+	return sy21612_clear_set_reg(SY21612_CTRL2, SY21612_CTRL2_VBUS_ADJ_MASK,
 				     adj << SY21612_CTRL2_VBUS_ADJ_SHIFT);
 }
 
 int sy21612_set_sink_mode(int sink_mode)
 {
-	return sink_mode ?
-		sy21612_clear_set_reg(SY21612_PROT2,
-				      0, SY21612_PROT2_SINK_MODE) :
-		sy21612_clear_set_reg(SY21612_PROT2,
-				      SY21612_PROT2_SINK_MODE, 0);
+	return sink_mode ? sy21612_clear_set_reg(SY21612_PROT2, 0,
+						 SY21612_PROT2_SINK_MODE) :
+			   sy21612_clear_set_reg(SY21612_PROT2,
+						 SY21612_PROT2_SINK_MODE, 0);
 }
 
 int sy21612_is_power_good(void)
@@ -208,6 +204,5 @@ static int command_sy21612(int argc, char **argv)
 
 	return 0;
 }
-DECLARE_CONSOLE_COMMAND(sy21612, command_sy21612,
-			NULL, NULL);
+DECLARE_CONSOLE_COMMAND(sy21612, command_sy21612, NULL, NULL);
 #endif
