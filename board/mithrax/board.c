@@ -29,8 +29,8 @@
 #include "gpio_list.h" /* Must come after other header files. */
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 static void rgb_backlight_config(void);
 
@@ -97,8 +97,8 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	}
 
 	if (voltage < BC12_MIN_VOLTAGE) {
-		CPRINTS("%s: port %d: vbus %d lower than %d", __func__,
-			port, voltage, BC12_MIN_VOLTAGE);
+		CPRINTS("%s: port %d: vbus %d lower than %d", __func__, port,
+			voltage, BC12_MIN_VOLTAGE);
 		return 1;
 	}
 
@@ -130,7 +130,6 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-
 /**
  * Deferred function to handle pen detect change
  */
@@ -153,8 +152,7 @@ DECLARE_HOOK(HOOK_INIT, pendetect_deferred, HOOK_PRIO_DEFAULT);
 void pen_detect_interrupt(enum gpio_signal s)
 {
 	/* Trigger deferred notification of pen detect change */
-	hook_call_deferred(&pendetect_deferred_data,
-			500 * MSEC);
+	hook_call_deferred(&pendetect_deferred_data, 500 * MSEC);
 }
 
 void pen_config(void)
