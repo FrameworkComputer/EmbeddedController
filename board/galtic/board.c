@@ -47,8 +47,8 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 #define INT_RECHECK_US 5000
 
@@ -131,34 +131,26 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_VSNS_PP3300_A] = {
-		.name = "PP3300_A_PGOOD",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH0
-	},
-	[ADC_TEMP_SENSOR_1] = {
-		.name = "TEMP_SENSOR1",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH2
-	},
-	[ADC_TEMP_SENSOR_2] = {
-		.name = "TEMP_SENSOR2",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH3
-	},
-	[ADC_TEMP_SENSOR_3] = {
-		.name = "TEMP_SENSOR3",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH15
-	},
+	[ADC_VSNS_PP3300_A] = { .name = "PP3300_A_PGOOD",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH0 },
+	[ADC_TEMP_SENSOR_1] = { .name = "TEMP_SENSOR1",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH2 },
+	[ADC_TEMP_SENSOR_2] = { .name = "TEMP_SENSOR2",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH3 },
+	[ADC_TEMP_SENSOR_3] = { .name = "TEMP_SENSOR3",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH15 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -218,40 +210,31 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 /* USB Retimer */
-enum tusb544_conf {
-	USB_DP = 0,
-	USB_DP_INV,
-	USB,
-	USB_INV,
-	DP,
-	DP_INV
-};
+enum tusb544_conf { USB_DP = 0, USB_DP_INV, USB, USB_INV, DP, DP_INV };
 
-static int board_tusb544_set(const struct usb_mux *me,
-		mux_state_t mux_state)
+static int board_tusb544_set(const struct usb_mux *me, mux_state_t mux_state)
 {
-	int  rv = EC_SUCCESS;
+	int rv = EC_SUCCESS;
 	enum tusb544_conf usb_mode = 0;
 	/* USB */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/* USB with DP */
 		if (mux_state & USB_PD_MUX_DP_ENABLED) {
-			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-					? USB_DP_INV
-					: USB_DP;
+			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+					   USB_DP_INV :
+					   USB_DP;
 		}
 		/* USB without DP */
 		else {
-			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-					? USB_INV
-					: USB;
+			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+					   USB_INV :
+					   USB;
 		}
 	}
 	/* DP without USB */
 	else if (mux_state & USB_PD_MUX_DP_ENABLED) {
-		usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-				? DP_INV
-				: DP;
+		usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED) ? DP_INV :
+									DP;
 	}
 	/* Nothing enabled */
 	else
@@ -320,11 +303,9 @@ static int board_tusb544_set(const struct usb_mux *me,
 	return rv;
 }
 
-static int board_ps8743_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+static int board_ps8743_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
-	return ps8743_write(me, PS8743_REG_USB_EQ_RX,
-				PS8743_USB_EQ_RX_16_7_DB);
+	return ps8743_write(me, PS8743_REG_USB_EQ_RX, PS8743_USB_EQ_RX_16_7_DB);
 }
 
 const struct usb_mux usbc1_retimer = {
@@ -392,8 +373,8 @@ static const struct ec_response_keybd_config galtic_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	if (get_cbi_fw_config_numeric_pad() == NUMERIC_PAD_PRESENT)
 		return &galith_kb;
@@ -532,8 +513,7 @@ int board_is_sourcing_vbus(int port)
 
 int board_set_active_charge_port(int port)
 {
-		int is_real_port = (port >= 0 &&
-			    port < board_get_usb_pd_port_count());
+	int is_real_port = (port >= 0 && port < board_get_usb_pd_port_count());
 	int i;
 	int old_port;
 
@@ -595,12 +575,10 @@ int board_set_active_charge_port(int port)
 	charger_discharge_on_ac(0);
 
 	return EC_SUCCESS;
-
 }
 
-__override void ocpc_get_pid_constants(int *kp, int *kp_div,
-				       int *ki, int *ki_div,
-				       int *kd, int *kd_div)
+__override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+				       int *ki_div, int *kd, int *kd_div)
 {
 	*kp = 1;
 	*kp_div = 20;
@@ -634,27 +612,21 @@ static struct mutex g_base_mutex;
 
 /* Sensor Data */
 static struct accelgyro_saved_data_t g_bma253_data;
-static struct kionix_accel_data  g_kx022_data;
+static struct kionix_accel_data g_kx022_data;
 static struct bmi_drv_data_t g_bmi160_data;
 static struct icm_drv_data_t g_icm426xx_data;
 
-const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t base_standard_ref_icm = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t base_standard_ref_icm = { { FLOAT_TO_FP(1), 0, 0 },
+					   { 0, FLOAT_TO_FP(-1), 0 },
+					   { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t base_standard_ref_bmi = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t base_standard_ref_bmi = { { 0, FLOAT_TO_FP(-1), 0 },
+					   { FLOAT_TO_FP(-1), 0, 0 },
+					   { 0, 0, FLOAT_TO_FP(-1) } };
 
 struct motion_sensor_t bma253_lid_accel = {
 	.name = "Lid Accel",
@@ -826,26 +798,26 @@ DECLARE_HOOK(HOOK_INIT, board_sensors_init, HOOK_PRIO_DEFAULT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Charger",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Vcore",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_2},
-	[TEMP_SENSOR_3] = {.name = "Ambient",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_3},
+	[TEMP_SENSOR_1] = { .name = "Charger",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Vcore",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
+	[TEMP_SENSOR_3] = { .name = "Ambient",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CHARGER \
-	{ \
+#define THERMAL_CHARGER          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(98), \
@@ -859,8 +831,8 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_VCORE \
-	{ \
+#define THERMAL_VCORE            \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -874,8 +846,8 @@ __maybe_unused static const struct ec_thermal_config thermal_vcore =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_AMBIENT \
-	{ \
+#define THERMAL_AMBIENT          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -941,8 +913,8 @@ static void get_battery_cell(void)
 {
 	int val;
 
-	if (i2c_read16(I2C_PORT_USB_C0, ISL923X_ADDR_FLAGS,
-		       ISL9238_REG_INFO2, &val) == EC_SUCCESS) {
+	if (i2c_read16(I2C_PORT_USB_C0, ISL923X_ADDR_FLAGS, ISL9238_REG_INFO2,
+		       &val) == EC_SUCCESS) {
 		/* PROG resistor read out. Number of battery cells [4:0] */
 		val = val & 0x001f;
 	}
@@ -958,7 +930,7 @@ static void get_battery_cell(void)
 
 	CPRINTS("Get battery cells: %d", battery_cell);
 }
-DECLARE_HOOK(HOOK_INIT, get_battery_cell, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, get_battery_cell, HOOK_PRIO_INIT_I2C + 1);
 
 enum battery_cell_type board_get_battery_cell_type(void)
 {
