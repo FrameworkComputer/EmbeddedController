@@ -14,8 +14,8 @@
 int tablet_get_mode(void);
 
 /* Bit mask of tablet mode trigger */
-#define TABLET_TRIGGER_LID	BIT(0)
-#define TABLET_TRIGGER_BASE	BIT(1)
+#define TABLET_TRIGGER_LID BIT(0)
+#define TABLET_TRIGGER_BASE BIT(1)
 
 /**
  * Set tablet mode state
@@ -56,4 +56,4 @@ void gmr_tablet_switch_disable(void);
  */
 int board_sensor_at_360(void);
 
-#endif  /* __CROS_EC_TABLET_MODE_H */
+#endif /* __CROS_EC_TABLET_MODE_H */
