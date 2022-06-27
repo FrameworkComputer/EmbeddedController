@@ -13,10 +13,10 @@
 #include "usb_mux.h"
 
 /* I2C interface addresses */
-#define ANX7483_I2C_ADDR0_FLAGS		0x3E
-#define ANX7483_I2C_ADDR1_FLAGS		0x38
-#define ANX7483_I2C_ADDR2_FLAGS		0x40
-#define ANX7483_I2C_ADDR3_FLAGS		0x44
+#define ANX7483_I2C_ADDR0_FLAGS 0x3E
+#define ANX7483_I2C_ADDR1_FLAGS 0x38
+#define ANX7483_I2C_ADDR2_FLAGS 0x40
+#define ANX7483_I2C_ADDR3_FLAGS 0x44
 
 /* Equalization tuning */
 enum anx7483_eq_setting {
