@@ -12,7 +12,7 @@
 #include "compile_time_macros.h"
 #include "panic.h"
 
-#include "builtin/assert.h"         /* For ASSERT(). */
+#include "builtin/assert.h" /* For ASSERT(). */
 #include <stdbool.h>
 #include <stddef.h>
 #ifdef CONFIG_ZEPHYR
@@ -27,21 +27,21 @@ extern "C" {
 #define GENERIC_MAX(x, y) ((x) > (y) ? (x) : (y))
 #define GENERIC_MIN(x, y) ((x) < (y) ? (x) : (y))
 #ifndef MAX
-#define MAX(a, b)					\
-	({						\
-		__typeof__(a) temp_a = (a);		\
-		__typeof__(b) temp_b = (b);		\
-							\
-		GENERIC_MAX(temp_a, temp_b);		\
+#define MAX(a, b)                            \
+	({                                   \
+		__typeof__(a) temp_a = (a);  \
+		__typeof__(b) temp_b = (b);  \
+                                             \
+		GENERIC_MAX(temp_a, temp_b); \
 	})
 #endif
 #ifndef MIN
-#define MIN(a, b)					\
-	({						\
-		__typeof__(a) temp_a = (a);		\
-		__typeof__(b) temp_b = (b);		\
-							\
-		GENERIC_MIN(temp_a, temp_b);		\
+#define MIN(a, b)                            \
+	({                                   \
+		__typeof__(a) temp_a = (a);  \
+		__typeof__(b) temp_b = (b);  \
+                                             \
+		GENERIC_MIN(temp_a, temp_b); \
 	})
 #endif
 #ifndef NULL
@@ -69,11 +69,11 @@ extern "C" {
  * contains the base struct.  This requires knowing where in the contained
  * struct the base struct resides, this is the member parameter to downcast.
  */
-#define DOWNCAST(pointer, type, member)					\
-	((type *)(((uint8_t *) pointer) - offsetof(type, member)))
+#define DOWNCAST(pointer, type, member) \
+	((type *)(((uint8_t *)pointer) - offsetof(type, member)))
 
 /* True of x is a power of two */
-#define POWER_OF_TWO(x) ((x) && !((x) & ((x) - 1)))
+#define POWER_OF_TWO(x) ((x) && !((x) & ((x)-1)))
 
 /* Macro to check if the value is in range */
 #ifndef CONFIG_ZEPHYR
@@ -84,7 +84,7 @@ extern "C" {
  * macros for integer division with various rounding variants
  * default integer division rounds down.
  */
-#define DIV_ROUND_UP(x, y) (((x) + ((y) - 1)) / (y))
+#define DIV_ROUND_UP(x, y) (((x) + ((y)-1)) / (y))
 #define DIV_ROUND_NEAREST(x, y) (((x) + ((y) / 2)) / (y))
 
 /*
@@ -93,12 +93,12 @@ extern "C" {
  * Swapping composites (e.g. a+b, x++) doesn't make sense. So, <a> and <b>
  * can only be a variable (x) or a pointer reference (*x) without operator.
  */
-#define swap(a, b) \
-	do { \
+#define swap(a, b)               \
+	do {                     \
 		typeof(a) __t__; \
-		__t__ = a; \
-		a = b; \
-		b = __t__; \
+		__t__ = a;       \
+		a = b;           \
+		b = __t__;       \
 	} while (0)
 
 #ifndef HIDE_EC_STDLIB
@@ -173,7 +173,7 @@ char *strzcpy(char *dest, const char *src, int len);
  * Other strings return 0 and leave *dest unchanged.
  */
 int parse_bool(const char *s, int *dest);
-#endif  /* !HIDE_EC_STDLIB */
+#endif /* !HIDE_EC_STDLIB */
 
 /**
  * Constant time implementation of memcmp to avoid timing side channels.
@@ -234,7 +234,6 @@ int alignment_log2(unsigned int x);
  */
 void reverse(void *dest, size_t len);
 
-
 /****************************************************************************/
 /* Conditional stuff.
  *
@@ -261,25 +260,49 @@ typedef uint8_t cond_t;
 
 /* Initialize a conditional to a specific state. Do this first. */
 void cond_init(cond_t *c, int boolean);
-static inline void cond_init_false(cond_t *c) { cond_init(c, 0); }
-static inline void cond_init_true(cond_t *c) { cond_init(c, 1); }
+static inline void cond_init_false(cond_t *c)
+{
+	cond_init(c, 0);
+}
+static inline void cond_init_true(cond_t *c)
+{
+	cond_init(c, 1);
+}
 
 /* Set the current state. Do this as often as you like. */
 void cond_set(cond_t *c, int boolean);
-static inline void cond_set_false(cond_t *c) { cond_set(c, 0); }
-static inline void cond_set_true(cond_t *c) { cond_set(c, 1); }
+static inline void cond_set_false(cond_t *c)
+{
+	cond_set(c, 0);
+}
+static inline void cond_set_true(cond_t *c)
+{
+	cond_set(c, 1);
+}
 
 /* Get the current state. Do this as often as you like. */
 int cond_is(cond_t *c, int boolean);
-static inline int cond_is_false(cond_t *c) { return cond_is(c, 0); }
-static inline int cond_is_true(cond_t *c) { return cond_is(c, 1); }
+static inline int cond_is_false(cond_t *c)
+{
+	return cond_is(c, 0);
+}
+static inline int cond_is_true(cond_t *c)
+{
+	return cond_is(c, 1);
+}
 
 /* See if the state has transitioned. If it has, the corresponding function
  * will return true ONCE only, until it's changed back.
  */
 int cond_went(cond_t *c, int boolean);
-static inline int cond_went_false(cond_t *c) { return cond_went(c, 0); }
-static inline int cond_went_true(cond_t *c) { return cond_went(c, 1); }
+static inline int cond_went_false(cond_t *c)
+{
+	return cond_went(c, 0);
+}
+static inline int cond_went_true(cond_t *c)
+{
+	return cond_went(c, 1);
+}
 
 /****************************************************************************/
 /* Console command parsing */
@@ -287,8 +310,7 @@ static inline int cond_went_true(cond_t *c) { return cond_went(c, 1); }
 /* Parse command-line arguments given integer shift value to obtain
  * offset and size.
  */
-int parse_offset_size(int argc, char **argv, int shift,
-			     int *offset, int *size);
+int parse_offset_size(int argc, char **argv, int shift, int *offset, int *size);
 
 /**
  * Print binary in hex and ASCII
@@ -396,4 +418,4 @@ int ternary_from_bits(int *bits, int nbits);
 }
 #endif
 
-#endif  /* __CROS_EC_UTIL_H */
+#endif /* __CROS_EC_UTIL_H */
