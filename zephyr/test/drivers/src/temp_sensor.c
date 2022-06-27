@@ -20,17 +20,16 @@
 #define GPIO_PG_EC_DSW_PWROK_PATH DT_PATH(named_gpios, pg_ec_dsw_pwrok)
 #define GPIO_PG_EC_DSW_PWROK_PORT DT_GPIO_PIN(GPIO_PG_EC_DSW_PWROK_PATH, gpios)
 
-#define ADC_DEVICE_NODE		DT_NODELABEL(adc0)
-#define ADC_CHANNELS_NUM	DT_PROP(DT_NODELABEL(adc0), nchannels)
+#define ADC_DEVICE_NODE DT_NODELABEL(adc0)
+#define ADC_CHANNELS_NUM DT_PROP(DT_NODELABEL(adc0), nchannels)
 
 /** Test error code when invalid sensor is passed to temp_sensor_read() */
 ZTEST_USER(temp_sensor, test_temp_sensor_wrong_id)
 {
 	int temp;
 
-	zassert_equal(EC_ERROR_INVAL, temp_sensor_read(TEMP_SENSOR_COUNT,
-						       &temp),
-		      NULL);
+	zassert_equal(EC_ERROR_INVAL,
+		      temp_sensor_read(TEMP_SENSOR_COUNT, &temp), NULL);
 }
 
 /** Test error code when temp_sensor_read() is called with powered off ADC */
@@ -85,9 +84,10 @@ static void check_valid_temperature(const struct device *adc_dev, int sensor)
 					    1000),
 		   "adc_emul_const_value_set() failed (sensor %d)", sensor);
 	zassert_equal(EC_SUCCESS, temp_sensor_read(sensor, &temp), NULL);
-	zassert_within(temp, 273 + 50, 51,
-		       "Expected temperature in 0*C-100*C, got %d*C (sensor %d)",
-		       temp - 273, sensor);
+	zassert_within(
+		temp, 273 + 50, 51,
+		"Expected temperature in 0*C-100*C, got %d*C (sensor %d)",
+		temp - 273, sensor);
 	/* Return error on ADC channel of tested sensor */
 	zassert_ok(adc_emul_value_func_set(adc_dev, temp_sensors[sensor].idx,
 					   adc_error_func, NULL),
@@ -105,7 +105,7 @@ ZTEST_USER(temp_sensor, test_temp_sensor_read)
 	/* Return error on all ADC channels */
 	for (chan = 0; chan < ADC_CHANNELS_NUM; chan++) {
 		zassert_ok(adc_emul_value_func_set(adc_dev, chan,
-						    adc_error_func, NULL),
+						   adc_error_func, NULL),
 			   "channel %d adc_emul_value_func_set() failed", chan);
 	}
 
