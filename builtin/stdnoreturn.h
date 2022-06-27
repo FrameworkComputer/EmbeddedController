@@ -9,7 +9,8 @@
 /*
  * Only defined for C: https://en.cppreference.com/w/c/language/_Noreturn
  *
- * C++ uses [[noreturn]]: https://en.cppreference.com/w/cpp/language/attributes/noreturn
+ * C++ uses [[noreturn]]:
+ * https://en.cppreference.com/w/cpp/language/attributes/noreturn
  */
 #ifndef __cplusplus
 #ifndef noreturn
