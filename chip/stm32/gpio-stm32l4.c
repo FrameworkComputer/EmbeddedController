@@ -38,7 +38,6 @@ static void gpio_init(void)
 	task_enable_irq(STM32_IRQ_EXTI4);
 	task_enable_irq(STM32_IRQ_EXTI9_5);
 	task_enable_irq(STM32_IRQ_EXTI15_10);
-
 }
 DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
