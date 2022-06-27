@@ -60,7 +60,7 @@ void test_run_step(uint32_t state)
 		else if (write_protect_enabled) {
 			ccprintf("Request RO protection at boot\n");
 			crec_flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT,
-			    EC_FLASH_PROTECT_RO_AT_BOOT);
+					       EC_FLASH_PROTECT_RO_AT_BOOT);
 			test_reboot_to_next_step(TEST_STATE_STEP_2);
 		} else {
 			/* Write protect is disabled, nothing else to do */
