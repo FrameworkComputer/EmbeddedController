@@ -45,16 +45,15 @@ static void hdmi_hpd_interrupt(enum gpio_signal signal);
  * that we don't have pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-	{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-	{0, 7}, {-1, -1}, {-1, -1}, {1, 4}, {1, 3},
-	{-1, -1}, {1, 6}, {1, 7}, {3, 1}, {2, 0},
-	{1, 5}, {2, 6}, {2, 7}, {2, 1}, {2, 4},
-	{2, 5}, {1, 2}, {2, 3}, {2, 2}, {3, 0},
-	{-1, -1}, {0, 4}, {-1, -1}, {8, 2}, {-1, -1},
-	{-1, -1},
+	{ -1, -1 }, { 0, 5 },	{ 1, 1 }, { 1, 0 },   { 0, 6 },	  { 0, 7 },
+	{ -1, -1 }, { -1, -1 }, { 1, 4 }, { 1, 3 },   { -1, -1 }, { 1, 6 },
+	{ 1, 7 },   { 3, 1 },	{ 2, 0 }, { 1, 5 },   { 2, 6 },	  { 2, 7 },
+	{ 2, 1 },   { 2, 4 },	{ 2, 5 }, { 1, 2 },   { 2, 3 },	  { 2, 2 },
+	{ 3, 0 },   { -1, -1 }, { 0, 4 }, { -1, -1 }, { 8, 2 },	  { -1, -1 },
+	{ -1, -1 },
 };
 const int keyboard_factory_scan_pins_used =
-		ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 __override enum ec_error_list
 board_a1_ps8811_retimer_init(const struct usb_mux *me)
@@ -63,51 +62,46 @@ board_a1_ps8811_retimer_init(const struct usb_mux *me)
 }
 
 __override int board_c1_ps8818_mux_set(const struct usb_mux *me,
-				    mux_state_t mux_state)
+				       mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 
 	/* USB specific config */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/* Boost the USB gain */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX1EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX1EQ_10G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX2EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX2EQ_10G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX1EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX1EQ_5G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX2EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX2EQ_5G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
 		/* Set the RX input termination */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_RX_PHY,
-					PS8818_RX_INPUT_TERM_MASK,
-					PS8818_RX_INPUT_TERM_112_OHM);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_RX_PHY,
+					      PS8818_RX_INPUT_TERM_MASK,
+					      PS8818_RX_INPUT_TERM_112_OHM);
 		if (rv)
 			return rv;
 	}
@@ -115,11 +109,10 @@ __override int board_c1_ps8818_mux_set(const struct usb_mux *me,
 	/* DP specific config */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Boost the DP gain */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_DPEQ_LEVEL,
-					PS8818_DPEQ_LEVEL_UP_MASK,
-					PS8818_DPEQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_DPEQ_LEVEL,
+					      PS8818_DPEQ_LEVEL_UP_MASK,
+					      PS8818_DPEQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
@@ -145,8 +138,7 @@ static void board_chipset_startup(void)
 	if (get_board_version() > 1)
 		pct2075_init();
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
-	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 int board_get_soc_temp_k(int idx, int *temp_k)
 {
@@ -336,17 +328,15 @@ static void board_chipset_resume(void)
 	ioex_set_level(IOEX_EN_PWR_HDMI, 1);
 	ioex_set_level(IOEX_HDMI_DATA_EN, 1);
 	msleep(PI3HDX1204_POWER_ON_DELAY_MS);
-	pi3hdx1204_enable(I2C_PORT_TCPC1,
-		PI3HDX1204_I2C_ADDR_FLAGS,
-		check_hdmi_hpd_status());
+	pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
+			  check_hdmi_hpd_status());
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
 /* Called on AP suspend */
 static void board_chipset_suspend(void)
 {
-	pi3hdx1204_enable(I2C_PORT_TCPC1,
-		PI3HDX1204_I2C_ADDR_FLAGS, 0);
+	pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS, 0);
 	ioex_set_level(IOEX_HDMI_DATA_EN, 0);
 	ioex_set_level(IOEX_EN_PWR_HDMI, 0);
 	ioex_set_level(IOEX_USB_A1_PD_R_L, 0);
@@ -499,10 +489,9 @@ static void hdmi_hpd_handler(void)
 	int hpd = check_hdmi_hpd_status();
 
 	ccprints("HDMI HPD %d", hpd);
-	pi3hdx1204_enable(I2C_PORT_TCPC1,
-			  PI3HDX1204_I2C_ADDR_FLAGS,
-			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
-			  && hpd);
+	pi3hdx1204_enable(
+		I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
+		chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON) && hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
