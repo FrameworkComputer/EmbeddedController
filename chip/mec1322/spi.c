@@ -17,12 +17,12 @@
 #include "task.h"
 
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
 
 #define SPI_BYTE_TRANSFER_TIMEOUT_US (3 * MSEC)
 #define SPI_BYTE_TRANSFER_POLL_INTERVAL_US 100
 
-#define SPI_DMA_CHANNEL(port) (MEC1322_DMAC_SPI0_RX + (port) * 2)
+#define SPI_DMA_CHANNEL(port) (MEC1322_DMAC_SPI0_RX + (port)*2)
 
 /* only regular image needs mutex, LFW does not have scheduling */
 /* TODO: Move SPI locking to common code */
@@ -31,16 +31,10 @@ static struct mutex spi_mutex;
 #endif
 
 static const struct dma_option spi_rx_option[] = {
-	{
-		SPI_DMA_CHANNEL(0),
-		(void *)&MEC1322_SPI_RD(0),
-		MEC1322_DMA_XFER_SIZE(1)
-	},
-	{
-		SPI_DMA_CHANNEL(1),
-		(void *)&MEC1322_SPI_RD(1),
-		MEC1322_DMA_XFER_SIZE(1)
-	},
+	{ SPI_DMA_CHANNEL(0), (void *)&MEC1322_SPI_RD(0),
+	  MEC1322_DMA_XFER_SIZE(1) },
+	{ SPI_DMA_CHANNEL(1), (void *)&MEC1322_SPI_RD(1),
+	  MEC1322_DMA_XFER_SIZE(1) },
 };
 
 static int wait_byte(const int port)
@@ -74,8 +68,8 @@ static int spi_tx(const int port, const uint8_t *txdata, int txlen)
 }
 
 int spi_transaction_async(const struct spi_device_t *spi_device,
-			  const uint8_t *txdata, int txlen,
-			  uint8_t *rxdata, int rxlen)
+			  const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			  int rxlen)
 {
 	int port = spi_device->port;
 	int ret = EC_SUCCESS;
@@ -129,8 +123,8 @@ int spi_transaction_flush(const struct spi_device_t *spi_device)
 }
 
 int spi_transaction(const struct spi_device_t *spi_device,
-		    const uint8_t *txdata, int txlen,
-		    uint8_t *rxdata, int rxlen)
+		    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+		    int rxlen)
 {
 	int ret;
 
