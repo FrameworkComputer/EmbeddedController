@@ -29,14 +29,14 @@ void queue_remove_direct(struct queue_policy const *policy, size_t count)
 
 struct producer const null_producer = {
 	.queue = NULL,
-	.ops   = &((struct producer_ops const) {
-		 .read = NULL,
+	.ops = &((struct producer_ops const){
+		.read = NULL,
 	}),
 };
 
 struct consumer const null_consumer = {
 	.queue = NULL,
-	.ops   = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = NULL,
 	}),
 };
