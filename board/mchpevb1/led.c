@@ -30,8 +30,7 @@
  * NOTE: GPIO_BAT_LED_xxx defined in board.h
  */
 
-const enum ec_led_id supported_led_ids[] = {
-			EC_LED_ID_BATTERY_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -40,7 +39,7 @@ enum led_color {
 	LED_RED,
 	LED_AMBER,
 	LED_GREEN,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static int bat_led_set_color(enum led_color color)
@@ -68,8 +67,7 @@ static int bat_led_set_color(enum led_color color)
 	return EC_SUCCESS;
 }
 
-void led_get_brightness_range(enum ec_led_id led_id,
-		uint8_t *brightness_range)
+void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	brightness_range[EC_LED_COLOR_RED] = 1;
 	brightness_range[EC_LED_COLOR_GREEN] = 1;
@@ -129,23 +127,29 @@ static void board_led_set_battery(void)
 	case PWR_STATE_DISCHARGE:
 		/* Less than 3%, blink one second every two second */
 		if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
-			charge_get_percent() < CRITICAL_LOW_BATTERY_PERCENTAGE)
+		    charge_get_percent() < CRITICAL_LOW_BATTERY_PERCENTAGE)
 			board_led_set_color_battery(
 				(battery_ticks % LED_TOTAL_2SECS_TICKS <
-				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
+				 LED_ON_1SEC_TICKS) ?
+					LED_AMBER :
+					LED_OFF);
 		/* Less than 10%, blink one second every four seconds */
 		else if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
-			charge_get_percent() < LOW_BATTERY_PERCENTAGE)
+			 charge_get_percent() < LOW_BATTERY_PERCENTAGE)
 			board_led_set_color_battery(
 				(battery_ticks % LED_TOTAL_4SECS_TICKS <
-				 LED_ON_1SEC_TICKS) ? LED_AMBER : LED_OFF);
+				 LED_ON_1SEC_TICKS) ?
+					LED_AMBER :
+					LED_OFF);
 		else
 			board_led_set_color_battery(LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
 		board_led_set_color_battery(
 			(battery_ticks % LED_TOTAL_2SECS_TICKS <
-			 LED_ON_1SEC_TICKS) ? LED_RED : LED_OFF);
+			 LED_ON_1SEC_TICKS) ?
+				LED_RED :
+				LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		board_led_set_color_battery(LED_GREEN);
@@ -154,7 +158,9 @@ static void board_led_set_battery(void)
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
 			board_led_set_color_battery(
 				(battery_ticks % LED_TOTAL_4SECS_TICKS <
-				 LED_ON_2SECS_TICKS) ? LED_GREEN : LED_AMBER);
+				 LED_ON_2SECS_TICKS) ?
+					LED_GREEN :
+					LED_AMBER);
 		else
 			board_led_set_color_battery(LED_GREEN);
 		break;
@@ -164,7 +170,6 @@ static void board_led_set_battery(void)
 	}
 #endif
 }
-
 
 static void led_second(void)
 {
