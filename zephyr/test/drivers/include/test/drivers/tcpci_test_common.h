@@ -18,7 +18,7 @@
  */
 void check_tcpci_reg_f(const struct emul *emul, int reg, uint16_t exp_val,
 		       int line);
-#define check_tcpci_reg(emul, reg, exp_val)			\
+#define check_tcpci_reg(emul, reg, exp_val) \
 	check_tcpci_reg_f((emul), (reg), (exp_val), __LINE__)
 
 /**
@@ -32,7 +32,7 @@ void check_tcpci_reg_f(const struct emul *emul, int reg, uint16_t exp_val,
  */
 void check_tcpci_reg_with_mask_f(const struct emul *emul, int reg,
 				 uint16_t exp_val, uint16_t mask, int line);
-#define check_tcpci_reg_with_mask(emul, reg, exp_val, mask)		\
+#define check_tcpci_reg_with_mask(emul, reg, exp_val, mask) \
 	check_tcpci_reg_with_mask_f((emul), (reg), (exp_val), (mask), __LINE__)
 
 /**
