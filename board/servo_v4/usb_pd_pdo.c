@@ -12,9 +12,9 @@
 #define CHG_PDO_FIXED_FLAGS (PDO_FIXED_DATA_SWAP)
 
 const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000, 500, CHG_PDO_FIXED_FLAGS),
-		PDO_BATT(4750, 21000, 15000),
-		PDO_VAR(4750, 21000, 3000),
+	PDO_FIXED(5000, 500, CHG_PDO_FIXED_FLAGS),
+	PDO_BATT(4750, 21000, 15000),
+	PDO_VAR(4750, 21000, 3000),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
@@ -48,7 +48,7 @@ int charge_manager_get_source_pdo(const uint32_t **src_pdo, const int port)
 	 * port, otherwise we provide no power.
 	 */
 	if (charge_port_is_active()) {
-		*src_pdo =  pd_src_chg_pdo;
+		*src_pdo = pd_src_chg_pdo;
 		pdo_cnt = chg_pdo_cnt;
 	}
 
