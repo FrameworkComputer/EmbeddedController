@@ -6,7 +6,7 @@
 #ifndef __AP_PWRSEQ_SIGNAL_VW_H__
 #define __AP_PWRSEQ_SIGNAL_VW_H__
 
-#define PWR_SIG_TAG_VW	PWR_VW_
+#define PWR_SIG_TAG_VW PWR_VW_
 
 /*
  * Generate enums for the virtual wire signals.
@@ -21,13 +21,13 @@
 
 enum pwr_sig_vw {
 #if HAS_VW_SIGNALS
-DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw, PWR_VW_ENUM)
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw, PWR_VW_ENUM)
 #endif
-	PWR_SIG_VW_COUNT
+		PWR_SIG_VW_COUNT
 };
 
-#undef	PWR_VW_ENUM
-#undef	TAG_VW
+#undef PWR_VW_ENUM
+#undef TAG_VW
 
 /**
  * @brief Get the value of the virtual wire signal.
