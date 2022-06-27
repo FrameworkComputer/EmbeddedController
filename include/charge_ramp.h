@@ -11,10 +11,7 @@
 #include "timer.h"
 
 /* Charge ramp state used for checking VBUS */
-enum chg_ramp_vbus_state {
-	CHG_RAMP_VBUS_RAMPING,
-	CHG_RAMP_VBUS_STABLE
-};
+enum chg_ramp_vbus_state { CHG_RAMP_VBUS_RAMPING, CHG_RAMP_VBUS_STABLE };
 
 /**
  * Check if VBUS is too low
@@ -81,11 +78,15 @@ int chg_ramp_is_detected(void);
  * @voltage Negotiated charge voltage.
  */
 void chg_ramp_charge_supplier_change(int port, int supplier, int current,
-			     timestamp_t registration_time, int voltage);
+				     timestamp_t registration_time,
+				     int voltage);
 
 #else
-static inline void chg_ramp_charge_supplier_change(
-		int port, int supplier, timestamp_t registration_time) { }
+static inline void
+chg_ramp_charge_supplier_change(int port, int supplier,
+				timestamp_t registration_time)
+{
+}
 #endif
 
 #endif /* __CROS_EC_CHARGE_RAMP_H */
