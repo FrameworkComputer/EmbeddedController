@@ -48,10 +48,10 @@
  * included if that signal source is configured in the
  * devicetree.
  */
-#define	HAS_GPIO_SIGNALS  DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_gpio)
-#define	HAS_VW_SIGNALS	  DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_vw)
-#define	HAS_EXT_SIGNALS   DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_external)
-#define	HAS_ADC_SIGNALS   DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_adc)
+#define HAS_GPIO_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_gpio)
+#define HAS_VW_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_vw)
+#define HAS_EXT_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_external)
+#define HAS_ADC_SIGNALS DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq_adc)
 
 /**
  * @brief Definitions for AP power sequence signals.
@@ -62,11 +62,9 @@
 /**
  * @brief Generate the enum for this power signal.
  */
-#define PWR_SIGNAL_ENUM(id) \
-	 DT_STRING_UPPER_TOKEN(id, enum_name)
+#define PWR_SIGNAL_ENUM(id) DT_STRING_UPPER_TOKEN(id, enum_name)
 
-#define PWR_SIGNAL_ENUM_COMMA(id) \
-	 PWR_SIGNAL_ENUM(id),
+#define PWR_SIGNAL_ENUM_COMMA(id) PWR_SIGNAL_ENUM(id),
 /**
  * @brief Enum of all power signals.
  *
@@ -78,11 +76,14 @@
  * must be the same as in power_signals.c
  */
 enum power_signal {
-DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_gpio, PWR_SIGNAL_ENUM_COMMA)
-DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw, PWR_SIGNAL_ENUM_COMMA)
-DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external, PWR_SIGNAL_ENUM_COMMA)
-DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc, PWR_SIGNAL_ENUM_COMMA)
-	POWER_SIGNAL_COUNT,
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_gpio, PWR_SIGNAL_ENUM_COMMA)
+		DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw,
+				       PWR_SIGNAL_ENUM_COMMA)
+			DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external,
+					       PWR_SIGNAL_ENUM_COMMA)
+				DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc,
+						       PWR_SIGNAL_ENUM_COMMA)
+					POWER_SIGNAL_COUNT,
 };
 
 #undef PWR_SIGNAL_ENUM_COMMA
@@ -301,8 +302,7 @@ static inline bool power_signals_off(power_signal_mask_t want)
  * @return negative If the signals did not match before the timeout.
  */
 int power_wait_mask_signals_timeout(power_signal_mask_t want,
-				    power_signal_mask_t mask,
-				    int timeout);
+				    power_signal_mask_t mask, int timeout);
 
 /**
  * @brief Wait until the selected power signals match, with timeout
