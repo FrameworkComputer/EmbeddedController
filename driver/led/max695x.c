@@ -13,12 +13,11 @@
 #include "max695x.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 static inline int max695x_i2c_write8(uint8_t offset, uint8_t data)
 {
-	return i2c_write8(I2C_PORT_PORT80, PORT80_I2C_ADDR,
-			   offset, (int)data);
+	return i2c_write8(I2C_PORT_PORT80, PORT80_I2C_ADDR, offset, (int)data);
 }
 
 static inline int max695x_i2c_write(uint8_t offset, uint8_t *data, int len)
@@ -27,8 +26,8 @@ static inline int max695x_i2c_write(uint8_t offset, uint8_t *data, int len)
 	 * The address pointer stored in the MAX695x increments after
 	 * each data byte is written unless the address equals 01111111
 	 */
-	return i2c_write_block(I2C_PORT_PORT80, PORT80_I2C_ADDR,
-			   offset, data, len);
+	return i2c_write_block(I2C_PORT_PORT80, PORT80_I2C_ADDR, offset, data,
+			       len);
 }
 
 int display_7seg_write(enum seven_seg_module_display module, uint16_t data)
@@ -84,12 +83,10 @@ int display_7seg_write(enum seven_seg_module_display module, uint16_t data)
  */
 static void max695x_init(void)
 {
-	uint8_t buf[4] = {
-		[0] = MAX695X_DECODE_MODE_HEX_DECODE,
-		[1] = MAX695X_INTENSITY_MEDIUM,
-		[2] = MAX695X_SCAN_LIMIT_4,
-		[3] = MAX695X_CONFIG_OPR_NORMAL
-	};
+	uint8_t buf[4] = { [0] = MAX695X_DECODE_MODE_HEX_DECODE,
+			   [1] = MAX695X_INTENSITY_MEDIUM,
+			   [2] = MAX695X_SCAN_LIMIT_4,
+			   [3] = MAX695X_CONFIG_OPR_NORMAL };
 	max695x_i2c_write(MAX695X_REG_DECODE_MODE, buf, ARRAY_SIZE(buf));
 }
 DECLARE_HOOK(HOOK_INIT, max695x_init, HOOK_PRIO_DEFAULT);
@@ -97,8 +94,7 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, max695x_init, HOOK_PRIO_DEFAULT);
 
 static void max695x_shutdown(void)
 {
-	max695x_i2c_write8(MAX695X_REG_CONFIG,
-			   MAX695X_CONFIG_OPR_SHUTDOWN);
+	max695x_i2c_write8(MAX695X_REG_CONFIG, MAX695X_CONFIG_OPR_SHUTDOWN);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, max695x_shutdown, HOOK_PRIO_DEFAULT);
 
@@ -118,7 +114,6 @@ static int console_command_max695x_write(int argc, char **argv)
 
 	return display_7seg_write(SEVEN_SEG_CONSOLE_DISPLAY, val);
 }
-DECLARE_CONSOLE_COMMAND(seg, console_command_max695x_write,
-			"<val>",
+DECLARE_CONSOLE_COMMAND(seg, console_command_max695x_write, "<val>",
 			"Write to 7 segment display in hex");
 #endif
