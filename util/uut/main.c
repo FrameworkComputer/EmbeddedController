@@ -36,20 +36,20 @@
 #define DEFAULT_FLASH_OFFSET 0
 
 /* The magic number in monitor header */
-#define MONITOR_HDR_TAG        0xA5075001
+#define MONITOR_HDR_TAG 0xA5075001
 /* The location of monitor header */
-#define MONITOR_HDR_ADDR       0x200C3000
+#define MONITOR_HDR_ADDR 0x200C3000
 /* The start address of the monitor little firmware to execute */
-#define MONITOR_ADDR           0x200C3020
+#define MONITOR_ADDR 0x200C3020
 /* The start address to store the firmware segment to be programmed */
-#define FIRMWARE_START_ADDR    0x10090000
+#define FIRMWARE_START_ADDR 0x10090000
 /* Divide the ec firmware image into 4K byte */
-#define FIRMWARE_SEGMENT       0x1000
+#define FIRMWARE_SEGMENT 0x1000
 /* Register address for chip ID */
-#define NPCX_SRID_CR           0x400C101C
+#define NPCX_SRID_CR 0x400C101C
 /* Register address for device ID */
-#define NPCX_DEVICE_ID_CR      0x400C1022
-#define NPCX_FLASH_BASE_ADDR   0x64000000
+#define NPCX_DEVICE_ID_CR 0x400C1022
+#define NPCX_FLASH_BASE_ADDR 0x64000000
 
 /*---------------------------------------------------------------------------
  * Global variables
@@ -64,8 +64,8 @@ struct comport_fields port_cfg;
  *---------------------------------------------------------------------------
  */
 
-static const char tool_name[] = {"LINUX UART Update Tool"};
-static const char tool_version[] = {"2.0.1"};
+static const char tool_name[] = { "LINUX UART Update Tool" };
+static const char tool_version[] = { "2.0.1" };
 
 static char port_name[MAX_PARAM_SIZE];
 static char opr_name[MAX_PARAM_SIZE];
@@ -185,7 +185,7 @@ enum EXIT_CODE {
  *---------------------------------------------------------------------------
  */
 static bool image_auto_write(uint32_t offset, uint8_t *buffer,
-				uint32_t file_size)
+			     uint32_t file_size)
 {
 	uint32_t data_buf[4];
 	uint32_t addr, chunk_remain, file_seg, flash_index, seg;
@@ -199,8 +199,8 @@ static bool image_auto_write(uint32_t offset, uint8_t *buffer,
 	file_seg = file_size;
 	total = 0;
 	while (file_seg) {
-		seg = (file_seg > FIRMWARE_SEGMENT) ?
-					FIRMWARE_SEGMENT : file_seg;
+		seg = (file_seg > FIRMWARE_SEGMENT) ? FIRMWARE_SEGMENT :
+						      file_seg;
 		/*
 		 * Check if the content of the segment is all 0xff.
 		 * If yes, there is no need to write.
@@ -218,7 +218,7 @@ static bool image_auto_write(uint32_t offset, uint8_t *buffer,
 			data_buf[2] = 0;
 			data_buf[3] = flash_index;
 			opr_write_chunk((uint8_t *)data_buf, MONITOR_HDR_ADDR,
-						sizeof(data_buf));
+					sizeof(data_buf));
 			if (opr_execute_return(MONITOR_ADDR) != true)
 				return false;
 			file_seg -= seg;
@@ -242,10 +242,11 @@ static bool image_auto_write(uint32_t offset, uint8_t *buffer,
 		data_buf[3] = flash_index;
 		/* Write the monitor header to RAM */
 		opr_write_chunk((uint8_t *)data_buf, MONITOR_HDR_ADDR,
-						sizeof(data_buf));
+				sizeof(data_buf));
 		while (chunk_remain) {
 			count = (chunk_remain > MAX_RW_DATA_SIZE) ?
-						MAX_RW_DATA_SIZE : chunk_remain;
+					MAX_RW_DATA_SIZE :
+					chunk_remain;
 			if (opr_write_chunk(buffer, addr, count) != true)
 				return false;
 
@@ -281,13 +282,13 @@ static bool get_flash_size(uint32_t *flash_size)
 
 	for (i = 0; i < ARRAY_SIZE(chip_info); i++) {
 		if (chip_info[i].device_id == dev_id &&
-				chip_info[i].chip_id == chip_id) {
+		    chip_info[i].chip_id == chip_id) {
 			*flash_size = chip_info[i].flash_size;
 			return true;
 		}
 	}
-	printf("Unknown NPCX device ID:0x%02x chip ID:0x%02x\n",
-				dev_id, chip_id);
+	printf("Unknown NPCX device ID:0x%02x chip ID:0x%02x\n", dev_id,
+	       chip_id);
 
 	return false;
 }
@@ -315,8 +316,8 @@ static uint8_t *read_input_file(uint32_t size, const char *file_name)
 	}
 	input_fp = fopen(file_name, "r");
 	if (!input_fp) {
-		display_color_msg(FAIL,
-			"ERROR: cannot open file %s\n", file_name);
+		display_color_msg(FAIL, "ERROR: cannot open file %s\n",
+				  file_name);
 		free(buffer);
 		return NULL;
 	}
@@ -396,9 +397,11 @@ int main(int argc, char *argv[])
 		 * It might fail for garbage data drainage from H1, or
 		 * for timeout due to unstable data transfer yet.
 		 */
-		display_color_msg(FAIL,
+		display_color_msg(
+			FAIL,
 			"Host/Device synchronization failed, error = %d,"
-			" fail count = %d\n", sr, sync_cnt);
+			" fail count = %d\n",
+			sr, sync_cnt);
 	}
 	if (sync_cnt > MAX_SYNC_RETRIES)
 		exit_uart_app(EC_SYNC_ERR);
@@ -412,8 +415,8 @@ int main(int argc, char *argv[])
 		if (!buffer)
 			exit_uart_app(EC_FILE_ERR);
 
-		printf("Write file %s at %d with %d bytes\n",
-					file_name, flash_offset, size);
+		printf("Write file %s at %d with %d bytes\n", file_name,
+		       flash_offset, size);
 		if (image_auto_write(flash_offset, buffer, size)) {
 			printf("Flash Done.\n");
 			free(buffer);
@@ -429,7 +432,7 @@ int main(int argc, char *argv[])
 		if (get_flash_size(&flash_size)) {
 			printf("Read %d bytes from flash...\n", flash_size);
 			opr_read_mem(file_name, NPCX_FLASH_BASE_ADDR,
-					flash_size);
+				     flash_size);
 			exit_uart_app(EC_OK);
 		}
 
@@ -506,20 +509,13 @@ int main(int argc, char *argv[])
  */
 
 static const struct option long_opts[] = {
-	{"version",         0, 0, 'v'},
-	{"help",            0, 0, 'h'},
-	{"quiet",           0, 0, 'q'},
-	{"console",         0, 0, 'c'},
-	{"auto",            0, 0, 'A'},
-	{"read-flash",      0, 0, 'r'},
-	{"baudrate",        1, 0, 'b'},
-	{"opr",             1, 0, 'o'},
-	{"port",            1, 0, 'p'},
-	{"file",            1, 0, 'f'},
-	{"addr",            1, 0, 'a'},
-	{"size",            1, 0, 's'},
-	{"offset",          1, 0, 'O'},
-	{NULL,       0, 0, 0}
+	{ "version", 0, 0, 'v' },  { "help", 0, 0, 'h' },
+	{ "quiet", 0, 0, 'q' },	   { "console", 0, 0, 'c' },
+	{ "auto", 0, 0, 'A' },	   { "read-flash", 0, 0, 'r' },
+	{ "baudrate", 1, 0, 'b' }, { "opr", 1, 0, 'o' },
+	{ "port", 1, 0, 'p' },	   { "file", 1, 0, 'f' },
+	{ "addr", 1, 0, 'a' },	   { "size", 1, 0, 's' },
+	{ "offset", 1, 0, 'O' },   { NULL, 0, 0, 0 }
 };
 
 static const char *short_opts = "vhqcArb:o:p:f:a:s:O:?";
@@ -528,9 +524,8 @@ static void param_parse_cmd_line(int argc, char *argv[])
 {
 	int opt, idx;
 
-	while ((opt = getopt_long(argc, argv, short_opts,
-				long_opts, &idx)) != -1) {
-
+	while ((opt = getopt_long(argc, argv, short_opts, long_opts, &idx)) !=
+	       -1) {
 		switch (opt) {
 		case 'v':
 			main_print_version();
@@ -558,23 +553,23 @@ static void param_parse_cmd_line(int argc, char *argv[])
 			break;
 		case 'o':
 			strncpy(opr_name, optarg, sizeof(opr_name));
-			opr_name[sizeof(opr_name)-1] = '\0';
+			opr_name[sizeof(opr_name) - 1] = '\0';
 			break;
 		case 'p':
 			strncpy(port_name, optarg, sizeof(port_name));
-			port_name[sizeof(port_name)-1] = '\0';
+			port_name[sizeof(port_name) - 1] = '\0';
 			break;
 		case 'f':
 			strncpy(file_name, optarg, sizeof(file_name));
-			file_name[sizeof(file_name)-1] = '\0';
+			file_name[sizeof(file_name) - 1] = '\0';
 			break;
 		case 'a':
 			strncpy(addr_str, optarg, sizeof(addr_str));
-			addr_str[sizeof(addr_str)-1] = '\0';
+			addr_str[sizeof(addr_str) - 1] = '\0';
 			break;
 		case 's':
 			strncpy(size_str, optarg, sizeof(size_str));
-			size_str[sizeof(size_str)-1] = '\0';
+			size_str[sizeof(size_str) - 1] = '\0';
 			break;
 		case 'O':
 			flash_offset = strtol(optarg, NULL, 0);
@@ -595,12 +590,12 @@ static void param_parse_cmd_line(int argc, char *argv[])
  */
 static void param_check_opr_num(const char *opr)
 {
-
 	if ((strcasecmp(opr, OPR_WRITE_MEM) != 0) &&
-		(strcasecmp(opr, OPR_READ_MEM) != 0) &&
-		(strcasecmp(opr, OPR_EXECUTE_EXIT) != 0) &&
-		(strcasecmp(opr, OPR_EXECUTE_CONT) != 0)) {
-		display_color_msg(FAIL,
+	    (strcasecmp(opr, OPR_READ_MEM) != 0) &&
+	    (strcasecmp(opr, OPR_EXECUTE_EXIT) != 0) &&
+	    (strcasecmp(opr, OPR_EXECUTE_CONT) != 0)) {
+		display_color_msg(
+			FAIL,
 			"ERROR: Operation %s not supported, Supported "
 			"operations are %s, %s, %s & %s\n",
 			opr, OPR_WRITE_MEM, OPR_READ_MEM, OPR_EXECUTE_EXIT,
@@ -624,12 +619,11 @@ static uint32_t param_get_file_size(const char *file_name)
 	struct stat fst;
 
 	if (stat(file_name, &fst)) {
-		display_color_msg(FAIL,
-				"ERROR: Could not stat file [%s]\n", file_name);
+		display_color_msg(FAIL, "ERROR: Could not stat file [%s]\n",
+				  file_name);
 		return 0;
 	}
 	return fst.st_size;
-
 }
 
 /*---------------------------------------------------------------------------
@@ -653,7 +647,7 @@ static uint32_t param_get_str_size(char *string)
 	/* Verify string is non-NULL */
 	if ((string == NULL) || (strlen(string) == 0)) {
 		display_color_msg(FAIL,
-			"ERROR: Zero length input string provided\n");
+				  "ERROR: Zero length input string provided\n");
 		return 0;
 	}
 
@@ -692,14 +686,14 @@ static void tool_usage(void)
 	printf("  -c, --console        - Print data to console (default is "
 	       "print to file)\n");
 	printf("  -p, --port <name>    - Serial port name (default is %s)\n",
-		DEFAULT_PORT_NAME);
+	       DEFAULT_PORT_NAME);
 	printf("  -b, --baudrate <num> - COM Port baud-rate (default is %d)\n",
-		DEFAULT_BAUD_RATE);
+	       DEFAULT_BAUD_RATE);
 	printf("  -A, --auto           - Enable auto mode. (default is off)\n");
 	printf("  -O, --offset <num>   - With --auto, assign the offset of");
 	printf(" flash where the image to be written.\n");
 	printf("  -r, --read-flash     - With --file=<file>, Read the whole"
-			" flash content and write it to <file>.\n");
+	       " flash content and write it to <file>.\n");
 	printf("\n");
 	printf("Operation specific switches:\n");
 	printf("  -o, --opr   <name>   - Operation number (see list below)\n");
