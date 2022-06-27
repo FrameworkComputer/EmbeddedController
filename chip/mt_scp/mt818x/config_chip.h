@@ -10,7 +10,7 @@
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 500
-#define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
+#define HOOK_TICK_INTERVAL (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /* Default to UART 2 (AP UART) for EC console */
 #define CONFIG_UART_CONSOLE 2
@@ -26,7 +26,7 @@
 #define MAX_EINT_PORT (MAX_NUM_EINT / 32)
 
 /* RW only, no flash */
-#undef  CONFIG_FW_INCLUDE_RO
+#undef CONFIG_FW_INCLUDE_RO
 #define CONFIG_RO_MEM_OFF 0
 #define CONFIG_RO_SIZE 0
 #define CONFIG_RW_MEM_OFF 0
