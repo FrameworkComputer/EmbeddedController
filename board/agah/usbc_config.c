@@ -33,8 +33,8 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* USBC TCPC configuration */
 const struct tcpc_config_t tcpc_config[] = {
@@ -116,18 +116,17 @@ const static struct ps8818_reg_val equalizer_default_table[] = {
 
 #define NUM_EQ_DEFAULT_ARRAY ARRAY_SIZE(equalizer_default_table)
 
-int board_ps8818_mux_set(const struct usb_mux *me,
-				    mux_state_t mux_state)
+int board_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 	int i;
 
 	/* USB specific config */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
-
 		/* Boost the USB gain */
 		for (i = 0; i < NUM_EQ_DEFAULT_ARRAY; i++)
-			rv |= ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+			rv |= ps8818_i2c_field_update8(
+				me, PS8818_REG_PAGE1,
 				equalizer_default_table[i].reg,
 				equalizer_default_table[i].mask,
 				equalizer_default_table[i].val);
@@ -136,11 +135,10 @@ int board_ps8818_mux_set(const struct usb_mux *me,
 	/* DP specific config */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Boost the DP gain */
-		rv |= ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_DPEQ_LEVEL,
-					PS8818_DPEQ_LEVEL_UP_MASK,
-					PS8818_DPEQ_LEVEL_UP_19DB);
+		rv |= ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					       PS8818_REG1_DPEQ_LEVEL,
+					       PS8818_DPEQ_LEVEL_UP_MASK,
+					       PS8818_DPEQ_LEVEL_UP_19DB);
 	}
 
 	return rv;
@@ -203,8 +201,8 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	}
 
 	if (voltage < BC12_MIN_VOLTAGE) {
-		CPRINTS("%s: port %d: vbus %d lower than %d", __func__,
-			port, voltage, BC12_MIN_VOLTAGE);
+		CPRINTS("%s: port %d: vbus %d lower than %d", __func__, port,
+			voltage, BC12_MIN_VOLTAGE);
 		return 1;
 	}
 
@@ -215,7 +213,7 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 void board_reset_pd_mcu(void)
 {
- /* There's no reset pin on TCPC */
+	/* There's no reset pin on TCPC */
 }
 
 static void board_tcpc_init(void)
