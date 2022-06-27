@@ -11,45 +11,48 @@
 #include "led_onoff_states.h"
 #include "ec_commands.h"
 
-#define LED_RED		MT6370_LED_ID1
-#define LED_GREEN	MT6370_LED_ID2
-#define LED_WHITE	MT6370_LED_ID3
+#define LED_RED MT6370_LED_ID1
+#define LED_GREEN MT6370_LED_ID2
+#define LED_WHITE MT6370_LED_ID3
 
-#define LED_MASK_OFF	0
-#define LED_MASK_RED	MT6370_MASK_RGB_ISNK1DIM_EN
-#define LED_MASK_GREEN	MT6370_MASK_RGB_ISNK2DIM_EN
-#define LED_MASK_WHITE	MT6370_MASK_RGB_ISNK3DIM_EN
+#define LED_MASK_OFF 0
+#define LED_MASK_RED MT6370_MASK_RGB_ISNK1DIM_EN
+#define LED_MASK_GREEN MT6370_MASK_RGB_ISNK2DIM_EN
+#define LED_MASK_WHITE MT6370_MASK_RGB_ISNK3DIM_EN
 
 __override const int led_charge_lvl_1 = 5;
 __override const int led_charge_lvl_2 = 97;
 
 __override struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_RED, LED_INDEFINITE} },
-	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_GREEN,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0]	     = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S3]	     = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S5]         = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_RED,  1 * LED_ONE_SEC},
-					{LED_OFF,	    1 * LED_ONE_SEC} },
-	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_RED,   2 * LED_ONE_SEC},
-					{EC_LED_COLOR_GREEN, 2 * LED_ONE_SEC} },
-};
+	led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+		[STATE_CHARGING_LVL_1] = { { EC_LED_COLOR_RED,
+					     LED_INDEFINITE } },
+		[STATE_CHARGING_LVL_2] = { { EC_LED_COLOR_AMBER,
+					     LED_INDEFINITE } },
+		[STATE_CHARGING_FULL_CHARGE] = { { EC_LED_COLOR_GREEN,
+						   LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S3] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S5] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_BATTERY_ERROR] = { { EC_LED_COLOR_RED, 1 * LED_ONE_SEC },
+					  { LED_OFF, 1 * LED_ONE_SEC } },
+		[STATE_FACTORY_TEST] = { { EC_LED_COLOR_RED, 2 * LED_ONE_SEC },
+					 { EC_LED_COLOR_GREEN,
+					   2 * LED_ONE_SEC } },
+	};
 
 __override const struct led_descriptor
-		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
-	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 3 * LED_ONE_SEC},
-					{LED_OFF,	   LED_ONE_SEC / 2} },
-	[PWR_LED_STATE_SUSPEND_NO_AC] = {{LED_OFF, LED_INDEFINITE} },
-	[PWR_LED_STATE_OFF]           = {{LED_OFF, LED_INDEFINITE} },
-};
+	led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
+		[PWR_LED_STATE_ON] = { { EC_LED_COLOR_WHITE, LED_INDEFINITE } },
+		[PWR_LED_STATE_SUSPEND_AC] = { { EC_LED_COLOR_WHITE,
+						 3 * LED_ONE_SEC },
+					       { LED_OFF, LED_ONE_SEC / 2 } },
+		[PWR_LED_STATE_SUSPEND_NO_AC] = { { LED_OFF, LED_INDEFINITE } },
+		[PWR_LED_STATE_OFF] = { { LED_OFF, LED_INDEFINITE } },
+	};
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_POWER_LED,
-	EC_LED_ID_BATTERY_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_POWER_LED,
+					     EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
