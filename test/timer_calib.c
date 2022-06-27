@@ -13,7 +13,7 @@
 
 uint32_t difftime(timestamp_t t0, timestamp_t t1)
 {
-	return (uint32_t)(t1.val-t0.val);
+	return (uint32_t)(t1.val - t0.val);
 }
 
 int timer_calib_task(void *data)
