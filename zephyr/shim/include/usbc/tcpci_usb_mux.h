@@ -7,9 +7,11 @@
 #define __ZEPHYR_SHIM_TCPCI_USB_MUX_H
 
 #include "dt-bindings/usbc_mux.h"
+#include "tcpm/anx7447_public.h"
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
 
+#define ANX7447_USB_MUX_COMPAT analogix_usbc_mux_anx7447
 #define TCPCI_TCPM_USB_MUX_COMPAT cros_ec_usbc_mux_tcpci
 #define PS8XXX_USB_MUX_COMPAT parade_usbc_mux_ps8xxx
 

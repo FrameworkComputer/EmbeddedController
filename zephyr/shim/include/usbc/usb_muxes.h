@@ -22,7 +22,8 @@
  *        element of list has to have (compatible, config) format.
  */
 #define USB_MUX_DRIVERS                                                 \
-	(ANX7483_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7483),               \
+	(ANX7447_USB_MUX_COMPAT, USB_MUX_CONFIG_TCPCI_TCPM),            \
+		(ANX7483_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7483),       \
 		(BB_RETIMER_USB_MUX_COMPAT, USB_MUX_CONFIG_BB_RETIMER), \
 		(IT5205_USB_MUX_COMPAT, USB_MUX_CONFIG_IT5205),         \
 		(PS8743_USB_MUX_COMPAT, USB_MUX_CONFIG_PS8743),         \

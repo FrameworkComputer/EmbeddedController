@@ -7,6 +7,7 @@
 #include <zephyr/sys/util.h>
 #include "usb_pd_tcpm.h"
 #include "usb_pd.h"
+#include "usbc/tcpc_anx7447.h"
 #include "usbc/tcpc_ccgxxf.h"
 #include "usbc/tcpc_fusb302.h"
 #include "usbc/tcpc_it8xxx2.h"
@@ -16,7 +17,8 @@
 #include "usbc/tcpci.h"
 #include "usbc/utils.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(CCGXXF_TCPC_COMPAT) ||      \
+#if DT_HAS_COMPAT_STATUS_OKAY(ANX7447_TCPC_COMPAT) ||     \
+	DT_HAS_COMPAT_STATUS_OKAY(CCGXXF_TCPC_COMPAT) ||  \
 	DT_HAS_COMPAT_STATUS_OKAY(FUSB302_TCPC_COMPAT) || \
 	DT_HAS_COMPAT_STATUS_OKAY(IT8XXX2_TCPC_COMPAT) || \
 	DT_HAS_COMPAT_STATUS_OKAY(PS8XXX_COMPAT) ||       \
@@ -32,6 +34,8 @@
 /* Enable clang-format when the formatted code is readable. */
 /* clang-format off */
 MAYBE_CONST struct tcpc_config_t tcpc_config[] = {
+	DT_FOREACH_STATUS_OKAY_VARGS(ANX7447_TCPC_COMPAT, TCPC_CONFIG,
+				     TCPC_CONFIG_ANX7447)
 	DT_FOREACH_STATUS_OKAY_VARGS(CCGXXF_TCPC_COMPAT, TCPC_CONFIG,
 				     TCPC_CONFIG_CCGXXF)
 	DT_FOREACH_STATUS_OKAY_VARGS(FUSB302_TCPC_COMPAT, TCPC_CONFIG,
