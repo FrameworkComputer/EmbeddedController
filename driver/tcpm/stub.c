@@ -22,8 +22,8 @@ static int init_alert_mask(int port)
 	 * signal the TCPM via the Alert# gpio line.
 	 */
 	mask = TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED |
-		TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
-		TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS;
+	       TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
+	       TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS;
 	/* Set the alert mask in TCPC */
 	rv = tcpc_alert_mask_set(port, mask);
 
@@ -48,7 +48,7 @@ int tcpm_init(int port)
 }
 
 int tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+		enum tcpc_cc_voltage_status *cc2)
 {
 	return tcpc_get_cc(port, cc1, cc2);
 }
@@ -153,7 +153,7 @@ void tcpc_alert(int port)
 	if (status & TCPC_REG_ALERT_TX_COMPLETE) {
 		/* transmit complete */
 		pd_transmit_complete(port, status & TCPC_REG_ALERT_TX_SUCCESS ?
-					   TCPC_TX_COMPLETE_SUCCESS :
-					   TCPC_TX_COMPLETE_FAILED);
+						   TCPC_TX_COMPLETE_SUCCESS :
+						   TCPC_TX_COMPLETE_FAILED);
 	}
 }
