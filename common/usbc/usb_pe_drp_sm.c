@@ -6136,6 +6136,24 @@ static void pe_vdm_request_dpm_run(int port)
 
 static void pe_vdm_request_dpm_exit(int port)
 {
+	if (PE_CHK_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT)) {
+		PE_CLR_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT);
+		PE_SET_FLAG(port, PE_FLAGS_VDM_SETUP_DONE);
+
+		/*
+		 * Mark failure to respond as discovery failure.
+		 *
+		 * For PD 2.0 partners (6.10.3 Applicability of Structured VDM
+		 * Commands Note 3):
+		 *
+		 * If Structured VDMs are not supported, a Structured VDM
+		 * Command received by a DFP or UFP Shall be Ignored.
+		 */
+		dpm_vdm_naked(port, pe[port].tx_type,
+			      PD_VDO_VID(pe[port].vdm_data[0]),
+			      PD_VDO_CMD(pe[port].vdm_data[0]));
+	}
+
 	/*
 	 * Force Tx type to be reset before reentering a VDM state, unless the
 	 * current VDM request will be resumed.
