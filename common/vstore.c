@@ -22,7 +22,7 @@
 #include "system.h"
 #include "util.h"
 
-#define VSTORE_SYSJUMP_TAG  0x5653 /* "VS" */
+#define VSTORE_SYSJUMP_TAG 0x5653 /* "VS" */
 #define VSTORE_HOOK_VERSION 1
 
 struct vstore_slot {
@@ -32,7 +32,7 @@ struct vstore_slot {
 
 static struct vstore_slot vstore_slots[CONFIG_VSTORE_SLOT_COUNT];
 static const int vstore_size =
-		sizeof(struct vstore_slot) * CONFIG_VSTORE_SLOT_COUNT;
+	sizeof(struct vstore_slot) * CONFIG_VSTORE_SLOT_COUNT;
 BUILD_ASSERT(ARRAY_SIZE(vstore_slots) <= EC_VSTORE_SLOT_MAX);
 
 /*
