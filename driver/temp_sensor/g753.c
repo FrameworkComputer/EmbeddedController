@@ -31,15 +31,14 @@ static int has_power(void)
 
 static int raw_read8(const int offset, int *data_ptr)
 {
-	return i2c_read8(I2C_PORT_THERMAL, G753_I2C_ADDR_FLAGS,
-			 offset, data_ptr);
+	return i2c_read8(I2C_PORT_THERMAL, G753_I2C_ADDR_FLAGS, offset,
+			 data_ptr);
 }
 
 #ifdef CONFIG_CMD_TEMP_SENSOR
 static int raw_write8(const int offset, int data)
 {
-	return i2c_write8(I2C_PORT_THERMAL, G753_I2C_ADDR_FLAGS,
-			  offset, data);
+	return i2c_write8(I2C_PORT_THERMAL, G753_I2C_ADDR_FLAGS, offset, data);
 }
 #endif
 
@@ -93,8 +92,7 @@ static void temp_sensor_poll(void)
 DECLARE_HOOK(HOOK_SECOND, temp_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 
 #ifdef CONFIG_CMD_TEMP_SENSOR
-static void print_temps(const char *name,
-			const int temp_reg,
+static void print_temps(const char *name, const int temp_reg,
 			const int high_limit_reg)
 {
 	int value;
@@ -106,7 +104,6 @@ static void print_temps(const char *name,
 
 	if (get_temp(high_limit_reg, &value) == EC_SUCCESS)
 		ccprintf("  High Alarm: %3dC\n", value);
-
 }
 
 static int print_status(void)
@@ -118,8 +115,7 @@ static int print_status(void)
 		return EC_ERROR_NOT_POWERED;
 	}
 
-	print_temps("Local", G753_TEMP_LOCAL,
-		    G753_LOCAL_TEMP_HIGH_LIMIT_R);
+	print_temps("Local", G753_TEMP_LOCAL, G753_LOCAL_TEMP_HIGH_LIMIT_R);
 
 	ccprintf("\n");
 
@@ -161,8 +157,8 @@ static int command_g753(int argc, char **argv)
 		rv = raw_read8(offset, &data);
 		if (rv < 0)
 			return rv;
-		ccprintf("Byte at offset 0x%02x is %pb\n",
-			 offset, BINARY_VALUE(data, 8));
+		ccprintf("Byte at offset 0x%02x is %pb\n", offset,
+			 BINARY_VALUE(data, 8));
 		return rv;
 	}
 
@@ -185,7 +181,8 @@ static int command_g753(int argc, char **argv)
 
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(g753, command_g753,
+DECLARE_CONSOLE_COMMAND(
+	g753, command_g753,
 	"[settemp|setbyte <offset> <value>] or [getbyte <offset>]. "
 	"Temps in Celsius.",
 	"Print g753 temp sensor status or set parameters.");
