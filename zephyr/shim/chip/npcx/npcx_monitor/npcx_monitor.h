@@ -7,11 +7,11 @@
 
 #include <stdint.h>
 
-#define NPCX_MONITOR_UUT_TAG      0xA5075001
-#define NPCX_MONITOR_HEADER_ADDR  0x200C3000
+#define NPCX_MONITOR_UUT_TAG 0xA5075001
+#define NPCX_MONITOR_HEADER_ADDR 0x200C3000
 
 /* Flag to record the progress of programming SPI flash */
-#define SPI_PROGRAMMING_FLAG     0x200C4000
+#define SPI_PROGRAMMING_FLAG 0x200C4000
 
 struct monitor_header_tag {
 	/* offset 0x00: TAG NPCX_MONITOR_TAG */
@@ -23,9 +23,9 @@ struct monitor_header_tag {
 	/* offset 0x0C: The Flash address to be programmed (Absolute address) */
 	uint32_t dest_addr;
 	/* offset 0x10: Maximum allowable flash clock frequency */
-	uint8_t  max_clock;
+	uint8_t max_clock;
 	/* offset 0x11: SPI Flash read mode */
-	uint8_t  read_mode;
+	uint8_t read_mode;
 	/* offset 0x12: Reserved */
 	uint16_t reserved;
 } __packed;
