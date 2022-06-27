@@ -27,13 +27,13 @@
 #undef STM32_PLLM
 #undef STM32_PLLN
 #undef STM32_PLLR
-#define STM32_PLLM	1
+#define STM32_PLLM 1
 #ifdef STM32_HSE_CLOCK
-#define STM32_PLLN	12
+#define STM32_PLLN 12
 #else
-#define STM32_PLLN	10
+#define STM32_PLLN 10
 #endif
-#define STM32_PLLR	2
+#define STM32_PLLR 2
 
 #define STM32_USE_PLL
 
@@ -65,13 +65,12 @@
 #define CONFIG_LED_ONOFF_STATES
 #define CONFIG_LED_POWER_LED
 
-#undef	CONFIG_WATCHDOG_PERIOD_MS
+#undef CONFIG_WATCHDOG_PERIOD_MS
 #define CONFIG_WATCHDOG_PERIOD_MS 4000
-
 
 /* Motion Sensors */
 #ifndef VARIANT_KUKUI_NO_SENSORS
-#define CONFIG_ACCEL_LIS2DWL    /* Lid accel */
+#define CONFIG_ACCEL_LIS2DWL /* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160 /* Base accel */
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
@@ -93,34 +92,34 @@
 #endif /* VARIANT_KUKUI_NO_SENSORS */
 
 /* I2C ports */
-#define I2C_PORT_BC12               0
-#define I2C_PORT_TCPC0              0
-#define I2C_PORT_USB_MUX            0
-#define I2C_PORT_CHARGER            2
-#define I2C_PORT_SENSORS            2
-#define I2C_PORT_KB_DISCRETE        2
-#define I2C_PORT_VIRTUAL_BATTERY    I2C_PORT_BATTERY
-#define I2C_PORT_BATTERY            3
-#define I2C_PORT_TCPC0              0
+#define I2C_PORT_BC12 0
+#define I2C_PORT_TCPC0 0
+#define I2C_PORT_USB_MUX 0
+#define I2C_PORT_CHARGER 2
+#define I2C_PORT_SENSORS 2
+#define I2C_PORT_KB_DISCRETE 2
+#define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
+#define I2C_PORT_BATTERY 3
+#define I2C_PORT_TCPC0 0
 
 #undef I2C_CONTROLLER_COUNT
 #undef I2C_PORT_COUNT
-#define I2C_CONTROLLER_COUNT        3
-#define I2C_PORT_COUNT              3
+#define I2C_CONTROLLER_COUNT 3
+#define I2C_PORT_COUNT 3
 
 /* IT8801 I2C address */
-#define KB_DISCRETE_I2C_ADDR_FLAGS  IT8801_I2C_ADDR1
+#define KB_DISCRETE_I2C_ADDR_FLAGS IT8801_I2C_ADDR1
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI controller port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT 0 /* The first SPI controller port (SPI2) */
 
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 /* Define the MKBP events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON))
+#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK            \
+	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON))
 
 #undef CONFIG_GMR_TABLET_MODE
 #undef GPIO_TABLET_MODE_L
