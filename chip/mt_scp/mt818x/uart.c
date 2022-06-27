@@ -16,7 +16,7 @@
 #include "util.h"
 
 /* Console UART index */
-#define UARTN           CONFIG_UART_CONSOLE
+#define UARTN CONFIG_UART_CONSOLE
 #define UART_IDLE_WAIT_US 500
 
 static uint8_t uart_done, tx_started;
@@ -155,9 +155,8 @@ void uart_init(void)
 #endif
 
 	/* Init and clear FIFO */
-	UART_FCR(UARTN) = UART_FCR_ENABLE_FIFO
-		| UART_FCR_CLEAR_RCVR
-		| UART_FCR_CLEAR_XMIT;
+	UART_FCR(UARTN) = UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_RCVR |
+			  UART_FCR_CLEAR_XMIT;
 	/* Line control: parity none, 8 bit, 1 stop bit */
 	UART_LCR(UARTN) = UART_LCR_WLEN8;
 	/* For baud rate <= 115200 */
