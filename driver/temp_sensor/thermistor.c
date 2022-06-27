@@ -15,7 +15,7 @@
 #include "util.h"
 
 int thermistor_linear_interpolate(uint16_t mv,
-		const struct thermistor_info *info)
+				  const struct thermistor_info *info)
 {
 	const struct thermistor_data_pair *data = info->data;
 	int v_high = 0, v_low = 0, t_low, t_high, num_steps;
@@ -66,7 +66,7 @@ int thermistor_linear_interpolate(uint16_t mv,
 	return t_low + num_steps;
 }
 
-#if defined(CONFIG_STEINHART_HART_3V3_51K1_47K_4050B) || \
+#if defined(CONFIG_STEINHART_HART_3V3_51K1_47K_4050B) ||     \
 	defined(CONFIG_STEINHART_HART_3V3_13K7_47K_4050B) || \
 	defined(CONFIG_STEINHART_HART_6V0_51K1_47K_4050B) || \
 	defined(CONFIG_STEINHART_HART_3V0_22K6_47K_4050B) || \
@@ -103,19 +103,19 @@ int thermistor_get_temperature(int idx_adc, int *temp_ptr,
  */
 #define THERMISTOR_SCALING_FACTOR_51_47 11
 static const struct thermistor_data_pair thermistor_data_51_47[] = {
-	{ 2484 / THERMISTOR_SCALING_FACTOR_51_47, 0   },
-	{ 2142 / THERMISTOR_SCALING_FACTOR_51_47, 10  },
-	{ 1767 / THERMISTOR_SCALING_FACTOR_51_47, 20  },
-	{ 1400 / THERMISTOR_SCALING_FACTOR_51_47, 30  },
-	{ 1072 / THERMISTOR_SCALING_FACTOR_51_47, 40  },
-	{  802 / THERMISTOR_SCALING_FACTOR_51_47, 50  },
-	{  593 / THERMISTOR_SCALING_FACTOR_51_47, 60  },
-	{  436 / THERMISTOR_SCALING_FACTOR_51_47, 70  },
-	{  321 / THERMISTOR_SCALING_FACTOR_51_47, 80  },
-	{  276 / THERMISTOR_SCALING_FACTOR_51_47, 85  },
-	{  237 / THERMISTOR_SCALING_FACTOR_51_47, 90  },
-	{  204 / THERMISTOR_SCALING_FACTOR_51_47, 95  },
-	{  177 / THERMISTOR_SCALING_FACTOR_51_47, 100 },
+	{ 2484 / THERMISTOR_SCALING_FACTOR_51_47, 0 },
+	{ 2142 / THERMISTOR_SCALING_FACTOR_51_47, 10 },
+	{ 1767 / THERMISTOR_SCALING_FACTOR_51_47, 20 },
+	{ 1400 / THERMISTOR_SCALING_FACTOR_51_47, 30 },
+	{ 1072 / THERMISTOR_SCALING_FACTOR_51_47, 40 },
+	{ 802 / THERMISTOR_SCALING_FACTOR_51_47, 50 },
+	{ 593 / THERMISTOR_SCALING_FACTOR_51_47, 60 },
+	{ 436 / THERMISTOR_SCALING_FACTOR_51_47, 70 },
+	{ 321 / THERMISTOR_SCALING_FACTOR_51_47, 80 },
+	{ 276 / THERMISTOR_SCALING_FACTOR_51_47, 85 },
+	{ 237 / THERMISTOR_SCALING_FACTOR_51_47, 90 },
+	{ 204 / THERMISTOR_SCALING_FACTOR_51_47, 95 },
+	{ 177 / THERMISTOR_SCALING_FACTOR_51_47, 100 },
 };
 
 static const struct thermistor_info thermistor_info_51_47 = {
@@ -127,7 +127,7 @@ static const struct thermistor_info thermistor_info_51_47 = {
 int get_temp_3v3_51k1_47k_4050b(int idx_adc, int *temp_ptr)
 {
 	return thermistor_get_temperature(idx_adc, temp_ptr,
-			&thermistor_info_51_47);
+					  &thermistor_info_51_47);
 }
 #endif /* CONFIG_STEINHART_HART_3V3_51K1_47K_4050B */
 
@@ -139,19 +139,19 @@ int get_temp_3v3_51k1_47k_4050b(int idx_adc, int *temp_ptr)
  */
 #define THERMISTOR_SCALING_FACTOR_13_47 13
 static const struct thermistor_data_pair thermistor_data_13_47[] = {
-	{ 3033 / THERMISTOR_SCALING_FACTOR_13_47, 0   },
-	{ 2882 / THERMISTOR_SCALING_FACTOR_13_47, 10  },
-	{ 2677 / THERMISTOR_SCALING_FACTOR_13_47, 20  },
-	{ 2420 / THERMISTOR_SCALING_FACTOR_13_47, 30  },
-	{ 2119 / THERMISTOR_SCALING_FACTOR_13_47, 40  },
-	{ 1799 / THERMISTOR_SCALING_FACTOR_13_47, 50  },
-	{ 1485 / THERMISTOR_SCALING_FACTOR_13_47, 60  },
-	{ 1197 / THERMISTOR_SCALING_FACTOR_13_47, 70  },
-	{  947 / THERMISTOR_SCALING_FACTOR_13_47, 80  },
-	{  839 / THERMISTOR_SCALING_FACTOR_13_47, 85  },
-	{  741 / THERMISTOR_SCALING_FACTOR_13_47, 90  },
-	{  653 / THERMISTOR_SCALING_FACTOR_13_47, 95  },
-	{  576 / THERMISTOR_SCALING_FACTOR_13_47, 100 },
+	{ 3033 / THERMISTOR_SCALING_FACTOR_13_47, 0 },
+	{ 2882 / THERMISTOR_SCALING_FACTOR_13_47, 10 },
+	{ 2677 / THERMISTOR_SCALING_FACTOR_13_47, 20 },
+	{ 2420 / THERMISTOR_SCALING_FACTOR_13_47, 30 },
+	{ 2119 / THERMISTOR_SCALING_FACTOR_13_47, 40 },
+	{ 1799 / THERMISTOR_SCALING_FACTOR_13_47, 50 },
+	{ 1485 / THERMISTOR_SCALING_FACTOR_13_47, 60 },
+	{ 1197 / THERMISTOR_SCALING_FACTOR_13_47, 70 },
+	{ 947 / THERMISTOR_SCALING_FACTOR_13_47, 80 },
+	{ 839 / THERMISTOR_SCALING_FACTOR_13_47, 85 },
+	{ 741 / THERMISTOR_SCALING_FACTOR_13_47, 90 },
+	{ 653 / THERMISTOR_SCALING_FACTOR_13_47, 95 },
+	{ 576 / THERMISTOR_SCALING_FACTOR_13_47, 100 },
 };
 
 static const struct thermistor_info thermistor_info_13_47 = {
@@ -163,7 +163,7 @@ static const struct thermistor_info thermistor_info_13_47 = {
 int get_temp_3v3_13k7_47k_4050b(int idx_adc, int *temp_ptr)
 {
 	return thermistor_get_temperature(idx_adc, temp_ptr,
-			&thermistor_info_13_47);
+					  &thermistor_info_13_47);
 }
 #endif /* CONFIG_STEINHART_HART_3V3_13K7_47K_4050B */
 
@@ -175,19 +175,19 @@ int get_temp_3v3_13k7_47k_4050b(int idx_adc, int *temp_ptr)
  */
 #define THERMISTOR_SCALING_FACTOR_6V0_51_47 18
 static const struct thermistor_data_pair thermistor_data_6v0_51_47[] = {
-	{ 4517 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 0   },
-	{ 3895 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 10  },
-	{ 3214 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 20  },
-	{ 2546 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 30  },
-	{ 1950 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 40  },
-	{ 1459 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 50  },
-	{ 1079 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 60  },
-	{  794 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 70  },
-	{  584 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 80  },
-	{  502 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 85  },
-	{  432 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 90  },
-	{  372 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 95  },
-	{  322 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 100 },
+	{ 4517 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 0 },
+	{ 3895 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 10 },
+	{ 3214 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 20 },
+	{ 2546 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 30 },
+	{ 1950 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 40 },
+	{ 1459 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 50 },
+	{ 1079 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 60 },
+	{ 794 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 70 },
+	{ 584 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 80 },
+	{ 502 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 85 },
+	{ 432 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 90 },
+	{ 372 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 95 },
+	{ 322 / THERMISTOR_SCALING_FACTOR_6V0_51_47, 100 },
 };
 
 static const struct thermistor_info thermistor_info_6v0_51_47 = {
@@ -199,7 +199,7 @@ static const struct thermistor_info thermistor_info_6v0_51_47 = {
 int get_temp_6v0_51k1_47k_4050b(int idx_adc, int *temp_ptr)
 {
 	return thermistor_get_temperature(idx_adc, temp_ptr,
-			&thermistor_info_6v0_51_47);
+					  &thermistor_info_6v0_51_47);
 }
 #endif /* CONFIG_STEINHART_HART_6V0_51K1_47K_4050B */
 
@@ -211,19 +211,19 @@ int get_temp_6v0_51k1_47k_4050b(int idx_adc, int *temp_ptr)
  */
 #define THERMISTOR_SCALING_FACTOR_22_47 11
 static const struct thermistor_data_pair thermistor_data_22_47[] = {
-	{ 2619 / THERMISTOR_SCALING_FACTOR_22_47, 0   },
-	{ 2421 / THERMISTOR_SCALING_FACTOR_22_47, 10  },
-	{ 2168 / THERMISTOR_SCALING_FACTOR_22_47, 20  },
-	{ 1875 / THERMISTOR_SCALING_FACTOR_22_47, 30  },
-	{ 1563 / THERMISTOR_SCALING_FACTOR_22_47, 40  },
-	{ 1262 / THERMISTOR_SCALING_FACTOR_22_47, 50  },
-	{  994 / THERMISTOR_SCALING_FACTOR_22_47, 60  },
-	{  769 / THERMISTOR_SCALING_FACTOR_22_47, 70  },
-	{  588 / THERMISTOR_SCALING_FACTOR_22_47, 80  },
-	{  513 / THERMISTOR_SCALING_FACTOR_22_47, 85  },
-	{  448 / THERMISTOR_SCALING_FACTOR_22_47, 90  },
-	{  390 / THERMISTOR_SCALING_FACTOR_22_47, 95  },
-	{  340 / THERMISTOR_SCALING_FACTOR_22_47, 100 },
+	{ 2619 / THERMISTOR_SCALING_FACTOR_22_47, 0 },
+	{ 2421 / THERMISTOR_SCALING_FACTOR_22_47, 10 },
+	{ 2168 / THERMISTOR_SCALING_FACTOR_22_47, 20 },
+	{ 1875 / THERMISTOR_SCALING_FACTOR_22_47, 30 },
+	{ 1563 / THERMISTOR_SCALING_FACTOR_22_47, 40 },
+	{ 1262 / THERMISTOR_SCALING_FACTOR_22_47, 50 },
+	{ 994 / THERMISTOR_SCALING_FACTOR_22_47, 60 },
+	{ 769 / THERMISTOR_SCALING_FACTOR_22_47, 70 },
+	{ 588 / THERMISTOR_SCALING_FACTOR_22_47, 80 },
+	{ 513 / THERMISTOR_SCALING_FACTOR_22_47, 85 },
+	{ 448 / THERMISTOR_SCALING_FACTOR_22_47, 90 },
+	{ 390 / THERMISTOR_SCALING_FACTOR_22_47, 95 },
+	{ 340 / THERMISTOR_SCALING_FACTOR_22_47, 100 },
 };
 
 static const struct thermistor_info thermistor_info_22_47 = {
@@ -235,7 +235,7 @@ static const struct thermistor_info thermistor_info_22_47 = {
 int get_temp_3v0_22k6_47k_4050b(int idx_adc, int *temp_ptr)
 {
 	return thermistor_get_temperature(idx_adc, temp_ptr,
-			&thermistor_info_22_47);
+					  &thermistor_info_22_47);
 }
 #endif /* CONFIG_STEINHART_HART_3V0_22K6_47K_4050B */
 
@@ -247,16 +247,16 @@ int get_temp_3v0_22k6_47k_4050b(int idx_adc, int *temp_ptr)
  */
 #define THERMISTOR_SCALING_FACTOR_31_47 11
 static const struct thermistor_data_pair thermistor_data_31_47[] = {
-	{ 2753 / THERMISTOR_SCALING_FACTOR_31_47, 0   },
-	{ 2487 / THERMISTOR_SCALING_FACTOR_31_47, 10  },
-	{ 2165 / THERMISTOR_SCALING_FACTOR_31_47, 20  },
-	{ 1813 / THERMISTOR_SCALING_FACTOR_31_47, 30  },
-	{ 1145 / THERMISTOR_SCALING_FACTOR_31_47, 50  },
-	{  878 / THERMISTOR_SCALING_FACTOR_31_47, 60  },
-	{  665 / THERMISTOR_SCALING_FACTOR_31_47, 70  },
-	{  500 / THERMISTOR_SCALING_FACTOR_31_47, 80  },
-	{  375 / THERMISTOR_SCALING_FACTOR_31_47, 90  },
-	{  282 / THERMISTOR_SCALING_FACTOR_31_47, 100 },
+	{ 2753 / THERMISTOR_SCALING_FACTOR_31_47, 0 },
+	{ 2487 / THERMISTOR_SCALING_FACTOR_31_47, 10 },
+	{ 2165 / THERMISTOR_SCALING_FACTOR_31_47, 20 },
+	{ 1813 / THERMISTOR_SCALING_FACTOR_31_47, 30 },
+	{ 1145 / THERMISTOR_SCALING_FACTOR_31_47, 50 },
+	{ 878 / THERMISTOR_SCALING_FACTOR_31_47, 60 },
+	{ 665 / THERMISTOR_SCALING_FACTOR_31_47, 70 },
+	{ 500 / THERMISTOR_SCALING_FACTOR_31_47, 80 },
+	{ 375 / THERMISTOR_SCALING_FACTOR_31_47, 90 },
+	{ 282 / THERMISTOR_SCALING_FACTOR_31_47, 100 },
 };
 
 static const struct thermistor_info thermistor_info_31_47 = {
@@ -268,6 +268,6 @@ static const struct thermistor_info thermistor_info_31_47 = {
 int get_temp_3v3_30k9_47k_4050b(int idx_adc, int *temp_ptr)
 {
 	return thermistor_get_temperature(idx_adc, temp_ptr,
-			&thermistor_info_31_47);
+					  &thermistor_info_31_47);
 }
 #endif /* CONFIG_STEINHART_HART_3V3_30K9_47K_4050B */
