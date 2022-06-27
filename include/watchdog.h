@@ -49,7 +49,9 @@ void watchdog_stop_and_unlock(void);
 #ifdef CONFIG_WATCHDOG
 void watchdog_reload(void);
 #else
-static inline void watchdog_reload(void) { }
+static inline void watchdog_reload(void)
+{
+}
 #endif
 
 #endif /* __CROS_EC_WATCHDOG_H */
