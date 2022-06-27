@@ -18,5 +18,4 @@
 CONFIG_TEST_MOCK_LIST
 #endif
 
-
 #endif /*  __CROS_EC_MOCK_FILTER_H */
