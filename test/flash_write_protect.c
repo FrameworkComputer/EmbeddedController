@@ -97,7 +97,6 @@ test_static int test_cbi_wb_asserted_immediately(void)
 	/* Now make sure EC_CBI_WP is asserted immediately. */
 	TEST_EQ(gpio_get_level(GPIO_EC_CBI_WP), 1, "%d");
 
-
 	return EC_SUCCESS;
 }
 
