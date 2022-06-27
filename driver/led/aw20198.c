@@ -16,12 +16,12 @@
 #define CPRINTF(fmt, args...) cprintf(CC_RGBKBD, "AW20198: " fmt, ##args)
 #define CPRINTS(fmt, args...) cprints(CC_RGBKBD, "AW20198: " fmt, ##args)
 
-#define BUF_SIZE	(SIZE_OF_RGB * AW20198_GRID_SIZE)
+#define BUF_SIZE (SIZE_OF_RGB * AW20198_GRID_SIZE)
 
 static int aw20198_read(struct rgbkbd *ctx, uint8_t addr, uint8_t *value)
 {
-	return i2c_xfer(ctx->cfg->i2c, AW20198_I2C_ADDR_FLAG,
-			&addr, sizeof(addr), value, sizeof(*value));
+	return i2c_xfer(ctx->cfg->i2c, AW20198_I2C_ADDR_FLAG, &addr,
+			sizeof(addr), value, sizeof(*value));
 }
 
 static int aw20198_write(struct rgbkbd *ctx, uint8_t addr, uint8_t value)
@@ -31,8 +31,8 @@ static int aw20198_write(struct rgbkbd *ctx, uint8_t addr, uint8_t value)
 		[1] = value,
 	};
 
-	return i2c_xfer(ctx->cfg->i2c, AW20198_I2C_ADDR_FLAG,
-			buf, sizeof(buf), NULL, 0);
+	return i2c_xfer(ctx->cfg->i2c, AW20198_I2C_ADDR_FLAG, buf, sizeof(buf),
+			NULL, 0);
 }
 
 static int aw20198_set_page(struct rgbkbd *ctx, uint8_t page)
@@ -103,8 +103,8 @@ static int aw20198_set_color(struct rgbkbd *ctx, uint8_t offset,
 		buf[i * SIZE_OF_RGB + 3] = color[i].b;
 	}
 
-	return i2c_xfer(ctx->cfg->i2c, AW20198_I2C_ADDR_FLAG,
-			buf, frame_len, NULL, 0);
+	return i2c_xfer(ctx->cfg->i2c, AW20198_I2C_ADDR_FLAG, buf, frame_len,
+			NULL, 0);
 }
 
 static int aw20198_set_scale(struct rgbkbd *ctx, uint8_t offset,
@@ -131,8 +131,8 @@ static int aw20198_set_scale(struct rgbkbd *ctx, uint8_t offset,
 		buf[i * SIZE_OF_RGB + 3] = scale.b;
 	}
 
-	return i2c_xfer(ctx->cfg->i2c, AW20198_I2C_ADDR_FLAG,
-			buf, frame_len, NULL, 0);
+	return i2c_xfer(ctx->cfg->i2c, AW20198_I2C_ADDR_FLAG, buf, frame_len,
+			NULL, 0);
 }
 
 static int aw20198_set_gcc(struct rgbkbd *ctx, uint8_t level)
@@ -159,7 +159,7 @@ static int aw20198_init(struct rgbkbd *ctx)
 	rv = aw20198_get_config(ctx, AW20198_REG_GCR, &u8);
 	if (rv) {
 		return rv;
-	}  
+	}
 	u8 &= ~AW20198_REG_GCR_SWSEL_MASK;
 	u8 |= ((ctx->cfg->col_len - 1) << AW20198_REG_GCR_SWSEL_SHIFT);
 	rv = aw20198_write(ctx, AW20198_REG_GCR, u8);
