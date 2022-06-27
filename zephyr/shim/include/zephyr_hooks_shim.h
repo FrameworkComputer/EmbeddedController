@@ -31,7 +31,7 @@ int hook_call_deferred(const struct deferred_data *data, int us);
 	K_WORK_DELAYABLE_DEFINE(routine##_work_data,                 \
 				(void (*)(struct k_work *))routine); \
 	__maybe_unused const struct deferred_data routine##_data = { \
-		.work = &routine##_work_data,                \
+		.work = &routine##_work_data,                        \
 	}
 
 /**
