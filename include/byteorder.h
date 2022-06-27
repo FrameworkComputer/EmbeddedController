@@ -8,4 +8,4 @@
 
 #include <endian.h>
 
-#endif  /* __EC_INCLUDE_BYTEORDER_H */
+#endif /* __EC_INCLUDE_BYTEORDER_H */
