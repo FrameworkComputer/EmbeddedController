@@ -23,24 +23,24 @@ static void dump_pe(int port)
 	const struct pd_discovery *disc =
 		pd_get_am_discovery(port, TCPCI_MSG_SOP);
 
-	static const char * const idh_ptype_names[]  = {
-		"UNDEF", "Hub", "Periph", "PCable", "ACable", "AMA",
-		"RSV6", "RSV7"};
-	static const char * const tx_names[] = {"SOP", "SOP'", "SOP''"};
+	static const char *const idh_ptype_names[] = { "UNDEF",	 "Hub",
+						       "Periph", "PCable",
+						       "ACable", "AMA",
+						       "RSV6",	 "RSV7" };
+	static const char *const tx_names[] = { "SOP", "SOP'", "SOP''" };
 
 	for (type = TCPCI_MSG_SOP; type < DISCOVERY_TYPE_COUNT; type++) {
 		resp = pd_get_identity_response(port, type);
 		if (pd_get_identity_discovery(port, type) != PD_DISC_COMPLETE) {
 			ccprintf("No %s identity discovered yet.\n",
-								tx_names[type]);
+				 tx_names[type]);
 			continue;
 		}
 
 		idh_ptype = resp->idh.product_type;
 		ccprintf("IDENT %s:\n", tx_names[type]);
 		ccprintf("\t[ID Header] %08x :: %s, VID:%04x\n",
-			 resp->raw_value[0],
-			 idh_ptype_names[idh_ptype],
+			 resp->raw_value[0], idh_ptype_names[idh_ptype],
 			 resp->idh.usb_vendor_id);
 
 		ccprintf("\t[Cert Stat] %08x\n", resp->cert.xid);
@@ -62,11 +62,11 @@ static void dump_pe(int port)
 		ccprintf("SVID[%d]: %04x MODES:", i, disc->svids[i].svid);
 		for (j = 0; j < disc->svids[j].mode_cnt; j++)
 			ccprintf(" [%d] %08x", j + 1,
-					disc->svids[i].mode_vdo[j]);
+				 disc->svids[i].mode_vdo[j]);
 		ccprintf("\n");
 
 		modep = pd_get_amode_data(port, TCPCI_MSG_SOP,
-				disc->svids[i].svid);
+					  disc->svids[i].svid);
 		if (modep) {
 			mode_caps = modep->data->mode_vdo[modep->opos - 1];
 			ccprintf("MODE[%d]: svid:%04x caps:%08x\n", modep->opos,
@@ -92,18 +92,16 @@ static int command_pe(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(pe, command_pe,
-			"<port> dump",
-			"USB PE");
+DECLARE_CONSOLE_COMMAND(pe, command_pe, "<port> dump", "USB PE");
 #endif /* CONFIG_CMD_USB_PD_PE */
 
 #ifdef CONFIG_CMD_USB_PD_CABLE
-static const char * const cable_type[] = {
+static const char *const cable_type[] = {
 	[IDH_PTYPE_PCABLE] = "Passive",
 	[IDH_PTYPE_ACABLE] = "Active",
 };
 
-static const char * const cable_curr[] = {
+static const char *const cable_curr[] = {
 	[USB_VBUS_CUR_3A] = "3A",
 	[USB_VBUS_CUR_5A] = "5A",
 };
@@ -127,8 +125,7 @@ static int command_cable(int argc, char **argv)
 	ptype = get_usb_pd_cable_type(port);
 
 	ccprintf("Cable Type: ");
-	if (ptype != IDH_PTYPE_PCABLE &&
-		ptype != IDH_PTYPE_ACABLE) {
+	if (ptype != IDH_PTYPE_PCABLE && ptype != IDH_PTYPE_ACABLE) {
 		ccprintf("Not Emark Cable\n");
 		return EC_SUCCESS;
 	}
@@ -139,7 +136,6 @@ static int command_cable(int argc, char **argv)
 	cable_mode_resp.raw_value =
 		pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
 
-
 	/* Cable revision */
 	ccprintf("Cable Rev: %d.0\n", cable_rev + 1);
 
@@ -148,13 +144,15 @@ static int command_cable(int argc, char **argv)
 	 * connector type (Bit 19:18) and current handling capability bit 6:5
 	 */
 	ccprintf("Connector Type: %d\n",
-				disc->identity.product_t1.p_rev20.connector);
+		 disc->identity.product_t1.p_rev20.connector);
 
 	if (disc->identity.product_t1.p_rev20.vbus_cur) {
 		ccprintf("Cable Current: %s\n",
-		   disc->identity.product_t1.p_rev20.vbus_cur >
-		      ARRAY_SIZE(cable_curr) ? "Invalid" :
-		      cable_curr[disc->identity.product_t1.p_rev20.vbus_cur]);
+			 disc->identity.product_t1.p_rev20.vbus_cur >
+					 ARRAY_SIZE(cable_curr) ?
+				 "Invalid" :
+				 cable_curr[disc->identity.product_t1.p_rev20
+						    .vbus_cur]);
 	} else
 		ccprintf("Cable Current: Invalid\n");
 
@@ -164,7 +162,7 @@ static int command_cable(int argc, char **argv)
 	 */
 	if (ptype == IDH_PTYPE_PCABLE)
 		ccprintf("USB Superspeed Signaling support: %d\n",
-			disc->identity.product_t1.p_rev20.ss);
+			 disc->identity.product_t1.p_rev20.ss);
 
 	/*
 	 * For Rev 3.0 active cables and Rev 2.0 active and passive cables,
@@ -172,7 +170,8 @@ static int command_cable(int argc, char **argv)
 	 */
 	if (ptype == IDH_PTYPE_ACABLE)
 		ccprintf("SOP'' Controller: %s present\n",
-		      disc->identity.product_t1.a_rev20.sop_p_p ? "" : "Not");
+			 disc->identity.product_t1.a_rev20.sop_p_p ? "" :
+								     "Not");
 
 	if (cable_rev == PD_REV30) {
 		/*
@@ -180,15 +179,16 @@ static int command_cable(int argc, char **argv)
 		 * same bits 10:9.
 		 */
 		ccprintf("Max vbus voltage: %d\n",
-			20 + 10 * disc->identity.product_t1.p_rev30.vbus_max);
+			 20 + 10 * disc->identity.product_t1.p_rev30.vbus_max);
 
 		/* For Rev 3.0 Active cables */
 		if (ptype == IDH_PTYPE_ACABLE) {
 			ccprintf("SS signaling: USB_SS_GEN%u\n",
-				disc->identity.product_t2.a2_rev30.usb_gen ?
-									2 : 1);
+				 disc->identity.product_t2.a2_rev30.usb_gen ?
+					 2 :
+					 1);
 			ccprintf("Number of SS lanes supported: %u\n",
-				disc->identity.product_t2.a2_rev30.usb_lanes);
+				 disc->identity.product_t2.a2_rev30.usb_lanes);
 		}
 	}
 
@@ -196,28 +196,29 @@ static int command_cable(int argc, char **argv)
 		return EC_SUCCESS;
 
 	ccprintf("Rounded support: %s\n",
-		cable_mode_resp.tbt_rounded ==
-			TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED ? "Yes" : "No");
+		 cable_mode_resp.tbt_rounded ==
+				 TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED ?
+			 "Yes" :
+			 "No");
 
 	ccprintf("Optical cable: %s\n",
-		cable_mode_resp.tbt_cable == TBT_CABLE_OPTICAL ? "Yes" : "No");
+		 cable_mode_resp.tbt_cable == TBT_CABLE_OPTICAL ? "Yes" : "No");
 
 	ccprintf("Retimer support: %s\n",
-		cable_mode_resp.retimer_type == USB_RETIMER ?
-			"Yes" : "No");
+		 cable_mode_resp.retimer_type == USB_RETIMER ? "Yes" : "No");
 
 	ccprintf("Link training: %s-directional\n",
-		cable_mode_resp.lsrx_comm == BIDIR_LSRX_COMM ? "Bi" : "Uni");
+		 cable_mode_resp.lsrx_comm == BIDIR_LSRX_COMM ? "Bi" : "Uni");
 
 	ccprintf("Thunderbolt cable type: %s\n",
-		cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE ?
-		"Active" : "Passive");
+		 cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE ?
+			 "Active" :
+			 "Passive");
 
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND(pdcable, command_cable,
-			"<port>",
+DECLARE_CONSOLE_COMMAND(pdcable, command_cable, "<port>",
 			"Cable Characteristics");
 #endif /* CONFIG_CMD_USB_PD_CABLE */
 
