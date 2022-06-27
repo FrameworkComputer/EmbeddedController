@@ -11,7 +11,7 @@
 #define ioex_signal gpio_signal
 #include "gpio.h"
 #else
-enum ioex_signal;	/* from gpio_signal.h */
+enum ioex_signal; /* from gpio_signal.h */
 #endif
 
 /* IO expander signal definition structure */
@@ -34,11 +34,11 @@ struct ioex_info {
 
 /* Signal information from board.c.  Must match order from enum ioex_signal. */
 extern const struct ioex_info ioex_list[];
-extern void (* const ioex_irq_handlers[])(enum ioex_signal signal);
+extern void (*const ioex_irq_handlers[])(enum ioex_signal signal);
 extern const int ioex_ih_count;
 
 /* Get ioex_info structure for specified signal */
-#define IOEX_GET_INFO(signal) (ioex_list + (signal) - IOEX_SIGNAL_START)
+#define IOEX_GET_INFO(signal) (ioex_list + (signal)-IOEX_SIGNAL_START)
 
 struct ioexpander_drv {
 	/* Initialize IO expander chip/driver */
@@ -60,9 +60,9 @@ struct ioexpander_drv {
 };
 
 /* IO expander default init disabled. No I2C communication will be attempted. */
-#define IOEX_FLAGS_DEFAULT_INIT_DISABLED	BIT(0)
+#define IOEX_FLAGS_DEFAULT_INIT_DISABLED BIT(0)
 /* IO Expander has been initialized */
-#define IOEX_FLAGS_INITIALIZED	BIT(1)
+#define IOEX_FLAGS_INITIALIZED BIT(1)
 
 /*
  * BITS 24 to 31 are used by io-expander drivers that need to control multiple
