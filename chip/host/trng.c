@@ -35,6 +35,6 @@ test_mockable void rand_bytes(void *buffer, size_t len)
 {
 	uint8_t *b, *end;
 
-	for (b = buffer, end = b+len; b != end; b++)
+	for (b = buffer, end = b + len; b != end; b++)
 		*b = (uint8_t)rand_r(&seed);
 }
