@@ -20,10 +20,9 @@ void emulator_reboot(void)
 	ccprints("Emulator would reboot here. Fuzzing: doing nothing.");
 }
 #else /* !TEST_FUZZ */
-noreturn
-void emulator_reboot(void)
+noreturn void emulator_reboot(void)
 {
-	char *argv[] = {strdup(__get_prog_name()), NULL};
+	char *argv[] = { strdup(__get_prog_name()), NULL };
 	emulator_flush();
 	execv(__get_prog_name(), argv);
 	while (1)
