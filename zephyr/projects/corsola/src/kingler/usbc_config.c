@@ -34,31 +34,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
-struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USBC_PORT_C0] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C0,
-			.addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
-		},
-		.drv = &anx7447_tcpm_drv,
-		/* Alert is active-low, open-drain */
-		.flags = TCPC_FLAGS_ALERT_OD | TCPC_FLAGS_VBUS_MONITOR |
-			 TCPC_FLAGS_CONTROL_FRS,
-	},
-	[USBC_PORT_C1] = {
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C1,
-			.addr_flags = RT1718S_I2C_ADDR2_FLAGS,
-		},
-		.drv = &rt1718s_tcpm_drv,
-		/* Alert is active-low, open-drain */
-		.flags = TCPC_FLAGS_ALERT_OD | TCPC_FLAGS_VBUS_MONITOR |
-			 TCPC_FLAGS_CONTROL_FRS,
-	}
-};
-
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USBC_PORT_C0] = { .i2c_port = I2C_PORT_USB_C0,
 			   .i2c_addr_flags = NX20P3483_ADDR2_FLAGS,
