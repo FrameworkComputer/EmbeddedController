@@ -10,7 +10,7 @@
 
 #include "common.h"
 
-enum gpio_signal;	/* from gpio_signal.h */
+enum gpio_signal; /* from gpio_signal.h */
 
 /**
  * Run board specific code to update extpower status.  The default
@@ -37,4 +37,4 @@ void extpower_interrupt(enum gpio_signal signal);
  */
 void extpower_handle_update(int is_present);
 
-#endif  /* __CROS_EC_EXTPOWER_H */
+#endif /* __CROS_EC_EXTPOWER_H */
