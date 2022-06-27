@@ -20,8 +20,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /* Make sure POGO VBUS starts later then PP3300_HUB when power on  */
 #define BASE_DETECT_EN_LATER_US (600 * MSEC)
@@ -85,7 +85,7 @@ static void base_detect_change(enum base_status status)
 {
 	int connected = (status == BASE_CONNECTED);
 	bool base_enable_allow =
-	    !chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF);
+		!chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF);
 
 	if ((current_base_status == status) &&
 	    (current_base_enable_allow == base_enable_allow))
@@ -109,8 +109,8 @@ static uint32_t pulse_width;
 
 static void print_base_detect_value(int v, int tmp_pulse_width)
 {
-	CPRINTS("%s = %d (pulse %d)", adc_channels[ADC_BASE_DET].name,
-			v, tmp_pulse_width);
+	CPRINTS("%s = %d (pulse %d)", adc_channels[ADC_BASE_DET].name, v,
+		tmp_pulse_width);
 }
 
 static void base_detect_deferred(void)
@@ -202,8 +202,7 @@ static void base_enable(void)
 {
 	/* Enable base detection interrupt. */
 	base_detect_debounce_time = get_time().val;
-	hook_call_deferred(&base_detect_deferred_data,
-			BASE_DETECT_EN_LATER_US);
+	hook_call_deferred(&base_detect_deferred_data, BASE_DETECT_EN_LATER_US);
 	gpio_enable_interrupt(GPIO_BASE_DET_L);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, base_enable, HOOK_PRIO_DEFAULT);
@@ -228,7 +227,7 @@ static void base_init(void)
 	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 		base_enable();
 }
-DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT + 1);
 
 void base_force_state(enum ec_set_base_state_cmd state)
 {
