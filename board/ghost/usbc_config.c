@@ -25,15 +25,11 @@
 #include "usb_pd_tbt.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 #ifdef CONFIG_ZEPHYR
-enum ioex_port {
-	IOEX_C0_NCT38XX = 0,
-	IOEX_C1_NCT38XX,
-	IOEX_PORT_COUNT
-};
+enum ioex_port { IOEX_C0_NCT38XX = 0, IOEX_C1_NCT38XX, IOEX_PORT_COUNT };
 #endif /* CONFIG_ZEPHYR */
 
 /* USBC TCPC configuration */
