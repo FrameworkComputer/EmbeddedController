@@ -39,16 +39,14 @@ static int ge_mod(const struct rsa_public_key *key, const uint32_t *a)
 		if (a[i] > key->n[i])
 			return 1;
 	}
-	return 1;  /* equal */
+	return 1; /* equal */
 }
 
 /**
  * Montgomery c[] += a * b[] / R % mod
  */
-static void mont_mul_add(const struct rsa_public_key *key,
-			 uint32_t *c,
-			 const uint32_t a,
-			 const uint32_t *b)
+static void mont_mul_add(const struct rsa_public_key *key, uint32_t *c,
+			 const uint32_t a, const uint32_t *b)
 {
 	uint64_t A = mula32(a, b[0], c[0]);
 	uint32_t d0 = (uint32_t)A * key->n0inv;
@@ -73,9 +71,8 @@ static void mont_mul_add(const struct rsa_public_key *key,
 /**
  * Montgomery c[] += 0 * b[] / R % mod
  */
-static void mont_mul_add_0(const struct rsa_public_key *key,
-			 uint32_t *c,
-			 const uint32_t *b)
+static void mont_mul_add_0(const struct rsa_public_key *key, uint32_t *c,
+			   const uint32_t *b)
 {
 	uint32_t d0 = c[0] * key->n0inv;
 	uint64_t B = mula32(d0, key->n[0], c[0]);
@@ -90,8 +87,7 @@ static void mont_mul_add_0(const struct rsa_public_key *key,
 }
 
 /* Montgomery c[] = a[] * 1 / R % key. */
-static void mont_mul_1(const struct rsa_public_key *key,
-		       uint32_t *c,
+static void mont_mul_1(const struct rsa_public_key *key, uint32_t *c,
 		       const uint32_t *a)
 {
 	int i;
@@ -108,10 +104,8 @@ static void mont_mul_1(const struct rsa_public_key *key,
 /**
  * Montgomery c[] = a[] * b[] / R % mod
  */
-static void mont_mul(const struct rsa_public_key *key,
-		     uint32_t *c,
-		     const uint32_t *a,
-		     const uint32_t *b)
+static void mont_mul(const struct rsa_public_key *key, uint32_t *c,
+		     const uint32_t *a, const uint32_t *b)
 {
 	uint32_t i;
 	for (i = 0; i < RSANUMWORDS; ++i)
@@ -136,21 +130,20 @@ static void mod_pow(const struct rsa_public_key *key, uint8_t *inout,
 	uint32_t *a = workbuf32;
 	uint32_t *a_r = a + RSANUMWORDS;
 	uint32_t *aa_r = a_r + RSANUMWORDS;
-	uint32_t *aaa = aa_r;  /* Re-use location. */
+	uint32_t *aaa = aa_r; /* Re-use location. */
 	int i;
 
 	/* Convert from big endian byte array to little endian word array. */
 	for (i = 0; i < RSANUMWORDS; ++i) {
-		uint32_t tmp =
-			(inout[((RSANUMWORDS - 1 - i) * 4) + 0] << 24) |
-			(inout[((RSANUMWORDS - 1 - i) * 4) + 1] << 16) |
-			(inout[((RSANUMWORDS - 1 - i) * 4) + 2] << 8) |
-			(inout[((RSANUMWORDS - 1 - i) * 4) + 3] << 0);
+		uint32_t tmp = (inout[((RSANUMWORDS - 1 - i) * 4) + 0] << 24) |
+			       (inout[((RSANUMWORDS - 1 - i) * 4) + 1] << 16) |
+			       (inout[((RSANUMWORDS - 1 - i) * 4) + 2] << 8) |
+			       (inout[((RSANUMWORDS - 1 - i) * 4) + 3] << 0);
 		a[i] = tmp;
 	}
 
 	/* TODO(drinkcat): This operation could be precomputed to save time. */
-	mont_mul(key, a_r, a, key->rr);  /* a_r = a * RR / R mod M */
+	mont_mul(key, a_r, a, key->rr); /* a_r = a * RR / R mod M */
 #ifdef CONFIG_RSA_EXPONENT_3
 	mont_mul(key, aa_r, a_r, a_r);
 	mont_mul(key, a, aa_r, a_r);
@@ -159,9 +152,10 @@ static void mod_pow(const struct rsa_public_key *key, uint8_t *inout,
 	/* Exponent 65537 */
 	for (i = 0; i < 16; i += 2) {
 		mont_mul(key, aa_r, a_r, a_r); /* aa_r = a_r * a_r / R mod M */
-		mont_mul(key, a_r, aa_r, aa_r);/* a_r = aa_r * aa_r / R mod M */
+		mont_mul(key, a_r, aa_r, aa_r); /* a_r = aa_r * aa_r / R mod M
+						 */
 	}
-	mont_mul(key, aaa, a_r, a);  /* aaa = a_r * a / R mod M */
+	mont_mul(key, aaa, a_r, a); /* aaa = a_r * a / R mod M */
 #endif
 
 	/* Make sure aaa < mod; aaa is at most 1x mod too large. */
@@ -173,8 +167,8 @@ static void mod_pow(const struct rsa_public_key *key, uint8_t *inout,
 		uint32_t tmp = aaa[i];
 		*inout++ = (uint8_t)(tmp >> 24);
 		*inout++ = (uint8_t)(tmp >> 16);
-		*inout++ = (uint8_t)(tmp >>  8);
-		*inout++ = (uint8_t)(tmp >>  0);
+		*inout++ = (uint8_t)(tmp >> 8);
+		*inout++ = (uint8_t)(tmp >> 0);
 	}
 }
 
@@ -192,11 +186,9 @@ static void mod_pow(const struct rsa_public_key *key, uint8_t *inout,
  *
  * PS: octet string consisting of {Length(RSA Key) - Length(T) - 3} 0xFF
  */
-static const uint8_t sha256_tail[] = {
-	0x00, 0x30, 0x31, 0x30, 0x0d, 0x06, 0x09, 0x60,
-	0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x02, 0x01,
-	0x05, 0x00, 0x04, 0x20
-};
+static const uint8_t sha256_tail[] = { 0x00, 0x30, 0x31, 0x30, 0x0d, 0x06, 0x09,
+				       0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04,
+				       0x02, 0x01, 0x05, 0x00, 0x04, 0x20 };
 
 #define PKCS_PAD_SIZE (RSANUMBYTES - SHA256_DIGEST_SIZE)
 
@@ -255,5 +247,5 @@ int rsa_verify(const struct rsa_public_key *key, const uint8_t *signature,
 	if (memcmp(buf + PKCS_PAD_SIZE, sha, SHA256_DIGEST_SIZE) != 0)
 		return 0;
 
-	return 1;  /* All checked out OK. */
+	return 1; /* All checked out OK. */
 }
