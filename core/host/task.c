@@ -96,22 +96,18 @@ void _run_test(void *d)
 	run_test(0, NULL);
 }
 
-#define TASK(n, r, d, s) {r, d},
+#define TASK(n, r, d, s) { r, d },
 const struct task_args task_info[TASK_ID_COUNT] = {
-	{__idle, NULL},
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
-	CONFIG_CTS_TASK_LIST
-	{_run_test, NULL},
+	{ __idle, NULL },
+	CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST CONFIG_CTS_TASK_LIST{ _run_test,
+								     NULL },
 };
 #undef TASK
 
 #define TASK(n, r, d, s) #n,
-static const char * const task_names[] = {
+static const char *const task_names[] = {
 	"<< idle >>",
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
-	CONFIG_CTS_TASK_LIST
+	CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST CONFIG_CTS_TASK_LIST
 	"<< test runner >>",
 };
 #undef TASK
@@ -325,8 +321,7 @@ static int command_task_info(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(taskinfo, command_task_info,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(taskinfo, command_task_info, NULL,
 			     "Print task info");
 
 static void _wait_for_task_started(int can_sleep)
@@ -519,8 +514,8 @@ int task_start(void)
 	 */
 	pthread_mutex_lock(&interrupt_lock);
 
-	pthread_create(&interrupt_thread, NULL,
-		       _task_int_generator_start, NULL);
+	pthread_create(&interrupt_thread, NULL, _task_int_generator_start,
+		       NULL);
 
 	/*
 	 * Tell the hooks task to continue so that it can call back to enable
@@ -557,7 +552,6 @@ static void task_enable_all_tasks_callback(void)
 		pthread_mutex_unlock(&interrupt_lock);
 		pthread_cond_wait(&scheduler_cond, &run_lock);
 	}
-
 }
 
 void task_enable_all_tasks(void)
