@@ -16,8 +16,8 @@
 #include <compile_time_macros.h>
 
 /* eMMC transfer block size */
-#define BLOCK_SIZE		512
-#define BLOCK_RAW_DATA		"bootblock_raw_data"
+#define BLOCK_SIZE 512
+#define BLOCK_RAW_DATA "bootblock_raw_data"
 
 uint16_t crc16_arg(uint8_t data, uint16_t previous_crc)
 {
@@ -42,12 +42,11 @@ void header_format(FILE *fin, FILE *fout)
 	size_t cnt = 0;
 
 	fprintf(fout, "/* This file is auto-generated. Do not modify. */\n"
-		"#ifndef __CROS_EC_BOOTBLOCK_DATA_H\n"
-		"#define __CROS_EC_BOOTBLOCK_DATA_H\n"
-		"\n"
-		"#include <stdint.h>\n"
-		"\n"
-		);
+		      "#ifndef __CROS_EC_BOOTBLOCK_DATA_H\n"
+		      "#define __CROS_EC_BOOTBLOCK_DATA_H\n"
+		      "\n"
+		      "#include <stdint.h>\n"
+		      "\n");
 
 	fprintf(fout,
 		"static const uint8_t %s[] __attribute__((aligned(4))) =\n"
@@ -64,18 +63,19 @@ void header_format(FILE *fin, FILE *fout)
 		if (cnt == 0)
 			break;
 		else if (cnt < BLOCK_SIZE)
-			memset(&data[cnt], 0xff, BLOCK_SIZE-cnt);
+			memset(&data[cnt], 0xff, BLOCK_SIZE - cnt);
 
 		fprintf(fout, "\t/* Block %d (%ld) */\n", blk, cnt);
 		fprintf(fout, "\t0xff, 0xfe, /* idle, start bit. */");
 		for (j = 0; j < sizeof(data); j++) {
-			fprintf(fout, "%s0x%02x,",
-				(j % 8) == 0 ? "\n\t" : " ", data[j]);
+			fprintf(fout, "%s0x%02x,", (j % 8) == 0 ? "\n\t" : " ",
+				data[j]);
 			crc16 = crc16_arg(data[j], crc16);
 		}
 		fprintf(fout, "\n");
 
-		fprintf(fout, "\t0x%02x, 0x%02x, 0xff,"
+		fprintf(fout,
+			"\t0x%02x, 0x%02x, 0xff,"
 			" /* CRC, end bit, idle */\n",
 			crc16 >> 8, crc16 & 0xff);
 	}
@@ -96,16 +96,14 @@ int main(int argc, char **argv)
 	FILE *fout = NULL;
 
 	const char short_opts[] = "i:ho:";
-	const struct option long_opts[] = {
-		{ "input", 1, NULL, 'i' },
-		{ "help", 0, NULL, 'h' },
-		{ "out", 1, NULL, 'o' },
-		{ NULL }
-	};
+	const struct option long_opts[] = { { "input", 1, NULL, 'i' },
+					    { "help", 0, NULL, 'h' },
+					    { "out", 1, NULL, 'o' },
+					    { NULL } };
 	const char usage[] = "USAGE: %s [-i <input>] -o <output>\n";
 
-	while ((nopt = getopt_long(argc, argv, short_opts, long_opts,
-								NULL)) != -1) {
+	while ((nopt = getopt_long(argc, argv, short_opts, long_opts, NULL)) !=
+	       -1) {
 		switch (nopt) {
 		case 'i': /* -i or --input*/
 			input_name = optarg;
