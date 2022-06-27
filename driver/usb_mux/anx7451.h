@@ -12,38 +12,38 @@
 #include "usb_mux.h"
 
 /* I2C interface addresses */
-#define ANX7451_I2C_ADDR0_FLAGS		0x10
-#define ANX7451_I2C_ADDR1_FLAGS		0x14
-#define ANX7451_I2C_ADDR2_FLAGS		0x16
-#define ANX7451_I2C_ADDR3_FLAGS		0x11
+#define ANX7451_I2C_ADDR0_FLAGS 0x10
+#define ANX7451_I2C_ADDR1_FLAGS 0x14
+#define ANX7451_I2C_ADDR2_FLAGS 0x16
+#define ANX7451_I2C_ADDR3_FLAGS 0x11
 
 /* This register is not documented in datasheet. */
-#define ANX7451_REG_POWER_CNTRL		0x2B
-#define ANX7451_POWER_CNTRL_OFF		0xFF
+#define ANX7451_REG_POWER_CNTRL 0x2B
+#define ANX7451_POWER_CNTRL_OFF 0xFF
 
 /*
  * Ultra low power control register.
  * On ANX7451, this register should always be 0 (disabled).
  * See figure 2-2 in family programming guide.
  */
-#define ANX7451_REG_ULTRA_LOW_POWER	0xE6
+#define ANX7451_REG_ULTRA_LOW_POWER 0xE6
 /* #define ANX7451_ULTRA_LOW_POWER_EN	0x06 */
-#define ANX7451_ULTRA_LOW_POWER_DIS	0x00
+#define ANX7451_ULTRA_LOW_POWER_DIS 0x00
 
 /* Mux control register  */
-#define ANX7451_REG_ULP_CFG_MODE	0xF8
-#define ANX7451_ULP_CFG_MODE_EN		BIT(4)
-#define ANX7451_ULP_CFG_MODE_SWAP	BIT(3)
-#define ANX7451_ULP_CFG_MODE_FLIP	BIT(2)
-#define ANX7451_ULP_CFG_MODE_DP_EN	BIT(1)
-#define ANX7451_ULP_CFG_MODE_USB_EN	BIT(0)
+#define ANX7451_REG_ULP_CFG_MODE 0xF8
+#define ANX7451_ULP_CFG_MODE_EN BIT(4)
+#define ANX7451_ULP_CFG_MODE_SWAP BIT(3)
+#define ANX7451_ULP_CFG_MODE_FLIP BIT(2)
+#define ANX7451_ULP_CFG_MODE_DP_EN BIT(1)
+#define ANX7451_ULP_CFG_MODE_USB_EN BIT(0)
 
 /* Register to set USB I2C address, defaults to 0x29 (7-bit) */
-#define ANX7451_REG_USB_I2C_ADDR	0x38
+#define ANX7451_REG_USB_I2C_ADDR 0x38
 
 /* ANX7451 AUX FLIP control */
-#define ANX7451_REG_USB_AUX_FLIP_CTRL	0xA4
-#define ANX7451_USB_AUX_FLIP_EN		0x20
+#define ANX7451_REG_USB_AUX_FLIP_CTRL 0xA4
+#define ANX7451_USB_AUX_FLIP_EN 0x20
 
 extern const struct usb_mux_driver anx7451_usb_mux_driver;
 
