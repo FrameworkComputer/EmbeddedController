@@ -7,4 +7,7 @@
 
 #define RT9490_BC12_COMPAT richtek_rt9490_bc12
 
-#define BC12_CHIP_RT9490(id) { .drv = &rt9490_bc12_drv, },
+#define BC12_CHIP_RT9490(id)             \
+	{                                \
+		.drv = &rt9490_bc12_drv, \
+	},
