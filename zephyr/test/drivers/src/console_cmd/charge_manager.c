@@ -25,8 +25,7 @@ static void connect_sink_to_port(const struct emul *charger_emul,
 	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_EXT_STATUS,
 			   TCPC_REG_EXT_STATUS_SAFE0V);
 	tcpci_tcpc_alert(0);
-	zassume_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul),
-		   NULL);
+	zassume_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul), NULL);
 
 	/* Wait for PD negotiation and current ramp.
 	 * TODO(b/213906889): Check message timing and contents.
@@ -60,9 +59,8 @@ static void *console_cmd_charge_manager_setup(void)
 
 	/* Initialized the sink to request 5V and 3A */
 	tcpci_partner_init(&test_fixture.sink_5v_3a, PD_REV20);
-	test_fixture.sink_5v_3a.extensions =
-		tcpci_snk_emul_init(&test_fixture.sink_ext,
-				    &test_fixture.sink_5v_3a, NULL);
+	test_fixture.sink_5v_3a.extensions = tcpci_snk_emul_init(
+		&test_fixture.sink_ext, &test_fixture.sink_5v_3a, NULL);
 	test_fixture.sink_ext.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
