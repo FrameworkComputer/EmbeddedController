@@ -30,7 +30,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 
 /* LPC PM channels */
 enum lpc_pm_ch {
@@ -48,25 +48,25 @@ enum pm_ctrl_mask {
 	PM_CTRL_OBEIE = 0x02,
 };
 
-#define LPC_ACPI_CMD      LPC_PM1   /* ACPI commands 62h/66h port */
-#define LPC_HOST_CMD      LPC_PM2   /* Host commands 200h/204h port */
-#define LPC_HOST_PORT_80H LPC_PM3   /* Host 80h port */
+#define LPC_ACPI_CMD LPC_PM1 /* ACPI commands 62h/66h port */
+#define LPC_HOST_CMD LPC_PM2 /* Host commands 200h/204h port */
+#define LPC_HOST_PORT_80H LPC_PM3 /* Host 80h port */
 
 static uint8_t acpi_ec_memmap[EC_MEMMAP_SIZE]
-			__attribute__((section(".h2ram.pool.acpiec")));
+	__attribute__((section(".h2ram.pool.acpiec")));
 static uint8_t host_cmd_memmap[256]
-			__attribute__((section(".h2ram.pool.hostcmd")));
+	__attribute__((section(".h2ram.pool.hostcmd")));
 
 static struct host_packet lpc_packet;
 static struct host_cmd_handler_args host_cmd_args;
-static uint8_t host_cmd_flags;   /* Flags from host command */
+static uint8_t host_cmd_flags; /* Flags from host command */
 
 /* Params must be 32-bit aligned */
 static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __aligned(4);
 static int init_done;
 static int p80l_index;
 
-static struct ec_lpc_host_args * const lpc_host_args =
+static struct ec_lpc_host_args *const lpc_host_args =
 	(struct ec_lpc_host_args *)host_cmd_memmap;
 
 static void pm_set_ctrl(enum lpc_pm_ch ch, enum pm_ctrl_mask ctrl, int set)
@@ -195,15 +195,13 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	}
 
 	/* New-style response */
-	lpc_host_args->flags =
-		(host_cmd_flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
-		EC_HOST_ARGS_FLAG_TO_HOST;
+	lpc_host_args->flags = (host_cmd_flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
+			       EC_HOST_ARGS_FLAG_TO_HOST;
 
 	lpc_host_args->data_size = size;
 
 	csum = args->command + lpc_host_args->flags +
-		lpc_host_args->command_version +
-		lpc_host_args->data_size;
+	       lpc_host_args->command_version + lpc_host_args->data_size;
 
 	for (i = 0, out = (uint8_t *)args->response; i < size; i++, out++)
 		csum += *out;
@@ -251,7 +249,7 @@ void lpc_update_host_event_status(void)
 
 	/* Copy host events to mapped memory */
 	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
-				lpc_get_host_events();
+		lpc_get_host_events();
 
 	task_enable_irq(IT83XX_IRQ_PMC_IN);
 
@@ -390,7 +388,7 @@ void lpc_kbc_ibf_interrupt(void)
 {
 	if (lpc_keyboard_input_pending()) {
 		keyboard_host_write(IT83XX_KBC_KBHIDIR,
-			(IT83XX_KBC_KBHISR & 0x08) ? 1 : 0);
+				    (IT83XX_KBC_KBHISR & 0x08) ? 1 : 0);
 		/* bit7, write-1 clear IBF */
 		IT83XX_KBC_KBHICR |= BIT(7);
 		IT83XX_KBC_KBHICR &= ~BIT(7);
@@ -733,8 +731,7 @@ void lpcrst_interrupt(enum gpio_signal signal)
 		/* Store port 80 reset event */
 		port_80_write(PORT_80_EVENT_RESET);
 
-	CPRINTS("LPC RESET# %sasserted",
-		lpc_get_pltrst_asserted() ? "" : "de");
+	CPRINTS("LPC RESET# %sasserted", lpc_get_pltrst_asserted() ? "" : "de");
 }
 #endif
 
@@ -765,6 +762,5 @@ static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
 
 	return EC_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
-		lpc_get_protocol_info,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
+		     EC_VER_MASK(0));
