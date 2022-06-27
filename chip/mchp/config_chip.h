@@ -20,11 +20,11 @@
 
 /* Use a bigger console output buffer */
 #undef CONFIG_UART_TX_BUF_SIZE
-#define CONFIG_UART_TX_BUF_SIZE	1024
+#define CONFIG_UART_TX_BUF_SIZE 1024
 
 /* Interval between HOOK_TICK notifications */
-#define HOOK_TICK_INTERVAL_MS	250
-#define HOOK_TICK_INTERVAL	(HOOK_TICK_INTERVAL_MS * MSEC)
+#define HOOK_TICK_INTERVAL_MS 250
+#define HOOK_TICK_INTERVAL (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /*
  * Enable chip_pre_init called from main
@@ -48,14 +48,14 @@
  * addresses. Define fake peripheral addresses that aren't used by
  * peripherals on the board.
  */
-#define CONFIG_MCHP_I2C0_SLAVE_ADDRS	0xE3E1
-#define CONFIG_MCHP_I2C1_SLAVE_ADDRS	0xE3E1
-#define CONFIG_MCHP_I2C2_SLAVE_ADDRS	0xE3E1
-#define CONFIG_MCHP_I2C3_SLAVE_ADDRS	0xE3E1
-#define CONFIG_MCHP_I2C4_SLAVE_ADDRS	0xE3E1
-#define CONFIG_MCHP_I2C5_SLAVE_ADDRS	0xE3E1
-#define CONFIG_MCHP_I2C6_SLAVE_ADDRS	0xE3E1
-#define CONFIG_MCHP_I2C7_SLAVE_ADDRS	0xE3E1
+#define CONFIG_MCHP_I2C0_SLAVE_ADDRS 0xE3E1
+#define CONFIG_MCHP_I2C1_SLAVE_ADDRS 0xE3E1
+#define CONFIG_MCHP_I2C2_SLAVE_ADDRS 0xE3E1
+#define CONFIG_MCHP_I2C3_SLAVE_ADDRS 0xE3E1
+#define CONFIG_MCHP_I2C4_SLAVE_ADDRS 0xE3E1
+#define CONFIG_MCHP_I2C5_SLAVE_ADDRS 0xE3E1
+#define CONFIG_MCHP_I2C6_SLAVE_ADDRS 0xE3E1
+#define CONFIG_MCHP_I2C7_SLAVE_ADDRS 0xE3E1
 
 /************************************************************************/
 /* Memory mapping */
@@ -74,45 +74,44 @@
 /* Define our RAM layout. */
 
 #if defined(CHIP_FAMILY_MEC172X)
-#define CONFIG_MEC_SRAM_BASE_START	0x000C0000
-#define CONFIG_MEC_SRAM_BASE_END	(0x00128000 - (2 * 1024))
+#define CONFIG_MEC_SRAM_BASE_START 0x000C0000
+#define CONFIG_MEC_SRAM_BASE_END (0x00128000 - (2 * 1024))
 #else
-#define CONFIG_MEC_SRAM_BASE_START	0x000E0000
-#define CONFIG_MEC_SRAM_BASE_END	0x00120000
+#define CONFIG_MEC_SRAM_BASE_START 0x000E0000
+#define CONFIG_MEC_SRAM_BASE_END 0x00120000
 #endif
 
-#define CONFIG_MEC_SRAM_SIZE		(CONFIG_MEC_SRAM_BASE_END - \
-					CONFIG_MEC_SRAM_BASE_START)
+#define CONFIG_MEC_SRAM_SIZE \
+	(CONFIG_MEC_SRAM_BASE_END - CONFIG_MEC_SRAM_BASE_START)
 /* 64k Data RAM for RO / RW / loader */
-#define CONFIG_RAM_SIZE			0x00010000
-#define CONFIG_RAM_BASE			(CONFIG_MEC_SRAM_BASE_END - \
-					CONFIG_RAM_SIZE)
+#define CONFIG_RAM_SIZE 0x00010000
+#define CONFIG_RAM_BASE (CONFIG_MEC_SRAM_BASE_END - CONFIG_RAM_SIZE)
 
 /* System stack size */
 /* was 1024, temporarily expanded to 2048 for debug */
-#define CONFIG_STACK_SIZE		2048
+#define CONFIG_STACK_SIZE 2048
 
 /* non-standard task stack sizes */
-#define IDLE_TASK_STACK_SIZE		672
-#define LARGER_TASK_STACK_SIZE		800
-#define VENTI_TASK_STACK_SIZE		928
-#define ULTRA_TASK_STACK_SIZE		1056
-#define TRENTA_TASK_STACK_SIZE		1184
+#define IDLE_TASK_STACK_SIZE 672
+#define LARGER_TASK_STACK_SIZE 800
+#define VENTI_TASK_STACK_SIZE 928
+#define ULTRA_TASK_STACK_SIZE 1056
+#define TRENTA_TASK_STACK_SIZE 1184
 
-#define CHARGER_TASK_STACK_SIZE		1024	/* 640 */
-#define HOOKS_TASK_STACK_SIZE		1024	/* 640 */
-#define CONSOLE_TASK_STACK_SIZE		1024	/* 640 */
-#define HOST_CMD_TASK_STACK_SIZE	1024	/* 640 */
+#define CHARGER_TASK_STACK_SIZE 1024 /* 640 */
+#define HOOKS_TASK_STACK_SIZE 1024 /* 640 */
+#define CONSOLE_TASK_STACK_SIZE 1024 /* 640 */
+#define HOST_CMD_TASK_STACK_SIZE 1024 /* 640 */
 
 /*
  * TODO: Large stack consumption
  * https://code.google.com/p/chrome-os-partner/issues/detail?id=49245
  */
 /* original = 800, if stack exceptions expand to 1024 for debug */
-#define PD_TASK_STACK_SIZE		2048
+#define PD_TASK_STACK_SIZE 2048
 
 /* Default task stack size */
-#define TASK_STACK_SIZE			672
+#define TASK_STACK_SIZE 672
 
 /************************************************************************/
 /* Define our flash layout. */
@@ -134,20 +133,20 @@
 #endif
 
 /* Protect bank size 4K bytes */
-#define CONFIG_FLASH_BANK_SIZE		0x00001000
+#define CONFIG_FLASH_BANK_SIZE 0x00001000
 /* Sector erase size 4K bytes */
-#define CONFIG_FLASH_ERASE_SIZE		0x00001000
+#define CONFIG_FLASH_ERASE_SIZE 0x00001000
 /* Minimum write size */
-#define CONFIG_FLASH_WRITE_SIZE		0x00000004
+#define CONFIG_FLASH_WRITE_SIZE 0x00000004
 
 /* One page size for write */
-#define CONFIG_FLASH_WRITE_IDEAL_SIZE	256
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE 256
 
 /* Program memory base address */
 #if defined(CHIP_FAMILY_MEC172X)
-#define CONFIG_PROGRAM_MEMORY_BASE	0x000C0000
+#define CONFIG_PROGRAM_MEMORY_BASE 0x000C0000
 #else
-#define CONFIG_PROGRAM_MEMORY_BASE	0x000E0000
+#define CONFIG_PROGRAM_MEMORY_BASE 0x000E0000
 #endif
 
 /*
@@ -232,14 +231,13 @@
  * GPIO(PCH_SLP_S0_L, PIN(0x89), GPIO_INPUT | GPIO_PULL_DOWN)
  */
 #define GPIO_BANK(index) ((index) >> 5)
-#define GPIO_BANK_MASK(index) (1ul << ((index) & 0x1F))
+#define GPIO_BANK_MASK(index) (1ul << ((index)&0x1F))
 
 #define GPIO_PIN(index) GPIO_BANK(index), GPIO_BANK_MASK(index)
 #define GPIO_PIN_MASK(p, m) .port = (p), .mask = (m)
 
 #ifndef __ASSEMBLER__
 
-
 #endif /* #ifndef __ASSEMBLER__ */
 
-#endif  /* __CROS_EC_CONFIG_CHIP_H */
+#endif /* __CROS_EC_CONFIG_CHIP_H */
