@@ -28,9 +28,8 @@
 #include "usbc_ppc.h"
 #include "usbc/ppc.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
-
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* GPIO Interrupt Handlers */
 void tcpc_alert_event(enum gpio_signal signal)
@@ -54,9 +53,9 @@ void tcpc_alert_event(enum gpio_signal signal)
 static void usba_oc_deferred(void)
 {
 	/* Use next number after all USB-C ports to indicate the USB-A port */
-	board_overcurrent_event(CONFIG_USB_PD_PORT_MAX_COUNT,
-				!gpio_pin_get_dt(
-				 GPIO_DT_FROM_NODELABEL(gpio_usb_a0_oc_odl)));
+	board_overcurrent_event(
+		CONFIG_USB_PD_PORT_MAX_COUNT,
+		!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_a0_oc_odl)));
 }
 DECLARE_DEFERRED(usba_oc_deferred);
 
@@ -148,7 +147,7 @@ void board_tcpc_init(void)
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_POST_I2C);
 
@@ -194,8 +193,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
@@ -223,7 +221,6 @@ int board_set_active_charge_port(int port)
 		return EC_ERROR_INVAL;
 	}
 
-
 	CPRINTS("New charge port: p%d", port);
 
 	/*
@@ -247,23 +244,21 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
 	 * critical, as we may brownout.
 	 */
-	if (supplier == CHARGE_SUPPLIER_PD &&
-	    charge_ma < 1500 &&
+	if (supplier == CHARGE_SUPPLIER_PD && charge_ma < 1500 &&
 	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
 		CPRINTS("Using max ilim %d", max_ma);
 		charge_ma = max_ma;
 	}
 
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -272,11 +267,11 @@ uint16_t tcpc_get_alert_status(void)
 
 	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_int_odl)))
 		if (gpio_pin_get_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l)))
+			    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l)))
 			status |= PD_STATUS_TCPC_ALERT_0;
 	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_int_odl)))
 		if (gpio_pin_get_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l)))
+			    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l)))
 			status |= PD_STATUS_TCPC_ALERT_1;
 
 	return status;
