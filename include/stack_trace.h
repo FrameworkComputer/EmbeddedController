@@ -18,8 +18,12 @@ void task_register_tracedump(void);
 /* Dump current stack trace */
 void task_dump_trace(void);
 #else
-static inline void task_register_tracedump(void) { }
-static inline void task_dump_trace(void) { }
+static inline void task_register_tracedump(void)
+{
+}
+static inline void task_dump_trace(void)
+{
+}
 #endif
 
-#endif  /* __CROS_EC_STACK_TRACE_H */
+#endif /* __CROS_EC_STACK_TRACE_H */
