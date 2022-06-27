@@ -30,8 +30,8 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(stubs);
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* All of these definitions are just to get the test to link. None of these
  * functions are useful or behave as they should. Please remove them once the
@@ -55,8 +55,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
@@ -83,7 +82,6 @@ int board_set_active_charge_port(int port)
 		CPRINTS("Skip enable p%d", port);
 		return EC_ERROR_INVAL;
 	}
-
 
 	CPRINTS("New charge port: p%d", port);
 
@@ -117,7 +115,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {
 	charge_set_input_current_limit(
-	MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 struct tcpc_config_t tcpc_config[] = {
@@ -256,13 +254,13 @@ uint16_t tcpc_get_alert_status(void)
 	 */
 	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_int_odl))) {
 		if (gpio_pin_get_dt(
-		GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l)) != 0)
+			    GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
 	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_int_odl))) {
 		if (gpio_pin_get_dt(
-		GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l)) != 0)
+			    GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_1;
 	}
 
