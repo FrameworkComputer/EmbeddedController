@@ -63,9 +63,11 @@ int comm_init_buffer(void);
  * Send a command to the EC.  Returns the length of output data returned (0 if
  * none), or negative on error.
  */
-int ec_command(int command, int version,
-	       const void *outdata, int outsize,   /* to the EC */
-	       void *indata, int insize);	   /* from the EC */
+int ec_command(int command, int version, const void *outdata, int outsize, /* to
+									      the
+									      EC
+									    */
+	       void *indata, int insize); /* from the EC */
 
 /**
  * Set the offset to be applied to the command number when ec_command() calls
@@ -79,9 +81,9 @@ void set_command_offset(int offset);
  * by the protocol-specific driver.  DO NOT call this version directly from
  * anywhere but ec_command(), or the --device option will not work.
  */
-extern int (*ec_command_proto)(int command, int version,
-			       const void *outdata, int outsize, /* to EC */
-			       void *indata, int insize);        /* from EC */
+extern int (*ec_command_proto)(int command, int version, const void *outdata,
+			       int outsize, /* to EC */
+			       void *indata, int insize); /* from EC */
 
 /**
  * Return the content of the EC information area mapped as "memory".
