@@ -24,7 +24,7 @@
 #define CPRINTS(fmt, args...) cprints(CC_RGBKBD, "RGBKBD: " fmt, ##args)
 
 test_export_static enum ec_rgbkbd_demo demo =
-#if   defined(CONFIG_RGBKBD_DEMO_FLOW)
+#if defined(CONFIG_RGBKBD_DEMO_FLOW)
 	EC_RGBKBD_DEMO_FLOW;
 #elif defined(CONFIG_RGBKBD_DEMO_DOT)
 	EC_RGBKBD_DEMO_DOT;
@@ -35,15 +35,14 @@ test_export_static enum ec_rgbkbd_demo demo =
 const int default_demo_interval_ms = 250;
 test_export_static int demo_interval_ms = -1;
 
-test_export_static
-uint8_t rgbkbd_table[EC_RGBKBD_MAX_KEY_COUNT];
+test_export_static uint8_t rgbkbd_table[EC_RGBKBD_MAX_KEY_COUNT];
 
 static enum rgbkbd_state rgbkbd_state;
 
 const struct rgbkbd_init rgbkbd_init_default = {
 	.gcc = RGBKBD_MAX_GCC_LEVEL / 2,
 	.scale = { RGBKBD_MAX_SCALE, RGBKBD_MAX_SCALE, RGBKBD_MAX_SCALE },
-	.color = { .r = 0xff, .g = 0xff, .b = 0xff },  /* white */
+	.color = { .r = 0xff, .g = 0xff, .b = 0xff }, /* white */
 };
 
 const struct rgbkbd_init *rgbkbd_init_setting = &rgbkbd_init_default;
@@ -88,8 +87,8 @@ static int set_color_single(struct rgb_s color, int x, int y)
 	rv = ctx->cfg->drv->set_color(ctx, offset, &ctx->buf[offset], 1);
 
 	CPRINTS("%set (%d,%d) to color=(%d,%d,%d) grid=%u offset=%u (%d)",
-		rv ? "Failed to s" : "S",
-		x, y, color.r, color.g, color.b, grid, offset, rv);
+		rv ? "Failed to s" : "S", x, y, color.r, color.g, color.b, grid,
+		offset, rv);
 
 	return rv;
 }
@@ -214,14 +213,13 @@ static void rgbkbd_demo_run(enum ec_rgbkbd_demo id)
 	}
 }
 
-test_export_static
-void rgbkbd_init_lookup_table(void)
+test_export_static void rgbkbd_init_lookup_table(void)
 {
 	bool add = true;
 	int i, k = 0;
 
 	if (rgbkbd_map[0] != RGBKBD_DELM ||
-			rgbkbd_map[rgbkbd_map_size - 1] != RGBKBD_DELM) {
+	    rgbkbd_map[rgbkbd_map_size - 1] != RGBKBD_DELM) {
 		CPRINTS("Invalid Key-LED map");
 		return;
 	}
@@ -267,8 +265,8 @@ static int rgbkbd_set_global_brightness(uint8_t gcc)
 
 		e = ctx->cfg->drv->set_gcc(ctx, gcc);
 		if (e) {
-			CPRINTS("Failed to set GCC to %u for grid=%d (%d)",
-				gcc, grid, e);
+			CPRINTS("Failed to set GCC to %u for grid=%d (%d)", gcc,
+				grid, e);
 			rv = e;
 			continue;
 		}
@@ -356,8 +354,8 @@ static int rgbkbd_init(void)
 
 		e = ctx->cfg->drv->set_gcc(ctx, gcc);
 		if (e) {
-			CPRINTS("Failed to set GCC to %u for grid=%d (%d)",
-				gcc, i, e);
+			CPRINTS("Failed to set GCC to %u for grid=%d (%d)", gcc,
+				i, e);
 			rv = e;
 			continue;
 		}
@@ -423,8 +421,8 @@ static int rgbkbd_enable(int enable)
 	}
 
 	if (rv == EC_SUCCESS) {
-		rgbkbd_state = enable ?
-				RGBKBD_STATE_ENABLED : RGBKBD_STATE_DISABLED;
+		rgbkbd_state = enable ? RGBKBD_STATE_ENABLED :
+					RGBKBD_STATE_DISABLED;
 	}
 
 	/* Return EC_SUCCESS or the last error. */
@@ -518,8 +516,8 @@ static enum ec_status hc_rgbkbd_set_color(struct host_cmd_handler_args *args)
 			if (led.u8 == RGBKBD_DELM)
 				/* Reached end of the group. */
 				break;
-			if (set_color_single(p->color[i],
-					     led.coord.x, led.coord.y))
+			if (set_color_single(p->color[i], led.coord.x,
+					     led.coord.y))
 				return EC_RES_ERROR;
 		} while (led.u8 != RGBKBD_DELM);
 	}
@@ -606,19 +604,19 @@ test_export_static int cc_rgb(int argc, char **argv)
 
 		if (y < 0) {
 			/* Set all LEDs on column x. */
-			ccprintf("Set column %d to 0x%02x%02x%02x\n",
-				 x, rgb.r, rgb.g, rgb.b);
+			ccprintf("Set column %d to 0x%02x%02x%02x\n", x, rgb.r,
+				 rgb.g, rgb.b);
 			for (i = 0; i < rgbkbd_vsize; i++)
 				rv = set_color_single(rgb, x, i);
 		} else if (x < 0) {
 			/* Set all LEDs on row y. */
-			ccprintf("Set row %d to 0x%02x%02x%02x\n",
-				 y, rgb.r, rgb.g, rgb.b);
+			ccprintf("Set row %d to 0x%02x%02x%02x\n", y, rgb.r,
+				 rgb.g, rgb.b);
 			for (i = 0; i < rgbkbd_hsize; i++)
 				rv = set_color_single(rgb, i, y);
 		} else {
-			ccprintf("Set (%d,%d) to 0x%02x%02x%02x\n",
-				 x, y, rgb.r, rgb.g, rgb.b);
+			ccprintf("Set (%d,%d) to 0x%02x%02x%02x\n", x, y, rgb.r,
+				 rgb.g, rgb.b);
 			rv = set_color_single(rgb, x, y);
 		}
 	} else if (!strcasecmp(argv[1], "all")) {
@@ -680,6 +678,5 @@ DECLARE_CONSOLE_COMMAND(rgb, cc_rgb,
 			"4. rgb demo <id>\n"
 			"5. rgb reset/enable/disable/red\n"
 			"6. rgb scale <24-bit RGB scale>\n",
-			"Control RGB keyboard"
-			);
+			"Control RGB keyboard");
 #endif
