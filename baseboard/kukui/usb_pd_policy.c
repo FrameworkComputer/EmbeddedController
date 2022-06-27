@@ -16,8 +16,8 @@
 #include "usb_pd_policy.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 static int board_get_polarity(int port)
 {
@@ -30,8 +30,8 @@ static int board_get_polarity(int port)
 
 static uint8_t vbus_en;
 
-#define VBUS_EN_SYSJUMP_TAG		0x5645 /* VE */
-#define VBUS_EN_HOOK_VERSION	1
+#define VBUS_EN_SYSJUMP_TAG 0x5645 /* VE */
+#define VBUS_EN_HOOK_VERSION 1
 
 static void vbus_en_preserve_state(void)
 {
@@ -45,11 +45,11 @@ static void vbus_en_restore_state(void)
 	const uint8_t *prev_vbus_en;
 	int size, version;
 
-	prev_vbus_en = (const uint8_t *)system_get_jump_tag(
-		VBUS_EN_SYSJUMP_TAG, &version, &size);
+	prev_vbus_en = (const uint8_t *)system_get_jump_tag(VBUS_EN_SYSJUMP_TAG,
+							    &version, &size);
 
 	if (prev_vbus_en && version == VBUS_EN_HOOK_VERSION &&
-		size == sizeof(*prev_vbus_en)) {
+	    size == sizeof(*prev_vbus_en)) {
 		memcpy(&vbus_en, prev_vbus_en, sizeof(vbus_en));
 	}
 }
@@ -89,7 +89,8 @@ int pd_set_power_supply_ready(int port)
 
 	gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
 	gpio_set_level(GPIO_EN_PP5000_USBC, 1);
-	if (IS_ENABLED(CONFIG_CHARGER_OTG) && IS_ENABLED(CONFIG_CHARGER_ISL9238C))
+	if (IS_ENABLED(CONFIG_CHARGER_OTG) &&
+	    IS_ENABLED(CONFIG_CHARGER_ISL9238C))
 		charger_set_current(CHARGER_SOLO, 0);
 
 	/* notify host of power info change */
@@ -142,7 +143,7 @@ __overridable int board_has_virtual_mux(void)
 }
 
 static void board_usb_mux_set(int port, mux_state_t mux_mode,
-		 enum usb_switch usb_mode, int polarity)
+			      enum usb_switch usb_mode, int polarity)
 {
 	usb_mux_set(port, mux_mode, usb_mode, polarity);
 
@@ -163,8 +164,9 @@ __override void svdm_safe_dp_mode(int port)
 __override int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 {
 	/* Kukui/Krane doesn't support superspeed lanes. */
-	const uint32_t support_pin_mode = board_has_virtual_mux() ?
-		(MODE_DP_PIN_C | MODE_DP_PIN_E) : MODE_DP_PIN_ALL;
+	const uint32_t support_pin_mode =
+		board_has_virtual_mux() ? (MODE_DP_PIN_C | MODE_DP_PIN_E) :
+					  MODE_DP_PIN_ALL;
 
 	/**
 	 * Only enter mode if device is DFP_D (and PIN_C/E for Kukui/Krane)
@@ -205,11 +207,11 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 			port, mf_pref ? USB_PD_MUX_DOCK : USB_PD_MUX_DP_ENABLED,
 			USB_SWITCH_CONNECT, board_get_polarity(port));
 
-	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
-			 CMD_DP_CONFIG | VDO_OPOS(opos));
-	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
-				1,             /* DPv1.3 signaling */
-				2);            /* UFP connected */
+	payload[0] =
+		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG | VDO_OPOS(opos));
+	payload[1] = VDO_DP_CFG(pin_mode, /* pin mode */
+				1, /* DPv1.3 signaling */
+				2); /* UFP connected */
 	return 2;
 };
 
@@ -227,8 +229,8 @@ __override void svdm_dp_post_config(int port)
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 
-	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL |
-				 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+	usb_mux_hpd_update(port,
+			   USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
@@ -267,8 +269,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 #endif
 
 		/* set the minimum time delay (2ms) for the next HPD IRQ */
-		svdm_hpd_deadline[port] = get_time().val +
-			HPD_USTREAM_DEBOUNCE_LVL;
+		svdm_hpd_deadline[port] =
+			get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 	} else if (irq & !lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0; /* nak */
@@ -278,8 +280,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		board_set_dp_mux_control(lvl, board_get_polarity(port));
 #endif
 		/* set the minimum time delay (2ms) for the next HPD IRQ */
-		svdm_hpd_deadline[port] = get_time().val +
-			HPD_USTREAM_DEBOUNCE_LVL;
+		svdm_hpd_deadline[port] =
+			get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 	}
 
 	/* ack */
@@ -293,6 +295,6 @@ __override void svdm_exit_dp_mode(int port)
 	board_set_dp_mux_control(0, 0);
 #endif
 	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-				 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
