@@ -109,8 +109,8 @@ ZTEST(lis2dw12, test_lis2dw12_init__timeout_read_soft_reset)
 }
 
 static int lis2dw12_test_mock_write_fail_set_bdu(struct i2c_emul *emul, int reg,
-						uint8_t val, int bytes,
-						void *data)
+						 uint8_t val, int bytes,
+						 void *data)
 {
 	if (reg == LIS2DW12_BDU_ADDR && bytes == 1 &&
 	    (val & LIS2DW12_BDU_MASK) != 0) {
@@ -126,13 +126,13 @@ ZTEST(lis2dw12, test_lis2dw12_init__fail_set_bdu)
 	int rv;
 
 	i2c_common_emul_set_write_func(lis2dw12_emul_to_i2c_emul(emul),
-				      lis2dw12_test_mock_write_fail_set_bdu,
-				      NULL);
+				       lis2dw12_test_mock_write_fail_set_bdu,
+				       NULL);
 	rv = ms->drv->init(ms);
 	zassert_equal(EC_ERROR_INVAL, rv, "init returned %d but expected %d",
 		      rv, EC_ERROR_INVAL);
 	zassert_true(lis2dw12_emul_get_soft_reset_count(emul) > 0,
-		      "expected at least one soft reset");
+		     "expected at least one soft reset");
 }
 
 ZTEST(lis2dw12, test_lis2dw12_init__fail_set_lir)
@@ -425,8 +425,8 @@ ZTEST(lis2dw12, test_lis2dw12_read)
 		 * output
 		 */
 
-		expected_sample[i] = fake_sample[i] *
-				    (1 << (16 - LIS2DW12_RESOLUTION));
+		expected_sample[i] =
+			fake_sample[i] * (1 << (16 - LIS2DW12_RESOLUTION));
 	}
 
 	i2c_common_emul_set_read_fail_reg(i2c_emul,
