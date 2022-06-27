@@ -20,7 +20,7 @@
 #include "tfdp_chip.h"
 
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
 
 #define SPI_BYTE_TRANSFER_TIMEOUT_US (3 * MSEC)
 /* One byte at 12 MHz full duplex = 0.67 us */
@@ -91,8 +91,8 @@ static int gpspi_tx(const int ctrl, const uint8_t *txdata, int txlen)
 #endif
 
 int gpspi_transaction_async(const struct spi_device_t *spi_device,
-				const uint8_t *txdata, int txlen,
-				uint8_t *rxdata, int rxlen)
+			    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			    int rxlen)
 {
 	int hw_port, ctrl;
 	int ret = EC_SUCCESS;
@@ -232,7 +232,6 @@ int gpspi_enable(int hw_port, int enable)
 	ctrl = (uint32_t)hw_port & 0x0f;
 
 	if (enable) {
-
 		if (ctrl)
 			MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_GPSPI1);
 		else
