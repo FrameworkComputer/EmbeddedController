@@ -34,9 +34,8 @@
 #define GPIO_BAT_LED_AMBER GPIO_LED_Y_ODL
 #define GPIO_PWR_LED_WHITE GPIO_LED_W_ODL
 
-
 /* PWM */
-#define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
+#define NPCX7_PWM1_SEL 1 /* GPIO C2 is used as PWM1. */
 
 /* Temp sensor */
 #define CONFIG_TEMP_SENSOR
@@ -65,16 +64,16 @@
 #define CONFIG_USB_PD_5V_EN_CUSTOM
 
 /* I2C configuration */
-#define I2C_PORT_EEPROM     NPCX_I2C_PORT7_0
-#define I2C_PORT_BATTERY    NPCX_I2C_PORT5_0
-#define I2C_PORT_SENSOR     NPCX_I2C_PORT0_0
-#define I2C_PORT_USB_C0     NPCX_I2C_PORT1_0
+#define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
+#define I2C_PORT_BATTERY NPCX_I2C_PORT5_0
+#define I2C_PORT_SENSOR NPCX_I2C_PORT0_0
+#define I2C_PORT_USB_C0 NPCX_I2C_PORT1_0
 #define I2C_PORT_SUB_USB_C1 NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_MUX    I2C_PORT_USB_C0
+#define I2C_PORT_USB_MUX I2C_PORT_USB_C0
 /* TODO(b:147440290): Need to handle multiple charger ICs */
-#define I2C_PORT_CHARGER    I2C_PORT_USB_C0
+#define I2C_PORT_CHARGER I2C_PORT_USB_C0
 
-#define I2C_PORT_ACCEL      I2C_PORT_SENSOR
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
 
@@ -89,17 +88,13 @@
 #include "registers.h"
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1,     /* ADC0 */
-	ADC_TEMP_SENSOR_2,     /* ADC1 */
-	ADC_VSNS_PP3300_A,     /* ADC9 */
+	ADC_TEMP_SENSOR_1, /* ADC0 */
+	ADC_TEMP_SENSOR_2, /* ADC1 */
+	ADC_VSNS_PP3300_A, /* ADC9 */
 	ADC_CH_COUNT
 };
 
-enum temp_sensor_id {
-	TEMP_SENSOR_1,
-	TEMP_SENSOR_2,
-	TEMP_SENSOR_COUNT
-};
+enum temp_sensor_id { TEMP_SENSOR_1, TEMP_SENSOR_2, TEMP_SENSOR_COUNT };
 
 enum battery_type {
 	BATTERY_C21N2018,
