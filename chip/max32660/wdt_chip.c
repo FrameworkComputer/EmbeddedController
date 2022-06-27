@@ -20,7 +20,7 @@
 #define CPUTS(outstr) cputs(CC_COMMAND, outstr)
 #define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
 
-/* For a System clock of 96MHz, 
+/* For a System clock of 96MHz,
  *     Time in seconds = 96000000 / 2 * 2^power
  * Example for MXC_S_WDT_CTRL_INT_PERIOD_WDT2POW29
  *     Time in seconds = 96000000 / 2 * 2^29
