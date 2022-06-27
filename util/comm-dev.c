@@ -27,7 +27,7 @@ static int fd = -1;
 #define ARRAY_SIZE(t) (sizeof(t) / sizeof(t[0]))
 #endif
 
-static const char * const meanings[] = {
+static const char *const meanings[] = {
 	"SUCCESS",
 	"INVALID_COMMAND",
 	"ERROR",
@@ -60,9 +60,8 @@ static const char *strresult(int i)
 
 /* Old ioctl format, used by Chrome OS 3.18 and older */
 
-static int ec_command_dev(int command, int version,
-			  const void *outdata, int outsize,
-			  void *indata, int insize)
+static int ec_command_dev(int command, int version, const void *outdata,
+			  int outsize, void *indata, int insize)
 {
 	struct cros_ec_command s_cmd;
 	int r;
@@ -117,16 +116,14 @@ static int ec_readmem_dev(int offset, int bytes, void *dest)
 
 	r_mem.offset = offset;
 	r_mem.size = bytes;
-	return ec_command_dev(EC_CMD_READ_MEMMAP, 0,
-			      &r_mem, sizeof(r_mem),
+	return ec_command_dev(EC_CMD_READ_MEMMAP, 0, &r_mem, sizeof(r_mem),
 			      dest, bytes);
 }
 
 /* New ioctl format, used by Chrome OS 4.4 and later as well as upstream 4.0+ */
 
-static int ec_command_dev_v2(int command, int version,
-			     const void *outdata, int outsize,
-			     void *indata, int insize)
+static int ec_command_dev_v2(int command, int version, const void *outdata,
+			     int outsize, void *indata, int insize)
 {
 	struct cros_ec_command_v2 *s_cmd;
 	int r;
@@ -164,7 +161,7 @@ static int ec_command_dev_v2(int command, int version,
 		if (s_cmd->result != EC_RES_SUCCESS) {
 			fprintf(stderr, "EC result %d (%s)\n", s_cmd->result,
 				strresult(s_cmd->result));
-			r =  -EECRESULT - s_cmd->result;
+			r = -EECRESULT - s_cmd->result;
 		}
 	}
 	free(s_cmd);
@@ -193,8 +190,7 @@ static int ec_readmem_dev_v2(int offset, int bytes, void *dest)
 
 	r_mem.offset = offset;
 	r_mem.size = bytes;
-	return ec_command_dev_v2(EC_CMD_READ_MEMMAP, 0,
-				 &r_mem, sizeof(r_mem),
+	return ec_command_dev_v2(EC_CMD_READ_MEMMAP, 0, &r_mem, sizeof(r_mem),
 				 dest, bytes);
 }
 
@@ -204,11 +200,9 @@ static int ec_readmem_dev_v2(int offset, int bytes, void *dest)
  */
 static int ec_dev_is_v2(void)
 {
-	struct ec_params_hello h_req = {
-		.in_data = 0xa0b0c0d0
-	};
+	struct ec_params_hello h_req = { .in_data = 0xa0b0c0d0 };
 	struct ec_response_hello h_resp;
-	struct cros_ec_command s_cmd = { };
+	struct cros_ec_command s_cmd = {};
 	int r;
 
 	s_cmd.command = EC_CMD_HELLO;
@@ -256,7 +250,7 @@ int comm_init_dev(const char *device_name)
 	if (fd < 0)
 		return 1;
 
-	r = read(fd, version, sizeof(version)-1);
+	r = read(fd, version, sizeof(version) - 1);
 	if (r <= 0) {
 		close(fd);
 		return 2;
