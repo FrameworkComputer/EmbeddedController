@@ -14,7 +14,7 @@
 #include "task.h"
 
 /* USB charger voltage */
-#define USB_CHARGER_VOLTAGE_MV  5000
+#define USB_CHARGER_VOLTAGE_MV 5000
 /* USB charger minimum current */
 #define USB_CHARGER_MIN_CURR_MA 500
 /*
@@ -65,13 +65,13 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
 #define USB_CHARGER_EVENT_BIT(x) TASK_EVENT_CUSTOM_BIT(x)
 #endif
 
-#define USB_CHG_EVENT_BC12	USB_CHARGER_EVENT_BIT(0)
-#define USB_CHG_EVENT_VBUS	USB_CHARGER_EVENT_BIT(1)
-#define USB_CHG_EVENT_INTR	USB_CHARGER_EVENT_BIT(2)
-#define USB_CHG_EVENT_DR_UFP	USB_CHARGER_EVENT_BIT(3)
-#define USB_CHG_EVENT_DR_DFP	USB_CHARGER_EVENT_BIT(4)
-#define USB_CHG_EVENT_CC_OPEN	USB_CHARGER_EVENT_BIT(5)
-#define USB_CHG_EVENT_MUX	USB_CHARGER_EVENT_BIT(6)
+#define USB_CHG_EVENT_BC12 USB_CHARGER_EVENT_BIT(0)
+#define USB_CHG_EVENT_VBUS USB_CHARGER_EVENT_BIT(1)
+#define USB_CHG_EVENT_INTR USB_CHARGER_EVENT_BIT(2)
+#define USB_CHG_EVENT_DR_UFP USB_CHARGER_EVENT_BIT(3)
+#define USB_CHG_EVENT_DR_DFP USB_CHARGER_EVENT_BIT(4)
+#define USB_CHG_EVENT_CC_OPEN USB_CHARGER_EVENT_BIT(5)
+#define USB_CHG_EVENT_MUX USB_CHARGER_EVENT_BIT(6)
 
 /*
  * Define USB_CHG_PORT_TO_TASK_ID() and TASK_ID_TO_USB_CHG_PORT() macros to
@@ -80,11 +80,11 @@ int usb_charge_set_mode(int usb_port_id, enum usb_charge_mode mode,
  */
 #ifdef HAS_TASK_USB_CHG_P0
 #define USB_CHG_PORT_TO_TASK_ID(port) (TASK_ID_USB_CHG_P0 + (port))
-#define TASK_ID_TO_USB_CHG_PORT(id) ((id) - TASK_ID_USB_CHG_P0)
+#define TASK_ID_TO_USB_CHG_PORT(id) ((id)-TASK_ID_USB_CHG_P0)
 #else
 #define USB_CHG_PORT_TO_TASK_ID(port) -1 /* stub task ID */
 #define TASK_ID_TO_USB_CHG_PORT(id) 0
-#endif  /* HAS_TASK_USB_CHG_P0 */
+#endif /* HAS_TASK_USB_CHG_P0 */
 
 /**
  * Returns true if the passed port is a power source.
@@ -214,4 +214,4 @@ int board_is_sourcing_vbus(int port);
  */
 int board_vbus_sink_enable(int port, int enable);
 
-#endif  /* __CROS_EC_USB_CHARGE_H */
+#endif /* __CROS_EC_USB_CHARGE_H */
