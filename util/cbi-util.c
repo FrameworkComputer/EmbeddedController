@@ -20,10 +20,10 @@
 #include "cros_board_info.h"
 #include "crc8.h"
 
-#define ARGS_MASK_BOARD_VERSION		BIT(0)
-#define ARGS_MASK_FILENAME		BIT(1)
-#define ARGS_MASK_SIZE			BIT(2)
-#define ARGS_MASK_SKU_ID		BIT(3)
+#define ARGS_MASK_BOARD_VERSION BIT(0)
+#define ARGS_MASK_FILENAME BIT(1)
+#define ARGS_MASK_SIZE BIT(2)
+#define ARGS_MASK_SKU_ID BIT(3)
 
 /* TODO: Set it by macro */
 const char cmd_name[] = "cbi-util";
@@ -48,40 +48,31 @@ enum {
 };
 
 static const struct option opts_create[] = {
-	{"file", 1, 0, OPT_FILENAME},
-	{"board_version", 1, 0, OPT_BOARD_VERSION},
-	{"oem_id", 1, 0, OPT_OEM_ID},
-	{"sku_id", 1, 0, OPT_SKU_ID},
-	{"dram_part_num", 1, 0, OPT_DRAM_PART_NUM},
-	{"oem_name", 1, 0, OPT_OEM_NAME},
-	{"model_id", 1, 0, OPT_MODEL_ID},
-	{"fw_config", 1, 0, OPT_FW_CONFIG},
-	{"pcb_supplier", 1, 0, OPT_PCB_SUPPLIER},
-	{"ssfc", 1, 0, OPT_SSFC},
-	{"rework_id", 1, 0, OPT_REWORK_ID},
-	{"size", 1, 0, OPT_SIZE},
-	{"erase_byte", 1, 0, OPT_ERASE_BYTE},
-	{NULL, 0, 0, 0}
+	{ "file", 1, 0, OPT_FILENAME },
+	{ "board_version", 1, 0, OPT_BOARD_VERSION },
+	{ "oem_id", 1, 0, OPT_OEM_ID },
+	{ "sku_id", 1, 0, OPT_SKU_ID },
+	{ "dram_part_num", 1, 0, OPT_DRAM_PART_NUM },
+	{ "oem_name", 1, 0, OPT_OEM_NAME },
+	{ "model_id", 1, 0, OPT_MODEL_ID },
+	{ "fw_config", 1, 0, OPT_FW_CONFIG },
+	{ "pcb_supplier", 1, 0, OPT_PCB_SUPPLIER },
+	{ "ssfc", 1, 0, OPT_SSFC },
+	{ "rework_id", 1, 0, OPT_REWORK_ID },
+	{ "size", 1, 0, OPT_SIZE },
+	{ "erase_byte", 1, 0, OPT_ERASE_BYTE },
+	{ NULL, 0, 0, 0 }
 };
 
-static const struct option opts_show[] = {
-	{"file", 1, 0, OPT_FILENAME},
-	{"all", 0, 0, OPT_SHOW_ALL},
-	{NULL, 0, 0, 0}
-};
+static const struct option opts_show[] = { { "file", 1, 0, OPT_FILENAME },
+					   { "all", 0, 0, OPT_SHOW_ALL },
+					   { NULL, 0, 0, 0 } };
 
 static const char *field_name[] = {
 	/* Same order as enum cbi_data_tag */
-	"BOARD_VERSION",
-	"OEM_ID",
-	"SKU_ID",
-	"DRAM_PART_NUM",
-	"OEM_NAME",
-	"MODEL_ID",
-	"FW_CONFIG",
-	"PCB_SUPPLIER",
-	"SSFC",
-	"REWORK_ID",
+	"BOARD_VERSION", "OEM_ID",    "SKU_ID",	   "DRAM_PART_NUM",
+	"OEM_NAME",	 "MODEL_ID",  "FW_CONFIG", "PCB_SUPPLIER",
+	"SSFC",		 "REWORK_ID",
 };
 BUILD_ASSERT(ARRAY_SIZE(field_name) == CBI_TAG_COUNT);
 
@@ -147,8 +138,9 @@ static void print_help_show(void)
 static void print_help(void)
 {
 	printf("\nUsage: %s <create|show> [ARGS]\n"
-		"\n"
-		"Utility for CBI:Cros Board Info images.\n", cmd_name);
+	       "\n"
+	       "Utility for CBI:Cros Board Info images.\n",
+	       cmd_name);
 	print_help_create();
 	print_help_show();
 }
@@ -402,7 +394,7 @@ static int cmd_create(int argc, char **argv)
 	}
 
 	if (set_mask != (ARGS_MASK_BOARD_VERSION | ARGS_MASK_FILENAME |
-			ARGS_MASK_SIZE | ARGS_MASK_SKU_ID)) {
+			 ARGS_MASK_SIZE | ARGS_MASK_SKU_ID)) {
 		fprintf(stderr, "Missing required arguments\n");
 		print_help_create();
 		return -1;
@@ -427,7 +419,7 @@ static int cmd_create(int argc, char **argv)
 	p = cbi_set_data(p, CBI_TAG_FW_CONFIG, &bi.fw_config.val,
 			 bi.fw_config.size);
 	p = cbi_set_data(p, CBI_TAG_PCB_SUPPLIER, &bi.pcb_supplier.val,
-			bi.pcb_supplier.size);
+			 bi.pcb_supplier.size);
 	p = cbi_set_data(p, CBI_TAG_SSFC, &bi.ssfc.val, bi.ssfc.size);
 	p = cbi_set_data(p, CBI_TAG_REWORK_ID, &bi.rework.val, bi.rework.size);
 	p = cbi_set_string(p, CBI_TAG_DRAM_PART_NUM, bi.dram_part_num);
@@ -460,7 +452,7 @@ static void print_string(const uint8_t *buf, enum cbi_data_tag tag)
 	name = d->tag < CBI_TAG_COUNT ? field_name[d->tag] : "???";
 
 	printf("    %s: %.*s (%u, %u)\n", name, d->size, (const char *)d->value,
-		d->tag, d->size);
+	       d->tag, d->size);
 }
 
 static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
@@ -489,12 +481,12 @@ static void print_integer(const uint8_t *buf, enum cbi_data_tag tag)
 		v = *(uint64_t *)d->value;
 		break;
 	default:
-		printf("    %s: Integer of size %d not supported\n",
-		       name, d->size);
+		printf("    %s: Integer of size %d not supported\n", name,
+		       d->size);
 		return;
 	}
 	printf("    %s: %llu (0x%llx, %u, %u)\n", name, (unsigned long long)v,
-		(unsigned long long)v, d->tag, d->size);
+	       (unsigned long long)v, d->tag, d->size);
 }
 
 static int cmd_show(int argc, char **argv)
