@@ -6,7 +6,7 @@
 #include "i2c.h"
 #include "pi3usb9201.h"
 
-#define PI3USB9201_ADDR	0x5f
+#define PI3USB9201_ADDR 0x5f
 
 inline void init_pi3usb9201(void)
 {
@@ -19,7 +19,7 @@ inline void init_pi3usb9201(void)
 }
 
 inline void write_pi3usb9201(enum pi3usb9201_reg_t reg,
-					enum pi3usb9201_dat_t dat)
+			     enum pi3usb9201_dat_t dat)
 {
 	i2c_write8(1, PI3USB9201_ADDR, reg, dat);
 }
