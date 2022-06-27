@@ -27,36 +27,39 @@ __override const int led_charge_lvl_1 = 5;
 __override const int led_charge_lvl_2 = 95;
 
 __override struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0]	     = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0_BAT_LOW] = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-					{LED_OFF,	     1 * LED_ONE_SEC} },
-	[STATE_DISCHARGE_S3]	     = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S5]         = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {
-		{EC_LED_COLOR_WHITE, 0.4 * LED_ONE_SEC},
-		{LED_OFF,            0.4 * LED_ONE_SEC}
-	},
-	[STATE_FACTORY_TEST]         = {
-		{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-		{LED_OFF,            1 * LED_ONE_SEC}
-	},
-};
+	led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+		[STATE_CHARGING_LVL_1] = { { EC_LED_COLOR_AMBER,
+					     LED_INDEFINITE } },
+		[STATE_CHARGING_LVL_2] = { { EC_LED_COLOR_AMBER,
+					     LED_INDEFINITE } },
+		[STATE_CHARGING_FULL_CHARGE] = { { EC_LED_COLOR_WHITE,
+						   LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0_BAT_LOW] = { { EC_LED_COLOR_WHITE,
+						   1 * LED_ONE_SEC },
+						 { LED_OFF, 1 * LED_ONE_SEC } },
+		[STATE_DISCHARGE_S3] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S5] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_BATTERY_ERROR] = { { EC_LED_COLOR_WHITE,
+					    0.4 * LED_ONE_SEC },
+					  { LED_OFF, 0.4 * LED_ONE_SEC } },
+		[STATE_FACTORY_TEST] = { { EC_LED_COLOR_WHITE,
+					   1 * LED_ONE_SEC },
+					 { LED_OFF, 1 * LED_ONE_SEC } },
+	};
 
 __override const struct led_descriptor
-		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
-	[PWR_LED_STATE_ON]           =  {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[PWR_LED_STATE_SUSPEND_AC]   =  {{EC_LED_COLOR_WHITE,  1 * LED_ONE_SEC},
-		{LED_OFF,	           1 * LED_ONE_SEC} },
-	[PWR_LED_STATE_SUSPEND_NO_AC] = {{EC_LED_COLOR_WHITE,  1 * LED_ONE_SEC},
-		{LED_OFF,	           6 * LED_ONE_SEC} },
-	[PWR_LED_STATE_OFF]           = {
-		{LED_OFF,             LED_INDEFINITE} },
-};
-
+	led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
+		[PWR_LED_STATE_ON] = { { EC_LED_COLOR_WHITE, LED_INDEFINITE } },
+		[PWR_LED_STATE_SUSPEND_AC] = { { EC_LED_COLOR_WHITE,
+						 1 * LED_ONE_SEC },
+					       { LED_OFF, 1 * LED_ONE_SEC } },
+		[PWR_LED_STATE_SUSPEND_NO_AC] = { { EC_LED_COLOR_WHITE,
+						    1 * LED_ONE_SEC },
+						  { LED_OFF,
+						    6 * LED_ONE_SEC } },
+		[PWR_LED_STATE_OFF] = { { LED_OFF, LED_INDEFINITE } },
+	};
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_BATTERY_LED,
@@ -80,10 +83,10 @@ __override void led_set_color_battery(enum ec_led_colors color)
 			side_select_duty = 100;
 			break;
 		default:
-		/*
-		 * We need to turn off led here since curr.ac won't update
-		 * immediately but led will update every 200ms.
-		 */
+			/*
+			 * We need to turn off led here since curr.ac won't
+			 * update immediately but led will update every 200ms.
+			 */
 			side_select_duty = 50;
 			color = LED_OFF;
 		}
