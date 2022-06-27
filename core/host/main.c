@@ -19,7 +19,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 const char *__prog_name;
 
@@ -85,7 +85,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 	 * We lose the program name as LLVM fuzzer takes over main function:
 	 * make up one.
 	 */
-	static const char *name = STRINGIFY(PROJECT)".exe";
+	static const char *name = STRINGIFY(PROJECT) ".exe";
 
 	if (!initialized) {
 		__prog_name = name;
