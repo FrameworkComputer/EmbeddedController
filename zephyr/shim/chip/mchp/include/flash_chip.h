@@ -11,10 +11,10 @@
  * Similar to W25X40, both only have one status reg
  */
 #define CONFIG_SPI_FLASH_W25X40 /* Internal SPI flash type. */
-#define CONFIG_FLASH_WRITE_SIZE		0x1  /* minimum write size */
-#define CONFIG_FLASH_WRITE_IDEAL_SIZE	256   /* one page size for write */
-#define CONFIG_FLASH_ERASE_SIZE		0x1000
-#define CONFIG_FLASH_BANK_SIZE		CONFIG_FLASH_ERASE_SIZE
+#define CONFIG_FLASH_WRITE_SIZE 0x1 /* minimum write size */
+#define CONFIG_FLASH_WRITE_IDEAL_SIZE 256 /* one page size for write */
+#define CONFIG_FLASH_ERASE_SIZE 0x1000
+#define CONFIG_FLASH_BANK_SIZE CONFIG_FLASH_ERASE_SIZE
 
 /* RO image resides at 4KB offset in protected region
  * The first 4KB in the protected region starting at offset 0 contains
@@ -23,7 +23,7 @@
  * RW image is never loaded by the Boot-ROM therefore no TAG or Header
  * is needed. RW starts at offset 0 in RW storage region.
  */
-#define CONFIG_RO_STORAGE_OFF		0x1000
-#define CONFIG_RW_STORAGE_OFF		0
+#define CONFIG_RO_STORAGE_OFF 0x1000
+#define CONFIG_RW_STORAGE_OFF 0
 
 #endif /* __CROS_EC_FLASH_CHIP_H */
