@@ -31,9 +31,8 @@
 #endif
 #include "gpio.h"
 
-
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
 struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USBC_PORT_C0] = {
@@ -61,16 +60,12 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = NX20P3483_ADDR2_FLAGS,
-		.drv = &nx20p348x_drv
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1,
-		.i2c_addr_flags = NX20P3483_ADDR2_FLAGS,
-		.drv = &nx20p348x_drv
-	}
+	[USBC_PORT_C0] = { .i2c_port = I2C_PORT_USB_C0,
+			   .i2c_addr_flags = NX20P3483_ADDR2_FLAGS,
+			   .drv = &nx20p348x_drv },
+	[USBC_PORT_C1] = { .i2c_port = I2C_PORT_USB_C1,
+			   .i2c_addr_flags = NX20P3483_ADDR2_FLAGS,
+			   .drv = &nx20p348x_drv }
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -79,9 +74,8 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 /* USB Mux C1 : board_init of PS8743 */
 static int ps8743_tune_mux(const struct usb_mux *me)
 {
-	ps8743_tune_usb_eq(me,
-			PS8743_USB_EQ_TX_3_6_DB,
-			PS8743_USB_EQ_RX_16_0_DB);
+	ps8743_tune_usb_eq(me, PS8743_USB_EQ_TX_3_6_DB,
+			   PS8743_USB_EQ_RX_16_0_DB);
 
 	return EC_SUCCESS;
 }
@@ -90,10 +84,9 @@ void board_usb_mux_init(void)
 {
 	if (corsola_get_db_type() == CORSOLA_DB_TYPEC) {
 		/* Disable DCI function. This is not needed for ARM. */
-		ps8743_field_update(&usb_muxes[1],
-				   PS8743_REG_DCI_CONFIG_2,
-				   PS8743_AUTO_DCI_MODE_MASK,
-				   PS8743_AUTO_DCI_MODE_FORCE_USB);
+		ps8743_field_update(&usb_muxes[1], PS8743_REG_DCI_CONFIG_2,
+				    PS8743_AUTO_DCI_MODE_MASK,
+				    PS8743_AUTO_DCI_MODE_FORCE_USB);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
@@ -169,7 +162,7 @@ void board_tcpc_init(void)
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port) {
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_POST_I2C);
@@ -188,20 +181,23 @@ __override int board_rt1718s_init(int port)
 
 	/* gpio1 low, gpio2 output high when receiving frs signal */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO1_VBUS_CTRL,
-			RT1718S_GPIO1_VBUS_CTRL_FRS_RX_VBUS, 0));
+					  RT1718S_GPIO1_VBUS_CTRL_FRS_RX_VBUS,
+					  0));
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_GPIO2_VBUS_CTRL,
-			RT1718S_GPIO2_VBUS_CTRL_FRS_RX_VBUS, 0xFF));
+					  RT1718S_GPIO2_VBUS_CTRL_FRS_RX_VBUS,
+					  0xFF));
 
 	/* Trigger GPIO 1/2 change when FRS signal received */
-	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_FRS_CTRL3,
-			RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO2 |
+	RETURN_ERROR(rt1718s_update_bits8(
+		port, RT1718S_FRS_CTRL3,
+		RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO2 |
 			RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO1,
-			RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO2 |
+		RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO2 |
 			RT1718S_FRS_CTRL3_FRS_RX_WAIT_GPIO1));
 	/* Set FRS signal detect time to 46.875us */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_FRS_CTRL1,
-			RT1718S_FRS_CTRL1_FRSWAPRX_MASK,
-			0xFF));
+					  RT1718S_FRS_CTRL1_FRSWAPRX_MASK,
+					  0xFF));
 
 	return EC_SUCCESS;
 }
@@ -215,13 +211,12 @@ __override int board_rt1718s_set_frs_enable(int port, int enable)
 		 * FRS path.
 		 */
 		rt1718s_gpio_set_flags(port, GPIO_EN_USB_C1_FRS,
-				enable ? GPIO_OUT_HIGH : GPIO_OUT_LOW);
+				       enable ? GPIO_OUT_HIGH : GPIO_OUT_LOW);
 	return EC_SUCCESS;
 }
 
 void board_reset_pd_mcu(void)
 {
-
 	CPRINTS("Resetting TCPCs...");
 	/* reset C0 ANX3447 */
 	/* Assert reset */
@@ -315,15 +310,15 @@ uint16_t tcpc_get_alert_status(void)
 	uint16_t status = 0;
 
 	if (!gpio_pin_get_dt(
-		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
+		    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
 		if (!gpio_pin_get_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst))) {
+			    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst))) {
 			status |= PD_STATUS_TCPC_ALERT_0;
 		}
 	}
 
 	if (!gpio_pin_get_dt(
-		GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
+		    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
 		return status |= PD_STATUS_TCPC_ALERT_1;
 	}
 	return status;
