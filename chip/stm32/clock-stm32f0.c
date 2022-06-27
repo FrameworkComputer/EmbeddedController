@@ -22,7 +22,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
 /* use 48Mhz USB-synchronized High-speed oscillator */
 #define HSI48_CLOCK 48000000
@@ -54,13 +54,13 @@ static int dsleep_recovery_margin_us = 1000000;
  * we won't miss the host alarm.
  */
 #ifdef CHIP_VARIANT_STM32F373
-#define STOP_MODE_LATENCY 500  /* us */
+#define STOP_MODE_LATENCY 500 /* us */
 #elif defined(CHIP_VARIANT_STM32F05X)
-#define STOP_MODE_LATENCY 300  /* us */
+#define STOP_MODE_LATENCY 300 /* us */
 #elif (CPU_CLOCK == PLL_CLOCK)
-#define STOP_MODE_LATENCY 300   /* us */
+#define STOP_MODE_LATENCY 300 /* us */
 #else
-#define STOP_MODE_LATENCY 50    /* us */
+#define STOP_MODE_LATENCY 50 /* us */
 #endif
 #define SET_RTC_MATCH_DELAY 200 /* us */
 
@@ -137,9 +137,8 @@ void config_hispeed_clock(void)
 	while ((STM32_RCC_CFGR & 0xc) != 0x8)
 		;
 /* F03X and F05X and F070 don't have HSI48 */
-#elif defined(CHIP_VARIANT_STM32F03X) || \
-defined(CHIP_VARIANT_STM32F05X) || \
-defined(CHIP_VARIANT_STM32F070)
+#elif defined(CHIP_VARIANT_STM32F03X) || defined(CHIP_VARIANT_STM32F05X) || \
+	defined(CHIP_VARIANT_STM32F070)
 	/* If PLL is the clock source, PLL has already been set up. */
 	if ((STM32_RCC_CFGR & 0xc) == 0x8)
 		return;
@@ -319,8 +318,8 @@ void __idle(void)
 		     * EC exits deep sleep mode.
 		     */
 		    !is_host_wake_alarm_expired(
-			(timestamp_t)(next_delay + t0.val + SECOND +
-				      RESTORE_HOST_ALARM_LATENCY)) &&
+			    (timestamp_t)(next_delay + t0.val + SECOND +
+					  RESTORE_HOST_ALARM_LATENCY)) &&
 #endif
 		    (next_delay > (STOP_MODE_LATENCY + SET_RTC_MATCH_DELAY))) {
 			/* Deep-sleep in STOP mode */
@@ -331,8 +330,8 @@ void __idle(void)
 			/* Set deep sleep bit */
 			CPU_SCB_SYSCTRL |= 0x4;
 
-			set_rtc_alarm(0, next_delay - STOP_MODE_LATENCY,
-				      &rtc0, 0);
+			set_rtc_alarm(0, next_delay - STOP_MODE_LATENCY, &rtc0,
+				      0);
 			asm("wfi");
 
 			CPU_SCB_SYSCTRL &= ~0x4;
@@ -374,7 +373,7 @@ void __idle(void)
 			asm("wfi");
 		}
 #ifdef CONFIG_LOW_POWER_IDLE_LIMITED
-en_int:
+	en_int:
 #endif
 		interrupt_enable();
 	}
@@ -489,15 +488,14 @@ static int command_idle_stats(int argc, char **argv)
 	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
 	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
 	ccprintf("Time spent in deep-sleep:            %.6llds\n",
-			idle_dsleep_time_us);
+		 idle_dsleep_time_us);
 	ccprintf("Total time on:                       %.6llds\n", ts.val);
 	ccprintf("Deep-sleep closest to wake deadline: %dus\n",
-			dsleep_recovery_margin_us);
+		 dsleep_recovery_margin_us);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
-			"",
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 			"Print last idle stats");
 #endif /* CONFIG_CMD_IDLE_STATS */
 #endif
