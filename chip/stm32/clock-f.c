@@ -23,7 +23,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
 /* Convert decimal to BCD */
 static uint8_t u8_to_bcd(uint8_t val)
@@ -41,8 +41,8 @@ static uint32_t rtc_tr_to_sec(uint32_t rtc_tr)
 	uint32_t sec;
 
 	/* convert the hours field */
-	sec = (((rtc_tr & 0x300000) >> 20) * 10 +
-	       ((rtc_tr & 0xf0000) >> 16)) * 3600;
+	sec = (((rtc_tr & 0x300000) >> 20) * 10 + ((rtc_tr & 0xf0000) >> 16)) *
+	      3600;
 	/* convert the minutes field */
 	sec += (((rtc_tr & 0x7000) >> 12) * 10 + ((rtc_tr & 0xf00) >> 8)) * 60;
 	/* convert the seconds field */
@@ -122,10 +122,9 @@ static uint32_t rtc_dr_to_sec(uint32_t rtc_dr)
 	struct calendar_date time;
 	uint32_t sec;
 
-	time.year = (((rtc_dr & 0xf00000) >> 20) * 10 +
-		    ((rtc_dr & 0xf0000) >> 16));
-	time.month = (((rtc_dr & 0x1000) >> 12) * 10 +
-		     ((rtc_dr & 0xf00) >> 8));
+	time.year =
+		(((rtc_dr & 0xf00000) >> 20) * 10 + ((rtc_dr & 0xf0000) >> 16));
+	time.month = (((rtc_dr & 0x1000) >> 12) * 10 + ((rtc_dr & 0xf00) >> 8));
 	time.day = ((rtc_dr & 0x30) >> 4) * 10 + (rtc_dr & 0xf);
 
 	sec = date_to_sec(time);
@@ -258,8 +257,8 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 	 * If the caller doesn't specify subsecond delay (e.g. host command),
 	 * just align the alarm time to second.
 	 */
-	STM32_RTC_ALRMASSR = delay_us ?
-			     (us_to_rtcss(alarm_us) | 0x0f000000) : 0;
+	STM32_RTC_ALRMASSR = delay_us ? (us_to_rtcss(alarm_us) | 0x0f000000) :
+					0;
 
 #ifdef CONFIG_HOSTCMD_RTC
 	/*
@@ -321,8 +320,7 @@ static void set_rtc_host_event(void)
 DECLARE_DEFERRED(set_rtc_host_event);
 #endif
 
-test_mockable
-void rtc_alarm_irq(void)
+test_mockable void rtc_alarm_irq(void)
 {
 	struct rtc_time_reg rtc;
 	reset_rtc_alarm(&rtc);
@@ -342,8 +340,7 @@ static void __rtc_alarm_irq(void)
 }
 DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 
-__attribute__((weak))
-int clock_get_timer_freq(void)
+__attribute__((weak)) int clock_get_timer_freq(void)
 {
 	return clock_get_freq();
 }
@@ -416,9 +413,8 @@ static int command_system_rtc(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc,
-		"[set <seconds>]",
-		"Get/set real-time clock");
+DECLARE_CONSOLE_COMMAND(rtc, command_system_rtc, "[set <seconds>]",
+			"Get/set real-time clock");
 
 #ifdef CONFIG_CMD_RTC_ALARM
 static int command_rtc_alarm_test(int argc, char **argv)
@@ -433,7 +429,6 @@ static int command_rtc_alarm_test(int argc, char **argv)
 		s = strtoi(argv[1], &e, 10);
 		if (*e)
 			return EC_ERROR_PARAM1;
-
 	}
 	if (argc > 2) {
 		us = strtoi(argv[2], &e, 10);
@@ -445,8 +440,7 @@ static int command_rtc_alarm_test(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(rtc_alarm, command_rtc_alarm_test,
-			"[seconds [microseconds]]",
-			"Test alarm");
+			"[seconds [microseconds]]", "Test alarm");
 #endif /* CONFIG_CMD_RTC_ALARM */
 #endif /* CONFIG_CMD_RTC */
 
@@ -465,9 +459,8 @@ static enum ec_status system_rtc_get_value(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_VALUE,
-		system_rtc_get_value,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_VALUE, system_rtc_get_value,
+		     EC_VER_MASK(0));
 
 static enum ec_status system_rtc_set_value(struct host_cmd_handler_args *args)
 {
@@ -476,9 +469,8 @@ static enum ec_status system_rtc_set_value(struct host_cmd_handler_args *args)
 	rtc_set(p->time);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE,
-		system_rtc_set_value,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_VALUE, system_rtc_set_value,
+		     EC_VER_MASK(0));
 
 static enum ec_status system_rtc_set_alarm(struct host_cmd_handler_args *args)
 {
@@ -492,9 +484,8 @@ static enum ec_status system_rtc_set_alarm(struct host_cmd_handler_args *args)
 	set_rtc_alarm(p->time, 0, &rtc, 1);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_ALARM,
-		system_rtc_set_alarm,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RTC_SET_ALARM, system_rtc_set_alarm,
+		     EC_VER_MASK(0));
 
 static enum ec_status system_rtc_get_alarm(struct host_cmd_handler_args *args)
 {
@@ -505,8 +496,7 @@ static enum ec_status system_rtc_get_alarm(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_ALARM,
-		system_rtc_get_alarm,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RTC_GET_ALARM, system_rtc_get_alarm,
+		     EC_VER_MASK(0));
 
 #endif /* CONFIG_HOSTCMD_RTC */
