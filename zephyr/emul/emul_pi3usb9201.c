@@ -72,10 +72,10 @@ static void pi3usb9201_emul_reset(struct i2c_emul *emul)
 
 	data = CONTAINER_OF(emul, struct pi3usb9201_emul_data, emul);
 
-	data->reg[PI3USB9201_REG_CTRL_1]     = 0;
-	data->reg[PI3USB9201_REG_CTRL_2]     = 0;
+	data->reg[PI3USB9201_REG_CTRL_1] = 0;
+	data->reg[PI3USB9201_REG_CTRL_2] = 0;
 	data->reg[PI3USB9201_REG_CLIENT_STS] = 0;
-	data->reg[PI3USB9201_REG_HOST_STS]   = 0;
+	data->reg[PI3USB9201_REG_HOST_STS] = 0;
 }
 
 /**
@@ -109,18 +109,18 @@ static int pi3usb9201_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 	i2c_dump_msgs("emul", msgs, num_msgs, addr);
 
 	if (num_msgs == 1) {
-		if (!(((msgs[0].flags & I2C_MSG_RW_MASK) == I2C_MSG_WRITE)
-		      && (msgs[0].len == 2))) {
+		if (!(((msgs[0].flags & I2C_MSG_RW_MASK) == I2C_MSG_WRITE) &&
+		      (msgs[0].len == 2))) {
 			LOG_ERR("Unexpected write msgs");
 			return -EIO;
 		}
 		return pi3usb9201_emul_set_reg(emul, msgs[0].buf[0],
 					       msgs[0].buf[1]);
 	} else if (num_msgs == 2) {
-		if (!(((msgs[0].flags & I2C_MSG_RW_MASK) == I2C_MSG_WRITE)
-		      && (msgs[0].len == 1)
-		      && ((msgs[1].flags & I2C_MSG_RW_MASK) == I2C_MSG_READ)
-		      && (msgs[1].len == 1))) {
+		if (!(((msgs[0].flags & I2C_MSG_RW_MASK) == I2C_MSG_WRITE) &&
+		      (msgs[0].len == 1) &&
+		      ((msgs[1].flags & I2C_MSG_RW_MASK) == I2C_MSG_READ) &&
+		      (msgs[1].len == 1))) {
 			LOG_ERR("Unexpected read msgs");
 			return -EIO;
 		}
@@ -130,7 +130,6 @@ static int pi3usb9201_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 		LOG_ERR("Unexpected num_msgs");
 		return -EIO;
 	}
-
 }
 
 /* Device instantiation */
@@ -151,7 +150,7 @@ static struct i2c_emul_api pi3usb9201_emul_api = {
  * @return 0 indicating success (always)
  */
 static int pi3usb9201_emul_init(const struct emul *emul,
-			 const struct device *parent)
+				const struct device *parent)
 {
 	const struct pi3usb9201_emul_cfg *cfg = emul->cfg;
 	struct pi3usb9201_emul_data *data = cfg->data;
@@ -181,13 +180,14 @@ static int pi3usb9201_emul_init(const struct emul *emul,
 
 DT_INST_FOREACH_STATUS_OKAY(PI3USB9201_EMUL)
 
-#define PI3USB9201_EMUL_CASE(n)					\
-	case DT_INST_DEP_ORD(n): return &pi3usb9201_emul_data_##n.emul;
+#define PI3USB9201_EMUL_CASE(n)  \
+	case DT_INST_DEP_ORD(n): \
+		return &pi3usb9201_emul_data_##n.emul;
 
 struct i2c_emul *pi3usb9201_emul_get(int ord)
 {
 	switch (ord) {
-	DT_INST_FOREACH_STATUS_OKAY(PI3USB9201_EMUL_CASE)
+		DT_INST_FOREACH_STATUS_OKAY(PI3USB9201_EMUL_CASE)
 
 	default:
 		return NULL;
