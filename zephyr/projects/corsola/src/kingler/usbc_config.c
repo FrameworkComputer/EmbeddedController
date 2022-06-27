@@ -95,24 +95,6 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USBC_PORT_C0] = {
-		.drv = &pi3usb9201_drv,
-	},
-	[USBC_PORT_C1] = {
-		.drv = &rt1718s_bc12_drv,
-	}
-};
-
-const struct pi3usb9201_config_t
-		pi3usb9201_bc12_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-	[USBC_PORT_C1] = { /* unused */ }
-};
-
 void board_tcpc_init(void)
 {
 	/* Only reset TCPC if not sysjump */

@@ -16,6 +16,13 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
+			bc12 {
+				compatible = "pericom,pi3usb9201";
+				port = <&i2c_usb_c0>;
+				irq = <&int_usb_c0_bc12>;
+				i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
+				status = "okay";
+			};
 			tcpc {
 				compatible = "anologix,anx7447-tcpc";
 				status = "okay";
@@ -36,6 +43,11 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
+			bc12 {
+				compatible = "richtek,rt1718s-bc12";
+				port = <&i2c_usb_c1>;
+				status = "okay";
+			};
 			tcpc {
 				compatible = "richtek,rt1718s-tcpc";
 				port = <&i2c_usb_c1>;
