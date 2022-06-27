@@ -9,7 +9,7 @@
 
 #define TCPCI_COMPAT cros_ec_tcpci
 
-#define TCPC_CONFIG_TCPCI(id)                                                 \
+#define TCPC_CONFIG_TCPCI(id) \
 	{                                                                     \
 		.bus_type = EC_BUS_TYPE_I2C,                                  \
 		.i2c_info = {                                                 \
