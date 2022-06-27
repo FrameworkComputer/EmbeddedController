@@ -14,14 +14,14 @@ extern struct motion_sensor_t motion_sensors_alt[];
 /*
  * Common macros.
  */
-#define SENSOR_ROT_STD_REF_NAME(id)	DT_CAT(ROT_REF_, id)
-#define SENSOR_ROT_REF_NODE		DT_PATH(motionsense_rotation_ref)
+#define SENSOR_ROT_STD_REF_NAME(id) DT_CAT(ROT_REF_, id)
+#define SENSOR_ROT_REF_NODE DT_PATH(motionsense_rotation_ref)
 
 /*
  * Declare rotation parameters, since they may be
  * dynamically selected.
  */
-#define DECLARE_EXTERN_SENSOR_ROT_REF(id)				\
+#define DECLARE_EXTERN_SENSOR_ROT_REF(id) \
 	extern const mat33_fp_t SENSOR_ROT_STD_REF_NAME(id);
 
 #if DT_NODE_EXISTS(SENSOR_ROT_REF_NODE)
@@ -45,18 +45,18 @@ int motion_sense_probe(enum sensor_alt_id alt_idx);
  */
 void motion_sensors_check_ssfc(void);
 
-#define ENABLE_ALT_MOTION_SENSOR(alt_id) \
+#define ENABLE_ALT_MOTION_SENSOR(alt_id)                               \
 	motion_sensors[SENSOR_ID(DT_PHANDLE(alt_id, alternate_for))] = \
 		motion_sensors_alt[SENSOR_ID(alt_id)];
 
 /*
  * Replaces a default motion sensor with an alternate one pointed by nodelabel.
  */
-#define MOTIONSENSE_ENABLE_ALTERNATE(nodelabel)                              \
-	do {                                                                 \
-		BUILD_ASSERT(DT_NODE_EXISTS(DT_NODELABEL(nodelabel)),        \
-			     "Motionsense alternate node does not exist");   \
-		ENABLE_ALT_MOTION_SENSOR(DT_NODELABEL(nodelabel));           \
+#define MOTIONSENSE_ENABLE_ALTERNATE(nodelabel)                            \
+	do {                                                               \
+		BUILD_ASSERT(DT_NODE_EXISTS(DT_NODELABEL(nodelabel)),      \
+			     "Motionsense alternate node does not exist"); \
+		ENABLE_ALT_MOTION_SENSOR(DT_NODELABEL(nodelabel));         \
 	} while (0)
 
 /*
