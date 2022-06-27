@@ -14,7 +14,7 @@
 /**
  * Debounce time for lid switch
  */
-#define LID_DEBOUNCE_US    (30 * MSEC)
+#define LID_DEBOUNCE_US (30 * MSEC)
 
 /**
  * Return non-zero if lid is open.
@@ -37,4 +37,4 @@ void lid_interrupt(enum gpio_signal signal);
  */
 void enable_lid_detect(bool enable);
 
-#endif  /* __CROS_EC_LID_SWITCH_H */
+#endif /* __CROS_EC_LID_SWITCH_H */
