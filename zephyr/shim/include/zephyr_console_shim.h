@@ -20,9 +20,7 @@ struct zephyr_console_command {
 };
 
 #ifdef CONFIG_SHELL_HELP
-#define _HELP_ARGS(A, H) \
-	.argdesc = A,     \
-	.help = H,
+#define _HELP_ARGS(A, H) .argdesc = A, .help = H,
 #else
 #define _HELP_ARGS(A, H)
 #endif
@@ -44,8 +42,7 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 #define _ZEPHYR_SHELL_COMMAND_SHIM_2(NAME, ROUTINE_ID, ARGDESC, HELP,       \
 				     WRAPPER_ID, ENTRY_ID)                  \
 	static const struct zephyr_console_command ENTRY_ID = {             \
-		.handler = ROUTINE_ID,                                      \
-		_HELP_ARGS(ARGDESC, HELP)                                   \
+		.handler = ROUTINE_ID, _HELP_ARGS(ARGDESC, HELP)            \
 	};                                                                  \
 	static int WRAPPER_ID(const struct shell *shell, size_t argc,       \
 			      char **argv)                                  \
