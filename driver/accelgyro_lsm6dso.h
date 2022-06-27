@@ -12,78 +12,77 @@
 #include "stm_mems_common.h"
 
 /* Access to embedded sensor hub register bank */
-#define LSM6DSO_FUNC_CFG_ACC_ADDR	0x01
-#define LSM6DSO_FUNC_CFG_EN			0x80
+#define LSM6DSO_FUNC_CFG_ACC_ADDR 0x01
+#define LSM6DSO_FUNC_CFG_EN 0x80
 
 /* Who Am I */
-#define LSM6DSO_WHO_AM_I_REG		0x0f
-#define LSM6DSO_WHO_AM_I		0x6c
+#define LSM6DSO_WHO_AM_I_REG 0x0f
+#define LSM6DSO_WHO_AM_I 0x6c
 
 /* Common defines for Acc and Gyro sensors */
-#define LSM6DSO_EN_BIT				0x01
-#define LSM6DSO_DIS_BIT				0x00
+#define LSM6DSO_EN_BIT 0x01
+#define LSM6DSO_DIS_BIT 0x00
 
-#define LSM6DSO_GYRO_OUT_X_L_ADDR	0x22
-#define LSM6DSO_ACCEL_OUT_X_L_ADDR	0x28
+#define LSM6DSO_GYRO_OUT_X_L_ADDR 0x22
+#define LSM6DSO_ACCEL_OUT_X_L_ADDR 0x28
 
-#define LSM6DSO_CTRL1_ADDR		0x10
-#define LSM6DSO_CTRL2_ADDR		0x11
-#define LSM6DSO_CTRL3_ADDR		0x12
-#define LSM6DSO_SW_RESET			0x01
-#define LSM6DSO_IF_INC				0x04
-#define LSM6DSO_PP_OD				0x10
-#define LSM6DSO_H_L_ACTIVE			0x20
-#define LSM6DSO_BDU				0x40
+#define LSM6DSO_CTRL1_ADDR 0x10
+#define LSM6DSO_CTRL2_ADDR 0x11
+#define LSM6DSO_CTRL3_ADDR 0x12
+#define LSM6DSO_SW_RESET 0x01
+#define LSM6DSO_IF_INC 0x04
+#define LSM6DSO_PP_OD 0x10
+#define LSM6DSO_H_L_ACTIVE 0x20
+#define LSM6DSO_BDU 0x40
 
-#define LSM6DSO_CTRL4_ADDR		0x13
-#define LSM6DSO_INT2_ON_INT1_MASK		0x20
+#define LSM6DSO_CTRL4_ADDR 0x13
+#define LSM6DSO_INT2_ON_INT1_MASK 0x20
 
-#define LSM6DSO_CTRL5_ADDR		0x14
-#define LSM6DSO_CTRL6_ADDR		0x15
-#define LSM6DSO_CTRL7_ADDR		0x16
-#define LSM6DSO_CTRL8_ADDR		0x17
-#define LSM6DSO_CTRL9_ADDR		0x18
+#define LSM6DSO_CTRL5_ADDR 0x14
+#define LSM6DSO_CTRL6_ADDR 0x15
+#define LSM6DSO_CTRL7_ADDR 0x16
+#define LSM6DSO_CTRL8_ADDR 0x17
+#define LSM6DSO_CTRL9_ADDR 0x18
 
-#define LSM6DSO_CTRL10_ADDR		0x19
-#define LSM6DSO_TIMESTAMP_EN    		0x20
+#define LSM6DSO_CTRL10_ADDR 0x19
+#define LSM6DSO_TIMESTAMP_EN 0x20
 
-#define LSM6DSO_STATUS_REG		0x1e
+#define LSM6DSO_STATUS_REG 0x1e
 
 /* Output data rate registers and masks */
-#define LSM6DSO_ODR_REG(_sensor) \
-	(LSM6DSO_CTRL1_ADDR + (_sensor))
-#define LSM6DSO_ODR_MASK			0xf0
+#define LSM6DSO_ODR_REG(_sensor) (LSM6DSO_CTRL1_ADDR + (_sensor))
+#define LSM6DSO_ODR_MASK 0xf0
 
 /* FIFO decimator registers and bitmask */
-#define LSM6DSO_FIFO_CTRL1_ADDR		0x07
-#define LSM6DSO_FIFO_CTRL2_ADDR		0x08
+#define LSM6DSO_FIFO_CTRL1_ADDR 0x07
+#define LSM6DSO_FIFO_CTRL2_ADDR 0x08
 
-#define LSM6DSO_FIFO_CTRL3_ADDR		0x09
-#define LSM6DSO_FIFO_ODR_XL_MASK		0x0f
-#define LSM6DSO_FIFO_ODR_G_MASK			0xf0
+#define LSM6DSO_FIFO_CTRL3_ADDR 0x09
+#define LSM6DSO_FIFO_ODR_XL_MASK 0x0f
+#define LSM6DSO_FIFO_ODR_G_MASK 0xf0
 
-#define LSM6DSO_FIFO_CTRL4_ADDR		0x0a
-#define LSM6DSO_FIFO_MODE_MASK			0x07
+#define LSM6DSO_FIFO_CTRL4_ADDR 0x0a
+#define LSM6DSO_FIFO_MODE_MASK 0x07
 
-#define LSM6DSO_INT1_CTRL		0x0d
-#define LSM6DSO_INT2_CTRL		0x0e
-#define LSM6DSO_INT_FIFO_TH			0x08
-#define LSM6DSO_INT_FIFO_OVR			0x10
-#define LSM6DSO_INT_FIFO_FULL			0x20
+#define LSM6DSO_INT1_CTRL 0x0d
+#define LSM6DSO_INT2_CTRL 0x0e
+#define LSM6DSO_INT_FIFO_TH 0x08
+#define LSM6DSO_INT_FIFO_OVR 0x10
+#define LSM6DSO_INT_FIFO_FULL 0x20
 
-#define LSM6DSO_FIFO_STS1_ADDR		0x3a
-#define LSM6DSO_FIFO_STS2_ADDR		0x3b
-#define LSM6DSO_FIFO_DIFF_MASK			0x07ff
-#define LSM6DSO_FIFO_FULL			0x2000
-#define LSM6DSO_FIFO_DATA_OVR			0x4000
-#define LSM6DSO_FIFO_WATERMARK			0x8000
+#define LSM6DSO_FIFO_STS1_ADDR 0x3a
+#define LSM6DSO_FIFO_STS2_ADDR 0x3b
+#define LSM6DSO_FIFO_DIFF_MASK 0x07ff
+#define LSM6DSO_FIFO_FULL 0x2000
+#define LSM6DSO_FIFO_DATA_OVR 0x4000
+#define LSM6DSO_FIFO_WATERMARK 0x8000
 
 /* Out FIFO data register */
-#define LSM6DSO_FIFO_DATA_ADDR_TAG	0x78
+#define LSM6DSO_FIFO_DATA_ADDR_TAG 0x78
 
 /* Registers value for supported FIFO mode */
-#define LSM6DSO_FIFO_MODE_BYPASS_VAL	0x00
-#define LSM6DSO_FIFO_MODE_CONTINUOUS_VAL	0x06
+#define LSM6DSO_FIFO_MODE_BYPASS_VAL 0x00
+#define LSM6DSO_FIFO_MODE_CONTINUOUS_VAL 0x06
 
 /* Define device available in FIFO pattern */
 enum lsm6dso_dev_fifo {
@@ -94,8 +93,8 @@ enum lsm6dso_dev_fifo {
 };
 
 /* Define FIFO data pattern, tag and len */
-#define LSM6DSO_TAG_SIZE		1
-#define LSM6DSO_FIFO_SAMPLE_SIZE	(OUT_XYZ_SIZE + LSM6DSO_TAG_SIZE)
+#define LSM6DSO_TAG_SIZE 1
+#define LSM6DSO_FIFO_SAMPLE_SIZE (OUT_XYZ_SIZE + LSM6DSO_TAG_SIZE)
 
 enum lsm6dso_tag_fifo {
 	LSM6DSO_GYRO_TAG = 0x01,
@@ -110,32 +109,32 @@ struct lsm6dso_fstatus {
 /* ODR reg value from selected data rate in mHz */
 #define LSM6DSO_ODR_TO_REG(_odr) (__fls(_odr / LSM6DSO_ODR_MIN_VAL) + 1)
 
-#define LSM6DSO_FIFO_ODR_MASK(_s) \
+#define LSM6DSO_FIFO_ODR_MASK(_s)                                        \
 	(_s->type == MOTIONSENSE_TYPE_ACCEL ? LSM6DSO_FIFO_ODR_XL_MASK : \
-	 LSM6DSO_FIFO_ODR_G_MASK)
+					      LSM6DSO_FIFO_ODR_G_MASK)
 
 /* Normalized ODR values from selected data rate in mHz */
 #define LSM6DSO_REG_TO_ODR(_reg) (LSM6DSO_ODR_MIN_VAL << (_reg - 1))
 
 /* Full Scale ranges value and gain for Acc */
-#define LSM6DSO_FS_LIST_NUM		4
+#define LSM6DSO_FS_LIST_NUM 4
 
-#define LSM6DSO_ACCEL_FS_ADDR		0x10
-#define LSM6DSO_ACCEL_FS_MASK			0x0c
+#define LSM6DSO_ACCEL_FS_ADDR 0x10
+#define LSM6DSO_ACCEL_FS_MASK 0x0c
 
-#define LSM6DSO_ACCEL_FS_2G_VAL		0x00
-#define LSM6DSO_ACCEL_FS_4G_VAL		0x02
-#define LSM6DSO_ACCEL_FS_8G_VAL		0x03
-#define LSM6DSO_ACCEL_FS_16G_VAL	0x01
+#define LSM6DSO_ACCEL_FS_2G_VAL 0x00
+#define LSM6DSO_ACCEL_FS_4G_VAL 0x02
+#define LSM6DSO_ACCEL_FS_8G_VAL 0x03
+#define LSM6DSO_ACCEL_FS_16G_VAL 0x01
 
-#define LSM6DSO_ACCEL_FS_MAX_VAL	16
+#define LSM6DSO_ACCEL_FS_MAX_VAL 16
 
 /* Accel reg value from Full Scale range */
 static inline uint8_t lsm6dso_accel_fs_reg(int fs)
 {
 	uint8_t ret;
 
-	switch(fs) {
+	switch (fs) {
 	case 2:
 		ret = LSM6DSO_ACCEL_FS_2G_VAL;
 		break;
@@ -154,8 +153,8 @@ static inline uint8_t lsm6dso_accel_fs_reg(int fs)
 #define LSM6DSO_ACCEL_NORMALIZE_FS(_fs) (1 << __fls(_fs))
 
 /* Full Scale range value and gain for Gyro */
-#define LSM6DSO_GYRO_FS_ADDR		0x11
-#define LSM6DSO_GYRO_FS_MASK			0x0c
+#define LSM6DSO_GYRO_FS_ADDR 0x11
+#define LSM6DSO_GYRO_FS_MASK 0x0c
 
 /* Minimal Gyro range in mDPS */
 #define LSM6DSO_GYRO_FS_MIN_VAL_MDPS ((8750 << 15) / 1000)
@@ -170,8 +169,8 @@ static inline uint8_t lsm6dso_accel_fs_reg(int fs)
 	((LSM6DSO_GYRO_FS_MIN_VAL_MDPS << (_reg)) / 1000)
 
 /* FS register address/mask for Acc/Gyro sensors */
-#define LSM6DSO_RANGE_REG(_sensor)  	(LSM6DSO_ACCEL_FS_ADDR + (_sensor))
-#define LSM6DSO_RANGE_MASK  			0x0c
+#define LSM6DSO_RANGE_REG(_sensor) (LSM6DSO_ACCEL_FS_ADDR + (_sensor))
+#define LSM6DSO_RANGE_MASK 0x0c
 
 /* Status register bit for Acc/Gyro data ready */
 enum lsm6dso_status {
@@ -181,11 +180,11 @@ enum lsm6dso_status {
 };
 
 /* Status register bitmask for Acc/Gyro data ready */
-#define LSM6DSO_STS_XLDA_MASK			0x01
-#define LSM6DSO_STS_GDA_MASK			0x02
+#define LSM6DSO_STS_XLDA_MASK 0x01
+#define LSM6DSO_STS_GDA_MASK 0x02
 
 /* Sensor resolution in number of bits: fixed 16 bit */
-#define LSM6DSO_RESOLUTION      	16
+#define LSM6DSO_RESOLUTION 16
 
 /* Aggregate private data for all supported sensor (Acc, Gyro) */
 struct lsm6dso_data {
@@ -224,6 +223,6 @@ void lsm6dso_interrupt(enum gpio_signal signal);
 #define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(lsm6dso_int)))
 #endif
-#endif  /* CONFIG_ZEPHYR */
+#endif /* CONFIG_ZEPHYR */
 
 #endif /* __CROS_EC_ACCELGYRO_LSM6DSO_H */
