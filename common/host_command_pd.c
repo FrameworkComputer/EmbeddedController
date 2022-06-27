@@ -20,10 +20,10 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_PD_HOST_CMD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_PD_HOST_CMD, format, ##args)
 
-#define TASK_EVENT_EXCHANGE_PD_STATUS  TASK_EVENT_CUSTOM_BIT(0)
-#define TASK_EVENT_HIBERNATING         TASK_EVENT_CUSTOM_BIT(1)
+#define TASK_EVENT_EXCHANGE_PD_STATUS TASK_EVENT_CUSTOM_BIT(0)
+#define TASK_EVENT_HIBERNATING TASK_EVENT_CUSTOM_BIT(1)
 
 /* Define local option for if we are a TCPM with an off chip TCPC */
 #if defined(CONFIG_USB_POWER_DELIVERY) && !defined(CONFIG_USB_PD_TCPM_STUB)
@@ -61,7 +61,7 @@ void host_command_pd_request_hibernate(void)
 
 #ifdef CONFIG_HOSTCMD_PD
 static int pd_send_host_command(struct ec_params_pd_status *ec_status,
-	struct ec_response_pd_status *pd_status)
+				struct ec_response_pd_status *pd_status)
 {
 	return pd_host_command(EC_CMD_PD_EXCHANGE_STATUS,
 			       EC_VER_PD_EXCHANGE_STATUS, ec_status,
@@ -126,8 +126,8 @@ static void pd_check_chg_status(struct ec_response_pd_status *pd_status)
 #endif
 
 	/* Set input current limit */
-	rv = charge_set_input_current_limit(MAX(pd_status->curr_lim_ma,
-					CONFIG_CHARGER_INPUT_CURRENT), 0);
+	rv = charge_set_input_current_limit(
+		MAX(pd_status->curr_lim_ma, CONFIG_CHARGER_INPUT_CURRENT), 0);
 	if (rv < 0)
 		CPRINTS("Failed to set input curr limit from PD MCU");
 }
@@ -201,7 +201,7 @@ static void pd_exchange_status(uint32_t ec_state)
 
 		if (!first_exchange)
 			/* Delay to prevent task starvation */
-			usleep(5*MSEC);
+			usleep(5 * MSEC);
 		first_exchange = 0;
 	} while (pd_get_alert());
 #endif /* USB_TCPM_WITH_OFF_CHIP_TCPC */
