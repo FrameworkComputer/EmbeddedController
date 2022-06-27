@@ -43,8 +43,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -65,30 +65,27 @@ static void motion_interrupt(enum gpio_signal signal);
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] = {"BOARD_ID", 3300, 4096, 0, STM32_AIN(10)},
-	[ADC_EC_SKU_ID] = {"EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8)},
-	[ADC_BATT_ID] = {"BATT_ID", 3300, 4096, 0, STM32_AIN(7)},
-	[ADC_POGO_ADC_INT_L] = {"POGO_ADC_INT_L", 3300, 4096, 0, STM32_AIN(6)},
+	[ADC_BOARD_ID] = { "BOARD_ID", 3300, 4096, 0, STM32_AIN(10) },
+	[ADC_EC_SKU_ID] = { "EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8) },
+	[ADC_BATT_ID] = { "BATT_ID", 3300, 4096, 0, STM32_AIN(7) },
+	[ADC_POGO_ADC_INT_L] = { "POGO_ADC_INT_L", 3300, 4096, 0,
+				 STM32_AIN(6) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "typec",
-		.port = 0,
-		.kbps = 400,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "other",
-		.port = 1,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
+	{ .name = "typec",
+	  .port = 0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "other",
+	  .port = 1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -96,15 +93,14 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_AP_IN_SLEEP_L,   POWER_SIGNAL_ACTIVE_LOW,  "AP_IN_S3_L"},
-	{GPIO_PMIC_EC_RESETB,  POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD"},
+	{ GPIO_AP_IN_SLEEP_L, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_S3_L" },
+	{ GPIO_PMIC_EC_RESETB, POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /******************************************************************************/
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
-};
+const struct spi_device_t spi_devices[] = {};
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
@@ -134,8 +130,7 @@ void board_set_dp_mux_control(int output_enable, int polarity)
 		gpio_set_level(GPIO_USB_C0_DP_POLARITY, polarity);
 }
 
-static void board_hpd_update(const struct usb_mux *me,
-			     mux_state_t mux_state,
+static void board_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 			     bool *ack_required)
 {
 	/* This driver does not use host command ACKs */
@@ -266,9 +261,8 @@ int extpower_is_present(void)
 	if (board_vbus_source_enabled(CHARGE_PORT_USB_C))
 		usb_c_extpower_present = 0;
 	else
-		usb_c_extpower_present = tcpm_check_vbus_level(
-							CHARGE_PORT_USB_C,
-							VBUS_PRESENT);
+		usb_c_extpower_present =
+			tcpm_check_vbus_level(CHARGE_PORT_USB_C, VBUS_PRESENT);
 
 	return usb_c_extpower_present || kukui_pogo_extpower_present();
 }
@@ -357,8 +351,8 @@ static void board_rev_init(void)
 		/* configure PI3USB9201 to USB Path ON Mode */
 		i2c_write8(I2C_PORT_BC12, BC12_I2C_ADDR_FLAGS,
 			   PI3USB9201_REG_CTRL_1,
-			   (PI3USB9201_USB_PATH_ON <<
-			    PI3USB9201_REG_CTRL_1_MODE_SHIFT));
+			   (PI3USB9201_USB_PATH_ON
+			    << PI3USB9201_REG_CTRL_1_MODE_SHIFT));
 	}
 
 	if (board_get_version() < 5) {
@@ -438,26 +432,20 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 
 /* Matrix to rotate accelerometer into standard reference frame */
 #ifdef BOARD_KUKUI
-static const mat33_fp_t lid_standard_ref = {
-	{FLOAT_TO_FP(1), 0, 0},
-	{0, FLOAT_TO_FP(1), 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					     { 0, FLOAT_TO_FP(1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 #else
-static const mat33_fp_t lid_standard_ref = {
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, FLOAT_TO_FP(-1), 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 #endif /* BOARD_KUKUI */
 
 #ifdef CONFIG_MAG_BMI_BMM150
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t mag_standard_ref = {
-	{0, FLOAT_TO_FP(-1), 0},
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t mag_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+					     { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 #endif /* CONFIG_MAG_BMI_BMM150 */
 
 struct motion_sensor_t motion_sensors[] = {
@@ -632,7 +620,6 @@ static void motion_interrupt(enum gpio_signal signal)
 #elif !defined(VARIANT_KUKUI_NO_SENSORS)
 	bmi160_interrupt(signal);
 #endif /* BOARD_KRANE, !VARIANT_KUKUI_NO_SENSORS */
-
 }
 #endif /* SECTION_IS_RW */
 
@@ -669,9 +656,8 @@ __override int board_charge_port_is_connected(int port)
 	return gpio_get_level(GPIO_POGO_VBUS_PRESENT);
 }
 
-__override
-void board_fill_source_power_info(int port,
-				  struct ec_response_usb_pd_power_info *r)
+__override void
+board_fill_source_power_info(int port, struct ec_response_usb_pd_power_info *r)
 {
 	r->meas.voltage_now = 3300;
 	r->meas.voltage_max = 3300;
