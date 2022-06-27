@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_UART_H
 #define __CROS_EC_UART_H
 
-#include <stdarg.h>  /* For va_list */
+#include <stdarg.h> /* For va_list */
 #include "common.h"
 #include "gpio_signal.h"
 
@@ -72,8 +72,8 @@ int uart_put_raw(const char *out, int len);
  *
  * @return EC_SUCCESS, or non-zero if output was truncated.
  */
-__attribute__((__format__(__printf__, 1, 2)))
-int uart_printf(const char *format, ...);
+__attribute__((__format__(__printf__, 1, 2))) int
+uart_printf(const char *format, ...);
 
 /**
  * Print formatted output to the UART, like vprintf().
@@ -258,7 +258,9 @@ void uart_exit_dsleep(void);
  */
 void uart_deepsleep_interrupt(enum gpio_signal signal);
 #else
-static inline void uart_deepsleep_interrupt(enum gpio_signal signal) { }
+static inline void uart_deepsleep_interrupt(enum gpio_signal signal)
+{
+}
 #endif /* !CONFIG_LOW_POWER_IDLE */
 
 #if defined(HAS_TASK_CONSOLE) && defined(CONFIG_FORCE_CONSOLE_RESUME)
@@ -269,7 +271,9 @@ static inline void uart_deepsleep_interrupt(enum gpio_signal signal) { }
  */
 void uart_enable_wakeup(int enable);
 #elif !defined(CHIP_FAMILY_NPCX5)
-static inline void uart_enable_wakeup(int enable) {}
+static inline void uart_enable_wakeup(int enable)
+{
+}
 #endif
 
 #ifdef CONFIG_UART_INPUT_FILTER
@@ -335,7 +339,7 @@ void uart_reset_default_pad_panic(void);
  *           time specified in timeout_us.
  */
 int uart_alt_pad_write_read(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len,
-			int timeout_us);
+			    int timeout_us);
 
 /**
  * Interrupt handler for default UART RX pin transition when UART is switched
@@ -372,9 +376,7 @@ enum ec_status uart_console_read_buffer_init(void);
  *
  * @return result status (EC_RES_*)
  */
-int uart_console_read_buffer(uint8_t type,
-			     char *dest,
-			     uint16_t dest_size,
+int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 			     uint16_t *write_count);
 
 /**
@@ -382,4 +384,4 @@ int uart_console_read_buffer(uint8_t type,
  */
 void uart_init_buffer(void);
 
-#endif  /* __CROS_EC_UART_H */
+#endif /* __CROS_EC_UART_H */
