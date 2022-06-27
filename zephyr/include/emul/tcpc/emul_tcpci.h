@@ -133,10 +133,7 @@ enum tcpci_emul_ops_resp {
 };
 
 /** Revisions supported by TCPCI emaluator */
-enum tcpci_emul_rev {
-	TCPCI_EMUL_REV1_0_VER1_0 = 0,
-	TCPCI_EMUL_REV2_0_VER1_1
-};
+enum tcpci_emul_rev { TCPCI_EMUL_REV1_0_VER1_0 = 0, TCPCI_EMUL_REV2_0_VER1_1 };
 
 /** Status of TX message send to TCPCI emulator partner */
 enum tcpci_emul_tx_status {
@@ -166,9 +163,9 @@ struct tcpci_emul_dev_ops {
 	 * @return TCPCI_EMUL_DONE to immedietly return success
 	 * @return TCPCI_EMUL_ERROR to immedietly return error
 	 */
-	enum tcpci_emul_ops_resp (*read_byte)(const struct emul *emul,
-					const struct tcpci_emul_dev_ops *ops,
-					int reg, uint8_t *val, int bytes);
+	enum tcpci_emul_ops_resp (*read_byte)(
+		const struct emul *emul, const struct tcpci_emul_dev_ops *ops,
+		int reg, uint8_t *val, int bytes);
 
 	/**
 	 * @brief Function called for each byte of write message
@@ -183,9 +180,9 @@ struct tcpci_emul_dev_ops {
 	 * @return TCPCI_EMUL_DONE to immedietly return success
 	 * @return TCPCI_EMUL_ERROR to immedietly return error
 	 */
-	enum tcpci_emul_ops_resp (*write_byte)(const struct emul *emul,
-					const struct tcpci_emul_dev_ops *ops,
-					int reg, uint8_t val, int bytes);
+	enum tcpci_emul_ops_resp (*write_byte)(
+		const struct emul *emul, const struct tcpci_emul_dev_ops *ops,
+		int reg, uint8_t val, int bytes);
 
 	/**
 	 * @brief Function called on the end of write message
@@ -199,9 +196,9 @@ struct tcpci_emul_dev_ops {
 	 * @return TCPCI_EMUL_DONE to immedietly return success
 	 * @return TCPCI_EMUL_ERROR to immedietly return error
 	 */
-	enum tcpci_emul_ops_resp (*handle_write)(const struct emul *emul,
-					const struct tcpci_emul_dev_ops *ops,
-					int reg, int msg_len);
+	enum tcpci_emul_ops_resp (*handle_write)(
+		const struct emul *emul, const struct tcpci_emul_dev_ops *ops,
+		int reg, int msg_len);
 
 	/**
 	 * @brief Function called on reset
@@ -227,8 +224,7 @@ struct tcpci_emul_partner_ops {
 	void (*transmit)(const struct emul *emul,
 			 const struct tcpci_emul_partner_ops *ops,
 			 const struct tcpci_emul_msg *tx_msg,
-			 enum tcpci_msg_type type,
-			 int retry);
+			 enum tcpci_msg_type type, int retry);
 
 	/**
 	 * @brief Function called when control settings change to allow partner
