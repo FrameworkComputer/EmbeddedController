@@ -13,9 +13,8 @@
 #include "gpio_signal.h"
 #include "ec_commands.h"
 
-#define BUTTON_FLAG_ACTIVE_HIGH  BIT(0)
-#define BUTTON_FLAG_DISABLED     BIT(1)   /* Button disabled */
-
+#define BUTTON_FLAG_ACTIVE_HIGH BIT(0)
+#define BUTTON_FLAG_DISABLED BIT(1) /* Button disabled */
 
 #define BUTTON_DEBOUNCE_US (30 * MSEC)
 
@@ -103,4 +102,4 @@ int button_is_adc_detected(enum gpio_signal gpio);
  */
 int adc_to_physical_value(enum gpio_signal gpio);
 
-#endif  /* __CROS_EC_BUTTON_H */
+#endif /* __CROS_EC_BUTTON_H */
