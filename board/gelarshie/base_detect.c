@@ -19,8 +19,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /* Base detection and debouncing */
 #define BASE_DETECT_EN_DEBOUNCE_US (350 * MSEC)
@@ -93,8 +93,8 @@ static uint32_t pulse_width;
 
 static void print_base_detect_value(int v, int tmp_pulse_width)
 {
-	CPRINTS("%s = %d (pulse %d)", adc_channels[ADC_BASE_DET].name,
-			v, tmp_pulse_width);
+	CPRINTS("%s = %d (pulse %d)", adc_channels[ADC_BASE_DET].name, v,
+		tmp_pulse_width);
 }
 
 static void base_detect_deferred(void)
@@ -144,12 +144,12 @@ void base_detect_interrupt(enum gpio_signal signal)
 {
 	uint64_t time_now = get_time().val;
 	int debounce_us;
-	
+
 	if (detect_pin_connected(signal))
 		debounce_us = BASE_DETECT_EN_DEBOUNCE_US;
-        else
+	else
 		debounce_us = BASE_DETECT_DIS_DEBOUNCE_US;
-  
+
 	if (base_detect_debounce_time <= time_now) {
 		/*
 		 * Detect and measure detection pin pulse, when base is
@@ -211,7 +211,7 @@ static void base_init(void)
 	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 		base_enable();
 }
-DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT + 1);
 
 void base_force_state(enum ec_set_base_state_cmd state)
 {
