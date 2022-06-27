@@ -49,13 +49,13 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #define INT_RECHECK_US 5000
 
-#define ADC_VOL_UP_MASK     BIT(0)
-#define ADC_VOL_DOWN_MASK   BIT(1)
+#define ADC_VOL_UP_MASK BIT(0)
+#define ADC_VOL_DOWN_MASK BIT(1)
 
 static uint8_t new_adc_key_state;
 
@@ -101,7 +101,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
-
 }
 
 static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
@@ -119,7 +118,7 @@ static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
 static void pen_input_deferred(void)
 {
 	int pen_charge_enable = !gpio_get_level(GPIO_PEN_DET_ODL) &&
-			!chipset_in_state(CHIPSET_STATE_ANY_OFF);
+				!chipset_in_state(CHIPSET_STATE_ANY_OFF);
 
 	if (pen_charge_enable)
 		gpio_set_level(GPIO_EN_PP3300_PEN, 1);
@@ -181,26 +180,22 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
 
-	[TEMP_SENSOR_MEMORY] = {
-		.name = "Memory",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_51k1_47k_4050b,
-		.idx  = ADC_TEMP_SENSOR_1
-	},
-	[TEMP_SENSOR_CPU] = {
-		.name = "CPU",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_51k1_47k_4050b,
-		.idx  = ADC_TEMP_SENSOR_2
-	},
+	[TEMP_SENSOR_MEMORY] = { .name = "Memory",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_51k1_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_CPU] = { .name = "CPU",
+			      .type = TEMP_SENSOR_TYPE_BOARD,
+			      .read = get_temp_3v3_51k1_47k_4050b,
+			      .idx = ADC_TEMP_SENSOR_2 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_MEMORY \
-	{ \
+#define THERMAL_MEMORY           \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
@@ -218,8 +213,8 @@ __maybe_unused static const struct ec_thermal_config thermal_memory =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
@@ -238,7 +233,7 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 static void setup_thermal(void)
 {
 	thermal_params[TEMP_SENSOR_MEMORY] = thermal_memory;
-	thermal_params[TEMP_SENSOR_CPU]    = thermal_cpu;
+	thermal_params[TEMP_SENSOR_CPU] = thermal_cpu;
 }
 
 void board_hibernate(void)
@@ -274,7 +269,7 @@ static void reconfigure_5v_gpio(void)
 		gpio_set_flags(GPIO_VOLUP_BTN_ODL, GPIO_OUT_LOW);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C + 1);
 #endif /* BOARD_WADDLEDOO */
 
 static void set_5v_gpio(int level)
@@ -312,7 +307,7 @@ __override void board_power_5v_enable(int enable)
 	set_5v_gpio(!!enable);
 
 	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
-		get_cbi_fw_config_db() == DB_LTE_HDMI) {
+	    get_cbi_fw_config_db() == DB_LTE_HDMI) {
 		gpio_set_level(GPIO_SUB_C1_INT_EN_RAILS_ODL, !enable);
 	}
 }
@@ -333,13 +328,11 @@ int board_is_sourcing_vbus(int port)
 
 	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
 	return !!(regval & TCPC_REG_POWER_STATUS_SOURCING_VBUS);
-
 }
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < board_get_usb_pd_port_count());
+	int is_real_port = (port >= 0 && port < board_get_usb_pd_port_count());
 	int i;
 	int old_port;
 
@@ -403,8 +396,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
@@ -429,29 +422,21 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrices to rotate accelerometers into the standard reference. */
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					      { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(-1) } };
 
-static const mat33_fp_t base_lsm6dsm_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t base_lsm6dsm_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(1), 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
-static const mat33_fp_t base_icm_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t base_icm_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					 { 0, FLOAT_TO_FP(1), 0 },
+					 { 0, 0, FLOAT_TO_FP(-1) } };
 
 static struct accelgyro_saved_data_t g_bma253_data;
 static struct bmi_drv_data_t g_bmi160_data;
@@ -593,8 +578,7 @@ struct motion_sensor_t lsm6dsm_base_gyro = {
 	.location = MOTIONSENSE_LOC_BASE,
 	.drv = &lsm6dsm_drv,
 	.mutex = &g_base_mutex,
-	.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data,
-			MOTIONSENSE_TYPE_GYRO),
+	.drv_data = LSM6DSM_ST_DATA(lsm6dsm_data, MOTIONSENSE_TYPE_GYRO),
 	.port = I2C_PORT_SENSOR,
 	.i2c_spi_addr_flags = LSM6DSM_ADDR0_FLAGS,
 	.default_range = 1000 | ROUND_UP_FLAG, /* dps */
@@ -602,7 +586,6 @@ struct motion_sensor_t lsm6dsm_base_gyro = {
 	.min_frequency = LSM6DSM_ODR_MIN_VAL,
 	.max_frequency = LSM6DSM_ODR_MAX_VAL,
 };
-
 
 struct motion_sensor_t icm426xx_base_accel = {
 	.name = "Base Accel",
@@ -660,12 +643,12 @@ void board_init(void)
 	check_c0_line();
 
 	if (get_cbi_fw_config_db() == DB_1A_HDMI ||
-		get_cbi_fw_config_db() == DB_LTE_HDMI) {
+	    get_cbi_fw_config_db() == DB_LTE_HDMI) {
 		/* Disable i2c on HDMI pins */
 		gpio_config_pin(MODULE_I2C, GPIO_HDMI_HPD_SUB_ODL, 0);
 		gpio_config_pin(MODULE_I2C, GPIO_GPIO92_NC, 0);
 
-		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
+		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL, GPIO_ODR_HIGH);
 
 		/* Select HDMI option */
 		gpio_set_level(GPIO_HDMI_SEL_L, 0);
@@ -674,8 +657,7 @@ void board_init(void)
 		gpio_enable_interrupt(GPIO_HDMI_HPD_SUB_ODL);
 	} else {
 		/* Set SDA as an input */
-		gpio_set_flags(GPIO_HDMI_HPD_SUB_ODL,
-			       GPIO_INPUT);
+		gpio_set_flags(GPIO_HDMI_HPD_SUB_ODL, GPIO_INPUT);
 	}
 	/* Enable gpio interrupt for base accelgyro sensor */
 	gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
@@ -693,11 +675,11 @@ void board_init(void)
 
 	if (base_gyro_config == SSFC_SENSOR_LSM6DSM) {
 		motion_sensors[BASE_ACCEL] = lsm6dsm_base_accel;
-		motion_sensors[BASE_GYRO]  = lsm6dsm_base_gyro;
+		motion_sensors[BASE_GYRO] = lsm6dsm_base_gyro;
 		cprints(CC_SYSTEM, "SSFC: BASE GYRO is LSM6DSM");
 	} else if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_ICM426XX) {
 		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
-		motion_sensors[BASE_GYRO]  = icm426xx_base_gyro;
+		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
 		cprints(CC_SYSTEM, "SSFC: BASE GYRO is ICM426XX");
 	} else
 		cprints(CC_SYSTEM, "SSFC: BASE GYRO is BMI160");
@@ -710,7 +692,6 @@ void board_init(void)
 
 	/* Initial thermal */
 	setup_thermal();
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -873,45 +854,35 @@ void motion_interrupt(enum gpio_signal signal)
 }
 
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "eeprom",
-		.port = I2C_PORT_EEPROM,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_EEPROM_SCL,
-		.sda  = GPIO_EC_I2C_EEPROM_SDA
-	},
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_EEPROM_SCL,
+	  .sda = GPIO_EC_I2C_EEPROM_SDA },
 
-	{
-		.name = "battery",
-		.port = I2C_PORT_BATTERY,
-		.kbps = 100,
-		.scl  = GPIO_EC_I2C_BATTERY_SCL,
-		.sda  = GPIO_EC_I2C_BATTERY_SDA
-	},
+	{ .name = "battery",
+	  .port = I2C_PORT_BATTERY,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_BATTERY_SCL,
+	  .sda = GPIO_EC_I2C_BATTERY_SDA },
 
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_SENSOR_SCL,
-		.sda  = GPIO_EC_I2C_SENSOR_SDA
-	},
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_SENSOR_SCL,
+	  .sda = GPIO_EC_I2C_SENSOR_SDA },
 
-	{
-		.name = "usbc0",
-		.port = I2C_PORT_USB_C0,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_USB_C0_SCL,
-		.sda  = GPIO_EC_I2C_USB_C0_SDA
-	},
+	{ .name = "usbc0",
+	  .port = I2C_PORT_USB_C0,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_USB_C0_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_SDA },
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-	{
-		.name = "sub_usbc1",
-		.port = I2C_PORT_SUB_USB_C1,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_SUB_USB_C1_SCL,
-		.sda  = GPIO_EC_I2C_SUB_USB_C1_SDA
-	},
+	{ .name = "sub_usbc1",
+	  .port = I2C_PORT_SUB_USB_C1,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_SUB_USB_C1_SCL,
+	  .sda = GPIO_EC_I2C_SUB_USB_C1_SDA },
 #endif
 };
 
