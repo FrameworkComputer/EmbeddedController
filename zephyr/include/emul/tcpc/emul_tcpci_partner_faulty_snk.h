@@ -63,7 +63,7 @@ struct tcpci_faulty_snk_action {
 };
 
 /* Count of actions which is treated by emulator as infinite */
-#define TCPCI_FAULTY_SNK_INFINITE_ACTION	0
+#define TCPCI_FAULTY_SNK_INFINITE_ACTION 0
 
 /**
  * @brief Initialise USB-C malfunctioning sink device data structure
@@ -74,10 +74,10 @@ struct tcpci_faulty_snk_action {
  *
  * @return Pointer to USB-C malfunctioning sink extension
  */
-struct tcpci_partner_extension *tcpci_faulty_snk_emul_init(
-	struct tcpci_faulty_snk_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	struct tcpci_partner_extension *ext);
+struct tcpci_partner_extension *
+tcpci_faulty_snk_emul_init(struct tcpci_faulty_snk_emul_data *data,
+			   struct tcpci_partner_data *common_data,
+			   struct tcpci_partner_extension *ext);
 
 /**
  * @brief Add action to perform by USB-C malfunctioning sink extension
