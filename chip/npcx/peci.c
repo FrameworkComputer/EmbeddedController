@@ -19,31 +19,29 @@
 #include "temp_sensor.h"
 #include "util.h"
 
-
 /* Initial PECI baud rate */
-#define PECI_BAUD_RATE        750000
+#define PECI_BAUD_RATE 750000
 
-#define TEMP_AVG_LENGTH       4  /* Should be power of 2 */
-
+#define TEMP_AVG_LENGTH 4 /* Should be power of 2 */
 
 /* PECI Time-out */
-#define PECI_DONE_TIMEOUT_US  (10*MSEC)
+#define PECI_DONE_TIMEOUT_US (10 * MSEC)
 
-#define NULL_PENDING_TASK_ID  0xFFFFFFFF
-#define PECI_MAX_FIFO_SIZE    16
-#define PROC_SOCKET           0x30
+#define NULL_PENDING_TASK_ID 0xFFFFFFFF
+#define PECI_MAX_FIFO_SIZE 16
+#define PROC_SOCKET 0x30
 /* PECI Command Code */
 enum peci_command_t {
-	PECI_COMMAND_PING               = 0x00,
-	PECI_COMMAND_GET_DIB            = 0xF7,
-	PECI_COMMAND_GET_TEMP           = 0x01,
-	PECI_COMMAND_RD_PKG_CFG         = 0xA1,
-	PECI_COMMAND_WR_PKG_CFG         = 0xA5,
-	PECI_COMMAND_RD_IAMSR           = 0xB1,
-	PECI_COMMAND_RD_PCI_CFG         = 0x61,
-	PECI_COMMAND_RD_PCI_CFG_LOCAL   = 0xE1,
-	PECI_COMMAND_WR_PCI_CFG_LOCAL   = 0xE5,
-	PECI_COMMAND_NONE               = 0xFF
+	PECI_COMMAND_PING = 0x00,
+	PECI_COMMAND_GET_DIB = 0xF7,
+	PECI_COMMAND_GET_TEMP = 0x01,
+	PECI_COMMAND_RD_PKG_CFG = 0xA1,
+	PECI_COMMAND_WR_PKG_CFG = 0xA5,
+	PECI_COMMAND_RD_IAMSR = 0xB1,
+	PECI_COMMAND_RD_PCI_CFG = 0x61,
+	PECI_COMMAND_RD_PCI_CFG_LOCAL = 0xE1,
+	PECI_COMMAND_WR_PCI_CFG_LOCAL = 0xE5,
+	PECI_COMMAND_NONE = 0xFF
 };
 
 #define PECI_COMMAND_GET_TEMP_WR_LENS 0x00
@@ -68,12 +66,8 @@ static int peci_pending_task_id;
  * @param   *wr_data  Buffer pointer of write data
  * @return  TASK_EVENT_PECI_DONE that mean slave had a response
  */
-static uint32_t peci_trans(
-		uint8_t             wr_length,
-		uint8_t             rd_length,
-		enum peci_command_t cmd_code,
-		uint8_t            *wr_data
-)
+static uint32_t peci_trans(uint8_t wr_length, uint8_t rd_length,
+			   enum peci_command_t cmd_code, uint8_t *wr_data)
 {
 	uint32_t events;
 	/* Ensure no PECI transaction is in progress */
@@ -100,7 +94,7 @@ static uint32_t peci_trans(
 	/* Write-Length */
 	if (cmd_code != PECI_COMMAND_PING) {
 		if ((cmd_code == PECI_COMMAND_WR_PKG_CFG) ||
-				(cmd_code == PECI_COMMAND_WR_PCI_CFG_LOCAL)) {
+		    (cmd_code == PECI_COMMAND_WR_PCI_CFG_LOCAL)) {
 			/*CMD+AWFCS*/
 			NPCX_PECI_WR_LENGTH = wr_length + 2;
 			/* Enable AWFCS */
@@ -110,7 +104,7 @@ static uint32_t peci_trans(
 			NPCX_PECI_WR_LENGTH = wr_length + 1;
 			/* Enable AWFCS */
 			CLEAR_BIT(NPCX_PECI_CTL_STS,
-					NPCX_PECI_CTL_STS_AWFCS_EN);
+				  NPCX_PECI_CTL_STS_AWFCS_EN);
 		}
 	}
 
@@ -119,9 +113,7 @@ static uint32_t peci_trans(
 
 	/* It should be using a interrupt , don't waste cpu computing power */
 	peci_pending_task_id = task_get_current();
-	return task_wait_event_mask(TASK_EVENT_PECI_DONE,
-					PECI_DONE_TIMEOUT_US);
-
+	return task_wait_event_mask(TASK_EVENT_PECI_DONE, PECI_DONE_TIMEOUT_US);
 }
 
 /**
@@ -143,8 +135,8 @@ int peci_get_cpu_temp(void)
 
 	/* Start PECI trans */
 	events = peci_trans(PECI_COMMAND_GET_TEMP_WR_LENS,
-				PECI_COMMAND_GET_TEMP_RD_LENS,
-				PECI_COMMAND_GET_TEMP, NULL);
+			    PECI_COMMAND_GET_TEMP_RD_LENS,
+			    PECI_COMMAND_GET_TEMP, NULL);
 	/* if return DONE , that mean slave had a PECI response */
 	if ((events & TASK_EVENT_PECI_DONE) == TASK_EVENT_PECI_DONE) {
 		/* check CRC & ABRT */
@@ -223,7 +215,7 @@ static void peci_freq_changed(void)
 	 * Maximum bit rate should not extend the field's boundaries.
 	 */
 	if (freq != 0) {
-		baud = (uint8_t)(freq  / (4 * PECI_BAUD_RATE)) - 1;
+		baud = (uint8_t)(freq / (4 * PECI_BAUD_RATE)) - 1;
 		/* Set maximum PECI baud rate (bit0 - bit4) */
 		if (baud > 0x1F)
 			baud = 0x1F;
@@ -247,7 +239,7 @@ static void peci_init(void)
 
 	/* Enable clock for PECI peripheral */
 	clock_enable_peripheral(CGC_OFFSET_PECI, CGC_PECI_MASK,
-			CGC_MODE_RUN | CGC_MODE_SLEEP);
+				CGC_MODE_RUN | CGC_MODE_SLEEP);
 	/* Set PECI freq */
 	peci_freq_changed();
 
@@ -269,7 +261,8 @@ static void peci_init(void)
 DECLARE_HOOK(HOOK_INIT, peci_init, HOOK_PRIO_DEFAULT);
 
 /* If received a PECI DONE interrupt, post the event to PECI task */
-static void peci_done_interrupt(void){
+static void peci_done_interrupt(void)
+{
 	if (peci_pending_task_id != NULL_PENDING_TASK_ID)
 		task_set_event(peci_pending_task_id, TASK_EVENT_PECI_DONE);
 	peci_sts = NPCX_PECI_CTL_STS & 0x18;
@@ -293,6 +286,5 @@ static int command_peci_temp(int argc, char **argv)
 	ccprintf("CPU temp = %d K = %d\n", t, K_TO_C(t));
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp,
-		NULL,
-		"Print CPU temperature");
+DECLARE_CONSOLE_COMMAND(pecitemp, command_peci_temp, NULL,
+			"Print CPU temperature");
