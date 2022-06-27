@@ -10,7 +10,7 @@
 #include "stdbool.h"
 
 /* RVP ID read retry count */
-#define RVP_VERSION_READ_RETRY_CNT	2
+#define RVP_VERSION_READ_RETRY_CNT 2
 
 #define DC_JACK_MAX_VOLTAGE_MV 19000
 
