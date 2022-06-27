@@ -13,7 +13,7 @@
 #include "util.h"
 
 void gpio_set_alternate_function(uint32_t port, uint32_t mask,
-				enum gpio_alternate_func func)
+				 enum gpio_alternate_func func)
 {
 	int bit, mode_reg_index, shift;
 	uint32_t mode_bits, mode_mask;
@@ -37,17 +37,15 @@ void gpio_set_alternate_function(uint32_t port, uint32_t mask,
 		shift = (bit & 7) << 2;
 		mode_bits = func << shift;
 		mode_mask = ~(0xf << shift);
-		AP_GPIO_MODE(mode_reg_index) = (AP_GPIO_MODE(mode_reg_index) &
-						mode_mask) | mode_bits;
+		AP_GPIO_MODE(mode_reg_index) =
+			(AP_GPIO_MODE(mode_reg_index) & mode_mask) | mode_bits;
 	}
 }
 
 test_mockable int gpio_get_level(enum gpio_signal signal)
 {
-	return !!(AP_GPIO_DIN(gpio_list[signal].port) &
-		  gpio_list[signal].mask);
+	return !!(AP_GPIO_DIN(gpio_list[signal].port) & gpio_list[signal].mask);
 }
-
 
 void gpio_set_level(enum gpio_signal signal, int value)
 {
