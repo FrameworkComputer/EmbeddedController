@@ -13,7 +13,7 @@
 #include "stdint.h"
 
 /* Max fingers to support */
-#define I2C_HID_TOUCHPAD_MAX_FINGERS	5
+#define I2C_HID_TOUCHPAD_MAX_FINGERS 5
 
 /*
  * Struct holding a touchpad event
