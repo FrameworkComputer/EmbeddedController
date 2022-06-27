@@ -16,7 +16,7 @@ struct mock_ctrl_charge_manager {
 };
 
 #define MOCK_CTRL_DEFAULT_CHARGE_MANAGER    \
-	((struct mock_ctrl_charge_manager) { \
+	((struct mock_ctrl_charge_manager){ \
 		.vbus_voltage_mv = 0,       \
 	})
 
