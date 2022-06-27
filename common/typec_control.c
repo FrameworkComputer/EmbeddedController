@@ -28,7 +28,7 @@ void typec_set_sbu(int port, bool enable)
 }
 
 __overridable void typec_set_source_current_limit(int port,
-						enum tcpc_rp_value rp)
+						  enum tcpc_rp_value rp)
 {
 	if (IS_ENABLED(CONFIG_USBC_PPC))
 		ppc_set_vbus_source_current_limit(port, rp);
@@ -45,8 +45,8 @@ void typec_set_vconn(int port, bool enable)
 	 * the PD state machine detects a disconnection on the CC lines, we will
 	 * reset our OC event counter.
 	 */
-	if (IS_ENABLED(CONFIG_USBC_OCP) &&
-	    enable && usbc_ocp_is_port_latched_off(port))
+	if (IS_ENABLED(CONFIG_USBC_OCP) && enable &&
+	    usbc_ocp_is_port_latched_off(port))
 		return;
 
 	/*
