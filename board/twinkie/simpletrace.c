@@ -25,61 +25,57 @@ int trace_mode;
 /* The FSM is waiting for the following command (0 == None) */
 uint8_t expected_cmd;
 
-static const char * const ctrl_msg_name[] = {
-	[0]                      = "RSVD-C0",
-	[PD_CTRL_GOOD_CRC]       = "GOODCRC",
-	[PD_CTRL_GOTO_MIN]       = "GOTOMIN",
-	[PD_CTRL_ACCEPT]         = "ACCEPT",
-	[PD_CTRL_REJECT]         = "REJECT",
-	[PD_CTRL_PING]           = "PING",
-	[PD_CTRL_PS_RDY]         = "PSRDY",
+static const char *const ctrl_msg_name[] = {
+	[0] = "RSVD-C0",
+	[PD_CTRL_GOOD_CRC] = "GOODCRC",
+	[PD_CTRL_GOTO_MIN] = "GOTOMIN",
+	[PD_CTRL_ACCEPT] = "ACCEPT",
+	[PD_CTRL_REJECT] = "REJECT",
+	[PD_CTRL_PING] = "PING",
+	[PD_CTRL_PS_RDY] = "PSRDY",
 	[PD_CTRL_GET_SOURCE_CAP] = "GSRCCAP",
-	[PD_CTRL_GET_SINK_CAP]   = "GSNKCAP",
-	[PD_CTRL_DR_SWAP]        = "DRSWAP",
-	[PD_CTRL_PR_SWAP]        = "PRSWAP",
-	[PD_CTRL_VCONN_SWAP]     = "VCONNSW",
-	[PD_CTRL_WAIT]           = "WAIT",
-	[PD_CTRL_SOFT_RESET]     = "SFT-RST",
-	[14]                     = "RSVD-C14",
-	[15]                     = "RSVD-C15",
+	[PD_CTRL_GET_SINK_CAP] = "GSNKCAP",
+	[PD_CTRL_DR_SWAP] = "DRSWAP",
+	[PD_CTRL_PR_SWAP] = "PRSWAP",
+	[PD_CTRL_VCONN_SWAP] = "VCONNSW",
+	[PD_CTRL_WAIT] = "WAIT",
+	[PD_CTRL_SOFT_RESET] = "SFT-RST",
+	[14] = "RSVD-C14",
+	[15] = "RSVD-C15",
 };
 
-static const char * const data_msg_name[] = {
-	[0]                      = "RSVD-D0",
-	[PD_DATA_SOURCE_CAP]     = "SRCCAP",
-	[PD_DATA_REQUEST]        = "REQUEST",
-	[PD_DATA_BIST]           = "BIST",
-	[PD_DATA_SINK_CAP]       = "SNKCAP",
+static const char *const data_msg_name[] = {
+	[0] = "RSVD-D0",
+	[PD_DATA_SOURCE_CAP] = "SRCCAP",
+	[PD_DATA_REQUEST] = "REQUEST",
+	[PD_DATA_BIST] = "BIST",
+	[PD_DATA_SINK_CAP] = "SNKCAP",
 	/* 5-14 Reserved */
-	[PD_DATA_VENDOR_DEF]     = "VDM",
+	[PD_DATA_VENDOR_DEF] = "VDM",
 };
 
-static const char * const svdm_cmd_name[] = {
-	[CMD_DISCOVER_IDENT]     = "DISCID",
-	[CMD_DISCOVER_SVID]	 = "DISCSVID",
-	[CMD_DISCOVER_MODES]	 = "DISCMODE",
-	[CMD_ENTER_MODE]	 = "ENTER",
-	[CMD_EXIT_MODE]		 = "EXIT",
-	[CMD_ATTENTION]		 = "ATTN",
-	[CMD_DP_STATUS]          = "DPSTAT",
-	[CMD_DP_CONFIG]          = "DPCFG",
+static const char *const svdm_cmd_name[] = {
+	[CMD_DISCOVER_IDENT] = "DISCID",   [CMD_DISCOVER_SVID] = "DISCSVID",
+	[CMD_DISCOVER_MODES] = "DISCMODE", [CMD_ENTER_MODE] = "ENTER",
+	[CMD_EXIT_MODE] = "EXIT",	   [CMD_ATTENTION] = "ATTN",
+	[CMD_DP_STATUS] = "DPSTAT",	   [CMD_DP_CONFIG] = "DPCFG",
 };
 
-static const char * const svdm_cmdt_name[] = {
-	[CMDT_INIT]     = "INI",
-	[CMDT_RSP_ACK]  = "ACK",
-	[CMDT_RSP_NAK]  = "NAK",
+static const char *const svdm_cmdt_name[] = {
+	[CMDT_INIT] = "INI",
+	[CMDT_RSP_ACK] = "ACK",
+	[CMDT_RSP_NAK] = "NAK",
 	[CMDT_RSP_BUSY] = "BSY",
 };
 
 static void print_pdo(uint32_t word)
 {
 	if ((word & PDO_TYPE_MASK) == PDO_TYPE_BATTERY)
-		ccprintf(" %dmV/%dmW", ((word>>10)&0x3ff)*50,
-			 (word&0x3ff)*250);
+		ccprintf(" %dmV/%dmW", ((word >> 10) & 0x3ff) * 50,
+			 (word & 0x3ff) * 250);
 	else
-		ccprintf(" %dmV/%dmA", ((word>>10)&0x3ff)*50,
-			 (word&0x3ff)*10);
+		ccprintf(" %dmV/%dmA", ((word >> 10) & 0x3ff) * 50,
+			 (word & 0x3ff) * 10);
 }
 
 static void print_rdo(uint32_t word)
@@ -119,8 +115,8 @@ static void print_packet(int head, uint32_t *payload)
 	}
 	name = cnt ? data_msg_name[typ] : ctrl_msg_name[typ];
 	prole = head & (PD_ROLE_SOURCE << 8) ? "SRC" : "SNK";
-	ccprintf("%pT %s/%d [%04x]%s",
-		 PRINTF_TIMESTAMP_NOW, prole, id, head, name);
+	ccprintf("%pT %s/%d [%04x]%s", PRINTF_TIMESTAMP_NOW, prole, id, head,
+		 name);
 	if (!cnt) { /* Control message : we are done */
 		ccputs("\n");
 		return;
@@ -144,7 +140,7 @@ static void print_packet(int head, uint32_t *payload)
 			break;
 		default:
 			ccprintf(" %08x", payload[i]);
-	}
+		}
 	ccputs("\n");
 }
 
@@ -176,19 +172,20 @@ static void rx_event(void)
 		if (pending & (1 << (21 + i))) {
 			rx_edge_ts[i][rx_edge_ts_idx[i]].val = get_time().val;
 			next_idx = (rx_edge_ts_idx[i] ==
-					PD_RX_TRANSITION_COUNT - 1) ?
-						0 : rx_edge_ts_idx[i] + 1;
+				    PD_RX_TRANSITION_COUNT - 1) ?
+					   0 :
+					   rx_edge_ts_idx[i] + 1;
 
 			/*
 			 * If we have seen enough edges in a certain amount of
 			 * time, then trigger RX start.
 			 */
 			if ((rx_edge_ts[i][rx_edge_ts_idx[i]].val -
-			     rx_edge_ts[i][next_idx].val)
-			     < PD_RX_TRANSITION_WINDOW) {
+			     rx_edge_ts[i][next_idx].val) <
+			    PD_RX_TRANSITION_WINDOW) {
 				/* acquire the message only on the active CC */
-				STM32_COMP_CSR &= ~(i ? STM32_COMP_CMP1EN
-						      : STM32_COMP_CMP2EN);
+				STM32_COMP_CSR &= ~(i ? STM32_COMP_CMP1EN :
+							STM32_COMP_CMP2EN);
 				/* start sampling */
 				pd_rx_start(0);
 				/*
