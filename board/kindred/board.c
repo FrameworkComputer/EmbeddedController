@@ -46,8 +46,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static int lid_device_id;
 static int base_device_id;
@@ -66,17 +66,16 @@ const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
  * that we don't have pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-		{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-		{0, 7}, {-1, -1}, {-1, -1}, {1, 4}, {1, 3},
-		{-1, -1}, {1, 6}, {1, 7}, {3, 1}, {2, 0},
-		{1, 5}, {2, 6}, {2, 7}, {2, 1}, {2, 4},
-		{2, 5}, {1, 2}, {2, 3}, {2, 2}, {3, 0},
-		{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1},
-		{-1, -1},
+	{ -1, -1 }, { 0, 5 },	{ 1, 1 },   { 1, 0 },	{ 0, 6 },   { 0, 7 },
+	{ -1, -1 }, { -1, -1 }, { 1, 4 },   { 1, 3 },	{ -1, -1 }, { 1, 6 },
+	{ 1, 7 },   { 3, 1 },	{ 2, 0 },   { 1, 5 },	{ 2, 6 },   { 2, 7 },
+	{ 2, 1 },   { 2, 4 },	{ 2, 5 },   { 1, 2 },	{ 2, 3 },   { 2, 2 },
+	{ 3, 0 },   { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 },
+	{ -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
@@ -137,16 +136,16 @@ static void bc12_interrupt(enum gpio_signal signal)
 
 /******************************************************************************/
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
-};
+const struct spi_device_t spi_devices[] = {};
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT]   = { .channel = 3, .flags = 0, .freq = 10000 },
-	[PWM_CH_FAN] = {.channel = 5, .flags = PWM_CONFIG_OPEN_DRAIN,
-			.freq = 25000},
+	[PWM_CH_KBLIGHT] = { .channel = 3, .flags = 0, .freq = 10000 },
+	[PWM_CH_FAN] = { .channel = 5,
+			 .flags = PWM_CONFIG_OPEN_DRAIN,
+			 .freq = 25000 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -213,23 +212,17 @@ static struct accelgyro_saved_data_t g_bma255_data;
 static struct kionix_accel_data g_kx022_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, FLOAT_TO_FP(-1), 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t base_icm_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_icm_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					 { FLOAT_TO_FP(-1), 0, 0 },
+					 { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t kx022_lid_accel = {
 	.name = "Lid Accel",
@@ -301,7 +294,6 @@ struct motion_sensor_t icm426xx_base_gyro = {
 	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
 	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 };
-
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -382,7 +374,7 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
@@ -401,37 +393,36 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {NPCX_MFT_MODULE_1, TCKC_LFCLK, PWM_CH_FAN},
+	[MFT_CH_0] = { NPCX_MFT_MODULE_1, TCKC_LFCLK, PWM_CH_FAN },
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_1] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_2] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_3] = {
-		"TEMP_WIFI", NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_1] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_2] = { "TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT,
+				ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_3] = { "TEMP_WIFI", NPCX_ADC_CH3, ADC_MAX_VOLT,
+				ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Temp1",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Temp2",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_2},
-	[TEMP_SENSOR_3] = {.name = "Temp3",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_3},
+	[TEMP_SENSOR_1] = { .name = "Temp1",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_30k9_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Temp2",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_30k9_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
+	[TEMP_SENSOR_3] = { .name = "Temp3",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_30k9_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
 
 /* Hatch Temperature sensors */
 /*
@@ -442,8 +433,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_A \
-	{ \
+#define THERMAL_A                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
@@ -498,7 +489,6 @@ static void board_gpio_set_pp5000(void)
 	} else if (board_id >= 1) {
 		reset_gpio_flags(GPIO_EN_PP5000_A_V1, GPIO_OUT_LOW);
 	}
-
 }
 
 bool board_is_convertible(void)
@@ -582,15 +572,14 @@ static void determine_accel_devices(void)
 
 	if (read_time == 0 && board_is_convertible()) {
 		/* Read g sensor chip id*/
-		i2c_read8(I2C_PORT_ACCEL,
-			  KX022_ADDR0_FLAGS, KX022_WHOAMI, &lid_device_id);
+		i2c_read8(I2C_PORT_ACCEL, KX022_ADDR0_FLAGS, KX022_WHOAMI,
+			  &lid_device_id);
 		/* Read gyro sensor id*/
-		i2c_read8(I2C_PORT_ACCEL,
-			  ICM426XX_ADDR0_FLAGS,
-			    ICM426XX_REG_WHO_AM_I, &base_device_id);
+		i2c_read8(I2C_PORT_ACCEL, ICM426XX_ADDR0_FLAGS,
+			  ICM426XX_REG_WHO_AM_I, &base_device_id);
 
-		CPRINTS("Motion Sensor Base id = %d Lid id =%d",
-			  base_device_id, lid_device_id);
+		CPRINTS("Motion Sensor Base id = %d Lid id =%d", base_device_id,
+			lid_device_id);
 
 		if (lid_device_id == KX022_WHO_AM_I_VAL) {
 			motion_sensors[LID_ACCEL] = kx022_lid_accel;
@@ -657,7 +646,8 @@ __override void board_chipset_forced_shutdown(void)
 {
 	hook_call_deferred(&check_reboot_deferred_data, -1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_forced_shutdown, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_forced_shutdown,
+	     HOOK_PRIO_DEFAULT);
 
 static void check_reboot_deferred(void)
 {
