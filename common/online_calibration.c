@@ -202,8 +202,7 @@ void online_calibration_init(void)
 		void *type_specific_data = NULL;
 
 		s->online_calib_data->last_temperature = -1;
-		type_specific_data =
-			s->online_calib_data->type_specific_data;
+		type_specific_data = s->online_calib_data->type_specific_data;
 
 		if (!type_specific_data)
 			continue;
