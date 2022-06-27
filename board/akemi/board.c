@@ -43,8 +43,8 @@
 #include "util.h"
 #include "battery_smart.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* GPIO to enable/disable the USB Type-A port. */
 const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
@@ -105,16 +105,16 @@ static void bc12_interrupt(enum gpio_signal signal)
 
 /******************************************************************************/
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
-};
+const struct spi_device_t spi_devices[] = {};
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT]   = { .channel = 3, .flags = 0, .freq = 10000 },
-	[PWM_CH_FAN] = {.channel = 5, .flags = PWM_CONFIG_OPEN_DRAIN,
-			.freq = 25000},
+	[PWM_CH_KBLIGHT] = { .channel = 3, .flags = 0, .freq = 10000 },
+	[PWM_CH_FAN] = { .channel = 5,
+			 .flags = PWM_CONFIG_OPEN_DRAIN,
+			 .freq = 25000 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -177,17 +177,13 @@ static struct stprivate_data g_lis2dwl_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, FLOAT_TO_FP(1), 0 },
+					      { 0, 0, FLOAT_TO_FP(-1) } };
 
-static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+					     { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -267,13 +263,12 @@ struct motion_sensor_t motion_sensors[] = {
 };
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
 
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
@@ -292,35 +287,34 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {NPCX_MFT_MODULE_1, TCKC_LFCLK, PWM_CH_FAN},
+	[MFT_CH_0] = { NPCX_MFT_MODULE_1, TCKC_LFCLK, PWM_CH_FAN },
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_1] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_2] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_1] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_2] = { "TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT,
+				ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Temp1",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Temp2",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_2},
-	[TEMP_SENSOR_3] = {.name = "Temp3",
-				 .type = TEMP_SENSOR_TYPE_CPU,
-				 .read = g753_get_val,
-				 .idx = 0},
+	[TEMP_SENSOR_1] = { .name = "Temp1",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Temp2",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
+	[TEMP_SENSOR_3] = { .name = "Temp3",
+			    .type = TEMP_SENSOR_TYPE_CPU,
+			    .read = g753_get_val,
+			    .idx = 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-
 
 /* Hatch Temperature sensors */
 /*
@@ -331,8 +325,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_A \
-	{ \
+#define THERMAL_A                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
@@ -391,12 +385,12 @@ __override uint32_t board_override_feature_flags0(uint32_t flags0)
 }
 
 /* Battery functions */
-#define SB_OPTIONALMFG_FUNCTION2        0x26
-#define QUICK_CHARGE_SUPPORT            0x01
-#define QUICK_CHARGE_ENABLE             0x02
+#define SB_OPTIONALMFG_FUNCTION2 0x26
+#define QUICK_CHARGE_SUPPORT 0x01
+#define QUICK_CHARGE_ENABLE 0x02
 
-#define SB_QUICK_CHARGE_ENABLE          1
-#define SB_QUICK_CHARGE_DISABLE         0
+#define SB_QUICK_CHARGE_ENABLE 1
+#define SB_QUICK_CHARGE_DISABLE 0
 
 static void sb_quick_charge_mode(int enable)
 {
@@ -422,7 +416,8 @@ static void board_chipset_startup(void)
 	/* Normal charge current */
 	sb_quick_charge_mode(SB_QUICK_CHARGE_DISABLE);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
+	     HOOK_PRIO_INIT_I2C + 1);
 
 /* Called on AP S0 -> S5 transition */
 static void board_chipset_shutdown(void)
@@ -437,5 +432,5 @@ bool board_is_convertible(void)
 	const uint8_t sku = get_board_sku();
 
 	return (sku == 255) || (sku == 1) || (sku == 2) || (sku == 3) ||
-		(sku == 4);
+	       (sku == 4);
 }
