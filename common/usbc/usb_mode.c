@@ -26,8 +26,8 @@
 #include "usbc_ppc.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #else
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
@@ -117,7 +117,7 @@ static void usb4_debug_prints(int port, enum usb4_mode_status usb4_status)
 bool enter_usb_entry_is_done(int port)
 {
 	return usb4_state[port] == USB4_ACTIVE ||
-		usb4_state[port] == USB4_INACTIVE;
+	       usb4_state[port] == USB4_INACTIVE;
 }
 
 void usb4_exit_mode_request(int port)
@@ -153,7 +153,7 @@ static bool enter_usb_response_valid(int port, enum tcpci_msg_type type)
 	 * Check for an unexpected response.
 	 */
 	if (get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE &&
-	     type != TCPCI_MSG_SOP) {
+	    type != TCPCI_MSG_SOP) {
 		enter_usb_failed(port);
 		return false;
 	}
@@ -163,7 +163,7 @@ static bool enter_usb_response_valid(int port, enum tcpci_msg_type type)
 bool enter_usb_port_partner_is_capable(int port)
 {
 	const struct pd_discovery *disc =
-			pd_get_am_discovery(port, TCPCI_MSG_SOP);
+		pd_get_am_discovery(port, TCPCI_MSG_SOP);
 
 	if (usb4_state[port] == USB4_INACTIVE)
 		return false;
@@ -185,7 +185,7 @@ bool enter_usb_cable_is_capable(int port)
 
 		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) >= VDM_VER20 &&
 		    disc_sop_prime->identity.product_t1.a_rev30.vdo_ver >=
-							VDO_VERSION_1_3) {
+			    VDO_VERSION_1_3) {
 			union active_cable_vdo2_rev30 a2_rev30 =
 				disc_sop_prime->identity.product_t2.a2_rev30;
 			/*
@@ -195,25 +195,25 @@ bool enter_usb_cable_is_capable(int port)
 			 */
 			if (a2_rev30.usb_40_support == USB4_NOT_SUPPORTED)
 				return false;
-		/*
-		 * For VDM version < 2.0 or VDO version < 1.3, do not enter USB4
-		 * mode if the cable -
-		 * doesn't support modal operation or
-		 * doesn't support Intel SVID or
-		 * doesn't have rounded support.
-		 */
+			/*
+			 * For VDM version < 2.0 or VDO version < 1.3, do not
+			 * enter USB4 mode if the cable - doesn't support modal
+			 * operation or doesn't support Intel SVID or doesn't
+			 * have rounded support.
+			 */
 		} else {
 			const struct pd_discovery *disc =
 				pd_get_am_discovery(port, TCPCI_MSG_SOP);
 			union tbt_mode_resp_cable cable_mode_resp = {
-				.raw_value = pd_get_tbt_mode_vdo(port,
-							TCPCI_MSG_SOP_PRIME) };
+				.raw_value = pd_get_tbt_mode_vdo(
+					port, TCPCI_MSG_SOP_PRIME)
+			};
 
 			if (!disc->identity.idh.modal_support ||
-			   !pd_is_mode_discovered_for_svid(port,
-					TCPCI_MSG_SOP_PRIME, USB_VID_INTEL) ||
+			    !pd_is_mode_discovered_for_svid(
+				    port, TCPCI_MSG_SOP_PRIME, USB_VID_INTEL) ||
 			    cable_mode_resp.tbt_rounded !=
-					TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED)
+				    TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED)
 				return false;
 		}
 	} else {
@@ -288,7 +288,7 @@ uint32_t enter_usb_setup_next_msg(int port, enum tcpci_msg_type *type)
 
 		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) < VDM_VER20 ||
 		    disc_sop_prime->identity.product_t1.a_rev30.vdo_ver <
-							VDO_VERSION_1_3 ||
+			    VDO_VERSION_1_3 ||
 		    get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) {
 			usb4_state[port] = USB4_ENTER_SOP;
 		} else {
