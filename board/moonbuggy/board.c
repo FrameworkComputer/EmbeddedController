@@ -36,8 +36,8 @@
 #include "usb_common.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 static void power_monitor(void);
 DECLARE_DEFERRED(power_monitor);
@@ -49,14 +49,14 @@ static int32_t base_5v_power;
  * Power usage for each port as measured or estimated.
  * Units are milliwatts (5v x ma current)
  */
-#define PWR_BASE_LOAD	(5*1335)
-#define PWR_FRONT_HIGH	(5*1500)
-#define PWR_FRONT_LOW	(5*900)
-#define PWR_REAR	(5*1500)
-#define PWR_HDMI	(5*562)
-#define PWR_C_HIGH	(5*3740)
-#define PWR_C_LOW	(5*2090)
-#define PWR_MAX		(5*10000)
+#define PWR_BASE_LOAD (5 * 1335)
+#define PWR_FRONT_HIGH (5 * 1500)
+#define PWR_FRONT_LOW (5 * 900)
+#define PWR_REAR (5 * 1500)
+#define PWR_HDMI (5 * 562)
+#define PWR_C_HIGH (5 * 3740)
+#define PWR_C_LOW (5 * 2090)
+#define PWR_MAX (5 * 10000)
 
 /*
  * Update the 5V power usage, assuming no throttling,
@@ -147,64 +147,52 @@ void ads_12v_interrupt(enum gpio_signal signal)
 
 /******************************************************************************/
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
-};
+const struct spi_device_t spi_devices[] = {};
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_FAN]        = { .channel = 5,
-				.flags = PWM_CONFIG_OPEN_DRAIN,
-				.freq = 25000},
-	[PWM_CH_LED_RED]    = { .channel = 0,
-				.flags = PWM_CONFIG_ACTIVE_LOW |
-					 PWM_CONFIG_DSLEEP,
-				.freq = 2000 },
-	[PWM_CH_LED_WHITE]  = { .channel = 2,
-				.flags = PWM_CONFIG_ACTIVE_LOW |
-					 PWM_CONFIG_DSLEEP,
-				.freq = 2000 },
+	[PWM_CH_FAN] = { .channel = 5,
+			 .flags = PWM_CONFIG_OPEN_DRAIN,
+			 .freq = 25000 },
+	[PWM_CH_LED_RED] = { .channel = 0,
+			     .flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+			     .freq = 2000 },
+	[PWM_CH_LED_WHITE] = { .channel = 2,
+			       .flags = PWM_CONFIG_ACTIVE_LOW |
+					PWM_CONFIG_DSLEEP,
+			       .freq = 2000 },
 };
 
 /******************************************************************************/
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "ina",
-		.port = I2C_PORT_INA,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_SCL,
-		.sda  = GPIO_I2C0_SDA
-	},
-	{
-		.name = "tcpc0",
-		.port = I2C_PORT_TCPC0,
-		.kbps = 400,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA
-	},
-	{
-		.name = "pse",
-		.port = I2C_PORT_PSE,
-		.kbps = 400,
-		.scl  = GPIO_I2C4_SCL,
-		.sda  = GPIO_I2C4_SDA
-	},
-	{
-		.name = "power",
-		.port = I2C_PORT_POWER,
-		.kbps = 400,
-		.scl  = GPIO_I2C5_SCL,
-		.sda  = GPIO_I2C5_SDA
-	},
-	{
-		.name = "eeprom",
-		.port = I2C_PORT_EEPROM,
-		.kbps = 400,
-		.scl  = GPIO_I2C7_SCL,
-		.sda  = GPIO_I2C7_SDA
-	},
+	{ .name = "ina",
+	  .port = I2C_PORT_INA,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
+	{ .name = "pse",
+	  .port = I2C_PORT_PSE,
+	  .kbps = 400,
+	  .scl = GPIO_I2C4_SCL,
+	  .sda = GPIO_I2C4_SDA },
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 400,
+	  .scl = GPIO_I2C5_SCL,
+	  .sda = GPIO_I2C5_SDA },
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_I2C7_SCL,
+	  .sda = GPIO_I2C7_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -260,15 +248,14 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /******************************************************************************/
 /* Wake up pins */
-const enum gpio_signal hibernate_wake_pins[] = {
-};
+const enum gpio_signal hibernate_wake_pins[] = {};
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = -1,
 };
@@ -287,7 +274,7 @@ BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN},
+	[MFT_CH_0] = { NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN },
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
@@ -296,8 +283,8 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_A \
-	{ \
+#define THERMAL_A                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
@@ -386,14 +373,12 @@ static void board_init(void)
 	/* ADS GPIO interrupt enable*/
 	gpio_enable_interrupt(GPIO_ADS_5VS_V2_ADP_PRESENT_L);
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_L);
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /******************************************************************************/
 /* USB-A port control */
-const int usb_port_enable[USB_PORT_COUNT] = {
-};
+const int usb_port_enable[USB_PORT_COUNT] = {};
 
 int64_t get_time_dsw_pwrok(void)
 {
@@ -454,23 +439,23 @@ void board_enable_s0_rails(int enable)
  *
  *  All measurements are in milliwatts.
  */
-#define THROT_TYPE_A		BIT(0)
-#define THROT_TYPE_C		BIT(1)
-#define THROT_PROCHOT		BIT(2)
+#define THROT_TYPE_A BIT(0)
+#define THROT_TYPE_C BIT(1)
+#define THROT_PROCHOT BIT(2)
 
 /*
  * Power gain if front USB A ports are limited.
  */
-#define POWER_GAIN_TYPE_A	3200
+#define POWER_GAIN_TYPE_A 3200
 /*
  * Power gain if Type C port is limited.
  */
-#define POWER_GAIN_TYPE_C	8800
+#define POWER_GAIN_TYPE_C 8800
 /*
  * Power is averaged over 10 ms, with a reading every 2 ms.
  */
-#define POWER_DELAY_MS		2
-#define POWER_READINGS		(10/POWER_DELAY_MS)
+#define POWER_DELAY_MS 2
+#define POWER_READINGS (10 / POWER_DELAY_MS)
 
 static void power_monitor(void)
 {
@@ -483,8 +468,7 @@ static void power_monitor(void)
 	 * If CPU is off or suspended, no need to throttle
 	 * or restrict power.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-			     CHIPSET_STATE_SUSPEND)) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF | CHIPSET_STATE_SUSPEND)) {
 		/*
 		 * Slow down monitoring, assume no throttling required.
 		 */
