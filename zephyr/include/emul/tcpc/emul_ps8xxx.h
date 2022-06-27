@@ -47,7 +47,7 @@ enum ps8xxx_emul_port {
 };
 
 /* For now all devices supported by this emulator has the same FW rev reg */
-#define PS8XXX_REG_FW_REV		0x82
+#define PS8XXX_REG_FW_REV 0x82
 
 /**
  * @brief Get pointer to specific "hidden" I2C device
