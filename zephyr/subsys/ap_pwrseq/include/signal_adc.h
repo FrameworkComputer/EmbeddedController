@@ -6,7 +6,7 @@
 #ifndef __AP_PWRSEQ_SIGNAL_ADC_H__
 #define __AP_PWRSEQ_SIGNAL_ADC_H__
 
-#define PWR_SIG_TAG_ADC	PWR_ADC_
+#define PWR_SIG_TAG_ADC PWR_ADC_
 
 /*
  * Generate enums for the analogue converters.
@@ -21,13 +21,13 @@
 
 enum pwr_sig_adc {
 #if HAS_ADC_SIGNALS
-DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc, PWR_ADC_ENUM)
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_adc, PWR_ADC_ENUM)
 #endif
-	PWR_SIG_ADC_COUNT
+		PWR_SIG_ADC_COUNT
 };
 
-#undef	PWR_ADC_ENUM
-#undef	TAG_ADC
+#undef PWR_ADC_ENUM
+#undef TAG_ADC
 
 /**
  * @brief Get the value of the ADC power signal.
