@@ -23,28 +23,27 @@
  *		cover-scale = <1>;
  *	};
  */
-#define ACCELGYRO_ALS_CHANNEL_SCALE(id)					\
-	{								\
-		.k_channel_scale =					\
-			ALS_CHANNEL_SCALE(DT_PROP(id, k_channel_scale)),\
-		.cover_scale =						\
-			ALS_CHANNEL_SCALE(DT_PROP(id, cover_scale)),	\
+#define ACCELGYRO_ALS_CHANNEL_SCALE(id)                                     \
+	{                                                                   \
+		.k_channel_scale =                                          \
+			ALS_CHANNEL_SCALE(DT_PROP(id, k_channel_scale)),    \
+		.cover_scale = ALS_CHANNEL_SCALE(DT_PROP(id, cover_scale)), \
 	}
 
-#define ALS_CALIBRATION_CHANNEL_SCALE(id)				\
+#define ALS_CALIBRATION_CHANNEL_SCALE(id) \
 	.als_cal.channel_scale = ACCELGYRO_ALS_CHANNEL_SCALE(id),
 
-#define ALS_CALIBRATION_SET(id)					\
-	.als_cal.scale = DT_PROP(id, scale),			\
-	.als_cal.uscale = DT_PROP(id, uscale),			\
-	.als_cal.offset = DT_PROP(id, offset),			\
+#define ALS_CALIBRATION_SET(id)                \
+	.als_cal.scale = DT_PROP(id, scale),   \
+	.als_cal.uscale = DT_PROP(id, uscale), \
+	.als_cal.offset = DT_PROP(id, offset), \
 	ALS_CALIBRATION_CHANNEL_SCALE(DT_CHILD(id, als_channel_scale))
 
 /*
  * compatible = "cros-ec,accelgyro-als-drv-data"
  * als_drv_data_t in accelgyro.h
  *
- * e.g) The following is the example in DT for als_drv_data_t 
+ * e.g) The following is the example in DT for als_drv_data_t
  * als-drv-data {
  *	compatible = "cros-ec,accelgyro-als-drv-data";
  *	als-cal {
@@ -59,22 +58,21 @@
  *	};
  * };
  */
-#define ACCELGYRO_ALS_DRV_DATA(id)					\
-	{								\
-		ALS_CALIBRATION_SET(DT_CHILD(id, als_cal))		\
+#define ACCELGYRO_ALS_DRV_DATA(id)                         \
+	{                                                  \
+		ALS_CALIBRATION_SET(DT_CHILD(id, als_cal)) \
 	}
 
-#define RGB_CAL_RGB_SET_SCALE(id)			\
-	.scale = ACCELGYRO_ALS_CHANNEL_SCALE(id),
+#define RGB_CAL_RGB_SET_SCALE(id) .scale = ACCELGYRO_ALS_CHANNEL_SCALE(id),
 
-#define RGB_CAL_RGB_SET_ONE(id, suffix)					\
-	.rgb_cal[suffix] = {						\
-	    .offset = DT_PROP(id, offset),				\
-	    .coeff[0] = FLOAT_TO_FP(DT_PROP_BY_IDX(id, coeff, 0)),	\
-	    .coeff[1] = FLOAT_TO_FP(DT_PROP_BY_IDX(id, coeff, 1)),	\
-	    .coeff[2] = FLOAT_TO_FP(DT_PROP_BY_IDX(id, coeff, 2)),	\
-	    .coeff[3] = FLOAT_TO_FP(DT_PROP_BY_IDX(id, coeff, 3)),	\
-	    RGB_CAL_RGB_SET_SCALE(DT_CHILD(id, als_channel_scale))	\
+#define RGB_CAL_RGB_SET_ONE(id, suffix)                                \
+	.rgb_cal[suffix] = {                                           \
+		.offset = DT_PROP(id, offset),                         \
+		.coeff[0] = FLOAT_TO_FP(DT_PROP_BY_IDX(id, coeff, 0)), \
+		.coeff[1] = FLOAT_TO_FP(DT_PROP_BY_IDX(id, coeff, 1)), \
+		.coeff[2] = FLOAT_TO_FP(DT_PROP_BY_IDX(id, coeff, 2)), \
+		.coeff[3] = FLOAT_TO_FP(DT_PROP_BY_IDX(id, coeff, 3)), \
+		RGB_CAL_RGB_SET_SCALE(DT_CHILD(id, als_channel_scale)) \
 	},
 
 /*
@@ -116,12 +114,12 @@
  *	};
  * };
  */
-#define ACCELGYRO_RGB_CALIBRATION(id)				\
-	{							\
-		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_x), X)	\
-		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_y), Y)	\
-		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_z), Z)	\
-		.irt = INT_TO_FP(DT_PROP(id, irt)),		\
+#define ACCELGYRO_RGB_CALIBRATION(id)                                 \
+	{                                                             \
+		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_x), X)       \
+		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_y), Y)       \
+		RGB_CAL_RGB_SET_ONE(DT_CHILD(id, rgb_cal_z), Z).irt = \
+			INT_TO_FP(DT_PROP(id, irt)),                  \
 	}
 
 #endif /* __ZEPHYR_SHIM_SRC_MOTIONSENSE_DRIVER_DRVDATA_ACCELGYRO_H */
