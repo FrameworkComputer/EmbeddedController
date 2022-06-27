@@ -10,15 +10,15 @@
 #ifndef __CROS_EC_DRIVER_TCPM_CCGXXF_H
 #define __CROS_EC_DRIVER_TCPM_CCGXXF_H
 
-#define CCGXXF_I2C_ADDR1_FLAGS	0x0B
-#define CCGXXF_I2C_ADDR2_FLAGS	0x1B
+#define CCGXXF_I2C_ADDR1_FLAGS 0x0B
+#define CCGXXF_I2C_ADDR2_FLAGS 0x1B
 
 /* SBU FET control register */
-#define CCGXXF_REG_SBU_MUX_CTL	0xBB
+#define CCGXXF_REG_SBU_MUX_CTL 0xBB
 
 /* F/W info register */
-#define CCGXXF_REG_FW_VERSION		0x94
-#define CCGXXF_REG_FW_VERSION_BUILD	0x96
+#define CCGXXF_REG_FW_VERSION 0x94
+#define CCGXXF_REG_FW_VERSION_BUILD 0x96
 
 extern const struct tcpm_drv ccgxxf_tcpm_drv;
 
@@ -45,13 +45,13 @@ enum ccgxxf_io_pins {
 	CCGXXF_IO_7
 };
 
-#define CCGXXF_REG_GPIO_CONTROL(port)	((port) + 0x80)
-#define CCGXXF_REG_GPIO_STATUS(port)	((port) + 0x84)
+#define CCGXXF_REG_GPIO_CONTROL(port) ((port) + 0x80)
+#define CCGXXF_REG_GPIO_STATUS(port) ((port) + 0x84)
 
-#define CCGXXF_REG_GPIO_MODE		0x88
-#define CCGXXF_GPIO_PIN_MASK_SHIFT	8
-#define CCGXXF_GPIO_PIN_MODE_SHIFT	2
-#define CCGXXF_GPIO_1P8V_SEL		BIT(7)
+#define CCGXXF_REG_GPIO_MODE 0x88
+#define CCGXXF_GPIO_PIN_MASK_SHIFT 8
+#define CCGXXF_GPIO_PIN_MODE_SHIFT 2
+#define CCGXXF_GPIO_1P8V_SEL BIT(7)
 
 enum ccgxxf_gpio_mode {
 	CCGXXF_GPIO_MODE_HIZ_ANALOG,
