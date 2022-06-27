@@ -54,7 +54,6 @@ struct usb_stream_config {
 extern struct consumer_ops const usb_stream_consumer_ops;
 extern struct producer_ops const usb_stream_producer_ops;
 
-
 /*
  * Convenience macro for defining USB streams and their associated state and
  * buffers.
@@ -92,26 +91,19 @@ extern struct producer_ops const usb_stream_producer_ops;
  * BUILD_ASSERT(RX_QUEUE.unit_bytes == 1);
  * BUILD_ASSERT(TX_QUEUE.unit_bytes == 1);
  */
-#define USB_STREAM_CONFIG_FULL(NAME,					\
-			       INTERFACE,				\
-			       INTERFACE_CLASS,				\
-			       INTERFACE_SUBCLASS,			\
-			       INTERFACE_PROTOCOL,			\
-			       INTERFACE_NAME,				\
-			       ENDPOINT,				\
-			       RX_SIZE,					\
-			       TX_SIZE,					\
-			       RX_QUEUE,				\
-			       TX_QUEUE)				\
-									\
-	static uint8_t CONCAT2(NAME, _buf_rx_)[RX_SIZE];		\
-	static uint8_t CONCAT2(NAME, _buf_tx_)[TX_SIZE];		\
-	static int CONCAT2(NAME, _is_reset_);				\
-	static int CONCAT2(NAME, _overflow_);				\
-	static void CONCAT2(NAME, _deferred_tx_)(void);			\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_tx_));			\
-	static void CONCAT2(NAME, _deferred_rx_)(void);			\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_rx_));			\
+#define USB_STREAM_CONFIG_FULL(NAME, INTERFACE, INTERFACE_CLASS,               \
+			       INTERFACE_SUBCLASS, INTERFACE_PROTOCOL,         \
+			       INTERFACE_NAME, ENDPOINT, RX_SIZE, TX_SIZE,     \
+			       RX_QUEUE, TX_QUEUE)                             \
+                                                                               \
+	static uint8_t CONCAT2(NAME, _buf_rx_)[RX_SIZE];                       \
+	static uint8_t CONCAT2(NAME, _buf_tx_)[TX_SIZE];                       \
+	static int CONCAT2(NAME, _is_reset_);                                  \
+	static int CONCAT2(NAME, _overflow_);                                  \
+	static void CONCAT2(NAME, _deferred_tx_)(void);                        \
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_tx_));                        \
+	static void CONCAT2(NAME, _deferred_rx_)(void);                        \
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_rx_));                        \
 	struct usb_stream_config const NAME = {				\
 		.endpoint     = ENDPOINT,				\
 		.is_reset     = &CONCAT2(NAME, _is_reset_),		\
@@ -130,94 +122,80 @@ extern struct producer_ops const usb_stream_producer_ops;
 			.queue = &RX_QUEUE,				\
 			.ops   = &usb_stream_producer_ops,		\
 		},							\
-	};								\
-	const struct usb_interface_descriptor				\
-	USB_IFACE_DESC(INTERFACE) = {					\
-		.bLength            = USB_DT_INTERFACE_SIZE,		\
-		.bDescriptorType    = USB_DT_INTERFACE,			\
-		.bInterfaceNumber   = INTERFACE,			\
-		.bAlternateSetting  = 0,				\
-		.bNumEndpoints      = 2,				\
-		.bInterfaceClass    = INTERFACE_CLASS,			\
-		.bInterfaceSubClass = INTERFACE_SUBCLASS,		\
-		.bInterfaceProtocol = INTERFACE_PROTOCOL,		\
-		.iInterface         = INTERFACE_NAME,			\
-	};								\
-	const struct usb_endpoint_descriptor				\
-	USB_EP_DESC(INTERFACE, 0) = {					\
-		.bLength          = USB_DT_ENDPOINT_SIZE,		\
-		.bDescriptorType  = USB_DT_ENDPOINT,			\
-		.bEndpointAddress = 0x80 | ENDPOINT,			\
-		.bmAttributes     = 0x02 /* Bulk IN */,			\
-		.wMaxPacketSize   = TX_SIZE,				\
-		.bInterval        = 10,					\
-	};								\
-	const struct usb_endpoint_descriptor				\
-	USB_EP_DESC(INTERFACE, 1) = {					\
-		.bLength          = USB_DT_ENDPOINT_SIZE,		\
-		.bDescriptorType  = USB_DT_ENDPOINT,			\
-		.bEndpointAddress = ENDPOINT,				\
-		.bmAttributes     = 0x02 /* Bulk OUT */,		\
-		.wMaxPacketSize   = RX_SIZE,				\
-		.bInterval        = 0,					\
-	};								\
-	static void CONCAT2(NAME, _deferred_tx_)(void)			\
-	{ tx_stream_handler(&NAME); }					\
-	static void CONCAT2(NAME, _deferred_rx_)(void)			\
-	{ rx_stream_handler(&NAME); }					\
-	static void CONCAT2(NAME, _ep_tx)(void)				\
-	{								\
-		usb_epN_tx(ENDPOINT);					\
-	}								\
-	static void CONCAT2(NAME, _ep_rx)(void)				\
-	{								\
-		usb_epN_rx(ENDPOINT);					\
-	}								\
-	static void CONCAT2(NAME, _ep_event)(enum usb_ep_event evt)	\
-	{								\
-		usb_stream_event(&NAME, evt);				\
-	}								\
-	struct dwc_usb_ep CONCAT2(NAME, _ep_ctl) = {			\
-		.max_packet = USB_MAX_PACKET_SIZE,			\
-		.tx_fifo = ENDPOINT,					\
-		.out_pending = 0,					\
-		.out_expected = 0,					\
-		.out_data = 0,						\
-		.out_databuffer = CONCAT2(NAME, _buf_rx_),		\
-		.out_databuffer_max = RX_SIZE,				\
-		.rx_deferred = &CONCAT2(NAME, _deferred_rx__data),	\
-		.in_packets = 0,					\
-		.in_pending = 0,					\
-		.in_data = 0,						\
-		.in_databuffer = CONCAT2(NAME, _buf_tx_),		\
-		.in_databuffer_max = TX_SIZE,				\
-		.tx_deferred = &CONCAT2(NAME, _deferred_tx__data),	\
-	};								\
-	USB_DECLARE_EP(ENDPOINT,					\
-		       CONCAT2(NAME, _ep_tx),				\
-		       CONCAT2(NAME, _ep_rx),				\
+	};                           \
+	const struct usb_interface_descriptor USB_IFACE_DESC(INTERFACE) = {    \
+		.bLength = USB_DT_INTERFACE_SIZE,                              \
+		.bDescriptorType = USB_DT_INTERFACE,                           \
+		.bInterfaceNumber = INTERFACE,                                 \
+		.bAlternateSetting = 0,                                        \
+		.bNumEndpoints = 2,                                            \
+		.bInterfaceClass = INTERFACE_CLASS,                            \
+		.bInterfaceSubClass = INTERFACE_SUBCLASS,                      \
+		.bInterfaceProtocol = INTERFACE_PROTOCOL,                      \
+		.iInterface = INTERFACE_NAME,                                  \
+	};                                                                     \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 0) = {     \
+		.bLength = USB_DT_ENDPOINT_SIZE,                               \
+		.bDescriptorType = USB_DT_ENDPOINT,                            \
+		.bEndpointAddress = 0x80 | ENDPOINT,                           \
+		.bmAttributes = 0x02 /* Bulk IN */,                            \
+		.wMaxPacketSize = TX_SIZE,                                     \
+		.bInterval = 10,                                               \
+	};                                                                     \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 1) = {     \
+		.bLength = USB_DT_ENDPOINT_SIZE,                               \
+		.bDescriptorType = USB_DT_ENDPOINT,                            \
+		.bEndpointAddress = ENDPOINT,                                  \
+		.bmAttributes = 0x02 /* Bulk OUT */,                           \
+		.wMaxPacketSize = RX_SIZE,                                     \
+		.bInterval = 0,                                                \
+	};                                                                     \
+	static void CONCAT2(NAME, _deferred_tx_)(void)                         \
+	{                                                                      \
+		tx_stream_handler(&NAME);                                      \
+	}                                                                      \
+	static void CONCAT2(NAME, _deferred_rx_)(void)                         \
+	{                                                                      \
+		rx_stream_handler(&NAME);                                      \
+	}                                                                      \
+	static void CONCAT2(NAME, _ep_tx)(void)                                \
+	{                                                                      \
+		usb_epN_tx(ENDPOINT);                                          \
+	}                                                                      \
+	static void CONCAT2(NAME, _ep_rx)(void)                                \
+	{                                                                      \
+		usb_epN_rx(ENDPOINT);                                          \
+	}                                                                      \
+	static void CONCAT2(NAME, _ep_event)(enum usb_ep_event evt)            \
+	{                                                                      \
+		usb_stream_event(&NAME, evt);                                  \
+	}                                                                      \
+	struct dwc_usb_ep CONCAT2(NAME, _ep_ctl) = {                           \
+		.max_packet = USB_MAX_PACKET_SIZE,                             \
+		.tx_fifo = ENDPOINT,                                           \
+		.out_pending = 0,                                              \
+		.out_expected = 0,                                             \
+		.out_data = 0,                                                 \
+		.out_databuffer = CONCAT2(NAME, _buf_rx_),                     \
+		.out_databuffer_max = RX_SIZE,                                 \
+		.rx_deferred = &CONCAT2(NAME, _deferred_rx__data),             \
+		.in_packets = 0,                                               \
+		.in_pending = 0,                                               \
+		.in_data = 0,                                                  \
+		.in_databuffer = CONCAT2(NAME, _buf_tx_),                      \
+		.in_databuffer_max = TX_SIZE,                                  \
+		.tx_deferred = &CONCAT2(NAME, _deferred_tx__data),             \
+	};                                                                     \
+	USB_DECLARE_EP(ENDPOINT, CONCAT2(NAME, _ep_tx), CONCAT2(NAME, _ep_rx), \
 		       CONCAT2(NAME, _ep_event));
 
 /* This is a short version for declaring Google serial endpoints */
-#define USB_STREAM_CONFIG(NAME,						\
-			  INTERFACE,					\
-			  INTERFACE_NAME,				\
-			  ENDPOINT,					\
-			  RX_SIZE,					\
-			  TX_SIZE,					\
-			  RX_QUEUE,					\
-			  TX_QUEUE)					\
-	USB_STREAM_CONFIG_FULL(NAME,					\
-			       INTERFACE,				\
-			       USB_CLASS_VENDOR_SPEC,			\
-			       USB_SUBCLASS_GOOGLE_SERIAL,		\
-			       USB_PROTOCOL_GOOGLE_SERIAL,		\
-			       INTERFACE_NAME,				\
-			       ENDPOINT,				\
-			       RX_SIZE,					\
-			       TX_SIZE,					\
-			       RX_QUEUE,				\
-			       TX_QUEUE)
+#define USB_STREAM_CONFIG(NAME, INTERFACE, INTERFACE_NAME, ENDPOINT, RX_SIZE, \
+			  TX_SIZE, RX_QUEUE, TX_QUEUE)                        \
+	USB_STREAM_CONFIG_FULL(NAME, INTERFACE, USB_CLASS_VENDOR_SPEC,        \
+			       USB_SUBCLASS_GOOGLE_SERIAL,                    \
+			       USB_PROTOCOL_GOOGLE_SERIAL, INTERFACE_NAME,    \
+			       ENDPOINT, RX_SIZE, TX_SIZE, RX_QUEUE, TX_QUEUE)
 
 /*
  * Handle USB and Queue request in a deferred callback.
@@ -232,6 +210,6 @@ int tx_stream_handler(struct usb_stream_config const *config);
 void usb_stream_tx(struct usb_stream_config const *config);
 void usb_stream_rx(struct usb_stream_config const *config);
 void usb_stream_event(struct usb_stream_config const *config,
-		enum usb_ep_event evt);
+		      enum usb_ep_event evt);
 
 #endif /* __CROS_EC_USB_STREAM_H */
