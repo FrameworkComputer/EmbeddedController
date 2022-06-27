@@ -55,12 +55,12 @@ struct tcpci_drp_emul_data {
  *
  * @return Pointer to USB-C DRP extension
  */
-struct tcpci_partner_extension *tcpci_drp_emul_init(
-	struct tcpci_drp_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	enum pd_power_role power_role,
-	struct tcpci_partner_extension *src_ext,
-	struct tcpci_partner_extension *snk_ext);
+struct tcpci_partner_extension *
+tcpci_drp_emul_init(struct tcpci_drp_emul_data *data,
+		    struct tcpci_partner_data *common_data,
+		    enum pd_power_role power_role,
+		    struct tcpci_partner_extension *src_ext,
+		    struct tcpci_partner_extension *snk_ext);
 
 /**
  * @brief Set correct flags for first capabilities PDO to indicate that this
