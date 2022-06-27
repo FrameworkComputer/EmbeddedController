@@ -117,8 +117,8 @@ void board_base_reset(void);
  * @param curr Pointer to struct charge_state_data
  * @return Action to take.
  */
-enum critical_shutdown board_critical_shutdown_check(
-		struct charge_state_data *curr);
+enum critical_shutdown
+board_critical_shutdown_check(struct charge_state_data *curr);
 
 /**
  * Callback to set battery level for shutdown
