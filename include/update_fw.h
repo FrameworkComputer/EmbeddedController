@@ -43,8 +43,8 @@
  * block_base:   offset of this PDU into the flash SPI.
  */
 struct update_command {
-	uint32_t  block_digest;
-	uint32_t  block_base;
+	uint32_t block_digest;
+	uint32_t block_base;
 	/* The actual payload goes here. */
 } __packed;
 
@@ -112,8 +112,8 @@ struct first_response_pdu {
 		/* cr50 (header_type = UPDATE_HEADER_TYPE_CR50) */
 		struct {
 			/* The below fields are present in versions 3 and up. */
-			uint32_t  backup_ro_offset;
-			uint32_t  backup_rw_offset;
+			uint32_t backup_ro_offset;
+			uint32_t backup_rw_offset;
 
 			/* The below fields are present in versions 4 and up. */
 			/*
@@ -154,8 +154,8 @@ enum first_response_pdu_header_type {
 };
 
 /* TODO: Handle this in update_fw.c, not usb_update.c */
-#define UPDATE_DONE          0xB007AB1E
-#define UPDATE_EXTRA_CMD     0xB007AB1F
+#define UPDATE_DONE 0xB007AB1E
+#define UPDATE_EXTRA_CMD 0xB007AB1F
 
 enum update_extra_command {
 	UPDATE_EXTRA_CMD_IMMEDIATE_RESET = 0,
@@ -235,8 +235,7 @@ struct touchpad_info {
  */
 BUILD_ASSERT(sizeof(struct touchpad_info) <= 50);
 
-void fw_update_command_handler(void *body,
-			       size_t cmd_size,
+void fw_update_command_handler(void *body, size_t cmd_size,
 			       size_t *response_size);
 
 /* Used to tell fw update the update ran successfully and is finished */
@@ -286,4 +285,4 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 /* SHA256 hash of the touchpad firmware expected by this image. */
 extern const uint8_t touchpad_fw_full_hash[32];
 
-#endif  /* ! __CROS_EC_UPDATE_FW_H */
+#endif /* ! __CROS_EC_UPDATE_FW_H */
