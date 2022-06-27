@@ -51,7 +51,7 @@ void dpm_data_reset_complete(int port);
  * @param vdm       The VDM payload of the ACK
  */
 void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
-		uint32_t *vdm);
+		   uint32_t *vdm);
 
 /*
  * Informs the DPM that a VDM NAK was received. Also applies when a VDM request
@@ -63,7 +63,7 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
  * @param vdm_cmd The VDM command of the request
  */
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
-		uint8_t vdm_cmd);
+		   uint8_t vdm_cmd);
 
 /*
  * Drives the Policy Engine through entry/exit mode process
@@ -147,4 +147,4 @@ enum dpm_msg_setup_status {
 	MSG_SETUP_MUX_WAIT,
 };
 
-#endif  /* __CROS_EC_USB_DPM_H */
+#endif /* __CROS_EC_USB_DPM_H */
