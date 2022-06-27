@@ -11,9 +11,9 @@
 #include "common.h"
 
 enum port_80_event {
-	PORT_80_EVENT_RESUME = 0x1001,  /* S3->S0 transition */
-	PORT_80_EVENT_RESET = 0x1002,   /* RESET transition */
-	PORT_80_IGNORE = 0xffff,	/* Invalid POST CODE */
+	PORT_80_EVENT_RESUME = 0x1001, /* S3->S0 transition */
+	PORT_80_EVENT_RESET = 0x1002, /* RESET transition */
+	PORT_80_IGNORE = 0xffff, /* Invalid POST CODE */
 };
 
 /**
@@ -31,4 +31,4 @@ void port_80_write(int data);
  */
 int port_80_read(void);
 
-#endif  /* __CROS_EC_PORT80_H */
+#endif /* __CROS_EC_PORT80_H */
