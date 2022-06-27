@@ -21,13 +21,11 @@
 #include "tfdp_chip.h"
 
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
 
 #define QMSPI_TRANSFER_TIMEOUT (100 * MSEC)
 #define QMSPI_BYTE_TRANSFER_TIMEOUT_US (3 * MSEC)
 #define QMSPI_BYTE_TRANSFER_POLL_INTERVAL_US 20
-
-
 
 #ifndef CONFIG_MCHP_QMSPI_TX_DMA
 #ifdef LFW
@@ -137,8 +135,8 @@ static uint32_t qmspi_build_tx_descr(uint32_t ntx, uint32_t ndid)
  * value (1, 2, or 4).
  * Caller will apply close and last flags if applicable.
  */
-static uint64_t qmspi_build_rx_descr(uint32_t raddr,
-		uint32_t nrx, uint32_t ndid)
+static uint64_t qmspi_build_rx_descr(uint32_t raddr, uint32_t nrx,
+				     uint32_t ndid)
 {
 	uint32_t d, dmau, na;
 	uint64_t u;
@@ -182,9 +180,9 @@ static uint64_t qmspi_build_rx_descr(uint32_t raddr,
 
 #ifdef CONFIG_MCHP_QMSPI_TX_DMA
 
-#define QMSPI_ERR_ANY			0x80
-#define QMSPI_ERR_BAD_PTR		0x81
-#define QMSPI_ERR_OUT_OF_DESCR		0x85
+#define QMSPI_ERR_ANY 0x80
+#define QMSPI_ERR_BAD_PTR 0x81
+#define QMSPI_ERR_OUT_OF_DESCR 0x85
 
 /*
  * bits[1:0] of word
@@ -206,9 +204,9 @@ static void qmspi_descr_mode_ready(void)
 	int i;
 
 	MCHP_QMSPI0_CTRL = 0;
-	MCHP_QMSPI0_IEN  = 0;
-	MCHP_QMSPI0_EXE  = MCHP_QMSPI_EXE_CLR_FIFOS;
-	MCHP_QMSPI0_STS  = 0xfffffffful;
+	MCHP_QMSPI0_IEN = 0;
+	MCHP_QMSPI0_EXE = MCHP_QMSPI_EXE_CLR_FIFOS;
+	MCHP_QMSPI0_STS = 0xfffffffful;
 	MCHP_QMSPI0_CTRL = MCHP_QMSPI_C_DESCR_MODE_EN;
 	/* clear all descriptors */
 	for (i = 0; i < MCHP_QMSPI_MAX_DESCR; i++)
@@ -229,8 +227,7 @@ static void qmspi_descr_mode_ready(void)
  * and remaining < 16 bytes in byte unit descriptor until all bytes
  * exhausted or out of descriptors error.
  */
-static uint32_t qmspi_descr_alloc(uint32_t did,
-				uint32_t descr, uint32_t nb)
+static uint32_t qmspi_descr_alloc(uint32_t did, uint32_t descr, uint32_t nb)
 {
 	uint32_t nu;
 
@@ -238,8 +235,8 @@ static uint32_t qmspi_descr_alloc(uint32_t did,
 		if (did >= MCHP_QMSPI_MAX_DESCR)
 			return 0xffff;
 
-		descr &= ~(MCHP_QMSPI_C_NUM_UNITS_MASK +
-			MCHP_QMSPI_C_XFRU_MASK);
+		descr &=
+			~(MCHP_QMSPI_C_NUM_UNITS_MASK + MCHP_QMSPI_C_XFRU_MASK);
 
 		if (nb < (MCHP_QMSPI_C_MAX_UNITS + 1)) {
 			descr |= MCHP_QMSPI_C_XFRU_1B;
@@ -252,7 +249,7 @@ static uint32_t qmspi_descr_alloc(uint32_t did,
 			nb -= (nu << 4);
 		}
 
-		descr |= ((did+1) << MCHP_QMSPI_C_NEXT_DESCR_BITPOS);
+		descr |= ((did + 1) << MCHP_QMSPI_C_NEXT_DESCR_BITPOS);
 		MCHP_QMSPI0_DESCR(did) = descr;
 		if (nb)
 			did++;
@@ -271,9 +268,8 @@ static uint32_t qmspi_descr_alloc(uint32_t did,
  * channel and configure the DMA channel for memory to device transfer.
  */
 static uint32_t qmspi_xmit_data_descr(const struct dma_option *opdma,
-					uint32_t cfg,
-					const uint8_t *data,
-					uint32_t ndata)
+				      uint32_t cfg, const uint8_t *data,
+				      uint32_t ndata)
 {
 	uint32_t d, d2, did, dma_cfg;
 
@@ -282,7 +278,7 @@ static uint32_t qmspi_xmit_data_descr(const struct dma_option *opdma,
 
 	if (ndata <= MCHP_QMSPI_TX_FIFO_LEN) {
 		d2 = d + (ndata << MCHP_QMSPI_C_NUM_UNITS_BITPOS) +
-			MCHP_QMSPI_C_XFRU_1B + MCHP_QMSPI_C_TX_DATA;
+		     MCHP_QMSPI_C_XFRU_1B + MCHP_QMSPI_C_TX_DATA;
 		d2 += ((did + 1) << MCHP_QMSPI_C_NEXT_DESCR_BITPOS);
 		MCHP_QMSPI0_DESCR(did) = d2;
 		while (ndata--)
@@ -290,12 +286,10 @@ static uint32_t qmspi_xmit_data_descr(const struct dma_option *opdma,
 	} else { // TX DMA
 		if (((uint32_t)data | ndata) & 0x03) {
 			dma_cfg = 1;
-			d |= (MCHP_QMSPI_C_TX_DATA +
-				MCHP_QMSPI_C_TX_DMA_1B);
+			d |= (MCHP_QMSPI_C_TX_DATA + MCHP_QMSPI_C_TX_DMA_1B);
 		} else {
 			dma_cfg = 4;
-			d |= (MCHP_QMSPI_C_TX_DATA +
-				MCHP_QMSPI_C_TX_DMA_4B);
+			d |= (MCHP_QMSPI_C_TX_DATA + MCHP_QMSPI_C_TX_DMA_4B);
 		}
 		did = qmspi_descr_alloc(did, d, ndata);
 		if (did == 0xffff)
@@ -303,10 +297,9 @@ static uint32_t qmspi_xmit_data_descr(const struct dma_option *opdma,
 
 		dma_clr_chan(opdma->channel);
 		dma_cfg_buffers(opdma->channel, data, ndata,
-			(void *)MCHP_QMSPI0_TX_FIFO_ADDR);
-		dma_cfg_xfr(opdma->channel, dma_cfg,
-			MCHP_DMA_QMSPI0_TX_REQ_ID,
-			(DMA_FLAG_M2D + DMA_FLAG_INCR_MEM));
+				(void *)MCHP_QMSPI0_TX_FIFO_ADDR);
+		dma_cfg_xfr(opdma->channel, dma_cfg, MCHP_DMA_QMSPI0_TX_REQ_ID,
+			    (DMA_FLAG_M2D + DMA_FLAG_INCR_MEM));
 		dma_run(opdma->channel);
 	}
 
@@ -327,8 +320,8 @@ void qmspi_cfg_irq_start(uint8_t flags)
 	MCHP_QMSPI0_IEN = 0;
 
 	if (flags & (1u << 1)) {
-		MCHP_QMSPI0_IEN = (MCHP_QMSPI_STS_DONE +
-			MCHP_QMSPI_STS_PROG_ERR);
+		MCHP_QMSPI0_IEN =
+			(MCHP_QMSPI_STS_DONE + MCHP_QMSPI_STS_PROG_ERR);
 		MCHP_INT_ENABLE(MCHP_QMSPI_GIRQ) = MCHP_QMSPI_GIRQ_BIT;
 	}
 
@@ -349,10 +342,9 @@ void qmspi_cfg_irq_start(uint8_t flags)
  * returns last descriptor 0 <= index < MCHP_QMSPI_MAX_DESCR
  * or error (bit[7]==1)
  */
-uint8_t qmspi_xfr(const struct spi_device_t *spi_device,
-			uint32_t np_flags,
-			const uint8_t *txdata, uint32_t ntx,
-			uint8_t *rxdata, uint32_t nrx)
+uint8_t qmspi_xfr(const struct spi_device_t *spi_device, uint32_t np_flags,
+		  const uint8_t *txdata, uint32_t ntx, uint8_t *rxdata,
+		  uint32_t nrx)
 {
 	uint32_t d, did, dma_cfg;
 	const struct dma_option *opdma;
@@ -399,10 +391,9 @@ uint8_t qmspi_xfr(const struct spi_device_t *spi_device,
 		opdma = spi_dma_option(spi_device, SPI_DMA_OPTION_RD);
 		dma_clr_chan(opdma->channel);
 		dma_cfg_buffers(opdma->channel, rxdata, nrx,
-			(void *)MCHP_QMSPI0_RX_FIFO_ADDR);
-		dma_cfg_xfr(opdma->channel, dma_cfg,
-			MCHP_DMA_QMSPI0_RX_REQ_ID,
-			(DMA_FLAG_D2M + DMA_FLAG_INCR_MEM));
+				(void *)MCHP_QMSPI0_RX_FIFO_ADDR);
+		dma_cfg_xfr(opdma->channel, dma_cfg, MCHP_DMA_QMSPI0_RX_REQ_ID,
+			    (DMA_FLAG_D2M + DMA_FLAG_INCR_MEM));
 		dma_run(opdma->channel);
 	}
 
@@ -466,8 +457,8 @@ uint8_t qmspi_xfr(const struct spi_device_t *spi_device,
  */
 #ifdef CONFIG_MCHP_QMSPI_TX_DMA
 int qmspi_transaction_async(const struct spi_device_t *spi_device,
-				const uint8_t *txdata, int txlen,
-				uint8_t *rxdata, int rxlen)
+			    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			    int rxlen)
 {
 	uint32_t np_flags, ntx, nrx;
 	int ret;
@@ -482,9 +473,7 @@ int qmspi_transaction_async(const struct spi_device_t *spi_device,
 		nrx = (uint32_t)rxlen;
 
 	np_flags = 0x010105; /* b[0]=1 close on done, b[2]=1 start */
-	rc = qmspi_xfr(spi_device, np_flags,
-			txdata, ntx,
-			rxdata, nrx);
+	rc = qmspi_xfr(spi_device, np_flags, txdata, ntx, rxdata, nrx);
 
 	if (rc & QMSPI_ERR_ANY)
 		return EC_ERROR_INVAL;
@@ -498,8 +487,8 @@ int qmspi_transaction_async(const struct spi_device_t *spi_device,
  * Receive using DMA as above.
  */
 int qmspi_transaction_async(const struct spi_device_t *spi_device,
-				const uint8_t *txdata, int txlen,
-				uint8_t *rxdata, int rxlen)
+			    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			    int rxlen)
 {
 	const struct dma_option *opdma;
 	uint32_t d, did, dmau;
@@ -533,8 +522,7 @@ int qmspi_transaction_async(const struct spi_device_t *spi_device,
 		if (rxdata == NULL)
 			return EC_ERROR_PARAM4;
 
-		u = qmspi_build_rx_descr((uint32_t)rxdata,
-				(uint32_t)rxlen, 2);
+		u = qmspi_build_rx_descr((uint32_t)rxdata, (uint32_t)rxlen, 2);
 
 		d = (uint32_t)u;
 		dmau = u >> 32;
@@ -547,16 +535,16 @@ int qmspi_transaction_async(const struct spi_device_t *spi_device,
 		dma_xfr_start_rx(opdma, dmau, (uint32_t)rxlen, rxdata);
 	}
 
-	MCHP_QMSPI0_DESCR(did) |= (MCHP_QMSPI_C_CLOSE +
-			MCHP_QMSPI_C_DESCR_LAST);
+	MCHP_QMSPI0_DESCR(did) |=
+		(MCHP_QMSPI_C_CLOSE + MCHP_QMSPI_C_DESCR_LAST);
 
 	MCHP_QMSPI0_EXE = MCHP_QMSPI_EXE_START;
 
 	while (txlen--) {
 		if (MCHP_QMSPI0_STS & MCHP_QMSPI_STS_TX_BUFF_FULL) {
 			if (qmspi_wait(MCHP_QMSPI_STS_TX_BUFF_EMPTY,
-					MCHP_QMSPI_STS_TX_BUFF_EMPTY) !=
-							EC_SUCCESS) {
+				       MCHP_QMSPI_STS_TX_BUFF_EMPTY) !=
+			    EC_SUCCESS) {
 				MCHP_QMSPI0_EXE = MCHP_QMSPI_EXE_STOP;
 				return EC_ERROR_TIMEOUT;
 			}
@@ -673,8 +661,8 @@ int qmspi_enable(int hw_port, int enable)
 {
 	uint8_t unused __attribute__((unused)) = 0;
 
-	trace2(0, QMSPI, 0, "qmspi_enable: port = %d enable = %d",
-			hw_port, enable);
+	trace2(0, QMSPI, 0, "qmspi_enable: port = %d enable = %d", hw_port,
+	       enable);
 
 	if (hw_port != QMSPI0_PORT)
 		return EC_ERROR_INVAL;
@@ -685,9 +673,9 @@ int qmspi_enable(int hw_port, int enable)
 		MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_QMSPI);
 		MCHP_QMSPI0_MODE_ACT_SRST = MCHP_QMSPI_M_SOFT_RESET;
 		unused = MCHP_QMSPI0_MODE_ACT_SRST;
-		MCHP_QMSPI0_MODE = (MCHP_QMSPI_M_ACTIVATE +
-				MCHP_QMSPI_M_SPI_MODE0 +
-				MCHP_QMSPI_M_CLKDIV_12M);
+		MCHP_QMSPI0_MODE =
+			(MCHP_QMSPI_M_ACTIVATE + MCHP_QMSPI_M_SPI_MODE0 +
+			 MCHP_QMSPI_M_CLKDIV_12M);
 	} else {
 		MCHP_QMSPI0_MODE_ACT_SRST = MCHP_QMSPI_M_SOFT_RESET;
 		unused = MCHP_QMSPI0_MODE_ACT_SRST;
