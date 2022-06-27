@@ -34,8 +34,8 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* USBC TCPC configuration */
 const struct tcpc_config_t tcpc_config[] = {
@@ -156,8 +156,8 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	}
 
 	if (voltage < BC12_MIN_VOLTAGE) {
-		CPRINTS("%s: port %d: vbus %d lower than %d", __func__,
-			port, voltage, BC12_MIN_VOLTAGE);
+		CPRINTS("%s: port %d: vbus %d lower than %d", __func__, port,
+			voltage, BC12_MIN_VOLTAGE);
 		return 1;
 	}
 
@@ -176,7 +176,6 @@ void config_usb_db_type(void)
 
 	CPRINTS("Configured USB DB type number is %d", db_type);
 }
-
 
 void board_reset_pd_mcu(void)
 {
