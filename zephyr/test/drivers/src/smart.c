@@ -18,7 +18,7 @@
 #include "battery_smart.h"
 #include "test/drivers/test_state.h"
 
-#define BATTERY_ORD	DT_DEP_ORD(DT_NODELABEL(battery))
+#define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
 
 /** Test all simple getters */
 ZTEST_USER(smart_battery, test_battery_getters)
@@ -40,22 +40,22 @@ ZTEST_USER(smart_battery, test_battery_getters)
 	zassert_equal(expected, word, "%d != %d", expected, word);
 
 	zassert_equal(EC_SUCCESS, battery_cycle_count(&word), NULL);
-	zassert_equal(bat->cycle_count, word, "%d != %d",
-		      bat->cycle_count, word);
+	zassert_equal(bat->cycle_count, word, "%d != %d", bat->cycle_count,
+		      word);
 	zassert_equal(EC_SUCCESS, battery_design_voltage(&word), NULL);
 	zassert_equal(bat->design_mv, word, "%d != %d", bat->design_mv, word);
 	zassert_equal(EC_SUCCESS, battery_serial_number(&word), NULL);
 	zassert_equal(bat->sn, word, "%d != %d", bat->sn, word);
 	zassert_equal(EC_SUCCESS, get_battery_manufacturer_name(block, 32),
 		      NULL);
-	zassert_mem_equal(block, bat->mf_name, bat->mf_name_len,
-			  "%s != %s", block, bat->mf_name);
+	zassert_mem_equal(block, bat->mf_name, bat->mf_name_len, "%s != %s",
+			  block, bat->mf_name);
 	zassert_equal(EC_SUCCESS, battery_device_name(block, 32), NULL);
-	zassert_mem_equal(block, bat->dev_name, bat->dev_name_len,
-			  "%s != %s", block, bat->dev_name);
+	zassert_mem_equal(block, bat->dev_name, bat->dev_name_len, "%s != %s",
+			  block, bat->dev_name);
 	zassert_equal(EC_SUCCESS, battery_device_chemistry(block, 32), NULL);
-	zassert_mem_equal(block, bat->dev_chem, bat->dev_chem_len,
-			  "%s != %s", block, bat->dev_chem);
+	zassert_mem_equal(block, bat->dev_chem, bat->dev_chem_len, "%s != %s",
+			  block, bat->dev_chem);
 	word = battery_get_avg_current();
 	zassert_equal(bat->avg_cur, word, "%d != %d", bat->avg_cur, word);
 	word = battery_get_avg_voltage();
@@ -113,7 +113,6 @@ ZTEST_USER(smart_battery, test_battery_get_capacity)
 	zassert_equal(bat->design_cap, word, "%d != %d", bat->design_cap, word);
 	zassert_false(bat->mode & MODE_CAPACITY, "mAh mode not forced");
 }
-
 
 /** Test battery status */
 ZTEST_USER(smart_battery, test_battery_status)
@@ -369,7 +368,8 @@ ZTEST_USER(smart_battery, test_battery_mfacc)
 	len = 2;
 	zassert_equal(EC_ERROR_INVAL,
 		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
-				     len), NULL);
+				     len),
+		      NULL);
 
 	/* Set correct length for rest of the test */
 	len = 10;
@@ -378,13 +378,15 @@ ZTEST_USER(smart_battery, test_battery_mfacc)
 	i2c_common_emul_set_write_fail_reg(emul, SB_MANUFACTURER_ACCESS);
 	zassert_equal(EC_ERROR_INVAL,
 		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
-				     len), NULL);
+				     len),
+		      NULL);
 	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on reading manufacturer data (custom handler is not set) */
 	zassert_equal(EC_ERROR_INVAL,
 		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
-				     len), NULL);
+				     len),
+		      NULL);
 
 	/* Set arbitrary manufacturer data */
 	for (int i = 1; i < len; i++) {
@@ -402,7 +404,8 @@ ZTEST_USER(smart_battery, test_battery_mfacc)
 	/* Test error when mf_data doesn't start with command */
 	zassert_equal(EC_ERROR_UNKNOWN,
 		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
-				     len), NULL);
+				     len),
+		      NULL);
 
 	/* Set beginning of the manufacturer data */
 	mf_data[1] = cmd & 0xff;
@@ -411,7 +414,8 @@ ZTEST_USER(smart_battery, test_battery_mfacc)
 	/* Test successful manufacturer data read */
 	zassert_equal(EC_SUCCESS,
 		      sb_read_mfgacc(cmd, SB_ALT_MANUFACTURER_ACCESS, recv_buf,
-				     len), NULL);
+				     len),
+		      NULL);
 	/* Compare received data ignoring length byte */
 	zassert_mem_equal(mf_data + 1, recv_buf, len - 1, NULL);
 
@@ -434,30 +438,25 @@ ZTEST_USER(smart_battery, test_battery_fake_charge)
 	bat = sbat_emul_get_bat_data(emul);
 
 	/* Success on command with no argument */
-	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(get_ec_shell(),
-					"battfake"), NULL);
+	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "battfake"),
+		      NULL);
 
 	/* Fail on command with argument which is not a number */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(get_ec_shell(),
-					"battfake test"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "battfake test"), NULL);
 
 	/* Fail on command with charge level above 100% */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(get_ec_shell(),
-					"battfake 123"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "battfake 123"), NULL);
 
 	/* Fail on command with charge level below 0% */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(get_ec_shell(),
-					"battfake -23"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "battfake -23"), NULL);
 
 	/* Set fake charge level */
 	fake_charge = 65;
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(get_ec_shell(),
-					"battfake 65"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "battfake 65"), NULL);
 
 	/* Test that fake charge level is applied */
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
@@ -484,18 +483,17 @@ ZTEST_USER(smart_battery, test_battery_fake_charge)
 
 	/* Disable fake charge level */
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(get_ec_shell(),
-					"battfake -1"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "battfake -1"), NULL);
 
 	/* Test that fake charge level is not applied */
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 	charge = 100 * bat->cap / bat->full_cap;
-	zassert_equal(charge, batt.state_of_charge, "%d%% != %d%%",
-		      charge, batt.state_of_charge);
-	zassert_equal(bat->cap, batt.remaining_capacity, "%d != %d",
-		      bat->cap, batt.remaining_capacity);
+	zassert_equal(charge, batt.state_of_charge, "%d%% != %d%%", charge,
+		      batt.state_of_charge);
+	zassert_equal(bat->cap, batt.remaining_capacity, "%d != %d", bat->cap,
+		      batt.remaining_capacity);
 }
 
 /** Test battery fake temperature set and read */
@@ -512,48 +510,47 @@ ZTEST_USER(smart_battery, test_battery_fake_temperature)
 
 	/* Success on command with no argument */
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(get_ec_shell(),
-					"batttempfake"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "batttempfake"), NULL);
 
 	/* Fail on command with argument which is not a number */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(get_ec_shell(),
-					"batttempfake test"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "batttempfake test"),
+		      NULL);
 
 	/* Fail on command with too high temperature (above 500.0 K) */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(get_ec_shell(),
-					"batttempfake 5001"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "batttempfake 5001"),
+		      NULL);
 
 	/* Fail on command with too low temperature (below 0 K) */
 	zassert_equal(EC_ERROR_PARAM1,
-		      shell_execute_cmd(get_ec_shell(),
-					"batttempfake -23"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "batttempfake -23"),
+		      NULL);
 
 	/* Set fake temperature */
 	fake_temp = 2840;
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(get_ec_shell(),
-					"batttempfake 2840"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "batttempfake 2840"),
+		      NULL);
 
 	/* Test that fake temperature is applied */
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
-	zassert_equal(fake_temp, batt.temperature, "%d != %d",
-		      fake_temp, batt.temperature);
+	zassert_equal(fake_temp, batt.temperature, "%d != %d", fake_temp,
+		      batt.temperature);
 
 	/* Disable fake temperature */
 	zassert_equal(EC_SUCCESS,
-		      shell_execute_cmd(get_ec_shell(),
-					"batttempfake -1"), NULL);
+		      shell_execute_cmd(get_ec_shell(), "batttempfake -1"),
+		      NULL);
 
 	/* Test that fake temperature is not applied */
 	flags = BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE;
 	battery_get_params(&batt);
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
-	zassert_equal(bat->temp, batt.temperature, "%d != %d",
-		      bat->temp, batt.temperature);
+	zassert_equal(bat->temp, batt.temperature, "%d != %d", bat->temp,
+		      batt.temperature);
 }
 
 ZTEST_SUITE(smart_battery, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
