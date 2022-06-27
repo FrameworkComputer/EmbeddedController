@@ -21,8 +21,8 @@ static struct pca9675_ioexpander pca9675_iox[CONFIG_IO_EXPANDER_PORT_COUNT];
 static int pca9675_read16(int ioex, uint16_t *data)
 {
 	return i2c_xfer(ioex_config[ioex].i2c_host_port,
-			ioex_config[ioex].i2c_addr_flags,
-			NULL, 0, (uint8_t *)data, 2);
+			ioex_config[ioex].i2c_addr_flags, NULL, 0,
+			(uint8_t *)data, 2);
 }
 
 static int pca9675_write16(int ioex, uint16_t data)
@@ -35,22 +35,21 @@ static int pca9675_write16(int ioex, uint16_t data)
 	data |= pca9675_iox[ioex].io_direction;
 
 	return i2c_xfer(ioex_config[ioex].i2c_host_port,
-			ioex_config[ioex].i2c_addr_flags,
-			(uint8_t *)&data, 2, NULL, 0);
+			ioex_config[ioex].i2c_addr_flags, (uint8_t *)&data, 2,
+			NULL, 0);
 }
 
 static int pca9675_reset(int ioex)
 {
 	uint8_t reset = PCA9675_RESET_SEQ_DATA;
 
-	return i2c_xfer(ioex_config[ioex].i2c_host_port,
-			0, &reset, 1, NULL, 0);
+	return i2c_xfer(ioex_config[ioex].i2c_host_port, 0, &reset, 1, NULL, 0);
 }
 
 static int pca9675_get_flags_by_mask(int ioex, int port, int mask, int *flags)
 {
-	*flags = mask & pca9675_iox[ioex].io_direction ?
-				GPIO_INPUT : GPIO_OUTPUT;
+	*flags = mask & pca9675_iox[ioex].io_direction ? GPIO_INPUT :
+							 GPIO_OUTPUT;
 
 	return EC_SUCCESS;
 }
@@ -129,13 +128,13 @@ static int pca9675_get_port(int ioex, int port, int *val)
 #endif
 
 const struct ioexpander_drv pca9675_ioexpander_drv = {
-	.init			= &pca9675_init,
-	.get_level		= &pca9675_get_level,
-	.set_level		= &pca9675_set_level,
-	.get_flags_by_mask	= &pca9675_get_flags_by_mask,
-	.set_flags_by_mask	= &pca9675_set_flags_by_mask,
-	.enable_interrupt	= &pca9675_enable_interrupt,
+	.init = &pca9675_init,
+	.get_level = &pca9675_get_level,
+	.set_level = &pca9675_set_level,
+	.get_flags_by_mask = &pca9675_get_flags_by_mask,
+	.set_flags_by_mask = &pca9675_set_flags_by_mask,
+	.enable_interrupt = &pca9675_enable_interrupt,
 #ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
-	.get_port		= &pca9675_get_port,
+	.get_port = &pca9675_get_port,
 #endif
 };
