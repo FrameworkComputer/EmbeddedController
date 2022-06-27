@@ -27,9 +27,10 @@
 #define CONFIG_CHARGER_RAA489000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
+					*/
 #define CONFIG_OCPC
-#undef  CONFIG_CHARGER_SINGLE_CHIP
+#undef CONFIG_CHARGER_SINGLE_CHIP
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
 #define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
 
@@ -37,19 +38,19 @@
 
 /* LED */
 #define CONFIG_LED_ONOFF_STATES
-#define CONFIG_LED_ONOFF_STATES_BAT_LOW	10
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
-#define I2C_PORT_ACCEL	I2C_PORT_SENSOR
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
 /* Sensors */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
-#define CONFIG_ACCEL_BMA255		/* Lid accel */
+#define CONFIG_ACCEL_BMA255 /* Lid accel */
 #define CONFIG_ACCEL_LIS2DWL
 #define CONFIG_ACCEL_KX022
-#define CONFIG_ACCELGYRO_BMI160	/* Base accel */
+#define CONFIG_ACCELGYRO_BMI160 /* Base accel */
 #define CONFIG_ACCELGYRO_ICM42607
 #define CONFIG_ACCELGYRO_BMI220
 #define CONFIG_I2C_XFER_LARGE_TRANSFER
@@ -57,7 +58,7 @@
 /* Lid operates in forced mode, base in FIFO */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 #define CONFIG_ACCEL_FIFO
-#define CONFIG_ACCEL_FIFO_SIZE 256	/* Must be a power of 2 */
+#define CONFIG_ACCEL_FIFO_SIZE 256 /* Must be a power of 2 */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
@@ -95,12 +96,10 @@
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
 /* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
-#define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
+#define CONFIG_USB_MUX_IT5205 /* C1: ITE Mux */
+#define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
 
-#define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
-
-
+#define CONFIG_USBC_RETIMER_TUSB544 /* C1 Redriver: TUSB544 */
 
 #ifndef __ASSEMBLER__
 
@@ -113,22 +112,15 @@ enum chg_id {
 	CHARGER_NUM,
 };
 
-
-
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* ADC channels */
 enum adc_channel {
-	ADC_VSNS_PP3300_A,     /* ADC0 */
-	ADC_TEMP_SENSOR_1,     /* ADC2 */
-	ADC_TEMP_SENSOR_2,     /* ADC3 */
-	ADC_TEMP_SENSOR_3,     /* ADC15*/
+	ADC_VSNS_PP3300_A, /* ADC0 */
+	ADC_TEMP_SENSOR_1, /* ADC2 */
+	ADC_TEMP_SENSOR_2, /* ADC3 */
+	ADC_TEMP_SENSOR_3, /* ADC15*/
 	ADC_CH_COUNT
 };
 
