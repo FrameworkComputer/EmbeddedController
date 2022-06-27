@@ -14,12 +14,12 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
 const static uint8_t ina3221_reg_map[INA3221_CHAN_COUNT][INA3221_MAX_REG] = {
-{ 1, 2,  7,  8 }, /* Chan 1 */
-{ 3, 4,  9, 10 }, /* Chan 2 */
-{ 5, 6, 11, 12 }  /* Chan 3 */
+	{ 1, 2, 7, 8 }, /* Chan 1 */
+	{ 3, 4, 9, 10 }, /* Chan 2 */
+	{ 5, 6, 11, 12 } /* Chan 3 */
 };
 
 static uint16_t ina3221_read(unsigned int unit, uint8_t reg)
@@ -27,8 +27,7 @@ static uint16_t ina3221_read(unsigned int unit, uint8_t reg)
 	int res;
 	int val;
 
-	res = i2c_read16(ina3221[unit].port, ina3221[unit].address,
-			 reg, &val);
+	res = i2c_read16(ina3221[unit].port, ina3221[unit].address, reg, &val);
 	if (res) {
 		CPRINTS("INA3221 I2C read failed");
 		return 0x0bad;
@@ -37,7 +36,7 @@ static uint16_t ina3221_read(unsigned int unit, uint8_t reg)
 }
 
 static uint16_t ina3221_chan_read(unsigned int unit, enum ina3221_channel chan,
-			   enum ina3221_register reg)
+				  enum ina3221_register reg)
 {
 	if (chan >= INA3221_CHAN_COUNT || reg >= INA3221_MAX_REG) {
 		CPRINTS("INA3221 Bad channel or register value");
@@ -51,8 +50,8 @@ static int ina3221_write(unsigned int unit, uint8_t reg, uint16_t val)
 	int res;
 	uint16_t be_val = (val >> 8) | ((val & 0xff) << 8);
 
-	res = i2c_write16(ina3221[unit].port, ina3221[unit].address,
-			  reg, be_val);
+	res = i2c_write16(ina3221[unit].port, ina3221[unit].address, reg,
+			  be_val);
 	if (res)
 		CPRINTS("INA3221 I2C write failed");
 	return res;
@@ -93,12 +92,12 @@ static void ina3221_dump(unsigned int unit)
 		if (ina3221[unit].name[chan] != NULL) {
 			sv[chan] = ina3221_chan_read(unit, chan,
 						     INA3221_SHUNT_VOLT);
-			bv[chan] = ina3221_chan_read(unit, chan,
-						     INA3221_BUS_VOLT);
-			crit[chan] = ina3221_chan_read(unit, chan,
-						       INA3221_CRITICAL);
-			warn[chan] = ina3221_chan_read(unit, chan,
-						       INA3221_WARNING);
+			bv[chan] =
+				ina3221_chan_read(unit, chan, INA3221_BUS_VOLT);
+			crit[chan] =
+				ina3221_chan_read(unit, chan, INA3221_CRITICAL);
+			warn[chan] =
+				ina3221_chan_read(unit, chan, INA3221_WARNING);
 		}
 	}
 	mask = ina3221_read(unit, INA3221_REG_MASK);
@@ -109,9 +108,9 @@ static void ina3221_dump(unsigned int unit)
 		if (ina3221[unit].name[chan] != NULL) {
 			ccprintf("%d: %s:\n", chan, ina3221[unit].name[chan]);
 			ccprintf("      Shunt voltage: %04x => %d uV\n",
-				sv[chan], INA3221_SHUNT_UV((int)sv[chan]));
+				 sv[chan], INA3221_SHUNT_UV((int)sv[chan]));
 			ccprintf("      Bus voltage  : %04x => %d mV\n",
-				bv[chan], INA3221_BUS_MV((int)bv[chan]));
+				 bv[chan], INA3221_BUS_MV((int)bv[chan]));
 			ccprintf("      Warning      : %04x\n", warn[chan]);
 			ccprintf("      Critical     : %04x\n", crit[chan]);
 		}
@@ -156,7 +155,6 @@ static int command_ina(int argc, char **argv)
 
 	return EC_ERROR_INVAL;
 }
-DECLARE_CONSOLE_COMMAND(ina, command_ina,
-			"<index> [config|mask <val>]",
+DECLARE_CONSOLE_COMMAND(ina, command_ina, "<index> [config|mask <val>]",
 			"INA3221 voltage sensing");
 #endif
