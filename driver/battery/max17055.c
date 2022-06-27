@@ -16,13 +16,13 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /*
  * For max17055 to finish battery presence detection, this is the minimal time
  * we have to wait since the last POR. LSB = 175ms.
  */
-#define RELIABLE_BATT_DETECT_TIME	0x10
+#define RELIABLE_BATT_DETECT_TIME 0x10
 
 /*
  * Convert the register values to the units that match
@@ -30,50 +30,48 @@
  */
 
 /* Voltage reg value to mV */
-#define VOLTAGE_CONV(REG)       ((REG * 5) >> 6)
+#define VOLTAGE_CONV(REG) ((REG * 5) >> 6)
 /* Current reg value to mA */
-#define CURRENT_CONV(REG)       (((REG * 25) >> 4) / BATTERY_MAX17055_RSENSE)
+#define CURRENT_CONV(REG) (((REG * 25) >> 4) / BATTERY_MAX17055_RSENSE)
 /* Capacity reg value to mAh */
-#define CAPACITY_CONV(REG)      (REG * 5 / BATTERY_MAX17055_RSENSE)
+#define CAPACITY_CONV(REG) (REG * 5 / BATTERY_MAX17055_RSENSE)
 /* Time reg value to minute */
-#define TIME_CONV(REG)          ((REG * 3) >> 5)
+#define TIME_CONV(REG) ((REG * 3) >> 5)
 /* Temperature reg value to 0.1K */
-#define TEMPERATURE_CONV(REG)   (((REG * 10) >> 8) + 2731)
+#define TEMPERATURE_CONV(REG) (((REG * 10) >> 8) + 2731)
 /* Percentage reg value to 1% */
-#define PERCENTAGE_CONV(REG)    (REG >> 8)
+#define PERCENTAGE_CONV(REG) (REG >> 8)
 /* Cycle count reg value (LSB = 1%) to absolute count (100%) */
-#define CYCLE_COUNT_CONV(REG)	((REG * 5) >> 9)
+#define CYCLE_COUNT_CONV(REG) ((REG * 5) >> 9)
 
 /* Useful macros */
-#define MAX17055_READ_DEBUG(offset, ptr_reg) \
-	do { \
-		if (max17055_read(offset, ptr_reg)) { \
-			CPRINTS("%s: failed to read reg %02x", \
-				__func__, offset); \
-			return; \
-		} \
+#define MAX17055_READ_DEBUG(offset, ptr_reg)                             \
+	do {                                                             \
+		if (max17055_read(offset, ptr_reg)) {                    \
+			CPRINTS("%s: failed to read reg %02x", __func__, \
+				offset);                                 \
+			return;                                          \
+		}                                                        \
 	} while (0)
-#define MAX17055_WRITE_DEBUG(offset, reg) \
-	do { \
-		if (max17055_write(offset, reg)) { \
-			CPRINTS("%s: failed to read reg %02x", \
-				__func__, offset); \
-			return; \
-		} \
+#define MAX17055_WRITE_DEBUG(offset, reg)                                \
+	do {                                                             \
+		if (max17055_write(offset, reg)) {                       \
+			CPRINTS("%s: failed to read reg %02x", __func__, \
+				offset);                                 \
+			return;                                          \
+		}                                                        \
 	} while (0)
 
 static int fake_state_of_charge = -1;
 
 static int max17055_read(int offset, int *data)
 {
-	return i2c_read16(I2C_PORT_BATTERY, MAX17055_ADDR_FLAGS,
-			  offset, data);
+	return i2c_read16(I2C_PORT_BATTERY, MAX17055_ADDR_FLAGS, offset, data);
 }
 
 static int max17055_write(int offset, int data)
 {
-	return i2c_write16(I2C_PORT_BATTERY, MAX17055_ADDR_FLAGS,
-			   offset, data);
+	return i2c_write16(I2C_PORT_BATTERY, MAX17055_ADDR_FLAGS, offset, data);
 }
 
 /* Return 1 if the device id is correct. */
@@ -269,7 +267,7 @@ enum battery_present battery_is_present(void)
 void battery_get_params(struct batt_params *batt)
 {
 	int reg = 0;
-	struct batt_params batt_new = {0};
+	struct batt_params batt_new = { 0 };
 
 	/*
 	 * Assuming the battery is responsive as long as
@@ -293,7 +291,8 @@ void battery_get_params(struct batt_params *batt)
 		batt_new.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 
 	batt_new.state_of_charge = fake_state_of_charge >= 0 ?
-				fake_state_of_charge : PERCENTAGE_CONV(reg);
+					   fake_state_of_charge :
+					   PERCENTAGE_CONV(reg);
 
 	if (max17055_read(REG_VOLTAGE, &reg))
 		batt_new.flags |= BATT_FLAG_BAD_VOLTAGE;
@@ -319,8 +318,7 @@ void battery_get_params(struct batt_params *batt)
 	 * and battery isn't full (and we read them all correctly).
 	 */
 	if (!(batt_new.flags & BATT_FLAG_BAD_STATE_OF_CHARGE) &&
-	    batt_new.desired_voltage &&
-	    batt_new.desired_current &&
+	    batt_new.desired_voltage && batt_new.desired_current &&
 	    batt_new.state_of_charge < BATTERY_LEVEL_FULL)
 		batt_new.flags |= BATT_FLAG_WANT_CHARGE;
 
