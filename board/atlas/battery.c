@@ -18,10 +18,10 @@
 #include "i2c.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* Shutdown mode parameter to write to manufacturer access register */
-#define SB_SHUTDOWN_DATA	0x0010
+#define SB_SHUTDOWN_DATA 0x0010
 
 enum battery_type {
 	BATTERY_LG,
@@ -52,16 +52,16 @@ static int battery_report_present = 1;
  * limits are given by discharging_min/max_c.
  */
 static const struct battery_info batt_info_lg = {
-	.voltage_max		= TARGET_WITH_MARGIN(8800, 5), /* mV */
-	.voltage_normal		= 7700,
-	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
-	.precharge_current	= 256,	/* mA */
-	.start_charging_min_c	= 0,
-	.start_charging_max_c	= 46,
-	.charging_min_c		= 10,
-	.charging_max_c		= 50,
-	.discharging_min_c	= 0,
-	.discharging_max_c	= 60,
+	.voltage_max = TARGET_WITH_MARGIN(8800, 5), /* mV */
+	.voltage_normal = 7700,
+	.voltage_min = 6100, /* Add 100mV for charger accuracy */
+	.precharge_current = 256, /* mA */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 46,
+	.charging_min_c = 10,
+	.charging_max_c = 50,
+	.discharging_min_c = 0,
+	.discharging_max_c = 60,
 };
 
 /*
@@ -70,16 +70,16 @@ static const struct battery_info batt_info_lg = {
  * limits are given by discharging_min/max_c.
  */
 static const struct battery_info batt_info_lishen = {
-	.voltage_max		= TARGET_WITH_MARGIN(8800, 5), /* mV */
-	.voltage_normal		= 7700,
-	.voltage_min		= 6100, /* Add 100mV for charger accuracy */
-	.precharge_current	= 256,	/* mA */
-	.start_charging_min_c	= 0,
-	.start_charging_max_c	= 46,
-	.charging_min_c		= 10,
-	.charging_max_c		= 50,
-	.discharging_min_c	= 0,
-	.discharging_max_c	= 60,
+	.voltage_max = TARGET_WITH_MARGIN(8800, 5), /* mV */
+	.voltage_normal = 7700,
+	.voltage_min = 6100, /* Add 100mV for charger accuracy */
+	.precharge_current = 256, /* mA */
+	.start_charging_min_c = 0,
+	.start_charging_max_c = 46,
+	.charging_min_c = 10,
+	.charging_max_c = 50,
+	.discharging_min_c = 0,
+	.discharging_max_c = 60,
 };
 
 static const struct board_batt_params info[] = {
@@ -110,7 +110,7 @@ static int board_get_battery_type(void)
 	if (!battery_manufacturer_name(name, sizeof(name))) {
 		for (i = 0; i < BATTERY_TYPE_COUNT; i++) {
 			if (!strncasecmp(name, info[i].manuf_name,
-					 ARRAY_SIZE(name)-1)) {
+					 ARRAY_SIZE(name) - 1)) {
 				board_battery_type = i;
 				break;
 			}
@@ -139,7 +139,9 @@ DECLARE_HOOK(HOOK_INIT, board_init_battery_type, HOOK_PRIO_INIT_I2C + 1);
 const struct battery_info *battery_get_info(void)
 {
 	return info[board_battery_type == BATTERY_TYPE_COUNT ?
-		    DEFAULT_BATTERY_TYPE : board_battery_type].batt_info;
+			    DEFAULT_BATTERY_TYPE :
+			    board_battery_type]
+		.batt_info;
 }
 
 int board_cut_off_battery(void)
@@ -183,7 +185,7 @@ static int charger_should_discharge_on_ac(struct charge_state_data *curr)
 	 */
 	if (!battery_is_cut_off() &&
 	    !(curr->batt.flags & BATT_FLAG_WANT_CHARGE) &&
-		(curr->batt.status & STATUS_FULLY_CHARGED))
+	    (curr->batt.status & STATUS_FULLY_CHARGED))
 		return 1;
 
 	return 0;
