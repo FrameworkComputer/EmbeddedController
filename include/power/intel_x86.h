@@ -5,7 +5,6 @@
 
 /* Intel X86 chipset power control module for Chrome EC */
 
-
 #ifndef __CROS_EC_INTEL_X86_H
 #define __CROS_EC_INTEL_X86_H
 
