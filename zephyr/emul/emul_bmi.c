@@ -21,7 +21,7 @@ LOG_MODULE_REGISTER(emul_bmi);
 #include "driver/accelgyro_bmi260.h"
 #include "driver/accelgyro_bmi_common.h"
 
-#define BMI_DATA_FROM_I2C_EMUL(_emul)					     \
+#define BMI_DATA_FROM_I2C_EMUL(_emul)                                        \
 	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
 		     struct bmi_emul_data, common)
 
@@ -296,17 +296,17 @@ void bmi_emul_set_off(struct i2c_emul *emul, enum bmi_emul_axis axis,
 	case BMI_EMUL_ACC_X:
 		data->off_acc_x = val;
 		data->reg[data->type_data->acc_off_reg] =
-				bmi_emul_acc_off_to_nvm(data->off_acc_x);
+			bmi_emul_acc_off_to_nvm(data->off_acc_x);
 		break;
 	case BMI_EMUL_ACC_Y:
 		data->off_acc_y = val;
 		data->reg[data->type_data->acc_off_reg + 1] =
-				bmi_emul_acc_off_to_nvm(data->off_acc_y);
+			bmi_emul_acc_off_to_nvm(data->off_acc_y);
 		break;
 	case BMI_EMUL_ACC_Z:
 		data->off_acc_z = val;
 		data->reg[data->type_data->acc_off_reg + 2] =
-				bmi_emul_acc_off_to_nvm(data->off_acc_z);
+			bmi_emul_acc_off_to_nvm(data->off_acc_z);
 		break;
 	case BMI_EMUL_GYR_X:
 		data->off_gyr_x = val;
@@ -314,9 +314,9 @@ void bmi_emul_set_off(struct i2c_emul *emul, enum bmi_emul_axis axis,
 		data->reg[data->type_data->gyr_off_reg] = gyr_off & 0xff;
 		gyr98_shift = 0;
 		data->reg[data->type_data->gyr98_off_reg] &=
-				~(0x3 << gyr98_shift);
+			~(0x3 << gyr98_shift);
 		data->reg[data->type_data->gyr98_off_reg] |=
-				(gyr_off & 0x300) >> (8 - gyr98_shift);
+			(gyr_off & 0x300) >> (8 - gyr98_shift);
 		break;
 	case BMI_EMUL_GYR_Y:
 		data->off_gyr_y = val;
@@ -324,9 +324,9 @@ void bmi_emul_set_off(struct i2c_emul *emul, enum bmi_emul_axis axis,
 		data->reg[data->type_data->gyr_off_reg + 1] = gyr_off & 0xff;
 		gyr98_shift = 2;
 		data->reg[data->type_data->gyr98_off_reg] &=
-				~(0x3 << gyr98_shift);
+			~(0x3 << gyr98_shift);
 		data->reg[data->type_data->gyr98_off_reg] |=
-				(gyr_off & 0x300) >> (8 - gyr98_shift);
+			(gyr_off & 0x300) >> (8 - gyr98_shift);
 		break;
 	case BMI_EMUL_GYR_Z:
 		data->off_gyr_z = val;
@@ -334,9 +334,9 @@ void bmi_emul_set_off(struct i2c_emul *emul, enum bmi_emul_axis axis,
 		data->reg[data->type_data->gyr_off_reg + 2] = gyr_off & 0xff;
 		gyr98_shift = 4;
 		data->reg[data->type_data->gyr98_off_reg] &=
-				~(0x3 << gyr98_shift);
+			~(0x3 << gyr98_shift);
 		data->reg[data->type_data->gyr98_off_reg] |=
-				(gyr_off & 0x300) >> (8 - gyr98_shift);
+			(gyr_off & 0x300) >> (8 - gyr98_shift);
 		break;
 	}
 }
@@ -595,8 +595,8 @@ static void bmi_emul_set_current_frame(struct i2c_emul *emul,
 	data = BMI_DATA_FROM_I2C_EMUL(emul);
 
 	data->fifo_frame_byte = 0;
-	data->fifo_frame_len = bmi_emul_get_frame_len(emul, frame, tag_time,
-						      header);
+	data->fifo_frame_len =
+		bmi_emul_get_frame_len(emul, frame, tag_time, header);
 	/* Empty FIFO frame */
 	if (frame == NULL) {
 		if (tag_time && header) {
@@ -628,11 +628,14 @@ static void bmi_emul_set_current_frame(struct i2c_emul *emul,
 	if (header) {
 		data->fifo[0] = BMI_EMUL_FIFO_HEAD_DATA;
 		data->fifo[0] |= frame->type & BMI_EMUL_FRAME_MAG ?
-						BMI_EMUL_FIFO_HEAD_DATA_MAG : 0;
+					 BMI_EMUL_FIFO_HEAD_DATA_MAG :
+					 0;
 		data->fifo[0] |= frame->type & BMI_EMUL_FRAME_GYR ?
-						BMI_EMUL_FIFO_HEAD_DATA_GYR : 0;
+					 BMI_EMUL_FIFO_HEAD_DATA_GYR :
+					 0;
 		data->fifo[0] |= frame->type & BMI_EMUL_FRAME_ACC ?
-						BMI_EMUL_FIFO_HEAD_DATA_ACC : 0;
+					 BMI_EMUL_FIFO_HEAD_DATA_ACC :
+					 0;
 		data->fifo[0] |= frame->tag & BMI_EMUL_FIFO_HEAD_DATA_TAG_MASK;
 		i = 1;
 	}
@@ -688,11 +691,11 @@ static void bmi_emul_updata_int_off(struct i2c_emul *emul)
 	data = BMI_DATA_FROM_I2C_EMUL(emul);
 
 	data->off_acc_x = bmi_emul_acc_nvm_to_off(
-				data->reg[data->type_data->acc_off_reg]);
+		data->reg[data->type_data->acc_off_reg]);
 	data->off_acc_y = bmi_emul_acc_nvm_to_off(
-				data->reg[data->type_data->acc_off_reg + 1]);
+		data->reg[data->type_data->acc_off_reg + 1]);
 	data->off_acc_z = bmi_emul_acc_nvm_to_off(
-				data->reg[data->type_data->acc_off_reg + 2]);
+		data->reg[data->type_data->acc_off_reg + 2]);
 
 	gyr98 = data->reg[data->type_data->gyr98_off_reg];
 
@@ -855,10 +858,9 @@ static int bmi_emul_handle_write(struct i2c_emul *emul, int reg, uint8_t val,
 }
 
 /** Check description in emul_bmi.h */
-void bmi_emul_state_to_reg(struct i2c_emul *emul, int acc_shift,
-			   int gyr_shift, int acc_reg, int gyr_reg,
-			   int sensortime_reg, bool acc_off_en,
-			   bool gyr_off_en)
+void bmi_emul_state_to_reg(struct i2c_emul *emul, int acc_shift, int gyr_shift,
+			   int acc_reg, int gyr_reg, int sensortime_reg,
+			   bool acc_off_en, bool gyr_off_en)
 {
 	struct bmi_emul_data *data;
 	int32_t val[3];
@@ -945,9 +947,8 @@ uint16_t bmi_emul_fifo_len(struct i2c_emul *emul, bool tag_time, bool header)
 }
 
 /** Check description in emul_bmi.h */
-uint8_t bmi_emul_get_fifo_data(struct i2c_emul *emul, int byte,
-			       bool tag_time, bool header, int acc_shift,
-			       int gyr_shift)
+uint8_t bmi_emul_get_fifo_data(struct i2c_emul *emul, int byte, bool tag_time,
+			       bool header, int acc_shift, int gyr_shift)
 {
 	struct bmi_emul_data *data;
 	int ret;
@@ -1031,8 +1032,7 @@ static int bmi_emul_handle_read(struct i2c_emul *emul, int reg, uint8_t *buf,
  *
  * @return 0 indicating success (always)
  */
-static int bmi_emul_init(const struct emul *emul,
-			 const struct device *parent)
+static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 {
 	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct i2c_common_emul_data *data = cfg->data;
@@ -1066,7 +1066,7 @@ static int bmi_emul_init(const struct emul *emul,
 	return ret;
 }
 
-#define BMI_EMUL(n)							\
+#define BMI_EMUL(n)                                                   \
 	static struct bmi_emul_data bmi_emul_data_##n = {		\
 		.error_on_ro_write = DT_INST_PROP(n, error_on_ro_write),\
 		.error_on_wo_read = DT_INST_PROP(n, error_on_wo_read),	\
@@ -1084,27 +1084,28 @@ static int bmi_emul_init(const struct emul *emul,
 			.finish_read = NULL,				\
 			.access_reg = NULL,				\
 		},							\
-	};								\
-									\
-	static const struct i2c_common_emul_cfg bmi_emul_cfg_##n = {	\
-		.i2c_label = DT_INST_BUS_LABEL(n),			\
-		.dev_label = DT_INST_LABEL(n),                          \
-		.data = &bmi_emul_data_##n.common,			\
-		.addr = DT_INST_REG_ADDR(n),				\
-	};								\
-	EMUL_DEFINE(bmi_emul_init, DT_DRV_INST(n), &bmi_emul_cfg_##n,	\
+	};          \
+                                                                      \
+	static const struct i2c_common_emul_cfg bmi_emul_cfg_##n = {  \
+		.i2c_label = DT_INST_BUS_LABEL(n),                    \
+		.dev_label = DT_INST_LABEL(n),                        \
+		.data = &bmi_emul_data_##n.common,                    \
+		.addr = DT_INST_REG_ADDR(n),                          \
+	};                                                            \
+	EMUL_DEFINE(bmi_emul_init, DT_DRV_INST(n), &bmi_emul_cfg_##n, \
 		    &bmi_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(BMI_EMUL)
 
-#define BMI_EMUL_CASE(n)					\
-	case DT_INST_DEP_ORD(n): return &bmi_emul_data_##n.common.emul;
+#define BMI_EMUL_CASE(n)         \
+	case DT_INST_DEP_ORD(n): \
+		return &bmi_emul_data_##n.common.emul;
 
 /** Check description in emul_bmi.h */
 struct i2c_emul *bmi_emul_get(int ord)
 {
 	switch (ord) {
-	DT_INST_FOREACH_STATUS_OKAY(BMI_EMUL_CASE)
+		DT_INST_FOREACH_STATUS_OKAY(BMI_EMUL_CASE)
 
 	default:
 		return NULL;
