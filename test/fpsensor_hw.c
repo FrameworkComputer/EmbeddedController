@@ -32,7 +32,6 @@ test_static int test_fp_check_hwid(void)
 	return EC_SUCCESS;
 }
 
-
 void run_test(int argc, char **argv)
 {
 	RUN_TEST(test_fp_check_hwid);
