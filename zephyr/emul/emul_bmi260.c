@@ -21,100 +21,100 @@ LOG_MODULE_REGISTER(emul_bmi260);
 
 /** Mask reserved bits in each register of BMI260 */
 static const uint8_t bmi_emul_260_rsvd_mask[] = {
-	[BMI260_CHIP_ID]		= 0x00,
-	[0x01]				= 0xff, /* Reserved */
-	[BMI260_ERR_REG]		= 0x20,
-	[BMI260_STATUS]			= 0x0b,
-	[BMI260_AUX_X_L_G]		= 0x00,
-	[BMI260_AUX_X_H_G]		= 0x00,
-	[BMI260_AUX_Y_L_G]		= 0x00,
-	[BMI260_AUX_Y_H_G]		= 0x00,
-	[BMI260_AUX_Z_L_G]		= 0x00,
-	[BMI260_AUX_Z_H_G]		= 0x00,
-	[BMI260_AUX_R_L_G]		= 0x00,
-	[BMI260_AUX_R_H_G]		= 0x00,
-	[BMI260_ACC_X_L_G]		= 0x00,
-	[BMI260_ACC_X_H_G]		= 0x00,
-	[BMI260_ACC_Y_L_G]		= 0x00,
-	[BMI260_ACC_Y_H_G]		= 0x00,
-	[BMI260_ACC_Z_L_G]		= 0x00,
-	[BMI260_ACC_Z_H_G]		= 0x00,
-	[BMI260_GYR_X_L_G]		= 0x00,
-	[BMI260_GYR_X_H_G]		= 0x00,
-	[BMI260_GYR_Y_L_G]		= 0x00,
-	[BMI260_GYR_Y_H_G]		= 0x00,
-	[BMI260_GYR_Z_L_G]		= 0x00,
-	[BMI260_GYR_Z_H_G]		= 0x00,
-	[BMI260_SENSORTIME_0]		= 0x00,
-	[BMI260_SENSORTIME_1]		= 0x00,
-	[BMI260_SENSORTIME_2]		= 0x00,
-	[BMI260_EVENT]			= 0xe2,
-	[BMI260_INT_STATUS_0]		= 0x00,
-	[BMI260_INT_STATUS_1]		= 0x18,
-	[BMI260_SC_OUT_0]		= 0x00,
-	[BMI260_SC_OUT_1]		= 0x00,
-	[BMI260_ORIENT_ACT]		= 0xe0,
-	[BMI260_INTERNAL_STATUS]	= 0x00,
-	[BMI260_TEMPERATURE_0]		= 0x00,
-	[BMI260_TEMPERATURE_1]		= 0x00,
-	[BMI260_FIFO_LENGTH_0]		= 0x00,
-	[BMI260_FIFO_LENGTH_1]		= 0xc0,
-	[BMI160_FIFO_DATA]		= 0x00,
-	[0x27 ... 0x2e]			= 0xff, /* Reserved */
-	[BMI260_FEAT_PAGE]		= 0xf8,
-	[0x30 ... 0x3f]			= 0x00, /* Features */
-	[BMI260_ACC_CONF]		= 0x00,
-	[BMI260_ACC_RANGE]		= 0xfc,
-	[BMI260_GYR_CONF]		= 0x00,
-	[BMI260_GYR_RANGE]		= 0xf0,
-	[BMI260_AUX_CONF]		= 0x00,
-	[BMI260_FIFO_DOWNS]		= 0x00,
-	[BMI260_FIFO_WTM_0]		= 0x00,
-	[BMI260_FIFO_WTM_1]		= 0xe0,
-	[BMI260_FIFO_CONFIG_0]		= 0xfc,
-	[BMI260_FIFO_CONFIG_1]		= 0x00,
-	[BMI260_SATURATION]		= 0xc0,
-	[BMI260_AUX_DEV_ID]		= 0x01,
-	[BMI260_AUX_IF_CONF]		= 0x30,
-	[BMI260_AUX_RD_ADDR]		= 0x00,
-	[BMI260_AUX_WR_ADDR]		= 0x00,
-	[BMI260_AUX_WR_DATA]		= 0x00,
-	[0x50 ... 0x51]			= 0xff, /* Reserved */
-	[BMI260_ERR_REG_MSK]		= 0x20,
-	[BMI260_INT1_IO_CTRL]		= 0xe1,
-	[BMI260_INT2_IO_CTRL]		= 0xe1,
-	[BMI260_INT_LATCH]		= 0xfe,
-	[BMI260_INT1_MAP_FEAT]		= 0x00,
-	[BMI260_INT2_MAP_FEAT]		= 0x00,
-	[BMI260_INT_MAP_DATA]		= 0x00,
-	[BMI260_INIT_CTRL]		= 0x00,
-	[0x5a]				= 0xff, /* Reserved */
-	[BMI260_INIT_ADDR_0]		= 0xf0,
-	[BMI260_INIT_ADDR_1]		= 0x00,
-	[0x5d]				= 0xff, /* Reserved */
-	[BMI260_INIT_DATA]		= 0x00,
-	[BMI260_INTERNAL_ERROR]		= 0xe9,
-	[0x60 ... 0x67]			= 0xff, /* Reserved */
-	[BMI260_AUX_IF_TRIM]		= 0xf8,
-	[BMI260_GYR_CRT_CONF]		= 0xf2,
-	[BMI260_NVM_CONF]		= 0xfd,
-	[BMI260_IF_CONF]		= 0xcc,
-	[BMI260_DRV]			= 0x00,
-	[BMI260_ACC_SELF_TEST]		= 0xf2,
-	[BMI260_GYR_SELF_TEST_AXES]	= 0xf0,
-	[0x6f]				= 0xff, /* Reserved */
-	[BMI260_NV_CONF]		= 0xf0,
-	[BMI260_OFFSET_ACC70]		= 0x00,
-	[BMI260_OFFSET_ACC70 + 1]	= 0x00,
-	[BMI260_OFFSET_ACC70 + 2]	= 0x00,
-	[BMI260_OFFSET_GYR70]		= 0x00,
-	[BMI260_OFFSET_GYR70 + 1]	= 0x00,
-	[BMI260_OFFSET_GYR70 + 2]	= 0x00,
-	[BMI160_OFFSET_EN_GYR98]	= 0x00,
-	[0x78 ... 0x7b]			= 0xff, /* Reserved */
-	[BMI260_PWR_CONF]		= 0xf8,
-	[BMI260_PWR_CTRL]		= 0xf0,
-	[BMI260_CMD_REG]		= 0x00,
+	[BMI260_CHIP_ID] = 0x00,
+	[0x01] = 0xff, /* Reserved */
+	[BMI260_ERR_REG] = 0x20,
+	[BMI260_STATUS] = 0x0b,
+	[BMI260_AUX_X_L_G] = 0x00,
+	[BMI260_AUX_X_H_G] = 0x00,
+	[BMI260_AUX_Y_L_G] = 0x00,
+	[BMI260_AUX_Y_H_G] = 0x00,
+	[BMI260_AUX_Z_L_G] = 0x00,
+	[BMI260_AUX_Z_H_G] = 0x00,
+	[BMI260_AUX_R_L_G] = 0x00,
+	[BMI260_AUX_R_H_G] = 0x00,
+	[BMI260_ACC_X_L_G] = 0x00,
+	[BMI260_ACC_X_H_G] = 0x00,
+	[BMI260_ACC_Y_L_G] = 0x00,
+	[BMI260_ACC_Y_H_G] = 0x00,
+	[BMI260_ACC_Z_L_G] = 0x00,
+	[BMI260_ACC_Z_H_G] = 0x00,
+	[BMI260_GYR_X_L_G] = 0x00,
+	[BMI260_GYR_X_H_G] = 0x00,
+	[BMI260_GYR_Y_L_G] = 0x00,
+	[BMI260_GYR_Y_H_G] = 0x00,
+	[BMI260_GYR_Z_L_G] = 0x00,
+	[BMI260_GYR_Z_H_G] = 0x00,
+	[BMI260_SENSORTIME_0] = 0x00,
+	[BMI260_SENSORTIME_1] = 0x00,
+	[BMI260_SENSORTIME_2] = 0x00,
+	[BMI260_EVENT] = 0xe2,
+	[BMI260_INT_STATUS_0] = 0x00,
+	[BMI260_INT_STATUS_1] = 0x18,
+	[BMI260_SC_OUT_0] = 0x00,
+	[BMI260_SC_OUT_1] = 0x00,
+	[BMI260_ORIENT_ACT] = 0xe0,
+	[BMI260_INTERNAL_STATUS] = 0x00,
+	[BMI260_TEMPERATURE_0] = 0x00,
+	[BMI260_TEMPERATURE_1] = 0x00,
+	[BMI260_FIFO_LENGTH_0] = 0x00,
+	[BMI260_FIFO_LENGTH_1] = 0xc0,
+	[BMI160_FIFO_DATA] = 0x00,
+	[0x27 ... 0x2e] = 0xff, /* Reserved */
+	[BMI260_FEAT_PAGE] = 0xf8,
+	[0x30 ... 0x3f] = 0x00, /* Features */
+	[BMI260_ACC_CONF] = 0x00,
+	[BMI260_ACC_RANGE] = 0xfc,
+	[BMI260_GYR_CONF] = 0x00,
+	[BMI260_GYR_RANGE] = 0xf0,
+	[BMI260_AUX_CONF] = 0x00,
+	[BMI260_FIFO_DOWNS] = 0x00,
+	[BMI260_FIFO_WTM_0] = 0x00,
+	[BMI260_FIFO_WTM_1] = 0xe0,
+	[BMI260_FIFO_CONFIG_0] = 0xfc,
+	[BMI260_FIFO_CONFIG_1] = 0x00,
+	[BMI260_SATURATION] = 0xc0,
+	[BMI260_AUX_DEV_ID] = 0x01,
+	[BMI260_AUX_IF_CONF] = 0x30,
+	[BMI260_AUX_RD_ADDR] = 0x00,
+	[BMI260_AUX_WR_ADDR] = 0x00,
+	[BMI260_AUX_WR_DATA] = 0x00,
+	[0x50 ... 0x51] = 0xff, /* Reserved */
+	[BMI260_ERR_REG_MSK] = 0x20,
+	[BMI260_INT1_IO_CTRL] = 0xe1,
+	[BMI260_INT2_IO_CTRL] = 0xe1,
+	[BMI260_INT_LATCH] = 0xfe,
+	[BMI260_INT1_MAP_FEAT] = 0x00,
+	[BMI260_INT2_MAP_FEAT] = 0x00,
+	[BMI260_INT_MAP_DATA] = 0x00,
+	[BMI260_INIT_CTRL] = 0x00,
+	[0x5a] = 0xff, /* Reserved */
+	[BMI260_INIT_ADDR_0] = 0xf0,
+	[BMI260_INIT_ADDR_1] = 0x00,
+	[0x5d] = 0xff, /* Reserved */
+	[BMI260_INIT_DATA] = 0x00,
+	[BMI260_INTERNAL_ERROR] = 0xe9,
+	[0x60 ... 0x67] = 0xff, /* Reserved */
+	[BMI260_AUX_IF_TRIM] = 0xf8,
+	[BMI260_GYR_CRT_CONF] = 0xf2,
+	[BMI260_NVM_CONF] = 0xfd,
+	[BMI260_IF_CONF] = 0xcc,
+	[BMI260_DRV] = 0x00,
+	[BMI260_ACC_SELF_TEST] = 0xf2,
+	[BMI260_GYR_SELF_TEST_AXES] = 0xf0,
+	[0x6f] = 0xff, /* Reserved */
+	[BMI260_NV_CONF] = 0xf0,
+	[BMI260_OFFSET_ACC70] = 0x00,
+	[BMI260_OFFSET_ACC70 + 1] = 0x00,
+	[BMI260_OFFSET_ACC70 + 2] = 0x00,
+	[BMI260_OFFSET_GYR70] = 0x00,
+	[BMI260_OFFSET_GYR70 + 1] = 0x00,
+	[BMI260_OFFSET_GYR70 + 2] = 0x00,
+	[BMI160_OFFSET_EN_GYR98] = 0x00,
+	[0x78 ... 0x7b] = 0xff, /* Reserved */
+	[BMI260_PWR_CONF] = 0xf8,
+	[BMI260_PWR_CTRL] = 0xf0,
+	[BMI260_CMD_REG] = 0x00,
 };
 
 /**
@@ -128,83 +128,83 @@ static void bmi260_emul_reset(uint8_t *regs, struct i2c_emul *emul)
 	bool tag_time;
 	bool header;
 
-	regs[BMI260_CHIP_ID]		= 0x27;
-	regs[BMI260_ERR_REG]		= 0x00;
-	regs[BMI260_STATUS]		= 0x10;
-	regs[BMI260_AUX_X_L_G]		= 0x00;
-	regs[BMI260_AUX_X_H_G]		= 0x00;
-	regs[BMI260_AUX_Y_L_G]		= 0x00;
-	regs[BMI260_AUX_Y_H_G]		= 0x00;
-	regs[BMI260_AUX_Z_L_G]		= 0x00;
-	regs[BMI260_AUX_Z_H_G]		= 0x00;
-	regs[BMI260_AUX_R_L_G]		= 0x00;
-	regs[BMI260_AUX_R_H_G]		= 0x00;
-	regs[BMI260_ACC_X_L_G]		= 0x00;
-	regs[BMI260_ACC_X_H_G]		= 0x00;
-	regs[BMI260_ACC_Y_L_G]		= 0x00;
-	regs[BMI260_ACC_Y_H_G]		= 0x00;
-	regs[BMI260_ACC_Z_L_G]		= 0x00;
-	regs[BMI260_ACC_Z_H_G]		= 0x00;
-	regs[BMI260_GYR_X_L_G]		= 0x00;
-	regs[BMI260_GYR_X_H_G]		= 0x00;
-	regs[BMI260_GYR_Y_L_G]		= 0x00;
-	regs[BMI260_GYR_Y_H_G]		= 0x00;
-	regs[BMI260_GYR_Z_L_G]		= 0x00;
-	regs[BMI260_GYR_Z_H_G]		= 0x00;
-	regs[BMI260_SENSORTIME_0]	= 0x00;
-	regs[BMI260_SENSORTIME_1]	= 0x00;
-	regs[BMI260_SENSORTIME_2]	= 0x00;
-	regs[BMI260_EVENT]		= 0x01;
-	regs[BMI260_INT_STATUS_0]	= 0x00;
-	regs[BMI260_INT_STATUS_1]	= 0x00;
-	regs[BMI260_SC_OUT_0]		= 0x00;
-	regs[BMI260_SC_OUT_1]		= 0x00;
-	regs[BMI260_ORIENT_ACT]		= 0x00;
-	regs[BMI260_INTERNAL_STATUS]	= 0x00;
-	regs[BMI260_TEMPERATURE_0]	= 0x00;
-	regs[BMI260_TEMPERATURE_1]	= 0x80;
-	regs[BMI260_FIFO_LENGTH_0]	= 0x00;
-	regs[BMI260_FIFO_LENGTH_1]	= 0x00;
-	regs[BMI160_FIFO_DATA]		= 0x00;
-	regs[BMI260_FEAT_PAGE]		= 0x00;
-	regs[BMI260_ACC_CONF]		= 0xa8;
-	regs[BMI260_ACC_RANGE]		= 0x02;
-	regs[BMI260_GYR_CONF]		= 0xa9;
-	regs[BMI260_GYR_RANGE]		= 0x00;
-	regs[BMI260_AUX_CONF]		= 0x46;
-	regs[BMI260_FIFO_DOWNS]		= 0x88;
-	regs[BMI260_FIFO_WTM_0]		= 0x00;
-	regs[BMI260_FIFO_WTM_1]		= 0x02;
-	regs[BMI260_FIFO_CONFIG_0]	= 0x02;
-	regs[BMI260_FIFO_CONFIG_1]	= 0x10;
-	regs[BMI260_SATURATION]		= 0x00;
-	regs[BMI260_AUX_DEV_ID]		= 0x20;
-	regs[BMI260_AUX_IF_CONF]	= 0x83;
-	regs[BMI260_AUX_RD_ADDR]	= 0x42;
-	regs[BMI260_AUX_WR_ADDR]	= 0x4c;
-	regs[BMI260_AUX_WR_DATA]	= 0x02;
-	regs[BMI260_ERR_REG_MSK]	= 0x00;
-	regs[BMI260_INT1_IO_CTRL]	= 0x00;
-	regs[BMI260_INT2_IO_CTRL]	= 0x00;
-	regs[BMI260_INT_LATCH]		= 0x00;
-	regs[BMI260_INT1_MAP_FEAT]	= 0x00;
-	regs[BMI260_INT2_MAP_FEAT]	= 0x00;
-	regs[BMI260_INT_MAP_DATA]	= 0x00;
-	regs[BMI260_INIT_CTRL]		= 0x00;
-	regs[BMI260_INIT_ADDR_0]	= 0x00;
-	regs[BMI260_INIT_ADDR_1]	= 0x00;
-	regs[BMI260_INIT_DATA]		= 0x00;
-	regs[BMI260_INTERNAL_ERROR]	= 0x00;
-	regs[BMI260_AUX_IF_TRIM]	= 0x01;
-	regs[BMI260_GYR_CRT_CONF]	= 0x00;
-	regs[BMI260_NVM_CONF]		= 0x00;
-	regs[BMI260_IF_CONF]		= 0x00;
-	regs[BMI260_DRV]		= 0xff;
-	regs[BMI260_ACC_SELF_TEST]	= 0x00;
-	regs[BMI260_GYR_SELF_TEST_AXES]	= 0x00;
-	regs[BMI260_PWR_CONF]		= 0x03;
-	regs[BMI260_PWR_CTRL]		= 0x00;
-	regs[BMI260_CMD_REG]		= 0x00;
+	regs[BMI260_CHIP_ID] = 0x27;
+	regs[BMI260_ERR_REG] = 0x00;
+	regs[BMI260_STATUS] = 0x10;
+	regs[BMI260_AUX_X_L_G] = 0x00;
+	regs[BMI260_AUX_X_H_G] = 0x00;
+	regs[BMI260_AUX_Y_L_G] = 0x00;
+	regs[BMI260_AUX_Y_H_G] = 0x00;
+	regs[BMI260_AUX_Z_L_G] = 0x00;
+	regs[BMI260_AUX_Z_H_G] = 0x00;
+	regs[BMI260_AUX_R_L_G] = 0x00;
+	regs[BMI260_AUX_R_H_G] = 0x00;
+	regs[BMI260_ACC_X_L_G] = 0x00;
+	regs[BMI260_ACC_X_H_G] = 0x00;
+	regs[BMI260_ACC_Y_L_G] = 0x00;
+	regs[BMI260_ACC_Y_H_G] = 0x00;
+	regs[BMI260_ACC_Z_L_G] = 0x00;
+	regs[BMI260_ACC_Z_H_G] = 0x00;
+	regs[BMI260_GYR_X_L_G] = 0x00;
+	regs[BMI260_GYR_X_H_G] = 0x00;
+	regs[BMI260_GYR_Y_L_G] = 0x00;
+	regs[BMI260_GYR_Y_H_G] = 0x00;
+	regs[BMI260_GYR_Z_L_G] = 0x00;
+	regs[BMI260_GYR_Z_H_G] = 0x00;
+	regs[BMI260_SENSORTIME_0] = 0x00;
+	regs[BMI260_SENSORTIME_1] = 0x00;
+	regs[BMI260_SENSORTIME_2] = 0x00;
+	regs[BMI260_EVENT] = 0x01;
+	regs[BMI260_INT_STATUS_0] = 0x00;
+	regs[BMI260_INT_STATUS_1] = 0x00;
+	regs[BMI260_SC_OUT_0] = 0x00;
+	regs[BMI260_SC_OUT_1] = 0x00;
+	regs[BMI260_ORIENT_ACT] = 0x00;
+	regs[BMI260_INTERNAL_STATUS] = 0x00;
+	regs[BMI260_TEMPERATURE_0] = 0x00;
+	regs[BMI260_TEMPERATURE_1] = 0x80;
+	regs[BMI260_FIFO_LENGTH_0] = 0x00;
+	regs[BMI260_FIFO_LENGTH_1] = 0x00;
+	regs[BMI160_FIFO_DATA] = 0x00;
+	regs[BMI260_FEAT_PAGE] = 0x00;
+	regs[BMI260_ACC_CONF] = 0xa8;
+	regs[BMI260_ACC_RANGE] = 0x02;
+	regs[BMI260_GYR_CONF] = 0xa9;
+	regs[BMI260_GYR_RANGE] = 0x00;
+	regs[BMI260_AUX_CONF] = 0x46;
+	regs[BMI260_FIFO_DOWNS] = 0x88;
+	regs[BMI260_FIFO_WTM_0] = 0x00;
+	regs[BMI260_FIFO_WTM_1] = 0x02;
+	regs[BMI260_FIFO_CONFIG_0] = 0x02;
+	regs[BMI260_FIFO_CONFIG_1] = 0x10;
+	regs[BMI260_SATURATION] = 0x00;
+	regs[BMI260_AUX_DEV_ID] = 0x20;
+	regs[BMI260_AUX_IF_CONF] = 0x83;
+	regs[BMI260_AUX_RD_ADDR] = 0x42;
+	regs[BMI260_AUX_WR_ADDR] = 0x4c;
+	regs[BMI260_AUX_WR_DATA] = 0x02;
+	regs[BMI260_ERR_REG_MSK] = 0x00;
+	regs[BMI260_INT1_IO_CTRL] = 0x00;
+	regs[BMI260_INT2_IO_CTRL] = 0x00;
+	regs[BMI260_INT_LATCH] = 0x00;
+	regs[BMI260_INT1_MAP_FEAT] = 0x00;
+	regs[BMI260_INT2_MAP_FEAT] = 0x00;
+	regs[BMI260_INT_MAP_DATA] = 0x00;
+	regs[BMI260_INIT_CTRL] = 0x00;
+	regs[BMI260_INIT_ADDR_0] = 0x00;
+	regs[BMI260_INIT_ADDR_1] = 0x00;
+	regs[BMI260_INIT_DATA] = 0x00;
+	regs[BMI260_INTERNAL_ERROR] = 0x00;
+	regs[BMI260_AUX_IF_TRIM] = 0x01;
+	regs[BMI260_GYR_CRT_CONF] = 0x00;
+	regs[BMI260_NVM_CONF] = 0x00;
+	regs[BMI260_IF_CONF] = 0x00;
+	regs[BMI260_DRV] = 0xff;
+	regs[BMI260_ACC_SELF_TEST] = 0x00;
+	regs[BMI260_GYR_SELF_TEST_AXES] = 0x00;
+	regs[BMI260_PWR_CONF] = 0x03;
+	regs[BMI260_PWR_CTRL] = 0x00;
+	regs[BMI260_CMD_REG] = 0x00;
 
 	/* Call generic reset */
 	tag_time = regs[BMI260_FIFO_CONFIG_0] & BMI260_FIFO_TIME_EN;
@@ -354,8 +354,7 @@ static int bmi260_emul_access_reg(struct i2c_emul *emul, int reg, int byte,
 	 */
 	if (reg <= BMI260_FIFO_DATA && reg + byte >= BMI260_FIFO_DATA) {
 		return BMI260_FIFO_DATA;
-	} else if (reg <= BMI260_INIT_DATA &&
-		   reg + byte >= BMI260_INIT_DATA) {
+	} else if (reg <= BMI260_INIT_DATA && reg + byte >= BMI260_INIT_DATA) {
 		return BMI260_INIT_DATA;
 	}
 
@@ -394,7 +393,6 @@ static int bmi260_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
 	    reg == BMI260_INTERNAL_ERROR || reg == BMI260_SATURATION) {
 		return BMI_EMUL_ACCESS_E;
 	}
-
 
 	/* Stop on going command if required */
 	if (regs[BMI260_CMD_REG] != 0 && bmi_emul_is_cmd_end(emul)) {
@@ -513,8 +511,8 @@ static int bmi260_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
 			bmi_emul_state_to_reg(emul, acc_shift, gyr_shift,
 					      BMI260_ACC_X_L_G,
 					      BMI260_GYR_X_L_G,
-					      BMI260_SENSORTIME_0,
-					      acc_off_en, gyr_off_en);
+					      BMI260_SENSORTIME_0, acc_off_en,
+					      gyr_off_en);
 		}
 		break;
 	case BMI260_FIFO_LENGTH_0:
@@ -538,16 +536,12 @@ static int bmi260_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
 }
 
 /** Registers backed in NVM by BMI260 */
-const int bmi260_nvm_reg[] = {BMI260_AUX_IF_TRIM,
-			      BMI260_NV_CONF,
-			      BMI260_DRV,
-			      BMI260_OFFSET_ACC70,
-			      BMI260_OFFSET_ACC70 + 1,
-			      BMI260_OFFSET_ACC70 + 2,
-			      BMI260_OFFSET_GYR70,
-			      BMI260_OFFSET_GYR70 + 1,
-			      BMI260_OFFSET_GYR70 + 2,
-			      BMI260_OFFSET_EN_GYR98};
+const int bmi260_nvm_reg[] = {
+	BMI260_AUX_IF_TRIM,    BMI260_NV_CONF,		BMI260_DRV,
+	BMI260_OFFSET_ACC70,   BMI260_OFFSET_ACC70 + 1, BMI260_OFFSET_ACC70 + 2,
+	BMI260_OFFSET_GYR70,   BMI260_OFFSET_GYR70 + 1, BMI260_OFFSET_GYR70 + 2,
+	BMI260_OFFSET_EN_GYR98
+};
 
 /** Confguration of BMI260 */
 struct bmi_emul_type_data bmi260_emul = {
