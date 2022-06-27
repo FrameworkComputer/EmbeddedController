@@ -11,13 +11,12 @@
 #include "power_mgt.h"
 
 /* magic ID for valid aontask image check */
-#define AON_MAGIC_ID			        0x544E4F41  /*"AONT"*/
+#define AON_MAGIC_ID 0x544E4F41 /*"AONT"*/
 
 /* aontask error code  */
-#define AON_SUCCESS				0
-#define AON_ERROR_NOT_SUPPORT_POWER_MODE	1
-#define AON_ERROR_DMA_FAILED			2
-
+#define AON_SUCCESS 0
+#define AON_ERROR_NOT_SUPPORT_POWER_MODE 1
+#define AON_ERROR_DMA_FAILED 2
 
 /* shared data structure between main FW and aontask */
 struct ish_aon_share {
