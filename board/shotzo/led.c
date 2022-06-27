@@ -18,10 +18,8 @@
 #define POWER_LED_ON 0
 #define POWER_LED_OFF 1
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
-	EC_LED_ID_POWER_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
+					     EC_LED_ID_POWER_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -29,7 +27,7 @@ enum led_color {
 	LED_OFF = 0,
 	LED_AMBER,
 	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static int led_set_color_battery(enum led_color color)
@@ -127,9 +125,9 @@ static void led_set_battery(void)
 	 */
 	if (get_cbi_fw_config_tablet_mode() == TABLET_MODE_ABSENT) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-			charge_get_state() != PWR_STATE_CHARGE) {
-			led_set_color_battery(power_ticks++ & 0x2 ?
-						  LED_WHITE : LED_OFF);
+		    charge_get_state() != PWR_STATE_CHARGE) {
+			led_set_color_battery(power_ticks++ & 0x2 ? LED_WHITE :
+								    LED_OFF);
 			return;
 		}
 	}
@@ -158,8 +156,8 @@ static void led_set_battery(void)
 			led_set_color_battery(LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
-		led_set_color_battery(
-			(battery_ticks % 0x2) ? LED_WHITE : LED_OFF);
+		led_set_color_battery((battery_ticks % 0x2) ? LED_WHITE :
+							      LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		led_set_color_battery(LED_WHITE);
@@ -186,8 +184,7 @@ static void led_set_power(void)
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		led_set_color_power(LED_WHITE);
 	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		led_set_color_power(
-			(power_tick & 0x2) ? LED_WHITE : LED_OFF);
+		led_set_color_power((power_tick & 0x2) ? LED_WHITE : LED_OFF);
 	else
 		led_set_color_power(LED_OFF);
 }
