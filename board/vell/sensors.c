@@ -207,8 +207,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(95), \
@@ -225,8 +225,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CHARGER \
-	{ \
+#define THERMAL_CHARGER          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(95), \
@@ -244,8 +244,8 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_WWAN \
-	{ \
+#define THERMAL_WWAN             \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -264,8 +264,8 @@ __maybe_unused static const struct ec_thermal_config thermal_wwan =
  * TODO(b/202062363): Remove when clang is fixed.
  */
 
-#define THERMAL_DDR \
-	{ \
+#define THERMAL_DDR              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
@@ -274,8 +274,7 @@ __maybe_unused static const struct ec_thermal_config thermal_wwan =
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 		}, \
 	}
-__maybe_unused static const struct ec_thermal_config thermal_ddr =
-	THERMAL_DDR;
+__maybe_unused static const struct ec_thermal_config thermal_ddr = THERMAL_DDR;
 
 /*
  * TODO(b/203839956): update for Alder Lake/vell
@@ -284,8 +283,8 @@ __maybe_unused static const struct ec_thermal_config thermal_ddr =
  * TODO(b/202062363): Remove when clang is fixed.
  */
 
-#define THERMAL_REGULATOR \
-	{ \
+#define THERMAL_REGULATOR        \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
@@ -299,7 +298,7 @@ __maybe_unused static const struct ec_thermal_config thermal_regulator =
 
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_SOC] = thermal_cpu,
-	[TEMP_SENSOR_2_CHARGER]	= thermal_charger,
+	[TEMP_SENSOR_2_CHARGER] = thermal_charger,
 	[TEMP_SENSOR_3_WWAN] = thermal_wwan,
 	[TEMP_SENSOR_4_DDR] = thermal_ddr,
 	[TEMP_SENSOR_5_REGULATOR] = thermal_regulator,
