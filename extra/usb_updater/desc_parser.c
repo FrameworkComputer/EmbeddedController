@@ -75,8 +75,7 @@ static int get_next_token(char *input, size_t expected_size, char **output)
 	next_colon = strchr(input, ':');
 	if (next_colon)
 		*next_colon = '\0';
-	if (!next_colon || (expected_size &&
-			    strlen(input) != expected_size)) {
+	if (!next_colon || (expected_size && strlen(input) != expected_size)) {
 		fprintf(stderr, "Invalid entry in section %d\n",
 			section_count_);
 		return -EINVAL;
@@ -98,16 +97,15 @@ static int get_hex_value(char *input, char **output)
 
 	value = strtol(input, &e, 16);
 	if ((e && *e) || (strlen(input) > 8)) {
-		fprintf(stderr, "Invalid hex value %s in section %d\n",
-			input, section_count_);
+		fprintf(stderr, "Invalid hex value %s in section %d\n", input,
+			section_count_);
 		return -EINVAL;
 	}
 
 	return value;
 }
 
-static int parse_range(char *next_line,
-		       size_t line_len,
+static int parse_range(char *next_line, size_t line_len,
 		       struct addr_range *parsed_range)
 {
 	char *line_cursor;
@@ -299,7 +297,6 @@ int parser_get_next_range(struct addr_range **range)
 
 	*range = new_range;
 	return 0;
-
 }
 
 int parser_find_board(const char *hash_file_name, const char *board_id)
