@@ -31,21 +31,21 @@ enum led_color {
 	LED_OFF = 0,
 	LED_AMBER,
 	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static void led_set_color_battery(enum led_color color)
 {
 	gpio_set_level(GPIO_EC_CHG_LED_Y_C0,
-		(color == LED_AMBER) ? LED_ON_LVL : LED_OFF_LVL);
+		       (color == LED_AMBER) ? LED_ON_LVL : LED_OFF_LVL);
 	gpio_set_level(GPIO_EC_CHG_LED_W_C0,
-		(color == LED_WHITE) ? LED_ON_LVL : LED_OFF_LVL);
+		       (color == LED_WHITE) ? LED_ON_LVL : LED_OFF_LVL);
 }
 
 void led_set_color_power(enum led_color color)
 {
 	gpio_set_level(GPIO_EC_PWR_LED_W,
-		(color == LED_WHITE) ? LED_ON_LVL : LED_OFF_LVL);
+		       (color == LED_WHITE) ? LED_ON_LVL : LED_OFF_LVL);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
