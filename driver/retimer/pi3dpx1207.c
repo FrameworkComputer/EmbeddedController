@@ -21,8 +21,7 @@ static uint8_t buf[PI3DPX1207_NUM_REGISTERS];
 /**
  * Local utility functions
  */
-static int pi3dpx1207_i2c_write(const struct usb_mux *me,
-				uint8_t offset,
+static int pi3dpx1207_i2c_write(const struct usb_mux *me, uint8_t offset,
 				uint8_t val)
 {
 	int rv = EC_SUCCESS;
@@ -44,8 +43,8 @@ static int pi3dpx1207_i2c_write(const struct usb_mux *me,
 		attempt = 0;
 		do {
 			attempt++;
-			rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
-				      NULL, 0, buf, offset);
+			rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags, NULL, 0,
+				      buf, offset);
 		} while ((rv != EC_SUCCESS) && (attempt < I2C_MAX_RETRIES));
 	}
 
@@ -55,8 +54,8 @@ static int pi3dpx1207_i2c_write(const struct usb_mux *me,
 		attempt = 0;
 		do {
 			attempt++;
-			rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
-				      buf, offset + 1, NULL, 0);
+			rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags, buf,
+				      offset + 1, NULL, 0);
 		} while ((rv != EC_SUCCESS) && (attempt < I2C_MAX_RETRIES));
 	}
 	return rv;
@@ -108,25 +107,25 @@ static int pi3dpx1207_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 		/* USB with DP */
 		if (mux_state & USB_PD_MUX_DP_ENABLED) {
 			gpio_or_ioex_set_level(gpio_dp_enable, 1);
-			mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-					? PI3DPX1207_MODE_CONF_USB_DP_FLIP
-					: PI3DPX1207_MODE_CONF_USB_DP;
+			mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+					    PI3DPX1207_MODE_CONF_USB_DP_FLIP :
+					    PI3DPX1207_MODE_CONF_USB_DP;
 		}
 		/* USB without DP */
 		else {
 			gpio_or_ioex_set_level(gpio_dp_enable, 0);
-			mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-					? PI3DPX1207_MODE_CONF_USB_FLIP
-					: PI3DPX1207_MODE_CONF_USB;
+			mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+					    PI3DPX1207_MODE_CONF_USB_FLIP :
+					    PI3DPX1207_MODE_CONF_USB;
 		}
 	}
 	/* DP without USB */
 	else if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		gpio_or_ioex_set_level(gpio_enable, 1);
 		gpio_or_ioex_set_level(gpio_dp_enable, 1);
-		mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-				? PI3DPX1207_MODE_CONF_DP_FLIP
-				: PI3DPX1207_MODE_CONF_DP;
+		mode_val |= (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+				    PI3DPX1207_MODE_CONF_DP_FLIP :
+				    PI3DPX1207_MODE_CONF_DP;
 	}
 	/* Nothing enabled, power down the retimer */
 	else {
