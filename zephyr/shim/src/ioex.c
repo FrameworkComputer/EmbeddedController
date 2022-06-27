@@ -42,8 +42,8 @@ static int ioex_init_default(const struct device *unused)
 
 	for (i = 0; i < CONFIG_IO_EXPANDER_PORT_COUNT; i++) {
 		/* IO Expander has been initialized, skip re-initializing */
-		if (ioex_config[i].flags & (IOEX_FLAGS_INITIALIZED |
-					IOEX_FLAGS_DEFAULT_INIT_DISABLED))
+		if (ioex_config[i].flags &
+		    (IOEX_FLAGS_INITIALIZED | IOEX_FLAGS_DEFAULT_INIT_DISABLED))
 			continue;
 
 		ret = ioex_init(i);
