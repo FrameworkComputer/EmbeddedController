@@ -27,8 +27,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /******************************************************************************/
 /* Keyboard scan setting */
@@ -218,9 +218,9 @@ int board_is_i2c_port_powered(int port)
 enum adc_channel board_get_vbus_adc(int port)
 {
 	if (port == 0)
-		return  ADC_VBUS_C0;
+		return ADC_VBUS_C0;
 	if (port == 1)
-		return  ADC_VBUS_C1;
+		return ADC_VBUS_C1;
 	CPRINTSUSB("Unknown vbus adc port id: %d", port);
 	return ADC_VBUS_C0;
 }
@@ -238,27 +238,26 @@ void baseboard_tcpc_init(void)
 	 */
 	for (int port = 0; port < board_get_usb_pd_port_count(); ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 /* Called after the cbi_init (via +2) */
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 &&
-			    port < board_get_usb_pd_port_count());
+	int is_valid_port = (port >= 0 && port < board_get_usb_pd_port_count());
 	int i;
 
 	if (!is_valid_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
 
-
 	if (port == CHARGE_PORT_NONE) {
 		CPRINTSUSB("Disabling all charger ports");
 
 		/* Disable all ports. */
-		for (i = 0; (i < ppc_cnt) &&
-		    (i < board_get_usb_pd_port_count()); i++) {
+		for (i = 0;
+		     (i < ppc_cnt) && (i < board_get_usb_pd_port_count());
+		     i++) {
 			/*
 			 * Do not return early if one fails otherwise we can
 			 * get into a boot loop assertion failure.
@@ -282,8 +281,7 @@ int board_set_active_charge_port(int port)
 	 * Turn off the other ports' sink path FETs, before enabling the
 	 * requested charge port.
 	 */
-	for (i = 0; (i < ppc_cnt) &&
-	    (i < board_get_usb_pd_port_count()); i++) {
+	for (i = 0; (i < ppc_cnt) && (i < board_get_usb_pd_port_count()); i++) {
 		if (i == port)
 			continue;
 
@@ -300,8 +298,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/*
 	 * Empirically, the charger seems to draw a little more current that
@@ -310,9 +308,8 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 #if defined(CONFIG_CHARGER_BQ25710) || defined(CONFIG_CHARGER_ISL9238)
 	charge_ma = (charge_ma * 95) / 100;
 #endif
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void board_hibernate(void)
