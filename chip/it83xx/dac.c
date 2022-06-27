@@ -85,6 +85,5 @@ static int command_dac(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dac, command_dac,
-			"[ch2-5] [0-3300mV]",
+DECLARE_CONSOLE_COMMAND(dac, command_dac, "[ch2-5] [0-3300mV]",
 			"Enable or disable(0mV) DAC output voltage.");
