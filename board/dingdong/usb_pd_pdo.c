@@ -15,6 +15,6 @@ const int pd_src_pdo_cnt = ARRAY_SIZE(pd_src_pdo);
 
 /* Fake PDOs : we just want our pre-defined voltages */
 const uint32_t pd_snk_pdo[] = {
-		PDO_FIXED(5000,   500, PDO_FIXED_FLAGS),
+	PDO_FIXED(5000, 500, PDO_FIXED_FLAGS),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
