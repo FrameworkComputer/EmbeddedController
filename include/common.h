@@ -46,7 +46,7 @@
  *     #define BAZ CONCAT2(BAR, FOO)
  * Will evaluate to BAR1, which then evaluates to 42.
  */
-#define CONCAT_STAGE_1(w, x, y, z) w ## x ## y ## z
+#define CONCAT_STAGE_1(w, x, y, z) w##x##y##z
 #define CONCAT2(w, x) CONCAT_STAGE_1(w, x, , )
 #define CONCAT3(w, x, y) CONCAT_STAGE_1(w, x, y, )
 #define CONCAT4(w, x, y, z) CONCAT_STAGE_1(w, x, y, z)
@@ -58,20 +58,20 @@
  * is safe with regards to using nested macros and defined arguments.
  */
 #ifndef CONFIG_ZEPHYR
-#define STRINGIFY0(name)  #name
-#define STRINGIFY(name)  STRINGIFY0(name)
-#endif   /* CONFIG_ZEPHYR */
+#define STRINGIFY0(name) #name
+#define STRINGIFY(name) STRINGIFY0(name)
+#endif /* CONFIG_ZEPHYR */
 
 /* Macros to access registers */
 #define REG64_ADDR(addr) ((volatile uint64_t *)(addr))
 #define REG32_ADDR(addr) ((volatile uint32_t *)(addr))
 #define REG16_ADDR(addr) ((volatile uint16_t *)(addr))
-#define REG8_ADDR(addr)  ((volatile uint8_t  *)(addr))
+#define REG8_ADDR(addr) ((volatile uint8_t *)(addr))
 
 #define REG64(addr) (*REG64_ADDR(addr))
 #define REG32(addr) (*REG32_ADDR(addr))
 #define REG16(addr) (*REG16_ADDR(addr))
-#define REG8(addr)  (*REG8_ADDR(addr))
+#define REG8(addr) (*REG8_ADDR(addr))
 
 /*
  * Define __aligned(n) and __packed if someone hasn't beat us to it.  Linux
@@ -184,7 +184,7 @@
  */
 #define __override_proto
 #define __override
-#define __overridable	__attribute__((weak))
+#define __overridable __attribute__((weak))
 
 /*
  * Macros for combining bytes into larger integers. _LE and _BE signify little
@@ -198,30 +198,29 @@
 
 #define UINT32_FROM_BYTES(lsb, byte1, byte2, msb) \
 	((lsb) | (byte1) << 8 | (byte2) << 16 | (msb) << 24)
-#define UINT32_FROM_BYTE_ARRAY_LE(data, lsb_index) \
+#define UINT32_FROM_BYTE_ARRAY_LE(data, lsb_index)                      \
 	UINT32_FROM_BYTES((data)[(lsb_index)], (data)[(lsb_index) + 1], \
 			  (data)[(lsb_index) + 2], (data)[(lsb_index) + 3])
-#define UINT32_FROM_BYTE_ARRAY_BE(data, msb_index) \
+#define UINT32_FROM_BYTE_ARRAY_BE(data, msb_index)                          \
 	UINT32_FROM_BYTES((data)[(msb_index) + 3], (data)[(msb_index) + 2], \
 			  (data)[(msb_index) + 1], (data)[(msb_index)])
 
 /* There isn't really a better place for this */
 #define C_TO_K(temp_c) ((temp_c) + 273)
-#define K_TO_C(temp_c) ((temp_c) - 273)
+#define K_TO_C(temp_c) ((temp_c)-273)
 /*
  * round_divide is part of math_utils, so you may need to import math_utils.h
  * and link math_utils.o if you use the following macros.
  */
 #define CELSIUS_TO_DECI_KELVIN(temp_c) \
 	(round_divide(CELSIUS_TO_MILLI_KELVIN(temp_c), 100))
-#define DECI_KELVIN_TO_CELSIUS(temp_dk) \
-	(MILLI_KELVIN_TO_CELSIUS((temp_dk) * 100))
-#define MILLI_KELVIN_TO_MILLI_CELSIUS(temp_mk) ((temp_mk) - 273150)
+#define DECI_KELVIN_TO_CELSIUS(temp_dk) (MILLI_KELVIN_TO_CELSIUS((temp_dk)*100))
+#define MILLI_KELVIN_TO_MILLI_CELSIUS(temp_mk) ((temp_mk)-273150)
 #define MILLI_CELSIUS_TO_MILLI_KELVIN(temp_mc) ((temp_mc) + 273150)
 #define MILLI_KELVIN_TO_KELVIN(temp_mk) (round_divide((temp_mk), 1000))
-#define KELVIN_TO_MILLI_KELVIN(temp_k) ((temp_k) * 1000)
+#define KELVIN_TO_MILLI_KELVIN(temp_k) ((temp_k)*1000)
 #define CELSIUS_TO_MILLI_KELVIN(temp_c) \
-	(MILLI_CELSIUS_TO_MILLI_KELVIN((temp_c) * 1000))
+	(MILLI_CELSIUS_TO_MILLI_KELVIN((temp_c)*1000))
 #define MILLI_KELVIN_TO_CELSIUS(temp_mk) \
 	(round_divide(MILLI_KELVIN_TO_MILLI_CELSIUS(temp_mk), 1000))
 
@@ -229,14 +228,15 @@
  * TARGET_WITH_MARGIN(X, 5) returns X' where X' * 100.5% is almost equal to
  * but does not exceed X. */
 #define TARGET_WITH_MARGIN(target, tenths_percent) \
-	(((target) * 1000) / (1000 + (tenths_percent)))
+	(((target)*1000) / (1000 + (tenths_percent)))
 
 /* Call a function, and return the error value unless it returns EC_SUCCESS. */
-#define RETURN_ERROR(fn) do { \
-	int error = (fn); \
-	if (error != EC_SUCCESS) \
-		return error; \
-} while (0)
+#define RETURN_ERROR(fn)                 \
+	do {                             \
+		int error = (fn);        \
+		if (error != EC_SUCCESS) \
+			return error;    \
+	} while (0)
 
 /*
  * Define test_mockable and test_mockable_static for mocking
@@ -391,12 +391,12 @@ enum ec_error_list {
  * undefined, rather than defined to something else. This usually
  * involves tricks with __builtin_strcmp.
  */
-#define __cfg_select(cfg, empty, otherwise)     \
+#define __cfg_select(cfg, empty, otherwise) \
 	__cfg_select_1(cfg, empty, otherwise)
 #define __cfg_select_placeholder_ _,
-#define __cfg_select_1(value, empty, otherwise)			  \
+#define __cfg_select_1(value, empty, otherwise) \
 	__cfg_select_2(__cfg_select_placeholder_##value, empty, otherwise)
-#define __cfg_select_2(arg1_or_junk, empty, otherwise)		\
+#define __cfg_select_2(arg1_or_junk, empty, otherwise) \
 	__cfg_select_3(arg1_or_junk _, empty, otherwise)
 #define __cfg_select_3(_ignore1, _ignore2, select, ...) select
 
@@ -405,13 +405,10 @@ enum ec_error_list {
  * handling the __builtin_strcmp trickery where a BUILD_ASSERT is
  * appropriate in the context.
  */
-#define __cfg_select_build_assert(cfg, value, empty, undef)	\
-	__cfg_select(						\
-		value,						\
-		empty,						\
-		BUILD_ASSERT(					\
-			__builtin_strcmp(cfg, #value) == 0);	\
-		undef)
+#define __cfg_select_build_assert(cfg, value, empty, undef)            \
+	__cfg_select(value, empty,                                     \
+		     BUILD_ASSERT(__builtin_strcmp(cfg, #value) == 0); \
+		     undef)
 
 /*
  * Attribute for generating an error if a function is used.
@@ -436,16 +433,16 @@ enum ec_error_list {
  * technique requires that the optimizer be enabled so it can remove
  * the undefined function call.
  */
-#define __config_enabled(cfg, value)					      \
-	__cfg_select(							      \
-		value, 1, ({						      \
-			int __undefined = __builtin_strcmp(cfg, #value) == 0; \
-			extern int IS_ENABLED_BAD_ARGS(void) __error(	      \
-				cfg " must be <blank>, or not defined.");     \
-			if (!__undefined)				      \
-				IS_ENABLED_BAD_ARGS();			      \
-			0;						      \
-		}))
+#define __config_enabled(cfg, value)                                           \
+	__cfg_select(value, 1, ({                                              \
+			     int __undefined =                                 \
+				     __builtin_strcmp(cfg, #value) == 0;       \
+			     extern int IS_ENABLED_BAD_ARGS(void) __error(     \
+				     cfg " must be <blank>, or not defined."); \
+			     if (!__undefined)                                 \
+				     IS_ENABLED_BAD_ARGS();                    \
+			     0;                                                \
+		     }))
 
 /**
  * Checks if a config option is enabled or disabled
@@ -478,7 +475,7 @@ enum ec_error_list {
  * if the config option is enabled by Zephyr's definition.
  */
 #define IS_ENABLED(option) __cfg_select(option, 1, Z_IS_ENABLED1(option))
-#endif  /* CONFIG_ZEPHYR */
+#endif /* CONFIG_ZEPHYR */
 
 /**
  * Makes a global variable static when a config option is enabled,
@@ -490,7 +487,7 @@ enum ec_error_list {
  * should be defined to nothing or undefined.
  */
 #ifndef CONFIG_ZEPHYR
-#define STATIC_IF(option)						\
+#define STATIC_IF(option) \
 	__cfg_select_build_assert(#option, option, static, extern)
 #else
 /*
@@ -511,7 +508,7 @@ enum ec_error_list {
  * config option.
  */
 #ifndef CONFIG_ZEPHYR
-#define STATIC_IF_NOT(option)						\
+#define STATIC_IF_NOT(option) \
 	__cfg_select_build_assert(#option, option, extern, static)
 #else
 /*
@@ -522,4 +519,4 @@ enum ec_error_list {
 	__cfg_select(option, extern, COND_CODE_1(option, (extern), (static)))
 #endif /* CONFIG_ZEPHYR */
 
-#endif  /* __CROS_EC_COMMON_H */
+#endif /* __CROS_EC_COMMON_H */
