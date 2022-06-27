@@ -24,8 +24,8 @@ int gpspi_transaction_flush(const struct spi_device_t *spi_device);
 int gpspi_transaction_wait(const struct spi_device_t *spi_device);
 
 int gpspi_transaction_async(const struct spi_device_t *spi_device,
-				const uint8_t *txdata, int txlen,
-				uint8_t *rxdata, int rxlen);
+			    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			    int rxlen);
 
 int gpspi_enable(int port, int enable);
 
