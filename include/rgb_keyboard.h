@@ -10,16 +10,16 @@
 #include "stddef.h"
 
 /* Use this instead of '3' for readability where applicable. */
-#define SIZE_OF_RGB		sizeof(struct rgb_s)
+#define SIZE_OF_RGB sizeof(struct rgb_s)
 
-#define RGBKBD_MAX_GCC_LEVEL	0xff
-#define RGBKBD_MAX_SCALE	0xff
+#define RGBKBD_MAX_GCC_LEVEL 0xff
+#define RGBKBD_MAX_SCALE 0xff
 
-#define RGBKBD_CTX_TO_GRID(ctx)	((ctx) - &rgbkbds[0])
+#define RGBKBD_CTX_TO_GRID(ctx) ((ctx) - &rgbkbds[0])
 
 struct rgbkbd_cfg {
 	/* Driver for LED IC */
-	const struct rgbkbd_drv * const drv;
+	const struct rgbkbd_drv *const drv;
 	/* SPI/I2C port (i.e. index of spi_devices[], i2c_ports[]) */
 	union {
 		const uint8_t i2c;
@@ -50,7 +50,7 @@ void rgbkbd_register_init_setting(const struct rgbkbd_init *setting);
 
 struct rgbkbd {
 	/* Static configuration */
-	const struct rgbkbd_cfg * const cfg;
+	const struct rgbkbd_cfg *const cfg;
 	/* Current state of the port */
 	enum rgbkbd_state state;
 	/* Buffer containing color info for each dot. */
@@ -85,8 +85,8 @@ struct rgbkbd_drv {
 	 * @param len    Length of LEDs to be set.
 	 * @return enum ec_error_list
 	 */
-	int (*set_scale)(struct rgbkbd *ctx, uint8_t offset,
-			 struct rgb_s scale, uint8_t len);
+	int (*set_scale)(struct rgbkbd *ctx, uint8_t offset, struct rgb_s scale,
+			 uint8_t len);
 	/**
 	 * Set global current control.
 	 *
@@ -98,24 +98,24 @@ struct rgbkbd_drv {
 
 /* Represents a position of an LED in RGB matrix. */
 struct rgbkbd_coord {
-	uint8_t y: 3;
-	uint8_t x: 5;
+	uint8_t y : 3;
+	uint8_t x : 5;
 };
 
- /*
-  * For optimization, LED coordinates are encoded in LED IDs. This saves us one
-  * translation.
-  */
+/*
+ * For optimization, LED coordinates are encoded in LED IDs. This saves us one
+ * translation.
+ */
 union rgbkbd_coord_u8 {
 	uint8_t u8;
 	struct rgbkbd_coord coord;
 };
 
-#define RGBKBD_COORD(x,y)	((x) << 3 | (y))
+#define RGBKBD_COORD(x, y) ((x) << 3 | (y))
 /* Delimiter for rgbkbd_map data */
-#define RGBKBD_DELM		0xff
+#define RGBKBD_DELM 0xff
 /* Non-existent entry indicator for rgbkbd_table */
-#define RGBKBD_NONE		0x00
+#define RGBKBD_NONE 0x00
 
 /*
  * The matrix consists of multiple grids:
