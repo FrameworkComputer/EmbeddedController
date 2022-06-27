@@ -51,7 +51,7 @@ int crec_flash_physical_read(int offset, int size, char *data)
 int crec_flash_physical_write(int offset, int size, const char *data)
 {
 	int ret = EC_SUCCESS;
-	int  i, write_size;
+	int i, write_size;
 
 	if (entire_flash_locked)
 		return EC_ERROR_ACCESS_DENIED;
@@ -62,8 +62,7 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 
 	for (i = 0; i < size; i += write_size) {
 		write_size = MIN((size - i), SPI_FLASH_MAX_WRITE_SIZE);
-		ret = spi_flash_write(offset + i,
-				      write_size,
+		ret = spi_flash_write(offset + i, write_size,
 				      (uint8_t *)data + i);
 		if (ret != EC_SUCCESS)
 			break;
@@ -99,7 +98,7 @@ int crec_flash_physical_erase(int offset, int size)
 int crec_flash_physical_get_protect(int bank)
 {
 	return spi_flash_check_protect(bank * CONFIG_FLASH_BANK_SIZE,
-			CONFIG_FLASH_BANK_SIZE);
+				       CONFIG_FLASH_BANK_SIZE);
 }
 
 /**
@@ -153,8 +152,7 @@ uint32_t crec_flash_physical_get_protect_flags(void)
  */
 uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
@@ -171,8 +169,9 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 
 	wp_status = spi_flash_check_wp();
 
-	if (wp_status == SPI_WP_NONE || (wp_status == SPI_WP_HARDWARE &&
-	   !(cur_flags & EC_FLASH_PROTECT_GPIO_ASSERTED)))
+	if (wp_status == SPI_WP_NONE ||
+	    (wp_status == SPI_WP_HARDWARE &&
+	     !(cur_flags & EC_FLASH_PROTECT_GPIO_ASSERTED)))
 		ret = EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW;
 
 	if (!entire_flash_locked)
@@ -243,7 +242,7 @@ int crec_flash_physical_restore_state(void)
 	 */
 	if (reset_flags & EC_RESET_FLAG_SYSJUMP) {
 		prev = (const struct flash_wp_state *)system_get_jump_tag(
-				FLASH_SYSJUMP_TAG, &version, &size);
+			FLASH_SYSJUMP_TAG, &version, &size);
 		if (prev && version == FLASH_HOOK_VERSION &&
 		    size == sizeof(*prev))
 			entire_flash_locked = prev->entire_flash_locked;
