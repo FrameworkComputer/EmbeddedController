@@ -43,8 +43,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -61,45 +61,40 @@ static void gauge_interrupt(enum gpio_signal signal)
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] = {"BOARD_ID", 3300, 4096, 0, STM32_AIN(10)},
-	[ADC_EC_SKU_ID] = {"EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8)},
-	[ADC_BATT_ID] = {"BATT_ID", 3300, 4096, 0, STM32_AIN(7)},
-	[ADC_POGO_ADC_INT_L] = {"POGO_ADC_INT_L", 3300, 4096, 0, STM32_AIN(6)},
+	[ADC_BOARD_ID] = { "BOARD_ID", 3300, 4096, 0, STM32_AIN(10) },
+	[ADC_EC_SKU_ID] = { "EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8) },
+	[ADC_BATT_ID] = { "BATT_ID", 3300, 4096, 0, STM32_AIN(7) },
+	[ADC_POGO_ADC_INT_L] = { "POGO_ADC_INT_L", 3300, 4096, 0,
+				 STM32_AIN(6) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "typec",
-		.port = 0,
-		.kbps = 400,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "other",
-		.port = 1,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
+	{ .name = "typec",
+	  .port = 0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "other",
+	  .port = 1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_AP_IN_SLEEP_L,   POWER_SIGNAL_ACTIVE_LOW,  "AP_IN_S3_L"},
-	{GPIO_PMIC_EC_RESETB,  POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD"},
+	{ GPIO_AP_IN_SLEEP_L, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_S3_L" },
+	{ GPIO_PMIC_EC_RESETB, POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /******************************************************************************/
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
-};
+const struct spi_device_t spi_devices[] = {};
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
@@ -119,8 +114,7 @@ struct mt6370_thermal_bound thermal_bound = {
 	.err = 4,
 };
 
-static void board_hpd_update(const struct usb_mux *me,
-			     mux_state_t mux_state,
+static void board_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 			     bool *ack_required)
 {
 	/* This driver does not use host command ACKs */
@@ -244,9 +238,8 @@ int extpower_is_present(void)
 	if (board_vbus_source_enabled(CHARGE_PORT_USB_C))
 		usb_c_extpower_present = 0;
 	else
-		usb_c_extpower_present = tcpm_check_vbus_level(
-							CHARGE_PORT_USB_C,
-							VBUS_PRESENT);
+		usb_c_extpower_present =
+			tcpm_check_vbus_level(CHARGE_PORT_USB_C, VBUS_PRESENT);
 
 	return usb_c_extpower_present;
 }
@@ -334,17 +327,13 @@ enum lid_accelgyro_type {
 static enum lid_accelgyro_type lid_accelgyro_config;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-static const mat33_fp_t lid_standard_ref = {
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, FLOAT_TO_FP(-1), 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t lid_standard_ref_icm42607 = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref_icm42607 = { { 0, FLOAT_TO_FP(1), 0 },
+					       { FLOAT_TO_FP(-1), 0, 0 },
+					       { 0, 0, FLOAT_TO_FP(1) } };
 struct motion_sensor_t icm42607_lid_accel = {
 	 .name = "Accel",
 	 .active_mask = SENSOR_ACTIVE_S0_S3,
@@ -370,20 +359,20 @@ struct motion_sensor_t icm42607_lid_accel = {
 };
 
 struct motion_sensor_t icm42607_lid_gyro = {
-	 .name = "Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_ICM42607,
-	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_LID,
-	 .drv = &icm42607_drv,
-	 .mutex = &g_lid_mutex,
-	 .drv_data = &g_icm42607_data,
-	 .port = I2C_PORT_ACCEL,
-	 .i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
-	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &lid_standard_ref_icm42607,
-	 .min_frequency = ICM42607_GYRO_MIN_FREQ,
-	 .max_frequency = ICM42607_GYRO_MAX_FREQ,
+	.name = "Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM42607,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &icm42607_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_icm42607_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = ICM42607_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &lid_standard_ref_icm42607,
+	.min_frequency = ICM42607_GYRO_MIN_FREQ,
+	.max_frequency = ICM42607_GYRO_MAX_FREQ,
 };
 
 struct motion_sensor_t motion_sensors[] = {
@@ -460,18 +449,18 @@ static void board_detect_motionsensor(void)
 	if (lid_accelgyro_config != LID_GYRO_NONE)
 		return;
 	/* Check base accelgyro chip */
-	ret = icm_read8(&icm42607_lid_accel,
-				ICM42607_REG_WHO_AM_I, &val);
+	ret = icm_read8(&icm42607_lid_accel, ICM42607_REG_WHO_AM_I, &val);
 	if (ret)
 		ccprints("Get ICM fail.");
 	if (val == ICM42607_CHIP_ICM42607P) {
 		motion_sensors[LID_ACCEL] = icm42607_lid_accel;
 		motion_sensors[LID_GYRO] = icm42607_lid_gyro;
 	}
-	lid_accelgyro_config = (val == ICM42607_CHIP_ICM42607P)
-			? LID_GYRO_ICM426XX : LID_GYRO_BMI160;
-	ccprints("LID Accelgyro: %s", (val == ICM42607_CHIP_ICM42607P)
-			? "ICM42607" : "BMI160");
+	lid_accelgyro_config = (val == ICM42607_CHIP_ICM42607P) ?
+				       LID_GYRO_ICM426XX :
+				       LID_GYRO_BMI160;
+	ccprints("LID Accelgyro: %s",
+		 (val == ICM42607_CHIP_ICM42607P) ? "ICM42607" : "BMI160");
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
 	     HOOK_PRIO_DEFAULT);
@@ -525,9 +514,8 @@ __override int board_charge_port_is_connected(int port)
 	return gpio_get_level(GPIO_POGO_VBUS_PRESENT);
 }
 
-__override
-void board_fill_source_power_info(int port,
-				  struct ec_response_usb_pd_power_info *r)
+__override void
+board_fill_source_power_info(int port, struct ec_response_usb_pd_power_info *r)
 {
 	r->meas.voltage_now = 3300;
 	r->meas.voltage_max = 3300;
@@ -540,13 +528,10 @@ void board_fill_source_power_info(int port,
 static void mt6370_reg_fix(void)
 {
 	i2c_update8(chg_chips[CHARGER_SOLO].i2c_port,
-		    chg_chips[CHARGER_SOLO].i2c_addr_flags,
-		    RT946X_REG_CHGCTRL1,
+		    chg_chips[CHARGER_SOLO].i2c_addr_flags, RT946X_REG_CHGCTRL1,
 		    BIT(3) | BIT(5), MASK_CLR);
 	i2c_update8(chg_chips[CHARGER_SOLO].i2c_port,
-		    chg_chips[CHARGER_SOLO].i2c_addr_flags,
-		    RT946X_REG_CHGCTRL2,
-		    BIT(5) | BIT(RT946X_SHIFT_BATDET_DIS_DLY),
-		    MASK_CLR);
+		    chg_chips[CHARGER_SOLO].i2c_addr_flags, RT946X_REG_CHGCTRL2,
+		    BIT(5) | BIT(RT946X_SHIFT_BATDET_DIS_DLY), MASK_CLR);
 }
 DECLARE_HOOK(HOOK_INIT, mt6370_reg_fix, HOOK_PRIO_DEFAULT);
