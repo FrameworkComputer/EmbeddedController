@@ -14,7 +14,7 @@
 #define HAS_TASK_TASK_3 1
 
 /* Highest priority on bottom same as in platform/ec */
-#define CROS_EC_TASK_LIST \
+#define CROS_EC_TASK_LIST                            \
 	CROS_EC_TASK(TASK_1, task1_entry, 0, 512, 2) \
 	CROS_EC_TASK(TASK_2, task2_entry, 0, 512, 1) \
 	CROS_EC_TASK(TASK_3, task3_entry, 0, 512, 0)
