@@ -23,7 +23,6 @@
 #include "util.h"
 #include "watchdog.h"
 
-
 #ifdef CONFIG_ACCELGYRO_BMI260_INT_EVENT
 #define ACCELGYRO_BMI260_INT_ENABLE
 #endif
@@ -37,52 +36,43 @@
 #include "bmi260/accelgyro_bmi260_config_tbin.h"
 #endif /* CONFIG_ACCELGYRO_BMI260 */
 
-
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
 STATIC_IF(ACCELGYRO_BMI260_INT_ENABLE)
-	volatile uint32_t last_interrupt_timestamp;
+volatile uint32_t last_interrupt_timestamp;
 
 /*
  * The gyro start-up time is 45ms in normal mode
  *                            2ms in fast start-up mode
  */
-static int wakeup_time[] = {
-	[MOTIONSENSE_TYPE_ACCEL] = 2,
-	[MOTIONSENSE_TYPE_GYRO] = 45,
-	[MOTIONSENSE_TYPE_MAG] = 1
-};
+static int wakeup_time[] = { [MOTIONSENSE_TYPE_ACCEL] = 2,
+			     [MOTIONSENSE_TYPE_GYRO] = 45,
+			     [MOTIONSENSE_TYPE_MAG] = 1 };
 
 static int enable_sensor(const struct motion_sensor_t *s, int enable)
 {
 	int ret;
 
-	ret = bmi_enable_reg8(s, BMI260_PWR_CTRL,
-			      BMI260_PWR_EN(s->type),
+	ret = bmi_enable_reg8(s, BMI260_PWR_CTRL, BMI260_PWR_EN(s->type),
 			      enable);
 	if (ret)
 		return ret;
 
 	if (s->type == MOTIONSENSE_TYPE_GYRO) {
 		/* switch to performance mode */
-		ret = bmi_enable_reg8(s, BMI_CONF_REG(s->type),
-				      BMI260_FILTER_PERF |
-				      BMI260_GYR_NOISE_PERF,
-				      enable);
+		ret = bmi_enable_reg8(
+			s, BMI_CONF_REG(s->type),
+			BMI260_FILTER_PERF | BMI260_GYR_NOISE_PERF, enable);
 	} else {
 		ret = bmi_enable_reg8(s, BMI_CONF_REG(s->type),
-				      BMI260_FILTER_PERF,
-				      enable);
+				      BMI260_FILTER_PERF, enable);
 	}
 	return ret;
-
 }
 
-static int set_data_rate(const struct motion_sensor_t *s,
-			 int rate,
-			 int rnd)
+static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
 	int ret, normalized_rate;
 	uint8_t reg_val;
@@ -106,8 +96,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 		msleep(wakeup_time[s->type]);
 	}
 
-	ret = bmi_get_normalized_rate(s, rate, rnd,
-				      &normalized_rate, &reg_val);
+	ret = bmi_get_normalized_rate(s, rate, rnd, &normalized_rate, &reg_val);
 	if (ret)
 		return ret;
 
@@ -117,8 +106,7 @@ static int set_data_rate(const struct motion_sensor_t *s,
 	 */
 	mutex_lock(s->mutex);
 
-	ret = bmi_set_reg8(s, BMI_CONF_REG(s->type),
-			   reg_val, BMI_ODR_MASK);
+	ret = bmi_set_reg8(s, BMI_CONF_REG(s->type), reg_val, BMI_ODR_MASK);
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
@@ -136,21 +124,20 @@ accel_cleanup:
 	return ret;
 }
 
-static int set_offset(const struct motion_sensor_t *s,
-			const int16_t *offset,
-			int16_t    temp)
+static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
+		      int16_t temp)
 {
 	int ret, val98, val_nv_conf;
 	intv3_t v = { offset[X], offset[Y], offset[Z] };
 
 	rotate_inv(v, *s->rot_standard_ref, v);
 
-	ret = bmi_read8(s->port, s->i2c_spi_addr_flags,
-			BMI260_OFFSET_EN_GYR98, &val98);
+	ret = bmi_read8(s->port, s->i2c_spi_addr_flags, BMI260_OFFSET_EN_GYR98,
+			&val98);
 	if (ret)
 		return ret;
-	ret = bmi_read8(s->port, s->i2c_spi_addr_flags,
-			BMI260_NV_CONF, &val_nv_conf);
+	ret = bmi_read8(s->port, s->i2c_spi_addr_flags, BMI260_NV_CONF,
+			&val_nv_conf);
 	if (ret)
 		return ret;
 
@@ -160,8 +147,7 @@ static int set_offset(const struct motion_sensor_t *s,
 		if (ret != EC_SUCCESS)
 			return ret;
 
-		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				 BMI260_NV_CONF,
+		ret = bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_NV_CONF,
 				 val_nv_conf | BMI260_ACC_OFFSET_EN);
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
@@ -179,8 +165,8 @@ static int set_offset(const struct motion_sensor_t *s,
 	return ret;
 }
 
-static int wait_and_read_data(const struct motion_sensor_t *s,
-			      intv3_t v, int try_cnt, int msec)
+static int wait_and_read_data(const struct motion_sensor_t *s, intv3_t v,
+			      int try_cnt, int msec)
 {
 	uint8_t data[6];
 	int ret, status = 0;
@@ -188,8 +174,8 @@ static int wait_and_read_data(const struct motion_sensor_t *s,
 	/* Check if data is ready */
 	while (try_cnt && !(status & BMI260_DRDY_ACC)) {
 		msleep(msec);
-		ret = bmi_read8(s->port, s->i2c_spi_addr_flags,
-				BMI260_STATUS, &status);
+		ret = bmi_read8(s->port, s->i2c_spi_addr_flags, BMI260_STATUS,
+				&status);
 		if (ret)
 			return ret;
 		try_cnt -= 1;
@@ -197,18 +183,18 @@ static int wait_and_read_data(const struct motion_sensor_t *s,
 	if (!(status & BMI260_DRDY_ACC))
 		return EC_ERROR_TIMEOUT;
 	/* Read 6 bytes starting at xyz_reg */
-	ret = bmi_read_n(s->port, s->i2c_spi_addr_flags,
-			 bmi_get_xyz_reg(s), data, 6);
+	ret = bmi_read_n(s->port, s->i2c_spi_addr_flags, bmi_get_xyz_reg(s),
+			 data, 6);
 	bmi_normalize(s, v, data);
 	return ret;
 }
 
-static int calibrate_offset(const struct motion_sensor_t *s,
-			    int range, intv3_t target, int16_t *offset)
+static int calibrate_offset(const struct motion_sensor_t *s, int range,
+			    intv3_t target, int16_t *offset)
 {
 	int ret = EC_ERROR_UNKNOWN;
 	int i, n_sample = 32;
-	int data_diff[3] = {0};
+	int data_diff[3] = { 0 };
 
 	/* Manually offset compensation */
 	for (i = 0; i < n_sample; ++i) {
@@ -224,8 +210,9 @@ static int calibrate_offset(const struct motion_sensor_t *s,
 
 	/* The data LSB: 1000 * range / 32768 (mdps | mg)*/
 	for (i = X; i <= Z; ++i)
-		offset[i] -= ((int64_t)(data_diff[i] / n_sample) *
-			     1000 * range) >> 15;
+		offset[i] -=
+			((int64_t)(data_diff[i] / n_sample) * 1000 * range) >>
+			15;
 	return ret;
 }
 
@@ -234,7 +221,7 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 	int ret, rate;
 	int16_t temp;
 	int16_t offset[3];
-	intv3_t target = {0, 0, 0};
+	intv3_t target = { 0, 0, 0 };
 	/* Get sensor range for calibration*/
 	int range = s->current_range;
 
@@ -266,7 +253,7 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 		/* Unreachable due to sensor type check above. */
 		ASSERT(false);
 		break;
-	/* LCOV_EXCL_STOP */
+		/* LCOV_EXCL_STOP */
 	}
 
 	/* Get the calibrated offset */
@@ -296,52 +283,45 @@ static __maybe_unused int config_interrupt(const struct motion_sensor_t *s)
 	int ret;
 
 	mutex_lock(s->mutex);
-	bmi_write8(s->port, s->i2c_spi_addr_flags,
-		   BMI260_CMD_REG, BMI260_CMD_FIFO_FLUSH);
+	bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_CMD_REG,
+		   BMI260_CMD_FIFO_FLUSH);
 
 	/* configure int1 as an interrupt */
-	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-			 BMI260_INT1_IO_CTRL,
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_INT1_IO_CTRL,
 			 BMI260_INT1_OUTPUT_EN);
 	if (IS_ENABLED(CONFIG_ACCELGYRO_BMI260_INT2_OUTPUT))
 		/* TODO(chingkang): Test it if we want int2 as an interrupt */
 		/* configure int2 as an interrupt */
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				 BMI260_INT2_IO_CTRL,
-				 BMI260_INT2_OUTPUT_EN);
+				 BMI260_INT2_IO_CTRL, BMI260_INT2_OUTPUT_EN);
 	else
 		/* configure int2 as an external input. */
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				 BMI260_INT2_IO_CTRL,
-				 BMI260_INT2_INPUT_EN);
+				 BMI260_INT2_IO_CTRL, BMI260_INT2_INPUT_EN);
 
 	/* map fifo water mark to int 1 */
-	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-			 BMI260_INT_MAP_DATA,
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_INT_MAP_DATA,
 			 BMI260_INT_MAP_DATA_REG(1, FWM) |
-			 BMI260_INT_MAP_DATA_REG(1, FFULL));
+				 BMI260_INT_MAP_DATA_REG(1, FFULL));
 
 	/*
 	 * Configure fifo watermark to int whenever there's any data in
 	 * there
 	 */
-	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-			 BMI260_FIFO_WTM_0, 1);
-	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-			 BMI260_FIFO_WTM_1, 0);
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_FIFO_WTM_0, 1);
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_FIFO_WTM_1, 0);
 	if (IS_ENABLED(CONFIG_ACCELGYRO_BMI260_INT2_OUTPUT))
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-				 BMI260_FIFO_CONFIG_1,
-				 BMI260_FIFO_HEADER_EN);
+				 BMI260_FIFO_CONFIG_1, BMI260_FIFO_HEADER_EN);
 	else
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
 				 BMI260_FIFO_CONFIG_1,
-				 (BMI260_FIFO_TAG_INT_LEVEL <<
-				  BMI260_FIFO_TAG_INT2_EN_OFFSET) |
-				 BMI260_FIFO_HEADER_EN);
+				 (BMI260_FIFO_TAG_INT_LEVEL
+				  << BMI260_FIFO_TAG_INT2_EN_OFFSET) |
+					 BMI260_FIFO_HEADER_EN);
 	/* disable FIFO sensortime frame */
-	ret = bmi_write8(s->port, s->i2c_spi_addr_flags,
-			BMI260_FIFO_CONFIG_0, 0);
+	ret = bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_FIFO_CONFIG_0,
+			 0);
 	mutex_unlock(s->mutex);
 	return ret;
 }
@@ -375,7 +355,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	int rv;
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
-			(!(*event & CONFIG_ACCELGYRO_BMI260_INT_EVENT)))
+	    (!(*event & CONFIG_ACCELGYRO_BMI260_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
 	do {
@@ -398,17 +378,17 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 	return EC_SUCCESS;
 }
-#endif  /* ACCELGYRO_BMI260_INT_ENABLE */
+#endif /* ACCELGYRO_BMI260_INT_ENABLE */
 
 /*
  * If the .init_rom section is not memory mapped, we need a static
  * buffer in RAM to access the BMI configuration data.
  */
 #ifdef CONFIG_CHIP_INIT_ROM_REGION
-#define BMI_RAM_BUFFER_SIZE		256
+#define BMI_RAM_BUFFER_SIZE 256
 static uint8_t bmi_ram_buffer[BMI_RAM_BUFFER_SIZE];
 #else
-#define BMI_RAM_BUFFER_SIZE		0
+#define BMI_RAM_BUFFER_SIZE 0
 static uint8_t *bmi_ram_buffer;
 #endif
 
@@ -464,8 +444,7 @@ static int bmi_config_load(const struct motion_sensor_t *s)
 
 	for (i = 0; i < bmi_config_tbin_len; i += burst_write_len) {
 		uint8_t addr[2];
-		const int len = MIN(burst_write_len,
-				    bmi_config_tbin_len - i);
+		const int len = MIN(burst_write_len, bmi_config_tbin_len - i);
 
 		addr[0] = (i / 2) & 0xF;
 		addr[1] = (i / 2) >> 4;
@@ -480,17 +459,17 @@ static int bmi_config_load(const struct motion_sensor_t *s)
 			 * data through a RAM buffer.
 			 */
 			ret = init_rom_copy((int)&bmi_config_tbin[i], len,
-				bmi_ram_buffer);
+					    bmi_ram_buffer);
 			if (ret)
 				break;
 
 			ret = bmi_write_n(s->port, s->i2c_spi_addr_flags,
-					  BMI260_INIT_DATA,
-					  bmi_ram_buffer, len);
+					  BMI260_INIT_DATA, bmi_ram_buffer,
+					  len);
 		} else {
 			ret = bmi_write_n(s->port, s->i2c_spi_addr_flags,
-					  BMI260_INIT_DATA,
-					  &bmi_config[i], len);
+					  BMI260_INIT_DATA, &bmi_config[i],
+					  len);
 		}
 
 		if (ret)
@@ -530,7 +509,7 @@ static int init_config(const struct motion_sensor_t *s)
 	for (i = 0; i < 15; ++i) {
 		msleep(10);
 		ret = bmi_read8(s->port, s->i2c_spi_addr_flags,
-			BMI260_INTERNAL_STATUS, &init_status);
+				BMI260_INTERNAL_STATUS, &init_status);
 		if (ret)
 			break;
 		init_status &= BMI260_MESSAGE_MASK;
@@ -547,8 +526,7 @@ static int init(struct motion_sensor_t *s)
 	int ret = 0, tmp, i;
 	struct accelgyro_saved_data_t *saved_data = BMI_GET_SAVED_DATA(s);
 
-	ret = bmi_read8(s->port, s->i2c_spi_addr_flags,
-			BMI260_CHIP_ID, &tmp);
+	ret = bmi_read8(s->port, s->i2c_spi_addr_flags, BMI260_CHIP_ID, &tmp);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 
@@ -567,20 +545,18 @@ static int init(struct motion_sensor_t *s)
 		return EC_ERROR_ACCESS_DENIED;
 	}
 
-
 	if (s->type == MOTIONSENSE_TYPE_ACCEL) {
 		struct bmi_drv_data_t *data = BMI_GET_DATA(s);
 
 		/* Reset the chip to be in a good state */
-		bmi_write8(s->port, s->i2c_spi_addr_flags,
-				 BMI260_CMD_REG, BMI260_CMD_SOFT_RESET);
+		bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_CMD_REG,
+			   BMI260_CMD_SOFT_RESET);
 		msleep(2);
 		if (init_config(s))
 			return EC_ERROR_INVALID_CONFIG;
 
 		data->flags &= ~(BMI_FLAG_SEC_I2C_ENABLED |
-				(BMI_FIFO_ALL_MASK <<
-				 BMI_FIFO_FLAG_OFFSET));
+				 (BMI_FIFO_ALL_MASK << BMI_FIFO_FLAG_OFFSET));
 	}
 
 	for (i = X; i <= Z; i++)
