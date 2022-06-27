@@ -29,10 +29,8 @@
  * @param flags		Flags (see I2C_XFER_* above)
  * @return EC_SUCCESS, or non-zero if error.
  */
-int chip_i2c_xfer(const int port,
-		  const uint16_t addr_flags,
-		  const uint8_t *out, int out_size,
-		  uint8_t *in, int in_size, int flags);
+int chip_i2c_xfer(const int port, const uint16_t addr_flags, const uint8_t *out,
+		  int out_size, uint8_t *in, int in_size, int flags);
 
 /**
  * Chip level function to set bus speed.
