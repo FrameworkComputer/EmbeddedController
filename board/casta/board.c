@@ -37,10 +37,10 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 static uint8_t sku_id;
 
@@ -65,27 +65,27 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_AMB] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_CHARGER] = { "TEMP_CHARGER", NPCX_ADC_CH1,
+				      ADC_MAX_VOLT, ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* TODO(b/119872005): Casta: confirm thermistor parts */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -103,13 +103,12 @@ const unsigned int chg_cnt = ARRAY_SIZE(chg_chips);
  * I2C callbacks to ensure bus free time for battery I2C transactions is at
  * least 5ms.
  */
-#define BATTERY_FREE_MIN_DELTA_US               (5 * MSEC)
+#define BATTERY_FREE_MIN_DELTA_US (5 * MSEC)
 static timestamp_t battery_last_i2c_time;
 
 static int is_battery_i2c(const int port, const uint16_t addr_flags)
 {
-	return (port == I2C_PORT_BATTERY)
-		&& (addr_flags == BATTERY_ADDR_FLAGS);
+	return (port == I2C_PORT_BATTERY) && (addr_flags == BATTERY_ADDR_FLAGS);
 }
 
 static int is_battery_port(int port)
@@ -157,7 +156,7 @@ DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C);
 
 static void board_init(void)
 {
-	if(get_cbi_ssfc_charger() != SSFC_CHARGER_BQ25710)
+	if (get_cbi_ssfc_charger() != SSFC_CHARGER_BQ25710)
 		return;
 
 	chg_chips[0].drv = &bq25710_drv;
@@ -174,7 +173,6 @@ static void set_input_limit_on_ac_removal(void)
 		return;
 
 	charger_set_input_current_limit(0, CONFIG_CHARGER_INPUT_CURRENT);
-
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, set_input_limit_on_ac_removal, HOOK_PRIO_DEFAULT);
 
