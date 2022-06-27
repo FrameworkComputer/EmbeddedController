@@ -15,20 +15,18 @@
 
 #define GET_POWER_GOOD_PROP(node_id) DT_PROP(node_id, power_good_pin)
 
-#define GET_POWER_GOOD_DEV(node_id)					       \
-		DEVICE_DT_GET(DT_GPIO_CTLR(GET_POWER_GOOD_PROP(node_id),       \
-					   gpios))
+#define GET_POWER_GOOD_DEV(node_id) \
+	DEVICE_DT_GET(DT_GPIO_CTLR(GET_POWER_GOOD_PROP(node_id), gpios))
 
-#define GET_POWER_GOOD_PIN(node_id) DT_GPIO_PIN(GET_POWER_GOOD_PROP(node_id),  \
-						gpios)
+#define GET_POWER_GOOD_PIN(node_id) \
+	DT_GPIO_PIN(GET_POWER_GOOD_PROP(node_id), gpios)
 
 #if ANY_INST_HAS_POWER_GOOD_PIN
-#define FILL_POWER_GOOD(node_id) \
-COND_CODE_1(DT_NODE_HAS_PROP(node_id, power_good_pin),			      \
-		(.power_good_dev = GET_POWER_GOOD_DEV(node_id),		      \
-		 .power_good_pin = GET_POWER_GOOD_PIN(node_id), ),	      \
-		(.power_good_dev = NULL,				      \
-		 .power_good_pin = 0, ))
+#define FILL_POWER_GOOD(node_id)                                       \
+	COND_CODE_1(DT_NODE_HAS_PROP(node_id, power_good_pin),         \
+		    (.power_good_dev = GET_POWER_GOOD_DEV(node_id),    \
+		     .power_good_pin = GET_POWER_GOOD_PIN(node_id), ), \
+		    (.power_good_dev = NULL, .power_good_pin = 0, ))
 #else
 #define FILL_POWER_GOOD(node_id)
 #endif /* ANY_INST_HAS_POWER_GOOD_PIN */
@@ -58,20 +56,19 @@ static int thermistor_get_temp(const struct temp_sensor_t *sensor,
 		.data = DT_CAT(node_id, _thermistor_data),          \
 	})
 
-#define GET_ZEPHYR_TEMP_SENSOR_THERMISTOR(node_id)			      \
-	(&(struct zephyr_temp_sensor){					      \
-		.read = &thermistor_get_temp,				      \
+#define GET_ZEPHYR_TEMP_SENSOR_THERMISTOR(node_id)                            \
+	(&(struct zephyr_temp_sensor){                                        \
+		.read = &thermistor_get_temp,                                 \
 		.thermistor =                                                 \
 			GET_THERMISTOR_INFO(DT_PHANDLE(node_id, thermistor)), \
-		FILL_POWER_GOOD(node_id)				      \
-	})
+		FILL_POWER_GOOD(node_id) })
 
-#define TEMP_THERMISTOR(node_id)                                              \
-	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                                   \
-		.name = DT_LABEL(node_id),                                    \
-		.idx = ZSHIM_ADC_ID(DT_PHANDLE(node_id, adc)),                \
-		.type = TEMP_SENSOR_TYPE_BOARD,                               \
-		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_THERMISTOR(node_id),    \
+#define TEMP_THERMISTOR(node_id)                                           \
+	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                                \
+		.name = DT_LABEL(node_id),                                 \
+		.idx = ZSHIM_ADC_ID(DT_PHANDLE(node_id, adc)),             \
+		.type = TEMP_SENSOR_TYPE_BOARD,                            \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_THERMISTOR(node_id), \
 	},
 
 DT_FOREACH_STATUS_OKAY(cros_ec_thermistor, DEFINE_THERMISTOR_DATA)
@@ -89,19 +86,17 @@ static int pct2075_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
 		.i2c_addr_flags = DT_STRING_TOKEN(node_id, i2c_addr_flags), \
 	},
 
-#define GET_ZEPHYR_TEMP_SENSOR_PCT2075(node_id)				      \
-	(&(struct zephyr_temp_sensor){					      \
-		.read = &pct2075_get_temp,				      \
-		.thermistor = NULL,                                           \
-		FILL_POWER_GOOD(node_id)				      \
-	})
+#define GET_ZEPHYR_TEMP_SENSOR_PCT2075(node_id)                   \
+	(&(struct zephyr_temp_sensor){ .read = &pct2075_get_temp, \
+				       .thermistor = NULL,        \
+				       FILL_POWER_GOOD(node_id) })
 
-#define TEMP_PCT2075(node_id)						\
-	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {				\
-		.name = DT_LABEL(node_id),				\
-		.idx = ZSHIM_PCT2075_SENSOR_ID(node_id),		\
-		.type = TEMP_SENSOR_TYPE_BOARD,				\
-		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_PCT2075(node_id),	\
+#define TEMP_PCT2075(node_id)                                           \
+	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                             \
+		.name = DT_LABEL(node_id),                              \
+		.idx = ZSHIM_PCT2075_SENSOR_ID(node_id),                \
+		.type = TEMP_SENSOR_TYPE_BOARD,                         \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_PCT2075(node_id), \
 	},
 
 const struct pct2075_sensor_t pct2075_sensors[PCT2075_COUNT] = {
@@ -121,19 +116,17 @@ static int sb_tsi_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
 
 #endif /* cros_ec_temp_sensor_sb_tsi */
 
-#define GET_ZEPHYR_TEMP_SENSOR_SB_TSI(node_id)				      \
-	(&(struct zephyr_temp_sensor){					      \
-		.read = &sb_tsi_get_temp,				      \
-		.thermistor = NULL,                                           \
-		FILL_POWER_GOOD(node_id)				      \
-	})
+#define GET_ZEPHYR_TEMP_SENSOR_SB_TSI(node_id)                   \
+	(&(struct zephyr_temp_sensor){ .read = &sb_tsi_get_temp, \
+				       .thermistor = NULL,       \
+				       FILL_POWER_GOOD(node_id) })
 
-#define TEMP_SB_TSI(node_id)						\
-	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {				\
-		.name = DT_LABEL(node_id),				\
-		.idx = 0,						\
-		.type = TEMP_SENSOR_TYPE_CPU,				\
-		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_SB_TSI(node_id),	\
+#define TEMP_SB_TSI(node_id)                                           \
+	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                            \
+		.name = DT_LABEL(node_id),                             \
+		.idx = 0,                                              \
+		.type = TEMP_SENSOR_TYPE_CPU,                          \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_SB_TSI(node_id), \
 	},
 
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_temp_sensor_tmp112)
@@ -149,19 +142,17 @@ static int tmp112_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
 		.i2c_addr_flags = DT_STRING_TOKEN(node_id, i2c_addr_flags), \
 	},
 
-#define GET_ZEPHYR_TEMP_SENSOR_TMP112(node_id)				      \
-	(&(struct zephyr_temp_sensor){					      \
-		.read = &tmp112_get_temp,				      \
-		.thermistor = NULL,                                           \
-		FILL_POWER_GOOD(node_id)				      \
-	})
+#define GET_ZEPHYR_TEMP_SENSOR_TMP112(node_id)                   \
+	(&(struct zephyr_temp_sensor){ .read = &tmp112_get_temp, \
+				       .thermistor = NULL,       \
+				       FILL_POWER_GOOD(node_id) })
 
-#define TEMP_TMP112(node_id)						\
-	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {				\
-		.name = DT_LABEL(node_id),				\
-		.idx = ZSHIM_TMP112_SENSOR_ID(node_id),			\
-		.type = TEMP_SENSOR_TYPE_BOARD,				\
-		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_TMP112(node_id),	\
+#define TEMP_TMP112(node_id)                                           \
+	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                            \
+		.name = DT_LABEL(node_id),                             \
+		.idx = ZSHIM_TMP112_SENSOR_ID(node_id),                \
+		.type = TEMP_SENSOR_TYPE_BOARD,                        \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_TMP112(node_id), \
 	},
 
 const struct tmp112_sensor_t tmp112_sensors[TMP112_COUNT] = {
@@ -170,9 +161,12 @@ const struct tmp112_sensor_t tmp112_sensors[TMP112_COUNT] = {
 
 const struct temp_sensor_t temp_sensors[] = {
 	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_thermistor, TEMP_THERMISTOR)
-	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_pct2075, TEMP_PCT2075)
-	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_sb_tsi, TEMP_SB_TSI)
-	DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_tmp112, TEMP_TMP112)
+		DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_pct2075,
+				       TEMP_PCT2075)
+			DT_FOREACH_STATUS_OKAY(cros_ec_temp_sensor_sb_tsi,
+					       TEMP_SB_TSI)
+				DT_FOREACH_STATUS_OKAY(
+					cros_ec_temp_sensor_tmp112, TEMP_TMP112)
 };
 
 int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr)
