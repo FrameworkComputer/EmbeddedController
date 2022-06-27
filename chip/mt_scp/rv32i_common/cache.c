@@ -33,8 +33,9 @@ void cache_init(void)
 #pragma GCC unroll 16
 	for (i = 0; i < NR_MPU_ENTRIES; ++i) {
 		if (mpu_entries[i].end_addr - mpu_entries[i].start_addr) {
-			write_csr(CSR_MPU_L(i), mpu_entries[i].start_addr |
-						mpu_entries[i].attribute);
+			write_csr(CSR_MPU_L(i),
+				  mpu_entries[i].start_addr |
+					  mpu_entries[i].attribute);
 			write_csr(CSR_MPU_H(i), mpu_entries[i].end_addr);
 			mpu_en |= BIT(i);
 		}
@@ -47,7 +48,7 @@ void cache_init(void)
 	set_csr(CSR_MCTREN, CSR_MCTREN_MPU);
 
 	/* fence */
-	asm volatile ("fence.i" ::: "memory");
+	asm volatile("fence.i" ::: "memory");
 }
 
 #ifdef DEBUG
@@ -56,15 +57,11 @@ void cache_init(void)
  * D for D-cache
  * C for control transfer instructions (branch, jump, ret, interrupt, ...)
  */
-static enum {
-	PMU_SELECT_I = 0,
-	PMU_SELECT_D,
-	PMU_SELECT_C
-} pmu_select;
+static enum { PMU_SELECT_I = 0, PMU_SELECT_D, PMU_SELECT_C } pmu_select;
 
 int command_enable_pmu(int argc, char **argv)
 {
-	static const char * const selectors[] = {
+	static const char *const selectors[] = {
 		[PMU_SELECT_I] = "I",
 		[PMU_SELECT_D] = "D",
 		[PMU_SELECT_C] = "C",
@@ -87,9 +84,8 @@ int command_enable_pmu(int argc, char **argv)
 
 	/* disable all PMU */
 	clear_csr(CSR_PMU_MPMUCTR,
-		  CSR_PMU_MPMUCTR_C | CSR_PMU_MPMUCTR_I |
-		  CSR_PMU_MPMUCTR_H3 | CSR_PMU_MPMUCTR_H4 |
-		  CSR_PMU_MPMUCTR_H5);
+		  CSR_PMU_MPMUCTR_C | CSR_PMU_MPMUCTR_I | CSR_PMU_MPMUCTR_H3 |
+			  CSR_PMU_MPMUCTR_H4 | CSR_PMU_MPMUCTR_H5);
 
 	/* reset cycle count */
 	write_csr(CSR_PMU_MCYCLE, 0);
@@ -138,25 +134,23 @@ int command_enable_pmu(int argc, char **argv)
 
 	/* enable all PMU */
 	set_csr(CSR_PMU_MPMUCTR,
-		CSR_PMU_MPMUCTR_C | CSR_PMU_MPMUCTR_I |
-		CSR_PMU_MPMUCTR_H3 | CSR_PMU_MPMUCTR_H4 |
-		CSR_PMU_MPMUCTR_H5);
+		CSR_PMU_MPMUCTR_C | CSR_PMU_MPMUCTR_I | CSR_PMU_MPMUCTR_H3 |
+			CSR_PMU_MPMUCTR_H4 | CSR_PMU_MPMUCTR_H5);
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(enable_pmu, command_enable_pmu,
-			     "[I | D | C]", "Enable PMU");
+DECLARE_SAFE_CONSOLE_COMMAND(enable_pmu, command_enable_pmu, "[I | D | C]",
+			     "Enable PMU");
 
 int command_disable_pmu(int argc, char **argv)
 {
 	clear_csr(CSR_PMU_MPMUCTR,
-		  CSR_PMU_MPMUCTR_C | CSR_PMU_MPMUCTR_I |
-		  CSR_PMU_MPMUCTR_H3 | CSR_PMU_MPMUCTR_H4 |
-		  CSR_PMU_MPMUCTR_H5);
+		  CSR_PMU_MPMUCTR_C | CSR_PMU_MPMUCTR_I | CSR_PMU_MPMUCTR_H3 |
+			  CSR_PMU_MPMUCTR_H4 | CSR_PMU_MPMUCTR_H5);
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(disable_pmu, command_disable_pmu,
-			     NULL, "Disable PMU");
+DECLARE_SAFE_CONSOLE_COMMAND(disable_pmu, command_disable_pmu, NULL,
+			     "Disable PMU");
 
 int command_show_pmu(int argc, char **argv)
 {
@@ -164,19 +158,19 @@ int command_show_pmu(int argc, char **argv)
 	uint32_t p;
 
 	val3 = ((uint64_t)read_csr(CSR_PMU_MCYCLEH) << 32) |
-			read_csr(CSR_PMU_MCYCLE);
+	       read_csr(CSR_PMU_MCYCLE);
 	ccprintf("cycles: %lld\n", val3);
 
 	val3 = ((uint64_t)read_csr(CSR_PMU_MINSTRETH) << 32) |
-			read_csr(CSR_PMU_MINSTRET);
+	       read_csr(CSR_PMU_MINSTRET);
 	ccprintf("retired instructions: %lld\n", val3);
 
 	val3 = ((uint64_t)read_csr(CSR_PMU_MHPMCOUNTER3H) << 32) |
-			read_csr(CSR_PMU_MHPMCOUNTER3);
+	       read_csr(CSR_PMU_MHPMCOUNTER3);
 	val4 = ((uint64_t)read_csr(CSR_PMU_MHPMCOUNTER4H) << 32) |
-			read_csr(CSR_PMU_MHPMCOUNTER4);
+	       read_csr(CSR_PMU_MHPMCOUNTER4);
 	val5 = ((uint64_t)read_csr(CSR_PMU_MHPMCOUNTER5H) << 32) |
-			read_csr(CSR_PMU_MHPMCOUNTER5);
+	       read_csr(CSR_PMU_MHPMCOUNTER5);
 
 	if (val3)
 		p = val4 * 10000 / val3;
@@ -199,8 +193,8 @@ int command_show_pmu(int argc, char **argv)
 	case PMU_SELECT_C:
 		ccprintf("control transfer instruction:\n");
 		ccprintf("  total: %lld\n", val3);
-		ccprintf("  miss-predict: %lld (%d.%d%%)\n",
-			 val4, p / 100, p % 100);
+		ccprintf("  miss-predict: %lld (%d.%d%%)\n", val4, p / 100,
+			 p % 100);
 		ccprintf("interrupts: %lld\n", val5);
 		break;
 	}
