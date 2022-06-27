@@ -52,14 +52,14 @@ static int last_rx_was_cr;
 #ifndef CONFIG_EXPERIMENTAL_CONSOLE
 /* State of input escape code */
 static enum {
-	ESC_OUTSIDE,   /* Not in escape code */
-	ESC_START,     /* Got ESC */
-	ESC_BAD,       /* Bad escape sequence */
-	ESC_BRACKET,   /* Got ESC [ */
+	ESC_OUTSIDE, /* Not in escape code */
+	ESC_START, /* Got ESC */
+	ESC_BAD, /* Bad escape sequence */
+	ESC_BRACKET, /* Got ESC [ */
 	ESC_BRACKET_1, /* Got ESC [ 1 */
 	ESC_BRACKET_3, /* Got ESC [ 3 */
 	ESC_BRACKET_4, /* Got ESC [ 4 */
-	ESC_O,         /* Got ESC O */
+	ESC_O, /* Got ESC O */
 } esc_state;
 #endif /* !defined(CONFIG_EXPERIMENTAL_CONSOLE) */
 
@@ -151,18 +151,10 @@ static const struct console_command *find_command(char *name)
 	return match;
 }
 
-
 static const char *const errmsgs[] = {
-	"OK",
-	"Unknown error",
-	"Unimplemented",
-	"Overflow",
-	"Timeout",
-	"Invalid argument",
-	"Busy",
-	"Access Denied",
-	"Not Powered",
-	"Not Calibrated",
+	"OK",	       "Unknown error",	   "Unimplemented", "Overflow",
+	"Timeout",     "Invalid argument", "Busy",	    "Access Denied",
+	"Not Powered", "Not Calibrated",
 };
 
 /**
@@ -205,10 +197,10 @@ static int handle_command(char *input)
 	i = input[1] == '&' ? 2 : 1;
 
 	/* Next, there should be 4 hex digits: XXYY + '&' */
-	if (i+5 > input_len)
+	if (i + 5 > input_len)
 		goto command_has_error;
 	/* Replace the '&' with null so we can call strtoi(). */
-	input[i+4] = 0;
+	input[i + 4] = 0;
 	j = strtoi(input + i, &e, 16);
 	if (*e)
 		goto command_has_error;
@@ -218,10 +210,10 @@ static int handle_command(char *input)
 	i += 5;
 
 	/* Lastly, verify the CRC8 of the command. */
-	if (i+command_len > input_len)
+	if (i + command_len > input_len)
 		goto command_has_error;
 	if (packed_crc8 != cros_crc8(&input[i], command_len)) {
-command_has_error:
+	command_has_error:
 		/* Send back the error string. */
 		ccprintf("&&EE\n");
 		return EC_ERROR_UNKNOWN;
@@ -248,7 +240,7 @@ command_has_error:
 		rv = EC_ERROR_ACCESS_DENIED;
 	else
 #endif
-	rv = cmd->handler(argc, argv);
+		rv = cmd->handler(argc, argv);
 	if (rv == EC_SUCCESS)
 		return rv;
 
@@ -372,7 +364,7 @@ static void save_history(void)
 static void handle_backspace(void)
 {
 	if (!input_pos)
-		return;  /* Already at beginning of line */
+		return; /* Already at beginning of line */
 
 	/* Move cursor back */
 	console_putc('\b');
@@ -380,8 +372,7 @@ static void handle_backspace(void)
 	/* Print and move anything following the cursor position */
 	if (input_pos != input_len) {
 		ccputs(input_buf + input_pos);
-		memmove(input_buf + input_pos - 1,
-			input_buf + input_pos,
+		memmove(input_buf + input_pos - 1, input_buf + input_pos,
 			input_len - input_pos + 1);
 	} else {
 		input_buf[input_len - 1] = '\0';
@@ -511,7 +502,7 @@ static void console_handle_char(int c)
 #ifndef CONFIG_EXPERIMENTAL_CONSOLE
 	case KEY_DEL:
 		if (input_pos == input_len)
-			break;  /* Already at end */
+			break; /* Already at end */
 
 		move_cursor_right();
 
@@ -544,8 +535,8 @@ static void console_handle_char(int c)
 		/* Save command in history buffer */
 		if (input_len) {
 			save_history();
-			history_next = (history_next + 1) %
-				CONFIG_CONSOLE_HISTORY;
+			history_next =
+				(history_next + 1) % CONFIG_CONSOLE_HISTORY;
 			history_pos = history_next;
 		}
 #endif
@@ -692,7 +683,7 @@ void console_task(void *u)
 			console_handle_char(c);
 		}
 
-		task_wait_event(-1);  /* Wait for more input */
+		task_wait_event(-1); /* Wait for more input */
 	}
 }
 
@@ -703,7 +694,7 @@ void console_task(void *u)
 static int command_help(int argc, char **argv)
 {
 	const int ncmds = __cmds_end - __cmds;
-	const int cols = 5;			/* printing in five columns */
+	const int cols = 5; /* printing in five columns */
 	const int rows = (ncmds + cols - 1) / cols;
 	int i, j;
 
@@ -715,16 +706,15 @@ static int command_help(int argc, char **argv)
 #ifdef CONFIG_CONSOLE_COMMAND_FLAGS
 			ccputs("Command     Flags   Description\n");
 			for (i = 0; i < ncmds; i++) {
-				ccprintf(" %-14s %x %s\n",
-					 __cmds[i].name, __cmds[i].flags,
-					 __cmds[i].help);
+				ccprintf(" %-14s %x %s\n", __cmds[i].name,
+					 __cmds[i].flags, __cmds[i].help);
 				cflush();
 			}
 #else
 			ccputs("Known commands:\n");
 			for (i = 0; i < ncmds; i++) {
-				ccprintf("  %-15s%s\n",
-					 __cmds[i].name, __cmds[i].help);
+				ccprintf("  %-15s%s\n", __cmds[i].name,
+					 __cmds[i].help);
 				cflush();
 			}
 #endif
@@ -771,8 +761,7 @@ static int command_help(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(help, command_help,
-			     "[ list | <name> ]",
+DECLARE_SAFE_CONSOLE_COMMAND(help, command_help, "[ list | <name> ]",
 			     "Print command help");
 
 #ifdef CONFIG_CONSOLE_HISTORY
@@ -788,7 +777,6 @@ static int command_history(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(history, command_history,
-			     NULL,
+DECLARE_SAFE_CONSOLE_COMMAND(history, command_history, NULL,
 			     "Print console history");
 #endif
