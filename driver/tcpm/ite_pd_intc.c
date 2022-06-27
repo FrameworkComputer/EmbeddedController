@@ -16,8 +16,8 @@ void chip_pd_irq(enum usbpd_port port)
 
 	/* check status */
 	if (IS_ENABLED(IT83XX_INTC_FAST_SWAP_SUPPORT) &&
-		IS_ENABLED(CONFIG_USB_PD_FRS_TCPC) &&
-		IS_ENABLED(CONFIG_USB_PD_REV30)) {
+	    IS_ENABLED(CONFIG_USB_PD_FRS_TCPC) &&
+	    IS_ENABLED(CONFIG_USB_PD_REV30)) {
 		/*
 		 * FRS detection must handle first, because we need to short
 		 * the interrupt -> board_frs_handler latency-critical time.
