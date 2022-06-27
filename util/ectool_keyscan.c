@@ -18,39 +18,39 @@
 
 enum {
 	/* Alloc this many more scans when needed */
-	KEYSCAN_ALLOC_STEP	= 64,
-	KEYSCAN_MAX_TESTS	= 10,	/* Maximum number of tests supported */
-	KEYSCAN_MAX_INPUT_LEN	= 20,	/* Maximum characters we can receive */
+	KEYSCAN_ALLOC_STEP = 64,
+	KEYSCAN_MAX_TESTS = 10, /* Maximum number of tests supported */
+	KEYSCAN_MAX_INPUT_LEN = 20, /* Maximum characters we can receive */
 };
 
 /* A single entry of the key matrix */
 struct matrix_entry {
-	int row;	/* key matrix row */
-	int col;	/* key matrix column */
-	int keycode;	/* corresponding linux key code */
+	int row; /* key matrix row */
+	int col; /* key matrix column */
+	int keycode; /* corresponding linux key code */
 };
 
 struct keyscan_test_item {
-	uint32_t beat;			/* Beat number */
-	uint8_t scan[KEYBOARD_COLS_MAX];	/* Scan data */
+	uint32_t beat; /* Beat number */
+	uint8_t scan[KEYBOARD_COLS_MAX]; /* Scan data */
 };
 
 /* A single test, consisting of a list of key scans and expected ascii input */
 struct keyscan_test {
-	char *name;		/* name of test */
-	char *expect;		/* resulting input we expect to see */
-	int item_count;		/* number of items in data */
-	int item_alloced;	/* number of items alloced in data */
-	struct keyscan_test_item *items;	/* key data for EC */
+	char *name; /* name of test */
+	char *expect; /* resulting input we expect to see */
+	int item_count; /* number of items in data */
+	int item_alloced; /* number of items alloced in data */
+	struct keyscan_test_item *items; /* key data for EC */
 };
 
 /* A list of tests that we can run */
 struct keyscan_info {
-	unsigned int beat_us;	/* length of each beat in microseconds */
-	struct keyscan_test tests[KEYSCAN_MAX_TESTS];	/* the tests */
-	int test_count;		/* number of tests */
-	struct matrix_entry *matrix;	/* the key matrix info */
-	int matrix_count;	/* number of keys in matrix */
+	unsigned int beat_us; /* length of each beat in microseconds */
+	struct keyscan_test tests[KEYSCAN_MAX_TESTS]; /* the tests */
+	int test_count; /* number of tests */
+	struct matrix_entry *matrix; /* the key matrix info */
+	int matrix_count; /* number of keys in matrix */
 };
 
 /**
@@ -125,18 +125,18 @@ static int keyscan_read_fdt_matrix(struct keyscan_info *keyscan,
  * when we see a space in a key sequence file.
  */
 static const unsigned char kbd_plain_xlate[] = {
-	0xff, 0x1b, '1',  '2',  '3',  '4',  '5',  '6',
-	'7',  '8',  '9',  '0',  '-',  '=', '\b', '\t',	/* 0x00 - 0x0f */
-	'q',  'w',  'e',  'r',  't',  'y',  'u',  'i',
-	'o',  'p',  '[',  ']', '\r', 0xff,  'a',  's',  /* 0x10 - 0x1f */
-	'd',  'f',  'g',  'h',  'j',  'k',  'l',  ';',
-	'\'',  '`', 0xff, '\\', 'z',  'x',  'c',  'v',	/* 0x20 - 0x2f */
-	'b',  'n',  'm',  ',' ,  '.', '/', 0xff, 0xff, 0xff,
-	0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* 0x30 - 0x3f */
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,  '7',
-	'8',  '9',  '-',  '4',  '5',  '6',  '+',  '1',	/* 0x40 - 0x4f */
-	'2',  '3',  '0',  '.', 0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,	/* 0x50 - 0x5F */
+	0xff, 0x1b, '1',  '2',	'3',  '4',  '5',  '6',
+	'7',  '8',  '9',  '0',	'-',  '=',  '\b', '\t', /* 0x00 - 0x0f */
+	'q',  'w',  'e',  'r',	't',  'y',  'u',  'i',
+	'o',  'p',  '[',  ']',	'\r', 0xff, 'a',  's', /* 0x10 - 0x1f */
+	'd',  'f',  'g',  'h',	'j',  'k',  'l',  ';',
+	'\'', '`',  0xff, '\\', 'z',  'x',  'c',  'v', /* 0x20 - 0x2f */
+	'b',  'n',  'm',  ',',	'.',  '/',  0xff, 0xff,
+	0xff, 0xfe, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0x30 - 0x3f */
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, '7',
+	'8',  '9',  '-',  '4',	'5',  '6',  '+',  '1', /* 0x40 - 0x4f */
+	'2',  '3',  '0',  '.',	0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, /* 0x50 - 0x5F */
 	'\r', 0xff, 0xff, '\0'
 };
 
@@ -216,7 +216,7 @@ static int keyscan_add_to_scan(struct keyscan_info *keyscan, char **keysp,
 
 	/* Look up keycode in matrix */
 	for (i = 0, matrix = keyscan->matrix; i < keyscan->matrix_count;
-			i++, matrix++) {
+	     i++, matrix++) {
 		if (matrix->keycode == keycode) {
 #ifdef DEBUG
 			printf("%d: %d,%d\n", matrix->keycode, matrix->row,
@@ -289,15 +289,15 @@ static int keyscan_process_keys(struct keyscan_info *keyscan, int linenum,
 		keys++;
 		while (*keys) {
 			if (keyscan_add_to_scan(keyscan, &keys, item->scan)) {
-				fprintf(stderr, "Line %d: Cannot parse"
-					" key input '%s'\n", linenum,
-					keys);
+				fprintf(stderr,
+					"Line %d: Cannot parse"
+					" key input '%s'\n",
+					linenum, keys);
 				return -1;
 			}
 		}
 	} else if (*keys) {
-		fprintf(stderr, "Line %d: Need space after beat\n",
-			linenum);
+		fprintf(stderr, "Line %d: Need space after beat\n", linenum);
 		return -1;
 	}
 	test->item_count++;
@@ -307,10 +307,10 @@ static int keyscan_process_keys(struct keyscan_info *keyscan, int linenum,
 
 /* These are the commands we understand in a key sequence file */
 enum keyscan_cmd {
-	KEYSCAN_CMD_TEST,	/* start a new test */
-	KEYSCAN_CMD_ENDTEST,	/* end a test */
-	KEYSCAN_CMD_SEQ,	/* add a keyscan to a test sequence */
-	KEYSCAN_CMD_EXPECT,	/* indicate what input is expected */
+	KEYSCAN_CMD_TEST, /* start a new test */
+	KEYSCAN_CMD_ENDTEST, /* end a test */
+	KEYSCAN_CMD_SEQ, /* add a keyscan to a test sequence */
+	KEYSCAN_CMD_EXPECT, /* indicate what input is expected */
 
 	KEYSCAN_CMD_COUNT
 };
@@ -388,7 +388,7 @@ static int keyscan_process_file(FILE *f, struct keyscan_info *keyscan)
 			/* Start a new test */
 			if (keyscan->test_count == KEYSCAN_MAX_TESTS) {
 				fprintf(stderr, "KEYSCAN_MAX_TESTS "
-					"exceeded\n");
+						"exceeded\n");
 				return -1;
 			}
 			cur_test = &keyscan->tests[keyscan->test_count];
@@ -401,8 +401,10 @@ static int keyscan_process_file(FILE *f, struct keyscan_info *keyscan)
 		case KEYSCAN_CMD_EXPECT:
 			/* Get expect string */
 			if (!cur_test) {
-				fprintf(stderr, "Line %d: expect should be "
-					"inside test\n", linenum);
+				fprintf(stderr,
+					"Line %d: expect should be "
+					"inside test\n",
+					linenum);
 				return -1;
 			}
 			cur_test->expect = strdup(args);
@@ -418,9 +420,11 @@ static int keyscan_process_file(FILE *f, struct keyscan_info *keyscan)
 			break;
 		case KEYSCAN_CMD_SEQ:
 			if (keyscan_process_keys(keyscan, linenum, cur_test,
-					args)) {
-				fprintf(stderr, "Line %d: Cannot parse key "
-					"input '%s'\n", linenum, args);
+						 args)) {
+				fprintf(stderr,
+					"Line %d: Cannot parse key "
+					"input '%s'\n",
+					linenum, args);
 				return -1;
 			}
 			break;
@@ -519,8 +523,8 @@ static int keyscan_send_sequence(struct keyscan_info *keyscan,
 		fprintf(stderr, "Out of memory for message\n");
 		return -1;
 	}
-	for (upto = rv = 0, item = test->items; rv >= 0 &&
-			upto < test->item_count; upto++, item++) {
+	for (upto = rv = 0, item = test->items;
+	     rv >= 0 && upto < test->item_count; upto++, item++) {
 		req->cmd = EC_KEYSCAN_SEQ_ADD;
 		req->add.time_us = item->beat * keyscan->beat_us;
 		memcpy(req->add.scan, item->scan, sizeof(item->scan));
@@ -553,8 +557,8 @@ static int run_test(struct keyscan_info *keyscan, struct keyscan_test *test)
 
 	/* First clear the sequence */
 	ctrl.cmd = EC_KEYSCAN_SEQ_CLEAR;
-	rv = ec_command(EC_CMD_KEYSCAN_SEQ_CTRL, 0, &ctrl, sizeof(ctrl),
-			NULL, 0);
+	rv = ec_command(EC_CMD_KEYSCAN_SEQ_CTRL, 0, &ctrl, sizeof(ctrl), NULL,
+			0);
 	if (rv < 0)
 		return rv;
 
@@ -565,13 +569,13 @@ static int run_test(struct keyscan_info *keyscan, struct keyscan_test *test)
 	/* Start it */
 	set_to_raw(fd, 1);
 	ctrl.cmd = EC_KEYSCAN_SEQ_START;
-	rv = ec_command(EC_CMD_KEYSCAN_SEQ_CTRL, 0, &ctrl, sizeof(ctrl),
-			NULL, 0);
+	rv = ec_command(EC_CMD_KEYSCAN_SEQ_CTRL, 0, &ctrl, sizeof(ctrl), NULL,
+			0);
 	if (rv < 0)
 		return rv;
 
 	/* Work out how long we need to wait */
-	wait_us = 100 * 1000;	/* Wait 100ms to at least */
+	wait_us = 100 * 1000; /* Wait 100ms to at least */
 	if (test->item_count) {
 		struct keyscan_test_item *ksi;
 
@@ -593,8 +597,8 @@ static int run_test(struct keyscan_info *keyscan, struct keyscan_test *test)
 	ctrl.cmd = EC_KEYSCAN_SEQ_COLLECT;
 	ctrl.collect.start_item = 0;
 	ctrl.collect.num_items = test->item_count;
-	rv = ec_command(EC_CMD_KEYSCAN_SEQ_CTRL, 0, &ctrl, sizeof(ctrl),
-			resp, size);
+	rv = ec_command(EC_CMD_KEYSCAN_SEQ_CTRL, 0, &ctrl, sizeof(ctrl), resp,
+			size);
 	if (rv < 0)
 		return rv;
 
