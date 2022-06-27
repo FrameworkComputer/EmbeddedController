@@ -27,11 +27,9 @@
 static mutex_t sensor_mutex;
 
 /** Rotation used in some tests */
-static const mat33_fp_t test_rotation = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t test_rotation = { { 0, FLOAT_TO_FP(1), 0 },
+					  { FLOAT_TO_FP(-1), 0, 0 },
+					  { 0, 0, FLOAT_TO_FP(-1) } };
 
 /** Rotate given vector by test rotation */
 void rotate_int3v_by_test_rotation(int16_t *v)
@@ -99,7 +97,8 @@ static void compare_int3v_f(int16_t *exp_v, int16_t *v, int line)
 	int i;
 
 	for (i = 0; i < 3; i++) {
-		zassert_within(exp_v[i], v[i], V_EPS,
+		zassert_within(
+			exp_v[i], v[i], V_EPS,
 			"Expected [%d; %d; %d], got [%d; %d; %d]; line: %d",
 			exp_v[0], exp_v[1], exp_v[2], v[0], v[1], v[2], line);
 	}
@@ -269,8 +268,8 @@ static void check_set_range_f(struct i2c_emul *emul, int range, int rnd,
 	zassert_equal(EC_SUCCESS, ms.drv->set_range(&ms, range, rnd),
 		      "set_range failed; line: %d", line);
 	zassert_equal(exp_range, ms.current_range,
-		      "Expected range %d, got %d; line %d",
-		      exp_range, ms.current_range, line);
+		      "Expected range %d, got %d; line %d", exp_range,
+		      ms.current_range, line);
 	range_reg = bma_emul_get_reg(emul, BMA2x2_RANGE_SELECT_ADDR);
 	range_reg &= BMA2x2_RANGE_SELECT_MSK;
 
@@ -299,7 +298,7 @@ static void check_set_range_f(struct i2c_emul *emul, int range, int rnd,
 		      "Expected range reg 0x%x, got 0x%x; line %d",
 		      exp_range_reg, range_reg, line);
 }
-#define check_set_range(emul, range, rnd, exp_range)	\
+#define check_set_range(emul, range, rnd, exp_range) \
 	check_set_range_f(emul, range, rnd, exp_range, __LINE__)
 
 /** Test set range with and without I2C errors. */
@@ -500,10 +499,10 @@ static void check_set_rate_f(struct i2c_emul *emul, int rate, int rnd,
 	}
 
 	zassert_equal(exp_rate_reg, rate_reg,
-		      "Expected rate reg 0x%x, got 0x%x; line %d",
-		      exp_rate_reg, rate_reg, line);
+		      "Expected rate reg 0x%x, got 0x%x; line %d", exp_rate_reg,
+		      rate_reg, line);
 }
-#define check_set_rate(emul, rate, rnd, exp_rate)	\
+#define check_set_rate(emul, rate, rnd, exp_rate) \
 	check_set_rate_f(emul, rate, rnd, exp_rate, __LINE__)
 
 /** Test set and get rate with and without I2C errors. */
@@ -589,8 +588,8 @@ ZTEST_USER(bma2x2, test_bma_rate)
 	zassert_equal(EC_ERROR_INVAL, ms.drv->set_data_rate(&ms, 15625, 1),
 		      NULL);
 	zassert_equal(drv_rate, ms.drv->get_data_rate(&ms), NULL);
-	zassert_equal(reg_rate,
-		      bma_emul_get_reg(emul, BMA2x2_BW_SELECT_ADDR), NULL);
+	zassert_equal(reg_rate, bma_emul_get_reg(emul, BMA2x2_BW_SELECT_ADDR),
+		      NULL);
 
 	/* Do not fail on read */
 	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -765,11 +764,9 @@ ZTEST_USER(bma2x2, test_bma_perform_calib)
 	int16_t ret_off[3];
 	int range;
 	int rate;
-	mat33_fp_t rot = {
-		{ FLOAT_TO_FP(1), 0, 0},
-		{ 0, FLOAT_TO_FP(1), 0},
-		{ 0, 0, FLOAT_TO_FP(-1)}
-	};
+	mat33_fp_t rot = { { FLOAT_TO_FP(1), 0, 0 },
+			   { 0, FLOAT_TO_FP(1), 0 },
+			   { 0, 0, FLOAT_TO_FP(-1) } };
 
 	emul = bma_emul_get(BMA_ORD);
 
@@ -875,8 +872,8 @@ ZTEST_USER(bma2x2, test_bma_perform_calib)
 	/* Enable rotation with negative value on Z axis */
 	ms.rot_standard_ref = &rot;
 	/* Expected offset -1G - accelerometer[Z] */
-	exp_off[2] = -((int)BMA_EMUL_1G) - bma_emul_get_acc(emul,
-							    BMA_EMUL_AXIS_Z);
+	exp_off[2] =
+		-((int)BMA_EMUL_1G) - bma_emul_get_acc(emul, BMA_EMUL_AXIS_Z);
 
 	/* Test successful offset compenastion with negative Z rotation */
 	zassert_equal(EC_SUCCESS, ms.drv->perform_calib(&ms, 1), NULL);
