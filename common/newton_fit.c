@@ -32,7 +32,7 @@ static fp_t compute_error(struct newton_fit *fit, fpv3_t center)
 
 		_it = (struct newton_fit_orientation *)it.ptr;
 		e = FLOAT_TO_FP(1.0f) -
-			distance_squared(_it->orientation, center);
+		    distance_squared(_it->orientation, center);
 		error += fp_mul(e, e);
 	}
 
@@ -138,8 +138,8 @@ void newton_fit_compute(struct newton_fit *fit, fpv3_t bias, fp_t *radius)
 	if (queue_is_empty(fit->orientations))
 		return;
 
-	inv_orient_count = fp_div(FLOAT_TO_FP(1.0f),
-				  queue_count(fit->orientations));
+	inv_orient_count =
+		fp_div(FLOAT_TO_FP(1.0f), queue_count(fit->orientations));
 
 	memcpy(new_bias, bias, sizeof(fpv3_t));
 	new_error = compute_error(fit, new_bias);
