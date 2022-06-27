@@ -12,7 +12,7 @@
 #include "extpower.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
-#define SB_SHUTDOWN_DATA	0x0010
+#define SB_SHUTDOWN_DATA 0x0010
 
 const struct board_batt_params board_battery_info[] = {
 	[BATTERY_SIMPLO_HIGHPOWER] = {
