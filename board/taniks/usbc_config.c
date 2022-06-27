@@ -34,13 +34,13 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 #if 0
 /* Debug only! */
-#define CPRINTSUSB(format, args...) cprints(CC_USBPD, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBPD, format, ##args)
 #else
 #define CPRINTSUSB(format, args...)
 #define CPRINTFUSB(format, args...)
@@ -169,21 +169,20 @@ static void ps8815_reset(void)
 
 	CPRINTS("%s: patching ps8815 registers", __func__);
 
-	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
-		      PS8XXX_I2C_ADDR1_FLAGS, 0x0f, &val) == EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_FLAGS, 0x0f,
+		      &val) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f was %02x", val);
 	else {
 		CPRINTS("delay 10ms to make sure PS8815 is waken from idle");
 		msleep(10);
 	}
 
-
-	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
-		       PS8XXX_I2C_ADDR1_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+	if (i2c_write8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_FLAGS, 0x0f,
+		       0x31) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f set to 0x31");
 
-	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
-		      PS8XXX_I2C_ADDR1_FLAGS, 0x0f, &val) == EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_FLAGS, 0x0f,
+		      &val) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f now %02x", val);
 }
 
@@ -209,10 +208,11 @@ static void board_init_ps8815_detection(void)
 
 	CPRINTSUSB("%s", __func__);
 
-	rv = i2c_read8(I2C_PORT_USB_C1_TCPC,
-			PS8XXX_I2C_ADDR1_FLAGS, 0x00, &val);
+	rv = i2c_read8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_FLAGS, 0x00,
+		       &val);
 
-	db_usb_hw_pres = (rv == EC_SUCCESS)?DB_USB_PRESENT:DB_USB_NOT_PRESENT;
+	db_usb_hw_pres = (rv == EC_SUCCESS) ? DB_USB_PRESENT :
+					      DB_USB_NOT_PRESENT;
 
 	if (db_usb_hw_pres == DB_USB_NOT_PRESENT)
 		CPRINTS("DB isn't plugged or something went wrong!");
@@ -230,7 +230,7 @@ static bool board_detect_ps8815_db(void)
 		return true;
 
 	if (ec_cfg_usb_db_type() == DB_USB3_PS8815 &&
-		db_usb_hw_pres == DB_USB_PRESENT)
+	    db_usb_hw_pres == DB_USB_PRESENT)
 		return true;
 
 	CPRINTSUSB("No PS8815 DB");
@@ -257,8 +257,7 @@ void board_reset_pd_mcu(void)
 	/*
 	 * delay for power-on to reset-off and min. assertion time
 	 */
-	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
-			   PS8815_PWR_H_RST_H_DELAY_MS));
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS, PS8815_PWR_H_RST_H_DELAY_MS));
 
 	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 1);
@@ -274,7 +273,7 @@ void board_reset_pd_mcu(void)
 	 */
 	board_init_ps8815_detection();
 	usb_mux_hpd_update(USBC_PORT_C1, USB_PD_MUX_HPD_LVL_DEASSERTED |
-				USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 static void board_tcpc_init(void)
@@ -385,7 +384,7 @@ __override bool board_is_dts_port(int port)
 
 __override uint8_t board_get_usb_pd_port_count(void)
 {
-	CPRINTSUSB("%s is called by task_id:%d",  __func__, task_get_current());
+	CPRINTSUSB("%s is called by task_id:%d", __func__, task_get_current());
 
 	if (board_detect_ps8815_db())
 		return CONFIG_USB_PD_PORT_MAX_COUNT;
