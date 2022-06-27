@@ -34,7 +34,8 @@ static void lock(void)
 	ignore_bus_fault(1);
 
 	STM32_FLASH_PECR = STM32_FLASH_PECR_PE_LOCK |
-		STM32_FLASH_PECR_PRG_LOCK | STM32_FLASH_PECR_OPT_LOCK;
+			   STM32_FLASH_PECR_PRG_LOCK |
+			   STM32_FLASH_PECR_OPT_LOCK;
 
 	ignore_bus_fault(0);
 }
@@ -105,8 +106,8 @@ static uint16_t read_optb(int offset)
  */
 static void write_optb(int offset, uint16_t value)
 {
-	REG32(STM32_OPTB_BASE + offset) =
-		(uint32_t)value | ((uint32_t)(~value) << 16);
+	REG32(STM32_OPTB_BASE + offset) = (uint32_t)value |
+					  ((uint32_t)(~value) << 16);
 }
 
 /**
@@ -115,7 +116,7 @@ static void write_optb(int offset, uint16_t value)
 static uint32_t read_optb_wrp(void)
 {
 	return read_optb(STM32_OPTB_WRP1L) |
-		((uint32_t)read_optb(STM32_OPTB_WRP1H) << 16);
+	       ((uint32_t)read_optb(STM32_OPTB_WRP1H) << 16);
 }
 
 /**
@@ -133,8 +134,8 @@ static void write_optb_wrp(uint32_t value)
  * This function lives in internal RAM, as we cannot read flash during writing.
  * You must not call other functions from this one or declare it static.
  */
-void  __attribute__((section(".iram.text")))
-	iram_flash_write(uint32_t *addr, uint32_t *data)
+void __attribute__((section(".iram.text")))
+iram_flash_write(uint32_t *addr, uint32_t *data)
 {
 	int i;
 
@@ -189,7 +190,7 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 
 	/* Update flash timeout based on current clock speed */
 	flash_timeout_loop = FLASH_TIMEOUT_MS * (clock_get_freq() / MSEC) /
-		CYCLE_PER_FLASH_LOOP;
+			     CYCLE_PER_FLASH_LOOP;
 
 	while (size > 0) {
 		/*
@@ -204,7 +205,8 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 
 			/* Wait for writes to complete */
 			for (i = 0; ((STM32_FLASH_SR & 9) != 8) &&
-				     (i < flash_timeout_loop); i++)
+				    (i < flash_timeout_loop);
+			     i++)
 				;
 
 			size -= sizeof(uint32_t);
@@ -257,13 +259,13 @@ int crec_flash_physical_erase(int offset, int size)
 
 	for (address = (uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + offset);
 	     size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
-	     address += CONFIG_FLASH_ERASE_SIZE / sizeof(uint32_t)) {
+	    address += CONFIG_FLASH_ERASE_SIZE / sizeof(uint32_t)) {
 		timestamp_t deadline;
 
 		/* Do nothing if already erased */
 		if (crec_flash_is_erased((uint32_t)address -
-				    CONFIG_PROGRAM_MEMORY_BASE,
-				    CONFIG_FLASH_ERASE_SIZE))
+						 CONFIG_PROGRAM_MEMORY_BASE,
+					 CONFIG_FLASH_ERASE_SIZE))
 			continue;
 
 		/* Start erase */
@@ -336,7 +338,7 @@ int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 		prot &= ~mask;
 
 	if (prot == read_optb_wrp())
-		return EC_SUCCESS;  /* No bits changed */
+		return EC_SUCCESS; /* No bits changed */
 
 	/* Unlock option bytes */
 	rv = unlock(STM32_FLASH_PECR_OPT_LOCK);
@@ -402,8 +404,7 @@ int crec_flash_physical_protect_now(int all)
 
 uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
@@ -458,7 +459,7 @@ int crec_flash_pre_init(void)
 			 * Set it back to a good state and reboot.
 			 */
 			crec_flash_protect_at_boot(prot_flags &
-					EC_FLASH_PROTECT_RO_AT_BOOT);
+						   EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 	} else if (prot_flags & (EC_FLASH_PROTECT_RO_NOW |
