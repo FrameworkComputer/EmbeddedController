@@ -15,28 +15,28 @@
 #include "math_util.h"
 
 #define PWM_CTRX_MIN 100
-#define PWM_EC_FREQ  8000000
+#define PWM_EC_FREQ 8000000
 
 const struct pwm_ctrl_t pwm_ctrl_regs[] = {
-	{ &IT83XX_PWM_DCR0, &IT83XX_PWM_PCSSGL, &IT83XX_GPIO_GPCRA0},
-	{ &IT83XX_PWM_DCR1, &IT83XX_PWM_PCSSGL, &IT83XX_GPIO_GPCRA1},
-	{ &IT83XX_PWM_DCR2, &IT83XX_PWM_PCSSGL, &IT83XX_GPIO_GPCRA2},
-	{ &IT83XX_PWM_DCR3, &IT83XX_PWM_PCSSGL, &IT83XX_GPIO_GPCRA3},
-	{ &IT83XX_PWM_DCR4, &IT83XX_PWM_PCSSGH, &IT83XX_GPIO_GPCRA4},
-	{ &IT83XX_PWM_DCR5, &IT83XX_PWM_PCSSGH, &IT83XX_GPIO_GPCRA5},
-	{ &IT83XX_PWM_DCR6, &IT83XX_PWM_PCSSGH, &IT83XX_GPIO_GPCRA6},
-	{ &IT83XX_PWM_DCR7, &IT83XX_PWM_PCSSGH, &IT83XX_GPIO_GPCRA7},
+	{ &IT83XX_PWM_DCR0, &IT83XX_PWM_PCSSGL, &IT83XX_GPIO_GPCRA0 },
+	{ &IT83XX_PWM_DCR1, &IT83XX_PWM_PCSSGL, &IT83XX_GPIO_GPCRA1 },
+	{ &IT83XX_PWM_DCR2, &IT83XX_PWM_PCSSGL, &IT83XX_GPIO_GPCRA2 },
+	{ &IT83XX_PWM_DCR3, &IT83XX_PWM_PCSSGL, &IT83XX_GPIO_GPCRA3 },
+	{ &IT83XX_PWM_DCR4, &IT83XX_PWM_PCSSGH, &IT83XX_GPIO_GPCRA4 },
+	{ &IT83XX_PWM_DCR5, &IT83XX_PWM_PCSSGH, &IT83XX_GPIO_GPCRA5 },
+	{ &IT83XX_PWM_DCR6, &IT83XX_PWM_PCSSGH, &IT83XX_GPIO_GPCRA6 },
+	{ &IT83XX_PWM_DCR7, &IT83XX_PWM_PCSSGH, &IT83XX_GPIO_GPCRA7 },
 };
 
 const struct pwm_ctrl_t2 pwm_clock_ctrl_regs[] = {
 	{ &IT83XX_PWM_CTR, &IT83XX_PWM_C0CPRS, &IT83XX_PWM_C0CPRS,
-		&IT83XX_PWM_PCFSR, 0x01},
+	  &IT83XX_PWM_PCFSR, 0x01 },
 	{ &IT83XX_PWM_CTR1, &IT83XX_PWM_C4CPRS, &IT83XX_PWM_C4MCPRS,
-		&IT83XX_PWM_PCFSR, 0x02},
+	  &IT83XX_PWM_PCFSR, 0x02 },
 	{ &IT83XX_PWM_CTR2, &IT83XX_PWM_C6CPRS, &IT83XX_PWM_C6MCPRS,
-		&IT83XX_PWM_PCFSR, 0x04},
+	  &IT83XX_PWM_PCFSR, 0x04 },
 	{ &IT83XX_PWM_CTR3, &IT83XX_PWM_C7CPRS, &IT83XX_PWM_C7MCPRS,
-		&IT83XX_PWM_PCFSR, 0x08},
+	  &IT83XX_PWM_PCFSR, 0x08 },
 };
 
 static int pwm_get_cycle_time(enum pwm_channel ch)
@@ -76,9 +76,10 @@ void pwm_enable(enum pwm_channel ch, int enabled)
 	if (enabled)
 		*pwm_ctrl_regs[pwm_reg_index].pwm_pin = 0x00;
 	else
-		*pwm_ctrl_regs[pwm_reg_index].pwm_pin = 0x80 |
-			((pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW) ?
-			4 : 2);
+		*pwm_ctrl_regs[pwm_reg_index].pwm_pin =
+			0x80 |
+			((pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW) ? 4 :
+									    2);
 }
 
 int pwm_get_enabled(enum pwm_channel ch)
@@ -88,7 +89,9 @@ int pwm_get_enabled(enum pwm_channel ch)
 
 	/* pin is PWM function and PWMs clock counter was enabled */
 	return ((*pwm_ctrl_regs[ch].pwm_pin & ~0x04) == 0x00 &&
-		IT83XX_PWM_ZTIER & 0x02) ? 1 : 0;
+		IT83XX_PWM_ZTIER & 0x02) ?
+		       1 :
+		       0;
 }
 
 void pwm_set_duty(enum pwm_channel ch, int percent)
@@ -202,7 +205,8 @@ static int pwm_ch_freq(enum pwm_channel ch)
 	int actual_freq = -1, targe_freq, deviation;
 	int pcfsr, ctr, pcfsr_sel, pcs_shift, pcs_mask;
 	int pwm_clk_src = (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP) ?
-							32768 : PWM_EC_FREQ;
+				  32768 :
+				  PWM_EC_FREQ;
 
 	targe_freq = pwm_channels[ch].freq_hz;
 	deviation = (targe_freq / 100) + 1;
@@ -251,8 +255,8 @@ static int pwm_ch_freq(enum pwm_channel ch)
 		*pwm_ctrl_regs[ch].pwm_clock_source |= pcs_mask;
 
 		*pwm_clock_ctrl_regs[pcfsr_sel].pwm_cpr_lsb = pcfsr & 0xFF;
-		*pwm_clock_ctrl_regs[pcfsr_sel].pwm_cpr_msb =
-			(pcfsr >> 8) & 0xFF;
+		*pwm_clock_ctrl_regs[pcfsr_sel].pwm_cpr_msb = (pcfsr >> 8) &
+							      0xFF;
 	}
 
 	return actual_freq;
