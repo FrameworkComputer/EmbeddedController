@@ -10,9 +10,9 @@
 
 /* Data structure to define I2C peripheral port configuration. */
 struct i2c_periph_port_t {
-	const char *name;     /* Port name */
-	int port;             /* Port */
-	uint8_t addr;         /* address(7-bit without R/W) */
+	const char *name; /* Port name */
+	int port; /* Port */
+	uint8_t addr; /* address(7-bit without R/W) */
 };
 
 extern const struct i2c_periph_port_t i2c_periph_ports[];
