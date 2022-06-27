@@ -39,9 +39,8 @@ static void *usb_attach_5v_3a_pd_source_setup(void)
 
 	/* Initialized the charger to supply 5V and 3A */
 	tcpci_partner_init(&test_fixture.source_5v_3a, PD_REV20);
-	test_fixture.source_5v_3a.extensions =
-		tcpci_src_emul_init(&test_fixture.src_ext,
-				    &test_fixture.source_5v_3a, NULL);
+	test_fixture.source_5v_3a.extensions = tcpci_src_emul_init(
+		&test_fixture.src_ext, &test_fixture.source_5v_3a, NULL);
 	test_fixture.src_ext.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
@@ -64,8 +63,7 @@ static void usb_attach_5v_3a_pd_source_after(void *data)
 }
 
 ZTEST_SUITE(usb_attach_5v_3a_pd_source, drivers_predicate_post_main,
-	    usb_attach_5v_3a_pd_source_setup,
-	    usb_attach_5v_3a_pd_source_before,
+	    usb_attach_5v_3a_pd_source_setup, usb_attach_5v_3a_pd_source_before,
 	    usb_attach_5v_3a_pd_source_after, NULL);
 
 ZTEST(usb_attach_5v_3a_pd_source, test_battery_is_charging)
