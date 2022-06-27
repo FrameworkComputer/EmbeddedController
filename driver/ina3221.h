@@ -8,8 +8,8 @@
 #ifndef __CROS_EC_INA3221_H
 #define __CROS_EC_INA3221_H
 
-#define INA3221_REG_CONFIG	0x00
-#define INA3221_REG_MASK	0x0F
+#define INA3221_REG_CONFIG 0x00
+#define INA3221_REG_MASK 0x0F
 
 /*
  * Common bits are:
@@ -18,12 +18,12 @@
  * conversion time = 1.1 ms
  * mode = shunt and bus, continuous.
  */
-#define INA3221_CONFIG_BASE	0x8127
+#define INA3221_CONFIG_BASE 0x8127
 
 /* Bus voltage: lower 3 bits clear, LSB = 8 mV */
 #define INA3221_BUS_MV(reg) (reg)
 /* Shunt voltage: lower 3 bits clear, LSB = 40 uV */
-#define INA3221_SHUNT_UV(reg) ((reg) * (40/8))
+#define INA3221_SHUNT_UV(reg) ((reg) * (40 / 8))
 
 enum ina3221_channel {
 	INA3221_CHAN_1 = 0,
@@ -43,9 +43,9 @@ enum ina3221_register {
 
 /* Configuration table - defined in board file. */
 struct ina3221_t {
-	int port;             /* I2C port index */
-	uint8_t address;      /* I2C address */
-	const char *name[INA3221_CHAN_COUNT];  /* Channel names */
+	int port; /* I2C port index */
+	uint8_t address; /* I2C address */
+	const char *name[INA3221_CHAN_COUNT]; /* Channel names */
 };
 
 /* External config in board file */
