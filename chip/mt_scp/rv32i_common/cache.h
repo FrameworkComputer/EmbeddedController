@@ -14,23 +14,23 @@
 /* rs1 0~31 register X0~X31 */
 #define COP(rs1) (((rs1) << 15) | 0x400f)
 
-#define COP_OP_BARRIER_ICACHE		0x0
-#define COP_OP_INVALIDATE_ICACHE	0x8
-#define COP_OP_INVALIDATE_ICACHE_ADDR	0x9
+#define COP_OP_BARRIER_ICACHE 0x0
+#define COP_OP_INVALIDATE_ICACHE 0x8
+#define COP_OP_INVALIDATE_ICACHE_ADDR 0x9
 
-#define COP_OP_BARRIER_DCACHE		0x10
-#define COP_OP_WRITEBACK_DCACHE		0x14
-#define COP_OP_WRITEBACK_DCACHE_ADDR	0x15
-#define COP_OP_INVALIDATE_DCACHE	0x18
-#define COP_OP_INVALIDATE_DCACHE_ADDR	0x19
+#define COP_OP_BARRIER_DCACHE 0x10
+#define COP_OP_WRITEBACK_DCACHE 0x14
+#define COP_OP_WRITEBACK_DCACHE_ADDR 0x15
+#define COP_OP_INVALIDATE_DCACHE 0x18
+#define COP_OP_INVALIDATE_DCACHE_ADDR 0x19
 /* FLUSH = WRITEBACK + INVALIDATE */
-#define COP_OP_FLUSH_DCACHE		0x1C
-#define COP_OP_FLUSH_DCACHE_ADDR	0x1D
+#define COP_OP_FLUSH_DCACHE 0x1C
+#define COP_OP_FLUSH_DCACHE_ADDR 0x1D
 
 static inline void cache_op_all(uint32_t op)
 {
 	register int t0 asm("t0") = op;
-	asm volatile (".word "STRINGIFY(COP(5)) :: "r"(t0));
+	asm volatile(".word " STRINGIFY(COP(5))::"r"(t0));
 }
 
 static inline int cache_op_addr(uintptr_t addr, uint32_t length, uint32_t op)
@@ -44,7 +44,7 @@ static inline int cache_op_addr(uintptr_t addr, uint32_t length, uint32_t op)
 
 	for (offset = 0; offset < length; offset += 4) {
 		t0 = addr + offset + op;
-		asm volatile (".word "STRINGIFY(COP(5)) :: "r"(t0));
+		asm volatile(".word " STRINGIFY(COP(5))::"r"(t0));
 	}
 
 	return EC_SUCCESS;
