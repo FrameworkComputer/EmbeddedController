@@ -41,36 +41,36 @@ static uint32_t last_deadline;
 
 /* brief Timer prescaler values */
 enum tmr_pres {
-	TMR_PRES_1 = MXC_V_TMR_CN_PRES_DIV1,     /// Divide input clock by 1
-	TMR_PRES_2 = MXC_V_TMR_CN_PRES_DIV2,     /// Divide input clock by 2
-	TMR_PRES_4 = MXC_V_TMR_CN_PRES_DIV4,     /// Divide input clock by 4
-	TMR_PRES_8 = MXC_V_TMR_CN_PRES_DIV8,     /// Divide input clock by 8
-	TMR_PRES_16 = MXC_V_TMR_CN_PRES_DIV16,   /// Divide input clock by 16
-	TMR_PRES_32 = MXC_V_TMR_CN_PRES_DIV32,   /// Divide input clock by 32
-	TMR_PRES_64 = MXC_V_TMR_CN_PRES_DIV64,   /// Divide input clock by 64
+	TMR_PRES_1 = MXC_V_TMR_CN_PRES_DIV1, /// Divide input clock by 1
+	TMR_PRES_2 = MXC_V_TMR_CN_PRES_DIV2, /// Divide input clock by 2
+	TMR_PRES_4 = MXC_V_TMR_CN_PRES_DIV4, /// Divide input clock by 4
+	TMR_PRES_8 = MXC_V_TMR_CN_PRES_DIV8, /// Divide input clock by 8
+	TMR_PRES_16 = MXC_V_TMR_CN_PRES_DIV16, /// Divide input clock by 16
+	TMR_PRES_32 = MXC_V_TMR_CN_PRES_DIV32, /// Divide input clock by 32
+	TMR_PRES_64 = MXC_V_TMR_CN_PRES_DIV64, /// Divide input clock by 64
 	TMR_PRES_128 = MXC_V_TMR_CN_PRES_DIV128, /// Divide input clock by 128
-	TMR_PRES_256 =
-		(0x20 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock by 256
-	TMR_PRES_512 =
-		(0x21 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock by 512
-	TMR_PRES_1024 =
-		(0x22 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock by 1024
-	TMR_PRES_2048 =
-		(0x23 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock by 2048
-	TMR_PRES_4096 =
-		(0x24 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock by 4096
+	TMR_PRES_256 = (0x20 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock
+							/// by 256
+	TMR_PRES_512 = (0x21 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock
+							/// by 512
+	TMR_PRES_1024 = (0x22 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock
+							 /// by 1024
+	TMR_PRES_2048 = (0x23 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock
+							 /// by 2048
+	TMR_PRES_4096 = (0x24 << MXC_F_TMR_CN_PRES_POS), /// Divide input clock
+							 /// by 4096
 };
 
 /* Timer modes */
 enum tmr_mode {
 	TMR_MODE_ONESHOT = MXC_V_TMR_CN_TMODE_ONESHOT, /// Timer Mode ONESHOT
-	TMR_MODE_CONTINUOUS =
-		MXC_V_TMR_CN_TMODE_CONTINUOUS,	 /// Timer Mode CONTINUOUS
+	TMR_MODE_CONTINUOUS = MXC_V_TMR_CN_TMODE_CONTINUOUS, /// Timer Mode
+							     /// CONTINUOUS
 	TMR_MODE_COUNTER = MXC_V_TMR_CN_TMODE_COUNTER, /// Timer Mode COUNTER
-	TMR_MODE_PWM = MXC_V_TMR_CN_TMODE_PWM,	 /// Timer Mode PWM
+	TMR_MODE_PWM = MXC_V_TMR_CN_TMODE_PWM, /// Timer Mode PWM
 	TMR_MODE_CAPTURE = MXC_V_TMR_CN_TMODE_CAPTURE, /// Timer Mode CAPTURE
 	TMR_MODE_COMPARE = MXC_V_TMR_CN_TMODE_COMPARE, /// Timer Mode COMPARE
-	TMR_MODE_GATED = MXC_V_TMR_CN_TMODE_GATED,     /// Timer Mode GATED
+	TMR_MODE_GATED = MXC_V_TMR_CN_TMODE_GATED, /// Timer Mode GATED
 	TMR_MODE_CAPTURE_COMPARE =
 		MXC_V_TMR_CN_TMODE_CAPTURECOMPARE /// Timer Mode CAPTURECOMPARE
 };
