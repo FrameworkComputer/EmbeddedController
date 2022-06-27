@@ -14,7 +14,7 @@
 #include "lib_crc.h"
 #include "main.h"
 
- /* Extracting Byte - 8 bit: MSB, LSB */
+/* Extracting Byte - 8 bit: MSB, LSB */
 #define MSB(u16) ((uint8_t)((uint16_t)(u16) >> 8))
 #define LSB(u16) ((uint8_t)(u16))
 
@@ -85,7 +85,7 @@ void cmd_create_sync(uint8_t *cmd_info, uint32_t *cmd_len)
  *---------------------------------------------------------------------------
  */
 void cmd_create_write(uint32_t addr, uint32_t size, uint8_t *data_buf,
-					uint8_t *cmd_info, uint32_t *cmd_len)
+		      uint8_t *cmd_info, uint32_t *cmd_len)
 {
 	uint32_t i;
 	union cmd_addr adr_tr;
@@ -136,7 +136,7 @@ void cmd_create_write(uint32_t addr, uint32_t size, uint8_t *data_buf,
  *---------------------------------------------------------------------------
  */
 void cmd_create_read(uint32_t addr, uint8_t size, uint8_t *cmd_info,
-					uint32_t *cmd_len)
+		     uint32_t *cmd_len)
 {
 	uint32_t i;
 	union cmd_addr adr_tr;
@@ -251,7 +251,7 @@ void cmd_build_sync(struct command_node *cmd_buf, uint32_t *cmd_num)
  *---------------------------------------------------------------------------
  */
 void cmd_build_exec_exit(uint32_t addr, struct command_node *cmd_buf,
-						uint32_t *cmd_num)
+			 uint32_t *cmd_num)
 {
 	uint32_t cmd = 0;
 
@@ -280,7 +280,7 @@ void cmd_build_exec_exit(uint32_t addr, struct command_node *cmd_buf,
  *---------------------------------------------------------------------------
  */
 void cmd_build_exec_ret(uint32_t addr, struct command_node *cmd_buf,
-						uint32_t *cmd_num)
+			uint32_t *cmd_num)
 {
 	uint32_t cmd = 0;
 
@@ -325,10 +325,11 @@ bool cmd_disp_sync(uint8_t *resp_buf)
  *---------------------------------------------------------------------------
  */
 bool cmd_disp_write(uint8_t *resp_buf, uint32_t resp_size, uint32_t resp_num,
-					  uint32_t total_size)
+		    uint32_t total_size)
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_WRITE_CMD)) {
-		display_color_msg(SUCCESS,
+		display_color_msg(
+			SUCCESS,
 			"\rTransmitted packet of size %u bytes, packet "
 			"[%u]out of [%u]",
 			resp_size, resp_num, total_size);
@@ -352,10 +353,11 @@ bool cmd_disp_write(uint8_t *resp_buf, uint32_t resp_size, uint32_t resp_num,
  *---------------------------------------------------------------------------
  */
 bool cmd_disp_read(uint8_t *resp_buf, uint32_t resp_size, uint32_t resp_num,
-					uint32_t total_size)
+		   uint32_t total_size)
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_READ_CMD)) {
-		display_color_msg(SUCCESS,
+		display_color_msg(
+			SUCCESS,
 			"\rReceived packet of size %u bytes, packet [%u] out "
 			"of [%u]",
 			resp_size, resp_num, total_size);
@@ -412,10 +414,11 @@ void cmd_disp_flash_erase_dev(uint8_t *resp_buf, uint32_t dev_num)
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_WRITE_CMD)) {
 		display_color_msg(SUCCESS,
-			"Flash Erase of device [%u] Passed\n", dev_num);
+				  "Flash Erase of device [%u] Passed\n",
+				  dev_num);
 	} else {
-		display_color_msg(
-			FAIL, "Flash Erase of device [%u] Failed\n", dev_num);
+		display_color_msg(FAIL, "Flash Erase of device [%u] Failed\n",
+				  dev_num);
 	}
 }
 
@@ -433,10 +436,11 @@ void cmd_disp_flash_erase_sect(uint8_t *resp_buf, uint32_t dev_num)
 {
 	if (resp_buf[0] == (uint8_t)(UFPP_WRITE_CMD)) {
 		display_color_msg(SUCCESS,
-			"Sector Erase of device [%lu] Passed\n", dev_num);
+				  "Sector Erase of device [%lu] Passed\n",
+				  dev_num);
 	} else {
-		display_color_msg(
-			FAIL, "Sector Erase of device [%lu] Failed\n", dev_num);
+		display_color_msg(FAIL, "Sector Erase of device [%lu] Failed\n",
+				  dev_num);
 	}
 }
 
@@ -471,11 +475,13 @@ void cmd_disp_exec_exit(uint8_t *resp_buf)
 void cmd_disp_exec_ret(uint8_t *resp_buf)
 {
 	if (resp_buf[1] == (uint8_t)(UFPP_FCALL_RSLT_CMD)) {
-		display_color_msg(SUCCESS,
+		display_color_msg(
+			SUCCESS,
 			"Execute Command Passed, execution result is [0x%X]\n",
 			resp_buf[2]);
 	} else {
-		display_color_msg(FAIL,
+		display_color_msg(
+			FAIL,
 			"Execute Command Failed  [0x%X]  [0x%X], rslt=[0x%X]\n",
 			resp_buf[0], resp_buf[1], resp_buf[2]);
 	}
