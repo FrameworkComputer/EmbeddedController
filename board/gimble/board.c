@@ -35,8 +35,8 @@
 #include "gpio_list.h" /* Must come after other header files. */
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /******************************************************************************/
 /* USB-A charging control */
@@ -106,8 +106,8 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	}
 
 	if (voltage < BC12_MIN_VOLTAGE) {
-		CPRINTS("%s: port %d: vbus %d lower than %d", __func__,
-			port, voltage, BC12_MIN_VOLTAGE);
+		CPRINTS("%s: port %d: vbus %d lower than %d", __func__, port,
+			voltage, BC12_MIN_VOLTAGE);
 		return 1;
 	}
 
@@ -141,53 +141,53 @@ __overridable void board_ps8xxx_tcpc_init(int port)
 {
 	int val;
 
-	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
-		PS8XXX_I2C_ADDR1_P1_FLAGS, PS8815_REG_APTX_EQ_AT_10G, &val))
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_P1_FLAGS,
+		      PS8815_REG_APTX_EQ_AT_10G, &val))
 		CPRINTS("ps8815: fail to read reg 0x%02x",
 			PS8815_REG_APTX_EQ_AT_10G);
 
 	/* APTX2 EQ 23dB, APTX1 EQ 23dB */
-	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
-		PS8XXX_I2C_ADDR1_P1_FLAGS, PS8815_REG_APTX_EQ_AT_10G, 0x99))
+	if (i2c_write8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_P1_FLAGS,
+		       PS8815_REG_APTX_EQ_AT_10G, 0x99))
 		CPRINTS("ps8815: fail to write reg 0x%02x",
 			PS8815_REG_APTX_EQ_AT_10G);
 
-	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
-		PS8XXX_I2C_ADDR1_P1_FLAGS, PS8815_REG_RX_EQ_AT_10G, &val))
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_P1_FLAGS,
+		      PS8815_REG_RX_EQ_AT_10G, &val))
 		CPRINTS("ps8815: fail to read reg 0x%02x",
 			PS8815_REG_RX_EQ_AT_10G);
 
 	/* RX2 EQ 18dB, RX1 EQ 16dB */
-	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
-		PS8XXX_I2C_ADDR1_P1_FLAGS, PS8815_REG_RX_EQ_AT_10G, 0x64))
+	if (i2c_write8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_P1_FLAGS,
+		       PS8815_REG_RX_EQ_AT_10G, 0x64))
 		CPRINTS("ps8815: fail to write reg 0x%02x",
 			PS8815_REG_RX_EQ_AT_10G);
 
-	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
-		PS8XXX_I2C_ADDR1_P1_FLAGS, PS8815_REG_APTX_EQ_AT_5G, &val))
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_P1_FLAGS,
+		      PS8815_REG_APTX_EQ_AT_5G, &val))
 		CPRINTS("ps8815: fail to read reg 0x%02x",
 			PS8815_REG_APTX_EQ_AT_5G);
 
 	/* APTX2 EQ 16dB, APTX1 EQ 16dB */
-	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
-		PS8XXX_I2C_ADDR1_P1_FLAGS, PS8815_REG_APTX_EQ_AT_5G, 0x44))
+	if (i2c_write8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_P1_FLAGS,
+		       PS8815_REG_APTX_EQ_AT_5G, 0x44))
 		CPRINTS("ps8815: fail to write reg 0x%02x",
 			PS8815_REG_APTX_EQ_AT_5G);
 
-	if (i2c_read8(I2C_PORT_USB_C1_TCPC,
-		PS8XXX_I2C_ADDR1_P1_FLAGS, PS8815_REG_RX_EQ_AT_5G, &val))
+	if (i2c_read8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_P1_FLAGS,
+		      PS8815_REG_RX_EQ_AT_5G, &val))
 		CPRINTS("ps8815: fail to read reg 0x%02x",
 			PS8815_REG_RX_EQ_AT_5G);
 
 	/* RX2 EQ 16dB, RX1 EQ 16dB */
-	if (i2c_write8(I2C_PORT_USB_C1_TCPC,
-		PS8XXX_I2C_ADDR1_P1_FLAGS, PS8815_REG_RX_EQ_AT_5G, 0x44))
+	if (i2c_write8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_P1_FLAGS,
+		       PS8815_REG_RX_EQ_AT_5G, 0x44))
 		CPRINTS("ps8815: fail to write reg 0x%02x",
 			PS8815_REG_RX_EQ_AT_5G);
 }
 
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Follow OEM request to limit the input current to
@@ -195,7 +195,6 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 */
 	charge_ma = charge_ma * 90 / 100;
 
-	charge_set_input_current_limit(MAX(charge_ma,
-					CONFIG_CHARGER_INPUT_CURRENT),
-					charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
