@@ -14,7 +14,8 @@ bool board_is_convertible(void)
 bool board_has_kblight(void)
 {
 	return (get_fw_config_field(FW_CONFIG_KBLIGHT_OFFSET,
-			FW_CONFIG_KBLIGHT_WIDTH) == FW_CONFIG_KBLIGHT_YES);
+				    FW_CONFIG_KBLIGHT_WIDTH) ==
+		FW_CONFIG_KBLIGHT_YES);
 }
 
 enum board_usb_c1_mux board_get_usb_c1_mux(void)
