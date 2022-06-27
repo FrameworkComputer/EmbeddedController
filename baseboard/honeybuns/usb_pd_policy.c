@@ -21,45 +21,46 @@
 #include "usb_tc_sm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 #define MP4245_VOLTAGE_WINDOW BIT(2)
 #define MP4245_VOLTAGE_WINDOW_MASK (MP4245_VOLTAGE_WINDOW - 1)
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
-			 PDO_FIXED_COMM_CAP | PDO_FIXED_UNCONSTRAINED)
+#define PDO_FIXED_FLAGS                                                   \
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP | \
+	 PDO_FIXED_UNCONSTRAINED)
 
 /* Voltage indexes for the PDOs */
 enum volt_idx {
-	PDO_IDX_5V   = 0,
-	PDO_IDX_9V   = 1,
-	PDO_IDX_15V  = 2,
-	PDO_IDX_20V  = 3,
+	PDO_IDX_5V = 0,
+	PDO_IDX_9V = 1,
+	PDO_IDX_15V = 2,
+	PDO_IDX_20V = 3,
 	PDO_IDX_COUNT
 };
 
 /* PDOs */
 const uint32_t pd_src_host_pdo[] = {
-	[PDO_IDX_5V]  = PDO_FIXED(5000,   3000, PDO_FIXED_FLAGS),
-	[PDO_IDX_9V]  = PDO_FIXED(9000,   3000, 0),
-	[PDO_IDX_15V]  = PDO_FIXED(15000, 3000, 0),
-	[PDO_IDX_20V]  = PDO_FIXED(20000, 3000, 0),
+	[PDO_IDX_5V] = PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
+	[PDO_IDX_9V] = PDO_FIXED(9000, 3000, 0),
+	[PDO_IDX_15V] = PDO_FIXED(15000, 3000, 0),
+	[PDO_IDX_20V] = PDO_FIXED(20000, 3000, 0),
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_src_host_pdo) == PDO_IDX_COUNT);
 
 #ifdef BOARD_C1_1A5_LIMIT
 const uint32_t pd_src_display_pdo[] = {
-	[PDO_IDX_5V]  = PDO_FIXED(5000,   1500, PDO_FIXED_FLAGS),
+	[PDO_IDX_5V] = PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
 };
 #else
 const uint32_t pd_src_display_pdo[] = {
-	[PDO_IDX_5V]  = PDO_FIXED(5000,   3000, PDO_FIXED_FLAGS),
+	[PDO_IDX_5V] = PDO_FIXED(5000, 3000, PDO_FIXED_FLAGS),
 };
 #endif
 
 const uint32_t pd_snk_pdo[] = {
-	[PDO_IDX_5V]  = PDO_FIXED(5000,   0, PDO_FIXED_FLAGS),
+	[PDO_IDX_5V] = PDO_FIXED(5000, 0, PDO_FIXED_FLAGS),
 };
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
@@ -74,7 +75,6 @@ static int command_hostpdo(int argc, char **argv)
 	int limit;
 
 	if (argc >= 2) {
-
 		limit = strtoi(argv[1], &e, 10);
 		if ((limit < 0) || (limit > PDO_IDX_COUNT))
 			return EC_ERROR_PARAM1;
@@ -85,8 +85,7 @@ static int command_hostpdo(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hostpdo, command_hostpdo,
-			"<0|1|2|3|4>",
+DECLARE_CONSOLE_COMMAND(hostpdo, command_hostpdo, "<0|1|2|3|4>",
 			"Limit number of PDOs for C0");
 
 int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
@@ -94,7 +93,7 @@ int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 	int pdo_cnt = 0;
 
 	if (port == USB_PD_PORT_HOST) {
-		*src_pdo =  pd_src_host_pdo;
+		*src_pdo = pd_src_host_pdo;
 		pdo_cnt = ARRAY_SIZE(pd_src_host_pdo);
 		/*
 		 * This override is only active via a console command. Only used
@@ -105,7 +104,7 @@ int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 		if (src_host_pdo_cnt_override)
 			pdo_cnt = src_host_pdo_cnt_override;
 	} else {
-		*src_pdo =  pd_src_display_pdo;
+		*src_pdo = pd_src_display_pdo;
 		pdo_cnt = ARRAY_SIZE(pd_src_display_pdo);
 	}
 
@@ -118,15 +117,15 @@ int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
  * 1) If port == 0 and port data role is DFP, transition to pe_drs_send_swap
  * 2) If port == 1 and port data role is UFP, transition to pe_drs_send_swap
  */
-__override bool port_discovery_dr_swap_policy(int port,
-			enum pd_data_role dr, bool dr_swap_flag)
+__override bool port_discovery_dr_swap_policy(int port, enum pd_data_role dr,
+					      bool dr_swap_flag)
 {
 	/*
 	 * Port0: test if role is DFP
 	 * Port1: test if role is UFP
 	 */
-	enum pd_data_role role_test =
-		(port == USB_PD_PORT_HOST) ? PD_ROLE_DFP : PD_ROLE_UFP;
+	enum pd_data_role role_test = (port == USB_PD_PORT_HOST) ? PD_ROLE_DFP :
+								   PD_ROLE_UFP;
 
 	/*
 	 * Request data role swap if not in the port's desired data role and if
@@ -135,8 +134,8 @@ __override bool port_discovery_dr_swap_policy(int port,
 	 * rejects data role swap requests (eg compliance tester), want to limit
 	 * how many DR swap requests are attempted.
 	 */
-	if (dr == role_test && (pd_dr_swap_attempt_count[port]++ <
-				PD_DR_SWAP_ATTEMPT_MAX))
+	if (dr == role_test &&
+	    (pd_dr_swap_attempt_count[port]++ < PD_DR_SWAP_ATTEMPT_MAX))
 		return true;
 
 	/* Do not perform a DR swap */
@@ -148,8 +147,7 @@ __override bool port_discovery_dr_swap_policy(int port,
  *
  * 1) No need to Vconn swap.  This board does not require any cable information.
  */
-__override bool port_discovery_vconn_swap_policy(int port,
-			bool vconn_swap_flag)
+__override bool port_discovery_vconn_swap_policy(int port, bool vconn_swap_flag)
 {
 	return false;
 }
@@ -193,8 +191,7 @@ void pd_power_supply_reset(int port)
 		 * (fixed 5V SRC_CAP) so VBUS is ready to be applied at the next
 		 * attached.src condition.
 		 */
-		pd_extract_pdo_power(pd_src_host_pdo[0], &ma, &mv,
-				     &unused_mv);
+		pd_extract_pdo_power(pd_src_host_pdo[0], &ma, &mv, &unused_mv);
 		mp4245_set_voltage_out(mv);
 		/* Ensure voltage is back to 5V */
 		pd_transition_voltage(1);
@@ -243,8 +240,7 @@ void pd_transition_voltage(int idx)
 	 * by the PDO requested by sink. Note that USB PD uses idx = 1 for 1st
 	 * PDO of SRC_CAP which must always be 5V fixed supply.
 	 */
-	pd_extract_pdo_power(pd_src_host_pdo[idx - 1], &ma, &target_mv,
-			     &mv);
+	pd_extract_pdo_power(pd_src_host_pdo[idx - 1], &ma, &target_mv, &mv);
 
 	/* Initialize sample delay buffer */
 	for (i = 0; i < MP4245_VOLTAGE_WINDOW; i++)
@@ -327,11 +323,9 @@ int board_vbus_source_enabled(int port)
 void pd_set_input_current_limit(int port, uint32_t max_ma,
 				uint32_t supply_voltage)
 {
-
 }
 
-int pd_check_data_swap(int port,
-	enum pd_data_role data_role)
+int pd_check_data_swap(int port, enum pd_data_role data_role)
 {
 	int swap = 0;
 
@@ -345,7 +339,6 @@ int pd_check_data_swap(int port,
 
 int pd_check_power_swap(int port)
 {
-
 	if (pd_get_power_role(port) == PD_ROLE_SINK)
 		return 1;
 
@@ -394,7 +387,7 @@ static void usb_tc_disconnect(void)
 DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, usb_tc_disconnect, HOOK_PRIO_DEFAULT);
 
 __override bool pd_can_charge_from_device(int port, const int pdo_cnt,
-				      const uint32_t *pdos)
+					  const uint32_t *pdos)
 {
 	/*
 	 * This function is called to determine if this port can be charged by
@@ -421,22 +414,17 @@ const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
 				 USB_VID_GOOGLE);
 
 static const uint32_t vdo_idh_rev30 = VDO_IDH_REV30(
-				 0, /* Data caps as USB host     */
-				 1, /* Data caps as USB device   */
-				 IDH_PTYPE_HUB,
-				 1, /* Supports alt modes */
-				 IDH_PTYPE_DFP_UNDEFINED,
-				 USB_TYPEC_RECEPTACLE,
-				 USB_VID_GOOGLE);
+	0, /* Data caps as USB host     */
+	1, /* Data caps as USB device   */
+	IDH_PTYPE_HUB, 1, /* Supports alt modes */
+	IDH_PTYPE_DFP_UNDEFINED, USB_TYPEC_RECEPTACLE, USB_VID_GOOGLE);
 
 const uint32_t vdo_product = VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
 
-static const uint32_t vdo_ufp1 = VDO_UFP1(
-				   (VDO_UFP1_CAPABILITY_USB20
-				   | VDO_UFP1_CAPABILITY_USB32),
-				   USB_TYPEC_RECEPTACLE,
-				   VDO_UFP1_ALT_MODE_RECONFIGURE,
-				   USB_R30_SS_U32_U40_GEN2);
+static const uint32_t vdo_ufp1 =
+	VDO_UFP1((VDO_UFP1_CAPABILITY_USB20 | VDO_UFP1_CAPABILITY_USB32),
+		 USB_TYPEC_RECEPTACLE, VDO_UFP1_ALT_MODE_RECONFIGURE,
+		 USB_R30_SS_U32_U40_GEN2);
 
 static int svdm_response_identity(int port, uint32_t *payload)
 {
@@ -479,14 +467,16 @@ static int svdm_response_svids(int port, uint32_t *payload)
 
 #define OPOS_DP 1
 
-const uint32_t vdo_dp_modes[1] =  {
+const uint32_t vdo_dp_modes[1] = {
 	VDO_MODE_DP(/* Must support C and E. D is required for 2 lanes */
-		    MODE_DP_PIN_C | MODE_DP_PIN_D | MODE_DP_PIN_E,
-		    0, /* DFP pin cfg supported */
-		    0,		   /* usb2.0 signalling in AMode may be req */
-		    CABLE_RECEPTACLE,	   /* its a receptacle */
-		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
-		    MODE_DP_SNK)   /* Its a sink only */
+		    MODE_DP_PIN_C | MODE_DP_PIN_D | MODE_DP_PIN_E, 0, /* DFP pin
+									 cfg
+									 supported
+								       */
+		    0, /* usb2.0 signalling in AMode may be req */
+		    CABLE_RECEPTACLE, /* its a receptacle */
+		    MODE_DP_V13, /* DPv1.3 Support, no Gen2 */
+		    MODE_DP_SNK) /* Its a sink only */
 };
 
 static int svdm_response_modes(int port, uint32_t *payload)
@@ -508,13 +498,12 @@ static int amode_dp_status(int port, uint32_t *payload)
 	if (opos != OPOS_DP)
 		return 0; /* nak */
 
-	payload[1] = VDO_DP_STATUS(0,		/* IRQ_HPD */
-				   (hpd == 1),	/* HPD_HI|LOW */
-				   0,		/* request exit DP */
-				   0,		/* request exit USB */
-				   mf,		/* MF pref */
-				   vdm_is_dp_enabled(port),
-				   0,		/* power low */
+	payload[1] = VDO_DP_STATUS(0, /* IRQ_HPD */
+				   (hpd == 1), /* HPD_HI|LOW */
+				   0, /* request exit DP */
+				   0, /* request exit USB */
+				   mf, /* MF pref */
+				   vdm_is_dp_enabled(port), 0, /* power low */
 				   0x2);
 	return 2;
 }
@@ -536,8 +525,8 @@ static void svdm_configure_demux(int port, int enable, int mf)
 		 * stored in bit 0 of CBI fw_config.
 		 */
 		baseboard_set_mst_lane_control(mf);
-		CPRINTS("DP[%d]: DFP-D selected pin config %s",
-			port, mf ? "D" : "C");
+		CPRINTS("DP[%d]: DFP-D selected pin config %s", port,
+			mf ? "D" : "C");
 	} else {
 		demux &= ~USB_PD_MUX_DP_ENABLED;
 		demux |= USB_PD_MUX_USB_ENABLED;
@@ -573,7 +562,6 @@ static int svdm_enter_mode(int port, uint32_t *payload)
 	/* SID & mode request is valid */
 	if ((PD_VDO_VID(payload[0]) == USB_SID_DISPLAYPORT) &&
 	    (PD_VDO_OPOS(payload[0]) == OPOS_DP)) {
-
 		/* Store valid object position to indicate mode is active */
 		pd_ufp_set_dp_opos(port, OPOS_DP);
 
@@ -623,8 +611,7 @@ const struct svdm_response svdm_rsp = {
 	.exit_mode = &svdm_exit_mode,
 };
 
-int pd_custom_vdm(int port, int cnt, uint32_t *payload,
-		  uint32_t **rpayload)
+int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {
 	/* We don't support, so ignore this message */
 	return 0;
