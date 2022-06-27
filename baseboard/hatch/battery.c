@@ -32,8 +32,9 @@ static int battery_init(void)
 {
 	int batt_status;
 
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
+	return battery_status(&batt_status) ?
+		       0 :
+		       !!(batt_status & STATUS_INITIALIZED);
 }
 
 /*
