@@ -18,16 +18,16 @@
 #include <libusb.h>
 
 /* Command line options */
-static uint16_t vid = 0x18d1;			/* Google */
-static uint16_t pid = 0x5022;			/* Hammer */
-static uint8_t ep_num = 4;			/* console endpoint */
-static uint8_t extended_i2c_exercise;		/* non-zero to exercise */
-static char *firmware_binary = "144.0_2.0.bin";	/* firmware blob */
+static uint16_t vid = 0x18d1; /* Google */
+static uint16_t pid = 0x5022; /* Hammer */
+static uint8_t ep_num = 4; /* console endpoint */
+static uint8_t extended_i2c_exercise; /* non-zero to exercise */
+static char *firmware_binary = "144.0_2.0.bin"; /* firmware blob */
 
 /* Firmware binary blob related */
-#define MAX_FW_PAGE_SIZE	512
-#define MAX_FW_PAGE_COUNT	1024
-#define MAX_FW_SIZE		(128 * 1024)
+#define MAX_FW_PAGE_SIZE 512
+#define MAX_FW_PAGE_COUNT 1024
+#define MAX_FW_SIZE (128 * 1024)
 
 static uint8_t fw_data[MAX_FW_SIZE];
 int fw_page_count;
@@ -47,13 +47,10 @@ static char *progname;
 static char *short_opts = ":f:v:p:e:hd";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
-	{"file",     1,   NULL, 'f'},
-	{"vid",      1,   NULL, 'v'},
-	{"pid",      1,   NULL, 'p'},
-	{"ep",       1,   NULL, 'e'},
-	{"help",     0,   NULL, 'h'},
-	{"debug",    0,   NULL, 'd'},
-	{NULL,       0,   NULL, 0},
+	{ "file", 1, NULL, 'f' }, { "vid", 1, NULL, 'v' },
+	{ "pid", 1, NULL, 'p' },  { "ep", 1, NULL, 'e' },
+	{ "help", 0, NULL, 'h' }, { "debug", 0, NULL, 'd' },
+	{ NULL, 0, NULL, 0 },
 };
 
 static void usage(int errs)
@@ -71,7 +68,8 @@ static void usage(int errs)
 	       "  -d,--debug              Exercise extended read I2C over USB\n"
 	       "                          and print verbose debug messages.\n"
 	       "  -h,--help               Show this message\n"
-	       "\n", progname, firmware_binary, vid, pid, ep_num);
+	       "\n",
+	       progname, firmware_binary, vid, pid, ep_num);
 
 	exit(!!errs);
 }
@@ -87,28 +85,28 @@ static void parse_cmdline(int argc, char *argv[])
 	else
 		progname = argv[0];
 
-	opterr = 0;				/* quiet, you */
+	opterr = 0; /* quiet, you */
 	while ((i = getopt_long(argc, argv, short_opts, long_opts, 0)) != -1) {
 		switch (i) {
 		case 'f':
 			firmware_binary = optarg;
 			break;
 		case 'p':
-			pid = (uint16_t) strtoull(optarg, &e, 16);
+			pid = (uint16_t)strtoull(optarg, &e, 16);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
 			}
 			break;
 		case 'v':
-			vid = (uint16_t) strtoull(optarg, &e, 16);
+			vid = (uint16_t)strtoull(optarg, &e, 16);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
 			}
 			break;
 		case 'e':
-			ep_num = (uint8_t) strtoull(optarg, &e, 0);
+			ep_num = (uint8_t)strtoull(optarg, &e, 0);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
@@ -120,7 +118,7 @@ static void parse_cmdline(int argc, char *argv[])
 		case 'h':
 			usage(errorcnt);
 			break;
-		case 0:				/* auto-handled option */
+		case 0: /* auto-handled option */
 			break;
 		case '?':
 			if (optopt)
@@ -142,7 +140,6 @@ static void parse_cmdline(int argc, char *argv[])
 
 	if (errorcnt)
 		usage(errorcnt);
-
 }
 
 /* USB transfer related */
@@ -163,7 +160,7 @@ static void request_exit(const char *format, ...)
 	va_start(ap, format);
 	vfprintf(stderr, format, ap);
 	va_end(ap);
-	do_exit++;    /* Why need this ? */
+	do_exit++; /* Why need this ? */
 
 	if (tx_transfer)
 		libusb_free_transfer(tx_transfer);
@@ -178,9 +175,8 @@ static void request_exit(const char *format, ...)
 	exit(1);
 }
 
-#define DIE(msg, r)							\
-	request_exit("%s: line %d, %s\n", msg, __LINE__,		\
-		     libusb_error_name(r))
+#define DIE(msg, r) \
+	request_exit("%s: line %d, %s\n", msg, __LINE__, libusb_error_name(r))
 
 static void sighandler(int signum)
 {
@@ -259,8 +255,8 @@ static void register_sigaction(void)
 }
 
 /* Transfer over libusb */
-#define I2C_PORT_ON_HAMMER		0x00
-#define I2C_ADDRESS_ON_HAMMER		0x15
+#define I2C_PORT_ON_HAMMER 0x00
+#define I2C_ADDRESS_ON_HAMMER 0x15
 
 static int check_read_status(int r, int expected, int actual)
 {
@@ -291,12 +287,12 @@ static int check_read_status(int r, int expected, int actual)
 	return r;
 }
 
-#define MAX_USB_PACKET_SIZE		64
-#define PRIMITIVE_READING_SIZE		60
+#define MAX_USB_PACKET_SIZE 64
+#define PRIMITIVE_READING_SIZE 60
 
-static int libusb_single_write_and_read(
-		const uint8_t *to_write, uint16_t write_length,
-		uint8_t *to_read, uint16_t read_length)
+static int libusb_single_write_and_read(const uint8_t *to_write,
+					uint16_t write_length, uint8_t *to_read,
+					uint16_t read_length)
 {
 	int r;
 	int tx_ready;
@@ -315,10 +311,10 @@ static int libusb_single_write_and_read(
 		tx_buf[4] = read_length >> 7;
 		if (extended_i2c_exercise) {
 			printf("Triggering extended reading."
-				"rc:%0x, rc1:%0x\n",
-				tx_buf[3], tx_buf[4]);
+			       "rc:%0x, rc1:%0x\n",
+			       tx_buf[3], tx_buf[4]);
 			printf("Expecting %d Bytes.\n",
-				(tx_buf[3] & 0x7f) | (tx_buf[4] << 7));
+			       (tx_buf[3] & 0x7f) | (tx_buf[4] << 7));
 		}
 	} else {
 		tx_buf[3] = read_length;
@@ -331,19 +327,18 @@ static int libusb_single_write_and_read(
 	while (sent_bytes < (offset + write_length)) {
 		tx_ready = remains = (offset + write_length) - sent_bytes;
 
-		r = libusb_bulk_transfer(devh,
-				(ep_num | LIBUSB_ENDPOINT_OUT),
-				tx_buf + sent_bytes, tx_ready,
-				&actual_length, 5000);
+		r = libusb_bulk_transfer(devh, (ep_num | LIBUSB_ENDPOINT_OUT),
+					 tx_buf + sent_bytes, tx_ready,
+					 &actual_length, 5000);
 		if (r == 0 && actual_length == tx_ready) {
 			r = libusb_bulk_transfer(devh,
-					(ep_num | LIBUSB_ENDPOINT_IN),
-					rx_buf, sizeof(rx_buf),
-					&actual_length, 5000);
+						 (ep_num | LIBUSB_ENDPOINT_IN),
+						 rx_buf, sizeof(rx_buf),
+						 &actual_length, 5000);
 		}
-		r = check_read_status(
-				r, (remains == tx_ready) ? read_length : 0,
-				actual_length);
+		r = check_read_status(r,
+				      (remains == tx_ready) ? read_length : 0,
+				      actual_length);
 		if (r)
 			break;
 		sent_bytes += tx_ready;
@@ -352,21 +347,19 @@ static int libusb_single_write_and_read(
 }
 
 /* Control Elan trackpad I2C over USB */
-#define ETP_I2C_INF_LENGTH		2
+#define ETP_I2C_INF_LENGTH 2
 
-static int elan_write_and_read(
-		int reg, uint8_t *buf, int read_length,
-		int with_cmd, int cmd)
+static int elan_write_and_read(int reg, uint8_t *buf, int read_length,
+			       int with_cmd, int cmd)
 {
-
 	tx_buf[0] = (reg >> 0) & 0xff;
 	tx_buf[1] = (reg >> 8) & 0xff;
 	if (with_cmd) {
 		tx_buf[2] = (cmd >> 0) & 0xff;
 		tx_buf[3] = (cmd >> 8) & 0xff;
 	}
-	return libusb_single_write_and_read(
-			tx_buf, with_cmd ? 4 : 2, rx_buf, read_length);
+	return libusb_single_write_and_read(tx_buf, with_cmd ? 4 : 2, rx_buf,
+					    read_length);
 }
 
 static int elan_read_block(int reg, uint8_t *buf, int read_length)
@@ -385,16 +378,16 @@ static int elan_write_cmd(int reg, int cmd)
 }
 
 /* Elan trackpad firmware information related */
-#define ETP_I2C_IAP_VERSION_CMD		0x0110
-#define ETP_I2C_FW_VERSION_CMD		0x0102
-#define ETP_I2C_IAP_CHECKSUM_CMD	0x0315
-#define ETP_I2C_FW_CHECKSUM_CMD		0x030F
-#define ETP_I2C_OSM_VERSION_CMD		0x0103
+#define ETP_I2C_IAP_VERSION_CMD 0x0110
+#define ETP_I2C_FW_VERSION_CMD 0x0102
+#define ETP_I2C_IAP_CHECKSUM_CMD 0x0315
+#define ETP_I2C_FW_CHECKSUM_CMD 0x030F
+#define ETP_I2C_OSM_VERSION_CMD 0x0103
 
 static int elan_get_version(int is_iap)
 {
-	elan_read_cmd(
-		is_iap ? ETP_I2C_IAP_VERSION_CMD : ETP_I2C_FW_VERSION_CMD);
+	elan_read_cmd(is_iap ? ETP_I2C_IAP_VERSION_CMD :
+			       ETP_I2C_FW_VERSION_CMD);
 	return le_bytes_to_int(rx_buf + 4);
 }
 
@@ -435,8 +428,8 @@ static void elan_get_ic_page_count(void)
 
 static int elan_get_checksum(int is_iap)
 {
-	elan_read_cmd(
-		is_iap ? ETP_I2C_IAP_CHECKSUM_CMD : ETP_I2C_FW_CHECKSUM_CMD);
+	elan_read_cmd(is_iap ? ETP_I2C_IAP_CHECKSUM_CMD :
+			       ETP_I2C_FW_CHECKSUM_CMD);
 	return le_bytes_to_int(rx_buf + 4);
 }
 
@@ -451,21 +444,21 @@ static uint16_t elan_get_fw_info(void)
 	iap_checksum = elan_get_checksum(1);
 	fw_version = elan_get_version(0);
 	iap_version = elan_get_version(1);
-	printf("IAP  version: %4x, FW  version: %4x\n",
-			iap_version, fw_version);
-	printf("IAP checksum: %4x, FW checksum: %4x\n",
-			iap_checksum, fw_checksum);
+	printf("IAP  version: %4x, FW  version: %4x\n", iap_version,
+	       fw_version);
+	printf("IAP checksum: %4x, FW checksum: %4x\n", iap_checksum,
+	       fw_checksum);
 	return fw_checksum;
 }
 
 /* Update preparation */
-#define ETP_I2C_IAP_RESET_CMD		0x0314
-#define ETP_I2C_IAP_RESET		0xF0F0
-#define ETP_I2C_IAP_CTRL_CMD		0x0310
-#define ETP_I2C_MAIN_MODE_ON		(1 << 9)
-#define ETP_I2C_IAP_CMD			0x0311
-#define ETP_I2C_IAP_PASSWORD		0x1EA5
-#define ETP_I2C_IAP_TYPE_CMD		0x0304
+#define ETP_I2C_IAP_RESET_CMD 0x0314
+#define ETP_I2C_IAP_RESET 0xF0F0
+#define ETP_I2C_IAP_CTRL_CMD 0x0310
+#define ETP_I2C_MAIN_MODE_ON (1 << 9)
+#define ETP_I2C_IAP_CMD 0x0311
+#define ETP_I2C_IAP_PASSWORD 0x1EA5
+#define ETP_I2C_IAP_TYPE_CMD 0x0304
 
 static int elan_in_main_mode(void)
 {
@@ -478,8 +471,7 @@ static int elan_read_write_iap_type(void)
 	for (int retry = 0; retry < 3; ++retry) {
 		uint16_t val;
 
-		if (elan_write_cmd(ETP_I2C_IAP_TYPE_CMD,
-				   fw_page_size / 2))
+		if (elan_write_cmd(ETP_I2C_IAP_TYPE_CMD, fw_page_size / 2))
 			return -1;
 
 		if (elan_read_cmd(ETP_I2C_IAP_TYPE_CMD))
@@ -490,7 +482,6 @@ static int elan_read_write_iap_type(void)
 			printf("%s: OK\n", __func__);
 			return 0;
 		}
-
 	}
 	return -1;
 }
@@ -528,17 +519,17 @@ static void elan_prepare_for_update(void)
 		request_exit("cannot read iap password.\n");
 	if (le_bytes_to_int(rx_buf + 4) != ETP_I2C_IAP_PASSWORD)
 		request_exit("Got an unexpected IAP password %4x\n",
-			le_bytes_to_int(rx_buf + 4));
+			     le_bytes_to_int(rx_buf + 4));
 }
 
 /* Firmware block update */
-#define ETP_IAP_START_ADDR		0x0083
+#define ETP_IAP_START_ADDR 0x0083
 
 static uint16_t elan_calc_checksum(uint8_t *data, int length)
 {
 	uint16_t checksum = 0;
 	for (int i = 0; i < length; i += 2)
-		checksum += ((uint16_t)(data[i+1]) << 8) | (data[i]);
+		checksum += ((uint16_t)(data[i + 1]) << 8) | (data[i]);
 	return checksum;
 }
 
@@ -547,11 +538,11 @@ static int elan_get_iap_addr(void)
 	return le_bytes_to_int(fw_data + ETP_IAP_START_ADDR * 2) * 2;
 }
 
-#define ETP_I2C_IAP_REG_L		0x01
-#define ETP_I2C_IAP_REG_H		0x06
+#define ETP_I2C_IAP_REG_L 0x01
+#define ETP_I2C_IAP_REG_H 0x06
 
-#define ETP_FW_IAP_PAGE_ERR		(1 << 5)
-#define ETP_FW_IAP_INTF_ERR		(1 << 4)
+#define ETP_FW_IAP_PAGE_ERR (1 << 5)
+#define ETP_FW_IAP_INTF_ERR (1 << 4)
 
 static int elan_write_fw_block(uint8_t *raw_data, uint16_t checksum)
 {
@@ -564,8 +555,8 @@ static int elan_write_fw_block(uint8_t *raw_data, uint16_t checksum)
 	page_store[fw_page_size + 2 + 0] = (checksum >> 0) & 0xff;
 	page_store[fw_page_size + 2 + 1] = (checksum >> 8) & 0xff;
 
-	rv = libusb_single_write_and_read(
-			page_store, fw_page_size + 4, rx_buf, 0);
+	rv = libusb_single_write_and_read(page_store, fw_page_size + 4, rx_buf,
+					  0);
 	if (rv)
 		return rv;
 	usleep((fw_page_size >= 512 ? 50 : 35) * 1000);
@@ -577,7 +568,6 @@ static int elan_write_fw_block(uint8_t *raw_data, uint16_t checksum)
 	}
 	return 0;
 }
-
 
 static uint16_t elan_update_firmware(void)
 {
@@ -661,7 +651,7 @@ int main(int argc, char *argv[])
 	remote_checksum = elan_get_checksum(1);
 	if (remote_checksum != local_checksum)
 		printf("checksum diff local=[%04X], remote=[%04X]\n",
-				local_checksum, remote_checksum);
+		       local_checksum, remote_checksum);
 
 	/* Print the updated firmware information */
 	elan_get_fw_info();
