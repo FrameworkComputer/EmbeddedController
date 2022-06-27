@@ -26,8 +26,8 @@
 #define GPIO_USB_C1_LS_EN_PATH DT_PATH(named_gpios, usb_c1_ls_en)
 #define GPIO_USB_C1_LS_EN_PORT DT_GPIO_PIN(GPIO_USB_C1_LS_EN_PATH, gpios)
 #define GPIO_USB_C1_RT_RST_ODL_PATH DT_PATH(named_gpios, usb_c1_rt_rst_odl)
-#define GPIO_USB_C1_RT_RST_ODL_PORT	\
-		DT_GPIO_PIN(GPIO_USB_C1_RT_RST_ODL_PATH, gpios)
+#define GPIO_USB_C1_RT_RST_ODL_PORT \
+	DT_GPIO_PIN(GPIO_USB_C1_RT_RST_ODL_PATH, gpios)
 #define EMUL_LABEL DT_NODELABEL(usb_c1_bb_retimer_emul)
 
 #define BB_RETIMER_ORD DT_DEP_ORD(EMUL_LABEL)
@@ -70,9 +70,10 @@ ZTEST_USER(bb_retimer, test_bb_set_state)
 
 	/* Test none mode */
 	bb_emul_set_reg(emul, BB_RETIMER_REG_CONNECTION_STATE, 0x12144678);
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						     USB_PD_MUX_NONE,
-						     &ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_NONE, &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	/* Only UFP mode is set */
@@ -82,9 +83,10 @@ ZTEST_USER(bb_retimer, test_bb_set_state)
 
 	/* Test USB3 gen1 mode */
 	prl_set_rev(USBC_PORT_C1, TCPCI_MSG_SOP_PRIME, PD_REV10);
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						     USB_PD_MUX_USB_ENABLED,
-						     &ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_USB_ENABLED, &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
@@ -94,26 +96,28 @@ ZTEST_USER(bb_retimer, test_bb_set_state)
 		      exp_conn, conn);
 
 	/* Test USB3 gen2 mode */
-	disc = pd_get_am_discovery_and_notify_access(
-					USBC_PORT_C1, TCPCI_MSG_SOP_PRIME);
+	disc = pd_get_am_discovery_and_notify_access(USBC_PORT_C1,
+						     TCPCI_MSG_SOP_PRIME);
 	disc->identity.product_t1.p_rev30.ss = USB_R30_SS_U32_U40_GEN2;
 	prl_set_rev(USBC_PORT_C1, TCPCI_MSG_SOP_PRIME, PD_REV30);
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						     USB_PD_MUX_USB_ENABLED,
-						     &ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_USB_ENABLED, &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
 		   BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_USB_3_CONNECTION |
-		   BB_RETIMER_USB_3_SPEED;
+		   BB_RETIMER_USB_3_CONNECTION | BB_RETIMER_USB_3_SPEED;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
 	/* Test TBT mode */
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
@@ -123,35 +127,38 @@ ZTEST_USER(bb_retimer, test_bb_set_state)
 		      exp_conn, conn);
 
 	/* Test USB4 mode */
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						     USB_PD_MUX_USB4_ENABLED,
-						     &ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_USB4_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
-		   BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_USB4_ENABLED;
+		   BB_RETIMER_DATA_CONNECTION_PRESENT | BB_RETIMER_USB4_ENABLED;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
 	/* Test USB4 mode with polarity inverted */
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_USB4_ENABLED |
-						USB_PD_MUX_POLARITY_INVERTED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_USB4_ENABLED |
+						 USB_PD_MUX_POLARITY_INVERTED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
 		   BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_CONNECTION_ORIENTATION |
-		   BB_RETIMER_USB4_ENABLED;
+		   BB_RETIMER_CONNECTION_ORIENTATION | BB_RETIMER_USB4_ENABLED;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
 	/* Test DP mode */
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						     USB_PD_MUX_DP_ENABLED,
-						     &ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_DP_ENABLED, &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
@@ -160,29 +167,31 @@ ZTEST_USER(bb_retimer, test_bb_set_state)
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						     USB_PD_MUX_DP_ENABLED |
-						     USB_PD_MUX_HPD_IRQ,
-						     &ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_DP_ENABLED |
+						 USB_PD_MUX_HPD_IRQ,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
 		   BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_DP_CONNECTION |
-		   BB_RETIMER_IRQ_HPD;
+		   BB_RETIMER_DP_CONNECTION | BB_RETIMER_IRQ_HPD;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						     USB_PD_MUX_DP_ENABLED |
-						     USB_PD_MUX_HPD_LVL,
-						     &ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_DP_ENABLED |
+						 USB_PD_MUX_HPD_LVL,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
 		   BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_DP_CONNECTION |
-		   BB_RETIMER_HPD_LVL;
+		   BB_RETIMER_DP_CONNECTION | BB_RETIMER_HPD_LVL;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 }
@@ -205,9 +214,10 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 
 	/* Test PD mux none mode with DFP should clear all bits in state */
 	bb_emul_set_reg(emul, BB_RETIMER_REG_CONNECTION_STATE, 0x12144678);
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						     USB_PD_MUX_NONE,
-						     &ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_NONE, &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = 0;
@@ -215,8 +225,8 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 		      exp_conn, conn);
 
 	/* Set active cable type */
-	disc = pd_get_am_discovery_and_notify_access(
-					USBC_PORT_C1, TCPCI_MSG_SOP_PRIME);
+	disc = pd_get_am_discovery_and_notify_access(USBC_PORT_C1,
+						     TCPCI_MSG_SOP_PRIME);
 	disc->identity.idh.product_type = IDH_PTYPE_ACABLE;
 	disc->identity.product_t2.a2_rev30.active_elem = ACTIVE_RETIMER;
 	disc->identity.product_t1.p_rev30.ss = USB_R30_SS_U32_U40_GEN2;
@@ -237,8 +247,8 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
 
 	/* Set device VDO */
-	dev_disc = pd_get_am_discovery_and_notify_access(
-						USBC_PORT_C1, TCPCI_MSG_SOP);
+	dev_disc = pd_get_am_discovery_and_notify_access(USBC_PORT_C1,
+							 TCPCI_MSG_SOP);
 	dev_disc->svid_cnt = 1;
 	dev_disc->svids[0].svid = USB_VID_INTEL;
 	dev_disc->svids[0].discovery = PD_DISC_COMPLETE;
@@ -251,42 +261,43 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	dev_disc->svids[0].mode_vdo[0] = device_resp.raw_value;
 
 	/* Test USB mode with active cable */
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						     USB_PD_MUX_USB_ENABLED,
-						     &ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_USB_ENABLED, &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_USB_3_CONNECTION |
-		   BB_RETIMER_USB_3_SPEED |
-		   BB_RETIMER_RE_TIMER_DRIVER |
-		   BB_RETIMER_ACTIVE_PASSIVE;
+		   BB_RETIMER_USB_3_CONNECTION | BB_RETIMER_USB_3_SPEED |
+		   BB_RETIMER_RE_TIMER_DRIVER | BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
 	/* Test TBT mode with active cable */
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_TBT_CONNECTION |
-		   BB_RETIMER_ACTIVE_PASSIVE;
+		   BB_RETIMER_TBT_CONNECTION | BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
 	/* Test TBT mode with retimer */
 	cable_resp.retimer_type = USB_RETIMER;
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_TBT_CONNECTION |
-		   BB_RETIMER_RE_TIMER_DRIVER |
+		   BB_RETIMER_TBT_CONNECTION | BB_RETIMER_RE_TIMER_DRIVER |
 		   BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
@@ -295,14 +306,15 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	cable_resp.retimer_type = USB_NOT_RETIMER;
 	cable_resp.tbt_cable = TBT_CABLE_OPTICAL;
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_TBT_CONNECTION |
-		   BB_RETIMER_TBT_CABLE_TYPE |
+		   BB_RETIMER_TBT_CONNECTION | BB_RETIMER_TBT_CABLE_TYPE |
 		   BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
@@ -311,15 +323,16 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	cable_resp.tbt_cable = TBT_CABLE_NON_OPTICAL;
 	cable_resp.lsrx_comm = UNIDIR_LSRX_COMM;
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
-	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_TBT_CONNECTION |
-		   BB_RETIMER_TBT_ACTIVE_LINK_TRAINING |
-		   BB_RETIMER_ACTIVE_PASSIVE;
+	exp_conn =
+		BB_RETIMER_DATA_CONNECTION_PRESENT | BB_RETIMER_TBT_CONNECTION |
+		BB_RETIMER_TBT_ACTIVE_LINK_TRAINING | BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
@@ -327,9 +340,11 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	cable_resp.lsrx_comm = BIDIR_LSRX_COMM;
 	cable_resp.tbt_cable_speed = TBT_SS_U31_GEN1;
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
@@ -341,9 +356,11 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 
 	cable_resp.tbt_cable_speed = TBT_SS_U32_GEN1_GEN2;
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
@@ -355,9 +372,11 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 
 	cable_resp.tbt_cable_speed = TBT_SS_TBT_GEN3;
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
@@ -371,15 +390,16 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	cable_resp.tbt_cable_speed = TBT_SS_RES_0;
 	cable_resp.tbt_rounded = TBT_GEN3_GEN4_ROUNDED_NON_ROUNDED;
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
-	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_TBT_CONNECTION |
-		   BB_RETIMER_TBT_CABLE_GENERATION(1) |
-		   BB_RETIMER_ACTIVE_PASSIVE;
+	exp_conn =
+		BB_RETIMER_DATA_CONNECTION_PRESENT | BB_RETIMER_TBT_CONNECTION |
+		BB_RETIMER_TBT_CABLE_GENERATION(1) | BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
@@ -388,14 +408,15 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
 	device_resp.tbt_adapter = TBT_ADAPTER_TBT2_LEGACY;
 	dev_disc->svids[0].mode_vdo[0] = device_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_TBT_CONNECTION |
-		   BB_RETIMER_TBT_TYPE |
+		   BB_RETIMER_TBT_CONNECTION | BB_RETIMER_TBT_TYPE |
 		   BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
@@ -404,14 +425,15 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	device_resp.tbt_adapter = TBT_ADAPTER_TBT3;
 	device_resp.intel_spec_b0 = VENDOR_SPECIFIC_SUPPORTED;
 	dev_disc->svids[0].mode_vdo[0] = device_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_TBT_CONNECTION |
-		   BB_RETIMER_ACTIVE_PASSIVE;
+		   BB_RETIMER_TBT_CONNECTION | BB_RETIMER_ACTIVE_PASSIVE;
 
 	if (IS_ENABLED(CONFIG_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE))
 		exp_conn |= BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE;
@@ -423,15 +445,16 @@ ZTEST_USER(bb_retimer, test_bb_set_dfp_state)
 	device_resp.intel_spec_b0 = VENDOR_SPECIFIC_NOT_SUPPORTED;
 	device_resp.vendor_spec_b1 = VENDOR_SPECIFIC_SUPPORTED;
 	dev_disc->svids[0].mode_vdo[0] = device_resp.raw_value;
-	zassert_equal(EC_SUCCESS, bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
-						USB_PD_MUX_TBT_COMPAT_ENABLED,
-						&ack_required), NULL);
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(&usb_muxes[USBC_PORT_C1],
+					 USB_PD_MUX_TBT_COMPAT_ENABLED,
+					 &ack_required),
+		      NULL);
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
-	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_TBT_CONNECTION |
-		   BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE |
-		   BB_RETIMER_ACTIVE_PASSIVE;
+	exp_conn =
+		BB_RETIMER_DATA_CONNECTION_PRESENT | BB_RETIMER_TBT_CONNECTION |
+		BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE | BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 }
@@ -458,9 +481,9 @@ ZTEST_USER(bb_retimer, test_bb_init)
 	/* Enable pins should be set always after init, when AP is on */
 	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
 		      NULL);
-	zassert_equal(1, gpio_emul_output_get(gpio_dev,
-					      GPIO_USB_C1_RT_RST_ODL_PORT),
-		      NULL);
+	zassert_equal(
+		1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_RT_RST_ODL_PORT),
+		NULL);
 
 	/* Setup wrong vendor ID */
 	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -470,9 +493,9 @@ ZTEST_USER(bb_retimer, test_bb_init)
 		      bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]), NULL);
 	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
 		      NULL);
-	zassert_equal(1, gpio_emul_output_get(gpio_dev,
-					      GPIO_USB_C1_RT_RST_ODL_PORT),
-		      NULL);
+	zassert_equal(
+		1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_RT_RST_ODL_PORT),
+		NULL);
 
 	/* Setup emulator fail on device ID read */
 	i2c_common_emul_set_read_fail_reg(emul, BB_RETIMER_REG_DEVICE_ID);
@@ -482,9 +505,9 @@ ZTEST_USER(bb_retimer, test_bb_init)
 		      bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]), NULL);
 	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
 		      NULL);
-	zassert_equal(1, gpio_emul_output_get(gpio_dev,
-					      GPIO_USB_C1_RT_RST_ODL_PORT),
-		      NULL);
+	zassert_equal(
+		1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_RT_RST_ODL_PORT),
+		NULL);
 
 	/* Setup wrong device ID */
 	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -494,9 +517,9 @@ ZTEST_USER(bb_retimer, test_bb_init)
 		      bb_usb_retimer.init(&usb_muxes[USBC_PORT_C1]), NULL);
 	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
 		      NULL);
-	zassert_equal(1, gpio_emul_output_get(gpio_dev,
-					      GPIO_USB_C1_RT_RST_ODL_PORT),
-		      NULL);
+	zassert_equal(
+		1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_RT_RST_ODL_PORT),
+		NULL);
 
 	/* Test successful init */
 	bb_emul_set_reg(emul, BB_RETIMER_REG_DEVICE_ID, BB_RETIMER_DEVICE_ID);
@@ -504,9 +527,9 @@ ZTEST_USER(bb_retimer, test_bb_init)
 		      NULL);
 	zassert_equal(1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
 		      NULL);
-	zassert_equal(1, gpio_emul_output_get(gpio_dev,
-					      GPIO_USB_C1_RT_RST_ODL_PORT),
-		      NULL);
+	zassert_equal(
+		1, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_RT_RST_ODL_PORT),
+		NULL);
 
 	/* Set AP to off state and wait for chipset task */
 	test_set_chipset_to_g3();
@@ -518,9 +541,9 @@ ZTEST_USER(bb_retimer, test_bb_init)
 		      NULL);
 
 	msleep(1);
-	zassert_equal(0, gpio_emul_output_get(gpio_dev,
-					      GPIO_USB_C1_RT_RST_ODL_PORT),
-		      NULL);
+	zassert_equal(
+		0, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_RT_RST_ODL_PORT),
+		NULL);
 }
 
 /** Test BB retimer console command */
