@@ -43,10 +43,9 @@ static void wdg_intr_enable(int enable)
 #else
 static void wdg_intr_enable(int enable)
 {
-	(void) enable;
+	(void)enable;
 }
 #endif
-
 
 /*
  * MEC1701 WDG asserts chip reset on LOAD count expiration.
@@ -81,8 +80,8 @@ int watchdog_init(void)
 		MCHP_TMR16_CTL(0) |= BIT(0);
 
 		/* Prescaler = 48000 -> 1kHz -> Period = 1 ms */
-		MCHP_TMR16_CTL(0) = (MCHP_TMR16_CTL(0) & 0xffffU)
-					| (47999 << 16);
+		MCHP_TMR16_CTL(0) = (MCHP_TMR16_CTL(0) & 0xffffU) |
+				    (47999 << 16);
 
 		/* No auto restart */
 		MCHP_TMR16_CTL(0) &= ~BIT(3);
@@ -116,8 +115,8 @@ int watchdog_init(void)
 	 * counting if a debug cable is attached to JTAG_RST#.
 	 */
 	if (IS_ENABLED(CONFIG_CHIPSET_DEBUG))
-		MCHP_WDG_CTL |= (MCHP_WDT_CTL_ENABLE
-			| MCHP_WDT_CTL_JTAG_STALL_EN);
+		MCHP_WDG_CTL |=
+			(MCHP_WDT_CTL_ENABLE | MCHP_WDT_CTL_JTAG_STALL_EN);
 	else
 		MCHP_WDG_CTL |= MCHP_WDT_CTL_ENABLE;
 
@@ -142,32 +141,29 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 	MCHP_WDG_CTL = 0; /* clear enable to allow write to load register */
 	MCHP_WDG_LOAD = 2;
 	MCHP_WDG_CTL |= MCHP_WDT_CTL_ENABLE;
-
 }
 
 /* ISR for watchdog warning naked will keep SP & LR */
-void
-IRQ_HANDLER(MCHP_IRQ_WDG)(void) __keep __attribute__((naked));
+void IRQ_HANDLER(MCHP_IRQ_WDG)(void) __keep __attribute__((naked));
 void IRQ_HANDLER(MCHP_IRQ_WDG)(void)
 {
 	/* Naked call so we can extract raw LR and SP */
 	asm volatile("mov r0, lr\n"
-			"mov r1, sp\n"
-			/*
-			 * Must push registers in pairs to keep 64-bit aligned
-			 * stack for ARM EABI.  This also conveniently saves
-			 * R0=LR so we can pass it to task_resched_if_needed.
-			 */
-			"push {r0, lr}\n"
-			"bl watchdog_check\n"
-			"pop {r0, lr}\n"
-			"b task_resched_if_needed\n");
+		     "mov r1, sp\n"
+		     /*
+		      * Must push registers in pairs to keep 64-bit aligned
+		      * stack for ARM EABI.  This also conveniently saves
+		      * R0=LR so we can pass it to task_resched_if_needed.
+		      */
+		     "push {r0, lr}\n"
+		     "bl watchdog_check\n"
+		     "pop {r0, lr}\n"
+		     "b task_resched_if_needed\n");
 }
 
 /* put the watchdog at the highest priority */
 const struct irq_priority __keep IRQ_PRIORITY(MCHP_IRQ_WDG)
-__attribute__((section(".rodata.irqprio")))
-= {MCHP_IRQ_WDG, 0};
+	__attribute__((section(".rodata.irqprio"))) = { MCHP_IRQ_WDG, 0 };
 
 #else
 /*
@@ -185,8 +181,7 @@ void __keep watchdog_check(uint32_t excep_lr, uint32_t excep_sp)
 	watchdog_trace(excep_lr, excep_sp);
 }
 
-void
-IRQ_HANDLER(MCHP_IRQ_TIMER16_0)(void) __keep __attribute__((naked));
+void IRQ_HANDLER(MCHP_IRQ_TIMER16_0)(void) __keep __attribute__((naked));
 void IRQ_HANDLER(MCHP_IRQ_TIMER16_0)(void)
 {
 	/* Naked call so we can extract raw LR and SP */
@@ -205,8 +200,7 @@ void IRQ_HANDLER(MCHP_IRQ_TIMER16_0)(void)
 
 /* Put the watchdog at the highest interrupt priority. */
 const struct irq_priority __keep IRQ_PRIORITY(MCHP_IRQ_TIMER16_0)
-	__attribute__((section(".rodata.irqprio")))
-		= {MCHP_IRQ_TIMER16_0, 0};
+	__attribute__((section(".rodata.irqprio"))) = { MCHP_IRQ_TIMER16_0, 0 };
 
 #endif /* #ifdef CONFIG_WATCHDOG_HELP */
 #endif /* #if defined(CHIP_FAMILY_MEC152X) || defined(CHIP_FAMILY_MEC172X) */
