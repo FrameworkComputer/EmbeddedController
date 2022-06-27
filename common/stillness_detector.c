@@ -23,8 +23,8 @@ static bool stillness_batch_complete(struct still_det *still_det,
 				     uint32_t sample_time)
 {
 	bool complete = false;
-	uint32_t batch_window = time_until(still_det->window_start_time,
-					   sample_time);
+	uint32_t batch_window =
+		time_until(still_det->window_start_time, sample_time);
 
 	/* Checking if enough data is accumulated */
 	if (batch_window >= still_det->min_batch_window &&
@@ -51,8 +51,8 @@ static inline fp_t compute_variance(fp_t acc_squared, fp_t acc, fp_t inv)
 	return fp_mul((acc_squared - fp_mul(fp_sq(acc), inv)), inv);
 }
 
-bool still_det_update(struct still_det *still_det, uint32_t sample_time,
-		      fp_t x, fp_t y, fp_t z)
+bool still_det_update(struct still_det *still_det, uint32_t sample_time, fp_t x,
+		      fp_t y, fp_t z)
 {
 	fp_t inv = FLOAT_TO_FP(0.0f), var_x, var_y, var_z;
 	bool complete = false;
@@ -88,12 +88,12 @@ bool still_det_update(struct still_det *still_det, uint32_t sample_time,
 			return complete;
 		}
 		/* Calculating the VAR = sum(x^2)/n - sum(x)^2/n^2 */
-		var_x = compute_variance(
-			still_det->acc_xx, still_det->acc_x, inv);
-		var_y = compute_variance(
-			still_det->acc_yy, still_det->acc_y, inv);
-		var_z = compute_variance(
-			still_det->acc_zz, still_det->acc_z, inv);
+		var_x = compute_variance(still_det->acc_xx, still_det->acc_x,
+					 inv);
+		var_y = compute_variance(still_det->acc_yy, still_det->acc_y,
+					 inv);
+		var_z = compute_variance(still_det->acc_zz, still_det->acc_z,
+					 inv);
 		/* Checking if sensor is still */
 		if (var_x < still_det->var_threshold &&
 		    var_y < still_det->var_threshold &&
