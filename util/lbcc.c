@@ -31,10 +31,10 @@ static const char usage[] =
 /* globals */
 static int hit_errors;
 static int opt_verbose;
-static int is_jump_target[EC_LB_PROG_LEN];	/* does program jump here? */
-static int is_instruction[EC_LB_PROG_LEN];	/* instruction or operand? */
-static char *label[EC_LB_PROG_LEN];		/* labels we've seen */
-static char *reloc_label[EC_LB_PROG_LEN];	/* put label target here */
+static int is_jump_target[EC_LB_PROG_LEN]; /* does program jump here? */
+static int is_instruction[EC_LB_PROG_LEN]; /* instruction or operand? */
+static char *label[EC_LB_PROG_LEN]; /* labels we've seen */
+static char *reloc_label[EC_LB_PROG_LEN]; /* put label target here */
 
 static void Error(const char *format, ...)
 {
@@ -66,32 +66,21 @@ struct safe_lightbar_program {
 
 #define OP(NAME, BYTES, MNEMONIC) NAME,
 #include "lightbar_opcode_list.h"
-enum lightbyte_opcode {
-	LIGHTBAR_OPCODE_TABLE
-	MAX_OPCODE
-};
+enum lightbyte_opcode { LIGHTBAR_OPCODE_TABLE MAX_OPCODE };
 #undef OP
 
 #define OP(NAME, BYTES, MNEMONIC) BYTES,
 #include "lightbar_opcode_list.h"
-static const int num_operands[] = {
-	LIGHTBAR_OPCODE_TABLE
-};
+static const int num_operands[] = { LIGHTBAR_OPCODE_TABLE };
 #undef OP
 
 #define OP(NAME, BYTES, MNEMONIC) MNEMONIC,
 #include "lightbar_opcode_list.h"
-static const char * const opcode_sym[] = {
-	LIGHTBAR_OPCODE_TABLE
-};
+static const char *const opcode_sym[] = { LIGHTBAR_OPCODE_TABLE };
 #undef OP
 
-static const char * const control_sym[] = {
-	"beg", "end", "phase", "<invalid>"
-};
-static const char * const color_sym[] = {
-	"r", "g", "b", "<invalid>"
-};
+static const char *const control_sym[] = { "beg", "end", "phase", "<invalid>" };
+static const char *const color_sym[] = { "r", "g", "b", "<invalid>" };
 
 static void read_binary(FILE *fp, struct safe_lightbar_program *prog)
 {
@@ -232,7 +221,8 @@ static void set_jump_target(uint8_t targ)
 {
 	if (targ >= EC_LB_PROG_LEN) {
 		Warning("program jumps to 0x%02x, "
-			"which out of bounds\n", targ);
+			"which out of bounds\n",
+			targ);
 		return;
 	}
 	is_jump_target[targ] = 1;
@@ -266,7 +256,8 @@ static void disassemble_prog(FILE *fp, struct safe_lightbar_program *prog)
 	for (i = 0; i < EC_LB_PROG_LEN; i++)
 		if (is_jump_target[i] && !is_instruction[i]) {
 			Warning("program jumps to 0x%02x, "
-				"which is not a valid instruction\n", i);
+				"which is not a valid instruction\n",
+				i);
 		}
 }
 
@@ -295,7 +286,6 @@ static int split_line(char *buf, const char *delim, struct parse_s *elt,
 		elt[i].val = (uint32_t)strtoull(w, &e, 0);
 		if (!e || !*e)
 			elt[i].is_num = 1;
-
 	}
 
 	return i;
@@ -377,7 +367,6 @@ static int is_color_arg(char *buf, int expected, uint32_t *valp)
 	} else
 		color = 0;
 
-
 	*valp = ((led & 0xF) << 4) | ((control & 0x3) << 2) | (color & 0x3);
 	return 1;
 }
@@ -390,8 +379,8 @@ static void fixup_symbols(struct safe_lightbar_program *prog)
 		if (reloc_label[i]) {
 			/* Looking for reloc label */
 			for (j = 0; j < EC_LB_PROG_LEN; j++) {
-				if (label[j] && !strcmp(label[j],
-							reloc_label[i])) {
+				if (label[j] &&
+				    !strcmp(label[j], reloc_label[i])) {
 					prog->p.data[i] = j;
 					break;
 				}
@@ -401,7 +390,6 @@ static void fixup_symbols(struct safe_lightbar_program *prog)
 		}
 	}
 }
-
 
 static void compile(FILE *fp, struct safe_lightbar_program *prog)
 {
@@ -415,7 +403,6 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 	int i;
 
 	while (fgets(buf, sizeof(buf), fp)) {
-
 		/* We truncate lines that are too long */
 		s = strchr(buf, '\n');
 		if (chopping) {
@@ -458,7 +445,8 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 
 		if (opcode >= MAX_OPCODE) {
 			Error("Unrecognized opcode \"%s\""
-			      " at line %d\n", token[wnum].word, line);
+			      " at line %d\n",
+			      token[wnum].word, line);
 			continue;
 		}
 
@@ -488,7 +476,8 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 				reloc_label[addr++] = strdup(token[wnum].word);
 			else {
 				Error("Missing first jump target "
-				      "at line %d\n", line);
+				      "at line %d\n",
+				      line);
 				break;
 			}
 			wnum++;
@@ -496,7 +485,8 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 				reloc_label[addr++] = strdup(token[wnum].word);
 			else
 				Error("Missing second jump target "
-				      "at line %d\n", line);
+				      "at line %d\n",
+				      line);
 			break;
 
 		case SET_BRIGHTNESS:
@@ -511,14 +501,13 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 		case SET_RAMP_DELAY:
 			/* one 32-bit arg */
 			if (token[wnum].is_num) {
-				prog->p.data[addr++] =
-					(token[wnum].val >> 24) & 0xff;
-				prog->p.data[addr++] =
-					(token[wnum].val >> 16) & 0xff;
-				prog->p.data[addr++] =
-					(token[wnum].val >> 8) & 0xff;
-				prog->p.data[addr++] =
-					token[wnum].val & 0xff;
+				prog->p.data[addr++] = (token[wnum].val >> 24) &
+						       0xff;
+				prog->p.data[addr++] = (token[wnum].val >> 16) &
+						       0xff;
+				prog->p.data[addr++] = (token[wnum].val >> 8) &
+						       0xff;
+				prog->p.data[addr++] = token[wnum].val & 0xff;
 			} else {
 				Error("Missing/invalid arg at line %d\n", line);
 			}
@@ -535,11 +524,11 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 			prog->p.data[addr++] = token[wnum++].val;
 			/* and the color immediate */
 			if (token[wnum].is_num) {
-				prog->p.data[addr++] =
-					token[wnum++].val;
+				prog->p.data[addr++] = token[wnum++].val;
 			} else {
 				Error("Missing/Invalid arg "
-				      "at line %d\n", line);
+				      "at line %d\n",
+				      line);
 				break;
 			}
 			break;
@@ -559,7 +548,8 @@ static void compile(FILE *fp, struct safe_lightbar_program *prog)
 						token[wnum++].val;
 				} else {
 					Error("Missing/Invalid arg "
-					      "at line %d\n", line);
+					      "at line %d\n",
+					      line);
 					break;
 				}
 			}
@@ -604,7 +594,7 @@ int main(int argc, char *argv[])
 	else
 		progname = argv[0];
 
-	opterr = 0;                     /* quiet, you */
+	opterr = 0; /* quiet, you */
 	while ((c = getopt(argc, argv, ":dv")) != -1) {
 		switch (c) {
 		case 'd':
@@ -676,8 +666,8 @@ int main(int argc, char *argv[])
 		compile(ifp, &safe_prog);
 		fclose(ifp);
 		if (!hit_errors) {
-			if (1 != fwrite(safe_prog.p.data,
-					safe_prog.p.size, 1, ofp))
+			if (1 !=
+			    fwrite(safe_prog.p.data, safe_prog.p.size, 1, ofp))
 				Error("%s: Unable to write to %s: %s\n",
 				      progname, outfile, strerror(errno));
 			else
