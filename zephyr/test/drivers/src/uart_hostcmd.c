@@ -86,8 +86,8 @@ static void test_uart_hc_read_next(int ver)
 	 */
 	msg1_start = response + read_args.response_size - 1 - MSG_LEN(msg1);
 	zassert_mem_equal(msg1, msg1_start, MSG_LEN(msg1),
-			  "expected \"%s\", got \"%.*s\"",
-			  msg1, MSG_LEN(msg1), msg1_start);
+			  "expected \"%s\", got \"%.*s\"", msg1, MSG_LEN(msg1),
+			  msg1_start);
 
 	/* Set new snapshot which should include message 2 */
 	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args), NULL);
@@ -106,11 +106,11 @@ static void test_uart_hc_read_next(int ver)
 	msg2_start = response + read_args.response_size - 1 - MSG_LEN(msg2);
 	msg1_start = msg2_start - MSG_LEN(msg1);
 	zassert_mem_equal(msg2, msg2_start, MSG_LEN(msg2),
-			  "expected \"%s\", got \"%.*s\"",
-			  msg2, MSG_LEN(msg2), msg2_start);
+			  "expected \"%s\", got \"%.*s\"", msg2, MSG_LEN(msg2),
+			  msg2_start);
 	zassert_mem_equal(msg1, msg1_start, MSG_LEN(msg1),
-			  "expected \"%s\", got \"%.*s\"",
-			  msg1, MSG_LEN(msg1), msg1_start);
+			  "expected \"%s\", got \"%.*s\"", msg1, MSG_LEN(msg1),
+			  msg1_start);
 
 	/* Append third message */
 	cputs(CC_COMMAND, msg3);
@@ -135,14 +135,14 @@ static void test_uart_hc_read_next(int ver)
 	msg2_start = msg3_start - MSG_LEN(msg2);
 	msg1_start = msg2_start - MSG_LEN(msg1);
 	zassert_mem_equal(msg3, msg3_start, MSG_LEN(msg3),
-			  "expected \"%s\", got \"%.*s\"",
-			  msg3, MSG_LEN(msg3), msg3_start);
+			  "expected \"%s\", got \"%.*s\"", msg3, MSG_LEN(msg3),
+			  msg3_start);
 	zassert_mem_equal(msg2, msg2_start, MSG_LEN(msg2),
-			  "expected \"%s\", got \"%.*s\"",
-			  msg2, MSG_LEN(msg2), msg2_start);
+			  "expected \"%s\", got \"%.*s\"", msg2, MSG_LEN(msg2),
+			  msg2_start);
 	zassert_mem_equal(msg1, msg1_start, MSG_LEN(msg1),
-			  "expected \"%s\", got \"%.*s\"",
-			  msg1, MSG_LEN(msg1), msg1_start);
+			  "expected \"%s\", got \"%.*s\"", msg1, MSG_LEN(msg1),
+			  msg1_start);
 }
 
 ZTEST_USER(uart_hostcmd, test_uart_hc_read_next_v0)
@@ -176,11 +176,11 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 		      response[read_args.response_size]);
 	/* Account additional NULL char at the end */
 	zassert_equal(MSG_LEN(msg1) + 1, read_args.response_size,
-		      "expected message length %d, got %d",
-		      MSG_LEN(msg1) + 1, read_args.response_size);
+		      "expected message length %d, got %d", MSG_LEN(msg1) + 1,
+		      read_args.response_size);
 	zassert_mem_equal(msg1, response, MSG_LEN(msg1),
-			  "expected \"%s\", got \"%.*s\"",
-			  msg1, MSG_LEN(msg1), response);
+			  "expected \"%s\", got \"%.*s\"", msg1, MSG_LEN(msg1),
+			  response);
 
 	/* Set new snapshot after second message */
 	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args), NULL);
@@ -193,11 +193,11 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 		      response[read_args.response_size]);
 	/* Account additional NULL char at the end */
 	zassert_equal(MSG_LEN(msg2) + 1, read_args.response_size,
-		      "expected message length %d, got %d",
-		      MSG_LEN(msg2) + 1, read_args.response_size);
+		      "expected message length %d, got %d", MSG_LEN(msg2) + 1,
+		      read_args.response_size);
 	zassert_mem_equal(msg2, response, MSG_LEN(msg2),
-			  "expected \"%s\", got \"%.*s\"",
-			  msg2, MSG_LEN(msg2), response);
+			  "expected \"%s\", got \"%.*s\"", msg2, MSG_LEN(msg2),
+			  response);
 
 	/* Append third message */
 	cputs(CC_COMMAND, msg3);
@@ -220,11 +220,11 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 		      response[read_args.response_size]);
 	/* Account additional NULL char at the end */
 	zassert_equal(MSG_LEN(msg3) + 1, read_args.response_size,
-		      "expected message length %d, got %d",
-		      MSG_LEN(msg3) + 1, read_args.response_size);
+		      "expected message length %d, got %d", MSG_LEN(msg3) + 1,
+		      read_args.response_size);
 	zassert_mem_equal(msg3, response, MSG_LEN(msg3),
-			  "expected \"%s\", got \"%.*s\"",
-			  msg3, MSG_LEN(msg3), response);
+			  "expected \"%s\", got \"%.*s\"", msg3, MSG_LEN(msg3),
+			  response);
 }
 
 ZTEST_SUITE(uart_hostcmd, drivers_predicate_post_main, NULL,
