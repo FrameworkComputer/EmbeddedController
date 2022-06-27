@@ -10,5 +10,5 @@
 void cpu_init(void)
 {
 	/* bit3: Global interrupt enable (M-mode) */
-	asm volatile ("csrsi mstatus, 0x8");
+	asm volatile("csrsi mstatus, 0x8");
 }
