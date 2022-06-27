@@ -30,8 +30,8 @@
 #include "gpio_list.h" /* Must come after other header files. */
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 #define KBLIGHT_LED_ON_LVL 100
 #define KBLIGHT_LED_OFF_LVL 0
@@ -93,8 +93,8 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	}
 
 	if (voltage < BC12_MIN_VOLTAGE) {
-		CPRINTS("%s: port %d: vbus %d lower than %d", __func__,
-			port, voltage, BC12_MIN_VOLTAGE);
+		CPRINTS("%s: port %d: vbus %d lower than %d", __func__, port,
+			voltage, BC12_MIN_VOLTAGE);
 		return 1;
 	}
 
@@ -123,7 +123,7 @@ static void keyboard_init(void)
 DECLARE_HOOK(HOOK_INIT, keyboard_init, HOOK_PRIO_DEFAULT);
 
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Need to set different input current limit depend on system state.
@@ -131,15 +131,14 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 */
 
 	if (((max_ma == PD_MAX_CURRENT_MA) &&
-		chipset_in_state(CHIPSET_STATE_ANY_OFF)) ||
-		(max_ma != PD_MAX_CURRENT_MA))
+	     chipset_in_state(CHIPSET_STATE_ANY_OFF)) ||
+	    (max_ma != PD_MAX_CURRENT_MA))
 		charge_ma = charge_ma * 97 / 100;
 	else
 		charge_ma = charge_ma * 93 / 100;
 
-	charge_set_input_current_limit(MAX(charge_ma,
-					CONFIG_CHARGER_INPUT_CURRENT),
-					charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 static void configure_input_current_limit(void)
@@ -155,16 +154,16 @@ static void configure_input_current_limit(void)
 	adapter_current_ma = charge_manager_get_charger_current();
 
 	if ((adapter_current_ma == PD_MAX_CURRENT_MA) &&
-		chipset_in_or_transitioning_to_state(CHIPSET_STATE_SUSPEND))
+	    chipset_in_or_transitioning_to_state(CHIPSET_STATE_SUSPEND))
 		adapter_current_ma = PD_MAX_SUSPEND_CURRENT_MA;
 	else
 		adapter_current_ma = adapter_current_ma * 97 / 100;
 
 	charge_set_input_current_limit(MAX(adapter_current_ma,
-					CONFIG_CHARGER_INPUT_CURRENT),
-					adapter_current_mv);
+					   CONFIG_CHARGER_INPUT_CURRENT),
+				       adapter_current_mv);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, configure_input_current_limit,
-		HOOK_PRIO_DEFAULT);
+	     HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE, configure_input_current_limit,
-		HOOK_PRIO_DEFAULT);
+	     HOOK_PRIO_DEFAULT);
