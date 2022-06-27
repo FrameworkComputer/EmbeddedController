@@ -13,7 +13,8 @@
 
 /*
  * FMAP structs.
- * See https://chromium.googlesource.com/chromiumos/third_party/flashmap/+/HEAD/lib/fmap.h
+ * See
+ * https://chromium.googlesource.com/chromiumos/third_party/flashmap/+/HEAD/lib/fmap.h
  */
 #define FMAP_NAMELEN 32
 #define FMAP_SIGNATURE "__FMAP__"
@@ -25,8 +26,8 @@
  * For address containing CONFIG_PROGRAM_MEMORY_BASE (symbols in *.RO.lds.S and
  * variable), this computes the offset to the start of the image on flash.
  */
-#define RELATIVE_RO(addr) ((addr) - CONFIG_PROGRAM_MEMORY_BASE - \
-			   CONFIG_RO_MEM_OFF)
+#define RELATIVE_RO(addr) \
+	((addr)-CONFIG_PROGRAM_MEMORY_BASE - CONFIG_RO_MEM_OFF)
 
 /*
  * All internal EC code assumes that offsets are provided relative to
@@ -45,23 +46,23 @@
 #endif
 
 struct fmap_header {
-	char        fmap_signature[FMAP_SIGNATURE_SIZE];
-	uint8_t     fmap_ver_major;
-	uint8_t     fmap_ver_minor;
-	uint64_t    fmap_base;
-	uint32_t    fmap_size;
-	char        fmap_name[FMAP_NAMELEN];
-	uint16_t    fmap_nareas;
+	char fmap_signature[FMAP_SIGNATURE_SIZE];
+	uint8_t fmap_ver_major;
+	uint8_t fmap_ver_minor;
+	uint64_t fmap_base;
+	uint32_t fmap_size;
+	char fmap_name[FMAP_NAMELEN];
+	uint16_t fmap_nareas;
 } __packed;
 
-#define FMAP_AREA_STATIC      BIT(0)	/* can be checksummed */
-#define FMAP_AREA_COMPRESSED  BIT(1)  /* may be compressed */
-#define FMAP_AREA_RO          BIT(2)  /* writes may fail */
+#define FMAP_AREA_STATIC BIT(0) /* can be checksummed */
+#define FMAP_AREA_COMPRESSED BIT(1) /* may be compressed */
+#define FMAP_AREA_RO BIT(2) /* writes may fail */
 
 struct fmap_area_header {
 	uint32_t area_offset;
 	uint32_t area_size;
-	char     area_name[FMAP_NAMELEN];
+	char area_name[FMAP_NAMELEN];
 	uint16_t area_flags;
 } __packed;
 
@@ -77,19 +78,18 @@ struct fmap_area_header {
 #define NUM_EC_FMAP_AREAS_ROLLBACK 0
 #endif
 #ifdef CONFIG_RW_B
-#  ifdef CONFIG_RWSIG_TYPE_RWSIG
-#    define NUM_EC_FMAP_AREAS_RW_B     2
-#  else
-#    define NUM_EC_FMAP_AREAS_RW_B     1
-#  endif
+#ifdef CONFIG_RWSIG_TYPE_RWSIG
+#define NUM_EC_FMAP_AREAS_RW_B 2
 #else
-#define NUM_EC_FMAP_AREAS_RW_B     0
+#define NUM_EC_FMAP_AREAS_RW_B 1
+#endif
+#else
+#define NUM_EC_FMAP_AREAS_RW_B 0
 #endif
 
-#define NUM_EC_FMAP_AREAS (7 + \
-			NUM_EC_FMAP_AREAS_RWSIG + \
-			NUM_EC_FMAP_AREAS_ROLLBACK + \
-			NUM_EC_FMAP_AREAS_RW_B)
+#define NUM_EC_FMAP_AREAS                                           \
+	(7 + NUM_EC_FMAP_AREAS_RWSIG + NUM_EC_FMAP_AREAS_ROLLBACK + \
+	 NUM_EC_FMAP_AREAS_RW_B)
 
 const struct _ec_fmap {
 	struct fmap_header header;
@@ -97,7 +97,7 @@ const struct _ec_fmap {
 } ec_fmap __keep __attribute__((section(".google"))) = {
 	/* Header */
 	{
-		.fmap_signature = {'_', '_', 'F', 'M', 'A', 'P', '_', '_'},
+		.fmap_signature = { '_', '_', 'F', 'M', 'A', 'P', '_', '_' },
 		.fmap_ver_major = FMAP_VER_MAJOR,
 		.fmap_ver_minor = FMAP_VER_MINOR,
 		.fmap_base = CONFIG_PROGRAM_MEMORY_BASE,
@@ -108,7 +108,7 @@ const struct _ec_fmap {
 	},
 
 	{
-	/* RO Firmware */
+		/* RO Firmware */
 		{
 			/*
 			 * Range of RO firmware to be updated. EC_RO
@@ -120,7 +120,7 @@ const struct _ec_fmap {
 			 */
 			.area_name = "EC_RO",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				FMAP_REGION_START,
+				       FMAP_REGION_START,
 			.area_size = CONFIG_RO_SIZE + CONFIG_RO_STORAGE_OFF,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -128,7 +128,8 @@ const struct _ec_fmap {
 			/* (Optional) RO firmware code. */
 			.area_name = "FR_MAIN",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				FMAP_REGION_START + CONFIG_RO_STORAGE_OFF,
+				       FMAP_REGION_START +
+				       CONFIG_RO_STORAGE_OFF,
 			.area_size = CONFIG_RO_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -138,10 +139,11 @@ const struct _ec_fmap {
 			 * ASCII, and padded with \0.
 			 */
 			.area_name = "RO_FRID",
-			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
+			.area_offset =
+				CONFIG_EC_PROTECTED_STORAGE_OFF -
 				FMAP_REGION_START + CONFIG_RO_STORAGE_OFF +
 				RELATIVE_RO((uint32_t)__image_data_offset) +
-				offsetof(struct image_data,  version),
+				offsetof(struct image_data, version),
 			.area_size = sizeof(current_image_data.version),
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -150,8 +152,9 @@ const struct _ec_fmap {
 		{
 			.area_name = "FMAP",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				FMAP_REGION_START + CONFIG_RO_STORAGE_OFF +
-				RELATIVE_RO((uint32_t)&ec_fmap),
+				       FMAP_REGION_START +
+				       CONFIG_RO_STORAGE_OFF +
+				       RELATIVE_RO((uint32_t)&ec_fmap),
 			.area_size = sizeof(ec_fmap),
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -162,8 +165,7 @@ const struct _ec_fmap {
 			 * EC_RO and aligned to hardware specification.
 			 */
 			.area_name = "WP_RO",
-			.area_offset = CONFIG_WP_STORAGE_OFF -
-				       FMAP_REGION_START,
+			.area_offset = CONFIG_WP_STORAGE_OFF - FMAP_REGION_START,
 			.area_size = CONFIG_WP_STORAGE_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -172,8 +174,9 @@ const struct _ec_fmap {
 			/* RO public key address, for RW verification */
 			.area_name = "KEY_RO",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				FMAP_REGION_START + CONFIG_RO_PUBKEY_ADDR -
-				CONFIG_PROGRAM_MEMORY_BASE,
+				       FMAP_REGION_START +
+				       CONFIG_RO_PUBKEY_ADDR -
+				       CONFIG_PROGRAM_MEMORY_BASE,
 			.area_size = CONFIG_RO_PUBKEY_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -181,10 +184,11 @@ const struct _ec_fmap {
 
 		/* RW Firmware */
 		{
-			 /* The range of RW firmware to be auto-updated. */
+			/* The range of RW firmware to be auto-updated. */
 			.area_name = "EC_RW",
 			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -
-				FMAP_REGION_START + CONFIG_RW_STORAGE_OFF,
+				       FMAP_REGION_START +
+				       CONFIG_RW_STORAGE_OFF,
 			.area_size = CONFIG_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -197,10 +201,11 @@ const struct _ec_fmap {
 			 * accommodate image asymmetry.
 			 */
 			.area_name = "RW_FWID",
-			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -
+			.area_offset =
+				CONFIG_EC_WRITABLE_STORAGE_OFF -
 				FMAP_REGION_START + CONFIG_RW_STORAGE_OFF +
 				RELATIVE_RO((uint32_t)__image_data_offset) +
-				offsetof(struct image_data,  version),
+				offsetof(struct image_data, version),
 			.area_size = sizeof(current_image_data.version),
 			.area_flags = FMAP_AREA_STATIC,
 		},
@@ -213,22 +218,22 @@ const struct _ec_fmap {
 			 * accommodate image asymmetry.
 			 */
 			.area_name = "RW_RBVER",
-			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -
+			.area_offset =
+				CONFIG_EC_WRITABLE_STORAGE_OFF -
 				FMAP_REGION_START + CONFIG_RW_STORAGE_OFF +
 				RELATIVE_RO((uint32_t)__image_data_offset) +
 				offsetof(struct image_data, rollback_version),
-			.area_size = sizeof(
-				current_image_data.rollback_version),
+			.area_size = sizeof(current_image_data.rollback_version),
 			.area_flags = FMAP_AREA_STATIC,
 		},
 #endif
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
 		{
-			 /* RW image signature */
+			/* RW image signature */
 			.area_name = "SIG_RW",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				FMAP_REGION_START + CONFIG_RW_SIG_ADDR -
-				CONFIG_PROGRAM_MEMORY_BASE,
+				       FMAP_REGION_START + CONFIG_RW_SIG_ADDR -
+				       CONFIG_PROGRAM_MEMORY_BASE,
 			.area_size = CONFIG_RW_SIG_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
@@ -236,21 +241,22 @@ const struct _ec_fmap {
 #ifdef CONFIG_RW_B
 		/* RW Firmware */
 		{
-			 /* The range of RW firmware to be auto-updated. */
+			/* The range of RW firmware to be auto-updated. */
 			.area_name = "EC_RW_B",
 			.area_offset = CONFIG_EC_WRITABLE_STORAGE_OFF -
-				FMAP_REGION_START + CONFIG_RW_STORAGE_OFF +
-				CONFIG_RW_SIZE,
+				       FMAP_REGION_START +
+				       CONFIG_RW_STORAGE_OFF + CONFIG_RW_SIZE,
 			.area_size = CONFIG_RW_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
 		{
-			 /* RW_B image signature */
+			/* RW_B image signature */
 			.area_name = "SIG_RW_B",
 			.area_offset = CONFIG_EC_PROTECTED_STORAGE_OFF -
-				FMAP_REGION_START + CONFIG_RW_B_SIG_ADDR -
-				CONFIG_PROGRAM_MEMORY_BASE,
+				       FMAP_REGION_START +
+				       CONFIG_RW_B_SIG_ADDR -
+				       CONFIG_PROGRAM_MEMORY_BASE,
 			.area_size = CONFIG_RW_SIG_SIZE,
 			.area_flags = FMAP_AREA_STATIC | FMAP_AREA_RO,
 		},
