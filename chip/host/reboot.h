@@ -13,6 +13,7 @@
 #ifndef TEST_FUZZ
 noreturn
 #endif
-void emulator_reboot(void);
+	void
+	emulator_reboot(void);
 
 #endif
