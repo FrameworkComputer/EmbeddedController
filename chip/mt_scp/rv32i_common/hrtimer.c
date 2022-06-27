@@ -65,8 +65,8 @@ static void timer_set_reset_value(int n, uint32_t reset_value)
 
 static void timer_set_clock(int n, uint32_t clock_source)
 {
-	SCP_CORE0_TIMER_EN(n) =
-		(SCP_CORE0_TIMER_EN(n) & ~TIMER_CLK_SRC_MASK) | clock_source;
+	SCP_CORE0_TIMER_EN(n) = (SCP_CORE0_TIMER_EN(n) & ~TIMER_CLK_SRC_MASK) |
+				clock_source;
 }
 
 static void timer_reset(int n)
@@ -88,8 +88,8 @@ static uint64_t timer_read_raw_system(void)
 	 * sys_high value.
 	 */
 	if (timer_ctrl & TIMER_IRQ_STATUS)
-		sys_high_adj = sys_high ? (sys_high - 1)
-					: (TIMER_CLOCK_MHZ - 1);
+		sys_high_adj = sys_high ? (sys_high - 1) :
+					  (TIMER_CLOCK_MHZ - 1);
 
 	return OVERFLOW_TICKS - (((uint64_t)sys_high_adj << 32) |
 				 SCP_CORE0_TIMER_CUR_VAL(TIMER_SYSTEM));
@@ -159,8 +159,8 @@ uint32_t __hw_clock_source_read(void)
 
 uint32_t __hw_clock_event_get(void)
 {
-	return (timer_read_raw_event() + timer_read_raw_system())
-			/ TIMER_CLOCK_MHZ;
+	return (timer_read_raw_event() + timer_read_raw_system()) /
+	       TIMER_CLOCK_MHZ;
 }
 
 void __hw_clock_event_clear(void)
