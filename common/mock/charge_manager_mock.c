@@ -47,4 +47,4 @@ void mock_charge_manager_set_vbus_voltage(int voltage_mv)
 }
 
 struct mock_ctrl_charge_manager mock_ctrl_charge_manager =
-MOCK_CTRL_DEFAULT_CHARGE_MANAGER;
+	MOCK_CTRL_DEFAULT_CHARGE_MANAGER;
