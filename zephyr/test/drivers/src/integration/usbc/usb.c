@@ -122,14 +122,12 @@ ZTEST(integration_usb, test_attach_drp)
 
 	/* Attach emulated sink */
 	tcpci_partner_init(&my_drp, PD_REV20);
-	my_drp.extensions =
-		tcpci_drp_emul_init(
-			&drp_ext, &my_drp, PD_ROLE_SINK,
-			tcpci_src_emul_init(&src_ext, &my_drp, NULL),
-			tcpci_snk_emul_init(&snk_ext, &my_drp, NULL));
+	my_drp.extensions = tcpci_drp_emul_init(
+		&drp_ext, &my_drp, PD_ROLE_SINK,
+		tcpci_src_emul_init(&src_ext, &my_drp, NULL),
+		tcpci_snk_emul_init(&snk_ext, &my_drp, NULL));
 
-	zassert_ok(tcpci_partner_connect_to_tcpci(&my_drp, tcpci_emul),
-		   NULL);
+	zassert_ok(tcpci_partner_connect_to_tcpci(&my_drp, tcpci_emul), NULL);
 
 	/* Wait for PD negotiation */
 	k_sleep(K_SECONDS(10));
