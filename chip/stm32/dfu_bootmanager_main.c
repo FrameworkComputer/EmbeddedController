@@ -93,7 +93,7 @@ static void dfu_bootmanager_init(void)
 {
 	/* enable clock on Power module */
 #ifndef CHIP_FAMILY_STM32H7
-#ifdef	CHIP_FAMILY_STM32L4
+#ifdef CHIP_FAMILY_STM32L4
 	STM32_RCC_APB1ENR1 |= STM32_RCC_PWREN;
 #else
 	STM32_RCC_APB1ENR |= STM32_RCC_PWREN;
@@ -122,8 +122,8 @@ static void jump_to_rw(void)
 {
 	void (*addr)(void);
 
-	addr = (void (*)(void)) (*((uint32_t *) (CONFIG_PROGRAM_MEMORY_BASE +
-		CONFIG_RW_MEM_OFF + 4)));
+	addr = (void (*)(void))(*((uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE +
+					       CONFIG_RW_MEM_OFF + 4)));
 
 	addr();
 }
@@ -132,7 +132,7 @@ static void jump_to_dfu(void)
 {
 	void (*addr)(void);
 
-	addr = (void (*)(void)) (*((uint32_t *) (STM32_DFU_BASE + 4)));
+	addr = (void (*)(void))(*((uint32_t *)(STM32_DFU_BASE + 4)));
 
 	/* Clear the scratchpad. */
 	dfu_bootmanager_backup_write(DFU_BOOTMANAGER_VALUE_CLEAR);
@@ -170,10 +170,18 @@ void exception_panic(void)
  * need to worry about concurrent access.
  */
 
-void task_clear_pending_irq(int irq) {}
-void interrupt_disable(void) {}
-void mutex_lock(mutex_t *mtx) {}
-void mutex_unlock(mutex_t *mtx) {}
+void task_clear_pending_irq(int irq)
+{
+}
+void interrupt_disable(void)
+{
+}
+void mutex_lock(mutex_t *mtx)
+{
+}
+void mutex_unlock(mutex_t *mtx)
+{
+}
 
 bool in_interrupt_context(void)
 {
