@@ -12,4 +12,4 @@ void set_time(timestamp_t now_);
 
 timestamp_t get_time(void);
 
-#endif  /* __MOCK_TIMER_MOCK_H */
+#endif /* __MOCK_TIMER_MOCK_H */
