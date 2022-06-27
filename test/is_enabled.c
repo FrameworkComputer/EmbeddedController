@@ -7,8 +7,8 @@
 #include "common.h"
 #include "test_util.h"
 
-#undef	CONFIG_UNDEFINED
-#define	CONFIG_BLANK
+#undef CONFIG_UNDEFINED
+#define CONFIG_BLANK
 
 static int test_undef(void)
 {
