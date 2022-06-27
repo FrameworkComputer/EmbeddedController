@@ -17,8 +17,8 @@ static enum fp_transport_type curr_transport_type = FP_TRANSPORT_TYPE_UNKNOWN;
 /*
  * Get protocol information
  */
-static enum ec_status host_command_protocol_info(struct host_cmd_handler_args
-						 *args)
+static enum ec_status
+host_command_protocol_info(struct host_cmd_handler_args *args)
 {
 	enum ec_status ret_status = EC_RES_INVALID_COMMAND;
 
@@ -39,8 +39,7 @@ static enum ec_status host_command_protocol_info(struct host_cmd_handler_args
 
 	return ret_status;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
-		     host_command_protocol_info,
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, host_command_protocol_info,
 		     EC_VER_MASK(0));
 
 #endif /* CONFIG_I2C_PERIPHERAL */
