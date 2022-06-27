@@ -55,7 +55,7 @@ static inline void spi_enable_clock(int port)
 
 #define TIM_TX_CCR_IDX(p) TIM_TX_CCR_C0
 #define TIM_RX_CCR_IDX(p) TIM_RX_CCR_C0
-#define TIM_CCR_CS  1
+#define TIM_CCR_CS 1
 
 /* EXTI line 21 is connected to the CMP1 output */
 #define EXTI_COMP1_MASK (1 << 21)
@@ -95,13 +95,15 @@ static inline void pd_tx_spi_reset(int port)
 static inline void pd_tx_enable(int port, int polarity)
 {
 	/* USB_CC_TX_DATA: PB4 is SPI1 MISO */
-	STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-			& ~(3 << (2*4))) /* PB4 disable ADC */
-			|  (2 << (2*4)); /* Set as SPI1_MISO */
+	STM32_GPIO_MODER(GPIO_B) =
+		(STM32_GPIO_MODER(GPIO_B) & ~(3 << (2 * 4))) /* PB4 disable ADC
+							      */
+		| (2 << (2 * 4)); /* Set as SPI1_MISO */
 	/* MCU ADC PA1 pin output low */
-	STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-			& ~(3 << (2*1))) /* PA1 disable ADC */
-			|  (1 << (2*1)); /* Set as GPO */
+	STM32_GPIO_MODER(GPIO_A) =
+		(STM32_GPIO_MODER(GPIO_A) & ~(3 << (2 * 1))) /* PA1 disable ADC
+							      */
+		| (1 << (2 * 1)); /* Set as GPO */
 	gpio_set_level(GPIO_CC_VPDMCU, 0);
 }
 
@@ -109,11 +111,10 @@ static inline void pd_tx_enable(int port, int polarity)
 static inline void pd_tx_disable(int port, int polarity)
 {
 	/* Set CC_TX_DATA to Hi-Z, PB4 is SPI1 MISO */
-	STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-			& ~(3 << (2*4)));
+	STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B) & ~(3 << (2 * 4)));
 	/* set ADC PA1 pin to ADC function (Hi-Z) */
-	STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-			|  (3 << (2*1))); /* PA1 as ADC */
+	STM32_GPIO_MODER(GPIO_A) =
+		(STM32_GPIO_MODER(GPIO_A) | (3 << (2 * 1))); /* PA1 as ADC */
 }
 
 /* we know the plug polarity, do the right configuration */
@@ -123,8 +124,8 @@ static inline void pd_select_polarity(int port, int polarity)
 	 * use the right comparator : CC1 -> PA1 (COMP1 INP)
 	 * use VrefInt / 2 as INM (about 600mV)
 	 */
-	STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP1INSEL_MASK)
-		| STM32_COMP_CMP1EN | STM32_COMP_CMP1INSEL_VREF12;
+	STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP1INSEL_MASK) |
+			 STM32_COMP_CMP1EN | STM32_COMP_CMP1INSEL_VREF12;
 }
 
 /* Initialize pins used for TX and put them in Hi-Z */
