@@ -82,7 +82,7 @@ struct cros_system_npcx_data {
 #define NPCX_RAM_BLOCK_PD_MASK (BIT(NPCX_RAM_PD_DEPTH) - 1)
 
 /* Get saved reset flag address in battery-backed ram */
-#define BBRAM_SAVED_RESET_FLAG_ADDR                         \
+#define BBRAM_SAVED_RESET_FLAG_ADDR                    \
 	(DT_REG_ADDR(DT_INST(0, nuvoton_npcx_bbram)) + \
 	 DT_PROP(DT_PATH(named_bbram_regions, saved_reset_flags), offset))
 
@@ -90,8 +90,8 @@ struct cros_system_npcx_data {
 static int system_npcx_watchdog_stop(void)
 {
 	if (IS_ENABLED(CONFIG_WATCHDOG)) {
-		const struct device *wdt_dev = DEVICE_DT_GET(
-				DT_NODELABEL(twd0));
+		const struct device *wdt_dev =
+			DEVICE_DT_GET(DT_NODELABEL(twd0));
 		if (!device_is_ready(wdt_dev)) {
 			LOG_ERR("Error: device %s is not ready", wdt_dev->name);
 			return -ENODEV;
@@ -182,7 +182,7 @@ static void system_npcx_set_wakeup_gpios_before_hibernate(void)
 /*
  * Get the interrupt DTS node for this wakeup pin
  */
-#define WAKEUP_INT(id, prop, idx)  DT_PHANDLE_BY_IDX(id, prop, idx)
+#define WAKEUP_INT(id, prop, idx) DT_PHANDLE_BY_IDX(id, prop, idx)
 
 /*
  * Get the named-gpio node for this wakeup pin by reading the
@@ -194,19 +194,19 @@ static void system_npcx_set_wakeup_gpios_before_hibernate(void)
 /*
  * Reset and re-enable interrupts on this wake pin.
  */
-#define WAKEUP_SETUP(id, prop, idx)		\
-do {									       \
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODE(WAKEUP_NGPIO(id, prop, idx)),  \
-			      GPIO_INPUT);				       \
-	gpio_enable_dt_interrupt(					       \
-		GPIO_INT_FROM_NODE(WAKEUP_INT(id, prop, idx)));	       \
+#define WAKEUP_SETUP(id, prop, idx)                                     \
+	do {                                                            \
+		gpio_pin_configure_dt(                                  \
+			GPIO_DT_FROM_NODE(WAKEUP_NGPIO(id, prop, idx)), \
+			GPIO_INPUT);                                    \
+		gpio_enable_dt_interrupt(                               \
+			GPIO_INT_FROM_NODE(WAKEUP_INT(id, prop, idx))); \
 	} while (0);
 
-/*
- * For all the wake-pins, re-init the GPIO and re-enable the interrupt.
- */
-	DT_FOREACH_PROP_ELEM(SYSTEM_DT_NODE_HIBERNATE_CONFIG,
-			     wakeup_irqs,
+	/*
+	 * For all the wake-pins, re-init the GPIO and re-enable the interrupt.
+	 */
+	DT_FOREACH_PROP_ELEM(SYSTEM_DT_NODE_HIBERNATE_CONFIG, wakeup_irqs,
 			     WAKEUP_SETUP);
 
 #undef WAKEUP_INT
@@ -460,8 +460,8 @@ static int cros_system_npcx_init(const struct device *dev)
 	data->reset = UNKNOWN_RST;
 	/* Use scratch bit to check power on reset or VCC1_RST reset. */
 	if (!IS_BIT_SET(inst_scfg->RSTCTL, NPCX_RSTCTL_VCC1_RST_SCRATCH)) {
-		bool is_vcc1_rst = IS_BIT_SET(inst_scfg->RSTCTL,
-				       NPCX_RSTCTL_VCC1_RST_STS);
+		bool is_vcc1_rst =
+			IS_BIT_SET(inst_scfg->RSTCTL, NPCX_RSTCTL_VCC1_RST_STS);
 		data->reset = is_vcc1_rst ? VCC1_RST_PIN : POWERUP;
 	}
 
@@ -587,9 +587,9 @@ DEVICE_DEFINE(cros_system_npcx_0, "CROS_SYSTEM", cros_system_npcx_init, NULL,
 #define HAL_DBG_REG_BASE_ADDR \
 	((struct dbg_reg *)DT_REG_ADDR(DT_INST(0, nuvoton_npcx_cros_dbg)))
 
-#define DBG_NODE           DT_NODELABEL(dbg)
-#define DBG_PINCTRL_PH     DT_PHANDLE_BY_IDX(DBG_NODE, pinctrl_0, 0)
-#define DBG_ALT_FILED(f)   DT_PHA_BY_IDX(DBG_PINCTRL_PH, alts, 0, f)
+#define DBG_NODE DT_NODELABEL(dbg)
+#define DBG_PINCTRL_PH DT_PHANDLE_BY_IDX(DBG_NODE, pinctrl_0, 0)
+#define DBG_ALT_FILED(f) DT_PHA_BY_IDX(DBG_PINCTRL_PH, alts, 0, f)
 
 PINCTRL_DT_DEFINE(DBG_NODE);
 
