@@ -25,15 +25,14 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 BUILD_ASSERT(DT_INST_PROP_LEN(0, leds) <= 2,
 	     "Unsupported number of LEDs defined");
 
-#define PWM_LED_PERIOD_NS (NSEC_PER_SEC/DT_INST_PROP(0, frequency))
+#define PWM_LED_PERIOD_NS (NSEC_PER_SEC / DT_INST_PROP(0, frequency))
 #define PWM_SIDESEL_PERIOD_NS (PWM_LED_PERIOD_NS * 2)
 
 #define PWM_LED_NAME(node_id) DT_STRING_UPPER_TOKEN(node_id, ec_led_name)
 #define PWM_LED_NAME_WITH_COMMA(node_id) PWM_LED_NAME(node_id),
 
-const enum ec_led_id supported_led_ids[] = {
-	DT_INST_FOREACH_CHILD(0, PWM_LED_NAME_WITH_COMMA)
-};
+const enum ec_led_id supported_led_ids[] = { DT_INST_FOREACH_CHILD(
+	0, PWM_LED_NAME_WITH_COMMA) };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 BUILD_ASSERT(ARRAY_SIZE(supported_led_ids) == DT_INST_PROP_LEN(0, leds),
@@ -65,68 +64,68 @@ static void pwm_led_set_duty(const struct pwm_led_dt_channel *ch, int percent)
 		.dev = DEVICE_DT_GET(DT_PWMS_CTLR_BY_IDX(node_id, led_ch)), \
 		.channel = DT_PWMS_CHANNEL_BY_IDX(node_id, led_ch),         \
 		.flags = DT_PWMS_FLAGS_BY_IDX(node_id, led_ch),             \
-		.period_ns = _period_ns, \
+		.period_ns = _period_ns,                                    \
 	}
 
-#define PWM_CHANNEL_DT_BY_IDX(node_id, prop, idx, led_ch)                      \
-	static const struct pwm_led_dt_channel _pwm_led_dt_##idx##_ch_##led_ch = \
-		PWM_CHANNEL_DT_BY_IDX_INIT(                                    \
-			DT_PHANDLE_BY_IDX(node_id, prop, idx), led_ch,         \
+#define PWM_CHANNEL_DT_BY_IDX(node_id, prop, idx, led_ch)                     \
+	static const struct pwm_led_dt_channel                                \
+		_pwm_led_dt_##idx##_ch_##led_ch = PWM_CHANNEL_DT_BY_IDX_INIT( \
+			DT_PHANDLE_BY_IDX(node_id, prop, idx), led_ch,        \
 			PWM_LED_PERIOD_NS);
 
-#define PWM_CHANNEL_DT_BY_IDX_COND(node_id, prop, idx, led_ch)        \
-	IF_ENABLED(DT_PROP_HAS_IDX(                                   \
-		DT_PHANDLE_BY_IDX(node_id, prop, idx), pwms, led_ch), \
-		(PWM_CHANNEL_DT_BY_IDX(node_id, prop, idx, led_ch))   \
-		)
+#define PWM_CHANNEL_DT_BY_IDX_COND(node_id, prop, idx, led_ch)            \
+	IF_ENABLED(DT_PROP_HAS_IDX(DT_PHANDLE_BY_IDX(node_id, prop, idx), \
+				   pwms, led_ch),                         \
+		   (PWM_CHANNEL_DT_BY_IDX(node_id, prop, idx, led_ch)))
 
-#define PWM_LED_DT_INIT(node_id, prop, idx) \
+#define PWM_LED_DT_INIT(node_id, prop, idx)               \
 	PWM_CHANNEL_DT_BY_IDX_COND(node_id, prop, idx, 0) \
 	PWM_CHANNEL_DT_BY_IDX_COND(node_id, prop, idx, 1) \
 	PWM_CHANNEL_DT_BY_IDX_COND(node_id, prop, idx, 2)
 
 DT_INST_FOREACH_PROP_ELEM(0, leds, PWM_LED_DT_INIT)
 
-#define PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, led_ch)           \
-	COND_CODE_1(DT_PROP_HAS_IDX(                                  \
-		DT_PHANDLE_BY_IDX(node_id, prop, idx), pwms, led_ch), \
-		(&_pwm_led_dt_##idx##_ch_##led_ch), \
-		(PWM_LED_NO_CHANNEL))
+#define PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, led_ch)                \
+	COND_CODE_1(DT_PROP_HAS_IDX(DT_PHANDLE_BY_IDX(node_id, prop, idx), \
+				    pwms, led_ch),                         \
+		    (&_pwm_led_dt_##idx##_ch_##led_ch), (PWM_LED_NO_CHANNEL))
 
-#define PWM_LED_INIT(node_id, prop, idx) \
-	[PWM_LED##idx] = { \
+#define PWM_LED_INIT(node_id, prop, idx)                               \
+	[PWM_LED##idx] = {                                             \
 		.ch0 = PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, 0), \
 		.ch1 = PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, 1), \
 		.ch2 = PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, 2), \
-		.set_duty = &pwm_led_set_duty, \
+		.set_duty = &pwm_led_set_duty,                         \
 	},
 
-struct pwm_led pwm_leds[] = {
-	DT_INST_FOREACH_PROP_ELEM(0, leds, PWM_LED_INIT)
-};
+struct pwm_led pwm_leds[] = { DT_INST_FOREACH_PROP_ELEM(0, leds,
+							PWM_LED_INIT) };
 
-#define EC_LED_COLOR_BLANK {0}
+#define EC_LED_COLOR_BLANK \
+	{                  \
+		0          \
+	}
 
 struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
-	[EC_LED_COLOR_RED]    = DT_INST_PROP_OR(0, color_map_red,
-						EC_LED_COLOR_BLANK),
-	[EC_LED_COLOR_GREEN]  = DT_INST_PROP_OR(0, color_map_green,
-						EC_LED_COLOR_BLANK),
-	[EC_LED_COLOR_BLUE]   = DT_INST_PROP_OR(0, color_map_blue,
-						EC_LED_COLOR_BLANK),
-	[EC_LED_COLOR_YELLOW] = DT_INST_PROP_OR(0, color_map_yellow,
-						EC_LED_COLOR_BLANK),
-	[EC_LED_COLOR_WHITE]  = DT_INST_PROP_OR(0, color_map_white,
-						EC_LED_COLOR_BLANK),
-	[EC_LED_COLOR_AMBER]  = DT_INST_PROP_OR(0, color_map_amber,
-						EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_RED] =
+		DT_INST_PROP_OR(0, color_map_red, EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_GREEN] =
+		DT_INST_PROP_OR(0, color_map_green, EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_BLUE] =
+		DT_INST_PROP_OR(0, color_map_blue, EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_YELLOW] =
+		DT_INST_PROP_OR(0, color_map_yellow, EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_WHITE] =
+		DT_INST_PROP_OR(0, color_map_white, EC_LED_COLOR_BLANK),
+	[EC_LED_COLOR_AMBER] =
+		DT_INST_PROP_OR(0, color_map_amber, EC_LED_COLOR_BLANK),
 };
 
 BUILD_ASSERT(DT_INST_PROP_LEN(0, brightness_range) == EC_LED_COLOR_COUNT,
 	     "brightness_range must have exactly EC_LED_COLOR_COUNT values");
 
-static const uint8_t dt_brigthness_range[EC_LED_COLOR_COUNT] = DT_INST_PROP(
-		0, brightness_range);
+static const uint8_t dt_brigthness_range[EC_LED_COLOR_COUNT] =
+	DT_INST_PROP(0, brightness_range);
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
@@ -135,8 +134,8 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 	       sizeof(dt_brigthness_range));
 }
 
-#define PWM_NAME_TO_ID(node_id) \
-	case PWM_LED_NAME(node_id): \
+#define PWM_NAME_TO_ID(node_id)                \
+	case PWM_LED_NAME(node_id):            \
 		pwm_id = DT_REG_ADDR(node_id); \
 		break;
 
@@ -145,7 +144,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	enum pwm_led_id pwm_id;
 
 	switch (led_id) {
-	DT_INST_FOREACH_CHILD(0, PWM_NAME_TO_ID)
+		DT_INST_FOREACH_CHILD(0, PWM_NAME_TO_ID)
 	default:
 		return EC_ERROR_UNKNOWN;
 	}
@@ -154,19 +153,19 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	    brightness[EC_LED_COLOR_RED]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_RED);
 	} else if (DT_INST_NODE_HAS_PROP(0, color_map_green) &&
-		 brightness[EC_LED_COLOR_GREEN]) {
+		   brightness[EC_LED_COLOR_GREEN]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_GREEN);
 	} else if (DT_INST_NODE_HAS_PROP(0, color_map_blue) &&
-			brightness[EC_LED_COLOR_BLUE]) {
+		   brightness[EC_LED_COLOR_BLUE]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_BLUE);
 	} else if (DT_INST_NODE_HAS_PROP(0, color_map_yellow) &&
-			brightness[EC_LED_COLOR_YELLOW]) {
+		   brightness[EC_LED_COLOR_YELLOW]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_YELLOW);
 	} else if (DT_INST_NODE_HAS_PROP(0, color_map_white) &&
-			brightness[EC_LED_COLOR_WHITE]) {
+		   brightness[EC_LED_COLOR_WHITE]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_WHITE);
 	} else if (DT_INST_NODE_HAS_PROP(0, color_map_amber) &&
-			brightness[EC_LED_COLOR_AMBER]) {
+		   brightness[EC_LED_COLOR_AMBER]) {
 		set_pwm_led_color(pwm_id, EC_LED_COLOR_AMBER);
 	} else {
 		/* Otherwise, the "color" is "off". */
