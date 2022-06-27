@@ -12,7 +12,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
@@ -93,14 +93,14 @@ struct fan_step {
 };
 
 static const struct fan_step fan_table[] = {
-	{.on =  0, .off =  1, .rpm = 0},
-	{.on =  6, .off =  2, .rpm = 3000},
-	{.on = 28, .off = 15, .rpm = 3300},
-	{.on = 34, .off = 26, .rpm = 3700},
-	{.on = 39, .off = 32, .rpm = 4000},
-	{.on = 45, .off = 38, .rpm = 4300},
-	{.on = 51, .off = 43, .rpm = 4700},
-	{.on = 74, .off = 62, .rpm = 5400},
+	{ .on = 0, .off = 1, .rpm = 0 },
+	{ .on = 6, .off = 2, .rpm = 3000 },
+	{ .on = 28, .off = 15, .rpm = 3300 },
+	{ .on = 34, .off = 26, .rpm = 3700 },
+	{ .on = 39, .off = 32, .rpm = 4000 },
+	{ .on = 45, .off = 38, .rpm = 4300 },
+	{ .on = 51, .off = 43, .rpm = 4700 },
+	{ .on = 74, .off = 62, .rpm = 5400 },
 };
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table)
 
@@ -137,10 +137,8 @@ int fan_percent_to_rpm(int fan, int pct)
 
 	previous_pct = pct;
 
-	if (fan_table[current_level].rpm !=
-		fan_get_rpm_target(FAN_CH(fan)))
-		CPRINTS("Setting fan RPM to %d",
-			fan_table[current_level].rpm);
+	if (fan_table[current_level].rpm != fan_get_rpm_target(FAN_CH(fan)))
+		CPRINTS("Setting fan RPM to %d", fan_table[current_level].rpm);
 
 	return fan_table[current_level].rpm;
 }
