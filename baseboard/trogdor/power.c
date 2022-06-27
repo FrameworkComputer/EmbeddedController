@@ -35,4 +35,4 @@ void board_chipset_shutdown_complete(void)
 	gpio_set_level(GPIO_EN_PP3300_A, 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE, board_chipset_shutdown_complete,
-		HOOK_PRIO_DEFAULT);
+	     HOOK_PRIO_DEFAULT);
