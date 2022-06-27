@@ -39,10 +39,8 @@ DECLARE_HOOK(HOOK_TICK, usb_gpio_tick, HOOK_PRIO_DEFAULT);
  */
 static struct usart_config const loopback_usart;
 
-static struct queue const loopback_queue =
-	QUEUE_DIRECT(64, uint8_t,
-		     loopback_usart.producer,
-		     loopback_usart.consumer);
+static struct queue const loopback_queue = QUEUE_DIRECT(
+	64, uint8_t, loopback_usart.producer, loopback_usart.consumer);
 
 static struct usart_rx_dma const loopback_rx_dma =
 	USART_RX_DMA(STM32_DMAC_CH6, 32);
@@ -50,14 +48,9 @@ static struct usart_rx_dma const loopback_rx_dma =
 static struct usart_tx_dma const loopback_tx_dma =
 	USART_TX_DMA(STM32_DMAC_CH7, 16);
 
-static struct usart_config const loopback_usart =
-	USART_CONFIG(usart2_hw,
-		     loopback_rx_dma.usart_rx,
-		     loopback_tx_dma.usart_tx,
-		     115200,
-		     0,
-		     loopback_queue,
-		     loopback_queue);
+static struct usart_config const loopback_usart = USART_CONFIG(
+	usart2_hw, loopback_rx_dma.usart_rx, loopback_tx_dma.usart_tx, 115200,
+	0, loopback_queue, loopback_queue);
 
 /******************************************************************************
  * Initialize board.
