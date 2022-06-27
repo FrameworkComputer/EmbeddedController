@@ -466,7 +466,7 @@ void host_cmd_typec_control(int port, enum typec_control_command command,
 			    enum typec_mode mode);
 
 #define GPIO_ACOK_OD_NODE DT_NODELABEL(gpio_acok_od)
-#define GPIO_ACOK_OD_PIN  DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
+#define GPIO_ACOK_OD_PIN DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
 
 /**
  * Set whether or not AC is enabled.
