@@ -33,8 +33,8 @@ static void generate_pwrok_handler(void)
 
 	power_signal_set(PWR_EC_PCH_SYS_PWROK, all_sys_pwrgd_in);
 	/* PCH_PWROK is set to combined result of ALL_SYS_PWRGD and SLP_S3 */
-	power_signal_set(PWR_PCH_PWROK, all_sys_pwrgd_in &&
-					!power_signal_get(PWR_SLP_S3));
+	power_signal_set(PWR_PCH_PWROK,
+			 all_sys_pwrgd_in && !power_signal_get(PWR_SLP_S3));
 }
 
 /* Chipset specific power state machine handler */
