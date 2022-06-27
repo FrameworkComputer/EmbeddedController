@@ -72,9 +72,8 @@
 
 extern uint32_t SystemCoreClock; /*!< System Clock Frequency (Core Clock)  */
 #ifndef PeripheralClock
-#define PeripheralClock    \
-	(SystemCoreClock / \
-	 2) /*!< Peripheral Clock Frequency                  \
+#define PeripheralClock                                       \
+	(SystemCoreClock / 2) /*!< Peripheral Clock Frequency \
 			       */
 #endif
 
@@ -173,14 +172,17 @@ extern uint32_t SystemCoreClock; /*!< System Clock Frequency (Core Clock)  */
 #define MXC_BASE_TMR2 ((uint32_t)0x40012000UL)
 #define MXC_TMR2 ((mxc_tmr_regs_t *)MXC_BASE_TMR2)
 
-#define MXC_TMR_GET_IRQ(i)              \
-	(IRQn_Type)((i) == 0 ?          \
-			    TMR0_IRQn : \
-			    (i) == 1 ? TMR1_IRQn : (i) == 2 ? TMR2_IRQn : 0)
+#define MXC_TMR_GET_IRQ(i)                 \
+	(IRQn_Type)((i) == 0 ? TMR0_IRQn : \
+		    (i) == 1 ? TMR1_IRQn : \
+		    (i) == 2 ? TMR2_IRQn : \
+			       0)
 
 #define MXC_TMR_GET_BASE(i)         \
 	((i) == 0 ? MXC_BASE_TMR0 : \
-		    (i) == 1 ? MXC_BASE_TMR1 : (i) == 2 ? MXC_BASE_TMR2 : 0)
+	 (i) == 1 ? MXC_BASE_TMR1 : \
+	 (i) == 2 ? MXC_BASE_TMR2 : \
+		    0)
 
 #define MXC_TMR_GET_TMR(i) \
 	((i) == 0 ? MXC_TMR0 : (i) == 1 ? MXC_TMR1 : (i) == 2 ? MXC_TMR2 : 0)
