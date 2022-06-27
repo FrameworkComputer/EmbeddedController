@@ -180,9 +180,8 @@ static void *console_cmd_charge_state_setup(void)
 
 	/* Initialized the source to supply 5V and 3A */
 	tcpci_partner_init(&fixture.source_5v_3a, PD_REV20);
-	fixture.source_5v_3a.extensions =
-		tcpci_src_emul_init(&fixture.source_ext,
-				    &fixture.source_5v_3a, NULL);
+	fixture.source_5v_3a.extensions = tcpci_src_emul_init(
+		&fixture.source_ext, &fixture.source_5v_3a, NULL);
 	fixture.source_ext.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
