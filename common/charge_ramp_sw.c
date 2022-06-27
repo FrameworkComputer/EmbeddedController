@@ -16,30 +16,30 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 /* Number of times to ramp current searching for limit before stable charging */
-#define RAMP_COUNT          3
+#define RAMP_COUNT 3
 
 /* Maximum allowable time charger can be unplugged to be considered an OCP */
 #define OC_RECOVER_MAX_TIME (SECOND)
 
 /* Delay for running state machine when board is not consuming full current */
-#define CURRENT_DRAW_DELAY  (5*SECOND)
+#define CURRENT_DRAW_DELAY (5 * SECOND)
 
 /* Current ramp increment */
-#define RAMP_CURR_INCR_MA   64
-#define RAMP_CURR_DELAY     (500*MSEC)
-#define RAMP_CURR_START_MA  500
+#define RAMP_CURR_INCR_MA 64
+#define RAMP_CURR_DELAY (500 * MSEC)
+#define RAMP_CURR_START_MA 500
 
 /* How much to backoff the input current limit when limit has been found */
-#define RAMP_ICL_BACKOFF    (2*RAMP_CURR_INCR_MA)
+#define RAMP_ICL_BACKOFF (2 * RAMP_CURR_INCR_MA)
 
 /* Interval at which VBUS voltage is monitored in stable state */
 #define STABLE_VBUS_MONITOR_INTERVAL (SECOND)
 
 /* Time to delay for stablizing the charging current */
-#define STABLIZE_DELAY (5*SECOND)
+#define STABLIZE_DELAY (5 * SECOND)
 
 enum chg_ramp_state {
 	CHG_RAMP_DISCONNECTED,
@@ -78,14 +78,13 @@ static int max_icl;
 static int min_icl;
 
 void chg_ramp_charge_supplier_change(int port, int supplier, int current,
-				timestamp_t registration_time, int voltage)
+				     timestamp_t registration_time, int voltage)
 {
 	/*
 	 * If the last active port was a valid port and the port
 	 * has changed, then this may have been an over-current.
 	 */
-	if (active_port != CHARGE_PORT_NONE &&
-	    port != active_port) {
+	if (active_port != CHARGE_PORT_NONE && port != active_port) {
 		if (oc_info_idx[active_port] == RAMP_COUNT - 1)
 			oc_info_idx[active_port] = 0;
 		else
@@ -111,7 +110,8 @@ void chg_ramp_charge_supplier_change(int port, int supplier, int current,
 	reg_time = registration_time;
 	if (ramp_st != CHG_RAMP_STABILIZE) {
 		ramp_st = (active_port == CHARGE_PORT_NONE) ?
-			  CHG_RAMP_DISCONNECTED : CHG_RAMP_CHARGE_DETECT_DELAY;
+				  CHG_RAMP_DISCONNECTED :
+				  CHG_RAMP_CHARGE_DETECT_DELAY;
 		CPRINTS("Ramp reset: st%d", ramp_st);
 		task_wake(TASK_ID_CHG_RAMP);
 	}
@@ -153,7 +153,7 @@ void chg_ramp_task(void *u)
 	int last_active_port = CHARGE_PORT_NONE;
 
 	enum chg_ramp_state ramp_st_prev = CHG_RAMP_DISCONNECTED,
-				   ramp_st_new = CHG_RAMP_DISCONNECTED;
+			    ramp_st_new = CHG_RAMP_DISCONNECTED;
 	int active_icl_new;
 
 	/* Clear last OCP supplier to guarantee we ramp on first connect */
@@ -190,15 +190,15 @@ void chg_ramp_task(void *u)
 				last_active_port = active_port;
 				if (reg_time.val <
 				    ACTIVE_OC_INFO.ts.val +
-				    OC_RECOVER_MAX_TIME) {
+					    OC_RECOVER_MAX_TIME) {
 					ACTIVE_OC_INFO.oc_detected = 1;
 				} else {
 					for (i = 0; i < RAMP_COUNT; ++i)
-						oc_info[active_port][i].
-							oc_detected = 0;
+						oc_info[active_port][i]
+							.oc_detected = 0;
 				}
-				detect_end_time_us = get_time().val +
-						     CHARGE_DETECT_DELAY;
+				detect_end_time_us =
+					get_time().val + CHARGE_DETECT_DELAY;
 				task_wait_time = CHARGE_DETECT_DELAY;
 				break;
 			}
@@ -246,8 +246,8 @@ void chg_ramp_task(void *u)
 
 			if (i == RAMP_COUNT) {
 				/* Found OC threshold! */
-				active_icl_new = ACTIVE_OC_INFO.icl -
-						 RAMP_ICL_BACKOFF;
+				active_icl_new =
+					ACTIVE_OC_INFO.icl - RAMP_ICL_BACKOFF;
 				ramp_st_new = CHG_RAMP_STABLE;
 			} else {
 				/*
@@ -272,8 +272,8 @@ void chg_ramp_task(void *u)
 			if (board_is_vbus_too_low(active_port,
 						  CHG_RAMP_VBUS_RAMPING)) {
 				CPRINTS("VBUS low");
-				active_icl_new = MAX(min_icl, active_icl -
-							      RAMP_ICL_BACKOFF);
+				active_icl_new = MAX(
+					min_icl, active_icl - RAMP_ICL_BACKOFF);
 				ramp_st_new = CHG_RAMP_STABILIZE;
 				task_wait_time = STABLIZE_DELAY;
 				stablize_port = active_port;
@@ -300,8 +300,8 @@ void chg_ramp_task(void *u)
 			}
 
 			ramp_st_new = active_port == CHARGE_PORT_NONE ?
-				      CHG_RAMP_DISCONNECTED :
-				      CHG_RAMP_CHARGE_DETECT_DELAY;
+					      CHG_RAMP_DISCONNECTED :
+					      CHG_RAMP_CHARGE_DETECT_DELAY;
 			break;
 		case CHG_RAMP_STABLE:
 			/* Maintain input current limit */
@@ -320,7 +320,7 @@ void chg_ramp_task(void *u)
 						  CHG_RAMP_VBUS_STABLE)) {
 				CPRINTS("VBUS low; Re-ramp");
 				max_icl = MAX(min_icl,
-						max_icl - RAMP_ICL_BACKOFF);
+					      max_icl - RAMP_ICL_BACKOFF);
 				active_icl_new = min_icl;
 				ramp_st_new = CHG_RAMP_RAMP;
 			}
@@ -334,9 +334,9 @@ void chg_ramp_task(void *u)
 
 		/* Skip setting limit if status is stable twice in a row */
 		if (ramp_st_prev != CHG_RAMP_STABLE ||
-				ramp_st != CHG_RAMP_STABLE) {
-			CPRINTS("Ramp p%d st%d %dmA %dmA",
-				active_port, ramp_st, min_icl, active_icl);
+		    ramp_st != CHG_RAMP_STABLE) {
+			CPRINTS("Ramp p%d st%d %dmA %dmA", active_port, ramp_st,
+				min_icl, active_icl);
 			/* Set the input current limit */
 			lim = chg_ramp_get_current_limit();
 			board_set_charge_limit(active_port, active_sup, lim,
@@ -361,8 +361,8 @@ static int command_chgramp(int argc, char **argv)
 	int i;
 	int port;
 
-	ccprintf("Chg Ramp:\nState: %d\nMin ICL: %d\nActive ICL: %d\n",
-		 ramp_st, min_icl, active_icl);
+	ccprintf("Chg Ramp:\nState: %d\nMin ICL: %d\nActive ICL: %d\n", ramp_st,
+		 min_icl, active_icl);
 
 	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
 		ccprintf("Port %d:\n", port);
@@ -377,7 +377,6 @@ static int command_chgramp(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(chgramp, command_chgramp,
-	"",
-	"Dump charge ramp state info");
+DECLARE_CONSOLE_COMMAND(chgramp, command_chgramp, "",
+			"Dump charge ramp state info");
 #endif
