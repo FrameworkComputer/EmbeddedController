@@ -34,9 +34,9 @@ struct gpio_alt_func {
  * Construct the gpio_alt_funcs array.  This array is used by gpio_config_module
  * to enable and disable GPIO alternate functions on a module by module basis.
  */
-#define ALTERNATE(pinmask, function, module, flagz)                            \
-	{GPIO_##pinmask, .func = (function), .module_id = (module),            \
-	 .flags = (flagz)},
+#define ALTERNATE(pinmask, function, module, flagz)                  \
+	{ GPIO_##pinmask, .func = (function), .module_id = (module), \
+	  .flags = (flagz) },
 
 static __const_data const struct gpio_alt_func gpio_alt_funcs[] = {
 #include "gpio.wrap"
@@ -74,9 +74,9 @@ static int gpio_config_pins(enum module_id id, uint32_t port, uint32_t pin_mask,
 				gpio_set_flags_by_mask(
 					af->port, (af->mask & pin_mask),
 					enable ? af->flags : GPIO_INPUT);
-			gpio_set_alternate_function(af->port,
-				    (af->mask & pin_mask),
-				    enable ? af->func : GPIO_ALT_FUNC_NONE);
+			gpio_set_alternate_function(
+				af->port, (af->mask & pin_mask),
+				enable ? af->func : GPIO_ALT_FUNC_NONE);
 			rv = EC_SUCCESS;
 			/* We're done here if we were just setting one port. */
 			if (port != GPIO_CONFIG_ALL_PORTS)
@@ -222,8 +222,8 @@ int gpio_or_ioex_get_level(int signal, int *value)
 
 int signal_is_gpio(int signal)
 {
-	return ((signal >= GPIO_SIGNAL_START)
-		&& (signal < GPIO_SIGNAL_START + GPIO_COUNT));
+	return ((signal >= GPIO_SIGNAL_START) &&
+		(signal < GPIO_SIGNAL_START + GPIO_COUNT));
 }
 
 __attribute__((weak)) void gpio_set_wakepin(enum gpio_signal signal,
