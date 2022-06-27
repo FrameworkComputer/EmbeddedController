@@ -6,24 +6,24 @@
 #ifndef __CROS_EC_SYSTEM_CHIP_H_
 #define __CROS_EC_SYSTEM_CHIP_H_
 
-#define SET_BIT(reg, bit)           ((reg) |= (0x1 << (bit)))
-#define CLEAR_BIT(reg, bit)         ((reg) &= (~(0x1 << (bit))))
+#define SET_BIT(reg, bit) ((reg) |= (0x1 << (bit)))
+#define CLEAR_BIT(reg, bit) ((reg) &= (~(0x1 << (bit))))
 
 /* TODO(b:179900857) Clean this up too */
 #undef IS_BIT_SET
-#define IS_BIT_SET(reg, bit)        (((reg) >> (bit)) & (0x1))
+#define IS_BIT_SET(reg, bit) (((reg) >> (bit)) & (0x1))
 
 /*****************************************************************************/
 /* Memory mapping */
-#define CONFIG_LPRAM_BASE	0x40001400 /* memory address of lpwr ram */
-#define CONFIG_LPRAM_SIZE	0x00000620 /* 1568B low power ram */
+#define CONFIG_LPRAM_BASE 0x40001400 /* memory address of lpwr ram */
+#define CONFIG_LPRAM_SIZE 0x00000620 /* 1568B low power ram */
 
 /******************************************************************************/
 /* Optional M4 Registers */
-#define CPU_MPU_CTRL		REG32(0xE000ED94)
-#define CPU_MPU_RNR		REG32(0xE000ED98)
-#define CPU_MPU_RBAR		REG32(0xE000ED9C)
-#define CPU_MPU_RASR		REG32(0xE000EDA0)
+#define CPU_MPU_CTRL REG32(0xE000ED94)
+#define CPU_MPU_RNR REG32(0xE000ED98)
+#define CPU_MPU_RBAR REG32(0xE000ED9C)
+#define CPU_MPU_RASR REG32(0xE000EDA0)
 
 /*
  * Region assignment. 7 as the highest, a higher index has a higher priority.
@@ -35,18 +35,18 @@
  * made mutually exclusive.
  */
 enum mpu_region {
-	REGION_DATA_RAM = 0,		/* For internal data RAM */
-	REGION_DATA_RAM2 = 1,		/* Second region for unaligned size */
-	REGION_CODE_RAM = 2,		/* For internal code RAM */
-	REGION_CODE_RAM2 = 3,		/* Second region for unaligned size */
-	REGION_STORAGE = 4,		/* For mapped internal storage */
-	REGION_STORAGE2 = 5,		/* Second region for unaligned size */
-	REGION_DATA_RAM_TEXT = 6,	/* Exempt region of data RAM */
-	REGION_CHIP_RESERVED = 7,	/* Reserved for use in chip/ */
+	REGION_DATA_RAM = 0, /* For internal data RAM */
+	REGION_DATA_RAM2 = 1, /* Second region for unaligned size */
+	REGION_CODE_RAM = 2, /* For internal code RAM */
+	REGION_CODE_RAM2 = 3, /* Second region for unaligned size */
+	REGION_STORAGE = 4, /* For mapped internal storage */
+	REGION_STORAGE2 = 5, /* Second region for unaligned size */
+	REGION_DATA_RAM_TEXT = 6, /* Exempt region of data RAM */
+	REGION_CHIP_RESERVED = 7, /* Reserved for use in chip/ */
 	/* only for chips with MPU supporting 16 regions */
-	REGION_UNCACHED_RAM = 8,        /* For uncached data RAM */
-	REGION_UNCACHED_RAM2 = 9,       /* Second region for unaligned size */
-	REGION_ROLLBACK = 10,           /* For rollback */
+	REGION_UNCACHED_RAM = 8, /* For uncached data RAM */
+	REGION_UNCACHED_RAM2 = 9, /* Second region for unaligned size */
+	REGION_ROLLBACK = 10, /* For rollback */
 };
 
 /*
