@@ -32,7 +32,7 @@ char *get_input(const char *prompt)
 	return line;
 }
 
-#else  /* no readline */
+#else /* no readline */
 
 char *get_input(const char *prompt)
 {
