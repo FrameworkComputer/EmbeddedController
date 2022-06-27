@@ -17,15 +17,15 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 static enum charge_state prv_chstate = PWR_STATE_INIT;
 
-#define LED_OFF		MT6370_LED_ID_OFF
-#define LED_RED		MT6370_LED_ID1
-#define LED_GREEN	MT6370_LED_ID2
-#define LED_BLUE	MT6370_LED_ID3
+#define LED_OFF MT6370_LED_ID_OFF
+#define LED_RED MT6370_LED_ID1
+#define LED_GREEN MT6370_LED_ID2
+#define LED_BLUE MT6370_LED_ID3
 
-#define LED_MASK_OFF	0
-#define LED_MASK_RED	MT6370_MASK_RGB_ISNK1DIM_EN
-#define LED_MASK_GREEN	MT6370_MASK_RGB_ISNK2DIM_EN
-#define LED_MASK_BLUE	MT6370_MASK_RGB_ISNK3DIM_EN
+#define LED_MASK_OFF 0
+#define LED_MASK_RED MT6370_MASK_RGB_ISNK1DIM_EN
+#define LED_MASK_GREEN MT6370_MASK_RGB_ISNK2DIM_EN
+#define LED_MASK_BLUE MT6370_MASK_RGB_ISNK3DIM_EN
 
 static void kukui_led_set_battery(void)
 {
@@ -35,8 +35,7 @@ static void kukui_led_set_battery(void)
 
 	chstate = charge_get_state();
 
-	if (prv_chstate == chstate &&
-		chstate != PWR_STATE_DISCHARGE)
+	if (prv_chstate == chstate && chstate != PWR_STATE_DISCHARGE)
 		return;
 
 	prv_chstate = chstate;
@@ -62,8 +61,7 @@ static void kukui_led_set_battery(void)
 		return;
 	}
 
-	if (prv_r == br[EC_LED_COLOR_RED] &&
-	    prv_g == br[EC_LED_COLOR_GREEN] &&
+	if (prv_r == br[EC_LED_COLOR_RED] && prv_g == br[EC_LED_COLOR_GREEN] &&
 	    prv_b == br[EC_LED_COLOR_BLUE])
 		return;
 
