@@ -15,8 +15,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
-
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 /******************************************************************************/
 /* EC thermal management configuration */
@@ -30,8 +29,8 @@
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -56,8 +55,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_INDUCTOR \
-	{ \
+#define THERMAL_INDUCTOR         \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -102,39 +101,39 @@ struct fan_step {
 static const struct fan_step fan_table[] = {
 	{
 		/* level 0 */
-		.on = {-1, -1, 44, -1},
-		.off = {-1, -1, 0, -1},
-		.rpm = {0},
+		.on = { -1, -1, 44, -1 },
+		.off = { -1, -1, 0, -1 },
+		.rpm = { 0 },
 	},
 	{
 		/* level 1 */
-		.on = {-1, -1, 46, -1},
-		.off = {-1, -1, 44, -1},
-		.rpm = {3200},
+		.on = { -1, -1, 46, -1 },
+		.off = { -1, -1, 44, -1 },
+		.rpm = { 3200 },
 	},
 	{
 		/* level 2 */
-		.on = {-1, -1, 50, -1},
-		.off = {-1, -1, 45, -1},
-		.rpm = {3600},
+		.on = { -1, -1, 50, -1 },
+		.off = { -1, -1, 45, -1 },
+		.rpm = { 3600 },
 	},
 	{
 		/* level 3 */
-		.on = {-1, -1, 54, -1},
-		.off = {-1, -1, 49, -1},
-		.rpm = {4100},
+		.on = { -1, -1, 54, -1 },
+		.off = { -1, -1, 49, -1 },
+		.rpm = { 4100 },
 	},
 	{
 		/* level 4 */
-		.on = {-1, -1, 58, -1},
-		.off = {-1, -1, 53, -1},
-		.rpm = {4900},
+		.on = { -1, -1, 58, -1 },
+		.off = { -1, -1, 53, -1 },
+		.rpm = { 4900 },
 	},
 	{
 		/* level 5 */
-		.on = {-1, -1, 60, -1},
-		.off = {-1, -1, 57, -1},
-		.rpm = {5200},
+		.on = { -1, -1, 60, -1 },
+		.off = { -1, -1, 57, -1 },
+		.rpm = { 5200 },
 	},
 };
 
@@ -162,16 +161,16 @@ int fan_table_to_rpm(int fan, int *temp)
 	if (temp[TEMP_SENSOR_3_DDR_SOC] < prev_temp[TEMP_SENSOR_3_DDR_SOC]) {
 		for (i = current_level; i > 0; i--) {
 			if (temp[TEMP_SENSOR_3_DDR_SOC] <
-				fan_table[i].off[TEMP_SENSOR_3_DDR_SOC])
+			    fan_table[i].off[TEMP_SENSOR_3_DDR_SOC])
 				current_level = i - 1;
 			else
 				break;
 		}
 	} else if (temp[TEMP_SENSOR_3_DDR_SOC] >
-		prev_temp[TEMP_SENSOR_3_DDR_SOC]) {
+		   prev_temp[TEMP_SENSOR_3_DDR_SOC]) {
 		for (i = current_level; i < num_fan_levels; i++) {
 			if (temp[TEMP_SENSOR_3_DDR_SOC] >
-				fan_table[i].on[TEMP_SENSOR_3_DDR_SOC])
+			    fan_table[i].on[TEMP_SENSOR_3_DDR_SOC])
 				current_level = i;
 			else
 				break;
@@ -207,8 +206,7 @@ void board_override_fan_control(int fan, int *temp)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		fan_set_rpm_mode(FAN_CH(fan), 1);
-		fan_set_rpm_target(FAN_CH(fan),
-			fan_table_to_rpm(fan, temp));
+		fan_set_rpm_target(FAN_CH(fan), fan_table_to_rpm(fan, temp));
 	} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 		/* Stop fan when enter S0ix */
 		fan_set_rpm_mode(FAN_CH(fan), 1);
