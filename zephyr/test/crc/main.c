@@ -21,7 +21,6 @@ static void test_crc8_known_data(void)
 
 void test_main(void)
 {
-	ztest_test_suite(test_task_shim,
-			 ztest_unit_test(test_crc8_known_data));
+	ztest_test_suite(test_task_shim, ztest_unit_test(test_crc8_known_data));
 	ztest_run_test_suite(test_task_shim);
 }
