@@ -11,20 +11,19 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
 /* Console commands */
 static int powerinfo_handler(const struct shell *shell, size_t argc,
-							char **argv)
+			     char **argv)
 {
 	enum power_states_ndsx state = pwr_sm_get_state();
 
 	shell_fprintf(shell, SHELL_INFO, "power state %d = %s, in 0x%04x\n",
-		      state, pwr_sm_get_state_name(state),
-		      power_get_signals());
+		      state, pwr_sm_get_state_name(state), power_get_signals());
 	return 0;
 }
 
 SHELL_CMD_REGISTER(powerinfo, NULL, NULL, powerinfo_handler);
 
 static int powerindebug_handler(const struct shell *shell, size_t argc,
-							char **argv)
+				char **argv)
 {
 	int i;
 	char *e;
@@ -44,7 +43,7 @@ static int powerindebug_handler(const struct shell *shell, size_t argc,
 	current = power_get_signals();
 	shell_fprintf(shell, SHELL_INFO, "power in:   0x%05x\n", current);
 	shell_fprintf(shell, SHELL_INFO, "debug mask: 0x%05x\n",
-						power_get_debug());
+		      power_get_debug());
 
 	/* Print the decode */
 	shell_fprintf(shell, SHELL_INFO, "bit meanings:\n");
@@ -52,21 +51,19 @@ static int powerindebug_handler(const struct shell *shell, size_t argc,
 		power_signal_mask_t mask = POWER_SIGNAL_MASK(i);
 		bool valid = (power_signal_get(i) >= 0);
 
-		shell_fprintf(shell, SHELL_INFO, "  0x%05x %d%s %s\n",
-			mask, (current & mask) ? 1 : 0,
-			valid ? " " : "!",
-			power_signal_name(i));
+		shell_fprintf(shell, SHELL_INFO, "  0x%05x %d%s %s\n", mask,
+			      (current & mask) ? 1 : 0, valid ? " " : "!",
+			      power_signal_name(i));
 	}
 
 	return 0;
 };
 
-SHELL_CMD_REGISTER(powerindebug, NULL,
-	"[mask] Get/set power input debug mask", powerindebug_handler);
-
+SHELL_CMD_REGISTER(powerindebug, NULL, "[mask] Get/set power input debug mask",
+		   powerindebug_handler);
 
 static int apshutdown_handler(const struct shell *shell, size_t argc,
-							char **argv)
+			      char **argv)
 {
 	ap_power_force_shutdown(AP_POWER_SHUTDOWN_CONSOLE_CMD);
 	return 0;
@@ -74,8 +71,7 @@ static int apshutdown_handler(const struct shell *shell, size_t argc,
 
 SHELL_CMD_REGISTER(apshutdown, NULL, NULL, apshutdown_handler);
 
-static int apreset_handler(const struct shell *shell, size_t argc,
-							char **argv)
+static int apreset_handler(const struct shell *shell, size_t argc, char **argv)
 {
 	ap_power_reset(AP_POWER_SHUTDOWN_CONSOLE_CMD);
 	return 0;
