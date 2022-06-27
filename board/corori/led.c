@@ -19,20 +19,16 @@
 
 #define LED_ON_LVL 0
 #define LED_OFF_LVL 1
-#define LED_INDEFINITE	UINT8_MAX
-#define LED_ONE_SEC	(1000 / HOOK_TICK_INTERVAL_MS)
-#define LED_OFF         EC_LED_COLOR_COUNT
+#define LED_INDEFINITE UINT8_MAX
+#define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
+#define LED_OFF EC_LED_COLOR_COUNT
 
 struct led_descriptor {
 	enum ec_led_colors color;
 	uint8_t time;
 };
 
-enum led_phase {
-	LED_PHASE_0,
-	LED_PHASE_1,
-	LED_NUM_PHASES
-};
+enum led_phase { LED_PHASE_0, LED_PHASE_1, LED_NUM_PHASES };
 
 enum led_states {
 	STATE_CHARGING,
@@ -47,27 +43,31 @@ enum led_states {
 };
 
 static const struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0]	     = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0_BAT_LOW] = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
-					{LED_OFF,	     3 * LED_ONE_SEC} },
-	[STATE_BATTERY_S0_ERROR]     = {{EC_LED_COLOR_AMBER,  1 * LED_ONE_SEC},
-					{LED_OFF,	    1 * LED_ONE_SEC} },
-	[STATE_BATTERY_S3_BLINK]     = {{EC_LED_COLOR_WHITE,  1 * LED_ONE_SEC},
-					{LED_OFF,	    3 * LED_ONE_SEC} },
-	[STATE_BATTERY_S5_OFF]	     = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_FACTORY_TEST]	     = {{EC_LED_COLOR_WHITE,   2 * LED_ONE_SEC},
-					{EC_LED_COLOR_AMBER, 2 * LED_ONE_SEC} },
-};
+	led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+		[STATE_CHARGING] = { { EC_LED_COLOR_AMBER, LED_INDEFINITE } },
+		[STATE_CHARGING_FULL_CHARGE] = { { EC_LED_COLOR_WHITE,
+						   LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0] = { { EC_LED_COLOR_WHITE,
+					   LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0_BAT_LOW] = { { EC_LED_COLOR_AMBER,
+						   1 * LED_ONE_SEC },
+						 { LED_OFF, 3 * LED_ONE_SEC } },
+		[STATE_BATTERY_S0_ERROR] = { { EC_LED_COLOR_AMBER,
+					       1 * LED_ONE_SEC },
+					     { LED_OFF, 1 * LED_ONE_SEC } },
+		[STATE_BATTERY_S3_BLINK] = { { EC_LED_COLOR_WHITE,
+					       1 * LED_ONE_SEC },
+					     { LED_OFF, 3 * LED_ONE_SEC } },
+		[STATE_BATTERY_S5_OFF] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_FACTORY_TEST] = { { EC_LED_COLOR_WHITE,
+					   2 * LED_ONE_SEC },
+					 { EC_LED_COLOR_AMBER,
+					   2 * LED_ONE_SEC } },
+	};
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
-
 
 static int led_get_charge_percent(void)
 {
@@ -131,7 +131,8 @@ static enum led_states led_get_state(void)
 	case PWR_STATE_DISCHARGE /* and PWR_STATE_DISCHARGE_FULL */:
 		if (chipset_in_state(CHIPSET_STATE_ON))
 			new_state = (led_get_charge_percent() < 10) ?
-				STATE_DISCHARGE_S0_BAT_LOW : STATE_DISCHARGE_S0;
+					    STATE_DISCHARGE_S0_BAT_LOW :
+					    STATE_DISCHARGE_S0;
 		else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
 			new_state = STATE_BATTERY_S3_BLINK;
 		else
@@ -182,8 +183,7 @@ static void led_update_battery(void)
 		ticks = 0;
 
 		period = led_bat_state_table[led_state][LED_PHASE_0].time +
-			led_bat_state_table[led_state][LED_PHASE_1].time;
-
+			 led_bat_state_table[led_state][LED_PHASE_1].time;
 	}
 
 	/* If this state is undefined, turn the LED off */
@@ -196,8 +196,8 @@ static void led_update_battery(void)
 	 * Determine which phase of the state table to use. The phase is
 	 * determined if it falls within first phase time duration.
 	 */
-	phase = ticks < led_bat_state_table[led_state][LED_PHASE_0].time ?
-									0 : 1;
+	phase = ticks < led_bat_state_table[led_state][LED_PHASE_0].time ? 0 :
+									   1;
 	ticks = (ticks + 1) % period;
 
 	/* Set the color for the given state and phase */
