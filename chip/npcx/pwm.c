@@ -23,7 +23,7 @@
 #if !(DEBUG_PWM)
 #define CPRINTS(...)
 #else
-#define CPRINTS(format, args...) cprints(CC_PWM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_PWM, format, ##args)
 #endif
 
 /* pwm resolution for each channel */
@@ -31,20 +31,20 @@ static uint32_t pwm_res[PWM_CH_COUNT];
 
 /* PWM clock source */
 enum npcx_pwm_source_clock {
-	NPCX_PWM_CLOCK_APB2_LFCLK  = 0,
-	NPCX_PWM_CLOCK_FX          = 1,
-	NPCX_PWM_CLOCK_FR          = 2,
-	NPCX_PWM_CLOCK_RESERVED    = 3,
-	NPCX_PWM_CLOCK_UNDEF       = 0xFF
+	NPCX_PWM_CLOCK_APB2_LFCLK = 0,
+	NPCX_PWM_CLOCK_FX = 1,
+	NPCX_PWM_CLOCK_FR = 2,
+	NPCX_PWM_CLOCK_RESERVED = 3,
+	NPCX_PWM_CLOCK_UNDEF = 0xFF
 };
 
 /* PWM heartbeat mode */
 enum npcx_pwm_heartbeat_mode {
-	NPCX_PWM_HBM_NORMAL    = 0,
-	NPCX_PWM_HBM_25        = 1,
-	NPCX_PWM_HBM_50        = 2,
-	NPCX_PWM_HBM_100       = 3,
-	NPCX_PWM_HBM_UNDEF     = 0xFF
+	NPCX_PWM_HBM_NORMAL = 0,
+	NPCX_PWM_HBM_25 = 1,
+	NPCX_PWM_HBM_50 = 2,
+	NPCX_PWM_HBM_100 = 3,
+	NPCX_PWM_HBM_UNDEF = 0xFF
 };
 
 /**
@@ -146,7 +146,7 @@ void pwm_set_raw_duty(enum pwm_channel ch, uint16_t duty)
 
 	/* Assume the fan control is active high and invert it ourselves */
 	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_INVP,
-			(pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW));
+		   (pwm_channels[ch].flags & PWM_CONFIG_ACTIVE_LOW));
 
 	CPRINTS("initial freq=0x%x", pwm_channels[ch].freq);
 	CPRINTS("duty_cycle_cnt=%d", duty);
@@ -189,7 +189,7 @@ uint16_t pwm_get_raw_duty(enum pwm_channel ch)
 		 * so scale to 0 - 0xffff
 		 */
 		return DIV_ROUND_NEAREST(NPCX_DCR(mdl) * EC_PWM_MAX_DUTY,
-						pwm_res[ch]);
+					 pwm_res[ch]);
 }
 
 /**
@@ -206,22 +206,22 @@ void pwm_config(enum pwm_channel ch)
 
 	/* Set PWM heartbeat mode is no heartbeat */
 	SET_FIELD(NPCX_PWMCTL(mdl), NPCX_PWMCTL_HB_DC_CTL_FIELD,
-			NPCX_PWM_HBM_NORMAL);
+		  NPCX_PWM_HBM_NORMAL);
 
 	/* Select default CLK or LFCLK clock input to PWM module */
 	SET_FIELD(NPCX_PWMCTLEX(mdl), NPCX_PWMCTLEX_FCK_SEL_FIELD,
-			NPCX_PWM_CLOCK_APB2_LFCLK);
+		  NPCX_PWM_CLOCK_APB2_LFCLK);
 
 	/* Set PWM polarity normal first */
 	CLEAR_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_INVP);
 
 	/* Select PWM clock source */
 	UPDATE_BIT(NPCX_PWMCTL(mdl), NPCX_PWMCTL_CKSEL,
-			(pwm_channels[ch].flags & PWM_CONFIG_DSLEEP));
+		   (pwm_channels[ch].flags & PWM_CONFIG_DSLEEP));
 
 	/* Select PWM IO type */
 	UPDATE_BIT(NPCX_PWMCTLEX(mdl), NPCX_PWMCTLEX_OD_OUT,
-			(pwm_channels[ch].flags & PWM_CONFIG_OPEN_DRAIN));
+		   (pwm_channels[ch].flags & PWM_CONFIG_OPEN_DRAIN));
 
 	/* Set PWM operation frequency */
 	pwm_set_freq(ch, pwm_channels[ch].freq);
