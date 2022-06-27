@@ -59,36 +59,26 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = {
-		.name = "DDR and SOC",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
-	},
-	[TEMP_SENSOR_2_SSD] = {
-		.name = "SSD",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_SSD
-	},
-	[TEMP_SENSOR_3_CHARGER] = {
-		.name = "Charger",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_3_CHARGER
-	},
-	[TEMP_SENSOR_4_MEMORY] = {
-		.name = "MEMORY",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_4_MEMORY
-	},
-	[TEMP_SENSOR_5_USBC] = {
-		.name = "USBC",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_5_USBC
-	},
+	[TEMP_SENSOR_1_DDR_SOC] = { .name = "DDR and SOC",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_1_DDR_SOC },
+	[TEMP_SENSOR_2_SSD] = { .name = "SSD",
+				.type = TEMP_SENSOR_TYPE_BOARD,
+				.read = get_temp_3v3_30k9_47k_4050b,
+				.idx = ADC_TEMP_SENSOR_2_SSD },
+	[TEMP_SENSOR_3_CHARGER] = { .name = "Charger",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_3_CHARGER },
+	[TEMP_SENSOR_4_MEMORY] = { .name = "MEMORY",
+				   .type = TEMP_SENSOR_TYPE_BOARD,
+				   .read = get_temp_3v3_30k9_47k_4050b,
+				   .idx = ADC_TEMP_SENSOR_4_MEMORY },
+	[TEMP_SENSOR_5_USBC] = { .name = "USBC",
+				 .type = TEMP_SENSOR_TYPE_BOARD,
+				 .read = get_temp_3v3_30k9_47k_4050b,
+				 .idx = ADC_TEMP_SENSOR_5_USBC },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -102,8 +92,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
@@ -119,8 +109,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_SSD \
-	{ \
+#define THERMAL_SSD              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(92), \
@@ -149,8 +139,8 @@ __maybe_unused static const struct ec_thermal_config thermal_ssd = THERMAL_SSD;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_INDUCTOR \
-	{ \
+#define THERMAL_INDUCTOR         \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
