@@ -11,7 +11,7 @@ __attribute__((weak)) void clean_state(void)
 	/* Each test overrides as needed */
 }
 
-void cts_main_loop(const struct cts_test* tests, const char *name)
+void cts_main_loop(const struct cts_test *tests, const char *name)
 {
 	enum cts_rc rc;
 	int i;
