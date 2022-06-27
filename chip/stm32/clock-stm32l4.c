@@ -21,7 +21,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
 /* High-speed oscillator is 16 MHz */
 #define STM32_HSI_CLOCK 16000000
@@ -45,13 +45,13 @@
 #define SCALING 1000
 
 enum clock_osc {
-	OSC_INIT = 0,	/* Uninitialized */
-	OSC_HSI,	/* High-speed internal oscillator */
-	OSC_MSI,	/* Multi-speed internal oscillator */
-#ifdef STM32_HSE_CLOCK	/* Allows us to catch absence of HSE at comiple time */
-	OSC_HSE,	/* High-speed external oscillator */
+	OSC_INIT = 0, /* Uninitialized */
+	OSC_HSI, /* High-speed internal oscillator */
+	OSC_MSI, /* Multi-speed internal oscillator */
+#ifdef STM32_HSE_CLOCK /* Allows us to catch absence of HSE at comiple time */
+	OSC_HSE, /* High-speed external oscillator */
 #endif
-	OSC_PLL,	/* PLL */
+	OSC_PLL, /* PLL */
 };
 
 static int freq = STM32_MSI_CLOCK;
@@ -162,8 +162,8 @@ static void clock_switch_osc(enum clock_osc osc)
  * 5. Enable the desired PLL outputs by configuring PLLPEN, PLLQEN, PLLREN
  *    in RCC_PLLCFGR.
  */
-static int stm32_configure_pll(enum clock_osc osc,
-			       uint8_t m, uint8_t n, uint8_t r)
+static int stm32_configure_pll(enum clock_osc osc, uint8_t m, uint8_t n,
+			       uint8_t r)
 {
 	uint32_t val;
 	bool pll_unchanged;
@@ -323,9 +323,8 @@ static void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 
 	case OSC_MSI:
 		/* Switch to MSI @ 1MHz */
-		STM32_RCC_CR =
-			(STM32_RCC_CR & ~STM32_RCC_ICSCR_MSIRANGE_MASK) |
-			STM32_RCC_ICSCR_MSIRANGE_1MHZ;
+		STM32_RCC_CR = (STM32_RCC_CR & ~STM32_RCC_ICSCR_MSIRANGE_MASK) |
+			       STM32_RCC_ICSCR_MSIRANGE_1MHZ;
 		/* Ensure that MSI is ON */
 		clock_enable_osc(osc);
 
@@ -353,7 +352,7 @@ static void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 
 		/* Disable other clock sources */
 		STM32_RCC_CR &= ~(STM32_RCC_CR_MSION | STM32_RCC_CR_HSION |
-				STM32_RCC_CR_PLLON);
+				  STM32_RCC_CR_PLLON);
 
 		freq = STM32_HSE_CLOCK;
 
@@ -396,22 +395,22 @@ static void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 			 */
 			val = STM32_FLASH_ACR;
 			val &= ~STM32_FLASH_ACR_LATENCY_MASK;
-			if (freq <= 16000000U)	{
+			if (freq <= 16000000U) {
 				val = val;
-			} else if (freq <= 32000000U)	{
+			} else if (freq <= 32000000U) {
 				val |= 1;
-			} else if (freq <= 48000000U)	{
+			} else if (freq <= 48000000U) {
 				val |= 2;
-			} else if (freq <= 64000000U)	{
+			} else if (freq <= 64000000U) {
 				val |= 3;
-			} else if (freq <= 80000000U)	{
+			} else if (freq <= 80000000U) {
 				val |= 4;
-			} else	{
+			} else {
 				val |= 4;
 				CPUTS("Incorrect Frequency setting in VOS1!\n");
 			}
 			STM32_FLASH_ACR = val;
-		} else	{
+		} else {
 			val = STM32_FLASH_ACR;
 			val &= ~STM32_FLASH_ACR_LATENCY_MASK;
 
@@ -423,7 +422,7 @@ static void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 				val |= 2;
 			} else if (freq <= 26000000U) {
 				val |= 3;
-			} else	{
+			} else {
 				val |= 4;
 				CPUTS("Incorrect Frequency setting in VOS2!\n");
 			}
@@ -472,8 +471,8 @@ void clock_enable_module(enum module_id module, int enable)
 
 		/* ADC select bit 28/29 */
 		STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_ADCSEL_MSK;
-		STM32_RCC_CCIPR |= (STM32_RCC_CCIPR_ADCSEL_0 |
-				    STM32_RCC_CCIPR_ADCSEL_1);
+		STM32_RCC_CCIPR |=
+			(STM32_RCC_CCIPR_ADCSEL_0 | STM32_RCC_CCIPR_ADCSEL_1);
 		/* ADC clock enable */
 		if (enable)
 			STM32_RCC_AHB2ENR |= STM32_RCC_HB2_ADC1;
@@ -484,12 +483,11 @@ void clock_enable_module(enum module_id module, int enable)
 			STM32_RCC_APB1ENR1 |= STM32_RCC_PB1_SPI2;
 		else
 			STM32_RCC_APB1ENR1 &= ~STM32_RCC_PB1_SPI2;
-	} else if (module == MODULE_SPI ||
-		   module == MODULE_SPI_CONTROLLER) {
+	} else if (module == MODULE_SPI || module == MODULE_SPI_CONTROLLER) {
 		if (enable)
 			STM32_RCC_APB2ENR |= STM32_RCC_APB2ENR_SPI1EN;
-		else if ((new_mask & (BIT(MODULE_SPI) |
-				      BIT(MODULE_SPI_CONTROLLER))) == 0)
+		else if ((new_mask &
+			  (BIT(MODULE_SPI) | BIT(MODULE_SPI_CONTROLLER))) == 0)
 			STM32_RCC_APB2ENR &= ~STM32_RCC_APB2ENR_SPI1EN;
 	} else if (module == MODULE_USB) {
 #ifdef CHIP_FAMILY_STM32L5
@@ -588,7 +586,6 @@ void rtc_set(uint32_t sec)
 }
 #endif
 
-
 void clock_init(void)
 {
 #ifdef STM32_HSE_CLOCK
@@ -666,7 +663,6 @@ uint32_t us_to_rtcss(uint32_t us)
 		(us * (RTC_FREQ / SCALING) / (SECOND / SCALING)));
 }
 
-
 /* Convert decimal to BCD */
 static uint8_t u8_to_bcd(uint8_t val)
 {
@@ -684,12 +680,14 @@ static uint32_t rtc_tr_to_sec(uint32_t rtc_tr)
 
 	/* convert the hours field */
 	sec = (((rtc_tr & RTC_TR_HT) >> RTC_TR_HT_POS) * 10 +
-	       ((rtc_tr & RTC_TR_HU) >> RTC_TR_HU_POS)) * 3600;
+	       ((rtc_tr & RTC_TR_HU) >> RTC_TR_HU_POS)) *
+	      3600;
 	/* convert the minutes field */
 	sec += (((rtc_tr & RTC_TR_MNT) >> RTC_TR_MNT_POS) * 10 +
-		((rtc_tr & RTC_TR_MNU) >> RTC_TR_MNU_POS)) * 60;
+		((rtc_tr & RTC_TR_MNU) >> RTC_TR_MNU_POS)) *
+	       60;
 	/* convert the seconds field */
-	sec += ((rtc_tr & RTC_TR_ST) >> RTC_TR_ST_POS) *  10 +
+	sec += ((rtc_tr & RTC_TR_ST) >> RTC_TR_ST_POS) * 10 +
 	       (rtc_tr & RTC_TR_SU);
 	return sec;
 }
@@ -766,10 +764,9 @@ static uint32_t rtc_dr_to_sec(uint32_t rtc_dr)
 	struct calendar_date time;
 	uint32_t sec;
 
-	time.year = (((rtc_dr & 0xf00000) >> 20) * 10 +
-		    ((rtc_dr & 0xf0000) >> 16));
-	time.month = (((rtc_dr & 0x1000) >> 12) * 10 +
-		     ((rtc_dr & 0xf00) >> 8));
+	time.year =
+		(((rtc_dr & 0xf00000) >> 20) * 10 + ((rtc_dr & 0xf0000) >> 16));
+	time.month = (((rtc_dr & 0x1000) >> 12) * 10 + ((rtc_dr & 0xf00) >> 8));
 	time.day = ((rtc_dr & 0x30) >> 4) * 10 + (rtc_dr & 0xf);
 
 	sec = date_to_sec(time);
@@ -905,8 +902,8 @@ void set_rtc_alarm(uint32_t delay_s, uint32_t delay_us,
 	 * If the caller doesn't specify subsecond delay (e.g. host command),
 	 * just align the alarm time to second.
 	 */
-	STM32_RTC_ALRMASSR = delay_us ?
-			     (us_to_rtcss(alarm_us) | 0x0f000000) : 0;
+	STM32_RTC_ALRMASSR = delay_us ? (us_to_rtcss(alarm_us) | 0x0f000000) :
+					0;
 
 #ifdef CONFIG_HOSTCMD_RTC
 	/*
@@ -968,8 +965,7 @@ static void set_rtc_host_event(void)
 DECLARE_DEFERRED(set_rtc_host_event);
 #endif
 
-test_mockable_static
-void __rtc_alarm_irq(void)
+test_mockable_static void __rtc_alarm_irq(void)
 {
 	struct rtc_time_reg rtc;
 
@@ -985,7 +981,6 @@ void __rtc_alarm_irq(void)
 }
 DECLARE_IRQ(STM32_IRQ_RTC_ALARM, __rtc_alarm_irq, 1);
 
-
 void print_system_rtc(enum console_channel ch)
 {
 	uint32_t sec;
@@ -996,7 +991,6 @@ void print_system_rtc(enum console_channel ch)
 
 	cprintf(ch, "RTC: 0x%08x (%d.00 s)\n", sec, sec);
 }
-
 
 #ifdef CONFIG_LOW_POWER_IDLE
 /* Low power idle statistics */
@@ -1014,7 +1008,6 @@ static int dsleep_recovery_margin_us = 1000000;
  * in the past, it will never wake up and cause a watchdog.
  */
 #define SET_RTC_MATCH_DELAY 120 /* us */
-
 
 void low_power_init(void)
 {
@@ -1055,10 +1048,10 @@ void __idle(void)
 			/* Set deep sleep bit */
 			CPU_SCB_SYSCTRL |= 0x4;
 
-			set_rtc_alarm(0, next_delay - STOP_MODE_LATENCY
-						    - PLL_LOCK_LATENCY,
+			set_rtc_alarm(0,
+				      next_delay - STOP_MODE_LATENCY -
+					      PLL_LOCK_LATENCY,
 				      &rtc0, 0);
-
 
 			/* ensure outstanding memory transactions complete */
 			asm volatile("dsb");
@@ -1071,8 +1064,8 @@ void __idle(void)
 			STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_PWREN;
 			clock_wait_bus_cycles(BUS_APB, 2);
 
-			stm32_configure_pll(OSC_HSI, STM32_PLLM,
-						   STM32_PLLN, STM32_PLLR);
+			stm32_configure_pll(OSC_HSI, STM32_PLLM, STM32_PLLN,
+					    STM32_PLLR);
 
 			/* Switch to PLL */
 			clock_switch_osc(OSC_PLL);
@@ -1117,14 +1110,13 @@ static int command_idle_stats(int argc, char **argv)
 	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
 	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
 	ccprintf("Time spent in deep-sleep:            %.6llus\n",
-			idle_dsleep_time_us);
+		 idle_dsleep_time_us);
 	ccprintf("Total time on:                       %.6llus\n", ts.val);
 	ccprintf("Deep-sleep closest to wake deadline: %dus\n",
-			dsleep_recovery_margin_us);
+		 dsleep_recovery_margin_us);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
-			"",
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 			"Print last idle stats");
 #endif /* CONFIG_LOW_POWER_IDLE */
