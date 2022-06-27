@@ -20,7 +20,7 @@
 #define BAT_LED_ON 0
 #define BAT_LED_OFF 1
 
-const enum ec_led_id supported_led_ids[] = {EC_LED_ID_BATTERY_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -28,7 +28,7 @@ enum led_color {
 	LED_OFF = 0,
 	LED_AMBER,
 	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static int led_set_color_battery(enum led_color color)
@@ -93,11 +93,10 @@ static void led_set_battery(void)
 	battery_ticks++;
 
 	/* override battery led for system suspend */
-	if (chipset_in_state(CHIPSET_STATE_SUSPEND |
-			     CHIPSET_STATE_STANDBY) &&
+	if (chipset_in_state(CHIPSET_STATE_SUSPEND | CHIPSET_STATE_STANDBY) &&
 	    charge_get_state() != PWR_STATE_CHARGE) {
-		led_set_color_battery(power_ticks++ & 0x4 ?
-				      LED_WHITE : LED_OFF);
+		led_set_color_battery(power_ticks++ & 0x4 ? LED_WHITE :
+							    LED_OFF);
 		return;
 	}
 
@@ -125,8 +124,8 @@ static void led_set_battery(void)
 			led_set_color_battery(LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
-		led_set_color_battery(
-			(battery_ticks & 0x2) ? LED_WHITE : LED_OFF);
+		led_set_color_battery((battery_ticks & 0x2) ? LED_WHITE :
+							      LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		led_set_color_battery(LED_WHITE);
