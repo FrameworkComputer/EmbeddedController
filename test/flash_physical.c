@@ -30,7 +30,6 @@ struct flash_info flash_info = {
 #error "Flash info not defined for this chip. Please add it."
 #endif
 
-
 test_static int test_lock_option_bytes(void)
 {
 	TEST_EQ(flash_option_bytes_locked(), true, "%d");
