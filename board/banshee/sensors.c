@@ -40,7 +40,6 @@ struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-
 /* CM32183 private data */
 static struct als_drv_data_t g_cm32183_data = {
 	/**
@@ -120,8 +119,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = C_TO_K(80), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
@@ -152,8 +151,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_AMBIENT \
-	{ \
+#define THERMAL_AMBIENT          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = C_TO_K(85), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
@@ -183,8 +182,8 @@ __maybe_unused static const struct ec_thermal_config thermal_ambient =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CHARGER \
-	{ \
+#define THERMAL_CHARGER          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = C_TO_K(90), \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(100), \
@@ -206,8 +205,8 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_WWAN \
-	{ \
+#define THERMAL_WWAN             \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(130), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(130), \
