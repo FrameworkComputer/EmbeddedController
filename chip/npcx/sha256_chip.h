@@ -8,7 +8,7 @@
 
 #include "common.h"
 
-#define NPCX_SHA256_HANDLE_SIZE    212
+#define NPCX_SHA256_HANDLE_SIZE 212
 struct sha256_ctx {
 	/* the context handle required for SHA256 API */
 	uint8_t handle[NPCX_SHA256_HANDLE_SIZE];
@@ -22,4 +22,4 @@ struct sha256_ctx {
 
 void SHA256_abort(struct sha256_ctx *ctx);
 
-#endif  /* __CROS_EC_SHA256_CHIP_H */
+#endif /* __CROS_EC_SHA256_CHIP_H */
