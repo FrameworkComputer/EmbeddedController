@@ -10,7 +10,6 @@
 #include "util.h"
 #include "watchdog.h"
 
-
 enum format {
 	FMT_WORD,
 	FMT_HALF,
@@ -106,11 +105,10 @@ static int command_mem_dump(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND_FLAGS
-	(md, command_mem_dump,
-	 "[.b|.h|.s] addr [count]",
-	 "dump memory values, optionally specifying the format",
-	 CMD_FLAG_RESTRICTED);
+DECLARE_CONSOLE_COMMAND_FLAGS(
+	md, command_mem_dump, "[.b|.h|.s] addr [count]",
+	"dump memory values, optionally specifying the format",
+	CMD_FLAG_RESTRICTED);
 #endif /* CONFIG_CMD_MD */
 
 #ifdef CONFIG_CMD_RW
@@ -149,16 +147,16 @@ static int command_read_word(int argc, char **argv)
 	if ((argc - argc_offs) < 3) {
 		switch (access_size) {
 		case 1:
-			ccprintf("read 0x%pP = 0x%02x\n",
-				 address, *((uint8_t *)address));
+			ccprintf("read 0x%pP = 0x%02x\n", address,
+				 *((uint8_t *)address));
 			break;
 		case 2:
-			ccprintf("read 0x%pP = 0x%04x\n",
-				 address, *((uint16_t *)address));
+			ccprintf("read 0x%pP = 0x%04x\n", address,
+				 *((uint16_t *)address));
 			break;
 
 		default:
-			ccprintf("read 0x%pP = 0x%08x\n",  address, *address);
+			ccprintf("read 0x%pP = 0x%08x\n", address, *address);
 			break;
 		}
 		return EC_SUCCESS;
@@ -172,7 +170,7 @@ static int command_read_word(int argc, char **argv)
 	switch (access_size) {
 	case 1:
 		ccprintf("write 0x%pP = 0x%02x\n", address, (uint8_t)value);
-		cflush();  /* Flush before writing in case this crashes */
+		cflush(); /* Flush before writing in case this crashes */
 		*((uint8_t *)address) = (uint8_t)value;
 		break;
 	case 2:
@@ -190,9 +188,8 @@ static int command_read_word(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND_FLAGS
-	(rw, command_read_word,
-	 "[.b|.h] addr [value]",
-	 "Read or write a word in memory optionally specifying the size",
-	 CMD_FLAG_RESTRICTED);
-#endif	/* CONFIG_CMD_RW */
+DECLARE_CONSOLE_COMMAND_FLAGS(
+	rw, command_read_word, "[.b|.h] addr [value]",
+	"Read or write a word in memory optionally specifying the size",
+	CMD_FLAG_RESTRICTED);
+#endif /* CONFIG_CMD_RW */
