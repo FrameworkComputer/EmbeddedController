@@ -25,7 +25,7 @@
 #include "tablet_mode.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
 /******************************************************************************/
 /* Sensors */
 static struct mutex g_lid_accel_mutex;
@@ -40,23 +40,17 @@ static struct bmi_drv_data_t g_bmi160_data;
 static struct icm_drv_data_t g_icm426xx_data;
 
 /* Rotation matrix for the lid accelerometer */
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+				       { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t base_icm_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_icm_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					 { 0, FLOAT_TO_FP(1), 0 },
+					 { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t kx022_lid_accel = {
 	.name = "Lid Accel",
@@ -283,8 +277,7 @@ static void board_sensors_init(void)
 		motion_sensor_count = 0;
 		gmr_tablet_switch_disable();
 		/* Base accel is not stuffed, don't allow line to float */
-		gpio_set_flags(GPIO_EC_IMU_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_EC_IMU_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_sensors_init, HOOK_PRIO_DEFAULT);
