@@ -38,11 +38,10 @@ enum ec_ssfc_spkr_auto_mode get_cbi_ssfc_spkr_auto_mode(void)
 enum ec_ssfc_edp_phy_alt_tuning get_cbi_ssfc_edp_phy_alt_tuning(void)
 {
 	return (cached_ssfc & SSFC_EDP_PHY_ALT_TUNING_MASK) >>
-		SSFC_EDP_PHY_ALT_TUNING_OFFSET;
+	       SSFC_EDP_PHY_ALT_TUNING_OFFSET;
 }
 
 enum ec_ssfc_c1_mux get_cbi_ssfc_c1_mux(void)
 {
-	return (cached_ssfc & SSFC_C1_MUX_MASK) >>
-		SSFC_C1_MUX_OFFSET;
+	return (cached_ssfc & SSFC_C1_MUX_MASK) >> SSFC_C1_MUX_OFFSET;
 }
