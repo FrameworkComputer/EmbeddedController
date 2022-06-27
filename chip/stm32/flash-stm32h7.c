@@ -45,7 +45,7 @@
  * not what is called 'bank' in the common code (ie Write-Protect sectors)
  * both have the same number of 128KB blocks.
  */
-#define HWBANK_SIZE  (CONFIG_FLASH_SIZE_BYTES / 2)
+#define HWBANK_SIZE (CONFIG_FLASH_SIZE_BYTES / 2)
 #define BLOCKS_PER_HWBANK (HWBANK_SIZE / CONFIG_FLASH_ERASE_SIZE)
 #define BLOCKS_HWBANK_MASK (BIT(BLOCKS_PER_HWBANK) - 1)
 
@@ -74,8 +74,8 @@ struct flash_wp_state {
 
 static inline int calculate_flash_timeout(void)
 {
-	return (FLASH_TIMEOUT_US *
-		(clock_get_freq() / SECOND) / CYCLE_PER_FLASH_LOOP);
+	return (FLASH_TIMEOUT_US * (clock_get_freq() / SECOND) /
+		CYCLE_PER_FLASH_LOOP);
 }
 
 static int unlock(int bank)
@@ -94,8 +94,8 @@ static int unlock(int bank)
 		ignore_bus_fault(0);
 	}
 
-	return (STM32_FLASH_CR(bank) & FLASH_CR_LOCK) ? EC_ERROR_UNKNOWN
-						      : EC_SUCCESS;
+	return (STM32_FLASH_CR(bank) & FLASH_CR_LOCK) ? EC_ERROR_UNKNOWN :
+							EC_SUCCESS;
 }
 
 static void lock(int bank)
@@ -123,15 +123,14 @@ static int unlock_optb(void)
 		ignore_bus_fault(0);
 	}
 
-	return flash_option_bytes_locked() ? EC_ERROR_UNKNOWN
-					   : EC_SUCCESS;
+	return flash_option_bytes_locked() ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 
 static int commit_optb(void)
 {
 	/* might use this before timer_init, cannot use get_time/usleep */
-	int timeout = (FLASH_OPT_PRG_TIMEOUT_US *
-		(clock_get_freq() / SECOND) / CYCLE_PER_FLASH_LOOP);
+	int timeout = (FLASH_OPT_PRG_TIMEOUT_US * (clock_get_freq() / SECOND) /
+		       CYCLE_PER_FLASH_LOOP);
 
 	STM32_FLASH_OPTCR(0) |= FLASH_OPTCR_OPTSTART;
 
@@ -149,11 +148,10 @@ static void protect_blocks(uint32_t blocks)
 	if (unlock_optb())
 		return;
 	STM32_FLASH_WPSN_PRG(0) &= ~(blocks & BLOCKS_HWBANK_MASK);
-	STM32_FLASH_WPSN_PRG(1) &= ~((blocks >> BLOCKS_PER_HWBANK)
-				& BLOCKS_HWBANK_MASK);
+	STM32_FLASH_WPSN_PRG(1) &=
+		~((blocks >> BLOCKS_PER_HWBANK) & BLOCKS_HWBANK_MASK);
 	commit_optb();
 }
-
 
 /*
  * Helper function definitions for consistency with F4 to enable flash
@@ -226,7 +224,7 @@ bool flash_option_bytes_locked(void)
 	 * Always use bank 0 flash controller as there is only one option bytes
 	 * set for both banks. See http://b/181130245
 	 */
-	return  !!(STM32_FLASH_OPTCR(0) & FLASH_OPTCR_OPTLOCK);
+	return !!(STM32_FLASH_OPTCR(0) & FLASH_OPTCR_OPTLOCK);
 }
 
 bool flash_control_register_locked(void)
@@ -252,8 +250,8 @@ bool flash_control_register_locked(void)
 static int is_wp_enabled(void)
 {
 #ifdef CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE
-	return (STM32_FLASH_OPTSR_CUR(0) & FLASH_OPTSR_RDP_MASK)
-		!= FLASH_OPTSR_RDP_LEVEL_0;
+	return (STM32_FLASH_OPTSR_CUR(0) & FLASH_OPTSR_RDP_MASK) !=
+	       FLASH_OPTSR_RDP_LEVEL_0;
 #else
 	return !!(STM32_FLASH_OPTSR_CUR(0) & FLASH_OPTSR_RSS1);
 #endif
@@ -311,8 +309,8 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 	STM32_FLASH_CCR(bank) = FLASH_CCR_ERR_MASK;
 
 	/* select write parallelism */
-	STM32_FLASH_CR(bank) = (STM32_FLASH_CR(bank) & ~FLASH_CR_PSIZE_MASK)
-			| DEFAULT_PSIZE;
+	STM32_FLASH_CR(bank) = (STM32_FLASH_CR(bank) & ~FLASH_CR_PSIZE_MASK) |
+			       DEFAULT_PSIZE;
 
 	/* set PG bit */
 	STM32_FLASH_CR(bank) |= FLASH_CR_PG;
@@ -326,18 +324,21 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 
 		/* write a 256-bit flash word */
 		if (unaligned) {
-			for (i = 0; i < CONFIG_FLASH_WRITE_SIZE / 4; i++,
-								     data += 4)
-				*address++ = (uint32_t)data[0] | (data[1] << 8)
-					   | (data[2] << 16) | (data[3] << 24);
+			for (i = 0; i < CONFIG_FLASH_WRITE_SIZE / 4;
+			     i++, data += 4)
+				*address++ = (uint32_t)data[0] |
+					     (data[1] << 8) | (data[2] << 16) |
+					     (data[3] << 24);
 		} else {
 			for (i = 0; i < CONFIG_FLASH_WRITE_SIZE / 4; i++)
 				*address++ = *data32++;
 		}
 
 		/* Wait for writes to complete */
-		for (i = 0; (STM32_FLASH_SR(bank) &
-		     (FLASH_SR_WBNE | FLASH_SR_QW)) && (i < timeout); i++)
+		for (i = 0;
+		     (STM32_FLASH_SR(bank) & (FLASH_SR_WBNE | FLASH_SR_QW)) &&
+		     (i < timeout);
+		     i++)
 			;
 
 		if (STM32_FLASH_SR(bank) & (FLASH_SR_WBNE | FLASH_SR_QW)) {
@@ -386,16 +387,16 @@ int crec_flash_physical_erase(int offset, int size)
 	STM32_FLASH_CCR(bank) = FLASH_CCR_ERR_MASK;
 
 	/* select erase parallelism */
-	STM32_FLASH_CR(bank) = (STM32_FLASH_CR(bank) & ~FLASH_CR_PSIZE_MASK)
-			| DEFAULT_PSIZE;
+	STM32_FLASH_CR(bank) = (STM32_FLASH_CR(bank) & ~FLASH_CR_PSIZE_MASK) |
+			       DEFAULT_PSIZE;
 
 	for (sect = offset / CONFIG_FLASH_ERASE_SIZE; sect < last; sect++) {
 		timestamp_t deadline;
 
 		/* select page to erase and PER bit */
-		STM32_FLASH_CR(bank) = (STM32_FLASH_CR(bank)
-					& ~FLASH_CR_SNB_MASK)
-				| FLASH_CR_SER | FLASH_CR_SNB(sect);
+		STM32_FLASH_CR(bank) =
+			(STM32_FLASH_CR(bank) & ~FLASH_CR_SNB_MASK) |
+			FLASH_CR_SER | FLASH_CR_SNB(sect);
 
 		/* set STRT bit : start erase */
 		STM32_FLASH_CR(bank) |= FLASH_CR_STRT;
@@ -516,8 +517,7 @@ int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 
 uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
@@ -549,11 +549,11 @@ int crec_flash_physical_restore_state(void)
 	/*
 	 * If we have already jumped between images, an earlier image could
 	 * have applied write protection. We simply need to represent these
-         * irreversible flags to other components.
+	 * irreversible flags to other components.
 	 */
 	if (reset_flags & EC_RESET_FLAG_SYSJUMP) {
 		prev = (const struct flash_wp_state *)system_get_jump_tag(
-				FLASH_SYSJUMP_TAG, &version, &size);
+			FLASH_SYSJUMP_TAG, &version, &size);
 		if (prev && version == FLASH_HOOK_VERSION &&
 		    size == sizeof(*prev)) {
 			access_disabled = prev->access_disabled;
@@ -571,7 +571,7 @@ int crec_flash_pre_init(void)
 	uint32_t reset_flags = system_get_reset_flags();
 	uint32_t prot_flags = crec_flash_get_protect();
 	uint32_t unwanted_prot_flags = EC_FLASH_PROTECT_ALL_NOW |
-		EC_FLASH_PROTECT_ERROR_INCONSISTENT;
+				       EC_FLASH_PROTECT_ERROR_INCONSISTENT;
 
 	if (crec_flash_physical_restore_state())
 		return EC_SUCCESS;
