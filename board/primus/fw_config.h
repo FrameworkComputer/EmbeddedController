@@ -25,21 +25,18 @@ enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
-enum ec_cfg_mlb_usb {
-	MLB_USB_TBT = 0,
-	MLB_USB_USB4 = 1
-};
+enum ec_cfg_mlb_usb { MLB_USB_TBT = 0, MLB_USB_USB4 = 1 };
 
 union primus_cbi_fw_config {
 	struct {
-		enum ec_cfg_usb_db_type			usb_db : 4;
-		uint32_t				sd_db : 2;
-		uint32_t				reserved_0 : 1;
-		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
-		uint32_t				audio : 3;
-		uint32_t				cellular_db : 2;
-		enum ec_cfg_mlb_usb			mlb_usb : 1;
-		uint32_t				reserved_1 : 18;
+		enum ec_cfg_usb_db_type usb_db : 4;
+		uint32_t sd_db : 2;
+		uint32_t reserved_0 : 1;
+		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
+		uint32_t audio : 3;
+		uint32_t cellular_db : 2;
+		enum ec_cfg_mlb_usb mlb_usb : 1;
+		uint32_t reserved_1 : 18;
 	};
 	uint32_t raw_value;
 };
