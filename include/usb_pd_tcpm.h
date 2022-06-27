@@ -15,7 +15,7 @@
 #include "i2c.h"
 
 /* Time to wait for TCPC to complete transmit */
-#define PD_T_TCPC_TX_TIMEOUT  (100*MSEC)
+#define PD_T_TCPC_TX_TIMEOUT (100 * MSEC)
 
 enum usbpd_cc_pin {
 	USBPD_CC_PIN_1,
@@ -25,8 +25,8 @@ enum usbpd_cc_pin {
 /* Detected resistor values of port partner */
 enum tcpc_cc_voltage_status {
 	TYPEC_CC_VOLT_OPEN = 0,
-	TYPEC_CC_VOLT_RA = 1,	  /* Port partner is applying Ra */
-	TYPEC_CC_VOLT_RD = 2,	  /* Port partner is applying Rd */
+	TYPEC_CC_VOLT_RA = 1, /* Port partner is applying Ra */
+	TYPEC_CC_VOLT_RD = 2, /* Port partner is applying Rd */
 	TYPEC_CC_VOLT_RP_DEF = 5, /* Port partner is applying Rp (0.5A) */
 	TYPEC_CC_VOLT_RP_1_5 = 6, /* Port partner is applying Rp (1.5A) */
 	TYPEC_CC_VOLT_RP_3_0 = 7, /* Port partner is applying Rp (3.0A) */
@@ -42,7 +42,7 @@ enum tcpc_cc_pull {
 };
 
 /* Pull-up values we apply as a SRC to advertise different current limits */
-FORWARD_DECLARE_ENUM(tcpc_rp_value) {
+FORWARD_DECLARE_ENUM(tcpc_rp_value){
 	TYPEC_RP_USB = 0,
 	TYPEC_RP_1A5 = 1,
 	TYPEC_RP_3A0 = 2,
@@ -58,8 +58,8 @@ enum tcpc_drp {
 /**
  * Returns whether the polarity without the DTS extension
  */
-static inline enum tcpc_cc_polarity polarity_rm_dts(
-	enum tcpc_cc_polarity polarity)
+static inline enum tcpc_cc_polarity
+polarity_rm_dts(enum tcpc_cc_polarity polarity)
 {
 	BUILD_ASSERT(POLARITY_COUNT == 4);
 	return (enum tcpc_cc_polarity)(polarity & BIT(0));
@@ -91,9 +91,9 @@ enum tcpci_msg_type {
 enum tcpc_transmit_complete {
 	TCPC_TX_UNSET = -1,
 	TCPC_TX_WAIT = 0,
-	TCPC_TX_COMPLETE_SUCCESS =   1,
+	TCPC_TX_COMPLETE_SUCCESS = 1,
 	TCPC_TX_COMPLETE_DISCARDED = 2,
-	TCPC_TX_COMPLETE_FAILED =    3,
+	TCPC_TX_COMPLETE_FAILED = 3,
 };
 
 /*
@@ -102,9 +102,9 @@ enum tcpc_transmit_complete {
  * Return true on Vbus check if Vbus is...
  */
 enum vbus_level {
-	VBUS_SAFE0V,	/* less than vSafe0V max */
-	VBUS_PRESENT,	/* at least vSafe5V min */
-	VBUS_REMOVED,	/* less than vSinkDisconnect max */
+	VBUS_SAFE0V, /* less than vSafe0V max */
+	VBUS_PRESENT, /* at least vSafe5V min */
+	VBUS_REMOVED, /* less than vSinkDisconnect max */
 };
 
 /**
@@ -120,7 +120,7 @@ static inline int cc_is_rp(enum tcpc_cc_voltage_status cc)
  * Returns true if both CC lines are completely open.
  */
 static inline int cc_is_open(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+			     enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_OPEN && cc2 == TYPEC_CC_VOLT_OPEN;
 }
@@ -129,7 +129,7 @@ static inline int cc_is_open(enum tcpc_cc_voltage_status cc1,
  * Returns true if we detect the port partner is a snk debug accessory.
  */
 static inline int cc_is_snk_dbg_acc(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+				    enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_RD && cc2 == TYPEC_CC_VOLT_RD;
 }
@@ -138,7 +138,7 @@ static inline int cc_is_snk_dbg_acc(enum tcpc_cc_voltage_status cc1,
  * Returns true if we detect the port partner is a src debug accessory.
  */
 static inline int cc_is_src_dbg_acc(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+				    enum tcpc_cc_voltage_status cc2)
 {
 	return cc_is_rp(cc1) && cc_is_rp(cc2);
 }
@@ -147,7 +147,7 @@ static inline int cc_is_src_dbg_acc(enum tcpc_cc_voltage_status cc1,
  * Returns true if the port partner is an audio accessory.
  */
 static inline int cc_is_audio_acc(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+				  enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_RA && cc2 == TYPEC_CC_VOLT_RA;
 }
@@ -156,7 +156,7 @@ static inline int cc_is_audio_acc(enum tcpc_cc_voltage_status cc1,
  * Returns true if the port partner is presenting at least one Rd
  */
 static inline int cc_is_at_least_one_rd(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+					enum tcpc_cc_voltage_status cc2)
 {
 	return cc1 == TYPEC_CC_VOLT_RD || cc2 == TYPEC_CC_VOLT_RD;
 }
@@ -165,7 +165,7 @@ static inline int cc_is_at_least_one_rd(enum tcpc_cc_voltage_status cc1,
  * Returns true if the port partner is presenting Rd on only one CC line.
  */
 static inline int cc_is_only_one_rd(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2)
+				    enum tcpc_cc_voltage_status cc2)
 {
 	return cc_is_at_least_one_rd(cc1, cc2) && cc1 != cc2;
 }
@@ -200,7 +200,7 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*get_cc)(int port, enum tcpc_cc_voltage_status *cc1,
-		enum tcpc_cc_voltage_status *cc2);
+		      enum tcpc_cc_voltage_status *cc2);
 
 	/**
 	 * Check VBUS level
@@ -233,7 +233,8 @@ struct tcpm_drv {
 	int (*select_rp_value)(int port, int rp);
 
 	/**
-	 * Set the CC pull resistor. This sets our role as either source or sink.
+	 * Set the CC pull resistor. This sets our role as either source or
+	 * sink.
 	 *
 	 * @param port Type-C port number
 	 * @param pull One of enum tcpc_cc_pull
@@ -321,7 +322,7 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*transmit)(int port, enum tcpci_msg_type type, uint16_t header,
-					const uint32_t *data);
+			const uint32_t *data);
 
 	/**
 	 * TCPC is asserting alert
@@ -344,8 +345,7 @@ struct tcpm_drv {
 	 * @param port Type-C port number
 	 * @param enable Auto Discharge enable or disable
 	 */
-	void (*tcpc_enable_auto_discharge_disconnect)(int port,
-						      int enable);
+	void (*tcpc_enable_auto_discharge_disconnect)(int port, int enable);
 
 	/**
 	 * Manual control of TCPC DebugAccessory enable
@@ -384,7 +384,7 @@ struct tcpm_drv {
 	 * @return EC_SUCCESS or error
 	 */
 	int (*get_chip_info)(int port, int live,
-			struct ec_response_pd_chip_info_v1 *info);
+			     struct ec_response_pd_chip_info_v1 *info);
 
 	/**
 	 * Request current sinking state of the TCPC
@@ -478,7 +478,7 @@ struct tcpm_drv {
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	 int (*set_frs_enable)(int port, int enable);
+	int (*set_frs_enable)(int port, int enable);
 #endif
 
 	/**
@@ -489,7 +489,7 @@ struct tcpm_drv {
 	 *
 	 * @return EC_SUCCESS or error
 	 */
-	 int (*handle_fault)(int port, int fault);
+	int (*handle_fault)(int port, int fault);
 
 	/**
 	 * Controls BIST Test Mode (or analogous functionality) in the TCPC and
@@ -500,7 +500,7 @@ struct tcpm_drv {
 	 * @param enable true to enter BIST Test Mode; false to exit
 	 * @return EC_SUCCESS or error code
 	 */
-	 enum ec_error_list (*set_bist_test_mode)(int port, bool enable);
+	enum ec_error_list (*set_bist_test_mode)(int port, bool enable);
 
 #ifdef CONFIG_CMD_TCPC_DUMP
 	/**
@@ -508,7 +508,7 @@ struct tcpm_drv {
 	 *
 	 * @param port Type-C port number
 	 */
-	 void (*dump_registers)(int port);
+	void (*dump_registers)(int port);
 #endif /* defined(CONFIG_CMD_TCPC_DUMP) */
 
 	int (*reset_bist_type_2)(int port);
@@ -534,20 +534,20 @@ struct tcpm_drv {
  * Bit 7 --> TCPC controls FRS (even when CONFIG_USB_PD_FRS_TCPC is off)
  * Bit 8 --> TCPC enable VBUS monitoring
  */
-#define TCPC_FLAGS_ALERT_ACTIVE_HIGH	BIT(0)
-#define TCPC_FLAGS_ALERT_OD		BIT(1)
-#define TCPC_FLAGS_RESET_ACTIVE_HIGH	BIT(2)
-#define TCPC_FLAGS_TCPCI_REV2_0		BIT(3)
-#define TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V	BIT(4)
-#define TCPC_FLAGS_NO_DEBUG_ACC_CONTROL	BIT(5)
-#define TCPC_FLAGS_CONTROL_VCONN	BIT(6)
-#define TCPC_FLAGS_CONTROL_FRS		BIT(7)
-#define TCPC_FLAGS_VBUS_MONITOR		BIT(8)
+#define TCPC_FLAGS_ALERT_ACTIVE_HIGH BIT(0)
+#define TCPC_FLAGS_ALERT_OD BIT(1)
+#define TCPC_FLAGS_RESET_ACTIVE_HIGH BIT(2)
+#define TCPC_FLAGS_TCPCI_REV2_0 BIT(3)
+#define TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V BIT(4)
+#define TCPC_FLAGS_NO_DEBUG_ACC_CONTROL BIT(5)
+#define TCPC_FLAGS_CONTROL_VCONN BIT(6)
+#define TCPC_FLAGS_CONTROL_FRS BIT(7)
+#define TCPC_FLAGS_VBUS_MONITOR BIT(8)
 
 #endif /* !CONFIG_ZEPHYR */
 
 struct tcpc_config_t {
-	enum ec_bus_type bus_type;	/* enum ec_bus_type */
+	enum ec_bus_type bus_type; /* enum ec_bus_type */
 	union {
 		struct i2c_info_t i2c_info;
 	};
@@ -632,9 +632,9 @@ int tcpc_get_vbus_voltage(int port);
 
 #ifdef CONFIG_CMD_TCPC_DUMP
 struct tcpc_reg_dump_map {
-	uint8_t		addr;
-	uint8_t		size;
-	const char	*name;
+	uint8_t addr;
+	uint8_t size;
+	const char *name;
 };
 
 /**
@@ -654,6 +654,6 @@ void tcpc_dump_std_registers(int port);
  *
  */
 void tcpc_dump_registers(int port, const struct tcpc_reg_dump_map *reg,
-			  int count);
+			 int count);
 #endif
 #endif /* __CROS_EC_USB_PD_TCPM_H */
