@@ -35,15 +35,15 @@ enum led_color {
 	LED_OFF = 0,
 	LED_AMBER,
 	LED_BLUE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static void led_set_color(enum led_color color)
 {
 	gpio_set_level(GPIO_LED_ORANGE,
-		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
 	gpio_set_level(GPIO_LED_BLUE,
-		(color == LED_BLUE) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_BLUE) ? BAT_LED_ON : BAT_LED_OFF);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -80,7 +80,7 @@ static void board_led_set_battery(void)
 		break;
 	case PWR_STATE_DISCHARGE:
 		if (chipset_in_or_transitioning_to_state(
-		    CHIPSET_STATE_ANY_SUSPEND)) {
+			    CHIPSET_STATE_ANY_SUSPEND)) {
 			/* Discharging in S3: Amber 1 sec, off 3 sec */
 			period = (1 + 3) * LED_ONE_SEC;
 			battery_ticks = battery_ticks % period;
@@ -89,7 +89,7 @@ static void board_led_set_battery(void)
 			else
 				color = LED_OFF;
 		} else if (chipset_in_or_transitioning_to_state(
-			   CHIPSET_STATE_ANY_OFF)) {
+				   CHIPSET_STATE_ANY_OFF)) {
 			/* Discharging in S5: off */
 			color = LED_OFF;
 		} else {
