@@ -58,12 +58,12 @@ static int pcf85063a_read_time_regs(const struct device *dev, bool is_alarm)
 		num_reg = NUM_TIMER_REGS;
 	}
 
-	return i2c_burst_read(config->bus,
-		config->i2c_addr_flags, start_reg, data->time_reg, num_reg);
+	return i2c_burst_read(config->bus, config->i2c_addr_flags, start_reg,
+			      data->time_reg, num_reg);
 }
 
-static int pcf85063a_read_reg(const struct device *dev,
-						uint8_t reg, uint8_t *val)
+static int pcf85063a_read_reg(const struct device *dev, uint8_t reg,
+			      uint8_t *val)
 {
 	const struct nxp_rtc_pcf85063a_config *const config = DRV_CONFIG(dev);
 
@@ -95,13 +95,12 @@ static int pcf85063a_write_time_regs(const struct device *dev, bool is_alarm)
 		tx_buf[i] = data->time_reg[i];
 	}
 
-	return i2c_burst_write(config->bus,
-			config->i2c_addr_flags, start_reg, tx_buf, num_reg);
+	return i2c_burst_write(config->bus, config->i2c_addr_flags, start_reg,
+			       tx_buf, num_reg);
 }
 
-
-static int pcf85063a_write_reg(const struct device *dev,
-						uint8_t reg, uint8_t val)
+static int pcf85063a_write_reg(const struct device *dev, uint8_t reg,
+			       uint8_t val)
 {
 	const struct nxp_rtc_pcf85063a_config *const config = DRV_CONFIG(dev);
 	uint8_t tx_buf[2];
@@ -109,8 +108,8 @@ static int pcf85063a_write_reg(const struct device *dev,
 	tx_buf[0] = reg;
 	tx_buf[1] = val;
 
-	return i2c_write(config->bus,
-		tx_buf, sizeof(tx_buf), config->i2c_addr_flags);
+	return i2c_write(config->bus, tx_buf, sizeof(tx_buf),
+			 config->i2c_addr_flags);
 }
 
 /*
@@ -138,7 +137,7 @@ static uint8_t dec_to_bcd(uint32_t val, enum bcd_mask mask)
 }
 
 static int nxp_rtc_pcf85063a_read_seconds(const struct device *dev,
-					uint32_t *value, bool is_alarm)
+					  uint32_t *value, bool is_alarm)
 {
 	struct nxp_rtc_pcf85063a_data *data = DRV_DATA(dev);
 	struct calendar_date time;
@@ -152,31 +151,30 @@ static int nxp_rtc_pcf85063a_read_seconds(const struct device *dev,
 
 	if (is_alarm) {
 		*value = (bcd_to_dec(data->time_reg[DAYS], DAYS_MASK) *
-				SECS_PER_DAY) +
-			(bcd_to_dec(data->time_reg[HOURS], HOURS24_MASK) *
-				SECS_PER_HOUR) +
-			(bcd_to_dec(data->time_reg[MINUTES], MINUTES_MASK) *
-				SECS_PER_MINUTE) +
-			bcd_to_dec(data->time_reg[SECONDS], SECONDS_MASK);
+			  SECS_PER_DAY) +
+			 (bcd_to_dec(data->time_reg[HOURS], HOURS24_MASK) *
+			  SECS_PER_HOUR) +
+			 (bcd_to_dec(data->time_reg[MINUTES], MINUTES_MASK) *
+			  SECS_PER_MINUTE) +
+			 bcd_to_dec(data->time_reg[SECONDS], SECONDS_MASK);
 	} else {
 		time.year = bcd_to_dec(data->time_reg[YEARS], YEARS_MASK);
-		time.month =
-			bcd_to_dec(data->time_reg[MONTHS], MONTHS_MASK);
+		time.month = bcd_to_dec(data->time_reg[MONTHS], MONTHS_MASK);
 		time.day = bcd_to_dec(data->time_reg[DAYS], DAYS_MASK);
 
 		*value = date_to_sec(time) - SECS_TILL_YEAR_2K +
-			(bcd_to_dec(data->time_reg[HOURS], HOURS24_MASK) *
-				SECS_PER_HOUR) +
-			(bcd_to_dec(data->time_reg[MINUTES], MINUTES_MASK) *
-				SECS_PER_MINUTE) +
-			bcd_to_dec(data->time_reg[SECONDS], SECONDS_MASK);
+			 (bcd_to_dec(data->time_reg[HOURS], HOURS24_MASK) *
+			  SECS_PER_HOUR) +
+			 (bcd_to_dec(data->time_reg[MINUTES], MINUTES_MASK) *
+			  SECS_PER_MINUTE) +
+			 bcd_to_dec(data->time_reg[SECONDS], SECONDS_MASK);
 	}
 
 	return ret;
 }
 
 static int nxp_rtc_pcf85063a_write_seconds(const struct device *dev,
-				uint32_t value, bool is_alarm)
+					   uint32_t value, bool is_alarm)
 {
 	struct nxp_rtc_pcf85063a_data *data = DRV_DATA(dev);
 	struct calendar_date time;
@@ -186,8 +184,7 @@ static int nxp_rtc_pcf85063a_write_seconds(const struct device *dev,
 
 	if (!is_alarm) {
 		data->time_reg[YEARS] = dec_to_bcd(time.year, YEARS_MASK);
-		data->time_reg[MONTHS] =
-				dec_to_bcd(time.month, MONTHS_MASK);
+		data->time_reg[MONTHS] = dec_to_bcd(time.month, MONTHS_MASK);
 	}
 
 	data->time_reg[DAYS] = dec_to_bcd(time.day, DAYS_MASK);
@@ -223,7 +220,7 @@ static int nxp_rtc_pcf85063a_write_seconds(const struct device *dev,
 }
 
 static int nxp_rtc_pcf85063a_configure(const struct device *dev,
-				   cros_rtc_alarm_callback_t callback)
+				       cros_rtc_alarm_callback_t callback)
 {
 	struct nxp_rtc_pcf85063a_data *data = DRV_DATA(dev);
 
@@ -237,7 +234,7 @@ static int nxp_rtc_pcf85063a_configure(const struct device *dev,
 }
 
 static int nxp_rtc_pcf85063a_get_value(const struct device *dev,
-							uint32_t *value)
+				       uint32_t *value)
 {
 	return nxp_rtc_pcf85063a_read_seconds(dev, value, false);
 }
@@ -248,7 +245,8 @@ static int nxp_rtc_pcf85063a_set_value(const struct device *dev, uint32_t value)
 }
 
 static int nxp_rtc_pcf85063a_get_alarm(const struct device *dev,
-			uint32_t *seconds, uint32_t *microseconds)
+				       uint32_t *seconds,
+				       uint32_t *microseconds)
 {
 	*microseconds = 0;
 	return nxp_rtc_pcf85063a_read_seconds(dev, seconds, true);
@@ -275,7 +273,7 @@ static int nxp_rtc_pcf85063a_reset_alarm(const struct device *dev)
 }
 
 static int nxp_rtc_pcf85063a_set_alarm(const struct device *dev,
-			uint32_t seconds, uint32_t microseconds)
+				       uint32_t seconds, uint32_t microseconds)
 {
 	int ret;
 
@@ -297,7 +295,7 @@ static int nxp_rtc_pcf85063a_set_alarm(const struct device *dev,
 }
 
 static void nxp_pcf85063a_isr(const struct device *port,
-				struct gpio_callback *cb, uint32_t pin)
+			      struct gpio_callback *cb, uint32_t pin)
 {
 	struct nxp_rtc_pcf85063a_data *data =
 		CONTAINER_OF(cb, struct nxp_rtc_pcf85063a_data, gpio_cb);
@@ -400,8 +398,8 @@ static int nxp_rtc_pcf85063a_init(const struct device *dev)
 		return ret;
 	}
 
-	gpio_init_callback(&data->gpio_cb,
-			nxp_pcf85063a_isr, BIT(config->gpio_alert.pin));
+	gpio_init_callback(&data->gpio_cb, nxp_pcf85063a_isr,
+			   BIT(config->gpio_alert.pin));
 
 	ret = gpio_add_callback(config->gpio_alert.port, &data->gpio_cb);
 
@@ -416,8 +414,7 @@ static int nxp_rtc_pcf85063a_init(const struct device *dev)
 					       GPIO_INT_EDGE_FALLING);
 }
 
-#define PCF85063A_INT_GPIOS \
-	DT_PHANDLE(DT_NODELABEL(pcf85063a), int_pin)
+#define PCF85063A_INT_GPIOS DT_PHANDLE(DT_NODELABEL(pcf85063a), int_pin)
 
 /*
  * dt_flags is a uint8_t type.  However, for platform/ec
@@ -426,19 +423,17 @@ static int nxp_rtc_pcf85063a_init(const struct device *dev)
  * Cast back to a gpio_dt_flags to compile, discarding the bits
  * that are not supported by the Zephyr GPIO API.
  */
-#define CROS_EC_GPIO_DT_SPEC_GET(node_id, prop)                     \
-	{                                                           \
-		.port = DEVICE_DT_GET(DT_GPIO_CTLR(node_id, prop)), \
-		.pin = DT_GPIO_PIN(node_id, prop),                  \
-		.dt_flags =                                         \
-		(gpio_dt_flags_t)DT_GPIO_FLAGS(node_id, prop),      \
+#define CROS_EC_GPIO_DT_SPEC_GET(node_id, prop)                            \
+	{                                                                  \
+		.port = DEVICE_DT_GET(DT_GPIO_CTLR(node_id, prop)),        \
+		.pin = DT_GPIO_PIN(node_id, prop),                         \
+		.dt_flags = (gpio_dt_flags_t)DT_GPIO_FLAGS(node_id, prop), \
 	}
 
 static const struct nxp_rtc_pcf85063a_config nxp_rtc_pcf85063a_cfg_0 = {
 	.bus = DEVICE_DT_GET(DT_INST_BUS(0)),
 	.i2c_addr_flags = DT_INST_REG_ADDR(0),
-	.gpio_alert =
-		CROS_EC_GPIO_DT_SPEC_GET(PCF85063A_INT_GPIOS, gpios)
+	.gpio_alert = CROS_EC_GPIO_DT_SPEC_GET(PCF85063A_INT_GPIOS, gpios)
 };
 
 static struct nxp_rtc_pcf85063a_data nxp_rtc_pcf85063a_data_0;
