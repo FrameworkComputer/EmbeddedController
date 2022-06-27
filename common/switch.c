@@ -19,7 +19,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ##args)
 
 static uint8_t *memmap_switches;
 
@@ -105,12 +105,8 @@ static int command_mmapinfo(int argc, char **argv)
 	uint8_t val = *memmap_switches;
 	int i;
 	const char *explanation[] = {
-		"lid_open",
-		"powerbtn",
-		"wp_off",
-		"kbd_rec",
-		"gpio_rec",
-		"fake_dev",
+		"lid_open", "powerbtn", "wp_off",
+		"kbd_rec",  "gpio_rec", "fake_dev",
 	};
 	ccprintf("memmap switches = 0x%x\n", val);
 	for (i = 0; i < ARRAY_SIZE(explanation); i++)
@@ -119,7 +115,6 @@ static int command_mmapinfo(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo,
-			NULL,
+DECLARE_CONSOLE_COMMAND(mmapinfo, command_mmapinfo, NULL,
 			"Print memmap switch state");
 #endif
