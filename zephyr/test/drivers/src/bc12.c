@@ -27,8 +27,8 @@ LOG_MODULE_REGISTER(test_drivers_bc12, LOG_LEVEL_DBG);
 /* Control_1 register bit definitions */
 #define PI3USB9201_REG_CTRL_1_INT_MASK BIT(0)
 #define PI3USB9201_REG_CTRL_1_MODE_SHIFT 1
-#define PI3USB9201_REG_CTRL_1_MODE_MASK (0x7 << \
-					 PI3USB9201_REG_CTRL_1_MODE_SHIFT)
+#define PI3USB9201_REG_CTRL_1_MODE_MASK \
+	(0x7 << PI3USB9201_REG_CTRL_1_MODE_SHIFT)
 
 /* Control_2 register bit definitions */
 #define PI3USB9201_REG_CTRL_2_AUTO_SW BIT(1)
@@ -67,26 +67,26 @@ struct bc12_status {
 };
 
 static const struct bc12_status bc12_chg_limits[] = {
-	[CHG_OTHER]    = { .supplier = CHARGE_SUPPLIER_OTHER,
-			   .current_limit = 500 },
-	[CHG_2_4A]     = { .supplier = CHARGE_SUPPLIER_PROPRIETARY,
-			   .current_limit = USB_CHARGER_MAX_CURR_MA },
-	[CHG_2_0A]     = { .supplier = CHARGE_SUPPLIER_PROPRIETARY,
-			   .current_limit = USB_CHARGER_MAX_CURR_MA },
-	[CHG_1_0A]     = { .supplier = CHARGE_SUPPLIER_PROPRIETARY,
-			   .current_limit = 1000 },
+	[CHG_OTHER] = { .supplier = CHARGE_SUPPLIER_OTHER,
+			.current_limit = 500 },
+	[CHG_2_4A] = { .supplier = CHARGE_SUPPLIER_PROPRIETARY,
+		       .current_limit = USB_CHARGER_MAX_CURR_MA },
+	[CHG_2_0A] = { .supplier = CHARGE_SUPPLIER_PROPRIETARY,
+		       .current_limit = USB_CHARGER_MAX_CURR_MA },
+	[CHG_1_0A] = { .supplier = CHARGE_SUPPLIER_PROPRIETARY,
+		       .current_limit = 1000 },
 	[CHG_RESERVED] = { .supplier = CHARGE_SUPPLIER_NONE,
 			   .current_limit = 0 },
-	[CHG_CDP]      = { .supplier = CHARGE_SUPPLIER_BC12_CDP,
-			   .current_limit = USB_CHARGER_MAX_CURR_MA },
-	[CHG_SDP]      = { .supplier = CHARGE_SUPPLIER_BC12_SDP,
-			   .current_limit = 500 },
+	[CHG_CDP] = { .supplier = CHARGE_SUPPLIER_BC12_CDP,
+		      .current_limit = USB_CHARGER_MAX_CURR_MA },
+	[CHG_SDP] = { .supplier = CHARGE_SUPPLIER_BC12_SDP,
+		      .current_limit = 500 },
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
-	[CHG_DCP]      = { .supplier = CHARGE_SUPPLIER_BC12_DCP,
-			   .current_limit = USB_CHARGER_MAX_CURR_MA },
+	[CHG_DCP] = { .supplier = CHARGE_SUPPLIER_BC12_DCP,
+		      .current_limit = USB_CHARGER_MAX_CURR_MA },
 #else
-	[CHG_DCP]      = { .supplier = CHARGE_SUPPLIER_BC12_DCP,
-			   .current_limit = 500 },
+	[CHG_DCP] = { .supplier = CHARGE_SUPPLIER_BC12_DCP,
+		      .current_limit = 500 },
 #endif
 };
 
@@ -140,9 +140,10 @@ static void test_bc12_pi3usb9201_host_mode(void)
 	pi3usb9201_emul_set_reg(emul, PI3USB9201_REG_HOST_STS, 0);
 }
 
-static void test_bc12_pi3usb9201_client_mode(
-			enum pi3usb9201_client_sts detect_result,
-			enum charge_supplier supplier, int current_limit)
+static void
+test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
+				 enum charge_supplier supplier,
+				 int current_limit)
 {
 	struct i2c_emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
 	uint8_t a, b;
@@ -188,14 +189,11 @@ static void test_bc12_pi3usb9201_client_mode(
 	}
 	/* Wait for the charge port to update. */
 	msleep(500);
-	zassert_equal(charge_manager_get_active_charge_port(),
-		      port, NULL);
-	zassert_equal(charge_manager_get_supplier(),
-		      supplier, NULL);
-	zassert_equal(charge_manager_get_charger_current(),
-		      current_limit, NULL);
-	zassert_equal(charge_manager_get_charger_voltage(),
-		      voltage, NULL);
+	zassert_equal(charge_manager_get_active_charge_port(), port, NULL);
+	zassert_equal(charge_manager_get_supplier(), supplier, NULL);
+	zassert_equal(charge_manager_get_charger_current(), current_limit,
+		      NULL);
+	zassert_equal(charge_manager_get_charger_voltage(), voltage, NULL);
 
 	/*
 	 * Pretend that the USB-C Port Manager (TCPMv2) has set the port data
@@ -213,10 +211,10 @@ static void test_bc12_pi3usb9201_client_mode(
 	b |= PI3USB9201_REG_CTRL_1_INT_MASK;
 	zassert_equal(a, b, NULL);
 	/* Expect the charge manager to have no active supplier. */
-	zassert_equal(charge_manager_get_active_charge_port(),
-		      CHARGE_PORT_NONE, NULL);
-	zassert_equal(charge_manager_get_supplier(),
-		      CHARGE_SUPPLIER_NONE, NULL);
+	zassert_equal(charge_manager_get_active_charge_port(), CHARGE_PORT_NONE,
+		      NULL);
+	zassert_equal(charge_manager_get_supplier(), CHARGE_SUPPLIER_NONE,
+		      NULL);
 	zassert_equal(charge_manager_get_charger_current(), 0, NULL);
 	zassert_equal(charge_manager_get_charger_voltage(), 0, NULL);
 }
@@ -240,8 +238,9 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 	uint8_t a, b;
 
 	/* Pretend we have battery and AC so charging works normally. */
-	zassert_ok(gpio_emul_input_set(batt_pres_dev,
-				       GPIO_BATT_PRES_ODL_PORT, 0), NULL);
+	zassert_ok(gpio_emul_input_set(batt_pres_dev, GPIO_BATT_PRES_ODL_PORT,
+				       0),
+		   NULL);
 	zassert_equal(BP_YES, battery_is_present(), NULL);
 	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PORT, 1), NULL);
 	msleep(CONFIG_EXTPOWER_DEBOUNCE_MS + 1);
@@ -269,9 +268,9 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 	test_bc12_pi3usb9201_host_mode();
 
 	for (int c = CHG_OTHER; c <= CHG_DCP; c++) {
-		test_bc12_pi3usb9201_client_mode(c,
-					bc12_chg_limits[c].supplier,
-					bc12_chg_limits[c].current_limit);
+		test_bc12_pi3usb9201_client_mode(
+			c, bc12_chg_limits[c].supplier,
+			bc12_chg_limits[c].current_limit);
 	}
 }
 
