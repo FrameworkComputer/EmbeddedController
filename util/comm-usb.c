@@ -17,9 +17,9 @@
 #include "misc_util.h"
 #include "usb_descriptor.h"
 
-#define USB_ERROR(m, r) \
-	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, \
-		m, r, libusb_strerror(r))
+#define USB_ERROR(m, r)                                                        \
+	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, m, \
+		r, libusb_strerror(r))
 
 #ifdef DEBUG
 #define debug(fmt, arg...) printf("%s:%d: " fmt, __FILE__, __LINE__, ##arg)
@@ -58,14 +58,12 @@ void comm_usb_exit(void)
 static int do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 		   void *inbuf, int inlen, int allow_less)
 {
-
 	int r, actual;
 
 	/* Send data out */
 	if (outbuf && outlen) {
 		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num,
-					 outbuf, outlen,
+		r = libusb_bulk_transfer(uep->devh, uep->ep_num, outbuf, outlen,
 					 &actual, 2000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
@@ -83,8 +81,7 @@ static int do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 	if (inbuf && inlen) {
 		actual = 0;
 		r = libusb_bulk_transfer(uep->devh, uep->ep_num | USB_DIR_IN,
-					 inbuf, inlen,
-					 &actual, 5000);
+					 inbuf, inlen, &actual, 5000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
 			return r;
@@ -161,9 +158,8 @@ int parse_vidpid(const char *input, uint16_t *vid_ptr, uint16_t *pid_ptr)
 	return 1;
 }
 
-static libusb_device_handle *check_device(libusb_device *dev,
-					  uint16_t vid, uint16_t pid,
-					  char *serialno)
+static libusb_device_handle *check_device(libusb_device *dev, uint16_t vid,
+					  uint16_t pid, char *serialno)
 {
 	struct libusb_device_descriptor desc;
 	libusb_device_handle *handle = NULL;
@@ -181,7 +177,9 @@ static libusb_device_handle *check_device(libusb_device *dev,
 
 	if (desc.iSerialNumber) {
 		r = libusb_get_string_descriptor_ascii(handle,
-			desc.iSerialNumber, (unsigned char *)sn, sizeof(sn));
+						       desc.iSerialNumber,
+						       (unsigned char *)sn,
+						       sizeof(sn));
 		if (r > 0)
 			snvalid = 1;
 	}
@@ -196,8 +194,8 @@ static libusb_device_handle *check_device(libusb_device *dev,
 	return handle;
 }
 
-static int find_endpoint(uint16_t vid, uint16_t pid,
-			 char *serialno, struct usb_endpoint *uep)
+static int find_endpoint(uint16_t vid, uint16_t pid, char *serialno,
+			 struct usb_endpoint *uep)
 {
 	int iface_num, r, i;
 	libusb_device **devs;
@@ -244,8 +242,8 @@ static int find_endpoint(uint16_t vid, uint16_t pid,
 		return -1;
 	}
 
-	debug("Found interface %d endpoint=%d, chunk_len=%d\n",
-	      iface_num, uep->ep_num, uep->chunk_len);
+	debug("Found interface %d endpoint=%d, chunk_len=%d\n", iface_num,
+	      uep->ep_num, uep->chunk_len);
 
 	libusb_set_auto_detach_kernel_driver(uep->devh, 1);
 	r = libusb_claim_interface(uep->devh, iface_num);
@@ -270,9 +268,8 @@ static int sum_bytes(const void *data, int length)
 	return sum;
 }
 
-static int ec_command_usb(int command, int version,
-			  const void *outdata, int outsize,
-			  void *indata, int insize)
+static int ec_command_usb(int command, int version, const void *outdata,
+			  int outsize, void *indata, int insize)
 {
 	struct ec_host_request *req;
 	struct ec_host_response *res;
@@ -289,7 +286,7 @@ static int ec_command_usb(int command, int version,
 	if (req == NULL || res == NULL)
 		goto out;
 
-	req->struct_version = EC_HOST_REQUEST_VERSION;  /* 3 */
+	req->struct_version = EC_HOST_REQUEST_VERSION; /* 3 */
 	req->checksum = 0;
 	req->command = command;
 	req->command_version = version;
@@ -338,4 +335,3 @@ int comm_init_usb(uint16_t vid, uint16_t pid)
 
 	return 0;
 }
-
