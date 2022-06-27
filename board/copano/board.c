@@ -42,7 +42,7 @@
 
 #include "gpio_list.h" /* Must come after other header files. */
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
@@ -77,8 +77,8 @@ static const struct ec_response_keybd_config copano_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &copano_kb;
 }
@@ -93,7 +93,6 @@ union volteer_cbi_fw_config fw_config_defaults = {
 
 static void board_init(void)
 {
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -180,8 +179,8 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -208,8 +207,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_INDUCTOR \
-	{ \
+#define THERMAL_INDUCTOR         \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -277,7 +276,6 @@ __override void board_cbi_init(void)
 	/* Reassign USB_C0_RT_RST_ODL */
 	bb_controls[USBC_PORT_C0].usb_ls_en_gpio = GPIO_USB_C0_LS_EN;
 	bb_controls[USBC_PORT_C0].retimer_rst_gpio = GPIO_USB_C0_RT_RST_ODL;
-
 }
 
 /******************************************************************************/
