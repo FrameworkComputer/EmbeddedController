@@ -28,8 +28,8 @@
 #include "gpio_list.h" /* Must come after other header files. */
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /******************************************************************************/
 /* USB-A charging control */
@@ -66,14 +66,13 @@ enum battery_present battery_hw_present(void)
 }
 
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
-					  int max_ma, int charge_mv)
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Limit the input current to 95% negotiated limit,
 	 * to account for the charger chip margin.
 	 */
 	charge_ma = charge_ma * 95 / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
