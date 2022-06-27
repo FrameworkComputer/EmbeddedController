@@ -72,15 +72,15 @@ extern int *const ipi_wakeup_table[];
  * handler: The IPI handler function
  * is_wakeup_src: Declare IPI ID as a wake-up source or not
  */
-#define DECLARE_IPI(_id, handler, is_wakeup_src) \
-	struct ipi_num_check##_id { \
-		int tmp1[_id < IPI_COUNT ? 1 : -1]; \
+#define DECLARE_IPI(_id, handler, is_wakeup_src)                             \
+	struct ipi_num_check##_id {                                          \
+		int tmp1[_id < IPI_COUNT ? 1 : -1];                          \
 		int tmp2[is_wakeup_src == 0 || is_wakeup_src == 1 ? 1 : -1]; \
-	};  \
-	void __keep IPI_HANDLER(_id)(int32_t id, void *buf, uint32_t len) \
-	{ \
-		handler(id, buf, len); \
-	} \
+	};                                                                   \
+	void __keep IPI_HANDLER(_id)(int32_t id, void *buf, uint32_t len)    \
+	{                                                                    \
+		handler(id, buf, len);                                       \
+	}                                                                    \
 	const int __keep IPI_WAKEUP(_id) = is_wakeup_src
 
 #endif /* __CROS_EC_IPI_CHIP_H */
