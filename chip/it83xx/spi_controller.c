@@ -17,7 +17,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
 
 enum sspi_clk_sel {
 	sspi_clk_24mhz = 0,
@@ -106,8 +106,8 @@ int spi_enable(const struct spi_device_t *spi_device, int enable)
 }
 
 int spi_transaction(const struct spi_device_t *spi_device,
-		const uint8_t *txdata, int txlen,
-		uint8_t *rxdata, int rxlen)
+		    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+		    int rxlen)
 {
 	int idx;
 	uint8_t port = spi_device->port;
