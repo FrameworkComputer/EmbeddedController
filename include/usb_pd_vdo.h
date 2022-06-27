@@ -134,20 +134,20 @@ struct product_vdo {
 #define PD_PRODUCT_IS_TBT3(vdo) ((vdo) >> 3 & BIT(0))
 
 /* UFP VDO Version 1.2; update the value when UFP VDO version changes */
-#define VDO_UFP1(cap, ctype, alt, speed)			\
-	((0x2) << 29 | ((cap) & 0xf) << 24			\
-	| ((ctype) & 0x3) << 22 | ((alt) & 0x7) << 3 | ((speed) & 0x7))
+#define VDO_UFP1(cap, ctype, alt, speed)                         \
+	((0x2) << 29 | ((cap)&0xf) << 24 | ((ctype)&0x3) << 22 | \
+	 ((alt)&0x7) << 3 | ((speed)&0x7))
 
 /* UFP VDO 1 Alternate Modes */
-#define VDO_UFP1_ALT_MODE_TBT3           BIT(0)
-#define VDO_UFP1_ALT_MODE_RECONFIGURE    BIT(1)
+#define VDO_UFP1_ALT_MODE_TBT3 BIT(0)
+#define VDO_UFP1_ALT_MODE_RECONFIGURE BIT(1)
 #define VDO_UFP1_ALT_MODE_NO_RECONFIGURE BIT(2)
 
 /* UFP VDO 1 Device Capability */
-#define VDO_UFP1_CAPABILITY_USB20           BIT(0)
+#define VDO_UFP1_CAPABILITY_USB20 BIT(0)
 #define VDO_UFP1_CAPABILITY_USB20_BILLBOARD BIT(1)
-#define VDO_UFP1_CAPABILITY_USB32           BIT(2)
-#define VDO_UFP1_CAPABILITY_USB4            BIT(3)
+#define VDO_UFP1_CAPABILITY_USB32 BIT(2)
+#define VDO_UFP1_CAPABILITY_USB4 BIT(3)
 /*****************************************************************************/
 /*
  * Table 6-37 DFP VDO
@@ -170,15 +170,13 @@ struct product_vdo {
  * <4:0>   : Port number
  */
 /* DFP VDO Version 1.1; update the value when DFP VDO version changes */
-#define VDO_DFP(cap, ctype, port)			\
-	((0x1) << 29 | ((cap) & 0x7) << 24	\
-	| ((ctype) & 0x3) << 22 | ((port) & 0x1f))
+#define VDO_DFP(cap, ctype, port) \
+	((0x1) << 29 | ((cap)&0x7) << 24 | ((ctype)&0x3) << 22 | ((port)&0x1f))
 
 /* DFP VDO Host Capability */
 #define VDO_DFP_HOST_CAPABILITY_USB20 BIT(0)
 #define VDO_DFP_HOST_CAPABILITY_USB32 BIT(1)
-#define VDO_DFP_HOST_CAPABILITY_USB4  BIT(2)
-
+#define VDO_DFP_HOST_CAPABILITY_USB4 BIT(2)
 
 /*****************************************************************************/
 /*
@@ -267,7 +265,7 @@ enum usb_vbus_cur {
 
 union passive_cable_vdo_rev30 {
 	struct {
-		enum usb_rev30_ss ss: 3;
+		enum usb_rev30_ss ss : 3;
 		uint32_t reserved0 : 2;
 		enum usb_vbus_cur vbus_cur : 2;
 		uint32_t reserved1 : 2;
@@ -355,7 +353,7 @@ enum vdo_version {
 
 union active_cable_vdo1_rev30 {
 	struct {
-		enum usb_rev30_ss ss: 3;
+		enum usb_rev30_ss ss : 3;
 		uint32_t sop_p_p : 1;
 		uint32_t vbus_cable : 1;
 		enum usb_vbus_cur vbus_cur : 2;
@@ -541,17 +539,11 @@ union active_cable_vdo2_rev30 {
  *           1b – the VPD supports Charge Through
  *           0b – the VPD does not support Charge Through
  */
-#define VDO_VPD(hw, fw, vbus, ctc, vbusz, gndz, cts)  \
-	(((hw) & 0xf) << 28 | ((fw) & 0xf) << 24 \
-	 | ((vbus) & 0x3) << 15                  \
-	 | ((ctc) & 0x1) << 14			 \
-	 | ((vbusz) & 0x3f) << 7                 \
-	 | ((gndz) & 0x3f) << 1 | (cts))
+#define VDO_VPD(hw, fw, vbus, ctc, vbusz, gndz, cts)                \
+	(((hw)&0xf) << 28 | ((fw)&0xf) << 24 | ((vbus)&0x3) << 15 | \
+	 ((ctc)&0x1) << 14 | ((vbusz)&0x3f) << 7 | ((gndz)&0x3f) << 1 | (cts))
 
-enum vpd_ctc_support {
-	VPD_CT_CURRENT_3A,
-	VPD_CT_CURRENT_5A
-};
+enum vpd_ctc_support { VPD_CT_CURRENT_3A, VPD_CT_CURRENT_5A };
 
 enum vpd_vbus {
 	VPD_MAX_VBUS_20V,
@@ -566,12 +558,12 @@ enum vpd_cts_support {
 };
 
 #define VPD_VDO_MAX_VBUS(vdo) (((vdo) >> 15) & 0x3)
-#define VPD_VDO_CURRENT(vdo)  (((vdo) >> 14) & 1)
+#define VPD_VDO_CURRENT(vdo) (((vdo) >> 14) & 1)
 #define VPD_VDO_VBUS_IMP(vdo) (((vdo) >> 7) & 0x3f)
-#define VPD_VDO_GND_IMP(vdo)  (((vdo) >> 1) & 0x3f)
-#define VPD_VDO_CTS(vdo)      ((vdo) & 1)
-#define VPD_VBUS_IMP(mo)      ((mo + 1) >> 1)
-#define VPD_GND_IMP(mo)       (mo)
+#define VPD_VDO_GND_IMP(vdo) (((vdo) >> 1) & 0x3f)
+#define VPD_VDO_CTS(vdo) ((vdo)&1)
+#define VPD_VBUS_IMP(mo) ((mo + 1) >> 1)
+#define VPD_GND_IMP(mo) (mo)
 
 /*
  * ############################################################################
@@ -625,11 +617,10 @@ enum idh_ptype {
  * - Table 6-29 ID Header VDO PD spec 3.0 version 2.0 and
  * - Table 6-23 ID Header VDO PD spec 2.0 version 1.3.
  */
-#define IS_PD_IDH_UFP_PTYPE(ptype) (ptype == IDH_PTYPE_HUB || \
-				    ptype == IDH_PTYPE_PERIPH || \
-				    ptype == IDH_PTYPE_PSD || \
-				    ptype == IDH_PTYPE_AMA ||  \
-				    ptype == IDH_PTYPE_VPD)
+#define IS_PD_IDH_UFP_PTYPE(ptype)                              \
+	(ptype == IDH_PTYPE_HUB || ptype == IDH_PTYPE_PERIPH || \
+	 ptype == IDH_PTYPE_PSD || ptype == IDH_PTYPE_AMA ||    \
+	 ptype == IDH_PTYPE_VPD)
 
 struct id_header_vdo_rev20 {
 	uint16_t usb_vendor_id;
@@ -715,7 +706,7 @@ enum usb_rev20_ss {
 
 union passive_cable_vdo_rev20 {
 	struct {
-		enum usb_rev20_ss ss: 3;
+		enum usb_rev20_ss ss : 3;
 		uint32_t reserved0 : 1;
 		uint32_t vbus_cable : 1;
 		enum usb_vbus_cur vbus_cur : 2;
@@ -798,7 +789,7 @@ union passive_cable_vdo_rev20 {
  */
 union active_cable_vdo_rev20 {
 	struct {
-		enum usb_rev20_ss ss: 3;
+		enum usb_rev20_ss ss : 3;
 		uint32_t sop_p_p : 1;
 		uint32_t vbus_cable : 1;
 		enum usb_vbus_cur vbus_cur : 2;
@@ -866,14 +857,13 @@ union active_cable_vdo_rev20 {
  *           011b = [USB 2.0] billboard only
  *           100b..111b = Reserved, Shall Not be used
  */
-#define VDO_AMA(hw, fw, tx1d, tx2d, rx1d, rx2d, vcpwr, vcr, vbr, usbss) \
-	(((hw) & 0x7) << 28 | ((fw) & 0x7) << 24			\
-	 | (tx1d) << 11 | (tx2d) << 10 | (rx1d) << 9 | (rx2d) << 8	\
-	 | ((vcpwr) & 0x3) << 5 | (vcr) << 4 | (vbr) << 3		\
-	 | ((usbss) & 0x7))
+#define VDO_AMA(hw, fw, tx1d, tx2d, rx1d, rx2d, vcpwr, vcr, vbr, usbss)      \
+	(((hw)&0x7) << 28 | ((fw)&0x7) << 24 | (tx1d) << 11 | (tx2d) << 10 | \
+	 (rx1d) << 9 | (rx2d) << 8 | ((vcpwr)&0x3) << 5 | (vcr) << 4 |       \
+	 (vbr) << 3 | ((usbss)&0x7))
 
 #define PD_VDO_AMA_VCONN_REQ(vdo) (((vdo) >> 4) & 1)
-#define PD_VDO_AMA_VBUS_REQ(vdo)  (((vdo) >> 3) & 1)
+#define PD_VDO_AMA_VBUS_REQ(vdo) (((vdo) >> 3) & 1)
 
 enum ama_usb_ss {
 	AMA_USBSS_U2_ONLY,
