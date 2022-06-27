@@ -20,11 +20,10 @@
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 #undef CONFIG_FLASH_PSTATE_LOCKED
 
-
 /* USB Type C and USB PD defines */
-#define USB_PD_PORT_HOST   0
-#define USB_PD_PORT_DP     1
-#define USB_PD_PORT_USB3   2
+#define USB_PD_PORT_HOST 0
+#define USB_PD_PORT_DP 1
+#define USB_PD_PORT_USB3 2
 
 /*
  * The host (C0) and display (C1) usbc ports are usb-pd capable. There is
@@ -41,9 +40,9 @@
 #define CONFIG_USB_PD_IDENTITY_SW_VERS 1
 
 /* I2C port names */
-#define I2C_PORT_I2C1	0
-#define I2C_PORT_I2C2	1
-#define I2C_PORT_I2C3	2
+#define I2C_PORT_I2C1 0
+#define I2C_PORT_I2C2 1
+#define I2C_PORT_I2C3 2
 
 /* Required symbolic I2C port names */
 #define I2C_PORT_MP4245 I2C_PORT_I2C3
@@ -71,7 +70,7 @@
 #define GPIO_TRIGGER_1 GPIO_EC_STATUS_LED1
 #define GPIO_TRIGGER_2 GPIO_EC_STATUS_LED2
 
-enum  debug_gpio {
+enum debug_gpio {
 	TRIGGER_1 = 0,
 	TRIGGER_2,
 };
