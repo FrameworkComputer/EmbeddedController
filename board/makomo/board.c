@@ -45,8 +45,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -58,40 +58,34 @@ static void tcpc_alert_event(enum gpio_signal signal)
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] =  {"BOARD_ID",  3300, 4096, 0, STM32_AIN(10)},
-	[ADC_EC_SKU_ID] = {"EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8)},
+	[ADC_BOARD_ID] = { "BOARD_ID", 3300, 4096, 0, STM32_AIN(10) },
+	[ADC_EC_SKU_ID] = { "EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "typec",
-		.port = 0,
-		.kbps = 400,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "other",
-		.port = 1,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
+	{ .name = "typec",
+	  .port = 0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "other",
+	  .port = 1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct i2c_port_t i2c_bitbang_ports[] = {
-	{
-		.name = "battery",
-		.port = 2,
-		.kbps = 100,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA,
-		.drv = &bitbang_drv
-	},
+	{ .name = "battery",
+	  .port = 2,
+	  .kbps = 100,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA,
+	  .drv = &bitbang_drv },
 };
 const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
@@ -99,8 +93,8 @@ const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_AP_IN_SLEEP_L,   POWER_SIGNAL_ACTIVE_LOW,  "AP_IN_S3_L"},
-	{GPIO_PMIC_EC_RESETB,  POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD"},
+	{ GPIO_AP_IN_SLEEP_L, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_S3_L" },
+	{ GPIO_PMIC_EC_RESETB, POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
@@ -156,8 +150,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-static void board_hpd_status(const struct usb_mux *me,
-			     mux_state_t mux_state,
+static void board_hpd_status(const struct usb_mux *me, mux_state_t mux_state,
 			     bool *ack_required)
 {
 	/* This driver does not use host command ACKs */
@@ -238,12 +231,12 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-			       CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 int board_discharge_on_ac(int enable)
@@ -300,8 +293,7 @@ static void board_spi_enable(void)
 	/* Pin mux spi peripheral toward the sensor. */
 	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
-	     board_spi_enable,
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_spi_enable,
 	     MOTION_SENSE_HOOK_PRIO - 1);
 
 static void board_spi_disable(void)
@@ -315,8 +307,7 @@ static void board_spi_disable(void)
 	spi_enable(&spi_devices[0], 0);
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
-	     board_spi_disable,
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_spi_disable,
 	     MOTION_SENSE_HOOK_PRIO + 1);
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 
@@ -355,17 +346,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Rotation matrixes */
-static const mat33_fp_t base_standard_ref = {
-	{0, FLOAT_TO_FP(1), 0},
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					      { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t lid_standard_ref = {
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, FLOAT_TO_FP(1), 0},
-	{0, 0, FLOAT_TO_FP(-1) }
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(1), 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* sensor private data */
 /* Lid accel private data */
@@ -453,7 +440,7 @@ struct motion_sensor_t motion_sensors[] = {
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 const struct it8801_pwm_t it8801_pwm_channels[] = {
-	[IT8801_PWM_CH_KBLIGHT] = {.index = 4},
+	[IT8801_PWM_CH_KBLIGHT] = { .index = 4 },
 };
 
 void board_kblight_init(void)
@@ -469,11 +456,11 @@ bool board_has_kb_backlight(void)
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 /* Battery functions */
-#define SB_SMARTCHARGE				0x26
+#define SB_SMARTCHARGE 0x26
 /* Quick charge enable bit */
-#define SMART_QUICK_CHARGE			0x02
+#define SMART_QUICK_CHARGE 0x02
 /* Quick charge support bit */
-#define MODE_QUICK_CHARGE_SUPPORT		0x01
+#define MODE_QUICK_CHARGE_SUPPORT 0x01
 
 static void sb_quick_charge_mode(int enable)
 {
@@ -544,8 +531,8 @@ int board_get_battery_i2c(void)
 }
 
 #ifdef SECTION_IS_RW
-static int it8801_get_target_channel(enum pwm_channel *channel,
-				     int type, int index)
+static int it8801_get_target_channel(enum pwm_channel *channel, int type,
+				     int index)
 {
 	switch (type) {
 	case EC_PWM_TYPE_GENERIC:
@@ -568,14 +555,13 @@ host_command_pwm_set_duty(struct host_cmd_handler_args *args)
 	if (it8801_get_target_channel(&channel, p->pwm_type, p->index))
 		return EC_RES_INVALID_PARAM;
 
-	duty = (uint32_t) p->duty * 255 / 65535;
+	duty = (uint32_t)p->duty * 255 / 65535;
 	it8801_pwm_set_raw_duty(channel, duty);
 	it8801_pwm_enable(channel, p->duty > 0);
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY,
-		     host_command_pwm_set_duty,
+DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY, host_command_pwm_set_duty,
 		     EC_VER_MASK(0));
 
 static enum ec_status
@@ -589,12 +575,11 @@ host_command_pwm_get_duty(struct host_cmd_handler_args *args)
 	if (it8801_get_target_channel(&channel, p->pwm_type, p->index))
 		return EC_RES_INVALID_PARAM;
 
-	r->duty = (uint32_t) it8801_pwm_get_raw_duty(channel) * 65535 / 255;
+	r->duty = (uint32_t)it8801_pwm_get_raw_duty(channel) * 65535 / 255;
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY,
-		     host_command_pwm_get_duty,
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY, host_command_pwm_get_duty,
 		     EC_VER_MASK(0));
 #endif
