@@ -34,10 +34,7 @@ enum wov_mic_source {
 };
 
 /* Clock source for APM. */
-enum wov_clk_src_sel {
-	WOV_FMUL2_CLK_SRC = 0,
-	WOV_PLL_CLK_SRC = 1
-};
+enum wov_clk_src_sel { WOV_FMUL2_CLK_SRC = 0, WOV_PLL_CLK_SRC = 1 };
 
 /* FMUL clock division factore. */
 enum wov_fmul_div {
@@ -48,10 +45,7 @@ enum wov_fmul_div {
 };
 
 /* Lock state. */
-enum wov_lock_state {
-	WOV_UNLOCK = 0,
-	WOV_LOCK = 1
-};
+enum wov_lock_state { WOV_UNLOCK = 0, WOV_LOCK = 1 };
 
 /* Reference clock source select. */
 enum wov_ref_clk_src_sel {
@@ -60,10 +54,7 @@ enum wov_ref_clk_src_sel {
 };
 
 /* PLL external divider select. */
-enum wov_ext_div_sel {
-	WOV_EXT_DIV_BINARY_CNT = 0,
-	WOV_EXT_DIV_LFSR_DIV = 1
-};
+enum wov_ext_div_sel { WOV_EXT_DIV_BINARY_CNT = 0, WOV_EXT_DIV_LFSR_DIV = 1 };
 
 /* FMUL output frequency. */
 enum wov_fmul_out_freq {
@@ -117,10 +108,7 @@ enum wov_interrupt_index {
 };
 
 /* FIFO DMA request selection. */
-enum wov_dma_req_sel {
-	WOV_DFLT_ESPI_DMA_REQ = 0,
-	WOV_FROM_FIFO_DMA_REQUEST
-};
+enum wov_dma_req_sel { WOV_DFLT_ESPI_DMA_REQ = 0, WOV_FROM_FIFO_DMA_REQUEST };
 
 /* Core FIFO input select. */
 enum wov_core_fifo_in_sel {
@@ -131,10 +119,7 @@ enum wov_core_fifo_in_sel {
 };
 
 /* PLL external divider selector. */
-enum wov_pll_ext_div_sel {
-	WOV_PLL_EXT_DIV_BIN_CNT = 0,
-	WOV_PLL_EXT_DIV_LFSR
-};
+enum wov_pll_ext_div_sel { WOV_PLL_EXT_DIV_BIN_CNT = 0, WOV_PLL_EXT_DIV_LFSR };
 
 /* Code for events for call back function. */
 enum wov_events {
@@ -144,7 +129,7 @@ enum wov_events {
 	 * need to call to wov_set_buffer to update the buffer * pointer
 	 */
 	WOV_EVENT_DATA_READY = 1,
-	WOV_EVENT_VAD,		  /* Voice activity detected */
+	WOV_EVENT_VAD, /* Voice activity detected */
 
 	WOV_EVENT_ERROR_FIRST = 128,
 	WOV_EVENT_ERROR_CORE_FIFO_OVERRUN = 128,
@@ -158,8 +143,8 @@ enum wov_events {
 enum wov_fifo_errors {
 	WOV_FIFO_NO_ERROR = 0,
 	WOV_CORE_FIFO_OVERRUN = 1, /* 2 : I2S FIFO is underrun. */
-	WOV_I2S_FIFO_OVERRUN = 2,  /* 3 : I2S FIFO is overrun.  */
-	WOV_I2S_FIFO_UNDERRUN = 3  /* 4 : I2S FIFO is underrun. */
+	WOV_I2S_FIFO_OVERRUN = 2, /* 3 : I2S FIFO is overrun.  */
+	WOV_I2S_FIFO_UNDERRUN = 3 /* 4 : I2S FIFO is underrun. */
 
 };
 
@@ -191,12 +176,12 @@ enum wov_modes {
 
 /* DAI format. */
 enum wov_dai_format {
-	WOV_DAI_FMT_I2S,     /* I2S mode			*/
+	WOV_DAI_FMT_I2S, /* I2S mode			*/
 	WOV_DAI_FMT_RIGHT_J, /* Right Justified mode		*/
-	WOV_DAI_FMT_LEFT_J,  /* Left Justified mode		*/
-	WOV_DAI_FMT_PCM_A,   /* PCM A Audio			*/
-	WOV_DAI_FMT_PCM_B,   /* PCM B Audio			*/
-	WOV_DAI_FMT_PCM_TDM  /* Time Division Multiplexing	*/
+	WOV_DAI_FMT_LEFT_J, /* Left Justified mode		*/
+	WOV_DAI_FMT_PCM_A, /* PCM A Audio			*/
+	WOV_DAI_FMT_PCM_B, /* PCM B Audio			*/
+	WOV_DAI_FMT_PCM_TDM /* Time Division Multiplexing	*/
 };
 
 struct wov_config {
@@ -375,10 +360,10 @@ void wov_enable_agc(int enable);
  * @param min_applied_gain      - Minimum Gain Value to apply to the ADC path.
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
-enum ec_error_list wov_set_agc_config(int stereo, float target,
-		int noise_gate_threshold, uint8_t hold_time,
-		uint16_t attack_time, uint16_t decay_time,
-		float max_applied_gain, float min_applied_gain);
+enum ec_error_list
+wov_set_agc_config(int stereo, float target, int noise_gate_threshold,
+		   uint8_t hold_time, uint16_t attack_time, uint16_t decay_time,
+		   float max_applied_gain, float min_applied_gain);
 
 /**
  * Sets VAD sensitivity.
@@ -438,7 +423,7 @@ void wov_set_i2s_bclk(uint32_t i2s_clock);
  * @return  EC error code.
  */
 enum ec_error_list wov_set_i2s_tdm_config(int ch0_delay, int ch1_delay,
-				uint32_t flags);
+					  uint32_t flags);
 
 /**
  * Configure FMUL2 clock tunning.
@@ -477,8 +462,9 @@ extern void wov_set_clk_selection(enum wov_clk_src_sel clk_src);
  *                                PLL External Divider Load Values table.
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
-enum ec_error_list wov_pll_clk_ext_div_config(
-	enum wov_pll_ext_div_sel ext_div_sel, uint32_t div_factor);
+enum ec_error_list
+wov_pll_clk_ext_div_config(enum wov_pll_ext_div_sel ext_div_sel,
+			   uint32_t div_factor);
 
 /**
  * PLL power down.
@@ -498,9 +484,9 @@ void wov_pll_enable(int enable);
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
 enum ec_error_list wov_pll_clk_div_config(uint32_t out_div_1,
-			uint32_t out_div_2,
-			uint32_t feedback_div,
-			uint32_t in_div);
+					  uint32_t out_div_2,
+					  uint32_t feedback_div,
+					  uint32_t in_div);
 
 /**
  * Enables/Disables WoV interrupt.
@@ -521,7 +507,7 @@ void wov_interrupt_enable(enum wov_interrupt_index int_index, int enable);
  * @return  None
  */
 void wov_cfifo_config(enum wov_core_fifo_in_sel in_sel,
-			enum wov_fifo_threshold threshold);
+		      enum wov_fifo_threshold threshold);
 
 /**
  * Start the actual capturing of the Voice data to the RAM.
@@ -632,13 +618,10 @@ void wov_handle_event(enum wov_events event);
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
 enum ec_error_list wov_i2s_global_config(
-	enum wov_floating_mode i2s_hiz_data,
-	enum wov_floating_mode i2s_hiz,
-	enum wov_clk_inverted_mode clk_invert,
-	int out_pull_en, enum wov_pull_upd_down_sel out_pull_mode,
-	int in_pull_en,
-	enum wov_pull_upd_down_sel in_pull_mode,
-	enum wov_test_mode test_mode);
+	enum wov_floating_mode i2s_hiz_data, enum wov_floating_mode i2s_hiz,
+	enum wov_clk_inverted_mode clk_invert, int out_pull_en,
+	enum wov_pull_upd_down_sel out_pull_mode, int in_pull_en,
+	enum wov_pull_upd_down_sel in_pull_mode, enum wov_test_mode test_mode);
 
 /**
  * I2S channel configuration
@@ -652,7 +635,8 @@ enum ec_error_list wov_i2s_global_config(
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
 enum ec_error_list wov_i2s_channel_config(uint32_t channel_num,
-			uint32_t bit_count, enum wov_i2s_chan_trigger trigger,
-			int32_t start_delay);
+					  uint32_t bit_count,
+					  enum wov_i2s_chan_trigger trigger,
+					  int32_t start_delay);
 
 #endif /* __CROS_EC_WOV_CHIP_H */
