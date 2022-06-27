@@ -14,40 +14,33 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-
 #define RT1718S_FLAGS_SOURCE_ENABLED BIT(0)
 static atomic_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static int read_reg(uint8_t port, int reg, int *val)
 {
 	if (reg > 0xFF) {
-		return i2c_read_offset16(
-			ppc_chips[port].i2c_port,
-			ppc_chips[port].i2c_addr_flags,
-			reg, val, 1);
+		return i2c_read_offset16(ppc_chips[port].i2c_port,
+					 ppc_chips[port].i2c_addr_flags, reg,
+					 val, 1);
 	} else {
-		return i2c_read8(
-			ppc_chips[port].i2c_port,
-			ppc_chips[port].i2c_addr_flags,
-			reg, val);
+		return i2c_read8(ppc_chips[port].i2c_port,
+				 ppc_chips[port].i2c_addr_flags, reg, val);
 	}
 }
 
 static int write_reg(uint8_t port, int reg, int val)
 {
 	if (reg > 0xFF) {
-		return i2c_write_offset16(
-			ppc_chips[port].i2c_port,
-			ppc_chips[port].i2c_addr_flags,
-			reg, val, 1);
+		return i2c_write_offset16(ppc_chips[port].i2c_port,
+					  ppc_chips[port].i2c_addr_flags, reg,
+					  val, 1);
 	} else {
-		return i2c_write8(
-			ppc_chips[port].i2c_port,
-			ppc_chips[port].i2c_addr_flags,
-			reg, val);
+		return i2c_write8(ppc_chips[port].i2c_port,
+				  ppc_chips[port].i2c_addr_flags, reg, val);
 	}
 }
 
@@ -75,11 +68,11 @@ static int rt1718s_vbus_source_enable(int port, int enable)
 	atomic_t prev_flag;
 
 	if (enable)
-		prev_flag = atomic_or(&flags[port],
-				RT1718S_FLAGS_SOURCE_ENABLED);
+		prev_flag =
+			atomic_or(&flags[port], RT1718S_FLAGS_SOURCE_ENABLED);
 	else
 		prev_flag = atomic_clear_bits(&flags[port],
-				RT1718S_FLAGS_SOURCE_ENABLED);
+					      RT1718S_FLAGS_SOURCE_ENABLED);
 
 	/* Return if status doesn't change */
 	if (!!(prev_flag & RT1718S_FLAGS_SOURCE_ENABLED) == !!enable)
@@ -105,10 +98,9 @@ static int rt1718s_vbus_sink_enable(int port, int enable)
 
 static int rt1718s_discharge_vbus(int port, int enable)
 {
-	return update_bits(port,
-		TCPC_REG_POWER_CTRL,
-		TCPC_REG_POWER_CTRL_FORCE_DISCHARGE,
-		enable ? 0xFF : 0x00);
+	return update_bits(port, TCPC_REG_POWER_CTRL,
+			   TCPC_REG_POWER_CTRL_FORCE_DISCHARGE,
+			   enable ? 0xFF : 0x00);
 }
 
 #ifdef CONFIG_CMD_PPC_DUMP
