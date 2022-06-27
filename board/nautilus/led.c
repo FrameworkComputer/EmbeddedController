@@ -23,9 +23,8 @@
 #define LED_TOTAL_TICKS 16
 #define LED_ON_TICKS 8
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_POWER_LED,
-	EC_LED_ID_BATTERY_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_POWER_LED,
+					     EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -67,7 +66,6 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	return EC_SUCCESS;
 }
 
-
 static void nautilus_led_set_power_battery(void)
 {
 	static unsigned int power_ticks;
@@ -82,9 +80,10 @@ static void nautilus_led_set_power_battery(void)
 
 	/* Flash red on critical battery, which usually inhibits AP power-on. */
 	if (battery_is_present() != BP_YES ||
-		charge_percent < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
-			set_color(((power_ticks++ % LED_TOTAL_TICKS) < LED_ON_TICKS) ?
-						  LED_RED : LED_OFF);
+	    charge_percent < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
+		set_color(((power_ticks++ % LED_TOTAL_TICKS) < LED_ON_TICKS) ?
+				  LED_RED :
+				  LED_OFF);
 		return;
 	}
 
@@ -92,7 +91,7 @@ static void nautilus_led_set_power_battery(void)
 	switch (chg_state) {
 	case PWR_STATE_DISCHARGE:
 		if ((charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER) &&
-			charge_percent >= BATTERY_LEVEL_NEAR_FULL)
+		    charge_percent >= BATTERY_LEVEL_NEAR_FULL)
 			cur_led_color = LED_GREEN;
 		else
 			cur_led_color = LED_OFF;
@@ -101,12 +100,14 @@ static void nautilus_led_set_power_battery(void)
 		cur_led_color = LED_RED;
 		break;
 	case PWR_STATE_ERROR:
-		cur_led_color = ((power_ticks++ % LED_TOTAL_TICKS)
-					  < LED_ON_TICKS) ? LED_RED : LED_GREEN;
+		cur_led_color =
+			((power_ticks++ % LED_TOTAL_TICKS) < LED_ON_TICKS) ?
+				LED_RED :
+				LED_GREEN;
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 	case PWR_STATE_IDLE:
-		if(charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
+		if (charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
 			cur_led_color = LED_GREEN;
 		else
 			cur_led_color = LED_OFF;
@@ -128,8 +129,8 @@ static void nautilus_led_set_power_battery(void)
 static void led_tick(void)
 {
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED) &&
-		led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
-			nautilus_led_set_power_battery();
+	    led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+		nautilus_led_set_power_battery();
 	}
 }
 
