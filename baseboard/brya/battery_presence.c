@@ -18,8 +18,9 @@ __overridable bool board_battery_is_initialized(void)
 {
 	int batt_status;
 
-	return battery_status(&batt_status) != EC_SUCCESS ? false :
-		!!(batt_status & STATUS_INITIALIZED);
+	return battery_status(&batt_status) != EC_SUCCESS ?
+		       false :
+		       !!(batt_status & STATUS_INITIALIZED);
 }
 
 /*
