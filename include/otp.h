@@ -29,4 +29,4 @@ int otp_write_serial(const char *serialno);
  */
 const char *otp_read_serial(void);
 
-#endif  /* __CROS_EC_OTP_H */
+#endif /* __CROS_EC_OTP_H */
