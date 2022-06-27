@@ -18,12 +18,12 @@
 #include "usb_sm_checks.h"
 #include "vpd_api.h"
 
-#define PORT0	0
+#define PORT0 0
 
-enum cc_type {CC1, CC2};
-enum vbus_type {VBUS_0 = 0, VBUS_5 = 5000};
-enum vconn_type {VCONN_0 = 0, VCONN_3 = 3000, VCONN_5 = 5000};
-enum snk_con_voltage_type {SRC_CON_DEF, SRC_CON_1_5, SRC_CON_3_0};
+enum cc_type { CC1, CC2 };
+enum vbus_type { VBUS_0 = 0, VBUS_5 = 5000 };
+enum vconn_type { VCONN_0 = 0, VCONN_3 = 3000, VCONN_5 = 5000 };
+enum snk_con_voltage_type { SRC_CON_DEF, SRC_CON_1_5, SRC_CON_3_0 };
 
 /*
  * These enum definitions are declared in usb_tc_*_sm and are private to that
@@ -92,15 +92,15 @@ static int ct_connect_sink(enum cc_type cc, enum snk_con_voltage_type v)
 	switch (v) {
 	case SRC_CON_DEF:
 		ret = (cc) ? mock_set_cc2_rp3a0_rd_l(PD_SRC_DEF_RD_THRESH_MV) :
-			mock_set_cc1_rp3a0_rd_l(PD_SRC_DEF_RD_THRESH_MV);
+			     mock_set_cc1_rp3a0_rd_l(PD_SRC_DEF_RD_THRESH_MV);
 		break;
 	case SRC_CON_1_5:
 		ret = (cc) ? mock_set_cc2_rp3a0_rd_l(PD_SRC_1_5_RD_THRESH_MV) :
-			mock_set_cc1_rp3a0_rd_l(PD_SRC_1_5_RD_THRESH_MV);
+			     mock_set_cc1_rp3a0_rd_l(PD_SRC_1_5_RD_THRESH_MV);
 		break;
 	case SRC_CON_3_0:
 		ret = (cc) ? mock_set_cc2_rp3a0_rd_l(PD_SRC_3_0_RD_THRESH_MV) :
-			mock_set_cc1_rp3a0_rd_l(PD_SRC_3_0_RD_THRESH_MV);
+			     mock_set_cc1_rp3a0_rd_l(PD_SRC_3_0_RD_THRESH_MV);
 		break;
 	default:
 		ret = 0;
@@ -124,7 +124,7 @@ static int ct_connect_source(enum cc_type cc, enum vbus_type vbus)
 {
 	mock_set_ct_vbus(vbus);
 	return (cc) ? mock_set_cc2_rpusb_odh(PD_SNK_VA_MV) :
-				mock_set_cc1_rpusb_odh(PD_SNK_VA_MV);
+		      mock_set_cc1_rpusb_odh(PD_SNK_VA_MV);
 }
 
 static int ct_disconnect_source(void)
@@ -297,14 +297,15 @@ void inc_rx_id(int port)
 static int verify_goodcrc(int port, int role, int id)
 {
 	return pd_test_tx_msg_verify_sop_prime(port) &&
-		pd_test_tx_msg_verify_short(port, PD_HEADER(PD_CTRL_GOOD_CRC,
-					role, role, id, 0, 0, 0)) &&
-		pd_test_tx_msg_verify_crc(port) &&
-		pd_test_tx_msg_verify_eop(port);
+	       pd_test_tx_msg_verify_short(port,
+					   PD_HEADER(PD_CTRL_GOOD_CRC, role,
+						     role, id, 0, 0, 0)) &&
+	       pd_test_tx_msg_verify_crc(port) &&
+	       pd_test_tx_msg_verify_eop(port);
 }
 
 static void simulate_rx_msg(int port, uint16_t header, int cnt,
-							const uint32_t *data)
+			    const uint32_t *data)
 {
 	int i;
 
@@ -330,20 +331,20 @@ static void simulate_rx_msg(int port, uint16_t header, int cnt,
 
 static void simulate_goodcrc(int port, int role, int id)
 {
-	simulate_rx_msg(port, PD_HEADER(PD_CTRL_GOOD_CRC, role, role, id, 0,
-						pd_port[port].rev, 0), 0, NULL);
+	simulate_rx_msg(port,
+			PD_HEADER(PD_CTRL_GOOD_CRC, role, role, id, 0,
+				  pd_port[port].rev, 0),
+			0, NULL);
 }
 
 static void simulate_discovery_identity(int port)
 {
-	uint16_t header = PD_HEADER(PD_DATA_VENDOR_DEF, PD_ROLE_SOURCE,
-					1, pd_port[port].msg_rx_id,
-					1, pd_port[port].rev, 0);
-	uint32_t msg = VDO(USB_SID_PD,
-			1, /* Structured VDM */
-			VDO_SVDM_VERS(1) |
-			VDO_CMDT(CMDT_INIT) |
-			CMD_DISCOVER_IDENT);
+	uint16_t header = PD_HEADER(PD_DATA_VENDOR_DEF, PD_ROLE_SOURCE, 1,
+				    pd_port[port].msg_rx_id, 1,
+				    pd_port[port].rev, 0);
+	uint32_t msg = VDO(USB_SID_PD, 1, /* Structured VDM */
+			   VDO_SVDM_VERS(1) | VDO_CMDT(CMDT_INIT) |
+				   CMD_DISCOVER_IDENT);
 
 	simulate_rx_msg(port, header, 1, (const uint32_t *)&msg);
 }
@@ -538,35 +539,27 @@ static int test_vpd_host_src_detection_vconn(void)
 static int test_vpd_host_src_detection_message_reception(void)
 {
 	int port = PORT0;
-	uint32_t expected_vdm_header = VDO(USB_VID_GOOGLE,
-			1, /* Structured VDM */
-			VDO_SVDM_VERS(1) |
-			VDO_CMDT(CMDT_RSP_ACK) |
-			CMD_DISCOVER_IDENT);
-	uint32_t expected_vdo_id_header = VDO_IDH(
-			0, /* Not a USB Host */
+	uint32_t expected_vdm_header = VDO(
+		USB_VID_GOOGLE, 1, /* Structured VDM */
+		VDO_SVDM_VERS(1) | VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT);
+	uint32_t expected_vdo_id_header =
+		VDO_IDH(0, /* Not a USB Host */
 			1, /* Capable of being enumerated as USB Device */
-			IDH_PTYPE_VPD,
-			0, /* Modal Operation Not Supported */
+			IDH_PTYPE_VPD, 0, /* Modal Operation Not Supported */
 			USB_VID_GOOGLE);
 	uint32_t expected_vdo_cert = 0;
-	uint32_t expected_vdo_product = VDO_PRODUCT(
-			CONFIG_USB_PID,
-			USB_BCD_DEVICE);
+	uint32_t expected_vdo_product =
+		VDO_PRODUCT(CONFIG_USB_PID, USB_BCD_DEVICE);
 	uint32_t expected_vdo_vpd = VDO_VPD(
-			VPD_HW_VERSION,
-			VPD_FW_VERSION,
-			VPD_MAX_VBUS_20V,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CT_CURRENT
-						: 0,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_VBUS_IMP(
-						VPD_VBUS_IMPEDANCE)
-						: 0,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_GND_IMP(
-						VPD_GND_IMPEDANCE)
-						: 0,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CTS_SUPPORTED
-						: VPD_CTS_NOT_SUPPORTED);
+		VPD_HW_VERSION, VPD_FW_VERSION, VPD_MAX_VBUS_20V,
+		IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CT_CURRENT : 0,
+		IS_ENABLED(CONFIG_USB_CTVPD) ?
+			VPD_VBUS_IMP(VPD_VBUS_IMPEDANCE) :
+			0,
+		IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_GND_IMP(VPD_GND_IMPEDANCE) :
+					       0,
+		IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CTS_SUPPORTED :
+					       VPD_CTS_NOT_SUPPORTED);
 
 	mock_set_vconn(VCONN_0);
 	host_disconnect_source();
@@ -608,8 +601,8 @@ static int test_vpd_host_src_detection_message_reception(void)
 	simulate_discovery_identity(port);
 	task_wait_event(30 * MSEC);
 
-	TEST_ASSERT(verify_goodcrc(port,
-				PD_ROLE_SINK, pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 	task_wait_event(30 * MSEC);
@@ -617,9 +610,10 @@ static int test_vpd_host_src_detection_message_reception(void)
 
 	/* Test Discover Identity Ack */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop_prime(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_VENDOR_DEF, PD_PLUG_FROM_CABLE, 0,
-			pd_port[port].msg_tx_id, 5, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_VENDOR_DEF, PD_PLUG_FROM_CABLE, 0,
+			  pd_port[port].msg_tx_id, 5, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdm_header));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdo_id_header));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdo_cert));
@@ -647,7 +641,6 @@ static int test_vpd_host_src_detection_message_reception(void)
 	wait_for_state_change(port, 100 * MSEC);
 
 	TEST_EQ(get_state_tc(port), TC_UNATTACHED_SNK, "%d");
-
 
 	return EC_SUCCESS;
 }
@@ -992,35 +985,27 @@ static int test_ctvpd_behavior_case3(void)
 static int test_ctvpd_behavior_case4(void)
 {
 	int port = PORT0;
-	uint32_t expected_vdm_header = VDO(USB_VID_GOOGLE,
-			1, /* Structured VDM */
-			VDO_SVDM_VERS(1) |
-			VDO_CMDT(CMDT_RSP_ACK) |
-			CMD_DISCOVER_IDENT);
-	uint32_t expected_vdo_id_header = VDO_IDH(
-			0, /* Not a USB Host */
+	uint32_t expected_vdm_header = VDO(
+		USB_VID_GOOGLE, 1, /* Structured VDM */
+		VDO_SVDM_VERS(1) | VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT);
+	uint32_t expected_vdo_id_header =
+		VDO_IDH(0, /* Not a USB Host */
 			1, /* Capable of being enumerated as USB Device */
-			IDH_PTYPE_VPD,
-			0, /* Modal Operation Not Supported */
+			IDH_PTYPE_VPD, 0, /* Modal Operation Not Supported */
 			USB_VID_GOOGLE);
 	uint32_t expected_vdo_cert = 0;
-	uint32_t expected_vdo_product = VDO_PRODUCT(
-			CONFIG_USB_PID,
-			USB_BCD_DEVICE);
+	uint32_t expected_vdo_product =
+		VDO_PRODUCT(CONFIG_USB_PID, USB_BCD_DEVICE);
 	uint32_t expected_vdo_vpd = VDO_VPD(
-			VPD_HW_VERSION,
-			VPD_FW_VERSION,
-			VPD_MAX_VBUS_20V,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CT_CURRENT
-						: 0,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_VBUS_IMP(
-						VPD_VBUS_IMPEDANCE)
-						: 0,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_GND_IMP(
-						VPD_GND_IMPEDANCE)
-						: 0,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CTS_SUPPORTED
-						: VPD_CTS_NOT_SUPPORTED);
+		VPD_HW_VERSION, VPD_FW_VERSION, VPD_MAX_VBUS_20V,
+		IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CT_CURRENT : 0,
+		IS_ENABLED(CONFIG_USB_CTVPD) ?
+			VPD_VBUS_IMP(VPD_VBUS_IMPEDANCE) :
+			0,
+		IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_GND_IMP(VPD_GND_IMPEDANCE) :
+					       0,
+		IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CTS_SUPPORTED :
+					       VPD_CTS_NOT_SUPPORTED);
 
 	init_port(port);
 	mock_set_vconn(VCONN_0);
@@ -1107,8 +1092,8 @@ static int test_ctvpd_behavior_case4(void)
 	simulate_discovery_identity(port);
 	task_wait_event(40 * MSEC);
 
-	TEST_ASSERT(verify_goodcrc(port,
-				PD_ROLE_SINK, pd_port[port].msg_rx_id));
+	TEST_ASSERT(
+		verify_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_rx_id));
 
 	task_wake(PD_PORT_TO_TASK_ID(port));
 	task_wait_event(40 * MSEC);
@@ -1116,9 +1101,10 @@ static int test_ctvpd_behavior_case4(void)
 
 	/* Test Discover Identity Ack */
 	TEST_ASSERT(pd_test_tx_msg_verify_sop_prime(port));
-	TEST_ASSERT(pd_test_tx_msg_verify_short(port,
-			PD_HEADER(PD_DATA_VENDOR_DEF, PD_PLUG_FROM_CABLE, 0,
-			pd_port[port].msg_tx_id, 5, pd_port[port].rev, 0)));
+	TEST_ASSERT(pd_test_tx_msg_verify_short(
+		port,
+		PD_HEADER(PD_DATA_VENDOR_DEF, PD_PLUG_FROM_CABLE, 0,
+			  pd_port[port].msg_tx_id, 5, pd_port[port].rev, 0)));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdm_header));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdo_id_header));
 	TEST_ASSERT(pd_test_tx_msg_verify_word(port, expected_vdo_cert));
@@ -1268,8 +1254,8 @@ static int test_ctvpd_behavior_case5(void)
 	 *    e. CTVPD connects VBUS from the Charge-Through side to the Host
 	 *       side
 	 */
-	wait_for_state_change(port, PD_T_TRY_CC_DEBOUNCE +
-						PD_T_DRP_TRY + 40 * MSEC);
+	wait_for_state_change(port,
+			      PD_T_TRY_CC_DEBOUNCE + PD_T_DRP_TRY + 40 * MSEC);
 
 	TEST_ASSERT(get_state_tc(port) == TC_TRY_WAIT_SRC);
 	TEST_ASSERT(check_host_rpusb());
