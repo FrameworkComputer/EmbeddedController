@@ -42,13 +42,13 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
-#define CONFIG_ACCEL_LIS2DWL		/* Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM    /* Base accel */
+#define CONFIG_ACCEL_LIS2DWL /* Lid accel */
+#define CONFIG_ACCELGYRO_LSM6DSM /* Base accel */
 
 /* Lid operates in forced mode, base in FIFO */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 #define CONFIG_ACCEL_FIFO
-#define CONFIG_ACCEL_FIFO_SIZE 256	/* Must be a power of 2 */
+#define CONFIG_ACCEL_FIFO_SIZE 256 /* Must be a power of 2 */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
@@ -112,12 +112,7 @@ enum pwm_channel {
 };
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* ADC channels */
 enum adc_channel {
