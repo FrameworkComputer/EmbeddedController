@@ -50,7 +50,7 @@
 /* Motion Sensors */
 #ifndef VARIANT_KUKUI_NO_SENSORS
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
-#define CONFIG_ACCEL_KX022      /* Lid accel */
+#define CONFIG_ACCEL_KX022 /* Lid accel */
 #define CONFIG_ACCELGYRO_BMI160 /* Base accel */
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
@@ -68,14 +68,14 @@
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 
 /* I2C ports */
-#define I2C_PORT_BC12               IT83XX_I2C_CH_C
-#define I2C_PORT_TCPC0              IT83XX_I2C_CH_C
-#define I2C_PORT_USB_MUX            IT83XX_I2C_CH_C
-#define I2C_PORT_CHARGER            IT83XX_I2C_CH_A
-#define I2C_PORT_SENSORS            IT83XX_I2C_CH_B
-#define I2C_PORT_ACCEL              I2C_PORT_SENSORS
-#define I2C_PORT_BATTERY            IT83XX_I2C_CH_A
-#define I2C_PORT_VIRTUAL_BATTERY    I2C_PORT_BATTERY
+#define I2C_PORT_BC12 IT83XX_I2C_CH_C
+#define I2C_PORT_TCPC0 IT83XX_I2C_CH_C
+#define I2C_PORT_USB_MUX IT83XX_I2C_CH_C
+#define I2C_PORT_CHARGER IT83XX_I2C_CH_A
+#define I2C_PORT_SENSORS IT83XX_I2C_CH_B
+#define I2C_PORT_ACCEL I2C_PORT_SENSORS
+#define I2C_PORT_BATTERY IT83XX_I2C_CH_A
+#define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
 
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_EVENT
@@ -129,7 +129,7 @@ enum battery_type {
 
 /* support factory keyboard test */
 #define CONFIG_KEYBOARD_FACTORY_TEST
-#define GPIO_KBD_KSO2		GPIO_EC_KSO_02_INV
+#define GPIO_KBD_KSO2 GPIO_EC_KSO_02_INV
 extern const int keyboard_factory_scan_pins[][2];
 extern const int keyboard_factory_scan_pins_used;
 
