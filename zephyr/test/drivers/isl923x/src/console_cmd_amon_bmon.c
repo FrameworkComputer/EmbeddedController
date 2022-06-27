@@ -60,7 +60,7 @@ ZTEST(console_cmd_amon_bmon, test_isl923x_amonbmon_get_input_current)
 }
 
 ZTEST(console_cmd_amon_bmon,
-	test_isl923x_amonbmon_get_input_current_read_fail_req1)
+      test_isl923x_amonbmon_get_input_current_read_fail_req1)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -76,7 +76,7 @@ ZTEST(console_cmd_amon_bmon,
 }
 
 ZTEST(console_cmd_amon_bmon,
-	test_isl923x_amonbmon_get_input_current_read_fail_req3)
+      test_isl923x_amonbmon_get_input_current_read_fail_req3)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -90,7 +90,7 @@ ZTEST(console_cmd_amon_bmon,
 }
 
 ZTEST(console_cmd_amon_bmon,
-	test_isl923x_amonbmon_get_input_current_write_fail_req1)
+      test_isl923x_amonbmon_get_input_current_write_fail_req1)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
@@ -104,7 +104,7 @@ ZTEST(console_cmd_amon_bmon,
 }
 
 ZTEST(console_cmd_amon_bmon,
-	test_isl923x_amonbmon_get_input_current_write_fail_req3)
+      test_isl923x_amonbmon_get_input_current_write_fail_req3)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
