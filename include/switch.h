@@ -19,7 +19,9 @@
  */
 void switch_interrupt(enum gpio_signal signal);
 #else
-static inline void switch_interrupt(enum gpio_signal signal) { }
-#endif  /* !CONFIG_SWITCH */
+static inline void switch_interrupt(enum gpio_signal signal)
+{
+}
+#endif /* !CONFIG_SWITCH */
 
-#endif  /* __CROS_EC_SWITCH_H */
+#endif /* __CROS_EC_SWITCH_H */
