@@ -28,8 +28,7 @@ uint32_t get_cbi_fw_config(void)
  */
 enum ec_cfg_usb_db_type ec_config_get_usb_db(void)
 {
-	return ((get_cbi_fw_config() & EC_CFG_USB_DB_MASK)
-			>> EC_CFG_USB_DB_L);
+	return ((get_cbi_fw_config() & EC_CFG_USB_DB_MASK) >> EC_CFG_USB_DB_L);
 }
 
 /*
@@ -37,8 +36,7 @@ enum ec_cfg_usb_db_type ec_config_get_usb_db(void)
  */
 enum ec_cfg_usb_mb_type ec_config_get_usb_mb(void)
 {
-	return ((get_cbi_fw_config() & EC_CFG_USB_MB_MASK)
-			>> EC_CFG_USB_MB_L);
+	return ((get_cbi_fw_config() & EC_CFG_USB_MB_MASK) >> EC_CFG_USB_MB_L);
 }
 
 /*
@@ -46,8 +44,8 @@ enum ec_cfg_usb_mb_type ec_config_get_usb_mb(void)
  */
 enum ec_cfg_lid_accel_sensor_type ec_config_has_lid_accel_sensor(void)
 {
-	return ((get_cbi_fw_config() & EC_CFG_LID_ACCEL_SENSOR_MASK)
-			>> EC_CFG_LID_ACCEL_SENSOR_L);
+	return ((get_cbi_fw_config() & EC_CFG_LID_ACCEL_SENSOR_MASK) >>
+		EC_CFG_LID_ACCEL_SENSOR_L);
 }
 
 /*
@@ -55,28 +53,27 @@ enum ec_cfg_lid_accel_sensor_type ec_config_has_lid_accel_sensor(void)
  */
 enum ec_ssfc_base_gyro_sensor ec_config_has_base_gyro_sensor(void)
 {
-	return ((get_cbi_fw_config() & EC_CFG_BASE_GYRO_SENSOR_MASK)
-			>> EC_CFG_BASE_GYRO_SENSOR_L);
+	return ((get_cbi_fw_config() & EC_CFG_BASE_GYRO_SENSOR_MASK) >>
+		EC_CFG_BASE_GYRO_SENSOR_L);
 }
 
 /*
  * ec_config_has_pwm_keyboard_backlight() will return 1 is present or 0
  */
-enum ec_cfg_pwm_keyboard_backlight_type ec_config_has_pwm_keyboard_backlight(
-									void)
+enum ec_cfg_pwm_keyboard_backlight_type
+ec_config_has_pwm_keyboard_backlight(void)
 {
-	return ((get_cbi_fw_config() & EC_CFG_PWM_KEYBOARD_BACKLIGHT_MASK)
-			>> EC_CFG_PWM_KEYBOARD_BACKLIGHT_L);
+	return ((get_cbi_fw_config() & EC_CFG_PWM_KEYBOARD_BACKLIGHT_MASK) >>
+		EC_CFG_PWM_KEYBOARD_BACKLIGHT_L);
 }
 
 /*
  * ec_config_has_lid_angle_tablet_mode() will return 1 is present or 0
  */
-enum ec_cfg_lid_angle_tablet_mode_type ec_config_has_lid_angle_tablet_mode(
-									void)
+enum ec_cfg_lid_angle_tablet_mode_type ec_config_has_lid_angle_tablet_mode(void)
 {
-	return ((get_cbi_fw_config() & EC_CFG_LID_ANGLE_TABLET_MODE_MASK)
-			>> EC_CFG_LID_ANGLE_TABLET_MODE_L);
+	return ((get_cbi_fw_config() & EC_CFG_LID_ANGLE_TABLET_MODE_MASK) >>
+		EC_CFG_LID_ANGLE_TABLET_MODE_L);
 }
 
 /*
@@ -84,8 +81,8 @@ enum ec_cfg_lid_angle_tablet_mode_type ec_config_has_lid_angle_tablet_mode(
  */
 enum ec_cfg_lte_present_type ec_config_lte_present(void)
 {
-	return ((get_cbi_fw_config() & EC_CFG_LTE_PRESENT_MASK)
-			>> EC_CFG_LTE_PRESENT_L);
+	return ((get_cbi_fw_config() & EC_CFG_LTE_PRESENT_MASK) >>
+		EC_CFG_LTE_PRESENT_L);
 }
 
 /*
@@ -93,6 +90,6 @@ enum ec_cfg_lte_present_type ec_config_lte_present(void)
  */
 enum ec_cfg_keyboard_layout_type ec_config_keyboard_layout(void)
 {
-	return ((get_cbi_fw_config() & EC_CFG_KEYBOARD_LAYOUT_MASK)
-			>> EC_CFG_KEYBOARD_LAYOUT_L);
+	return ((get_cbi_fw_config() & EC_CFG_KEYBOARD_LAYOUT_MASK) >>
+		EC_CFG_KEYBOARD_LAYOUT_L);
 }
