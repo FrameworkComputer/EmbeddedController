@@ -22,8 +22,8 @@
 #include "tablet_mode.h"
 
 #if 0
-#define CPRINTS(format, args...) ccprints(format, ## args)
-#define CPRINTF(format, args...) ccprintf(format, ## args)
+#define CPRINTS(format, args...) ccprints(format, ##args)
+#define CPRINTF(format, args...) ccprintf(format, ##args)
 #else
 #define CPRINTS(format, args...)
 #define CPRINTF(format, args...)
@@ -70,23 +70,17 @@ static struct lsm6dso_data lsm6dso_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* The matrix for new DB */
-static const mat33_fp_t lid_ref_for_new_DB = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_ref_for_new_DB = { { FLOAT_TO_FP(-1), 0, 0 },
+					       { 0, FLOAT_TO_FP(1), 0 },
+					       { 0, 0, FLOAT_TO_FP(-1) } };
 /* Matrix to rotate lid and base sensor into standard reference frame */
-static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					     { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, FLOAT_TO_FP(1), 0 },
+					      { 0, 0, FLOAT_TO_FP(-1) } };
 
 struct motion_sensor_t bma422_lid_accel = {
 	.name = "Lid Accel - BMA",
@@ -243,7 +237,6 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 #endif
 
-
 static void board_detect_motionsensor(void)
 {
 	int ret;
@@ -260,8 +253,8 @@ static void board_detect_motionsensor(void)
 		return;
 
 	/* Check lid accel chip */
-	ret = i2c_read8(I2C_PORT_SENSOR, LIS2DW12_ADDR1,
-			LIS2DW12_WHO_AM_I_REG, &val);
+	ret = i2c_read8(I2C_PORT_SENSOR, LIS2DW12_ADDR1, LIS2DW12_WHO_AM_I_REG,
+			&val);
 	if (ret == 0 && val == LIS2DW12_WHO_AM_I) {
 		CPRINTS("LID_ACCEL is LIS2DW12");
 		return;
@@ -281,8 +274,7 @@ static void board_detect_motionsensor(void)
 		 */
 		if (get_board_id() >= 2) {
 			/* Need to change matrix when board ID >= 2 */
-			bma422_lid_accel.rot_standard_ref =
-					&lid_ref_for_new_DB;
+			bma422_lid_accel.rot_standard_ref = &lid_ref_for_new_DB;
 		}
 		return;
 	}
@@ -293,7 +285,7 @@ static void board_detect_motionsensor(void)
 	CPRINTS("No LID_ACCEL are detected");
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
-		HOOK_PRIO_DEFAULT);
+	     HOOK_PRIO_DEFAULT);
 
 static void baseboard_sensors_init(void)
 {
@@ -316,7 +308,7 @@ static void baseboard_sensors_init(void)
 		if (get_board_id() >= 2) {
 			/* Need to change matrix when board ID >= 2 */
 			motion_sensors[LID_ACCEL].rot_standard_ref =
-							&lid_ref_for_new_DB;
+				&lid_ref_for_new_DB;
 		}
 
 		/* Enable gpio interrupt for base accelgyro sensor */
@@ -327,40 +319,31 @@ static void baseboard_sensors_init(void)
 		gmr_tablet_switch_disable();
 		gpio_set_flags(GPIO_TABLET_MODE_L, GPIO_INPUT | GPIO_PULL_DOWN);
 		/* Gyro is not present, don't allow line to float */
-		gpio_set_flags(GPIO_EC_IMU_INT_R_L, GPIO_INPUT |
-				GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_EC_IMU_INT_R_L,
+			       GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = {
-		.name = "DDR and SOC",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
-	},
-	[TEMP_SENSOR_2_FAN] = {
-		.name = "FAN",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_FAN
-	},
-	[TEMP_SENSOR_3_CHARGER] = {
-		.name = "CHARGER",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_3_CHARGER
-	},
-	[TEMP_SENSOR_4_CPUCHOKE] = {
-		.name = "CPU CHOKE",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_4_CPUCHOKE
-	},
+	[TEMP_SENSOR_1_DDR_SOC] = { .name = "DDR and SOC",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_1_DDR_SOC },
+	[TEMP_SENSOR_2_FAN] = { .name = "FAN",
+				.type = TEMP_SENSOR_TYPE_BOARD,
+				.read = get_temp_3v3_30k9_47k_4050b,
+				.idx = ADC_TEMP_SENSOR_2_FAN },
+	[TEMP_SENSOR_3_CHARGER] = { .name = "CHARGER",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_3_CHARGER },
+	[TEMP_SENSOR_4_CPUCHOKE] = { .name = "CPU CHOKE",
+				     .type = TEMP_SENSOR_TYPE_BOARD,
+				     .read = get_temp_3v3_30k9_47k_4050b,
+				     .idx = ADC_TEMP_SENSOR_4_CPUCHOKE },
 };
-
 
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -374,8 +357,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
@@ -404,8 +387,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_FAN \
-	{ \
+#define THERMAL_FAN              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
