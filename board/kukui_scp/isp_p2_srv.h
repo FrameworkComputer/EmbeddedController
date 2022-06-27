@@ -13,7 +13,8 @@ struct dip_msg_service {
 	unsigned char msg[288];
 };
 
-BUILD_ASSERT(member_size(struct dip_msg_service, msg) <= CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
+BUILD_ASSERT(member_size(struct dip_msg_service, msg) <=
+	     CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
 
 /* Functions provided by private overlay. */
 void dip_msg_handler(void *data);
