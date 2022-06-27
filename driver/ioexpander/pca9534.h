@@ -8,12 +8,12 @@
 #ifndef __CROS_EC_IOEXPANDER_PCA9534_H
 #define __CROS_EC_IOEXPANDER_PCA9534_H
 
-#define PCA9534_REG_INPUT  0x0
+#define PCA9534_REG_INPUT 0x0
 #define PCA9534_REG_OUTPUT 0x1
 #define PCA9534_REG_CONFIG 0x3
 
 #define PCA9534_OUTPUT 0
-#define PCA9534_INPUT  1
+#define PCA9534_INPUT 1
 
 /*
  * Get input level. Note that this reflects the actual level on the
@@ -26,8 +26,8 @@
  *
  * @return EC_SUCCESS, or EC_ERROR_* on error.
  */
-int pca9534_get_level(const int port, const uint16_t addr_flags,
-		      int pin, int *level);
+int pca9534_get_level(const int port, const uint16_t addr_flags, int pin,
+		      int *level);
 
 /*
  * Set output level. This function has no effect if the pin is
@@ -40,8 +40,8 @@ int pca9534_get_level(const int port, const uint16_t addr_flags,
  *
  * @return EC_SUCCESS, or EC_ERROR_* on error.
  */
-int pca9534_set_level(const int port, const uint16_t addr_flags,
-		      int pin, int level);
+int pca9534_set_level(const int port, const uint16_t addr_flags, int pin,
+		      int level);
 
 /*
  * Config a pin as input or output.
@@ -53,7 +53,7 @@ int pca9534_set_level(const int port, const uint16_t addr_flags,
  *
  * @return EC_SUCCESS, or EC_ERROR_* on error.
  */
-int pca9534_config_pin(const int port, const uint16_t addr_flags,
-		       int pin, int is_input);
+int pca9534_config_pin(const int port, const uint16_t addr_flags, int pin,
+		       int is_input);
 
-#endif  /* __CROS_EC_IOEXPANDER_PCA9534_H */
+#endif /* __CROS_EC_IOEXPANDER_PCA9534_H */
