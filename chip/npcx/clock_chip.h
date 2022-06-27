@@ -95,40 +95,40 @@
  * OSC_CLK (Unit:Hz).
  */
 #if (OSC_CLK > 80000000)
-#define HFCGN    0x82 /* Set XF_RANGE as 1 if OSC_CLK >= 80MHz */
+#define HFCGN 0x82 /* Set XF_RANGE as 1 if OSC_CLK >= 80MHz */
 #else
-#define HFCGN    0x02
+#define HFCGN 0x02
 #endif
-#if   (OSC_CLK == 100000000)
-#define HFCGMH   0x0B
-#define HFCGML   0xEC
+#if (OSC_CLK == 100000000)
+#define HFCGMH 0x0B
+#define HFCGML 0xEC
 #elif (OSC_CLK == 90000000)
-#define HFCGMH   0x0A
-#define HFCGML   0xBA
+#define HFCGMH 0x0A
+#define HFCGML 0xBA
 #elif (OSC_CLK == 80000000)
-#define HFCGMH   0x09
-#define HFCGML   0x89
+#define HFCGMH 0x09
+#define HFCGML 0x89
 #elif (OSC_CLK == 66000000)
-#define HFCGMH   0x0F
-#define HFCGML   0xBC
+#define HFCGMH 0x0F
+#define HFCGML 0xBC
 #elif (OSC_CLK == 50000000)
-#define HFCGMH   0x0B
-#define HFCGML   0xEC
+#define HFCGMH 0x0B
+#define HFCGML 0xEC
 #elif (OSC_CLK == 48000000)
-#define HFCGMH   0x0B
-#define HFCGML   0x72
+#define HFCGMH 0x0B
+#define HFCGML 0x72
 #elif (OSC_CLK == 40000000)
-#define HFCGMH   0x09
-#define HFCGML   0x89
+#define HFCGMH 0x09
+#define HFCGML 0x89
 #elif (OSC_CLK == 33000000)
-#define HFCGMH   0x07
-#define HFCGML   0xDE
+#define HFCGMH 0x07
+#define HFCGML 0xDE
 #elif (OSC_CLK == 30000000)
-#define HFCGMH   0x07
-#define HFCGML   0x27
+#define HFCGMH 0x07
+#define HFCGML 0x27
 #elif (OSC_CLK == 26000000)
-#define HFCGMH   0x06
-#define HFCGML   0x33
+#define HFCGMH 0x06
+#define HFCGML 0x33
 #else
 #error "Unsupported OSC_CLK Frequency"
 #endif
