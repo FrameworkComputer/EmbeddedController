@@ -34,4 +34,4 @@ void task_register_interrupt(void);
  */
 pid_t getpid(void);
 
-#endif  /* __CROS_EC_HOST_TASK_H */
+#endif /* __CROS_EC_HOST_TASK_H */
