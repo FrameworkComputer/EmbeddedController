@@ -22,8 +22,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define USB_PD_PORT_ITE_0	0
-#define USB_PD_PORT_ITE_1	1
+#define USB_PD_PORT_ITE_0 0
+#define USB_PD_PORT_ITE_1 1
 
 /******************************************************************************/
 /* USB-C TPCP Configuration */
@@ -49,13 +49,12 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 /* TODO(crbug.com/826441): Consolidate this logic with other impls */
 static void board_it83xx_hpd_status(const struct usb_mux *me,
-				    mux_state_t mux_state,
-				    bool *ack_required)
+				    mux_state_t mux_state, bool *ack_required)
 {
 	int hpd_lvl = (mux_state & USB_PD_MUX_HPD_LVL) ? 1 : 0;
 	int hpd_irq = (mux_state & USB_PD_MUX_HPD_IRQ) ? 1 : 0;
-	enum gpio_signal gpio = me->usb_port ?
-		GPIO_USB_C1_HPD_1V8_ODL : GPIO_USB_C0_HPD_1V8_ODL;
+	enum gpio_signal gpio = me->usb_port ? GPIO_USB_C1_HPD_1V8_ODL :
+					       GPIO_USB_C0_HPD_1V8_ODL;
 
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
@@ -94,16 +93,12 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 /******************************************************************************/
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USB_PD_PORT_ITE_0] = {
-		.i2c_port = I2C_PORT_USBC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-	[USB_PD_PORT_ITE_1] = {
-		.i2c_port = I2C_PORT_USBC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	[USB_PD_PORT_ITE_0] = { .i2c_port = I2C_PORT_USBC0,
+				.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+				.drv = &sn5s330_drv },
+	[USB_PD_PORT_ITE_1] = { .i2c_port = I2C_PORT_USBC1,
+				.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+				.drv = &sn5s330_drv },
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -158,6 +153,6 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 	 * correctly in the PPC driver via the pd state machine.
 	 */
 	if (ppc_set_vconn(port, enabled) != EC_SUCCESS)
-		cprints(CC_USBPD, "C%d: Failed %sabling vconn",
-			port, enabled ? "en" : "dis");
+		cprints(CC_USBPD, "C%d: Failed %sabling vconn", port,
+			enabled ? "en" : "dis");
 }
