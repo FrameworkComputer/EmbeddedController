@@ -11,9 +11,9 @@
 #define VARIANT_KEEBY_EC_NPCX797FC
 #include "baseboard.h"
 
-#undef	GPIO_VOLUME_UP_L
-#undef	GPIO_VOLUME_DOWN_L
-#undef	CONFIG_VOLUME_BUTTONS
+#undef GPIO_VOLUME_UP_L
+#undef GPIO_VOLUME_DOWN_L
+#undef CONFIG_VOLUME_BUTTONS
 
 /* System unlocked in early development */
 #define CONFIG_SYSTEM_UNLOCKED
@@ -36,11 +36,11 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SINGLE_CHIP
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
-#undef	CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
+#undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
 #define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
 
 /* Keyboard */
-#undef	CONFIG_PWM_KBLIGHT
+#undef CONFIG_PWM_KBLIGHT
 
 /* LED defines */
 #define CONFIG_LED_COMMON
@@ -50,7 +50,7 @@
 #define GPIO_PWR_LED_BLUE_L GPIO_LED_B_ODL
 
 /* PWM */
-#define NPCX7_PWM1_SEL    0  /* GPIO C2 is used as PWM1. */
+#define NPCX7_PWM1_SEL 0 /* GPIO C2 is used as PWM1. */
 
 /******************************************************************************/
 
@@ -81,11 +81,11 @@
 #define GPIO_TEMP_SENSOR_POWER GPIO_EN_PP3300_A
 
 /* I2C configuration */
-#define I2C_PORT_EEPROM     NPCX_I2C_PORT7_0
-#define I2C_PORT_BATTERY    NPCX_I2C_PORT5_0
-#define I2C_PORT_SENSOR     NPCX_I2C_PORT0_0
-#define I2C_PORT_USB_C0     NPCX_I2C_PORT1_0
-#define I2C_PORT_USB_MUX    I2C_PORT_USB_C0
+#define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
+#define I2C_PORT_BATTERY NPCX_I2C_PORT5_0
+#define I2C_PORT_SENSOR NPCX_I2C_PORT0_0
+#define I2C_PORT_USB_C0 NPCX_I2C_PORT1_0
+#define I2C_PORT_USB_MUX I2C_PORT_USB_C0
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
 
@@ -95,11 +95,11 @@
 #include "registers.h"
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1,     /* ADC0 */
-	ADC_TEMP_SENSOR_2,     /* ADC1 */
-	ADC_SUB_ANALOG,	       /* ADC2 */
-	ADC_TEMP_SENSOR_3,     /* ADC6 */
-	ADC_VSNS_PP3300_A,     /* ADC9 */
+	ADC_TEMP_SENSOR_1, /* ADC0 */
+	ADC_TEMP_SENSOR_2, /* ADC1 */
+	ADC_SUB_ANALOG, /* ADC2 */
+	ADC_TEMP_SENSOR_3, /* ADC6 */
+	ADC_VSNS_PP3300_A, /* ADC9 */
 	ADC_CH_COUNT
 };
 
