@@ -46,8 +46,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal s)
 {
@@ -101,79 +101,66 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_AC_PRESENT,
 	GPIO_POWER_BUTTON_L,
 };
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 const struct adc_t adc_channels[] = {
-	[ADC_BASE_ATTACH] = {
-		"BASE ATTACH", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
+	[ADC_BASE_ATTACH] = { "BASE ATTACH", NPCX_ADC_CH0, ADC_MAX_VOLT,
+			      ADC_READ_MAX + 1, 0 },
 
-	[ADC_BASE_DETACH] = {
-		"BASE DETACH", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX + 1, 0
-	},
+	[ADC_BASE_DETACH] = { "BASE DETACH", NPCX_ADC_CH1, ADC_MAX_VOLT,
+			      ADC_READ_MAX + 1, 0 },
 };
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_DB0_LED_RED] =   { 3, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   986 },
+	[PWM_CH_DB0_LED_RED] = { 3, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				 986 },
 	[PWM_CH_DB0_LED_GREEN] = { 0, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 				   986 },
-	[PWM_CH_DB0_LED_BLUE] =  { 2, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   986 },
-	[PWM_CH_DB1_LED_RED] =   { 7, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   986 },
+	[PWM_CH_DB0_LED_BLUE] = { 2, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				  986 },
+	[PWM_CH_DB1_LED_RED] = { 7, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				 986 },
 	[PWM_CH_DB1_LED_GREEN] = { 5, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
 				   986 },
-	[PWM_CH_DB1_LED_BLUE] =  { 6, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-				   986 },
+	[PWM_CH_DB1_LED_BLUE] = { 6, PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+				  986 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "battery",
-		.port = I2C_PORT_BATTERY,
-		.kbps = 100,
-		.scl  = GPIO_EC_I2C4_BATTERY_SCL,
-		.sda  = GPIO_EC_I2C4_BATTERY_SDA
-	},
+	{ .name = "battery",
+	  .port = I2C_PORT_BATTERY,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C4_BATTERY_SCL,
+	  .sda = GPIO_EC_I2C4_BATTERY_SDA },
 
-	{
-		.name = "power",
-		.port = I2C_PORT_POWER,
-		.kbps = 100,
-		.scl  = GPIO_EC_I2C0_POWER_SCL,
-		.sda  = GPIO_EC_I2C0_POWER_SDA
-	},
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C0_POWER_SCL,
+	  .sda = GPIO_EC_I2C0_POWER_SDA },
 
-	{
-		.name = "als_gyro",
-		.port = I2C_PORT_ALS_GYRO,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C5_ALS_GYRO_SCL,
-		.sda  = GPIO_EC_I2C5_ALS_GYRO_SDA
-	},
+	{ .name = "als_gyro",
+	  .port = I2C_PORT_ALS_GYRO,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C5_ALS_GYRO_SCL,
+	  .sda = GPIO_EC_I2C5_ALS_GYRO_SDA },
 
-	{
-		.name = "usbc0",
-		.port = I2C_PORT_USB_C0,
-		.kbps = 100,
-		.scl  = GPIO_USB_C0_SCL,
-		.sda  = GPIO_USB_C0_SDA
-	},
+	{ .name = "usbc0",
+	  .port = I2C_PORT_USB_C0,
+	  .kbps = 100,
+	  .scl = GPIO_USB_C0_SCL,
+	  .sda = GPIO_USB_C0_SDA },
 
-	{
-		.name = "usbc1",
-		.port = I2C_PORT_USB_C1,
-		.kbps = 100,
-		.scl  = GPIO_USB_C1_SCL,
-		.sda  = GPIO_USB_C1_SDA
-	},
+	{ .name = "usbc1",
+	  .port = I2C_PORT_USB_C1,
+	  .kbps = 100,
+	  .scl = GPIO_USB_C1_SCL,
+	  .sda = GPIO_USB_C1_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
 
 /*
  * Motion Sense
@@ -191,11 +178,9 @@ static struct opt3001_drv_data_t g_opt3001_data = {
 };
 
 /* Matrix to rotate accel/gyro into standard reference frame. */
-const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1),  0},
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+				      { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -303,11 +288,9 @@ static void enable_sensor_irqs(void)
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_sensor_irqs, HOOK_PRIO_DEFAULT);
 
 struct ppc_config_t ppc_chips[] = {
-	{
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	{ .i2c_port = I2C_PORT_USB_C0,
+	  .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+	  .drv = &sn5s330_drv },
 	{
 		.i2c_port = I2C_PORT_USB_C1,
 		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
@@ -366,8 +349,7 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 static void imvp8_tune_deferred(void)
 {
 	/* For the IMVP8, reduce the steps during decay from 3 to 1. */
-	if (i2c_write16(I2C_PORT_POWER, I2C_ADDR_MP2949_FLAGS,
-			0xFA, 0x0AC5))
+	if (i2c_write16(I2C_PORT_POWER, I2C_ADDR_MP2949_FLAGS, 0xFA, 0x0AC5))
 		CPRINTS("Failed to change step decay!");
 }
 DECLARE_DEFERRED(imvp8_tune_deferred);
@@ -522,8 +504,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x38, 0x6a);
 }
 
-__override void power_board_handle_host_sleep_event(
-		enum host_sleep_event state)
+__override void power_board_handle_host_sleep_event(enum host_sleep_event state)
 {
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
 		board_pmic_enable_slp_s0_vr_decay();
@@ -536,8 +517,7 @@ static void board_pmic_init(void)
 	int pgmask1;
 
 	/* Mask V5A_DS3_PG from PMIC PGMASK1. */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
-		      0x18, &pgmask1))
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x18, &pgmask1))
 		return;
 	pgmask1 |= BIT(2);
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x18, pgmask1);
@@ -611,19 +591,19 @@ static int read_gyro_sensor_temp(int idx, int *temp_ptr)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0},
+	{ "Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0 },
 
 	/* These BD99992GW temp sensors are only readable in S0 */
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM0},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM1},
-	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM2},
-	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM3},
+	{ "Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM0 },
+	{ "Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM1 },
+	{ "DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM2 },
+	{ "eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM3 },
 	/* The Gyro temperature sensor is only readable in S0. */
-	{"Gyro", TEMP_SENSOR_TYPE_BOARD, read_gyro_sensor_temp, LID_GYRO}
+	{ "Gyro", TEMP_SENSOR_TYPE_BOARD, read_gyro_sensor_temp, LID_GYRO }
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -633,15 +613,14 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  */
 struct ec_thermal_config thermal_params[] = {
 	/* {Twarn, Thigh, Thalt}, fan_off, fan_max */
-	{{0,          0, 0}, {0, 0, 0}, 0, 0}, /* Battery */
-	{{0,          0, 0}, {0, 0, 0}, 0, 0}, /* Ambient */
-	{{0,          0, 0}, {0, 0, 0}, 0, 0}, /* Charger */
-	{{0, C_TO_K(52), 0}, {0, 0, 0}, 0, 0}, /* DRAM */
-	{{0,          0, 0}, {0, 0, 0}, 0, 0}, /* eMMC */
-	{{0,          0, 0}, {0, 0, 0}, 0, 0}  /* Gyro */
+	{ { 0, 0, 0 }, { 0, 0, 0 }, 0, 0 }, /* Battery */
+	{ { 0, 0, 0 }, { 0, 0, 0 }, 0, 0 }, /* Ambient */
+	{ { 0, 0, 0 }, { 0, 0, 0 }, 0, 0 }, /* Charger */
+	{ { 0, C_TO_K(52), 0 }, { 0, 0, 0 }, 0, 0 }, /* DRAM */
+	{ { 0, 0, 0 }, { 0, 0, 0 }, 0, 0 }, /* eMMC */
+	{ { 0, 0, 0 }, { 0, 0, 0 }, 0, 0 } /* Gyro */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
-
 
 /*
  * Check if PMIC fault registers indicate VR fault. If yes, print out fault
@@ -655,8 +634,8 @@ static void board_report_pmic_fault(const char *str)
 	uint32_t info;
 
 	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault)
-	    != EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault) !=
+	    EC_SUCCESS)
 		return;
 
 	if (!(vrfault & BIT(4)))
@@ -709,8 +688,7 @@ void board_set_tcpc_power_mode(int port, int mode)
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 	int rv;
 	int old_port;
@@ -775,8 +753,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
