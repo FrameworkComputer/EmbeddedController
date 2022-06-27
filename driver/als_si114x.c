@@ -24,8 +24,8 @@
 #endif
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
 static int init(struct motion_sensor_t *s);
 
@@ -57,10 +57,8 @@ static inline int raw_read16(const int port, const uint16_t i2c_addr_flags,
 }
 
 /* helper function to operate on parameter values: op can be query/set/or/and */
-static int si114x_param_op(const struct motion_sensor_t *s,
-			   uint8_t op,
-			   uint8_t param,
-			   int *value)
+static int si114x_param_op(const struct motion_sensor_t *s, uint8_t op,
+			   uint8_t param, int *value)
 {
 	int ret;
 
@@ -73,13 +71,12 @@ static int si114x_param_op(const struct motion_sensor_t *s,
 			goto error;
 	}
 
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 SI114X_COMMAND, op | (param & 0x1F));
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_COMMAND,
+			 op | (param & 0x1F));
 	if (ret != EC_SUCCESS)
 		goto error;
 
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			SI114X_PARAM_RD, value);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, SI114X_PARAM_RD, value);
 	if (ret != EC_SUCCESS)
 		goto error;
 
@@ -101,8 +98,7 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 	/* Read ALX result */
 	for (i = 0; i < nb; i++) {
 		ret = raw_read16(s->port, s->i2c_spi_addr_flags,
-				 type_data->base_data_reg + i * 2,
-				 &val);
+				 type_data->base_data_reg + i * 2, &val);
 		if (ret)
 			break;
 		if (val == SI114X_OVERFLOW) {
@@ -122,8 +118,7 @@ static int si114x_read_results(struct motion_sensor_t *s, int nb)
 		 */
 		if (s->type == MOTIONSENSE_TYPE_PROX)
 			val = BIT(16) / val;
-		val = val * type_data->scale +
-			val * type_data->uscale / 10000;
+		val = val * type_data->scale + val * type_data->uscale / 10000;
 		s->raw_xyz[i] = val;
 	}
 
@@ -184,8 +179,8 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	if (!(*event & CONFIG_ALS_SI114X_INT_EVENT))
 		return EC_ERROR_NOT_HANDLED;
 
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			SI114X_IRQ_STATUS, &val);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, SI114X_IRQ_STATUS,
+			&val);
 	if (ret)
 		return ret;
 
@@ -193,8 +188,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		return EC_ERROR_INVAL;
 
 	/* clearing IRQ */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 SI114X_IRQ_STATUS,
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_IRQ_STATUS,
 			 val & type_data->irq_flags);
 	if (ret != EC_SUCCESS)
 		CPRINTS("clearing irq failed");
@@ -274,8 +268,8 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 			CPRINTS("Invalid sensor type");
 			return EC_ERROR_INVAL;
 		}
-		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-				 SI114X_COMMAND, cmd);
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_COMMAND,
+				 cmd);
 #ifdef CONFIG_ALS_SI114X_POLLING
 		hook_call_deferred(&si114x_read_deferred_data,
 				   SI114x_POLLING_DELAY);
@@ -330,8 +324,8 @@ static int si114x_set_chlist(const struct motion_sensor_t *s)
 		break;
 	}
 
-	return si114x_param_op(s, SI114X_COMMAND_PARAM_SET,
-			SI114X_PARAM_CHLIST, &reg);
+	return si114x_param_op(s, SI114X_COMMAND_PARAM_SET, SI114X_PARAM_CHLIST,
+			       &reg);
 }
 
 #ifdef CONFIG_ALS_SI114X_CHECK_REVISION
@@ -363,58 +357,53 @@ static int si114x_initialize(const struct motion_sensor_t *s)
 	int ret, val;
 
 	/* send reset command */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 SI114X_COMMAND, SI114X_COMMAND_RESET);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_COMMAND,
+			 SI114X_COMMAND_RESET);
 	if (ret != EC_SUCCESS)
 		return ret;
 	msleep(20);
 
 	/* hardware key, magic value */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 SI114X_HW_KEY, SI114X_HW_KEY_VALUE);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_HW_KEY,
+			 SI114X_HW_KEY_VALUE);
 	if (ret != EC_SUCCESS)
 		return ret;
 	msleep(20);
 
 	/* interrupt configuration, interrupt output enable */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 SI114X_INT_CFG, SI114X_INT_CFG_INT_OE);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_INT_CFG,
+			 SI114X_INT_CFG_INT_OE);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* enable interrupt for certain activities */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 SI114X_IRQ_ENABLE,
-			 SI114X_IRQ_ENABLE_PS3_IE |
-			 SI114X_IRQ_ENABLE_PS2_IE |
-			 SI114X_IRQ_ENABLE_PS1_IE |
-			 SI114X_IRQ_ENABLE_ALS_IE_INT0);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_IRQ_ENABLE,
+			 SI114X_IRQ_ENABLE_PS3_IE | SI114X_IRQ_ENABLE_PS2_IE |
+				 SI114X_IRQ_ENABLE_PS1_IE |
+				 SI114X_IRQ_ENABLE_ALS_IE_INT0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* Only forced mode */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 SI114X_MEAS_RATE, 0);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_MEAS_RATE, 0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* measure ALS every time device wakes up */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 SI114X_ALS_RATE, 0);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_ALS_RATE, 0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* measure proximity every time device wakes up */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 SI114X_PS_RATE, 0);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_PS_RATE, 0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* set LED currents to maximum */
 	switch (SI114X_NUM_LEDS) {
 	case 3:
-		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-				 SI114X_PS_LED3, 0x0f);
+		ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_PS_LED3,
+				 0x0f);
 		if (ret != EC_SUCCESS)
 			return ret;
 		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
@@ -444,9 +433,7 @@ static int si114x_initialize(const struct motion_sensor_t *s)
 	return ret;
 }
 
-static int set_resolution(const struct motion_sensor_t *s,
-				int res,
-				int rnd)
+static int set_resolution(const struct motion_sensor_t *s, int res, int rnd)
 {
 	int ret, reg1, reg2, val;
 	/* override on resolution: set the gain. between 0 to 7 */
@@ -489,9 +476,7 @@ static int get_resolution(const struct motion_sensor_t *s)
 	return val & 0x07;
 }
 
-static int set_range(struct motion_sensor_t *s,
-				int range,
-				int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	struct si114x_typed_data_t *data = SI114X_GET_TYPED_DATA(s);
 	data->scale = range >> 16;
@@ -507,27 +492,23 @@ static int get_data_rate(const struct motion_sensor_t *s)
 	return data->rate;
 }
 
-static int set_data_rate(const struct motion_sensor_t *s,
-				int rate,
-				int rnd)
+static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
 	struct si114x_typed_data_t *data = SI114X_GET_TYPED_DATA(s);
 	data->rate = rate;
 	return EC_SUCCESS;
 }
 
-static int set_offset(const struct motion_sensor_t *s,
-			const int16_t *offset,
-			int16_t    temp)
+static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
+		      int16_t temp)
 {
 	struct si114x_typed_data_t *data = SI114X_GET_TYPED_DATA(s);
 	data->offset = offset[X];
 	return EC_SUCCESS;
 }
 
-static int get_offset(const struct motion_sensor_t *s,
-			int16_t   *offset,
-			int16_t    *temp)
+static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
+		      int16_t *temp)
 {
 	struct si114x_typed_data_t *data = SI114X_GET_TYPED_DATA(s);
 	offset[X] = data->offset;
