@@ -22,7 +22,6 @@
 #define EXT_MSG_DATA_SIZE_1 1
 #define GBSDB_FIXED_BATTERY_0 (0 << 16)
 
-
 static int number_of_fixed_batteries(void)
 {
 	return CONFIG_NUM_FIXED_BATTERIES;
@@ -78,13 +77,8 @@ int test_td_pd_src3_e7(void)
 	possible[1].ctrl_msg = 0;
 	possible[1].data_msg = PD_DATA_SOURCE_CAP;
 
-	TEST_EQ(verify_tcpci_possible_tx(possible,
-					 2,
-					 &found_index,
-					 data,
-					 sizeof(data),
-					 &msg_len,
-					 0),
+	TEST_EQ(verify_tcpci_possible_tx(possible, 2, &found_index, data,
+					 sizeof(data), &msg_len, 0),
 		EC_SUCCESS, "%d");
 	if (found_index == 0) {
 		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
@@ -104,8 +98,7 @@ int test_td_pd_src3_e7(void)
 		mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 		task_wait_event(10 * MSEC);
 
-		if (data[HEADER_BYTE_OFFSET +
-			 HEADER_BYTE_CNT +
+		if (data[HEADER_BYTE_OFFSET + HEADER_BYTE_CNT +
 			 SRC_CAP_EXT_NUM_BATTERY_OFFSET] == 0)
 			return EC_SUCCESS;
 	}
@@ -114,11 +107,9 @@ int test_td_pd_src3_e7(void)
 	 * e) The Tester waits until it can start an AMS (Run PROC.PD.E3) and
 	 *    sends a Get_Battery_Status message to the UUT
 	 */
-	ext_msg = EXT_MSG_CHUNKED |
-		  EXT_MSG_DATA_SIZE_1 |
-		  GBSDB_FIXED_BATTERY_0;
+	ext_msg = EXT_MSG_CHUNKED | EXT_MSG_DATA_SIZE_1 | GBSDB_FIXED_BATTERY_0;
 	partner_send_msg(TCPCI_MSG_SOP, PD_EXT_GET_BATTERY_STATUS, 1, 1,
-			&ext_msg);
+			 &ext_msg);
 
 	/*
 	 * f) If a Battery_Status message is not received within
@@ -127,10 +118,8 @@ int test_td_pd_src3_e7(void)
 	 *    been transmitted to the time the first bit of the Battery_Status
 	 *    message preamble has been received.
 	 */
-	TEST_EQ(verify_tcpci_tx_timeout(TCPCI_MSG_SOP,
-					0,
-					PD_DATA_BATTERY_STATUS,
-					(15 * MSEC)),
+	TEST_EQ(verify_tcpci_tx_timeout(TCPCI_MSG_SOP, 0,
+					PD_DATA_BATTERY_STATUS, (15 * MSEC)),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 	task_wait_event(10 * MSEC);
