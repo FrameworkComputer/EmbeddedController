@@ -8,4 +8,4 @@
 #ifndef __CROS_EC_FPU_H
 #define __CROS_EC_FPU_H
 
-#endif  /* __CROS_EC_FPU_H */
+#endif /* __CROS_EC_FPU_H */
