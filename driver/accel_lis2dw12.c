@@ -22,11 +22,11 @@
 #define ACCEL_LIS2DW12_INT_ENABLE
 #endif
 
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
 STATIC_IF(ACCEL_LIS2DW12_INT_ENABLE)
-	volatile uint32_t last_interrupt_timestamp;
+volatile uint32_t last_interrupt_timestamp;
 
 /**
  * lis2dw12_enable_fifo - Enable/Disable FIFO in LIS2DW12
@@ -34,7 +34,7 @@ STATIC_IF(ACCEL_LIS2DW12_INT_ENABLE)
  * @mode: fifo_modes
  */
 static __maybe_unused int lis2dw12_enable_fifo(const struct motion_sensor_t *s,
-			enum lis2dw12_fmode mode)
+					       enum lis2dw12_fmode mode)
 {
 	return st_write_data_with_mask(s, LIS2DW12_FIFO_CTRL_ADDR,
 				       LIS2DW12_FIFO_MODE_MASK, mode);
@@ -46,16 +46,17 @@ static __maybe_unused int lis2dw12_enable_fifo(const struct motion_sensor_t *s,
  *
  * Must works with interface mutex locked
  */
-static __maybe_unused int lis2dw12_config_interrupt(
-		const struct motion_sensor_t *s)
+static __maybe_unused int
+lis2dw12_config_interrupt(const struct motion_sensor_t *s)
 {
 	/* Configure FIFO watermark level. */
 	RETURN_ERROR(st_write_data_with_mask(s, LIS2DW12_FIFO_CTRL_ADDR,
-				LIS2DW12_FIFO_THRESHOLD_MASK, 1));
+					     LIS2DW12_FIFO_THRESHOLD_MASK, 1));
 
 	/* Enable interrupt on FIFO watermark and route to int1. */
 	RETURN_ERROR(st_write_data_with_mask(s, LIS2DW12_INT1_FTH_ADDR,
-				LIS2DW12_INT1_FTH_MASK, LIS2DW12_EN_BIT));
+					     LIS2DW12_INT1_FTH_MASK,
+					     LIS2DW12_EN_BIT));
 
 	if (IS_ENABLED(CONFIG_GESTURE_SENSOR_DOUBLE_TAP)) {
 		/*
@@ -63,27 +64,26 @@ static __maybe_unused int lis2dw12_config_interrupt(
 		 * For more details please refer to AN5038.
 		 */
 		RETURN_ERROR(st_raw_write8(s->port, s->i2c_spi_addr_flags,
-				LIS2DW12_TAP_THS_X_ADDR, 0x09));
+					   LIS2DW12_TAP_THS_X_ADDR, 0x09));
 		RETURN_ERROR(st_raw_write8(s->port, s->i2c_spi_addr_flags,
-				LIS2DW12_TAP_THS_Y_ADDR, 0x09));
+					   LIS2DW12_TAP_THS_Y_ADDR, 0x09));
 		RETURN_ERROR(st_raw_write8(s->port, s->i2c_spi_addr_flags,
-				LIS2DW12_TAP_THS_Z_ADDR, 0xE9));
+					   LIS2DW12_TAP_THS_Z_ADDR, 0xE9));
 		RETURN_ERROR(st_raw_write8(s->port, s->i2c_spi_addr_flags,
-				LIS2DW12_INT_DUR_ADDR, 0x7F));
+					   LIS2DW12_INT_DUR_ADDR, 0x7F));
 
 		/* Enable D-TAP event detection. */
-		RETURN_ERROR(st_write_data_with_mask(s,
-					LIS2DW12_WAKE_UP_THS_ADDR,
-					LIS2DW12_SINGLE_DOUBLE_TAP,
-					LIS2DW12_EN_BIT));
+		RETURN_ERROR(st_write_data_with_mask(
+			s, LIS2DW12_WAKE_UP_THS_ADDR,
+			LIS2DW12_SINGLE_DOUBLE_TAP, LIS2DW12_EN_BIT));
 
 		/*
 		 * Enable D-TAP detection on int_1 pad. In any case D-TAP event
 		 * can be detected only if ODR is over 200 Hz.
 		 */
 		RETURN_ERROR(st_write_data_with_mask(s, LIS2DW12_INT1_TAP_ADDR,
-				LIS2DW12_INT1_DTAP_MASK,
-				LIS2DW12_EN_BIT));
+						     LIS2DW12_INT1_DTAP_MASK,
+						     LIS2DW12_EN_BIT));
 	}
 	return EC_SUCCESS;
 }
@@ -93,8 +93,7 @@ static __maybe_unused int lis2dw12_config_interrupt(
  * Load data from internal sensor FIFO.
  * @s: Motion sensor pointer
  */
-static int lis2dw12_load_fifo(struct motion_sensor_t *s,
-			      int nsamples)
+static int lis2dw12_load_fifo(struct motion_sensor_t *s, int nsamples)
 {
 	int ret, left, length, i;
 	uint32_t interrupt_timestamp = last_interrupt_timestamp;
@@ -131,8 +130,8 @@ static int lis2dw12_load_fifo(struct motion_sensor_t *s,
 				vect.data[Z] = axis[Z];
 				vect.flags = 0;
 				vect.sensor_num = s - motion_sensors;
-				motion_sense_fifo_stage_data(&vect, s, 3,
-						interrupt_timestamp);
+				motion_sense_fifo_stage_data(
+					&vect, s, 3, interrupt_timestamp);
 			} else {
 				motion_sense_push_raw_xyz(s);
 			}
@@ -146,8 +145,7 @@ static int lis2dw12_load_fifo(struct motion_sensor_t *s,
 /**
  * lis2dw12_get_fifo_samples - check for stored FIFO samples.
  */
-static int lis2dw12_get_fifo_samples(struct motion_sensor_t *s,
-				     int *nsamples)
+static int lis2dw12_get_fifo_samples(struct motion_sensor_t *s, int *nsamples)
 {
 	int ret, tmp;
 
@@ -175,8 +173,7 @@ void lis2dw12_interrupt(enum gpio_signal signal)
 /**
  * lis2dw12_irq_handler - bottom half of the interrupt stack.
  */
-static int lis2dw12_irq_handler(struct motion_sensor_t *s,
-					       uint32_t *event)
+static int lis2dw12_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
 	bool commit_needed = false;
 	int nsamples;
@@ -194,7 +191,7 @@ static int lis2dw12_irq_handler(struct motion_sensor_t *s,
 			     LIS2DW12_STATUS_TAP, &status);
 		if (status & LIS2DW12_DOUBLE_TAP)
 			*event |= TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(
-					MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
+				MOTIONSENSE_ACTIVITY_DOUBLE_TAP);
 	}
 
 	do {
@@ -231,8 +228,7 @@ int lis2dw12_set_power_mode(const struct motion_sensor_t *s,
 {
 	int ret = EC_SUCCESS;
 
-	if (mode == LIS2DW12_LOW_POWER &&
-	    lpmode == LIS2DW12_LOW_POWER_MODE_1)
+	if (mode == LIS2DW12_LOW_POWER && lpmode == LIS2DW12_LOW_POWER_MODE_1)
 		return EC_ERROR_UNIMPLEMENTED;
 
 	/* Set Mode and Low Power Mode. */
@@ -364,8 +360,9 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		if (reg_val > LIS2DW12_ODR_200HZ_VAL)
 			ret = lis2dw12_set_power_mode(s, LIS2DW12_HIGH_PERF, 0);
 		else
-			ret = lis2dw12_set_power_mode(s, LIS2DW12_LOW_POWER,
-					LIS2DW12_LOW_POWER_MODE_2);
+			ret = lis2dw12_set_power_mode(
+				s, LIS2DW12_LOW_POWER,
+				LIS2DW12_LOW_POWER_MODE_2);
 	}
 
 	ret = st_write_data_with_mask(s, LIS2DW12_ACC_ODR_ADDR,
@@ -387,8 +384,8 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LIS2DW12_STATUS_REG, &tmp);
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LIS2DW12_STATUS_REG,
+			   &tmp);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -419,8 +416,7 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 
 	/* Read 6 bytes starting at xyz_reg. */
 	ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
-				  LIS2DW12_OUT_X_L_ADDR, raw,
-				  OUT_XYZ_SIZE);
+				  LIS2DW12_OUT_X_L_ADDR, raw, OUT_XYZ_SIZE);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s type:0x%X RD XYZ Error", s->name, s->type);
 		return ret;
@@ -466,7 +462,7 @@ static int init(struct motion_sensor_t *s)
 		msleep(1);
 		timeout += 1;
 		ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-				  LIS2DW12_SOFT_RESET_ADDR, &status);
+				   LIS2DW12_SOFT_RESET_ADDR, &status);
 	} while (ret != EC_SUCCESS || (status & LIS2DW12_SOFT_RESET_MASK) != 0);
 
 	/* Enable BDU. */
@@ -483,8 +479,8 @@ static int init(struct motion_sensor_t *s)
 	/* Interrupt trigger level of power-on-reset is HIGH */
 	if (IS_ENABLED(ACCEL_LIS2DW12_INT_ENABLE)) {
 		ret = st_write_data_with_mask(s, LIS2DW12_H_ACTIVE_ADDR,
-						LIS2DW12_H_ACTIVE_MASK,
-						LIS2DW12_EN_BIT);
+					      LIS2DW12_H_ACTIVE_MASK,
+					      LIS2DW12_EN_BIT);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 	}
@@ -498,7 +494,7 @@ static int init(struct motion_sensor_t *s)
 	else
 		/* Set default Mode and Low Power Mode. */
 		ret = lis2dw12_set_power_mode(s, LIS2DW12_LOW_POWER,
-				     LIS2DW12_LOW_POWER_MODE_2);
+					      LIS2DW12_LOW_POWER_MODE_2);
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
