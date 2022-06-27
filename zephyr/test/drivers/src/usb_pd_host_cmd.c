@@ -14,8 +14,7 @@ ZTEST_USER(usb_pd_host_cmd, test_host_command_hc_pd_ports)
 {
 	struct ec_response_usb_pd_ports response;
 	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_USB_PD_PORTS, 0,
-					    response);
+		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_USB_PD_PORTS, 0, response);
 
 	zassert_ok(host_command_process(&args), NULL);
 	zassert_ok(args.result, NULL);
