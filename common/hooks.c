@@ -14,7 +14,7 @@
 
 #ifdef CONFIG_HOOK_DEBUG
 #define CPUTS(outstr) cputs(CC_HOOK, outstr)
-#define CPRINTS(format, args...) cprints(CC_HOOK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_HOOK, format, ##args)
 #else
 #define CPUTS(outstr)
 #define CPRINTS(format, args...)
@@ -32,38 +32,38 @@ struct hook_ptrs {
  * order as enum hook_type.
  */
 static const struct hook_ptrs hook_list[] = {
-	{__hooks_init, __hooks_init_end},
-	{__hooks_pre_freq_change, __hooks_pre_freq_change_end},
-	{__hooks_freq_change, __hooks_freq_change_end},
-	{__hooks_sysjump, __hooks_sysjump_end},
-	{__hooks_chipset_pre_init, __hooks_chipset_pre_init_end},
-	{__hooks_chipset_startup, __hooks_chipset_startup_end},
-	{__hooks_chipset_resume, __hooks_chipset_resume_end},
-	{__hooks_chipset_suspend, __hooks_chipset_suspend_end},
+	{ __hooks_init, __hooks_init_end },
+	{ __hooks_pre_freq_change, __hooks_pre_freq_change_end },
+	{ __hooks_freq_change, __hooks_freq_change_end },
+	{ __hooks_sysjump, __hooks_sysjump_end },
+	{ __hooks_chipset_pre_init, __hooks_chipset_pre_init_end },
+	{ __hooks_chipset_startup, __hooks_chipset_startup_end },
+	{ __hooks_chipset_resume, __hooks_chipset_resume_end },
+	{ __hooks_chipset_suspend, __hooks_chipset_suspend_end },
 #ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
-	{__hooks_chipset_resume_init, __hooks_chipset_resume_init_end},
-	{__hooks_chipset_suspend_complete,
-	 __hooks_chipset_suspend_complete_end},
+	{ __hooks_chipset_resume_init, __hooks_chipset_resume_init_end },
+	{ __hooks_chipset_suspend_complete,
+	  __hooks_chipset_suspend_complete_end },
 #endif
-	{__hooks_chipset_shutdown, __hooks_chipset_shutdown_end},
-	{__hooks_chipset_shutdown_complete,
-	 __hooks_chipset_shutdown_complete_end},
-	{__hooks_chipset_hard_off, __hooks_chipset_hard_off_end},
-	{__hooks_chipset_reset, __hooks_chipset_reset_end},
-	{__hooks_ac_change, __hooks_ac_change_end},
-	{__hooks_lid_change, __hooks_lid_change_end},
-	{__hooks_tablet_mode_change, __hooks_tablet_mode_change_end},
-	{__hooks_base_attached_change, __hooks_base_attached_change_end},
-	{__hooks_pwrbtn_change, __hooks_pwrbtn_change_end},
-	{__hooks_battery_soc_change, __hooks_battery_soc_change_end},
+	{ __hooks_chipset_shutdown, __hooks_chipset_shutdown_end },
+	{ __hooks_chipset_shutdown_complete,
+	  __hooks_chipset_shutdown_complete_end },
+	{ __hooks_chipset_hard_off, __hooks_chipset_hard_off_end },
+	{ __hooks_chipset_reset, __hooks_chipset_reset_end },
+	{ __hooks_ac_change, __hooks_ac_change_end },
+	{ __hooks_lid_change, __hooks_lid_change_end },
+	{ __hooks_tablet_mode_change, __hooks_tablet_mode_change_end },
+	{ __hooks_base_attached_change, __hooks_base_attached_change_end },
+	{ __hooks_pwrbtn_change, __hooks_pwrbtn_change_end },
+	{ __hooks_battery_soc_change, __hooks_battery_soc_change_end },
 #ifdef CONFIG_USB_SUSPEND
-	{__hooks_usb_change, __hooks_usb_change_end},
+	{ __hooks_usb_change, __hooks_usb_change_end },
 #endif
-	{__hooks_tick, __hooks_tick_end},
-	{__hooks_second, __hooks_second_end},
-	{__hooks_usb_pd_disconnect, __hooks_usb_pd_disconnect_end},
-	{__hooks_usb_pd_connect, __hooks_usb_pd_connect_end},
-	{__hooks_power_supply_change, __hooks_power_supply_change_end},
+	{ __hooks_tick, __hooks_tick_end },
+	{ __hooks_second, __hooks_second_end },
+	{ __hooks_usb_pd_disconnect, __hooks_usb_pd_disconnect_end },
+	{ __hooks_usb_pd_connect, __hooks_usb_pd_connect_end },
+	{ __hooks_power_supply_change, __hooks_power_supply_change_end },
 };
 
 /* Times for deferrable functions */
@@ -150,7 +150,7 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 	int i = data - __deferred_funcs;
 
 	if (data < __deferred_funcs || data >= __deferred_funcs_end)
-		return EC_ERROR_INVAL;  /* Routine not registered */
+		return EC_ERROR_INVAL; /* Routine not registered */
 
 	if (us == -1) {
 		/* Cancel */
@@ -284,7 +284,5 @@ static int command_stats(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hookstats, command_stats,
-			NULL,
-			"Print stats of hooks");
+DECLARE_CONSOLE_COMMAND(hookstats, command_stats, NULL, "Print stats of hooks");
 #endif
