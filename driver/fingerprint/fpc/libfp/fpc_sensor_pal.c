@@ -14,8 +14,8 @@
 #include "uart.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
 void fpc_pal_log_entry(const char *tag, int log_level, const char *format, ...)
 {
