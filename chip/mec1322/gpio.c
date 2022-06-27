@@ -21,16 +21,14 @@ struct gpio_int_mapping {
 
 /* Mapping from GPIO port to GIRQ info */
 static const struct gpio_int_mapping int_map[22] = {
-	{11, 0}, {11, 0}, {11, 0}, {11, 0},
-	{10, 4}, {10, 4}, {10, 4}, {-1, -1},
-	{-1, -1}, {-1, -1}, {9, 10}, {9, 10},
-	{9, 10}, {9, 10}, {8, 14}, {8, 14},
-	{8, 14}, {-1, -1}, {-1, -1}, {-1, -1},
-	{20, 20}, {20, 20}
+	{ 11, 0 },  { 11, 0 },	{ 11, 0 },  { 11, 0 },	{ 10, 4 }, { 10, 4 },
+	{ 10, 4 },  { -1, -1 }, { -1, -1 }, { -1, -1 }, { 9, 10 }, { 9, 10 },
+	{ 9, 10 },  { 9, 10 },	{ 8, 14 },  { 8, 14 },	{ 8, 14 }, { -1, -1 },
+	{ -1, -1 }, { -1, -1 }, { 20, 20 }, { 20, 20 }
 };
 
 void gpio_set_alternate_function(uint32_t port, uint32_t mask,
-				enum gpio_alternate_func func)
+				 enum gpio_alternate_func func)
 {
 	int i;
 	uint32_t val;
@@ -199,7 +197,6 @@ void gpio_pre_init(void)
 	int is_warm = system_is_reboot_warm();
 	const struct gpio_info *g = gpio_list;
 
-
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
 		flags = g->flags;
 
@@ -217,15 +214,15 @@ void gpio_pre_init(void)
 
 		/* Use as GPIO, not alternate function */
 		gpio_set_alternate_function(g->port, g->mask,
-					GPIO_ALT_FUNC_NONE);
+					    GPIO_ALT_FUNC_NONE);
 	}
 }
 
 /* Clear any interrupt flags before enabling GPIO interrupt */
-#define ENABLE_GPIO_GIRQ(x) \
-	do { \
+#define ENABLE_GPIO_GIRQ(x)                                     \
+	do {                                                    \
 		MEC1322_INT_SOURCE(x) |= MEC1322_INT_RESULT(x); \
-		task_enable_irq(MEC1322_IRQ_GIRQ ## x); \
+		task_enable_irq(MEC1322_IRQ_GIRQ##x);           \
 	} while (0)
 
 static void gpio_init(void)
@@ -240,7 +237,6 @@ DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Interrupt handlers */
-
 
 /**
  * Handler for each GIRQ interrupt. This reads and clears the interrupt bits for
