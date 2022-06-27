@@ -13,95 +13,95 @@
 #include "util.h"
 #include "timer.h"
 
-#define BQ27621_ADDR_FLAGS                  0x55
-#define BQ27621_TYPE_ID                     0x0621
+#define BQ27621_ADDR_FLAGS 0x55
+#define BQ27621_TYPE_ID 0x0621
 
-#define REG_CTRL                            0x00
-#define REG_TEMPERATURE                     0x02
-#define REG_VOLTAGE                         0x04
-#define REG_FLAGS                           0x06
-#define REG_NOMINAL_CAPACITY                0x08
-#define REG_FULL_AVAILABLE_CAPACITY         0x0a
-#define REG_REMAINING_CAPACITY              0x0c
-#define REG_FULL_CHARGE_CAPACITY            0x0e
-#define REG_EFFECTIVE_CURRENT               0x10
-#define REG_AVERAGE_POWER                   0x18
-#define REG_STATE_OF_CHARGE                 0x1c
-#define REG_INTERNAL_TEMPERATURE            0x1e
-#define REG_REMAINING_CAPACITY_UNFILTERED   0x28
-#define REG_REMAINING_CAPACITY_FILTERED     0x2a
+#define REG_CTRL 0x00
+#define REG_TEMPERATURE 0x02
+#define REG_VOLTAGE 0x04
+#define REG_FLAGS 0x06
+#define REG_NOMINAL_CAPACITY 0x08
+#define REG_FULL_AVAILABLE_CAPACITY 0x0a
+#define REG_REMAINING_CAPACITY 0x0c
+#define REG_FULL_CHARGE_CAPACITY 0x0e
+#define REG_EFFECTIVE_CURRENT 0x10
+#define REG_AVERAGE_POWER 0x18
+#define REG_STATE_OF_CHARGE 0x1c
+#define REG_INTERNAL_TEMPERATURE 0x1e
+#define REG_REMAINING_CAPACITY_UNFILTERED 0x28
+#define REG_REMAINING_CAPACITY_FILTERED 0x2a
 #define REG_FULL_CHARGE_CAPACITY_UNFILTERED 0x28
-#define REG_FULL_CHARGE_CAPACITY_FILTERED   0x2a
-#define REG_STATE_OF_CHARGE_UNFILTERED      0x30
-#define REG_OP_CONFIG                       0x3a
-#define REG_DESIGN_CAPACITY                 0x3c
-#define REG_DATA_CLASS                      0x3e
-#define REG_DATA_BLOCK                      0x3f
-#define REG_BLOCK_DATA_CHECKSUM             0x60
-#define REG_BLOCK_DATA_CONTROL              0x61
+#define REG_FULL_CHARGE_CAPACITY_FILTERED 0x2a
+#define REG_STATE_OF_CHARGE_UNFILTERED 0x30
+#define REG_OP_CONFIG 0x3a
+#define REG_DESIGN_CAPACITY 0x3c
+#define REG_DATA_CLASS 0x3e
+#define REG_DATA_BLOCK 0x3f
+#define REG_BLOCK_DATA_CHECKSUM 0x60
+#define REG_BLOCK_DATA_CONTROL 0x61
 
-#define REGISTERS_BLOCK_OFFSET                64
-#define REGISTERS_BLOCK_OP_CONFIG           0x40
-#define REGISTERS_BLOCK_OP_CONFIG_B         0x42
-#define REGISTERS_BLOCK_DF_VERSION          0x43
+#define REGISTERS_BLOCK_OFFSET 64
+#define REGISTERS_BLOCK_OP_CONFIG 0x40
+#define REGISTERS_BLOCK_OP_CONFIG_B 0x42
+#define REGISTERS_BLOCK_DF_VERSION 0x43
 
 /* State block */
-#define STATE_BLOCK_OFFSET                    82
-#define STATE_BLOCK_DESIGN_CAPACITY         0x43
-#define STATE_BLOCK_DESIGN_ENERGY           0x45
-#define STATE_BLOCK_TERMINATE_VOLTAGE       0x49
-#define STATE_BLOCK_TAPER_RATE              0x54
+#define STATE_BLOCK_OFFSET 82
+#define STATE_BLOCK_DESIGN_CAPACITY 0x43
+#define STATE_BLOCK_DESIGN_ENERGY 0x45
+#define STATE_BLOCK_TERMINATE_VOLTAGE 0x49
+#define STATE_BLOCK_TAPER_RATE 0x54
 
 /* BQ27621 Control subcommands */
-#define CONTROL_CONTROL_STATUS   0x00
-#define CONTROL_DEVICE_TYPE      0x01
-#define CONTROL_FW_VERSION       0x02
-#define CONTROL_PREV_MACWRITE    0x07
-#define CONTROL_CHEM_ID          0x08
-#define CONTROL_BAT_INSERT       0x0C
-#define CONTROL_BAT_REMOVE       0x0D
-#define CONTROL_TOGGLE_POWERMIN  0x10
-#define CONTROL_SET_HIBERNATE    0x11
-#define CONTROL_CLEAR_HIBERNATE  0x12
-#define CONTROL_SET_CFGUPDATE    0x13
-#define CONTROL_SHUTDOWN_ENABLE  0x1B
-#define CONTROL_SHUTDOWN         0x1C
-#define CONTROL_SEALED           0x20
-#define CONTROL_TOGGLE_GPOUT     0x23
-#define CONTROL_ALT_CHEM1        0x31
-#define CONTROL_ALT_CHEM2        0x32
-#define CONTROL_RESET            0x41
-#define CONTROL_SOFT_RESET       0x42
-#define CONTROL_EXIT_CFGUPDATE   0x43
-#define CONTROL_EXIT_RESIM       0x44
-#define CONTROL_UNSEAL           0x8000
+#define CONTROL_CONTROL_STATUS 0x00
+#define CONTROL_DEVICE_TYPE 0x01
+#define CONTROL_FW_VERSION 0x02
+#define CONTROL_PREV_MACWRITE 0x07
+#define CONTROL_CHEM_ID 0x08
+#define CONTROL_BAT_INSERT 0x0C
+#define CONTROL_BAT_REMOVE 0x0D
+#define CONTROL_TOGGLE_POWERMIN 0x10
+#define CONTROL_SET_HIBERNATE 0x11
+#define CONTROL_CLEAR_HIBERNATE 0x12
+#define CONTROL_SET_CFGUPDATE 0x13
+#define CONTROL_SHUTDOWN_ENABLE 0x1B
+#define CONTROL_SHUTDOWN 0x1C
+#define CONTROL_SEALED 0x20
+#define CONTROL_TOGGLE_GPOUT 0x23
+#define CONTROL_ALT_CHEM1 0x31
+#define CONTROL_ALT_CHEM2 0x32
+#define CONTROL_RESET 0x41
+#define CONTROL_SOFT_RESET 0x42
+#define CONTROL_EXIT_CFGUPDATE 0x43
+#define CONTROL_EXIT_RESIM 0x44
+#define CONTROL_UNSEAL 0x8000
 
 /* BQ27621 Status bits */
-#define STATUS_SHUTDOWNEN        0x8000
-#define STATUS_WDRESET           0x4000
-#define STATUS_SS                0x2000
-#define STATUS_CALMODE           0x1000
-#define STATUS_OCVCMDCOMP        0x0200
-#define STATUS_OCVFAIL           0x0100
-#define STATUS_INITCOMP          0x0080
-#define STATUS_HIBERNATE         0x0040
-#define STATUS_POWERMIN          0x0020
-#define STATUS_SLEEP             0x0010
-#define STATUS_LDMD              0x0008
-#define STATUS_CHEMCHNG          0x0001
+#define STATUS_SHUTDOWNEN 0x8000
+#define STATUS_WDRESET 0x4000
+#define STATUS_SS 0x2000
+#define STATUS_CALMODE 0x1000
+#define STATUS_OCVCMDCOMP 0x0200
+#define STATUS_OCVFAIL 0x0100
+#define STATUS_INITCOMP 0x0080
+#define STATUS_HIBERNATE 0x0040
+#define STATUS_POWERMIN 0x0020
+#define STATUS_SLEEP 0x0010
+#define STATUS_LDMD 0x0008
+#define STATUS_CHEMCHNG 0x0001
 
 /* BQ27621 Flags bits */
-#define FLAGS_OT                 0x8000
-#define FLAGS_UT                 0x4000
-#define FLAGS_FC                 0x0200
-#define FLAGS_CHG                0x0100
-#define FLAGS_OCVTAKEN           0x0080
-#define FLAGS_ITPOR              0x0020
-#define FLAGS_CFGUPD             0x0010
-#define FLAGS_BAT_DET            0x0008
-#define FLAGS_SOC1               0x0004
-#define FLAGS_SOCF               0x0002
-#define FLAGS_DSG                0x0001
+#define FLAGS_OT 0x8000
+#define FLAGS_UT 0x4000
+#define FLAGS_FC 0x0200
+#define FLAGS_CHG 0x0100
+#define FLAGS_OCVTAKEN 0x0080
+#define FLAGS_ITPOR 0x0020
+#define FLAGS_CFGUPD 0x0010
+#define FLAGS_BAT_DET 0x0008
+#define FLAGS_SOC1 0x0004
+#define FLAGS_SOCF 0x0002
+#define FLAGS_DSG 0x0001
 
 /*
  * There are some parameters that need to be defined in the board file:
@@ -119,19 +119,23 @@
  *
  */
 
-#define BQ27621_SCALE_FACTOR (BQ27621_DESIGN_CAPACITY < 150 ? 10.0 : \
-				(BQ27621_DESIGN_CAPACITY > 6000 ? 0.1 : 1))
+#define BQ27621_SCALE_FACTOR             \
+	(BQ27621_DESIGN_CAPACITY < 150 ? \
+		 10.0 :                  \
+		 (BQ27621_DESIGN_CAPACITY > 6000 ? 0.1 : 1))
 
-#define BQ27621_UNSCALE(x)   (BQ27621_SCALE_FACTOR == 10 ? (x) / 10 : \
-				(BQ27621_SCALE_FACTOR == 0.1 ? (x) * 10 : (x)))
+#define BQ27621_UNSCALE(x)            \
+	(BQ27621_SCALE_FACTOR == 10 ? \
+		 (x) / 10 :           \
+		 (BQ27621_SCALE_FACTOR == 0.1 ? (x)*10 : (x)))
 
-#define BQ27621_TAPER_RATE  ((int)(BQ27621_DESIGN_CAPACITY/    \
-				(0.1 * BQ27621_TAPER_CURRENT)))
+#define BQ27621_TAPER_RATE \
+	((int)(BQ27621_DESIGN_CAPACITY / (0.1 * BQ27621_TAPER_CURRENT)))
 
-#define BQ27621_SCALED_DESIGN_CAPACITY ((int)(BQ27621_DESIGN_CAPACITY *   \
-					BQ27621_SCALE_FACTOR))
-#define BQ27621_SCALED_DESIGN_ENERGY   ((int)(BQ27621_DESIGN_CAPACITY *   \
-					BQ27621_SCALE_FACTOR))
+#define BQ27621_SCALED_DESIGN_CAPACITY \
+	((int)(BQ27621_DESIGN_CAPACITY * BQ27621_SCALE_FACTOR))
+#define BQ27621_SCALED_DESIGN_ENERGY \
+	((int)(BQ27621_DESIGN_CAPACITY * BQ27621_SCALE_FACTOR))
 
 /*
  *Everything is LSB first.  Parameters need to be converted.
@@ -139,11 +143,11 @@
  * The values from the data sheet are already LSB-first.
  */
 
-#define ENDIAN_SWAP_2B(x)     ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
-#define DESIGN_CAPACITY       ENDIAN_SWAP_2B(BQ27621_SCALED_DESIGN_CAPACITY)
-#define DESIGN_ENERGY         ENDIAN_SWAP_2B(BQ27621_SCALED_DESIGN_ENERGY)
-#define TAPER_RATE            ENDIAN_SWAP_2B(BQ27621_TAPER_RATE)
-#define TERMINATE_VOLTAGE     ENDIAN_SWAP_2B(BQ27621_TERMINATE_VOLTAGE)
+#define ENDIAN_SWAP_2B(x) ((((x)&0xff) << 8) | (((x)&0xff00) >> 8))
+#define DESIGN_CAPACITY ENDIAN_SWAP_2B(BQ27621_SCALED_DESIGN_CAPACITY)
+#define DESIGN_ENERGY ENDIAN_SWAP_2B(BQ27621_SCALED_DESIGN_ENERGY)
+#define TAPER_RATE ENDIAN_SWAP_2B(BQ27621_TAPER_RATE)
+#define TERMINATE_VOLTAGE ENDIAN_SWAP_2B(BQ27621_TERMINATE_VOLTAGE)
 
 struct battery_info battery_params;
 
@@ -192,7 +196,7 @@ static int bq27621_probe(void)
 static inline int bq27621_unseal(void)
 {
 	return bq27621_write(REG_CTRL, CONTROL_UNSEAL) |
-				bq27621_write(REG_CTRL, CONTROL_UNSEAL);
+	       bq27621_write(REG_CTRL, CONTROL_UNSEAL);
 }
 
 static int bq27621_enter_config_update(void)
@@ -200,8 +204,9 @@ static int bq27621_enter_config_update(void)
 	int tries, flags = 0, rv = EC_SUCCESS;
 
 	/* Enter Config Update Mode (Can take up to a second) */
-	for (tries = 2000; tries > 0 && !(flags & FLAGS_CFGUPD) &&
-					(rv == EC_SUCCESS); tries--) {
+	for (tries = 2000;
+	     tries > 0 && !(flags & FLAGS_CFGUPD) && (rv == EC_SUCCESS);
+	     tries--) {
 		rv |= bq27621_write(REG_CTRL, CONTROL_SET_CFGUPDATE);
 		rv |= bq27621_read(REG_FLAGS, &flags);
 	}
@@ -255,7 +260,7 @@ static int bq27621_seal(void)
 	rv = bq27621_read8(REGISTERS_BLOCK_OP_CONFIG_B, &param);
 	checksum -= param; /* 1B */
 
-	param |= 1<<5; /* Set DEF_SEAL */
+	param |= 1 << 5; /* Set DEF_SEAL */
 
 	rv = bq27621_write8(REGISTERS_BLOCK_OP_CONFIG_B, param);
 	checksum += param; /* 1B */
@@ -273,7 +278,7 @@ static int bq27621_seal(void)
 	return rv;
 }
 
-#define CHECKSUM_2B(x) ((x & 0xff) + ((x>>8) & 0xff))
+#define CHECKSUM_2B(x) ((x & 0xff) + ((x >> 8) & 0xff))
 
 static int bq27621_init(void)
 {
@@ -308,18 +313,18 @@ static int bq27621_init(void)
 
 			if (BQ27621_CHEM_ID == 0x1210)
 				rv |= bq27621_write(REG_CTRL,
-					CONTROL_ALT_CHEM1);
+						    CONTROL_ALT_CHEM1);
 			if (BQ27621_CHEM_ID == 0x0354)
 				rv |= bq27621_write(REG_CTRL,
-					CONTROL_ALT_CHEM2);
+						    CONTROL_ALT_CHEM2);
 
-		/*
-		 * The datasheet recommends checking the status here.
-		 *
-		 * If the CHEMCHG is active, it wasn't successful.
-		 *
-		 * There's no recommendation for what to do if it isn't.
-		 */
+			/*
+			 * The datasheet recommends checking the status here.
+			 *
+			 * If the CHEMCHG is active, it wasn't successful.
+			 *
+			 * There's no recommendation for what to do if it isn't.
+			 */
 
 			rv |= bq27621_write(REG_CTRL, CONTROL_EXIT_CFGUPDATE);
 		}
@@ -374,7 +379,6 @@ static int bq27621_init(void)
 
 	checksum = 0xff - (0xff & checksum);
 
-
 	if (rv)
 		return rv;
 
@@ -403,7 +407,7 @@ static void probe_type_id_init(void)
 
 	if (rv) { /* Try it once more */
 		rv = bq27621_write(REG_CTRL, CONTROL_RESET);
-	  rv |= bq27621_init();
+		rv |= bq27621_init();
 	}
 }
 
@@ -555,9 +559,9 @@ int battery_wait_for_stable(void)
 }
 
 #ifdef CONFIG_CMD_BATDEBUG
-	#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)
 #else
-	#define CPRINTF(format, args...)
+#define CPRINTF(format, args...)
 #endif
 
 #ifdef CONFIG_CMD_BATDEBUG
@@ -574,9 +578,7 @@ static int command_fgunseal(int argc, char **argv)
 	return rv;
 }
 
-DECLARE_CONSOLE_COMMAND(fgunseal, command_fgunseal,
-			"",
-			"Unseal the fg");
+DECLARE_CONSOLE_COMMAND(fgunseal, command_fgunseal, "", "Unseal the fg");
 
 static int command_fgseal(int argc, char **argv)
 {
@@ -590,9 +592,7 @@ static int command_fgseal(int argc, char **argv)
 	return rv;
 }
 
-DECLARE_CONSOLE_COMMAND(fgseal, command_fgseal,
-			"",
-			"Seal the fg");
+DECLARE_CONSOLE_COMMAND(fgseal, command_fgseal, "", "Seal the fg");
 
 static int command_fginit(int argc, char **argv)
 {
@@ -625,9 +625,7 @@ static int command_fginit(int argc, char **argv)
 	return rv;
 }
 
-DECLARE_CONSOLE_COMMAND(fginit, command_fginit,
-			"[force]",
-			"Initialize the fg");
+DECLARE_CONSOLE_COMMAND(fginit, command_fginit, "[force]", "Initialize the fg");
 
 static int command_fgprobe(int argc, char **argv)
 {
@@ -641,9 +639,7 @@ static int command_fgprobe(int argc, char **argv)
 	return rv;
 }
 
-DECLARE_CONSOLE_COMMAND(fgprobe, command_fgprobe,
-			"",
-			"Probe the fg");
+DECLARE_CONSOLE_COMMAND(fgprobe, command_fgprobe, "", "Probe the fg");
 
 static int command_fgrd(int argc, char **argv)
 {
@@ -675,8 +671,7 @@ static int command_fgrd(int argc, char **argv)
 	return rv;
 }
 
-DECLARE_CONSOLE_COMMAND(fgrd, command_fgrd,
-			"cmd len",
+DECLARE_CONSOLE_COMMAND(fgrd, command_fgrd, "cmd len",
 			"Read _len_ words from the fg");
 
 static int command_fgcmd(int argc, char **argv)
@@ -708,11 +703,9 @@ static int command_fgcmd(int argc, char **argv)
 		CPRINTF("Write 2 bytes @0xaa %0x: 0x%0x\n", cmd, data);
 		return bq27621_write(cmd, data);
 	}
-
 }
 
-DECLARE_CONSOLE_COMMAND(fgcmd, command_fgcmd,
-			"cmd data [byte]",
+DECLARE_CONSOLE_COMMAND(fgcmd, command_fgcmd, "cmd data [byte]",
 			"Send a cmd to the fg");
 
 static int command_fgcmdrd(int argc, char **argv)
@@ -739,8 +732,8 @@ static int command_fgcmdrd(int argc, char **argv)
 	return rv;
 }
 
-DECLARE_CONSOLE_COMMAND(fgcmdrd, command_fgcmdrd,
-			"cmd data",
-			"Send a 2-byte cmd to the fg, read back the 2-byte result");
+DECLARE_CONSOLE_COMMAND(
+	fgcmdrd, command_fgcmdrd, "cmd data",
+	"Send a 2-byte cmd to the fg, read back the 2-byte result");
 
 #endif /* CONFIG_CMD_BATDEBUG */
