@@ -33,8 +33,8 @@
 #include "usb_mux.h"
 #include "usbc_ppc.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* This I2C moved. Temporarily detect and support the V0 HW. */
 int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
@@ -55,17 +55,13 @@ static struct stprivate_data g_lis2dwl_data;
 static struct lsm6dsm_data g_lsm6dsm_data = LSM6DSM_DATA;
 
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, FLOAT_TO_FP(-1), 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
@@ -219,8 +215,7 @@ void ppc_interrupt(enum gpio_signal signal)
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 &&
-			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (port == CHARGE_PORT_NONE) {
@@ -240,7 +235,6 @@ int board_set_active_charge_port(int port)
 	} else if (!is_valid_port) {
 		return EC_ERROR_INVAL;
 	}
-
 
 	/* Check if the port is sourcing VBUS. */
 	if (ppc_is_sourcing_vbus(port)) {
@@ -323,7 +317,6 @@ static void reset_nct38xx_port(int port)
 		msleep(NCT3807_RESET_POST_DELAY_MS);
 }
 
-
 void board_reset_pd_mcu(void)
 {
 	/* Reset TCPC0 */
@@ -367,8 +360,7 @@ int board_pd_set_frs_enable(int port, int enable)
 
 	/* Use the TCPC to enable fast switch when FRS included */
 	if (port == USBC_PORT_C0) {
-		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN,
-				    !!enable);
+		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN, !!enable);
 	}
 
 	return rv;
@@ -509,7 +501,7 @@ const int usb_port_enable[USBA_PORT_COUNT] = {
 };
 
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
-			int max_ma, int charge_mv)
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Limit the input current to 95% negotiated limit,
@@ -517,7 +509,6 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 */
 	charge_ma = charge_ma * 95 / 100;
 
-	charge_set_input_current_limit(MAX(charge_ma,
-				CONFIG_CHARGER_INPUT_CURRENT),
-				charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
