@@ -87,17 +87,17 @@ enum power_states_ndsx {
  * @brief Represents the state of the AP as a mask.
  */
 enum ap_power_state_mask {
-	AP_POWER_STATE_HARD_OFF = BIT(0),   /* Hard off (G3) */
-	AP_POWER_STATE_SOFT_OFF = BIT(1),   /* Soft off (S5, S4) */
-	AP_POWER_STATE_SUSPEND  = BIT(2),   /* Suspend (S3) */
-	AP_POWER_STATE_ON       = BIT(3),   /* On (S0) */
-	AP_POWER_STATE_STANDBY  = BIT(4),   /* Standby (S0ix) */
+	AP_POWER_STATE_HARD_OFF = BIT(0), /* Hard off (G3) */
+	AP_POWER_STATE_SOFT_OFF = BIT(1), /* Soft off (S5, S4) */
+	AP_POWER_STATE_SUSPEND = BIT(2), /* Suspend (S3) */
+	AP_POWER_STATE_ON = BIT(3), /* On (S0) */
+	AP_POWER_STATE_STANDBY = BIT(4), /* Standby (S0ix) */
 	/* Common combinations, any off state */
-	AP_POWER_STATE_ANY_OFF = (AP_POWER_STATE_HARD_OFF |
-				 AP_POWER_STATE_SOFT_OFF),
+	AP_POWER_STATE_ANY_OFF =
+		(AP_POWER_STATE_HARD_OFF | AP_POWER_STATE_SOFT_OFF),
 	/* This combination covers any kind of suspend i.e. S3 or S0ix. */
-	AP_POWER_STATE_ANY_SUSPEND = (AP_POWER_STATE_SUSPEND |
-				     AP_POWER_STATE_STANDBY),
+	AP_POWER_STATE_ANY_SUSPEND =
+		(AP_POWER_STATE_SUSPEND | AP_POWER_STATE_STANDBY),
 };
 
 /**
