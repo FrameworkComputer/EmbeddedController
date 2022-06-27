@@ -13,7 +13,7 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* The macro is used to prevent a DBZ exception while decoding PDOs. */
 #define PROCESS_ZERO_DIVISOR(x) ((x) == 0 ? 1 : (x))
@@ -66,8 +66,8 @@ static bool pd_get_usb_comm_capable(int port)
  * PD_MAX_VOLTAGE_MV and PD_OPERATING_POWER_MW. And in turn, does not
  * use the following functions.
  */
-int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t * const src_caps,
-					int max_mv, uint32_t *selected_pdo)
+int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t *const src_caps,
+		      int max_mv, uint32_t *selected_pdo)
 {
 	int i, uw, mv;
 	int ret = 0;
@@ -157,10 +157,10 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t * const src_caps,
 						 mv < cur_mv)
 						prefer_cur = 1;
 				}
-			/*
-			 * pick the largest power if we don't see one staisfy
-			 * desired power
-			 */
+				/*
+				 * pick the largest power if we don't see one
+				 * staisfy desired power
+				 */
 			} else if (cur_uw == 0 || uw > cur_uw) {
 				prefer_cur = 1;
 			}
@@ -225,7 +225,7 @@ void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
 }
 
 void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
-			uint32_t *mv, int port)
+		      uint32_t *mv, int port)
 {
 	uint32_t pdo;
 	int pdo_index, flags = 0;
@@ -236,7 +236,7 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 	int vpd_vbus_dcr;
 	int vpd_gnd_dcr;
 	uint32_t src_cap_cnt = pd_get_src_cap_cnt(port);
-	const uint32_t * const src_caps = pd_get_src_caps(port);
+	const uint32_t *const src_caps = pd_get_src_caps(port);
 	int charging_allowed;
 	int max_request_allowed;
 	uint32_t max_request_mv = pd_get_max_voltage();
@@ -265,8 +265,7 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 		max_request_allowed = 1;
 
 	if (IS_ENABLED(CONFIG_USB_PD_DPS) && dps_is_enabled())
-		max_request_mv =
-			MIN(max_request_mv, dps_get_dynamic_voltage());
+		max_request_mv = MIN(max_request_mv, dps_get_dynamic_voltage());
 
 	/*
 	 * If currently charging on a different port, or we are not allowed to
@@ -275,7 +274,7 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 	if (charging_allowed && max_request_allowed) {
 		/* find pdo index for max voltage we can request */
 		pdo_index = pd_find_pdo_index(src_cap_cnt, src_caps,
-						max_request_mv, &pdo);
+					      max_request_mv, &pdo);
 	} else {
 		/* src cap 0 should be vSafe5V */
 		pdo_index = 0;
@@ -319,28 +318,28 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 		flags |= RDO_CAP_MISMATCH;
 
 #ifdef CONFIG_USB_PD_GIVE_BACK
-		/* Tell source we are give back capable. */
-		flags |= RDO_GIVE_BACK;
+	/* Tell source we are give back capable. */
+	flags |= RDO_GIVE_BACK;
 
-		/*
-		 * BATTERY PDO: Inform the source that the sink will reduce
-		 * power to this minimum level on receipt of a GotoMin Request.
-		 */
-		max_or_min_mw = PD_MIN_POWER_MW;
+	/*
+	 * BATTERY PDO: Inform the source that the sink will reduce
+	 * power to this minimum level on receipt of a GotoMin Request.
+	 */
+	max_or_min_mw = PD_MIN_POWER_MW;
 
-		/*
-		 * FIXED or VARIABLE PDO: Inform the source that the sink will
-		 * reduce current to this minimum level on receipt of a GotoMin
-		 * Request.
-		 */
-		max_or_min_ma = PD_MIN_CURRENT_MA;
+	/*
+	 * FIXED or VARIABLE PDO: Inform the source that the sink will
+	 * reduce current to this minimum level on receipt of a GotoMin
+	 * Request.
+	 */
+	max_or_min_ma = PD_MIN_CURRENT_MA;
 #else
-		/*
-		 * Can't give back, so set maximum current and power to
-		 * operating level.
-		 */
-		max_or_min_ma = *ma;
-		max_or_min_mw = uw / 1000;
+	/*
+	 * Can't give back, so set maximum current and power to
+	 * operating level.
+	 */
+	max_or_min_ma = *ma;
+	max_or_min_mw = uw / 1000;
 #endif
 
 	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
@@ -381,8 +380,7 @@ void pd_process_source_cap(int port, int cnt, uint32_t *src_caps)
 
 		/* Get max power info that we could request */
 		pd_find_pdo_index(pd_get_src_cap_cnt(port),
-					pd_get_src_caps(port),
-					max_mv, &pdo);
+				  pd_get_src_caps(port), max_mv, &pdo);
 		pd_extract_pdo_power(pdo, &ma, &mv, &unused);
 
 		/* Set max. limit, but apply 500mA ceiling */
@@ -397,8 +395,7 @@ bool pd_is_battery_capable(void)
 	bool capable;
 
 	/* Battery is present and at some minimum percentage. */
-	capable = (usb_get_battery_soc() >=
-		   CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC);
+	capable = (usb_get_battery_soc() >= CONFIG_USB_PD_TRY_SRC_MIN_BATT_SOC);
 
 #ifdef CONFIG_BATTERY_REVIVE_DISCONNECT
 	/*
@@ -406,9 +403,8 @@ bool pd_is_battery_capable(void)
 	 * FET may not be enabled and so attempting being a SRC may cut off
 	 * our only power source at the time.
 	 */
-	capable &= (battery_get_disconnect_state() ==
-		    BATTERY_NOT_DISCONNECTED);
-#elif defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
+	capable &= (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED);
+#elif defined(CONFIG_BATTERY_PRESENT_CUSTOM) || \
 	defined(CONFIG_BATTERY_PRESENT_GPIO)
 	/*
 	 * When battery is cutoff in ship mode it may not be reliable to
@@ -443,7 +439,7 @@ bool pd_is_try_source_capable(void)
 	 * therefore allow Try.Src if we're toggling.
 	 */
 	new_try_src = try_src && (charge_manager_get_supplier() ==
-			     CHARGE_SUPPLIER_DEDICATED);
+				  CHARGE_SUPPLIER_DEDICATED);
 #endif /* CONFIG_DEDICATED_CHARGE_PORT_COUNT */
 
 	return new_try_src;
