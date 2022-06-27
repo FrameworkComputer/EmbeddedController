@@ -279,8 +279,8 @@ __override bool board_is_tbt_usb4_port(int port)
 	 * TODO (b/147732807): All the USB-C ports need to support same
 	 * features. Need to fix once USB-C feature set is known for Volteer.
 	 */
-	return ((port == USBC_PORT_C1)
-		&& ((usb_db == DB_USB4_GEN2) || (usb_db == DB_USB4_GEN3)));
+	return ((port == USBC_PORT_C1) &&
+		((usb_db == DB_USB4_GEN2) || (usb_db == DB_USB4_GEN3)));
 }
 
 static void ps8815_reset(void)
@@ -288,8 +288,7 @@ static void ps8815_reset(void)
 	int val;
 
 	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 0);
-	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
-			   PS8815_PWR_H_RST_H_DELAY_MS));
+	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS, PS8815_PWR_H_RST_H_DELAY_MS));
 	gpio_set_level(GPIO_USB_C1_RT_RST_ODL, 1);
 	msleep(PS8815_FW_INIT_DELAY_MS);
 
@@ -300,16 +299,16 @@ static void ps8815_reset(void)
 
 	CPRINTS("%s: patching ps8815 registers", __func__);
 
-	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_USB_C1, PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) ==
+	    EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f was %02x", val);
 
-	if (i2c_write8(I2C_PORT_USB_C1,
-		       PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, 0x31) == EC_SUCCESS)
+	if (i2c_write8(I2C_PORT_USB_C1, PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f,
+		       0x31) == EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f set to 0x31");
 
-	if (i2c_read8(I2C_PORT_USB_C1,
-		      PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) == EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_USB_C1, PS8XXX_I2C_ADDR1_P2_FLAGS, 0x0f, &val) ==
+	    EC_SUCCESS)
 		CPRINTS("ps8815: reg 0x0f now %02x", val);
 }
 
@@ -321,8 +320,9 @@ void board_reset_pd_mcu(void)
 	/* Daughterboard specific reset for port 1 */
 	if (usb_db == DB_USB3_ACTIVE) {
 		ps8815_reset();
-		usb_mux_hpd_update(USBC_PORT_C1, USB_PD_MUX_HPD_LVL_DEASSERTED |
-						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+		usb_mux_hpd_update(USBC_PORT_C1,
+				   USB_PD_MUX_HPD_LVL_DEASSERTED |
+					   USB_PD_MUX_HPD_IRQ_DEASSERTED);
 	}
 }
 
