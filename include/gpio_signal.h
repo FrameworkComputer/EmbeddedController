@@ -27,7 +27,7 @@
 #define GPIO_SIGNAL_START 0 /* The first valid GPIO signal is 0 */
 
 enum gpio_signal {
-	#include "gpio.wrap"
+#include "gpio.wrap"
 	GPIO_COUNT,
 	/* Ensure that sizeof gpio_signal is large enough for ioex_signal */
 	GPIO_LIMIT = 0x0FFF
@@ -42,7 +42,7 @@ enum ioex_signal {
 	IOEX_SIGNAL_START = GPIO_LIMIT + 1,
 	/* Used to ensure that the first IOEX signal is same as start */
 	__IOEX_PLACEHOLDER = GPIO_LIMIT,
-	#include "gpio.wrap"
+#include "gpio.wrap"
 	IOEX_SIGNAL_END,
 	IOEX_LIMIT = 0x1FFF
 };
