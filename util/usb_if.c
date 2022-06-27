@@ -12,16 +12,14 @@
 
 /* Return 0 on error, since it's never gonna be EP 0 */
 static int find_endpoint(const struct libusb_interface_descriptor *iface,
-			 uint16_t subclass,
-			 uint16_t protocol,
+			 uint16_t subclass, uint16_t protocol,
 			 struct usb_endpoint *uep)
 {
 	const struct libusb_endpoint_descriptor *ep;
 
 	if (iface->bInterfaceClass == 255 &&
 	    iface->bInterfaceSubClass == subclass &&
-	    iface->bInterfaceProtocol == protocol &&
-	    iface->bNumEndpoints) {
+	    iface->bInterfaceProtocol == protocol && iface->bNumEndpoints) {
 		ep = &iface->endpoint[0];
 		uep->ep_num = ep->bEndpointAddress & 0x7f;
 		uep->chunk_len = ep->wMaxPacketSize;
@@ -32,8 +30,7 @@ static int find_endpoint(const struct libusb_interface_descriptor *iface,
 }
 
 /* Return -1 on error */
-static int find_interface(uint16_t subclass,
-			  uint16_t protocol,
+static int find_interface(uint16_t subclass, uint16_t protocol,
 			  struct usb_endpoint *uep)
 {
 	int iface_num = -1;
@@ -66,8 +63,8 @@ out:
 	return iface_num;
 }
 
-static libusb_device_handle *check_device(libusb_device *dev,
-	uint16_t vid, uint16_t pid, const char *serial)
+static libusb_device_handle *check_device(libusb_device *dev, uint16_t vid,
+					  uint16_t pid, const char *serial)
 {
 	struct libusb_device_descriptor desc;
 	libusb_device_handle *handle = NULL;
@@ -81,18 +78,17 @@ static libusb_device_handle *check_device(libusb_device *dev,
 		return NULL;
 
 	if (desc.iSerialNumber && serial) {
-		sn_size = libusb_get_string_descriptor_ascii(handle,
-				desc.iSerialNumber, (unsigned char *)sn,
-				sizeof(sn));
+		sn_size = libusb_get_string_descriptor_ascii(
+			handle, desc.iSerialNumber, (unsigned char *)sn,
+			sizeof(sn));
 	}
 	/*
 	 * If the VID, PID, and serial number don't match, then it's not the
 	 * correct device. Close the handle and return NULL.
 	 */
-	if ((vid && vid != desc.idVendor) ||
-	    (pid && pid != desc.idProduct) ||
-	    (serial && ((sn_size != strlen(serial)) ||
-	    memcmp(sn, serial, sn_size)))) {
+	if ((vid && vid != desc.idVendor) || (pid && pid != desc.idProduct) ||
+	    (serial &&
+	     ((sn_size != strlen(serial)) || memcmp(sn, serial, sn_size)))) {
 		libusb_close(handle);
 		return NULL;
 	}
@@ -156,8 +152,8 @@ int usb_findit(const char *serial, uint16_t vid, uint16_t pid,
 		goto terminate_usb_findit;
 	}
 
-	printf("found interface %d endpoint %d, chunk_len %d\n",
-	       iface_num, uep->ep_num, uep->chunk_len);
+	printf("found interface %d endpoint %d, chunk_len %d\n", iface_num,
+	       uep->ep_num, uep->chunk_len);
 
 	libusb_set_auto_detach_kernel_driver(uep->devh, 1);
 	r = libusb_claim_interface(uep->devh, iface_num);
@@ -175,17 +171,15 @@ terminate_usb_findit:
 	return -1;
 }
 
-int usb_trx(struct usb_endpoint *uep, void *outbuf, int outlen,
-	    void *inbuf, int inlen, int allow_less, size_t *rxed_count)
+int usb_trx(struct usb_endpoint *uep, void *outbuf, int outlen, void *inbuf,
+	    int inlen, int allow_less, size_t *rxed_count)
 {
-
 	int r, actual;
 
 	/* Send data out */
 	if (outbuf && outlen) {
 		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num,
-					 outbuf, outlen,
+		r = libusb_bulk_transfer(uep->devh, uep->ep_num, outbuf, outlen,
 					 &actual, 1000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
@@ -200,11 +194,9 @@ int usb_trx(struct usb_endpoint *uep, void *outbuf, int outlen,
 
 	/* Read reply back */
 	if (inbuf && inlen) {
-
 		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80,
-					 inbuf, inlen,
-					 &actual, 1000);
+		r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80, inbuf,
+					 inlen, &actual, 1000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
 			return -1;
