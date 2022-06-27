@@ -21,7 +21,7 @@ struct adc_profile_t {
 	/* Register values. */
 	uint32_t cfgr1_reg;
 	uint32_t cfgr2_reg;
-	uint32_t smpr_reg;	/* Default Sampling Rate */
+	uint32_t smpr_reg; /* Default Sampling Rate */
 	uint32_t ier_reg;
 	/* DMA config. */
 	const struct dma_option *dma_option;
@@ -36,11 +36,11 @@ struct adc_profile_t {
 #endif
 
 #if defined(CHIP_FAMILY_STM32L4)
-#define ADC_CALIBRATION_TIMEOUT_US	100000U
-#define ADC_ENABLE_TIMEOUT_US		200000U
-#define ADC_CONVERSION_TIMEOUT_US	200000U
+#define ADC_CALIBRATION_TIMEOUT_US 100000U
+#define ADC_ENABLE_TIMEOUT_US 200000U
+#define ADC_CONVERSION_TIMEOUT_US 200000U
 
-#define NUMBER_OF_ADC_CHANNEL   2
+#define NUMBER_OF_ADC_CHANNEL 2
 uint8_t adc1_initialized;
 #endif
 
@@ -51,15 +51,15 @@ uint8_t adc1_initialized;
 #endif
 
 static const struct dma_option dma_continuous = {
-	STM32_DMAC_ADC, (void *)&STM32_ADC_DR,
+	STM32_DMAC_ADC,
+	(void *)&STM32_ADC_DR,
 	STM32_DMA_CCR_MSIZE_32_BIT | STM32_DMA_CCR_PSIZE_32_BIT |
-	STM32_DMA_CCR_CIRC,
+		STM32_DMA_CCR_CIRC,
 };
 
 static const struct adc_profile_t profile = {
 	/* Sample all channels continuously using DMA */
-	.cfgr1_reg = STM32_ADC_CFGR1_OVRMOD |
-		     STM32_ADC_CFGR1_CONT |
+	.cfgr1_reg = STM32_ADC_CFGR1_OVRMOD | STM32_ADC_CFGR1_CONT |
 		     STM32_ADC_CFGR1_DMACFG,
 	.cfgr2_reg = 0,
 	.smpr_reg = CONFIG_ADC_SAMPLE_TIME,
@@ -87,7 +87,7 @@ static void adc_init(const struct adc_t *adc)
 
 	/* set ADC clock to 20MHz */
 	STM32_ADC1_CCR &= ~0x003C0000;
-	STM32_ADC1_CCR |=  0x00080000;
+	STM32_ADC1_CCR |= 0x00080000;
 
 	STM32_RCC_AHB2ENR |= STM32_RCC_HB2_GPIOA;
 	STM32_RCC_AHB2ENR |= STM32_RCC_HB2_GPIOB;
@@ -101,13 +101,13 @@ static void adc_init(const struct adc_t *adc)
 }
 
 static void adc_configure(int ain_id, int ain_rank,
-		enum stm32_adc_smpr sample_rate)
+			  enum stm32_adc_smpr sample_rate)
 {
 	/* Select Sampling time and channel to convert */
-	if (ain_id <= 10)	{
+	if (ain_id <= 10) {
 		STM32_ADC1_SMPR1 &= ~(7 << ((ain_id - 1) * 3));
 		STM32_ADC1_SMPR1 |= (sample_rate << ((ain_id - 1) * 3));
-	} else	{
+	} else {
 		STM32_ADC1_SMPR2 &= ~(7 << ((ain_id - 11) * 3));
 		STM32_ADC1_SMPR2 |= (sample_rate << ((ain_id - 11) * 3));
 	}
@@ -172,7 +172,8 @@ int adc_read_channel(enum adc_channel ch)
 
 		/* wait for the end of calibration */
 		wait_loop_index = ((ADC_CALIBRATION_TIMEOUT_US *
-				(CPU_CLOCK / (100000 * 2))) / 10);
+				    (CPU_CLOCK / (100000 * 2))) /
+				   10);
 		while (STM32_ADC1_CR & STM32_ADC1_CR_ADCAL) {
 			if (wait_loop_index-- == 0)
 				break;
@@ -181,8 +182,9 @@ int adc_read_channel(enum adc_channel ch)
 		/* Enable ADC */
 		STM32_ADC1_ISR |= STM32_ADC1_ISR_ADRDY;
 		STM32_ADC1_CR |= STM32_ADC1_CR_ADEN;
-		wait_loop_index = ((ADC_ENABLE_TIMEOUT_US *
-				(CPU_CLOCK / (100000 * 2))) / 10);
+		wait_loop_index =
+			((ADC_ENABLE_TIMEOUT_US * (CPU_CLOCK / (100000 * 2))) /
+			 10);
 		while (!(STM32_ADC1_ISR & STM32_ADC1_ISR_ADRDY)) {
 			wait_loop_index--;
 			if (wait_loop_index == 0)
@@ -196,8 +198,8 @@ int adc_read_channel(enum adc_channel ch)
 	STM32_ADC1_CR |= BIT(3); /* JADSTART */
 
 	/* Wait for end of injected conversion */
-	wait_loop_index = ((ADC_CONVERSION_TIMEOUT_US *
-			(CPU_CLOCK / (100000 * 2))) / 10);
+	wait_loop_index =
+		((ADC_CONVERSION_TIMEOUT_US * (CPU_CLOCK / (100000 * 2))) / 10);
 	while (!(STM32_ADC1_ISR & BIT(6))) {
 		if (wait_loop_index-- == 0)
 			break;
