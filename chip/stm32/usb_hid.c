@@ -20,7 +20,7 @@
 #include "usb_hid_hw.h"
 
 /* Console output macro */
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 void hid_tx(int ep)
 {
@@ -41,17 +41,15 @@ void hid_reset(int ep, usb_uint *hid_ep_tx_buf, int tx_len,
 	for (i = 0; i < DIV_ROUND_UP(tx_len, 2); i++)
 		hid_ep_tx_buf[i] = 0;
 
-	ep_reg = (ep << 0) /* Endpoint Address */ |
-		EP_TX_VALID |
-		(3 << 9) /* interrupt EP */ |
-		EP_RX_DISAB;
+	ep_reg = (ep << 0) /* Endpoint Address */ | EP_TX_VALID |
+		 (3 << 9) /* interrupt EP */ | EP_RX_DISAB;
 
 	/* Enable RX for output reports */
 	if (hid_ep_rx_buf && rx_len > 0) {
 		btable_ep[ep].rx_addr = usb_sram_addr(hid_ep_rx_buf);
 		btable_ep[ep].rx_count = ((rx_len + 1) / 2) << 10;
 
-		ep_reg |= EP_RX_VALID;  /* RX Valid */
+		ep_reg |= EP_RX_VALID; /* RX Valid */
 	}
 
 	STM32_USB_EP(ep) = ep_reg;
@@ -73,14 +71,13 @@ static const uint8_t *report_ptr;
  *
  * @return 0 if entire report is sent, 1 if there are remaining data.
  */
-static int send_report(usb_uint *ep0_buf_tx,
-		       const uint8_t *report,
+static int send_report(usb_uint *ep0_buf_tx, const uint8_t *report,
 		       int report_size)
 {
 	int packet_size = MIN(report_size, USB_MAX_PACKET_SIZE);
 
-	memcpy_to_usbram((void *) usb_sram_addr(ep0_buf_tx),
-			 report, packet_size);
+	memcpy_to_usbram((void *)usb_sram_addr(ep0_buf_tx), report,
+			 packet_size);
 	btable_ep[0].tx_count = packet_size;
 	/* report_left != 0 if report doesn't fit in 1 packet. */
 	report_left = report_size - packet_size;
@@ -108,8 +105,8 @@ int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx,
 		if (report_left == 0)
 			return -1;
 		report_size = MIN(USB_MAX_PACKET_SIZE, report_left);
-		memcpy_to_usbram((void *) usb_sram_addr(ep0_buf_tx),
-				 report_ptr, report_size);
+		memcpy_to_usbram((void *)usb_sram_addr(ep0_buf_tx), report_ptr,
+				 report_size);
 		btable_ep[0].tx_count = report_size;
 		report_left -= report_size;
 		report_ptr += report_size;
@@ -117,7 +114,7 @@ int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx,
 				report_left ? 0 : EP_STATUS_OUT);
 		return report_left ? 1 : 0;
 	} else if (ep0_buf_rx[0] == (USB_DIR_IN | USB_RECIP_INTERFACE |
-					(USB_REQ_GET_DESCRIPTOR << 8))) {
+				     (USB_REQ_GET_DESCRIPTOR << 8))) {
 		if (ep0_buf_rx[1] == (USB_HID_DT_REPORT << 8)) {
 			/* Setup : HID specific : Get Report descriptor */
 			return send_report(ep0_buf_tx, report_desc,
@@ -130,10 +127,9 @@ int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx,
 					EP_STATUS_OUT);
 			return 0;
 		}
-	} else if (ep0_buf_rx[0] == (USB_DIR_IN |
-				     USB_RECIP_INTERFACE |
-				     USB_TYPE_CLASS |
-				     (USB_HID_REQ_GET_REPORT << 8))) {
+	} else if (ep0_buf_rx[0] ==
+		   (USB_DIR_IN | USB_RECIP_INTERFACE | USB_TYPE_CLASS |
+		    (USB_HID_REQ_GET_REPORT << 8))) {
 		const uint8_t report_type = (ep0_buf_rx[1] >> 8) & 0xFF;
 		const uint8_t report_id = ep0_buf_rx[1] & 0xFF;
 		int retval;
@@ -142,9 +138,7 @@ int hid_iface_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx,
 		if (!config->get_report) /* not supported */
 			return -1;
 
-		retval = config->get_report(report_id,
-					    report_type,
-					    &report_ptr,
+		retval = config->get_report(report_id, report_type, &report_ptr,
 					    &report_left);
 		if (retval)
 			return retval;
