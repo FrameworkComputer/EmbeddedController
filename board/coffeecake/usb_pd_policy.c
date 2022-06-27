@@ -22,8 +22,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* Holds valid object position (opos) for entered mode */
 static int alt_mode[PD_AMODE_COUNT];
@@ -97,31 +97,24 @@ int pd_check_power_swap(int port)
 	return 0;
 }
 
-int pd_check_data_swap(int port,
-		       enum pd_data_role data_role)
+int pd_check_data_swap(int port, enum pd_data_role data_role)
 {
 	/* We can swap to UFP */
 	return data_role == PD_ROLE_DFP;
 }
 
-void pd_execute_data_swap(int port,
-			  enum pd_data_role data_role)
+void pd_execute_data_swap(int port, enum pd_data_role data_role)
 {
 	/* TODO: turn on pp5000, pp3300 */
 }
 
-void pd_check_pr_role(int port,
-		      enum pd_power_role pr_role,
-		      int flags)
+void pd_check_pr_role(int port, enum pd_power_role pr_role, int flags)
 {
 	if (pr_role == PD_ROLE_SINK && !gpio_get_level(GPIO_AC_PRESENT_L))
 		pd_request_power_swap(port);
-
 }
 
-void pd_check_dr_role(int port,
-		      enum pd_data_role dr_role,
-		      int flags)
+void pd_check_dr_role(int port, enum pd_data_role dr_role, int flags)
 {
 	if ((flags & PD_FLAGS_PARTNER_DR_DATA) && dr_role == PD_ROLE_DFP)
 		pd_request_data_swap(port);
@@ -136,8 +129,8 @@ const uint32_t vdo_idh = VDO_IDH(0, /* data caps as USB host */
 const uint32_t vdo_product = VDO_PRODUCT(CONFIG_USB_PID, CONFIG_USB_BCD_DEV);
 
 const uint32_t vdo_ama = VDO_AMA(CONFIG_USB_PD_IDENTITY_HW_VERS,
-				 CONFIG_USB_PD_IDENTITY_SW_VERS,
-				 0, 0, 0, 0, /* SS[TR][12] */
+				 CONFIG_USB_PD_IDENTITY_SW_VERS, 0, 0, 0,
+				 0, /* SS[TR][12] */
 				 0, /* Vconn power */
 				 0, /* Vconn power required */
 				 1, /* Vbus power required */
@@ -163,18 +156,16 @@ static int svdm_response_svids(int port, uint32_t *payload)
 #define OPOS_DP 1
 #define OPOS_GFU 1
 
-const uint32_t vdo_dp_modes[1] =  {
-	VDO_MODE_DP(0,		   /* UFP pin cfg supported : none */
+const uint32_t vdo_dp_modes[1] = {
+	VDO_MODE_DP(0, /* UFP pin cfg supported : none */
 		    MODE_DP_PIN_C, /* DFP pin cfg supported */
-		    1,		   /* no usb2.0	signalling in AMode */
-		    CABLE_PLUG,	   /* its a plug */
-		    MODE_DP_V13,   /* DPv1.3 Support, no Gen2 */
-		    MODE_DP_SNK)   /* Its a sink only */
+		    1, /* no usb2.0	signalling in AMode */
+		    CABLE_PLUG, /* its a plug */
+		    MODE_DP_V13, /* DPv1.3 Support, no Gen2 */
+		    MODE_DP_SNK) /* Its a sink only */
 };
 
-const uint32_t vdo_goog_modes[1] =  {
-	VDO_MODE_GOOGLE(MODE_GOOGLE_FU)
-};
+const uint32_t vdo_goog_modes[1] = { VDO_MODE_GOOGLE(MODE_GOOGLE_FU) };
 
 static int svdm_response_modes(int port, uint32_t *payload)
 {
@@ -196,13 +187,14 @@ static int dp_status(int port, uint32_t *payload)
 	if (opos != OPOS_DP)
 		return 0; /* nak */
 
-	payload[1] = VDO_DP_STATUS(0,                /* IRQ_HPD */
-				   (hpd == 1),       /* HPD_HI|LOW */
-				   0,		     /* request exit DP */
-				   0,		     /* request exit USB */
-				   0,		     /* MF pref */
-				   gpio_get_level(GPIO_PD_SBU_ENABLE),
-				   0,		     /* power low */
+	payload[1] = VDO_DP_STATUS(0, /* IRQ_HPD */
+				   (hpd == 1), /* HPD_HI|LOW */
+				   0, /* request exit DP */
+				   0, /* request exit USB */
+				   0, /* MF pref */
+				   gpio_get_level(GPIO_PD_SBU_ENABLE), 0, /* power
+									     low
+									   */
 				   0x2);
 	return 2;
 }
@@ -281,8 +273,7 @@ const struct svdm_response svdm_rsp = {
 	.exit_mode = &svdm_exit_mode,
 };
 
-int pd_custom_vdm(int port, int cnt, uint32_t *payload,
-		  uint32_t **rpayload)
+int pd_custom_vdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload)
 {
 	int rsize;
 
