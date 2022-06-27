@@ -129,9 +129,8 @@ BUILD_ASSERT(sizeof(union cbi_ssfc) == sizeof(uint32_t),
 
 DT_INST_FOREACH_STATUS_OKAY(CBI_SSFC_VALUE_BUILD_ASSERT)
 
-static const uint8_t ssfc_values[] = {
-	DT_INST_FOREACH_STATUS_OKAY(CBI_SSFC_VALUE_ARRAY)
-};
+static const uint8_t ssfc_values[] = { DT_INST_FOREACH_STATUS_OKAY(
+	CBI_SSFC_VALUE_ARRAY) };
 
 static union cbi_ssfc cached_ssfc;
 
