@@ -184,7 +184,7 @@ static int cros_flash_xec_set_status_reg(const struct device *dev,
 }
 
 static int cros_flash_xec_write_protection_set(const struct device *dev,
-						bool enable)
+					       bool enable)
 {
 	int ret = 0;
 
@@ -303,8 +303,7 @@ static int flash_set_status_for_prot(const struct device *dev, int reg1)
 
 	flash_set_status(dev, reg1);
 
-	spi_flash_reg_to_protect(reg1, 0, &addr_prot_start,
-				 &addr_prot_length);
+	spi_flash_reg_to_protect(reg1, 0, &addr_prot_start, &addr_prot_length);
 
 	return EC_SUCCESS;
 }
@@ -391,7 +390,6 @@ static int cros_flash_xec_init(const struct device *dev)
 
 	return 0;
 }
-
 
 static int cros_flash_xec_write(const struct device *dev, int offset, int size,
 				const char *src_data)
@@ -524,7 +522,7 @@ static int cros_flash_xec_protect_now(const struct device *dev, int all)
 }
 
 static int cros_flash_xec_get_jedec_id(const struct device *dev,
-					uint8_t *manufacturer, uint16_t *device)
+				       uint8_t *manufacturer, uint16_t *device)
 {
 	int ret;
 	uint8_t jedec_id[3];
@@ -546,7 +544,7 @@ static int cros_flash_xec_get_jedec_id(const struct device *dev,
 }
 
 static int cros_flash_xec_get_status(const struct device *dev, uint8_t *sr1,
-				      uint8_t *sr2)
+				     uint8_t *sr2)
 {
 	flash_get_status(dev, sr1);
 	*sr2 = 0;
