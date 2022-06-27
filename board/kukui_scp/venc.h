@@ -22,7 +22,8 @@ struct venc_msg {
 	unsigned char msg[288];
 };
 
-BUILD_ASSERT(member_size(struct venc_msg, msg) <= CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
+BUILD_ASSERT(member_size(struct venc_msg, msg) <=
+	     CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
 
 /* Functions provided by private overlay. */
 void venc_h264_msg_handler(void *data);
