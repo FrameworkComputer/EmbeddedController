@@ -16,7 +16,7 @@ struct ish_persistent_data ish_persistent_data = {
 	.magic = PERSISTENT_DATA_MAGIC,
 	.reset_flags = EC_RESET_FLAG_POWER_ON,
 	.watchdog_counter = 0,
-	.panic_data = {0},
+	.panic_data = { 0 },
 };
 
 /*
@@ -40,8 +40,7 @@ void ish_persistent_data_init(void)
 {
 	if (ish_persistent_data_aon.magic == PERSISTENT_DATA_MAGIC) {
 		/* Stored data is valid, load a copy */
-		memcpy(&ish_persistent_data,
-		       &ish_persistent_data_aon,
+		memcpy(&ish_persistent_data, &ish_persistent_data_aon,
 		       sizeof(struct ish_persistent_data));
 
 		/* Invalidate stored data, in case commit fails to happen */
@@ -54,7 +53,6 @@ void ish_persistent_data_init(void)
 
 void ish_persistent_data_commit(void)
 {
-	memcpy(&ish_persistent_data_aon,
-	       &ish_persistent_data,
+	memcpy(&ish_persistent_data_aon, &ish_persistent_data,
 	       sizeof(struct ish_persistent_data));
 }
