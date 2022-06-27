@@ -26,8 +26,7 @@ struct usb_malfunction_sink_fixture {
 	struct tcpci_faulty_snk_action actions[2];
 };
 
-static void
-connect_sink_to_port(struct usb_malfunction_sink_fixture *fixture)
+static void connect_sink_to_port(struct usb_malfunction_sink_fixture *fixture)
 {
 	/*
 	 * TODO(b/221439302) Updating the TCPCI emulator registers, updating the
@@ -56,8 +55,8 @@ connect_sink_to_port(struct usb_malfunction_sink_fixture *fixture)
 	k_sleep(K_SECONDS(10));
 }
 
-static inline void disconnect_sink_from_port(
-	struct usb_malfunction_sink_fixture *fixture)
+static inline void
+disconnect_sink_from_port(struct usb_malfunction_sink_fixture *fixture)
 {
 	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul), NULL);
 	k_sleep(K_SECONDS(1));
@@ -73,16 +72,14 @@ static void *usb_malfunction_sink_setup(void)
 	test_fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 	tcpci_emul_set_rev(test_fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
-	tcpc_config[0].flags = tcpc_config[0].flags |
-			       TCPC_FLAGS_TCPCI_REV2_0;
+	tcpc_config[0].flags = tcpc_config[0].flags | TCPC_FLAGS_TCPCI_REV2_0;
 
 	/* Initialized the sink to request 5V and 3A */
 	tcpci_partner_init(&test_fixture.sink, PD_REV20);
-	test_fixture.sink.extensions =
-		tcpci_faulty_snk_emul_init(
-			&test_fixture.faulty_snk_ext, &test_fixture.sink,
-			tcpci_snk_emul_init(&test_fixture.snk_ext,
-					    &test_fixture.sink, NULL));
+	test_fixture.sink.extensions = tcpci_faulty_snk_emul_init(
+		&test_fixture.faulty_snk_ext, &test_fixture.sink,
+		tcpci_snk_emul_init(&test_fixture.snk_ext, &test_fixture.sink,
+				    NULL));
 	test_fixture.snk_ext.pdo[1] =
 		PDO_FIXED(5000, 3000, PDO_FIXED_UNCONSTRAINED);
 
@@ -96,7 +93,6 @@ static void usb_malfunction_sink_before(void *data)
 
 	/* TODO(b/214401892): Check why need to give time TCPM to spin */
 	k_sleep(K_SECONDS(1));
-
 }
 
 static void usb_malfunction_sink_after(void *data)
@@ -109,8 +105,7 @@ static void usb_malfunction_sink_after(void *data)
 }
 
 ZTEST_SUITE(usb_malfunction_sink, drivers_predicate_post_main,
-	    usb_malfunction_sink_setup,
-	    usb_malfunction_sink_before,
+	    usb_malfunction_sink_setup, usb_malfunction_sink_before,
 	    usb_malfunction_sink_after, NULL);
 
 ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_disable)
@@ -177,11 +172,11 @@ ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_connect)
 		      "Current max expected to be 1500mV, but was %dmV",
 		      info.meas.current_max);
 	zassert_equal(info.meas.current_lim, 0,
-		     "VBUS max is set to 0mA, but PD is reporting %dmA",
-		     info.meas.current_lim);
+		      "VBUS max is set to 0mA, but PD is reporting %dmA",
+		      info.meas.current_lim);
 	zassert_equal(info.max_power, 0,
-		      "Charging expected to be at %duW, but PD max is %duW",
-		      0, info.max_power);
+		      "Charging expected to be at %duW, but PD max is %duW", 0,
+		      info.max_power);
 }
 
 ZTEST_F(usb_malfunction_sink, test_ignore_source_cap)
@@ -207,23 +202,26 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap)
 	 */
 
 	/* Check if SourceCapability message alternate with HardReset */
-	SYS_SLIST_FOR_EACH_CONTAINER(&fixture->sink.msg_log, msg, node) {
+	SYS_SLIST_FOR_EACH_CONTAINER(&fixture->sink.msg_log, msg, node)
+	{
 		if (expect_hard_reset) {
 			zassert_equal(msg->sop, TCPCI_MSG_TX_HARD_RESET,
 				      "Expected message %d to be hard reset",
 				      msg_cnt);
 		} else {
 			header = sys_get_le16(msg->buf);
-			zassert_equal(msg->sop, TCPCI_MSG_SOP,
-				      "Expected message %d to be SOP message, not 0x%x",
-				      msg_cnt, msg->sop);
-			zassert_not_equal(PD_HEADER_CNT(header), 0,
-					  "Expected message %d to has at least one data object",
-					  msg_cnt);
-			zassert_equal(PD_HEADER_TYPE(header),
-				      PD_DATA_SOURCE_CAP,
-				      "Expected message %d to be SourceCapabilities, not 0x%x",
-				      msg_cnt, PD_HEADER_TYPE(header));
+			zassert_equal(
+				msg->sop, TCPCI_MSG_SOP,
+				"Expected message %d to be SOP message, not 0x%x",
+				msg_cnt, msg->sop);
+			zassert_not_equal(
+				PD_HEADER_CNT(header), 0,
+				"Expected message %d to has at least one data object",
+				msg_cnt);
+			zassert_equal(
+				PD_HEADER_TYPE(header), PD_DATA_SOURCE_CAP,
+				"Expected message %d to be SourceCapabilities, not 0x%x",
+				msg_cnt, PD_HEADER_TYPE(header));
 		}
 
 		msg_cnt++;
