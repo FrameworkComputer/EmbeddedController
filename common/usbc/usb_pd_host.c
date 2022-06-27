@@ -15,8 +15,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* Retrieve all discovery results for the given port and transmit type */
 static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
@@ -35,8 +35,8 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 	if (p->partner_type > TYPEC_PARTNER_SOP_PRIME)
 		return EC_RES_INVALID_PARAM;
 
-	type = p->partner_type == TYPEC_PARTNER_SOP ?
-		TCPCI_MSG_SOP : TCPCI_MSG_SOP_PRIME;
+	type = p->partner_type == TYPEC_PARTNER_SOP ? TCPCI_MSG_SOP :
+						      TCPCI_MSG_SOP_PRIME;
 
 	/*
 	 * Clear out access mask so we can track if tasks have touched data
@@ -61,8 +61,9 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 
 	if (pd_get_modes_discovery(p->port, type) == PD_DISC_COMPLETE) {
 		int svid_i;
-		int max_resp_svids = (args->response_max - args->response_size)/
-				      sizeof(struct svid_mode_info);
+		int max_resp_svids =
+			(args->response_max - args->response_size) /
+			sizeof(struct svid_mode_info);
 
 		if (disc->svid_cnt > max_resp_svids) {
 			CPRINTS("Warn: SVIDS exceeded HC response");
@@ -74,7 +75,7 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 		for (svid_i = 0; svid_i < r->svid_count; svid_i++) {
 			r->svids[svid_i].svid = disc->svids[svid_i].svid;
 			r->svids[svid_i].mode_count =
-						disc->svids[svid_i].mode_cnt;
+				disc->svids[svid_i].mode_cnt;
 			memcpy(r->svids[svid_i].mode_vdo,
 			       disc->svids[svid_i].mode_vdo,
 			       sizeof(r->svids[svid_i].mode_vdo));
@@ -96,14 +97,12 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_TYPEC_DISCOVERY,
-		     hc_typec_discovery,
+DECLARE_HOST_COMMAND(EC_CMD_TYPEC_DISCOVERY, hc_typec_discovery,
 		     EC_VER_MASK(0));
 
 /* Default to feature unavailable, with boards supporting it overriding */
 __overridable enum ec_status
-			board_set_tbt_ufp_reply(int port,
-						enum typec_tbt_ufp_reply reply)
+board_set_tbt_ufp_reply(int port, enum typec_tbt_ufp_reply reply)
 {
 	return EC_RES_UNAVAILABLE;
 }
@@ -134,14 +133,13 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 		if (!IS_ENABLED(CONFIG_USB_MUX_AP_CONTROL))
 			return EC_RES_INVALID_PARAM;
 
-		usb_mux_set_single(p->port, p->mux_params.mux_index,
-				   mode, USB_SWITCH_CONNECT,
+		usb_mux_set_single(p->port, p->mux_params.mux_index, mode,
+				   USB_SWITCH_CONNECT,
 				   polarity_rm_dts(pd_get_polarity(p->port)));
 		return EC_RES_SUCCESS;
 	default:
 		return EC_RES_INVALID_PARAM;
 	}
-
 
 	return EC_RES_SUCCESS;
 }
@@ -180,13 +178,15 @@ static enum ec_status hc_typec_status(struct host_cmd_handler_args *args)
 	r->events = pd_get_events(p->port);
 
 	r->sop_revision = r->sop_connected ?
-		PD_STATUS_REV_SET_MAJOR(pd_get_rev(p->port, TCPCI_MSG_SOP)) : 0;
+				  PD_STATUS_REV_SET_MAJOR(
+					  pd_get_rev(p->port, TCPCI_MSG_SOP)) :
+				  0;
 	r->sop_prime_revision =
 		pd_get_identity_discovery(p->port, TCPCI_MSG_SOP_PRIME) ==
-		PD_DISC_COMPLETE ?
-		PD_STATUS_REV_SET_MAJOR(pd_get_rev(p->port,
-					TCPCI_MSG_SOP_PRIME))
-		: 0;
+				PD_DISC_COMPLETE ?
+			PD_STATUS_REV_SET_MAJOR(
+				pd_get_rev(p->port, TCPCI_MSG_SOP_PRIME)) :
+			0;
 
 	r->source_cap_count = pd_get_src_cap_cnt(p->port);
 	memcpy(r->source_cap_pdos, pd_get_src_caps(p->port),
