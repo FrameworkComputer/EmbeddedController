@@ -54,9 +54,8 @@ connect_sink_to_port(struct usb_attach_5v_3a_pd_sink_fixture *fixture)
 	tcpci_tcpc_alert(0);
 	k_sleep(K_SECONDS(1));
 
-	zassume_ok(tcpci_partner_connect_to_tcpci(
-			   &fixture->sink_5v_3a,
-			   fixture->tcpci_emul),
+	zassume_ok(tcpci_partner_connect_to_tcpci(&fixture->sink_5v_3a,
+						  fixture->tcpci_emul),
 		   NULL);
 
 	/* Wait for PD negotiation and current ramp.
@@ -65,8 +64,8 @@ connect_sink_to_port(struct usb_attach_5v_3a_pd_sink_fixture *fixture)
 	k_sleep(K_SECONDS(10));
 }
 
-static inline void disconnect_sink_from_port(
-	struct usb_attach_5v_3a_pd_sink_fixture *fixture)
+static inline void
+disconnect_sink_from_port(struct usb_attach_5v_3a_pd_sink_fixture *fixture)
 {
 	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul), NULL);
 	k_sleep(K_SECONDS(1));
@@ -98,9 +97,8 @@ static void usb_attach_5v_3a_pd_sink_before(void *data)
 
 	/* Initialized the sink to request 5V and 3A */
 	tcpci_partner_init(&test_fixture->sink_5v_3a, PD_REV20);
-	test_fixture->sink_5v_3a.extensions =
-		tcpci_snk_emul_init(&test_fixture->snk_ext,
-				    &test_fixture->sink_5v_3a, NULL);
+	test_fixture->sink_5v_3a.extensions = tcpci_snk_emul_init(
+		&test_fixture->snk_ext, &test_fixture->sink_5v_3a, NULL);
 	test_fixture->snk_ext.pdo[0] = TEST_INITIAL_SINK_CAP;
 	test_fixture->snk_ext.pdo[1] = TEST_ADDITIONAL_SINK_CAP;
 	connect_sink_to_port(test_fixture);
@@ -113,8 +111,7 @@ static void usb_attach_5v_3a_pd_sink_after(void *data)
 }
 
 ZTEST_SUITE(usb_attach_5v_3a_pd_sink, drivers_predicate_post_main,
-	    usb_attach_5v_3a_pd_sink_setup,
-	    usb_attach_5v_3a_pd_sink_before,
+	    usb_attach_5v_3a_pd_sink_setup, usb_attach_5v_3a_pd_sink_before,
 	    usb_attach_5v_3a_pd_sink_after, NULL);
 
 ZTEST_F(usb_attach_5v_3a_pd_sink, test_partner_pd_completed)
@@ -171,11 +168,11 @@ ZTEST(usb_attach_5v_3a_pd_sink, test_power_info)
 		      "Current max expected to be 1500mV, but was %dmV",
 		      info.meas.current_max);
 	zassert_equal(info.meas.current_lim, 0,
-		     "VBUS max is set to 0mA, but PD is reporting %dmA",
-		     info.meas.current_lim);
+		      "VBUS max is set to 0mA, but PD is reporting %dmA",
+		      info.meas.current_lim);
 	zassert_equal(info.max_power, 0,
-		      "Charging expected to be at %duW, but PD max is %duW",
-		      0, info.max_power);
+		      "Charging expected to be at %duW, but PD max is %duW", 0,
+		      info.max_power);
 }
 
 ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_battery_discharging)
