@@ -14,8 +14,8 @@
 #define CROS_EC_IMAGE_DATA_COOKIE1 0xce778899
 #define CROS_EC_IMAGE_DATA_COOKIE2 0xceaabbdd
 #define CROS_EC_IMAGE_DATA_COOKIE3 0xceeeff00
-#define CROS_EC_IMAGE_DATA_COOKIE3_MASK		GENMASK(31, 8)
-#define CROS_EC_IMAGE_DATA_COOKIE3_VERSION	GENMASK(7, 0)
+#define CROS_EC_IMAGE_DATA_COOKIE3_MASK GENMASK(31, 8)
+#define CROS_EC_IMAGE_DATA_COOKIE3_VERSION GENMASK(7, 0)
 
 #define CROS_FWID_MISSING_STR "CROS_FWID_MISSING"
 
@@ -40,4 +40,4 @@ extern const void *__image_size;
  * @return Number of commits in integer or 0 on error
  */
 int ver_get_num_commits(enum ec_image copy);
-#endif  /* __CROS_EC_VERSION_H */
+#endif /* __CROS_EC_VERSION_H */
