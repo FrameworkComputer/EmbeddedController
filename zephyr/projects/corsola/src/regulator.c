@@ -7,13 +7,12 @@
 #include "bc12/mt6360_public.h"
 
 /* SD Card */
-int board_regulator_get_info(uint32_t index, char *name,
-			     uint16_t *num_voltages, uint16_t *voltages_mv)
+int board_regulator_get_info(uint32_t index, char *name, uint16_t *num_voltages,
+			     uint16_t *voltages_mv)
 {
 	enum mt6360_regulator_id id = index;
 
-	return mt6360_regulator_get_info(id, name, num_voltages,
-					 voltages_mv);
+	return mt6360_regulator_get_info(id, name, num_voltages, voltages_mv);
 }
 
 int board_regulator_enable(uint32_t index, uint8_t enable)
