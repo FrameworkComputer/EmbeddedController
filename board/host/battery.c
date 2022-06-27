@@ -14,8 +14,7 @@
 
 static uint16_t mock_smart_battery[SB_MANUFACTURER_DATA + 1];
 
-int sb_i2c_xfer(int port, uint16_t addr_flags,
-		const uint8_t *out, int out_size,
+int sb_i2c_xfer(int port, uint16_t addr_flags, const uint8_t *out, int out_size,
 		uint8_t *in, int in_size, int flags)
 {
 	if (out_size == 0)
@@ -23,7 +22,7 @@ int sb_i2c_xfer(int port, uint16_t addr_flags,
 
 	if (port != I2C_PORT_BATTERY || addr_flags != BATTERY_ADDR_FLAGS)
 		return EC_ERROR_INVAL;
-	if (out[0]  >= ARRAY_SIZE(mock_smart_battery))
+	if (out[0] >= ARRAY_SIZE(mock_smart_battery))
 		return EC_ERROR_UNIMPLEMENTED;
 	if (out_size == 1) {
 		/* Read */
@@ -56,12 +55,12 @@ static const struct battery_info bat_info = {
 	 *   normal = 7.4V
 	 *   min    = 6.0V
 	 */
-	.voltage_max    = 8400,
+	.voltage_max = 8400,
 	.voltage_normal = 7400,
-	.voltage_min    = 6000,
+	.voltage_min = 6000,
 
 	/* Pre-charge current: I <= 0.01C */
-	.precharge_current  = 64, /* mA */
+	.precharge_current = 64, /* mA */
 
 	/*
 	 * Operational temperature range
@@ -70,10 +69,10 @@ static const struct battery_info bat_info = {
 	 */
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 50,
-	.charging_min_c       = 0,
-	.charging_max_c       = 50,
-	.discharging_min_c    = -20,
-	.discharging_max_c    = 60,
+	.charging_min_c = 0,
+	.charging_max_c = 50,
+	.discharging_min_c = -20,
+	.discharging_max_c = 60,
 };
 
 const struct battery_info *battery_get_info(void)
