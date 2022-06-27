@@ -31,7 +31,7 @@ int tcpm_dequeue_message(int port, uint32_t *payload, int *header)
 
 	*header = mock_tcpm[port].mock_header;
 	memcpy(payload, mock_tcpm[port].mock_rx_chk_buf,
-		sizeof(mock_tcpm[port].mock_rx_chk_buf));
+	       sizeof(mock_tcpm[port].mock_rx_chk_buf));
 
 	return EC_SUCCESS;
 }
@@ -51,7 +51,7 @@ void mock_tcpm_reset(void)
 {
 	int port;
 
-	for (port = 0 ; port < CONFIG_USB_PD_PORT_MAX_COUNT ; ++port)
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		mock_tcpm[port].mock_has_pending_message = 0;
 }
 
@@ -65,7 +65,7 @@ void mock_tcpm_rx_msg(int port, uint16_t header, int cnt, const uint32_t *data)
 	if (cnt > 0) {
 		int idx;
 
-		for (idx = 0 ; (idx < cnt) && (idx < MOCK_CHK_BUF_SIZE) ; ++idx)
+		for (idx = 0; (idx < cnt) && (idx < MOCK_CHK_BUF_SIZE); ++idx)
 			mock_tcpm[port].mock_rx_chk_buf[idx] = data[idx];
 	}
 	mock_tcpm[port].mock_has_pending_message = 1;
