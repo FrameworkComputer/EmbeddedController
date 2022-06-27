@@ -10,15 +10,13 @@
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 
-
 #define PORT 0
 
 ZTEST_USER(espi, test_host_command_get_protocol_info)
 {
 	struct ec_response_get_protocol_info response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_GET_PROTOCOL_INFO, 0,
-					    response);
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_GET_PROTOCOL_INFO, 0, response);
 
 	zassert_ok(host_command_process(&args), NULL);
 	zassert_ok(args.result, NULL);
