@@ -21,8 +21,8 @@
 #include "usb_pd_config.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #else
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
@@ -38,7 +38,7 @@
  */
 #define PD_BIT_LEN 429
 
-#define PD_MAX_RAW_SIZE (PD_BIT_LEN*2)
+#define PD_MAX_RAW_SIZE (PD_BIT_LEN * 2)
 
 /* maximum number of consecutive similar bits with Biphase Mark Coding */
 #define MAX_BITS 2
@@ -46,12 +46,12 @@
 /* alternating bit sequence used for packet preamble : 00 10 11 01 00 ..  */
 #define PD_PREAMBLE 0xB4B4B4B4 /* starts with 0, ends with 1 */
 
-#define TX_CLOCK_DIV ((clock_get_freq() / (2*PD_DATARATE)))
+#define TX_CLOCK_DIV ((clock_get_freq() / (2 * PD_DATARATE)))
 
 /* threshold for 1 300-khz period */
 #define PERIOD 4
-#define NB_PERIOD(from, to) ((((to) - (from) + (PERIOD/2)) & 0xFF) / PERIOD)
-#define PERIOD_THRESHOLD ((PERIOD + 2*PERIOD) / 2)
+#define NB_PERIOD(from, to) ((((to) - (from) + (PERIOD / 2)) & 0xFF) / PERIOD)
+#define PERIOD_THRESHOLD ((PERIOD + 2 * PERIOD) / 2)
 
 static struct pd_physical {
 	/* samples for the PD messages */
@@ -73,8 +73,8 @@ static struct pd_physical {
 } pd_phy[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* keep track of RX edge timing in order to trigger receive */
-static timestamp_t
-	rx_edge_ts[CONFIG_USB_PD_PORT_MAX_COUNT][PD_RX_TRANSITION_COUNT];
+static timestamp_t rx_edge_ts[CONFIG_USB_PD_PORT_MAX_COUNT]
+			     [PD_RX_TRANSITION_COUNT];
 static int rx_edge_ts_idx[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* keep track of transmit polarity for DMA interrupt */
@@ -95,8 +95,8 @@ static int wait_bits(int port, int nb)
 
 	avail = dma_bytes_done(rx, PD_MAX_RAW_SIZE);
 	if (avail < nb) { /* no received yet ... */
-		while ((dma_bytes_done(rx, PD_MAX_RAW_SIZE) < nb)
-			&& !(pd_phy[port].tim_rx->sr & 4))
+		while ((dma_bytes_done(rx, PD_MAX_RAW_SIZE) < nb) &&
+		       !(pd_phy[port].tim_rx->sr & 4))
 			; /* optimized for latency, not CPU usage ... */
 		if (dma_bytes_done(rx, PD_MAX_RAW_SIZE) < nb) {
 			CPRINTS("PD TMOUT RX %d/%d",
@@ -117,8 +117,8 @@ int pd_dequeue_bits(int port, int off, int len, uint32_t *val)
 		w = wait_bits(port, off + 2);
 		if (w < 0)
 			goto stream_err;
-		cnt = samples[off] - samples[off-1];
-		if (!cnt || (cnt > 3*PERIOD))
+		cnt = samples[off] - samples[off - 1];
+		if (!cnt || (cnt > 3 * PERIOD))
 			goto stream_err;
 		off++;
 		if (cnt <= PERIOD_THRESHOLD) {
@@ -127,20 +127,22 @@ int pd_dequeue_bits(int port, int off, int len, uint32_t *val)
 			if (w < 0)
 				goto stream_err;
 			*/
-			cnt = samples[off] - samples[off-1];
-			if (cnt >  PERIOD_THRESHOLD)
+			cnt = samples[off] - samples[off - 1];
+			if (cnt > PERIOD_THRESHOLD)
 				goto stream_err;
 			off++;
 		}
 
 		/* enqueue the bit of the last period */
-		pd_phy[port].d_last = (pd_phy[port].d_last >> 1)
-		       | (cnt <= PERIOD_THRESHOLD ? 0x80000000 : 0);
+		pd_phy[port].d_last =
+			(pd_phy[port].d_last >> 1) |
+			(cnt <= PERIOD_THRESHOLD ? 0x80000000 : 0);
 		pd_phy[port].d_lastlen++;
 	}
 	if (off < PD_MAX_RAW_SIZE) {
-		*val = (pd_phy[port].d_last << (pd_phy[port].d_lastlen - len))
-				>> (32 - len);
+		*val = (pd_phy[port].d_last
+			<< (pd_phy[port].d_lastlen - len)) >>
+		       (32 - len);
 		pd_phy[port].d_lastlen -= len;
 		return off;
 	} else {
@@ -168,7 +170,7 @@ int pd_find_preamble(int port)
 		/* wait if the bit is not received yet ... */
 		if (PD_MAX_RAW_SIZE - rx->cndtr < bit + 1) {
 			while ((PD_MAX_RAW_SIZE - rx->cndtr < bit + 1) &&
-				!(pd_phy[port].tim_rx->sr & 4))
+			       !(pd_phy[port].tim_rx->sr & 4))
 				;
 			if (pd_phy[port].tim_rx->sr & 4) {
 				CPRINTS("PD TMOUT RX %d/%d",
@@ -176,7 +178,7 @@ int pd_find_preamble(int port)
 				return -1;
 			}
 		}
-		cnt = vals[bit] - vals[bit-1];
+		cnt = vals[bit] - vals[bit - 1];
 		all = (all >> 1) | (cnt <= PERIOD_THRESHOLD ? BIT(31) : 0);
 		if (all == 0x36db6db6)
 			return bit - 1; /* should be SYNC-1 */
@@ -198,7 +200,7 @@ int pd_write_preamble(int port)
 	msg[2] = PD_PREAMBLE;
 	msg[3] = PD_PREAMBLE;
 	pd_phy[port].b_toggle = 0x3FF; /* preamble ends with 1 */
-	return 2*64;
+	return 2 * 64;
 }
 
 int pd_write_sym(int port, int bit_off, uint32_t val10)
@@ -214,10 +216,10 @@ int pd_write_sym(int port, int bit_off, uint32_t val10)
 		msg[word_idx] |= val << bit_idx;
 	} else {
 		msg[word_idx] |= val << bit_idx;
-		msg[word_idx+1] = val >> (32 - bit_idx);
+		msg[word_idx + 1] = val >> (32 - bit_idx);
 		/* side effect: clear the new word when starting it */
 	}
-	return bit_off + 5*2;
+	return bit_off + 5 * 2;
 }
 
 int pd_write_last_edge(int port, int bit_off)
@@ -239,7 +241,7 @@ int pd_write_last_edge(int port, int bit_off)
 		}
 	}
 	/* ensure that the trailer is 0 */
-	msg[word_idx+1] = 0;
+	msg[word_idx + 1] = 0;
 
 	return bit_off + 3;
 }
@@ -252,15 +254,15 @@ void pd_dump_packet(int port, const char *msg)
 
 	CPRINTF("ERR %s:\n000:- ", msg);
 	/* Packet debug output */
-	for (bit = 1; bit <  PD_MAX_RAW_SIZE; bit++) {
-		int cnt = NB_PERIOD(vals[bit-1], vals[bit]);
+	for (bit = 1; bit < PD_MAX_RAW_SIZE; bit++) {
+		int cnt = NB_PERIOD(vals[bit - 1], vals[bit]);
 		if ((bit & 31) == 0)
 			CPRINTF("\n%03d:", bit);
 		CPRINTF("%1d ", cnt);
 	}
 	CPRINTF("><\n");
 	cflush();
-	for (bit = 0; bit <  PD_MAX_RAW_SIZE; bit++) {
+	for (bit = 0; bit < PD_MAX_RAW_SIZE; bit++) {
 		if ((bit & 31) == 0)
 			CPRINTF("\n%03d:", bit);
 		CPRINTF("%02x ", vals[bit]);
@@ -280,9 +282,9 @@ void pd_tx_spi_init(int port)
 	spi->cr2 = STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_DATASIZE(8);
 
 	/* Enable the slave SPI: LSB first, force NSS, TX only, CPHA */
-	spi->cr1 = STM32_SPI_CR1_SPE | STM32_SPI_CR1_LSBFIRST
-		 | STM32_SPI_CR1_SSM | STM32_SPI_CR1_BIDIMODE
-		 | STM32_SPI_CR1_BIDIOE | STM32_SPI_CR1_CPHA;
+	spi->cr1 = STM32_SPI_CR1_SPE | STM32_SPI_CR1_LSBFIRST |
+		   STM32_SPI_CR1_SSM | STM32_SPI_CR1_BIDIMODE |
+		   STM32_SPI_CR1_BIDIOE | STM32_SPI_CR1_CPHA;
 }
 
 static void tx_dma_done(void *data)
@@ -330,9 +332,8 @@ int pd_start_tx(int port, int polarity, int bit_len)
 	pd_phy[port].tim_tx->cnt = TX_CLOCK_DIV - 1;
 
 	/* update DMA configuration */
-	dma_prepare_tx(&(pd_phy[port].dma_tx_option),
-			DIV_ROUND_UP(bit_len, 8),
-			pd_phy[port].raw_samples);
+	dma_prepare_tx(&(pd_phy[port].dma_tx_option), DIV_ROUND_UP(bit_len, 8),
+		       pd_phy[port].raw_samples);
 	/* Flush data in write buffer so that DMA can get the latest data */
 	asm volatile("dmb;");
 
@@ -343,8 +344,7 @@ int pd_start_tx(int port, int polarity, int bit_len)
 	if (!(pd_phy[port].dma_tx_option.flags & STM32_DMA_CCR_CIRC)) {
 		/* Only enable interrupt if not in circular mode */
 		dma_enable_tc_interrupt_callback(DMAC_SPI_TX(port),
-						 &tx_dma_done,
-						 (void *)port);
+						 &tx_dma_done, (void *)port);
 	}
 #endif
 	dma_go(tx);
@@ -401,9 +401,10 @@ void pd_rx_start(int port)
 {
 	/* start sampling the edges on the CC line using the RX timer */
 	dma_start_rx(&(pd_phy[port].dma_tim_option), PD_MAX_RAW_SIZE,
-			pd_phy[port].raw_samples);
+		     pd_phy[port].raw_samples);
 	/* enable TIM2 DMA requests */
-	pd_phy[port].tim_rx->egr = 0x0001; /* reset counter / reload PSC */;
+	pd_phy[port].tim_rx->egr = 0x0001; /* reset counter / reload PSC */
+	;
 	pd_phy[port].tim_rx->sr = 0; /* clear overflows */
 	pd_phy[port].tim_rx->cr1 |= 1;
 }
@@ -441,8 +442,8 @@ void pd_rx_disable_monitoring(int port)
 uint64_t get_time_since_last_edge(int port)
 {
 	int prev_idx = (rx_edge_ts_idx[port] == 0) ?
-			PD_RX_TRANSITION_COUNT - 1 :
-			rx_edge_ts_idx[port] - 1;
+			       PD_RX_TRANSITION_COUNT - 1 :
+			       rx_edge_ts_idx[port] - 1;
 	return get_time().val - rx_edge_ts[port][prev_idx].val;
 }
 
@@ -467,11 +468,12 @@ void pd_rx_handler(void)
 		if (pending & EXTI_COMP_MASK(i)) {
 			rx_edge_ts[i][rx_edge_ts_idx[i]].val = get_time().val;
 			next_idx = (rx_edge_ts_idx[i] ==
-					PD_RX_TRANSITION_COUNT - 1) ?
-						0 : rx_edge_ts_idx[i] + 1;
+				    PD_RX_TRANSITION_COUNT - 1) ?
+					   0 :
+					   rx_edge_ts_idx[i] + 1;
 
-#if defined(CONFIG_LOW_POWER_IDLE) &&                        \
-defined(CONFIG_USB_PD_LOW_POWER_IDLE_WHEN_CONNECTED)
+#if defined(CONFIG_LOW_POWER_IDLE) && \
+	defined(CONFIG_USB_PD_LOW_POWER_IDLE_WHEN_CONNECTED)
 			/*
 			 * Do not deep sleep while waiting for more edges. For
 			 * most boards, sleep is already disabled due to being
@@ -487,8 +489,8 @@ defined(CONFIG_USB_PD_LOW_POWER_IDLE_WHEN_CONNECTED)
 			 * time, then trigger RX start.
 			 */
 			if ((rx_edge_ts[i][rx_edge_ts_idx[i]].val -
-			     rx_edge_ts[i][next_idx].val)
-			     < PD_RX_TRANSITION_WINDOW) {
+			     rx_edge_ts[i][next_idx].val) <
+			    PD_RX_TRANSITION_WINDOW) {
 				/* start sampling */
 				pd_rx_start(i);
 				/*
@@ -535,7 +537,7 @@ void pd_hw_init_rx(int port)
 	phy->dma_tim_option.channel = DMAC_TIM_RX(port);
 	phy->dma_tim_option.periph = (void *)(TIM_RX_CCR_REG(port));
 	phy->dma_tim_option.flags = STM32_DMA_CCR_MSIZE_8_BIT |
-				     STM32_DMA_CCR_PSIZE_16_BIT;
+				    STM32_DMA_CCR_PSIZE_16_BIT;
 
 	/* --- set counter for RX timing : 2.4Mhz rate, free-running --- */
 	__hw_timer_enable_clock(TIM_CLOCK_PD_RX(port), 1);
@@ -561,7 +563,8 @@ void pd_hw_init_rx(int port)
 
 	phy->tim_rx->ccer = 0xB << ((TIM_RX_CCR_IDX(port) - 1) * 4);
 	/* configure DMA request on CCRx update */
-	phy->tim_rx->dier |= 1 << (8 + TIM_RX_CCR_IDX(port)); /* CCxDE */;
+	phy->tim_rx->dier |= 1 << (8 + TIM_RX_CCR_IDX(port)); /* CCxDE */
+	;
 	/* set prescaler to /26 (F=1.2Mhz, T=0.8us) */
 	phy->tim_rx->psc = (clock_get_freq() / 2400000) - 1;
 	/* Reload the pre-scaler and reset the counter (clear CCRx) */
@@ -590,18 +593,15 @@ void pd_hw_init_rx(int port)
 	clock_wait_bus_cycles(BUS_APB, 1);
 	/* currently in hi-speed mode : TODO revisit later, INM = PA0(INM6) */
 	STM32_COMP_CSR = STM32_COMP_CMP1MODE_LSPEED |
-			 STM32_COMP_CMP1INSEL_INM6 |
-			 CMP1OUTSEL |
-			 STM32_COMP_CMP1HYST_HI |
-			 STM32_COMP_CMP2MODE_LSPEED |
-			 STM32_COMP_CMP2INSEL_INM6 |
-			 CMP2OUTSEL |
+			 STM32_COMP_CMP1INSEL_INM6 | CMP1OUTSEL |
+			 STM32_COMP_CMP1HYST_HI | STM32_COMP_CMP2MODE_LSPEED |
+			 STM32_COMP_CMP2INSEL_INM6 | CMP2OUTSEL |
 			 STM32_COMP_CMP2HYST_HI;
 #elif defined(CHIP_FAMILY_STM32L)
 	STM32_RCC_APB1ENR |= BIT(31); /* turn on COMP */
 
-	STM32_COMP_CSR = STM32_COMP_OUTSEL_TIM2_IC4 | STM32_COMP_INSEL_DAC_OUT1
-			| STM32_COMP_SPEED_FAST;
+	STM32_COMP_CSR = STM32_COMP_OUTSEL_TIM2_IC4 |
+			 STM32_COMP_INSEL_DAC_OUT1 | STM32_COMP_SPEED_FAST;
 	/* route PB4 to COMP input2 through GR6_1 bit 4 (or PB5->GR6_2 bit 5) */
 	STM32_RI_ASCR2 |= BIT(4);
 #else
@@ -638,9 +638,9 @@ void pd_hw_init(int port, enum pd_power_role role)
 	phy->dma_tx_option.channel = DMAC_SPI_TX(port);
 	phy->dma_tx_option.periph = (void *)&SPI_REGS(port)->dr;
 	phy->dma_tx_option.flags = STM32_DMA_CCR_MSIZE_8_BIT |
-				    STM32_DMA_CCR_PSIZE_8_BIT;
+				   STM32_DMA_CCR_PSIZE_8_BIT;
 	dma_prepare_tx(&(phy->dma_tx_option), PD_MAX_RAW_SIZE,
-			phy->raw_samples);
+		       phy->raw_samples);
 
 	/* configure registers used for timers */
 	phy->tim_tx = (void *)TIM_REG_TX(port);
@@ -680,5 +680,5 @@ void pd_hw_init(int port, enum pd_power_role role)
 
 void pd_set_clock(int port, int freq)
 {
-	pd_phy[port].tim_tx->arr = clock_get_freq() / (2*freq);
+	pd_phy[port].tim_tx->arr = clock_get_freq() / (2 * freq);
 }
