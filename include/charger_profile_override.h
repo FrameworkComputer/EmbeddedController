@@ -10,7 +10,7 @@
 
 #include "charge_state_v2.h"
 
-#define TEMPC_TENTHS_OF_DEG(c) ((c) * 10)
+#define TEMPC_TENTHS_OF_DEG(c) ((c)*10)
 
 #define CHARGER_PROF_TEMP_C_LAST_RANGE 0xFFFF
 
@@ -69,10 +69,11 @@ int charger_profile_override(struct charge_state_data *curr);
  *  <0     An error occurred. The poll time will be shorter than usual.
  *         Too many errors in a row may trigger some corrective action.
  */
-int charger_profile_override_common(struct charge_state_data *curr,
-			const struct fast_charge_params *fast_chg_params,
-			const struct fast_charge_profile **prev_chg_prof_info,
-			int batt_vtg_max);
+int charger_profile_override_common(
+	struct charge_state_data *curr,
+	const struct fast_charge_params *fast_chg_params,
+	const struct fast_charge_profile **prev_chg_prof_info,
+	int batt_vtg_max);
 
 /*
  * Access to custom profile params through host commands.
