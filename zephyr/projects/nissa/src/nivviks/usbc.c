@@ -54,8 +54,7 @@ int board_is_sourcing_vbus(int port)
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 	int old_port;
 
@@ -233,8 +232,7 @@ static void usbc_interrupt_trigger(int port)
 	usb_charger_task_set_event(port, USB_CHG_EVENT_BC12);
 }
 
-static inline void poll_usb_gpio(int port,
-				 const struct gpio_dt_spec *gpio,
+static inline void poll_usb_gpio(int port, const struct gpio_dt_spec *gpio,
 				 const struct deferred_data *ud)
 {
 	if (!gpio_pin_get_dt(gpio)) {
@@ -243,17 +241,15 @@ static inline void poll_usb_gpio(int port,
 	}
 }
 
-static void poll_c0_int (void)
+static void poll_c0_int(void)
 {
-	poll_usb_gpio(0,
-		      GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl),
+	poll_usb_gpio(0, GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl),
 		      &poll_c0_int_data);
 }
 
-static void poll_c1_int (void)
+static void poll_c1_int(void)
 {
-	poll_usb_gpio(1,
-		      GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
+	poll_usb_gpio(1, GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
 		      &poll_c1_int_data);
 }
 
