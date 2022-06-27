@@ -44,8 +44,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void ppc_interrupt(enum gpio_signal signal)
 {
@@ -101,23 +101,16 @@ static void bc12_interrupt(enum gpio_signal signal)
 
 /******************************************************************************/
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
-};
+const struct spi_device_t spi_devices[] = {};
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 3,
-		.flags = 0,
-		.freq = 10000
-	},
-	[PWM_CH_FAN] = {
-		.channel = 5,
-		.flags = PWM_CONFIG_OPEN_DRAIN,
-		.freq = 25000
-	},
+	[PWM_CH_KBLIGHT] = { .channel = 3, .flags = 0, .freq = 10000 },
+	[PWM_CH_FAN] = { .channel = 5,
+			 .flags = PWM_CONFIG_OPEN_DRAIN,
+			 .freq = 25000 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -186,22 +179,18 @@ static struct opt3001_drv_data_t g_opt3001_data = {
 static struct stprivate_data g_lis2ds_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					      { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
 /*
  * TODO(b/124337208): P0 boards don't have this sensor mounted so the rotation
  * matrix can't be tested properly. This needs to be revisited after EVT to make
  * sure the rotation matrix for the lid sensor is correct.
  */
-static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+					     { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -341,49 +330,49 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {NPCX_MFT_MODULE_1, TCKC_LFCLK, PWM_CH_FAN},
+	[MFT_CH_0] = { NPCX_MFT_MODULE_1, TCKC_LFCLK, PWM_CH_FAN },
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /**********************************************************************/
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_1] = {
-		"TEMP_CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_2] = {
-		"TEMP_IA", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_3] = {
-		"TEMP_GT", NPCX_ADC_CH3, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_1] = { "TEMP_CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_2] = { "TEMP_IA", NPCX_ADC_CH1, ADC_MAX_VOLT,
+				ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_3] = { "TEMP_GT", NPCX_ADC_CH3, ADC_MAX_VOLT,
+				ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "IA",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_2},
-	[TEMP_SENSOR_3] = {.name = "GT",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_3},
+	[TEMP_SENSOR_1] = { .name = "Charger",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_30k9_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "IA",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_30k9_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
+	[TEMP_SENSOR_3] = { .name = "GT",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_30k9_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /* Nightfury Temperature sensors */
 /*
  * TODO(b/138578073): These setting need to be reviewed and set appropriately
- * for Nightfury. They matter when the EC is controlling the fan as opposed to DPTF
- * control.
+ * for Nightfury. They matter when the EC is controlling the fan as opposed to
+ * DPTF control.
  */
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_A \
-	{ \
+#define THERMAL_A                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
