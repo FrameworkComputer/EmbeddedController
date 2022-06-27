@@ -49,15 +49,15 @@ static void baseboard_suspend_change(struct ap_power_ev_callback *cb,
 
 	case AP_POWER_SUSPEND:
 		/* Disable display backlight and retimer */
-		gpio_pin_set_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl),
+				1);
 		ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 		break;
 
 	case AP_POWER_RESUME:
 		/* Enable retimer and display backlight */
-		gpio_pin_set_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl),
+				0);
 		ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
 		/* Any retimer tuning can be done after the retimer turns on */
 		break;
@@ -101,7 +101,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, baseboard_suspend, HOOK_PRIO_DEFAULT);
  * PCH_PWRBTN_L.  This can be as long as ~65ms after cold boot.  Then wait an
  * additional delay of T1a defined in the EDS before changing the power button.
  */
-#define RSMRST_WAIT_DELAY	     70
+#define RSMRST_WAIT_DELAY 70
 #define EDS_PWR_BTN_RSMRST_T1A_DELAY 16
 void board_pwrbtn_to_pch(int level)
 {
@@ -113,13 +113,13 @@ void board_pwrbtn_to_pch(int level)
 		start = get_time();
 		do {
 			usleep(500);
-			if (gpio_pin_get_dt(
-				GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l)))
+			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
+				    gpio_ec_soc_rsmrst_l)))
 				break;
 		} while (time_since32(start) < (RSMRST_WAIT_DELAY * MSEC));
 
 		if (!gpio_pin_get_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l)))
+			    GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l)))
 			ccprints("Error pwrbtn: RSMRST_L still low");
 
 		msleep(EDS_PWR_BTN_RSMRST_T1A_DELAY);
@@ -130,10 +130,13 @@ void board_pwrbtn_to_pch(int level)
 /* Note: signal parameter unused */
 void baseboard_set_soc_pwr_pgood(enum gpio_signal unused)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_good),
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_pcore_s0_r)) &&
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr5_s0_od)) &&
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_s0_pgood)));
+	gpio_pin_set_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_good),
+		gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_en_pwr_pcore_s0_r)) &&
+			gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr5_s0_od)) &&
+			gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_s0_pgood)));
 }
 
 void baseboard_s0_pgood(enum gpio_signal signal)
@@ -151,10 +154,13 @@ void baseboard_set_en_pwr_pcore(enum gpio_signal unused)
 	 * EC must AND signals PG_LPDDR5_S3_OD, PG_GROUPC_S0_OD, and
 	 * EN_PWR_S0_R
 	 */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_pcore_s0_r),
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr5_s3_od)) &&
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_groupc_s0_od)) &&
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0_r)));
+	gpio_pin_set_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_en_pwr_pcore_s0_r),
+		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_lpddr5_s3_od)) &&
+			gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_pg_groupc_s0_od)) &&
+			gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0_r)));
 
 	/* Update EC_SOC_PWR_GOOD based on our results */
 	baseboard_set_soc_pwr_pgood(unused);
@@ -163,9 +169,11 @@ void baseboard_set_en_pwr_pcore(enum gpio_signal unused)
 void baseboard_en_pwr_s0(enum gpio_signal signal)
 {
 	/* EC must AND signals SLP_S3_L and PG_PWR_S5 */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0_r),
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) &&
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_pg_pwr_s5)));
+	gpio_pin_set_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s0_r),
+		gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) &&
+			gpio_pin_get_dt(
+				GPIO_DT_FROM_NODELABEL(gpio_pg_pwr_s5)));
 
 	/* Change EN_PWR_PCORE_S0_R if needed*/
 	baseboard_set_en_pwr_pcore(signal);
@@ -196,7 +204,7 @@ void baseboard_set_en_pwr_s3(enum gpio_signal signal)
 {
 	/* EC must enable PWR_S3 when SLP_S5_L goes high, disable on low */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_pwr_s3),
-	    gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)));
+			gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)));
 
 	/* Chain off the normal power signal interrupt handler */
 	power_signal_interrupt(signal);
