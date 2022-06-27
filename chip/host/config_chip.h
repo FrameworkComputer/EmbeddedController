@@ -20,11 +20,11 @@
 extern char __host_flash[CONFIG_FLASH_SIZE_BYTES];
 
 #define CONFIG_PROGRAM_MEMORY_BASE ((uintptr_t)__host_flash)
-#define CONFIG_FLASH_ERASE_SIZE 0x0010	     /* erase bank size */
-#define CONFIG_FLASH_WRITE_SIZE 0x0002	     /* minimum write size */
+#define CONFIG_FLASH_ERASE_SIZE 0x0010 /* erase bank size */
+#define CONFIG_FLASH_WRITE_SIZE 0x0002 /* minimum write size */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE 0x0080 /* ideal write size */
-#define CONFIG_RAM_BASE 0x0		     /* Not supported */
-#define CONFIG_RAM_SIZE                0x0 /* Not supported */
+#define CONFIG_RAM_BASE 0x0 /* Not supported */
+#define CONFIG_RAM_SIZE 0x0 /* Not supported */
 
 #define CONFIG_FPU
 
@@ -43,7 +43,7 @@ extern char __host_flash[CONFIG_FLASH_SIZE_BYTES];
 
 /* Interval between HOOK_TICK notifications */
 #define HOOK_TICK_INTERVAL_MS 250
-#define HOOK_TICK_INTERVAL    (HOOK_TICK_INTERVAL_MS * MSEC)
+#define HOOK_TICK_INTERVAL (HOOK_TICK_INTERVAL_MS * MSEC)
 
 /* Do NOT use common panic code (designed to output information on the UART) */
 #undef CONFIG_COMMON_PANIC_OUTPUT
