@@ -167,55 +167,48 @@ static void pe_request_run(const int port)
 		/* Prepare to send ACK */
 
 		/* VDM Header */
-		payload[0] = VDO(
-			USB_VID_GOOGLE,
-			1, /* Structured VDM */
-			VDO_SVDM_VERS(1) |
-			VDO_CMDT(CMDT_RSP_ACK) |
-			CMD_DISCOVER_IDENT);
+		payload[0] = VDO(USB_VID_GOOGLE, 1, /* Structured VDM */
+				 VDO_SVDM_VERS(1) | VDO_CMDT(CMDT_RSP_ACK) |
+					 CMD_DISCOVER_IDENT);
 
 		/* ID Header VDO */
-		payload[1] = VDO_IDH(
-			0, /* Not a USB Host */
-			1, /* Capable of being enumerated as USB Device */
-			IDH_PTYPE_VPD,
-			0, /* Modal Operation Not Supported */
-			USB_VID_GOOGLE);
+		payload[1] = VDO_IDH(0, /* Not a USB Host */
+				     1, /* Capable of being enumerated as USB
+					   Device */
+				     IDH_PTYPE_VPD, 0, /* Modal Operation Not
+							  Supported */
+				     USB_VID_GOOGLE);
 
 		/* Cert State VDO */
 		payload[2] = 0;
 
 		/* Product VDO */
-		payload[3] = VDO_PRODUCT(
-			CONFIG_USB_PID,
-			USB_BCD_DEVICE);
+		payload[3] = VDO_PRODUCT(CONFIG_USB_PID, USB_BCD_DEVICE);
 
 		/* VPD VDO */
 		payload[4] = VDO_VPD(
-			VPD_HW_VERSION,
-			VPD_FW_VERSION,
-			VPD_MAX_VBUS_20V,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CT_CURRENT
-						     : 0,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_VBUS_IMP(
-							VPD_VBUS_IMPEDANCE)
-						     : 0,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_GND_IMP(
-							VPD_GND_IMPEDANCE)
-						     : 0,
-			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CTS_SUPPORTED
-						     : VPD_CTS_NOT_SUPPORTED);
+			VPD_HW_VERSION, VPD_FW_VERSION, VPD_MAX_VBUS_20V,
+			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CT_CURRENT : 0,
+			IS_ENABLED(CONFIG_USB_CTVPD) ?
+				VPD_VBUS_IMP(VPD_VBUS_IMPEDANCE) :
+				0,
+			IS_ENABLED(CONFIG_USB_CTVPD) ?
+				VPD_GND_IMP(VPD_GND_IMPEDANCE) :
+				0,
+			IS_ENABLED(CONFIG_USB_CTVPD) ? VPD_CTS_SUPPORTED :
+						       VPD_CTS_NOT_SUPPORTED);
 
 		/* 20 bytes, 5 data objects */
 		tx_emsg[port].len = 20;
 
 		/* Set to highest revision supported by both ports. */
 		prl_set_rev(port, TCPCI_MSG_SOP_PRIME,
-					(PD_HEADER_REV(header) > PD_REV30) ?
-					PD_REV30 : PD_HEADER_REV(header));
+			    (PD_HEADER_REV(header) > PD_REV30) ?
+				    PD_REV30 :
+				    PD_HEADER_REV(header));
 		/* Send the ACK */
 		prl_send_data_msg(port, TCPCI_MSG_SOP_PRIME,
-					PD_DATA_VENDOR_DEF);
+				  PD_DATA_VENDOR_DEF);
 	}
 }
 
