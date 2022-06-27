@@ -90,23 +90,17 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 };
 
 /* Rotation matrix for the lid accelerometer */
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t base_icm_ref = {
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t base_icm_ref = { { FLOAT_TO_FP(1), 0, 0 },
+				  { 0, FLOAT_TO_FP(-1), 0 },
+				  { 0, 0, FLOAT_TO_FP(-1) } };
 
 struct motion_sensor_t kx022_lid_accel = {
 	.name = "Lid Accel",
@@ -256,20 +250,20 @@ struct motion_sensor_t icm_base_accel = {
 };
 
 struct motion_sensor_t icm_base_gyro = {
-		 .name = "Base Gyro",
-		 .active_mask = SENSOR_ACTIVE_S0_S3,
-		 .chip = MOTIONSENSE_CHIP_ICM426XX,
-		 .type = MOTIONSENSE_TYPE_GYRO,
-		 .location = MOTIONSENSE_LOC_BASE,
-		 .drv = &icm426xx_drv,
-		 .mutex = &g_base_mutex,
-		 .drv_data = &g_icm426xx_data,
-		 .port = I2C_PORT_SENSOR,
-		 .i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
-		 .default_range = 1000, /* dps */
-		 .rot_standard_ref = &base_icm_ref,
-		 .min_frequency = ICM426XX_GYRO_MIN_FREQ,
-		 .max_frequency = ICM426XX_GYRO_MAX_FREQ,
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_icm_ref,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 };
 
 /* ALS instances when LPC mapping is needed. Each entry directs to a sensor. */
