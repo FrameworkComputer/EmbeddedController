@@ -23,7 +23,7 @@ static struct mutex mtx;
 
 int mutex_random_task(void *unused)
 {
-	char letter = 'A'+(TASK_ID_MTX3A - task_get_current());
+	char letter = 'A' + (TASK_ID_MTX3A - task_get_current());
 	/* wait to be activated */
 
 	while (1) {
