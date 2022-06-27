@@ -42,8 +42,8 @@ void init_windows(void)
 
 	/* Get a colormap */
 	colormap_id = xcb_generate_id(c);
-	xcb_create_colormap(c, XCB_COLORMAP_ALLOC_NONE,
-			    colormap_id, screen->root, screen->root_visual);
+	xcb_create_colormap(c, XCB_COLORMAP_ALLOC_NONE, colormap_id,
+			    screen->root, screen->root_visual);
 
 	/* Create foreground GC */
 	foreground = xcb_generate_id(c);
@@ -57,16 +57,16 @@ void init_windows(void)
 	mask = XCB_CW_BACK_PIXEL | XCB_CW_EVENT_MASK;
 	values[0] = screen->black_pixel;
 	values[1] = XCB_EVENT_MASK_EXPOSURE | XCB_EVENT_MASK_BUTTON_PRESS;
-	xcb_create_window(c,				 /* Connection */
-			  XCB_COPY_FROM_PARENT,		 /* depth */
-			  win,				 /* window Id */
-			  screen->root,			 /* parent window */
-			  0, 0,				 /* x, y */
-			  win_w, win_h,			 /* width, height */
-			  10,				 /* border_width */
+	xcb_create_window(c, /* Connection */
+			  XCB_COPY_FROM_PARENT, /* depth */
+			  win, /* window Id */
+			  screen->root, /* parent window */
+			  0, 0, /* x, y */
+			  win_w, win_h, /* width, height */
+			  10, /* border_width */
 			  XCB_WINDOW_CLASS_INPUT_OUTPUT, /* class */
-			  screen->root_visual,		 /* visual */
-			  mask, values);		 /* masks */
+			  screen->root_visual, /* visual */
+			  mask, values); /* masks */
 
 	/* Map the window on the screen */
 	xcb_map_window(c, win);
@@ -88,10 +88,10 @@ void cleanup(void)
 
 /* xcb likes 16-bit colors */
 uint16_t leds[NUM_LEDS][3] = {
-	{0xffff, 0x0000, 0x0000},
-	{0x0000, 0xffff, 0x0000},
-	{0x0000, 0x0000, 0xffff},
-	{0xffff, 0xffff, 0x0000},
+	{ 0xffff, 0x0000, 0x0000 },
+	{ 0x0000, 0xffff, 0x0000 },
+	{ 0x0000, 0x0000, 0xffff },
+	{ 0xffff, 0xffff, 0x0000 },
 };
 pthread_mutex_t leds_mutex = PTHREAD_MUTEX_INITIALIZER;
 
@@ -101,10 +101,8 @@ void change_gc_color(uint16_t red, uint16_t green, uint16_t blue)
 	uint32_t values[2];
 	xcb_alloc_color_reply_t *reply;
 
-	reply = xcb_alloc_color_reply(c,
-				      xcb_alloc_color(c, colormap_id,
-						      red, green, blue),
-				      NULL);
+	reply = xcb_alloc_color_reply(
+		c, xcb_alloc_color(c, colormap_id, red, green, blue), NULL);
 	assert(reply);
 
 	mask = XCB_GC_FOREGROUND;
@@ -116,8 +114,8 @@ void change_gc_color(uint16_t red, uint16_t green, uint16_t blue)
 void update_window(void)
 {
 	xcb_segment_t segments[] = {
-		{0, 0, win_w, win_h},
-		{0, win_h, win_w, 0},
+		{ 0, 0, win_w, win_h },
+		{ 0, win_h, win_w, 0 },
 	};
 	xcb_rectangle_t rect;
 	int w = win_w / NUM_LEDS;
@@ -135,8 +133,7 @@ void update_window(void)
 			rect.width = w;
 			rect.height = win_h;
 
-			change_gc_color(copyleds[i][0],
-					copyleds[i][1],
+			change_gc_color(copyleds[i][0], copyleds[i][1],
 					copyleds[i][2]);
 
 			xcb_poly_fill_rectangle(c, win, foreground, 1, &rect);
@@ -183,8 +180,6 @@ void setrgb(int led, int red, int green, int blue)
 
 /*****************************************************************************/
 /* lb_common stubs */
-
-
 
 /* Brightness serves no purpose here. It's automatic on the Chromebook. */
 static int brightness = 0xc0;
@@ -238,13 +233,12 @@ void lb_hc_cmd_dump(struct ec_response_lightbar *out)
 	printf("lightbar is %s\n", fake_power ? "on" : "off");
 	memset(out, fake_power, sizeof(*out));
 };
-void lb_hc_cmd_reg(const struct ec_params_lightbar *in) { };
+void lb_hc_cmd_reg(const struct ec_params_lightbar *in){};
 
 int lb_power(int enabled)
 {
 	return fake_power;
 }
-
 
 /*****************************************************************************/
 /* Event handling stuff */
@@ -257,7 +251,6 @@ void *entry_windows(void *ptr)
 	int chg = 1;
 
 	while ((e = xcb_wait_for_event(c))) {
-
 		switch (e->response_type & ~0x80) {
 		case XCB_EXPOSE:
 			ev = (xcb_expose_event_t *)e;
