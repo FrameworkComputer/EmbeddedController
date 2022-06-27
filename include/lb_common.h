@@ -38,4 +38,4 @@ void lb_hc_cmd_reg(const struct ec_params_lightbar *in);
  */
 int lb_power(int enabled);
 
-#endif  /* __CROS_EC_LB_COMMON_H */
+#endif /* __CROS_EC_LB_COMMON_H */
