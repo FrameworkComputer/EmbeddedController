@@ -70,15 +70,15 @@ enum cts_rc test_task_switch(void)
 	}
 
 	if (wake_count[0] != repeat_count || wake_count[1] != repeat_count) {
-		CPRINTS("Unexpected counter values: %d %d %d",
-			wake_count[0], wake_count[1], wake_count[2]);
+		CPRINTS("Unexpected counter values: %d %d %d", wake_count[0],
+			wake_count[1], wake_count[2]);
 		return CTS_RC_FAILURE;
 	}
 
 	/* TODO: Verify no tasks are ready, no events are pending. */
-	if (*task_get_event_bitmap(TASK_ID_A)
-			|| *task_get_event_bitmap(TASK_ID_B)
-			|| *task_get_event_bitmap(TASK_ID_C)) {
+	if (*task_get_event_bitmap(TASK_ID_A) ||
+	    *task_get_event_bitmap(TASK_ID_B) ||
+	    *task_get_event_bitmap(TASK_ID_C)) {
 		CPRINTS("Events are pending");
 		return CTS_RC_FAILURE;
 	}
@@ -102,17 +102,17 @@ enum cts_rc test_task_priority(void)
 		return CTS_RC_FAILURE;
 	}
 
-	if (wake_count[0] != repeat_count - 1
-			|| wake_count[1] != repeat_count - 1) {
-		CPRINTS("Unexpected counter values: %d %d %d",
-			wake_count[0], wake_count[1], wake_count[2]);
+	if (wake_count[0] != repeat_count - 1 ||
+	    wake_count[1] != repeat_count - 1) {
+		CPRINTS("Unexpected counter values: %d %d %d", wake_count[0],
+			wake_count[1], wake_count[2]);
 		return CTS_RC_FAILURE;
 	}
 
 	/* TODO: Verify no tasks are ready, no events are pending. */
-	if (*task_get_event_bitmap(TASK_ID_A)
-			|| *task_get_event_bitmap(TASK_ID_B)
-			|| *task_get_event_bitmap(TASK_ID_C)) {
+	if (*task_get_event_bitmap(TASK_ID_A) ||
+	    *task_get_event_bitmap(TASK_ID_B) ||
+	    *task_get_event_bitmap(TASK_ID_C)) {
 		CPRINTS("Events are pending");
 		return CTS_RC_FAILURE;
 	}
