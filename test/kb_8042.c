@@ -20,7 +20,7 @@
 #include "timer.h"
 #include "util.h"
 
-static const char *action[2] = {"release", "press"};
+static const char *action[2] = { "release", "press" };
 
 #define BUF_SIZE 16
 static char lpc_char_buf[BUF_SIZE];
@@ -274,8 +274,8 @@ static const struct ec_response_keybd_config keybd_config = {
 	},
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &keybd_config;
 }
@@ -285,8 +285,8 @@ static int test_ec_cmd_get_keybd_config(void)
 	struct ec_response_keybd_config resp;
 	int rv;
 
-	rv = test_send_host_command(EC_CMD_GET_KEYBD_CONFIG, 0, NULL, 0,
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_GET_KEYBD_CONFIG, 0, NULL, 0, &resp,
+				    sizeof(resp));
 	if (rv != EC_RES_SUCCESS) {
 		ccprintf("Error: EC_CMD_GET_KEYBD_CONFIG cmd returns %d\n", rv);
 		return EC_ERROR_INVAL;
@@ -307,18 +307,18 @@ static int test_vivaldi_top_keys(void)
 
 	/* Test REFRESH key */
 	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
-	press_key(2, 3, 1);		/* Press T2 */
-	VERIFY_LPC_CHAR("\xe0\x67");	/* Check REFRESH scancode in set-1 */
+	press_key(2, 3, 1); /* Press T2 */
+	VERIFY_LPC_CHAR("\xe0\x67"); /* Check REFRESH scancode in set-1 */
 
 	/* Test SNAPSHOT key */
 	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
-	press_key(4, 3, 1);		/* Press T2 */
-	VERIFY_LPC_CHAR("\xe0\x13");	/* Check SNAPSHOT scancode in set-1 */
+	press_key(4, 3, 1); /* Press T2 */
+	VERIFY_LPC_CHAR("\xe0\x13"); /* Check SNAPSHOT scancode in set-1 */
 
 	/* Test VOL_UP key */
 	write_cmd_byte(read_cmd_byte() | I8042_XLATE);
-	press_key(5, 3, 1);		/* Press T2 */
-	VERIFY_LPC_CHAR("\xe0\x30");	/* Check VOL_UP scancode in set-1 */
+	press_key(5, 3, 1); /* Press T2 */
+	VERIFY_LPC_CHAR("\xe0\x30"); /* Check VOL_UP scancode in set-1 */
 
 	return EC_SUCCESS;
 }
