@@ -13,7 +13,7 @@
 struct usb_endpoint {
 	struct libusb_device_handle *devh;
 	uint8_t ep_num;
-	int     chunk_len;
+	int chunk_len;
 };
 
 /*
@@ -34,9 +34,8 @@ int usb_findit(const char *serialno, uint16_t vid, uint16_t pid,
  * pointer, if provided along with 'allow_less', lets the caller know how many
  * bytes were received.
  */
-int usb_trx(struct usb_endpoint *uep, void *outbuf, int outlen,
-	    void *inbuf, int inlen, int allow_less,
-	    size_t *rxed_count);
+int usb_trx(struct usb_endpoint *uep, void *outbuf, int outlen, void *inbuf,
+	    int inlen, int allow_less, size_t *rxed_count);
 
 /*
  * This function should be called for graceful tear down of the USB interface
@@ -46,8 +45,8 @@ int usb_trx(struct usb_endpoint *uep, void *outbuf, int outlen,
  */
 void usb_shut_down(struct usb_endpoint *uep);
 
-#define USB_ERROR(m, r) \
-	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, \
-		m, r, libusb_strerror(r))
+#define USB_ERROR(m, r)                                                        \
+	fprintf(stderr, "%s:%d, %s returned %d (%s)\n", __FILE__, __LINE__, m, \
+		r, libusb_strerror(r))
 
-#endif  /* ! __EC_EXTRA_USB_UPDATER_USB_IF_H */
+#endif /* ! __EC_EXTRA_USB_UPDATER_USB_IF_H */
