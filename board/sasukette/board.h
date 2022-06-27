@@ -60,8 +60,8 @@
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
 /* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
-#define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
+#define CONFIG_USB_MUX_IT5205 /* C1: ITE Mux */
+#define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
 
 #ifndef __ASSEMBLER__
 
@@ -70,10 +70,10 @@
 
 /* ADC channels */
 enum adc_channel {
-	ADC_VSNS_PP3300_A,     /* ADC0 */
-	ADC_TEMP_SENSOR_1,     /* ADC2 */
-	ADC_TEMP_SENSOR_2,     /* ADC3 */
-	ADC_TEMP_SENSOR_3,     /* ADC15*/
+	ADC_VSNS_PP3300_A, /* ADC0 */
+	ADC_TEMP_SENSOR_1, /* ADC2 */
+	ADC_TEMP_SENSOR_2, /* ADC3 */
+	ADC_TEMP_SENSOR_3, /* ADC15*/
 	ADC_CH_COUNT
 };
 
