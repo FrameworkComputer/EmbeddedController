@@ -26,9 +26,9 @@
 typedef enum {
 	SYS_CLOCK_NANORING = MXC_V_GCR_CLKCN_CLKSEL_NANORING, /**< 8KHz nanoring
 								 on MAX32660 */
-	SYS_CLOCK_HFXIN =
-		MXC_V_GCR_CLKCN_CLKSEL_HFXIN, /**< 32KHz on MAX32660 */
-	SYS_CLOCK_HFXIN_DIGITAL = 0x9,	/**< External Clock Input*/
+	SYS_CLOCK_HFXIN = MXC_V_GCR_CLKCN_CLKSEL_HFXIN, /**< 32KHz on MAX32660
+							 */
+	SYS_CLOCK_HFXIN_DIGITAL = 0x9, /**< External Clock Input*/
 	SYS_CLOCK_HIRC = MXC_V_GCR_CLKCN_CLKSEL_HIRC, /**< High Frequency
 							 Internal Oscillator */
 } sys_system_clock_t;
