@@ -40,7 +40,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 #define INT_RECHECK_US 5000
 
@@ -127,34 +127,26 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_VSNS_PP3300_A] = {
-		.name = "PP3300_A_PGOOD",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH0
-	},
-	[ADC_TEMP_SENSOR_1] = {
-		.name = "TEMP_SENSOR1",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH2
-	},
-	[ADC_TEMP_SENSOR_2] = {
-		.name = "TEMP_SENSOR2",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH3
-	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH13
-	},
+	[ADC_VSNS_PP3300_A] = { .name = "PP3300_A_PGOOD",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH0 },
+	[ADC_TEMP_SENSOR_1] = { .name = "TEMP_SENSOR1",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH2 },
+	[ADC_TEMP_SENSOR_2] = { .name = "TEMP_SENSOR2",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH3 },
+	[ADC_SUB_ANALOG] = { .name = "SUB_ANALOG",
+			     .factor_mul = ADC_MAX_MVOLT,
+			     .factor_div = ADC_READ_MAX + 1,
+			     .shift = 0,
+			     .channel = CHIP_ADC_CH13 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -238,7 +230,6 @@ void board_init(void)
 	} else {
 		c1_int_line = GPIO_USB_C1_INT_V1_ODL;
 	}
-
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 	gpio_enable_interrupt(c1_int_line);
@@ -403,9 +394,8 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 		gpio_set_level(GPIO_EN_USB_C0_CC2_VCONN, !!enabled);
 }
 
-__override void ocpc_get_pid_constants(int *kp, int *kp_div,
-				       int *ki, int *ki_div,
-				       int *kd, int *kd_div)
+__override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+				       int *ki_div, int *kd, int *kd_div)
 {
 	*kp = 3;
 	*kp_div = 14;
@@ -463,7 +453,7 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Sensor Data */
-static struct kionix_accel_data  g_kx022_data;
+static struct kionix_accel_data g_kx022_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* Drivers */
@@ -543,14 +533,14 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Memory",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Ambient",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_2},
+	[TEMP_SENSOR_1] = { .name = "Memory",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Ambient",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
