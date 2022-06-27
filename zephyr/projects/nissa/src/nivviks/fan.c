@@ -28,8 +28,7 @@ static void fan_init(void)
 	 */
 	ret = cros_cbi_get_fw_config(FW_FAN, &val);
 	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
-			FW_FAN);
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_FAN);
 		return;
 	}
 	if (val != FW_FAN_PRESENT) {
@@ -37,9 +36,8 @@ static void fan_init(void)
 		fan_set_count(0);
 	} else {
 		/* Configure the fan enable GPIO */
-		gpio_pin_configure_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_fan_enable),
-			GPIO_OUTPUT);
+		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_fan_enable),
+				      GPIO_OUTPUT);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_POST_FIRST);
