@@ -24,8 +24,8 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SPI, format, ##args)
 
 #if !(DEBUG_SHI)
 #define DEBUG_CPUTS(...)
@@ -33,39 +33,42 @@
 #define DEBUG_CPRINTF(...)
 #else
 #define DEBUG_CPUTS(outstr) cputs(CC_SPI, outstr)
-#define DEBUG_CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
-#define DEBUG_CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
+#define DEBUG_CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
+#define DEBUG_CPRINTF(format, args...) cprintf(CC_SPI, format, ##args)
 #endif
 
 /* SHI Bus definition */
 #ifdef NPCX_SHI_V2
-#define SHI_OBUF_FULL_SIZE  128                    /* Full output buffer size */
-#define SHI_IBUF_FULL_SIZE  128                    /* Full input buffer size  */
+#define SHI_OBUF_FULL_SIZE 128 /* Full output buffer size */
+#define SHI_IBUF_FULL_SIZE 128 /* Full input buffer size  */
 /* Configure the IBUFLVL2 = the size of V3 protocol header */
 #define SHI_IBUFLVL2_THRESHOLD (sizeof(struct ec_host_request))
 #else
-#define SHI_OBUF_FULL_SIZE  64                     /* Full output buffer size */
-#define SHI_IBUF_FULL_SIZE  64                     /* Full input buffer size  */
+#define SHI_OBUF_FULL_SIZE 64 /* Full output buffer size */
+#define SHI_IBUF_FULL_SIZE 64 /* Full input buffer size  */
 #endif
-#define SHI_OBUF_HALF_SIZE  (SHI_OBUF_FULL_SIZE/2) /* Half output buffer size */
-#define SHI_IBUF_HALF_SIZE  (SHI_IBUF_FULL_SIZE/2) /* Half input buffer size  */
+#define SHI_OBUF_HALF_SIZE \
+	(SHI_OBUF_FULL_SIZE / 2) /* Half output buffer size */
+#define SHI_IBUF_HALF_SIZE \
+	(SHI_IBUF_FULL_SIZE / 2) /* Half input buffer size  */
 
 /* Start address of SHI output buffer */
-#define SHI_OBUF_START_ADDR  (volatile uint8_t  *)(NPCX_SHI_BASE_ADDR + 0x020)
+#define SHI_OBUF_START_ADDR (volatile uint8_t *)(NPCX_SHI_BASE_ADDR + 0x020)
 /* Middle address of SHI output buffer */
-#define SHI_OBUF_HALF_ADDR   (SHI_OBUF_START_ADDR + SHI_OBUF_HALF_SIZE)
+#define SHI_OBUF_HALF_ADDR (SHI_OBUF_START_ADDR + SHI_OBUF_HALF_SIZE)
 /* Top address of SHI output buffer */
-#define SHI_OBUF_FULL_ADDR   (SHI_OBUF_START_ADDR + SHI_IBUF_FULL_SIZE)
+#define SHI_OBUF_FULL_ADDR (SHI_OBUF_START_ADDR + SHI_IBUF_FULL_SIZE)
 /*
  * Valid offset of SHI output buffer to write.
  * When SIMUL bit is set, IBUFPTR can be used instead of OBUFPTR
  */
-#define SHI_OBUF_VALID_OFFSET ((shi_read_buf_pointer() + \
-			SHI_OUT_PREAMBLE_LENGTH) % SHI_OBUF_FULL_SIZE)
+#define SHI_OBUF_VALID_OFFSET                                 \
+	((shi_read_buf_pointer() + SHI_OUT_PREAMBLE_LENGTH) % \
+	 SHI_OBUF_FULL_SIZE)
 /* Start address of SHI input buffer */
-#define SHI_IBUF_START_ADDR  (&NPCX_IBUF(0))
+#define SHI_IBUF_START_ADDR (&NPCX_IBUF(0))
 /* Current address of SHI input buffer */
-#define SHI_IBUF_CUR_ADDR    (SHI_IBUF_START_ADDR + shi_read_buf_pointer())
+#define SHI_IBUF_CUR_ADDR (SHI_IBUF_START_ADDR + shi_read_buf_pointer())
 
 /*
  * Timeout to wait for SHI request packet
@@ -106,12 +109,11 @@
  */
 #define SHI_PROTO3_OVERHEAD (EC_SPI_PAST_END_LENGTH + EC_SPI_FRAME_START_LENGTH)
 
-
 #ifdef NPCX_SHI_BYPASS_OVER_256B
 /* The boundary which SHI will output invalid data on MISO. */
 #define SHI_BYPASS_BOUNDARY 256
 /* Increase FRAME_START_LENGTH in case shi outputs invalid FRAME_START byte */
-#undef  EC_SPI_FRAME_START_LENGTH
+#undef EC_SPI_FRAME_START_LENGTH
 #define EC_SPI_FRAME_START_LENGTH 2
 #endif
 
@@ -141,10 +143,9 @@ BUILD_ASSERT(SHI_MAX_RESPONSE_SIZE <= SHI_BYPASS_BOUNDARY);
  */
 #define SHI_OUT_START_PAD (4 * (EC_SPI_FRAME_START_LENGTH / 4 + 1))
 #define SHI_OUT_END_PAD (4 * (EC_SPI_PAST_END_LENGTH / 4 + 1))
-static uint8_t out_msg_padded[SHI_OUT_START_PAD +
-			      SHI_MAX_RESPONSE_SIZE +
+static uint8_t out_msg_padded[SHI_OUT_START_PAD + SHI_MAX_RESPONSE_SIZE +
 			      SHI_OUT_END_PAD] __aligned(4);
-static uint8_t * const out_msg =
+static uint8_t *const out_msg =
 	out_msg_padded + SHI_OUT_START_PAD - EC_SPI_FRAME_START_LENGTH;
 static uint8_t in_msg[SHI_MAX_REQUEST_SIZE] __aligned(4);
 
@@ -176,18 +177,18 @@ volatile enum shi_state state;
 
 /* SHI bus parameters */
 struct shi_bus_parameters {
-	uint8_t *rx_msg;          /* Entry pointer of msg rx buffer   */
-	uint8_t *tx_msg;          /* Entry pointer of msg tx buffer   */
+	uint8_t *rx_msg; /* Entry pointer of msg rx buffer   */
+	uint8_t *tx_msg; /* Entry pointer of msg tx buffer   */
 	volatile uint8_t *rx_buf; /* Entry pointer of receive buffer  */
 	volatile uint8_t *tx_buf; /* Entry pointer of transmit buffer */
-	uint16_t sz_received;     /* Size of received data in bytes   */
-	uint16_t sz_sending;      /* Size of sending data in bytes    */
-	uint16_t sz_request;      /* request bytes need to receive    */
-	uint16_t sz_response;     /* response bytes need to receive   */
-	timestamp_t rx_deadline;  /* deadline of receiving            */
-	uint8_t  pre_ibufstat;    /* Previous IBUFSTAT value          */
+	uint16_t sz_received; /* Size of received data in bytes   */
+	uint16_t sz_sending; /* Size of sending data in bytes    */
+	uint16_t sz_request; /* request bytes need to receive    */
+	uint16_t sz_response; /* response bytes need to receive   */
+	timestamp_t rx_deadline; /* deadline of receiving            */
+	uint8_t pre_ibufstat; /* Previous IBUFSTAT value          */
 #ifdef NPCX_SHI_BYPASS_OVER_256B
-	uint16_t bytes_in_256b;   /* Sent bytes in 256 bytes boundary */
+	uint16_t bytes_in_256b; /* Sent bytes in 256 bytes boundary */
 #endif
 } shi_params;
 
@@ -222,7 +223,7 @@ static void shi_send_response_packet(struct host_packet *pkt)
 	interrupt_disable();
 	if (state == SHI_STATE_PROCESSING) {
 		/* Append our past-end byte, which we reserved space for. */
-		((uint8_t *) pkt->response)[pkt->response_size + 0] =
+		((uint8_t *)pkt->response)[pkt->response_size + 0] =
 			EC_SPI_PAST_END;
 
 		/* Computing sending bytes of response */
@@ -266,8 +267,8 @@ void shi_handle_host_package(void)
 		/* Need to receive data from buffer */
 		return;
 	else {
-		uint16_t remain_bytes = shi_params.sz_request
-					- shi_params.sz_received;
+		uint16_t remain_bytes =
+			shi_params.sz_request - shi_params.sz_received;
 
 		/* Read remaining bytes from input buffer directly */
 		if (!shi_read_inbuf_wait(remain_bytes))
@@ -286,7 +287,6 @@ void shi_handle_host_package(void)
 	shi_packet.request_temp = NULL;
 	shi_packet.request_max = sizeof(in_msg);
 	shi_packet.request_size = shi_params.sz_request;
-
 
 #ifdef NPCX_SHI_BYPASS_OVER_256B
 	/* Move FRAME_START to second byte */
@@ -324,7 +324,7 @@ static void shi_parse_header(void)
 
 	if (in_msg[0] == EC_HOST_REQUEST_VERSION) {
 		/* Protocol version 3 */
-		struct ec_host_request *r = (struct ec_host_request *) in_msg;
+		struct ec_host_request *r = (struct ec_host_request *)in_msg;
 		int pkt_size;
 		/*
 		 * If request is over 32 bytes,
@@ -371,8 +371,8 @@ static void shi_fill_out_status(uint8_t status)
 	 * be done within this gap. No racing happens.
 	 */
 	start = SHI_OBUF_VALID_OFFSET;
-	end = ((start + SHI_OBUF_FULL_SIZE - SHI_OUT_PREAMBLE_LENGTH)
-	       % SHI_OBUF_FULL_SIZE);
+	end = ((start + SHI_OBUF_FULL_SIZE - SHI_OUT_PREAMBLE_LENGTH) %
+	       SHI_OBUF_FULL_SIZE);
 
 	fill_ptr = (uint8_t *)SHI_OBUF_START_ADDR + start;
 	fill_end = (uint8_t *)SHI_OBUF_START_ADDR + end;
@@ -388,17 +388,17 @@ static void shi_fill_out_status(uint8_t status)
 }
 
 #ifdef NPCX_SHI_V2
- /*
-  * This routine configures at which level the Input Buffer Half Full 2(IBHF2))
-  * event triggers an interrupt to core.
-  */
+/*
+ * This routine configures at which level the Input Buffer Half Full 2(IBHF2))
+ * event triggers an interrupt to core.
+ */
 static void shi_sec_ibf_int_enable(int enable)
 {
 	if (enable) {
 		/* Setup IBUFLVL2 threshold and enable it */
 		SET_BIT(NPCX_SHICFG5, NPCX_SHICFG5_IBUFLVL2DIS);
 		SET_FIELD(NPCX_SHICFG5, NPCX_SHICFG5_IBUFLVL2,
-				SHI_IBUFLVL2_THRESHOLD);
+			  SHI_IBUFLVL2_THRESHOLD);
 		CLEAR_BIT(NPCX_SHICFG5, NPCX_SHICFG5_IBUFLVL2DIS);
 		/* Enable IBHF2 event */
 		SET_BIT(NPCX_EVENABLE2, NPCX_EVENABLE2_IBHF2EN);
@@ -436,9 +436,9 @@ static int shi_is_cs_glitch(void)
  */
 static void shi_write_half_outbuf(void)
 {
-	const uint8_t size = MIN(SHI_OBUF_HALF_SIZE,
-				 shi_params.sz_response -
-				 shi_params.sz_sending);
+	const uint8_t size =
+		MIN(SHI_OBUF_HALF_SIZE,
+		    shi_params.sz_response - shi_params.sz_sending);
 	uint8_t *obuf_ptr = (uint8_t *)shi_params.tx_buf;
 	const uint8_t *obuf_end = obuf_ptr + size;
 	uint8_t *msg_ptr = shi_params.tx_msg;
@@ -468,8 +468,8 @@ static void shi_write_first_pkg_outbuf(uint16_t szbytes)
 	 * If response package is across 256 bytes boundary,
 	 * bypass needs to extend PROCESSING bytes after reaching the boundary.
 	 */
-	if (shi_params.bytes_in_256b + SHI_OBUF_FULL_SIZE + szbytes
-	    > SHI_BYPASS_BOUNDARY) {
+	if (shi_params.bytes_in_256b + SHI_OBUF_FULL_SIZE + szbytes >
+	    SHI_BYPASS_BOUNDARY) {
 		state = SHI_STATE_WAIT_ALIGNMENT;
 		/* Set pointer of output buffer to the start address */
 		shi_params.tx_buf = SHI_OBUF_START_ADDR;
@@ -485,7 +485,7 @@ static void shi_write_first_pkg_outbuf(uint16_t szbytes)
 
 	/* Fill up to OBUF mid point, or OBUF end */
 	size = MIN(SHI_OBUF_HALF_SIZE - (offset % SHI_OBUF_HALF_SIZE),
-					szbytes - shi_params.sz_sending);
+		   szbytes - shi_params.sz_sending);
 	obuf_end = obuf_ptr + size;
 	while (obuf_ptr != obuf_end)
 		*(obuf_ptr++) = *(msg_ptr++);
@@ -520,8 +520,8 @@ static void shi_read_half_inbuf(void)
 		/* Restore data to msg buffer */
 		*(shi_params.rx_msg++) = *(shi_params.rx_buf++);
 		shi_params.sz_received++;
-	} while (shi_params.sz_received % SHI_IBUF_HALF_SIZE
-		&& shi_params.sz_received != shi_params.sz_request);
+	} while (shi_params.sz_received % SHI_IBUF_HALF_SIZE &&
+		 shi_params.sz_received != shi_params.sz_request);
 }
 
 /*
@@ -601,7 +601,7 @@ static void shi_handle_cs_assert(void)
 	if (state == SHI_STATE_DISABLED)
 		return;
 
-	/* SHI V2 module filters cs glitch by hardware automatically */
+		/* SHI V2 module filters cs glitch by hardware automatically */
 #ifndef NPCX_SHI_V2
 	/*
 	 * IBUFSTAT resets on the 7th clock cycle after CS assertion, which
@@ -725,7 +725,7 @@ static void shi_int_handler(void)
 
 			DEBUG_CPRINTF("CNL-");
 			return;
-		/* Next transaction but we're not ready */
+			/* Next transaction but we're not ready */
 		} else if (state == SHI_STATE_CNL_RESP_NOT_RDY)
 			return;
 
@@ -754,8 +754,8 @@ static void shi_int_handler(void)
 			return shi_handle_host_package();
 		} else if (state == SHI_STATE_SENDING) {
 			/* Write data from msg buffer to output buffer */
-			if (shi_params.tx_buf == SHI_OBUF_START_ADDR +
-					SHI_OBUF_FULL_SIZE) {
+			if (shi_params.tx_buf ==
+			    SHI_OBUF_START_ADDR + SHI_OBUF_FULL_SIZE) {
 				/* Write data from bottom address again */
 				shi_params.tx_buf = SHI_OBUF_START_ADDR;
 				return shi_write_half_outbuf();
@@ -770,8 +770,8 @@ static void shi_int_handler(void)
 			 * If pointer of output buffer will reach 256 bytes
 			 * boundary soon, start to fill response data.
 			 */
-			if (shi_params.bytes_in_256b == SHI_BYPASS_BOUNDARY -
-					SHI_OBUF_FULL_SIZE) {
+			if (shi_params.bytes_in_256b ==
+			    SHI_BYPASS_BOUNDARY - SHI_OBUF_FULL_SIZE) {
 				state = SHI_STATE_SENDING;
 				DEBUG_CPRINTF("SND-");
 				return shi_write_half_outbuf();
@@ -805,8 +805,9 @@ static void shi_int_handler(void)
 	if (IS_BIT_SET(stat_reg, NPCX_EVSTAT_IBF)) {
 #ifdef NPCX_SHI_BYPASS_OVER_256B
 		/* Record the sent bytes within 256B boundary */
-		shi_params.bytes_in_256b = (shi_params.bytes_in_256b +
-				SHI_OBUF_FULL_SIZE) % SHI_BYPASS_BOUNDARY;
+		shi_params.bytes_in_256b =
+			(shi_params.bytes_in_256b + SHI_OBUF_FULL_SIZE) %
+			SHI_BYPASS_BOUNDARY;
 #endif
 		if (state == SHI_STATE_RECEIVING) {
 			/* read data from input to msg buffer */
@@ -816,16 +817,16 @@ static void shi_int_handler(void)
 			return shi_handle_host_package();
 		} else if (state == SHI_STATE_SENDING)
 			/* Write data from msg buffer to output buffer */
-			if (shi_params.tx_buf == SHI_OBUF_START_ADDR +
-					SHI_OBUF_HALF_SIZE)
+			if (shi_params.tx_buf ==
+			    SHI_OBUF_START_ADDR + SHI_OBUF_HALF_SIZE)
 				return shi_write_half_outbuf();
 			else /* ignore it */
 				return;
 		else if (state == SHI_STATE_PROCESSING
 #ifdef NPCX_SHI_BYPASS_OVER_256B
-				|| state == SHI_STATE_WAIT_ALIGNMENT
+			 || state == SHI_STATE_WAIT_ALIGNMENT
 #endif
-				)
+		)
 			/* Wait for host handles request */
 			return;
 		else
@@ -850,7 +851,6 @@ void shi_cs_event(enum gpio_signal signal)
 #else
 	shi_handle_cs_assert();
 #endif
-
 }
 
 /*****************************************************************************/
@@ -960,9 +960,7 @@ static void shi_reenable_on_sysjump(void)
 		shi_enable();
 }
 /* Call hook after chipset sets initial power state */
-DECLARE_HOOK(HOOK_INIT,
-	     shi_reenable_on_sysjump,
-	     HOOK_PRIO_POST_CHIPSET);
+DECLARE_HOOK(HOOK_INIT, shi_reenable_on_sysjump, HOOK_PRIO_POST_CHIPSET);
 
 /* Disable SHI bus */
 static void shi_disable(void)
@@ -1079,4 +1077,4 @@ static enum ec_status shi_get_protocol_info(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, shi_get_protocol_info,
-EC_VER_MASK(0));
+		     EC_VER_MASK(0));
