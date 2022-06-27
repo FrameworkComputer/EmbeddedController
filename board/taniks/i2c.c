@@ -44,7 +44,8 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 	{
 		/* I2C4 C1 TCPC */
-		/* TODO(b/211080526): Change TCPC1's (PS8815) I2C frequency from 400Khz to 1000Khz */
+		/* TODO(b/211080526): Change TCPC1's (PS8815) I2C frequency from
+		   400Khz to 1000Khz */
 		.name = "tcpc1",
 		.port = I2C_PORT_USB_C1_TCPC,
 		.kbps = 1000,
