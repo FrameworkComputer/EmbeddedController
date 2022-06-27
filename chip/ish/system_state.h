@@ -6,7 +6,7 @@
 #ifndef __SYSTEM_STATE_H
 #define __SYSTEM_STATE_H
 
-#define HECI_FIXED_SYSTEM_STATE_ADDR				13
+#define HECI_FIXED_SYSTEM_STATE_ADDR 13
 
 struct ss_subsys_device;
 
