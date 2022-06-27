@@ -37,9 +37,9 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 const struct charger_config_t chg_chips[] = {
 	{
@@ -56,7 +56,7 @@ static void baseboard_init(void)
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 	gpio_enable_interrupt(GPIO_AP_XHCI_INIT_DONE);
 }
-DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT-1);
+DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_DEFAULT - 1);
 
 /* Sub-board */
 
@@ -193,14 +193,14 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 void usb_a0_interrupt(enum gpio_signal signal)
 {
 	enum usb_charge_mode mode = gpio_get_level(signal) ?
-		USB_CHARGE_MODE_ENABLED : USB_CHARGE_MODE_DISABLED;
+					    USB_CHARGE_MODE_ENABLED :
+					    USB_CHARGE_MODE_DISABLED;
 
 	for (int i = 0; i < USB_PORT_COUNT; i++)
 		usb_charge_set_mode(i, mode, USB_ALLOW_SUSPEND_CHARGE);
 }
 
-static int board_ps8743_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+static int board_ps8743_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 	int reg = 0;
@@ -297,8 +297,8 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	charge_set_input_current_limit(
 		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
@@ -422,9 +422,9 @@ int ppc_get_alert_status(int port)
 enum adc_channel board_get_vbus_adc(int port)
 {
 	if (port == 0)
-		return  ADC_VBUS_C0;
+		return ADC_VBUS_C0;
 	if (port == 1)
-		return  ADC_VBUS_C1;
+		return ADC_VBUS_C1;
 	CPRINTSUSB("Unknown vbus adc port id: %d", port);
 	return ADC_VBUS_C0;
 }
