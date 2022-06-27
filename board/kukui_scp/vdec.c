@@ -20,19 +20,23 @@
 static struct consumer const event_vdec_consumer;
 static void event_vdec_written(struct consumer const *consumer, size_t count);
 
-static struct queue const event_vdec_queue = QUEUE_DIRECT(8,
-	struct vdec_msg, null_producer, event_vdec_consumer);
+static struct queue const event_vdec_queue =
+	QUEUE_DIRECT(8, struct vdec_msg, null_producer, event_vdec_consumer);
 static struct consumer const event_vdec_consumer = {
 	.queue = &event_vdec_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_vdec_written,
 	}),
 };
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT8183
-void vdec_h264_service_init(void) {}
-void vdec_h264_msg_handler(void *data) {}
+void vdec_h264_service_init(void)
+{
+}
+void vdec_h264_msg_handler(void *data)
+{
+}
 #endif
 
 static vdec_msg_handler mtk_vdec_msg_handle[VDEC_MAX];
