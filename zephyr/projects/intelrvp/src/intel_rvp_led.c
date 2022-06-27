@@ -26,8 +26,8 @@
 
 #define LED_PULSE_TICK (125 * MSEC)
 
-#define LED_FAST_PULSE_PERIOD  (250 / 125)		/* 250 ms */
-#define LED_SLOW_PULSE_PERIOD  ((2 * MSEC) / 125)	/* 2 sec  */
+#define LED_FAST_PULSE_PERIOD (250 / 125) /* 250 ms */
+#define LED_SLOW_PULSE_PERIOD ((2 * MSEC) / 125) /* 2 sec  */
 
 struct led_pulse_data {
 	bool led_is_pulsing;
@@ -56,13 +56,13 @@ static void pulse_led_deferred(void)
 		 * and in OFF state in second half of the pulse period.
 		 */
 		if (rvp_led[i].led_tick_count <
-					(rvp_led[i].led_pulse_period >> 1))
+		    (rvp_led[i].led_pulse_period >> 1))
 			set_pwm_led_color(i, EC_LED_COLOR_GREEN);
 		else
 			set_pwm_led_color(i, LED_OFF);
 
 		rvp_led[i].led_tick_count = (rvp_led[i].led_tick_count + 1) %
-						rvp_led[i].led_pulse_period;
+					    rvp_led[i].led_pulse_period;
 		call_deferred = true;
 	}
 
@@ -73,7 +73,7 @@ static void pulse_led_deferred(void)
 static void pulse_leds(enum pwm_led_id id, int period)
 {
 	rvp_led[id].led_pulse_period = period;
-	rvp_led[id].led_is_pulsing   = true;
+	rvp_led[id].led_is_pulsing = true;
 
 	pulse_led_deferred();
 }
@@ -96,7 +96,7 @@ static void update_charger_led(enum pwm_led_id id)
 		rvp_led[id].led_is_pulsing = false;
 		set_pwm_led_color(id, EC_LED_COLOR_GREEN);
 	} else if (chg_st == PWR_STATE_DISCHARGE ||
-		  chg_st == PWR_STATE_DISCHARGE_FULL) {
+		   chg_st == PWR_STATE_DISCHARGE_FULL) {
 		if (extpower_is_present()) {
 			/* Discharging:
 			 * Flash slower (2 second period, 100% duty cycle)
