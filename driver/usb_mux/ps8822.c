@@ -15,15 +15,13 @@
 static int ps8822_read(const struct usb_mux *me, int page, uint8_t reg,
 		       int *val)
 {
-	return i2c_read8(me->i2c_port, me->i2c_addr_flags + page,
-			 reg, val);
+	return i2c_read8(me->i2c_port, me->i2c_addr_flags + page, reg, val);
 }
 
 static int ps8822_write(const struct usb_mux *me, int page, uint8_t reg,
 			int val)
 {
-	return i2c_write8(me->i2c_port, me->i2c_addr_flags + page,
-			reg, val);
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags + page, reg, val);
 }
 
 int ps8822_set_dp_rx_eq(const struct usb_mux *me, int db)
@@ -32,8 +30,7 @@ int ps8822_set_dp_rx_eq(const struct usb_mux *me, int db)
 	int rv;
 
 	/* Read DP EQ register */
-	rv = ps8822_read(me, PS8822_REG_PAGE1, PS8822_REG_DP_EQ,
-			 &dpeq_reg);
+	rv = ps8822_read(me, PS8822_REG_PAGE1, PS8822_REG_DP_EQ, &dpeq_reg);
 	if (rv)
 		return rv;
 
@@ -44,13 +41,11 @@ int ps8822_set_dp_rx_eq(const struct usb_mux *me, int db)
 	dpeq_reg &= ~PS8822_DP_EQ_AUTO_EN;
 
 	/* Set gain to the requested value */
-	dpeq_reg &= ~(PS8822_DPEQ_LEVEL_UP_MASK <<
-		      PS8822_REG_DP_EQ_SHIFT);
+	dpeq_reg &= ~(PS8822_DPEQ_LEVEL_UP_MASK << PS8822_REG_DP_EQ_SHIFT);
 	dpeq_reg |= (db << PS8822_REG_DP_EQ_SHIFT);
 
 	/* Apply new EQ setting */
-	return ps8822_write(me, PS8822_REG_PAGE1, PS8822_REG_DP_EQ,
-			  dpeq_reg);
+	return ps8822_write(me, PS8822_REG_PAGE1, PS8822_REG_DP_EQ, dpeq_reg);
 }
 
 static int ps8822_init(const struct usb_mux *me)
@@ -125,7 +120,6 @@ static int ps8822_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 
 	return EC_SUCCESS;
 }
-
 
 const struct usb_mux_driver ps8822_usb_mux_driver = {
 	.init = ps8822_init,
