@@ -17,7 +17,7 @@
 /* General purpose register (r6) for saving software panic reason */
 #define SOFT_PANIC_GPR_REASON 6
 /* General purpose register (r7) for saving software panic information */
-#define SOFT_PANIC_GPR_INFO   7
+#define SOFT_PANIC_GPR_INFO 7
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 /**
@@ -46,7 +46,7 @@
  * All other exceptions not in the abovetable should have the INST field of
  * the ITYPE register set to 0.
  */
-static const char * const itype_inst[2] = {
+static const char *const itype_inst[2] = {
 	"a data memory access",
 	"an instruction fetch access",
 };
@@ -54,7 +54,7 @@ static const char * const itype_inst[2] = {
 /**
  * bit[3-0] @ ITYPE, general exception type information.
  */
-static const char * const itype_exc_type[16] = {
+static const char *const itype_exc_type[16] = {
 	"Alignment check",
 	"Reserved instruction",
 	"Trap",
@@ -78,8 +78,8 @@ static const char * const itype_exc_type[16] = {
 #ifdef CONFIG_SOFTWARE_PANIC
 void software_panic(uint32_t reason, uint32_t info)
 {
-	asm volatile ("mov55  $r6, %0" : : "r"(reason));
-	asm volatile ("mov55  $r7, %0" : : "r"(info));
+	asm volatile("mov55  $r6, %0" : : "r"(reason));
+	asm volatile("mov55  $r7, %0" : : "r"(info));
 	if (in_interrupt_context())
 		asm("j excep_handler");
 	else
@@ -94,7 +94,7 @@ void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 	 * If it was called earlier (eg. when saving nds_n8.ipc) calling it
 	 * once again won't remove any data
 	 */
-	struct panic_data * const pdata = get_panic_data_write();
+	struct panic_data *const pdata = get_panic_data_write();
 	uint32_t warning_ipc;
 	uint32_t *regs;
 
@@ -121,7 +121,7 @@ void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 {
-	struct panic_data * const pdata = panic_get_data();
+	struct panic_data *const pdata = panic_get_data();
 	uint32_t *regs;
 
 	if (pdata && pdata->struct_version == 2) {
@@ -136,17 +136,17 @@ void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 #endif /* CONFIG_SOFTWARE_PANIC */
 
 static void print_panic_information(uint32_t *regs, uint32_t itype,
-					uint32_t ipc, uint32_t ipsw)
+				    uint32_t ipc, uint32_t ipsw)
 {
 	panic_printf("=== EXCEP: ITYPE=%x ===\n", itype);
-	panic_printf("R0  %08x R1  %08x R2  %08x R3  %08x\n",
-		     regs[0], regs[1], regs[2], regs[3]);
-	panic_printf("R4  %08x R5  %08x R6  %08x R7  %08x\n",
-		     regs[4], regs[5], regs[6], regs[7]);
-	panic_printf("R8  %08x R9  %08x R10 %08x R15 %08x\n",
-		     regs[8], regs[9], regs[10], regs[11]);
-	panic_printf("FP  %08x GP  %08x LP  %08x SP  %08x\n",
-		     regs[12], regs[13], regs[14], regs[15]);
+	panic_printf("R0  %08x R1  %08x R2  %08x R3  %08x\n", regs[0], regs[1],
+		     regs[2], regs[3]);
+	panic_printf("R4  %08x R5  %08x R6  %08x R7  %08x\n", regs[4], regs[5],
+		     regs[6], regs[7]);
+	panic_printf("R8  %08x R9  %08x R10 %08x R15 %08x\n", regs[8], regs[9],
+		     regs[10], regs[11]);
+	panic_printf("FP  %08x GP  %08x LP  %08x SP  %08x\n", regs[12],
+		     regs[13], regs[14], regs[15]);
 	panic_printf("IPC %08x IPSW   %05x\n", ipc, ipsw);
 	if ((ipsw & PSW_INTL_MASK) == (2 << PSW_INTL_SHIFT)) {
 		/* 2nd level exception */
@@ -161,16 +161,16 @@ static void print_panic_information(uint32_t *regs, uint32_t itype,
 	if (panic_sw_reason_is_valid(regs[SOFT_PANIC_GPR_REASON])) {
 #ifdef CONFIG_SOFTWARE_PANIC
 		panic_printf("Software panic reason %s\n",
-			panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] -
-					  PANIC_SW_BASE)]);
+			     panic_sw_reasons[(regs[SOFT_PANIC_GPR_REASON] -
+					       PANIC_SW_BASE)]);
 		panic_printf("Software panic info 0x%x\n",
-			regs[SOFT_PANIC_GPR_INFO]);
+			     regs[SOFT_PANIC_GPR_INFO]);
 #endif
 	} else {
 		panic_printf("Exception type: General exception [%s]\n",
-			itype_exc_type[(itype & 0xf)]);
+			     itype_exc_type[(itype & 0xf)]);
 		panic_printf("Exception is caused by %s\n",
-			itype_inst[(itype & BIT(4))]);
+			     itype_inst[(itype & BIT(4))]);
 	}
 #endif
 }
@@ -178,7 +178,7 @@ static void print_panic_information(uint32_t *regs, uint32_t itype,
 void report_panic(uint32_t *regs, uint32_t itype)
 {
 	int i;
-	struct panic_data * const pdata = get_panic_data_write();
+	struct panic_data *const pdata = get_panic_data_write();
 
 	pdata->magic = PANIC_DATA_MAGIC;
 	pdata->struct_size = CONFIG_PANIC_DATA_SIZE;
