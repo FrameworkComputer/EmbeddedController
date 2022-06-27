@@ -10,14 +10,14 @@
 
 #include "common.h"
 
-#define SECS_PER_MINUTE     60
-#define SECS_PER_HOUR       (60 * SECS_PER_MINUTE)
-#define SECS_PER_DAY        (24 * SECS_PER_HOUR)
-#define SECS_PER_WEEK       (7 * SECS_PER_DAY)
-#define SECS_PER_YEAR       (365 * SECS_PER_DAY)
+#define SECS_PER_MINUTE 60
+#define SECS_PER_HOUR (60 * SECS_PER_MINUTE)
+#define SECS_PER_DAY (24 * SECS_PER_HOUR)
+#define SECS_PER_WEEK (7 * SECS_PER_DAY)
+#define SECS_PER_YEAR (365 * SECS_PER_DAY)
 /* The seconds elapsed from 01-01-1970 to 01-01-2000 */
-#define SECS_TILL_YEAR_2K   (946684800)
-#define IS_LEAP_YEAR(x)     \
+#define SECS_TILL_YEAR_2K (946684800)
+#define IS_LEAP_YEAR(x) \
 	(((x) % 4 == 0) && (((x) % 100 != 0) || ((x) % 400 == 0)))
 
 struct calendar_date {
