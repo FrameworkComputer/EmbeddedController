@@ -42,8 +42,8 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #define INT_RECHECK_US 5000
 
@@ -83,7 +83,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
-
 }
 
 /* C1 interrupt line shared by BC 1.2, TCPC, and charger */
@@ -118,7 +117,6 @@ static void sub_usb_c1_interrupt(enum gpio_signal s)
 
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-
 }
 
 static void sub_hdmi_hpd_interrupt(enum gpio_signal s)
@@ -173,16 +171,17 @@ void board_init(void)
 
 	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
 		/* Disable i2c on HDMI pins */
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, 0);
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
+		gpio_config_pin(MODULE_I2C, GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
+				0);
+		gpio_config_pin(MODULE_I2C, GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
+				0);
 
 		/* Set HDMI and sub-rail enables to output */
 		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
 			       chipset_in_state(CHIPSET_STATE_ON) ?
-						GPIO_ODR_LOW : GPIO_ODR_HIGH);
-		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
+				       GPIO_ODR_LOW :
+				       GPIO_ODR_HIGH);
+		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL, GPIO_ODR_HIGH);
 
 		/* Select HDMI option */
 		gpio_set_level(GPIO_HDMI_SEL_L, 0);
@@ -191,8 +190,7 @@ void board_init(void)
 		gpio_enable_interrupt(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL);
 	} else {
 		/* Set SDA as an input */
-		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
-			       GPIO_INPUT);
+		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, GPIO_INPUT);
 
 		/* Enable C1 interrupt and check if it needs processing */
 		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
@@ -256,7 +254,7 @@ static void reconfigure_5v_gpio(void)
 		gpio_set_flags(GPIO_VOLUP_BTN_ODL, GPIO_OUT_LOW);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C + 1);
 #endif /* BOARD_WADDLEDOO */
 
 static void set_5v_gpio(int level)
@@ -297,10 +295,9 @@ __override void board_power_5v_enable(int enable)
 		gpio_set_level(GPIO_SUB_C1_INT_EN_RAILS_ODL, !enable);
 	} else {
 		if (isl923x_set_comparator_inversion(1, !!enable))
-			CPRINTS("Failed to %sable sub rails!", enable ?
-								"en" : "dis");
+			CPRINTS("Failed to %sable sub rails!",
+				enable ? "en" : "dis");
 	}
-
 }
 
 __override uint8_t board_get_usb_pd_port_count(void)
@@ -325,13 +322,11 @@ int board_is_sourcing_vbus(int port)
 
 	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
 	return !!(regval & TCPC_REG_POWER_STATUS_SOURCING_VBUS);
-
 }
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < board_get_usb_pd_port_count());
+	int is_real_port = (port >= 0 && port < board_get_usb_pd_port_count());
 	int i;
 	int old_port;
 
@@ -395,8 +390,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
@@ -421,17 +416,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrices to rotate accelerometers into the standard reference. */
-static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					     { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					      { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
 static struct accelgyro_saved_data_t g_bma253_data;
 static struct bmi_drv_data_t g_bmi160_data;
@@ -507,9 +498,8 @@ struct motion_sensor_t motion_sensors[] = {
 
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
-__override void ocpc_get_pid_constants(int *kp, int *kp_div,
-				       int *ki, int *ki_div,
-				       int *kd, int *kd_div)
+__override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+				       int *ki_div, int *kd, int *kd_div)
 {
 	*kp = 1;
 	*kp_div = 20;
@@ -640,7 +630,7 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	if (board_get_usb_pd_port_count() > 1 &&
-				!gpio_get_level(GPIO_SUB_C1_INT_EN_RAILS_ODL)) {
+	    !gpio_get_level(GPIO_SUB_C1_INT_EN_RAILS_ODL)) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
 			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
