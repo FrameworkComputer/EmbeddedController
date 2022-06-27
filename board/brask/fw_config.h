@@ -13,15 +13,9 @@
  *
  * Source of truth is the project/brask/brask/config.star configuration file.
  */
-enum ec_cfg_audio_type {
-	DB_AUDIO_UNKNOWN = 0,
-	DB_NAU88L25B_I2S = 1
-};
+enum ec_cfg_audio_type { DB_AUDIO_UNKNOWN = 0, DB_NAU88L25B_I2S = 1 };
 
-enum ec_cfg_bj_power {
-	BJ_135W = 0,
-	BJ_230W = 1
-};
+enum ec_cfg_bj_power { BJ_135W = 0, BJ_230W = 1 };
 
 union brask_cbi_fw_config {
 	struct {
