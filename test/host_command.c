@@ -202,15 +202,15 @@ static int test_hostcmd_reuse_response_buffer(void)
 	h->checksum = calculate_checksum(resp_buf, pkt.request_size);
 
 	ccprintf("\nBuffer contents before process 0x%ph\n",
-			HEX_BUF(resp_buf, BUFFER_SIZE));
+		 HEX_BUF(resp_buf, BUFFER_SIZE));
 	host_packet_receive(&pkt);
 	task_wait_event(-1);
 
 	ccprintf("\nBuffer contents after process 0x%ph\n",
-			HEX_BUF(resp_buf, BUFFER_SIZE));
+		 HEX_BUF(resp_buf, BUFFER_SIZE));
 
-	TEST_EQ(calculate_checksum(resp_buf,
-				sizeof(*resp) + resp->data_len), 0, "%d");
+	TEST_EQ(calculate_checksum(resp_buf, sizeof(*resp) + resp->data_len), 0,
+		"%d");
 	TEST_EQ(resp->result, EC_RES_SUCCESS, "%d");
 	TEST_EQ(r->out_data, 0x12243648, "0x%x");
 
@@ -246,11 +246,10 @@ static int test_hostcmd_clears_unused_data(void)
 
 	hostcmd_send();
 
-	ccprintf("\nBuffer contents 0x%ph\n",
-			HEX_BUF(resp_buf, BUFFER_SIZE));
+	ccprintf("\nBuffer contents 0x%ph\n", HEX_BUF(resp_buf, BUFFER_SIZE));
 
-	TEST_EQ(calculate_checksum(resp_buf,
-				sizeof(*resp) + resp->data_len), 0, "%d");
+	TEST_EQ(calculate_checksum(resp_buf, sizeof(*resp) + resp->data_len), 0,
+		"%d");
 	TEST_EQ(resp->result, EC_RES_SUCCESS, "%d");
 
 	/* Ensure partial strings have 0s after the NULL byte */
