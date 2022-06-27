@@ -50,28 +50,28 @@
 
 #define CONFIG_FLASH_WRITE_SIZE STM32_FLASH_WRITE_SIZE_3300
 
-#define CONFIG_SHAREDLIB_SIZE   0
+#define CONFIG_SHAREDLIB_SIZE 0
 
-#define CONFIG_RO_MEM_OFF       0
-#define CONFIG_RO_STORAGE_OFF   0
-#define CONFIG_RO_SIZE          (128 * 1024)
+#define CONFIG_RO_MEM_OFF 0
+#define CONFIG_RO_STORAGE_OFF 0
+#define CONFIG_RO_SIZE (128 * 1024)
 
 /* EC rollback protection block */
 #define CONFIG_ROLLBACK_OFF (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE)
 #define CONFIG_ROLLBACK_SIZE (128 * 1024 * 2) /* 2 blocks of 128KB each */
 
-#define CONFIG_RW_MEM_OFF	(CONFIG_ROLLBACK_OFF + CONFIG_ROLLBACK_SIZE)
-#define CONFIG_RW_STORAGE_OFF	0
-#define CONFIG_RW_SIZE		(CONFIG_FLASH_SIZE_BYTES -		\
-				(CONFIG_RW_MEM_OFF - CONFIG_RO_MEM_OFF))
+#define CONFIG_RW_MEM_OFF (CONFIG_ROLLBACK_OFF + CONFIG_ROLLBACK_SIZE)
+#define CONFIG_RW_STORAGE_OFF 0
+#define CONFIG_RW_SIZE \
+	(CONFIG_FLASH_SIZE_BYTES - (CONFIG_RW_MEM_OFF - CONFIG_RO_MEM_OFF))
 
-#define CONFIG_EC_PROTECTED_STORAGE_OFF         CONFIG_RO_MEM_OFF
-#define CONFIG_EC_PROTECTED_STORAGE_SIZE        CONFIG_RO_SIZE
-#define CONFIG_EC_WRITABLE_STORAGE_OFF          CONFIG_RW_MEM_OFF
-#define CONFIG_EC_WRITABLE_STORAGE_SIZE         CONFIG_RW_SIZE
+#define CONFIG_EC_PROTECTED_STORAGE_OFF CONFIG_RO_MEM_OFF
+#define CONFIG_EC_PROTECTED_STORAGE_SIZE CONFIG_RO_SIZE
+#define CONFIG_EC_WRITABLE_STORAGE_OFF CONFIG_RW_MEM_OFF
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE CONFIG_RW_SIZE
 
-#define CONFIG_WP_STORAGE_OFF           CONFIG_EC_PROTECTED_STORAGE_OFF
-#define CONFIG_WP_STORAGE_SIZE          CONFIG_EC_PROTECTED_STORAGE_SIZE
+#define CONFIG_WP_STORAGE_OFF CONFIG_EC_PROTECTED_STORAGE_OFF
+#define CONFIG_WP_STORAGE_SIZE CONFIG_EC_PROTECTED_STORAGE_SIZE
 
 /*
  * We want to prevent flash readout, and use it as indicator of protection
@@ -116,7 +116,7 @@
  */
 #undef CONFIG_ROLLBACK_SECRET_LOCAL_ENTROPY_SIZE
 #ifdef SECTION_IS_RW
-	#undef CONFIG_ROLLBACK_UPDATE
+#undef CONFIG_ROLLBACK_UPDATE
 #endif
 
 /*-------------------------------------------------------------------------*
@@ -124,9 +124,9 @@
  *-------------------------------------------------------------------------*/
 
 #ifdef SECTION_IS_RO
-	/* RO verifies the RW partition signature */
-	#define CONFIG_RSA
-	#define CONFIG_RWSIG
+/* RO verifies the RW partition signature */
+#define CONFIG_RSA
+#define CONFIG_RWSIG
 #endif /* SECTION_IS_RO */
 #define CONFIG_RSA_KEY_SIZE 3072
 #define CONFIG_RSA_EXPONENT_3
@@ -172,27 +172,27 @@
 #define CONFIG_WP_ACTIVE_HIGH
 
 #ifndef TEST_BUILD
-	/* TODO(hesling): Fix the illogical dependency between spi.c
-	 *                and host_command.c
-	 *
-	 * Currently, the chip/stm32/spi.c depends on functions defined in
-	 * common/host_command.c. When unit test builds use their own tasklist
-	 * without the HOSTCMD task, host_command.c is excluded from the build,
-	 * but chip/stm32/spi.c remains (because of CONFIG_SPI).
-	 * This triggers an undefined reference linker error.
-	 * The reproduce case:
-	 * - Allow CONFIG_SPI in TEST_BUILDs
-	 * - make BOARD=nucleo-h743zi tests
-	 */
-	#define CONFIG_SPI
+/* TODO(hesling): Fix the illogical dependency between spi.c
+ *                and host_command.c
+ *
+ * Currently, the chip/stm32/spi.c depends on functions defined in
+ * common/host_command.c. When unit test builds use their own tasklist
+ * without the HOSTCMD task, host_command.c is excluded from the build,
+ * but chip/stm32/spi.c remains (because of CONFIG_SPI).
+ * This triggers an undefined reference linker error.
+ * The reproduce case:
+ * - Allow CONFIG_SPI in TEST_BUILDs
+ * - make BOARD=nucleo-h743zi tests
+ */
+#define CONFIG_SPI
 #endif
 
 #ifndef __ASSEMBLER__
-	/* Timer selection */
-	#define TIM_CLOCK32 2
-	#define TIM_WATCHDOG 16
-	#include "gpio_signal.h"
-	void button_event(enum gpio_signal signal);
+/* Timer selection */
+#define TIM_CLOCK32 2
+#define TIM_WATCHDOG 16
+#include "gpio_signal.h"
+void button_event(enum gpio_signal signal);
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BASE_BOARD_H */
