@@ -21,11 +21,11 @@ static void event_vdec_written(struct consumer const *consumer, size_t count)
 	task_wake(TASK_ID_VDEC_SERVICE);
 }
 static struct consumer const event_vdec_consumer;
-static struct queue const event_vdec_queue = QUEUE_DIRECT(8,
-	struct vdec_msg, null_producer, event_vdec_consumer);
+static struct queue const event_vdec_queue =
+	QUEUE_DIRECT(8, struct vdec_msg, null_producer, event_vdec_consumer);
 static struct consumer const event_vdec_consumer = {
 	.queue = &event_vdec_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_vdec_written,
 	}),
 };
@@ -36,19 +36,23 @@ static void event_vdec_core_written(struct consumer const *consumer,
 	task_wake(TASK_ID_VDEC_CORE_SERVICE);
 }
 static struct consumer const event_vdec_core_consumer;
-static struct queue const event_vdec_core_queue = QUEUE_DIRECT(8,
-	struct vdec_msg, null_producer, event_vdec_core_consumer);
+static struct queue const event_vdec_core_queue = QUEUE_DIRECT(
+	8, struct vdec_msg, null_producer, event_vdec_core_consumer);
 static struct consumer const event_vdec_core_consumer = {
 	.queue = &event_vdec_core_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_vdec_core_written,
 	}),
 };
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT_SCP
-void vdec_msg_handler(void *data) {}
-void vdec_core_msg_handler(void *data) {}
+void vdec_msg_handler(void *data)
+{
+}
+void vdec_core_msg_handler(void *data)
+{
+}
 #endif
 
 static void vdec_h264_ipi_handler(int id, void *data, uint32_t len)
