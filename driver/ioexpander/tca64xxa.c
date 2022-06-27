@@ -19,32 +19,33 @@
  * must multiply them by 4. Flags value contains information which version
  * of chip is used.
  */
-#define TCA64XXA_PORT_ID(port, reg, flags) \
-	((((flags) & TCA64XXA_FLAG_VER_MASK) \
-	>> TCA64XXA_FLAG_VER_OFFSET) * (reg) + (port))
+#define TCA64XXA_PORT_ID(port, reg, flags)                                \
+	((((flags)&TCA64XXA_FLAG_VER_MASK) >> TCA64XXA_FLAG_VER_OFFSET) * \
+		 (reg) +                                                  \
+	 (port))
 
 static int tca64xxa_write_byte(int ioex, int port, int reg, uint8_t val)
 {
 	const struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
-	const int reg_addr = TCA64XXA_PORT_ID(port, reg,
-		(ioex_p->flags & IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6416A) ? 2:4);
+	const int reg_addr = TCA64XXA_PORT_ID(
+		port, reg,
+		(ioex_p->flags & IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6416A) ? 2 :
+									  4);
 
-	return i2c_write8(ioex_p->i2c_host_port,
-			  ioex_p->i2c_addr_flags,
-			  reg_addr,
-			  val);
+	return i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
+			  reg_addr, val);
 }
 
 static int tca64xxa_read_byte(int ioex, int port, int reg, int *val)
 {
 	const struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
-	const int reg_addr = TCA64XXA_PORT_ID(port, reg,
-		(ioex_p->flags & IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6416A) ? 2:4);
+	const int reg_addr = TCA64XXA_PORT_ID(
+		port, reg,
+		(ioex_p->flags & IOEX_FLAGS_TCA64XXA_FLAG_VER_TCA6416A) ? 2 :
+									  4);
 
-	return i2c_read8(ioex_p->i2c_host_port,
-			 ioex_p->i2c_addr_flags,
-			 reg_addr,
-			 val);
+	return i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
+			 reg_addr, val);
 }
 
 /* Restore default values in registers */
@@ -59,23 +60,17 @@ static int tca64xxa_reset(int ioex, int portsCount)
 	 * This loop sets default values (from specification) to all registers.
 	 */
 	for (port = 0; port < portsCount; port++) {
-		ret = tca64xxa_write_byte(ioex,
-					  port,
-					  TCA64XXA_REG_OUTPUT,
+		ret = tca64xxa_write_byte(ioex, port, TCA64XXA_REG_OUTPUT,
 					  TCA64XXA_DEFAULT_OUTPUT);
 		if (ret)
 			return ret;
 
-		ret = tca64xxa_write_byte(ioex,
-					  port,
-					  TCA64XXA_REG_POLARITY_INV,
+		ret = tca64xxa_write_byte(ioex, port, TCA64XXA_REG_POLARITY_INV,
 					  TCA64XXA_DEFAULT_POLARITY_INV);
 		if (ret)
 			return ret;
 
-		ret = tca64xxa_write_byte(ioex,
-					  port,
-					  TCA64XXA_REG_CONF,
+		ret = tca64xxa_write_byte(ioex, port, TCA64XXA_REG_CONF,
 					  TCA64XXA_DEFAULT_CONF);
 		if (ret)
 			return ret;
@@ -150,7 +145,7 @@ static int tca64xxa_get_flags_by_mask(int ioex, int port, int mask, int *flags)
 		*flags |= GPIO_OUTPUT;
 
 		ret = tca64xxa_read_byte(ioex, port, TCA64XXA_REG_OUTPUT, &v);
-		if(ret)
+		if (ret)
 			return ret;
 
 		if (v & mask)
@@ -188,7 +183,7 @@ static int tca64xxa_set_flags_by_mask(int ioex, int port, int mask, int flags)
 
 	/* Configuration */
 	ret = tca64xxa_read_byte(ioex, port, TCA64XXA_REG_CONF, &v);
-	if(ret)
+	if (ret)
 		return ret;
 
 	if (flags & GPIO_INPUT)
@@ -217,13 +212,13 @@ static int tca64xxa_get_port(int ioex, int port, int *val)
 
 /* Driver structure */
 const struct ioexpander_drv tca64xxa_ioexpander_drv = {
-	.init 			= tca64xxa_init,
-	.get_level 		= tca64xxa_get_level,
-	.set_level 		= tca64xxa_set_level,
-	.get_flags_by_mask 	= tca64xxa_get_flags_by_mask,
-	.set_flags_by_mask 	= tca64xxa_set_flags_by_mask,
-	.enable_interrupt 	= NULL,
+	.init = tca64xxa_init,
+	.get_level = tca64xxa_get_level,
+	.set_level = tca64xxa_set_level,
+	.get_flags_by_mask = tca64xxa_get_flags_by_mask,
+	.set_flags_by_mask = tca64xxa_set_flags_by_mask,
+	.enable_interrupt = NULL,
 #ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
-	.get_port		= tca64xxa_get_port,
+	.get_port = tca64xxa_get_port,
 #endif
 };
