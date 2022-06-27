@@ -25,7 +25,7 @@
 #define CONFIG_PWM_KBLIGHT
 
 /* Battery */
-#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_FUEL_GAUGE
 
@@ -62,26 +62,21 @@
 #define CONFIG_GMR_TABLET_MODE
 
 /* GPIO alias */
-#define GPIO_AC_PRESENT		GPIO_ACOK_OD
-#define GPIO_WP_L		GPIO_EC_WP_ODL
-#define GPIO_SWITCHCAP_PG	GPIO_SRC_VPH_PWR_PG
-#define GPIO_ACOK_OD		GPIO_CHG_ACOK_OD
-#define GPIO_EN_PP5000		GPIO_EN_PP5000_S5
-#define GPIO_POWER_GOOD		GPIO_MB_POWER_GOOD
-#define GPIO_EC_INT_L		GPIO_AP_EC_INT_L
-#define GPIO_DP_HOT_PLUG_DET	GPIO_DP_HOT_PLUG_DET_R
+#define GPIO_AC_PRESENT GPIO_ACOK_OD
+#define GPIO_WP_L GPIO_EC_WP_ODL
+#define GPIO_SWITCHCAP_PG GPIO_SRC_VPH_PWR_PG
+#define GPIO_ACOK_OD GPIO_CHG_ACOK_OD
+#define GPIO_EN_PP5000 GPIO_EN_PP5000_S5
+#define GPIO_POWER_GOOD GPIO_MB_POWER_GOOD
+#define GPIO_EC_INT_L GPIO_AP_EC_INT_L
+#define GPIO_DP_HOT_PLUG_DET GPIO_DP_HOT_PLUG_DET_R
 
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
 #include "registers.h"
 
-enum adc_channel {
-	ADC_VBUS,
-	ADC_AMON_BMON,
-	ADC_PSYS,
-	ADC_CH_COUNT
-};
+enum adc_channel { ADC_VBUS, ADC_AMON_BMON, ADC_PSYS, ADC_CH_COUNT };
 
 /* Motion sensors */
 enum sensor_id {
@@ -91,11 +86,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT = 0,
-	PWM_CH_DISPLIGHT,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT = 0, PWM_CH_DISPLIGHT, PWM_CH_COUNT };
 
 /* List of possible batteries */
 enum battery_type {
