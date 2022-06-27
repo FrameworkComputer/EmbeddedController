@@ -12,22 +12,20 @@
  * Helper macros to declare and access SFDP defined bitfields at a JEDEC SFDP
  * defined double word (32b) granularity.
  */
-#define SFDP_DEFINE_BITMASK_32(name, hi, lo)                              \
-	static const uint32_t name = (((1ULL << ((hi) - (lo) + 1)) - 1UL) \
-				      << (lo));
-#define SFDP_DEFINE_SHIFT_32(name, hi, lo) \
-	static const size_t name = (lo);
-#define SFDP_DEFINE_BITFIELD(name, hi, lo)            \
-	SFDP_DEFINE_BITMASK_32(name ## _MASK, hi, lo) \
-	SFDP_DEFINE_SHIFT_32(name ## _SHIFT, hi, lo)
-#define SFDP_GET_BITFIELD(name, dw) \
-	(((dw) & name ## _MASK) >> name ## _SHIFT)
+#define SFDP_DEFINE_BITMASK_32(name, hi, lo) \
+	static const uint32_t name =         \
+		(((1ULL << ((hi) - (lo) + 1)) - 1UL) << (lo));
+#define SFDP_DEFINE_SHIFT_32(name, hi, lo) static const size_t name = (lo);
+#define SFDP_DEFINE_BITFIELD(name, hi, lo)          \
+	SFDP_DEFINE_BITMASK_32(name##_MASK, hi, lo) \
+	SFDP_DEFINE_SHIFT_32(name##_SHIFT, hi, lo)
+#define SFDP_GET_BITFIELD(name, dw) (((dw)&name##_MASK) >> name##_SHIFT)
 
 /**
  * Helper macros to construct SFDP defined double words (32b). Note reserved or
  * unused fields must always be set to all 1's.
  */
-#define SFDP_BITFIELD(name, value) (((value) << name ## _SHIFT) & name ## _MASK)
+#define SFDP_BITFIELD(name, value) (((value) << name##_SHIFT) & name##_MASK)
 #define SFDP_UNUSED(hi, lo) (((1ULL << ((hi) - (lo) + 1)) - 1UL) << (lo))
 
 /******************************************************************************/
@@ -85,10 +83,9 @@ SFDP_DEFINE_BITFIELD(SFDP_HEADER_DW1_S, 7, 0);
 SFDP_DEFINE_BITFIELD(SFDP_HEADER_DW2_NPH, 23, 16);
 SFDP_DEFINE_BITFIELD(SFDP_HEADER_DW2_SFDP_MAJOR, 15, 8);
 SFDP_DEFINE_BITFIELD(SFDP_HEADER_DW2_SFDP_MINOR, 7, 0);
-#define SFDP_HEADER_DWORD_2(nph, major, minor)              \
-	(SFDP_UNUSED(31, 24) |                              \
-	 SFDP_BITFIELD(SFDP_HEADER_DW2_NPH, nph) |          \
-	 SFDP_BITFIELD(SFDP_HEADER_DW2_SFDP_MAJOR, major) | \
+#define SFDP_HEADER_DWORD_2(nph, major, minor)                           \
+	(SFDP_UNUSED(31, 24) | SFDP_BITFIELD(SFDP_HEADER_DW2_NPH, nph) | \
+	 SFDP_BITFIELD(SFDP_HEADER_DW2_SFDP_MAJOR, major) |              \
 	 SFDP_BITFIELD(SFDP_HEADER_DW2_SFDP_MINOR, minor))
 
 /******************************************************************************/
@@ -98,7 +95,7 @@ SFDP_DEFINE_BITFIELD(SFDP_HEADER_DW2_SFDP_MINOR, 7, 0);
 /* In SFDP v1.0, the only reserved ID was the Basic Flash Parameter Table ID of
  * 0x00. Otherwise this field must be set to the vendor's manufacturer ID. Note,
  * the spec does not call out how to report the manufacturer bank number. */
- #define BASIC_FLASH_PARAMETER_TABLE_1_0_ID 0x00
+#define BASIC_FLASH_PARAMETER_TABLE_1_0_ID 0x00
 
 /*
  * SFDP v1.0: Parameter Header 1st DWORD
@@ -178,8 +175,8 @@ SFDP_DEFINE_BITFIELD(SFDP_1_5_PARAMETER_HEADER_DW1_ID_LSB, 7, 0);
  */
 SFDP_DEFINE_BITFIELD(SFDP_1_5_PARAMETER_HEADER_DW2_ID_MSB, 31, 24);
 SFDP_DEFINE_BITFIELD(SFDP_1_5_PARAMETER_HEADER_DW2_PTP, 23, 0);
-#define SFDP_1_5_PARAMETER_HEADER_DWORD_2(idmsb, ptp)                     \
-	(SFDP_BITFIELD(SFDP_1_5_PARAMETER_HEADER_DW2_ID_MSB, idmsb) |     \
+#define SFDP_1_5_PARAMETER_HEADER_DWORD_2(idmsb, ptp)                 \
+	(SFDP_BITFIELD(SFDP_1_5_PARAMETER_HEADER_DW2_ID_MSB, idmsb) | \
 	 SFDP_BITFIELD(SFDP_1_5_PARAMETER_HEADER_DW2_PTP, ptp))
 
 /******************************************************************************/
@@ -226,20 +223,20 @@ SFDP_DEFINE_BITFIELD(BFPT_1_0_DW1_WREN_OPCODE_SELECT, 4, 4);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW1_WREN_REQ, 3, 3);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW1_WRITE_GRANULARITY, 2, 2);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW1_4KIB_AVAILABILITY, 1, 0);
-#define BFPT_1_0_DWORD_1(fr114, fr144, fr122, dtr, addr, fr112,              \
-				    rm4kb, wrenop, wrenrq, wrgr,  ergr)      \
-	(SFDP_UNUSED(31, 23) |                                               \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_1_1_4_SUPPORTED, fr114) |                \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_1_4_4_SUPPORTED, fr144) |                \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_1_2_2_SUPPORTED, fr122) |                \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_DTR_SUPPORTED, dtr) |                    \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_ADDR_BYTES, addr) |                      \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_1_1_2_SUPPORTED, fr112) |                \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_4KIB_ERASE_OPCODE, rm4kb) |              \
-	 SFDP_UNUSED(7, 5) |                                                 \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_WREN_OPCODE_SELECT, wrenop) |            \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_WREN_REQ, wrenrq) |                      \
-	 SFDP_BITFIELD(BFPT_1_0_DW1_WRITE_GRANULARITY, wrgr) |               \
+#define BFPT_1_0_DWORD_1(fr114, fr144, fr122, dtr, addr, fr112, rm4kb, wrenop, \
+			 wrenrq, wrgr, ergr)                                   \
+	(SFDP_UNUSED(31, 23) |                                                 \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_1_1_4_SUPPORTED, fr114) |                  \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_1_4_4_SUPPORTED, fr144) |                  \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_1_2_2_SUPPORTED, fr122) |                  \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_DTR_SUPPORTED, dtr) |                      \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_ADDR_BYTES, addr) |                        \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_1_1_2_SUPPORTED, fr112) |                  \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_4KIB_ERASE_OPCODE, rm4kb) |                \
+	 SFDP_UNUSED(7, 5) |                                                   \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_WREN_OPCODE_SELECT, wrenop) |              \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_WREN_REQ, wrenrq) |                        \
+	 SFDP_BITFIELD(BFPT_1_0_DW1_WRITE_GRANULARITY, wrgr) |                 \
 	 SFDP_BITFIELD(BFPT_1_0_DW1_4KIB_AVAILABILITY, ergr))
 
 /* Basic Flash Parameter Table v1.0 2nd DWORD
@@ -270,13 +267,12 @@ SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_1_4_WAIT_STATE_CLOCKS, 20, 16);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_4_4_OPCODE, 15, 8);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_4_4_MODE_BITS, 7, 5);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW3_1_4_4_WAIT_STATE_CLOCKS, 4, 0);
-#define BFPT_1_0_DWORD_3(fr114op, fr114mb, fr114dc,                \
-				    fr144op, fr144mb, fr144dc)     \
-	(SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_OPCODE, fr114op) |       \
-	 SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_MODE_BITS, fr114mb) |    \
-	 SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_WAIT_STATE_CLOCKS, fr114dc) | \
-	 SFDP_BITFIELD(BFPT_1_0_DW3_1_4_4_OPCODE, fr144op) |       \
-	 SFDP_BITFIELD(BFPT_1_0_DW3_1_4_4_MODE_BITS, fr144mb) |    \
+#define BFPT_1_0_DWORD_3(fr114op, fr114mb, fr114dc, fr144op, fr144mb, fr144dc) \
+	(SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_OPCODE, fr114op) |                   \
+	 SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_MODE_BITS, fr114mb) |                \
+	 SFDP_BITFIELD(BFPT_1_0_DW3_1_1_4_WAIT_STATE_CLOCKS, fr114dc) |        \
+	 SFDP_BITFIELD(BFPT_1_0_DW3_1_4_4_OPCODE, fr144op) |                   \
+	 SFDP_BITFIELD(BFPT_1_0_DW3_1_4_4_MODE_BITS, fr144mb) |                \
 	 SFDP_BITFIELD(BFPT_1_0_DW3_1_4_4_WAIT_STATE_CLOCKS, fr144dc))
 
 /* Basic Flash Parameter Table v1.0 4th DWORD
@@ -294,13 +290,12 @@ SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_2_2_WAIT_STATE_CLOCKS, 20, 16);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_1_2_OPCODE, 15, 8);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_1_2_MODE_BITS, 7, 5);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW4_1_1_2_WAIT_STATE_CLOCKS, 4, 0);
-#define BFPT_1_0_DWORD_4(fr122op, fr122mb, fr122dc,                \
-				    fr112op, fr112mb, fr112dc)     \
-	(SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_OPCODE, fr122op) |       \
-	 SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_MODE_BITS, fr122mb) |    \
-	 SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_WAIT_STATE_CLOCKS, fr122dc) | \
-	 SFDP_BITFIELD(BFPT_1_0_DW4_1_1_2_OPCODE, fr112op) |       \
-	 SFDP_BITFIELD(BFPT_1_0_DW4_1_1_2_MODE_BITS, fr112mb) |    \
+#define BFPT_1_0_DWORD_4(fr122op, fr122mb, fr122dc, fr112op, fr112mb, fr112dc) \
+	(SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_OPCODE, fr122op) |                   \
+	 SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_MODE_BITS, fr122mb) |                \
+	 SFDP_BITFIELD(BFPT_1_0_DW4_1_2_2_WAIT_STATE_CLOCKS, fr122dc) |        \
+	 SFDP_BITFIELD(BFPT_1_0_DW4_1_1_2_OPCODE, fr112op) |                   \
+	 SFDP_BITFIELD(BFPT_1_0_DW4_1_1_2_MODE_BITS, fr112mb) |                \
 	 SFDP_BITFIELD(BFPT_1_0_DW4_1_1_2_WAIT_STATE_CLOCKS, fr112dc))
 
 /* Basic Flash Parameter Table v1.0 5th DWORD
@@ -328,9 +323,9 @@ SFDP_DEFINE_BITFIELD(BFPT_1_0_DW5_2_2_2_SUPPORTED, 0, 0);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW6_2_2_2_OPCODE, 31, 24);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW6_2_2_2_MODE_BITS, 23, 21);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW6_2_2_2_WAIT_STATE_CLOCKS, 20, 16);
-#define BFPT_1_0_DWORD_6(fr222op, fr222mb, fr222dc)                \
-	(SFDP_BITFIELD(BFPT_1_0_DW6_2_2_2_OPCODE, fr222op) |       \
-	 SFDP_BITFIELD(BFPT_1_0_DW6_2_2_2_MODE_BITS, fr222mb) |    \
+#define BFPT_1_0_DWORD_6(fr222op, fr222mb, fr222dc)                     \
+	(SFDP_BITFIELD(BFPT_1_0_DW6_2_2_2_OPCODE, fr222op) |            \
+	 SFDP_BITFIELD(BFPT_1_0_DW6_2_2_2_MODE_BITS, fr222mb) |         \
 	 SFDP_BITFIELD(BFPT_1_0_DW6_2_2_2_WAIT_STATE_CLOCKS, fr222dc) | \
 	 SFDP_UNUSED(15, 0))
 
@@ -344,9 +339,9 @@ SFDP_DEFINE_BITFIELD(BFPT_1_0_DW6_2_2_2_WAIT_STATE_CLOCKS, 20, 16);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW7_4_4_4_OPCODE, 31, 24);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW7_4_4_4_MODE_BITS, 23, 21);
 SFDP_DEFINE_BITFIELD(BFPT_1_0_DW7_4_4_4_WAIT_STATE_CLOCKS, 20, 16);
-#define BFPT_1_0_DWORD_7(fr444op, fr444mb, fr444dc)                \
-	(SFDP_BITFIELD(BFPT_1_0_DW7_4_4_4_OPCODE, fr444op) |       \
-	 SFDP_BITFIELD(BFPT_1_0_DW7_4_4_4_MODE_BITS, fr444mb) |    \
+#define BFPT_1_0_DWORD_7(fr444op, fr444mb, fr444dc)                     \
+	(SFDP_BITFIELD(BFPT_1_0_DW7_4_4_4_OPCODE, fr444op) |            \
+	 SFDP_BITFIELD(BFPT_1_0_DW7_4_4_4_MODE_BITS, fr444mb) |         \
 	 SFDP_BITFIELD(BFPT_1_0_DW7_4_4_4_WAIT_STATE_CLOCKS, fr444dc) | \
 	 SFDP_UNUSED(15, 0))
 
@@ -419,17 +414,16 @@ SFDP_DEFINE_BITFIELD(BFPT_1_5_DW10_ERASE_2_TIME_CNT, 15, 11);
 SFDP_DEFINE_BITFIELD(BFPT_1_5_DW10_ERASE_1_TIME_UNIT, 10, 9);
 SFDP_DEFINE_BITFIELD(BFPT_1_5_DW10_ERASE_1_TIME_CNT, 8, 4);
 SFDP_DEFINE_BITFIELD(BFPT_1_5_DW10_ERASE_TIME_MAX_MULT, 3, 0);
-#define BFPT_1_5_DWORD_10(rm4unit, rm4count, rm3unit,               \
-			  rm3count, rm2unit, rm2count,              \
-			  rm1unit, rm1count, maxmult)               \
-	(SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_4_TIME_UNIT, rm4unit) |  \
-	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_4_TIME_CNT, rm4count) |  \
-	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_3_TIME_UNIT, rm3unit) |  \
-	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_3_TIME_CNT, rm3count) |  \
-	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_2_TIME_UNIT, rm2unit) |  \
-	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_2_TIME_CNT, rm2count) |  \
-	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_1_TIME_UNIT, rm1unit) |  \
-	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_1_TIME_CNT, rm1count) |  \
+#define BFPT_1_5_DWORD_10(rm4unit, rm4count, rm3unit, rm3count, rm2unit, \
+			  rm2count, rm1unit, rm1count, maxmult)          \
+	(SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_4_TIME_UNIT, rm4unit) |       \
+	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_4_TIME_CNT, rm4count) |       \
+	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_3_TIME_UNIT, rm3unit) |       \
+	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_3_TIME_CNT, rm3count) |       \
+	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_2_TIME_UNIT, rm2unit) |       \
+	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_2_TIME_CNT, rm2count) |       \
+	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_1_TIME_UNIT, rm1unit) |       \
+	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_1_TIME_CNT, rm1count) |       \
 	 SFDP_BITFIELD(BFPT_1_5_DW10_ERASE_TIME_MAX_MULT, maxmult))
 
 /* Basic Flash Parameter Table v1.5 11th DWORD
@@ -464,18 +458,12 @@ SFDP_DEFINE_BITFIELD(BFPT_1_5_DW11_WR_TIME_MAX_MULT, 3, 0);
 #define BFPT_1_5_DWORD_11(crmunit, crmcount, mrbunit, mrbcount, initunit,  \
 			  initcount, pgwrunit, pgwrcount, pagesz, maxmult) \
 	(SFDP_UNUSED(31, 31) |                                             \
-	 SFDP_BITFIELD(BFPT_1_5_DW11_CHIP_ERASE_TIME_UNIT,                 \
-		       crmunit) |                                          \
-	 SFDP_BITFIELD(BFPT_1_5_DW11_CHIP_ERASE_TIME_CNT,                  \
-		       crmcount) |                                         \
-	 SFDP_BITFIELD(BFPT_1_5_DW11_MORE_BYTE_WR_TIME_UNIT,               \
-		       mrbunit) |                                          \
-	 SFDP_BITFIELD(BFPT_1_5_DW11_MORE_BYTE_WR_TIME_CNT,                \
-		       mrbcount) |                                         \
-	 SFDP_BITFIELD(BFPT_1_5_DW11_INIT_BYTE_WR_TIME_UNIT,               \
-		       initunit) |                                         \
-	 SFDP_BITFIELD(BFPT_1_5_DW11_INIT_BYTE_WR_TIME_CNT,                \
-		       initcount) |                                        \
+	 SFDP_BITFIELD(BFPT_1_5_DW11_CHIP_ERASE_TIME_UNIT, crmunit) |      \
+	 SFDP_BITFIELD(BFPT_1_5_DW11_CHIP_ERASE_TIME_CNT, crmcount) |      \
+	 SFDP_BITFIELD(BFPT_1_5_DW11_MORE_BYTE_WR_TIME_UNIT, mrbunit) |    \
+	 SFDP_BITFIELD(BFPT_1_5_DW11_MORE_BYTE_WR_TIME_CNT, mrbcount) |    \
+	 SFDP_BITFIELD(BFPT_1_5_DW11_INIT_BYTE_WR_TIME_UNIT, initunit) |   \
+	 SFDP_BITFIELD(BFPT_1_5_DW11_INIT_BYTE_WR_TIME_CNT, initcount) |   \
 	 SFDP_BITFIELD(BFPT_1_5_DW11_PAGE_WR_TIME_UNIT, pgwrunit) |        \
 	 SFDP_BITFIELD(BFPT_1_5_DW11_PAGE_WR_TIME_CNT, pgwrcount) |        \
 	 SFDP_BITFIELD(BFPT_1_5_DW11_PAGE_SIZE, pagesz) |                  \
@@ -532,26 +520,21 @@ SFDP_DEFINE_BITFIELD(BFPT_1_5_DW12_SUSP_WR_MAX_LAT_CNT, 17, 13);
 SFDP_DEFINE_BITFIELD(BFPT_1_5_DW12_WR_RES_TO_SUSP_LAT_CNT, 12, 9);
 SFDP_DEFINE_BITFIELD(BFPT_1_5_DW12_PROHIB_OPS_DURING_RM_SUSP, 7, 4);
 SFDP_DEFINE_BITFIELD(BFPT_1_5_DW12_PROHIB_OPS_DURING_WR_SUSP, 3, 0);
-#define BFPT_1_5_DWORD_12(unsup, susprmlatun, susprmlatcnt, rmressusplatcnt, \
-			  suspwrmaxlatunit, suspwrmaxlatcnt, wrressuspcnt,   \
-			  prohibopsrmsusp, prohibopswrsusp)                  \
-	(SFDP_BITFIELD(BFPT_1_5_DW12_SUSPEND_UNSUPPORTED, unsup) |           \
-	 SFDP_BITFIELD(BFPT_1_5_DW12_SUSP_RM_MAX_LAT_UNIT,                   \
-		       susprmlatun) |                                        \
-	 SFDP_BITFIELD(BFPT_1_5_DW12_SUSP_RM_MAX_LAT_CNT,                    \
-		       susprmlatcnt) |                                       \
-	 SFDP_BITFIELD(BFPT_1_5_DW12_RM_RES_TO_SUSP_LAT_CNT,                 \
-		       rmressusplatcnt) |                                    \
-	 SFDP_BITFIELD(BFPT_1_5_DW12_SUSP_WR_MAX_LAT_UNIT,                   \
-		       suspwrmaxlatunit) |                                   \
-	 SFDP_BITFIELD(BFPT_1_5_DW12_SUSP_WR_MAX_LAT_CNT,                    \
-		       suspwrmaxlatcnt) |                                    \
-	 SFDP_BITFIELD(BFPT_1_5_DW12_WR_RES_TO_SUSP_LAT_CNT,                 \
-		       wrressuspcnt) |                                       \
-	 SFDP_UNUSED(8, 8) |                                                 \
-	 SFDP_BITFIELD(BFPT_1_5_DW12_PROHIB_OPS_DURING_RM_SUSP,              \
-		       prohibopsrmsusp) |                                    \
-	 SFDP_BITFIELD(BFPT_1_5_DW12_PROHIB_OPS_DURING_WR_SUSP,              \
+#define BFPT_1_5_DWORD_12(unsup, susprmlatun, susprmlatcnt, rmressusplatcnt,   \
+			  suspwrmaxlatunit, suspwrmaxlatcnt, wrressuspcnt,     \
+			  prohibopsrmsusp, prohibopswrsusp)                    \
+	(SFDP_BITFIELD(BFPT_1_5_DW12_SUSPEND_UNSUPPORTED, unsup) |             \
+	 SFDP_BITFIELD(BFPT_1_5_DW12_SUSP_RM_MAX_LAT_UNIT, susprmlatun) |      \
+	 SFDP_BITFIELD(BFPT_1_5_DW12_SUSP_RM_MAX_LAT_CNT, susprmlatcnt) |      \
+	 SFDP_BITFIELD(BFPT_1_5_DW12_RM_RES_TO_SUSP_LAT_CNT,                   \
+		       rmressusplatcnt) |                                      \
+	 SFDP_BITFIELD(BFPT_1_5_DW12_SUSP_WR_MAX_LAT_UNIT, suspwrmaxlatunit) | \
+	 SFDP_BITFIELD(BFPT_1_5_DW12_SUSP_WR_MAX_LAT_CNT, suspwrmaxlatcnt) |   \
+	 SFDP_BITFIELD(BFPT_1_5_DW12_WR_RES_TO_SUSP_LAT_CNT, wrressuspcnt) |   \
+	 SFDP_UNUSED(8, 8) |                                                   \
+	 SFDP_BITFIELD(BFPT_1_5_DW12_PROHIB_OPS_DURING_RM_SUSP,                \
+		       prohibopsrmsusp) |                                      \
+	 SFDP_BITFIELD(BFPT_1_5_DW12_PROHIB_OPS_DURING_WR_SUSP,                \
 		       prohibopswrsusp))
 
 /* Basic Flash Parameter Table v1.5 13th DWORD
@@ -600,12 +583,10 @@ SFDP_DEFINE_BITFIELD(BFPT_1_5_DW14_POWER_UP_TIME_CNT, 12, 8);
 SFDP_DEFINE_BITFIELD(BFPT_1_5_DW14_BUSY_FLAGS, 7, 2);
 #define BFPT_1_5_DWORD_14(pwrdwnunsup, pwrdwnop, pwrupop, pwrupunit, pwrupcnt, \
 			  busypollflags)                                       \
-	(SFDP_BITFIELD(BFPT_1_5_DW14_POWER_DOWN_UNSUPPORTED,                   \
-			pwrdwnunsup) |                                         \
+	(SFDP_BITFIELD(BFPT_1_5_DW14_POWER_DOWN_UNSUPPORTED, pwrdwnunsup) |    \
 	 SFDP_BITFIELD(BFPT_1_5_DW14_POWER_DOWN_OPCODE, pwrdwnop) |            \
 	 SFDP_BITFIELD(BFPT_1_5_DW14_POWER_UP_OPCODE, pwrupop) |               \
-	 SFDP_BITFIELD(BFPT_1_5_DW14_POWER_UP_TIME_UNIT,                       \
-		       pwrupunit) |                                            \
+	 SFDP_BITFIELD(BFPT_1_5_DW14_POWER_UP_TIME_UNIT, pwrupunit) |          \
 	 SFDP_BITFIELD(BFPT_1_5_DW14_POWER_UP_TIME_CNT, pwrupcnt) |            \
 	 SFDP_BITFIELD(BFPT_1_5_DW14_BUSY_FLAGS, busypollflags) |              \
 	 SFDP_UNUSED(1, 0))
@@ -701,7 +682,6 @@ SFDP_DEFINE_BITFIELD(BFPT_1_5_DW15_4_4_4_EXIT, 3, 0);
 	 SFDP_BITFIELD(BFPT_1_5_DW15_0_4_4_SUPPORTED, fr044sup) |            \
 	 SFDP_BITFIELD(BFPT_1_5_DW15_4_4_4_ENTRY, fr444entry) |              \
 	 SFDP_BITFIELD(BFPT_1_5_DW15_4_4_4_EXIT, fr444exit))
-
 
 /* Basic Flash Parameter Table v1.5 16th DWORD
  * -------------------------------------------
@@ -804,4 +784,4 @@ SFDP_DEFINE_BITFIELD(BFPT_1_5_DW16_STATUS_REG_1, 6, 0);
 	 SFDP_UNUSED(7, 7) |                                  \
 	 SFDP_BITFIELD(BFPT_1_5_DW16_STATUS_REG_1, statusreg1))
 
-#endif  /* __CROS_EC_SFDP_H */
+#endif /* __CROS_EC_SFDP_H */
