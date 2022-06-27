@@ -43,19 +43,19 @@
  * light, value obtainded with 128 cycles will be two times smaller than value
  * obtained with 256 cycles.
  */
-#define TCS_EMUL_MAX_CYCLES	256
+#define TCS_EMUL_MAX_CYCLES 256
 /**
  * Maximum gain supported by TCS3400. Value read from sensor is multiplied by
  * gain selected in CONTROL register.
  */
-#define TCS_EMUL_MAX_GAIN	64
+#define TCS_EMUL_MAX_GAIN 64
 
 /**
  * Emulator units are value returned with gain x64 and 256 integration cycles.
  * Max value is 1024 returned when gain is x1 and 1 integration cycle. Max value
  * represented in emulator units is 1024 * 64 * 256
  */
-#define TCS_EMUL_MAX_VALUE	(1024 * TCS_EMUL_MAX_GAIN * TCS_EMUL_MAX_CYCLES)
+#define TCS_EMUL_MAX_VALUE (1024 * TCS_EMUL_MAX_GAIN * TCS_EMUL_MAX_CYCLES)
 
 /** Axis argument used in @ref tcs_emul_set_val @ref tcs_emul_get_val */
 enum tcs_emul_axis {
@@ -70,9 +70,9 @@ enum tcs_emul_axis {
  * Emulator saves only those registers in memory. IR select is stored sparately
  * and other registers are write only.
  */
-#define TCS_EMUL_FIRST_REG	TCS_I2C_ENABLE
-#define TCS_EMUL_LAST_REG	TCS_I2C_BDATAH
-#define TCS_EMUL_REG_COUNT	(TCS_EMUL_LAST_REG - TCS_EMUL_FIRST_REG + 1)
+#define TCS_EMUL_FIRST_REG TCS_I2C_ENABLE
+#define TCS_EMUL_LAST_REG TCS_I2C_BDATAH
+#define TCS_EMUL_REG_COUNT (TCS_EMUL_LAST_REG - TCS_EMUL_FIRST_REG + 1)
 
 /**
  * @brief Get pointer to TCS3400 emulator using device tree order number.
