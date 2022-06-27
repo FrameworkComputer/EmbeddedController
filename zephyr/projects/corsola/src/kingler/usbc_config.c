@@ -34,16 +34,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
-struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USBC_PORT_C0] = { .i2c_port = I2C_PORT_USB_C0,
-			   .i2c_addr_flags = NX20P3483_ADDR2_FLAGS,
-			   .drv = &nx20p348x_drv },
-	[USBC_PORT_C1] = { .i2c_port = I2C_PORT_USB_C1,
-			   .i2c_addr_flags = NX20P3483_ADDR2_FLAGS,
-			   .drv = &nx20p348x_drv }
-};
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
-
 /* USB Mux */
 
 /* USB Mux C1 : board_init of PS8743 */
