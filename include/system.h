@@ -328,17 +328,17 @@ const char *system_get_build_info(void);
  * Hard reset.  Cuts power to the entire system.  If not present, does a soft
  * reset which just resets the core and on-chip peripherals.
  */
-#define SYSTEM_RESET_HARD               BIT(0)
+#define SYSTEM_RESET_HARD BIT(0)
 /*
  * Preserve existing reset flags.  Used by flash pre-init when it discovers it
  * needs to do a hard reset to clear write protect registers.
  */
-#define SYSTEM_RESET_PRESERVE_FLAGS     BIT(1)
+#define SYSTEM_RESET_PRESERVE_FLAGS BIT(1)
 /*
  * Leave AP off on next reboot, instead of powering it on to do EC software
  * sync.
  */
-#define SYSTEM_RESET_LEAVE_AP_OFF       BIT(2)
+#define SYSTEM_RESET_LEAVE_AP_OFF BIT(2)
 /*
  * Indicate that this was a manually triggered reset.
  */
@@ -346,20 +346,20 @@ const char *system_get_build_info(void);
 /*
  * Wait for reset pin to be driven, rather that resetting ourselves.
  */
-#define SYSTEM_RESET_WAIT_EXT           BIT(4)
+#define SYSTEM_RESET_WAIT_EXT BIT(4)
 /*
  * Indicate that this reset was triggered by an AP watchdog
  */
-#define SYSTEM_RESET_AP_WATCHDOG        BIT(5)
+#define SYSTEM_RESET_AP_WATCHDOG BIT(5)
 /*
  * Stay in RO next reboot, instead of potentially selecting RW during EFS.
  */
-#define SYSTEM_RESET_STAY_IN_RO         BIT(6)
+#define SYSTEM_RESET_STAY_IN_RO BIT(6)
 /*
  * Hibernate reset. Reset EC when wake up from hibernate mode
  * (the most power saving mode).
  */
-#define SYSTEM_RESET_HIBERNATE          BIT(7)
+#define SYSTEM_RESET_HIBERNATE BIT(7)
 
 /**
  * Reset the system.
@@ -369,7 +369,8 @@ const char *system_get_build_info(void);
 #ifndef TEST_FUZZ
 noreturn
 #endif
-void system_reset(int flags);
+	void
+	system_reset(int flags);
 
 /**
  * Set a scratchpad register to the specified value.
@@ -439,7 +440,6 @@ __override_proto const char *board_read_serial(void);
  * chip. Default implementation reads from flash/otp (flash/otp_write_serial).
  */
 __override_proto int board_write_serial(const char *serial);
-
 
 /**
  * Optional board-level callback functions to read a unique MAC address per
@@ -525,7 +525,9 @@ timestamp_t system_get_rtc(void);
 #ifdef CONFIG_RTC
 void print_system_rtc(enum console_channel channel);
 #else
-static inline void print_system_rtc(enum console_channel channel) { }
+static inline void print_system_rtc(enum console_channel channel)
+{
+}
 #endif /* !defined(CONFIG_RTC) */
 
 /**
@@ -538,32 +540,31 @@ enum {
 	/*
 	 * Sleep masks to prevent going in to deep sleep.
 	 */
-	SLEEP_MASK_AP_RUN     = BIT(0), /* the main CPU is running */
-	SLEEP_MASK_UART       = BIT(1), /* UART communication ongoing */
+	SLEEP_MASK_AP_RUN = BIT(0), /* the main CPU is running */
+	SLEEP_MASK_UART = BIT(1), /* UART communication ongoing */
 	SLEEP_MASK_I2C_CONTROLLER = BIT(2), /* I2C controller comms ongoing */
-	SLEEP_MASK_CHARGING   = BIT(3), /* Charging loop ongoing */
-	SLEEP_MASK_USB_PWR    = BIT(4), /* USB power loop ongoing */
-	SLEEP_MASK_USB_PD     = BIT(5), /* USB PD device connected */
-	SLEEP_MASK_SPI        = BIT(6), /* SPI communications ongoing */
+	SLEEP_MASK_CHARGING = BIT(3), /* Charging loop ongoing */
+	SLEEP_MASK_USB_PWR = BIT(4), /* USB power loop ongoing */
+	SLEEP_MASK_USB_PD = BIT(5), /* USB PD device connected */
+	SLEEP_MASK_SPI = BIT(6), /* SPI communications ongoing */
 	SLEEP_MASK_I2C_PERIPHERAL = BIT(7), /* I2C peripheral comms ongoing */
-	SLEEP_MASK_FAN        = BIT(8), /* Fan control loop ongoing */
+	SLEEP_MASK_FAN = BIT(8), /* Fan control loop ongoing */
 	SLEEP_MASK_USB_DEVICE = BIT(9), /* Generic USB device in use */
-	SLEEP_MASK_PWM        = BIT(10), /* PWM output is enabled */
-	SLEEP_MASK_PHYSICAL_PRESENCE  = BIT(11), /* Physical presence
-						    * detection ongoing */
-	SLEEP_MASK_PLL        = BIT(12), /* High-speed PLL in-use */
-	SLEEP_MASK_ADC        = BIT(13), /* ADC conversion ongoing */
-	SLEEP_MASK_EMMC       = BIT(14), /* eMMC emulation ongoing */
-	SLEEP_MASK_FORCE_NO_DSLEEP    = BIT(15), /* Force disable. */
-
+	SLEEP_MASK_PWM = BIT(10), /* PWM output is enabled */
+	SLEEP_MASK_PHYSICAL_PRESENCE = BIT(11), /* Physical presence
+						 * detection ongoing */
+	SLEEP_MASK_PLL = BIT(12), /* High-speed PLL in-use */
+	SLEEP_MASK_ADC = BIT(13), /* ADC conversion ongoing */
+	SLEEP_MASK_EMMC = BIT(14), /* eMMC emulation ongoing */
+	SLEEP_MASK_FORCE_NO_DSLEEP = BIT(15), /* Force disable. */
 
 	/*
 	 * Sleep masks to prevent using slow speed clock in deep sleep.
 	 */
-	SLEEP_MASK_JTAG     = BIT(16), /* JTAG is in use. */
-	SLEEP_MASK_CONSOLE  = BIT(17), /* Console is in use. */
+	SLEEP_MASK_JTAG = BIT(16), /* JTAG is in use. */
+	SLEEP_MASK_CONSOLE = BIT(17), /* Console is in use. */
 
-	SLEEP_MASK_FORCE_NO_LOW_SPEED = BIT(31)  /* Force disable. */
+	SLEEP_MASK_FORCE_NO_LOW_SPEED = BIT(31) /* Force disable. */
 };
 
 /*
@@ -578,10 +579,9 @@ extern atomic_t sleep_mask;
  */
 
 #ifndef CONFIG_LOW_POWER_S0
-#define DEEP_SLEEP_ALLOWED           (!(sleep_mask & 0x0000ffff))
+#define DEEP_SLEEP_ALLOWED (!(sleep_mask & 0x0000ffff))
 #else
-#define DEEP_SLEEP_ALLOWED           (!(sleep_mask & 0x0000ffff & \
-				       (~SLEEP_MASK_AP_RUN)))
+#define DEEP_SLEEP_ALLOWED (!(sleep_mask & 0x0000ffff & (~SLEEP_MASK_AP_RUN)))
 #endif
 #define LOW_SPEED_DEEP_SLEEP_ALLOWED (!(sleep_mask & 0xffff0000))
 
@@ -761,4 +761,4 @@ uint32_t flash_get_rw_offset(enum ec_image copy);
  */
 void system_compensate_rtc(void);
 
-#endif  /* __CROS_EC_SYSTEM_H */
+#endif /* __CROS_EC_SYSTEM_H */
