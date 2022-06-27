@@ -52,10 +52,10 @@
 #include "util.h"
 #include "espi.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define USB_PD_PORT_ANX74XX	0
+#define USB_PD_PORT_ANX74XX 0
 
 /* Minimum input current limit. */
 #define ILIM_MIN_MA 472
@@ -80,9 +80,9 @@ static void vbus_discharge_handler(void)
 {
 	if (system_get_board_version() >= 2) {
 		pd_set_vbus_discharge(0,
-				gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+				      gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
 		pd_set_vbus_discharge(1,
-				gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
+				      gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
 	}
 }
 DECLARE_DEFERRED(vbus_discharge_handler);
@@ -154,16 +154,17 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Base detection */
-	[ADC_BASE_DET] = {"BASE_DET", NPCX_ADC_CH0,
-			  ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_BASE_DET] = { "BASE_DET", NPCX_ADC_CH0, ADC_MAX_VOLT,
+			   ADC_READ_MAX + 1, 0 },
 	/* Vbus sensing (10x voltage divider). */
-	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS] = { "VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT * 10,
+		       ADC_READ_MAX + 1, 0 },
 	/*
 	 * Adapter current output or battery charging/discharging current (uV)
 	 * 18x amplification on charger side.
 	 */
-	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT*1000/18,
-			   ADC_READ_MAX+1, 0},
+	[ADC_AMON_BMON] = { "AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT * 1000 / 18,
+			    ADC_READ_MAX + 1, 0 },
 #ifdef BOARD_LUX
 	/*
 	 * ISL9238 PSYS output is 1.44 uA/W over 12.4K resistor, to read
@@ -171,49 +172,39 @@ const struct adc_t adc_channels[] = {
 	 * ADC_READ_MAX+1 as multiplier/divider leads to overflows, so we
 	 * only divide by 2 (enough to avoid precision issues).
 	 */
-	[ADC_PSYS] = {"PSYS", NPCX_ADC_CH3,
-		      ADC_MAX_VOLT*56250*2/(ADC_READ_MAX+1), 2, 0},
+	[ADC_PSYS] = { "PSYS", NPCX_ADC_CH3,
+		       ADC_MAX_VOLT * 56250 * 2 / (ADC_READ_MAX + 1), 2, 0 },
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C port map */
-const struct i2c_port_t i2c_ports[]  = {
-	{
-		.name = "tcpc",
-		.port = NPCX_I2C_PORT0_0,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_0_SCL,
-		.sda  = GPIO_I2C0_0_SDA
-	},
-	{
-		.name = "als",
-		.port = NPCX_I2C_PORT0_1,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_1_SCL,
-		.sda  = GPIO_I2C0_1_SDA
-	},
-	{
-		.name = "charger",
-		.port = NPCX_I2C_PORT1,
-		.kbps = 100,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "pmic",
-		.port = NPCX_I2C_PORT2,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
-	{
-		.name = "accelgyro",
-		.port = NPCX_I2C_PORT3,
-		.kbps = 400,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA
-	},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "tcpc",
+	  .port = NPCX_I2C_PORT0_0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_0_SCL,
+	  .sda = GPIO_I2C0_0_SDA },
+	{ .name = "als",
+	  .port = NPCX_I2C_PORT0_1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_1_SCL,
+	  .sda = GPIO_I2C0_1_SDA },
+	{ .name = "charger",
+	  .port = NPCX_I2C_PORT1,
+	  .kbps = 100,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "pmic",
+	  .port = NPCX_I2C_PORT2,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "accelgyro",
+	  .port = NPCX_I2C_PORT3,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -270,7 +261,6 @@ const struct charger_config_t chg_chips[] = {
 		.drv = &isl923x_drv,
 	},
 };
-
 
 /**
  * Power on (or off) a single TCPC.
@@ -349,9 +339,9 @@ void board_tcpc_init(void)
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 uint16_t tcpc_get_alert_status(void)
 {
@@ -371,17 +361,17 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0},
+	{ "Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0 },
 
 	/* These BD99992GW temp sensors are only readable in S0 */
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM0},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM1},
-	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM2},
-	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM3},
+	{ "Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM0 },
+	{ "Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM1 },
+	{ "DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM2 },
+	{ "eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -397,8 +387,8 @@ static void board_report_pmic_fault(const char *str)
 	uint32_t info;
 
 	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault)
-	    != EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault) !=
+	    EC_SUCCESS)
 		return;
 
 	if (!(vrfault & BIT(4)))
@@ -507,8 +497,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x38, 0x7a);
 }
 
-__override void power_board_handle_host_sleep_event(
-		enum host_sleep_event state)
+__override void power_board_handle_host_sleep_event(enum host_sleep_event state)
 {
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
 		board_pmic_enable_slp_s0_vr_decay();
@@ -561,9 +550,9 @@ static void board_init(void)
 		 * force detection on both ports.
 		 */
 		gpio_set_flags(GPIO_USB_C0_VBUS_WAKE_L,
-			GPIO_INPUT | GPIO_PULL_DOWN);
+			       GPIO_INPUT | GPIO_PULL_DOWN);
 		gpio_set_flags(GPIO_USB_C1_VBUS_WAKE_L,
-			GPIO_INPUT | GPIO_PULL_DOWN);
+			       GPIO_INPUT | GPIO_PULL_DOWN);
 
 		vbus0_evt(GPIO_USB_C0_VBUS_WAKE_L);
 		vbus1_evt(GPIO_USB_C1_VBUS_WAKE_L);
@@ -582,10 +571,9 @@ static void board_init(void)
 	 */
 	if (system_get_board_version() >= 5)
 		gpio_set_flags(GPIO_LED_YELLOW_C0_OLD,
-			GPIO_INPUT | GPIO_PULL_UP);
+			       GPIO_INPUT | GPIO_PULL_UP);
 	else
-		gpio_set_flags(GPIO_LED_YELLOW_C0,
-			GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_LED_YELLOW_C0, GPIO_INPUT | GPIO_PULL_UP);
 
 #ifdef BOARD_SORAKA
 	/*
@@ -594,18 +582,12 @@ static void board_init(void)
 	 * for better S0ix/S3 power
 	 */
 	if (system_get_board_version() >= 4) {
-		gpio_set_flags(GPIO_WLAN_PE_RST,
-			GPIO_INPUT | GPIO_PULL_UP);
-		gpio_set_flags(GPIO_PP3300_DX_LTE,
-			GPIO_INPUT | GPIO_PULL_UP);
-		gpio_set_flags(GPIO_LTE_GPS_OFF_L,
-			GPIO_INPUT | GPIO_PULL_UP);
-		gpio_set_flags(GPIO_LTE_BODY_SAR_L,
-			GPIO_INPUT | GPIO_PULL_UP);
-		gpio_set_flags(GPIO_LTE_WAKE_L,
-			GPIO_INPUT | GPIO_PULL_UP);
-		gpio_set_flags(GPIO_LTE_OFF_ODL,
-			GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_WLAN_PE_RST, GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_PP3300_DX_LTE, GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_LTE_GPS_OFF_L, GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_LTE_BODY_SAR_L, GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_LTE_WAKE_L, GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_LTE_OFF_ODL, GPIO_INPUT | GPIO_PULL_UP);
 	}
 #endif
 
@@ -671,10 +653,12 @@ int board_set_active_charge_port(int charge_port)
 #endif
 		/* Make sure non-charging port is disabled */
 		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_L :
-					     GPIO_USB_C1_CHARGE_L, 1);
+					     GPIO_USB_C1_CHARGE_L,
+			       1);
 		/* Enable charging port */
 		gpio_set_level(charge_port ? GPIO_USB_C1_CHARGE_L :
-					     GPIO_USB_C0_CHARGE_L, 0);
+					     GPIO_USB_C0_CHARGE_L,
+			       0);
 	}
 
 	return EC_SUCCESS;
@@ -688,8 +672,8 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Adjust ILIM according to measurements to eliminate overshoot. */
 	charge_ma = (charge_ma - 500) * 31 / 32 + 472;
@@ -706,8 +690,7 @@ void board_hibernate(void)
 	uart_flush_output();
 
 	/* Trigger PMIC shutdown. */
-	if (i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS,
-		       0x49, 0x01)) {
+	if (i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x49, 0x01)) {
 		/*
 		 * If we can't tell the PMIC to shutdown, instead reset
 		 * and don't start the AP. Hopefully we'll be able to
@@ -763,31 +746,23 @@ static struct opt3001_drv_data_t g_opt3001_data = {
 };
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t mag_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t mag_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
 
 #ifdef BOARD_SORAKA
-const mat33_fp_t lid_standard_ref = {
-	{ 0,  FLOAT_TO_FP(-1),  0},
-	{FLOAT_TO_FP(1),  0,  0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				      { FLOAT_TO_FP(1), 0, 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* For rev3 and older */
-const mat33_fp_t lid_standard_ref_old = {
-	{FLOAT_TO_FP(-1),  0,  0},
-	{ 0,  FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref_old = { { FLOAT_TO_FP(-1), 0, 0 },
+					  { 0, FLOAT_TO_FP(-1), 0 },
+					  { 0, 0, FLOAT_TO_FP(1) } };
 #else
-const mat33_fp_t lid_standard_ref = {
-	{FLOAT_TO_FP(-1),  0,  0},
-	{ 0,  FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 #endif
 
 struct motion_sensor_t motion_sensors[] = {
