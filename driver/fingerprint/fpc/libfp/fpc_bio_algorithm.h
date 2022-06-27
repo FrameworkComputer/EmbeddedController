@@ -196,12 +196,12 @@ int bio_enrollment_begin(bio_sensor_t sensor, bio_enrollment_t *enrollment);
  * - BIO_ENROLLMENT_LOW_COVERAGE when image could not be used  due to
  *   finger covering too little area of the sensor
  */
-#define BIO_ENROLLMENT_OK               0
-#define BIO_ENROLLMENT_IMMOBILE         2
-#define BIO_ENROLLMENT_LOW_QUALITY      1
-#define BIO_ENROLLMENT_LOW_COVERAGE     3
+#define BIO_ENROLLMENT_OK 0
+#define BIO_ENROLLMENT_IMMOBILE 2
+#define BIO_ENROLLMENT_LOW_QUALITY 1
+#define BIO_ENROLLMENT_LOW_COVERAGE 3
 /* Can be used to detect if image was usable for enrollment or not. */
-#define BIO_ENROLLMENT_PROBLEM_MASK     1
+#define BIO_ENROLLMENT_PROBLEM_MASK 1
 int bio_enrollment_add_image(bio_enrollment_t enrollment, bio_image_t image);
 /*
  * Indicates whether there is enough data in the enrollment for it to be
@@ -236,10 +236,10 @@ int bio_enrollment_get_percent_complete(bio_enrollment_t enrollment);
 int bio_enrollment_finish(bio_enrollment_t enrollment, bio_template_t *tmpl);
 
 typedef struct {
-	int32_t coverage;     /* Sensor coverage in range [0..100]        */
-	int32_t quality;      /* Image quality in range [0..100]          */
+	int32_t coverage; /* Sensor coverage in range [0..100]        */
+	int32_t quality; /* Image quality in range [0..100]          */
 	int32_t min_coverage; /* Minimum coverage accepted by enroll      */
-	int32_t min_quality;  /* Minimum image quality accepted by enroll */
+	int32_t min_quality; /* Minimum image quality accepted by enroll */
 } bio_image_status_t;
 
 /*
