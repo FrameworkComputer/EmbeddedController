@@ -26,10 +26,10 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
-#define WAKE_INTERVAL   61        /* Unit: 61 usec */
-#define IDLE_PARAMS     0x7       /* Support deep idle, instant wake-up */
+#define WAKE_INTERVAL 61 /* Unit: 61 usec */
+#define IDLE_PARAMS 0x7 /* Support deep idle, instant wake-up */
 
 /* Low power idle statistics */
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -40,7 +40,7 @@ static uint64_t idle_dsleep_time_us;
  * Fixed amount of time to keep the console in use flag true after boot in
  * order to give a permanent window in which the low speed clock is not used.
  */
-#define CONSOLE_IN_USE_ON_BOOT_TIME (15*SECOND)
+#define CONSOLE_IN_USE_ON_BOOT_TIME (15 * SECOND)
 static int console_in_use_timeout_sec = 15;
 static timestamp_t console_expire_time;
 #endif
@@ -79,7 +79,6 @@ void clock_disable_peripheral(uint32_t offset, uint32_t mask, uint32_t mode)
 
 	/* Set PD bit to 1 */
 	NPCX_PWDWN_CTL(offset) |= reg_mask;
-
 }
 
 /*****************************************************************************/
@@ -100,13 +99,13 @@ void clock_init(void)
 	 * unstable for a little which can affect peripheral communication like
 	 * eSPI. Skip this if not needed (e.g. RW jump)
 	 */
-	if (NPCX_HFCGN != HFCGN || NPCX_HFCGML != HFCGML
-				|| NPCX_HFCGMH != HFCGMH) {
+	if (NPCX_HFCGN != HFCGN || NPCX_HFCGML != HFCGML ||
+	    NPCX_HFCGMH != HFCGMH) {
 		/*
 		 * Configure frequency multiplier M/N values according to
 		 * the requested OSC_CLK (Unit:Hz).
 		 */
-		NPCX_HFCGN  = HFCGN;
+		NPCX_HFCGN = HFCGN;
 		NPCX_HFCGML = HFCGML;
 		NPCX_HFCGMH = HFCGMH;
 
@@ -119,11 +118,11 @@ void clock_init(void)
 
 	/* Set all clock prescalers of core and peripherals. */
 #if defined(CHIP_FAMILY_NPCX5)
-	NPCX_HFCGP  = (FPRED << 4);
+	NPCX_HFCGP = (FPRED << 4);
 	NPCX_HFCBCD = (NPCX_HFCBCD & 0xF0) | (APB1DIV | (APB2DIV << 2));
 #elif NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX7
-	NPCX_HFCGP   = ((FPRED << 4) | AHB6DIV);
-	NPCX_HFCBCD  = (FIUDIV << 4);
+	NPCX_HFCGP = ((FPRED << 4) | AHB6DIV);
+	NPCX_HFCBCD = (FIUDIV << 4);
 	NPCX_HFCBCD1 = (APB1DIV | (APB2DIV << 4));
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
 	NPCX_HFCBCD2 = (APB3DIV | (APB4DIV << 4));
@@ -143,7 +142,7 @@ void clock_init(void)
 void clock_turbo(void)
 {
 	/* Configure Frequency multiplier values to 50MHz */
-	NPCX_HFCGN  = 0x02;
+	NPCX_HFCGN = 0x02;
 	NPCX_HFCGML = 0xEC;
 	NPCX_HFCGMH = 0x0B;
 
@@ -255,7 +254,8 @@ int clock_get_apb3_freq(void)
 void clock_wait_cycles(uint32_t cycles)
 {
 	asm volatile("1: subs %0, #1\n"
-		     "   bne 1b\n" : "+r"(cycles));
+		     "   bne 1b\n"
+		     : "+r"(cycles));
 }
 
 #ifdef CONFIG_LOW_POWER_IDLE
@@ -378,12 +378,11 @@ void __idle(void)
 			 * more detail.
 			 * Workaround: Apply the same bypass of idle.
 			 */
-			asm ("push {r0-r5}\n"
-			     "wfi\n"
-			     "ldm %0, {r0-r5}\n"
-			     "pop {r0-r5}\n"
-			     "isb\n" :: "r" (0x100A8000)
-			);
+			asm("push {r0-r5}\n"
+			    "wfi\n"
+			    "ldm %0, {r0-r5}\n"
+			    "pop {r0-r5}\n"
+			    "isb\n" ::"r"(0x100A8000));
 
 			/* Get time delay cause of deep idle */
 			next_evt_us = __hw_clock_get_sleep_time(evt_count);
@@ -431,12 +430,11 @@ void __idle(void)
 			 * TODO (ML): Workaround method for wfi issue.
 			 * Please see task.c for more detail
 			 */
-			asm ("push {r0-r5}\n"
-			     "wfi\n"
-			     "ldm %0, {r0-r5}\n"
-			     "pop {r0-r5}\n"
-			     "isb\n" :: "r" (0x100A8000)
-			);
+			asm("push {r0-r5}\n"
+			    "wfi\n"
+			    "ldm %0, {r0-r5}\n"
+			    "pop {r0-r5}\n"
+			    "isb\n" ::"r"(0x100A8000));
 		}
 
 		/*
@@ -447,7 +445,6 @@ void __idle(void)
 	}
 }
 #endif /* CONFIG_LOW_POWER_IDLE */
-
 
 #ifdef CONFIG_LOW_POWER_IDLE
 /**
@@ -460,13 +457,12 @@ static int command_idle_stats(int argc, char **argv)
 	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
 	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
 	ccprintf("Time spent in deep-sleep:            %.6llds\n",
-			idle_dsleep_time_us);
+		 idle_dsleep_time_us);
 	ccprintf("Total time on:                       %.6llds\n", ts.val);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
-		"",
-		"Print last idle stats");
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
+			"Print last idle stats");
 
 /**
  * Configure deep sleep clock settings.
@@ -501,17 +497,16 @@ static int command_dsleep(int argc, char **argv)
 
 	ccprintf("Sleep mask: %08x\n", (int)sleep_mask);
 	ccprintf("Console in use timeout:   %d sec\n",
-			console_in_use_timeout_sec);
+		 console_in_use_timeout_sec);
 	ccprintf("PMCSR register:      0x%02x\n", NPCX_PMCSR);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dsleep, command_dsleep,
-		"[ on | off | <timeout> sec]",
-		"Deep sleep clock settings:\nUse 'on' to force deep "
-		"sleep not to use low speed clock.\nUse 'off' to "
-		"allow deep sleep to auto-select using the low speed "
-		"clock.\n"
-		"Give a timeout value for the console in use timeout.\n"
-		"See also 'sleepmask'.");
+DECLARE_CONSOLE_COMMAND(dsleep, command_dsleep, "[ on | off | <timeout> sec]",
+			"Deep sleep clock settings:\nUse 'on' to force deep "
+			"sleep not to use low speed clock.\nUse 'off' to "
+			"allow deep sleep to auto-select using the low speed "
+			"clock.\n"
+			"Give a timeout value for the console in use timeout.\n"
+			"See also 'sleepmask'.");
 #endif /* CONFIG_LOW_POWER_IDLE */
