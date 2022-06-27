@@ -25,7 +25,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 /*****************************************************************************/
 /* EC-specific thermal controls */
@@ -93,7 +93,6 @@ static void thermal_control(void)
 
 	/* go through all the sensors */
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
-
 		/* read one */
 		rv = temp_sensor_read(i, &t);
 
@@ -249,21 +248,17 @@ static int command_thermalget(int argc, char **argv)
 	ccprintf("sensor  warn  high  halt   fan_off fan_max   name\n");
 	for (i = 0; i < TEMP_SENSOR_COUNT; i++) {
 		ccprintf(" %2d      %3d   %3d    %3d    %3d     %3d     %s\n",
-			 i,
-			 thermal_params[i].temp_host[EC_TEMP_THRESH_WARN],
+			 i, thermal_params[i].temp_host[EC_TEMP_THRESH_WARN],
 			 thermal_params[i].temp_host[EC_TEMP_THRESH_HIGH],
 			 thermal_params[i].temp_host[EC_TEMP_THRESH_HALT],
 			 thermal_params[i].temp_fan_off,
-			 thermal_params[i].temp_fan_max,
-			 temp_sensors[i].name);
+			 thermal_params[i].temp_fan_max, temp_sensors[i].name);
 	}
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(thermalget, command_thermalget,
-			NULL,
+DECLARE_CONSOLE_COMMAND(thermalget, command_thermalget, NULL,
 			"Print thermal parameters (degrees Kelvin)");
-
 
 static int command_thermalset(int argc, char **argv)
 {
@@ -329,8 +324,7 @@ thermal_command_set_threshold(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_SET_THRESHOLD,
-		     thermal_command_set_threshold,
-		     EC_VER_MASK(1));
+		     thermal_command_set_threshold, EC_VER_MASK(1));
 
 static enum ec_status
 thermal_command_get_threshold(struct host_cmd_handler_args *args)
@@ -346,5 +340,4 @@ thermal_command_get_threshold(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_THERMAL_GET_THRESHOLD,
-		     thermal_command_get_threshold,
-		     EC_VER_MASK(1));
+		     thermal_command_get_threshold, EC_VER_MASK(1));
