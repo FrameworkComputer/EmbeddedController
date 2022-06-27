@@ -44,38 +44,30 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_FAN] = {
-		.name = "Fan",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_FAN
-	},
-	[TEMP_SENSOR_2_SOC] = {
-		.name = "SOC",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_SOC
-	},
-	[TEMP_SENSOR_3_CHARGER] = {
-		.name = "Charger",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_3_CHARGER
-	},
-	[TEMP_SENSOR_4_REGULATOR] = {
-		.name = "Regulator",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_4_REGULATOR
-	},
+	[TEMP_SENSOR_1_FAN] = { .name = "Fan",
+				.type = TEMP_SENSOR_TYPE_BOARD,
+				.read = get_temp_3v3_30k9_47k_4050b,
+				.idx = ADC_TEMP_SENSOR_1_FAN },
+	[TEMP_SENSOR_2_SOC] = { .name = "SOC",
+				.type = TEMP_SENSOR_TYPE_BOARD,
+				.read = get_temp_3v3_30k9_47k_4050b,
+				.idx = ADC_TEMP_SENSOR_2_SOC },
+	[TEMP_SENSOR_3_CHARGER] = { .name = "Charger",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_3_CHARGER },
+	[TEMP_SENSOR_4_REGULATOR] = { .name = "Regulator",
+				      .type = TEMP_SENSOR_TYPE_BOARD,
+				      .read = get_temp_3v3_30k9_47k_4050b,
+				      .idx = ADC_TEMP_SENSOR_4_REGULATOR },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_FAN \
-	{ \
+#define THERMAL_FAN              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -94,8 +86,8 @@ __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -109,8 +101,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CHARGER \
-	{ \
+#define THERMAL_CHARGER          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
@@ -125,8 +117,8 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_REGULATOR \
-	{ \
+#define THERMAL_REGULATOR        \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(55), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(60), \
