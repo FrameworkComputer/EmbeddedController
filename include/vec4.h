@@ -12,4 +12,4 @@
 typedef float floatv4_t[4];
 typedef fp_t fpv4_t[4];
 
-#endif  /* __CROS_EC_VEC_4_H */
+#endif /* __CROS_EC_VEC_4_H */
