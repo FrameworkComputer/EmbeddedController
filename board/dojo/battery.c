@@ -178,19 +178,18 @@ int charger_profile_override(struct charge_state_data *curr)
 		chg_temp = K_TO_C(chg_temp);
 
 		prev_chg_lvl = chg_lvl;
-		if (chg_temp <= temp_chg_table[chg_lvl].lo_thre &&
-		    chg_lvl > 0)
+		if (chg_temp <= temp_chg_table[chg_lvl].lo_thre && chg_lvl > 0)
 			chg_lvl--;
 		else if (chg_temp >= temp_chg_table[chg_lvl].hi_thre &&
-		         chg_lvl < CHG_LEVEL_COUNT - 1)
+			 chg_lvl < CHG_LEVEL_COUNT - 1)
 			chg_lvl++;
 
 		curr->requested_current = MIN(curr->requested_current,
-		      temp_chg_table[chg_lvl].chg_curr);
+					      temp_chg_table[chg_lvl].chg_curr);
 
-		if(chg_lvl != prev_chg_lvl)
+		if (chg_lvl != prev_chg_lvl)
 			ccprints("Override chg curr to %dmA by chg LEVEL_%d",
-			         curr->requested_current, chg_lvl);
+				 curr->requested_current, chg_lvl);
 	}
 
 	return 0;
