@@ -36,19 +36,35 @@ static struct opp_ulposc_cfg {
 	uint32_t target_mhz;
 } opp[] = {
 	{
-		.osc = 1, .target_mhz = 196, .div = 20, .fband = 10, .mod = 3,
+		.osc = 1,
+		.target_mhz = 196,
+		.div = 20,
+		.fband = 10,
+		.mod = 3,
 		.cali = 64,
 	},
 	{
-		.osc = 0, .target_mhz = 260, .div = 14, .fband = 2, .mod = 0,
+		.osc = 0,
+		.target_mhz = 260,
+		.div = 14,
+		.fband = 2,
+		.mod = 0,
 		.cali = 64,
 	},
 	{
-		.osc = 1, .target_mhz = 280, .div = 20, .fband = 2, .mod = 0,
+		.osc = 1,
+		.target_mhz = 280,
+		.div = 20,
+		.fband = 2,
+		.mod = 0,
 		.cali = 64,
 	},
 	{
-		.osc = 1, .target_mhz = 360, .div = 20, .fband = 10, .mod = 0,
+		.osc = 1,
+		.target_mhz = 360,
+		.div = 20,
+		.fband = 10,
+		.mod = 0,
 		.cali = 64,
 	},
 };
@@ -112,13 +128,12 @@ static uint32_t clock_ulposc_measure_freq(uint32_t osc)
 	int cnt;
 
 	/* before select meter clock input, bit[1:0] = b00 */
-	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) |
-			 DBG_MODE_SET_CLOCK;
+	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) | DBG_MODE_SET_CLOCK;
 
 	/* select source, bit[21:16] = clk_src */
-	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
-			 (osc == 0 ? DBG_BIST_SOURCE_ULPOSC1 :
-				     DBG_BIST_SOURCE_ULPOSC2);
+	AP_CLK_DBG_CFG =
+		(AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
+		(osc == 0 ? DBG_BIST_SOURCE_ULPOSC1 : DBG_BIST_SOURCE_ULPOSC2);
 
 	/* set meter divisor to 1, bit[31:24] = b00000000 */
 	AP_CLK_MISC_CFG_0 = (AP_CLK_MISC_CFG_0 & ~MISC_METER_DIVISOR_MASK) |
@@ -152,7 +167,7 @@ static uint32_t clock_ulposc_measure_freq(uint32_t osc)
 	return result;
 }
 
-#define CAL_MIS_RATE	40
+#define CAL_MIS_RATE 40
 static int clock_ulposc_is_calibrated(struct opp_ulposc_cfg *opp)
 {
 	uint32_t curr, target;
@@ -278,8 +293,8 @@ static void clock_calibrate_ulposc(struct opp_ulposc_cfg *opp)
 		opp->cali = clock_ulposc_process_cali(opp);
 
 #ifdef DEBUG
-	CPRINTF("osc:%u, target=%uMHz, cal:%u\n",
-		opp->osc, opp->target_mhz, opp->cali);
+	CPRINTF("osc:%u, target=%uMHz, cal:%u\n", opp->osc, opp->target_mhz,
+		opp->cali);
 #endif
 }
 
@@ -327,12 +342,12 @@ void clock_init(void)
 	SCP_SYS_CTRL |= AUTO_DDREN;
 
 	/* set settle time */
-	SCP_CLK_SYS_VAL =
-		(SCP_CLK_SYS_VAL & ~CLK_SYS_VAL_MASK) | CLK_SYS_VAL_VAL(1);
-	SCP_CLK_HIGH_VAL =
-		(SCP_CLK_HIGH_VAL & ~CLK_HIGH_VAL_MASK) | CLK_HIGH_VAL_VAL(1);
-	SCP_SLEEP_CTRL =
-		(SCP_SLEEP_CTRL & ~VREQ_COUNT_MASK) | VREQ_COUNT_VAL(1);
+	SCP_CLK_SYS_VAL = (SCP_CLK_SYS_VAL & ~CLK_SYS_VAL_MASK) |
+			  CLK_SYS_VAL_VAL(1);
+	SCP_CLK_HIGH_VAL = (SCP_CLK_HIGH_VAL & ~CLK_HIGH_VAL_MASK) |
+			   CLK_HIGH_VAL_VAL(1);
+	SCP_SLEEP_CTRL = (SCP_SLEEP_CTRL & ~VREQ_COUNT_MASK) |
+			 VREQ_COUNT_VAL(1);
 
 	/* turn off ULPOSC2 */
 	SCP_CLK_ON_CTRL |= HIGH_CORE_DIS_SUB;
@@ -349,7 +364,7 @@ void clock_init(void)
 
 	/* enable default clock gate */
 	SCP_SET_CLK_CG |= CG_DMA_CH3 | CG_DMA_CH2 | CG_DMA_CH1 | CG_DMA_CH0 |
-		CG_I2C_MCLK | CG_MAD_MCLK | CG_AP2P_MCLK;
+			  CG_I2C_MCLK | CG_MAD_MCLK | CG_AP2P_MCLK;
 }
 
 #ifdef DEBUG
@@ -358,8 +373,7 @@ int command_ulposc(int argc, char *argv[])
 	int i;
 
 	for (i = 0; i <= 1; ++i)
-		ccprintf("ULPOSC%u frequency: %u kHz\n",
-			 i + 1,
+		ccprintf("ULPOSC%u frequency: %u kHz\n", i + 1,
 			 clock_ulposc_measure_freq(i) * 26 * 1000 / 1024);
 
 	return EC_SUCCESS;
