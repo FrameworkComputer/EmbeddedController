@@ -31,8 +31,8 @@
 #include "gpio_list.h" /* Must come after other header files. */
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 __override void board_cbi_init(void)
 {
@@ -75,4 +75,4 @@ static void usba_power(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, usba_power, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_AC_CHANGE, usba_power, HOOK_PRIO_DEFAULT);
-#endif  /* CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK */
+#endif /* CONFIG_USB_PORT_POWER_DUMB_CUSTOM_HOOK */
