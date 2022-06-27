@@ -36,22 +36,22 @@
 
 #include "gpio_list.h" /* Must come after other header files. */
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
 
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
 
 const struct fan_rpm fan_rpm_0 = {
-	.rpm_min   = 3000,
+	.rpm_min = 3000,
 	.rpm_start = 5000,
-	.rpm_max   = 5100,
+	.rpm_max = 5100,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
@@ -73,23 +73,23 @@ const struct fan_t fans[FAN_CH_COUNT] = {
  * TODO(b/202062363): Remove when clang is fixed.
  */
 #define THERMAL_CONFIG_WITHOUT_FAN \
-	{ \
+	{                          \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(77), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
 		}, \
 		.temp_host_release = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-		}, \
+		},   \
 	}
-__maybe_unused static const struct ec_thermal_config
-	thermal_config_without_fan = THERMAL_CONFIG_WITHOUT_FAN;
+__maybe_unused static const struct ec_thermal_config thermal_config_without_fan =
+	THERMAL_CONFIG_WITHOUT_FAN;
 
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CONFIG_WITH_FAN \
-	{ \
+#define THERMAL_CONFIG_WITH_FAN  \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(77), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -120,12 +120,12 @@ struct fan_step {
 
 /* Fan control table */
 static const struct fan_step fan_table0[] = {
-	{.on = 30, .off =  0, .rpm = 3150 },		/* Fan level 0 */
-	{.on = 47, .off = 43, .rpm = 3500 },		/* Fan level 1 */
-	{.on = 50, .off = 47, .rpm = 3750 },		/* Fan level 2 */
-	{.on = 53, .off = 50, .rpm = 4200 },		/* Fan level 3 */
-	{.on = 56, .off = 53, .rpm = 4500 },		/* Fan level 4 */
-	{.on = 59, .off = 56, .rpm = 5000 },		/* Fan level 5 */
+	{ .on = 30, .off = 0, .rpm = 3150 }, /* Fan level 0 */
+	{ .on = 47, .off = 43, .rpm = 3500 }, /* Fan level 1 */
+	{ .on = 50, .off = 47, .rpm = 3750 }, /* Fan level 2 */
+	{ .on = 53, .off = 50, .rpm = 4200 }, /* Fan level 3 */
+	{ .on = 56, .off = 53, .rpm = 4500 }, /* Fan level 4 */
+	{ .on = 59, .off = 56, .rpm = 5000 }, /* Fan level 5 */
 };
 
 /* All fan tables must have the same number of levels */
@@ -148,7 +148,7 @@ int fan_percent_to_rpm(int fan, int pct)
 	if (++cnt != FAN_AVERAGE_TIME_SEC)
 		return fan_table[previous_level].rpm;
 
-	avg_pct = (int) avg_pct / FAN_AVERAGE_TIME_SEC;
+	avg_pct = (int)avg_pct / FAN_AVERAGE_TIME_SEC;
 
 	/*
 	 * Compare the pct and previous pct, we have the three paths :
@@ -287,8 +287,8 @@ static const struct ec_response_keybd_config main_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &main_kb;
 }
@@ -303,15 +303,15 @@ __override const struct ec_response_keybd_config
  */
 
 const int keyboard_factory_scan_pins[][2] = {
-		{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-		{0, 7}, {1, 4}, {1, 3}, {1, 6}, {1, 7},
-		{3, 1}, {2, 0}, {1, 5}, {2, 6}, {2, 7},
-		{2, 1}, {2, 4}, {2, 5}, {1, 2}, {2, 3},
-		{2, 2}, {3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+	{ -1, -1 }, { 0, 5 }, { 1, 1 },	  { 1, 0 },   { 0, 6 },
+	{ 0, 7 },   { 1, 4 }, { 1, 3 },	  { 1, 6 },   { 1, 7 },
+	{ 3, 1 },   { 2, 0 }, { 1, 5 },	  { 2, 6 },   { 2, 7 },
+	{ 2, 1 },   { 2, 4 }, { 2, 5 },	  { 1, 2 },   { 2, 3 },
+	{ 2, 2 },   { 3, 0 }, { -1, -1 }, { -1, -1 }, { -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
 
 /******************************************************************************/
@@ -322,19 +322,19 @@ static int manual_run_time = -1;
 #endif
 
 struct drop_step {
-	int run_time;	/* battery run time (day) */
-	int drop_volt;	/* drop voltage (mV) */
+	int run_time; /* battery run time (day) */
+	int drop_volt; /* drop voltage (mV) */
 };
 
 /* voltage drop table */
 static const struct drop_step voltage_drop_table[] = {
-	{.run_time =   90, .drop_volt = 13200 },	/* drop level 0 */
-	{.run_time =  198, .drop_volt = 13125 },	/* drop level 1 */
-	{.run_time =  305, .drop_volt = 13050 },	/* drop level 2 */
-	{.run_time =  412, .drop_volt = 12975 },	/* drop level 3 */
-	{.run_time =  519, .drop_volt = 12900 },	/* drop level 4 */
-	{.run_time =  626, .drop_volt = 12825 },	/* drop level 5 */
-	{.run_time =  __INT_MAX__, .drop_volt = 12750 },/* drop level 6 */
+	{ .run_time = 90, .drop_volt = 13200 }, /* drop level 0 */
+	{ .run_time = 198, .drop_volt = 13125 }, /* drop level 1 */
+	{ .run_time = 305, .drop_volt = 13050 }, /* drop level 2 */
+	{ .run_time = 412, .drop_volt = 12975 }, /* drop level 3 */
+	{ .run_time = 519, .drop_volt = 12900 }, /* drop level 4 */
+	{ .run_time = 626, .drop_volt = 12825 }, /* drop level 5 */
+	{ .run_time = __INT_MAX__, .drop_volt = 12750 }, /* drop level 6 */
 };
 
 #define NUM_DROP_LEVELS ARRAY_SIZE(voltage_drop_table)
@@ -346,19 +346,19 @@ static int get_battery_run_time_day(uint32_t *battery_run_time)
 	uint8_t data[6];
 
 	/* get battery run time */
-	rv = sb_read_mfgacc(PARAM_FIRMWARE_RUNTIME,
-			SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	rv = sb_read_mfgacc(PARAM_FIRMWARE_RUNTIME, SB_ALT_MANUFACTURER_ACCESS,
+			    data, sizeof(data));
 
 	if (rv)
 		return EC_ERROR_UNKNOWN;
 	/*
 	 * The response is 6 bytes; the runtime in seconds is the last 4 bytes.
 	 */
-	run_time = *(int32_t *) (&data[2]);
+	run_time = *(int32_t *)(&data[2]);
 
 #ifdef BATTERY_RUNTIME_TEST
-	cprints(CC_CHARGER, "run_time : 0x%08x (%d day)",
-				run_time, (run_time / 86400));
+	cprints(CC_CHARGER, "run_time : 0x%08x (%d day)", run_time,
+		(run_time / 86400));
 
 	/* manual battery run time fot test */
 	if (manual_run_time != -1)
@@ -388,8 +388,8 @@ int charger_profile_override(struct charge_state_data *curr)
 			break;
 	}
 
-	curr->requested_voltage = MIN(curr->requested_voltage,
-					voltage_drop_table[i].drop_volt);
+	curr->requested_voltage =
+		MIN(curr->requested_voltage, voltage_drop_table[i].drop_volt);
 #ifdef BATTERY_RUNTIME_TEST
 	cprints(CC_CHARGER,
 		"Charger: run time(day): %d, drop level: %d, CV: %d",
@@ -399,13 +399,13 @@ int charger_profile_override(struct charge_state_data *curr)
 }
 
 enum ec_status charger_profile_override_get_param(uint32_t param,
-				uint32_t *value)
+						  uint32_t *value)
 {
 	return EC_RES_INVALID_PARAM;
 }
 
 enum ec_status charger_profile_override_set_param(uint32_t param,
-				uint32_t value)
+						  uint32_t value)
 {
 	return EC_RES_INVALID_PARAM;
 }
@@ -445,10 +445,10 @@ static int command_manual_run_time(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
 	cprints(CC_CHARGER, "manual run time set to %d sec (%d day)",
-				manual_run_time, (manual_run_time/86400));
+		manual_run_time, (manual_run_time / 86400));
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(rt, command_manual_run_time, "<battery_run_time_sec>",
-					"Set manual run time for test");
+			"Set manual run time for test");
 #endif
