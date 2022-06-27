@@ -18,4 +18,4 @@
  */
 int mkbp_keyboard_add(const uint8_t *buffp);
 
-#endif  /* __CROS_EC_KEYBOARD_MKBP_H */
+#endif /* __CROS_EC_KEYBOARD_MKBP_H */
