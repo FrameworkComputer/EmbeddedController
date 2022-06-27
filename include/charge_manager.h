@@ -19,7 +19,7 @@
 
 /* Only track BC1.2 charge current if we support BC1.2 charging */
 #if defined(HAS_TASK_USB_CHG) || defined(HAS_TASK_USB_CHG_P0) || \
-	defined(CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK) || \
+	defined(CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK) ||   \
 	defined(TEST_BUILD)
 #define CHARGE_MANAGER_BC12
 #endif
@@ -28,7 +28,7 @@
  * Time to delay for detecting the charger type (must be long enough for BC1.2
  * driver to get supplier information and notify charge manager).
  */
-#define CHARGE_DETECT_DELAY (2*SECOND)
+#define CHARGE_DETECT_DELAY (2 * SECOND)
 
 /*
  * Commonly-used charge suppliers listed in no particular order.
@@ -60,14 +60,13 @@ enum charge_supplier {
 };
 
 #ifdef CHARGE_MANAGER_BC12
-#define CHARGE_SUPPLIER_NAME_BC12 \
-	[CHARGE_SUPPLIER_BC12_DCP] = "BC12_DCP", \
-	[CHARGE_SUPPLIER_BC12_CDP] = "BC12_CDP", \
-	[CHARGE_SUPPLIER_BC12_SDP] = "BC12_SDP", \
-	[CHARGE_SUPPLIER_PROPRIETARY] = "BC12_PROP", \
+#define CHARGE_SUPPLIER_NAME_BC12                          \
+	[CHARGE_SUPPLIER_BC12_DCP] = "BC12_DCP",           \
+	[CHARGE_SUPPLIER_BC12_CDP] = "BC12_CDP",           \
+	[CHARGE_SUPPLIER_BC12_SDP] = "BC12_SDP",           \
+	[CHARGE_SUPPLIER_PROPRIETARY] = "BC12_PROP",       \
 	[CHARGE_SUPPLIER_TYPEC_UNDER_1_5A] = "USBC_U1_5A", \
-	[CHARGE_SUPPLIER_OTHER] = "BC12_OTHER", \
-	[CHARGE_SUPPLIER_VBUS] = "VBUS",
+	[CHARGE_SUPPLIER_OTHER] = "BC12_OTHER", [CHARGE_SUPPLIER_VBUS] = "VBUS",
 #else
 #define CHARGE_SUPPLIER_NAME_BC12
 #endif
@@ -78,7 +77,7 @@ enum charge_supplier {
 #define CHARGE_SUPPLIER_NAME_DEDICATED
 #endif
 #ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-#define CHARGE_SUPPLIER_NAME_QI \
+#define CHARGE_SUPPLIER_NAME_QI               \
 	[CHARGE_SUPPLIER_WPC_BPP] = "QI_BPP", \
 	[CHARGE_SUPPLIER_WPC_EPP] = "QI_EPP", \
 	[CHARGE_SUPPLIER_WPC_GPP] = "QI_GPP",
@@ -86,13 +85,11 @@ enum charge_supplier {
 #define CHARGE_SUPPLIER_NAME_QI
 #endif
 
-#define CHARGE_SUPPLIER_NAME \
-	[CHARGE_SUPPLIER_PD] = "PD", \
-	[CHARGE_SUPPLIER_TYPEC] = "USBC", \
-	[CHARGE_SUPPLIER_TYPEC_DTS] = "USBC_DTS", \
-	CHARGE_SUPPLIER_NAME_BC12 \
-	CHARGE_SUPPLIER_NAME_DEDICATED \
-	CHARGE_SUPPLIER_NAME_QI
+#define CHARGE_SUPPLIER_NAME                                           \
+	[CHARGE_SUPPLIER_PD] = "PD", [CHARGE_SUPPLIER_TYPEC] = "USBC", \
+	[CHARGE_SUPPLIER_TYPEC_DTS] = "USBC_DTS",                      \
+	CHARGE_SUPPLIER_NAME_BC12 CHARGE_SUPPLIER_NAME_DEDICATED       \
+		CHARGE_SUPPLIER_NAME_QI
 
 /*
  * Charge supplier priority: lower number indicates higher priority.
@@ -114,8 +111,7 @@ struct charge_port_info {
  * @param charge	Charge port current / voltage. If NULL, current = 0
  * 			voltage = 0 will be used.
  */
-void charge_manager_update_charge(int supplier,
-				  int port,
+void charge_manager_update_charge(int supplier, int port,
 				  const struct charge_port_info *charge);
 
 /* Partner port dualrole capabilities */
@@ -152,8 +148,8 @@ enum ceil_requestor {
 	CEIL_REQUESTOR_COUNT,
 };
 
-#define CHARGE_PORT_COUNT (CONFIG_USB_PD_PORT_MAX_COUNT + \
-			   CONFIG_DEDICATED_CHARGE_PORT_COUNT)
+#define CHARGE_PORT_COUNT \
+	(CONFIG_USB_PD_PORT_MAX_COUNT + CONFIG_DEDICATED_CHARGE_PORT_COUNT)
 #if (CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0)
 
 /**
@@ -322,8 +318,8 @@ int board_set_active_charge_port(int charge_port);
  * @param max_ma Maximum charge current limit, >= charge_ma.
  * @param charge_mv Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv);
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv);
 
 /**
  * Get whether the port is sourcing power on VBUS.
@@ -367,9 +363,8 @@ __override_proto int board_charge_port_is_connected(int port);
  * @param port	Dedicated charge port.
  * @param r	USB PD power info to be updated.
  */
-__override_proto
-void board_fill_source_power_info(int port,
-				  struct ec_response_usb_pd_power_info *r);
+__override_proto void
+board_fill_source_power_info(int port, struct ec_response_usb_pd_power_info *r);
 
 /**
  * Board specific callback to get vbus voltage.
