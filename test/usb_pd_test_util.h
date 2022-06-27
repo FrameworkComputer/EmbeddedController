@@ -31,4 +31,4 @@ int pd_test_tx_msg_verify_short(int port, uint16_t val);
 int pd_test_tx_msg_verify_word(int port, uint32_t val);
 int pd_test_tx_msg_verify_crc(int port);
 
-#endif  /* __TEST_USB_PD_TEST_UTIL_H */
+#endif /* __TEST_USB_PD_TEST_UTIL_H */
