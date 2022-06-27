@@ -60,49 +60,49 @@ enum bmi_emul_axis {
 };
 
 /** BMI emulator models */
-#define BMI_EMUL_160		1
-#define BMI_EMUL_260		2
+#define BMI_EMUL_160 1
+#define BMI_EMUL_260 2
 
 /** Last register supported by emulator */
-#define BMI_EMUL_MAX_REG	0x80
+#define BMI_EMUL_MAX_REG 0x80
 /** Maximum number of registers that can be backed in NVM */
-#define BMI_EMUL_MAX_NVM_REGS	10
+#define BMI_EMUL_MAX_NVM_REGS 10
 
 /** Headers used in FIFO frames */
-#define BMI_EMUL_FIFO_HEAD_SKIP			0x40
-#define BMI_EMUL_FIFO_HEAD_TIME			0x44
-#define BMI_EMUL_FIFO_HEAD_CONFIG		0x48
-#define BMI_EMUL_FIFO_HEAD_EMPTY		0x80
-#define BMI_EMUL_FIFO_HEAD_DATA			0x80
-#define BMI_EMUL_FIFO_HEAD_DATA_MAG		BIT(4)
-#define BMI_EMUL_FIFO_HEAD_DATA_GYR		BIT(3)
-#define BMI_EMUL_FIFO_HEAD_DATA_ACC		BIT(2)
-#define BMI_EMUL_FIFO_HEAD_DATA_TAG_MASK	0x03
+#define BMI_EMUL_FIFO_HEAD_SKIP 0x40
+#define BMI_EMUL_FIFO_HEAD_TIME 0x44
+#define BMI_EMUL_FIFO_HEAD_CONFIG 0x48
+#define BMI_EMUL_FIFO_HEAD_EMPTY 0x80
+#define BMI_EMUL_FIFO_HEAD_DATA 0x80
+#define BMI_EMUL_FIFO_HEAD_DATA_MAG BIT(4)
+#define BMI_EMUL_FIFO_HEAD_DATA_GYR BIT(3)
+#define BMI_EMUL_FIFO_HEAD_DATA_ACC BIT(2)
+#define BMI_EMUL_FIFO_HEAD_DATA_TAG_MASK 0x03
 
 /**
  * Acceleration 1g in internal emulator units. It is helpful for using
  * functions @ref bmi_emul_set_value @ref bmi_emul_get_value
  * @ref bmi_emul_set_off and @ref bmi_emul_get_off
  */
-#define BMI_EMUL_1G		BIT(14)
+#define BMI_EMUL_1G BIT(14)
 /**
  * Gyroscope 125°/s in internal emulator units. It is helpful for using
  * functions @ref bmi_emul_set_value @ref bmi_emul_get_value
  * @ref bmi_emul_set_off and @ref bmi_emul_get_off
  */
-#define BMI_EMUL_125_DEG_S	BIT(15)
+#define BMI_EMUL_125_DEG_S BIT(15)
 
 /** Type of frames that can be added to the emulator frames list */
-#define BMI_EMUL_FRAME_CONFIG	BIT(0)
-#define BMI_EMUL_FRAME_ACC	BIT(1)
-#define BMI_EMUL_FRAME_MAG	BIT(2)
-#define BMI_EMUL_FRAME_GYR	BIT(3)
+#define BMI_EMUL_FRAME_CONFIG BIT(0)
+#define BMI_EMUL_FRAME_ACC BIT(1)
+#define BMI_EMUL_FRAME_MAG BIT(2)
+#define BMI_EMUL_FRAME_GYR BIT(3)
 
 /**
  * Code returned by model specific handle_read and handle_write functions, when
  * RO register is accessed on write or WO register is accessed on read
  */
-#define BMI_EMUL_ACCESS_E	1
+#define BMI_EMUL_ACCESS_E 1
 
 /** Structure used to describe single FIFO frame */
 struct bmi_emul_frame {
@@ -400,9 +400,8 @@ uint16_t bmi_emul_fifo_len(struct i2c_emul *emul, bool tag_time, bool header);
  *
  * @return FIFO data byte
  */
-uint8_t bmi_emul_get_fifo_data(struct i2c_emul *emul, int byte,
-			       bool tag_time, bool header, int acc_shift,
-			       int gyr_shift);
+uint8_t bmi_emul_get_fifo_data(struct i2c_emul *emul, int byte, bool tag_time,
+			       bool header, int acc_shift, int gyr_shift);
 
 /**
  * @brief Saves current internal state of sensors to emulator's registers.
@@ -419,10 +418,9 @@ uint8_t bmi_emul_get_fifo_data(struct i2c_emul *emul, int byte,
  * @param gyr_off_en Indicate if gyroscope offset should be included to
  *                   sensor data value
  */
-void bmi_emul_state_to_reg(struct i2c_emul *emul, int acc_shift,
-			   int gyr_shift, int acc_reg, int gyr_reg,
-			   int sensortime_reg, bool acc_off_en,
-			   bool gyr_off_en);
+void bmi_emul_state_to_reg(struct i2c_emul *emul, int acc_shift, int gyr_shift,
+			   int acc_reg, int gyr_reg, int sensortime_reg,
+			   bool acc_off_en, bool gyr_off_en);
 
 /**
  * @}
