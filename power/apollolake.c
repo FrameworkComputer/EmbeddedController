@@ -13,7 +13,7 @@
 #include "timer.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /*
  * force_shutdown is used to maintain chipset shutdown request. This request
@@ -145,7 +145,6 @@ enum power_state power_handle_state(enum power_state state)
 
 		new_state = POWER_S5G3;
 		goto rsmrst_handle;
-
 	}
 
 	/* If force shutdown is requested, perform that. */
