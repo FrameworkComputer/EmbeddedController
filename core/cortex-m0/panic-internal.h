@@ -10,4 +10,4 @@
 
 noreturn void exception_panic(void) __attribute__((naked));
 
-#endif  /* __CROS_EC_PANIC_INTERNAL_H */
+#endif /* __CROS_EC_PANIC_INTERNAL_H */
