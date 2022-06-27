@@ -10,4 +10,4 @@
 
 extern struct dwc_usb_ep ep_console_ctl;
 
-#endif  /* __CHIP_STM32_USB_DWC_CONSOLE_H */
+#endif /* __CHIP_STM32_USB_DWC_CONSOLE_H */
