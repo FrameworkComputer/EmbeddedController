@@ -13,7 +13,8 @@ struct isp_msg {
 	unsigned char msg[140];
 };
 
-BUILD_ASSERT(member_size(struct isp_msg, msg) <= CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
+BUILD_ASSERT(member_size(struct isp_msg, msg) <=
+	     CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
 
 /* Functions provided by private overlay. */
 void isp_msg_handler(void *data);
