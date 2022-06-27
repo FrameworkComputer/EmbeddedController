@@ -20,7 +20,7 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
 /**
  * Read 8bit register from accelerometer.
@@ -97,20 +97,19 @@ static int set_foc_config(struct motion_sensor_t *s)
 				   BMA4_NV_ACCEL_OFFSET_MSK));
 
 	/* Set accelerometer configurations to 50Hz,CIC, continuous mode */
-	RETURN_ERROR(bma4_write8(s, BMA4_ACCEL_CONFIG_ADDR,
-				 BMA4_FOC_ACC_CONF_VAL));
-
+	RETURN_ERROR(
+		bma4_write8(s, BMA4_ACCEL_CONFIG_ADDR, BMA4_FOC_ACC_CONF_VAL));
 
 	/* Set accelerometer to normal mode by enabling it */
 	RETURN_ERROR(bma4_set_reg8(s, BMA4_POWER_CTRL_ADDR,
-				   (BMA4_ENABLE <<  BMA4_ACCEL_ENABLE_POS),
+				   (BMA4_ENABLE << BMA4_ACCEL_ENABLE_POS),
 				   BMA4_ACCEL_ENABLE_MSK));
 
 	/* Disable advance power save mode */
-	RETURN_ERROR(bma4_set_reg8(s, BMA4_POWER_CONF_ADDR,
-				   (BMA4_DISABLE
-				    << BMA4_ADVANCE_POWER_SAVE_POS),
-				   BMA4_ADVANCE_POWER_SAVE_MSK));
+	RETURN_ERROR(
+		bma4_set_reg8(s, BMA4_POWER_CONF_ADDR,
+			      (BMA4_DISABLE << BMA4_ADVANCE_POWER_SAVE_POS),
+			      BMA4_ADVANCE_POWER_SAVE_MSK));
 
 	return EC_SUCCESS;
 }
@@ -120,7 +119,7 @@ static int wait_and_read_data(struct motion_sensor_t *s, intv3_t v)
 	int i;
 
 	/* Retry 5 times */
-	uint8_t reg_data[6] = {0}, try_cnt = 5;
+	uint8_t reg_data[6] = { 0 }, try_cnt = 5;
 
 	/* Check if data is ready */
 	while (try_cnt && (!(reg_data[0] & BMA4_STAT_DATA_RDY_ACCEL_MSK))) {
@@ -142,8 +141,8 @@ static int wait_and_read_data(struct motion_sensor_t *s, intv3_t v)
 				    BMA4_DATA_8_ADDR, reg_data, 6));
 
 	for (i = X; i <= Z; i++) {
-		v[i] = (((int8_t)reg_data[i * 2 + 1]) << 8)
-		       | (reg_data[i * 2] & 0xf0);
+		v[i] = (((int8_t)reg_data[i * 2 + 1]) << 8) |
+		       (reg_data[i * 2] & 0xf0);
 
 		/* Since the resolution is only 12 bits*/
 		v[i] = (v[i] / 0x10);
@@ -160,7 +159,7 @@ static int8_t perform_accel_foc(struct motion_sensor_t *s, int *target,
 	intv3_t accel_data, offset;
 
 	/* Structure to store accelerometer data temporarily */
-	int32_t delta_value[3] = {0, 0, 0};
+	int32_t delta_value[3] = { 0, 0, 0 };
 
 	/* Variable to define count */
 	uint8_t i, loop, sample_count = 0;
@@ -181,8 +180,10 @@ static int8_t perform_accel_foc(struct motion_sensor_t *s, int *target,
 	 * (unit of offset:mg)
 	 */
 	for (i = X; i <= Z; ++i) {
-		offset[i] = ((((delta_value[i] * 1000 * sens_range)
-			     / sample_count) / 2048) * -1);
+		offset[i] = ((((delta_value[i] * 1000 * sens_range) /
+			       sample_count) /
+			      2048) *
+			     -1);
 	}
 
 	RETURN_ERROR(write_accel_offset(s, offset));
@@ -199,7 +200,7 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 {
 	uint8_t config[2];
 	int pwr_ctrl, pwr_conf;
-	intv3_t target = {0, 0, 0};
+	intv3_t target = { 0, 0, 0 };
 	int sens_range = s->current_range;
 
 	if (!enable)
@@ -207,7 +208,7 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 
 	/* Read accelerometer configurations */
 	RETURN_ERROR(i2c_read_block(s->port, s->i2c_spi_addr_flags,
-			BMA4_ACCEL_CONFIG_ADDR, config, 2));
+				    BMA4_ACCEL_CONFIG_ADDR, config, 2));
 
 	/* Get accelerometer enable status to be saved */
 	RETURN_ERROR(bma4_read8(s, BMA4_POWER_CTRL_ADDR, &pwr_ctrl));
@@ -225,7 +226,7 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 
 	/* Set the saved sensor configuration */
 	RETURN_ERROR(i2c_write_block(s->port, s->i2c_spi_addr_flags,
-			BMA4_ACCEL_CONFIG_ADDR, config, 2));
+				     BMA4_ACCEL_CONFIG_ADDR, config, 2));
 
 	RETURN_ERROR(bma4_write8(s, BMA4_POWER_CTRL_ADDR, pwr_ctrl));
 
@@ -236,7 +237,7 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 
 static int set_range(struct motion_sensor_t *s, int range, int round)
 {
-	int ret,  range_reg_val;
+	int ret, range_reg_val;
 
 	range_reg_val = BMA4_RANGE_TO_REG(range);
 
@@ -366,8 +367,8 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	mutex_lock(s->mutex);
 
 	/* Read 6 bytes starting at X_AXIS_LSB. */
-	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags,
-			     BMA4_DATA_8_ADDR, acc, 6);
+	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags, BMA4_DATA_8_ADDR,
+			     acc, 6);
 
 	mutex_unlock(s->mutex);
 
