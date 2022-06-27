@@ -10,7 +10,7 @@
 
 /* Optional modules */
 #define CONFIG_ADC
-#undef  CONFIG_ADC_WATCHDOG
+#undef CONFIG_ADC_WATCHDOG
 #define CONFIG_CHIPSET_RK3399
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_RTC
@@ -30,11 +30,11 @@
 
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 
-#undef  CONFIG_UART_CONSOLE
+#undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 
 /* Region sizes are no longer a power of 2 so we can't enable MPU */
-#undef  CONFIG_MPU
+#undef CONFIG_MPU
 
 /* Enable a different power-on sequence than the one on gru */
 #undef CONFIG_CHIPSET_POWER_SEQ_VERSION
@@ -104,38 +104,38 @@
 #define CONFIG_USB_PD_COMM_LOCKED
 
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     12850
+#define PD_MAX_POWER_MW ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 12850
 
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
 
 /* Timer selection */
-#define TIM_CLOCK32  2
+#define TIM_CLOCK32 2
 #define TIM_WATCHDOG 7
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
 /* Optional for testing */
-#undef  CONFIG_PECI
-#undef  CONFIG_PSTORE
+#undef CONFIG_PECI
+#undef CONFIG_PSTORE
 
 #define CONFIG_TASK_PROFILING
 
 #define I2C_PORT_TCPC0 1
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI controller port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT 0 /* The first SPI controller port (SPI2) */
 
 #define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 /* Define the host events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
+#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK                \
+	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) | \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
 
 #ifndef __ASSEMBLER__
 
