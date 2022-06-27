@@ -13,8 +13,8 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 const struct charger_config_t chg_chips[] = {
 	{
@@ -25,16 +25,16 @@ const struct charger_config_t chg_chips[] = {
 };
 
 struct temp_chg_step {
-	int low;	/* temp thershold ('C) to lower level*/
-	int high;	/* temp thershold ('C) to higher level */
-	int current;	/* charging limitation (mA) */
+	int low; /* temp thershold ('C) to lower level*/
+	int high; /* temp thershold ('C) to higher level */
+	int current; /* charging limitation (mA) */
 };
 
 static const struct temp_chg_step temp_chg_table[] = {
-	{.low =  0, .high = 50, .current = 3000},	/* Lv0: normal charge */
-	{.low = 48, .high = 53, .current = 1500},
-	{.low = 51, .high = 56, .current = 1000},
-	{.low = 54, .high = 100, .current = 800},
+	{ .low = 0, .high = 50, .current = 3000 }, /* Lv0: normal charge */
+	{ .low = 48, .high = 53, .current = 1500 },
+	{ .low = 51, .high = 56, .current = 1000 },
+	{ .low = 54, .high = 100, .current = 800 },
 };
 #define NUM_TEMP_CHG_LEVELS ARRAY_SIZE(temp_chg_table)
 
@@ -64,8 +64,9 @@ int charger_profile_override(struct charge_state_data *curr)
 		if (current_level >= NUM_TEMP_CHG_LEVELS)
 			current_level = NUM_TEMP_CHG_LEVELS - 1;
 
-		curr->requested_current = MIN(curr->requested_current,
-			temp_chg_table[current_level].current);
+		curr->requested_current =
+			MIN(curr->requested_current,
+			    temp_chg_table[current_level].current);
 	}
 
 	/* Lower the max requested voltage to 5V when battery is full. */
