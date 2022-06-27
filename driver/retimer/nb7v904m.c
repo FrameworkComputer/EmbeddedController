@@ -12,8 +12,8 @@
 #include "nb7v904m.h"
 #include "usb_mux.h"
 
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 #ifdef CONFIG_NB7V904M_LPM_OVERRIDE
 int nb7v904m_lpm_disable = 0;
@@ -21,18 +21,12 @@ int nb7v904m_lpm_disable = 0;
 
 static int nb7v904m_write(const struct usb_mux *me, int offset, int data)
 {
-	return i2c_write8(me->i2c_port,
-			  me->i2c_addr_flags,
-			  offset, data);
-
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags, offset, data);
 }
 
 static int nb7v904m_read(const struct usb_mux *me, int offset, int *regval)
 {
-	return i2c_read8(me->i2c_port,
-			 me->i2c_addr_flags,
-			 offset, regval);
-
+	return i2c_read8(me->i2c_port, me->i2c_addr_flags, offset, regval);
 }
 
 static int set_low_power_mode(const struct usb_mux *me, bool enable)
@@ -68,7 +62,7 @@ static int nb7v904m_enter_low_power_mode(const struct usb_mux *me)
 
 /* Tune USB Eq All: This must be called on board_init context */
 int nb7v904m_tune_usb_set_eq(const struct usb_mux *me, uint8_t eq_a,
-			uint8_t eq_b, uint8_t eq_c, uint8_t eq_d)
+			     uint8_t eq_b, uint8_t eq_c, uint8_t eq_d)
 {
 	int rv = EC_SUCCESS;
 
@@ -89,7 +83,7 @@ int nb7v904m_tune_usb_set_eq(const struct usb_mux *me, uint8_t eq_a,
 
 /* Tune USB Flat Gain: This must be called on board_init context */
 int nb7v904m_tune_usb_flat_gain(const struct usb_mux *me, uint8_t gain_a,
-			uint8_t gain_b, uint8_t gain_c, uint8_t gain_d)
+				uint8_t gain_b, uint8_t gain_c, uint8_t gain_d)
 {
 	int rv = EC_SUCCESS;
 
@@ -110,7 +104,8 @@ int nb7v904m_tune_usb_flat_gain(const struct usb_mux *me, uint8_t gain_a,
 
 /* Set Loss Profile Matching : This must be called on board_init context */
 int nb7v904m_set_loss_profile_match(const struct usb_mux *me, uint8_t loss_a,
-			uint8_t loss_b, uint8_t loss_c, uint8_t loss_d)
+				    uint8_t loss_b, uint8_t loss_c,
+				    uint8_t loss_d)
 {
 	int rv = EC_SUCCESS;
 
@@ -168,8 +163,8 @@ static int nb7v904m_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	/* Clear operation mode field */
 	rv = nb7v904m_read(me, NB7V904M_REG_GEN_DEV_SETTINGS, &regval);
 	if (rv) {
-		CPRINTS("C%d %s: Failed to obtain dev settings!",
-			me->usb_port, __func__);
+		CPRINTS("C%d %s: Failed to obtain dev settings!", me->usb_port,
+			__func__);
 		return rv;
 	}
 	regval &= ~NB7V904M_OP_MODE_MASK;
@@ -193,9 +188,9 @@ static int nb7v904m_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Connect AUX */
-		rv = nb7v904m_write(me, NB7V904M_REG_AUX_CH_CTRL, flipped ?
-				    NB7V904M_AUX_CH_FLIPPED :
-				    NB7V904M_AUX_CH_NORMAL);
+		rv = nb7v904m_write(me, NB7V904M_REG_AUX_CH_CTRL,
+				    flipped ? NB7V904M_AUX_CH_FLIPPED :
+					      NB7V904M_AUX_CH_NORMAL);
 		/* Enable all channels for DP */
 		regval |= NB7V904M_CH_EN_MASK;
 	} else {
