@@ -32,22 +32,14 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* USB-A ports */
-enum usba_port {
-	USBA_PORT_A0 = 0,
-	USBA_PORT_A1,
-	USBA_PORT_COUNT
-};
+enum usba_port { USBA_PORT_A0 = 0, USBA_PORT_A1, USBA_PORT_COUNT };
 
 /* USB-C ports */
-enum usbc_port {
-	USBC_PORT_C0 = 0,
-	USBC_PORT_C1,
-	USBC_PORT_COUNT
-};
+enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
 BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 static void reset_nct38xx_port(int port);
@@ -112,7 +104,7 @@ unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
  * not needed as well. usb_mux.c can handle the situation
  * properly.
  */
-static int ioex_set_flip(const struct usb_mux*, mux_state_t, bool *);
+static int ioex_set_flip(const struct usb_mux *, mux_state_t, bool *);
 struct usb_mux_driver ioex_sbu_mux_driver = {
 	.set = ioex_set_flip,
 };
@@ -132,13 +124,13 @@ struct usb_mux usbc1_sbu_mux = {
 };
 
 int baseboard_anx7483_c0_mux_set(const struct usb_mux *me,
-			      mux_state_t mux_state)
+				 mux_state_t mux_state)
 {
 	return anx7483_set_default_tuning(me, mux_state);
 }
 
 int baseboard_anx7483_c1_mux_set(const struct usb_mux *me,
-			      mux_state_t mux_state)
+				 mux_state_t mux_state)
 {
 	bool flipped = mux_state & USB_PD_MUX_POLARITY_INVERTED;
 
@@ -278,7 +270,7 @@ static void setup_mux(void)
 
 	if (cros_cbi_get_fw_config(FW_IO_DB, &val) != 0)
 		CPRINTSUSB("Error finding FW_DB_IO in CBI FW_CONFIG");
-		/* Val will have our dts default on error, so continue setup */
+	/* Val will have our dts default on error, so continue setup */
 
 	if (val == FW_IO_DB_PS8811_PS8818) {
 		CPRINTSUSB("C1: Setting PS8818 mux");
@@ -294,8 +286,7 @@ DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_INIT_I2C);
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 &&
-			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 	int rv;
 
@@ -309,7 +300,7 @@ int board_set_active_charge_port(int port)
 			 * ahead and reset it so EN_SNK responds properly.
 			 */
 			if (nct38xx_get_boot_type(i) ==
-						NCT38XX_BOOT_DEAD_BATTERY) {
+			    NCT38XX_BOOT_DEAD_BATTERY) {
 				reset_nct38xx_port(i);
 				pd_set_error_recovery(i);
 			}
@@ -358,7 +349,7 @@ int board_set_active_charge_port(int port)
 				 * change because we'll brown out.
 				 */
 				if (nct38xx_get_boot_type(port) ==
-						NCT38XX_BOOT_DEAD_BATTERY) {
+				    NCT38XX_BOOT_DEAD_BATTERY) {
 					reset_nct38xx_port(i);
 					pd_set_error_recovery(i);
 				} else {
@@ -405,8 +396,7 @@ int board_set_active_charge_port(int port)
  * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
  * current limits.
  */
-int board_aoz1380_set_vbus_source_current_limit(int port,
-						enum tcpc_rp_value rp)
+int board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv = EC_SUCCESS;
 
@@ -416,12 +406,11 @@ int board_aoz1380_set_vbus_source_current_limit(int port,
 	return rv;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void sbu_fault_interrupt(enum gpio_signal signal)
@@ -437,9 +426,9 @@ void usb_fault_interrupt(enum gpio_signal signal)
 	int out;
 
 	CPRINTSUSB("USB fault(%d), alerting the SoC", signal);
-	out = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_hub_fault_q_odl))
-	      && gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(ioex_usb_a0_fault_odl))
-	      &&
+	out = gpio_pin_get_dt(
+		      GPIO_DT_FROM_NODELABEL(gpio_usb_hub_fault_q_odl)) &&
+	      gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(ioex_usb_a0_fault_odl)) &&
 	      gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(ioex_usb_a1_fault_db_odl));
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_fault_odl), out);
@@ -511,7 +500,6 @@ static void reset_nct38xx_port(int port)
 	gpio_reset_port(ioex_port1);
 }
 
-
 void board_reset_pd_mcu(void)
 {
 	/* Reset TCPC0 */
@@ -530,16 +518,16 @@ uint16_t tcpc_get_alert_status(void)
 	 * its reset line active.
 	 */
 	if (!gpio_pin_get_dt(
-	     GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
-		if (gpio_pin_get_dt(
-		    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_rst_l)) != 0)
+		    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
+			    gpio_usb_c0_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_0;
 	}
 
 	if (!gpio_pin_get_dt(
-	     GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
-		if (gpio_pin_get_dt(
-		    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_rst_l)) != 0)
+		    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_tcpc_int_odl))) {
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
+			    gpio_usb_c1_tcpc_rst_l)) != 0)
 			status |= PD_STATUS_TCPC_ALERT_1;
 	}
 
