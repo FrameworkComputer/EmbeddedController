@@ -7,7 +7,7 @@
 #include "temp_sensor/temp_sensor.h"
 #include "ec_commands.h"
 
-#define THERMAL_CONFIG(node_id)					\
+#define THERMAL_CONFIG(node_id) \
 	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {				\
 		.temp_host = {						\
 			[EC_TEMP_THRESH_WARN] =			\
