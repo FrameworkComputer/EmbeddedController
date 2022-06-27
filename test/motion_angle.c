@@ -32,10 +32,10 @@ int filler(const struct motion_sensor_t *s, const float v)
 static int test_lid_angle_less180(void)
 {
 	int index = 0, lid_angle;
-	struct motion_sensor_t *lid = &motion_sensors[
-		CONFIG_LID_ANGLE_SENSOR_LID];
-	struct motion_sensor_t *base = &motion_sensors[
-		CONFIG_LID_ANGLE_SENSOR_BASE];
+	struct motion_sensor_t *lid =
+		&motion_sensors[CONFIG_LID_ANGLE_SENSOR_LID];
+	struct motion_sensor_t *base =
+		&motion_sensors[CONFIG_LID_ANGLE_SENSOR_BASE];
 
 	/* We don't have TASK_CHIP so simulate init ourselves */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
@@ -56,40 +56,37 @@ static int test_lid_angle_less180(void)
 	cprints(CC_ACCEL, "start loop");
 	/* Check we will never enter tablet mode. */
 	while (index < kAccelerometerLaptopModeTestDataLength) {
-		feed_accel_data(kAccelerometerLaptopModeTestData,
-				&index, filler);
+		feed_accel_data(kAccelerometerLaptopModeTestData, &index,
+				filler);
 		wait_for_valid_sample();
 		lid_angle = motion_lid_get_angle();
 		cprints(CC_ACCEL, "%d : LID(%d, %d, %d)/BASE(%d, %d, %d): %d",
-				index / TEST_LID_SAMPLE_SIZE,
-				lid->xyz[X], lid->xyz[Y], lid->xyz[Z],
-				base->xyz[X], base->xyz[Y], base->xyz[Z],
-				lid_angle);
+			index / TEST_LID_SAMPLE_SIZE, lid->xyz[X], lid->xyz[Y],
+			lid->xyz[Z], base->xyz[X], base->xyz[Y], base->xyz[Z],
+			lid_angle);
 		/* We need few sample to debounce and enter laptop mode. */
 		TEST_ASSERT(index < TEST_LID_SAMPLE_SIZE *
-				(TABLET_MODE_DEBOUNCE_COUNT + 2) ||
+					    (TABLET_MODE_DEBOUNCE_COUNT + 2) ||
 			    !tablet_get_mode());
 	}
 
 	/* Check we will never exit tablet mode. */
 	index = 0;
 	while (index < kAccelerometerFullyOpenTestDataLength) {
-		feed_accel_data(kAccelerometerFullyOpenTestData,
-				&index, filler);
+		feed_accel_data(kAccelerometerFullyOpenTestData, &index,
+				filler);
 		wait_for_valid_sample();
 		lid_angle = motion_lid_get_angle();
 		cprints(CC_ACCEL, "%d : LID(%d, %d, %d)/BASE(%d, %d, %d): %d",
-				index / TEST_LID_SAMPLE_SIZE,
-				lid->xyz[X], lid->xyz[Y], lid->xyz[Z],
-				base->xyz[X], base->xyz[Y], base->xyz[Z],
-				lid_angle);
+			index / TEST_LID_SAMPLE_SIZE, lid->xyz[X], lid->xyz[Y],
+			lid->xyz[Z], base->xyz[X], base->xyz[Y], base->xyz[Z],
+			lid_angle);
 		TEST_ASSERT(index < TEST_LID_SAMPLE_SIZE *
-				(TABLET_MODE_DEBOUNCE_COUNT + 2) ||
+					    (TABLET_MODE_DEBOUNCE_COUNT + 2) ||
 			    tablet_get_mode());
 	}
 	return EC_SUCCESS;
 }
-
 
 void run_test(int argc, char **argv)
 {
