@@ -33,8 +33,8 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* USBC TCPC configuration */
 struct tcpc_config_t tcpc_config[] = {
@@ -139,23 +139,22 @@ struct usb_mux usb_muxes[] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
 static const struct usb_mux usb_muxes_c1 = {
-		.usb_port = USBC_PORT_C1,
-		.driver = &bb_usb_retimer,
-		.hpd_update = bb_retimer_hpd_update,
-		.i2c_port = I2C_PORT_USB_C1_MUX,
-		.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
-		.next_mux = &usbc1_tcss_usb_mux,
+	.usb_port = USBC_PORT_C1,
+	.driver = &bb_usb_retimer,
+	.hpd_update = bb_retimer_hpd_update,
+	.i2c_port = I2C_PORT_USB_C1_MUX,
+	.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
+	.next_mux = &usbc1_tcss_usb_mux,
 };
 
 static const struct usb_mux usb_muxes_c2 = {
-		.usb_port = USBC_PORT_C2,
-		.driver = &bb_usb_retimer,
-		.hpd_update = bb_retimer_hpd_update,
-		.i2c_port = I2C_PORT_USB_C2_MUX,
-		.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
-		.next_mux = &usbc2_tcss_usb_mux,
+	.usb_port = USBC_PORT_C2,
+	.driver = &bb_usb_retimer,
+	.hpd_update = bb_retimer_hpd_update,
+	.i2c_port = I2C_PORT_USB_C2_MUX,
+	.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
+	.next_mux = &usbc2_tcss_usb_mux,
 };
-
 
 /* BC1.2 charger detect configuration */
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
@@ -253,7 +252,6 @@ void board_reset_pd_mcu(void)
 
 	if (ec_cfg_usb_db_type() == DB_USB4_NCT3807)
 		gpio_set_level(GPIO_USB_C1_RST_ODL, 0);
-
 
 	/*
 	 * delay for power-on to reset-off and min. assertion time
@@ -392,10 +390,9 @@ __override bool board_is_dts_port(int port)
 
 __override bool board_is_tbt_usb4_port(int port)
 {
-	if (((port == USBC_PORT_C2) &&
-		(ec_cfg_usb_mb_type() == MB_USB4_TBT)) ||
-		((port == USBC_PORT_C1) &&
-		(ec_cfg_usb_db_type() == DB_USB4_NCT3807)))
+	if (((port == USBC_PORT_C2) && (ec_cfg_usb_mb_type() == MB_USB4_TBT)) ||
+	    ((port == USBC_PORT_C1) &&
+	     (ec_cfg_usb_db_type() == DB_USB4_NCT3807)))
 		return true;
 
 	return false;
