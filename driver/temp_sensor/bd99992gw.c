@@ -23,7 +23,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 /* List of active channels, ordered by pointer register */
 static enum bd99992gw_adc_channel
@@ -39,8 +39,8 @@ static enum bd99992gw_adc_channel
 static int raw_read8(const int offset, int *data_ptr)
 {
 	int ret;
-	ret = i2c_read8(I2C_PORT_THERMAL, BD99992GW_I2C_ADDR_FLAGS,
-			offset, data_ptr);
+	ret = i2c_read8(I2C_PORT_THERMAL, BD99992GW_I2C_ADDR_FLAGS, offset,
+			data_ptr);
 	if (ret != EC_SUCCESS)
 		CPRINTS("bd99992gw read fail %d", ret);
 	return ret;
@@ -49,8 +49,8 @@ static int raw_read8(const int offset, int *data_ptr)
 static int raw_write8(const int offset, int data)
 {
 	int ret;
-	ret = i2c_write8(I2C_PORT_THERMAL, BD99992GW_I2C_ADDR_FLAGS,
-			 offset, data);
+	ret = i2c_write8(I2C_PORT_THERMAL, BD99992GW_I2C_ADDR_FLAGS, offset,
+			 data);
 	if (ret != EC_SUCCESS)
 		CPRINTS("bd99992gw write fail %d", ret);
 	return ret;
@@ -79,9 +79,11 @@ static void bd99992gw_init(void)
 	/* Now write pointer regs with channel to monitor */
 	for (i = 0; i < active_channel_count; ++i)
 		/* Write stop bit on last channel */
-		if (raw_write8(pointer_reg + i, active_channels[i] |
-			  ((i == active_channel_count - 1) ?
-			  BD99992GW_ADC1ADDR_STOP : 0)))
+		if (raw_write8(pointer_reg + i,
+			       active_channels[i] |
+				       ((i == active_channel_count - 1) ?
+						BD99992GW_ADC1ADDR_STOP :
+						0)))
 			return;
 
 	/* Enable ADC interrupts */
@@ -96,7 +98,8 @@ static void bd99992gw_init(void)
 
 	/* Start round-robin conversions at 27ms period */
 	raw_write8(BD99992GW_REG_ADC1CNTL1, ADC_LOOP_PERIOD |
-		   BD99992GW_ADC1CNTL1_ADEN | BD99992GW_ADC1CNTL1_ADSTRT);
+						    BD99992GW_ADC1CNTL1_ADEN |
+						    BD99992GW_ADC1CNTL1_ADSTRT);
 }
 /*
  * Some regs only work in S0, so we must initialize on AP startup in
@@ -130,24 +133,20 @@ int bd99992gw_get_val(int idx, int *temp_ptr)
 	/* Find requested channel */
 	for (i = 0; i < ARRAY_SIZE(active_channels); ++i) {
 		channel = active_channels[i];
-		if (channel == idx ||
-		    channel == BD99992GW_ADC_CHANNEL_NONE)
+		if (channel == idx || channel == BD99992GW_ADC_CHANNEL_NONE)
 			break;
 	}
 
 	/* Make sure we found it */
-	if (i == ARRAY_SIZE(active_channels) ||
-	    active_channels[i] != idx) {
+	if (i == ARRAY_SIZE(active_channels) || active_channels[i] != idx) {
 		CPRINTS("Bad ADC channel %d", idx);
 		return EC_ERROR_INVAL;
 	}
 
 	/* Pause conversions */
-	ret = raw_write8(0x80,
-			 ADC_LOOP_PERIOD |
-			 BD99992GW_ADC1CNTL1_ADEN |
-			 BD99992GW_ADC1CNTL1_ADSTRT |
-			 BD99992GW_ADC1CNTL1_ADPAUSE);
+	ret = raw_write8(0x80, ADC_LOOP_PERIOD | BD99992GW_ADC1CNTL1_ADEN |
+				       BD99992GW_ADC1CNTL1_ADSTRT |
+				       BD99992GW_ADC1CNTL1_ADPAUSE);
 	if (ret)
 		return ret;
 
@@ -173,8 +172,9 @@ int bd99992gw_get_val(int idx, int *temp_ptr)
 		return ret;
 
 	/* Resume conversions */
-	ret = raw_write8(BD99992GW_REG_ADC1CNTL1, ADC_LOOP_PERIOD |
-		   BD99992GW_ADC1CNTL1_ADEN | BD99992GW_ADC1CNTL1_ADSTRT);
+	ret = raw_write8(BD99992GW_REG_ADC1CNTL1,
+			 ADC_LOOP_PERIOD | BD99992GW_ADC1CNTL1_ADEN |
+				 BD99992GW_ADC1CNTL1_ADSTRT);
 	if (ret)
 		return ret;
 
