@@ -40,14 +40,14 @@
 #define CONFIG_USB_PD_PULLUP TYPEC_RP_USB
 
 /* fake board specific type-C power constants */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 650000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_POWER_MW 60000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
 
 /* I2C master port connected to the TCPC */
 #define I2C_PORT_TCPC 0
@@ -66,12 +66,12 @@
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE 0
-#define USB_IFACE_COUNT   1
+#define USB_IFACE_COUNT 1
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL 0
 #define USB_EP_CONSOLE 1
-#define USB_EP_COUNT   2
+#define USB_EP_COUNT 2
 
 /* Remove console commands / features for flash / RAM savings */
 #undef CONFIG_WATCHDOG_HELP
