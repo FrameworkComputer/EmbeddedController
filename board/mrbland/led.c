@@ -38,15 +38,15 @@ enum led_color {
 	LED_GREEN,
 	LED_AMBER,
 	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static void led_set_color_battery(enum led_color color)
 {
 	gpio_set_level(GPIO_EC_CHG_LED_R_C0,
-		(color == LED_RED) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_RED) ? BAT_LED_ON : BAT_LED_OFF);
 	gpio_set_level(GPIO_EC_CHG_LED_G_C0,
-		(color == LED_GREEN) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_GREEN) ? BAT_LED_ON : BAT_LED_OFF);
 	if (color == LED_AMBER) {
 		gpio_set_level(GPIO_EC_CHG_LED_R_C0, BAT_LED_ON);
 		gpio_set_level(GPIO_EC_CHG_LED_G_C0, BAT_LED_ON);
@@ -56,7 +56,7 @@ static void led_set_color_battery(enum led_color color)
 static void led_set_color_power(enum led_color color)
 {
 	gpio_set_level(GPIO_EC_PWRBTN_LED,
-		(color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -105,13 +105,13 @@ static void board_led_set_battery(void)
 	case PWR_STATE_CHARGE:
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		if (chipset_in_state(CHIPSET_STATE_ON |
-					CHIPSET_STATE_ANY_SUSPEND |
-					CHIPSET_STATE_ANY_OFF)) {
+				     CHIPSET_STATE_ANY_SUSPEND |
+				     CHIPSET_STATE_ANY_OFF)) {
 			if (percent <= BATTERY_LEVEL_CRITICAL) {
 				/* battery capa <= 5%, Red */
 				color = LED_RED;
 			} else if (percent > BATTERY_LEVEL_CRITICAL &&
-					percent < BATTERY_LEVEL_NEAR_FULL) {
+				   percent < BATTERY_LEVEL_NEAR_FULL) {
 				/* 5% < battery capa < 97%, Orange */
 				color = LED_AMBER;
 			} else {
@@ -203,7 +203,7 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 	enum led_color color;
 
 	if ((led_id != EC_LED_ID_RECOVERY_HW_REINIT_LED) &&
-		(led_id != EC_LED_ID_SYSRQ_DEBUG_LED))
+	    (led_id != EC_LED_ID_SYSRQ_DEBUG_LED))
 		return;
 
 	if (state == LED_STATE_RESET) {
