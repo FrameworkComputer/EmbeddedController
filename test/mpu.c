@@ -17,22 +17,18 @@ struct mpu_info {
 };
 
 #if defined(CHIP_VARIANT_STM32F412)
-struct mpu_info mpu_info = {
-	.has_mpu = true,
-	.num_mpu_regions = 8,
-	.mpu_is_unified = true
-};
+struct mpu_info mpu_info = { .has_mpu = true,
+			     .num_mpu_regions = 8,
+			     .mpu_is_unified = true };
 
 struct mpu_rw_regions expected_rw_regions = { .num_regions = 2,
 					      .addr = { 0x08060000,
 							0x08080000 },
 					      .size = { 0x20000, 0x80000 } };
 #elif defined(CHIP_VARIANT_STM32H7X3)
-struct mpu_info mpu_info = {
-	.has_mpu = true,
-	.num_mpu_regions = 16,
-	.mpu_is_unified = true
-};
+struct mpu_info mpu_info = { .has_mpu = true,
+			     .num_mpu_regions = 16,
+			     .mpu_is_unified = true };
 
 struct mpu_rw_regions expected_rw_regions = { .num_regions = 1,
 					      .addr = { 0x08100000,
@@ -75,7 +71,7 @@ test_static int test_mpu_update_region_valid_region(void)
 {
 	volatile char data __maybe_unused;
 
-	char * const ram_base = (char * const)CONFIG_RAM_BASE;
+	char *const ram_base = (char *const)CONFIG_RAM_BASE;
 	const uint8_t size_bit = 5;
 	uint16_t mpu_attr = MPU_ATTR_NO_NO;
 
