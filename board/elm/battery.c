@@ -10,8 +10,8 @@
 #include "util.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
-#define SB_SHIP_MODE_REG	0x3a
-#define SB_SHUTDOWN_DATA	0xC574
+#define SB_SHIP_MODE_REG 0x3a
+#define SB_SHUTDOWN_DATA 0xC574
 
 static const struct battery_info info = {
 	.voltage_max = 13200,
