@@ -17,7 +17,7 @@
 
 enum i2c_ports {
 	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), I2C_PORT_WITH_COMMA)
-	I2C_PORT_COUNT
+		I2C_PORT_COUNT
 };
 #define NAMED_I2C(name) I2C_PORT(DT_PATH(named_i2c_ports, name))
 #endif /* named_i2c_ports */
@@ -36,8 +36,9 @@ enum i2c_ports {
 #endif
 
 #if defined(CONFIG_I2C_ITE_IT8XXX2) && defined(CONFIG_I2C_ITE_ENHANCE)
-#define I2C_DEVICE_COUNT DT_NUM_INST_STATUS_OKAY(ite_it8xxx2_i2c) +            \
-			 DT_NUM_INST_STATUS_OKAY(ite_enhance_i2c)
+#define I2C_DEVICE_COUNT                           \
+	DT_NUM_INST_STATUS_OKAY(ite_it8xxx2_i2c) + \
+		DT_NUM_INST_STATUS_OKAY(ite_enhance_i2c)
 #else
 #define I2C_DEVICE_COUNT DT_NUM_INST_STATUS_OKAY(I2C_COMPAT)
 #endif
