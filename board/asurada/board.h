@@ -41,7 +41,7 @@
 #define PD_MAX_VOLTAGE_MV 20000
 #define PD_MAX_POWER_MW 60000
 #endif
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* Optional console commands */
@@ -49,7 +49,7 @@
 #define CONFIG_CMD_SCRATCHPAD
 #define CONFIG_CMD_STACKOVERFLOW
 
-#define CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV	9000
+#define CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV 9000
 
 /* Sensor */
 #define CONFIG_GMR_TABLET_MODE
@@ -118,12 +118,12 @@ enum sensor_id {
 };
 
 enum adc_channel {
-	ADC_VBUS_C0,             /* ADC 0 */
-	ADC_BOARD_ID_0,          /* ADC 1 */
-	ADC_BOARD_ID_1,          /* ADC 2 */
-	ADC_CHARGER_AMON_R,      /* ADC 3 */
-	ADC_VBUS_C1,             /* ADC 5 */
-	ADC_CHARGER_PMON,        /* ADC 6 */
+	ADC_VBUS_C0, /* ADC 0 */
+	ADC_BOARD_ID_0, /* ADC 1 */
+	ADC_BOARD_ID_1, /* ADC 2 */
+	ADC_CHARGER_AMON_R, /* ADC 3 */
+	ADC_VBUS_C1, /* ADC 5 */
+	ADC_CHARGER_PMON, /* ADC 6 */
 
 	/* Number of ADC channels */
 	ADC_CH_COUNT,
