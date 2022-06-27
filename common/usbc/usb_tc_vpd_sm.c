@@ -17,15 +17,15 @@
 /* USB Type-C VCONN Powered Device module */
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
 #else /* CONFIG_COMMON_RUNTIME */
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
 #endif
 
 /* Type-C Layer Flags */
-#define TC_FLAGS_VCONN_ON           BIT(0)
+#define TC_FLAGS_VCONN_ON BIT(0)
 
 /**
  * This is the Type-C Port object that contains information needed to
@@ -61,7 +61,7 @@ enum usb_tc_state {
 static const struct usb_state tc_states[];
 
 /* List of human readable state names for console debugging */
-__maybe_unused static const char * const tc_state_names[] = {
+__maybe_unused static const char *const tc_state_names[] = {
 #ifdef CONFIG_COMMON_RUNTIME
 	[TC_DISABLED] = "Disabled",
 	[TC_UNATTACHED_SNK] = "Unattached.SNK",
@@ -270,11 +270,11 @@ static void tc_attach_wait_snk_run(const int port)
 	if (tc[port].host_cc_state != host_new_cc_state) {
 		tc[port].host_cc_state = host_new_cc_state;
 		if (host_new_cc_state == PD_CC_DFP_ATTACHED)
-			tc[port].cc_debounce = get_time().val +
-							PD_T_CC_DEBOUNCE;
+			tc[port].cc_debounce =
+				get_time().val + PD_T_CC_DEBOUNCE;
 		else
-			tc[port].cc_debounce = get_time().val +
-							PD_T_PD_DEBOUNCE;
+			tc[port].cc_debounce =
+				get_time().val + PD_T_PD_DEBOUNCE;
 
 		return;
 	}
@@ -293,7 +293,7 @@ static void tc_attach_wait_snk_run(const int port)
 	 * CC2 pins is SNK.Open for at least tPDDebounce.
 	 */
 	if (tc[port].host_cc_state == PD_CC_DFP_ATTACHED &&
-			(vpd_is_vconn_present() || vpd_is_host_vbus_present()))
+	    (vpd_is_vconn_present() || vpd_is_host_vbus_present()))
 		set_state_tc(port, TC_ATTACHED_SNK);
 	else if (tc[port].host_cc_state == PD_CC_NONE)
 		set_state_tc(port, TC_UNATTACHED_SNK);
