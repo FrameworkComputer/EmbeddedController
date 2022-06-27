@@ -47,17 +47,13 @@ static struct bmi_drv_data_t g_bmi_data;
 static struct accelgyro_saved_data_t g_bma422_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, FLOAT_TO_FP(1), 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 /*
  * We have total 30 pins for keyboard connecter {-1, -1} mean
@@ -65,16 +61,15 @@ const mat33_fp_t lid_standard_ref = {
  * that we don't have pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-	{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-	{0, 7}, {-1, -1}, {-1, -1}, {1, 4}, {1, 3},
-	{-1, -1}, {1, 6}, {1, 7}, {3, 1}, {2, 0},
-	{1, 5}, {2, 6}, {2, 7}, {2, 1}, {2, 4},
-	{2, 5}, {1, 2}, {2, 3}, {2, 2}, {3, 0},
-	{-1, -1}, {0, 4}, {-1, -1}, {8, 2}, {-1, -1},
-	{-1, -1},
+	{ -1, -1 }, { 0, 5 },	{ 1, 1 }, { 1, 0 },   { 0, 6 },	  { 0, 7 },
+	{ -1, -1 }, { -1, -1 }, { 1, 4 }, { 1, 3 },   { -1, -1 }, { 1, 6 },
+	{ 1, 7 },   { 3, 1 },	{ 2, 0 }, { 1, 5 },   { 2, 6 },	  { 2, 7 },
+	{ 2, 1 },   { 2, 4 },	{ 2, 5 }, { 1, 2 },   { 2, 3 },	  { 2, 2 },
+	{ 3, 0 },   { -1, -1 }, { 0, 4 }, { -1, -1 }, { 8, 2 },	  { -1, -1 },
+	{ -1, -1 },
 };
 const int keyboard_factory_scan_pins_used =
-		ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 struct motion_sensor_t motion_sensors[] = {
 	[BASE_ACCEL] = {
@@ -178,51 +173,46 @@ board_a1_ps8811_retimer_init(const struct usb_mux *me)
 }
 
 __override int board_c1_ps8818_mux_set(const struct usb_mux *me,
-				    mux_state_t mux_state)
+				       mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 
 	/* USB specific config */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/* Boost the USB gain */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX1EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX1EQ_10G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX2EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX2EQ_10G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX1EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX1EQ_5G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX2EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX2EQ_5G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
 		/* Set the RX input termination */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_RX_PHY,
-					PS8818_RX_INPUT_TERM_MASK,
-					PS8818_RX_INPUT_TERM_112_OHM);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_RX_PHY,
+					      PS8818_RX_INPUT_TERM_MASK,
+					      PS8818_RX_INPUT_TERM_112_OHM);
 		if (rv)
 			return rv;
 	}
@@ -230,11 +220,10 @@ __override int board_c1_ps8818_mux_set(const struct usb_mux *me,
 	/* DP specific config */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Boost the DP gain */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_DPEQ_LEVEL,
-					PS8818_DPEQ_LEVEL_UP_MASK,
-					PS8818_DPEQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_DPEQ_LEVEL,
+					      PS8818_DPEQ_LEVEL_UP_MASK,
+					      PS8818_DPEQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
@@ -302,8 +291,7 @@ static void board_chipset_startup(void)
 	if (get_board_version() > 1)
 		pct2075_init();
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
-	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 int board_get_soc_temp_k(int idx, int *temp_k)
 {
@@ -437,8 +425,8 @@ static const struct ec_response_keybd_config main_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &main_kb;
 }
