@@ -8,8 +8,8 @@
 #ifndef __CROS_EC_PRINTF_H
 #define __CROS_EC_PRINTF_H
 
-#include <stdarg.h>  /* For va_list */
-#include <stddef.h>  /* For size_t */
+#include <stdarg.h> /* For va_list */
+#include <stddef.h> /* For size_t */
 #include "common.h"
 
 /* The declaration of snprintf is changed to crec_snprintf for Zephyr,
@@ -99,9 +99,8 @@ __stdlib_compat int vfnprintf(int (*addchar)(void *context, int c),
  * @param format	Format string
  * @return EC_SUCCESS, or EC_ERROR_OVERFLOW if the output was truncated.
  */
-__attribute__((__format__(__printf__, 3, 4)))
-__stdlib_compat int crec_snprintf(char *str, size_t size, const char *format,
-				  ...);
+__attribute__((__format__(__printf__, 3, 4))) __stdlib_compat int
+crec_snprintf(char *str, size_t size, const char *format, ...);
 
 /**
  * Print formatted output to a string.
@@ -118,6 +117,6 @@ __stdlib_compat int crec_snprintf(char *str, size_t size, const char *format,
 __stdlib_compat int crec_vsnprintf(char *str, size_t size, const char *format,
 				   va_list args);
 
-#endif  /* !HIDE_EC_STDLIB */
+#endif /* !HIDE_EC_STDLIB */
 
-#endif  /* __CROS_EC_PRINTF_H */
+#endif /* __CROS_EC_PRINTF_H */
