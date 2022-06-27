@@ -37,31 +37,31 @@
 #define FLASH_PAGE_SIZE CONFIG_FLASH_BANK_SIZE
 #define FLASH_PAGE_MAX_COUNT (CONFIG_FLASH_SIZE_BYTES / FLASH_PAGE_SIZE)
 #define FLASH_RO_FIRST_PAGE_IDX WP_BANK_OFFSET
-#define FLASH_RO_LAST_PAGE_IDX ((CONFIG_WP_STORAGE_SIZE / FLASH_PAGE_SIZE) \
-				 + FLASH_RO_FIRST_PAGE_IDX - 1)
+#define FLASH_RO_LAST_PAGE_IDX                        \
+	((CONFIG_WP_STORAGE_SIZE / FLASH_PAGE_SIZE) + \
+	 FLASH_RO_FIRST_PAGE_IDX - 1)
 #define FLASH_RW_FIRST_PAGE_IDX (FLASH_RO_LAST_PAGE_IDX + 1)
 #define FLASH_RW_LAST_PAGE_IDX (FLASH_PAGE_MAX_COUNT - 1)
 
-
 #define FLASH_PAGE_ROLLBACK_COUNT ROLLBACK_BANK_COUNT
 #define FLASH_PAGE_ROLLBACK_FIRST_IDX ROLLBACK_BANK_OFFSET
-#define FLASH_PAGE_ROLLBACK_LAST_IDX (FLASH_PAGE_ROLLBACK_FIRST_IDX +\
-					FLASH_PAGE_ROLLBACK_COUNT -1)
+#define FLASH_PAGE_ROLLBACK_LAST_IDX \
+	(FLASH_PAGE_ROLLBACK_FIRST_IDX + FLASH_PAGE_ROLLBACK_COUNT - 1)
 
 #ifdef STM32_FLASH_DBANK_MODE
-#define FLASH_WRP_MASK              (FLASH_PAGE_MAX_COUNT - 1)
+#define FLASH_WRP_MASK (FLASH_PAGE_MAX_COUNT - 1)
 #else
 #ifdef CHIP_FAMILY_STM32L4
-#define FLASH_WRP_MASK              0xFF
+#define FLASH_WRP_MASK 0xFF
 #else
-#define FLASH_WRP_MASK              ((FLASH_PAGE_MAX_COUNT) / 2 - 1)
+#define FLASH_WRP_MASK ((FLASH_PAGE_MAX_COUNT) / 2 - 1)
 #endif
 #endif /* CONFIG_FLASH_DBANK_MODE */
-#define FLASH_WRP_START(val)        ((val) & FLASH_WRP_MASK)
-#define FLASH_WRP_END(val)          (((val) >> 16) & FLASH_WRP_MASK)
-#define FLASH_WRP_RANGE(start, end) (((start) & FLASH_WRP_MASK) | \
-				       (((end) & FLASH_WRP_MASK) << 16))
-#define FLASH_WRP_RANGE_DISABLED    FLASH_WRP_RANGE(FLASH_WRP_MASK, 0x00)
+#define FLASH_WRP_START(val) ((val)&FLASH_WRP_MASK)
+#define FLASH_WRP_END(val) (((val) >> 16) & FLASH_WRP_MASK)
+#define FLASH_WRP_RANGE(start, end) \
+	(((start)&FLASH_WRP_MASK) | (((end)&FLASH_WRP_MASK) << 16))
+#define FLASH_WRP_RANGE_DISABLED FLASH_WRP_RANGE(FLASH_WRP_MASK, 0x00)
 #define FLASH_WRP1X_MASK FLASH_WRP_RANGE(FLASH_WRP_MASK, FLASH_WRP_MASK)
 
 enum wrp_region {
@@ -77,8 +77,8 @@ struct wrp_info {
 
 static inline int calculate_flash_timeout(void)
 {
-	return (FLASH_TIMEOUT_US *
-		(clock_get_freq() / SECOND) / CYCLE_PER_FLASH_LOOP);
+	return (FLASH_TIMEOUT_US * (clock_get_freq() / SECOND) /
+		CYCLE_PER_FLASH_LOOP);
 }
 
 static int wait_while_busy(void)
@@ -104,8 +104,7 @@ static int unlock(int locks)
 		STM32_FLASH_KEYR = FLASH_KEYR_KEY2;
 	}
 	/* unlock option memory if required */
-	if ((locks & FLASH_CR_OPTLOCK) &&
-	    (STM32_FLASH_CR & FLASH_CR_OPTLOCK)) {
+	if ((locks & FLASH_CR_OPTLOCK) && (STM32_FLASH_CR & FLASH_CR_OPTLOCK)) {
 		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY1;
 		STM32_FLASH_OPTKEYR = FLASH_OPTKEYR_KEY2;
 	}
@@ -113,8 +112,8 @@ static int unlock(int locks)
 	/* Re-enable bus fault handler */
 	ignore_bus_fault(0);
 
-	return (STM32_FLASH_CR & (locks | FLASH_CR_LOCK)) ? EC_ERROR_UNKNOWN
-							  : EC_SUCCESS;
+	return (STM32_FLASH_CR & (locks | FLASH_CR_LOCK)) ? EC_ERROR_UNKNOWN :
+							    EC_SUCCESS;
 }
 
 static void lock(void)
@@ -299,10 +298,10 @@ static void optb_set_wrp(enum wrp_region region, struct wrp_info *wrp)
 			 * value. Otherwise, can use end passed in directly.
 			 */
 			if (start <= FLASH_WRP_MASK) {
-				rw_end = end > FLASH_WRP_MASK ?
-					FLASH_WRP_MASK : end;
-				STM32_FLASH_WRP1BR = FLASH_WRP_RANGE(start,
-								     rw_end);
+				rw_end = end > FLASH_WRP_MASK ? FLASH_WRP_MASK :
+								end;
+				STM32_FLASH_WRP1BR =
+					FLASH_WRP_RANGE(start, rw_end);
 			}
 			/*
 			 * If the last RW flash page is in the 2nd half of
@@ -366,8 +365,8 @@ int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 	 * write protection in the option bytes. Based on new_flags either RO or
 	 * RW or both regions write protect may be set.
 	 */
-	if (new_flags & (EC_FLASH_PROTECT_ALL_AT_BOOT |
-			 EC_FLASH_PROTECT_RO_AT_BOOT)) {
+	if (new_flags &
+	    (EC_FLASH_PROTECT_ALL_AT_BOOT | EC_FLASH_PROTECT_RO_AT_BOOT)) {
 		wrp_ro.start = FLASH_RO_FIRST_PAGE_IDX;
 		wrp_ro.end = FLASH_RO_LAST_PAGE_IDX;
 		wrp_ro.enable = 1;
@@ -434,9 +433,9 @@ static int registers_need_reset(void)
 	/* The RO region is write-protected by the WRP1AR range. */
 	uint32_t wrp1ar = STM32_OPTB_WRP1AR;
 	uint32_t ro_range = ro_at_boot ?
-		FLASH_WRP_RANGE(FLASH_RO_FIRST_PAGE_IDX,
-				  FLASH_RO_LAST_PAGE_IDX)
-		: FLASH_WRP_RANGE_DISABLED;
+				    FLASH_WRP_RANGE(FLASH_RO_FIRST_PAGE_IDX,
+						    FLASH_RO_LAST_PAGE_IDX) :
+				    FLASH_WRP_RANGE_DISABLED;
 
 	return ro_range != (wrp1ar & FLASH_WRP1X_MASK);
 }
@@ -484,10 +483,10 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 
 		/* write the 2 words */
 		if (unaligned) {
-			*address++ = (uint32_t)data[0] | (data[1] << 8)
-				   | (data[2] << 16) | (data[3] << 24);
-			*address++ = (uint32_t)data[4] | (data[5] << 8)
-				   | (data[6] << 16) | (data[7] << 24);
+			*address++ = (uint32_t)data[0] | (data[1] << 8) |
+				     (data[2] << 16) | (data[3] << 24);
+			*address++ = (uint32_t)data[4] | (data[5] << 8) |
+				     (data[6] << 16) | (data[7] << 24);
 			data += STM32_FLASH_MIN_WRITE_SIZE;
 		} else {
 			*address++ = *data32++;
@@ -540,8 +539,8 @@ int crec_flash_physical_erase(int offset, int size)
 		timestamp_t deadline;
 
 		/* select page to erase and PER bit */
-		STM32_FLASH_CR = (STM32_FLASH_CR & ~FLASH_CR_PNB_MASK)
-				| FLASH_CR_PER | FLASH_CR_PNB(pg);
+		STM32_FLASH_CR = (STM32_FLASH_CR & ~FLASH_CR_PNB_MASK) |
+				 FLASH_CR_PER | FLASH_CR_PNB(pg);
 
 		/* set STRT bit : start erase */
 		STM32_FLASH_CR |= FLASH_CR_STRT;
@@ -591,7 +590,7 @@ int crec_flash_physical_get_protect(int block)
 	optb_get_wrp(WRP_RW, &wrp_rw);
 
 	return ((block >= wrp_ro.start) && (block <= wrp_ro.end)) ||
-		((block >= wrp_rw.start) && (block <= wrp_rw.end));
+	       ((block >= wrp_rw.start) && (block <= wrp_rw.end));
 }
 
 /*
@@ -613,7 +612,6 @@ uint32_t crec_flash_physical_get_protect_flags(void)
 		flags |= EC_FLASH_PROTECT_RO_AT_BOOT;
 
 	if (wrp_rw.enable) {
-
 #ifdef CONFIG_ROLLBACK
 		if (wrp_rw.start <= FLASH_PAGE_ROLLBACK_FIRST_IDX &&
 		    wrp_rw.end >= FLASH_PAGE_ROLLBACK_LAST_IDX)
@@ -639,18 +637,15 @@ int crec_flash_physical_protect_now(int all)
 
 uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 #ifdef CONFIG_FLASH_PROTECT_RW
-	       EC_FLASH_PROTECT_RW_AT_BOOT |
-	       EC_FLASH_PROTECT_RW_NOW |
+	       EC_FLASH_PROTECT_RW_AT_BOOT | EC_FLASH_PROTECT_RW_NOW |
 #endif
 #ifdef CONFIG_ROLLBACK
 	       EC_FLASH_PROTECT_ROLLBACK_AT_BOOT |
 	       EC_FLASH_PROTECT_ROLLBACK_NOW |
 #endif
-	       EC_FLASH_PROTECT_ALL_AT_BOOT |
-	       EC_FLASH_PROTECT_ALL_NOW;
+	       EC_FLASH_PROTECT_ALL_AT_BOOT | EC_FLASH_PROTECT_ALL_NOW;
 }
 
 uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
@@ -665,13 +660,13 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 	 * ALL/RW at-boot state can be set if WP GPIO is asserted and can always
 	 * be cleared.
 	 */
-	if (cur_flags & (EC_FLASH_PROTECT_ALL_AT_BOOT |
-			 EC_FLASH_PROTECT_GPIO_ASSERTED))
+	if (cur_flags &
+	    (EC_FLASH_PROTECT_ALL_AT_BOOT | EC_FLASH_PROTECT_GPIO_ASSERTED))
 		ret |= EC_FLASH_PROTECT_ALL_AT_BOOT;
 
 #ifdef CONFIG_FLASH_PROTECT_RW
-	if (cur_flags & (EC_FLASH_PROTECT_RW_AT_BOOT |
-			 EC_FLASH_PROTECT_GPIO_ASSERTED))
+	if (cur_flags &
+	    (EC_FLASH_PROTECT_RW_AT_BOOT | EC_FLASH_PROTECT_GPIO_ASSERTED))
 		ret |= EC_FLASH_PROTECT_RW_AT_BOOT;
 #endif
 
@@ -735,8 +730,8 @@ int crec_flash_pre_init(void)
 			 * to the check above.  One of them should be able to
 			 * go away.
 			 */
-			crec_flash_protect_at_boot(
-				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT);
+			crec_flash_protect_at_boot(prot_flags &
+						   EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 	} else {
@@ -751,7 +746,7 @@ int crec_flash_pre_init(void)
 	}
 
 	if ((crec_flash_physical_get_valid_flags() &
-	    EC_FLASH_PROTECT_ALL_AT_BOOT) &&
+	     EC_FLASH_PROTECT_ALL_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_ALL_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_ALL_NOW))) {
 		/*
@@ -767,7 +762,7 @@ int crec_flash_pre_init(void)
 
 #ifdef CONFIG_FLASH_PROTECT_RW
 	if ((crec_flash_physical_get_valid_flags() &
-	    EC_FLASH_PROTECT_RW_AT_BOOT) &&
+	     EC_FLASH_PROTECT_RW_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_RW_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_RW_NOW))) {
 		/* RW_AT_BOOT and RW_NOW do not match. */
