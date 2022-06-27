@@ -7,6 +7,6 @@
 #define __CROS_EC_LINKER_H
 
 /* Put the start of shared memory after all allocated RAM symbols */
-#define __shared_mem_buf	_image_ram_end
+#define __shared_mem_buf _image_ram_end
 
 #endif
