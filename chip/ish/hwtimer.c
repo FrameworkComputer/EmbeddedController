@@ -14,8 +14,8 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ##args)
 
 static uint32_t last_deadline;
 
@@ -37,7 +37,7 @@ static uint32_t last_deadline;
 /* Scaling helper methods for different ISH chip variants */
 #ifdef CHIP_FAMILY_ISH3
 #define CLOCK_FACTOR 12
-BUILD_ASSERT(CLOCK_FACTOR * SECOND == ISH_HPET_CLK_FREQ);
+BUILD_ASSERT(CLOCK_FACTOR *SECOND == ISH_HPET_CLK_FREQ);
 
 static inline uint64_t scale_us2ticks(uint64_t us)
 {
@@ -239,8 +239,7 @@ int __hw_clock_source_init64(uint64_t start_t)
 
 	/* Timer 1 - IRQ routing */
 	timer1_config &= ~HPET_Tn_INT_ROUTE_CNF_MASK;
-	timer1_config |= (ISH_HPET_TIMER1_IRQ <<
-			  HPET_Tn_INT_ROUTE_CNF_SHIFT);
+	timer1_config |= (ISH_HPET_TIMER1_IRQ << HPET_Tn_INT_ROUTE_CNF_SHIFT);
 
 	/* Level triggered interrupt */
 	timer1_config |= HPET_Tn_INT_TYPE_CNF;
