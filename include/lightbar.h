@@ -13,26 +13,13 @@
 /* Define the types of sequences */
 #define LBMSG(state) LIGHTBAR_##state
 #include "lightbar_msg_list.h"
-enum lightbar_sequence {
-	LIGHTBAR_MSG_LIST
-	LIGHTBAR_NUM_SEQUENCES
-};
+enum lightbar_sequence { LIGHTBAR_MSG_LIST LIGHTBAR_NUM_SEQUENCES };
 #undef LBMSG
 
 /* Bytecode field constants */
-enum lb_color {
-	LB_COL_RED,
-	LB_COL_GREEN,
-	LB_COL_BLUE,
-	LB_COL_ALL
-};
+enum lb_color { LB_COL_RED, LB_COL_GREEN, LB_COL_BLUE, LB_COL_ALL };
 
-enum lb_control {
-	LB_CONT_COLOR0,
-	LB_CONT_COLOR1,
-	LB_CONT_PHASE,
-	LB_CONT_MAX
-};
+enum lb_control { LB_CONT_COLOR0, LB_CONT_COLOR1, LB_CONT_PHASE, LB_CONT_MAX };
 
 #ifdef CONFIG_ALS_LIGHTBAR_DIMMING
 /*
@@ -67,4 +54,4 @@ extern void demo_battery_level(int inc);
 extern void demo_is_charging(int ischarge);
 extern void demo_brightness(int inc);
 extern void demo_tap(void);
-#endif  /* __CROS_EC_LIGHTBAR_H */
+#endif /* __CROS_EC_LIGHTBAR_H */
