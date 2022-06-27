@@ -76,8 +76,7 @@ uint32_t bkpdata_read_reset_flags()
 	return flags;
 }
 
-__overridable
-void bkpdata_write_reset_flags(uint32_t save_flags)
+__overridable void bkpdata_write_reset_flags(uint32_t save_flags)
 {
 	bkpdata_write(BKPDATA_INDEX_SAVED_RESET_FLAGS, save_flags & 0xffff);
 #ifdef CONFIG_STM32_EXTENDED_RESET_FLAGS
