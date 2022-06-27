@@ -112,8 +112,8 @@ int ish_dma_copy(uint32_t chan, uint32_t dst, uint32_t src, uint32_t length,
 	mode |= NON_SNOOP;
 	MISC_DMA_CTL_REG(chan) = mode; /* Set transfer direction */
 
-	DMA_CFG_REG = DMA_ENABLE;  /* Enable DMA module */
-	DMA_LLP(chan_reg) = 0;     /* Linked lists are not used */
+	DMA_CFG_REG = DMA_ENABLE; /* Enable DMA module */
+	DMA_LLP(chan_reg) = 0; /* Linked lists are not used */
 	DMA_CTL_LOW(chan_reg) =
 		0 /* Set transfer parameters */ |
 		(DMA_CTL_TT_FC_M2M_DMAC << DMA_CTL_TT_FC_SHIFT) |
@@ -126,24 +126,26 @@ int ish_dma_copy(uint32_t chan, uint32_t dst, uint32_t src, uint32_t length,
 
 	interrupt_unlock(eflags);
 	while (length) {
-		chunk = (length > DMA_MAX_BLOCK_SIZE) ? DMA_MAX_BLOCK_SIZE
-						      : length;
+		chunk = (length > DMA_MAX_BLOCK_SIZE) ? DMA_MAX_BLOCK_SIZE :
+							length;
 
 		if (rc != DMA_RC_OK)
 			break;
 
 		eflags = interrupt_lock();
 		MISC_CHID_CFG_REG = chan; /* Set channel to configure */
-		DMA_CTL_HIGH(chan_reg) =
-			chunk;		 /* Set number of bytes to transfer */
+		DMA_CTL_HIGH(chan_reg) = chunk; /* Set number of bytes to
+						   transfer */
 		DMA_DAR(chan_reg) = dst; /* Destination address */
 		DMA_SAR(chan_reg) = src; /* Source address */
-		DMA_EN_REG = DMA_CH_EN_BIT(chan) |
-			     DMA_CH_EN_WE_BIT(chan); /* Enable the channel */
+		DMA_EN_REG = DMA_CH_EN_BIT(chan) | DMA_CH_EN_WE_BIT(chan); /* Enable
+									      the
+									      channel
+									    */
 		interrupt_unlock(eflags);
 
-		rc = ish_wait_for_dma_done(
-			chan); /* Wait for trans completion */
+		rc = ish_wait_for_dma_done(chan); /* Wait for trans completion
+						   */
 
 		dst += chunk;
 		src += chunk;
