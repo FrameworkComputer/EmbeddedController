@@ -40,13 +40,13 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
-#define USB_PD_PORT_ANX7447	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX7447 0
+#define USB_PD_PORT_PS8751 1
 
 static uint8_t sku_id;
 
@@ -71,32 +71,32 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_AMB] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_CHARGER] = { "TEMP_CHARGER", NPCX_ADC_CH1,
+				      ADC_MAX_VOLT, ADC_READ_MAX + 1, 0 },
 	/* Vbus C0 sensing (10x voltage divider). PPVAR_USB_C0_VBUS */
-	[ADC_VBUS_C0] = {
-		"VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS_C0] = { "VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
 	/* Vbus C1 sensing (10x voltage divider). PPVAR_USB_C1_VBUS */
-	[ADC_VBUS_C1] = {
-		"VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS_C1] = { "VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -106,23 +106,17 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t lid_a_cover_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t lid_a_cover_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				     { 0, FLOAT_TO_FP(1), 0 },
+				     { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t lid_b_cover_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_b_cover_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				     { 0, FLOAT_TO_FP(-1), 0 },
+				     { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, FLOAT_TO_FP(-1), 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
 /* sensor private data */
 static struct kionix_accel_data kx022_data;
@@ -220,10 +214,10 @@ int board_is_convertible(void)
 	 * Bipship: 53, 54, 55, 56
 	 * Unprovisioned: 255
 	 */
-	return sku_id == 33 || sku_id == 34 || sku_id == 35 || sku_id == 36
-		|| sku_id == 49 || sku_id == 50 || sku_id == 51 || sku_id == 52
-		|| sku_id == 53 || sku_id == 54 || sku_id == 55 || sku_id == 56
-		|| sku_id == 255;
+	return sku_id == 33 || sku_id == 34 || sku_id == 35 || sku_id == 36 ||
+	       sku_id == 49 || sku_id == 50 || sku_id == 51 || sku_id == 52 ||
+	       sku_id == 53 || sku_id == 54 || sku_id == 55 || sku_id == 56 ||
+	       sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -234,8 +228,8 @@ static void board_update_sensor_config_from_sku(void)
 		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
 
 		/* Override sensor marix for Bipship. */
-		if (sku_id == 53 || sku_id == 54 || sku_id == 55
-			|| sku_id == 56)
+		if (sku_id == 53 || sku_id == 54 || sku_id == 55 ||
+		    sku_id == 56)
 			motion_sensors[LID_ACCEL].rot_standard_ref =
 				&lid_b_cover_ref;
 	} else {
@@ -265,10 +259,10 @@ void board_hibernate_late(void)
 
 	const uint32_t hibernate_pins[][2] = {
 		/* Turn off LEDs before going to hibernate */
-		{GPIO_LED_WHITE_C0_L, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_LED_AMBER_C0_L, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_LED_WHITE_C1_L, GPIO_INPUT | GPIO_PULL_UP},
-		{GPIO_LED_AMBER_C1_L, GPIO_INPUT | GPIO_PULL_UP},
+		{ GPIO_LED_WHITE_C0_L, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_LED_AMBER_C0_L, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_LED_WHITE_C1_L, GPIO_INPUT | GPIO_PULL_UP },
+		{ GPIO_LED_AMBER_C1_L, GPIO_INPUT | GPIO_PULL_UP },
 	};
 
 	for (i = 0; i < ARRAY_SIZE(hibernate_pins); ++i)
@@ -297,15 +291,15 @@ __override void lid_angle_peripheral_enable(int enable)
  * The connector has 24 pins total, and there is no pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-		{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-		{0, 7}, {1, 4}, {1, 3}, {1, 6}, {1, 7},
-		{3, 1}, {2, 0}, {1, 5}, {2, 6}, {2, 7},
-		{2, 1}, {2, 4}, {2, 5}, {1, 2}, {2, 3},
-		{2, 2}, {3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+	{ -1, -1 }, { 0, 5 }, { 1, 1 },	  { 1, 0 },   { 0, 6 },
+	{ 0, 7 },   { 1, 4 }, { 1, 3 },	  { 1, 6 },   { 1, 7 },
+	{ 3, 1 },   { 2, 0 }, { 1, 5 },	  { 2, 6 },   { 2, 7 },
+	{ 2, 1 },   { 2, 4 }, { 2, 5 },	  { 1, 2 },   { 2, 3 },
+	{ 2, 2 },   { 3, 0 }, { -1, -1 }, { -1, -1 }, { -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
 
 void board_overcurrent_event(int port, int is_overcurrented)
@@ -323,9 +317,8 @@ __override uint32_t board_override_feature_flags0(uint32_t flags0)
 	/*
 	 * Remove keyboard backlight feature for devices that don't support it.
 	 */
-	if (sku_id == 33 || sku_id == 36 || sku_id == 51 ||
-		sku_id == 52 || sku_id == 53 || sku_id == 55 ||
-		sku_id == 66 || sku_id == 68)
+	if (sku_id == 33 || sku_id == 36 || sku_id == 51 || sku_id == 52 ||
+	    sku_id == 53 || sku_id == 55 || sku_id == 66 || sku_id == 68)
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 	else
 		return flags0;
