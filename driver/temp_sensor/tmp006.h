@@ -9,11 +9,11 @@
 #define __CROS_EC_TMP006_H
 
 /* Registers within the TMP006 chip */
-#define TMP006_REG_VOBJ            0x00
-#define TMP006_REG_TDIE            0x01
-#define TMP006_REG_CONFIG          0x02
+#define TMP006_REG_VOBJ 0x00
+#define TMP006_REG_TDIE 0x01
+#define TMP006_REG_CONFIG 0x02
 #define TMP006_REG_MANUFACTURER_ID 0xfe
-#define TMP006_REG_DEVICE_ID       0xff
+#define TMP006_REG_DEVICE_ID 0xff
 
 /* I2C address components */
 #define TMP006_ADDR(PORT, REG) ((PORT << 16) + REG)
@@ -22,7 +22,7 @@
 
 struct tmp006_t {
 	const char *name;
-	int addr_flags;	/* I2C address formed by TMP006_ADDR macro. */
+	int addr_flags; /* I2C address formed by TMP006_ADDR macro. */
 };
 
 /* Names and addresses of the sensors we have */
@@ -40,4 +40,4 @@ extern const struct tmp006_t tmp006_sensors[];
  */
 int tmp006_get_val(int idx, int *temp_ptr);
 
-#endif  /* __CROS_EC_TMP006_H */
+#endif /* __CROS_EC_TMP006_H */
