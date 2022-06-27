@@ -19,18 +19,17 @@
 /* struct spi_device_t */
 #include "spi.h"
 
-
 int qmspi_transaction_flush(const struct spi_device_t *spi_device);
 
 int qmspi_transaction_wait(const struct spi_device_t *spi_device);
 
 int qmspi_transaction_sync(const struct spi_device_t *spi_device,
-				const uint8_t *txdata, int txlen,
-				uint8_t *rxdata, int rxlen);
+			   const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			   int rxlen);
 
 int qmspi_transaction_async(const struct spi_device_t *spi_device,
-				const uint8_t *txdata, int txlen,
-				uint8_t *rxdata, int rxlen);
+			    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			    int rxlen);
 
 int qmspi_enable(int port, int enable);
 
@@ -56,10 +55,9 @@ void qmspi_cfg_irq_start(uint8_t flags);
  * returns last descriptor 0 <= index < MCHP_QMSPI_MAX_DESCR
  * or error (bit[7]==1)
  */
-uint8_t qmspi_xfr(const struct spi_device_t *spi_device,
-			uint32_t np_flags,
-			const uint8_t *txdata, uint32_t ntx,
-			uint8_t *rxdata, uint32_t nrx);
+uint8_t qmspi_xfr(const struct spi_device_t *spi_device, uint32_t np_flags,
+		  const uint8_t *txdata, uint32_t ntx, uint8_t *rxdata,
+		  uint32_t nrx);
 
 #endif /* #ifndef _QMSPI_CHIP_H */
 /**   @}
