@@ -24,7 +24,7 @@ enum try_src_override_t {
  * This is the maximum voltage a sink can request
  * while charging.
  */
-#define TYPE_C_VOLTAGE  5000 /* mV */
+#define TYPE_C_VOLTAGE 5000 /* mV */
 
 /*
  * Type C default sink current (mA)
@@ -32,7 +32,7 @@ enum try_src_override_t {
  * This is the maximum current a sink can draw if charging
  * while in the Audio Accessory State.
  */
-#define TYPE_C_AUDIO_ACC_CURRENT  500 /* mA */
+#define TYPE_C_AUDIO_ACC_CURRENT 500 /* mA */
 
 /**
  * Returns true if TypeC State machine is in attached source state.
@@ -256,7 +256,7 @@ void pd_request_vconn_swap_off(int port);
  * @return 0 if cc1 is connected, else 1 for cc2
  */
 enum tcpc_cc_polarity get_snk_polarity(enum tcpc_cc_voltage_status cc1,
-	enum tcpc_cc_voltage_status cc2);
+				       enum tcpc_cc_voltage_status cc2);
 
 /**
  * Called by the state machine framework to initialize the
