@@ -22,18 +22,16 @@ enum mock_connect_result {
 	MOCK_CC_DUT_IS_SNK = 1,
 };
 
-
 extern uint32_t rdo;
 extern uint32_t pdo;
 
 extern const struct tcpc_config_t tcpc_config[];
 extern const struct usb_mux usb_muxes[];
 
-
-void mock_set_cc(enum mock_connect_result cr,
-	enum mock_cc_state cc1, enum mock_cc_state cc2);
-void mock_set_role(int drp, enum tcpc_rp_value rp,
-	enum tcpc_cc_pull cc1, enum tcpc_cc_pull cc2);
+void mock_set_cc(enum mock_connect_result cr, enum mock_cc_state cc1,
+		 enum mock_cc_state cc2);
+void mock_set_role(int drp, enum tcpc_rp_value rp, enum tcpc_cc_pull cc1,
+		   enum tcpc_cc_pull cc2);
 void mock_set_alert(int alert);
 uint16_t tcpc_get_alert_status(void);
 bool vboot_allow_usb_pd(void);
@@ -54,20 +52,15 @@ enum pd_rev_type partner_get_pd_rev(void);
 #define TCPCI_MSG_SOP_ALL -1
 void partner_tx_msg_id_reset(int sop);
 
-void partner_send_msg(enum tcpci_msg_type sop,
-		      uint16_t type,
-		      uint16_t cnt,
-		      uint16_t ext,
-		      uint32_t *payload);
-
+void partner_send_msg(enum tcpci_msg_type sop, uint16_t type, uint16_t cnt,
+		      uint16_t ext, uint32_t *payload);
 
 int handle_attach_expected_msgs(enum pd_data_role data_role);
 
-
 enum proc_pd_e1_attach {
-	INITIAL_ATTACH			= BIT(0),
-	ALREADY_ATTACHED		= BIT(1),
-	INITIAL_AND_ALREADY_ATTACHED	= INITIAL_ATTACH | ALREADY_ATTACHED
+	INITIAL_ATTACH = BIT(0),
+	ALREADY_ATTACHED = BIT(1),
+	INITIAL_AND_ALREADY_ATTACHED = INITIAL_ATTACH | ALREADY_ATTACHED
 };
 int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach);
 int proc_pd_e3(void);
