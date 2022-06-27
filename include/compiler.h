@@ -21,7 +21,7 @@
  * macro.
  */
 #ifndef typeof
-#define typeof(x)	__typeof__(x)
+#define typeof(x) __typeof__(x)
 #endif
 
 /**
