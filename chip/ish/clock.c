@@ -12,8 +12,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
-
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
 void clock_init(void)
 {
