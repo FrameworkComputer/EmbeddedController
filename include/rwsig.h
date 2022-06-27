@@ -77,22 +77,21 @@ void rwsig_jump_now(void);
 #endif /* ! CONFIG_RO_PUBKEY_SIZE */
 #ifndef CONFIG_RO_PUBKEY_ADDR
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
-#define CONFIG_RO_PUBKEY_STORAGE_OFF (CONFIG_RO_STORAGE_OFF		\
-				      + CONFIG_RO_SIZE			\
-				      - CONFIG_RO_PUBKEY_SIZE)
+#define CONFIG_RO_PUBKEY_STORAGE_OFF \
+	(CONFIG_RO_STORAGE_OFF + CONFIG_RO_SIZE - CONFIG_RO_PUBKEY_SIZE)
 
 /* The pubkey resides at the end of the RO image */
-#define CONFIG_RO_PUBKEY_ADDR (CONFIG_PROGRAM_MEMORY_BASE		\
-			       + CONFIG_EC_PROTECTED_STORAGE_OFF	\
-			       + CONFIG_RO_PUBKEY_STORAGE_OFF)
+#define CONFIG_RO_PUBKEY_ADDR                                           \
+	(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_EC_PROTECTED_STORAGE_OFF + \
+	 CONFIG_RO_PUBKEY_STORAGE_OFF)
 #else
 /*
  * usbpd1 type assumes pubkey location at the end of first half of flash,
  * which might actually be in the PSTATE region.
  */
-#define CONFIG_RO_PUBKEY_ADDR (CONFIG_PROGRAM_MEMORY_BASE	\
-			       + (CONFIG_FLASH_SIZE_BYTES / 2)	\
-			       - CONFIG_RO_PUBKEY_SIZE)
+#define CONFIG_RO_PUBKEY_ADDR                                         \
+	(CONFIG_PROGRAM_MEMORY_BASE + (CONFIG_FLASH_SIZE_BYTES / 2) - \
+	 CONFIG_RO_PUBKEY_SIZE)
 #endif
 #endif /* CONFIG_RO_PUBKEY_ADDR */
 
@@ -108,19 +107,19 @@ void rwsig_jump_now(void);
 #endif
 #endif /* ! CONFIG_RW_SIG_SIZE */
 /* The signature resides at the end of each RW copy */
-#define RW_SIG_OFFSET		(CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
-#define RW_A_ADDR		(CONFIG_PROGRAM_MEMORY_BASE +		\
-				 CONFIG_EC_WRITABLE_STORAGE_OFF +	\
-				 CONFIG_RW_STORAGE_OFF)
+#define RW_SIG_OFFSET (CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
+#define RW_A_ADDR                                                      \
+	(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_EC_WRITABLE_STORAGE_OFF + \
+	 CONFIG_RW_STORAGE_OFF)
 /* Assume the layout is same as RW_A and it sits right after RW_A */
-#define RW_B_ADDR		(CONFIG_PROGRAM_MEMORY_BASE + \
-				 CONFIG_EC_WRITABLE_STORAGE_OFF + \
-				 CONFIG_RW_B_STORAGE_OFF)
+#define RW_B_ADDR                                                      \
+	(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_EC_WRITABLE_STORAGE_OFF + \
+	 CONFIG_RW_B_STORAGE_OFF)
 #ifndef CONFIG_RW_SIG_ADDR
-#define CONFIG_RW_SIG_ADDR	(RW_A_ADDR + RW_SIG_OFFSET)
+#define CONFIG_RW_SIG_ADDR (RW_A_ADDR + RW_SIG_OFFSET)
 #endif
 #ifndef CONFIG_RW_B_SIG_ADDR
-#define CONFIG_RW_B_SIG_ADDR	(RW_B_ADDR + RW_SIG_OFFSET)
+#define CONFIG_RW_B_SIG_ADDR (RW_B_ADDR + RW_SIG_OFFSET)
 #endif
 
 #endif /* __CROS_EC_RWSIG_H */
