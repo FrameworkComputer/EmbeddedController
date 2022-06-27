@@ -21,8 +21,8 @@
 #include "util.h"
 #include "watchdog.h"
 
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 #define CUTOFFPRINTS(info) CPRINTS("%s %s", "Battery cut off", info)
 
 /* See config.h for details */
@@ -77,9 +77,14 @@ static int check_print_error(int rv)
 
 static void print_battery_status(void)
 {
-	static const char * const st[] = {"EMPTY", "FULL", "DCHG", "INIT",};
-	static const char * const al[] = {"RT", "RC", "--", "TD",
-					  "OT", "--", "TC", "OC"};
+	static const char *const st[] = {
+		"EMPTY",
+		"FULL",
+		"DCHG",
+		"INIT",
+	};
+	static const char *const al[] = { "RT", "RC", "--", "TD",
+					  "OT", "--", "TC", "OC" };
 
 	int value, i;
 
@@ -92,12 +97,12 @@ static void print_battery_status(void)
 
 		/* bits 4-7 are status */
 		for (i = 0; i < 4; i++)
-			if (value & (1 << (i+4)))
+			if (value & (1 << (i + 4)))
 				ccprintf(" %s", st[i]);
 
 		/* bits 15-8 are alarms */
 		for (i = 0; i < 8; i++)
-			if (value & (1 << (i+8)))
+			if (value & (1 << (i + 8)))
 				ccprintf(" %s", al[i]);
 
 		ccprintf("\n");
@@ -138,10 +143,8 @@ static void print_battery_params(void)
 	ccprintf("%08x\n", batt->flags);
 
 	print_item_name("Temp:");
-	ccprintf("0x%04x = %.1d K (%.1d C)\n",
-		 batt->temperature,
-		 batt->temperature,
-		 batt->temperature - 2731);
+	ccprintf("0x%04x = %.1d K (%.1d C)\n", batt->temperature,
+		 batt->temperature, batt->temperature - 2731);
 
 	print_item_name("V:");
 	ccprintf("0x%04x = %d mV\n", batt->voltage, batt->voltage);
@@ -167,7 +170,7 @@ static void print_battery_params(void)
 		 batt->flags & BATT_FLAG_WANT_CHARGE ? "" : "Not ");
 
 	print_item_name("Charge:");
-		ccprintf("%d %%\n", batt->state_of_charge);
+	ccprintf("%d %%\n", batt->state_of_charge);
 
 	if (IS_ENABLED(CONFIG_CHARGER)) {
 		int value;
@@ -214,10 +217,10 @@ static void print_battery_info(void)
 	print_item_name("Time-full:");
 	if (check_print_error(battery_time_to_full(&value))) {
 		if (value == 65535) {
-			hour   = 0;
+			hour = 0;
 			minute = 0;
 		} else {
-			hour   = value / 60;
+			hour = value / 60;
 			minute = value % 60;
 		}
 		ccprintf("%dh:%d\n", hour, minute);
@@ -226,10 +229,10 @@ static void print_battery_info(void)
 	print_item_name("  Empty:");
 	if (check_print_error(battery_time_to_empty(&value))) {
 		if (value == 65535) {
-			hour   = 0;
+			hour = 0;
 			minute = 0;
 		} else {
-			hour   = value / 60;
+			hour = value / 60;
 			minute = value % 60;
 		}
 		ccprintf("%dh:%d\n", hour, minute);
@@ -289,8 +292,7 @@ static int command_battery(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(battery, command_battery,
-			"<repeat_count> <sleep_ms>",
+DECLARE_CONSOLE_COMMAND(battery, command_battery, "<repeat_count> <sleep_ms>",
 			"Print battery info");
 
 #ifdef CONFIG_BATTERY_CUT_OFF
@@ -349,7 +351,7 @@ static enum ec_status battery_command_cutoff(struct host_cmd_handler_args *args)
 	return rv;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cutoff,
-		EC_VER_MASK(0) | EC_VER_MASK(1));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static void check_pending_cutoff(void)
 {
@@ -384,15 +386,14 @@ static int command_cutoff(int argc, char **argv)
 
 	return EC_ERROR_UNKNOWN;
 }
-DECLARE_CONSOLE_COMMAND(cutoff, command_cutoff,
-		"[at-shutdown]",
-		"Cut off the battery output");
+DECLARE_CONSOLE_COMMAND(cutoff, command_cutoff, "[at-shutdown]",
+			"Cut off the battery output");
 #else
 int battery_is_cut_off(void)
 {
-	return 0;  /* Always return NOT cut off */
+	return 0; /* Always return NOT cut off */
 }
-#endif  /* CONFIG_BATTERY_CUT_OFF */
+#endif /* CONFIG_BATTERY_CUT_OFF */
 
 #ifdef CONFIG_BATTERY_VENDOR_PARAM
 __overridable int battery_get_vendor_param(uint32_t param, uint32_t *value)
@@ -488,10 +489,8 @@ host_command_battery_vendor_param(struct host_cmd_handler_args *args)
 	return rv;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_VENDOR_PARAM,
-		     host_command_battery_vendor_param,
-		     EC_VER_MASK(0));
+		     host_command_battery_vendor_param, EC_VER_MASK(0));
 #endif /* CONFIG_BATTERY_VENDOR_PARAM */
-
 
 void battery_compensate_params(struct batt_params *batt)
 {
@@ -500,7 +499,7 @@ void battery_compensate_params(struct batt_params *batt)
 	int full = batt->full_capacity;
 
 	if ((batt->flags & BATT_FLAG_BAD_FULL_CAPACITY) ||
-			(batt->flags & BATT_FLAG_BAD_REMAINING_CAPACITY))
+	    (batt->flags & BATT_FLAG_BAD_REMAINING_CAPACITY))
 		return;
 
 	if (*remain <= 0 || full <= 0)
@@ -589,20 +588,21 @@ __overridable enum battery_disconnect_state battery_get_disconnect_state(void)
 #ifdef CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV
 
 #if CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV < 5000 || \
-    CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV >= PD_MAX_VOLTAGE_MV
-	#error "Voltage limit must be between 5000 and PD_MAX_VOLTAGE_MV"
+	CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV >= PD_MAX_VOLTAGE_MV
+#error "Voltage limit must be between 5000 and PD_MAX_VOLTAGE_MV"
 #endif
 
 #if !((defined(CONFIG_USB_PD_TCPMV1) && defined(CONFIG_USB_PD_DUAL_ROLE)) || \
-    (defined(CONFIG_USB_PD_TCPMV2) && defined(CONFIG_USB_PE_SM)))
-	#error "Voltage reducing requires TCPM with Policy Engine"
+      (defined(CONFIG_USB_PD_TCPMV2) && defined(CONFIG_USB_PE_SM)))
+#error "Voltage reducing requires TCPM with Policy Engine"
 #endif
 
 /*
  * Returns true if input voltage should be reduced (chipset is in S5/G3) and
  * battery is full, otherwise returns false
  */
-static bool board_wants_reduced_input_voltage(void) {
+static bool board_wants_reduced_input_voltage(void)
+{
 	struct batt_params batt;
 
 	/* Chipset not in S5/G3, so we don't want to reduce voltage */
@@ -638,7 +638,7 @@ static void reduce_input_voltage_when_full(void)
 		    CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV) {
 			saved_input_voltage = max_pd_voltage_mv;
 			max_pd_voltage_mv =
-			    CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV;
+				CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV;
 		}
 	} else if (saved_input_voltage != -1) {
 		/*
@@ -656,8 +656,7 @@ static void reduce_input_voltage_when_full(void)
 	if (pd_get_max_voltage() != max_pd_voltage_mv)
 		pd_set_external_voltage_limit(port, max_pd_voltage_mv);
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, reduce_input_voltage_when_full,
-	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, reduce_input_voltage_when_full, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, reduce_input_voltage_when_full,
 	     HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, reduce_input_voltage_when_full,
@@ -677,7 +676,7 @@ void battery_validate_params(struct batt_params *batt)
 	 */
 	if (batt->temperature > CELSIUS_TO_DECI_KELVIN(5660)) {
 		CPRINTS("ignoring ridiculous batt.temp of %dC",
-			 DECI_KELVIN_TO_CELSIUS(batt->temperature));
+			DECI_KELVIN_TO_CELSIUS(batt->temperature));
 		batt->flags |= BATT_FLAG_BAD_TEMPERATURE;
 	}
 
