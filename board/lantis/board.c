@@ -46,7 +46,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 #define INT_RECHECK_US 5000
 
@@ -183,48 +183,36 @@ static void pen_detect_interrupt(enum gpio_signal s)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_VSNS_PP3300_A] = {
-		.name = "PP3300_A_PGOOD",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH0
-	},
-	[ADC_TEMP_SENSOR_1] = {
-		.name = "TEMP_SENSOR1",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH2
-	},
-	[ADC_TEMP_SENSOR_2] = {
-		.name = "TEMP_SENSOR2",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH3
-	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH13
-	},
-	[ADC_TEMP_SENSOR_3] = {
-		.name = "TEMP_SENSOR3",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH15
-	},
-	[ADC_TEMP_SENSOR_4] = {
-		.name = "TEMP_SENSOR4",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH16
-	},
+	[ADC_VSNS_PP3300_A] = { .name = "PP3300_A_PGOOD",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH0 },
+	[ADC_TEMP_SENSOR_1] = { .name = "TEMP_SENSOR1",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH2 },
+	[ADC_TEMP_SENSOR_2] = { .name = "TEMP_SENSOR2",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH3 },
+	[ADC_SUB_ANALOG] = { .name = "SUB_ANALOG",
+			     .factor_mul = ADC_MAX_MVOLT,
+			     .factor_div = ADC_READ_MAX + 1,
+			     .shift = 0,
+			     .channel = CHIP_ADC_CH13 },
+	[ADC_TEMP_SENSOR_3] = { .name = "TEMP_SENSOR3",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH15 },
+	[ADC_TEMP_SENSOR_4] = { .name = "TEMP_SENSOR4",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH16 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -299,17 +287,13 @@ static struct accelgyro_saved_data_t g_bma422_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 
 /* Matrix to rotate accelrator into standard reference frame */
-static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+					      { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
@@ -497,8 +481,8 @@ static const struct ec_response_keybd_config landrid_keybd = {
 	/* No function keys and no screenlock key */
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	if (get_cbi_fw_config_numeric_pad()) {
 		if (get_cbi_fw_config_kblight())
@@ -513,8 +497,7 @@ __override const struct ec_response_keybd_config
 	}
 }
 
-__override
-uint8_t board_keyboard_row_refresh(void)
+__override uint8_t board_keyboard_row_refresh(void)
 {
 	if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
 		return 3;
@@ -674,8 +657,8 @@ __override void board_power_5v_enable(int enable)
 
 	if (board_get_charger_chip_count() > 1) {
 		if (sm5803_set_gpio0_level(1, !!enable))
-			CPRINTUSB("Failed to %sable sub rails!", enable ?
-								  "en" : "dis");
+			CPRINTUSB("Failed to %sable sub rails!",
+				  enable ? "en" : "dis");
 	}
 }
 
@@ -683,11 +666,11 @@ __override uint8_t board_get_usb_pd_port_count(void)
 {
 	enum fw_config_db db = get_cbi_fw_config_db();
 
-	if (db == DB_1A_HDMI || db == DB_NONE || db == DB_LTE_HDMI
-			|| db == DB_1A_HDMI_LTE)
+	if (db == DB_1A_HDMI || db == DB_NONE || db == DB_LTE_HDMI ||
+	    db == DB_1A_HDMI_LTE)
 		return CONFIG_USB_PD_PORT_MAX_COUNT - 1;
-	else if (db == DB_1C || db == DB_1C_LTE || db == DB_1C_1A
-			|| db == DB_1C_1A_LTE)
+	else if (db == DB_1C || db == DB_1C_LTE || db == DB_1C_1A ||
+		 db == DB_1C_1A_LTE)
 		return CONFIG_USB_PD_PORT_MAX_COUNT;
 
 	ccprints("Unhandled DB configuration: %d", db);
@@ -698,11 +681,11 @@ __override uint8_t board_get_charger_chip_count(void)
 {
 	enum fw_config_db db = get_cbi_fw_config_db();
 
-	if (db == DB_1A_HDMI || db == DB_NONE || db == DB_LTE_HDMI
-			|| db == DB_1A_HDMI_LTE)
+	if (db == DB_1A_HDMI || db == DB_NONE || db == DB_LTE_HDMI ||
+	    db == DB_1A_HDMI_LTE)
 		return CHARGER_NUM - 1;
-	else if (db == DB_1C || db == DB_1C_LTE || db == DB_1C_1A
-			|| db == DB_1C_1A_LTE)
+	else if (db == DB_1C || db == DB_1C_LTE || db == DB_1C_1A ||
+		 db == DB_1C_1A_LTE)
 		return CHARGER_NUM;
 
 	ccprints("Unhandled DB configuration: %d", db);
@@ -804,33 +787,31 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 }
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq_hz = 10000,
-	}
-};
+const struct pwm_t pwm_channels[] = { [PWM_CH_KBLIGHT] = {
+					      .channel = 0,
+					      .flags = PWM_CONFIG_DSLEEP,
+					      .freq_hz = 10000,
+				      } };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Memory",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Ambient",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_2},
-	[TEMP_SENSOR_3] = {.name = "Charger",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_3},
-	[TEMP_SENSOR_4] = {.name = "5V regular",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_4},
+	[TEMP_SENSOR_1] = { .name = "Memory",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Ambient",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
+	[TEMP_SENSOR_3] = { .name = "Charger",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_3 },
+	[TEMP_SENSOR_4] = { .name = "5V regular",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_4 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -860,9 +841,8 @@ __override void lid_angle_peripheral_enable(int enable)
 	}
 }
 
-__override void ocpc_get_pid_constants(int *kp, int *kp_div,
-				       int *ki, int *ki_div,
-				       int *kd, int *kd_div)
+__override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+				       int *ki_div, int *kd, int *kd_div)
 {
 	*kp = 3;
 	*kp_div = 20;
@@ -881,14 +861,17 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div,
  * The connector has 24 pins total, and there is no pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-	{-1, -1}, {GPIO_KSO_H, 4}, {GPIO_KSO_H, 0}, {GPIO_KSO_H, 1},
-	{GPIO_KSO_H, 3}, {GPIO_KSO_H, 2}, {GPIO_KSO_L, 5}, {GPIO_KSO_L, 6},
-	{GPIO_KSO_L, 3}, {GPIO_KSO_L, 2}, {GPIO_KSI, 0}, {GPIO_KSO_L, 1},
-	{GPIO_KSO_L, 4}, {GPIO_KSI, 3}, {GPIO_KSI, 2}, {GPIO_KSO_L, 0},
-	{GPIO_KSI, 5}, {GPIO_KSI, 4}, {GPIO_KSO_L, 7}, {GPIO_KSI, 6},
-	{GPIO_KSI, 7}, {GPIO_KSI, 1}, {-1, -1}, {-1, -1}, {-1, -1},
+	{ -1, -1 },	   { GPIO_KSO_H, 4 }, { GPIO_KSO_H, 0 },
+	{ GPIO_KSO_H, 1 }, { GPIO_KSO_H, 3 }, { GPIO_KSO_H, 2 },
+	{ GPIO_KSO_L, 5 }, { GPIO_KSO_L, 6 }, { GPIO_KSO_L, 3 },
+	{ GPIO_KSO_L, 2 }, { GPIO_KSI, 0 },   { GPIO_KSO_L, 1 },
+	{ GPIO_KSO_L, 4 }, { GPIO_KSI, 3 },   { GPIO_KSI, 2 },
+	{ GPIO_KSO_L, 0 }, { GPIO_KSI, 5 },   { GPIO_KSI, 4 },
+	{ GPIO_KSO_L, 7 }, { GPIO_KSI, 6 },   { GPIO_KSI, 7 },
+	{ GPIO_KSI, 1 },   { -1, -1 },	      { -1, -1 },
+	{ -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
