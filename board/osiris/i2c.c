@@ -9,7 +9,7 @@
 #include "hooks.h"
 #include "i2c.h"
 
-#define BOARD_ID_FAST_PLUS_CAPABLE	2
+#define BOARD_ID_FAST_PLUS_CAPABLE 2
 
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
