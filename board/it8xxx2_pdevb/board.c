@@ -14,12 +14,12 @@
 #include "timer.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
-#define USB_PD_PORT_ITE_0   0
-#define USB_PD_PORT_ITE_1   1
-#define USB_PD_PORT_ITE_2   2
-#define RESISTIVE_DIVIDER   11
+#define USB_PD_PORT_ITE_0 0
+#define USB_PD_PORT_ITE_1 1
+#define USB_PD_PORT_ITE_2 2
+#define RESISTIVE_DIVIDER 11
 
 int board_get_battery_soc(void)
 {
@@ -83,7 +83,7 @@ void board_pd_vbus_ctrl(int port, int enabled)
 		gpio_set_level(GPIO_USBPD_PORTA_VBUS_OUTPUT, enabled);
 		if (!enabled) {
 			gpio_set_level(GPIO_USBPD_PORTA_VBUS_DROP, 1);
-			udelay(10*MSEC); /* 10ms is a try and error value */
+			udelay(10 * MSEC); /* 10ms is a try and error value */
 		}
 		gpio_set_level(GPIO_USBPD_PORTA_VBUS_DROP, 0);
 	} else if (port == USBPD_PORT_B) {
@@ -91,7 +91,7 @@ void board_pd_vbus_ctrl(int port, int enabled)
 		gpio_set_level(GPIO_USBPD_PORTB_VBUS_OUTPUT, enabled);
 		if (!enabled) {
 			gpio_set_level(GPIO_USBPD_PORTB_VBUS_DROP, 1);
-			udelay(10*MSEC); /* 10ms is a try and error value */
+			udelay(10 * MSEC); /* 10ms is a try and error value */
 		}
 		gpio_set_level(GPIO_USBPD_PORTB_VBUS_DROP, 0);
 	} else if (port == USBPD_PORT_C) {
@@ -99,13 +99,13 @@ void board_pd_vbus_ctrl(int port, int enabled)
 		gpio_set_level(GPIO_USBPD_PORTC_VBUS_OUTPUT, enabled);
 		if (!enabled) {
 			gpio_set_level(GPIO_USBPD_PORTC_VBUS_DROP, 1);
-			udelay(10*MSEC); /* 10ms is a try and error value */
+			udelay(10 * MSEC); /* 10ms is a try and error value */
 		}
 		gpio_set_level(GPIO_USBPD_PORTC_VBUS_DROP, 0);
 	}
 
 	if (enabled)
-		udelay(10*MSEC); /* 10ms is a try and error value */
+		udelay(10 * MSEC); /* 10ms is a try and error value */
 }
 
 void pd_set_input_current_limit(int port, uint32_t max_ma,
@@ -120,8 +120,7 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
  * so use the same frequency and prescaler register setting is required if
  * number of pwm channel greater than three.
  */
-const struct pwm_t pwm_channels[] = {
-};
+const struct pwm_t pwm_channels[] = {};
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
