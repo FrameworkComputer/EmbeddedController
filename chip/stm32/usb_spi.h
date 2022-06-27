@@ -268,48 +268,48 @@
  *                      http://libusb.sourceforge.net/api-1.0/group__misc.html
  */
 
-#define USB_SPI_FULL_DUPLEX_ENABLED         (UINT16_MAX)
+#define USB_SPI_FULL_DUPLEX_ENABLED (UINT16_MAX)
 
-#define USB_SPI_PAYLOAD_SIZE_V2_START       (58)
+#define USB_SPI_PAYLOAD_SIZE_V2_START (58)
 
-#define USB_SPI_PAYLOAD_SIZE_V2_RESPONSE    (60)
+#define USB_SPI_PAYLOAD_SIZE_V2_RESPONSE (60)
 
-#define USB_SPI_PAYLOAD_SIZE_V2_CONTINUE    (60)
+#define USB_SPI_PAYLOAD_SIZE_V2_CONTINUE (60)
 
-#define USB_SPI_PAYLOAD_SIZE_V2_ERROR       (60)
+#define USB_SPI_PAYLOAD_SIZE_V2_ERROR (60)
 
-#define USB_SPI_MIN_PACKET_SIZE             (2)
+#define USB_SPI_MIN_PACKET_SIZE (2)
 
 enum packet_id_type {
 	/* Request USB SPI configuration data from device. */
 	USB_SPI_PKT_ID_CMD_GET_USB_SPI_CONFIG = 0,
 	/* USB SPI configuration data from device. */
-	USB_SPI_PKT_ID_RSP_USB_SPI_CONFIG     = 1,
+	USB_SPI_PKT_ID_RSP_USB_SPI_CONFIG = 1,
 	/*
 	 * Start a USB SPI transfer specifying number of bytes to write,
 	 * read and deliver first packet of data to write.
 	 */
-	USB_SPI_PKT_ID_CMD_TRANSFER_START     = 2,
+	USB_SPI_PKT_ID_CMD_TRANSFER_START = 2,
 	/* Additional packets containing write payload. */
-	USB_SPI_PKT_ID_CMD_TRANSFER_CONTINUE  = 3,
+	USB_SPI_PKT_ID_CMD_TRANSFER_CONTINUE = 3,
 	/*
 	 * Request the device restart the response enabling us to recover
 	 * from packet loss without another SPI transfer.
 	 */
-	USB_SPI_PKT_ID_CMD_RESTART_RESPONSE   = 4,
+	USB_SPI_PKT_ID_CMD_RESTART_RESPONSE = 4,
 	/*
 	 * First packet of USB SPI response with the status code
 	 * and read payload if it was successful.
 	 */
-	USB_SPI_PKT_ID_RSP_TRANSFER_START     = 5,
+	USB_SPI_PKT_ID_RSP_TRANSFER_START = 5,
 	/* Additional packets containing read payload. */
-	USB_SPI_PKT_ID_RSP_TRANSFER_CONTINUE  = 6,
+	USB_SPI_PKT_ID_RSP_TRANSFER_CONTINUE = 6,
 	/*
 	 * Request assertion or deassertion of chip select
 	 */
-	USB_SPI_PKT_ID_CMD_CHIP_SELECT        = 7,
+	USB_SPI_PKT_ID_CMD_CHIP_SELECT = 7,
 	/* Response to above request. */
-	USB_SPI_PKT_ID_RSP_CHIP_SELECT        = 8,
+	USB_SPI_PKT_ID_RSP_CHIP_SELECT = 8,
 };
 
 enum feature_bitmap {
@@ -383,25 +383,25 @@ struct usb_spi_packet_ctx {
 };
 
 enum usb_spi_error {
-	USB_SPI_SUCCESS                 = 0x0000,
-	USB_SPI_TIMEOUT                 = 0x0001,
-	USB_SPI_BUSY                    = 0x0002,
-	USB_SPI_WRITE_COUNT_INVALID     = 0x0003,
-	USB_SPI_READ_COUNT_INVALID      = 0x0004,
-	USB_SPI_DISABLED                = 0x0005,
+	USB_SPI_SUCCESS = 0x0000,
+	USB_SPI_TIMEOUT = 0x0001,
+	USB_SPI_BUSY = 0x0002,
+	USB_SPI_WRITE_COUNT_INVALID = 0x0003,
+	USB_SPI_READ_COUNT_INVALID = 0x0004,
+	USB_SPI_DISABLED = 0x0005,
 	/* The RX continue packet's data index is invalid. */
-	USB_SPI_RX_BAD_DATA_INDEX       = 0x0006,
+	USB_SPI_RX_BAD_DATA_INDEX = 0x0006,
 	/* The RX endpoint has received more data than write count. */
-	USB_SPI_RX_DATA_OVERFLOW        = 0x0007,
+	USB_SPI_RX_DATA_OVERFLOW = 0x0007,
 	/* An unexpected packet arrived on the device. */
-	USB_SPI_RX_UNEXPECTED_PACKET    = 0x0008,
+	USB_SPI_RX_UNEXPECTED_PACKET = 0x0008,
 	/* The device does not support full duplex mode. */
 	USB_SPI_UNSUPPORTED_FULL_DUPLEX = 0x0009,
-	USB_SPI_UNKNOWN_ERROR           = 0x8000,
+	USB_SPI_UNKNOWN_ERROR = 0x8000,
 };
 
 enum usb_spi_request {
-	USB_SPI_REQ_ENABLE  = 0x0000,
+	USB_SPI_REQ_ENABLE = 0x0000,
 	USB_SPI_REQ_DISABLE = 0x0001,
 };
 
@@ -416,11 +416,11 @@ enum usb_spi_request {
 #ifdef CONFIG_USB_SPI_BUFFER_SIZE
 #define USB_SPI_BUFFER_SIZE CONFIG_USB_SPI_BUFFER_SIZE
 #else
-#define USB_SPI_BUFFER_SIZE	(USB_SPI_PAYLOAD_SIZE_V2_START + \
-				(4 * USB_SPI_PAYLOAD_SIZE_V2_CONTINUE))
+#define USB_SPI_BUFFER_SIZE \
+	(USB_SPI_PAYLOAD_SIZE_V2_START + (4 * USB_SPI_PAYLOAD_SIZE_V2_CONTINUE))
 #endif
-#define USB_SPI_MAX_WRITE_COUNT	USB_SPI_BUFFER_SIZE
-#define USB_SPI_MAX_READ_COUNT	USB_SPI_BUFFER_SIZE
+#define USB_SPI_MAX_WRITE_COUNT USB_SPI_BUFFER_SIZE
+#define USB_SPI_MAX_READ_COUNT USB_SPI_BUFFER_SIZE
 
 /* Protocol uses two-byte length fields.  Larger buffer makes no sense. */
 BUILD_ASSERT(USB_SPI_BUFFER_SIZE <= 65536);
@@ -541,78 +541,82 @@ struct usb_spi_config {
  * FLAGS encodes different run-time control parameters. See
  * USB_SPI_CONFIG_FLAGS_* for definitions.
  */
-#define USB_SPI_CONFIG(NAME,						\
-		       INTERFACE,					\
-		       ENDPOINT,					\
-		       FLAGS)						\
-	static uint16_t CONCAT2(NAME, _buffer_)[(USB_SPI_BUFFER_SIZE + 1) / 2];\
-	static usb_uint CONCAT2(NAME, _ep_rx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
-	static usb_uint CONCAT2(NAME, _ep_tx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram; \
-	static void CONCAT2(NAME, _deferred_)(void);			\
-	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));			\
-	struct usb_spi_state CONCAT2(NAME, _state_) = {			\
-		.enabled_host   = 0,					\
-		.enabled_device = 0,					\
-		.enabled        = 0,					\
+#define USB_SPI_CONFIG(NAME, INTERFACE, ENDPOINT, FLAGS)                    \
+	static uint16_t CONCAT2(NAME,                                       \
+				_buffer_)[(USB_SPI_BUFFER_SIZE + 1) / 2];   \
+	static usb_uint CONCAT2(                                            \
+		NAME, _ep_rx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram;   \
+	static usb_uint CONCAT2(                                            \
+		NAME, _ep_tx_buffer_)[USB_MAX_PACKET_SIZE / 2] __usb_ram;   \
+	static void CONCAT2(NAME, _deferred_)(void);                        \
+	DECLARE_DEFERRED(CONCAT2(NAME, _deferred_));                        \
+	struct usb_spi_state CONCAT2(NAME, _state_) = {                     \
+		.enabled_host = 0,                                          \
+		.enabled_device = 0,                                        \
+		.enabled = 0,                                               \
 		.spi_write_ctx.buffer = (uint8_t *)CONCAT2(NAME, _buffer_), \
-		.spi_read_ctx.buffer = (uint8_t *)CONCAT2(NAME, _buffer_), \
-	};								\
-	struct usb_spi_config const NAME = {				\
-		.state     = &CONCAT2(NAME, _state_),			\
-		.interface = INTERFACE,					\
-		.endpoint  = ENDPOINT,					\
-		.deferred  = &CONCAT2(NAME, _deferred__data),		\
-		.ep_rx_ram = CONCAT2(NAME, _ep_rx_buffer_),		\
-		.ep_tx_ram = CONCAT2(NAME, _ep_tx_buffer_),		\
-		.flags     = FLAGS,		\
-	};								\
-	const struct usb_interface_descriptor				\
-	USB_IFACE_DESC(INTERFACE) = {					\
-		.bLength            = USB_DT_INTERFACE_SIZE,		\
-		.bDescriptorType    = USB_DT_INTERFACE,			\
-		.bInterfaceNumber   = INTERFACE,			\
-		.bAlternateSetting  = 0,				\
-		.bNumEndpoints      = 2,				\
-		.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,		\
-		.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SPI,		\
-		.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SPI,		\
-		.iInterface         = USB_STR_SPI_NAME,			\
-	};								\
-	const struct usb_endpoint_descriptor				\
-	USB_EP_DESC(INTERFACE, 0) = {					\
-		.bLength          = USB_DT_ENDPOINT_SIZE,		\
-		.bDescriptorType  = USB_DT_ENDPOINT,			\
-		.bEndpointAddress = 0x80 | ENDPOINT,			\
-		.bmAttributes     = 0x02 /* Bulk IN */,			\
-		.wMaxPacketSize   = USB_MAX_PACKET_SIZE,		\
-		.bInterval        = 10,					\
-	};								\
-	const struct usb_endpoint_descriptor				\
-	USB_EP_DESC(INTERFACE, 1) = {					\
-		.bLength          = USB_DT_ENDPOINT_SIZE,		\
-		.bDescriptorType  = USB_DT_ENDPOINT,			\
-		.bEndpointAddress = ENDPOINT,				\
-		.bmAttributes     = 0x02 /* Bulk OUT */,		\
-		.wMaxPacketSize   = USB_MAX_PACKET_SIZE,		\
-		.bInterval        = 0,					\
-	};								\
-	static void CONCAT2(NAME, _ep_tx_)   (void) { usb_spi_tx   (&NAME); } \
-	static void CONCAT2(NAME, _ep_rx_)   (void) { usb_spi_rx   (&NAME); } \
-	static void CONCAT2(NAME, _ep_event_)(enum usb_ep_event evt)	\
-	{								\
-		usb_spi_event(&NAME, evt);				\
-	}								\
-	USB_DECLARE_EP(ENDPOINT,					\
-		       CONCAT2(NAME, _ep_tx_),				\
-		       CONCAT2(NAME, _ep_rx_),				\
-		       CONCAT2(NAME, _ep_event_));			\
-	static int CONCAT2(NAME, _interface_)(usb_uint *rx_buf,		\
-					      usb_uint *tx_buf)		\
-	{ return usb_spi_interface(&NAME, rx_buf, tx_buf); }		\
-	USB_DECLARE_IFACE(INTERFACE,					\
-			  CONCAT2(NAME, _interface_));			\
-	static void CONCAT2(NAME, _deferred_)(void)			\
-	{ usb_spi_deferred(&NAME); }
+		.spi_read_ctx.buffer = (uint8_t *)CONCAT2(NAME, _buffer_),  \
+	};                                                                  \
+	struct usb_spi_config const NAME = {                                \
+		.state = &CONCAT2(NAME, _state_),                           \
+		.interface = INTERFACE,                                     \
+		.endpoint = ENDPOINT,                                       \
+		.deferred = &CONCAT2(NAME, _deferred__data),                \
+		.ep_rx_ram = CONCAT2(NAME, _ep_rx_buffer_),                 \
+		.ep_tx_ram = CONCAT2(NAME, _ep_tx_buffer_),                 \
+		.flags = FLAGS,                                             \
+	};                                                                  \
+	const struct usb_interface_descriptor USB_IFACE_DESC(INTERFACE) = { \
+		.bLength = USB_DT_INTERFACE_SIZE,                           \
+		.bDescriptorType = USB_DT_INTERFACE,                        \
+		.bInterfaceNumber = INTERFACE,                              \
+		.bAlternateSetting = 0,                                     \
+		.bNumEndpoints = 2,                                         \
+		.bInterfaceClass = USB_CLASS_VENDOR_SPEC,                   \
+		.bInterfaceSubClass = USB_SUBCLASS_GOOGLE_SPI,              \
+		.bInterfaceProtocol = USB_PROTOCOL_GOOGLE_SPI,              \
+		.iInterface = USB_STR_SPI_NAME,                             \
+	};                                                                  \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 0) = {  \
+		.bLength = USB_DT_ENDPOINT_SIZE,                            \
+		.bDescriptorType = USB_DT_ENDPOINT,                         \
+		.bEndpointAddress = 0x80 | ENDPOINT,                        \
+		.bmAttributes = 0x02 /* Bulk IN */,                         \
+		.wMaxPacketSize = USB_MAX_PACKET_SIZE,                      \
+		.bInterval = 10,                                            \
+	};                                                                  \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 1) = {  \
+		.bLength = USB_DT_ENDPOINT_SIZE,                            \
+		.bDescriptorType = USB_DT_ENDPOINT,                         \
+		.bEndpointAddress = ENDPOINT,                               \
+		.bmAttributes = 0x02 /* Bulk OUT */,                        \
+		.wMaxPacketSize = USB_MAX_PACKET_SIZE,                      \
+		.bInterval = 0,                                             \
+	};                                                                  \
+	static void CONCAT2(NAME, _ep_tx_)(void)                            \
+	{                                                                   \
+		usb_spi_tx(&NAME);                                          \
+	}                                                                   \
+	static void CONCAT2(NAME, _ep_rx_)(void)                            \
+	{                                                                   \
+		usb_spi_rx(&NAME);                                          \
+	}                                                                   \
+	static void CONCAT2(NAME, _ep_event_)(enum usb_ep_event evt)        \
+	{                                                                   \
+		usb_spi_event(&NAME, evt);                                  \
+	}                                                                   \
+	USB_DECLARE_EP(ENDPOINT, CONCAT2(NAME, _ep_tx_),                    \
+		       CONCAT2(NAME, _ep_rx_), CONCAT2(NAME, _ep_event_));  \
+	static int CONCAT2(NAME, _interface_)(usb_uint * rx_buf,            \
+					      usb_uint * tx_buf)            \
+	{                                                                   \
+		return usb_spi_interface(&NAME, rx_buf, tx_buf);            \
+	}                                                                   \
+	USB_DECLARE_IFACE(INTERFACE, CONCAT2(NAME, _interface_));           \
+	static void CONCAT2(NAME, _deferred_)(void)                         \
+	{                                                                   \
+		usb_spi_deferred(&NAME);                                    \
+	}
 
 /*
  * Handle SPI request in a deferred callback.
@@ -636,9 +640,8 @@ void usb_spi_enable(struct usb_spi_config const *config, int enabled);
 void usb_spi_tx(struct usb_spi_config const *config);
 void usb_spi_rx(struct usb_spi_config const *config);
 void usb_spi_event(struct usb_spi_config const *config, enum usb_ep_event evt);
-int  usb_spi_interface(struct usb_spi_config const *config,
-		       usb_uint *rx_buf,
-		       usb_uint *tx_buf);
+int usb_spi_interface(struct usb_spi_config const *config, usb_uint *rx_buf,
+		      usb_uint *tx_buf);
 
 /*
  * These functions should be implemented by the board to provide any board
