@@ -386,7 +386,7 @@ static int test_deep_charge_battery(void)
 	state_v2 = charge_get_state_v2();
 	TEST_ASSERT(state_v2 == ST_IDLE);
 
-        /* recovery from a low voltage. */
+	/* recovery from a low voltage. */
 	sb_write(SB_VOLTAGE, (bat_info->voltage_normal));
 	wait_charging_state();
 	state_v2 = charge_get_state_v2();
@@ -533,9 +533,8 @@ static int test_hc_charge_state(void)
 	/* Get the state */
 	memset(&resp, 0, sizeof(resp));
 	params.cmd = CHARGE_STATE_CMD_GET_STATE;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	TEST_ASSERT(resp.get_state.ac);
 	TEST_ASSERT(resp.get_state.chg_voltage);
@@ -545,14 +544,13 @@ static int test_hc_charge_state(void)
 
 	/* Check all the params */
 	for (i = 0; i < CS_NUM_BASE_PARAMS; i++) {
-
 		/* Read it */
 		memset(&resp, 0, sizeof(resp));
 		params.cmd = CHARGE_STATE_CMD_GET_PARAM;
 		params.get_param.param = i;
-		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-					    &params, sizeof(params),
-					    &resp, sizeof(resp));
+		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+					    sizeof(params), &resp,
+					    sizeof(resp));
 		TEST_ASSERT(rv == EC_RES_SUCCESS);
 		if (i != CS_PARAM_LIMIT_POWER)
 			TEST_ASSERT(resp.get_param.value);
@@ -565,7 +563,7 @@ static int test_hc_charge_state(void)
 		case CS_PARAM_CHG_VOLTAGE:
 		case CS_PARAM_CHG_CURRENT:
 		case CS_PARAM_CHG_INPUT_CURRENT:
-			tmp -= 128;		/* Should be valid delta */
+			tmp -= 128; /* Should be valid delta */
 			break;
 		case CS_PARAM_CHG_STATUS:
 		case CS_PARAM_LIMIT_POWER:
@@ -578,9 +576,9 @@ static int test_hc_charge_state(void)
 		params.cmd = CHARGE_STATE_CMD_SET_PARAM;
 		params.set_param.param = i;
 		params.set_param.value = tmp;
-		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-					    &params, sizeof(params),
-					    &resp, sizeof(resp));
+		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+					    sizeof(params), &resp,
+					    sizeof(resp));
 		if (i == CS_PARAM_CHG_STATUS || i == CS_PARAM_LIMIT_POWER)
 			TEST_ASSERT(rv == EC_RES_ACCESS_DENIED);
 		else
@@ -593,9 +591,9 @@ static int test_hc_charge_state(void)
 		memset(&resp, 0, sizeof(resp));
 		params.cmd = CHARGE_STATE_CMD_GET_PARAM;
 		params.get_param.param = i;
-		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-					    &params, sizeof(params),
-					    &resp, sizeof(resp));
+		rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+					    sizeof(params), &resp,
+					    sizeof(resp));
 		TEST_ASSERT(rv == EC_RES_SUCCESS);
 		TEST_ASSERT(resp.get_param.value == tmp);
 	}
@@ -605,17 +603,15 @@ static int test_hc_charge_state(void)
 	memset(&resp, 0, sizeof(resp));
 	params.cmd = CHARGE_STATE_CMD_GET_PARAM;
 	params.get_param.param = CS_PARAM_CUSTOM_PROFILE_MIN;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	TEST_ASSERT(resp.get_param.value == meh);
 	params.cmd = CHARGE_STATE_CMD_SET_PARAM;
 	params.set_param.param = CS_PARAM_CUSTOM_PROFILE_MIN;
 	params.set_param.value = 0xc0def00d;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	/* Allow the change to take effect */
 	state = wait_charging_state();
@@ -624,23 +620,20 @@ static int test_hc_charge_state(void)
 	/* param out of range */
 	params.cmd = CHARGE_STATE_CMD_GET_PARAM;
 	params.get_param.param = CS_NUM_BASE_PARAMS;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_INVALID_PARAM);
 	params.cmd = CHARGE_STATE_CMD_SET_PARAM;
 	params.set_param.param = CS_NUM_BASE_PARAMS;
-	params.set_param.value = 0x1000;	/* random value */
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	params.set_param.value = 0x1000; /* random value */
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_INVALID_PARAM);
 
 	/* command out of range */
 	params.cmd = CHARGE_STATE_NUM_CMDS;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &params, sizeof(params),
-				    &resp, sizeof(resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &params,
+				    sizeof(params), &resp, sizeof(resp));
 	TEST_ASSERT(rv == EC_RES_INVALID_PARAM);
 
 	/*
@@ -665,40 +658,38 @@ static int test_hc_current_limit(void)
 
 	/* See what current the charger is delivering */
 	cs_params.cmd = CHARGE_STATE_CMD_GET_STATE;
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &cs_params, sizeof(cs_params),
-				    &cs_resp, sizeof(cs_resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &cs_params,
+				    sizeof(cs_params), &cs_resp,
+				    sizeof(cs_resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	norm_current = cs_resp.get_state.chg_current;
 
 	/* Lower it a bit */
 	lower_current = norm_current - 256;
 	cl_params.limit = lower_current;
-	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 0,
-				    &cl_params, sizeof(cl_params),
-				    0, 0);
+	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 0, &cl_params,
+				    sizeof(cl_params), 0, 0);
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	wait_charging_state();
 
 	/* See that it's changed */
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &cs_params, sizeof(cs_params),
-				    &cs_resp, sizeof(cs_resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &cs_params,
+				    sizeof(cs_params), &cs_resp,
+				    sizeof(cs_resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	TEST_ASSERT(lower_current == cs_resp.get_state.chg_current);
 
 	/* Remove the limit */
 	cl_params.limit = -1U;
-	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 0,
-				    &cl_params, sizeof(cl_params),
-				    0, 0);
+	rv = test_send_host_command(EC_CMD_CHARGE_CURRENT_LIMIT, 0, &cl_params,
+				    sizeof(cl_params), 0, 0);
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	wait_charging_state();
 
 	/* See that it's back */
-	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0,
-				    &cs_params, sizeof(cs_params),
-				    &cs_resp, sizeof(cs_resp));
+	rv = test_send_host_command(EC_CMD_CHARGE_STATE, 0, &cs_params,
+				    sizeof(cs_params), &cs_resp,
+				    sizeof(cs_resp));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	TEST_ASSERT(norm_current == cs_resp.get_state.chg_current);
 
@@ -789,13 +780,13 @@ static int test_battery_sustainer(void)
 	p.mode = CHARGE_CONTROL_NORMAL;
 	p.sustain_soc.lower = 79;
 	p.sustain_soc.upper = 80;
-	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2,
-				    &p, sizeof(p), NULL, 0);
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 
 	p.cmd = EC_CHARGE_CONTROL_CMD_GET;
-	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2,
-				    &p, sizeof(p), &r, sizeof(r));
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p), &r,
+				    sizeof(r));
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	TEST_ASSERT(r.sustain_soc.lower == 79);
 	TEST_ASSERT(r.sustain_soc.upper == 80);
@@ -854,8 +845,8 @@ static int test_battery_sustainer(void)
 	p.mode = CHARGE_CONTROL_NORMAL;
 	p.sustain_soc.lower = 79;
 	p.sustain_soc.upper = 80;
-	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2,
-				    &p, sizeof(p), NULL, 0);
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	wait_charging_state();
 	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE);
@@ -876,8 +867,8 @@ static int test_battery_sustainer(void)
 	p.mode = CHARGE_CONTROL_NORMAL;
 	p.sustain_soc.lower = 79;
 	p.sustain_soc.upper = 80;
-	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2,
-				    &p, sizeof(p), NULL, 0);
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 	wait_charging_state();
 	TEST_ASSERT(get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE);
@@ -898,8 +889,8 @@ static int test_battery_sustainer_discharge_idle(void)
 	p.mode = CHARGE_CONTROL_NORMAL;
 	p.sustain_soc.lower = 80;
 	p.sustain_soc.upper = 80;
-	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2,
-				    &p, sizeof(p), NULL, 0);
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 
 	/* Check mode transition as the SoC changes. */
@@ -939,8 +930,8 @@ static int test_battery_sustainer_discharge_idle(void)
 	p.mode = CHARGE_CONTROL_NORMAL;
 	p.sustain_soc.lower = -1;
 	p.sustain_soc.upper = -1;
-	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2,
-				    &p, sizeof(p), NULL, 0);
+	rv = test_send_host_command(EC_CMD_CHARGE_CONTROL, 2, &p, sizeof(p),
+				    NULL, 0);
 	TEST_ASSERT(rv == EC_RES_SUCCESS);
 
 	/* This time, mode will stay in NORMAL even when upper < SoC. */
