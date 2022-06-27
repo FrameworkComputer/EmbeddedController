@@ -72,4 +72,4 @@ int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr);
  */
 int print_temps(void);
 
-#endif  /* __CROS_EC_TEMP_SENSOR_H */
+#endif /* __CROS_EC_TEMP_SENSOR_H */
