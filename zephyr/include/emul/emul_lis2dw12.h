@@ -87,8 +87,7 @@ uint8_t lis2dw12_emul_peek_lpmode(struct i2c_emul *emul);
  * @param reading array of int X, Y, and Z readings.
  * @return 0 on success, or -EINVAL if readings are out of bounds.
  */
-int lis2dw12_emul_set_accel_reading(const struct emul *emul,
-				    intv3_t reading);
+int lis2dw12_emul_set_accel_reading(const struct emul *emul, intv3_t reading);
 
 /**
  * @brief Clears the current accelerometer reading and resets the
