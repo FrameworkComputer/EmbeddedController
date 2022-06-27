@@ -19,8 +19,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
@@ -37,17 +37,13 @@ static uint8_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 static int read_reg(uint8_t port, int reg, int *regval)
 {
 	return i2c_read8(ppc_chips[port].i2c_port,
-			 ppc_chips[port].i2c_addr_flags,
-			 reg,
-			 regval);
+			 ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 static int write_reg(uint8_t port, int reg, int regval)
 {
 	return i2c_write8(ppc_chips[port].i2c_port,
-			  ppc_chips[port].i2c_addr_flags,
-			  reg,
-			  regval);
+			  ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 static int nx20p348x_set_ovp_limit(int port)
@@ -76,7 +72,7 @@ static int nx20p348x_is_sourcing_vbus(int port)
 }
 
 static int nx20p348x_set_vbus_source_current_limit(int port,
-						 enum tcpc_rp_value rp)
+						   enum tcpc_rp_value rp)
 {
 	int regval;
 	int status;
@@ -102,7 +98,6 @@ static int nx20p348x_set_vbus_source_current_limit(int port,
 		regval |= NX20P348X_ILIM_0_600;
 		break;
 	};
-
 
 	return write_reg(port, NX20P348X_5V_SRC_OCP_THRESHOLD_REG, regval);
 }
@@ -166,7 +161,8 @@ __maybe_unused static int nx20p3481_vbus_sink_enable(int port, int enable)
 		return rv;
 
 	return (status & NX20P348X_SWITCH_STATUS_HVSNK) == control ?
-		EC_SUCCESS : EC_ERROR_UNKNOWN;
+		       EC_SUCCESS :
+		       EC_ERROR_UNKNOWN;
 }
 
 __maybe_unused static int nx20p3481_vbus_source_enable(int port, int enable)
@@ -242,7 +238,7 @@ __maybe_unused static int nx20p3483_vbus_sink_enable(int port, int enable)
 			return rv;
 
 		is_sink = (ds & NX20P3483_DEVICE_MODE_MASK) ==
-			NX20P3483_MODE_HV_SNK;
+			  NX20P3483_MODE_HV_SNK;
 		if (enable == is_sink)
 			return EC_SUCCESS;
 
@@ -409,7 +405,7 @@ static void nx20p348x_handle_interrupt(int port)
 		    NX20P348X_DB_EXIT_FAIL_THRESHOLD) {
 			ppc_prints("failed to exit DB mode", port);
 			if (read_reg(port, NX20P348X_INTERRUPT1_MASK_REG,
-				    &mask_reg)) {
+				     &mask_reg)) {
 				mask_reg |= NX20P348X_INT1_DBEXIT_ERR;
 				write_reg(port, NX20P348X_INTERRUPT1_MASK_REG,
 					  mask_reg);
@@ -502,8 +498,8 @@ static int nx20p348x_dump(int port)
 	int rv;
 
 	ccprintf("Port %d NX20P348X registers\n", port);
-	for (reg_addr = NX20P348X_DEVICE_ID_REG; reg_addr <=
-		     NX20P348X_DEVICE_CONTROL_REG; reg_addr++) {
+	for (reg_addr = NX20P348X_DEVICE_ID_REG;
+	     reg_addr <= NX20P348X_DEVICE_CONTROL_REG; reg_addr++) {
 		rv = read_reg(port, reg_addr, &reg);
 		if (rv) {
 			ccprintf("nx20p: Failed to read register 0x%x\n",
