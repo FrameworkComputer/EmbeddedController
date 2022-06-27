@@ -17,12 +17,12 @@ void board_hibernate(void)
 		 * Sensors are unpowered in hibernate. Apply PD to the
 		 * interrupt lines such that they don't float.
 		 */
-		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(
-				      gpio_accel_gyro_int_l),
-				      GPIO_DISCONNECTED);
-		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(
-				      gpio_lid_accel_int_l),
-				      GPIO_DISCONNECTED);
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_accel_gyro_int_l),
+			GPIO_DISCONNECTED);
+		gpio_pin_configure_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_lid_accel_int_l),
+			GPIO_DISCONNECTED);
 	}
 
 	/*
