@@ -140,7 +140,7 @@ uint8_t board_get_usb_pd_port_count(void)
 }
 
 void pe_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
-					int count)
+		 int count)
 {
 	int i;
 
@@ -249,7 +249,7 @@ enum pd_cc_states pd_get_task_cc_state(int port)
 static int test_command_pd_dump(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "dump", "", 0, 0, 0};
+	char *argv[] = { "pd", "dump", "", 0, 0, 0 };
 	char test[2];
 
 	sprintf(test, "e");
@@ -277,7 +277,7 @@ static int test_command_pd_dump(void)
 static int test_command_pd_try_src(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "trysrc", "2", 0, 0};
+	char *argv[] = { "pd", "trysrc", "2", 0, 0 };
 
 	try_src_override = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -297,7 +297,7 @@ static int test_command_pd_try_src(void)
 static int test_command_pd_version(void)
 {
 	int argc = 2;
-	char *argv[] = {"pd", "version", 0, 0, 0};
+	char *argv[] = { "pd", "version", 0, 0, 0 };
 
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
 
@@ -307,7 +307,7 @@ static int test_command_pd_version(void)
 static int test_command_pd_arg_count(void)
 {
 	int argc;
-	char *argv[] = {"pd", "", 0, 0, 0};
+	char *argv[] = { "pd", "", 0, 0, 0 };
 
 	for (argc = 0; argc < 3; argc++)
 		TEST_ASSERT(command_pd(argc, argv) == EC_ERROR_PARAM_COUNT);
@@ -318,7 +318,7 @@ static int test_command_pd_arg_count(void)
 static int test_command_pd_port_num(void)
 {
 	int argc = 3;
-	char *argv[10] = {"pd", "0", 0, 0, 0};
+	char *argv[10] = { "pd", "0", 0, 0, 0 };
 	char test[2];
 
 	sprintf(test, "%d", CONFIG_USB_PD_PORT_MAX_COUNT);
@@ -331,7 +331,7 @@ static int test_command_pd_port_num(void)
 static int test_command_pd_tx(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "0", "tx", 0, 0};
+	char *argv[] = { "pd", "0", "tx", 0, 0 };
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -344,7 +344,7 @@ static int test_command_pd_tx(void)
 static int test_command_pd_charger(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "1", "charger", 0, 0};
+	char *argv[] = { "pd", "1", "charger", 0, 0 };
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -357,7 +357,7 @@ static int test_command_pd_charger(void)
 static int test_command_pd_dev1(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "0", "dev", "20", 0};
+	char *argv[] = { "pd", "0", "dev", "20", 0 };
 
 	request = 0;
 	max_volt = 0;
@@ -372,7 +372,7 @@ static int test_command_pd_dev1(void)
 static int test_command_pd_dev2(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "1", "dev", 0, 0};
+	char *argv[] = { "pd", "1", "dev", 0, 0 };
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -386,7 +386,7 @@ static int test_command_pd_dev2(void)
 static int test_command_pd_disable(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "0", "disable", 0, 0};
+	char *argv[] = { "pd", "0", "disable", 0, 0 };
 
 	comm_enable = 1;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -399,7 +399,7 @@ static int test_command_pd_disable(void)
 static int test_command_pd_enable(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "1", "enable", 0, 0};
+	char *argv[] = { "pd", "1", "enable", 0, 0 };
 
 	comm_enable = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -412,7 +412,7 @@ static int test_command_pd_enable(void)
 static int test_command_pd_hard(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "0", "hard", 0, 0};
+	char *argv[] = { "pd", "0", "hard", 0, 0 };
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -425,7 +425,7 @@ static int test_command_pd_hard(void)
 static int test_command_pd_soft(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "0", "soft", 0, 0};
+	char *argv[] = { "pd", "0", "soft", 0, 0 };
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -438,7 +438,7 @@ static int test_command_pd_soft(void)
 static int test_command_pd_swap1(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "0", "swap", 0, 0};
+	char *argv[] = { "pd", "0", "swap", 0, 0 };
 
 	TEST_ASSERT(command_pd(argc, argv) == EC_ERROR_PARAM_COUNT);
 
@@ -448,7 +448,7 @@ static int test_command_pd_swap1(void)
 static int test_command_pd_swap2(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "0", "swap", "power", 0};
+	char *argv[] = { "pd", "0", "swap", "power", 0 };
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -461,7 +461,7 @@ static int test_command_pd_swap2(void)
 static int test_command_pd_swap3(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "1", "swap", "data", 0};
+	char *argv[] = { "pd", "1", "swap", "data", 0 };
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -474,7 +474,7 @@ static int test_command_pd_swap3(void)
 static int test_command_pd_swap4(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "0", "swap", "vconn", 0};
+	char *argv[] = { "pd", "0", "swap", "vconn", 0 };
 
 	request = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -487,7 +487,7 @@ static int test_command_pd_swap4(void)
 static int test_command_pd_swap5(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "0", "swap", "xyz", 0};
+	char *argv[] = { "pd", "0", "swap", "xyz", 0 };
 
 	TEST_ASSERT(command_pd(argc, argv) == EC_ERROR_PARAM3);
 
@@ -497,7 +497,7 @@ static int test_command_pd_swap5(void)
 static int test_command_pd_dualrole0(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "0", "dualrole", 0, 0};
+	char *argv[] = { "pd", "0", "dualrole", 0, 0 };
 
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
 
@@ -507,7 +507,7 @@ static int test_command_pd_dualrole0(void)
 static int test_command_pd_dualrole1(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "0", "dualrole", "on", 0};
+	char *argv[] = { "pd", "0", "dualrole", "on", 0 };
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -520,7 +520,7 @@ static int test_command_pd_dualrole1(void)
 static int test_command_pd_dualrole2(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "0", "dualrole", "off", 0};
+	char *argv[] = { "pd", "0", "dualrole", "off", 0 };
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -533,7 +533,7 @@ static int test_command_pd_dualrole2(void)
 static int test_command_pd_dualrole3(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "0", "dualrole", "freeze", 0};
+	char *argv[] = { "pd", "0", "dualrole", "freeze", 0 };
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -546,7 +546,7 @@ static int test_command_pd_dualrole3(void)
 static int test_command_pd_dualrole4(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "0", "dualrole", "sink", 0};
+	char *argv[] = { "pd", "0", "dualrole", "sink", 0 };
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -559,7 +559,7 @@ static int test_command_pd_dualrole4(void)
 static int test_command_pd_dualrole5(void)
 {
 	int argc = 4;
-	char *argv[] = {"pd", "0", "dualrole", "source", 0};
+	char *argv[] = { "pd", "0", "dualrole", "source", 0 };
 
 	dr_state = 0;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -572,7 +572,7 @@ static int test_command_pd_dualrole5(void)
 static int test_command_pd_state(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "0", "state", 0, 0};
+	char *argv[] = { "pd", "0", "state", 0, 0 };
 
 	pd_get_polarity_called = false;
 	pd_comm_is_enabled_called = false;
@@ -601,7 +601,7 @@ static int test_command_pd_state(void)
 static int test_command_pd_srccaps(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "0", "srccaps", 0, 0};
+	char *argv[] = { "pd", "0", "srccaps", 0, 0 };
 
 	pd_srccaps_dump_called = false;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -613,7 +613,7 @@ static int test_command_pd_srccaps(void)
 static int test_command_pd_timer(void)
 {
 	int argc = 3;
-	char *argv[] = {"pd", "0", "timer", 0, 0};
+	char *argv[] = { "pd", "0", "timer", 0, 0 };
 
 	pd_timer_dump_called = false;
 	TEST_ASSERT(command_pd(argc, argv) == EC_SUCCESS);
@@ -621,7 +621,6 @@ static int test_command_pd_timer(void)
 
 	return EC_SUCCESS;
 }
-
 
 void run_test(int argc, char **argv)
 {
