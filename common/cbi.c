@@ -31,8 +31,8 @@ uint8_t cbi_crc8(const struct cbi_header *h)
 			 h->total_size - sizeof(h->magic) - sizeof(h->crc));
 }
 
-uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,
-		      const void *buf, int size)
+uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag, const void *buf,
+		      int size)
 {
 	struct cbi_data *d = (struct cbi_data *)p;
 
@@ -77,11 +77,11 @@ struct cbi_data *cbi_find_tag(const void *buf, enum cbi_data_tag tag)
  */
 #ifndef HOST_TOOLS_BUILD
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ##args)
 
 static int cache_status = CBI_CACHE_STATUS_INVALID;
 static uint8_t cbi[CBI_IMAGE_SIZE];
-static struct cbi_header * const head = (struct cbi_header *)cbi;
+static struct cbi_header *const head = (struct cbi_header *)cbi;
 
 int cbi_create(void)
 {
@@ -133,21 +133,21 @@ static int do_cbi_read(void)
 	 * buffer has practical limitation.
 	 */
 	if (head->total_size < sizeof(*head) ||
-			head->total_size > CBI_IMAGE_SIZE) {
+	    head->total_size > CBI_IMAGE_SIZE) {
 		CPRINTS("Bad size: %d", head->total_size);
 		return EC_ERROR_OVERFLOW;
 	}
 
 	/* Read the data */
 	if (cbi_config.drv->load(sizeof(*head), head->data,
-			head->total_size - sizeof(*head))) {
+				 head->total_size - sizeof(*head))) {
 		CPRINTS("Failed to read body");
 		return EC_ERROR_INVAL;
 	}
 
 	/* Check CRC. This supports new fields unknown to this parser. */
 	if (cbi_config.storage_type != CBI_STORAGE_TYPE_GPIO &&
-			cbi_crc8(head) != head->crc) {
+	    cbi_crc8(head) != head->crc) {
 		CPRINTS("Bad CRC");
 		return EC_ERROR_INVAL;
 	}
@@ -175,8 +175,8 @@ static int cbi_read(void)
 	return rv;
 }
 
-__attribute__((weak))
-int cbi_board_override(enum cbi_data_tag tag, uint8_t *buf, uint8_t *size)
+__attribute__((weak)) int cbi_board_override(enum cbi_data_tag tag,
+					     uint8_t *buf, uint8_t *size)
 {
 	return EC_SUCCESS;
 }
@@ -294,8 +294,7 @@ int cbi_get_ssfc(uint32_t *ssfc)
 {
 	uint8_t size = sizeof(*ssfc);
 
-	return cbi_get_board_info(CBI_TAG_SSFC, (uint8_t *)ssfc,
-				  &size);
+	return cbi_get_board_info(CBI_TAG_SSFC, (uint8_t *)ssfc, &size);
 }
 
 int cbi_get_pcb_supplier(uint32_t *pcb_supplier)
@@ -303,7 +302,7 @@ int cbi_get_pcb_supplier(uint32_t *pcb_supplier)
 	uint8_t size = sizeof(*pcb_supplier);
 
 	return cbi_get_board_info(CBI_TAG_PCB_SUPPLIER, (uint8_t *)pcb_supplier,
-			&size);
+				  &size);
 }
 
 int cbi_get_rework_id(uint64_t *id)
@@ -326,19 +325,16 @@ static enum ec_status hc_cbi_get(struct host_cmd_handler_args *args)
 	args->response_size = size;
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_CROS_BOARD_INFO,
-		     hc_cbi_get,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_GET_CROS_BOARD_INFO, hc_cbi_get, EC_VER_MASK(0));
 
-static enum ec_status common_cbi_set(const struct __ec_align4
-							ec_params_set_cbi * p)
+static enum ec_status
+common_cbi_set(const struct __ec_align4 ec_params_set_cbi *p)
 {
 	/*
 	 * If we ultimately cannot write to the flash, then fail early unless
 	 * we are explicitly trying to write to the in-memory CBI only
 	 */
-	if (cbi_config.drv->is_protected() &&
-	    !(p->flag & CBI_SET_NO_SYNC)) {
+	if (cbi_config.drv->is_protected() && !(p->flag & CBI_SET_NO_SYNC)) {
 		CPRINTS("Failed to write due to WP");
 		return EC_RES_ACCESS_DENIED;
 	}
@@ -386,7 +382,7 @@ static enum ec_status common_cbi_set(const struct __ec_align4
 
 static enum ec_status hc_cbi_set(struct host_cmd_handler_args *args)
 {
-	const struct __ec_align4 ec_params_set_cbi * p = args->params;
+	const struct __ec_align4 ec_params_set_cbi *p = args->params;
 
 	/* Given data size exceeds the packet size. */
 	if (args->params_size < sizeof(*p) + p->size)
@@ -394,12 +390,10 @@ static enum ec_status hc_cbi_set(struct host_cmd_handler_args *args)
 
 	return common_cbi_set(p);
 }
-DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO,
-		     hc_cbi_set,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_SET_CROS_BOARD_INFO, hc_cbi_set, EC_VER_MASK(0));
 
 #ifdef CONFIG_CMD_CBI
-static void print_tag(const char * const tag, int rv, const uint32_t *val)
+static void print_tag(const char *const tag, int rv, const uint32_t *val)
 {
 	ccprintf("%s", tag);
 	if (rv == EC_SUCCESS && val)
@@ -408,7 +402,7 @@ static void print_tag(const char * const tag, int rv, const uint32_t *val)
 		ccprintf(": (Error %d)\n", rv);
 }
 
-static void print_uint64_tag(const char * const tag, int rv,
+static void print_uint64_tag(const char *const tag, int rv,
 			     const uint64_t *lval)
 {
 	ccprintf("%s", tag);
@@ -429,7 +423,8 @@ static void dump_cbi(void)
 	cbi_read();
 
 	if (cbi_get_cache_status() != CBI_CACHE_STATUS_SYNCED) {
-		ccprintf("Cannot Read CBI (Error %d)\n", cbi_get_cache_status());
+		ccprintf("Cannot Read CBI (Error %d)\n",
+			 cbi_get_cache_status());
 		return;
 	}
 
@@ -450,12 +445,12 @@ static void dump_cbi(void)
  * Space for the set command (does not include data space) plus maximum
  * possible console input
  */
-static uint8_t buf[sizeof(struct ec_params_set_cbi) + \
-		       CONFIG_CONSOLE_INPUT_LINE_SIZE];
+static uint8_t
+	buf[sizeof(struct ec_params_set_cbi) + CONFIG_CONSOLE_INPUT_LINE_SIZE];
 
 static int cc_cbi(int argc, char **argv)
 {
-	struct __ec_align4 ec_params_set_cbi * setter =
+	struct __ec_align4 ec_params_set_cbi *setter =
 		(struct __ec_align4 ec_params_set_cbi *)buf;
 	int last_arg;
 	char *e;
@@ -494,8 +489,9 @@ static int cc_cbi(int argc, char **argv)
 			if (setter->size < 1) {
 				ccprintf("Set size too small\n");
 				return EC_ERROR_PARAM4;
-			} else if ((setter->size > 8) || (setter->size > 4 &&
-				   setter->tag != CBI_TAG_REWORK_ID)) {
+			} else if ((setter->size > 8) ||
+				   (setter->size > 4 &&
+				    setter->tag != CBI_TAG_REWORK_ID)) {
 				ccprintf("Set size too large\n");
 				return EC_ERROR_PARAM4;
 			}
@@ -542,7 +538,8 @@ static int cc_cbi(int argc, char **argv)
 
 	return EC_ERROR_UNKNOWN;
 }
-DECLARE_CONSOLE_COMMAND(cbi, cc_cbi, "[set <tag> <value> <size> | "
+DECLARE_CONSOLE_COMMAND(cbi, cc_cbi,
+			"[set <tag> <value> <size> | "
 			"remove <tag>] [init | skip_write]",
 			"Print or change Cros Board Info from flash");
 #endif /* CONFIG_CMD_CBI */
