@@ -12,8 +12,8 @@
 #include "timer.h"
 #include "usb_mux.h"
 
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 #define OVP_RETRY_DELAY_US_MIN (100 * MSEC)
 
