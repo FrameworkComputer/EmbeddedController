@@ -31,8 +31,8 @@ static void ap_deferred(void)
 	 * in S0:   SLP_S3_L is 1 and SLP_S0_L is 1.
 	 * in S5/G3, the FP MCU should not be running.
 	 */
-	int running = gpio_get_level(GPIO_PCH_SLP_S3_L)
-			&& gpio_get_level(GPIO_PCH_SLP_S0_L);
+	int running = gpio_get_level(GPIO_PCH_SLP_S3_L) &&
+		      gpio_get_level(GPIO_PCH_SLP_S0_L);
 
 	if (running) { /* S0 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
