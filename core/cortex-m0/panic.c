@@ -19,9 +19,8 @@
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
 
-
 /* Panic data goes at the end of RAM. */
-static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
+static struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 
 /* Preceded by stack, rounded down to nearest 64-bit-aligned boundary */
 static const uint32_t pstack_addr = ((uint32_t)pdata_ptr) & ~7;
@@ -101,7 +100,7 @@ void panic_data_print(const struct panic_data *pdata)
 	print_reg(12, sregs, CORTEX_PANIC_FRAME_REGISTER_R12);
 	print_reg(13, lregs,
 		  in_handler ? CORTEX_PANIC_REGISTER_MSP :
-				     CORTEX_PANIC_REGISTER_PSP);
+			       CORTEX_PANIC_REGISTER_PSP);
 	print_reg(14, sregs, CORTEX_PANIC_FRAME_REGISTER_LR);
 	print_reg(15, sregs, CORTEX_PANIC_FRAME_REGISTER_PC);
 }
@@ -126,10 +125,9 @@ void __keep report_panic(void)
 	sp = is_frame_in_handler_stack(
 		     pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) ?
 		     pdata->cm.regs[CORTEX_PANIC_REGISTER_MSP] :
-			   pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
+		     pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
 	/* If stack is valid, copy exception frame to pdata */
-	if ((sp & 3) == 0 &&
-	    sp >= CONFIG_RAM_BASE &&
+	if ((sp & 3) == 0 && sp >= CONFIG_RAM_BASE &&
 	    sp <= CONFIG_RAM_BASE + CONFIG_RAM_SIZE - 8 * sizeof(uint32_t)) {
 		const uint32_t *sregs = (const uint32_t *)sp;
 		int i;
@@ -162,38 +160,41 @@ void exception_panic(void)
 		"mov r5, lr\n"
 		"stmia %[pregs]!, {r1-r5}\n"
 		"mov sp, %[pstack]\n"
-		"bl report_panic\n" : :
-			[pregs] "r" (pdata_ptr->cm.regs),
-			[pstack] "r" (pstack_addr) :
-			/* Constraints protecting these from being clobbered.
-			 * Gcc should be using r0 & r12 for pregs and pstack. */
-			"r1", "r2", "r3", "r4", "r5", "r6",
-		/* clang warns that we're clobbering a reserved register:
-		 * inline asm clobber list contains reserved registers: R7
-		 * [-Werror,-Winline-asm]. The intent of the clobber list is
-		 * to force pregs and pstack to be in R0 and R12, which
-		 * still holds.
-		 */
+		"bl report_panic\n"
+		:
+		: [pregs] "r"(pdata_ptr->cm.regs), [pstack] "r"(pstack_addr)
+		:
+		/* Constraints protecting these from being clobbered.
+		 * Gcc should be using r0 & r12 for pregs and pstack. */
+		"r1", "r2", "r3", "r4", "r5", "r6",
+	/* clang warns that we're clobbering a reserved register:
+	 * inline asm clobber list contains reserved registers: R7
+	 * [-Werror,-Winline-asm]. The intent of the clobber list is
+	 * to force pregs and pstack to be in R0 and R12, which
+	 * still holds.
+	 */
 #ifndef __clang__
-			"r7",
+		"r7",
 #endif
-			"r8", "r9", "r10", "r11", "cc", "memory"
-		);
+		"r8", "r9", "r10", "r11", "cc", "memory");
 }
 
 #ifdef CONFIG_SOFTWARE_PANIC
 void software_panic(uint32_t reason, uint32_t info)
 {
-	__asm__("mov " STRINGIFY(SOFTWARE_PANIC_INFO_REG) ", %0\n"
-		"mov " STRINGIFY(SOFTWARE_PANIC_REASON_REG) ", %1\n"
-		"bl exception_panic\n"
-		: : "r"(info), "r"(reason));
+	__asm__("mov " STRINGIFY(
+			SOFTWARE_PANIC_INFO_REG) ", %0\n"
+						 "mov " STRINGIFY(
+							 SOFTWARE_PANIC_REASON_REG) ", %1\n"
+										    "bl exception_panic\n"
+		:
+		: "r"(info), "r"(reason));
 	__builtin_unreachable();
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
-	struct panic_data * const pdata = get_panic_data_write();
+	struct panic_data *const pdata = get_panic_data_write();
 	uint32_t *lregs;
 
 	lregs = pdata->cm.regs;
@@ -213,7 +214,7 @@ void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 {
-	struct panic_data * const pdata = panic_get_data();
+	struct panic_data *const pdata = panic_get_data();
 	uint32_t *lregs;
 
 	if (pdata && pdata->struct_version == 2) {
