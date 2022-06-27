@@ -40,7 +40,7 @@ static int test_queue8_init(void)
 
 static int test_queue8_fifo(void)
 {
-	char buf1[3] = {1, 2, 3};
+	char buf1[3] = { 1, 2, 3 };
 	char buf2[3];
 
 	TEST_ASSERT(queue_add_units(&test_queue8, buf1 + 0, 1) == 1);
@@ -55,7 +55,7 @@ static int test_queue8_fifo(void)
 
 static int test_queue8_multiple_units_add(void)
 {
-	char buf1[5] = {1, 2, 3, 4, 5};
+	char buf1[5] = { 1, 2, 3, 4, 5 };
 	char buf2[5];
 
 	TEST_ASSERT(queue_space(&test_queue8) >= 5);
@@ -68,7 +68,7 @@ static int test_queue8_multiple_units_add(void)
 
 static int test_queue8_removal(void)
 {
-	char buf1[5] = {1, 2, 3, 4, 5};
+	char buf1[5] = { 1, 2, 3, 4, 5 };
 	char buf2[5];
 
 	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
@@ -105,7 +105,7 @@ static int test_queue8_removal(void)
 
 static int test_queue8_peek(void)
 {
-	char buf1[5] = {1, 2, 3, 4, 5};
+	char buf1[5] = { 1, 2, 3, 4, 5 };
 	char buf2[5];
 
 	TEST_ASSERT(queue_add_units(&test_queue8, buf1, 5) == 5);
@@ -122,7 +122,7 @@ static int test_queue8_peek(void)
 
 static int test_queue2_odd_even(void)
 {
-	uint16_t buf1[3] = {1, 2, 3};
+	uint16_t buf1[3] = { 1, 2, 3 };
 	uint16_t buf2[3];
 
 	TEST_ASSERT(queue_add_units(&test_queue2, buf1, 1) == 1);
@@ -147,7 +147,7 @@ static int test_queue2_odd_even(void)
 
 static int test_queue8_chunks(void)
 {
-	static uint8_t const data[3] = {1, 2, 3};
+	static uint8_t const data[3] = { 1, 2, 3 };
 	struct queue_chunk chunk;
 
 	chunk = queue_get_write_chunk(&test_queue8, 0);
@@ -161,7 +161,7 @@ static int test_queue8_chunks(void)
 	chunk = queue_get_read_chunk(&test_queue8);
 
 	TEST_ASSERT(chunk.count == 3);
-	TEST_ASSERT_ARRAY_EQ((uint8_t *) chunk.buffer, data, 3);
+	TEST_ASSERT_ARRAY_EQ((uint8_t *)chunk.buffer, data, 3);
 
 	TEST_ASSERT(queue_advance_head(&test_queue8, 3) == 3);
 	TEST_ASSERT(queue_is_empty(&test_queue8));
@@ -171,7 +171,7 @@ static int test_queue8_chunks(void)
 
 static int test_queue8_chunks_wrapped(void)
 {
-	static uint8_t const data[3] = {1, 2, 3};
+	static uint8_t const data[3] = { 1, 2, 3 };
 
 	/* Move near the end of the queue */
 	TEST_ASSERT(queue_advance_tail(&test_queue8, 6) == 6);
@@ -213,7 +213,7 @@ static int test_queue8_chunks_wrapped(void)
 
 static int test_queue8_chunks_full(void)
 {
-	static uint8_t const data[8] = {1, 2, 3, 4, 5, 6, 7, 8};
+	static uint8_t const data[8] = { 1, 2, 3, 4, 5, 6, 7, 8 };
 	struct queue_chunk chunk;
 
 	/* Move near the end of the queue */
@@ -230,7 +230,7 @@ static int test_queue8_chunks_full(void)
 	chunk = queue_get_read_chunk(&test_queue8);
 
 	TEST_ASSERT(chunk.count == 2);
-	TEST_ASSERT_ARRAY_EQ((uint8_t *) chunk.buffer, data, 2);
+	TEST_ASSERT_ARRAY_EQ((uint8_t *)chunk.buffer, data, 2);
 
 	/* Signal that we have read both units */
 	TEST_ASSERT(queue_advance_head(&test_queue8, 2) == 2);
@@ -239,8 +239,7 @@ static int test_queue8_chunks_full(void)
 	chunk = queue_get_read_chunk(&test_queue8);
 
 	TEST_ASSERT(chunk.count == 6);
-	TEST_ASSERT_ARRAY_EQ((uint8_t *) chunk.buffer, data + 2, 6);
-
+	TEST_ASSERT_ARRAY_EQ((uint8_t *)chunk.buffer, data + 2, 6);
 
 	return EC_SUCCESS;
 }
@@ -287,12 +286,12 @@ static int test_queue8_chunks_offset(void)
 	/* Check offsetting by 1 */
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 1).count == 7);
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 1).buffer ==
-			test_queue8.buffer + 1);
+		    test_queue8.buffer + 1);
 
 	/* Check offsetting by 4 */
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 4).count == 4);
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 4).buffer ==
-			test_queue8.buffer + 4);
+		    test_queue8.buffer + 4);
 
 	/* Check offset wrapping around */
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 10).count == 0);
@@ -309,12 +308,12 @@ static int test_queue8_chunks_offset(void)
 	/* Get writable chunk to right of tail. */
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 2).count == 2);
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 2).buffer ==
-			test_queue8.buffer + 6);
+		    test_queue8.buffer + 6);
 
 	/* Get writable chunk wrapped and before head. */
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 4).count == 2);
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 4).buffer ==
-			test_queue8.buffer);
+		    test_queue8.buffer);
 
 	/* Check offsetting into non-writable memory. */
 	TEST_ASSERT(queue_get_write_chunk(&test_queue8, 6).count == 0);
