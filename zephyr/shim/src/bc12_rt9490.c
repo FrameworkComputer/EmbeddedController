@@ -19,15 +19,14 @@ static void rt9490_bc12_enable_irqs(void)
 }
 DECLARE_HOOK(HOOK_INIT, rt9490_bc12_enable_irqs, HOOK_PRIO_DEFAULT);
 
-#define GPIO_SIGNAL_FROM_INST(inst)					\
+#define GPIO_SIGNAL_FROM_INST(inst) \
 	GPIO_SIGNAL(DT_PHANDLE(DT_INST_PHANDLE(inst, irq), irq_pin))
 
-#define RT9490_DISPATCH_INTERRUPT(inst)					\
-	IF_ENABLED(DT_INST_NODE_HAS_PROP(inst, irq),			\
-		   (case GPIO_SIGNAL_FROM_INST(inst):			\
-			rt9490_interrupt(USBC_PORT_FROM_INST(inst));	\
-			break;						\
-		   ))
+#define RT9490_DISPATCH_INTERRUPT(inst)                            \
+	IF_ENABLED(DT_INST_NODE_HAS_PROP(inst, irq),               \
+		   (case GPIO_SIGNAL_FROM_INST(inst)               \
+		    : rt9490_interrupt(USBC_PORT_FROM_INST(inst)); \
+		    break;))
 
 void rt9490_bc12_dt_interrupt(enum gpio_signal signal)
 {
