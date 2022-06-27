@@ -11,10 +11,10 @@ struct mdp_msg_service {
 	unsigned char msg[20];
 };
 BUILD_ASSERT(member_size(struct mdp_msg_service, msg) <=
-		CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
+	     CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
 
 /* Functions provided by private overlay. */
 void mdp_common_init(void);
 void mdp_ipi_task_handler(void *pvParameters);
 
-#endif  /* __CROS_EC_SCP_MDP_H */
+#endif /* __CROS_EC_SCP_MDP_H */
