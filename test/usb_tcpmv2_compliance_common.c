@@ -15,9 +15,8 @@
 
 uint32_t rdo = RDO_FIXED(1, 500, 500, 0);
 uint32_t pdo = PDO_FIXED(5000, 3000,
-			 PDO_FIXED_DUAL_ROLE |
-			 PDO_FIXED_DATA_SWAP |
-			 PDO_FIXED_COMM_CAP);
+			 PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |
+				 PDO_FIXED_COMM_CAP);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -31,25 +30,22 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.driver = &mock_usb_mux_driver,
-	}
-};
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = { {
+	.driver = &mock_usb_mux_driver,
+} };
 
-
-void mock_set_cc(enum mock_connect_result cr,
-	enum mock_cc_state cc1, enum mock_cc_state cc2)
+void mock_set_cc(enum mock_connect_result cr, enum mock_cc_state cc1,
+		 enum mock_cc_state cc2)
 {
 	mock_tcpci_set_reg(TCPC_REG_CC_STATUS,
-		TCPC_REG_CC_STATUS_SET(cr, cc1, cc2));
+			   TCPC_REG_CC_STATUS_SET(cr, cc1, cc2));
 }
 
-void mock_set_role(int drp, enum tcpc_rp_value rp,
-	enum tcpc_cc_pull cc1, enum tcpc_cc_pull cc2)
+void mock_set_role(int drp, enum tcpc_rp_value rp, enum tcpc_cc_pull cc1,
+		   enum tcpc_cc_pull cc2)
 {
 	mock_tcpci_set_reg(TCPC_REG_ROLE_CTRL,
-		TCPC_REG_ROLE_CTRL_SET(drp, rp, cc1, cc2));
+			   TCPC_REG_ROLE_CTRL_SET(drp, rp, cc1, cc2));
 }
 
 static int mock_alert_count;
@@ -80,7 +76,9 @@ int pd_check_vconn_swap(int port)
 	return 1;
 }
 
-void board_reset_pd_mcu(void) {}
+void board_reset_pd_mcu(void)
+{
+}
 
 /*****************************************************************************
  * Partner utility functions
@@ -125,29 +123,22 @@ void partner_tx_msg_id_reset(int sop)
 		partner_tx_id[sop] = 0;
 }
 
-void partner_send_msg(enum tcpci_msg_type sop,
-		      uint16_t type,
-		      uint16_t cnt,
-		      uint16_t ext,
-		      uint32_t *payload)
+void partner_send_msg(enum tcpci_msg_type sop, uint16_t type, uint16_t cnt,
+		      uint16_t ext, uint32_t *payload)
 {
 	uint16_t header;
 
 	partner_tx_id[sop] &= 7;
 	header = PD_HEADER(type,
-			sop == TCPCI_MSG_SOP ? partner_get_power_role()
-			: PD_PLUG_FROM_CABLE,
-			partner_get_data_role(),
-			partner_tx_id[sop],
-			cnt,
-			partner_get_pd_rev(),
-			ext);
+			   sop == TCPCI_MSG_SOP ? partner_get_power_role() :
+						  PD_PLUG_FROM_CABLE,
+			   partner_get_data_role(), partner_tx_id[sop], cnt,
+			   partner_get_pd_rev(), ext);
 
 	mock_tcpci_receive(sop, header, payload);
 	++partner_tx_id[sop];
 	mock_set_alert(TCPC_REG_ALERT_RX_STATUS);
 }
-
 
 /*****************************************************************************
  * TCPCI clean power up
@@ -155,8 +146,8 @@ void partner_send_msg(enum tcpci_msg_type sop,
 int tcpci_startup(void)
 {
 	/* Should be in low power mode before AP boots. */
-	TEST_EQ(mock_tcpci_get_reg(TCPC_REG_COMMAND),
-		TCPC_REG_COMMAND_I2CIDLE, "%d");
+	TEST_EQ(mock_tcpci_get_reg(TCPC_REG_COMMAND), TCPC_REG_COMMAND_I2CIDLE,
+		"%d");
 	task_wait_event(10 * SECOND);
 
 	hook_notify(HOOK_CHIPSET_STARTUP);
@@ -165,12 +156,12 @@ int tcpci_startup(void)
 
 	task_wait_event(10 * SECOND);
 	/* Should be in low power mode and DRP auto-toggling with AP in S0. */
-	TEST_EQ((mock_tcpci_get_reg(TCPC_REG_ROLE_CTRL)
-		 & TCPC_REG_ROLE_CTRL_DRP_MASK),
+	TEST_EQ((mock_tcpci_get_reg(TCPC_REG_ROLE_CTRL) &
+		 TCPC_REG_ROLE_CTRL_DRP_MASK),
 		TCPC_REG_ROLE_CTRL_DRP_MASK, "%d");
 	/* TODO: check previous command was TCPC_REG_COMMAND_LOOK4CONNECTION */
-	TEST_EQ(mock_tcpci_get_reg(TCPC_REG_COMMAND),
-		TCPC_REG_COMMAND_I2CIDLE, "%d");
+	TEST_EQ(mock_tcpci_get_reg(TCPC_REG_COMMAND), TCPC_REG_COMMAND_I2CIDLE,
+		"%d");
 
 	/* TODO: this should be performed in TCPCI mock on startup but needs
 	 * more TCPCI functionality added before that can happen.  So until
@@ -198,13 +189,12 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 		TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC),
 			PD_ROLE_DISCONNECTED, "%d");
 
-		partner_set_data_role((data_role == PD_ROLE_UFP)
-						? PD_ROLE_DFP
-						: PD_ROLE_UFP);
+		partner_set_data_role((data_role == PD_ROLE_UFP) ? PD_ROLE_DFP :
+								   PD_ROLE_UFP);
 
-		partner_set_power_role((data_role == PD_ROLE_UFP)
-						? PD_ROLE_SOURCE
-						: PD_ROLE_SINK);
+		partner_set_power_role((data_role == PD_ROLE_UFP) ?
+					       PD_ROLE_SOURCE :
+					       PD_ROLE_SINK);
 
 		switch (partner_get_power_role()) {
 		case PD_ROLE_SOURCE:
@@ -212,11 +202,10 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			 * b) The tester applies Rp (PD3=1.5A, PD2=3A) and
 			 *    waits for the UUT attachment.
 			 */
-			mock_set_cc(MOCK_CC_DUT_IS_SNK,
-				    MOCK_CC_SNK_OPEN,
-				    (partner_get_pd_rev() == PD_REV30
-					? MOCK_CC_SNK_RP_1_5
-					: MOCK_CC_SNK_RP_3_0));
+			mock_set_cc(MOCK_CC_DUT_IS_SNK, MOCK_CC_SNK_OPEN,
+				    (partner_get_pd_rev() == PD_REV30 ?
+					     MOCK_CC_SNK_RP_1_5 :
+					     MOCK_CC_SNK_RP_3_0));
 			mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
 			task_wait_event(5 * MSEC);
 
@@ -227,11 +216,12 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			/*
 			 * d) The tester applies Vbus and waits 50 ms.
 			 */
-			mock_tcpci_set_reg_bits(TCPC_REG_POWER_STATUS,
-					TCPC_REG_POWER_STATUS_VBUS_PRES);
+			mock_tcpci_set_reg_bits(
+				TCPC_REG_POWER_STATUS,
+				TCPC_REG_POWER_STATUS_VBUS_PRES);
 
 			mock_tcpci_clr_reg_bits(TCPC_REG_EXT_STATUS,
-					TCPC_REG_EXT_STATUS_SAFE0V);
+						TCPC_REG_EXT_STATUS_SAFE0V);
 			mock_set_alert(TCPC_REG_ALERT_EXT_STATUS |
 				       TCPC_REG_ALERT_POWER_STATUS);
 			task_wait_event(50 * MSEC);
@@ -242,8 +232,7 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			 * b) The tester applies Rd and waits for Vbus for
 			 *    tNoResponse max (5.5 s).
 			 */
-			mock_set_cc(MOCK_CC_DUT_IS_SRC,
-				    MOCK_CC_SRC_OPEN,
+			mock_set_cc(MOCK_CC_DUT_IS_SRC, MOCK_CC_SRC_OPEN,
 				    MOCK_CC_SRC_RD);
 			mock_set_alert(TCPC_REG_ALERT_CC_STATUS);
 			break;
@@ -260,7 +249,7 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			 */
 			task_wait_event(1 * MSEC);
 			partner_send_msg(TCPCI_MSG_SOP, PD_DATA_SOURCE_CAP, 1,
-					0, &pdo);
+					 0, &pdo);
 
 			/*
 			 * f) The tester waits for the Request from the UUT for
@@ -324,8 +313,7 @@ int proc_pd_e1(enum pd_data_role data_role, enum proc_pd_e1_attach attach)
 			TEST_EQ(tc_is_attached_src(PORT0), true, "%d");
 			break;
 		}
-		TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC),
-			data_role, "%d");
+		TEST_EQ(pd_get_data_role(I2C_PORT_HOST_TCPC), data_role, "%d");
 	}
 
 	return EC_SUCCESS;
@@ -390,13 +378,8 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 		possible[4].data_msg = 0;
 
 		do {
-			rv = verify_tcpci_possible_tx(possible,
-						 5,
-						 &found_index,
-						 NULL,
-						 0,
-						 NULL,
-						 -1);
+			rv = verify_tcpci_possible_tx(possible, 5, &found_index,
+						      NULL, 0, NULL, -1);
 
 			TEST_NE(rv, EC_ERROR_UNKNOWN, "%d");
 			if (rv == EC_ERROR_TIMEOUT)
@@ -406,30 +389,29 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 			task_wait_event(10 * MSEC);
 
 			switch (found_index) {
-			case 0:	/* TCPCI_MSG_SOP PD_CTRL_GET_SOURCE_CAP */
+			case 0: /* TCPCI_MSG_SOP PD_CTRL_GET_SOURCE_CAP */
 				partner_send_msg(TCPCI_MSG_SOP,
-						 PD_DATA_SOURCE_CAP,
-						 1, 0, &pdo);
+						 PD_DATA_SOURCE_CAP, 1, 0,
+						 &pdo);
 				break;
 			case 1: /* TCPCI_MSG_SOP PD_CTRL_GET_SINK_CAP */
 				partner_send_msg(TCPCI_MSG_SOP,
-						 PD_DATA_SINK_CAP,
-						 1, 0, &pdo);
+						 PD_DATA_SINK_CAP, 1, 0, &pdo);
 				break;
 			case 2: /* TCPCI_MSG_SOP_PRIME PD_DATA_VENDOR_DEF */
 				partner_send_msg(TCPCI_MSG_SOP_PRIME,
-						 PD_CTRL_NOT_SUPPORTED,
-						 0, 0, NULL);
+						 PD_CTRL_NOT_SUPPORTED, 0, 0,
+						 NULL);
 				break;
 			case 3: /* TCPCI_MSG_SOP PD_DATA_VENDOR_DEF */
 				partner_send_msg(TCPCI_MSG_SOP,
-						 PD_CTRL_NOT_SUPPORTED,
-						 0, 0, NULL);
+						 PD_CTRL_NOT_SUPPORTED, 0, 0,
+						 NULL);
 				break;
 			case 4: /* TCPCI_MSG_SOP PD_CTRL_GET_REVISION */
 				partner_send_msg(TCPCI_MSG_SOP,
-						 PD_CTRL_NOT_SUPPORTED,
-						 0, 0, NULL);
+						 PD_CTRL_NOT_SUPPORTED, 0, 0,
+						 NULL);
 				break;
 			default:
 				TEST_ASSERT(0);
@@ -460,13 +442,8 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 		possible[4].data_msg = 0;
 
 		do {
-			rv = verify_tcpci_possible_tx(possible,
-						 5,
-						 &found_index,
-						 NULL,
-						 0,
-						 NULL,
-						 -1);
+			rv = verify_tcpci_possible_tx(possible, 5, &found_index,
+						      NULL, 0, NULL, -1);
 
 			TEST_NE(rv, EC_ERROR_UNKNOWN, "%d");
 			if (rv == EC_ERROR_TIMEOUT)
@@ -478,29 +455,25 @@ int handle_attach_expected_msgs(enum pd_data_role data_role)
 			switch (found_index) {
 			case 0: /* TCPCI_MSG_SOP PD_CTRL_GET_SINK_CAP */
 				partner_send_msg(TCPCI_MSG_SOP,
-						 PD_DATA_SINK_CAP,
-						 1, 0, &pdo);
+						 PD_DATA_SINK_CAP, 1, 0, &pdo);
 				break;
 			case 1: /* TCPCI_MSG_SOP PD_CTRL_DR_SWAP */
-				partner_send_msg(TCPCI_MSG_SOP,
-						 PD_CTRL_REJECT,
+				partner_send_msg(TCPCI_MSG_SOP, PD_CTRL_REJECT,
 						 0, 0, NULL);
 				break;
-			case 2:	/* TCPCI_MSG_SOP PD_CTRL_PR_SWAP */
-				partner_send_msg(TCPCI_MSG_SOP,
-						 PD_CTRL_REJECT,
+			case 2: /* TCPCI_MSG_SOP PD_CTRL_PR_SWAP */
+				partner_send_msg(TCPCI_MSG_SOP, PD_CTRL_REJECT,
 						 0, 0, NULL);
 				break;
 			case 3: /* TCPCI_MSG_SOP PD_CTRL_VCONN_SWAP */
 				TEST_LT(vcs++, 4, "%d");
-				partner_send_msg(TCPCI_MSG_SOP,
-						 PD_CTRL_REJECT,
+				partner_send_msg(TCPCI_MSG_SOP, PD_CTRL_REJECT,
 						 0, 0, NULL);
 				break;
 			case 4: /* TCPCI_MSG_SOP PD_CTRL_GET_REVISION */
 				partner_send_msg(TCPCI_MSG_SOP,
-						 PD_CTRL_NOT_SUPPORTED,
-						 0, 0, NULL);
+						 PD_CTRL_NOT_SUPPORTED, 0, 0,
+						 NULL);
 				break;
 			default:
 				TEST_ASSERT(0);
