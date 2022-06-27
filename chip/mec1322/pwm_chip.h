@@ -23,4 +23,4 @@ extern const struct pwm_t pwm_channels[];
  * MEC1322_PCR_EC_SLP_EN bit mask.
  */
 uint32_t pwm_get_keep_awake_mask(void);
-#endif  /* __CROS_EC_PWM_CHIP_H */
+#endif /* __CROS_EC_PWM_CHIP_H */
