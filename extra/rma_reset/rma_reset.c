@@ -27,24 +27,22 @@
 #define EC_COORDINATE_SZ 32
 #define EC_PRIV_KEY_SZ 32
 #define EC_P256_UNCOMPRESSED_PUB_KEY_SZ (EC_COORDINATE_SZ * 2 + 1)
-#define EC_P256_COMPRESSED_PUB_KEY_SZ (EC_COORDINATE_SZ  + 1)
+#define EC_P256_COMPRESSED_PUB_KEY_SZ (EC_COORDINATE_SZ + 1)
 
 #define SERVER_ADDRESS \
 	"https://www.google.com/chromeos/partner/console/cr50reset/request"
 
 /* Test server keys for x25519 and p256 curves. */
 static const uint8_t rma_test_server_x25519_public_key[] = {
-	0x03, 0xae, 0x2d, 0x2c, 0x06, 0x23, 0xe0, 0x73,
-	0x0d, 0xd3, 0xb7, 0x92, 0xac, 0x54, 0xc5, 0xfd,
-	0x7e, 0x9c, 0xf0, 0xa8, 0xeb, 0x7e, 0x2a, 0xb5,
-	0xdb, 0xf4, 0x79, 0x5f, 0x8a, 0x0f, 0x28, 0x3f
+	0x03, 0xae, 0x2d, 0x2c, 0x06, 0x23, 0xe0, 0x73, 0x0d, 0xd3, 0xb7,
+	0x92, 0xac, 0x54, 0xc5, 0xfd, 0x7e, 0x9c, 0xf0, 0xa8, 0xeb, 0x7e,
+	0x2a, 0xb5, 0xdb, 0xf4, 0x79, 0x5f, 0x8a, 0x0f, 0x28, 0x3f
 };
 
 static const uint8_t rma_test_server_x25519_private_key[] = {
-	0x47, 0x3b, 0xa5, 0xdb, 0xc4, 0xbb, 0xd6, 0x77,
-	0x20, 0xbd, 0xd8, 0xbd, 0xc8, 0x7a, 0xbb, 0x07,
-	0x03, 0x79, 0xba, 0x7b, 0x52, 0x8c, 0xec, 0xb3,
-	0x4d, 0xaa, 0x69, 0xf5, 0x65, 0xb4, 0x31, 0xad
+	0x47, 0x3b, 0xa5, 0xdb, 0xc4, 0xbb, 0xd6, 0x77, 0x20, 0xbd, 0xd8,
+	0xbd, 0xc8, 0x7a, 0xbb, 0x07, 0x03, 0x79, 0xba, 0x7b, 0x52, 0x8c,
+	0xec, 0xb3, 0x4d, 0xaa, 0x69, 0xf5, 0x65, 0xb4, 0x31, 0xad
 };
 
 #define RMA_TEST_SERVER_X25519_KEY_ID 0x10
@@ -57,10 +55,9 @@ static const uint8_t rma_test_server_x25519_private_key[] = {
  * openssl ec -in key.pem -text -noout
  */
 static const uint8_t rma_test_server_p256_private_key[] = {
-	0x54, 0xb0, 0x82, 0x92, 0x54, 0x92, 0xfc, 0x4a,
-	0xa7, 0x6b, 0xea, 0x8f, 0x30, 0xcc, 0xf7, 0x3d,
-	0xa2, 0xf6, 0xa7, 0xad, 0xf0, 0xec, 0x7d, 0xe9,
-	0x26, 0x75, 0xd1, 0xec, 0xde, 0x20, 0x8f, 0x81
+	0x54, 0xb0, 0x82, 0x92, 0x54, 0x92, 0xfc, 0x4a, 0xa7, 0x6b, 0xea,
+	0x8f, 0x30, 0xcc, 0xf7, 0x3d, 0xa2, 0xf6, 0xa7, 0xad, 0xf0, 0xec,
+	0x7d, 0xe9, 0x26, 0x75, 0xd1, 0xec, 0xde, 0x20, 0x8f, 0x81
 };
 
 /*
@@ -68,15 +65,12 @@ static const uint8_t rma_test_server_p256_private_key[] = {
  * prefix, 65 bytes total.
  */
 static const uint8_t rma_test_server_p256_public_key[] = {
-	0x04, 0xe7, 0xbe, 0x37, 0xaa, 0x68, 0xca, 0xcc,
-	0x68, 0xf4, 0x8c, 0x56, 0x65, 0x5a, 0xcb, 0xf8,
-	0xf4, 0x65, 0x3c, 0xd3, 0xc6, 0x1b, 0xae, 0xd6,
-	0x51, 0x7a, 0xcc, 0x00, 0x8d, 0x59, 0x6d, 0x1b,
-	0x0a, 0x66, 0xe8, 0x68, 0x5e, 0x6a, 0x82, 0x19,
-	0x81, 0x76, 0x84, 0x92, 0x7f, 0x8d, 0xb2, 0xbe,
-	0xf5, 0x39, 0x50, 0xd5, 0xfe, 0xee, 0x00, 0x67,
-	0xcf, 0x40, 0x5f, 0x68, 0x12, 0x83, 0x4f, 0xa4,
-	0x35
+	0x04, 0xe7, 0xbe, 0x37, 0xaa, 0x68, 0xca, 0xcc, 0x68, 0xf4, 0x8c,
+	0x56, 0x65, 0x5a, 0xcb, 0xf8, 0xf4, 0x65, 0x3c, 0xd3, 0xc6, 0x1b,
+	0xae, 0xd6, 0x51, 0x7a, 0xcc, 0x00, 0x8d, 0x59, 0x6d, 0x1b, 0x0a,
+	0x66, 0xe8, 0x68, 0x5e, 0x6a, 0x82, 0x19, 0x81, 0x76, 0x84, 0x92,
+	0x7f, 0x8d, 0xb2, 0xbe, 0xf5, 0x39, 0x50, 0xd5, 0xfe, 0xee, 0x00,
+	0x67, 0xcf, 0x40, 0x5f, 0x68, 0x12, 0x83, 0x4f, 0xa4, 0x35
 };
 
 #define RMA_TEST_SERVER_P256_KEY_ID 0x20
@@ -84,8 +78,8 @@ static const uint8_t rma_test_server_p256_public_key[] = {
 
 /* Default values which can change based on command line arguments. */
 static uint8_t server_key_id = RMA_TEST_SERVER_X25519_KEY_ID;
-static uint8_t board_id[4] = {'Z', 'Z', 'C', 'R'};
-static uint8_t device_id[8] = {'T', 'H', 'X', 1, 1, 3, 8, 0xfe};
+static uint8_t board_id[4] = { 'Z', 'Z', 'C', 'R' };
+static uint8_t device_id[8] = { 'T', 'H', 'X', 1, 1, 3, 8, 0xfe };
 static uint8_t hw_id[20] = "TESTSAMUS1234";
 
 static char challenge[RMA_CHALLENGE_BUF_SIZE];
@@ -95,16 +89,11 @@ static char *progname;
 static char *short_opts = "a:b:c:d:hpk:tw:";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
-	{"auth_code",  1,   NULL, 'a'},
-	{"board_id",   1,   NULL, 'b'},
-	{"challenge",  1,   NULL, 'c'},
-	{"device_id",  1,   NULL, 'd'},
-	{"help",       0,   NULL, 'h'},
-	{"hw_id",      1,   NULL, 'w'},
-	{"key_id",     1,   NULL, 'k'},
-	{"p256",       0,   NULL, 'p'},
-	{"test",       0,   NULL, 't'},
-	{},
+	{ "auth_code", 1, NULL, 'a' }, { "board_id", 1, NULL, 'b' },
+	{ "challenge", 1, NULL, 'c' }, { "device_id", 1, NULL, 'd' },
+	{ "help", 0, NULL, 'h' },      { "hw_id", 1, NULL, 'w' },
+	{ "key_id", 1, NULL, 'k' },    { "p256", 0, NULL, 'p' },
+	{ "test", 0, NULL, 't' },      {},
 };
 
 void panic_assert_fail(const char *fname, int linenum);
@@ -173,8 +162,8 @@ static void p256_key_and_secret_seed(uint8_t pub_key[32],
 
 		/* Extract public key into an octal array. */
 		EC_POINT_point2oct(group, EC_KEY_get0_public_key(key),
-				   POINT_CONVERSION_UNCOMPRESSED,
-				   buf, sizeof(buf), NULL);
+				   POINT_CONVERSION_UNCOMPRESSED, buf,
+				   sizeof(buf), NULL);
 
 		/* If Y coordinate is an odd value, we are done. */
 	} while (!(buf[sizeof(buf) - 1] & 1));
@@ -195,8 +184,8 @@ static void p256_key_and_secret_seed(uint8_t pub_key[32],
 	secret_point = EC_POINT_new(group);
 
 	/* Multiply server public key by our private key. */
-	EC_POINT_mul(group, secret_point, 0, pub,
-		     EC_KEY_get0_private_key(key), 0);
+	EC_POINT_mul(group, secret_point, 0, pub, EC_KEY_get0_private_key(key),
+		     0);
 
 	/* Pull the result back into the octal buffer. */
 	EC_POINT_point2oct(group, secret_point, POINT_CONVERSION_UNCOMPRESSED,
@@ -252,9 +241,8 @@ static void p256_calculate_secret(uint8_t secret[32],
 	secret_point = EC_POINT_new(group);
 
 	/* Multiply client's point by our private key. */
-	EC_POINT_mul(group, secret_point, 0,
-		     EC_KEY_get0_public_key(key),
-		     priv, 0);
+	EC_POINT_mul(group, secret_point, 0, EC_KEY_get0_public_key(key), priv,
+		     0);
 
 	/* Pull the result back into the octal buffer. */
 	EC_POINT_point2oct(group, secret_point, POINT_CONVERSION_UNCOMPRESSED,
@@ -274,7 +262,7 @@ static int rma_server_side(const char *generated_challenge)
 
 	/* Convert the challenge back into binary */
 	if (base32_decode(cptr, 8 * sizeof(c), generated_challenge, 9) !=
-		8 * sizeof(c)) {
+	    8 * sizeof(c)) {
 		printf("Error decoding challenge\n");
 		return -1;
 	}
@@ -311,8 +299,8 @@ static int rma_server_side(const char *generated_challenge)
 	 * and DeviceID.
 	 */
 	hmac_SHA256(hmac, secret, sizeof(secret), cptr + 1, sizeof(c) - 1);
-	if (base32_encode(authcode, RMA_AUTHCODE_BUF_SIZE,
-			  hmac, RMA_AUTHCODE_CHARS * 5, 0)) {
+	if (base32_encode(authcode, RMA_AUTHCODE_BUF_SIZE, hmac,
+			  RMA_AUTHCODE_CHARS * 5, 0)) {
 		printf("Error encoding auth code\n");
 		return -1;
 	}
@@ -323,7 +311,7 @@ static int rma_server_side(const char *generated_challenge)
 
 static int rma_create_test_challenge(int p256_mode)
 {
-	uint8_t temp[32];   /* Private key or HMAC */
+	uint8_t temp[32]; /* Private key or HMAC */
 	uint8_t secret_seed[32];
 	struct rma_challenge c;
 	uint8_t *cptr = (uint8_t *)&c;
@@ -334,8 +322,8 @@ static int rma_create_test_challenge(int p256_mode)
 	memset(authcode, 0, sizeof(authcode));
 
 	memset(&c, 0, sizeof(c));
-	c.version_key_id = RMA_CHALLENGE_VKID_BYTE(
-		RMA_CHALLENGE_VERSION, server_key_id);
+	c.version_key_id =
+		RMA_CHALLENGE_VKID_BYTE(RMA_CHALLENGE_VERSION, server_key_id);
 
 	memcpy(&bid, board_id, sizeof(bid));
 	bid = be32toh(bid);
@@ -361,8 +349,8 @@ static int rma_create_test_challenge(int p256_mode)
 	 * and DeviceID.  Those are all in the right order in the challenge
 	 * struct, after the version/key id byte.
 	 */
-	hmac_SHA256(temp, secret_seed, sizeof(secret_seed),
-		    cptr + 1, sizeof(c) - 1);
+	hmac_SHA256(temp, secret_seed, sizeof(secret_seed), cptr + 1,
+		    sizeof(c) - 1);
 	if (base32_encode(authcode, sizeof(authcode), temp,
 			  RMA_AUTHCODE_CHARS * 5, 0))
 		return 1;
@@ -382,7 +370,8 @@ static void dump_key(const char *title, const uint8_t *key, size_t key_size)
 
 	printf("\n\n\%s\n", title);
 	for (i = 0; i < key_size; i++)
-		printf("%02x%c", key[i], ((i + 1) % bytes_per_line) ? ' ':'\n');
+		printf("%02x%c", key[i],
+		       ((i + 1) % bytes_per_line) ? ' ' : '\n');
 
 	if (i % bytes_per_line)
 		printf("\n");
@@ -453,25 +442,26 @@ static void usage(void)
 	       "--device_id <arg> --hw_id <arg> |\n"
 	       "                           --auth_code <arg> |\n"
 	       "                           --challenge <arg>\n"
-		"\n"
-		"This is used to generate the cr50 or server responses for rma "
-		"open.\n"
-		"The cr50 side can be used to generate a challenge response "
-		"and sends authoriztion code to reset device.\n"
-		"The server side can generate an authcode from cr50's "
-		"rma challenge.\n"
-		"\n"
-		"  -c,--challenge    The challenge generated by cr50\n"
-		"  -k,--key_id       Index of the server private key\n"
-		"  -b,--board_id     BoardID type field\n"
-		"  -d,--device_id    Device-unique identifier\n"
-		"  -a,--auth_code    Reset authorization code\n"
-		"  -w,--hw_id        Hardware id\n"
-		"  -h,--help         Show this message\n"
-		"  -p,--p256         Use prime256v1 curve instead of x25519\n"
-		"  -t,--test         "
-			"Generate challenge using default test inputs\n"
-	       "\n", progname);
+	       "\n"
+	       "This is used to generate the cr50 or server responses for rma "
+	       "open.\n"
+	       "The cr50 side can be used to generate a challenge response "
+	       "and sends authoriztion code to reset device.\n"
+	       "The server side can generate an authcode from cr50's "
+	       "rma challenge.\n"
+	       "\n"
+	       "  -c,--challenge    The challenge generated by cr50\n"
+	       "  -k,--key_id       Index of the server private key\n"
+	       "  -b,--board_id     BoardID type field\n"
+	       "  -d,--device_id    Device-unique identifier\n"
+	       "  -a,--auth_code    Reset authorization code\n"
+	       "  -w,--hw_id        Hardware id\n"
+	       "  -h,--help         Show this message\n"
+	       "  -p,--p256         Use prime256v1 curve instead of x25519\n"
+	       "  -t,--test         "
+	       "Generate challenge using default test inputs\n"
+	       "\n",
+	       progname);
 }
 
 static int atoh(char *v)
@@ -498,7 +488,7 @@ static int set_server_key_id(char *id)
 		return 1;
 
 	/* verify digits */
-	if (!isxdigit(*id) || !isxdigit(*(id+1)))
+	if (!isxdigit(*id) || !isxdigit(*(id + 1)))
 		return 1;
 
 	server_key_id = atoh(id);
@@ -520,7 +510,7 @@ static int set_board_id(char *id)
 			return 1;
 
 	for (i = 0; i < 4; i++)
-		board_id[i] = atoh((id + (i*2)));
+		board_id[i] = atoh((id + (i * 2)));
 
 	return 0;
 }
@@ -538,7 +528,7 @@ static int set_device_id(char *id)
 			return 1;
 
 	for (i = 0; i < 8; i++)
-		device_id[i] = atoh((id + (i*2)));
+		device_id[i] = atoh((id + (i * 2)));
 
 	return 0;
 }
@@ -635,14 +625,14 @@ int main(int argc, char **argv)
 		case 'h':
 			usage();
 			return 0;
-		case 0:                         /* auto-handled option */
+		case 0: /* auto-handled option */
 			break;
 		case '?':
 			if (optopt)
 				printf("Unrecognized option: -%c\n", optopt);
 			else
 				printf("Unrecognized option: %s\n",
-							argv[optind - 1]);
+				       argv[optind - 1]);
 			break;
 		case ':':
 			printf("Missing argument to %s\n", argv[optind - 1]);
@@ -683,7 +673,7 @@ int main(int argc, char **argv)
 			if (!k_flag || !b_flag || !d_flag || !w_flag) {
 				printf("server-side: Flag -c is mandatory\n");
 				printf("cr50-side: Flags -k, -b, -d, and -w "
-					"are mandatory\n");
+				       "are mandatory\n");
 				return 1;
 			}
 		}
