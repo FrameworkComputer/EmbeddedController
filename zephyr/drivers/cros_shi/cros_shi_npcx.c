@@ -810,7 +810,7 @@ static int cros_shi_npcx_disable(const struct device *dev)
 	}
 
 	ret = clock_control_off(clk_dev,
-			       (clock_control_subsys_t *)&config->clk_cfg);
+				(clock_control_subsys_t *)&config->clk_cfg);
 	if (ret < 0) {
 		DEBUG_CPRINTF("Turn off SHI clock fail %d", ret);
 		return ret;
