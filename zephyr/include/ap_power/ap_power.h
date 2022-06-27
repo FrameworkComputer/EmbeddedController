@@ -116,9 +116,9 @@ typedef void (*ap_power_ev_callback_handler_t)(struct ap_power_ev_callback *cb,
  * ap_power_ev_init_callback can be used to initialise this structure.
  */
 struct ap_power_ev_callback {
-	sys_snode_t node;	/* Only usable by AP power event code */
+	sys_snode_t node; /* Only usable by AP power event code */
 	ap_power_ev_callback_handler_t handler;
-	enum ap_power_events events;	/* Events to listen for */
+	enum ap_power_events events; /* Events to listen for */
 };
 /** @endcond */
 
@@ -129,9 +129,10 @@ struct ap_power_ev_callback {
  * @param handler The function pointer to call.
  * @param events The bitmask of events to be called for.
  */
-static inline void ap_power_ev_init_callback(struct ap_power_ev_callback *cb,
-				ap_power_ev_callback_handler_t handler,
-				enum ap_power_events events)
+static inline void
+ap_power_ev_init_callback(struct ap_power_ev_callback *cb,
+			  ap_power_ev_callback_handler_t handler,
+			  enum ap_power_events events)
 {
 	__ASSERT(cb, "Callback pointer should not be NULL");
 	__ASSERT(handler, "Callback handler pointer should not be NULL");
