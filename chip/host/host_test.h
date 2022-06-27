@@ -14,4 +14,4 @@
 /* Get emulator executable name */
 const char *__get_prog_name(void);
 
-#endif  /* __CROS_EC_HOST_TEST_H */
+#endif /* __CROS_EC_HOST_TEST_H */
