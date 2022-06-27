@@ -12,7 +12,6 @@
 #include "timer.h"
 #include "util.h"
 
-
 const char *espi_vw_names[] = {
 	"VW_SLP_S3_L",
 	"VW_SLP_S4_L",
@@ -41,7 +40,6 @@ const char *espi_vw_names[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(espi_vw_names) == VW_SIGNAL_COUNT);
 
-
 const char *espi_vw_get_wire_name(enum espi_vw_signal signal)
 {
 	if (espi_signal_is_vw(signal))
@@ -49,7 +47,6 @@ const char *espi_vw_get_wire_name(enum espi_vw_signal signal)
 
 	return NULL;
 }
-
 
 int espi_signal_is_vw(int signal)
 {
