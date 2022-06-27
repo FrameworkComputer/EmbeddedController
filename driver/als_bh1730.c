@@ -11,8 +11,8 @@
 #include "driver/als_bh1730.h"
 #include "i2c.h"
 
-#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ##args)
 
 /**
  * Convert BH1730 data0, data1 to lux
@@ -32,16 +32,16 @@ static int bh1730_convert_to_lux(uint32_t data0_1)
 	else
 		d_temp = d1_1k / data0;
 
-	if(d_temp < BH1730_LUXTH1_1K) {
+	if (d_temp < BH1730_LUXTH1_1K) {
 		d0_1k = BH1730_LUXTH1_D0_1K * data0;
 		d1_1k = BH1730_LUXTH1_D1_1K * data1;
-	} else if(d_temp < BH1730_LUXTH2_1K) {
+	} else if (d_temp < BH1730_LUXTH2_1K) {
 		d0_1k = BH1730_LUXTH2_D0_1K * data0;
 		d1_1k = BH1730_LUXTH2_D1_1K * data1;
-	} else if(d_temp < BH1730_LUXTH3_1K) {
+	} else if (d_temp < BH1730_LUXTH3_1K) {
 		d0_1k = BH1730_LUXTH3_D0_1K * data0;
 		d1_1k = BH1730_LUXTH3_D1_1K * data1;
-	} else if(d_temp < BH1730_LUXTH4_1K) {
+	} else if (d_temp < BH1730_LUXTH4_1K) {
 		d0_1k = BH1730_LUXTH4_D0_1K * data0;
 		d1_1k = BH1730_LUXTH4_D1_1K * data1;
 	} else
@@ -64,8 +64,8 @@ static int bh1730_read_lux(const struct motion_sensor_t *s, intv3_t v)
 	int data0_1;
 
 	/* read data0 and data1 from sensor */
-	ret = i2c_read32(s->port, s->i2c_spi_addr_flags,
-			 BH1730_DATA0LOW, &data0_1);
+	ret = i2c_read32(s->port, s->i2c_spi_addr_flags, BH1730_DATA0LOW,
+			 &data0_1);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("bh1730_read_lux - fail %d\n", ret);
 		return ret;
@@ -88,8 +88,7 @@ static int bh1730_read_lux(const struct motion_sensor_t *s, intv3_t v)
 	}
 }
 
-static int bh1730_set_range(struct motion_sensor_t *s, int range,
-			     int rnd)
+static int bh1730_set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	/* Range is fixed by hardware */
 	if (range != s->default_range)
@@ -99,8 +98,8 @@ static int bh1730_set_range(struct motion_sensor_t *s, int range,
 	return EC_SUCCESS;
 }
 
-static int bh1730_set_data_rate(const struct motion_sensor_t *s,
-				int rate, int roundup)
+static int bh1730_set_data_rate(const struct motion_sensor_t *s, int rate,
+				int roundup)
 {
 	struct bh1730_drv_data_t *drv_data = BH1730_GET_DATA(s);
 
@@ -118,15 +117,13 @@ static int bh1730_get_data_rate(const struct motion_sensor_t *s)
 }
 
 static int bh1730_set_offset(const struct motion_sensor_t *s,
-			const int16_t *offset,
-			int16_t    temp)
+			     const int16_t *offset, int16_t temp)
 {
 	return EC_SUCCESS;
 }
 
-static int bh1730_get_offset(const struct motion_sensor_t *s,
-			int16_t   *offset,
-			int16_t    *temp)
+static int bh1730_get_offset(const struct motion_sensor_t *s, int16_t *offset,
+			     int16_t *temp)
 {
 	*offset = 0;
 
@@ -141,10 +138,9 @@ static int bh1730_init(struct motion_sensor_t *s)
 	int ret;
 
 	/* power and measurement bit high */
-	ret = i2c_write8(s->port, s->i2c_spi_addr_flags,
-			BH1730_CONTROL,
-			BH1730_CONTROL_POWER_ENABLE
-			      | BH1730_CONTROL_ADC_EN_ENABLE);
+	ret = i2c_write8(s->port, s->i2c_spi_addr_flags, BH1730_CONTROL,
+			 BH1730_CONTROL_POWER_ENABLE |
+				 BH1730_CONTROL_ADC_EN_ENABLE);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTF("bh1730_init_sensor - enable fail %d\n", ret);
@@ -152,15 +148,15 @@ static int bh1730_init(struct motion_sensor_t *s)
 	}
 
 	/* set timing */
-	ret = i2c_write8(s->port, s->i2c_spi_addr_flags,
-			 BH1730_TIMING, BH1730_CONF_ITIME);
+	ret = i2c_write8(s->port, s->i2c_spi_addr_flags, BH1730_TIMING,
+			 BH1730_CONF_ITIME);
 	if (ret != EC_SUCCESS) {
 		CPRINTF("bh1730_init_sensor - time fail %d\n", ret);
 		return ret;
 	}
 	/* set ADC gain */
-	ret = i2c_write8(s->port, s->i2c_spi_addr_flags,
-			 BH1730_GAIN, BH1730_CONF_GAIN);
+	ret = i2c_write8(s->port, s->i2c_spi_addr_flags, BH1730_GAIN,
+			 BH1730_CONF_GAIN);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTF("bh1730_init_sensor - gain fail %d\n", ret);
