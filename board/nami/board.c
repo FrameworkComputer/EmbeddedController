@@ -65,11 +65,11 @@
 #include "fan.h"
 #include "fan_chip.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define USB_PD_PORT_PS8751	0
-#define USB_PD_PORT_ANX7447	1
+#define USB_PD_PORT_PS8751 0
+#define USB_PD_PORT_ANX7447 1
 
 uint16_t board_version;
 uint8_t oem = PROJECT_NAMI;
@@ -82,17 +82,16 @@ uint8_t model;
  * that we don't have pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-	{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-	{0, 7}, {-1, -1}, {-1, -1}, {1, 4}, {1, 3},
-	{-1, -1}, {1, 6}, {1, 7}, {3, 1}, {2, 0},
-	{1, 5}, {2, 6}, {2, 7}, {2, 1}, {2, 4},
-	{2, 5}, {1, 2}, {2, 3}, {2, 2}, {3, 0},
-	{-1, -1}, {-1, -1}, {-1, -1}, {-1, -1}, {-1, -1},
-	{-1, -1},
+	{ -1, -1 }, { 0, 5 },	{ 1, 1 },   { 1, 0 },	{ 0, 6 },   { 0, 7 },
+	{ -1, -1 }, { -1, -1 }, { 1, 4 },   { 1, 3 },	{ -1, -1 }, { 1, 6 },
+	{ 1, 7 },   { 3, 1 },	{ 2, 0 },   { 1, 5 },	{ 2, 6 },   { 2, 7 },
+	{ 2, 1 },   { 2, 4 },	{ 2, 5 },   { 1, 2 },	{ 2, 3 },   { 2, 2 },
+	{ 3, 0 },   { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 }, { -1, -1 },
+	{ -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-		ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -151,13 +150,14 @@ void usb1_evt(enum gpio_signal signal)
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vbus sensing (10x voltage divider). PPVAR_BOOSTIN_SENSE */
-	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS] = { "VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT * 10,
+		       ADC_READ_MAX + 1, 0 },
 	/*
 	 * Adapter current output or battery charging/discharging current (uV)
 	 * 18x amplification on charger side.
 	 */
-	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT*1000/18,
-			   ADC_READ_MAX+1, 0},
+	[ADC_AMON_BMON] = { "AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT * 1000 / 18,
+			    ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -166,7 +166,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = -1,
 };
@@ -212,54 +212,42 @@ struct fan_t fans[FAN_CH_COUNT] = {
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN},
+	[MFT_CH_0] = { NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN },
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /* I2C port map */
-const struct i2c_port_t i2c_ports[]  = {
-	{
-		.name = "tcpc0",
-		.port = NPCX_I2C_PORT0_0,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_0_SCL,
-		.sda  = GPIO_I2C0_0_SDA
-	},
-	{
-		.name = "tcpc1",
-		.port = NPCX_I2C_PORT0_1,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_1_SCL,
-		.sda  = GPIO_I2C0_1_SDA
-	},
-	{
-		.name = "battery",
-		.port = NPCX_I2C_PORT1,
-		.kbps = 100,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "charger",
-		.port = NPCX_I2C_PORT2,
-		.kbps = 100,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
-	{
-		.name = "pmic",
-		.port = NPCX_I2C_PORT2,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
-	{
-		.name = "accelgyro",
-		.port = NPCX_I2C_PORT3,
-		.kbps = 400,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA
-	},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "tcpc0",
+	  .port = NPCX_I2C_PORT0_0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_0_SCL,
+	  .sda = GPIO_I2C0_0_SDA },
+	{ .name = "tcpc1",
+	  .port = NPCX_I2C_PORT0_1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_1_SCL,
+	  .sda = GPIO_I2C0_1_SDA },
+	{ .name = "battery",
+	  .port = NPCX_I2C_PORT1,
+	  .kbps = 100,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "charger",
+	  .port = NPCX_I2C_PORT2,
+	  .kbps = 100,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "pmic",
+	  .port = NPCX_I2C_PORT2,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "accelgyro",
+	  .port = NPCX_I2C_PORT3,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -333,7 +321,6 @@ void board_reset_pd_mcu(void)
 	if (oem == PROJECT_AKALI && board_version < 0x0200) {
 		if (anx7447_flash_erase(USB_PD_PORT_ANX7447))
 			CPRINTS("Failed to erase OCM flash");
-
 	}
 
 	/* Assert reset */
@@ -366,7 +353,7 @@ void board_tcpc_init(void)
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
 
@@ -391,12 +378,12 @@ uint16_t tcpc_get_alert_status(void)
  * F75303_Remote1 is near CPU, and F75303_Remote2 is near 5V power IC.
  */
 const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
-	{"F75303_Local", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
-		F75303_IDX_LOCAL},
-	{"F75303_Remote1", TEMP_SENSOR_TYPE_CPU, f75303_get_val,
-		F75303_IDX_REMOTE1},
-	{"F75303_Remote2", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
-		F75303_IDX_REMOTE2},
+	{ "F75303_Local", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
+	  F75303_IDX_LOCAL },
+	{ "F75303_Remote1", TEMP_SENSOR_TYPE_CPU, f75303_get_val,
+	  F75303_IDX_REMOTE1 },
+	{ "F75303_Remote2", TEMP_SENSOR_TYPE_BOARD, f75303_get_val,
+	  F75303_IDX_REMOTE2 },
 };
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
@@ -405,8 +392,8 @@ struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_A \
-	{ \
+#define THERMAL_A                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
@@ -426,8 +413,8 @@ __maybe_unused static const struct ec_thermal_config thermal_a = THERMAL_A;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_B1 \
-	{ \
+#define THERMAL_B1               \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(82), \
@@ -447,8 +434,8 @@ __maybe_unused static const struct ec_thermal_config thermal_b1 = THERMAL_B1;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_B2 \
-	{ \
+#define THERMAL_B2               \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(84), \
@@ -468,8 +455,8 @@ __maybe_unused static const struct ec_thermal_config thermal_b2 = THERMAL_B2;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_C1 \
-	{ \
+#define THERMAL_C1               \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(66), \
@@ -489,8 +476,8 @@ __maybe_unused static const struct ec_thermal_config thermal_c1 = THERMAL_C1;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_C2 \
-	{ \
+#define THERMAL_C2               \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(74), \
@@ -510,8 +497,8 @@ __maybe_unused static const struct ec_thermal_config thermal_c2 = THERMAL_C2;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_D0 \
-	{ \
+#define THERMAL_D0               \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = C_TO_K(79), \
 			[EC_TEMP_THRESH_HIGH] = 0, \
@@ -531,8 +518,8 @@ __maybe_unused static const struct ec_thermal_config thermal_d0 = THERMAL_D0;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_D1 \
-	{ \
+#define THERMAL_D1               \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = C_TO_K(59), \
 			[EC_TEMP_THRESH_HIGH] = 0, \
@@ -552,8 +539,8 @@ __maybe_unused static const struct ec_thermal_config thermal_d1 = THERMAL_D1;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_D2 \
-	{ \
+#define THERMAL_D2               \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = C_TO_K(59), \
 			[EC_TEMP_THRESH_HIGH] = 0, \
@@ -570,11 +557,9 @@ __maybe_unused static const struct ec_thermal_config thermal_d1 = THERMAL_D1;
 __maybe_unused static const struct ec_thermal_config thermal_d2 = THERMAL_D2;
 
 #define I2C_PMIC_READ(reg, data) \
-		i2c_read8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1_FLAGS,\
-			  (reg), (data))
+	i2c_read8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1_FLAGS, (reg), (data))
 #define I2C_PMIC_WRITE(reg, data) \
-		i2c_write8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1_FLAGS,\
-			   (reg), (data))
+	i2c_write8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1_FLAGS, (reg), (data))
 
 static void board_pmic_init(void)
 {
@@ -726,8 +711,8 @@ int board_set_active_charge_port(int charge_port)
 			    charge_port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	/* check if we are sourcing VBUS on the port */
 	/* dnojiri: revisit */
-	int is_source = gpio_get_level(charge_port == 0 ?
-			GPIO_USB_C0_5V_EN : GPIO_USB_C1_5V_EN);
+	int is_source = gpio_get_level(charge_port == 0 ? GPIO_USB_C0_5V_EN :
+							  GPIO_USB_C1_5V_EN);
 
 	if (is_real_port && is_source) {
 		CPRINTF("No charging on source port p%d is ", charge_port);
@@ -745,17 +730,19 @@ int board_set_active_charge_port(int charge_port)
 		/* dnojiri: revisit. there is always this assumption that
 		 * battery is present. If not, this may cause brownout. */
 		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_L :
-					     GPIO_USB_C1_CHARGE_L, 1);
+					     GPIO_USB_C1_CHARGE_L,
+			       1);
 		/* Enable charging port */
 		gpio_set_level(charge_port ? GPIO_USB_C1_CHARGE_L :
-					     GPIO_USB_C0_CHARGE_L, 0);
+					     GPIO_USB_C0_CHARGE_L,
+			       0);
 	}
 
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/*
 	 * Limit the input current to 96% negotiated limit,
@@ -764,12 +751,11 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	int factor = 96;
 
 	if (oem == PROJECT_AKALI &&
-		(model == MODEL_EKKO || model == MODEL_BARD))
+	    (model == MODEL_EKKO || model == MODEL_BARD))
 		factor = 95;
 	charge_ma = charge_ma * factor / 100;
 	charge_set_input_current_limit(
-			MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT),
-			charge_mv);
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void board_hibernate(void)
@@ -782,9 +768,9 @@ void board_hibernate(void)
 }
 
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED1]   = { 3, PWM_CONFIG_DSLEEP, 1200 },
+	[PWM_CH_LED1] = { 3, PWM_CONFIG_DSLEEP, 1200 },
 	[PWM_CH_LED2] = { 5, PWM_CONFIG_DSLEEP, 1200 },
-	[PWM_CH_FAN] = {4, PWM_CONFIG_OPEN_DRAIN, 25000},
+	[PWM_CH_FAN] = { 4, PWM_CONFIG_OPEN_DRAIN, 25000 },
 	/*
 	 * 1.2kHz is a multiple of both 50 and 60. So a video recorder
 	 * (generally designed to ignore either 50 or 60 Hz flicker) will not
@@ -806,23 +792,17 @@ static struct kionix_accel_data g_kx022_data;
 static struct accelgyro_saved_data_t g_bma255_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t rotation_x180_z90 = {
-	{ 0, FLOAT_TO_FP(-1), 0 },
-	{ FLOAT_TO_FP(-1), 0, 0 },
-	{ 0, 0, FLOAT_TO_FP(-1) }
-};
+const mat33_fp_t rotation_x180_z90 = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
 
 const struct motion_sensor_t lid_accel_1 = {
 	.name = "Lid Accel",
@@ -1096,7 +1076,7 @@ static void board_init(void)
 		       ISL9238_REG_CONTROL3, &reg) == EC_SUCCESS) {
 		reg |= ISL9238_C3_BB_SWITCHING_PERIOD;
 		if (i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
-			    ISL9238_REG_CONTROL3, reg))
+				ISL9238_REG_CONTROL3, reg))
 			CPRINTF("Failed to set isl9238\n");
 	}
 
@@ -1188,14 +1168,13 @@ void board_kblight_init(void)
 	}
 }
 
-enum critical_shutdown board_critical_shutdown_check(
-		struct charge_state_data *curr)
+enum critical_shutdown
+board_critical_shutdown_check(struct charge_state_data *curr)
 {
 	if (oem == PROJECT_VAYNE)
 		return CRITICAL_SHUTDOWN_CUTOFF;
 	else
 		return CRITICAL_SHUTDOWN_HIBERNATE;
-
 }
 
 uint8_t board_set_battery_level_shutdown(void)
