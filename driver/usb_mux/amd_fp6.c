@@ -15,8 +15,8 @@
 #include "timer.h"
 #include "usb_mux.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /*
  * The recommendation from "3.3.2 Command Timeout" is 250ms,
@@ -50,8 +50,8 @@ static int amd_fp6_mux_port0_read(const struct usb_mux *me, uint8_t *val)
 	 * payload[1]: Port 0 Control/Status
 	 * payload[2]: Port 1 Control/Status (unused on FP6)
 	 */
-	mux_ready = !!((payload[0] >> AMD_FP6_MUX_PD_STATUS_OFFSET)
-						& AMD_FP6_MUX_PD_STATUS_READY);
+	mux_ready = !!((payload[0] >> AMD_FP6_MUX_PD_STATUS_OFFSET) &
+		       AMD_FP6_MUX_PD_STATUS_READY);
 
 	if (!mux_ready)
 		return EC_ERROR_BUSY;
@@ -80,7 +80,6 @@ static int amd_fp6_mux_port0_write(const struct usb_mux *me, uint8_t write_val)
 	 */
 	start = get_time();
 	while (time_since32(start) < WRITE_CMD_TIMEOUT_MS * MSEC) {
-
 		RETURN_ERROR(amd_fp6_mux_port0_read(me, &read_val));
 		port_status = read_val >> AMD_FP6_MUX_PORT_STATUS_OFFSET;
 
@@ -134,7 +133,6 @@ static void amd_fp6_set_mux_retry(void)
 				   CMD_RETRY_INTERVAL_MS * MSEC);
 }
 
-
 static int amd_fp6_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 			   bool *ack_required)
 {
@@ -170,8 +168,8 @@ static int amd_fp6_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 
 	/* Mux is not powered in Z1 */
 	if (chipset_in_state(CHIPSET_STATE_HARD_OFF))
-		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS
-						      : EC_ERROR_NOT_POWERED;
+		return (mux_state == USB_PD_MUX_NONE) ? EC_SUCCESS :
+							EC_ERROR_NOT_POWERED;
 
 	saved_mux_state[me->usb_port].write_pending = true;
 	amd_fp6_set_mux_retry();
