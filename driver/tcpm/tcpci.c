@@ -26,17 +26,17 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
-	bool sop_prime_en[CONFIG_USB_PD_PORT_MAX_COUNT];
+bool sop_prime_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 STATIC_IF(CONFIG_USB_PD_DECODE_SOP)
-	int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
+int rx_en[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define TCPC_FLAGS_VSAFE0V(_flags) \
+#define TCPC_FLAGS_VSAFE0V(_flags)             \
 	((_flags & TCPC_FLAGS_TCPCI_REV2_0) && \
-		!(_flags & TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V))
+	 !(_flags & TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V))
 
 /****************************************************************************
  * TCPCI DEBUG Helpers
@@ -57,7 +57,7 @@ struct i2c_wrt_op {
 	int mask;
 };
 STATIC_IF(DEBUG_I2C_FAULT_LAST_WRITE_OP)
-	struct i2c_wrt_op last_write_op[CONFIG_USB_PD_PORT_MAX_COUNT];
+struct i2c_wrt_op last_write_op[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
  * AutoDischargeDisconnect has caused a number of issues with the
@@ -90,7 +90,7 @@ struct get_cc_values {
 	int role;
 };
 STATIC_IF(DEBUG_GET_CC)
-	struct get_cc_values last_get_cc[CONFIG_USB_PD_PORT_MAX_COUNT];
+struct get_cc_values last_get_cc[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /*
  * Seeing RoleCtrl updates can help determine why GetCC is not
@@ -130,13 +130,12 @@ int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 
 	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP)) {
 		last_write_op[port].addr = i2c_addr;
-		last_write_op[port].reg  = reg;
-		last_write_op[port].val  = val & 0xFF;
+		last_write_op[port].reg = reg;
+		last_write_op[port].val = val & 0xFF;
 		last_write_op[port].mask = 0;
 	}
 
-	rv = i2c_write8(tcpc_config[port].i2c_info.port,
-			i2c_addr, reg, val);
+	rv = i2c_write8(tcpc_config[port].i2c_info.port, i2c_addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
@@ -150,13 +149,12 @@ int tcpc_addr_write16(int port, int i2c_addr, int reg, int val)
 
 	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP)) {
 		last_write_op[port].addr = i2c_addr;
-		last_write_op[port].reg  = reg;
-		last_write_op[port].val  = val & 0xFFFF;
+		last_write_op[port].reg = reg;
+		last_write_op[port].val = val & 0xFFFF;
 		last_write_op[port].mask = 0;
 	}
 
-	rv = i2c_write16(tcpc_config[port].i2c_info.port,
-			 i2c_addr, reg, val);
+	rv = i2c_write16(tcpc_config[port].i2c_info.port, i2c_addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
@@ -168,8 +166,7 @@ int tcpc_addr_read(int port, int i2c_addr, int reg, int *val)
 
 	pd_wait_exit_low_power(port);
 
-	rv = i2c_read8(tcpc_config[port].i2c_info.port,
-		       i2c_addr, reg, val);
+	rv = i2c_read8(tcpc_config[port].i2c_info.port, i2c_addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
@@ -186,8 +183,7 @@ int tcpc_addr_read16_no_lpm_exit(int port, int i2c_addr, int reg, int *val)
 {
 	int rv;
 
-	rv = i2c_read16(tcpc_config[port].i2c_info.port,
-			i2c_addr, reg, val);
+	rv = i2c_read16(tcpc_config[port].i2c_info.port, i2c_addr, reg, val);
 
 	pd_device_accessed(port);
 	return rv;
@@ -200,8 +196,8 @@ int tcpc_read_block(int port, int reg, uint8_t *in, int size)
 	pd_wait_exit_low_power(port);
 
 	rv = i2c_read_block(tcpc_config[port].i2c_info.port,
-			    tcpc_config[port].i2c_info.addr_flags,
-			    reg, in, size);
+			    tcpc_config[port].i2c_info.addr_flags, reg, in,
+			    size);
 
 	pd_device_accessed(port);
 	return rv;
@@ -214,15 +210,15 @@ int tcpc_write_block(int port, int reg, const uint8_t *out, int size)
 	pd_wait_exit_low_power(port);
 
 	rv = i2c_write_block(tcpc_config[port].i2c_info.port,
-			     tcpc_config[port].i2c_info.addr_flags,
-			     reg, out, size);
+			     tcpc_config[port].i2c_info.addr_flags, reg, out,
+			     size);
 
 	pd_device_accessed(port);
 	return rv;
 }
 
-int tcpc_xfer(int port, const uint8_t *out, int out_size,
-			uint8_t *in, int in_size)
+int tcpc_xfer(int port, const uint8_t *out, int out_size, uint8_t *in,
+	      int in_size)
 {
 	int rv;
 	/* Dispatching to tcpc_xfer_unlocked reduces code size growth. */
@@ -233,23 +229,22 @@ int tcpc_xfer(int port, const uint8_t *out, int out_size,
 	return rv;
 }
 
-int tcpc_xfer_unlocked(int port, const uint8_t *out, int out_size,
-			    uint8_t *in, int in_size, int flags)
+int tcpc_xfer_unlocked(int port, const uint8_t *out, int out_size, uint8_t *in,
+		       int in_size, int flags)
 {
 	int rv;
 
 	pd_wait_exit_low_power(port);
 
 	rv = i2c_xfer_unlocked(tcpc_config[port].i2c_info.port,
-			       tcpc_config[port].i2c_info.addr_flags,
-			       out, out_size, in, in_size, flags);
+			       tcpc_config[port].i2c_info.addr_flags, out,
+			       out_size, in, in_size, flags);
 
 	pd_device_accessed(port);
 	return rv;
 }
 
-int tcpc_update8(int port, int reg,
-		 uint8_t mask,
+int tcpc_update8(int port, int reg, uint8_t mask,
 		 enum mask_update_action action)
 {
 	int rv;
@@ -259,20 +254,19 @@ int tcpc_update8(int port, int reg,
 
 	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP)) {
 		last_write_op[port].addr = i2c_addr;
-		last_write_op[port].reg  = reg;
-		last_write_op[port].val  = 0;
+		last_write_op[port].reg = reg;
+		last_write_op[port].val = 0;
 		last_write_op[port].mask = (mask & 0xFF) | (action << 16);
 	}
 
-	rv = i2c_update8(tcpc_config[port].i2c_info.port,
-			 i2c_addr, reg, mask, action);
+	rv = i2c_update8(tcpc_config[port].i2c_info.port, i2c_addr, reg, mask,
+			 action);
 
 	pd_device_accessed(port);
 	return rv;
 }
 
-int tcpc_update16(int port, int reg,
-		  uint16_t mask,
+int tcpc_update16(int port, int reg, uint16_t mask,
 		  enum mask_update_action action)
 {
 	int rv;
@@ -282,13 +276,13 @@ int tcpc_update16(int port, int reg,
 
 	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP)) {
 		last_write_op[port].addr = i2c_addr;
-		last_write_op[port].reg  = reg;
-		last_write_op[port].val  = 0;
+		last_write_op[port].reg = reg;
+		last_write_op[port].val = 0;
 		last_write_op[port].mask = (mask & 0xFFFF) | (action << 16);
 	}
 
-	rv = i2c_update16(tcpc_config[port].i2c_info.port,
-			  i2c_addr, reg, mask, action);
+	rv = i2c_update16(tcpc_config[port].i2c_info.port, i2c_addr, reg, mask,
+			  action);
 
 	pd_device_accessed(port);
 	return rv;
@@ -324,17 +318,14 @@ static int init_alert_mask(int port)
 	 */
 	if (get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_TCPC) {
 		mask = TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED |
-			TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
-			TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS |
-			TCPC_REG_ALERT_FAULT
-			| TCPC_REG_ALERT_POWER_STATUS
-			;
+		       TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
+		       TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS |
+		       TCPC_REG_ALERT_FAULT | TCPC_REG_ALERT_POWER_STATUS;
 	} else {
 		mask = TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED |
-			TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
-			TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS |
-			TCPC_REG_ALERT_FAULT
-			;
+		       TCPC_REG_ALERT_TX_DISCARDED | TCPC_REG_ALERT_RX_STATUS |
+		       TCPC_REG_ALERT_RX_HARD_RST | TCPC_REG_ALERT_CC_STATUS |
+		       TCPC_REG_ALERT_FAULT;
 	}
 
 	/* TCPCI Rev2 includes SAFE0V alerts */
@@ -373,7 +364,7 @@ static int init_power_status_mask(int port)
 	else
 		mask = 0;
 
-	rv = tcpc_write(port, TCPC_REG_POWER_STATUS_MASK , mask);
+	rv = tcpc_write(port, TCPC_REG_POWER_STATUS_MASK, mask);
 
 	return rv;
 }
@@ -399,11 +390,10 @@ int tcpci_tcpm_select_rp_value(int port, int rp)
 void tcpci_tcpc_discharge_vbus(int port, int enable)
 {
 	if (IS_ENABLED(DEBUG_FORCED_DISCHARGE))
-		CPRINTS("C%d: ForceDischarge %sABLED",
-			port, enable ? "EN" : "DIS");
+		CPRINTS("C%d: ForceDischarge %sABLED", port,
+			enable ? "EN" : "DIS");
 
-	tcpc_update8(port,
-		     TCPC_REG_POWER_CTRL,
+	tcpc_update8(port, TCPC_REG_POWER_CTRL,
 		     TCPC_REG_POWER_CTRL_FORCE_DISCHARGE,
 		     (enable) ? MASK_SET : MASK_CLR);
 }
@@ -416,11 +406,10 @@ void tcpci_tcpc_discharge_vbus(int port, int enable)
 void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable)
 {
 	if (IS_ENABLED(DEBUG_AUTO_DISCHARGE_DISCONNECT))
-		CPRINTS("C%d: AutoDischargeDisconnect %sABLED",
-			port, enable ? "EN" : "DIS");
+		CPRINTS("C%d: AutoDischargeDisconnect %sABLED", port,
+			enable ? "EN" : "DIS");
 
-	tcpc_update8(port,
-		     TCPC_REG_POWER_CTRL,
+	tcpc_update8(port, TCPC_REG_POWER_CTRL,
 		     TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT,
 		     (enable) ? MASK_SET : MASK_CLR);
 }
@@ -433,7 +422,7 @@ int tcpci_tcpc_debug_accessory(int port, bool enable)
 }
 
 int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+		      enum tcpc_cc_voltage_status *cc2)
 {
 	int role;
 	int status;
@@ -493,13 +482,11 @@ int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	*cc2 |= cc2_present_rd << 2;
 
 	if (IS_ENABLED(DEBUG_GET_CC) &&
-	    (last_get_cc[port].cc1 != *cc1 ||
-	     last_get_cc[port].cc2 != *cc2 ||
+	    (last_get_cc[port].cc1 != *cc1 || last_get_cc[port].cc2 != *cc2 ||
 	     last_get_cc[port].cc_sts != status ||
 	     last_get_cc[port].role != role)) {
-
-		CPRINTS("C%d: GET_CC cc1=%d cc2=%d cc_sts=0x%X role=0x%X",
-			port, *cc1, *cc2, status, role);
+		CPRINTS("C%d: GET_CC cc1=%d cc2=%d cc_sts=0x%X role=0x%X", port,
+			*cc1, *cc2, status, role);
 
 		last_get_cc[port].cc1 = *cc1;
 		last_get_cc[port].cc2 = *cc2;
@@ -511,9 +498,8 @@ int tcpci_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 
 int tcpci_tcpm_set_cc(int port, int pull)
 {
-	int role = TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP,
-					  tcpci_get_cached_rp(port),
-					  pull, pull);
+	int role = TCPC_REG_ROLE_CTRL_SET(
+		TYPEC_NO_DRP, tcpci_get_cached_rp(port), pull, pull);
 
 	if (IS_ENABLED(DEBUG_ROLE_CTRL_UPDATES))
 		CPRINTS("C%d: SET_CC pull=%d role=0x%X", port, pull, role);
@@ -523,7 +509,7 @@ int tcpci_tcpm_set_cc(int port, int pull)
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 int tcpci_set_role_ctrl(int port, enum tcpc_drp drp, enum tcpc_rp_value rp,
-	enum tcpc_cc_pull pull)
+			enum tcpc_cc_pull pull)
 {
 	int role = TCPC_REG_ROLE_CTRL_SET(drp, rp, pull, pull);
 
@@ -552,16 +538,16 @@ int tcpci_tcpc_drp_toggle(int port)
 	 *
 	 * Set the Rp Value to be the minimal to save power
 	 */
-	pull = (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0)
-			? TYPEC_CC_RP : TYPEC_CC_RD;
+	pull = (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) ?
+		       TYPEC_CC_RP :
+		       TYPEC_CC_RD;
 
 	rv = tcpci_set_role_ctrl(port, TYPEC_DRP, TYPEC_RP_USB, pull);
 	if (rv)
 		return rv;
 
 	/* Set up to catch LOOK4CONNECTION alerts */
-	rv = tcpc_update8(port,
-			  TCPC_REG_TCPC_CTRL,
+	rv = tcpc_update8(port, TCPC_REG_TCPC_CTRL,
 			  TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT,
 			  MASK_SET);
 	if (rv)
@@ -590,18 +576,15 @@ void tcpci_wake_low_power_mode(int port)
 	 * correctly support it
 	 */
 	i2c_write8(tcpc_config[port].i2c_info.port,
-		   tcpc_config[port].i2c_info.addr_flags,
-		   TCPC_REG_COMMAND, TCPC_REG_COMMAND_WAKE_I2C);
+		   tcpc_config[port].i2c_info.addr_flags, TCPC_REG_COMMAND,
+		   TCPC_REG_COMMAND_WAKE_I2C);
 }
 #endif
 
 int tcpci_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
-	return tcpc_update8(port,
-			    TCPC_REG_TCPC_CTRL,
-			    TCPC_REG_TCPC_CTRL_SET(1),
-			    polarity_rm_dts(polarity)
-					? MASK_SET : MASK_CLR);
+	return tcpc_update8(port, TCPC_REG_TCPC_CTRL, TCPC_REG_TCPC_CTRL_SET(1),
+			    polarity_rm_dts(polarity) ? MASK_SET : MASK_CLR);
 }
 
 bool tcpci_tcpm_get_snk_ctrl(int port)
@@ -611,14 +594,13 @@ bool tcpci_tcpm_get_snk_ctrl(int port)
 
 	rv = tcpci_tcpm_get_power_status(port, &pwr_sts);
 
-	return rv == EC_SUCCESS &&
-		pwr_sts & TCPC_REG_POWER_STATUS_SINKING_VBUS;
+	return rv == EC_SUCCESS && pwr_sts & TCPC_REG_POWER_STATUS_SINKING_VBUS;
 }
 
 int tcpci_tcpm_set_snk_ctrl(int port, int enable)
 {
 	int cmd = enable ? TCPC_REG_COMMAND_SNK_CTRL_HIGH :
-		TCPC_REG_COMMAND_SNK_CTRL_LOW;
+			   TCPC_REG_COMMAND_SNK_CTRL_LOW;
 
 	return tcpc_write(port, TCPC_REG_COMMAND, cmd);
 }
@@ -631,13 +613,13 @@ bool tcpci_tcpm_get_src_ctrl(int port)
 	rv = tcpci_tcpm_get_power_status(port, &pwr_sts);
 
 	return rv == EC_SUCCESS &&
-		pwr_sts & TCPC_REG_POWER_STATUS_SOURCING_VBUS;
+	       pwr_sts & TCPC_REG_POWER_STATUS_SOURCING_VBUS;
 }
 
 int tcpci_tcpm_set_src_ctrl(int port, int enable)
 {
 	int cmd = enable ? TCPC_REG_COMMAND_SRC_CTRL_HIGH :
-		TCPC_REG_COMMAND_SRC_CTRL_LOW;
+			   TCPC_REG_COMMAND_SRC_CTRL_LOW;
 
 	return tcpc_write(port, TCPC_REG_COMMAND, cmd);
 }
@@ -708,12 +690,11 @@ int tcpci_tcpm_set_rx_enable(int port, int enable)
 		rx_en[port] = enable;
 	}
 
-
 	if (enable) {
 		detect_sop_en = TCPC_REG_RX_DETECT_SOP_HRST_MASK;
 
 		if (IS_ENABLED(CONFIG_USB_PD_DECODE_SOP) &&
-			sop_prime_en[port]) {
+		    sop_prime_en[port]) {
 			/*
 			 * Only the VCONN Source is allowed to communicate
 			 * with the Cable Plugs.
@@ -730,10 +711,9 @@ int tcpci_tcpm_set_rx_enable(int port, int enable)
 #ifdef CONFIG_USB_PD_FRS
 int tcpci_tcpc_fast_role_swap_enable(int port, int enable)
 {
-	return tcpc_update8(port,
-		     TCPC_REG_POWER_CTRL,
-		     TCPC_REG_POWER_CTRL_FRS_ENABLE,
-		     (enable) ? MASK_SET : MASK_CLR);
+	return tcpc_update8(port, TCPC_REG_POWER_CTRL,
+			    TCPC_REG_POWER_CTRL_FRS_ENABLE,
+			    (enable) ? MASK_SET : MASK_CLR);
 }
 #endif
 
@@ -788,7 +768,7 @@ static int tcpci_rev2_0_tcpm_get_message_raw(int port, uint32_t *payload,
 
 	/* The next two bytes are the header */
 	rv |= tcpc_xfer_unlocked(port, NULL, 0, (uint8_t *)head, 2,
-				cnt ? 0 : I2C_XFER_STOP);
+				 cnt ? 0 : I2C_XFER_STOP);
 
 	/* Encode message address in bits 31 to 28 */
 	*head &= 0x0000ffff;
@@ -953,11 +933,11 @@ void tcpm_clear_pending_messages(int port)
 	q->tail = q->head;
 }
 
-int tcpci_tcpm_transmit(int port, enum tcpci_msg_type type,
-			uint16_t header, const uint32_t *data)
+int tcpci_tcpm_transmit(int port, enum tcpci_msg_type type, uint16_t header,
+			const uint32_t *data)
 {
 	int reg = TCPC_REG_TX_DATA;
-	int rv, cnt = 4*PD_HEADER_CNT(header);
+	int rv, cnt = 4 * PD_HEADER_CNT(header);
 
 	/* If not SOP* transmission, just write to the transmit register */
 	if (type >= NUM_SOP_STAR_TYPES) {
@@ -966,7 +946,7 @@ int tcpci_tcpm_transmit(int port, enum tcpci_msg_type type,
 		 * should ignore retry field for these 3 types).
 		 */
 		return tcpc_write(port, TCPC_REG_TRANSMIT,
-			TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type));
+				  TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type));
 	}
 
 	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) {
@@ -983,13 +963,14 @@ int tcpci_tcpm_transmit(int port, enum tcpci_msg_type type,
 		rv |= tcpc_xfer_unlocked(port, (uint8_t *)&cnt, 1, NULL, 0, 0);
 		if (cnt > sizeof(header)) {
 			rv |= tcpc_xfer_unlocked(port, (uint8_t *)&header,
-					 sizeof(header), NULL, 0, 0);
+						 sizeof(header), NULL, 0, 0);
 			rv |= tcpc_xfer_unlocked(port, (uint8_t *)data,
-					 cnt-sizeof(header), NULL, 0,
-					 I2C_XFER_STOP);
+						 cnt - sizeof(header), NULL, 0,
+						 I2C_XFER_STOP);
 		} else {
 			rv |= tcpc_xfer_unlocked(port, (uint8_t *)&header,
-					sizeof(header), NULL, 0, I2C_XFER_STOP);
+						 sizeof(header), NULL, 0,
+						 I2C_XFER_STOP);
 		}
 		tcpc_lock(port, 0);
 
@@ -1075,15 +1056,13 @@ static int tcpci_handle_fault(int port, int fault)
 	if (IS_ENABLED(DEBUG_I2C_FAULT_LAST_WRITE_OP) &&
 	    fault & TCPC_REG_FAULT_STATUS_I2C_INTERFACE_ERR) {
 		if (last_write_op[port].mask == 0)
-			CPRINTS("C%d I2C WR 0x%02X 0x%02X value=0x%X",
-				port,
+			CPRINTS("C%d I2C WR 0x%02X 0x%02X value=0x%X", port,
 				last_write_op[port].addr,
 				last_write_op[port].reg,
 				last_write_op[port].val);
 		else
 			CPRINTS("C%d I2C UP 0x%02X 0x%02X op=%d mask=0x%X",
-				port,
-				last_write_op[port].addr,
+				port, last_write_op[port].addr,
 				last_write_op[port].reg,
 				last_write_op[port].mask >> 16,
 				last_write_op[port].mask & 0xFFFF);
@@ -1091,8 +1070,8 @@ static int tcpci_handle_fault(int port, int fault)
 
 	/* Report overcurrent to the OCP module if enabled */
 	if ((dev_cap_1[port] & TCPC_REG_DEV_CAP_1_VBUS_OCP_REPORTING) &&
-			IS_ENABLED(CONFIG_USBC_OCP) &&
-			(fault & TCPC_REG_FAULT_STATUS_VBUS_OVER_CURRENT))
+	    IS_ENABLED(CONFIG_USBC_OCP) &&
+	    (fault & TCPC_REG_FAULT_STATUS_VBUS_OVER_CURRENT))
 		pd_handle_overcurrent(port);
 
 	if (tcpc_config[port].drv->handle_fault)
@@ -1101,16 +1080,15 @@ static int tcpci_handle_fault(int port, int fault)
 	return rv;
 }
 
-enum ec_error_list tcpci_set_bist_test_mode(const int port,
-		const bool enable)
+enum ec_error_list tcpci_set_bist_test_mode(const int port, const bool enable)
 {
 	int rv;
 
 	rv = tcpc_update8(port, TCPC_REG_TCPC_CTRL,
-			TCPC_REG_TCPC_CTRL_BIST_TEST_MODE,
-			enable ? MASK_SET : MASK_CLR);
-	rv |= tcpc_update16(port, TCPC_REG_ALERT_MASK,
-			TCPC_REG_ALERT_RX_STATUS, enable ? MASK_CLR : MASK_SET);
+			  TCPC_REG_TCPC_CTRL_BIST_TEST_MODE,
+			  enable ? MASK_SET : MASK_CLR);
+	rv |= tcpc_update16(port, TCPC_REG_ALERT_MASK, TCPC_REG_ALERT_RX_STATUS,
+			    enable ? MASK_CLR : MASK_SET);
 	return rv;
 }
 
@@ -1166,8 +1144,8 @@ static void tcpci_check_vbus_changed(int port, int alert, uint32_t *pd_event)
 		if ((get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_TCPC) &&
 		    IS_ENABLED(CONFIG_USB_CHARGER)) {
 			/* Update charge manager with new VBUS state */
-			usb_charger_vbus_change(port,
-				!!(tcpc_vbus[port] & BIT(VBUS_PRESENT)));
+			usb_charger_vbus_change(port, !!(tcpc_vbus[port] &
+							 BIT(VBUS_PRESENT)));
 
 			if (pd_event)
 				*pd_event |= TASK_EVENT_WAKE;
@@ -1203,8 +1181,7 @@ void tcpci_tcpc_alert(int port)
 	if (alert & TCPC_REG_ALERT_FAULT) {
 		int fault;
 
-		if (tcpci_get_fault(port, &fault) == EC_SUCCESS &&
-		    fault != 0 &&
+		if (tcpci_get_fault(port, &fault) == EC_SUCCESS && fault != 0 &&
 		    tcpci_handle_fault(port, fault) == EC_SUCCESS &&
 		    tcpci_clear_fault(port, fault) == EC_SUCCESS)
 			CPRINTS("C%d FAULT 0x%02X handled", port, fault);
@@ -1217,8 +1194,8 @@ void tcpci_tcpc_alert(int port)
 	 */
 	if (alert & TCPC_REG_ALERT_TX_COMPLETE)
 		pd_transmit_complete(port, alert & TCPC_REG_ALERT_TX_SUCCESS ?
-					   TCPC_TX_COMPLETE_SUCCESS :
-					   TCPC_TX_COMPLETE_FAILED);
+						   TCPC_TX_COMPLETE_SUCCESS :
+						   TCPC_TX_COMPLETE_FAILED);
 
 	/* Pull all RX messages from TCPC into EC memory */
 	failed_attempts = 0;
@@ -1229,7 +1206,6 @@ void tcpci_tcpc_alert(int port)
 		if (tcpm_alert_status(port, &alert))
 			++failed_attempts;
 
-
 		/*
 		 * EC RX FIFO is full. Deassert ALERT# line to exit interrupt
 		 * handler by discarding pending message from TCPC RX FIFO.
@@ -1237,8 +1213,8 @@ void tcpci_tcpc_alert(int port)
 		if (retval == EC_ERROR_OVERFLOW) {
 			CPRINTS("C%d: PD RX OVF!", port);
 			tcpc_write16(port, TCPC_REG_ALERT,
-				TCPC_REG_ALERT_RX_STATUS |
-				TCPC_REG_ALERT_RX_BUF_OVF);
+				     TCPC_REG_ALERT_RX_STATUS |
+					     TCPC_REG_ALERT_RX_BUF_OVF);
 		}
 
 		/* Ensure we don't loop endlessly */
@@ -1307,8 +1283,8 @@ void tcpci_tcpc_alert(int port)
 	    alert & TCPC_REG_ALERT_TX_FAILED)
 		CPRINTS("C%d Hard Reset sent", port);
 
-	if (tcpm_tcpc_has_frs_control(port)
-	    && (alert_ext & TCPC_REG_ALERT_EXT_SNK_FRS))
+	if (tcpm_tcpc_has_frs_control(port) &&
+	    (alert_ext & TCPC_REG_ALERT_EXT_SNK_FRS))
 		pd_got_frs_signal(port);
 
 	/*
@@ -1364,7 +1340,6 @@ int tcpci_get_chip_info(int port, int live,
 		return EC_ERROR_INVAL;
 
 	i = &cached_info[port];
-
 
 	/* If already cached && live data is not asked, return cached value */
 	if (i->vendor_id && !live) {
@@ -1463,9 +1438,9 @@ int tcpci_tcpm_init(int port)
 	 * Alert assertion when CC_STATUS.Looking4Connection changes state.
 	 */
 	if (tcpc_config[port].flags & TCPC_FLAGS_TCPCI_REV2_0) {
-		error = tcpc_update8(port, TCPC_REG_TCPC_CTRL,
-				TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT,
-				MASK_SET);
+		error = tcpc_update8(
+			port, TCPC_REG_TCPC_CTRL,
+			TCPC_REG_TCPC_CTRL_EN_LOOK4CONNECTION_ALERT, MASK_SET);
 		if (error)
 			CPRINTS("C%d: Failed to init TCPC_CTRL!", port);
 	}
@@ -1492,10 +1467,10 @@ int tcpci_tcpm_init(int port)
 			tcpc_vbus[port] = 0;
 	} else {
 		/* Initial level, set appropriately */
-		tcpc_vbus[port] = (power_status &
-				   TCPC_REG_POWER_STATUS_VBUS_PRES)
-					? BIT(VBUS_PRESENT)
-					: BIT(VBUS_SAFE0V);
+		tcpc_vbus[port] =
+			(power_status & TCPC_REG_POWER_STATUS_VBUS_PRES) ?
+				BIT(VBUS_PRESENT) :
+				BIT(VBUS_SAFE0V);
 	}
 
 	/* Enable/disable VBUS monitor by the flag */
@@ -1511,8 +1486,8 @@ int tcpci_tcpm_init(int port)
 	 * Force an update to the VBUS status in case the TCPC doesn't send a
 	 * power status changed interrupt later.
 	 */
-	tcpci_check_vbus_changed(port,
-		TCPC_REG_ALERT_POWER_STATUS | TCPC_REG_ALERT_EXT_STATUS,
+	tcpci_check_vbus_changed(
+		port, TCPC_REG_ALERT_POWER_STATUS | TCPC_REG_ALERT_EXT_STATUS,
 		NULL);
 
 	error = init_alert_mask(port);
@@ -1686,11 +1661,9 @@ static const struct tcpc_reg_dump_map tcpc_regs[] = {
 		.name = "FAULT_STATUS_MASK",
 		.size = 1,
 	},
-	{
-		.addr = TCPC_REG_EXT_STATUS_MASK,
-		.name = "EXT_STATUS_MASK",
-		.size = 1
-	},
+	{ .addr = TCPC_REG_EXT_STATUS_MASK,
+	  .name = "EXT_STATUS_MASK",
+	  .size = 1 },
 	{
 		.addr = TCPC_REG_ALERT_EXTENDED_MASK,
 		.name = "ALERT_EXTENDED_MASK",
@@ -1833,43 +1806,43 @@ void tcpc_dump_std_registers(int port)
 #endif
 
 const struct tcpm_drv tcpci_tcpm_drv = {
-	.init			= &tcpci_tcpm_init,
-	.release		= &tcpci_tcpm_release,
-	.get_cc			= &tcpci_tcpm_get_cc,
+	.init = &tcpci_tcpm_init,
+	.release = &tcpci_tcpm_release,
+	.get_cc = &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
+	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
 #endif
-	.get_vbus_voltage	= &tcpci_get_vbus_voltage,
-	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &tcpci_tcpm_set_cc,
-	.set_polarity		= &tcpci_tcpm_set_polarity,
+	.get_vbus_voltage = &tcpci_get_vbus_voltage,
+	.select_rp_value = &tcpci_tcpm_select_rp_value,
+	.set_cc = &tcpci_tcpm_set_cc,
+	.set_polarity = &tcpci_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable	= &tcpci_tcpm_sop_prime_enable,
+	.sop_prime_enable = &tcpci_tcpm_sop_prime_enable,
 #endif
-	.set_vconn		= &tcpci_tcpm_set_vconn,
-	.set_msg_header		= &tcpci_tcpm_set_msg_header,
-	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
-	.get_message_raw	= &tcpci_tcpm_get_message_raw,
-	.transmit		= &tcpci_tcpm_transmit,
-	.tcpc_alert		= &tcpci_tcpc_alert,
+	.set_vconn = &tcpci_tcpm_set_vconn,
+	.set_msg_header = &tcpci_tcpm_set_msg_header,
+	.set_rx_enable = &tcpci_tcpm_set_rx_enable,
+	.get_message_raw = &tcpci_tcpm_get_message_raw,
+	.transmit = &tcpci_tcpm_transmit,
+	.tcpc_alert = &tcpci_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+	.tcpc_discharge_vbus = &tcpci_tcpc_discharge_vbus,
 #endif
 	.tcpc_enable_auto_discharge_disconnect =
 		&tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+	.drp_toggle = &tcpci_tcpc_drp_toggle,
 #endif
-	.get_chip_info		= &tcpci_get_chip_info,
-	.get_snk_ctrl		= &tcpci_tcpm_get_snk_ctrl,
-	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
-	.get_src_ctrl		= &tcpci_tcpm_get_src_ctrl,
-	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+	.get_chip_info = &tcpci_get_chip_info,
+	.get_snk_ctrl = &tcpci_tcpm_get_snk_ctrl,
+	.set_snk_ctrl = &tcpci_tcpm_set_snk_ctrl,
+	.get_src_ctrl = &tcpci_tcpm_get_src_ctrl,
+	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+	.enter_low_power_mode = &tcpci_enter_low_power_mode,
 #endif
-	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
+	.set_bist_test_mode = &tcpci_set_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
-	.dump_registers		= &tcpc_dump_std_registers,
+	.dump_registers = &tcpc_dump_std_registers,
 #endif
 };
