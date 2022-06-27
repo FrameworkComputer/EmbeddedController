@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_CPU_H
 #define __CROS_EC_CPU_H
 
-static inline void cpu_init(void) { }
+static inline void cpu_init(void)
+{
+}
 
 #endif /* __CROS_EC_CPU_H */
