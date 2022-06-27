@@ -43,22 +43,20 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Arduino connectors analog pins */
-	[ADC1_0] = {"ADC1_0",  3000, 4096, 0, STM32_AIN(0)},
-	[ADC1_1] = {"ADC1_1",  3000, 4096, 0, STM32_AIN(1)},
-	[ADC1_4] = {"ADC1_4",  3000, 4096, 0, STM32_AIN(4)},
-	[ADC1_8] = {"ADC1_8",  3000, 4096, 0, STM32_AIN(8)},
+	[ADC1_0] = { "ADC1_0", 3000, 4096, 0, STM32_AIN(0) },
+	[ADC1_1] = { "ADC1_1", 3000, 4096, 0, STM32_AIN(1) },
+	[ADC1_4] = { "ADC1_4", 3000, 4096, 0, STM32_AIN(4) },
+	[ADC1_8] = { "ADC1_8", 3000, 4096, 0, STM32_AIN(8) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "master",
-		.port = I2C_PORT_MASTER,
-		.kbps = 100,
-		.scl  = GPIO_MASTER_I2C_SCL,
-		.sda  = GPIO_MASTER_I2C_SDA
-	},
+	{ .name = "master",
+	  .port = I2C_PORT_MASTER,
+	  .kbps = 100,
+	  .scl = GPIO_MASTER_I2C_SCL,
+	  .sda = GPIO_MASTER_I2C_SDA },
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -124,6 +122,5 @@ static int command_dma_help(int argc, char **argv)
 	dma_dump(STM32_DMA2_STREAM0);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dmahelp, command_dma_help,
-			NULL, "Run DMA test");
+DECLARE_CONSOLE_COMMAND(dmahelp, command_dma_help, NULL, "Run DMA test");
 #endif
