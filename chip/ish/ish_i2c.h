@@ -9,22 +9,21 @@
 #include <stdint.h>
 #include "task.h"
 
-#define I2C_TSC_TIMEOUT			2000000
-#define I2C_CALIB_ADDRESS		0x3
-#define I2C_INTERRUPT_TIMEOUT		(TICKFREQ / 20)
-#define NS_IN_SEC			1000
-#define DEFAULT_SDA_HOLD		240
-#define DEFAULT_SDA_HOLD_STD		2400
-#define DEFAULT_SDA_HOLD_FAST		600
-#define DEFAULT_SDA_HOLD_FAST_PLUS	300
-#define DEFAULT_SDA_HOLD_HIGH		140
-#define NS_2_COUNTERS(ns, clk)		((ns * clk)/NS_IN_SEC)
-#define COUNTERS_2_NS(counters, clk)	(counters * (NANOSECONDS_IN_SEC / \
-					(clk * HZ_IN_MEGAHZ)))
-#define I2C_TX_FLUSH_TIMEOUT_USEC	200
+#define I2C_TSC_TIMEOUT 2000000
+#define I2C_CALIB_ADDRESS 0x3
+#define I2C_INTERRUPT_TIMEOUT (TICKFREQ / 20)
+#define NS_IN_SEC 1000
+#define DEFAULT_SDA_HOLD 240
+#define DEFAULT_SDA_HOLD_STD 2400
+#define DEFAULT_SDA_HOLD_FAST 600
+#define DEFAULT_SDA_HOLD_FAST_PLUS 300
+#define DEFAULT_SDA_HOLD_HIGH 140
+#define NS_2_COUNTERS(ns, clk) ((ns * clk) / NS_IN_SEC)
+#define COUNTERS_2_NS(counters, clk) \
+	(counters * (NANOSECONDS_IN_SEC / (clk * HZ_IN_MEGAHZ)))
+#define I2C_TX_FLUSH_TIMEOUT_USEC 200
 
 #define ISH_I2C_FIFO_SIZE 64
-
 
 enum {
 	/* freq mode values */
@@ -38,29 +37,18 @@ enum {
 };
 
 const unsigned int clk_in[] = {
-	[I2C_FREQ_25] = 25,
-	[I2C_FREQ_50] = 50,
-	[I2C_FREQ_100] = 100,
-	[I2C_FREQ_120] = 120,
-	[I2C_FREQ_40] = 40,
-	[I2C_FREQ_20] = 20,
+	[I2C_FREQ_25] = 25,   [I2C_FREQ_50] = 50, [I2C_FREQ_100] = 100,
+	[I2C_FREQ_120] = 120, [I2C_FREQ_40] = 40, [I2C_FREQ_20] = 20,
 	[I2C_FREQ_37] = 37,
 };
 
 const uint8_t spkln[] = {
-	[I2C_FREQ_25] = 2,
-	[I2C_FREQ_50] = 3,
-	[I2C_FREQ_100] = 5,
-	[I2C_FREQ_120] = 6,
-	[I2C_FREQ_40] = 2,
-	[I2C_FREQ_20] = 1,
+	[I2C_FREQ_25] = 2,  [I2C_FREQ_50] = 3, [I2C_FREQ_100] = 5,
+	[I2C_FREQ_120] = 6, [I2C_FREQ_40] = 2, [I2C_FREQ_20] = 1,
 	[I2C_FREQ_37] = 2,
 };
 
-enum {
-	I2C_READ,
-	I2C_WRITE
-};
+enum { I2C_READ, I2C_WRITE };
 
 enum {
 	/* REGISTERS */
@@ -125,7 +113,7 @@ enum {
 	IC_10BITADDR_MASTER = 0,
 	/* IC_TAR WRITE VALUES */
 	IC_10BITADDR_MASTER_VAL =
-	    (IC_10BITADDR_MASTER << IC_10BITADDR_MASTER_OFFSET),
+		(IC_10BITADDR_MASTER << IC_10BITADDR_MASTER_OFFSET),
 	TAR_SPECIAL_VAL = (TAR_SPECIAL << SPECIAL_OFFSET),
 	/* IC_DATA_CMD OFFSETS */
 	DATA_CMD_DAT_OFFSET = 0,
@@ -180,13 +168,13 @@ struct i2c_bus_info {
 	struct i2c_bus_data fast_speed;
 	struct i2c_bus_data fast_plus_speed;
 	struct i2c_bus_data high_speed;
-} __attribute__ ((__packed__));
+} __attribute__((__packed__));
 
 enum i2c_speed {
-	I2C_SPEED_100KHZ,	/* 100kHz */
-	I2C_SPEED_400KHZ,	/* 400kHz */
-	I2C_SPEED_1MHZ,		/*   1MHz */
-	I2C_SPEED_3M4HZ,	/* 3.4MHz */
+	I2C_SPEED_100KHZ, /* 100kHz */
+	I2C_SPEED_400KHZ, /* 400kHz */
+	I2C_SPEED_1MHZ, /*   1MHz */
+	I2C_SPEED_3M4HZ, /* 3.4MHz */
 };
 
 struct i2c_context {
