@@ -71,7 +71,7 @@ LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 
 #define DEFAULT_R_SNS 10
 #define R_SNS CONFIG_CHARGER_SENSE_RESISTOR
-#define REG_TO_CURRENT(REG) ((REG) * DEFAULT_R_SNS / R_SNS)
+#define REG_TO_CURRENT(REG) ((REG)*DEFAULT_R_SNS / R_SNS)
 
 struct isl923x_emul_data {
 	/** Common I2C data */
@@ -160,8 +160,7 @@ void isl923x_emul_set_manufacturer_id(const struct emul *emulator,
 	data->manufacturer_id_reg = manufacturer_id;
 }
 
-void isl923x_emul_set_device_id(const struct emul *emulator,
-				uint16_t device_id)
+void isl923x_emul_set_device_id(const struct emul *emulator, uint16_t device_id)
 {
 	struct isl923x_emul_data *data = emulator->data;
 
@@ -366,7 +365,7 @@ static int isl923x_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 		break;
 	case ISL9238_REG_INPUT_VOLTAGE:
 		WRITE_REG_16(data->input_voltage_reg, bytes, val,
-					REG_INPUT_VOLTAGE_MASK);
+			     REG_INPUT_VOLTAGE_MASK);
 		break;
 	default:
 		__ASSERT(false, "Attempt to write unimplemented reg 0x%02x",
@@ -421,7 +420,7 @@ static int emul_isl923x_init(const struct emul *emul,
 	return i2c_emul_register(parent, emul->dev_label, &data->common.emul);
 }
 
-#define INIT_ISL923X(n)                                                        \
+#define INIT_ISL923X(n)                                                          \
 	static struct isl923x_emul_data isl923x_emul_data_##n = {              \
 		.common = {                                                    \
 			.write_byte = isl923x_emul_write_byte,                 \
@@ -432,15 +431,15 @@ static int emul_isl923x_init(const struct emul *emul,
 			DT_INST_NODE_HAS_PROP(n, battery),                     \
 			(DT_DEP_ORD(DT_INST_PROP(n, battery))),                \
 			(-1)),                                                 \
-	};                                                                     \
+	}; \
 	static struct isl923x_emul_cfg isl923x_emul_cfg_##n = {                \
 	.common = {                                                            \
 		.i2c_label = DT_INST_BUS_LABEL(n),                             \
 		.dev_label = DT_INST_LABEL(n),                                 \
 		.addr = DT_INST_REG_ADDR(n),                                   \
 		},                                                             \
-	};                                                                     \
-	EMUL_DEFINE(emul_isl923x_init, DT_DRV_INST(n), &isl923x_emul_cfg_##n,  \
+	}; \
+	EMUL_DEFINE(emul_isl923x_init, DT_DRV_INST(n), &isl923x_emul_cfg_##n,    \
 		    &isl923x_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_ISL923X)
