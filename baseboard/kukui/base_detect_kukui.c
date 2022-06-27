@@ -14,7 +14,7 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
 
 /* Krane base detection code */
 
@@ -41,11 +41,11 @@ enum kukui_pogo_device_type {
 struct {
 	int mv_low, mv_high;
 } static const pogo_detect_table[] = {
-	[DEVICE_TYPE_DETACHED] = {2700, 3500}, /* 10K, NC, around 3.3V */
+	[DEVICE_TYPE_DETACHED] = { 2700, 3500 }, /* 10K, NC, around 3.3V */
 #ifdef VARIANT_KUKUI_POGO_DOCK
-	[DEVICE_TYPE_DOCK] = {141, 173},       /* 10K, 0.5K ohm */
+	[DEVICE_TYPE_DOCK] = { 141, 173 }, /* 10K, 0.5K ohm */
 #endif
-	[DEVICE_TYPE_KEYBOARD] = {270, 400},   /* 10K, 1K ohm */
+	[DEVICE_TYPE_KEYBOARD] = { 270, 400 }, /* 10K, 1K ohm */
 };
 BUILD_ASSERT(ARRAY_SIZE(pogo_detect_table) == DEVICE_TYPE_COUNT);
 
@@ -71,7 +71,7 @@ static enum kukui_pogo_device_type get_device_type(int mv)
 
 	for (i = 0; i < DEVICE_TYPE_COUNT; i++) {
 		if (pogo_detect_table[i].mv_low <= mv &&
-				mv <= pogo_detect_table[i].mv_high)
+		    mv <= pogo_detect_table[i].mv_high)
 			return i;
 	}
 
@@ -82,17 +82,17 @@ static void enable_charge(int enable)
 {
 #ifdef VARIANT_KUKUI_POGO_DOCK
 	if (enable) {
-		struct charge_port_info info = {
-			.voltage = 5000, .current = 1500};
+		struct charge_port_info info = { .voltage = 5000,
+						 .current = 1500 };
 		/*
 		 * Set supplier type to PD to have same priority as type c
 		 * port.
 		 */
-		charge_manager_update_charge(
-			CHARGE_SUPPLIER_DEDICATED, CHARGE_PORT_POGO, &info);
+		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+					     CHARGE_PORT_POGO, &info);
 	} else {
-		charge_manager_update_charge(
-			CHARGE_SUPPLIER_DEDICATED, CHARGE_PORT_POGO, NULL);
+		charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+					     CHARGE_PORT_POGO, NULL);
 	}
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 #endif
@@ -112,7 +112,7 @@ static void base_set_device_type(enum kukui_pogo_device_type device_type)
 	case DEVICE_TYPE_ERROR:
 	case DEVICE_TYPE_UNKNOWN:
 		hook_call_deferred(&base_detect_deferred_data,
-				BASE_DETECT_RETRY_US);
+				   BASE_DETECT_RETRY_US);
 		break;
 
 	case DEVICE_TYPE_DETACHED:
@@ -210,11 +210,11 @@ void base_force_state(enum ec_set_base_state_cmd state)
 
 	gpio_disable_interrupt(GPIO_POGO_ADC_INT_L);
 	pogo_type = (state == 1 ? DEVICE_TYPE_KEYBOARD : DEVICE_TYPE_DETACHED);
-	base_set_device_type(state == EC_SET_BASE_STATE_ATTACH
-					? DEVICE_TYPE_KEYBOARD
-					: DEVICE_TYPE_DETACHED);
-	CPRINTS("BD forced %sconnected", state == EC_SET_BASE_STATE_ATTACH ?
-						  "" : "dis");
+	base_set_device_type(state == EC_SET_BASE_STATE_ATTACH ?
+				     DEVICE_TYPE_KEYBOARD :
+				     DEVICE_TYPE_DETACHED);
+	CPRINTS("BD forced %sconnected",
+		state == EC_SET_BASE_STATE_ATTACH ? "" : "dis");
 }
 
 #ifdef VARIANT_KUKUI_POGO_DOCK
