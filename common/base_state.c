@@ -8,7 +8,7 @@
 #include "host_command.h"
 #include "hooks.h"
 
-#define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ##args)
 
 #ifdef CONFIG_BASE_ATTACHED_SWITCH
 /* 1: base attached, 0: otherwise */
@@ -47,10 +47,9 @@ static int command_setbasestate(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 
 	return EC_SUCCESS;
-
 }
-DECLARE_CONSOLE_COMMAND(basestate, command_setbasestate,
-	"[attach | detach | reset]",
+DECLARE_CONSOLE_COMMAND(
+	basestate, command_setbasestate, "[attach | detach | reset]",
 	"Manually force base state to attached, detached or reset.");
 
 static enum ec_status hostcmd_setbasestate(struct host_cmd_handler_args *args)
