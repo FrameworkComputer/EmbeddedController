@@ -9,7 +9,7 @@
 #define __CROS_EC_USBC_CONFIG_H
 
 #ifndef CONFIG_ZEPHYR
-#define CONFIG_USB_PD_PORT_MAX_COUNT	3
+#define CONFIG_USB_PD_PORT_MAX_COUNT 3
 #endif
 
 enum usbc_port {
