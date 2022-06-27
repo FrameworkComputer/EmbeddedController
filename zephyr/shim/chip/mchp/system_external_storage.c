@@ -13,12 +13,11 @@
 #include "system_chip.h"
 #include "config_chip.h"
 
-#define MCHP_ECRO_WORD		0x4F524345u /* ASCII ECRO */
-#define MCHP_ECRW_WORD		0x57524345u /* ASCII ECRW */
-#define MCHP_PCR_NODE		DT_INST(0, microchip_xec_pcr)
+#define MCHP_ECRO_WORD 0x4F524345u /* ASCII ECRO */
+#define MCHP_ECRW_WORD 0x57524345u /* ASCII ECRW */
+#define MCHP_PCR_NODE DT_INST(0, microchip_xec_pcr)
 
-#define GET_BBRAM_OFS(node) \
-	DT_PROP(DT_PATH(named_bbram_regions, node), offset)
+#define GET_BBRAM_OFS(node) DT_PROP(DT_PATH(named_bbram_regions, node), offset)
 #define GET_BBRAM_SZ(node) DT_PROP(DT_PATH(named_bbram_regions, node), size)
 
 static const struct device *const bbram_dev =
@@ -49,8 +48,8 @@ void system_jump_to_booter(void)
 	 */
 	switch (system_get_shrspi_image_copy()) {
 	case EC_IMAGE_RW:
-		flash_offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
-				CONFIG_RW_STORAGE_OFF;
+		flash_offset =
+			CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
 		flash_used = CONFIG_CROS_EC_RW_SIZE;
 		break;
 	case EC_IMAGE_RO:
