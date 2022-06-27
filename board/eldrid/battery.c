@@ -100,7 +100,9 @@ __override bool board_battery_is_initialized(void)
 	bool batt_initialization_state;
 	int batt_status;
 
-	batt_initialization_state = (battery_status(&batt_status) ? false :
-		!!(batt_status & STATUS_INITIALIZED));
+	batt_initialization_state =
+		(battery_status(&batt_status) ?
+			 false :
+			 !!(batt_status & STATUS_INITIALIZED));
 	return batt_initialization_state;
 }
