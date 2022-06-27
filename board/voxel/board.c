@@ -44,7 +44,7 @@
 
 #include "gpio_list.h" /* Must come after other header files. */
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 static const struct ec_response_keybd_config zbu_new_kb = {
 	.num_top_row_keys = 10,
@@ -80,8 +80,8 @@ static const struct ec_response_keybd_config zbu_old_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__override
-const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	if (get_board_id() > 2)
 		return &zbu_new_kb;
@@ -111,16 +111,15 @@ __override struct keyboard_scan_config keyscan_config = {
  * that we don't have pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-	{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-	{0, 7}, {-1, -1}, {-1, -1}, {1, 4}, {1, 3},
-	{-1, -1}, {1, 6}, {1, 7}, {3, 1}, {2, 0},
-	{1, 5}, {2, 6}, {2, 7}, {2, 1}, {2, 4},
-	{2, 5}, {1, 2}, {2, 3}, {2, 2}, {3, 0},
-	{-1, -1}, {0, 4}, {-1, -1}, {8, 2}, {-1, -1},
-	{-1, -1},
+	{ -1, -1 }, { 0, 5 },	{ 1, 1 }, { 1, 0 },   { 0, 6 },	  { 0, 7 },
+	{ -1, -1 }, { -1, -1 }, { 1, 4 }, { 1, 3 },   { -1, -1 }, { 1, 6 },
+	{ 1, 7 },   { 3, 1 },	{ 2, 0 }, { 1, 5 },   { 2, 6 },	  { 2, 7 },
+	{ 2, 1 },   { 2, 4 },	{ 2, 5 }, { 1, 2 },   { 2, 3 },	  { 2, 2 },
+	{ 3, 0 },   { -1, -1 }, { 0, 4 }, { -1, -1 }, { 8, 2 },	  { -1, -1 },
+	{ -1, -1 },
 };
 const int keyboard_factory_scan_pins_used =
-		ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 __override uint32_t board_override_feature_flags0(uint32_t flags0)
 {
@@ -146,7 +145,7 @@ union volteer_cbi_fw_config fw_config_defaults = {
 
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
@@ -183,8 +182,8 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
@@ -314,12 +313,12 @@ static void setup_board_tcpc(void)
 
 	if (board_id == 0) {
 		/* config typec C0 prot TUSB422 TCPC */
-		tcpc_config[USBC_PORT_C0].i2c_info.addr_flags
-			= TUSB422_I2C_ADDR_FLAGS;
+		tcpc_config[USBC_PORT_C0].i2c_info.addr_flags =
+			TUSB422_I2C_ADDR_FLAGS;
 		tcpc_config[USBC_PORT_C0].drv = &tusb422_tcpm_drv;
 		/* config typec C1 prot TUSB422 TCPC */
-		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags
-			= TUSB422_I2C_ADDR_FLAGS;
+		tcpc_config[USBC_PORT_C1].i2c_info.addr_flags =
+			TUSB422_I2C_ADDR_FLAGS;
 		tcpc_config[USBC_PORT_C1].drv = &tusb422_tcpm_drv;
 	}
 }
