@@ -11,9 +11,7 @@
 #include "common.h"
 #include "ec_commands.h"
 
-
 #define FIFO_DEPTH 16
-
 
 /**
  * Update the "soft" FIFO depth (size). The new depth should be less or
