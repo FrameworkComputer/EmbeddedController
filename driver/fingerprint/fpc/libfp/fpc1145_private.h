@@ -21,9 +21,9 @@
 #define FP_SENSOR_NAME "FPC1145"
 
 /* Sensor pixel resolution */
-#define FP_SENSOR_RES_Y        192
-#define FP_SENSOR_RES_X        56
-#define FP_SENSOR_RES_BPP      8
+#define FP_SENSOR_RES_Y 192
+#define FP_SENSOR_RES_X 56
+#define FP_SENSOR_RES_BPP 8
 
 /* Acquired finger frame definitions */
 #define FP_SENSOR_IMAGE_SIZE_MODE_VENDOR (35460)
@@ -33,17 +33,17 @@
  * corresponding value in the MQT tool fputils.py must be changed too.
  * See b/111443750 for context.
  */
-#define FP_SENSOR_IMAGE_SIZE_MODE_QUAL   (24408)
+#define FP_SENSOR_IMAGE_SIZE_MODE_QUAL (24408)
 
-#define FP_SENSOR_IMAGE_SIZE   FP_SENSOR_IMAGE_SIZE_MODE_VENDOR
+#define FP_SENSOR_IMAGE_SIZE FP_SENSOR_IMAGE_SIZE_MODE_VENDOR
 #define FP_SENSOR_IMAGE_OFFSET 2340
 
 /* Opaque FPC context */
 #define FP_SENSOR_CONTEXT_SIZE 4944
 
 /* Algorithm buffer sizes */
-#define FP_ALGORITHM_ENROLLMENT_SIZE    28
-#define FP_ALGORITHM_TEMPLATE_SIZE   47552
+#define FP_ALGORITHM_ENROLLMENT_SIZE 28
+#define FP_ALGORITHM_TEMPLATE_SIZE 47552
 
 /* Max number of templates stored / matched against */
 #define FP_MAX_FINGER_COUNT 5
