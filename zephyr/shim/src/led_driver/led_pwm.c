@@ -28,53 +28,48 @@ LOG_MODULE_REGISTER(pwm_led, LOG_LEVEL_ERR);
  * duty_cycle = 50 %, pulse_ns  = (2000000*50)/100 = 1000000ns
  */
 const uint32_t period_ns =
-		(NSEC_PER_SEC / DT_PROP(PWM_LED_PINS_NODE, pwm_frequency));
+	(NSEC_PER_SEC / DT_PROP(PWM_LED_PINS_NODE, pwm_frequency));
 
-#define SET_PIN(node_id, prop, i)					\
-{									\
-	.pwm = DEVICE_DT_GET(						\
-		DT_PWMS_CTLR(DT_PHANDLE_BY_IDX(node_id, prop, i))),	\
-	.channel = DT_PWMS_CHANNEL(					\
-			DT_PHANDLE_BY_IDX(node_id, prop, i)),		\
-	.flags = DT_PWMS_FLAGS(DT_PHANDLE_BY_IDX(node_id, prop, i)),	\
-	.pulse_ns = DIV_ROUND_NEAREST(					\
-	   period_ns * DT_PHA_BY_IDX(node_id, prop, i, value), 100),	\
-},
+#define SET_PIN(node_id, prop, i)                                             \
+	{                                                                     \
+		.pwm = DEVICE_DT_GET(                                         \
+			DT_PWMS_CTLR(DT_PHANDLE_BY_IDX(node_id, prop, i))),   \
+		.channel =                                                    \
+			DT_PWMS_CHANNEL(DT_PHANDLE_BY_IDX(node_id, prop, i)), \
+		.flags = DT_PWMS_FLAGS(DT_PHANDLE_BY_IDX(node_id, prop, i)),  \
+		.pulse_ns = DIV_ROUND_NEAREST(                                \
+			period_ns * DT_PHA_BY_IDX(node_id, prop, i, value),   \
+			100),                                                 \
+	},
 
-#define SET_PWM_PIN(node_id)						\
-{									\
-	DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN)		\
-};
+#define SET_PWM_PIN(node_id) \
+	{ DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN) };
 
-#define GEN_PINS_ARRAY(id)						\
-struct pwm_pin_t PINS_ARRAY(id)[] = SET_PWM_PIN(id)
+#define GEN_PINS_ARRAY(id) struct pwm_pin_t PINS_ARRAY(id)[] = SET_PWM_PIN(id)
 
 DT_FOREACH_CHILD(PWM_LED_PINS_NODE, GEN_PINS_ARRAY)
 
-#define SET_PIN_NODE(node_id)						\
-{									\
-	.led_color = GET_PROP(node_id, led_color),			\
-	.led_id = GET_PROP(node_id, led_id),				\
-	.br_color = GET_PROP_NVE(node_id, br_color),			\
-	.pwm_pins = PINS_ARRAY(node_id),				\
-	.pins_count = DT_PROP_LEN(node_id, led_pins)			\
-};
+#define SET_PIN_NODE(node_id)                          \
+	{ .led_color = GET_PROP(node_id, led_color),   \
+	  .led_id = GET_PROP(node_id, led_id),         \
+	  .br_color = GET_PROP_NVE(node_id, br_color), \
+	  .pwm_pins = PINS_ARRAY(node_id),             \
+	  .pins_count = DT_PROP_LEN(node_id, led_pins) };
 
 /*
  * Initialize led_pins_node_t struct for each pin node defined
  */
-#define GEN_PINS_NODES(id)						\
-const struct led_pins_node_t PINS_NODE(id) = SET_PIN_NODE(id)
+#define GEN_PINS_NODES(id) \
+	const struct led_pins_node_t PINS_NODE(id) = SET_PIN_NODE(id)
 
 DT_FOREACH_CHILD(PWM_LED_PINS_NODE, GEN_PINS_NODES)
 
 /*
  * Array of pointers to each pin node
  */
-#define PINS_NODE_PTR(id)	&PINS_NODE(id),
-const struct led_pins_node_t *pins_node[] = {
-	DT_FOREACH_CHILD(PWM_LED_PINS_NODE, PINS_NODE_PTR)
-};
+#define PINS_NODE_PTR(id) &PINS_NODE(id),
+const struct led_pins_node_t *pins_node[] = { DT_FOREACH_CHILD(
+	PWM_LED_PINS_NODE, PINS_NODE_PTR) };
 
 /*
  * Set all the PWM channels defined in the node to the defined value,
@@ -84,10 +79,8 @@ const struct led_pins_node_t *pins_node[] = {
 void led_set_color_with_node(const struct led_pins_node_t *pins_node)
 {
 	for (int j = 0; j < pins_node->pins_count; j++) {
-		pwm_set(
-			pins_node->pwm_pins[j].pwm,
-			pins_node->pwm_pins[j].channel,
-			period_ns,
+		pwm_set(pins_node->pwm_pins[j].pwm,
+			pins_node->pwm_pins[j].channel, period_ns,
 			pins_node->pwm_pins[j].pulse_ns,
 			pins_node->pwm_pins[j].flags);
 	}
