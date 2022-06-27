@@ -8,7 +8,7 @@
 #include "cbi_ec_fw_config.h"
 #include "cros_board_info.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 static union volteer_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
