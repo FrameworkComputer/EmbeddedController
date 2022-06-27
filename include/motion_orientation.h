@@ -12,13 +12,13 @@
 #include "ec_commands.h"
 #include "motion_sense.h"
 
-enum motionsensor_orientation motion_orientation_remap(
-		const struct motion_sensor_t *s,
-		enum motionsensor_orientation orientation);
+enum motionsensor_orientation
+motion_orientation_remap(const struct motion_sensor_t *s,
+			 enum motionsensor_orientation orientation);
 
 bool motion_orientation_changed(const struct motion_sensor_t *s);
-enum motionsensor_orientation *motion_orientation_ptr(
-		const struct motion_sensor_t *s);
+enum motionsensor_orientation *
+motion_orientation_ptr(const struct motion_sensor_t *s);
 void motion_orientation_update(const struct motion_sensor_t *s);
 
-#endif   /* __CROS_EC_MOTION_ORIENTATION_H */
+#endif /* __CROS_EC_MOTION_ORIENTATION_H */
