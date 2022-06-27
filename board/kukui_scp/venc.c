@@ -20,11 +20,11 @@
 static struct consumer const event_venc_consumer;
 static void event_venc_written(struct consumer const *consumer, size_t count);
 
-static struct queue const event_venc_queue = QUEUE_DIRECT(8,
-	struct venc_msg, null_producer, event_venc_consumer);
+static struct queue const event_venc_queue =
+	QUEUE_DIRECT(8, struct venc_msg, null_producer, event_venc_consumer);
 static struct consumer const event_venc_consumer = {
 	.queue = &event_venc_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_venc_written,
 	}),
 };
@@ -33,7 +33,9 @@ static venc_msg_handler mtk_venc_msg_handle[VENC_MAX];
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT8183
-void venc_h264_msg_handler(void *data) {}
+void venc_h264_msg_handler(void *data)
+{
+}
 #endif
 
 static void event_venc_written(struct consumer const *consumer, size_t count)
