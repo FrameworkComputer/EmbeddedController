@@ -31,8 +31,8 @@
 #include "gpio_list.h" /* Must come after other header files. */
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 static int block_sequence;
 
@@ -68,7 +68,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 static void board_init(void)
 {
 	if ((system_get_reset_flags() & EC_RESET_FLAG_AP_OFF) ||
-			(keyboard_scan_get_boot_keys() & BOOT_KEY_DOWN_ARROW)) {
+	    (keyboard_scan_get_boot_keys() & BOOT_KEY_DOWN_ARROW)) {
 		CPRINTS("PG_PP3300_S5_OD block is enabled");
 		block_sequence = 1;
 	}
