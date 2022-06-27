@@ -20,7 +20,7 @@ void keyboard_raw_init(void)
 {
 	/* Enable clock for KBS peripheral */
 	clock_enable_peripheral(CGC_OFFSET_KBS, CGC_KBS_MASK,
-			CGC_MODE_RUN | CGC_MODE_SLEEP);
+				CGC_MODE_RUN | CGC_MODE_SLEEP);
 
 	/* Ensure top-level interrupt is disabled */
 	keyboard_raw_enable_interrupt(0);
@@ -63,7 +63,7 @@ void keyboard_raw_init(void)
 	NPCX_WKEN(MIWU_TABLE_WKKEY, MIWU_GROUP_WKKEY) = 0xFF;
 
 	/* Select high to low transition (falling edge) */
-	NPCX_WKEDG(MIWU_TABLE_WKKEY, MIWU_GROUP_WKKEY) =  0xFF;
+	NPCX_WKEDG(MIWU_TABLE_WKKEY, MIWU_GROUP_WKKEY) = 0xFF;
 
 	/* Enable interrupt of WK KBS */
 	keyboard_raw_enable_interrupt(1);
