@@ -70,8 +70,8 @@
  * dp0-1 : rx1, tx1
  * hpd+/-: rfu2, rfu1
  */
-#define PI3USB3X532_MODE_DP_USB_SWAP (PI3USB3X532_MODE_DP_USB | \
-				      PI3USB3X532_BIT_SWAP)
+#define PI3USB3X532_MODE_DP_USB_SWAP \
+	(PI3USB3X532_MODE_DP_USB | PI3USB3X532_BIT_SWAP)
 
 /* Get Vendor ID */
 int pi3usb3x532_check_vendor(const struct usb_mux *me, int *val);
