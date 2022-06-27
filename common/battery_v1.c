@@ -15,8 +15,8 @@
 #include "printf.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* Returns zero if every item was updated. */
 int update_static_battery_info(void)
@@ -136,7 +136,8 @@ void update_dynamic_battery_info(void)
 		 * Don't report zero charge, as that has special meaning
 		 * to Chrome OS powerd.
 		 */
-		if (curr->batt.remaining_capacity == 0 && !curr->batt_is_charging)
+		if (curr->batt.remaining_capacity == 0 &&
+		    !curr->batt_is_charging)
 			*memmap_cap = 1;
 		else
 			*memmap_cap = curr->batt.remaining_capacity;
@@ -156,7 +157,7 @@ void update_dynamic_battery_info(void)
 		tmp |= EC_BATT_FLAG_LEVEL_CRITICAL;
 
 	tmp |= curr->batt_is_charging ? EC_BATT_FLAG_CHARGING :
-				       EC_BATT_FLAG_DISCHARGING;
+					EC_BATT_FLAG_DISCHARGING;
 
 	/* Tell the AP to re-read battery status if charge state changes */
 	if (*memmap_flags != tmp)
