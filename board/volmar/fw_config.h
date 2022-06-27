@@ -27,12 +27,12 @@ enum ec_cfg_keyboard_backlight_type {
 
 union volmar_cbi_fw_config {
 	struct {
-		enum ec_cfg_usb_db_type			usb_db : 4;
-		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
-		uint32_t				audio : 3;
-		uint32_t				boot_nvme_mask : 1;
-		uint32_t				boot_emmc_mask : 1;
-		uint32_t				reserved_1 : 22;
+		enum ec_cfg_usb_db_type usb_db : 4;
+		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
+		uint32_t audio : 3;
+		uint32_t boot_nvme_mask : 1;
+		uint32_t boot_emmc_mask : 1;
+		uint32_t reserved_1 : 22;
 	};
 	uint32_t raw_value;
 };
