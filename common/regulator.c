@@ -11,8 +11,7 @@
 #include "host_command.h"
 #include "regulator.h"
 
-static enum ec_status
-hc_regulator_get_info(struct host_cmd_handler_args *args)
+static enum ec_status hc_regulator_get_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_regulator_get_info *p = args->params;
 	struct ec_response_regulator_get_info *r = args->response;
@@ -33,8 +32,7 @@ hc_regulator_get_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_REGULATOR_GET_INFO, hc_regulator_get_info,
 		     EC_VER_MASK(0));
 
-static enum ec_status
-hc_regulator_enable(struct host_cmd_handler_args *args)
+static enum ec_status hc_regulator_enable(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_regulator_enable *p = args->params;
 	int rv;
