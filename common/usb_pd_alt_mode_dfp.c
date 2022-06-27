@@ -23,8 +23,8 @@
 #include "util.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #else
 #define CPRINTS(format, args...)
 #define CPRINTF(format, args...)
@@ -51,8 +51,8 @@ uint32_t dp_status[CONFIG_USB_PD_PORT_MAX_COUNT];
 /* Console command multi-function preference set for a PD port. */
 
 __maybe_unused bool dp_port_mf_allow[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-		[0 ... CONFIG_USB_PD_PORT_MAX_COUNT - 1] = true};
-
+	[0 ... CONFIG_USB_PD_PORT_MAX_COUNT - 1] = true
+};
 
 __overridable const struct svdm_response svdm_rsp = {
 	.identity = NULL,
@@ -60,8 +60,7 @@ __overridable const struct svdm_response svdm_rsp = {
 	.modes = NULL,
 };
 
-static int pd_get_mode_idx(int port, enum tcpci_msg_type type,
-		uint16_t svid)
+static int pd_get_mode_idx(int port, enum tcpci_msg_type type, uint16_t svid)
 {
 	int amode_idx;
 	struct partner_active_modes *active =
@@ -75,8 +74,7 @@ static int pd_get_mode_idx(int port, enum tcpci_msg_type type,
 	return -1;
 }
 
-static int pd_allocate_mode(int port, enum tcpci_msg_type type,
-		uint16_t svid)
+static int pd_allocate_mode(int port, enum tcpci_msg_type type, uint16_t svid)
 {
 	int i, j;
 	struct svdm_amode_data *modep;
@@ -122,21 +120,20 @@ static int pd_allocate_mode(int port, enum tcpci_msg_type type,
 	return -1;
 }
 
-static int validate_mode_request(struct svdm_amode_data *modep,
-				 uint16_t svid, int opos)
+static int validate_mode_request(struct svdm_amode_data *modep, uint16_t svid,
+				 int opos)
 {
 	if (!modep->fx)
 		return 0;
 
 	if (svid != modep->fx->svid) {
-		CPRINTF("ERR:svid r:0x%04x != c:0x%04x\n",
-			svid, modep->fx->svid);
+		CPRINTF("ERR:svid r:0x%04x != c:0x%04x\n", svid,
+			modep->fx->svid);
 		return 0;
 	}
 
 	if (opos != modep->opos) {
-		CPRINTF("ERR:opos r:%d != c:%d\n",
-			opos, modep->opos);
+		CPRINTF("ERR:opos r:%d != c:%d\n", opos, modep->opos);
 		return 0;
 	}
 
@@ -199,7 +196,7 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 
 	if (IS_ENABLED(CONFIG_CMD_MFALLOW))
 		mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]) &&
-			dp_port_mf_allow[port];
+			  dp_port_mf_allow[port];
 	else
 		mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 
@@ -229,8 +226,8 @@ int pd_dfp_dp_get_pin_mode(int port, uint32_t status)
 	return 1 << get_next_bit(&pin_caps);
 }
 
-struct svdm_amode_data *pd_get_amode_data(int port,
-		enum tcpci_msg_type type, uint16_t svid)
+struct svdm_amode_data *pd_get_amode_data(int port, enum tcpci_msg_type type,
+					  uint16_t svid)
 {
 	int idx = pd_get_mode_idx(port, type, svid);
 	struct partner_active_modes *active =
@@ -244,8 +241,8 @@ struct svdm_amode_data *pd_get_amode_data(int port,
  * Enter default mode ( payload[0] == 0 ) or attempt to enter mode via svid &
  * opos
  */
-uint32_t pd_dfp_enter_mode(int port, enum tcpci_msg_type type,
-		uint16_t svid, int opos)
+uint32_t pd_dfp_enter_mode(int port, enum tcpci_msg_type type, uint16_t svid,
+			   int opos)
 {
 	int mode_idx = pd_allocate_mode(port, type, svid);
 	struct svdm_amode_data *modep;
@@ -285,7 +282,7 @@ uint32_t pd_dfp_enter_mode(int port, enum tcpci_msg_type type,
 
 /* TODO(b/170372521) : Incorporate exit mode specific changes to DPM SM */
 int pd_dfp_exit_mode(int port, enum tcpci_msg_type type, uint16_t svid,
-		int opos)
+		     int opos)
 {
 	struct svdm_amode_data *modep;
 	struct partner_active_modes *active =
@@ -358,7 +355,7 @@ void dfp_consume_attention(int port, uint32_t *payload)
 }
 
 void dfp_consume_identity(int port, enum tcpci_msg_type type, int cnt,
-		uint32_t *payload)
+			  uint32_t *payload)
 {
 	int ptype;
 	struct pd_discovery *disc;
@@ -372,8 +369,8 @@ void dfp_consume_identity(int port, enum tcpci_msg_type type, int cnt,
 
 	ptype = PD_IDH_PTYPE(payload[VDO_I(IDH)]);
 	disc = pd_get_am_discovery_and_notify_access(port, type);
-	identity_size = MIN(sizeof(union disc_ident_ack),
-				   (cnt - 1) * sizeof(uint32_t));
+	identity_size =
+		MIN(sizeof(union disc_ident_ack), (cnt - 1) * sizeof(uint32_t));
 
 	/* Note: only store VDOs, not the VDM header */
 	memcpy(disc->identity.raw_value, payload + 1, identity_size);
@@ -383,14 +380,14 @@ void dfp_consume_identity(int port, enum tcpci_msg_type type, int cnt,
 	case IDH_PTYPE_AMA:
 		/* Leave vbus ON if the following macro is false */
 		if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE) &&
-			IS_ENABLED(CONFIG_USBC_VCONN_SWAP)) {
+		    IS_ENABLED(CONFIG_USBC_VCONN_SWAP)) {
 			/* Adapter is requesting vconn, try to supply it */
 			if (PD_VDO_AMA_VCONN_REQ(payload[VDO_I(AMA)]))
 				pd_try_vconn_src(port);
 
 			/* Only disable vbus if vconn was requested */
 			if (PD_VDO_AMA_VCONN_REQ(payload[VDO_I(AMA)]) &&
-				!PD_VDO_AMA_VBUS_REQ(payload[VDO_I(AMA)]))
+			    !PD_VDO_AMA_VBUS_REQ(payload[VDO_I(AMA)]))
 				pd_power_supply_reset(port);
 		}
 		break;
@@ -401,14 +398,14 @@ void dfp_consume_identity(int port, enum tcpci_msg_type type, int cnt,
 }
 
 void dfp_consume_svids(int port, enum tcpci_msg_type type, int cnt,
-		uint32_t *payload)
+		       uint32_t *payload)
 {
 	int i;
 	uint32_t *ptr = payload + 1;
 	int vdo = 1;
 	uint16_t svid0, svid1;
 	struct pd_discovery *disc =
-			pd_get_am_discovery_and_notify_access(port, type);
+		pd_get_am_discovery_and_notify_access(port, type);
 
 	for (i = disc->svid_cnt; i < disc->svid_cnt + 12; i += 2) {
 		if (i >= SVID_DISCOVERY_MAX) {
@@ -447,13 +444,13 @@ void dfp_consume_svids(int port, enum tcpci_msg_type type, int cnt,
 }
 
 void dfp_consume_modes(int port, enum tcpci_msg_type type, int cnt,
-		uint32_t *payload)
+		       uint32_t *payload)
 {
 	int svid_idx;
 	struct svid_mode_data *mode_discovery = NULL;
 	struct pd_discovery *disc =
-			pd_get_am_discovery_and_notify_access(port, type);
-	uint16_t response_svid = (uint16_t) PD_VDO_VID(payload[0]);
+		pd_get_am_discovery_and_notify_access(port, type);
+	uint16_t response_svid = (uint16_t)PD_VDO_VID(payload[0]);
 
 	for (svid_idx = 0; svid_idx < disc->svid_cnt; ++svid_idx) {
 		uint16_t svid = disc->svids[svid_idx].svid;
@@ -467,15 +464,15 @@ void dfp_consume_modes(int port, enum tcpci_msg_type type, int cnt,
 		const struct svid_mode_data *requested_mode_data =
 			pd_get_next_mode(port, type);
 		CPRINTF("C%d: Mode response for undiscovered SVID %x, but TCPM "
-				"requested SVID %x\n",
-				port, response_svid, requested_mode_data->svid);
+			"requested SVID %x\n",
+			port, response_svid, requested_mode_data->svid);
 		/*
 		 * Although SVIDs discovery seemed like it succeeded before, the
 		 * partner is now responding with undiscovered SVIDs. Discovery
 		 * cannot reasonably continue under these circumstances.
 		 */
 		pd_set_modes_discovery(port, type, requested_mode_data->svid,
-				PD_DISC_FAIL);
+				       PD_DISC_FAIL);
 		return;
 	}
 
@@ -483,15 +480,15 @@ void dfp_consume_modes(int port, enum tcpci_msg_type type, int cnt,
 	if (mode_discovery->mode_cnt < 1) {
 		CPRINTF("ERR:NOMODE\n");
 		pd_set_modes_discovery(port, type, mode_discovery->svid,
-				PD_DISC_FAIL);
+				       PD_DISC_FAIL);
 		return;
 	}
 
 	memcpy(mode_discovery->mode_vdo, &payload[1],
-			sizeof(uint32_t) * mode_discovery->mode_cnt);
+	       sizeof(uint32_t) * mode_discovery->mode_cnt);
 	disc->svid_idx++;
 	pd_set_modes_discovery(port, type, mode_discovery->svid,
-			PD_DISC_COMPLETE);
+			       PD_DISC_COMPLETE);
 }
 
 int pd_alt_mode(int port, enum tcpci_msg_type type, uint16_t svid)
@@ -505,7 +502,7 @@ void pd_set_identity_discovery(int port, enum tcpci_msg_type type,
 			       enum pd_discovery_state disc)
 {
 	struct pd_discovery *pd =
-			pd_get_am_discovery_and_notify_access(port, type);
+		pd_get_am_discovery_and_notify_access(port, type);
 
 	pd->identity_discovery = disc;
 }
@@ -519,7 +516,7 @@ enum pd_discovery_state pd_get_identity_discovery(int port,
 }
 
 const union disc_ident_ack *pd_get_identity_response(int port,
-					       enum tcpci_msg_type type)
+						     enum tcpci_msg_type type)
 {
 	if (type >= DISCOVERY_TYPE_COUNT)
 		return NULL;
@@ -529,39 +526,39 @@ const union disc_ident_ack *pd_get_identity_response(int port,
 
 uint16_t pd_get_identity_vid(int port)
 {
-	const union disc_ident_ack *resp = pd_get_identity_response(port,
-								TCPCI_MSG_SOP);
+	const union disc_ident_ack *resp =
+		pd_get_identity_response(port, TCPCI_MSG_SOP);
 
 	return resp->idh.usb_vendor_id;
 }
 
 uint16_t pd_get_identity_pid(int port)
 {
-	const union disc_ident_ack *resp = pd_get_identity_response(port,
-								TCPCI_MSG_SOP);
+	const union disc_ident_ack *resp =
+		pd_get_identity_response(port, TCPCI_MSG_SOP);
 
 	return resp->product.product_id;
 }
 
 uint8_t pd_get_product_type(int port)
 {
-	const union disc_ident_ack *resp = pd_get_identity_response(port,
-								TCPCI_MSG_SOP);
+	const union disc_ident_ack *resp =
+		pd_get_identity_response(port, TCPCI_MSG_SOP);
 
 	return resp->idh.product_type;
 }
 
 void pd_set_svids_discovery(int port, enum tcpci_msg_type type,
-			       enum pd_discovery_state disc)
+			    enum pd_discovery_state disc)
 {
 	struct pd_discovery *pd =
-			pd_get_am_discovery_and_notify_access(port, type);
+		pd_get_am_discovery_and_notify_access(port, type);
 
 	pd->svids_discovery = disc;
 }
 
 enum pd_discovery_state pd_get_svids_discovery(int port,
-		enum tcpci_msg_type type)
+					       enum tcpci_msg_type type)
 {
 	const struct pd_discovery *disc = pd_get_am_discovery(port, type);
 
@@ -582,11 +579,11 @@ uint16_t pd_get_svid(int port, uint16_t svid_idx, enum tcpci_msg_type type)
 	return disc->svids[svid_idx].svid;
 }
 
-void pd_set_modes_discovery(int port, enum tcpci_msg_type type,
-		uint16_t svid, enum pd_discovery_state disc)
+void pd_set_modes_discovery(int port, enum tcpci_msg_type type, uint16_t svid,
+			    enum pd_discovery_state disc)
 {
 	struct pd_discovery *pd =
-			pd_get_am_discovery_and_notify_access(port, type);
+		pd_get_am_discovery_and_notify_access(port, type);
 	int svid_idx;
 
 	for (svid_idx = 0; svid_idx < pd->svid_cnt; ++svid_idx) {
@@ -601,7 +598,7 @@ void pd_set_modes_discovery(int port, enum tcpci_msg_type type,
 }
 
 enum pd_discovery_state pd_get_modes_discovery(int port,
-		enum tcpci_msg_type type)
+					       enum tcpci_msg_type type)
 {
 	const struct svid_mode_data *mode_data = pd_get_next_mode(port, type);
 
@@ -615,8 +612,8 @@ enum pd_discovery_state pd_get_modes_discovery(int port,
 	return mode_data->discovery;
 }
 
-int pd_get_mode_vdo_for_svid(int port, enum tcpci_msg_type type,
-		uint16_t svid, uint32_t *vdo_out)
+int pd_get_mode_vdo_for_svid(int port, enum tcpci_msg_type type, uint16_t svid,
+			     uint32_t *vdo_out)
 {
 	int idx;
 	const struct pd_discovery *disc;
@@ -637,7 +634,7 @@ int pd_get_mode_vdo_for_svid(int port, enum tcpci_msg_type type,
 }
 
 const struct svid_mode_data *pd_get_next_mode(int port,
-		enum tcpci_msg_type type)
+					      enum tcpci_msg_type type)
 {
 	const struct pd_discovery *disc = pd_get_am_discovery(port, type);
 	const struct svid_mode_data *failed_mode_data = NULL;
@@ -672,7 +669,7 @@ const struct svid_mode_data *pd_get_next_mode(int port,
 }
 
 const uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
-		enum tcpci_msg_type type)
+				enum tcpci_msg_type type)
 {
 	const struct pd_discovery *disc = pd_get_am_discovery(port, type);
 
@@ -680,15 +677,15 @@ const uint32_t *pd_get_mode_vdo(int port, uint16_t svid_idx,
 }
 
 bool pd_is_mode_discovered_for_svid(int port, enum tcpci_msg_type type,
-		uint16_t svid)
+				    uint16_t svid)
 {
 	const struct pd_discovery *disc = pd_get_am_discovery(port, type);
 	const struct svid_mode_data *mode_data;
 
 	for (mode_data = disc->svids; mode_data < disc->svids + disc->svid_cnt;
-			++mode_data) {
+	     ++mode_data) {
 		if (mode_data->svid == svid &&
-				mode_data->discovery == PD_DISC_COMPLETE)
+		    mode_data->discovery == PD_DISC_COMPLETE)
 			return true;
 	}
 
@@ -812,7 +809,7 @@ bool is_usb2_cable_support(int port)
 	return disc->identity.idh.product_type == IDH_PTYPE_PCABLE ||
 	       pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) < VDM_VER20 ||
 	       disc->identity.product_t2.a2_rev30.usb_20_support ==
-							USB2_SUPPORTED;
+		       USB2_SUPPORTED;
 }
 
 bool is_cable_speed_gen2_capable(int port)
@@ -823,13 +820,13 @@ bool is_cable_speed_gen2_capable(int port)
 	switch (pd_get_rev(port, TCPCI_MSG_SOP_PRIME)) {
 	case PD_REV20:
 		return disc->identity.product_t1.p_rev20.ss ==
-						USB_R20_SS_U31_GEN1_GEN2;
+		       USB_R20_SS_U31_GEN1_GEN2;
 
 	case PD_REV30:
 		return disc->identity.product_t1.p_rev30.ss ==
-						USB_R30_SS_U32_U40_GEN2 ||
+			       USB_R30_SS_U32_U40_GEN2 ||
 		       disc->identity.product_t1.p_rev30.ss ==
-						USB_R30_SS_U40_GEN3;
+			       USB_R30_SS_U40_GEN3;
 	default:
 		return false;
 	}
@@ -844,9 +841,8 @@ bool is_active_cable_element_retimer(int port)
 	 * Revision 2 Active cables do not have Active element support.
 	 */
 	return is_pd_rev3(port, TCPCI_MSG_SOP_PRIME) &&
-		disc->identity.idh.product_type == IDH_PTYPE_ACABLE &&
-		disc->identity.product_t2.a2_rev30.active_elem ==
-							ACTIVE_RETIMER;
+	       disc->identity.idh.product_type == IDH_PTYPE_ACABLE &&
+	       disc->identity.product_t2.a2_rev30.active_elem == ACTIVE_RETIMER;
 }
 
 /*
@@ -862,7 +858,9 @@ uint32_t pd_get_tbt_mode_vdo(int port, enum tcpci_msg_type type)
 	uint32_t tbt_mode_vdo[PDO_MODES];
 
 	return pd_get_mode_vdo_for_svid(port, type, USB_VID_INTEL,
-					tbt_mode_vdo) ? tbt_mode_vdo[0] : 0;
+					tbt_mode_vdo) ?
+		       tbt_mode_vdo[0] :
+		       0;
 }
 
 /* TODO (b/148528713): Need to enable Thunderbolt-compatible mode on TCPMv2 */
@@ -875,8 +873,8 @@ void set_tbt_compat_mode_ready(int port)
 
 		/* Set usb mux to Thunderbolt-compatible mode */
 		usb_mux_set(port, USB_PD_MUX_TBT_COMPAT_ENABLED,
-			USB_SWITCH_CONNECT,
-			polarity_rm_dts(pd_get_polarity(port)));
+			    USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 }
 
@@ -902,18 +900,16 @@ static bool is_tbt_cable_superspeed(int port)
 		return false;
 
 	if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
-	   is_pd_rev3(port, TCPCI_MSG_SOP_PRIME))
-		return  disc->identity.product_t1.p_rev30.ss ==
-						USB_R30_SS_U32_U40_GEN1 ||
-			disc->identity.product_t1.p_rev30.ss ==
-						USB_R30_SS_U32_U40_GEN2 ||
-			disc->identity.product_t1.p_rev30.ss ==
-						USB_R30_SS_U40_GEN3;
+	    is_pd_rev3(port, TCPCI_MSG_SOP_PRIME))
+		return disc->identity.product_t1.p_rev30.ss ==
+			       USB_R30_SS_U32_U40_GEN1 ||
+		       disc->identity.product_t1.p_rev30.ss ==
+			       USB_R30_SS_U32_U40_GEN2 ||
+		       disc->identity.product_t1.p_rev30.ss ==
+			       USB_R30_SS_U40_GEN3;
 
-	return  disc->identity.product_t1.p_rev20.ss ==
-						USB_R20_SS_U31_GEN1 ||
-		disc->identity.product_t1.p_rev20.ss ==
-						USB_R20_SS_U31_GEN1_GEN2;
+	return disc->identity.product_t1.p_rev20.ss == USB_R20_SS_U31_GEN1 ||
+	       disc->identity.product_t1.p_rev20.ss == USB_R20_SS_U31_GEN1_GEN2;
 }
 
 static enum tbt_compat_cable_speed usb_rev30_to_tbt_speed(enum usb_rev30_ss ss)
@@ -958,26 +954,24 @@ enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
 			return TBT_SS_RES_0;
 
 		disc = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-		cable_tbt_speed =
-		   usb_rev30_to_tbt_speed(disc->identity.product_t1.p_rev30.ss);
+		cable_tbt_speed = usb_rev30_to_tbt_speed(
+			disc->identity.product_t1.p_rev30.ss);
 	} else {
 		cable_tbt_speed = cable_mode_resp.tbt_cable_speed;
 	}
 
-	return max_tbt_speed < cable_tbt_speed ?
-		max_tbt_speed : cable_tbt_speed;
+	return max_tbt_speed < cable_tbt_speed ? max_tbt_speed :
+						 cable_tbt_speed;
 }
 
 /* Note: Assumes that pins have already been set in safe state */
-int enter_tbt_compat_mode(int port, enum tcpci_msg_type sop,
-			uint32_t *payload)
+int enter_tbt_compat_mode(int port, enum tcpci_msg_type sop, uint32_t *payload)
 {
 	union tbt_dev_mode_enter_cmd enter_dev_mode = { .raw_value = 0 };
 	union tbt_mode_resp_device dev_mode_resp;
 	union tbt_mode_resp_cable cable_mode_resp;
 	enum tcpci_msg_type enter_mode_sop =
-					sop == TCPCI_MSG_SOP_PRIME_PRIME ?
-						TCPCI_MSG_SOP_PRIME : sop;
+		sop == TCPCI_MSG_SOP_PRIME_PRIME ? TCPCI_MSG_SOP_PRIME : sop;
 
 	/* Table F-12 TBT3 Cable Enter Mode Command */
 	/*
@@ -990,13 +984,12 @@ int enter_tbt_compat_mode(int port, enum tcpci_msg_type sop,
 		     VDO_SVDM_VERS(pd_get_vdo_ver(port, enter_mode_sop));
 
 	/* For TBT3 Cable Enter Mode Command, number of Objects is 1 */
-	if ((sop == TCPCI_MSG_SOP_PRIME) ||
-	    (sop == TCPCI_MSG_SOP_PRIME_PRIME))
+	if ((sop == TCPCI_MSG_SOP_PRIME) || (sop == TCPCI_MSG_SOP_PRIME_PRIME))
 		return 1;
 
 	dev_mode_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP);
 	cable_mode_resp.raw_value =
-			pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
+		pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
 
 	/* Table F-13 TBT3 Device Enter Mode Command */
 	enter_dev_mode.vendor_spec_b1 = dev_mode_resp.vendor_spec_b1;
@@ -1023,7 +1016,8 @@ int enter_tbt_compat_mode(int port, enum tcpci_msg_type sop,
 enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
 {
 	union tbt_mode_resp_cable cable_mode_resp = {
-		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME) };
+		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME)
+	};
 
 	/* tbt_rounded_support is zero when uninitialized */
 	return cable_mode_resp.tbt_rounded;
@@ -1055,7 +1049,6 @@ enum usb_rev30_ss get_usb4_cable_speed(int port)
 	enum tbt_compat_cable_speed tbt_speed = get_tbt_cable_speed(port);
 	enum usb_rev30_ss max_usb4_speed;
 
-
 	if (tbt_speed < TBT_SS_U31_GEN1)
 		return USB_R30_SS_U2_ONLY;
 
@@ -1063,19 +1056,19 @@ enum usb_rev30_ss get_usb4_cable_speed(int port)
 	 * Converting Thunderbolt-Compatible board speed to equivalent USB4
 	 * speed.
 	 */
-	max_usb4_speed = tbt_speed == TBT_SS_TBT_GEN3 ?
-		USB_R30_SS_U40_GEN3 : USB_R30_SS_U32_U40_GEN2;
+	max_usb4_speed = tbt_speed == TBT_SS_TBT_GEN3 ? USB_R30_SS_U40_GEN3 :
+							USB_R30_SS_U32_U40_GEN2;
 
 	if ((get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) &&
-	     is_pd_rev3(port, TCPCI_MSG_SOP_PRIME)) {
+	    is_pd_rev3(port, TCPCI_MSG_SOP_PRIME)) {
 		const struct pd_discovery *disc =
 			pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 		union active_cable_vdo1_rev30 a_rev30 =
 			disc->identity.product_t1.a_rev30;
 
 		if (a_rev30.vdo_ver >= VDO_VERSION_1_3) {
-			return max_usb4_speed < a_rev30.ss ?
-			       max_usb4_speed : a_rev30.ss;
+			return max_usb4_speed < a_rev30.ss ? max_usb4_speed :
+							     a_rev30.ss;
 		}
 	}
 
@@ -1106,24 +1099,25 @@ uint32_t get_enter_usb_msg_payload(int port)
 			enum retimer_active_element active_element =
 				disc->identity.product_t2.a2_rev30.active_elem;
 			eudo.cable_type = active_element == ACTIVE_RETIMER ?
-				CABLE_TYPE_ACTIVE_RETIMER :
-				CABLE_TYPE_ACTIVE_REDRIVER;
+						  CABLE_TYPE_ACTIVE_RETIMER :
+						  CABLE_TYPE_ACTIVE_REDRIVER;
 		} else {
 			cable_mode_resp.raw_value =
 				pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
 
-			eudo.cable_type =
-				cable_mode_resp.retimer_type  == USB_RETIMER ?
-				CABLE_TYPE_ACTIVE_RETIMER :
-				CABLE_TYPE_ACTIVE_REDRIVER;
+			eudo.cable_type = cable_mode_resp.retimer_type ==
+							  USB_RETIMER ?
+						  CABLE_TYPE_ACTIVE_RETIMER :
+						  CABLE_TYPE_ACTIVE_REDRIVER;
 		}
 	} else {
 		cable_mode_resp.raw_value =
 			pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
 
-		eudo.cable_type =
-			cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE ?
-			CABLE_TYPE_ACTIVE_REDRIVER : CABLE_TYPE_PASSIVE;
+		eudo.cable_type = cable_mode_resp.tbt_active_passive ==
+						  TBT_CABLE_ACTIVE ?
+					  CABLE_TYPE_ACTIVE_REDRIVER :
+					  CABLE_TYPE_PASSIVE;
 	}
 
 	switch (disc->identity.product_t1.p_rev20.vbus_cur) {
@@ -1179,17 +1173,17 @@ __overridable int svdm_enter_dp_mode(int port, uint32_t mode_caps)
 		return -1;
 #endif
 
-	/*
-	 * TCPMv2: Enable logging of CCD line state CCD_MODE_ODL.
-	 * DisplayPort Alternate mode requires that the SBU lines are used for
-	 * AUX communication.
-	 * However, in Chromebooks SBU signals are repurposed as USB2 signals
-	 * for CCD. This functionality is accomplished by override fets whose
-	 * state is controlled by CCD_MODE_ODL.
-	 *
-	 * This condition helps in debugging unexpected AUX timeout issues by
-	 * indicating the state of the CCD override fets.
-	 */
+		/*
+		 * TCPMv2: Enable logging of CCD line state CCD_MODE_ODL.
+		 * DisplayPort Alternate mode requires that the SBU lines are
+		 * used for AUX communication. However, in Chromebooks SBU
+		 * signals are repurposed as USB2 signals for CCD. This
+		 * functionality is accomplished by override fets whose state is
+		 * controlled by CCD_MODE_ODL.
+		 *
+		 * This condition helps in debugging unexpected AUX timeout
+		 * issues by indicating the state of the CCD override fets.
+		 */
 #ifdef GPIO_CCD_MODE_ODL
 	if (!gpio_get_level(GPIO_CCD_MODE_ODL))
 		CPRINTS("WARNING: Tried to EnterMode DP with [CCD on AUX/SBU]");
@@ -1216,8 +1210,8 @@ __overridable int svdm_dp_status(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 
-	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
-			 CMD_DP_STATUS | VDO_OPOS(opos));
+	payload[0] =
+		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_STATUS | VDO_OPOS(opos));
 	payload[1] = VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
 				   0, /* HPD level ... not applicable */
 				   0, /* exit DP? ... no */
@@ -1242,7 +1236,7 @@ mux_state_t svdm_dp_get_mux_mode(int port)
 
 	if (IS_ENABLED(CONFIG_CMD_MFALLOW))
 		mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]) &&
-			dp_port_mf_allow[port];
+			  dp_port_mf_allow[port];
 	else
 		mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 
@@ -1267,7 +1261,7 @@ __overridable int svdm_dp_config(int port, uint32_t *payload)
 
 	if (IS_ENABLED(CONFIG_CMD_MFALLOW))
 		mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]) &&
-			dp_port_mf_allow[port];
+			  dp_port_mf_allow[port];
 	else
 		mf_pref = PD_VDO_DPSTS_MF_PREF(dp_status[port]);
 
@@ -1276,11 +1270,11 @@ __overridable int svdm_dp_config(int port, uint32_t *payload)
 
 	CPRINTS("pin_mode: %x, mf: %d, mux: %d", pin_mode, mf_pref, mux_mode);
 
-	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
-			 CMD_DP_CONFIG | VDO_OPOS(opos));
-	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
-				1,	       /* DPv1.3 signaling */
-				2);	       /* UFP connected */
+	payload[0] =
+		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG | VDO_OPOS(opos));
+	payload[1] = VDO_DP_CFG(pin_mode, /* pin mode */
+				1, /* DPv1.3 signaling */
+				2); /* UFP connected */
 	return 2;
 };
 
@@ -1304,7 +1298,7 @@ __overridable void svdm_dp_post_config(int port)
 	typec_set_sbu(port, true);
 
 	usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT,
-		polarity_rm_dts(pd_get_polarity(port)));
+		    polarity_rm_dts(pd_get_polarity(port)));
 
 	dp_flags[port] |= DP_FLAGS_DP_ON;
 	if (!(dp_flags[port] & DP_FLAGS_HPD_HI_PENDING))
@@ -1317,8 +1311,8 @@ __overridable void svdm_dp_post_config(int port)
 	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 
-	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL |
-				 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+	usb_mux_hpd_update(port,
+			   USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ_DEASSERTED);
 
 #ifdef USB_PD_PORT_TCPC_MST
 	if (port == USB_PD_PORT_TCPC_MST)
@@ -1337,8 +1331,7 @@ __overridable int svdm_dp_attention(int port, uint32_t *payload)
 
 	dp_status[port] = payload[1];
 
-	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-	    (irq || lvl))
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) && (irq || lvl))
 		/*
 		 * Wake up the AP.  IRQ or level high indicates a DP sink is now
 		 * present.
@@ -1402,7 +1395,7 @@ __overridable void svdm_exit_dp_mode(int port)
 	svdm_set_hpd_gpio(port, 0);
 #endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-				 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 #ifdef USB_PD_PORT_TCPC_MST
 	if (port == USB_PD_PORT_TCPC_MST)
 		baseboard_mst_enable_control(port, 0);
@@ -1526,5 +1519,5 @@ static int command_mfallow(int argc, char **argv)
 }
 
 DECLARE_CONSOLE_COMMAND(mfallow, command_mfallow, "port [true | false]",
-		"Controls Multifunction choice during DP Altmode.");
+			"Controls Multifunction choice during DP Altmode.");
 #endif
