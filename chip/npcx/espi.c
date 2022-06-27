@@ -24,114 +24,114 @@
 #define CPRINTS(...)
 #else
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 #endif
 
 /* Default eSPI configuration for VW events */
 struct vwevms_config_t {
-	uint8_t idx;        /* VW index */
-	uint8_t idx_en;     /* Index enable */
-	uint8_t pltrst_en;  /* Enable reset by PLTRST assert */
+	uint8_t idx; /* VW index */
+	uint8_t idx_en; /* Index enable */
+	uint8_t pltrst_en; /* Enable reset by PLTRST assert */
 	uint8_t espirst_en; /* Enable reset by eSPI_RST assert */
-	uint8_t int_en;     /* Interrupt/Wake-up enable */
+	uint8_t int_en; /* Interrupt/Wake-up enable */
 };
 
 struct vwevsm_config_t {
-	uint8_t idx;        /* VW index */
-	uint8_t idx_en;     /* Index enable */
-	uint8_t pltrst_en;  /* Enable reset by PLTRST assert */
-	uint8_t cdrst_en;   /* Enable cold reset */
-	uint8_t valid;      /* Valid VW mask */
+	uint8_t idx; /* VW index */
+	uint8_t idx_en; /* Index enable */
+	uint8_t pltrst_en; /* Enable reset by PLTRST assert */
+	uint8_t cdrst_en; /* Enable cold reset */
+	uint8_t valid; /* Valid VW mask */
 };
 
 /* Default MIWU configurations for VW events */
 struct host_wui_item {
 	uint16_t table : 2; /* MIWU table 0-2 */
 	uint16_t group : 3; /* MIWU group 0-7 */
-	uint16_t num   : 3; /* MIWU bit   0-7 */
-	uint16_t edge  : 4; /* MIWU edge trigger type rising/falling/any */
+	uint16_t num : 3; /* MIWU bit   0-7 */
+	uint16_t edge : 4; /* MIWU edge trigger type rising/falling/any */
 };
 
 /* Mapping item between VW signal, index and value */
 struct vw_event_t {
-	uint16_t name;     /* Name of signal */
-	uint8_t  evt_idx;  /* VW index of signal */
-	uint8_t  evt_val;  /* VW value of signal */
+	uint16_t name; /* Name of signal */
+	uint8_t evt_idx; /* VW index of signal */
+	uint8_t evt_val; /* VW value of signal */
 };
 
 /* Default settings of VWEVMS registers (Please refer Table.43/44) */
 static const struct vwevms_config_t espi_in_list[] = {
-	/* IDX EN ENPL ENESP IE/WE          VW Event Bit 0 - 3 (M->S)         */
+/* IDX EN ENPL ENESP IE/WE          VW Event Bit 0 - 3 (M->S)         */
 #ifdef CONFIG_HOSTCMD_ESPI_RESET_SLP_SX_VW_ON_ESPI_RST
-	{0x02,  1,  0,  1,  1},  /* SLP_S3#,   SLP_S4#,    SLP_S5#,   Reserve */
+	{ 0x02, 1, 0, 1, 1 }, /* SLP_S3#,   SLP_S4#,    SLP_S5#,   Reserve */
 #else
-	{0x02,  1,  0,  0,  1},  /* SLP_S3#,   SLP_S4#,    SLP_S5#,   Reserve */
+	{ 0x02, 1, 0, 0, 1 }, /* SLP_S3#,   SLP_S4#,    SLP_S5#,   Reserve */
 #endif
-	{0x03,  1,  0,  1,  1},  /* SUS_STAT#, PLTRST#,    ORST_WARN, Reserve */
-	{0x07,  1,  1,  1,  1},  /* HRST_WARN, SMIOUT#,    NMIOUT#,   Reserve */
-	{0x41,  1,  0,  1,  1},  /* SUS_WARN#, SPWRDN_ACK, Reserve,   SLP_A#  */
-	{0x42,  1,  0,  0,  1},  /* SLP_LAN#,  SLP_WAN#,   Reserve,   Reserve */
-	{0x47,  1,  1,  1,  1},  /* HOST_C10,  Reserve,    Reserve,   Reserve */
+	{ 0x03, 1, 0, 1, 1 }, /* SUS_STAT#, PLTRST#,    ORST_WARN, Reserve */
+	{ 0x07, 1, 1, 1, 1 }, /* HRST_WARN, SMIOUT#,    NMIOUT#,   Reserve */
+	{ 0x41, 1, 0, 1, 1 }, /* SUS_WARN#, SPWRDN_ACK, Reserve,   SLP_A#  */
+	{ 0x42, 1, 0, 0, 1 }, /* SLP_LAN#,  SLP_WAN#,   Reserve,   Reserve */
+	{ 0x47, 1, 1, 1, 1 }, /* HOST_C10,  Reserve,    Reserve,   Reserve */
 };
 
 /* Default settings of VWEVSM registers (Please refer Table.43/44) */
 static const struct vwevsm_config_t espi_out_list[] = {
 	/* IDX EN ENPL ENCDR VDMASK         VW Event Bit 0 - 3 (S->M)         */
-	{0x04,  1,  0,  0, 0x0D}, /* ORST_ACK,   Reserve, WAKE#,   PME#       */
-	{0x05,  1,  0,  0, 0x0F}, /* SLV_BL_DNE, ERR_F,   ERR_NF,  SLV_BL_STS */
+	{ 0x04, 1, 0, 0, 0x0D }, /* ORST_ACK,   Reserve, WAKE#,   PME#       */
+	{ 0x05, 1, 0, 0, 0x0F }, /* SLV_BL_DNE, ERR_F,   ERR_NF,  SLV_BL_STS */
 #ifdef CONFIG_SCI_GPIO
-	{0x06,  1,  1,  0, 0x0C}, /* SCI#,       SMI#,    RCIN#,   HRST_ACK   */
+	{ 0x06, 1, 1, 0, 0x0C }, /* SCI#,       SMI#,    RCIN#,   HRST_ACK   */
 #else
-	{0x06,  1,  1,  0, 0x0F}, /* SCI#,       SMI#,    RCIN#,   HRST_ACK   */
+	{ 0x06, 1, 1, 0, 0x0F }, /* SCI#,       SMI#,    RCIN#,   HRST_ACK   */
 #endif
-	{0x40,  1,  0,  0, 0x01}, /* SUS_ACK,    Reserve, Reserve, Reserve    */
+	{ 0x40, 1, 0, 0, 0x01 }, /* SUS_ACK,    Reserve, Reserve, Reserve    */
 };
 
 /* eSPI interrupts used in MIWU */
 static const struct host_wui_item espi_vw_int_list[] = {
 	/* ESPI_RESET  */
-	{MIWU_TABLE_0, MIWU_GROUP_5, 5, MIWU_EDGE_FALLING},
+	{ MIWU_TABLE_0, MIWU_GROUP_5, 5, MIWU_EDGE_FALLING },
 	/* SLP_S3 */
-	{MIWU_TABLE_2, MIWU_GROUP_1, 0, MIWU_EDGE_ANYING},
+	{ MIWU_TABLE_2, MIWU_GROUP_1, 0, MIWU_EDGE_ANYING },
 	/* SLP_S4 */
-	{MIWU_TABLE_2, MIWU_GROUP_1, 1, MIWU_EDGE_ANYING},
+	{ MIWU_TABLE_2, MIWU_GROUP_1, 1, MIWU_EDGE_ANYING },
 	/* SLP_S5 */
-	{MIWU_TABLE_2, MIWU_GROUP_1, 2, MIWU_EDGE_ANYING},
+	{ MIWU_TABLE_2, MIWU_GROUP_1, 2, MIWU_EDGE_ANYING },
 	/* VW_WIRE_PLTRST */
-	{MIWU_TABLE_2, MIWU_GROUP_1, 5, MIWU_EDGE_ANYING},
+	{ MIWU_TABLE_2, MIWU_GROUP_1, 5, MIWU_EDGE_ANYING },
 	/* VW_WIRE_OOB_RST_WARN */
-	{MIWU_TABLE_2, MIWU_GROUP_1, 6, MIWU_EDGE_ANYING},
+	{ MIWU_TABLE_2, MIWU_GROUP_1, 6, MIWU_EDGE_ANYING },
 	/* VW_WIRE_HOST_RST_WARN */
-	{MIWU_TABLE_2, MIWU_GROUP_2, 0, MIWU_EDGE_ANYING},
+	{ MIWU_TABLE_2, MIWU_GROUP_2, 0, MIWU_EDGE_ANYING },
 	/* VW_WIRE_SUS_WARN */
-	{MIWU_TABLE_2, MIWU_GROUP_2, 4, MIWU_EDGE_ANYING},
+	{ MIWU_TABLE_2, MIWU_GROUP_2, 4, MIWU_EDGE_ANYING },
 };
 
 /* VW signals used in eSPI */
 static const struct vw_event_t vw_events_list[] = {
-	{VW_SLP_S3_L,                    0x02,   0x01},	/* index 02h (In)  */
-	{VW_SLP_S4_L,                    0x02,   0x02},
-	{VW_SLP_S5_L,                    0x02,   0x04},
-	{VW_SUS_STAT_L,                  0x03,   0x01},	/* index 03h (In)  */
-	{VW_PLTRST_L,                    0x03,   0x02},
-	{VW_OOB_RST_WARN,                0x03,   0x04},
-	{VW_OOB_RST_ACK,                 0x04,   0x01},	/* index 04h (Out) */
-	{VW_WAKE_L,                      0x04,   0x04},
-	{VW_PME_L,                       0x04,   0x08},
-	{VW_ERROR_FATAL,                 0x05,   0x02},	/* index 05h (Out) */
-	{VW_ERROR_NON_FATAL,             0x05,   0x04},
-	{VW_PERIPHERAL_BTLD_STATUS_DONE, 0x05,   0x09},
-	{VW_SCI_L,                       0x06,   0x01},	/* index 06h (Out) */
-	{VW_SMI_L,                       0x06,   0x02},
-	{VW_RCIN_L,                      0x06,   0x04},
-	{VW_HOST_RST_ACK,                0x06,   0x08},
-	{VW_HOST_RST_WARN,               0x07,   0x01},	/* index 07h (In)  */
-	{VW_SUS_ACK,                     0x40,   0x01},	/* index 40h (Out) */
-	{VW_SUS_WARN_L,                  0x41,   0x01},	/* index 41h (In)  */
-	{VW_SUS_PWRDN_ACK_L,             0x41,   0x02},
-	{VW_SLP_A_L,                     0x41,   0x08},
-	{VW_SLP_LAN,                     0x42,   0x01},	/* index 42h (In)  */
-	{VW_SLP_WLAN,                    0x42,   0x02},
+	{ VW_SLP_S3_L, 0x02, 0x01 }, /* index 02h (In)  */
+	{ VW_SLP_S4_L, 0x02, 0x02 },
+	{ VW_SLP_S5_L, 0x02, 0x04 },
+	{ VW_SUS_STAT_L, 0x03, 0x01 }, /* index 03h (In)  */
+	{ VW_PLTRST_L, 0x03, 0x02 },
+	{ VW_OOB_RST_WARN, 0x03, 0x04 },
+	{ VW_OOB_RST_ACK, 0x04, 0x01 }, /* index 04h (Out) */
+	{ VW_WAKE_L, 0x04, 0x04 },
+	{ VW_PME_L, 0x04, 0x08 },
+	{ VW_ERROR_FATAL, 0x05, 0x02 }, /* index 05h (Out) */
+	{ VW_ERROR_NON_FATAL, 0x05, 0x04 },
+	{ VW_PERIPHERAL_BTLD_STATUS_DONE, 0x05, 0x09 },
+	{ VW_SCI_L, 0x06, 0x01 }, /* index 06h (Out) */
+	{ VW_SMI_L, 0x06, 0x02 },
+	{ VW_RCIN_L, 0x06, 0x04 },
+	{ VW_HOST_RST_ACK, 0x06, 0x08 },
+	{ VW_HOST_RST_WARN, 0x07, 0x01 }, /* index 07h (In)  */
+	{ VW_SUS_ACK, 0x40, 0x01 }, /* index 40h (Out) */
+	{ VW_SUS_WARN_L, 0x41, 0x01 }, /* index 41h (In)  */
+	{ VW_SUS_PWRDN_ACK_L, 0x41, 0x02 },
+	{ VW_SLP_A_L, 0x41, 0x08 },
+	{ VW_SLP_LAN, 0x42, 0x01 }, /* index 42h (In)  */
+	{ VW_SLP_WLAN, 0x42, 0x02 },
 };
 
 /* Flag for boot load signals */
@@ -153,7 +153,7 @@ static void espi_reset_recovery(void)
 static void espi_vw_config_in(const struct vwevms_config_t *config)
 {
 	uint32_t val;
-	uint8_t  i, index;
+	uint8_t i, index;
 
 	switch (VM_TYPE(config->idx)) {
 	case ESPI_VW_TYPE_SYS_EV:
@@ -164,11 +164,10 @@ static void espi_vw_config_in(const struct vwevms_config_t *config)
 			if (index == config->idx) {
 				/* Get Wire field */
 				val = NPCX_VWEVMS(i) & 0x0F;
-				val |= VWEVMS_FIELD(config->idx,
-						config->idx_en,
-						config->pltrst_en,
-						config->int_en,
-						config->espirst_en);
+				val |= VWEVMS_FIELD(config->idx, config->idx_en,
+						    config->pltrst_en,
+						    config->int_en,
+						    config->espirst_en);
 				NPCX_VWEVMS(i) = val;
 				return;
 			}
@@ -196,11 +195,10 @@ static void espi_vw_config_out(const struct vwevsm_config_t *config)
 			if (index == config->idx) {
 				/* Preserve WIRE(3-0) and HW_WIRE (27-24). */
 				val = NPCX_VWEVSM(i) & 0x0F00000F;
-				val |= VWEVSM_FIELD(config->idx,
-						config->idx_en,
-						config->valid,
-						config->pltrst_en,
-						config->cdrst_en);
+				val |= VWEVSM_FIELD(config->idx, config->idx_en,
+						    config->valid,
+						    config->pltrst_en,
+						    config->cdrst_en);
 				NPCX_VWEVSM(i) = val;
 				return;
 			}
@@ -218,8 +216,8 @@ static void espi_enable_vw_int(const struct host_wui_item *vwire_int)
 {
 	uint8_t table = vwire_int->table;
 	uint8_t group = vwire_int->group;
-	uint8_t num   = vwire_int->num;
-	uint8_t edge  = vwire_int->edge;
+	uint8_t num = vwire_int->num;
+	uint8_t edge = vwire_int->edge;
 
 	/* Set detection mode to edge */
 	CLEAR_BIT(NPCX_WKMOD(table, group), num);
@@ -266,7 +264,7 @@ void espi_vw_power_signal_interrupt(enum espi_vw_signal signal)
 {
 	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL))
 		/* TODO: Add VW handler in power/common.c */
-		power_signal_interrupt((enum gpio_signal) signal);
+		power_signal_interrupt((enum gpio_signal)signal);
 }
 
 void espi_wait_vw_not_dirty(enum espi_vw_signal signal, unsigned int timeout_us)
@@ -289,7 +287,7 @@ void espi_wait_vw_not_dirty(enum espi_vw_signal signal, unsigned int timeout_us)
 
 	timeout = get_time().val + (uint64_t)timeout_us;
 	while ((NPCX_VWEVSM(offset) & VWEVSM_DIRTY(1)) &&
-		(get_time().val < timeout)) {
+	       (get_time().val < timeout)) {
 		udelay(10);
 	}
 }
@@ -609,12 +607,12 @@ static void espi_interrupt(void)
 			 * handled by PLTRST separately.
 			 */
 			for (chan = NPCX_ESPI_CH_VW; chan < NPCX_ESPI_CH_COUNT;
-					chan++) {
+			     chan++) {
 				if (!IS_PERIPHERAL_CHAN_ENABLE(chan) &&
-						IS_HOST_CHAN_EN(chan))
+				    IS_HOST_CHAN_EN(chan))
 					ENABLE_ESPI_CHAN(chan);
 				else if (IS_PERIPHERAL_CHAN_ENABLE(chan) &&
-						!IS_HOST_CHAN_EN(chan))
+					 !IS_HOST_CHAN_EN(chan))
 					DISABLE_ESPI_CHAN(chan);
 			}
 
@@ -625,9 +623,8 @@ static void espi_interrupt(void)
 			 */
 			if (boot_load_done == 0 &&
 			    IS_PERIPHERAL_CHAN_ENABLE(NPCX_ESPI_CH_VW)) {
-
-				espi_vw_set_wire(
-					VW_PERIPHERAL_BTLD_STATUS_DONE, 1);
+				espi_vw_set_wire(VW_PERIPHERAL_BTLD_STATUS_DONE,
+						 1);
 				boot_load_done = 1;
 			}
 		}
@@ -662,7 +659,7 @@ void espi_init(void)
 
 	/* Support all I/O modes */
 	SET_FIELD(NPCX_ESPICFG, NPCX_ESPICFG_IOMODE_FIELD,
-		NPCX_ESPI_IO_MODE_ALL);
+		  NPCX_ESPI_IO_MODE_ALL);
 
 	/* Set eSPI speed to max supported */
 	SET_FIELD(NPCX_ESPICFG, NPCX_ESPICFG_MAXFREQ_FIELD,
@@ -688,7 +685,7 @@ static int command_espi(int argc, char **argv)
 
 	if (argc == 1) {
 		return EC_ERROR_INVAL;
-	/* Get value of eSPI registers */
+		/* Get value of eSPI registers */
 	} else if (argc == 2) {
 		int i;
 
@@ -697,23 +694,23 @@ static int command_espi(int argc, char **argv)
 		} else if (strcasecmp(argv[1], "vsm") == 0) {
 			for (i = 0; i < ESPI_VWEVSM_NUM; i++) {
 				uint32_t val = NPCX_VWEVSM(i);
-				uint8_t  idx = VWEVSM_IDX_GET(val);
+				uint8_t idx = VWEVSM_IDX_GET(val);
 
 				ccprintf("VWEVSM%d: %02x [0x%08x]\n", i, idx,
-						val);
+					 val);
 			}
 		} else if (strcasecmp(argv[1], "vms") == 0) {
 			for (i = 0; i < ESPI_VWEVMS_NUM; i++) {
 				uint32_t val = NPCX_VWEVMS(i);
-				uint8_t  idx = VWEVMS_IDX_GET(val);
+				uint8_t idx = VWEVMS_IDX_GET(val);
 
 				ccprintf("VWEVMS%d: %02x [0x%08x]\n", i, idx,
-						val);
+					 val);
 			}
 		}
-	/* Enable/Disable the channels of eSPI */
+		/* Enable/Disable the channels of eSPI */
 	} else if (argc == 3) {
-		uint32_t m = (uint32_t) strtoi(argv[2], &e, 0);
+		uint32_t m = (uint32_t)strtoi(argv[2], &e, 0);
 
 		if (*e)
 			return EC_ERROR_PARAM2;
@@ -733,6 +730,5 @@ static int command_espi(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(espi, command_espi,
-			"cfg/vms/vsm/en/dis [channel]",
+DECLARE_CONSOLE_COMMAND(espi, command_espi, "cfg/vms/vsm/en/dis [channel]",
 			"eSPI configurations");
