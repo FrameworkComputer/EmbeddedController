@@ -15,11 +15,11 @@
  *     npcx7m6f/npcx7m6fb/npcx7m6fc/npcx7m7fc/npcx7m7wb/npcx7m7wc
  */
 #if defined(CHIP_VARIANT_NPCX7M6G)
-#define BOARD_VERSION  1
-#elif defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6FB) || \
+#define BOARD_VERSION 1
+#elif defined(CHIP_VARIANT_NPCX7M6F) || defined(CHIP_VARIANT_NPCX7M6FB) ||    \
 	defined(CHIP_VARIANT_NPCX7M6FC) || defined(CHIP_VARIANT_NPCX7M7FC) || \
 	defined(CHIP_VARIANT_NPCX7M7WB) || defined(CHIP_VARIANT_NPCX7M7WC)
-#define BOARD_VERSION  2
+#define BOARD_VERSION 2
 #endif
 
 /* EC modules */
@@ -39,9 +39,9 @@
 #define CONFIG_I2C_CONTROLLER
 
 #define CONFIG_KEYBOARD_PROTOCOL_8042
-#undef  CONFIG_LOW_POWER_IDLE /* Deep Sleep Support */
+#undef CONFIG_LOW_POWER_IDLE /* Deep Sleep Support */
 #define CONFIG_POWER_BUTTON
-#undef  CONFIG_PSTORE
+#undef CONFIG_PSTORE
 #define CONFIG_PWM_KBLIGHT
 #define CONFIG_VBOOT_HASH
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands */
@@ -57,7 +57,7 @@
 
 /* I2C port for CONFIG_CMD_I2CWEDGE */
 #define I2C_PORT_MASTER NPCX_I2C_PORT0_0
-#define I2C_PORT_HOST   0
+#define I2C_PORT_HOST 0
 
 /* Fans for testing */
 #define CONFIG_FANS 1
@@ -95,20 +95,20 @@
 
 /* Select which UART Controller is the Console UART */
 #undef CONFIG_CONSOLE_UART
-#define CONFIG_CONSOLE_UART    0 /* 0:UART1 1:UART2 */
+#define CONFIG_CONSOLE_UART 0 /* 0:UART1 1:UART2 */
 /*
  * This definition below actually doesn't define which UART controller to be
  * used. Instead, it defines which pinouts (GPIO10/11 or GPIO64/65) are
  * connected to "UART1" controller.
  */
 #if (BOARD_VERSION == 2)
-#define NPCX_UART_MODULE2  1 /* 1:GPIO64/65 as UART1 */
+#define NPCX_UART_MODULE2 1 /* 1:GPIO64/65 as UART1 */
 #else
-#define NPCX_UART_MODULE2  0 /* 0:GPIO10/11 as UART1 */
+#define NPCX_UART_MODULE2 0 /* 0:GPIO10/11 as UART1 */
 #endif
-#define NPCX_JTAG_MODULE2  0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG */
-#define NPCX_TACH_SEL2     0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
-#define NPCX7_PWM1_SEL     0 /* 0:GPIOC2 as I2CSCL0 1:as PWM1 (only in npcx7) */
+#define NPCX_JTAG_MODULE2 0 /* 0:GPIO21/17/16/20 1:GPIOD5/E2/D4/E5 as JTAG */
+#define NPCX_TACH_SEL2 0 /* 0:GPIO40/73 1:GPIO93/A6 as TACH */
+#define NPCX7_PWM1_SEL 0 /* 0:GPIOC2 as I2CSCL0 1:as PWM1 (only in npcx7) */
 
 #ifndef __ASSEMBLER__
 
