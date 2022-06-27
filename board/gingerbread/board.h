@@ -20,7 +20,6 @@
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
 #undef CONFIG_FLASH_PSTATE_LOCKED
 
-
 #define CONFIG_WP_ACTIVE_HIGH
 
 /* Console */
@@ -29,8 +28,8 @@
 #define CONFIG_UART_TX_DMA_PH DMAMUX_REQ_USART3_TX
 
 /* USB Type C and USB PD defines */
-#define USB_PD_PORT_HOST   0
-#define USB_PD_PORT_DP   1
+#define USB_PD_PORT_HOST 0
+#define USB_PD_PORT_DP 1
 
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_MUX_TUSB1064
@@ -44,13 +43,13 @@
 #define CONFIG_USB_PD_IDENTITY_SW_VERS 1
 
 /* I2C port names */
-#define I2C_PORT_I2C1	0
-#define I2C_PORT_I2C2	1
-#define I2C_PORT_I2C3	2
+#define I2C_PORT_I2C1 0
+#define I2C_PORT_I2C2 1
+#define I2C_PORT_I2C3 2
 /* Required symbolic I2C port names */
 #define I2C_PORT_MP4245 I2C_PORT_I2C3
 #define I2C_PORT_EEPROM I2C_PORT_I2C1
-#define MP4245_I2C_ADDR_FLAGS  MP4245_I2C_ADDR_0_FLAGS
+#define MP4245_I2C_ADDR_FLAGS MP4245_I2C_ADDR_0_FLAGS
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -58,9 +57,9 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
-#define GPIO_WP_L		GPIO_EC_WP_L
-#define GPIO_WP		GPIO_EC_WP_L
+#define GPIO_ENTERING_RW GPIO_EC_ENTERING_RW
+#define GPIO_WP_L GPIO_EC_WP_L
+#define GPIO_WP GPIO_EC_WP_L
 
 /* Include math_util for bitmask_uint64 used in pd_timers */
 #define CONFIG_MATH_UTIL
@@ -80,7 +79,7 @@
 #define GPIO_TRIGGER_1 GPIO_USB3_A1_CDP_EN
 #define GPIO_TRIGGER_2 GPIO_USB3_A2_CDP_EN
 
-enum  debug_gpio {
+enum debug_gpio {
 	TRIGGER_1 = 0,
 	TRIGGER_2,
 };
