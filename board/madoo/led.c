@@ -14,8 +14,8 @@
 #include "hooks.h"
 #include "system.h"
 
-#define LED_OFF_LVL	1
-#define LED_ON_LVL	0
+#define LED_OFF_LVL 1
+#define LED_ON_LVL 0
 
 __override const int led_charge_lvl_1;
 
@@ -23,34 +23,40 @@ __override const int led_charge_lvl_2 = 100;
 
 /* madoo: Note there is only LED for charge / power */
 __override struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0]	     = {{LED_OFF, LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0_BAT_LOW] = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
-					{LED_OFF, 1 * LED_ONE_SEC} },
-	/* STATE_DISCHARGE_S3 will changed if sku is clamshells */
-	[STATE_DISCHARGE_S3]	     = {{LED_OFF, LED_INDEFINITE} },
-	[STATE_DISCHARGE_S5]         = {{LED_OFF, LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_AMBER, 0.5 * LED_ONE_SEC},
-					{LED_OFF, 0.5 * LED_ONE_SEC} },
-};
+	led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+		[STATE_CHARGING_LVL_1] = { { EC_LED_COLOR_AMBER,
+					     LED_INDEFINITE } },
+		[STATE_CHARGING_LVL_2] = { { EC_LED_COLOR_AMBER,
+					     LED_INDEFINITE } },
+		[STATE_CHARGING_FULL_CHARGE] = { { EC_LED_COLOR_WHITE,
+						   LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0_BAT_LOW] = { { EC_LED_COLOR_AMBER,
+						   1 * LED_ONE_SEC },
+						 { LED_OFF, 1 * LED_ONE_SEC } },
+		/* STATE_DISCHARGE_S3 will changed if sku is clamshells */
+		[STATE_DISCHARGE_S3] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S5] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_BATTERY_ERROR] = { { EC_LED_COLOR_AMBER,
+					    0.5 * LED_ONE_SEC },
+					  { LED_OFF, 0.5 * LED_ONE_SEC } },
+	};
 
 __override const struct led_descriptor
-		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
-	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-					{LED_OFF,	   1 * LED_ONE_SEC} },
-	[PWR_LED_STATE_SUSPEND_NO_AC] = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-					{LED_OFF,	   1 * LED_ONE_SEC} },
-	[PWR_LED_STATE_OFF]           = {{LED_OFF, LED_INDEFINITE} },
-};
+	led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
+		[PWR_LED_STATE_ON] = { { EC_LED_COLOR_WHITE, LED_INDEFINITE } },
+		[PWR_LED_STATE_SUSPEND_AC] = { { EC_LED_COLOR_WHITE,
+						 1 * LED_ONE_SEC },
+					       { LED_OFF, 1 * LED_ONE_SEC } },
+		[PWR_LED_STATE_SUSPEND_NO_AC] = { { EC_LED_COLOR_WHITE,
+						    1 * LED_ONE_SEC },
+						  { LED_OFF,
+						    1 * LED_ONE_SEC } },
+		[PWR_LED_STATE_OFF] = { { LED_OFF, LED_INDEFINITE } },
+	};
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
-	EC_LED_ID_POWER_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
+					     EC_LED_ID_POWER_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -77,8 +83,8 @@ int battery_safety_check(void)
 		return false;
 
 	/* turn off LED due to a safety fault */
-	rv = sb_read_mfgacc(PARAM_SAFETY_STATUS,
-			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	rv = sb_read_mfgacc(PARAM_SAFETY_STATUS, SB_ALT_MANUFACTURER_ACCESS,
+			    data, sizeof(data));
 	if (rv)
 		return false;
 	/*
@@ -111,7 +117,7 @@ __override void led_set_color_battery(enum ec_led_colors color)
 			gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_OFF_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
 		} else if (charge_manager_get_active_charge_port() == 1 ||
-			system_get_board_version() < 3) {
+			   system_get_board_version() < 3) {
 			gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_ON_LVL);
 			gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
 		} else if (charge_manager_get_active_charge_port() == 0) {
@@ -125,11 +131,11 @@ __override void led_set_color_battery(enum ec_led_colors color)
 			gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_OFF_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_OFF_LVL);
 		} else if (charge_get_state() == PWR_STATE_ERROR &&
-				system_get_board_version() >= 3) {
+			   system_get_board_version() >= 3) {
 			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_ON_LVL);
 		} else if (charge_manager_get_active_charge_port() == 1 ||
-				system_get_board_version() < 3) {
+			   system_get_board_version() < 3) {
 			gpio_set_level(GPIO_BAT_LED_WHITE_L, LED_OFF_LVL);
 			gpio_set_level(GPIO_BAT_LED_AMBER_L, LED_ON_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_OFF_LVL);
@@ -137,7 +143,7 @@ __override void led_set_color_battery(enum ec_led_colors color)
 			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_ON_LVL);
 		} else if (charge_get_percent() <
-				CONFIG_LED_ONOFF_STATES_BAT_LOW) {
+			   CONFIG_LED_ONOFF_STATES_BAT_LOW) {
 			gpio_set_level(GPIO_EC_CHG_LED_R_W, LED_OFF_LVL);
 			gpio_set_level(GPIO_EC_CHG_LED_R_Y, LED_ON_LVL);
 		}
