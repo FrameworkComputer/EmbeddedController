@@ -39,7 +39,7 @@
 #define CONFIG_USB_PD_IDENTITY_SW_VERS 1
 #define CONFIG_USB_PD_VBUS_DETECT_NONE
 #define CONFIG_USB_PD_LOGGING
-#undef  CONFIG_EVENT_LOG_SIZE
+#undef CONFIG_EVENT_LOG_SIZE
 #define CONFIG_EVENT_LOG_SIZE 256
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPC
@@ -63,7 +63,7 @@
 
 /* Timer selection */
 #define TIM_CLOCK32 2
-#define TIM_ADC     3
+#define TIM_ADC 3
 
 #include "gpio_signal.h"
 
@@ -86,14 +86,14 @@ enum usb_strings {
 };
 
 /* we are never a source : don't care about power supply */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  0 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 0 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 0 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 1000
-#define PD_MAX_POWER_MW       1500
-#define PD_MAX_CURRENT_MA     300
-#define PD_MAX_VOLTAGE_MV     5000
+#define PD_MAX_POWER_MW 1500
+#define PD_MAX_CURRENT_MA 300
+#define PD_MAX_VOLTAGE_MV 5000
 
 #endif /* !__ASSEMBLER__ */
 
@@ -101,10 +101,10 @@ enum usb_strings {
 #define USB_DEV_CLASS USB_CLASS_BILLBOARD
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_COUNT     0
+#define USB_IFACE_COUNT 0
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL   0
-#define USB_EP_COUNT     1
+#define USB_EP_CONTROL 0
+#define USB_EP_COUNT 1
 
 #endif /* __CROS_EC_BOARD_H */
