@@ -13,8 +13,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define TEST_STATE_STEP_2	(1 << 0)
-#define TEST_STATE_FAIL		(1 << 1)
+#define TEST_STATE_STEP_2 (1 << 0)
+#define TEST_STATE_FAIL (1 << 1)
 
 static int test_reboot_on_shutdown(void)
 {
