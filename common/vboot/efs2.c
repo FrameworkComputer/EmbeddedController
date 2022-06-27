@@ -26,14 +26,14 @@
 #include "vboot.h"
 #include "vboot_hash.h"
 
-#define CPRINTS(format, args...) cprints(CC_VBOOT,"VB " format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_VBOOT,"VB " format, ## args)
+#define CPRINTS(format, args...) cprints(CC_VBOOT, "VB " format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_VBOOT, "VB " format, ##args)
 
 static const char *boot_mode_to_string(uint8_t mode)
 {
 	static const char *boot_mode_str[] = {
-		[BOOT_MODE_NORMAL] =		"NORMAL",
-		[BOOT_MODE_NO_BOOT] =		"NO_BOOT",
+		[BOOT_MODE_NORMAL] = "NORMAL",
+		[BOOT_MODE_NO_BOOT] = "NO_BOOT",
 	};
 	if (mode < ARRAY_SIZE(boot_mode_str))
 		return boot_mode_str[mode];
@@ -46,8 +46,8 @@ static const char *boot_mode_to_string(uint8_t mode)
  */
 static bool is_valid_cr50_response(enum cr50_comm_err code)
 {
-	return code != CR50_COMM_ERR_TIMEOUT
-			&& (code >> 8) == CR50_COMM_ERR_PREFIX;
+	return code != CR50_COMM_ERR_TIMEOUT &&
+	       (code >> 8) == CR50_COMM_ERR_PREFIX;
 }
 
 __overridable void board_enable_packet_mode(bool enable)
@@ -108,7 +108,7 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 		while (!timeout) {
 			int c = uart_getc();
 			if (c != -1) {
-				res.error = res.error | c << (i*8);
+				res.error = res.error | c << (i * 8);
 				break;
 			}
 			msleep(1);
@@ -159,7 +159,7 @@ static enum cr50_comm_err cmd_to_cr50(enum cr50_comm_cmd cmd,
 	p->size = size;
 	memcpy(p->data, data, size);
 	p->crc = cros_crc8((uint8_t *)&p->type,
-		      sizeof(p->type) + sizeof(p->size) + size);
+			   sizeof(p->type) + sizeof(p->size) + size);
 
 	do {
 		rv = send_to_cr50((uint8_t *)&s,
@@ -196,8 +196,8 @@ static enum cr50_comm_err set_boot_mode(uint8_t mode)
 	enum cr50_comm_err rv;
 
 	CPRINTS("Setting boot mode to %s(%d)", boot_mode_to_string(mode), mode);
-	rv = cmd_to_cr50(CR50_COMM_CMD_SET_BOOT_MODE,
-			 &mode, sizeof(enum boot_mode));
+	rv = cmd_to_cr50(CR50_COMM_CMD_SET_BOOT_MODE, &mode,
+			 sizeof(enum boot_mode));
 	if (rv != CR50_COMM_SUCCESS)
 		CPRINTS("Failed to set boot mode");
 	return rv;
@@ -274,8 +274,8 @@ void vboot_main(void)
 	    (system_get_reset_flags() & EC_RESET_FLAG_STAY_IN_RO)) {
 		if (system_is_manual_recovery())
 			CPRINTS("In recovery mode");
-		if (!IS_ENABLED(CONFIG_BATTERY)
-				&& !IS_ENABLED(HAS_TASK_KEYSCAN)) {
+		if (!IS_ENABLED(CONFIG_BATTERY) &&
+		    !IS_ENABLED(HAS_TASK_KEYSCAN)) {
 			/*
 			 * For Chromeboxes, we relax security by allowing PD in
 			 * RO. Attackers don't gain meaningful advantage on
@@ -296,7 +296,7 @@ void vboot_main(void)
 		if (!is_battery_ready()) {
 			CPRINTS("Battery not ready or bad");
 			if (set_boot_mode(BOOT_MODE_NO_BOOT) ==
-					CR50_COMM_SUCCESS)
+			    CR50_COMM_SUCCESS)
 				enable_pd();
 		}
 
