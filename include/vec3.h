@@ -80,4 +80,4 @@ fp_t fpv3_norm_squared(const fpv3_t v);
  */
 fp_t fpv3_norm(const fpv3_t v);
 
-#endif  /* __CROS_EC_VEC_3_H */
+#endif /* __CROS_EC_VEC_3_H */
