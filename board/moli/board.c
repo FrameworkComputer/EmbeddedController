@@ -24,8 +24,8 @@
 #include "usbc_ppc.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 static void power_monitor(void);
 DECLARE_DEFERRED(power_monitor);
@@ -124,13 +124,11 @@ static const struct {
 	int current;
 } bj_power[] = {
 	{ /* 0 - 90W (also default) */
-	.voltage = 19000,
-	.current = 4740
-	},
+	  .voltage = 19000,
+	  .current = 4740 },
 	{ /* 1 - 135W */
-	.voltage = 19000,
-	.current = 6920
-	},
+	  .voltage = 19000,
+	  .current = 6920 },
 };
 
 static unsigned int ec_config_get_bj_power(void)
@@ -146,7 +144,7 @@ static unsigned int ec_config_get_bj_power(void)
 	return bj;
 }
 
-#define ADP_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
+#define ADP_DEBOUNCE_MS 1000 /* Debounce time for BJ plug/unplug */
 /* Debounced connection state of the barrel jack */
 static int8_t adp_connected = -1;
 static void adp_connect_deferred(void)
@@ -249,25 +247,25 @@ void board_overcurrent_event(int port, int is_overcurrented)
  *
  *  All measurements are in milliwatts.
  */
-#define THROT_TYPE_A_FRONT  BIT(0)
-#define THROT_TYPE_A_REAR   BIT(1)
-#define THROT_TYPE_C0       BIT(2)
-#define THROT_TYPE_C1       BIT(3)
-#define THROT_PROCHOT       BIT(5)
+#define THROT_TYPE_A_FRONT BIT(0)
+#define THROT_TYPE_A_REAR BIT(1)
+#define THROT_TYPE_C0 BIT(2)
+#define THROT_TYPE_C1 BIT(3)
+#define THROT_PROCHOT BIT(5)
 
 /*
  * Power gain if front USB A ports are limited.
  */
-#define POWER_GAIN_TYPE_A	3200
+#define POWER_GAIN_TYPE_A 3200
 /*
  * Power gain if Type C port is limited.
  */
-#define POWER_GAIN_TYPE_C	8800
+#define POWER_GAIN_TYPE_C 8800
 /*
  * Power is averaged over 10 ms, with a reading every 2 ms.
  */
-#define POWER_DELAY_MS		2
-#define POWER_READINGS		(10/POWER_DELAY_MS)
+#define POWER_DELAY_MS 2
+#define POWER_READINGS (10 / POWER_DELAY_MS)
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -283,8 +281,7 @@ static void power_monitor(void)
 	 * If CPU is off or suspended, no need to throttle
 	 * or restrict power.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-			     CHIPSET_STATE_SUSPEND)) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF | CHIPSET_STATE_SUSPEND)) {
 		/*
 		 * Slow down monitoring, assume no throttling required.
 		 */
@@ -312,7 +309,7 @@ static void power_monitor(void)
 			 */
 			power = (adc_read_channel(ADC_VBUS) *
 				 adc_read_channel(ADC_PPVAR_IMON)) /
-				 1000;
+				1000;
 			/* Init power table */
 			if (history[0] == 0) {
 				for (i = 0; i < POWER_READINGS; i++)
@@ -339,8 +336,7 @@ static void power_monitor(void)
 			 * For barrel-jack supplies, the rating can be
 			 * exceeded briefly, so use the average.
 			 */
-			if (charge_manager_get_supplier() ==
-			    CHARGE_SUPPLIER_PD)
+			if (charge_manager_get_supplier() == CHARGE_SUPPLIER_PD)
 				power = max;
 			else
 				power = total / POWER_READINGS;
@@ -403,16 +399,18 @@ static void power_monitor(void)
 		gpio_set_level(GPIO_EC_PROCHOT_ODL, prochot);
 	}
 	if (diff & THROT_TYPE_C0) {
-		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C0)
-			? TYPEC_RP_1A5 : TYPEC_RP_3A0;
+		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C0) ?
+						TYPEC_RP_1A5 :
+						TYPEC_RP_3A0;
 
 		ppc_set_vbus_source_current_limit(0, rp);
 		tcpm_select_rp_value(0, rp);
 		pd_update_contract(0);
 	}
 	if (diff & THROT_TYPE_C1) {
-		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C1)
-			? TYPEC_RP_1A5 : TYPEC_RP_3A0;
+		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C1) ?
+						TYPEC_RP_1A5 :
+						TYPEC_RP_3A0;
 
 		ppc_set_vbus_source_current_limit(1, rp);
 		tcpm_select_rp_value(1, rp);
