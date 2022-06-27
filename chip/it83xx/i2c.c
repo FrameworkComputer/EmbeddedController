@@ -16,7 +16,7 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
 /* Default maximum time we allow for an I2C transfer */
 #define I2C_TIMEOUT_DEFAULT_US (100 * MSEC)
@@ -28,13 +28,13 @@
 #endif
 
 /* It is allowed to configure the size up to 2K bytes. */
-#define I2C_CQ_MODE_MAX_PAYLOAD_SIZE     128
+#define I2C_CQ_MODE_MAX_PAYLOAD_SIZE 128
 /* reserved 5 bytes for ID and CMD_x */
-#define I2C_CQ_MODE_TX_MAX_PAYLOAD_SIZE  (I2C_CQ_MODE_MAX_PAYLOAD_SIZE - 5)
+#define I2C_CQ_MODE_TX_MAX_PAYLOAD_SIZE (I2C_CQ_MODE_MAX_PAYLOAD_SIZE - 5)
 uint8_t i2c_cq_mode_tx_dlm[I2C_ENHANCED_PORT_COUNT]
-			[I2C_CQ_MODE_MAX_PAYLOAD_SIZE] __aligned(4);
+			  [I2C_CQ_MODE_MAX_PAYLOAD_SIZE] __aligned(4);
 uint8_t i2c_cq_mode_rx_dlm[I2C_ENHANCED_PORT_COUNT]
-			[I2C_CQ_MODE_MAX_PAYLOAD_SIZE] __aligned(4);
+			  [I2C_CQ_MODE_MAX_PAYLOAD_SIZE] __aligned(4);
 
 /* Repeat Start */
 #define I2C_CQ_CMD_L_RS BIT(7)
@@ -44,9 +44,9 @@ uint8_t i2c_cq_mode_rx_dlm[I2C_ENHANCED_PORT_COUNT]
  */
 #define I2C_CQ_CMD_L_RW BIT(6)
 /* P (STOP) is the I2C STOP condition */
-#define I2C_CQ_CMD_L_P  BIT(5)
+#define I2C_CQ_CMD_L_P BIT(5)
 /* E (End) is this device end flag */
-#define I2C_CQ_CMD_L_E  BIT(4)
+#define I2C_CQ_CMD_L_E BIT(4)
 /* LA (Last ACK) is Last ACK in master receiver */
 #define I2C_CQ_CMD_L_LA BIT(3)
 /* bit[2:0] are number of transfer out or receive data which depends on R/W. */
@@ -86,8 +86,8 @@ enum i2c_host_status {
 	/* Byte done status */
 	HOSTA_BDS = 0x80,
 	/* Error bit is set */
-	HOSTA_ANY_ERROR = (HOSTA_DVER | HOSTA_BSER |
-				HOSTA_FAIL | HOSTA_NACK | HOSTA_TMOE),
+	HOSTA_ANY_ERROR = (HOSTA_DVER | HOSTA_BSER | HOSTA_FAIL | HOSTA_NACK |
+			   HOSTA_TMOE),
 	/* W/C for next byte */
 	HOSTA_NEXT_BYTE = HOSTA_BDS,
 	/* W/C host status register */
@@ -155,10 +155,10 @@ struct i2c_ch_freq {
 };
 
 static const struct i2c_ch_freq i2c_freq_select[] = {
-	{ 50,   1},
-	{ 100,  2},
-	{ 400,  3},
-	{ 1000, 4},
+	{ 50, 1 },
+	{ 100, 2 },
+	{ 400, 3 },
+	{ 1000, 4 },
 };
 
 struct i2c_pin {
@@ -173,37 +173,30 @@ struct i2c_pin {
 };
 
 static const struct i2c_pin i2c_pin_regs[] = {
-	{ &IT83XX_GPIO_GPCRB3, &IT83XX_GPIO_GPCRB4,
-		&IT83XX_GPIO_GPDRB, &IT83XX_GPIO_GPDRB,
-		&IT83XX_GPIO_GPDMRB, &IT83XX_GPIO_GPDMRB,
-		0x08, 0x10},
-	{ &IT83XX_GPIO_GPCRC1, &IT83XX_GPIO_GPCRC2,
-		&IT83XX_GPIO_GPDRC, &IT83XX_GPIO_GPDRC,
-		&IT83XX_GPIO_GPDMRC, &IT83XX_GPIO_GPDMRC,
-		0x02, 0x04},
+	{ &IT83XX_GPIO_GPCRB3, &IT83XX_GPIO_GPCRB4, &IT83XX_GPIO_GPDRB,
+	  &IT83XX_GPIO_GPDRB, &IT83XX_GPIO_GPDMRB, &IT83XX_GPIO_GPDMRB, 0x08,
+	  0x10 },
+	{ &IT83XX_GPIO_GPCRC1, &IT83XX_GPIO_GPCRC2, &IT83XX_GPIO_GPDRC,
+	  &IT83XX_GPIO_GPDRC, &IT83XX_GPIO_GPDMRC, &IT83XX_GPIO_GPDMRC, 0x02,
+	  0x04 },
 #ifdef CONFIG_IT83XX_SMCLK2_ON_GPC7
-	{ &IT83XX_GPIO_GPCRC7, &IT83XX_GPIO_GPCRF7,
-		&IT83XX_GPIO_GPDRC, &IT83XX_GPIO_GPDRF,
-		&IT83XX_GPIO_GPDMRC, &IT83XX_GPIO_GPDMRF,
-		0x80, 0x80},
+	{ &IT83XX_GPIO_GPCRC7, &IT83XX_GPIO_GPCRF7, &IT83XX_GPIO_GPDRC,
+	  &IT83XX_GPIO_GPDRF, &IT83XX_GPIO_GPDMRC, &IT83XX_GPIO_GPDMRF, 0x80,
+	  0x80 },
 #else
-	{ &IT83XX_GPIO_GPCRF6, &IT83XX_GPIO_GPCRF7,
-		&IT83XX_GPIO_GPDRF, &IT83XX_GPIO_GPDRF,
-		&IT83XX_GPIO_GPDMRF, &IT83XX_GPIO_GPDMRF,
-		0x40, 0x80},
+	{ &IT83XX_GPIO_GPCRF6, &IT83XX_GPIO_GPCRF7, &IT83XX_GPIO_GPDRF,
+	  &IT83XX_GPIO_GPDRF, &IT83XX_GPIO_GPDMRF, &IT83XX_GPIO_GPDMRF, 0x40,
+	  0x80 },
 #endif
-	{ &IT83XX_GPIO_GPCRH1, &IT83XX_GPIO_GPCRH2,
-		&IT83XX_GPIO_GPDRH, &IT83XX_GPIO_GPDRH,
-		&IT83XX_GPIO_GPDMRH, &IT83XX_GPIO_GPDMRH,
-		0x02, 0x04},
-	{ &IT83XX_GPIO_GPCRE0, &IT83XX_GPIO_GPCRE7,
-		&IT83XX_GPIO_GPDRE, &IT83XX_GPIO_GPDRE,
-		&IT83XX_GPIO_GPDMRE, &IT83XX_GPIO_GPDMRE,
-		0x01, 0x80},
-	{ &IT83XX_GPIO_GPCRA4, &IT83XX_GPIO_GPCRA5,
-		&IT83XX_GPIO_GPDRA, &IT83XX_GPIO_GPDRA,
-		&IT83XX_GPIO_GPDMRA, &IT83XX_GPIO_GPDMRA,
-		0x10, 0x20},
+	{ &IT83XX_GPIO_GPCRH1, &IT83XX_GPIO_GPCRH2, &IT83XX_GPIO_GPDRH,
+	  &IT83XX_GPIO_GPDRH, &IT83XX_GPIO_GPDMRH, &IT83XX_GPIO_GPDMRH, 0x02,
+	  0x04 },
+	{ &IT83XX_GPIO_GPCRE0, &IT83XX_GPIO_GPCRE7, &IT83XX_GPIO_GPDRE,
+	  &IT83XX_GPIO_GPDRE, &IT83XX_GPIO_GPDMRE, &IT83XX_GPIO_GPDMRE, 0x01,
+	  0x80 },
+	{ &IT83XX_GPIO_GPCRA4, &IT83XX_GPIO_GPCRA5, &IT83XX_GPIO_GPDRA,
+	  &IT83XX_GPIO_GPDRA, &IT83XX_GPIO_GPDMRA, &IT83XX_GPIO_GPDMRA, 0x10,
+	  0x20 },
 };
 
 struct i2c_ctrl_t {
@@ -213,12 +206,12 @@ struct i2c_ctrl_t {
 };
 
 const struct i2c_ctrl_t i2c_ctrl_regs[] = {
-	{IT83XX_IRQ_SMB_A, CGC_OFFSET_SMBA, -1},
-	{IT83XX_IRQ_SMB_B, CGC_OFFSET_SMBB, -1},
-	{IT83XX_IRQ_SMB_C, CGC_OFFSET_SMBC, -1},
-	{IT83XX_IRQ_SMB_D, CGC_OFFSET_SMBD, 3},
-	{IT83XX_IRQ_SMB_E, CGC_OFFSET_SMBE, 0},
-	{IT83XX_IRQ_SMB_F, CGC_OFFSET_SMBF, 1},
+	{ IT83XX_IRQ_SMB_A, CGC_OFFSET_SMBA, -1 },
+	{ IT83XX_IRQ_SMB_B, CGC_OFFSET_SMBB, -1 },
+	{ IT83XX_IRQ_SMB_C, CGC_OFFSET_SMBC, -1 },
+	{ IT83XX_IRQ_SMB_D, CGC_OFFSET_SMBD, 3 },
+	{ IT83XX_IRQ_SMB_E, CGC_OFFSET_SMBE, 0 },
+	{ IT83XX_IRQ_SMB_F, CGC_OFFSET_SMBF, 1 },
 };
 
 enum i2c_ch_status {
@@ -230,17 +223,17 @@ enum i2c_ch_status {
 
 /* I2C port state data */
 struct i2c_port_data {
-	const uint8_t *out;  /* Output data pointer */
-	int out_size;        /* Output data to transfer, in bytes */
-	uint8_t *in;         /* Input data pointer */
-	int in_size;         /* Input data to transfer, in bytes */
-	int flags;           /* Flags (I2C_XFER_*) */
-	int widx;            /* Index into output data */
-	int ridx;            /* Index into input data */
-	int err;             /* Error code, if any */
-	uint8_t addr_8bit;   /* address of device */
+	const uint8_t *out; /* Output data pointer */
+	int out_size; /* Output data to transfer, in bytes */
+	uint8_t *in; /* Input data pointer */
+	int in_size; /* Input data to transfer, in bytes */
+	int flags; /* Flags (I2C_XFER_*) */
+	int widx; /* Index into output data */
+	int ridx; /* Index into input data */
+	int err; /* Error code, if any */
+	uint8_t addr_8bit; /* address of device */
 	uint32_t timeout_us; /* Transaction timeout, or 0 to use default */
-	uint8_t freq;        /* Frequency setting */
+	uint8_t freq; /* Frequency setting */
 
 	enum i2c_ch_status i2ccs;
 	/* Task waiting on port, or TASK_ID_INVALID if none. */
@@ -329,8 +322,8 @@ static void i2c_pio_trans_data(int p, enum enhanced_i2c_transfer_direct direct,
 
 	if (first_byte) {
 		/* First byte must be peripheral address. */
-		IT83XX_I2C_DTR(p_ch) =
-			data | (direct == RX_DIRECT ? BIT(0) : 0);
+		IT83XX_I2C_DTR(p_ch) = data |
+				       (direct == RX_DIRECT ? BIT(0) : 0);
 		/* start or repeat start signal. */
 		IT83XX_I2C_CTR(p_ch) = E_START_ID;
 	} else {
@@ -343,12 +336,12 @@ static void i2c_pio_trans_data(int p, enum enhanced_i2c_transfer_direct direct,
 			 * Last byte should be NACK in the end of read cycle
 			 */
 			if (((pd->ridx + 1) == pd->in_size) &&
-				(pd->flags & I2C_XFER_STOP))
+			    (pd->flags & I2C_XFER_STOP))
 				nack = 1;
 		}
 		/* Set hardware reset to start next transmission */
-		IT83XX_I2C_CTR(p_ch) =
-			E_INT_EN | E_MODE_SEL | E_HW_RST | (nack ? 0 : E_ACK);
+		IT83XX_I2C_CTR(p_ch) = E_INT_EN | E_MODE_SEL | E_HW_RST |
+				       (nack ? 0 : E_ACK);
 	}
 }
 
@@ -439,7 +432,7 @@ static int i2c_tran_read(int p)
 			IT83XX_SMB_HOCTL(p) = 0x5D;
 	} else {
 		if ((pd->i2ccs == I2C_CH_REPEAT_START) ||
-			(pd->i2ccs == I2C_CH_WAIT_READ)) {
+		    (pd->i2ccs == I2C_CH_WAIT_READ)) {
 			if (pd->i2ccs == I2C_CH_REPEAT_START) {
 				/* write to read */
 				i2c_w2r_change_direction(p);
@@ -532,8 +525,8 @@ static int enhanced_i2c_tran_write(int p)
 				/* Write to read protocol */
 				pd->i2ccs = I2C_CH_REPEAT_START;
 				/* Repeat Start */
-				i2c_pio_trans_data(p, RX_DIRECT,
-						   pd->addr_8bit, 1);
+				i2c_pio_trans_data(p, RX_DIRECT, pd->addr_8bit,
+						   1);
 			} else {
 				if (pd->flags & I2C_XFER_STOP) {
 					IT83XX_I2C_CTR(p_ch) = E_FINISH;
@@ -582,8 +575,8 @@ static int enhanced_i2c_tran_read(int p)
 				/* Write to read */
 				pd->i2ccs = I2C_CH_WAIT_READ;
 				/* Send ID */
-				i2c_pio_trans_data(p, RX_DIRECT,
-						   pd->addr_8bit, 1);
+				i2c_pio_trans_data(p, RX_DIRECT, pd->addr_8bit,
+						   1);
 				task_enable_irq(i2c_ctrl_regs[p].irq);
 			}
 		} else {
@@ -622,7 +615,7 @@ static int enhanced_i2c_error(int p)
 
 	if (i2c_str & E_HOSTA_ANY_ERROR) {
 		pd->err = i2c_str & E_HOSTA_ANY_ERROR;
-	/* device does not respond ACK */
+		/* device does not respond ACK */
 	} else if ((i2c_str & E_HOSTA_BDS_AND_ACK) == E_HOSTA_BDS) {
 		if (IT83XX_I2C_CTR(p_ch) & E_ACK)
 			pd->err = E_HOSTA_ACK;
@@ -672,8 +665,8 @@ static int command_i2c_idle_mask(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(i2cidlemask, command_i2c_idle_mask,
-			     NULL, "Display i2c idle mask");
+DECLARE_SAFE_CONSOLE_COMMAND(i2cidlemask, command_i2c_idle_mask, NULL,
+			     "Display i2c idle mask");
 
 static void enhanced_i2c_cq_write(int p)
 {
@@ -703,8 +696,8 @@ static void enhanced_i2c_cq_read(int p)
 	i2c_cq_pckt = (struct i2c_cq_packet *)&i2c_cq_mode_tx_dlm[dlm_index];
 	/* Set commands in RAM. */
 	i2c_cq_pckt->id = pd->addr_8bit;
-	i2c_cq_pckt->cmd_l = I2C_CQ_CMD_L_RW | I2C_CQ_CMD_L_P |
-				I2C_CQ_CMD_L_E | num_bit_2_0;
+	i2c_cq_pckt->cmd_l = I2C_CQ_CMD_L_RW | I2C_CQ_CMD_L_P | I2C_CQ_CMD_L_E |
+			     num_bit_2_0;
 	i2c_cq_pckt->cmd_h = num_bit_10_3;
 }
 
@@ -728,7 +721,7 @@ static void enhanced_i2c_cq_write_to_read(int p)
 	num_bit_2_0 = (pd->in_size - 1) & I2C_CQ_CMD_L_NUM_BIT_2_0;
 	num_bit_10_3 = ((pd->in_size - 1) >> 3) & 0xff;
 	i2c_cq_pckt->wdata[i++] = I2C_CQ_CMD_L_RS | I2C_CQ_CMD_L_RW |
-				I2C_CQ_CMD_L_P | I2C_CQ_CMD_L_E | num_bit_2_0;
+				  I2C_CQ_CMD_L_P | I2C_CQ_CMD_L_E | num_bit_2_0;
 	i2c_cq_pckt->wdata[i] = num_bit_10_3;
 }
 
@@ -751,7 +744,7 @@ static int enhanced_i2c_cmd_queue_trans(int p)
 				pd->err = E_HOSTA_ACK;
 			else
 				pd->err = IT83XX_I2C_STR(p_ch) &
-						E_HOSTA_ANY_ERROR;
+					  E_HOSTA_ANY_ERROR;
 		}
 		/* reset bus */
 		IT83XX_I2C_CTR(p_ch) = E_STS_AND_HW_RST;
@@ -761,7 +754,7 @@ static int enhanced_i2c_cmd_queue_trans(int p)
 	}
 
 	if ((pd->out_size > I2C_CQ_MODE_TX_MAX_PAYLOAD_SIZE) ||
-		(pd->in_size > I2C_CQ_MODE_MAX_PAYLOAD_SIZE)) {
+	    (pd->in_size > I2C_CQ_MODE_MAX_PAYLOAD_SIZE)) {
 		pd->err = EC_ERROR_INVAL;
 		return 0;
 	}
@@ -868,9 +861,8 @@ int i2c_is_busy(int port)
 	return (IT83XX_I2C_STR(p_ch) & E_HOSTA_BB);
 }
 
-int chip_i2c_xfer(int port, uint16_t addr_flags,
-		  const uint8_t *out, int out_size,
-		  uint8_t *in, int in_size, int flags)
+int chip_i2c_xfer(int port, uint16_t addr_flags, const uint8_t *out,
+		  int out_size, uint8_t *in, int in_size, int flags)
 {
 	struct i2c_port_data *pd = pdata + port;
 	uint32_t events = 0;
@@ -900,9 +892,9 @@ int chip_i2c_xfer(int port, uint16_t addr_flags,
 	pd->addr_8bit = I2C_STRIP_FLAGS(addr_flags) << 1;
 
 	/* Make sure we're in a good state to start */
-	if ((flags & I2C_XFER_START) && (i2c_is_busy(port)
-		|| (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
-
+	if ((flags & I2C_XFER_START) &&
+	    (i2c_is_busy(port) ||
+	     (i2c_get_line_levels(port) != I2C_LINE_IDLE))) {
 		/* Attempt to unwedge the port. */
 		pd->err = i2c_unwedge(port);
 
@@ -953,7 +945,7 @@ int i2c_raw_get_scl(int port)
 
 	if (get_scl_from_i2c_port(port, &g) == EC_SUCCESS)
 		return !!(*i2c_pin_regs[port].mirror_clk &
-			i2c_pin_regs[port].clk_mask);
+			  i2c_pin_regs[port].clk_mask);
 
 	/* If no SCL pin defined for this port, then return 1 to appear idle */
 	return 1;
@@ -965,7 +957,7 @@ int i2c_raw_get_sda(int port)
 
 	if (get_sda_from_i2c_port(port, &g) == EC_SUCCESS)
 		return !!(*i2c_pin_regs[port].mirror_data &
-			i2c_pin_regs[port].data_mask);
+			  i2c_pin_regs[port].data_mask);
 
 	/* If no SDA pin defined for this port, then return 1 to appear idle */
 	return 1;
@@ -1041,7 +1033,7 @@ static void i2c_standard_port_set_frequency(int port, int freq_khz)
 		for (int f = ARRAY_SIZE(i2c_freq_select) - 1; f >= 0; f--) {
 			if (freq_khz >= i2c_freq_select[f].kbps) {
 				IT83XX_SMB_SCLKTS(port) =
-						i2c_freq_select[f].freq_set;
+					i2c_freq_select[f].freq_set;
 				break;
 			}
 		}
@@ -1143,10 +1135,10 @@ void i2c_init(void)
 			p_ch = i2c_ch_reg_shift(p);
 			switch (p) {
 			case IT83XX_I2C_CH_D:
-				#ifndef CONFIG_UART_HOST
+#ifndef CONFIG_UART_HOST
 				/* Enable SMBus D channel */
 				IT83XX_GPIO_GRC2 |= 0x20;
-				#endif
+#endif
 				break;
 			case IT83XX_I2C_CH_E:
 				/* Enable SMBus E channel */
