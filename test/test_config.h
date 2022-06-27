@@ -169,17 +169,13 @@
 #define CONFIG_MKBP_USE_GPIO
 #endif
 
-#if defined(CONFIG_ONLINE_CALIB) && \
-	!defined(CONFIG_TEMP_CACHE_STALE_THRES)
+#if defined(CONFIG_ONLINE_CALIB) && !defined(CONFIG_TEMP_CACHE_STALE_THRES)
 #define CONFIG_TEMP_CACHE_STALE_THRES (1 * SECOND)
 #endif /* CONFIG_ONLINE_CALIB && !CONFIG_TEMP_CACHE_STALE_THRES */
 
-#if defined(CONFIG_ONLINE_CALIB) || \
-	defined(TEST_BODY_DETECTION) || \
-	defined(TEST_MOTION_ANGLE) || \
-	defined(TEST_MOTION_ANGLE_TABLET) || \
-	defined(TEST_MOTION_LID) || \
-	defined(TEST_MOTION_SENSE_FIFO)
+#if defined(CONFIG_ONLINE_CALIB) || defined(TEST_BODY_DETECTION) ||        \
+	defined(TEST_MOTION_ANGLE) || defined(TEST_MOTION_ANGLE_TABLET) || \
+	defined(TEST_MOTION_LID) || defined(TEST_MOTION_SENSE_FIFO)
 enum sensor_id {
 	BASE,
 	LID,
@@ -195,15 +191,14 @@ enum sensor_id {
 #endif
 
 #if defined(TEST_MOTION_ANGLE)
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
+#define CONFIG_ACCEL_FORCE_MODE_MASK           \
 	((1 << CONFIG_LID_ANGLE_SENSOR_BASE) | \
 	 (1 << CONFIG_LID_ANGLE_SENSOR_LID))
 #define CONFIG_ACCEL_STD_REF_FRAME_OLD
 #endif
 
-#if defined(TEST_MOTION_ANGLE_TABLET) || \
-	defined(TEST_MOTION_LID)
-#define CONFIG_ACCEL_FORCE_MODE_MASK \
+#if defined(TEST_MOTION_ANGLE_TABLET) || defined(TEST_MOTION_LID)
+#define CONFIG_ACCEL_FORCE_MODE_MASK           \
 	((1 << CONFIG_LID_ANGLE_SENSOR_BASE) | \
 	 (1 << CONFIG_LID_ANGLE_SENSOR_LID))
 #endif
@@ -216,19 +211,21 @@ enum sensor_id {
 #ifdef TEST_RMA_AUTH
 
 /* Test server public and private keys */
-#define RMA_KEY_BLOB	{					\
-		0x03, 0xae, 0x2d, 0x2c, 0x06, 0x23, 0xe0, 0x73, \
-		0x0d, 0xd3, 0xb7, 0x92, 0xac, 0x54, 0xc5, 0xfd,	\
-		0x7e, 0x9c, 0xf0, 0xa8, 0xeb, 0x7e, 0x2a, 0xb5,	\
-		0xdb, 0xf4, 0x79, 0x5f, 0x8a, 0x0f, 0x28, 0x3f, \
-		0x10						\
+#define RMA_KEY_BLOB                                                          \
+	{                                                                     \
+		0x03, 0xae, 0x2d, 0x2c, 0x06, 0x23, 0xe0, 0x73, 0x0d, 0xd3,   \
+			0xb7, 0x92, 0xac, 0x54, 0xc5, 0xfd, 0x7e, 0x9c, 0xf0, \
+			0xa8, 0xeb, 0x7e, 0x2a, 0xb5, 0xdb, 0xf4, 0x79, 0x5f, \
+			0x8a, 0x0f, 0x28, 0x3f, 0x10                          \
 	}
 
-#define RMA_TEST_SERVER_PRIVATE_KEY {				\
-		0x47, 0x3b, 0xa5, 0xdb, 0xc4, 0xbb, 0xd6, 0x77, \
-		0x20, 0xbd, 0xd8, 0xbd, 0xc8, 0x7a, 0xbb, 0x07,	\
-		0x03, 0x79, 0xba, 0x7b, 0x52, 0x8c, 0xec, 0xb3,	\
-		0x4d, 0xaa, 0x69, 0xf5, 0x65, 0xb4, 0x31, 0xad}
+#define RMA_TEST_SERVER_PRIVATE_KEY                                           \
+	{                                                                     \
+		0x47, 0x3b, 0xa5, 0xdb, 0xc4, 0xbb, 0xd6, 0x77, 0x20, 0xbd,   \
+			0xd8, 0xbd, 0xc8, 0x7a, 0xbb, 0x07, 0x03, 0x79, 0xba, \
+			0x7b, 0x52, 0x8c, 0xec, 0xb3, 0x4d, 0xaa, 0x69, 0xf5, \
+			0x65, 0xb4, 0x31, 0xad                                \
+	}
 #define RMA_TEST_SERVER_KEY_ID 0x10
 
 #define CONFIG_BASE32
@@ -290,8 +287,8 @@ int board_discharge_on_ac(int enabled);
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
 #define CONFIG_BATTERY_LOW_VOLTAGE_PROTECTION
-#undef  CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT
-#define CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT  (2*SECOND)
+#undef CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT
+#define CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT (2 * SECOND)
 #endif
 
 #ifdef TEST_THERMAL
@@ -361,10 +358,8 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_ONLY_FIXED_PDOS
 #endif
 
-#if defined(TEST_USB_SM_FRAMEWORK_H3) || \
-	defined(TEST_USB_SM_FRAMEWORK_H2) || \
-	defined(TEST_USB_SM_FRAMEWORK_H1) || \
-	defined(TEST_USB_SM_FRAMEWORK_H0)
+#if defined(TEST_USB_SM_FRAMEWORK_H3) || defined(TEST_USB_SM_FRAMEWORK_H2) || \
+	defined(TEST_USB_SM_FRAMEWORK_H1) || defined(TEST_USB_SM_FRAMEWORK_H0)
 #define CONFIG_TEST_SM
 #endif
 
@@ -457,8 +452,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #endif /* TEST_USB_PE_DRP || TEST_USB_PE_DRP_NOEXTENDED */
 
 /* Common TypeC tests defines */
-#if defined(TEST_USB_TYPEC_VPD) || \
-	defined(TEST_USB_TYPEC_CTVPD)
+#if defined(TEST_USB_TYPEC_VPD) || defined(TEST_USB_TYPEC_CTVPD)
 #define CONFIG_USB_PID 0x5036
 #define VPD_HW_VERSION 0x0001
 #define VPD_FW_VERSION 0x0001
@@ -629,18 +623,17 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_RSA
 #define CONFIG_RWSIG_TYPE_RWSIG
 #define CONFIG_RW_B
-#define CONFIG_RW_B_MEM_OFF		CONFIG_RO_MEM_OFF
-#undef  CONFIG_RO_SIZE
-#define CONFIG_RO_SIZE			(CONFIG_FLASH_SIZE_BYTES / 4)
-#undef  CONFIG_RW_SIZE
-#define CONFIG_RW_SIZE			CONFIG_RO_SIZE
-#define CONFIG_RW_A_STORAGE_OFF		CONFIG_RW_STORAGE_OFF
-#define CONFIG_RW_B_STORAGE_OFF		(CONFIG_RW_A_STORAGE_OFF + \
-					 CONFIG_RW_SIZE)
-#define CONFIG_RW_A_SIGN_STORAGE_OFF	(CONFIG_RW_A_STORAGE_OFF + \
-					 CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
-#define CONFIG_RW_B_SIGN_STORAGE_OFF	(CONFIG_RW_B_STORAGE_OFF + \
-					 CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
+#define CONFIG_RW_B_MEM_OFF CONFIG_RO_MEM_OFF
+#undef CONFIG_RO_SIZE
+#define CONFIG_RO_SIZE (CONFIG_FLASH_SIZE_BYTES / 4)
+#undef CONFIG_RW_SIZE
+#define CONFIG_RW_SIZE CONFIG_RO_SIZE
+#define CONFIG_RW_A_STORAGE_OFF CONFIG_RW_STORAGE_OFF
+#define CONFIG_RW_B_STORAGE_OFF (CONFIG_RW_A_STORAGE_OFF + CONFIG_RW_SIZE)
+#define CONFIG_RW_A_SIGN_STORAGE_OFF \
+	(CONFIG_RW_A_STORAGE_OFF + CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
+#define CONFIG_RW_B_SIGN_STORAGE_OFF \
+	(CONFIG_RW_B_STORAGE_OFF + CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE)
 #endif
 
 #ifdef TEST_X25519
@@ -654,5 +647,5 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define I2C_BITBANG_PORT_COUNT 1
 #endif
 
-#endif  /* TEST_BUILD */
-#endif  /* __TEST_TEST_CONFIG_H */
+#endif /* TEST_BUILD */
+#endif /* __TEST_TEST_CONFIG_H */
