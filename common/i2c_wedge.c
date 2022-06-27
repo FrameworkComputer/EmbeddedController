@@ -199,8 +199,7 @@ static void i2c_bang_xfer(int addr, int reg)
 	ccprintf("  read byte: %d\n", byte);
 }
 
-static void i2c_bang_wedge_write(int addr, int byte, int bit_count,
-	int reboot)
+static void i2c_bang_wedge_write(int addr, int byte, int bit_count, int reboot)
 {
 	int i;
 
@@ -219,8 +218,7 @@ static void i2c_bang_wedge_write(int addr, int byte, int bit_count,
 		system_reset(0);
 }
 
-static void i2c_bang_wedge_read(int addr, int reg, int bit_count,
-	int reboot)
+static void i2c_bang_wedge_read(int addr, int reg, int bit_count, int reboot)
 {
 	int i;
 
@@ -244,9 +242,9 @@ static void i2c_bang_wedge_read(int addr, int reg, int bit_count,
 		system_reset(0);
 }
 
-#define WEDGE_WRITE	1
-#define WEDGE_READ	2
-#define WEDGE_REBOOT	4
+#define WEDGE_WRITE 1
+#define WEDGE_READ 2
+#define WEDGE_REBOOT 4
 
 static int command_i2c_wedge(int argc, char **argv)
 {
@@ -256,17 +254,17 @@ static int command_i2c_wedge(int argc, char **argv)
 
 	/* Verify that the I2C_PORT_HOST has SDA and SCL pins defined. */
 	if (get_sda_from_i2c_port(I2C_PORT_HOST, &tmp) != EC_SUCCESS ||
-		get_scl_from_i2c_port(I2C_PORT_HOST, &tmp) != EC_SUCCESS) {
+	    get_scl_from_i2c_port(I2C_PORT_HOST, &tmp) != EC_SUCCESS) {
 		ccprintf("Cannot wedge bus because no SCL and SDA pins are"
-			"defined for this port. Check i2c_ports[].\n");
+			 "defined for this port. Check i2c_ports[].\n");
 		return EC_SUCCESS;
 	}
 
 	if (argc < 3) {
 		ccputs("Usage: i2cwedge addr out_byte "
-			"[wedge_flag [wedge_bit_count]]\n");
+		       "[wedge_flag [wedge_bit_count]]\n");
 		ccputs("  wedge_flag - (1: wedge out; 2: wedge in;"
-			" 5: wedge out+reboot; 6: wedge in+reboot)]\n");
+		       " 5: wedge out+reboot; 6: wedge in+reboot)]\n");
 		ccputs("  wedge_bit_count - 0 to 8\n");
 		return EC_ERROR_UNKNOWN;
 	}
@@ -302,12 +300,12 @@ static int command_i2c_wedge(int argc, char **argv)
 		if (wedge_bit_count < 0)
 			wedge_bit_count = 8;
 		i2c_bang_wedge_write(addr, reg, wedge_bit_count,
-			(wedge_flag & WEDGE_REBOOT));
+				     (wedge_flag & WEDGE_REBOOT));
 	} else if (wedge_flag & WEDGE_READ) {
 		if (wedge_bit_count < 0)
 			wedge_bit_count = 2;
 		i2c_bang_wedge_read(addr, reg, wedge_bit_count,
-			(wedge_flag & WEDGE_REBOOT));
+				    (wedge_flag & WEDGE_REBOOT));
 	} else {
 		i2c_bang_xfer(addr, reg);
 	}
@@ -326,7 +324,7 @@ static int command_i2c_wedge(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND(i2cwedge, command_i2c_wedge,
 			"i2cwedge addr out_byte "
-				"[wedge_flag [wedge_bit_count]]",
+			"[wedge_flag [wedge_bit_count]]",
 			"Wedge host I2C bus");
 
 static int command_i2c_unwedge(int argc, char **argv)
@@ -335,6 +333,5 @@ static int command_i2c_unwedge(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(i2cunwedge, command_i2c_unwedge,
-	"",
-	"Unwedge host I2C bus");
+DECLARE_CONSOLE_COMMAND(i2cunwedge, command_i2c_unwedge, "",
+			"Unwedge host I2C bus");
