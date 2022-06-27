@@ -19,9 +19,8 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_ALS, outstr)
-#define CPRINTS(format, args...) cprints(CC_ALS, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_ALS, format, ## args)
-
+#define CPRINTS(format, args...) cprints(CC_ALS, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_ALS, format, ##args)
 
 #define ALS_POLL_PERIOD SECOND
 
@@ -90,8 +89,7 @@ static void als_task_init(void)
 	 * Enable ALS task in S0 only and may need to re-enable
 	 * when sysjumped.
 	 */
-	if (system_jumped_late() &&
-		chipset_in_state(CHIPSET_STATE_ON))
+	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON))
 		als_task_enable();
 }
 
@@ -121,7 +119,5 @@ static int command_als(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(als, command_als,
-			NULL,
-			"Print ALS values");
+DECLARE_CONSOLE_COMMAND(als, command_als, NULL, "Print ALS values");
 #endif
