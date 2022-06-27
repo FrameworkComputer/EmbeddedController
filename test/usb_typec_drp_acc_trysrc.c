@@ -34,11 +34,9 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.driver = &mock_usb_mux_driver,
-	}
-};
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = { {
+	.driver = &mock_usb_mux_driver,
+} };
 
 void charge_manager_set_ceil(int port, enum ceil_requestor requestor, int ceil)
 {
@@ -732,8 +730,8 @@ __maybe_unused static int test_auto_toggle_delay_early_connect(void)
 
 	/* Ensure the auto toggle enable was never called */
 	task_wait_event(SECOND);
-	TEST_EQ(mock_tcpc.first_call_to_enable_auto_toggle,
-		TIMER_DISABLED, "%" PRIu64);
+	TEST_EQ(mock_tcpc.first_call_to_enable_auto_toggle, TIMER_DISABLED,
+		"%" PRIu64);
 
 	/* Ensure that the first CC set call was to Rd. */
 	TEST_GT(cc_pull_count, 0, "%d");
