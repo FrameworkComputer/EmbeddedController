@@ -19,15 +19,15 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 /*
  * When C10 deasserts, PROCHOT may also change state when the corresponding
  * power rail is turned back on. Recheck PROCHOT directly from the C10 exit
  * using a shorter debounce than the PROCHOT interrupt.
  */
-#define PROCHOT_IN_DEBOUNCE_US		(100 * MSEC)
-#define C10_IN_DEBOUNCE_US		(10 * MSEC)
+#define PROCHOT_IN_DEBOUNCE_US (100 * MSEC)
+#define C10_IN_DEBOUNCE_US (10 * MSEC)
 
 /*****************************************************************************/
 /* This enforces the virtual OR of all throttling sources. */
@@ -36,8 +36,7 @@ static uint32_t throttle_request[NUM_THROTTLE_TYPES];
 static int debounced_prochot_in;
 static const struct prochot_cfg *prochot_cfg;
 
-void throttle_ap(enum throttle_level level,
-		 enum throttle_type type,
+void throttle_ap(enum throttle_level level, enum throttle_type type,
 		 enum throttle_sources source)
 {
 	uint32_t tmpval, bitmask;
@@ -55,7 +54,7 @@ void throttle_ap(enum throttle_level level,
 		break;
 	}
 
-	tmpval = throttle_request[type];	/* save for printing */
+	tmpval = throttle_request[type]; /* save for printing */
 
 	switch (type) {
 	case THROTTLE_SOFT:
@@ -79,9 +78,8 @@ void throttle_ap(enum throttle_level level,
 	mutex_unlock(&throttle_mutex);
 
 	/* print outside the mutex */
-	CPRINTS("set AP throttling type %d to %s (0x%08x)",
-		type, tmpval ? "on" : "off", tmpval);
-
+	CPRINTS("set AP throttling type %d to %s (0x%08x)", type,
+		tmpval ? "on" : "off", tmpval);
 }
 
 void throttle_ap_config_prochot(const struct prochot_cfg *cfg)
@@ -163,7 +161,7 @@ void throttle_ap_prochot_input_interrupt(enum gpio_signal signal)
 	 * any pulses that are too short.
 	 */
 	hook_call_deferred(&prochot_input_deferred_data,
-		PROCHOT_IN_DEBOUNCE_US);
+			   PROCHOT_IN_DEBOUNCE_US);
 }
 
 #ifdef CONFIG_CPU_PROCHOT_GATE_ON_C10
@@ -197,7 +195,6 @@ static int command_apthrottle(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(apthrottle, command_apthrottle,
-			NULL,
+DECLARE_CONSOLE_COMMAND(apthrottle, command_apthrottle, NULL,
 			"Display the AP throttling state");
 #endif
