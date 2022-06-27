@@ -75,7 +75,7 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 	chunks[2].start = chunks[1].start + chunks[1].size + data_len_size;
 	chunks[2].size = sizeof(req_buf) - chunks[2].start;
 #else
-	struct chunk chunks[1] = { {0, sizeof(req_buf)} };
+	struct chunk chunks[1] = { { 0, sizeof(req_buf) } };
 #endif
 
 	/*
@@ -89,7 +89,7 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 	 * over checksum and data_len.
 	 */
 	for (i = 0; i < ARRAY_SIZE(chunks) && ipos < size; i++) {
-		int cp_size = MIN(chunks[i].size, size-ipos);
+		int cp_size = MIN(chunks[i].size, size - ipos);
 
 		memcpy(req_buf + chunks[i].start, data + ipos, cp_size);
 
@@ -112,8 +112,8 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 	 * issues.
 	 */
 	if (first) {
-		ccprintf("Request: cmd=%04x data=%ph\n",
-			req->command, HEX_BUF(req_buf, req_size));
+		ccprintf("Request: cmd=%04x data=%ph\n", req->command,
+			 HEX_BUF(req_buf, req_size));
 		first = 0;
 	}
 
