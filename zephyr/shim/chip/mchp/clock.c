@@ -16,9 +16,9 @@
 
 LOG_MODULE_REGISTER(shim_clock, LOG_LEVEL_ERR);
 
-#define PCR_NODE		DT_INST(0, microchip_xec_pcr)
+#define PCR_NODE DT_INST(0, microchip_xec_pcr)
 #define HAL_PCR_REG_BASE_ADDR \
-			((struct pcr_regs *)DT_REG_ADDR_BY_IDX(PCR_NODE, 0))
+	((struct pcr_regs *)DT_REG_ADDR_BY_IDX(PCR_NODE, 0))
 
 int clock_get_freq(void)
 {
