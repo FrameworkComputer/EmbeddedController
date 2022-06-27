@@ -24,13 +24,12 @@ static struct usart_config const *configs[STM32_USARTS_MAX];
 
 struct usart_configs usart_get_configs(void)
 {
-	return (struct usart_configs) {configs, ARRAY_SIZE(configs)};
+	return (struct usart_configs){ configs, ARRAY_SIZE(configs) };
 }
 
 static void usart_variant_enable(struct usart_config const *config)
 {
 	configs[config->hw->index] = config;
-
 
 	/* Use single-bit sampling */
 	STM32_USART_CR3(config->hw->base) |= STM32_USART_CR3_ONEBIT;
@@ -48,7 +47,7 @@ static void usart_variant_disable(struct usart_config const *config)
 }
 
 static struct usart_hw_ops const usart_variant_hw_ops = {
-	.enable  = usart_variant_enable,
+	.enable = usart_variant_enable,
 	.disable = usart_variant_disable,
 };
 
@@ -58,12 +57,12 @@ static struct usart_hw_ops const usart_variant_hw_ops = {
  */
 #if defined(CONFIG_STREAM_USART1)
 struct usart_hw_config const usart1_hw = {
-	.index          = 0,
-	.base           = STM32_USART1_BASE,
-	.irq            = STM32_IRQ_USART1,
+	.index = 0,
+	.base = STM32_USART1_BASE,
+	.irq = STM32_IRQ_USART1,
 	.clock_register = &STM32_RCC_APB2ENR,
-	.clock_enable   = STM32_RCC_PB2_USART1,
-	.ops            = &usart_variant_hw_ops,
+	.clock_enable = STM32_RCC_PB2_USART1,
+	.ops = &usart_variant_hw_ops,
 };
 
 static void usart1_interrupt(void)
@@ -76,12 +75,12 @@ DECLARE_IRQ(STM32_IRQ_USART1, usart1_interrupt, 2);
 
 #if defined(CONFIG_STREAM_USART2)
 struct usart_hw_config const usart2_hw = {
-	.index          = 1,
-	.base           = STM32_USART2_BASE,
-	.irq            = STM32_IRQ_USART2,
+	.index = 1,
+	.base = STM32_USART2_BASE,
+	.irq = STM32_IRQ_USART2,
 	.clock_register = &STM32_RCC_APB1ENR,
-	.clock_enable   = STM32_RCC_PB1_USART2,
-	.ops            = &usart_variant_hw_ops,
+	.clock_enable = STM32_RCC_PB1_USART2,
+	.ops = &usart_variant_hw_ops,
 };
 
 static void usart2_interrupt(void)
@@ -94,12 +93,12 @@ DECLARE_IRQ(STM32_IRQ_USART2, usart2_interrupt, 2);
 
 #if defined(CONFIG_STREAM_USART3)
 struct usart_hw_config const usart3_hw = {
-	.index          = 2,
-	.base           = STM32_USART3_BASE,
-	.irq            = STM32_IRQ_USART3,
+	.index = 2,
+	.base = STM32_USART3_BASE,
+	.irq = STM32_IRQ_USART3,
 	.clock_register = &STM32_RCC_APB1ENR,
-	.clock_enable   = STM32_RCC_PB1_USART3,
-	.ops            = &usart_variant_hw_ops,
+	.clock_enable = STM32_RCC_PB1_USART3,
+	.ops = &usart_variant_hw_ops,
 };
 #endif
 
