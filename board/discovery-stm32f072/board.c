@@ -28,31 +28,22 @@ void button_event(enum gpio_signal signal);
 #include "gpio_list.h"
 
 static enum gpio_signal const usb_gpio_list[] = {
-	GPIO_USER_BUTTON,
-	GPIO_LED_U,
-	GPIO_LED_D,
-	GPIO_LED_L,
-	GPIO_LED_R,
+	GPIO_USER_BUTTON, GPIO_LED_U, GPIO_LED_D, GPIO_LED_L, GPIO_LED_R,
 };
 
 /*
  * This instantiates struct usb_gpio_config const usb_gpio, plus several other
  * variables, all named something beginning with usb_gpio_
  */
-USB_GPIO_CONFIG(usb_gpio,
-		usb_gpio_list,
-		USB_IFACE_GPIO,
-		USB_EP_GPIO);
+USB_GPIO_CONFIG(usb_gpio, usb_gpio_list, USB_IFACE_GPIO, USB_EP_GPIO);
 
 /******************************************************************************
  * Setup USART1 as a loopback device, it just echo's back anything sent to it.
  */
 static struct usart_config const loopback_usart;
 
-static struct queue const loopback_queue =
-	QUEUE_DIRECT(64, uint8_t,
-		     loopback_usart.producer,
-		     loopback_usart.consumer);
+static struct queue const loopback_queue = QUEUE_DIRECT(
+	64, uint8_t, loopback_usart.producer, loopback_usart.consumer);
 
 static struct usart_rx_dma const loopback_rx_dma =
 	USART_RX_DMA(STM32_DMAC_CH3, 8);
@@ -60,14 +51,9 @@ static struct usart_rx_dma const loopback_rx_dma =
 static struct usart_tx_dma const loopback_tx_dma =
 	USART_TX_DMA(STM32_DMAC_CH2, 16);
 
-static struct usart_config const loopback_usart =
-	USART_CONFIG(usart1_hw,
-		     loopback_rx_dma.usart_rx,
-		     loopback_tx_dma.usart_tx,
-		     115200,
-		     0,
-		     loopback_queue,
-		     loopback_queue);
+static struct usart_config const loopback_usart = USART_CONFIG(
+	usart1_hw, loopback_rx_dma.usart_rx, loopback_tx_dma.usart_tx, 115200,
+	0, loopback_queue, loopback_queue);
 
 /******************************************************************************
  * Forward USART4 as a simple USB serial interface.
@@ -75,36 +61,24 @@ static struct usart_config const loopback_usart =
 static struct usart_config const forward_usart;
 struct usb_stream_config const forward_usb;
 
-static struct queue const usart_to_usb = QUEUE_DIRECT(64, uint8_t,
-						      forward_usart.producer,
-						      forward_usb.consumer);
-static struct queue const usb_to_usart = QUEUE_DIRECT(64, uint8_t,
-						      forward_usb.producer,
-						      forward_usart.consumer);
+static struct queue const usart_to_usb =
+	QUEUE_DIRECT(64, uint8_t, forward_usart.producer, forward_usb.consumer);
+static struct queue const usb_to_usart =
+	QUEUE_DIRECT(64, uint8_t, forward_usb.producer, forward_usart.consumer);
 
 static struct usart_tx_dma const forward_tx_dma =
 	USART_TX_DMA(STM32_DMAC_CH7, 16);
 
 static struct usart_config const forward_usart =
-	USART_CONFIG(usart4_hw,
-		     usart_rx_interrupt,
-		     forward_tx_dma.usart_tx,
-		     115200,
-		     0,
-		     usart_to_usb,
-		     usb_to_usart);
+	USART_CONFIG(usart4_hw, usart_rx_interrupt, forward_tx_dma.usart_tx,
+		     115200, 0, usart_to_usb, usb_to_usart);
 
-#define USB_STREAM_RX_SIZE	16
-#define USB_STREAM_TX_SIZE	16
+#define USB_STREAM_RX_SIZE 16
+#define USB_STREAM_TX_SIZE 16
 
-USB_STREAM_CONFIG(forward_usb,
-		  USB_IFACE_STREAM,
-		  USB_STR_STREAM_NAME,
-		  USB_EP_STREAM,
-		  USB_STREAM_RX_SIZE,
-		  USB_STREAM_TX_SIZE,
-		  usb_to_usart,
-		  usart_to_usb)
+USB_STREAM_CONFIG(forward_usb, USB_IFACE_STREAM, USB_STR_STREAM_NAME,
+		  USB_EP_STREAM, USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE,
+		  usb_to_usart, usart_to_usb)
 
 /******************************************************************************
  * Handle button presses by cycling the LEDs on the board.  Also run a tick
@@ -135,17 +109,16 @@ DECLARE_HOOK(HOOK_TICK, usb_gpio_tick, HOOK_PRIO_DEFAULT);
  * Define the strings used in our USB descriptors.
  */
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("discovery-stm32f072"),
-	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
-	[USB_STR_STREAM_NAME]  = USB_STRING_DESC("Forward"),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("discovery-stm32f072"),
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_STREAM_NAME] = USB_STRING_DESC("Forward"),
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Shell"),
-	[USB_STR_SPI_NAME]     = USB_STRING_DESC("SPI"),
+	[USB_STR_SPI_NAME] = USB_STRING_DESC("SPI"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
-
 
 /******************************************************************************
  * Support SPI bridging over USB, this requires usb_spi_board_enable and
@@ -154,7 +127,7 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_SPI_CS},
+	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_SPI_CS },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
