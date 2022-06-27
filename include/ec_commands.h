@@ -1869,34 +1869,6 @@ struct ec_response_flash_region_info {
 	uint32_t size;
 } __ec_align4;
 
-/*
- * Read/write VbNvContext
- *
- * Deprecated as of February 2021.  No current devices use VBNV in EC
- * BBRAM anymore, so this is guaranteed to fail.
- *
- * TODO(b/178689388): remove from this header once no external
- * dependencies reference these constants.
- */
-#define EC_CMD_VBNV_CONTEXT 0x0017
-#define EC_VER_VBNV_CONTEXT 1
-#define EC_VBNV_BLOCK_SIZE 16
-
-enum ec_vbnvcontext_op {
-	EC_VBNV_CONTEXT_OP_READ,
-	EC_VBNV_CONTEXT_OP_WRITE,
-};
-
-struct ec_params_vbnvcontext {
-	uint32_t op;
-	uint8_t block[EC_VBNV_BLOCK_SIZE];
-} __ec_align4;
-
-struct ec_response_vbnvcontext {
-	uint8_t block[EC_VBNV_BLOCK_SIZE];
-} __ec_align4;
-
-
 /* Get SPI flash information */
 #define EC_CMD_FLASH_SPI_INFO 0x0018
 
