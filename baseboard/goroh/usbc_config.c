@@ -21,7 +21,7 @@
 #include "gpio.h"
 #include "gpio_signal.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 #ifdef CONFIG_BRINGUP
 #define GPIO_SET_LEVEL(pin, lvl) gpio_set_level_verbose(CC_USBPD, pin, lvl)
@@ -62,7 +62,6 @@ static int goroh_usb_c0_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	mux_state = mux_state ^ USB_PD_MUX_POLARITY_INVERTED;
 
 	return virtual_usb_mux_driver.set(me, mux_state, ack_required);
-
 }
 
 static int goroh_usb_c0_get_mux(const struct usb_mux *me,
@@ -127,7 +126,6 @@ void ppc_interrupt(enum gpio_signal signal)
 		/* C1: PPC interrupt */
 		syv682x_interrupt(1);
 }
-
 
 static void board_tcpc_init(void)
 {
