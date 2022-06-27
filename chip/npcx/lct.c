@@ -13,10 +13,10 @@
 #include "timer.h"
 #include "util.h"
 
-#define LCT_CLK_ENABLE_DELAY_USEC    150
+#define LCT_CLK_ENABLE_DELAY_USEC 150
 
-#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
 void npcx_lct_sel_power_src(enum NPCX_LCT_PWR_SRC pwr_src)
 {
@@ -93,7 +93,6 @@ void npcx_lct_config(int seconds, int psl_ena, int int_ena)
 
 	if (int_ena)
 		SET_BIT(NPCX_LCTCONT, NPCX_LCTCONT_EVEN);
-
 }
 
 uint32_t npcx_lct_get_time(void)
@@ -102,21 +101,17 @@ uint32_t npcx_lct_get_time(void)
 	uint8_t week, day, hour, minute;
 
 	do {
-		week   = NPCX_LCTWEEK;
-		day    = NPCX_LCTDAY;
-		hour   = NPCX_LCTHOUR;
+		week = NPCX_LCTWEEK;
+		day = NPCX_LCTDAY;
+		hour = NPCX_LCTHOUR;
 		minute = NPCX_LCTMINUTE;
 		second = NPCX_LCTSECOND;
-	} while (week   != NPCX_LCTWEEK   ||
-		 day    != NPCX_LCTDAY    ||
-		 hour   != NPCX_LCTHOUR   ||
-		 minute != NPCX_LCTMINUTE ||
+	} while (week != NPCX_LCTWEEK || day != NPCX_LCTDAY ||
+		 hour != NPCX_LCTHOUR || minute != NPCX_LCTMINUTE ||
 		 second != NPCX_LCTSECOND);
 
-	second += minute * SECS_PER_MINUTE +
-		  hour * SECS_PER_HOUR +
-		  day * SECS_PER_DAY +
-		  week * SECS_PER_WEEK;
+	second += minute * SECS_PER_MINUTE + hour * SECS_PER_HOUR +
+		  day * SECS_PER_DAY + week * SECS_PER_WEEK;
 
 	return second;
 }
@@ -164,9 +159,9 @@ static int command_lctalarm(int argc, char **argv)
 	npcx_lct_config(seconds, 0, 1);
 	task_disable_irq(NPCX_IRQ_LCT_WKINTF_2);
 	/* Enable wake-up input sources & clear pending bit */
-	NPCX_WKPCL(MIWU_TABLE_2, LCT_WUI_GROUP)  |= LCT_WUI_MASK;
+	NPCX_WKPCL(MIWU_TABLE_2, LCT_WUI_GROUP) |= LCT_WUI_MASK;
 	NPCX_WKINEN(MIWU_TABLE_2, LCT_WUI_GROUP) |= LCT_WUI_MASK;
-	NPCX_WKEN(MIWU_TABLE_2, LCT_WUI_GROUP)   |= LCT_WUI_MASK;
+	NPCX_WKEN(MIWU_TABLE_2, LCT_WUI_GROUP) |= LCT_WUI_MASK;
 	task_enable_irq(NPCX_IRQ_LCT_WKINTF_2);
 	npcx_lct_enable(1);
 
