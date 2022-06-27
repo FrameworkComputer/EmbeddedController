@@ -47,8 +47,8 @@ int test_td_pd_src3_e26(void)
 	 * d) The Tester verifies that a Soft_Reset message is sent by the UUT
 	 * within tReceive max (1.1 ms) + tSoftReset max (15 ms).
 	 */
-	TEST_EQ(verify_tcpci_tx_timeout(
-			TCPCI_MSG_SOP, PD_CTRL_SOFT_RESET, 0, 15 * MSEC),
+	TEST_EQ(verify_tcpci_tx_timeout(TCPCI_MSG_SOP, PD_CTRL_SOFT_RESET, 0,
+					15 * MSEC),
 		EC_SUCCESS, "%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS);
 
