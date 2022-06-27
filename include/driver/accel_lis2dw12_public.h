@@ -17,18 +17,18 @@ extern const struct accelgyro_drv lis2dw12_drv;
  * 7-bit address is 011000Xb. Where 'X' is determined
  * by the voltage on the ADDR pin.
  */
-#define LIS2DW12_ADDR0			0x18
-#define LIS2DW12_ADDR1			0x19
+#define LIS2DW12_ADDR0 0x18
+#define LIS2DW12_ADDR1 0x19
 
-#define LIS2DWL_ADDR0_FLAGS		0x18
-#define LIS2DWL_ADDR1_FLAGS		0x19
+#define LIS2DWL_ADDR0_FLAGS 0x18
+#define LIS2DWL_ADDR1_FLAGS 0x19
 
-#define LIS2DW12_EN_BIT			0x01
-#define LIS2DW12_DIS_BIT		0x00
+#define LIS2DW12_EN_BIT 0x01
+#define LIS2DW12_DIS_BIT 0x00
 
 /* Absolute Acc rate. */
-#define LIS2DW12_ODR_MIN_VAL		12500
-#define LIS2DW12_ODR_MAX_VAL		\
+#define LIS2DW12_ODR_MIN_VAL 12500
+#define LIS2DW12_ODR_MAX_VAL \
 	MOTION_MAX_SENSOR_FREQUENCY(1600000, LIS2DW12_ODR_MIN_VAL)
 
 void lis2dw12_interrupt(enum gpio_signal signal);
