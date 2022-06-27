@@ -16,10 +16,10 @@
 #include "driver/fingerprint/fpc/fpc_sensor.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
-static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] __aligned(4) = {0};
+static uint8_t enroll_ctx[FP_ALGORITHM_ENROLLMENT_SIZE] __aligned(4) = { 0 };
 
 /* Recorded error flags */
 static uint16_t errors;
@@ -91,8 +91,8 @@ const fpc_bio_info_t fpc_bio_info = {
 
 /* Sensor IC commands */
 enum fpc_cmd {
-	FPC_CMD_DEEPSLEEP         = 0x2C,
-	FPC_CMD_HW_ID             = 0xFC,
+	FPC_CMD_DEEPSLEEP = 0x2C,
+	FPC_CMD_HW_ID = 0xFC,
 };
 
 /* Maximum size of a sensor command SPI transfer */
