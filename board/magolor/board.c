@@ -52,13 +52,13 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #define INT_RECHECK_US 5000
 
-#define ADC_VOL_UP_MASK     BIT(0)
-#define ADC_VOL_DOWN_MASK   BIT(1)
+#define ADC_VOL_UP_MASK BIT(0)
+#define ADC_VOL_DOWN_MASK BIT(1)
 
 static uint8_t new_adc_key_state;
 
@@ -165,8 +165,7 @@ static const struct ec_response_keybd_config magma_keybd = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
-__override
-uint8_t board_keyboard_row_refresh(void)
+__override uint8_t board_keyboard_row_refresh(void)
 {
 	if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
 		return 3;
@@ -174,16 +173,15 @@ uint8_t board_keyboard_row_refresh(void)
 		return 2;
 }
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	if (get_cbi_fw_config_numeric_pad()) {
 		if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
 			return &magma_keybd;
 		else
 			return &magpie_keybd;
-	}
-	else {
+	} else {
 		if (gpio_get_level(GPIO_EC_VIVALDIKEYBOARD_ID))
 			return &magister_keybd;
 		else
@@ -198,16 +196,15 @@ __override const struct ec_response_keybd_config
  * that we don't have pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-	{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-	{0, 7}, {-1, -1}, {-1, -1}, {1, 4}, {1, 3},
-	{-1, -1}, {1, 6}, {1, 7}, {3, 1}, {2, 0},
-	{1, 5}, {2, 6}, {2, 7}, {2, 1}, {2, 4},
-	{2, 5}, {1, 2}, {2, 3}, {2, 2}, {3, 0},
-	{-1, -1}, {0, 4}, {-1, -1}, {8, 2}, {-1, -1},
-	{-1, -1},
+	{ -1, -1 }, { 0, 5 },	{ 1, 1 }, { 1, 0 },   { 0, 6 },	  { 0, 7 },
+	{ -1, -1 }, { -1, -1 }, { 1, 4 }, { 1, 3 },   { -1, -1 }, { 1, 6 },
+	{ 1, 7 },   { 3, 1 },	{ 2, 0 }, { 1, 5 },   { 2, 6 },	  { 2, 7 },
+	{ 2, 1 },   { 2, 4 },	{ 2, 5 }, { 1, 2 },   { 2, 3 },	  { 2, 2 },
+	{ 3, 0 },   { -1, -1 }, { 0, 4 }, { -1, -1 }, { 8, 2 },	  { -1, -1 },
+	{ -1, -1 },
 };
 const int keyboard_factory_scan_pins_used =
-		ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 /* C0 interrupt line shared by BC 1.2 and charger */
 static void check_c0_line(void);
@@ -245,7 +242,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
-
 }
 
 /* C1 interrupt line shared by BC 1.2, TCPC, and charger */
@@ -326,22 +322,22 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Memory",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Ambient",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_2},
+	[TEMP_SENSOR_1] = { .name = "Memory",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Ambient",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_A \
-	{ \
+#define THERMAL_A                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
@@ -358,8 +354,8 @@ __maybe_unused static const struct ec_thermal_config thermal_a = THERMAL_A;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_B \
-	{ \
+#define THERMAL_B                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(73), \
@@ -443,7 +439,7 @@ static void reconfigure_5v_gpio(void)
 		gpio_set_flags(GPIO_VOLUP_BTN_ODL, GPIO_OUT_LOW);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, reconfigure_5v_gpio, HOOK_PRIO_INIT_I2C + 1);
 #endif /* BOARD_WADDLEDOO */
 
 static void set_5v_gpio(int level)
@@ -492,8 +488,8 @@ __override void board_power_5v_enable(int enable)
 		gpio_set_level(GPIO_SUB_C1_INT_EN_RAILS_ODL, !enable);
 	} else {
 		if (isl923x_set_comparator_inversion(1, !!enable))
-			CPRINTS("Failed to %sable sub rails!", enable ?
-								  "en" : "dis");
+			CPRINTS("Failed to %sable sub rails!",
+				enable ? "en" : "dis");
 
 		if (!enable)
 			return;
@@ -503,7 +499,7 @@ __override void board_power_5v_enable(int enable)
 		 */
 		if (get_cbi_ssfc_usb_mux() == SSFC_USBMUX_PS8762)
 			hook_call_deferred(&ps8762_chaddr_deferred_data,
-						   15 * MSEC);
+					   15 * MSEC);
 	}
 }
 
@@ -529,13 +525,11 @@ int board_is_sourcing_vbus(int port)
 
 	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
 	return !!(regval & TCPC_REG_POWER_STATUS_SOURCING_VBUS);
-
 }
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < board_get_usb_pd_port_count());
+	int is_real_port = (port >= 0 && port < board_get_usb_pd_port_count());
 	int i;
 	int old_port;
 
@@ -599,8 +593,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
@@ -625,25 +619,18 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrices to rotate accelerometers into the standard reference. */
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* Matrices to rotate accelerometers into the magister reference. */
-static const mat33_fp_t lid_magister_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_magister_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-
+static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					      { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* BMA253 private data */
 static struct accelgyro_saved_data_t g_bma253_data;
@@ -652,11 +639,9 @@ static struct accelgyro_saved_data_t g_bma253_data;
 static struct bmi_drv_data_t g_bmi160_data;
 
 #ifdef BOARD_MAGOLOR
-static const mat33_fp_t base_icm_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t base_icm_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					 { 0, FLOAT_TO_FP(1), 0 },
+					 { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* ICM426 private data */
 static struct icm_drv_data_t g_icm426xx_data;
@@ -814,7 +799,7 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 static void pendetect_deferred(void)
 {
 	int pen_charge_enable = !gpio_get_level(GPIO_PEN_DET_ODL) &&
-	    !chipset_in_state(CHIPSET_STATE_ANY_OFF);
+				!chipset_in_state(CHIPSET_STATE_ANY_OFF);
 
 	if (pen_charge_enable)
 		gpio_set_level(GPIO_EN_PP5000_PEN, 1);
@@ -839,7 +824,6 @@ static void pen_charge_check(void)
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pen_charge_check, HOOK_PRIO_LAST);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pen_charge_check, HOOK_PRIO_LAST);
 
-
 /*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
  */
@@ -862,16 +846,17 @@ void board_init(void)
 
 	if (get_cbi_fw_config_db() == DB_1A_HDMI) {
 		/* Disable i2c on HDMI pins */
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, 0);
-		gpio_config_pin(MODULE_I2C,
-				GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL, 0);
+		gpio_config_pin(MODULE_I2C, GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
+				0);
+		gpio_config_pin(MODULE_I2C, GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
+				0);
 
 		/* Set HDMI and sub-rail enables to output */
 		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SCL_HDMI_EN_ODL,
 			       chipset_in_state(CHIPSET_STATE_ON) ?
-						GPIO_ODR_LOW : GPIO_ODR_HIGH);
-		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL,   GPIO_ODR_HIGH);
+				       GPIO_ODR_LOW :
+				       GPIO_ODR_HIGH);
+		gpio_set_flags(GPIO_SUB_C1_INT_EN_RAILS_ODL, GPIO_ODR_HIGH);
 
 		/* Select HDMI option */
 		gpio_set_level(GPIO_HDMI_SEL_L, 0);
@@ -881,8 +866,7 @@ void board_init(void)
 
 	} else {
 		/* Set SDA as an input */
-		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL,
-			       GPIO_INPUT);
+		gpio_set_flags(GPIO_EC_I2C_SUB_C1_SDA_HDMI_HPD_ODL, GPIO_INPUT);
 
 		/* Enable C1 interrupt and check if it needs processing */
 		gpio_enable_interrupt(GPIO_SUB_C1_INT_EN_RAILS_ODL);
@@ -907,8 +891,8 @@ void board_init(void)
 			ccprints("LID_ACCEL is KX022");
 		} else {
 			if (system_get_board_version() >= 5) {
-				motion_sensors[LID_ACCEL]
-				.rot_standard_ref = &lid_magister_ref;
+				motion_sensors[LID_ACCEL].rot_standard_ref =
+					&lid_magister_ref;
 			}
 			ccprints("LID_ACCEL is BMA253");
 		}
@@ -921,7 +905,7 @@ void board_init(void)
 		gmr_tablet_switch_disable();
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
-		GPIO_INPUT | GPIO_PULL_DOWN);
+			       GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 
 	if (get_cbi_fw_config_stylus() == STYLUS_PRESENT) {
@@ -930,8 +914,7 @@ void board_init(void)
 		pen_charge_check();
 	} else {
 		gpio_disable_interrupt(GPIO_PEN_DET_ODL);
-		gpio_set_flags(GPIO_PEN_DET_ODL,
-		GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_PEN_DET_ODL, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 
 	/* Turn on 5V if the system is on, otherwise turn it off. */
@@ -944,32 +927,30 @@ void board_init(void)
 
 #ifdef BOARD_MAGOLOR
 	/* Support Keyboard Pad */
-		board_update_no_keypad_by_fwconfig();
+	board_update_no_keypad_by_fwconfig();
 #endif
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 void motion_interrupt(enum gpio_signal signal)
 {
 #ifdef BOARD_MAGOLOR
-		switch (get_cbi_ssfc_base_sensor()) {
-		case SSFC_SENSOR_ICM426XX:
-			icm426xx_interrupt(signal);
-			break;
-		case SSFC_SENSOR_BMI160:
-		default:
-			bmi160_interrupt(signal);
-			break;
-		}
-	#else
+	switch (get_cbi_ssfc_base_sensor()) {
+	case SSFC_SENSOR_ICM426XX:
+		icm426xx_interrupt(signal);
+		break;
+	case SSFC_SENSOR_BMI160:
+	default:
 		bmi160_interrupt(signal);
+		break;
+	}
+#else
+	bmi160_interrupt(signal);
 #endif
 }
 
-__override void ocpc_get_pid_constants(int *kp, int *kp_div,
-				       int *ki, int *ki_div,
-				       int *kd, int *kd_div)
+__override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+				       int *ki_div, int *kd, int *kd_div)
 {
 	*kp = 1;
 	*kp_div = 20;
@@ -1082,7 +1063,7 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	if (board_get_usb_pd_port_count() > 1 &&
-				!gpio_get_level(GPIO_SUB_C1_INT_EN_RAILS_ODL)) {
+	    !gpio_get_level(GPIO_SUB_C1_INT_EN_RAILS_ODL)) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
 			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
