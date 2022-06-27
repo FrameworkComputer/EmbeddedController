@@ -19,11 +19,7 @@
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 1000
-	},
+	{ .name = "sensor", .port = I2C_PORT_SENSOR, .kbps = 1000 },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
