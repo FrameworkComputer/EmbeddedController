@@ -40,4 +40,4 @@ int onewire_read(void);
  */
 void onewire_write(int data);
 
-#endif  /* __CROS_EC_ONEWIRE_H */
+#endif /* __CROS_EC_ONEWIRE_H */
