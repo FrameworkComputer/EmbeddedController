@@ -17,14 +17,14 @@
 #include "system.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ##args)
 
 /*
  * In order to support the battery LED being optional (ex. for Chromeboxes),
  * set up default battery table, setter, and variables.
  */
-__overridable struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES];
+__overridable struct led_descriptor led_bat_state_table[LED_NUM_STATES]
+						       [LED_NUM_PHASES];
 __overridable const int led_charge_lvl_1;
 __overridable const int led_charge_lvl_2;
 __overridable void led_set_color_battery(enum ec_led_colors color)
@@ -43,7 +43,7 @@ static int led_get_charge_percent(void)
 
 static enum led_states led_get_state(void)
 {
-	int  charge_lvl;
+	int charge_lvl;
 	enum led_states new_state = LED_NUM_STATES;
 
 	if (!IS_ENABLED(CONFIG_CHARGER))
@@ -58,11 +58,10 @@ static enum led_states led_get_state(void)
 			new_state = STATE_CHARGING_LVL_1;
 		else if (charge_lvl < led_charge_lvl_2)
 			new_state = STATE_CHARGING_LVL_2;
+		else if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+			new_state = STATE_CHARGING_FULL_S5;
 		else
-			if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-				new_state = STATE_CHARGING_FULL_S5;
-			else
-				new_state = STATE_CHARGING_FULL_CHARGE;
+			new_state = STATE_CHARGING_FULL_CHARGE;
 		break;
 	case PWR_STATE_DISCHARGE_FULL:
 		if (extpower_is_present()) {
@@ -77,7 +76,7 @@ static enum led_states led_get_state(void)
 		if (chipset_in_state(CHIPSET_STATE_ON)) {
 #ifdef CONFIG_LED_ONOFF_STATES_BAT_LOW
 			if (led_get_charge_percent() <
-				CONFIG_LED_ONOFF_STATES_BAT_LOW)
+			    CONFIG_LED_ONOFF_STATES_BAT_LOW)
 				new_state = STATE_DISCHARGE_S0_BAT_LOW;
 			else
 #endif
@@ -147,14 +146,14 @@ static void led_update_battery(void)
 		ticks = 0;
 
 		period = led_bat_state_table[led_state][LED_PHASE_0].time +
-			led_bat_state_table[led_state][LED_PHASE_1].time;
-
+			 led_bat_state_table[led_state][LED_PHASE_1].time;
 	}
 
 	/* If this state is undefined, turn the LED off */
 	if (period == 0) {
 		CPRINTS("Undefined LED behavior for battery state %d,"
-			"turning off LED", led_state);
+			"turning off LED",
+			led_state);
 		led_set_color_battery(LED_OFF);
 		return;
 	}
@@ -163,8 +162,8 @@ static void led_update_battery(void)
 	 * Determine which phase of the state table to use. The phase is
 	 * determined if it falls within first phase time duration.
 	 */
-	phase = ticks < led_bat_state_table[led_state][LED_PHASE_0].time ?
-									0 : 1;
+	phase = ticks < led_bat_state_table[led_state][LED_PHASE_0].time ? 0 :
+									   1;
 	ticks = (ticks + 1) % period;
 
 	/* Set the color for the given state and phase */
@@ -176,7 +175,7 @@ static void led_update_battery(void)
  * table and setter
  */
 __overridable const struct led_descriptor
-			led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES];
+	led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES];
 __overridable void led_set_color_power(enum ec_led_colors color)
 {
 }
@@ -226,14 +225,14 @@ static void led_update_power(void)
 		ticks = 0;
 
 		period = led_pwr_state_table[led_state][LED_PHASE_0].time +
-			led_pwr_state_table[led_state][LED_PHASE_1].time;
-
+			 led_pwr_state_table[led_state][LED_PHASE_1].time;
 	}
 
 	/* If this state is undefined, turn the LED off */
 	if (period == 0) {
 		CPRINTS("Undefined LED behavior for power state %d,"
-			"turning off LED", led_state);
+			"turning off LED",
+			led_state);
 		led_set_color_power(LED_OFF);
 		return;
 	}
@@ -242,13 +241,12 @@ static void led_update_power(void)
 	 * Determine which phase of the state table to use. The phase is
 	 * determined if it falls within first phase time duration.
 	 */
-	phase = ticks < led_pwr_state_table[led_state][LED_PHASE_0].time ?
-									0 : 1;
+	phase = ticks < led_pwr_state_table[led_state][LED_PHASE_0].time ? 0 :
+									   1;
 	ticks = (ticks + 1) % period;
 
 	/* Set the color for the given state and phase */
 	led_set_color_power(led_pwr_state_table[led_state][phase].color);
-
 }
 
 static void led_init(void)
@@ -260,7 +258,6 @@ static void led_init(void)
 	/* If power LED is enabled, set it to "off" to start with */
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		led_set_color_power(LED_OFF);
-
 }
 DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_DEFAULT);
 
