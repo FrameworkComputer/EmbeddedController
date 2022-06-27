@@ -88,11 +88,12 @@ int charger_profile_override(struct charge_state_data *curr)
 		temp_sensor_read(TEMP_SENSOR_CHARGER, &charger_temp);
 		charger_temp_c = K_TO_C(charger_temp);
 		if (charger_temp_c > 52)
-			curr->requested_current = MIN(curr->requested_current,
-			    2200);
+			curr->requested_current =
+				MIN(curr->requested_current, 2200);
 		else if (charger_temp_c > 48)
-			curr->requested_current = MIN(curr->requested_current,
-			    CONFIG_CHARGER_MAX_INPUT_CURRENT);
+			curr->requested_current =
+				MIN(curr->requested_current,
+				    CONFIG_CHARGER_MAX_INPUT_CURRENT);
 	}
 
 	return 0;
