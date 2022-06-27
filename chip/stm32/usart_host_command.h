@@ -6,7 +6,7 @@
 #ifndef __CROS_EC_USART_HOST_COMMAND_H
 #define __CROS_EC_USART_HOST_COMMAND_H
 
-#include <stdarg.h>  /* For va_list */
+#include <stdarg.h> /* For va_list */
 #include "common.h"
 #include "gpio.h"
 #include "host_command.h"
