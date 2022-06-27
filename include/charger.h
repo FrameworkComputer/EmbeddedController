@@ -50,7 +50,7 @@ struct charger_drv {
 	enum ec_error_list (*post_init)(int chgnum);
 
 	/* Get charger information */
-	const struct charger_info * (*get_info)(int chgnum);
+	const struct charger_info *(*get_info)(int chgnum);
 
 	/* Get smart battery charger status. Supported flags may vary. */
 	enum ec_error_list (*get_status)(int chgnum, int *status);
@@ -85,11 +85,9 @@ struct charger_drv {
 	enum ec_error_list (*get_voltage)(int chgnum, int *voltage);
 	enum ec_error_list (*set_voltage)(int chgnum, int voltage);
 
-
 	/* Get the measured charge current and voltage in mA/mV */
 	enum ec_error_list (*get_actual_current)(int chgnum, int *current);
 	enum ec_error_list (*get_actual_voltage)(int chgnum, int *voltage);
-
 
 	/* Discharge battery when on AC power. */
 	enum ec_error_list (*discharge_on_ac)(int chgnum, int enable);
@@ -184,13 +182,13 @@ enum chg_id {
 void charger_get_params(struct charger_params *chg);
 
 /* Bits to indicate which fields of struct charger_params could not be read */
-#define CHG_FLAG_BAD_CURRENT		0x00000001
-#define CHG_FLAG_BAD_VOLTAGE		0x00000002
-#define CHG_FLAG_BAD_INPUT_CURRENT	0x00000004
-#define CHG_FLAG_BAD_STATUS		0x00000008
-#define CHG_FLAG_BAD_OPTION		0x00000010
+#define CHG_FLAG_BAD_CURRENT 0x00000001
+#define CHG_FLAG_BAD_VOLTAGE 0x00000002
+#define CHG_FLAG_BAD_INPUT_CURRENT 0x00000004
+#define CHG_FLAG_BAD_STATUS 0x00000008
+#define CHG_FLAG_BAD_OPTION 0x00000010
 /* All of the above CHG_FLAG_BAD_* bits */
-#define CHG_FLAG_BAD_ANY                0x0000001f
+#define CHG_FLAG_BAD_ANY 0x0000001f
 
 /**
  * Return the closest match the charger can supply to the requested current.
