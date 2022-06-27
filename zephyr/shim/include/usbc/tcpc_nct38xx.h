@@ -11,7 +11,7 @@
 
 #define NCT38XX_TCPC_COMPAT nuvoton_nct38xx
 
-#define TCPC_CONFIG_NCT38XX(id)                                               \
+#define TCPC_CONFIG_NCT38XX(id) \
 	{                                                                     \
 		.bus_type = EC_BUS_TYPE_I2C,                                  \
 		.i2c_info = {                                                 \
