@@ -50,9 +50,8 @@ uint32_t get_fw_config(void)
 			return UNINITIALIZED_FW_CONFIG;
 		fw_config = val;
 	}
-	return  fw_config;
+	return fw_config;
 }
-
 
 int get_fw_config_field(uint8_t offset, uint8_t width)
 {
@@ -63,7 +62,6 @@ int get_fw_config_field(uint8_t offset, uint8_t width)
 
 	return (fw_config >> offset) & ((1 << width) - 1);
 }
-
 
 __overridable void board_cbi_init(void)
 {
