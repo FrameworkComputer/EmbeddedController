@@ -11,7 +11,7 @@
 #include "util.h"
 
 #define CPUTS(str) cputs(CC_I2C, str)
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
 static int started;
 
@@ -22,8 +22,8 @@ static void i2c_delay(void)
 }
 
 /* Number of attempts to unwedge each pin. */
-#define UNWEDGE_SCL_ATTEMPTS  10
-#define UNWEDGE_SDA_ATTEMPTS  3
+#define UNWEDGE_SCL_ATTEMPTS 10
+#define UNWEDGE_SDA_ATTEMPTS 3
 
 static void i2c_bitbang_unwedge(const struct i2c_port_t *i2c_port)
 {
@@ -84,7 +84,7 @@ static void i2c_bitbang_unwedge(const struct i2c_port_t *i2c_port)
 
 		/* Check if the bus is unwedged. */
 		if (gpio_get_level(i2c_port->sda) &&
-				gpio_get_level(i2c_port->scl))
+		    gpio_get_level(i2c_port->scl))
 			break;
 	}
 
@@ -263,7 +263,7 @@ static int i2c_write_byte(const struct i2c_port_t *i2c_port, uint8_t byte)
 }
 
 static int i2c_read_byte(const struct i2c_port_t *i2c_port, uint8_t *byte,
-		int nack)
+			 int nack)
 {
 	int i;
 
@@ -281,9 +281,8 @@ static int i2c_read_byte(const struct i2c_port_t *i2c_port, uint8_t *byte,
 }
 
 static int i2c_bitbang_xfer(const struct i2c_port_t *i2c_port,
-		const uint16_t addr_flags,
-		const uint8_t *out, int out_size,
-		uint8_t *in, int in_size, int flags)
+			    const uint16_t addr_flags, const uint8_t *out,
+			    int out_size, uint8_t *in, int in_size, int flags)
 {
 	uint16_t addr_8bit = addr_flags << 1, err = EC_SUCCESS;
 	int i = 0;
@@ -320,7 +319,8 @@ static int i2c_bitbang_xfer(const struct i2c_port_t *i2c_port,
 
 		for (i = 0; i < in_size; i++) {
 			err = i2c_read_byte(i2c_port, &in[i],
-				(flags & I2C_XFER_STOP) && (i == in_size - 1));
+					    (flags & I2C_XFER_STOP) &&
+						    (i == in_size - 1));
 			if (err)
 				goto exit;
 		}
@@ -353,9 +353,7 @@ __overridable void board_pre_task_i2c_peripheral_init(void)
 {
 }
 
-const struct i2c_drv bitbang_drv = {
-	.xfer = &i2c_bitbang_xfer
-};
+const struct i2c_drv bitbang_drv = { .xfer = &i2c_bitbang_xfer };
 
 #ifdef TEST_BUILD
 int bitbang_start_cond(const struct i2c_port_t *i2c_port)
