@@ -15,7 +15,7 @@
 #include "timer.h"
 #include "util.h"
 
-const enum ec_led_id supported_led_ids[] = {EC_LED_ID_POWER_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_POWER_LED };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
@@ -76,9 +76,9 @@ static int set_color(enum ec_led_id id, enum led_color color, int duty)
 	}
 }
 
-#define LED_PULSE_US		(2 * SECOND)
+#define LED_PULSE_US (2 * SECOND)
 /* 40 msec for nice and smooth transition. */
-#define LED_PULSE_TICK_US	(40 * MSEC)
+#define LED_PULSE_TICK_US (40 * MSEC)
 
 /* When pulsing is enabled, brightness is incremented by <duty_inc> every
  * <interval> usec from 0 to 100% in LED_PULSE_US usec. Then it's decremented
