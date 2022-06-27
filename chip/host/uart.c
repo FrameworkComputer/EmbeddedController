@@ -55,7 +55,6 @@ static void test_capture_char(char c)
 	capture_buf[capture_size++] = c;
 }
 
-
 const char *test_get_captured_console(void)
 {
 	return (const char *)capture_buf;
@@ -190,6 +189,6 @@ void uart_init(void)
 	pthread_mutex_unlock(&mutex);
 #endif
 
-	stopped = 1;  /* Not transmitting yet */
+	stopped = 1; /* Not transmitting yet */
 	init_done = 1;
 }
