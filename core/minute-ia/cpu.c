@@ -7,7 +7,6 @@
 
 #include <cpu.h>
 
-
 void cpu_init(void)
 {
 	/* Nothing to do now */
