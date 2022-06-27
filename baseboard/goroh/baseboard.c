@@ -48,8 +48,8 @@
 
 #include "gpio_list.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /* Wake-up pins for hibernate */
 enum gpio_signal hibernate_wake_pins[] = {
@@ -68,11 +68,9 @@ const struct charger_config_t chg_chips[] = {
 };
 
 /* BC12 skeleton to make build happy. */
-struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
-};
+struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {};
 
-const int usb_port_enable[USB_PORT_COUNT] = {
-};
+const int usb_port_enable[USB_PORT_COUNT] = {};
 
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
@@ -109,34 +107,26 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "bat_chg",
-		.port = IT83XX_I2C_CH_A,
-		.kbps = 100,
-		.scl  = GPIO_I2C_A_SCL,
-		.sda  = GPIO_I2C_A_SDA
-	},
-	{
-		.name = "sensor",
-		.port = IT83XX_I2C_CH_B,
-		.kbps = 400,
-		.scl  = GPIO_I2C_B_SCL,
-		.sda  = GPIO_I2C_B_SDA
-	},
-	{
-		.name = "usb0",
-		.port = IT83XX_I2C_CH_C,
-		.kbps = 400,
-		.scl  = GPIO_I2C_C_SCL,
-		.sda  = GPIO_I2C_C_SDA
-	},
-	{
-		.name = "usb1",
-		.port = IT83XX_I2C_CH_E,
-		.kbps = 400,
-		.scl  = GPIO_I2C_E_SCL,
-		.sda  = GPIO_I2C_E_SDA
-	},
+	{ .name = "bat_chg",
+	  .port = IT83XX_I2C_CH_A,
+	  .kbps = 100,
+	  .scl = GPIO_I2C_A_SCL,
+	  .sda = GPIO_I2C_A_SDA },
+	{ .name = "sensor",
+	  .port = IT83XX_I2C_CH_B,
+	  .kbps = 400,
+	  .scl = GPIO_I2C_B_SCL,
+	  .sda = GPIO_I2C_B_SDA },
+	{ .name = "usb0",
+	  .port = IT83XX_I2C_CH_C,
+	  .kbps = 400,
+	  .scl = GPIO_I2C_C_SCL,
+	  .sda = GPIO_I2C_C_SDA },
+	{ .name = "usb1",
+	  .port = IT83XX_I2C_CH_E,
+	  .kbps = 400,
+	  .scl = GPIO_I2C_E_SCL,
+	  .sda = GPIO_I2C_E_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -144,7 +134,6 @@ int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 {
 	return (cmd_desc->port == I2C_PORT_VIRTUAL_BATTERY);
 }
-
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
@@ -155,21 +144,25 @@ const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 {
 	const static struct cc_para_t
 		cc_parameter[CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT] = {
-		{
-			.rising_time = IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
-			.falling_time = IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
-		},
-		{
-			.rising_time = IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
-			.falling_time = IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
-		},
-	};
+			{
+				.rising_time =
+					IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
+				.falling_time =
+					IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
+			},
+			{
+				.rising_time =
+					IT83XX_TX_PRE_DRIVING_TIME_1_UNIT,
+				.falling_time =
+					IT83XX_TX_PRE_DRIVING_TIME_2_UNIT,
+			},
+		};
 
 	return &cc_parameter[port];
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	charge_set_input_current_limit(
 		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
