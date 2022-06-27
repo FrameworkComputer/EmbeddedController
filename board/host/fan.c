@@ -22,7 +22,10 @@ const struct fan_rpm fan_rpm_0 = {
 };
 
 const struct fan_t fans[CONFIG_FANS] = {
-	{ .conf = &fan_conf_0, .rpm = &fan_rpm_0, },
+	{
+		.conf = &fan_conf_0,
+		.rpm = &fan_rpm_0,
+	},
 };
 
 static int mock_enabled;
