@@ -18,7 +18,7 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq)
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(intel_ap_pwrseq) == 1,
-	"Only one node for intel_ap_pwrseq is allowed");
+	     "Only one node for intel_ap_pwrseq is allowed");
 #endif
 
 BUILD_ASSERT(POWER_SIGNAL_COUNT <= 32, "Too many power signals");
@@ -41,49 +41,46 @@ struct ps_config {
 
 #define TAG_PWR_ENUM(tag, name) DT_CAT(tag, name)
 
-#define PWR_ENUM(id, tag)			\
-	TAG_PWR_ENUM(tag, PWR_SIGNAL_ENUM(id))
+#define PWR_ENUM(id, tag) TAG_PWR_ENUM(tag, PWR_SIGNAL_ENUM(id))
 
-#define DBGNAME(id) \
-	"(" DT_PROP(id, enum_name) ") " \
-	    DT_PROP(id, dbg_label)
+#define DBGNAME(id) "(" DT_PROP(id, enum_name) ") " DT_PROP(id, dbg_label)
 
-#define GEN_PS_ENTRY(id, src, tag)		\
-{						\
-	.debug_name = DBGNAME(id),	\
-	.source = src,				\
-	.src_enum = PWR_ENUM(id, tag),		\
-},
+#define GEN_PS_ENTRY(id, src, tag)             \
+	{                                      \
+		.debug_name = DBGNAME(id),     \
+		.source = src,                 \
+		.src_enum = PWR_ENUM(id, tag), \
+	},
 
-#define GEN_PS_ENTRY_NO_ENUM(id, src)		\
-{						\
-	.debug_name = DBGNAME(id),	\
-	.source = src,				\
-},
-
+#define GEN_PS_ENTRY_NO_ENUM(id, src)      \
+	{                                  \
+		.debug_name = DBGNAME(id), \
+		.source = src,             \
+	},
 
 /*
  * Generate the power signal configuration array.
  */
 static const struct ps_config sig_config[] = {
-DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_gpio, GEN_PS_ENTRY,
-			     PWR_SIG_SRC_GPIO, PWR_SIG_TAG_GPIO)
-DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_vw, GEN_PS_ENTRY,
-			     PWR_SIG_SRC_VW, PWR_SIG_TAG_VW)
-DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_external, GEN_PS_ENTRY_NO_ENUM,
-			     PWR_SIG_SRC_EXT)
-DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_adc, GEN_PS_ENTRY,
-			     PWR_SIG_SRC_ADC, PWR_SIG_TAG_ADC)
+	DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_gpio, GEN_PS_ENTRY,
+				     PWR_SIG_SRC_GPIO, PWR_SIG_TAG_GPIO)
+		DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_vw, GEN_PS_ENTRY,
+					     PWR_SIG_SRC_VW, PWR_SIG_TAG_VW)
+			DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_external,
+						     GEN_PS_ENTRY_NO_ENUM,
+						     PWR_SIG_SRC_EXT)
+				DT_FOREACH_STATUS_OKAY_VARGS(
+					intel_ap_pwrseq_adc, GEN_PS_ENTRY,
+					PWR_SIG_SRC_ADC, PWR_SIG_TAG_ADC)
 };
 
-#define PWR_SIGNAL_POLLED(id)	PWR_SIGNAL_ENUM(id),
+#define PWR_SIGNAL_POLLED(id) PWR_SIGNAL_ENUM(id),
 
 /*
  * List of power signals that need to be polled.
  */
-static const uint8_t polled_signals[] = {
-DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_external, PWR_SIGNAL_POLLED)
-};
+static const uint8_t polled_signals[] = { DT_FOREACH_STATUS_OKAY(
+	intel_ap_pwrseq_external, PWR_SIGNAL_POLLED) };
 
 /*
  * Bitmasks of power signals. A previous copy is held so that
@@ -112,7 +109,7 @@ static inline void check_debug(enum power_signal signal)
 	 */
 	if ((CONFIG_AP_PWRSEQ_LOG_LEVEL >= LOG_LEVEL_INF) &&
 	    (debug_signals & POWER_SIGNAL_MASK(signal))) {
-		bool value =  atomic_test_bit(&power_signals, signal);
+		bool value = atomic_test_bit(&power_signals, signal);
 
 		if (value != atomic_test_bit(&prev_power_signals, signal)) {
 			LOG_INF("%s -> %d", power_signal_name(signal), value);
@@ -140,8 +137,7 @@ void power_signal_interrupt(enum power_signal signal, int value)
 }
 
 int power_wait_mask_signals_timeout(power_signal_mask_t mask,
-				    power_signal_mask_t want,
-				    int timeout)
+				    power_signal_mask_t want, int timeout)
 {
 	if (mask == 0) {
 		return 0;
@@ -166,7 +162,7 @@ int power_signal_get(enum power_signal signal)
 	cp = &sig_config[signal];
 	switch (cp->source) {
 	default:
-		return -EINVAL;  /* should never happen */
+		return -EINVAL; /* should never happen */
 
 #if HAS_GPIO_SIGNALS
 	case PWR_SIG_SRC_GPIO:
