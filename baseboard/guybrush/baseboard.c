@@ -40,10 +40,10 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define CPRINTSCHIP(format, args...) cprints(CC_CHIPSET, format ## args)
+#define CPRINTSCHIP(format, args...) cprints(CC_CHIPSET, format##args)
 
 static void reset_nct38xx_port(int port);
 
@@ -53,7 +53,7 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_AC_PRESENT,
 	GPIO_POWER_BUTTON_L,
 };
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
@@ -145,8 +145,6 @@ const struct i2c_port_t i2c_ports[] = {
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-
-
 const struct charger_config_t chg_chips[] = {
 	{
 		.i2c_port = I2C_PORT_CHARGER,
@@ -235,7 +233,7 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
 
-static int fsusb42umx_set_mux(const struct usb_mux*, mux_state_t);
+static int fsusb42umx_set_mux(const struct usb_mux *, mux_state_t);
 
 __overridable int board_c1_ps8818_mux_set(const struct usb_mux *me,
 					  mux_state_t mux_state)
@@ -389,8 +387,7 @@ DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_INIT_I2C);
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 &&
-			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 	int rv;
 
@@ -404,7 +401,7 @@ int board_set_active_charge_port(int port)
 			 * ahead and reset it so EN_SNK responds properly.
 			 */
 			if (nct38xx_get_boot_type(i) ==
-						NCT38XX_BOOT_DEAD_BATTERY) {
+			    NCT38XX_BOOT_DEAD_BATTERY) {
 				reset_nct38xx_port(i);
 				pd_set_error_recovery(i);
 			}
@@ -453,7 +450,7 @@ int board_set_active_charge_port(int port)
 				 * change because we'll brown out.
 				 */
 				if (nct38xx_get_boot_type(port) ==
-						NCT38XX_BOOT_DEAD_BATTERY) {
+				    NCT38XX_BOOT_DEAD_BATTERY) {
 					reset_nct38xx_port(i);
 					pd_set_error_recovery(i);
 				} else {
@@ -505,7 +502,9 @@ int board_is_i2c_port_powered(int port)
 	case I2C_PORT_THERMAL_AP:
 		/* SOC thermal i2c bus is unpowered in S0i3/S3/S5/Z1 */
 		return chipset_in_state(CHIPSET_STATE_ANY_OFF |
-					CHIPSET_STATE_ANY_SUSPEND) ? 0 : 1;
+					CHIPSET_STATE_ANY_SUSPEND) ?
+			       0 :
+			       1;
 	default:
 		return 1;
 	}
@@ -516,8 +515,7 @@ int board_is_i2c_port_powered(int port)
  * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
  * current limits.
  */
-int board_aoz1380_set_vbus_source_current_limit(int port,
-						enum tcpc_rp_value rp)
+int board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv;
 
@@ -528,12 +526,11 @@ int board_aoz1380_set_vbus_source_current_limit(int port,
 	return rv;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void sbu_fault_interrupt(enum ioex_signal signal)
@@ -571,10 +568,10 @@ void tcpc_alert_event(enum gpio_signal signal)
 static void reset_nct38xx_port(int port)
 {
 	int rv;
-	int saved_state[IOEX_COUNT] = {0};
+	int saved_state[IOEX_COUNT] = { 0 };
 	enum gpio_signal reset_gpio_l = (port == USBC_PORT_C0) ?
-						      GPIO_USB_C0_TCPC_RST_L :
-						      GPIO_USB_C1_TCPC_RST_L;
+						GPIO_USB_C0_TCPC_RST_L :
+						GPIO_USB_C1_TCPC_RST_L;
 
 	if (port < 0 || port > USBC_PORT_COUNT) {
 		CPRINTSUSB("%s invalid port %d", __func__, port);
@@ -877,9 +874,9 @@ static void baseboard_set_en_pwr_pcore(void)
 	 * EN_PWR_S0_R.
 	 */
 	gpio_set_level(GPIO_EN_PWR_PCORE_S0_R,
-					gpio_get_level(GPIO_PG_LPDDR4X_S3_OD) &&
-					gpio_get_level(GPIO_PG_GROUPC_S0_OD) &&
-					gpio_get_level(GPIO_EN_PWR_S0_R));
+		       gpio_get_level(GPIO_PG_LPDDR4X_S3_OD) &&
+			       gpio_get_level(GPIO_PG_GROUPC_S0_OD) &&
+			       gpio_get_level(GPIO_EN_PWR_S0_R));
 }
 
 void baseboard_en_pwr_pcore_signal(enum gpio_signal signal)
@@ -891,19 +888,17 @@ static void baseboard_check_groupc_low(void)
 {
 	/* Warn if we see unexpected sequencing here */
 	if (!gpio_get_level(GPIO_EN_PWR_S0_R) &&
-					gpio_get_level(GPIO_PG_GROUPC_S0_OD))
+	    gpio_get_level(GPIO_PG_GROUPC_S0_OD))
 		CPRINTSCHIP("WARN: PG_GROUPC_S0_OD high while EN_PWR_S0_R low");
-
 }
 DECLARE_DEFERRED(baseboard_check_groupc_low);
 
 void baseboard_en_pwr_s0(enum gpio_signal signal)
 {
-
 	/* EC must AND signals SLP_S3_L and PG_PWR_S5 */
 	gpio_set_level(GPIO_EN_PWR_S0_R,
-					gpio_get_level(GPIO_SLP_S3_L) &&
-					gpio_get_level(GPIO_PG_PWR_S5));
+		       gpio_get_level(GPIO_SLP_S3_L) &&
+			       gpio_get_level(GPIO_PG_PWR_S5));
 
 	/*
 	 * If we set EN_PWR_S0_R low, then check PG_GROUPC_S0_OD went low as
@@ -973,7 +968,7 @@ __override void power_board_handle_sleep_hang(enum sleep_hang_type hang_type)
 		ccprints("Consecutive(%d) hard sleep hangs detected!",
 			 hard_sleep_hang_count);
 		ccprints("AP will be force shutdown in %dms if hang persists",
-			  HARD_SLEEP_HANG_TIMEOUT);
+			 HARD_SLEEP_HANG_TIMEOUT);
 	}
 
 	hook_call_deferred(&board_handle_hard_sleep_hang_data,
@@ -999,7 +994,7 @@ static void board_handle_hard_sleep_hang(void)
 		/* If AP reset does not break hang, force a shutdown */
 		shutdown_on_hard_hang = true;
 		ccprints("AP will be shutdown in %dms if hang persists",
-			  HARD_SLEEP_HANG_TIMEOUT);
+			 HARD_SLEEP_HANG_TIMEOUT);
 		hook_call_deferred(&board_handle_hard_sleep_hang_data,
 				   HARD_SLEEP_HANG_TIMEOUT * MSEC);
 		chipset_reset(CHIPSET_RESET_HANG_REBOOT);
