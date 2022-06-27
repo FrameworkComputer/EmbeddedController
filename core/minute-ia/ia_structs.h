@@ -10,7 +10,6 @@
 
 #include "common.h"
 
-
 /**
  * IA32/x86 architecture related data structure definitions.
  * including: Global Descriptor Table (GDT), Local Descriptor Table (LDT),
@@ -24,16 +23,16 @@
 struct gdt_entry {
 	union {
 		struct {
-			uint32_t dword_lo;	/* lower dword */
-			uint32_t dword_up;	/* upper dword */
+			uint32_t dword_lo; /* lower dword */
+			uint32_t dword_up; /* upper dword */
 		};
 		struct {
-			uint16_t limit_lw;	/* limit (0:15) */
-			uint16_t base_addr_lw;	/* base address (0:15) */
-			uint8_t base_addr_mb;	/* base address (16:23) */
-			uint8_t flags;		/* flags */
-			uint8_t limit_ub;	/* limit (16:19) */
-			uint8_t base_addr_ub;	/* base address (24:31) */
+			uint16_t limit_lw; /* limit (0:15) */
+			uint16_t base_addr_lw; /* base address (0:15) */
+			uint8_t base_addr_mb; /* base address (16:23) */
+			uint8_t flags; /* flags */
+			uint8_t limit_ub; /* limit (16:19) */
+			uint8_t base_addr_ub; /* base address (24:31) */
 		};
 	};
 
@@ -43,32 +42,32 @@ typedef struct gdt_entry ldt_entry;
 
 /* GDT header */
 struct gdt_header {
-	uint16_t limit;			/* GDT limit size */
-	struct gdt_entry *entries;	/* pointer to GDT entries */
+	uint16_t limit; /* GDT limit size */
+	struct gdt_entry *entries; /* pointer to GDT entries */
 } __packed;
 
 /* IDT entry descriptor */
 struct idt_entry {
 	union {
 		struct {
-			uint32_t dword_lo;	/* lower dword */
-			uint32_t dword_up;	/* upper dword */
+			uint32_t dword_lo; /* lower dword */
+			uint32_t dword_up; /* upper dword */
 		};
 
 		struct {
-			uint16_t offset_lw;	/* offset (0:15) */
-			uint16_t seg_selector;	/* segment selector */
-			uint8_t zero;		/* must be set to zero */
-			uint8_t flags;		/* flags */
-			uint16_t offset_uw;	/* offset (16:31) */
+			uint16_t offset_lw; /* offset (0:15) */
+			uint16_t seg_selector; /* segment selector */
+			uint8_t zero; /* must be set to zero */
+			uint8_t flags; /* flags */
+			uint16_t offset_uw; /* offset (16:31) */
 		};
 	};
 } __packed;
 
 /* IDT header */
 struct idt_header {
-	uint16_t limit;			/* IDT limit size */
-	struct idt_entry *entries;	/* pointer to IDT entries */
+	uint16_t limit; /* IDT limit size */
+	struct idt_entry *entries; /* pointer to IDT entries */
 } __packed;
 
 /* TSS entry descriptor */
@@ -117,22 +116,22 @@ struct tss_entry {
 #endif
 
 /* code segment flag,  E/R, Present = 1, DPL = 0, Acesssed = 1 */
-#define GDT_DESC_CODE_FLAGS	(0x9B)
+#define GDT_DESC_CODE_FLAGS (0x9B)
 
 /* data segment flag,  R/W, Present = 1, DPL = 0, Acesssed = 1 */
-#define GDT_DESC_DATA_FLAGS	(0x93)
+#define GDT_DESC_DATA_FLAGS (0x93)
 
 /* TSS segment limit size */
-#define GDT_DESC_TSS_LIMIT	(0x67)
+#define GDT_DESC_TSS_LIMIT (0x67)
 
 /* TSS segment flag, Present = 1, DPL = 0, Acesssed = 1 */
-#define GDT_DESC_TSS_FLAGS	(0x89)
+#define GDT_DESC_TSS_FLAGS (0x89)
 
 /* LDT segment flag, Present = 1, DPL = 0 */
-#define GDT_DESC_LDT_FLAGS	(0x82)
+#define GDT_DESC_LDT_FLAGS (0x82)
 
 /* IDT descriptor flag, Present = 1, DPL = 0, 32-bit interrupt gate */
-#define IDT_DESC_FLAGS		(0x8E)
+#define IDT_DESC_FLAGS (0x8E)
 
 /**
  * macros helper to create a GDT entry descriptor
@@ -141,21 +140,20 @@ struct tss_entry {
  * limit: 32bit limit size of bytes (will covert to unit of 4096-byte pages)
  * flags: 8bit flags
  */
-#define GEN_GDT_DESC_LO(base, limit, flags)                                    \
-	((((limit) >> 12) & 0xFFFF) | (((base) & 0xFFFF) << 16))
+#define GEN_GDT_DESC_LO(base, limit, flags) \
+	((((limit) >> 12) & 0xFFFF) | (((base)&0xFFFF) << 16))
 
-#define GEN_GDT_DESC_UP(base, limit, flags)                                    \
-	((((base) >> 16) & 0xFF) | (((flags) << 8) & 0xFF00) |                 \
-	(((limit) >> 12) & 0xFF0000) | ((base) & 0xFF000000) | 0xc00000)
-
+#define GEN_GDT_DESC_UP(base, limit, flags)                    \
+	((((base) >> 16) & 0xFF) | (((flags) << 8) & 0xFF00) | \
+	 (((limit) >> 12) & 0xFF0000) | ((base)&0xFF000000) | 0xc00000)
 
 /**
  * macro helper to create a IDT entry descriptor
  */
-#define GEN_IDT_DESC_LO(offset, selector, flags)                               \
-	(((uint32_t)(offset) & 0xFFFF) | (((selector) & 0xFFFF) << 16))
+#define GEN_IDT_DESC_LO(offset, selector, flags) \
+	(((uint32_t)(offset)&0xFFFF) | (((selector)&0xFFFF) << 16))
 
-#define GEN_IDT_DESC_UP(offset, selector, flags)                               \
-	(((uint32_t)(offset) & 0xFFFF0000) | (((flags) & 0xFF) << 8))
+#define GEN_IDT_DESC_UP(offset, selector, flags) \
+	(((uint32_t)(offset)&0xFFFF0000) | (((flags)&0xFF) << 8))
 
 #endif /* __CROS_EC_IA_STRUCTS_H */
