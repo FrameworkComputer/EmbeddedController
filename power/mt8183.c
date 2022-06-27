@@ -30,29 +30,29 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* Input state flags */
-#define IN_PGOOD_PMIC		POWER_SIGNAL_MASK(PMIC_PWR_GOOD)
-#define IN_SUSPEND_ASSERTED	POWER_SIGNAL_MASK(AP_IN_S3_L)
+#define IN_PGOOD_PMIC POWER_SIGNAL_MASK(PMIC_PWR_GOOD)
+#define IN_SUSPEND_ASSERTED POWER_SIGNAL_MASK(AP_IN_S3_L)
 
 /* Rails required for S3 and S0 */
-#define IN_PGOOD_S0		(IN_PGOOD_PMIC)
-#define IN_PGOOD_S3		(IN_PGOOD_PMIC)
+#define IN_PGOOD_S0 (IN_PGOOD_PMIC)
+#define IN_PGOOD_S3 (IN_PGOOD_PMIC)
 
 /* All inputs in the right state for S0 */
-#define IN_ALL_S0		(IN_PGOOD_S0 & ~IN_SUSPEND_ASSERTED)
+#define IN_ALL_S0 (IN_PGOOD_S0 & ~IN_SUSPEND_ASSERTED)
 
 /* Long power key press to force shutdown in S0. go/crosdebug */
 #ifdef VARIANT_KUKUI_JACUZZI
-#define FORCED_SHUTDOWN_DELAY	(8 * SECOND)
+#define FORCED_SHUTDOWN_DELAY (8 * SECOND)
 #else
-#define FORCED_SHUTDOWN_DELAY	(10 * SECOND)
+#define FORCED_SHUTDOWN_DELAY (10 * SECOND)
 #endif
 
 /* Long power key press to boot from S5/G3 state. */
 #ifndef POWERBTN_BOOT_DELAY
-#define POWERBTN_BOOT_DELAY	(1 * SECOND)
+#define POWERBTN_BOOT_DELAY (1 * SECOND)
 #endif
 
 #define CHARGER_INITIALIZED_DELAY_MS 100
@@ -96,12 +96,10 @@ static const struct power_seq_op s5s3_power_seq[] = {
 };
 
 /* The power sequence for POWER_S3S0 */
-static const struct power_seq_op s3s0_power_seq[] = {
-};
+static const struct power_seq_op s3s0_power_seq[] = {};
 
 /* The power sequence for POWER_S0S3 */
-static const struct power_seq_op s0s3_power_seq[] = {
-};
+static const struct power_seq_op s0s3_power_seq[] = {};
 
 /* The power sequence for POWER_S3S5 */
 static const struct power_seq_op s3s5_power_seq[] = {
@@ -261,8 +259,7 @@ static void power_seq_run(const struct power_seq_op *power_seq_ops,
 	int i;
 
 	for (i = 0; i < op_count; i++) {
-		gpio_set_level(power_seq_ops[i].signal,
-			       power_seq_ops[i].level);
+		gpio_set_level(power_seq_ops[i].signal, power_seq_ops[i].level);
 		if (!power_seq_ops[i].delay)
 			continue;
 		msleep(power_seq_ops[i].delay);
@@ -351,8 +348,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0:
-		if (!power_has_signals(IN_PGOOD_S0) ||
-		    forcing_shutdown ||
+		if (!power_has_signals(IN_PGOOD_S0) || forcing_shutdown ||
 		    power_get_signals() & IN_SUSPEND_ASSERTED)
 			return POWER_S0S3;
 
@@ -525,7 +521,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_button_is_pressed()) {
 			forcing_shutdown = 1;
 			hook_call_deferred(&chipset_force_shutdown_button_data,
-					-1);
+					   -1);
 		}
 
 		return POWER_S3;
@@ -564,7 +560,7 @@ enum power_state power_handle_state(enum power_state state)
 			gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
 			msleep(5);
 			hook_call_deferred(&release_pmic_force_reset_data,
-				PMIC_FORCE_RESET_TIME);
+					   PMIC_FORCE_RESET_TIME);
 
 			return POWER_S5G3;
 		}
@@ -581,16 +577,15 @@ enum power_state power_handle_state(enum power_state state)
 }
 
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
-__override void power_chipset_handle_sleep_hang(
-		enum sleep_hang_type hang_type)
+__override void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
 	CPRINTS("Warning: Detected sleep hang! Waking host up!");
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 
-__override void power_chipset_handle_host_sleep_event(
-		enum host_sleep_event state,
-		struct host_sleep_event_context *ctx)
+__override void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx)
 {
 	CPRINTS("Handle sleep: %d", state);
 
@@ -611,7 +606,6 @@ __override void power_chipset_handle_host_sleep_event(
 		sleep_set_notify(SLEEP_NOTIFY_RESUME);
 		task_wake(TASK_ID_CHIPSET);
 		sleep_complete_resume(ctx);
-
 	}
 }
 #endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
