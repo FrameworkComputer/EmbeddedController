@@ -22,12 +22,9 @@
 
 #define BAT_LEVEL_PD_LIMIT 85
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
-enum battery_type {
-	BATTERY_SCUD = 0,
-	BATTERY_COUNT
-};
+enum battery_type { BATTERY_SCUD = 0, BATTERY_COUNT };
 
 static const struct battery_info info[] = {
 	[BATTERY_SCUD] = {
@@ -100,7 +97,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	else {
 		for (temp_zone = 0; temp_zone < TEMP_ZONE_COUNT; temp_zone++) {
 			if (bat_temp_c <
-				temp_zones[BATT_ID][temp_zone].temp_max)
+			    temp_zones[BATT_ID][temp_zone].temp_max)
 				break;
 		}
 	}
