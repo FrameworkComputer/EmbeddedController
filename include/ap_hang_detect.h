@@ -17,4 +17,4 @@
  */
 void hang_detect_stop_on_host_command(void);
 
-#endif  /* __CROS_EC_AP_HANG_DETECT_H */
+#endif /* __CROS_EC_AP_HANG_DETECT_H */
