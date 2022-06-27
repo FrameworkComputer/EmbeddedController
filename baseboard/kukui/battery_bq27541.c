@@ -25,12 +25,9 @@
 
 #define BAT_LEVEL_PD_LIMIT 85
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
-enum battery_type {
-	BATTERY_CPT = 0,
-	BATTERY_COUNT
-};
+enum battery_type { BATTERY_CPT = 0, BATTERY_COUNT };
 
 static const struct battery_info info[] = {
 	[BATTERY_CPT] = {
@@ -105,7 +102,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	else {
 		for (temp_zone = 0; temp_zone < TEMP_ZONE_COUNT; temp_zone++) {
 			if (bat_temp_c <
-				temp_zones[BATT_ID][temp_zone].temp_max)
+			    temp_zones[BATT_ID][temp_zone].temp_max)
 				break;
 		}
 	}
@@ -143,7 +140,7 @@ int charger_profile_override(struct charge_state_data *curr)
 		rcv_cycle = 150;
 	/* Check SOH to decrease charging voltage. */
 	if (!battery_full_charge_capacity(&full_cap) &&
-		!battery_design_capacity(&design_cap))
+	    !battery_design_capacity(&design_cap))
 		soh = ((full_cap * 100) / design_cap);
 	if (soh > 70 && soh <= 75)
 		rcv_soh = 50;
@@ -159,15 +156,13 @@ int charger_profile_override(struct charge_state_data *curr)
 	curr->requested_voltage -= rcv;
 
 	/* Should not keep charging voltage > 4250mV for 48hrs. */
-	if ((curr->state == ST_DISCHARGE) ||
-		curr->chg.voltage < 4250) {
+	if ((curr->state == ST_DISCHARGE) || curr->chg.voltage < 4250) {
 		deadline_48.val = 0;
-	/* Starting count 48hours */
-	} else if (curr->state == ST_CHARGE ||
-		curr->state == ST_PRECHARGE) {
+		/* Starting count 48hours */
+	} else if (curr->state == ST_CHARGE || curr->state == ST_PRECHARGE) {
 		if (deadline_48.val == 0)
 			deadline_48.val = get_time().val +
-				CHARGER_LIMIT_TIMEOUT_HOURS * HOUR;
+					  CHARGER_LIMIT_TIMEOUT_HOURS * HOUR;
 		/* If charging voltage keep > 4250 for 48hrs,
 		 * set charging voltage = 4250
 		 */
@@ -177,14 +172,13 @@ int charger_profile_override(struct charge_state_data *curr)
 	/* Should not keeep battery voltage > 4100mV and
 	 * battery temperature > 45C for two hour
 	 */
-	if (curr->state == ST_DISCHARGE ||
-		curr->batt.voltage < 4100 ||
-		bat_temp_c < 450) {
+	if (curr->state == ST_DISCHARGE || curr->batt.voltage < 4100 ||
+	    bat_temp_c < 450) {
 		deadline_2.val = 0;
-	} else if (curr->state == ST_CHARGE ||
-		curr->state == ST_PRECHARGE) {
+	} else if (curr->state == ST_CHARGE || curr->state == ST_PRECHARGE) {
 		if (deadline_2.val == 0)
-			deadline_2.val = get_time().val +
+			deadline_2.val =
+				get_time().val +
 				CHARGER_LIMIT_TIMEOUT_HOURS_TEMP * HOUR;
 		else if (timestamp_expired(deadline_2, NULL)) {
 			/* Set discharge and charging voltage = 4100mV */
@@ -216,7 +210,7 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 
 int get_battery_manufacturer_name(char *dest, int size)
 {
-	static const char * const name[] = {
+	static const char *const name[] = {
 		[BATTERY_CPT] = "AS1XXXD3Ka",
 	};
 	ASSERT(dest);
