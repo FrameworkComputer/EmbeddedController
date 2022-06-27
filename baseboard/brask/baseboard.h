@@ -11,16 +11,16 @@
 /*
  * By default, enable all console messages excepted HC
  */
-#define CC_DEFAULT     (CC_ALL & ~(BIT(CC_HOSTCMD)))
+#define CC_DEFAULT (CC_ALL & ~(BIT(CC_HOSTCMD)))
 
 /* NPCX9 config */
-#define NPCX9_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
+#define NPCX9_PWM1_SEL 1 /* GPIO C2 is used as PWM1. */
 /*
  * This defines which pads (GPIO10/11 or GPIO64/65) are connected to
  * the "UART1" (NPCX_UART_PORT0) controller when used for
  * CONSOLE_UART.
  */
-#define NPCX_UART_MODULE2	1 /* 1:GPIO64/65 for UART1 */
+#define NPCX_UART_MODULE2 1 /* 1:GPIO64/65 for UART1 */
 
 /* CrOS Board Info */
 #define CONFIG_CBI_EEPROM
@@ -59,7 +59,7 @@
 /* Support Barrel Jack */
 #undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
 #define CONFIG_DEDICATED_CHARGE_PORT_COUNT 1
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		45000
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 45000
 
 /* Chipset config */
 #define CONFIG_CHIPSET_ALDERLAKE_SLG4BD44540
@@ -87,7 +87,7 @@
 /* ADL has new low-power features that requires extra-wide virtual wire
  * pulses. The EDS specifies 100 microseconds. */
 #undef CONFIG_ESPI_DEFAULT_VW_WIDTH_US
-#define CONFIG_ESPI_DEFAULT_VW_WIDTH_US	100
+#define CONFIG_ESPI_DEFAULT_VW_WIDTH_US 100
 
 /* Buttons */
 #define CONFIG_DEDICATED_RECOVERY_BUTTON
@@ -137,7 +137,7 @@
 #define CONFIG_USB_PD_TCPM_NCT38XX
 
 #define CONFIG_USB_PD_TCPM_MUX
-#define CONFIG_HOSTCMD_PD_CONTROL		/* Needed for TCPC FW update */
+#define CONFIG_HOSTCMD_PD_CONTROL /* Needed for TCPC FW update */
 #define CONFIG_CMD_USB_PD_PE
 
 /*
@@ -145,7 +145,7 @@
  * with non-PD chargers.  Override the default low-power mode exit delay.
  */
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
-#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE	(50*MSEC)
+#define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (50 * MSEC)
 
 /* Enable USB3.2 DRD */
 #define CONFIG_USB_PD_USB32_DRD
