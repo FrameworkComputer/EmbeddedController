@@ -14,8 +14,8 @@
 #include "registers.h"
 #include "timer.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #ifndef CONFIG_CHARGER_RUNTIME_CONFIG
 #if defined(VARIANT_KUKUI_CHARGER_MT6370)
@@ -54,11 +54,11 @@ void board_config_pre_init(void)
 	 * Ch4: USART1_TX / Ch5: USART1_RX (1000)
 	 * Ch6: SPI2_RX / Ch7: SPI2_TX (0011)
 	 */
-	STM32_DMA_CSELR(STM32_DMAC_CH4) = (8 << 12) | (8 << 16) |
-					  (3 << 20) | (3 << 24);
+	STM32_DMA_CSELR(STM32_DMAC_CH4) = (8 << 12) | (8 << 16) | (3 << 20) |
+					  (3 << 24);
 
 #elif defined(VARIANT_KUKUI_EC_STM32L431)
-#ifdef	CONFIG_DMA
+#ifdef CONFIG_DMA
 	dma_init();
 #endif
 	/*
@@ -102,43 +102,43 @@ enum kukui_board_version {
 /* map from kukui_board_version to board id voltage in mv */
 #ifdef VARIANT_KUKUI_EC_IT81202
 const int16_t kukui_board_id_map[] = {
-	136,   /* 51.1K , 2.2K(gru 3.3K) ohm */
-	388,   /* 51.1k , 6.8K ohm */
-	584,   /* 51.1K , 11K ohm */
-	785,   /* 56K   , 17.4K ohm */
-	993,   /* 51.1K , 22K ohm */
-	1221,  /* 51.1K , 30K ohm */
-	1433,  /* 51.1K , 39.2K ohm */
-	1650,  /* 56K   , 56K ohm */
-	1876,  /* 47K   , 61.9K ohm */
-	2084,  /* 47K   , 80.6K ohm */
-	2273,  /* 56K   , 124K ohm */
-	2461,  /* 51.1K , 150K ohm */
-	2672,  /* 47K   , 200K ohm */
-	2889,  /* 47K   , 330K ohm */
-	3086,  /* 47K   , 680K ohm */
-	3300,  /* 56K   , NC */
+	136, /* 51.1K , 2.2K(gru 3.3K) ohm */
+	388, /* 51.1k , 6.8K ohm */
+	584, /* 51.1K , 11K ohm */
+	785, /* 56K   , 17.4K ohm */
+	993, /* 51.1K , 22K ohm */
+	1221, /* 51.1K , 30K ohm */
+	1433, /* 51.1K , 39.2K ohm */
+	1650, /* 56K   , 56K ohm */
+	1876, /* 47K   , 61.9K ohm */
+	2084, /* 47K   , 80.6K ohm */
+	2273, /* 56K   , 124K ohm */
+	2461, /* 51.1K , 150K ohm */
+	2672, /* 47K   , 200K ohm */
+	2889, /* 47K   , 330K ohm */
+	3086, /* 47K   , 680K ohm */
+	3300, /* 56K   , NC */
 };
 
 #define THRESHOLD_MV 103 /* Simply assume 3300/16/2 */
 #else
 const int16_t kukui_board_id_map[] = {
-	109,   /* 51.1K , 2.2K(gru 3.3K) ohm */
-	211,   /* 51.1k , 6.8K ohm */
-	319,   /* 51.1K , 11K ohm */
-	427,   /* 56K   , 17.4K ohm */
-	542,   /* 51.1K , 22K ohm */
-	666,   /* 51.1K , 30K ohm */
-	781,   /* 51.1K , 39.2K ohm */
-	900,   /* 56K   , 56K ohm */
-	1023,  /* 47K   , 61.9K ohm */
-	1137,  /* 47K   , 80.6K ohm */
-	1240,  /* 56K   , 124K ohm */
-	1343,  /* 51.1K , 150K ohm */
-	1457,  /* 47K   , 200K ohm */
-	1576,  /* 47K   , 330K ohm */
-	1684,  /* 47K   , 680K ohm */
-	1800,  /* 56K   , NC */
+	109, /* 51.1K , 2.2K(gru 3.3K) ohm */
+	211, /* 51.1k , 6.8K ohm */
+	319, /* 51.1K , 11K ohm */
+	427, /* 56K   , 17.4K ohm */
+	542, /* 51.1K , 22K ohm */
+	666, /* 51.1K , 30K ohm */
+	781, /* 51.1K , 39.2K ohm */
+	900, /* 56K   , 56K ohm */
+	1023, /* 47K   , 61.9K ohm */
+	1137, /* 47K   , 80.6K ohm */
+	1240, /* 56K   , 124K ohm */
+	1343, /* 51.1K , 150K ohm */
+	1457, /* 47K   , 200K ohm */
+	1576, /* 47K   , 330K ohm */
+	1684, /* 47K   , 680K ohm */
+	1800, /* 56K   , NC */
 };
 
 #define THRESHOLD_MV 56 /* Simply assume 1800/16/2 */
@@ -178,7 +178,7 @@ int board_get_version(void)
 	 * for this board.
 	 */
 	if (CONFIG_DEDICATED_CHARGE_PORT_COUNT == 0 &&
-			version != BOARD_VERSION_UNKNOWN)
+	    version != BOARD_VERSION_UNKNOWN)
 		adc_disable();
 #endif
 
@@ -216,8 +216,7 @@ __override void lid_angle_peripheral_enable(int enable)
 		 * ignore input devices or not.
 		 */
 		if (!chipset_in_s0)
-			keyboard_scan_enable(0,
-					     KB_SCAN_DISABLE_LID_ANGLE);
+			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
 	}
 }
 #endif
