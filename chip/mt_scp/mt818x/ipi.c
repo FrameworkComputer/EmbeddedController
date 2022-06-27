@@ -196,7 +196,6 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 		return EC_ERROR_BUSY;
 	}
 
-
 	scp_send_obj->id = id;
 	scp_send_obj->len = len;
 	memcpy(scp_send_obj->buffer, buf, len);
