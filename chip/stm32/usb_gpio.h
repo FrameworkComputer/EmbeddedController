@@ -55,68 +55,61 @@ struct usb_gpio_config {
  * ENDPOINT is the index of the USB bulk endpoint used for receiving and
  * transmitting bytes.
  */
-#define USB_GPIO_CONFIG(NAME,						\
-			GPIO_LIST,					\
-			INTERFACE,					\
-			ENDPOINT)					\
-	BUILD_ASSERT(ARRAY_SIZE(GPIO_LIST) <= 32);			\
-	static usb_uint CONCAT2(NAME, _ep_rx_buffer)[USB_GPIO_RX_PACKET_SIZE / 2] __usb_ram;	\
-	static usb_uint CONCAT2(NAME, _ep_tx_buffer)[USB_GPIO_TX_PACKET_SIZE / 2] __usb_ram;	\
-	struct usb_gpio_config const NAME = {				\
-		.state     = &((struct usb_gpio_state){}),		\
-		.endpoint  = ENDPOINT,					\
-		.rx_ram    = CONCAT2(NAME, _ep_rx_buffer),		\
-		.tx_ram    = CONCAT2(NAME, _ep_tx_buffer),		\
-		.gpios     = GPIO_LIST,					\
-		.num_gpios = ARRAY_SIZE(GPIO_LIST),			\
-	};								\
-	const struct usb_interface_descriptor				\
-	USB_IFACE_DESC(INTERFACE) = {					\
-		.bLength            = USB_DT_INTERFACE_SIZE,		\
-		.bDescriptorType    = USB_DT_INTERFACE,			\
-		.bInterfaceNumber   = INTERFACE,			\
-		.bAlternateSetting  = 0,				\
-		.bNumEndpoints      = 2,				\
-		.bInterfaceClass    = USB_CLASS_VENDOR_SPEC,		\
-		.bInterfaceSubClass = 0,				\
-		.bInterfaceProtocol = 0,				\
-		.iInterface         = 0,				\
-	};								\
-	const struct usb_endpoint_descriptor				\
-	USB_EP_DESC(INTERFACE, 0) = {					\
-		.bLength          = USB_DT_ENDPOINT_SIZE,		\
-		.bDescriptorType  = USB_DT_ENDPOINT,			\
-		.bEndpointAddress = 0x80 | ENDPOINT,			\
-		.bmAttributes     = 0x02 /* Bulk IN */,			\
-		.wMaxPacketSize   = USB_GPIO_TX_PACKET_SIZE,		\
-		.bInterval        = 10,					\
-	};								\
-	const struct usb_endpoint_descriptor				\
-	USB_EP_DESC(INTERFACE, 1) = {					\
-		.bLength          = USB_DT_ENDPOINT_SIZE,		\
-		.bDescriptorType  = USB_DT_ENDPOINT,			\
-		.bEndpointAddress = ENDPOINT,				\
-		.bmAttributes     = 0x02 /* Bulk OUT */,		\
-		.wMaxPacketSize   = USB_GPIO_RX_PACKET_SIZE,		\
-		.bInterval        = 0,					\
-	};								\
-	static void CONCAT2(NAME, _ep_tx)(void)				\
-	{								\
-		usb_gpio_tx(&NAME);					\
-	}								\
-	static void CONCAT2(NAME, _ep_rx)(void)				\
-	{								\
-		usb_gpio_rx(&NAME);					\
-	}								\
-	static void CONCAT2(NAME, _ep_event)(enum usb_ep_event evt)	\
-	{								\
-		usb_gpio_event(&NAME, evt);				\
-	}								\
-	USB_DECLARE_EP(ENDPOINT,					\
-		       CONCAT2(NAME, _ep_tx),				\
-		       CONCAT2(NAME, _ep_rx),				\
+#define USB_GPIO_CONFIG(NAME, GPIO_LIST, INTERFACE, ENDPOINT)                  \
+	BUILD_ASSERT(ARRAY_SIZE(GPIO_LIST) <= 32);                             \
+	static usb_uint CONCAT2(                                               \
+		NAME, _ep_rx_buffer)[USB_GPIO_RX_PACKET_SIZE / 2] __usb_ram;   \
+	static usb_uint CONCAT2(                                               \
+		NAME, _ep_tx_buffer)[USB_GPIO_TX_PACKET_SIZE / 2] __usb_ram;   \
+	struct usb_gpio_config const NAME = {                                  \
+		.state = &((struct usb_gpio_state){}),                         \
+		.endpoint = ENDPOINT,                                          \
+		.rx_ram = CONCAT2(NAME, _ep_rx_buffer),                        \
+		.tx_ram = CONCAT2(NAME, _ep_tx_buffer),                        \
+		.gpios = GPIO_LIST,                                            \
+		.num_gpios = ARRAY_SIZE(GPIO_LIST),                            \
+	};                                                                     \
+	const struct usb_interface_descriptor USB_IFACE_DESC(INTERFACE) = {    \
+		.bLength = USB_DT_INTERFACE_SIZE,                              \
+		.bDescriptorType = USB_DT_INTERFACE,                           \
+		.bInterfaceNumber = INTERFACE,                                 \
+		.bAlternateSetting = 0,                                        \
+		.bNumEndpoints = 2,                                            \
+		.bInterfaceClass = USB_CLASS_VENDOR_SPEC,                      \
+		.bInterfaceSubClass = 0,                                       \
+		.bInterfaceProtocol = 0,                                       \
+		.iInterface = 0,                                               \
+	};                                                                     \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 0) = {     \
+		.bLength = USB_DT_ENDPOINT_SIZE,                               \
+		.bDescriptorType = USB_DT_ENDPOINT,                            \
+		.bEndpointAddress = 0x80 | ENDPOINT,                           \
+		.bmAttributes = 0x02 /* Bulk IN */,                            \
+		.wMaxPacketSize = USB_GPIO_TX_PACKET_SIZE,                     \
+		.bInterval = 10,                                               \
+	};                                                                     \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 1) = {     \
+		.bLength = USB_DT_ENDPOINT_SIZE,                               \
+		.bDescriptorType = USB_DT_ENDPOINT,                            \
+		.bEndpointAddress = ENDPOINT,                                  \
+		.bmAttributes = 0x02 /* Bulk OUT */,                           \
+		.wMaxPacketSize = USB_GPIO_RX_PACKET_SIZE,                     \
+		.bInterval = 0,                                                \
+	};                                                                     \
+	static void CONCAT2(NAME, _ep_tx)(void)                                \
+	{                                                                      \
+		usb_gpio_tx(&NAME);                                            \
+	}                                                                      \
+	static void CONCAT2(NAME, _ep_rx)(void)                                \
+	{                                                                      \
+		usb_gpio_rx(&NAME);                                            \
+	}                                                                      \
+	static void CONCAT2(NAME, _ep_event)(enum usb_ep_event evt)            \
+	{                                                                      \
+		usb_gpio_event(&NAME, evt);                                    \
+	}                                                                      \
+	USB_DECLARE_EP(ENDPOINT, CONCAT2(NAME, _ep_tx), CONCAT2(NAME, _ep_rx), \
 		       CONCAT2(NAME, _ep_event))
-
 
 /*
  * These functions are used by the trampoline functions defined above to
