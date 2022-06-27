@@ -35,24 +35,24 @@ static int done_uart_init_yet;
 
 #define UART_BAUD 115200
 
-#define UART_ER_IF                                                             \
-	(MXC_F_UART_INT_FL_RX_FRAME_ERROR |                                    \
+#define UART_ER_IF                          \
+	(MXC_F_UART_INT_FL_RX_FRAME_ERROR | \
 	 MXC_F_UART_INT_FL_RX_PARITY_ERROR | MXC_F_UART_INT_FL_RX_OVERRUN)
 
-#define UART_ER_IE                                                             \
-	(MXC_F_UART_INT_EN_RX_FRAME_ERROR |                                    \
+#define UART_ER_IE                          \
+	(MXC_F_UART_INT_EN_RX_FRAME_ERROR | \
 	 MXC_F_UART_INT_EN_RX_PARITY_ERROR | MXC_F_UART_INT_EN_RX_OVERRUN)
 
 #define UART_RX_IF (UART_ER_IF | MXC_F_UART_INT_FL_RX_FIFO_THRESH)
 
 #define UART_RX_IE (UART_ER_IE | MXC_F_UART_INT_EN_RX_FIFO_THRESH)
 
-#define UART_TX_IF                                                             \
-	(UART_ER_IF | MXC_F_UART_INT_FL_TX_FIFO_ALMOST_EMPTY |                 \
+#define UART_TX_IF                                             \
+	(UART_ER_IF | MXC_F_UART_INT_FL_TX_FIFO_ALMOST_EMPTY | \
 	 MXC_F_UART_INT_FL_TX_FIFO_THRESH)
 
-#define UART_TX_IE                                                             \
-	(UART_ER_IE | MXC_F_UART_INT_EN_TX_FIFO_ALMOST_EMPTY |                 \
+#define UART_TX_IE                                             \
+	(UART_ER_IE | MXC_F_UART_INT_EN_TX_FIFO_ALMOST_EMPTY | \
 	 MXC_F_UART_INT_EN_TX_FIFO_THRESH)
 
 #define UART_RX_THRESHOLD_LEVEL 1
@@ -242,19 +242,20 @@ void uart_init(void)
 	gpio_config_module(MODULE_UART, 1);
 
 	/* Drain FIFOs and enable UART and set configuration */
-	MXC_UART->ctrl = (MXC_F_UART_CTRL_ENABLE | MXC_S_UART_CTRL_CHAR_SIZE_8 | 1);
+	MXC_UART->ctrl =
+		(MXC_F_UART_CTRL_ENABLE | MXC_S_UART_CTRL_CHAR_SIZE_8 | 1);
 
 	/* Set the baud rate */
-	div = PeripheralClock / (UART_BAUD); 	// constant part of DIV (i.e. DIV
-					     					// * (Baudrate*factor_int))
+	div = PeripheralClock / (UART_BAUD); // constant part of DIV (i.e. DIV
+					     // * (Baudrate*factor_int))
 
 	do {
 		factor += 1;
-		baud0 = div >> (7 - factor); 	// divide by 128,64,32,16 to
-					     				// extract integer part
-		baud1 = ((div << factor) -
-			 (baud0 << 7)); 			// subtract factor corrected div -
-										// integer parts
+		baud0 = div >> (7 - factor); // divide by 128,64,32,16 to
+					     // extract integer part
+		baud1 = ((div << factor) - (baud0 << 7)); // subtract factor
+							  // corrected div -
+							  // integer parts
 
 	} while ((baud0 == 0) && (factor < 4));
 
@@ -262,7 +263,7 @@ void uart_init(void)
 	MXC_UART->baud1 = baud1;
 
 	MXC_UART->thresh_ctrl = UART_RX_THRESHOLD_LEVEL
-			    << MXC_F_UART_THRESH_CTRL_RX_FIFO_THRESH_POS;
+				<< MXC_F_UART_THRESH_CTRL_RX_FIFO_THRESH_POS;
 
 	/* Clear Interrupt Flags */
 	flags = MXC_UART->int_fl;
