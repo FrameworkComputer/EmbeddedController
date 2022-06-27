@@ -47,34 +47,29 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
-	},
-	[ADC_TEMP_SENSOR_SOC] = {
-		"SOC", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
-	},
-	[ADC_VBUS] = {
-		"VBUS", NPCX_ADC_CH8, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0
-	},
-	[ADC_SKU_ID1] = {
-		"SKU1", NPCX_ADC_CH9, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
-	},
-	[ADC_SKU_ID2] = {
-		"SKU2", NPCX_ADC_CH4, ADC_MAX_VOLT, ADC_READ_MAX+1, 0
-	},
+	[ADC_TEMP_SENSOR_CHARGER] = { "CHARGER", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				      ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_SOC] = { "SOC", NPCX_ADC_CH1, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_VBUS] = { "VBUS", NPCX_ADC_CH8, ADC_MAX_VOLT * 10,
+		       ADC_READ_MAX + 1, 0 },
+	[ADC_SKU_ID1] = { "SKU1", NPCX_ADC_CH9, ADC_MAX_VOLT, ADC_READ_MAX + 1,
+			  0 },
+	[ADC_SKU_ID2] = { "SKU2", NPCX_ADC_CH4, ADC_MAX_VOLT, ADC_READ_MAX + 1,
+			  0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_PCH_SLP_S3_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED"},
-	{GPIO_PCH_SLP_S5_L,	POWER_SIGNAL_ACTIVE_HIGH, "SLP_S5_DEASSERTED"},
-	{GPIO_S0_PGOOD,		POWER_SIGNAL_ACTIVE_HIGH, "S0_PGOOD"},
-	{GPIO_S5_PGOOD,		POWER_SIGNAL_ACTIVE_HIGH, "S5_PGOOD"},
+	{ GPIO_PCH_SLP_S3_L, POWER_SIGNAL_ACTIVE_HIGH, "SLP_S3_DEASSERTED" },
+	{ GPIO_PCH_SLP_S5_L, POWER_SIGNAL_ACTIVE_HIGH, "SLP_S5_DEASSERTED" },
+	{ GPIO_S0_PGOOD, POWER_SIGNAL_ACTIVE_HIGH, "S0_PGOOD" },
+	{ GPIO_S5_PGOOD, POWER_SIGNAL_ACTIVE_HIGH, "S5_PGOOD" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
@@ -156,7 +151,7 @@ void board_tcpc_init(void)
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
@@ -278,8 +273,8 @@ static uint32_t sku_id;
 static int ps8751_tune_mux(const struct usb_mux *me)
 {
 	/* Tune USB mux registers for treeya's port 1 Rx measurement */
-	if (((sku_id >= 0xa0) && (sku_id <= 0xaf)) ||
-	   sku_id == 0xbe || sku_id == 0xbf)
+	if (((sku_id >= 0xa0) && (sku_id <= 0xaf)) || sku_id == 0xbe ||
+	    sku_id == 0xbf)
 		mux_write(me, PS8XXX_REG_MUX_USB_C2SS_EQ, 0x40);
 
 	return EC_SUCCESS;
@@ -308,16 +303,12 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 struct ppc_config_t ppc_chips[] = {
-	{
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-	{
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	{ .i2c_port = I2C_PORT_TCPC0,
+	  .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+	  .drv = &sn5s330_drv },
+	{ .i2c_port = I2C_PORT_TCPC1,
+	  .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+	  .drv = &sn5s330_drv },
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -338,8 +329,8 @@ int ppc_get_alert_status(int port)
 
 void board_overcurrent_event(int port, int is_overcurrented)
 {
-	enum gpio_signal signal = (port == 0) ? GPIO_USB_C0_OC_L
-					      : GPIO_USB_C1_OC_L;
+	enum gpio_signal signal = (port == 0) ? GPIO_USB_C0_OC_L :
+						GPIO_USB_C1_OC_L;
 	/* Note that the levels are inverted because the pin is active low. */
 	int lvl = is_overcurrented ? 0 : 1;
 
@@ -371,7 +362,6 @@ const struct charger_config_t chg_chips[] = {
 	},
 };
 
-
 const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A0_5V,
 	GPIO_EN_USB_A1_5V,
@@ -393,7 +383,6 @@ static void baseboard_chipset_resume(void)
 {
 	/* Allow display backlight to turn on. See above backlight comment */
 	gpio_set_level(GPIO_ENABLE_BACKLIGHT_L, 0);
-
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
@@ -469,17 +458,16 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/*
 	 * Limit the input current to 95% negotiated limit,
 	 * to account for the charger chip margin.
 	 */
 	charge_ma = charge_ma * 95 / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /* Keyboard scan setting */
@@ -513,19 +501,19 @@ __override struct keyboard_scan_config keyscan_config = {
  * Murata page for part NCP15WB473F03RC. Vdd=3.3V, R=30.9Kohm.
  */
 static const struct thermistor_data_pair thermistor_data[] = {
-	{ 2761 / THERMISTOR_SCALING_FACTOR, 0},
-	{ 2492 / THERMISTOR_SCALING_FACTOR, 10},
-	{ 2167 / THERMISTOR_SCALING_FACTOR, 20},
-	{ 1812 / THERMISTOR_SCALING_FACTOR, 30},
-	{ 1462 / THERMISTOR_SCALING_FACTOR, 40},
-	{ 1146 / THERMISTOR_SCALING_FACTOR, 50},
-	{ 878 / THERMISTOR_SCALING_FACTOR, 60},
-	{ 665 / THERMISTOR_SCALING_FACTOR, 70},
-	{ 500 / THERMISTOR_SCALING_FACTOR, 80},
-	{ 434 / THERMISTOR_SCALING_FACTOR, 85},
-	{ 376 / THERMISTOR_SCALING_FACTOR, 90},
-	{ 326 / THERMISTOR_SCALING_FACTOR, 95},
-	{ 283 / THERMISTOR_SCALING_FACTOR, 100}
+	{ 2761 / THERMISTOR_SCALING_FACTOR, 0 },
+	{ 2492 / THERMISTOR_SCALING_FACTOR, 10 },
+	{ 2167 / THERMISTOR_SCALING_FACTOR, 20 },
+	{ 1812 / THERMISTOR_SCALING_FACTOR, 30 },
+	{ 1462 / THERMISTOR_SCALING_FACTOR, 40 },
+	{ 1146 / THERMISTOR_SCALING_FACTOR, 50 },
+	{ 878 / THERMISTOR_SCALING_FACTOR, 60 },
+	{ 665 / THERMISTOR_SCALING_FACTOR, 70 },
+	{ 500 / THERMISTOR_SCALING_FACTOR, 80 },
+	{ 434 / THERMISTOR_SCALING_FACTOR, 85 },
+	{ 376 / THERMISTOR_SCALING_FACTOR, 90 },
+	{ 326 / THERMISTOR_SCALING_FACTOR, 95 },
+	{ 283 / THERMISTOR_SCALING_FACTOR, 100 }
 };
 
 static const struct thermistor_info thermistor_info = {
@@ -537,8 +525,8 @@ static const struct thermistor_info thermistor_info = {
 static int board_get_temp(int idx, int *temp_k)
 {
 	/* idx is the sensor index set below in temp_sensors[] */
-	int mv = adc_read_channel(
-		idx ? ADC_TEMP_SENSOR_SOC : ADC_TEMP_SENSOR_CHARGER);
+	int mv = adc_read_channel(idx ? ADC_TEMP_SENSOR_SOC :
+					ADC_TEMP_SENSOR_CHARGER);
 	int temp_c;
 
 	if (mv < 0)
@@ -550,9 +538,9 @@ static int board_get_temp(int idx, int *temp_k)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0},
-	{"SOC", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 1},
-	{"CPU", TEMP_SENSOR_TYPE_CPU, sb_tsi_get_val, 0},
+	{ "Charger", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 0 },
+	{ "SOC", TEMP_SENSOR_TYPE_BOARD, board_get_temp, 1 },
+	{ "CPU", TEMP_SENSOR_TYPE_CPU, sb_tsi_get_val, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -655,11 +643,11 @@ __override void lid_angle_peripheral_enable(int enable)
 static const int sku_thresh_mv[] = {
 	/* Vin = 3.3V, Ideal voltage, R2 values listed below */
 	/* R1 = 51.1 kOhm */
-	200,  /* 124 mV, 2.0 Kohm */
-	366,  /* 278 mV, 4.7 Kohm */
-	550,  /* 456 mV, 8.2  Kohm */
-	752,  /* 644 mV, 12.4 Kohm */
-	927,  /* 860 mV, 18.0 Kohm */
+	200, /* 124 mV, 2.0 Kohm */
+	366, /* 278 mV, 4.7 Kohm */
+	550, /* 456 mV, 8.2  Kohm */
+	752, /* 644 mV, 12.4 Kohm */
+	927, /* 860 mV, 18.0 Kohm */
 	1073, /* 993 mV, 22.0 Kohm */
 	1235, /* 1152 mV, 27.4 Kohm */
 	1386, /* 1318 mV, 34.0 Kohm */
@@ -706,10 +694,9 @@ static uint32_t board_get_adc_sku_id(void)
 
 static int board_get_gpio_board_version(void)
 {
-	return
-		(!!gpio_get_level(GPIO_BOARD_VERSION1) << 0) |
-		(!!gpio_get_level(GPIO_BOARD_VERSION2) << 1) |
-		(!!gpio_get_level(GPIO_BOARD_VERSION3) << 2);
+	return (!!gpio_get_level(GPIO_BOARD_VERSION1) << 0) |
+	       (!!gpio_get_level(GPIO_BOARD_VERSION2) << 1) |
+	       (!!gpio_get_level(GPIO_BOARD_VERSION3) << 2);
 }
 
 static int board_version;
@@ -767,8 +754,8 @@ int board_is_convertible(void)
 	/* Kasumi360: 82 */
 	/* Treeya360: a8-af, be, bf*/
 	return (sku_id == 6 || sku_id == 82 ||
-		((sku_id >= 0xa8) && (sku_id <= 0xaf)) ||
-		sku_id == 0xbe || sku_id == 0xbf);
+		((sku_id >= 0xa8) && (sku_id <= 0xaf)) || sku_id == 0xbe ||
+		sku_id == 0xbf);
 }
 
 int board_is_lid_angle_tablet_mode(void)
@@ -782,13 +769,11 @@ __override uint32_t board_override_feature_flags0(uint32_t flags0)
 	 * Remove keyboard backlight feature for devices that don't support it.
 	 * All Treeya and Treeya360 models do not support keyboard backlight.
 	 */
-	if (sku_id == 16 || sku_id == 17 ||
-	    sku_id == 20 || sku_id == 21 ||
-	    sku_id == 32 || sku_id == 33 ||
-	    sku_id == 40 || sku_id == 41 ||
+	if (sku_id == 16 || sku_id == 17 || sku_id == 20 || sku_id == 21 ||
+	    sku_id == 32 || sku_id == 33 || sku_id == 40 || sku_id == 41 ||
 	    sku_id == 44 || sku_id == 45 ||
-	    ((sku_id >= 0xa0) && (sku_id <= 0xaf)) ||
-		sku_id == 0xbe || sku_id == 0xbf)
+	    ((sku_id >= 0xa0) && (sku_id <= 0xaf)) || sku_id == 0xbe ||
+	    sku_id == 0xbf)
 		return (flags0 & ~EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB));
 	else
 		return flags0;
