@@ -33,7 +33,7 @@ void typec_set_sbu(int port, bool enable);
  * @param rp Pull-up values to be aplied as a SRC to advertise current limits
  */
 __override_proto void typec_set_source_current_limit(int port,
-						enum tcpc_rp_value rp);
+						     enum tcpc_rp_value rp);
 
 /**
  * Turn on/off the VCONN FET
