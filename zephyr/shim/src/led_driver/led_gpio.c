@@ -17,46 +17,38 @@
 
 LOG_MODULE_REGISTER(gpio_led, LOG_LEVEL_ERR);
 
-#define SET_PIN(node_id, prop, i)					\
-{									\
-	.signal = GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, i)),	\
-	.val = DT_PHA_BY_IDX(node_id, prop, i, value)			\
-},
+#define SET_PIN(node_id, prop, i)                                     \
+	{ .signal = GPIO_SIGNAL(DT_PHANDLE_BY_IDX(node_id, prop, i)), \
+	  .val = DT_PHA_BY_IDX(node_id, prop, i, value) },
 
-#define SET_GPIO_PIN(node_id)						\
-{									\
-	DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN)		\
-};
+#define SET_GPIO_PIN(node_id) \
+	{ DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN) };
 
-#define GEN_PINS_ARRAY(id)						\
-struct gpio_pin_t PINS_ARRAY(id)[] = SET_GPIO_PIN(id)
+#define GEN_PINS_ARRAY(id) struct gpio_pin_t PINS_ARRAY(id)[] = SET_GPIO_PIN(id)
 
 DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, GEN_PINS_ARRAY)
 
-#define SET_PIN_NODE(node_id)						\
-{									\
-	.led_color = GET_PROP(node_id, led_color),			\
-	.led_id = GET_PROP(node_id, led_id),				\
-	.br_color = GET_PROP_NVE(node_id, br_color),			\
-	.gpio_pins = PINS_ARRAY(node_id),				\
-	.pins_count = DT_PROP_LEN(node_id, led_pins)			\
-};
+#define SET_PIN_NODE(node_id)                          \
+	{ .led_color = GET_PROP(node_id, led_color),   \
+	  .led_id = GET_PROP(node_id, led_id),         \
+	  .br_color = GET_PROP_NVE(node_id, br_color), \
+	  .gpio_pins = PINS_ARRAY(node_id),            \
+	  .pins_count = DT_PROP_LEN(node_id, led_pins) };
 
 /*
  * Initialize led_pins_node_t struct for each pin node defined
  */
-#define GEN_PINS_NODES(id)						\
-const struct led_pins_node_t PINS_NODE(id) = SET_PIN_NODE(id)
+#define GEN_PINS_NODES(id) \
+	const struct led_pins_node_t PINS_NODE(id) = SET_PIN_NODE(id)
 
 DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, GEN_PINS_NODES)
 
 /*
  * Array of pointers to each pin node
  */
-#define PINS_NODE_PTR(id)	&PINS_NODE(id),
-const struct led_pins_node_t *pins_node[] = {
-	DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, PINS_NODE_PTR)
-};
+#define PINS_NODE_PTR(id) &PINS_NODE(id),
+const struct led_pins_node_t *pins_node[] = { DT_FOREACH_CHILD(
+	GPIO_LED_PINS_NODE, PINS_NODE_PTR) };
 
 /*
  * Set all the GPIO pins defined in the node to the defined value,
@@ -65,8 +57,8 @@ const struct led_pins_node_t *pins_node[] = {
 void led_set_color_with_node(const struct led_pins_node_t *pins_node)
 {
 	for (int j = 0; j < pins_node->pins_count; j++) {
-		gpio_pin_set_dt(gpio_get_dt_spec(
-			pins_node->gpio_pins[j].signal),
+		gpio_pin_set_dt(
+			gpio_get_dt_spec(pins_node->gpio_pins[j].signal),
 			pins_node->gpio_pins[j].val);
 	}
 }
