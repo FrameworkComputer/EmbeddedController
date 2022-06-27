@@ -19,8 +19,8 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
 /*
  * Struct for pairing an engineering value with the register value for a
@@ -32,25 +32,21 @@ struct accel_param_pair {
 };
 
 /* List of range values in +/-G's and their associated register values. */
-static const struct accel_param_pair g_ranges[] = {
-	{2, LSM6DS0_GSEL_2G},
-	{4, LSM6DS0_GSEL_4G},
-	{8, LSM6DS0_GSEL_8G}
-};
+static const struct accel_param_pair g_ranges[] = { { 2, LSM6DS0_GSEL_2G },
+						    { 4, LSM6DS0_GSEL_4G },
+						    { 8, LSM6DS0_GSEL_8G } };
 
 /*
  * List of angular rate range values in +/-dps's
  * and their associated register values.
  */
-const struct accel_param_pair dps_ranges[] = {
-	{245, LSM6DS0_DPS_SEL_245},
-	{500, LSM6DS0_DPS_SEL_500},
-	{1000, LSM6DS0_DPS_SEL_1000},
-	{2000, LSM6DS0_DPS_SEL_2000}
-};
+const struct accel_param_pair dps_ranges[] = { { 245, LSM6DS0_DPS_SEL_245 },
+					       { 500, LSM6DS0_DPS_SEL_500 },
+					       { 1000, LSM6DS0_DPS_SEL_1000 },
+					       { 2000, LSM6DS0_DPS_SEL_2000 } };
 
-static inline const struct accel_param_pair *get_range_table(
-		enum motionsensor_type type, int *psize)
+static inline const struct accel_param_pair *
+get_range_table(enum motionsensor_type type, int *psize)
 {
 	if (MOTIONSENSE_TYPE_ACCEL == type) {
 		if (psize)
@@ -65,28 +61,22 @@ static inline const struct accel_param_pair *get_range_table(
 
 /* List of ODR (gyro off) values in mHz and their associated register values.*/
 const struct accel_param_pair gyro_on_odr[] = {
-	{0,        LSM6DS0_ODR_PD},
-	{15000,    LSM6DS0_ODR_15HZ},
-	{59000,    LSM6DS0_ODR_59HZ},
-	{119000,   LSM6DS0_ODR_119HZ},
-	{238000,   LSM6DS0_ODR_238HZ},
-	{476000,   LSM6DS0_ODR_476HZ},
-	{952000,   LSM6DS0_ODR_952HZ}
+	{ 0, LSM6DS0_ODR_PD },	       { 15000, LSM6DS0_ODR_15HZ },
+	{ 59000, LSM6DS0_ODR_59HZ },   { 119000, LSM6DS0_ODR_119HZ },
+	{ 238000, LSM6DS0_ODR_238HZ }, { 476000, LSM6DS0_ODR_476HZ },
+	{ 952000, LSM6DS0_ODR_952HZ }
 };
 
 /* List of ODR (gyro on) values in mHz and their associated register values. */
 const struct accel_param_pair gyro_off_odr[] = {
-	{0,        LSM6DS0_ODR_PD},
-	{10000,    LSM6DS0_ODR_10HZ},
-	{50000,    LSM6DS0_ODR_50HZ},
-	{119000,   LSM6DS0_ODR_119HZ},
-	{238000,   LSM6DS0_ODR_238HZ},
-	{476000,   LSM6DS0_ODR_476HZ},
-	{952000,   LSM6DS0_ODR_952HZ}
+	{ 0, LSM6DS0_ODR_PD },	       { 10000, LSM6DS0_ODR_10HZ },
+	{ 50000, LSM6DS0_ODR_50HZ },   { 119000, LSM6DS0_ODR_119HZ },
+	{ 238000, LSM6DS0_ODR_238HZ }, { 476000, LSM6DS0_ODR_476HZ },
+	{ 952000, LSM6DS0_ODR_952HZ }
 };
 
-static inline const struct accel_param_pair *get_odr_table(
-		enum motionsensor_type type, int *psize)
+static inline const struct accel_param_pair *
+get_odr_table(enum motionsensor_type type, int *psize)
 {
 	if (MOTIONSENSE_TYPE_ACCEL == type) {
 		if (psize)
@@ -101,14 +91,14 @@ static inline const struct accel_param_pair *get_odr_table(
 
 static inline int get_ctrl_reg(enum motionsensor_type type)
 {
-	return (MOTIONSENSE_TYPE_ACCEL == type) ?
-		LSM6DS0_CTRL_REG6_XL : LSM6DS0_CTRL_REG1_G;
+	return (MOTIONSENSE_TYPE_ACCEL == type) ? LSM6DS0_CTRL_REG6_XL :
+						  LSM6DS0_CTRL_REG1_G;
 }
 
 static inline int get_xyz_reg(enum motionsensor_type type)
 {
-	return (MOTIONSENSE_TYPE_ACCEL == type) ?
-		LSM6DS0_OUT_X_L_XL : LSM6DS0_OUT_X_L_G;
+	return (MOTIONSENSE_TYPE_ACCEL == type) ? LSM6DS0_OUT_X_L_XL :
+						  LSM6DS0_OUT_X_L_G;
 }
 
 /**
@@ -118,14 +108,14 @@ static inline int get_xyz_reg(enum motionsensor_type type)
  * outside the range of values, it returns the closest valid reg value.
  */
 static int get_reg_val(const int eng_val, const int round_up,
-		const struct accel_param_pair *pairs, const int size)
+		       const struct accel_param_pair *pairs, const int size)
 {
 	int i;
 	for (i = 0; i < size - 1; i++) {
 		if (eng_val <= pairs[i].val)
 			break;
 
-		if (eng_val < pairs[i+1].val) {
+		if (eng_val < pairs[i + 1].val) {
 			if (round_up)
 				i += 1;
 			break;
@@ -138,7 +128,8 @@ static int get_reg_val(const int eng_val, const int round_up,
  * @return engineering value that matches the given reg val
  */
 static int get_engineering_val(const int reg_val,
-		const struct accel_param_pair *pairs, const int size)
+			       const struct accel_param_pair *pairs,
+			       const int size)
 {
 	int i;
 	for (i = 0; i < size; i++) {
@@ -166,9 +157,7 @@ static inline int raw_write8(const int port, const uint16_t i2c_addr_flags,
 	return i2c_write8(port, i2c_addr_flags, reg, data);
 }
 
-static int set_range(struct motion_sensor_t *s,
-				int range,
-				int rnd)
+static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int ret, ctrl_val, range_tbl_size;
 	uint8_t ctrl_reg, reg_val;
@@ -185,19 +174,17 @@ static int set_range(struct motion_sensor_t *s,
 	 */
 	mutex_lock(s->mutex);
 
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			ctrl_reg, &ctrl_val);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, ctrl_reg, &ctrl_val);
 	if (ret != EC_SUCCESS)
 		goto accel_cleanup;
 
 	ctrl_val = (ctrl_val & ~LSM6DS0_RANGE_MASK) | reg_val;
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 ctrl_reg, ctrl_val);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, ctrl_reg, ctrl_val);
 
 	/* Now that we have set the range, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		s->current_range = get_engineering_val(reg_val, ranges,
-						       range_tbl_size);
+		s->current_range =
+			get_engineering_val(reg_val, ranges, range_tbl_size);
 
 accel_cleanup:
 	mutex_unlock(s->mutex);
@@ -209,9 +196,7 @@ static int get_resolution(const struct motion_sensor_t *s)
 	return LSM6DS0_RESOLUTION;
 }
 
-static int set_data_rate(const struct motion_sensor_t *s,
-				int rate,
-				int rnd)
+static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 {
 	int ret, val, odr_tbl_size;
 	uint8_t ctrl_reg, reg_val;
@@ -237,8 +222,8 @@ static int set_data_rate(const struct motion_sensor_t *s,
 
 	/* Now that we have set the odr, update the driver's value. */
 	if (ret == EC_SUCCESS)
-		data->base.odr = get_engineering_val(reg_val, data_rates,
-						       odr_tbl_size);
+		data->base.odr =
+			get_engineering_val(reg_val, data_rates, odr_tbl_size);
 
 	/* CTRL_REG3_G 12h
 	 * [7] low-power mode = 0;
@@ -254,8 +239,8 @@ static int set_data_rate(const struct motion_sensor_t *s,
 			goto accel_cleanup;
 		val &= ~(0x3 << 4); /* clear bit [5:4] */
 		val = (rate > 119000) ?
-			(val | (1<<7))   /* set high-power mode */ :
-			(val & ~(1<<7)); /* set low-power mode */
+			      (val | (1 << 7)) /* set high-power mode */ :
+			      (val & ~(1 << 7)); /* set low-power mode */
 		ret = raw_write8(s->port, s->i2c_spi_addr_flags,
 				 LSM6DS0_CTRL_REG3_G, val);
 	}
@@ -272,9 +257,8 @@ static int get_data_rate(const struct motion_sensor_t *s)
 	return data->base.odr;
 }
 
-static int set_offset(const struct motion_sensor_t *s,
-			const int16_t *offset,
-			int16_t    temp)
+static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
+		      int16_t temp)
 {
 	/* temperature is ignored */
 	struct lsm6ds0_data *data = s->drv_data;
@@ -284,9 +268,8 @@ static int set_offset(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int get_offset(const struct motion_sensor_t *s,
-			int16_t    *offset,
-			int16_t    *temp)
+static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
+		      int16_t *temp)
 {
 	struct lsm6ds0_data *data = s->drv_data;
 	offset[X] = data->offset[X];
@@ -300,8 +283,8 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			LSM6DS0_STATUS_REG, &tmp);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DS0_STATUS_REG,
+			&tmp);
 
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s type:0x%X RS Error", s->name, s->type);
@@ -341,12 +324,10 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	xyz_reg = get_xyz_reg(s->type);
 
 	/* Read 6 bytes starting at xyz_reg */
-	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags,
-			     xyz_reg, raw, 6);
+	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags, xyz_reg, raw, 6);
 
 	if (ret != EC_SUCCESS) {
-		CPRINTS("%s type:0x%X RD XYZ Error",
-			s->name, s->type);
+		CPRINTS("%s type:0x%X RD XYZ Error", s->name, s->type);
 		return ret;
 	}
 
@@ -366,8 +347,8 @@ static int init(struct motion_sensor_t *s)
 {
 	int ret = 0, tmp;
 
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			LSM6DS0_WHO_AM_I_REG, &tmp);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DS0_WHO_AM_I_REG,
+			&tmp);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 
@@ -387,7 +368,6 @@ static int init(struct motion_sensor_t *s)
 	 * SW_RESET is down for accel only!
 	 */
 	if (MOTIONSENSE_TYPE_ACCEL == s->type) {
-
 		mutex_lock(s->mutex);
 		ret = raw_read8(s->port, s->i2c_spi_addr_flags,
 				LSM6DS0_CTRL_REG8, &tmp);
