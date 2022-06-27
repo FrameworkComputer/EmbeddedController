@@ -13,7 +13,7 @@
 #include "task.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ##args)
 
 /*
  * To shorten the variable names, or the following code is likely to greater
@@ -99,7 +99,7 @@ static enum ec_status wov_set_lang_shm(struct host_cmd_handler_args *args)
 {
 	const struct ec_param_ec_codec_wov *p = args->params;
 	const struct ec_param_ec_codec_wov_set_lang_shm *pp =
-			&p->set_lang_shm_param;
+		&p->set_lang_shm_param;
 
 	if (pp->total_len > LANG_BUF_LEN)
 		return EC_RES_INVALID_PARAM;
@@ -135,11 +135,11 @@ static enum ec_status wov_set_lang(struct host_cmd_handler_args *args)
 		return EC_RES_BUSY;
 
 	if (!pp->offset)
-		memset((uint8_t *)audio_codec_wov_lang_buf_addr,
-		       0, LANG_BUF_LEN);
+		memset((uint8_t *)audio_codec_wov_lang_buf_addr, 0,
+		       LANG_BUF_LEN);
 
-	memcpy((uint8_t *)audio_codec_wov_lang_buf_addr + pp->offset,
-		pp->buf, pp->len);
+	memcpy((uint8_t *)audio_codec_wov_lang_buf_addr + pp->offset, pp->buf,
+	       pp->len);
 
 	if (pp->offset + pp->len == pp->total_len) {
 		if (check_lang_buf((uint8_t *)audio_codec_wov_lang_buf_addr,
@@ -176,7 +176,7 @@ static enum ec_status wov_enable(struct host_cmd_handler_args *args)
 
 	if (!speech_lib_loaded) {
 		if (!GoogleHotwordDspInit(
-				(void *)audio_codec_wov_lang_buf_addr))
+			    (void *)audio_codec_wov_lang_buf_addr))
 			return EC_RES_ERROR;
 		speech_lib_loaded = 1;
 	} else {
@@ -359,7 +359,6 @@ void audio_codec_wov_task(void *arg)
 			continue;
 		}
 
-
 		/* Clear the buffer if full. */
 		if (is_buf_full()) {
 			audio_buf_wp = audio_buf_rp;
@@ -415,7 +414,7 @@ void audio_codec_wov_task(void *arg)
 		 * case, sample is S16_LE.  Thus, n / 2.
 		 */
 		if (!hotword_detected &&
-				GoogleHotwordDspProcess(p, n / 2, &r)) {
+		    GoogleHotwordDspProcess(p, n / 2, &r)) {
 			CPRINTS("hotword detected");
 
 			mutex_lock(&lock);
