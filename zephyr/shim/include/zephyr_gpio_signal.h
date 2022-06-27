@@ -34,20 +34,19 @@
  * a GPIO signal name from either the enum-name or a
  * unique name generated using the DTS ordinal.
  */
-#define GPIO_SIGNAL_NAME(id)					\
-	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name),		\
-		(GPIO_SIGNAL_NAME_FROM_ENUM(id)),		\
-		(GPIO_SIGNAL_NAME_FROM_ORD(id ## _ORD)))
+#define GPIO_SIGNAL_NAME(id)                          \
+	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name),  \
+		    (GPIO_SIGNAL_NAME_FROM_ENUM(id)), \
+		    (GPIO_SIGNAL_NAME_FROM_ORD(id##_ORD)))
 
-#define GPIO_SIGNAL(id)		GPIO_SIGNAL_NAME(id)
-#define GPIO_SIGNAL_WITH_COMMA(id) \
-	GPIO_SIGNAL(id),
+#define GPIO_SIGNAL(id) GPIO_SIGNAL_NAME(id)
+#define GPIO_SIGNAL_WITH_COMMA(id) GPIO_SIGNAL(id),
 enum gpio_signal {
 	GPIO_UNIMPLEMENTED = -1,
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
 	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_SIGNAL_WITH_COMMA)
 #endif
-	GPIO_COUNT,
+		GPIO_COUNT,
 	GPIO_LIMIT = 0x0FFF,
 
 	IOEX_SIGNAL_START = GPIO_LIMIT + 1,
@@ -118,8 +117,8 @@ BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
  */
 struct gpio_dt_spec;
 
-#define GPIO_DT_PTR_DECL(id) extern const struct gpio_dt_spec * const \
-	GPIO_DT_NAME(GPIO_SIGNAL(id));
+#define GPIO_DT_PTR_DECL(id) \
+	extern const struct gpio_dt_spec *const GPIO_DT_NAME(GPIO_SIGNAL(id));
 
 DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DT_PTR_DECL)
 
@@ -127,14 +126,13 @@ DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DT_PTR_DECL)
 
 #endif /* DT_NODE_EXISTS(DT_PATH(named_gpios)) */
 
-
 #define IOEXPANDER_ID_EXPAND(id) ioex_chip_##id
 #define IOEXPANDER_ID(id) IOEXPANDER_ID_EXPAND(id)
 #define IOEXPANDER_ID_FROM_INST_WITH_COMMA(id) IOEXPANDER_ID(id),
 enum ioexpander_id {
 	DT_FOREACH_STATUS_OKAY(cros_ioex_chip,
-		IOEXPANDER_ID_FROM_INST_WITH_COMMA)
-	CONFIG_IO_EXPANDER_PORT_COUNT
+			       IOEXPANDER_ID_FROM_INST_WITH_COMMA)
+		CONFIG_IO_EXPANDER_PORT_COUNT
 };
 
 /**
