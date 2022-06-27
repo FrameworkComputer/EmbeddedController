@@ -43,8 +43,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #include "gpio_list.h"
 
@@ -55,17 +55,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Rotation matrixes */
-static const mat33_fp_t lid_standard_ref = {
-	{FLOAT_TO_FP(1), 0, 0},
-	{0, FLOAT_TO_FP(-1), 0},
-	{0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
-static const mat33_fp_t base_standard_ref = {
-	{FLOAT_TO_FP(1), 0, 0},
-	{0, FLOAT_TO_FP(1), 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, FLOAT_TO_FP(1), 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
@@ -171,18 +167,21 @@ int board_sensor_at_360(void)
  * The connector has 24 pins total, and there is no pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-	{-1, -1}, {GPIO_KSO_H, 4}, {GPIO_KSO_H, 0}, {GPIO_KSO_H, 1},
-	{GPIO_KSO_H, 3}, {GPIO_KSO_H, 2}, {-1, -1}, {-1, -1},
-	{GPIO_KSO_L, 5}, {GPIO_KSO_L, 6}, {-1, -1}, {GPIO_KSO_L, 3},
-	{GPIO_KSO_L, 2}, {GPIO_KSI, 0}, {GPIO_KSO_L, 1}, {GPIO_KSO_L, 4},
-	{GPIO_KSI, 3}, {GPIO_KSI, 2}, {GPIO_KSO_L, 0}, {GPIO_KSI, 5},
-	{GPIO_KSI, 4}, {GPIO_KSO_L, 7}, {GPIO_KSI, 6}, {GPIO_KSI, 7},
-	{GPIO_KSI, 1}, {-1, -1}, {GPIO_KSO_H, 5}, {-1, -1},
-	{GPIO_KSO_H, 6}, {-1, -1}, {-1, -1},
+	{ -1, -1 },	   { GPIO_KSO_H, 4 }, { GPIO_KSO_H, 0 },
+	{ GPIO_KSO_H, 1 }, { GPIO_KSO_H, 3 }, { GPIO_KSO_H, 2 },
+	{ -1, -1 },	   { -1, -1 },	      { GPIO_KSO_L, 5 },
+	{ GPIO_KSO_L, 6 }, { -1, -1 },	      { GPIO_KSO_L, 3 },
+	{ GPIO_KSO_L, 2 }, { GPIO_KSI, 0 },   { GPIO_KSO_L, 1 },
+	{ GPIO_KSO_L, 4 }, { GPIO_KSI, 3 },   { GPIO_KSI, 2 },
+	{ GPIO_KSO_L, 0 }, { GPIO_KSI, 5 },   { GPIO_KSI, 4 },
+	{ GPIO_KSO_L, 7 }, { GPIO_KSI, 6 },   { GPIO_KSI, 7 },
+	{ GPIO_KSI, 1 },   { -1, -1 },	      { GPIO_KSO_H, 5 },
+	{ -1, -1 },	   { GPIO_KSO_H, 6 }, { -1, -1 },
+	{ -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-		ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 /* Wake-up pins for hibernate */
 const enum gpio_signal hibernate_wake_pins[] = {
@@ -195,39 +194,33 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] = {"BOARD_ID", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
-				CHIP_ADC_CH1},
-	[ADC_EC_SKU_ID] = {"EC_SKU_ID", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
-				CHIP_ADC_CH2},
-	[ADC_VBUS] = {"VBUS", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0,
-				CHIP_ADC_CH0},
+	[ADC_BOARD_ID] = { "BOARD_ID", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
+			   CHIP_ADC_CH1 },
+	[ADC_EC_SKU_ID] = { "EC_SKU_ID", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
+			    CHIP_ADC_CH2 },
+	[ADC_VBUS] = { "VBUS", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0,
+		       CHIP_ADC_CH0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "typec",
-		.port = IT83XX_I2C_CH_C,
-		.kbps = 400,
-		.scl  = GPIO_I2C_C_SCL,
-		.sda  = GPIO_I2C_C_SDA
-	},
-	{
-		.name = "sensor",
-		.port = IT83XX_I2C_CH_B,
-		.kbps = 400,
-		.scl  = GPIO_I2C_B_SCL,
-		.sda  = GPIO_I2C_B_SDA
-	},
-	{
-		.name = "battery",
-		.port = IT83XX_I2C_CH_A,
-		.kbps = 100,
-		.scl  = GPIO_I2C_A_SCL,
-		.sda  = GPIO_I2C_A_SDA
-	},
+	{ .name = "typec",
+	  .port = IT83XX_I2C_CH_C,
+	  .kbps = 400,
+	  .scl = GPIO_I2C_C_SCL,
+	  .sda = GPIO_I2C_C_SDA },
+	{ .name = "sensor",
+	  .port = IT83XX_I2C_CH_B,
+	  .kbps = 400,
+	  .scl = GPIO_I2C_B_SCL,
+	  .sda = GPIO_I2C_B_SDA },
+	{ .name = "battery",
+	  .port = IT83XX_I2C_CH_A,
+	  .kbps = 100,
+	  .scl = GPIO_I2C_A_SCL,
+	  .sda = GPIO_I2C_A_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -235,8 +228,8 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_AP_IN_SLEEP_L,   POWER_SIGNAL_ACTIVE_LOW,  "AP_IN_S3_L"},
-	{GPIO_PMIC_EC_RESETB,  POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD"},
+	{ GPIO_AP_IN_SLEEP_L, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_S3_L" },
+	{ GPIO_PMIC_EC_RESETB, POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
@@ -259,8 +252,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-static void board_hpd_status(const struct usb_mux *me,
-			     mux_state_t mux_state,
+static void board_hpd_status(const struct usb_mux *me, mux_state_t mux_state,
 			     bool *ack_required)
 {
 	/* This driver does not use host command ACKs */
@@ -324,12 +316,12 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-			       CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 int board_discharge_on_ac(int enable)
@@ -401,8 +393,7 @@ static void board_motion_init(void)
 		/* Disable tablet mode. */
 		tablet_set_mode(0, TABLET_TRIGGER_LID);
 		gmr_tablet_switch_disable();
-		gpio_set_flags(GPIO_TABLET_MODE_L,
-				GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_TABLET_MODE_L, GPIO_INPUT | GPIO_PULL_UP);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_motion_init, HOOK_PRIO_DEFAULT + 1);
