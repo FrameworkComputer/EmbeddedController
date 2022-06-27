@@ -11,7 +11,7 @@
 #ifndef __ASSEMBLER__
 #include <stdint.h>
 
-#define USHRT_MAX		0xFFFF
+#define USHRT_MAX 0xFFFF
 typedef struct {
 	unsigned irq;
 	unsigned trigger;
@@ -19,13 +19,11 @@ typedef struct {
 	unsigned vector;
 } irq_desc_t;
 
-#define INTR_DESC(__irq,__vector,__trig)                    \
-    {                                                       \
-        .irq            = __irq,                            \
-        .trigger        = __trig,                           \
-        .polarity       = IOAPIC_REDTBL_INTPOL_HIGH,        \
-        .vector         = __vector	                    \
-    }
+#define INTR_DESC(__irq, __vector, __trig)                                \
+	{                                                                 \
+		.irq = __irq, .trigger = __trig,                          \
+		.polarity = IOAPIC_REDTBL_INTPOL_HIGH, .vector = __vector \
+	}
 
 #define LEVEL_INTR(__irq, __vector) \
 	INTR_DESC(__irq, __vector, IOAPIC_REDTBL_TRIGGER_LEVEL)
@@ -34,18 +32,18 @@ typedef struct {
 #endif
 
 /* ISH has a single core processor */
-#define DEST_APIC_ID			0
-#define NUM_VECTORS			256
+#define DEST_APIC_ID 0
+#define NUM_VECTORS 256
 
 /* APIC bit definitions. */
-#define APIC_DIV_16			0x03
-#define APIC_ENABLE_BIT			(1UL << 8UL)
-#define APIC_SPURIOUS_INT		REG32(ISH_LAPIC_BASE + 0xF0UL )
-#define APIC_LVT_ERROR			REG32(ISH_LAPIC_BASE + 0x370UL)
+#define APIC_DIV_16 0x03
+#define APIC_ENABLE_BIT (1UL << 8UL)
+#define APIC_SPURIOUS_INT REG32(ISH_LAPIC_BASE + 0xF0UL)
+#define APIC_LVT_ERROR REG32(ISH_LAPIC_BASE + 0x370UL)
 
 #ifndef __ASSEMBLER__
 
-typedef void (*isr_handler_t) (void);
+typedef void (*isr_handler_t)(void);
 
 void init_interrupts(void);
 void mask_interrupt(unsigned int irq);
@@ -66,4 +64,4 @@ void restore_interrupts(uint64_t irq_map);
 uint32_t get_current_interrupt_vector(void);
 #endif
 
-#endif	/* __CROS_EC_IA32_INTERRUPTS_H */
+#endif /* __CROS_EC_IA32_INTERRUPTS_H */
