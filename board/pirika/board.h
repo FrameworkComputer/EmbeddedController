@@ -25,12 +25,13 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* Charger */
-#define CONFIG_CHARGER_RAA489000	/* C0 and C1: Charger */
+#define CONFIG_CHARGER_RAA489000 /* C0 and C1: Charger */
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
-#undef  CONFIG_CHARGER_SINGLE_CHIP
+#undef CONFIG_CHARGER_SINGLE_CHIP
 #define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
+					*/
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
 #define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
 
@@ -38,14 +39,14 @@
 
 /* LED */
 #define CONFIG_LED_ONOFF_STATES
-#define CONFIG_LED_ONOFF_STATES_BAT_LOW	10
+#define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
 /* PWM */
 #define CONFIG_PWM
 
 /* Sensors */
-#define CONFIG_ACCEL_KX022		/* Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
+#define CONFIG_ACCEL_KX022 /* Lid accel */
+#define CONFIG_ACCELGYRO_LSM6DSM /* Base accel */
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 /* Sensors without hardware FIFO are in forced mode */
@@ -83,10 +84,10 @@
 #define CONFIG_CHIPSET_CAN_THROTTLE
 
 /* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
-#define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
+#define CONFIG_USB_MUX_IT5205 /* C1: ITE Mux */
+#define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
 
-#define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
+#define CONFIG_USBC_RETIMER_TUSB544 /* C1 Redriver: TUSB544 */
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_VIVALDI
@@ -110,19 +111,14 @@ enum pwm_channel {
 };
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* ADC channels */
 enum adc_channel {
-	ADC_VSNS_PP3300_A,     /* ADC0 */
-	ADC_TEMP_SENSOR_1,     /* ADC2 */
-	ADC_TEMP_SENSOR_2,     /* ADC3 */
-	ADC_TEMP_SENSOR_3,     /* ADC15 */
+	ADC_VSNS_PP3300_A, /* ADC0 */
+	ADC_TEMP_SENSOR_1, /* ADC2 */
+	ADC_TEMP_SENSOR_2, /* ADC3 */
+	ADC_TEMP_SENSOR_3, /* ADC15 */
 	ADC_CH_COUNT
 };
 
