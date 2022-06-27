@@ -66,58 +66,27 @@ const uint8_t rgbkbd_count = ARRAY_SIZE(rgbkbds);
 const uint8_t rgbkbd_hsize = RGB_GRID0_COL;
 const uint8_t rgbkbd_vsize = RGB_GRID0_ROW;
 
-#define LED(x, y)	RGBKBD_COORD((x), (y))
-#define DELM		RGBKBD_DELM
+#define LED(x, y) RGBKBD_COORD((x), (y))
+#define DELM RGBKBD_DELM
 const uint8_t rgbkbd_map[] = {
-	DELM,
-	LED( 0, 0), DELM,
-	LED( 1, 0), DELM,
-	LED( 2, 0), DELM,
-	LED( 3, 0), DELM,
-	LED( 4, 0), DELM,
-	LED( 5, 0), DELM,
-	LED( 6, 0), DELM,
-	LED( 7, 0), DELM,
-	LED( 0, 1), DELM,
-	LED( 1, 1), DELM,
-	LED( 2, 1), DELM,
-	LED( 3, 1), DELM,
-	LED( 4, 1), DELM,
-	LED( 5, 1), DELM,
-	LED( 6, 1), DELM,
-	LED( 7, 1), DELM,
-	LED( 0, 2), DELM,
-	LED( 1, 2), DELM,
-	LED( 2, 2), DELM,
-	LED( 3, 2), DELM,
-	LED( 4, 2), DELM,
-	LED( 5, 2), DELM,
-	LED( 6, 2), DELM,
-	LED( 7, 2), DELM,
-	LED( 0, 3), DELM,
-	LED( 1, 3), DELM,
-	LED( 2, 3), DELM,
-	LED( 3, 3), DELM,
-	LED( 4, 3), DELM,
-	LED( 5, 3), DELM,
-	LED( 6, 3), DELM,
-	LED( 7, 3), DELM,
-	LED( 0, 4), DELM,
-	LED( 1, 4), DELM,
-	LED( 2, 4), DELM,
-	LED( 3, 4), DELM,
-	LED( 4, 4), DELM,
-	LED( 5, 4), DELM,
-	LED( 6, 4), DELM,
-	LED( 7, 4), DELM,
-	DELM,
+	DELM, LED(0, 0), DELM, LED(1, 0), DELM, LED(2, 0), DELM, LED(3, 0),
+	DELM, LED(4, 0), DELM, LED(5, 0), DELM, LED(6, 0), DELM, LED(7, 0),
+	DELM, LED(0, 1), DELM, LED(1, 1), DELM, LED(2, 1), DELM, LED(3, 1),
+	DELM, LED(4, 1), DELM, LED(5, 1), DELM, LED(6, 1), DELM, LED(7, 1),
+	DELM, LED(0, 2), DELM, LED(1, 2), DELM, LED(2, 2), DELM, LED(3, 2),
+	DELM, LED(4, 2), DELM, LED(5, 2), DELM, LED(6, 2), DELM, LED(7, 2),
+	DELM, LED(0, 3), DELM, LED(1, 3), DELM, LED(2, 3), DELM, LED(3, 3),
+	DELM, LED(4, 3), DELM, LED(5, 3), DELM, LED(6, 3), DELM, LED(7, 3),
+	DELM, LED(0, 4), DELM, LED(1, 4), DELM, LED(2, 4), DELM, LED(3, 4),
+	DELM, LED(4, 4), DELM, LED(5, 4), DELM, LED(6, 4), DELM, LED(7, 4),
+	DELM, DELM,
 };
 #undef LED
 #undef DELM
 const size_t rgbkbd_map_size = ARRAY_SIZE(rgbkbd_map);
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &taniks_kb;
 }
