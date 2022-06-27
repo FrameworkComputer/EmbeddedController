@@ -58,26 +58,25 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
-
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* NOTE: MEC17xx EVB + SKL RVP3 does not use BD99992 PMIC.
  * RVP3 PMIC controlled by RVP3 logic.
  */
-#define I2C_ADDR_BD99992_FLAGS	0x30
+#define I2C_ADDR_BD99992_FLAGS 0x30
 
 /*
  * Maxim DS1624 I2C temperature sensor used for testing I2C.
  * DS1624 contains one internal temperature sensor
  * and EEPROM. It has no external temperature inputs.
  */
-#define DS1624_I2C_ADDR_FLAGS	(0x48 | I2C_FLAG_BIG_ENDIAN)
-#define DS1624_IDX_LOCAL	0
-#define DS1624_READ_TEMP16	0xAA	/* read 16-bit temperature */
-#define DS1624_ACCESS_CFG	0xAC	/* read/write 8-bit config */
-#define DS1624_CMD_START	0xEE
-#define DS1624_CMD_STOP		0x22
+#define DS1624_I2C_ADDR_FLAGS (0x48 | I2C_FLAG_BIG_ENDIAN)
+#define DS1624_IDX_LOCAL 0
+#define DS1624_READ_TEMP16 0xAA /* read 16-bit temperature */
+#define DS1624_ACCESS_CFG 0xAC /* read/write 8-bit config */
+#define DS1624_CMD_START 0xEE
+#define DS1624_CMD_STOP 0x22
 
 /*
  * static global and routine to return smart battery
@@ -116,7 +115,6 @@ void board_config_pre_init(void)
 }
 #endif /* #ifdef CONFIG_BOARD_PRE_INIT */
 
-
 /*
  * Use EC to handle ALL_SYS_PWRGD signal.
  * MEC17xx connected to SKL/KBL RVP3 reference board
@@ -135,8 +133,8 @@ static void board_all_sys_pwrgd(void)
 
 	CPRINTS("ALL_SYS_PWRGD=%d SYS_RESET_L=%d", allsys_in, allsys_out);
 
-	trace2(0, BRD, 0, "ALL_SYS_PWRGD=%d SYS_RESET_L=%d",
-			allsys_in, allsys_out);
+	trace2(0, BRD, 0, "ALL_SYS_PWRGD=%d SYS_RESET_L=%d", allsys_in,
+	       allsys_out);
 
 	/*
 	 * Wait at least 10 ms between power signals going high
@@ -161,14 +159,12 @@ void all_sys_pwrgd_interrupt(enum gpio_signal signal)
 }
 #endif /* #ifdef CONFIG_BOARD_HAS_ALL_SYS_PWRGD */
 
-
 #ifdef HAS_TASK_PDCMD
 /* Exchange status with PD MCU. */
 static void pd_mcu_interrupt(enum gpio_signal signal)
 {
 	/* Exchange status with PD MCU to determine interrupt cause */
 	host_command_pd_send_status(0);
-
 }
 #endif
 
@@ -217,33 +213,29 @@ void tablet_mode_interrupt(enum gpio_signal signal)
  */
 const struct adc_t adc_channels[] = {
 	/* Vbus sensing. Converted to mV, full ADC is equivalent to 30V. */
-	[ADC_VBUS] = {"VBUS", 30000, 1024, 0, 1},
+	[ADC_VBUS] = { "VBUS", 30000, 1024, 0, 1 },
 	/* Adapter current output or battery discharging current */
-	[ADC_AMON_BMON] = {"AMON_BMON", 25000, 3072, 0, 3},
+	[ADC_AMON_BMON] = { "AMON_BMON", 25000, 3072, 0, 3 },
 	/* System current consumption */
-	[ADC_PSYS] = {"PSYS", 1, 1, 0, 4},
-	[ADC_CASE] = {"CASE", 1, 1, 0, 7},
+	[ADC_PSYS] = { "PSYS", 1, 1, 0, 4 },
+	[ADC_CASE] = { "CASE", 1, 1, 0, 7 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /*
  * MCHP EVB connected to KBL RVP3
  */
-const struct i2c_port_t i2c_ports[]  = {
-	{
-		.name = "sensors",
-		.port = MCHP_I2C_PORT4,
-		.kbps = 100,
-		.scl  = GPIO_SMB04_SCL,
-		.sda  = GPIO_SMB04_SDA
-	},
-	{
-		.name = "batt",
-		.port = MCHP_I2C_PORT5,
-		.kbps = 100,
-		.scl  = GPIO_SMB05_SCL,
-		.sda  = GPIO_SMB05_SDA
-	},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "sensors",
+	  .port = MCHP_I2C_PORT4,
+	  .kbps = 100,
+	  .scl = GPIO_SMB04_SCL,
+	  .sda = GPIO_SMB04_SDA },
+	{ .name = "batt",
+	  .port = MCHP_I2C_PORT5,
+	  .kbps = 100,
+	  .scl = GPIO_SMB05_SCL,
+	  .sda = GPIO_SMB05_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -273,19 +265,15 @@ int board_i2c_p2c(int port)
 
 #ifdef CONFIG_USB_POWER_DELIVERY
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{I2C_PORT_TCPC,
-	 CONFIG_TCPC_I2C_BASE_ADDR_FLAGS,
-	 &tcpci_tcpm_drv},
+	{ I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR_FLAGS, &tcpci_tcpm_drv },
 
-	{I2C_PORT_TCPC,
-	 CONFIG_TCPC_I2C_BASE_ADDR_FLAGS + 1,
-	 &tcpci_tcpm_drv},
+	{ I2C_PORT_TCPC, CONFIG_TCPC_I2C_BASE_ADDR_FLAGS + 1, &tcpci_tcpm_drv },
 };
 #endif
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ QMSPI0_PORT, 4, GPIO_QMSPI_CS0},
+	{ QMSPI0_PORT, 4, GPIO_QMSPI_CS0 },
 #if defined(CONFIG_SPI_ACCEL_PORT)
 	{ GPSPI0_PORT, 2, GPIO_SPI0_CS0 },
 #endif
@@ -298,7 +286,6 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,
 };
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
-
 
 /*
  * Deep sleep support, called by chip level.
@@ -429,9 +416,9 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * a static global in this module.
  */
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, sb_temp, 0},
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, ds1624_get_val, 0},
-	{"Case", TEMP_SENSOR_TYPE_CASE, therm_get_val, (int)ADC_CASE},
+	{ "Battery", TEMP_SENSOR_TYPE_BATTERY, sb_temp, 0 },
+	{ "Ambient", TEMP_SENSOR_TYPE_BOARD, ds1624_get_val, 0 },
+	{ "Case", TEMP_SENSOR_TYPE_CASE, therm_get_val, (int)ADC_CASE },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #endif
@@ -440,16 +427,16 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #ifdef CONFIG_ALS
 /* ALS instances. Must be in same order as enum als_id. */
 struct als_t als[] = {
-	{"TI", opt3001_init, opt3001_read_lux, 5},
+	{ "TI", opt3001_init, opt3001_read_lux, 5 },
 };
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 #endif
 
 const struct button_config buttons[CONFIG_BUTTON_COUNT] = {
-	{"Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN_L,
-	 30 * MSEC, 0},
-	{"Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP_L,
-	 30 * MSEC, 0},
+	{ "Volume Down", KEYBOARD_BUTTON_VOLUME_DOWN, GPIO_VOLUME_DOWN_L,
+	  30 * MSEC, 0 },
+	{ "Volume Up", KEYBOARD_BUTTON_VOLUME_UP, GPIO_VOLUME_UP_L, 30 * MSEC,
+	  0 },
 };
 
 /* MCHP mec1701_evb connected to Intel SKL RVP3 with Kabylake
@@ -490,8 +477,7 @@ static void board_pmic_init(void)
 	cfg = 0x66;
 	rv = i2c_read8(I2C_PORT_THERMAL, DS1624_I2C_ADDR_FLAGS,
 		       DS1624_ACCESS_CFG, &cfg);
-	trace2(0, BRD, 0, "Read DS1624 Config rv = %d  cfg = 0x%02X",
-	       rv, cfg);
+	trace2(0, BRD, 0, "Read DS1624 Config rv = %d  cfg = 0x%02X", rv, cfg);
 
 	if ((rv == EC_SUCCESS) && (cfg & (1u << 0))) {
 		/* one-shot mode switch to continuous */
@@ -536,15 +522,12 @@ static void board_init(void)
 	/* Provide AC status to the PCH */
 	gpio_set_level(GPIO_PCH_ACOK, extpower_is_present());
 
-	if (system_jumped_late() &&
-	    chipset_in_state(CHIPSET_STATE_ON)) {
+	if (system_jumped_late() && chipset_in_state(CHIPSET_STATE_ON)) {
 		trace0(0, BRD, 0, "board_init: S0 call board_spi_enable");
 		board_spi_enable();
 	}
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
 
 /**
  * Buffer the AC present GPIO to the PCH.
@@ -577,8 +560,7 @@ int board_set_active_charge_port(int charge_port)
 
 	if (is_real_port && source) {
 		CPRINTS("MEC1701 Skip enable p%d", charge_port);
-		trace1(0, BOARD, 0, "Skip enable charge port %d",
-			charge_port);
+		trace1(0, BOARD, 0, "Skip enable charge port %d", charge_port);
 		return EC_ERROR_INVAL;
 	}
 
@@ -592,10 +574,12 @@ int board_set_active_charge_port(int charge_port)
 	} else {
 		/* Make sure non-charging port is disabled */
 		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_EN_L :
-					     GPIO_USB_C1_CHARGE_EN_L, 1);
+					     GPIO_USB_C1_CHARGE_EN_L,
+			       1);
 		/* Enable charging port */
 		gpio_set_level(charge_port ? GPIO_USB_C1_CHARGE_EN_L :
-					     GPIO_USB_C0_CHARGE_EN_L, 0);
+					     GPIO_USB_C0_CHARGE_EN_L,
+			       0);
 	}
 
 	return EC_SUCCESS;
@@ -609,11 +593,11 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 #else
 /*
@@ -624,7 +608,6 @@ int charge_prevent_power_on(int power_button_pressed)
 {
 	return 0;
 }
-
 
 #endif
 
@@ -657,23 +640,18 @@ static void board_chipset_startup(void)
 	gpio_set_level(GPIO_USB2_ENABLE, 1);
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
-		board_chipset_startup,
-		HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S3 -> S5 transition */
 static void board_chipset_shutdown(void)
 {
 	CPRINTS("MEC1701 HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
-	trace0(0, HOOK, 0,
-	       "HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
+	trace0(0, HOOK, 0, "HOOK_CHIPSET_SHUTDOWN board_chipset_shutdown");
 	gpio_set_level(GPIO_USB1_ENABLE, 0);
 	gpio_set_level(GPIO_USB2_ENABLE, 0);
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
-		board_chipset_shutdown,
-		HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
@@ -685,10 +663,9 @@ static void board_chipset_resume(void)
 	gpio_set_level(GPIO_PP1800_DX_AUDIO_EN, 1);
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 1);
 #endif
-
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
-	     MOTION_SENSE_HOOK_PRIO-1);
+	     MOTION_SENSE_HOOK_PRIO - 1);
 
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
@@ -701,9 +678,7 @@ static void board_chipset_suspend(void)
 	gpio_set_level(GPIO_PP1800_DX_SENSOR_EN, 0);
 #endif
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
-		board_chipset_suspend,
-		HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
 void board_hibernate_late(void)
 {
@@ -780,7 +755,6 @@ static void board_handle_reboot(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_handle_reboot, HOOK_PRIO_FIRST);
 
-
 static int sb_temp(int idx, int *temp_ptr)
 {
 	if (idx != 0)
@@ -817,8 +791,8 @@ static void sb_update(void)
 	rv = sb_read(SB_TEMPERATURE, &smart_batt_temp);
 	smart_batt_temp = smart_batt_temp / 10;
 
-	trace12(0, BRD, 0, "sb_read temperature rv=%d  temp=%d K",
-		rv, smart_batt_temp);
+	trace12(0, BRD, 0, "sb_read temperature rv=%d  temp=%d K", rv,
+		smart_batt_temp);
 }
 
 /*
