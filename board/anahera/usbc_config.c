@@ -32,8 +32,8 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* USBC TCPC configuration */
 const struct tcpc_config_t tcpc_config[] = {
@@ -321,33 +321,33 @@ const static struct ps8811_reg_val equalizer_wwan_table[] = {
 	{
 		/* Set channel A EQ setting */
 		.reg = PS8811_REG1_USB_AEQ_LEVEL,
-		.val = (PS8811_AEQ_I2C_LEVEL_UP_13DB <<
-			PS8811_AEQ_I2C_LEVEL_UP_SHIFT) |
-			(PS8811_AEQ_PIN_LEVEL_UP_18DB <<
-			PS8811_AEQ_PIN_LEVEL_UP_SHIFT),
+		.val = (PS8811_AEQ_I2C_LEVEL_UP_13DB
+			<< PS8811_AEQ_I2C_LEVEL_UP_SHIFT) |
+		       (PS8811_AEQ_PIN_LEVEL_UP_18DB
+			<< PS8811_AEQ_PIN_LEVEL_UP_SHIFT),
 	},
 	{
 		/* Set ADE pin setting */
 		.reg = PS8811_REG1_USB_ADE_CONFIG,
-		.val = (PS8811_ADE_PIN_MID_LEVEL_3DB <<
-			PS8811_ADE_PIN_MID_LEVEL_SHIFT) |
-			PS8811_AEQ_CONFIG_REG_ENABLE |
-			PS8811_AEQ_ADAPTIVE_REG_ENABLE,
+		.val = (PS8811_ADE_PIN_MID_LEVEL_3DB
+			<< PS8811_ADE_PIN_MID_LEVEL_SHIFT) |
+		       PS8811_AEQ_CONFIG_REG_ENABLE |
+		       PS8811_AEQ_ADAPTIVE_REG_ENABLE,
 	},
 	{
 		/* Set channel B EQ setting */
 		.reg = PS8811_REG1_USB_BEQ_LEVEL,
-		.val = (PS8811_BEQ_I2C_LEVEL_UP_10P5DB <<
-			PS8811_BEQ_I2C_LEVEL_UP_SHIFT) |
-			(PS8811_BEQ_PIN_LEVEL_UP_18DB <<
-			PS8811_BEQ_PIN_LEVEL_UP_SHIFT),
+		.val = (PS8811_BEQ_I2C_LEVEL_UP_10P5DB
+			<< PS8811_BEQ_I2C_LEVEL_UP_SHIFT) |
+		       (PS8811_BEQ_PIN_LEVEL_UP_18DB
+			<< PS8811_BEQ_PIN_LEVEL_UP_SHIFT),
 	},
 	{
 		/* Set BDE pin setting */
 		.reg = PS8811_REG1_USB_BDE_CONFIG,
-		.val = (PS8811_BDE_PIN_MID_LEVEL_3DB <<
-			PS8811_BDE_PIN_MID_LEVEL_SHIFT) |
-			PS8811_BEQ_CONFIG_REG_ENABLE,
+		.val = (PS8811_BDE_PIN_MID_LEVEL_3DB
+			<< PS8811_BDE_PIN_MID_LEVEL_SHIFT) |
+		       PS8811_BEQ_CONFIG_REG_ENABLE,
 	},
 };
 
@@ -357,8 +357,8 @@ const static struct ps8811_reg_val equalizer_wlan_table[] = {
 	{
 		/* Set 50ohm adjust for B channel */
 		.reg = PS8811_REG1_50OHM_ADJUST_CHAN_B,
-		.val = (PS8811_50OHM_ADJUST_CHAN_B_MINUS_9PCT <<
-			PS8811_50OHM_ADJUST_CHAN_B_SHIFT),
+		.val = (PS8811_50OHM_ADJUST_CHAN_B_MINUS_9PCT
+			<< PS8811_50OHM_ADJUST_CHAN_B_SHIFT),
 	},
 };
 
@@ -371,16 +371,16 @@ static int usba_retimer_init(int port)
 	int i;
 	const struct usb_mux *me = &usba_ps8811[port];
 
-	rv = ps8811_i2c_read(me, PS8811_REG_PAGE1,
-			     PS8811_REG1_USB_BEQ_LEVEL, &val);
+	rv = ps8811_i2c_read(me, PS8811_REG_PAGE1, PS8811_REG1_USB_BEQ_LEVEL,
+			     &val);
 
 	switch (port) {
 	case USBA_PORT_A0:
 		/* Set channel A output swing */
-		rv = ps8811_i2c_field_update(
-			me, PS8811_REG_PAGE1, PS8811_REG1_USB_CHAN_A_SWING,
-			PS8811_CHAN_A_SWING_MASK,
-			0x2 << PS8811_CHAN_A_SWING_SHIFT);
+		rv = ps8811_i2c_field_update(me, PS8811_REG_PAGE1,
+					     PS8811_REG1_USB_CHAN_A_SWING,
+					     PS8811_CHAN_A_SWING_MASK,
+					     0x2 << PS8811_CHAN_A_SWING_SHIFT);
 		break;
 	case USBA_PORT_A1:
 		if (ec_cfg_has_lte()) {
@@ -403,9 +403,9 @@ static int usba_retimer_init(int port)
 				PS8811_REG1_USB_CHAN_B_DE_PS_MSB,
 				PS8811_CHAN_B_DE_PS_MSB_MASK, 0x16);
 
-
 			for (i = 0; i < NUM_EQ_WWAN_ARRAY; i++)
-				rv |= ps8811_i2c_write(me, PS8811_REG_PAGE1,
+				rv |= ps8811_i2c_write(
+					me, PS8811_REG_PAGE1,
 					equalizer_wwan_table[i].reg,
 					equalizer_wwan_table[i].val);
 		} else {
@@ -416,9 +416,9 @@ static int usba_retimer_init(int port)
 				PS8811_CHAN_A_SWING_MASK,
 				0x2 << PS8811_CHAN_A_SWING_SHIFT);
 
-
 			for (i = 0; i < NUM_EQ_WLAN_ARRAY; i++)
-				rv |= ps8811_i2c_write(me, PS8811_REG_PAGE1,
+				rv |= ps8811_i2c_write(
+					me, PS8811_REG_PAGE1,
 					equalizer_wlan_table[i].reg,
 					equalizer_wlan_table[i].val);
 		}
