@@ -22,8 +22,8 @@ static const struct ec_response_keybd_config nereid_kb_legacy = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &nereid_kb_legacy;
 }
