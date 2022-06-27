@@ -7,8 +7,8 @@
 #include <ap_power/ap_power_interface.h>
 #include <power_host_sleep.h>
 
-static enum power_state translate_ap_power_state(
-	enum power_states_ndsx ap_power_state)
+static enum power_state
+translate_ap_power_state(enum power_states_ndsx ap_power_state)
 {
 	switch (ap_power_state) {
 	case SYS_POWER_STATE_S5:
@@ -24,8 +24,8 @@ static enum power_state translate_ap_power_state(
 	}
 }
 
-int ap_power_get_lazy_wake_mask(
-	enum power_states_ndsx state, host_event_t *mask)
+int ap_power_get_lazy_wake_mask(enum power_states_ndsx state,
+				host_event_t *mask)
 {
 	enum power_state st;
 
@@ -36,9 +36,8 @@ int ap_power_get_lazy_wake_mask(
 }
 
 #if CONFIG_AP_PWRSEQ_HOST_SLEEP
-void power_chipset_handle_host_sleep_event(
-		enum host_sleep_event state,
-		struct host_sleep_event_context *ctx)
+void power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+					   struct host_sleep_event_context *ctx)
 {
 	ap_power_chipset_handle_host_sleep_event(state, ctx);
 }
