@@ -12,8 +12,8 @@
 
 #include "gl3590.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)
 
 /* GL3590 is unique in terms of i2c_read, since it doesn't support repeated
  * start sequence. One need to issue two separate transactions - first is write
@@ -25,11 +25,8 @@ int gl3590_read(int hub, uint8_t reg, uint8_t *data, int count)
 	struct uhub_i2c_iface_t *uhub_p = &uhub_config[hub];
 
 	i2c_lock(uhub_p->i2c_host_port, 1);
-	rv = i2c_xfer_unlocked(uhub_p->i2c_host_port,
-			       uhub_p->i2c_addr,
-			       &reg, 1,
-			       NULL, 0,
-			       I2C_XFER_SINGLE);
+	rv = i2c_xfer_unlocked(uhub_p->i2c_host_port, uhub_p->i2c_addr, &reg, 1,
+			       NULL, 0, I2C_XFER_SINGLE);
 	i2c_lock(uhub_p->i2c_host_port, 0);
 
 	if (rv)
@@ -39,11 +36,8 @@ int gl3590_read(int hub, uint8_t reg, uint8_t *data, int count)
 	udelay(MSEC);
 
 	i2c_lock(uhub_p->i2c_host_port, 1);
-	rv = i2c_xfer_unlocked(uhub_p->i2c_host_port,
-			       uhub_p->i2c_addr,
-			       NULL, 0,
-			       data, count,
-			       I2C_XFER_SINGLE);
+	rv = i2c_xfer_unlocked(uhub_p->i2c_host_port, uhub_p->i2c_addr, NULL, 0,
+			       data, count, I2C_XFER_SINGLE);
 	i2c_lock(uhub_p->i2c_host_port, 0);
 
 	/*
@@ -71,11 +65,8 @@ int gl3590_write(int hub, uint8_t reg, uint8_t *data, int count)
 	memcpy(&buf[1], data, count);
 
 	i2c_lock(uhub_p->i2c_host_port, 1);
-	rv = i2c_xfer_unlocked(uhub_p->i2c_host_port,
-			       uhub_p->i2c_addr,
-			       buf, count + 1,
-			       NULL, 0,
-			       I2C_XFER_SINGLE);
+	rv = i2c_xfer_unlocked(uhub_p->i2c_host_port, uhub_p->i2c_addr, buf,
+			       count + 1, NULL, 0, I2C_XFER_SINGLE);
 	i2c_lock(uhub_p->i2c_host_port, 0);
 
 	/*
@@ -164,7 +155,7 @@ void gl3590_irq_handler(int hub)
 	else
 		ccprintf("Host hub event! ");
 
-	switch(res_reg[0]) {
+	switch (res_reg[0]) {
 	case 0x0:
 		ccprintf("No response");
 		break;
@@ -247,7 +238,7 @@ enum ec_error_list gl3590_ufp_pwr(int hub, struct pwr_con_t *pwr)
 			return EC_SUCCESS;
 		} else {
 			CPRINTF("GL3590: Neither USB3 nor USB2 hubs "
-				 "configured\n");
+				"configured\n");
 			return EC_ERROR_HW_INTERNAL;
 		}
 	case GL3590_1_5_A_HOST_PWR_SRC:
@@ -262,11 +253,11 @@ enum ec_error_list gl3590_ufp_pwr(int hub, struct pwr_con_t *pwr)
 	}
 }
 
-#define GL3590_EN_PORT_MAX_RETRY_COUNT	10
+#define GL3590_EN_PORT_MAX_RETRY_COUNT 10
 
 int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
 {
-	uint8_t buf[4] = {0};
+	uint8_t buf[4] = { 0 };
 	uint8_t en_mask = 0;
 	uint8_t tmp;
 	int rv, i;
@@ -306,8 +297,9 @@ int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
 		}
 
 		CPRINTF("GL3590: Port %s retrying.. %d/%d\n"
-			"Port status is 0x%x\n", enable ? "enable" : "disable",
-			i, GL3590_EN_PORT_MAX_RETRY_COUNT, tmp);
+			"Port status is 0x%x\n",
+			enable ? "enable" : "disable", i,
+			GL3590_EN_PORT_MAX_RETRY_COUNT, tmp);
 	}
 
 	return EC_SUCCESS;
