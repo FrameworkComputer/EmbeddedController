@@ -37,4 +37,4 @@
 #include "charger_enum.h"
 #endif
 
-#endif  /* __BOARD_H */
+#endif /* __BOARD_H */
