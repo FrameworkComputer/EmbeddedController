@@ -36,20 +36,20 @@
 #define CONFIG_LED_ONOFF_STATES
 
 /*SENSOR*/
-#define I2C_PORT_ACCEL	I2C_PORT_SENSOR
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
-#define CONFIG_ACCEL_LIS2DWL		/* Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM    /* Base accel */
+#define CONFIG_ACCEL_LIS2DWL /* Lid accel */
+#define CONFIG_ACCELGYRO_LSM6DSM /* Base accel */
 #define CONFIG_ACCELGYRO_ICM42607
 #define CONFIG_ACCELGYRO_BMI220
 
 /* Lid operates in forced mode, base in FIFO */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 #define CONFIG_ACCEL_FIFO
-#define CONFIG_ACCEL_FIFO_SIZE 256	/* Must be a power of 2 */
+#define CONFIG_ACCEL_FIFO_SIZE 256 /* Must be a power of 2 */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 #define CONFIG_I2C_XFER_LARGE_TRANSFER
@@ -125,19 +125,14 @@ enum pwm_channel {
 };
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* ADC channels */
 enum adc_channel {
-	ADC_VSNS_PP3300_A,     /* ADC0 */
-	ADC_TEMP_SENSOR_1,     /* ADC2 */
-	ADC_TEMP_SENSOR_2,     /* ADC3 */
-	ADC_TEMP_SENSOR_3,     /* ADC15 */
+	ADC_VSNS_PP3300_A, /* ADC0 */
+	ADC_TEMP_SENSOR_1, /* ADC2 */
+	ADC_TEMP_SENSOR_2, /* ADC3 */
+	ADC_TEMP_SENSOR_3, /* ADC15 */
 	ADC_CH_COUNT
 };
 
