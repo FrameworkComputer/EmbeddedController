@@ -14,8 +14,8 @@
 #include "system.h"
 #include "sku.h"
 
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)
 
 /* LN9310 switchcap */
 const struct ln9310_config_t ln9310_config = {
