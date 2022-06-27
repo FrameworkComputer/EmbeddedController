@@ -57,8 +57,8 @@
 #include "util.h"
 #include "espi.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -171,13 +171,13 @@ __override struct keyboard_scan_config keyscan_config = {
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT]     = { 5, 0, 10000 },
-	[PWM_CH_LED_L_RED]   = { 2, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_KBLIGHT] = { 5, 0, 10000 },
+	[PWM_CH_LED_L_RED] = { 2, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_L_GREEN] = { 3, PWM_CONFIG_DSLEEP, 100 },
-	[PWM_CH_LED_L_BLUE]  = { 4, PWM_CONFIG_DSLEEP, 100 },
-	[PWM_CH_LED_R_RED]   = { 1, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_L_BLUE] = { 4, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_R_RED] = { 1, PWM_CONFIG_DSLEEP, 100 },
 	[PWM_CH_LED_R_GREEN] = { 0, PWM_CONFIG_DSLEEP, 100 },
-	[PWM_CH_LED_R_BLUE]  = { 6, PWM_CONFIG_DSLEEP, 100 },
+	[PWM_CH_LED_R_BLUE] = { 6, PWM_CONFIG_DSLEEP, 100 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -190,42 +190,32 @@ const enum gpio_signal hibernate_wake_pins[] = {
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* I2C port map */
-const struct i2c_port_t i2c_ports[]  = {
-	{
-		.name = "tcpc0",
-		.port = I2C_PORT_TCPC0,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_0_SCL,
-		.sda  = GPIO_I2C0_0_SDA
-	},
-	{
-		.name = "tcpc1",
-		.port = I2C_PORT_TCPC1,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_1_SCL,
-		.sda  = GPIO_I2C0_1_SDA
-	},
-	{
-		.name = "accelgyro",
-		.port = I2C_PORT_GYRO,
-		.kbps = 400,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "sensors",
-		.port = I2C_PORT_LID_ACCEL,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
-	{
-		.name = "batt",
-		.port = I2C_PORT_BATTERY,
-		.kbps = 100,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA
-	},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_0_SCL,
+	  .sda = GPIO_I2C0_0_SDA },
+	{ .name = "tcpc1",
+	  .port = I2C_PORT_TCPC1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_1_SCL,
+	  .sda = GPIO_I2C0_1_SDA },
+	{ .name = "accelgyro",
+	  .port = I2C_PORT_GYRO,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "sensors",
+	  .port = I2C_PORT_LID_ACCEL,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "batt",
+	  .port = I2C_PORT_BATTERY,
+	  .kbps = 100,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -360,7 +350,7 @@ void board_tcpc_init(void)
 	 */
 	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -381,18 +371,18 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0},
+	{ "Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0 },
 
 	/* These BD99992GW temp sensors are only readable in S0 */
-	{"Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM0},
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM1},
-	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM2},
-	{"eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM3},
-	{"Gyro", TEMP_SENSOR_TYPE_BOARD, bmi160_get_sensor_temp, BASE_GYRO},
+	{ "Ambient", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM0 },
+	{ "Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM1 },
+	{ "DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM2 },
+	{ "eMMC", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM3 },
+	{ "Gyro", TEMP_SENSOR_TYPE_BOARD, bmi160_get_sensor_temp, BASE_GYRO },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -408,8 +398,8 @@ static void board_report_pmic_fault(const char *str)
 	uint32_t info;
 
 	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault)
-	    != EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault) !=
+	    EC_SUCCESS)
 		return;
 
 	if (!(vrfault & BIT(4)))
@@ -636,8 +626,8 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Enable charging trigger by BC1.2 detection */
 	int bc12_enable = (supplier == CHARGE_SUPPLIER_BC12_CDP ||
@@ -649,8 +639,8 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		return;
 
 	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /**
@@ -719,7 +709,7 @@ __override void lid_angle_peripheral_enable(int enable)
 	 * which might be faulty. Disable keyboard and trackpad wake.
 	 */
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
-	   (tablet_get_mode() && chipset_in_state(CHIPSET_STATE_SUSPEND)))
+	    (tablet_get_mode() && chipset_in_state(CHIPSET_STATE_SUSPEND)))
 		enable = 0;
 	keyboard_scan_enable(enable, KB_SCAN_DISABLE_LID_ANGLE);
 
@@ -851,36 +841,30 @@ static struct mutex g_lid_mutex;
 static struct kionix_accel_data g_kxcj9_data;
 static struct bmi_drv_data_t g_bmi160_data;
 
-static struct si114x_drv_data_t g_si114x_data = {
-	.state = SI114X_NOT_READY,
-	.covered = 0,
-	.type_data = {
-		/* Proximity - unused */
-		{
-		},
-		/* light */
-		{
-			.base_data_reg = SI114X_ALS_VIS_DATA0,
-			.irq_flags = SI114X_IRQ_ENABLE_ALS_IE_INT0 |
-				     SI114X_IRQ_ENABLE_ALS_IE_INT1,
-			.scale = 1,
-			.offset = -256,
-		}
-	}
-};
+static struct si114x_drv_data_t
+	g_si114x_data = { .state = SI114X_NOT_READY,
+			  .covered = 0,
+			  .type_data = {
+				  /* Proximity - unused */
+				  {},
+				  /* light */
+				  {
+					  .base_data_reg = SI114X_ALS_VIS_DATA0,
+					  .irq_flags =
+						  SI114X_IRQ_ENABLE_ALS_IE_INT0 |
+						  SI114X_IRQ_ENABLE_ALS_IE_INT1,
+					  .scale = 1,
+					  .offset = -256,
+				  } } };
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t mag_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t mag_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t lid_standard_ref = {
-	{FLOAT_TO_FP(-1),  0,  0},
-	{ 0,  FLOAT_TO_FP(-1), 0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
