@@ -40,8 +40,8 @@ static void hdmi_hpd_interrupt(enum gpio_signal signal);
 
 #include "gpio_list.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_KBLIGHT] = {
@@ -95,8 +95,7 @@ static void board_chipset_resume(void)
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
 		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
 				  check_hdmi_hpd_status());
 	}
 }
@@ -105,9 +104,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 static void board_chipset_suspend(void)
 {
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  0);
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS, 0);
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 	}
 
@@ -163,8 +160,7 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_amd_fp5_usb_mux,
+		memcpy(&usb_muxes[USBC_PORT_C1], &usbc1_amd_fp5_usb_mux,
 		       sizeof(struct usb_mux));
 		/* Set the TUSB544 as the secondary MUX */
 		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_tusb544;
@@ -176,8 +172,7 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the PS8743
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_ps8743,
+		memcpy(&usb_muxes[USBC_PORT_C1], &usbc1_ps8743,
 		       sizeof(struct usb_mux));
 		/* Set the AMD FP5 as the secondary MUX */
 		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_amd_fp5_usb_mux;
@@ -201,67 +196,58 @@ struct usb_mux usb_muxes[] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
 static int board_tusb544_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+				 mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
-
-		rv = tusb544_i2c_field_update8(me,
-					TUSB544_REG_USB3_1_1,
-					TUSB544_EQ_RX_MASK,
-					TUSB544_EQ_RX_DFP_04_UFP_MINUS15);
+		rv = tusb544_i2c_field_update8(
+			me, TUSB544_REG_USB3_1_1, TUSB544_EQ_RX_MASK,
+			TUSB544_EQ_RX_DFP_04_UFP_MINUS15);
 		if (rv)
 			return rv;
 
-		rv = tusb544_i2c_field_update8(me,
-					TUSB544_REG_USB3_1_1,
-					TUSB544_EQ_TX_MASK,
-					TUSB544_EQ_TX_DFP_MINUS14_UFP_MINUS33);
+		rv = tusb544_i2c_field_update8(
+			me, TUSB544_REG_USB3_1_1, TUSB544_EQ_TX_MASK,
+			TUSB544_EQ_TX_DFP_MINUS14_UFP_MINUS33);
 		if (rv)
 			return rv;
 
-		rv = tusb544_i2c_field_update8(me,
-					TUSB544_REG_USB3_1_2,
-					TUSB544_EQ_RX_MASK,
-					TUSB544_EQ_RX_DFP_04_UFP_MINUS15);
+		rv = tusb544_i2c_field_update8(
+			me, TUSB544_REG_USB3_1_2, TUSB544_EQ_RX_MASK,
+			TUSB544_EQ_RX_DFP_04_UFP_MINUS15);
 		if (rv)
 			return rv;
 
-		rv = tusb544_i2c_field_update8(me,
-					TUSB544_REG_USB3_1_2,
-					TUSB544_EQ_TX_MASK,
-					TUSB544_EQ_TX_DFP_MINUS14_UFP_MINUS33);
+		rv = tusb544_i2c_field_update8(
+			me, TUSB544_REG_USB3_1_2, TUSB544_EQ_TX_MASK,
+			TUSB544_EQ_TX_DFP_MINUS14_UFP_MINUS33);
 		if (rv)
 			return rv;
 	}
 
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
-		rv = tusb544_i2c_field_update8(me,
-					TUSB544_REG_DISPLAYPORT_1,
-					TUSB544_EQ_RX_MASK,
-					TUSB544_EQ_RX_DFP_61_UFP_43);
+		rv = tusb544_i2c_field_update8(me, TUSB544_REG_DISPLAYPORT_1,
+					       TUSB544_EQ_RX_MASK,
+					       TUSB544_EQ_RX_DFP_61_UFP_43);
 		if (rv)
 			return rv;
 
-		rv = tusb544_i2c_field_update8(me,
-					TUSB544_REG_DISPLAYPORT_1,
-					TUSB544_EQ_TX_MASK,
-					TUSB544_EQ_TX_DFP_61_UFP_43);
+		rv = tusb544_i2c_field_update8(me, TUSB544_REG_DISPLAYPORT_1,
+					       TUSB544_EQ_TX_MASK,
+					       TUSB544_EQ_TX_DFP_61_UFP_43);
 		if (rv)
 			return rv;
 
-		rv = tusb544_i2c_field_update8(me,
-					TUSB544_REG_DISPLAYPORT_2,
-					TUSB544_EQ_RX_MASK,
-					TUSB544_EQ_RX_DFP_61_UFP_43);
+		rv = tusb544_i2c_field_update8(me, TUSB544_REG_DISPLAYPORT_2,
+					       TUSB544_EQ_RX_MASK,
+					       TUSB544_EQ_RX_DFP_61_UFP_43);
 		if (rv)
 			return rv;
 
-		rv = tusb544_i2c_field_update8(me,
-					TUSB544_REG_DISPLAYPORT_2,
-					TUSB544_EQ_TX_MASK,
-					TUSB544_EQ_TX_DFP_61_UFP_43);
+		rv = tusb544_i2c_field_update8(me, TUSB544_REG_DISPLAYPORT_2,
+					       TUSB544_EQ_TX_MASK,
+					       TUSB544_EQ_TX_DFP_61_UFP_43);
 		if (rv)
 			return rv;
 
@@ -346,10 +332,9 @@ static void hdmi_hpd_handler(void)
 
 	gpio_set_level(GPIO_EC_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
-	pi3hdx1204_enable(I2C_PORT_TCPC1,
-			  PI3HDX1204_I2C_ADDR_FLAGS,
-			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
-			  && hpd);
+	pi3hdx1204_enable(
+		I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
+		chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON) && hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
@@ -366,7 +351,7 @@ static void hdmi_hpd_interrupt(enum gpio_signal signal)
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = -1,
 };
@@ -401,7 +386,7 @@ int board_get_temp(int idx, int *temp_k)
 
 		/* adc power not ready when transition to S5 */
 		if (chipset_in_or_transitioning_to_state(
-			CHIPSET_STATE_SOFT_OFF))
+			    CHIPSET_STATE_SOFT_OFF))
 			return EC_ERROR_NOT_POWERED;
 
 		channel = ADC_TEMP_SENSOR_SOC;
@@ -413,7 +398,7 @@ int board_get_temp(int idx, int *temp_k)
 
 		/* adc power not ready when transition to S5 */
 		if (chipset_in_or_transitioning_to_state(
-			CHIPSET_STATE_SOFT_OFF))
+			    CHIPSET_STATE_SOFT_OFF))
 			return EC_ERROR_NOT_POWERED;
 
 		channel = ADC_TEMP_SENSOR_5V_REGULATOR;
@@ -487,8 +472,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_THERMISTOR_SOC \
-	{ \
+#define THERMAL_THERMISTOR_SOC   \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(62), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(66), \
@@ -506,7 +491,7 @@ __maybe_unused static const struct ec_thermal_config thermal_thermistor_soc =
  * TODO(b/202062363): Remove when clang is fixed.
  */
 #define THERMAL_THERMISTOR_CHARGER \
-	{ \
+	{                          \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(99), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(99), \
@@ -515,16 +500,16 @@ __maybe_unused static const struct ec_thermal_config thermal_thermistor_soc =
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(98), \
 		}, \
 		.temp_fan_off = C_TO_K(98), \
-		.temp_fan_max = C_TO_K(99), \
+		.temp_fan_max = C_TO_K(99),   \
 	}
-__maybe_unused static const struct ec_thermal_config
-	thermal_thermistor_charger = THERMAL_THERMISTOR_CHARGER;
+__maybe_unused static const struct ec_thermal_config thermal_thermistor_charger =
+	THERMAL_THERMISTOR_CHARGER;
 
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_THERMISTOR_5V \
-	{ \
+#define THERMAL_THERMISTOR_5V    \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(60), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(99), \
@@ -541,8 +526,8 @@ __maybe_unused static const struct ec_thermal_config thermal_thermistor_5v =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(100), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(105), \
@@ -562,13 +547,13 @@ struct fan_step {
 };
 
 static const struct fan_step fan_table0[] = {
-	{.on =  0, .off =  5, .rpm = 0},
-	{.on = 29, .off =  5, .rpm = 3700},
-	{.on = 38, .off = 19, .rpm = 4000},
-	{.on = 48, .off = 33, .rpm = 4500},
-	{.on = 62, .off = 43, .rpm = 4800},
-	{.on = 76, .off = 52, .rpm = 5200},
-	{.on = 100, .off = 67, .rpm = 6200},
+	{ .on = 0, .off = 5, .rpm = 0 },
+	{ .on = 29, .off = 5, .rpm = 3700 },
+	{ .on = 38, .off = 19, .rpm = 4000 },
+	{ .on = 48, .off = 33, .rpm = 4500 },
+	{ .on = 62, .off = 43, .rpm = 4800 },
+	{ .on = 76, .off = 52, .rpm = 5200 },
+	{ .on = 100, .off = 67, .rpm = 6200 },
 };
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
@@ -608,8 +593,7 @@ int fan_percent_to_rpm(int fan, int pct)
 
 	previous_pct = pct;
 
-	if (fan_table[current_level].rpm !=
-		fan_get_rpm_target(FAN_CH(fan)))
+	if (fan_table[current_level].rpm != fan_get_rpm_target(FAN_CH(fan)))
 		cprints(CC_THERMAL, "Setting fan RPM to %d",
 			fan_table[current_level].rpm);
 
@@ -632,15 +616,14 @@ DECLARE_HOOK(HOOK_INIT, setup_fans, HOOK_PRIO_DEFAULT);
  * The connector has 24 pins total, and there is no pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-		{0, 5}, {1, 1}, {1, 0}, {0, 6}, {0, 7},
-		{1, 4}, {1, 3}, {1, 6}, {1, 7}, {3, 1},
-		{2, 0}, {1, 5}, {2, 6}, {2, 7}, {2, 1},
-		{2, 4}, {2, 5}, {1, 2}, {2, 3}, {2, 2},
-		{3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+	{ 0, 5 }, { 1, 1 }, { 1, 0 }, { 0, 6 },	  { 0, 7 },   { 1, 4 },
+	{ 1, 3 }, { 1, 6 }, { 1, 7 }, { 3, 1 },	  { 2, 0 },   { 1, 5 },
+	{ 2, 6 }, { 2, 7 }, { 2, 1 }, { 2, 4 },	  { 2, 5 },   { 1, 2 },
+	{ 2, 3 }, { 2, 2 }, { 3, 0 }, { -1, -1 }, { -1, -1 }, { -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
 
 /*****************************************************************************
@@ -685,9 +668,8 @@ enum gpio_signal board_usbc_port_to_hpd_gpio(int port)
 	 *    from USB-PD messages..
 	 */
 	else if (ec_config_has_mst_hub_rtd2141b())
-		return (board_ver >= 3)
-				? GPIO_USB_C1_HPD_IN_DB_V1
-				: GPIO_NO_HPD;
+		return (board_ver >= 3) ? GPIO_USB_C1_HPD_IN_DB_V1 :
+					  GPIO_NO_HPD;
 
 	/* USB-C1 OPT1 DB uses DP2_HPD. */
 	return GPIO_DP2_HPD;
