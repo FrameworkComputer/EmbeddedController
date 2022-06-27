@@ -13,10 +13,10 @@
 #include "task.h"
 #include "timer.h"
 
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)
 
-#define I2C_ADDR_MP3385_FLAGS	0x31
+#define I2C_ADDR_MP3385_FLAGS 0x31
 
 struct mp3385_value {
 	uint8_t offset;
@@ -40,36 +40,36 @@ static struct mp3385_value mp3385_conf[] = {
 	 * Frequency selection: 300(KHz)
 	 * Short circuit protection: 8(V)
 	 */
-	{.offset = 1, .data = 0x43},
+	{ .offset = 1, .data = 0x43 },
 	/*
 	 * Register 0x02: LED current Full-Scale Register
 	 * ISET Resistor: 127(Kohm)
 	 * Maximum LED current: 20196/127 = 159(mA)
 	 * Setting LED current: 62(mA)
 	 */
-	{.offset = 2, .data = 0x65},
+	{ .offset = 2, .data = 0x65 },
 
-	 /* Register 0x03: RO - ignored */
+	/* Register 0x03: RO - ignored */
 
 	/*
 	 * Register 0x04: Internal LED Dimming Brightness Register
 	 * SMBus PWM function: None Use
 	 */
-	{.offset = 4, .data = 0x00},
+	{ .offset = 4, .data = 0x00 },
 	/*
 	 * Register 0x05: OVP, OCP Threshold Register
 	 * Over Current Protection: 0.5(V)
 	 * Panel LED Voltage(Max): 47.8(V)
 	 * OVP setting: 54(V)
 	 */
-	{.offset = 5, .data = 0x97},
+	{ .offset = 5, .data = 0x97 },
 	/*
 	 * Register 0x00: Dimming mode Register
 	 * String Selection: 4(Number)
 	 * Interface Selection: 1
 	 * Brightness mode: 3
 	 */
-	{.offset = 0, .data = 0xF2},
+	{ .offset = 0, .data = 0xF2 },
 };
 static const int mp3385_conf_size = ARRAY_SIZE(mp3385_conf);
 
@@ -78,12 +78,12 @@ static void set_mp3385_reg(void)
 	int i;
 
 	for (i = 0; i < mp3385_conf_size; ++i) {
-		int rv = i2c_write8(I2C_PORT_BACKLIGHT,
-				    I2C_ADDR_MP3385_FLAGS,
+		int rv = i2c_write8(I2C_PORT_BACKLIGHT, I2C_ADDR_MP3385_FLAGS,
 				    mp3385_conf[i].offset, mp3385_conf[i].data);
 		if (rv) {
 			CPRINTS("Write MP3385 register %d "
-					"failed rv=%d", i, rv);
+				"failed rv=%d",
+				i, rv);
 			return;
 		}
 	}
@@ -113,7 +113,7 @@ void mp3385_interrupt(enum gpio_signal signal)
 	 *             |-   t2   -| : 1 second is enough
 	 */
 	hook_call_deferred(&mp3385_backlight_enable_deferred_data,
-						MP3385_POWER_BACKLIGHT_DELAY);
+			   MP3385_POWER_BACKLIGHT_DELAY);
 }
 
 int mp3385_set_config(int offset, int data)
