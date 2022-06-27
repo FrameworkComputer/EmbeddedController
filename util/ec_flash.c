@@ -27,8 +27,8 @@ int ec_flash_read(uint8_t *buf, int offset, int size)
 	for (i = 0; i < size; i += ec_max_insize) {
 		p.offset = offset + i;
 		p.size = MIN(size - i, ec_max_insize);
-		rv = ec_command(EC_CMD_FLASH_READ, 0,
-				&p, sizeof(p), ec_inbuf, p.size);
+		rv = ec_command(EC_CMD_FLASH_READ, 0, &p, sizeof(p), ec_inbuf,
+				p.size);
 		if (rv < 0) {
 			fprintf(stderr, "Read error at offset %d\n", i);
 			return rv;
@@ -58,7 +58,8 @@ int ec_flash_verify(const uint8_t *buf, int offset, int size)
 
 	for (i = 0; i < size; i++) {
 		if (buf[i] != rbuf[i]) {
-			fprintf(stderr, "Mismatch at offset 0x%x: "
+			fprintf(stderr,
+				"Mismatch at offset 0x%x: "
 				"want 0x%02x, got 0x%02x\n",
 				i, buf[i], rbuf[i]);
 			free(rbuf);
@@ -76,12 +77,15 @@ int ec_flash_verify(const uint8_t *buf, int offset, int size)
  */
 static int get_flash_info_v2(struct ec_response_flash_info_2 *info_response)
 {
-	struct ec_params_flash_info_2 info_params = {
-		/*
-		 * By setting this to zero we indicate that we don't care
-		 * about getting the bank description in the response.
-		 */
-		.num_banks_desc = 0
+	struct ec_params_flash_info_2 info_params = { /*
+						       * By setting this to zero
+						       * we indicate that we
+						       * don't care about
+						       * getting the bank
+						       * description in the
+						       * response.
+						       */
+						      .num_banks_desc = 0
 	};
 
 	return ec_command(EC_CMD_FLASH_INFO, 2, &info_params,
