@@ -34,4 +34,4 @@ int comm_init_usb(uint16_t vid, uint16_t pid);
  */
 void comm_usb_exit(void);
 
-#endif  /* __UTIL_COMM_USB_H */
+#endif /* __UTIL_COMM_USB_H */
