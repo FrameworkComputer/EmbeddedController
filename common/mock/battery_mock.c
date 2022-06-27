@@ -141,7 +141,7 @@ void set_battery_time_to_full(int new_value)
 }
 
 #define MAX_DEVICE_NAME_LENGTH 40
-static char battery_device_name_value[MAX_DEVICE_NAME_LENGTH+1] = "?";
+static char battery_device_name_value[MAX_DEVICE_NAME_LENGTH + 1] = "?";
 int battery_device_name(char *dest, int size)
 {
 	int i;
@@ -159,12 +159,13 @@ void set_battery_device_name(char *new_value)
 
 	for (i = 0; i < size && i < MAX_DEVICE_NAME_LENGTH; ++i)
 		battery_device_name_value[i] = new_value[i];
-	for (; i < MAX_DEVICE_NAME_LENGTH+1; ++i)
+	for (; i < MAX_DEVICE_NAME_LENGTH + 1; ++i)
 		battery_device_name_value[i] = '\0';
 }
 
 #define MAX_DEVICE_CHEMISTRY_LENGTH 40
-static char battery_device_chemistry_value[MAX_DEVICE_CHEMISTRY_LENGTH+1] = "?";
+static char battery_device_chemistry_value[MAX_DEVICE_CHEMISTRY_LENGTH + 1] =
+	"?";
 int battery_device_chemistry(char *dest, int size)
 {
 	int i;
@@ -182,7 +183,7 @@ void set_battery_device_chemistry(char *new_value)
 
 	for (i = 0; i < size && i < MAX_DEVICE_CHEMISTRY_LENGTH; ++i)
 		battery_device_chemistry_value[i] = new_value[i];
-	for (; i < MAX_DEVICE_CHEMISTRY_LENGTH+1; ++i)
+	for (; i < MAX_DEVICE_CHEMISTRY_LENGTH + 1; ++i)
 		battery_device_chemistry_value[i] = '\0';
 }
 
@@ -194,7 +195,7 @@ static int battery_temperature_value = 20;
 static int battery_voltage_value = 5000;
 void battery_get_params(struct batt_params *batt)
 {
-	struct batt_params batt_new = {0};
+	struct batt_params batt_new = { 0 };
 
 	batt_new.temperature = battery_temperature_value;
 	batt_new.state_of_charge = battery_soc_value;
