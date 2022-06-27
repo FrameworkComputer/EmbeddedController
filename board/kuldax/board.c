@@ -27,8 +27,8 @@
 #include "fw_config.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 static void power_monitor(void);
 DECLARE_DEFERRED(power_monitor);
@@ -140,21 +140,21 @@ static int32_t base_5v_power_z1;
  */
 
 /* PP5000_S5 loads */
-#define PWR_S5_BASE_LOAD  (5*1431)
-#define PWR_S5_FRONT_HIGH (5*1737)
-#define PWR_S5_FRONT_LOW  (5*1055)
-#define PWR_S5_REAR_HIGH  (5*1737)
-#define PWR_S5_REAR_LOW   (5*1055)
-#define PWR_S5_HDMI       (5*580)
-#define PWR_S5_MAX        (5*10000)
-#define FRONT_DELTA       (PWR_S5_FRONT_HIGH - PWR_S5_FRONT_LOW)
-#define REAR_DELTA        (PWR_S5_REAR_HIGH - PWR_S5_REAR_LOW)
+#define PWR_S5_BASE_LOAD (5 * 1431)
+#define PWR_S5_FRONT_HIGH (5 * 1737)
+#define PWR_S5_FRONT_LOW (5 * 1055)
+#define PWR_S5_REAR_HIGH (5 * 1737)
+#define PWR_S5_REAR_LOW (5 * 1055)
+#define PWR_S5_HDMI (5 * 580)
+#define PWR_S5_MAX (5 * 10000)
+#define FRONT_DELTA (PWR_S5_FRONT_HIGH - PWR_S5_FRONT_LOW)
+#define REAR_DELTA (PWR_S5_REAR_HIGH - PWR_S5_REAR_LOW)
 
 /* PP5000_Z1 loads */
-#define PWR_Z1_BASE_LOAD   (5*5)
-#define PWR_Z1_C_HIGH      (5*3600)
-#define PWR_Z1_C_LOW       (5*2000)
-#define PWR_Z1_MAX         (5*9000)
+#define PWR_Z1_BASE_LOAD (5 * 5)
+#define PWR_Z1_C_HIGH (5 * 3600)
+#define PWR_Z1_C_LOW (5 * 2000)
+#define PWR_Z1_MAX (5 * 9000)
 /*
  * Update the 5V power usage, assuming no throttling,
  * and invoke the power monitoring.
@@ -228,7 +228,7 @@ static void port_ocp_interrupt(enum gpio_signal signal)
  * only do that if the system is off since it might still brown out.
  */
 
-#define ADP_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
+#define ADP_DEBOUNCE_MS 1000 /* Debounce time for BJ plug/unplug */
 /* Debounced connection state of the barrel jack */
 static int8_t adp_connected = -1;
 static void adp_connect_deferred(void)
@@ -328,26 +328,26 @@ void board_overcurrent_event(int port, int is_overcurrented)
  *
  *  All measurements are in milliwatts.
  */
-#define THROT_TYPE_A_FRONT  BIT(0)
-#define THROT_TYPE_A_REAR   BIT(1)
-#define THROT_TYPE_C0       BIT(2)
-#define THROT_TYPE_C1       BIT(3)
-#define THROT_TYPE_C2       BIT(4)
-#define THROT_PROCHOT       BIT(5)
+#define THROT_TYPE_A_FRONT BIT(0)
+#define THROT_TYPE_A_REAR BIT(1)
+#define THROT_TYPE_C0 BIT(2)
+#define THROT_TYPE_C1 BIT(3)
+#define THROT_TYPE_C2 BIT(4)
+#define THROT_PROCHOT BIT(5)
 
 /*
  * Power gain if front USB A ports are limited.
  */
-#define POWER_GAIN_TYPE_A	3200
+#define POWER_GAIN_TYPE_A 3200
 /*
  * Power gain if Type C port is limited.
  */
-#define POWER_GAIN_TYPE_C	8800
+#define POWER_GAIN_TYPE_C 8800
 /*
  * Power is averaged over 10 ms, with a reading every 2 ms.
  */
-#define POWER_DELAY_MS		2
-#define POWER_READINGS		(10/POWER_DELAY_MS)
+#define POWER_DELAY_MS 2
+#define POWER_READINGS (10 / POWER_DELAY_MS)
 
 static void power_monitor(void)
 {
@@ -363,8 +363,7 @@ static void power_monitor(void)
 	 * If CPU is off or suspended, no need to throttle
 	 * or restrict power.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-			     CHIPSET_STATE_SUSPEND)) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF | CHIPSET_STATE_SUSPEND)) {
 		/*
 		 * Slow down monitoring, assume no throttling required.
 		 */
@@ -392,7 +391,7 @@ static void power_monitor(void)
 			 */
 			power = (adc_read_channel(ADC_VBUS) *
 				 adc_read_channel(ADC_PPVAR_IMON)) /
-				 1000;
+				1000;
 			/* Init power table */
 			if (history[0] == 0) {
 				for (i = 0; i < POWER_READINGS; i++)
@@ -419,8 +418,7 @@ static void power_monitor(void)
 			 * For barrel-jack supplies, the rating can be
 			 * exceeded briefly, so use the average.
 			 */
-			if (charge_manager_get_supplier() ==
-			    CHARGE_SUPPLIER_PD)
+			if (charge_manager_get_supplier() == CHARGE_SUPPLIER_PD)
 				power = max;
 			else
 				power = total / POWER_READINGS;
@@ -551,24 +549,27 @@ static void power_monitor(void)
 		gpio_set_level(GPIO_EC_PROCHOT_ODL, prochot);
 	}
 	if (diff & THROT_TYPE_C0) {
-		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C0)
-			? TYPEC_RP_1A5 : TYPEC_RP_3A0;
+		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C0) ?
+						TYPEC_RP_1A5 :
+						TYPEC_RP_3A0;
 
 		ppc_set_vbus_source_current_limit(0, rp);
 		tcpm_select_rp_value(0, rp);
 		pd_update_contract(0);
 	}
 	if (diff & THROT_TYPE_C1) {
-		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C1)
-			? TYPEC_RP_1A5 : TYPEC_RP_3A0;
+		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C1) ?
+						TYPEC_RP_1A5 :
+						TYPEC_RP_3A0;
 
 		ppc_set_vbus_source_current_limit(1, rp);
 		tcpm_select_rp_value(1, rp);
 		pd_update_contract(1);
 	}
 	if (diff & THROT_TYPE_C2) {
-		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C2)
-			? TYPEC_RP_1A5 : TYPEC_RP_3A0;
+		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C2) ?
+						TYPEC_RP_1A5 :
+						TYPEC_RP_3A0;
 
 		ppc_set_vbus_source_current_limit(2, rp);
 		tcpm_select_rp_value(2, rp);
