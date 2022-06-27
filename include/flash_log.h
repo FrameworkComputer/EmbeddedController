@@ -16,10 +16,10 @@ enum flash_event_type {
 	FE_LOG_CORRUPTED = 1,
 	FE_TPM_I2C_ERROR = 2,
 	FE_LOG_OVERFLOWS = 3, /* A single byte, overflow counter. */
-	FE_LOG_LOCKS = 4,     /* A single byte, lock failures counter. */
-	FE_LOG_NVMEM = 5,     /* NVMEM failure, variable structure. */
-	FE_LOG_TPM_WIPE_ERROR = 6,     /* Failed to wipe the TPM */
-	FE_LOG_TRNG_STALL = 7,     /* Stall while retrieving a random number. */
+	FE_LOG_LOCKS = 4, /* A single byte, lock failures counter. */
+	FE_LOG_NVMEM = 5, /* NVMEM failure, variable structure. */
+	FE_LOG_TPM_WIPE_ERROR = 6, /* Failed to wipe the TPM */
+	FE_LOG_TRNG_STALL = 7, /* Stall while retrieving a random number. */
 	FE_LOG_DCRYPTO_FAILURE = 8, /* Dcrypto had to be reset. */
 
 	/*
@@ -92,9 +92,9 @@ struct nvmem_failure_payload {
 
 #define FLASH_LOG_PAYLOAD_SIZE(size) ((size)&FLASH_LOG_PAYLOAD_SIZE_MASK)
 /* Size of log entry for a specific payload size. */
-#define FLASH_LOG_ENTRY_SIZE(payload_sz)                                       \
-	((FLASH_LOG_PAYLOAD_SIZE(payload_sz) +                                 \
-	  sizeof(struct flash_log_entry) + CONFIG_FLASH_WRITE_SIZE - 1) &      \
+#define FLASH_LOG_ENTRY_SIZE(payload_sz)                                  \
+	((FLASH_LOG_PAYLOAD_SIZE(payload_sz) +                            \
+	  sizeof(struct flash_log_entry) + CONFIG_FLASH_WRITE_SIZE - 1) & \
 	 ~(CONFIG_FLASH_WRITE_SIZE - 1))
 
 /*
