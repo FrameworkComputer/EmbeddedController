@@ -194,9 +194,8 @@ ZTEST(ppc_sn5s330, test_vbus_source_sink_enable)
 }
 
 /* This test depends on EC GIPO initialization happening before I2C */
-BUILD_ASSERT(
-	CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY < CONFIG_I2C_INIT_PRIORITY,
-	"GPIO initialization must happen before I2C");
+BUILD_ASSERT(CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY < CONFIG_I2C_INIT_PRIORITY,
+	     "GPIO initialization must happen before I2C");
 ZTEST(ppc_sn5s330, test_vbus_discharge)
 {
 	const struct emul *emul = EMUL;
@@ -438,25 +437,24 @@ enum i2c_operation {
 	I2C_READ,
 };
 
-#define INIT_I2C_FAIL_HELPER(EMUL, RW, REG)                                \
-	do {                                                               \
-		if ((RW) == I2C_READ) {                                    \
-			i2c_common_emul_set_read_fail_reg((EMUL), (REG));  \
-			i2c_common_emul_set_write_fail_reg(                \
-				(EMUL), I2C_COMMON_EMUL_NO_FAIL_REG);      \
-		} else if ((RW) == I2C_WRITE) {                            \
-			i2c_common_emul_set_read_fail_reg(                 \
-				(EMUL), I2C_COMMON_EMUL_NO_FAIL_REG);      \
-			i2c_common_emul_set_write_fail_reg((EMUL), (REG)); \
-		} else {                                                   \
-			zassert_true(false, "Invalid I2C operation");      \
-		}                                                          \
-		zassert_equal(                                             \
-			EC_ERROR_INVAL, sn5s330_drv.init(SN5S330_PORT),    \
-			"Did not get EC_ERROR_INVAL when reg %s (0x%02x)"  \
-			"could not be %s",                                 \
-			#REG, (REG),                                       \
-			((RW) == I2C_READ) ? "read" : "written");          \
+#define INIT_I2C_FAIL_HELPER(EMUL, RW, REG)                                    \
+	do {                                                                   \
+		if ((RW) == I2C_READ) {                                        \
+			i2c_common_emul_set_read_fail_reg((EMUL), (REG));      \
+			i2c_common_emul_set_write_fail_reg(                    \
+				(EMUL), I2C_COMMON_EMUL_NO_FAIL_REG);          \
+		} else if ((RW) == I2C_WRITE) {                                \
+			i2c_common_emul_set_read_fail_reg(                     \
+				(EMUL), I2C_COMMON_EMUL_NO_FAIL_REG);          \
+			i2c_common_emul_set_write_fail_reg((EMUL), (REG));     \
+		} else {                                                       \
+			zassert_true(false, "Invalid I2C operation");          \
+		}                                                              \
+		zassert_equal(                                                 \
+			EC_ERROR_INVAL, sn5s330_drv.init(SN5S330_PORT),        \
+			"Did not get EC_ERROR_INVAL when reg %s (0x%02x)"      \
+			"could not be %s",                                     \
+			#REG, (REG), ((RW) == I2C_READ) ? "read" : "written"); \
 	} while (0)
 
 ZTEST(ppc_sn5s330, test_init_reg_fails)
@@ -665,9 +663,9 @@ static inline void reset_sn5s330_state(void)
 	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
 	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
 	i2c_common_emul_set_write_fail_reg(i2c_emul,
-		I2C_COMMON_EMUL_NO_FAIL_REG);
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
 	i2c_common_emul_set_read_fail_reg(i2c_emul,
-		I2C_COMMON_EMUL_NO_FAIL_REG);
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	sn5s330_emul_reset(EMUL);
 	RESET_FAKE(sn5s330_emul_interrupt_set_stub);
 }
