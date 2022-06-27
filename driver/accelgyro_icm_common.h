@@ -20,9 +20,9 @@
 
 #ifdef CONFIG_ACCEL_FIFO
 /* reserve maximum 4 samples of 16 bytes */
-#define ICM_FIFO_BUFFER	64
+#define ICM_FIFO_BUFFER 64
 #else
-#define ICM_FIFO_BUFFER	0
+#define ICM_FIFO_BUFFER 0
 #endif
 
 struct icm_drv_data_t {
@@ -35,21 +35,19 @@ struct icm_drv_data_t {
 	uint8_t fifo_buffer[ICM_FIFO_BUFFER] __aligned(sizeof(long));
 };
 
-#define ICM_GET_DATA(_s) \
-	((struct icm_drv_data_t *)(_s)->drv_data)
-#define ICM_GET_SAVED_DATA(_s) \
-	(&ICM_GET_DATA(_s)->saved_data[(_s)->type])
+#define ICM_GET_DATA(_s) ((struct icm_drv_data_t *)(_s)->drv_data)
+#define ICM_GET_SAVED_DATA(_s) (&ICM_GET_DATA(_s)->saved_data[(_s)->type])
 
 /*
  * Virtual register address is 16 bits:
  * - 8 bits MSB coding bank number
  * - 8 bits LSB coding physical address
  */
-#define ICM426XX_REG_GET_BANK(_r)	(((_r) & 0xFF00) >> 8)
-#define ICM426XX_REG_GET_ADDR(_r)	((_r) & 0x00FF)
+#define ICM426XX_REG_GET_BANK(_r) (((_r)&0xFF00) >> 8)
+#define ICM426XX_REG_GET_ADDR(_r) ((_r)&0x00FF)
 
 /* Sensor resolution in number of bits */
-#define ICM_RESOLUTION		16
+#define ICM_RESOLUTION 16
 
 /**
  * sign_extend - sign extend a standard int value using the given sign-bit
@@ -105,7 +103,7 @@ int icm_get_scale(const struct motion_sensor_t *s, uint16_t *scale,
 		  int16_t *temp);
 
 ssize_t icm_fifo_decode_packet(const void *packet, const uint8_t **accel,
-		const uint8_t **gyro);
+			       const uint8_t **gyro);
 
 static inline void icm_set_stabilize_ts(const struct motion_sensor_t *s,
 					uint32_t delay)
@@ -125,9 +123,8 @@ static inline void icm_reset_stabilize_ts(const struct motion_sensor_t *s)
 	st->stabilize_ts[s->type] = 0;
 }
 
-static inline
-int32_t icm_get_sensor_stabilized(const struct motion_sensor_t *s,
-				  uint32_t ts)
+static inline int32_t icm_get_sensor_stabilized(const struct motion_sensor_t *s,
+						uint32_t ts)
 {
 	struct icm_drv_data_t *st = ICM_GET_DATA(s);
 	uint32_t stabilize_ts = st->stabilize_ts[s->type];
@@ -138,4 +135,4 @@ int32_t icm_get_sensor_stabilized(const struct motion_sensor_t *s,
 	return time_until(ts, stabilize_ts);
 }
 
-#endif	/* __CROS_EC_ACCELGYRO_ICM_COMMON_H */
+#endif /* __CROS_EC_ACCELGYRO_ICM_COMMON_H */
