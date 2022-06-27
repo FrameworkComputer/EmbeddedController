@@ -21,8 +21,12 @@ void button_event(enum gpio_signal signal)
  * Mock interrupt handler. It's supposed to be overwritten by each suite
  * if needed.
  */
-__attribute__((weak)) void cts_irq1(enum gpio_signal signal) {}
-__attribute__((weak)) void cts_irq2(enum gpio_signal signal) {}
+__attribute__((weak)) void cts_irq1(enum gpio_signal signal)
+{
+}
+__attribute__((weak)) void cts_irq2(enum gpio_signal signal)
+{
+}
 #endif
 
 #include "gpio_list.h"
@@ -38,14 +42,12 @@ void tick_event(void)
 DECLARE_HOOK(HOOK_TICK, tick_event, HOOK_PRIO_DEFAULT);
 
 #ifdef CTS_MODULE_I2C
-const struct i2c_port_t i2c_ports[]  = {
-	{
-		.name = "test",
-		.port = STM32_I2C1_PORT,
-		.kbps = 100,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "test",
+	  .port = STM32_I2C1_PORT,
+	  .kbps = 100,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -57,6 +59,5 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 static void board_init(void)
 {
 	gpio_enable_interrupt(GPIO_USER_BUTTON);
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
