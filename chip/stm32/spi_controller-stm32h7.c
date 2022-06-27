@@ -50,44 +50,28 @@ static struct mutex spi_mutex[ARRAY_SIZE(SPI_REGS)];
 
 static const struct dma_option dma_tx_option[] = {
 #ifdef CONFIG_STM32_SPI1_CONTROLLER
-	{
-		STM32_DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->txdr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-	},
+	{ STM32_DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->txdr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT },
 #endif
-	{
-		STM32_DMAC_SPI2_TX, (void *)&STM32_SPI2_REGS->txdr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-	},
-	{
-		STM32_DMAC_SPI3_TX, (void *)&STM32_SPI3_REGS->txdr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-	},
-	{
-		STM32_DMAC_SPI4_TX, (void *)&STM32_SPI4_REGS->txdr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-	},
+	{ STM32_DMAC_SPI2_TX, (void *)&STM32_SPI2_REGS->txdr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT },
+	{ STM32_DMAC_SPI3_TX, (void *)&STM32_SPI3_REGS->txdr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT },
+	{ STM32_DMAC_SPI4_TX, (void *)&STM32_SPI4_REGS->txdr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT },
 };
 
 static const struct dma_option dma_rx_option[] = {
 #ifdef CONFIG_STM32_SPI1_CONTROLLER
-	{
-		STM32_DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->rxdr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-	},
+	{ STM32_DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->rxdr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT },
 #endif
-	{
-		STM32_DMAC_SPI2_RX, (void *)&STM32_SPI2_REGS->rxdr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-	},
-	{
-		STM32_DMAC_SPI3_RX, (void *)&STM32_SPI3_REGS->rxdr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-	},
-	{
-		STM32_DMAC_SPI4_RX, (void *)&STM32_SPI4_REGS->rxdr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-	},
+	{ STM32_DMAC_SPI2_RX, (void *)&STM32_SPI2_REGS->rxdr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT },
+	{ STM32_DMAC_SPI3_RX, (void *)&STM32_SPI3_REGS->rxdr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT },
+	{ STM32_DMAC_SPI4_RX, (void *)&STM32_SPI4_REGS->rxdr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT },
 };
 
 static uint8_t spi_enabled[ARRAY_SIZE(SPI_REGS)];
@@ -252,8 +236,8 @@ static int spi_dma_wait(int port)
 }
 
 int spi_transaction_async(const struct spi_device_t *spi_device,
-			  const uint8_t *txdata, int txlen,
-			  uint8_t *rxdata, int rxlen)
+			  const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			  int rxlen)
 {
 	int rv = EC_SUCCESS;
 	int port = spi_device->port;
@@ -314,8 +298,8 @@ int spi_transaction_wait(const struct spi_device_t *spi_device)
 }
 
 int spi_transaction(const struct spi_device_t *spi_device,
-		    const uint8_t *txdata, int txlen,
-		    uint8_t *rxdata, int rxlen)
+		    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+		    int rxlen)
 {
 	int rv;
 	int port = spi_device->port;
