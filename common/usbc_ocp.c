@@ -16,8 +16,8 @@
 #include "util.h"
 
 #ifndef TEST_BUILD
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #else
 #define CPRINTF(args...)
 #define CPRINTS(args...)
@@ -102,7 +102,6 @@ static void re_enable_ports(void)
 }
 DECLARE_DEFERRED(re_enable_ports);
 
-
 int usbc_ocp_add_event(int port)
 {
 	int delay = 0;
@@ -122,8 +121,8 @@ int usbc_ocp_add_event(int port)
 
 	if (oc_event_cnt_tbl[port] >= OCP_MAX_CNT) {
 		CPRINTS("C%d: OC event limit reached! "
-			   "Source path disabled until physical disconnect.",
-			   port);
+			"Source path disabled until physical disconnect.",
+			port);
 		pd_power_supply_reset(port);
 	} else if (oc_event_cnt_tbl[port] <= OCP_HR_CNT) {
 		/*
@@ -132,7 +131,7 @@ int usbc_ocp_add_event(int port)
 		 * contract.
 		 */
 		pd_send_hard_reset(port);
-		delay = PD_T_SRC_RECOVER + 100*MSEC;
+		delay = PD_T_SRC_RECOVER + 100 * MSEC;
 	} else {
 		/*
 		 * ErrorRecovery must be performed past the third OCP event,
@@ -140,7 +139,7 @@ int usbc_ocp_add_event(int port)
 		 * contract is in place
 		 */
 		pd_set_error_recovery(port);
-		delay = PD_T_ERROR_RECOVERY + 100*MSEC;
+		delay = PD_T_ERROR_RECOVERY + 100 * MSEC;
 	}
 
 	if (delay) {
@@ -148,10 +147,8 @@ int usbc_ocp_add_event(int port)
 		hook_call_deferred(&re_enable_ports_data, delay);
 	}
 
-
 	return EC_SUCCESS;
 }
-
 
 int usbc_ocp_clear_event_counter(int port)
 {
@@ -168,8 +165,7 @@ int usbc_ocp_clear_event_counter(int port)
 	 * actually detect the physical disconnect.
 	 */
 	if (oc_event_cnt_tbl[port]) {
-		hook_call_deferred(&clear_oc_tbl_data,
-				   OCP_COOLDOWN_DELAY_US);
+		hook_call_deferred(&clear_oc_tbl_data, OCP_COOLDOWN_DELAY_US);
 	}
 	return EC_SUCCESS;
 }
