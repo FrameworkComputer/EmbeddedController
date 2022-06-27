@@ -10,7 +10,7 @@
 #include "timer.h"
 #include "usb_pd.h"
 
-#define CHG_P5V_POWER  0
+#define CHG_P5V_POWER 0
 #define CHG_VBUS_POWER 1
 
 void chg_reset(void)
@@ -55,9 +55,11 @@ void chg_attach_cc_rds(bool en)
 		 * Configure USB_CHG_CC1_MCU and USB_CHG_CC2_MCU as
 		 * ANALOG input
 		 */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-			| (3 << (2*2)) | /* PA2 in ANALOG mode */
-			  (3 << (2*4))); /* PA4 in ANALOG mode */
+		STM32_GPIO_MODER(GPIO_A) =
+			(STM32_GPIO_MODER(GPIO_A) | (3 << (2 * 2)) | /* PA2 in
+									ANALOG
+									mode */
+			 (3 << (2 * 4))); /* PA4 in ANALOG mode */
 	} else {
 		/*
 		 * Configure USB_CHG_CC1_MCU and USB_CHG_CC2_MCU as GPIO and
@@ -71,10 +73,12 @@ void chg_attach_cc_rds(bool en)
 		gpio_set_level(GPIO_USB_CHG_CC2_MCU, 1);
 
 		/* Disable Analog mode and Enable GPO */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-			& ~(3 << (2*2) | /* PA2 disable ADC */
-			    3 << (2*4))) /* PA4 disable ADC */
-			|  (1 << (2*2) | /* Set as GPO */
-			    1 << (2*4)); /* Set as GPO */
+		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A) &
+					    ~(3 << (2 * 2) | /* PA2 disable ADC
+							      */
+					      3 << (2 * 4))) /* PA4 disable ADC
+							      */
+					   | (1 << (2 * 2) | /* Set as GPO */
+					      1 << (2 * 4)); /* Set as GPO */
 	}
 }
