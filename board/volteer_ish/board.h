@@ -22,7 +22,7 @@
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
 /* ISH specific */
-#undef  CONFIG_DEBUG_ASSERT
+#undef CONFIG_DEBUG_ASSERT
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_ISH_UART_0
 /* EC */
@@ -39,7 +39,6 @@
 
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_HECI
-
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
@@ -87,10 +86,7 @@
 #include "registers.h"
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, SENSOR_COUNT };
 
 #endif /* !__ASSEMBLER__ */
 
