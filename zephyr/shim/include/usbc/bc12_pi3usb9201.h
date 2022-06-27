@@ -7,4 +7,7 @@
 
 #define PI3USB9201_COMPAT pericom_pi3usb9201
 
-#define BC12_CHIP_PI3USB9201(id) { .drv = &pi3usb9201_drv, },
+#define BC12_CHIP_PI3USB9201(id)        \
+	{                               \
+		.drv = &pi3usb9201_drv, \
+	},
