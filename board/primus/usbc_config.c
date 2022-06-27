@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-
 #include <stdint.h>
 #include <stdbool.h>
 
@@ -32,8 +31,8 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* USBC TCPC configuration */
 const struct tcpc_config_t tcpc_config[] = {
@@ -178,7 +177,6 @@ void board_reset_pd_mcu(void)
 
 static void board_tcpc_init(void)
 {
-
 	/* Don't reset TCPCs after initial reset */
 	if (!system_jumped_late()) {
 		board_reset_pd_mcu();
@@ -195,7 +193,6 @@ static void board_tcpc_init(void)
 	/* Enable BC1.2 interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
-
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
