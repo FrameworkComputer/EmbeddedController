@@ -15,17 +15,20 @@ __overridable int pd_is_vbus_present(int port)
 }
 
 __overridable void pd_request_data_swap(int port)
-{}
+{
+}
 
 __overridable void pd_request_power_swap(int port)
-{}
+{
+}
 
 void pd_request_vconn_swap_off(int port)
-{}
+{
+}
 
 void pd_request_vconn_swap_on(int port)
-{}
-
+{
+}
 
 static enum pd_data_role data_role;
 __overridable enum pd_data_role pd_get_data_role(int port)
@@ -68,10 +71,12 @@ int tc_check_vconn_swap(int port)
 }
 
 void tc_ctvpd_detected(int port)
-{}
+{
+}
 
 void tc_disc_ident_complete(int port)
-{}
+{
+}
 
 static int attached_snk;
 int tc_is_attached_snk(int port)
@@ -91,28 +96,36 @@ int tc_is_vconn_src(int port)
 }
 
 void tc_hard_reset_request(int port)
-{}
+{
+}
 
 void tc_hard_reset_complete(int port)
-{}
+{
+}
 
 void tc_partner_dr_data(int port, int en)
-{}
+{
+}
 
 void tc_partner_dr_power(int port, int en)
-{}
+{
+}
 
 void tc_partner_unconstrainedpower(int port, int en)
-{}
+{
+}
 
 void tc_partner_usb_comm(int port, int en)
-{}
+{
+}
 
 void tc_pd_connection(int port, int en)
-{}
+{
+}
 
 void tc_pr_swap_complete(int port, bool success)
-{}
+{
+}
 
 void tc_prs_snk_src_assert_rp(int port)
 {
@@ -127,16 +140,20 @@ void tc_prs_src_snk_assert_rd(int port)
 }
 
 void tc_src_power_off(int port)
-{}
+{
+}
 
 void tc_set_timeout(int port, uint64_t timeout)
-{}
+{
+}
 
 __overridable void tc_start_error_recovery(int port)
-{}
+{
+}
 
 __overridable void tc_snk_power_off(int port)
-{}
+{
+}
 
 __overridable void pe_invalidate_explicit_contract(int port)
 {
@@ -148,7 +165,7 @@ __overridable enum pd_dual_role_states pd_get_dual_role(int port)
 }
 
 __overridable void pd_dev_get_rw_hash(int port, uint16_t *dev_id,
-		uint8_t *rw_hash, uint32_t *current_image)
+				      uint8_t *rw_hash, uint32_t *current_image)
 {
 }
 
@@ -185,7 +202,7 @@ enum idh_ptype get_usb_pd_mux_cable_type(int port)
 	return IDH_PTYPE_UNDEF;
 }
 
-const uint32_t * const pd_get_src_caps(int port)
+const uint32_t *const pd_get_src_caps(int port)
 {
 	return NULL;
 }
@@ -200,8 +217,7 @@ uint8_t pd_get_src_cap_cnt(int port)
 }
 #endif
 
-#if !defined(CONFIG_USB_DRP_ACC_TRYSRC) && \
-	!defined(CONFIG_USB_CTVPD)
+#if !defined(CONFIG_USB_DRP_ACC_TRYSRC) && !defined(CONFIG_USB_CTVPD)
 int pd_is_connected(int port)
 {
 	return true;
@@ -271,12 +287,12 @@ void dpm_mode_exit_complete(int port)
 }
 
 void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
-		uint32_t *vdm)
+		   uint32_t *vdm)
 {
 }
 
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
-		uint8_t vdm_cmd)
+		   uint8_t vdm_cmd)
 {
 }
 
@@ -325,7 +341,7 @@ int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 
 static enum tcpc_rp_value lcl_rp;
 __overridable void typec_select_src_current_limit_rp(int port,
-						  enum tcpc_rp_value rp)
+						     enum tcpc_rp_value rp)
 {
 	lcl_rp = rp;
 }
