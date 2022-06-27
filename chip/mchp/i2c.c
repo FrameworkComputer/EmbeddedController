@@ -24,77 +24,77 @@
 /*
  * MCHP I2C BAUD clock source is 16 MHz.
  */
-#define I2C_CLOCK			16000000UL
-#define MCHP_I2C_SUPPORTED_BUS_CLOCKS	6
+#define I2C_CLOCK 16000000UL
+#define MCHP_I2C_SUPPORTED_BUS_CLOCKS 6
 
 /* SMBus Timing values for 1MHz Speed */
-#define SPEED_1MHZ_BUS_CLOCK		0x0509ul
-#define SPEED_1MHZ_DATA_TIMING		0x06060601ul
-#define SPEED_1MHZ_DATA_TIMING_2	0x06ul
-#define SPEED_1MHZ_IDLE_SCALING		0x01000050ul
-#define SPEED_1MHZ_TIMEOUT_SCALING	0x149CC2C7ul
+#define SPEED_1MHZ_BUS_CLOCK 0x0509ul
+#define SPEED_1MHZ_DATA_TIMING 0x06060601ul
+#define SPEED_1MHZ_DATA_TIMING_2 0x06ul
+#define SPEED_1MHZ_IDLE_SCALING 0x01000050ul
+#define SPEED_1MHZ_TIMEOUT_SCALING 0x149CC2C7ul
 /* SMBus Timing values for 400kHz speed */
-#define SPEED_400KHZ_BUS_CLOCK		0x0F17ul
-#define SPEED_400KHZ_DATA_TIMING	0x040A0F01ul
-#define SPEED_400KHZ_DATA_TIMING_2	0x0Aul
-#define SPEED_400KHZ_IDLE_SCALING	0x01000050ul
-#define SPEED_400KHZ_TIMEOUT_SCALING	0x149CC2C7ul
+#define SPEED_400KHZ_BUS_CLOCK 0x0F17ul
+#define SPEED_400KHZ_DATA_TIMING 0x040A0F01ul
+#define SPEED_400KHZ_DATA_TIMING_2 0x0Aul
+#define SPEED_400KHZ_IDLE_SCALING 0x01000050ul
+#define SPEED_400KHZ_TIMEOUT_SCALING 0x149CC2C7ul
 /* SMBus Timing values for 100kHz speed */
-#define SPEED_100KHZ_BUS_CLOCK		0x4F4Ful
-#define SPEED_100KHZ_DATA_TIMING	0x0C4D4306ul
-#define SPEED_100KHZ_DATA_TIMING_2	0x4Dul
-#define SPEED_100KHZ_IDLE_SCALING	0x01FC01EDul
-#define SPEED_100KHZ_TIMEOUT_SCALING	0x4B9CC2C7ul
+#define SPEED_100KHZ_BUS_CLOCK 0x4F4Ful
+#define SPEED_100KHZ_DATA_TIMING 0x0C4D4306ul
+#define SPEED_100KHZ_DATA_TIMING_2 0x4Dul
+#define SPEED_100KHZ_IDLE_SCALING 0x01FC01EDul
+#define SPEED_100KHZ_TIMEOUT_SCALING 0x4B9CC2C7ul
 /* Bus clock dividers for 333, 80, and 40 kHz */
-#define SPEED_333KHZ_BUS_CLOCK		0x0F1Ful
-#define SPEED_80KHZ_BUS_CLOCK		0x6363ul
-#define SPEED_40KHZ_BUS_CLOCK		0xC7C7ul
+#define SPEED_333KHZ_BUS_CLOCK 0x0F1Ful
+#define SPEED_80KHZ_BUS_CLOCK 0x6363ul
+#define SPEED_40KHZ_BUS_CLOCK 0xC7C7ul
 
 /* Status */
-#define STS_NBB			BIT(0) /* Bus busy */
-#define STS_LAB			BIT(1) /* Arbitration lost */
-#define STS_LRB			BIT(3) /* Last received bit */
-#define STS_BER			BIT(4) /* Bus error */
-#define STS_PIN			BIT(7) /* Pending interrupt */
+#define STS_NBB BIT(0) /* Bus busy */
+#define STS_LAB BIT(1) /* Arbitration lost */
+#define STS_LRB BIT(3) /* Last received bit */
+#define STS_BER BIT(4) /* Bus error */
+#define STS_PIN BIT(7) /* Pending interrupt */
 /* Control */
-#define CTRL_ACK		BIT(0) /* Acknowledge */
-#define CTRL_STO		BIT(1) /* STOP */
-#define CTRL_STA		BIT(2) /* START */
-#define CTRL_ENI		BIT(3) /* Enable interrupt */
-#define CTRL_ESO		BIT(6) /* Enable serial output */
-#define CTRL_PIN		BIT(7) /* Pending interrupt not */
+#define CTRL_ACK BIT(0) /* Acknowledge */
+#define CTRL_STO BIT(1) /* STOP */
+#define CTRL_STA BIT(2) /* START */
+#define CTRL_ENI BIT(3) /* Enable interrupt */
+#define CTRL_ESO BIT(6) /* Enable serial output */
+#define CTRL_PIN BIT(7) /* Pending interrupt not */
 /* Completion */
-#define COMP_DTEN		BIT(2) /* enable device timeouts */
-#define COMP_MCEN		BIT(3) /* enable ctrl. cumulative timeouts */
-#define COMP_SCEN		BIT(4) /* enable periph. cumulative timeouts */
-#define COMP_BIDEN		BIT(5) /* enable Bus idle timeouts */
-#define COMP_IDLE		BIT(29) /* i2c bus is idle */
-#define COMP_RW_BITS_MASK	0x3C /* R/W bits mask */
+#define COMP_DTEN BIT(2) /* enable device timeouts */
+#define COMP_MCEN BIT(3) /* enable ctrl. cumulative timeouts */
+#define COMP_SCEN BIT(4) /* enable periph. cumulative timeouts */
+#define COMP_BIDEN BIT(5) /* enable Bus idle timeouts */
+#define COMP_IDLE BIT(29) /* i2c bus is idle */
+#define COMP_RW_BITS_MASK 0x3C /* R/W bits mask */
 /* Configuration */
-#define CFG_PORT_MASK		(0x0F) /* port selection field */
-#define CFG_TCEN		BIT(4) /* Enable HW bus timeouts */
-#define CFG_FEN			BIT(8) /* enable input filtering */
-#define CFG_RESET		BIT(9) /* reset controller */
-#define CFG_ENABLE		BIT(10) /* enable controller */
-#define CFG_GC_DIS		BIT(14) /* disable general call address */
-#define CFG_ENIDI		BIT(29) /* Enable I2C idle interrupt */
+#define CFG_PORT_MASK (0x0F) /* port selection field */
+#define CFG_TCEN BIT(4) /* Enable HW bus timeouts */
+#define CFG_FEN BIT(8) /* enable input filtering */
+#define CFG_RESET BIT(9) /* reset controller */
+#define CFG_ENABLE BIT(10) /* enable controller */
+#define CFG_GC_DIS BIT(14) /* disable general call address */
+#define CFG_ENIDI BIT(29) /* Enable I2C idle interrupt */
 /* Enable network layer controller done interrupt */
-#define CFG_ENMI		BIT(30)
+#define CFG_ENMI BIT(30)
 /* Enable network layer peripheral done interrupt */
-#define CFG_ENSI		BIT(31)
+#define CFG_ENSI BIT(31)
 /* Controller Command */
-#define MCMD_MRUN		BIT(0)
-#define MCMD_MPROCEED		BIT(1)
-#define MCMD_START0		BIT(8)
-#define MCMD_STARTN		BIT(9)
-#define MCMD_STOP		BIT(10)
-#define MCMD_READM		BIT(12)
-#define MCMD_WCNT_BITPOS	(16)
-#define MCMD_WCNT_MASK0		(0xFF)
-#define MCMD_WCNT_MASK		(0xFF << 16)
-#define MCMD_RCNT_BITPOS	(24)
-#define MCMD_RCNT_MASK0		(0xFF)
-#define MCMD_RCNT_MASK		(0xFF << 24)
+#define MCMD_MRUN BIT(0)
+#define MCMD_MPROCEED BIT(1)
+#define MCMD_START0 BIT(8)
+#define MCMD_STARTN BIT(9)
+#define MCMD_STOP BIT(10)
+#define MCMD_READM BIT(12)
+#define MCMD_WCNT_BITPOS (16)
+#define MCMD_WCNT_MASK0 (0xFF)
+#define MCMD_WCNT_MASK (0xFF << 16)
+#define MCMD_RCNT_BITPOS (24)
+#define MCMD_RCNT_MASK0 (0xFF)
+#define MCMD_RCNT_MASK (0xFF << 24)
 
 /* Maximum transfer of a SMBUS block transfer */
 #define SMBUS_MAX_BLOCK_SIZE 32
@@ -146,34 +146,37 @@ static struct {
 	uint8_t lines;
 } cdata[I2C_CONTROLLER_COUNT];
 
-static const uint16_t i2c_ctrl_nvic_id[] = {
-	MCHP_IRQ_I2C_0, MCHP_IRQ_I2C_1, MCHP_IRQ_I2C_2, MCHP_IRQ_I2C_3,
+static const uint16_t i2c_ctrl_nvic_id[] = { MCHP_IRQ_I2C_0, MCHP_IRQ_I2C_1,
+					     MCHP_IRQ_I2C_2, MCHP_IRQ_I2C_3,
 #if defined(CHIP_FAMILY_MEC172X)
-	MCHP_IRQ_I2C_4
+					     MCHP_IRQ_I2C_4
 #elif defined(CHIP_FAMILY_MEC152X)
-	MCHP_IRQ_I2C_4, MCHP_IRQ_I2C_5, MCHP_IRQ_I2C_6, MCHP_IRQ_I2C_7
+					     MCHP_IRQ_I2C_4, MCHP_IRQ_I2C_5,
+					     MCHP_IRQ_I2C_6, MCHP_IRQ_I2C_7
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_ctrl_nvic_id) == MCHP_I2C_CTRL_MAX);
 
-static const uint16_t i2c_controller_pcr[] = {
-	MCHP_PCR_I2C0, MCHP_PCR_I2C1, MCHP_PCR_I2C2, MCHP_PCR_I2C3,
+static const uint16_t i2c_controller_pcr[] = { MCHP_PCR_I2C0, MCHP_PCR_I2C1,
+					       MCHP_PCR_I2C2, MCHP_PCR_I2C3,
 #if defined(CHIP_FAMILY_MEC172X)
-	MCHP_PCR_I2C4
+					       MCHP_PCR_I2C4
 #elif defined(CHIP_FAMILY_MEC152X)
 	MCHP_PCR_I2C4, MCHP_PCR_I2C5, MCHP_PCR_I2C6, MCHP_PCR_I2C7,
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_controller_pcr) == MCHP_I2C_CTRL_MAX);
 
-static uintptr_t i2c_ctrl_base_addr[] = {
-	MCHP_I2C0_BASE, MCHP_I2C1_BASE, MCHP_I2C2_BASE, MCHP_I2C3_BASE,
+static uintptr_t i2c_ctrl_base_addr[] = { MCHP_I2C0_BASE, MCHP_I2C1_BASE,
+					  MCHP_I2C2_BASE, MCHP_I2C3_BASE,
 #if defined(CHIP_FAMILY_MEC172X)
-	MCHP_I2C4_BASE
+					  MCHP_I2C4_BASE
 #elif defined(CHIP_FAMILY_MEC152X)
-	MCHP_I2C4_BASE,
-	/* NOTE: 5-7 do not implement network layer hardware */
-	MCHP_I2C5_BASE, MCHP_I2C6_BASE, MCHP_I2C7_BASE
+					  MCHP_I2C4_BASE,
+					  /* NOTE: 5-7 do not implement network
+					     layer hardware */
+					  MCHP_I2C5_BASE, MCHP_I2C6_BASE,
+					  MCHP_I2C7_BASE
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(i2c_ctrl_base_addr) == MCHP_I2C_CTRL_MAX);
@@ -230,7 +233,7 @@ struct i2c_bus_clk {
 };
 
 const struct i2c_bus_clk i2c_freq_tbl[] = {
-	{ 40, SPEED_40KHZ_BUS_CLOCK }, { 80, SPEED_80KHZ_BUS_CLOCK },
+	{ 40, SPEED_40KHZ_BUS_CLOCK },	 { 80, SPEED_80KHZ_BUS_CLOCK },
 	{ 100, SPEED_100KHZ_BUS_CLOCK }, { 333, SPEED_333KHZ_BUS_CLOCK },
 	{ 400, SPEED_400KHZ_BUS_CLOCK }, { 1000, SPEED_1MHZ_BUS_CLOCK },
 };
