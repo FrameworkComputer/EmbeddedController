@@ -11,7 +11,7 @@
 #include "baseboard.h"
 
 /* Internal SPI flash on NPCX7 */
-#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)  /* 512KB internal spi flash */
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024) /* 512KB internal spi flash */
 
 /* Reduce flash usage */
 #define CONFIG_USB_PD_DEBUG_LEVEL 2
@@ -25,7 +25,7 @@
 #define CONFIG_PWM_KBLIGHT
 
 /* Battery */
-#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_FUEL_GAUGE
 
@@ -91,12 +91,7 @@
 #include "registers.h"
 #include "sku.h"
 
-enum adc_channel {
-	ADC_VBUS,
-	ADC_AMON_BMON,
-	ADC_PSYS,
-	ADC_CH_COUNT
-};
+enum adc_channel { ADC_VBUS, ADC_AMON_BMON, ADC_PSYS, ADC_CH_COUNT };
 
 /* Motion sensors */
 enum sensor_id {
@@ -106,11 +101,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT = 0,
-	PWM_CH_DISPLIGHT,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT = 0, PWM_CH_DISPLIGHT, PWM_CH_COUNT };
 
 /* List of possible batteries */
 enum battery_type {
