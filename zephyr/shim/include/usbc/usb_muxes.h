@@ -20,35 +20,35 @@
  * @brief List of USB mux drivers compatibles and their configurations. Each
  *        element of list has to have (compatible, config) format.
  */
-#define USB_MUX_DRIVERS						\
-	(ANX7483_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7483),	\
-	(BB_RETIMER_USB_MUX_COMPAT, USB_MUX_CONFIG_BB_RETIMER),	\
-	(IT5205_USB_MUX_COMPAT, USB_MUX_CONFIG_IT5205),		\
-	(PS8XXX_USB_MUX_COMPAT, USB_MUX_CONFIG_TCPCI_TCPM),	\
-	(TCPCI_TCPM_USB_MUX_COMPAT, USB_MUX_CONFIG_TCPCI_TCPM),	\
-	(TUSB1064_USB_MUX_COMPAT, USB_MUX_CONFIG_TUSB1064),	\
-	(VIRTUAL_USB_MUX_COMPAT, USB_MUX_CONFIG_VIRTUAL)
+#define USB_MUX_DRIVERS                                                 \
+	(ANX7483_USB_MUX_COMPAT, USB_MUX_CONFIG_ANX7483),               \
+		(BB_RETIMER_USB_MUX_COMPAT, USB_MUX_CONFIG_BB_RETIMER), \
+		(IT5205_USB_MUX_COMPAT, USB_MUX_CONFIG_IT5205),         \
+		(PS8XXX_USB_MUX_COMPAT, USB_MUX_CONFIG_TCPCI_TCPM),     \
+		(TCPCI_TCPM_USB_MUX_COMPAT, USB_MUX_CONFIG_TCPCI_TCPM), \
+		(TUSB1064_USB_MUX_COMPAT, USB_MUX_CONFIG_TUSB1064),     \
+		(VIRTUAL_USB_MUX_COMPAT, USB_MUX_CONFIG_VIRTUAL)
 
 /**
  * @brief Get compatible from @p driver
  *
  * @param driver USB mux driver description in format (compatible, config)
  */
-#define USB_MUX_DRIVER_GET_COMPAT(driver)	GET_ARG_N(1, __DEBRACKET driver)
+#define USB_MUX_DRIVER_GET_COMPAT(driver) GET_ARG_N(1, __DEBRACKET driver)
 
 /**
  * @brief Get configuration from @p driver
  *
  * @param driver USB mux driver description in format (compatible, config)
  */
-#define USB_MUX_DRIVER_GET_CONFIG(driver)	GET_ARG_N(2, __DEBRACKET driver)
+#define USB_MUX_DRIVER_GET_CONFIG(driver) GET_ARG_N(2, __DEBRACKET driver)
 
 /**
  * @brief USB mux port number based on parent node in DTS
  *
  * @param port_id USBC node ID
  */
-#define USB_MUX_PORT(port_id)		DT_REG_ADDR(port_id)
+#define USB_MUX_PORT(port_id) DT_REG_ADDR(port_id)
 
 /**
  * @brief Name of USB mux structure if node is not EMPTY. Note, that root of
@@ -56,22 +56,22 @@
  *
  * @param mux_id USB mux node ID
  */
-#define USB_MUX_STRUCT_NAME(mux_id)					\
+#define USB_MUX_STRUCT_NAME(mux_id) \
 	COND_CODE_0(IS_EMPTY(mux_id), (DT_CAT(USB_MUX_NODE_, mux_id)), (EMPTY))
 
 /**
  * @brief USB muxes in chain should be constant only if configuration
  *        cannot change in runtime
  */
-#define MAYBE_CONST COND_CODE_1(CONFIG_PLATFORM_EC_USB_MUX_RUNTIME_CONFIG, \
-				(), (const))
+#define MAYBE_CONST \
+	COND_CODE_1(CONFIG_PLATFORM_EC_USB_MUX_RUNTIME_CONFIG, (), (const))
 
 /**
  * @brief Declaration of USB mux structure
  *
  * @param mux_id USB mux node ID
  */
-#define USB_MUX_STRUCT_DECLARE(mux_id)					\
+#define USB_MUX_STRUCT_DECLARE(mux_id) \
 	MAYBE_CONST struct usb_mux USB_MUX_STRUCT_NAME(mux_id)
 
 /**
@@ -79,7 +79,7 @@
  *
  * @param name Identifier to reference
  */
-#define USB_MUX_POINTER_OR_NULL(name)					\
+#define USB_MUX_POINTER_OR_NULL(name) \
 	COND_CODE_0(IS_EMPTY(name), (&name), (NULL))
 
 /**
@@ -88,7 +88,7 @@
  * @param idx Position of USB mux in chain
  * @param port_id USBC node ID
  */
-#define USB_MUX_GET_CHAIN_N(idx, port_id)				\
+#define USB_MUX_GET_CHAIN_N(idx, port_id) \
 	DT_PHANDLE_BY_IDX(port_id, usb_muxes, idx)
 
 /**
@@ -97,10 +97,11 @@
  * @param port_id USBC node ID
  * @param idx Position of USB mux in chain
  */
-#define USB_MUX_NEXT(port_id, idx)					\
-	GET_ARG_N(2, GET_ARGS_LESS_N(idx,				\
-			LISTIFY(DT_PROP_LEN(port_id, usb_muxes),	\
-				USB_MUX_GET_CHAIN_N, (,), port_id)),	\
+#define USB_MUX_NEXT(port_id, idx)                                           \
+	GET_ARG_N(2,                                                         \
+		  GET_ARGS_LESS_N(                                           \
+			  idx, LISTIFY(DT_PROP_LEN(port_id, usb_muxes),      \
+				       USB_MUX_GET_CHAIN_N, (, ), port_id)), \
 		  EMPTY)
 
 /**
@@ -109,7 +110,7 @@
  * @param port_id USBC node ID
  * @param idx Position of USB mux in chain
  */
-#define USB_MUX_NEXT_POINTER(port_id, idx)				\
+#define USB_MUX_NEXT_POINTER(port_id, idx) \
 	USB_MUX_POINTER_OR_NULL(USB_MUX_STRUCT_NAME(USB_MUX_NEXT(port_id, idx)))
 
 /**
@@ -119,7 +120,7 @@
  * @param mux_id USB mux node ID
  * @param cb_name Name of property with callback function
  */
-#define USB_MUX_CALLBACK_OR_NULL(mux_id, cb_name)			\
+#define USB_MUX_CALLBACK_OR_NULL(mux_id, cb_name) \
 	USB_MUX_POINTER_OR_NULL(DT_STRING_TOKEN_OR(mux_id, cb_name, EMPTY))
 
 /**
@@ -131,12 +132,12 @@
  * @param flags_mask Mask for bits that should be igonred in flags property
  * @param flags_val Value that should be used instead for masked bits
  */
-#define USB_MUX_COMMON_FIELDS_WITH_FLAGS(mux_id, port_id, idx,		\
-					 flags_mask, flags_val)		\
-	.usb_port = USB_MUX_PORT(port_id),				\
-	.next_mux = USB_MUX_NEXT_POINTER(port_id, idx),			\
-	.board_init = USB_MUX_CALLBACK_OR_NULL(mux_id, board_init),	\
-	.board_set = USB_MUX_CALLBACK_OR_NULL(mux_id, board_set),	\
+#define USB_MUX_COMMON_FIELDS_WITH_FLAGS(mux_id, port_id, idx, flags_mask, \
+					 flags_val)                        \
+	.usb_port = USB_MUX_PORT(port_id),                                 \
+	.next_mux = USB_MUX_NEXT_POINTER(port_id, idx),                    \
+	.board_init = USB_MUX_CALLBACK_OR_NULL(mux_id, board_init),        \
+	.board_set = USB_MUX_CALLBACK_OR_NULL(mux_id, board_set),          \
 	.flags = (DT_PROP(mux_id, flags) & ~(flags_mask)) | (flags_val)
 
 /**
@@ -146,7 +147,7 @@
  * @param port_id USBC node ID
  * @param idx Position of USB mux in chain
  */
-#define USB_MUX_COMMON_FIELDS(mux_id, port_id, idx)			\
+#define USB_MUX_COMMON_FIELDS(mux_id, port_id, idx) \
 	USB_MUX_COMMON_FIELDS_WITH_FLAGS(mux_id, port_id, idx, 0, 0)
 
 /**
@@ -156,8 +157,7 @@
  * @param mux_id USB mux node ID
  * @param compat USB mux driver compatible
  */
-#define USB_MUX_IS_COMPATIBLE(mux_id, compat)	\
-	DT_NODE_HAS_COMPAT(mux_id, compat)
+#define USB_MUX_IS_COMPATIBLE(mux_id, compat) DT_NODE_HAS_COMPAT(mux_id, compat)
 
 /**
  * @brief Expands to @p driver config if @p mux_id is compatible with @p driver
@@ -165,18 +165,18 @@
  * @param driver USB mux driver description in format (compatible, config)
  * @param mux_id USB mux node ID
  */
-#define USB_MUX_DRIVER_CONFIG_IF_COMPAT(driver, mux_id)			\
-	COND_CODE_1(USB_MUX_IS_COMPATIBLE(				\
-			mux_id, USB_MUX_DRIVER_GET_COMPAT(driver)),	\
-		   (USB_MUX_DRIVER_GET_CONFIG(driver)), ())
+#define USB_MUX_DRIVER_CONFIG_IF_COMPAT(driver, mux_id)                       \
+	COND_CODE_1(USB_MUX_IS_COMPATIBLE(mux_id,                             \
+					  USB_MUX_DRIVER_GET_COMPAT(driver)), \
+		    (USB_MUX_DRIVER_GET_CONFIG(driver)), ())
 
 /**
  * @brief Find driver from USB_MUX_DRIVERS that is compatible with @p mux_id
  *
  * @param mux_id USB mux node ID
  */
-#define USB_MUX_FIND_DRIVER_CONFIG(mux_id)				\
-	FOR_EACH_FIXED_ARG(USB_MUX_DRIVER_CONFIG_IF_COMPAT, (), mux_id,	\
+#define USB_MUX_FIND_DRIVER_CONFIG(mux_id)                              \
+	FOR_EACH_FIXED_ARG(USB_MUX_DRIVER_CONFIG_IF_COMPAT, (), mux_id, \
 			   USB_MUX_DRIVERS)
 
 /**
@@ -187,7 +187,7 @@
  * @param idx Position of USB mux in chain
  * @param op Operation to perform on USB muxes
  */
-#define USB_MUX_CALL_OP(mux_id, port_id, idx, op)			\
+#define USB_MUX_CALL_OP(mux_id, port_id, idx, op) \
 	op(mux_id, port_id, idx, USB_MUX_FIND_DRIVER_CONFIG(mux_id))
 
 /**
@@ -197,7 +197,7 @@
  * @param idx Position of USB mux in chain
  * @param op Operation to perform on USB muxes
  */
-#define USB_MUX_DO(port_id, idx, op)					\
+#define USB_MUX_DO(port_id, idx, op) \
 	USB_MUX_CALL_OP(USB_MUX_GET_CHAIN_N(idx, port_id), port_id, idx, op)
 
 /**
@@ -208,7 +208,7 @@
  * @param idx Position of USB mux in chain
  * @param conf Driver configuration function
  */
-#define USB_MUX_DECLARE(mux_id, port_id, idx, conf)			\
+#define USB_MUX_DECLARE(mux_id, port_id, idx, conf) \
 	extern USB_MUX_STRUCT_DECLARE(mux_id);
 
 /**
@@ -219,7 +219,7 @@
  * @param idx Position of USB mux in chain
  * @param conf Driver configuration function
  */
-#define USB_MUX_DEFINE(mux_id, port_id, idx, conf)			\
+#define USB_MUX_DEFINE(mux_id, port_id, idx, conf) \
 	USB_MUX_STRUCT_DECLARE(mux_id) = conf(mux_id, port_id, idx);
 
 /**
@@ -230,7 +230,7 @@
  * @param idx Position of USB mux in chain
  * @param conf Driver configuration function
  */
-#define USB_MUX_ARRAY(mux_id, port_id, idx, conf)			\
+#define USB_MUX_ARRAY(mux_id, port_id, idx, conf) \
 	[USB_MUX_PORT(port_id)] = conf(mux_id, port_id, idx),
 
 /**
@@ -241,8 +241,7 @@
  *           USB mux node ID, USBC port node ID, position in chain, and driver
  *           config as arguments.
  */
-#define USB_MUX_FIRST(port_id, op)					\
-	USB_MUX_DO(port_id, 0, op)
+#define USB_MUX_FIRST(port_id, op) USB_MUX_DO(port_id, 0, op)
 
 /**
  * @brief Call USB_MUX_DO if @p idx is not 0 (is not first mux in chain)
@@ -252,7 +251,7 @@
  * @param idx Position of USB mux in chain
  * @param op Operation to perform on USB muxes
  */
-#define USB_MUX_DO_SKIP_FIRST(port_id, unused2, idx, op)		\
+#define USB_MUX_DO_SKIP_FIRST(port_id, unused2, idx, op) \
 	COND_CODE_1(UTIL_BOOL(idx), (USB_MUX_DO(port_id, idx, op)), ())
 
 /**
@@ -263,9 +262,9 @@
  *           ID, USBC port node ID, position in chain, and driver config as
  *           arguments.
  */
-#define USB_MUX_NO_FIRST(port_id, op)					\
-	DT_FOREACH_PROP_ELEM_VARGS(port_id, usb_muxes,			\
-				   USB_MUX_DO_SKIP_FIRST, op)
+#define USB_MUX_NO_FIRST(port_id, op)                                         \
+	DT_FOREACH_PROP_ELEM_VARGS(port_id, usb_muxes, USB_MUX_DO_SKIP_FIRST, \
+				   op)
 
 /**
  * @brief Call @p op if @p idx mux in chain has BB retimer compatible
@@ -275,12 +274,12 @@
  * @param idx Position of USB mux in chain
  * @param op Operation to perform on BB retimer
  */
-#define USB_MUX_ONLY_BB_RETIMER(port_id, unused2, idx, op)		\
-	COND_CODE_1(USB_MUX_IS_COMPATIBLE(				\
-			USB_MUX_GET_CHAIN_N(idx, port_id),		\
-			BB_RETIMER_USB_MUX_COMPAT),			\
-			(op(USB_MUX_GET_CHAIN_N(idx, port_id), port_id, \
-			    idx, BB_RETIMER_CONTROLS_CONFIG)), ())
+#define USB_MUX_ONLY_BB_RETIMER(port_id, unused2, idx, op)                   \
+	COND_CODE_1(USB_MUX_IS_COMPATIBLE(USB_MUX_GET_CHAIN_N(idx, port_id), \
+					  BB_RETIMER_USB_MUX_COMPAT),        \
+		    (op(USB_MUX_GET_CHAIN_N(idx, port_id), port_id, idx,     \
+			BB_RETIMER_CONTROLS_CONFIG)),                        \
+		    ())
 
 /**
  * @brief Call @p op with every BB retimer in chain
@@ -290,8 +289,8 @@
  *           ID, USBC port node ID, position in chain, and driver config as
  *           arguments.
  */
-#define USB_MUX_BB_RETIMERS(port_id, op)				\
-	DT_FOREACH_PROP_ELEM_VARGS(port_id, usb_muxes,			\
+#define USB_MUX_BB_RETIMERS(port_id, op)               \
+	DT_FOREACH_PROP_ELEM_VARGS(port_id, usb_muxes, \
 				   USB_MUX_ONLY_BB_RETIMER, op)
 
 /**
@@ -306,8 +305,8 @@
  *           ID, USBC port node ID, position in chain, and driver config as
  *           arguments.
  */
-#define USB_MUX_USBC_PORT_HAS_MUXES(port_id, filter, op)		\
-	COND_CODE_1(DT_NODE_HAS_PROP(port_id, usb_muxes),		\
+#define USB_MUX_USBC_PORT_HAS_MUXES(port_id, filter, op)  \
+	COND_CODE_1(DT_NODE_HAS_PROP(port_id, usb_muxes), \
 		    (filter(port_id, op)), ())
 
 /**
@@ -321,10 +320,9 @@
  *           ID, USBC port node ID, position in chain, and driver config as
  *           arguments.
  */
-#define USB_MUX_FOREACH_USBC_PORT(filter, op)				\
-	DT_FOREACH_STATUS_OKAY_VARGS(named_usbc_port,			\
-				     USB_MUX_USBC_PORT_HAS_MUXES,	\
-				     filter, op)
+#define USB_MUX_FOREACH_USBC_PORT(filter, op)         \
+	DT_FOREACH_STATUS_OKAY_VARGS(named_usbc_port, \
+				     USB_MUX_USBC_PORT_HAS_MUXES, filter, op)
 
 /**
  * Forward declare all usb_mux structures e.g.
