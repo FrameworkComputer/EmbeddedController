@@ -55,7 +55,7 @@ void *entry_lightbar(void *ptr)
 /* timespec uses nanoseconds */
 #define TS_USEC 1000L
 #define TS_MSEC 1000000L
-#define TS_SEC  1000000000L
+#define TS_SEC 1000000000L
 
 static void timespec_incr(struct timespec *v, time_t secs, long nsecs)
 {
@@ -65,7 +65,6 @@ static void timespec_incr(struct timespec *v, time_t secs, long nsecs)
 	v->tv_sec += v->tv_nsec / TS_SEC;
 	v->tv_nsec %= TS_SEC;
 }
-
 
 static pthread_mutex_t task_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t task_cond = PTHREAD_COND_INITIALIZER;
@@ -82,8 +81,8 @@ uint32_t task_wait_event(int timeout_us)
 		clock_gettime(CLOCK_REALTIME, &t);
 		timespec_incr(&t, timeout_us / SECOND, timeout_us * TS_USEC);
 
-		if (ETIMEDOUT == pthread_cond_timedwait(&task_cond,
-							&task_mutex, &t))
+		if (ETIMEDOUT ==
+		    pthread_cond_timedwait(&task_cond, &task_mutex, &t))
 			task_event |= TASK_EVENT_TIMER;
 	} else {
 		pthread_cond_wait(&task_cond, &task_mutex);
@@ -96,15 +95,13 @@ uint32_t task_wait_event(int timeout_us)
 }
 
 void task_set_event(task_id_t tskid, /* always LIGHTBAR */
-			uint32_t event)
+		    uint32_t event)
 {
 	pthread_mutex_lock(&task_mutex);
 	task_event = event;
 	pthread_cond_signal(&task_cond);
 	pthread_mutex_unlock(&task_mutex);
 }
-
-
 
 /* Stubbed functions */
 
@@ -146,7 +143,7 @@ timestamp_t get_time(void)
 		clock_gettime(CLOCK_REALTIME, &t_start);
 	clock_gettime(CLOCK_REALTIME, &t);
 	ret.val = (t.tv_sec - t_start.tv_sec) * SECOND +
-		(t.tv_nsec - t_start.tv_nsec) / TS_USEC;
+		  (t.tv_nsec - t_start.tv_nsec) / TS_USEC;
 	return ret;
 }
 
@@ -162,8 +159,7 @@ uint8_t *system_get_jump_tag(uint16_t tag, int *version, int *size)
 }
 
 /* Copied from util/ectool.c */
-int lb_read_params_from_file(const char *filename,
-			     struct lightbar_params_v1 *p)
+int lb_read_params_from_file(const char *filename, struct lightbar_params_v1 *p)
 {
 	FILE *fp;
 	char buf[80];
@@ -175,46 +171,65 @@ int lb_read_params_from_file(const char *filename,
 
 	fp = fopen(filename, "rb");
 	if (!fp) {
-		fprintf(stderr, "Can't open %s: %s\n",
-			filename, strerror(errno));
+		fprintf(stderr, "Can't open %s: %s\n", filename,
+			strerror(errno));
 		return 1;
 	}
 
 	/* We must read the correct number of params from each line */
-#define READ(N) do {							\
-		line++;							\
-		want = (N);						\
-		got = -1;						\
-		if (!fgets(buf, sizeof(buf), fp))			\
-			goto done;					\
-		got = sscanf(buf, "%i %i %i %i",			\
-			     &val[0], &val[1], &val[2], &val[3]);	\
-		if (want != got)					\
-			goto done;					\
+#define READ(N)                                                             \
+	do {                                                                \
+		line++;                                                     \
+		want = (N);                                                 \
+		got = -1;                                                   \
+		if (!fgets(buf, sizeof(buf), fp))                           \
+			goto done;                                          \
+		got = sscanf(buf, "%i %i %i %i", &val[0], &val[1], &val[2], \
+			     &val[3]);                                      \
+		if (want != got)                                            \
+			goto done;                                          \
 	} while (0)
 
-
 	/* Do it */
-	READ(1); p->google_ramp_up = val[0];
-	READ(1); p->google_ramp_down = val[0];
-	READ(1); p->s3s0_ramp_up = val[0];
-	READ(1); p->s0_tick_delay[0] = val[0];
-	READ(1); p->s0_tick_delay[1] = val[0];
-	READ(1); p->s0a_tick_delay[0] = val[0];
-	READ(1); p->s0a_tick_delay[1] = val[0];
-	READ(1); p->s0s3_ramp_down = val[0];
-	READ(1); p->s3_sleep_for = val[0];
-	READ(1); p->s3_ramp_up = val[0];
-	READ(1); p->s3_ramp_down = val[0];
-	READ(1); p->tap_tick_delay = val[0];
-	READ(1); p->tap_gate_delay = val[0];
-	READ(1); p->tap_display_time = val[0];
+	READ(1);
+	p->google_ramp_up = val[0];
+	READ(1);
+	p->google_ramp_down = val[0];
+	READ(1);
+	p->s3s0_ramp_up = val[0];
+	READ(1);
+	p->s0_tick_delay[0] = val[0];
+	READ(1);
+	p->s0_tick_delay[1] = val[0];
+	READ(1);
+	p->s0a_tick_delay[0] = val[0];
+	READ(1);
+	p->s0a_tick_delay[1] = val[0];
+	READ(1);
+	p->s0s3_ramp_down = val[0];
+	READ(1);
+	p->s3_sleep_for = val[0];
+	READ(1);
+	p->s3_ramp_up = val[0];
+	READ(1);
+	p->s3_ramp_down = val[0];
+	READ(1);
+	p->tap_tick_delay = val[0];
+	READ(1);
+	p->tap_gate_delay = val[0];
+	READ(1);
+	p->tap_display_time = val[0];
 
-	READ(1); p->tap_pct_red = val[0];
-	READ(1); p->tap_pct_green = val[0];
-	READ(1); p->tap_seg_min_on = val[0];
-	READ(1); p->tap_seg_max_on = val[0];
-	READ(1); p->tap_seg_osc = val[0];
+	READ(1);
+	p->tap_pct_red = val[0];
+	READ(1);
+	p->tap_pct_green = val[0];
+	READ(1);
+	p->tap_seg_min_on = val[0];
+	READ(1);
+	p->tap_seg_max_on = val[0];
+	READ(1);
+	p->tap_seg_osc = val[0];
 	READ(3);
 	p->tap_idx[0] = val[0];
 	p->tap_idx[1] = val[1];
@@ -298,19 +313,18 @@ int lb_load_program(const char *filename, struct lightbar_program *prog)
 
 	fp = fopen(filename, "rb");
 	if (!fp) {
-		fprintf(stderr, "Can't open %s: %s\n",
-			filename, strerror(errno));
+		fprintf(stderr, "Can't open %s: %s\n", filename,
+			strerror(errno));
 		return 1;
 	}
 
 	rc = fseek(fp, 0, SEEK_END);
 	if (rc) {
-		fprintf(stderr, "Couldn't find end of file %s",
-				filename);
+		fprintf(stderr, "Couldn't find end of file %s", filename);
 		fclose(fp);
 		return 1;
 	}
-	rc = (int) ftell(fp);
+	rc = (int)ftell(fp);
 	if (rc > EC_LB_PROG_LEN) {
 		fprintf(stderr, "File %s is too long, aborting\n", filename);
 		fclose(fp);
