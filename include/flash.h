@@ -9,11 +9,11 @@
 #define __CROS_EC_FLASH_H
 
 #include "common.h"
-#include "ec_commands.h"  /* For EC_FLASH_PROTECT_* flags */
+#include "ec_commands.h" /* For EC_FLASH_PROTECT_* flags */
 
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
-extern struct ec_flash_bank const flash_bank_array[
-	CONFIG_FLASH_REGION_TYPE_COUNT];
+extern struct ec_flash_bank const
+	flash_bank_array[CONFIG_FLASH_REGION_TYPE_COUNT];
 
 /*
  * Return the bank the offset is in.
@@ -51,25 +51,25 @@ int crec_flash_bank_start_offset(int bank);
 int crec_flash_bank_erase_size(int bank);
 
 /* Number of physical flash banks */
-#define PHYSICAL_BANKS  CONFIG_FLASH_MULTIPLE_REGION
+#define PHYSICAL_BANKS CONFIG_FLASH_MULTIPLE_REGION
 
 /* WP region offset and size in units of flash banks */
-#define WP_BANK_OFFSET	crec_flash_bank_index(CONFIG_WP_STORAGE_OFF)
+#define WP_BANK_OFFSET crec_flash_bank_index(CONFIG_WP_STORAGE_OFF)
 #define WP_BANK_COUNT \
 	(crec_flash_bank_count(CONFIG_WP_STORAGE_OFF, CONFIG_WP_STORAGE_SIZE))
 
-#else  /* CONFIG_FLASH_MULTIPLE_REGION */
+#else /* CONFIG_FLASH_MULTIPLE_REGION */
 /* Number of physical flash banks */
 #ifndef PHYSICAL_BANKS
 #define PHYSICAL_BANKS (CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE)
 #endif
 
 /* WP region offset and size in units of flash banks */
-#define WP_BANK_OFFSET	(CONFIG_WP_STORAGE_OFF / CONFIG_FLASH_BANK_SIZE)
+#define WP_BANK_OFFSET (CONFIG_WP_STORAGE_OFF / CONFIG_FLASH_BANK_SIZE)
 #ifndef WP_BANK_COUNT
-#define WP_BANK_COUNT	(CONFIG_WP_STORAGE_SIZE / CONFIG_FLASH_BANK_SIZE)
+#define WP_BANK_COUNT (CONFIG_WP_STORAGE_SIZE / CONFIG_FLASH_BANK_SIZE)
 #endif
-#endif  /* CONFIG_FLASH_MULTIPLE_REGION */
+#endif /* CONFIG_FLASH_MULTIPLE_REGION */
 
 /* Persistent protection state flash offset / size / bank */
 #if defined(CONFIG_FLASH_PSTATE) && defined(CONFIG_FLASH_PSTATE_BANK)
@@ -82,33 +82,33 @@ int crec_flash_bank_erase_size(int bank);
  * When there is a dedicated flash bank used to store persistent state,
  * ensure the RO flash region excludes the PSTATE bank.
  */
-#define EC_FLASH_REGION_RO_SIZE		CONFIG_RO_SIZE
+#define EC_FLASH_REGION_RO_SIZE CONFIG_RO_SIZE
 
 #ifndef PSTATE_BANK
-#define PSTATE_BANK	    (CONFIG_FW_PSTATE_OFF / CONFIG_FLASH_BANK_SIZE)
+#define PSTATE_BANK (CONFIG_FW_PSTATE_OFF / CONFIG_FLASH_BANK_SIZE)
 #endif
 #ifndef PSTATE_BANK_COUNT
-#define PSTATE_BANK_COUNT   (CONFIG_FW_PSTATE_SIZE / CONFIG_FLASH_BANK_SIZE)
+#define PSTATE_BANK_COUNT (CONFIG_FW_PSTATE_SIZE / CONFIG_FLASH_BANK_SIZE)
 #endif
-#else   /* CONFIG_FLASH_PSTATE && CONFIG_FLASH_PSTATE_BANK */
+#else /* CONFIG_FLASH_PSTATE && CONFIG_FLASH_PSTATE_BANK */
 /* Allow flashrom to program the entire write protected area */
-#define EC_FLASH_REGION_RO_SIZE		CONFIG_WP_STORAGE_SIZE
-#define PSTATE_BANK_COUNT		0
-#endif  /* CONFIG_FLASH_PSTATE && CONFIG_FLASH_PSTATE_BANK */
+#define EC_FLASH_REGION_RO_SIZE CONFIG_WP_STORAGE_SIZE
+#define PSTATE_BANK_COUNT 0
+#endif /* CONFIG_FLASH_PSTATE && CONFIG_FLASH_PSTATE_BANK */
 
 #ifdef CONFIG_ROLLBACK
 /*
  * ROLLBACK region offset and size in units of flash banks.
  */
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
-#define ROLLBACK_BANK_OFFSET	crec_flash_bank_index(CONFIG_ROLLBACK_OFF)
-#define ROLLBACK_BANK_COUNT	\
+#define ROLLBACK_BANK_OFFSET crec_flash_bank_index(CONFIG_ROLLBACK_OFF)
+#define ROLLBACK_BANK_COUNT \
 	crec_flash_bank_count(CONFIG_ROLLBACK_OFF, CONFIG_ROLLBACK_SIZE)
 #else
-#define ROLLBACK_BANK_OFFSET	(CONFIG_ROLLBACK_OFF / CONFIG_FLASH_BANK_SIZE)
-#define ROLLBACK_BANK_COUNT	(CONFIG_ROLLBACK_SIZE / CONFIG_FLASH_BANK_SIZE)
-#endif	/* CONFIG_FLASH_MULTIPLE_REGION */
-#endif	/* CONFIG_ROLLBACK */
+#define ROLLBACK_BANK_OFFSET (CONFIG_ROLLBACK_OFF / CONFIG_FLASH_BANK_SIZE)
+#define ROLLBACK_BANK_COUNT (CONFIG_ROLLBACK_SIZE / CONFIG_FLASH_BANK_SIZE)
+#endif /* CONFIG_FLASH_MULTIPLE_REGION */
+#endif /* CONFIG_ROLLBACK */
 
 /* This enum is useful to identify different regions during verification. */
 enum flash_region {
@@ -378,7 +378,7 @@ int crec_flash_write_pstate_mac_addr(const char *mac_addr);
 #ifdef CONFIG_EXTERNAL_STORAGE
 void crec_flash_lock_mapped_storage(int lock);
 #else
-static inline void crec_flash_lock_mapped_storage(int lock) { };
+static inline void crec_flash_lock_mapped_storage(int lock){};
 #endif /* CONFIG_EXTERNAL_STORAGE */
 
 /**
@@ -390,4 +390,4 @@ static inline void crec_flash_lock_mapped_storage(int lock) { };
  */
 int crec_board_flash_select(int select);
 
-#endif  /* __CROS_EC_FLASH_H */
+#endif /* __CROS_EC_FLASH_H */
