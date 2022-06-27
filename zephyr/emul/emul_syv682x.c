@@ -68,8 +68,8 @@ i2c_emul_to_syv682x_emul_data(const struct i2c_emul *emul)
 static void syv682x_emul_set_alert(struct syv682x_emul_data *data, bool alert)
 {
 	int res = gpio_emul_input_set(data->alert_gpio_port,
-			/* The signal is inverted. */
-			data->alert_gpio_pin, !alert);
+				      /* The signal is inverted. */
+				      data->alert_gpio_pin, !alert);
 	__ASSERT_NO_MSG(res == 0);
 }
 
@@ -86,12 +86,12 @@ int syv682x_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
 }
 
 void syv682x_emul_set_condition(struct i2c_emul *emul, uint8_t status,
-		uint8_t control_4)
+				uint8_t control_4)
 {
 	uint8_t control_4_interrupt = control_4 & SYV682X_CONTROL_4_INT_MASK;
 	struct syv682x_emul_data *data = i2c_emul_to_syv682x_emul_data(emul);
 	int frs_en_gpio = gpio_emul_output_get(data->frs_en_gpio_port,
-			data->frs_en_gpio_pin);
+					       data->frs_en_gpio_pin);
 
 	__ASSERT_NO_MSG(frs_en_gpio >= 0);
 
@@ -108,8 +108,8 @@ void syv682x_emul_set_condition(struct i2c_emul *emul, uint8_t status,
 	data->reg[SYV682X_CONTROL_4_REG] |= control_4_interrupt;
 
 	/* These conditions disable the power path. */
-	if (status & (SYV682X_STATUS_TSD | SYV682X_STATUS_OVP |
-				SYV682X_STATUS_OC_HV)) {
+	if (status &
+	    (SYV682X_STATUS_TSD | SYV682X_STATUS_OVP | SYV682X_STATUS_OC_HV)) {
 		data->reg[SYV682X_CONTROL_1_REG] |= SYV682X_CONTROL_1_PWR_ENB;
 	}
 
@@ -123,10 +123,9 @@ void syv682x_emul_set_condition(struct i2c_emul *emul, uint8_t status,
 
 	/* VBAT_OVP disconnects CC and VCONN. */
 	if (control_4_interrupt & SYV682X_CONTROL_4_VBAT_OVP) {
-		data->reg[SYV682X_CONTROL_4_REG] &= ~(SYV682X_CONTROL_4_CC1_BPS
-				| SYV682X_CONTROL_4_CC2_BPS
-				| SYV682X_CONTROL_4_VCONN1
-				| SYV682X_CONTROL_4_VCONN2);
+		data->reg[SYV682X_CONTROL_4_REG] &= ~(
+			SYV682X_CONTROL_4_CC1_BPS | SYV682X_CONTROL_4_CC2_BPS |
+			SYV682X_CONTROL_4_VCONN1 | SYV682X_CONTROL_4_VCONN2);
 	}
 
 	syv682x_emul_set_alert(data, status | control_4_interrupt);
@@ -244,7 +243,7 @@ static void syv682x_emul_reset(struct syv682x_emul_data *data)
  * @return 0 on success or an error code on failure
  */
 static int syv682x_emul_init(const struct emul *emul,
-			  const struct device *parent)
+			     const struct device *parent)
 {
 	const struct syv682x_emul_cfg *cfg = emul->cfg;
 	struct syv682x_emul_data *data = emul->data;
@@ -263,7 +262,7 @@ static int syv682x_emul_init(const struct emul *emul,
 }
 
 /* Device instantiation */
-#define SYV682X_EMUL(n)                                                        \
+#define SYV682X_EMUL(n)                                                          \
 	static struct syv682x_emul_data syv682x_emul_data_##n = {              \
 		.common = {                                                    \
 			.write_byte = syv682x_emul_write_byte,                 \
@@ -277,27 +276,27 @@ static int syv682x_emul_init(const struct emul *emul,
 					DT_INST_PROP(n, alert_gpio), gpios)),  \
 		.alert_gpio_pin = DT_GPIO_PIN(                                 \
 				DT_INST_PROP(n, alert_gpio), gpios),           \
-	};                                                                     \
+	}; \
 	static const struct syv682x_emul_cfg syv682x_emul_cfg_##n = {          \
 		.common = {                                                    \
 			.i2c_label = DT_INST_BUS_LABEL(n),                     \
 			.dev_label = DT_INST_LABEL(n),                         \
 			.addr = DT_INST_REG_ADDR(n),                           \
 		},                                                             \
-	};                                                                     \
-	EMUL_DEFINE(syv682x_emul_init, DT_DRV_INST(n), &syv682x_emul_cfg_##n,  \
+	}; \
+	EMUL_DEFINE(syv682x_emul_init, DT_DRV_INST(n), &syv682x_emul_cfg_##n,    \
 		    &syv682x_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(SYV682X_EMUL)
 
-#define SYV682X_EMUL_CASE(n) \
-	case DT_INST_DEP_ORD(n): return &syv682x_emul_data_##n.common.emul;
-
+#define SYV682X_EMUL_CASE(n)     \
+	case DT_INST_DEP_ORD(n): \
+		return &syv682x_emul_data_##n.common.emul;
 
 struct i2c_emul *syv682x_emul_get(int ord)
 {
 	switch (ord) {
-	DT_INST_FOREACH_STATUS_OKAY(SYV682X_EMUL_CASE)
+		DT_INST_FOREACH_STATUS_OKAY(SYV682X_EMUL_CASE)
 
 	default:
 		return NULL;
