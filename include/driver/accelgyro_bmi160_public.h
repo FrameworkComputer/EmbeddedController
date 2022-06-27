@@ -18,7 +18,7 @@
  */
 
 /* I2C addresses */
-#define BMI160_ADDR0_FLAGS      0x68
+#define BMI160_ADDR0_FLAGS 0x68
 
 extern const struct accelgyro_drv bmi160_drv;
 
