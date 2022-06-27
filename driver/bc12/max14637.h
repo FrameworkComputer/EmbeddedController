@@ -7,8 +7,8 @@
 
 #include "gpio.h"
 
-#define MAX14637_FLAGS_ENABLE_ACTIVE_LOW		BIT(0)
-#define MAX14637_FLAGS_CHG_DET_ACTIVE_LOW		BIT(1)
+#define MAX14637_FLAGS_ENABLE_ACTIVE_LOW BIT(0)
+#define MAX14637_FLAGS_CHG_DET_ACTIVE_LOW BIT(1)
 
 struct max14637_config_t {
 	/*
@@ -29,5 +29,5 @@ struct max14637_config_t {
  * Array that contains boards-specific configuration for BC 1.2 charging chips.
  */
 extern const struct max14637_config_t
-				max14637_config[CONFIG_USB_PD_PORT_MAX_COUNT];
+	max14637_config[CONFIG_USB_PD_PORT_MAX_COUNT];
 extern const struct bc12_drv max14637_drv;
