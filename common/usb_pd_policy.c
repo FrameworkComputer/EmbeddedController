@@ -90,7 +90,7 @@ DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_DP_ALT_MODE_ENTERED,
 static uint32_t pd_src_caps[CONFIG_USB_PD_PORT_MAX_COUNT][PDO_MAX_OBJECTS];
 static uint8_t pd_src_cap_cnt[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-const uint32_t * const pd_get_src_caps(int port)
+const uint32_t *const pd_get_src_caps(int port)
 {
 	return pd_src_caps[port];
 }
@@ -373,14 +373,14 @@ static int dfp_discover_svids(uint32_t *payload)
 	return 1;
 }
 
-struct pd_discovery *pd_get_am_discovery_and_notify_access(
-				int port, enum tcpci_msg_type type)
+struct pd_discovery *
+pd_get_am_discovery_and_notify_access(int port, enum tcpci_msg_type type)
 {
 	return (struct pd_discovery *)pd_get_am_discovery(port, type);
 }
 
 const struct pd_discovery *pd_get_am_discovery(int port,
-			enum tcpci_msg_type type)
+					       enum tcpci_msg_type type)
 {
 	return &discovery[port][type];
 }
@@ -407,7 +407,7 @@ void pd_set_dfp_enter_mode_flag(int port, bool set)
 static int dfp_discover_modes(int port, uint32_t *payload)
 {
 	const struct pd_discovery *disc =
-			pd_get_am_discovery(port, TCPCI_MSG_SOP);
+		pd_get_am_discovery(port, TCPCI_MSG_SOP);
 	uint16_t svid = disc->svids[disc->svid_idx].svid;
 
 	if (disc->svid_idx >= disc->svid_cnt)
@@ -553,8 +553,7 @@ static int process_am_discover_svids(int port, int cnt, uint32_t *payload,
 	return dfp_discover_modes(port, payload);
 }
 
-static int process_tbt_compat_discover_modes(int port,
-					     enum tcpci_msg_type sop,
+static int process_tbt_compat_discover_modes(int port, enum tcpci_msg_type sop,
 					     uint32_t *payload,
 					     enum tcpci_msg_type *rtype)
 {
@@ -776,7 +775,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 			} else {
 				if (!modep->opos)
 					pd_dfp_enter_mode(port, TCPCI_MSG_SOP,
-							0, 0);
+							  0, 0);
 
 				if (modep->opos) {
 					rsize = modep->fx->status(port,
@@ -805,7 +804,7 @@ int pd_svdm(int port, int cnt, uint32_t *payload, uint32_t **rpayload,
 				 * config ack).
 				 */
 				if (svdm_dp_get_mux_mode(port) ==
-							USB_PD_MUX_DP_ENABLED)
+				    USB_PD_MUX_DP_ENABLED)
 					usb_mux_set_safe_mode(port);
 				rsize = modep->fx->config(port, payload);
 			} else {
@@ -952,7 +951,7 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 		flash_offset =
 			CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
 		crec_flash_physical_erase(CONFIG_EC_WRITABLE_STORAGE_OFF +
-					  CONFIG_RW_STORAGE_OFF,
+						  CONFIG_RW_STORAGE_OFF,
 					  CONFIG_RW_SIZE);
 		rw_flash_changed = 1;
 		break;
@@ -963,7 +962,7 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 		     CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF))
 			break;
 		crec_flash_physical_write(flash_offset, 4 * (cnt - 1),
-				     (const char *)(payload + 1));
+					  (const char *)(payload + 1));
 		flash_offset += 4 * (cnt - 1);
 		rw_flash_changed = 1;
 		break;
@@ -976,7 +975,7 @@ int pd_custom_flash_vdm(int port, int cnt, uint32_t *payload)
 			for (offset = FW_RW_END - RSANUMBYTES;
 			     offset < FW_RW_END; offset += 4)
 				crec_flash_physical_write(offset, 4,
-						     (const char *)&zero);
+							  (const char *)&zero);
 		}
 		break;
 	default:
