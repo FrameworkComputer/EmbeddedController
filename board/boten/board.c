@@ -40,7 +40,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define INT_RECHECK_US 5000
 
 /* C0 interrupt line shared by BC 1.2 and charger */
@@ -84,7 +84,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
-
 }
 
 static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
@@ -114,8 +113,7 @@ DECLARE_DEFERRED(pendetect_deferred);
 void pen_detect_interrupt(enum gpio_signal s)
 {
 	/* Trigger deferred notification of pen detect change */
-	hook_call_deferred(&pendetect_deferred_data,
-			500 * MSEC);
+	hook_call_deferred(&pendetect_deferred_data, 500 * MSEC);
 }
 
 void board_hibernate(void)
@@ -147,27 +145,21 @@ __override void board_pulse_entering_rw(void)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_VSNS_PP3300_A] = {
-		.name = "PP3300_A_PGOOD",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH0
-	},
-	[ADC_TEMP_SENSOR_1] = {
-		.name = "TEMP_SENSOR1",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH2
-	},
-	[ADC_TEMP_SENSOR_2] = {
-		.name = "TEMP_SENSOR2",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH3
-	},
+	[ADC_VSNS_PP3300_A] = { .name = "PP3300_A_PGOOD",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH0 },
+	[ADC_TEMP_SENSOR_1] = { .name = "TEMP_SENSOR1",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH2 },
+	[ADC_TEMP_SENSOR_2] = { .name = "TEMP_SENSOR2",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH3 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -276,7 +268,6 @@ int board_is_sourcing_vbus(int port)
 
 	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
 	return !!(regval & TCPC_REG_POWER_STATUS_SOURCING_VBUS);
-
 }
 
 int board_set_active_charge_port(int port)
@@ -288,8 +279,7 @@ int board_set_active_charge_port(int port)
 
 	/* Disable all ports. */
 	if (port == CHARGE_PORT_NONE) {
-		tcpc_write(0, TCPC_REG_COMMAND,
-				TCPC_REG_COMMAND_SNK_CTRL_LOW);
+		tcpc_write(0, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SNK_CTRL_LOW);
 		raa489000_enable_asgate(0, false);
 		return EC_SUCCESS;
 	}
@@ -302,8 +292,7 @@ int board_set_active_charge_port(int port)
 
 	/* Enable requested charge port. */
 	if (raa489000_enable_asgate(port, true) ||
-	    tcpc_write(0, TCPC_REG_COMMAND,
-		       TCPC_REG_COMMAND_SNK_CTRL_HIGH)) {
+	    tcpc_write(0, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SNK_CTRL_HIGH)) {
 		CPRINTUSB("p%d: sink path enable failed.", port);
 		return EC_ERROR_UNKNOWN;
 	}
@@ -345,17 +334,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrices to rotate accelerometers into the standard reference. */
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					     { 0, FLOAT_TO_FP(-1), 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, FLOAT_TO_FP(1), 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* Sensor Data */
 static struct stprivate_data g_lis2dwl_data;
@@ -459,7 +444,7 @@ void board_init(void)
 		gmr_tablet_switch_disable();
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_set_flags(GPIO_BASE_SIXAXIS_INT_L,
-				GPIO_INPUT | GPIO_PULL_DOWN);
+			       GPIO_INPUT | GPIO_PULL_DOWN);
 
 		/* only clamshell sku todo */
 		gpio_set_flags(GPIO_PEN_DET_ODL, GPIO_INPUT | GPIO_PULL_DOWN);
@@ -488,14 +473,14 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Memory",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Ambient",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_2},
+	[TEMP_SENSOR_1] = { .name = "Memory",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Ambient",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
