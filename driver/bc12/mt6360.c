@@ -19,20 +19,20 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 #define CPRINTS(format, args...) \
-	cprints(CC_USBCHARGE, "%s " format, "MT6360", ## args)
+	cprints(CC_USBCHARGE, "%s " format, "MT6360", ##args)
 
 static enum ec_error_list mt6360_read8(int reg, int *val)
 {
 	return i2c_read8(mt6360_config.i2c_port, mt6360_config.i2c_addr_flags,
-			reg, val);
+			 reg, val);
 }
 
 static enum ec_error_list mt6360_write8(int reg, int val)
 {
 	return i2c_write8(mt6360_config.i2c_port, mt6360_config.i2c_addr_flags,
-			reg, val);
+			  reg, val);
 }
 
 static int mt6360_update_bits(int reg, int mask, int val)
@@ -121,7 +121,7 @@ static void mt6360_update_charge_manager(int port,
 	if (new_bc12_type != current_bc12_type) {
 		if (current_bc12_type >= 0)
 			charge_manager_update_charge(current_bc12_type, port,
-							NULL);
+						     NULL);
 
 		if (new_bc12_type != CHARGE_SUPPLIER_NONE) {
 			struct charge_port_info chg = {
@@ -146,10 +146,9 @@ static void mt6360_handle_bc12_irq(int port)
 		/* Check vbus again to avoid timing issue */
 		if (pd_snk_is_vbus_provided(port))
 			mt6360_update_charge_manager(
-					port, mt6360_get_bc12_device_type());
+				port, mt6360_get_bc12_device_type());
 		else
-			mt6360_update_charge_manager(
-					0, CHARGE_SUPPLIER_NONE);
+			mt6360_update_charge_manager(0, CHARGE_SUPPLIER_NONE);
 	}
 
 	/* write clear */
@@ -168,9 +167,8 @@ static void mt6360_usb_charger_task_event(const int port, uint32_t evt)
 	/* vbus change, start bc12 detection */
 	if (evt & USB_CHG_EVENT_VBUS) {
 		bool is_sink = pd_get_power_role(port) == PD_ROLE_SINK;
-		bool is_non_pd_sink = !pd_capable(port) &&
-			is_sink &&
-			pd_snk_is_vbus_provided(port);
+		bool is_non_pd_sink = !pd_capable(port) && is_sink &&
+				      pd_snk_is_vbus_provided(port);
 
 		if (is_sink)
 			mt6360_clr_bit(MT6360_REG_CHG_CTRL1, MT6360_MASK_HZ);
@@ -197,15 +195,15 @@ static int mt6360_regulator_write8(uint8_t addr, int reg, int val)
 	 * Note: The checksum from I2C_FLAG_PEC happens to be correct because
 	 * length == 1 -> the high 3 bits of the offset byte is 0.
 	 */
-	return i2c_write8(mt6360_config.i2c_port,
-			  addr | I2C_FLAG_PEC, reg, val);
+	return i2c_write8(mt6360_config.i2c_port, addr | I2C_FLAG_PEC, reg,
+			  val);
 }
 
 static int mt6360_regulator_read8(int addr, int reg, int *val)
 {
 	int rv;
 	uint8_t crc = 0, real_crc;
-	uint8_t out[3] = {(addr << 1) | 1, reg};
+	uint8_t out[3] = { (addr << 1) | 1, reg };
 
 	rv = i2c_read16(mt6360_config.i2c_port, addr, reg, val);
 	if (rv)
@@ -262,22 +260,10 @@ static const uint16_t MT6360_LDO5_VOSEL_TABLE[8] = {
 };
 
 static const uint16_t MT6360_LDO6_VOSEL_TABLE[16] = {
-	[0x0] = 500,
-	[0x1] = 600,
-	[0x2] = 700,
-	[0x3] = 800,
-	[0x4] = 900,
-	[0x5] = 1000,
-	[0x6] = 1100,
-	[0x7] = 1200,
-	[0x8] = 1300,
-	[0x9] = 1400,
-	[0xA] = 1500,
-	[0xB] = 1600,
-	[0xC] = 1700,
-	[0xD] = 1800,
-	[0xE] = 1900,
-	[0xF] = 2000,
+	[0x0] = 500,  [0x1] = 600,  [0x2] = 700,  [0x3] = 800,
+	[0x4] = 900,  [0x5] = 1000, [0x6] = 1100, [0x7] = 1200,
+	[0x8] = 1300, [0x9] = 1400, [0xA] = 1500, [0xB] = 1600,
+	[0xC] = 1700, [0xD] = 1800, [0xE] = 1900, [0xF] = 2000,
 };
 
 /* LDO7 VOSEL table is the same as LDO6's. */
@@ -410,14 +396,12 @@ int mt6360_regulator_enable(enum mt6360_regulator_id id, uint8_t enable)
 
 	if (enable)
 		return mt6360_regulator_update_bits(
-			data->addr,
-			data->reg_en_ctrl2,
+			data->addr, data->reg_en_ctrl2,
 			MT6360_MASK_RGL_SW_OP_EN | MT6360_MASK_RGL_SW_EN,
 			MT6360_MASK_RGL_SW_OP_EN | MT6360_MASK_RGL_SW_EN);
 	else
 		return mt6360_regulator_update_bits(
-			data->addr,
-			data->reg_en_ctrl2,
+			data->addr, data->reg_en_ctrl2,
 			MT6360_MASK_RGL_SW_OP_EN | MT6360_MASK_RGL_SW_EN,
 			MT6360_MASK_RGL_SW_OP_EN);
 }
@@ -468,8 +452,7 @@ int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
 
 		step = (mv - MT6360_BUCK_VOSEL_MIN) / MT6360_BUCK_VOSEL_STEP_MV;
 
-		return mt6360_regulator_update_bits(data->addr,
-						    data->reg_ctrl3,
+		return mt6360_regulator_update_bits(data->addr, data->reg_ctrl3,
 						    data->mask_vosel, step);
 	}
 
@@ -489,8 +472,7 @@ int mt6360_regulator_set_voltage(enum mt6360_regulator_id id, int min_mv,
 		if (mv + step * MT6360_LDO_VOCAL_STEP_MV > max_mv)
 			continue;
 		return mt6360_regulator_update_bits(
-			data->addr,
-			data->reg_ctrl3,
+			data->addr, data->reg_ctrl3,
 			data->mask_vosel | data->mask_vocal,
 			(i << data->shift_vosel) | step);
 	}
