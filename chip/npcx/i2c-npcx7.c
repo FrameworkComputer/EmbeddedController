@@ -37,13 +37,13 @@ void i2c_select_port(int port)
 	/* Select I2C ports for the same controller */
 	else if (port <= NPCX_I2C_PORT4_1) {
 		UPDATE_BIT(NPCX_GLUE_SMBSEL, NPCX_SMBSEL_SMB4SEL,
-			(port == NPCX_I2C_PORT4_1));
+			   (port == NPCX_I2C_PORT4_1));
 	} else if (port <= NPCX_I2C_PORT5_1) {
 		UPDATE_BIT(NPCX_GLUE_SMBSEL, NPCX_SMBSEL_SMB5SEL,
-			(port == NPCX_I2C_PORT5_1));
+			   (port == NPCX_I2C_PORT5_1));
 	} else {
 		UPDATE_BIT(NPCX_GLUE_SMBSEL, NPCX_SMBSEL_SMB6SEL,
-			(port == NPCX_I2C_PORT6_1));
+			   (port == NPCX_I2C_PORT6_1));
 	}
 }
 
@@ -52,7 +52,7 @@ int i2c_is_raw_mode(int port)
 	int group, bit;
 
 	if (port == NPCX_I2C_PORT4_1 || port == NPCX_I2C_PORT5_1 ||
-			port == NPCX_I2C_PORT6_1) {
+	    port == NPCX_I2C_PORT6_1) {
 		group = 6;
 		bit = 7 - (port - NPCX_I2C_PORT4_1) / 2;
 	} else {
