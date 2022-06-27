@@ -50,9 +50,9 @@ struct cros_ec_readmem {
 	char *buffer;
 };
 
-#define CROS_EC_DEV_IOC              ':'
-#define CROS_EC_DEV_IOCXCMD    _IOWR(':', 0, struct cros_ec_command)
-#define CROS_EC_DEV_IOCRDMEM   _IOWR(':', 1, struct cros_ec_readmem)
+#define CROS_EC_DEV_IOC ':'
+#define CROS_EC_DEV_IOCXCMD _IOWR(':', 0, struct cros_ec_command)
+#define CROS_EC_DEV_IOCRDMEM _IOWR(':', 1, struct cros_ec_readmem)
 
 /*
  * @version: Command version number (often 0)
@@ -84,12 +84,12 @@ struct cros_ec_readmem_v2 {
 	uint8_t buffer[EC_MEMMAP_SIZE];
 };
 
-#define CROS_EC_DEV_IOC_V2	0xEC
-#define CROS_EC_DEV_IOCXCMD_V2	_IOWR(CROS_EC_DEV_IOC_V2, 0, \
-				      struct cros_ec_command_v2)
-#define CROS_EC_DEV_IOCRDMEM_V2	_IOWR(CROS_EC_DEV_IOC_V2, 1, \
-				      struct cros_ec_readmem_v2)
-#define CROS_EC_DEV_IOCEVENTMASK_V2	_IO(CROS_EC_DEV_IOC_V2, 2)
+#define CROS_EC_DEV_IOC_V2 0xEC
+#define CROS_EC_DEV_IOCXCMD_V2 \
+	_IOWR(CROS_EC_DEV_IOC_V2, 0, struct cros_ec_command_v2)
+#define CROS_EC_DEV_IOCRDMEM_V2 \
+	_IOWR(CROS_EC_DEV_IOC_V2, 1, struct cros_ec_readmem_v2)
+#define CROS_EC_DEV_IOCEVENTMASK_V2 _IO(CROS_EC_DEV_IOC_V2, 2)
 
 #ifdef __cplusplus
 }
