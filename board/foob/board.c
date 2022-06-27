@@ -31,11 +31,11 @@
 #include "util.h"
 #include "battery_smart.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define USB_PD_PORT_ANX7447	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX7447 0
+#define USB_PD_PORT_PS8751 1
 
 static uint8_t sku_id;
 
@@ -60,31 +60,31 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_AMB] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_CHARGER] = { "TEMP_CHARGER", NPCX_ADC_CH1,
+				      ADC_MAX_VOLT, ADC_READ_MAX + 1, 0 },
 	/* Vbus sensing (1/10 voltage divider). */
-	[ADC_VBUS_C0] = {
-		"VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
-	[ADC_VBUS_C1] = {
-		"VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS_C0] = { "VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
+	[ADC_VBUS_C1] = { "VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -94,11 +94,9 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate lid and base sensor into standard reference frame */
-const mat33_fp_t standard_rot_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t standard_rot_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* sensor private data */
 static struct stprivate_data g_lis2dh_data;
@@ -238,11 +236,11 @@ int board_is_lid_angle_tablet_mode(void)
 }
 
 /* Battery functions */
-#define SB_OPTIONALMFG_FUNCTION2		0x3e
+#define SB_OPTIONALMFG_FUNCTION2 0x3e
 /* Optional mfg function2 */
-#define SMART_QUICK_CHARGE			(1<<12)
+#define SMART_QUICK_CHARGE (1 << 12)
 /* Quick charge support */
-#define MODE_QUICK_CHARGE_SUPPORT		(1<<4)
+#define MODE_QUICK_CHARGE_SUPPORT (1 << 4)
 
 static void sb_quick_charge_mode(int enable)
 {
