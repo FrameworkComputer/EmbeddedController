@@ -27,11 +27,11 @@
 #endif
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
 STATIC_IF(ACCELGYRO_ICM426XX_INT_ENABLE)
-	volatile uint32_t last_interrupt_timestamp;
+volatile uint32_t last_interrupt_timestamp;
 
 static int icm426xx_normalize(const struct motion_sensor_t *s, intv3_t v,
 			      const uint8_t *raw)
@@ -45,8 +45,7 @@ static int icm426xx_normalize(const struct motion_sensor_t *s, intv3_t v,
 	v[Z] = (int16_t)UINT16_FROM_BYTE_ARRAY_LE(raw, 4);
 
 	/* check if data is valid */
-	if (v[X] == ICM426XX_INVALID_DATA &&
-	    v[Y] == ICM426XX_INVALID_DATA &&
+	if (v[X] == ICM426XX_INVALID_DATA && v[Y] == ICM426XX_INVALID_DATA &&
 	    v[Z] == ICM426XX_INVALID_DATA) {
 		return EC_ERROR_INVAL;
 	}
@@ -76,8 +75,8 @@ static int icm426xx_check_sensor_stabilized(const struct motion_sensor_t *s,
 }
 
 /* use FIFO threshold interrupt on INT1 */
-#define ICM426XX_FIFO_INT_EN		ICM426XX_FIFO_THS_INT1_EN
-#define ICM426XX_FIFO_INT_STATUS	ICM426XX_FIFO_THS_INT
+#define ICM426XX_FIFO_INT_EN ICM426XX_FIFO_THS_INT1_EN
+#define ICM426XX_FIFO_INT_STATUS ICM426XX_FIFO_THS_INT
 
 static int __maybe_unused icm426xx_enable_fifo(const struct motion_sensor_t *s,
 					       int enable)
@@ -184,7 +183,8 @@ out_unlock:
 }
 
 static void __maybe_unused icm426xx_push_fifo_data(struct motion_sensor_t *s,
-						const uint8_t *raw, uint32_t ts)
+						   const uint8_t *raw,
+						   uint32_t ts)
 {
 	intv3_t v;
 	struct ec_response_motion_sensor_data vect;
@@ -232,8 +232,8 @@ static int __maybe_unused icm426xx_load_fifo(struct motion_sensor_t *s,
 		return ret;
 
 	for (i = 0; i < count; i += size) {
-		size = icm_fifo_decode_packet(&st->fifo_buffer[i],
-				&accel, &gyro);
+		size = icm_fifo_decode_packet(&st->fifo_buffer[i], &accel,
+					      &gyro);
 		/* exit if error or FIFO is empty */
 		if (size <= 0)
 			return -size;
@@ -310,7 +310,7 @@ static int icm426xx_config_interrupt(const struct motion_sensor_t *s)
 
 	/* deassert async reset for proper INT pin operation */
 	ret = icm_field_update8(s, ICM426XX_REG_INT_CONFIG1,
-			ICM426XX_INT_ASYNC_RESET, 0);
+				ICM426XX_INT_ASYNC_RESET, 0);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -322,8 +322,7 @@ static int icm426xx_config_interrupt(const struct motion_sensor_t *s)
 	 */
 	val = ICM426XX_FIFO_PARTIAL_READ | ICM426XX_FIFO_WM_GT_TH;
 	ret = icm_field_update8(s, ICM426XX_REG_FIFO_CONFIG1,
-			GENMASK(6, 5) | ICM426XX_FIFO_EN_MASK,
-			val);
+				GENMASK(6, 5) | ICM426XX_FIFO_EN_MASK, val);
 	if (ret != EC_SUCCESS)
 		return ret;
 
@@ -337,7 +336,7 @@ static int icm426xx_config_interrupt(const struct motion_sensor_t *s)
 	return ret;
 }
 
-#endif	/* ACCELGYRO_ICM426XX_INT_ENABLE */
+#endif /* ACCELGYRO_ICM426XX_INT_ENABLE */
 
 static int icm426xx_enable_sensor(const struct motion_sensor_t *s, int enable)
 {
@@ -431,7 +430,7 @@ static int icm426xx_set_data_rate(const struct motion_sensor_t *s, int rate,
 
 	if (rate > 0) {
 		if ((normalized_rate < min_rate) ||
-			(normalized_rate > max_rate))
+		    (normalized_rate > max_rate))
 			return EC_RES_INVALID_PARAM;
 	}
 
@@ -470,8 +469,7 @@ out_unlock:
 	return ret;
 }
 
-static int icm426xx_set_range(struct motion_sensor_t *s, int range,
-			      int rnd)
+static int icm426xx_set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	int reg, ret, reg_val;
 	int newrange;
@@ -536,8 +534,8 @@ static int icm426xx_get_hw_offset(const struct motion_sensor_t *s,
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		mutex_lock(s->mutex);
-		ret = icm_read_n(s, ICM426XX_REG_OFFSET_USER4,
-				raw, sizeof(raw));
+		ret = icm_read_n(s, ICM426XX_REG_OFFSET_USER4, raw,
+				 sizeof(raw));
 		mutex_unlock(s->mutex);
 		if (ret != EC_SUCCESS)
 			return ret;
@@ -554,8 +552,8 @@ static int icm426xx_get_hw_offset(const struct motion_sensor_t *s,
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		mutex_lock(s->mutex);
-		ret = icm_read_n(s, ICM426XX_REG_OFFSET_USER0,
-				raw, sizeof(raw));
+		ret = icm_read_n(s, ICM426XX_REG_OFFSET_USER0, raw,
+				 sizeof(raw));
 		mutex_unlock(s->mutex);
 		if (ret != EC_SUCCESS)
 			return ret;
