@@ -79,10 +79,10 @@ void system_pre_init(void)
 	/* CM4 Modification */
 	scp_cm4_mod();
 
-	/* Clock */
-	#ifdef CHIP_VARIANT_MT8183
+/* Clock */
+#ifdef CHIP_VARIANT_MT8183
 	scp_enable_clock();
-	#endif
+#endif
 
 	/* Peripheral IRQ */
 	scp_enable_pirq();
@@ -127,7 +127,8 @@ void system_reset(int flags)
 		}
 	}
 
-	/* Set watchdog timer to small value, and spin wait for watchdog reset */
+	/* Set watchdog timer to small value, and spin wait for watchdog reset
+	 */
 	SCP_WDT_CFG = 0;
 	SCP_WDT_CFG = SCP_WDT_ENABLE | SCP_WDT_PERIOD(1);
 	watchdog_reload();
@@ -162,12 +163,9 @@ static void check_reset_cause(void)
 int system_is_reboot_warm(void)
 {
 	const uint32_t cold_flags =
-		EC_RESET_FLAG_RESET_PIN |
-		EC_RESET_FLAG_POWER_ON  |
-		EC_RESET_FLAG_WATCHDOG  |
-		EC_RESET_FLAG_HARD      |
-		EC_RESET_FLAG_SOFT      |
-		EC_RESET_FLAG_HIBERNATE;
+		EC_RESET_FLAG_RESET_PIN | EC_RESET_FLAG_POWER_ON |
+		EC_RESET_FLAG_WATCHDOG | EC_RESET_FLAG_HARD |
+		EC_RESET_FLAG_SOFT | EC_RESET_FLAG_HIBERNATE;
 
 	check_reset_cause();
 
