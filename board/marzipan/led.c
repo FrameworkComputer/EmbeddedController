@@ -32,15 +32,15 @@ enum led_color {
 	LED_OFF = 0,
 	LED_AMBER,
 	LED_BLUE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static void led_set_color(enum led_color color)
 {
 	gpio_set_level(GPIO_EC_CHG_LED_Y_C1,
-		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
 	gpio_set_level(GPIO_EC_CHG_LED_B_C1,
-		(color == LED_BLUE) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_BLUE) ? BAT_LED_ON : BAT_LED_OFF);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
