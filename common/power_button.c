@@ -21,14 +21,14 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SWITCH, outstr)
-#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ##args)
 
 /* By default the power button is active low */
 #ifndef CONFIG_POWER_BUTTON_FLAGS
 #define CONFIG_POWER_BUTTON_FLAGS 0
 #endif
 
-static int debounced_power_pressed;	/* Debounced power button state */
+static int debounced_power_pressed; /* Debounced power button state */
 static int simulate_power_pressed;
 static volatile int power_button_is_stable = 1;
 
@@ -41,8 +41,11 @@ static const struct button_config power_button = {
 
 int power_button_signal_asserted(void)
 {
-	return !!(gpio_get_level(power_button.gpio)
-		== (power_button.flags & BUTTON_FLAG_ACTIVE_HIGH) ? 1 : 0);
+	return !!(
+		gpio_get_level(power_button.gpio) ==
+				(power_button.flags & BUTTON_FLAG_ACTIVE_HIGH) ?
+			1 :
+			0);
 }
 
 /**
@@ -93,8 +96,8 @@ int power_button_wait_for_release(int timeout_us)
 		 * the power button is debounced but not changed, or the power
 		 * button has not been debounced.
 		 */
-		task_wait_event(MIN(power_button.debounce_us,
-				    deadline.val - now.val));
+		task_wait_event(
+			MIN(power_button.debounce_us, deadline.val - now.val));
 	}
 
 	CPRINTS("%s released in time", power_button.name);
@@ -164,8 +167,8 @@ static void power_button_change_deferred(void)
 	debounced_power_pressed = new_pressed;
 	power_button_is_stable = 1;
 
-	CPRINTS("%s %s",
-		power_button.name, new_pressed ? "pressed" : "released");
+	CPRINTS("%s %s", power_button.name,
+		new_pressed ? "pressed" : "released");
 
 	/* Call hooks */
 	hook_notify(HOOK_POWER_BUTTON_CHANGE);
@@ -197,7 +200,7 @@ void power_button_interrupt(enum gpio_signal signal)
 
 static int command_powerbtn(int argc, char **argv)
 {
-	int ms = 200;  /* Press duration in ms */
+	int ms = 200; /* Press duration in ms */
 	char *e;
 
 	if (argc > 1) {
@@ -221,6 +224,5 @@ static int command_powerbtn(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn,
-			"[msec]",
+DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn, "[msec]",
 			"Simulate power button press");
