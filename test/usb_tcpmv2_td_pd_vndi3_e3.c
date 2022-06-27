@@ -11,10 +11,8 @@
 #include "usb_tcpmv2_compliance.h"
 #include "usb_tc_sm.h"
 
-uint32_t vdo = VDO(USB_SID_PD, 1,
-		   VDO_SVDM_VERS(VDM_VER20) |
-		   CMD_DISCOVER_IDENT);
-
+uint32_t vdo =
+	VDO(USB_SID_PD, 1, VDO_SVDM_VERS(VDM_VER20) | CMD_DISCOVER_IDENT);
 
 /*****************************************************************************
  * TD.PD.VNDI3.E3.VDM Identity
@@ -32,8 +30,8 @@ static int td_pd_vndi3_e3(enum pd_data_role data_role)
 	/*
 	 * a) Run PROC.PD.E1 Bring-up according to the UUT role.
 	 */
-	TEST_EQ(proc_pd_e1(data_role, INITIAL_AND_ALREADY_ATTACHED),
-		EC_SUCCESS, "%d");
+	TEST_EQ(proc_pd_e1(data_role, INITIAL_AND_ALREADY_ATTACHED), EC_SUCCESS,
+		"%d");
 
 	/*
 	 * Make sure we are idle. Reject everything that is pending
@@ -43,8 +41,7 @@ static int td_pd_vndi3_e3(enum pd_data_role data_role)
 	/*
 	 * b) Tester executes a Discover Identity exchange
 	 */
-	partner_send_msg(TCPCI_MSG_SOP, PD_DATA_VENDOR_DEF,
-			 1, 0, &vdo);
+	partner_send_msg(TCPCI_MSG_SOP, PD_DATA_VENDOR_DEF, 1, 0, &vdo);
 
 	/*
 	 * c) If the UUT is not a cable and if Responds_To_Discov_SOP is set to
