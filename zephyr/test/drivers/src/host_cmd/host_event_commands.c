@@ -48,8 +48,8 @@ ZTEST_SUITE(host_cmd_host_event_commands, drivers_predicate_post_main,
 	    host_cmd_host_event_commands_after, NULL);
 
 static enum ec_status host_event_cmd_helper(enum ec_host_event_action action,
-				     uint8_t mask,
-				     struct ec_response_host_event *r)
+					    uint8_t mask,
+					    struct ec_response_host_event *r)
 {
 	enum ec_status ret_val;
 
@@ -73,11 +73,9 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_invalid_cmd)
 	enum ec_status ret_val;
 	struct ec_response_host_event result = { 0 };
 
-	ret_val = host_event_cmd_helper(0xFF, 0,
-					&result);
+	ret_val = host_event_cmd_helper(0xFF, 0, &result);
 
-	zassert_equal(ret_val, EC_RES_INVALID_PARAM,
-		      "Expected=%d, returned=%d",
+	zassert_equal(ret_val, EC_RES_INVALID_PARAM, "Expected=%d, returned=%d",
 		      EC_RES_INVALID_PARAM, ret_val);
 }
 
