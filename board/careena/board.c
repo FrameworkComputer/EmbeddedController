@@ -26,45 +26,35 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,
 	GPIO_EC_RST_ODL,
 };
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* I2C port map. */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "power",
-		.port = I2C_PORT_POWER,
-		.kbps = 100,
-		.scl  = GPIO_I2C0_SCL,
-		.sda  = GPIO_I2C0_SDA
-	},
-	{
-		.name = "tcpc0",
-		.port = I2C_PORT_TCPC0,
-		.kbps = 400,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "tcpc1",
-		.port = I2C_PORT_TCPC1,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
-	{
-		.name = "thermal",
-		.port = I2C_PORT_THERMAL_AP,
-		.kbps = 400,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA
-	},
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl  = GPIO_I2C7_SCL,
-		.sda  = GPIO_I2C7_SDA
-	},
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 100,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "tcpc1",
+	  .port = I2C_PORT_TCPC1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "thermal",
+	  .port = I2C_PORT_THERMAL_AP,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 400,
+	  .scl = GPIO_I2C7_SCL,
+	  .sda = GPIO_I2C7_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -114,15 +104,15 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
  * that we don't have pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-		{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-		{0, 7}, {1, 4}, {1, 3}, {1, 6}, {-1, -1},
-		{3, 1}, {2, 0}, {1, 5}, {2, 6}, {-1, -1},
-		{2, 1}, {2, 4}, {2, 5}, {1, 2}, {2, 3},
-		{2, 2}, {3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+	{ -1, -1 }, { 0, 5 }, { 1, 1 },	  { 1, 0 },   { 0, 6 },
+	{ 0, 7 },   { 1, 4 }, { 1, 3 },	  { 1, 6 },   { -1, -1 },
+	{ 3, 1 },   { 2, 0 }, { 1, 5 },	  { 2, 6 },   { -1, -1 },
+	{ 2, 1 },   { 2, 4 }, { 2, 5 },	  { 1, 2 },   { 2, 3 },
+	{ 2, 2 },   { 3, 0 }, { -1, -1 }, { -1, -1 }, { -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 static int board_is_support_ps8755_tcpc(void)
 {
