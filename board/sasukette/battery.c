@@ -12,8 +12,8 @@
 #include "common.h"
 #include "util.h"
 
-#define CHARGING_VOLTAGE_MV_SAFE        8400
-#define CHARGING_CURRENT_MA_SAFE        1500
+#define CHARGING_VOLTAGE_MV_SAFE 8400
+#define CHARGING_CURRENT_MA_SAFE 1500
 
 /*
  * Battery info for all sasukette battery types. Note that the fields
@@ -165,13 +165,13 @@ int charger_profile_override(struct charge_state_data *curr)
 }
 
 enum ec_status charger_profile_override_get_param(uint32_t param,
-				uint32_t *value)
+						  uint32_t *value)
 {
 	return EC_RES_INVALID_PARAM;
 }
 
 enum ec_status charger_profile_override_set_param(uint32_t param,
-				uint32_t value)
+						  uint32_t value)
 {
 	return EC_RES_INVALID_PARAM;
 }
