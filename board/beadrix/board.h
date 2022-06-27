@@ -30,9 +30,10 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGE_RAMP_HW
-#undef  CONFIG_CHARGER_SINGLE_CHIP
+#undef CONFIG_CHARGER_SINGLE_CHIP
 #define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
+					*/
 
 /*
  * GPIO for C1 interrupts, for baseboard use
@@ -45,7 +46,7 @@
 #define CONFIG_PWM
 
 /* TCPC */
-#define CONFIG_USB_PD_TCPM_ANX7447	/* C1: MUX  only*/
+#define CONFIG_USB_PD_TCPM_ANX7447 /* C1: MUX  only*/
 #define CONFIG_USB_PD_TCPM_MUX
 #define CONFIG_USB_PD_TCPM_ANX7447_AUX_PU_PD
 
@@ -57,7 +58,7 @@
 /* USB */
 #define CONFIG_BC12_DETECT_PI3USB9201
 #define CONFIG_USB_MUX_RUNTIME_CONFIG
-#define CONFIG_USB_MUX_IT5205	/* C0: ITE MUX */
+#define CONFIG_USB_MUX_IT5205 /* C0: ITE MUX */
 
 /* USB PD */
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
@@ -67,7 +68,7 @@
 
 /* USB Mux and Retimer */
 #define CONFIG_USB_MUX_RUNTIME_CONFIG
-#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
+#define CONFIG_USB_MUX_IT5205 /* C1: ITE Mux */
 #define CONFIG_USBC_RETIMER_NB7V904M
 
 /* USB defines specific to external TCPCs */
@@ -82,8 +83,8 @@
 #undef PD_POWER_SUPPLY_TURN_ON_DELAY
 #undef PD_POWER_SUPPLY_TURN_OFF_DELAY
 /* 20% margin added for these timings */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	13080	/* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	16080	/* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 13080 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 16080 /* us */
 
 #ifndef __ASSEMBLER__
 
@@ -103,18 +104,14 @@ enum pwm_channel {
 
 /* ADC channels */
 enum adc_channel {
-	ADC_VSNS_PP3300_A,     /* ADC0 */
-	ADC_TEMP_SENSOR_1,     /* ADC2 */
-	ADC_TEMP_SENSOR_2,     /* ADC3 */
-	ADC_SUB_ANALOG,        /* ADC13 */
+	ADC_VSNS_PP3300_A, /* ADC0 */
+	ADC_TEMP_SENSOR_1, /* ADC2 */
+	ADC_TEMP_SENSOR_2, /* ADC3 */
+	ADC_SUB_ANALOG, /* ADC13 */
 	ADC_CH_COUNT
 };
 
-enum temp_sensor_id {
-	TEMP_SENSOR_1,
-	TEMP_SENSOR_2,
-	TEMP_SENSOR_COUNT
-};
+enum temp_sensor_id { TEMP_SENSOR_1, TEMP_SENSOR_2, TEMP_SENSOR_COUNT };
 
 /* List of possible batteries */
 enum battery_type {
