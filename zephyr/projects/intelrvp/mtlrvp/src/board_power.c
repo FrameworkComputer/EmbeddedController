@@ -47,8 +47,9 @@ void board_ap_power_action_g3_s5(void)
 	/* Turn on the PP3300_PRIM rail. */
 	power_signal_set(PWR_EN_PP3300_A, 1);
 
-	if (!power_wait_signals_timeout(IN_PGOOD_ALL_CORE,
-		AP_PWRSEQ_DT_VALUE(wait_signal_timeout))) {
+	if (!power_wait_signals_timeout(
+		    IN_PGOOD_ALL_CORE,
+		    AP_PWRSEQ_DT_VALUE(wait_signal_timeout))) {
 		ap_power_ev_send_callbacks(AP_POWER_PRE_INIT);
 	}
 }
