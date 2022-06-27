@@ -169,4 +169,4 @@ void lpc_init_mask(void);
  */
 void lpc_s3_resume_clear_masks(void);
 
-#endif  /* __CROS_EC_LPC_H */
+#endif /* __CROS_EC_LPC_H */
