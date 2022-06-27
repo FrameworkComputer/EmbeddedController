@@ -79,14 +79,15 @@ static const uint8_t usb_ss_lane_to_eb[] = { [KB800X_TX0] = KB800X_EB4,
 
 /* Assign a phy TX to an elastic buffer */
 static int kb800x_assign_tx_to_eb(const struct usb_mux *me,
-			  enum kb800x_phy_lane phy_lane, enum kb800x_eb eb)
+				  enum kb800x_phy_lane phy_lane,
+				  enum kb800x_eb eb)
 {
 	uint8_t field_value = 0;
 	uint8_t regval;
 	int rv;
 
 	field_value = KB800X_PHY_IS_AB(phy_lane) ? tx_eb_to_field_ab[eb] :
-						    tx_eb_to_field_cd[eb];
+						   tx_eb_to_field_cd[eb];
 
 	/* For lane1 of each PHY, shift by 3 bits */
 	field_value <<= 3 * KB800X_LANE_NUMBER_FROM_PHY(phy_lane);
@@ -95,19 +96,18 @@ static int kb800x_assign_tx_to_eb(const struct usb_mux *me,
 	if (rv)
 		return rv;
 	return kb800x_write(me, KB800X_REG_TXSEL_FROM_PHY(phy_lane),
-		     regval | field_value);
+			    regval | field_value);
 }
-
 
 /* Assign a phy RX to an elastic buffer */
 static int kb800x_assign_rx_to_eb(const struct usb_mux *me,
-			  enum kb800x_phy_lane phy_lane, enum kb800x_eb eb)
+				  enum kb800x_phy_lane phy_lane,
+				  enum kb800x_eb eb)
 {
 	uint16_t address = 0;
 	uint8_t field_value = 0;
 	uint8_t regval = 0;
 	int rv;
-
 
 	field_value = rx_phy_lane_to_field[phy_lane];
 	address = rx_eb_to_address[eb];
@@ -246,13 +246,11 @@ static int kb800x_xbar_override(const struct usb_mux *me)
 
 	for (i = KB800X_A0; i < KB800X_PHY_LANE_COUNT; ++i) {
 		rv = kb800x_assign_lane(
-			me, i,
-			kb800x_control[me->usb_port].ss_lanes[i]);
+			me, i, kb800x_control[me->usb_port].ss_lanes[i]);
 		if (rv)
 			return rv;
 	}
-	return kb800x_write(me, KB800X_REG_XBAR_OVR,
-				KB800X_XBAR_OVR_EN);
+	return kb800x_write(me, KB800X_REG_XBAR_OVR, KB800X_XBAR_OVR_EN);
 }
 #endif /* CONFIG_KB800X_CUSTOM_XBAR */
 
@@ -314,8 +312,8 @@ static int kb800x_dp_init(const struct usb_mux *me, mux_state_t mux_state)
 		me, KB800X_REG_ORIENTATION,
 		KB800X_ORIENTATION_DP_DFP |
 			((mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
-				       KB800X_ORIENTATION_POLARITY :
-				       0x0));
+				 KB800X_ORIENTATION_POLARITY :
+				 0x0));
 }
 
 static int kb800x_usb3_init(const struct usb_mux *me, mux_state_t mux_state)
@@ -356,7 +354,7 @@ static int kb800x_cio_init(const struct usb_mux *me, mux_state_t mux_state)
 	if (!(mux_state & USB_PD_MUX_USB4_ENABLED)) {
 		/* Special configuration only for legacy mode */
 		if (cable_type == IDH_PTYPE_ACABLE ||
-		     cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE) {
+		    cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE) {
 			/* Active cable */
 			if (cable_resp.lsrx_comm == UNIDIR_LSRX_COMM) {
 				orientation |=
@@ -391,7 +389,7 @@ static int kb800x_set_state(const struct usb_mux *me, mux_state_t mux_state,
 		return rv;
 	/* Release memory map reset */
 	rv = kb800x_write(me, KB800X_REG_RESET,
-		     KB800X_RESET_MASK & ~KB800X_RESET_MM);
+			  KB800X_RESET_MASK & ~KB800X_RESET_MM);
 	if (rv)
 		return rv;
 
