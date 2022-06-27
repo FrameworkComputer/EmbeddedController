@@ -57,14 +57,14 @@
  * Map the legacy EC GPIO flags to the Zephyr equivalent.
  * Refer to the descriptions below.
  */
-#define GPIO_FLAG_NONE     GPIO_DISCONNECTED
+#define GPIO_FLAG_NONE GPIO_DISCONNECTED
 /* GPIO_ANALOG	           not supported by Zephyr */
 /* GPIO_OPEN_DRAIN         already defined by Zephyr */
 /* GPIO_DEFAULT            not supported by Zephyr */
 /* GPIO_PULL_UP            already defined by Zephyr */
 /* GPIO_PULL_DOWN          already defined by Zephyr */
-#define GPIO_LOW           GPIO_OUTPUT_INIT_LOW
-#define GPIO_HIGH          GPIO_OUTPUT_INIT_HIGH
+#define GPIO_LOW GPIO_OUTPUT_INIT_LOW
+#define GPIO_HIGH GPIO_OUTPUT_INIT_HIGH
 /* GPIO_INPUT              already defined by Zephyr */
 /* GPIO_OUTPUT             already defined by Zephyr */
 
@@ -72,14 +72,14 @@
  * One to one mapping of interrupt flags isn't possible. So map these
  * flags to not conflict with any Zephyr flags.
  */
-#define GPIO_INT_F_RISING  BIT(28)
+#define GPIO_INT_F_RISING BIT(28)
 #define GPIO_INT_F_FALLING BIT(29)
-#define GPIO_INT_F_LOW     BIT(30)
-#define GPIO_INT_F_HIGH    BIT(31)
+#define GPIO_INT_F_LOW BIT(30)
+#define GPIO_INT_F_HIGH BIT(31)
 /* GPIO_INT_DSLEEP         not supported by Zephyr */
 /* GPIO_INT_SHARED         not supported by Zephyr */
 
-#define GPIO_SEL_1P8V      GPIO_VOLTAGE_1P8
+#define GPIO_SEL_1P8V GPIO_VOLTAGE_1P8
 /* GPIO_ALTERNATE          not supported by Zephyr */
 /* GPIO_LOCKED             not supported by Zephyr */
 /* GPIO_HIB_WAKE_HIGH      not supported by Zephyr */
@@ -98,51 +98,52 @@
  *   GPIO_PULL_DOWN
  *   GPIO_PULL_ANALOG
  */
-#define GPIO_FLAG_NONE     0       /* No flag needed, default setting */
-#define GPIO_ANALOG        BIT(0)  /* Set pin to analog-mode */
-#define GPIO_OPEN_DRAIN    (BIT(1) | BIT(2))  /* Output type is open-drain  */
-#define GPIO_DEFAULT       BIT(3)  /* Don't set up on boot */
-#define GPIO_PULL_UP       BIT(4)  /* Enable on-chip pullup */
-#define GPIO_PULL_DOWN     BIT(5)  /* Enable on-chip pulldown */
-#define GPIO_LOW           BIT(6)  /* If GPIO_OUTPUT, set level low */
-#define GPIO_HIGH          BIT(7)  /* If GPIO_OUTPUT, set level high */
-#define GPIO_INPUT         BIT(8)  /* Input */
-#define GPIO_OUTPUT        BIT(9)  /* Output */
-#define GPIO_INT_F_RISING  BIT(10) /* Interrupt on rising edge */
+#define GPIO_FLAG_NONE 0 /* No flag needed, default setting */
+#define GPIO_ANALOG BIT(0) /* Set pin to analog-mode */
+#define GPIO_OPEN_DRAIN (BIT(1) | BIT(2)) /* Output type is open-drain  */
+#define GPIO_DEFAULT BIT(3) /* Don't set up on boot */
+#define GPIO_PULL_UP BIT(4) /* Enable on-chip pullup */
+#define GPIO_PULL_DOWN BIT(5) /* Enable on-chip pulldown */
+#define GPIO_LOW BIT(6) /* If GPIO_OUTPUT, set level low */
+#define GPIO_HIGH BIT(7) /* If GPIO_OUTPUT, set level high */
+#define GPIO_INPUT BIT(8) /* Input */
+#define GPIO_OUTPUT BIT(9) /* Output */
+#define GPIO_INT_F_RISING BIT(10) /* Interrupt on rising edge */
 #define GPIO_INT_F_FALLING BIT(11) /* Interrupt on falling edge */
-#define GPIO_INT_F_LOW     BIT(12) /* Interrupt on low level */
-#define GPIO_INT_F_HIGH    BIT(13) /* Interrupt on high level */
-#define GPIO_INT_DSLEEP    BIT(14) /* Interrupt in deep sleep */
-#define GPIO_INT_SHARED    BIT(15) /* Shared among multiple pins */
-#define GPIO_SEL_1P8V      BIT(16) /* Support 1.8v */
-#define GPIO_ALTERNATE     BIT(17) /* GPIO used for alternate function. */
-#define GPIO_LOCKED        BIT(18) /* Lock GPIO output and configuration */
-#define GPIO_HIB_WAKE_HIGH    BIT(19) /* Hibernate wake on high level */
-#define GPIO_HIB_WAKE_LOW     BIT(20) /* Hibernate wake on low level */
-#define GPIO_HIB_WAKE_RISING  BIT(21) /* Hibernate wake on rising edge */
+#define GPIO_INT_F_LOW BIT(12) /* Interrupt on low level */
+#define GPIO_INT_F_HIGH BIT(13) /* Interrupt on high level */
+#define GPIO_INT_DSLEEP BIT(14) /* Interrupt in deep sleep */
+#define GPIO_INT_SHARED BIT(15) /* Shared among multiple pins */
+#define GPIO_SEL_1P8V BIT(16) /* Support 1.8v */
+#define GPIO_ALTERNATE BIT(17) /* GPIO used for alternate function. */
+#define GPIO_LOCKED BIT(18) /* Lock GPIO output and configuration */
+#define GPIO_HIB_WAKE_HIGH BIT(19) /* Hibernate wake on high level */
+#define GPIO_HIB_WAKE_LOW BIT(20) /* Hibernate wake on low level */
+#define GPIO_HIB_WAKE_RISING BIT(21) /* Hibernate wake on rising edge */
 #define GPIO_HIB_WAKE_FALLING BIT(22) /* Hibernate wake on falling edge */
 #ifdef CONFIG_GPIO_POWER_DOWN
-#define GPIO_POWER_DOWN    BIT(23) /* Pin and pad is powered off */
+#define GPIO_POWER_DOWN BIT(23) /* Pin and pad is powered off */
 #endif
 
 #endif /* CONFIG_ZEPHYR */
 
 /* Common flag combinations */
-#define GPIO_OUT_LOW        (GPIO_OUTPUT | GPIO_LOW)
-#define GPIO_OUT_HIGH       (GPIO_OUTPUT | GPIO_HIGH)
-#define GPIO_ODR_HIGH       (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_HIGH)
-#define GPIO_ODR_LOW        (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_LOW)
-#define GPIO_INT_RISING     (GPIO_INPUT | GPIO_INT_F_RISING)
-#define GPIO_INT_FALLING    (GPIO_INPUT | GPIO_INT_F_FALLING)
+#define GPIO_OUT_LOW (GPIO_OUTPUT | GPIO_LOW)
+#define GPIO_OUT_HIGH (GPIO_OUTPUT | GPIO_HIGH)
+#define GPIO_ODR_HIGH (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_HIGH)
+#define GPIO_ODR_LOW (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_LOW)
+#define GPIO_INT_RISING (GPIO_INPUT | GPIO_INT_F_RISING)
+#define GPIO_INT_FALLING (GPIO_INPUT | GPIO_INT_F_FALLING)
 /* TODO(crosbug.com/p/24204): "EDGE" would have been clearer than "BOTH". */
-#define GPIO_INT_BOTH       (GPIO_INT_RISING | GPIO_INT_FALLING)
-#define GPIO_INT_LOW        (GPIO_INPUT | GPIO_INT_F_LOW)
-#define GPIO_INT_HIGH       (GPIO_INPUT | GPIO_INT_F_HIGH)
-#define GPIO_INT_LEVEL      (GPIO_INT_LOW | GPIO_INT_HIGH)
-#define GPIO_INT_ANY        (GPIO_INT_BOTH | GPIO_INT_LEVEL)
+#define GPIO_INT_BOTH (GPIO_INT_RISING | GPIO_INT_FALLING)
+#define GPIO_INT_LOW (GPIO_INPUT | GPIO_INT_F_LOW)
+#define GPIO_INT_HIGH (GPIO_INPUT | GPIO_INT_F_HIGH)
+#define GPIO_INT_LEVEL (GPIO_INT_LOW | GPIO_INT_HIGH)
+#define GPIO_INT_ANY (GPIO_INT_BOTH | GPIO_INT_LEVEL)
 #define GPIO_INT_BOTH_DSLEEP (GPIO_INT_BOTH | GPIO_INT_DSLEEP)
-#define GPIO_HIB_WAKE_MASK   (GPIO_HIB_WAKE_HIGH | GPIO_HIB_WAKE_LOW | \
-			      GPIO_HIB_WAKE_RISING|GPIO_HIB_WAKE_FALLING)
+#define GPIO_HIB_WAKE_MASK                                               \
+	(GPIO_HIB_WAKE_HIGH | GPIO_HIB_WAKE_LOW | GPIO_HIB_WAKE_RISING | \
+	 GPIO_HIB_WAKE_FALLING)
 
 /* Convert GPIO mask to GPIO number / index. */
 #define GPIO_MASK_TO_NUM(mask) (__fls(mask))
@@ -151,9 +152,7 @@
  * some boards and unit tests don't have a gpio_signal enum defined, so we
  * define an emtpy one here.*/
 #ifndef __CROS_EC_GPIO_SIGNAL_H
-enum gpio_signal {
-	GPIO_COUNT
-};
+enum gpio_signal { GPIO_COUNT };
 #endif /* __CROS_EC_GPIO_SIGNAL_H */
 
 /* Alternate functions for GPIOs */
@@ -207,7 +206,7 @@ extern const int unused_pin_count;
  * If the signal's interrupt is enabled, this will be called in the
  * context of the GPIO interrupt handler.
  */
-extern void (* const gpio_irq_handlers[])(enum gpio_signal signal);
+extern void (*const gpio_irq_handlers[])(enum gpio_signal signal);
 extern const int gpio_ih_count;
 #define GPIO_IH_COUNT gpio_ih_count
 
@@ -440,7 +439,6 @@ int gpio_clear_pending_interrupt(enum gpio_signal signal);
  */
 void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags);
 
-
 /**
  * Set alternate function for GPIO(s).
  *
@@ -454,7 +452,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags);
  *                      the specified GPIOs for normal GPIO operation.
  */
 void gpio_set_alternate_function(uint32_t port, uint32_t mask,
-				enum gpio_alternate_func func);
+				 enum gpio_alternate_func func);
 
 #ifdef CONFIG_GPIO_POWER_DOWN
 /**
@@ -486,4 +484,4 @@ int signal_is_gpio(int signal);
  */
 void gpio_set_wakepin(enum gpio_signal signal, uint32_t flags);
 
-#endif  /* __CROS_EC_GPIO_H */
+#endif /* __CROS_EC_GPIO_H */
