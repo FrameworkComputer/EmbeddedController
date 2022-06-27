@@ -20,14 +20,13 @@
 #include "timer.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 #ifdef CONFIG_BRINGUP
 #define GPIO_SET_LEVEL(signal, value) \
 	gpio_set_level_verbose(CC_CHIPSET, signal, value)
 #else
-#define GPIO_SET_LEVEL(signal, value) \
-	gpio_set_level(signal, value)
+#define GPIO_SET_LEVEL(signal, value) gpio_set_level(signal, value)
 #endif
 
 /* Power signals list. Must match order of enum power_signal. */
@@ -117,7 +116,6 @@ static void enable_pp5000_rail(void)
 		power_5v_enable(task_get_current(), 1);
 	else
 		GPIO_SET_LEVEL(GPIO_EN_PP5000, 1);
-
 }
 
 /*
@@ -126,7 +124,7 @@ static void enable_pp5000_rail(void)
  * &param level		0 deasserts the signal, other values assert the signal
  */
 static void pwrok_signal_set(const struct intel_x86_pwrok_signal *signal,
-	int level)
+			     int level)
 {
 	GPIO_SET_LEVEL(signal->gpio, signal->active_low ? !level : level);
 }
@@ -167,8 +165,9 @@ static void all_sys_pwrgd_pass_thru(void)
 	}
 
 	/* PCH_PWROK is combination of ALL_SYS_PWRGD and SLP_S3 */
-	gpio_set_level(GPIO_PCH_PWROK, all_sys_pwrgd_in &&
-				power_signal_get_level(SLP_S3_SIGNAL_L));
+	gpio_set_level(GPIO_PCH_PWROK,
+		       all_sys_pwrgd_in &&
+			       power_signal_get_level(SLP_S3_SIGNAL_L));
 }
 
 enum power_state power_handle_state(enum power_state state)
@@ -178,7 +177,6 @@ enum power_state power_handle_state(enum power_state state)
 	common_intel_x86_handle_rsmrst(state);
 
 	switch (state) {
-
 	case POWER_G3S5:
 		if (IS_ENABLED(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)) {
 			/*
