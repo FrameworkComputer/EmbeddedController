@@ -14,17 +14,17 @@
 #include "util.h"
 
 /* Data from sensor is in 16th of uT, 0.0625 uT/LSB */
-#define MAG_CAL_RAW_UT      16
+#define MAG_CAL_RAW_UT 16
 
-#define MAX_EIGEN_RATIO     FLOAT_TO_FP(25.0f)
-#define MAX_EIGEN_MAG       FLOAT_TO_FP(80.0f * MAG_CAL_RAW_UT)
-#define MIN_EIGEN_MAG       FLOAT_TO_FP(10.0f * MAG_CAL_RAW_UT)
+#define MAX_EIGEN_RATIO FLOAT_TO_FP(25.0f)
+#define MAX_EIGEN_MAG FLOAT_TO_FP(80.0f * MAG_CAL_RAW_UT)
+#define MIN_EIGEN_MAG FLOAT_TO_FP(10.0f * MAG_CAL_RAW_UT)
 
-#define MAX_FIT_MAG         MAX_EIGEN_MAG
-#define MIN_FIT_MAG         MIN_EIGEN_MAG
+#define MAX_FIT_MAG MAX_EIGEN_MAG
+#define MIN_FIT_MAG MIN_EIGEN_MAG
 
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define PRINTF_FLOAT(x)  ((int)((x) * 100.0f))
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define PRINTF_FLOAT(x) ((int)((x)*100.0f))
 
 /**
  * Compute the covariance element: (avg(ab) - avg(a)*avg(b))
@@ -51,34 +51,25 @@ static int moc_eigen_test(struct mag_cal_t *moc)
 	mat33_fp_t eigenvecs;
 	fp_t evmax, evmin, evmag;
 	fp_t inv = fp_div_dbz(FLOAT_TO_FP(1.0f),
-			      INT_TO_FP((int) moc->kasa_fit.nsamples));
+			      INT_TO_FP((int)moc->kasa_fit.nsamples));
 	int eigen_pass;
 
 	/* covariance matrix */
-	S[0][0] = covariance_element(moc->kasa_fit.acc_xx,
-				     moc->kasa_fit.acc_x,
-				     moc->kasa_fit.acc_x,
-				     inv);
+	S[0][0] = covariance_element(moc->kasa_fit.acc_xx, moc->kasa_fit.acc_x,
+				     moc->kasa_fit.acc_x, inv);
 	S[0][1] = S[1][0] = covariance_element(moc->kasa_fit.acc_xy,
 					       moc->kasa_fit.acc_x,
-					       moc->kasa_fit.acc_y,
-					       inv);
+					       moc->kasa_fit.acc_y, inv);
 	S[0][2] = S[2][0] = covariance_element(moc->kasa_fit.acc_xz,
 					       moc->kasa_fit.acc_x,
-					       moc->kasa_fit.acc_z,
-					       inv);
-	S[1][1] = covariance_element(moc->kasa_fit.acc_yy,
-				     moc->kasa_fit.acc_y,
-				     moc->kasa_fit.acc_y,
-				     inv);
+					       moc->kasa_fit.acc_z, inv);
+	S[1][1] = covariance_element(moc->kasa_fit.acc_yy, moc->kasa_fit.acc_y,
+				     moc->kasa_fit.acc_y, inv);
 	S[1][2] = S[2][1] = covariance_element(moc->kasa_fit.acc_yz,
 					       moc->kasa_fit.acc_y,
-					       moc->kasa_fit.acc_z,
-					       inv);
-	S[2][2] = covariance_element(moc->kasa_fit.acc_zz,
-				     moc->kasa_fit.acc_z,
-				     moc->kasa_fit.acc_z,
-				     inv);
+					       moc->kasa_fit.acc_z, inv);
+	S[2][2] = covariance_element(moc->kasa_fit.acc_zz, moc->kasa_fit.acc_z,
+				     moc->kasa_fit.acc_z, inv);
 
 	mat33_fp_get_eigenbasis(S, eigenvals, eigenvecs);
 
@@ -90,9 +81,8 @@ static int moc_eigen_test(struct mag_cal_t *moc)
 
 	evmag = fp_sqrtf(eigenvals[X] + eigenvals[Y] + eigenvals[Z]);
 
-	eigen_pass = (fp_mul(evmin, MAX_EIGEN_RATIO) > evmax)
-		&& (evmag > MIN_EIGEN_MAG)
-		&& (evmag < MAX_EIGEN_MAG);
+	eigen_pass = (fp_mul(evmin, MAX_EIGEN_RATIO) > evmax) &&
+		     (evmag > MIN_EIGEN_MAG) && (evmag < MAX_EIGEN_MAG);
 
 #if 0
 	CPRINTF("mag eigenvalues: (%.02d %.02d %.02d), ",
