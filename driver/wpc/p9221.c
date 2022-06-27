@@ -23,19 +23,19 @@
 #include <stdbool.h>
 #include "printf.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, "WPC " format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, "WPC " format, ##args)
 
-#define P9221_TX_TIMEOUT_MS		(20 * 1000*1000)
-#define P9221_DCIN_TIMEOUT_MS		(2 * 1000*1000)
-#define P9221_VRECT_TIMEOUT_MS		(2 * 1000*1000)
-#define P9221_NOTIFIER_DELAY_MS		(80*1000)
-#define P9221R7_ILIM_MAX_UA		(1600 * 1000)
-#define P9221R7_OVER_CHECK_NUM		3
+#define P9221_TX_TIMEOUT_MS (20 * 1000 * 1000)
+#define P9221_DCIN_TIMEOUT_MS (2 * 1000 * 1000)
+#define P9221_VRECT_TIMEOUT_MS (2 * 1000 * 1000)
+#define P9221_NOTIFIER_DELAY_MS (80 * 1000)
+#define P9221R7_ILIM_MAX_UA (1600 * 1000)
+#define P9221R7_OVER_CHECK_NUM 3
 
-#define OVC_LIMIT			1
-#define OVC_THRESHOLD			1400000
-#define OVC_BACKOFF_LIMIT		900000
-#define OVC_BACKOFF_AMOUNT		100000
+#define OVC_LIMIT 1
+#define OVC_THRESHOLD 1400000
+#define OVC_BACKOFF_LIMIT 900000
+#define OVC_BACKOFF_AMOUNT 100000
 
 /* P9221  parameters */
 static struct wpc_charger_info p9221_charger_info = {
@@ -48,10 +48,9 @@ static struct wpc_charger_info *wpc = &p9221_charger_info;
 
 static void p9221_set_offline(void);
 
-static const uint32_t p9221_ov_set_lut[] = {
-	17000000, 20000000, 15000000, 13000000,
-	11000000, 11000000, 11000000, 11000000
-};
+static const uint32_t p9221_ov_set_lut[] = { 17000000, 20000000, 15000000,
+					     13000000, 11000000, 11000000,
+					     11000000, 11000000 };
 
 static int p9221_reg_is_8_bit(uint16_t reg)
 {
@@ -98,38 +97,38 @@ static int p9221_reg_is_8_bit(uint16_t reg)
 
 static int p9221_read8(uint16_t reg, int *val)
 {
-	return i2c_read_offset16(wpc->i2c_port, P9221_R7_ADDR_FLAGS,
-				 reg, val, 1);
+	return i2c_read_offset16(wpc->i2c_port, P9221_R7_ADDR_FLAGS, reg, val,
+				 1);
 }
 
 static int p9221_write8(uint16_t reg, int val)
 {
-	return i2c_write_offset16(wpc->i2c_port, P9221_R7_ADDR_FLAGS,
-				  reg, val, 1);
+	return i2c_write_offset16(wpc->i2c_port, P9221_R7_ADDR_FLAGS, reg, val,
+				  1);
 }
 
 static int p9221_read16(uint16_t reg, int *val)
 {
-	return i2c_read_offset16(wpc->i2c_port, P9221_R7_ADDR_FLAGS,
-				 reg, val, 2);
+	return i2c_read_offset16(wpc->i2c_port, P9221_R7_ADDR_FLAGS, reg, val,
+				 2);
 }
 
 static int p9221_write16(uint16_t reg, int val)
 {
-	return i2c_write_offset16(wpc->i2c_port, P9221_R7_ADDR_FLAGS,
-				  reg, val, 2);
+	return i2c_write_offset16(wpc->i2c_port, P9221_R7_ADDR_FLAGS, reg, val,
+				  2);
 }
 
 static int p9221_block_read(uint16_t reg, uint8_t *data, int len)
 {
-	return i2c_read_offset16_block(wpc->i2c_port, P9221_R7_ADDR_FLAGS,
-				       reg, data, len);
+	return i2c_read_offset16_block(wpc->i2c_port, P9221_R7_ADDR_FLAGS, reg,
+				       data, len);
 }
 
 static int p9221_block_write(uint16_t reg, uint8_t *data, int len)
 {
-	return i2c_write_offset16_block(wpc->i2c_port, P9221_R7_ADDR_FLAGS,
-					reg, data, len);
+	return i2c_write_offset16_block(wpc->i2c_port, P9221_R7_ADDR_FLAGS, reg,
+					data, len);
 }
 
 static int p9221_set_cmd_reg(uint8_t cmd)
@@ -161,30 +160,30 @@ static int p9221_set_cmd_reg(uint8_t cmd)
 static int p9221_convert_reg_r7(uint16_t reg, uint16_t raw_data, uint32_t *val)
 {
 	switch (reg) {
-	case P9221R7_ALIGN_X_ADC_REG:	/* raw */
-	case P9221R7_ALIGN_Y_ADC_REG:	/* raw */
+	case P9221R7_ALIGN_X_ADC_REG: /* raw */
+	case P9221R7_ALIGN_Y_ADC_REG: /* raw */
 		*val = raw_data;
 		break;
-	case P9221R7_VOUT_ADC_REG:	/* 12-bit ADC raw */
-	case P9221R7_IOUT_ADC_REG:	/* 12-bit ADC raw */
-	case P9221R7_DIE_TEMP_ADC_REG:	/* 12-bit ADC raw */
+	case P9221R7_VOUT_ADC_REG: /* 12-bit ADC raw */
+	case P9221R7_IOUT_ADC_REG: /* 12-bit ADC raw */
+	case P9221R7_DIE_TEMP_ADC_REG: /* 12-bit ADC raw */
 	case P9221R7_EXT_TEMP_REG:
 		*val = raw_data & 0xFFF;
 		break;
-	case P9221R7_VOUT_SET_REG:	/* 0.1V -> uV */
+	case P9221R7_VOUT_SET_REG: /* 0.1V -> uV */
 		*val = raw_data * 100 * 1000;
 		break;
-	case P9221R7_IOUT_REG:		/* mA -> uA */
-	case P9221R7_VRECT_REG:		/* mV -> uV */
-	case P9221R7_VOUT_REG:		/* mV -> uV */
-	case P9221R7_OP_FREQ_REG:	/* kHz -> Hz */
-	case P9221R7_TX_PINGFREQ_REG:	/* kHz -> Hz */
+	case P9221R7_IOUT_REG: /* mA -> uA */
+	case P9221R7_VRECT_REG: /* mV -> uV */
+	case P9221R7_VOUT_REG: /* mV -> uV */
+	case P9221R7_OP_FREQ_REG: /* kHz -> Hz */
+	case P9221R7_TX_PINGFREQ_REG: /* kHz -> Hz */
 		*val = raw_data * 1000;
 		break;
-	case P9221R7_ILIM_SET_REG:	/* 100mA -> uA, 200mA offset */
+	case P9221R7_ILIM_SET_REG: /* 100mA -> uA, 200mA offset */
 		*val = ((raw_data * 100) + 200) * 1000;
 		break;
-	case P9221R7_OVSET_REG:		/* uV */
+	case P9221R7_OVSET_REG: /* uV */
 		raw_data &= P9221R7_OVSET_MASK;
 		*val = p9221_ov_set_lut[raw_data];
 		break;
@@ -215,8 +214,8 @@ static int p9221_is_online(void)
 {
 	int chip_id;
 
-	if (p9221_read16(P9221_CHIP_ID_REG, &chip_id)
-			|| chip_id != P9221_CHIP_ID)
+	if (p9221_read16(P9221_CHIP_ID_REG, &chip_id) ||
+	    chip_id != P9221_CHIP_ID)
 		return false;
 	else
 		return true;
@@ -226,7 +225,6 @@ int wpc_chip_is_online(void)
 {
 	return p9221_is_online();
 }
-
 
 void p9221_interrupt(enum gpio_signal signal)
 {
@@ -261,8 +259,8 @@ static int p9221_enable_interrupts_r7(void)
 
 	CPRINTS("Enable interrupts");
 
-	mask = P9221R7_STAT_LIMIT_MASK | P9221R7_STAT_CC_MASK
-		| P9221_STAT_VRECT;
+	mask = P9221R7_STAT_LIMIT_MASK | P9221R7_STAT_CC_MASK |
+	       P9221_STAT_VRECT;
 
 	p9221r7_clear_interrupts(mask);
 
@@ -307,12 +305,11 @@ static void print_current_samples(uint32_t *iout_val, int count)
 	int i;
 	char temp[P9221R7_OVER_CHECK_NUM * 9 + 1] = { 0 };
 
-	for (i = 0; i < count ; i++)
-		snprintf(temp + i * 9, sizeof(temp) - i * 9,
-			  "%08x ", iout_val[i]);
+	for (i = 0; i < count; i++)
+		snprintf(temp + i * 9, sizeof(temp) - i * 9, "%08x ",
+			 iout_val[i]);
 	CPRINTS("OVER IOUT_SAMPLES: %s", temp);
 }
-
 
 /*
  * Number of times to poll the status to see if the current limit condition
@@ -344,8 +341,8 @@ static void p9221_limit_handler_r7(uint16_t orign_irq_src)
 
 	reason = P9221_EOP_OVER_CURRENT;
 	for (i = 0; i < P9221R7_OVER_CHECK_NUM; i++) {
-		ret = p9221r7_clear_interrupts(
-				irq_src & P9221R7_STAT_LIMIT_MASK);
+		ret = p9221r7_clear_interrupts(irq_src &
+					       P9221R7_STAT_LIMIT_MASK);
 		msleep(50);
 		if (ret)
 			continue;
@@ -434,8 +431,8 @@ static void p9221r7_irq_handler(uint16_t irq_src)
 
 	/* Proprietary packet */
 	if (irq_src & P9221R7_STAT_PPRCVD) {
-		res = p9221_block_read(P9221R7_DATA_RECV_BUF_START,
-				       wpc->pp_buf, sizeof(wpc->pp_buf));
+		res = p9221_block_read(P9221R7_DATA_RECV_BUF_START, wpc->pp_buf,
+				       sizeof(wpc->pp_buf));
 		if (res) {
 			CPRINTS("Failed to read PP: %d", res);
 			wpc->pp_buf_valid = false;
@@ -477,7 +474,6 @@ static int p9221_is_epp(void)
 
 static void p9221_config_fod(void)
 {
-
 	int epp;
 	uint8_t *fod;
 	int fod_len;
@@ -496,8 +492,8 @@ static void p9221_config_fod(void)
 	while (retries) {
 		uint8_t fod_read[fod_len];
 
-		CPRINTS("Writing %s FOD (n=%d try=%d)",
-			epp ? "EPP" : "BPP", fod_len, retries);
+		CPRINTS("Writing %s FOD (n=%d try=%d)", epp ? "EPP" : "BPP",
+			fod_len, retries);
 
 		ret = p9221_block_write(P9221R7_FOD_REG, fod, fod_len);
 		if (ret)
@@ -547,7 +543,6 @@ static void p9221_vbus_check_timeout(void)
 	CPRINTS("Timeout VBUS, online=%d", wpc->online);
 	if (wpc->online)
 		p9221_set_offline();
-
 }
 DECLARE_DEFERRED(p9221_vbus_check_timeout);
 
@@ -601,7 +596,7 @@ static int p9221_get_charge_supplier(void)
 			return ret;
 
 		ret = p9221_block_read(P9221R7_PROP_TX_ID_REG,
-				       (uint8_t *) &tx_id,
+				       (uint8_t *)&tx_id,
 				       P9221R7_PROP_TX_ID_SIZE);
 		if (ret)
 			return ret;
@@ -609,8 +604,8 @@ static int p9221_get_charge_supplier(void)
 		if (tx_id & P9221R7_PROP_TX_ID_GPP_MASK)
 			wpc->charge_supplier = CHARGE_SUPPLIER_WPC_GPP;
 
-		CPRINTS("txmf_id=0x%04x tx_id=0x%08x supplier=%d",
-			txmf_id, tx_id, wpc->charge_supplier);
+		CPRINTS("txmf_id=0x%04x tx_id=0x%08x supplier=%d", txmf_id,
+			tx_id, wpc->charge_supplier);
 	} else {
 		wpc->charge_supplier = CHARGE_SUPPLIER_WPC_BPP;
 		CPRINTS("supplier=%d", wpc->charge_supplier);
@@ -703,7 +698,6 @@ static int p9221_set_dc_icl(void)
 	return EC_SUCCESS;
 }
 
-
 static void p9221_notifier_check_vbus(void)
 {
 	struct charge_port_info chg;
@@ -749,12 +743,10 @@ static void p9221_notifier_check_vbus(void)
 
 	CPRINTS("check_vbus changed on:%d vbus:%d", wpc->online,
 		wpc->vbus_status);
-
 }
 
 static void p9221_detect_work(void)
 {
-
 	CPRINTS("%s online:%d check_vbus:%d check_det:%d vbus:%d", __func__,
 		wpc->online, wpc->p9221_check_vbus, wpc->p9221_check_det,
 		wpc->vbus_status);
@@ -766,7 +758,6 @@ static void p9221_detect_work(void)
 	/* Step 2 */
 	if (wpc->p9221_check_vbus)
 		p9221_notifier_check_vbus();
-
 }
 DECLARE_DEFERRED(p9221_detect_work);
 
