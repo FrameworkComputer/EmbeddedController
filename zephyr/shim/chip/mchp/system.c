@@ -11,8 +11,7 @@
 
 LOG_MODULE_REGISTER(shim_xec_system, LOG_LEVEL_ERR);
 
-#define GET_BBRAM_OFS(node) \
-	DT_PROP(DT_PATH(named_bbram_regions, node), offset)
+#define GET_BBRAM_OFS(node) DT_PROP(DT_PATH(named_bbram_regions, node), offset)
 #define GET_BBRAM_SZ(node) DT_PROP(DT_PATH(named_bbram_regions, node), size)
 
 /*
