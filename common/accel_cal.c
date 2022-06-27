@@ -23,17 +23,17 @@ void accel_cal_reset(struct accel_cal *cal)
 
 static inline int compute_temp_gate(const struct accel_cal *cal, fp_t temp)
 {
-	int gate = (int) fp_div(fp_mul(temp - CONFIG_ACCEL_CAL_MIN_TEMP,
-				       INT_TO_FP(cal->num_temp_windows)),
-				TEMP_RANGE);
+	int gate = (int)fp_div(fp_mul(temp - CONFIG_ACCEL_CAL_MIN_TEMP,
+				      INT_TO_FP(cal->num_temp_windows)),
+			       TEMP_RANGE);
 
-	return gate < cal->num_temp_windows
-		? gate : (cal->num_temp_windows - 1);
+	return gate < cal->num_temp_windows ? gate :
+					      (cal->num_temp_windows - 1);
 }
 
-test_mockable bool accel_cal_accumulate(
-	struct accel_cal *cal, uint32_t timestamp, fp_t x, fp_t y, fp_t z,
-	fp_t temp)
+test_mockable bool accel_cal_accumulate(struct accel_cal *cal,
+					uint32_t timestamp, fp_t x, fp_t y,
+					fp_t z, fp_t temp)
 {
 	struct accel_cal_algo *algo;
 
