@@ -19,7 +19,7 @@
 
 #define TASK_EVENT_OVERCURRENT (1 << 0)
 
-#define RAMP_STABLE_DELAY (120*SECOND)
+#define RAMP_STABLE_DELAY (120 * SECOND)
 
 /*
  * Time to delay for detecting the charger type. This value follows
@@ -27,7 +27,7 @@
  * CHARGE_DETECT_DELAY so we guarantee we wake up before the ramp
  * has started.
  */
-#define CHARGE_DETECT_DELAY_TEST (CHARGE_DETECT_DELAY - 100*MSEC)
+#define CHARGE_DETECT_DELAY_TEST (CHARGE_DETECT_DELAY - 100 * MSEC)
 
 static int system_load_current_ma;
 static int vbus_low_current_ma = 500;
@@ -73,8 +73,8 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	       vbus_low_current_ma;
 }
 
-void board_set_charge_limit(int port, int supplier, int limit_ma,
-			    int max_ma, int max_mv)
+void board_set_charge_limit(int port, int supplier, int limit_ma, int max_ma,
+			    int max_mv)
 {
 	charge_limit_ma = limit_ma;
 	if (charge_limit_ma > overcurrent_current_ma)
@@ -96,9 +96,8 @@ static void plug_charger_with_ts(int supplier_type, int port, int min_current,
 static void plug_charger(int supplier_type, int port, int min_current,
 			 int vbus_low_current, int overcurrent_current)
 {
-	plug_charger_with_ts(supplier_type, port, min_current,
-			     vbus_low_current, overcurrent_current,
-			     get_time());
+	plug_charger_with_ts(supplier_type, port, min_current, vbus_low_current,
+			     overcurrent_current, get_time());
 }
 
 static void unplug_charger(void)
@@ -137,7 +136,7 @@ static int test_no_ramp(void)
 	 * the charge limit.  This just needs at least transition to the
 	 * CHG_RAMP_OVERCURRENT_DETECT state.
 	 */
-	usleep(CHARGE_DETECT_DELAY_TEST + 200*MSEC);
+	usleep(CHARGE_DETECT_DELAY_TEST + 200 * MSEC);
 	/* That's right. Start at 500 mA */
 	TEST_ASSERT(charge_limit_ma == 500);
 	TEST_ASSERT(wait_stable_no_overcurrent());
@@ -442,14 +441,14 @@ static int test_equal_priority_overcurrent(void)
 	 * switches to the other one.
 	 */
 	while (1) {
-		plug_charger_with_ts(CHARGE_SUPPLIER_TEST4, 0, 500, 3000,
-				     2000, oc_time);
+		plug_charger_with_ts(CHARGE_SUPPLIER_TEST4, 0, 500, 3000, 2000,
+				     oc_time);
 		oc_time = get_time();
 		oc_time.val += 600 * MSEC;
 		if (wait_stable_no_overcurrent())
 			break;
-		plug_charger_with_ts(CHARGE_SUPPLIER_TEST4, 1, 500, 3000,
-				     2000, oc_time);
+		plug_charger_with_ts(CHARGE_SUPPLIER_TEST4, 1, 500, 3000, 2000,
+				     oc_time);
 		oc_time = get_time();
 		oc_time.val += 600 * MSEC;
 		if (wait_stable_no_overcurrent())
