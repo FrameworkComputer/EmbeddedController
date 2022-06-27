@@ -15,18 +15,16 @@
 #include "stdbool.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_PWM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_PWM, format, ##args)
 
 #define LED_OFF EC_LED_COLOR_COUNT
 
 const enum ec_led_id supported_led_ids[] = {
 	/* Main LED */
-	EC_LED_ID_LEFT_LED,
-	EC_LED_ID_RIGHT_LED,
+	EC_LED_ID_LEFT_LED, EC_LED_ID_RIGHT_LED,
 
 	/* Not used, give them some random name for testing */
-	EC_LED_ID_POWER_LED,
-	EC_LED_ID_BATTERY_LED
+	EC_LED_ID_POWER_LED, EC_LED_ID_BATTERY_LED
 };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -85,8 +83,7 @@ static void led_set_color_battery(enum ec_led_colors color, int duty)
 }
 
 static enum ec_error_list set_color(enum ec_led_id led_id,
-				    enum ec_led_colors color,
-				    int duty)
+				    enum ec_led_colors color, int duty)
 {
 	switch (led_id) {
 	case EC_LED_ID_LEFT_LED:
@@ -174,13 +171,11 @@ static void update_led(enum ec_led_id led_id, bool is_active_charge_port,
 		if (chipset_in_state(CHIPSET_STATE_ON))
 			set_color(led_id, EC_LED_COLOR_WHITE, duty);
 		else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-			set_color(
-				led_id,
-				(tick % 8 < 6) ? EC_LED_COLOR_AMBER : LED_OFF,
-				duty);
+			set_color(led_id,
+				  (tick % 8 < 6) ? EC_LED_COLOR_AMBER : LED_OFF,
+				  duty);
 		else
 			set_color(led_id, LED_OFF, 0);
-
 	}
 }
 
