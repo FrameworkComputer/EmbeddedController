@@ -67,7 +67,7 @@ test_static int test_rtc_match_delay(void)
 	}
 
 	ccprintf("Expected number of RTC alarm interrupts %d\n",
-	    rtc_match_delay_iterations);
+		 rtc_match_delay_iterations);
 	ccprintf("Actual number of RTC alarm interrupts %d\n", rtc_fired);
 
 	/* Make sure each set_rtc_alarm() generated the interrupt. */
