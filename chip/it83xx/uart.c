@@ -17,7 +17,7 @@
 #include "util.h"
 
 /* Traces on UART1 */
-#define UART_PORT      0
+#define UART_PORT 0
 #define UART_PORT_HOST 1
 
 static int init_done;
