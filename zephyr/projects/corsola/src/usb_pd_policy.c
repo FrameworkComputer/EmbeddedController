@@ -20,8 +20,8 @@
 #error Corsola reference must have at least one 3.0 A port
 #endif
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
 static int active_aux_port = -1;
 
@@ -78,7 +78,6 @@ void svdm_set_hpd_gpio(int port, int en)
 	}
 }
 
-
 __override int svdm_dp_config(int port, uint32_t *payload)
 {
 	int opos = pd_alt_mode(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
@@ -101,11 +100,11 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 	 *  (3) plug a monitor to the port-1 dongle.
 	 */
 
-	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
-			 CMD_DP_CONFIG | VDO_OPOS(opos));
-	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
-				1,             /* DPv1.3 signaling */
-				2);            /* UFP connected */
+	payload[0] =
+		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG | VDO_OPOS(opos));
+	payload[1] = VDO_DP_CFG(pin_mode, /* pin mode */
+				1, /* DPv1.3 signaling */
+				2); /* UFP connected */
 	return 2;
 };
 
@@ -122,9 +121,9 @@ __override void svdm_dp_post_config(int port)
 	 */
 	if (port == active_aux_port) {
 		usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT,
-			polarity_rm_dts(pd_get_polarity(port)));
+			    polarity_rm_dts(pd_get_polarity(port)));
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 	}
 
 	dp_flags[port] |= DP_FLAGS_DP_ON;
@@ -165,17 +164,14 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	if (lvl) {
 		set_dp_aux_path_sel(port);
 
-		usb_mux_set(port, USB_PD_MUX_DOCK,
-			    USB_SWITCH_CONNECT,
+		usb_mux_set(port, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
-		usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
-			    USB_SWITCH_CONNECT,
+		usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 
-	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-	    (irq || lvl)) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) && (irq || lvl)) {
 		/*
 		 * Wake up the AP.  IRQ or level high indicates a DP sink is now
 		 * present.
