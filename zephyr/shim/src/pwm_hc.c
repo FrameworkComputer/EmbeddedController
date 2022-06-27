@@ -19,17 +19,15 @@
 
 LOG_MODULE_REGISTER(pwm_shim, LOG_LEVEL_ERR);
 
-#define PWM_RAW_TO_PERCENT(v) \
-	DIV_ROUND_NEAREST((uint32_t)(v) * 100, UINT16_MAX)
-#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v) * UINT16_MAX / 100)
+#define PWM_RAW_TO_PERCENT(v) DIV_ROUND_NEAREST((uint32_t)(v)*100, UINT16_MAX)
+#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v)*UINT16_MAX / 100)
 
-#define HAS_PWM_GENERIC_CHANNEL(compat) \
+#define HAS_PWM_GENERIC_CHANNEL(compat)                         \
 	DT_NODE_HAS_PROP(DT_COMPAT_GET_ANY_STATUS_OKAY(compat), \
 			 generic_pwm_channel)
 
 #define PWM_GENERIC_CHANNEL_ID(compat) \
-	DT_PROP(DT_COMPAT_GET_ANY_STATUS_OKAY(compat), \
-		generic_pwm_channel)
+	DT_PROP(DT_COMPAT_GET_ANY_STATUS_OKAY(compat), generic_pwm_channel)
 
 #ifdef CONFIG_PWM_KBLIGHT
 static bool pwm_is_kblight(int type, int index)
@@ -63,9 +61,8 @@ static bool pwm_is_displight(int type, int index)
 }
 #endif /* CONFIG_PLATFORM_EC_PWM_DISPLIGHT */
 
-
-static enum ec_status host_command_pwm_set_duty(
-		struct host_cmd_handler_args *args)
+static enum ec_status
+host_command_pwm_set_duty(struct host_cmd_handler_args *args)
 {
 	__maybe_unused const struct ec_params_pwm_set_duty *p = args->params;
 
@@ -85,12 +82,11 @@ static enum ec_status host_command_pwm_set_duty(
 
 	return EC_RES_INVALID_PARAM;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY,
-		     host_command_pwm_set_duty,
+DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY, host_command_pwm_set_duty,
 		     EC_VER_MASK(0));
 
-static enum ec_status host_command_pwm_get_duty(
-		struct host_cmd_handler_args *args)
+static enum ec_status
+host_command_pwm_get_duty(struct host_cmd_handler_args *args)
 {
 	__maybe_unused const struct ec_params_pwm_get_duty *p = args->params;
 	__maybe_unused struct ec_response_pwm_get_duty *r = args->response;
@@ -112,6 +108,5 @@ static enum ec_status host_command_pwm_get_duty(
 
 	return EC_RES_INVALID_PARAM;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY,
-		     host_command_pwm_get_duty,
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY, host_command_pwm_get_duty,
 		     EC_VER_MASK(0));
