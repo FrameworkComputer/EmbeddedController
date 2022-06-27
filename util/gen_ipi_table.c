@@ -12,7 +12,7 @@
 
 #include "board.h"
 
-#define FPRINTF(format, args...) fprintf(fout, format, ## args)
+#define FPRINTF(format, args...) fprintf(fout, format, ##args)
 
 int main(int argc, char **argv)
 {
