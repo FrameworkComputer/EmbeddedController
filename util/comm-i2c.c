@@ -27,7 +27,7 @@
 
 #define I2C_ADAPTER_NODE "/sys/class/i2c-adapter/i2c-%d/%d-%04x/name"
 #define I2C_ADAPTER_NAME "cros-ec-i2c"
-#define I2C_MAX_ADAPTER  32
+#define I2C_MAX_ADAPTER 32
 #define I2C_NODE "/dev/i2c-%d"
 
 #ifdef DEBUG
@@ -62,9 +62,8 @@ static void dump_buffer(const uint8_t *data, int length)
  * Sends a command to the EC (protocol v3). Returns the command status code
  * (>= 0), or a negative EC_RES_* value on error.
  */
-static int ec_command_i2c_3(int command, int version,
-			    const void *outdata, int outsize,
-			    void *indata, int insize)
+static int ec_command_i2c_3(int command, int version, const void *outdata,
+			    int outsize, void *indata, int insize)
 {
 	int ret = -EC_RES_ERROR;
 	int error;
@@ -87,8 +86,8 @@ static int ec_command_i2c_3(int command, int version,
 			insize, ec_max_insize);
 		return -EC_RES_ERROR;
 	}
-	req_len = I2C_REQUEST_HEADER_SIZE + sizeof(struct ec_host_request)
-		+ outsize;
+	req_len = I2C_REQUEST_HEADER_SIZE + sizeof(struct ec_host_request) +
+		  outsize;
 	req_buf = (uint8_t *)(calloc(1, req_len));
 	if (!req_buf)
 		goto done;
@@ -102,8 +101,8 @@ static int ec_command_i2c_3(int command, int version,
 	req->reserved = 0;
 	req->data_len = outsize;
 
-	memcpy(&req_buf[I2C_REQUEST_HEADER_SIZE
-			+ sizeof(struct ec_host_request)],
+	memcpy(&req_buf[I2C_REQUEST_HEADER_SIZE +
+			sizeof(struct ec_host_request)],
 	       outdata, outsize);
 
 	req->checksum =
@@ -115,8 +114,8 @@ static int ec_command_i2c_3(int command, int version,
 	i2c_msg.len = req_len;
 	i2c_msg.buf = req_buf;
 
-	resp_len = I2C_RESPONSE_HEADER_SIZE + sizeof(struct ec_host_response)
-		+ insize;
+	resp_len = I2C_RESPONSE_HEADER_SIZE + sizeof(struct ec_host_response) +
+		   insize;
 	resp_buf = (uint8_t *)(calloc(1, resp_len));
 	if (!resp_buf)
 		goto done;
@@ -135,8 +134,8 @@ static int ec_command_i2c_3(int command, int version,
 	data.nmsgs = 1;
 	error = ioctl(i2c_fd, I2C_RDWR, &data);
 	if (error < 0) {
-		fprintf(stderr, "I2C write failed: %d (err: %d, %s)\n",
-			error, errno, strerror(errno));
+		fprintf(stderr, "I2C write failed: %d (err: %d, %s)\n", error,
+			errno, strerror(errno));
 		goto done;
 	}
 
@@ -146,8 +145,8 @@ static int ec_command_i2c_3(int command, int version,
 	i2c_msg.buf = resp_buf;
 	error = ioctl(i2c_fd, I2C_RDWR, &data);
 	if (error < 0) {
-		fprintf(stderr, "I2C read failed: %d (err: %d, %s)\n",
-			error, errno, strerror(errno));
+		fprintf(stderr, "I2C read failed: %d (err: %d, %s)\n", error,
+			errno, strerror(errno));
 		goto done;
 	}
 
@@ -177,15 +176,16 @@ static int ec_command_i2c_3(int command, int version,
 		goto done;
 	}
 
-	if ((uint8_t)sum_bytes(&resp_buf[I2C_RESPONSE_HEADER_SIZE], resp_buf[1])
-			!= 0) {
+	if ((uint8_t)sum_bytes(&resp_buf[I2C_RESPONSE_HEADER_SIZE],
+			       resp_buf[1]) != 0) {
 		debug("Bad checksum on EC response.\n");
 		ret = -EC_RES_INVALID_CHECKSUM;
 		goto done;
 	}
 
-	memcpy(indata, &resp_buf[I2C_RESPONSE_HEADER_SIZE
-				 + sizeof(struct ec_host_response)],
+	memcpy(indata,
+	       &resp_buf[I2C_RESPONSE_HEADER_SIZE +
+			 sizeof(struct ec_host_response)],
 	       insize);
 
 	ret = resp->data_len;
@@ -208,7 +208,8 @@ int comm_init_i2c(int i2c_bus)
 		i = i2c_bus;
 
 		if (i >= I2C_MAX_ADAPTER) {
-			fprintf(stderr, "Invalid I2C bus number %d. (The highest possible bus number is %d.)\n",
+			fprintf(stderr,
+				"Invalid I2C bus number %d. (The highest possible bus number is %d.)\n",
 				i, I2C_MAX_ADAPTER);
 			return -1;
 		}
@@ -217,8 +218,8 @@ int comm_init_i2c(int i2c_bus)
 		for (i = 0; i < I2C_MAX_ADAPTER; i++) {
 			FILE *f;
 
-			if (asprintf(&file_path, I2C_ADAPTER_NODE,
-				     i, i, EC_I2C_ADDR) < 0)
+			if (asprintf(&file_path, I2C_ADAPTER_NODE, i, i,
+				     EC_I2C_ADDR) < 0)
 				return -1;
 			f = fopen(file_path, "r");
 			if (f) {
@@ -248,10 +249,10 @@ int comm_init_i2c(int i2c_bus)
 	free(file_path);
 
 	ec_command_proto = ec_command_i2c_3;
-	ec_max_outsize = I2C_MAX_HOST_PACKET_SIZE - I2C_REQUEST_HEADER_SIZE
-		- sizeof(struct ec_host_request);
-	ec_max_insize = I2C_MAX_HOST_PACKET_SIZE - I2C_RESPONSE_HEADER_SIZE
-		- sizeof(struct ec_host_response);
+	ec_max_outsize = I2C_MAX_HOST_PACKET_SIZE - I2C_REQUEST_HEADER_SIZE -
+			 sizeof(struct ec_host_request);
+	ec_max_insize = I2C_MAX_HOST_PACKET_SIZE - I2C_RESPONSE_HEADER_SIZE -
+			sizeof(struct ec_host_response);
 
 	return 0;
 }
