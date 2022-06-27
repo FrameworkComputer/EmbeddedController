@@ -32,11 +32,7 @@
 static uint8_t batt_id = 0xff;
 
 /* Do not change the enum values. We directly use strap gpio level to index. */
-enum battery_type {
-	BATTERY_SIMPLO = 0,
-	BATTERY_AETECH,
-	BATTERY_COUNT
-};
+enum battery_type { BATTERY_SIMPLO = 0, BATTERY_AETECH, BATTERY_COUNT };
 
 static const struct battery_info info[] = {
 	[BATTERY_SIMPLO] = {
@@ -192,7 +188,7 @@ int charger_profile_override(struct charge_state_data *curr)
 	else {
 		for (temp_zone = 0; temp_zone < TEMP_ZONE_COUNT; temp_zone++) {
 			if (bat_temp_c <
-				temp_zones[batt_id][temp_zone].temp_max)
+			    temp_zones[batt_id][temp_zone].temp_max)
 				break;
 		}
 	}
@@ -233,9 +229,10 @@ int charger_profile_override(struct charge_state_data *curr)
 		curr->requested_voltage =
 			temp_zones[batt_id][temp_zone].desired_voltage;
 
-		curr->requested_current = (charge_phase) ?
-			CHARGE_PHASE_CHANGED_CURRENT_MA :
-			temp_zones[batt_id][temp_zone].desired_current;
+		curr->requested_current =
+			(charge_phase) ?
+				CHARGE_PHASE_CHANGED_CURRENT_MA :
+				temp_zones[batt_id][temp_zone].desired_current;
 		break;
 	case TEMP_OUT_OF_RANGE:
 		curr->requested_current = curr->requested_voltage = 0;
@@ -281,8 +278,7 @@ static void board_charge_termination(void)
 			te = 1;
 	}
 }
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE,
-	     board_charge_termination,
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, board_charge_termination,
 	     HOOK_PRIO_DEFAULT);
 
 /* Customs options controllable by host command. */
