@@ -21,7 +21,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
-#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ##args)
 
 /* Changes to col,row here need to also be reflected in kernel.
  * drivers/input/mkbp.c ... see KEY_BATTERY.
@@ -36,9 +36,9 @@
 
 /* Config for mkbp protocol; does not include fields from scan config */
 struct ec_mkbp_protocol_config {
-	uint32_t valid_mask;	/* valid fields */
-	uint8_t flags;		/* some flags (enum mkbp_config_flags) */
-	uint8_t valid_flags;	/* which flags are valid */
+	uint32_t valid_mask; /* valid fields */
+	uint8_t flags; /* some flags (enum mkbp_config_flags) */
+	uint8_t valid_flags; /* which flags are valid */
 
 	/* maximum depth to allow for fifo (0 = no keyscan output) */
 	uint8_t fifo_max_depth;
@@ -46,9 +46,10 @@ struct ec_mkbp_protocol_config {
 
 static struct ec_mkbp_protocol_config config = {
 	.valid_mask = EC_MKBP_VALID_SCAN_PERIOD | EC_MKBP_VALID_POLL_TIMEOUT |
-		EC_MKBP_VALID_MIN_POST_SCAN_DELAY |
-		EC_MKBP_VALID_OUTPUT_SETTLE | EC_MKBP_VALID_DEBOUNCE_DOWN |
-		EC_MKBP_VALID_DEBOUNCE_UP | EC_MKBP_VALID_FIFO_MAX_DEPTH,
+		      EC_MKBP_VALID_MIN_POST_SCAN_DELAY |
+		      EC_MKBP_VALID_OUTPUT_SETTLE |
+		      EC_MKBP_VALID_DEBOUNCE_DOWN | EC_MKBP_VALID_DEBOUNCE_UP |
+		      EC_MKBP_VALID_FIFO_MAX_DEPTH,
 	.valid_flags = EC_MKBP_FLAGS_ENABLE,
 	.flags = EC_MKBP_FLAGS_ENABLE,
 	.fifo_max_depth = FIFO_DEPTH,
@@ -81,7 +82,8 @@ static int keyboard_get_next_event(uint8_t *out)
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_KEY_MATRIX, keyboard_get_next_event);
 
 void clear_typematic_key(void)
-{ }
+{
+}
 
 static void set_keyscan_config(const struct ec_mkbp_config *src,
 			       struct ec_mkbp_protocol_config *dst,
@@ -119,7 +121,7 @@ static void set_keyscan_config(const struct ec_mkbp_config *src,
 	 * fall out of the task_wait_event() in keyboard_scan_task().
 	 */
 	if ((new_flags & EC_MKBP_FLAGS_ENABLE) &&
-			!(dst->flags & EC_MKBP_FLAGS_ENABLE))
+	    !(dst->flags & EC_MKBP_FLAGS_ENABLE))
 		task_wake(TASK_ID_KEYSCAN);
 }
 
@@ -151,15 +153,14 @@ static void get_keyscan_config(struct ec_mkbp_config *dst)
  *			over to dst->flags
  */
 static void keyscan_copy_config(const struct ec_mkbp_config *src,
-				 struct ec_mkbp_protocol_config *dst,
-				 uint32_t valid_mask, uint8_t valid_flags)
+				struct ec_mkbp_protocol_config *dst,
+				uint32_t valid_mask, uint8_t valid_flags)
 {
 	uint8_t new_flags;
 
 	if (valid_mask & EC_MKBP_VALID_FIFO_MAX_DEPTH) {
 		/* Validity check for fifo depth */
-		dst->fifo_max_depth = MIN(src->fifo_max_depth,
-					  FIFO_DEPTH);
+		dst->fifo_max_depth = MIN(src->fifo_max_depth, FIFO_DEPTH);
 	}
 
 	new_flags = dst->flags & ~valid_flags;
@@ -182,8 +183,7 @@ host_command_mkbp_set_config(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_MKBP_SET_CONFIG,
-		     host_command_mkbp_set_config,
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_SET_CONFIG, host_command_mkbp_set_config,
 		     EC_VER_MASK(0));
 
 static enum ec_status
@@ -206,6 +206,5 @@ host_command_mkbp_get_config(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_MKBP_GET_CONFIG,
-		     host_command_mkbp_get_config,
+DECLARE_HOST_COMMAND(EC_CMD_MKBP_GET_CONFIG, host_command_mkbp_get_config,
 		     EC_VER_MASK(0));
