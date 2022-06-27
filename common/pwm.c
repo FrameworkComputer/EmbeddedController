@@ -13,9 +13,8 @@
 
 #ifdef CONFIG_PWM
 
-#define PWM_RAW_TO_PERCENT(v) \
-	DIV_ROUND_NEAREST((uint32_t)(v) * 100, UINT16_MAX)
-#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v) * UINT16_MAX / 100)
+#define PWM_RAW_TO_PERCENT(v) DIV_ROUND_NEAREST((uint32_t)(v)*100, UINT16_MAX)
+#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v)*UINT16_MAX / 100)
 
 /*
  * Get target channel based on type / index host command parameters.
@@ -71,8 +70,7 @@ host_command_pwm_set_duty(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY,
-		     host_command_pwm_set_duty,
+DECLARE_HOST_COMMAND(EC_CMD_PWM_SET_DUTY, host_command_pwm_set_duty,
 		     EC_VER_MASK(0));
 
 static enum ec_status
@@ -92,8 +90,7 @@ host_command_pwm_get_duty(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY,
-		     host_command_pwm_get_duty,
+DECLARE_HOST_COMMAND(EC_CMD_PWM_GET_DUTY, host_command_pwm_get_duty,
 		     EC_VER_MASK(0));
 
 /**
@@ -153,7 +150,7 @@ static int cc_pwm_duty(int argc, char **argv)
 			ccprintf("Setting channel %d to %d\n", ch, value);
 			pwm_enable(ch, 1);
 			(max_duty == 100) ? pwm_set_duty(ch, value) :
-				pwm_set_raw_duty(ch, value);
+					    pwm_set_raw_duty(ch, value);
 		}
 	}
 
