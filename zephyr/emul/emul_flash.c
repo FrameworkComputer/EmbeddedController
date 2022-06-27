@@ -98,7 +98,6 @@ static int cros_flash_emul_get_status(const struct device *dev, uint8_t *sr1,
 	return -EINVAL;
 }
 
-
 static const struct cros_flash_driver_api emul_cros_flash_driver_api = {
 	.init = cros_flash_emul_init,
 	.physical_write = cros_flash_emul_write,
@@ -118,17 +117,15 @@ static int flash_emul_init(const struct device *dev)
 	return 0;
 }
 
-#define FLASH_EMUL(n)                                                      \
-	static struct flash_emul_data flash_emul_data_##n = {              \
-	};                                                                 \
-									   \
-	static const struct flash_emul_cfg flash_emul_cfg_##n = {          \
-		.dev_label = DT_INST_LABEL(n),                             \
-		.data = &flash_emul_data_##n,                              \
-	};                                                                 \
-	DEVICE_DT_INST_DEFINE(n, flash_emul_init, NULL,                    \
-			      &flash_emul_data_##n, &flash_emul_cfg_##n,   \
-			      PRE_KERNEL_1,                                \
-			      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,         \
+#define FLASH_EMUL(n)                                                         \
+	static struct flash_emul_data flash_emul_data_##n = {};               \
+                                                                              \
+	static const struct flash_emul_cfg flash_emul_cfg_##n = {             \
+		.dev_label = DT_INST_LABEL(n),                                \
+		.data = &flash_emul_data_##n,                                 \
+	};                                                                    \
+	DEVICE_DT_INST_DEFINE(n, flash_emul_init, NULL, &flash_emul_data_##n, \
+			      &flash_emul_cfg_##n, PRE_KERNEL_1,              \
+			      CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,            \
 			      &emul_cros_flash_driver_api)
 DT_INST_FOREACH_STATUS_OKAY(FLASH_EMUL);
