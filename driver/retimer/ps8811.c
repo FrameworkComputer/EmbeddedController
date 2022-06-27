@@ -15,9 +15,7 @@ int ps8811_i2c_read(const struct usb_mux *me, int page, int offset, int *data)
 {
 	int rv;
 
-	rv = i2c_read8(me->i2c_port,
-		       me->i2c_addr_flags + page,
-		       offset, data);
+	rv = i2c_read8(me->i2c_port, me->i2c_addr_flags + page, offset, data);
 
 	return rv;
 }
@@ -26,23 +24,18 @@ int ps8811_i2c_write(const struct usb_mux *me, int page, int offset, int data)
 {
 	int rv;
 
-	rv = i2c_write8(me->i2c_port,
-			me->i2c_addr_flags + page,
-			offset, data);
+	rv = i2c_write8(me->i2c_port, me->i2c_addr_flags + page, offset, data);
 
 	return rv;
 }
 
 int ps8811_i2c_field_update(const struct usb_mux *me, int page, int offset,
-			     uint8_t field_mask, uint8_t set_value)
+			    uint8_t field_mask, uint8_t set_value)
 {
 	int rv;
 
-	rv = i2c_field_update8(me->i2c_port,
-			       me->i2c_addr_flags + page,
-			       offset,
-			       field_mask,
-			       set_value);
+	rv = i2c_field_update8(me->i2c_port, me->i2c_addr_flags + page, offset,
+			       field_mask, set_value);
 
 	return rv;
 }
