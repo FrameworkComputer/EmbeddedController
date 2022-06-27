@@ -23,9 +23,8 @@
 #define LED_CHARGE_PULSE 10
 #define LED_POWER_PULSE 15
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_POWER_LED,
-	EC_LED_ID_BATTERY_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_POWER_LED,
+					     EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -47,24 +46,20 @@ enum led_power_state {
 };
 
 static const struct {
-	uint8_t led1:1;
-	uint8_t led2:1;
-} led_chg_state_table[] = {
-	[LED_STATE_DISCHARGE] = {LED_OFF, LED_OFF},
-	[LED_STATE_CHARGE] = {LED_OFF, LED_ON},
-	[LED_STATE_FULL] = {LED_ON, LED_OFF},
-	[LED_STATE_ERROR_PHASE0] = {LED_OFF, LED_OFF},
-	[LED_STATE_ERROR_PHASE1] = {LED_OFF, LED_ON}
-};
+	uint8_t led1 : 1;
+	uint8_t led2 : 1;
+} led_chg_state_table[] = { [LED_STATE_DISCHARGE] = { LED_OFF, LED_OFF },
+			    [LED_STATE_CHARGE] = { LED_OFF, LED_ON },
+			    [LED_STATE_FULL] = { LED_ON, LED_OFF },
+			    [LED_STATE_ERROR_PHASE0] = { LED_OFF, LED_OFF },
+			    [LED_STATE_ERROR_PHASE1] = { LED_OFF, LED_ON } };
 
 static const struct {
-	uint8_t led:1;
-} led_pwr_state_table[] = {
-	[LED_STATE_S0] = {LED_ON},
-	[LED_STATE_S3_PHASE0] = {LED_OFF},
-	[LED_STATE_S3_PHASE1] = {LED_ON},
-	[LED_STATE_S5] = {LED_OFF}
-};
+	uint8_t led : 1;
+} led_pwr_state_table[] = { [LED_STATE_S0] = { LED_ON },
+			    [LED_STATE_S3_PHASE0] = { LED_OFF },
+			    [LED_STATE_S3_PHASE1] = { LED_ON },
+			    [LED_STATE_S5] = { LED_OFF } };
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
@@ -100,7 +95,7 @@ static void rammus_led_set_power(void)
 
 	chipset_state = chipset_in_state(CHIPSET_STATE_HARD_OFF) |
 			(chipset_in_state(CHIPSET_STATE_SOFT_OFF) << 1) |
-			(chipset_in_state(CHIPSET_STATE_SUSPEND)  << 2) |
+			(chipset_in_state(CHIPSET_STATE_SUSPEND) << 2) |
 			(chipset_in_state(CHIPSET_STATE_ON) << 3) |
 			(chipset_in_state(CHIPSET_STATE_STANDBY) << 4);
 
@@ -136,7 +131,7 @@ static void rammus_led_set_battery(void)
 	switch (chg_state) {
 	case PWR_STATE_DISCHARGE:
 		if ((charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER) &&
-			charge_percent >= BATTERY_LEVEL_NEAR_FULL)
+		    charge_percent >= BATTERY_LEVEL_NEAR_FULL)
 			config_battery_led(LED_STATE_FULL);
 		else
 			config_battery_led(LED_STATE_DISCHARGE);
@@ -154,7 +149,7 @@ static void rammus_led_set_battery(void)
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 	case PWR_STATE_IDLE:
-		if(charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
+		if (charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
 			config_battery_led(LED_STATE_FULL);
 		else
 			config_battery_led(LED_STATE_DISCHARGE);
