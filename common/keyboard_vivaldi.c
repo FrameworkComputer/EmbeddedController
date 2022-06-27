@@ -15,7 +15,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
-#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ##args)
 
 /*
  * Row Column info for Top row keys T1 - T15. This has been sourced from
@@ -25,21 +25,21 @@ __overridable const struct key {
 	uint8_t row;
 	uint8_t col;
 } vivaldi_keys[] = {
-	{.row = 0, .col = 2},	/* T1 */
-	{.row = 3, .col = 2},	/* T2 */
-	{.row = 2, .col = 2},	/* T3 */
-	{.row = 1, .col = 2},	/* T4 */
-	{.row = 3, .col = 4},	/* T5 */
-	{.row = 2, .col = 4},	/* T6 */
-	{.row = 1, .col = 4},	/* T7 */
-	{.row = 2, .col = 9},	/* T8 */
-	{.row = 1, .col = 9},	/* T9 */
-	{.row = 0, .col = 4},	/* T10 */
-	{.row = 0, .col = 1},	/* T11 */
-	{.row = 1, .col = 5},	/* T12 */
-	{.row = 3, .col = 5},	/* T13 */
-	{.row = 0, .col = 9},	/* T14 */
-	{.row = 0, .col = 11},	/* T15 */
+	{ .row = 0, .col = 2 }, /* T1 */
+	{ .row = 3, .col = 2 }, /* T2 */
+	{ .row = 2, .col = 2 }, /* T3 */
+	{ .row = 1, .col = 2 }, /* T4 */
+	{ .row = 3, .col = 4 }, /* T5 */
+	{ .row = 2, .col = 4 }, /* T6 */
+	{ .row = 1, .col = 4 }, /* T7 */
+	{ .row = 2, .col = 9 }, /* T8 */
+	{ .row = 1, .col = 9 }, /* T9 */
+	{ .row = 0, .col = 4 }, /* T10 */
+	{ .row = 0, .col = 1 }, /* T11 */
+	{ .row = 1, .col = 5 }, /* T12 */
+	{ .row = 3, .col = 5 }, /* T13 */
+	{ .row = 0, .col = 9 }, /* T14 */
+	{ .row = 0, .col = 11 }, /* T15 */
 };
 BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
 
@@ -69,8 +69,8 @@ static const uint16_t action_scancodes[] = {
 
 static const struct ec_response_keybd_config *vivaldi_keybd;
 
-static enum
-ec_status get_vivaldi_keybd_config(struct host_cmd_handler_args *args)
+static enum ec_status
+get_vivaldi_keybd_config(struct host_cmd_handler_args *args)
 {
 	struct ec_response_keybd_config *resp = args->response;
 
@@ -90,8 +90,8 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_KEYBD_CONFIG, get_vivaldi_keybd_config,
  * Boards selecting CONFIG_KEYBOARD_CUSTOMIZATION are likely to not
  * want vivaldi code messing with their customized keyboards.
  */
-__overridable
-const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
+__overridable const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return NULL;
 }
@@ -117,8 +117,8 @@ static const struct ec_response_keybd_config default_keybd = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__overridable
-const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
+__overridable const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &default_keybd;
 }
@@ -149,7 +149,6 @@ static void vivaldi_init(void)
 	}
 
 	for (i = 0; i < ARRAY_SIZE(vivaldi_keys); i++) {
-
 		uint8_t row, col, *mask;
 		enum action_key key;
 
@@ -157,8 +156,8 @@ static void vivaldi_init(void)
 		col = vivaldi_keys[i].col;
 
 		if (col >= KEYBOARD_COLS_MAX || row >= KEYBOARD_ROWS) {
-			CPRINTS("VIVALDI: Bad (row,col) for T-%u: (%u,%u)",
-				i, row, col);
+			CPRINTS("VIVALDI: Bad (row,col) for T-%u: (%u,%u)", i,
+				row, col);
 			ASSERT(false);
 		}
 
@@ -171,18 +170,16 @@ static void vivaldi_init(void)
 		key = vivaldi_keybd->action_keys[i];
 
 		if (i < vivaldi_keybd->num_top_row_keys && key != TK_ABSENT) {
-
 			/* Enable the mask */
 			*mask |= BIT(row);
 
 			/* Populate the scancode */
 			set_scancode_set2(row, col, action_scancodes[key]);
-			CPRINTS("VIVALDI key-%u (r-%u, c-%u) = scancode-%X",
-				i, row, col, action_scancodes[key]);
+			CPRINTS("VIVALDI key-%u (r-%u, c-%u) = scancode-%X", i,
+				row, col, action_scancodes[key]);
 
 			if (key == TK_VOL_UP)
 				set_vol_up_key(row, col);
-
 		}
 	}
 }
