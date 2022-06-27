@@ -28,10 +28,10 @@ LOG_MODULE_REGISTER(tcpci_drp_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
  * @return TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled
  * @return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
  */
-static enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
-	struct tcpci_partner_extension *ext,
-	struct tcpci_partner_data *common_data,
-	const struct tcpci_emul_msg *msg)
+static enum tcpci_partner_handler_res
+tcpci_drp_emul_handle_sop_msg(struct tcpci_partner_extension *ext,
+			      struct tcpci_partner_data *common_data,
+			      const struct tcpci_emul_msg *msg)
 {
 	struct tcpci_drp_emul_data *data =
 		CONTAINER_OF(ext, struct tcpci_drp_emul_data, ext);
@@ -46,9 +46,8 @@ static enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 		case PD_DATA_REQUEST:
 			if (common_data->power_role == PD_ROLE_SINK) {
 				/* As sink we shouldn't accept request */
-				tcpci_partner_send_control_msg(common_data,
-							       PD_CTRL_REJECT,
-							       0);
+				tcpci_partner_send_control_msg(
+					common_data, PD_CTRL_REJECT, 0);
 				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 			}
 			/* As source, let source handler to handle this */
@@ -66,8 +65,7 @@ static enum tcpci_partner_handler_res tcpci_drp_emul_handle_sop_msg(
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_CTRL_PR_SWAP:
 			tcpci_partner_send_control_msg(common_data,
-						       PD_CTRL_ACCEPT,
-						       0);
+						       PD_CTRL_ACCEPT, 0);
 			data->in_pwr_swap = true;
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_PS_RDY:
@@ -140,12 +138,12 @@ struct tcpci_partner_extension_ops tcpci_drp_emul_ops = {
 	.connect = NULL,
 };
 
-struct tcpci_partner_extension *tcpci_drp_emul_init(
-	struct tcpci_drp_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	enum pd_power_role power_role,
-	struct tcpci_partner_extension *src_ext,
-	struct tcpci_partner_extension *snk_ext)
+struct tcpci_partner_extension *
+tcpci_drp_emul_init(struct tcpci_drp_emul_data *data,
+		    struct tcpci_partner_data *common_data,
+		    enum pd_power_role power_role,
+		    struct tcpci_partner_extension *src_ext,
+		    struct tcpci_partner_extension *snk_ext)
 {
 	struct tcpci_partner_extension *drp_ext = &data->ext;
 	struct tcpci_src_emul_data *src_data =
