@@ -15,7 +15,7 @@
 static inline void data_serialization_barrier(void)
 {
 	if (IS_ENABLED(CHIP_CORE_NDS32))
-		asm volatile ("dsb");
+		asm volatile("dsb");
 }
 
 int intc_get_ec_int(void);
