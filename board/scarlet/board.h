@@ -15,12 +15,12 @@
 
 /* Optional modules */
 #define CONFIG_ADC
-#undef  CONFIG_ADC_WATCHDOG
+#undef CONFIG_ADC_WATCHDOG
 #define CONFIG_CHIPSET_RK3399
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_RTC
 #define CONFIG_EMULATED_SYSRQ
-#undef  CONFIG_HIBERNATE
+#undef CONFIG_HIBERNATE
 #define CONFIG_HOSTCMD_RTC
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
@@ -40,7 +40,7 @@
 
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands for testing */
 
-#undef  CONFIG_UART_CONSOLE
+#undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 1
 #define CONFIG_UART_RX_DMA
 
@@ -92,8 +92,7 @@
 /* Camera VSYNC */
 #define CONFIG_SYNC
 #define CONFIG_SYNC_COMMAND
-#define CONFIG_SYNC_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
+#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 
 /* To be able to indicate the device is in tablet mode. */
 #define CONFIG_TABLET_MODE
@@ -137,33 +136,33 @@
 #endif
 
 /* Battery parameters for max17055 ModelGauge m5 algorithm. */
-#define BATTERY_MAX17055_RSENSE             5     /* m-ohm */
-#define BATTERY_DESIRED_CHARGING_CURRENT    4000  /* mA */
+#define BATTERY_MAX17055_RSENSE 5 /* m-ohm */
+#define BATTERY_DESIRED_CHARGING_CURRENT 4000 /* mA */
 
 #define CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT
-#define BAT_MAX_DISCHG_CURRENT	5000 /* mA */
+#define BAT_MAX_DISCHG_CURRENT 5000 /* mA */
 
 #define CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE
 #define BAT_LOW_VOLTAGE_THRESH 3200 /* mV */
 
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     12850
+#define PD_MAX_POWER_MW ((PD_MAX_VOLTAGE_MV * PD_MAX_CURRENT_MA) / 1000)
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 12850
 
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
 
 /* Timer selection */
-#define TIM_CLOCK32  2
+#define TIM_CLOCK32 2
 #define TIM_WATCHDOG 7
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 
 /* Optional for testing */
-#undef  CONFIG_PECI
-#undef  CONFIG_PSTORE
+#undef CONFIG_PECI
+#undef CONFIG_PSTORE
 
 /* Modules we want to exclude */
 #undef CONFIG_CMD_BATTFAKE
@@ -176,24 +175,24 @@
 
 #define CONFIG_TASK_PROFILING
 
-#define I2C_PORT_CHARGER  0
-#define I2C_PORT_BATTERY  0
+#define I2C_PORT_CHARGER 0
+#define I2C_PORT_BATTERY 0
 #define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
-#define I2C_PORT_TCPC0    1
+#define I2C_PORT_TCPC0 1
 
 /* Route sbs host requests to virtual battery driver */
 #define VIRTUAL_BATTERY_ADDR_FLAGS 0x0B
 
 /* Enable Accel over SPI */
-#define CONFIG_SPI_ACCEL_PORT    0  /* The first SPI controller port (SPI2) */
+#define CONFIG_SPI_ACCEL_PORT 0 /* The first SPI controller port (SPI2) */
 
 #define CONFIG_MKBP_INPUT_DEVICES
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 /* Define the host events which are allowed to wakeup AP in S3. */
-#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK \
-		(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) |\
-		 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
+#define CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK                \
+	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON) | \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_RTC))
 
 #ifndef __ASSEMBLER__
 
