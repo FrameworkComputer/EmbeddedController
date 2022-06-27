@@ -36,8 +36,8 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* USBC TCPC configuration */
 const struct tcpc_config_t tcpc_config[] = {
@@ -252,8 +252,8 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	}
 
 	if (voltage < BC12_MIN_VOLTAGE) {
-		CPRINTS("%s: port %d: vbus %d lower than %d", __func__,
-			port, voltage, BC12_MIN_VOLTAGE);
+		CPRINTS("%s: port %d: vbus %d lower than %d", __func__, port,
+			voltage, BC12_MIN_VOLTAGE);
 		return 1;
 	}
 
@@ -294,7 +294,7 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * which powers I2C controller within retimer
 		 */
 		msleep(1);
-	} else{
+	} else {
 		ioex_set_level(rst_signal, 0);
 		msleep(1);
 	}
