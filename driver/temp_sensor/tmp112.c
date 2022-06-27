@@ -21,7 +21,7 @@
 #define TMP112_SHIFT1 (16 - TMP112_RESOLUTION)
 #define TMP112_SHIFT2 (TMP112_RESOLUTION - 8)
 
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 static int temp_mk_local[TMP112_COUNT];
 
@@ -35,8 +35,8 @@ static int raw_read16(int sensor, const int offset, int *data_ptr)
 		return EC_ERROR_NOT_POWERED;
 #endif
 	return i2c_read16(tmp112_sensors[sensor].i2c_port,
-			  tmp112_sensors[sensor].i2c_addr_flags,
-			  offset, data_ptr);
+			  tmp112_sensors[sensor].i2c_addr_flags, offset,
+			  data_ptr);
 }
 
 static int raw_write16(int sensor, const int offset, int data)
@@ -49,8 +49,7 @@ static int raw_write16(int sensor, const int offset, int data)
 		return EC_ERROR_NOT_POWERED;
 #endif
 	return i2c_write16(tmp112_sensors[sensor].i2c_port,
-			   tmp112_sensors[sensor].i2c_addr_flags,
-			   offset, data);
+			   tmp112_sensors[sensor].i2c_addr_flags, offset, data);
 }
 
 static int get_reg_temp(int sensor, int *temp_ptr)
