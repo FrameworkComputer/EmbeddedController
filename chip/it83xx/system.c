@@ -44,7 +44,7 @@ static int delayed_clear_reset_flags;
 static void clear_reset_flags(void)
 {
 	if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
-			delayed_clear_reset_flags) {
+	    delayed_clear_reset_flags) {
 		chip_save_reset_flags(0);
 	}
 }
@@ -68,8 +68,12 @@ static void system_restore_panic_data_from_bram(void)
 }
 BUILD_ASSERT(BRAM_PANIC_LEN >= CONFIG_PANIC_DATA_SIZE);
 #else
-static void system_save_panic_data_to_bram(void) {}
-static void system_restore_panic_data_from_bram(void) {}
+static void system_save_panic_data_to_bram(void)
+{
+}
+static void system_restore_panic_data_from_bram(void)
+{
+}
 #endif
 
 static void system_reset_ec_by_gpg1(void)
@@ -132,7 +136,7 @@ static void check_reset_cause(void)
 	 * we know this is the first reset.
 	 */
 	if (IS_ENABLED(CONFIG_BOARD_RESET_AFTER_POWER_ON) &&
-			(flags & EC_RESET_FLAG_POWER_ON)) {
+	    (flags & EC_RESET_FLAG_POWER_ON)) {
 		if (flags & EC_RESET_FLAG_INITIAL_PWR) {
 			/* Second boot, clear the flag immediately */
 			chip_save_reset_flags(0);
@@ -146,7 +150,7 @@ static void check_reset_cause(void)
 			 * fine because we will have the correct flag anyway.
 			 */
 			chip_save_reset_flags(chip_read_reset_flags() |
-						EC_RESET_FLAG_INITIAL_PWR);
+					      EC_RESET_FLAG_INITIAL_PWR);
 
 			/*
 			 * Schedule chip_save_reset_flags(0) later.
@@ -163,13 +167,13 @@ static void check_reset_cause(void)
 
 	/* Clear PD contract recorded in bram if this is a power-on reset. */
 	if (IS_ENABLED(CONFIG_IT83XX_RESET_PD_CONTRACT_IN_BRAM) &&
-	   (flags == (EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_RESET_PIN))) {
+	    (flags == (EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_RESET_PIN))) {
 		for (int i = 0; i < MAX_SYSTEM_BBRAM_IDX_PD_PORTS; i++)
 			system_set_bbram((SYSTEM_BBRAM_IDX_PD0 + i), 0);
 	}
 
 	if ((IS_ENABLED(CONFIG_IT83XX_HARD_RESET_BY_GPG1)) &&
-		(flags & ~(EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_RESET_PIN)))
+	    (flags & ~(EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_RESET_PIN)))
 		system_restore_panic_data_from_bram();
 }
 
@@ -183,7 +187,7 @@ static void system_reset_cause_is_unknown(void)
 		 * eg: Andes core (jral5: LP=PC+2, jal: LP=PC+4)
 		 */
 		ccprintf("===Unknown reset! jump from %x or %x===\n",
-				ec_reset_lp - 4, ec_reset_lp - 2);
+			 ec_reset_lp - 4, ec_reset_lp - 2);
 }
 DECLARE_HOOK(HOOK_INIT, system_reset_cause_is_unknown, HOOK_PRIO_FIRST);
 
@@ -239,7 +243,7 @@ void chip_pre_init(void)
 		IT83XX_GCTRL_WMCR |= BIT(7);
 }
 
-#define BRAM_VALID_MAGIC        0x4252414D  /* "BRAM" */
+#define BRAM_VALID_MAGIC 0x4252414D /* "BRAM" */
 #define BRAM_VALID_MAGIC_FIELD0 (BRAM_VALID_MAGIC & 0xff)
 #define BRAM_VALID_MAGIC_FIELD1 ((BRAM_VALID_MAGIC >> 8) & 0xff)
 #define BRAM_VALID_MAGIC_FIELD2 ((BRAM_VALID_MAGIC >> 16) & 0xff)
@@ -269,8 +273,8 @@ void chip_bram_valid(void)
 	if (BRAM_EC_LOG_STATUS == EC_LOG_SAVED_IN_FLASH) {
 		/* Restore EC logs from flash. */
 		memcpy((void *)__preserved_logs_start,
-			(const void *)CHIP_FLASH_PRESERVE_LOGS_BASE,
-			(uintptr_t)__preserved_logs_size);
+		       (const void *)CHIP_FLASH_PRESERVE_LOGS_BASE,
+		       (uintptr_t)__preserved_logs_size);
 	}
 	BRAM_EC_LOG_STATUS = 0;
 #endif
@@ -279,7 +283,6 @@ void chip_bram_valid(void)
 void system_pre_init(void)
 {
 	/* No initialization required */
-
 }
 
 uint32_t chip_read_reset_flags(void)
@@ -313,9 +316,10 @@ void system_reset(int flags)
 #if defined(CONFIG_PRESERVE_LOGS) && defined(CONFIG_IT83XX_HARD_RESET_BY_GPG1)
 	/* Saving EC logs into flash before reset. */
 	crec_flash_physical_erase(CHIP_FLASH_PRESERVE_LOGS_BASE,
-		CHIP_FLASH_PRESERVE_LOGS_SIZE);
+				  CHIP_FLASH_PRESERVE_LOGS_SIZE);
 	crec_flash_physical_write(CHIP_FLASH_PRESERVE_LOGS_BASE,
-		(uintptr_t)__preserved_logs_size, __preserved_logs_start);
+				  (uintptr_t)__preserved_logs_size,
+				  __preserved_logs_start);
 	BRAM_EC_LOG_STATUS = EC_LOG_SAVED_IN_FLASH;
 #endif
 
@@ -384,7 +388,7 @@ static uint32_t system_get_chip_id(void)
 {
 #ifdef IT83XX_CHIP_ID_3BYTES
 	return (IT83XX_GCTRL_CHIPID1 << 16) | (IT83XX_GCTRL_CHIPID2 << 8) |
-		IT83XX_GCTRL_CHIPID3;
+	       IT83XX_GCTRL_CHIPID3;
 #else
 	return (IT83XX_GCTRL_CHIPID1 << 8) | IT83XX_GCTRL_CHIPID2;
 #endif
@@ -410,7 +414,7 @@ const char *system_get_chip_vendor(void)
 
 const char *system_get_chip_name(void)
 {
-	static char buf[8] = {'i', 't'};
+	static char buf[8] = { 'i', 't' };
 	int num = (IS_ENABLED(IT83XX_CHIP_ID_3BYTES) ? 4 : 3);
 	uint32_t chip_id = system_get_chip_id();
 
