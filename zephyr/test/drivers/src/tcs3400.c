@@ -16,14 +16,14 @@
 #include "driver/als_tcs3400.h"
 #include "test/drivers/test_state.h"
 
-#define TCS_ORD			DT_DEP_ORD(DT_NODELABEL(tcs_emul))
-#define TCS_CLR_SENSOR_ID	SENSOR_ID(DT_NODELABEL(tcs3400_clear))
-#define TCS_RGB_SENSOR_ID	SENSOR_ID(DT_NODELABEL(tcs3400_rgb))
-#define TCS_INT_EVENT		\
+#define TCS_ORD DT_DEP_ORD(DT_NODELABEL(tcs_emul))
+#define TCS_CLR_SENSOR_ID SENSOR_ID(DT_NODELABEL(tcs3400_clear))
+#define TCS_RGB_SENSOR_ID SENSOR_ID(DT_NODELABEL(tcs3400_rgb))
+#define TCS_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(tcs3400_int)))
 
 /** How accurate comparision of rgb sensors should be */
-#define V_EPS		8
+#define V_EPS 8
 
 /** Test initialization of light sensor driver and device */
 ZTEST_USER(tcs3400, test_tcs_init)
@@ -52,8 +52,8 @@ ZTEST_USER(tcs3400, test_tcs_init)
 
 	/* Test successful init. ATIME and AGAIN should be changed on init */
 	zassert_equal(EC_SUCCESS, ms->drv->init(ms), NULL);
-	zassert_equal(TCS_DEFAULT_ATIME,
-		      tcs_emul_get_reg(emul, TCS_I2C_ATIME), NULL);
+	zassert_equal(TCS_DEFAULT_ATIME, tcs_emul_get_reg(emul, TCS_I2C_ATIME),
+		      NULL);
 	zassert_equal(TCS_DEFAULT_AGAIN,
 		      tcs_emul_get_reg(emul, TCS_I2C_CONTROL), NULL);
 }
@@ -132,8 +132,7 @@ static void check_fifo_empty_f(struct motion_sensor_t *ms,
 		}
 	}
 }
-#define check_fifo_empty(ms, ms_rgb)		\
-	check_fifo_empty_f(ms, ms_rgb, __LINE__)
+#define check_fifo_empty(ms, ms_rgb) check_fifo_empty_f(ms, ms_rgb, __LINE__)
 
 /**
  * Test different conditions where irq handler fail or commit no data
@@ -179,12 +178,12 @@ ZTEST_USER(tcs3400, test_tcs_irq_handler_fail)
  * expected value.
  */
 static void check_fifo_f(struct motion_sensor_t *ms,
-			 struct motion_sensor_t *ms_rgb,
-			 int *exp_v, int eps, int line)
+			 struct motion_sensor_t *ms_rgb, int *exp_v, int eps,
+			 int line)
 {
 	struct ec_response_motion_sensor_data vector;
 	uint16_t size;
-	int ret_v[4] = {-1, -1, -1, -1};
+	int ret_v[4] = { -1, -1, -1, -1 };
 	int i;
 
 	/* Read all data committed to FIFO */
@@ -217,13 +216,14 @@ static void check_fifo_f(struct motion_sensor_t *ms,
 
 	/* Compare with last committed data */
 	for (i = 0; i < 4; i++) {
-		zassert_within(exp_v[i], ret_v[i], eps,
+		zassert_within(
+			exp_v[i], ret_v[i], eps,
 			"Expected [%d; %d; %d; %d], got [%d; %d; %d; %d]; line: %d",
-			exp_v[0], exp_v[1], exp_v[2], exp_v[3],
-			ret_v[0], ret_v[1], ret_v[2], ret_v[3], line);
+			exp_v[0], exp_v[1], exp_v[2], exp_v[3], ret_v[0],
+			ret_v[1], ret_v[2], ret_v[3], line);
 	}
 }
-#define check_fifo(ms, ms_rgb, exp_v, eps)		\
+#define check_fifo(ms, ms_rgb, exp_v, eps) \
 	check_fifo_f(ms, ms_rgb, exp_v, eps, __LINE__)
 
 /** Test calibration mode reading of light sensor values */
@@ -346,23 +346,17 @@ ZTEST_USER(tcs3400, test_tcs_read_xyz)
 	uint32_t event = TCS_INT_EVENT;
 	/* Expected data to test: IR, R, G, B */
 	int exp_v[][4] = {
-		{200,	1110,	870,	850},
-		{300,	1110,	10000,	8500},
-		{600,	50000,	40000,	30000},
-		{1000,	3000,	40000,	2000},
-		{1000,	65000,	65000,	65000},
-		{100,	214,	541,	516},
-		{143,	2141,	5414,	5163},
-		{100,	50000,	40000,	30000},
-		{1430,	2141,	5414,	5163},
-		{10000,	50000,	40000,	30000},
-		{10000,	214,	541,	516},
-		{15000,	50000,	40000,	30000},
+		{ 200, 1110, 870, 850 },       { 300, 1110, 10000, 8500 },
+		{ 600, 50000, 40000, 30000 },  { 1000, 3000, 40000, 2000 },
+		{ 1000, 65000, 65000, 65000 }, { 100, 214, 541, 516 },
+		{ 143, 2141, 5414, 5163 },     { 100, 50000, 40000, 30000 },
+		{ 1430, 2141, 5414, 5163 },    { 10000, 50000, 40000, 30000 },
+		{ 10000, 214, 541, 516 },      { 15000, 50000, 40000, 30000 },
 	};
-	uint16_t scale[4] = {
-		MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE,
-		MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE
-	};
+	uint16_t scale[4] = { MOTION_SENSE_DEFAULT_SCALE,
+			      MOTION_SENSE_DEFAULT_SCALE,
+			      MOTION_SENSE_DEFAULT_SCALE,
+			      MOTION_SENSE_DEFAULT_SCALE };
 	int i, test;
 	intv3_t v;
 
@@ -424,34 +418,32 @@ ZTEST_USER(tcs3400, test_tcs_scale)
 	uint32_t event = TCS_INT_EVENT;
 	/* Expected data to test: IR, R, G, B */
 	int exp_v[][4] = {
-		{200,	1110,	870,	850},
-		{300,	1110,	10000,	8500},
-		{600,	5000,	4000,	3000},
-		{100,	3000,	4000,	2000},
-		{100,	1000,	1000,	1000},
+		{ 200, 1110, 870, 850 },   { 300, 1110, 10000, 8500 },
+		{ 600, 5000, 4000, 3000 }, { 100, 3000, 4000, 2000 },
+		{ 100, 1000, 1000, 1000 },
 	};
 	/* Scale for each test */
 	uint16_t exp_scale[][4] = {
-		{MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE,
-		 MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE},
-		{MOTION_SENSE_DEFAULT_SCALE + 300,
-		 MOTION_SENSE_DEFAULT_SCALE + 300,
-		 MOTION_SENSE_DEFAULT_SCALE + 300,
-		 MOTION_SENSE_DEFAULT_SCALE + 300},
-		{MOTION_SENSE_DEFAULT_SCALE - 300,
-		 MOTION_SENSE_DEFAULT_SCALE - 300,
-		 MOTION_SENSE_DEFAULT_SCALE - 300,
-		 MOTION_SENSE_DEFAULT_SCALE - 300},
-		{MOTION_SENSE_DEFAULT_SCALE + 345,
-		 MOTION_SENSE_DEFAULT_SCALE - 5423,
-		 MOTION_SENSE_DEFAULT_SCALE - 30,
-		 MOTION_SENSE_DEFAULT_SCALE + 400},
-		{MOTION_SENSE_DEFAULT_SCALE - 345,
-		 MOTION_SENSE_DEFAULT_SCALE + 5423,
-		 MOTION_SENSE_DEFAULT_SCALE + 30,
-		 MOTION_SENSE_DEFAULT_SCALE - 400},
-		{MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE,
-		 MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE}
+		{ MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE,
+		  MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE },
+		{ MOTION_SENSE_DEFAULT_SCALE + 300,
+		  MOTION_SENSE_DEFAULT_SCALE + 300,
+		  MOTION_SENSE_DEFAULT_SCALE + 300,
+		  MOTION_SENSE_DEFAULT_SCALE + 300 },
+		{ MOTION_SENSE_DEFAULT_SCALE - 300,
+		  MOTION_SENSE_DEFAULT_SCALE - 300,
+		  MOTION_SENSE_DEFAULT_SCALE - 300,
+		  MOTION_SENSE_DEFAULT_SCALE - 300 },
+		{ MOTION_SENSE_DEFAULT_SCALE + 345,
+		  MOTION_SENSE_DEFAULT_SCALE - 5423,
+		  MOTION_SENSE_DEFAULT_SCALE - 30,
+		  MOTION_SENSE_DEFAULT_SCALE + 400 },
+		{ MOTION_SENSE_DEFAULT_SCALE - 345,
+		  MOTION_SENSE_DEFAULT_SCALE + 5423,
+		  MOTION_SENSE_DEFAULT_SCALE + 30,
+		  MOTION_SENSE_DEFAULT_SCALE - 400 },
+		{ MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE,
+		  MOTION_SENSE_DEFAULT_SCALE, MOTION_SENSE_DEFAULT_SCALE }
 	};
 	uint16_t scale[3];
 	int16_t temp;
@@ -476,16 +468,16 @@ ZTEST_USER(tcs3400, test_tcs_scale)
 		zassert_equal(EC_SUCCESS,
 			      ms->drv->set_scale(ms, exp_scale[test], 0),
 			      "test %d", test);
-		zassert_equal(EC_SUCCESS,
-			      ms->drv->get_scale(ms, scale, &temp),
+		zassert_equal(EC_SUCCESS, ms->drv->get_scale(ms, scale, &temp),
 			      "test %d", test);
 		zassert_equal((int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, temp,
 			      "test %d, %d", test, temp);
 		zassert_equal(exp_scale[test][0], scale[0], "test %d", test);
 
 		/* Set and test RGB sensor scale */
-		zassert_equal(EC_SUCCESS, ms_rgb->drv->set_scale(ms_rgb,
-						&(exp_scale[test][1]), 0),
+		zassert_equal(EC_SUCCESS,
+			      ms_rgb->drv->set_scale(ms_rgb,
+						     &(exp_scale[test][1]), 0),
 			      "test %d", test);
 		zassert_equal(EC_SUCCESS,
 			      ms_rgb->drv->get_scale(ms_rgb, scale, &temp),
@@ -559,7 +551,6 @@ ZTEST_USER(tcs3400, test_tcs_data_rate)
 	zassert_equal(0, tcs_emul_get_reg(emul, TCS_I2C_ENABLE), NULL);
 	zassert_equal(0, ms->drv->get_data_rate(ms), NULL);
 	zassert_equal(0, ms_rgb->drv->get_data_rate(ms_rgb), NULL);
-
 
 	/* Test setting non-zero rate enables device */
 	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 100, 0), NULL);
