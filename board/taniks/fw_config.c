@@ -10,7 +10,7 @@
 #include "fw_config.h"
 #include "gpio.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 static union taniks_cbi_fw_config fw_config;
 BUILD_ASSERT(sizeof(fw_config) == sizeof(uint32_t));
@@ -65,7 +65,7 @@ void board_init_fw_config(void)
 		CPRINTS("CBI: Using board defaults for early board");
 		if (ec_cfg_has_tabletmode()) {
 			fw_config = fw_config_defaults;
-		} 
+		}
 	}
 
 	determine_storage();
