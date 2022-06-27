@@ -8,15 +8,15 @@
 #ifndef __CROS_EC_BASEBOARD_H
 #define __CROS_EC_BASEBOARD_H
 
-#if (defined(VARIANT_GRUNT_TCPC_0_ANX3429) \
-	+ defined(VARIANT_GRUNT_TCPC_0_ANX3447)) != 1
+#if (defined(VARIANT_GRUNT_TCPC_0_ANX3429) + \
+     defined(VARIANT_GRUNT_TCPC_0_ANX3447)) != 1
 #error Must choose VARIANT_GRUNT_TCPC_0_ANX3429 or VARIANT_GRUNT_TCPC_0_ANX3447
 #endif
 
 /* NPCX7 config */
-#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
-#define NPCX_TACH_SEL2    0  /* No tach. */
-#define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
+#define NPCX_UART_MODULE2 1 /* GPIO64/65 are used as UART pins. */
+#define NPCX_TACH_SEL2 0 /* No tach. */
+#define NPCX7_PWM1_SEL 0 /* GPIO C2 is not used as PWM1. */
 
 /* Internal SPI flash on NPCX7 */
 /* Flash is 1MB but reserve half for future use. */
@@ -85,7 +85,7 @@
  * ACOK from ISL9238 sometimes has a negative pulse after connecting
  * USB-C power. We want to ignore it. b/77455171
  */
-#undef  CONFIG_EXTPOWER_DEBOUNCE_MS
+#undef CONFIG_EXTPOWER_DEBOUNCE_MS
 #define CONFIG_EXTPOWER_DEBOUNCE_MS 200
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_POWER_COMMON
@@ -100,7 +100,6 @@
  * allow the second reset to be treated as a power-on.
  */
 #define CONFIG_BOARD_RESET_AFTER_POWER_ON
-
 
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PROTOCOL_8042
@@ -139,13 +138,13 @@
 #define CONFIG_USB_PORT_POWER_DUMB
 #define USB_PORT_COUNT 2
 
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000 /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	30000 /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 30000 /* us */
 
-#define PD_OPERATING_POWER_MW	15000
-#define PD_MAX_POWER_MW		45000
-#define PD_MAX_CURRENT_MA	3000
-#define PD_MAX_VOLTAGE_MV	20000
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW 45000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
 
 /*
  * Require PD negotiation to be complete when we are in a low-battery condition
@@ -158,15 +157,15 @@
 #undef CONFIG_PORT80_HISTORY_LEN
 #define CONFIG_PORT80_HISTORY_LEN 256
 
-#define I2C_PORT_BATTERY	I2C_PORT_POWER
-#define I2C_PORT_CHARGER	I2C_PORT_POWER
-#define I2C_PORT_POWER		NPCX_I2C_PORT0_0
-#define I2C_PORT_TCPC0		NPCX_I2C_PORT1_0
-#define I2C_PORT_TCPC1		NPCX_I2C_PORT2_0
-#define I2C_PORT_THERMAL_AP	NPCX_I2C_PORT3_0
-#define I2C_PORT_SENSOR		NPCX_I2C_PORT7_0
+#define I2C_PORT_BATTERY I2C_PORT_POWER
+#define I2C_PORT_CHARGER I2C_PORT_POWER
+#define I2C_PORT_POWER NPCX_I2C_PORT0_0
+#define I2C_PORT_TCPC0 NPCX_I2C_PORT1_0
+#define I2C_PORT_TCPC1 NPCX_I2C_PORT2_0
+#define I2C_PORT_THERMAL_AP NPCX_I2C_PORT3_0
+#define I2C_PORT_SENSOR NPCX_I2C_PORT7_0
 /* Accelerometer and Gyroscope are the same device. */
-#define I2C_PORT_ACCEL		I2C_PORT_SENSOR
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
 /* Sensors */
 #define CONFIG_MKBP_EVENT
@@ -184,8 +183,8 @@
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 #endif /* VARIANT_GRUNT_NO_SENSORS */
 
-#define USB_PD_PORT_ANX74XX	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX74XX 0
+#define USB_PD_PORT_PS8751 1
 
 #ifndef __ASSEMBLER__
 
