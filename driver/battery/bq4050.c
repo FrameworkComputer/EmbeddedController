@@ -18,9 +18,8 @@ int battery_bq4050_imbalance_mv(void)
 	 * returns a voltage for each cell, regardless of the number of cells
 	 * actually installed in the pack.  Unpopulated cells read exactly zero.
 	 */
-	static const uint8_t cell_voltage_address[4] = {
-		0x3c, 0x3d, 0x3e, 0x3f
-	};
+	static const uint8_t cell_voltage_address[4] = { 0x3c, 0x3d, 0x3e,
+							 0x3f };
 	int i, res, cell_voltage;
 	int n_cells = 0;
 	int max_voltage = 0;
