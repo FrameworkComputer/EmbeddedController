@@ -8,6 +8,5 @@
 #ifndef __CROS_EC_CPU_H
 #define __CROS_EC_CPU_H
 
-
 void cpu_init(void);
-#endif	/* __CROS_EC_CPU_H */
+#endif /* __CROS_EC_CPU_H */
