@@ -32,14 +32,12 @@ void tick_event(void)
 DECLARE_HOOK(HOOK_TICK, tick_event, HOOK_PRIO_DEFAULT);
 
 #ifdef CTS_MODULE_I2C
-const struct i2c_port_t i2c_ports[]  = {
-	{
-		.name = "test",
-		.port = STM32_I2C2_PORT,
-		.kbps = 100,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "test",
+	  .port = STM32_I2C2_PORT,
+	  .kbps = 100,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 #endif
