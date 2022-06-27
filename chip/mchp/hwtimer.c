@@ -16,8 +16,7 @@
 
 void __hw_clock_event_set(uint32_t deadline)
 {
-	MCHP_TMR32_CNT(1) = MCHP_TMR32_CNT(0) -
-			       (0xffffffff - deadline);
+	MCHP_TMR32_CNT(1) = MCHP_TMR32_CNT(0) - (0xffffffff - deadline);
 	MCHP_TMR32_CTL(1) |= BIT(5);
 }
 
@@ -49,16 +48,21 @@ void __hw_clock_source_set(uint32_t ts)
 static void __hw_clock_source_irq(int timer_id)
 {
 	MCHP_TMR32_STS(timer_id & 0x01) |= 1;
-	MCHP_INT_SOURCE(MCHP_TMR32_GIRQ) =
-			MCHP_TMR32_GIRQ_BIT(timer_id & 0x01);
+	MCHP_INT_SOURCE(MCHP_TMR32_GIRQ) = MCHP_TMR32_GIRQ_BIT(timer_id & 0x01);
 
 	/* If IRQ is from timer 0, 32-bit timer overflowed */
 	process_timers(timer_id == 0);
 }
 
-static void __hw_clock_source_irq_0(void) { __hw_clock_source_irq(0); }
+static void __hw_clock_source_irq_0(void)
+{
+	__hw_clock_source_irq(0);
+}
 DECLARE_IRQ(MCHP_IRQ_TIMER32_0, __hw_clock_source_irq_0, 1);
-static void __hw_clock_source_irq_1(void) { __hw_clock_source_irq(1); }
+static void __hw_clock_source_irq_1(void)
+{
+	__hw_clock_source_irq(1);
+}
 DECLARE_IRQ(MCHP_IRQ_TIMER32_1, __hw_clock_source_irq_1, 1);
 
 static void configure_timer(int timer_id)
@@ -88,7 +92,7 @@ static void configure_timer(int timer_id)
 int __hw_clock_source_init(uint32_t start_t)
 {
 	MCHP_PCR_SLP_DIS_DEV_MASK(3, MCHP_PCR_SLP_EN3_BTMR32_0 +
-			MCHP_PCR_SLP_EN3_BTMR32_1);
+					     MCHP_PCR_SLP_EN3_BTMR32_1);
 
 	/*
 	 * The timer can only fire interrupt when its value reaches zero.
@@ -111,8 +115,8 @@ int __hw_clock_source_init(uint32_t start_t)
 	/* Enable interrupt */
 	task_enable_irq(MCHP_IRQ_TIMER32_0);
 	task_enable_irq(MCHP_IRQ_TIMER32_1);
-	MCHP_INT_ENABLE(MCHP_TMR32_GIRQ) = MCHP_TMR32_GIRQ_BIT(0) +
-			MCHP_TMR32_GIRQ_BIT(1);
+	MCHP_INT_ENABLE(MCHP_TMR32_GIRQ) =
+		MCHP_TMR32_GIRQ_BIT(0) + MCHP_TMR32_GIRQ_BIT(1);
 	/*
 	 * Not needed when using direct mode interrupts
 	 * MCHP_INT_BLK_EN |= BIT(MCHP_TMR32_GIRQ);
