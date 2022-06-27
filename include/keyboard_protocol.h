@@ -39,7 +39,9 @@ void keyboard_update_button(enum keyboard_button_type button, int is_pressed);
 /* MKBP protocol takes the whole keyboard matrix, and does not care about
  * individual key presses.
  */
-static inline void keyboard_state_changed(int row, int col, int is_pressed) {}
+static inline void keyboard_state_changed(int row, int col, int is_pressed)
+{
+}
 #else
 /**
  * Called by keyboard scan code once any key state change (after de-bounce),
@@ -60,7 +62,7 @@ int board_has_keyboard_backlight(void);
  * to change KEYBOARD_ROW_REFRESH accordingly so that recovery mode can work on
  * the EC side of things (also see related CONFIG_KEYBOARD_REFRESH_ROW3)
  */
-__override_proto
-const struct ec_response_keybd_config *board_vivaldi_keybd_config(void);
+__override_proto const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void);
 
-#endif  /* __CROS_EC_KEYBOARD_PROTOCOL_H */
+#endif /* __CROS_EC_KEYBOARD_PROTOCOL_H */
