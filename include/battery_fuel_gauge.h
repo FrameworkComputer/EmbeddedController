@@ -67,7 +67,6 @@ struct board_batt_params {
 extern const struct board_batt_params board_battery_info[];
 extern const enum battery_type DEFAULT_BATTERY_TYPE;
 
-
 #ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
 /**
  * Report the absolute difference between the highest and lowest cell voltage in
