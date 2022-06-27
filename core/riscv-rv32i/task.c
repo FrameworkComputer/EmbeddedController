@@ -19,10 +19,10 @@ typedef struct {
 	 * Note that sp must be the first element in the task struct
 	 * for __switchto() to work.
 	 */
-	uint32_t sp;       /* Saved stack pointer for context switch */
-	atomic_t events;   /* Bitmaps of received events */
-	uint64_t runtime;  /* Time spent in task */
-	uint32_t *stack;   /* Start of stack */
+	uint32_t sp; /* Saved stack pointer for context switch */
+	atomic_t events; /* Bitmaps of received events */
+	uint64_t runtime; /* Time spent in task */
+	uint32_t *stack; /* Start of stack */
 } task_;
 
 /* Value to store in unused stack */
@@ -36,11 +36,9 @@ CONFIG_TEST_TASK_LIST
 #undef TASK
 
 /* Task names for easier debugging */
-#define TASK(n, r, d, s)  #n,
-static const char * const task_names[] = {
-	"<< idle >>",
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
+#define TASK(n, r, d, s) #n,
+static const char *const task_names[] = {
+	"<< idle >>", CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST
 };
 #undef TASK
 
@@ -48,12 +46,12 @@ static const char * const task_names[] = {
 static int task_will_switch;
 static uint32_t exc_sub_time;
 static uint64_t task_start_time; /* Time task scheduling started */
-static uint32_t exc_start_time;  /* Time of task->exception transition */
-static uint32_t exc_end_time;    /* Time of exception->task transition */
-static uint64_t exc_total_time;  /* Total time in exceptions */
-static uint32_t svc_calls;       /* Number of service calls */
-static uint32_t task_switches;   /* Number of times active task changed */
-static uint32_t irq_dist[CONFIG_IRQ_COUNT];  /* Distribution of IRQ calls */
+static uint32_t exc_start_time; /* Time of task->exception transition */
+static uint32_t exc_end_time; /* Time of exception->task transition */
+static uint64_t exc_total_time; /* Total time in exceptions */
+static uint32_t svc_calls; /* Number of service calls */
+static uint32_t task_switches; /* Number of times active task changed */
+static uint32_t irq_dist[CONFIG_IRQ_COUNT]; /* Distribution of IRQ calls */
 #endif
 
 extern int __task_start(void);
@@ -96,41 +94,36 @@ static void task_exit_trap(void)
 }
 
 /* Startup parameters for all tasks. */
-#define TASK(n, r, d, s)  {	\
-	.a0 = (uint32_t)d,	\
-	.pc = (uint32_t)r,	\
-	.stack_size = s,	\
-},
+#define TASK(n, r, d, s)           \
+	{                          \
+		.a0 = (uint32_t)d, \
+		.pc = (uint32_t)r, \
+		.stack_size = s,   \
+	},
 static const struct {
 	uint32_t a0;
 	uint32_t pc;
 	uint16_t stack_size;
-} tasks_init[] = {
-	TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
-};
+} tasks_init[] = { TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
+			   CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST };
 #undef TASK
 
 /* Contexts for all tasks */
-static task_ tasks[TASK_ID_COUNT] __attribute__ ((section(".bss.tasks")));
+static task_ tasks[TASK_ID_COUNT] __attribute__((section(".bss.tasks")));
 /* Validity checks about static task invariants */
 BUILD_ASSERT(TASK_ID_COUNT <= (sizeof(unsigned) * 8));
 BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
 
 /* Stacks for all tasks */
-#define TASK(n, r, d, s)  + s
-uint8_t task_stacks[0
-		    TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
-		    CONFIG_TASK_LIST
-		    CONFIG_TEST_TASK_LIST
-] __aligned(8);
+#define TASK(n, r, d, s) +s
+uint8_t task_stacks[0 TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE)
+			    CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST] __aligned(8);
 
 #undef TASK
 
 /* Reserve space to discard context on first context switch. */
-uint32_t scratchpad[TASK_SCRATCHPAD_SIZE] __attribute__
-					((section(".bss.task_scratchpad")));
+uint32_t scratchpad[TASK_SCRATCHPAD_SIZE]
+	__attribute__((section(".bss.task_scratchpad")));
 
 task_ *current_task = (task_ *)scratchpad;
 
@@ -162,7 +155,7 @@ static atomic_t tasks_ready = BIT(TASK_ID_HOOKS);
  */
 static atomic_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
 
-int start_called;  /* Has task swapping started */
+int start_called; /* Has task swapping started */
 
 /* in interrupt context */
 volatile bool in_interrupt;
@@ -188,22 +181,22 @@ static inline task_ *__task_id_to_ptr(task_id_t id)
 void __ram_code interrupt_disable(void)
 {
 	/* bit11: disable MEIE */
-	asm volatile ("li t0, 0x800");
-	asm volatile ("csrc mie, t0");
+	asm volatile("li t0, 0x800");
+	asm volatile("csrc mie, t0");
 }
 
 void __ram_code interrupt_enable(void)
 {
 	/* bit11: enable MEIE */
-	asm volatile ("li t0, 0x800");
-	asm volatile ("csrs  mie, t0");
+	asm volatile("li t0, 0x800");
+	asm volatile("csrs  mie, t0");
 }
 
 inline bool is_interrupt_enabled(void)
 {
 	int mie = 0;
 
-	asm volatile ("csrr %0, mie" : "=r"(mie));
+	asm volatile("csrr %0, mie" : "=r"(mie));
 
 	/* Check if MEIE bit is set in MIE register */
 	return mie & 0x800;
@@ -229,7 +222,7 @@ task_id_t __ram_code task_get_current(void)
 	return current_task - tasks;
 }
 
-atomic_t * __ram_code task_get_event_bitmap(task_id_t tskid)
+atomic_t *__ram_code task_get_event_bitmap(task_id_t tskid)
 {
 	task_ *tsk = __task_id_to_ptr(tskid);
 
@@ -247,7 +240,7 @@ int task_start_called(void)
  * Also includes emulation of software triggering interrupt vector
  */
 void __ram_code __keep syscall_handler(int desched, task_id_t resched,
-								int swirq)
+				       int swirq)
 {
 	/* are we emulating an interrupt ? */
 	if (swirq) {
@@ -279,14 +272,14 @@ void __ram_code __keep syscall_handler(int desched, task_id_t resched,
 	set_mepc(get_mepc() + 4);
 }
 
-task_ * __ram_code next_sched_task(void)
+task_ *__ram_code next_sched_task(void)
 {
 	task_ *new_task = __task_id_to_ptr(__fls(tasks_ready & tasks_enabled));
 
 #ifdef CONFIG_TASK_PROFILING
 	if (current_task != new_task) {
 		current_task->runtime +=
-				(exc_start_time - exc_end_time - exc_sub_time);
+			(exc_start_time - exc_end_time - exc_sub_time);
 		task_will_switch = 1;
 	}
 #endif
@@ -466,14 +459,14 @@ uint32_t __ram_code read_clear_int_mask(void)
 	uint32_t mie, meie = BIT(11);
 
 	/* Read and clear MEIE bit of MIE register. */
-	asm volatile ("csrrc %0, mie, %1" : "=r"(mie) : "r"(meie));
+	asm volatile("csrrc %0, mie, %1" : "=r"(mie) : "r"(meie));
 
 	return mie;
 }
 
 void __ram_code set_int_mask(uint32_t val)
 {
-	asm volatile ("csrw mie, %0" : : "r"(val));
+	asm volatile("csrw mie, %0" : : "r"(val));
 }
 
 void task_enable_all_tasks(void)
@@ -553,12 +546,12 @@ void __ram_code mutex_lock(struct mutex *mtx)
 	atomic_or(&mtx->waiters, id);
 
 	while (1) {
-		asm volatile (
+		asm volatile(
 			/* set lock value */
 			"li %0, 2\n\t"
 			/* attempt to acquire lock */
 			"amoswap.w.aq %0, %0, %1\n\t"
-			: "=&r" (locked), "+A" (mtx->lock));
+			: "=&r"(locked), "+A"(mtx->lock));
 		/* we got it ! */
 		if (!locked)
 			break;
@@ -576,9 +569,7 @@ void __ram_code mutex_unlock(struct mutex *mtx)
 	task_ *tsk = current_task;
 
 	/* give back the lock */
-	asm volatile (
-		"amoswap.w.aqrl zero, zero, %0\n\t"
-		: "+A" (mtx->lock));
+	asm volatile("amoswap.w.aqrl zero, zero, %0\n\t" : "+A"(mtx->lock));
 	waiters = mtx->waiters;
 
 	while (waiters) {
@@ -648,9 +639,7 @@ static int command_task_info(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info,
-			NULL,
-			"Print task info");
+DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info, NULL, "Print task info");
 
 static int command_task_ready(int argc, char **argv)
 {
@@ -664,8 +653,7 @@ static int command_task_ready(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
-			"[setmask]",
+DECLARE_CONSOLE_COMMAND(taskready, command_task_ready, "[setmask]",
 			"Print/set ready tasks");
 
 void task_pre_init(void)
@@ -688,9 +676,10 @@ void task_pre_init(void)
 		tasks[i].sp = (uint32_t)sp;
 
 		/* Initial context on stack (see __switchto()) */
-		sp[TASK_SCRATCHPAD_SIZE-2] = tasks_init[i].a0;         /* a0 */
-		sp[TASK_SCRATCHPAD_SIZE-1] = (uint32_t)task_exit_trap; /* ra */
-		sp[0] = tasks_init[i].pc;  /* pc/mepc */
+		sp[TASK_SCRATCHPAD_SIZE - 2] = tasks_init[i].a0; /* a0 */
+		sp[TASK_SCRATCHPAD_SIZE - 1] = (uint32_t)task_exit_trap; /* ra
+									  */
+		sp[0] = tasks_init[i].pc; /* pc/mepc */
 
 		/* Fill unused stack; also used to detect stack overflow. */
 		for (sp = stack_next; sp < (uint32_t *)tasks[i].sp; sp++)
