@@ -27,8 +27,8 @@
 enum POWERD_ERROR_CODE {
 	POWERD_OK = 0,
 	POWERD_CREATE_LOCK_FILE_ERROR = 0x1,
-	POWERD_WRITE_LOCK_FILE_ERROR  = 0x2,
-	POWERD_CLOSE_LOCK_FILE_ERROR  = 0x4,
+	POWERD_WRITE_LOCK_FILE_ERROR = 0x2,
+	POWERD_CLOSE_LOCK_FILE_ERROR = 0x4,
 	POWERD_DELETE_LOCK_FILE_ERROR = 0x8
 };
 
@@ -38,4 +38,4 @@ int disable_power_management(void);
 /* Re-enable power management. */
 int restore_power_management(void);
 
-#endif	/* __UTIL_POWERD_LOCK_H */
+#endif /* __UTIL_POWERD_LOCK_H */
