@@ -32,4 +32,4 @@ void lid_angle_set_wake_angle(int ang);
  */
 __override_proto void lid_angle_peripheral_enable(int enable);
 
-#endif  /* __CROS_EC_LID_ANGLE_H */
+#endif /* __CROS_EC_LID_ANGLE_H */
