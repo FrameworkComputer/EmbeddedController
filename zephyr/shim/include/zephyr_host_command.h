@@ -27,11 +27,11 @@ bool in_host_command_main(void);
 /**
  * See include/host_command.h for documentation.
  */
-#define DECLARE_HOST_COMMAND(_command, _routine, _version_mask)            \
-	STRUCT_SECTION_ITERABLE(host_command, _cros_hcmd_##_command) = {   \
-		.command = _command,                                       \
-		.handler = _routine,                                       \
-		.version_mask = _version_mask,                             \
+#define DECLARE_HOST_COMMAND(_command, _routine, _version_mask)          \
+	STRUCT_SECTION_ITERABLE(host_command, _cros_hcmd_##_command) = { \
+		.command = _command,                                     \
+		.handler = _routine,                                     \
+		.version_mask = _version_mask,                           \
 	}
 #else /* !CONFIG_PLATFORM_EC_HOSTCMD */
 
@@ -39,12 +39,12 @@ bool in_host_command_main(void);
  * Create a fake routine to call the function. The linker should
  * garbage-collect it since it is behind 'if (0)'
  */
-#define DECLARE_HOST_COMMAND(command, routine, version_mask)		\
-	int __remove_ ## command(void)					\
-	{								\
-		if (0)							\
-			routine(NULL);					\
-		return 0;						\
+#define DECLARE_HOST_COMMAND(command, routine, version_mask) \
+	int __remove_##command(void)                         \
+	{                                                    \
+		if (0)                                       \
+			routine(NULL);                       \
+		return 0;                                    \
 	}
 
 #endif /* CONFIG_PLATFORM_EC_HOSTCMD */
