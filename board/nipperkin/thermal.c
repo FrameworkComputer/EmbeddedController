@@ -18,7 +18,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
@@ -59,52 +59,51 @@ struct fan_step {
 static const struct fan_step fan_step_table[] = {
 	{
 		/* level 0 */
-		.on = {51, 0, 44, -1, -1, -1},
-		.off = {99, 99, 99, -1, -1, -1},
-		.rpm = {0},
+		.on = { 51, 0, 44, -1, -1, -1 },
+		.off = { 99, 99, 99, -1, -1, -1 },
+		.rpm = { 0 },
 	},
 	{
 		/* level 1 */
-		.on = {52, 0, 47, -1, -1, -1},
-		.off = {50, 99, 43, -1, -1, -1},
-		.rpm = {3000},
+		.on = { 52, 0, 47, -1, -1, -1 },
+		.off = { 50, 99, 43, -1, -1, -1 },
+		.rpm = { 3000 },
 	},
 	{
 		/* level 2 */
-		.on = {53, 0, 49, -1, -1, -1},
-		.off = {51, 99, 45, -1, -1, -1},
-		.rpm = {3400},
+		.on = { 53, 0, 49, -1, -1, -1 },
+		.off = { 51, 99, 45, -1, -1, -1 },
+		.rpm = { 3400 },
 	},
 	{
 		/* level 3 */
-		.on = {54, 0, 51, -1, -1, -1},
-		.off = {52, 99, 47, -1, -1, -1},
-		.rpm = {3800},
+		.on = { 54, 0, 51, -1, -1, -1 },
+		.off = { 52, 99, 47, -1, -1, -1 },
+		.rpm = { 3800 },
 	},
 	{
 		/* level 4 */
-		.on = {56, 50, 53, -1, -1, -1},
-		.off = {53, 47, 49, -1, -1, -1},
-		.rpm = {4100},
+		.on = { 56, 50, 53, -1, -1, -1 },
+		.off = { 53, 47, 49, -1, -1, -1 },
+		.rpm = { 4100 },
 	},
 	{
 		/* level 5 */
-		.on = {57, 52, 55, -1, -1, -1},
-		.off = {55, 49, 51, -1, -1, -1},
-		.rpm = {4400},
+		.on = { 57, 52, 55, -1, -1, -1 },
+		.off = { 55, 49, 51, -1, -1, -1 },
+		.rpm = { 4400 },
 	},
 	{
 		/* level 6 */
-		.on = {100, 100, 100, -1, -1, -1},
-		.off = {56, 51, 53, -1, -1, -1},
-		.rpm = {4900},
+		.on = { 100, 100, 100, -1, -1, -1 },
+		.off = { 56, 51, 53, -1, -1, -1 },
+		.rpm = { 4900 },
 	},
 };
 
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_step_table)
 
-BUILD_ASSERT(ARRAY_SIZE(fan_step_table) ==
-	ARRAY_SIZE(fan_step_table));
+BUILD_ASSERT(ARRAY_SIZE(fan_step_table) == ARRAY_SIZE(fan_step_table));
 
 int fan_table_to_rpm(int fan, int *temp)
 {
@@ -121,30 +120,29 @@ int fan_table_to_rpm(int fan, int *temp)
 	 *  3. invariant path. (return the current RPM)
 	 */
 	if (temp[TEMP_SENSOR_CHARGER] < prev_tmp[TEMP_SENSOR_CHARGER] ||
-		temp[TEMP_SENSOR_MEMORY] < prev_tmp[TEMP_SENSOR_MEMORY] ||
-		temp[TEMP_SENSOR_SOC] < prev_tmp[TEMP_SENSOR_SOC]) {
+	    temp[TEMP_SENSOR_MEMORY] < prev_tmp[TEMP_SENSOR_MEMORY] ||
+	    temp[TEMP_SENSOR_SOC] < prev_tmp[TEMP_SENSOR_SOC]) {
 		for (i = current_level; i > 0; i--) {
 			if (temp[TEMP_SENSOR_CHARGER] <
-				fan_step_table[i].off[TEMP_SENSOR_CHARGER] &&
-				temp[TEMP_SENSOR_MEMORY] <
-				fan_step_table[i].off[TEMP_SENSOR_MEMORY] &&
-				temp[TEMP_SENSOR_SOC] <
-				fan_step_table[i].off[TEMP_SENSOR_SOC]) {
+				    fan_step_table[i].off[TEMP_SENSOR_CHARGER] &&
+			    temp[TEMP_SENSOR_MEMORY] <
+				    fan_step_table[i].off[TEMP_SENSOR_MEMORY] &&
+			    temp[TEMP_SENSOR_SOC] <
+				    fan_step_table[i].off[TEMP_SENSOR_SOC]) {
 				current_level = i - 1;
 			} else
 				break;
 		}
 	} else if (temp[TEMP_SENSOR_CHARGER] > prev_tmp[TEMP_SENSOR_CHARGER] ||
-			temp[TEMP_SENSOR_MEMORY]
-				> prev_tmp[TEMP_SENSOR_MEMORY] ||
-			temp[TEMP_SENSOR_SOC] > prev_tmp[TEMP_SENSOR_SOC]) {
+		   temp[TEMP_SENSOR_MEMORY] > prev_tmp[TEMP_SENSOR_MEMORY] ||
+		   temp[TEMP_SENSOR_SOC] > prev_tmp[TEMP_SENSOR_SOC]) {
 		for (i = current_level; i < NUM_FAN_LEVELS; i++) {
 			if ((temp[TEMP_SENSOR_CHARGER] >
-				fan_step_table[i].on[TEMP_SENSOR_CHARGER] &&
-				temp[TEMP_SENSOR_MEMORY] >
-				fan_step_table[i].on[TEMP_SENSOR_MEMORY]) ||
-				temp[TEMP_SENSOR_SOC] >
-				fan_step_table[i].on[TEMP_SENSOR_SOC]) {
+				     fan_step_table[i].on[TEMP_SENSOR_CHARGER] &&
+			     temp[TEMP_SENSOR_MEMORY] >
+				     fan_step_table[i].on[TEMP_SENSOR_MEMORY]) ||
+			    temp[TEMP_SENSOR_SOC] >
+				    fan_step_table[i].on[TEMP_SENSOR_SOC]) {
 				current_level = i + 1;
 			} else
 				break;
@@ -167,14 +165,11 @@ int fan_table_to_rpm(int fan, int *temp)
 
 void board_override_fan_control(int fan, int *tmp)
 {
-	if (chipset_in_state(CHIPSET_STATE_ON |
-		CHIPSET_STATE_ANY_SUSPEND)) {
+	if (chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND)) {
 		fan_set_rpm_mode(FAN_CH(fan), 1);
-		fan_set_rpm_target(FAN_CH(fan),
-			fan_table_to_rpm(fan, tmp));
+		fan_set_rpm_target(FAN_CH(fan), fan_table_to_rpm(fan, tmp));
 	}
 }
-
 
 struct chg_curr_step {
 	int on;
@@ -183,11 +178,10 @@ struct chg_curr_step {
 };
 
 static const struct chg_curr_step chg_curr_table[] = {
-	{.on =  0, .off =  0, .curr_ma = 3566},
-	{.on = 66, .off = 65, .curr_ma = 2500},
-	{.on = 70, .off = 69, .curr_ma = 1500},
+	{ .on = 0, .off = 0, .curr_ma = 3566 },
+	{ .on = 66, .off = 65, .curr_ma = 2500 },
+	{ .on = 70, .off = 69, .curr_ma = 1500 },
 };
-
 
 #define NUM_CHG_CURRENT_LEVELS ARRAY_SIZE(chg_curr_table)
 
@@ -199,7 +193,6 @@ int charger_profile_override(struct charge_state_data *curr)
 	int thermal_sensor_chrg;
 	static int current_level;
 	static int prev_tmp;
-
 
 	if (!(curr->batt.flags & BATT_FLAG_RESPONSIVE))
 		return 0;
@@ -214,12 +207,13 @@ int charger_profile_override(struct charge_state_data *curr)
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		if (chg_temp_c < prev_tmp) {
-			if ((chg_temp_c <= chg_curr_table[current_level].off)
-				&& (current_level > 0))
+			if ((chg_temp_c <= chg_curr_table[current_level].off) &&
+			    (current_level > 0))
 				current_level -= 1;
 		} else if (chg_temp_c > prev_tmp) {
-			if ((chg_temp_c >= chg_curr_table[current_level + 1].on)
-				&& (current_level < NUM_CHG_CURRENT_LEVELS - 1))
+			if ((chg_temp_c >=
+			     chg_curr_table[current_level + 1].on) &&
+			    (current_level < NUM_CHG_CURRENT_LEVELS - 1))
 				current_level += 1;
 		}
 
