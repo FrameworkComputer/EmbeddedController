@@ -179,7 +179,7 @@ static void test_hook_ap_power_events(void)
 
 	cb.count = 0;
 	ap_power_ev_init_callback(&cb.cb, ev_handler,
-		AP_POWER_SUSPEND|AP_POWER_RESUME);
+				  AP_POWER_SUSPEND | AP_POWER_RESUME);
 	ap_power_ev_add_callback(&cb.cb);
 	hook_notify(HOOK_CHIPSET_SUSPEND);
 	zassert_equal(1, cb.count, "Callbacks not called");
@@ -201,15 +201,13 @@ static void test_hook_ap_power_events(void)
 
 void test_main(void)
 {
-	ztest_test_suite(
-		hooks_tests,
-		ztest_unit_test(test_hook_list_multiple),
-		ztest_unit_test(test_hook_list_single),
-		ztest_unit_test(test_hook_list_empty),
-		ztest_unit_test(test_deferred_func),
-		ztest_unit_test(test_deferred_func_push_out),
-		ztest_unit_test(test_deferred_func_cancel),
-		ztest_unit_test(test_hook_ap_power_events));
+	ztest_test_suite(hooks_tests, ztest_unit_test(test_hook_list_multiple),
+			 ztest_unit_test(test_hook_list_single),
+			 ztest_unit_test(test_hook_list_empty),
+			 ztest_unit_test(test_deferred_func),
+			 ztest_unit_test(test_deferred_func_push_out),
+			 ztest_unit_test(test_deferred_func_cancel),
+			 ztest_unit_test(test_hook_ap_power_events));
 
 	ztest_run_test_suite(hooks_tests);
 }
