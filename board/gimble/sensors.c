@@ -69,30 +69,22 @@ static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;
 static struct accelgyro_saved_data_t g_bma422_data;
 
 /* TODO(b/192477578): calibrate the orientation matrix on later board stage */
-static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					     { FLOAT_TO_FP(1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
-static const mat33_fp_t lid_standard_ref_id_1 = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_standard_ref_id_1 = { { 0, FLOAT_TO_FP(1), 0 },
+						  { FLOAT_TO_FP(1), 0, 0 },
+						  { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* TODO(b/192477578): calibrate the orientation matrix on later board stage */
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, FLOAT_TO_FP(-1), 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t base_standard_ref_id_1 = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_standard_ref_id_1 = { { 0, FLOAT_TO_FP(1), 0 },
+						   { FLOAT_TO_FP(-1), 0, 0 },
+						   { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -287,24 +279,18 @@ DECLARE_HOOK(HOOK_INIT, baseboard_sensors_init, HOOK_PRIO_INIT_I2C + 1);
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = {
-		.name = "DDR and SOC",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
-	},
-	[TEMP_SENSOR_2_FAN] = {
-		.name = "Fan",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_FAN
-	},
-	[TEMP_SENSOR_3_CHARGER] = {
-		.name = "Charger",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_3_CHARGER
-	},
+	[TEMP_SENSOR_1_DDR_SOC] = { .name = "DDR and SOC",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_1_DDR_SOC },
+	[TEMP_SENSOR_2_FAN] = { .name = "Fan",
+				.type = TEMP_SENSOR_TYPE_BOARD,
+				.read = get_temp_3v3_30k9_47k_4050b,
+				.idx = ADC_TEMP_SENSOR_2_FAN },
+	[TEMP_SENSOR_3_CHARGER] = { .name = "Charger",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_3_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -318,8 +304,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -346,8 +332,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_INDUCTOR \
-	{ \
+#define THERMAL_INDUCTOR         \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -359,8 +345,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 __maybe_unused static const struct ec_thermal_config thermal_inductor =
 	THERMAL_INDUCTOR;
 
-#define THERMAL_FAN_MISSING \
-	{ \
+#define THERMAL_FAN_MISSING      \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
@@ -388,9 +374,8 @@ static void config_thermal_params(void)
 {
 	int rv, val;
 
-	rv = tcpc_addr_read16_no_lpm_exit(USBC_PORT_C1,
-				PS8XXX_I2C_ADDR1_FLAGS, TCPC_REG_VENDOR_ID,
-				&val);
+	rv = tcpc_addr_read16_no_lpm_exit(USBC_PORT_C1, PS8XXX_I2C_ADDR1_FLAGS,
+					  TCPC_REG_VENDOR_ID, &val);
 
 	if (rv != 0) {
 		thermal_params[TEMP_SENSOR_2_FAN] =
