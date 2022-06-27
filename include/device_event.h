@@ -50,4 +50,4 @@ static inline void device_set_single_event(int event)
  */
 void device_enable_event(enum ec_device_event event);
 
-#endif  /* __CROS_EC_DEVICE_EVENT_H */
+#endif /* __CROS_EC_DEVICE_EVENT_H */
