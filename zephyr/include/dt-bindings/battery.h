@@ -10,11 +10,11 @@
  * Macros used by LED devicetree files (led.dts) to define battery-level
  * range.
  */
-#define BATTERY_LEVEL_EMPTY		0
-#define BATTERY_LEVEL_SHUTDOWN		3
-#define BATTERY_LEVEL_CRITICAL		5
-#define BATTERY_LEVEL_LOW		10
-#define BATTERY_LEVEL_NEAR_FULL		97
-#define BATTERY_LEVEL_FULL		100
+#define BATTERY_LEVEL_EMPTY 0
+#define BATTERY_LEVEL_SHUTDOWN 3
+#define BATTERY_LEVEL_CRITICAL 5
+#define BATTERY_LEVEL_LOW 10
+#define BATTERY_LEVEL_NEAR_FULL 97
+#define BATTERY_LEVEL_FULL 100
 
 #endif /* DT_BINDINGS_BATTERY_H_ */
