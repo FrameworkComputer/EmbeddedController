@@ -6,7 +6,7 @@
 #ifndef __AP_PWRSEQ_SIGNAL_GPIO_H__
 #define __AP_PWRSEQ_SIGNAL_GPIO_H__
 
-#define PWR_SIG_TAG_GPIO	PWR_GPIO_
+#define PWR_SIG_TAG_GPIO PWR_GPIO_
 
 /*
  * Generate enums for the GPIOs.
@@ -21,13 +21,13 @@
 
 enum pwr_sig_gpio {
 #if HAS_GPIO_SIGNALS
-DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_gpio, PWR_GPIO_ENUM)
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_gpio, PWR_GPIO_ENUM)
 #endif
-	PWR_SIG_GPIO_COUNT
+		PWR_SIG_GPIO_COUNT
 };
 
-#undef	PWR_GPIO_ENUM
-#undef	TAG_GPIO
+#undef PWR_GPIO_ENUM
+#undef TAG_GPIO
 
 /**
  * @brief Get the value of the GPIO power signal.
