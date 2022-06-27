@@ -13,8 +13,8 @@
 #include "nct38xx.h"
 #include "tcpm/tcpci.h"
 
-#define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_GPIO, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ##args)
 
 #ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
 #error "This driver doesn't support get_port function"
@@ -30,7 +30,7 @@ struct nct38xx_chip_data {
 };
 
 static struct nct38xx_chip_data chip_data[CONFIG_IO_EXPANDER_PORT_COUNT] = {
-	 [0 ... (CONFIG_IO_EXPANDER_PORT_COUNT - 1)] =  { {0, 0}, -1 }
+	[0 ...(CONFIG_IO_EXPANDER_PORT_COUNT - 1)] = { { 0, 0 }, -1 }
 };
 
 static int nct38xx_ioex_check_is_valid(int ioex, int port, int mask)
@@ -41,9 +41,8 @@ static int nct38xx_ioex_check_is_valid(int ioex, int port, int mask)
 			return EC_ERROR_INVAL;
 		}
 		if (mask & ~NCT38XXX_3808_VALID_GPIO_MASK) {
-
 			CPRINTF("GPIO%02d is not support in NCT3808\n",
-							__fls(mask));
+				__fls(mask));
 			return EC_ERROR_INVAL;
 		}
 	}
@@ -62,11 +61,11 @@ static int nct38xx_ioex_init(int ioex)
 	 *  010: NCT3808
 	 */
 	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
-			TCPC_REG_BCD_DEV, &val);
+		       TCPC_REG_BCD_DEV, &val);
 
 	if (rv != EC_SUCCESS) {
 		CPRINTF("Failed to read NCT38XX DEV ID for IOexpander %d\n",
-					ioex);
+			ioex);
 		return rv;
 	}
 
@@ -81,9 +80,9 @@ static int nct38xx_ioex_init(int ioex)
 	 * function of IOEX when the NCT38XX TCPCI driver is not included.
 	 */
 	if (!IS_ENABLED(CONFIG_USB_PD_TCPM_NCT38XX)) {
-		rv = i2c_write16(ioex_p->i2c_host_port,
-				ioex_p->i2c_addr_flags, TCPC_REG_ALERT_MASK,
-				TCPC_REG_ALERT_VENDOR_DEF);
+		rv = i2c_write16(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
+				 TCPC_REG_ALERT_MASK,
+				 TCPC_REG_ALERT_VENDOR_DEF);
 		if (rv != EC_SUCCESS)
 			return rv;
 	}
@@ -100,7 +99,7 @@ static int nct38xx_ioex_get_level(int ioex, int port, int mask, int *val)
 
 	reg = NCT38XX_REG_GPIO_DATA_IN(port);
 	rv = i2c_read8(ioex_config[ioex].i2c_host_port,
-			ioex_config[ioex].i2c_addr_flags, reg, val);
+		       ioex_config[ioex].i2c_addr_flags, reg, val);
 	if (rv != EC_SUCCESS)
 		return rv;
 
@@ -120,7 +119,7 @@ static int nct38xx_ioex_set_level(int ioex, int port, int mask, int value)
 	reg = NCT38XX_REG_GPIO_DATA_OUT(port);
 
 	rv = i2c_read8(ioex_config[ioex].i2c_host_port,
-			ioex_config[ioex].i2c_addr_flags, reg, &val);
+		       ioex_config[ioex].i2c_addr_flags, reg, &val);
 	if (rv != EC_SUCCESS)
 		return rv;
 
@@ -130,7 +129,7 @@ static int nct38xx_ioex_set_level(int ioex, int port, int mask, int value)
 		val &= ~mask;
 
 	return i2c_write8(ioex_config[ioex].i2c_host_port,
-			ioex_config[ioex].i2c_addr_flags, reg, val);
+			  ioex_config[ioex].i2c_addr_flags, reg, val);
 }
 
 static int nct38xx_ioex_get_flags(int ioex, int port, int mask, int *flags)
@@ -177,7 +176,7 @@ static int nct38xx_ioex_get_flags(int ioex, int port, int mask, int *flags)
 }
 
 static int nct38xx_ioex_sel_int_type(int i2c_port, int i2c_addr, int port,
-					int mask, int flags)
+				     int mask, int flags)
 {
 	int rv;
 	int reg_rising, reg_falling;
@@ -222,7 +221,7 @@ static int nct38xx_ioex_sel_int_type(int i2c_port, int i2c_addr, int port,
 		if (rv != EC_SUCCESS)
 			return rv;
 	} else if ((flags & GPIO_INT_F_RISING) ||
-				(flags & GPIO_INT_F_FALLING)) {
+		   (flags & GPIO_INT_F_FALLING)) {
 		if (flags & GPIO_INT_F_RISING)
 			rising |= mask;
 		else
@@ -242,7 +241,7 @@ static int nct38xx_ioex_sel_int_type(int i2c_port, int i2c_addr, int port,
 }
 
 static int nct38xx_ioex_set_flags_by_mask(int ioex, int port, int mask,
-					int flags)
+					  int flags)
 {
 	int rv, reg, val, i2c_port, i2c_addr;
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
@@ -260,8 +259,8 @@ static int nct38xx_ioex_set_flags_by_mask(int ioex, int port, int mask,
 	 */
 	if (port == 0) {
 		/* GPIO03 in NCT3807 is not muxed with other function. */
-		if (!(chip_data[ioex].chip_id ==
-					NCT38XX_VARIANT_3807 && mask & 0x08)) {
+		if (!(chip_data[ioex].chip_id == NCT38XX_VARIANT_3807 &&
+		      mask & 0x08)) {
 			reg = NCT38XX_REG_MUX_CONTROL;
 			rv = i2c_read8(i2c_port, i2c_addr, reg, &val);
 			if (rv != EC_SUCCESS)
@@ -320,7 +319,7 @@ static int nct38xx_ioex_set_flags_by_mask(int ioex, int port, int mask,
 	else
 		val &= ~mask;
 
-	return  i2c_write8(i2c_port, i2c_addr, reg, val);
+	return i2c_write8(i2c_port, i2c_addr, reg, val);
 }
 
 /*
@@ -341,7 +340,7 @@ static int nct38xx_ioex_set_flags_by_mask(int ioex, int port, int mask,
  *    TCPC.
  */
 static int nct38xx_ioex_enable_interrupt(int ioex, int port, int mask,
-					int enable)
+					 int enable)
 {
 	int rv, reg, val;
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
@@ -352,14 +351,14 @@ static int nct38xx_ioex_enable_interrupt(int ioex, int port, int mask,
 
 	/* Clear the pending bit */
 	reg = NCT38XX_REG_GPIO_ALERT_STAT(port);
-	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
-					reg, &val);
+	rv = i2c_read8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags, reg,
+		       &val);
 	if (rv != EC_SUCCESS)
 		return rv;
 
 	val |= mask;
-	rv = i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
-					reg, val);
+	rv = i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags, reg,
+			val);
 	if (rv != EC_SUCCESS)
 		return rv;
 
@@ -374,8 +373,8 @@ static int nct38xx_ioex_enable_interrupt(int ioex, int port, int mask,
 		val = chip_data[ioex].int_mask[port];
 	}
 
-	return i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
-					reg, val);
+	return i2c_write8(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags, reg,
+			  val);
 }
 
 int nct38xx_ioex_event_handler(int ioex)
@@ -386,15 +385,15 @@ int nct38xx_ioex_event_handler(int ioex)
 	struct ioexpander_config_t *ioex_p = &ioex_config[ioex];
 	int rv = 0;
 
-	int_mask = chip_data[ioex].int_mask[0] | (
-				chip_data[ioex].int_mask[1] << 8);
+	int_mask = chip_data[ioex].int_mask[0] |
+		   (chip_data[ioex].int_mask[1] << 8);
 	reg = NCT38XX_REG_GPIO_ALERT_STAT(0);
 	/*
 	 * Read ALERT_STAT_0 and ALERT_STAT_1 register in a single I2C
 	 * transaction to increase efficiency
 	 */
-	rv = i2c_read16(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
-					reg, &int_status);
+	rv = i2c_read16(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags, reg,
+			&int_status);
 	if (rv != EC_SUCCESS)
 		return rv;
 
@@ -403,15 +402,15 @@ int nct38xx_ioex_event_handler(int ioex)
 	 * Clear the changed status bits in ALERT_STAT_0 and ALERT_STAT_1
 	 * register in a single I2C transaction to increase efficiency
 	 */
-	rv = i2c_write16(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
-					reg, int_status);
+	rv = i2c_write16(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags, reg,
+			 int_status);
 	if (rv != EC_SUCCESS)
 		return rv;
 
 	/* For NCT3808, only check one port */
 	total_port = (chip_data[ioex].chip_id == NCT38XX_VARIANT_3808) ?
-		NCT38XX_NCT3808_MAX_IO_PORT :
-		NCT38XX_NCT3807_MAX_IO_PORT;
+			     NCT38XX_NCT3808_MAX_IO_PORT :
+			     NCT38XX_NCT3807_MAX_IO_PORT;
 	for (i = 0; i < total_port; i++) {
 		uint8_t pending;
 
@@ -421,15 +420,13 @@ int nct38xx_ioex_event_handler(int ioex)
 			continue;
 
 		for (j = 0, g = ioex_list; j < ioex_ih_count; j++, g++) {
-
 			if (ioex == g->ioex && i == g->port &&
-						(pending & g->mask)) {
+			    (pending & g->mask)) {
 				ioex_irq_handlers[j](j + IOEX_SIGNAL_START);
 				pending &= ~g->mask;
 				if (!pending)
 					break;
 			}
-
 		}
 	}
 
@@ -453,9 +450,8 @@ void nct38xx_ioex_handle_alert(int ioex)
 		CPRINTF("fail to read ALERT register\n");
 
 	if (status & TCPC_REG_ALERT_VENDOR_DEF) {
-		rv = i2c_write16(ioex_p->i2c_host_port,
-				ioex_p->i2c_addr_flags, TCPC_REG_ALERT,
-				TCPC_REG_ALERT_VENDOR_DEF);
+		rv = i2c_write16(ioex_p->i2c_host_port, ioex_p->i2c_addr_flags,
+				 TCPC_REG_ALERT, TCPC_REG_ALERT_VENDOR_DEF);
 		if (rv != EC_SUCCESS) {
 			CPRINTF("Fail to clear Vendor Define mask\n");
 			return;
@@ -465,10 +461,10 @@ void nct38xx_ioex_handle_alert(int ioex)
 }
 
 const struct ioexpander_drv nct38xx_ioexpander_drv = {
-	.init              = &nct38xx_ioex_init,
-	.get_level         = &nct38xx_ioex_get_level,
-	.set_level         = &nct38xx_ioex_set_level,
+	.init = &nct38xx_ioex_init,
+	.get_level = &nct38xx_ioex_get_level,
+	.set_level = &nct38xx_ioex_set_level,
 	.get_flags_by_mask = &nct38xx_ioex_get_flags,
 	.set_flags_by_mask = &nct38xx_ioex_set_flags_by_mask,
-	.enable_interrupt  = &nct38xx_ioex_enable_interrupt,
+	.enable_interrupt = &nct38xx_ioex_enable_interrupt,
 };
