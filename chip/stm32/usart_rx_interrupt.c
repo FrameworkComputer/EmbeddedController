@@ -23,8 +23,8 @@ static void usart_rx_init(struct usart_config const *config)
 
 static void usart_rx_interrupt_handler(struct usart_config const *config)
 {
-	intptr_t base   = config->hw->base;
-	int32_t  status = STM32_USART_SR(base);
+	intptr_t base = config->hw->base;
+	int32_t status = STM32_USART_SR(base);
 
 	if (status & STM32_USART_SR_RXNE) {
 		uint8_t byte = STM32_USART_RDR(base);
