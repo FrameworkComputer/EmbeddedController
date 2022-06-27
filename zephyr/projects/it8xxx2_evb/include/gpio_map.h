@@ -9,6 +9,6 @@
 #include <zephyr/devicetree.h>
 #include <gpio_signal.h>
 
-#define GPIO_ENTERING_RW	GPIO_UNIMPLEMENTED
+#define GPIO_ENTERING_RW GPIO_UNIMPLEMENTED
 
 #endif /* __ZEPHYR_GPIO_MAP_H */
