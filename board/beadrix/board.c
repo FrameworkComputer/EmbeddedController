@@ -39,8 +39,8 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 #define INT_RECHECK_US 5000
 
@@ -142,34 +142,26 @@ __override void board_pulse_entering_rw(void)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_VSNS_PP3300_A] = {
-		.name = "PP3300_A_PGOOD",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH0
-	},
-	[ADC_TEMP_SENSOR_1] = {
-		.name = "TEMP_SENSOR1",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH2
-	},
-	[ADC_TEMP_SENSOR_2] = {
-		.name = "TEMP_SENSOR2",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH3
-	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH13
-	},
+	[ADC_VSNS_PP3300_A] = { .name = "PP3300_A_PGOOD",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH0 },
+	[ADC_TEMP_SENSOR_1] = { .name = "TEMP_SENSOR1",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH2 },
+	[ADC_TEMP_SENSOR_2] = { .name = "TEMP_SENSOR2",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH3 },
+	[ADC_SUB_ANALOG] = { .name = "SUB_ANALOG",
+			     .factor_mul = ADC_MAX_MVOLT,
+			     .factor_div = ADC_READ_MAX + 1,
+			     .shift = 0,
+			     .channel = CHIP_ADC_CH13 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -224,7 +216,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 };
 
 static int board_nb7v904m_mux_set(const struct usb_mux *me,
-						mux_state_t mux_state);
+				  mux_state_t mux_state);
 
 /* USB Retimer */
 const struct usb_mux usbc1_retimer = {
@@ -243,7 +235,8 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
 		.driver = &it5205_usb_mux_driver,
 	},
-	{	/* Used as MUX only*/
+	{
+		/* Used as MUX only*/
 		.usb_port = 1,
 		.i2c_port = I2C_PORT_SUB_USB_C1,
 		.i2c_addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
@@ -255,7 +248,7 @@ struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 /* USB Mux */
 static int board_nb7v904m_mux_set(const struct usb_mux *me,
-						mux_state_t mux_state)
+				  mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 	int flipped = !!(mux_state & USB_PD_MUX_POLARITY_INVERTED);
@@ -264,75 +257,71 @@ static int board_nb7v904m_mux_set(const struct usb_mux *me,
 		/* USB with DP */
 		if (mux_state & USB_PD_MUX_DP_ENABLED) {
 			if (flipped) { /* CC2 */
-				rv |= nb7v904m_tune_usb_set_eq(me,
-						NB7V904M_CH_A_EQ_0_DB,
-						NB7V904M_CH_B_EQ_4_DB,
-						NB7V904M_CH_C_EQ_0_DB,
-						NB7V904M_CH_D_EQ_0_DB);
-				rv |= nb7v904m_tune_usb_flat_gain(me,
-						NB7V904M_CH_A_GAIN_0_DB,
-						NB7V904M_CH_B_GAIN_3P5_DB,
-						NB7V904M_CH_C_GAIN_0_DB,
-						NB7V904M_CH_D_GAIN_0_DB);
-				rv |= nb7v904m_set_loss_profile_match(me,
-						NB7V904M_LOSS_PROFILE_A,
-						NB7V904M_LOSS_PROFILE_A,
-						NB7V904M_LOSS_PROFILE_D,
-						NB7V904M_LOSS_PROFILE_D);
+				rv |= nb7v904m_tune_usb_set_eq(
+					me, NB7V904M_CH_A_EQ_0_DB,
+					NB7V904M_CH_B_EQ_4_DB,
+					NB7V904M_CH_C_EQ_0_DB,
+					NB7V904M_CH_D_EQ_0_DB);
+				rv |= nb7v904m_tune_usb_flat_gain(
+					me, NB7V904M_CH_A_GAIN_0_DB,
+					NB7V904M_CH_B_GAIN_3P5_DB,
+					NB7V904M_CH_C_GAIN_0_DB,
+					NB7V904M_CH_D_GAIN_0_DB);
+				rv |= nb7v904m_set_loss_profile_match(
+					me, NB7V904M_LOSS_PROFILE_A,
+					NB7V904M_LOSS_PROFILE_A,
+					NB7V904M_LOSS_PROFILE_D,
+					NB7V904M_LOSS_PROFILE_D);
 			} /* CC1 */
 			else {
-				rv |= nb7v904m_tune_usb_set_eq(me,
-						NB7V904M_CH_A_EQ_0_DB,
-						NB7V904M_CH_B_EQ_0_DB,
-						NB7V904M_CH_C_EQ_4_DB,
-						NB7V904M_CH_D_EQ_0_DB);
-				rv |= nb7v904m_tune_usb_flat_gain(me,
-						NB7V904M_CH_A_GAIN_0_DB,
-						NB7V904M_CH_B_GAIN_0_DB,
-						NB7V904M_CH_C_GAIN_3P5_DB,
-						NB7V904M_CH_D_GAIN_0_DB);
-				rv |= nb7v904m_set_loss_profile_match(me,
-						NB7V904M_LOSS_PROFILE_D,
-						NB7V904M_LOSS_PROFILE_D,
-						NB7V904M_LOSS_PROFILE_A,
-						NB7V904M_LOSS_PROFILE_A);
+				rv |= nb7v904m_tune_usb_set_eq(
+					me, NB7V904M_CH_A_EQ_0_DB,
+					NB7V904M_CH_B_EQ_0_DB,
+					NB7V904M_CH_C_EQ_4_DB,
+					NB7V904M_CH_D_EQ_0_DB);
+				rv |= nb7v904m_tune_usb_flat_gain(
+					me, NB7V904M_CH_A_GAIN_0_DB,
+					NB7V904M_CH_B_GAIN_0_DB,
+					NB7V904M_CH_C_GAIN_3P5_DB,
+					NB7V904M_CH_D_GAIN_0_DB);
+				rv |= nb7v904m_set_loss_profile_match(
+					me, NB7V904M_LOSS_PROFILE_D,
+					NB7V904M_LOSS_PROFILE_D,
+					NB7V904M_LOSS_PROFILE_A,
+					NB7V904M_LOSS_PROFILE_A);
 			}
 		} else {
 			/* USB only */
 			rv |= nb7v904m_tune_usb_set_eq(me,
-					NB7V904M_CH_A_EQ_0_DB,
-					NB7V904M_CH_B_EQ_4_DB,
-					NB7V904M_CH_C_EQ_4_DB,
-					NB7V904M_CH_D_EQ_0_DB);
-			rv |= nb7v904m_tune_usb_flat_gain(me,
-					NB7V904M_CH_A_GAIN_0_DB,
-					NB7V904M_CH_B_GAIN_3P5_DB,
-					NB7V904M_CH_C_GAIN_3P5_DB,
-					NB7V904M_CH_D_GAIN_0_DB);
-			rv |= nb7v904m_set_loss_profile_match(me,
-					NB7V904M_LOSS_PROFILE_A,
-					NB7V904M_LOSS_PROFILE_A,
-					NB7V904M_LOSS_PROFILE_A,
-					NB7V904M_LOSS_PROFILE_A);
+						       NB7V904M_CH_A_EQ_0_DB,
+						       NB7V904M_CH_B_EQ_4_DB,
+						       NB7V904M_CH_C_EQ_4_DB,
+						       NB7V904M_CH_D_EQ_0_DB);
+			rv |= nb7v904m_tune_usb_flat_gain(
+				me, NB7V904M_CH_A_GAIN_0_DB,
+				NB7V904M_CH_B_GAIN_3P5_DB,
+				NB7V904M_CH_C_GAIN_3P5_DB,
+				NB7V904M_CH_D_GAIN_0_DB);
+			rv |= nb7v904m_set_loss_profile_match(
+				me, NB7V904M_LOSS_PROFILE_A,
+				NB7V904M_LOSS_PROFILE_A,
+				NB7V904M_LOSS_PROFILE_A,
+				NB7V904M_LOSS_PROFILE_A);
 		}
 
 	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* 4 lanes DP */
-		rv |= nb7v904m_tune_usb_set_eq(me,
-				NB7V904M_CH_A_EQ_0_DB,
-				NB7V904M_CH_B_EQ_0_DB,
-				NB7V904M_CH_C_EQ_0_DB,
-				NB7V904M_CH_D_EQ_0_DB);
-		rv |= nb7v904m_tune_usb_flat_gain(me,
-				NB7V904M_CH_A_GAIN_0_DB,
-				NB7V904M_CH_B_GAIN_0_DB,
-				NB7V904M_CH_C_GAIN_0_DB,
-				NB7V904M_CH_D_GAIN_0_DB);
-		rv |= nb7v904m_set_loss_profile_match(me,
-				NB7V904M_LOSS_PROFILE_D,
-				NB7V904M_LOSS_PROFILE_D,
-				NB7V904M_LOSS_PROFILE_D,
-				NB7V904M_LOSS_PROFILE_D);
+		rv |= nb7v904m_tune_usb_set_eq(me, NB7V904M_CH_A_EQ_0_DB,
+					       NB7V904M_CH_B_EQ_0_DB,
+					       NB7V904M_CH_C_EQ_0_DB,
+					       NB7V904M_CH_D_EQ_0_DB);
+		rv |= nb7v904m_tune_usb_flat_gain(me, NB7V904M_CH_A_GAIN_0_DB,
+						  NB7V904M_CH_B_GAIN_0_DB,
+						  NB7V904M_CH_C_GAIN_0_DB,
+						  NB7V904M_CH_D_GAIN_0_DB);
+		rv |= nb7v904m_set_loss_profile_match(
+			me, NB7V904M_LOSS_PROFILE_D, NB7V904M_LOSS_PROFILE_D,
+			NB7V904M_LOSS_PROFILE_D, NB7V904M_LOSS_PROFILE_D);
 	}
 
 	return rv;
@@ -406,8 +395,7 @@ int board_is_sourcing_vbus(int port)
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < board_get_usb_pd_port_count());
+	int is_real_port = (port >= 0 && port < board_get_usb_pd_port_count());
 	int i;
 	int old_port;
 
@@ -476,8 +464,8 @@ int board_set_active_charge_port(int port)
 }
 
 /* Vconn control for integrated ITE TCPC */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-				int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
 
@@ -518,7 +506,7 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	if (board_get_usb_pd_port_count() > 1 &&
-				!gpio_get_level(GPIO_USB_C1_INT_V1_ODL)) {
+	    !gpio_get_level(GPIO_USB_C1_INT_V1_ODL)) {
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
 			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
 			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
@@ -532,9 +520,8 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-__override void ocpc_get_pid_constants(int *kp, int *kp_div,
-				       int *ki, int *ki_div,
-				       int *kd, int *kd_div)
+__override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
+				       int *ki_div, int *kd, int *kd_div)
 {
 	*kp = 1;
 	*kp_div = 20;
@@ -550,25 +537,23 @@ int pd_snk_is_vbus_provided(int port)
 }
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq_hz = 10000,
-	}
-};
+const struct pwm_t pwm_channels[] = { [PWM_CH_KBLIGHT] = {
+					      .channel = 0,
+					      .flags = PWM_CONFIG_DSLEEP,
+					      .freq_hz = 10000,
+				      } };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Memory",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Ambient",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_2},
+	[TEMP_SENSOR_1] = { .name = "Memory",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Ambient",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -589,8 +574,8 @@ static const struct ec_response_keybd_config keybd1 = {
 	/* No function keys, no numeric keypad and no screenlock key */
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	/*
 	 * Future boards should use fw_config if needed.
