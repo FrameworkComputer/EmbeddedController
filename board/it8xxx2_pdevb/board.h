@@ -42,12 +42,12 @@
 #define CONFIG_USB_PD_CUSTOM_PDO
 #define CONFIG_USB_PD_3A_PORTS 0
 #define CONFIG_USB_PD_DUAL_ROLE
-#define CONFIG_USB_PD_PORT_MAX_COUNT    2
-#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT   2
+#define CONFIG_USB_PD_PORT_MAX_COUNT 2
+#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 2
 #define CONFIG_USB_PD_TCPMV2
 #define CONFIG_USB_DRP_ACC_TRYSRC
 #define CONFIG_USB_PD_REV30
-#define CONFIG_USB_PID 0x1234            /* Invalid PID for development board */
+#define CONFIG_USB_PID 0x1234 /* Invalid PID for development board */
 #define CONFIG_USB_PD_DEBUG_LEVEL 2
 #define CONFIG_USB_PD_TCPM_ITE_ON_CHIP
 #define CONFIG_USB_PD_TRY_SRC
@@ -82,16 +82,16 @@ enum adc_channel {
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     3000
+#define PD_MAX_POWER_MW 60000
+#define PD_MAX_CURRENT_MA 3000
 /* Try to negotiate to 20V since i2c noise problems should be fixed. */
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_VOLTAGE_MV 20000
 /* TODO: determine the following board specific type-C power constants */
 /*
  * delay to turn on the power supply max is ~16ms.
  * delay to turn off the power supply max is about ~180ms.
  */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* delay to turn on/off vconn */
