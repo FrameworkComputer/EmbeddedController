@@ -38,9 +38,10 @@
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
 #define CONFIG_PVD
-/* See 'Programmable voltage detector characteristics' in the STM32F072x8 Datasheet.
-   PVD Threshold 1 corresponds to a falling voltage threshold of min:2.09V, max:2.27V. */
-#define PVD_THRESHOLD     (1)
+/* See 'Programmable voltage detector characteristics' in the STM32F072x8
+   Datasheet. PVD Threshold 1 corresponds to a falling voltage threshold of
+   min:2.09V, max:2.27V. */
+#define PVD_THRESHOLD (1)
 
 /* USB Configuration */
 #define CONFIG_USB
@@ -60,23 +61,23 @@
 #define DEFAULT_MAC_ADDR "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_CONSOLE	0
-#define USB_IFACE_EMPTY		1
-#define USB_IFACE_I2C		2
-#define USB_IFACE_USART3_STREAM	3
-#define USB_IFACE_USART4_STREAM	4
-#define USB_IFACE_UPDATE	5
-#define USB_IFACE_COUNT		6
+#define USB_IFACE_CONSOLE 0
+#define USB_IFACE_EMPTY 1
+#define USB_IFACE_I2C 2
+#define USB_IFACE_USART3_STREAM 3
+#define USB_IFACE_USART4_STREAM 4
+#define USB_IFACE_UPDATE 5
+#define USB_IFACE_COUNT 6
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_CONSOLE		1
-#define USB_EP_EMPTY		2
-#define USB_EP_I2C		3
-#define USB_EP_USART3_STREAM	4
-#define USB_EP_USART4_STREAM	5
-#define USB_EP_UPDATE		6
-#define USB_EP_COUNT		7
+#define USB_EP_CONTROL 0
+#define USB_EP_CONSOLE 1
+#define USB_EP_EMPTY 2
+#define USB_EP_I2C 3
+#define USB_EP_USART3_STREAM 4
+#define USB_EP_USART4_STREAM 5
+#define USB_EP_UPDATE 6
+#define USB_EP_COUNT 7
 
 /* Enable console recasting of GPIO type. */
 #define CONFIG_CMD_GPIO_EXTENDED
@@ -113,7 +114,7 @@
 
 /* PD features */
 #define CONFIG_ADC
-#undef  CONFIG_ADC_WATCHDOG
+#undef CONFIG_ADC_WATCHDOG
 #define CONFIG_BOARD_PRE_INIT
 /*
  * If task profiling is enabled then the rx falling edge detection interrupts
@@ -122,7 +123,7 @@
 #undef CONFIG_TASK_PROFILING
 
 #define CONFIG_CHARGE_MANAGER
-#undef  CONFIG_CHARGE_MANAGER_SAFE_MODE
+#undef CONFIG_CHARGE_MANAGER_SAFE_MODE
 #define CONFIG_USB_POWER_DELIVERY
 #define CONFIG_USB_PD_TCPMV1
 #define CONFIG_CMD_PD
@@ -144,22 +145,22 @@
 #define CONFIG_USB_PD_INITIAL_DRP_STATE PD_DRP_FORCE_SINK
 
 /* Variable-current Rp no connect and Ra attach macros */
-#define CC_NC(port, cc, sel)  (pd_tcpc_cc_nc(port, cc, sel))
-#define CC_RA(port, cc, sel)  (pd_tcpc_cc_ra(port, cc, sel))
+#define CC_NC(port, cc, sel) (pd_tcpc_cc_nc(port, cc, sel))
+#define CC_RA(port, cc, sel) (pd_tcpc_cc_ra(port, cc, sel))
 
 /*
  * TODO(crosbug.com/p/60792): The delay values are currently just place holders
  * and the delay will need to be relative to the circuitry that allows VBUS to
  * be supplied to the DUT port from the CHG port.
  */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  50000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 50000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 50000 /* us */
 
 /* Define typical operating power and max power */
 #define PD_OPERATING_POWER_MW 15000
-#define PD_MAX_POWER_MW       60000
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_VOLTAGE_MV     20000
+#define PD_MAX_POWER_MW 60000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
 /*
  * Define PDO selection logic for SourceCap.
  * On a 45W PD charger, it might provide PDOs with 15V/3A and 20V/2.25A.
@@ -180,8 +181,7 @@
 
 /* Timer selection */
 #define TIM_CLOCK32 2
-#define TIM_ADC     3
-
+#define TIM_ADC 3
 
 #include "gpio_signal.h"
 
@@ -199,7 +199,6 @@ enum usb_strings {
 	USB_STR_UPDATE_NAME,
 	USB_STR_COUNT
 };
-
 
 /* ADC signal */
 enum adc_channel {
