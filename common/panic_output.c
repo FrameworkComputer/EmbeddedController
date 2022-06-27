@@ -30,17 +30,13 @@ static struct panic_data zephyr_panic_data;
 #define CONFIG_PANIC_DATA_BASE (&zephyr_panic_data)
 #endif
 /* Panic data goes at the end of RAM. */
-static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
+static struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 
 /* Common SW Panic reasons strings */
-const char * const panic_sw_reasons[] = {
+const char *const panic_sw_reasons[] = {
 #ifdef CONFIG_SOFTWARE_PANIC
-	"PANIC_SW_DIV_ZERO",
-	"PANIC_SW_STACK_OVERFLOW",
-	"PANIC_SW_PD_CRASH",
-	"PANIC_SW_ASSERT",
-	"PANIC_SW_WATCHDOG",
-	"PANIC_SW_RNG",
+	"PANIC_SW_DIV_ZERO",   "PANIC_SW_STACK_OVERFLOW", "PANIC_SW_PD_CRASH",
+	"PANIC_SW_ASSERT",     "PANIC_SW_WATCHDOG",	  "PANIC_SW_RNG",
 	"PANIC_SW_PMIC_FAULT",
 #endif
 };
@@ -52,8 +48,7 @@ const char * const panic_sw_reasons[] = {
  */
 int panic_sw_reason_is_valid(uint32_t reason)
 {
-	return (IS_ENABLED(CONFIG_SOFTWARE_PANIC) &&
-		reason >= PANIC_SW_BASE &&
+	return (IS_ENABLED(CONFIG_SOFTWARE_PANIC) && reason >= PANIC_SW_BASE &&
 		(reason - PANIC_SW_BASE) < ARRAY_SIZE(panic_sw_reasons));
 }
 
@@ -143,8 +138,8 @@ void panic_assert_fail(const char *fname, int linenum)
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
 		       int linenum)
 {
-	panic_printf("\nASSERTION FAILURE '%s' in %s() at %s:%d\n",
-		     msg, func, fname, linenum);
+	panic_printf("\nASSERTION FAILURE '%s' in %s() at %s:%d\n", msg, func,
+		     fname, linenum);
 	complete_panic(linenum);
 }
 #endif
@@ -179,9 +174,8 @@ uintptr_t get_panic_data_start(void)
 	if (IS_ENABLED(CONFIG_BOARD_NATIVE_POSIX))
 		return (uintptr_t)pdata_ptr;
 
-	return ((uintptr_t)CONFIG_PANIC_DATA_BASE
-			   + CONFIG_PANIC_DATA_SIZE
-			   - pdata_ptr->struct_size);
+	return ((uintptr_t)CONFIG_PANIC_DATA_BASE + CONFIG_PANIC_DATA_SIZE -
+		pdata_ptr->struct_size);
 }
 
 static uint32_t get_panic_data_size(void)
@@ -212,7 +206,7 @@ struct panic_data *get_panic_data_write(void)
 	 * and magic is safe because it is always placed at the
 	 * end of RAM.
 	 */
-	struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
+	struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 	const struct jump_data *jdata_ptr;
 	uintptr_t data_begin;
 	size_t move_size;
@@ -249,8 +243,8 @@ struct panic_data *get_panic_data_write(void)
 	 * anything and can just return pdata_ptr (clear memory, set magic
 	 * and struct_size first).
 	 */
-	if (jdata_ptr->magic != JUMP_DATA_MAGIC ||
-	    jdata_ptr->version < 1 || jdata_ptr->version > 3) {
+	if (jdata_ptr->magic != JUMP_DATA_MAGIC || jdata_ptr->version < 1 ||
+	    jdata_ptr->version > 3) {
 		memset(pdata_ptr, 0, CONFIG_PANIC_DATA_SIZE);
 		pdata_ptr->magic = PANIC_DATA_MAGIC;
 		pdata_ptr->struct_size = CONFIG_PANIC_DATA_SIZE;
@@ -273,7 +267,8 @@ struct panic_data *get_panic_data_write(void)
 
 	if (move_size != 0) {
 		/* Move jump_tags and jump_data */
-		memmove((void *)(data_begin - delta), (void *)data_begin, move_size);
+		memmove((void *)(data_begin - delta), (void *)data_begin,
+			move_size);
 	}
 
 	/*
@@ -322,7 +317,7 @@ static void stack_overflow_recurse(int n)
 	 */
 	msleep(10);
 
-	stack_overflow_recurse(n+1);
+	stack_overflow_recurse(n + 1);
 
 	/*
 	 * Do work after the recursion, or else the compiler uses tail-chaining
@@ -382,22 +377,23 @@ static int command_crash(int argc, char **argv)
 	return EC_ERROR_UNKNOWN;
 }
 DECLARE_CONSOLE_COMMAND(crash, command_crash,
-		"[assert | divzero | udivzero"
+			"[assert | divzero | udivzero"
 #ifdef CONFIG_CMD_STACKOVERFLOW
 			" | stack"
 #endif
 			" | unaligned | watchdog | hang]",
-		"Crash the system (for testing)");
+			"Crash the system (for testing)");
 #endif /* CONFIG_CMD_CRASH */
 
 static int command_panicinfo(int argc, char **argv)
 {
-	struct panic_data * const pdata_ptr = panic_get_data();
+	struct panic_data *const pdata_ptr = panic_get_data();
 
 	if (pdata_ptr) {
 		ccprintf("Saved panic data:%s\n",
 			 (pdata_ptr->flags & PANIC_DATA_FLAG_OLD_CONSOLE ?
-			  "" : " (NEW)"));
+				  "" :
+				  " (NEW)"));
 
 		panic_data_print(pdata_ptr);
 
@@ -405,12 +401,11 @@ static int command_panicinfo(int argc, char **argv)
 		pdata_ptr->flags |= PANIC_DATA_FLAG_OLD_CONSOLE;
 	} else {
 		ccprintf("No saved panic data available "
-		    "or panic data can't be safely interpreted.\n");
+			 "or panic data can't be safely interpreted.\n");
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo,
-			NULL,
+DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo, NULL,
 			"Print info from a previous panic");
 
 /*****************************************************************************/
@@ -421,7 +416,7 @@ host_command_panic_info(struct host_cmd_handler_args *args)
 {
 	uint32_t pdata_size = get_panic_data_size();
 	uintptr_t pdata_start = get_panic_data_start();
-	struct panic_data * pdata;
+	struct panic_data *pdata;
 
 	if (pdata_start && pdata_size > 0) {
 		ASSERT(pdata_size <= args->response_max);
@@ -437,6 +432,5 @@ host_command_panic_info(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_PANIC_INFO,
-		     host_command_panic_info,
+DECLARE_HOST_COMMAND(EC_CMD_GET_PANIC_INFO, host_command_panic_info,
 		     EC_VER_MASK(0));
