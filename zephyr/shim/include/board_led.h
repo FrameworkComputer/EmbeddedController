@@ -12,13 +12,13 @@ struct board_led_pwm_dt_channel {
 	pwm_flags_t flags;
 };
 
-#define BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(node_id) \
-	{ \
+#define BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(node_id)        \
+	{                                                    \
 		.dev = DEVICE_DT_GET(DT_PWMS_CTLR(node_id)), \
-		.channel = DT_PWMS_CHANNEL(node_id), \
-		.flags = DT_PWMS_FLAGS(node_id), \
+		.channel = DT_PWMS_CHANNEL(node_id),         \
+		.flags = DT_PWMS_FLAGS(node_id),             \
 	}
 
 #define BOARD_LED_HZ_TO_PERIOD_NS(freq_hz) (NSEC_PER_SEC / freq_hz)
 
-#endif  /* __BOARD_LED_H */
+#endif /* __BOARD_LED_H */
