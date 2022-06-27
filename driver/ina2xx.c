@@ -14,7 +14,7 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 /* I2C base address */
 #define INA2XX_I2C_ADDR_FLAGS 0x40
@@ -24,8 +24,8 @@ uint16_t ina2xx_read(uint8_t idx, uint8_t reg)
 	int res;
 	int val;
 
-	res = i2c_read16(I2C_PORT_MASTER, INA2XX_I2C_ADDR_FLAGS | idx,
-			 reg, &val);
+	res = i2c_read16(I2C_PORT_MASTER, INA2XX_I2C_ADDR_FLAGS | idx, reg,
+			 &val);
 	if (res) {
 		CPRINTS("INA2XX I2C read failed");
 		return 0x0bad;
@@ -38,8 +38,8 @@ int ina2xx_write(uint8_t idx, uint8_t reg, uint16_t val)
 	int res;
 	uint16_t be_val = (val >> 8) | ((val & 0xff) << 8);
 
-	res = i2c_write16(I2C_PORT_MASTER, INA2XX_I2C_ADDR_FLAGS | idx,
-			  reg, be_val);
+	res = i2c_write16(I2C_PORT_MASTER, INA2XX_I2C_ADDR_FLAGS | idx, reg,
+			  be_val);
 	if (res)
 		CPRINTS("INA2XX I2C write failed");
 	return res;
@@ -109,11 +109,10 @@ static void ina2xx_dump(uint8_t idx)
 
 	ccprintf("Configuration: %04x\n", cfg);
 	ccprintf("Shunt voltage: %04x => %d uV\n", sv,
-						   INA2XX_SHUNT_UV((int)sv));
-	ccprintf("Bus voltage  : %04x => %d mV\n", bv,
-						   INA2XX_BUS_MV((int)bv));
+		 INA2XX_SHUNT_UV((int)sv));
+	ccprintf("Bus voltage  : %04x => %d mV\n", bv, INA2XX_BUS_MV((int)bv));
 	ccprintf("Power        : %04x => %d mW\n", pow,
-						   INA2XX_POW_MW((int)pow));
+		 INA2XX_POW_MW((int)pow));
 	ccprintf("Current      : %04x => %d mA\n", curr, curr);
 	ccprintf("Calibration  : %04x\n", calib);
 	ccprintf("Mask/Enable  : %04x\n", mask);
