@@ -28,7 +28,7 @@
 /* Console output macros */
 #ifdef DEBUG_SIB
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #else
 #define CPUTS(...)
 #define CPRINTS(...)
@@ -110,8 +110,7 @@ uint8_t sib_read_kbc_reg(uint8_t io_offset)
 }
 
 /* Super-IO read/write function */
-void sib_write_reg(uint8_t io_offset, uint8_t index_value,
-		uint8_t io_data)
+void sib_write_reg(uint8_t io_offset, uint8_t index_value, uint8_t io_data)
 {
 	/* Disable interrupts */
 	interrupt_disable();
@@ -132,7 +131,7 @@ void sib_write_reg(uint8_t io_offset, uint8_t index_value,
 	sib_wait_host_write_done();
 
 	/* Specify the io_offset A0 = 1. the data register is accessed */
-	NPCX_IHIOA = io_offset+1;
+	NPCX_IHIOA = io_offset + 1;
 	/* Write the data. This starts the write access to the host module */
 	NPCX_IHD = io_data;
 	/* Wait while Core write operation is in progress */
@@ -170,7 +169,7 @@ uint8_t sib_read_reg(uint8_t io_offset, uint8_t index_value)
 	sib_wait_host_write_done();
 
 	/* Specify the io_offset A0 = 1. the data register is accessed */
-	NPCX_IHIOA = io_offset+1;
+	NPCX_IHIOA = io_offset + 1;
 	/* Start a Core read from host module */
 	SET_BIT(NPCX_SIBCTRL, NPCX_SIBCTRL_CSRD);
 	/* Wait while Core read operation is in progress */
