@@ -14,11 +14,7 @@
  * Source of truth is the project/brask/kinox/config.star configuration file.
  */
 
-enum ec_cfg_dp_display {
-	ABSENT = 0,
-	DB_HDMI = 1,
-	DB_DP = 2
-};
+enum ec_cfg_dp_display { ABSENT = 0, DB_HDMI = 1, DB_DP = 2 };
 
 union kinox_cbi_fw_config {
 	struct {
