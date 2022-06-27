@@ -22,7 +22,7 @@
 
 #undef CTS_TEST
 #define CTS_TEST(test, th_rc, th_string, dut_rc, dut_string) \
-	{test, STRINGIFY(test)},
+	{ test, STRINGIFY(test) },
 struct cts_test tests[] = {
 #include "cts.testlist"
 };
