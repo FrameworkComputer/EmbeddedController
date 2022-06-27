@@ -157,8 +157,7 @@ struct usb_mux {
 	 * @param[out] ack_required: indication of whether this function
 	 *	       requires a wait for an AP ACK after
 	 */
-	void (*hpd_update)(const struct usb_mux *me,
-			   mux_state_t mux_state,
+	void (*hpd_update)(const struct usb_mux *me, mux_state_t mux_state,
 			   bool *ack_required);
 };
 
@@ -193,30 +192,30 @@ void virtual_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 #ifdef CONFIG_USB_PD_TCPM_MUX
 static inline int mux_write(const struct usb_mux *me, int reg, int val)
 {
-	return me->flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val)
-		: tcpc_write(me->usb_port, reg, val);
+	return me->flags & USB_MUX_FLAG_NOT_TCPC ?
+		       i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val) :
+		       tcpc_write(me->usb_port, reg, val);
 }
 
 static inline int mux_read(const struct usb_mux *me, int reg, int *val)
 {
-	return me->flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val)
-		: tcpc_read(me->usb_port, reg, val);
+	return me->flags & USB_MUX_FLAG_NOT_TCPC ?
+		       i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val) :
+		       tcpc_read(me->usb_port, reg, val);
 }
 
 static inline int mux_write16(const struct usb_mux *me, int reg, int val)
 {
-	return me->flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_write16(me->i2c_port, me->i2c_addr_flags, reg, val)
-		: tcpc_write16(me->usb_port, reg, val);
+	return me->flags & USB_MUX_FLAG_NOT_TCPC ?
+		       i2c_write16(me->i2c_port, me->i2c_addr_flags, reg, val) :
+		       tcpc_write16(me->usb_port, reg, val);
 }
 
 static inline int mux_read16(const struct usb_mux *me, int reg, int *val)
 {
-	return me->flags & USB_MUX_FLAG_NOT_TCPC
-		? i2c_read16(me->i2c_port, me->i2c_addr_flags, reg, val)
-		: tcpc_read16(me->usb_port, reg, val);
+	return me->flags & USB_MUX_FLAG_NOT_TCPC ?
+		       i2c_read16(me->i2c_port, me->i2c_addr_flags, reg, val) :
+		       tcpc_read16(me->usb_port, reg, val);
 }
 #endif /* CONFIG_USB_PD_TCPM_MUX */
 
@@ -235,8 +234,8 @@ void usb_mux_init(int port);
  * @param usb_config usb2.0 selected function.
  * @param polarity plug polarity (0=CC1, 1=CC2).
  */
-void usb_mux_set(int port, mux_state_t mux_mode,
-		 enum usb_switch usb_config, int polarity);
+void usb_mux_set(int port, mux_state_t mux_mode, enum usb_switch usb_config,
+		 int polarity);
 
 /**
  * Configure superspeed muxes on type-C port for only one index in the mux
