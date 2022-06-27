@@ -51,11 +51,10 @@ struct mkbp_event_source {
 #ifdef CONFIG_PLATFORM_EC_MKBP_EVENT
 #include "zephyr_mkbp_event.h"
 #else
-#define DECLARE_EVENT_SOURCE(type, func)                       \
-	const struct mkbp_event_source __keep		       \
-	__no_sanitize_address _evt_src_##type		       \
-	__attribute__((section(".rodata.evtsrcs")))            \
-		 = {type, func}
+#define DECLARE_EVENT_SOURCE(type, func)                            \
+	const struct mkbp_event_source __keep __no_sanitize_address \
+		_evt_src_##type                                     \
+		__attribute__((section(".rodata.evtsrcs"))) = { type, func }
 #endif
 
-#endif  /* __CROS_EC_MKBP_EVENT_H */
+#endif /* __CROS_EC_MKBP_EVENT_H */
