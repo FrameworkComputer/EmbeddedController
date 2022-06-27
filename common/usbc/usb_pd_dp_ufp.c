@@ -15,9 +15,8 @@
 #include "usb_pd.h"
 #include "usb_pd_dp_ufp.h"
 
-
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 enum hpd_state {
 	LOW_WAIT,
@@ -105,17 +104,17 @@ static void hpd_to_dp_attention(void)
 	 * the DP_STATUS VDO.
 	 */
 	svdm_header = VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP)) |
-			       VDO_OPOS(opos) | CMD_ATTENTION;
+		      VDO_OPOS(opos) | CMD_ATTENTION;
 	vdm[0] = VDO(USB_SID_DISPLAYPORT, 1, svdm_header);
 
 	vdm[1] = VDO_DP_STATUS((evt == hpd_irq), /* IRQ_HPD */
-				(evt != hpd_low), /* HPD_HI|LOW */
-				0, /* request exit DP */
-				0, /* request exit USB */
-				dock_get_mf_preference(), /* MF pref */
-				1, /* enabled */
-				0, /* power low */
-				0x2);
+			       (evt != hpd_low), /* HPD_HI|LOW */
+			       0, /* request exit DP */
+			       0, /* request exit USB */
+			       dock_get_mf_preference(), /* MF pref */
+			       1, /* enabled */
+			       0, /* power low */
+			       0x2);
 
 	/* Send request to DPM to send an attention VDM */
 	pd_request_vdm_attention(port, vdm, ARRAY_SIZE(vdm));
@@ -154,10 +153,10 @@ static void hpd_queue_event(enum hpd_event evt)
 	 * are kept in the queue.
 	 */
 	if (evt == hpd_irq) {
-		if ((hpd.count >= HPD_QUEUE_DEPTH) || ((hpd.count  >= 2) &&
-			(hpd.queue[hpd.count - 2] == hpd_irq))) {
-			CPRINTS("hpd: discard hpd: count - %d",
-				hpd.count);
+		if ((hpd.count >= HPD_QUEUE_DEPTH) ||
+		    ((hpd.count >= 2) &&
+		     (hpd.queue[hpd.count - 2] == hpd_irq))) {
+			CPRINTS("hpd: discard hpd: count - %d", hpd.count);
 			return;
 		}
 	}
@@ -238,13 +237,13 @@ static void hpd_to_pd_converter(int level, uint64_t ts)
 		 */
 		if (!level) {
 			/* Still low, now wait for IRQ or LOW determination */
-			hpd.timer = ts + (HPD_T_IRQ_MAX_PULSE -
-					  HPD_T_IRQ_MIN_PULSE);
+			hpd.timer = ts +
+				    (HPD_T_IRQ_MAX_PULSE - HPD_T_IRQ_MIN_PULSE);
 			hpd.state = IRQ_CHECK;
 
 		} else {
 			uint64_t irq_ts = hpd.timer + HPD_T_IRQ_MAX_PULSE -
-				HPD_T_IRQ_MIN_PULSE;
+					  HPD_T_IRQ_MIN_PULSE;
 			/*
 			 * If hpd is high now, this must have been an edge
 			 * event, but still need to determine if the pulse width
@@ -271,7 +270,7 @@ static void hpd_to_pd_converter(int level, uint64_t ts)
 			if (ts <= hpd.timer) {
 				hpd_queue_event(hpd_irq);
 			}
-		} else if (ts >  hpd.timer) {
+		} else if (ts > hpd.timer) {
 			hpd.state = LOW_WAIT;
 			hpd_queue_event(hpd_low);
 		}
@@ -287,7 +286,7 @@ static void manage_hpd(void)
 	int level;
 	uint64_t ts = get_time().val;
 	uint32_t num_hpd_events = (hpd.edges.head - hpd.edges.tail) &
-		EDGE_QUEUE_MASK;
+				  EDGE_QUEUE_MASK;
 
 	/*
 	 * HPD edges are detected via GPIO interrupts. The ISR routine adds edge
@@ -305,7 +304,7 @@ static void manage_hpd(void)
 	}
 
 	if (num_hpd_events) {
-		while(num_hpd_events-- > 0) {
+		while (num_hpd_events-- > 0) {
 			int idx = hpd.edges.tail;
 
 			level = hpd.edges.buffer[idx].level;
@@ -331,9 +330,8 @@ static void manage_hpd(void)
 		 * a DP_ATTENTION message if a DP_CONFIG message has been
 		 * received and have passed the minimum spacing interval.
 		 */
-		if (hpd.send_enable &&
-		    ((get_time().val - hpd.last_send_ts) >
-		     HPD_T_MIN_DP_ATTEN)) {
+		if (hpd.send_enable && ((get_time().val - hpd.last_send_ts) >
+					HPD_T_MIN_DP_ATTEN)) {
 			/* Generate DP_ATTENTION event pending in queue */
 			hpd_to_dp_attention();
 		} else {
@@ -352,7 +350,7 @@ static void manage_hpd(void)
 			 * the minimum time spacing.
 			 */
 			callback_us = HPD_T_MIN_DP_ATTEN -
-				(get_time().val - hpd.last_send_ts);
+				      (get_time().val - hpd.last_send_ts);
 			if (callback_us <= 0 ||
 			    callback_us > HPD_T_MIN_DP_ATTEN)
 				callback_us = HPD_T_MIN_DP_ATTEN;
@@ -403,7 +401,7 @@ void usb_pd_hpd_converter_enable(int enable)
 		hpd.state = LOW_WAIT;
 		hpd.count = 0;
 		hpd.timer = 0;
-	        hpd.last_send_ts = 0;
+		hpd.last_send_ts = 0;
 		hpd.send_enable = 0;
 
 		/* Reset hpd signal edges queue */
@@ -427,7 +425,7 @@ void usb_pd_hpd_converter_enable(int enable)
 
 void usb_pd_hpd_edge_event(int signal)
 {
-	int  next_head = (hpd.edges.head + 1) & EDGE_QUEUE_MASK;
+	int next_head = (hpd.edges.head + 1) & EDGE_QUEUE_MASK;
 	struct hpd_mark mark;
 
 	/* Get current timestamp and level */
