@@ -18,25 +18,21 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
 	return i2c_read8(ppc_chips[port].i2c_port,
-			 ppc_chips[port].i2c_addr_flags,
-			 reg,
-			 regval);
+			 ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 static int write_reg(uint8_t port, int reg, int regval)
 {
 	return i2c_write8(ppc_chips[port].i2c_port,
-			  ppc_chips[port].i2c_addr_flags,
-			  reg,
-			  regval);
+			  ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 static int set_flags(const int port, const int addr, const int flags_to_set)
@@ -80,7 +76,6 @@ static int set_field(const int port, const int addr, const int shift,
 	return set_flags(port, addr, val);
 }
 
-
 #ifdef CONFIG_CMD_PPC_DUMP
 static int ktu1125_dump(int port)
 {
@@ -102,15 +97,14 @@ static int ktu1125_dump(int port)
 static int ktu1125_power_path_control(int port, int enable)
 {
 	int status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_SW_AB_EN)
-			    : clr_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_SW_AB_EN |
-					KTU1125_CC1S_VCONN |
-					KTU1125_CC2S_VCONN);
+					KTU1125_SW_AB_EN) :
+			      clr_flags(port, KTU1125_CTRL_SW_CFG,
+					KTU1125_SW_AB_EN | KTU1125_CC1S_VCONN |
+						KTU1125_CC2S_VCONN);
 
 	if (status) {
-		CPRINTS("ppc p%d: Failed to %s power path",
-			port, enable ? "enable" : "disable");
+		CPRINTS("ppc p%d: Failed to %s power path", port,
+			enable ? "enable" : "disable");
 	}
 
 	return status;
@@ -137,7 +131,6 @@ static int ktu1125_init(int port)
 		ppc_err_prints("KTU1125 ID mismatch!", port, regval);
 		return regval;
 	}
-
 
 	/*
 	 * Setting control register CTRL_SW_CFG
@@ -230,7 +223,7 @@ static int ktu1125_init(int port)
 	 */
 
 	/* Leave SYSA_OK and FRS masked for SNK group of interrupts */
-	regval =  KTU1125_SNK_MASK_ALL & (KTU1125_SYSA_OK | KTU1125_FR_SWAP);
+	regval = KTU1125_SNK_MASK_ALL & (KTU1125_SYSA_OK | KTU1125_FR_SWAP);
 	status = write_reg(port, KTU1125_INTMASK_SNK, regval);
 	if (status) {
 		ppc_err_prints("Failed to write INTMASK_SNK!", port, status);
@@ -291,8 +284,7 @@ static int ktu1125_set_polarity(int port, int polarity)
 	if (polarity) {
 		/* CC2 active. */
 		clr_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_CC2S_VCONN);
-		return set_flags(port, KTU1125_CTRL_SW_CFG,
-				 KTU1125_CC1S_VCONN);
+		return set_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_CC1S_VCONN);
 	}
 
 	/* else CC1 active. */
@@ -326,9 +318,8 @@ static int ktu1125_set_vbus_src_current_limit(int port, enum tcpc_rp_value rp)
 		break;
 	};
 
-
 	status = set_field(port, KTU1125_SET_SW_CFG, KTU1125_SYSB_CLP_SHIFT,
-			    KTU1125_SYSB_CLP_LEN, regval);
+			   KTU1125_SYSB_CLP_LEN, regval);
 	if (status)
 		ppc_prints("Failed to set KTU1125_SET_SW_CFG!", port);
 
@@ -338,13 +329,13 @@ static int ktu1125_set_vbus_src_current_limit(int port, enum tcpc_rp_value rp)
 static int ktu1125_discharge_vbus(int port, int enable)
 {
 	int status = enable ? set_flags(port, KTU1125_SET_SW2_CFG,
-					KTU1125_VBUS_DIS_EN)
-			    : clr_flags(port, KTU1125_SET_SW2_CFG,
+					KTU1125_VBUS_DIS_EN) :
+			      clr_flags(port, KTU1125_SET_SW2_CFG,
 					KTU1125_VBUS_DIS_EN);
 
 	if (status) {
-		CPRINTS("ppc p%d: Failed to %s vbus discharge",
-			port, enable ? "enable" : "disable");
+		CPRINTS("ppc p%d: Failed to %s vbus discharge", port,
+			enable ? "enable" : "disable");
 		return status;
 	}
 
@@ -355,11 +346,10 @@ static int ktu1125_discharge_vbus(int port, int enable)
 static int ktu1125_set_vconn(int port, int enable)
 {
 	int status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_VCONN_EN)
-			    : clr_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_VCONN_EN |
-					KTU1125_CC1S_VCONN |
-					KTU1125_CC2S_VCONN);
+					KTU1125_VCONN_EN) :
+			      clr_flags(port, KTU1125_CTRL_SW_CFG,
+					KTU1125_VCONN_EN | KTU1125_CC1S_VCONN |
+						KTU1125_CC2S_VCONN);
 
 	return status;
 }
@@ -369,10 +359,9 @@ static int ktu1125_set_vconn(int port, int enable)
 static int ktu1125_set_frs_enable(int port, int enable)
 {
 	/* Enable/Disable FR_SWAP Interrupt */
-	int status = enable ? clr_flags(port, KTU1125_INTMASK_SNK,
-					KTU1125_FR_SWAP)
-			    : set_flags(port, KTU1125_INTMASK_SNK,
-					KTU1125_FR_SWAP);
+	int status =
+		enable ? clr_flags(port, KTU1125_INTMASK_SNK, KTU1125_FR_SWAP) :
+			 set_flags(port, KTU1125_INTMASK_SNK, KTU1125_FR_SWAP);
 
 	if (status) {
 		ppc_prints("Failed to write KTU1125_INTMASK_SNK!", port);
@@ -380,10 +369,8 @@ static int ktu1125_set_frs_enable(int port, int enable)
 	}
 
 	/* Set the FRS_EN bit */
-	status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG,
-				    KTU1125_FRS_EN)
-			: clr_flags(port, KTU1125_CTRL_SW_CFG,
-				    KTU1125_FRS_EN);
+	status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_FRS_EN) :
+			  clr_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_FRS_EN);
 
 	return status;
 }
@@ -418,14 +405,14 @@ static int ktu1125_vbus_source_enable(int port, int enable)
 #ifdef CONFIG_USBC_PPC_SBU
 static int ktu1125_set_sbu(int port, int enable)
 {
-	int status = enable ? clr_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_SBU_SHUT)
-			    : set_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_SBU_SHUT);
+	int status =
+		enable ?
+			clr_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_SBU_SHUT) :
+			set_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_SBU_SHUT);
 
 	if (status) {
-		CPRINTS("ppc p%d: Failed to %s sbu",
-			port, enable ? "enable" : "disable");
+		CPRINTS("ppc p%d: Failed to %s sbu", port,
+			enable ? "enable" : "disable");
 	}
 
 	return status;
@@ -452,31 +439,29 @@ static void ktu1125_handle_interrupt(int port)
 		attempt++;
 		if (attempt > 1)
 			ppc_prints("Could not clear interrupts on first "
-				"try, retrying", port);
+				   "try, retrying",
+				   port);
 
 		/* Clear the interrupt by reading all 3 registers */
 		read_reg(port, KTU1125_INT_SNK, &snk);
 		read_reg(port, KTU1125_INT_SRC, &src);
 		read_reg(port, KTU1125_INT_DATA, &data);
 
-		CPRINTS("ppc p%d: INTERRUPT snk=%02X src=%02X data=%02X",
-			port, snk, src, data);
+		CPRINTS("ppc p%d: INTERRUPT snk=%02X src=%02X data=%02X", port,
+			snk, src, data);
 
 		if (snk & KTU1125_FR_SWAP)
 			pd_got_frs_signal(port);
 
-		if (snk & (KTU1125_SYSA_SCP |
-			   KTU1125_SYSA_OCP |
-			   KTU1125_VBUS_OVP)) {
+		if (snk &
+		    (KTU1125_SYSA_SCP | KTU1125_SYSA_OCP | KTU1125_VBUS_OVP)) {
 			/* Log and PD reset */
 			pd_handle_overcurrent(port);
 		}
 
-		if (src & (KTU1125_SYSB_CLP |
-			   KTU1125_SYSB_OCP |
-			   KTU1125_SYSB_SCP |
-			   KTU1125_VCONN_CLP |
-			   KTU1125_VCONN_SCP)) {
+		if (src &
+		    (KTU1125_SYSB_CLP | KTU1125_SYSB_OCP | KTU1125_SYSB_SCP |
+		     KTU1125_VCONN_CLP | KTU1125_VCONN_SCP)) {
 			/* Log and PD reset */
 			pd_handle_overcurrent(port);
 		}
