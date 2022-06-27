@@ -17,12 +17,12 @@
 int gpio_required_clocks(void)
 {
 	const int gpio_ports_used = (0
-#		define GPIO(name, pin, flags) pin
-#		define GPIO_INT(name, pin, flags, signal) pin
-#		define ALTERNATE(pinmask, function, module, flagz) pinmask
-#		define PIN(port, index) | STM32_RCC_AHB1ENR_GPIO_PORT ## port
-#		define PIN_MASK(port, mask) PIN(port, 0)
-#		include "gpio.wrap"
+#define GPIO(name, pin, flags) pin
+#define GPIO_INT(name, pin, flags, signal) pin
+#define ALTERNATE(pinmask, function, module, flagz) pinmask
+#define PIN(port, index) | STM32_RCC_AHB1ENR_GPIO_PORT##port
+#define PIN_MASK(port, mask) PIN(port, 0)
+#include "gpio.wrap"
 	);
 
 	/*
