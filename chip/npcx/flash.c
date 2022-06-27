@@ -68,7 +68,7 @@ static void flash_execute_cmd(uint8_t code, uint8_t cts)
 	/* set UMA_CODE */
 	NPCX_UMA_CODE = code;
 	/* execute UMA flash transaction */
-	NPCX_UMA_CTS  = cts;
+	NPCX_UMA_CTS = cts;
 	while (IS_BIT_SET(NPCX_UMA_CTS, NPCX_UMA_CTS_EXEC_DONE))
 		;
 }
@@ -94,7 +94,7 @@ static int flash_wait_ready(void)
 	flash_execute_cmd(CMD_READ_STATUS_REG, MASK_CMD_ONLY);
 	do {
 		/* Read status register */
-		NPCX_UMA_CTS  = MASK_RD_1BYTE;
+		NPCX_UMA_CTS = MASK_RD_1BYTE;
 		while (IS_BIT_SET(NPCX_UMA_CTS, NPCX_UMA_CTS_EXEC_DONE))
 			;
 		/* Busy bit is clear */
@@ -316,8 +316,8 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 #endif
 	flash_set_status(reg1, reg2);
 
-	spi_flash_reg_to_protect(reg1, reg2,
-				 &addr_prot_start, &addr_prot_length);
+	spi_flash_reg_to_protect(reg1, reg2, &addr_prot_start,
+				 &addr_prot_length);
 
 	return EC_SUCCESS;
 }
@@ -328,8 +328,8 @@ static int flash_check_prot_range(unsigned int offset, unsigned int bytes)
 	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
 	/* Check if ranges overlap */
-	if (MAX(addr_prot_start, offset) < MIN(addr_prot_start +
-		addr_prot_length, offset + bytes))
+	if (MAX(addr_prot_start, offset) <
+	    MIN(addr_prot_start + addr_prot_length, offset + bytes))
 		return EC_ERROR_ACCESS_DENIED;
 
 	return EC_SUCCESS;
@@ -369,7 +369,6 @@ static int flash_check_prot_reg(unsigned int offset, unsigned int bytes)
 		return EC_ERROR_ACCESS_DENIED;
 
 	return EC_SUCCESS;
-
 }
 
 static int flash_write_prot_reg(unsigned int offset, unsigned int bytes,
@@ -395,7 +394,7 @@ static int flash_write_prot_reg(unsigned int offset, unsigned int bytes,
 }
 
 static void flash_burst_write(unsigned int dest_addr, unsigned int bytes,
-		const char *data)
+			      const char *data)
 {
 	unsigned int i;
 	/* Chip Select down */
@@ -413,15 +412,17 @@ static void flash_burst_write(unsigned int dest_addr, unsigned int bytes,
 }
 
 static int flash_program_bytes(uint32_t offset, uint32_t bytes,
-	const uint8_t *data)
+			       const uint8_t *data)
 {
 	int write_size;
 	int rv;
 
 	while (bytes > 0) {
 		/* Write length can not go beyond the end of the flash page */
-		write_size = MIN(bytes, CONFIG_FLASH_WRITE_IDEAL_SIZE -
-		(offset & (CONFIG_FLASH_WRITE_IDEAL_SIZE - 1)));
+		write_size = MIN(bytes,
+				 CONFIG_FLASH_WRITE_IDEAL_SIZE -
+					 (offset &
+					  (CONFIG_FLASH_WRITE_IDEAL_SIZE - 1)));
 
 		/* Enable write */
 		rv = flash_write_enable();
@@ -436,9 +437,9 @@ static int flash_program_bytes(uint32_t offset, uint32_t bytes,
 		if (rv)
 			return rv;
 
-		data   += write_size;
+		data += write_size;
 		offset += write_size;
-		bytes  -= write_size;
+		bytes -= write_size;
 	}
 
 	return rv;
@@ -467,7 +468,7 @@ int crec_flash_physical_read(int offset, int size, char *data)
 	/* Burst read transaction */
 	for (idx = 0; idx < size; idx++) {
 		/* 1101 0101 - EXEC, RD, NO CMD, NO ADDR, 4 bytes */
-		NPCX_UMA_CTS  = MASK_RD_1BYTE;
+		NPCX_UMA_CTS = MASK_RD_1BYTE;
 		/* wait for UMA to complete */
 		while (IS_BIT_SET(NPCX_UMA_CTS, EXEC_DONE))
 			;
@@ -493,8 +494,8 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 	int rv;
 
 	/* Fail if offset, size, and data aren't at least word-aligned */
-	if ((offset | size
-	     | (uint32_t)(uintptr_t)data) & (CONFIG_FLASH_WRITE_SIZE - 1))
+	if ((offset | size | (uint32_t)(uintptr_t)data) &
+	    (CONFIG_FLASH_WRITE_SIZE - 1))
 		return EC_ERROR_INVAL;
 
 	/* check protection */
@@ -510,7 +511,8 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 	while (size > 0) {
 		/* First write multiples of 256, then (size % 256) last */
 		write_len = ((size % CONFIG_FLASH_WRITE_IDEAL_SIZE) == size) ?
-					size : CONFIG_FLASH_WRITE_IDEAL_SIZE;
+				    size :
+				    CONFIG_FLASH_WRITE_IDEAL_SIZE;
 
 		/* check protection */
 		if (flash_check_prot_range(dest_addr, write_len)) {
@@ -522,9 +524,9 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 		if (rv)
 			break;
 
-		data      += write_len;
+		data += write_len;
 		dest_addr += write_len;
-		size      -= write_len;
+		size -= write_len;
 	}
 
 	/* Enable tri-state */
@@ -551,7 +553,7 @@ int crec_flash_physical_erase(int offset, int size)
 
 	/* Alignment has been checked in upper layer */
 	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE,
-		offset += CONFIG_FLASH_ERASE_SIZE) {
+			 offset += CONFIG_FLASH_ERASE_SIZE) {
 		/* check protection */
 		if (flash_check_prot_range(offset, CONFIG_FLASH_ERASE_SIZE)) {
 			rv = EC_ERROR_ACCESS_DENIED;
@@ -645,7 +647,6 @@ int crec_flash_physical_protect_now(int all)
 	return EC_SUCCESS;
 }
 
-
 int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 {
 	int ret;
@@ -657,8 +658,7 @@ int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 	}
 
 	ret = flash_write_prot_reg(CONFIG_WP_STORAGE_OFF,
-				   CONFIG_WP_STORAGE_SIZE,
-				   1);
+				   CONFIG_WP_STORAGE_SIZE, 1);
 
 	/*
 	 * Set UMA_LOCK bit for locking all UMA transaction.
@@ -672,9 +672,8 @@ int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 
 uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-			EC_FLASH_PROTECT_RO_NOW |
-			EC_FLASH_PROTECT_ALL_NOW;
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
+	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
 uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
@@ -690,7 +689,7 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 	 * the WP GPIO is asserted.
 	 */
 	if (!(cur_flags & EC_FLASH_PROTECT_ALL_NOW) &&
-			(cur_flags & EC_FLASH_PROTECT_GPIO_ASSERTED))
+	    (cur_flags & EC_FLASH_PROTECT_GPIO_ASSERTED))
 		ret |= EC_FLASH_PROTECT_ALL_NOW;
 
 	return ret;
@@ -759,8 +758,7 @@ static enum ec_status flash_command_spi_info(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_FLASH_SPI_INFO,
-		     flash_command_spi_info,
+DECLARE_HOST_COMMAND(EC_CMD_FLASH_SPI_INFO, flash_command_spi_info,
 		     EC_VER_MASK(0));
 
 #endif
@@ -801,8 +799,7 @@ static int command_flash_spi_sel_lock(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(flash_spi_lock, command_flash_spi_sel_lock,
-			"[on | off]",
-			"Lock spi flash interface selection");
+			"[on | off]", "Lock spi flash interface selection");
 
 static int command_flash_tristate(int argc, char **argv)
 {
@@ -817,8 +814,7 @@ static int command_flash_tristate(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(flash_tristate, command_flash_tristate,
-			"[on | off]",
+DECLARE_CONSOLE_COMMAND(flash_tristate, command_flash_tristate, "[on | off]",
 			"Tristate spi flash pins");
 #endif /* CONFIG_CMD_FLASH_TRISTATE */
 
@@ -832,10 +828,9 @@ static int command_flash_chip(int argc, char **argv)
 
 	flash_get_jedec_id(jedec_id);
 	ccprintf("Manufacturer: 0x%02x, DID: 0x%02x%02x\n", jedec_id[0],
-			jedec_id[1], jedec_id[2]);
+		 jedec_id[1], jedec_id[2]);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(flashchip, command_flash_chip,
-			NULL,
+DECLARE_CONSOLE_COMMAND(flashchip, command_flash_chip, NULL,
 			"Print flash chip info");
