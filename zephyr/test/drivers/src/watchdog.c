@@ -53,8 +53,8 @@ static void watchdog_before(void *state)
 	/* When shuffling need watchdog initialized and running
 	 * for other tests.
 	 */
-	(void) watchdog_init();
-	(void) wdt_setup(wdt, 0);
+	(void)watchdog_init();
+	(void)wdt_setup(wdt, 0);
 }
 
 /**
