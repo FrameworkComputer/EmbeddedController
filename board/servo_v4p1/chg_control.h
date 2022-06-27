@@ -8,11 +8,7 @@
 
 #include <stdbool.h>
 
-enum chg_cc_t {
-	CHG_OPEN,
-	CHG_CC1,
-	CHG_CC2
-};
+enum chg_cc_t { CHG_OPEN, CHG_CC1, CHG_CC2 };
 
 enum chg_power_select_t {
 	CHG_POWER_OFF,
