@@ -5,6 +5,9 @@
 
 /* Disabled functions */
 
-#define DISABLED(proto) proto { }
+#define DISABLED(proto) \
+	proto           \
+	{               \
+	}
 
 DISABLED(void clock_init(void));
