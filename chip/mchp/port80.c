@@ -14,7 +14,6 @@
 #include "task.h"
 #include "tfdp_chip.h"
 
-
 #if defined(CHIP_FAMILY_MEC172X)
 /*
  * MEC172x family implements a new Port 0x80 capture block.
