@@ -45,14 +45,15 @@ void mock_prl_reset(void)
 
 	memset(mock_prl_port, 0, sizeof(mock_prl_port));
 
-	for (port = 0 ; port < CONFIG_USB_PD_PORT_MAX_COUNT ; ++port) {
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port) {
 		mock_prl_port[port].last_tx_type = TCPCI_MSG_INVALID;
 		mock_prl_port[port].error_tx_type = TCPCI_MSG_INVALID;
 	}
 }
 
 void prl_end_ams(int port)
-{}
+{
+}
 
 void prl_execute_hard_reset(int port)
 {
@@ -67,7 +68,8 @@ enum pd_rev_type prl_get_rev(int port, enum tcpci_msg_type partner)
 }
 
 void prl_hard_reset_complete(int port)
-{}
+{
+}
 
 int prl_is_running(int port)
 {
@@ -80,10 +82,11 @@ __overridable bool prl_is_busy(int port)
 }
 
 void prl_reset_soft(int port)
-{}
+{
+}
 
 void prl_send_ctrl_msg(int port, enum tcpci_msg_type type,
-	enum pd_ctrl_msg_type msg)
+		       enum pd_ctrl_msg_type msg)
 {
 	mock_prl_port[port].last_ctrl_msg = msg;
 	mock_prl_port[port].last_data_msg = 0;
@@ -91,7 +94,7 @@ void prl_send_ctrl_msg(int port, enum tcpci_msg_type type,
 }
 
 void prl_send_data_msg(int port, enum tcpci_msg_type type,
-	enum pd_data_msg_type msg)
+		       enum pd_data_msg_type msg)
 {
 	mock_prl_port[port].last_data_msg = msg;
 	mock_prl_port[port].last_ctrl_msg = 0;
@@ -99,30 +102,28 @@ void prl_send_data_msg(int port, enum tcpci_msg_type type,
 }
 
 void prl_send_ext_data_msg(int port, enum tcpci_msg_type type,
-	enum pd_ext_msg_type msg)
-{}
+			   enum pd_ext_msg_type msg)
+{
+}
 
-void prl_set_rev(int port, enum tcpci_msg_type partner,
-	enum pd_rev_type rev)
-{}
+void prl_set_rev(int port, enum tcpci_msg_type partner, enum pd_rev_type rev)
+{
+}
 
-
-int mock_prl_wait_for_tx_msg(int port,
-			     enum tcpci_msg_type tx_type,
+int mock_prl_wait_for_tx_msg(int port, enum tcpci_msg_type tx_type,
 			     enum pd_ctrl_msg_type ctrl_msg,
-			     enum pd_data_msg_type data_msg,
-			     int timeout)
+			     enum pd_data_msg_type data_msg, int timeout)
 {
 	uint64_t end_time = get_time().val + timeout;
 
 	while (get_time().val < end_time) {
 		if (mock_prl_port[port].last_tx_type != TCPCI_MSG_INVALID) {
-			TEST_EQ(mock_prl_port[port].last_tx_type,
-				tx_type, "%d");
-			TEST_EQ(mock_prl_port[port].last_ctrl_msg,
-				ctrl_msg, "%d");
-			TEST_EQ(mock_prl_port[port].last_data_msg,
-				data_msg, "%d");
+			TEST_EQ(mock_prl_port[port].last_tx_type, tx_type,
+				"%d");
+			TEST_EQ(mock_prl_port[port].last_ctrl_msg, ctrl_msg,
+				"%d");
+			TEST_EQ(mock_prl_port[port].last_data_msg, data_msg,
+				"%d");
 			mock_prl_clear_last_sent_msg(port);
 			return EC_SUCCESS;
 		}
@@ -191,8 +192,7 @@ void prl_run(int port, int evt, int en)
 	}
 	if (mock_prl_port[port].error_tx_type != TCPCI_MSG_INVALID) {
 		ccprints("pe_error %d", mock_prl_port[port].error);
-		pe_report_error(port,
-				mock_prl_port[port].error,
+		pe_report_error(port, mock_prl_port[port].error,
 				mock_prl_port[port].error_tx_type);
 		mock_prl_port[port].error = 0;
 		mock_prl_port[port].error_tx_type = TCPCI_MSG_INVALID;
