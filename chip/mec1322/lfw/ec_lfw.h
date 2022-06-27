@@ -8,16 +8,16 @@
 
 #include <stdnoreturn.h>
 
-noreturn void lfw_main(void) __attribute__ ((naked));
+noreturn void lfw_main(void) __attribute__((naked));
 void fault_handler(void) __attribute__((naked));
 
 struct int_vector_t {
-	void   *stack_ptr;
-	void   *reset_vector;
-	void   *nmi;
-	void   *hard_fault;
-	void   *bus_fault;
-	void   *usage_fault;
+	void *stack_ptr;
+	void *reset_vector;
+	void *nmi;
+	void *hard_fault;
+	void *bus_fault;
+	void *usage_fault;
 };
 
-#define SPI_CHUNK_SIZE			1024
+#define SPI_CHUNK_SIZE 1024
