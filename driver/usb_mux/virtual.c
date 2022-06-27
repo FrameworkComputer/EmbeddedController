@@ -18,11 +18,11 @@
  * configures the HPD mux state. Both states are independent of each other
  * may differ when the PD role changes when in dock mode.
  */
-#define USB_PD_MUX_HPD_STATE	(USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ)
-#define USB_PD_MUX_USB_DP_STATE	(USB_PD_MUX_USB_ENABLED | \
-			USB_PD_MUX_DP_ENABLED | USB_PD_MUX_POLARITY_INVERTED | \
-			USB_PD_MUX_SAFE_MODE | USB_PD_MUX_TBT_COMPAT_ENABLED | \
-			USB_PD_MUX_USB4_ENABLED)
+#define USB_PD_MUX_HPD_STATE (USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ)
+#define USB_PD_MUX_USB_DP_STATE                                \
+	(USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED |      \
+	 USB_PD_MUX_POLARITY_INVERTED | USB_PD_MUX_SAFE_MODE | \
+	 USB_PD_MUX_TBT_COMPAT_ENABLED | USB_PD_MUX_USB4_ENABLED)
 
 static mux_state_t virtual_mux_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -82,7 +82,8 @@ static int virtual_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	 * is still active.  Otherwise, don't preserve HPD state.
 	 */
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
-		new_mux_state = (mux_state & ~USB_PD_MUX_HPD_STATE) |
+		new_mux_state =
+			(mux_state & ~USB_PD_MUX_HPD_STATE) |
 			(virtual_mux_state[port] & USB_PD_MUX_HPD_STATE);
 	else
 		new_mux_state = mux_state;
@@ -112,8 +113,8 @@ void virtual_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 	int port = me->usb_port;
 
 	/* Current HPD related mux status + existing USB & DP mux status */
-	mux_state_t new_mux_state = mux_state |
-			(virtual_mux_state[port] & USB_PD_MUX_USB_DP_STATE);
+	mux_state_t new_mux_state =
+		mux_state | (virtual_mux_state[port] & USB_PD_MUX_USB_DP_STATE);
 
 	virtual_mux_update_state(port, new_mux_state, ack_required);
 }
