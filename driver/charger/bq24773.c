@@ -22,39 +22,39 @@
 /* Sense resistor configurations and macros */
 #define DEFAULT_SENSE_RESISTOR 10
 #define R_SNS CONFIG_CHARGER_SENSE_RESISTOR
-#define R_AC  (CONFIG_CHARGER_SENSE_RESISTOR_AC)
-#define REG_TO_CURRENT(REG, RS) ((REG) * DEFAULT_SENSE_RESISTOR / (RS))
+#define R_AC (CONFIG_CHARGER_SENSE_RESISTOR_AC)
+#define REG_TO_CURRENT(REG, RS) ((REG)*DEFAULT_SENSE_RESISTOR / (RS))
 #define CURRENT_TO_REG(CUR, RS) ((CUR) * (RS) / DEFAULT_SENSE_RESISTOR)
-#define REG8_TO_CURRENT(REG, RS) ((REG) * DEFAULT_SENSE_RESISTOR / (RS) * R8)
+#define REG8_TO_CURRENT(REG, RS) ((REG)*DEFAULT_SENSE_RESISTOR / (RS)*R8)
 #define CURRENT_TO_REG8(CUR, RS) ((CUR) * (RS) / DEFAULT_SENSE_RESISTOR / R8)
 
 /* ChargeCurrent Register - 0x14 (mA) */
-#define CHARGE_I_OFF                    0
-#define CHARGE_I_MIN                    128
-#define CHARGE_I_MAX                    8128
-#define CHARGE_I_STEP                   64
+#define CHARGE_I_OFF 0
+#define CHARGE_I_MIN 128
+#define CHARGE_I_MAX 8128
+#define CHARGE_I_STEP 64
 
 /* MaxChargeVoltage Register - 0x15 (mV) */
-#define CHARGE_V_MIN                    1024
-#define CHARGE_V_MAX                    19200
-#define CHARGE_V_STEP                   16
+#define CHARGE_V_MIN 1024
+#define CHARGE_V_MAX 19200
+#define CHARGE_V_STEP 16
 
 /* InputCurrent Register - 0x3f (mA) */
-#define INPUT_I_MIN                    128
-#define INPUT_I_MAX                    8128
-#define INPUT_I_STEP                   64
+#define INPUT_I_MIN 128
+#define INPUT_I_MAX 8128
+#define INPUT_I_STEP 64
 
 /* Charger parameters */
 static const struct charger_info bq2477x_charger_info = {
-	.name         = CHARGER_NAME,
-	.voltage_max  = CHARGE_V_MAX,
-	.voltage_min  = CHARGE_V_MIN,
+	.name = CHARGER_NAME,
+	.voltage_max = CHARGE_V_MAX,
+	.voltage_min = CHARGE_V_MIN,
 	.voltage_step = CHARGE_V_STEP,
-	.current_max  = REG_TO_CURRENT(CHARGE_I_MAX, R_SNS),
-	.current_min  = REG_TO_CURRENT(CHARGE_I_MIN, R_SNS),
+	.current_max = REG_TO_CURRENT(CHARGE_I_MAX, R_SNS),
+	.current_min = REG_TO_CURRENT(CHARGE_I_MIN, R_SNS),
 	.current_step = REG_TO_CURRENT(CHARGE_I_STEP, R_SNS),
-	.input_current_max  = REG_TO_CURRENT(INPUT_I_MAX, R_AC),
-	.input_current_min  = REG_TO_CURRENT(INPUT_I_MIN, R_AC),
+	.input_current_max = REG_TO_CURRENT(INPUT_I_MAX, R_AC),
+	.input_current_min = REG_TO_CURRENT(INPUT_I_MIN, R_AC),
 	.input_current_step = REG_TO_CURRENT(INPUT_I_STEP, R_AC),
 };
 
@@ -62,32 +62,27 @@ static const struct charger_info bq2477x_charger_info = {
 static inline enum ec_error_list raw_read8(int chgnum, int offset, int *value)
 {
 	return i2c_read8(chg_chips[chgnum].i2c_port,
-			 chg_chips[chgnum].i2c_addr_flags,
-			 offset, value);
+			 chg_chips[chgnum].i2c_addr_flags, offset, value);
 }
 
 static inline enum ec_error_list raw_write8(int chgnum, int offset, int value)
 {
 	return i2c_write8(chg_chips[chgnum].i2c_port,
-			  chg_chips[chgnum].i2c_addr_flags,
-			  offset, value);
+			  chg_chips[chgnum].i2c_addr_flags, offset, value);
 }
 #endif
 
 static inline enum ec_error_list raw_read16(int chgnum, int offset, int *value)
 {
 	return i2c_read16(chg_chips[chgnum].i2c_port,
-			  chg_chips[chgnum].i2c_addr_flags,
-			  offset, value);
+			  chg_chips[chgnum].i2c_addr_flags, offset, value);
 }
 
 static inline enum ec_error_list raw_write16(int chgnum, int offset, int value)
 {
 	return i2c_write16(chg_chips[chgnum].i2c_port,
-			   chg_chips[chgnum].i2c_addr_flags,
-			   offset, value);
+			   chg_chips[chgnum].i2c_addr_flags, offset, value);
 }
-
 
 /* chip specific interfaces */
 
