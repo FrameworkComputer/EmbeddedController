@@ -41,7 +41,7 @@ test_mockable int chg_ramp_allowed(int port, int supplier)
 	case CHARGE_SUPPLIER_PD:
 	case CHARGE_SUPPLIER_TYPEC:
 		return 0;
-	/* default: fall through */
+		/* default: fall through */
 	}
 
 	/* Otherwise ask the BC1.2 detect module */
@@ -59,7 +59,7 @@ test_mockable int chg_ramp_max(int port, int supplier, int sup_curr)
 		 * we may brownout the systems they are connected to.
 		 */
 		return sup_curr;
-	/* default: fall through */
+		/* default: fall through */
 	}
 
 	/* Otherwise ask the BC1.2 detect module */
