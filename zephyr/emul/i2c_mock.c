@@ -41,8 +41,7 @@ static const struct i2c_emul_api i2c_mock_api = {
 	.transfer = i2c_common_emul_transfer,
 };
 
-static int i2c_mock_init(const struct emul *emul,
-			 const struct device *parent)
+static int i2c_mock_init(const struct emul *emul, const struct device *parent)
 {
 	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct i2c_common_emul_data *data = emul->data;
