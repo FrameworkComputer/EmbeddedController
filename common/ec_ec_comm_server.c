@@ -21,8 +21,8 @@
 #include "task.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* Print extra debugging information */
 #undef EXTRA_DEBUG
@@ -37,11 +37,10 @@ static int charging_allowed;
 #define LARGEST_PARAMS_SIZE 8
 
 BUILD_ASSERT(LARGEST_PARAMS_SIZE >=
-	sizeof(struct ec_params_battery_static_info));
+	     sizeof(struct ec_params_battery_static_info));
 BUILD_ASSERT(LARGEST_PARAMS_SIZE >=
-	sizeof(struct ec_params_battery_dynamic_info));
-BUILD_ASSERT(LARGEST_PARAMS_SIZE >=
-	sizeof(struct ec_params_charger_control));
+	     sizeof(struct ec_params_battery_dynamic_info));
+BUILD_ASSERT(LARGEST_PARAMS_SIZE >= sizeof(struct ec_params_charger_control));
 
 #define COMMAND_BUFFER_PARAMS_SIZE (LARGEST_PARAMS_SIZE + 1)
 
@@ -50,7 +49,6 @@ BUILD_ASSERT(LARGEST_PARAMS_SIZE >=
  * should not take more than 2ms to be sent at 115200 bps.
  */
 #define COMMAND_TIMEOUT_US (5 * MSEC)
-
 
 void ec_ec_comm_server_written(struct consumer const *consumer, size_t count)
 {
@@ -67,7 +65,7 @@ static void discard_queue(void)
 {
 	do {
 		queue_advance_head(&ec_ec_comm_server_input,
-				queue_count(&ec_ec_comm_server_input));
+				   queue_count(&ec_ec_comm_server_input));
 		usleep(1 * MSEC);
 	} while (queue_count(&ec_ec_comm_server_input) > 0);
 }
@@ -78,19 +76,17 @@ static void write_response(uint16_t res, int seq, const void *data, int len)
 	struct ec_host_response4 header;
 	uint8_t crc;
 
-	header.fields0 =
-		4 | /* version */
-		EC_PACKET4_0_IS_RESPONSE_MASK | /* is_response */
-		(seq << EC_PACKET4_0_SEQ_NUM_SHIFT); /* seq_num */
+	header.fields0 = 4 | /* version */
+			 EC_PACKET4_0_IS_RESPONSE_MASK | /* is_response */
+			 (seq << EC_PACKET4_0_SEQ_NUM_SHIFT); /* seq_num */
 	/* Set data_crc_present if there is data */
 	header.fields1 = (len > 0) ? EC_PACKET4_1_DATA_CRC_PRESENT_MASK : 0;
 	header.result = res;
 	header.data_len = len;
 	header.reserved = 0;
-	header.header_crc =
-		cros_crc8((uint8_t *)&header, sizeof(header)-1);
-	QUEUE_ADD_UNITS(&ec_ec_comm_server_output,
-			(uint8_t *)&header, sizeof(header));
+	header.header_crc = cros_crc8((uint8_t *)&header, sizeof(header) - 1);
+	QUEUE_ADD_UNITS(&ec_ec_comm_server_output, (uint8_t *)&header,
+			sizeof(header));
 
 	if (len > 0) {
 		QUEUE_ADD_UNITS(&ec_ec_comm_server_output, data, len);
@@ -123,9 +119,8 @@ static int read_data(void *buffer, size_t len, uint32_t start)
 	return EC_SUCCESS;
 }
 
-static void handle_cmd_reboot_ec(
-	const struct ec_params_reboot_ec *params,
-	int data_len, int seq)
+static void handle_cmd_reboot_ec(const struct ec_params_reboot_ec *params,
+				 int data_len, int seq)
 {
 	int ret = EC_RES_SUCCESS;
 
@@ -150,9 +145,9 @@ out:
 }
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY
-static void handle_cmd_charger_control(
-	const struct ec_params_charger_control *params,
-	int data_len, int seq)
+static void
+handle_cmd_charger_control(const struct ec_params_charger_control *params,
+			   int data_len, int seq)
 {
 	int ret = EC_RES_SUCCESS;
 	int prev_charging_allowed = charging_allowed;
@@ -169,7 +164,7 @@ static void handle_cmd_charger_control(
 		charging_allowed = params->allow_charging;
 	} else {
 		if (-params->max_current > MAX_OTG_CURRENT_MA ||
-				params->otg_voltage > MAX_OTG_VOLTAGE_MV) {
+		    params->otg_voltage > MAX_OTG_VOLTAGE_MV) {
 			ret = EC_RES_INVALID_PARAM;
 			goto out;
 		}
@@ -233,8 +228,8 @@ void ec_ec_comm_server_task(void *u)
 
 #ifdef EXTRA_DEBUG
 		CPRINTS("%s f0=%02x f1=%02x cmd=%02x, length=%d", __func__,
-			header.fields0, header.fields1,
-			header.command, header.data_len);
+			header.fields0, header.fields1, header.command,
+			header.data_len);
 #endif
 
 		/* Ignore response (we wrote that ourselves) */
@@ -266,7 +261,7 @@ void ec_ec_comm_server_task(void *u)
 		}
 
 		seq = (header.fields0 & EC_PACKET4_0_SEQ_NUM_MASK) >>
-			EC_PACKET4_0_SEQ_NUM_SHIFT;
+		      EC_PACKET4_0_SEQ_NUM_SHIFT;
 
 		cmdver = header.fields1 & EC_PACKET4_1_COMMAND_VERSION_MASK;
 
@@ -277,7 +272,7 @@ void ec_ec_comm_server_task(void *u)
 		}
 
 		/* Check data CRC */
-		if (hascrc && params[len-1] != cros_crc8(params, len-1)) {
+		if (hascrc && params[len - 1] != cros_crc8(params, len - 1)) {
 			CPRINTS("%s data crc error", __func__);
 			write_response(EC_RES_INVALID_CHECKSUM, seq, NULL, 0);
 			goto discard;
@@ -295,31 +290,30 @@ void ec_ec_comm_server_task(void *u)
 		case EC_CMD_BATTERY_GET_STATIC:
 			/* Note that we ignore the battery index parameter. */
 			write_response(EC_RES_SUCCESS, seq,
-				&battery_static[BATT_IDX_MAIN],
-				sizeof(battery_static[BATT_IDX_MAIN]));
+				       &battery_static[BATT_IDX_MAIN],
+				       sizeof(battery_static[BATT_IDX_MAIN]));
 			break;
 		case EC_CMD_BATTERY_GET_DYNAMIC:
 			/* Note that we ignore the battery index parameter. */
 			write_response(EC_RES_SUCCESS, seq,
-				&battery_dynamic[BATT_IDX_MAIN],
-				sizeof(battery_dynamic[BATT_IDX_MAIN]));
+				       &battery_dynamic[BATT_IDX_MAIN],
+				       sizeof(battery_dynamic[BATT_IDX_MAIN]));
 			break;
 		case EC_CMD_CHARGER_CONTROL:
 			handle_cmd_charger_control((void *)params,
-						header.data_len, seq);
+						   header.data_len, seq);
 			break;
 #endif
 		case EC_CMD_REBOOT_EC:
-			handle_cmd_reboot_ec((void *)params,
-						header.data_len, seq);
+			handle_cmd_reboot_ec((void *)params, header.data_len,
+					     seq);
 			break;
 		default:
-			write_response(EC_RES_INVALID_COMMAND, seq,
-				NULL, 0);
+			write_response(EC_RES_INVALID_COMMAND, seq, NULL, 0);
 		}
 
 		continue;
-discard:
+	discard:
 		/*
 		 * Some error occurred: discard all data in the queue.
 		 */
