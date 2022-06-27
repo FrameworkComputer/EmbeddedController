@@ -31,7 +31,6 @@ static int rpm_setting;
 static int duty_setting;
 static int in_rpm_mode = 1;
 
-
 static void clear_status(void)
 {
 	/* Clear DRIVE_FAIL, FAN_SPIN, and FAN_STALL bits */
