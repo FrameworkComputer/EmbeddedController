@@ -36,15 +36,11 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 #ifdef CONFIG_ZEPHYR
-enum ioex_port {
-	IOEX_C0_NCT38XX = 0,
-	IOEX_C1_NCT38XX,
-	IOEX_PORT_COUNT
-};
+enum ioex_port { IOEX_C0_NCT38XX = 0, IOEX_C1_NCT38XX, IOEX_PORT_COUNT };
 #endif /* CONFIG_ZEPHYR */
 
 /* USBC TCPC configuration */
@@ -204,8 +200,8 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 	}
 
 	if (voltage < BC12_MIN_VOLTAGE) {
-		CPRINTS("%s: port %d: vbus %d lower than %d", __func__,
-			port, voltage, BC12_MIN_VOLTAGE);
+		CPRINTS("%s: port %d: vbus %d lower than %d", __func__, port,
+			voltage, BC12_MIN_VOLTAGE);
 		return 1;
 	}
 
