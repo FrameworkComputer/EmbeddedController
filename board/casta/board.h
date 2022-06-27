@@ -74,8 +74,8 @@
 #include "registers.h"
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
-	ADC_TEMP_SENSOR_CHARGER,	/* ADC1 */
+	ADC_TEMP_SENSOR_AMB, /* ADC0 */
+	ADC_TEMP_SENSOR_CHARGER, /* ADC1 */
 	ADC_CH_COUNT
 };
 
