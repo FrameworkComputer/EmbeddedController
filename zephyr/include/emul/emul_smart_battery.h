@@ -38,11 +38,11 @@
  */
 
 /* Value used to indicate that no command is selected */
-#define SBAT_EMUL_NO_CMD	-1
+#define SBAT_EMUL_NO_CMD -1
 /* Maximum size of data that can be returned in SMBus block transaction */
-#define MAX_BLOCK_SIZE		32
+#define MAX_BLOCK_SIZE 32
 /* Maximum length of command to send is maximum size of data + len byte + PEC */
-#define MSG_BUF_LEN		(MAX_BLOCK_SIZE + 2)
+#define MSG_BUF_LEN (MAX_BLOCK_SIZE + 2)
 
 /** @brief Emulated smart battery properties */
 struct sbat_emul_bat_data {
