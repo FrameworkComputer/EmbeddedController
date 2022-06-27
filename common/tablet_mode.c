@@ -13,8 +13,8 @@
 #include "tablet_mode.h"
 #include "timer.h"
 
-#define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_MOTION_LID, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_MOTION_LID, format, ##args)
 
 /*
  * Other code modules assume that notebook mode (i.e. tablet_mode = 0) at
@@ -58,7 +58,6 @@ static void notify_tablet_mode_change(void)
 	 */
 	if (IS_ENABLED(CONFIG_HOSTCMD_EVENTS))
 		host_set_single_event(EC_HOST_EVENT_MODE_CHANGE);
-
 }
 
 void tablet_set_mode(int mode, uint32_t trigger)
@@ -105,9 +104,9 @@ void tablet_disable(void)
 #endif
 static void gmr_tablet_switch_interrupt_debounce(void)
 {
-	gmr_sensor_at_360 = IS_ENABLED(CONFIG_GMR_TABLET_MODE_CUSTOM)
-				     ? board_sensor_at_360()
-				     : !gpio_get_level(GPIO_TABLET_MODE_L);
+	gmr_sensor_at_360 = IS_ENABLED(CONFIG_GMR_TABLET_MODE_CUSTOM) ?
+				    board_sensor_at_360() :
+				    !gpio_get_level(GPIO_TABLET_MODE_L);
 
 	/*
 	 * DPTF table is updated only when the board enters/exits completely
@@ -116,9 +115,9 @@ static void gmr_tablet_switch_interrupt_debounce(void)
 	 * calculation and update DPTF table when lid angle > 300 degrees.
 	 */
 	if (IS_ENABLED(CONFIG_HOSTCMD_X86) && IS_ENABLED(CONFIG_DPTF)) {
-		acpi_dptf_set_profile_num(gmr_sensor_at_360 ?
-					  DPTF_PROFILE_FLIPPED_360_MODE :
-					  DPTF_PROFILE_CLAMSHELL);
+		acpi_dptf_set_profile_num(
+			gmr_sensor_at_360 ? DPTF_PROFILE_FLIPPED_360_MODE :
+					    DPTF_PROFILE_CLAMSHELL);
 	}
 	/*
 	 * 1. Peripherals are disabled only when lid reaches 360 position (It's
@@ -142,7 +141,7 @@ static void gmr_tablet_switch_interrupt_debounce(void)
 DECLARE_DEFERRED(gmr_tablet_switch_interrupt_debounce);
 
 /* Debounce time for gmr sensor tablet mode interrupt */
-#define GMR_SENSOR_DEBOUNCE_US    (30 * MSEC)
+#define GMR_SENSOR_DEBOUNCE_US (30 * MSEC)
 
 void gmr_tablet_switch_isr(enum gpio_signal signal)
 {
@@ -206,7 +205,6 @@ static int command_settabletmode(int argc, char **argv)
 	notify_tablet_mode_change();
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(tabletmode, command_settabletmode,
-	"[on | off | reset]",
-	"Manually force tablet mode to on, off or reset.");
+DECLARE_CONSOLE_COMMAND(tabletmode, command_settabletmode, "[on | off | reset]",
+			"Manually force tablet mode to on, off or reset.");
 #endif
