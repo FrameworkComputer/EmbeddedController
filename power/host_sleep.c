@@ -12,15 +12,15 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
 
 /* Track last reported sleep event */
 static enum host_sleep_event host_sleep_state;
 
-__overridable void power_chipset_handle_host_sleep_event(
-		enum host_sleep_event state,
-		struct host_sleep_event_context *ctx)
+__overridable void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx)
 {
 	/* Default weak implementation -- no action required. */
 }
@@ -71,8 +71,7 @@ host_command_host_sleep_event(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT,
-		     host_command_host_sleep_event,
+DECLARE_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT, host_command_host_sleep_event,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 enum host_sleep_event power_get_host_sleep_state(void)
@@ -116,14 +115,13 @@ static enum sleep_hang_type timeout_hang_type;
 static void sleep_transition_timeout(void);
 DECLARE_DEFERRED(sleep_transition_timeout);
 
-__overridable void power_board_handle_sleep_hang(
-		enum sleep_hang_type hang_type)
+__overridable void power_board_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
 	/* Default empty implementation */
 }
 
-__overridable void power_chipset_handle_sleep_hang(
-		enum sleep_hang_type hang_type)
+__overridable void
+power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
 	/* Default empty implementation */
 }
@@ -231,7 +229,7 @@ static int command_sleep_fail_timeout(int argc, char **argv)
 
 		if (val <= 0 || val >= EC_HOST_SLEEP_TIMEOUT_INFINITE) {
 			ccprintf("Error: timeout range is 1..%d [msec]\n",
-				EC_HOST_SLEEP_TIMEOUT_INFINITE - 1);
+				 EC_HOST_SLEEP_TIMEOUT_INFINITE - 1);
 			return EC_ERROR_PARAM1;
 		}
 
@@ -242,19 +240,18 @@ static int command_sleep_fail_timeout(int argc, char **argv)
 		ccprintf("Sleep failure detection timeout is disabled\n");
 	else
 		ccprintf("Sleep failure detection timeout is %d [msec]\n",
-			host_sleep_timeout_default);
+			 host_sleep_timeout_default);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(sleeptimeout, command_sleep_fail_timeout,
-		"[default | infinite | <msec>]",
-		"Display or set host sleep failure detection timeout.\n"
-		"Valid arguments are:\n"
-		" default\n"
-		" infinite - disables the timeout\n"
-		" <msec> - custom length in milliseconds\n"
-		" <none> - prints the current setting");
-
+			"[default | infinite | <msec>]",
+			"Display or set host sleep failure detection timeout.\n"
+			"Valid arguments are:\n"
+			" default\n"
+			" infinite - disables the timeout\n"
+			" <msec> - custom length in milliseconds\n"
+			" <none> - prints the current setting");
 
 #else /* !CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 
