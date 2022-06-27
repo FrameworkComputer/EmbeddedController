@@ -53,7 +53,7 @@ static int start_single_and_wait(int timeout)
 	/* clear GIRQ single status */
 	MCHP_INT_SOURCE(MCHP_ADC_GIRQ) = MCHP_ADC_GIRQ_SINGLE_BIT;
 	/* make sure all writes are issued before starting conversion */
-	asm volatile ("dsb");
+	asm volatile("dsb");
 
 	/* Start conversion */
 	MCHP_ADC_CTRL |= BIT(1);
@@ -77,7 +77,8 @@ int adc_read_channel(enum adc_channel ch)
 
 	if (start_single_and_wait(ADC_SINGLE_READ_TIME))
 		value = (MCHP_ADC_READ(adc->channel) * adc->factor_mul) /
-			adc->factor_div + adc->shift;
+				adc->factor_div +
+			adc->shift;
 	else
 		value = ADC_READ_ERROR;
 
@@ -105,7 +106,8 @@ int adc_read_all_channels(int *data)
 	for (i = 0; i < ADC_CH_COUNT; ++i) {
 		adc = adc_channels + i;
 		data[i] = (MCHP_ADC_READ(adc->channel) * adc->factor_mul) /
-			  adc->factor_div + adc->shift;
+				  adc->factor_div +
+			  adc->shift;
 	}
 
 exit_all_channels:
