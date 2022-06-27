@@ -15,4 +15,4 @@ extern const uint8_t default_fake_tpm_seed[FP_CONTEXT_TPM_BYTES];
 int fpsensor_state_mock_set_tpm_seed(
 	const uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES]);
 
-#endif  /* __MOCK_FPSENSOR_STATE_MOCK_H */
+#endif /* __MOCK_FPSENSOR_STATE_MOCK_H */
