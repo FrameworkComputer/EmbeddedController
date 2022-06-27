@@ -357,8 +357,8 @@ int i2c_common_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 			}
 		}
 
-		data->msg_state = read ? I2C_COMMON_EMUL_IN_READ
-				       : I2C_COMMON_EMUL_IN_WRITE;
+		data->msg_state = read ? I2C_COMMON_EMUL_IN_READ :
+					 I2C_COMMON_EMUL_IN_WRITE;
 
 		if (stop) {
 			data->msg_state = I2C_COMMON_EMUL_NONE_MSG;
@@ -395,8 +395,8 @@ int i2c_common_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
 		} else {
 			/* Dispatch read command */
 			for (i = 0; i < msgs->len; i++, data->msg_byte++) {
-				ret = i2c_common_emul_read_byte(emul, data,
-							       &(msgs->buf[i]));
+				ret = i2c_common_emul_read_byte(
+					emul, data, &(msgs->buf[i]));
 				if (ret) {
 					return ret;
 				}
