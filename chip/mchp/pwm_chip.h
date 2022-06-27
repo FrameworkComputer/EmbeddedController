@@ -48,4 +48,4 @@ extern const struct pwm_t pwm_channels[];
 
 void pwm_keep_awake(void);
 
-#endif  /* __CROS_EC_PWM_CHIP_H */
+#endif /* __CROS_EC_PWM_CHIP_H */
