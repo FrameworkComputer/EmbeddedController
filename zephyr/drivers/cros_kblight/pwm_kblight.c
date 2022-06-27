@@ -21,7 +21,7 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 #define KBLIGHT_PWM_NODE DT_INST_PWMS_CTLR(0)
 #define KBLIGHT_PWM_CHANNEL DT_INST_PWMS_CHANNEL(0)
 #define KBLIGHT_PWM_FLAGS DT_INST_PWMS_FLAGS(0)
-#define KBLIGHT_PWM_PERIOD_NS (NSEC_PER_SEC/DT_INST_PROP(0, frequency))
+#define KBLIGHT_PWM_PERIOD_NS (NSEC_PER_SEC / DT_INST_PROP(0, frequency))
 
 static bool kblight_enabled;
 static int kblight_percent;
@@ -39,8 +39,8 @@ static void kblight_pwm_set_duty(int percent)
 
 	pulse_ns = DIV_ROUND_NEAREST(KBLIGHT_PWM_PERIOD_NS * percent, 100);
 
-	LOG_DBG("kblight PWM %s set percent (%d), pulse %d",
-		pwm_dev->name, percent, pulse_ns);
+	LOG_DBG("kblight PWM %s set percent (%d), pulse %d", pwm_dev->name,
+		percent, pulse_ns);
 
 	rv = pwm_set(pwm_dev, KBLIGHT_PWM_CHANNEL, KBLIGHT_PWM_PERIOD_NS,
 		     pulse_ns, KBLIGHT_PWM_FLAGS);
