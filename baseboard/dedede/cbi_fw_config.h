@@ -24,8 +24,8 @@ enum fw_config_db {
 	DB_1C,
 	DB_1A_HDMI_LTE,
 };
-#define FW_CONFIG_DB_OFFSET			0
-#define FW_CONFIG_DB_MASK			GENMASK(3, 0)
+#define FW_CONFIG_DB_OFFSET 0
+#define FW_CONFIG_DB_MASK GENMASK(3, 0)
 
 /*
  * Stylus (1 bit)
@@ -34,8 +34,8 @@ enum fw_config_stylus {
 	STYLUS_ABSENT = 0,
 	STYLUS_PRESENT = 1,
 };
-#define FW_CONFIG_STYLUS_OFFSET			4
-#define FW_CONFIG_STYLUS_MASK			GENMASK(4, 4)
+#define FW_CONFIG_STYLUS_OFFSET 4
+#define FW_CONFIG_STYLUS_MASK GENMASK(4, 4)
 
 /*
  * Keyboard backlight (1 bit)
@@ -44,8 +44,8 @@ enum fw_config_kblight_type {
 	KB_BL_ABSENT = 0,
 	KB_BL_PRESENT = 1,
 };
-#define FW_CONFIG_KB_BL_OFFSET			8
-#define FW_CONFIG_KB_BL_MASK			GENMASK(8, 8)
+#define FW_CONFIG_KB_BL_OFFSET 8
+#define FW_CONFIG_KB_BL_MASK GENMASK(8, 8)
 
 /*
  * Keyboard numeric pad (1 bit)
@@ -54,8 +54,8 @@ enum fw_config_numeric_pad_type {
 	NUMERIC_PAD_ABSENT = 0,
 	NUMERIC_PAD_PRESENT = 1,
 };
-#define FW_CONFIG_KB_NUMPAD_OFFSET		9
-#define FW_CONFIG_KB_NUMPAD_MASK		GENMASK(9, 9)
+#define FW_CONFIG_KB_NUMPAD_OFFSET 9
+#define FW_CONFIG_KB_NUMPAD_MASK GENMASK(9, 9)
 
 /*
  * Tablet Mode (1 bit)
@@ -64,11 +64,11 @@ enum fw_config_tablet_mode_type {
 	TABLET_MODE_ABSENT = 0,
 	TABLET_MODE_PRESENT = 1,
 };
-#define FW_CONFIG_TABLET_MODE_OFFSET		10
-#define FW_CONFIG_TABLET_MODE_MASK		GENMASK(10, 10)
+#define FW_CONFIG_TABLET_MODE_OFFSET 10
+#define FW_CONFIG_TABLET_MODE_MASK GENMASK(10, 10)
 
-#define FW_CONFIG_KB_LAYOUT_OFFSET		12
-#define FW_CONFIG_KB_LAYOUT_MASK		GENMASK(13, 12)
+#define FW_CONFIG_KB_LAYOUT_OFFSET 12
+#define FW_CONFIG_KB_LAYOUT_MASK GENMASK(13, 12)
 
 /*
  * Hdmi (1 bit)
@@ -77,8 +77,8 @@ enum fw_config_hdmi_type {
 	HDMI_ABSENT = 0,
 	HDMI_PRESENT = 1,
 };
-#define FW_CONFIG_HDMI_OFFSET			17
-#define FW_CONFIG_HDMI_MASK			GENMASK(17, 17)
+#define FW_CONFIG_HDMI_OFFSET 17
+#define FW_CONFIG_HDMI_MASK GENMASK(17, 17)
 
 enum fw_config_db get_cbi_fw_config_db(void);
 enum fw_config_stylus get_cbi_fw_config_stylus(void);
