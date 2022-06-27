@@ -38,13 +38,11 @@ static int command_llsr(int argc, char **argv)
 	const struct {
 		uint32_t shift_by;
 		uint64_t result;
-	} cases[] = {
-		{0, start},
-		{16, 0x123456789ABCull},
-		{32, 0x12345678u},
-		{48, 0x1234u},
-		{64, 0u}
-	};
+	} cases[] = { { 0, start },
+		      { 16, 0x123456789ABCull },
+		      { 32, 0x12345678u },
+		      { 48, 0x1234u },
+		      { 64, 0u } };
 
 	for (x = 0; x < ARRAY_SIZE(cases); ++x) {
 		if ((start >> cases[x].shift_by) != cases[x].result) {
@@ -58,8 +56,7 @@ static int command_llsr(int argc, char **argv)
 }
 
 DECLARE_CONSOLE_COMMAND(
-		llsrtest, command_llsr,
-		"",
-		"Run tests against the LLSR ABI. Prints SUCCESS or FAILURE.");
+	llsrtest, command_llsr, "",
+	"Run tests against the LLSR ABI. Prints SUCCESS or FAILURE.");
 
-#endif  /* CONFIG_LLSR_TEST */
+#endif /* CONFIG_LLSR_TEST */
