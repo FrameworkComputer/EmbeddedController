@@ -23,8 +23,8 @@
 #include "usb_pd.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /******************************************************************************/
 /*
@@ -80,7 +80,6 @@ const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[] = {
 	},
 };
 const int pwrok_signal_deassert_count = ARRAY_SIZE(pwrok_signal_deassert_list);
-
 
 /*
  * Dedede does not use hibernate wake pins, but the super low power "Z-state"
@@ -149,8 +148,8 @@ __override int intel_x86_get_pg_ec_dsw_pwrok(void)
 }
 
 /* Store away PP300_A good status before sysjumps */
-#define BASEBOARD_SYSJUMP_TAG	0x4242 /* BB */
-#define BASEBOARD_HOOK_VERSION	1
+#define BASEBOARD_SYSJUMP_TAG 0x4242 /* BB */
+#define BASEBOARD_HOOK_VERSION 1
 
 static void pp3300_a_pgood_preserve(void)
 {
@@ -167,13 +166,13 @@ static void baseboard_prepare_power_signals(void)
 	stored = (const int *)system_get_jump_tag(BASEBOARD_SYSJUMP_TAG,
 						  &version, &size);
 	if (stored && (version == BASEBOARD_HOOK_VERSION) &&
-					(size == sizeof(pp3300_a_pgood)))
+	    (size == sizeof(pp3300_a_pgood)))
 		/* Valid PP3300 status found, restore before CHIPSET init */
 		pp3300_a_pgood = *stored;
 
 	/* Restore pull-up on PG_PP1050_ST_OD */
 	if (system_jumped_to_this_image() &&
-					gpio_get_level(GPIO_PG_EC_RSMRST_ODL))
+	    gpio_get_level(GPIO_PG_EC_RSMRST_ODL))
 		board_after_rsmrst(1);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_prepare_power_signals, HOOK_PRIO_FIRST);
@@ -191,8 +190,8 @@ __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 	 * PGOOD.
 	 */
 	return gpio_get_level(GPIO_PG_PP1050_ST_OD) &&
-		gpio_get_level(GPIO_PG_DRAM_OD) &&
-		gpio_get_level(GPIO_PG_VCCIO_EXT_OD);
+	       gpio_get_level(GPIO_PG_DRAM_OD) &&
+	       gpio_get_level(GPIO_PG_VCCIO_EXT_OD);
 }
 
 __override int power_signal_get_level(enum gpio_signal signal)
@@ -209,7 +208,6 @@ __override int power_signal_get_level(enum gpio_signal signal)
 			return espi_vw_get_wire((enum espi_vw_signal)signal);
 	}
 	return gpio_get_level(signal);
-
 }
 
 void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal)
@@ -220,8 +218,8 @@ void baseboard_all_sys_pgood_interrupt(enum gpio_signal signal)
 	 * driver to.
 	 * Early protos do not pull VCCST_PWRGD below Vil in hardware logic,
 	 * so we need to do the same for this signal.
-	 * Pull EN_VCCIO_EXT to LOW, which ensures VCCST_PWRGD remains LOW during
-	 * SLP_S3_L assertion.
+	 * Pull EN_VCCIO_EXT to LOW, which ensures VCCST_PWRGD remains LOW
+	 * during SLP_S3_L assertion.
 	 */
 	if (!gpio_get_level(GPIO_SLP_S3_L)) {
 		gpio_set_level(GPIO_ALL_SYS_PWRGD, 0);
@@ -259,9 +257,9 @@ void board_hibernate_late(void)
 
 	/* Disable any pull-ups on C0 and C1 interrupt lines */
 	gpio_set_flags(GPIO_USB_C0_INT_ODL, GPIO_INPUT);
-	#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-		gpio_set_flags(GPIO_USB_C1_INT_ODL, GPIO_INPUT);
-	#endif
+#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
+	gpio_set_flags(GPIO_USB_C1_INT_ODL, GPIO_INPUT);
+#endif
 	/*
 	 * Turn on the Z state.  This will not return as it will cut power to
 	 * the EC.
