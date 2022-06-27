@@ -19,8 +19,8 @@
 
 static int raw_read8(const int offset, int *data_ptr)
 {
-	return i2c_read8(I2C_PORT_THERMAL_AP, SB_TSI_I2C_ADDR_FLAGS,
-			 offset, data_ptr);
+	return i2c_read8(I2C_PORT_THERMAL_AP, SB_TSI_I2C_ADDR_FLAGS, offset,
+			 data_ptr);
 }
 
 int sb_tsi_get_val(int idx, int *temp_ptr)
