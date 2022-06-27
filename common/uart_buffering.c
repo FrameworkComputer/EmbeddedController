@@ -22,7 +22,7 @@
 /* Macros to advance in the circular buffers */
 #define TX_BUF_NEXT(i) (((i) + 1) & (CONFIG_UART_TX_BUF_SIZE - 1))
 #define RX_BUF_NEXT(i) (((i) + 1) & (CONFIG_UART_RX_BUF_SIZE - 1))
-#define RX_BUF_PREV(i) (((i) - 1) & (CONFIG_UART_RX_BUF_SIZE - 1))
+#define RX_BUF_PREV(i) (((i)-1) & (CONFIG_UART_RX_BUF_SIZE - 1))
 
 /* Macros to calculate difference of pointers in the circular buffers. */
 #define TX_BUF_DIFF(i, j) (((i) - (j)) & (CONFIG_UART_TX_BUF_SIZE - 1))
@@ -37,12 +37,12 @@ BUILD_ASSERT((CONFIG_UART_RX_BUF_SIZE & (CONFIG_UART_RX_BUF_SIZE - 1)) == 0);
  * of input has been detected by the normal tick task.  There will be
  * CONFIG_UART_RX_DMA_RECHECKS rechecks between this tick and the next tick.
  */
-#define RX_DMA_RECHECK_INTERVAL (HOOK_TICK_INTERVAL /			\
-				 (CONFIG_UART_RX_DMA_RECHECKS + 1))
+#define RX_DMA_RECHECK_INTERVAL \
+	(HOOK_TICK_INTERVAL / (CONFIG_UART_RX_DMA_RECHECKS + 1))
 
 /* Transmit and receive buffers */
-static volatile char tx_buf[CONFIG_UART_TX_BUF_SIZE]
-			__uncached __preserved_logs(tx_buf);
+static volatile char tx_buf[CONFIG_UART_TX_BUF_SIZE] __uncached
+	__preserved_logs(tx_buf);
 static volatile int tx_buf_head __preserved_logs(tx_buf_head);
 static volatile int tx_buf_tail __preserved_logs(tx_buf_tail);
 static volatile char rx_buf[CONFIG_UART_RX_BUF_SIZE] __uncached;
@@ -58,7 +58,6 @@ static int uart_buffer_calc_checksum(void)
 {
 	return tx_buf_head ^ tx_buf_tail;
 }
-
 
 void uart_init_buffer(void)
 {
@@ -81,8 +80,8 @@ int uart_tx_char_raw(void *context, int c)
 	int tx_buf_next, tx_buf_new_tail;
 
 #if defined CONFIG_POLLING_UART
-	(void) tx_buf_next;
-	(void) tx_buf_new_tail;
+	(void)tx_buf_next;
+	(void)tx_buf_new_tail;
 	uart_write_char(c);
 #else
 
@@ -137,7 +136,7 @@ void uart_process_output(void)
 	/* If a previous DMA transfer completed, free up the buffer it used */
 	if (tx_dma_in_progress) {
 		tx_buf_tail = (tx_buf_tail + tx_dma_in_progress) &
-			(CONFIG_UART_TX_BUF_SIZE - 1);
+			      (CONFIG_UART_TX_BUF_SIZE - 1);
 		tx_dma_in_progress = 0;
 
 		if (IS_ENABLED(CONFIG_PRESERVE_LOGS))
@@ -154,8 +153,9 @@ void uart_process_output(void)
 	 * Get the largest contiguous block of output.  If the transmit buffer
 	 * wraps, only use the part before the wrap.
 	 */
-	tx_dma_in_progress = (head > tx_buf_tail ? head :
-			      CONFIG_UART_TX_BUF_SIZE) - tx_buf_tail;
+	tx_dma_in_progress =
+		(head > tx_buf_tail ? head : CONFIG_UART_TX_BUF_SIZE) -
+		tx_buf_tail;
 
 	uart_tx_dma_start((char *)(tx_buf + tx_buf_tail), tx_dma_in_progress);
 }
@@ -181,7 +181,7 @@ void uart_process_output(void)
 #endif /* !CONFIG_UART_TX_DMA */
 
 #ifdef CONFIG_UART_RX_DMA
-#ifdef CONFIG_UART_INPUT_FILTER  /* TODO(crosbug.com/p/36745): */
+#ifdef CONFIG_UART_INPUT_FILTER /* TODO(crosbug.com/p/36745): */
 #error "Filtering the UART input with DMA enabled is NOT SUPPORTED!"
 #endif
 
@@ -245,7 +245,7 @@ void uart_process_input(void)
 
 void uart_clear_input(void)
 {
-	int scratch __attribute__ ((unused));
+	int scratch __attribute__((unused));
 	while (uart_rx_available())
 		scratch = uart_read_char();
 	rx_buf_head = rx_buf_tail = 0;
@@ -347,9 +347,7 @@ enum ec_status uart_console_read_buffer_init(void)
 	return EC_RES_SUCCESS;
 }
 
-int uart_console_read_buffer(uint8_t type,
-			     char *dest,
-			     uint16_t dest_size,
+int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
 			     uint16_t *write_count)
 {
 	int *tail;
@@ -371,7 +369,6 @@ int uart_console_read_buffer(uint8_t type,
 
 	/* Copy data to response */
 	while (*tail != tx_snapshot_head && *write_count < dest_size - 1) {
-
 		/*
 		 * Copy only non-zero bytes, so that we don't copy unused
 		 * bytes if the buffer hasn't completely rolled at boot.
