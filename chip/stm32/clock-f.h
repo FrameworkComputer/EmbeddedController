@@ -100,4 +100,4 @@ int is_host_wake_alarm_expired(timestamp_t ts);
 /* Set RTC wakeup based on the value saved in host_wake_time */
 void restore_host_wake_alarm(void);
 
-#endif  /* __CROS_EC_CLOCK_F_H */
+#endif /* __CROS_EC_CLOCK_F_H */
