@@ -198,7 +198,11 @@ class Zmake:
         return self._checkout.resolve()
 
     def _resolve_projects(
-        self, project_names, all_projects=False, host_tests_only=False
+        self,
+        project_names,
+        all_projects=False,
+        host_tests_only=False,
+        boards_only=False,
     ) -> Set[zmake.project.Project]:
         """Finds all projects for the specified command line flags.
 
@@ -209,6 +213,8 @@ class Zmake:
             projects = set(found_projects.values())
         elif host_tests_only:
             projects = {p for p in found_projects.values() if p.config.is_test}
+        elif boards_only:
+            projects = {p for p in found_projects.values() if not p.config.is_test}
         else:
             projects = set()
             for project_name in project_names:
@@ -232,6 +238,8 @@ class Zmake:
         all_projects=False,
         host_tests_only=False,
         extra_cflags=None,
+        delete_intermediates=False,
+        boards_only=False,
     ):
         """Locate and configure the specified projects."""
         # Resolve build_dir if needed.
@@ -242,6 +250,7 @@ class Zmake:
             project_names,
             all_projects=all_projects,
             host_tests_only=host_tests_only,
+            boards_only=boards_only,
         )
         for project in projects:
             project_build_dir = pathlib.Path(build_dir) / project.config.project_name
@@ -259,6 +268,7 @@ class Zmake:
                     allow_warnings=allow_warnings,
                     extra_cflags=extra_cflags,
                     multiproject=len(projects) > 1,
+                    delete_intermediates=delete_intermediates,
                 )
             )
             if self._sequential:
@@ -302,6 +312,8 @@ class Zmake:
         all_projects=False,
         host_tests_only=False,
         extra_cflags=None,
+        delete_intermediates=False,
+        boards_only=False,
     ):
         """Locate and build the specified projects."""
         return self.configure(
@@ -316,6 +328,8 @@ class Zmake:
             host_tests_only=host_tests_only,
             extra_cflags=extra_cflags,
             build_after_configure=True,
+            delete_intermediates=delete_intermediates,
+            boards_only=boards_only,
         )
 
     def test(  # pylint: disable=too-many-arguments,too-many-locals
@@ -331,6 +345,8 @@ class Zmake:
         host_tests_only=False,
         extra_cflags=None,
         no_rebuild=False,
+        delete_intermediates=False,
+        boards_only=False,
     ):
         """Locate and build the specified projects."""
         if not no_rebuild:
@@ -346,6 +362,8 @@ class Zmake:
                 host_tests_only=host_tests_only,
                 extra_cflags=extra_cflags,
                 test_after_configure=True,
+                delete_intermediates=delete_intermediates,
+                boards_only=boards_only,
             )
         # Resolve build_dir if needed.
         if not build_dir:
@@ -355,6 +373,7 @@ class Zmake:
             project_names,
             all_projects=all_projects,
             host_tests_only=host_tests_only,
+            boards_only=boards_only,
         )
         test_projects = [p for p in projects if p.config.is_test]
         for project in test_projects:
@@ -416,7 +435,7 @@ class Zmake:
     def _configure(
         self,
         project,
-        build_dir=None,
+        build_dir: pathlib.Path,
         toolchain=None,
         build_after_configure=False,
         test_after_configure=False,
@@ -426,20 +445,12 @@ class Zmake:
         allow_warnings=False,
         extra_cflags=None,
         multiproject=False,
+        delete_intermediates=False,
     ):
         # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         # pylint: disable=too-many-statements
         """Set up a build directory to later be built by "zmake build"."""
         try:
-            # Resolve build_dir if needed.
-            if not build_dir:
-                build_dir = (
-                    self.module_paths["ec"]
-                    / "build"
-                    / "zephyr"
-                    / project.config.project_name
-                )
-
             # Clobber build directory if requested.
             if clobber and build_dir.exists():
                 self.logger.info(
@@ -501,7 +512,7 @@ class Zmake:
                 )
 
             if not build_dir.exists():
-                build_dir = build_dir.mkdir()
+                build_dir.mkdir()
             if not generated_include_dir.exists():
                 generated_include_dir.mkdir()
             processes = []
@@ -617,6 +628,16 @@ class Zmake:
                         timeout=project.config.test_timeout_secs,
                     )
                 )
+
+            if delete_intermediates:
+                outdir = build_dir / "output"
+                for child in build_dir.iterdir():
+                    if child != outdir:
+                        logging.debug("Deleting %s", child)
+                        if not child.is_symlink() and child.is_dir():
+                            shutil.rmtree(child)
+                        else:
+                            child.unlink()
             return 0
         except Exception:
             self.failed_projects.append(project.config.project_name)
@@ -711,7 +732,10 @@ class Zmake:
                 )
                 job_id = "{}:{}".format(project.config.project_name, build_name)
                 dirs[build_name].mkdir(parents=True, exist_ok=True)
-                build_log = open(dirs[build_name] / "build.log", "w")
+                build_log = open(  # pylint:disable=consider-using-with
+                    dirs[build_name] / "build.log",
+                    "w",
+                )
                 out = zmake.multiproc.LogWriter.log_output(
                     logger=self.logger,
                     log_level=logging.INFO,

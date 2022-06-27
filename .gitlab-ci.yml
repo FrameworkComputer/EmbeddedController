@@ -251,7 +251,7 @@ zephyr_boards_coverage:
   script:
     - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG build
-      --coverage -a
+      --coverage --boards-only --delete-intermediates
   artifacts:
     paths:
       - build/zephyr/all_builds.info

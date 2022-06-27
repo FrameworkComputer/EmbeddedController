@@ -288,6 +288,12 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
         "--extra-cflags",
         help="Additional CFLAGS to use for target builds",
     )
+    sub_parser.add_argument(
+        "--delete-intermediates",
+        action="store_true",
+        dest="delete_intermediates",
+        help="Delete intermediate files to save disk space",
+    )
     group = sub_parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
         "-a",
@@ -301,6 +307,12 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
         action="store_true",
         dest="host_tests_only",
         help="Select all test projects",
+    )
+    group.add_argument(
+        "--boards-only",
+        action="store_true",
+        dest="boards_only",
+        help="Select all board projects (not tests)",
     )
     group.add_argument(
         "project_names",
