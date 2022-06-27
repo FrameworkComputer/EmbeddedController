@@ -9,7 +9,7 @@
 #define __CROS_EC_R19ME4070_H
 
 /* GPU features */
-#define R19ME4070_LOCAL                 0
+#define R19ME4070_LOCAL 0
 
 /*
  * get GPU temperature value and move to *tem_ptr
