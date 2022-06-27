@@ -19,8 +19,8 @@
  * 1) If dr_swap_to_dfp_flag == true and port data role is UFP,
  *    transition to pe_drs_send_swap
  */
-__overridable bool port_discovery_dr_swap_policy(int port,
-	enum pd_data_role dr, bool dr_swap_flag)
+__overridable bool port_discovery_dr_swap_policy(int port, enum pd_data_role dr,
+						 bool dr_swap_flag)
 {
 	if (dr_swap_flag && dr == PD_ROLE_UFP)
 		return true;
@@ -37,10 +37,10 @@ __overridable bool port_discovery_dr_swap_policy(int port,
  *    then transition to pe_vcs_send_swap
  */
 __overridable bool port_discovery_vconn_swap_policy(int port,
-		bool vconn_swap_flag)
+						    bool vconn_swap_flag)
 {
 	if (IS_ENABLED(CONFIG_USBC_VCONN) && vconn_swap_flag &&
-		!tc_is_vconn_src(port) && tc_check_vconn_swap(port))
+	    !tc_is_vconn_src(port) && tc_check_vconn_swap(port))
 		return true;
 
 	/* Do not perform a VCONN swap */
