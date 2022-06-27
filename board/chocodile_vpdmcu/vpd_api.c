@@ -35,7 +35,7 @@
 #endif
 
 #undef CC_RA
-#define CC_RA(cc, sel)  (cc < pd_src_rd_threshold[sel])
+#define CC_RA(cc, sel) (cc < pd_src_rd_threshold[sel])
 #undef CC_RD
 #define CC_RD(cc, sel) ((cc >= pd_src_rd_threshold[sel]) && (cc < PD_SRC_VNC))
 
@@ -47,16 +47,16 @@
 #define VBUS_DETECT_THRESHOLD 2500 /* mV */
 #define VCONN_DETECT_THRESHOLD 2500 /* mV */
 
-#define SCALE(vmeas, sfactor) (((vmeas) * 1000) / (sfactor))
+#define SCALE(vmeas, sfactor) (((vmeas)*1000) / (sfactor))
 
 /*
  * Type C power source charge current limits are identified by their cc
  * voltage (set by selecting the proper Rd resistor). Any voltage below
  * TYPE_C_SRC_500_THRESHOLD will not be identified as a type C charger.
  */
-#define TYPE_C_SRC_DEFAULT_THRESHOLD    200  /* mV */
-#define TYPE_C_SRC_1500_THRESHOLD       660  /* mV */
-#define TYPE_C_SRC_3000_THRESHOLD       1230 /* mV */
+#define TYPE_C_SRC_DEFAULT_THRESHOLD 200 /* mV */
+#define TYPE_C_SRC_1500_THRESHOLD 660 /* mV */
+#define TYPE_C_SRC_3000_THRESHOLD 1230 /* mV */
 
 /* Charge-Through pull up/down enabled */
 static int ct_cc_pull;
@@ -86,7 +86,7 @@ static int vpd_cc_voltage_to_status(int cc_volt, int cc_pull)
 			return TYPEC_CC_VOLT_RA;
 		else
 			return TYPEC_CC_VOLT_OPEN;
-	/* If we have a pull-down, then we are sink, check for Rp. */
+		/* If we have a pull-down, then we are sink, check for Rp. */
 	} else if (cc_pull == TYPEC_CC_RD || cc_pull == TYPEC_CC_RA_RD) {
 		if (cc_volt >= TYPE_C_SRC_3000_THRESHOLD)
 			return TYPEC_CC_VOLT_RP_3_0;
@@ -218,8 +218,8 @@ void vpd_host_set_pull(int pull, int rp_value)
 
 void vpd_host_get_cc(int *cc)
 {
-	*cc = vpd_cc_voltage_to_status(
-		adc_read_channel(ADC_CC_VPDMCU), host_cc_pull);
+	*cc = vpd_cc_voltage_to_status(adc_read_channel(ADC_CC_VPDMCU),
+				       host_cc_pull);
 }
 
 void vpd_rx_enable(int en)
@@ -237,17 +237,23 @@ void vpd_config_cc_rp3a0_rd_l(enum vpd_pin cfg, int en)
 		gpio_set_level(GPIO_CC_RP3A0_RD_L, en ? 1 : 0);
 
 		/* Disable Analog mode and Enable GPO */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-				& ~(3 << (2*2))) /* PA2 disable ADC */
-				|  (1 << (2*2)); /* Set as GPO */
+		STM32_GPIO_MODER(GPIO_A) =
+			(STM32_GPIO_MODER(GPIO_A) & ~(3 << (2 * 2))) /* PA2
+									disable
+									ADC */
+			| (1 << (2 * 2)); /* Set as GPO */
 	} else {
 		/* Set PA2 pin to ANALOG function */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-				|  (3 << (2*2))); /* PA2 in ANALOG mode */
+		STM32_GPIO_MODER(GPIO_A) =
+			(STM32_GPIO_MODER(GPIO_A) | (3 << (2 * 2))); /* PA2 in
+									ANALOG
+									mode */
 
 		/* Set PA3 pin to ANALOG function */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-				|  (3 << (2*3))); /* PA3 in ANALOG mode */
+		STM32_GPIO_MODER(GPIO_A) =
+			(STM32_GPIO_MODER(GPIO_A) | (3 << (2 * 3))); /* PA3 in
+									ANALOG
+									mode */
 
 		/* Disable Window Mode. Select PA3 */
 		STM32_COMP_CSR &= ~STM32_COMP_WNDWEN;
@@ -276,9 +282,11 @@ void vpd_config_cc1_rp3a0_rd_l(enum vpd_pin cfg, int en)
 		gpio_set_level(GPIO_CC1_RP3A0_RD_L, en ? 1 : 0);
 
 		/* Disable Analog mode and Enable GPO */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-				& ~(3 << (2*4))) /* PA4 disable ADC */
-				|  (1 << (2*4)); /* Set as GPO */
+		STM32_GPIO_MODER(GPIO_A) =
+			(STM32_GPIO_MODER(GPIO_A) & ~(3 << (2 * 4))) /* PA4
+									disable
+									ADC */
+			| (1 << (2 * 4)); /* Set as GPO */
 	}
 
 	if (cfg == PIN_ADC || cfg == PIN_CMP) {
@@ -286,13 +294,17 @@ void vpd_config_cc1_rp3a0_rd_l(enum vpd_pin cfg, int en)
 		STM32_COMP_CSR &= ~STM32_COMP_CMP2EN;
 
 		/* Set PA4 pin to Analog mode */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-				|  (3 << (2*4))); /* PA4 in ANALOG mode */
+		STM32_GPIO_MODER(GPIO_A) =
+			(STM32_GPIO_MODER(GPIO_A) | (3 << (2 * 4))); /* PA4 in
+									ANALOG
+									mode */
 
 		if (cfg == PIN_CMP) {
 			/* Set PA3 pin to ANALOG function */
-			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-				|  (3 << (2*3))); /* PA3 in ANALOG mode */
+			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A) |
+						    (3 << (2 * 3))); /* PA3 in
+									ANALOG
+									mode */
 
 			/* Disable Window Mode. Select PA3*/
 			STM32_COMP_CSR &= ~STM32_COMP_WNDWEN;
@@ -319,9 +331,11 @@ void vpd_config_cc2_rp3a0_rd_l(enum vpd_pin cfg, int en)
 		gpio_set_level(GPIO_CC2_RP3A0_RD_L, en ? 1 : 0);
 
 		/* Disable Analog mode and Enable GPO */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-				& ~(3 << (2*5))) /* PA5 disable ADC */
-				|  (1 << (2*5)); /* Set as GPO */
+		STM32_GPIO_MODER(GPIO_A) =
+			(STM32_GPIO_MODER(GPIO_A) & ~(3 << (2 * 5))) /* PA5
+									disable
+									ADC */
+			| (1 << (2 * 5)); /* Set as GPO */
 	}
 
 	if (cfg == PIN_ADC || cfg == PIN_CMP) {
@@ -329,13 +343,17 @@ void vpd_config_cc2_rp3a0_rd_l(enum vpd_pin cfg, int en)
 		STM32_COMP_CSR &= ~STM32_COMP_CMP2EN;
 
 		/* Set PA5 pin to ANALOG function */
-		STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-				|  (3 << (2*5))); /* PA5 in ANALOG mode */
+		STM32_GPIO_MODER(GPIO_A) =
+			(STM32_GPIO_MODER(GPIO_A) | (3 << (2 * 5))); /* PA5 in
+									ANALOG
+									mode */
 
 		if (cfg == PIN_CMP) {
 			/* Set PA3 pin to ANALOG function */
-			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A)
-				|  (3 << (2*3))); /* PA3 in ANALOG mode */
+			STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A) |
+						    (3 << (2 * 3))); /* PA3 in
+									ANALOG
+									mode */
 
 			/* Disable Window Mode. */
 			STM32_COMP_CSR &= ~STM32_COMP_WNDWEN;
@@ -362,13 +380,17 @@ void vpd_config_cc1_rpusb_odh(enum vpd_pin cfg, int en)
 		gpio_set_level(GPIO_CC1_RPUSB_ODH, en ? 1 : 0);
 
 		/* Disable Analog mode and Enable GPO */
-		STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-				& ~(3 << (2*0))) /* PB0 disable ADC */
-				|  (1 << (2*0)); /* Set as GPO */
+		STM32_GPIO_MODER(GPIO_B) =
+			(STM32_GPIO_MODER(GPIO_B) & ~(3 << (2 * 0))) /* PB0
+									disable
+									ADC */
+			| (1 << (2 * 0)); /* Set as GPO */
 	} else {
 		/* Enable Analog mode */
-		STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-				|  (3 << (2*0))); /* PB0 in ANALOG mode */
+		STM32_GPIO_MODER(GPIO_B) =
+			(STM32_GPIO_MODER(GPIO_B) | (3 << (2 * 0))); /* PB0 in
+									ANALOG
+									mode */
 	}
 }
 
@@ -382,13 +404,17 @@ void vpd_config_cc2_rpusb_odh(enum vpd_pin cfg, int en)
 		gpio_set_level(GPIO_CC2_RPUSB_ODH, en ? 1 : 0);
 
 		/* Disable Analog mode and Enable GPO */
-		STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-				& ~(3 << (2*1))) /* PB1 disable ADC */
-				|  (1 << (2*1)); /* Set as GPO */
+		STM32_GPIO_MODER(GPIO_B) =
+			(STM32_GPIO_MODER(GPIO_B) & ~(3 << (2 * 1))) /* PB1
+									disable
+									ADC */
+			| (1 << (2 * 1)); /* Set as GPO */
 	} else {
 		/* Enable Analog mode */
-		STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B)
-				|  (3 << (2*1))); /* PB1 in ANALOG mode */
+		STM32_GPIO_MODER(GPIO_B) =
+			(STM32_GPIO_MODER(GPIO_B) | (3 << (2 * 1))); /* PB1 in
+									ANALOG
+									mode */
 	}
 }
 
@@ -405,7 +431,7 @@ inline int vpd_read_host_vbus(void)
 inline int vpd_read_ct_vbus(void)
 {
 	return SCALE(adc_read_channel(ADC_CHARGE_VBUS_VSENSE),
-							VBUS_SCALE_FACTOR);
+		     VBUS_SCALE_FACTOR);
 }
 
 inline int vpd_read_vconn(void)
