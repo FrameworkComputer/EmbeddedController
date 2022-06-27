@@ -25,14 +25,13 @@ struct taskinfo {
 	uint32_t stack_size;
 };
 
-#define TASK(n, r, d, s, ...)  {	\
-	.name = #n,			\
-	.routine = #r,			\
-	.stack_size = s,		\
-},
-static const struct taskinfo taskinfos[] = {
-	CONFIG_TASK_LIST
-};
+#define TASK(n, r, d, s, ...)    \
+	{                        \
+		.name = #n,      \
+		.routine = #r,   \
+		.stack_size = s, \
+	},
+static const struct taskinfo taskinfos[] = { CONFIG_TASK_LIST };
 #undef TASK
 
 uint32_t GET_TASKINFOS_FUNC(const struct taskinfo **infos)
