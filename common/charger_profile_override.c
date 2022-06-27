@@ -20,17 +20,17 @@ static int test_vtg_mV = -1;
 
 static int fast_charging_allowed = 1;
 
-int charger_profile_override_common(struct charge_state_data *curr,
-			const struct fast_charge_params *fast_chg_params,
-			const struct fast_charge_profile **prev_chg_prof_info,
-			int batt_vtg_max)
+int charger_profile_override_common(
+	struct charge_state_data *curr,
+	const struct fast_charge_params *fast_chg_params,
+	const struct fast_charge_profile **prev_chg_prof_info, int batt_vtg_max)
 {
 	int i, voltage_range;
 	/* temp in 0.1 deg C */
 	int temp_c = curr->batt.temperature - 2731;
 	int temp_ranges = fast_chg_params->total_temp_ranges;
 	const struct fast_charge_profile *chg_profile_info =
-				fast_chg_params->chg_profile_info;
+		fast_chg_params->chg_profile_info;
 
 #ifdef CONFIG_CMD_CHARGER_PROFILE_OVERRIDE_TEST
 	if (fast_charge_test_on && test_vtg_mV != -1) {
@@ -78,9 +78,9 @@ int charger_profile_override_common(struct charge_state_data *curr,
 
 	if (!(curr->batt.flags & BATT_FLAG_BAD_VOLTAGE)) {
 		for (i = 0; i < CONFIG_CHARGER_PROFILE_VOLTAGE_RANGES - 1;
-			i++) {
+		     i++) {
 			if (curr->batt.voltage <
-					fast_chg_params->voltage_mV[i]) {
+			    fast_chg_params->voltage_mV[i]) {
 				voltage_range = i;
 				break;
 			}
@@ -98,13 +98,13 @@ int charger_profile_override_common(struct charge_state_data *curr,
 	 * Okay, impose our custom will:
 	 */
 	curr->requested_current =
-			(*prev_chg_prof_info)->current_mA[voltage_range];
+		(*prev_chg_prof_info)->current_mA[voltage_range];
 	curr->requested_voltage = curr->requested_current ? batt_vtg_max : 0;
 
 #ifdef CONFIG_CMD_CHARGER_PROFILE_OVERRIDE_TEST
 	if (fast_charge_test_on)
 		ccprintf("Fast charge profile i=%dmA, v=%dmV\n",
-			curr->requested_current, curr->requested_voltage);
+			 curr->requested_current, curr->requested_voltage);
 #endif
 
 	return 0;
@@ -143,8 +143,7 @@ static int command_fastcharge(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(fastcharge, command_fastcharge,
-			"[on|off]",
+DECLARE_CONSOLE_COMMAND(fastcharge, command_fastcharge, "[on|off]",
 			"Get or set fast charging profile");
 #endif
 
