@@ -31,52 +31,40 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,
 	GPIO_EC_RST_ODL,
 };
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /* I2C port map. */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "power",
-		.port = I2C_PORT_POWER,
-		.kbps = 100,
-		.scl  = GPIO_I2C0_SCL,
-		.sda  = GPIO_I2C0_SDA
-	},
-	{
-		.name = "tcpc0",
-		.port = I2C_PORT_TCPC0,
-		.kbps = 400,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "tcpc1",
-		.port = I2C_PORT_TCPC1,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
-	{
-		.name = "thermal",
-		.port = I2C_PORT_THERMAL_AP,
-		.kbps = 400,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA
-	},
-	{
-		.name = "kblight",
-		.port = I2C_PORT_KBLIGHT,
-		.kbps = 100,
-		.scl  = GPIO_I2C5_SCL,
-		.sda  = GPIO_I2C5_SDA
-	},
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl  = GPIO_I2C7_SCL,
-		.sda  = GPIO_I2C7_SDA
-	},
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 100,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "tcpc1",
+	  .port = I2C_PORT_TCPC1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "thermal",
+	  .port = I2C_PORT_THERMAL_AP,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
+	{ .name = "kblight",
+	  .port = I2C_PORT_KBLIGHT,
+	  .kbps = 100,
+	  .scl = GPIO_I2C5_SCL,
+	  .sda = GPIO_I2C5_SDA },
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 400,
+	  .scl = GPIO_I2C7_SCL,
+	  .sda = GPIO_I2C7_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -101,11 +89,9 @@ enum base_accelgyro_type {
 	BASE_GYRO_ICM426XX = 2,
 };
 
-const mat33_fp_t base_standard_ref_icm426xx = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref_icm426xx = { { 0, FLOAT_TO_FP(-1), 0 },
+						{ FLOAT_TO_FP(1), 0, 0 },
+						{ 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t icm426xx_base_accel = {
 	 .name = "Base Accel",
@@ -136,20 +122,20 @@ struct motion_sensor_t icm426xx_base_accel = {
 };
 
 struct motion_sensor_t icm426xx_base_gyro = {
-	 .name = "Base Gyro",
-	 .active_mask = SENSOR_ACTIVE_S0_S3,
-	 .chip = MOTIONSENSE_CHIP_ICM426XX,
-	 .type = MOTIONSENSE_TYPE_GYRO,
-	 .location = MOTIONSENSE_LOC_BASE,
-	 .drv = &icm426xx_drv,
-	 .mutex = &icm426xx_mutex,
-	 .drv_data = &g_icm426xx_data,
-	 .port = I2C_PORT_SENSOR,
-	 .i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
-	 .default_range = 1000, /* dps */
-	 .rot_standard_ref = &base_standard_ref_icm426xx,
-	 .min_frequency = ICM426XX_GYRO_MIN_FREQ,
-	 .max_frequency = ICM426XX_GYRO_MAX_FREQ,
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_ICM426XX,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &icm426xx_drv,
+	.mutex = &icm426xx_mutex,
+	.drv_data = &g_icm426xx_data,
+	.port = I2C_PORT_SENSOR,
+	.i2c_spi_addr_flags = ICM426XX_ADDR0_FLAGS,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_standard_ref_icm426xx,
+	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
+	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 };
 
 static enum base_accelgyro_type base_accelgyro_config;
@@ -179,18 +165,20 @@ static void board_detect_motionsensor(void)
 
 	if (board_is_convertible()) {
 		/* Check base accelgyro chip */
-		ret = icm_read8(&icm426xx_base_accel,
-				 ICM426XX_REG_WHO_AM_I, &val);
+		ret = icm_read8(&icm426xx_base_accel, ICM426XX_REG_WHO_AM_I,
+				&val);
 		if (ret)
 			ccprints("Get ICM fail.");
 		if (val == ICM426XX_CHIP_ICM40608) {
 			motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
 			motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
 		}
-		base_accelgyro_config = (val == ICM426XX_CHIP_ICM40608)
-			 ? BASE_GYRO_ICM426XX : BASE_GYRO_BMI160;
-		ccprints("Base Accelgyro: %s", (val == ICM426XX_CHIP_ICM40608)
-			 ? "ICM40608" : "BMI160");
+		base_accelgyro_config = (val == ICM426XX_CHIP_ICM40608) ?
+						BASE_GYRO_ICM426XX :
+						BASE_GYRO_BMI160;
+		ccprints("Base Accelgyro: %s", (val == ICM426XX_CHIP_ICM40608) ?
+						       "ICM40608" :
+						       "BMI160");
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsensor,
@@ -207,8 +195,7 @@ void board_update_sensor_config_from_sku(void)
 		/* Device is clamshell only */
 		tablet_set_mode(0, TABLET_TRIGGER_LID);
 		/* Gyro is not present, don't allow line to float */
-		gpio_set_flags(GPIO_6AXIS_INT_L,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_6AXIS_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
 	}
 }
 
@@ -230,15 +217,14 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_kblight_init, HOOK_PRIO_DEFAULT);
  * The connector has 30 pins total, and there is no pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-		{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-		{0, 7}, {-1, -1}, {-1, -1}, {1, 4}, {1, 3},
-		{-1, -1}, {1, 6}, {1, 7}, {3, 1}, {2, 0},
-		{1, 5}, {2, 6}, {2, 7}, {2, 1}, {2, 4},
-		{2, 5}, {1, 2}, {2, 3}, {2, 2}, {3, 0},
-		{-1, -1}, {0, 4}, {-1, -1}, {8, 2}, {-1, -1},
-		{-1, -1},
+	{ -1, -1 }, { 0, 5 },	{ 1, 1 }, { 1, 0 },   { 0, 6 },	  { 0, 7 },
+	{ -1, -1 }, { -1, -1 }, { 1, 4 }, { 1, 3 },   { -1, -1 }, { 1, 6 },
+	{ 1, 7 },   { 3, 1 },	{ 2, 0 }, { 1, 5 },   { 2, 6 },	  { 2, 7 },
+	{ 2, 1 },   { 2, 4 },	{ 2, 5 }, { 1, 2 },   { 2, 3 },	  { 2, 2 },
+	{ 3, 0 },   { -1, -1 }, { 0, 4 }, { -1, -1 }, { 8, 2 },	  { -1, -1 },
+	{ -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
