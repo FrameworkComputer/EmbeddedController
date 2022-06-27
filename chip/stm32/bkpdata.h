@@ -20,27 +20,27 @@
  * compatibility.
  */
 enum bkpdata_index {
-	BKPDATA_INDEX_SCRATCHPAD,	     /* General-purpose scratchpad */
-	BKPDATA_INDEX_SAVED_RESET_FLAGS,     /* Saved reset flags */
+	BKPDATA_INDEX_SCRATCHPAD, /* General-purpose scratchpad */
+	BKPDATA_INDEX_SAVED_RESET_FLAGS, /* Saved reset flags */
 #ifdef CONFIG_STM32_EXTENDED_RESET_FLAGS
-	BKPDATA_INDEX_SAVED_RESET_FLAGS_2,   /* Saved reset flags (cont) */
+	BKPDATA_INDEX_SAVED_RESET_FLAGS_2, /* Saved reset flags (cont) */
 #endif
 #ifdef CONFIG_SOFTWARE_PANIC
-	BKPDATA_INDEX_SAVED_PANIC_REASON,    /* Saved panic reason */
-	BKPDATA_INDEX_SAVED_PANIC_INFO,      /* Saved panic data */
+	BKPDATA_INDEX_SAVED_PANIC_REASON, /* Saved panic reason */
+	BKPDATA_INDEX_SAVED_PANIC_INFO, /* Saved panic data */
 	BKPDATA_INDEX_SAVED_PANIC_EXCEPTION, /* Saved panic exception code */
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE
-	BKPDATA_INDEX_PD0,		     /* USB-PD saved port0 state */
-	BKPDATA_INDEX_PD1,		     /* USB-PD saved port1 state */
-	BKPDATA_INDEX_PD2,		     /* USB-PD saved port2 state */
+	BKPDATA_INDEX_PD0, /* USB-PD saved port0 state */
+	BKPDATA_INDEX_PD1, /* USB-PD saved port1 state */
+	BKPDATA_INDEX_PD2, /* USB-PD saved port2 state */
 #endif
 #ifdef CONFIG_SOFTWARE_PANIC
 	/**
 	 * Saving the panic flags in case that AP thinks the panic is new
 	 * after a hard reset.
 	 */
-	BKPDATA_INDEX_SAVED_PANIC_FLAGS,     /* Saved panic flags */
+	BKPDATA_INDEX_SAVED_PANIC_FLAGS, /* Saved panic flags */
 #endif
 	BKPDATA_COUNT
 };
