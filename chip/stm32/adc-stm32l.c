@@ -91,7 +91,7 @@ static void adc_init(void)
 
 	if (!adc_powered())
 		/* Power on ADC module */
-		STM32_ADC_CR2 |= BIT(0);  /* ADON */
+		STM32_ADC_CR2 |= BIT(0); /* ADON */
 
 	/* Set right alignment */
 	STM32_ADC_CR2 &= ~BIT(11);
@@ -165,6 +165,7 @@ int adc_read_channel(enum adc_channel ch)
 	adc_release();
 
 	mutex_unlock(&adc_lock);
-	return (value == ADC_READ_ERROR) ? ADC_READ_ERROR :
-	       value * adc->factor_mul / adc->factor_div + adc->shift;
+	return (value == ADC_READ_ERROR) ?
+		       ADC_READ_ERROR :
+		       value * adc->factor_mul / adc->factor_div + adc->shift;
 }
