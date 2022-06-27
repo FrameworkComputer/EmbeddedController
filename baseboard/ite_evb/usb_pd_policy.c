@@ -20,8 +20,8 @@
 #include "usb_mux.h"
 #include "usb_pd_pdo.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 int pd_is_max_request_allowed(void)
 {
@@ -61,7 +61,6 @@ void pd_power_supply_reset(int port)
 	/* Kill VBUS */
 	board_pd_vbus_ctrl(port, 0);
 }
-
 
 __override int pd_check_data_swap(int port, enum pd_data_role data_role)
 {
@@ -107,7 +106,7 @@ __override void svdm_exit_dp_mode(int port)
 }
 
 __override int pd_custom_vdm(int port, int cnt, uint32_t *payload,
-				uint32_t **rpayload)
+			     uint32_t **rpayload)
 {
 	/* Return length 0, means nothing needn't tx */
 	return 0;
