@@ -12,19 +12,19 @@
 /* N8 core */
 #define CHIP_CORE_NDS32
 /* The base address of EC interrupt controller registers. */
-#define CHIP_EC_INTC_BASE           0x00F01100
+#define CHIP_EC_INTC_BASE 0x00F01100
 
 /****************************************************************************/
 /* Memory mapping */
 
-#define CHIP_H2RAM_BASE             0x0008D000 /* 0x0008D000~0x0008DFFF */
-#define CHIP_RAMCODE_BASE           0x0008E000 /* 0x0008E000~0x0008EFFF */
-#define CHIP_EXTRA_STACK_SPACE      0
+#define CHIP_H2RAM_BASE 0x0008D000 /* 0x0008D000~0x0008DFFF */
+#define CHIP_RAMCODE_BASE 0x0008E000 /* 0x0008E000~0x0008EFFF */
+#define CHIP_EXTRA_STACK_SPACE 0
 
-#define CONFIG_RAM_BASE             0x00080000
-#define CONFIG_RAM_SIZE             0x0000C000
+#define CONFIG_RAM_BASE 0x00080000
+#define CONFIG_RAM_SIZE 0x0000C000
 
-#define CONFIG_PROGRAM_MEMORY_BASE  0x00000000
+#define CONFIG_PROGRAM_MEMORY_BASE 0x00000000
 
 /****************************************************************************/
 /* Chip IT8320 is used with IT83XX TCPM driver */
@@ -36,7 +36,7 @@
  * doesn't support a write-protect pin, and if we make the write-protection
  * permanent, it can't be undone easily enough to support RMA.
  */
-#define CONFIG_FLASH_SIZE_BYTES  0x00040000
+#define CONFIG_FLASH_SIZE_BYTES 0x00040000
 /* For IT8320BX, we have to reload cc parameters after ec softreset. */
 #define IT83XX_USBPD_CC_PARAMETER_RELOAD
 /*
@@ -45,7 +45,7 @@
  */
 #define IT83XX_USBPD_CC_VOLTAGE_DETECTOR_INDEPENDENT
 /* Chip IT8320BX actually has TCPC physical port count */
-#define IT83XX_USBPD_PHY_PORT_COUNT    2
+#define IT83XX_USBPD_PHY_PORT_COUNT 2
 /* For IT8320BX, we have to write 0xff to clear pending bit.*/
 #define IT83XX_ESPI_VWCTRL1_WRITE_FF_CLEAR
 /* For IT8320BX, we have to read observation register of external timer two
@@ -53,7 +53,7 @@
  */
 #define IT83XX_EXT_OBSERVATION_REG_READ_TWO_TIMES
 #elif defined(CHIP_VARIANT_IT8320DX)
-#define CONFIG_FLASH_SIZE_BYTES  0x00080000
+#define CONFIG_FLASH_SIZE_BYTES 0x00080000
 #define CONFIG_IT83XX_FLASH_CLOCK_48MHZ
 /*
  * Disable eSPI pad, then PLL change
@@ -96,9 +96,9 @@
 /* Chip Dx transmit status bit of PD register is different from Bx. */
 #define IT83XX_PD_TX_ERROR_STATUS_BIT5
 /* Chip IT8320DX actually has TCPC physical port count */
-#define IT83XX_USBPD_PHY_PORT_COUNT    2
+#define IT83XX_USBPD_PHY_PORT_COUNT 2
 #else
 #error "Unsupported chip variant!"
 #endif
 
-#endif  /* __CROS_EC_CONFIG_CHIP_IT8320_H */
+#endif /* __CROS_EC_CONFIG_CHIP_IT8320_H */
