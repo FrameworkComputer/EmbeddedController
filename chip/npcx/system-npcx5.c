@@ -39,9 +39,9 @@ void system_mpu_config(void)
 	CPU_MPU_CTRL = 0x7;
 
 	/* Create a new MPU Region to allow execution from low-power ram */
-	CPU_MPU_RNR  = REGION_CHIP_RESERVED;
+	CPU_MPU_RNR = REGION_CHIP_RESERVED;
 	CPU_MPU_RASR = CPU_MPU_RASR & 0xFFFFFFFE; /* Disable region */
-	CPU_MPU_RBAR = CONFIG_LPRAM_BASE;         /* Set region base address */
+	CPU_MPU_RBAR = CONFIG_LPRAM_BASE; /* Set region base address */
 	/*
 	 * Set region size & attribute and enable region
 	 * [31:29] - Reserved.
@@ -61,7 +61,7 @@ void system_mpu_config(void)
 /**
  * hibernate function in low power ram for npcx5 series.
  */
-noreturn void __keep __attribute__ ((section(".lowpower_ram")))
+noreturn void __keep __attribute__((section(".lowpower_ram")))
 __enter_hibernate_in_lpram(void)
 {
 	/*
@@ -69,10 +69,8 @@ __enter_hibernate_in_lpram(void)
 	 * Our bypass needs stack instructions but FW will turn off main ram
 	 * later for better power consumption.
 	 */
-	asm (
-		"ldr r0, =0x40001800\n"
-		"mov sp, r0\n"
-	);
+	asm("ldr r0, =0x40001800\n"
+	    "mov sp, r0\n");
 
 	/* Disable Code RAM first */
 	SET_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_5), NPCX_PWDWN_CTL5_MRFSH_DIS);
@@ -88,13 +86,12 @@ __enter_hibernate_in_lpram(void)
 	 * wake-up from deep idle.
 	 * Workaround: Apply the same bypass of idle but don't enable interrupt.
 	 */
-	asm (
-		"push {r0-r5}\n"        /* Save needed registers */
-		"ldr r0, =0x40001600\n" /* Set r0 to Suspend RAM addr */
-		"wfi\n"                 /* Wait for int to enter idle */
-		"ldm r0, {r0-r5}\n"     /* Add a delay after WFI */
-		"pop {r0-r5}\n"         /* Restore regs before enabling ints */
-		"isb\n"                 /* Flush the cpu pipeline */
+	asm("push {r0-r5}\n" /* Save needed registers */
+	    "ldr r0, =0x40001600\n" /* Set r0 to Suspend RAM addr */
+	    "wfi\n" /* Wait for int to enter idle */
+	    "ldm r0, {r0-r5}\n" /* Add a delay after WFI */
+	    "pop {r0-r5}\n" /* Restore regs before enabling ints */
+	    "isb\n" /* Flush the cpu pipeline */
 	);
 
 	/* RTC wake-up */
@@ -129,7 +126,7 @@ void __hibernate_npcx_series(void)
 {
 	int i;
 	void (*__hibernate_in_lpram)(void) =
-			(void(*)(void))(__lpram_fw_start | 0x01);
+		(void (*)(void))(__lpram_fw_start | 0x01);
 
 	/* Enable power for the Low Power RAM */
 	CLEAR_BIT(NPCX_PWDWN_CTL(NPCX_PMC_PWDWN_6), 6);
@@ -140,7 +137,7 @@ void __hibernate_npcx_series(void)
 	/* Copy the __enter_hibernate_in_lpram instructions to LPRAM */
 	for (i = 0; i < &__flash_lpfw_end - &__flash_lpfw_start; i++)
 		*((uint32_t *)__lpram_fw_start + i) =
-				*(&__flash_lpfw_start + i);
+			*(&__flash_lpfw_start + i);
 
 	/* execute hibernate func in LPRAM */
 	__hibernate_in_lpram();
@@ -148,7 +145,7 @@ void __hibernate_npcx_series(void)
 
 #ifdef CONFIG_EXTERNAL_STORAGE
 /* Sysjump utilities in low power ram for npcx5 series. */
-noreturn void __keep __attribute__ ((section(".lowpower_ram2")))
+noreturn void __keep __attribute__((section(".lowpower_ram2")))
 __start_gdma(uint32_t exeAddr)
 {
 	/* Enable GDMA now */
@@ -159,7 +156,7 @@ __start_gdma(uint32_t exeAddr)
 
 	/* Wait for transfer to complete/fail */
 	while (!IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_TC) &&
-			!IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAERR))
+	       !IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAERR))
 		;
 
 	/* Disable GDMA now */
@@ -186,7 +183,7 @@ __start_gdma(uint32_t exeAddr)
 
 /* Bypass for GMDA issue of ROM api utilities only on npcx5 series. */
 void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
-		uint32_t size, uint32_t exeAddr)
+				uint32_t size, uint32_t exeAddr)
 {
 	int i;
 	uint8_t chunkSize = 16; /* 4 data burst mode. ie.16 bytes */
@@ -195,7 +192,7 @@ void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 	 * it's a thumb branch for cortex-m series CPU.
 	 */
 	void (*__start_gdma_in_lpram)(uint32_t) =
-			(void(*)(uint32_t))(__lpram_lfw_start | 0x01);
+		(void (*)(uint32_t))(__lpram_lfw_start | 0x01);
 
 	/*
 	 * Before enabling burst mode for better performance of GDMA, it's
@@ -203,7 +200,7 @@ void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 	 * are 16 bytes aligned in case failure occurs.
 	 */
 	ASSERT((size % chunkSize) == 0 && (srcAddr % chunkSize) == 0 &&
-			(dstAddr % chunkSize) == 0);
+	       (dstAddr % chunkSize) == 0);
 
 	/* Check valid address for jumpiing */
 	ASSERT(exeAddr != 0x0);
@@ -253,7 +250,7 @@ void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 	/* Copy the __start_gdma_in_lpram instructions to LPRAM */
 	for (i = 0; i < &__flash_lplfw_end - &__flash_lplfw_start; i++)
 		*((uint32_t *)__lpram_lfw_start + i) =
-				*(&__flash_lplfw_start + i);
+			*(&__flash_lplfw_start + i);
 
 	/* Start GDMA in Suspend RAM */
 	__start_gdma_in_lpram(exeAddr);
