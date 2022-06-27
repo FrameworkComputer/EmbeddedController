@@ -14,7 +14,7 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 const struct board_batt_params board_battery_info[] = {
 	[BATTERY_SIMPLO] = {
@@ -95,9 +95,9 @@ int charger_profile_override(struct charge_state_data *curr)
 	 * When smart battery temperature is more than 45 deg C, the max
 	 * charging voltage is 4100mV.
 	 */
-	if (curr->state == ST_CHARGE && bat_temp_c >= 450
-		&& !(curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE))
-		curr->requested_voltage	= 4100;
+	if (curr->state == ST_CHARGE && bat_temp_c >= 450 &&
+	    !(curr->batt.flags & BATT_FLAG_BAD_TEMPERATURE))
+		curr->requested_voltage = 4100;
 	else
 		curr->requested_voltage = batt_info->voltage_max;
 
