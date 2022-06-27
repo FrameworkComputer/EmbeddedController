@@ -15,7 +15,6 @@
 #error "This file should only be built for RO."
 #endif
 
-
 /**
  * Disable restricted commands when the system is locked.
  *
