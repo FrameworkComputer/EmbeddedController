@@ -13,4 +13,4 @@
 /* Initializes the module. */
 int power_demo_init(void);
 
-#endif  /* __TEST_POWERDEMO_H */
+#endif /* __TEST_POWERDEMO_H */
