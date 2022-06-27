@@ -111,10 +111,10 @@ enum battery_present variant_battery_present(void)
 
 int charger_profile_override(struct charge_state_data *curr)
 {
-	if(chipset_in_state(CHIPSET_STATE_ANY_OFF))
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		return 0;
 
-	if(curr->requested_current > CHARGING_CURRENT_45C)
+	if (curr->requested_current > CHARGING_CURRENT_45C)
 		curr->requested_current = CHARGING_CURRENT_45C;
 
 	return 0;
@@ -124,13 +124,13 @@ int charger_profile_override(struct charge_state_data *curr)
 #define PARAM_FASTCHARGE (CS_PARAM_CUSTOM_PROFILE_MIN + 0)
 
 enum ec_status charger_profile_override_get_param(uint32_t param,
-                                                  uint32_t *value)
+						  uint32_t *value)
 {
-        return EC_RES_INVALID_PARAM;
+	return EC_RES_INVALID_PARAM;
 }
 
 enum ec_status charger_profile_override_set_param(uint32_t param,
-                                                  uint32_t value)
+						  uint32_t value)
 {
-        return EC_RES_INVALID_PARAM;
+	return EC_RES_INVALID_PARAM;
 }
