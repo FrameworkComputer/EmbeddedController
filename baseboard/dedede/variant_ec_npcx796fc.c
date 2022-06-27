@@ -21,8 +21,8 @@
 #include "timer.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 void pp3300_a_pgood_high(void)
 {
@@ -79,7 +79,7 @@ static void set_up_adc_irqs(void)
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH1, 1);
 	npcx_adc_thresh_int_enable(NPCX_ADC_THRESH2, 1);
 }
-DECLARE_HOOK(HOOK_INIT, set_up_adc_irqs, HOOK_PRIO_INIT_ADC+1);
+DECLARE_HOOK(HOOK_INIT, set_up_adc_irqs, HOOK_PRIO_INIT_ADC + 1);
 
 static void disable_adc_irqs_deferred(void)
 {
@@ -144,8 +144,8 @@ static void enable_adc_irqs(void)
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
 		CPRINTS("%s", __func__);
 		hook_call_deferred(&disable_adc_irqs_deferred_data, -1);
-		npcx_set_adc_repetitive(adc_channels[ADC_VSNS_PP3300_A].input_ch,
-					1);
+		npcx_set_adc_repetitive(
+			adc_channels[ADC_VSNS_PP3300_A].input_ch, 1);
 		npcx_adc_thresh_int_enable(NPCX_ADC_THRESH1, 1);
 		npcx_adc_thresh_int_enable(NPCX_ADC_THRESH2, 1);
 	}
@@ -162,56 +162,44 @@ DECLARE_HOOK(HOOK_LID_CHANGE, enable_adc_irqs_via_lid, HOOK_PRIO_DEFAULT);
 
 /* I2C Ports */
 __attribute__((weak)) const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "eeprom",
-		.port = I2C_PORT_EEPROM,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_EEPROM_SCL,
-		.sda  = GPIO_EC_I2C_EEPROM_SDA
-	},
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_EEPROM_SCL,
+	  .sda = GPIO_EC_I2C_EEPROM_SDA },
 
-	{
-		.name = "battery",
-		.port = I2C_PORT_BATTERY,
-		.kbps = 100,
-		.scl  = GPIO_EC_I2C_BATTERY_SCL,
-		.sda  = GPIO_EC_I2C_BATTERY_SDA
-	},
+	{ .name = "battery",
+	  .port = I2C_PORT_BATTERY,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_BATTERY_SCL,
+	  .sda = GPIO_EC_I2C_BATTERY_SDA },
 
 #ifdef HAS_TASK_MOTIONSENSE
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_SENSOR_SCL,
-		.sda  = GPIO_EC_I2C_SENSOR_SDA
-	},
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_SENSOR_SCL,
+	  .sda = GPIO_EC_I2C_SENSOR_SDA },
 #endif
 
-	{
-		.name = "usbc0",
-		.port = I2C_PORT_USB_C0,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_USB_C0_SCL,
-		.sda  = GPIO_EC_I2C_USB_C0_SDA
-	},
+	{ .name = "usbc0",
+	  .port = I2C_PORT_USB_C0,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_USB_C0_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_SDA },
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-	{
-		.name = "sub_usbc1",
-		.port = I2C_PORT_SUB_USB_C1,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_SUB_USB_C1_SCL,
-		.sda  = GPIO_EC_I2C_SUB_USB_C1_SDA
-	},
+	{ .name = "sub_usbc1",
+	  .port = I2C_PORT_SUB_USB_C1,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_SUB_USB_C1_SCL,
+	  .sda = GPIO_EC_I2C_SUB_USB_C1_SDA },
 #endif
 #ifdef BOARD_BUGZZY
-	{
-		.name = "lcd",
-		.port = I2C_PORT_LCD,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_LCD_SCL,
-		.sda  = GPIO_EC_I2C_LCD_SDA
-	},
+	{ .name = "lcd",
+	  .port = I2C_PORT_LCD,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_LCD_SCL,
+	  .sda = GPIO_EC_I2C_LCD_SDA },
 #endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
