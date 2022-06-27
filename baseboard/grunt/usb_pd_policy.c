@@ -17,11 +17,11 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
-			 PDO_FIXED_COMM_CAP)
+#define PDO_FIXED_FLAGS \
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP)
 
 int pd_check_vconn_swap(int port)
 {
@@ -118,11 +118,11 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 		usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 
-	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
-			 CMD_DP_CONFIG | VDO_OPOS(opos));
-	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
-				1,             /* DPv1.3 signaling */
-				2);            /* UFP connected */
+	payload[0] =
+		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG | VDO_OPOS(opos));
+	payload[1] = VDO_DP_CFG(pin_mode, /* pin mode */
+				1, /* DPv1.3 signaling */
+				2); /* UFP connected */
 	return 2;
 };
 
@@ -142,8 +142,8 @@ __override void svdm_dp_post_config(int port)
 
 	/* set the minimum time delay (2ms) for the next HPD IRQ */
 	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL |
-				 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+	usb_mux_hpd_update(port,
+			   USB_PD_MUX_HPD_LVL | USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
 
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
