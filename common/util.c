@@ -23,8 +23,8 @@ __stdlib_compat int strcasecmp(const char *s1, const char *s2)
 
 static int find_base(int base, int *c, const char **nptr)
 {
-	if ((base == 0 || base == 16) && *c == '0'
-	    && (**nptr == 'x' || **nptr == 'X')) {
+	if ((base == 0 || base == 16) && *c == '0' &&
+	    (**nptr == 'x' || **nptr == 'X')) {
 		*c = (*nptr)[1];
 		(*nptr) += 2;
 		base = 16;
@@ -130,7 +130,6 @@ int parse_bool(const char *s, int *dest)
 	/* dunno */
 	return 0;
 }
-
 
 /* Constant-time memory comparison */
 int safe_memcmp(const void *s1, const void *s2, size_t size)
@@ -253,7 +252,7 @@ bool is_aligned(uint32_t addr, uint32_t align)
 
 int alignment_log2(unsigned int x)
 {
-	ASSERT(x != 0);	/* ctz(0) is undefined */
+	ASSERT(x != 0); /* ctz(0) is undefined */
 	return __builtin_ctz(x);
 }
 
@@ -261,9 +260,9 @@ int alignment_log2(unsigned int x)
 /* stateful conditional stuff */
 
 enum cond_internal_bits {
-	COND_CURR_MASK = BIT(0),		/* current value */
-	COND_RISE_MASK = BIT(1),		/* set if 0->1 */
-	COND_FALL_MASK = BIT(2),		/* set if 1->0 */
+	COND_CURR_MASK = BIT(0), /* current value */
+	COND_RISE_MASK = BIT(1), /* set if 0->1 */
+	COND_FALL_MASK = BIT(2), /* set if 1->0 */
 };
 
 void cond_init(cond_t *c, int val)
@@ -319,8 +318,7 @@ int cond_went(cond_t *c, int val)
  * *offset<0.  If argc<shift+1, leaves size unchanged, returning error if
  * *size<0.
  */
-int parse_offset_size(int argc, char **argv, int shift,
-			     int *offset, int *size)
+int parse_offset_size(int argc, char **argv, int shift, int *offset, int *size)
 {
 	char *e;
 	int i;
@@ -417,10 +415,10 @@ int binary_first_base3_from_bits(int *bits, int nbits)
 			switch (bits[i]) {
 			case 0: /* Ignore '0' digits. */
 				break;
-			case 1:	/* Account for binaries 0 to 2^i - 1. */
+			case 1: /* Account for binaries 0 to 2^i - 1. */
 				binary_below += 1 << i;
 				break;
-			case 2:	/* Account for binaries 0 to 2^(i+1) - 1. */
+			case 2: /* Account for binaries 0 to 2^(i+1) - 1. */
 				binary_below += 1 << (i + 1);
 				has_z = 1;
 			}
