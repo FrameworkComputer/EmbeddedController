@@ -139,15 +139,15 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 	 * enabling the VCONN on respective CC line
 	 */
 	gpio_set_level(tcpc_gpios[port].vconn.cc1_pin,
-			!tcpc_gpios[port].vconn.pin_pol);
+		       !tcpc_gpios[port].vconn.pin_pol);
 	gpio_set_level(tcpc_gpios[port].vconn.cc2_pin,
-			!tcpc_gpios[port].vconn.pin_pol);
+		       !tcpc_gpios[port].vconn.pin_pol);
 
 	if (enabled)
 		gpio_set_level((cc_pin != USBPD_CC_PIN_1) ?
-				tcpc_gpios[port].vconn.cc2_pin :
-				tcpc_gpios[port].vconn.cc1_pin,
-				tcpc_gpios[port].vconn.pin_pol);
+				       tcpc_gpios[port].vconn.cc2_pin :
+				       tcpc_gpios[port].vconn.cc1_pin,
+			       tcpc_gpios[port].vconn.pin_pol);
 #endif
 }
 #endif
