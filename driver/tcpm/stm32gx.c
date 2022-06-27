@@ -30,8 +30,8 @@
 #error "Unsupported config options of Stm32gx PD driver"
 #endif
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* Wait time for vconn power switch to turn off. */
 #ifndef PD_STM32GX_VCONN_TURN_OFF_DELAY_US
@@ -39,7 +39,6 @@
 #endif
 
 static int cached_rp[CONFIG_USB_PD_PORT_MAX_COUNT];
-
 
 static int stm32gx_tcpm_get_message_raw(int port, uint32_t *buf, int *head)
 {
@@ -57,7 +56,7 @@ static int stm32gx_tcpm_release(int port)
 }
 
 static int stm32gx_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+			       enum tcpc_cc_voltage_status *cc2)
 {
 	/* Get cc_state value for each CC line */
 	stm32gx_ucpd_get_cc(port, cc1, cc2);
@@ -102,10 +101,8 @@ static int stm32gx_tcpm_set_rx_enable(int port, int enable)
 	return stm32gx_ucpd_set_rx_enable(port, enable);
 }
 
-static int stm32gx_tcpm_transmit(int port,
-			enum tcpci_msg_type type,
-			uint16_t header,
-			const uint32_t *data)
+static int stm32gx_tcpm_transmit(int port, enum tcpci_msg_type type,
+				 uint16_t header, const uint32_t *data)
 {
 	return stm32gx_ucpd_transmit(port, type, header, data);
 }
@@ -115,9 +112,9 @@ static int stm32gx_tcpm_sop_prime_enable(int port, bool enable)
 	return stm32gx_ucpd_sop_prime_enable(port, enable);
 }
 
-
-static int stm32gx_tcpm_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 *chip_info)
+static int
+stm32gx_tcpm_get_chip_info(int port, int live,
+			   struct ec_response_pd_chip_info_v1 *chip_info)
 {
 	return stm32gx_ucpd_get_chip_info(port, live, chip_info);
 }
@@ -147,7 +144,7 @@ static int stm32gx_tcpm_reset_bist_type_2(int port)
 }
 
 enum ec_error_list stm32gx_tcpm_set_bist_test_mode(const int port,
-		const bool enable)
+						   const bool enable)
 {
 	return stm32gx_ucpd_set_bist_test_mode(port, enable);
 }
@@ -165,22 +162,22 @@ bool stm32gx_tcpm_check_vbus_level(int port, enum vbus_level level)
 }
 
 const struct tcpm_drv stm32gx_tcpm_drv = {
-	.init			= &stm32gx_tcpm_init,
-	.release		= &stm32gx_tcpm_release,
-	.get_cc			= &stm32gx_tcpm_get_cc,
-	.check_vbus_level	= &stm32gx_tcpm_check_vbus_level,
-	.select_rp_value	= &stm32gx_tcpm_select_rp_value,
-	.set_cc			= &stm32gx_tcpm_set_cc,
-	.set_polarity		= &stm32gx_tcpm_set_polarity,
+	.init = &stm32gx_tcpm_init,
+	.release = &stm32gx_tcpm_release,
+	.get_cc = &stm32gx_tcpm_get_cc,
+	.check_vbus_level = &stm32gx_tcpm_check_vbus_level,
+	.select_rp_value = &stm32gx_tcpm_select_rp_value,
+	.set_cc = &stm32gx_tcpm_set_cc,
+	.set_polarity = &stm32gx_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable      = &stm32gx_tcpm_sop_prime_enable,
+	.sop_prime_enable = &stm32gx_tcpm_sop_prime_enable,
 #endif
-	.set_vconn		= &stm32gx_tcpm_set_vconn,
-	.set_msg_header		= &stm32gx_tcpm_set_msg_header,
-	.set_rx_enable		= &stm32gx_tcpm_set_rx_enable,
-	.get_message_raw	= &stm32gx_tcpm_get_message_raw,
-	.transmit		= &stm32gx_tcpm_transmit,
-	.get_chip_info		= &stm32gx_tcpm_get_chip_info,
-	.reset_bist_type_2	= &stm32gx_tcpm_reset_bist_type_2,
-	.set_bist_test_mode	= &stm32gx_tcpm_set_bist_test_mode,
+	.set_vconn = &stm32gx_tcpm_set_vconn,
+	.set_msg_header = &stm32gx_tcpm_set_msg_header,
+	.set_rx_enable = &stm32gx_tcpm_set_rx_enable,
+	.get_message_raw = &stm32gx_tcpm_get_message_raw,
+	.transmit = &stm32gx_tcpm_transmit,
+	.get_chip_info = &stm32gx_tcpm_get_chip_info,
+	.reset_bist_type_2 = &stm32gx_tcpm_reset_bist_type_2,
+	.set_bist_test_mode = &stm32gx_tcpm_set_bist_test_mode,
 };
