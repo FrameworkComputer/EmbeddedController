@@ -12,7 +12,7 @@
 #include "board_revs.h"
 
 /* Internal SPI flash on NPCX7 */
-#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)  /* 512KB internal spi flash */
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024) /* 512KB internal spi flash */
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
@@ -72,12 +72,7 @@
 #include "gpio_signal.h"
 #include "registers.h"
 
-enum adc_channel {
-	ADC_VBUS,
-	ADC_AMON_BMON,
-	ADC_PSYS,
-	ADC_CH_COUNT
-};
+enum adc_channel { ADC_VBUS, ADC_AMON_BMON, ADC_PSYS, ADC_CH_COUNT };
 
 /* Motion sensors */
 enum sensor_id {
@@ -87,11 +82,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT = 0,
-	PWM_CH_DISPLIGHT,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT = 0, PWM_CH_DISPLIGHT, PWM_CH_COUNT };
 
 enum battery_type {
 	BATTERY_BYD,
