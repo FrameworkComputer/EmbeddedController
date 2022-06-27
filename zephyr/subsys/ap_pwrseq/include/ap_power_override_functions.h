@@ -75,7 +75,7 @@ bool board_ap_power_check_power_rails_enabled(void);
 /**
  * @brief macro to access configuration properties from DTS
  */
-#define AP_PWRSEQ_DT_VALUE(p)					\
-	DT_PROP(DT_COMPAT_GET_ANY_STATUS_OKAY(intel_ap_pwrseq), p)	\
+#define AP_PWRSEQ_DT_VALUE(p) \
+	DT_PROP(DT_COMPAT_GET_ANY_STATUS_OKAY(intel_ap_pwrseq), p)
 
 #endif /* __AP_PWRSEQ_AP_POWER_BOARD_FUNCTIONS_H__ */
