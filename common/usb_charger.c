@@ -48,7 +48,7 @@ BUILD_ASSERT(BIT(3) == TASK_EVENT_CUSTOM_BIT(3));
 
 static void update_vbus_supplier(int port, int vbus_level)
 {
-	struct charge_port_info charge = {0};
+	struct charge_port_info charge = { 0 };
 
 	if (vbus_level && !usb_charger_port_is_sourcing_vbus(port)) {
 		charge.voltage = USB_CHARGER_VOLTAGE_MV;
@@ -104,7 +104,7 @@ void usb_charger_vbus_change(int port, int vbus_level)
 #endif
 
 	if ((get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_CHARGER) ||
-		(get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_PPC)) {
+	    (get_usb_pd_vbus_detect() == USB_PD_VBUS_DETECT_PPC)) {
 		/* USB PD task */
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
@@ -112,29 +112,19 @@ void usb_charger_vbus_change(int port, int vbus_level)
 
 void usb_charger_reset_charge(int port)
 {
-	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY,
-				     port, NULL);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP,
-				     port, NULL);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP,
-				     port, NULL);
-	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP,
-				     port, NULL);
-	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER,
-				     port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_PROPRIETARY, port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_CDP, port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_DCP, port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_BC12_SDP, port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_OTHER, port, NULL);
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
-	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-				     port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, port, NULL);
 #endif
 #ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_BPP,
-				     port, NULL);
-	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_EPP,
-				     port, NULL);
-	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_GPP,
-				     port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_BPP, port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_EPP, port, NULL);
+	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_GPP, port, NULL);
 #endif
-
 }
 
 void usb_charger_task_set_event(int port, uint8_t event)
@@ -185,8 +175,7 @@ void usb_charger_task_shared(void *u)
 			}
 
 			port_evt = PORT_EVENT_UNPACK(
-					port,
-					atomic_get(&usb_charger_port_events));
+				port, atomic_get(&usb_charger_port_events));
 			atomic_and(&usb_charger_port_events,
 				   ~PORT_EVENT_PACK(port, port_evt));
 
