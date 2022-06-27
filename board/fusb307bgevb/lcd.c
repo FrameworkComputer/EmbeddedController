@@ -26,17 +26,17 @@ static struct lcd_state_info state = {
 /* write either command or data */
 static void expander_write(uint8_t data)
 {
-	i2c_write8(I2C_PORT_TCPC, LCD_SLAVE_ADDR, 0x00, data |
-		state.backlightval);
+	i2c_write8(I2C_PORT_TCPC, LCD_SLAVE_ADDR, 0x00,
+		   data | state.backlightval);
 }
 
 static void pulse_enable(uint8_t data)
 {
-	expander_write(data | LCD_EN);/* En high */
-	usleep(1);	/* enable pulse must be >450ns */
+	expander_write(data | LCD_EN); /* En high */
+	usleep(1); /* enable pulse must be >450ns */
 
-	expander_write(data & ~LCD_EN);/* En low */
-	usleep(50);	/* commands need > 37us to settle */
+	expander_write(data & ~LCD_EN); /* En low */
+	usleep(50); /* commands need > 37us to settle */
 }
 
 static void write_4bits(uint8_t value)
@@ -63,8 +63,8 @@ static void command(uint8_t value)
 /********** high level commands, for the user! */
 void lcd_clear(void)
 {
-	command(LCD_CLEAR_DISPLAY);/* clear display, set cursor to zero */
-	usleep(2000);	/* this command takes a long time! */
+	command(LCD_CLEAR_DISPLAY); /* clear display, set cursor to zero */
+	usleep(2000); /* this command takes a long time! */
 }
 
 void lcd_set_cursor(uint8_t col, uint8_t row)
