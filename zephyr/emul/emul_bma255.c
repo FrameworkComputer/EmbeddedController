@@ -19,7 +19,7 @@ LOG_MODULE_REGISTER(emul_bma255);
 
 #include "driver/accel_bma2x2.h"
 
-#define BMA_DATA_FROM_I2C_EMUL(_emul)					     \
+#define BMA_DATA_FROM_I2C_EMUL(_emul)                                        \
 	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
 		     struct bma_emul_data, common)
 
@@ -210,18 +210,18 @@ void bma_emul_set_off(struct i2c_emul *emul, int axis, int16_t val)
 	switch (axis) {
 	case BMA_EMUL_AXIS_X:
 		data->off_x = val;
-		data->reg[BMA2x2_OFFSET_X_AXIS_ADDR] = bma_emul_off_to_nvm(
-								data->off_x);
+		data->reg[BMA2x2_OFFSET_X_AXIS_ADDR] =
+			bma_emul_off_to_nvm(data->off_x);
 		break;
 	case BMA_EMUL_AXIS_Y:
 		data->off_y = val;
-		data->reg[BMA2x2_OFFSET_Y_AXIS_ADDR] = bma_emul_off_to_nvm(
-								data->off_y);
+		data->reg[BMA2x2_OFFSET_Y_AXIS_ADDR] =
+			bma_emul_off_to_nvm(data->off_y);
 		break;
 	case BMA_EMUL_AXIS_Z:
 		data->off_z = val;
-		data->reg[BMA2x2_OFFSET_Z_AXIS_ADDR] = bma_emul_off_to_nvm(
-								data->off_z);
+		data->reg[BMA2x2_OFFSET_Z_AXIS_ADDR] =
+			bma_emul_off_to_nvm(data->off_z);
 		break;
 	}
 }
@@ -312,70 +312,70 @@ void bma_emul_set_err_on_msb_first(struct i2c_emul *emul, bool set)
 
 /** Mask reserved bits in each register of BMA255 */
 static const uint8_t bma_emul_rsvd_mask[] = {
-	[BMA2x2_CHIP_ID_ADDR]			= 0x00,
-	[0x01]					= 0xff, /* Reserved */
-	[BMA2x2_X_AXIS_LSB_ADDR]		= 0x0e,
-	[BMA2x2_X_AXIS_MSB_ADDR]		= 0x00,
-	[BMA2x2_Y_AXIS_LSB_ADDR]		= 0x0e,
-	[BMA2x2_Y_AXIS_MSB_ADDR]		= 0x00,
-	[BMA2x2_Z_AXIS_LSB_ADDR]		= 0x0e,
-	[BMA2x2_Z_AXIS_MSB_ADDR]		= 0x00,
-	[BMA2x2_TEMP_ADDR]			= 0x00,
-	[BMA2x2_STAT1_ADDR]			= 0x00,
-	[BMA2x2_STAT2_ADDR]			= 0x1f,
-	[BMA2x2_STAT_TAP_SLOPE_ADDR]		= 0x00,
-	[BMA2x2_STAT_ORIENT_HIGH_ADDR]		= 0x00,
-	[0x0d]					= 0xff, /* Reserved */
-	[BMA2x2_STAT_FIFO_ADDR]			= 0x00,
-	[BMA2x2_RANGE_SELECT_ADDR]		= 0xf0,
-	[BMA2x2_BW_SELECT_ADDR]			= 0xe0,
-	[BMA2x2_MODE_CTRL_ADDR]			= 0x01,
-	[BMA2x2_LOW_NOISE_CTRL_ADDR]		= 0x9f,
-	[BMA2x2_DATA_CTRL_ADDR]			= 0x3f,
-	[BMA2x2_RST_ADDR]			= 0x00,
-	[0x15]					= 0xff, /* Reserved */
-	[BMA2x2_INTR_ENABLE1_ADDR]		= 0x08,
-	[BMA2x2_INTR_ENABLE2_ADDR]		= 0x80,
-	[BMA2x2_INTR_SLOW_NO_MOTION_ADDR]	= 0xf0,
-	[BMA2x2_INTR1_PAD_SELECT_ADDR]		= 0x00,
-	[BMA2x2_INTR_DATA_SELECT_ADDR]		= 0x18,
-	[BMA2x2_INTR2_PAD_SELECT_ADDR]		= 0x00,
-	[0x1c]					= 0xff, /* Reserved */
-	[0x1d]					= 0xff, /* Reserved */
-	[BMA2x2_INTR_SOURCE_ADDR]		= 0xc0,
-	[0x1f]					= 0xff, /* Reserved */
-	[BMA2x2_INTR_SET_ADDR]			= 0xf0,
-	[BMA2x2_INTR_CTRL_ADDR]			= 0x70,
-	[BMA2x2_LOW_DURN_ADDR]			= 0x00,
-	[BMA2x2_LOW_THRES_ADDR]			= 0x00,
-	[BMA2x2_LOW_HIGH_HYST_ADDR]		= 0x38,
-	[BMA2x2_HIGH_DURN_ADDR]			= 0x00,
-	[BMA2x2_HIGH_THRES_ADDR]		= 0x00,
-	[BMA2x2_SLOPE_DURN_ADDR]		= 0x00,
-	[BMA2x2_SLOPE_THRES_ADDR]		= 0x00,
-	[BMA2x2_SLOW_NO_MOTION_THRES_ADDR]	= 0x00,
-	[BMA2x2_TAP_PARAM_ADDR]			= 0x38,
-	[BMA2x2_TAP_THRES_ADDR]			= 0x20,
-	[BMA2x2_ORIENT_PARAM_ADDR]		= 0x80,
-	[BMA2x2_THETA_BLOCK_ADDR]		= 0x80,
-	[BMA2x2_THETA_FLAT_ADDR]		= 0xc0,
-	[BMA2x2_FLAT_HOLD_TIME_ADDR]		= 0xc8,
-	[BMA2x2_FIFO_WML_TRIG]			= 0xc0,
-	[0x31]					= 0xff, /* Reserved */
-	[BMA2x2_SELFTEST_ADDR]			= 0xf8,
-	[BMA2x2_EEPROM_CTRL_ADDR]		= 0x00,
-	[BMA2x2_SERIAL_CTRL_ADDR]		= 0xf8,
-	[0x35]					= 0xff, /* Reserved */
-	[BMA2x2_OFFSET_CTRL_ADDR]		= 0x08,
-	[BMA2x2_OFC_SETTING_ADDR]		= 0x80,
-	[BMA2x2_OFFSET_X_AXIS_ADDR]		= 0x00,
-	[BMA2x2_OFFSET_Y_AXIS_ADDR]		= 0x00,
-	[BMA2x2_OFFSET_Z_AXIS_ADDR]		= 0x00,
-	[BMA2x2_GP0_ADDR]			= 0x00,
-	[BMA2x2_GP1_ADDR]			= 0x00,
-	[0x3d]					= 0xff, /* Reserved */
-	[BMA2x2_FIFO_MODE_ADDR]			= 0x3c,
-	[BMA2x2_FIFO_DATA_OUTPUT_ADDR]		= 0x00,
+	[BMA2x2_CHIP_ID_ADDR] = 0x00,
+	[0x01] = 0xff, /* Reserved */
+	[BMA2x2_X_AXIS_LSB_ADDR] = 0x0e,
+	[BMA2x2_X_AXIS_MSB_ADDR] = 0x00,
+	[BMA2x2_Y_AXIS_LSB_ADDR] = 0x0e,
+	[BMA2x2_Y_AXIS_MSB_ADDR] = 0x00,
+	[BMA2x2_Z_AXIS_LSB_ADDR] = 0x0e,
+	[BMA2x2_Z_AXIS_MSB_ADDR] = 0x00,
+	[BMA2x2_TEMP_ADDR] = 0x00,
+	[BMA2x2_STAT1_ADDR] = 0x00,
+	[BMA2x2_STAT2_ADDR] = 0x1f,
+	[BMA2x2_STAT_TAP_SLOPE_ADDR] = 0x00,
+	[BMA2x2_STAT_ORIENT_HIGH_ADDR] = 0x00,
+	[0x0d] = 0xff, /* Reserved */
+	[BMA2x2_STAT_FIFO_ADDR] = 0x00,
+	[BMA2x2_RANGE_SELECT_ADDR] = 0xf0,
+	[BMA2x2_BW_SELECT_ADDR] = 0xe0,
+	[BMA2x2_MODE_CTRL_ADDR] = 0x01,
+	[BMA2x2_LOW_NOISE_CTRL_ADDR] = 0x9f,
+	[BMA2x2_DATA_CTRL_ADDR] = 0x3f,
+	[BMA2x2_RST_ADDR] = 0x00,
+	[0x15] = 0xff, /* Reserved */
+	[BMA2x2_INTR_ENABLE1_ADDR] = 0x08,
+	[BMA2x2_INTR_ENABLE2_ADDR] = 0x80,
+	[BMA2x2_INTR_SLOW_NO_MOTION_ADDR] = 0xf0,
+	[BMA2x2_INTR1_PAD_SELECT_ADDR] = 0x00,
+	[BMA2x2_INTR_DATA_SELECT_ADDR] = 0x18,
+	[BMA2x2_INTR2_PAD_SELECT_ADDR] = 0x00,
+	[0x1c] = 0xff, /* Reserved */
+	[0x1d] = 0xff, /* Reserved */
+	[BMA2x2_INTR_SOURCE_ADDR] = 0xc0,
+	[0x1f] = 0xff, /* Reserved */
+	[BMA2x2_INTR_SET_ADDR] = 0xf0,
+	[BMA2x2_INTR_CTRL_ADDR] = 0x70,
+	[BMA2x2_LOW_DURN_ADDR] = 0x00,
+	[BMA2x2_LOW_THRES_ADDR] = 0x00,
+	[BMA2x2_LOW_HIGH_HYST_ADDR] = 0x38,
+	[BMA2x2_HIGH_DURN_ADDR] = 0x00,
+	[BMA2x2_HIGH_THRES_ADDR] = 0x00,
+	[BMA2x2_SLOPE_DURN_ADDR] = 0x00,
+	[BMA2x2_SLOPE_THRES_ADDR] = 0x00,
+	[BMA2x2_SLOW_NO_MOTION_THRES_ADDR] = 0x00,
+	[BMA2x2_TAP_PARAM_ADDR] = 0x38,
+	[BMA2x2_TAP_THRES_ADDR] = 0x20,
+	[BMA2x2_ORIENT_PARAM_ADDR] = 0x80,
+	[BMA2x2_THETA_BLOCK_ADDR] = 0x80,
+	[BMA2x2_THETA_FLAT_ADDR] = 0xc0,
+	[BMA2x2_FLAT_HOLD_TIME_ADDR] = 0xc8,
+	[BMA2x2_FIFO_WML_TRIG] = 0xc0,
+	[0x31] = 0xff, /* Reserved */
+	[BMA2x2_SELFTEST_ADDR] = 0xf8,
+	[BMA2x2_EEPROM_CTRL_ADDR] = 0x00,
+	[BMA2x2_SERIAL_CTRL_ADDR] = 0xf8,
+	[0x35] = 0xff, /* Reserved */
+	[BMA2x2_OFFSET_CTRL_ADDR] = 0x08,
+	[BMA2x2_OFC_SETTING_ADDR] = 0x80,
+	[BMA2x2_OFFSET_X_AXIS_ADDR] = 0x00,
+	[BMA2x2_OFFSET_Y_AXIS_ADDR] = 0x00,
+	[BMA2x2_OFFSET_Z_AXIS_ADDR] = 0x00,
+	[BMA2x2_GP0_ADDR] = 0x00,
+	[BMA2x2_GP1_ADDR] = 0x00,
+	[0x3d] = 0xff, /* Reserved */
+	[BMA2x2_FIFO_MODE_ADDR] = 0x3c,
+	[BMA2x2_FIFO_DATA_OUTPUT_ADDR] = 0x00,
 };
 
 /**
@@ -414,65 +414,65 @@ static void bma_emul_reset(struct i2c_emul *emul)
 
 	data = BMA_DATA_FROM_I2C_EMUL(emul);
 
-	data->reg[BMA2x2_CHIP_ID_ADDR]			= 0xfa;
-	data->reg[0x01]					= 0x00; /* Reserved */
-	data->reg[BMA2x2_X_AXIS_LSB_ADDR]		= 0x00;
-	data->reg[BMA2x2_X_AXIS_MSB_ADDR]		= 0x00;
-	data->reg[BMA2x2_Y_AXIS_LSB_ADDR]		= 0x00;
-	data->reg[BMA2x2_Y_AXIS_MSB_ADDR]		= 0x00;
-	data->reg[BMA2x2_Z_AXIS_LSB_ADDR]		= 0x00;
-	data->reg[BMA2x2_Z_AXIS_MSB_ADDR]		= 0x00;
-	data->reg[BMA2x2_TEMP_ADDR]			= 0x00;
-	data->reg[BMA2x2_STAT1_ADDR]			= 0x00;
-	data->reg[BMA2x2_STAT2_ADDR]			= 0x00;
-	data->reg[BMA2x2_STAT_TAP_SLOPE_ADDR]		= 0x00;
-	data->reg[BMA2x2_STAT_ORIENT_HIGH_ADDR]		= 0x00;
-	data->reg[0x0d]					= 0xff; /* Reserved */
-	data->reg[BMA2x2_STAT_FIFO_ADDR]		= 0x00;
-	data->reg[BMA2x2_RANGE_SELECT_ADDR]		= 0x03;
-	data->reg[BMA2x2_BW_SELECT_ADDR]		= 0x0f;
-	data->reg[BMA2x2_MODE_CTRL_ADDR]		= 0x00;
-	data->reg[BMA2x2_LOW_NOISE_CTRL_ADDR]		= 0x00;
-	data->reg[BMA2x2_DATA_CTRL_ADDR]		= 0x00;
-	data->reg[BMA2x2_RST_ADDR]			= 0x00;
-	data->reg[0x15]					= 0xff; /* Reserved */
-	data->reg[BMA2x2_INTR_ENABLE1_ADDR]		= 0x00;
-	data->reg[BMA2x2_INTR_ENABLE2_ADDR]		= 0x00;
-	data->reg[BMA2x2_INTR_SLOW_NO_MOTION_ADDR]	= 0x00;
-	data->reg[BMA2x2_INTR1_PAD_SELECT_ADDR]		= 0x00;
-	data->reg[BMA2x2_INTR_DATA_SELECT_ADDR]		= 0x00;
-	data->reg[BMA2x2_INTR2_PAD_SELECT_ADDR]		= 0x00;
-	data->reg[0x1c]					= 0xff; /* Reserved */
-	data->reg[0x1d]					= 0xff; /* Reserved */
-	data->reg[BMA2x2_INTR_SOURCE_ADDR]		= 0x00;
-	data->reg[0x1f]					= 0xff; /* Reserved */
-	data->reg[BMA2x2_INTR_SET_ADDR]			= 0x05;
-	data->reg[BMA2x2_INTR_CTRL_ADDR]		= 0x00;
-	data->reg[BMA2x2_LOW_DURN_ADDR]			= 0x09;
-	data->reg[BMA2x2_LOW_THRES_ADDR]		= 0x30;
-	data->reg[BMA2x2_LOW_HIGH_HYST_ADDR]		= 0x81;
-	data->reg[BMA2x2_HIGH_DURN_ADDR]		= 0x0f;
-	data->reg[BMA2x2_HIGH_THRES_ADDR]		= 0xc0;
-	data->reg[BMA2x2_SLOPE_DURN_ADDR]		= 0x00;
-	data->reg[BMA2x2_SLOPE_THRES_ADDR]		= 0x14;
-	data->reg[BMA2x2_SLOW_NO_MOTION_THRES_ADDR]	= 0x14;
-	data->reg[BMA2x2_TAP_PARAM_ADDR]		= 0x04;
-	data->reg[BMA2x2_TAP_THRES_ADDR]		= 0x0a;
-	data->reg[BMA2x2_ORIENT_PARAM_ADDR]		= 0x18;
-	data->reg[BMA2x2_THETA_BLOCK_ADDR]		= 0x48;
-	data->reg[BMA2x2_THETA_FLAT_ADDR]		= 0x08;
-	data->reg[BMA2x2_FLAT_HOLD_TIME_ADDR]		= 0x11;
-	data->reg[BMA2x2_FIFO_WML_TRIG]			= 0x00;
-	data->reg[0x31]					= 0xff; /* Reserved */
-	data->reg[BMA2x2_SELFTEST_ADDR]			= 0x00;
-	data->reg[BMA2x2_EEPROM_CTRL_ADDR]		= 0xf0;
-	data->reg[BMA2x2_SERIAL_CTRL_ADDR]		= 0x00;
-	data->reg[0x35]					= 0x00; /* Reserved */
-	data->reg[BMA2x2_OFFSET_CTRL_ADDR]		= 0x10;
-	data->reg[BMA2x2_OFC_SETTING_ADDR]		= 0x00;
-	data->reg[0x3d]					= 0xff; /* Reserved */
-	data->reg[BMA2x2_FIFO_MODE_ADDR]		= 0x00;
-	data->reg[BMA2x2_FIFO_DATA_OUTPUT_ADDR]		= 0x00;
+	data->reg[BMA2x2_CHIP_ID_ADDR] = 0xfa;
+	data->reg[0x01] = 0x00; /* Reserved */
+	data->reg[BMA2x2_X_AXIS_LSB_ADDR] = 0x00;
+	data->reg[BMA2x2_X_AXIS_MSB_ADDR] = 0x00;
+	data->reg[BMA2x2_Y_AXIS_LSB_ADDR] = 0x00;
+	data->reg[BMA2x2_Y_AXIS_MSB_ADDR] = 0x00;
+	data->reg[BMA2x2_Z_AXIS_LSB_ADDR] = 0x00;
+	data->reg[BMA2x2_Z_AXIS_MSB_ADDR] = 0x00;
+	data->reg[BMA2x2_TEMP_ADDR] = 0x00;
+	data->reg[BMA2x2_STAT1_ADDR] = 0x00;
+	data->reg[BMA2x2_STAT2_ADDR] = 0x00;
+	data->reg[BMA2x2_STAT_TAP_SLOPE_ADDR] = 0x00;
+	data->reg[BMA2x2_STAT_ORIENT_HIGH_ADDR] = 0x00;
+	data->reg[0x0d] = 0xff; /* Reserved */
+	data->reg[BMA2x2_STAT_FIFO_ADDR] = 0x00;
+	data->reg[BMA2x2_RANGE_SELECT_ADDR] = 0x03;
+	data->reg[BMA2x2_BW_SELECT_ADDR] = 0x0f;
+	data->reg[BMA2x2_MODE_CTRL_ADDR] = 0x00;
+	data->reg[BMA2x2_LOW_NOISE_CTRL_ADDR] = 0x00;
+	data->reg[BMA2x2_DATA_CTRL_ADDR] = 0x00;
+	data->reg[BMA2x2_RST_ADDR] = 0x00;
+	data->reg[0x15] = 0xff; /* Reserved */
+	data->reg[BMA2x2_INTR_ENABLE1_ADDR] = 0x00;
+	data->reg[BMA2x2_INTR_ENABLE2_ADDR] = 0x00;
+	data->reg[BMA2x2_INTR_SLOW_NO_MOTION_ADDR] = 0x00;
+	data->reg[BMA2x2_INTR1_PAD_SELECT_ADDR] = 0x00;
+	data->reg[BMA2x2_INTR_DATA_SELECT_ADDR] = 0x00;
+	data->reg[BMA2x2_INTR2_PAD_SELECT_ADDR] = 0x00;
+	data->reg[0x1c] = 0xff; /* Reserved */
+	data->reg[0x1d] = 0xff; /* Reserved */
+	data->reg[BMA2x2_INTR_SOURCE_ADDR] = 0x00;
+	data->reg[0x1f] = 0xff; /* Reserved */
+	data->reg[BMA2x2_INTR_SET_ADDR] = 0x05;
+	data->reg[BMA2x2_INTR_CTRL_ADDR] = 0x00;
+	data->reg[BMA2x2_LOW_DURN_ADDR] = 0x09;
+	data->reg[BMA2x2_LOW_THRES_ADDR] = 0x30;
+	data->reg[BMA2x2_LOW_HIGH_HYST_ADDR] = 0x81;
+	data->reg[BMA2x2_HIGH_DURN_ADDR] = 0x0f;
+	data->reg[BMA2x2_HIGH_THRES_ADDR] = 0xc0;
+	data->reg[BMA2x2_SLOPE_DURN_ADDR] = 0x00;
+	data->reg[BMA2x2_SLOPE_THRES_ADDR] = 0x14;
+	data->reg[BMA2x2_SLOW_NO_MOTION_THRES_ADDR] = 0x14;
+	data->reg[BMA2x2_TAP_PARAM_ADDR] = 0x04;
+	data->reg[BMA2x2_TAP_THRES_ADDR] = 0x0a;
+	data->reg[BMA2x2_ORIENT_PARAM_ADDR] = 0x18;
+	data->reg[BMA2x2_THETA_BLOCK_ADDR] = 0x48;
+	data->reg[BMA2x2_THETA_FLAT_ADDR] = 0x08;
+	data->reg[BMA2x2_FLAT_HOLD_TIME_ADDR] = 0x11;
+	data->reg[BMA2x2_FIFO_WML_TRIG] = 0x00;
+	data->reg[0x31] = 0xff; /* Reserved */
+	data->reg[BMA2x2_SELFTEST_ADDR] = 0x00;
+	data->reg[BMA2x2_EEPROM_CTRL_ADDR] = 0xf0;
+	data->reg[BMA2x2_SERIAL_CTRL_ADDR] = 0x00;
+	data->reg[0x35] = 0x00; /* Reserved */
+	data->reg[BMA2x2_OFFSET_CTRL_ADDR] = 0x10;
+	data->reg[BMA2x2_OFC_SETTING_ADDR] = 0x00;
+	data->reg[0x3d] = 0xff; /* Reserved */
+	data->reg[BMA2x2_FIFO_MODE_ADDR] = 0x00;
+	data->reg[BMA2x2_FIFO_DATA_OUTPUT_ADDR] = 0x00;
 
 	/* Restore registers backed in NVM */
 	bma_emul_restore_nvm(emul);
@@ -532,7 +532,8 @@ static int bma_emul_handle_nvm_write(struct i2c_emul *emul, uint8_t val)
 	}
 
 	writes_rem = (data->reg[BMA2x2_EEPROM_CTRL_ADDR] &
-		      BMA2x2_EEPROM_REMAIN_MSK) >> BMA2x2_EEPROM_REMAIN_OFF;
+		      BMA2x2_EEPROM_REMAIN_MSK) >>
+		     BMA2x2_EEPROM_REMAIN_OFF;
 	/* Trigger write is set, write is unlocked and writes remaining */
 	if (val & BMA2x2_EEPROM_PROG &&
 	    data->reg[BMA2x2_EEPROM_CTRL_ADDR] & BMA2x2_EEPROM_PROG_EN &&
@@ -544,10 +545,9 @@ static int bma_emul_handle_nvm_write(struct i2c_emul *emul, uint8_t val)
 		data->nvm_gp1 = data->reg[BMA2x2_GP1_ADDR];
 		/* Decrement number of remaining writes and save it in reg */
 		writes_rem--;
-		data->reg[BMA2x2_EEPROM_CTRL_ADDR] &=
-					~BMA2x2_EEPROM_REMAIN_MSK;
+		data->reg[BMA2x2_EEPROM_CTRL_ADDR] &= ~BMA2x2_EEPROM_REMAIN_MSK;
 		data->reg[BMA2x2_EEPROM_CTRL_ADDR] |=
-					writes_rem << BMA2x2_EEPROM_REMAIN_OFF;
+			writes_rem << BMA2x2_EEPROM_REMAIN_OFF;
 	}
 
 	return 0;
@@ -564,10 +564,10 @@ static void bma_emul_clear_int(struct i2c_emul *emul)
 
 	data = BMA_DATA_FROM_I2C_EMUL(emul);
 
-	data->reg[BMA2x2_STAT1_ADDR]		= 0x00;
-	data->reg[BMA2x2_STAT2_ADDR]		= 0x00;
-	data->reg[BMA2x2_STAT_TAP_SLOPE_ADDR]	= 0x00;
-	data->reg[BMA2x2_STAT_ORIENT_HIGH_ADDR]	= 0x00;
+	data->reg[BMA2x2_STAT1_ADDR] = 0x00;
+	data->reg[BMA2x2_STAT2_ADDR] = 0x00;
+	data->reg[BMA2x2_STAT_TAP_SLOPE_ADDR] = 0x00;
+	data->reg[BMA2x2_STAT_ORIENT_HIGH_ADDR] = 0x00;
 }
 
 /**
@@ -630,7 +630,6 @@ static int bma_emul_handle_off_comp(struct i2c_emul *emul, uint8_t val)
 		data->reg[BMA2x2_OFFSET_Y_AXIS_ADDR] = 0;
 		data->reg[BMA2x2_OFFSET_Z_AXIS_ADDR] = 0;
 	}
-
 
 	trigger = (val & BMA2x2_OFFSET_TRIGGER_MASK) >>
 		  BMA2x2_OFFSET_TRIGGER_OFF;
@@ -717,7 +716,6 @@ static int bma_emul_handle_write(struct i2c_emul *emul, int reg, int bytes)
 		return -EIO;
 	}
 
-
 	switch (reg) {
 	case BMA2x2_RST_ADDR:
 		if (val == BMA2x2_CMD_SOFT_RESET) {
@@ -745,9 +743,9 @@ static int bma_emul_handle_write(struct i2c_emul *emul, int reg, int bytes)
 		/* Only slow compensation bits are RW */
 		val &= BMA2x2_OFFSET_CAL_SLOW_X | BMA2x2_OFFSET_CAL_SLOW_Y |
 		       BMA2x2_OFFSET_CAL_SLOW_Z;
-		val |= data->reg[reg] & ~(BMA2x2_OFFSET_CAL_SLOW_X |
-					  BMA2x2_OFFSET_CAL_SLOW_Y |
-					  BMA2x2_OFFSET_CAL_SLOW_Z);
+		val |= data->reg[reg] &
+		       ~(BMA2x2_OFFSET_CAL_SLOW_X | BMA2x2_OFFSET_CAL_SLOW_Y |
+			 BMA2x2_OFFSET_CAL_SLOW_Z);
 		break;
 	/* Change internal offset to value set in I2C message */
 	case BMA2x2_OFFSET_X_AXIS_ADDR:
@@ -961,8 +959,7 @@ static int bma_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
  *
  * @return 0 indicating success (always)
  */
-static int bma_emul_init(const struct emul *emul,
-			 const struct device *parent)
+static int bma_emul_init(const struct emul *emul, const struct device *parent)
 {
 	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct i2c_common_emul_data *data = cfg->data;
@@ -981,7 +978,7 @@ static int bma_emul_init(const struct emul *emul,
 	return ret;
 }
 
-#define BMA255_EMUL(n)							\
+#define BMA255_EMUL(n)                                                \
 	static struct bma_emul_data bma_emul_data_##n = {		\
 		.nvm_x = DT_INST_PROP(n, nvm_off_x),			\
 		.nvm_y = DT_INST_PROP(n, nvm_off_y),			\
@@ -1010,27 +1007,28 @@ static int bma_emul_init(const struct emul *emul,
 			.finish_read = NULL,				\
 			.access_reg = bma_emul_access_reg,		\
 		},							\
-	};								\
-									\
-	static const struct i2c_common_emul_cfg bma_emul_cfg_##n = {	\
-		.i2c_label = DT_INST_BUS_LABEL(n),			\
-		.dev_label = DT_INST_LABEL(n),                          \
-		.data = &bma_emul_data_##n.common,			\
-		.addr = DT_INST_REG_ADDR(n),				\
-	};								\
-	EMUL_DEFINE(bma_emul_init, DT_DRV_INST(n), &bma_emul_cfg_##n,	\
+	};          \
+                                                                      \
+	static const struct i2c_common_emul_cfg bma_emul_cfg_##n = {  \
+		.i2c_label = DT_INST_BUS_LABEL(n),                    \
+		.dev_label = DT_INST_LABEL(n),                        \
+		.data = &bma_emul_data_##n.common,                    \
+		.addr = DT_INST_REG_ADDR(n),                          \
+	};                                                            \
+	EMUL_DEFINE(bma_emul_init, DT_DRV_INST(n), &bma_emul_cfg_##n, \
 		    &bma_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL)
 
-#define BMA255_EMUL_CASE(n)					\
-	case DT_INST_DEP_ORD(n): return &bma_emul_data_##n.common.emul;
+#define BMA255_EMUL_CASE(n)      \
+	case DT_INST_DEP_ORD(n): \
+		return &bma_emul_data_##n.common.emul;
 
 /** Check description in emul_bma255.h */
 struct i2c_emul *bma_emul_get(int ord)
 {
 	switch (ord) {
-	DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL_CASE)
+		DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL_CASE)
 
 	default:
 		return NULL;
