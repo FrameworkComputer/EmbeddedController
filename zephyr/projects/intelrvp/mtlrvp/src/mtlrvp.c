@@ -12,8 +12,8 @@
 #include "keyboard_raw.h"
 #include "power/meteorlake.h"
 
-#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
 
 /******************************************************************************/
 /* KSO mapping for discrete keyboard */
@@ -65,8 +65,7 @@ __override int board_get_version(void)
 	 * This loop retries to ensure rail is settled and read is successful
 	 */
 	for (i = 0; i < RVP_VERSION_READ_RETRY_CNT; i++) {
-
-		rv  = gpio_pin_get_dt(&bom_id_config[0]);
+		rv = gpio_pin_get_dt(&bom_id_config[0]);
 
 		if (rv >= 0)
 			break;
@@ -82,20 +81,20 @@ __override int board_get_version(void)
 	 * BOM ID [2]   : IOEX[0]
 	 * BOM ID [1:0] : IOEX[15:14]
 	 */
-	bom_id  = gpio_pin_get_dt(&bom_id_config[0]) << 2;
+	bom_id = gpio_pin_get_dt(&bom_id_config[0]) << 2;
 	bom_id |= gpio_pin_get_dt(&bom_id_config[1]) << 1;
 	bom_id |= gpio_pin_get_dt(&bom_id_config[2]);
 	/*
 	 * FAB ID [1:0] : IOEX[2:1] + 1
 	 */
-	fab_id  = gpio_pin_get_dt(&fab_id_config[0]) << 1;
+	fab_id = gpio_pin_get_dt(&fab_id_config[0]) << 1;
 	fab_id |= gpio_pin_get_dt(&fab_id_config[1]);
 	fab_id += 1;
 
 	/*
 	 * BOARD ID[5:0] : IOEX[13:8]
 	 */
-	board_id  = gpio_pin_get_dt(&board_id_config[0]) << 5;
+	board_id = gpio_pin_get_dt(&board_id_config[0]) << 5;
 	board_id |= gpio_pin_get_dt(&board_id_config[1]) << 4;
 	board_id |= gpio_pin_get_dt(&board_id_config[2]) << 3;
 	board_id |= gpio_pin_get_dt(&board_id_config[3]) << 2;
