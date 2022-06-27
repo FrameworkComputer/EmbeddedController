@@ -51,11 +51,11 @@ DECLARE_HOOK(HOOK_INIT, gpio_init, HOOK_PRIO_DEFAULT);
  * the port, then call the master handler above.
  */
 
-#define GPIO_IRQ_FUNC(_irq_func, wui_int)		\
-static void _irq_func(void)				\
-{							\
-	gpio_interrupt(wui_int);			\
-}
+#define GPIO_IRQ_FUNC(_irq_func, wui_int) \
+	static void _irq_func(void)       \
+	{                                 \
+		gpio_interrupt(wui_int);  \
+	}
 
 /* If we need to handle the other type interrupts except GPIO, add code here */
 static void __gpio_host_interrupt(void)
@@ -63,7 +63,7 @@ static void __gpio_host_interrupt(void)
 	if (IS_ENABLED(CONFIG_HOSTCMD_X86)) {
 		/* Pending bit 7 or 6 or 5? */
 		if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 6) &&
-			IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_5), 6)) {
+		    IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_5), 6)) {
 			/* Disable host wake-up */
 			CLEAR_BIT(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 6);
 			/* Clear pending bit of WUI */
@@ -71,16 +71,18 @@ static void __gpio_host_interrupt(void)
 			return;
 		}
 		if (IS_ENABLED(CONFIG_HOST_INTERFACE_ESPI)) {
-			if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 5)
-					&&
-			IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_5), 5)) {
+			if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5),
+				       5) &&
+			    IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_5),
+				       5)) {
 				espi_espirst_handler();
 				return;
 			}
 		} else {
-			if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5), 7)
-					&&
-			IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_5), 7)) {
+			if (IS_BIT_SET(NPCX_WKEN(MIWU_TABLE_0, MIWU_GROUP_5),
+				       7) &&
+			    IS_BIT_SET(NPCX_WKPND(MIWU_TABLE_0, MIWU_GROUP_5),
+				       7)) {
 				lpc_lreset_pltrst_handler();
 				return;
 			}
@@ -130,7 +132,6 @@ static void __gpio_cr_sin2_interrupt(void)
 	}
 #endif
 	gpio_interrupt(WUI_INT(MIWU_TABLE_0, MIWU_GROUP_1));
-
 }
 
 static void __gpio_wk1h_interrupt(void)
@@ -181,32 +182,32 @@ GPIO_IRQ_FUNC(__gpio_wk1f_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_6));
 GPIO_IRQ_FUNC(__gpio_wk1g_interrupt, WUI_INT(MIWU_TABLE_1, MIWU_GROUP_7));
 
 DECLARE_IRQ(NPCX_IRQ_CR_SIN2_WKINTA_0, __gpio_cr_sin2_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_TWD_WKINTB_0,     __gpio_wk0b_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTC_0,         __gpio_wk0c_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_MTC_WKINTD_0,     __gpio_rtc_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTE_0,         __gpio_host_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTF_0,         __gpio_wk0f_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTG_0,         __gpio_wk0g_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTH_0,         __gpio_wk0h_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTA_1,         __gpio_wk1a_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTB_1,         __gpio_wk1b_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_TWD_WKINTB_0, __gpio_wk0b_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTC_0, __gpio_wk0c_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_MTC_WKINTD_0, __gpio_rtc_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTE_0, __gpio_host_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTF_0, __gpio_wk0f_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTG_0, __gpio_wk0g_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTH_0, __gpio_wk0h_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTA_1, __gpio_wk1a_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTB_1, __gpio_wk1b_interrupt, 3);
 #ifdef NPCX_SELECT_KSI_TO_GPIO
-DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1,     __gpio_wk1c_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_KSI_WKINTC_1, __gpio_wk1c_interrupt, 3);
 #endif
-DECLARE_IRQ(NPCX_IRQ_WKINTD_1,         __gpio_wk1d_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTE_1,         __gpio_wk1e_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTD_1, __gpio_wk1d_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTE_1, __gpio_wk1e_interrupt, 3);
 #ifdef CONFIG_HOST_INTERFACE_SHI
 /*
  * HACK: Make CS GPIO P2 to improve SHI reliability.
  * TODO: Increase CS-assertion-to-transaction-start delay on host to
  * accommodate P3 CS interrupt.
  */
-DECLARE_IRQ(NPCX_IRQ_WKINTF_1,         __gpio_wk1f_interrupt, 2);
+DECLARE_IRQ(NPCX_IRQ_WKINTF_1, __gpio_wk1f_interrupt, 2);
 #else
-DECLARE_IRQ(NPCX_IRQ_WKINTF_1,         __gpio_wk1f_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTF_1, __gpio_wk1f_interrupt, 3);
 #endif
-DECLARE_IRQ(NPCX_IRQ_WKINTG_1,         __gpio_wk1g_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_WKINTH_1,         __gpio_wk1h_interrupt, 3);
-DECLARE_IRQ(NPCX_IRQ_LCT_WKINTF_2,     __gpio_lct_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTG_1, __gpio_wk1g_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_WKINTH_1, __gpio_wk1h_interrupt, 3);
+DECLARE_IRQ(NPCX_IRQ_LCT_WKINTF_2, __gpio_lct_interrupt, 3);
 
 #undef GPIO_IRQ_FUNC
