@@ -29,8 +29,8 @@
 #include "gpio_list.h" /* Must come after other header files. */
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
@@ -50,25 +50,25 @@ void board_set_charger_current_limit_deferred(void)
 	int rv;
 
 	if (extpower_is_present() &&
-		(battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED))
+	    (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED))
 		/* AC only or AC+DC but battery is disconnect */
 		action = MASK_SET;
 	else
 		action = MASK_CLR;
 
 	rv = i2c_update16(chg_chips[CHARGER_SOLO].i2c_port,
-				chg_chips[CHARGER_SOLO].i2c_addr_flags,
-				ISL9241_REG_CONTROL3,
-				ISL9241_CONTROL3_INPUT_CURRENT_LIMIT, action);
+			  chg_chips[CHARGER_SOLO].i2c_addr_flags,
+			  ISL9241_REG_CONTROL3,
+			  ISL9241_CONTROL3_INPUT_CURRENT_LIMIT, action);
 
 	if (rv)
-		CPRINTF("Could not set charger input current limit! Error: %d\n"
-		, rv);
+		CPRINTF("Could not set charger input current limit! Error: %d\n",
+			rv);
 }
 
 DECLARE_DEFERRED(board_set_charger_current_limit_deferred);
 DECLARE_HOOK(HOOK_SECOND, board_set_charger_current_limit_deferred,
-	HOOK_PRIO_DEFAULT);
+	     HOOK_PRIO_DEFAULT);
 
 void battery_present_interrupt(enum gpio_signal signal)
 {
@@ -87,19 +87,19 @@ void board_init(void)
 		gpio_set_flags(GPIO_EC_KSO_04_INV, GPIO_ODR_HIGH);
 		gpio_set_flags(GPIO_EC_KSO_05_INV, GPIO_ODR_HIGH);
 		gpio_set_alternate_function(GPIO_PORT_1, (BIT(4) | BIT(5)),
-			GPIO_ALT_FUNC_DEFAULT);
+					    GPIO_ALT_FUNC_DEFAULT);
 	} else if (board_id == 1) {
 		/* keyboard_col4_inverted on board id 1 */
 		gpio_set_flags(GPIO_EC_KSO_02_INV, GPIO_ODR_HIGH);
 		gpio_set_flags(GPIO_EC_KSO_05_INV, GPIO_ODR_HIGH);
 		gpio_set_alternate_function(GPIO_PORT_1, (BIT(4) | BIT(7)),
-			GPIO_ALT_FUNC_DEFAULT);
+					    GPIO_ALT_FUNC_DEFAULT);
 	} else {
 		/* keyboard_col5_inverted on board id 2 and later */
 		gpio_set_flags(GPIO_EC_KSO_02_INV, GPIO_ODR_HIGH);
 		gpio_set_flags(GPIO_EC_KSO_04_INV, GPIO_ODR_HIGH);
 		gpio_set_alternate_function(GPIO_PORT_1, (BIT(5) | BIT(7)),
-			GPIO_ALT_FUNC_DEFAULT);
+					    GPIO_ALT_FUNC_DEFAULT);
 	}
 
 	board_id_keyboard_col_inverted(board_id);
