@@ -17,11 +17,10 @@
  * PSTATE in single bank memories with a write size > 4 bytes.
  */
 
-#define CONFIG_FLASH_SIZE_BYTES       (128 * 1024)
+#define CONFIG_FLASH_SIZE_BYTES (128 * 1024)
 #define CONFIG_FLASH_WRITE_SIZE 0x0004
 #define CONFIG_FLASH_BANK_SIZE (2 * 1024)
 #define CONFIG_FLASH_ERASE_SIZE CONFIG_FLASH_BANK_SIZE
-
 
 /* Erasing 128K can take up to 2s, need to defer erase. */
 #define CONFIG_FLASH_DEFERRED_ERASE
@@ -37,11 +36,11 @@
  * • 10 Kbytes mapped at address 0x1000 0000 (CCM SRAM). It is also aliased
  *   at 0x2000 5800 address to be accessed by all bus controllers.
  */
-#define CONFIG_RAM_BASE		0x20000000
-#define CONFIG_RAM_SIZE		0x00008000
+#define CONFIG_RAM_BASE 0x20000000
+#define CONFIG_RAM_SIZE 0x00008000
 
 #undef I2C_PORT_COUNT
-#define I2C_PORT_COUNT	3
+#define I2C_PORT_COUNT 3
 
 /* Number of DMA channels supported (6 channels each for DMA1 and DMA2) */
 #define DMAC_COUNT 12
@@ -51,13 +50,13 @@
 #undef CONFIG_FLASH_PSTATE_BANK
 
 /* Number of IRQ vectors on the NVIC */
-#define CONFIG_IRQ_COUNT	101
+#define CONFIG_IRQ_COUNT 101
 
 /* USB packet ram config */
-#define CONFIG_USB_RAM_BASE        0x40006000
-#define CONFIG_USB_RAM_SIZE        1024
+#define CONFIG_USB_RAM_BASE 0x40006000
+#define CONFIG_USB_RAM_SIZE 1024
 #define CONFIG_USB_RAM_ACCESS_TYPE uint16_t
 #define CONFIG_USB_RAM_ACCESS_SIZE 2
 
 /* DFU Address */
-#define STM32_DFU_BASE              0x1fff0000
+#define STM32_DFU_BASE 0x1fff0000
