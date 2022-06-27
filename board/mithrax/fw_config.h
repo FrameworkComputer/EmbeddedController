@@ -14,43 +14,31 @@
  * Source of truth is the project/brya/mithrax/config.star configuration file.
  */
 
-enum ec_cfg_usb_db_type {
-	DB_USB3_PS8815 = 1,
-	DB_USB4_NCT3807 = 2
-};
+enum ec_cfg_usb_db_type { DB_USB3_PS8815 = 1, DB_USB4_NCT3807 = 2 };
 
 enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_DISABLED = 0,
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
-enum ec_cfg_usb_mb_type {
-	MB_USB4_TBT = 0,
-	MB_USB3_NON_TBT = 1
-};
+enum ec_cfg_usb_mb_type { MB_USB4_TBT = 0, MB_USB3_NON_TBT = 1 };
 
-enum ec_cfg_stylus_type {
-	STYLUS_ABSENT = 0,
-	STYLUS_PRSENT = 1
-};
+enum ec_cfg_stylus_type { STYLUS_ABSENT = 0, STYLUS_PRSENT = 1 };
 
-enum ec_cfg_kb_backlight_type {
-	SOLID_COLOR = 0,
-	RGB = 1
-};
+enum ec_cfg_kb_backlight_type { SOLID_COLOR = 0, RGB = 1 };
 
 union mithrax_cbi_fw_config {
 	struct {
-		enum ec_cfg_usb_db_type			usb_db : 3;
-		uint32_t				wifi : 1;
-		enum ec_cfg_kb_backlight_type		rgb : 1;
-		enum ec_cfg_stylus_type			stylus : 1;
-		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
-		uint32_t				audio : 3;
-		uint32_t				thermal : 2;
-		uint32_t				table_mode : 1;
-		enum ec_cfg_usb_mb_type			usb_mb : 3;
-		uint32_t				reserved_1 : 16;
+		enum ec_cfg_usb_db_type usb_db : 3;
+		uint32_t wifi : 1;
+		enum ec_cfg_kb_backlight_type rgb : 1;
+		enum ec_cfg_stylus_type stylus : 1;
+		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
+		uint32_t audio : 3;
+		uint32_t thermal : 2;
+		uint32_t table_mode : 1;
+		enum ec_cfg_usb_mb_type usb_mb : 3;
+		uint32_t reserved_1 : 16;
 	};
 	uint32_t raw_value;
 };
