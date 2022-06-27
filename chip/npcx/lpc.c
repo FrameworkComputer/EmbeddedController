@@ -33,30 +33,30 @@
 #define CPRINTS(...)
 #else
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 #endif
 
 /* PM channel definitions */
-#define PMC_ACPI     PM_CHAN_1
+#define PMC_ACPI PM_CHAN_1
 #define PMC_HOST_CMD PM_CHAN_2
 
 /* Microseconds to wait for eSPI VW changes to propagate */
-#define ESPI_DIRTY_WAIT_TIME_US	150
+#define ESPI_DIRTY_WAIT_TIME_US 150
 
-#define PORT80_MAX_BUF_SIZE    16
+#define PORT80_MAX_BUF_SIZE 16
 static uint16_t port80_buf[PORT80_MAX_BUF_SIZE];
 
-static struct	host_packet lpc_packet;
-static struct	host_cmd_handler_args host_cmd_args;
-static uint8_t	host_cmd_flags;         /* Flags from host command */
-static uint8_t	shm_mem_host_cmd[256] __aligned(8);
-static uint8_t	shm_memmap[256] __aligned(8);
+static struct host_packet lpc_packet;
+static struct host_cmd_handler_args host_cmd_args;
+static uint8_t host_cmd_flags; /* Flags from host command */
+static uint8_t shm_mem_host_cmd[256] __aligned(8);
+static uint8_t shm_memmap[256] __aligned(8);
 /* Params must be 32-bit aligned */
 static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __aligned(4);
 static int init_done;
 
-static struct ec_lpc_host_args * const lpc_host_args =
-		(struct ec_lpc_host_args *)shm_mem_host_cmd;
+static struct ec_lpc_host_args *const lpc_host_args =
+	(struct ec_lpc_host_args *)shm_mem_host_cmd;
 
 /*****************************************************************************/
 /* IC specific low-level driver */
@@ -260,15 +260,13 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	}
 
 	/* New-style response */
-	lpc_host_args->flags =
-			(host_cmd_flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
-			EC_HOST_ARGS_FLAG_TO_HOST;
+	lpc_host_args->flags = (host_cmd_flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
+			       EC_HOST_ARGS_FLAG_TO_HOST;
 
 	lpc_host_args->data_size = size;
 
 	csum = args->command + lpc_host_args->flags +
-			lpc_host_args->command_version +
-			lpc_host_args->data_size;
+	       lpc_host_args->command_version + lpc_host_args->data_size;
 
 	for (i = 0, out = (uint8_t *)args->response; i < size; i++, out++)
 		csum += *out;
@@ -300,13 +298,13 @@ static void lpc_send_response_packet(struct host_packet *pkt)
 int lpc_keyboard_has_char(void)
 {
 	/* if OBF bit is '1', that mean still have a data in DBBOUT */
-	return (NPCX_HIKMST&0x01) ? 1 : 0;
+	return (NPCX_HIKMST & 0x01) ? 1 : 0;
 }
 
 int lpc_keyboard_input_pending(void)
 {
 	/* if IBF bit is '1', that mean still have a data in DBBIN */
-	return (NPCX_HIKMST&0x02) ? 1 : 0;
+	return (NPCX_HIKMST & 0x02) ? 1 : 0;
 }
 
 /* Put a char to host buffer by HIKDO and send IRQ if specified. */
@@ -407,7 +405,7 @@ void lpc_update_host_event_status(void)
 
 	/* Copy host events to mapped memory */
 	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
-				lpc_get_host_events();
+		lpc_get_host_events();
 
 	lpc_task_enable_irq();
 
@@ -571,9 +569,9 @@ static void lpc_pmc_ibf_interrupt(void)
 	/* Channel-2 for Host Command usage , so the argument data had been
 	 * put on the share memory firstly*/
 	if (NPCX_HIPMST(PMC_ACPI) & 0x02)
-		handle_acpi_write((NPCX_HIPMST(PMC_ACPI)&0x08) ? 1 : 0);
+		handle_acpi_write((NPCX_HIPMST(PMC_ACPI) & 0x08) ? 1 : 0);
 	else if (NPCX_HIPMST(PMC_HOST_CMD) & 0x02)
-		handle_host_write((NPCX_HIPMST(PMC_HOST_CMD)&0x08) ? 1 : 0);
+		handle_host_write((NPCX_HIPMST(PMC_HOST_CMD) & 0x08) ? 1 : 0);
 }
 DECLARE_IRQ(NPCX_IRQ_PM_CHAN_IBF, lpc_pmc_ibf_interrupt, 4);
 
@@ -591,7 +589,7 @@ static void lpc_port80_interrupt(void)
 
 	/* buffer Port80 data to the local buffer if FIFO is not empty */
 	while (IS_BIT_SET(NPCX_DP80STS, NPCX_DP80STS_FNE) &&
-		   (count < ARRAY_SIZE(port80_buf)))
+	       (count < ARRAY_SIZE(port80_buf)))
 		port80_buf[count++] = NPCX_DP80BUF;
 
 	for (i = 0; i < count; i++) {
@@ -690,8 +688,7 @@ void host_register_init(void)
 	/* LDN register = 0x0F(SHM) */
 	sib_write_reg(SIO_OFFSET, 0x07, 0x0F);
 	/* WIN1&2 mapping to IO */
-	sib_write_reg(SIO_OFFSET, 0xF1,
-			sib_read_reg(SIO_OFFSET, 0xF1) | 0x30);
+	sib_write_reg(SIO_OFFSET, 0xF1, sib_read_reg(SIO_OFFSET, 0xF1) | 0x30);
 	/* WIN1 as Host Command on the IO:0x0800 */
 	sib_write_reg(SIO_OFFSET, 0xF5, 0x08);
 	sib_write_reg(SIO_OFFSET, 0xF4, 0x00);
@@ -711,7 +708,6 @@ void host_register_init(void)
 	sib_write_reg(SIO_OFFSET, 0x30, 0x01);
 
 	CPRINTS("Host settings are done!");
-
 }
 
 #ifdef CONFIG_CHIPSET_RESET_HOOK
@@ -735,7 +731,7 @@ void lpc_lreset_pltrst_handler(void)
 	int pltrst_asserted;
 
 	/* Clear pending bit of WUI */
-	SET_BIT(NPCX_WKPCL(MIWU_TABLE_0 , MIWU_GROUP_5), 7);
+	SET_BIT(NPCX_WKPCL(MIWU_TABLE_0, MIWU_GROUP_5), 7);
 
 	/* Ignore PLTRST# from SOC if it is not valid */
 	if (chipset_pltrst_is_valid && !chipset_pltrst_is_valid())
@@ -770,7 +766,7 @@ static void lpc_init(void)
 {
 	/* Enable clock for LPC peripheral */
 	clock_enable_peripheral(CGC_OFFSET_LPC, CGC_LPC_MASK,
-			CGC_MODE_RUN | CGC_MODE_SLEEP);
+				CGC_MODE_RUN | CGC_MODE_SLEEP);
 	/*
 	 * In npcx5/7, the host interface type (HIF_TYP_SEL in the DEVCNT
 	 * register) is updated by booter after VCC1 Power-Up reset according to
@@ -839,8 +835,8 @@ static void lpc_init(void)
 
 	/* We support LPC args and version 3 protocol */
 	*(lpc_get_memmap_range() + EC_MEMMAP_HOST_CMD_FLAGS) =
-			EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
-			EC_HOST_CMD_FLAG_VERSION_3;
+		EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED |
+		EC_HOST_CMD_FLAG_VERSION_3;
 
 	/*
 	 * Clear processing flag before enabling lpc's interrupts in case
@@ -854,7 +850,7 @@ static void lpc_init(void)
 	/*
 	 * Set required control value (avoid setting HOSTWAIT bit at this stage)
 	 */
-	NPCX_SMC_CTL = NPCX_SMC_CTL&~0x7F;
+	NPCX_SMC_CTL = NPCX_SMC_CTL & ~0x7F;
 	/* Clear status */
 	NPCX_SMC_STS = NPCX_SMC_STS;
 
@@ -903,8 +899,8 @@ static void lpc_init(void)
 	CLEAR_BIT(NPCX_HIPMCTL(PMC_ACPI), NPCX_HIPMCTL_SCIPOL);
 	CLEAR_BIT(NPCX_HIPMIC(PMC_ACPI), NPCX_HIPMIC_SMIPOL);
 	/* Set SMIB/SCIB to make sure SMI/SCI are high at init */
-	NPCX_HIPMIC(PMC_ACPI) = NPCX_HIPMIC(PMC_ACPI)
-			| BIT(NPCX_HIPMIC_SMIB) | BIT(NPCX_HIPMIC_SCIB);
+	NPCX_HIPMIC(PMC_ACPI) = NPCX_HIPMIC(PMC_ACPI) | BIT(NPCX_HIPMIC_SMIB) |
+				BIT(NPCX_HIPMIC_SCIB);
 #ifndef CONFIG_SCI_GPIO
 	/*
 	 * Allow SMI/SCI generated from PM module.
@@ -973,9 +969,8 @@ static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
-		lpc_get_protocol_info,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
+		     EC_VER_MASK(0));
 
 #if DEBUG_LPC
 static int command_lpc(int argc, char **argv)
