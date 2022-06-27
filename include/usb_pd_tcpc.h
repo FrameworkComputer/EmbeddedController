@@ -18,11 +18,11 @@
 
 #ifdef TCPCI_I2C_PERIPHERAL
 /* Convert TCPC address to type-C port number */
-#define TCPC_ADDR_TO_PORT(addr) ((addr) \
-			- I2C_STRIP_FLAGS(CONFIG_TCPC_I2C_BASE_ADDR_FLAGS))
+#define TCPC_ADDR_TO_PORT(addr) \
+	((addr)-I2C_STRIP_FLAGS(CONFIG_TCPC_I2C_BASE_ADDR_FLAGS))
 /* Check if the i2c address belongs to TCPC */
-#define ADDR_IS_TCPC(addr)      (((addr) & 0x7E) \
-			== I2C_STRIP_FLAGS(CONFIG_TCPC_I2C_BASE_ADDR_FLAGS))
+#define ADDR_IS_TCPC(addr) \
+	(((addr)&0x7E) == I2C_STRIP_FLAGS(CONFIG_TCPC_I2C_BASE_ADDR_FLAGS))
 #endif
 
 /**
@@ -52,7 +52,7 @@ int tcpc_alert_status(int port, int *alert);
 int tcpc_alert_status_clear(int port, uint16_t mask);
 int tcpc_alert_mask_set(int port, uint16_t mask);
 int tcpc_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2);
+		enum tcpc_cc_voltage_status *cc2);
 int tcpc_select_rp_value(int port, int rp);
 int tcpc_set_cc(int port, int pull);
 int tcpc_set_polarity(int port, int polarity);
