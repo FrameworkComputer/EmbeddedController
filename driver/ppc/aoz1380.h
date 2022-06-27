@@ -33,7 +33,6 @@ extern const struct ppc_drv aoz1380_drv;
 int board_aoz1380_set_vbus_source_current_limit(int port,
 						enum tcpc_rp_value rp);
 
-
 /**
  * Interrupt Handler for the AOZ1380.
  *
