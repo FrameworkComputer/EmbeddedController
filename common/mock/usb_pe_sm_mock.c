@@ -23,7 +23,6 @@
 
 struct mock_pe_port_t mock_pe_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-
 /**
  * Resets all mock PE ports to initial values
  */
@@ -31,7 +30,7 @@ void mock_pe_port_reset(void)
 {
 	int port;
 
-	for (port = 0 ; port < CONFIG_USB_PD_PORT_MAX_COUNT ; ++port) {
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port) {
 		mock_pe_port[port].mock_pe_error = -1;
 		/* These mock variable only get set to 1 by various functions,
 		 * so initialize them to 0. Tests can verify they are still 0
@@ -93,7 +92,7 @@ bool pe_in_local_ams(int port)
 	return false;
 }
 
-const uint32_t * const pd_get_src_caps(int port)
+const uint32_t *const pd_get_src_caps(int port)
 {
 	return NULL;
 }
@@ -108,7 +107,8 @@ void pd_set_src_caps(int port, int cnt, uint32_t *src_caps)
 }
 
 void pd_request_power_swap(int port)
-{}
+{
+}
 
 int pd_get_rev(int port, enum tcpci_msg_type type)
 {
