@@ -75,13 +75,9 @@ struct usb_isochronous_config;
  *
  * @return  -EC_ERROR_CODE on failure, or number of bytes written on success.
  */
-int usb_isochronous_write_buffer(
-		struct usb_isochronous_config const *config,
-		const uint8_t *src,
-		size_t n,
-		size_t dst_offset,
-		int *buffer_id,
-		int commit);
+int usb_isochronous_write_buffer(struct usb_isochronous_config const *config,
+				 const uint8_t *src, size_t n,
+				 size_t dst_offset, int *buffer_id, int commit);
 
 struct usb_isochronous_config {
 	int endpoint;
@@ -110,21 +106,15 @@ struct usb_isochronous_config {
 };
 
 /* Define an USB isochronous interface */
-#define USB_ISOCHRONOUS_CONFIG_FULL(NAME,				\
-				    INTERFACE,				\
-				    INTERFACE_CLASS,			\
-				    INTERFACE_SUBCLASS,			\
-				    INTERFACE_PROTOCOL,			\
-				    INTERFACE_NAME,			\
-				    ENDPOINT,				\
-				    TX_SIZE,				\
-				    TX_CALLBACK,			\
-				    SET_INTERFACE,			\
-				    NUM_EXTRA_ENDPOINTS)		\
-	BUILD_ASSERT(TX_SIZE > 0);					\
-	BUILD_ASSERT((TX_SIZE <   64 && (TX_SIZE & 0x01) == 0) ||	\
-		     (TX_SIZE < 1024 && (TX_SIZE & 0x1f) == 0));	\
-	/* Declare buffer */						\
+#define USB_ISOCHRONOUS_CONFIG_FULL(NAME, INTERFACE, INTERFACE_CLASS,          \
+				    INTERFACE_SUBCLASS, INTERFACE_PROTOCOL,    \
+				    INTERFACE_NAME, ENDPOINT, TX_SIZE,         \
+				    TX_CALLBACK, SET_INTERFACE,                \
+				    NUM_EXTRA_ENDPOINTS)                       \
+	BUILD_ASSERT(TX_SIZE > 0);                                             \
+	BUILD_ASSERT((TX_SIZE < 64 && (TX_SIZE & 0x01) == 0) ||                \
+		     (TX_SIZE < 1024 && (TX_SIZE & 0x1f) == 0));               \
+	/* Declare buffer */                                                   \
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer_0)[TX_SIZE / 2] __usb_ram; \
 	static usb_uint CONCAT2(NAME, _ep_tx_buffer_1)[TX_SIZE / 2] __usb_ram; \
 	struct usb_isochronous_config const NAME = {			\
@@ -136,62 +126,57 @@ struct usb_isochronous_config {
 			CONCAT2(NAME, _ep_tx_buffer_0),			\
 			CONCAT2(NAME, _ep_tx_buffer_1),			\
 		},							\
-	};								\
-	const struct usb_interface_descriptor				\
-	USB_IFACE_DESC(INTERFACE) = {					\
-		.bLength            = USB_DT_INTERFACE_SIZE,		\
-		.bDescriptorType    = USB_DT_INTERFACE,			\
-		.bInterfaceNumber   = INTERFACE,			\
-		.bAlternateSetting  = 0,				\
-		.bNumEndpoints      = 0,				\
-		.bInterfaceClass    = INTERFACE_CLASS,			\
-		.bInterfaceSubClass = INTERFACE_SUBCLASS,		\
-		.bInterfaceProtocol = INTERFACE_PROTOCOL,		\
-		.iInterface         = INTERFACE_NAME,			\
-	};								\
-	const struct usb_interface_descriptor				\
-	USB_CONF_DESC(CONCAT3(iface, INTERFACE, _1iface)) = {		\
-		.bLength            = USB_DT_INTERFACE_SIZE,		\
-		.bDescriptorType    = USB_DT_INTERFACE,			\
-		.bInterfaceNumber   = INTERFACE,			\
-		.bAlternateSetting  = 1,				\
-		.bNumEndpoints      = 1 + NUM_EXTRA_ENDPOINTS,		\
-		.bInterfaceClass    = INTERFACE_CLASS,			\
-		.bInterfaceSubClass = INTERFACE_SUBCLASS,		\
-		.bInterfaceProtocol = INTERFACE_PROTOCOL,		\
-		.iInterface         = INTERFACE_NAME,			\
-	};								\
-	const struct usb_endpoint_descriptor				\
-	USB_EP_DESC(INTERFACE, 0) = {					\
-		.bLength          = USB_DT_ENDPOINT_SIZE,		\
-		.bDescriptorType  = USB_DT_ENDPOINT,			\
-		.bEndpointAddress = 0x80 | ENDPOINT,			\
-		.bmAttributes     = 0x01 /* Isochronous IN */,		\
-		.wMaxPacketSize   = TX_SIZE,				\
-		.bInterval        = 1,					\
-	};								\
-	static void CONCAT2(NAME, _ep_tx)(void)				\
-	{								\
-		usb_isochronous_tx(&NAME);				\
-	}								\
-	static void CONCAT2(NAME, _ep_event)(enum usb_ep_event evt)	\
-	{								\
-		usb_isochronous_event(&NAME, evt);			\
-	}								\
-	static int CONCAT2(NAME, _handler)(usb_uint *rx, usb_uint *tx)	\
-	{								\
-		return usb_isochronous_iface_handler(&NAME, rx, tx);	\
-	}								\
-	USB_DECLARE_IFACE(INTERFACE, CONCAT2(NAME, _handler));		\
-	USB_DECLARE_EP(ENDPOINT,					\
-		       CONCAT2(NAME, _ep_tx),				\
-		       CONCAT2(NAME, _ep_tx),				\
-		       CONCAT2(NAME, _ep_event));			\
+	};                       \
+	const struct usb_interface_descriptor USB_IFACE_DESC(INTERFACE) = {    \
+		.bLength = USB_DT_INTERFACE_SIZE,                              \
+		.bDescriptorType = USB_DT_INTERFACE,                           \
+		.bInterfaceNumber = INTERFACE,                                 \
+		.bAlternateSetting = 0,                                        \
+		.bNumEndpoints = 0,                                            \
+		.bInterfaceClass = INTERFACE_CLASS,                            \
+		.bInterfaceSubClass = INTERFACE_SUBCLASS,                      \
+		.bInterfaceProtocol = INTERFACE_PROTOCOL,                      \
+		.iInterface = INTERFACE_NAME,                                  \
+	};                                                                     \
+	const struct usb_interface_descriptor USB_CONF_DESC(                   \
+		CONCAT3(iface, INTERFACE, _1iface)) = {                        \
+		.bLength = USB_DT_INTERFACE_SIZE,                              \
+		.bDescriptorType = USB_DT_INTERFACE,                           \
+		.bInterfaceNumber = INTERFACE,                                 \
+		.bAlternateSetting = 1,                                        \
+		.bNumEndpoints = 1 + NUM_EXTRA_ENDPOINTS,                      \
+		.bInterfaceClass = INTERFACE_CLASS,                            \
+		.bInterfaceSubClass = INTERFACE_SUBCLASS,                      \
+		.bInterfaceProtocol = INTERFACE_PROTOCOL,                      \
+		.iInterface = INTERFACE_NAME,                                  \
+	};                                                                     \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 0) = {     \
+		.bLength = USB_DT_ENDPOINT_SIZE,                               \
+		.bDescriptorType = USB_DT_ENDPOINT,                            \
+		.bEndpointAddress = 0x80 | ENDPOINT,                           \
+		.bmAttributes = 0x01 /* Isochronous IN */,                     \
+		.wMaxPacketSize = TX_SIZE,                                     \
+		.bInterval = 1,                                                \
+	};                                                                     \
+	static void CONCAT2(NAME, _ep_tx)(void)                                \
+	{                                                                      \
+		usb_isochronous_tx(&NAME);                                     \
+	}                                                                      \
+	static void CONCAT2(NAME, _ep_event)(enum usb_ep_event evt)            \
+	{                                                                      \
+		usb_isochronous_event(&NAME, evt);                             \
+	}                                                                      \
+	static int CONCAT2(NAME, _handler)(usb_uint * rx, usb_uint * tx)       \
+	{                                                                      \
+		return usb_isochronous_iface_handler(&NAME, rx, tx);           \
+	}                                                                      \
+	USB_DECLARE_IFACE(INTERFACE, CONCAT2(NAME, _handler));                 \
+	USB_DECLARE_EP(ENDPOINT, CONCAT2(NAME, _ep_tx), CONCAT2(NAME, _ep_tx), \
+		       CONCAT2(NAME, _ep_event));
 
 void usb_isochronous_tx(struct usb_isochronous_config const *config);
 void usb_isochronous_event(struct usb_isochronous_config const *config,
 			   enum usb_ep_event event);
 int usb_isochronous_iface_handler(struct usb_isochronous_config const *config,
-				  usb_uint *ep0_buf_rx,
-				  usb_uint *ep0_buf_tx);
+				  usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
 #endif /* __CROS_EC_USB_ISOCHRONOUS_H */
