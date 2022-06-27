@@ -39,7 +39,5 @@ static int command_usart_info(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND(usart_info,
-			command_usart_info,
-			NULL,
+DECLARE_CONSOLE_COMMAND(usart_info, command_usart_info, NULL,
 			"Display USART info");
