@@ -24,11 +24,9 @@
 #define LED_TICKS_PER_CYCLE 10
 #define LED_ON_TICKS 5
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_LEFT_LED,
-	EC_LED_ID_RIGHT_LED,
-	EC_LED_ID_POWER_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_LEFT_LED,
+					     EC_LED_ID_RIGHT_LED,
+					     EC_LED_ID_POWER_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -36,15 +34,15 @@ enum led_color {
 	LED_OFF = 0,
 	LED_AMBER,
 	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static void led_set_color_battery(int port, enum led_color color)
 {
 	gpio_set_level(port ? GPIO_LED_AMBER_C1_L : GPIO_LED_AMBER_C0_L,
-		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
 	gpio_set_level(port ? GPIO_LED_WHITE_C1_L : GPIO_LED_WHITE_C0_L,
-		(color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
 }
 
 void led_set_color_power(enum led_color color)
@@ -141,15 +139,14 @@ static void led_set_battery(void)
 	 */
 	if (!board_is_convertible()) {
 		if (chipset_in_state(CHIPSET_STATE_SUSPEND |
-					 CHIPSET_STATE_STANDBY) &&
-			charge_get_state() != PWR_STATE_CHARGE) {
-
+				     CHIPSET_STATE_STANDBY) &&
+		    charge_get_state() != PWR_STATE_CHARGE) {
 			power_ticks++;
 
-			led_set_color_battery(0, power_ticks & 0x4 ?
-						  LED_WHITE : LED_OFF);
-			led_set_color_battery(1, power_ticks & 0x4 ?
-						  LED_WHITE : LED_OFF);
+			led_set_color_battery(0, power_ticks & 0x4 ? LED_WHITE :
+								     LED_OFF);
+			led_set_color_battery(1, power_ticks & 0x4 ? LED_WHITE :
+								     LED_OFF);
 			return;
 		}
 	}
@@ -164,9 +161,12 @@ static void led_set_battery(void)
 	case PWR_STATE_DISCHARGE:
 		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED)) {
 			if (charge_get_percent() < 10)
-				led_set_color_battery(1, (battery_ticks %
-					LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
-					LED_WHITE : LED_OFF);
+				led_set_color_battery(
+					1,
+					(battery_ticks % LED_TICKS_PER_CYCLE <
+					 LED_ON_TICKS) ?
+						LED_WHITE :
+						LED_OFF);
 			else
 				led_set_color_battery(1, LED_OFF);
 		}
@@ -175,17 +175,19 @@ static void led_set_battery(void)
 			led_set_color_battery(0, LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
-				LED_WHITE : LED_OFF);
+		set_active_port_color((battery_ticks & 0x2) ? LED_WHITE :
+							      LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			set_active_port_color((battery_ticks %
-				LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
-				LED_AMBER : LED_OFF);
+			set_active_port_color(
+				(battery_ticks % LED_TICKS_PER_CYCLE <
+				 LED_ON_TICKS) ?
+					LED_AMBER :
+					LED_OFF);
 		else
 			set_active_port_color(LED_WHITE);
 		break;
@@ -205,9 +207,10 @@ static void led_set_power(void)
 		led_set_color_power(LED_WHITE);
 	else if (chipset_in_state(CHIPSET_STATE_SUSPEND |
 				  CHIPSET_STATE_STANDBY))
-		led_set_color_power((power_tick %
-			LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
-			LED_WHITE : LED_OFF);
+		led_set_color_power(
+			(power_tick % LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
+				LED_WHITE :
+				LED_OFF);
 	else
 		led_set_color_power(LED_OFF);
 }
