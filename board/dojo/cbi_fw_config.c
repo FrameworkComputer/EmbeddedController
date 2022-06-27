@@ -30,12 +30,12 @@ DECLARE_HOOK(HOOK_INIT, cbi_fw_config_init, HOOK_PRIO_FIRST);
 
 enum fw_config_kblight_type get_cbi_fw_config_kblight(void)
 {
-	return ((cached_fw_config & FW_CONFIG_KB_BL_MASK)
-			>> FW_CONFIG_KB_BL_OFFSET);
+	return ((cached_fw_config & FW_CONFIG_KB_BL_MASK) >>
+		FW_CONFIG_KB_BL_OFFSET);
 }
 
 enum fw_config_kblayout_type get_cbi_fw_config_kblayout(void)
 {
-	return ((cached_fw_config & FW_CONFIG_KB_LAYOUT_MASK)
-			>> FW_CONFIG_KB_LAYOUT_OFFSET);
+	return ((cached_fw_config & FW_CONFIG_KB_LAYOUT_MASK) >>
+		FW_CONFIG_KB_LAYOUT_OFFSET);
 }
