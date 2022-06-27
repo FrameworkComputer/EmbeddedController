@@ -27,8 +27,7 @@ host_command_reboot_ap_on_g3(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3,
-		     host_command_reboot_ap_on_g3,
+DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3, host_command_reboot_ap_on_g3,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 /* End of host commands */
