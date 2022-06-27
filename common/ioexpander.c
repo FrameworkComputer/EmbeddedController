@@ -11,8 +11,8 @@
 #include "system.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_GPIO, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_GPIO, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ##args)
 
 int signal_is_ioex(int signal)
 {
@@ -68,7 +68,7 @@ int ioex_enable_interrupt(enum ioex_signal signal)
 
 	rv = ioex_is_valid_interrupt_signal(signal);
 	if (rv != EC_SUCCESS)
-		return  rv;
+		return rv;
 
 	drv = ioex_config[g->ioex].drv;
 	return drv->enable_interrupt(g->ioex, g->port, g->mask, 1);
@@ -82,7 +82,7 @@ int ioex_disable_interrupt(enum ioex_signal signal)
 
 	rv = ioex_is_valid_interrupt_signal(signal);
 	if (rv != EC_SUCCESS)
-		return  rv;
+		return rv;
 
 	drv = ioex_config[g->ioex].drv;
 	return drv->enable_interrupt(g->ioex, g->port, g->mask, 0);
@@ -107,8 +107,8 @@ int ioex_get_flags(enum ioex_signal signal, int *flags)
 	if (g == NULL)
 		return EC_ERROR_BUSY;
 
-	return ioex_config[g->ioex].drv->get_flags_by_mask(g->ioex,
-						g->port, g->mask, flags);
+	return ioex_config[g->ioex].drv->get_flags_by_mask(g->ioex, g->port,
+							   g->mask, flags);
 }
 
 int ioex_set_flags(enum ioex_signal signal, int flags)
@@ -118,8 +118,8 @@ int ioex_set_flags(enum ioex_signal signal, int flags)
 	if (g == NULL)
 		return EC_ERROR_BUSY;
 
-	return ioex_config[g->ioex].drv->set_flags_by_mask(g->ioex,
-						g->port, g->mask, flags);
+	return ioex_config[g->ioex].drv->set_flags_by_mask(g->ioex, g->port,
+							   g->mask, flags);
 }
 
 int ioex_get_level(enum ioex_signal signal, int *val)
@@ -129,8 +129,8 @@ int ioex_get_level(enum ioex_signal signal, int *val)
 	if (g == NULL)
 		return EC_ERROR_BUSY;
 
-	return ioex_config[g->ioex].drv->get_level(g->ioex, g->port,
-							g->mask, val);
+	return ioex_config[g->ioex].drv->get_level(g->ioex, g->port, g->mask,
+						   val);
 }
 
 int ioex_set_level(enum ioex_signal signal, int value)
@@ -140,8 +140,8 @@ int ioex_set_level(enum ioex_signal signal, int value)
 	if (g == NULL)
 		return EC_ERROR_BUSY;
 
-	return ioex_config[g->ioex].drv->set_level(g->ioex, g->port,
-							g->mask, value);
+	return ioex_config[g->ioex].drv->set_level(g->ioex, g->port, g->mask,
+						   value);
 }
 
 #ifdef CONFIG_IO_EXPANDER_SUPPORT_GET_PORT
@@ -198,7 +198,7 @@ int ioex_restore_gpio_state(int ioex, const int *state, int state_len)
 		}
 
 		rv = drv->set_flags_by_mask(g->ioex, g->port, g->mask,
-				       state[state_offset++]);
+					    state[state_offset++]);
 		if (rv) {
 			CPRINTS("%s failed to set flags rv=%d", __func__, rv);
 			return rv;
@@ -233,8 +233,8 @@ int ioex_init(int ioex)
 			if (system_jumped_late())
 				flags &= ~(GPIO_LOW | GPIO_HIGH);
 
-			drv->set_flags_by_mask(g->ioex, g->port,
-						g->mask, flags);
+			drv->set_flags_by_mask(g->ioex, g->port, g->mask,
+					       flags);
 		}
 	}
 
@@ -253,8 +253,8 @@ static void ioex_init_default(void)
 		 * If the IO Expander has been initialized or if the default
 		 * initialization is disabled, skip initializing.
 		 */
-		if (ioex_config[i].flags & (IOEX_FLAGS_INITIALIZED |
-					IOEX_FLAGS_DEFAULT_INIT_DISABLED))
+		if (ioex_config[i].flags &
+		    (IOEX_FLAGS_INITIALIZED | IOEX_FLAGS_DEFAULT_INIT_DISABLED))
 			continue;
 
 		ioex_init(i);
