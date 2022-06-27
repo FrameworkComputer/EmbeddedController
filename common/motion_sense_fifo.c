@@ -15,7 +15,7 @@
 #include "online_calibration.h"
 #include "stdbool.h"
 
-#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
 
 /**
  * Staged metadata for the fifo queue.
@@ -76,8 +76,8 @@ static int wake_up_needed;
  * @param data The data entry to check.
  * @return 1 if the entry is a timestamp, 0 otherwise.
  */
-static inline int is_timestamp(
-	const struct ec_response_motion_sensor_data *data)
+static inline int
+is_timestamp(const struct ec_response_motion_sensor_data *data)
 {
 	return data->flags & MOTIONSENSE_SENSOR_FLAG_TIMESTAMP;
 }
@@ -102,8 +102,8 @@ static inline bool is_data(const struct ec_response_motion_sensor_data *data)
  */
 static inline struct ec_response_motion_sensor_data *get_fifo_head(void)
 {
-	return ((struct ec_response_motion_sensor_data *) fifo.buffer) +
-		(fifo.state->head & fifo.buffer_units_mask);
+	return ((struct ec_response_motion_sensor_data *)fifo.buffer) +
+	       (fifo.state->head & fifo.buffer_units_mask);
 }
 
 /**
@@ -229,10 +229,8 @@ static inline bool is_new_timestamp(uint8_t sensor_num)
  * @param sensor The sensor that generated the data
  * @param valid_data The number of readable data entries in the data.
  */
-static void fifo_stage_unit(
-	struct ec_response_motion_sensor_data *data,
-	struct motion_sensor_t *sensor,
-	int valid_data)
+static void fifo_stage_unit(struct ec_response_motion_sensor_data *data,
+			    struct motion_sensor_t *sensor, int valid_data)
 {
 	struct queue_chunk chunk;
 	int i;
@@ -279,7 +277,8 @@ static void fifo_stage_unit(
 
 	if (IS_ENABLED(CONFIG_TABLET_MODE))
 		data->flags |= (tablet_get_mode() ?
-				MOTIONSENSE_SENSOR_FLAG_TABLET_MODE : 0);
+					MOTIONSENSE_SENSOR_FLAG_TABLET_MODE :
+					0);
 
 	/*
 	 * Get the next writable block in the fifo. We don't need to lock this
@@ -316,8 +315,7 @@ static void fifo_stage_unit(
 	 * If the new per-sensor sample count is greater than 1, we'll need to
 	 * spread.
 	 */
-	if (IS_ENABLED(CONFIG_SENSOR_TIGHT_TIMESTAMPS) &&
-	    !is_timestamp(data) &&
+	if (IS_ENABLED(CONFIG_SENSOR_TIGHT_TIMESTAMPS) && !is_timestamp(data) &&
 	    ++fifo_staged.sample_count[data->sensor_num] > 1)
 		fifo_staged.requires_spreading = 1;
 
@@ -351,8 +349,9 @@ static void fifo_stage_timestamp(uint32_t timestamp, uint8_t sensor_num)
 static inline struct ec_response_motion_sensor_data *
 peek_fifo_staged(size_t offset)
 {
-	return (struct ec_response_motion_sensor_data *)
-		queue_get_write_chunk(&fifo, offset).buffer;
+	return (struct ec_response_motion_sensor_data *)queue_get_write_chunk(
+		       &fifo, offset)
+		.buffer;
 }
 
 void motion_sense_fifo_init(void)
@@ -389,9 +388,8 @@ void motion_sense_fifo_reset_needed_flags(void)
 	mutex_unlock(&g_sensor_mutex);
 }
 
-void motion_sense_fifo_insert_async_event(
-	struct motion_sensor_t *sensor,
-	enum motion_sense_async_event event)
+void motion_sense_fifo_insert_async_event(struct motion_sensor_t *sensor,
+					  enum motion_sense_async_event event)
 {
 	struct ec_response_motion_sensor_data vector;
 
@@ -409,11 +407,9 @@ inline void motion_sense_fifo_add_timestamp(uint32_t timestamp)
 	motion_sense_fifo_commit_data();
 }
 
-void motion_sense_fifo_stage_data(
-	struct ec_response_motion_sensor_data *data,
-	struct motion_sensor_t *sensor,
-	int valid_data,
-	uint32_t time)
+void motion_sense_fifo_stage_data(struct ec_response_motion_sensor_data *data,
+				  struct motion_sensor_t *sensor,
+				  int valid_data, uint32_t time)
 {
 	if (IS_ENABLED(CONFIG_SENSOR_TIGHT_TIMESTAMPS)) {
 		/* First entry, save the time for spreading later. */
@@ -474,9 +470,9 @@ void motion_sense_fifo_commit_data(void)
 		 * window length / (sample count - 1).
 		 */
 		if (window && fifo_staged.sample_count[i] > 1)
-			period = MIN(
-				period,
-				window / (fifo_staged.sample_count[i] - 1));
+			period =
+				MIN(period,
+				    window / (fifo_staged.sample_count[i] - 1));
 		data_periods[i] = period;
 	}
 
@@ -531,9 +527,9 @@ commit_data_end:
 		next_timestamp[sensor_num].prev =
 			next_timestamp[sensor_num].next;
 		next_timestamp[sensor_num].next +=
-			fifo_staged.requires_spreading
-			? data_periods[sensor_num]
-			: motion_sensors[sensor_num].collection_rate;
+			fifo_staged.requires_spreading ?
+				data_periods[sensor_num] :
+				motion_sensors[sensor_num].collection_rate;
 
 		/* Update online calibration if enabled. */
 		data = peek_fifo_staged(i);
@@ -559,8 +555,7 @@ commit_data_end:
 }
 
 void motion_sense_fifo_get_info(
-	struct ec_response_motion_sense_fifo_info *fifo_info,
-	int reset)
+	struct ec_response_motion_sense_fifo_info *fifo_info, int reset)
 {
 	mutex_lock(&g_sensor_mutex);
 	fifo_info->size = fifo.buffer_units;
@@ -641,7 +636,8 @@ static int motion_sense_read_fifo(int argc, char **argv)
 			memcpy(&timestamp, v.data, sizeof(v.data));
 			ccprintf("Timestamp: 0x%016llx%s\n", timestamp,
 				 (v.flags & MOTIONSENSE_SENSOR_FLAG_FLUSH ?
-				  " - Flush" : ""));
+					  " - Flush" :
+					  ""));
 		} else {
 			ccprintf("%d %d: %-5d %-5d %-5d\n", i, v.sensor_num,
 				 v.data[X], v.data[Y], v.data[Z]);
@@ -650,7 +646,6 @@ static int motion_sense_read_fifo(int argc, char **argv)
 	return EC_SUCCESS;
 }
 
-DECLARE_CONSOLE_COMMAND(fiforead, motion_sense_read_fifo,
-	"id",
-	"Read Fifo sensor");
+DECLARE_CONSOLE_COMMAND(fiforead, motion_sense_read_fifo, "id",
+			"Read Fifo sensor");
 #endif /* defined(CONFIG_CMD_ACCEL_FIFO) */
