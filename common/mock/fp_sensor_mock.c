@@ -59,9 +59,8 @@ int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode)
 	return mock_ctrl_fp_sensor.fp_sensor_acquire_image_with_mode_return;
 }
 
-int fp_finger_match(void *templ, uint32_t templ_count,
-		    uint8_t *image, int32_t *match_index,
-		    uint32_t *update_bitmap)
+int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
+		    int32_t *match_index, uint32_t *update_bitmap)
 {
 	return mock_ctrl_fp_sensor.fp_finger_match_return;
 }
