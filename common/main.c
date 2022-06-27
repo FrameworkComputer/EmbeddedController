@@ -40,8 +40,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 test_mockable __keep int main(void)
 {
@@ -182,12 +182,12 @@ test_mockable __keep int main(void)
 	if (IS_ENABLED(CONFIG_EEPROM_CBI_WP) && system_is_locked())
 		cbi_latch_eeprom_wp();
 
-	/*
-	 * Keyboard scan init/Button init can set recovery events to
-	 * indicate to host entry into recovery mode. Before this is
-	 * done, LPC_HOST_EVENT_ALWAYS_REPORT mask needs to be initialized
-	 * correctly.
-	 */
+		/*
+		 * Keyboard scan init/Button init can set recovery events to
+		 * indicate to host entry into recovery mode. Before this is
+		 * done, LPC_HOST_EVENT_ALWAYS_REPORT mask needs to be
+		 * initialized correctly.
+		 */
 #ifdef CONFIG_HOSTCMD_X86
 	lpc_init_mask();
 #endif
@@ -228,9 +228,9 @@ test_mockable __keep int main(void)
 #endif /* defined(CONFIG_DEDICATED_RECOVERY_BUTTON | CONFIG_VOLUME_BUTTONS) */
 
 	/* Make sure recovery boot won't be paused. */
-	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE)
-			&& system_is_manual_recovery()
-			&& (system_get_reset_flags() & EC_RESET_FLAG_AP_IDLE)) {
+	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE) &&
+	    system_is_manual_recovery() &&
+	    (system_get_reset_flags() & EC_RESET_FLAG_AP_IDLE)) {
 		CPRINTS("Clear AP_IDLE for recovery mode");
 		system_clear_reset_flags(EC_RESET_FLAG_AP_IDLE);
 	}
@@ -270,15 +270,14 @@ test_mockable __keep int main(void)
 				rwsig_jump_now();
 		}
 	}
-#endif  /* !CONFIG_VBOOT_EFS && CONFIG_RWSIG && !HAS_TASK_RWSIG */
+#endif /* !CONFIG_VBOOT_EFS && CONFIG_RWSIG && !HAS_TASK_RWSIG */
 
 	/*
 	 * Disable I2C raw mode for the ports which needed pre-task i2c
 	 * transactions as the task is about to start and the I2C can resume
 	 * to event based transactions.
 	 */
-	if (IS_ENABLED(CONFIG_I2C_BITBANG) &&
-		IS_ENABLED(CONFIG_I2C_CONTROLLER))
+	if (IS_ENABLED(CONFIG_I2C_BITBANG) && IS_ENABLED(CONFIG_I2C_CONTROLLER))
 		enable_i2c_raw_mode(false);
 
 	/*
