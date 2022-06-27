@@ -34,8 +34,8 @@
 #include "hwtimer.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_LPC, format, ##args)
 
 /*
  * comminucation protocol is defined in Linux Documentation
@@ -44,57 +44,55 @@
 
 /* MNG commands */
 /* The ipc_mng_task manages IPC link. It should be the highest priority */
-#define MNG_RX_CMPL_ENABLE              0
-#define MNG_RX_CMPL_DISABLE             1
-#define MNG_RX_CMPL_INDICATION          2
-#define MNG_RESET_NOTIFY                3
-#define MNG_RESET_NOTIFY_ACK            4
-#define MNG_SYNC_FW_CLOCK               5
-#define MNG_ILLEGAL_CMD                 0xFF
+#define MNG_RX_CMPL_ENABLE 0
+#define MNG_RX_CMPL_DISABLE 1
+#define MNG_RX_CMPL_INDICATION 2
+#define MNG_RESET_NOTIFY 3
+#define MNG_RESET_NOTIFY_ACK 4
+#define MNG_SYNC_FW_CLOCK 5
+#define MNG_ILLEGAL_CMD 0xFF
 
 /* Doorbell */
-#define IPC_DB_MSG_LENGTH_FIELD		0x3FF
-#define IPC_DB_MSG_LENGTH_SHIFT		0
+#define IPC_DB_MSG_LENGTH_FIELD 0x3FF
+#define IPC_DB_MSG_LENGTH_SHIFT 0
 #define IPC_DB_MSG_LENGTH_MASK \
-	  (IPC_DB_MSG_LENGTH_FIELD << IPC_DB_MSG_LENGTH_SHIFT)
+	(IPC_DB_MSG_LENGTH_FIELD << IPC_DB_MSG_LENGTH_SHIFT)
 
-#define IPC_DB_PROTOCOL_FIELD		0x0F
-#define IPC_DB_PROTOCOL_SHIFT		10
+#define IPC_DB_PROTOCOL_FIELD 0x0F
+#define IPC_DB_PROTOCOL_SHIFT 10
 #define IPC_DB_PROTOCOL_MASK (IPC_DB_PROTOCOL_FIELD << IPC_DB_PROTOCOL_SHIFT)
 
-#define IPC_DB_CMD_FIELD		0x0F
-#define IPC_DB_CMD_SHIFT		16
-#define IPC_DB_CMD_MASK			(IPC_DB_CMD_FIELD << IPC_DB_CMD_SHIFT)
+#define IPC_DB_CMD_FIELD 0x0F
+#define IPC_DB_CMD_SHIFT 16
+#define IPC_DB_CMD_MASK (IPC_DB_CMD_FIELD << IPC_DB_CMD_SHIFT)
 
-#define IPC_DB_BUSY_SHIFT		31
-#define IPC_DB_BUSY_MASK		BIT(IPC_DB_BUSY_SHIFT)
+#define IPC_DB_BUSY_SHIFT 31
+#define IPC_DB_BUSY_MASK BIT(IPC_DB_BUSY_SHIFT)
 
 #define IPC_DB_MSG_LENGTH(drbl) \
-	  (((drbl) & IPC_DB_MSG_LENGTH_MASK) >> IPC_DB_MSG_LENGTH_SHIFT)
+	(((drbl)&IPC_DB_MSG_LENGTH_MASK) >> IPC_DB_MSG_LENGTH_SHIFT)
 #define IPC_DB_PROTOCOL(drbl) \
-	  (((drbl) & IPC_DB_PROTOCOL_MASK) >> IPC_DB_PROTOCOL_SHIFT)
-#define IPC_DB_CMD(drbl) \
-	  (((drbl) & IPC_DB_CMD_MASK) >> IPC_DB_CMD_SHIFT)
-#define IPC_DB_BUSY(drbl)		(!!((drbl) & IPC_DB_BUSY_MASK))
+	(((drbl)&IPC_DB_PROTOCOL_MASK) >> IPC_DB_PROTOCOL_SHIFT)
+#define IPC_DB_CMD(drbl) (((drbl)&IPC_DB_CMD_MASK) >> IPC_DB_CMD_SHIFT)
+#define IPC_DB_BUSY(drbl) (!!((drbl)&IPC_DB_BUSY_MASK))
 
-#define IPC_BUILD_DB(length, proto, cmd, busy) \
+#define IPC_BUILD_DB(length, proto, cmd, busy)                         \
 	(((busy) << IPC_DB_BUSY_SHIFT) | ((cmd) << IPC_DB_CMD_SHIFT) | \
-	((proto) << IPC_DB_PROTOCOL_SHIFT) | \
-		((length) << IPC_DB_MSG_LENGTH_SHIFT))
+	 ((proto) << IPC_DB_PROTOCOL_SHIFT) |                          \
+	 ((length) << IPC_DB_MSG_LENGTH_SHIFT))
 
 #define IPC_BUILD_MNG_DB(cmd, length) \
 	IPC_BUILD_DB(length, IPC_PROTOCOL_MNG, cmd, 1)
 
-#define IPC_BUILD_HECI_DB(length) \
-	IPC_BUILD_DB(length, IPC_PROTOCOL_HECI, 0, 1)
+#define IPC_BUILD_HECI_DB(length) IPC_BUILD_DB(length, IPC_PROTOCOL_HECI, 0, 1)
 
-#define IPC_MSG_MAX_SIZE		0x80
-#define IPC_HOST_MSG_QUEUE_SIZE		8
-#define IPC_PMC_MSG_QUEUE_SIZE		2
+#define IPC_MSG_MAX_SIZE 0x80
+#define IPC_HOST_MSG_QUEUE_SIZE 8
+#define IPC_PMC_MSG_QUEUE_SIZE 2
 
-#define IPC_HANDLE_PEER_ID_SHIFT	4
-#define IPC_HANDLE_PROTOCOL_SHIFT	0
-#define IPC_HANDLE_PROTOCOL_MASK	0x0F
+#define IPC_HANDLE_PEER_ID_SHIFT 4
+#define IPC_HANDLE_PROTOCOL_SHIFT 0
+#define IPC_HANDLE_PROTOCOL_MASK 0x0F
 #define IPC_BUILD_HANDLE(peer_id, protocol) \
 	((ipc_handle_t)(((peer_id) << IPC_HANDLE_PEER_ID_SHIFT) | (protocol)))
 #define IPC_BUILD_MNG_HANDLE(peer_id) \
@@ -103,10 +101,10 @@
 #define IPC_HANDLE_PEER_ID(handle) \
 	((uint32_t)(handle) >> IPC_HANDLE_PEER_ID_SHIFT)
 #define IPC_HANDLE_PROTOCOL(handle) \
-	((uint32_t)(handle) & IPC_HANDLE_PROTOCOL_MASK)
-#define IPC_IS_VALID_HANDLE(handle) \
+	((uint32_t)(handle)&IPC_HANDLE_PROTOCOL_MASK)
+#define IPC_IS_VALID_HANDLE(handle)                      \
 	(IPC_HANDLE_PEER_ID(handle) < IPC_PEERS_COUNT && \
-	    IPC_HANDLE_PROTOCOL(handle) < IPC_PROTOCOL_COUNT)
+	 IPC_HANDLE_PROTOCOL(handle) < IPC_PROTOCOL_COUNT)
 
 struct ipc_msg {
 	uint32_t drbl;
@@ -191,21 +189,20 @@ static inline void ipc_disable_pimr_db_interrupt(const struct ipc_if_ctx *ctx)
 	IPC_PIMR &= ~ctx->pimr_2ish_bit;
 }
 
-static inline void ipc_enable_pimr_clearing_interrupt(
-						const struct ipc_if_ctx *ctx)
+static inline void
+ipc_enable_pimr_clearing_interrupt(const struct ipc_if_ctx *ctx)
 {
 	IPC_PIMR |= ctx->pimr_2host_clearing_bit;
 }
 
-static inline void ipc_disable_pimr_clearing_interrupt(
-						const struct ipc_if_ctx *ctx)
+static inline void
+ipc_disable_pimr_clearing_interrupt(const struct ipc_if_ctx *ctx)
 {
 	IPC_PIMR &= ~ctx->pimr_2host_clearing_bit;
 }
 
 static void write_payload_and_ring_drbl(const struct ipc_if_ctx *ctx,
-					uint32_t drbl,
-					const uint8_t *payload,
+					uint32_t drbl, const uint8_t *payload,
 					size_t payload_size)
 {
 	memcpy((void *)(ctx->out_msg_reg), payload, payload_size);
@@ -280,7 +277,7 @@ static int ipc_send_reset_notify(const ipc_handle_t handle)
 
 static int ipc_send_cmpl_indication(struct ipc_if_ctx *ctx)
 {
-	struct ipc_msg msg = {0};
+	struct ipc_msg msg = { 0 };
 
 	msg.drbl = IPC_BUILD_MNG_DB(MNG_RX_CMPL_INDICATION, 0);
 	ipc_write_raw(ctx, msg.drbl, msg.payload, IPC_DB_MSG_LENGTH(msg.drbl));
@@ -289,8 +286,8 @@ static int ipc_send_cmpl_indication(struct ipc_if_ctx *ctx)
 }
 
 static int ipc_get_protocol_data(const struct ipc_if_ctx *ctx,
-				 const uint32_t protocol,
-				 uint8_t *buf, const size_t buf_size)
+				 const uint32_t protocol, uint8_t *buf,
+				 const size_t buf_size)
 {
 	int len = 0, payload_size;
 	uint8_t *src = NULL, *dest = NULL;
@@ -325,9 +322,8 @@ static int ipc_get_protocol_data(const struct ipc_if_ctx *ctx,
 	}
 
 	if (IS_ENABLED(IPC_HECI_DEBUG))
-		CPRINTF("ipc p=%d, db=0x%0x, payload_size=%d\n",
-			protocol, drbl_val,
-			IPC_DB_MSG_LENGTH(drbl_val));
+		CPRINTF("ipc p=%d, db=0x%0x, payload_size=%d\n", protocol,
+			drbl_val, IPC_DB_MSG_LENGTH(drbl_val));
 
 	switch (protocol) {
 	case IPC_PROTOCOL_HECI:
@@ -340,7 +336,7 @@ static int ipc_get_protocol_data(const struct ipc_if_ctx *ctx,
 		msg->drbl = drbl_val;
 		dest = msg->payload;
 		break;
-	default :
+	default:
 		break;
 	}
 
@@ -544,13 +540,11 @@ int ipc_write_timestamp(const ipc_handle_t handle, const void *buf,
 }
 
 ipc_handle_t ipc_open(const enum ipc_peer_id peer_id,
-		      const enum ipc_protocol protocol,
-		      const uint32_t event)
+		      const enum ipc_protocol protocol, const uint32_t event)
 {
 	struct ipc_if_ctx *ctx;
 
-	if (protocol >= IPC_PROTOCOL_COUNT ||
-	    peer_id >= IPC_PEERS_COUNT)
+	if (protocol >= IPC_PROTOCOL_COUNT || peer_id >= IPC_PEERS_COUNT)
 		return IPC_INVALID_HANDLE;
 
 	ctx = ipc_get_if_ctx(peer_id);
@@ -564,9 +558,9 @@ ipc_handle_t ipc_open(const enum ipc_peer_id peer_id,
 	ctx->msg_events[protocol].enabled = 1;
 	ctx->msg_events[protocol].event = event;
 
-	 /* For HECI protocol, set HECI UP status when IPC link is ready */
-	if (peer_id == IPC_PEER_ID_HOST &&
-	    protocol == IPC_PROTOCOL_HECI && ish_fwst_is_ilup_set())
+	/* For HECI protocol, set HECI UP status when IPC link is ready */
+	if (peer_id == IPC_PEER_ID_HOST && protocol == IPC_PROTOCOL_HECI &&
+	    ish_fwst_is_ilup_set())
 		ish_fwst_set_hup();
 
 	if (ctx->initialized == 0) {
@@ -686,7 +680,7 @@ int ipc_read(const ipc_handle_t handle, void *buf, const size_t buf_size,
 }
 
 /* event flag for MNG msg */
-#define EVENT_FLAG_BIT_MNG_MSG			TASK_EVENT_CUSTOM_BIT(0)
+#define EVENT_FLAG_BIT_MNG_MSG TASK_EVENT_CUSTOM_BIT(0)
 
 /*
  * This task handles MNG messages
