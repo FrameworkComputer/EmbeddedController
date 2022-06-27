@@ -18,49 +18,49 @@
 /* Print additional data */
 #define CPS8100_DEBUG
 
-#define CPUTS(outstr)		cputs(CC_PCHG, outstr)
-#define CPRINTS(fmt, args...)	cprints(CC_PCHG, "CPS8100: " fmt, ##args)
-#define CPRINTFP(fmt, args...)	cprintf(CC_PCHG, "CPS8100: " fmt, ##args)
-#define CPRINTF(fmt, args...)	cprintf(CC_PCHG, fmt, ##args)
+#define CPUTS(outstr) cputs(CC_PCHG, outstr)
+#define CPRINTS(fmt, args...) cprints(CC_PCHG, "CPS8100: " fmt, ##args)
+#define CPRINTFP(fmt, args...) cprintf(CC_PCHG, "CPS8100: " fmt, ##args)
+#define CPRINTF(fmt, args...) cprintf(CC_PCHG, fmt, ##args)
 
 /*
  * Configuration
  */
-#define CPS8100_I2C_ADDR_H		0x31
-#define CPS8100_I2C_ADDR_L		0x30
+#define CPS8100_I2C_ADDR_H 0x31
+#define CPS8100_I2C_ADDR_L 0x30
 
 /* High address registers (commands?) */
-#define CPS8100_REGH_PASSWORD		0xf500
-#define CPS8100_REGH_ACCESS_MODE	0xf505
-#define CPS8100_REGH_ADDRESS		0xf503
+#define CPS8100_REGH_PASSWORD 0xf500
+#define CPS8100_REGH_ACCESS_MODE 0xf505
+#define CPS8100_REGH_ADDRESS 0xf503
 
-#define CPS8100_ACCESS_MODE_8		0x00
-#define CPS8100_ACCESS_MODE_16		0x01
-#define CPS8100_ACCESS_MODE_32		0x02
+#define CPS8100_ACCESS_MODE_8 0x00
+#define CPS8100_ACCESS_MODE_16 0x01
+#define CPS8100_ACCESS_MODE_32 0x02
 
 /* Registers */
-#define CPS8100_REG_IC_INFO		0x20000000
-#define CPS8100_REG_FW_INFO		0x20000004
-#define CPS8100_REG_FUNC_EN		0x2000003c
-#define CPS8100_REG_ALERT_INFO		0x20000158
-#define CPS8100_REG_INT_ENABLE		0x20000160
-#define CPS8100_REG_INT_FLAG		0x20000164
+#define CPS8100_REG_IC_INFO 0x20000000
+#define CPS8100_REG_FW_INFO 0x20000004
+#define CPS8100_REG_FUNC_EN 0x2000003c
+#define CPS8100_REG_ALERT_INFO 0x20000158
+#define CPS8100_REG_INT_ENABLE 0x20000160
+#define CPS8100_REG_INT_FLAG 0x20000164
 
-#define CPS8100_STATUS_PROFILE(r)	(((r) & GENMASK(5, 4)) >> 4)
-#define CPS8100_STATUS_CHARGE(r)	((r) & BIT(6))
-#define CPS8100_STATUS_DEVICE(r)	((r) & BIT(7))
-#define CPS8100_STATUS_BATTERY(r)	(((r) & GENMASK(15, 8)) >> 8)
-#define CPS8100_IRQ_TYPE(r)		(((r) & GENMASK(23, 20)) >> 20)
+#define CPS8100_STATUS_PROFILE(r) (((r)&GENMASK(5, 4)) >> 4)
+#define CPS8100_STATUS_CHARGE(r) ((r)&BIT(6))
+#define CPS8100_STATUS_DEVICE(r) ((r)&BIT(7))
+#define CPS8100_STATUS_BATTERY(r) (((r)&GENMASK(15, 8)) >> 8)
+#define CPS8100_IRQ_TYPE(r) (((r)&GENMASK(23, 20)) >> 20)
 
 /* Status flags in ALERT_INFO register */
-#define CPS8100_STATUS_FOD		BIT(0)
-#define CPS8100_STATUS_OCP		BIT(1)
-#define CPS8100_STATUS_OVP		BIT(2)
-#define CPS8100_STATUS_OTP		BIT(3)
-#define CPS8100_STATUS_UVP		BIT(16)
+#define CPS8100_STATUS_FOD BIT(0)
+#define CPS8100_STATUS_OCP BIT(1)
+#define CPS8100_STATUS_OVP BIT(2)
+#define CPS8100_STATUS_OTP BIT(3)
+#define CPS8100_STATUS_UVP BIT(16)
 
 /* Buffer size for i2c read & write */
-#define CPS8100_MESSAGE_BUFFER_SIZE	0x20
+#define CPS8100_MESSAGE_BUFFER_SIZE 0x20
 
 /* TODO: Check datasheet how to wake up and how long it takes to wake up. */
 static const int cps8100_wake_up_delay_ms = 10;
@@ -82,21 +82,12 @@ struct cps8100_msg {
 } __packed;
 
 /* This driver isn't compatible with big endian. */
-BUILD_ASSERT(__BYTE_ORDER__  == __ORDER_LITTLE_ENDIAN__);
+BUILD_ASSERT(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__);
 
-static const char * const cps8100_func_names[] = {
-	[0] = "DPL",
-	[1] = "OPP",
-	[2] = "OTP",
-	[3] = "OVPK",
-	[4] = "OCP",
-	[5] = "UVP",
-	[6] = "OVP",
-	[7] = "FOD",
-	[8] = "SAMSUNG",
-	[9] = "APPLE",
-	[10] = "EPP",
-	[11] = "HUAWEI",
+static const char *const cps8100_func_names[] = {
+	[0] = "DPL",	 [1] = "OPP",	[2] = "OTP",  [3] = "OVPK",
+	[4] = "OCP",	 [5] = "UVP",	[6] = "OVP",  [7] = "FOD",
+	[8] = "SAMSUNG", [9] = "APPLE", [10] = "EPP", [11] = "HUAWEI",
 	[12] = "CPS",
 };
 
@@ -114,7 +105,7 @@ enum cps8100_irq_type {
 	CPS8100_IRQ_TYPE_COUNT
 };
 
-static const char * const cps8100_irq_type_names[] = {
+static const char *const cps8100_irq_type_names[] = {
 	[CPS8100_IRQ_TYPE_FOD] = "FOD",
 	[CPS8100_IRQ_TYPE_OCP] = "OCP",
 	[CPS8100_IRQ_TYPE_OVP] = "OVP",
@@ -127,7 +118,7 @@ static const char * const cps8100_irq_type_names[] = {
 	[CPS8100_IRQ_TYPE_RESET] = "RESET",
 };
 
-static const char * const cps8100_profile_names[] = {
+static const char *const cps8100_profile_names[] = {
 	[0] = "NONE",
 	[1] = "BPP",
 	[2] = "EPP",
@@ -214,9 +205,9 @@ static int cps8100_set_unlock(int port)
 	uint8_t buf[4];
 
 	buf[0] = 0xf5;
-	buf[1] = 0x00;	/* Password register address */
+	buf[1] = 0x00; /* Password register address */
 	buf[2] = 0xe5;
-	buf[3] = 0x19;	/* Password */
+	buf[3] = 0x19; /* Password */
 
 	return cps8100_i2c_write(port, CPS8100_I2C_ADDR_H, buf, 4);
 }
@@ -258,8 +249,8 @@ static int cps8100_read32(int port, uint32_t reg, uint32_t *val)
 	buf[0] = (reg >> 8) & 0xff;
 	buf[1] = (reg >> 0) & 0xff;
 
-	return i2c_xfer(port, CPS8100_I2C_ADDR_L, buf, 2,
-			(void *)val, sizeof(*val));
+	return i2c_xfer(port, CPS8100_I2C_ADDR_L, buf, 2, (void *)val,
+			sizeof(*val));
 }
 
 static int cps8100_reset(struct pchg *ctx)
@@ -315,7 +306,8 @@ static void cps8100_print_alert_info(uint32_t reg)
 	CPRINTFP("Profile: %s\n",
 		 cps8100_profile_names[CPS8100_STATUS_PROFILE(reg)]);
 	CPRINTFP("%sCharging\n", CPS8100_STATUS_CHARGE(reg) ? "" : "Not ");
-	CPRINTFP("Device %sPresent\n", CPS8100_STATUS_DEVICE(reg) ? "":"Not ");
+	CPRINTFP("Device %sPresent\n",
+		 CPS8100_STATUS_DEVICE(reg) ? "" : "Not ");
 	CPRINTFP("Battery: %d%%\n", CPS8100_STATUS_BATTERY(reg));
 }
 
@@ -436,6 +428,5 @@ static int cc_cps8100(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(cps8100, cc_cps8100,
-			"<port> [reset]",
+DECLARE_CONSOLE_COMMAND(cps8100, cc_cps8100, "<port> [reset]",
 			"Print status of or reset CPS8100");
