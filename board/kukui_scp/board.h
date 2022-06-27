@@ -16,8 +16,8 @@
 #define CONFIG_FLASH_SIZE_BYTES 0x58000 /* Image file size: 256KB */
 #endif
 
-#undef  CONFIG_LID_SWITCH
-#undef  CONFIG_FW_INCLUDE_RO
+#undef CONFIG_LID_SWITCH
+#undef CONFIG_FW_INCLUDE_RO
 #define CONFIG_MKBP_EVENT
 /* Sent MKBP event via IPI. */
 #define CONFIG_MKBP_USE_CUSTOM
@@ -68,8 +68,8 @@
 
 /* IPI configs */
 #define CONFIG_IPC_SHARED_OBJ_BUF_SIZE 288
-#define CONFIG_IPC_SHARED_OBJ_ADDR                                             \
-	(ICACHE_BASE -                                                         \
+#define CONFIG_IPC_SHARED_OBJ_ADDR \
+	(ICACHE_BASE -             \
 	 (CONFIG_IPC_SHARED_OBJ_BUF_SIZE + 2 * 4 /* int32_t */) * 2)
 #define CONFIG_IPI
 #define CONFIG_RPMSG_NAME_SERVICE
@@ -95,11 +95,10 @@
 
 #define IPI_NS_SERVICE 0xFF
 
-
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 8192
 
-#undef  CONFIG_UART_CONSOLE
+#undef CONFIG_UART_CONSOLE
 /*
  * CONFIG_UART_CONSOLE
  *   0 - SCP UART0
@@ -112,8 +111,8 @@
 #define CONFIG_UART_CONSOLE 0
 #endif
 /* We let AP setup the correct pinmux. */
-#undef    UART0_PINMUX_11_12
-#undef    UART0_PINMUX_110_112
+#undef UART0_PINMUX_11_12
+#undef UART0_PINMUX_110_112
 
 /* Track AP power state */
 #define CONFIG_POWER_TRACK_HOST_SLEEP_STATE
