@@ -23,8 +23,8 @@
 #include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 int board_vbus_source_enabled(int port)
 {
