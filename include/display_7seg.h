@@ -9,9 +9,9 @@
 #define __CROS_EC_DISPLAY_7SEG_H
 
 enum seven_seg_module_display {
-	SEVEN_SEG_CONSOLE_DISPLAY,	/* Console data */
-	SEVEN_SEG_EC_DISPLAY,		/* power state */
-	SEVEN_SEG_PORT80_DISPLAY,	/* port80 data */
+	SEVEN_SEG_CONSOLE_DISPLAY, /* Console data */
+	SEVEN_SEG_EC_DISPLAY, /* power state */
+	SEVEN_SEG_PORT80_DISPLAY, /* port80 data */
 };
 
 /**
@@ -23,4 +23,4 @@ enum seven_seg_module_display {
  */
 int display_7seg_write(enum seven_seg_module_display module, uint16_t data);
 
-#endif  /* __CROS_EC_DISPLAY_7SEG_H */
+#endif /* __CROS_EC_DISPLAY_7SEG_H */
