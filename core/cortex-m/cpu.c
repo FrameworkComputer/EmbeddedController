@@ -16,7 +16,8 @@ void cpu_init(void)
 
 	/* Enable reporting of memory faults, bus faults and usage faults */
 	CPU_NVIC_SHCSR |= CPU_NVIC_SHCSR_MEMFAULTENA |
-		CPU_NVIC_SHCSR_BUSFAULTENA | CPU_NVIC_SHCSR_USGFAULTENA;
+			  CPU_NVIC_SHCSR_BUSFAULTENA |
+			  CPU_NVIC_SHCSR_USGFAULTENA;
 }
 
 #ifdef CONFIG_ARMV7M_CACHE
