@@ -26,8 +26,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /* Value to store in unused stack */
 #define STACK_UNUSED_VALUE 0xdeadd00d
@@ -43,11 +43,9 @@ CONFIG_TEST_TASK_LIST
 extern volatile uint32_t __in_isr;
 
 /* Task names for easier debugging */
-#define TASK(n, r, d, s, f)  #n,
-static const char * const task_names[] = {
-	"<< idle >>",
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
+#define TASK(n, r, d, s, f) #n,
+static const char *const task_names[] = {
+	"<< idle >>", CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST
 };
 #undef TASK
 
@@ -57,12 +55,12 @@ static uint64_t task_start_time; /* Time task scheduling started */
  * We only keep 32-bit values for exception start/end time, to avoid
  * accounting errors when we service interrupt when the timer wraps around.
  */
-static uint32_t exc_start_time;  /* Time of task->exception transition */
-static uint32_t exc_end_time;    /* Time of exception->task transition */
-static uint64_t exc_total_time;  /* Total time in exceptions */
-static atomic_t svc_calls;	 /* Number of service calls */
-static uint32_t task_switches;	/* Number of times active task changed */
-static uint32_t irq_dist[CONFIG_IRQ_COUNT];	/* Distribution of IRQ calls */
+static uint32_t exc_start_time; /* Time of task->exception transition */
+static uint32_t exc_end_time; /* Time of exception->task transition */
+static uint64_t exc_total_time; /* Total time in exceptions */
+static atomic_t svc_calls; /* Number of service calls */
+static uint32_t task_switches; /* Number of times active task changed */
+static uint32_t irq_dist[CONFIG_IRQ_COUNT]; /* Distribution of IRQ calls */
 #endif
 
 void __schedule(int desched, int resched);
@@ -97,22 +95,20 @@ static void task_exit_trap(void)
 }
 
 /* Startup parameters for all tasks. */
-#define TASK(n, r, d, s, f)  {	\
-	.r0 = (uint32_t)d,	\
-	.pc = (uint32_t)r,	\
-	.stack_size = s,	\
-	.flags = f,		\
-},
+#define TASK(n, r, d, s, f)        \
+	{                          \
+		.r0 = (uint32_t)d, \
+		.pc = (uint32_t)r, \
+		.stack_size = s,   \
+		.flags = f,        \
+	},
 static const struct {
 	uint32_t r0;
 	uint32_t pc;
 	uint16_t stack_size;
 	uint32_t flags;
-} tasks_init[] = {
-	TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE, 0)
-	CONFIG_TASK_LIST
-	CONFIG_TEST_TASK_LIST
-};
+} tasks_init[] = { TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE, 0)
+			   CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST };
 
 #undef TASK
 
@@ -122,17 +118,12 @@ static task_ tasks[TASK_ID_COUNT];
 BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned) * 8);
 BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
 
-
 /* Stacks for all tasks */
-#define TASK(n, r, d, s, f)  + s
-uint8_t task_stacks[0
-		    TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE, 0)
-		    CONFIG_TASK_LIST
-		    CONFIG_TEST_TASK_LIST
-] __aligned(8);
+#define TASK(n, r, d, s, f) +s
+uint8_t task_stacks[0 TASK(IDLE, __idle, 0, IDLE_TASK_STACK_SIZE, 0)
+			    CONFIG_TASK_LIST CONFIG_TEST_TASK_LIST] __aligned(8);
 
 #undef TASK
-
 
 task_ *current_task, *next_task;
 
@@ -151,7 +142,7 @@ static atomic_t tasks_ready = BIT(TASK_ID_HOOKS);
  */
 static atomic_t tasks_enabled = BIT(TASK_ID_HOOKS) | BIT(TASK_ID_IDLE);
 
-static int start_called;  /* Has task swapping started */
+static int start_called; /* Has task swapping started */
 
 static inline task_ *__task_id_to_ptr(task_id_t id)
 {
@@ -160,7 +151,7 @@ static inline task_ *__task_id_to_ptr(task_id_t id)
 
 void interrupt_disable(void)
 {
-	__asm__ __volatile__ ("cli");
+	__asm__ __volatile__("cli");
 }
 
 void interrupt_enable(void)
@@ -170,16 +161,16 @@ void interrupt_enable(void)
 	 */
 	ASSERT(task_start_called() != 1);
 
-	__asm__ __volatile__ ("sti");
+	__asm__ __volatile__("sti");
 }
 
 inline bool is_interrupt_enabled(void)
 {
 	uint32_t eflags = 0;
 
-	__asm__ __volatile__ ("pushfl\n"
-			      "popl %0\n"
-			      : "=r"(eflags));
+	__asm__ __volatile__("pushfl\n"
+			     "popl %0\n"
+			     : "=r"(eflags));
 
 	/* Check Interrupt Enable flag */
 	return eflags & 0x200;
@@ -251,8 +242,7 @@ uint32_t switch_handler(int desched, task_id_t resched)
 	next = __task_id_to_ptr(__fls(tasks_ready & tasks_enabled));
 
 	/* Only the first ISR on the (nested IRQ) stack calculates time */
-	if (IS_ENABLED(CONFIG_TASK_PROFILING) &&
-	    __in_isr == 1) {
+	if (IS_ENABLED(CONFIG_TASK_PROFILING) && __in_isr == 1) {
 		/* Track time in interrupts */
 		uint32_t t = get_time().le.lo;
 
@@ -465,11 +455,10 @@ void mutex_lock(struct mutex *mtx)
 
 	do {
 		old_val = 0;
-		__asm__ __volatile__(
-				ASM_LOCK_PREFIX "cmpxchg %1, %2\n"
-				: "=a" (old_val)
-				: "r" (value), "m" (mtx->lock), "a" (old_val)
-				: "memory");
+		__asm__ __volatile__(ASM_LOCK_PREFIX "cmpxchg %1, %2\n"
+				     : "=a"(old_val)
+				     : "r"(value), "m"(mtx->lock), "a"(old_val)
+				     : "memory");
 
 		if (old_val != 0) {
 			/* Contention on the mutex */
@@ -486,11 +475,10 @@ void mutex_unlock(struct mutex *mtx)
 	uint32_t old_val = 1, val = 0;
 	task_ *tsk = current_task;
 
-	__asm__ __volatile__(
-			ASM_LOCK_PREFIX "cmpxchg %1, %2\n"
-			: "=a" (old_val)
-			: "r" (val), "m" (mtx->lock), "a" (old_val)
-			: "memory");
+	__asm__ __volatile__(ASM_LOCK_PREFIX "cmpxchg %1, %2\n"
+			     : "=a"(old_val)
+			     : "r"(val), "m"(mtx->lock), "a"(old_val)
+			     : "memory");
 	if (old_val == 1)
 		waiters = mtx->waiters;
 	/* else? Does unlock fail - what to do then ? */
@@ -532,13 +520,13 @@ void task_print_list(void)
 		if (IS_ENABLED(CONFIG_FPU)) {
 			char use_fpu = tasks[i].use_fpu ? 'Y' : 'N';
 
-			ccprintf("%4d %c %-16s %08x %11.6lld  %3d/%3d %c\n",
-				 i, is_ready, task_get_name(i),
+			ccprintf("%4d %c %-16s %08x %11.6lld  %3d/%3d %c\n", i,
+				 is_ready, task_get_name(i),
 				 (int)tasks[i].events, tasks[i].runtime,
 				 stackused, tasks_init[i].stack_size, use_fpu);
 		} else {
-			ccprintf("%4d %c %-16s %08x %11.6lld  %3d/%3d\n",
-				 i, is_ready, task_get_name(i),
+			ccprintf("%4d %c %-16s %08x %11.6lld  %3d/%3d\n", i,
+				 is_ready, task_get_name(i),
 				 (int)tasks[i].events, tasks[i].runtime,
 				 stackused, tasks_init[i].stack_size);
 		}
@@ -577,12 +565,9 @@ static int command_task_info(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info,
-			NULL,
-			"Print task info");
+DECLARE_CONSOLE_COMMAND(taskinfo, command_task_info, NULL, "Print task info");
 
-__maybe_unused
-static int command_task_ready(int argc, char **argv)
+__maybe_unused static int command_task_ready(int argc, char **argv)
 {
 	if (argc < 2) {
 		ccprintf("tasks_ready: 0x%08x\n", (int)tasks_ready);
@@ -596,8 +581,7 @@ static int command_task_ready(int argc, char **argv)
 }
 
 #ifdef CONFIG_CMD_TASKREADY
-DECLARE_CONSOLE_COMMAND(taskready, command_task_ready,
-			"[setmask]",
+DECLARE_CONSOLE_COMMAND(taskready, command_task_ready, "[setmask]",
 			"Print/set ready tasks");
 #endif
 
@@ -606,7 +590,7 @@ void task_pre_init(void)
 	int i, cs;
 	uint32_t *stack_next = (uint32_t *)task_stacks;
 
-	__asm__ __volatile__ ("movl %%cs, %0":"=r" (cs));
+	__asm__ __volatile__("movl %%cs, %0" : "=r"(cs));
 
 	/* Fill the task memory with initial values */
 	for (i = 0; i < TASK_ID_COUNT; i++) {
@@ -638,12 +622,12 @@ void task_pre_init(void)
 		sp[7] = 0xea;	/* EAX */
 #endif
 		/* For IRET */
-		sp[8] = tasks_init[i].pc;	/* pc */
+		sp[8] = tasks_init[i].pc; /* pc */
 		sp[9] = cs;
 		sp[10] = INITIAL_EFLAGS;
 
-		sp[11] = (uint32_t) task_exit_trap;
-		sp[12] = tasks_init[i].r0;	/* task argument */
+		sp[11] = (uint32_t)task_exit_trap;
+		sp[12] = tasks_init[i].r0; /* task argument */
 		sp[13] = 0x00;
 		sp[14] = 0x00;
 		sp[15] = 0x00;
@@ -656,7 +640,8 @@ void task_pre_init(void)
 				0x00, 0x00, /* Status[0-15] */
 				0xff, 0xff, /* unused */
 				0xff, 0xff, /* Tag[0-15] */
-				0xff, 0xff};/* unused */
+				0xff, 0xff
+			}; /* unused */
 
 			/* Copy default x86 FPU state for each task */
 			memcpy(tasks[i].fp_ctx, default_fp_ctx,
