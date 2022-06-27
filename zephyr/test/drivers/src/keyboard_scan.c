@@ -12,8 +12,7 @@
 
 int emulate_keystate(int row, int col, int pressed)
 {
-	const struct device *dev =
-		DEVICE_DT_GET(DT_NODELABEL(cros_kb_raw));
+	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(cros_kb_raw));
 
 	return emul_kb_raw_set_kbstate(dev, row, col, pressed);
 }
