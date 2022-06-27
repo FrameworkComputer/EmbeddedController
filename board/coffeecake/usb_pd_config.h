@@ -49,7 +49,7 @@ static inline void spi_enable_clock(int port)
 
 #define TIM_TX_CCR_IDX(p) TIM_TX_CCR_C0
 #define TIM_RX_CCR_IDX(p) TIM_RX_CCR_C0
-#define TIM_CCR_CS  1
+#define TIM_CCR_CS 1
 #define EXTI_COMP_MASK(p) BIT(21)
 #define IRQ_COMP STM32_IRQ_COMP
 /* triggers packet detection on comparator falling edge */
@@ -100,8 +100,8 @@ static inline void pd_select_polarity(int port, int polarity)
 	 * use the right comparator : CC1 -> PA1 (COMP1 INP)
 	 * use VrefInt / 2 as INM (about 600mV)
 	 */
-	STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP1INSEL_MASK)
-		| STM32_COMP_CMP1EN | STM32_COMP_CMP1INSEL_VREF12;
+	STM32_COMP_CSR = (STM32_COMP_CSR & ~STM32_COMP_CMP1INSEL_MASK) |
+			 STM32_COMP_CMP1EN | STM32_COMP_CMP1INSEL_VREF12;
 }
 
 /* Initialize pins used for TX and put them in Hi-Z */
@@ -136,7 +136,7 @@ static inline int pd_adc_read(int port, int cc)
 	 * Check HOST_HIGH Rp setting.
 	 * Return 3300mV on host mode.
 	 */
-	if ((STM32_GPIO_MODER(GPIO_B) & (3 << (2*5))) == (1 << (2*5)))
+	if ((STM32_GPIO_MODER(GPIO_B) & (3 << (2 * 5))) == (1 << (2 * 5)))
 		return 3300;
 	else
 		return 0;
