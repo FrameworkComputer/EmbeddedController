@@ -35,8 +35,8 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* This I2C moved. Temporarily detect and support the V0 HW. */
 int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
@@ -167,8 +167,7 @@ void ppc_interrupt(enum gpio_signal signal)
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 &&
-			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (port == CHARGE_PORT_NONE) {
@@ -188,7 +187,6 @@ int board_set_active_charge_port(int port)
 	} else if (!is_valid_port) {
 		return EC_ERROR_INVAL;
 	}
-
 
 	/* Check if the port is sourcing VBUS. */
 	if (ppc_is_sourcing_vbus(port)) {
@@ -291,7 +289,6 @@ static void reset_nct38xx_port(int port)
 		msleep(NCT3807_RESET_POST_DELAY_MS);
 }
 
-
 void board_reset_pd_mcu(void)
 {
 	/* Reset TCPC0 */
@@ -362,11 +359,9 @@ int board_pd_set_frs_enable(int port, int enable)
 
 	/* Use the TCPC to enable fast switch when FRS included */
 	if (port == USBC_PORT_C0) {
-		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN,
-				    !!enable);
+		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN, !!enable);
 	} else {
-		rv = ioex_set_level(IOEX_USB_C1_TCPC_FASTSW_CTL_EN,
-				    !!enable);
+		rv = ioex_set_level(IOEX_USB_C1_TCPC_FASTSW_CTL_EN, !!enable);
 	}
 
 	return rv;
@@ -434,14 +429,13 @@ int usb_port_enable[USBA_PORT_COUNT] = {
  * The connector has 24 pins total, and there is no pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-		{0, 5}, {1, 1}, {1, 0}, {0, 6}, {0, 7},
-		{1, 4}, {1, 3}, {1, 6}, {1, 7}, {3, 1},
-		{2, 0}, {1, 5}, {2, 6}, {2, 7}, {2, 1},
-		{2, 4}, {2, 5}, {1, 2}, {2, 3}, {2, 2},
-		{3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+	{ 0, 5 }, { 1, 1 }, { 1, 0 }, { 0, 6 },	  { 0, 7 },   { 1, 4 },
+	{ 1, 3 }, { 1, 6 }, { 1, 7 }, { 3, 1 },	  { 2, 0 },   { 1, 5 },
+	{ 2, 6 }, { 2, 7 }, { 2, 1 }, { 2, 4 },	  { 2, 5 },   { 1, 2 },
+	{ 2, 3 }, { 2, 2 }, { 3, 0 }, { -1, -1 }, { -1, -1 }, { -1, -1 },
 };
 const int keyboard_factory_scan_pins_used =
-			ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
 
 #define CHARGING_CURRENT_500mA 500
@@ -501,13 +495,13 @@ int charger_profile_override(struct charge_state_data *curr)
 }
 
 enum ec_status charger_profile_override_get_param(uint32_t param,
-							uint32_t *value)
+						  uint32_t *value)
 {
 	return EC_RES_INVALID_PARAM;
 }
 
 enum ec_status charger_profile_override_set_param(uint32_t param,
-							uint32_t value)
+						  uint32_t value)
 {
 	return EC_RES_INVALID_PARAM;
 }
