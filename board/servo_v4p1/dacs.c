@@ -14,17 +14,17 @@
 #define CC1_DAC_ADDR 0x48
 #define CC2_DAC_ADDR 0x49
 
-#define REG_NOOP    0
-#define REG_DEVID   1
-#define REG_SYNC    2
-#define REG_CONFIG  3
-#define REG_GAIN    4
+#define REG_NOOP 0
+#define REG_DEVID 1
+#define REG_SYNC 2
+#define REG_CONFIG 3
+#define REG_GAIN 4
 #define REG_TRIGGER 5
-#define REG_STATUS  7
-#define REG_DAC     8
+#define REG_STATUS 7
+#define REG_DAC 8
 
-#define DAC1	BIT(0)
-#define DAC2	BIT(1)
+#define DAC1 BIT(0)
+#define DAC2 BIT(1)
 
 static uint8_t dac_enabled;
 
@@ -135,7 +135,6 @@ static int cmd_cc_dac(int argc, char *argv[])
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(cc_dac, cmd_cc_dac,
-			"dac <\"on\"|\"off\"|mv>",
+DECLARE_CONSOLE_COMMAND(cc_dac, cmd_cc_dac, "dac <\"on\"|\"off\"|mv>",
 			"Set Servo v4.1 CC dacs");
 #endif
