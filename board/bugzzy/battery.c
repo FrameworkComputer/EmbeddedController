@@ -85,7 +85,7 @@ const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_SDI;
 int charger_profile_override(struct charge_state_data *curr)
 {
 	if ((chipset_in_state(CHIPSET_STATE_ON)) &&
-			(curr->requested_current > CHARGING_CURRENT_45C))
+	    (curr->requested_current > CHARGING_CURRENT_45C))
 		curr->requested_current = CHARGING_CURRENT_45C;
 
 	return 0;
@@ -115,7 +115,7 @@ static void reduce_input_voltage_when_full(void)
 	int port;
 
 	if (charge_get_percent() == 100 &&
-			chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+	    chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 		if (max_pd_voltage_mv != PD_VOLTAGE_WHEN_FULL) {
 			saved_input_voltage = max_pd_voltage_mv;
 			max_pd_voltage_mv = PD_VOLTAGE_WHEN_FULL;
@@ -131,5 +131,4 @@ static void reduce_input_voltage_when_full(void)
 			pd_set_external_voltage_limit(port, max_pd_voltage_mv);
 	}
 }
-DECLARE_HOOK(HOOK_SECOND, reduce_input_voltage_when_full,
-		HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, reduce_input_voltage_when_full, HOOK_PRIO_DEFAULT);
