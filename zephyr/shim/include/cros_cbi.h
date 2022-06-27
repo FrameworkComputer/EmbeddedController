@@ -14,18 +14,17 @@
  * Macros are _INST_ types, so require DT_DRV_COMPAT to be defined.
  */
 #define DT_DRV_COMPAT named_cbi_ssfc_value
-#define CROS_CBI_LABEL				"cros_cbi"
+#define CROS_CBI_LABEL "cros_cbi"
 
-#define CBI_SSFC_VALUE_COMPAT			named_cbi_ssfc_value
-#define CBI_SSFC_VALUE_ID(id)			DT_CAT(CBI_SSFC_VALUE_, id)
-#define CBI_SSFC_VALUE_ID_WITH_COMMA(id)	CBI_SSFC_VALUE_ID(id),
+#define CBI_SSFC_VALUE_COMPAT named_cbi_ssfc_value
+#define CBI_SSFC_VALUE_ID(id) DT_CAT(CBI_SSFC_VALUE_, id)
+#define CBI_SSFC_VALUE_ID_WITH_COMMA(id) CBI_SSFC_VALUE_ID(id),
 #define CBI_SSFC_VALUE_INST_ENUM(inst, _) \
 	CBI_SSFC_VALUE_ID_WITH_COMMA(DT_INST(inst, CBI_SSFC_VALUE_COMPAT))
 
 enum cbi_ssfc_value_id {
 	LISTIFY(DT_NUM_INST_STATUS_OKAY(CBI_SSFC_VALUE_COMPAT),
-		     CBI_SSFC_VALUE_INST_ENUM, ())
-	CBI_SSFC_VALUE_COUNT
+		CBI_SSFC_VALUE_INST_ENUM, ()) CBI_SSFC_VALUE_COUNT
 };
 
 #undef DT_DRV_COMPAT
@@ -34,19 +33,18 @@ enum cbi_ssfc_value_id {
  * Macros to help generate the enum list of field and value names
  * for the FW_CONFIG CBI data.
  */
-#define CBI_FW_CONFIG_COMPAT		cros_ec_cbi_fw_config
-#define CBI_FW_CONFIG_VALUE_COMPAT	cros_ec_cbi_fw_config_value
+#define CBI_FW_CONFIG_COMPAT cros_ec_cbi_fw_config
+#define CBI_FW_CONFIG_VALUE_COMPAT cros_ec_cbi_fw_config_value
 
 /*
  * Retrieve the enum-name property for this node.
  */
-#define CBI_FW_CONFIG_ENUM(node)	DT_STRING_TOKEN(node, enum_name)
+#define CBI_FW_CONFIG_ENUM(node) DT_STRING_TOKEN(node, enum_name)
 
 /*
  * Create an enum entry without a value (an enum with a following comma).
  */
-#define CBI_FW_CONFIG_ENUM_WITH_COMMA(node)	\
-	CBI_FW_CONFIG_ENUM(node),
+#define CBI_FW_CONFIG_ENUM_WITH_COMMA(node) CBI_FW_CONFIG_ENUM(node),
 
 /*
  * Create a single enum entry with assignment to the node's value,
@@ -67,7 +65,7 @@ enum cbi_ssfc_value_id {
 enum cbi_fw_config_field_id {
 	DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_COMPAT,
 			       CBI_FW_CONFIG_CHILD_ENUM_LIST)
-	CBI_FW_CONFIG_FIELDS_COUNT
+		CBI_FW_CONFIG_FIELDS_COUNT
 };
 
 /*
@@ -76,7 +74,8 @@ enum cbi_fw_config_field_id {
 enum cbi_fw_config_value_id {
 	DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT,
 			       CBI_FW_CONFIG_ENUM_WITH_VALUE)
-	CBI_FW_CONFIG_VALUES_LAST /* added to ensure at least one entry */
+		CBI_FW_CONFIG_VALUES_LAST /* added to ensure at least one entry
+					   */
 };
 
 /**
