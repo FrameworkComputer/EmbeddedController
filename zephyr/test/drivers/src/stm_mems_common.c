@@ -317,14 +317,14 @@ ZTEST(stm_mems_common, test_st_normalize)
 	st_normalize(&sensor, (int *)&actual_output, (uint8_t *)input_reading);
 
 	zassert_within(actual_output[X], expected_output[X], 0.5f,
-		      "X output is %d but expected %d", actual_output[X],
-		      expected_output[X]);
+		       "X output is %d but expected %d", actual_output[X],
+		       expected_output[X]);
 	zassert_within(actual_output[Y], expected_output[Y], 0.5f,
-		      "Y output is %d but expected %d", actual_output[Y],
-		      expected_output[Y]);
+		       "Y output is %d but expected %d", actual_output[Y],
+		       expected_output[Y]);
 	zassert_within(actual_output[Z], expected_output[Z], 0.5f,
-		      "Z output is %d but expected %d", actual_output[Z],
-		      expected_output[Z]);
+		       "Z output is %d but expected %d", actual_output[Z],
+		       expected_output[Z]);
 }
 
 static void stm_mems_common_before(void *state)
