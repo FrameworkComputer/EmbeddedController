@@ -17,21 +17,24 @@ typedef void (*ipi_handler_t)(int32_t id, void *data, uint32_t len);
 #define ipi_arguments int32_t id, void *data, uint32_t len
 
 #if PASS == 1
-void ipi_handler_undefined(ipi_arguments) { }
+void ipi_handler_undefined(ipi_arguments)
+{
+}
 
 const int ipi_wakeup_undefined;
 
 #define table(type, name, x) x
 
-#define ipi_x_func(suffix, args, number)                                       \
-	extern void __attribute__(                                             \
-		(used, weak, alias(STRINGIFY(ipi_##suffix##_undefined))))      \
+#define ipi_x_func(suffix, args, number)                                    \
+	extern void                                                         \
+		__attribute__((used, weak,                                  \
+			       alias(STRINGIFY(ipi_##suffix##_undefined)))) \
 		ipi_##number##_##suffix(args);
 
 #define ipi_x_var(suffix, number)                                              \
-	extern int __attribute__(                                              \
-		(weak, alias(STRINGIFY(ipi_##suffix##_undefined))))            \
-		ipi_##number##_##suffix;
+	extern int __attribute__((weak,                                        \
+				  alias(STRINGIFY(ipi_##suffix##_undefined)))) \
+	ipi_##number##_##suffix;
 
 #endif /* PASS == 1 */
 
@@ -41,11 +44,11 @@ const int ipi_wakeup_undefined;
 #undef ipi_x_func
 #undef ipi_x_var
 
-#define table(type, name, x)                                                   \
-	type name[] __aligned(4)                                               \
-		__attribute__((section(".rodata.ipi, \"a\" @"))) = {x}
+#define table(type, name, x)     \
+	type name[] __aligned(4) \
+		__attribute__((section(".rodata.ipi, \"a\" @"))) = { x }
 
-#define ipi_x_var(suffix, number)                                              \
+#define ipi_x_var(suffix, number) \
 	[number < IPI_COUNT ? number : -1] = &ipi_##number##_##suffix,
 
 #define ipi_x_func(suffix, args, number) ipi_x_var(suffix, number)
