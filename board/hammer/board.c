@@ -48,21 +48,21 @@
 #define CROS_EC_SECTION "RO"
 #endif
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.
  */
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("Hammer"),
-	[USB_STR_SERIALNO]     = 0,
-	[USB_STR_VERSION]      =
-			USB_STRING_DESC(CROS_EC_SECTION ":" CROS_EC_VERSION32),
-	[USB_STR_SPI_NAME]     = USB_STRING_DESC("SPI"),
-	[USB_STR_I2C_NAME]     = USB_STRING_DESC("I2C"),
-	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("Hammer"),
+	[USB_STR_SERIALNO] = 0,
+	[USB_STR_VERSION] =
+		USB_STRING_DESC(CROS_EC_SECTION ":" CROS_EC_VERSION32),
+	[USB_STR_SPI_NAME] = USB_STRING_DESC("SPI"),
+	[USB_STR_I2C_NAME] = USB_STRING_DESC("I2C"),
+	[USB_STR_UPDATE_NAME] = USB_STRING_DESC("Firmware update"),
 #ifdef CONFIG_USB_ISOCHRONOUS
 	[USB_STR_HEATMAP_NAME] = USB_STRING_DESC("Heatmap"),
 #endif
@@ -84,28 +84,28 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 USB_SPI_CONFIG(usb_spi, USB_IFACE_I2C_SPI, USB_EP_I2C_SPI, 0);
 /* SPI interface is always enabled, no need to do anything. */
-void usb_spi_board_enable(struct usb_spi_config const *config) {}
-void usb_spi_board_disable(struct usb_spi_config const *config) {}
-#endif  /* !HAS_SPI_TOUCHPAD */
+void usb_spi_board_enable(struct usb_spi_config const *config)
+{
+}
+void usb_spi_board_disable(struct usb_spi_config const *config)
+{
+}
+#endif /* !HAS_SPI_TOUCHPAD */
 
 #ifdef CONFIG_I2C
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "master",
-		.port = I2C_PORT_MASTER,
-		.kbps = 400,
-		.scl  = GPIO_MASTER_I2C_SCL,
-		.sda  = GPIO_MASTER_I2C_SDA
-	},
+	{ .name = "master",
+	  .port = I2C_PORT_MASTER,
+	  .kbps = 400,
+	  .scl = GPIO_MASTER_I2C_SCL,
+	  .sda = GPIO_MASTER_I2C_SDA },
 #ifdef BOARD_WAND
-	{
-		.name = "charger",
-		.port = I2C_PORT_CHARGER,
-		.kbps = 100,
-		.scl  = GPIO_CHARGER_I2C_SCL,
-		.sda  = GPIO_CHARGER_I2C_SDA
-	},
+	{ .name = "charger",
+	  .port = I2C_PORT_CHARGER,
+	  .kbps = 100,
+	  .scl = GPIO_CHARGER_I2C_SCL,
+	  .sda = GPIO_CHARGER_I2C_SDA },
 #endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -125,7 +125,7 @@ const struct charger_config_t chg_chips[] = {
 #ifdef HAS_BACKLIGHT
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	{STM32_TIM(TIM_KBLIGHT), STM32_TIM_CH(1), 0, KBLIGHT_PWM_FREQ},
+	{ STM32_TIM(TIM_KBLIGHT), STM32_TIM_CH(1), 0, KBLIGHT_PWM_FREQ },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 #endif /* HAS_BACKLIGHT */
@@ -154,26 +154,22 @@ __override struct keyboard_scan_config keyscan_config = {
 struct consumer const ec_ec_usart_consumer;
 static struct usart_config const ec_ec_usart;
 
-struct queue const ec_ec_comm_server_input = QUEUE_DIRECT(64, uint8_t,
-				ec_ec_usart.producer, ec_ec_usart_consumer);
-struct queue const ec_ec_comm_server_output = QUEUE_DIRECT(64, uint8_t,
-				null_producer, ec_ec_usart.consumer);
+struct queue const ec_ec_comm_server_input =
+	QUEUE_DIRECT(64, uint8_t, ec_ec_usart.producer, ec_ec_usart_consumer);
+struct queue const ec_ec_comm_server_output =
+	QUEUE_DIRECT(64, uint8_t, null_producer, ec_ec_usart.consumer);
 
 struct consumer const ec_ec_usart_consumer = {
 	.queue = &ec_ec_comm_server_input,
-	.ops   = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = ec_ec_comm_server_written,
 	}),
 };
 
 static struct usart_config const ec_ec_usart =
-	USART_CONFIG(EC_EC_UART,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		115200,
-		USART_CONFIG_FLAG_HDSEL,
-		ec_ec_comm_server_input,
-		ec_ec_comm_server_output);
+	USART_CONFIG(EC_EC_UART, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     USART_CONFIG_FLAG_HDSEL, ec_ec_comm_server_input,
+		     ec_ec_comm_server_output);
 #endif /* BOARD_WAND && SECTION_IS_RW */
 
 /******************************************************************************
@@ -280,9 +276,9 @@ static void board_tablet_mode_change(void)
 		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
 }
 DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, board_tablet_mode_change,
-		HOOK_PRIO_DEFAULT);
+	     HOOK_PRIO_DEFAULT);
 /* Run after tablet_mode_init. */
-DECLARE_HOOK(HOOK_INIT, board_tablet_mode_change, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_INIT, board_tablet_mode_change, HOOK_PRIO_DEFAULT + 1);
 #endif
 
 /*
@@ -295,7 +291,7 @@ int board_get_entropy(void *buffer, int len)
 	uint8_t *data = buffer;
 	uint32_t start;
 	/* We expect one SOF per ms, so wait at most 2ms. */
-	const uint32_t timeout = 2*MSEC;
+	const uint32_t timeout = 2 * MSEC;
 
 	for (i = 0; i < len; i++) {
 		STM32_CRS_ICR |= STM32_CRS_ICR_SYNCOKC;
@@ -326,8 +322,7 @@ __override const char *board_read_serial(void)
 		int i;
 
 		for (i = 0; i < idlen && pos < sizeof(str); i++, pos += 2) {
-			snprintf(&str[pos], sizeof(str)-pos,
-				"%02x", id[i]);
+			snprintf(&str[pos], sizeof(str) - pos, "%02x", id[i]);
 		}
 	}
 
@@ -390,8 +385,8 @@ static const struct ec_response_keybd_config duck_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__override
-const struct ec_response_keybd_config *board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	if (IS_ENABLED(BOARD_ZED) || IS_ENABLED(BOARD_STAR) ||
 	    IS_ENABLED(BOARD_GELATIN))
