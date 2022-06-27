@@ -20,17 +20,26 @@
 
 #define TASK_EVENT_FUZZ TASK_EVENT_CUSTOM_BIT(0)
 
-#define PORT0	0
+#define PORT0 0
 
-static int mock_tcpm_init(int port) { return EC_SUCCESS; }
-static int mock_tcpm_release(int port) { return EC_SUCCESS; }
+static int mock_tcpm_init(int port)
+{
+	return EC_SUCCESS;
+}
+static int mock_tcpm_release(int port)
+{
+	return EC_SUCCESS;
+}
 
 static int mock_tcpm_select_rp_value(int port, int rp)
 {
 	return EC_SUCCESS;
 }
 
-static int mock_tcpm_set_cc(int port, int pull) { return EC_SUCCESS; }
+static int mock_tcpm_set_cc(int port, int pull)
+{
+	return EC_SUCCESS;
+}
 static int mock_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	return EC_SUCCESS;
@@ -41,16 +50,28 @@ static __maybe_unused int mock_tcpm_sop_prime_enable(int port, bool enable)
 	return EC_SUCCESS;
 }
 
-static int mock_tcpm_set_vconn(int port, int enable) { return EC_SUCCESS; }
-static int mock_tcpm_set_msg_header(int port,
-			int power_role, int data_role) { return EC_SUCCESS; }
-static int mock_tcpm_set_rx_enable(int port, int enable) { return EC_SUCCESS; }
+static int mock_tcpm_set_vconn(int port, int enable)
+{
+	return EC_SUCCESS;
+}
+static int mock_tcpm_set_msg_header(int port, int power_role, int data_role)
+{
+	return EC_SUCCESS;
+}
+static int mock_tcpm_set_rx_enable(int port, int enable)
+{
+	return EC_SUCCESS;
+}
 static int mock_tcpm_transmit(int port, enum tcpci_msg_type type,
-		uint16_t header, const uint32_t *data)
-{ return EC_SUCCESS; }
-static void mock_tcpc_alert(int port) {}
+			      uint16_t header, const uint32_t *data)
+{
+	return EC_SUCCESS;
+}
+static void mock_tcpc_alert(int port)
+{
+}
 static int mock_tcpci_get_chip_info(int port, int live,
-		struct ec_response_pd_chip_info_v1 *info)
+				    struct ec_response_pd_chip_info_v1 *info)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
@@ -76,7 +97,7 @@ struct tcpc_state {
 static struct tcpc_state mock_tcpc_state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int mock_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+			    enum tcpc_cc_voltage_status *cc2)
 {
 	*cc1 = mock_tcpc_state[port].cc1;
 	*cc2 = mock_tcpc_state[port].cc2;
@@ -125,31 +146,33 @@ int tcpm_enqueue_message(const int port)
 	return EC_SUCCESS;
 }
 
-void tcpm_clear_pending_messages(int port) {}
+void tcpm_clear_pending_messages(int port)
+{
+}
 
 static const struct tcpm_drv mock_tcpm_drv = {
-	.init                   = &mock_tcpm_init,
-	.release                = &mock_tcpm_release,
-	.get_cc                 = &mock_tcpm_get_cc,
+	.init = &mock_tcpm_init,
+	.release = &mock_tcpm_release,
+	.get_cc = &mock_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.check_vbus_level       = &mock_tcpm_check_vbus_level,
+	.check_vbus_level = &mock_tcpm_check_vbus_level,
 #endif
-	.select_rp_value        = &mock_tcpm_select_rp_value,
-	.set_cc                 = &mock_tcpm_set_cc,
-	.set_polarity           = &mock_tcpm_set_polarity,
+	.select_rp_value = &mock_tcpm_select_rp_value,
+	.set_cc = &mock_tcpm_set_cc,
+	.set_polarity = &mock_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable		= &mock_tcpm_sop_prime_enable,
+	.sop_prime_enable = &mock_tcpm_sop_prime_enable,
 #endif
-	.set_vconn              = &mock_tcpm_set_vconn,
-	.set_msg_header         = &mock_tcpm_set_msg_header,
-	.set_rx_enable          = &mock_tcpm_set_rx_enable,
+	.set_vconn = &mock_tcpm_set_vconn,
+	.set_msg_header = &mock_tcpm_set_msg_header,
+	.set_rx_enable = &mock_tcpm_set_rx_enable,
 	/* The core calls tcpm_dequeue_message. */
-	.get_message_raw        = NULL,
-	.transmit               = &mock_tcpm_transmit,
-	.tcpc_alert             = &mock_tcpc_alert,
-	.get_chip_info          = &mock_tcpci_get_chip_info,
+	.get_message_raw = NULL,
+	.transmit = &mock_tcpm_transmit,
+	.tcpc_alert = &mock_tcpc_alert,
+	.get_chip_info = &mock_tcpci_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode   = &mock_enter_low_power_mode,
+	.enter_low_power_mode = &mock_enter_low_power_mode,
 #endif
 };
 
@@ -181,8 +204,8 @@ void run_test(int argc, char **argv)
 	while (1) {
 		task_wait_event_mask(TASK_EVENT_FUZZ, -1);
 
-		memset(&mock_tcpc_state[port],
-			0, sizeof(mock_tcpc_state[port]));
+		memset(&mock_tcpc_state[port], 0,
+		       sizeof(mock_tcpc_state[port]));
 
 		task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_TCPC_RESET);
 		task_wait_event(250 * MSEC);
@@ -196,7 +219,7 @@ void run_test(int argc, char **argv)
 		/* Fake RX messages, one by one. */
 		for (i = 0; i < MAX_MESSAGES && messages[i].cnt; i++) {
 			memcpy(&mock_tcpc_state[port].message, &messages[i],
-				sizeof(messages[i]));
+			       sizeof(messages[i]));
 
 			tcpm_enqueue_message(port);
 			task_wait_event(50 * MSEC);
@@ -220,21 +243,23 @@ int test_fuzz_one_input(const uint8_t *data, unsigned int size)
 
 	next_cc1 = data[0] & 0x0f;
 	next_cc2 = (data[0] & 0xf0) >> 4;
-	data++; size--;
+	data++;
+	size--;
 
 	memset(messages, 0, sizeof(messages));
 
 	for (i = 0; i < MAX_MESSAGES && size > 0; i++) {
 		int cnt = data[0];
 
-		if (cnt < 3 || cnt > MAX_TCPC_PAYLOAD+3 || cnt > size) {
+		if (cnt < 3 || cnt > MAX_TCPC_PAYLOAD + 3 || cnt > size) {
 			/* Invalid count, or out of bounds. */
 			return 0;
 		}
 
 		memcpy(&messages[i], data, cnt);
 
-		data += cnt; size -= cnt;
+		data += cnt;
+		size -= cnt;
 	}
 
 	if (size != 0) {
