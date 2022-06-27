@@ -68,7 +68,7 @@ ZTEST(events, test_registration)
 	ap_power_ev_remove_callback(&cb.cb);
 	ap_power_ev_send_callbacks(AP_POWER_RESET);
 	zassert_equal(1, cb.count, "Callback called");
-	cb.count = 0;	/* Reset to make it clear */
+	cb.count = 0; /* Reset to make it clear */
 	cb.event = 0;
 	/* Add it twice */
 	ap_power_ev_add_callback(&cb.cb);
@@ -177,9 +177,9 @@ ZTEST(events, test_hooks)
 	zassert_equal(0, count_hook_shutdown, "shutdown hook called");
 	zassert_equal(1, count_hook_startup, "startup hook not called");
 	zassert_equal(0, count_hook_shutdown,
-		"reset event, shutdown hook called");
+		      "reset event, shutdown hook called");
 	zassert_equal(1, count_hook_startup,
-		"reset event, startup hook called");
+		      "reset event, startup hook called");
 	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
 	zassert_equal(1, count_hook_shutdown, "shutdown hook not called");
 	zassert_equal(1, count_hook_startup, "startup hook called");
@@ -188,5 +188,4 @@ ZTEST(events, test_hooks)
 /**
  * @brief Test Suite: Verifies AP power notification functionality.
  */
-ZTEST_SUITE(events, ap_power_predicate_post_main,
-	    NULL, NULL, NULL, NULL);
+ZTEST_SUITE(events, ap_power_predicate_post_main, NULL, NULL, NULL, NULL);
