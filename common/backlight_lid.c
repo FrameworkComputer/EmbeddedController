@@ -11,7 +11,6 @@
 #include "host_command.h"
 #include "lid_switch.h"
 
-
 /**
  * Activate/Deactivate the backlight GPIO pin considering active high or low.
  */
@@ -32,7 +31,7 @@ static void update_backlight(void)
 #ifdef CONFIG_BACKLIGHT_REQ_GPIO
 	/* Enable the backlight if lid is open AND requested by AP */
 	enable_backlight(lid_is_open() &&
-		gpio_get_level(CONFIG_BACKLIGHT_REQ_GPIO));
+			 gpio_get_level(CONFIG_BACKLIGHT_REQ_GPIO));
 #else
 	/*
 	 * Enable backlight if lid is open; this is AND'd with the request from
@@ -79,5 +78,4 @@ switch_command_enable_backlight(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SWITCH_ENABLE_BKLIGHT,
-		     switch_command_enable_backlight,
-		     EC_VER_MASK(0));
+		     switch_command_enable_backlight, EC_VER_MASK(0));
