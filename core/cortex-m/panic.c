@@ -20,9 +20,8 @@
 /* Whether bus fault is ignored */
 static int bus_fault_ignored;
 
-
 /* Panic data goes at the end of RAM. */
-static struct panic_data * const pdata_ptr = PANIC_DATA_PTR;
+static struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 
 /* Preceded by stack, rounded down to nearest 64-bit-aligned boundary */
 static const uint32_t pstack_addr = ((uint32_t)pdata_ptr) & ~7;
@@ -77,7 +76,7 @@ static int32_t is_frame_in_handler_stack(const uint32_t exc_return)
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
 /* Names for each of the bits in the cfs register, starting at bit 0 */
-static const char * const cfsr_name[32] = {
+static const char *const cfsr_name[32] = {
 	/* MMFSR */
 	[0] = "Instruction access violation",
 	[1] = "Data access violation",
@@ -101,11 +100,9 @@ static const char * const cfsr_name[32] = {
 };
 
 /* Names for the first 5 bits in the DFSR */
-static const char * const dfsr_name[] = {
-	"Halt request",
-	"Breakpoint",
-	"Data watchpoint/trace",
-	"Vector catch",
+static const char *const dfsr_name[] = {
+	"Halt request",		  "Breakpoint",
+	"Data watchpoint/trace",  "Vector catch",
 	"External debug request",
 };
 
@@ -281,7 +278,7 @@ void panic_data_print(const struct panic_data *pdata)
 	print_reg(12, sregs, CORTEX_PANIC_FRAME_REGISTER_R12);
 	print_reg(13, lregs,
 		  in_handler ? CORTEX_PANIC_REGISTER_MSP :
-				     CORTEX_PANIC_REGISTER_PSP);
+			       CORTEX_PANIC_REGISTER_PSP);
 	print_reg(14, sregs, CORTEX_PANIC_FRAME_REGISTER_LR);
 	print_reg(15, sregs, CORTEX_PANIC_FRAME_REGISTER_PC);
 
@@ -310,24 +307,23 @@ void __keep report_panic(void)
 	sp = is_frame_in_handler_stack(
 		     pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) ?
 		     pdata->cm.regs[CORTEX_PANIC_REGISTER_MSP] :
-			   pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
+		     pdata->cm.regs[CORTEX_PANIC_REGISTER_PSP];
 	/* If stack is valid, copy exception frame to pdata */
-	if ((sp & 3) == 0 &&
-	    sp >= CONFIG_RAM_BASE &&
+	if ((sp & 3) == 0 && sp >= CONFIG_RAM_BASE &&
 	    sp <= CONFIG_RAM_BASE + CONFIG_RAM_SIZE - 8 * sizeof(uint32_t)) {
 		const uint32_t *sregs = (const uint32_t *)sp;
 		int i;
 
 		/* Skip r0-r3 and r12 registers if necessary */
 		for (i = CORTEX_PANIC_FRAME_REGISTER_R0;
-		    i <= CORTEX_PANIC_FRAME_REGISTER_R12; i++)
+		     i <= CORTEX_PANIC_FRAME_REGISTER_R12; i++)
 			if (IS_ENABLED(CONFIG_PANIC_STRIP_GPR))
 				pdata->cm.frame[i] = 0;
 			else
 				pdata->cm.frame[i] = sregs[i];
 
 		for (i = CORTEX_PANIC_FRAME_REGISTER_LR;
-		    i < NUM_CORTEX_PANIC_FRAME_REGISTERS; i++)
+		     i < NUM_CORTEX_PANIC_FRAME_REGISTERS; i++)
 			pdata->cm.frame[i] = sregs[i];
 
 		pdata->flags |= PANIC_DATA_FLAG_FRAME_VALID;
@@ -401,38 +397,41 @@ void exception_panic(void)
 #endif
 		"stmia %[pregs], {r1-r11, lr}\n"
 		"mov sp, %[pstack]\n"
-		"bl report_panic\n" : :
-			[pregs] "r" (pdata_ptr->cm.regs),
-			[pstack] "r" (pstack_addr) :
-			/* Constraints protecting these from being clobbered.
-			 * Gcc should be using r0 & r12 for pregs and pstack. */
-			"r1", "r2", "r3", "r4", "r5", "r6",
-		/* clang warns that we're clobbering a reserved register:
-		 * inline asm clobber list contains reserved registers: R7
-		 * [-Werror,-Winline-asm]. The intent of the clobber list is
-		 * to force pregs and pstack to be in R0 and R12, which
-		 * still holds.
-		 */
+		"bl report_panic\n"
+		:
+		: [pregs] "r"(pdata_ptr->cm.regs), [pstack] "r"(pstack_addr)
+		:
+		/* Constraints protecting these from being clobbered.
+		 * Gcc should be using r0 & r12 for pregs and pstack. */
+		"r1", "r2", "r3", "r4", "r5", "r6",
+	/* clang warns that we're clobbering a reserved register:
+	 * inline asm clobber list contains reserved registers: R7
+	 * [-Werror,-Winline-asm]. The intent of the clobber list is
+	 * to force pregs and pstack to be in R0 and R12, which
+	 * still holds.
+	 */
 #ifndef __clang__
-			"r7",
+		"r7",
 #endif
-			"r8", "r9", "r10", "r11", "cc", "memory"
-		);
+		"r8", "r9", "r10", "r11", "cc", "memory");
 }
 
 #ifdef CONFIG_SOFTWARE_PANIC
 void software_panic(uint32_t reason, uint32_t info)
 {
-	__asm__("mov " STRINGIFY(SOFTWARE_PANIC_INFO_REG) ", %0\n"
-		"mov " STRINGIFY(SOFTWARE_PANIC_REASON_REG) ", %1\n"
-		"bl exception_panic\n"
-		: : "r"(info), "r"(reason));
+	__asm__("mov " STRINGIFY(
+			SOFTWARE_PANIC_INFO_REG) ", %0\n"
+						 "mov " STRINGIFY(
+							 SOFTWARE_PANIC_REASON_REG) ", %1\n"
+										    "bl exception_panic\n"
+		:
+		: "r"(info), "r"(reason));
 	__builtin_unreachable();
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
-	struct panic_data * const pdata = get_panic_data_write();
+	struct panic_data *const pdata = get_panic_data_write();
 	uint32_t *lregs;
 
 	lregs = pdata->cm.regs;
@@ -452,7 +451,7 @@ void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 {
-	struct panic_data * const pdata = panic_get_data();
+	struct panic_data *const pdata = panic_get_data();
 	uint32_t *lregs;
 
 	if (pdata && pdata->struct_version == 2) {
