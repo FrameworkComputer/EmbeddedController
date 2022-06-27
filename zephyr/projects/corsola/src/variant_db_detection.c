@@ -12,8 +12,8 @@
 
 #include "variant_db_detection.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 static void corsola_db_config(enum corsola_db_type type)
 {
@@ -21,7 +21,7 @@ static void corsola_db_config(enum corsola_db_type type)
 	case CORSOLA_DB_HDMI:
 		/* EC_X_GPIO1 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_hdmi_pwr),
-				   GPIO_OUTPUT_HIGH);
+				      GPIO_OUTPUT_HIGH);
 		/* X_EC_GPIO2 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd),
 				      GPIO_INPUT);
@@ -29,7 +29,7 @@ static void corsola_db_config(enum corsola_db_type type)
 			GPIO_INT_FROM_NODELABEL(int_x_ec_gpio2));
 		/* EC_X_GPIO3 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_pwrdn_odl),
-				     GPIO_OUTPUT_HIGH | GPIO_OPEN_DRAIN);
+				      GPIO_OUTPUT_HIGH | GPIO_OPEN_DRAIN);
 		return;
 	case CORSOLA_DB_TYPEC:
 		/* EC_X_GPIO1 */
@@ -42,9 +42,8 @@ static void corsola_db_config(enum corsola_db_type type)
 		gpio_enable_dt_interrupt(
 			GPIO_INT_FROM_NODELABEL(int_x_ec_gpio2));
 		/* EC_X_GPIO3 */
-		gpio_pin_configure_dt(
-			GPIO_DT_FROM_ALIAS(gpio_usb_c1_dp_in_hpd),
-			GPIO_OUTPUT_LOW);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_dp_in_hpd),
+				      GPIO_OUTPUT_LOW);
 		return;
 	default:
 		break;
