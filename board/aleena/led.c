@@ -10,10 +10,10 @@
 #include "hooks.h"
 #include "console.h"
 
-#define CPRINTS(format, args...) cprints(CC_HOOK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_HOOK, format, ##args)
 
-#define LED_OFF_LVL	1
-#define LED_ON_LVL	0
+#define LED_OFF_LVL 1
+#define LED_ON_LVL 0
 
 __override const int led_charge_lvl_1;
 
@@ -29,18 +29,24 @@ static enum gpio_signal led_blue = GPIO_BAT_LED_2_L;
 
 /* Note there is only LED for charge / power */
 __override struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_BLUE,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0]	     = {{EC_LED_COLOR_BLUE,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S3]	     = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
-					{LED_OFF,            3 * LED_ONE_SEC} },
-	[STATE_DISCHARGE_S5]         = {{LED_OFF,            LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_AMBER, 1 * LED_ONE_SEC},
-					{LED_OFF,            1 * LED_ONE_SEC} },
-	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_BLUE,  2 * LED_ONE_SEC},
-					{EC_LED_COLOR_AMBER, 2 * LED_ONE_SEC} },
-};
+	led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+		[STATE_CHARGING_LVL_2] = { { EC_LED_COLOR_AMBER,
+					     LED_INDEFINITE } },
+		[STATE_CHARGING_FULL_CHARGE] = { { EC_LED_COLOR_BLUE,
+						   LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0] = { { EC_LED_COLOR_BLUE,
+					   LED_INDEFINITE } },
+		[STATE_DISCHARGE_S3] = { { EC_LED_COLOR_AMBER,
+					   1 * LED_ONE_SEC },
+					 { LED_OFF, 3 * LED_ONE_SEC } },
+		[STATE_DISCHARGE_S5] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_BATTERY_ERROR] = { { EC_LED_COLOR_AMBER,
+					    1 * LED_ONE_SEC },
+					  { LED_OFF, 1 * LED_ONE_SEC } },
+		[STATE_FACTORY_TEST] = { { EC_LED_COLOR_BLUE, 2 * LED_ONE_SEC },
+					 { EC_LED_COLOR_AMBER,
+					   2 * LED_ONE_SEC } },
+	};
 
 const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
@@ -48,10 +54,9 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 static void board_led_init(void)
 {
-	int board_id =
-		(gpio_get_level(GPIO_BOARD_VERSION3) << 2) |
-		(gpio_get_level(GPIO_BOARD_VERSION2) << 1) |
-		(gpio_get_level(GPIO_BOARD_VERSION1) << 0);
+	int board_id = (gpio_get_level(GPIO_BOARD_VERSION3) << 2) |
+		       (gpio_get_level(GPIO_BOARD_VERSION2) << 1) |
+		       (gpio_get_level(GPIO_BOARD_VERSION1) << 0);
 
 	CPRINTS("board_id=%d", board_id);
 
@@ -60,7 +65,6 @@ static void board_led_init(void)
 		led_blue = GPIO_BAT_LED_1_L;
 		CPRINTS("LED: switch LED");
 	}
-
 }
 DECLARE_HOOK(HOOK_INIT, board_led_init, HOOK_PRIO_DEFAULT);
 
