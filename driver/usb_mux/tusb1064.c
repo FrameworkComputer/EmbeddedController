@@ -7,27 +7,27 @@
 #include "tusb1064.h"
 #include "usb_mux.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #if defined(CONFIG_USB_MUX_TUSB1044) + defined(CONFIG_USB_MUX_TUSB1064) + \
-	defined(CONFIG_USB_MUX_TUSB546) != 1
+		defined(CONFIG_USB_MUX_TUSB546) !=                        \
+	1
 #error "Must choose exactly one of CONFIG_USB_MUX_TUSB{546,1044,1064}"
 #endif
 
 static int tusb1064_read(const struct usb_mux *me, uint8_t reg, uint8_t *val)
 {
 	int buffer = 0xee;
-	int res = i2c_read8(me->i2c_port, me->i2c_addr_flags,
-			    (int)reg, &buffer);
+	int res =
+		i2c_read8(me->i2c_port, me->i2c_addr_flags, (int)reg, &buffer);
 	*val = buffer;
 	return res;
 }
 
 static int tusb1064_write(const struct usb_mux *me, uint8_t reg, uint8_t val)
 {
-	return i2c_write8(me->i2c_port, me->i2c_addr_flags,
-			  (int)reg, (int)val);
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags, (int)reg, (int)val);
 }
 
 #if defined(CONFIG_USB_MUX_TUSB1044)
@@ -102,7 +102,7 @@ static int tusb1064_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 
 	/* Mask bits that may be set in this function */
 	mask = REG_GENERAL_CTLSEL_USB3 | REG_GENERAL_CTLSEL_ANYDP |
-		REG_GENERAL_FLIPSEL;
+	       REG_GENERAL_FLIPSEL;
 #if defined(CONFIG_USB_MUX_TUSB1044) || defined(CONFIG_USB_MUX_TUSB546)
 	mask |= REG_GENERAL_HPDIN_OVERRIDE;
 #endif
