@@ -16,7 +16,7 @@
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
  */
-#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
@@ -37,7 +37,7 @@
 #define CONFIG_ACCELGYRO_BMI160
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-#define CONFIG_ACCELGYRO_ICM426XX	/* Base accel second source*/
+#define CONFIG_ACCELGYRO_ICM426XX /* Base accel second source*/
 #define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #define CONFIG_ACCEL_KX022
@@ -51,17 +51,14 @@
 /*
  * Slew rate on the PP1800_SENSOR load switch requires a short delay on startup.
  */
-#undef  CONFIG_MOTION_SENSE_RESUME_DELAY_US
+#undef CONFIG_MOTION_SENSE_RESUME_DELAY_US
 #define CONFIG_MOTION_SENSE_RESUME_DELAY_US (10 * MSEC)
 
 #define CONFIG_KEYBOARD_FACTORY_TEST
 
 #ifndef __ASSEMBLER__
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT = 0,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT = 0, PWM_CH_COUNT };
 
 enum battery_type {
 	BATTERY_PANASONIC,
