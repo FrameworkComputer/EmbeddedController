@@ -19,7 +19,7 @@ LOG_MODULE_REGISTER(emul_bb_retimer);
 
 #include "driver/retimer/bb_retimer.h"
 
-#define BB_DATA_FROM_I2C_EMUL(_emul)					     \
+#define BB_DATA_FROM_I2C_EMUL(_emul)                                         \
 	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
 		     struct bb_emul_data, common)
 
@@ -90,14 +90,14 @@ void bb_emul_set_err_on_rsvd_write(struct i2c_emul *emul, bool set)
 
 /** Mask reserved bits in each register of BB retimer */
 static const uint32_t bb_emul_rsvd_mask[] = {
-	[BB_RETIMER_REG_VENDOR_ID]		= 0x00000000,
-	[BB_RETIMER_REG_DEVICE_ID]		= 0x00000000,
-	[0x02]					= 0xffffffff, /* Reserved */
-	[0x03]					= 0xffffffff, /* Reserved */
-	[BB_RETIMER_REG_CONNECTION_STATE]	= 0xc0201000,
-	[BB_RETIMER_REG_TBT_CONTROL]		= 0xffffdfff,
-	[0x06]					= 0xffffffff, /* Reserved */
-	[BB_RETIMER_REG_EXT_CONNECTION_MODE]	= 0x08007f00,
+	[BB_RETIMER_REG_VENDOR_ID] = 0x00000000,
+	[BB_RETIMER_REG_DEVICE_ID] = 0x00000000,
+	[0x02] = 0xffffffff, /* Reserved */
+	[0x03] = 0xffffffff, /* Reserved */
+	[BB_RETIMER_REG_CONNECTION_STATE] = 0xc0201000,
+	[BB_RETIMER_REG_TBT_CONTROL] = 0xffffdfff,
+	[0x06] = 0xffffffff, /* Reserved */
+	[BB_RETIMER_REG_EXT_CONNECTION_MODE] = 0x08007f00,
 };
 
 /**
@@ -111,14 +111,14 @@ static void bb_emul_reset(struct i2c_emul *emul)
 
 	data = BB_DATA_FROM_I2C_EMUL(emul);
 
-	data->reg[BB_RETIMER_REG_VENDOR_ID]		= data->vendor_id;
-	data->reg[BB_RETIMER_REG_DEVICE_ID]		= BB_RETIMER_DEVICE_ID;
-	data->reg[0x02]					= 0x00; /* Reserved */
-	data->reg[0x03]					= 0x00; /* Reserved */
-	data->reg[BB_RETIMER_REG_CONNECTION_STATE]	= 0x00;
-	data->reg[BB_RETIMER_REG_TBT_CONTROL]		= 0x00;
-	data->reg[0x06]					= 0x00; /* Reserved */
-	data->reg[BB_RETIMER_REG_EXT_CONNECTION_MODE]	= 0x00;
+	data->reg[BB_RETIMER_REG_VENDOR_ID] = data->vendor_id;
+	data->reg[BB_RETIMER_REG_DEVICE_ID] = BB_RETIMER_DEVICE_ID;
+	data->reg[0x02] = 0x00; /* Reserved */
+	data->reg[0x03] = 0x00; /* Reserved */
+	data->reg[BB_RETIMER_REG_CONNECTION_STATE] = 0x00;
+	data->reg[BB_RETIMER_REG_TBT_CONTROL] = 0x00;
+	data->reg[0x06] = 0x00; /* Reserved */
+	data->reg[BB_RETIMER_REG_EXT_CONNECTION_MODE] = 0x00;
 }
 
 /**
@@ -155,8 +155,7 @@ static int bb_emul_handle_write(struct i2c_emul *emul, int reg, int msg_len)
 		LOG_WRN("Got %d bytes of WR data, expected 4", msg_len - 2);
 	}
 
-	if (reg <= BB_RETIMER_REG_DEVICE_ID ||
-	    reg >= BB_RETIMER_REG_COUNT ||
+	if (reg <= BB_RETIMER_REG_DEVICE_ID || reg >= BB_RETIMER_REG_COUNT ||
 	    reg == BB_RETIMER_REG_TBT_CONTROL) {
 		if (data->error_on_ro_write) {
 			LOG_ERR("Writing to reg 0x%x which is RO", reg);
@@ -298,8 +297,7 @@ static int bb_emul_access_reg(struct i2c_emul *emul, int reg, int bytes,
  *
  * @return 0 indicating success (always)
  */
-static int bb_emul_init(const struct emul *emul,
-			const struct device *parent)
+static int bb_emul_init(const struct emul *emul, const struct device *parent)
 {
 	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct i2c_common_emul_data *data = cfg->data;
@@ -318,7 +316,7 @@ static int bb_emul_init(const struct emul *emul,
 	return ret;
 }
 
-#define BB_RETIMER_EMUL(n)						\
+#define BB_RETIMER_EMUL(n)                                          \
 	static struct bb_emul_data bb_emul_data_##n = {			\
 		.vendor_id = DT_STRING_TOKEN(DT_DRV_INST(n), vendor),	\
 		.error_on_ro_write = DT_INST_PROP(n, error_on_ro_write),\
@@ -333,27 +331,28 @@ static int bb_emul_init(const struct emul *emul,
 			.finish_read = NULL,				\
 			.access_reg = bb_emul_access_reg,		\
 		},							\
-	};								\
-									\
-	static const struct i2c_common_emul_cfg bb_emul_cfg_##n = {	\
-		.i2c_label = DT_INST_BUS_LABEL(n),			\
-		.dev_label = DT_INST_LABEL(n),                          \
-		.data = &bb_emul_data_##n.common,			\
-		.addr = DT_INST_REG_ADDR(n),				\
-	};								\
-	EMUL_DEFINE(bb_emul_init, DT_DRV_INST(n), &bb_emul_cfg_##n,	\
+	};         \
+                                                                    \
+	static const struct i2c_common_emul_cfg bb_emul_cfg_##n = { \
+		.i2c_label = DT_INST_BUS_LABEL(n),                  \
+		.dev_label = DT_INST_LABEL(n),                      \
+		.data = &bb_emul_data_##n.common,                   \
+		.addr = DT_INST_REG_ADDR(n),                        \
+	};                                                          \
+	EMUL_DEFINE(bb_emul_init, DT_DRV_INST(n), &bb_emul_cfg_##n, \
 		    &bb_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(BB_RETIMER_EMUL)
 
-#define BB_RETIMER_EMUL_CASE(n)					\
-	case DT_INST_DEP_ORD(n): return &bb_emul_data_##n.common.emul;
+#define BB_RETIMER_EMUL_CASE(n)  \
+	case DT_INST_DEP_ORD(n): \
+		return &bb_emul_data_##n.common.emul;
 
 /** Check description in emul_bb_emulator.h */
 struct i2c_emul *bb_emul_get(int ord)
 {
 	switch (ord) {
-	DT_INST_FOREACH_STATUS_OKAY(BB_RETIMER_EMUL_CASE)
+		DT_INST_FOREACH_STATUS_OKAY(BB_RETIMER_EMUL_CASE)
 
 	default:
 		return NULL;
