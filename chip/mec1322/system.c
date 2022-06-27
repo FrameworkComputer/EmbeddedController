@@ -23,38 +23,37 @@
 
 /* Indices for hibernate data registers (RAM backed by VBAT) */
 enum hibdata_index {
-	HIBDATA_INDEX_SCRATCHPAD = 0,    /* General-purpose scratchpad */
+	HIBDATA_INDEX_SCRATCHPAD = 0, /* General-purpose scratchpad */
 	HIBDATA_INDEX_SAVED_RESET_FLAGS, /* Saved reset flags */
-	HIBDATA_INDEX_PD0,               /* USB-PD0 saved port state */
-	HIBDATA_INDEX_PD1,               /* USB-PD1 saved port state */
-	HIBDATA_INDEX_PD2,               /* USB-PD2 saved port state */
+	HIBDATA_INDEX_PD0, /* USB-PD0 saved port state */
+	HIBDATA_INDEX_PD1, /* USB-PD1 saved port state */
+	HIBDATA_INDEX_PD2, /* USB-PD2 saved port state */
 };
 
 static void check_reset_cause(void)
 {
 	uint32_t status = MEC1322_VBAT_STS;
 	uint32_t flags = 0;
-	uint32_t rst_sts = MEC1322_PCR_CHIP_PWR_RST &
-				(MEC1322_PWR_RST_STS_VCC1 |
-				MEC1322_PWR_RST_STS_VBAT);
+	uint32_t rst_sts =
+		MEC1322_PCR_CHIP_PWR_RST &
+		(MEC1322_PWR_RST_STS_VCC1 | MEC1322_PWR_RST_STS_VBAT);
 
 	/* Clear the reset causes now that we've read them */
 	MEC1322_VBAT_STS |= status;
 	MEC1322_PCR_CHIP_PWR_RST |= rst_sts;
 
 	/*
-	* BIT[6] determine VCC1 reset
-	*/
+	 * BIT[6] determine VCC1 reset
+	 */
 	if (rst_sts & MEC1322_PWR_RST_STS_VCC1)
 		flags |= EC_RESET_FLAG_RESET_PIN;
-
 
 	flags |= MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
 	MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = 0;
 
-	if ((status & MEC1322_VBAT_STS_WDT) && !(flags & (EC_RESET_FLAG_SOFT |
-					    EC_RESET_FLAG_HARD |
-					    EC_RESET_FLAG_HIBERNATE)))
+	if ((status & MEC1322_VBAT_STS_WDT) &&
+	    !(flags & (EC_RESET_FLAG_SOFT | EC_RESET_FLAG_HARD |
+		       EC_RESET_FLAG_HIBERNATE)))
 		flags |= EC_RESET_FLAG_WATCHDOG;
 
 	system_set_reset_flags(flags);
@@ -64,18 +63,18 @@ int system_is_reboot_warm(void)
 {
 	uint32_t reset_flags;
 	/*
-	* Check reset cause here,
-	* gpio_pre_init is executed faster than system_pre_init
-	*/
+	 * Check reset cause here,
+	 * gpio_pre_init is executed faster than system_pre_init
+	 */
 	check_reset_cause();
 	reset_flags = system_get_reset_flags();
 
 	if ((reset_flags & EC_RESET_FLAG_RESET_PIN) ||
-		(reset_flags & EC_RESET_FLAG_POWER_ON) ||
-		(reset_flags & EC_RESET_FLAG_WATCHDOG) ||
-		(reset_flags & EC_RESET_FLAG_HARD) ||
-		(reset_flags & EC_RESET_FLAG_SOFT) ||
-		(reset_flags & EC_RESET_FLAG_HIBERNATE))
+	    (reset_flags & EC_RESET_FLAG_POWER_ON) ||
+	    (reset_flags & EC_RESET_FLAG_WATCHDOG) ||
+	    (reset_flags & EC_RESET_FLAG_HARD) ||
+	    (reset_flags & EC_RESET_FLAG_SOFT) ||
+	    (reset_flags & EC_RESET_FLAG_HIBERNATE))
 		return 0;
 	else
 		return 1;
@@ -105,8 +104,7 @@ uint32_t chip_read_reset_flags(void)
 	return MEC1322_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS);
 }
 
-noreturn
-void _system_reset(int flags, int wake_from_hibernate)
+noreturn void _system_reset(int flags, int wake_from_hibernate)
 {
 	uint32_t save_flags = 0;
 
@@ -381,14 +379,14 @@ enum ec_image system_get_shrspi_image_copy(void)
 
 uint32_t system_get_lfw_address(void)
 {
-	uint32_t * const lfw_vector =
-		(uint32_t * const)CONFIG_PROGRAM_MEMORY_BASE;
+	uint32_t *const lfw_vector =
+		(uint32_t *const)CONFIG_PROGRAM_MEMORY_BASE;
 
 	return *(lfw_vector + 1);
 }
 
 void system_set_image_copy(enum ec_image copy)
 {
-	MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) = (copy == EC_IMAGE_RW) ?
-				EC_IMAGE_RW : EC_IMAGE_RO;
+	MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) =
+		(copy == EC_IMAGE_RW) ? EC_IMAGE_RW : EC_IMAGE_RO;
 }
