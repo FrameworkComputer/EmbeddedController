@@ -262,7 +262,7 @@ static void update_leds(void)
 }
 DECLARE_HOOK(HOOK_TICK, update_leds, HOOK_PRIO_DEFAULT);
 
-#endif/* CONFIG_LED_PWM_TASK_DISABLED */
+#endif /* CONFIG_LED_PWM_TASK_DISABLED */
 
 #ifdef CONFIG_CMD_LEDTEST
 static int command_ledtest(int argc, char **argv)
@@ -280,9 +280,8 @@ static int command_ledtest(int argc, char **argv)
 	led_id = supported_led_ids[pwm_led_id];
 
 	if (argc == 2) {
-		ccprintf("PWM LED %d: led_id=%d, auto_control=%d\n",
-			 pwm_led_id, led_id,
-			 led_auto_control_is_enabled(led_id) != 0);
+		ccprintf("PWM LED %d: led_id=%d, auto_control=%d\n", pwm_led_id,
+			 led_id, led_auto_control_is_enabled(led_id) != 0);
 		return EC_SUCCESS;
 	}
 	if (!parse_bool(argv[2], &enable))
