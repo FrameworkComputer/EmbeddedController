@@ -387,9 +387,9 @@ struct chg_curr_step {
 };
 
 static const struct chg_curr_step chg_curr_table[] = {
-	{.on = 0, .off = 35, .curr_ma = 2800},
-	{.on = 36, .off = 35, .curr_ma = 1500},
-	{.on = 39, .off = 38, .curr_ma = 1000},
+	{ .on = 0, .off = 35, .curr_ma = 2800 },
+	{ .on = 36, .off = 35, .curr_ma = 1500 },
+	{ .on = 39, .off = 38, .curr_ma = 1000 },
 };
 
 /* All charge current tables must have the same number of levels */
