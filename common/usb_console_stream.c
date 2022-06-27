@@ -25,12 +25,11 @@
 /* Console output macro */
 #define USB_CONSOLE_TIMEOUT_US (30 * MSEC)
 
-#define QUEUE_SIZE_USB_TX     CONFIG_USB_CONSOLE_TX_BUF_SIZE
-#define QUEUE_SIZE_USB_RX     USB_MAX_PACKET_SIZE
+#define QUEUE_SIZE_USB_TX CONFIG_USB_CONSOLE_TX_BUF_SIZE
+#define QUEUE_SIZE_USB_RX USB_MAX_PACKET_SIZE
 
 static void usb_console_wr(struct queue_policy const *policy, size_t count);
 static void uart_console_rd(struct queue_policy const *policy, size_t count);
-
 
 static int last_tx_ok = 1;
 
@@ -52,24 +51,19 @@ static int is_readonly = 1;
  * usb-stream.c.
  */
 static struct queue_policy const usb_console_policy = {
-	.add    = usb_console_wr,
+	.add = usb_console_wr,
 	.remove = uart_console_rd,
 };
 
 static struct queue const tx_q = QUEUE_NULL(QUEUE_SIZE_USB_TX, uint8_t);
-static struct queue const rx_q = QUEUE(QUEUE_SIZE_USB_RX, uint8_t,
-				       usb_console_policy);
+static struct queue const rx_q =
+	QUEUE(QUEUE_SIZE_USB_RX, uint8_t, usb_console_policy);
 
 struct usb_stream_config const usb_console;
 
-USB_STREAM_CONFIG(usb_console,
-		  USB_IFACE_CONSOLE,
-		  USB_STR_CONSOLE_NAME,
-		  USB_EP_CONSOLE,
-		  USB_MAX_PACKET_SIZE,
-		  USB_MAX_PACKET_SIZE,
-		  rx_q,
-		  tx_q)
+USB_STREAM_CONFIG(usb_console, USB_IFACE_CONSOLE, USB_STR_CONSOLE_NAME,
+		  USB_EP_CONSOLE, USB_MAX_PACKET_SIZE, USB_MAX_PACKET_SIZE,
+		  rx_q, tx_q)
 
 static void usb_console_wr(struct queue_policy const *policy, size_t count)
 {
@@ -185,7 +179,7 @@ int usb_puts(const char *outstr)
 	if (!is_enabled)
 		return EC_SUCCESS;
 
-	ret  = usb_wait_console();
+	ret = usb_wait_console();
 	if (ret)
 		return ret;
 
