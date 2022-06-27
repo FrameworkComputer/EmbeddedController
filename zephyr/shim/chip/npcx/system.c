@@ -54,9 +54,9 @@ void system_mpu_config(void)
 	CPU_MPU_CTRL = 0x7;
 
 	/* Create a new MPU Region to allow execution from low-power ram */
-	CPU_MPU_RNR  = REGION_CHIP_RESERVED;
+	CPU_MPU_RNR = REGION_CHIP_RESERVED;
 	CPU_MPU_RASR = CPU_MPU_RASR & 0xFFFFFFFE; /* Disable region */
-	CPU_MPU_RBAR = CONFIG_LPRAM_BASE;         /* Set region base address */
+	CPU_MPU_RBAR = CONFIG_LPRAM_BASE; /* Set region base address */
 	/*
 	 * Set region size & attribute and enable region
 	 * [31:29] - Reserved.
