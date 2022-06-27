@@ -13,17 +13,16 @@
 #include "usb_mux.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-static inline int anx7440_read(const struct usb_mux *me,
-			       uint8_t reg, int *val)
+static inline int anx7440_read(const struct usb_mux *me, uint8_t reg, int *val)
 {
 	return i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
-static inline int anx7440_write(const struct usb_mux *me,
-				uint8_t reg, uint8_t val)
+static inline int anx7440_write(const struct usb_mux *me, uint8_t reg,
+				uint8_t val)
 {
 	return i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
