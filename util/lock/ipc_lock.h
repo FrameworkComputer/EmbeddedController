@@ -32,17 +32,17 @@
 #define __UTIL_IPC_LOCK_H
 
 struct ipc_lock {
-	int is_held;	/* internal */
-	const char *filename;	/* provided by the developer */
-	int fd;		/* internal */
+	int is_held; /* internal */
+	const char *filename; /* provided by the developer */
+	int fd; /* internal */
 };
 
 /* don't use C99 initializers here, so this can be used in C++ code */
-#define LOCKFILE_INIT(lockfile) \
-	{ \
-		0,		/* is_held */	\
-		lockfile,	/* filename */	\
-		-1,		/* fd */	\
+#define LOCKFILE_INIT(lockfile)                  \
+	{                                        \
+		0, /* is_held */                 \
+			lockfile, /* filename */ \
+			-1, /* fd */             \
 	}
 
 /*
