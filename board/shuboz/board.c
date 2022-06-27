@@ -39,8 +39,8 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* This I2C moved. Temporarily detect and support the V0 HW. */
 int I2C_PORT_BATTERY = I2C_PORT_BATTERY_V1;
@@ -62,15 +62,13 @@ static const mat33_fp_t lid_standard_ref = {
 	{ 0, FLOAT_TO_FP(-1), 0 },
 	{ 0, 0, FLOAT_TO_FP(-1) },
 };
-static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+					      { FLOAT_TO_FP(-1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(-1) } };
 static const mat33_fp_t base_standard_ref_icm = {
-	{FLOAT_TO_FP(1), 0, 0},
-	{0, FLOAT_TO_FP(-1), 0},
-	{0, 0, FLOAT_TO_FP(-1)},
+	{ FLOAT_TO_FP(1), 0, 0 },
+	{ 0, FLOAT_TO_FP(-1), 0 },
+	{ 0, 0, FLOAT_TO_FP(-1) },
 };
 
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
@@ -226,8 +224,7 @@ static void board_chipset_suspend(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 
-static int board_ps8743_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+static int board_ps8743_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int res;
 
@@ -241,7 +238,6 @@ static int board_ps8743_mux_set(const struct usb_mux *me,
 	res = ps8743_write(me, PS8743_REG_USB_EQ_RX, 0xB0);
 	return res;
 }
-
 
 /*****************************************************************************
  * USB-C
@@ -350,8 +346,7 @@ void ppc_interrupt(enum gpio_signal signal)
 
 int board_set_active_charge_port(int port)
 {
-	int is_valid_port = (port >= 0 &&
-			     port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_valid_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (port == CHARGE_PORT_NONE) {
@@ -371,7 +366,6 @@ int board_set_active_charge_port(int port)
 	} else if (!is_valid_port) {
 		return EC_ERROR_INVAL;
 	}
-
 
 	/* Check if the port is sourcing VBUS. */
 	if (ppc_is_sourcing_vbus(port)) {
@@ -474,7 +468,6 @@ static void reset_nct38xx_port(int port)
 		msleep(NCT3807_RESET_POST_DELAY_MS);
 }
 
-
 void board_reset_pd_mcu(void)
 {
 	/* Reset TCPC0 */
@@ -545,11 +538,9 @@ int board_pd_set_frs_enable(int port, int enable)
 
 	/* Use the TCPC to enable fast switch when FRS included */
 	if (port == USBC_PORT_C0) {
-		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN,
-				    !!enable);
+		rv = ioex_set_level(IOEX_USB_C0_TCPC_FASTSW_CTL_EN, !!enable);
 	} else {
-		rv = ioex_set_level(IOEX_USB_C1_TCPC_FASTSW_CTL_EN,
-				    !!enable);
+		rv = ioex_set_level(IOEX_USB_C1_TCPC_FASTSW_CTL_EN, !!enable);
 	}
 
 	return rv;
