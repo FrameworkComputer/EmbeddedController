@@ -50,22 +50,22 @@ static inline uint64_t timer_read_raw_system(void)
 	 * sys_high value.
 	 */
 	if (timer_ctrl & TIMER_IRQ_STATUS)
-		sys_high_adj = sys_high ? (sys_high - 1) : (TIMER_CLOCK_MHZ-1);
+		sys_high_adj = sys_high ? (sys_high - 1) :
+					  (TIMER_CLOCK_MHZ - 1);
 
-	return OVERFLOW_TICKS - (((uint64_t)sys_high_adj << 32) |
-				 SCP_TIMER_VAL(TIMER_SYSTEM));
+	return OVERFLOW_TICKS -
+	       (((uint64_t)sys_high_adj << 32) | SCP_TIMER_VAL(TIMER_SYSTEM));
 }
 
 static inline uint64_t timer_read_raw_event(void)
 {
-	return OVERFLOW_TICKS - (((uint64_t)event_high << 32) |
-				 SCP_TIMER_VAL(TIMER_EVENT));
+	return OVERFLOW_TICKS -
+	       (((uint64_t)event_high << 32) | SCP_TIMER_VAL(TIMER_EVENT));
 }
 
 static inline void timer_set_clock(int n, uint32_t clock_source)
 {
-	SCP_TIMER_EN(n) = (SCP_TIMER_EN(n) & ~TIMER_CLK_MASK) |
-			  clock_source;
+	SCP_TIMER_EN(n) = (SCP_TIMER_EN(n) & ~TIMER_CLK_MASK) | clock_source;
 }
 
 static inline void timer_ack_irq(int n)
@@ -182,7 +182,7 @@ int __hw_clock_source_init(uint32_t start_t)
 	SCP_CLK_BCLK = CLK_BCLK_SEL_ULPOSC1_DIV8;
 
 	timer_set_clock(TIMER_SYSTEM, TIMER_CLK_BCLK);
-	sys_high = TIMER_CLOCK_MHZ-1;
+	sys_high = TIMER_CLOCK_MHZ - 1;
 	timer_set_reset_value(TIMER_SYSTEM, 0xffffffff);
 	__hw_timer_enable_clock(TIMER_SYSTEM, 1);
 	task_enable_irq(IRQ_TIMER(TIMER_SYSTEM));
@@ -200,8 +200,8 @@ uint32_t __hw_clock_source_read(void)
 
 uint32_t __hw_clock_event_get(void)
 {
-	return (timer_read_raw_event() + timer_read_raw_system())
-			/ TIMER_CLOCK_MHZ;
+	return (timer_read_raw_event() + timer_read_raw_system()) /
+	       TIMER_CLOCK_MHZ;
 }
 
 static void __hw_clock_source_irq(int n)
@@ -228,7 +228,7 @@ static void __hw_clock_source_irq(int n)
 				process_timers(0);
 			} else {
 				/* Overflow, reload system timer */
-				sys_high = TIMER_CLOCK_MHZ-1;
+				sys_high = TIMER_CLOCK_MHZ - 1;
 				process_timers(1);
 			}
 		} else {
@@ -238,10 +238,9 @@ static void __hw_clock_source_irq(int n)
 	default:
 		return;
 	}
-
 }
 
-#define DECLARE_TIMER_IRQ(n) \
+#define DECLARE_TIMER_IRQ(n)                                     \
 	DECLARE_IRQ(IRQ_TIMER(n), __hw_clock_source_irq_##n, 2); \
 	static void __hw_clock_source_irq_##n(void)              \
 	{                                                        \
