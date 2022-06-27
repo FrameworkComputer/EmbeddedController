@@ -53,10 +53,10 @@ struct tcpci_snk_emul_data {
  *
  * @return Pointer to USB-C sink extension
  */
-struct tcpci_partner_extension *tcpci_snk_emul_init(
-	struct tcpci_snk_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	struct tcpci_partner_extension *ext);
+struct tcpci_partner_extension *
+tcpci_snk_emul_init(struct tcpci_snk_emul_data *data,
+		    struct tcpci_partner_data *common_data,
+		    struct tcpci_partner_extension *ext);
 
 /**
  * @brief Clear the ping received flag.
