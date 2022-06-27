@@ -47,16 +47,16 @@
  * Axis argument used in @ref bma_emul_set_acc @ref bma_emul_get_acc
  * @ref bma_emul_set_off and @ref bma_emul_get_off
  */
-#define BMA_EMUL_AXIS_X		0
-#define BMA_EMUL_AXIS_Y		1
-#define BMA_EMUL_AXIS_Z		2
+#define BMA_EMUL_AXIS_X 0
+#define BMA_EMUL_AXIS_Y 1
+#define BMA_EMUL_AXIS_Z 2
 
 /**
  * Acceleration 1g in internal emulator units. It is helpful for using
  * functions @ref bma_emul_set_acc @ref bma_emul_get_acc
  * @ref bma_emul_set_off and @ref bma_emul_get_off
  */
-#define BMA_EMUL_1G		BIT(10)
+#define BMA_EMUL_1G BIT(10)
 
 /**
  * @brief Get pointer to BMA255 emulator using device tree order number.
