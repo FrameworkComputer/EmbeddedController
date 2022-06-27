@@ -52,4 +52,4 @@ int eeprom_write(int block, int offset, int size, const char *data);
  */
 int eeprom_hide(int block);
 
-#endif  /* __CROS_EC_EEPROM_H */
+#endif /* __CROS_EC_EEPROM_H */
