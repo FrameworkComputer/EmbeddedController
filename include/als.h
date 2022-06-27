@@ -34,4 +34,4 @@ extern struct als_t als[];
  */
 int als_read(enum als_id id, int *lux);
 
-#endif  /* __CROS_EC_ALS_H */
+#endif /* __CROS_EC_ALS_H */
