@@ -36,12 +36,12 @@ void dpm_mode_exit_complete(int port)
 }
 
 void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
-		uint32_t *vdm)
+		   uint32_t *vdm)
 {
 }
 
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
-		uint8_t vdm_cmd)
+		   uint8_t vdm_cmd)
 {
 }
 
