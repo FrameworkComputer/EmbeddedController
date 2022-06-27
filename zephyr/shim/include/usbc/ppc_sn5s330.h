@@ -7,9 +7,7 @@
 
 #define SN5S330_COMPAT ti_sn5s330
 
-#define PPC_CHIP_SN5S330(id)                                                 \
-	{			                                             \
-		.i2c_port = I2C_PORT(DT_PHANDLE(id, port)),                  \
-		.i2c_addr_flags = DT_STRING_UPPER_TOKEN(id, i2c_addr_flags), \
-		.drv = &sn5s330_drv                                          \
-	},
+#define PPC_CHIP_SN5S330(id)                                           \
+	{ .i2c_port = I2C_PORT(DT_PHANDLE(id, port)),                  \
+	  .i2c_addr_flags = DT_STRING_UPPER_TOKEN(id, i2c_addr_flags), \
+	  .drv = &sn5s330_drv },
