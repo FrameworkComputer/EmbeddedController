@@ -20,7 +20,7 @@ int main(int argc, char *argv[])
 	size_t size = 0;
 	size_t read;
 
-	BUILD_ASSERT(sizeof(pdata) > sizeof(struct panic_data)*2);
+	BUILD_ASSERT(sizeof(pdata) > sizeof(struct panic_data) * 2);
 
 	/*
 	 * Provide a minimal help message.
@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	}
 
 	while (1) {
-		read = fread(&pdata[size], 1, sizeof(pdata)-size, stdin);
+		read = fread(&pdata[size], 1, sizeof(pdata) - size, stdin);
 		if (read < 0) {
 			fprintf(stderr, "Cannot read panicinfo from stdin.\n");
 			return 1;
