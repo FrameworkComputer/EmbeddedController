@@ -17,7 +17,7 @@
 
 /* use cfmakeraw() */
 #define _DEFAULT_SOURCE /* Newer glibc */
-#define _BSD_SOURCE     /* Older glibc */
+#define _BSD_SOURCE /* Older glibc */
 
 #include <arpa/inet.h>
 #include <compile_time_macros.h>
@@ -39,52 +39,48 @@
 
 #include "ec_version.h"
 
-#define KBYTES_TO_BYTES		1024
+#define KBYTES_TO_BYTES 1024
 
 /*
  * Some Ubuntu versions do not export SPI_IOC_WR_MODE32 even though
  * the kernel shipped on those supports it.
  */
 #ifndef SPI_IOC_WR_MODE32
-#define SPI_IOC_WR_MODE32		_IOW(SPI_IOC_MAGIC, 5, __u32)
+#define SPI_IOC_WR_MODE32 _IOW(SPI_IOC_MAGIC, 5, __u32)
 #endif
 
 /* Monitor command set */
-#define CMD_INIT 0x7f    /* Starts the monitor */
+#define CMD_INIT 0x7f /* Starts the monitor */
 
-#define CMD_GETCMD   0x00 /* Gets the allowed commands */
-#define CMD_GETVER   0x01 /* Gets the bootloader version */
-#define CMD_GETID    0x02 /* Gets the Chip ID */
-#define CMD_READMEM  0x11 /* Reads memory */
-#define CMD_GO       0x21 /* Jumps to user code */
+#define CMD_GETCMD 0x00 /* Gets the allowed commands */
+#define CMD_GETVER 0x01 /* Gets the bootloader version */
+#define CMD_GETID 0x02 /* Gets the Chip ID */
+#define CMD_READMEM 0x11 /* Reads memory */
+#define CMD_GO 0x21 /* Jumps to user code */
 #define CMD_WRITEMEM 0x31 /* Writes memory (SRAM or Flash) */
-#define CMD_ERASE    0x43 /* Erases n pages of Flash memory */
+#define CMD_ERASE 0x43 /* Erases n pages of Flash memory */
 #define CMD_EXTERASE 0x44 /* Erases n pages of Flash memory */
 #define CMD_NO_STRETCH_ERASE 0x45 /* Erases while sending busy frame */
-#define CMD_WP       0x63 /* Enables write protect */
-#define CMD_WU       0x73 /* Disables write protect */
-#define CMD_RP       0x82 /* Enables the read protection */
-#define CMD_RU       0x92 /* Disables the read protection */
+#define CMD_WP 0x63 /* Enables write protect */
+#define CMD_WU 0x73 /* Disables write protect */
+#define CMD_RP 0x82 /* Enables the read protection */
+#define CMD_RU 0x92 /* Disables the read protection */
 
-#define CMD_LOOKUP_ENTRY(COMMAND) {CMD_##COMMAND, #COMMAND}
+#define CMD_LOOKUP_ENTRY(COMMAND)       \
+	{                               \
+		CMD_##COMMAND, #COMMAND \
+	}
 const struct {
 	const uint8_t cmd;
 	const char *name;
 } cmd_lookup_table[] = {
-	CMD_LOOKUP_ENTRY(INIT),
-	CMD_LOOKUP_ENTRY(GETCMD),
-	CMD_LOOKUP_ENTRY(GETVER),
-	CMD_LOOKUP_ENTRY(GETID),
-	CMD_LOOKUP_ENTRY(READMEM),
-	CMD_LOOKUP_ENTRY(GO),
-	CMD_LOOKUP_ENTRY(WRITEMEM),
-	CMD_LOOKUP_ENTRY(ERASE),
-	CMD_LOOKUP_ENTRY(EXTERASE),
-	CMD_LOOKUP_ENTRY(NO_STRETCH_ERASE),
-	CMD_LOOKUP_ENTRY(WP),
-	CMD_LOOKUP_ENTRY(WU),
-	CMD_LOOKUP_ENTRY(RP),
-	CMD_LOOKUP_ENTRY(RU),
+	CMD_LOOKUP_ENTRY(INIT),	    CMD_LOOKUP_ENTRY(GETCMD),
+	CMD_LOOKUP_ENTRY(GETVER),   CMD_LOOKUP_ENTRY(GETID),
+	CMD_LOOKUP_ENTRY(READMEM),  CMD_LOOKUP_ENTRY(GO),
+	CMD_LOOKUP_ENTRY(WRITEMEM), CMD_LOOKUP_ENTRY(ERASE),
+	CMD_LOOKUP_ENTRY(EXTERASE), CMD_LOOKUP_ENTRY(NO_STRETCH_ERASE),
+	CMD_LOOKUP_ENTRY(WP),	    CMD_LOOKUP_ENTRY(WU),
+	CMD_LOOKUP_ENTRY(RP),	    CMD_LOOKUP_ENTRY(RU),
 };
 
 const char *cmd_lookup_name(uint8_t cmd)
@@ -98,27 +94,27 @@ const char *cmd_lookup_name(uint8_t cmd)
 	return NULL;
 }
 
-#define RESP_NACK        0x1f
-#define RESP_ACK         0x79 /* 0b 0111 1001 */
-#define RESP_BUSY        0x76
+#define RESP_NACK 0x1f
+#define RESP_ACK 0x79 /* 0b 0111 1001 */
+#define RESP_BUSY 0x76
 #define RESP_DAMAGED_ACK 0xBC /* 0b 1011 1100, 1 bit shifted REST_ACK */
 
 /* SPI Start of Frame */
-#define SOF          0x5A
+#define SOF 0x5A
 
 /* Extended erase special parameters */
-#define ERASE_ALL    0xffff
-#define ERASE_BANK1  0xfffe
-#define ERASE_BANK2  0xfffd
+#define ERASE_ALL 0xffff
+#define ERASE_BANK1 0xfffe
+#define ERASE_BANK2 0xfffd
 
 /* Upper bound of rebooting the monitor */
 #define MAX_DELAY_REBOOT 100000 /* us */
 
 /* Standard addresses common across various ST chips */
-#define STM32_MAIN_MEMORY_ADDR		0x08000000
-#define STM32_SYSTEM_MEMORY_ADDR	0x1FFF0000
+#define STM32_MAIN_MEMORY_ADDR 0x08000000
+#define STM32_SYSTEM_MEMORY_ADDR 0x1FFF0000
 
-#define STM32_UNIQUE_ID_SIZE_BYTES	12
+#define STM32_UNIQUE_ID_SIZE_BYTES 12
 
 /*
  * Device electronic signature contains factory-programmed identification
@@ -166,7 +162,7 @@ struct memory_layout {
 
 /* known STM32 SoC parameters */
 struct stm32_def {
-	uint16_t   id;
+	uint16_t id;
 	const char *name;
 	uint32_t flash_size;
 	uint32_t page_size;
@@ -285,8 +281,8 @@ struct stm32_def {
 #define DEFAULT_BAUDRATE B38400
 #define PAGE_SIZE 256
 #define INVALID_I2C_ADAPTER -1
-#define MAX_ACK_RETRY_COUNT	(EXT_ERASE_TIMEOUT / DEFAULT_TIMEOUT)
-#define MAX_RETRY_COUNT		3
+#define MAX_ACK_RETRY_COUNT (EXT_ERASE_TIMEOUT / DEFAULT_TIMEOUT)
+#define MAX_RETRY_COUNT 3
 
 enum interface_mode {
 	MODE_SERIAL,
@@ -315,24 +311,24 @@ int retry_on_damaged_ack;
 
 /* STM32MON function return values */
 enum {
-	STM32_SUCCESS   = 0,
-	STM32_EIO       = -1,	/* IO error */
-	STM32_EINVAL    = -2,	/* Got a faulty response from device */
-	STM32_ETIMEDOUT = -3,	/* Device didn't respond in a time window. */
-	STM32_ENOMEM    = -4,	/* Failed to allocate memory. */
-	STM32_ENACK     = -5,	/* Got NACK. */
-	STM32_EDACK     = -6,	/* Got a damanged ACK. */
+	STM32_SUCCESS = 0,
+	STM32_EIO = -1, /* IO error */
+	STM32_EINVAL = -2, /* Got a faulty response from device */
+	STM32_ETIMEDOUT = -3, /* Device didn't respond in a time window. */
+	STM32_ENOMEM = -4, /* Failed to allocate memory. */
+	STM32_ENACK = -5, /* Got NACK. */
+	STM32_EDACK = -6, /* Got a damanged ACK. */
 };
 BUILD_ASSERT(STM32_SUCCESS == 0);
-#define IS_STM32_ERROR(res)		((res) < STM32_SUCCESS)
+#define IS_STM32_ERROR(res) ((res) < STM32_SUCCESS)
 
 /* optional command flags */
 enum {
-	FLAG_UNPROTECT      = 0x01,
-	FLAG_ERASE          = 0x02,
-	FLAG_GO             = 0x04,
+	FLAG_UNPROTECT = 0x01,
+	FLAG_ERASE = 0x02,
+	FLAG_GO = 0x04,
 	FLAG_READ_UNPROTECT = 0x08,
-	FLAG_CR50_MODE	    = 0x10,
+	FLAG_CR50_MODE = 0x10,
 };
 
 typedef struct {
@@ -357,14 +353,11 @@ static FILE *log_file;
 
 /* Statistic data structure for response kind. */
 struct {
-	const char * const event_name;
+	const char *const event_name;
 	uint32_t event_count;
 } stat_resp[] = {
-	{ "RESP_ACK",	0 },
-	{ "RESP_NACK",	0 },
-	{ "RESP_BUSY",	0 },
-	{ "RESP_DAMAGED_ACK", 0 },
-	{ "JUNK",	0 },
+	{ "RESP_ACK", 0 },	   { "RESP_NACK", 0 }, { "RESP_BUSY", 0 },
+	{ "RESP_DAMAGED_ACK", 0 }, { "JUNK", 0 },
 };
 
 enum {
@@ -389,7 +382,7 @@ static void dump_log(const char *prefix, const void *data, size_t count)
 
 	fprintf(log_file, "%s: ", prefix);
 	for (i = 0; i < count; i++) {
-		if (i && !(i  % 16))
+		if (i && !(i % 16))
 			fprintf(log_file, "\n   ");
 		fprintf(log_file, " %02x", ((uint8_t *)data)[i]);
 	}
@@ -560,7 +553,6 @@ static void discard_input(int fd)
 	do {
 		res = read_wrapper(fd, buffer, sizeof(buffer));
 		if (res > 0) {
-
 			/* Discard zeros in the beginning of the buffer. */
 			for (i = 0; i < res; i++)
 				if (buffer[i])
@@ -652,8 +644,8 @@ int wait_for_ack(int fd)
 	return STM32_ETIMEDOUT;
 }
 
-int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
-		 uint8_t *resp, int resp_size, int ack_requested)
+int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt, uint8_t *resp,
+		 int resp_size, int ack_requested)
 {
 	int res, i, c;
 	payload_t *p;
@@ -755,7 +747,8 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 			} else if (IS_STM32_ERROR(res)) {
 				fprintf(stderr,
 					"Failed to get response to command"
-					" 0x%02x ACK\n", cmd);
+					" 0x%02x ACK\n",
+					cmd);
 				return res;
 			}
 		}
@@ -767,8 +760,8 @@ int send_command(int fd, uint8_t cmd, payload_t *loads, int cnt,
 	return readcnt;
 }
 
-int send_command_retry(int fd, uint8_t cmd, payload_t *loads,
-		int cnt, uint8_t *resp, int resp_size, int ack_requested)
+int send_command_retry(int fd, uint8_t cmd, payload_t *loads, int cnt,
+		       uint8_t *resp, int resp_size, int ack_requested)
 {
 	int res;
 	int retries = MAX_RETRY_COUNT;
@@ -777,7 +770,7 @@ int send_command_retry(int fd, uint8_t cmd, payload_t *loads,
 		int ack_tries = MAX_ACK_RETRY_COUNT;
 
 		res = send_command(fd, cmd, loads, cnt, resp, resp_size,
-			ack_requested);
+				   ack_requested);
 
 		while (res == STM32_ETIMEDOUT && ack_tries--) {
 			if (cmd == CMD_WRITEMEM) {
@@ -807,8 +800,8 @@ struct stm32_def *command_get_id(int fd)
 	res = send_command(fd, CMD_GETID, NULL, 0, id, sizeof(id), 1);
 	if (res > 0) {
 		if (id[0] != 1) {
-			fprintf(stderr, "unknown ID : %02x %02x %02x\n",
-				id[0], id[1], id[2]);
+			fprintf(stderr, "unknown ID : %02x %02x %02x\n", id[0],
+				id[1], id[2]);
 			return NULL;
 		}
 		chipid = (id[1] << 8) | id[2];
@@ -891,8 +884,8 @@ int command_get_commands(int fd, struct stm32_def *chip)
 				cmds[0]);
 			return STM32_EINVAL;
 		}
-		printf("Bootloader v%d.%d, commands : ",
-		       cmds[1] >> 4, cmds[1] & 0xf);
+		printf("Bootloader v%d.%d, commands : ", cmds[1] >> 4,
+		       cmds[1] & 0xf);
 		boot_loader_version = cmds[1];
 
 		erase = command_erase;
@@ -920,10 +913,10 @@ int command_get_commands(int fd, struct stm32_def *chip)
 
 static int use_progressbar;
 static int windex;
-static const char wheel[] = {'|', '/', '-', '\\' };
+static const char wheel[] = { '|', '/', '-', '\\' };
 static void draw_spinner(uint32_t remaining, uint32_t size)
 {
-	int percent = (size - remaining)*100/size;
+	int percent = (size - remaining) * 100 / size;
 	if (use_progressbar) {
 		int dots = percent / 4;
 
@@ -944,15 +937,12 @@ int command_read_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 	uint32_t remaining = size;
 	uint32_t addr_be;
 	uint8_t cnt;
-	payload_t loads[2] = {
-		{4, (uint8_t *)&addr_be},
-		{1, &cnt}
-	};
+	payload_t loads[2] = { { 4, (uint8_t *)&addr_be }, { 1, &cnt } };
 
 	while (remaining) {
 		uint32_t bytes = MIN(remaining, PAGE_SIZE);
 
-		cnt = (uint8_t) (bytes - 1);
+		cnt = (uint8_t)(bytes - 1);
 		addr_be = htonl(address);
 
 		draw_spinner(remaining, size);
@@ -978,10 +968,8 @@ int command_write_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 	uint32_t addr_be;
 	uint32_t cnt;
 	uint8_t outbuf[257];
-	payload_t loads[2] = {
-		{4, (uint8_t *)&addr_be},
-		{sizeof(outbuf), outbuf}
-	};
+	payload_t loads[2] = { { 4, (uint8_t *)&addr_be },
+			       { sizeof(outbuf), outbuf } };
 
 	while (remaining) {
 		cnt = MIN(remaining, PAGE_SIZE);
@@ -997,7 +985,7 @@ int command_write_mem(int fd, uint32_t address, uint32_t size, uint8_t *buffer)
 			draw_spinner(remaining, size);
 
 			res = send_command_retry(fd, CMD_WRITEMEM, loads, 2,
-					   NULL, 0, 1);
+						 NULL, 0, 1);
 			if (IS_STM32_ERROR(res))
 				return STM32_EIO;
 		}
@@ -1026,7 +1014,7 @@ int command_ext_erase(int fd, uint16_t count, uint16_t start)
 		load.data = (uint8_t *)pages;
 		pages[0] = htons(count - 1);
 		for (i = 0; i < count; i++)
-			pages[i+1] = htons(start + i);
+			pages[i + 1] = htons(start + i);
 	}
 
 	printf("Erasing...\n");
@@ -1045,8 +1033,8 @@ int command_erase_i2c(int fd, uint16_t count, uint16_t start)
 	uint8_t erase_cmd;
 	uint16_t count_be = htons(count);
 	payload_t load[2] = {
-		{ 2, (uint8_t *)&count_be},
-		{ 0, NULL},
+		{ 2, (uint8_t *)&count_be },
+		{ 0, NULL },
 	};
 	int load_cnt = 1;
 	uint16_t *pages = NULL;
@@ -1071,7 +1059,7 @@ int command_erase_i2c(int fd, uint16_t count, uint16_t start)
 	}
 
 	erase_cmd = (boot_loader_version == 0x10) ? CMD_EXTERASE :
-		     CMD_NO_STRETCH_ERASE;
+						    CMD_NO_STRETCH_ERASE;
 
 	printf("Erasing...\n");
 	res = send_command(fd, erase_cmd, load, load_cnt, NULL, 0, 1);
@@ -1082,7 +1070,6 @@ int command_erase_i2c(int fd, uint16_t count, uint16_t start)
 		free(pages);
 	return res;
 }
-
 
 int command_erase(int fd, uint16_t count, uint16_t start)
 {
@@ -1101,7 +1088,7 @@ int command_erase(int fd, uint16_t count, uint16_t start)
 		load.data = (uint8_t *)pages;
 		pages[0] = count - 1;
 		for (i = 0; i < count; i++)
-			pages[i+1] = start + i;
+			pages[i + 1] = start + i;
 	}
 
 	printf("Erasing...\n");
@@ -1241,8 +1228,10 @@ int read_device_signature_register(int fd, const struct stm32_def *chip,
 	}
 
 	if (addr <= otp_end_addr) {
-		fprintf(stderr, "Attempting to read from invalid address: "
-				"%08X\n", addr);
+		fprintf(stderr,
+			"Attempting to read from invalid address: "
+			"%08X\n",
+			addr);
 		return STM32_EINVAL;
 	}
 
@@ -1290,9 +1279,9 @@ int read_flash_size_register(int fd, struct stm32_def *chip,
 	if (!flash_size_addr)
 		return STM32_EINVAL;
 
-	res = read_device_signature_register(fd, chip,
-		flash_size_addr, sizeof(*flash_size_kbytes),
-		(uint8_t *)flash_size_kbytes);
+	res = read_device_signature_register(fd, chip, flash_size_addr,
+					     sizeof(*flash_size_kbytes),
+					     (uint8_t *)flash_size_kbytes);
 
 	if (!IS_STM32_ERROR(res))
 		printf("Flash size: %" PRIu16 " KB\n", *flash_size_kbytes);
@@ -1306,7 +1295,7 @@ int read_flash_size_register(int fd, struct stm32_def *chip,
 
 /* Return zero on success, a negative error value on failures. */
 int read_unique_device_id_register(int fd, struct stm32_def *chip,
-	uint8_t device_id[STM32_UNIQUE_ID_SIZE_BYTES])
+				   uint8_t device_id[STM32_UNIQUE_ID_SIZE_BYTES])
 {
 	int i;
 	int res;
@@ -1317,7 +1306,8 @@ int read_unique_device_id_register(int fd, struct stm32_def *chip,
 		return STM32_EINVAL;
 
 	res = read_device_signature_register(fd, chip, unique_device_id_addr,
-		STM32_UNIQUE_ID_SIZE_BYTES, device_id);
+					     STM32_UNIQUE_ID_SIZE_BYTES,
+					     device_id);
 
 	if (!IS_STM32_ERROR(res)) {
 		printf("Unique Device ID: 0x");
@@ -1353,7 +1343,8 @@ int read_package_data_register(int fd, struct stm32_def *chip,
 	else
 		fprintf(stderr,
 			"Failed to read package data register (0x%08X). "
-			"Ignoring non-critical failure.\n", package_data_addr);
+			"Ignoring non-critical failure.\n",
+			package_data_addr);
 
 	return res;
 }
@@ -1445,25 +1436,16 @@ int write_flash(int fd, struct stm32_def *chip, const char *filename,
 }
 
 static const struct option longopts[] = {
-	{"adapter", 1, 0, 'a'},
-	{"baudrate", 1, 0, 'b'},
-	{"cr50", 0, 0, 'c'},
-	{"device", 1, 0, 'd'},
-	{"erase", 0, 0, 'e'},
-	{"go", 0, 0, 'g'},
-	{"help", 0, 0, 'h'},
-	{"length", 1, 0, 'n'},
-	{"location", 1, 0, 'l'},
-	{"logfile", 1, 0, 'L'},
-	{"offset", 1, 0, 'o'},
-	{"progressbar", 0, 0, 'p'},
-	{"read", 1, 0, 'r'},
-	{"retries", 1, 0, 'R'},
-	{"spi", 1, 0, 's'},
-	{"unprotect", 0, 0, 'u'},
-	{"version", 0, 0, 'v'},
-	{"write", 1, 0, 'w'},
-	{NULL, 0, 0, 0}
+	{ "adapter", 1, 0, 'a' },  { "baudrate", 1, 0, 'b' },
+	{ "cr50", 0, 0, 'c' },	   { "device", 1, 0, 'd' },
+	{ "erase", 0, 0, 'e' },	   { "go", 0, 0, 'g' },
+	{ "help", 0, 0, 'h' },	   { "length", 1, 0, 'n' },
+	{ "location", 1, 0, 'l' }, { "logfile", 1, 0, 'L' },
+	{ "offset", 1, 0, 'o' },   { "progressbar", 0, 0, 'p' },
+	{ "read", 1, 0, 'r' },	   { "retries", 1, 0, 'R' },
+	{ "spi", 1, 0, 's' },	   { "unprotect", 0, 0, 'u' },
+	{ "version", 0, 0, 'v' },  { "write", 1, 0, 'w' },
+	{ NULL, 0, 0, 0 }
 };
 
 void display_usage(char *program)
@@ -1498,9 +1480,9 @@ void display_usage(char *program)
 			"the spinner\n");
 	fprintf(stderr, "--R[etries] <num> : limit connect retries to num\n");
 	fprintf(stderr, "-L[ogfile] <file> : save all communications exchange "
-		"in a log file\n");
+			"in a log file\n");
 	fprintf(stderr, "-c[r50_mode] : consider device to be a Cr50 interface,"
-		" no need to set UART port attributes\n");
+			" no need to set UART port attributes\n");
 	fprintf(stderr, "--v[ersion] : print version and exit\n");
 
 	exit(2);
@@ -1509,7 +1491,7 @@ void display_usage(char *program)
 void display_version(const char *exe_name)
 {
 	printf("%s version: %s %s %s\n", exe_name, CROS_STM32MON_VERSION, DATE,
-		BUILDER);
+	       BUILDER);
 }
 
 speed_t parse_baudrate(const char *value)
@@ -1528,8 +1510,8 @@ speed_t parse_baudrate(const char *value)
 	case 115200:
 		return B115200;
 	default:
-		fprintf(stderr, "Invalid baudrate %s, using %d\n",
-			value, DEFAULT_BAUDRATE);
+		fprintf(stderr, "Invalid baudrate %s, using %d\n", value,
+			DEFAULT_BAUDRATE);
 		return DEFAULT_BAUDRATE;
 	}
 }
@@ -1626,7 +1608,7 @@ static void display_stat_response(void)
 	printf("--\n");
 	for (idx = 0; idx < total_events; ++idx) {
 		printf("%-18s %d\n", stat_resp[idx].event_name,
-				stat_resp[idx].event_count);
+		       stat_resp[idx].event_count);
 	}
 	printf("--\n");
 }
