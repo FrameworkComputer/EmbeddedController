@@ -12,40 +12,40 @@
 #define SPI_FLASH_SIZE(x) (1 << (x))
 
 /* SPI flash instructions */
-#define SPI_FLASH_WRITE_ENABLE		0x06
-#define SPI_FLASH_WRITE_DISABLE		0x04
-#define SPI_FLASH_READ_SR1		0x05
-#define SPI_FLASH_READ_SR2		0x35
-#define SPI_FLASH_WRITE_SR		0x01
-#define SPI_FLASH_ERASE_4KB		0x20
-#define SPI_FLASH_ERASE_32KB		0x52
-#define SPI_FLASH_ERASE_64KB		0xD8
-#define SPI_FLASH_ERASE_CHIP		0xC7
-#define SPI_FLASH_READ			0x03
-#define SPI_FLASH_PAGE_PRGRM		0x02
-#define SPI_FLASH_REL_PWRDWN		0xAB
-#define SPI_FLASH_MFR_DEV_ID		0x90
-#define SPI_FLASH_JEDEC_ID		0x9F
-#define SPI_FLASH_UNIQUE_ID		0x4B
-#define SPI_FLASH_SFDP			0x44
-#define SPI_FLASH_ERASE_SEC_REG		0x44
-#define SPI_FLASH_PRGRM_SEC_REG		0x42
-#define SPI_FLASH_READ_SEC_REG		0x48
-#define SPI_FLASH_ENABLE_RESET		0x66
-#define SPI_FLASH_RESET			0x99
+#define SPI_FLASH_WRITE_ENABLE 0x06
+#define SPI_FLASH_WRITE_DISABLE 0x04
+#define SPI_FLASH_READ_SR1 0x05
+#define SPI_FLASH_READ_SR2 0x35
+#define SPI_FLASH_WRITE_SR 0x01
+#define SPI_FLASH_ERASE_4KB 0x20
+#define SPI_FLASH_ERASE_32KB 0x52
+#define SPI_FLASH_ERASE_64KB 0xD8
+#define SPI_FLASH_ERASE_CHIP 0xC7
+#define SPI_FLASH_READ 0x03
+#define SPI_FLASH_PAGE_PRGRM 0x02
+#define SPI_FLASH_REL_PWRDWN 0xAB
+#define SPI_FLASH_MFR_DEV_ID 0x90
+#define SPI_FLASH_JEDEC_ID 0x9F
+#define SPI_FLASH_UNIQUE_ID 0x4B
+#define SPI_FLASH_SFDP 0x44
+#define SPI_FLASH_ERASE_SEC_REG 0x44
+#define SPI_FLASH_PRGRM_SEC_REG 0x42
+#define SPI_FLASH_READ_SEC_REG 0x48
+#define SPI_FLASH_ENABLE_RESET 0x66
+#define SPI_FLASH_RESET 0x99
 
 /* Maximum single write size (in bytes) for the W25Q64FV SPI flash */
-#define SPI_FLASH_MAX_WRITE_SIZE	256
+#define SPI_FLASH_MAX_WRITE_SIZE 256
 
 /*
  * Maximum message size (in bytes) for the W25Q64FV SPI flash
  * Instruction (1) + Address (3) + Data (256) = 260
  * Limited by chip maximum input length of write instruction
  */
-#define SPI_FLASH_MAX_MESSAGE_SIZE	(SPI_FLASH_MAX_WRITE_SIZE + 4)
+#define SPI_FLASH_MAX_MESSAGE_SIZE (SPI_FLASH_MAX_WRITE_SIZE + 4)
 
 /* Maximum single read size in bytes. Limited by size of the message buffer */
-#define SPI_FLASH_MAX_READ_SIZE		(SPI_FLASH_MAX_MESSAGE_SIZE - 4)
+#define SPI_FLASH_MAX_READ_SIZE (SPI_FLASH_MAX_MESSAGE_SIZE - 4)
 
 /* Status register write protect structure */
 enum spi_flash_wp {
@@ -120,7 +120,7 @@ int spi_flash_erase(unsigned int offset, unsigned int bytes);
  * @return EC_SUCCESS, or non-zero if any error.
  */
 int spi_flash_write(unsigned int offset, unsigned int bytes,
-	const uint8_t *data);
+		    const uint8_t *data);
 
 /**
  * Gets the SPI flash JEDEC ID (manufacturer ID, memory type, and capacity)
@@ -185,4 +185,4 @@ int spi_flash_check_protect(unsigned int offset, unsigned int bytes);
  */
 int spi_flash_set_protect(unsigned int offset, unsigned int bytes);
 
-#endif  /* __CROS_EC_SPI_FLASH_H */
+#endif /* __CROS_EC_SPI_FLASH_H */
