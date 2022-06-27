@@ -26,7 +26,7 @@ struct panic_test_fixture {
 
 static void *panic_test_setup(void)
 {
-	static struct panic_test_fixture panic_fixture = {0};
+	static struct panic_test_fixture panic_fixture = { 0 };
 
 	return &panic_fixture;
 }
