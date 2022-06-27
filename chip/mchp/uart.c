@@ -17,40 +17,40 @@
 #include "util.h"
 #include "tfdp_chip.h"
 
-#define TX_FIFO_SIZE	16
+#define TX_FIFO_SIZE 16
 
 BUILD_ASSERT((CONFIG_UART_CONSOLE >= 0) &&
 	     (CONFIG_UART_CONSOLE < MCHP_UART_INSTANCES));
 
 #if CONFIG_UART_CONSOLE == 2
 
-#define UART_IRQ		MCHP_IRQ_UART2
-#define UART_IRQ_BIT		MCHP_UART2_GIRQ_BIT
-#define UART_PCR		MCHP_PCR_UART2
-#define GPIO_UART_RX		GPIO_UART2_RX
+#define UART_IRQ MCHP_IRQ_UART2
+#define UART_IRQ_BIT MCHP_UART2_GIRQ_BIT
+#define UART_PCR MCHP_PCR_UART2
+#define GPIO_UART_RX GPIO_UART2_RX
 /* MEC152x only. UART2 RX Pin = GPIO 0145 GIRQ08 bit[5] */
-#define UART_RX_PIN_GIRQ	8
-#define UART_RX_PIN_BIT		BIT(5)
+#define UART_RX_PIN_GIRQ 8
+#define UART_RX_PIN_BIT BIT(5)
 
 #elif CONFIG_UART_CONSOLE == 1
 
-#define UART_IRQ		MCHP_IRQ_UART1
-#define UART_IRQ_BIT		MCHP_UART1_GIRQ_BIT
-#define UART_PCR		MCHP_PCR_UART1
-#define GPIO_UART_RX		GPIO_UART1_RX
+#define UART_IRQ MCHP_IRQ_UART1
+#define UART_IRQ_BIT MCHP_UART1_GIRQ_BIT
+#define UART_PCR MCHP_PCR_UART1
+#define GPIO_UART_RX GPIO_UART1_RX
 /* MEC152x and MEC170x UART1 RX Pin = GPIO 0171. GIRQ08 bit[25] */
-#define UART_RX_PIN_GIRQ	8
-#define UART_RX_PIN_BIT		BIT(25)
+#define UART_RX_PIN_GIRQ 8
+#define UART_RX_PIN_BIT BIT(25)
 
 #else
 
-#define UART_IRQ		MCHP_IRQ_UART0
-#define UART_IRQ_BIT		MCHP_UART0_GIRQ_BIT
-#define UART_PCR		MCHP_PCR_UART0
-#define GPIO_UART_RX		GPIO_UART0_RX
+#define UART_IRQ MCHP_IRQ_UART0
+#define UART_IRQ_BIT MCHP_UART0_GIRQ_BIT
+#define UART_PCR MCHP_PCR_UART0
+#define GPIO_UART_RX GPIO_UART0_RX
 /* MEC152x and MEC170x UART0 RX Pin = GPIO 0105. GIRQ09 bit[5] */
-#define UART_RX_PIN_GIRQ	9
-#define UART_RX_PIN_BIT		BIT(5)
+#define UART_RX_PIN_GIRQ 9
+#define UART_RX_PIN_BIT BIT(5)
 
 #endif /* CONFIG_UART_CONSOLE == 2 */
 
@@ -103,7 +103,7 @@ int uart_tx_ready(void)
 	 * this, we check transmit FIFO empty bit every 16 characters written.
 	 */
 	return tx_fifo_used != 0 ||
-		(MCHP_UART_LSR(CONFIG_UART_CONSOLE) & MCHP_LSR_TX_EMPTY);
+	       (MCHP_UART_LSR(CONFIG_UART_CONSOLE) & MCHP_LSR_TX_EMPTY);
 }
 
 int uart_tx_in_progress(void)
@@ -212,7 +212,7 @@ void uart_init(void)
 void uart_enter_dsleep(void)
 {
 	/* Disable the UART interrupt. */
-	task_disable_irq(UART_IRQ);  /* NVIC interrupt for UART=13 */
+	task_disable_irq(UART_IRQ); /* NVIC interrupt for UART=13 */
 
 	/*
 	 * Set the UART0 RX pin to be a GPIO-162(fixed pin) interrupt
@@ -232,7 +232,6 @@ void uart_enter_dsleep(void)
 	/* Enable GPIO interrupts on the UART0 RX pin. */
 	gpio_enable_interrupt(GPIO_UART_RX);
 }
-
 
 void uart_exit_dsleep(void)
 {
