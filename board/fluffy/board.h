@@ -29,13 +29,13 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_CONSOLE	0
-#define USB_IFACE_COUNT		1
+#define USB_IFACE_CONSOLE 0
+#define USB_IFACE_COUNT 1
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_CONSOLE		1
-#define USB_EP_COUNT		2
+#define USB_EP_CONTROL 0
+#define USB_EP_CONSOLE 1
+#define USB_EP_COUNT 2
 
 /* Optional features */
 #define CONFIG_STM_HWTIMER32
@@ -48,7 +48,7 @@
 
 /* Timer selection */
 #define TIM_CLOCK32 2
-#define TIM_ADC     3
+#define TIM_ADC 3
 
 #include "gpio_signal.h"
 
