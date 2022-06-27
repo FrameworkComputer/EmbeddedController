@@ -24,7 +24,7 @@
 #include "watchdog.h"
 
 /* Console output macro */
-#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SWITCH, format, ##args)
 
 struct button_state_t {
 	uint64_t debounce_time;
@@ -75,12 +75,12 @@ static int raw_button_pressed(const struct button_config *button)
 	int simulated_value = 0;
 	if (!(button->flags & BUTTON_FLAG_DISABLED)) {
 		if (IS_ENABLED(CONFIG_ADC_BUTTONS) &&
-			button_is_adc_detected(button->gpio)) {
-			physical_value =
-				adc_to_physical_value(button->gpio);
+		    button_is_adc_detected(button->gpio)) {
+			physical_value = adc_to_physical_value(button->gpio);
 		} else {
-			physical_value = (!!gpio_get_level(button->gpio) ==
-				!!(button->flags & BUTTON_FLAG_ACTIVE_HIGH));
+			physical_value =
+				(!!gpio_get_level(button->gpio) ==
+				 !!(button->flags & BUTTON_FLAG_ACTIVE_HIGH));
 		}
 #ifdef CONFIG_SIMULATED_BUTTON
 		simulated_value = simulated_button_pressed(button);
@@ -193,7 +193,7 @@ static int is_recovery_boot(void)
 	if (system_jumped_to_this_image())
 		return 0;
 	if (!(system_get_reset_flags() &
-	    (EC_RESET_FLAG_RESET_PIN | EC_RESET_FLAG_POWER_ON)))
+	      (EC_RESET_FLAG_RESET_PIN | EC_RESET_FLAG_POWER_ON)))
 		return 0;
 	if (!is_recovery_button_pressed())
 		return 0;
@@ -202,7 +202,7 @@ static int is_recovery_boot(void)
 #endif /* CONFIG_BUTTON_TRIGGERED_RECOVERY */
 
 static void button_reset(enum button button_type,
-	const struct button_config *button)
+			 const struct button_config *button)
 {
 	state[button_type].debounced_pressed = raw_button_pressed(button);
 	state[button_type].debounce_time = 0;
@@ -260,7 +260,6 @@ int button_disable_gpio(enum button button_type)
 }
 #endif
 
-
 /*
  * Handle debounced button changing state.
  */
@@ -308,15 +307,14 @@ static void button_change_deferred(void)
 					hook_call_deferred(
 						&debug_mode_handle_data, 0);
 #endif
-				CPRINTS("Button '%s' was %s",
-					buttons[i].name, new_pressed ?
-					"pressed" : "released");
+				CPRINTS("Button '%s' was %s", buttons[i].name,
+					new_pressed ? "pressed" : "released");
 				if (IS_ENABLED(CONFIG_MKBP_INPUT_DEVICES)) {
 					mkbp_button_update(buttons[i].type,
-								new_pressed);
+							   new_pressed);
 				} else if (IS_ENABLED(HAS_TASK_KEYPROTO)) {
 					keyboard_update_button(buttons[i].type,
-								new_pressed);
+							       new_pressed);
 				}
 			}
 
@@ -327,10 +325,11 @@ static void button_change_deferred(void)
 			 * Make sure the next deferred call happens on or before
 			 * each button needs it.
 			 */
-			soonest_debounce_time = (soonest_debounce_time == 0) ?
-				state[i].debounce_time :
-				MIN(soonest_debounce_time,
-				    state[i].debounce_time);
+			soonest_debounce_time =
+				(soonest_debounce_time == 0) ?
+					state[i].debounce_time :
+					MIN(soonest_debounce_time,
+					    state[i].debounce_time);
 		}
 	}
 
@@ -418,7 +417,7 @@ static void simulate_button(uint32_t button_mask, int press_ms)
 
 	/* Defer the button release for specified duration */
 	hook_call_deferred(&simulate_button_release_deferred_data,
-				press_ms * MSEC);
+			   press_ms * MSEC);
 }
 #endif /* #ifdef CONFIG_SIMULATED_BUTTON */
 
@@ -465,8 +464,7 @@ static int console_command_button(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(button, console_command_button,
-			"vup|vdown|rec msec",
+DECLARE_CONSOLE_COMMAND(button, console_command_button, "vup|vdown|rec msec",
 			"Simulate button press");
 #endif /* CONFIG_CMD_BUTTON */
 
@@ -493,7 +491,6 @@ static enum ec_status host_command_button(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_BUTTON, host_command_button, EC_VER_MASK(0));
 
 #endif /* CONFIG_HOSTCMD_BUTTON */
-
 
 #ifdef CONFIG_EMULATED_SYSRQ
 
@@ -546,10 +543,10 @@ enum debug_state {
 	STATE_WARM_RESET_EXEC,
 };
 
-#define DEBUG_BTN_POWER         BIT(0)
-#define DEBUG_BTN_VOL_UP        BIT(1)
-#define DEBUG_BTN_VOL_DN        BIT(2)
-#define DEBUG_TIMEOUT           (10 * SECOND)
+#define DEBUG_BTN_POWER BIT(0)
+#define DEBUG_BTN_VOL_UP BIT(1)
+#define DEBUG_BTN_VOL_DN BIT(2)
+#define DEBUG_TIMEOUT (10 * SECOND)
 
 static enum debug_state curr_debug_state = STATE_DEBUG_NONE;
 static enum debug_state next_debug_state = STATE_DEBUG_NONE;
@@ -721,8 +718,9 @@ static void debug_mode_handle(void)
 			 * Schedule a deferred call in case timeout hasn't
 			 * occurred yet.
 			 */
-			hook_call_deferred(&debug_mode_handle_data,
-					(debug_state_deadline.val - now.val));
+			hook_call_deferred(
+				&debug_mode_handle_data,
+				(debug_state_deadline.val - now.val));
 		}
 
 		break;
