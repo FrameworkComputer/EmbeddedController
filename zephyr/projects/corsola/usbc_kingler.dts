@@ -10,9 +10,6 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		/* TODO(b/227359727): kingler: convert USB-C configuration to
-		 * devicetree
-		 */
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
@@ -39,10 +36,20 @@
 				port = <&i2c_usb_c0>;
 				i2c-addr-flags = "NX20P3483_ADDR2_FLAGS";
 			};
+			usb-muxes = <&anx7447_mux_0 &virtual_mux_0>;
 			chg {
 				compatible = "intersil,isl923x";
 				status = "okay";
 				port = <&i2c_charger>;
+			};
+		};
+
+		port0-muxes {
+			anx7447_mux_0: anx7447-mux-0 {
+				compatible = "analogix,usbc-mux-anx7447";
+			};
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};
 
@@ -68,6 +75,19 @@
 				status = "okay";
 				port = <&i2c_usb_c1>;
 				i2c-addr-flags = "NX20P3483_ADDR2_FLAGS";
+			};
+			usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
+		};
+
+		port1-muxes {
+			ps8743_mux_1: ps8743-mux-1 {
+				compatible = "parade,ps8743";
+				port = <&i2c_usb_c1>;
+				i2c-addr-flags = "PS8743_I2C_ADDR0_FLAG";
+				board-init = "ps8743_mux_1_board_init";
+			};
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};
 	};
