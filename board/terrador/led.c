@@ -19,16 +19,16 @@ const enum ec_led_id supported_led_ids[] = {
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 struct pwm_led_color_map led_color_map[] = {
-				/* Green, Red, Blue */
-	[EC_LED_COLOR_GREEN] =  {    100,   0,    0 },
-	[EC_LED_COLOR_RED] =    {      0, 100,    0 },
-	[EC_LED_COLOR_BLUE] =   {      0,   0,  100 },
+	/* Green, Red, Blue */
+	[EC_LED_COLOR_GREEN] = { 100, 0, 0 },
+	[EC_LED_COLOR_RED] = { 0, 100, 0 },
+	[EC_LED_COLOR_BLUE] = { 0, 0, 100 },
 	/* The green LED seems to be brighter than the others, so turn down
 	 * green from its natural level for these secondary colors.
 	 */
-	[EC_LED_COLOR_YELLOW] = {     70, 100,    0 },
-	[EC_LED_COLOR_WHITE] =  {     70, 100,  100 },
-	[EC_LED_COLOR_AMBER] =  {     20, 100,    0 },
+	[EC_LED_COLOR_YELLOW] = { 70, 100, 0 },
+	[EC_LED_COLOR_WHITE] = { 70, 100, 100 },
+	[EC_LED_COLOR_AMBER] = { 20, 100, 0 },
 };
 
 struct pwm_led pwm_leds[] = {
