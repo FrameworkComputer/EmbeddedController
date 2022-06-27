@@ -63,8 +63,8 @@ static const struct ec_response_keybd_config banshee_kb_id2 = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	if (get_board_id() <= 1)
 		return &banshee_kb_id1;
@@ -81,20 +81,20 @@ __override const struct key {
 	uint8_t row;
 	uint8_t col;
 } vivaldi_keys[] = {
-	{.row = 3, .col = 5},	/* T1 */
-	{.row = 2, .col = 5},	/* T2 */
-	{.row = 6, .col = 4},	/* T3 */
-	{.row = 3, .col = 4},	/* T4 */
-	{.row = 4, .col = 10},	/* T5 */
-	{.row = 3, .col = 10},	/* T6 */
-	{.row = 2, .col = 10},	/* T7 */
-	{.row = 1, .col = 15},	/* T8 */
-	{.row = 3, .col = 11},	/* T9 */
-	{.row = 4, .col = 8},	/* T10 */
-	{.row = 6, .col = 8},	/* T11 */
-	{.row = 3, .col = 13},	/* T12 */
-	{.row = 3, .col = 5},	/* T13 */
-	{.row = 0, .col = 9},	/* T14 */
-	{.row = 0, .col = 11},	/* T15 */
+	{ .row = 3, .col = 5 }, /* T1 */
+	{ .row = 2, .col = 5 }, /* T2 */
+	{ .row = 6, .col = 4 }, /* T3 */
+	{ .row = 3, .col = 4 }, /* T4 */
+	{ .row = 4, .col = 10 }, /* T5 */
+	{ .row = 3, .col = 10 }, /* T6 */
+	{ .row = 2, .col = 10 }, /* T7 */
+	{ .row = 1, .col = 15 }, /* T8 */
+	{ .row = 3, .col = 11 }, /* T9 */
+	{ .row = 4, .col = 8 }, /* T10 */
+	{ .row = 6, .col = 8 }, /* T11 */
+	{ .row = 3, .col = 13 }, /* T12 */
+	{ .row = 3, .col = 5 }, /* T13 */
+	{ .row = 0, .col = 9 }, /* T14 */
+	{ .row = 0, .col = 11 }, /* T15 */
 };
 BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
