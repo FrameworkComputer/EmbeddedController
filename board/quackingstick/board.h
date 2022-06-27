@@ -13,7 +13,7 @@
 #define CONFIG_BUTTON_TRIGGERED_RECOVERY
 
 /* Internal SPI flash on NPCX7 */
-#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)  /* 512KB internal spi flash */
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024) /* 512KB internal spi flash */
 
 /* Save some flash space */
 #define CONFIG_LTO
@@ -26,7 +26,7 @@
 #undef CONFIG_CMD_TASK_RESET
 
 /* Battery */
-#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_FUEL_GAUGE
 #define CONFIG_BATTERY_VENDOR_PARAM
@@ -82,10 +82,7 @@ enum adc_channel {
 	ADC_CH_COUNT
 };
 
-enum temp_sensor_id {
-	TEMP_SENSOR_SYS2,
-	TEMP_SENSOR_COUNT
-};
+enum temp_sensor_id { TEMP_SENSOR_SYS2, TEMP_SENSOR_COUNT };
 
 /* Motion sensors */
 enum sensor_id {
@@ -94,10 +91,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_DISPLIGHT = 0,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_DISPLIGHT = 0, PWM_CH_COUNT };
 
 /* List of possible batteries */
 enum battery_type {
