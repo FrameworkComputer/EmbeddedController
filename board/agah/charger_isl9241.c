@@ -19,8 +19,8 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* Charger Chip Configuration */
 const struct charger_config_t chg_chips[] = {
@@ -96,7 +96,7 @@ static int board_disable_vbus_sink(int port)
 		 */
 		r = ppc_vbus_sink_enable(i, 0);
 		CPRINTS("%s to disable sink path C%d (%d).",
-			r ? "Failed" : "Succeeded", i,  r);
+			r ? "Failed" : "Succeeded", i, r);
 		rv |= r;
 	}
 
@@ -104,7 +104,7 @@ static int board_disable_vbus_sink(int port)
 }
 
 /* Minimum battery SoC required for switching source port. */
-#define MIN_BATT_FOR_SWITCHING_SOURCE_PORT	1
+#define MIN_BATT_FOR_SWITCHING_SOURCE_PORT 1
 
 /*
  * It should also work on POR with/without a battery:
@@ -201,12 +201,11 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 static const struct charge_port_info bj_power = {
@@ -216,7 +215,7 @@ static const struct charge_port_info bj_power = {
 };
 
 /* Debounce time for BJ plug/unplug */
-#define BJ_DEBOUNCE_MS		1000
+#define BJ_DEBOUNCE_MS 1000
 
 static void bj_connect_deferred(void)
 {
