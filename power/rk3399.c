@@ -30,46 +30,46 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* Input state flags */
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
-	#define IN_PGOOD_PP1250_S3   POWER_SIGNAL_MASK(PP1250_S3_PWR_GOOD)
-	#define IN_PGOOD_PP900_S0    POWER_SIGNAL_MASK(PP900_S0_PWR_GOOD)
+#define IN_PGOOD_PP1250_S3 POWER_SIGNAL_MASK(PP1250_S3_PWR_GOOD)
+#define IN_PGOOD_PP900_S0 POWER_SIGNAL_MASK(PP900_S0_PWR_GOOD)
 #else
-	#define IN_PGOOD_PP5000      POWER_SIGNAL_MASK(PP5000_PWR_GOOD)
-	#define IN_PGOOD_SYS         POWER_SIGNAL_MASK(SYS_PWR_GOOD)
+#define IN_PGOOD_PP5000 POWER_SIGNAL_MASK(PP5000_PWR_GOOD)
+#define IN_PGOOD_SYS POWER_SIGNAL_MASK(SYS_PWR_GOOD)
 #endif
 
-#define IN_PGOOD_AP            POWER_SIGNAL_MASK(AP_PWR_GOOD)
-#define IN_SUSPEND_DEASSERTED  POWER_SIGNAL_MASK(SUSPEND_DEASSERTED)
+#define IN_PGOOD_AP POWER_SIGNAL_MASK(AP_PWR_GOOD)
+#define IN_SUSPEND_DEASSERTED POWER_SIGNAL_MASK(SUSPEND_DEASSERTED)
 
 /* Rails requires for S3 and S0 */
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
-	#define IN_PGOOD_S3    (IN_PGOOD_PP1250_S3)
-	#define IN_PGOOD_S0    (IN_PGOOD_S3 | IN_PGOOD_PP900_S0 | IN_PGOOD_AP)
-	/* This board can optionally wake-on-USB in S3 */
-	#define S3_USB_WAKE
-	/* This board has non-INT power signal pins */
-	#define POWER_SIGNAL_POLLING
-	/* This board supports CR50 deep sleep mode */
-	#define CR50_DEEP_SLEEP
-	/*
-	 * If AP_PWR_GOOD assertion does not trigger an interrupt, poll the
-	 * signal every 5ms, up to 200 times (~ 1 second timeout).
-	 */
-	#define PGOOD_S0_POLL_TIMEOUT  (5 * MSEC)
-	#define PGOOD_S0_POLL_TRIES    200
+#define IN_PGOOD_S3 (IN_PGOOD_PP1250_S3)
+#define IN_PGOOD_S0 (IN_PGOOD_S3 | IN_PGOOD_PP900_S0 | IN_PGOOD_AP)
+/* This board can optionally wake-on-USB in S3 */
+#define S3_USB_WAKE
+/* This board has non-INT power signal pins */
+#define POWER_SIGNAL_POLLING
+/* This board supports CR50 deep sleep mode */
+#define CR50_DEEP_SLEEP
+/*
+ * If AP_PWR_GOOD assertion does not trigger an interrupt, poll the
+ * signal every 5ms, up to 200 times (~ 1 second timeout).
+ */
+#define PGOOD_S0_POLL_TIMEOUT (5 * MSEC)
+#define PGOOD_S0_POLL_TRIES 200
 #else
-	#define IN_PGOOD_S3    (IN_PGOOD_PP5000)
-	#define IN_PGOOD_S0    (IN_PGOOD_S3 | IN_PGOOD_AP | IN_PGOOD_SYS)
+#define IN_PGOOD_S3 (IN_PGOOD_PP5000)
+#define IN_PGOOD_S0 (IN_PGOOD_S3 | IN_PGOOD_AP | IN_PGOOD_SYS)
 #endif
 
 /* All inputs in the right state for S0 */
-#define IN_ALL_S0              (IN_PGOOD_S0 | IN_SUSPEND_DEASSERTED)
+#define IN_ALL_S0 (IN_PGOOD_S0 | IN_SUSPEND_DEASSERTED)
 
 /* Long power key press to force shutdown in S0 */
-#define FORCED_SHUTDOWN_DELAY  (8 * SECOND)
+#define FORCED_SHUTDOWN_DELAY (8 * SECOND)
 
 #define CHARGER_INITIALIZED_DELAY_MS 100
 #define CHARGER_INITIALIZED_TRIES 40
@@ -126,12 +126,9 @@ static const struct power_seq_op s3s0_power_seq[] = {
 };
 #else
 static const struct power_seq_op s3s0_power_seq[] = {
-	{ GPIO_PPVAR_CLOGIC_EN, 1, 2 },
-	{ GPIO_PP900_DDRPLL_EN, 1, 2 },
-	{ GPIO_PP1800_AP_AVDD_EN_L, 0, 2 },
-	{ GPIO_AP_CORE_EN, 1, 2 },
-	{ GPIO_PP1800_S0_EN_L, 0, 2 },
-	{ GPIO_PP3300_S0_EN_L, 0, 0 },
+	{ GPIO_PPVAR_CLOGIC_EN, 1, 2 },	    { GPIO_PP900_DDRPLL_EN, 1, 2 },
+	{ GPIO_PP1800_AP_AVDD_EN_L, 0, 2 }, { GPIO_AP_CORE_EN, 1, 2 },
+	{ GPIO_PP1800_S0_EN_L, 0, 2 },	    { GPIO_PP3300_S0_EN_L, 0, 0 },
 };
 #endif
 
@@ -151,12 +148,9 @@ static const struct power_seq_op s0s3_power_seq[] = {
 };
 #else
 static const struct power_seq_op s0s3_power_seq[] = {
-	{ GPIO_PP3300_S0_EN_L, 1, 20 },
-	{ GPIO_PP1800_S0_EN_L, 1, 1 },
-	{ GPIO_AP_CORE_EN, 0, 20 },
-	{ GPIO_PP1800_AP_AVDD_EN_L, 1, 1 },
-	{ GPIO_PP900_DDRPLL_EN, 0, 1 },
-	{ GPIO_PPVAR_CLOGIC_EN, 0, 0 },
+	{ GPIO_PP3300_S0_EN_L, 1, 20 }, { GPIO_PP1800_S0_EN_L, 1, 1 },
+	{ GPIO_AP_CORE_EN, 0, 20 },	{ GPIO_PP1800_AP_AVDD_EN_L, 1, 1 },
+	{ GPIO_PP900_DDRPLL_EN, 0, 1 }, { GPIO_PPVAR_CLOGIC_EN, 0, 0 },
 };
 #endif
 
@@ -173,28 +167,19 @@ static const struct power_seq_op s0s3_usb_wake_power_seq[] = {
 /* The power sequence for POWER_S3S5 */
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 static const struct power_seq_op s3s5_power_seq[] = {
-	{ GPIO_SYS_RST_L, 0, 0 },
-	{ GPIO_PP1250_S3_EN, 0, 2 },
-	{ GPIO_PP1800_S3_EN, 0, 2 },
-	{ GPIO_PP3300_S3_EN, 0, 2 },
+	{ GPIO_SYS_RST_L, 0, 0 },    { GPIO_PP1250_S3_EN, 0, 2 },
+	{ GPIO_PP1800_S3_EN, 0, 2 }, { GPIO_PP3300_S3_EN, 0, 2 },
 	{ GPIO_PP900_S3_EN, 0, 0 },
 };
 #else
 static const struct power_seq_op s3s5_power_seq[] = {
-	{ GPIO_PP1800_SENSOR_EN_L, 1, 0},
-	{ GPIO_PP1800_SIXAXIS_EN_L, 1, 0},
-	{ GPIO_PP1800_LID_EN_L, 1, 0 },
-	{ GPIO_PP3300_TRACKPAD_EN_L, 1, 0 },
-	{ GPIO_PP5000_EN, 0, 0 },
-	{ GPIO_PP3300_USB_EN_L, 1, 20 },
-	{ GPIO_PP1800_USB_EN_L, 1, 10 },
-	{ GPIO_LPDDR_PWR_EN, 0, 20 },
-	{ GPIO_PP1800_PMU_EN_L, 1, 2 },
-	{ GPIO_PP900_PLL_EN, 0, 0 },
-	{ GPIO_PP900_PMU_EN, 0, 0 },
-	{ GPIO_PP900_USB_EN, 0, 6 },
-	{ GPIO_PP900_PCIE_EN, 0, 0 },
-	{ GPIO_PP900_AP_EN, 0, 0 },
+	{ GPIO_PP1800_SENSOR_EN_L, 1, 0 }, { GPIO_PP1800_SIXAXIS_EN_L, 1, 0 },
+	{ GPIO_PP1800_LID_EN_L, 1, 0 },	   { GPIO_PP3300_TRACKPAD_EN_L, 1, 0 },
+	{ GPIO_PP5000_EN, 0, 0 },	   { GPIO_PP3300_USB_EN_L, 1, 20 },
+	{ GPIO_PP1800_USB_EN_L, 1, 10 },   { GPIO_LPDDR_PWR_EN, 0, 20 },
+	{ GPIO_PP1800_PMU_EN_L, 1, 2 },	   { GPIO_PP900_PLL_EN, 0, 0 },
+	{ GPIO_PP900_PMU_EN, 0, 0 },	   { GPIO_PP900_USB_EN, 0, 6 },
+	{ GPIO_PP900_PCIE_EN, 0, 0 },	   { GPIO_PP900_AP_EN, 0, 0 },
 	{ GPIO_PPVAR_LOGIC_EN, 0, 0 },
 };
 #endif
@@ -268,18 +253,18 @@ DECLARE_DEFERRED(force_shutdown);
  * power sequencing, and immediately transition out of suspend if necessary.
  */
 #define SLEEP_INTERVAL_MS 5
-#define MSLEEP_CHECK_ABORTED_SUSPEND(msec) \
-	do { \
-		int sleep_remain = msec; \
-		do { \
-			msleep(MIN(sleep_remain, SLEEP_INTERVAL_MS)); \
-			sleep_remain -= SLEEP_INTERVAL_MS; \
-			if (!forcing_shutdown && \
-			    power_get_signals() & IN_SUSPEND_DEASSERTED)  { \
-				CPRINTS("suspend aborted"); \
-				return POWER_S3S0; \
-			} \
-		} while (sleep_remain > 0); \
+#define MSLEEP_CHECK_ABORTED_SUSPEND(msec)                                 \
+	do {                                                               \
+		int sleep_remain = msec;                                   \
+		do {                                                       \
+			msleep(MIN(sleep_remain, SLEEP_INTERVAL_MS));      \
+			sleep_remain -= SLEEP_INTERVAL_MS;                 \
+			if (!forcing_shutdown &&                           \
+			    power_get_signals() & IN_SUSPEND_DEASSERTED) { \
+				CPRINTS("suspend aborted");                \
+				return POWER_S3S0;                         \
+			}                                                  \
+		} while (sleep_remain > 0);                                \
 	} while (0)
 BUILD_ASSERT(POWER_S3S0 != 0);
 
@@ -295,15 +280,14 @@ static int power_seq_run(const struct power_seq_op *power_seq_ops, int op_count)
 	int i;
 
 	for (i = 0; i < op_count; i++) {
-		gpio_set_level(power_seq_ops[i].signal,
-			       power_seq_ops[i].level);
+		gpio_set_level(power_seq_ops[i].signal, power_seq_ops[i].level);
 		if (!power_seq_ops[i].delay)
 			continue;
 		if ((power_seq_ops == s0s3_power_seq)
 #ifdef S3_USB_WAKE
 		    || (power_seq_ops == s0s3_usb_wake_power_seq)
 #endif
-		   )
+		)
 			MSLEEP_CHECK_ABORTED_SUSPEND(power_seq_ops[i].delay);
 		else
 			msleep(power_seq_ops[i].delay);
@@ -340,8 +324,7 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0:
-		if (!power_has_signals(IN_PGOOD_S3) ||
-		    forcing_shutdown ||
+		if (!power_has_signals(IN_PGOOD_S3) || forcing_shutdown ||
 		    !(power_get_signals() & IN_SUSPEND_DEASSERTED))
 			return POWER_S0S3;
 
@@ -353,16 +336,15 @@ enum power_state power_handle_state(enum power_state state)
 		 * it here as well.
 		 */
 		if (power_wait_signals_timeout(IN_PGOOD_AP | IN_PGOOD_SYS,
-					       PGOOD_AP_DEBOUNCE_TIMEOUT)
-					       == EC_ERROR_TIMEOUT)
+					       PGOOD_AP_DEBOUNCE_TIMEOUT) ==
+		    EC_ERROR_TIMEOUT)
 			return POWER_S0S3;
 
 		/*
 		 * power_wait_signals_timeout() can block and consume task
 		 * wake events, so re-verify the state of the world.
 		 */
-		if (!power_has_signals(IN_PGOOD_S3) ||
-		    forcing_shutdown ||
+		if (!power_has_signals(IN_PGOOD_S3) || forcing_shutdown ||
 		    !(power_get_signals() & IN_SUSPEND_DEASSERTED))
 			return POWER_S0S3;
 #endif
@@ -444,7 +426,8 @@ enum power_state power_handle_state(enum power_state state)
 		 * interrupt.
 		 */
 		while (power_wait_signals_timeout(IN_PGOOD_S0,
-		       PGOOD_S0_POLL_TIMEOUT) == EC_ERROR_TIMEOUT &&
+						  PGOOD_S0_POLL_TIMEOUT) ==
+			       EC_ERROR_TIMEOUT &&
 		       ++tries < PGOOD_S0_POLL_TRIES)
 			;
 
@@ -553,8 +536,7 @@ static void power_button_changed(void)
 #endif
 		}
 		/* Delayed power down from S0/S3, cancel on PB release */
-		hook_call_deferred(&force_shutdown_data,
-				   FORCED_SHUTDOWN_DELAY);
+		hook_call_deferred(&force_shutdown_data, FORCED_SHUTDOWN_DELAY);
 	} else {
 #if CONFIG_CHIPSET_POWER_SEQ_VERSION == 1
 		if (tablet_boot_on_button_release) {
