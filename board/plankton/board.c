@@ -78,14 +78,12 @@ void hpd_lvl_deferred(void)
 		/* Configure redriver's back side */
 		if (level)
 			sn75dp130_dpcd_init();
-
 	}
 
 	/* Send queued IRQ if the cable is attached */
 	if (hpd_possible_irq && level && dp_mode)
 		pd_send_hpd(0, hpd_irq);
 	hpd_possible_irq = 0;
-
 }
 DECLARE_DEFERRED(hpd_lvl_deferred);
 
@@ -103,8 +101,7 @@ void hpd_event(enum gpio_signal signal)
 	hpd_prev_ts = now.val;
 
 	/* All previous hpd level events need to be re-triggered */
-	hook_call_deferred(&hpd_lvl_deferred_data,
-			   HPD_USTREAM_DEBOUNCE_LVL);
+	hook_call_deferred(&hpd_lvl_deferred_data, HPD_USTREAM_DEBOUNCE_LVL);
 }
 
 /* Debounce time for voltage buttons */
@@ -134,8 +131,7 @@ enum usbc_action {
 	USBC_ACT_COUNT
 };
 
-enum board_src_cap src_cap_mapping[USBC_ACT_COUNT] =
-{
+enum board_src_cap src_cap_mapping[USBC_ACT_COUNT] = {
 	[USBC_ACT_5V_TO_DUT] = SRC_CAP_5V,
 	[USBC_ACT_12V_TO_DUT] = SRC_CAP_12V,
 	[USBC_ACT_20V_TO_DUT] = SRC_CAP_20V,
@@ -155,21 +151,21 @@ static void set_active_cc(int cc)
 	 * disabled then only set the active CC line.
 	 */
 	/* Pull-up on CC2 */
-	gpio_set_flags(GPIO_USBC_CC2_HOST,
-		       ((cc || drp_enable) && host_mode) ?
-		       GPIO_OUT_HIGH : GPIO_INPUT);
+	gpio_set_flags(GPIO_USBC_CC2_HOST, ((cc || drp_enable) && host_mode) ?
+						   GPIO_OUT_HIGH :
+						   GPIO_INPUT);
 	/* Pull-down on CC2 */
 	gpio_set_flags(GPIO_USBC_CC2_DEVICE_ODL,
-		       ((cc || drp_enable) && !host_mode) ?
-		       GPIO_OUT_LOW : GPIO_INPUT);
+		       ((cc || drp_enable) && !host_mode) ? GPIO_OUT_LOW :
+							    GPIO_INPUT);
 	/* Pull-up on CC1 */
-	gpio_set_flags(GPIO_USBC_CC1_HOST,
-		       ((!cc || drp_enable) && host_mode) ?
-		       GPIO_OUT_HIGH : GPIO_INPUT);
+	gpio_set_flags(GPIO_USBC_CC1_HOST, ((!cc || drp_enable) && host_mode) ?
+						   GPIO_OUT_HIGH :
+						   GPIO_INPUT);
 	/* Pull-down on CC1 */
 	gpio_set_flags(GPIO_USBC_CC1_DEVICE_ODL,
-		       ((!cc || drp_enable) && !host_mode) ?
-		       GPIO_OUT_LOW : GPIO_INPUT);
+		       ((!cc || drp_enable) && !host_mode) ? GPIO_OUT_LOW :
+							     GPIO_INPUT);
 }
 
 /**
@@ -221,7 +217,7 @@ static void fake_disconnect_end(void)
 	board_pd_set_host_mode(fake_pd_host_mode);
 
 	/* Restart CC cable detection */
-	hook_call_deferred(&detect_cc_cable_data, 500*MSEC);
+	hook_call_deferred(&detect_cc_cable_data, 500 * MSEC);
 }
 DECLARE_DEFERRED(fake_disconnect_end);
 
@@ -361,10 +357,10 @@ static void set_usbc_action(enum usbc_action act)
 		gpio_set_level(GPIO_CASE_CLOSE_EN, 1);
 		gpio_set_level(GPIO_CASE_CLOSE_DFU_L, 1);
 		break;
-	case  USBC_ACT_DRP_TOGGLE:
+	case USBC_ACT_DRP_TOGGLE:
 		/* Toggle dualrole mode setting. */
-		update_usbc_dual_role(drp_enable ?
-				      PD_DRP_TOGGLE_OFF : PD_DRP_TOGGLE_ON);
+		update_usbc_dual_role(drp_enable ? PD_DRP_TOGGLE_OFF :
+						   PD_DRP_TOGGLE_ON);
 		break;
 	default:
 		break;
@@ -424,8 +420,8 @@ static void button_deferred(void)
 		break;
 	}
 
-	ccprintf("Button %d = %d\n",
-		 button_pressed, gpio_get_level(button_pressed));
+	ccprintf("Button %d = %d\n", button_pressed,
+		 gpio_get_level(button_pressed));
 }
 DECLARE_DEFERRED(button_deferred);
 
@@ -453,20 +449,18 @@ void vbus_event(enum gpio_signal signal)
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
-	[ADC_CH_CC1_PD] = {"CC1_PD", 3300, 4096, 0, STM32_AIN(0)},
-	[ADC_CH_CC2_PD] = {"CC2_PD", 3300, 4096, 0, STM32_AIN(4)},
+	[ADC_CH_CC1_PD] = { "CC1_PD", 3300, 4096, 0, STM32_AIN(0) },
+	[ADC_CH_CC2_PD] = { "CC2_PD", 3300, 4096, 0, STM32_AIN(4) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "master",
-		.port = I2C_PORT_MASTER,
-		.kbps = 100,
-		.scl  = GPIO_MASTER_I2C_SCL,
-		.sda  = GPIO_MASTER_I2C_SDA
-	},
+	{ .name = "master",
+	  .port = I2C_PORT_MASTER,
+	  .kbps = 100,
+	  .scl = GPIO_MASTER_I2C_SCL,
+	  .sda = GPIO_MASTER_I2C_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -476,12 +470,12 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
  * Pin number for active-high reset from PCA9534 to CMOS pull-down to
  * SN75DP130's RSTN (active-low)
  */
-#define REDRIVER_RST_PIN  0x1
+#define REDRIVER_RST_PIN 0x1
 
 static int sn75dp130_i2c_write(uint8_t index, uint8_t value)
 {
-	return i2c_write8(I2C_PORT_MASTER, SN75DP130_I2C_ADDR_FLAGS,
-			  index, value);
+	return i2c_write8(I2C_PORT_MASTER, SN75DP130_I2C_ADDR_FLAGS, index,
+			  value);
 }
 
 /**
@@ -494,17 +488,15 @@ static int sn75dp130_reset(void)
 {
 	int rv;
 
-	rv = pca9534_config_pin(I2C_PORT_MASTER, 0x20,
-				REDRIVER_RST_PIN, PCA9534_OUTPUT);
+	rv = pca9534_config_pin(I2C_PORT_MASTER, 0x20, REDRIVER_RST_PIN,
+				PCA9534_OUTPUT);
 	/* Assert (its active high) */
-	rv |= pca9534_set_level(I2C_PORT_MASTER, 0x20,
-				REDRIVER_RST_PIN, 1);
+	rv |= pca9534_set_level(I2C_PORT_MASTER, 0x20, REDRIVER_RST_PIN, 1);
 	/* datasheet recommends > 100usec */
 	usleep(200);
 
 	/* De-assert */
-	rv |= pca9534_set_level(I2C_PORT_MASTER, 0x20,
-				REDRIVER_RST_PIN, 0);
+	rv |= pca9534_set_level(I2C_PORT_MASTER, 0x20, REDRIVER_RST_PIN, 0);
 	/* datasheet recommends > 400msec */
 	usleep(450 * MSEC);
 	return rv;
@@ -600,12 +592,10 @@ int board_in_hub_mode(void)
 	int ret;
 	int level;
 
-	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x20,
-				 6, PCA9534_INPUT);
+	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x20, 6, PCA9534_INPUT);
 	if (ret)
 		return -1;
-	ret = pca9534_get_level(I2C_PORT_MASTER, 0x20,
-				6, &level);
+	ret = pca9534_get_level(I2C_PORT_MASTER, 0x20, 6, &level);
 	if (ret)
 		return -1;
 	return level;
@@ -615,17 +605,14 @@ static int board_usb_hub_reset(void)
 {
 	int ret;
 
-	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x20,
-				 7, PCA9534_OUTPUT);
+	ret = pca9534_config_pin(I2C_PORT_MASTER, 0x20, 7, PCA9534_OUTPUT);
 	if (ret)
 		return ret;
-	ret = pca9534_set_level(I2C_PORT_MASTER, 0x20,
-				7, 0);
+	ret = pca9534_set_level(I2C_PORT_MASTER, 0x20, 7, 0);
 	if (ret)
 		return ret;
 	usleep(100 * MSEC);
-	return pca9534_set_level(I2C_PORT_MASTER, 0x20,
-				 7, 1);
+	return pca9534_set_level(I2C_PORT_MASTER, 0x20, 7, 1);
 }
 
 void board_maybe_reset_usb_hub(void)
@@ -638,8 +625,7 @@ static int cmd_usb_hub_reset(int argc, char *argv[])
 {
 	return board_usb_hub_reset();
 }
-DECLARE_CONSOLE_COMMAND(hub_reset, cmd_usb_hub_reset,
-			NULL, "Reset USB hub");
+DECLARE_CONSOLE_COMMAND(hub_reset, cmd_usb_hub_reset, NULL, "Reset USB hub");
 
 static void board_usb_hub_reset_no_return(void)
 {
@@ -668,7 +654,7 @@ int board_fake_pd_adc_read(int cc)
 			 * on other CC line. */
 			if (active_cc == cc)
 				return adc_read_channel(cc ? ADC_CH_CC2_PD :
-							ADC_CH_CC1_PD);
+							     ADC_CH_CC1_PD);
 			else
 				return host_mode ? 3000 : 0;
 		}
@@ -776,8 +762,8 @@ static int cmd_fake_disconnect(int argc, char *argv[])
 	fake_pd_disconnect_duration_us = duration_ms * MSEC;
 	hook_call_deferred(&fake_disconnect_start_data, delay_ms * MSEC);
 
-	ccprintf("Fake disconnect for %d ms starting in %d ms.\n",
-		 duration_ms, delay_ms);
+	ccprintf("Fake disconnect for %d ms starting in %d ms.\n", duration_ms,
+		 delay_ms);
 
 	return EC_SUCCESS;
 }
