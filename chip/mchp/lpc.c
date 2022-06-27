@@ -27,23 +27,22 @@
 /* Console output macros */
 #ifdef CONFIG_MCHP_DEBUG_LPC
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 #else
 #define CPUTS(...)
 #define CPRINTS(...)
 #endif
 
-static uint8_t
-mem_mapped[0x200] __attribute__((section(".bss.big_align")));
+static uint8_t mem_mapped[0x200] __attribute__((section(".bss.big_align")));
 
 static struct host_packet lpc_packet;
 static struct host_cmd_handler_args host_cmd_args;
-static uint8_t host_cmd_flags;   /* Flags from host command */
+static uint8_t host_cmd_flags; /* Flags from host command */
 
 static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __aligned(4);
 static int init_done;
 
-static struct ec_lpc_host_args * const lpc_host_args =
+static struct ec_lpc_host_args *const lpc_host_args =
 	(struct ec_lpc_host_args *)mem_mapped;
 
 #ifdef CONFIG_BOARD_ID_CMD_ACPI_EC1
@@ -51,7 +50,6 @@ static uint8_t custom_acpi_cmd;
 static uint8_t custom_acpi_ec2os_cnt;
 static uint8_t custom_apci_ec2os[4];
 #endif
-
 
 static void keyboard_irq_assert(void)
 {
@@ -142,7 +140,6 @@ static uint8_t *lpc_get_hostcmd_data_range(void)
 	return mem_mapped;
 }
 
-
 /**
  * Update the host event status.
  *
@@ -182,7 +179,7 @@ void lpc_update_host_event_status(void)
 
 	/* Copy host events to mapped memory */
 	*(uint32_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
-			lpc_get_host_events();
+		lpc_get_host_events();
 
 	task_enable_irq(MCHP_IRQ_ACPIEC0_IBF);
 
@@ -216,15 +213,13 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	}
 
 	/* New-style response */
-	lpc_host_args->flags =
-		(host_cmd_flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
-			EC_HOST_ARGS_FLAG_TO_HOST;
+	lpc_host_args->flags = (host_cmd_flags & ~EC_HOST_ARGS_FLAG_FROM_HOST) |
+			       EC_HOST_ARGS_FLAG_TO_HOST;
 
 	lpc_host_args->data_size = size;
 
 	csum = args->command + lpc_host_args->flags +
-			lpc_host_args->command_version +
-			lpc_host_args->data_size;
+	       lpc_host_args->command_version + lpc_host_args->data_size;
 
 	for (i = 0, out = (uint8_t *)args->response; i < size; i++, out++)
 		csum += *out;
@@ -243,9 +238,7 @@ static void lpc_send_response(struct host_cmd_handler_args *args)
 	 * sticky status in interrupt aggregator.
 	 */
 	MCHP_ACPI_EC_STATUS(1) &= ~EC_LPC_STATUS_PROCESSING;
-	MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) =
-				MCHP_ACPI_EC_IBF_GIRQ_BIT(1);
-
+	MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) = MCHP_ACPI_EC_IBF_GIRQ_BIT(1);
 }
 
 static void lpc_send_response_packet(struct host_packet *pkt)
@@ -265,8 +258,7 @@ static void lpc_send_response_packet(struct host_packet *pkt)
 
 	/* Clear the busy bit, so the host knows the EC is done. */
 	MCHP_ACPI_EC_STATUS(1) &= ~EC_LPC_STATUS_PROCESSING;
-	MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) =
-				MCHP_ACPI_EC_IBF_GIRQ_BIT(1);
+	MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) = MCHP_ACPI_EC_IBF_GIRQ_BIT(1);
 }
 
 uint8_t *lpc_get_memmap_range(void)
@@ -283,10 +275,8 @@ void lpc_mem_mapped_init(void)
 }
 
 const int acpi_ec_pcr_slp[] = {
-	MCHP_PCR_ACPI_EC0,
-	MCHP_PCR_ACPI_EC1,
-	MCHP_PCR_ACPI_EC2,
-	MCHP_PCR_ACPI_EC3,
+	MCHP_PCR_ACPI_EC0, MCHP_PCR_ACPI_EC1,
+	MCHP_PCR_ACPI_EC2, MCHP_PCR_ACPI_EC3,
 #ifndef CHIP_FAMILY_MEC152X
 	MCHP_PCR_ACPI_EC4,
 #endif
@@ -294,10 +284,8 @@ const int acpi_ec_pcr_slp[] = {
 BUILD_ASSERT(ARRAY_SIZE(acpi_ec_pcr_slp) == MCHP_ACPI_EC_INSTANCES);
 
 const int acpi_ec_nvic_ibf[] = {
-	MCHP_IRQ_ACPIEC0_IBF,
-	MCHP_IRQ_ACPIEC1_IBF,
-	MCHP_IRQ_ACPIEC2_IBF,
-	MCHP_IRQ_ACPIEC3_IBF,
+	MCHP_IRQ_ACPIEC0_IBF, MCHP_IRQ_ACPIEC1_IBF,
+	MCHP_IRQ_ACPIEC2_IBF, MCHP_IRQ_ACPIEC3_IBF,
 #ifndef CHIP_FAMILY_MEC152X
 	MCHP_IRQ_ACPIEC4_IBF,
 #endif
@@ -306,10 +294,8 @@ BUILD_ASSERT(ARRAY_SIZE(acpi_ec_nvic_ibf) == MCHP_ACPI_EC_INSTANCES);
 
 #ifdef CONFIG_HOST_INTERFACE_ESPI
 const int acpi_ec_espi_bar_id[] = {
-	MCHP_ESPI_IO_BAR_ID_ACPI_EC0,
-	MCHP_ESPI_IO_BAR_ID_ACPI_EC1,
-	MCHP_ESPI_IO_BAR_ID_ACPI_EC2,
-	MCHP_ESPI_IO_BAR_ID_ACPI_EC3,
+	MCHP_ESPI_IO_BAR_ID_ACPI_EC0, MCHP_ESPI_IO_BAR_ID_ACPI_EC1,
+	MCHP_ESPI_IO_BAR_ID_ACPI_EC2, MCHP_ESPI_IO_BAR_ID_ACPI_EC3,
 #ifndef CHIP_FAMILY_MEC152X
 	MCHP_ESPI_IO_BAR_ID_ACPI_EC4,
 #endif
@@ -327,17 +313,15 @@ void chip_acpi_ec_config(int instance, uint32_t io_base, uint8_t mask)
 	MCHP_PCR_SLP_DIS_DEV(acpi_ec_pcr_slp[instance]);
 
 #ifdef CONFIG_HOST_INTERFACE_ESPI
-	MCHP_ESPI_IO_BAR_CTL_MASK(acpi_ec_espi_bar_id[instance]) =
-			mask;
+	MCHP_ESPI_IO_BAR_CTL_MASK(acpi_ec_espi_bar_id[instance]) = mask;
 	MCHP_ESPI_IO_BAR(acpi_ec_espi_bar_id[instance]) =
-			(io_base << 16) + 0x01ul;
+		(io_base << 16) + 0x01ul;
 #else
-	MCHP_LPC_ACPI_EC_BAR(instance) = (io_base << 16) +
-		(1ul << 15) + mask;
+	MCHP_LPC_ACPI_EC_BAR(instance) = (io_base << 16) + (1ul << 15) + mask;
 #endif
 	MCHP_ACPI_EC_STATUS(instance) &= ~EC_LPC_STATUS_PROCESSING;
 	MCHP_INT_ENABLE(MCHP_ACPI_EC_GIRQ) =
-			MCHP_ACPI_EC_IBF_GIRQ_BIT(instance);
+		MCHP_ACPI_EC_IBF_GIRQ_BIT(instance);
 	task_enable_irq(acpi_ec_nvic_ibf[instance]);
 }
 
@@ -352,8 +336,7 @@ void chip_8042_config(uint32_t io_base)
 
 #ifdef CONFIG_HOST_INTERFACE_ESPI
 	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_ID_8042) = 0x04;
-	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_8042) =
-			(io_base << 16) + 0x01ul;
+	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_8042) = (io_base << 16) + 0x01ul;
 #else
 	/* Set up 8042 interface at 0x60/0x64 */
 	MCHP_LPC_8042_BAR = (io_base << 16) + (1ul << 15);
@@ -363,8 +346,8 @@ void chip_8042_config(uint32_t io_base)
 
 	MCHP_8042_ACT |= 1;
 
-	MCHP_INT_ENABLE(MCHP_8042_GIRQ) = MCHP_8042_OBE_GIRQ_BIT +
-			MCHP_8042_IBF_GIRQ_BIT;
+	MCHP_INT_ENABLE(MCHP_8042_GIRQ) =
+		MCHP_8042_OBE_GIRQ_BIT + MCHP_8042_IBF_GIRQ_BIT;
 
 	task_enable_irq(MCHP_IRQ_8042EM_IBF);
 	task_enable_irq(MCHP_IRQ_8042EM_OBE);
@@ -394,8 +377,7 @@ void chip_emi0_config(uint32_t io_base)
 {
 #ifdef CONFIG_HOST_INTERFACE_ESPI
 	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_ID_EMI0) = 0x0F;
-	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_EMI0) =
-			(io_base << 16) + 0x01ul;
+	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_ID_EMI0) = (io_base << 16) + 0x01ul;
 #else
 	MCHP_LPC_EMI0_BAR = (io_base << 16) + (1ul << 15);
 #endif
@@ -431,27 +413,23 @@ void chip_port80_config(uint32_t io_base)
 
 	/* Last: Enable Host access via eSPI IO BAR */
 	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_BDP0) = 0x00;
-	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_BDP0) =
-			(io_base << 16) + 0x01ul;
+	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_BDP0) = (io_base << 16) + 0x01ul;
 }
 #else
 void chip_port80_config(uint32_t io_base)
 {
 	MCHP_PCR_SLP_DIS_DEV(MCHP_PCR_P80CAP0);
 
-	MCHP_P80_CFG(0) = MCHP_P80_FLUSH_FIFO_WO +
-			MCHP_P80_RESET_TIMESTAMP_WO;
+	MCHP_P80_CFG(0) = MCHP_P80_FLUSH_FIFO_WO + MCHP_P80_RESET_TIMESTAMP_WO;
 
 #ifdef CONFIG_HOST_INTERFACE_ESPI
 	MCHP_ESPI_IO_BAR_CTL_MASK(MCHP_ESPI_IO_BAR_P80_0) = 0x00;
-	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_P80_0) =
-			(io_base << 16) + 0x01ul;
+	MCHP_ESPI_IO_BAR(MCHP_ESPI_IO_BAR_P80_0) = (io_base << 16) + 0x01ul;
 #else
 	MCHP_LPC_P80DBG0_BAR = (io_base << 16) + (1ul << 15);
 #endif
-	MCHP_P80_CFG(0) = MCHP_P80_FIFO_THRHOLD_14 +
-			MCHP_P80_TIMEBASE_1500KHZ +
-			MCHP_P80_TIMER_ENABLE;
+	MCHP_P80_CFG(0) = MCHP_P80_FIFO_THRHOLD_14 + MCHP_P80_TIMEBASE_1500KHZ +
+			  MCHP_P80_TIMER_ENABLE;
 
 	MCHP_P80_ACTIVATE(0) = 1;
 
@@ -541,9 +519,9 @@ static void lpc_init(void)
 	 * NOTE: EMI doesn't have a sleep enable.
 	 */
 	MCHP_PCR_SLP_DIS_DEV_MASK(2, MCHP_PCR_SLP_EN2_GCFG +
-		MCHP_PCR_SLP_EN2_ACPI_EC0 +
-		MCHP_PCR_SLP_EN2_ACPI_EC0 +
-		MCHP_PCR_SLP_EN2_MIF8042);
+					     MCHP_PCR_SLP_EN2_ACPI_EC0 +
+					     MCHP_PCR_SLP_EN2_ACPI_EC0 +
+					     MCHP_PCR_SLP_EN2_MIF8042);
 
 #ifdef CONFIG_HOST_INTERFACE_ESPI
 
@@ -574,8 +552,7 @@ static void lpc_init(void)
 	 * clock stop and there are no pending SERIRQ
 	 * or LPC DMA.
 	 */
-	MCHP_LPC_EC_CLK_CTRL =
-		(MCHP_LPC_EC_CLK_CTRL & ~(0x03ul)) | 0x01ul;
+	MCHP_LPC_EC_CLK_CTRL = (MCHP_LPC_EC_CLK_CTRL & ~(0x03ul)) | 0x01ul;
 
 	setup_lpc();
 #endif
@@ -635,8 +612,7 @@ void lpcrst_interrupt(enum gpio_signal signal)
 #endif
 	}
 #ifdef CONFIG_MCHP_DEBUG_LPC
-	CPRINTS("LPC RESET# %sasserted",
-		lpc_get_pltrst_asserted() ? "" : "de");
+	CPRINTS("LPC RESET# %sasserted", lpc_get_pltrst_asserted() ? "" : "de");
 #endif
 #endif
 }
@@ -688,8 +664,7 @@ int port_80_read(void)
  * Some chipset CoreBoot will send read board ID command expecting
  * a two byte response.
  */
-static int acpi_ec0_custom(int is_cmd, uint8_t value,
-		uint8_t *resultptr)
+static int acpi_ec0_custom(int is_cmd, uint8_t value, uint8_t *resultptr)
 {
 	int rval;
 
@@ -699,7 +674,7 @@ static int acpi_ec0_custom(int is_cmd, uint8_t value,
 
 	if (is_cmd && (value == 0x0d)) {
 		MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) =
-				MCHP_ACPI_EC_OBE_GIRQ_BIT(0);
+			MCHP_ACPI_EC_OBE_GIRQ_BIT(0);
 		/* Write two bytes sequence 0xC2, 0x04 to Host */
 		if (MCHP_ACPI_EC_BYTE_CTL(0) & 0x01) {
 			/* Host enabled 4-byte mode */
@@ -715,7 +690,7 @@ static int acpi_ec0_custom(int is_cmd, uint8_t value,
 			custom_apci_ec2os[0] = 0x04;
 			MCHP_ACPI_EC_EC2OS(0, 0) = 0x02;
 			MCHP_INT_ENABLE(MCHP_ACPI_EC_GIRQ) =
-					MCHP_ACPI_EC_OBE_GIRQ_BIT(0);
+				MCHP_ACPI_EC_OBE_GIRQ_BIT(0);
 			task_enable_irq(MCHP_IRQ_ACPIEC0_OBE);
 		}
 		custom_acpi_cmd = 0;
@@ -754,8 +729,7 @@ static void acpi_0_interrupt(void)
 	MCHP_ACPI_EC_STATUS(0) &= ~EC_LPC_STATUS_PROCESSING;
 
 	/* Clear R/W1C status bit in Aggregator */
-	MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) =
-			MCHP_ACPI_EC_IBF_GIRQ_BIT(0);
+	MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) = MCHP_ACPI_EC_IBF_GIRQ_BIT(0);
 
 	/*
 	 * ACPI 5.0-12.6.1: Generate SCI for Input Buffer Empty /
@@ -775,8 +749,7 @@ static void acpi_0_obe_isr(void)
 {
 	uint8_t sts, data;
 
-	MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) =
-			MCHP_ACPI_EC_OBE_GIRQ_BIT(0);
+	MCHP_INT_SOURCE(MCHP_ACPI_EC_GIRQ) = MCHP_ACPI_EC_OBE_GIRQ_BIT(0);
 
 	sts = MCHP_ACPI_EC_STATUS(0);
 	data = MCHP_ACPI_EC_BYTE_CTL(0);
@@ -788,7 +761,7 @@ static void acpi_0_obe_isr(void)
 
 	if (custom_acpi_ec2os_cnt == 0) { /* was last byte? */
 		MCHP_INT_DISABLE(MCHP_ACPI_EC_GIRQ) =
-				MCHP_ACPI_EC_OBE_GIRQ_BIT(0);
+			MCHP_ACPI_EC_OBE_GIRQ_BIT(0);
 	}
 
 	lpc_generate_sci();
@@ -800,8 +773,7 @@ static void acpi_1_interrupt(void)
 {
 	uint8_t st = MCHP_ACPI_EC_STATUS(1);
 
-	if (!(st & EC_LPC_STATUS_FROM_HOST) ||
-	    !(st & EC_LPC_STATUS_LAST_CMD))
+	if (!(st & EC_LPC_STATUS_FROM_HOST) || !(st & EC_LPC_STATUS_LAST_CMD))
 		return;
 
 	/* Set the busy bit */
@@ -821,8 +793,7 @@ static void acpi_1_interrupt(void)
 	if (host_cmd_args.command == EC_COMMAND_PROTOCOL_3) {
 		lpc_packet.send_response = lpc_send_response_packet;
 
-		lpc_packet.request =
-			(const void *)lpc_get_hostcmd_data_range();
+		lpc_packet.request = (const void *)lpc_get_hostcmd_data_range();
 		lpc_packet.request_temp = params_copy;
 		lpc_packet.request_max = sizeof(params_copy);
 		/* Don't know the request size so
@@ -830,8 +801,7 @@ static void acpi_1_interrupt(void)
 		 */
 		lpc_packet.request_size = EC_LPC_HOST_PACKET_SIZE;
 
-		lpc_packet.response =
-			(void *)lpc_get_hostcmd_data_range();
+		lpc_packet.response = (void *)lpc_get_hostcmd_data_range();
 		lpc_packet.response_max = EC_LPC_HOST_PACKET_SIZE;
 		lpc_packet.response_size = 0;
 
@@ -857,8 +827,7 @@ DECLARE_IRQ(MCHP_IRQ_ACPIEC1_IBF, acpi_1_interrupt, 1);
 static void kb_ibf_interrupt(void)
 {
 	if (lpc_keyboard_input_pending())
-		keyboard_host_write(MCHP_8042_H2E,
-				    MCHP_8042_STS & BIT(3));
+		keyboard_host_write(MCHP_8042_H2E, MCHP_8042_STS & BIT(3));
 
 	MCHP_INT_SOURCE(MCHP_8042_GIRQ) = MCHP_8042_IBF_GIRQ_BIT;
 	task_wake(TASK_ID_KEYPROTO);
@@ -954,7 +923,7 @@ int lpc_get_pltrst_asserted(void)
 	return !gpio_get_level(GPIO_PCH_PLTRST_L);
 #else
 	/* assumes LPC clock is running when host changes LRESET# */
-	return (MCHP_LPC_BUS_MONITOR & (1<<1)) ? 1 : 0;
+	return (MCHP_LPC_BUS_MONITOR & (1 << 1)) ? 1 : 0;
 #endif
 #endif
 }
@@ -996,9 +965,8 @@ static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
 
 	return EC_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
-		lpc_get_protocol_info,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
+		     EC_VER_MASK(0));
 
 #ifdef CONFIG_MCHP_DEBUG_LPC
 static int command_lpc(int argc, char **argv)
@@ -1016,6 +984,5 @@ static int command_lpc(int argc, char **argv)
 		return EC_ERROR_PARAM1;
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(lpc, command_lpc, "[sci|smi|wake]",
-	"Trigger SCI/SMI");
+DECLARE_CONSOLE_COMMAND(lpc, command_lpc, "[sci|smi|wake]", "Trigger SCI/SMI");
 #endif
