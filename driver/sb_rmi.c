@@ -16,7 +16,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 #define SB_RMI_MAILBOX_TIMEOUT_MS 200
 #define SB_RMI_MAILBOX_RETRY_DELAY_MS 5
@@ -47,7 +47,6 @@ static int sb_rmi_assert_interrupt(bool assert)
 	return sb_rmi_write(SB_RMI_SW_INTR_REG, assert ? 0x1 : 0x0);
 }
 
-
 /**
  * Execute a SB-RMI mailbox transaction
  *
@@ -60,34 +59,34 @@ static int sb_rmi_assert_interrupt(bool assert)
  */
 int sb_rmi_mailbox_xfer(int cmd, uint32_t msg_in, uint32_t *msg_out_ptr)
 {
-       /**
-	* The sequence is as follows:
-	* 1. The initiator (BMC) indicates that command is to be serviced by
-	*    firmware by writing 0x80 to SBRMI::InBndMsg_inst7 (SBRMI_x3F). This
-	*    register must be set to 0x80 after reset.
-	* 2. The initiator (BMC) writes the command to SBRMI::InBndMsg_inst0
-	*    (SBRMI_x38).
-	* 3. For write operations or read operations which require additional
-	*    addressing information as shown in the table above, the initiator
-	*    (BMC) writes Command Data In[31:0] to SBRMI::InBndMsg_inst[4:1]
-	*    {SBRMI_x3C(MSB):SBRMI_x39(LSB)}.
-	* 4. The initiator (BMC) writes 0x01 to SBRMI::SoftwareInterrupt to
-	*    notify firmware to perform the requested read or write command.
-	* 5. Firmware reads the message and performs the defined action.
-	* 6. Firmware writes the original command to outbound message register
-	*    SBRMI::OutBndMsg_inst0 (SBRMI_x30).
-	* 7. Firmware will write SBRMI::Status[SwAlertSts]=1 to generate an
-	*    ALERT (if enabled) to initiator (BMC) to indicate completion of the
-	*    requested command. Firmware must (if applicable) put the message
-	*    data into the message registers SBRMI::OutBndMsg_inst[4:1]
-	*    {SBRMI_x34(MSB):SBRMI_x31(LSB)}.
-	* 8. For a read operation, the initiator (BMC) reads the firmware
-	*    response Command Data Out[31:0] from SBRMI::OutBndMsg_inst[4:1]
-	*    {SBRMI_x34(MSB):SBRMI_x31(LSB)}.
-	* 9. BMC must write 1'b1 to SBRMI::Status[SwAlertSts] to clear the
-	*     ALERT to initiator (BMC). It is recommended to clear the ALERT
-	*     upon completion of the current mailbox command.
-	*/
+	/**
+	 * The sequence is as follows:
+	 * 1. The initiator (BMC) indicates that command is to be serviced by
+	 *    firmware by writing 0x80 to SBRMI::InBndMsg_inst7 (SBRMI_x3F).
+	 * This register must be set to 0x80 after reset.
+	 * 2. The initiator (BMC) writes the command to SBRMI::InBndMsg_inst0
+	 *    (SBRMI_x38).
+	 * 3. For write operations or read operations which require additional
+	 *    addressing information as shown in the table above, the initiator
+	 *    (BMC) writes Command Data In[31:0] to SBRMI::InBndMsg_inst[4:1]
+	 *    {SBRMI_x3C(MSB):SBRMI_x39(LSB)}.
+	 * 4. The initiator (BMC) writes 0x01 to SBRMI::SoftwareInterrupt to
+	 *    notify firmware to perform the requested read or write command.
+	 * 5. Firmware reads the message and performs the defined action.
+	 * 6. Firmware writes the original command to outbound message register
+	 *    SBRMI::OutBndMsg_inst0 (SBRMI_x30).
+	 * 7. Firmware will write SBRMI::Status[SwAlertSts]=1 to generate an
+	 *    ALERT (if enabled) to initiator (BMC) to indicate completion of
+	 * the requested command. Firmware must (if applicable) put the message
+	 *    data into the message registers SBRMI::OutBndMsg_inst[4:1]
+	 *    {SBRMI_x34(MSB):SBRMI_x31(LSB)}.
+	 * 8. For a read operation, the initiator (BMC) reads the firmware
+	 *    response Command Data Out[31:0] from SBRMI::OutBndMsg_inst[4:1]
+	 *    {SBRMI_x34(MSB):SBRMI_x31(LSB)}.
+	 * 9. BMC must write 1'b1 to SBRMI::Status[SwAlertSts] to clear the
+	 *     ALERT to initiator (BMC). It is recommended to clear the ALERT
+	 *     upon completion of the current mailbox command.
+	 */
 	int val;
 	bool alerted;
 	timestamp_t start;
