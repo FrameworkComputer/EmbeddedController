@@ -13,52 +13,52 @@
 #include "i2c.h"
 #include "util.h"
 
-#define BQ27541_ADDR_FLAGS          0x55
-#define BQ27541_TYPE_ID             0x0541
-#define BQ27542_TYPE_ID             0x0542
-#define BQ27741_TYPE_ID             0x0741
-#define BQ27742_TYPE_ID             0x0742
+#define BQ27541_ADDR_FLAGS 0x55
+#define BQ27541_TYPE_ID 0x0541
+#define BQ27542_TYPE_ID 0x0542
+#define BQ27741_TYPE_ID 0x0741
+#define BQ27742_TYPE_ID 0x0742
 
-#define REG_CTRL                    0x00
-#define REG_AT_RATE                 0x02
-#define REG_AT_RATE_TIME_TO_EMPTY   0x04
-#define REG_TEMPERATURE             0x06
-#define REG_VOLTAGE                 0x08
-#define REG_FLAGS                   0x0a
-#define REG_NOMINAL_CAPACITY        0x0c
+#define REG_CTRL 0x00
+#define REG_AT_RATE 0x02
+#define REG_AT_RATE_TIME_TO_EMPTY 0x04
+#define REG_TEMPERATURE 0x06
+#define REG_VOLTAGE 0x08
+#define REG_FLAGS 0x0a
+#define REG_NOMINAL_CAPACITY 0x0c
 #define REG_FULL_AVAILABLE_CAPACITY 0x0e
-#define REG_REMAINING_CAPACITY      0x10
-#define REG_FULL_CHARGE_CAPACITY    0x12
-#define REG_AVERAGE_CURRENT         0x14
-#define REG_TIME_TO_EMPTY           0x16
-#define REG_TIME_TO_FULL            0x18
-#define REG_STANDBY_CURRENT         0x1a
-#define REG_STANDBY_TIME_TO_EMPTY   0x1c
-#define REG_MAX_LOAD_CURRENT        0x1e
-#define REG_MAX_LOAD_TIME_TO_EMPTY  0x20
-#define REG_AVAILABLE_ENERGY        0x22
-#define REG_AVERAGE_POEWR           0x24
-#define REG_TT_EAT_CONSTANT_POWER   0x26
-#define REG_CYCLE_COUNT             0x2a
-#define REG_STATE_OF_CHARGE         0x2c
-#define	REG_DATA_FLASH_BLOCK	    0x3f
-#define REG_DESIGN_CAPACITY         0x3c
-#define REG_MANUFACTURER_INFO	    0x52
-#define REG_DEVICE_NAME_LENGTH      0x62
-#define MAX_DEVICE_NAME_LENGTH      7
-#define REG_DEVICE_NAME             0x63
-#define REG_PROTECTOR               0x6d
+#define REG_REMAINING_CAPACITY 0x10
+#define REG_FULL_CHARGE_CAPACITY 0x12
+#define REG_AVERAGE_CURRENT 0x14
+#define REG_TIME_TO_EMPTY 0x16
+#define REG_TIME_TO_FULL 0x18
+#define REG_STANDBY_CURRENT 0x1a
+#define REG_STANDBY_TIME_TO_EMPTY 0x1c
+#define REG_MAX_LOAD_CURRENT 0x1e
+#define REG_MAX_LOAD_TIME_TO_EMPTY 0x20
+#define REG_AVAILABLE_ENERGY 0x22
+#define REG_AVERAGE_POEWR 0x24
+#define REG_TT_EAT_CONSTANT_POWER 0x26
+#define REG_CYCLE_COUNT 0x2a
+#define REG_STATE_OF_CHARGE 0x2c
+#define REG_DATA_FLASH_BLOCK 0x3f
+#define REG_DESIGN_CAPACITY 0x3c
+#define REG_MANUFACTURER_INFO 0x52
+#define REG_DEVICE_NAME_LENGTH 0x62
+#define MAX_DEVICE_NAME_LENGTH 7
+#define REG_DEVICE_NAME 0x63
+#define REG_PROTECTOR 0x6d
 
 /* Over-charge */
-#define BQ27542_FLAG_BATHI           BIT(13)
+#define BQ27542_FLAG_BATHI BIT(13)
 /* Over Temperature in discharge */
-#define BQ27542_FLAG_OTD             BIT(11)
+#define BQ27542_FLAG_OTD BIT(11)
 /* Over Temperature in charge */
-#define BQ27542_FLAG_OTC             BIT(7)
+#define BQ27542_FLAG_OTC BIT(7)
 /* Charge allowed */
-#define BQ27542_FLAG_CHG             BIT(3)
+#define BQ27542_FLAG_CHG BIT(3)
 /* Discharge */
-#define BQ27542_FLAG_DSG             BIT(0)
+#define BQ27542_FLAG_DSG BIT(0)
 
 static int battery_type_id;
 static int fake_state_of_charge = -1;
@@ -273,10 +273,9 @@ enum battery_present battery_is_present(void)
 void battery_get_params(struct batt_params *batt)
 {
 	int v;
-	const uint32_t flags_to_check = BATT_FLAG_BAD_TEMPERATURE |
-					BATT_FLAG_BAD_STATE_OF_CHARGE |
-					BATT_FLAG_BAD_VOLTAGE |
-					BATT_FLAG_BAD_CURRENT;
+	const uint32_t flags_to_check =
+		BATT_FLAG_BAD_TEMPERATURE | BATT_FLAG_BAD_STATE_OF_CHARGE |
+		BATT_FLAG_BAD_VOLTAGE | BATT_FLAG_BAD_CURRENT;
 
 	/* Reset flags */
 	batt->flags = 0;
@@ -287,8 +286,8 @@ void battery_get_params(struct batt_params *batt)
 	if (bq27541_read8(REG_STATE_OF_CHARGE, &v) && fake_state_of_charge < 0)
 		batt->flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 
-	batt->state_of_charge = fake_state_of_charge >= 0 ?
-					fake_state_of_charge : v;
+	batt->state_of_charge =
+		fake_state_of_charge >= 0 ? fake_state_of_charge : v;
 
 	if (bq27541_read(REG_VOLTAGE, &batt->voltage))
 		batt->flags |= BATT_FLAG_BAD_VOLTAGE;
@@ -312,8 +311,7 @@ void battery_get_params(struct batt_params *batt)
 		batt->flags |= BATT_FLAG_RESPONSIVE;
 		batt->is_present = BP_YES;
 	} else {
-
-	/* If all of those reads error, the battery is not present */
+		/* If all of those reads error, the battery is not present */
 		batt->is_present = BP_NO;
 	}
 
@@ -405,8 +403,7 @@ static int command_battfake(int argc, char **argv)
 	}
 
 	if (fake_state_of_charge >= 0)
-		ccprintf("Fake batt %d%%\n",
-			 fake_state_of_charge);
+		ccprintf("Fake batt %d%%\n", fake_state_of_charge);
 
 	return EC_SUCCESS;
 }
