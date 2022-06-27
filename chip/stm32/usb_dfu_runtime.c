@@ -23,15 +23,15 @@ const struct usb_interface_descriptor USB_IFACE_DESC(USB_IFACE_DFU) = {
 };
 
 /* DFU Functional Descriptor. */
-const struct usb_runtime_dfu_functional_desc USB_CUSTOM_DESC_VAR(USB_IFACE_DFU,
-						dfu, dfu_func_desc) = {
-	.bLength = USB_DFU_RUNTIME_DESC_SIZE,
-	.bDescriptorType = USB_DFU_RUNTIME_DESC_FUNCTIONAL,
-	.bmAttributes = USB_DFU_RUNTIME_DESC_ATTRS,
-	.wDetachTimeOut = USB_DFU_RUNTIME_DESC_DETACH_TIMEOUT,
-	.wTransferSize = USB_DFU_RUNTIME_DESC_TRANSFER_SIZE,
-	.bcdDFUVersion = USB_DFU_RUNTIME_DESC_DFU_VERSION,
-};
+const struct usb_runtime_dfu_functional_desc
+	USB_CUSTOM_DESC_VAR(USB_IFACE_DFU, dfu, dfu_func_desc) = {
+		.bLength = USB_DFU_RUNTIME_DESC_SIZE,
+		.bDescriptorType = USB_DFU_RUNTIME_DESC_FUNCTIONAL,
+		.bmAttributes = USB_DFU_RUNTIME_DESC_ATTRS,
+		.wDetachTimeOut = USB_DFU_RUNTIME_DESC_DETACH_TIMEOUT,
+		.wTransferSize = USB_DFU_RUNTIME_DESC_TRANSFER_SIZE,
+		.bcdDFUVersion = USB_DFU_RUNTIME_DESC_DFU_VERSION,
+	};
 
 static int dfu_runtime_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 {
@@ -40,21 +40,21 @@ static int dfu_runtime_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 	usb_read_setup_packet(ep0_buf_rx, &packet);
 	btable_ep[0].tx_count = 0;
 	if ((packet.bmRequestType ==
-		(USB_DIR_OUT | USB_TYPE_STANDARD |  USB_RECIP_INTERFACE)) &&
-		(packet.bRequest == USB_REQ_SET_INTERFACE)) {
+	     (USB_DIR_OUT | USB_TYPE_STANDARD | USB_RECIP_INTERFACE)) &&
+	    (packet.bRequest == USB_REQ_SET_INTERFACE)) {
 		/* ACK the change alternative mode request. */
 
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
 		return 0;
 	} else if ((packet.bmRequestType ==
-			(USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE)) &&
-			(packet.bRequest == USB_DFU_RUNTIME_REQ_DETACH)) {
+		    (USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE)) &&
+		   (packet.bRequest == USB_DFU_RUNTIME_REQ_DETACH)) {
 		/* Host is requesting a jump from application to DFU mode. */
 
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
 		return dfu_bootmanager_enter_dfu();
 	} else if (packet.bmRequestType ==
-			(USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE)) {
+		   (USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE)) {
 		if (packet.bRequest == USB_DFU_RUNTIME_REQ_GET_STATUS) {
 			/* Return the Get Status response. */
 
@@ -63,8 +63,8 @@ static int dfu_runtime_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 				.bState = USB_DFU_RUNTIME_STATE_APP_IDLE,
 			};
 
-			memcpy_to_usbram((void *) usb_sram_addr(ep0_buf_tx),
-				&response, sizeof(response));
+			memcpy_to_usbram((void *)usb_sram_addr(ep0_buf_tx),
+					 &response, sizeof(response));
 			btable_ep[0].tx_count = sizeof(response);
 			STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
 			return 0;
@@ -76,8 +76,8 @@ static int dfu_runtime_request(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx)
 				.bState = USB_DFU_RUNTIME_STATE_APP_IDLE,
 			};
 
-			memcpy_to_usbram((void *) usb_sram_addr(ep0_buf_tx),
-				&response, sizeof(response));
+			memcpy_to_usbram((void *)usb_sram_addr(ep0_buf_tx),
+					 &response, sizeof(response));
 			btable_ep[0].tx_count = sizeof(response);
 			STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
 			return 0;
