@@ -7,8 +7,8 @@
 #include "console.h"
 #include "task.h"
 
-#define CPRINTF(format, args...) cprintf(CC_CEC, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CEC, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CEC, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CEC, format, ##args)
 
 /*
  * Mutex for the read-offset of the rx queue. Needed since the
@@ -75,7 +75,7 @@ int cec_rx_queue_push(struct cec_rx_queue *queue, const uint8_t *msg,
 	queue->buf[offset] = 0;
 	offset = (offset + 1) % CEC_RX_BUFFER_SIZE;
 
-	for (i = 0 ; i < msg_len; i++) {
+	for (i = 0; i < msg_len; i++) {
 		if (offset == queue->read_offset) {
 			/* Buffer full */
 			return EC_ERROR_OVERFLOW;
@@ -101,8 +101,7 @@ int cec_rx_queue_push(struct cec_rx_queue *queue, const uint8_t *msg,
 	return EC_SUCCESS;
 }
 
-int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg,
-		     uint8_t *msg_len)
+int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg, uint8_t *msg_len)
 {
 	int i;
 
@@ -126,9 +125,8 @@ int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg,
 	queue->read_offset = (queue->read_offset + 1) % CEC_RX_BUFFER_SIZE;
 	for (i = 0; i < *msg_len; i++) {
 		msg[i] = queue->buf[queue->read_offset];
-		queue->read_offset = (queue->read_offset + 1) %
-							CEC_RX_BUFFER_SIZE;
-
+		queue->read_offset =
+			(queue->read_offset + 1) % CEC_RX_BUFFER_SIZE;
 	}
 
 	mutex_unlock(&rx_queue_readoffset_mutex);
