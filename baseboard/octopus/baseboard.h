@@ -16,7 +16,7 @@
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
  */
-#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
 
 /*
  * Variant EC defines. Pick one:
@@ -24,59 +24,59 @@
  * VARIANT_OCTOPUS_EC_ITE8320
  */
 #if defined(VARIANT_OCTOPUS_EC_NPCX796FB)
-	/* NPCX7 config */
-	#define NPCX_UART_MODULE2 1  /* GPIO64/65 are used as UART pins. */
-	#define NPCX_TACH_SEL2    0  /* [0:GPIO40/73, 1:GPIO93/A6] as TACH */
-	#define NPCX7_PWM1_SEL    0  /* GPIO C2 is not used as PWM1. */
+/* NPCX7 config */
+#define NPCX_UART_MODULE2 1 /* GPIO64/65 are used as UART pins. */
+#define NPCX_TACH_SEL2 0 /* [0:GPIO40/73, 1:GPIO93/A6] as TACH */
+#define NPCX7_PWM1_SEL 0 /* GPIO C2 is not used as PWM1. */
 
-	/* Internal SPI flash on NPCX7 */
-	/* Flash is 1MB but reserve half for future use. */
-	#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)
+/* Internal SPI flash on NPCX7 */
+/* Flash is 1MB but reserve half for future use. */
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)
 
-	#define CONFIG_SPI_FLASH_REGS
-	#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
+#define CONFIG_SPI_FLASH_REGS
+#define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 
-	/* I2C Bus Configuration */
-	#define I2C_PORT_BATTERY	NPCX_I2C_PORT0_0
-	#define I2C_PORT_TCPC0		NPCX_I2C_PORT1_0
-	#define I2C_PORT_TCPC1		NPCX_I2C_PORT2_0
-	#define I2C_PORT_EEPROM		NPCX_I2C_PORT3_0
-	#define I2C_PORT_CHARGER	NPCX_I2C_PORT4_1
-	#define I2C_PORT_SENSOR		NPCX_I2C_PORT7_0
-	#define I2C_ADDR_EEPROM_FLAGS	0x50
+/* I2C Bus Configuration */
+#define I2C_PORT_BATTERY NPCX_I2C_PORT0_0
+#define I2C_PORT_TCPC0 NPCX_I2C_PORT1_0
+#define I2C_PORT_TCPC1 NPCX_I2C_PORT2_0
+#define I2C_PORT_EEPROM NPCX_I2C_PORT3_0
+#define I2C_PORT_CHARGER NPCX_I2C_PORT4_1
+#define I2C_PORT_SENSOR NPCX_I2C_PORT7_0
+#define I2C_ADDR_EEPROM_FLAGS 0x50
 
-	/* Enable PSL hibernate mode. */
-	#define CONFIG_HIBERNATE_PSL
+/* Enable PSL hibernate mode. */
+#define CONFIG_HIBERNATE_PSL
 
-	/* EC variant determines USB-C variant */
-	#define VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
+/* EC variant determines USB-C variant */
+#define VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
 
-	/* Allow the EC to enter deep sleep in S0 */
-	#define CONFIG_LOW_POWER_S0
+/* Allow the EC to enter deep sleep in S0 */
+#define CONFIG_LOW_POWER_S0
 #elif defined(VARIANT_OCTOPUS_EC_ITE8320)
-	/* IT83XX config */
-	#define CONFIG_IT83XX_VCC_1P8V
-	/* I2C Bus Configuration */
-	#define I2C_PORT_BATTERY	IT83XX_I2C_CH_A	/* Shared bus */
-	#define I2C_PORT_CHARGER	IT83XX_I2C_CH_A	/* Shared bus */
-	#define I2C_PORT_SENSOR		IT83XX_I2C_CH_B
-	#define I2C_PORT_USBC0		IT83XX_I2C_CH_C
-	#define I2C_PORT_USBC1		IT83XX_I2C_CH_E
-	#define I2C_PORT_USB_MUX	I2C_PORT_USBC0	/* For MUX driver */
-	#define I2C_PORT_EEPROM		IT83XX_I2C_CH_F
-	#define I2C_ADDR_EEPROM_FLAGS	0x50
-	#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 2
+/* IT83XX config */
+#define CONFIG_IT83XX_VCC_1P8V
+/* I2C Bus Configuration */
+#define I2C_PORT_BATTERY IT83XX_I2C_CH_A /* Shared bus */
+#define I2C_PORT_CHARGER IT83XX_I2C_CH_A /* Shared bus */
+#define I2C_PORT_SENSOR IT83XX_I2C_CH_B
+#define I2C_PORT_USBC0 IT83XX_I2C_CH_C
+#define I2C_PORT_USBC1 IT83XX_I2C_CH_E
+#define I2C_PORT_USB_MUX I2C_PORT_USBC0 /* For MUX driver */
+#define I2C_PORT_EEPROM IT83XX_I2C_CH_F
+#define I2C_ADDR_EEPROM_FLAGS 0x50
+#define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 2
 
-	/* EC variant determines USB-C variant */
-	#define VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS
+/* EC variant determines USB-C variant */
+#define VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS
 
-	/*
-	 * Limit maximal ODR to 125Hz, the EC is using ~5ms per sample at
-	 * 48MHz core cpu clock.
-	 */
-	#define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 125000
+/*
+ * Limit maximal ODR to 125Hz, the EC is using ~5ms per sample at
+ * 48MHz core cpu clock.
+ */
+#define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 125000
 #else
-	#error Must define a VARIANT_OCTOPUS_EC
+#error Must define a VARIANT_OCTOPUS_EC
 #endif /* VARIANT_OCTOPUS_EC */
 
 /* Common EC defines */
@@ -115,33 +115,33 @@
  * VARIANT_OCTOPUS_CHARGER_BQ25703
  */
 #if defined(VARIANT_OCTOPUS_CHARGER_ISL9238)
-	#define CONFIG_CHARGER_ISL9238
-	#define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
-	/*
-	 * ISL923x driver sets "Adapter insertion to Switching Debounce"
-	 * CONTROL2 REG 0x3DH <Bit 11> to 1 which is 150 ms
-	 */
-	#undef	CONFIG_EXTPOWER_DEBOUNCE_MS
-	#define	CONFIG_EXTPOWER_DEBOUNCE_MS 200
+#define CONFIG_CHARGER_ISL9238
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 20
+/*
+ * ISL923x driver sets "Adapter insertion to Switching Debounce"
+ * CONTROL2 REG 0x3DH <Bit 11> to 1 which is 150 ms
+ */
+#undef CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 200
 #elif defined(VARIANT_OCTOPUS_CHARGER_BQ25703)
-	#define CONFIG_CHARGER_BQ25703
-	#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
-	/*
-	 * From BQ25703: CHRG_OK is HIGH after 50ms deglitch time.
-	 */
-	#undef	CONFIG_EXTPOWER_DEBOUNCE_MS
-	#define	CONFIG_EXTPOWER_DEBOUNCE_MS 50
+#define CONFIG_CHARGER_BQ25703
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+/*
+ * From BQ25703: CHRG_OK is HIGH after 50ms deglitch time.
+ */
+#undef CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 50
 #elif defined(CONFIG_CHARGER_RUNTIME_CONFIG)
-	#define CONFIG_CHARGER_ISL9238
-	#define CONFIG_CHARGER_BQ25710
-	#define CONFIG_CHARGER_SENSE_RESISTOR_AC_ISL9238 20
-	#define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC 10
-	#define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR 10
+#define CONFIG_CHARGER_ISL9238
+#define CONFIG_CHARGER_BQ25710
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC_ISL9238 20
+#define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC 10
+#define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR 10
 
-	#undef CONFIG_EXTPOWER_DEBOUNCE_MS
-	#define CONFIG_EXTPOWER_DEBOUNCE_MS 200
+#undef CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 200
 #else
-	#error Must define a VARIANT_OCTOPUS_CHARGER
+#error Must define a VARIANT_OCTOPUS_CHARGER
 #endif /* VARIANT_OCTOPUS_CHARGER */
 
 /* Common charger defines */
@@ -155,7 +155,7 @@
 
 /* Common battery defines */
 #define CONFIG_BATTERY_CUT_OFF
-#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_FUEL_GAUGE
 #define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_L
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
@@ -166,38 +166,38 @@
  * Automatically defined by VARIANT_OCTOPUS_EC_ variant.
  */
 
- /*
-  * Variant USBC defines. Pick one:
-  * VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
-  * VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS (requires)
-  */
+/*
+ * Variant USBC defines. Pick one:
+ * VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS
+ * VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS (requires)
+ */
 #if defined(VARIANT_OCTOPUS_USBC_STANDALONE_TCPCS)
-	#define CONFIG_USB_PD_TCPC_LOW_POWER
-	#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_TCPC_LOW_POWER
+#define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #if !defined(VARIANT_OCTOPUS_TCPC_0_PS8751)
-	#define CONFIG_USB_PD_TCPM_ANX7447	/* C0 TCPC: ANX7447QN */
+#define CONFIG_USB_PD_TCPM_ANX7447 /* C0 TCPC: ANX7447QN */
 #endif
-	#define CONFIG_USB_PD_TCPM_PS8751	/* C1 TCPC: PS8751 */
-	#define CONFIG_USB_PD_VBUS_DETECT_TCPC
-	#define CONFIG_USBC_PPC_NX20P3483
+#define CONFIG_USB_PD_TCPM_PS8751 /* C1 TCPC: PS8751 */
+#define CONFIG_USB_PD_VBUS_DETECT_TCPC
+#define CONFIG_USBC_PPC_NX20P3483
 #elif defined(VARIANT_OCTOPUS_USBC_ITE_EC_TCPCS)
-	#undef CONFIG_USB_PD_TCPC_LOW_POWER
-	#undef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	#define CONFIG_USB_PD_VBUS_DETECT_PPC
-	#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP	/* C0 & C1 TCPC: ITE EC */
-	#define CONFIG_USB_MUX_IT5205		/* C0 MUX: IT5205 */
-	#define CONFIG_USB_PD_TCPM_PS8751	/* C1 Mux: PS8751 */
-	#define CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER
-	#define CONFIG_USBC_PPC_SN5S330		/* C0 & C1 PPC: each SN5S330 */
-	#define CONFIG_USBC_PPC_VCONN
-	#define CONFIG_USBC_PPC_DEDICATED_INT
+#undef CONFIG_USB_PD_TCPC_LOW_POWER
+#undef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#define CONFIG_USB_PD_VBUS_DETECT_PPC
+#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP /* C0 & C1 TCPC: ITE EC */
+#define CONFIG_USB_MUX_IT5205 /* C0 MUX: IT5205 */
+#define CONFIG_USB_PD_TCPM_PS8751 /* C1 Mux: PS8751 */
+#define CONFIG_USB_PD_TCPM_PS8751_CUSTOM_MUX_DRIVER
+#define CONFIG_USBC_PPC_SN5S330 /* C0 & C1 PPC: each SN5S330 */
+#define CONFIG_USBC_PPC_VCONN
+#define CONFIG_USBC_PPC_DEDICATED_INT
 #else
-	#error Must define a VARIANT_OCTOPUS_USBC
+#error Must define a VARIANT_OCTOPUS_USBC
 #endif /* VARIANT_OCTOPUS_USBC */
 
 /* Common USB-C defines */
-#define USB_PD_PORT_TCPC_0	0
-#define USB_PD_PORT_TCPC_1	1
+#define USB_PD_PORT_TCPC_0 0
+#define USB_PD_PORT_TCPC_1 1
 #define CONFIG_USB_PID 0x5046
 
 #define CONFIG_USB_DRP_ACC_TRYSRC
@@ -226,14 +226,14 @@
 #define CONFIG_CMD_PPC_DUMP
 
 /* TODO(b/76218141): Use correct PD delay values */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000	/* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* TODO(b/76218141): Use correct PD power values */
-#define PD_OPERATING_POWER_MW	15000
-#define PD_MAX_POWER_MW		45000
-#define PD_MAX_CURRENT_MA	3000
-#define PD_MAX_VOLTAGE_MV	20000
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_POWER_MW 45000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_VOLTAGE_MV 20000
 
 /*******************************************************************************
  * USB-A Configs
@@ -252,7 +252,7 @@
  * SoC / PCH Config
  */
 
- /* Common SoC / PCH defines */
+/* Common SoC / PCH defines */
 #define CONFIG_CHIPSET_GEMINILAKE
 #define CONFIG_CHIPSET_RESET_HOOK
 #define CONFIG_HOST_INTERFACE_ESPI
@@ -275,7 +275,7 @@
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_KEYBOARD_COL2_INVERTED
 #define CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2
-#undef  CONFIG_KEYBOARD_VIVALDI
+#undef CONFIG_KEYBOARD_VIVALDI
 
 /*******************************************************************************
  * Sensor Config
@@ -287,7 +287,7 @@
 /*
  * Slew rate on the PP1800_SENSOR load switch requires a short delay on startup.
  */
-#undef  CONFIG_MOTION_SENSE_RESUME_DELAY_US
+#undef CONFIG_MOTION_SENSE_RESUME_DELAY_US
 #define CONFIG_MOTION_SENSE_RESUME_DELAY_US (10 * MSEC)
 
 #ifndef VARIANT_OCTOPUS_NO_SENSORS
