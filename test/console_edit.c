@@ -40,7 +40,7 @@ enum arrow_key_t {
 
 static void arrow_key(enum arrow_key_t k, int repeat)
 {
-	static char seq[4] = {0x1B, '[', 0, 0};
+	static char seq[4] = { 0x1B, '[', 0, 0 };
 	seq[2] = 'A' + k;
 	while (repeat--)
 		UART_INJECT(seq);
@@ -63,7 +63,7 @@ static void end_key(void)
 
 static void ctrl_key(char c)
 {
-	static char seq[2] = {0, 0};
+	static char seq[2] = { 0, 0 };
 	seq[0] = c - '@';
 	UART_INJECT(seq);
 }
@@ -225,7 +225,7 @@ static int test_history_stash(void)
 static int test_history_list(void)
 {
 	const char *exp_output = "history\n" /* Input command */
-				 "test3\n"   /* Output 4 last commands */
+				 "test3\n" /* Output 4 last commands */
 				 "test4\n"
 				 "test5\n"
 				 "history\n"
@@ -258,8 +258,8 @@ static int test_output_channel(void)
 	cputs(CC_TASK, "shouldn't see this either\n");
 	cflush();
 	test_capture_console(0);
-	TEST_ASSERT(compare_multiline_string(test_get_captured_console(),
-					     "") == 0);
+	TEST_ASSERT(compare_multiline_string(test_get_captured_console(), "") ==
+		    0);
 	UART_INJECT("chan restore\n");
 	msleep(30);
 	test_capture_console(1);
