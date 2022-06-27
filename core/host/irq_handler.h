@@ -15,16 +15,16 @@
  * Macro to connect the interrupt handler "routine" to the irq number "irq" and
  * ensure it is enabled in the interrupt controller with the right priority.
  */
-#define DECLARE_IRQ(irq, routine, priority)                     \
-	static void __keep routine(void);			\
-	void IRQ_HANDLER(irq)(void)				\
-	{							\
-		void *ret = __builtin_return_address(0);	\
-		task_start_irq_handler(ret);			\
-		routine();					\
-		task_resched_if_needed(ret);			\
-	}							\
-	const struct irq_priority __keep IRQ_PRIORITY(irq)	\
-	__attribute__((section(".rodata.irqprio")))		\
-			= {irq, priority}
-#endif  /* __CROS_EC_IRQ_HANDLER_H */
+#define DECLARE_IRQ(irq, routine, priority)                          \
+	static void __keep routine(void);                            \
+	void IRQ_HANDLER(irq)(void)                                  \
+	{                                                            \
+		void *ret = __builtin_return_address(0);             \
+		task_start_irq_handler(ret);                         \
+		routine();                                           \
+		task_resched_if_needed(ret);                         \
+	}                                                            \
+	const struct irq_priority __keep IRQ_PRIORITY(irq)           \
+		__attribute__((section(".rodata.irqprio"))) = { irq, \
+								priority }
+#endif /* __CROS_EC_IRQ_HANDLER_H */
