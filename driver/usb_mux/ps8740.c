@@ -14,14 +14,12 @@
 
 int ps8740_read(const struct usb_mux *me, uint8_t reg, int *val)
 {
-	return i2c_read8(me->i2c_port, me->i2c_addr_flags,
-			 reg, val);
+	return i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
 int ps8740_write(const struct usb_mux *me, uint8_t reg, uint8_t val)
 {
-	return i2c_write8(me->i2c_port, me->i2c_addr_flags,
-			  reg, val);
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags, reg, val);
 }
 
 static int ps8740_init(const struct usb_mux *me)
@@ -42,7 +40,7 @@ static int ps8740_init(const struct usb_mux *me)
 	if (res)
 		return res;
 
-	res  = ps8740_read(me, PS8740_REG_CHIP_ID2, &id2);
+	res = ps8740_read(me, PS8740_REG_CHIP_ID2, &id2);
 	if (res)
 		return res;
 
