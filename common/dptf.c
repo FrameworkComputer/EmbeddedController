@@ -19,14 +19,14 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DPTF, outstr)
-#define CPRINTS(format, args...) cprints(CC_DPTF, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_DPTF, format, ##args)
 
 /*****************************************************************************/
 /* DPTF temperature thresholds */
 
 static struct {
-	int temp;     /* degrees K, negative for disabled */
-	cond_t over;      /* watch for crossings */
+	int temp; /* degrees K, negative for disabled */
+	cond_t over; /* watch for crossings */
 } dptf_threshold[TEMP_SENSOR_COUNT][DPTF_THRESHOLDS_PER_SENSOR];
 _STATIC_ASSERT(TEMP_SENSOR_COUNT > 0,
 	       "CONFIG_PLATFORM_EC_DPTF enabled, but no temp sensors");
@@ -40,7 +40,6 @@ static void dptf_init(void)
 			dptf_threshold[id][t].temp = -1;
 			cond_init(&dptf_threshold[id][t].over, 0);
 		}
-
 }
 DECLARE_HOOK(HOOK_INIT, dptf_init, HOOK_PRIO_DEFAULT);
 
@@ -72,9 +71,8 @@ static int dptf_check_temp_threshold(int sensor_id, int temp)
 	}
 
 	for (i = 0; i < DPTF_THRESHOLDS_PER_SENSOR; i++) {
-
 		max = dptf_threshold[sensor_id][i].temp;
-		if (max < 0)      /* disabled? */
+		if (max < 0) /* disabled? */
 			continue;
 
 		if (temp >= max)
@@ -83,14 +81,12 @@ static int dptf_check_temp_threshold(int sensor_id, int temp)
 			cond_set_false(&dptf_threshold[sensor_id][i].over);
 
 		if (cond_went_true(&dptf_threshold[sensor_id][i].over)) {
-			CPRINTS("DPTF over threshold [%d][%d",
-				sensor_id, i);
+			CPRINTS("DPTF over threshold [%d][%d", sensor_id, i);
 			atomic_or(&dptf_seen, BIT(sensor_id));
 			tripped = 1;
 		}
 		if (cond_went_false(&dptf_threshold[sensor_id][i].over)) {
-			CPRINTS("DPTF under threshold [%d][%d",
-				sensor_id, i);
+			CPRINTS("DPTF under threshold [%d][%d", sensor_id, i);
 			atomic_or(&dptf_seen, BIT(sensor_id));
 			tripped = 1;
 		}
@@ -101,8 +97,8 @@ static int dptf_check_temp_threshold(int sensor_id, int temp)
 
 void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 {
-	CPRINTS("DPTF sensor %d, threshold %d C, index %d, %sabled",
-		sensor_id, K_TO_C(temp), idx, enable ? "en" : "dis");
+	CPRINTS("DPTF sensor %d, threshold %d C, index %d, %sabled", sensor_id,
+		K_TO_C(temp), idx, enable ? "en" : "dis");
 
 	if ((sensor_id >= TEMP_SENSOR_COUNT) ||
 	    (idx >= DPTF_THRESHOLDS_PER_SENSOR)) {
@@ -201,6 +197,5 @@ static int command_dptftemp(int argc, char **argv)
 	ccprintf("AP seen mask: 0x%08x\n", (int)dptf_seen);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dptftemp, command_dptftemp,
-			NULL,
+DECLARE_CONSOLE_COMMAND(dptftemp, command_dptftemp, NULL,
 			"Print DPTF thermal parameters (degrees Kelvin)");
