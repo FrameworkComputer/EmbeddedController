@@ -19,19 +19,23 @@ static void event_mdp_written(struct consumer const *consumer, size_t count)
 	task_wake(TASK_ID_MDP_SERVICE);
 }
 static struct consumer const event_mdp_consumer;
-static struct queue const event_mdp_queue = QUEUE_DIRECT(4,
-	struct mdp_msg_service, null_producer, event_mdp_consumer);
+static struct queue const event_mdp_queue = QUEUE_DIRECT(
+	4, struct mdp_msg_service, null_producer, event_mdp_consumer);
 static struct consumer const event_mdp_consumer = {
 	.queue = &event_mdp_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_mdp_written,
 	}),
 };
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT_SCP
-void mdp_common_init(void) {}
-void mdp_ipi_task_handler(void *pvParameters) {}
+void mdp_common_init(void)
+{
+}
+void mdp_ipi_task_handler(void *pvParameters)
+{
+}
 #endif
 
 static void mdp_ipi_handler(int id, void *data, unsigned int len)
