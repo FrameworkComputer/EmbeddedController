@@ -45,8 +45,8 @@ static void __attribute__((noinline)) _task_dump_trace_impl(int offset)
 	for (i = 0; i < sz - offset; ++i) {
 		fprintf(stderr, "#%-2d %s\n", i, messages[i]);
 		/* %p is correct (as opposed to %pP) since this is the host */
-		sprintf(buf, "addr2line %p -e %s",
-			trace[i + offset], __get_prog_name());
+		sprintf(buf, "addr2line %p -e %s", trace[i + offset],
+			__get_prog_name());
 		file = popen(buf, "r");
 		if (file) {
 			nb = fread(buf, 1, sizeof(buf) - 1, file);
@@ -77,8 +77,8 @@ static void __attribute__((noinline)) _task_dump_trace_dispatch(int sig)
 	} else if (in_interrupt_context()) {
 		fprintf(stderr, "Stack trace of ISR:\n");
 	} else {
-		fprintf(stderr, "Stack trace of task %d (%s):\n",
-				running, task_get_name(running));
+		fprintf(stderr, "Stack trace of task %d (%s):\n", running,
+			task_get_name(running));
 	}
 
 	if (need_dispatch) {
