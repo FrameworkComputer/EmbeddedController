@@ -36,8 +36,7 @@ static uint32_t system_get_chip_id(void)
 	struct gctrl_it8xxx2_regs *const gctrl_base = GCTRL_IT8XXX2_REG_BASE;
 
 	return (gctrl_base->GCTRL_ECHIPID1 << 16) |
-		(gctrl_base->GCTRL_ECHIPID2 << 8) |
-		gctrl_base->GCTRL_ECHIPID3;
+	       (gctrl_base->GCTRL_ECHIPID2 << 8) | gctrl_base->GCTRL_ECHIPID3;
 }
 
 static uint8_t system_get_chip_version(void)
@@ -52,26 +51,26 @@ static const char *cros_system_it8xxx2_get_chip_name(const struct device *dev)
 {
 	ARG_UNUSED(dev);
 
-	static char buf[8] = {'i', 't'};
+	static char buf[8] = { 'i', 't' };
 	uint32_t chip_id = system_get_chip_id();
 	int num = 4;
 
 	for (int n = 2; num >= 0; n++, num--)
-		snprintf(buf+n, (sizeof(buf)-n), "%x",
+		snprintf(buf + n, (sizeof(buf) - n), "%x",
 			 chip_id >> (num * 4) & 0xF);
 
 	return buf;
 }
 
-static const char *cros_system_it8xxx2_get_chip_revision(const struct device
-							 *dev)
+static const char *
+cros_system_it8xxx2_get_chip_revision(const struct device *dev)
 {
 	ARG_UNUSED(dev);
 
 	static char buf[3];
 	uint8_t rev = system_get_chip_version();
 
-	snprintf(buf, sizeof(buf), "%1xx", rev+0xa);
+	snprintf(buf, sizeof(buf), "%1xx", rev + 0xa);
 
 	return buf;
 }
@@ -81,9 +80,10 @@ static int cros_system_it8xxx2_get_reset_cause(const struct device *dev)
 	ARG_UNUSED(dev);
 	struct gctrl_it8xxx2_regs *const gctrl_base = GCTRL_IT8XXX2_REG_BASE;
 	uint8_t last_reset_source = gctrl_base->GCTRL_RSTS & IT8XXX2_GCTRL_LRS;
-	uint8_t raw_reset_cause2 = gctrl_base->GCTRL_SPCTRL4 &
+	uint8_t raw_reset_cause2 =
+		gctrl_base->GCTRL_SPCTRL4 &
 		(IT8XXX2_GCTRL_LRSIWR | IT8XXX2_GCTRL_LRSIPWRSWTR |
-		IT8XXX2_GCTRL_LRSIPGWR);
+		 IT8XXX2_GCTRL_LRSIPGWR);
 
 	/* Clear reset cause. */
 	gctrl_base->GCTRL_RSTS |= IT8XXX2_GCTRL_LRS;
@@ -185,8 +185,8 @@ static int cros_system_it8xxx2_hibernate(const struct device *dev,
 		 * Convert milliseconds(or at least 1 ms) to 32 Hz
 		 * free run timer count for hibernate.
 		 */
-		uint32_t c = (seconds * 1000 + microseconds / 1000 + 1) *
-				32 / 1000;
+		uint32_t c =
+			(seconds * 1000 + microseconds / 1000 + 1) * 32 / 1000;
 
 		/* Enable a 32-bit timer and clock source is 32 Hz */
 		/* Disable external timer x */
@@ -205,7 +205,7 @@ static int cros_system_it8xxx2_hibernate(const struct device *dev,
 /*
  * Get the interrupt DTS node for this wakeup pin
  */
-#define WAKEUP_INT(id, prop, idx)  DT_PHANDLE_BY_IDX(id, prop, idx)
+#define WAKEUP_INT(id, prop, idx) DT_PHANDLE_BY_IDX(id, prop, idx)
 
 /*
  * Get the named-gpio node for this wakeup pin by reading the
@@ -217,19 +217,19 @@ static int cros_system_it8xxx2_hibernate(const struct device *dev,
 /*
  * Reset and re-enable interrupts on this wake pin.
  */
-#define WAKEUP_SETUP(id, prop, idx)					       \
-do {									       \
-	gpio_pin_configure_dt(GPIO_DT_FROM_NODE(WAKEUP_NGPIO(id, prop, idx)),  \
-			      GPIO_INPUT);				       \
-	gpio_enable_dt_interrupt(					       \
-		GPIO_INT_FROM_NODE(WAKEUP_INT(id, prop, idx)));	       \
+#define WAKEUP_SETUP(id, prop, idx)                                     \
+	do {                                                            \
+		gpio_pin_configure_dt(                                  \
+			GPIO_DT_FROM_NODE(WAKEUP_NGPIO(id, prop, idx)), \
+			GPIO_INPUT);                                    \
+		gpio_enable_dt_interrupt(                               \
+			GPIO_INT_FROM_NODE(WAKEUP_INT(id, prop, idx))); \
 	} while (0);
 
-/*
- * For all the wake-pins, re-init the GPIO and re-enable the interrupt.
- */
-	DT_FOREACH_PROP_ELEM(SYSTEM_DT_NODE_HIBERNATE_CONFIG,
-			     wakeup_irqs,
+	/*
+	 * For all the wake-pins, re-init the GPIO and re-enable the interrupt.
+	 */
+	DT_FOREACH_PROP_ELEM(SYSTEM_DT_NODE_HIBERNATE_CONFIG, wakeup_irqs,
 			     WAKEUP_SETUP);
 
 #undef WAKEUP_INT
@@ -242,7 +242,7 @@ do {									       \
 	chip_pll_ctrl(CHIP_PLL_SLEEP);
 
 	/* Chip sleep and wait timer wake it up */
-	__asm__ volatile ("wfi");
+	__asm__ volatile("wfi");
 
 	/* Reset EC when wake up from sleep mode (system hibernate) */
 	system_reset(SYSTEM_RESET_HIBERNATE);
