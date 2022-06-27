@@ -23,8 +23,8 @@ __override void board_hibernate_late(void)
 	 */
 	if (board_get_version() <= 1) {
 		if (IS_ENABLED(BOARD_ASURADA) ||
-			(IS_ENABLED(CONFIG_ZEPHYR) &&
-			IS_ENABLED(CONFIG_BOARD_ASURADA)))
+		    (IS_ENABLED(CONFIG_ZEPHYR) &&
+		     IS_ENABLED(CONFIG_BOARD_ASURADA)))
 			return;
 	}
 
