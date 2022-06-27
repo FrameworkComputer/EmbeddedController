@@ -15,7 +15,6 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-
 #if defined(CONFIG_USBC_PPC_VCONN) && !defined(CONFIG_USBC_PPC_POLARITY)
 #error "Can't use set_vconn without set_polarity"
 #endif
@@ -24,34 +23,27 @@
 #define RT1739_FLAGS_FRS_ENABLED BIT(1)
 static atomic_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
 static int read_reg(uint8_t port, int reg, int *val)
 {
-	return i2c_read8(
-		ppc_chips[port].i2c_port,
-		ppc_chips[port].i2c_addr_flags,
-		reg, val);
+	return i2c_read8(ppc_chips[port].i2c_port,
+			 ppc_chips[port].i2c_addr_flags, reg, val);
 }
 
 static int write_reg(uint8_t port, int reg, int val)
 {
-	return i2c_write8(
-		ppc_chips[port].i2c_port,
-		ppc_chips[port].i2c_addr_flags,
-		reg, val);
+	return i2c_write8(ppc_chips[port].i2c_port,
+			  ppc_chips[port].i2c_addr_flags, reg, val);
 }
 
 static int update_reg(int port, int reg, int mask,
 		      enum mask_update_action action)
 {
-	return i2c_update8(
-		ppc_chips[port].i2c_port,
-		ppc_chips[port].i2c_addr_flags,
-		reg, mask, action);
+	return i2c_update8(ppc_chips[port].i2c_port,
+			   ppc_chips[port].i2c_addr_flags, reg, mask, action);
 }
-
 
 static int rt1739_is_sourcing_vbus(int port)
 {
@@ -63,11 +55,11 @@ static int rt1739_vbus_source_enable(int port, int enable)
 	atomic_t prev_flag;
 
 	if (enable)
-		prev_flag = atomic_or(&flags[port],
-				RT1739_FLAGS_SOURCE_ENABLED);
+		prev_flag =
+			atomic_or(&flags[port], RT1739_FLAGS_SOURCE_ENABLED);
 	else
 		prev_flag = atomic_clear_bits(&flags[port],
-				RT1739_FLAGS_SOURCE_ENABLED);
+					      RT1739_FLAGS_SOURCE_ENABLED);
 
 	/* Return if status doesn't change */
 	if (!!(prev_flag & RT1739_FLAGS_SOURCE_ENABLED) == !!enable)
@@ -90,10 +82,8 @@ static int rt1739_vbus_source_enable(int port, int enable)
 
 static int rt1739_vbus_sink_enable(int port, int enable)
 {
-	return update_reg(port, RT1739_REG_VBUS_SWITCH_CTRL,
-			  RT1739_HV_SNK_EN,
+	return update_reg(port, RT1739_REG_VBUS_SWITCH_CTRL, RT1739_HV_SNK_EN,
 			  enable ? MASK_SET : MASK_CLR);
-
 }
 
 #ifdef CONFIG_CMD_PPC_DUMP
@@ -145,8 +135,7 @@ static int rt1739_is_vbus_present(int port)
 #ifdef CONFIG_USBC_PPC_POLARITY
 static int rt1739_set_polarity(int port, int polarity)
 {
-	return update_reg(port, RT1739_REG_VCONN_CTRL1,
-			  RT1739_VCONN_ORIENT,
+	return update_reg(port, RT1739_REG_VCONN_CTRL1, RT1739_VCONN_ORIENT,
 			  polarity ? RT1739_VCONN_ORIENT_CC1 :
 				     RT1739_VCONN_ORIENT_CC2);
 }
@@ -155,9 +144,8 @@ static int rt1739_set_polarity(int port, int polarity)
 #ifdef CONFIG_USBC_PPC_VCONN
 static int rt1739_set_vconn(int port, int enable)
 {
-	return update_reg(port, RT1739_REG_VCONN_CTRL1,
-				RT1739_VCONN_EN,
-				enable ? MASK_SET : MASK_CLR);
+	return update_reg(port, RT1739_REG_VCONN_CTRL1, RT1739_VCONN_EN,
+			  enable ? MASK_SET : MASK_CLR);
 }
 #endif
 
@@ -176,14 +164,13 @@ static int rt1739_workaround(int port)
 	case RT1739_DEVICE_ID_ES1:
 		CPRINTS("RT1739 ES1");
 		RETURN_ERROR(update_reg(port, RT1739_REG_SYS_CTRL1,
-			RT1739_OSC640K_FORCE_EN,
-			MASK_SET));
+					RT1739_OSC640K_FORCE_EN, MASK_SET));
 
 		RETURN_ERROR(write_reg(port, RT1739_VBUS_FAULT_DIS,
 				       RT1739_OVP_DISVBUS_EN |
-				       RT1739_UVLO_DISVBUS_EN |
-				       RT1739_SCP_DISVBUS_EN |
-				       RT1739_OCPS_DISVBUS_EN));
+					       RT1739_UVLO_DISVBUS_EN |
+					       RT1739_SCP_DISVBUS_EN |
+					       RT1739_OCPS_DISVBUS_EN));
 		break;
 
 	case RT1739_DEVICE_ID_ES2:
@@ -208,14 +195,13 @@ static int rt1739_workaround(int port)
 		msleep(5);
 		RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_SWITCH_CTRL, 0));
 		msleep(5);
-		RETURN_ERROR(write_reg(port, RT1739_VBUS_FAULT_DIS,
-				       RT1739_OVP_DISVBUS_EN |
-				       RT1739_UVLO_DISVBUS_EN |
-				       RT1739_RCP_DISVBUS_EN |
-				       RT1739_SCP_DISVBUS_EN));
-		RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_CTRL1,
-				       RT1739_HVLV_SCP_EN |
-				       RT1739_HVLV_OCRC_EN));
+		RETURN_ERROR(write_reg(
+			port, RT1739_VBUS_FAULT_DIS,
+			RT1739_OVP_DISVBUS_EN | RT1739_UVLO_DISVBUS_EN |
+				RT1739_RCP_DISVBUS_EN | RT1739_SCP_DISVBUS_EN));
+		RETURN_ERROR(
+			write_reg(port, RT1739_REG_VBUS_CTRL1,
+				  RT1739_HVLV_SCP_EN | RT1739_HVLV_OCRC_EN));
 		break;
 
 	default:
@@ -229,8 +215,7 @@ static int rt1739_workaround(int port)
 static int rt1739_set_frs_enable(int port, int enable)
 {
 	/* Enable FRS RX detect */
-	RETURN_ERROR(update_reg(port, RT1739_REG_CC_FRS_CTRL1,
-				RT1739_FRS_RX_EN,
+	RETURN_ERROR(update_reg(port, RT1739_REG_CC_FRS_CTRL1, RT1739_FRS_RX_EN,
 				enable ? MASK_SET : MASK_CLR));
 
 	/*
@@ -243,8 +228,7 @@ static int rt1739_set_frs_enable(int port, int enable)
 	RETURN_ERROR(update_reg(port, RT1739_REG_INT_MASK5,
 				RT1739_BC12_SNK_DONE_MASK,
 				enable ? MASK_CLR : MASK_SET));
-	RETURN_ERROR(update_reg(port, RT1739_REG_INT_MASK4,
-				RT1739_FRS_RX_MASK,
+	RETURN_ERROR(update_reg(port, RT1739_REG_INT_MASK4, RT1739_FRS_RX_MASK,
 				enable ? MASK_SET : MASK_CLR));
 	if (enable)
 		atomic_or(&flags[port], RT1739_FLAGS_FRS_ENABLED);
@@ -268,22 +252,19 @@ static int rt1739_init(int port)
 	RETURN_ERROR(rt1739_workaround(port));
 	RETURN_ERROR(rt1739_set_frs_enable(port, false));
 	RETURN_ERROR(update_reg(port, RT1739_REG_VBUS_DET_EN,
-				RT1739_VBUS_PRESENT_EN,
-				MASK_SET));
+				RT1739_VBUS_PRESENT_EN, MASK_SET));
 	RETURN_ERROR(update_reg(port, RT1739_REG_SBU_CTRL_01,
-				RT1739_DM_SWEN | RT1739_DP_SWEN,
-				MASK_SET));
+				RT1739_DM_SWEN | RT1739_DP_SWEN, MASK_SET));
 	RETURN_ERROR(update_reg(port, RT1739_REG_SBU_CTRL_01,
-				RT1739_SBUSW_MUX_SEL,
-				MASK_CLR));
+				RT1739_SBUSW_MUX_SEL, MASK_CLR));
 	RETURN_ERROR(update_reg(port, RT1739_REG_VCONN_CTRL3,
-				RT1739_VCONN_CLIMIT_EN,
-				MASK_SET));
+				RT1739_VCONN_CLIMIT_EN, MASK_SET));
 
 	/* VBUS OVP -> 23V */
-	RETURN_ERROR(write_reg(port, RT1739_REG_VBUS_OV_SETTING,
+	RETURN_ERROR(write_reg(
+		port, RT1739_REG_VBUS_OV_SETTING,
 		(RT1739_OVP_SEL_23_0V << RT1739_VBUS_OVP_SEL_SHIFT) |
-		(RT1739_OVP_SEL_23_0V << RT1739_VIN_HV_OVP_SEL_SHIFT)));
+			(RT1739_OVP_SEL_23_0V << RT1739_VIN_HV_OVP_SEL_SHIFT)));
 	/* VBUS OCP -> 3.3A (or 5.5A for ES2 HV Sink) */
 	RETURN_ERROR(rt1739_get_device_id(port, &device_id));
 	if (device_id == RT1739_DEVICE_ID_ES2)
@@ -317,7 +298,7 @@ static void rt1739_update_charge_manager(int port,
 	if (new_bc12_type != current_bc12_type) {
 		if (current_bc12_type != CHARGE_SUPPLIER_NONE)
 			charge_manager_update_charge(current_bc12_type, port,
-							NULL);
+						     NULL);
 
 		if (new_bc12_type != CHARGE_SUPPLIER_NONE) {
 			struct charge_port_info chg = {
@@ -334,8 +315,8 @@ static void rt1739_update_charge_manager(int port,
 
 static void rt1739_enable_bc12_detection(int port, bool enable)
 {
-	update_reg(port, RT1739_REG_BC12_SNK_FUNC,
-		   RT1739_BC12_SNK_EN, enable ? MASK_SET : MASK_CLR);
+	update_reg(port, RT1739_REG_BC12_SNK_FUNC, RT1739_BC12_SNK_EN,
+		   enable ? MASK_SET : MASK_CLR);
 }
 
 static enum charge_supplier rt1739_bc12_get_device_type(int port)
@@ -370,16 +351,16 @@ static void rt1739_usb_charger_task_init(const int port)
 static void rt1739_usb_charger_task_event(const int port, uint32_t evt)
 {
 	bool is_non_pd_sink = !pd_capable(port) &&
-		!usb_charger_port_is_sourcing_vbus(port) &&
-		pd_check_vbus_level(port, VBUS_PRESENT);
+			      !usb_charger_port_is_sourcing_vbus(port) &&
+			      pd_check_vbus_level(port, VBUS_PRESENT);
 
 	/* vbus change, start bc12 detection */
 	if (evt & USB_CHG_EVENT_VBUS) {
 		if (is_non_pd_sink)
 			rt1739_enable_bc12_detection(port, true);
 		else
-			rt1739_update_charge_manager(
-					port, CHARGE_SUPPLIER_NONE);
+			rt1739_update_charge_manager(port,
+						     CHARGE_SUPPLIER_NONE);
 	}
 
 	/* detection done, update charge_manager and stop detection */
