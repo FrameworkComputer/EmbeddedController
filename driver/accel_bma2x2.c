@@ -20,7 +20,7 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
 /* Number of times to attempt to enable sensor before giving up. */
 #define SENSOR_ENABLE_ATTEMPTS 5
@@ -45,7 +45,7 @@ static inline int raw_write8(const int port, const uint16_t i2c_addr_flags,
 
 static int set_range(struct motion_sensor_t *s, int range, int rnd)
 {
-	int ret,  range_val, reg_val, range_reg_val;
+	int ret, range_val, reg_val, range_reg_val;
 
 	/* Range has to be between 2G-16G */
 	if (range < 2)
@@ -105,16 +105,16 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 	mutex_lock(s->mutex);
 
 	/* Determine the new value of control reg and attempt to write it. */
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			BMA2x2_BW_SELECT_ADDR, &odr_reg_val);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, BMA2x2_BW_SELECT_ADDR,
+			&odr_reg_val);
 	if (ret != EC_SUCCESS) {
 		mutex_unlock(s->mutex);
 		return ret;
 	}
 	reg_val = (odr_reg_val & ~BMA2x2_BW_MSK) | odr_val;
 	/* Set output data rate. */
-	ret = raw_write8(s->port, s->i2c_spi_addr_flags,
-			 BMA2x2_BW_SELECT_ADDR, reg_val);
+	ret = raw_write8(s->port, s->i2c_spi_addr_flags, BMA2x2_BW_SELECT_ADDR,
+			 reg_val);
 
 	/* If successfully written, then save the new data rate. */
 	if (ret == EC_SUCCESS)
@@ -212,8 +212,8 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 	if (!enable)
 		return EC_SUCCESS;
 
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			BMA2x2_OFFSET_CTRL_ADDR, &val);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, BMA2x2_OFFSET_CTRL_ADDR,
+			&val);
 	if (ret)
 		return ret;
 	if (!(val & BMA2x2_OFFSET_CAL_READY))
@@ -237,8 +237,8 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 	val = ((BMA2x2_OFC_TARGET_0G << BMA2x2_OFC_TARGET_AXIS(X)) |
 	       (BMA2x2_OFC_TARGET_0G << BMA2x2_OFC_TARGET_AXIS(Y)) |
 	       (val << BMA2x2_OFC_TARGET_AXIS(Z)));
-	raw_write8(s->port, s->i2c_spi_addr_flags,
-		   BMA2x2_OFC_SETTING_ADDR, val);
+	raw_write8(s->port, s->i2c_spi_addr_flags, BMA2x2_OFC_SETTING_ADDR,
+		   val);
 
 	for (i = X; i <= Z; i++) {
 		val = (i + 1) << BMA2x2_OFFSET_TRIGGER_OFF;
@@ -275,8 +275,8 @@ static int init(struct motion_sensor_t *s)
 	/* This driver requires a mutex */
 	ASSERT(s->mutex);
 
-	ret = raw_read8(s->port, s->i2c_spi_addr_flags,
-			BMA2x2_CHIP_ID_ADDR, &val);
+	ret = raw_read8(s->port, s->i2c_spi_addr_flags, BMA2x2_CHIP_ID_ADDR,
+			&val);
 	if (ret)
 		return EC_ERROR_UNKNOWN;
 
