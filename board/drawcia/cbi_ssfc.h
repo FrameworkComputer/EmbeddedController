@@ -55,5 +55,4 @@ enum ec_ssfc_base_sensor get_cbi_ssfc_base_sensor(void);
  */
 enum ec_ssfc_lid_sensor get_cbi_ssfc_lid_sensor(void);
 
-
 #endif /* _DEDEDE_CBI_SSFC__H_ */
