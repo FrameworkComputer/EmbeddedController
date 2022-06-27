@@ -24,9 +24,9 @@ static int wdt_warning_fired;
  */
 
 /* Magic value to tickle the watchdog register. */
-#define ITE83XX_WATCHDOG_MAGIC_WORD  0x5C
+#define ITE83XX_WATCHDOG_MAGIC_WORD 0x5C
 /* Start to print warning message. */
-#define ITE83XX_WATCHDOG_WARNING_MS  CONFIG_AUX_TIMER_PERIOD_MS
+#define ITE83XX_WATCHDOG_WARNING_MS CONFIG_AUX_TIMER_PERIOD_MS
 /* The interval to print warning message at critical period. */
 #define ITE83XX_WATCHDOG_CRITICAL_MS 30
 
@@ -39,7 +39,7 @@ static void watchdog_set_warning_timer(int32_t ms, int init)
 void watchdog_warning_irq(void)
 {
 #ifdef CONFIG_SOFTWARE_PANIC
-	struct panic_data * const pdata_ptr = get_panic_data_write();
+	struct panic_data *const pdata_ptr = get_panic_data_write();
 
 #if defined(CHIP_CORE_NDS32)
 	pdata_ptr->nds_n8.ipc = get_ipc();
@@ -64,10 +64,10 @@ void watchdog_warning_irq(void)
 	 * LP = PC+4 after a jump and link instruction (jal).
 	 */
 	panic_printf("Pre-WDT warning! IPC:%08x LP:%08x TASK_ID:%d\n",
-		get_ipc(), ilp, task_get_current());
+		     get_ipc(), ilp, task_get_current());
 #elif defined(CHIP_CORE_RISCV)
 	panic_printf("Pre-WDT warning! MEPC:%08x RA:%08x TASK_ID:%d\n",
-		get_mepc(), ira, task_get_current());
+		     get_mepc(), ira, task_get_current());
 #endif
 
 	if (!wdt_warning_fired++)
