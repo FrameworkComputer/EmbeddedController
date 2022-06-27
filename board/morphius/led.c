@@ -17,8 +17,8 @@
 #include "timer.h"
 #include "util.h"
 
-#define LED_BAT_OFF_LVL	0
-#define LED_BAT_ON_LVL	1
+#define LED_BAT_OFF_LVL 0
+#define LED_BAT_ON_LVL 1
 #define LED_BAT_S3_OFF_TIME_MS 3000
 #define LED_BAT_S3_PWM_RESCALE 5
 #define LED_BAT_S3_TICK_MS 50
@@ -34,10 +34,8 @@
 
 static int ticks;
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_BATTERY_LED,
-	EC_LED_ID_POWER_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
+					     EC_LED_ID_POWER_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -45,13 +43,13 @@ enum led_color {
 	LED_OFF = 0,
 	LED_WHITE,
 	LED_AMBER,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 /* PWM brightness vs. color, in the order of off, white */
 static const uint8_t color_brightness[2] = {
-	[LED_OFF]   = 0,
-	[LED_WHITE]   = 100,
+	[LED_OFF] = 0,
+	[LED_WHITE] = 100,
 };
 
 void led_set_color_power(enum led_color color)
@@ -111,10 +109,10 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	} else if (led_id == EC_LED_ID_POWER_LED) {
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
 			pwm_set_duty(PWM_CH_POWER_LED,
-						color_brightness[LED_WHITE]);
+				     color_brightness[LED_WHITE]);
 		else
 			pwm_set_duty(PWM_CH_POWER_LED,
-						color_brightness[LED_OFF]);
+				     color_brightness[LED_OFF]);
 	}
 
 	return EC_SUCCESS;
@@ -133,8 +131,8 @@ static void suspend_led_update_deferred(void)
 	if (ticks <= TICKS_STEP2_DIMMER) {
 		pwm_set_duty(PWM_CH_POWER_LED, ticks * LED_BAT_S3_PWM_RESCALE);
 	} else if (ticks <= TICKS_STEP3_OFF) {
-		pwm_set_duty(PWM_CH_POWER_LED,
-					(TICKS_STEP3_OFF - ticks) * LED_BAT_S3_PWM_RESCALE);
+		pwm_set_duty(PWM_CH_POWER_LED, (TICKS_STEP3_OFF - ticks) *
+						       LED_BAT_S3_PWM_RESCALE);
 	} else {
 		ticks = TICKS_STEP1_BRIGHTER;
 		delay = LED_BAT_S3_OFF_TIME_MS * MSEC;
@@ -204,9 +202,10 @@ static void led_set_power(void)
 			power_ticks = 0;
 
 		while (blink_ticks < LED_PWR_TICKS_PER_CYCLE) {
-			led_set_color_power(
-				(power_ticks % LED_TOTAL_TICKS) < LED_ON_TICKS ?
-				LED_WHITE : LED_OFF);
+			led_set_color_power((power_ticks % LED_TOTAL_TICKS) <
+							    LED_ON_TICKS ?
+						    LED_WHITE :
+						    LED_OFF);
 
 			previous_state_suspend = 1;
 			return;
