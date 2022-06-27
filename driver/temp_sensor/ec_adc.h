@@ -21,4 +21,4 @@
  */
 int ec_adc_get_val(int idx, int *temp_ptr);
 
-#endif  /* __CROS_EC_TEMP_SENSOR_EC_ADC_H */
+#endif /* __CROS_EC_TEMP_SENSOR_EC_ADC_H */
