@@ -13,14 +13,14 @@
 #include "amd_r19me4070.h"
 #include "power.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* GPU I2C address */
-#define GPU_ADDR_FLAGS                  0x0041
+#define GPU_ADDR_FLAGS 0x0041
 
-#define GPU_INIT_OFFSET                 0x01
-#define GPU_TEMPERATURE_OFFSET          0x03
+#define GPU_INIT_OFFSET 0x01
+#define GPU_TEMPERATURE_OFFSET 0x03
 
 static int initialized;
 /*
@@ -34,8 +34,8 @@ static void gpu_init_temp_sensor(void)
 {
 	int rv;
 	rv = i2c_write_block(I2C_PORT_GPU, GPU_ADDR_FLAGS, GPU_INIT_OFFSET,
-			  gpu_init_write_value,
-			  ARRAY_SIZE(gpu_init_write_value));
+			     gpu_init_write_value,
+			     ARRAY_SIZE(gpu_init_write_value));
 	if (rv == EC_SUCCESS) {
 		initialized = 1;
 		return;
@@ -64,7 +64,7 @@ int get_temp_R19ME4070(int idx, int *temp_ptr)
 		return EC_ERROR_BUSY;
 	}
 	rv = i2c_read_block(I2C_PORT_GPU, GPU_ADDR_FLAGS,
-			GPU_TEMPERATURE_OFFSET, reg, ARRAY_SIZE(reg));
+			    GPU_TEMPERATURE_OFFSET, reg, ARRAY_SIZE(reg));
 	if (rv) {
 		CPRINTS("read GPU Temperature fail");
 		*temp_ptr = C_TO_K(0);
