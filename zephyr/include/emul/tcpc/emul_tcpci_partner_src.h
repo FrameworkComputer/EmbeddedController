@@ -95,10 +95,10 @@ enum check_pdos_res tcpci_src_emul_check_pdos(struct tcpci_src_emul_data *data);
  *
  * @return Pointer to USB-C source extension
  */
-struct tcpci_partner_extension *tcpci_src_emul_init(
-	struct tcpci_src_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	struct tcpci_partner_extension *ext);
+struct tcpci_partner_extension *
+tcpci_src_emul_init(struct tcpci_src_emul_data *data,
+		    struct tcpci_partner_data *common_data,
+		    struct tcpci_partner_extension *ext);
 
 /**
  * @brief Send capability message constructed from source device emulator PDOs
@@ -134,9 +134,7 @@ int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
  */
 int tcpci_src_emul_send_capability_msg_with_timer(
 	struct tcpci_src_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	uint64_t delay);
-
+	struct tcpci_partner_data *common_data, uint64_t delay);
 
 /**
  * @brief Clear the alert received flag.
