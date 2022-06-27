@@ -35,11 +35,11 @@ static void tcpci_src_emul_start_source_capability_custom_time(
  *
  * @param data Pointer to USB-C source device emulator data
  */
-static void tcpci_src_emul_start_source_capability_timer(
-	struct tcpci_src_emul_data *data)
+static void
+tcpci_src_emul_start_source_capability_timer(struct tcpci_src_emul_data *data)
 {
 	tcpci_src_emul_start_source_capability_custom_time(
-			data, TCPCI_SOURCE_CAPABILITY_TIMEOUT);
+		data, TCPCI_SOURCE_CAPABILITY_TIMEOUT);
 }
 
 /**
@@ -47,8 +47,8 @@ static void tcpci_src_emul_start_source_capability_timer(
  *
  * @param data Pointer to USB-C source device emulator data
  */
-static void tcpci_src_emul_stop_source_capability_timer(
-	struct tcpci_src_emul_data *data)
+static void
+tcpci_src_emul_stop_source_capability_timer(struct tcpci_src_emul_data *data)
 {
 	k_work_cancel_delayable(&data->source_capability_timeout);
 }
@@ -66,21 +66,19 @@ int tcpci_src_emul_send_capability_msg(struct tcpci_src_emul_data *data,
 		}
 	}
 
-	return tcpci_partner_send_data_msg(common_data,
-					   PD_DATA_SOURCE_CAP,
+	return tcpci_partner_send_data_msg(common_data, PD_DATA_SOURCE_CAP,
 					   data->pdo, pdos, delay);
 }
 
 int tcpci_src_emul_send_capability_msg_with_timer(
 	struct tcpci_src_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	uint64_t delay)
+	struct tcpci_partner_data *common_data, uint64_t delay)
 {
 	int ret;
 
 	if (delay > 0) {
 		tcpci_src_emul_start_source_capability_custom_time(
-							data, K_MSEC(delay));
+			data, K_MSEC(delay));
 		return TCPCI_EMUL_TX_SUCCESS;
 	}
 
@@ -119,10 +117,10 @@ void tcpci_src_emul_clear_status_received(struct tcpci_src_emul_data *data)
  * @param TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled
  * @param TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
  */
-static enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
-	struct tcpci_partner_extension *ext,
-	struct tcpci_partner_data *common_data,
-	const struct tcpci_emul_msg *msg)
+static enum tcpci_partner_handler_res
+tcpci_src_emul_handle_sop_msg(struct tcpci_partner_extension *ext,
+			      struct tcpci_partner_data *common_data,
+			      const struct tcpci_emul_msg *msg)
 {
 	struct tcpci_src_emul_data *data =
 		CONTAINER_OF(ext, struct tcpci_src_emul_data, ext);
@@ -171,9 +169,8 @@ static enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_GET_REVISION:
 			rmdo = 0x31000000;
-			tcpci_partner_send_data_msg(common_data,
-						    PD_DATA_REVISION,
-						    &rmdo, 1, 0);
+			tcpci_partner_send_data_msg(
+				common_data, PD_DATA_REVISION, &rmdo, 1, 0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
@@ -189,9 +186,8 @@ static enum tcpci_partner_handler_res tcpci_src_emul_handle_sop_msg(
 static void tcpci_src_emul_source_capability_timeout(struct k_work *work)
 {
 	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
-	struct tcpci_src_emul_data *data =
-		CONTAINER_OF(dwork, struct tcpci_src_emul_data,
-			     source_capability_timeout);
+	struct tcpci_src_emul_data *data = CONTAINER_OF(
+		dwork, struct tcpci_src_emul_data, source_capability_timeout);
 	struct tcpci_partner_data *common_data = data->common_data;
 
 	if (k_mutex_lock(&common_data->transmit_mutex, K_NO_WAIT) != 0) {
@@ -278,9 +274,9 @@ static void tcpci_src_emul_disconnect(struct tcpci_partner_extension *ext,
  * @return 0 on success
  * @return negative on TCPCI connect error
  */
-static int tcpci_src_emul_connect_to_tcpci(
-	struct tcpci_partner_extension *ext,
-	struct tcpci_partner_data *common_data)
+static int
+tcpci_src_emul_connect_to_tcpci(struct tcpci_partner_extension *ext,
+				struct tcpci_partner_data *common_data)
 {
 	struct tcpci_src_emul_data *data =
 		CONTAINER_OF(ext, struct tcpci_src_emul_data, ext);
@@ -298,15 +294,14 @@ static int tcpci_src_emul_connect_to_tcpci(
 	 * capabilities, but it is permit. Timeout is obligatory for power swap.
 	 */
 	tcpci_src_emul_send_capability_msg_with_timer(
-					data, common_data,
-					TCPCI_SWAP_SOURCE_START_TIMEOUT_MS);
+		data, common_data, TCPCI_SWAP_SOURCE_START_TIMEOUT_MS);
 
 	return 0;
 }
 
-#define PDO_FIXED_FLAGS_MASK						\
-	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_UNCONSTRAINED |		\
-	 PDO_FIXED_COMM_CAP | PDO_FIXED_DATA_SWAP)
+#define PDO_FIXED_FLAGS_MASK                                                  \
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_UNCONSTRAINED | PDO_FIXED_COMM_CAP | \
+	 PDO_FIXED_DATA_SWAP)
 
 enum check_pdos_res tcpci_src_emul_check_pdos(struct tcpci_src_emul_data *data)
 {
@@ -411,10 +406,10 @@ struct tcpci_partner_extension_ops tcpci_src_emul_ops = {
 	.connect = tcpci_src_emul_connect_to_tcpci,
 };
 
-struct tcpci_partner_extension *tcpci_src_emul_init(
-	struct tcpci_src_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	struct tcpci_partner_extension *ext)
+struct tcpci_partner_extension *
+tcpci_src_emul_init(struct tcpci_src_emul_data *data,
+		    struct tcpci_partner_data *common_data,
+		    struct tcpci_partner_extension *ext)
 {
 	struct tcpci_partner_extension *src_ext = &data->ext;
 
