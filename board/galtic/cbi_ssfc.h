@@ -37,7 +37,7 @@ enum ec_ssfc_lid_sensor {
  * Mux Redriver (Bit 6)
  */
 enum ec_ssfc_mux_redriver {
-	SSFC_MUX_DEFAULT = 0,		/* IT5205 + TUSB544 */
+	SSFC_MUX_DEFAULT = 0, /* IT5205 + TUSB544 */
 	SSFC_MUX_PS8743 = 1,
 };
 
