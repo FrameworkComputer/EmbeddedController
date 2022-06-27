@@ -106,8 +106,8 @@ static void clock_ulposc_config_default(struct opp_ulposc_cfg *opp)
 	AP_ULPOSC_CON1(opp->osc) = val;
 
 	/* set settle time */
-	SCP_CLK_HIGH_VAL =
-		(SCP_CLK_HIGH_VAL & ~CLK_HIGH_VAL_MASK) | CLK_HIGH_VAL_VAL(2);
+	SCP_CLK_HIGH_VAL = (SCP_CLK_HIGH_VAL & ~CLK_HIGH_VAL_MASK) |
+			   CLK_HIGH_VAL_VAL(2);
 }
 
 static void clock_ulposc_config_cali(struct opp_ulposc_cfg *opp,
@@ -137,13 +137,12 @@ static uint32_t clock_ulposc_measure_freq(uint32_t osc)
 	AP_CLK26CALI_1 = CFG_CKGEN_LOAD_CNT;
 
 	/* before select meter clock input, bit[1:0] = b00 */
-	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) |
-			 DBG_MODE_SET_CLOCK;
+	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) | DBG_MODE_SET_CLOCK;
 
 	/* select monclk_ext2fqmtr_sel: AP_CLK_DBG_CFG[14:8] */
-	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
-			 (osc == 0 ? DBG_BIST_SOURCE_ULPOSC1 :
-				     DBG_BIST_SOURCE_ULPOSC2);
+	AP_CLK_DBG_CFG =
+		(AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
+		(osc == 0 ? DBG_BIST_SOURCE_ULPOSC1 : DBG_BIST_SOURCE_ULPOSC2);
 
 	/* set meter divisor to 1, bit[31:24] = b00000000 */
 	AP_CLK_MISC_CFG_0 = (AP_CLK_MISC_CFG_0 & ~MISC_METER_DIVISOR_MASK) |
@@ -176,7 +175,7 @@ static uint32_t clock_ulposc_measure_freq(uint32_t osc)
 	return result;
 }
 
-#define CAL_MIS_RATE	40
+#define CAL_MIS_RATE 40
 static int clock_ulposc_is_calibrated(struct opp_ulposc_cfg *opp)
 {
 	uint32_t curr, target;
@@ -185,8 +184,8 @@ static int clock_ulposc_is_calibrated(struct opp_ulposc_cfg *opp)
 	target = opp->target_mhz * 512 / 26;
 
 #ifdef DEBUG
-	CPRINTF("osc:%u, target=%uMHz, curr=%uMHz, cali:%u\n",
-		opp->osc, opp->target_mhz, (curr * 26) / 512, opp->cali);
+	CPRINTF("osc:%u, target=%uMHz, curr=%uMHz, cali:%u\n", opp->osc,
+		opp->target_mhz, (curr * 26) / 512, opp->cali);
 #endif
 
 	/* check if calibrated value is in the range of target value +- 4% */
@@ -401,7 +400,7 @@ void sr_task(void *u)
 	uint32_t event;
 	uint32_t prev, now;
 
-	while(1) {
+	while (1) {
 		switch (state) {
 		case SR_S0:
 			event = task_wait_event(-1);
@@ -463,12 +462,12 @@ void clock_init(void)
 	SCP_SYS_CTRL |= AUTO_DDREN;
 
 	/* set settle time */
-	SCP_CLK_SYS_VAL =
-		(SCP_CLK_SYS_VAL & ~CLK_SYS_VAL_MASK) | CLK_SYS_VAL_VAL(1);
-	SCP_CLK_HIGH_VAL =
-		(SCP_CLK_HIGH_VAL & ~CLK_HIGH_VAL_MASK) | CLK_HIGH_VAL_VAL(1);
-	SCP_SLEEP_CTRL =
-		(SCP_SLEEP_CTRL & ~VREQ_COUNT_MASK) | VREQ_COUNT_VAL(1);
+	SCP_CLK_SYS_VAL = (SCP_CLK_SYS_VAL & ~CLK_SYS_VAL_MASK) |
+			  CLK_SYS_VAL_VAL(1);
+	SCP_CLK_HIGH_VAL = (SCP_CLK_HIGH_VAL & ~CLK_HIGH_VAL_MASK) |
+			   CLK_HIGH_VAL_VAL(1);
+	SCP_SLEEP_CTRL = (SCP_SLEEP_CTRL & ~VREQ_COUNT_MASK) |
+			 VREQ_COUNT_VAL(1);
 
 	/* turn off ULPOSC2 */
 	SCP_CLK_ON_CTRL |= HIGH_CORE_DIS_SUB;
