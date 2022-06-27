@@ -32,62 +32,61 @@
 #endif
 
 #ifdef CONFIG_CHARGER_SENSE_RESISTOR_AC_ISL9238
-	#undef CONFIG_CHARGER_SENSE_RESISTOR_AC
-	#define CONFIG_CHARGER_SENSE_RESISTOR_AC \
-		CONFIG_CHARGER_SENSE_RESISTOR_AC_ISL9238
+#undef CONFIG_CHARGER_SENSE_RESISTOR_AC
+#define CONFIG_CHARGER_SENSE_RESISTOR_AC \
+	CONFIG_CHARGER_SENSE_RESISTOR_AC_ISL9238
 #endif
-
 
 #define DEFAULT_R_AC 20
 #define DEFAULT_R_SNS 10
 #define R_AC CONFIG_CHARGER_SENSE_RESISTOR_AC
 #define R_SNS CONFIG_CHARGER_SENSE_RESISTOR
-#define REG_TO_CURRENT(REG) ((REG) * DEFAULT_R_SNS / R_SNS)
-#define CURRENT_TO_REG(CUR) ((CUR) * R_SNS / DEFAULT_R_SNS)
-#define AC_REG_TO_CURRENT(REG) ((REG) * DEFAULT_R_AC / R_AC)
-#define AC_CURRENT_TO_REG(CUR) ((CUR) * R_AC / DEFAULT_R_AC)
+#define REG_TO_CURRENT(REG) ((REG)*DEFAULT_R_SNS / R_SNS)
+#define CURRENT_TO_REG(CUR) ((CUR)*R_SNS / DEFAULT_R_SNS)
+#define AC_REG_TO_CURRENT(REG) ((REG)*DEFAULT_R_AC / R_AC)
+#define AC_CURRENT_TO_REG(CUR) ((CUR)*R_AC / DEFAULT_R_AC)
 
 #if defined(CONFIG_CHARGER_ISL9237)
-#define CHARGER_NAME  "isl9237"
-#define CHARGE_V_MAX  ISL9237_SYS_VOLTAGE_REG_MAX
-#define CHARGE_V_MIN  ISL923X_SYS_VOLTAGE_REG_MIN
+#define CHARGER_NAME "isl9237"
+#define CHARGE_V_MAX ISL9237_SYS_VOLTAGE_REG_MAX
+#define CHARGE_V_MIN ISL923X_SYS_VOLTAGE_REG_MIN
 #define CHARGE_V_STEP 8
 #elif defined(CONFIG_CHARGER_ISL9238)
-#define CHARGER_NAME  "isl9238"
-#define CHARGE_V_MAX  ISL9238_SYS_VOLTAGE_REG_MAX
-#define CHARGE_V_MIN  ISL923X_SYS_VOLTAGE_REG_MIN
+#define CHARGER_NAME "isl9238"
+#define CHARGE_V_MAX ISL9238_SYS_VOLTAGE_REG_MAX
+#define CHARGE_V_MIN ISL923X_SYS_VOLTAGE_REG_MIN
 #define CHARGE_V_STEP 8
 #elif defined(CONFIG_CHARGER_ISL9238C)
-#define CHARGER_NAME  "isl9238c"
-#define CHARGE_V_MAX  ISL9238_SYS_VOLTAGE_REG_MAX
-#define CHARGE_V_MIN  ISL923X_SYS_VOLTAGE_REG_MIN
+#define CHARGER_NAME "isl9238c"
+#define CHARGE_V_MAX ISL9238_SYS_VOLTAGE_REG_MAX
+#define CHARGE_V_MIN ISL923X_SYS_VOLTAGE_REG_MIN
 #define CHARGE_V_STEP 8
 #elif defined(CONFIG_CHARGER_RAA489000)
-#define CHARGER_NAME  "raa489000"
-#define CHARGE_V_MAX  RAA489000_SYS_VOLTAGE_REG_MAX
-#define CHARGE_V_MIN  RAA489000_SYS_VOLTAGE_REG_MIN
+#define CHARGER_NAME "raa489000"
+#define CHARGE_V_MAX RAA489000_SYS_VOLTAGE_REG_MAX
+#define CHARGE_V_MIN RAA489000_SYS_VOLTAGE_REG_MIN
 #define CHARGE_V_STEP 8
 #endif
 
 #ifdef CONFIG_CHARGER_RAA489000
-#define CHARGE_I_MAX  RAA489000_CURRENT_REG_MAX
+#define CHARGE_I_MAX RAA489000_CURRENT_REG_MAX
 #else
-#define CHARGE_I_MAX  ISL923X_CURRENT_REG_MAX
+#define CHARGE_I_MAX ISL923X_CURRENT_REG_MAX
 #endif /* CONFIG_CHARGER_RAA489000 */
-#define CHARGE_I_MIN  4
-#define CHARGE_I_OFF  0
+#define CHARGE_I_MIN 4
+#define CHARGE_I_OFF 0
 #define CHARGE_I_STEP 4
 #ifdef CONFIG_CHARGER_RAA489000
-#define INPUT_I_MAX   RAA489000_CURRENT_REG_MAX
+#define INPUT_I_MAX RAA489000_CURRENT_REG_MAX
 #else
-#define INPUT_I_MAX   ISL923X_CURRENT_REG_MAX
+#define INPUT_I_MAX ISL923X_CURRENT_REG_MAX
 #endif /* CONFIG_CHARGER_RAA489000 */
-#define INPUT_I_MIN   4
-#define INPUT_I_STEP  4
+#define INPUT_I_MIN 4
+#define INPUT_I_STEP 4
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 enum isl923x_amon_bmon { AMON, BMON };
 enum isl923x_mon_dir { MON_CHARGE = 0, MON_DISCHARGE = 1 };
@@ -102,38 +101,36 @@ static enum ec_error_list isl923x_discharge_on_ac_weak_disable(int chgnum);
 
 /* Charger parameters */
 static const struct charger_info isl9237_charger_info = {
-	.name         = CHARGER_NAME,
-	.voltage_max  = CHARGE_V_MAX,
-	.voltage_min  = CHARGE_V_MIN,
+	.name = CHARGER_NAME,
+	.voltage_max = CHARGE_V_MAX,
+	.voltage_min = CHARGE_V_MIN,
 	.voltage_step = CHARGE_V_STEP,
-	.current_max  = REG_TO_CURRENT(CHARGE_I_MAX),
-	.current_min  = REG_TO_CURRENT(CHARGE_I_MIN),
+	.current_max = REG_TO_CURRENT(CHARGE_I_MAX),
+	.current_min = REG_TO_CURRENT(CHARGE_I_MIN),
 	.current_step = REG_TO_CURRENT(CHARGE_I_STEP),
-	.input_current_max  = AC_REG_TO_CURRENT(INPUT_I_MAX),
-	.input_current_min  = AC_REG_TO_CURRENT(INPUT_I_MIN),
+	.input_current_max = AC_REG_TO_CURRENT(INPUT_I_MAX),
+	.input_current_min = AC_REG_TO_CURRENT(INPUT_I_MIN),
 	.input_current_step = AC_REG_TO_CURRENT(INPUT_I_STEP),
 };
 
 static inline enum ec_error_list raw_read16(int chgnum, int offset, int *value)
 {
 	return i2c_read16(chg_chips[chgnum].i2c_port,
-			  chg_chips[chgnum].i2c_addr_flags,
-			  offset, value);
+			  chg_chips[chgnum].i2c_addr_flags, offset, value);
 }
 
 static inline enum ec_error_list raw_write16(int chgnum, int offset, int value)
 {
 	return i2c_write16(chg_chips[chgnum].i2c_port,
-			   chg_chips[chgnum].i2c_addr_flags,
-			   offset, value);
+			   chg_chips[chgnum].i2c_addr_flags, offset, value);
 }
 
 static inline enum ec_error_list raw_update16(int chgnum, int offset, int mask,
 					      enum mask_update_action action)
 {
 	return i2c_update16(chg_chips[chgnum].i2c_port,
-			    chg_chips[chgnum].i2c_addr_flags,
-			    offset, mask, action);
+			    chg_chips[chgnum].i2c_addr_flags, offset, mask,
+			    action);
 }
 
 static enum ec_error_list isl9237_set_current(int chgnum, uint16_t current)
@@ -236,7 +233,7 @@ static enum ec_error_list isl923x_get_input_current_limit(int chgnum,
 
 #ifdef CONFIG_CHARGER_RAA489000
 static enum ec_error_list raa489000_get_input_current(int chgnum,
-						    int *input_current)
+						      int *input_current)
 {
 	int rv;
 	int regval;
@@ -305,13 +302,13 @@ static enum ec_error_list isl923x_set_otg_current_voltage(int chgnum,
 {
 	int rv;
 	uint16_t volt_reg = (output_voltage / ISL9238_OTG_VOLTAGE_STEP)
-			<< ISL9238_OTG_VOLTAGE_SHIFT;
+			    << ISL9238_OTG_VOLTAGE_SHIFT;
 	uint16_t current_reg =
 		DIV_ROUND_UP(output_current, ISL923X_OTG_CURRENT_STEP)
-			<< ISL923X_OTG_CURRENT_SHIFT;
+		<< ISL923X_OTG_CURRENT_SHIFT;
 
 	if (output_current < 0 || output_current > ISL923X_OTG_CURRENT_MAX ||
-			output_voltage > ISL9238_OTG_VOLTAGE_MAX)
+	    output_voltage > ISL9238_OTG_VOLTAGE_MAX)
 		return EC_ERROR_INVAL;
 
 	/* Set voltage. */
@@ -554,8 +551,8 @@ int isl923x_set_comparator_inversion(int chgnum, int invert)
 	int regval;
 
 	rv = i2c_read16(chg_chips[chgnum].i2c_port,
-			chg_chips[chgnum].i2c_addr_flags,
-			ISL923X_REG_CONTROL2, &regval);
+			chg_chips[chgnum].i2c_addr_flags, ISL923X_REG_CONTROL2,
+			&regval);
 	if (invert)
 		regval |= ISL923X_C2_INVERT_CMOUT;
 	else
@@ -577,8 +574,8 @@ static void isl923x_init(int chgnum)
 {
 	int reg;
 	const struct battery_info *bi = battery_get_info();
-	int precharge_voltage = bi->precharge_voltage ?
-		bi->precharge_voltage : bi->voltage_min;
+	int precharge_voltage = bi->precharge_voltage ? bi->precharge_voltage :
+							bi->voltage_min;
 
 	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
 		if (CONFIG_CHARGER_SENSE_RESISTOR ==
@@ -590,9 +587,9 @@ static void isl923x_init(int chgnum)
 			if (raw_read16(chgnum, ISL9238_REG_CONTROL4, &reg))
 				goto init_fail;
 
-			if (raw_write16(chgnum, ISL9238_REG_CONTROL4,
-					reg |
-					RAA489000_C4_PSYS_RSNS_RATIO_1_TO_1))
+			if (raw_write16(
+				    chgnum, ISL9238_REG_CONTROL4,
+				    reg | RAA489000_C4_PSYS_RSNS_RATIO_1_TO_1))
 				goto init_fail;
 		}
 
@@ -603,8 +600,7 @@ static void isl923x_init(int chgnum)
 			goto init_fail;
 
 		if (raw_write16(chgnum, ISL9238_REG_CONTROL3,
-				reg |
-				RAA489000_C3_DCM_CCM_HYSTERESIS_ENABLE))
+				reg | RAA489000_C3_DCM_CCM_HYSTERESIS_ENABLE))
 			goto init_fail;
 
 		/* Set switching frequency to 600KHz to help with ripple. */
@@ -614,8 +610,7 @@ static void isl923x_init(int chgnum)
 		reg &= ~ISL923X_C1_SWITCH_FREQ_MASK;
 
 		if (raw_write16(chgnum, ISL923X_REG_CONTROL1,
-				reg |
-				ISL9237_C1_SWITCH_FREQ_599K))
+				reg | ISL9237_C1_SWITCH_FREQ_599K))
 			goto init_fail;
 	}
 
@@ -650,8 +645,7 @@ static void isl923x_init(int chgnum)
 		reg |= ISL923X_C2_PROCHOT_DEBOUNCE_1000;
 
 	if (raw_write16(chgnum, ISL923X_REG_CONTROL2,
-			reg |
-			ISL923X_C2_ADAPTER_DEBOUNCE_150))
+			reg | ISL923X_C2_ADAPTER_DEBOUNCE_150))
 		goto init_fail;
 
 	/*
@@ -687,10 +681,10 @@ static void isl923x_init(int chgnum)
 			 */
 			if (IS_ENABLED(CONFIG_CHARGER_RAA489000))
 				reg = (4437 / RAA489000_INPUT_VOLTAGE_REF_STEP)
-					<< RAA489000_INPUT_VOLTAGE_REF_SHIFT;
+				      << RAA489000_INPUT_VOLTAGE_REF_SHIFT;
 			else
 				reg = (4439 / ISL9238_INPUT_VOLTAGE_REF_STEP)
-					<< ISL9238_INPUT_VOLTAGE_REF_SHIFT;
+				      << ISL9238_INPUT_VOLTAGE_REF_SHIFT;
 
 			if (raw_write16(chgnum, ISL9238_REG_INPUT_VOLTAGE, reg))
 				goto init_fail;
@@ -762,7 +756,7 @@ static void isl923x_init(int chgnum)
 		 * Initialize the input current limit to the board's default.
 		 */
 		if (isl923x_set_input_current_limit(
-				chgnum, CONFIG_CHARGER_INPUT_CURRENT))
+			    chgnum, CONFIG_CHARGER_INPUT_CURRENT))
 			goto init_fail;
 	}
 
@@ -975,16 +969,15 @@ enum ec_error_list isl9238c_hibernate(int chgnum)
 {
 	/* Disable PSYS */
 	RETURN_ERROR(raw_update16(chgnum, ISL923X_REG_CONTROL1,
-				ISL923X_C1_ENABLE_PSYS, MASK_CLR));
+				  ISL923X_C1_ENABLE_PSYS, MASK_CLR));
 
 	/* Disable GP comparator */
 	RETURN_ERROR(raw_update16(chgnum, ISL923X_REG_CONTROL2,
-				ISL923X_C2_COMPARATOR, MASK_SET));
+				  ISL923X_C2_COMPARATOR, MASK_SET));
 
 	/* Force BGATE off */
 	RETURN_ERROR(raw_update16(chgnum, ISL9238_REG_CONTROL3,
-				ISL9238_C3_BGATE_OFF, MASK_SET));
-
+				  ISL9238_C3_BGATE_OFF, MASK_SET));
 
 	return EC_SUCCESS;
 }
@@ -993,17 +986,16 @@ enum ec_error_list isl9238c_resume(int chgnum)
 {
 	/* Revert everything in isl9238c_hibernate() */
 	RETURN_ERROR(raw_update16(chgnum, ISL923X_REG_CONTROL1,
-				ISL923X_C1_ENABLE_PSYS, MASK_SET));
+				  ISL923X_C1_ENABLE_PSYS, MASK_SET));
 
 	RETURN_ERROR(raw_update16(chgnum, ISL923X_REG_CONTROL2,
-				ISL923X_C2_COMPARATOR, MASK_CLR));
+				  ISL923X_C2_COMPARATOR, MASK_CLR));
 
 	RETURN_ERROR(raw_update16(chgnum, ISL9238_REG_CONTROL3,
-				ISL9238_C3_BGATE_OFF, MASK_CLR));
+				  ISL9238_C3_BGATE_OFF, MASK_CLR));
 
 	return EC_SUCCESS;
 }
-
 
 /*****************************************************************************/
 /* Hardware current ramping */
@@ -1037,7 +1029,6 @@ static int isl923x_ramp_get_current_limit(int chgnum)
 	return input_current;
 }
 #endif /* CONFIG_CHARGE_RAMP_HW */
-
 
 #ifdef CONFIG_CHARGER_PSYS
 static int psys_enabled;
@@ -1120,8 +1111,7 @@ static int console_command_psys(int argc, char **argv)
 	ccprintf("PSYS = %d uW\n", charger_get_system_power());
 	return 0;
 }
-DECLARE_CONSOLE_COMMAND(psys, console_command_psys,
-			NULL,
+DECLARE_CONSOLE_COMMAND(psys, console_command_psys, NULL,
 			"Get the system power in mW");
 #endif /* CONFIG_CHARGER_PSYS_READ */
 #endif /* CONFIG_CHARGER_PSYS */
@@ -1138,7 +1128,7 @@ static int print_amon_bmon(int chgnum, enum isl923x_amon_bmon amon,
 
 	curr = adc / resistor;
 	ccprintf("%cMON(%sharging): %d uV, %d mA\n", amon == AMON ? 'A' : 'B',
-		direction == MON_DISCHARGE ? "Disc" : "C", adc, curr);
+		 direction == MON_DISCHARGE ? "Disc" : "C", adc, curr);
 
 	return ret;
 }
@@ -1172,24 +1162,27 @@ static int console_command_amon_bmon(int argc, char **argv)
 
 	if (print_ac) {
 		if (print_charge)
-			ret |= print_amon_bmon(chgnum, AMON, MON_CHARGE,
-					CONFIG_CHARGER_SENSE_RESISTOR_AC);
+			ret |= print_amon_bmon(
+				chgnum, AMON, MON_CHARGE,
+				CONFIG_CHARGER_SENSE_RESISTOR_AC);
 		if (IS_ENABLED(CHARGER_ISL9238X) && print_discharge)
-			ret |= print_amon_bmon(chgnum, AMON, MON_DISCHARGE,
-					CONFIG_CHARGER_SENSE_RESISTOR_AC);
+			ret |= print_amon_bmon(
+				chgnum, AMON, MON_DISCHARGE,
+				CONFIG_CHARGER_SENSE_RESISTOR_AC);
 	}
 
 	if (print_battery) {
 		if (IS_ENABLED(CHARGER_ISL9238X) && print_charge)
-			ret |= print_amon_bmon(chgnum, BMON, MON_CHARGE,
-					/*
-					 * charging current monitor has
-					 * 2x amplification factor
-					 */
-					2 * CONFIG_CHARGER_SENSE_RESISTOR);
+			ret |= print_amon_bmon(
+				chgnum, BMON, MON_CHARGE,
+				/*
+				 * charging current monitor has
+				 * 2x amplification factor
+				 */
+				2 * CONFIG_CHARGER_SENSE_RESISTOR);
 		if (print_discharge)
 			ret |= print_amon_bmon(chgnum, BMON, MON_DISCHARGE,
-					CONFIG_CHARGER_SENSE_RESISTOR);
+					       CONFIG_CHARGER_SENSE_RESISTOR);
 	}
 
 	return ret;
@@ -1213,8 +1206,7 @@ static void dump_reg_range(int chgnum, int low, int high)
 	for (reg = low; reg <= high; reg++) {
 		CPRINTF("[%Xh] = ", reg);
 		rv = i2c_read16(chg_chips[chgnum].i2c_port,
-				chg_chips[chgnum].i2c_addr_flags,
-				reg, &regval);
+				chg_chips[chgnum].i2c_addr_flags, reg, &regval);
 		if (!rv)
 			CPRINTF("0x%04x\n", regval);
 		else
@@ -1275,15 +1267,14 @@ static enum ec_error_list raa489000_enable_linear_charge(int chgnum,
 
 		/* Disable charge current loop for the aux charger. */
 		rv |= raw_update16(act_chg, RAA489000_REG_CONTROL10,
-				   RAA489000_C10_DISABLE_DVC_CC_LOOP,
-				   MASK_SET);
+				   RAA489000_C10_DISABLE_DVC_CC_LOOP, MASK_SET);
 
 		/*
 		 * Set primary charger charge current to the desired precharge
 		 * current.
 		 */
 		rv |= isl9237_set_current(CHARGER_PRIMARY,
-				    batt_info->precharge_current);
+					  batt_info->precharge_current);
 
 		/*
 		 * Set primary charger max VSYS to the max of the battery.
@@ -1307,10 +1298,11 @@ static enum ec_error_list raa489000_enable_linear_charge(int chgnum,
 				  regval);
 
 		/* Enable DVC trickle charge and DVC charge mode. */
-		rv |= raw_update16(CHARGER_PRIMARY, RAA489000_REG_CONTROL10,
-				   RAA489000_C10_ENABLE_DVC_MODE |
-				   RAA489000_C10_ENABLE_DVC_TRICKLE_CHARGE,
-				   MASK_SET);
+		rv |= raw_update16(
+			CHARGER_PRIMARY, RAA489000_REG_CONTROL10,
+			RAA489000_C10_ENABLE_DVC_MODE |
+				RAA489000_C10_ENABLE_DVC_TRICKLE_CHARGE,
+			MASK_SET);
 
 		if (rv)
 			return EC_ERROR_UNKNOWN;
