@@ -33,11 +33,11 @@
 #endif
 
 #ifndef CC_RA
-#define CC_RA(port, cc, sel)  (cc < pd_src_rd_threshold[ct_cc_rp_value])
+#define CC_RA(port, cc, sel) (cc < pd_src_rd_threshold[ct_cc_rp_value])
 #endif
 #define CC_RD(cc) ((cc >= PD_SRC_RD_THRESHOLD) && (cc < PD_SRC_VNC))
 #ifndef CC_NC
-#define CC_NC(port, cc, sel)  (cc >= PD_SRC_VNC)
+#define CC_NC(port, cc, sel) (cc >= PD_SRC_VNC)
 #endif
 
 /*
@@ -54,7 +54,7 @@
 #define PD_SNK_VA PD_SNK_VA_MV
 #endif
 
-#define CC_RP(cc)  (cc >= PD_SNK_VA)
+#define CC_RP(cc) (cc >= PD_SNK_VA)
 
 /* Mock Board State */
 static enum vpd_pwr mock_vconn_pwr_sel_odl;
@@ -266,7 +266,7 @@ static int vpd_cc_voltage_to_status(int cc_volt, int cc_pull)
 			return TYPEC_CC_VOLT_RA;
 		else
 			return TYPEC_CC_VOLT_RD;
-	/* If we have a pull-down, then we are sink, check for Rp. */
+		/* If we have a pull-down, then we are sink, check for Rp. */
 	} else if (cc_pull == TYPEC_CC_RD || cc_pull == TYPEC_CC_RA_RD) {
 		if (cc_volt >= TYPE_C_SRC_3000_THRESHOLD)
 			return TYPEC_CC_VOLT_RP_3_0;
