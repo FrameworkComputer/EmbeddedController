@@ -14,15 +14,15 @@
 #include "util.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
-#define PARAM_CUT_OFF_LOW  0x10
+#define PARAM_CUT_OFF_LOW 0x10
 #define PARAM_CUT_OFF_HIGH 0x00
 
 /* Battery info for BQ40Z55 */
 static const struct battery_info info = {
-	.voltage_max = 8700,        /* mV */
+	.voltage_max = 8700, /* mV */
 	.voltage_normal = 7600,
 	.voltage_min = 6000,
-	.precharge_current = 256,   /* mA */
+	.precharge_current = 256, /* mA */
 	.start_charging_min_c = 0,
 	.start_charging_max_c = 46,
 	.charging_min_c = 0,
@@ -47,10 +47,10 @@ int board_cut_off_battery(void)
 	buf[2] = PARAM_CUT_OFF_HIGH;
 
 	i2c_lock(I2C_PORT_BATTERY, 1);
-	rv = i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
-			       buf, 3, NULL, 0, I2C_XFER_SINGLE);
-	rv |= i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
-				buf, 3, NULL, 0, I2C_XFER_SINGLE);
+	rv = i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, buf, 3,
+			       NULL, 0, I2C_XFER_SINGLE);
+	rv |= i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, buf, 3,
+				NULL, 0, I2C_XFER_SINGLE);
 	i2c_lock(I2C_PORT_BATTERY, 0);
 
 	return rv;
@@ -223,8 +223,7 @@ static int command_fastcharge(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(fastcharge, command_fastcharge,
-			"[on|off]",
+DECLARE_CONSOLE_COMMAND(fastcharge, command_fastcharge, "[on|off]",
 			"Get or set fast charging profile");
 
-#endif	/* CONFIG_CHARGER_PROFILE_OVERRIDE */
+#endif /* CONFIG_CHARGER_PROFILE_OVERRIDE */
