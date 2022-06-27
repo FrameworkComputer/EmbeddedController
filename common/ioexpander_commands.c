@@ -69,14 +69,13 @@ static void print_ioex_info(enum ioex_signal signal)
 
 	changed = last_val_changed(signal, val);
 
-	ccprintf("  %d%c %s%s%s%s%s%s\n", val,
-		 (changed ? '*' : ' '),
+	ccprintf("  %d%c %s%s%s%s%s%s\n", val, (changed ? '*' : ' '),
 		 (flags & GPIO_INPUT ? "I " : ""),
 		 (flags & GPIO_OUTPUT ? "O " : ""),
 		 (flags & GPIO_LOW ? "L " : ""),
 		 (flags & GPIO_HIGH ? "H " : ""),
 		 (flags & GPIO_OPEN_DRAIN ? "ODR " : ""),
-		ioex_get_name(signal));
+		 ioex_get_name(signal));
 
 	/* Flush console to avoid truncating output */
 	cflush();
@@ -116,8 +115,7 @@ static int command_ioex_set(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(ioexset, command_ioex_set,
-			"name <0 | 1>",
+DECLARE_CONSOLE_COMMAND(ioexset, command_ioex_set, "name <0 | 1>",
 			"Set level of a IO expander pin");
 
 static int command_ioex_get(int argc, char **argv)
@@ -140,6 +138,5 @@ static int command_ioex_get(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_SAFE_CONSOLE_COMMAND(ioexget, command_ioex_get,
-			     "[name]",
+DECLARE_SAFE_CONSOLE_COMMAND(ioexget, command_ioex_get, "[name]",
 			     "Read level of IO expander pin(s)");
