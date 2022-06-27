@@ -6,9 +6,11 @@
 #include <ztest.h>
 #include "ec_commands.h"
 #include "gpio.h"
+#include "include/power.h"
 #include "led.h"
 #include "led_common.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 #define VERIFY_LED_COLOR(color, led_id)                                    \
 	{                                                                  \
@@ -27,6 +29,8 @@ ZTEST_SUITE(led_driver, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
 
 ZTEST(led_driver, test_led_control)
 {
+	test_set_chipset_to_power_level(POWER_S5);
+
 	/* Exercise valid led_id, set to RESET state */
 	led_control(EC_LED_ID_SYSRQ_DEBUG_LED, LED_STATE_RESET);
 	VERIFY_LED_COLOR(LED_OFF, EC_LED_ID_SYSRQ_DEBUG_LED);
