@@ -43,12 +43,12 @@
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE 0
-#define USB_IFACE_COUNT   1
+#define USB_IFACE_COUNT 1
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
 #define USB_EP_CONTROL 0
 #define USB_EP_CONSOLE 1
-#define USB_EP_COUNT   2
+#define USB_EP_COUNT 2
 
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
