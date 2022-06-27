@@ -22,7 +22,7 @@
 #define CONFIG_HOSTCMD_DEBUG_MODE HCDEBUG_OFF
 
 /* ISH specific */
-#undef  CONFIG_DEBUG_ASSERT
+#undef CONFIG_DEBUG_ASSERT
 #define CONFIG_CLOCK_CRYSTAL
 #define CONFIG_ISH_UART_0
 /* EC */
@@ -31,7 +31,7 @@
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 
-#define CONFIG_ACCELGYRO_LSM6DSM	/* For LSM6DS3 */
+#define CONFIG_ACCELGYRO_LSM6DSM /* For LSM6DS3 */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(BASE_ACCEL)
 
 /* Host command over HECI */
@@ -81,8 +81,8 @@
 
 #define CONFIG_ISH_IPAPG
 
-#define CONFIG_ISH_D0I2_MIN_USEC	(15*MSEC)
-#define CONFIG_ISH_D0I3_MIN_USEC	(50*MSEC)
+#define CONFIG_ISH_D0I2_MIN_USEC (15 * MSEC)
+#define CONFIG_ISH_D0I3_MIN_USEC (50 * MSEC)
 
 #define CONFIG_ISH_NEW_PM
 
@@ -92,10 +92,7 @@
 #include "registers.h"
 
 /* Motion sensors */
-enum sensor_id {
-	BASE_ACCEL,
-	SENSOR_COUNT
-};
+enum sensor_id { BASE_ACCEL, SENSOR_COUNT };
 
 #endif /* !__ASSEMBLER__ */
 
