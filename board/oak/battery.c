@@ -11,7 +11,7 @@
 #include "util.h"
 
 /* Shutdown mode parameter to write to manufacturer access register */
-#define PARAM_CUT_OFF_LOW  0x10
+#define PARAM_CUT_OFF_LOW 0x10
 #define PARAM_CUT_OFF_HIGH 0x00
 
 static const struct battery_info info = {
@@ -21,7 +21,7 @@ static const struct battery_info info = {
 	/*
 	 * TODO(crosbug.com/p/44428):
 	 * In order to compatible with 2S battery, set min voltage as 6V rather
-         * than 9V. Should set voltage_min to 9V, when 2S battery
+	 * than 9V. Should set voltage_min to 9V, when 2S battery
 	 * phased out.
 	 */
 	.voltage_min = 6000,
@@ -57,10 +57,10 @@ static int cutoff(void)
 	buf[2] = PARAM_CUT_OFF_HIGH;
 
 	i2c_lock(I2C_PORT_BATTERY, 1);
-	rv = i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
-			       buf, 3, NULL, 0, I2C_XFER_SINGLE);
-	rv |= i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
-				buf, 3, NULL, 0, I2C_XFER_SINGLE);
+	rv = i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, buf, 3,
+			       NULL, 0, I2C_XFER_SINGLE);
+	rv |= i2c_xfer_unlocked(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS, buf, 3,
+				NULL, 0, I2C_XFER_SINGLE);
 	i2c_lock(I2C_PORT_BATTERY, 0);
 
 	return rv;
