@@ -21,8 +21,9 @@
  * @param dr_swap_flag   Data Role Swap Flag bit
  * @param return True if state machine should perform a DR swap, elsf False
  */
-__override_proto  bool port_discovery_dr_swap_policy(int port,
-		enum pd_data_role dr, bool dr_swap_flag);
+__override_proto bool port_discovery_dr_swap_policy(int port,
+						    enum pd_data_role dr,
+						    bool dr_swap_flag);
 
 /**
  * Port Discovery VCONN Swap Policy
@@ -35,6 +36,6 @@ __override_proto  bool port_discovery_dr_swap_policy(int port,
  * @param return True if state machine should perform a VCONN swap, elsf False
  */
 __override_proto bool port_discovery_vconn_swap_policy(int port,
-		bool vconn_swap_flag);
+						       bool vconn_swap_flag);
 
 #endif /* __CROS_EC_USB_PD_POLICY_H */
