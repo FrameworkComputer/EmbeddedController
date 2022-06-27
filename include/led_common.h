@@ -79,8 +79,8 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness);
 void led_enable(int enable);
 
 enum ec_led_state {
-	LED_STATE_OFF   = 0,
-	LED_STATE_ON    = 1,
+	LED_STATE_OFF = 0,
+	LED_STATE_ON = 1,
 	LED_STATE_RESET = 2,
 };
 
