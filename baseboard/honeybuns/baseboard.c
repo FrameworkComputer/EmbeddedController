@@ -18,20 +18,17 @@
 #include "driver/tcpm/tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 #define POWER_BUTTON_SHORT_USEC (300 * MSEC)
 #define POWER_BUTTON_LONG_USEC (5000 * MSEC)
 #define POWER_BUTTON_DEBOUNCE_USEC (30)
 
-#define BUTTON_EVT_CHANGE   BIT(0)
-#define BUTTON_EVT_INFO     BIT(1)
+#define BUTTON_EVT_CHANGE BIT(0)
+#define BUTTON_EVT_INFO BIT(1)
 
-enum power {
-	POWER_OFF,
-	POWER_ON
-};
+enum power { POWER_OFF, POWER_ON };
 
 enum button {
 	BUTTON_RELEASE,
@@ -66,7 +63,7 @@ __maybe_unused static void board_power_sequence(int enable)
 	int i;
 
 	if (enable) {
-		for(i = 0; i < board_power_seq_count; i++) {
+		for (i = 0; i < board_power_seq_count; i++) {
 			gpio_set_level(board_power_seq[i].signal,
 				       board_power_seq[i].level);
 			CPRINTS("power seq: rail = %d", i);
@@ -74,7 +71,7 @@ __maybe_unused static void board_power_sequence(int enable)
 				msleep(board_power_seq[i].delay_ms);
 		}
 	} else {
-		for(i = board_power_seq_count - 1; i >= 0; i--) {
+		for (i = board_power_seq_count - 1; i >= 0; i--) {
 			gpio_set_level(board_power_seq[i].signal,
 				       !board_power_seq[i].level);
 			CPRINTS("sequence[%d]: level = %d", i,
@@ -89,20 +86,16 @@ __maybe_unused static void board_power_sequence(int enable)
 /******************************************************************************/
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "i2c1",
-		.port = I2C_PORT_I2C1,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C1_SCL,
-		.sda  = GPIO_EC_I2C1_SDA
-	},
-	{
-		.name = "i2c3",
-		.port = I2C_PORT_I2C3,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C3_SCL,
-		.sda  = GPIO_EC_I2C3_SDA
-	},
+	{ .name = "i2c1",
+	  .port = I2C_PORT_I2C1,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C1_SCL,
+	  .sda = GPIO_EC_I2C1_SDA },
+	{ .name = "i2c3",
+	  .port = I2C_PORT_I2C3,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C3_SCL,
+	  .sda = GPIO_EC_I2C3_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -246,7 +239,7 @@ static void baseboard_init(void)
 
 #else
 	/* Set up host port usbc to present Rd on CC lines */
-	if(baseboard_usbc_init(USB_PD_PORT_HOST))
+	if (baseboard_usbc_init(USB_PD_PORT_HOST))
 		CPRINTS("usbc: Failed to set up sink path");
 	else
 		CPRINTS("usbc: sink path configure success!");
@@ -381,11 +374,11 @@ void power_button_task(void *u)
 			 * Default wait state: Only need to check if the button
 			 * is pressed and start the short press timer.
 			 */
-			if (evt & BUTTON_EVT_CHANGE && button_level ==
-			    BUTTON_PRESSED_LEVEL) {
+			if (evt & BUTTON_EVT_CHANGE &&
+			    button_level == BUTTON_PRESSED_LEVEL) {
 				state = BUTTON_PRESS;
 				timer_us = (POWER_BUTTON_SHORT_USEC -
-						 POWER_BUTTON_DEBOUNCE_USEC);
+					    POWER_BUTTON_DEBOUNCE_USEC);
 			}
 			break;
 		case BUTTON_PRESS:
@@ -399,7 +392,7 @@ void power_button_task(void *u)
 			} else {
 				/* Start long press timer */
 				timer_us = POWER_BUTTON_LONG_USEC -
-					POWER_BUTTON_SHORT_USEC;
+					   POWER_BUTTON_SHORT_USEC;
 				/*
 				 * If dock is currently off, then change to the
 				 * power on state. If dock is already on, then
@@ -407,7 +400,7 @@ void power_button_task(void *u)
 				 */
 				if (dock_state == POWER_OFF) {
 					baseboard_power_on();
-				        state = BUTTON_PRESS_POWER_ON;
+					state = BUTTON_PRESS_POWER_ON;
 				} else {
 					state = BUTTON_PRESS_SHORT;
 				}
@@ -476,7 +469,6 @@ void baseboard_power_button_evt(int level)
 
 static int command_pwr_btn(int argc, char **argv)
 {
-
 	if (argc == 1) {
 		task_set_event(TASK_ID_POWER_BUTTON, BUTTON_EVT_INFO);
 		return EC_SUCCESS;
@@ -494,8 +486,7 @@ static int command_pwr_btn(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(pwr_btn, command_pwr_btn,
-			"<on|off|mf>",
+DECLARE_CONSOLE_COMMAND(pwr_btn, command_pwr_btn, "<on|off|mf>",
 			"Simulate Power Button Press");
 
 #endif
