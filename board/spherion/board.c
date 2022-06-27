@@ -46,30 +46,30 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
 	/* Convert to mV (3000mV/1024). */
-	{"VBUS_C0", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0, CHIP_ADC_CH0},
-	{"BOARD_ID_0", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH1},
-	{"BOARD_ID_1", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH2},
+	{ "VBUS_C0", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0, CHIP_ADC_CH0 },
+	{ "BOARD_ID_0", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH1 },
+	{ "BOARD_ID_1", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH2 },
 	/* AMON/BMON gain = 17.97 */
-	{"CHARGER_AMON_R", ADC_MAX_MVOLT * 1000 / 17.97, ADC_READ_MAX + 1, 0,
-	 CHIP_ADC_CH3},
-	{"VBUS_C1", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0, CHIP_ADC_CH5},
-	{"CHARGER_PMON", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH6},
-	{"TEMP_SENSOR_CHARGER", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
-	 CHIP_ADC_CH7},
+	{ "CHARGER_AMON_R", ADC_MAX_MVOLT * 1000 / 17.97, ADC_READ_MAX + 1, 0,
+	  CHIP_ADC_CH3 },
+	{ "VBUS_C1", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0, CHIP_ADC_CH5 },
+	{ "CHARGER_PMON", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH6 },
+	{ "TEMP_SENSOR_CHARGER", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0,
+	  CHIP_ADC_CH7 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_30k9_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_30k9_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -82,12 +82,10 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * number of pwm channel greater than three.
  */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_KBLIGHT] = {
-		.channel = PWM_HW_CH_DCR2,
-		.flags = 0,
-		.freq_hz = 10000,
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
+	[PWM_CH_KBLIGHT] = { .channel = PWM_HW_CH_DCR2,
+			     .flags = 0,
+			     .freq_hz = 10000,
+			     .pcfsr_sel = PWM_PRESCALER_C4 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
@@ -106,13 +104,11 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, kb_backlight_disable, HOOK_PRIO_DEFAULT);
 void board_usb_mux_init(void)
 {
 	if (board_get_sub_board() == SUB_BOARD_TYPEC) {
-		ps8743_tune_usb_eq(&usb_muxes[1],
-				   PS8743_USB_EQ_TX_12_8_DB,
+		ps8743_tune_usb_eq(&usb_muxes[1], PS8743_USB_EQ_TX_12_8_DB,
 				   PS8743_USB_EQ_RX_12_8_DB);
-		ps8743_field_update(&usb_muxes[1],
-				   PS8743_REG_DCI_CONFIG_2,
-				   PS8743_AUTO_DCI_MODE_MASK,
-				   PS8743_AUTO_DCI_MODE_FORCE_USB);
+		ps8743_field_update(&usb_muxes[1], PS8743_REG_DCI_CONFIG_2,
+				    PS8743_AUTO_DCI_MODE_MASK,
+				    PS8743_AUTO_DCI_MODE_FORCE_USB);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_usb_mux_init, HOOK_PRIO_INIT_I2C + 1);
