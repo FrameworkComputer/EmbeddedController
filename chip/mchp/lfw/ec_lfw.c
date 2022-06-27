@@ -41,15 +41,16 @@
 #define LFW_SPI_BYTE_TRANSFER_TIMEOUT_US (1 * MSEC)
 #define LFW_SPI_BYTE_TRANSFER_POLL_INTERVAL_US 100
 
-__attribute__ ((section(".intvector")))
+__attribute__((section(".intvector")))
 const struct int_vector_t hdr_int_vect = {
 	/* init sp, unused. set by MEC ROM loader */
-	(void *)lfw_stack_top,  /* preserve ROM log. was (void *)0x11FA00, */
-	&lfw_main,	/* was &lfw_main, */	  /* reset vector */
-	&fault_handler,   /* NMI handler */
-	&fault_handler,   /* HardFault handler */
-	&fault_handler,   /* MPU fault handler */
-	&fault_handler    /* Bus fault handler */
+	(void *)lfw_stack_top, /* preserve ROM log. was (void *)0x11FA00, */
+	&lfw_main,
+	/* was &lfw_main, */ /* reset vector */
+	&fault_handler, /* NMI handler */
+	&fault_handler, /* HardFault handler */
+	&fault_handler, /* MPU fault handler */
+	&fault_handler /* Bus fault handler */
 };
 
 /* SPI devices - from board.c */
@@ -123,7 +124,6 @@ void timer_init(void)
 
 	/* Start counting in timer 0 */
 	MCHP_TMR32_CTL(0) |= BIT(5);
-
 }
 
 /*
@@ -132,14 +132,11 @@ void timer_init(void)
  * before starting SPI read to minimize probability of
  * timer wrap.
  */
-static int spi_flash_readloc(uint8_t *buf_usr,
-				unsigned int offset,
-				unsigned int bytes)
+static int spi_flash_readloc(uint8_t *buf_usr, unsigned int offset,
+			     unsigned int bytes)
 {
-	uint8_t cmd[4] = {SPI_FLASH_READ,
-				(offset >> 16) & 0xFF,
-				(offset >> 8) & 0xFF,
-				offset & 0xFF};
+	uint8_t cmd[4] = { SPI_FLASH_READ, (offset >> 16) & 0xFF,
+			   (offset >> 8) & 0xFF, offset & 0xFF };
 
 	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
@@ -156,8 +153,8 @@ static int spi_flash_readloc(uint8_t *buf_usr,
  */
 int spi_image_load(uint32_t offset)
 {
-	uint8_t *buf = (uint8_t *) (CONFIG_RW_MEM_OFF +
-				    CONFIG_PROGRAM_MEMORY_BASE);
+	uint8_t *buf =
+		(uint8_t *)(CONFIG_RW_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE);
 	uint32_t i;
 #ifdef CONFIG_MCHP_LFW_DEBUG
 	uint32_t crc_calc, crc_exp;
@@ -172,13 +169,11 @@ int spi_image_load(uint32_t offset)
 	for (i = 0; i < CONFIG_RO_SIZE; i += SPI_CHUNK_SIZE)
 #ifdef CONFIG_MCHP_LFW_DEBUG
 		rc = spi_flash_readloc(&buf[i], offset + i, SPI_CHUNK_SIZE);
-		if (rc != EC_SUCCESS) {
-			trace2(0, LFW, 0,
-				"spi_flash_readloc block %d ret = %d",
-				i, rc);
-			while (MCHP_PCR_PROC_CLK_CTL)
-				MCHP_PCR_CHIP_OSC_ID &= 0x1FE;
-		}
+	if (rc != EC_SUCCESS) {
+		trace2(0, LFW, 0, "spi_flash_readloc block %d ret = %d", i, rc);
+		while (MCHP_PCR_PROC_CLK_CTL)
+			MCHP_PCR_CHIP_OSC_ID &= 0x1FE;
+	}
 #else
 		spi_flash_readloc(&buf[i], offset + i, SPI_CHUNK_SIZE);
 #endif
@@ -234,7 +229,7 @@ timestamp_t get_time(void)
 {
 	timestamp_t ts;
 
-	ts.le.hi = 0;	/* clksrc_high; */
+	ts.le.hi = 0; /* clksrc_high; */
 	ts.le.lo = __hw_clock_source_read();
 	return ts;
 }
@@ -297,11 +292,17 @@ void uart_init(void)
 	gpio_config_module(MODULE_UART, 1);
 }
 #else
-void uart_write_c(char c __attribute__((unused))) {}
+void uart_write_c(char c __attribute__((unused)))
+{
+}
 
-void uart_puts(const char *str __attribute__((unused))) {}
+void uart_puts(const char *str __attribute__((unused)))
+{
+}
 
-void uart_init(void) {}
+void uart_init(void)
+{
+}
 #endif /* #ifdef CONFIG_UART_CONSOLE */
 
 void fault_handler(void)
@@ -312,12 +313,11 @@ void fault_handler(void)
 	MCHP_PCR_SYS_RST = MCHP_PCR_SYS_SOFT_RESET;
 	while (1)
 		;
-
 }
 
 void jump_to_image(uintptr_t init_addr)
 {
-	void (*resetvec)(void) = (void(*)(void))init_addr;
+	void (*resetvec)(void) = (void (*)(void))init_addr;
 
 	resetvec();
 }
@@ -329,23 +329,19 @@ void jump_to_image(uintptr_t init_addr)
 void system_init(void)
 {
 	uint32_t wdt_sts = MCHP_VBAT_STS & MCHP_VBAT_STS_ANY_RST;
-	uint32_t rst_sts = MCHP_PCR_PWR_RST_STS &
-				MCHP_PWR_RST_STS_SYS;
+	uint32_t rst_sts = MCHP_PCR_PWR_RST_STS & MCHP_PWR_RST_STS_SYS;
 
-	trace12(0, LFW, 0,
-		"VBAT_STS = 0x%08x  PCR_PWR_RST_STS = 0x%08x",
+	trace12(0, LFW, 0, "VBAT_STS = 0x%08x  PCR_PWR_RST_STS = 0x%08x",
 		wdt_sts, rst_sts);
 
 	if (rst_sts || wdt_sts)
-		MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX)
-					= EC_IMAGE_UNKNOWN;
+		MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) = EC_IMAGE_UNKNOWN;
 }
 
 enum ec_image system_get_image_copy(void)
 {
 	return MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX);
 }
-
 
 /*
  * lfw_main is entered by MEC BootROM or EC_RO/RW calling it directly.
@@ -360,11 +356,10 @@ enum ec_image system_get_image_copy(void)
  */
 void lfw_main(void)
 {
-
 	uintptr_t init_addr;
 
 	/* install vector table */
-	*((uintptr_t *) 0xe000ed08) = (uintptr_t) &hdr_int_vect;
+	*((uintptr_t *)0xe000ed08) = (uintptr_t)&hdr_int_vect;
 
 	/* Use 48 MHz processor clock to power through boot */
 	MCHP_PCR_PROC_CLK_CTL = 1;
