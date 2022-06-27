@@ -43,9 +43,8 @@ static int accel_get_resolution(const struct motion_sensor_t *s)
 
 int test_data_rate[2] = { 0 };
 
-static int accel_set_data_rate(const struct motion_sensor_t *s,
-			      const int rate,
-			      const int rnd)
+static int accel_set_data_rate(const struct motion_sensor_t *s, const int rate,
+			       const int rnd)
 {
 	test_data_rate[s - motion_sensors] = rate | (rnd ? ROUND_UP_FLAG : 0);
 	return EC_SUCCESS;
@@ -62,8 +61,8 @@ static int accel_get_rms_noise(const struct motion_sensor_t *s)
 	/* Assume we are using BMI160 */
 	fp_t rate = INT_TO_FP(accel_get_data_rate(s) / 1000);
 	fp_t noise_100hz = INT_TO_FP(BMI160_ACCEL_RMS_NOISE_100HZ);
-	fp_t sqrt_rate_ratio = fp_sqrtf(fp_div(rate,
-					       INT_TO_FP(BMI_ACCEL_100HZ)));
+	fp_t sqrt_rate_ratio =
+		fp_sqrtf(fp_div(rate, INT_TO_FP(BMI_ACCEL_100HZ)));
 	return FP_TO_INT(fp_mul(noise_100hz, sqrt_rate_ratio));
 }
 #endif
@@ -118,7 +117,7 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* Read 6 samples from array to sensor vectors, convert units if necessary. */
 void feed_accel_data(const float *array, int *idx,
-		int (filler)(const struct motion_sensor_t*, const float))
+		     int(filler)(const struct motion_sensor_t *, const float))
 {
 	int i, j;
 
