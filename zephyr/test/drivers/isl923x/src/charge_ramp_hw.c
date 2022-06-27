@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-
 #include <ztest.h>
 
 #include "driver/charger/isl923x.h"
@@ -16,8 +15,8 @@
 #define CHARGER_NUM get_charger_num(&isl923x_drv)
 #define ISL923X_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)))
 
-ZTEST_SUITE(charge_ramp_hw, drivers_predicate_post_main, NULL, NULL,
-	    NULL, NULL);
+ZTEST_SUITE(charge_ramp_hw, drivers_predicate_post_main, NULL, NULL, NULL,
+	    NULL);
 
 ZTEST(charge_ramp_hw, test_charge_ramp_hw_ramp)
 {
