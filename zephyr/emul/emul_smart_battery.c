@@ -20,7 +20,7 @@ LOG_MODULE_REGISTER(smart_battery);
 #include "crc8.h"
 #include "battery_smart.h"
 
-#define SBAT_DATA_FROM_I2C_EMUL(_emul)					     \
+#define SBAT_DATA_FROM_I2C_EMUL(_emul)                                       \
 	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
 		     struct sbat_emul_data, common)
 
@@ -53,13 +53,13 @@ struct sbat_emul_bat_data *sbat_emul_get_bat_data(struct i2c_emul *emul)
 uint16_t sbat_emul_date_to_word(unsigned int day, unsigned int month,
 				unsigned int year)
 {
-	year   -= MANUFACTURE_DATE_YEAR_OFFSET;
-	year  <<= MANUFACTURE_DATE_YEAR_SHIFT;
-	year   &= MANUFACTURE_DATE_YEAR_MASK;
+	year -= MANUFACTURE_DATE_YEAR_OFFSET;
+	year <<= MANUFACTURE_DATE_YEAR_SHIFT;
+	year &= MANUFACTURE_DATE_YEAR_MASK;
 	month <<= MANUFACTURE_DATE_MONTH_SHIFT;
-	month  &= MANUFACTURE_DATE_MONTH_MASK;
-	day   <<= MANUFACTURE_DATE_DAY_SHIFT;
-	day    &= MANUFACTURE_DATE_DAY_MASK;
+	month &= MANUFACTURE_DATE_MONTH_MASK;
+	day <<= MANUFACTURE_DATE_DAY_SHIFT;
+	day &= MANUFACTURE_DATE_DAY_MASK;
 
 	return day | month | year;
 }
@@ -105,7 +105,7 @@ static uint16_t sbat_emul_10mw_to_ma(int mw, int mv)
 	/* Smart battery use 10mW units, convert to mW */
 	mw *= 10;
 	/* Multiple by 1000 to get mA instead of A */
-	return 1000 * mw/mv;
+	return 1000 * mw / mv;
 }
 
 /**
@@ -659,8 +659,8 @@ static int sbat_emul_finalize_write_msg(struct i2c_emul *emul, int reg,
 		pec = cros_crc8_arg(data->msg_buf, 3, pec);
 		if (pec != data->msg_buf[3]) {
 			data->bat.error_code = STATUS_CODE_UNKNOWN_ERROR;
-			LOG_ERR("Wrong PEC 0x%x != 0x%x",
-				pec, data->msg_buf[3]);
+			LOG_ERR("Wrong PEC 0x%x != 0x%x", pec,
+				data->msg_buf[3]);
 
 			return -EIO;
 		}
@@ -785,8 +785,7 @@ static int sbat_emul_access_reg(struct i2c_emul *emul, int reg, int bytes,
  *
  * @return 0 indicating success (always)
  */
-static int sbat_emul_init(const struct emul *emul,
-			  const struct device *parent)
+static int sbat_emul_init(const struct emul *emul, const struct device *parent)
 {
 	const struct i2c_common_emul_cfg *cfg = emul->cfg;
 	struct i2c_common_emul_data *data = cfg->data;
@@ -803,7 +802,7 @@ static int sbat_emul_init(const struct emul *emul,
 	return ret;
 }
 
-#define SMART_BATTERY_EMUL(n)						\
+#define SMART_BATTERY_EMUL(n)                                           \
 	static struct sbat_emul_data sbat_emul_data_##n = {		\
 		.bat = {						\
 			.mf_access = DT_INST_PROP(n, mf_access),	\
@@ -869,27 +868,28 @@ static int sbat_emul_init(const struct emul *emul,
 			.finish_read = NULL,				\
 			.access_reg = sbat_emul_access_reg,		\
 		},							\
-	};								\
-									\
-	static const struct i2c_common_emul_cfg sbat_emul_cfg_##n = {	\
-		.i2c_label = DT_INST_BUS_LABEL(n),			\
+	};          \
+                                                                        \
+	static const struct i2c_common_emul_cfg sbat_emul_cfg_##n = {   \
+		.i2c_label = DT_INST_BUS_LABEL(n),                      \
 		.dev_label = DT_INST_LABEL(n),                          \
-		.data = &sbat_emul_data_##n.common,			\
-		.addr = DT_INST_REG_ADDR(n),				\
-	};								\
-	EMUL_DEFINE(sbat_emul_init, DT_DRV_INST(n), &sbat_emul_cfg_##n,	\
+		.data = &sbat_emul_data_##n.common,                     \
+		.addr = DT_INST_REG_ADDR(n),                            \
+	};                                                              \
+	EMUL_DEFINE(sbat_emul_init, DT_DRV_INST(n), &sbat_emul_cfg_##n, \
 		    &sbat_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL)
 
-#define SMART_BATTERY_EMUL_CASE(n)					\
-	case DT_INST_DEP_ORD(n): return &sbat_emul_data_##n.common.emul;
+#define SMART_BATTERY_EMUL_CASE(n) \
+	case DT_INST_DEP_ORD(n):   \
+		return &sbat_emul_data_##n.common.emul;
 
 /** Check description in emul_smart_battery.h */
 struct i2c_emul *sbat_emul_get_ptr(int ord)
 {
 	switch (ord) {
-	DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL_CASE)
+		DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL_CASE)
 
 	default:
 		return NULL;
