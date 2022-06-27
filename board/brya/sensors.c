@@ -55,18 +55,14 @@ static struct stprivate_data g_lis2dw12_data;
 static struct lsm6dso_data lsm6dso_data;
 
 /* TODO(b/184779333): calibrate the orientation matrix on later board stage */
-static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					     { FLOAT_TO_FP(1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* TODO(b/184779743): verify orientation matrix */
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, FLOAT_TO_FP(-1), 0 },
+					      { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* TCS3400 private data */
 static struct als_drv_data_t g_tcs3400_data = {
@@ -292,8 +288,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
@@ -322,8 +318,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_AMBIENT \
-	{ \
+#define THERMAL_AMBIENT          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
@@ -351,8 +347,8 @@ __maybe_unused static const struct ec_thermal_config thermal_ambient =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CHARGER \
-	{ \
+#define THERMAL_CHARGER          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(120), \
@@ -372,8 +368,8 @@ __maybe_unused static const struct ec_thermal_config thermal_charger =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_WWAN \
-	{ \
+#define THERMAL_WWAN             \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(130), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(130), \
