@@ -44,8 +44,7 @@ static void ramdata_get_persistent(void)
 	FILE *f = get_persistent_storage("ramdata", "rb");
 
 	if ((f == NULL) || (fread(__ram_data, RAM_DATA_SIZE, 1, f) != 1)) {
-		fprintf(stderr,
-			"No RAM data found. Initializing to 0x00.\n");
+		fprintf(stderr, "No RAM data found. Initializing to 0x00.\n");
 		memset(__ram_data, 0, RAM_DATA_SIZE);
 		return;
 	}
@@ -129,14 +128,14 @@ static int load_time(timestamp_t *t)
 
 test_mockable struct panic_data *panic_get_data(void)
 {
-	return (struct panic_data *)
-		(__ram_data + RAM_DATA_SIZE - sizeof(struct panic_data));
+	return (struct panic_data *)(__ram_data + RAM_DATA_SIZE -
+				     sizeof(struct panic_data));
 }
 
 test_mockable uintptr_t get_panic_data_start(void)
 {
-	return (uintptr_t)
-		(__ram_data + RAM_DATA_SIZE - sizeof(struct panic_data));
+	return (uintptr_t)(__ram_data + RAM_DATA_SIZE -
+			   sizeof(struct panic_data));
 }
 
 test_mockable void system_reset(int flags)
