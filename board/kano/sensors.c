@@ -65,27 +65,19 @@ static enum base_accelgyro_type base_accelgyro_config;
  * TODO:(b/197200940): Verify lid and base orientation
  * matrix on proto board.
  */
-static const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-static const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(1), 0 },
+					     { 0, 0, FLOAT_TO_FP(-1) } };
+static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, FLOAT_TO_FP(1), 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t lid_bma422_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
-static const mat33_fp_t base_bmi260_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_bma422_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+						    { FLOAT_TO_FP(-1), 0, 0 },
+						    { 0, 0, FLOAT_TO_FP(-1) } };
+static const mat33_fp_t base_bmi260_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+						     { FLOAT_TO_FP(-1), 0, 0 },
+						     { 0, 0, FLOAT_TO_FP(1) } };
 
 static struct motion_sensor_t bmi260_base_accel = {
 	.name = "Base Accel",
@@ -244,15 +236,15 @@ static void baseboard_sensors_detect(void)
 		return;
 
 	ret = i2c_read8(I2C_PORT_ACCEL, BMA4_I2C_ADDR_SECONDARY,
-		BMA4_CHIP_ID_ADDR, &val);
+			BMA4_CHIP_ID_ADDR, &val);
 	if (ret == 0 && val == BMA422_CHIP_ID) {
 		motion_sensors[LID_ACCEL] = bma422_lid_accel;
 		ccprints("LID_ACCEL is BMA422");
 	} else
 		ccprints("LID_ACCEL is KX022");
 
-	ret = bmi_read8(I2C_PORT_ACCEL, BMI260_ADDR0_FLAGS,
-		BMI260_CHIP_ID, &val);
+	ret = bmi_read8(I2C_PORT_ACCEL, BMI260_ADDR0_FLAGS, BMI260_CHIP_ID,
+			&val);
 	if (ret == 0 && val == BMI260_CHIP_ID_MAJOR) {
 		motion_sensors[BASE_ACCEL] = bmi260_base_accel;
 		motion_sensors[BASE_GYRO] = bmi260_base_gyro;
@@ -263,8 +255,7 @@ static void baseboard_sensors_detect(void)
 		ccprints("BASE ACCEL IS ICM426XX");
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, baseboard_sensors_detect,
-	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, baseboard_sensors_detect, HOOK_PRIO_DEFAULT);
 
 static void baseboard_sensors_init(void)
 {
@@ -285,24 +276,18 @@ void motion_interrupt(enum gpio_signal signal)
 
 /* Temperature sensor configuration */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = {
-		.name = "DDR and SOC",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_1_DDR_SOC
-	},
-	[TEMP_SENSOR_2_FAN] = {
-		.name = "FAN",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_2_FAN
-	},
-	[TEMP_SENSOR_3_CHARGER] = {
-		.name = "CHARGER",
-		.type = TEMP_SENSOR_TYPE_BOARD,
-		.read = get_temp_3v3_30k9_47k_4050b,
-		.idx = ADC_TEMP_SENSOR_3_CHARGER
-	},
+	[TEMP_SENSOR_1_DDR_SOC] = { .name = "DDR and SOC",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_1_DDR_SOC },
+	[TEMP_SENSOR_2_FAN] = { .name = "FAN",
+				.type = TEMP_SENSOR_TYPE_BOARD,
+				.read = get_temp_3v3_30k9_47k_4050b,
+				.idx = ADC_TEMP_SENSOR_2_FAN },
+	[TEMP_SENSOR_3_CHARGER] = { .name = "CHARGER",
+				    .type = TEMP_SENSOR_TYPE_BOARD,
+				    .read = get_temp_3v3_30k9_47k_4050b,
+				    .idx = ADC_TEMP_SENSOR_3_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -316,8 +301,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = 0, \
 			[EC_TEMP_THRESH_HALT] = 0, \
@@ -346,8 +331,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_FAN \
-	{ \
+#define THERMAL_FAN              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
@@ -363,8 +348,8 @@ __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_FAN_28W \
-	{ \
+#define THERMAL_FAN_28W          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
@@ -376,7 +361,7 @@ __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 		.temp_fan_max = C_TO_K(62), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_fan_28w =
-							THERMAL_FAN_28W;
+	THERMAL_FAN_28W;
 
 /*
  * Set value to zero to disable charger thermal control.
@@ -384,8 +369,8 @@ __maybe_unused static const struct ec_thermal_config thermal_fan_28w =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CHARGER \
-	{ \
+#define THERMAL_CHARGER          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = 0, \
 			[EC_TEMP_THRESH_HALT] = 0, \
@@ -397,13 +382,13 @@ __maybe_unused static const struct ec_thermal_config thermal_fan_28w =
 		.temp_fan_max = 0, \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_charger =
-							THERMAL_CHARGER;
+	THERMAL_CHARGER;
 
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
 	[TEMP_SENSOR_2_FAN] = THERMAL_FAN,
-	[TEMP_SENSOR_3_CHARGER]	= THERMAL_CHARGER,
+	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
