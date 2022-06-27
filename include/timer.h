@@ -19,11 +19,11 @@ typedef long clock_t;
 #include "task_id.h"
 
 /* Time units in microseconds */
-#define MSEC         1000
-#define SECOND    1000000
-#define SEC_UL    1000000ul
-#define MINUTE   60000000
-#define HOUR   3600000000ull  /* Too big to fit in a signed int */
+#define MSEC 1000
+#define SECOND 1000000
+#define SEC_UL 1000000ul
+#define MINUTE 60000000
+#define HOUR 3600000000ull /* Too big to fit in a signed int */
 
 /* Microsecond timestamp. */
 typedef union {
@@ -33,7 +33,6 @@ typedef union {
 		uint32_t hi;
 	} le /* little endian words */;
 } timestamp_t;
-
 
 /**
  * Initialize the timer module.
@@ -195,4 +194,4 @@ static inline int time_after(uint32_t a, uint32_t b)
 extern timestamp_t *get_time_mock;
 #endif /* CONFIG_ZTEST */
 
-#endif  /* __CROS_EC_TIMER_H */
+#endif /* __CROS_EC_TIMER_H */
