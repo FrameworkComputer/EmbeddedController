@@ -103,8 +103,8 @@ static void board_chargers_suspend(struct ap_power_ev_callback *const cb,
 		fn = sm5803_disable_low_power_mode;
 		break;
 	default:
-		LOG_WRN("%s: power event %d is not recognized",
-			__func__, data.event);
+		LOG_WRN("%s: power event %d is not recognized", __func__,
+			data.event);
 		return;
 	}
 
@@ -281,7 +281,7 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
-#define INT_RECHECK_US	5000
+#define INT_RECHECK_US 5000
 
 /* C0 interrupt line shared by BC 1.2 and charger */
 
