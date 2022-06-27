@@ -20,25 +20,26 @@
  */
 #define DECLARE_IRQ(irq, routine, priority) DECLARE_IRQ_(irq, routine, priority)
 #ifdef CONFIG_TASK_PROFILING
-#define DECLARE_IRQ_(irq, routine, priority)                    \
-	static void routine(void);				\
-	void IRQ_HANDLER(irq)(void)				\
-	{							\
-		void *ret = __builtin_return_address(0);	\
-		task_start_irq_handler(ret);			\
-		routine();					\
-		task_end_irq_handler(ret);			\
-	}							\
-	const struct irq_priority __keep IRQ_PRIORITY(irq)	\
-	__attribute__((section(".rodata.irqprio")))		\
-			= {irq, priority}
+#define DECLARE_IRQ_(irq, routine, priority)                         \
+	static void routine(void);                                   \
+	void IRQ_HANDLER(irq)(void)                                  \
+	{                                                            \
+		void *ret = __builtin_return_address(0);             \
+		task_start_irq_handler(ret);                         \
+		routine();                                           \
+		task_end_irq_handler(ret);                           \
+	}                                                            \
+	const struct irq_priority __keep IRQ_PRIORITY(irq)           \
+		__attribute__((section(".rodata.irqprio"))) = { irq, \
+								priority }
 #else /* CONFIG_TASK_PROFILING */
 /* No Profiling : connect directly the IRQ vector */
-#define DECLARE_IRQ_(irq, routine, priority)                    \
-	static void __keep routine(void);			\
-	void IRQ_HANDLER(irq)(void) __attribute__((alias(STRINGIFY(routine))));\
-	const struct irq_priority __keep IRQ_PRIORITY(irq)	\
-	__attribute__((section(".rodata.irqprio")))		\
-			= {irq, priority}
+#define DECLARE_IRQ_(irq, routine, priority)                         \
+	static void __keep routine(void);                            \
+	void IRQ_HANDLER(irq)(void)                                  \
+		__attribute__((alias(STRINGIFY(routine))));          \
+	const struct irq_priority __keep IRQ_PRIORITY(irq)           \
+		__attribute__((section(".rodata.irqprio"))) = { irq, \
+								priority }
 #endif /* CONFIG_TASK_PROFILING */
-#endif  /* __CROS_EC_IRQ_HANDLER_H */
+#endif /* __CROS_EC_IRQ_HANDLER_H */
