@@ -10,7 +10,8 @@
 
 struct host_command *zephyr_find_host_command(int command)
 {
-	STRUCT_SECTION_FOREACH(host_command, cmd) {
+	STRUCT_SECTION_FOREACH(host_command, cmd)
+	{
 		if (cmd->command == command)
 			return cmd;
 	}
