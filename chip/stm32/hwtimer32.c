@@ -115,7 +115,7 @@ void __hw_timer_enable_clock(int n, int enable)
 #endif
 
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
-defined(CHIP_FAMILY_STM32H7)
+	defined(CHIP_FAMILY_STM32H7)
 	if (n == 14) {
 		reg = &STM32_RCC_APB1ENR;
 		mask = STM32_RCC_PB1_TIM14;
@@ -157,7 +157,7 @@ defined(CHIP_FAMILY_STM32H7)
 		reg = &STM32_RCC_APB2ENR;
 		mask = (n == 1)	 ? STM32_RCC_APB2ENR_TIM1EN :
 		       (n == 15) ? STM32_RCC_APB2ENR_TIM15EN :
-					 STM32_RCC_APB2ENR_TIM16EN;
+				   STM32_RCC_APB2ENR_TIM16EN;
 	}
 #else
 	if (n >= 2 && n <= 7) {
@@ -213,12 +213,12 @@ static void update_prescaler(void)
 #ifdef CONFIG_WATCHDOG_HELP
 	/* Watchdog timer runs at 1KHz */
 	STM32_TIM_PSC(TIM_WATCHDOG) =
-		(clock_get_timer_freq()  / SECOND * MSEC)- 1;
-#endif  /* CONFIG_WATCHDOG_HELP */
+		(clock_get_timer_freq() / SECOND * MSEC) - 1;
+#endif /* CONFIG_WATCHDOG_HELP */
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, update_prescaler, HOOK_PRIO_DEFAULT);
 #endif /* CHIP_FAMILY_STM32L  || CHIP_FAMILY_STM32L4 || */
-	/*  CHIP_FAMILY_STM32F4 || CHIP_FAMILY_STM32H7 */
+/*  CHIP_FAMILY_STM32F4 || CHIP_FAMILY_STM32H7 */
 
 int __hw_clock_source_init(uint32_t start_t)
 {
@@ -285,9 +285,11 @@ void IRQ_HANDLER(IRQ_WD)(void)
 		     "pop {r0,pc}\n");
 }
 const struct irq_priority __keep IRQ_PRIORITY(IRQ_WD)
-	__attribute__((section(".rodata.irqprio")))
-		= {IRQ_WD, 0}; /* put the watchdog at the highest
-					    priority */
+	__attribute__((section(".rodata.irqprio"))) = { IRQ_WD,
+							0 }; /* put the watchdog
+								at the highest
+									  priority
+							      */
 
 void hwtimer_setup_watchdog(void)
 {
@@ -320,8 +322,7 @@ void hwtimer_setup_watchdog(void)
 		STM32_TIM_ARR(TIM_WATCHDOG) = CONFIG_AUX_TIMER_PERIOD_MS;
 
 		/* Update prescaler: watchdog timer runs at 1KHz */
-		STM32_TIM_PSC(TIM_WATCHDOG) =
-			(freq / SECOND * MSEC) - 1;
+		STM32_TIM_PSC(TIM_WATCHDOG) = (freq / SECOND * MSEC) - 1;
 	}
 #ifdef CHIP_FAMILY_STM32L4
 	else {
@@ -351,4 +352,4 @@ void hwtimer_reset_watchdog(void)
 	STM32_TIM_CNT(TIM_WATCHDOG) = 0x0000;
 }
 
-#endif  /* CONFIG_WATCHDOG_HELP */
+#endif /* CONFIG_WATCHDOG_HELP */
