@@ -80,8 +80,7 @@ void prl_run(int port, int evt, int en);
  * @param type port address
  * @param rev revision
  */
-void prl_set_rev(int port, enum tcpci_msg_type type,
-					enum pd_rev_type rev);
+void prl_set_rev(int port, enum tcpci_msg_type type, enum pd_rev_type rev);
 
 /**
  * Get the PD revision
@@ -100,7 +99,7 @@ enum pd_rev_type prl_get_rev(int port, enum tcpci_msg_type type);
  * @param msg  Control message type
  */
 void prl_send_ctrl_msg(int port, enum tcpci_msg_type type,
-	enum pd_ctrl_msg_type msg);
+		       enum pd_ctrl_msg_type msg);
 
 /**
  * Sends a PD data message
@@ -110,7 +109,7 @@ void prl_send_ctrl_msg(int port, enum tcpci_msg_type type,
  * @param msg  Data message type
  */
 void prl_send_data_msg(int port, enum tcpci_msg_type type,
-	enum pd_data_msg_type msg);
+		       enum pd_data_msg_type msg);
 
 /**
  * Sends a PD extended data message
@@ -120,7 +119,7 @@ void prl_send_data_msg(int port, enum tcpci_msg_type type,
  * @param msg  Extended data message type
  */
 void prl_send_ext_data_msg(int port, enum tcpci_msg_type type,
-	enum pd_ext_msg_type msg);
+			   enum pd_ext_msg_type msg);
 
 /**
  * Informs the Protocol Layer that a hard reset has completed
