@@ -19,10 +19,7 @@ enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
-enum ec_cfg_eps_type {
-	EPS_DISABLED = 0,
-	EPS_ENABLED = 1
-};
+enum ec_cfg_eps_type { EPS_DISABLED = 0, EPS_ENABLED = 1 };
 
 enum ec_cfg_ite_type {
 	LTE_NOT_PRESENT = 0,
@@ -31,14 +28,14 @@ enum ec_cfg_ite_type {
 
 union anahera_cbi_fw_config {
 	struct {
-		uint32_t				sd_db : 2;
-		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
-		uint32_t				audio : 3;
-		enum ec_cfg_ite_type			lte_db : 2;
-		uint32_t				ufc : 2;
-		enum ec_cfg_eps_type			eps : 1;
-		uint32_t				boot_device : 2;
-		uint32_t				reserved_1 : 19;
+		uint32_t sd_db : 2;
+		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
+		uint32_t audio : 3;
+		enum ec_cfg_ite_type lte_db : 2;
+		uint32_t ufc : 2;
+		enum ec_cfg_eps_type eps : 1;
+		uint32_t boot_device : 2;
+		uint32_t reserved_1 : 19;
 	};
 	uint32_t raw_value;
 };
