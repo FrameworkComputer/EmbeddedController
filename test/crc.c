@@ -37,7 +37,7 @@ static int test_8(void)
 {
 	uint32_t crc;
 	const uint32_t input = 0xdeadbeef;
-	const uint8_t *p = (const uint8_t *) &input;
+	const uint8_t *p = (const uint8_t *)&input;
 	int i;
 
 	crc32_init();
