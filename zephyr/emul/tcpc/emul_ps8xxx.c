@@ -21,7 +21,7 @@ LOG_MODULE_REGISTER(ps8xxx_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 #include "driver/tcpm/ps8xxx.h"
 
-#define PS8XXX_REG_MUX_IN_HPD_ASSERTION		MUX_IN_HPD_ASSERTION_REG
+#define PS8XXX_REG_MUX_IN_HPD_ASSERTION MUX_IN_HPD_ASSERTION_REG
 
 /** Run-time data used by the emulator */
 struct ps8xxx_emul_data {
@@ -164,10 +164,10 @@ struct i2c_emul *ps8xxx_emul_get_i2c_emul(const struct emul *emul,
  * @return TCPCI_EMUL_DONE to immedietly return success
  * @return TCPCI_EMUL_ERROR to immedietly return error
  */
-static enum tcpci_emul_ops_resp ps8xxx_emul_tcpci_read_byte(
-					const struct emul *emul,
-					const struct tcpci_emul_dev_ops *ops,
-					int reg, uint8_t *val, int bytes)
+static enum tcpci_emul_ops_resp
+ps8xxx_emul_tcpci_read_byte(const struct emul *emul,
+			    const struct tcpci_emul_dev_ops *ops, int reg,
+			    uint8_t *val, int bytes)
 {
 	uint16_t reg_val;
 
@@ -206,10 +206,10 @@ static enum tcpci_emul_ops_resp ps8xxx_emul_tcpci_read_byte(
  * @return TCPCI_EMUL_DONE to immedietly return success
  * @return TCPCI_EMUL_ERROR to immedietly return error
  */
-static enum tcpci_emul_ops_resp ps8xxx_emul_tcpci_write_byte(
-					const struct emul *emul,
-					const struct tcpci_emul_dev_ops *ops,
-					int reg, uint8_t val, int bytes)
+static enum tcpci_emul_ops_resp
+ps8xxx_emul_tcpci_write_byte(const struct emul *emul,
+			     const struct tcpci_emul_dev_ops *ops, int reg,
+			     uint8_t val, int bytes)
 {
 	uint16_t prod_id;
 
@@ -252,10 +252,10 @@ static enum tcpci_emul_ops_resp ps8xxx_emul_tcpci_write_byte(
  * @return TCPCI_EMUL_DONE to immedietly return success
  * @return TCPCI_EMUL_ERROR to immedietly return error
  */
-static enum tcpci_emul_ops_resp ps8xxx_emul_tcpci_handle_write(
-					const struct emul *emul,
-					const struct tcpci_emul_dev_ops *ops,
-					int reg, int msg_len)
+static enum tcpci_emul_ops_resp
+ps8xxx_emul_tcpci_handle_write(const struct emul *emul,
+			       const struct tcpci_emul_dev_ops *ops, int reg,
+			       int msg_len)
 {
 	uint16_t prod_id;
 
@@ -286,7 +286,7 @@ static enum tcpci_emul_ops_resp ps8xxx_emul_tcpci_handle_write(
  * @param ops Pointer to device operations structure
  */
 static void ps8xxx_emul_tcpci_reset(const struct emul *emul,
-			     struct tcpci_emul_dev_ops *ops)
+				    struct tcpci_emul_dev_ops *ops)
 {
 	tcpci_emul_set_reg(emul, PS8XXX_REG_I2C_DEBUGGING_ENABLE, 0x31);
 	tcpci_emul_set_reg(emul, PS8XXX_REG_MUX_IN_HPD_ASSERTION, 0x00);
@@ -535,7 +535,7 @@ static int ps8xxx_emul_init(const struct emul *emul,
 	return ret;
 }
 
-#define PS8XXX_EMUL(n)							\
+#define PS8XXX_EMUL(n)                                                      \
 	static struct ps8xxx_emul_data ps8xxx_emul_data_##n = {		\
 		.prod_id = PS8805_PRODUCT_ID,				\
 		.p0_data = {						\
@@ -550,8 +550,8 @@ static int ps8xxx_emul_init(const struct emul *emul,
 			.write_byte = ps8xxx_emul_write_byte,		\
 			.read_byte = ps8xxx_emul_read_byte,		\
 		},							\
-	};								\
-									\
+	};          \
+                                                                            \
 	static const struct ps8xxx_emul_cfg ps8xxx_emul_cfg_##n = {	\
 		.tcpci_emul = DT_LABEL(DT_INST_PHANDLE(n, tcpci_i2c)),	\
 		.p0_cfg = {						\
@@ -572,9 +572,9 @@ static int ps8xxx_emul_init(const struct emul *emul,
 			.data = &ps8xxx_emul_data_##n.gpio_data,	\
 			.addr = DT_INST_PROP(n, gpio_i2c_addr),		\
 		},							\
-	};								\
-	EMUL_DEFINE(ps8xxx_emul_init, DT_DRV_INST(n),			\
-		    &ps8xxx_emul_cfg_##n, &ps8xxx_emul_data_##n)
+	};       \
+	EMUL_DEFINE(ps8xxx_emul_init, DT_DRV_INST(n), &ps8xxx_emul_cfg_##n, \
+		    &ps8xxx_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(PS8XXX_EMUL)
 
