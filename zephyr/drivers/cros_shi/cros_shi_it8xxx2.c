@@ -21,12 +21,12 @@
 #include "host_command.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SPI, format, ##args)
 
 LOG_MODULE_REGISTER(cros_shi, LOG_LEVEL_ERR);
 
-#define DRV_CONFIG(dev) ((struct cros_shi_it8xxx2_cfg * const)(dev)->config)
+#define DRV_CONFIG(dev) ((struct cros_shi_it8xxx2_cfg *const)(dev)->config)
 
 /*
  * Strcture cros_shi_it8xxx2_cfg is about the setting of SHI,
@@ -45,8 +45,8 @@ struct cros_shi_it8xxx2_cfg {
 
 /* Max data size for a version 3 request/response packet. */
 #define SPI_MAX_REQUEST_SIZE SPI_RX_MAX_FIFO_SIZE
-#define SPI_MAX_RESPONSE_SIZE (SPI_TX_MAX_FIFO_SIZE - \
-	EC_SPI_PREAMBLE_LENGTH - EC_SPI_PAST_END_LENGTH)
+#define SPI_MAX_RESPONSE_SIZE \
+	(SPI_TX_MAX_FIFO_SIZE - EC_SPI_PREAMBLE_LENGTH - EC_SPI_PAST_END_LENGTH)
 
 static const uint8_t out_preamble[EC_SPI_PREAMBLE_LENGTH] = {
 	EC_SPI_PROCESSING,
@@ -80,9 +80,9 @@ static enum shi_state_machine shi_state;
 
 static const int spi_response_state[] = {
 	[SPI_STATE_READY_TO_RECV] = EC_SPI_RX_READY,
-	[SPI_STATE_RECEIVING]     = EC_SPI_RECEIVING,
-	[SPI_STATE_PROCESSING]    = EC_SPI_PROCESSING,
-	[SPI_STATE_RX_BAD]        = EC_SPI_RX_BAD_DATA,
+	[SPI_STATE_RECEIVING] = EC_SPI_RECEIVING,
+	[SPI_STATE_PROCESSING] = EC_SPI_PROCESSING,
+	[SPI_STATE_RX_BAD] = EC_SPI_RX_BAD_DATA,
 };
 BUILD_ASSERT(ARRAY_SIZE(spi_response_state) == SPI_STATE_COUNT);
 
@@ -169,12 +169,12 @@ static void spi_send_response_packet(struct host_packet *pkt)
 
 	/* Append our past-end byte, which we reserved space for. */
 	for (int i = 0; i < EC_SPI_PAST_END_LENGTH; i++) {
-		((uint8_t *)pkt->response)[pkt->response_size + i]
-			= EC_SPI_PAST_END;
+		((uint8_t *)pkt->response)[pkt->response_size + i] =
+			EC_SPI_PAST_END;
 	}
 
 	tx_size = pkt->response_size + EC_SPI_PREAMBLE_LENGTH +
-			EC_SPI_PAST_END_LENGTH;
+		  EC_SPI_PAST_END_LENGTH;
 
 	/* Transmit the reply */
 	spi_response_host_data(out_msg, tx_size);
@@ -340,8 +340,8 @@ static int cros_shi_ite_init(const struct device *dev)
 	 * bit3 : Rx FIFO1 will not be overwrited once it's full.
 	 * bit0 : Rx FIFO1/FIFO2 will reset after each CS_N goes high.
 	 */
-	IT83XX_SPI_GCR2 = IT83XX_SPI_RXF2OC | IT83XX_SPI_RXF1OC
-				| IT83XX_SPI_RXFAR;
+	IT83XX_SPI_GCR2 = IT83XX_SPI_RXF2OC | IT83XX_SPI_RXF1OC |
+			  IT83XX_SPI_RXFAR;
 	/*
 	 * Interrupt mask register (0b:Enable, 1b:Mask)
 	 * bit5 : Rx byte reach interrupt mask
@@ -384,10 +384,8 @@ static const struct cros_shi_it8xxx2_cfg cros_shi_cfg = {
 	CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY
 #error "CROS_SHI must initialize after the GPIOs initialization"
 #endif
-DEVICE_DT_INST_DEFINE(0, cros_shi_ite_init, NULL,
-		      NULL, &cros_shi_cfg, POST_KERNEL,
-		      CONFIG_CROS_SHI_IT8XXX2_INIT_PRIORITY,
-		      NULL);
+DEVICE_DT_INST_DEFINE(0, cros_shi_ite_init, NULL, NULL, &cros_shi_cfg,
+		      POST_KERNEL, CONFIG_CROS_SHI_IT8XXX2_INIT_PRIORITY, NULL);
 
 /* Get protocol information */
 enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
@@ -404,6 +402,5 @@ enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
 
 	return EC_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
-		     spi_get_protocol_info,
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, spi_get_protocol_info,
 		     EC_VER_MASK(0));
