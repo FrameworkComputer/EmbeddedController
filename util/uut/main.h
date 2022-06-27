@@ -21,11 +21,11 @@
 #define BASE_HEXADECIMAL 16
 
 /* Verbose control messages display */
-#define DISPLAY_MSG(msg) \
-{                        \
-	if (verbose)         \
-		printf msg;      \
-}
+#define DISPLAY_MSG(msg)            \
+	{                           \
+		if (verbose)        \
+			printf msg; \
+	}
 
 #define SUCCESS true
 #define FAIL false
