@@ -12,66 +12,66 @@
 #include "compile_time_macros.h"
 
 /* Macro to access 32-bit registers */
-#define CPUREG(addr) (*(volatile uint32_t*)(addr))
+#define CPUREG(addr) (*(volatile uint32_t *)(addr))
 
-#define CPU_NVIC_ST_CTRL       CPUREG(0xE000E010)
-#define ST_ENABLE              BIT(0)
-#define ST_TICKINT             BIT(1)
-#define ST_CLKSOURCE           BIT(2)
-#define ST_COUNTFLAG           BIT(16)
+#define CPU_NVIC_ST_CTRL CPUREG(0xE000E010)
+#define ST_ENABLE BIT(0)
+#define ST_TICKINT BIT(1)
+#define ST_CLKSOURCE BIT(2)
+#define ST_COUNTFLAG BIT(16)
 
 /* Nested Vectored Interrupt Controller */
-#define CPU_NVIC_EN(x)         CPUREG(0xe000e100 + 4 * (x))
-#define CPU_NVIC_DIS(x)        CPUREG(0xe000e180 + 4 * (x))
-#define CPU_NVIC_UNPEND(x)     CPUREG(0xe000e280 + 4 * (x))
-#define CPU_NVIC_PRI(x)        CPUREG(0xe000e400 + 4 * (x))
+#define CPU_NVIC_EN(x) CPUREG(0xe000e100 + 4 * (x))
+#define CPU_NVIC_DIS(x) CPUREG(0xe000e180 + 4 * (x))
+#define CPU_NVIC_UNPEND(x) CPUREG(0xe000e280 + 4 * (x))
+#define CPU_NVIC_PRI(x) CPUREG(0xe000e400 + 4 * (x))
 /* SCB AIRCR : Application interrupt and reset control register */
-#define CPU_NVIC_APINT         CPUREG(0xe000ed0c)
-#define  CPU_NVIC_APINT_SYSRST  BIT(2)            /* System reset request */
-#define  CPU_NVIC_APINT_PRIOGRP (BIT(8)|BIT(9)|BIT(10))
-#define  CPU_NVIC_APINT_ENDIAN  BIT(15)           /* Endianness */
-#define  CPU_NVIC_APINT_KEY_RD  (0xFA05U << 16)
-#define  CPU_NVIC_APINT_KEY_WR  (0x05FAU << 16)
+#define CPU_NVIC_APINT CPUREG(0xe000ed0c)
+#define CPU_NVIC_APINT_SYSRST BIT(2) /* System reset request */
+#define CPU_NVIC_APINT_PRIOGRP (BIT(8) | BIT(9) | BIT(10))
+#define CPU_NVIC_APINT_ENDIAN BIT(15) /* Endianness */
+#define CPU_NVIC_APINT_KEY_RD (0xFA05U << 16)
+#define CPU_NVIC_APINT_KEY_WR (0x05FAU << 16)
 /* NVIC STIR : Software Trigger Interrupt Register */
-#define CPU_NVIC_SWTRIG        CPUREG(0xe000ef00)
+#define CPU_NVIC_SWTRIG CPUREG(0xe000ef00)
 /* SCB SCR : System Control Register */
-#define CPU_SCB_SYSCTRL        CPUREG(0xe000ed10)
+#define CPU_SCB_SYSCTRL CPUREG(0xe000ed10)
 
-#define CPU_NVIC_CCR           CPUREG(0xe000ed14)
-#define CPU_NVIC_SHCSR         CPUREG(0xe000ed24)
-#define CPU_NVIC_CFSR          CPUREG(0xe000ed28)
-#define CPU_NVIC_HFSR          CPUREG(0xe000ed2c)
-#define CPU_NVIC_DFSR          CPUREG(0xe000ed30)
-#define CPU_NVIC_MFAR          CPUREG(0xe000ed34)
-#define CPU_NVIC_BFAR          CPUREG(0xe000ed38)
+#define CPU_NVIC_CCR CPUREG(0xe000ed14)
+#define CPU_NVIC_SHCSR CPUREG(0xe000ed24)
+#define CPU_NVIC_CFSR CPUREG(0xe000ed28)
+#define CPU_NVIC_HFSR CPUREG(0xe000ed2c)
+#define CPU_NVIC_DFSR CPUREG(0xe000ed30)
+#define CPU_NVIC_MFAR CPUREG(0xe000ed34)
+#define CPU_NVIC_BFAR CPUREG(0xe000ed38)
 
 enum {
-	CPU_NVIC_CFSR_BFARVALID		= BIT(15),
-	CPU_NVIC_CFSR_MFARVALID		= BIT(7),
+	CPU_NVIC_CFSR_BFARVALID = BIT(15),
+	CPU_NVIC_CFSR_MFARVALID = BIT(7),
 
-	CPU_NVIC_CCR_ICACHE		= BIT(17),
-	CPU_NVIC_CCR_DCACHE		= BIT(16),
-	CPU_NVIC_CCR_DIV_0_TRAP		= BIT(4),
-	CPU_NVIC_CCR_UNALIGN_TRAP	= BIT(3),
+	CPU_NVIC_CCR_ICACHE = BIT(17),
+	CPU_NVIC_CCR_DCACHE = BIT(16),
+	CPU_NVIC_CCR_DIV_0_TRAP = BIT(4),
+	CPU_NVIC_CCR_UNALIGN_TRAP = BIT(3),
 
-	CPU_NVIC_HFSR_DEBUGEVT		= 1UL << 31,
-	CPU_NVIC_HFSR_FORCED		= BIT(30),
-	CPU_NVIC_HFSR_VECTTBL		= BIT(1),
+	CPU_NVIC_HFSR_DEBUGEVT = 1UL << 31,
+	CPU_NVIC_HFSR_FORCED = BIT(30),
+	CPU_NVIC_HFSR_VECTTBL = BIT(1),
 
-	CPU_NVIC_SHCSR_MEMFAULTENA	= BIT(16),
-	CPU_NVIC_SHCSR_BUSFAULTENA	= BIT(17),
-	CPU_NVIC_SHCSR_USGFAULTENA	= BIT(18),
+	CPU_NVIC_SHCSR_MEMFAULTENA = BIT(16),
+	CPU_NVIC_SHCSR_BUSFAULTENA = BIT(17),
+	CPU_NVIC_SHCSR_USGFAULTENA = BIT(18),
 };
 
 /* System Control Block: cache registers */
-#define CPU_SCB_CCSIDR         CPUREG(0xe000ed80)
-#define CPU_SCB_CCSELR         CPUREG(0xe000ed84)
-#define CPU_SCB_ICIALLU        CPUREG(0xe000ef50)
-#define CPU_SCB_DCISW          CPUREG(0xe000ef60)
-#define CPU_SCB_DCCISW         CPUREG(0xe000ef74)
+#define CPU_SCB_CCSIDR CPUREG(0xe000ed80)
+#define CPU_SCB_CCSELR CPUREG(0xe000ed84)
+#define CPU_SCB_ICIALLU CPUREG(0xe000ef50)
+#define CPU_SCB_DCISW CPUREG(0xe000ef60)
+#define CPU_SCB_DCCISW CPUREG(0xe000ef74)
 
 /* Floating Point Context Address Register */
-#define CPU_FPU_FPCAR          CPUREG(0xe000ef38)
+#define CPU_FPU_FPCAR CPUREG(0xe000ef38)
 
 /*
  * As defined by Armv7-M Reference Manual B1.5.7 "Context state stacking on
@@ -85,28 +85,29 @@ enum {
 #define FPU_FPSCR_UFC BIT(3) /* Underflow */
 #define FPU_FPSCR_IXC BIT(4) /* Inexact */
 #define FPU_FPSCR_IDC BIT(7) /* Input denormal */
-#define FPU_FPSCR_EXC_FLAGS (FPU_FPSCR_IOC | FPU_FPSCR_DZC | FPU_FPSCR_OFC | \
-			     FPU_FPSCR_UFC | FPU_FPSCR_IXC | FPU_FPSCR_IDC)
+#define FPU_FPSCR_EXC_FLAGS                                              \
+	(FPU_FPSCR_IOC | FPU_FPSCR_DZC | FPU_FPSCR_OFC | FPU_FPSCR_UFC | \
+	 FPU_FPSCR_IXC | FPU_FPSCR_IDC)
 
 /* Bitfield values for EXC_RETURN. */
-#define EXC_RETURN_ES_MASK	BIT(0)
+#define EXC_RETURN_ES_MASK BIT(0)
 #define EXC_RETURN_ES_NON_SECURE 0
-#define EXC_RETURN_ES_SECURE	BIT(0)
-#define EXC_RETURN_SPSEL_MASK	BIT(2)
-#define EXC_RETURN_SPSEL_MSP	0
-#define EXC_RETURN_SPSEL_PSP	BIT(2)
-#define EXC_RETURN_MODE_MASK	BIT(3)
-#define EXC_RETURN_MODE_HANDLER	0
-#define EXC_RETURN_MODE_THREAD	BIT(3)
-#define EXC_RETURN_FTYPE_MASK	BIT(4)
-#define EXC_RETURN_FTYPE_ON	0
-#define EXC_RETURN_FTYPE_OFF	BIT(4)
-#define EXC_RETURN_DCRS_MASK	BIT(5)
-#define EXC_RETURN_DCRS_OFF	0
-#define EXC_RETURN_DCRS_ON	BIT(5)
-#define EXC_RETURN_S_MASK	BIT(6)
-#define EXC_RETURN_S_NON_SECURE	0
-#define EXC_RETURN_S_SECURE	BIT(6)
+#define EXC_RETURN_ES_SECURE BIT(0)
+#define EXC_RETURN_SPSEL_MASK BIT(2)
+#define EXC_RETURN_SPSEL_MSP 0
+#define EXC_RETURN_SPSEL_PSP BIT(2)
+#define EXC_RETURN_MODE_MASK BIT(3)
+#define EXC_RETURN_MODE_HANDLER 0
+#define EXC_RETURN_MODE_THREAD BIT(3)
+#define EXC_RETURN_FTYPE_MASK BIT(4)
+#define EXC_RETURN_FTYPE_ON 0
+#define EXC_RETURN_FTYPE_OFF BIT(4)
+#define EXC_RETURN_DCRS_MASK BIT(5)
+#define EXC_RETURN_DCRS_OFF 0
+#define EXC_RETURN_DCRS_ON BIT(5)
+#define EXC_RETURN_S_MASK BIT(6)
+#define EXC_RETURN_S_NON_SECURE 0
+#define EXC_RETURN_S_SECURE BIT(6)
 
 /* Set up the cpu to detect faults */
 void cpu_init(void);
@@ -132,10 +133,8 @@ static inline void cpu_set_interrupt_priority(uint8_t irq, uint8_t priority)
 	if (priority > 7)
 		priority = 7;
 
-	CPU_NVIC_PRI(irq / 4) =
-		(CPU_NVIC_PRI(irq / 4) &
-		 ~(7 << prio_shift)) |
-		(priority << prio_shift);
+	CPU_NVIC_PRI(irq / 4) = (CPU_NVIC_PRI(irq / 4) & ~(7 << prio_shift)) |
+				(priority << prio_shift);
 }
 
 #endif /* __CROS_EC_CPU_H */
