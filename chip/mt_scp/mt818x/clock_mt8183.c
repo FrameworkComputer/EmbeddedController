@@ -14,7 +14,7 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CLOCK, format, ##args)
 
 #define ULPOSC_DIV_MAX (1 << OSC_DIV_BITS)
 #define ULPOSC_CALI_MAX (1 << OSC_CALI_BITS)
@@ -29,14 +29,14 @@ void clock_init(void)
 	SCP_SYS_CTRL |= AUTO_DDREN;
 
 	/* Initialize 26MHz system clock counter reset value to 1. */
-	SCP_CLK_SYS_VAL =
-		(SCP_CLK_SYS_VAL & ~CLK_SYS_VAL_MASK) | CLK_SYS_VAL(1);
+	SCP_CLK_SYS_VAL = (SCP_CLK_SYS_VAL & ~CLK_SYS_VAL_MASK) |
+			  CLK_SYS_VAL(1);
 	/* Initialize high frequency ULPOSC counter reset value to 1. */
-	SCP_CLK_HIGH_VAL =
-		(SCP_CLK_HIGH_VAL & ~CLK_HIGH_VAL_MASK) | CLK_HIGH_VAL(1);
+	SCP_CLK_HIGH_VAL = (SCP_CLK_HIGH_VAL & ~CLK_HIGH_VAL_MASK) |
+			   CLK_HIGH_VAL(1);
 	/* Initialize sleep mode control VREQ counter. */
-	SCP_CLK_SLEEP_CTRL =
-		(SCP_CLK_SLEEP_CTRL & ~VREQ_COUNTER_MASK) | VREQ_COUNTER_VAL(1);
+	SCP_CLK_SLEEP_CTRL = (SCP_CLK_SLEEP_CTRL & ~VREQ_COUNTER_MASK) |
+			     VREQ_COUNTER_VAL(1);
 
 	/* Set normal wake clock */
 	SCP_WAKE_CKSW &= ~WAKE_CKSW_SEL_NORMAL_MASK;
@@ -108,13 +108,12 @@ static unsigned int scp_measure_ulposc_freq(int osc)
 	int cnt;
 
 	/* Before select meter clock input, bit[1:0] = b00 */
-	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) |
-			 DBG_MODE_SET_CLOCK;
+	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_MODE_MASK) | DBG_MODE_SET_CLOCK;
 
 	/* Select source, bit[21:16] = clk_src */
-	AP_CLK_DBG_CFG = (AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
-			 (osc == 0 ? DBG_BIST_SOURCE_ULPOSC1 :
-				     DBG_BIST_SOURCE_ULPOSC2);
+	AP_CLK_DBG_CFG =
+		(AP_CLK_DBG_CFG & ~DBG_BIST_SOURCE_MASK) |
+		(osc == 0 ? DBG_BIST_SOURCE_ULPOSC1 : DBG_BIST_SOURCE_ULPOSC2);
 
 	/* Set meter divisor to 1, bit[31:24] = b00000000 */
 	AP_CLK_MISC_CFG_0 = (AP_CLK_MISC_CFG_0 & ~MISC_METER_DIVISOR_MASK) |
@@ -163,8 +162,7 @@ static int scp_ulposc_config_measure(int osc, int div, int cali)
 
 	scp_ulposc_config(osc, div, cali);
 	freq = scp_measure_ulposc_freq(osc);
-	CPRINTF("ULPOSC%d: %d %d %d (%dkHz)\n",
-		osc + 1, div, cali, freq,
+	CPRINTF("ULPOSC%d: %d %d %d (%dkHz)\n", osc + 1, div, cali, freq,
 		freq * 26 * 1000 / 1024);
 
 	return freq;
@@ -182,10 +180,10 @@ static int scp_calibrate_ulposc(int osc, int target_mhz)
 {
 	int target_freq = DIV_ROUND_NEAREST(target_mhz * 1024, 26);
 	struct ulposc {
-		int div;        /* frequency divisor/multiplier */
-		int cali;       /* variable resistor calibrator */
-		int freq;       /* frequency counter measure result */
-	} curr, prev = {0};
+		int div; /* frequency divisor/multiplier */
+		int cali; /* variable resistor calibrator */
+		int freq; /* frequency counter measure result */
+	} curr, prev = { 0 };
 	enum { STAGE_DIV, STAGE_CALI } stage = STAGE_DIV;
 	int param, param_max;
 
@@ -220,9 +218,9 @@ static int scp_calibrate_ulposc(int osc, int target_mhz)
 		 * frequency, pick the closest one.
 		 */
 		if (prev.freq && signum(target_freq - curr.freq) !=
-				 signum(target_freq - prev.freq)) {
+					 signum(target_freq - prev.freq)) {
 			if (abs(target_freq - prev.freq) <
-					abs(target_freq - curr.freq))
+			    abs(target_freq - curr.freq))
 				curr = prev;
 
 			if (stage == STAGE_CALI)
@@ -304,7 +302,7 @@ void scp_enable_clock(void)
 	SCP_SYS_CTRL |= AUTO_DDREN;
 
 	/* Set settle time */
-	SCP_CLK_SYS_VAL = 1;  /* System clock */
+	SCP_CLK_SYS_VAL = 1; /* System clock */
 	SCP_CLK_HIGH_VAL = 1; /* ULPOSC */
 	SCP_CLK_SLEEP_CTRL = (SCP_CLK_SLEEP_CTRL & ~VREQ_COUNTER_MASK) | 2;
 
