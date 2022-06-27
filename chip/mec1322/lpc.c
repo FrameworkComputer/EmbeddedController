@@ -22,18 +22,18 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 
 static uint8_t mem_mapped[0x200] __attribute__((section(".bss.big_align")));
 
 static struct host_packet lpc_packet;
 static struct host_cmd_handler_args host_cmd_args;
-static uint8_t host_cmd_flags;   /* Flags from host command */
+static uint8_t host_cmd_flags; /* Flags from host command */
 
 static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __aligned(4);
 static int init_done;
 
-static struct ec_lpc_host_args * const lpc_host_args =
+static struct ec_lpc_host_args *const lpc_host_args =
 	(struct ec_lpc_host_args *)mem_mapped;
 
 static void keyboard_irq_assert(void)
@@ -152,7 +152,7 @@ void lpc_update_host_event_status(void)
 
 	/* Copy host events to mapped memory */
 	*(host_event_t *)host_get_memmap(EC_MEMMAP_HOST_EVENTS) =
-				lpc_get_host_events();
+		lpc_get_host_events();
 
 	task_enable_irq(MEC1322_IRQ_ACPIEC0_IBF);
 
@@ -267,9 +267,9 @@ static void lpc_init(void)
 	MEC1322_LPC_ACT |= 1;
 
 	/*
-	* Ring Oscillator not permitted to shut down
-	* until LPC activate bit is cleared
-	*/
+	 * Ring Oscillator not permitted to shut down
+	 * until LPC activate bit is cleared
+	 */
 	MEC1322_LPC_CLK_CTRL |= 3;
 
 	/* Initialize host args and memory map to all zero */
@@ -375,8 +375,7 @@ DECLARE_IRQ(MEC1322_IRQ_ACPIEC0_IBF, acpi_0_interrupt, 1);
 void acpi_1_interrupt(void)
 {
 	uint8_t st = MEC1322_ACPI_EC_STATUS(1);
-	if (!(st & EC_LPC_STATUS_FROM_HOST) ||
-	    !(st & EC_LPC_STATUS_LAST_CMD))
+	if (!(st & EC_LPC_STATUS_FROM_HOST) || !(st & EC_LPC_STATUS_LAST_CMD))
 		return;
 
 	/* Set the busy bit */
@@ -477,7 +476,7 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
 
 int lpc_get_pltrst_asserted(void)
 {
-	return (MEC1322_LPC_BUS_MONITOR & (1<<1)) ? 1 : 0;
+	return (MEC1322_LPC_BUS_MONITOR & (1 << 1)) ? 1 : 0;
 }
 
 /* Enable LPC ACPI-EC0 interrupts */
@@ -515,6 +514,5 @@ static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
 
 	return EC_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO,
-		lpc_get_protocol_info,
-		EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
+		     EC_VER_MASK(0));
