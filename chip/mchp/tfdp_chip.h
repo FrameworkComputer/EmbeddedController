@@ -13,7 +13,6 @@
 
 #include <stdint.h>
 
-
 #ifdef CONFIG_MCHP_TFDP
 
 #undef TRACE0
@@ -35,19 +34,19 @@
 #undef trace13
 #undef trace14
 
-#define MCHP_TFDP_BASE_ADDR	(0x40008c00ul)
+#define MCHP_TFDP_BASE_ADDR (0x40008c00ul)
 
-#define TFDP_FRAME_START   (0xFD)
+#define TFDP_FRAME_START (0xFD)
 
-#define TFDP_POWER_ON   (1u)
-#define TFDP_POWER_OFF  (0u)
+#define TFDP_POWER_ON (1u)
+#define TFDP_POWER_OFF (0u)
 
-#define TFDP_ENABLE         (1u)
-#define TFDP_DISABLE        (0u)
-#define TFDP_CFG_PINS       (1u)
-#define TFDP_NO_CFG_PINS    (0u)
+#define TFDP_ENABLE (1u)
+#define TFDP_DISABLE (0u)
+#define TFDP_CFG_PINS (1u)
+#define TFDP_NO_CFG_PINS (0u)
 
-#define  MCHP_TRACE_MASK_IRQ
+#define MCHP_TRACE_MASK_IRQ
 
 #define TFDP_DELAY()
 
@@ -59,18 +58,15 @@ void tfdp_power(uint8_t pwr_on);
 void tfdp_enable(uint8_t en, uint8_t pin_cfg);
 void TFDPTrace0(uint16_t nbr);
 void TFDPTrace1(uint16_t nbr, uint32_t p1);
-void TFDPTrace2(uint16_t nbr, uint32_t p1,
-		uint32_t p2);
-void TFDPTrace3(uint16_t nbr, uint32_t p1,
-		uint32_t p2, uint32_t p3);
-void TFDPTrace4(uint16_t nbr, uint32_t p1, uint32_t p2,
-		uint32_t p3, uint32_t p4);
+void TFDPTrace2(uint16_t nbr, uint32_t p1, uint32_t p2);
+void TFDPTrace3(uint16_t nbr, uint32_t p1, uint32_t p2, uint32_t p3);
+void TFDPTrace4(uint16_t nbr, uint32_t p1, uint32_t p2, uint32_t p3,
+		uint32_t p4);
 void TFDPTrace11(uint16_t nbr, uint32_t p1);
 void TFDPTrace12(uint16_t nbr, uint32_t p1, uint32_t p2);
-void TFDPTrace13(uint16_t nbr, uint32_t p1, uint32_t p2,
-		 uint32_t p3);
-void TFDPTrace14(uint16_t nbr, uint32_t p1, uint32_t p2,
-		 uint32_t p3, uint32_t p4);
+void TFDPTrace13(uint16_t nbr, uint32_t p1, uint32_t p2, uint32_t p3);
+void TFDPTrace14(uint16_t nbr, uint32_t p1, uint32_t p2, uint32_t p3,
+		 uint32_t p4);
 
 #ifdef __cplusplus
 }
@@ -80,14 +76,12 @@ void TFDPTrace14(uint16_t nbr, uint32_t p1, uint32_t p2,
 #define TRACE1(nbr, cat, b, str, p1) TFDPTrace1(nbr, p1)
 #define TRACE2(nbr, cat, b, str, p1, p2) TFDPTrace2(nbr, p1, p2)
 #define TRACE3(nbr, cat, b, str, p1, p2, p3) TFDPTrace3(nbr, p1, p2, p3)
-#define TRACE4(nbr, cat, b, str, p1, p2, p3, p4) TFDPTrace4(nbr, p1, p2, \
-	p3, p4)
+#define TRACE4(nbr, cat, b, str, p1, p2, p3, p4) TFDPTrace4(nbr, p1, p2, p3, p4)
 #define TRACE11(nbr, cat, b, str, p1) TFDPTrace11(nbr, p1)
 #define TRACE12(nbr, cat, b, str, p1, p2) TFDPTrace12(nbr, p1, p2)
 #define TRACE13(nbr, cat, b, str, p1, p2, p3) TFDPTrace13(nbr, p1, p2, p3)
 #define TRACE14(nbr, cat, b, str, p1, p2, p3, p4) \
 	TFDPTrace14(nbr, p1, p2, p3, p4)
-
 
 #else /* #ifdef MCHP_TRACE */
 
