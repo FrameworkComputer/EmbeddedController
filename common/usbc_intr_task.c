@@ -18,19 +18,19 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 /* Events for pd_interrupt_handler_task */
-#define PD_PROCESS_INTERRUPT  BIT(0)
+#define PD_PROCESS_INTERRUPT BIT(0)
 
 /*
  * Theoretically, we may need to support up to 480 USB-PD packets per second for
  * intensive operations such as FW update over PD. This value has tested well
  * preventing watchdog resets with a single bad port partner plugged in.
  */
-#define ALERT_STORM_MAX_COUNT   480
-#define ALERT_STORM_INTERVAL    SECOND
+#define ALERT_STORM_MAX_COUNT 480
+#define ALERT_STORM_INTERVAL SECOND
 
 static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_MAX_COUNT];
 
@@ -57,8 +57,7 @@ static void service_one_port(int port)
 	tcpc_alert(port);
 
 	now = get_time();
-	if (timestamp_expired(storm_tracker[port].time,
-			      &now)) {
+	if (timestamp_expired(storm_tracker[port].time, &now)) {
 		/* Reset timer into future */
 		storm_tracker[port].time.val = now.val + ALERT_STORM_INTERVAL;
 
@@ -91,7 +90,7 @@ __overridable void board_process_pd_alert(int port)
  */
 void pd_interrupt_handler_task(void *p)
 {
-	const int port = (int) ((intptr_t) p);
+	const int port = (int)((intptr_t)p);
 	const int port_mask = (PD_STATUS_TCPC_ALERT_0 << port);
 
 	ASSERT(port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
@@ -122,7 +121,6 @@ void pd_interrupt_handler_task(void *p)
 		 */
 		while ((tcpc_get_alert_status() & port_mask) &&
 		       pd_is_port_enabled(port)) {
-
 			service_one_port(port);
 		}
 
@@ -147,7 +145,7 @@ BUILD_ASSERT(PD_STATUS_TCPC_ALERT_3 == (PD_STATUS_TCPC_ALERT_0 << 3));
 
 void pd_shared_alert_task(void *p)
 {
-	const int sources_mask = (int) ((intptr_t) p);
+	const int sources_mask = (int)((intptr_t)p);
 	int want_alerts = 0;
 	int port;
 	int port_mask;
