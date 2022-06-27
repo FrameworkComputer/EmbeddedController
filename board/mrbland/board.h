@@ -13,13 +13,13 @@
 #define CONFIG_BUTTON_TRIGGERED_RECOVERY
 
 /* Internal SPI flash on NPCX7 */
-#define CONFIG_FLASH_SIZE_BYTES (512 * 1024)  /* 512KB internal spi flash */
+#define CONFIG_FLASH_SIZE_BYTES (512 * 1024) /* 512KB internal spi flash */
 
 /* Switchcap */
 #define CONFIG_LN9310
 
 /* Battery */
-#define CONFIG_BATTERY_DEVICE_CHEMISTRY  "LION"
+#define CONFIG_BATTERY_DEVICE_CHEMISTRY "LION"
 #define CONFIG_BATTERY_REVIVE_DISCONNECT
 #define CONFIG_BATTERY_FUEL_GAUGE
 #define CONFIG_BATTERY_VENDOR_PARAM
@@ -40,7 +40,7 @@
 
 /* I2C */
 #undef I2C_PORT_TCPC0
-#define I2C_PORT_TCPC0   NPCX_I2C_PORT2_0
+#define I2C_PORT_TCPC0 NPCX_I2C_PORT2_0
 
 /* Lid accel/gyro */
 #define CONFIG_ACCELGYRO_BMI160
@@ -86,10 +86,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_DISPLIGHT = 0,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_DISPLIGHT = 0, PWM_CH_COUNT };
 
 /* List of possible batteries */
 enum battery_type {
