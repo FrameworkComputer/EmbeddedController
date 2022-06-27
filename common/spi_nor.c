@@ -18,7 +18,7 @@
 
 #ifdef CONFIG_SPI_NOR_DEBUG
 #define CPRINTS(dev, string, args...) \
-	cprints(CC_SPI, "SPI NOR %s: " string, (dev)->name, ## args)
+	cprints(CC_SPI, "SPI NOR %s: " string, (dev)->name, ##args)
 #else
 #define CPRINTS(dev, string, args...)
 #endif
@@ -74,8 +74,8 @@ static int spi_nor_write_enable(const struct spi_nor_device_t *spi_nor_device)
 	int rv = EC_SUCCESS;
 
 	/* Set the write enable latch. */
-	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller],
-			     &cmd, 1, NULL, 0);
+	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller], &cmd,
+			     1, NULL, 0);
 	if (rv)
 		return rv;
 
@@ -84,7 +84,7 @@ static int spi_nor_write_enable(const struct spi_nor_device_t *spi_nor_device)
 	if (rv)
 		return rv;
 	if ((status_register_value & SPI_NOR_STATUS_REGISTER_WEL) == 0)
-		return EC_ERROR_UNKNOWN;  /* WEL not set but should be. */
+		return EC_ERROR_UNKNOWN; /* WEL not set but should be. */
 
 	return rv;
 }
@@ -101,7 +101,7 @@ static int spi_nor_read_ear(const struct spi_nor_device_t *spi_nor_device,
 	uint8_t command = SPI_NOR_OPCODE_RDEAR;
 
 	return spi_transaction(&spi_devices[spi_nor_device->spi_controller],
-			&command, sizeof(command), value, 1);
+			       &command, sizeof(command), value, 1);
 }
 
 int spi_nor_write_ear(const struct spi_nor_device_t *spi_nor_device,
@@ -122,8 +122,8 @@ int spi_nor_write_ear(const struct spi_nor_device_t *spi_nor_device,
 	buf[0] = SPI_NOR_OPCODE_WREAR;
 	buf[1] = value;
 
-	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller],
-			     buf, sizeof(buf), NULL, 0);
+	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller], buf,
+			     sizeof(buf), NULL, 0);
 	if (rv) {
 		CPRINTS(spi_nor_device, "Failed to write EAR, rv=%d", rv);
 		goto err_free;
@@ -134,9 +134,9 @@ int spi_nor_write_ear(const struct spi_nor_device_t *spi_nor_device,
 		goto err_free;
 
 	if (ear != value) {
-		CPRINTS(spi_nor_device,
-			"Write EAR error: write=%d, read=%d", value, ear);
-		rv = EC_ERROR_UNKNOWN;  /* WEL not set but should be. */
+		CPRINTS(spi_nor_device, "Write EAR error: write=%d, read=%d",
+			value, ear);
+		rv = EC_ERROR_UNKNOWN; /* WEL not set but should be. */
 		goto err_free;
 	}
 
@@ -157,8 +157,7 @@ static int spi_nor_wait(const struct spi_nor_device_t *spi_nor_device)
 	rv = spi_nor_read_status(spi_nor_device, &status_register_value);
 	if (rv)
 		return rv;
-	timeout.val =
-		get_time().val + spi_nor_device->timeout_usec;
+	timeout.val = get_time().val + spi_nor_device->timeout_usec;
 	while (status_register_value & SPI_NOR_STATUS_REGISTER_WIP) {
 		/* Reload the watchdog before sleeping. */
 		watchdog_reload();
@@ -181,10 +180,9 @@ static int spi_nor_wait(const struct spi_nor_device_t *spi_nor_device)
 /**
  * Read the Manufacturer bank and ID out of the JEDEC ID.
  */
-static int spi_nor_read_jedec_mfn_id(
-		const struct spi_nor_device_t *spi_nor_device,
-		uint8_t *out_mfn_bank,
-		uint8_t *out_mfn_id)
+static int
+spi_nor_read_jedec_mfn_id(const struct spi_nor_device_t *spi_nor_device,
+			  uint8_t *out_mfn_bank, uint8_t *out_mfn_id)
 {
 	int rv = EC_SUCCESS;
 	uint8_t jedec_id[SPI_NOR_JEDEC_ID_BANKS];
@@ -192,8 +190,8 @@ static int spi_nor_read_jedec_mfn_id(
 	uint8_t cmd = SPI_NOR_OPCODE_JEDEC_ID;
 
 	/* Read the standardized part of the JEDEC ID. */
-	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller],
-			     &cmd, 1, jedec_id, SPI_NOR_JEDEC_ID_BANKS);
+	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller], &cmd,
+			     1, jedec_id, SPI_NOR_JEDEC_ID_BANKS);
 	if (rv)
 		return rv;
 
@@ -214,11 +212,11 @@ static int spi_nor_read_jedec_mfn_id(
 /**
  * Read a doubleword out of a SFDP table (DWs are 1-based like the SFDP spec).
  */
-static int spi_nor_read_sfdp_dword(
-		const struct spi_nor_device_t *spi_nor_device,
-		uint32_t table_offset,
-		uint8_t table_double_word,
-		uint32_t *out_dw) {
+static int
+spi_nor_read_sfdp_dword(const struct spi_nor_device_t *spi_nor_device,
+			uint32_t table_offset, uint8_t table_double_word,
+			uint32_t *out_dw)
+{
 	uint8_t sfdp_cmd[5];
 	/* Calculate the byte offset based on the double word. */
 	uint32_t sfdp_offset = table_offset + ((table_double_word - 1) * 4);
@@ -228,7 +226,7 @@ static int spi_nor_read_sfdp_dword(
 	sfdp_cmd[1] = (sfdp_offset & 0xFF0000) >> 16;
 	sfdp_cmd[2] = (sfdp_offset & 0xFF00) >> 8;
 	sfdp_cmd[3] = (sfdp_offset & 0xFF);
-	sfdp_cmd[4] = 0;  /* Required extra cycle. */
+	sfdp_cmd[4] = 0; /* Required extra cycle. */
 	return spi_transaction(&spi_devices[spi_nor_device->spi_controller],
 			       sfdp_cmd, 5, (uint8_t *)out_dw, 4);
 }
@@ -248,10 +246,10 @@ static int is_basic_flash_parameter_table(uint8_t sfdp_major_rev,
 			BASIC_FLASH_PARAMETER_TABLE_1_0_ID);
 	} else if (sfdp_major_rev == 1 && sfdp_minor_rev >= 5) {
 		return ((SFDP_GET_BITFIELD(SFDP_1_5_PARAMETER_HEADER_DW1_ID_LSB,
-					  parameter_header_dw1) ==
+					   parameter_header_dw1) ==
 			 BASIC_FLASH_PARAMETER_TABLE_1_5_ID_LSB) &&
 			(SFDP_GET_BITFIELD(SFDP_1_5_PARAMETER_HEADER_DW2_ID_MSB,
-					  parameter_header_dw2) ==
+					   parameter_header_dw2) ==
 			 BASIC_FLASH_PARAMETER_TABLE_1_5_ID_MSB));
 	}
 
@@ -262,13 +260,10 @@ static int is_basic_flash_parameter_table(uint8_t sfdp_major_rev,
  * Helper function to locate the SFDP Basic SPI Flash NOR Parameter Table.
  */
 static int locate_sfdp_basic_parameter_table(
-		const struct spi_nor_device_t *spi_nor_device,
-		uint8_t *out_sfdp_major_rev,
-		uint8_t *out_sfdp_minor_rev,
-		uint8_t *out_table_major_rev,
-		uint8_t *out_table_minor_rev,
-		uint32_t *out_table_offset,
-		size_t *out_table_size)
+	const struct spi_nor_device_t *spi_nor_device,
+	uint8_t *out_sfdp_major_rev, uint8_t *out_sfdp_minor_rev,
+	uint8_t *out_table_major_rev, uint8_t *out_table_minor_rev,
+	uint32_t *out_table_offset, size_t *out_table_size)
 {
 	int rv = EC_SUCCESS;
 	uint8_t number_parameter_headers;
@@ -296,8 +291,8 @@ static int locate_sfdp_basic_parameter_table(
 		SFDP_GET_BITFIELD(SFDP_HEADER_DW2_SFDP_MAJOR, dw2);
 	*out_sfdp_minor_rev =
 		SFDP_GET_BITFIELD(SFDP_HEADER_DW2_SFDP_MINOR, dw2);
-	CPRINTS(spi_nor_device, "SFDP v%d.%d discovered",
-		*out_sfdp_major_rev, *out_sfdp_minor_rev);
+	CPRINTS(spi_nor_device, "SFDP v%d.%d discovered", *out_sfdp_major_rev,
+		*out_sfdp_minor_rev);
 
 	/* NPH is 0-based, so add 1. */
 	number_parameter_headers =
@@ -315,17 +310,16 @@ static int locate_sfdp_basic_parameter_table(
 		number_parameter_headers--;
 
 		/* Read this parameter header's two dwords. */
-		rv = spi_nor_read_sfdp_dword(
-			spi_nor_device, table_offset, 1, &dw1);
-		rv |= spi_nor_read_sfdp_dword(
-			spi_nor_device, table_offset, 2, &dw2);
+		rv = spi_nor_read_sfdp_dword(spi_nor_device, table_offset, 1,
+					     &dw1);
+		rv |= spi_nor_read_sfdp_dword(spi_nor_device, table_offset, 2,
+					      &dw2);
 		if (rv)
 			return rv;
 
 		/* Ensure it's the basic flash parameter table. */
-		if (!is_basic_flash_parameter_table(*out_sfdp_major_rev,
-						    *out_sfdp_minor_rev,
-						    dw1, dw2))
+		if (!is_basic_flash_parameter_table(
+			    *out_sfdp_major_rev, *out_sfdp_minor_rev, dw1, dw2))
 			continue;
 
 		/* The parameter header major and minor versioning is still the
@@ -352,8 +346,10 @@ static int locate_sfdp_basic_parameter_table(
 		*out_table_offset = SFDP_GET_BITFIELD(
 			SFDP_1_0_PARAMETER_HEADER_DW2_PTP, dw2);
 		/* Convert the size from DW to Bytes. */
-		*out_table_size = SFDP_GET_BITFIELD(
-			SFDP_1_0_PARAMETER_HEADER_DW1_PTL, dw1) * 4;
+		*out_table_size =
+			SFDP_GET_BITFIELD(SFDP_1_0_PARAMETER_HEADER_DW1_PTL,
+					  dw1) *
+			4;
 	}
 
 	if (!table_found) {
@@ -376,8 +372,7 @@ static int spi_nor_device_discover_sfdp_page_size(
 	struct spi_nor_device_t *spi_nor_device,
 	uint8_t basic_parameter_table_major_version,
 	uint8_t basic_parameter_table_minor_version,
-	uint32_t basic_parameter_table_offset,
-	size_t *page_size)
+	uint32_t basic_parameter_table_offset, size_t *page_size)
 {
 	int rv = EC_SUCCESS;
 	uint32_t dw;
@@ -397,12 +392,12 @@ static int spi_nor_device_discover_sfdp_page_size(
 	} else if (basic_parameter_table_major_version == 1 &&
 		   basic_parameter_table_minor_version >= 5) {
 		/* Use the Basic Flash Parameter v1.5 page size reporting. */
-		rv = spi_nor_read_sfdp_dword(spi_nor_device,
-				     basic_parameter_table_offset, 11, &dw);
+		rv = spi_nor_read_sfdp_dword(
+			spi_nor_device, basic_parameter_table_offset, 11, &dw);
 		if (rv)
 			return rv;
-		*page_size =
-			1 << SFDP_GET_BITFIELD(BFPT_1_5_DW11_PAGE_SIZE, dw);
+		*page_size = 1
+			     << SFDP_GET_BITFIELD(BFPT_1_5_DW11_PAGE_SIZE, dw);
 	}
 
 	return EC_SUCCESS;
@@ -413,11 +408,10 @@ static int spi_nor_device_discover_sfdp_page_size(
  * NOR Parameter Table.
  */
 static int spi_nor_device_discover_sfdp_capacity(
-		struct spi_nor_device_t *spi_nor_device,
-		uint8_t basic_parameter_table_major_version,
-		uint8_t basic_parameter_table_minor_version,
-		uint32_t basic_parameter_table_offset,
-		uint32_t *capacity)
+	struct spi_nor_device_t *spi_nor_device,
+	uint8_t basic_parameter_table_major_version,
+	uint8_t basic_parameter_table_minor_version,
+	uint32_t basic_parameter_table_offset, uint32_t *capacity)
 {
 	int rv = EC_SUCCESS;
 	uint32_t dw;
@@ -425,15 +419,16 @@ static int spi_nor_device_discover_sfdp_capacity(
 	/* First attempt to discover the device's capacity. */
 	if (basic_parameter_table_major_version == 1) {
 		/* Use the Basic Flash Parameter v1.0 capacity reporting. */
-		rv = spi_nor_read_sfdp_dword(spi_nor_device,
-				     basic_parameter_table_offset, 2, &dw);
+		rv = spi_nor_read_sfdp_dword(
+			spi_nor_device, basic_parameter_table_offset, 2, &dw);
 		if (rv)
 			return rv;
 
 		if (SFDP_GET_BITFIELD(BFPT_1_0_DW2_GT_2_GIBIBITS, dw)) {
 			/* Ensure the capacity is less than 4GiB. */
-			uint64_t tmp_capacity = 1 <<
-				(SFDP_GET_BITFIELD(BFPT_1_0_DW2_N, dw) - 3);
+			uint64_t tmp_capacity =
+				1
+				<< (SFDP_GET_BITFIELD(BFPT_1_0_DW2_N, dw) - 3);
 			if (tmp_capacity > UINT32_MAX)
 				return EC_ERROR_OVERFLOW;
 			*capacity = tmp_capacity;
@@ -456,8 +451,7 @@ static int spi_nor_read_internal(const struct spi_nor_device_t *spi_nor_device,
 	 * is larger than the maximum read size.
 	 */
 	while (size > 0) {
-		size_t read_size =
-			MIN(size, CONFIG_SPI_NOR_MAX_READ_SIZE);
+		size_t read_size = MIN(size, CONFIG_SPI_NOR_MAX_READ_SIZE);
 		size_t read_command_size;
 
 		/* Set up the read command in the TX buffer. */
@@ -468,7 +462,7 @@ static int spi_nor_read_internal(const struct spi_nor_device_t *spi_nor_device,
 			buf[3] = (offset & 0xFF00) >> 8;
 			buf[4] = (offset & 0xFF);
 			read_command_size = 5;
-		} else {  /* in 3 byte addressing mode */
+		} else { /* in 3 byte addressing mode */
 			buf[1] = (offset & 0xFF0000) >> 16;
 			buf[2] = (offset & 0xFF00) >> 8;
 			buf[3] = (offset & 0xFF);
@@ -476,8 +470,8 @@ static int spi_nor_read_internal(const struct spi_nor_device_t *spi_nor_device,
 		}
 
 		rv = spi_transaction(
-			&spi_devices[spi_nor_device->spi_controller],
-			buf, read_command_size, data, read_size);
+			&spi_devices[spi_nor_device->spi_controller], buf,
+			read_command_size, data, read_size);
 		if (rv)
 			return rv;
 
@@ -513,16 +507,12 @@ int spi_nor_init(void)
 		uint8_t table_major_rev, table_minor_rev;
 		uint32_t table_offset;
 		size_t table_size;
-		struct spi_nor_device_t *spi_nor_device =
-			&spi_nor_devices[i];
+		struct spi_nor_device_t *spi_nor_device = &spi_nor_devices[i];
 
-		rv |= locate_sfdp_basic_parameter_table(spi_nor_device,
-							&sfdp_major_rev,
-							&sfdp_minor_rev,
-							&table_major_rev,
-							&table_minor_rev,
-							&table_offset,
-							&table_size);
+		rv |= locate_sfdp_basic_parameter_table(
+			spi_nor_device, &sfdp_major_rev, &sfdp_minor_rev,
+			&table_major_rev, &table_minor_rev, &table_offset,
+			&table_size);
 
 		/* If we failed to find a compatible SFDP Basic Flash Parameter
 		 * table, use the default capacity, page size, and addressing
@@ -532,13 +522,11 @@ int spi_nor_init(void)
 			uint32_t capacity = 0;
 
 			rv |= spi_nor_device_discover_sfdp_page_size(
-				spi_nor_device,
-				table_major_rev, table_minor_rev, table_offset,
-				&page_size);
+				spi_nor_device, table_major_rev,
+				table_minor_rev, table_offset, &page_size);
 			rv |= spi_nor_device_discover_sfdp_capacity(
-				spi_nor_device,
-				table_major_rev, table_minor_rev, table_offset,
-				&capacity);
+				spi_nor_device, table_major_rev,
+				table_minor_rev, table_offset, &capacity);
 			if (rv == EC_SUCCESS) {
 				mutex_lock(&driver_mutex);
 				spi_nor_device->capacity = capacity;
@@ -595,8 +583,8 @@ int spi_nor_set_4b_mode(struct spi_nor_device_t *spi_nor_device,
 	/* Claim the driver mutex to modify the device state. */
 	mutex_lock(&driver_mutex);
 
-	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller],
-			     &cmd, 1, NULL, 0);
+	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller], &cmd,
+			     1, NULL, 0);
 	if (rv == EC_SUCCESS) {
 		spi_nor_device->in_4b_addressing_mode =
 			enter_4b_addressing_mode;
@@ -619,7 +607,8 @@ int spi_nor_set_4b_mode(struct spi_nor_device_t *spi_nor_device,
  * @return ec_error_list (non-zero on error and timeout).
  */
 int spi_nor_read_jedec_id(const struct spi_nor_device_t *spi_nor_device,
-			  size_t size, uint8_t *data) {
+			  size_t size, uint8_t *data)
+{
 	int rv;
 	uint8_t cmd = SPI_NOR_OPCODE_JEDEC_ID;
 
@@ -628,8 +617,8 @@ int spi_nor_read_jedec_id(const struct spi_nor_device_t *spi_nor_device,
 	/* Claim the driver mutex. */
 	mutex_lock(&driver_mutex);
 	/* Read the JEDEC ID. */
-	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller],
-			     &cmd, 1, data, size);
+	rv = spi_transaction(&spi_devices[spi_nor_device->spi_controller], &cmd,
+			     1, data, size);
 	/* Release the driver mutex. */
 	mutex_unlock(&driver_mutex);
 
@@ -645,8 +634,8 @@ int spi_nor_read_jedec_id(const struct spi_nor_device_t *spi_nor_device,
  * @param data Destination buffer for data.
  * @return ec_error_list (non-zero on error and timeout).
  */
-int spi_nor_read(const struct spi_nor_device_t *spi_nor_device,
-		 uint32_t offset, size_t size, uint8_t *data)
+int spi_nor_read(const struct spi_nor_device_t *spi_nor_device, uint32_t offset,
+		 size_t size, uint8_t *data)
 {
 	int rv;
 
@@ -708,8 +697,8 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 		read_offset = offset;
 		read_left = erase_size;
 		while (read_left) {
-			read_size = MIN(read_left,
-					CONFIG_SPI_NOR_MAX_READ_SIZE);
+			read_size =
+				MIN(read_left, CONFIG_SPI_NOR_MAX_READ_SIZE);
 			/* Since CONFIG_SPI_NOR_MAX_READ_SIZE & erase_size are
 			 * both guaranteed to be multiples of 4.
 			 */
@@ -731,8 +720,8 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 			 */
 			verify_offset = 0;
 			while (verify_offset <= read_size - 4) {
-				if (*(uint32_t *)(buffer + verify_offset)
-				    != 0xffffffff) {
+				if (*(uint32_t *)(buffer + verify_offset) !=
+				    0xffffffff) {
 					break;
 				}
 				verify_offset += 4;
@@ -767,7 +756,7 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 			buf[3] = (offset & 0xFF00) >> 8;
 			buf[4] = (offset & 0xFF);
 			erase_command_size = 5;
-		} else {  /* in 3 byte addressing mode */
+		} else { /* in 3 byte addressing mode */
 			buf[1] = (offset & 0xFF0000) >> 16;
 			buf[2] = (offset & 0xFF00) >> 8;
 			buf[3] = (offset & 0xFF);
@@ -775,8 +764,8 @@ int spi_nor_erase(const struct spi_nor_device_t *spi_nor_device,
 		}
 
 		rv = spi_transaction(
-			&spi_devices[spi_nor_device->spi_controller],
-			buf, erase_command_size, NULL, 0);
+			&spi_devices[spi_nor_device->spi_controller], buf,
+			erase_command_size, NULL, 0);
 		if (rv)
 			goto err_free;
 
@@ -814,8 +803,8 @@ int spi_nor_write(const struct spi_nor_device_t *spi_nor_device,
 
 	/* Ensure the device's page size fits in the driver's buffer, if not
 	 * emulate a smaller page size based on the buffer size. */
-	effective_page_size = MIN(spi_nor_device->page_size,
-			       CONFIG_SPI_NOR_MAX_WRITE_SIZE);
+	effective_page_size =
+		MIN(spi_nor_device->page_size, CONFIG_SPI_NOR_MAX_WRITE_SIZE);
 
 	/* Split the write into multiple writes if the size is too large. */
 	while (size > 0) {
@@ -843,7 +832,7 @@ int spi_nor_write(const struct spi_nor_device_t *spi_nor_device,
 			buf[3] = (offset & 0xFF00) >> 8;
 			buf[4] = (offset & 0xFF);
 			prefix_size = 5;
-		} else {  /* in 3 byte addressing mode */
+		} else { /* in 3 byte addressing mode */
 			buf[1] = (offset & 0xFF0000) >> 16;
 			buf[2] = (offset & 0xFF00) >> 8;
 			buf[3] = (offset & 0xFF);
@@ -853,8 +842,8 @@ int spi_nor_write(const struct spi_nor_device_t *spi_nor_device,
 		memmove(buf + prefix_size, data, write_size);
 
 		rv = spi_transaction(
-			&spi_devices[spi_nor_device->spi_controller],
-			buf, prefix_size + write_size, NULL, 0);
+			&spi_devices[spi_nor_device->spi_controller], buf,
+			prefix_size + write_size, NULL, 0);
 		if (rv)
 			goto err_free;
 
@@ -908,14 +897,13 @@ static int command_spi_nor_info(int argc, char **argv)
 		ccprintf("\tName: %s\n", spi_nor_device->name);
 		ccprintf("\tSPI controller index: %d\n",
 			 spi_nor_device->spi_controller);
-		ccprintf("\tTimeout: %d uSec\n",
-			 spi_nor_device->timeout_usec);
+		ccprintf("\tTimeout: %d uSec\n", spi_nor_device->timeout_usec);
 		ccprintf("\tCapacity: %d KiB\n",
 			 spi_nor_device->capacity >> 10),
-		ccprintf("\tAddressing: %s addressing mode\n",
-			 spi_nor_device->in_4b_addressing_mode ? "4B" : "3B");
-		ccprintf("\tPage Size: %d Bytes\n",
-			 spi_nor_device->page_size);
+			ccprintf("\tAddressing: %s addressing mode\n",
+				 spi_nor_device->in_4b_addressing_mode ? "4B" :
+									 "3B");
+		ccprintf("\tPage Size: %d Bytes\n", spi_nor_device->page_size);
 
 		/* Get JEDEC ID info. */
 		rv = spi_nor_read_jedec_mfn_id(spi_nor_device, &mfn_bank,
@@ -927,24 +915,23 @@ static int command_spi_nor_info(int argc, char **argv)
 
 		/* Get SFDP info. */
 		if (locate_sfdp_basic_parameter_table(
-			spi_nor_device, &sfdp_major_rev, &sfdp_minor_rev,
-			&table_major_rev, &table_minor_rev, &table_offset,
-			&table_size) != EC_SUCCESS) {
+			    spi_nor_device, &sfdp_major_rev, &sfdp_minor_rev,
+			    &table_major_rev, &table_minor_rev, &table_offset,
+			    &table_size) != EC_SUCCESS) {
 			ccputs("\tNo JEDEC SFDP support detected\n");
-			continue;  /* Go on to the next device. */
+			continue; /* Go on to the next device. */
 		}
 		ccprintf("\tSFDP v%d.%d\n", sfdp_major_rev, sfdp_minor_rev);
 		ccprintf("\tFlash Parameter Table v%d.%d (%dB @ 0x%x)\n",
-			 table_major_rev, table_minor_rev,
-			 table_size, table_offset);
+			 table_major_rev, table_minor_rev, table_size,
+			 table_offset);
 	}
 
 	return rv;
 }
-DECLARE_CONSOLE_COMMAND(spinorinfo, command_spi_nor_info,
-			"[device]",
+DECLARE_CONSOLE_COMMAND(spinorinfo, command_spi_nor_info, "[device]",
 			"Report Serial NOR Flash device information");
-#endif  /* CONFIG_CMD_SPI_NOR */
+#endif /* CONFIG_CMD_SPI_NOR */
 
 #ifdef CONFIG_CMD_SPI_NOR
 static int command_spi_nor_erase(int argc, char **argv)
@@ -967,14 +954,13 @@ static int command_spi_nor_erase(int argc, char **argv)
 	if (rv)
 		return rv;
 
-	ccprintf("Erasing %d bytes at 0x%x on %s...\n",
-		 size, offset, spi_nor_device->name);
+	ccprintf("Erasing %d bytes at 0x%x on %s...\n", size, offset,
+		 spi_nor_device->name);
 	return spi_nor_erase(spi_nor_device, offset, size);
 }
 DECLARE_CONSOLE_COMMAND(spinorerase, command_spi_nor_erase,
-			"device [offset] [size]",
-			"Erase flash");
-#endif  /* CONFIG_CMD_SPI_NOR */
+			"device [offset] [size]", "Erase flash");
+#endif /* CONFIG_CMD_SPI_NOR */
 
 #ifdef CONFIG_CMD_SPI_NOR
 static int command_spi_nor_write(int argc, char **argv)
@@ -1013,8 +999,8 @@ static int command_spi_nor_write(int argc, char **argv)
 	for (i = 0; i < size; i++)
 		data[i] = i;
 
-	ccprintf("Writing %d bytes to 0x%x on %s...\n",
-		 size, offset, spi_nor_device->name);
+	ccprintf("Writing %d bytes to 0x%x on %s...\n", size, offset,
+		 spi_nor_device->name);
 	rv = spi_nor_write(spi_nor_device, offset, size, data);
 
 	/* Free the buffer */
@@ -1023,9 +1009,8 @@ static int command_spi_nor_write(int argc, char **argv)
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(spinorwrite, command_spi_nor_write,
-			"device [offset] [size]",
-			"Write pattern to flash");
-#endif  /* CONFIG_CMD_SPI_NOR */
+			"device [offset] [size]", "Write pattern to flash");
+#endif /* CONFIG_CMD_SPI_NOR */
 
 #ifdef CONFIG_CMD_SPI_NOR
 static int command_spi_nor_read(int argc, char **argv)
@@ -1061,8 +1046,7 @@ static int command_spi_nor_read(int argc, char **argv)
 	}
 
 	/* Read the data */
-	ccprintf("Reading %d bytes from %s...",
-		 size, spi_nor_device->name);
+	ccprintf("Reading %d bytes from %s...", size, spi_nor_device->name);
 	if (spi_nor_read(spi_nor_device, offset, size, data)) {
 		rv = EC_ERROR_INVAL;
 		goto err_free;
@@ -1086,6 +1070,5 @@ err_free:
 	return rv;
 }
 DECLARE_CONSOLE_COMMAND(spinorread, command_spi_nor_read,
-			"device [offset] [size]",
-			"Read flash");
-#endif  /* CONFIG_CMD_SPI_NOR */
+			"device [offset] [size]", "Read flash");
+#endif /* CONFIG_CMD_SPI_NOR */
