@@ -7,8 +7,9 @@
 #include "usb_pd.h"
 #include "usb_pd_pdo.h"
 
-#define PDO_FIXED_FLAGS (PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP |\
-			 PDO_FIXED_UNCONSTRAINED  | PDO_FIXED_COMM_CAP)
+#define PDO_FIXED_FLAGS                                                        \
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_UNCONSTRAINED | \
+	 PDO_FIXED_COMM_CAP)
 
 const uint32_t pd_src_pdo[] = {
 	PDO_FIXED(5000, 1500, PDO_FIXED_FLAGS),
