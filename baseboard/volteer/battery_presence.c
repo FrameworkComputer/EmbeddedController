@@ -24,8 +24,9 @@ static bool battery_init(void)
 {
 	int batt_status;
 
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
+	return battery_status(&batt_status) ?
+		       0 :
+		       !!(batt_status & STATUS_INITIALIZED);
 }
 
 __overridable bool board_battery_is_initialized(void)
