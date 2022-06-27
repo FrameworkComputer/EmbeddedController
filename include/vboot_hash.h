@@ -49,4 +49,4 @@ int vboot_hash_in_progress(void);
  */
 void vboot_hash_abort(void);
 
-#endif  /* __CROS_EC_VBOOT_HASH_H */
+#endif /* __CROS_EC_VBOOT_HASH_H */
