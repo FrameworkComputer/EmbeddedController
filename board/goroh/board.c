@@ -41,9 +41,9 @@
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* Initialize board. */
 static void board_init(void)
@@ -55,41 +55,35 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	{ "BOARD_ID",     ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH1 },
-	{ "TEMP_CPU",     ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH2 },
-	{ "TEMP_GPU",     ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH3 },
+	{ "BOARD_ID", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH1 },
+	{ "TEMP_CPU", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH2 },
+	{ "TEMP_GPU", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH3 },
 	{ "TEMP_CHARGER", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH5 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* PWM channels.  */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED_GREEN] = {
-		.channel = PWM_HW_CH_DCR0,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_OPEN_DRAIN |
-			 PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
-	[PWM_CH_LED_RED] = {
-		.channel = PWM_HW_CH_DCR1,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_OPEN_DRAIN |
-			 PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
-	[PWM_CH_FAN] = {
-		.channel = PWM_HW_CH_DCR2,
-		.flags = PWM_CONFIG_OPEN_DRAIN,
-		.freq_hz = 25000, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
-	[PWM_CH_KBLIGHT] = {
-		.channel = PWM_HW_CH_DCR3,
-		.flags = PWM_CONFIG_DSLEEP,
-		.freq_hz = 25000,
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
+	[PWM_CH_LED_GREEN] = { .channel = PWM_HW_CH_DCR0,
+			       .flags = PWM_CONFIG_DSLEEP |
+					PWM_CONFIG_OPEN_DRAIN |
+					PWM_CONFIG_ACTIVE_LOW,
+			       .freq_hz = 324, /* maximum supported frequency */
+			       .pcfsr_sel = PWM_PRESCALER_C4 },
+	[PWM_CH_LED_RED] = { .channel = PWM_HW_CH_DCR1,
+			     .flags = PWM_CONFIG_DSLEEP |
+				      PWM_CONFIG_OPEN_DRAIN |
+				      PWM_CONFIG_ACTIVE_LOW,
+			     .freq_hz = 324, /* maximum supported frequency */
+			     .pcfsr_sel = PWM_PRESCALER_C4 },
+	[PWM_CH_FAN] = { .channel = PWM_HW_CH_DCR2,
+			 .flags = PWM_CONFIG_OPEN_DRAIN,
+			 .freq_hz = 25000, /* maximum supported frequency */
+			 .pcfsr_sel = PWM_PRESCALER_C4 },
+	[PWM_CH_KBLIGHT] = { .channel = PWM_HW_CH_DCR3,
+			     .flags = PWM_CONFIG_DSLEEP,
+			     .freq_hz = 25000,
+			     .pcfsr_sel = PWM_PRESCALER_C4 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
