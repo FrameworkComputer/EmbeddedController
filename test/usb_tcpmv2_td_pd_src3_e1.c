@@ -69,21 +69,17 @@ int test_td_pd_src3_e1(void)
 	 *    5. Message Type field = 00001b (Source Capabilities)
 	 *    6. Extended field = 0b
 	 */
-	TEST_EQ(verify_tcpci_tx_with_data(TCPCI_MSG_SOP,
-					  PD_DATA_SOURCE_CAP,
-					  data,
-					  sizeof(data),
-					  &msg_len,
-					  0),
+	TEST_EQ(verify_tcpci_tx_with_data(TCPCI_MSG_SOP, PD_DATA_SOURCE_CAP,
+					  data, sizeof(data), &msg_len, 0),
 		EC_SUCCESS, "%d");
 	TEST_GE(msg_len, HEADER_BYTE_CNT, "%d");
 
 	header = UINT16_FROM_BYTE_ARRAY_LE(data, HEADER_BYTE_OFFSET);
 	pd_cnt = PD_HEADER_CNT(header);
 	TEST_NE(pd_cnt, 0, "%d");
-	TEST_EQ(msg_len, HEADER_BYTE_OFFSET +
-			 HEADER_BYTE_CNT +
-			 (pd_cnt * PDO_BYTE_CNT), "%d");
+	TEST_EQ(msg_len,
+		HEADER_BYTE_OFFSET + HEADER_BYTE_CNT + (pd_cnt * PDO_BYTE_CNT),
+		"%d");
 	TEST_EQ(PD_HEADER_PROLE(header), PD_ROLE_SOURCE, "%d");
 	TEST_EQ(PD_HEADER_REV(header), REVISION_3, "%d");
 	TEST_EQ(PD_HEADER_DROLE(header), PD_ROLE_DFP, "%d");
@@ -96,8 +92,8 @@ int test_td_pd_src3_e1(void)
 	 *    2. Voltage field = 100 (5 V)
 	 *    3. Bits 23..22 = 000b (Reserved)
 	 */
-	pdo = UINT32_FROM_BYTE_ARRAY_LE(data, HEADER_BYTE_OFFSET +
-					      HEADER_BYTE_CNT);
+	pdo = UINT32_FROM_BYTE_ARRAY_LE(data,
+					HEADER_BYTE_OFFSET + HEADER_BYTE_CNT);
 
 	type = pdo & PDO_TYPE_MASK;
 	TEST_EQ(type, PDO_TYPE_FIXED, "%d");
@@ -135,15 +131,14 @@ int test_td_pd_src3_e1(void)
 		int offset;
 		uint32_t voltage;
 
-		offset = HEADER_BYTE_OFFSET +
-			 HEADER_BYTE_CNT +
+		offset = HEADER_BYTE_OFFSET + HEADER_BYTE_CNT +
 			 (i * PDO_BYTE_CNT);
 		pdo = UINT32_FROM_BYTE_ARRAY_LE(data, offset);
 
 		type = pdo & PDO_TYPE_MASK;
 		if (type == PDO_TYPE_FIXED) {
-			TEST_EQ(pdo & (GENMASK(28, 26)|GENMASK(24, 22)),
-				0, "%d");
+			TEST_EQ(pdo & (GENMASK(28, 26) | GENMASK(24, 22)), 0,
+				"%d");
 			TEST_EQ(last_battery_voltage, 0, "%d");
 			TEST_EQ(last_variable_voltage, 0, "%d");
 			TEST_EQ(last_programmable_voltage, 0, "%d");
