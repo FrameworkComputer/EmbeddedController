@@ -32,16 +32,16 @@ static int test_memmove(void)
 
 	t0 = get_time();
 	for (i = 0; i < iteration; ++i)
-		memmove(buf + 101, buf, len);  /* unaligned */
+		memmove(buf + 101, buf, len); /* unaligned */
 	t1 = get_time();
 	TEST_ASSERT_ARRAY_EQ(buf + 101, buf, len);
-	ccprintf(" (speed gain: %" PRId64 " ->", t1.val-t0.val);
+	ccprintf(" (speed gain: %" PRId64 " ->", t1.val - t0.val);
 
 	t2 = get_time();
 	for (i = 0; i < iteration; ++i)
-		memmove(buf + 100, buf, len);	  /* aligned */
+		memmove(buf + 100, buf, len); /* aligned */
 	t3 = get_time();
-	ccprintf(" %" PRId64 " us) ", t3.val-t2.val);
+	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
 	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
 
 	if (!IS_ENABLED(EMU_BUILD))
@@ -77,16 +77,16 @@ static int test_memcpy(void)
 
 	t0 = get_time();
 	for (i = 0; i < iteration; ++i)
-		memcpy(buf + dest_offset + 1, buf, len);  /* unaligned */
+		memcpy(buf + dest_offset + 1, buf, len); /* unaligned */
 	t1 = get_time();
 	TEST_ASSERT_ARRAY_EQ(buf + dest_offset + 1, buf, len);
-	ccprintf(" (speed gain: %" PRId64 " ->", t1.val-t0.val);
+	ccprintf(" (speed gain: %" PRId64 " ->", t1.val - t0.val);
 
 	t2 = get_time();
 	for (i = 0; i < iteration; ++i)
-		memcpy(buf + dest_offset, buf, len);	  /* aligned */
+		memcpy(buf + dest_offset, buf, len); /* aligned */
 	t3 = get_time();
-	ccprintf(" %" PRId64 " us) ", t3.val-t2.val);
+	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
 	TEST_ASSERT_ARRAY_EQ(buf + dest_offset, buf, len);
 
 	if (!IS_ENABLED(EMU_BUILD))
@@ -136,14 +136,14 @@ static int test_memset(void)
 		dumb_memset(buf, 1, len);
 	t1 = get_time();
 	TEST_ASSERT_MEMSET(buf, (char)1, len);
-	ccprintf(" (speed gain: %" PRId64 " ->", t1.val-t0.val);
+	ccprintf(" (speed gain: %" PRId64 " ->", t1.val - t0.val);
 
 	t2 = get_time();
 	for (i = 0; i < iteration; ++i)
 		memset(buf, 1, len);
 	t3 = get_time();
 	TEST_ASSERT_MEMSET(buf, (char)1, len);
-	ccprintf(" %" PRId64 " us) ", t3.val-t2.val);
+	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
 
 	if (!IS_ENABLED(EMU_BUILD))
 		TEST_ASSERT((t1.val - t0.val) > (t3.val - t2.val));
@@ -361,24 +361,23 @@ static int test_mula32(void)
 	}
 	t1 = get_time();
 
-	ccprintf("After %d iterations, r=%08x%08x, r2=%08x%08x (time: %d)\n",
-		i, (uint32_t)(r >> 32), (uint32_t)r,
-		(uint32_t)(r2 >> 32), (uint32_t)r2, t1.le.lo-t0.le.lo);
-	TEST_ASSERT(r  == 0x9df59b9fb0ab9d96L);
+	ccprintf("After %d iterations, r=%08x%08x, r2=%08x%08x (time: %d)\n", i,
+		 (uint32_t)(r >> 32), (uint32_t)r, (uint32_t)(r2 >> 32),
+		 (uint32_t)r2, t1.le.lo - t0.le.lo);
+	TEST_ASSERT(r == 0x9df59b9fb0ab9d96L);
 	TEST_ASSERT(r2 == 0x9df59b9fb0beabd6L);
 
 	/* well okay then */
 	return EC_SUCCESS;
 }
 
-#define SWAP_TEST_HARNESS(t, x, y) \
-	do { \
-		t a = x, b = y; \
-		swap(a, b); \
+#define SWAP_TEST_HARNESS(t, x, y)   \
+	do {                         \
+		t a = x, b = y;      \
+		swap(a, b);          \
 		TEST_ASSERT(a == y); \
 		TEST_ASSERT(b == x); \
 	} while (0)
-
 
 static int test_swap(void)
 {
@@ -455,15 +454,15 @@ test_static int test_alignment_log2(void)
 
 test_static int test_binary_first_base3_from_bits(void)
 {
-	int n0[] = {0, 0, 0};  /* LSB first */
-	int n7[] = {1, 1, 1};
-	int n8[] = {2, 0, 0};
-	int n9[] = {2, 1, 0};
-	int n10[] = {0, 2, 0};
-	int n11[] = {1, 2, 0};
-	int n18[] = {0, 0, 2};
-	int n26[] = {2, 2, 2};
-	int n38[] = {1, 2, 0, 1};
+	int n0[] = { 0, 0, 0 }; /* LSB first */
+	int n7[] = { 1, 1, 1 };
+	int n8[] = { 2, 0, 0 };
+	int n9[] = { 2, 1, 0 };
+	int n10[] = { 0, 2, 0 };
+	int n11[] = { 1, 2, 0 };
+	int n18[] = { 0, 0, 2 };
+	int n26[] = { 2, 2, 2 };
+	int n38[] = { 1, 2, 0, 1 };
 
 	TEST_EQ(binary_first_base3_from_bits(n0, ARRAY_SIZE(n0)), 0, "%d");
 	TEST_EQ(binary_first_base3_from_bits(n7, ARRAY_SIZE(n7)), 7, "%d");
