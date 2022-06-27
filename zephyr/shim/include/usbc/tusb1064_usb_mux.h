@@ -8,35 +8,35 @@
 
 #include "driver/usb_mux/tusb1064.h"
 
-#define TUSB1064_USB_MUX_COMPAT	ti_tusb1064
+#define TUSB1064_USB_MUX_COMPAT ti_tusb1064
 
 #if defined(CONFIG_USB_MUX_TUSB1044)
-#define USB_MUX_CONFIG_TUSB1064(mux_id, port_id, idx)			\
-	{								\
-		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),		\
-		.driver = &tusb1064_usb_mux_driver,			\
-		.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),		\
-		.i2c_addr_flags =					\
-			DT_STRING_UPPER_TOKEN(mux_id, i2c_addr_flags),	\
-		.hpd_update = &tusb1044_hpd_update,			\
+#define USB_MUX_CONFIG_TUSB1064(mux_id, port_id, idx)                          \
+	{                                                                      \
+		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),                   \
+			.driver = &tusb1064_usb_mux_driver,                    \
+			.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),        \
+			.i2c_addr_flags =                                      \
+				DT_STRING_UPPER_TOKEN(mux_id, i2c_addr_flags), \
+			.hpd_update = &tusb1044_hpd_update,                    \
 	}
 #elif defined(CONFIG_USB_MUX_TUSB546)
-#define USB_MUX_CONFIG_TUSB1064(mux_id, port_id, idx)			\
-	{								\
-		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),		\
-		.driver = &tusb1064_usb_mux_driver,			\
-		.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),		\
-		.i2c_addr_flags =					\
-			DT_STRING_UPPER_TOKEN(mux_id, i2c_addr_flags),	\
+#define USB_MUX_CONFIG_TUSB1064(mux_id, port_id, idx)                          \
+	{                                                                      \
+		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),                   \
+			.driver = &tusb1064_usb_mux_driver,                    \
+			.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),        \
+			.i2c_addr_flags =                                      \
+				DT_STRING_UPPER_TOKEN(mux_id, i2c_addr_flags), \
 	}
 #else
-#define USB_MUX_CONFIG_TUSB1064(mux_id, port_id, idx)			\
-	{								\
-		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),		\
-		.driver = &tusb1064_usb_mux_driver,			\
-		.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),		\
-		.i2c_addr_flags =					\
-			DT_STRING_UPPER_TOKEN(mux_id, i2c_addr_flags),	\
+#define USB_MUX_CONFIG_TUSB1064(mux_id, port_id, idx)                          \
+	{                                                                      \
+		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),                   \
+			.driver = &tusb1064_usb_mux_driver,                    \
+			.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),        \
+			.i2c_addr_flags =                                      \
+				DT_STRING_UPPER_TOKEN(mux_id, i2c_addr_flags), \
 	}
 #endif /* defined(CONFIG_USB_MUX_TUSB1044) */
 
