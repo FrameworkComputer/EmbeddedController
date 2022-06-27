@@ -14,13 +14,13 @@
 #define CPRINTF(fmt, args...) cprintf(CC_RGBKBD, "TLC59116F: " fmt, ##args)
 #define CPRINTS(fmt, args...) cprints(CC_RGBKBD, "TLC59116F: " fmt, ##args)
 
-#define TLC59116F_BUF_SIZE	(SIZE_OF_RGB * TLC59116F_GRID_SIZE)
-#define TLC59116_MODE_BIT_SLEEP		4
+#define TLC59116F_BUF_SIZE (SIZE_OF_RGB * TLC59116F_GRID_SIZE)
+#define TLC59116_MODE_BIT_SLEEP 4
 
 static int tlc59116f_read(struct rgbkbd *ctx, uint8_t addr, uint8_t *value)
 {
-	return i2c_xfer(ctx->cfg->i2c, TLC59116F_I2C_ADDR_FLAG,
-			&addr, sizeof(addr), value, sizeof(*value));
+	return i2c_xfer(ctx->cfg->i2c, TLC59116F_I2C_ADDR_FLAG, &addr,
+			sizeof(addr), value, sizeof(*value));
 }
 
 static int tlc59116f_write(struct rgbkbd *ctx, uint8_t addr, uint8_t value)
@@ -30,8 +30,8 @@ static int tlc59116f_write(struct rgbkbd *ctx, uint8_t addr, uint8_t value)
 		[1] = value,
 	};
 
-	return i2c_xfer(ctx->cfg->i2c, TLC59116F_I2C_ADDR_FLAG,
-			buf, sizeof(buf), NULL, 0);
+	return i2c_xfer(ctx->cfg->i2c, TLC59116F_I2C_ADDR_FLAG, buf,
+			sizeof(buf), NULL, 0);
 }
 
 static int tlc59116f_reset(struct rgbkbd *ctx)
@@ -75,7 +75,7 @@ static int tlc59116f_enable(struct rgbkbd *ctx, bool enable)
 }
 
 static int tlc59116f_set_color(struct rgbkbd *ctx, uint8_t offset,
-				struct rgb_s *color, uint8_t len)
+			       struct rgb_s *color, uint8_t len)
 {
 	uint8_t buf[sizeof(offset) + TLC59116F_BUF_SIZE];
 	const int frame_len = len * SIZE_OF_RGB + sizeof(offset);
@@ -86,20 +86,19 @@ static int tlc59116f_set_color(struct rgbkbd *ctx, uint8_t offset,
 		return EC_ERROR_OVERFLOW;
 	}
 
-	buf[0] = TLC59116_AI_BRIGHTNESS_ONLY |
-			(frame_offset + TLC59116F_PWM0);
+	buf[0] = TLC59116_AI_BRIGHTNESS_ONLY | (frame_offset + TLC59116F_PWM0);
 	for (i = 0; i < len; i++) {
 		buf[i * SIZE_OF_RGB + 1] = color[i].r;
 		buf[i * SIZE_OF_RGB + 2] = color[i].g;
 		buf[i * SIZE_OF_RGB + 3] = color[i].b;
 	}
 
-	return i2c_xfer(ctx->cfg->i2c, TLC59116F_I2C_ADDR_FLAG,
-			buf, frame_len, NULL, 0);
+	return i2c_xfer(ctx->cfg->i2c, TLC59116F_I2C_ADDR_FLAG, buf, frame_len,
+			NULL, 0);
 }
 
 static int tlc59116f_set_scale(struct rgbkbd *ctx, uint8_t offset,
-				 struct rgb_s scale, uint8_t len)
+			       struct rgb_s scale, uint8_t len)
 {
 	/* tlc59116f not support scale function */
 	return EC_SUCCESS;
