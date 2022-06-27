@@ -30,10 +30,10 @@ void alert_event(enum gpio_signal signal)
 #include "gpio_list.h"
 
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("PDeval-stm32f072"),
-	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("PDeval-stm32f072"),
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("Shell"),
 };
 
@@ -52,15 +52,11 @@ void board_reset_pd_mcu(void)
 }
 
 /* I2C ports */
-const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "tcpc",
-		.port = I2C_PORT_TCPC,
-		.kbps = 400 /* kHz */,
-		.scl  = GPIO_I2C0_SCL,
-		.sda  = GPIO_I2C0_SDA
-	}
-};
+const struct i2c_port_t i2c_ports[] = { { .name = "tcpc",
+					  .port = I2C_PORT_TCPC,
+					  .kbps = 400 /* kHz */,
+					  .scl = GPIO_I2C0_SCL,
+					  .sda = GPIO_I2C0_SDA } };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
