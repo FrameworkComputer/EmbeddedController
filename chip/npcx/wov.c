@@ -26,7 +26,7 @@
 #define CPRINTS(...)
 #else
 #define CPUTS(outstr) cputs(CC_AUDIO_CODEC, outstr)
-#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_AUDIO_CODEC, format, ##args)
 #endif
 
 /* WOV FIFO status. */
@@ -64,106 +64,106 @@
 #define WOV_FMUL2_CLK_TUNING_DELAY_TIME (4 * 1000)
 
 /* The size of RAM buffer to store the voice data */
-#define VOICE_BUF_SIZE    16000
+#define VOICE_BUF_SIZE 16000
 
 /* PLL setting options. */
 struct wov_pll_set_options_val {
-	uint8_t pll_indv;     /* Input Divider */
-	uint16_t pll_fbdv;    /* Feedback Divider */
-	uint8_t pll_otdv1;    /* Output devide 1. */
-	uint8_t pll_otdv2;    /* Output devide 2. */
+	uint8_t pll_indv; /* Input Divider */
+	uint16_t pll_fbdv; /* Feedback Divider */
+	uint8_t pll_otdv1; /* Output devide 1. */
+	uint8_t pll_otdv2; /* Output devide 2. */
 	uint32_t pll_ext_div; /* Index for the table pll_ext_div */
 };
 
 /* PLL External Divider Load Values. */
 struct wov_pll_ext_div_val {
-	uint8_t pll_ediv;    /* Required PLL external divider */
+	uint8_t pll_ediv; /* Required PLL external divider */
 	uint8_t pll_ediv_dc; /* Required PLL external divider DC */
 };
 
 static const struct wov_pll_ext_div_val pll_ext_div[] = {
-	{0x2F, 0x78}, /* 12 */
-	{0x57, 0x7C}, /* 13 */
-	{0x2B, 0x7C}, /* 14 */
-	{0x55, 0x7E}, /* 15 */
-	{0x2A, 0x7E}, /* 16 */
-	{0x15, 0x7F}, /* 17 */
-	{0x4A, 0x7F}, /* 18 */
-	{0x65, 0x3F}, /* 19 */
-	{0x32, 0x3F}, /* 20 */
-	{0x19, 0x5F}, /* 21 */
-	{0x4C, 0x5F}, /* 22 */
-	{0x66, 0x2F}, /* 23 */
-	{0x73, 0x2F}, /* 24 */
-	{0x39, 0x57}, /* 25 */
-	{0x5C, 0x57}, /* 26 */
-	{0x6E, 0x2B}, /* 27 */
-	{0x77, 0x2B}, /* 28 */
-	{0x3B, 0x55}, /* 29 */
-	{0x5D, 0x55}, /* 30 */
-	{0x2E, 0x2A}, /* 31 */
-	{0x17, 0x2A}, /* 32 */
-	{0x4B, 0x15}, /* 33 */
-	{0x25, 0x15}, /* 34 */
-	{0x52, 0x4A}, /* 35 */
-	{0x69, 0x4A}, /* 36 */
-	{0x34, 0x65}, /* 37 */
-	{0x1A, 0x65}, /* 38 */
-	{0x0D, 0x32}, /* 39 */
-	{0x46, 0x32}, /* 40 */
-	{0x63, 0x19}, /* 41 */
-	{0x31, 0x19}, /* 42 */
-	{0x58, 0x4C}, /* 43 */
-	{0x6C, 0x4C}, /* 44 */
-	{0x76, 0x66}, /* 45 */
-	{0x7B, 0x66}, /* 46 */
-	{0x3D, 0x73}, /* 47 */
-	{0x5E, 0x73}, /* 48 */
-	{0x6F, 0x39}, /* 49 */
-	{0x37, 0x39}, /* 50 */
-	{0x5B, 0x5C}, /* 51 */
-	{0x2D, 0x5C}, /* 52 */
-	{0x56, 0x6E}, /* 53 */
-	{0x6B, 0x6E}, /* 54 */
-	{0x35, 0x77}, /* 55 */
-	{0x5A, 0x77}, /* 56 */
-	{0x6D, 0x3B}, /* 57 */
-	{0x36, 0x3B}, /* 58 */
-	{0x1B, 0x5D}, /* 59 */
-	{0x4D, 0x5D}, /* 60 */
-	{0x26, 0x2E}, /* 61 */
-	{0x13, 0x2E}, /* 62 */
-	{0x49, 0x17}, /* 63 */
-	{0x24, 0x17}, /* 64 */
-	{0x12, 0x4B}, /* 65 */
-	{0x09, 0x4B}, /* 66 */
-	{0x44, 0x25}  /* 67 */
+	{ 0x2F, 0x78 }, /* 12 */
+	{ 0x57, 0x7C }, /* 13 */
+	{ 0x2B, 0x7C }, /* 14 */
+	{ 0x55, 0x7E }, /* 15 */
+	{ 0x2A, 0x7E }, /* 16 */
+	{ 0x15, 0x7F }, /* 17 */
+	{ 0x4A, 0x7F }, /* 18 */
+	{ 0x65, 0x3F }, /* 19 */
+	{ 0x32, 0x3F }, /* 20 */
+	{ 0x19, 0x5F }, /* 21 */
+	{ 0x4C, 0x5F }, /* 22 */
+	{ 0x66, 0x2F }, /* 23 */
+	{ 0x73, 0x2F }, /* 24 */
+	{ 0x39, 0x57 }, /* 25 */
+	{ 0x5C, 0x57 }, /* 26 */
+	{ 0x6E, 0x2B }, /* 27 */
+	{ 0x77, 0x2B }, /* 28 */
+	{ 0x3B, 0x55 }, /* 29 */
+	{ 0x5D, 0x55 }, /* 30 */
+	{ 0x2E, 0x2A }, /* 31 */
+	{ 0x17, 0x2A }, /* 32 */
+	{ 0x4B, 0x15 }, /* 33 */
+	{ 0x25, 0x15 }, /* 34 */
+	{ 0x52, 0x4A }, /* 35 */
+	{ 0x69, 0x4A }, /* 36 */
+	{ 0x34, 0x65 }, /* 37 */
+	{ 0x1A, 0x65 }, /* 38 */
+	{ 0x0D, 0x32 }, /* 39 */
+	{ 0x46, 0x32 }, /* 40 */
+	{ 0x63, 0x19 }, /* 41 */
+	{ 0x31, 0x19 }, /* 42 */
+	{ 0x58, 0x4C }, /* 43 */
+	{ 0x6C, 0x4C }, /* 44 */
+	{ 0x76, 0x66 }, /* 45 */
+	{ 0x7B, 0x66 }, /* 46 */
+	{ 0x3D, 0x73 }, /* 47 */
+	{ 0x5E, 0x73 }, /* 48 */
+	{ 0x6F, 0x39 }, /* 49 */
+	{ 0x37, 0x39 }, /* 50 */
+	{ 0x5B, 0x5C }, /* 51 */
+	{ 0x2D, 0x5C }, /* 52 */
+	{ 0x56, 0x6E }, /* 53 */
+	{ 0x6B, 0x6E }, /* 54 */
+	{ 0x35, 0x77 }, /* 55 */
+	{ 0x5A, 0x77 }, /* 56 */
+	{ 0x6D, 0x3B }, /* 57 */
+	{ 0x36, 0x3B }, /* 58 */
+	{ 0x1B, 0x5D }, /* 59 */
+	{ 0x4D, 0x5D }, /* 60 */
+	{ 0x26, 0x2E }, /* 61 */
+	{ 0x13, 0x2E }, /* 62 */
+	{ 0x49, 0x17 }, /* 63 */
+	{ 0x24, 0x17 }, /* 64 */
+	{ 0x12, 0x4B }, /* 65 */
+	{ 0x09, 0x4B }, /* 66 */
+	{ 0x44, 0x25 } /* 67 */
 };
 
 /* WOV interrupts */
 static const uint8_t wov_interupts[] = {
-	0,  /* VAD_INTEN */
-	1,  /* VAD_WKEN */
-	8,  /* CFIFO_NE_IE */
-	9,  /* CFIFO_OIT_IE */
+	0, /* VAD_INTEN */
+	1, /* VAD_WKEN */
+	8, /* CFIFO_NE_IE */
+	9, /* CFIFO_OIT_IE */
 	10, /* CFIFO_OWT_WE */
 	11, /* CFIFO_OVRN_IE */
 	12, /* I2S_FIFO_OVRN_IE */
-	13  /* I2S_FIFO_UNDRN_IE */
+	13 /* I2S_FIFO_UNDRN_IE */
 };
 
 struct wov_ppl_divider {
 	uint16_t pll_frame_len; /* PLL frame length. */
-	uint16_t pll_fbdv;      /* PLL feedback divider. */
-	uint8_t pll_indv;       /* PLL Input Divider. */
-	uint8_t pll_otdv1;      /* PLL Output Divider 1. */
-	uint8_t pll_otdv2;      /* PLL Output Divider 2. */
-	uint8_t pll_ediv;       /* PLL External Divide Factor. */
+	uint16_t pll_fbdv; /* PLL feedback divider. */
+	uint8_t pll_indv; /* PLL Input Divider. */
+	uint8_t pll_otdv1; /* PLL Output Divider 1. */
+	uint8_t pll_otdv2; /* PLL Output Divider 2. */
+	uint8_t pll_ediv; /* PLL External Divide Factor. */
 };
 
 struct wov_cfifo_buf {
 	uint32_t *buf; /* Pointer to a buffer. */
-	int size;      /* Buffer size in words. */
+	int size; /* Buffer size in words. */
 };
 
 struct wov_config wov_conf;
@@ -205,11 +205,11 @@ void wov_cfifo_read_handler_l(uint32_t num_elements)
 	cfifo_buf.size -= num_elements;
 }
 
-static enum ec_error_list wov_calc_pll_div_s(int32_t d_in,
-					int32_t total_div, int32_t vco_freq,
-					struct wov_ppl_divider *pll_div)
+static enum ec_error_list wov_calc_pll_div_s(int32_t d_in, int32_t total_div,
+					     int32_t vco_freq,
+					     struct wov_ppl_divider *pll_div)
 {
-	int32_t	 d_1, d_2, d_e;
+	int32_t d_1, d_2, d_e;
 
 	/*
 	 * Please see comments in wov_calc_pll_div_l function below.
@@ -221,10 +221,10 @@ static enum ec_error_list wov_calc_pll_div_s(int32_t d_in,
 					continue;
 
 				if (total_div == (d_in * d_e * d_1 * d_2)) {
-					pll_div->pll_indv  = d_in;
+					pll_div->pll_indv = d_in;
 					pll_div->pll_otdv1 = d_1;
 					pll_div->pll_otdv2 = d_2;
-					pll_div->pll_ediv  = d_e;
+					pll_div->pll_ediv = d_e;
 					return EC_SUCCESS;
 				}
 			}
@@ -243,7 +243,8 @@ static enum ec_error_list wov_calc_pll_div_s(int32_t d_in,
  * @return  None
  */
 static enum ec_error_list wov_calc_pll_div_l(uint32_t i2s_clk_freq,
-			uint32_t sample_rate, struct wov_ppl_divider *pll_div)
+					     uint32_t sample_rate,
+					     struct wov_ppl_divider *pll_div)
 {
 	int32_t d_f;
 	int32_t total_div;
@@ -292,12 +293,11 @@ static enum ec_error_list wov_calc_pll_div_l(uint32_t i2s_clk_freq,
 				if ((vco_freq < 500) || (vco_freq > 1600))
 					continue;
 				if (wov_calc_pll_div_s(d_in, total_div,
-						vco_freq, pll_div) ==
-						EC_SUCCESS) {
-					pll_div->pll_fbdv  = d_f;
+						       vco_freq,
+						       pll_div) == EC_SUCCESS) {
+					pll_div->pll_fbdv = d_f;
 					return EC_SUCCESS;
 				}
-
 			}
 		}
 	}
@@ -340,12 +340,13 @@ static enum ec_error_list wov_set_i2s_config_l(void)
 	int32_t start_delay_0, start_delay_1;
 
 	ret_code = wov_calc_pll_div_l(wov_conf.i2s_clock,
-				wov_conf.sample_per_sec, &pll_div);
+				      wov_conf.sample_per_sec, &pll_div);
 	if (ret_code == EC_SUCCESS) {
 		/* Configure the PLL. */
-		ret_code = wov_pll_clk_div_config(
-			pll_div.pll_otdv1, pll_div.pll_otdv2, pll_div.pll_fbdv,
-			pll_div.pll_indv);
+		ret_code = wov_pll_clk_div_config(pll_div.pll_otdv1,
+						  pll_div.pll_otdv2,
+						  pll_div.pll_fbdv,
+						  pll_div.pll_indv);
 		if (ret_code != EC_SUCCESS)
 			return ret_code;
 
@@ -414,10 +415,10 @@ static enum ec_error_list wov_set_i2s_config_l(void)
 		udelay(100);
 
 		ret_code = wov_i2s_channel_config(0, wov_conf.bit_depth,
-					trigger_0, start_delay_0);
+						  trigger_0, start_delay_0);
 
 		ret_code = wov_i2s_channel_config(1, wov_conf.bit_depth,
-					trigger_1, start_delay_1);
+						  trigger_1, start_delay_1);
 	}
 
 	return EC_SUCCESS;
@@ -471,14 +472,14 @@ static enum ec_error_list wov_set_mic_source_l(void)
 	case WOV_SRC_LEFT:
 		if (wov_conf.bit_depth == 16)
 			SET_FIELD(NPCX_WOV_FIFO_CNT,
-				NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x00);
+				  NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x00);
 		else
 			SET_FIELD(NPCX_WOV_FIFO_CNT,
-				NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x02);
+				  NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x02);
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_SEL_LEFT,
-				0x01);
+			  0x01);
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_SEL_RIGHT,
-				0x01);
+			  0x01);
 		apm_digital_mixer_config(APM_OUT_MIX_NORMAL_INPUT,
 					 APM_OUT_MIX_NO_INPUT);
 		apm_set_vad_input_channel(APM_IN_LEFT);
@@ -493,11 +494,11 @@ static enum ec_error_list wov_set_mic_source_l(void)
 			SET_FIELD(NPCX_WOV_FIFO_CNT,
 				  NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x02);
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_SEL_LEFT,
-				0x01);
+			  0x01);
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_SEL_RIGHT,
-				0x01);
+			  0x01);
 		apm_digital_mixer_config(APM_OUT_MIX_CROSS_INPUT,
-					APM_OUT_MIX_NO_INPUT);
+					 APM_OUT_MIX_NO_INPUT);
 		apm_set_vad_input_channel(APM_IN_RIGHT);
 		wov_i2s_channel1_disable(1);
 		break;
@@ -505,16 +506,16 @@ static enum ec_error_list wov_set_mic_source_l(void)
 	case WOV_SRC_MONO:
 		if (wov_conf.bit_depth == 16)
 			SET_FIELD(NPCX_WOV_FIFO_CNT,
-				NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x01);
+				  NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x01);
 		else
 			SET_FIELD(NPCX_WOV_FIFO_CNT,
-				NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x03);
+				  NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x03);
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_SEL_LEFT,
-				0x02);
+			  0x02);
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_SEL_RIGHT,
-				0x02);
+			  0x02);
 		apm_digital_mixer_config(APM_OUT_MIX_NORMAL_INPUT,
-					APM_OUT_MIX_NORMAL_INPUT);
+					 APM_OUT_MIX_NORMAL_INPUT);
 		apm_set_vad_input_channel(APM_IN_AVERAGE_LEFT_RIGHT);
 		wov_i2s_channel1_disable(0);
 		break;
@@ -522,14 +523,14 @@ static enum ec_error_list wov_set_mic_source_l(void)
 	case WOV_SRC_STEREO:
 		if (wov_conf.bit_depth == 16)
 			SET_FIELD(NPCX_WOV_FIFO_CNT,
-				NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x01);
+				  NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x01);
 		else
 			SET_FIELD(NPCX_WOV_FIFO_CNT,
-				NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x03);
+				  NPCX_WOV_FIFO_CNT_CFIFO_ISEL, 0x03);
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_SEL_LEFT,
-				0x01);
+			  0x01);
 		SET_FIELD(NPCX_APM_CR_DMIC, NPCX_APM_CR_DMIC_ADC_DMIC_SEL_RIGHT,
-				0x01);
+			  0x01);
 		apm_digital_mixer_config(APM_OUT_MIX_NORMAL_INPUT,
 					 APM_OUT_MIX_NORMAL_INPUT);
 		wov_i2s_channel1_disable(0);
@@ -586,7 +587,7 @@ static void wov_interrupt_handler(void)
 
 	wov_inten = GET_FIELD(NPCX_WOV_WOV_INTEN, NPCX_WOV_STATUS_BITS);
 	wov_status = wov_inten &
-			GET_FIELD(NPCX_WOV_STATUS, NPCX_WOV_STATUS_BITS);
+		     GET_FIELD(NPCX_WOV_STATUS, NPCX_WOV_STATUS_BITS);
 
 	/*
 	 * Voice activity detected.
@@ -602,7 +603,7 @@ static void wov_interrupt_handler(void)
 		WOV_CALLBACK(WOV_EVENT_ERROR_CORE_FIFO_OVERRUN);
 		wov_core_fifo_reset();
 	} else if (WOV_IS_CFIFO_INT_THRESHOLD(wov_status) &&
-				(cfifo_buf.buf != NULL)) {
+		   (cfifo_buf.buf != NULL)) {
 		/*
 		 * Core FIFO threshold or FIFO not empty event occurred.
 		 * - Read data from core FIFO to the buffer.
@@ -635,7 +636,6 @@ static void wov_interrupt_handler(void)
 		wov_i2s_fifo_reset();
 	}
 
-
 	/* Clear the WoV status register. */
 	SET_FIELD(NPCX_WOV_STATUS, NPCX_WOV_STATUS_BITS, wov_status);
 }
@@ -651,19 +651,17 @@ DECLARE_IRQ(NPCX_IRQ_WOV, wov_interrupt_handler, 4);
 static void wov_fmul2_enable(int enable)
 {
 	if (enable) {
-
 		/* If clock disabled, then enable it. */
 		if (IS_BIT_SET(NPCX_FMUL2_FM2CTRL,
-					NPCX_FMUL2_FM2CTRL_FMUL2_DIS)) {
+			       NPCX_FMUL2_FM2CTRL_FMUL2_DIS)) {
 			/* Enable clock tuning. */
 			CLEAR_BIT(NPCX_FMUL2_FM2CTRL,
-					NPCX_FMUL2_FM2CTRL_TUNE_DIS);
+				  NPCX_FMUL2_FM2CTRL_TUNE_DIS);
 			/* Enable clock. */
 			CLEAR_BIT(NPCX_FMUL2_FM2CTRL,
-					NPCX_FMUL2_FM2CTRL_FMUL2_DIS);
+				  NPCX_FMUL2_FM2CTRL_FMUL2_DIS);
 
 			udelay(WOV_FMUL2_CLK_TUNING_DELAY_TIME);
-
 		}
 	} else
 		SET_BIT(NPCX_FMUL2_FM2CTRL, NPCX_FMUL2_FM2CTRL_FMUL2_DIS);
@@ -688,7 +686,7 @@ void wov_fmul2_conf_tuning(void)
 {
 	/* Check if FMUL2 is enabled, then do nothing. */
 	if (IS_BIT_SET(NPCX_FMUL2_FM2CTRL, NPCX_FMUL2_FM2CTRL_FMUL2_DIS) ==
-			0x00)
+	    0x00)
 		return;
 
 	/* Enable clock tuning. */
@@ -968,7 +966,6 @@ void wov_set_clk_selection(enum wov_clk_src_sel clk_src)
 		wov_fmul2_enable(0);
 	else
 		wov_pll_enable(0);
-
 }
 
 /**
@@ -981,9 +978,9 @@ void wov_set_clk_selection(enum wov_clk_src_sel clk_src)
  *                                PLL External Divider Load Values table.
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
-enum ec_error_list wov_pll_clk_ext_div_config(
-	enum wov_pll_ext_div_sel ext_div_sel,
-	uint32_t div_factor)
+enum ec_error_list
+wov_pll_clk_ext_div_config(enum wov_pll_ext_div_sel ext_div_sel,
+			   uint32_t div_factor)
 {
 	/* Sets the clock division factor for the PLL external divider.
 	 * The divide factor should be in the range of 2 to 67.
@@ -1045,13 +1042,13 @@ void wov_pll_enable(int enable)
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
 enum ec_error_list wov_pll_clk_div_config(uint32_t out_div_1,
-					uint32_t out_div_2,
-					uint32_t feedback_div,
-					uint32_t in_div)
+					  uint32_t out_div_2,
+					  uint32_t feedback_div,
+					  uint32_t in_div)
 {
 	/* Parameter check. */
-	if ((out_div_1 < 1) || (out_div_1 > 7) ||
-		(out_div_2 < 1) || (out_div_2 > 7))
+	if ((out_div_1 < 1) || (out_div_1 > 7) || (out_div_2 < 1) ||
+	    (out_div_2 > 7))
 		return EC_ERROR_INVAL;
 
 	/*
@@ -1255,7 +1252,7 @@ int wov_set_buffer(uint32_t *buf, int size_in_words)
 
 	cfifo_threshold = wov_get_cfifo_threshold_l();
 	if (size_in_words !=
-		((size_in_words / cfifo_threshold) * cfifo_threshold))
+	    ((size_in_words / cfifo_threshold) * cfifo_threshold))
 		return EC_ERROR_INVAL;
 
 	cfifo_buf.buf = buf;
@@ -1298,21 +1295,17 @@ void wov_apm_active(int enable)
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
 enum ec_error_list wov_i2s_global_config(
-	enum wov_floating_mode i2s_hiz_data,
-	enum wov_floating_mode i2s_hiz,
-	enum wov_clk_inverted_mode clk_invert,
-	int out_pull_en,
-	enum wov_pull_upd_down_sel out_pull_mode,
-	int in_pull_en,
-	enum wov_pull_upd_down_sel in_pull_mode,
-	enum wov_test_mode test_mode)
+	enum wov_floating_mode i2s_hiz_data, enum wov_floating_mode i2s_hiz,
+	enum wov_clk_inverted_mode clk_invert, int out_pull_en,
+	enum wov_pull_upd_down_sel out_pull_mode, int in_pull_en,
+	enum wov_pull_upd_down_sel in_pull_mode, enum wov_test_mode test_mode)
 {
 	/* Check the parameters correctness. */
 	if ((i2s_hiz_data == WOV_FLOATING) &&
-		((GET_FIELD(NPCX_WOV_I2S_CNTL(0),
-				NPCX_WOV_I2S_CNTL_I2S_ST_DEL) == 0) ||
-		(GET_FIELD(NPCX_WOV_I2S_CNTL(1),
-				NPCX_WOV_I2S_CNTL_I2S_ST_DEL) == 0)))
+	    ((GET_FIELD(NPCX_WOV_I2S_CNTL(0), NPCX_WOV_I2S_CNTL_I2S_ST_DEL) ==
+	      0) ||
+	     (GET_FIELD(NPCX_WOV_I2S_CNTL(1), NPCX_WOV_I2S_CNTL_I2S_ST_DEL) ==
+	      0)))
 		return EC_ERROR_INVAL;
 
 	/* Set the parameters. */
@@ -1375,9 +1368,9 @@ enum ec_error_list wov_i2s_global_config(
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
 enum ec_error_list wov_i2s_channel_config(uint32_t channel_num,
-					uint32_t bit_count,
-					enum wov_i2s_chan_trigger trigger,
-					int32_t start_delay)
+					  uint32_t bit_count,
+					  enum wov_i2s_chan_trigger trigger,
+					  int32_t start_delay)
 {
 	/* Check the parameters correctnes. */
 	if ((channel_num != 0) && (channel_num != 1))
@@ -1392,7 +1385,7 @@ enum ec_error_list wov_i2s_channel_config(uint32_t channel_num,
 
 	/* Set the parameters. */
 	SET_FIELD(NPCX_WOV_I2S_CNTL(channel_num), NPCX_WOV_I2S_CNTL_I2S_BCNT,
-			(bit_count - 1));
+		  (bit_count - 1));
 
 	if (trigger == WOV_I2S_SAMPLED_1_AFTER_0)
 		CLEAR_BIT(NPCX_WOV_I2S_CNTL(channel_num),
@@ -1459,8 +1452,8 @@ int wov_set_sample_depth(int bits_num)
 	if (wov_conf.mode != WOV_MODE_OFF)
 		return EC_ERROR_INVALID_CONFIG;
 
-	if ((bits_num != 16) && (bits_num != 18) &&
-		(bits_num != 20) && (bits_num != 24))
+	if ((bits_num != 16) && (bits_num != 18) && (bits_num != 20) &&
+	    (bits_num != 24))
 		return EC_ERROR_INVAL;
 
 	wov_conf.bit_depth = bits_num;
@@ -1529,8 +1522,8 @@ void wov_set_gain(int left_chan_gain, int right_chan_gain)
 	wov_conf.left_chan_gain = left_chan_gain;
 	wov_conf.right_chan_gain = right_chan_gain;
 
-	(void) apm_adc_gain_config(APM_ADC_CHAN_GAINS_INDEPENDENT,
-				left_chan_gain, right_chan_gain);
+	(void)apm_adc_gain_config(APM_ADC_CHAN_GAINS_INDEPENDENT,
+				  left_chan_gain, right_chan_gain);
 }
 
 /**
@@ -1571,10 +1564,10 @@ void wov_enable_agc(int enable)
  * @param min_applied_gain      - Minimum Gain Value to apply to the ADC path.
  * @return  EC_ERROR_INVAL or EC_SUCCESS
  */
-enum ec_error_list wov_set_agc_config(int stereo, float target,
-				int noise_gate_threshold, uint8_t hold_time,
-				uint16_t attack_time, uint16_t decay_time,
-				float max_applied_gain, float min_applied_gain)
+enum ec_error_list
+wov_set_agc_config(int stereo, float target, int noise_gate_threshold,
+		   uint8_t hold_time, uint16_t attack_time, uint16_t decay_time,
+		   float max_applied_gain, float min_applied_gain)
 {
 	int target_code;
 	int ngth_code;
@@ -1607,7 +1600,7 @@ enum ec_error_list wov_set_agc_config(int stereo, float target,
 		return EC_ERROR_INVAL;
 
 	for (attack_time_code = 0; attack_time_code <= 0x0F;
-			attack_time_code++) {
+	     attack_time_code++) {
 		if (((attack_time_code + 1) * 32) == attack_time)
 			break;
 	}
@@ -1622,15 +1615,15 @@ enum ec_error_list wov_set_agc_config(int stereo, float target,
 		return EC_ERROR_INVAL;
 
 	for (max_applied_gain_code = 0; max_applied_gain_code < 16;
-			max_applied_gain_code++) {
+	     max_applied_gain_code++) {
 		if ((max_applied_gain_code * 1.5) == max_applied_gain)
 			break;
 	}
 	if (max_applied_gain_code == 16) {
 		for (max_applied_gain_code = 18; max_applied_gain_code < 32;
-				max_applied_gain_code++) {
+		     max_applied_gain_code++) {
 			if (((max_applied_gain_code * 1.5) - 4) ==
-					max_applied_gain)
+			    max_applied_gain)
 				break;
 		}
 	}
@@ -1638,15 +1631,15 @@ enum ec_error_list wov_set_agc_config(int stereo, float target,
 		return EC_ERROR_INVAL;
 
 	for (min_applied_gain_code = 0; min_applied_gain_code < 16;
-			min_applied_gain_code++) {
+	     min_applied_gain_code++) {
 		if ((min_applied_gain_code * 1.5) == min_applied_gain)
 			break;
 	}
 	if (min_applied_gain_code == 16) {
 		for (min_applied_gain_code = 18; min_applied_gain_code < 32;
-				min_applied_gain_code++) {
+		     min_applied_gain_code++) {
 			if (((min_applied_gain_code * 1.5) - 4) ==
-					min_applied_gain)
+			    min_applied_gain)
 				break;
 		}
 	}
@@ -1654,14 +1647,14 @@ enum ec_error_list wov_set_agc_config(int stereo, float target,
 		return EC_ERROR_INVAL;
 
 	gain_cfg.stereo_enable = stereo,
-	gain_cfg.agc_target = (enum apm_adc_target_out_level) target_code;
+	gain_cfg.agc_target = (enum apm_adc_target_out_level)target_code;
 	gain_cfg.nois_gate_en = (noise_gate_threshold != 0);
-	gain_cfg.nois_gate_thold = (enum apm_noise_gate_threshold) ngth_code;
-	gain_cfg.hold_time = (enum apm_agc_adj_hold_time) hold_time;
-	gain_cfg.attack_time = (enum apm_gain_ramp_time) attack_time_code;
-	gain_cfg.decay_time = (enum apm_gain_ramp_time) decay_time_code;
-	gain_cfg.gain_max = (enum apm_gain_values) max_applied_gain_code;
-	gain_cfg.gain_min = (enum apm_gain_values) min_applied_gain_code;
+	gain_cfg.nois_gate_thold = (enum apm_noise_gate_threshold)ngth_code;
+	gain_cfg.hold_time = (enum apm_agc_adj_hold_time)hold_time;
+	gain_cfg.attack_time = (enum apm_gain_ramp_time)attack_time_code;
+	gain_cfg.decay_time = (enum apm_gain_ramp_time)decay_time_code;
+	gain_cfg.gain_max = (enum apm_gain_values)max_applied_gain_code;
+	gain_cfg.gain_min = (enum apm_gain_values)min_applied_gain_code;
 
 	ret_code = apm_adc_auto_gain_config(&gain_cfg);
 
@@ -1676,7 +1669,6 @@ enum ec_error_list wov_set_agc_config(int stereo, float target,
  */
 int wov_set_vad_sensitivity(int sensitivity_db)
 {
-
 	if ((sensitivity_db < 0) || (sensitivity_db > 31))
 		return EC_ERROR_INVAL;
 
@@ -1752,27 +1744,27 @@ void wov_set_i2s_bclk(uint32_t i2s_clock)
  * @return  EC error code.
  */
 enum ec_error_list wov_set_i2s_tdm_config(int ch0_delay, int ch1_delay,
-				uint32_t flags)
+					  uint32_t flags)
 {
 	if (wov_conf.mode != WOV_MODE_OFF)
 		return EC_ERROR_INVALID_CONFIG;
 
-	if ((ch0_delay < 0) || (ch0_delay > 496) ||
-		(ch1_delay < -1) || (ch1_delay > 496))
+	if ((ch0_delay < 0) || (ch0_delay > 496) || (ch1_delay < -1) ||
+	    (ch1_delay > 496))
 		return EC_ERROR_INVAL;
 
 	wov_conf.i2s_start_delay_0 = ch0_delay;
 	wov_conf.i2s_start_delay_1 = ch1_delay;
 
 	SET_FIELD(NPCX_WOV_I2S_CNTL(0), NPCX_WOV_I2S_CNTL_I2S_ST_DEL,
-			ch0_delay);
+		  ch0_delay);
 
 	if (ch1_delay == -1)
 		wov_i2s_channel1_disable(1);
 	else {
 		wov_i2s_channel1_disable(0);
 		SET_FIELD(NPCX_WOV_I2S_CNTL(1), NPCX_WOV_I2S_CNTL_I2S_ST_DEL,
-			ch1_delay);
+			  ch1_delay);
 	}
 
 	if (flags & 0x0001)
@@ -1820,7 +1812,7 @@ void wov_handle_event(enum wov_events event)
 }
 
 #ifdef DEBUG_AUDIO_CODEC
-static uint32_t voice_buffer[VOICE_BUF_SIZE] = {0};
+static uint32_t voice_buffer[VOICE_BUF_SIZE] = { 0 };
 
 /* voice data 16Khz 2ch 16bit 1s */
 static int command_wov(int argc, char **argv)
@@ -1845,8 +1837,9 @@ static int command_wov(int argc, char **argv)
 		/* Start to capature voice data and store in RAM buffer */
 		if (strcasecmp(argv[1], "capram") == 0) {
 			if (wov_set_buffer((uint32_t *)voice_buffer,
-				sizeof(voice_buffer) / sizeof(uint32_t))
-					== EC_SUCCESS) {
+					   sizeof(voice_buffer) /
+						   sizeof(uint32_t)) ==
+			    EC_SUCCESS) {
 				CPRINTS("Start RAM Catpure...");
 				wov_start_ram_capture();
 				return EC_SUCCESS;
@@ -1980,8 +1973,9 @@ static int command_wov(int argc, char **argv)
 				wov_set_mode(WOV_MODE_VAD);
 			} else if (strcasecmp(argv[2], "ram") == 0) {
 				if (wov_set_buffer((uint32_t *)voice_buffer,
-					sizeof(voice_buffer) / sizeof(uint32_t))
-						== EC_SUCCESS)
+						   sizeof(voice_buffer) /
+							   sizeof(uint32_t)) ==
+				    EC_SUCCESS)
 					wov_set_mode(WOV_MODE_RAM);
 				else
 					return EC_ERROR_INVAL;
@@ -1989,8 +1983,9 @@ static int command_wov(int argc, char **argv)
 				wov_set_mode(WOV_MODE_I2S);
 			} else if (strcasecmp(argv[2], "rami2s") == 0) {
 				if (wov_set_buffer((uint32_t *)voice_buffer,
-					sizeof(voice_buffer) / sizeof(uint32_t))
-						== EC_SUCCESS)
+						   sizeof(voice_buffer) /
+							   sizeof(uint32_t)) ==
+				    EC_SUCCESS)
 					wov_set_mode(WOV_MODE_RAM_AND_I2S);
 				else
 					return EC_ERROR_INVAL;
@@ -2013,7 +2008,7 @@ static int command_wov(int argc, char **argv)
 		if (strcasecmp(argv[1], "fmul2") == 0) {
 			if (strcasecmp(argv[2], "enable") == 0) {
 				CLEAR_BIT(NPCX_FMUL2_FM2CTRL,
-					NPCX_FMUL2_FM2CTRL_TUNE_DIS);
+					  NPCX_FMUL2_FM2CTRL_TUNE_DIS);
 				return EC_SUCCESS;
 			}
 			if (strcasecmp(argv[2], "disable") == 0) {
@@ -2050,22 +2045,22 @@ static int command_wov(int argc, char **argv)
 }
 
 DECLARE_CONSOLE_COMMAND(wov, command_wov,
-		"init\n"
-		"mute <enable|disable>\n"
-		"capram\n"
-		"cfgsrc <mono|stereo|left|right>\n"
-		"cfgbit <16|18|20|24>\n"
-		"cfgsfs <8000|12000|16000|24000|32000|48000>\n"
-		"cfgbck <32fs|48fs|64fs|128fs|256fs>\n"
-		"cfgfmt <i2s|right|left|pcma|pcmb|tdm>\n"
-		"cfgmod <off|vad|ram|i2s|rami2s>\n"
-		"cfgtdm [0~496 0~496 0~3]>\n"
-		"cfgdckV <0.75|1.0|1.2|2.4|3.0>\n"
-		"cfgdckR <0.75|1.0|1.2|2.4|3.0>\n"
-		"cfgdckI <0.75|1.0|1.2|2.4|3.0>\n"
-		"cfgget\n"
-		"fmul2 <enable|disable>\n"
-		"vadsens <0~31>\n"
-		"gain <0~31>",
-		"wov configuration");
+			"init\n"
+			"mute <enable|disable>\n"
+			"capram\n"
+			"cfgsrc <mono|stereo|left|right>\n"
+			"cfgbit <16|18|20|24>\n"
+			"cfgsfs <8000|12000|16000|24000|32000|48000>\n"
+			"cfgbck <32fs|48fs|64fs|128fs|256fs>\n"
+			"cfgfmt <i2s|right|left|pcma|pcmb|tdm>\n"
+			"cfgmod <off|vad|ram|i2s|rami2s>\n"
+			"cfgtdm [0~496 0~496 0~3]>\n"
+			"cfgdckV <0.75|1.0|1.2|2.4|3.0>\n"
+			"cfgdckR <0.75|1.0|1.2|2.4|3.0>\n"
+			"cfgdckI <0.75|1.0|1.2|2.4|3.0>\n"
+			"cfgget\n"
+			"fmul2 <enable|disable>\n"
+			"vadsens <0~31>\n"
+			"gain <0~31>",
+			"wov configuration");
 #endif
