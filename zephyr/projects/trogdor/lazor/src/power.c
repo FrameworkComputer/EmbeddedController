@@ -51,7 +51,7 @@ static int board_power_handler_init(const struct device *unused)
 	/* Setup a suspend/resume callback */
 	ap_power_ev_init_callback(&cb, board_power_change,
 				  AP_POWER_PRE_INIT |
-				  AP_POWER_SHUTDOWN_COMPLETE);
+					  AP_POWER_SHUTDOWN_COMPLETE);
 	ap_power_ev_add_callback(&cb);
 	return 0;
 }
