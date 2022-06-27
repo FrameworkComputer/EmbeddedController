@@ -22,4 +22,4 @@ void mat44_fp_swap_rows(mat44_fp_t A, const size_t i, const size_t j);
 
 void mat44_fp_solve(mat44_fp_t A, fpv4_t x, const fpv4_t b,
 		    const sizev4_t pivot);
-#endif  /* __CROS_EC_MAT_44_H */
+#endif /* __CROS_EC_MAT_44_H */
