@@ -14,8 +14,8 @@
 #include "usb_tc_sm.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #else
 #define CPRINTS(format, args...)
 #define CPRINTF(format, args...)
@@ -46,7 +46,7 @@
  */
 
 #define SUSPEND 1
-#define RESUME  0
+#define RESUME 0
 
 /* Track current port AP requested to update retimer firmware */
 static int cur_port;
@@ -175,8 +175,8 @@ void usb_retimer_fw_update_process_op_cb(int port)
 		result_mux_get = true;
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_USB:
-		usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
-			USB_SWITCH_CONNECT, pd_get_polarity(port));
+		usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
+			    pd_get_polarity(port));
 		result_mux_get = true;
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_SAFE:
@@ -185,12 +185,12 @@ void usb_retimer_fw_update_process_op_cb(int port)
 		break;
 	case USB_RETIMER_FW_UPDATE_SET_TBT:
 		usb_mux_set(port, USB_PD_MUX_TBT_COMPAT_ENABLED,
-			USB_SWITCH_CONNECT, pd_get_polarity(port));
+			    USB_SWITCH_CONNECT, pd_get_polarity(port));
 		result_mux_get = true;
 		break;
 	case USB_RETIMER_FW_UPDATE_DISCONNECT:
-		usb_mux_set(port, USB_PD_MUX_NONE,
-			USB_SWITCH_DISCONNECT, pd_get_polarity(port));
+		usb_mux_set(port, USB_PD_MUX_NONE, USB_SWITCH_DISCONNECT,
+			    pd_get_polarity(port));
 		result_mux_get = true;
 		break;
 	default:
@@ -253,7 +253,7 @@ static void restore_port(void)
 {
 	int port;
 
-	for  (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 		if (retimer_fw_update_get_port_state(port))
 			retimer_fw_update_port_handler(port, RESUME);
 	}
