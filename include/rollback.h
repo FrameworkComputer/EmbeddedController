@@ -71,4 +71,4 @@ int board_get_entropy(void *buffer, int len);
 
 #endif
 
-#endif  /* __CROS_EC_ROLLBACK_H */
+#endif /* __CROS_EC_ROLLBACK_H */
