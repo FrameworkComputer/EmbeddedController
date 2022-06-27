@@ -20,12 +20,11 @@
 static struct consumer const event_fd_consumer;
 static void event_fd_written(struct consumer const *consumer, size_t count);
 
-static struct queue const fd_queue = QUEUE_DIRECT(4, struct fd_msg,
-						  null_producer,
-						  event_fd_consumer);
+static struct queue const fd_queue =
+	QUEUE_DIRECT(4, struct fd_msg, null_producer, event_fd_consumer);
 static struct consumer const event_fd_consumer = {
 	.queue = &fd_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_fd_written,
 	}),
 };
@@ -33,7 +32,9 @@ static struct consumer const event_fd_consumer = {
 /* Stub functions only provided by private overlays. */
 // Jerry TODO implement private part and remove this
 #ifndef HAVE_PRIVATE_MT8183
-void fd_ipi_msg_handler(void *data) {}
+void fd_ipi_msg_handler(void *data)
+{
+}
 #endif
 
 static void event_fd_written(struct consumer const *consumer, size_t count)
