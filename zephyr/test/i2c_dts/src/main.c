@@ -10,14 +10,13 @@
 static void test_i2c_get_device(void)
 {
 	const struct device *accel0 = DEVICE_DT_GET(
-			DT_PHANDLE(DT_PATH(named_i2c_ports, accel_0),
-				   i2c_port));
-	const struct device *bmi_i2c = DEVICE_DT_GET(
-			DT_NODELABEL(bmi_i2c));
+		DT_PHANDLE(DT_PATH(named_i2c_ports, accel_0), i2c_port));
+	const struct device *bmi_i2c = DEVICE_DT_GET(DT_NODELABEL(bmi_i2c));
 
 	zassert_not_null(accel0, "accel0 was NULL");
 	zassert_not_null(bmi_i2c, "bmi_i2c was NULL");
-	zassert_equal(accel0, bmi_i2c,
+	zassert_equal(
+		accel0, bmi_i2c,
 		"named_i2c_ports/accel0 and bmi_i2c should resolve to the same device");
 }
 
