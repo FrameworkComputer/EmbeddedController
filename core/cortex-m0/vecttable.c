@@ -13,7 +13,7 @@
 #include "config.h"
 #include "panic-internal.h"
 #include "task.h"
-#endif  /* __INIT */
+#endif /* __INIT */
 
 typedef void (*func)(void);
 
@@ -30,7 +30,7 @@ void __attribute__((naked)) default_handler(void)
 	 * restricting the relative placement of default_handler and
 	 * exception_panic.
 	 */
-	asm volatile("bx %0\n" : : "r" (exception_panic));
+	asm volatile("bx %0\n" : : "r"(exception_panic));
 }
 
 #define table(x) x
@@ -38,8 +38,8 @@ void __attribute__((naked)) default_handler(void)
 /* Note: the alias target must be defined in this translation unit */
 #define weak_with_default __attribute__((used, weak, alias("default_handler")))
 
-#define vec(name) extern void weak_with_default name ## _handler(void);
-#define irq(num) vec(irq_ ## num)
+#define vec(name) extern void weak_with_default name##_handler(void);
+#define irq(num) vec(irq_##num)
 
 #define item(name) extern void name(void);
 #define null
@@ -77,69 +77,28 @@ extern void reset(void);
 #pragma clang diagnostic ignored "-Winitializer-overrides"
 #endif /* __clang__ */
 
-#define table(x)							     \
-	const func vectors[] __attribute__((section(".text.vecttable"))) = { \
-		x							     \
-		[IRQ_UNUSED_OFFSET] = null				     \
-	}
+#define table(x)                             \
+	const func vectors[] __attribute__(( \
+		section(".text.vecttable"))) = { x[IRQ_UNUSED_OFFSET] = null }
 
-#define vec(name) name ## _handler,
-#define irq(num) [num < CONFIG_IRQ_COUNT ? num + IRQ_OFFSET : IRQ_UNUSED_OFFSET] = vec(irq_ ## num)
+#define vec(name) name##_handler,
+#define irq(num)                                                          \
+	[num < CONFIG_IRQ_COUNT ? num + IRQ_OFFSET : IRQ_UNUSED_OFFSET] = \
+		vec(irq_##num)
 
 #define item(name) name,
 #define null (void *)0,
 #endif /* PASS 2 */
 
-table(
-	item(stack_end)
-	item(reset)
-	vec(nmi)
-	vec(hard_fault)
-	vec(mpu_fault)
-	vec(bus_fault)
-	vec(usage_fault)
-	null
-	null
-	null
-	null
-	vec(svc)
-	vec(debug)
-	null
-	vec(pendsv)
-	vec(sys_tick)
-	irq(0)
-	irq(1)
-	irq(2)
-	irq(3)
-	irq(4)
-	irq(5)
-	irq(6)
-	irq(7)
-	irq(8)
-	irq(9)
-	irq(10)
-	irq(11)
-	irq(12)
-	irq(13)
-	irq(14)
-	irq(15)
-	irq(16)
-	irq(17)
-	irq(18)
-	irq(19)
-	irq(20)
-	irq(21)
-	irq(22)
-	irq(23)
-	irq(24)
-	irq(25)
-	irq(26)
-	irq(27)
-	irq(28)
-	irq(29)
-	irq(30)
-	irq(31)
-);
+table(item(stack_end) item(reset) vec(nmi) vec(hard_fault) vec(mpu_fault) vec(
+	bus_fault) vec(usage_fault) null null null null vec(svc) vec(debug)
+	      null vec(pendsv) vec(sys_tick) irq(0) irq(1) irq(2) irq(3) irq(4)
+		      irq(5) irq(6) irq(7) irq(8) irq(9) irq(10) irq(11) irq(12)
+			      irq(13) irq(14) irq(15) irq(16) irq(17) irq(18)
+				      irq(19) irq(20) irq(21) irq(22) irq(23)
+					      irq(24) irq(25) irq(26) irq(27)
+						      irq(28) irq(29) irq(30)
+							      irq(31));
 
 #if PASS == 2
 #ifdef __clang__
