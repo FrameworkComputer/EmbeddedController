@@ -33,9 +33,10 @@
 #define CONFIG_STM_HWTIMER32
 #define CONFIG_HW_CRC
 #define CONFIG_PVD
-/* See 'Programmable voltage detector characteristics' in the STM32F072x8 Datasheet.
-   PVD Threshold 1 corresponds to a falling voltage threshold of min:2.09V, max:2.27V. */
-#define PVD_THRESHOLD     (1)
+/* See 'Programmable voltage detector characteristics' in the STM32F072x8
+   Datasheet. PVD Threshold 1 corresponds to a falling voltage threshold of
+   min:2.09V, max:2.27V. */
+#define PVD_THRESHOLD (1)
 
 /* USB Configuration */
 #define CONFIG_USB
@@ -50,25 +51,25 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_USART4_STREAM	0
-#define USB_IFACE_UPDATE	1
-#define USB_IFACE_SPI		2
-#define USB_IFACE_CONSOLE	3
-#define USB_IFACE_I2C		4
-#define USB_IFACE_USART3_STREAM	5
-#define USB_IFACE_USART2_STREAM	6
-#define USB_IFACE_COUNT		7
+#define USB_IFACE_USART4_STREAM 0
+#define USB_IFACE_UPDATE 1
+#define USB_IFACE_SPI 2
+#define USB_IFACE_CONSOLE 3
+#define USB_IFACE_I2C 4
+#define USB_IFACE_USART3_STREAM 5
+#define USB_IFACE_USART2_STREAM 6
+#define USB_IFACE_COUNT 7
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_USART4_STREAM	1
-#define USB_EP_UPDATE		2
-#define USB_EP_SPI		3
-#define USB_EP_CONSOLE		4
-#define USB_EP_I2C		5
-#define USB_EP_USART3_STREAM	6
-#define USB_EP_USART2_STREAM	7
-#define USB_EP_COUNT		8
+#define USB_EP_CONTROL 0
+#define USB_EP_USART4_STREAM 1
+#define USB_EP_UPDATE 2
+#define USB_EP_SPI 3
+#define USB_EP_CONSOLE 4
+#define USB_EP_I2C 5
+#define USB_EP_USART3_STREAM 6
+#define USB_EP_USART2_STREAM 7
+#define USB_EP_COUNT 8
 
 /* Enable console recasting of GPIO type. */
 #define CONFIG_CMD_GPIO_EXTENDED
@@ -76,7 +77,7 @@
 /* Enable control of SPI over USB */
 #define CONFIG_USB_SPI
 #define CONFIG_SPI_CONTROLLER
-#define CONFIG_SPI_FLASH_PORT    0  /* First SPI controller port */
+#define CONFIG_SPI_FLASH_PORT 0 /* First SPI controller port */
 
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
@@ -93,8 +94,8 @@
 #define CONFIG_I2C_XFER_LARGE_TRANSFER
 #undef CONFIG_USB_I2C_MAX_WRITE_COUNT
 #undef CONFIG_USB_I2C_MAX_READ_COUNT
-#define CONFIG_USB_I2C_MAX_WRITE_COUNT ((1<<9) - 4)
-#define CONFIG_USB_I2C_MAX_READ_COUNT ((1<<9) - 6)
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT ((1 << 9) - 4)
+#define CONFIG_USB_I2C_MAX_READ_COUNT ((1 << 9) - 6)
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect
