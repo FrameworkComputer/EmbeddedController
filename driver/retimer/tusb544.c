@@ -10,28 +10,21 @@
 
 static int tusb544_write(const struct usb_mux *me, int offset, int data)
 {
-	return i2c_write8(me->i2c_port,
-			  me->i2c_addr_flags,
-			  offset, data);
+	return i2c_write8(me->i2c_port, me->i2c_addr_flags, offset, data);
 }
 
 static int tusb544_read(const struct usb_mux *me, int offset, int *data)
 {
-	return i2c_read8(me->i2c_port,
-			 me->i2c_addr_flags,
-			 offset, data);
+	return i2c_read8(me->i2c_port, me->i2c_addr_flags, offset, data);
 }
 
 int tusb544_i2c_field_update8(const struct usb_mux *me, int offset,
-			     uint8_t field_mask, uint8_t set_value)
+			      uint8_t field_mask, uint8_t set_value)
 {
 	int rv;
 
-	rv = i2c_field_update8(me->i2c_port,
-			       me->i2c_addr_flags,
-			       offset,
-			       field_mask,
-			       set_value);
+	rv = i2c_field_update8(me->i2c_port, me->i2c_addr_flags, offset,
+			       field_mask, set_value);
 
 	return rv;
 }
