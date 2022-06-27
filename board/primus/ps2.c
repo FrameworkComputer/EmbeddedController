@@ -15,7 +15,7 @@
 #include "registers.h"
 #include "time.h"
 
-#define	PS2_TRANSMIT_DELAY_MS	10
+#define PS2_TRANSMIT_DELAY_MS 10
 
 static uint8_t queue_data[3];
 static int data_count;
@@ -39,8 +39,8 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
  */
 static void enable_ps2(void)
 {
-	gpio_set_alternate_function(GPIO_PORT_6,
-		BIT(2) | BIT(3), GPIO_ALT_FUNC_DEFAULT);
+	gpio_set_alternate_function(GPIO_PORT_6, BIT(2) | BIT(3),
+				    GPIO_ALT_FUNC_DEFAULT);
 }
 DECLARE_DEFERRED(enable_ps2);
 
@@ -48,8 +48,8 @@ static void disable_ps2(void)
 {
 	gpio_set_flags(GPIO_EC_PS2_SCL_TPAD, GPIO_ODR_LOW);
 	gpio_set_flags(GPIO_EC_PS2_SDA_TPAD, GPIO_ODR_LOW);
-	gpio_set_alternate_function(GPIO_PORT_6,
-		BIT(2) | BIT(3), GPIO_ALT_FUNC_NONE);
+	gpio_set_alternate_function(GPIO_PORT_6, BIT(2) | BIT(3),
+				    GPIO_ALT_FUNC_NONE);
 	/* make sure PLTRST# goes high and re-enable PS2.*/
 	hook_call_deferred(&enable_ps2_data, 2 * SECOND);
 }
@@ -96,7 +96,7 @@ uint8_t get_trackpoint_id(void)
 	 * Also make sure only return the trackpoint device ID.
 	 */
 	if (queue_data[1] == TP_VARIANT_ELAN ||
-		queue_data[1] == TP_VARIANT_SYNAPTICS)
+	    queue_data[1] == TP_VARIANT_SYNAPTICS)
 		return queue_data[1];
 	else
 		return 0;
@@ -129,10 +129,10 @@ static void ps2_suspend(void)
 	 */
 	if (trackpoint_id == TP_VARIANT_ELAN)
 		send_command_to_trackpoint(TP_TOGGLE_BURST,
-			TP_TOGGLE_ELAN_SLEEP);
+					   TP_TOGGLE_ELAN_SLEEP);
 	else if (trackpoint_id == TP_VARIANT_SYNAPTICS)
 		send_command_to_trackpoint(TP_TOGGLE_SOURCE_TAG,
-			TP_TOGGLE_SNAPTICS_SLEEP);
+					   TP_TOGGLE_SNAPTICS_SLEEP);
 
 	/* Clear the data in queue and the counter */
 	memset(queue_data, 0, ARRAY_SIZE(queue_data));
@@ -154,7 +154,7 @@ static void ps2_resume(void)
 	 */
 	if (trackpoint_id == TP_VARIANT_SYNAPTICS)
 		send_command_to_trackpoint(TP_TOGGLE_SOURCE_TAG,
-			TP_TOGGLE_SNAPTICS_SLEEP);
+					   TP_TOGGLE_SNAPTICS_SLEEP);
 
 	/* Clear the data in queue and the counter */
 	memset(queue_data, 0, ARRAY_SIZE(queue_data));
