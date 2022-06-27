@@ -46,4 +46,4 @@ int fp_sensor_maintenance(uint8_t *image_data,
  */
 int fpc_get_hwid(uint16_t *id);
 
-#endif  /* __CROS_EC_FPC_PRIVATE_H */
+#endif /* __CROS_EC_FPC_PRIVATE_H */
