@@ -20,7 +20,7 @@ const struct monitor_header_tag monitor_hdr = {
 	 * programed into the SPI flash.
 	 */
 	CONFIG_PROGRAM_MEMORY_BASE,
-	/* 0x0C:The Flash start address to be programmed*/
+/* 0x0C:The Flash start address to be programmed*/
 #ifdef SECTION_IS_RO
 	/* Default: RO image is programed from the start of SPI flash */
 	CONFIG_EC_PROTECTED_STORAGE_OFF,
