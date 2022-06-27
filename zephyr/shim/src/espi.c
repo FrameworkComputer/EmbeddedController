@@ -492,7 +492,9 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
  * This function is needed only for the obsolete platform which uses the GPIO
  * for KBC's IRQ.
  */
-void lpc_keyboard_resume_irq(void) {}
+void lpc_keyboard_resume_irq(void)
+{
+}
 
 void lpc_keyboard_clear_buffer(void)
 {
@@ -534,8 +536,7 @@ static void kbc_ibf_obe_handler(uint32_t data)
 	uint32_t status = I8042_AUX_DATA;
 
 	if (is_ibf) {
-		keyboard_host_write(get_8042_data(data),
-				    get_8042_type(data));
+		keyboard_host_write(get_8042_data(data), get_8042_type(data));
 	} else if (IS_ENABLED(CONFIG_8042_AUX)) {
 		espi_write_lpc_request(espi_dev, E8042_CLEAR_FLAG, &status);
 	}
