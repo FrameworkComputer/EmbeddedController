@@ -15,8 +15,8 @@
 #include "intelrvp.h"
 #endif /* CONFIG_ZEPHYR */
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 bool is_typec_port(int port)
 {
@@ -43,8 +43,8 @@ static void board_dc_jack_handle(void)
 
 	/* System is booted from DC Jack */
 	if (board_dc_jack_present()) {
-		charge_dc_jack.current = (PD_MAX_POWER_MW * 1000) /
-					DC_JACK_MAX_VOLTAGE_MV;
+		charge_dc_jack.current =
+			(PD_MAX_POWER_MW * 1000) / DC_JACK_MAX_VOLTAGE_MV;
 		charge_dc_jack.voltage = DC_JACK_MAX_VOLTAGE_MV;
 	} else {
 		charge_dc_jack.current = 0;
@@ -52,7 +52,7 @@ static void board_dc_jack_handle(void)
 	}
 
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
-				DEDICATED_CHARGE_PORT, &charge_dc_jack);
+				     DEDICATED_CHARGE_PORT, &charge_dc_jack);
 }
 #endif
 
@@ -75,7 +75,7 @@ static void board_charge_init(void)
 	for (port = 0; port < CHARGE_PORT_COUNT; port++) {
 		for (supplier = 0; supplier < CHARGE_SUPPLIER_COUNT; supplier++)
 			charge_manager_update_charge(supplier, port,
-				&charge_init);
+						     &charge_init);
 	}
 
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
@@ -88,8 +88,7 @@ int board_set_active_charge_port(int port)
 {
 	int i;
 	/* charge port is a realy physical port */
-	int is_real_port = (port >= 0 &&
-			port < CHARGE_PORT_COUNT);
+	int is_real_port = (port >= 0 && port < CHARGE_PORT_COUNT);
 	/* check if we are source vbus on that port */
 	int source = board_vbus_source_enabled(port);
 
@@ -127,9 +126,9 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-				CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
