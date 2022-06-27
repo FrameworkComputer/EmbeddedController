@@ -25,17 +25,16 @@
 #include "vboot.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 #if !defined(CONFIG_MAPPED_STORAGE)
 #error rwsig implementation assumes mem-mapped storage.
 #endif
 
 /* RW firmware reset vector */
-static uint32_t * const rw_rst =
+static uint32_t *const rw_rst =
 	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF + 4);
-
 
 void rwsig_jump_now(void)
 {
@@ -74,8 +73,8 @@ void rwsig_jump_now(void)
  * Check that memory between rwdata[start] and rwdata[len-1] is filled
  * with ones. data, start and len must be aligned on 4-byte boundary.
  */
-static int check_padding(const uint8_t *data,
-			 unsigned int start, unsigned int len)
+static int check_padding(const uint8_t *data, unsigned int start,
+			 unsigned int len)
 {
 	unsigned int i;
 	const uint32_t *data32 = (const uint32_t *)data;
@@ -83,7 +82,7 @@ static int check_padding(const uint8_t *data,
 	if ((start % 4) != 0 || (len % 4) != 0)
 		return 0;
 
-	for (i = start/4; i < len/4; i++) {
+	for (i = start / 4; i < len / 4; i++) {
 		if (data32[i] != 0xffffffff)
 			return 0;
 	}
@@ -99,8 +98,8 @@ int rwsig_check_signature(void)
 	const uint8_t *sig;
 	uint8_t *hash;
 	uint32_t *rsa_workbuf = NULL;
-	const uint8_t *rwdata = (uint8_t *)CONFIG_PROGRAM_MEMORY_BASE
-					+ CONFIG_RW_MEM_OFF;
+	const uint8_t *rwdata =
+		(uint8_t *)CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF;
 	int good = 0;
 
 	unsigned int rwlen;
@@ -125,8 +124,8 @@ int rwsig_check_signature(void)
 
 	if (rw_rollback_version < 0 || min_rollback_version < 0 ||
 	    rw_rollback_version < min_rollback_version) {
-		CPRINTS("Rollback error (%d < %d)",
-			rw_rollback_version, min_rollback_version);
+		CPRINTS("Rollback error (%d < %d)", rw_rollback_version,
+			min_rollback_version);
 		goto out;
 	}
 #endif
@@ -152,8 +151,8 @@ int rwsig_check_signature(void)
 		goto out;
 	}
 
-	key = (const struct rsa_public_key *)
-		((const uint8_t *)vb21_key + vb21_key->key_offset);
+	key = (const struct rsa_public_key *)((const uint8_t *)vb21_key +
+					      vb21_key->key_offset);
 
 	/*
 	 * TODO(crbug.com/690773): We could verify other parameters such
@@ -179,7 +178,7 @@ int rwsig_check_signature(void)
 	 * Check that unverified RW region is actually filled with ones.
 	 */
 	good = check_padding(rwdata, rwlen,
-			CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE);
+			     CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE);
 	if (!good) {
 		CPRINTS("Invalid padding.");
 		goto out;
@@ -207,11 +206,10 @@ int rwsig_check_signature(void)
 	 */
 	if (rw_rollback_version != min_rollback_version
 #ifdef CONFIG_FLASH_PROTECT_RW
-		&& ((!system_is_locked() ||
-				crec_flash_get_protect() &
-				EC_FLASH_PROTECT_RW_NOW))
+	    && ((!system_is_locked() ||
+		 crec_flash_get_protect() & EC_FLASH_PROTECT_RW_NOW))
 #endif
-			) {
+	) {
 		/*
 		 * This will fail if the rollback block is protected (RW image
 		 * will unprotect that block later on).
@@ -219,8 +217,7 @@ int rwsig_check_signature(void)
 		int ret = rollback_update_version(rw_rollback_version);
 
 		if (ret == 0) {
-			CPRINTS("Rollback updated to %d",
-				rw_rollback_version);
+			CPRINTS("Rollback updated to %d", rw_rollback_version);
 		} else if (ret != EC_ERROR_ACCESS_DENIED) {
 			CPRINTS("Rollback update error %d", ret);
 			good = 0;
@@ -315,9 +312,7 @@ static enum ec_status rwsig_cmd_action(struct host_cmd_handler_args *args)
 	args->response_size = 0;
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RWSIG_ACTION,
-		     rwsig_cmd_action,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_RWSIG_ACTION, rwsig_cmd_action, EC_VER_MASK(0));
 
 #else /* !HAS_TASK_RWSIG */
 static enum ec_status rwsig_cmd_check_status(struct host_cmd_handler_args *args)
@@ -330,7 +325,6 @@ static enum ec_status rwsig_cmd_check_status(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_RWSIG_CHECK_STATUS,
-		     rwsig_cmd_check_status,
+DECLARE_HOST_COMMAND(EC_CMD_RWSIG_CHECK_STATUS, rwsig_cmd_check_status,
 		     EC_VER_MASK(0));
 #endif
