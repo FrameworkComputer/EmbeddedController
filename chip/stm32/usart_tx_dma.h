@@ -29,7 +29,7 @@
  * required because the queue isn't notified that it has been read from until
  * after the DMA transfer completes.
  */
-#define USART_TX_DMA(CHANNEL, MAX_BYTES)			\
+#define USART_TX_DMA(CHANNEL, MAX_BYTES) \
 	((struct usart_tx_dma const) {				\
 		.usart_tx = {					\
 			.consumer_ops = {			\
