@@ -60,9 +60,7 @@ struct accelgyro_drv {
 	 *
 	 * @return EC_SUCCESS if successful, non-zero if error.
 	 */
-	int (*set_range)(struct motion_sensor_t *s,
-			int range,
-			int rnd);
+	int (*set_range)(struct motion_sensor_t *s, int range, int rnd);
 
 	/**
 	 * Setter and getter methods for the sensor resolution.
@@ -72,9 +70,8 @@ struct accelgyro_drv {
 	 * value. Otherwise, it rounds down.
 	 * @return EC_SUCCESS if successful, non-zero if error.
 	 */
-	int (*set_resolution)(const struct motion_sensor_t *s,
-				int res,
-				int rnd);
+	int (*set_resolution)(const struct motion_sensor_t *s, int res,
+			      int rnd);
 	int (*get_resolution)(const struct motion_sensor_t *s);
 
 	/**
@@ -86,11 +83,9 @@ struct accelgyro_drv {
 	 * value. Otherwise, it rounds down.
 	 * @return EC_SUCCESS if successful, non-zero if error.
 	 */
-	int (*set_data_rate)(const struct motion_sensor_t *s,
-				int rate,
-				int rnd);
+	int (*set_data_rate)(const struct motion_sensor_t *s, int rate,
+			     int rnd);
 	int (*get_data_rate)(const struct motion_sensor_t *s);
-
 
 	/**
 	 * Setter and getter methods for the sensor offset.
@@ -100,11 +95,9 @@ struct accelgyro_drv {
 	 * @return EC_SUCCESS if successful, non-zero if error.
 	 */
 	int (*set_offset)(const struct motion_sensor_t *s,
-				const int16_t    *offset,
-				int16_t    temp);
-	int (*get_offset)(const struct motion_sensor_t *s,
-				int16_t    *offset,
-				int16_t    *temp);
+			  const int16_t *offset, int16_t temp);
+	int (*get_offset)(const struct motion_sensor_t *s, int16_t *offset,
+			  int16_t *temp);
 	/**
 	 * Setter and getter methods for the sensor scale.
 	 * @s Pointer to sensor data.
@@ -112,19 +105,16 @@ struct accelgyro_drv {
 	 * @temp: temperature when calibration was done.
 	 * @return EC_SUCCESS if successful, non-zero if error.
 	 */
-	int (*set_scale)(const struct motion_sensor_t *s,
-				const uint16_t    *scale,
-				int16_t    temp);
-	int (*get_scale)(const struct motion_sensor_t *s,
-				uint16_t   *scale,
-				int16_t    *temp);
+	int (*set_scale)(const struct motion_sensor_t *s, const uint16_t *scale,
+			 int16_t temp);
+	int (*get_scale)(const struct motion_sensor_t *s, uint16_t *scale,
+			 int16_t *temp);
 	/**
 	 * Request performing/entering calibration.
 	 * Either a one shot mode (enable is not used),
 	 * or enter/exit a calibration state.
 	 */
-	int (*perform_calib)(struct motion_sensor_t *s,
-				int        enable);
+	int (*perform_calib)(struct motion_sensor_t *s, int enable);
 
 	/**
 	 * Function that probes if supported chip is present.
@@ -161,8 +151,7 @@ struct accelgyro_drv {
 	 * @data additional data if needed, activity dependent.
 	 */
 	int (*manage_activity)(const struct motion_sensor_t *s,
-			       enum motionsensor_activity activity,
-			       int enable,
+			       enum motionsensor_activity activity, int enable,
 			       const struct ec_motion_sense_activity *data);
 	/**
 	 * List activities managed by the sensors.
@@ -171,8 +160,7 @@ struct accelgyro_drv {
 	 * @disabled bit mask of activities currently disabled.
 	 */
 	int (*list_activities)(const struct motion_sensor_t *s,
-			       uint32_t *enabled,
-			       uint32_t *disabled);
+			       uint32_t *enabled, uint32_t *disabled);
 
 	/**
 	 * Get the root mean square of current noise (ug/mdps) in the sensor.
@@ -248,9 +236,9 @@ struct rgb_calibration_t {
 
 /* als driver data */
 struct als_drv_data_t {
-	int rate;          /* holds current sensor rate */
-	int last_value;    /* holds last als clear channel value */
-	struct als_calibration_t als_cal;    /* calibration data */
+	int rate; /* holds current sensor rate */
+	int last_value; /* holds last als clear channel value */
+	struct als_calibration_t als_cal; /* calibration data */
 };
 
 #define SENSOR_APPLY_DIV_SCALE(_input, _scale) \
@@ -260,6 +248,6 @@ struct als_drv_data_t {
 	(((_input) * (uint64_t)(_scale)) / MOTION_SENSE_DEFAULT_SCALE)
 
 /* Individual channel scale value between 0 and 2 represented in 16 bits */
-#define ALS_CHANNEL_SCALE(_x) ((_x) * MOTION_SENSE_DEFAULT_SCALE)
+#define ALS_CHANNEL_SCALE(_x) ((_x)*MOTION_SENSE_DEFAULT_SCALE)
 
 #endif /* __CROS_EC_ACCELGYRO_H */
