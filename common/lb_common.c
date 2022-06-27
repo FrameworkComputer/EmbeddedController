@@ -101,8 +101,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LIGHTBAR, outstr)
-#define CPRINTF(format, args...) cprintf(CC_LIGHTBAR, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_LIGHTBAR, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_LIGHTBAR, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_LIGHTBAR, format, ##args)
 
 /******************************************************************************/
 /* How to talk to the controller */
@@ -120,9 +120,8 @@ static inline void controller_write(int ctrl_num, uint8_t reg, uint8_t val)
 	buf[0] = reg;
 	buf[1] = val;
 	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr_flags);
-	i2c_xfer_unlocked(I2C_PORT_LIGHTBAR, i2c_addr_flags[ctrl_num],
-			buf, 2, 0, 0,
-			I2C_XFER_SINGLE);
+	i2c_xfer_unlocked(I2C_PORT_LIGHTBAR, i2c_addr_flags[ctrl_num], buf, 2,
+			  0, 0, I2C_XFER_SINGLE);
 }
 
 static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
@@ -132,7 +131,7 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
 
 	ctrl_num = ctrl_num % ARRAY_SIZE(i2c_addr_flags);
 	rv = i2c_xfer_unlocked(I2C_PORT_LIGHTBAR, i2c_addr_flags[ctrl_num],
-			&reg, 1, buf, 1, I2C_XFER_SINGLE);
+			       &reg, 1, buf, 1, I2C_XFER_SINGLE);
 	return rv ? 0 : buf[0];
 }
 
@@ -149,15 +148,15 @@ static inline uint8_t controller_read(int ctrl_num, uint8_t reg)
  * I've lowered the other colors until they all appear approximately equal
  * brightness when full on. That's still pretty bright and a lot of current
  * drain on the battery, so we'll probably rarely go that high. */
-#define MAX_RED   0x5c
+#define MAX_RED 0x5c
 #define MAX_GREEN 0x30
-#define MAX_BLUE  0x67
+#define MAX_BLUE 0x67
 #endif
 #ifdef BOARD_HOST
 /* For testing only */
-#define MAX_RED   0xff
+#define MAX_RED 0xff
 #define MAX_GREEN 0xff
-#define MAX_BLUE  0xff
+#define MAX_BLUE 0xff
 #endif
 
 /* How we'd like to see the driver chips initialized. The controllers have some
@@ -169,20 +168,20 @@ struct initdata_s {
 };
 
 static const struct initdata_s init_vals[] = {
-	{0x04, 0x00},				/* no backlight function */
-	{0x05, 0x3f},				/* xRGBRGB per chip */
-	{0x0f, 0x01},				/* square law looks better */
-	{0x10, 0x3f},				/* enable independent LEDs */
-	{0x11, 0x00},				/* no auto cycling */
-	{0x12, 0x00},				/* no auto cycling */
-	{0x13, 0x00},				/* instant fade in/out */
-	{0x14, 0x00},				/* not using LED 7 */
-	{0x15, 0x00},				/* current for LED 6 (blue) */
-	{0x16, 0x00},				/* current for LED 5 (red) */
-	{0x17, 0x00},				/* current for LED 4 (green) */
-	{0x18, 0x00},				/* current for LED 3 (blue) */
-	{0x19, 0x00},				/* current for LED 2 (red) */
-	{0x1a, 0x00},				/* current for LED 1 (green) */
+	{ 0x04, 0x00 }, /* no backlight function */
+	{ 0x05, 0x3f }, /* xRGBRGB per chip */
+	{ 0x0f, 0x01 }, /* square law looks better */
+	{ 0x10, 0x3f }, /* enable independent LEDs */
+	{ 0x11, 0x00 }, /* no auto cycling */
+	{ 0x12, 0x00 }, /* no auto cycling */
+	{ 0x13, 0x00 }, /* instant fade in/out */
+	{ 0x14, 0x00 }, /* not using LED 7 */
+	{ 0x15, 0x00 }, /* current for LED 6 (blue) */
+	{ 0x16, 0x00 }, /* current for LED 5 (red) */
+	{ 0x17, 0x00 }, /* current for LED 4 (green) */
+	{ 0x18, 0x00 }, /* current for LED 3 (blue) */
+	{ 0x19, 0x00 }, /* current for LED 2 (red) */
+	{ 0x1a, 0x00 }, /* current for LED 1 (green) */
 };
 
 /* Controller register lookup tables. */
@@ -198,7 +197,7 @@ static const uint8_t led_to_isc[] = { 0x15, 0x18, 0x15, 0x18 };
 /* Scale 0-255 into max value */
 static inline uint8_t scale_abs(int val, int max)
 {
-	return (val * max)/255;
+	return (val * max) / 255;
 }
 
 /* This is the overall brightness control. */
@@ -211,7 +210,7 @@ static uint8_t current[NUM_LEDS][3];
 /* Scale 0-255 by brightness */
 static inline uint8_t scale(int val, int max)
 {
-	return scale_abs((val * brightness)/255, max);
+	return scale_abs((val * brightness) / 255, max);
 }
 
 /* Helper function to set one LED color and remember it for later */
@@ -225,8 +224,8 @@ static void setrgb(int led, int red, int green, int blue)
 	bank = led_to_isc[led];
 	i2c_lock(I2C_PORT_LIGHTBAR, 1);
 	controller_write(ctrl, bank, scale(blue, MAX_BLUE));
-	controller_write(ctrl, bank+1, scale(red, MAX_RED));
-	controller_write(ctrl, bank+2, scale(green, MAX_GREEN));
+	controller_write(ctrl, bank + 1, scale(red, MAX_RED));
+	controller_write(ctrl, bank + 2, scale(green, MAX_GREEN));
 	i2c_lock(I2C_PORT_LIGHTBAR, 0);
 }
 
@@ -310,12 +309,10 @@ void lb_on(void)
 	i2c_lock(I2C_PORT_LIGHTBAR, 0);
 }
 
-static const uint8_t dump_reglist[] = {
-	0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-	0x08, 0x09, 0x0a,			  0x0f,
-	0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
-	0x18, 0x19, 0x1a
-};
+static const uint8_t dump_reglist[] = { 0x00, 0x01, 0x02, 0x03, 0x04, 0x05,
+					0x06, 0x07, 0x08, 0x09, 0x0a, 0x0f,
+					0x10, 0x11, 0x12, 0x13, 0x14, 0x15,
+					0x16, 0x17, 0x18, 0x19, 0x1a };
 
 /* Helper for host command to dump controller registers */
 void lb_hc_cmd_dump(struct ec_response_lightbar *out)
@@ -323,8 +320,7 @@ void lb_hc_cmd_dump(struct ec_response_lightbar *out)
 	int i;
 	uint8_t reg;
 
-	BUILD_ASSERT(ARRAY_SIZE(dump_reglist) ==
-		     ARRAY_SIZE(out->dump.vals));
+	BUILD_ASSERT(ARRAY_SIZE(dump_reglist) == ARRAY_SIZE(out->dump.vals));
 
 	for (i = 0; i < ARRAY_SIZE(dump_reglist); i++) {
 		reg = dump_reglist[i];
