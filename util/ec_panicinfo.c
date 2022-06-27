@@ -12,11 +12,10 @@
 
 static void print_panic_reg(int regnum, const uint32_t *regs, int index)
 {
-	static const char * const regname[] = {
-		"r0 ", "r1 ", "r2 ", "r3 ", "r4 ",
-		"r5 ", "r6 ", "r7 ", "r8 ", "r9 ",
-		"r10", "r11", "r12", "sp ", "lr ",
-		"pc "};
+	static const char *const regname[] = { "r0 ", "r1 ", "r2 ", "r3 ",
+					       "r4 ", "r5 ", "r6 ", "r7 ",
+					       "r8 ", "r9 ", "r10", "r11",
+					       "r12", "sp ", "lr ", "pc " };
 
 	printf("%s:", regname[regnum]);
 	if (regs)
@@ -56,14 +55,15 @@ static int parse_panic_info_cm(const struct panic_data *pdata)
 		ORIG_HANDLER
 	} origin = ORIG_UNKNOWN;
 	int i;
-	const char *panic_origins[3] = {"", "PROCESS", "HANDLER"};
+	const char *panic_origins[3] = { "", "PROCESS", "HANDLER" };
 
 	printf("Saved panic data:%s\n",
 	       (pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD ? "" : " (NEW)"));
 
 	if (pdata->struct_version == 2)
 		origin = ((lregs[11] & 0xf) == 1 || (lregs[11] & 0xf) == 9) ?
-			 ORIG_HANDLER : ORIG_PROCESS;
+				 ORIG_HANDLER :
+				 ORIG_PROCESS;
 
 	/*
 	 * In pdata struct, 'regs', which is allocated before 'frame', has
@@ -75,8 +75,7 @@ static int parse_panic_info_cm(const struct panic_data *pdata)
 		sregs = pdata->cm.frame - (pdata->struct_version == 1 ? 1 : 0);
 
 	printf("=== %s EXCEPTION: %02x ====== xPSR: %08x ===\n",
-	       panic_origins[origin],
-	       lregs[1] & 0xff, sregs ? sregs[7] : -1);
+	       panic_origins[origin], lregs[1] & 0xff, sregs ? sregs[7] : -1);
 	for (i = 0; i < 4; ++i)
 		print_panic_reg(i, sregs, i);
 	for (i = 4; i < 10; ++i)
@@ -104,14 +103,14 @@ static int parse_panic_info_nds32(const struct panic_data *pdata)
 	       (pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD ? "" : " (NEW)"));
 
 	printf("=== EXCEP: ITYPE=%x ===\n", itype);
-	printf("R0  %08x R1  %08x R2  %08x R3  %08x\n",
-		     regs[0], regs[1], regs[2], regs[3]);
-	printf("R4  %08x R5  %08x R6  %08x R7  %08x\n",
-		     regs[4], regs[5], regs[6], regs[7]);
-	printf("R8  %08x R9  %08x R10 %08x R15 %08x\n",
-		     regs[8], regs[9], regs[10], regs[11]);
-	printf("FP  %08x GP  %08x LP  %08x SP  %08x\n",
-		     regs[12], regs[13], regs[14], regs[15]);
+	printf("R0  %08x R1  %08x R2  %08x R3  %08x\n", regs[0], regs[1],
+	       regs[2], regs[3]);
+	printf("R4  %08x R5  %08x R6  %08x R7  %08x\n", regs[4], regs[5],
+	       regs[6], regs[7]);
+	printf("R8  %08x R9  %08x R10 %08x R15 %08x\n", regs[8], regs[9],
+	       regs[10], regs[11]);
+	printf("FP  %08x GP  %08x LP  %08x SP  %08x\n", regs[12], regs[13],
+	       regs[14], regs[15]);
 	printf("IPC %08x IPSW   %05x\n", ipc, ipsw);
 	printf("SWID of ITYPE: %x\n", ((itype >> 16) & 0x7fff));
 
@@ -127,22 +126,22 @@ static int parse_panic_info_rv32i(const struct panic_data *pdata)
 	mepc = pdata->riscv.mepc;
 
 	printf("=== EXCEPTION: MCAUSE=%x ===\n", mcause);
-	printf("S11 %08x S10 %08x  S9 %08x  S8   %08x\n",
-	       regs[0], regs[1], regs[2], regs[3]);
-	printf("S7  %08x S6  %08x  S5 %08x  S4   %08x\n",
-	       regs[4], regs[5], regs[6], regs[7]);
-	printf("S3  %08x S2  %08x  S1 %08x  S0   %08x\n",
-	       regs[8], regs[9], regs[10], regs[11]);
-	printf("T6  %08x T5  %08x  T4 %08x  T3   %08x\n",
-	       regs[12], regs[13], regs[14], regs[15]);
-	printf("T2  %08x T1  %08x  T0 %08x  A7   %08x\n",
-	       regs[16], regs[17], regs[18], regs[19]);
-	printf("A6  %08x A5  %08x  A4 %08x  A3   %08x\n",
-	       regs[20], regs[21], regs[22], regs[23]);
-	printf("A2  %08x A1  %08x  A0 %08x  TP   %08x\n",
-	       regs[24], regs[25], regs[26], regs[27]);
-	printf("GP  %08x RA  %08x  SP %08x  MEPC %08x\n",
-	       regs[28], regs[29], regs[30], mepc);
+	printf("S11 %08x S10 %08x  S9 %08x  S8   %08x\n", regs[0], regs[1],
+	       regs[2], regs[3]);
+	printf("S7  %08x S6  %08x  S5 %08x  S4   %08x\n", regs[4], regs[5],
+	       regs[6], regs[7]);
+	printf("S3  %08x S2  %08x  S1 %08x  S0   %08x\n", regs[8], regs[9],
+	       regs[10], regs[11]);
+	printf("T6  %08x T5  %08x  T4 %08x  T3   %08x\n", regs[12], regs[13],
+	       regs[14], regs[15]);
+	printf("T2  %08x T1  %08x  T0 %08x  A7   %08x\n", regs[16], regs[17],
+	       regs[18], regs[19]);
+	printf("A6  %08x A5  %08x  A4 %08x  A3   %08x\n", regs[20], regs[21],
+	       regs[22], regs[23]);
+	printf("A2  %08x A1  %08x  A0 %08x  TP   %08x\n", regs[24], regs[25],
+	       regs[26], regs[27]);
+	printf("GP  %08x RA  %08x  SP %08x  MEPC %08x\n", regs[28], regs[29],
+	       regs[30], mepc);
 
 	return 0;
 }
@@ -153,7 +152,7 @@ int parse_panic_info(const char *data, size_t size)
 	const size_t header_size = 4;
 	/* Size of the panic information "trailer" (struct_size and magic). */
 	const size_t trailer_size = sizeof(struct panic_data) -
-				 offsetof(struct panic_data, struct_size);
+				    offsetof(struct panic_data, struct_size);
 
 	struct panic_data pdata = { 0 };
 	size_t copy_size;
@@ -164,7 +163,8 @@ int parse_panic_info(const char *data, size_t size)
 	}
 
 	if (size > sizeof(pdata)) {
-		fprintf(stderr, "WARNING: Panic data too large (%zd > %zd). "
+		fprintf(stderr,
+			"WARNING: Panic data too large (%zd > %zd). "
 			"Following data may be incorrect!\n",
 			size, sizeof(pdata));
 		copy_size = sizeof(pdata);
@@ -175,20 +175,22 @@ int parse_panic_info(const char *data, size_t size)
 	memcpy(&pdata, data, copy_size);
 	/* Then copy the trailer in position. */
 	memcpy((char *)&pdata + (sizeof(struct panic_data) - trailer_size),
-		data + (size - trailer_size), trailer_size);
+	       data + (size - trailer_size), trailer_size);
 
 	/*
 	 * We only understand panic data with version <= 2. Warn the user
 	 * of higher versions.
 	 */
 	if (pdata.struct_version > 2)
-		fprintf(stderr, "WARNING: Unknown panic data version (%d). "
+		fprintf(stderr,
+			"WARNING: Unknown panic data version (%d). "
 			"Following data may be incorrect!\n",
 			pdata.struct_version);
 
 	/* Validate magic number */
 	if (pdata.magic != PANIC_DATA_MAGIC)
-		fprintf(stderr, "WARNING: Incorrect panic magic (%d). "
+		fprintf(stderr,
+			"WARNING: Incorrect panic magic (%d). "
 			"Following data may be incorrect!\n",
 			pdata.magic);
 
