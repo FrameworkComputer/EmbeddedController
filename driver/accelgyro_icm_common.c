@@ -16,12 +16,12 @@
 #include "driver/accelgyro_icm426xx.h"
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
 #ifdef CONFIG_ACCELGYRO_ICM_COMM_SPI
-static int icm_spi_raw_read(const int addr, const uint8_t reg,
-			    uint8_t *data, const int len)
+static int icm_spi_raw_read(const int addr, const uint8_t reg, uint8_t *data,
+			    const int len)
 {
 	uint8_t cmd = 0x80 | reg;
 
@@ -151,8 +151,7 @@ int icm_read16(const struct motion_sensor_t *s, const int reg, int *data_ptr)
 		}
 	}
 #else
-	ret = i2c_read16(s->port, s->i2c_spi_addr_flags,
-			addr, data_ptr);
+	ret = i2c_read16(s->port, s->i2c_spi_addr_flags, addr, data_ptr);
 #endif
 
 	return ret;
@@ -287,12 +286,12 @@ int icm_get_scale(const struct motion_sensor_t *s, uint16_t *scale,
 }
 
 /* FIFO header: 1 byte */
-#define ICM_FIFO_HEADER_MSG		BIT(7)
-#define ICM_FIFO_HEADER_ACCEL		BIT(6)
-#define ICM_FIFO_HEADER_GYRO		BIT(5)
-#define ICM_FIFO_HEADER_TMST_FSYNC	GENMASK(3, 2)
-#define ICM_FIFO_HEADER_ODR_ACCEL	BIT(1)
-#define ICM_FIFO_HEADER_ODR_GYRO	BIT(0)
+#define ICM_FIFO_HEADER_MSG BIT(7)
+#define ICM_FIFO_HEADER_ACCEL BIT(6)
+#define ICM_FIFO_HEADER_GYRO BIT(5)
+#define ICM_FIFO_HEADER_TMST_FSYNC GENMASK(3, 2)
+#define ICM_FIFO_HEADER_ODR_ACCEL BIT(1)
+#define ICM_FIFO_HEADER_ODR_GYRO BIT(0)
 
 /* FIFO data packet */
 struct icm_fifo_sensor_data {
@@ -306,7 +305,7 @@ struct icm_fifo_1sensor_packet {
 	struct icm_fifo_sensor_data data;
 	int8_t temp;
 } __packed;
-#define ICM_FIFO_1SENSOR_PACKET_SIZE	8
+#define ICM_FIFO_1SENSOR_PACKET_SIZE 8
 
 struct icm_fifo_2sensors_packet {
 	uint8_t header;
@@ -315,10 +314,10 @@ struct icm_fifo_2sensors_packet {
 	int8_t temp;
 	uint16_t timestamp;
 } __packed;
-#define ICM_FIFO_2SENSORS_PACKET_SIZE	16
+#define ICM_FIFO_2SENSORS_PACKET_SIZE 16
 
 ssize_t icm_fifo_decode_packet(const void *packet, const uint8_t **accel,
-		const uint8_t **gyro)
+			       const uint8_t **gyro)
 {
 	const struct icm_fifo_1sensor_packet *pack1 = packet;
 	const struct icm_fifo_2sensors_packet *pack2 = packet;
