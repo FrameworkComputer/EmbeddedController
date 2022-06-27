@@ -21,7 +21,7 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 #define DISPLIGHT_PWM_NODE DT_INST_PWMS_CTLR(0)
 #define DISPLIGHT_PWM_CHANNEL DT_INST_PWMS_CHANNEL(0)
 #define DISPLIGHT_PWM_FLAGS DT_INST_PWMS_FLAGS(0)
-#define DISPLIGHT_PWM_PERIOD_NS (NSEC_PER_SEC/DT_INST_PROP(0, frequency))
+#define DISPLIGHT_PWM_PERIOD_NS (NSEC_PER_SEC / DT_INST_PROP(0, frequency))
 
 static int displight_percent;
 
@@ -38,8 +38,8 @@ static void displight_set_duty(int percent)
 
 	pulse_ns = DIV_ROUND_NEAREST(DISPLIGHT_PWM_PERIOD_NS * percent, 100);
 
-	LOG_DBG("displight PWM %s set percent (%d), pulse %d",
-		pwm_dev->name, percent, pulse_ns);
+	LOG_DBG("displight PWM %s set percent (%d), pulse %d", pwm_dev->name,
+		percent, pulse_ns);
 
 	rv = pwm_set(pwm_dev, DISPLIGHT_PWM_CHANNEL, DISPLIGHT_PWM_PERIOD_NS,
 		     pulse_ns, DISPLIGHT_PWM_FLAGS);
