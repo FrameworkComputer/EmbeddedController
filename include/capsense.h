@@ -11,4 +11,4 @@
 
 void capsense_interrupt(enum gpio_signal signal);
 
-#endif  /* __CROS_EC_CAPSENSE_H */
+#endif /* __CROS_EC_CAPSENSE_H */
