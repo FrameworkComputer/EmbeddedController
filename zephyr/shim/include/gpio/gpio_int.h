@@ -23,8 +23,7 @@
 /*
  * Maps nodelabel of interrupt node to internal configuration block.
  */
-#define GPIO_INT_FROM_NODELABEL(lbl) \
-	(GPIO_INT_FROM_NODE(DT_NODELABEL(lbl)))
+#define GPIO_INT_FROM_NODELABEL(lbl) (GPIO_INT_FROM_NODE(DT_NODELABEL(lbl)))
 
 /*
  * Unique enum name for the interrupt.
@@ -38,7 +37,7 @@
 enum gpio_interrupts {
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
 	DT_FOREACH_CHILD(DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_interrupts),
-		GPIO_INT_ENUM_WITH_COMMA)
+			 GPIO_INT_ENUM_WITH_COMMA)
 #endif
 		GPIO_INT_COUNT
 };
@@ -60,24 +59,24 @@ struct gpio_int_config;
  *   ... // set up device
  *   gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(my_interrupt_node));
  */
-int gpio_enable_dt_interrupt(const struct gpio_int_config * const ic);
+int gpio_enable_dt_interrupt(const struct gpio_int_config *const ic);
 
 /*
  * Disable the interrupt.
  */
-int gpio_disable_dt_interrupt(const struct gpio_int_config * const ic);
+int gpio_disable_dt_interrupt(const struct gpio_int_config *const ic);
 
 /*
  * Get the interrupt config for this interrupt.
  */
 const struct gpio_int_config *
-	gpio_interrupt_get_config(enum gpio_interrupts intr);
+gpio_interrupt_get_config(enum gpio_interrupts intr);
 
 /*
  * Declare interrupt configuration data structures.
  */
-#define GPIO_INT_DECLARE(id)	\
-	extern const struct gpio_int_config * const GPIO_INT_FROM_NODE(id);
+#define GPIO_INT_DECLARE(id) \
+	extern const struct gpio_int_config *const GPIO_INT_FROM_NODE(id);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
 DT_FOREACH_CHILD(DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_interrupts),
