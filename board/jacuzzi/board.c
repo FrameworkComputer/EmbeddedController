@@ -46,8 +46,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -59,50 +59,42 @@ static void tcpc_alert_event(enum gpio_signal signal)
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] =  {"BOARD_ID",  3300, 4096, 0, STM32_AIN(10)},
-	[ADC_EC_SKU_ID] = {"EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8)},
+	[ADC_BOARD_ID] = { "BOARD_ID", 3300, 4096, 0, STM32_AIN(10) },
+	[ADC_EC_SKU_ID] = { "EC_SKU_ID", 3300, 4096, 0, STM32_AIN(8) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "typec",
-		.port = 0,
-		.kbps = 400,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
+	{ .name = "typec",
+	  .port = 0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
 #ifdef BOARD_JACUZZI
-	{
-		.name = "other",
-		.port = 1,
-		.kbps = 100,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
+	{ .name = "other",
+	  .port = 1,
+	  .kbps = 100,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
 #else /* Juniper */
-	{
-		.name = "other",
-		.port = 1,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
+	{ .name = "other",
+	  .port = 1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
 #endif
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 const struct i2c_port_t i2c_bitbang_ports[] = {
-	{
-		.name = "battery",
-		.port = 2,
-		.kbps = 100,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA,
-		.drv = &bitbang_drv
-	},
+	{ .name = "battery",
+	  .port = 2,
+	  .kbps = 100,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA,
+	  .drv = &bitbang_drv },
 };
 const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
@@ -110,8 +102,8 @@ const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_AP_IN_SLEEP_L,   POWER_SIGNAL_ACTIVE_LOW,  "AP_IN_S3_L"},
-	{GPIO_PMIC_EC_RESETB,  POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD"},
+	{ GPIO_AP_IN_SLEEP_L, POWER_SIGNAL_ACTIVE_LOW, "AP_IN_S3_L" },
+	{ GPIO_PMIC_EC_RESETB, POWER_SIGNAL_ACTIVE_HIGH, "PMIC_PWR_GOOD" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
@@ -167,8 +159,7 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-static void board_hpd_status(const struct usb_mux *me,
-			     mux_state_t mux_state,
+static void board_hpd_status(const struct usb_mux *me, mux_state_t mux_state,
 			     bool *ack_required)
 {
 	/* This driver does not use host command ACKs */
@@ -249,12 +240,12 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-			       CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 int board_discharge_on_ac(int enable)
@@ -311,8 +302,7 @@ static void board_spi_enable(void)
 	/* Pin mux spi peripheral toward the sensor. */
 	gpio_config_module(MODULE_SPI_CONTROLLER, 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
-	     board_spi_enable,
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_spi_enable,
 	     MOTION_SENSE_HOOK_PRIO - 1);
 
 static void board_spi_disable(void)
@@ -329,8 +319,7 @@ static void board_spi_disable(void)
 	spi_enable(&spi_devices[0], 0);
 	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
-	     board_spi_disable,
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_spi_disable,
 	     MOTION_SENSE_HOOK_PRIO + 1);
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 
@@ -368,14 +357,12 @@ static void board_init(void)
 #ifndef VARIANT_KUKUI_NO_SENSORS
 		motion_sensor_count = 0;
 		gpio_disable_interrupt(GPIO_ACCEL_INT_ODL);
-		gpio_set_flags(GPIO_ACCEL_INT_ODL,
-			       GPIO_INPUT | GPIO_PULL_DOWN);
+		gpio_set_flags(GPIO_ACCEL_INT_ODL, GPIO_INPUT | GPIO_PULL_DOWN);
 #endif /* !VARIANT_KUKUI_NO_SENSORS */
 		/* Disable tablet mode. */
 		tablet_set_mode(0, TABLET_TRIGGER_LID);
 		gmr_tablet_switch_disable();
-		gpio_set_flags(GPIO_TABLET_MODE_L,
-			       GPIO_INPUT | GPIO_PULL_UP);
+		gpio_set_flags(GPIO_TABLET_MODE_L, GPIO_INPUT | GPIO_PULL_UP);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
@@ -387,17 +374,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Rotation matrixes */
-static const mat33_fp_t base_bmi160_ref = {
-	{FLOAT_TO_FP(1), 0, 0},
-	{0, FLOAT_TO_FP(1), 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_bmi160_ref = { { FLOAT_TO_FP(1), 0, 0 },
+					    { 0, FLOAT_TO_FP(1), 0 },
+					    { 0, 0, FLOAT_TO_FP(1) } };
 
-static const mat33_fp_t base_icm426xx_ref = {
-	{0, FLOAT_TO_FP(-1), 0},
-	{FLOAT_TO_FP(1), 0, 0},
-	{0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t base_icm426xx_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+					      { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
@@ -558,10 +541,11 @@ static void board_detect_motionsensor(void)
 		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
 		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
 	}
-	base_accelgyro_config = (val == ICM426XX_CHIP_ICM40608)
-		 ? BASE_GYRO_ICM426XX : BASE_GYRO_BMI160;
-	CPRINTS("Base Accelgyro: %s", (val == ICM426XX_CHIP_ICM40608)
-		 ? "ICM40608" : "BMI160");
+	base_accelgyro_config = (val == ICM426XX_CHIP_ICM40608) ?
+					BASE_GYRO_ICM426XX :
+					BASE_GYRO_BMI160;
+	CPRINTS("Base Accelgyro: %s",
+		(val == ICM426XX_CHIP_ICM40608) ? "ICM40608" : "BMI160");
 }
 DECLARE_HOOK(HOOK_INIT, board_detect_motionsensor, HOOK_PRIO_DEFAULT);
 
