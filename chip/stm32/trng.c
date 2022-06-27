@@ -57,8 +57,8 @@ test_mockable void init_trng(void)
 		;
 
 	/* Clock the TRNG using the HSI48 */
-	STM32_RCC_CCIPR = (STM32_RCC_CCIPR & ~STM32_RCC_CCIPR_CLK48SEL_MASK)
-			| (0 << STM32_RCC_CCIPR_CLK48SEL_SHIFT);
+	STM32_RCC_CCIPR = (STM32_RCC_CCIPR & ~STM32_RCC_CCIPR_CLK48SEL_MASK) |
+			  (0 << STM32_RCC_CCIPR_CLK48SEL_SHIFT);
 #elif defined(CHIP_FAMILY_STM32H7)
 	/* Enable the 48Mhz internal RC oscillator */
 	STM32_RCC_CR |= STM32_RCC_CR_HSI48ON;
@@ -68,8 +68,8 @@ test_mockable void init_trng(void)
 
 	/* Clock the TRNG using the HSI48 */
 	STM32_RCC_D2CCIP2R =
-		(STM32_RCC_D2CCIP2R & ~STM32_RCC_D2CCIP2_RNGSEL_MASK)
-			| STM32_RCC_D2CCIP2_RNGSEL_HSI48;
+		(STM32_RCC_D2CCIP2R & ~STM32_RCC_D2CCIP2_RNGSEL_MASK) |
+		STM32_RCC_D2CCIP2_RNGSEL_HSI48;
 #elif defined(CHIP_FAMILY_STM32F4)
 	/*
 	 * The RNG clock is the same as the SDIO/USB OTG clock, already set at
@@ -115,8 +115,8 @@ static int command_rand(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(rand, command_rand,
-			NULL, "Output random bytes to console.");
+DECLARE_CONSOLE_COMMAND(rand, command_rand, NULL,
+			"Output random bytes to console.");
 
 static enum ec_status host_command_rand(struct host_cmd_handler_args *args)
 {
