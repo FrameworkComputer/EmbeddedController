@@ -17,8 +17,8 @@
 #include "task.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ##args)
 
 #ifndef CONFIG_ACCEL_FIFO
 #error This driver needs CONFIG_ACCEL_FIFO
@@ -35,7 +35,7 @@ static struct queue const sync_event_queue =
 struct sync_event_t next_event;
 struct ec_response_motion_sensor_data vector = {
 	.flags = MOTIONSENSE_SENSOR_FLAG_BYPASS_FIFO,
-	.data = {0, 0, 0}
+	.data = { 0, 0, 0 }
 };
 
 int sync_enabled;
@@ -51,8 +51,8 @@ static int sync_read(const struct motion_sensor_t *s, intv3_t v)
  * still depends on being able to set this to 0 to disable it, we'll just use
  * non 0 rate values as an enable boolean.
  */
-static int sync_set_data_rate(const struct motion_sensor_t *s,
-				int rate, int roundup)
+static int sync_set_data_rate(const struct motion_sensor_t *s, int rate,
+			      int roundup)
 {
 	sync_enabled = !!rate;
 	CPRINTF("sync event driver enabling=%d\n", sync_enabled);
@@ -88,8 +88,8 @@ static int motion_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 	while (queue_remove_unit(&sync_event_queue, &sync_event)) {
 		vector.data[X] = sync_event.counter;
-		motion_sense_fifo_stage_data(
-			&vector, s, 1, sync_event.timestamp);
+		motion_sense_fifo_stage_data(&vector, s, 1,
+					     sync_event.timestamp);
 	}
 	motion_sense_fifo_commit_data();
 
@@ -118,9 +118,7 @@ static int command_sync(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(sync, command_sync,
-	"[count]",
-	"Simulates sync events");
+DECLARE_CONSOLE_COMMAND(sync, command_sync, "[count]", "Simulates sync events");
 #endif
 
 const struct accelgyro_drv sync_drv = {
