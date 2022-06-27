@@ -18,28 +18,27 @@
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 
-#define BMI_ORD			DT_DEP_ORD(DT_NODELABEL(accel_bmi260))
-#define BMI_ACC_SENSOR_ID	SENSOR_ID(DT_NODELABEL(ms_bmi260_accel))
-#define BMI_GYR_SENSOR_ID	SENSOR_ID(DT_NODELABEL(ms_bmi260_gyro))
-#define BMI_INT_EVENT		\
+#define BMI_ORD DT_DEP_ORD(DT_NODELABEL(accel_bmi260))
+#define BMI_ACC_SENSOR_ID SENSOR_ID(DT_NODELABEL(ms_bmi260_accel))
+#define BMI_GYR_SENSOR_ID SENSOR_ID(DT_NODELABEL(ms_bmi260_gyro))
+#define BMI_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bmi260_int)))
 
 /** How accurate comparision of vectors should be */
-#define V_EPS		8
+#define V_EPS 8
 
 /** Convert from one type of vector to another */
-#define convert_int3v_int16(v, r) do {	\
-		r[0] = v[0];		\
-		r[1] = v[1];		\
-		r[2] = v[2];		\
+#define convert_int3v_int16(v, r) \
+	do {                      \
+		r[0] = v[0];      \
+		r[1] = v[1];      \
+		r[2] = v[2];      \
 	} while (0)
 
 /** Rotation used in some tests */
-static const mat33_fp_t test_rotation = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+static const mat33_fp_t test_rotation = { { 0, FLOAT_TO_FP(1), 0 },
+					  { FLOAT_TO_FP(-1), 0, 0 },
+					  { 0, 0, FLOAT_TO_FP(-1) } };
 /** Rotate given vector by test rotation */
 static void rotate_int3v_by_test_rotation(intv3_t v)
 {
@@ -126,7 +125,8 @@ static void compare_int3v_f(intv3_t exp_v, intv3_t v, int eps, int line)
 	int i;
 
 	for (i = 0; i < 3; i++) {
-		zassert_within(exp_v[i], v[i], eps,
+		zassert_within(
+			exp_v[i], v[i], eps,
 			"Expected [%d; %d; %d], got [%d; %d; %d]; line: %d",
 			exp_v[0], exp_v[1], exp_v[2], v[0], v[1], v[2], line);
 	}
@@ -208,8 +208,7 @@ ZTEST_USER(bmi260, test_bmi_acc_get_offset)
 	ms->rot_standard_ref = NULL;
 
 	/* Test get offset without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp),
-		      NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp), NULL);
 	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
 	convert_int3v_int16(ret, ret_v);
 	compare_int3v(exp_v, ret_v);
@@ -219,8 +218,7 @@ ZTEST_USER(bmi260, test_bmi_acc_get_offset)
 	rotate_int3v_by_test_rotation(exp_v);
 
 	/* Test get offset with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp),
-		      NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp), NULL);
 	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
 	convert_int3v_int16(ret, ret_v);
 	compare_int3v(exp_v, ret_v);
@@ -271,8 +269,7 @@ ZTEST_USER(bmi260, test_bmi_gyr_get_offset)
 	ms->rot_standard_ref = NULL;
 
 	/* Test get offset without rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp),
-		      NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp), NULL);
 	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
 	convert_int3v_int16(ret, ret_v);
 	compare_int3v_eps(exp_v, ret_v, 64);
@@ -282,8 +279,7 @@ ZTEST_USER(bmi260, test_bmi_gyr_get_offset)
 	rotate_int3v_by_test_rotation(exp_v);
 
 	/* Test get offset with rotation */
-	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp),
-		      NULL);
+	zassert_equal(EC_SUCCESS, ms->drv->get_offset(ms, ret, &temp), NULL);
 	zassert_equal(temp, (int16_t)EC_MOTION_SENSE_INVALID_CALIB_TEMP, NULL);
 	convert_int3v_int16(ret, ret_v);
 	compare_int3v_eps(exp_v, ret_v, 64);
@@ -352,8 +348,8 @@ ZTEST_USER(bmi260, test_bmi_acc_set_offset)
 	nv_c = bmi_emul_get_reg(emul, BMI260_NV_CONF);
 	/* Only ACC_OFFSET_EN bit should be changed */
 	zassert_equal(0x7 | BMI260_ACC_OFFSET_EN, nv_c,
-		      "Expected 0x%x, got 0x%x",
-		      0x7 | BMI260_ACC_OFFSET_EN, nv_c);
+		      "Expected 0x%x, got 0x%x", 0x7 | BMI260_ACC_OFFSET_EN,
+		      nv_c);
 
 	/* Setup NV_CONF register value */
 	bmi_emul_set_reg(emul, BMI260_NV_CONF, 0);
@@ -432,7 +428,8 @@ ZTEST_USER(bmi260, test_bmi_gyr_set_offset)
 	compare_int3v_eps(exp_v, ret_v, 32);
 	/* Gyroscope offset should be enabled */
 	zassert_true(bmi_emul_get_reg(emul, BMI260_OFFSET_EN_GYR98) &
-		     BMI260_OFFSET_GYRO_EN, NULL);
+			     BMI260_OFFSET_GYRO_EN,
+		     NULL);
 
 	/* Setup rotation and rotate input for set_offset function */
 	ms->rot_standard_ref = &test_rotation;
@@ -445,7 +442,8 @@ ZTEST_USER(bmi260, test_bmi_gyr_set_offset)
 	get_emul_gyr_offset(emul, ret_v);
 	compare_int3v_eps(exp_v, ret_v, 32);
 	zassert_true(bmi_emul_get_reg(emul, BMI260_OFFSET_EN_GYR98) &
-		     BMI260_OFFSET_GYRO_EN, NULL);
+			     BMI260_OFFSET_GYRO_EN,
+		     NULL);
 }
 
 /**
@@ -462,8 +460,8 @@ static void check_set_acc_range_f(struct i2c_emul *emul,
 	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, range, rnd),
 		      "set_range failed; line: %d", line);
 	zassert_equal(exp_range, ms->current_range,
-		      "Expected range %d, got %d; line %d",
-		      exp_range, ms->current_range, line);
+		      "Expected range %d, got %d; line %d", exp_range,
+		      ms->current_range, line);
 	range_reg = bmi_emul_get_reg(emul, BMI260_ACC_RANGE);
 
 	switch (exp_range) {
@@ -491,7 +489,7 @@ static void check_set_acc_range_f(struct i2c_emul *emul,
 		      "Expected range reg 0x%x, got 0x%x; line %d",
 		      exp_range_reg, range_reg, line);
 }
-#define check_set_acc_range(emul, ms, range, rnd, exp_range)	\
+#define check_set_acc_range(emul, ms, range, rnd, exp_range) \
 	check_set_acc_range_f(emul, ms, range, rnd, exp_range, __LINE__)
 
 /** Test set accelerometer range with and without I2C errors */
@@ -514,12 +512,12 @@ ZTEST_USER(bmi260, test_bmi_acc_set_range)
 	/* Test fail on write */
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 12, 0), NULL);
 	zassert_equal(start_range, ms->current_range, NULL);
-	zassert_equal(BMI260_GSEL_2G,
-		      bmi_emul_get_reg(emul, BMI260_ACC_RANGE), NULL);
+	zassert_equal(BMI260_GSEL_2G, bmi_emul_get_reg(emul, BMI260_ACC_RANGE),
+		      NULL);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_range(ms, 12, 1), NULL);
 	zassert_equal(start_range, ms->current_range, NULL);
-	zassert_equal(BMI260_GSEL_2G,
-		      bmi_emul_get_reg(emul, BMI260_ACC_RANGE), NULL);
+	zassert_equal(BMI260_GSEL_2G, bmi_emul_get_reg(emul, BMI260_ACC_RANGE),
+		      NULL);
 
 	/* Do not fail on write */
 	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -567,8 +565,8 @@ static void check_set_gyr_range_f(struct i2c_emul *emul,
 	zassert_equal(EC_SUCCESS, ms->drv->set_range(ms, range, rnd),
 		      "set_range failed; line: %d", line);
 	zassert_equal(exp_range, ms->current_range,
-		      "Expected range %d, got %d; line %d",
-		      exp_range, ms->current_range, line);
+		      "Expected range %d, got %d; line %d", exp_range,
+		      ms->current_range, line);
 	range_reg = bmi_emul_get_reg(emul, BMI260_GYR_RANGE);
 
 	switch (exp_range) {
@@ -599,7 +597,7 @@ static void check_set_gyr_range_f(struct i2c_emul *emul,
 		      "Expected range reg 0x%x, got 0x%x; line %d",
 		      exp_range_reg, range_reg, line);
 }
-#define check_set_gyr_range(emul, ms, range, rnd, exp_range)	\
+#define check_set_gyr_range(emul, ms, range, rnd, exp_range) \
 	check_set_gyr_range_f(emul, ms, range, rnd, exp_range, __LINE__)
 
 /** Test set gyroscope range with and without I2C errors */
@@ -741,10 +739,10 @@ static void check_set_acc_rate_f(struct i2c_emul *emul,
 	}
 
 	zassert_equal(exp_rate_reg, rate_reg,
-		      "Expected rate reg 0x%x, got 0x%x; line %d",
-		      exp_rate_reg, rate_reg, line);
+		      "Expected rate reg 0x%x, got 0x%x; line %d", exp_rate_reg,
+		      rate_reg, line);
 }
-#define check_set_acc_rate(emul, ms, rate, rnd, exp_rate)	\
+#define check_set_acc_rate(emul, ms, rate, rnd, exp_rate) \
 	check_set_acc_rate_f(emul, ms, rate, rnd, exp_rate, __LINE__)
 
 /** Test set and get accelerometer rate with and without I2C errors */
@@ -798,8 +796,8 @@ ZTEST_USER(bmi260, test_bmi_acc_rate)
 	check_set_acc_rate(emul, ms, 200000, 1, 200000);
 
 	/* Test out of range rate with rounding down */
-	zassert_equal(EC_RES_INVALID_PARAM,
-		      ms->drv->set_data_rate(ms, 1, 0), NULL);
+	zassert_equal(EC_RES_INVALID_PARAM, ms->drv->set_data_rate(ms, 1, 0),
+		      NULL);
 	zassert_equal(EC_RES_INVALID_PARAM,
 		      ms->drv->set_data_rate(ms, 12499, 0), NULL);
 	zassert_equal(EC_RES_INVALID_PARAM,
@@ -808,10 +806,10 @@ ZTEST_USER(bmi260, test_bmi_acc_rate)
 		      ms->drv->set_data_rate(ms, 2000000, 0), NULL);
 
 	/* Test out of range rate with rounding up */
-	zassert_equal(EC_RES_INVALID_PARAM,
-		      ms->drv->set_data_rate(ms, 1, 1), NULL);
-	zassert_equal(EC_RES_INVALID_PARAM,
-		      ms->drv->set_data_rate(ms, 6250, 1), NULL);
+	zassert_equal(EC_RES_INVALID_PARAM, ms->drv->set_data_rate(ms, 1, 1),
+		      NULL);
+	zassert_equal(EC_RES_INVALID_PARAM, ms->drv->set_data_rate(ms, 6250, 1),
+		      NULL);
 	zassert_equal(EC_RES_INVALID_PARAM,
 		      ms->drv->set_data_rate(ms, 200001, 1), NULL);
 	zassert_equal(EC_RES_INVALID_PARAM,
@@ -945,10 +943,10 @@ static void check_set_gyr_rate_f(struct i2c_emul *emul,
 	}
 
 	zassert_equal(exp_rate_reg, rate_reg,
-		      "Expected rate reg 0x%x, got 0x%x; line %d",
-		      exp_rate_reg, rate_reg, line);
+		      "Expected rate reg 0x%x, got 0x%x; line %d", exp_rate_reg,
+		      rate_reg, line);
 }
-#define check_set_gyr_rate(emul, ms, rate, rnd, exp_rate)	\
+#define check_set_gyr_rate(emul, ms, rate, rnd, exp_rate) \
 	check_set_gyr_rate_f(emul, ms, rate, rnd, exp_rate, __LINE__)
 
 /** Test set and get gyroscope rate with and without I2C errors */
@@ -996,8 +994,8 @@ ZTEST_USER(bmi260, test_bmi_gyr_rate)
 	check_set_gyr_rate(emul, ms, 200000, 1, 200000);
 
 	/* Test out of range rate with rounding down */
-	zassert_equal(EC_RES_INVALID_PARAM,
-		      ms->drv->set_data_rate(ms, 1, 0), NULL);
+	zassert_equal(EC_RES_INVALID_PARAM, ms->drv->set_data_rate(ms, 1, 0),
+		      NULL);
 	zassert_equal(EC_RES_INVALID_PARAM,
 		      ms->drv->set_data_rate(ms, 24999, 0), NULL);
 	zassert_equal(EC_RES_INVALID_PARAM,
@@ -1006,8 +1004,8 @@ ZTEST_USER(bmi260, test_bmi_gyr_rate)
 		      ms->drv->set_data_rate(ms, 4000000, 0), NULL);
 
 	/* Test out of range rate with rounding up */
-	zassert_equal(EC_RES_INVALID_PARAM,
-		      ms->drv->set_data_rate(ms, 1, 1), NULL);
+	zassert_equal(EC_RES_INVALID_PARAM, ms->drv->set_data_rate(ms, 1, 1),
+		      NULL);
 	zassert_equal(EC_RES_INVALID_PARAM,
 		      ms->drv->set_data_rate(ms, 12499, 1), NULL);
 	zassert_equal(EC_RES_INVALID_PARAM,
@@ -1086,7 +1084,7 @@ ZTEST_USER(bmi260, test_bmi_scale)
 {
 	struct motion_sensor_t *ms;
 	int16_t ret_scale[3];
-	int16_t exp_scale[3] = {100, 231, 421};
+	int16_t exp_scale[3] = { 100, 231, 421 };
 	int16_t t;
 
 	/* Test accelerometer */
@@ -1198,9 +1196,9 @@ ZTEST_USER(bmi260, test_bmi_acc_read)
 	struct i2c_emul *emul;
 	intv3_t ret_v;
 	intv3_t exp_v;
-	int16_t scale[3] = {MOTION_SENSE_DEFAULT_SCALE,
-			    MOTION_SENSE_DEFAULT_SCALE,
-			    MOTION_SENSE_DEFAULT_SCALE};
+	int16_t scale[3] = { MOTION_SENSE_DEFAULT_SCALE,
+			     MOTION_SENSE_DEFAULT_SCALE,
+			     MOTION_SENSE_DEFAULT_SCALE };
 
 	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
@@ -1306,9 +1304,9 @@ ZTEST_USER(bmi260, test_bmi_gyr_read)
 	struct i2c_emul *emul;
 	intv3_t ret_v;
 	intv3_t exp_v;
-	int16_t scale[3] = {MOTION_SENSE_DEFAULT_SCALE,
-			    MOTION_SENSE_DEFAULT_SCALE,
-			    MOTION_SENSE_DEFAULT_SCALE};
+	int16_t scale[3] = { MOTION_SENSE_DEFAULT_SCALE,
+			     MOTION_SENSE_DEFAULT_SCALE,
+			     MOTION_SENSE_DEFAULT_SCALE };
 
 	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
@@ -1658,9 +1656,8 @@ static int emul_fifo_func(struct i2c_emul *emul, int reg, uint8_t *val,
  */
 static void check_fifo_f(struct motion_sensor_t *ms_acc,
 			 struct motion_sensor_t *ms_gyr,
-			 struct bmi_emul_frame *frame,
-			 int acc_range, int gyr_range,
-			 int line)
+			 struct bmi_emul_frame *frame, int acc_range,
+			 int gyr_range, int line)
 {
 	struct ec_response_motion_sensor_data vector;
 	struct bmi_emul_frame *f_acc, *f_gyr;
@@ -1741,7 +1738,7 @@ static void check_fifo_f(struct motion_sensor_t *ms_acc,
 	zassert_is_null(f_gyr, "Not all gyroscope frames are read, line %d",
 			line);
 }
-#define check_fifo(ms_acc, ms_gyr, frame, acc_range, gyr_range)		\
+#define check_fifo(ms_acc, ms_gyr, frame, acc_range, gyr_range) \
 	check_fifo_f(ms_acc, ms_gyr, frame, acc_range, gyr_range, __LINE__)
 
 /** Test irq handler of accelerometer sensor */
