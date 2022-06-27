@@ -13,3 +13,5 @@ properties:
     description: |
       PS8xxx USB MUX almost always use this hdp_update callback
     default: "ps8xxx_tcpc_update_hpd_status"
+    enum:
+      - ps8xxx_tcpc_update_hpd_status

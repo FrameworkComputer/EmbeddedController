@@ -14,8 +14,6 @@ properties:
     required: false
     description: |
       Name of function used as hpd_update callback
-    enum:
-      - ps8xxx_tcpc_update_hpd_status
 
   port:
     type: phandle
