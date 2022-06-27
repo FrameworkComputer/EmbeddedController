@@ -24,7 +24,7 @@ test_mockable int gpio_get_level(enum gpio_signal signal)
 	if (g->port == UNIMPLEMENTED_GPIO_BANK)
 		return 0;
 
-	return  !!(ISH_GPIO_GPLR & g->mask);
+	return !!(ISH_GPIO_GPLR & g->mask);
 }
 
 void gpio_set_level(enum gpio_signal signal, int value)
@@ -55,8 +55,8 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	}
 
 	/* ISH 3 can't support both rising and falling edge */
-	if (IS_ENABLED(CHIP_FAMILY_ISH3) &&
-	    (flags & GPIO_INT_F_RISING) && (flags & GPIO_INT_F_FALLING)) {
+	if (IS_ENABLED(CHIP_FAMILY_ISH3) && (flags & GPIO_INT_F_RISING) &&
+	    (flags & GPIO_INT_F_FALLING)) {
 		ccprintf("\n\nISH 2/3 does not support both rising & falling "
 			 "edge for %d 0x%02x\n\n",
 			 port, mask);
@@ -65,7 +65,7 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	/* GPSR/GPCR Output high/low */
 	if (flags & GPIO_HIGH) /* Output high */
 		ISH_GPIO_GPSR |= mask;
-	else if (flags & GPIO_LOW)  /* output low */
+	else if (flags & GPIO_LOW) /* output low */
 		ISH_GPIO_GPCR |= mask;
 
 	/* GPDR pin direction 1 = output, 0 = input*/
@@ -123,7 +123,6 @@ void gpio_pre_init(void)
 	const struct gpio_info *g = gpio_list;
 
 	for (i = 0; i < GPIO_COUNT; i++, g++) {
-
 		flags = g->flags;
 
 		if (flags & GPIO_DEFAULT)
