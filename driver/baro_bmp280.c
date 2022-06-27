@@ -63,10 +63,12 @@
 #include "i2c.h"
 #include "timer.h"
 
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
-static const uint16_t standby_durn[] = {1, 63, 125, 250, 500, 1000, 2000, 4000};
+static const uint16_t standby_durn[] = {
+	1, 63, 125, 250, 500, 1000, 2000, 4000
+};
 
 /*
  * This function is used to get calibration parameters used for
@@ -95,19 +97,19 @@ static int bmp280_get_calib_param(const struct motion_sensor_t *s)
 {
 	int ret;
 
-	uint8_t a_data_u8[BMP280_CALIB_DATA_SIZE] = {0};
+	uint8_t a_data_u8[BMP280_CALIB_DATA_SIZE] = { 0 };
 	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
 
 	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags,
-			BMP280_TEMPERATURE_CALIB_DIG_T1_LSB_REG,
-			a_data_u8, BMP280_CALIB_DATA_SIZE);
+			     BMP280_TEMPERATURE_CALIB_DIG_T1_LSB_REG, a_data_u8,
+			     BMP280_CALIB_DATA_SIZE);
 
 	if (ret)
 		return ret;
 
 	/* read calibration values*/
 	data->calib_param.dig_T1 = (a_data_u8[1] << 8) | a_data_u8[0];
-	data->calib_param.dig_T2 = (a_data_u8[3] << 8  | a_data_u8[2]);
+	data->calib_param.dig_T2 = (a_data_u8[3] << 8 | a_data_u8[2]);
 	data->calib_param.dig_T3 = (a_data_u8[5] << 8) | a_data_u8[4];
 
 	data->calib_param.dig_P1 = (a_data_u8[7] << 8) | a_data_u8[6];
@@ -124,21 +126,20 @@ static int bmp280_get_calib_param(const struct motion_sensor_t *s)
 }
 
 static int bmp280_read_uncomp_pressure(const struct motion_sensor_t *s,
-					int *uncomp_pres)
+				       int *uncomp_pres)
 {
 	int ret;
-	uint8_t a_data_u8[BMP280_PRESSURE_DATA_SIZE] = {0};
+	uint8_t a_data_u8[BMP280_PRESSURE_DATA_SIZE] = { 0 };
 
 	ret = i2c_read_block(s->port, s->i2c_spi_addr_flags,
-			BMP280_PRESSURE_MSB_REG,
-			a_data_u8, BMP280_PRESSURE_DATA_SIZE);
+			     BMP280_PRESSURE_MSB_REG, a_data_u8,
+			     BMP280_PRESSURE_DATA_SIZE);
 
 	if (ret)
 		return ret;
 
-	*uncomp_pres = (int32_t)((a_data_u8[0] << 12) |
-		     (a_data_u8[1] << 4) |
-		     (a_data_u8[2] >> 4));
+	*uncomp_pres = (int32_t)((a_data_u8[0] << 12) | (a_data_u8[1] << 4) |
+				 (a_data_u8[2] >> 4));
 
 	return EC_SUCCESS;
 }
@@ -153,34 +154,33 @@ static int bmp280_read_uncomp_pressure(const struct motion_sensor_t *s,
  *
  */
 static int bmp280_compensate_pressure(const struct motion_sensor_t *s,
-					int uncomp_pressure)
+				      int uncomp_pressure)
 {
 	int var1, var2;
 	uint32_t p;
 	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
 
 	/* calculate x1 */
-	var1 = (((int32_t)data->calib_param.t_fine)
-		>> 1) - 64000;
+	var1 = (((int32_t)data->calib_param.t_fine) >> 1) - 64000;
 	/* calculate x2 */
-	var2 = (((var1 >> 2) * (var1 >> 2)) >> 11)
-		* ((int32_t)data->calib_param.dig_P6);
+	var2 = (((var1 >> 2) * (var1 >> 2)) >> 11) *
+	       ((int32_t)data->calib_param.dig_P6);
 	var2 = var2 + ((var1 * ((int32_t)data->calib_param.dig_P5)) << 1);
 	var2 = (var2 >> 2) + (((int32_t)data->calib_param.dig_P4) << 16);
 	/* calculate x1 */
 	var1 = (((data->calib_param.dig_P3 *
-		(((var1 >> 2) * (var1 >> 2)) >> 13)) >> 3) +
-		((((int32_t)data->calib_param.dig_P2) * var1) >> 1)) >> 18;
-	var1 = ((((32768 + var1)) *
-		((int32_t)data->calib_param.dig_P1)) >> 15);
+		  (((var1 >> 2) * (var1 >> 2)) >> 13)) >>
+		 3) +
+		((((int32_t)data->calib_param.dig_P2) * var1) >> 1)) >>
+	       18;
+	var1 = ((((32768 + var1)) * ((int32_t)data->calib_param.dig_P1)) >> 15);
 
 	/* Avoid exception caused by division by zero */
 	if (!var1)
 		return 0;
 
 	/* calculate pressure */
-	p = (((uint32_t)((1048576) - uncomp_pressure) -
-		(var2 >> 12))) * 3125;
+	p = (((uint32_t)((1048576) - uncomp_pressure) - (var2 >> 12))) * 3125;
 
 	/* check overflow */
 	if (p < 0x80000000)
@@ -190,13 +190,14 @@ static int bmp280_compensate_pressure(const struct motion_sensor_t *s,
 
 	/* calculate x1 */
 	var1 = (((int32_t)data->calib_param.dig_P9) *
-		((int32_t)(((p >> 3) * (p >> 3)) >> 13))) >> 12;
+		((int32_t)(((p >> 3) * (p >> 3)) >> 13))) >>
+	       12;
 	/* calculate x2 */
-	var2 = (((int32_t)(p >> 2)) *
-		((int32_t)data->calib_param.dig_P8)) >> 13;
+	var2 = (((int32_t)(p >> 2)) * ((int32_t)data->calib_param.dig_P8)) >>
+	       13;
 	/* calculate true pressure */
-	return (uint32_t)((int32_t)p + ((var1 + var2 +
-		data->calib_param.dig_P7) >> 4));
+	return (uint32_t)((int32_t)p +
+			  ((var1 + var2 + data->calib_param.dig_P7) >> 4));
 }
 
 /*
@@ -214,38 +215,36 @@ static int bmp280_compensate_pressure(const struct motion_sensor_t *s,
  *    0x07    | 4000_MS
  */
 static int bmp280_set_standby_durn(const struct motion_sensor_t *s,
-				uint8_t durn)
+				   uint8_t durn)
 {
 	int ret, val;
 
-	ret = i2c_read8(s->port, s->i2c_spi_addr_flags,
-			BMP280_CONFIG_REG, &val);
+	ret = i2c_read8(s->port, s->i2c_spi_addr_flags, BMP280_CONFIG_REG,
+			&val);
 
 	if (ret == EC_SUCCESS) {
 		val = (val & 0xE0) | ((durn << 5) & 0xE0);
 		/* write the standby duration*/
 		ret = i2c_write8(s->port, s->i2c_spi_addr_flags,
-			   BMP280_CONFIG_REG, val);
+				 BMP280_CONFIG_REG, val);
 	}
 
 	return ret;
 }
 
 static int bmp280_set_power_mode(const struct motion_sensor_t *s,
-				uint8_t power_mode)
+				 uint8_t power_mode)
 {
 	int val;
 
-	val = (BMP280_OVERSAMP_TEMP << 5) +
-		(BMP280_OVERSAMP_PRES << 2) + power_mode;
+	val = (BMP280_OVERSAMP_TEMP << 5) + (BMP280_OVERSAMP_PRES << 2) +
+	      power_mode;
 
-	return i2c_write8(s->port, s->i2c_spi_addr_flags,
-			  BMP280_CTRL_MEAS_REG, val);
+	return i2c_write8(s->port, s->i2c_spi_addr_flags, BMP280_CTRL_MEAS_REG,
+			  val);
 }
 
-static int bmp280_set_range(struct motion_sensor_t *s,
-				int range,
-				int rnd)
+static int bmp280_set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
 	/*
@@ -272,8 +271,8 @@ static int bmp280_init(struct motion_sensor_t *s)
 		return EC_ERROR_INVAL;
 
 	/* Read chip id */
-	ret = i2c_read8(s->port, s->i2c_spi_addr_flags,
-			BMP280_CHIP_ID_REG, &val);
+	ret = i2c_read8(s->port, s->i2c_spi_addr_flags, BMP280_CHIP_ID_REG,
+			&val);
 	if (ret)
 		return ret;
 
@@ -314,7 +313,7 @@ static int bmp280_read(const struct motion_sensor_t *s, intv3_t v)
  * Calculate the delay (in ms) to apply.
  */
 static int bmp280_set_data_rate(const struct motion_sensor_t *s, int rate,
-							int roundup)
+				int roundup)
 {
 	struct bmp280_drv_data_t *data = BMP280_GET_DATA(s);
 	int durn, i, ret;
@@ -335,12 +334,12 @@ static int bmp280_set_data_rate(const struct motion_sensor_t *s, int rate,
 	}
 
 	durn = 0;
-	for (i = BMP280_STANDBY_CNT-1;  i > 0; i--) {
+	for (i = BMP280_STANDBY_CNT - 1; i > 0; i--) {
 		if (period >= standby_durn[i] + BMP280_COMPUTE_TIME) {
 			durn = i;
 			break;
-		} else if (period > standby_durn[i-1] + BMP280_COMPUTE_TIME) {
-			durn = roundup ? i-1 : i;
+		} else if (period > standby_durn[i - 1] + BMP280_COMPUTE_TIME) {
+			durn = roundup ? i - 1 : i;
 			break;
 		}
 	}
