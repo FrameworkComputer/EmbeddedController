@@ -29,12 +29,12 @@ struct accel_cal cal = {
 
 static bool accumulate(float x, float y, float z, float temperature)
 {
-	return accel_cal_accumulate(&cal, 0, x, y, z, temperature)
-		|| accel_cal_accumulate(&cal, 200 * MSEC, x, y, z, temperature)
-		|| accel_cal_accumulate(&cal, 400 * MSEC, x, y, z, temperature)
-		|| accel_cal_accumulate(&cal, 600 * MSEC, x, y, z, temperature)
-		|| accel_cal_accumulate(&cal, 800 * MSEC, x, y, z, temperature)
-		|| accel_cal_accumulate(&cal, 1000 * MSEC, x, y, z, temperature);
+	return accel_cal_accumulate(&cal, 0, x, y, z, temperature) ||
+	       accel_cal_accumulate(&cal, 200 * MSEC, x, y, z, temperature) ||
+	       accel_cal_accumulate(&cal, 400 * MSEC, x, y, z, temperature) ||
+	       accel_cal_accumulate(&cal, 600 * MSEC, x, y, z, temperature) ||
+	       accel_cal_accumulate(&cal, 800 * MSEC, x, y, z, temperature) ||
+	       accel_cal_accumulate(&cal, 1000 * MSEC, x, y, z, temperature);
 }
 
 DECLARE_EC_TEST(test_calibrated_correctly_with_kasa)
@@ -66,20 +66,16 @@ DECLARE_EC_TEST(test_calibrated_correctly_with_newton)
 	float kasa_radius;
 	int i;
 	float data[] = {
-		1.00290f, 0.09170f, 0.09649f,
-		0.95183f, 0.23626f, 0.25853f,
-		0.95023f, 0.15387f, 0.31865f,
-		0.97374f, 0.01639f, 0.27675f,
-		0.88521f, 0.30212f, 0.39558f,
-		0.92787f, 0.35157f, 0.21209f,
-		0.95162f, 0.33173f, 0.10924f,
-		0.98397f, 0.22644f, 0.07737f,
+		1.00290f, 0.09170f, 0.09649f, 0.95183f, 0.23626f, 0.25853f,
+		0.95023f, 0.15387f, 0.31865f, 0.97374f, 0.01639f, 0.27675f,
+		0.88521f, 0.30212f, 0.39558f, 0.92787f, 0.35157f, 0.21209f,
+		0.95162f, 0.33173f, 0.10924f, 0.98397f, 0.22644f, 0.07737f,
 	};
 
 	kasa_reset(&kasa);
 	for (i = 0; i < ARRAY_SIZE(data); i += 3) {
 		zassert_false(has_bias, NULL);
-		kasa_accumulate(&kasa,  data[i], data[i + 1], data[i + 2]);
+		kasa_accumulate(&kasa, data[i], data[i + 1], data[i + 2]);
 		has_bias = accumulate(data[i], data[i + 1], data[i + 2], 21.0f);
 	}
 
@@ -93,9 +89,9 @@ DECLARE_EC_TEST(test_calibrated_correctly_with_newton)
 	zassert_true(sqrtf(powf(cal.bias[X] - 0.01f, 2.0f) +
 			   powf(cal.bias[Y] - 0.01f, 2.0f) +
 			   powf(cal.bias[Z] - 0.01f, 2.0f)) <
-		     sqrtf(powf(kasa_bias[X] - 0.01f, 2.0f) +
-			   powf(kasa_bias[Y] - 0.01f, 2.0f) +
-			   powf(kasa_bias[Z] - 0.01f, 2.0f)),
+			     sqrtf(powf(kasa_bias[X] - 0.01f, 2.0f) +
+				   powf(kasa_bias[Y] - 0.01f, 2.0f) +
+				   powf(kasa_bias[Z] - 0.01f, 2.0f)),
 		     NULL);
 
 	return EC_SUCCESS;
@@ -125,7 +121,9 @@ void before_test(void)
 	accel_cal_reset(&cal);
 }
 
-void after_test(void) {}
+void after_test(void)
+{
+}
 
 TEST_MAIN()
 {
