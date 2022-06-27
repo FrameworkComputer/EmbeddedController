@@ -26,7 +26,7 @@
 	__has_builtin(__builtin_mul_overflow)
 #define COMPILER_HAS_GENERIC_BUILTIN_OVERFLOW 1
 #endif
-#endif  /* __clang__ */
+#endif /* __clang__ */
 
 #include "third_party/linux/overflow.h"
 
