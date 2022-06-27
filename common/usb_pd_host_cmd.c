@@ -20,8 +20,8 @@
 #include "usb_pd_tcpm.h"
 #include "usb_pd.h"
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #else /* CONFIG_COMMON_RUNTIME */
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
@@ -38,9 +38,7 @@ static enum ec_status hc_pd_ports(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_PORTS,
-		     hc_pd_ports,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_PORTS, hc_pd_ports, EC_VER_MASK(0));
 
 #ifdef CONFIG_HOSTCMD_RWHASHPD
 static enum ec_status
@@ -71,8 +69,7 @@ hc_remote_rw_hash_entry(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY,
-		     hc_remote_rw_hash_entry,
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_RW_HASH_ENTRY, hc_remote_rw_hash_entry,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_RWHASHPD */
 
@@ -93,15 +90,14 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 	 * same layout for v0 data. (v1 just appends data)
 	 */
 	args->response_size =
-		args->version ? sizeof(struct ec_response_pd_chip_info_v1)
-			      : sizeof(struct ec_response_pd_chip_info);
+		args->version ? sizeof(struct ec_response_pd_chip_info_v1) :
+				sizeof(struct ec_response_pd_chip_info);
 
 	memcpy(args->response, &info, args->response_size);
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_PD_CHIP_INFO,
-		     hc_remote_pd_chip_info,
+DECLARE_HOST_COMMAND(EC_CMD_PD_CHIP_INFO, hc_remote_pd_chip_info,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 #endif /* CONFIG_EC_CMD_PD_CHIP_INFO && !CONFIG_USB_PD_TCPC */
 
@@ -110,8 +106,8 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_usb_pd_set_mode_request *p = args->params;
 
-	if ((p->port >= board_get_usb_pd_port_count()) ||
-	    (!p->svid) || (!p->opos))
+	if ((p->port >= board_get_usb_pd_port_count()) || (!p->svid) ||
+	    (!p->opos))
 		return EC_RES_INVALID_PARAM;
 
 	switch (p->cmd) {
@@ -126,16 +122,16 @@ static enum ec_status hc_remote_pd_set_amode(struct host_cmd_handler_args *args)
 		break;
 	case PD_ENTER_MODE:
 		if (pd_dfp_enter_mode(p->port, TCPCI_MSG_SOP, p->svid, p->opos))
-			pd_send_vdm(p->port, p->svid, CMD_ENTER_MODE |
-				    VDO_OPOS(p->opos), NULL, 0);
+			pd_send_vdm(p->port, p->svid,
+				    CMD_ENTER_MODE | VDO_OPOS(p->opos), NULL,
+				    0);
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
 	}
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE,
-		     hc_remote_pd_set_amode,
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_SET_AMODE, hc_remote_pd_set_amode,
 		     EC_VER_MASK(0));
 
 static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
@@ -156,8 +152,7 @@ static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY,
-		     hc_remote_pd_discovery,
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY, hc_remote_pd_discovery,
 		     EC_VER_MASK(0));
 
 static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
@@ -180,7 +175,7 @@ static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 	r->svid = pd_get_svid(p->port, p->svid_idx, TCPCI_MSG_SOP);
 	r->opos = 0;
 	memcpy(r->vdo, pd_get_mode_vdo(p->port, p->svid_idx, TCPCI_MSG_SOP),
-		sizeof(uint32_t) * PDO_MODES);
+	       sizeof(uint32_t) * PDO_MODES);
 	modep = pd_get_amode_data(p->port, TCPCI_MSG_SOP, r->svid);
 
 	if (modep)
@@ -189,8 +184,7 @@ static enum ec_status hc_remote_pd_get_amode(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_GET_AMODE,
-		     hc_remote_pd_get_amode,
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_GET_AMODE, hc_remote_pd_get_amode,
 		     EC_VER_MASK(0));
 
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
@@ -215,23 +209,22 @@ static enum ec_status hc_remote_pd_dev_info(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO,
-		     hc_remote_pd_dev_info,
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO, hc_remote_pd_dev_info,
 		     EC_VER_MASK(0));
 
 static const enum pd_dual_role_states dual_role_map[USB_PD_CTRL_ROLE_COUNT] = {
-	[USB_PD_CTRL_ROLE_TOGGLE_ON]    = PD_DRP_TOGGLE_ON,
-	[USB_PD_CTRL_ROLE_TOGGLE_OFF]   = PD_DRP_TOGGLE_OFF,
-	[USB_PD_CTRL_ROLE_FORCE_SINK]   = PD_DRP_FORCE_SINK,
+	[USB_PD_CTRL_ROLE_TOGGLE_ON] = PD_DRP_TOGGLE_ON,
+	[USB_PD_CTRL_ROLE_TOGGLE_OFF] = PD_DRP_TOGGLE_OFF,
+	[USB_PD_CTRL_ROLE_FORCE_SINK] = PD_DRP_FORCE_SINK,
 	[USB_PD_CTRL_ROLE_FORCE_SOURCE] = PD_DRP_FORCE_SOURCE,
-	[USB_PD_CTRL_ROLE_FREEZE]       = PD_DRP_FREEZE,
+	[USB_PD_CTRL_ROLE_FREEZE] = PD_DRP_FREEZE,
 };
 
 static const mux_state_t typec_mux_map[USB_PD_CTRL_MUX_COUNT] = {
 	[USB_PD_CTRL_MUX_NONE] = USB_PD_MUX_NONE,
-	[USB_PD_CTRL_MUX_USB]  = USB_PD_MUX_USB_ENABLED,
+	[USB_PD_CTRL_MUX_USB] = USB_PD_MUX_USB_ENABLED,
 	[USB_PD_CTRL_MUX_AUTO] = USB_PD_MUX_DP_ENABLED,
-	[USB_PD_CTRL_MUX_DP]   = USB_PD_MUX_DP_ENABLED,
+	[USB_PD_CTRL_MUX_DP] = USB_PD_MUX_DP_ENABLED,
 	[USB_PD_CTRL_MUX_DOCK] = USB_PD_MUX_DOCK,
 };
 
@@ -260,14 +253,18 @@ static uint8_t get_pd_control_flags(int port)
 	 * For Passive cables, Active Cable Plug link training is set to 0
 	 */
 	control_flags |= (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE ||
-			 cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE) ?
-			 USB_PD_CTRL_ACTIVE_CABLE : 0;
+			  cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE) ?
+				 USB_PD_CTRL_ACTIVE_CABLE :
+				 0;
 	control_flags |= cable_resp.tbt_cable == TBT_CABLE_OPTICAL ?
-			 USB_PD_CTRL_OPTICAL_CABLE : 0;
+				 USB_PD_CTRL_OPTICAL_CABLE :
+				 0;
 	control_flags |= device_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY ?
-			 USB_PD_CTRL_TBT_LEGACY_ADAPTER : 0;
+				 USB_PD_CTRL_TBT_LEGACY_ADAPTER :
+				 0;
 	control_flags |= cable_resp.lsrx_comm == UNIDIR_LSRX_COMM ?
-			 USB_PD_CTRL_ACTIVE_LINK_UNIDIR : 0;
+				 USB_PD_CTRL_ACTIVE_LINK_UNIDIR :
+				 0;
 
 	return control_flags;
 }
@@ -275,19 +272,23 @@ static uint8_t get_pd_control_flags(int port)
 static uint8_t pd_get_role_flags(int port)
 {
 	return (pd_get_power_role(port) == PD_ROLE_SOURCE ?
-			PD_CTRL_RESP_ROLE_POWER : 0) |
-		(pd_get_data_role(port) == PD_ROLE_DFP ?
-			PD_CTRL_RESP_ROLE_DATA : 0) |
-		(pd_get_vconn_state(port) ?
-			PD_CTRL_RESP_ROLE_VCONN : 0) |
-		(pd_get_partner_dual_role_power(port) ?
-			PD_CTRL_RESP_ROLE_DR_POWER : 0) |
-		(pd_get_partner_data_swap_capable(port) ?
-			PD_CTRL_RESP_ROLE_DR_DATA : 0) |
-		(pd_get_partner_usb_comm_capable(port) ?
-			PD_CTRL_RESP_ROLE_USB_COMM : 0) |
-		(pd_get_partner_unconstr_power(port) ?
-			PD_CTRL_RESP_ROLE_UNCONSTRAINED : 0);
+			PD_CTRL_RESP_ROLE_POWER :
+			0) |
+	       (pd_get_data_role(port) == PD_ROLE_DFP ? PD_CTRL_RESP_ROLE_DATA :
+							0) |
+	       (pd_get_vconn_state(port) ? PD_CTRL_RESP_ROLE_VCONN : 0) |
+	       (pd_get_partner_dual_role_power(port) ?
+			PD_CTRL_RESP_ROLE_DR_POWER :
+			0) |
+	       (pd_get_partner_data_swap_capable(port) ?
+			PD_CTRL_RESP_ROLE_DR_DATA :
+			0) |
+	       (pd_get_partner_usb_comm_capable(port) ?
+			PD_CTRL_RESP_ROLE_USB_COMM :
+			0) |
+	       (pd_get_partner_unconstr_power(port) ?
+			PD_CTRL_RESP_ROLE_UNCONSTRAINED :
+			0);
 }
 
 static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
@@ -313,11 +314,11 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 	}
 
 	if (IS_ENABLED(CONFIG_USBC_SS_MUX) &&
-		p->mux != USB_PD_CTRL_MUX_NO_CHANGE)
+	    p->mux != USB_PD_CTRL_MUX_NO_CHANGE)
 		usb_mux_set(p->port, typec_mux_map[p->mux],
 			    typec_mux_map[p->mux] == USB_PD_MUX_NONE ?
-			    USB_SWITCH_DISCONNECT :
-			    USB_SWITCH_CONNECT,
+				    USB_SWITCH_DISCONNECT :
+				    USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(p->port)));
 
 	if (p->swap == USB_PD_CTRL_SWAP_DATA) {
@@ -326,7 +327,7 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 		if (p->swap == USB_PD_CTRL_SWAP_POWER)
 			pd_request_power_swap(p->port);
 		else if (IS_ENABLED(CONFIG_USBC_VCONN_SWAP) &&
-			p->swap == USB_PD_CTRL_SWAP_VCONN)
+			 p->swap == USB_PD_CTRL_SWAP_VCONN)
 			pd_request_vconn_swap(p->port);
 	}
 
@@ -340,17 +341,19 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 		break;
 	case 1:
 	case 2:
-		r_v2->enabled =
-			(pd_comm_is_enabled(p->port) ?
-				PD_CTRL_RESP_ENABLED_COMMS : 0) |
-			(pd_is_connected(p->port) ?
-				PD_CTRL_RESP_ENABLED_CONNECTED : 0) |
-			(pd_capable(p->port) ?
-				PD_CTRL_RESP_ENABLED_PD_CAPABLE : 0);
+		r_v2->enabled = (pd_comm_is_enabled(p->port) ?
+					 PD_CTRL_RESP_ENABLED_COMMS :
+					 0) |
+				(pd_is_connected(p->port) ?
+					 PD_CTRL_RESP_ENABLED_CONNECTED :
+					 0) |
+				(pd_capable(p->port) ?
+					 PD_CTRL_RESP_ENABLED_PD_CAPABLE :
+					 0);
 		r_v2->role = pd_get_role_flags(p->port);
 		r_v2->polarity = pd_get_polarity(p->port);
 
-		r_v2->cc_state =  pd_get_task_cc_state(p->port);
+		r_v2->cc_state = pd_get_task_cc_state(p->port);
 		task_state_name = pd_get_task_state_name(p->port);
 		if (task_state_name)
 			strzcpy(r_v2->state, task_state_name,
@@ -376,8 +379,7 @@ static enum ec_status hc_usb_pd_control(struct host_cmd_handler_args *args)
 	}
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL,
-		     hc_usb_pd_control,
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL, hc_usb_pd_control,
 		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 #endif /* CONFIG_COMMON_RUNTIME */
 
@@ -397,14 +399,14 @@ static enum ec_status hc_remote_flash(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 
 #if defined(CONFIG_CHARGE_MANAGER) && defined(CONFIG_BATTERY) && \
-	(defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||   \
+	(defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||               \
 	 defined(CONFIG_BATTERY_PRESENT_GPIO))
 	/*
 	 * Do not allow PD firmware update if no battery and this port
 	 * is sinking power, because we will lose power.
 	 */
 	if (battery_is_present() != BP_YES &&
-			charge_manager_get_active_charge_port() == port)
+	    charge_manager_get_active_charge_port() == port)
 		return EC_RES_UNAVAILABLE;
 #endif
 
@@ -437,7 +439,7 @@ static enum ec_status hc_remote_flash(struct host_cmd_handler_args *args)
 		size = p->size / 4;
 		for (i = 0; i < size; i += VDO_MAX_SIZE - 1) {
 			pd_send_vdm(port, USB_VID_GOOGLE, VDO_CMD_FLASH_WRITE,
-				data + i, MIN(size - i, VDO_MAX_SIZE - 1));
+				    data + i, MIN(size - i, VDO_MAX_SIZE - 1));
 		}
 		return EC_RES_SUCCESS;
 
@@ -447,11 +449,8 @@ static enum ec_status hc_remote_flash(struct host_cmd_handler_args *args)
 
 	return rv;
 }
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE,
-			hc_remote_flash,
-			EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE, hc_remote_flash, EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_FLASHPD && CONFIG_USB_PD_TCPMV2 */
-
 
 __overridable enum ec_pd_port_location board_get_pd_port_location(int port)
 {
@@ -479,8 +478,7 @@ static enum ec_status hc_get_pd_port_caps(struct host_cmd_handler_args *args)
 	else
 		r->pd_try_power_role_cap = EC_PD_TRY_POWER_ROLE_NONE;
 
-	if (IS_ENABLED(CONFIG_USB_VPD) ||
-	    IS_ENABLED(CONFIG_USB_CTVPD))
+	if (IS_ENABLED(CONFIG_USB_VPD) || IS_ENABLED(CONFIG_USB_CTVPD))
 		r->pd_data_role_cap = EC_PD_DATA_ROLE_UFP;
 	else
 		r->pd_data_role_cap = EC_PD_DATA_ROLE_DUAL;
@@ -492,8 +490,7 @@ static enum ec_status hc_get_pd_port_caps(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_PD_PORT_CAPS,
-		     hc_get_pd_port_caps,
+DECLARE_HOST_COMMAND(EC_CMD_GET_PD_PORT_CAPS, hc_get_pd_port_caps,
 		     EC_VER_MASK(0));
 
 #ifdef CONFIG_HOSTCMD_PD_CONTROL
