@@ -11,7 +11,6 @@
 #define VARIANT_DEDEDE_EC_NPCX796FC
 #include "baseboard.h"
 
-
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
 
@@ -19,7 +18,7 @@
 #define CONFIG_CHARGER_RAA489000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
-#undef  CONFIG_CHARGER_SINGLE_CHIP
+#undef CONFIG_CHARGER_SINGLE_CHIP
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
 #define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
 
@@ -31,12 +30,11 @@
  */
 #define GPIO_USB_C1_INT_ODL GPIO_SUB_C1_INT_EN_RAILS_ODL
 
-
 /* LED defines */
 #define CONFIG_LED_ONOFF_STATES
 
 /* PWM */
-#define NPCX7_PWM1_SEL    1  /* GPIO C2 is used as PWM1. */
+#define NPCX7_PWM1_SEL 1 /* GPIO C2 is used as PWM1. */
 
 /* Temp sensor */
 #define CONFIG_TEMP_SENSOR
@@ -71,16 +69,16 @@
 #define CONFIG_USB_PD_5V_EN_CUSTOM
 
 /* I2C configuration */
-#define I2C_PORT_EEPROM     NPCX_I2C_PORT7_0
-#define I2C_PORT_BATTERY    NPCX_I2C_PORT5_0
-#define I2C_PORT_SENSOR     NPCX_I2C_PORT0_0
-#define I2C_PORT_USB_C0     NPCX_I2C_PORT1_0
+#define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
+#define I2C_PORT_BATTERY NPCX_I2C_PORT5_0
+#define I2C_PORT_SENSOR NPCX_I2C_PORT0_0
+#define I2C_PORT_USB_C0 NPCX_I2C_PORT1_0
 #define I2C_PORT_SUB_USB_C1 NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_MUX    I2C_PORT_USB_C0
+#define I2C_PORT_USB_MUX I2C_PORT_USB_C0
 /* TODO(b:147440290): Need to handle multiple charger ICs */
-#define I2C_PORT_CHARGER    I2C_PORT_USB_C0
+#define I2C_PORT_CHARGER I2C_PORT_USB_C0
 
-#define I2C_PORT_ACCEL      I2C_PORT_SENSOR
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
 
@@ -97,16 +95,16 @@
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
 
-#define CONFIG_ACCEL_BMA255         /* Lid accel */
-#define CONFIG_ACCEL_KX022          /* Lid accel second source */
-#define CONFIG_ACCELGYRO_BMI160     /* Base accel */
-#define CONFIG_ACCELGYRO_LSM6DSM    /* Base accel second source */
-#define CONFIG_ACCELGYRO_ICM426XX   /* Base accel second source */
+#define CONFIG_ACCEL_BMA255 /* Lid accel */
+#define CONFIG_ACCEL_KX022 /* Lid accel second source */
+#define CONFIG_ACCELGYRO_BMI160 /* Base accel */
+#define CONFIG_ACCELGYRO_LSM6DSM /* Base accel second source */
+#define CONFIG_ACCELGYRO_ICM426XX /* Base accel second source */
 
 /* Lid operates in forced mode, base in FIFO */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 #define CONFIG_ACCEL_FIFO
-#define CONFIG_ACCEL_FIFO_SIZE 256	/* Must be a power of 2 */
+#define CONFIG_ACCEL_FIFO_SIZE 256 /* Must be a power of 2 */
 #define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
 
 #define CONFIG_ACCELGYRO_BMI160_INT_EVENT \
@@ -154,25 +152,16 @@ enum chg_id {
 };
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1,     /* ADC0 */
-	ADC_TEMP_SENSOR_2,     /* ADC1 */
-	ADC_SUB_ANALOG,	       /* ADC2 */
-	ADC_VSNS_PP3300_A,     /* ADC9 */
+	ADC_TEMP_SENSOR_1, /* ADC0 */
+	ADC_TEMP_SENSOR_2, /* ADC1 */
+	ADC_SUB_ANALOG, /* ADC2 */
+	ADC_VSNS_PP3300_A, /* ADC9 */
 	ADC_CH_COUNT
 };
 
-enum temp_sensor_id {
-	TEMP_SENSOR_MEMORY,
-	TEMP_SENSOR_CPU,
-	TEMP_SENSOR_COUNT
-};
+enum temp_sensor_id { TEMP_SENSOR_MEMORY, TEMP_SENSOR_CPU, TEMP_SENSOR_COUNT };
 
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 enum pwm_channel {
 	PWM_CH_COUNT,
