@@ -35,10 +35,10 @@ extern "C" {
 #define COMP_PORT_PREFIX_3 "pts"
 
 struct comport_fields {
-	uint32_t baudrate;    /* Baudrate at which running               */
-	tcflag_t byte_size;   /* Number of bits/byte, 4-8                */
-	tcflag_t parity;       /* 0-4=None,Odd,Even,Mark,Space            */
-	uint8_t stop_bits;    /* 0,1,2 = 1, 1.5, 2                       */
+	uint32_t baudrate; /* Baudrate at which running               */
+	tcflag_t byte_size; /* Number of bits/byte, 4-8                */
+	tcflag_t parity; /* 0-4=None,Odd,Even,Mark,Space            */
+	uint8_t stop_bits; /* 0,1,2 = 1, 1.5, 2                       */
 	uint8_t flow_control; /* 0-none, 1-SwFlowControl,2-HwFlowControl */
 };
 
@@ -60,7 +60,7 @@ struct comport_fields {
  *---------------------------------------------------------------------------
  */
 int com_port_open(const char *com_port_dev_name,
-				struct comport_fields com_port_fields);
+		  struct comport_fields com_port_fields);
 
 /*---------------------------------------------------------------------------
  * Function: int com_config_uart()
@@ -110,7 +110,7 @@ bool com_port_close(int device_id);
  *---------------------------------------------------------------------------
  */
 bool com_port_write_bin(int device_id, const uint8_t *buffer,
-						uint32_t buf_size);
+			uint32_t buf_size);
 
 /*---------------------------------------------------------------------------
  * Function: uint32_t com_port_read_bin()
