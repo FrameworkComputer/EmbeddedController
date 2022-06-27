@@ -16,9 +16,9 @@ LOG_MODULE_REGISTER(tcpci_snk_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include "usb_pd.h"
 
 /** Length of PDO, RDO and BIST request object in SOP message in bytes */
-#define TCPCI_MSG_DO_LEN	4
+#define TCPCI_MSG_DO_LEN 4
 /** Length of header in SOP message in bytes  */
-#define TCPCI_MSG_HEADER_LEN	2
+#define TCPCI_MSG_HEADER_LEN 2
 
 /**
  * @brief Get number of PDOs that will be present in sink capability message
@@ -51,18 +51,17 @@ static int tcpci_snk_emul_num_of_pdos(struct tcpci_snk_emul_data *data)
  * @return -ENOMEM when there is no free memory for message
  * @return -EINVAL on TCPCI emulator add RX message error
  */
-static int tcpci_snk_emul_send_capability_msg(
-	struct tcpci_snk_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	uint64_t delay)
+static int
+tcpci_snk_emul_send_capability_msg(struct tcpci_snk_emul_data *data,
+				   struct tcpci_partner_data *common_data,
+				   uint64_t delay)
 {
 	int pdos;
 
 	/* Find number of PDOs */
 	pdos = tcpci_snk_emul_num_of_pdos(data);
 
-	return tcpci_partner_send_data_msg(common_data,
-					   PD_DATA_SINK_CAP,
+	return tcpci_partner_send_data_msg(common_data, PD_DATA_SINK_CAP,
 					   data->pdo, pdos, delay);
 }
 
@@ -95,8 +94,8 @@ static int tcpci_snk_emul_are_pdos_complementary(uint32_t src_pdo,
 			/* Voltage doesn't match */
 			return -1;
 		}
-		missing_current = PDO_FIXED_CURRENT(snk_pdo) -
-				  PDO_FIXED_CURRENT(src_pdo);
+		missing_current =
+			PDO_FIXED_CURRENT(snk_pdo) - PDO_FIXED_CURRENT(src_pdo);
 		break;
 	case PDO_TYPE_BATTERY:
 		if ((PDO_BATT_MIN_VOLTAGE(snk_pdo) <
@@ -111,8 +110,8 @@ static int tcpci_snk_emul_are_pdos_complementary(uint32_t src_pdo,
 		 * = P / V * 5 [A] = P / V * 500 * 10[mA]
 		 */
 		missing_current = (PDO_BATT_MAX_POWER(snk_pdo) -
-				   PDO_BATT_MAX_POWER(src_pdo)) * 500 /
-				  PDO_BATT_MAX_VOLTAGE(src_pdo);
+				   PDO_BATT_MAX_POWER(src_pdo)) *
+				  500 / PDO_BATT_MAX_VOLTAGE(src_pdo);
 		break;
 	case PDO_TYPE_VARIABLE:
 		if ((PDO_VAR_MIN_VOLTAGE(snk_pdo) <
@@ -147,8 +146,8 @@ static int tcpci_snk_emul_are_pdos_complementary(uint32_t src_pdo,
  * @return PDO on success
  * @return 0 when there is no PDO of given index in message
  */
-static uint32_t tcpci_snk_emul_get_pdo_from_cap(
-			const struct tcpci_emul_msg *msg, int pdo_num)
+static uint32_t
+tcpci_snk_emul_get_pdo_from_cap(const struct tcpci_emul_msg *msg, int pdo_num)
 {
 	int addr;
 
@@ -240,10 +239,10 @@ static uint32_t tcpci_snk_emul_create_rdo(uint32_t src_pdo, uint32_t snk_pdo,
  * @param common_data Pointer to common TCPCI partner data
  * @param msg Source capability message
  */
-static void tcpci_snk_emul_handle_source_cap(
-	struct tcpci_snk_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	const struct tcpci_emul_msg *msg)
+static void
+tcpci_snk_emul_handle_source_cap(struct tcpci_snk_emul_data *data,
+				 struct tcpci_partner_data *common_data,
+				 const struct tcpci_emul_msg *msg)
 {
 	uint32_t rdo = 0;
 	uint32_t pdo;
@@ -269,11 +268,10 @@ static void tcpci_snk_emul_handle_source_cap(
 
 		for (int i = skip_first_pdo; i < snk_pdos; i++) {
 			missing_current = tcpci_snk_emul_are_pdos_complementary(
-						pdo, data->pdo[i]);
+				pdo, data->pdo[i]);
 			if (missing_current == 0) {
-				rdo = tcpci_snk_emul_create_rdo(pdo,
-								data->pdo[i],
-								pdo_num + 1);
+				rdo = tcpci_snk_emul_create_rdo(
+					pdo, data->pdo[i], pdo_num + 1);
 				break;
 			}
 		}
@@ -363,10 +361,10 @@ void tcpci_snk_emul_clear_alert_received(struct tcpci_snk_emul_data *data)
  * @param TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled
  * @param TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
  */
-static enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
-	struct tcpci_partner_extension *ext,
-	struct tcpci_partner_data *common_data,
-	const struct tcpci_emul_msg *msg)
+static enum tcpci_partner_handler_res
+tcpci_snk_emul_handle_sop_msg(struct tcpci_partner_extension *ext,
+			      struct tcpci_partner_data *common_data,
+			      const struct tcpci_emul_msg *msg)
 {
 	struct tcpci_snk_emul_data *data =
 		CONTAINER_OF(ext, struct tcpci_snk_emul_data, ext);
@@ -404,20 +402,19 @@ static enum tcpci_partner_handler_res tcpci_snk_emul_handle_sop_msg(
 			__ASSERT(data->wait_for_ps_rdy,
 				 "Unexpected PS RDY message");
 			tcpci_snk_emul_stop_partner_transition_timer(
-							data, common_data);
+				data, common_data);
 			data->pd_completed = true;
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_REJECT:
 			tcpci_partner_stop_sender_response_timer(common_data);
 			/* Request rejected. Ask for capabilities again. */
-			tcpci_partner_send_control_msg(common_data,
-						       PD_CTRL_GET_SOURCE_CAP,
-						       0);
+			tcpci_partner_send_control_msg(
+				common_data, PD_CTRL_GET_SOURCE_CAP, 0);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		case PD_CTRL_ACCEPT:
 			tcpci_partner_stop_sender_response_timer(common_data);
 			tcpci_snk_emul_start_partner_transition_timer(
-							data, common_data);
+				data, common_data);
 			return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		default:
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
@@ -459,9 +456,9 @@ static void tcpci_snk_emul_hard_reset(struct tcpci_partner_extension *ext,
  * @return 0 on success
  * @return negative on TCPCI connect error
  */
-static int tcpci_snk_emul_connect_to_tcpci(
-	struct tcpci_partner_extension *ext,
-	struct tcpci_partner_data *common_data)
+static int
+tcpci_snk_emul_connect_to_tcpci(struct tcpci_partner_extension *ext,
+				struct tcpci_partner_data *common_data)
 {
 	struct tcpci_snk_emul_data *data =
 		CONTAINER_OF(ext, struct tcpci_snk_emul_data, ext);
@@ -489,10 +486,10 @@ struct tcpci_partner_extension_ops tcpci_snk_emul_ops = {
 	.connect = tcpci_snk_emul_connect_to_tcpci,
 };
 
-struct tcpci_partner_extension *tcpci_snk_emul_init(
-	struct tcpci_snk_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	struct tcpci_partner_extension *ext)
+struct tcpci_partner_extension *
+tcpci_snk_emul_init(struct tcpci_snk_emul_data *data,
+		    struct tcpci_partner_data *common_data,
+		    struct tcpci_partner_extension *ext)
 {
 	struct tcpci_partner_extension *snk_ext = &data->ext;
 
