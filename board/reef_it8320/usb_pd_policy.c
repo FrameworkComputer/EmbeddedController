@@ -23,12 +23,12 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 static uint8_t vbus_en[CONFIG_USB_PD_PORT_MAX_COUNT];
-static uint8_t vbus_rp[CONFIG_USB_PD_PORT_MAX_COUNT] = {TYPEC_RP_1A5,
-							TYPEC_RP_1A5};
+static uint8_t vbus_rp[CONFIG_USB_PD_PORT_MAX_COUNT] = { TYPEC_RP_1A5,
+							 TYPEC_RP_1A5 };
 
 int board_vbus_source_enabled(int port)
 {
@@ -39,7 +39,7 @@ static void board_vbus_update_source_current(int port)
 {
 	enum gpio_signal gpio = port ? GPIO_USB_C1_5V_EN : GPIO_USB_C0_5V_EN;
 	enum gpio_signal gpio_3a_en = port ? GPIO_EN_USB_C1_3A :
-		GPIO_EN_USB_C0_3A;
+					     GPIO_EN_USB_C0_3A;
 
 	gpio_set_level(gpio_3a_en, vbus_rp[port] == TYPEC_RP_3A0 ? 1 : 0);
 	gpio_set_level(gpio, vbus_en[port]);
