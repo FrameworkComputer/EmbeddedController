@@ -24,20 +24,22 @@ __override const int led_charge_lvl_1 = 5;
 __override const int led_charge_lvl_2 = 100;
 
 __override struct led_descriptor
-			led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0]	     = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0_BAT_LOW] = {{EC_LED_COLOR_AMBER,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S3]	     = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S5]         = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_FACTORY_TEST]         = {
-					{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-					{LED_OFF,            1 * LED_ONE_SEC}
-	},
-};
+	led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
+		[STATE_CHARGING_LVL_1] = { { EC_LED_COLOR_WHITE,
+					     LED_INDEFINITE } },
+		[STATE_CHARGING_LVL_2] = { { EC_LED_COLOR_WHITE,
+					     LED_INDEFINITE } },
+		[STATE_CHARGING_FULL_CHARGE] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0_BAT_LOW] = { { EC_LED_COLOR_AMBER,
+						   LED_INDEFINITE } },
+		[STATE_DISCHARGE_S3] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S5] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_BATTERY_ERROR] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_FACTORY_TEST] = { { EC_LED_COLOR_WHITE,
+					   1 * LED_ONE_SEC },
+					 { LED_OFF, 1 * LED_ONE_SEC } },
+	};
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_BATTERY_LED,
