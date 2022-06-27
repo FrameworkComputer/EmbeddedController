@@ -16,24 +16,22 @@
 #include <stdint.h>
 #include <stddef.h>
 
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 /* Place any C interfaces here */
 
-void dma_xfr_start_rx(const struct dma_option *option,
-		uint32_t dma_xfr_ulen,
-		uint32_t count, void *memory);
+void dma_xfr_start_rx(const struct dma_option *option, uint32_t dma_xfr_ulen,
+		      uint32_t count, void *memory);
 
 void dma_xfr_prepare_tx(const struct dma_option *option, uint32_t count,
-		const void *memory, uint32_t dma_xfr_units);
+			const void *memory, uint32_t dma_xfr_units);
 
 void dma_clr_chan(enum dma_channel ch);
 
-void dma_cfg_buffers(enum dma_channel ch, const void *membuf,
-			uint32_t nb, const void *pdev);
+void dma_cfg_buffers(enum dma_channel ch, const void *membuf, uint32_t nb,
+		     const void *pdev);
 
 /*
  * ch = zero based DMA channel number
@@ -44,13 +42,13 @@ void dma_cfg_buffers(enum dma_channel ch, const void *membuf,
  *   b[2] = 1 increment device address
  *   b[3] = disable HW flow control
  */
-#define DMA_FLAG_D2M		0
-#define DMA_FLAG_M2D		1
-#define DMA_FLAG_INCR_MEM	2
-#define DMA_FLAG_INCR_DEV	4
-#define DMA_FLAG_SW_FLOW	8
-void dma_cfg_xfr(enum dma_channel ch, uint8_t unit_len,
-			uint8_t dev_id, uint8_t flags);
+#define DMA_FLAG_D2M 0
+#define DMA_FLAG_M2D 1
+#define DMA_FLAG_INCR_MEM 2
+#define DMA_FLAG_INCR_DEV 4
+#define DMA_FLAG_SW_FLOW 8
+void dma_cfg_xfr(enum dma_channel ch, uint8_t unit_len, uint8_t dev_id,
+		 uint8_t flags);
 
 void dma_run(enum dma_channel ch);
 
