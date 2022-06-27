@@ -366,7 +366,6 @@ ZTEST(ln9310, test_ln9310_lion_ctrl_reg_fails)
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
-
 struct precharge_timeout_data {
 	timestamp_t time_to_mock;
 	bool handled_clearing_standby_en_bit_timeout;
@@ -481,8 +480,8 @@ ZTEST(ln9310, test_ln9310_interrupt_reg_fail)
 	zassert_ok(ln9310_init(), NULL);
 	zassert_true(ln9310_emul_is_init(emulator), NULL);
 
-	i2c_common_emul_set_read_func(
-		i2c_emul, mock_read_intercept_reg_to_fail, &test_data);
+	i2c_common_emul_set_read_func(i2c_emul, mock_read_intercept_reg_to_fail,
+				      &test_data);
 
 	/* Fail in beginning of software enable */
 	test_data.reg_access_to_fail = LN9310_REG_INT1;
