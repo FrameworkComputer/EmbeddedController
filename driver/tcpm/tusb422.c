@@ -36,7 +36,7 @@ enum tusb422_reg_addr {
 
 enum vbus_and_vconn_control_mask {
 	INT_VCONNDIS_DISABLE = BIT(1),
-	INT_VBUSDIS_DISABLE  = BIT(2),
+	INT_VBUSDIS_DISABLE = BIT(2),
 };
 
 /* The TUSB422 cannot drive an FRS GPIO, but can detect FRS */
@@ -86,7 +86,7 @@ static int tusb422_tcpci_tcpm_init(int port)
 		 * Mode.
 		 */
 		tcpc_write(port, TUSB422_REG_VBUS_AND_VCONN_CONTROL,
-				INT_VBUSDIS_DISABLE);
+			   INT_VBUSDIS_DISABLE);
 	}
 	if (IS_ENABLED(CONFIG_USB_PD_FRS_TCPC)) {
 		/* Disable FRS detection, and enable the FRS detection alert */
@@ -103,7 +103,7 @@ static int tusb422_tcpci_tcpm_init(int port)
 	 */
 	/* Enable VBUS detection */
 	return tcpc_write16(port, TCPC_REG_COMMAND,
-				TCPC_REG_COMMAND_ENABLE_VBUS_DETECT);
+			    TCPC_REG_COMMAND_ENABLE_VBUS_DETECT);
 }
 
 static int tusb422_tcpm_set_cc(int port, int pull)
@@ -154,40 +154,40 @@ static void tusb422_tcpci_tcpc_alert(int port)
 }
 
 const struct tcpm_drv tusb422_tcpm_drv = {
-	.init			= &tusb422_tcpci_tcpm_init,
-	.release		= &tcpci_tcpm_release,
-	.get_cc			= &tcpci_tcpm_get_cc,
+	.init = &tusb422_tcpci_tcpm_init,
+	.release = &tcpci_tcpm_release,
+	.get_cc = &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
+	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
 #endif
-	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &tusb422_tcpm_set_cc,
-	.set_polarity		= &tcpci_tcpm_set_polarity,
+	.select_rp_value = &tcpci_tcpm_select_rp_value,
+	.set_cc = &tusb422_tcpm_set_cc,
+	.set_polarity = &tcpci_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable	= &tcpci_tcpm_sop_prime_enable,
+	.sop_prime_enable = &tcpci_tcpm_sop_prime_enable,
 #endif
-	.set_vconn		= &tcpci_tcpm_set_vconn,
-	.set_msg_header		= &tcpci_tcpm_set_msg_header,
-	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
-	.get_message_raw	= &tcpci_tcpm_get_message_raw,
-	.transmit		= &tcpci_tcpm_transmit,
-	.tcpc_alert		= &tusb422_tcpci_tcpc_alert,
+	.set_vconn = &tcpci_tcpm_set_vconn,
+	.set_msg_header = &tcpci_tcpm_set_msg_header,
+	.set_rx_enable = &tcpci_tcpm_set_rx_enable,
+	.get_message_raw = &tcpci_tcpm_get_message_raw,
+	.transmit = &tcpci_tcpm_transmit,
+	.tcpc_alert = &tusb422_tcpci_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+	.tcpc_discharge_vbus = &tcpci_tcpc_discharge_vbus,
 #endif
 	.tcpc_enable_auto_discharge_disconnect =
-				  &tcpci_tcpc_enable_auto_discharge_disconnect,
+		&tcpci_tcpc_enable_auto_discharge_disconnect,
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &tusb422_tcpc_drp_toggle,
+	.drp_toggle = &tusb422_tcpc_drp_toggle,
 #endif
-	.get_chip_info		= &tcpci_get_chip_info,
-	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
-	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+	.get_chip_info = &tcpci_get_chip_info,
+	.set_snk_ctrl = &tcpci_tcpm_set_snk_ctrl,
+	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+	.enter_low_power_mode = &tcpci_enter_low_power_mode,
 #endif
-	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
+	.set_bist_test_mode = &tcpci_set_bist_test_mode,
 #ifdef CONFIG_USB_PD_FRS_TCPC
-	.set_frs_enable         = &tusb422_set_frs_enable,
+	.set_frs_enable = &tusb422_set_frs_enable,
 #endif
 };
