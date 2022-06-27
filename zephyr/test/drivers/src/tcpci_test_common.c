@@ -34,8 +34,8 @@ void check_tcpci_reg_with_mask_f(const struct emul *emul, int reg,
 	zassert_ok(tcpci_emul_get_reg(emul, reg, &reg_val),
 		   "Failed tcpci_emul_get_reg(); line: %d", line);
 	zassert_equal(exp_val & mask, reg_val & mask,
-		      "Expected 0x%x, got 0x%x, mask 0x%x; line: %d",
-		      exp_val, reg_val, mask, line);
+		      "Expected 0x%x, got 0x%x, mask 0x%x; line: %d", exp_val,
+		      reg_val, mask, line);
 }
 
 /** Test TCPCI init and vbus level */
@@ -84,7 +84,7 @@ void test_tcpci_init(const struct emul *emul, enum usbc_port port)
 	/* Set TCPCI emulator VBUS to present (connected, above 4V) */
 	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
 			   TCPC_REG_POWER_STATUS_VBUS_PRES |
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
+				   TCPC_REG_POWER_STATUS_VBUS_DET);
 
 	/* Test init with VBUS present without vSafe0V tcpc config flag */
 	zassert_equal(EC_SUCCESS, drv->init(port), NULL);
@@ -165,61 +165,61 @@ void test_tcpci_get_cc(const struct emul *emul, enum usbc_port port)
 	} test_param[] = {
 		/* Test DRP with open state */
 		{
-			.cc = {TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN},
+			.cc = { TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_OPEN },
 			.connect_result = false,
 			.drp = TYPEC_DRP,
 		},
 		/* Test DRP with cc1 open state, cc2 src RA */
 		{
-			.cc = {TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_RA},
+			.cc = { TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_RA },
 			.connect_result = false,
 			.drp = TYPEC_DRP,
 		},
 		/* Test DRP with cc1 src RA, cc2 src RD */
 		{
-			.cc = {TYPEC_CC_VOLT_RA, TYPEC_CC_VOLT_RD},
+			.cc = { TYPEC_CC_VOLT_RA, TYPEC_CC_VOLT_RD },
 			.connect_result = false,
 			.drp = TYPEC_DRP,
 		},
 		/* Test DRP with cc1 snk open, cc2 snk default */
 		{
-			.cc = {TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_RP_DEF},
+			.cc = { TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_RP_DEF },
 			.connect_result = true,
 			.drp = TYPEC_DRP,
 		},
 		/* Test DRP with cc1 snk 1.5, cc2 snk 3.0 */
 		{
-			.cc = {TYPEC_CC_VOLT_RP_1_5, TYPEC_CC_VOLT_RP_3_0},
+			.cc = { TYPEC_CC_VOLT_RP_1_5, TYPEC_CC_VOLT_RP_3_0 },
 			.connect_result = true,
 			.drp = TYPEC_DRP,
 		},
 		/* Test no DRP with cc1 src open, cc2 src RA */
 		{
-			.cc = {TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_RA},
+			.cc = { TYPEC_CC_VOLT_OPEN, TYPEC_CC_VOLT_RA },
 			.connect_result = false,
 			.drp = TYPEC_NO_DRP,
-			.role_cc = {TYPEC_CC_RP, TYPEC_CC_RP},
+			.role_cc = { TYPEC_CC_RP, TYPEC_CC_RP },
 		},
 		/* Test no DRP with cc1 src RD, cc2 snk default */
 		{
-			.cc = {TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_RP_DEF},
+			.cc = { TYPEC_CC_VOLT_RD, TYPEC_CC_VOLT_RP_DEF },
 			.connect_result = false,
 			.drp = TYPEC_NO_DRP,
-			.role_cc = {TYPEC_CC_RP, TYPEC_CC_RD},
+			.role_cc = { TYPEC_CC_RP, TYPEC_CC_RD },
 		},
 		/* Test no DRP with cc1 snk default, cc2 snk open */
 		{
-			.cc = {TYPEC_CC_VOLT_RP_DEF, TYPEC_CC_VOLT_OPEN},
+			.cc = { TYPEC_CC_VOLT_RP_DEF, TYPEC_CC_VOLT_OPEN },
 			.connect_result = false,
 			.drp = TYPEC_NO_DRP,
-			.role_cc = {TYPEC_CC_RD, TYPEC_CC_RD},
+			.role_cc = { TYPEC_CC_RD, TYPEC_CC_RD },
 		},
 		/* Test no DRP with cc1 snk 3.0, cc2 snk 1.5 */
 		{
-			.cc = {TYPEC_CC_VOLT_RP_3_0, TYPEC_CC_VOLT_RP_1_5},
+			.cc = { TYPEC_CC_VOLT_RP_3_0, TYPEC_CC_VOLT_RP_1_5 },
 			.connect_result = false,
 			.drp = TYPEC_NO_DRP,
-			.role_cc = {TYPEC_CC_RD, TYPEC_CC_RD},
+			.role_cc = { TYPEC_CC_RD, TYPEC_CC_RD },
 		},
 	};
 
@@ -233,17 +233,18 @@ void test_tcpci_get_cc(const struct emul *emul, enum usbc_port port)
 						   test_param[i].cc[1]);
 		tcpci_emul_set_reg(emul, TCPC_REG_ROLE_CTRL, role_ctrl);
 		tcpci_emul_set_reg(emul, TCPC_REG_CC_STATUS, cc_status);
-		zassert_equal(EC_SUCCESS, drv->get_cc(port, &cc1, &cc2),
-			      "Failed to get CC in test case %d (CC 0x%x, role 0x%x)",
-			      i, cc_status, role_ctrl);
-		zassert_equal(test_param[i].cc[0], cc1,
-			      "0x%x != (cc1 = 0x%x) in test case %d (CC 0x%x, role 0x%x)",
-			      test_param[i].cc[0], cc1, i, cc_status,
-			      role_ctrl);
-		zassert_equal(test_param[i].cc[1], cc2,
-			      "0x%x != (cc2 = 0x%x) in test case %d (CC 0x%x, role 0x%x)",
-			      test_param[i].cc[0], cc1, i, cc_status,
-			      role_ctrl);
+		zassert_equal(
+			EC_SUCCESS, drv->get_cc(port, &cc1, &cc2),
+			"Failed to get CC in test case %d (CC 0x%x, role 0x%x)",
+			i, cc_status, role_ctrl);
+		zassert_equal(
+			test_param[i].cc[0], cc1,
+			"0x%x != (cc1 = 0x%x) in test case %d (CC 0x%x, role 0x%x)",
+			test_param[i].cc[0], cc1, i, cc_status, role_ctrl);
+		zassert_equal(
+			test_param[i].cc[1], cc2,
+			"0x%x != (cc2 = 0x%x) in test case %d (CC 0x%x, role 0x%x)",
+			test_param[i].cc[0], cc1, i, cc_status, role_ctrl);
 	}
 }
 
@@ -380,32 +381,37 @@ void test_tcpci_set_msg_header(const struct emul *emul, enum usbc_port port)
 
 	/* Test error on failed header set */
 	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_MSG_HDR_INFO);
-	zassert_equal(EC_ERROR_INVAL, drv->set_msg_header(port, PD_ROLE_SINK,
-							  PD_ROLE_UFP), NULL);
+	zassert_equal(EC_ERROR_INVAL,
+		      drv->set_msg_header(port, PD_ROLE_SINK, PD_ROLE_UFP),
+		      NULL);
 	i2c_common_emul_set_write_fail_reg(i2c_emul,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test setting sink UFP */
-	zassert_equal(EC_SUCCESS, drv->set_msg_header(port, PD_ROLE_SINK,
-						      PD_ROLE_UFP), NULL);
+	zassert_equal(EC_SUCCESS,
+		      drv->set_msg_header(port, PD_ROLE_SINK, PD_ROLE_UFP),
+		      NULL);
 	check_tcpci_reg(emul, TCPC_REG_MSG_HDR_INFO,
 			TCPC_REG_MSG_HDR_INFO_SET(PD_ROLE_UFP, PD_ROLE_SINK));
 
 	/* Test setting sink DFP */
-	zassert_equal(EC_SUCCESS, drv->set_msg_header(port, PD_ROLE_SINK,
-						      PD_ROLE_DFP), NULL);
+	zassert_equal(EC_SUCCESS,
+		      drv->set_msg_header(port, PD_ROLE_SINK, PD_ROLE_DFP),
+		      NULL);
 	check_tcpci_reg(emul, TCPC_REG_MSG_HDR_INFO,
 			TCPC_REG_MSG_HDR_INFO_SET(PD_ROLE_DFP, PD_ROLE_SINK));
 
 	/* Test setting source UFP */
-	zassert_equal(EC_SUCCESS, drv->set_msg_header(port, PD_ROLE_SOURCE,
-						      PD_ROLE_UFP), NULL);
+	zassert_equal(EC_SUCCESS,
+		      drv->set_msg_header(port, PD_ROLE_SOURCE, PD_ROLE_UFP),
+		      NULL);
 	check_tcpci_reg(emul, TCPC_REG_MSG_HDR_INFO,
 			TCPC_REG_MSG_HDR_INFO_SET(PD_ROLE_UFP, PD_ROLE_SOURCE));
 
 	/* Test setting source DFP */
-	zassert_equal(EC_SUCCESS, drv->set_msg_header(port, PD_ROLE_SOURCE,
-						      PD_ROLE_DFP), NULL);
+	zassert_equal(EC_SUCCESS,
+		      drv->set_msg_header(port, PD_ROLE_SOURCE, PD_ROLE_DFP),
+		      NULL);
 	check_tcpci_reg(emul, TCPC_REG_MSG_HDR_INFO,
 			TCPC_REG_MSG_HDR_INFO_SET(PD_ROLE_DFP, PD_ROLE_SOURCE));
 }
@@ -455,8 +461,7 @@ void test_tcpci_set_rx_detect(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI get raw message from TCPC */
-void test_tcpci_get_rx_message_raw(const struct emul *emul,
-				   enum usbc_port port)
+void test_tcpci_get_rx_message_raw(const struct emul *emul, enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
 	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
@@ -528,8 +533,8 @@ void test_tcpci_get_rx_message_raw(const struct emul *emul,
 	 */
 	exp_head = (TCPCI_MSG_SOP_PRIME << 28) | (buf[1] << 8) | buf[0];
 	zassert_equal(exp_head, head,
-		      "Received header 0x%08lx, expected 0x%08lx",
-		      head, exp_head);
+		      "Received header 0x%08lx, expected 0x%08lx", head,
+		      exp_head);
 	zassert_mem_equal(payload, buf + 2, size, NULL);
 }
 
@@ -573,8 +578,7 @@ void test_tcpci_transmit(const struct emul *emul, enum usbc_port port)
 	/* Test transmit fail on rx buffer */
 	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_TX_BUFFER);
 	zassert_equal(EC_ERROR_INVAL,
-		      drv->transmit(port, TCPCI_MSG_SOP_PRIME, 0, data),
-		      NULL);
+		      drv->transmit(port, TCPCI_MSG_SOP_PRIME, 0, data), NULL);
 	i2c_common_emul_set_write_fail_reg(i2c_emul,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -693,8 +697,8 @@ void test_tcpci_alert_rx_message(const struct emul *emul, enum usbc_port port)
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
 	zassert_equal(exp_head, head,
-		      "Received header 0x%08lx, expected 0x%08lx",
-		      head, exp_head);
+		      "Received header 0x%08lx, expected 0x%08lx", head,
+		      exp_head);
 	zassert_mem_equal(payload, buf1 + 2, size, NULL);
 	zassert_false(tcpm_has_pending_message(port), NULL);
 
@@ -714,8 +718,8 @@ void test_tcpci_alert_rx_message(const struct emul *emul, enum usbc_port port)
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
 	zassert_equal(exp_head, head,
-		      "Received header 0x%08lx, expected 0x%08lx",
-		      head, exp_head);
+		      "Received header 0x%08lx, expected 0x%08lx", head,
+		      exp_head);
 	zassert_mem_equal(payload, buf1 + 2, size, NULL);
 	/* Check if msg2 is in queue */
 	zassert_true(tcpm_has_pending_message(port), NULL);
@@ -723,8 +727,8 @@ void test_tcpci_alert_rx_message(const struct emul *emul, enum usbc_port port)
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP_PRIME << 28) | (buf2[1] << 8) | buf2[0];
 	zassert_equal(exp_head, head,
-		      "Received header 0x%08lx, expected 0x%08lx",
-		      head, exp_head);
+		      "Received header 0x%08lx, expected 0x%08lx", head,
+		      exp_head);
 	zassert_mem_equal(payload, buf2 + 2, size, NULL);
 	zassert_false(tcpm_has_pending_message(port), NULL);
 
@@ -747,8 +751,8 @@ void test_tcpci_alert_rx_message(const struct emul *emul, enum usbc_port port)
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP_PRIME << 28) | (buf2[1] << 8) | buf2[0];
 	zassert_equal(exp_head, head,
-		      "Received header 0x%08lx, expected 0x%08lx",
-		      head, exp_head);
+		      "Received header 0x%08lx, expected 0x%08lx", head,
+		      exp_head);
 	zassert_mem_equal(payload, buf2 + 2, size, NULL);
 	zassert_false(tcpm_has_pending_message(port), NULL);
 
@@ -774,8 +778,8 @@ void test_tcpci_alert_rx_message(const struct emul *emul, enum usbc_port port)
 		zassert_equal(EC_SUCCESS,
 			      tcpm_dequeue_message(port, payload, &head), NULL);
 		zassert_equal(exp_head, head,
-			      "Received header 0x%08lx, expected 0x%08lx",
-			      head, exp_head);
+			      "Received header 0x%08lx, expected 0x%08lx", head,
+			      exp_head);
 		zassert_mem_equal(payload, buf1 + 2, size, NULL);
 	}
 	tcpm_clear_pending_messages(port);
@@ -791,8 +795,8 @@ void test_tcpci_alert_rx_message(const struct emul *emul, enum usbc_port port)
 		      NULL);
 	exp_head = (TCPCI_MSG_SOP << 28) | (buf1[1] << 8) | buf1[0];
 	zassert_equal(exp_head, head,
-		      "Received header 0x%08lx, expected 0x%08lx",
-		      head, exp_head);
+		      "Received header 0x%08lx, expected 0x%08lx", head,
+		      exp_head);
 	zassert_mem_equal(payload, buf1 + 2, size, NULL);
 	zassert_false(tcpm_has_pending_message(port), NULL);
 }
