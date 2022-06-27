@@ -15,7 +15,7 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_KEYBOARD, format, ##args)
 
 /*
  * Common FIFO depth.  This needs to be big enough not to overflow if a
@@ -26,9 +26,9 @@
  * which is non-trivial but not horrible.
  */
 
-static uint32_t fifo_start;	/* first entry */
-static uint32_t fifo_end;	/* last entry */
-static atomic_t fifo_entries;	/* number of existing entries */
+static uint32_t fifo_start; /* first entry */
+static uint32_t fifo_end; /* last entry */
+static atomic_t fifo_entries; /* number of existing entries */
 static uint8_t fifo_max_depth = FIFO_DEPTH;
 static struct ec_response_get_next_event fifo[FIFO_DEPTH];
 
@@ -114,7 +114,6 @@ void mkbp_fifo_depth_update(uint8_t new_max_depth)
 	fifo_max_depth = new_max_depth;
 }
 
-
 void mkbp_fifo_clear_keyboard(void)
 {
 	int i, new_fifo_entries = 0;
@@ -180,8 +179,7 @@ test_mockable int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp)
 	mutex_lock(&fifo_add_mutex);
 	if (fifo_entries >= fifo_max_depth) {
 		mutex_unlock(&fifo_add_mutex);
-		CPRINTS("MKBP common FIFO depth %d reached",
-			fifo_max_depth);
+		CPRINTS("MKBP common FIFO depth %d reached", fifo_max_depth);
 
 		return EC_ERROR_OVERFLOW;
 	}
