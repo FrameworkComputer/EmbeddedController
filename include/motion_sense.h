@@ -39,7 +39,6 @@ enum sensor_config {
 #define SENSOR_ACTIVE_S0_S3 (SENSOR_ACTIVE_S3 | SENSOR_ACTIVE_S0)
 #define SENSOR_ACTIVE_S0_S3_S5 (SENSOR_ACTIVE_S0_S3 | SENSOR_ACTIVE_S5)
 
-
 /*
  * Events layout:
  * 0                       8              10
@@ -49,29 +48,27 @@ enum sensor_config {
  */
 
 /* First 8 events for sensor interrupt lines */
-#define TASK_EVENT_MOTION_INTERRUPT_NUM      8
+#define TASK_EVENT_MOTION_INTERRUPT_NUM 8
 #define TASK_EVENT_MOTION_INTERRUPT_MASK \
 	((1 << TASK_EVENT_MOTION_INTERRUPT_NUM) - 1)
-#define TASK_EVENT_MOTION_SENSOR_INTERRUPT(_sensor_id) \
-	BUILD_CHECK_INLINE( \
-		TASK_EVENT_CUSTOM_BIT(_sensor_id), \
-		_sensor_id < TASK_EVENT_MOTION_INTERRUPT_NUM)
+#define TASK_EVENT_MOTION_SENSOR_INTERRUPT(_sensor_id)        \
+	BUILD_CHECK_INLINE(TASK_EVENT_CUSTOM_BIT(_sensor_id), \
+			   _sensor_id < TASK_EVENT_MOTION_INTERRUPT_NUM)
 
 /* Internal events to motion sense task.*/
 #define TASK_EVENT_MOTION_FIRST_INTERNAL_EVENT TASK_EVENT_MOTION_INTERRUPT_NUM
-#define TASK_EVENT_MOTION_INTERNAL_EVENT_NUM    2
+#define TASK_EVENT_MOTION_INTERNAL_EVENT_NUM 2
 #define TASK_EVENT_MOTION_FLUSH_PENDING \
 	TASK_EVENT_CUSTOM_BIT(TASK_EVENT_MOTION_FIRST_INTERNAL_EVENT)
 #define TASK_EVENT_MOTION_ODR_CHANGE \
 	TASK_EVENT_CUSTOM_BIT(TASK_EVENT_MOTION_FIRST_INTERNAL_EVENT + 1)
 
 /* Activity events */
-#define TASK_EVENT_MOTION_FIRST_SW_EVENT   \
+#define TASK_EVENT_MOTION_FIRST_SW_EVENT \
 	(TASK_EVENT_MOTION_INTERRUPT_NUM + TASK_EVENT_MOTION_INTERNAL_EVENT_NUM)
-#define TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(_activity_id) \
-	(TASK_EVENT_CUSTOM_BIT( \
-		TASK_EVENT_MOTION_FIRST_SW_EVENT + (_activity_id)))
-
+#define TASK_EVENT_MOTION_ACTIVITY_INTERRUPT(_activity_id)        \
+	(TASK_EVENT_CUSTOM_BIT(TASK_EVENT_MOTION_FIRST_SW_EVENT + \
+			       (_activity_id)))
 
 #define ROUND_UP_FLAG ((uint32_t)BIT(31))
 #define BASE_ODR(_odr) ((_odr) & ~ROUND_UP_FLAG)
@@ -87,13 +84,13 @@ enum sensor_config {
  *   use peripheral addressing, it is up to the driver to use this
  *   field as it sees fit
  */
-#define ACCEL_MK_I2C_ADDR_FLAGS(addr)	(addr)
-#define ACCEL_MK_SPI_ADDR_FLAGS(addr)	((addr) | I2C_FLAG_ADDR_IS_SPI)
+#define ACCEL_MK_I2C_ADDR_FLAGS(addr) (addr)
+#define ACCEL_MK_SPI_ADDR_FLAGS(addr) ((addr) | I2C_FLAG_ADDR_IS_SPI)
 
-#define ACCEL_GET_I2C_ADDR(addr_flags)	(I2C_STRIP_FLAGS(addr_flags))
-#define ACCEL_GET_SPI_ADDR(addr_flags)	((addr_flags) & I2C_ADDR_MASK)
+#define ACCEL_GET_I2C_ADDR(addr_flags) (I2C_STRIP_FLAGS(addr_flags))
+#define ACCEL_GET_SPI_ADDR(addr_flags) ((addr_flags)&I2C_ADDR_MASK)
 
-#define ACCEL_ADDR_IS_SPI(addr_flags)	((addr_flags) & I2C_FLAG_ADDR_IS_SPI)
+#define ACCEL_ADDR_IS_SPI(addr_flags) ((addr_flags)&I2C_FLAG_ADDR_IS_SPI)
 
 /*
  * Define the frequency to use in max_frequency based on the maximal frequency
@@ -101,9 +98,10 @@ enum sensor_config {
  * Return a frequency the sensor supports.
  * Trigger a compilation error when the EC way to slow for the sensor.
  */
-#define MOTION_MAX_SENSOR_FREQUENCY(_max, _step) GENERIC_MIN( \
-	(_max) / (CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ >= (_step)), \
-	(_step) << __fls(CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ / (_step)))
+#define MOTION_MAX_SENSOR_FREQUENCY(_max, _step)                         \
+	GENERIC_MIN(                                                     \
+		(_max) / (CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ >= (_step)), \
+		(_step) << __fls(CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ / (_step)))
 
 struct motion_data_t {
 	/*
@@ -126,7 +124,7 @@ struct motion_data_t {
  * When set, spoof mode will allow the EC to report arbitrary values for any of
  * the components.
  */
-#define MOTIONSENSE_FLAG_IN_SPOOF_MODE		BIT(1)
+#define MOTIONSENSE_FLAG_IN_SPOOF_MODE BIT(1)
 
 struct online_calib_data {
 	/**
@@ -353,8 +351,9 @@ static inline void ec_motion_sensor_clamp_i16s(int16_t *arr, const int32_t *v)
 }
 
 /* direct assignment */
-static inline void ec_motion_sensor_fill_values(
-		struct ec_response_motion_sensor_data *dst, const int32_t *v)
+static inline void
+ec_motion_sensor_fill_values(struct ec_response_motion_sensor_data *dst,
+			     const int32_t *v)
 {
 	dst->data[0] = v[0];
 	dst->data[1] = v[1];
