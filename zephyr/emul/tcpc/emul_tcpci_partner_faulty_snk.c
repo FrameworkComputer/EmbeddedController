@@ -42,9 +42,8 @@ static void tcpci_faulty_snk_emul_reduce_action_count(
 	k_fifo_get(&data->action_list, K_FOREVER);
 }
 
-void tcpci_faulty_snk_emul_append_action(
-	struct tcpci_faulty_snk_emul_data *data,
-	struct tcpci_faulty_snk_action *action)
+void tcpci_faulty_snk_emul_append_action(struct tcpci_faulty_snk_emul_data *data,
+					 struct tcpci_faulty_snk_action *action)
 {
 	k_fifo_put(&data->action_list, action);
 }
@@ -67,10 +66,10 @@ void tcpci_faulty_snk_emul_clear_actions_list(
  * @return TCPCI_PARTNER_COMMON_MSG_HANDLED Message was handled
  * @return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED Message wasn't handled
  */
-static enum tcpci_partner_handler_res tcpci_faulty_snk_emul_handle_sop_msg(
-	struct tcpci_partner_extension *ext,
-	struct tcpci_partner_data *common_data,
-	const struct tcpci_emul_msg *msg)
+static enum tcpci_partner_handler_res
+tcpci_faulty_snk_emul_handle_sop_msg(struct tcpci_partner_extension *ext,
+				     struct tcpci_partner_data *common_data,
+				     const struct tcpci_emul_msg *msg)
 {
 	struct tcpci_faulty_snk_emul_data *data =
 		CONTAINER_OF(ext, struct tcpci_faulty_snk_emul_data, ext);
@@ -106,8 +105,7 @@ static enum tcpci_partner_handler_res tcpci_faulty_snk_emul_handle_sop_msg(
 				tcpci_partner_received_msg_status(
 					common_data, TCPCI_EMUL_TX_DISCARDED);
 				tcpci_partner_send_control_msg(
-						common_data,
-						PD_CTRL_ACCEPT, 0);
+					common_data, PD_CTRL_ACCEPT, 0);
 				tcpci_faulty_snk_emul_reduce_action_count(data);
 				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 			}
@@ -140,10 +138,10 @@ struct tcpci_partner_extension_ops tcpci_faulty_snk_emul_ops = {
 	.connect = NULL,
 };
 
-struct tcpci_partner_extension *tcpci_faulty_snk_emul_init(
-	struct tcpci_faulty_snk_emul_data *data,
-	struct tcpci_partner_data *common_data,
-	struct tcpci_partner_extension *ext)
+struct tcpci_partner_extension *
+tcpci_faulty_snk_emul_init(struct tcpci_faulty_snk_emul_data *data,
+			   struct tcpci_partner_data *common_data,
+			   struct tcpci_partner_extension *ext)
 {
 	struct tcpci_partner_extension *snk_ext = &data->ext;
 
