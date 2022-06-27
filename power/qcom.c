@@ -35,7 +35,7 @@
 #include "task.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* Power signal list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -75,13 +75,12 @@ const struct power_signal_info power_signal_list[] = {
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 /* Masks for power signals */
-#define IN_POWER_GOOD		POWER_SIGNAL_MASK(SC7X80_POWER_GOOD)
-#define IN_AP_RST_ASSERTED	POWER_SIGNAL_MASK(SC7X80_AP_RST_ASSERTED)
-#define IN_SUSPEND		POWER_SIGNAL_MASK(SC7X80_AP_SUSPEND)
-
+#define IN_POWER_GOOD POWER_SIGNAL_MASK(SC7X80_POWER_GOOD)
+#define IN_AP_RST_ASSERTED POWER_SIGNAL_MASK(SC7X80_AP_RST_ASSERTED)
+#define IN_SUSPEND POWER_SIGNAL_MASK(SC7X80_AP_SUSPEND)
 
 /* Long power key press to force shutdown */
-#define DELAY_FORCE_SHUTDOWN		(8 * SECOND)
+#define DELAY_FORCE_SHUTDOWN (8 * SECOND)
 
 /*
  * If the power button is pressed to turn on, then held for this long, we
@@ -91,37 +90,37 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  *    into the inner loop, waiting for next event to occur (power button
  *    press or POWER_GOOD == 0).
  */
-#define DELAY_SHUTDOWN_ON_POWER_HOLD	(8 * SECOND)
+#define DELAY_SHUTDOWN_ON_POWER_HOLD (8 * SECOND)
 
 /*
  * After trigger PMIC power sequence, how long it triggers AP to turn on
  * or off. Observed that the worst case is ~150ms. Pick a safe vale.
  */
-#define PMIC_POWER_AP_RESPONSE_TIMEOUT	(350 * MSEC)
+#define PMIC_POWER_AP_RESPONSE_TIMEOUT (350 * MSEC)
 
 /*
  * After force off the switch cap, how long the PMIC/AP totally off.
  * Observed that the worst case is 2s. Pick a safe vale.
  */
-#define FORCE_OFF_RESPONSE_TIMEOUT	(4 * SECOND)
+#define FORCE_OFF_RESPONSE_TIMEOUT (4 * SECOND)
 
 /* Wait for polling the AP on signal */
-#define PMIC_POWER_AP_WAIT		(1 * MSEC)
+#define PMIC_POWER_AP_WAIT (1 * MSEC)
 
 /* The length of an issued low pulse to the PMIC_RESIN_L signal */
-#define PMIC_RESIN_PULSE_LENGTH		(20 * MSEC)
+#define PMIC_RESIN_PULSE_LENGTH (20 * MSEC)
 
 /* The timeout of the check if the system can boot AP */
-#define CAN_BOOT_AP_CHECK_TIMEOUT	(1500 * MSEC)
+#define CAN_BOOT_AP_CHECK_TIMEOUT (1500 * MSEC)
 
 /* Wait for polling if the system can boot AP */
-#define CAN_BOOT_AP_CHECK_WAIT		(200 * MSEC)
+#define CAN_BOOT_AP_CHECK_WAIT (200 * MSEC)
 
 /* The timeout of the check if the switchcap outputs good voltage */
-#define SWITCHCAP_PG_CHECK_TIMEOUT	(100 * MSEC)
+#define SWITCHCAP_PG_CHECK_TIMEOUT (100 * MSEC)
 
 /* Wait for polling if the switchcap outputs good voltage */
-#define SWITCHCAP_PG_CHECK_WAIT		(6 * MSEC)
+#define SWITCHCAP_PG_CHECK_WAIT (6 * MSEC)
 
 /*
  * Delay between power-on the system and power-on the PMIC.
@@ -131,7 +130,7 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  * Measured on Herobrine IOB + Trogdor MLB, the delay takes ~200ms. Set
  * it with margin.
  */
-#define SYSTEM_POWER_ON_DELAY		(300 * MSEC)
+#define SYSTEM_POWER_ON_DELAY (300 * MSEC)
 
 /*
  * Delay between the PMIC power drop and power-off the system.
@@ -139,17 +138,17 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
  * this delay to the same value as the above power-on sequence, which
  * has much safer margin.
  */
-#define PMIC_POWER_OFF_DELAY		(150 * MSEC)
+#define PMIC_POWER_OFF_DELAY (150 * MSEC)
 
 /* The AP_RST_L transition count of a normal AP warm reset */
-#define EXPECTED_AP_RST_TRANSITIONS	3
+#define EXPECTED_AP_RST_TRANSITIONS 3
 
 /*
  * The timeout of waiting the next AP_RST_L transition. We measured
  * the interval between AP_RST_L transitions is 130ms ~ 150ms. Pick
  * a safer value.
  */
-#define AP_RST_TRANSITION_TIMEOUT	(450 * MSEC)
+#define AP_RST_TRANSITION_TIMEOUT (450 * MSEC)
 
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
@@ -282,9 +281,11 @@ void chipset_warm_reset_interrupt(enum gpio_signal signal)
 			 */
 			ap_rst_overdriven = 1;
 			gpio_set_flags(GPIO_PS_HOLD, GPIO_INT_BOTH |
-				       GPIO_SEL_1P8V | GPIO_OUT_HIGH);
+							     GPIO_SEL_1P8V |
+							     GPIO_OUT_HIGH);
 			gpio_set_flags(GPIO_AP_RST_L, GPIO_INT_BOTH |
-				       GPIO_SEL_1P8V | GPIO_OUT_LOW);
+							      GPIO_SEL_1P8V |
+							      GPIO_OUT_LOW);
 		}
 		/* Ignore the else clause, the pull-up rail drops. */
 	} else {
@@ -315,10 +316,8 @@ void chipset_power_good_interrupt(enum gpio_signal signal)
 		 * When POWER_GOOD drops, high-Z both AP_RST_L and PS_HOLD
 		 * to restore their states.
 		 */
-		gpio_set_flags(GPIO_AP_RST_L, GPIO_INT_BOTH |
-			       GPIO_SEL_1P8V);
-		gpio_set_flags(GPIO_PS_HOLD, GPIO_INT_BOTH |
-			       GPIO_SEL_1P8V);
+		gpio_set_flags(GPIO_AP_RST_L, GPIO_INT_BOTH | GPIO_SEL_1P8V);
+		gpio_set_flags(GPIO_PS_HOLD, GPIO_INT_BOTH | GPIO_SEL_1P8V);
 		ap_rst_overdriven = 0;
 	}
 	power_signal_interrupt(signal);
@@ -590,7 +589,7 @@ enum power_state power_chipset_init(void)
 	if (reset_flags & EC_RESET_FLAG_AP_OFF)
 		auto_power_on = 0;
 	else if (!(reset_flags & EC_RESET_FLAG_EFS) &&
-		    (reset_flags & EC_RESET_FLAG_SYSJUMP))
+		 (reset_flags & EC_RESET_FLAG_SYSJUMP))
 		auto_power_on = 0;
 
 	if (battery_is_present() == BP_YES) {
@@ -666,7 +665,7 @@ static int power_is_enough(void)
 	 * waste the time and exit the loop.
 	 */
 	while (!system_can_boot_ap() && !charge_want_shutdown() &&
-		get_time().val < poll_deadline.val) {
+	       get_time().val < poll_deadline.val) {
 		usleep(CAN_BOOT_AP_CHECK_WAIT);
 	}
 
@@ -910,8 +909,8 @@ static int command_fake_suspend(int argc, char **argv)
 
 	if (argc < 2) {
 		ccprintf("fake_suspend: %s\n",
-			 fake_suspend == -1 ? "reset"
-					    : (fake_suspend ? "on" : "off"));
+			 fake_suspend == -1 ? "reset" :
+					      (fake_suspend ? "on" : "off"));
 		return EC_SUCCESS;
 	}
 
@@ -926,8 +925,7 @@ static int command_fake_suspend(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(fakesuspend, command_fake_suspend,
-			"on/off/reset",
+DECLARE_CONSOLE_COMMAND(fakesuspend, command_fake_suspend, "on/off/reset",
 			"Fake the AP_SUSPEND signal");
 
 /* Get system sleep state through GPIOs */
@@ -939,8 +937,7 @@ static inline int chipset_get_sleep_signal(void)
 		return fake_suspend;
 }
 
-__override void power_chipset_handle_sleep_hang(
-		enum sleep_hang_type hang_type)
+__override void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
 	CPRINTS("Warning: Detected sleep hang! Waking host up!");
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
@@ -964,9 +961,9 @@ static void handle_chipset_reset(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, handle_chipset_reset, HOOK_PRIO_FIRST);
 
-__override void power_chipset_handle_host_sleep_event(
-		enum host_sleep_event state,
-		struct host_sleep_event_context *ctx)
+__override void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx)
 {
 	CPRINTS("Handle sleep: %d", state);
 
@@ -1110,9 +1107,9 @@ enum power_state power_handle_state(enum power_state state)
 		shutdown_from_on = check_for_power_off_event();
 		if (shutdown_from_on) {
 			return POWER_S0S3;
-		} else if (power_get_host_sleep_state()
-					== HOST_SLEEP_EVENT_S3_SUSPEND &&
-				chipset_get_sleep_signal()) {
+		} else if (power_get_host_sleep_state() ==
+				   HOST_SLEEP_EVENT_S3_SUSPEND &&
+			   chipset_get_sleep_signal()) {
 			return POWER_S0S3;
 		}
 		/* When receive the host event, trigger the RESUME hook. */
@@ -1200,7 +1197,7 @@ enum power_state_t {
 	PSTATE_COUNT,
 };
 
-static const char * const state_name[] = {
+static const char *const state_name[] = {
 	"unknown",
 	"off",
 	"on",
@@ -1232,6 +1229,4 @@ static int command_power(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(power, command_power,
-			"on/off",
-			"Turn AP power on/off");
+DECLARE_CONSOLE_COMMAND(power, command_power, "on/off", "Turn AP power on/off");
