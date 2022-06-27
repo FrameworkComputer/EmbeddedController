@@ -52,8 +52,7 @@ int test_attach_i2c(const int port, const uint16_t addr_flags)
 	int i;
 
 	for (i = 0; i < MAX_DETACHED_DEV_COUNT; ++i)
-		if (detached_devs[i].valid &&
-		    detached_devs[i].port == port &&
+		if (detached_devs[i].valid && detached_devs[i].port == port &&
 		    detached_devs[i].addr_flags == addr_flags)
 			break;
 
@@ -64,22 +63,19 @@ int test_attach_i2c(const int port, const uint16_t addr_flags)
 	return EC_SUCCESS;
 }
 
-static int test_check_detached(const int port,
-			       const uint16_t addr_flags)
+static int test_check_detached(const int port, const uint16_t addr_flags)
 {
 	int i;
 
 	for (i = 0; i < MAX_DETACHED_DEV_COUNT; ++i)
-		if (detached_devs[i].valid &&
-		    detached_devs[i].port == port &&
+		if (detached_devs[i].valid && detached_devs[i].port == port &&
 		    detached_devs[i].addr_flags == addr_flags)
 			return 1;
 	return 0;
 }
 
-int chip_i2c_xfer(const int port, const uint16_t addr_flags,
-		  const uint8_t *out, int out_size,
-		  uint8_t *in, int in_size, int flags)
+int chip_i2c_xfer(const int port, const uint16_t addr_flags, const uint8_t *out,
+		  int out_size, uint8_t *in, int in_size, int flags)
 {
 	const struct test_i2c_xfer *p;
 	int rv;
@@ -87,9 +83,8 @@ int chip_i2c_xfer(const int port, const uint16_t addr_flags,
 	if (test_check_detached(port, addr_flags))
 		return EC_ERROR_UNKNOWN;
 	for (p = __test_i2c_xfer; p < __test_i2c_xfer_end; ++p) {
-		rv = p->routine(port, addr_flags,
-				out, out_size,
-				in, in_size, flags);
+		rv = p->routine(port, addr_flags, out, out_size, in, in_size,
+				flags);
 		if (rv != EC_ERROR_INVAL)
 			return rv;
 	}
