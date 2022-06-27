@@ -18,10 +18,10 @@
 
 #define DEFAULT_R_AC 20
 #define R_AC CONFIG_CHARGER_SENSE_RESISTOR_AC
-#define AC_CURRENT_TO_REG(CUR) ((CUR) * R_AC / DEFAULT_R_AC)
+#define AC_CURRENT_TO_REG(CUR) ((CUR)*R_AC / DEFAULT_R_AC)
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 static int dev_id[CONFIG_USB_PD_PORT_MAX_COUNT] = { -1 };
 
@@ -47,14 +47,13 @@ int raa489000_set_output_current(int port, enum tcpc_rp_value rp)
 {
 	int regval;
 	int selected_cur = rp == TYPEC_RP_3A0 ?
-				RAA489000_VBUS_CURRENT_TARGET_3A :
-				RAA489000_VBUS_CURRENT_TARGET_1_5A;
+				   RAA489000_VBUS_CURRENT_TARGET_3A :
+				   RAA489000_VBUS_CURRENT_TARGET_1_5A;
 
 	regval = AC_CURRENT_TO_REG(selected_cur) +
-				selected_cur % (DEFAULT_R_AC/R_AC);
+		 selected_cur % (DEFAULT_R_AC / R_AC);
 
-	return tcpc_write16(port, RAA489000_VBUS_CURRENT_TARGET,
-				regval);
+	return tcpc_write16(port, RAA489000_VBUS_CURRENT_TARGET, regval);
 }
 
 int raa489000_init(int port)
@@ -94,11 +93,11 @@ int raa489000_init(int port)
 	 * can get the correct voltage.
 	 */
 	i2c_port = tcpc_config[port].i2c_info.port;
-	rv = i2c_read16(i2c_port, ISL923X_ADDR_FLAGS,
-			ISL9238_REG_CONTROL3, &regval);
+	rv = i2c_read16(i2c_port, ISL923X_ADDR_FLAGS, ISL9238_REG_CONTROL3,
+			&regval);
 	regval |= RAA489000_ENABLE_ADC;
-	rv |= i2c_write16(i2c_port, ISL923X_ADDR_FLAGS,
-			ISL9238_REG_CONTROL3, regval);
+	rv |= i2c_write16(i2c_port, ISL923X_ADDR_FLAGS, ISL9238_REG_CONTROL3,
+			  regval);
 	if (rv)
 		CPRINTS("c%d: failed to enable ADCs", port);
 
@@ -107,7 +106,6 @@ int raa489000_init(int port)
 			TCPC_REG_COMMAND_ENABLE_VBUS_DETECT);
 	if (rv)
 		CPRINTS("c%d: failed to enable vbus detect cmd", port);
-
 
 	/*
 	 * If VBUS is present, start sinking from it if we haven't already
@@ -131,7 +129,7 @@ int raa489000_init(int port)
 				ISL9238_REG_CONTROL3, &regval);
 		regval &= ~RAA489000_ENABLE_ADC;
 		rv |= i2c_write16(i2c_port, ISL923X_ADDR_FLAGS,
-				ISL9238_REG_CONTROL3, regval);
+				  ISL9238_REG_CONTROL3, regval);
 		if (rv)
 			CPRINTS("c%d: failed to disable ADCs", port);
 	}
@@ -172,14 +170,14 @@ int raa489000_init(int port)
 	 */
 	if (device_id <= 1) {
 		rv = tcpc_write16(port, RAA489000_TYPEC_SETTING1,
-			     RAA489000_SETTING1_RDOE |
-			     RAA489000_SETTING1_CC2_CMP3_EN |
-			     RAA489000_SETTING1_CC2_CMP2_EN |
-			     RAA489000_SETTING1_CC2_CMP1_EN |
-			     RAA489000_SETTING1_CC1_CMP3_EN |
-			     RAA489000_SETTING1_CC1_CMP2_EN |
-			     RAA489000_SETTING1_CC1_CMP1_EN |
-			     RAA489000_SETTING1_CC_DB_EN);
+				  RAA489000_SETTING1_RDOE |
+					  RAA489000_SETTING1_CC2_CMP3_EN |
+					  RAA489000_SETTING1_CC2_CMP2_EN |
+					  RAA489000_SETTING1_CC2_CMP1_EN |
+					  RAA489000_SETTING1_CC1_CMP3_EN |
+					  RAA489000_SETTING1_CC1_CMP2_EN |
+					  RAA489000_SETTING1_CC1_CMP1_EN |
+					  RAA489000_SETTING1_CC_DB_EN);
 		if (rv)
 			CPRINTS("c%d: failed to enable CC comparators", port);
 	}
@@ -187,8 +185,8 @@ int raa489000_init(int port)
 	/* Set Rx enable for receiver comparator */
 	rv = tcpc_read16(port, RAA489000_PD_PHYSICAL_SETTING1, &regval);
 	regval |= RAA489000_PD_PHY_SETTING1_RECEIVER_EN |
-		RAA489000_PD_PHY_SETTING1_SQUELCH_EN |
-		RAA489000_PD_PHY_SETTING1_TX_LDO11_EN;
+		  RAA489000_PD_PHY_SETTING1_SQUELCH_EN |
+		  RAA489000_PD_PHY_SETTING1_TX_LDO11_EN;
 	rv |= tcpc_write16(port, RAA489000_PD_PHYSICAL_SETTING1, regval);
 	if (rv)
 		CPRINTS("c%d: failed to set PD PHY setting1", port);
@@ -231,13 +229,13 @@ int raa489000_init(int port)
 	 * Set Vbus OCP UV here, PD tasks will set target current
 	 */
 	rv = tcpc_write16(port, RAA489000_VBUS_OCP_UV_THRESHOLD,
-				RAA489000_OCP_THRESHOLD_VALUE);
+			  RAA489000_OCP_THRESHOLD_VALUE);
 	if (rv)
 		CPRINTS("c%d: failed to set OCP threshold", port);
 
 	/* Set Vbus Target Voltage */
 	rv = tcpc_write16(port, RAA489000_VBUS_VOLTAGE_TARGET,
-				RAA489000_VBUS_VOLTAGE_TARGET_5160MV);
+			  RAA489000_VBUS_VOLTAGE_TARGET_5160MV);
 	if (rv)
 		CPRINTS("c%d: failed to set Vbus Target Voltage", port);
 
@@ -278,7 +276,7 @@ int raa489000_debug_detach(int port)
 	RETURN_ERROR(tcpc_read(port, TCPC_REG_POWER_STATUS, &power_status));
 
 	if (!pd_is_battery_capable() &&
-			(power_status & TCPC_REG_POWER_STATUS_SINKING_VBUS))
+	    (power_status & TCPC_REG_POWER_STATUS_SINKING_VBUS))
 		return EC_SUCCESS;
 
 	tcpci_tcpc_enable_auto_discharge_disconnect(port, 1);
@@ -292,37 +290,37 @@ int raa489000_debug_detach(int port)
 
 /* RAA489000 is a TCPCI compatible port controller */
 const struct tcpm_drv raa489000_tcpm_drv = {
-	.init                   = &raa489000_init,
-	.release                = &tcpci_tcpm_release,
-	.get_cc                 = &tcpci_tcpm_get_cc,
+	.init = &raa489000_init,
+	.release = &tcpci_tcpm_release,
+	.get_cc = &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.check_vbus_level       = &tcpci_tcpm_check_vbus_level,
+	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
 #endif
-	.select_rp_value        = &tcpci_tcpm_select_rp_value,
-	.set_cc                 = &raa489000_tcpm_set_cc,
-	.set_polarity           = &tcpci_tcpm_set_polarity,
+	.select_rp_value = &tcpci_tcpm_select_rp_value,
+	.set_cc = &raa489000_tcpm_set_cc,
+	.set_polarity = &tcpci_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable	= &tcpci_tcpm_sop_prime_enable,
+	.sop_prime_enable = &tcpci_tcpm_sop_prime_enable,
 #endif
-	.set_vconn              = &tcpci_tcpm_set_vconn,
-	.set_msg_header         = &tcpci_tcpm_set_msg_header,
-	.set_rx_enable          = &tcpci_tcpm_set_rx_enable,
-	.get_message_raw        = &tcpci_tcpm_get_message_raw,
-	.transmit               = &tcpci_tcpm_transmit,
-	.tcpc_alert             = &tcpci_tcpc_alert,
+	.set_vconn = &tcpci_tcpm_set_vconn,
+	.set_msg_header = &tcpci_tcpm_set_msg_header,
+	.set_rx_enable = &tcpci_tcpm_set_rx_enable,
+	.get_message_raw = &tcpci_tcpm_get_message_raw,
+	.transmit = &tcpci_tcpm_transmit,
+	.tcpc_alert = &tcpci_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-	.tcpc_discharge_vbus    = &tcpci_tcpc_discharge_vbus,
+	.tcpc_discharge_vbus = &tcpci_tcpc_discharge_vbus,
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle             = &tcpci_tcpc_drp_toggle,
+	.drp_toggle = &tcpci_tcpc_drp_toggle,
 #endif
-	.get_chip_info          = &tcpci_get_chip_info,
+	.get_chip_info = &tcpci_get_chip_info,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode   = &raa489000_enter_low_power_mode,
-	.wake_low_power_mode	= &tcpci_wake_low_power_mode,
+	.enter_low_power_mode = &raa489000_enter_low_power_mode,
+	.wake_low_power_mode = &tcpci_wake_low_power_mode,
 #endif
-	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
+	.set_bist_test_mode = &tcpci_set_bist_test_mode,
 	.tcpc_enable_auto_discharge_disconnect =
 		&tcpci_tcpc_enable_auto_discharge_disconnect,
-	.debug_detach		= &raa489000_debug_detach,
+	.debug_detach = &raa489000_debug_detach,
 };
