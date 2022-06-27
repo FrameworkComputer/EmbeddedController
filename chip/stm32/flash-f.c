@@ -20,8 +20,8 @@
 #include "util.h"
 #include "watchdog.h"
 
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /*
  * Approximate number of CPU cycles per iteration of the loop when polling
@@ -49,14 +49,15 @@
 
 /* Forward declarations */
 #if defined(CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE)
-static enum flash_rdp_level flash_physical_get_rdp_level(void);
+	static enum flash_rdp_level
+	flash_physical_get_rdp_level(void);
 static int flash_physical_set_rdp_level(enum flash_rdp_level level);
 #endif /* CONFIG_FLASH_READOUT_PROTECTION_AS_PSTATE */
 
 static inline int calculate_flash_timeout(void)
 {
-	return (FLASH_WRITE_TIMEOUT_US *
-		(clock_get_freq() / SECOND) / CYCLE_PER_FLASH_LOOP);
+	return (FLASH_WRITE_TIMEOUT_US * (clock_get_freq() / SECOND) /
+		CYCLE_PER_FLASH_LOOP);
 }
 
 static int wait_busy(void)
@@ -66,7 +67,6 @@ static int wait_busy(void)
 		udelay(CYCLE_PER_FLASH_LOOP);
 	return (timeout > 0) ? EC_SUCCESS : EC_ERROR_TIMEOUT;
 }
-
 
 void unlock_flash_control_register(void)
 {
@@ -134,7 +134,7 @@ bool flash_control_register_locked(void)
  * We at least unlock the control register lock.
  * We may also unlock other locks.
  */
-enum extra_lock_type  {
+enum extra_lock_type {
 	NO_EXTRA_LOCK = 0,
 	OPT_LOCK = 1,
 };
@@ -382,9 +382,7 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 		watchdog_reload();
 
 		/* wait to be ready  */
-		for (i = 0;
-		     (STM32_FLASH_SR & FLASH_SR_BUSY) &&
-		     (i < timeout);
+		for (i = 0; (STM32_FLASH_SR & FLASH_SR_BUSY) && (i < timeout);
 		     i++)
 			;
 
@@ -392,9 +390,7 @@ int crec_flash_physical_write(int offset, int size, const char *data)
 		*address++ = quantum;
 
 		/* Wait for writes to complete */
-		for (i = 0;
-		     (STM32_FLASH_SR & FLASH_SR_BUSY) &&
-		     (i < timeout);
+		for (i = 0; (STM32_FLASH_SR & FLASH_SR_BUSY) && (i < timeout);
 		     i++)
 			;
 
@@ -429,7 +425,7 @@ int crec_flash_physical_erase(int offset, int size)
 	int sector = crec_flash_bank_index(offset);
 	/* we take advantage of sector_size == erase_size */
 	if ((sector < 0) || (crec_flash_bank_index(offset + size) < 0))
-		return EC_ERROR_INVAL;  /* Invalid range */
+		return EC_ERROR_INVAL; /* Invalid range */
 #endif
 
 	if (unlock(NO_EXTRA_LOCK) != EC_SUCCESS)
@@ -459,7 +455,7 @@ int crec_flash_physical_erase(int offset, int size)
 #ifdef CHIP_FAMILY_STM32F4
 		/* select page to erase */
 		STM32_FLASH_CR = (STM32_FLASH_CR & ~STM32_FLASH_CR_SNB_MASK) |
-			(sector << STM32_FLASH_CR_SNB_OFFSET);
+				 (sector << STM32_FLASH_CR_SNB_OFFSET);
 #else
 		/* select page to erase */
 		STM32_FLASH_AR = CONFIG_PROGRAM_MEMORY_BASE + offset;
@@ -472,7 +468,7 @@ int crec_flash_physical_erase(int offset, int size)
 		watchdog_reload();
 		while ((STM32_FLASH_SR & FLASH_SR_BUSY) &&
 		       (get_time().val < deadline.val)) {
-			usleep(timeout_us/100);
+			usleep(timeout_us / 100);
 		}
 		if (STM32_FLASH_SR & FLASH_SR_BUSY) {
 			res = EC_ERROR_TIMEOUT;
@@ -487,7 +483,7 @@ int crec_flash_physical_erase(int offset, int size)
 			res = EC_ERROR_UNKNOWN;
 			goto exit_er;
 		}
-next_sector:
+	next_sector:
 		size -= sector_size;
 		offset += sector_size;
 #ifdef CHIP_FAMILY_STM32F4
@@ -540,8 +536,7 @@ int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 
 	original_val = val = STM32_OPTB_WP & STM32_OPTB_nWRP_ALL;
 
-	for (block = WP_BANK_OFFSET;
-	     block < WP_BANK_OFFSET + PHYSICAL_BANKS;
+	for (block = WP_BANK_OFFSET; block < WP_BANK_OFFSET + PHYSICAL_BANKS;
 	     block++) {
 		int protect = new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT;
 
@@ -573,10 +568,10 @@ static void unprotect_all_blocks(void)
 	write_optb(STM32_FLASH_nWRP_ALL, STM32_FLASH_nWRP_ALL);
 }
 
-#else   /* CHIP_FAMILY_STM32F4 */
+#else /* CHIP_FAMILY_STM32F4 */
 static int flash_physical_get_protect_at_boot(int block)
 {
-	uint8_t val = read_optb(STM32_OPTB_WRP_OFF(block/8));
+	uint8_t val = read_optb(STM32_OPTB_WRP_OFF(block / 8));
 	return (!(val & (1 << (block % 8)))) ? 1 : 0;
 }
 
@@ -589,11 +584,10 @@ int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 	for (i = 0; i < 4; ++i)
 		original_val[i] = val[i] = read_optb(i * 2 + 8);
 
-	for (block = WP_BANK_OFFSET;
-	     block < WP_BANK_OFFSET + PHYSICAL_BANKS;
+	for (block = WP_BANK_OFFSET; block < WP_BANK_OFFSET + PHYSICAL_BANKS;
 	     block++) {
 		int protect = new_flags & EC_FLASH_PROTECT_ALL_AT_BOOT;
-		int byte_off = STM32_OPTB_WRP_OFF(block/8) / 2 - 4;
+		int byte_off = STM32_OPTB_WRP_OFF(block / 8) / 2 - 4;
 
 		if (block >= WP_BANK_OFFSET &&
 		    block < WP_BANK_OFFSET + WP_BANK_COUNT)
@@ -601,7 +595,8 @@ int crec_flash_physical_protect_at_boot(uint32_t new_flags)
 #ifdef CONFIG_ROLLBACK
 		else if (block >= ROLLBACK_BANK_OFFSET &&
 			 block < ROLLBACK_BANK_OFFSET + ROLLBACK_BANK_COUNT)
-			protect |= new_flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT;
+			protect |= new_flags &
+				   EC_FLASH_PROTECT_ROLLBACK_AT_BOOT;
 #endif
 #ifdef CONFIG_FLASH_PROTECT_RW
 		else
@@ -729,13 +724,12 @@ int crec_flash_pre_init(void)
 	uint32_t prot_flags = crec_flash_get_protect();
 	int need_reset = 0;
 
-
 #ifdef CHIP_FAMILY_STM32F4
 	unlock(NO_EXTRA_LOCK);
 	/* Set the proper write size */
 	STM32_FLASH_CR = (STM32_FLASH_CR & ~STM32_FLASH_CR_PSIZE_MASK) |
-		 (31 - __builtin_clz(CONFIG_FLASH_WRITE_SIZE)) <<
-		 STM32_FLASH_CR_PSIZE_OFFSET;
+			 (31 - __builtin_clz(CONFIG_FLASH_WRITE_SIZE))
+				 << STM32_FLASH_CR_PSIZE_OFFSET;
 	lock();
 #endif
 	if (crec_flash_physical_restore_state())
@@ -776,8 +770,8 @@ int crec_flash_pre_init(void)
 			 * to the check above.  One of them should be able to
 			 * go away.
 			 */
-			crec_flash_protect_at_boot(
-				prot_flags & EC_FLASH_PROTECT_RO_AT_BOOT);
+			crec_flash_protect_at_boot(prot_flags &
+						   EC_FLASH_PROTECT_RO_AT_BOOT);
 			need_reset = 1;
 		}
 	} else {
@@ -792,7 +786,7 @@ int crec_flash_pre_init(void)
 	}
 
 	if ((crec_flash_physical_get_valid_flags() &
-	    EC_FLASH_PROTECT_ALL_AT_BOOT) &&
+	     EC_FLASH_PROTECT_ALL_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_ALL_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_ALL_NOW))) {
 		/*
@@ -808,7 +802,7 @@ int crec_flash_pre_init(void)
 
 #ifdef CONFIG_FLASH_PROTECT_RW
 	if ((crec_flash_physical_get_valid_flags() &
-	    EC_FLASH_PROTECT_RW_AT_BOOT) &&
+	     EC_FLASH_PROTECT_RW_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_RW_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_RW_NOW))) {
 		/* RW_AT_BOOT and RW_NOW do not match. */
@@ -818,7 +812,7 @@ int crec_flash_pre_init(void)
 
 #ifdef CONFIG_ROLLBACK
 	if ((crec_flash_physical_get_valid_flags() &
-	    EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) &&
+	     EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) &&
 	    (!!(prot_flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT) !=
 	     !!(prot_flags & EC_FLASH_PROTECT_ROLLBACK_NOW))) {
 		/* ROLLBACK_AT_BOOT and ROLLBACK_NOW do not match. */
