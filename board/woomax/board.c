@@ -44,8 +44,8 @@
 
 #include "gpio_list.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* Motion sensors */
 static struct mutex g_lid_mutex;
@@ -64,15 +64,15 @@ static const mat33_fp_t lid_standard_ref = {
 };
 
 static const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)},
+	{ 0, FLOAT_TO_FP(-1), 0 },
+	{ FLOAT_TO_FP(-1), 0, 0 },
+	{ 0, 0, FLOAT_TO_FP(-1) },
 };
 
 static const mat33_fp_t base_standard_ref_icm = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)},
+	{ FLOAT_TO_FP(1), 0, 0 },
+	{ 0, FLOAT_TO_FP(-1), 0 },
+	{ 0, 0, FLOAT_TO_FP(-1) },
 };
 
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
@@ -294,8 +294,8 @@ static void board_chipset_resume(void)
 		int val;
 
 		rv = i2c_read8(I2C_PORT_USBA0,
-				PS8811_I2C_ADDR_FLAGS3 + PS8811_REG_PAGE1,
-				PS8811_REG1_USB_BEQ_LEVEL, &val);
+			       PS8811_I2C_ADDR_FLAGS3 + PS8811_REG_PAGE1,
+			       PS8811_REG1_USB_BEQ_LEVEL, &val);
 		if (!rv)
 			break;
 	}
@@ -307,8 +307,7 @@ static void board_chipset_resume(void)
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
 		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
 				  hpd);
 	}
 }
@@ -319,9 +318,7 @@ static void board_chipset_suspend(void)
 	ioex_set_level(IOEX_USB_A0_RETIMER_EN, 0);
 
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  0);
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS, 0);
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 	}
 
@@ -340,35 +337,31 @@ static int woomax_ps8818_mux_set(const struct usb_mux *me,
 	/* USB specific config */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/* Boost the USB gain */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX1EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_18DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX1EQ_10G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_18DB);
 		if (rv)
 			return rv;
 
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX2EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_18DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX2EQ_10G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_18DB);
 		if (rv)
 			return rv;
 
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX1EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX1EQ_5G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_APTX2EQ_5G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_APTX2EQ_5G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 	}
@@ -376,11 +369,10 @@ static int woomax_ps8818_mux_set(const struct usb_mux *me,
 	/* DP specific config */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Boost the DP gain */
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_DPEQ_LEVEL,
-					PS8818_DPEQ_LEVEL_UP_MASK,
-					PS8818_DPEQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_DPEQ_LEVEL,
+					      PS8818_DPEQ_LEVEL_UP_MASK,
+					      PS8818_DPEQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
@@ -391,21 +383,18 @@ static int woomax_ps8818_mux_set(const struct usb_mux *me,
 	}
 
 	if (!(mux_state & USB_PD_MUX_POLARITY_INVERTED)) {
-		rv = ps8818_i2c_field_update8(me,
-					PS8818_REG_PAGE1,
-					PS8818_REG1_CRX1EQ_10G_LEVEL,
-					PS8818_EQ_LEVEL_UP_MASK,
-					PS8818_EQ_LEVEL_UP_19DB);
+		rv = ps8818_i2c_field_update8(me, PS8818_REG_PAGE1,
+					      PS8818_REG1_CRX1EQ_10G_LEVEL,
+					      PS8818_EQ_LEVEL_UP_MASK,
+					      PS8818_EQ_LEVEL_UP_19DB);
 		rv |= ps8818_i2c_write(me, PS8818_REG_PAGE1,
-					PS8818_REG1_APRX1_DE_LEVEL, 0x02);
+				       PS8818_REG1_APRX1_DE_LEVEL, 0x02);
 	}
 
 	/* set the RX input termination */
-	rv |= ps8818_i2c_field_update8(me,
-				PS8818_REG_PAGE1,
-				PS8818_REG1_RX_PHY,
-				PS8818_RX_INPUT_TERM_MASK,
-				PS8818_RX_INPUT_TERM_85_OHM);
+	rv |= ps8818_i2c_field_update8(me, PS8818_REG_PAGE1, PS8818_REG1_RX_PHY,
+				       PS8818_RX_INPUT_TERM_MASK,
+				       PS8818_RX_INPUT_TERM_85_OHM);
 	/* set register 0x40 ICP1 for 1G PD loop */
 	rv |= ps8818_i2c_write(me, PS8818_REG_PAGE1, 0x40, 0x84);
 
@@ -425,11 +414,10 @@ static int woomax_ps8802_mux_set(const struct usb_mux *me,
 	/* USB specific config */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/* Boost the USB gain */
-		rv = ps8802_i2c_field_update16(me,
-					PS8802_REG_PAGE2,
-					PS8802_REG2_USB_SSEQ_LEVEL,
-					PS8802_USBEQ_LEVEL_UP_MASK,
-					PS8802_USBEQ_LEVEL_UP_19DB);
+		rv = ps8802_i2c_field_update16(me, PS8802_REG_PAGE2,
+					       PS8802_REG2_USB_SSEQ_LEVEL,
+					       PS8802_USBEQ_LEVEL_UP_MASK,
+					       PS8802_USBEQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 	}
@@ -437,11 +425,10 @@ static int woomax_ps8802_mux_set(const struct usb_mux *me,
 	/* DP specific config */
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/*Boost the DP gain */
-		rv = ps8802_i2c_field_update16(me,
-					PS8802_REG_PAGE2,
-					PS8802_REG2_DPEQ_LEVEL,
-					PS8802_DPEQ_LEVEL_UP_MASK,
-					PS8802_DPEQ_LEVEL_UP_19DB);
+		rv = ps8802_i2c_field_update16(me, PS8802_REG_PAGE2,
+					       PS8802_REG2_DPEQ_LEVEL,
+					       PS8802_DPEQ_LEVEL_UP_MASK,
+					       PS8802_DPEQ_LEVEL_UP_19DB);
 		if (rv)
 			return rv;
 
@@ -453,11 +440,10 @@ static int woomax_ps8802_mux_set(const struct usb_mux *me,
 	}
 
 	/* Set extra swing level tuning at 800mV/P0 */
-	rv = ps8802_i2c_field_update8(me,
-				PS8802_REG_PAGE1,
-				PS8802_800MV_LEVEL_TUNING,
-				PS8802_EXTRA_SWING_LEVEL_P0_MASK,
-				PS8802_EXTRA_SWING_LEVEL_P0_UP_1);
+	rv = ps8802_i2c_field_update8(me, PS8802_REG_PAGE1,
+				      PS8802_800MV_LEVEL_TUNING,
+				      PS8802_EXTRA_SWING_LEVEL_P0_MASK,
+				      PS8802_EXTRA_SWING_LEVEL_P0_UP_1);
 
 	return rv;
 }
@@ -481,8 +467,7 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the PS8802
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_ps8802,
+		memcpy(&usb_muxes[USBC_PORT_C1], &usbc1_ps8802,
 		       sizeof(struct usb_mux));
 
 		/* Set the AMD FP5 as the secondary MUX */
@@ -501,8 +486,7 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_amd_fp5_usb_mux,
+		memcpy(&usb_muxes[USBC_PORT_C1], &usbc1_amd_fp5_usb_mux,
 		       sizeof(struct usb_mux));
 
 		/* Set the PS8818 as the secondary MUX */
@@ -510,82 +494,206 @@ static void setup_mux(void)
 	}
 }
 
-enum pi3dpx1207_usb_conf {
-	USB_DP = 0,
-	USB_DP_INV,
-	USB,
-	USB_INV,
-	DP,
-	DP_INV
-};
+enum pi3dpx1207_usb_conf { USB_DP = 0, USB_DP_INV, USB, USB_INV, DP, DP_INV };
 
 static uint8_t pi3dpx1207_picasso_eq[] = {
 	/*usb_dp*/
-	0x13, 0x11, 0x20, 0x62, 0x06, 0x5B, 0x5B,
-	0x07, 0x03, 0x40, 0xFC, 0x42, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x62,
+	0x06,
+	0x5B,
+	0x5B,
+	0x07,
+	0x03,
+	0x40,
+	0xFC,
+	0x42,
+	0x71,
 	/*usb_dp_inv */
-	0x13, 0x11, 0x20, 0x72, 0x06, 0x03, 0x07,
-	0x5B, 0x5B, 0x23, 0xFC, 0x42, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x72,
+	0x06,
+	0x03,
+	0x07,
+	0x5B,
+	0x5B,
+	0x23,
+	0xFC,
+	0x42,
+	0x71,
 	/*usb*/
-	0x13, 0x11, 0x20, 0x42, 0x00, 0x03, 0x07,
-	0x07, 0x03, 0x00, 0x42, 0x42, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x42,
+	0x00,
+	0x03,
+	0x07,
+	0x07,
+	0x03,
+	0x00,
+	0x42,
+	0x42,
+	0x71,
 	/*usb_inv*/
-	0x13, 0x11, 0x20, 0x52, 0x00, 0x03, 0x07,
-	0x07, 0x03, 0x02, 0x42, 0x42, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x52,
+	0x00,
+	0x03,
+	0x07,
+	0x07,
+	0x03,
+	0x02,
+	0x42,
+	0x42,
+	0x71,
 	/*dp*/
-	0x13, 0x11, 0x20, 0x22, 0x06, 0x5B, 0x5B,
-	0x5B, 0x5B, 0x60, 0xFC, 0xFC, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x22,
+	0x06,
+	0x5B,
+	0x5B,
+	0x5B,
+	0x5B,
+	0x60,
+	0xFC,
+	0xFC,
+	0x71,
 	/*dp_inv*/
-	0x13, 0x11, 0x20, 0x32, 0x06, 0x5B, 0x5B,
-	0x5B, 0x5B, 0x63, 0xFC, 0xFC, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x32,
+	0x06,
+	0x5B,
+	0x5B,
+	0x5B,
+	0x5B,
+	0x63,
+	0xFC,
+	0xFC,
+	0x71,
 };
 static uint8_t pi3dpx1207_dali_eq[] = {
 	/*usb_dp*/
-	0x13, 0x11, 0x20, 0x62, 0x06, 0x5B, 0x5B,
-	0x07, 0x07, 0x40, 0xFC, 0x42, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x62,
+	0x06,
+	0x5B,
+	0x5B,
+	0x07,
+	0x07,
+	0x40,
+	0xFC,
+	0x42,
+	0x71,
 	/*usb_dp_inv*/
-	0x13, 0x11, 0x20, 0x72, 0x06, 0x07, 0x07,
-	0x5B, 0x5B, 0x23, 0xFC, 0x42, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x72,
+	0x06,
+	0x07,
+	0x07,
+	0x5B,
+	0x5B,
+	0x23,
+	0xFC,
+	0x42,
+	0x71,
 	/*usb*/
-	0x13, 0x11, 0x20, 0x42, 0x00, 0x07, 0x07,
-	0x07, 0x07, 0x00, 0x42, 0x42, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x42,
+	0x00,
+	0x07,
+	0x07,
+	0x07,
+	0x07,
+	0x00,
+	0x42,
+	0x42,
+	0x71,
 	/*usb_inv*/
-	0x13, 0x11, 0x20, 0x52, 0x00, 0x07, 0x07,
-	0x07, 0x07, 0x02, 0x42, 0x42, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x52,
+	0x00,
+	0x07,
+	0x07,
+	0x07,
+	0x07,
+	0x02,
+	0x42,
+	0x42,
+	0x71,
 	/*dp*/
-	0x13, 0x11, 0x20, 0x22, 0x06, 0x5B, 0x5B,
-	0x5B, 0x5B, 0x60, 0xFC, 0xFC, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x22,
+	0x06,
+	0x5B,
+	0x5B,
+	0x5B,
+	0x5B,
+	0x60,
+	0xFC,
+	0xFC,
+	0x71,
 	/*dp_inv*/
-	0x13, 0x11, 0x20, 0x32, 0x06, 0x5B, 0x5B,
-	0x5B, 0x5B, 0x63, 0xFC, 0xFC, 0x71,
+	0x13,
+	0x11,
+	0x20,
+	0x32,
+	0x06,
+	0x5B,
+	0x5B,
+	0x5B,
+	0x5B,
+	0x63,
+	0xFC,
+	0xFC,
+	0x71,
 };
 
 static int board_pi3dpx1207_mux_set(const struct usb_mux *me,
-		mux_state_t mux_state)
+				    mux_state_t mux_state)
 {
-	int  rv = EC_SUCCESS;
+	int rv = EC_SUCCESS;
 	enum pi3dpx1207_usb_conf usb_mode = 0;
 
 	/* USB */
 	if (mux_state & USB_PD_MUX_USB_ENABLED) {
 		/* USB with DP */
 		if (mux_state & USB_PD_MUX_DP_ENABLED) {
-			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-					? USB_DP_INV
-					: USB_DP;
+			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+					   USB_DP_INV :
+					   USB_DP;
 		}
 		/* USB without DP */
 		else {
-			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-					? USB_INV
-					: USB;
+			usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED) ?
+					   USB_INV :
+					   USB;
 		}
 	}
 	/* DP without USB */
 	else if (mux_state & USB_PD_MUX_DP_ENABLED) {
-		usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED)
-				? DP_INV
-				: DP;
+		usb_mode = (mux_state & USB_PD_MUX_POLARITY_INVERTED) ? DP_INV :
+									DP;
 	}
 	/* Nothing enabled */
 	else
@@ -594,10 +702,11 @@ static int board_pi3dpx1207_mux_set(const struct usb_mux *me,
 	/* Write the retimer config byte */
 	if (ec_config_has_usbc1_retimer_ps8802())
 		rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
-			&pi3dpx1207_dali_eq[usb_mode*13], 13, NULL, 0);
+			      &pi3dpx1207_dali_eq[usb_mode * 13], 13, NULL, 0);
 	else
 		rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
-			&pi3dpx1207_picasso_eq[usb_mode*13], 13, NULL, 0);
+			      &pi3dpx1207_picasso_eq[usb_mode * 13], 13, NULL,
+			      0);
 
 	return rv;
 }
@@ -667,7 +776,7 @@ DECLARE_HOOK(HOOK_INIT, setup_fw_config, HOOK_PRIO_INIT_I2C + 2);
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = -1,
 };
@@ -758,8 +867,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_THERMISTOR \
-	{ \
+#define THERMAL_THERMISTOR       \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
@@ -774,8 +883,8 @@ __maybe_unused static const struct ec_thermal_config thermal_thermistor =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(95), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
@@ -813,8 +922,8 @@ static const struct ec_response_keybd_config woomax_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
-__override const struct ec_response_keybd_config
-*board_vivaldi_keybd_config(void)
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
 {
 	return &woomax_kb;
 }
@@ -833,10 +942,9 @@ static void hdmi_hpd_handler(void)
 {
 	int hpd = gpio_get_level(GPIO_DP1_HPD_EC_IN);
 
-	pi3hdx1204_enable(I2C_PORT_TCPC1,
-			  PI3HDX1204_I2C_ADDR_FLAGS,
-			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
-			  && hpd);
+	pi3hdx1204_enable(
+		I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
+		chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON) && hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
@@ -856,9 +964,8 @@ int board_usbc_port_to_hpd_gpio_or_ioex(int port)
 	 * USB-C1 OPT3 DB use GPIO_USB_C1_HPD_IN_DB for board version 2
 	 */
 	else if (ec_config_has_mst_hub_rtd2141b())
-		return (board_ver >= 2)
-			? GPIO_USB_C1_HPD_IN_DB
-			: IOEX_USB_C1_HPD_IN_DB;
+		return (board_ver >= 2) ? GPIO_USB_C1_HPD_IN_DB :
+					  IOEX_USB_C1_HPD_IN_DB;
 
 	/* USB-C1 OPT1 DB use DP2_HPD. */
 	return GPIO_DP2_HPD;
