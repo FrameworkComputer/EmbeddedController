@@ -89,10 +89,10 @@ const uint8_t *keyboard_scan_get_state(void);
 
 enum kb_scan_disable_masks {
 	/* Reasons why keyboard scanning should be disabled */
-	KB_SCAN_DISABLE_LID_CLOSED   = (1<<0),
-	KB_SCAN_DISABLE_POWER_BUTTON = (1<<1),
-	KB_SCAN_DISABLE_LID_ANGLE    = (1<<2),
-	KB_SCAN_DISABLE_USB_SUSPENDED = (1<<3),
+	KB_SCAN_DISABLE_LID_CLOSED = (1 << 0),
+	KB_SCAN_DISABLE_POWER_BUTTON = (1 << 1),
+	KB_SCAN_DISABLE_LID_ANGLE = (1 << 2),
+	KB_SCAN_DISABLE_USB_SUSPENDED = (1 << 3),
 };
 
 #ifdef HAS_TASK_KEYSCAN
@@ -111,7 +111,9 @@ void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask);
 void clear_typematic_key(void);
 #else
 static inline void keyboard_scan_enable(int enable,
-		enum kb_scan_disable_masks mask) { }
+					enum kb_scan_disable_masks mask)
+{
+}
 #endif
 
 #ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
@@ -136,7 +138,9 @@ int keyboard_get_keyboard_id(void);
 #ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
 void set_vol_up_key(uint8_t row, uint8_t col);
 #else
-static inline void set_vol_up_key(uint8_t row, uint8_t col) {}
+static inline void set_vol_up_key(uint8_t row, uint8_t col)
+{
+}
 #endif
 
 #ifdef CONFIG_KEYBOARD_FACTORY_TEST
@@ -148,5 +152,4 @@ extern const int keyboard_factory_scan_pins[][2];
 extern const int keyboard_factory_scan_pins_used;
 #endif
 
-
-#endif  /* __CROS_EC_KEYBOARD_SCAN_H */
+#endif /* __CROS_EC_KEYBOARD_SCAN_H */
