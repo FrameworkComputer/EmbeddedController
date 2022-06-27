@@ -18,7 +18,7 @@
 #include "stm32-dma.h"
 
 /* Console USART index */
-#define UARTN      CONFIG_UART_CONSOLE
+#define UARTN CONFIG_UART_CONSOLE
 #define UARTN_BASE STM32_USART_BASE(CONFIG_UART_CONSOLE)
 
 #ifdef CONFIG_UART_TX_DMA
@@ -33,7 +33,7 @@ static const struct dma_option dma_tx_option = {
 	CONFIG_UART_TX_DMA_CH, (void *)&STM32_USART_TDR(UARTN_BASE),
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 #ifdef CHIP_FAMILY_STM32F4
-	| STM32_DMA_CCR_CHANNEL(CONFIG_UART_TX_REQ_CH)
+		| STM32_DMA_CCR_CHANNEL(CONFIG_UART_TX_REQ_CH)
 #endif
 };
 
@@ -51,16 +51,16 @@ static const struct dma_option dma_rx_option = {
 	CONFIG_UART_RX_DMA_CH, (void *)&STM32_USART_RDR(UARTN_BASE),
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
 #ifdef CHIP_FAMILY_STM32F4
-	STM32_DMA_CCR_CHANNEL(CONFIG_UART_RX_REQ_CH) |
+		STM32_DMA_CCR_CHANNEL(CONFIG_UART_RX_REQ_CH) |
 #endif
-	STM32_DMA_CCR_CIRC
+		STM32_DMA_CCR_CIRC
 };
 
-static int dma_rx_len;   /* Size of receive DMA circular buffer */
+static int dma_rx_len; /* Size of receive DMA circular buffer */
 #endif
 
-static int init_done;    /* Initialization done? */
-static int should_stop;  /* Last TX control action */
+static int init_done; /* Initialization done? */
+static int should_stop; /* Last TX control action */
 
 int uart_init_done(void)
 {
@@ -249,13 +249,13 @@ static void uart_freq_change(void)
 	freq = clock_get_freq();
 #endif
 
-#if (UARTN == 9)	/* LPUART */
+#if (UARTN == 9) /* LPUART */
 	div = DIV_ROUND_NEAREST(freq, CONFIG_UART_BAUD_RATE) * 256;
 #else
 	div = DIV_ROUND_NEAREST(freq, CONFIG_UART_BAUD_RATE);
 #endif
 
-#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0) || \
+#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0) ||      \
 	defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32L4) || \
 	defined(CHIP_FAMILY_STM32F4) || defined(CHIP_FAMILY_STM32G4)
 	if (div / 16 > 0) {
@@ -277,7 +277,6 @@ static void uart_freq_change(void)
 	/* STM32F only supports x16 oversampling */
 	STM32_USART_BRR(UARTN_BASE) = div;
 #endif
-
 }
 DECLARE_HOOK(HOOK_FREQ_CHANGE, uart_freq_change, HOOK_PRIO_DEFAULT);
 
@@ -286,7 +285,7 @@ void uart_init(void)
 	/* Select clock source */
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)
 #if (UARTN == 1)
-	STM32_RCC_CFGR3 |= 0x0003;   /* USART1 clock source from HSI(8MHz) */
+	STM32_RCC_CFGR3 |= 0x0003; /* USART1 clock source from HSI(8MHz) */
 #elif (UARTN == 2)
 	STM32_RCC_CFGR3 |= 0x030000; /* USART2 clock source from HSI(8MHz) */
 #endif /* UARTN */
@@ -339,8 +338,8 @@ void uart_init(void)
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_UART, 1);
 
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) \
-|| defined(CHIP_FAMILY_STM32H7) || defined(CHIP_FAMILY_STM32L4)
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
+	defined(CHIP_FAMILY_STM32H7) || defined(CHIP_FAMILY_STM32L4)
 	/*
 	 * Wake up on start bit detection. WUS can only be written when UE=0,
 	 * so clear UE first.
@@ -352,7 +351,7 @@ void uart_init(void)
 	 * and we don't want to clear an extra flag in the interrupt
 	 */
 	STM32_USART_CR3(UARTN_BASE) |= STM32_USART_CR3_WUS_START_BIT |
-	                               STM32_USART_CR3_OVRDIS;
+				       STM32_USART_CR3_OVRDIS;
 #endif
 
 	/*
@@ -360,11 +359,10 @@ void uart_init(void)
 	 * TX and RX enabled.
 	 */
 #ifdef CHIP_FAMILY_STM32L4
-	STM32_USART_CR1(UARTN_BASE) =
-		STM32_USART_CR1_TE | STM32_USART_CR1_RE;
+	STM32_USART_CR1(UARTN_BASE) = STM32_USART_CR1_TE | STM32_USART_CR1_RE;
 #else
-	STM32_USART_CR1(UARTN_BASE) =
-		STM32_USART_CR1_UE | STM32_USART_CR1_TE | STM32_USART_CR1_RE;
+	STM32_USART_CR1(UARTN_BASE) = STM32_USART_CR1_UE | STM32_USART_CR1_TE |
+				      STM32_USART_CR1_RE;
 #endif
 
 	/* 1 stop bit, no fancy stuff */
