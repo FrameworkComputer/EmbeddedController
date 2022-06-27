@@ -20,8 +20,7 @@ int cmd_i2c_protect(int argc, char *argv[])
 	int rv;
 
 	if (argc != 2 && (argc != 3 || strcmp(argv[2], "status"))) {
-		fprintf(stderr, "Usage: %s <port> [status]\n",
-			argv[0]);
+		fprintf(stderr, "Usage: %s <port> [status]\n", argv[0]);
 		return -1;
 	}
 
@@ -56,9 +55,8 @@ int cmd_i2c_protect(int argc, char *argv[])
 	return 0;
 }
 
-static int do_i2c_xfer(unsigned int port, unsigned int addr,
-		       uint8_t *write_buf, int write_len,
-		       uint8_t **read_buf, int read_len)
+static int do_i2c_xfer(unsigned int port, unsigned int addr, uint8_t *write_buf,
+		       int write_len, uint8_t **read_buf, int read_len)
 {
 	struct ec_params_i2c_passthru *p =
 		(struct ec_params_i2c_passthru *)ec_outbuf;
@@ -96,8 +94,8 @@ static int do_i2c_xfer(unsigned int port, unsigned int addr,
 		msg->len = read_len;
 	}
 
-	rv = ec_command(EC_CMD_I2C_PASSTHRU, 0, p, size + write_len,
-			r, sizeof(*r) + read_len);
+	rv = ec_command(EC_CMD_I2C_PASSTHRU, 0, p, size + write_len, r,
+			sizeof(*r) + read_len);
 	if (rv < 0)
 		return rv;
 
@@ -132,9 +130,7 @@ static void cmd_i2c_help(void)
 		"    <offset> offset to read from or write to\n"
 		"    <data> data to write\n"
 		"    <read_count> number of bytes to read\n"
-		"    [bytes ...] data to write\n"
-		);
-
+		"    [bytes ...] data to write\n");
 }
 
 int cmd_i2c_read(int argc, char *argv[])
@@ -184,8 +180,8 @@ int cmd_i2c_read(int argc, char *argv[])
 	if (rv < 0)
 		return rv;
 
-	printf("Read from I2C port %d at 0x%x offset 0x%x = 0x%x\n",
-	       port, addr8, write_buf[0], *(uint16_t *)read_buf);
+	printf("Read from I2C port %d at 0x%x offset 0x%x = 0x%x\n", port,
+	       addr8, write_buf[0], *(uint16_t *)read_buf);
 	return 0;
 }
 
@@ -324,7 +320,7 @@ int cmd_i2c_xfer(int argc, char *argv[])
 
 static int i2c_get(int port)
 {
-	struct ec_params_i2c_control  p;
+	struct ec_params_i2c_control p;
 	struct ec_response_i2c_control r;
 	uint16_t speed_khz;
 	int rv;
@@ -348,7 +344,7 @@ static int i2c_get(int port)
 
 static int i2c_set(int port, int new_speed_khz)
 {
-	struct ec_params_i2c_control  p;
+	struct ec_params_i2c_control p;
 	struct ec_response_i2c_control r;
 	uint16_t old_speed_khz;
 	int rv;
@@ -374,8 +370,7 @@ static int i2c_set(int port, int new_speed_khz)
 		printf("Port %d speed set to %d kHz\n", port, new_speed_khz);
 	} else {
 		printf("Port %d speed changed from %u kHz to %d kHz\n", port,
-		       old_speed_khz,
-		       new_speed_khz);
+		       old_speed_khz, new_speed_khz);
 	}
 
 	return 0;
@@ -403,7 +398,7 @@ int cmd_i2c_speed(int argc, char *argv[])
 	speed = strtol(argv[2], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad speed. "
-			"Typical speeds are one of {100,400,1000}.\n");
+				"Typical speeds are one of {100,400,1000}.\n");
 		return -1;
 	}
 
