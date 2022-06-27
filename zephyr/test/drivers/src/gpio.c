@@ -116,8 +116,8 @@ ZTEST(gpio, test_convert_to_zephyr_flags)
  */
 ZTEST(gpio, test_signal_is_gpio)
 {
-	zassert_true(signal_is_gpio(
-		GPIO_SIGNAL(DT_NODELABEL(gpio_test))), "Expected true");
+	zassert_true(signal_is_gpio(GPIO_SIGNAL(DT_NODELABEL(gpio_test))),
+		     "Expected true");
 }
 
 /**
@@ -301,7 +301,6 @@ ZTEST(gpio, test_gpio_get_default_flags)
 	zassert_equal(flags, GPIO_OUTPUT, "Flags set 0x%x", flags);
 }
 
-
 /**
  * @brief TestPurpose: Verify GPIO no-auto-init.
  *
@@ -319,16 +318,13 @@ ZTEST(gpio, test_gpio_no_auto_init)
 	gpio_flags_t flags;
 
 	flags = gpio_helper_get_flags(signal);
-	zassert_equal(0, flags,
-		      "Expected 0x%08x, returned 0x%08X",
-		      0, flags);
+	zassert_equal(0, flags, "Expected 0x%08x, returned 0x%08X", 0, flags);
 
 	/* Configure pin. */
 	gpio_pin_configure_dt(gp, GPIO_INPUT | GPIO_OUTPUT);
 	flags = gpio_helper_get_flags(signal);
-	zassert_equal(flags,
-		      (GPIO_ACTIVE_LOW | GPIO_OUTPUT | GPIO_INPUT),
-		       "Flags set 0x%x", flags);
+	zassert_equal(flags, (GPIO_ACTIVE_LOW | GPIO_OUTPUT | GPIO_INPUT),
+		      "Flags set 0x%x", flags);
 }
 
 /**
