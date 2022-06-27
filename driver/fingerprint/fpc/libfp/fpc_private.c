@@ -18,8 +18,8 @@
 
 #include "driver/fingerprint/fpc/fpc_sensor.h"
 
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
 /* Minimum reset duration */
 #define FP_SENSOR_RESET_DURATION_US (10 * MSEC)
@@ -31,7 +31,7 @@
 #define FP_SENSOR_OPEN_DELAY_US (500 * MSEC)
 
 /* Decode internal error codes from FPC's sensor library */
-#define FPC_GET_INTERNAL_CODE(res) (((res) & 0x000fc000) >> 14)
+#define FPC_GET_INTERNAL_CODE(res) (((res)&0x000fc000) >> 14)
 /* There was a finger on the sensor when calibrating finger detect */
 #define FPC_INTERNAL_FINGER_DFD FPC_ERROR_INTERNAL_38
 
@@ -63,14 +63,14 @@ static struct ec_response_fp_info fpc1145_info = {
 
 /* Sensor IC commands */
 enum fpc_cmd {
-	FPC_CMD_STATUS            = 0x14,
-	FPC_CMD_INT_STS           = 0x18,
-	FPC_CMD_INT_CLR           = 0x1C,
-	FPC_CMD_FINGER_QUERY      = 0x20,
-	FPC_CMD_SLEEP             = 0x28,
-	FPC_CMD_DEEPSLEEP         = 0x2C,
-	FPC_CMD_SOFT_RESET        = 0xF8,
-	FPC_CMD_HW_ID             = 0xFC,
+	FPC_CMD_STATUS = 0x14,
+	FPC_CMD_INT_STS = 0x18,
+	FPC_CMD_INT_CLR = 0x1C,
+	FPC_CMD_FINGER_QUERY = 0x20,
+	FPC_CMD_SLEEP = 0x28,
+	FPC_CMD_DEEPSLEEP = 0x2C,
+	FPC_CMD_SOFT_RESET = 0xF8,
+	FPC_CMD_HW_ID = 0xFC,
 };
 
 /* Maximum size of a sensor command SPI transfer */
