@@ -24,13 +24,14 @@
 #define CONFIG_BC12_DETECT_PI3USB9201
 
 /* Charger */
-#define CONFIG_CHARGER_SM5803		/* C0 and C1: Charger */
+#define CONFIG_CHARGER_SM5803 /* C0 and C1: Charger */
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
-#undef  CONFIG_CHARGER_SINGLE_CHIP
+#undef CONFIG_CHARGER_SINGLE_CHIP
 #define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 21 /* R_DS(on) 10.7mOhm + 10mOhm sns rstr */
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 21 /* R_DS(on) 10.7mOhm + 10mOhm sns rstr \
+					*/
 
 /*
  * GPIO for C1 interrupts, for baseboard use
@@ -47,8 +48,8 @@
 #define CONFIG_PWM
 
 /* Sensors */
-#define CONFIG_ACCEL_KX022		/* Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
+#define CONFIG_ACCEL_KX022 /* Lid accel */
+#define CONFIG_ACCELGYRO_LSM6DSM /* Base accel */
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 /* Sensors without hardware FIFO are in forced mode */
@@ -71,8 +72,8 @@
 
 /* TCPC */
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
-#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP	/* C0: ITE EC TCPC */
-#define CONFIG_USB_PD_TCPM_ANX7447	/* C1: ANX TCPC + Mux */
+#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP /* C0: ITE EC TCPC */
+#define CONFIG_USB_PD_TCPM_ANX7447 /* C1: ANX TCPC + Mux */
 #define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
 
 /* Thermistors */
@@ -81,10 +82,10 @@
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
 /* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
-#define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
+#define CONFIG_USB_MUX_IT5205 /* C1: ITE Mux */
+#define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
 
-#define CONFIG_USBC_RETIMER_TUSB544		/* C1 Redriver: TUSB544 */
+#define CONFIG_USBC_RETIMER_TUSB544 /* C1 Redriver: TUSB544 */
 
 #ifndef __ASSEMBLER__
 
@@ -106,27 +107,18 @@ enum pwm_channel {
 };
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* ADC channels */
 enum adc_channel {
-	ADC_VSNS_PP3300_A,     /* ADC0 */
-	ADC_TEMP_SENSOR_1,     /* ADC2 */
-	ADC_TEMP_SENSOR_2,     /* ADC3 */
-	ADC_SUB_ANALOG,        /* ADC13 */
+	ADC_VSNS_PP3300_A, /* ADC0 */
+	ADC_TEMP_SENSOR_1, /* ADC2 */
+	ADC_TEMP_SENSOR_2, /* ADC3 */
+	ADC_SUB_ANALOG, /* ADC13 */
 	ADC_CH_COUNT
 };
 
-enum temp_sensor_id {
-	TEMP_SENSOR_1,
-	TEMP_SENSOR_2,
-	TEMP_SENSOR_COUNT
-};
+enum temp_sensor_id { TEMP_SENSOR_1, TEMP_SENSOR_2, TEMP_SENSOR_COUNT };
 
 /* List of possible batteries */
 enum battery_type {
