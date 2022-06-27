@@ -102,7 +102,7 @@ int crec_flash_physical_get_protect(int block)
 #elif defined(CHIP_FAMILY_STM32F4)
 		!(STM32_OPTB_WP & STM32_OPTB_nWRP(block))
 #endif
-	       );
+	);
 }
 
 uint32_t crec_flash_physical_get_protect_flags(void)
@@ -137,8 +137,7 @@ int crec_flash_physical_protect_now(int all)
 
 uint32_t crec_flash_physical_get_valid_flags(void)
 {
-	return EC_FLASH_PROTECT_RO_AT_BOOT |
-	       EC_FLASH_PROTECT_RO_NOW |
+	return EC_FLASH_PROTECT_RO_AT_BOOT | EC_FLASH_PROTECT_RO_NOW |
 	       EC_FLASH_PROTECT_ALL_NOW;
 }
 
@@ -173,7 +172,7 @@ int crec_flash_physical_restore_state(void)
 	 */
 	if (reset_flags & EC_RESET_FLAG_SYSJUMP) {
 		prev = (const struct flash_wp_state *)system_get_jump_tag(
-				FLASH_SYSJUMP_TAG, &version, &size);
+			FLASH_SYSJUMP_TAG, &version, &size);
 		if (prev && version == FLASH_HOOK_VERSION &&
 		    size == sizeof(*prev))
 			entire_flash_locked = prev->entire_flash_locked;
