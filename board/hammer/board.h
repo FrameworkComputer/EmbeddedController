@@ -46,27 +46,27 @@
 /* Do not use a dedicated PSTATE bank */
 #undef CONFIG_FLASH_PSTATE_BANK
 
-#define CONFIG_SHAREDLIB_SIZE	0
+#define CONFIG_SHAREDLIB_SIZE 0
 
-#define CONFIG_RO_MEM_OFF	0
-#define CONFIG_RO_STORAGE_OFF	0
-#define CONFIG_RO_SIZE		(44*1024)
+#define CONFIG_RO_MEM_OFF 0
+#define CONFIG_RO_STORAGE_OFF 0
+#define CONFIG_RO_SIZE (44 * 1024)
 
 /* EC rollback protection block */
 #define CONFIG_ROLLBACK_OFF (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE)
 #define CONFIG_ROLLBACK_SIZE CONFIG_FLASH_BANK_SIZE
 
-#define CONFIG_RW_MEM_OFF	(CONFIG_ROLLBACK_OFF + CONFIG_ROLLBACK_SIZE)
-#define CONFIG_RW_STORAGE_OFF	0
-#define CONFIG_RW_SIZE		(CONFIG_FLASH_SIZE_BYTES - CONFIG_RW_MEM_OFF)
+#define CONFIG_RW_MEM_OFF (CONFIG_ROLLBACK_OFF + CONFIG_ROLLBACK_SIZE)
+#define CONFIG_RW_STORAGE_OFF 0
+#define CONFIG_RW_SIZE (CONFIG_FLASH_SIZE_BYTES - CONFIG_RW_MEM_OFF)
 
-#define CONFIG_EC_PROTECTED_STORAGE_OFF		CONFIG_RO_MEM_OFF
-#define CONFIG_EC_PROTECTED_STORAGE_SIZE	CONFIG_RO_SIZE
-#define CONFIG_EC_WRITABLE_STORAGE_OFF		CONFIG_RW_MEM_OFF
-#define CONFIG_EC_WRITABLE_STORAGE_SIZE		CONFIG_RW_SIZE
+#define CONFIG_EC_PROTECTED_STORAGE_OFF CONFIG_RO_MEM_OFF
+#define CONFIG_EC_PROTECTED_STORAGE_SIZE CONFIG_RO_SIZE
+#define CONFIG_EC_WRITABLE_STORAGE_OFF CONFIG_RW_MEM_OFF
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE CONFIG_RW_SIZE
 
-#define CONFIG_WP_STORAGE_OFF		CONFIG_EC_PROTECTED_STORAGE_OFF
-#define CONFIG_WP_STORAGE_SIZE		CONFIG_EC_PROTECTED_STORAGE_SIZE
+#define CONFIG_WP_STORAGE_OFF CONFIG_EC_PROTECTED_STORAGE_OFF
+#define CONFIG_WP_STORAGE_SIZE CONFIG_EC_PROTECTED_STORAGE_SIZE
 
 /* The UART console is on USART1 (PA9/PA10) */
 #undef CONFIG_UART_CONSOLE
@@ -110,48 +110,48 @@
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #ifdef SECTION_IS_RW
-#define USB_IFACE_HID_KEYBOARD	0
-#define USB_IFACE_UPDATE	1
+#define USB_IFACE_HID_KEYBOARD 0
+#define USB_IFACE_UPDATE 1
 #ifdef HAS_NO_TOUCHPAD
-#define USB_IFACE_COUNT		2
+#define USB_IFACE_COUNT 2
 #else /* !HAS_NO_TOUCHPAD */
-#define USB_IFACE_HID_TOUCHPAD	2
+#define USB_IFACE_HID_TOUCHPAD 2
 /* Can be either I2C or SPI passthrough, depending on the board. */
-#define USB_IFACE_I2C_SPI	3
+#define USB_IFACE_I2C_SPI 3
 #if defined(CONFIG_USB_ISOCHRONOUS)
-#define USB_IFACE_ST_TOUCHPAD	4
-#define USB_IFACE_COUNT		5
-#else  /* !CONFIG_USB_ISOCHRONOUS */
-#define USB_IFACE_COUNT		4
-#endif  /* CONFIG_USB_ISOCHRONOUS */
-#endif /* !HAS_NO_TOUCHPAD */
-#else  /* !SECTION_IS_RW */
-#define USB_IFACE_UPDATE	0
-#define USB_IFACE_COUNT		1
-#endif  /* SECTION_IS_RW */
-
-/* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_UPDATE		1
-#ifdef SECTION_IS_RW
-#define USB_EP_HID_KEYBOARD	2
-#ifdef HAS_NO_TOUCHPAD
-#define USB_EP_COUNT		3
-#else /* !HAS_NO_TOUCHPAD */
-#define USB_EP_HID_TOUCHPAD	3
-/* Can be either I2C or SPI passthrough, depending on the board. */
-#define USB_EP_I2C_SPI		4
-#if defined(CONFIG_USB_ISOCHRONOUS)
-#define USB_EP_ST_TOUCHPAD	5
-#define USB_EP_ST_TOUCHPAD_INT	6
-#define USB_EP_COUNT		7
+#define USB_IFACE_ST_TOUCHPAD 4
+#define USB_IFACE_COUNT 5
 #else /* !CONFIG_USB_ISOCHRONOUS */
-#define USB_EP_COUNT		5
+#define USB_IFACE_COUNT 4
 #endif /* CONFIG_USB_ISOCHRONOUS */
 #endif /* !HAS_NO_TOUCHPAD */
-#else  /* !SECTION_IS_RW */
-#define USB_EP_COUNT		2
-#endif  /* SECTION_IS_RW */
+#else /* !SECTION_IS_RW */
+#define USB_IFACE_UPDATE 0
+#define USB_IFACE_COUNT 1
+#endif /* SECTION_IS_RW */
+
+/* USB endpoint indexes (use define rather than enum to expand them) */
+#define USB_EP_CONTROL 0
+#define USB_EP_UPDATE 1
+#ifdef SECTION_IS_RW
+#define USB_EP_HID_KEYBOARD 2
+#ifdef HAS_NO_TOUCHPAD
+#define USB_EP_COUNT 3
+#else /* !HAS_NO_TOUCHPAD */
+#define USB_EP_HID_TOUCHPAD 3
+/* Can be either I2C or SPI passthrough, depending on the board. */
+#define USB_EP_I2C_SPI 4
+#if defined(CONFIG_USB_ISOCHRONOUS)
+#define USB_EP_ST_TOUCHPAD 5
+#define USB_EP_ST_TOUCHPAD_INT 6
+#define USB_EP_COUNT 7
+#else /* !CONFIG_USB_ISOCHRONOUS */
+#define USB_EP_COUNT 5
+#endif /* CONFIG_USB_ISOCHRONOUS */
+#endif /* !HAS_NO_TOUCHPAD */
+#else /* !SECTION_IS_RW */
+#define USB_EP_COUNT 2
+#endif /* SECTION_IS_RW */
 
 /* Optional features */
 #define CONFIG_BOARD_PRE_INIT
@@ -177,13 +177,16 @@
 #undef CONFIG_USB_I2C_MAX_WRITE_COUNT
 #ifdef VARIANT_HAMMER_TP_LARGE_PAGE
 /* Zed requires 516 byte per packet for touchpad update */
-#define CONFIG_USB_I2C_MAX_WRITE_COUNT (1024 - 4) /* 4 is maximum header size */
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT (1024 - 4) /* 4 is maximum header size \
+						   */
 #else
-#define CONFIG_USB_I2C_MAX_WRITE_COUNT (128 - 4) /* 4 is maximum header size */
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT (128 - 4) /* 4 is maximum header size \
+						  */
 #endif
 
 #undef CONFIG_USB_I2C_MAX_READ_COUNT
-#define CONFIG_USB_I2C_MAX_READ_COUNT (1024 - 6) /* 6 is maximum header size */
+#define CONFIG_USB_I2C_MAX_READ_COUNT (1024 - 6) /* 6 is maximum header size \
+						  */
 
 #define CONFIG_I2C_XFER_LARGE_TRANSFER
 
@@ -201,7 +204,7 @@
 #define CONFIG_USB_HID_TOUCHPAD
 
 /* Virtual address for touchpad FW in USB updater. */
-#define CONFIG_TOUCHPAD_VIRTUAL_OFF	0x80000000
+#define CONFIG_TOUCHPAD_VIRTUAL_OFF 0x80000000
 
 /* Include touchpad FW hashes in image */
 #define CONFIG_TOUCHPAD_HASH_FW
@@ -315,10 +318,10 @@
 #endif
 
 /* Maximum current to draw. */
-#define MAX_CURRENT_MA			2000
+#define MAX_CURRENT_MA 2000
 /* Maximum current/voltage to provide over OTG. */
-#define MAX_OTG_CURRENT_MA		2000
-#define MAX_OTG_VOLTAGE_MV		20000
+#define MAX_OTG_CURRENT_MA 2000
+#define MAX_OTG_VOLTAGE_MV 20000
 
 #ifndef __ASSEMBLER__
 
