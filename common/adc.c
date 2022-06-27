@@ -61,9 +61,7 @@ static int command_adc(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 }
-DECLARE_CONSOLE_COMMAND(adc, command_adc,
-			"[name]",
-			"Print ADC channel(s)");
+DECLARE_CONSOLE_COMMAND(adc, command_adc, "[name]", "Print ADC channel(s)");
 
 static enum ec_status hc_adc_read(struct host_cmd_handler_args *args)
 {
