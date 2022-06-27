@@ -66,12 +66,12 @@ int bio_algorithm_exit(void);
  * - BIO_TEMPLATE_LOW_COVERAGE when matching could not be performed due to
  *   finger covering too little area of the sensor
  */
-#define BIO_TEMPLATE_NO_MATCH            0
-#define BIO_TEMPLATE_MATCH               1
-#define BIO_TEMPLATE_MATCH_UPDATED       3
+#define BIO_TEMPLATE_NO_MATCH 0
+#define BIO_TEMPLATE_MATCH 1
+#define BIO_TEMPLATE_MATCH_UPDATED 3
 #define BIO_TEMPLATE_MATCH_UPDATE_FAILED 5
-#define BIO_TEMPLATE_LOW_QUALITY         2
-#define BIO_TEMPLATE_LOW_COVERAGE        4
+#define BIO_TEMPLATE_LOW_QUALITY 2
+#define BIO_TEMPLATE_LOW_COVERAGE 4
 
 int bio_template_image_match_list(bio_template_t templ, uint32_t num_templ,
 				  bio_image_t image, int32_t *match_index,
@@ -101,14 +101,14 @@ int bio_enrollment_begin(bio_enrollment_t *enrollment);
  *   finger covering too little area of the sensor
  * - BIO_ENROLLMENT_INTERNAL_ERROR when an internal error occurred
  */
-#define BIO_ENROLLMENT_OK               0
-#define BIO_ENROLLMENT_LOW_QUALITY      1
-#define BIO_ENROLLMENT_IMMOBILE         2
-#define BIO_ENROLLMENT_LOW_COVERAGE     3
-#define BIO_ENROLLMENT_INTERNAL_ERROR   5
+#define BIO_ENROLLMENT_OK 0
+#define BIO_ENROLLMENT_LOW_QUALITY 1
+#define BIO_ENROLLMENT_IMMOBILE 2
+#define BIO_ENROLLMENT_LOW_COVERAGE 3
+#define BIO_ENROLLMENT_INTERNAL_ERROR 5
 
 /* Can be used to detect if image was usable for enrollment or not. */
-#define BIO_ENROLLMENT_PROBLEM_MASK     1
+#define BIO_ENROLLMENT_PROBLEM_MASK 1
 int bio_enrollment_add_image(bio_enrollment_t enrollment, bio_image_t image);
 /*
  * Returns percent of coverage accumulated during enrollment process.
