@@ -9,13 +9,13 @@
 #define __CROS_EC_TEMP_SENSOR_THERMISTOR_H
 
 struct thermistor_data_pair {
-	uint8_t mv;	/* Scaled voltage level at ADC (in mV) */
-	uint8_t temp;	/* Temperature in Celsius */
+	uint8_t mv; /* Scaled voltage level at ADC (in mV) */
+	uint8_t temp; /* Temperature in Celsius */
 };
 
 struct thermistor_info {
-	uint8_t scaling_factor;	/* Scaling factor for voltage in data pair. */
-	uint8_t num_pairs;	/* Number of data pairs. */
+	uint8_t scaling_factor; /* Scaling factor for voltage in data pair. */
+	uint8_t num_pairs; /* Number of data pairs. */
 
 	/*
 	 * Values between given data pairs will be calculated as points on
