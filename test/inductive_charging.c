@@ -17,8 +17,8 @@
 
 #define START_CHARGE_DELAY 5000 /* ms */
 #define MONITOR_CHARGE_DONE_DELAY 1000 /* ms */
-#define TEST_CHECK_CHARGE_DELAY (START_CHARGE_DELAY + \
-				 MONITOR_CHARGE_DONE_DELAY + 500) /* ms */
+#define TEST_CHECK_CHARGE_DELAY \
+	(START_CHARGE_DELAY + MONITOR_CHARGE_DONE_DELAY + 500) /* ms */
 
 static void wait_for_lid_debounce(void)
 {
