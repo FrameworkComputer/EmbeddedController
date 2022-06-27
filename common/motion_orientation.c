@@ -18,9 +18,9 @@ static const intv3_t orientation_modes[] = {
 	[MOTIONSENSE_ORIENTATION_UPSIDE_DOWN_LANDSCAPE] = { 0, 1, 0 },
 };
 
-enum motionsensor_orientation motion_orientation_remap(
-		const struct motion_sensor_t *s,
-		enum motionsensor_orientation orientation)
+enum motionsensor_orientation
+motion_orientation_remap(const struct motion_sensor_t *s,
+			 enum motionsensor_orientation orientation)
 {
 	enum motionsensor_orientation rotated_orientation;
 	const intv3_t *orientation_v;
@@ -31,7 +31,8 @@ enum motionsensor_orientation motion_orientation_remap(
 
 	orientation_v = &orientation_modes[orientation];
 	rotate(*orientation_v, *s->rot_standard_ref, rotated_orientation_v);
-	rotated_orientation = ((2 * rotated_orientation_v[1] +
-			rotated_orientation_v[0] + 4) % 5);
+	rotated_orientation =
+		((2 * rotated_orientation_v[1] + rotated_orientation_v[0] + 4) %
+		 5);
 	return rotated_orientation;
 }
