@@ -20,8 +20,8 @@
 #include "usb-stream.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USB, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USB, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 /*
  * This file is an adaptation layer between the USB interface and the firmware
@@ -47,37 +47,27 @@
 struct consumer const update_consumer;
 struct usb_stream_config const usb_update;
 
-static struct queue const update_to_usb = QUEUE_DIRECT(64, uint8_t,
-						     null_producer,
-						     usb_update.consumer);
-static struct queue const usb_to_update = QUEUE_DIRECT(64, uint8_t,
-						     usb_update.producer,
-						     update_consumer);
+static struct queue const update_to_usb =
+	QUEUE_DIRECT(64, uint8_t, null_producer, usb_update.consumer);
+static struct queue const usb_to_update =
+	QUEUE_DIRECT(64, uint8_t, usb_update.producer, update_consumer);
 
-USB_STREAM_CONFIG_FULL(usb_update,
-		       USB_IFACE_UPDATE,
-		       USB_CLASS_VENDOR_SPEC,
-		       USB_SUBCLASS_GOOGLE_UPDATE,
-		       USB_PROTOCOL_GOOGLE_UPDATE,
-		       USB_STR_UPDATE_NAME,
-		       USB_EP_UPDATE,
-		       USB_MAX_PACKET_SIZE,
-		       USB_MAX_PACKET_SIZE,
-		       usb_to_update,
-		       update_to_usb)
-
+USB_STREAM_CONFIG_FULL(usb_update, USB_IFACE_UPDATE, USB_CLASS_VENDOR_SPEC,
+		       USB_SUBCLASS_GOOGLE_UPDATE, USB_PROTOCOL_GOOGLE_UPDATE,
+		       USB_STR_UPDATE_NAME, USB_EP_UPDATE, USB_MAX_PACKET_SIZE,
+		       USB_MAX_PACKET_SIZE, usb_to_update, update_to_usb)
 
 /* The receiver can be in one of the states below. */
 enum rx_state {
-	rx_idle,	   /* Nothing happened yet. */
-	rx_inside_block,   /* Assembling a block to pass to the programmer. */
-	rx_outside_block,  /* Waiting for the next block to start or for the
-			      reset command. */
+	rx_idle, /* Nothing happened yet. */
+	rx_inside_block, /* Assembling a block to pass to the programmer. */
+	rx_outside_block, /* Waiting for the next block to start or for the
+			     reset command. */
 };
 
 enum rx_state rx_state_ = rx_idle;
-static uint8_t block_buffer[sizeof(struct update_command) +
-			    CONFIG_UPDATE_PDU_SIZE];
+static uint8_t
+	block_buffer[sizeof(struct update_command) + CONFIG_UPDATE_PDU_SIZE];
 static uint32_t block_size;
 static uint32_t block_index;
 
@@ -117,8 +107,8 @@ static int pair_challenge(struct pair_challenge *challenge)
 	 * tmp2 = device_private
 	 *      = HMAC_SHA256(device_secret, "device-identity")
 	 */
-	hmac_SHA256(tmp2, tmp, CONFIG_ROLLBACK_SECRET_SIZE,
-		    KEY_CONTEXT, sizeof(KEY_CONTEXT) - 1);
+	hmac_SHA256(tmp2, tmp, CONFIG_ROLLBACK_SECRET_SIZE, KEY_CONTEXT,
+		    sizeof(KEY_CONTEXT) - 1);
 
 	/* tmp = device_public = x25519(device_private, x25519_base_point) */
 	X25519_public_from_private(tmp, tmp2);
@@ -128,10 +118,11 @@ static int pair_challenge(struct pair_challenge *challenge)
 	X25519(tmp, tmp2, challenge->host_public);
 
 	/* tmp2 = authenticator = HMAC_SHA256(shared_secret, nonce) */
-	hmac_SHA256(tmp2, tmp, sizeof(tmp),
-		    challenge->nonce, sizeof(challenge->nonce));
+	hmac_SHA256(tmp2, tmp, sizeof(tmp), challenge->nonce,
+		    sizeof(challenge->nonce));
 	QUEUE_ADD_UNITS(&update_to_usb, tmp2,
-		member_size(struct pair_challenge_response, authenticator));
+			member_size(struct pair_challenge_response,
+				    authenticator));
 	return 1;
 }
 #endif
@@ -198,7 +189,8 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 
 	/* Looks like this is a vendor command, let's verify it. */
 	if (update_pdu_valid(&cmd_buffer->cmd,
-			  count - offsetof(struct update_frame_header, cmd))) {
+			     count - offsetof(struct update_frame_header,
+					      cmd))) {
 		enum update_extra_command subcommand;
 		uint8_t response;
 		size_t response_size = sizeof(response);
@@ -267,8 +259,8 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			break;
 #ifdef CONFIG_ROLLBACK
 		case UPDATE_EXTRA_CMD_UNLOCK_ROLLBACK:
-			crec_flash_set_protect(EC_FLASH_PROTECT_ROLLBACK_AT_BOOT
-					       , 0);
+			crec_flash_set_protect(
+				EC_FLASH_PROTECT_ROLLBACK_AT_BOOT, 0);
 			response = EC_RES_SUCCESS;
 			break;
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
@@ -295,8 +287,8 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			}
 
 			/* pair_challenge takes care of answering */
-			return pair_challenge((struct pair_challenge *)
-						(buffer + header_size));
+			return pair_challenge((
+				struct pair_challenge *)(buffer + header_size));
 		}
 #endif
 #endif /* CONFIG_ROLLBACK_SECRET_SIZE */
@@ -322,11 +314,10 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 
 #ifdef CONFIG_TOUCHPAD_HASH_FW
 			memcpy(tp.allowed_fw_hash, touchpad_fw_full_hash,
-				sizeof(tp.allowed_fw_hash));
+			       sizeof(tp.allowed_fw_hash));
 #endif
 #endif /* CONFIG_TOUCHPAD_VIRTUAL_OFF */
-			QUEUE_ADD_UNITS(&update_to_usb,
-					&tp, response_size);
+			QUEUE_ADD_UNITS(&update_to_usb, &tp, response_size);
 			return 1;
 		}
 		case UPDATE_EXTRA_CMD_TOUCHPAD_DEBUG: {
@@ -338,7 +329,8 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			 * with the payload data, and put the response in data.
 			 */
 			response = touchpad_debug(buffer + header_size,
-					data_count, &data, &write_count);
+						  data_count, &data,
+						  &write_count);
 
 			/*
 			 * On error, or if there is no data to write back, just
@@ -374,11 +366,10 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 			}
 
 			response = uart_console_read_buffer(
-					data[0],
-					(char *)output,
-					MIN(sizeof(output),
-					    queue_space(&update_to_usb)),
-					&write_count);
+				data[0], (char *)output,
+				MIN(sizeof(output),
+				    queue_space(&update_to_usb)),
+				&write_count);
 			if (response != EC_RES_SUCCESS || write_count == 0)
 				break;
 
@@ -406,7 +397,7 @@ static uint64_t prev_activity_timestamp;
  * A flag indicating that at least one valid PDU containing flash update block
  * has been received in the current transfer session.
  */
-static uint8_t  data_was_transferred;
+static uint8_t data_was_transferred;
 
 /* Reply with an error to remote side, reset state. */
 static void send_error_reset(uint8_t resp_value)
@@ -459,10 +450,10 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 		 * digest = 0, and base = 0.
 		 */
 		if (!fetch_transfer_start(consumer, count, &u.upfr) ||
-			be32toh(u.upfr.block_size) !=
-					sizeof(struct update_frame_header) ||
-				u.upfr.cmd.block_digest != 0 ||
-				u.upfr.cmd.block_base != 0) {
+		    be32toh(u.upfr.block_size) !=
+			    sizeof(struct update_frame_header) ||
+		    u.upfr.cmd.block_digest != 0 ||
+		    u.upfr.cmd.block_base != 0) {
 			/*
 			 * Something is wrong, this payload is not a valid
 			 * update start PDU. Let'w indicate this by returning
@@ -474,14 +465,14 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 		}
 
 		CPRINTS("FW update: starting...");
-		fw_update_command_handler(&u.upfr.cmd, count -
-					   offsetof(struct update_frame_header,
-						    cmd),
-					   &resp_size);
+		fw_update_command_handler(
+			&u.upfr.cmd,
+			count - offsetof(struct update_frame_header, cmd),
+			&resp_size);
 
 		if (!u.startup_resp.return_value) {
-			rx_state_ = rx_outside_block;  /* We're in business. */
-			data_was_transferred = 0;   /* No data received yet. */
+			rx_state_ = rx_outside_block; /* We're in business. */
+			data_was_transferred = 0; /* No data received yet. */
 		}
 
 		/* Let the host know what updater had to say. */
@@ -509,8 +500,7 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 				}
 
 				resp_value = 0;
-				QUEUE_ADD_UNITS(&update_to_usb,
-						&resp_value, 1);
+				QUEUE_ADD_UNITS(&update_to_usb, &resp_value, 1);
 				rx_state_ = rx_idle;
 				return;
 			}
@@ -528,7 +518,7 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 
 		/* Let's allocate a large enough buffer. */
 		block_size = be32toh(upfr.block_size) -
-			offsetof(struct update_frame_header, cmd);
+			     offsetof(struct update_frame_header, cmd);
 
 		/*
 		 * Only update start PDU is allowed to have a size 0 payload.
@@ -545,7 +535,7 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 		 * to the updater.
 		 */
 		block_index = sizeof(upfr) -
-			offsetof(struct update_frame_header, cmd);
+			      offsetof(struct update_frame_header, cmd);
 		memcpy(block_buffer, &upfr.cmd, block_index);
 		block_size -= block_index;
 		rx_state_ = rx_inside_block;
@@ -567,7 +557,7 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 			send_error_reset(UPDATE_GEN_ERROR);
 			return;
 		}
-		return;	/* More to come. */
+		return; /* More to come. */
 	}
 
 	/*
@@ -588,7 +578,7 @@ static void update_out_handler(struct consumer const *consumer, size_t count)
 
 struct consumer const update_consumer = {
 	.queue = &usb_to_update,
-	.ops   = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = update_out_handler,
 	}),
 };
