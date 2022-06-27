@@ -34,11 +34,11 @@
 #include "util.h"
 #include "battery_smart.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define USB_PD_PORT_ANX7447	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX7447 0
+#define USB_PD_PORT_PS8751 1
 
 static uint8_t sku_id;
 static bool support_syv_ppc;
@@ -85,31 +85,31 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_AMB] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_CHARGER] = { "TEMP_CHARGER", NPCX_ADC_CH1,
+				      ADC_MAX_VOLT, ADC_READ_MAX + 1, 0 },
 	/* Vbus sensing (1/10 voltage divider). */
-	[ADC_VBUS_C0] = {
-		"VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
-	[ADC_VBUS_C1] = {
-		"VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS_C0] = { "VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
+	[ADC_VBUS_C1] = { "VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -119,11 +119,9 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate lid and base sensor into standard reference frame */
-const mat33_fp_t standard_rot_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t standard_rot_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* sensor private data */
 static struct stprivate_data g_lis2dh_data;
@@ -212,8 +210,8 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static int board_is_convertible(void)
 {
-	return sku_id == 2 || sku_id == 3 || sku_id == 4 || sku_id == 5 || \
-		sku_id == 255;
+	return sku_id == 2 || sku_id == 3 || sku_id == 4 || sku_id == 5 ||
+	       sku_id == 255;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -331,7 +329,7 @@ void board_hibernate_late(void)
 	}
 
 	/* Clear all pending IRQ otherwise wfi will have no affect */
-	for (i = NPCX_IRQ_0 ; i < NPCX_IRQ_COUNT ; i++)
+	for (i = NPCX_IRQ_0; i < NPCX_IRQ_COUNT; i++)
 		task_clear_pending_irq(i);
 
 	__enter_hibernate_in_psl();
@@ -358,11 +356,11 @@ int board_is_lid_angle_tablet_mode(void)
 }
 
 /* Battery functions */
-#define SB_OPTIONALMFG_FUNCTION2		0x3e
+#define SB_OPTIONALMFG_FUNCTION2 0x3e
 /* Optional mfg function2 */
-#define SMART_QUICK_CHARGE			(1<<12)
+#define SMART_QUICK_CHARGE (1 << 12)
 /* Quick charge support */
-#define MODE_QUICK_CHARGE_SUPPORT		(1<<4)
+#define MODE_QUICK_CHARGE_SUPPORT (1 << 4)
 
 static void sb_quick_charge_mode(int enable)
 {
@@ -411,15 +409,15 @@ void board_overcurrent_event(int port, int is_overcurrented)
 }
 
 static const struct ppc_config_t ppc_syv682x_port0 = {
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
+	.i2c_port = I2C_PORT_TCPC0,
+	.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+	.drv = &syv682x_drv,
 };
 
 static const struct ppc_config_t ppc_syv682x_port1 = {
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
-		.drv = &syv682x_drv,
+	.i2c_port = I2C_PORT_TCPC1,
+	.i2c_addr_flags = SYV682X_ADDR0_FLAGS,
+	.drv = &syv682x_drv,
 };
 
 static void board_setup_ppc(void)
@@ -427,12 +425,10 @@ static void board_setup_ppc(void)
 	if (!support_syv_ppc)
 		return;
 
-	memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
-		&ppc_syv682x_port0,
-		sizeof(struct ppc_config_t));
-	memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
-		&ppc_syv682x_port1,
-		sizeof(struct ppc_config_t));
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_0], &ppc_syv682x_port0,
+	       sizeof(struct ppc_config_t));
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_1], &ppc_syv682x_port1,
+	       sizeof(struct ppc_config_t));
 
 	gpio_set_flags(GPIO_USB_PD_C0_INT_ODL, GPIO_INT_BOTH);
 	gpio_set_flags(GPIO_USB_PD_C1_INT_ODL, GPIO_INT_BOTH);
