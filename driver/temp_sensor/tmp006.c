@@ -19,7 +19,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_THERMAL, outstr)
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 /*
  * Alg 0 was what's in the TMP006 User's Guide.  Alg 1 is Alg 0, but with
@@ -30,23 +30,23 @@
 #define ALGORITHM_PARAMS 12
 
 /* Flags for tdata->fail */
-#define FAIL_INIT        BIT(0)  /* Just initialized */
-#define FAIL_POWER       BIT(1)  /* Sensor not powered */
-#define FAIL_I2C         BIT(2)  /* I2C communication error */
-#define FAIL_NOT_READY   BIT(3)  /* Data not ready */
+#define FAIL_INIT BIT(0) /* Just initialized */
+#define FAIL_POWER BIT(1) /* Sensor not powered */
+#define FAIL_I2C BIT(2) /* I2C communication error */
+#define FAIL_NOT_READY BIT(3) /* Data not ready */
 
 /* State and conversion factors to track for each sensor */
 struct tmp006_data_t {
 	/* chip info */
-	int16_t v_raw;		 /* TMP006_REG_VOBJ */
-	int16_t t_raw0;		 /* TMP006_REG_TDIE */
-	int fail;		 /* Fail flags; non-zero if last read failed */
+	int16_t v_raw; /* TMP006_REG_VOBJ */
+	int16_t t_raw0; /* TMP006_REG_TDIE */
+	int fail; /* Fail flags; non-zero if last read failed */
 	/* calibration params */
-	float s0, a1, a2;	 /* Sensitivity factors */
-	float b0, b1, b2;	 /* Self-heating correction */
-	float c2;		 /* Seebeck effect */
-	float d0, d1, ds;	 /* Tdie filter and slope adjustment */
-	float e0, e1;		 /* Tobj output filter */
+	float s0, a1, a2; /* Sensitivity factors */
+	float b0, b1, b2; /* Self-heating correction */
+	float c2; /* Seebeck effect */
+	float d0, d1, ds; /* Tdie filter and slope adjustment */
+	float e0, e1; /* Tobj output filter */
 	/* FIR filter stages */
 	float tdie1, tobj1;
 };
@@ -57,7 +57,7 @@ static const struct tmp006_data_t tmp006_data_default = {
 	.fail = FAIL_INIT,
 
 	/* Alg 0 params from User's Guide */
-	.s0 = 0.0f,				/* zero == "uncalibrated" */
+	.s0 = 0.0f, /* zero == "uncalibrated" */
 	.a1 = 1.75e-3f,
 	.a2 = -1.678e-5f,
 	.b0 = -2.94e-5f,
@@ -104,8 +104,7 @@ static void tmp006_poll_sensor(int sensor_id)
 	 * data ready; otherwise, we read garbage data.
 	 */
 	if (tdata->fail & (FAIL_POWER | FAIL_INIT)) {
-		rv = i2c_read16(TMP006_PORT(addr_flags),
-				TMP006_REG(addr_flags),
+		rv = i2c_read16(TMP006_PORT(addr_flags), TMP006_REG(addr_flags),
 				TMP006_REG_CONFIG, &v);
 		if (rv) {
 			tdata->fail |= FAIL_I2C;
@@ -117,16 +116,14 @@ static void tmp006_poll_sensor(int sensor_id)
 		}
 	}
 
-	rv = i2c_read16(TMP006_PORT(addr_flags),
-			TMP006_REG(addr_flags),
+	rv = i2c_read16(TMP006_PORT(addr_flags), TMP006_REG(addr_flags),
 			TMP006_REG_TDIE, &t);
 	if (rv) {
 		tdata->fail |= FAIL_I2C;
 		return;
 	}
 
-	rv = i2c_read16(TMP006_PORT(addr_flags),
-			TMP006_REG(addr_flags),
+	rv = i2c_read16(TMP006_PORT(addr_flags), TMP006_REG(addr_flags),
 			TMP006_REG_VOBJ, &v);
 	if (rv) {
 		tdata->fail |= FAIL_I2C;
@@ -179,8 +176,7 @@ static int tmp006_read_die_temp_k(const struct tmp006_data_t *tdata,
  * This uses Tdie and Vobj and a bunch of magic parameters to calculate the
  * object temperature, Tobj.
  */
-static int tmp006_read_object_temp_k(struct tmp006_data_t *tdata,
-				     int *temp_ptr)
+static int tmp006_read_object_temp_k(struct tmp006_data_t *tdata, int *temp_ptr)
 {
 	float tdie, vobj;
 	float tx, s, vos, vx, fv, tobj, t4;
@@ -251,7 +247,7 @@ int tmp006_get_val(int idx, int *temp_ptr)
 		 * an I2C error.
 		 */
 		return (tdata->fail & FAIL_I2C) ? EC_ERROR_UNKNOWN :
-			EC_ERROR_NOT_POWERED;
+						  EC_ERROR_NOT_POWERED;
 	}
 
 	/* Check the low bit to determine which temperature to read. */
@@ -277,26 +273,24 @@ static enum ec_status tmp006_get_calibration(struct host_cmd_handler_args *args)
 
 	r1->algorithm = ALGORITHM_NUM;
 	r1->num_params = ALGORITHM_PARAMS;
-	r1->val[0]  = tdata->s0;
-	r1->val[1]  = tdata->a1;
-	r1->val[2]  = tdata->a2;
-	r1->val[3]  = tdata->b0;
-	r1->val[4]  = tdata->b1;
-	r1->val[5]  = tdata->b2;
-	r1->val[6]  = tdata->c2;
-	r1->val[7]  = tdata->d0;
-	r1->val[8]  = tdata->d1;
-	r1->val[9]  = tdata->ds;
+	r1->val[0] = tdata->s0;
+	r1->val[1] = tdata->a1;
+	r1->val[2] = tdata->a2;
+	r1->val[3] = tdata->b0;
+	r1->val[4] = tdata->b1;
+	r1->val[5] = tdata->b2;
+	r1->val[6] = tdata->c2;
+	r1->val[7] = tdata->d0;
+	r1->val[8] = tdata->d1;
+	r1->val[9] = tdata->ds;
 	r1->val[10] = tdata->e0;
 	r1->val[11] = tdata->e1;
 
-	args->response_size = sizeof(*r1) +
-		r1->num_params * sizeof(r1->val[0]);
+	args->response_size = sizeof(*r1) + r1->num_params * sizeof(r1->val[0]);
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_TMP006_GET_CALIBRATION,
-		     tmp006_get_calibration,
+DECLARE_HOST_COMMAND(EC_CMD_TMP006_GET_CALIBRATION, tmp006_get_calibration,
 		     EC_VER_MASK(1));
 
 static enum ec_status tmp006_set_calibration(struct host_cmd_handler_args *args)
@@ -329,8 +323,7 @@ static enum ec_status tmp006_set_calibration(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_TMP006_SET_CALIBRATION,
-		     tmp006_set_calibration,
+DECLARE_HOST_COMMAND(EC_CMD_TMP006_SET_CALIBRATION, tmp006_set_calibration,
 		     EC_VER_MASK(1));
 
 static enum ec_status tmp006_get_raw(struct host_cmd_handler_args *args)
@@ -356,9 +349,7 @@ static enum ec_status tmp006_get_raw(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_TMP006_GET_RAW,
-		     tmp006_get_raw,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_TMP006_GET_RAW, tmp006_get_raw, EC_VER_MASK(0));
 
 /*****************************************************************************/
 /* Console commands */
@@ -375,7 +366,6 @@ static int tmp006_print(int idx)
 	int d;
 	int addr_flags = tmp006_sensors[idx].addr_flags;
 
-
 	ccprintf("Debug data from %s:\n", tmp006_sensors[idx].name);
 
 	if (!tmp006_has_power(idx)) {
@@ -383,36 +373,31 @@ static int tmp006_print(int idx)
 		return EC_ERROR_UNKNOWN;
 	}
 
-	rv = i2c_read16(TMP006_PORT(addr_flags),
-			TMP006_REG(addr_flags),
+	rv = i2c_read16(TMP006_PORT(addr_flags), TMP006_REG(addr_flags),
 			TMP006_REG_MANUFACTURER_ID, &d);
 	if (rv)
 		return rv;
 	ccprintf("  Manufacturer ID: 0x%04x\n", d);
 
-	rv = i2c_read16(TMP006_PORT(addr_flags),
-			TMP006_REG(addr_flags),
+	rv = i2c_read16(TMP006_PORT(addr_flags), TMP006_REG(addr_flags),
 			TMP006_REG_DEVICE_ID, &d);
 	ccprintf("  Device ID:       0x%04x\n", d);
 
-	rv = i2c_read16(TMP006_PORT(addr_flags),
-			TMP006_REG(addr_flags),
+	rv = i2c_read16(TMP006_PORT(addr_flags), TMP006_REG(addr_flags),
 			TMP006_REG_CONFIG, &d);
 	ccprintf("  Config:          0x%04x\n", d);
 
-	rv = i2c_read16(TMP006_PORT(addr_flags),
-			TMP006_REG(addr_flags),
+	rv = i2c_read16(TMP006_PORT(addr_flags), TMP006_REG(addr_flags),
 			TMP006_REG_VOBJ, &vraw);
 
 	v = ((int)vraw * 15625) / 100;
 	ccprintf("  Voltage:         0x%04x = %d nV\n", vraw, v);
 
-	rv = i2c_read16(TMP006_PORT(addr_flags),
-			TMP006_REG(addr_flags),
+	rv = i2c_read16(TMP006_PORT(addr_flags), TMP006_REG(addr_flags),
 			TMP006_REG_TDIE, &traw);
 	t = (int)traw;
-	ccprintf("  Temperature:     0x%04x = %d.%02d C\n",
-		 traw, t / 128, t > 0 ? t % 128 : 128 - (t % 128));
+	ccprintf("  Temperature:     0x%04x = %d.%02d C\n", traw, t / 128,
+		 t > 0 ? t % 128 : 128 - (t % 128));
 
 	return EC_SUCCESS;
 }
@@ -442,8 +427,7 @@ static int command_sensor_info(int argc, char **argv)
 
 	return rv1;
 }
-DECLARE_CONSOLE_COMMAND(tmp006, command_sensor_info,
-			"[ <index> ]",
+DECLARE_CONSOLE_COMMAND(tmp006, command_sensor_info, "[ <index> ]",
 			"Print TMP006 sensors");
 #endif
 
