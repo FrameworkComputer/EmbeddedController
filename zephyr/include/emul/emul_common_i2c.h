@@ -49,8 +49,8 @@
  * Special register values used in @ref i2c_common_emul_set_read_fail_reg and
  * @ref i2c_common_emul_set_write_fail_reg
  */
-#define I2C_COMMON_EMUL_FAIL_ALL_REG	(-1)
-#define I2C_COMMON_EMUL_NO_FAIL_REG	(-2)
+#define I2C_COMMON_EMUL_FAIL_ALL_REG (-1)
+#define I2C_COMMON_EMUL_NO_FAIL_REG (-2)
 
 /**
  * Describe if there is no ongoing I2C message or if there is message handled
