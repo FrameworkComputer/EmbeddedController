@@ -9,6 +9,7 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include "usbc/ppc_rt1739.h"
+#include "usbc/ppc_nx20p348x.h"
 #include "usbc/ppc_sn5s330.h"
 #include "usbc/ppc_syv682x.h"
 #include "usbc/utils.h"
@@ -23,10 +24,12 @@
 		    (PPC_ID_WITH_COMMA(id)), ())
 
 enum ppc_chips_alt_id {
-	DT_FOREACH_STATUS_OKAY(RT1739_PPC_COMPAT, PPC_ALT_ENUM)
-		DT_FOREACH_STATUS_OKAY(SN5S330_COMPAT, PPC_ALT_ENUM)
-			DT_FOREACH_STATUS_OKAY(SYV682X_COMPAT, PPC_ALT_ENUM)
-				PPC_CHIP_ALT_COUNT
+	DT_FOREACH_STATUS_OKAY(NX20P348X_COMPAT, PPC_ALT_ENUM)
+		DT_FOREACH_STATUS_OKAY(RT1739_PPC_COMPAT, PPC_ALT_ENUM)
+			DT_FOREACH_STATUS_OKAY(SN5S330_COMPAT, PPC_ALT_ENUM)
+				DT_FOREACH_STATUS_OKAY(SYV682X_COMPAT,
+						       PPC_ALT_ENUM)
+					PPC_CHIP_ALT_COUNT
 };
 
 extern struct ppc_config_t ppc_chips_alt[];
