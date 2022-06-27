@@ -21,7 +21,7 @@
 #define PCT2075_SHIFT1 (16 - PCT2075_RESOLUTION)
 #define PCT2075_SHIFT2 (PCT2075_RESOLUTION - 8)
 
-#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
 
 static int temp_mk_local[PCT2075_COUNT];
 
@@ -35,8 +35,8 @@ static int raw_read16(int sensor, const int offset, int *data_ptr)
 		return EC_ERROR_NOT_POWERED;
 #endif
 	return i2c_read16(pct2075_sensors[sensor].i2c_port,
-			  pct2075_sensors[sensor].i2c_addr_flags,
-			  offset, data_ptr);
+			  pct2075_sensors[sensor].i2c_addr_flags, offset,
+			  data_ptr);
 }
 
 static int get_reg_temp(int sensor, int *temp_ptr)
@@ -90,6 +90,6 @@ DECLARE_HOOK(HOOK_SECOND, pct2075_poll, HOOK_PRIO_TEMP_SENSOR);
 
 void pct2075_init(void)
 {
-/* Incase we need to initialize somthing */
+	/* Incase we need to initialize somthing */
 }
 DECLARE_HOOK(HOOK_INIT, pct2075_init, HOOK_PRIO_DEFAULT);
