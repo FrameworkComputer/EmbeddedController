@@ -17,9 +17,8 @@
 #define POLL_PERIOD_USEC 1000
 /* After 30 seconds of no port 80 data, disable the timer interrupt. */
 #define INTERRUPT_DISABLE_TIMEOUT_SEC 30
-#define INTERRUPT_DISABLE_IDLE_COUNT (INTERRUPT_DISABLE_TIMEOUT_SEC \
-				      * 1000000 \
-				      / POLL_PERIOD_USEC)
+#define INTERRUPT_DISABLE_IDLE_COUNT \
+	(INTERRUPT_DISABLE_TIMEOUT_SEC * 1000000 / POLL_PERIOD_USEC)
 
 /* Count the number of consecutive interrupts with no port 80 data. */
 static int idle_count;
