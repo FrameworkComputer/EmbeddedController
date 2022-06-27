@@ -66,7 +66,7 @@ static void hdmi_hpd_interrupt(const struct device *device,
 }
 
 static void lte_power_handler(struct ap_power_ev_callback *cb,
-			       struct ap_power_ev_data data)
+			      struct ap_power_ev_data data)
 {
 	/* Enable rails for S5 */
 	const struct gpio_dt_spec *s5_rail =
@@ -105,20 +105,18 @@ static void nereid_subboard_config(void)
 	 */
 	if (sb == NISSA_SB_C_A || sb == NISSA_SB_HDMI_A) {
 		/* Configure VBUS enable, default off */
-		gpio_pin_configure_dt(
-			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
-			GPIO_OUTPUT_LOW);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
+				      GPIO_OUTPUT_LOW);
 	} else {
 		/* Turn off unused pins */
 		gpio_pin_configure_dt(
 			GPIO_DT_FROM_NODELABEL(gpio_sub_usb_a1_ilimit_sdp),
 			GPIO_DISCONNECTED);
-		gpio_pin_configure_dt(
-			GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
-			GPIO_DISCONNECTED);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
+				      GPIO_DISCONNECTED);
 		/* Disable second USB-A port enable GPIO */
 		__ASSERT(USB_PORT_ENABLE_COUNT == 2,
-		       "USB A port count != 2 (%d)", USB_PORT_ENABLE_COUNT);
+			 "USB A port count != 2 (%d)", USB_PORT_ENABLE_COUNT);
 		usb_port_enable[1] = -1;
 	}
 	/*
@@ -127,9 +125,8 @@ static void nereid_subboard_config(void)
 	 */
 	if (sb == NISSA_SB_C_A || sb == NISSA_SB_C_LTE) {
 		/* Configure interrupt input */
-		gpio_pin_configure_dt(
-			GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
-			GPIO_INPUT | GPIO_PULL_UP);
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
+				      GPIO_INPUT | GPIO_PULL_UP);
 	} else {
 		/* Disable the port 1 charger task */
 		task_disable_task(TASK_ID_USB_CHG_P1);
@@ -197,9 +194,9 @@ static void nereid_subboard_config(void)
 		/* Control LTE power when CPU entering or
 		 * exiting S5 state.
 		 */
-		ap_power_ev_init_callback(
-			&power_cb, lte_power_handler,
-			AP_POWER_SHUTDOWN | AP_POWER_PRE_INIT);
+		ap_power_ev_init_callback(&power_cb, lte_power_handler,
+					  AP_POWER_SHUTDOWN |
+						  AP_POWER_PRE_INIT);
 		ap_power_ev_add_callback(&power_cb);
 		break;
 
