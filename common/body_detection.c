@@ -14,8 +14,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
 
 static struct motion_sensor_t *body_sensor =
 	&motion_sensors[CONFIG_BODY_DETECTION_SENSOR];
@@ -31,10 +31,9 @@ static bool history_initialized;
 static bool body_detect_enable;
 STATIC_IF(CONFIG_ACCEL_SPOOF_MODE) bool spoof_enable;
 
-static struct body_detect_motion_data
-{
+static struct body_detect_motion_data {
 	int history[CONFIG_BODY_DETECTION_MAX_WINDOW_SIZE]; /* acceleration */
-	int sum;              /* sum(history) */
+	int sum; /* sum(history) */
 	uint64_t n2_variance; /* n^2 * var(history) */
 } data[2]; /* motion data for X-axis and Y-axis */
 
@@ -59,8 +58,8 @@ static void update_motion_data(struct body_detect_motion_data *x, int x_n)
 	const int sum_diff = x_n - x_0;
 	const int new_sum = x->sum + sum_diff;
 
-	x->n2_variance += sum_diff *
-			  ((int64_t)n * (x_n + x_0) - new_sum - x->sum);
+	x->n2_variance +=
+		sum_diff * ((int64_t)n * (x_n + x_0) - new_sum - x->sum);
 	x->sum = new_sum;
 	x->history[history_idx] = x_n;
 }
@@ -76,8 +75,8 @@ static void update_motion_variance(void)
 /* return Var(X) + Var(Y) */
 static uint64_t get_motion_variance(void)
 {
-	return (data[X].n2_variance + data[Y].n2_variance)
-		/ window_size / window_size;
+	return (data[X].n2_variance + data[Y].n2_variance) / window_size /
+	       window_size;
 }
 
 static int calculate_motion_confidence(uint64_t var)
@@ -87,7 +86,7 @@ static int calculate_motion_confidence(uint64_t var)
 	if (var > var_threshold_scaled + confidence_delta_scaled)
 		return 100;
 	return 100 * (var - var_threshold_scaled + confidence_delta_scaled) /
-		(2 * confidence_delta_scaled);
+	       (2 * confidence_delta_scaled);
 }
 
 /* Change the motion state and commit the change to AP. */
@@ -105,7 +104,7 @@ void body_detect_change_state(enum body_detect_states state, bool spoof)
 			.sensor_num = MOTION_SENSE_ACTIVITY_SENSOR_ID,
 		};
 		motion_sense_fifo_stage_data(&vector, NULL, 0,
-				__hw_clock_source_read());
+					     __hw_clock_source_read());
 		motion_sense_fifo_commit_data();
 	}
 	/* change the motion state */
@@ -160,15 +159,15 @@ static void determine_threshold_scale(int range, int resolution, int rms_noise)
 	 * CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR / 100.
 	 */
 	const int var_noise = POW2((uint64_t)rms_noise) *
-			      CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR * POW2(98)
-			      / 100 / POW2(10000);
+			      CONFIG_BODY_DETECTION_VAR_NOISE_FACTOR *
+			      POW2(98) / 100 / POW2(10000);
 
-	var_threshold_scaled = (uint64_t)
-		(CONFIG_BODY_DETECTION_VAR_THRESHOLD + var_noise) *
+	var_threshold_scaled =
+		(uint64_t)(CONFIG_BODY_DETECTION_VAR_THRESHOLD + var_noise) *
 		multiplier / divisor;
-	confidence_delta_scaled = (uint64_t)
-		CONFIG_BODY_DETECTION_CONFIDENCE_DELTA *
-		multiplier / divisor;
+	confidence_delta_scaled =
+		(uint64_t)CONFIG_BODY_DETECTION_CONFIDENCE_DELTA * multiplier /
+		divisor;
 }
 
 void body_detect_reset(void)
@@ -185,8 +184,8 @@ void body_detect_reset(void)
 	if (odr == 0)
 		return;
 	determine_window_size(odr);
-	determine_threshold_scale(body_sensor->current_range,
-				  resolution, rms_noise);
+	determine_threshold_scale(body_sensor->current_range, resolution,
+				  rms_noise);
 	/* initialize motion data and state */
 	memset(data, 0, sizeof(data));
 	history_idx = 0;
