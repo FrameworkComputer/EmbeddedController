@@ -11,15 +11,15 @@
 
 #include "hooks.h"
 
-#define HID_SUBSYS_MAX_PAYLOAD_SIZE			4954
+#define HID_SUBSYS_MAX_PAYLOAD_SIZE 4954
 
 enum HID_SUBSYS_ERR {
-	HID_SUBSYS_ERR_NOT_READY		= EC_ERROR_INTERNAL_FIRST + 0,
-	HID_SUBSYS_ERR_TOO_MANY_HID_DEVICES	= EC_ERROR_INTERNAL_FIRST + 1,
+	HID_SUBSYS_ERR_NOT_READY = EC_ERROR_INTERNAL_FIRST + 0,
+	HID_SUBSYS_ERR_TOO_MANY_HID_DEVICES = EC_ERROR_INTERNAL_FIRST + 1,
 };
 
-typedef void *					hid_handle_t;
-#define HID_INVALID_HANDLE			NULL
+typedef void *hid_handle_t;
+#define HID_INVALID_HANDLE NULL
 
 struct hid_callbacks {
 	/*
@@ -73,11 +73,11 @@ int hid_subsys_set_device_data(const hid_handle_t handle, void *data);
 /* retrieve HID device specific data */
 void *hid_subsys_get_device_data(const hid_handle_t handle);
 
-#define HID_DEVICE_ENTRY(hid_dev) \
-	void _hid_dev_entry_##hid_dev(void) \
-	{ \
+#define HID_DEVICE_ENTRY(hid_dev)                       \
+	void _hid_dev_entry_##hid_dev(void)             \
+	{                                               \
 		hid_subsys_register_device(&(hid_dev)); \
-	} \
+	}                                               \
 	DECLARE_HOOK(HOOK_INIT, _hid_dev_entry_##hid_dev, HOOK_PRIO_LAST - 2)
 
 #endif /* __HID_DEVICE_H */
