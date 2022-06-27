@@ -85,8 +85,7 @@ enum power_states_ndsx chipset_pwr_seq_get_state(void)
 	/*
 	 * Unable to determine state, force to G3.
 	 */
-	LOG_INF("Unable to determine CPU state (%#x), forcing shutdown",
-		sig);
+	LOG_INF("Unable to determine CPU state (%#x), forcing shutdown", sig);
 	ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
 	return SYS_POWER_STATE_G3;
 }
