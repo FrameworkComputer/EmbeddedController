@@ -8,9 +8,8 @@
 
 #include "rtc.h"
 
-static uint16_t days_since_year_start[12] = {
-	0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334
-};
+static uint16_t days_since_year_start[12] = { 0,   31,	59,  90,  120, 151,
+					      181, 212, 243, 273, 304, 334 };
 
 /* Conversion between calendar date and seconds eclapsed since 1970-01-01 */
 uint32_t date_to_sec(struct calendar_date time)
@@ -25,8 +24,8 @@ uint32_t date_to_sec(struct calendar_date time)
 	}
 
 	sec += (days_since_year_start[time.month - 1] +
-		(IS_LEAP_YEAR(time.year) && time.month > 2) +
-		(time.day - 1)) * SECS_PER_DAY;
+		(IS_LEAP_YEAR(time.year) && time.month > 2) + (time.day - 1)) *
+	       SECS_PER_DAY;
 
 	/* add the accumulated time in seconds from 1970 to 2000 */
 	return sec + SECS_TILL_YEAR_2K;
@@ -55,7 +54,8 @@ struct calendar_date sec_to_date(uint32_t sec)
 	}
 	for (i = 1; i < 12; i++) {
 		if (days_since_year_start[i] +
-		    (IS_LEAP_YEAR(time.year) && (i >= 2)) >= day_tmp)
+			    (IS_LEAP_YEAR(time.year) && (i >= 2)) >=
+		    day_tmp)
 			break;
 	}
 	time.month = i;
