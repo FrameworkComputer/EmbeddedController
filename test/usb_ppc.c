@@ -28,15 +28,12 @@ const struct ppc_drv null_drv = {
 };
 
 struct ppc_config_t ppc_chips[] = {
-	[0] = {
-		.drv = &null_drv
-	},
+	[0] = { .drv = &null_drv },
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 const struct tcpc_config_t tcpc_config[] = {
-	[0] = {
-	},
+	[0] = {},
 };
 
 static int test_ppc_init(void)
@@ -170,8 +167,6 @@ static int test_ppc_is_vbus_present(void)
 
 	return EC_SUCCESS;
 }
-
-
 
 void run_test(int argc, char **argv)
 {
