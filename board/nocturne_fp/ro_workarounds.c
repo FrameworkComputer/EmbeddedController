@@ -19,7 +19,7 @@
 #include "watchdog.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /*
  * We only patch RW to ensure that future ROs have correct behavior.
@@ -30,7 +30,7 @@
  * Add in ap-off flag to be able to detect on next boot.
  * No other code in this build uses this ap-off reset flag.
  */
-#define FORGE_PORFLAG_FLAGS (EC_RESET_FLAG_POWER_ON|EC_RESET_FLAG_AP_OFF)
+#define FORGE_PORFLAG_FLAGS (EC_RESET_FLAG_POWER_ON | EC_RESET_FLAG_AP_OFF)
 
 static void wp_change_deferred(void)
 {
@@ -75,8 +75,7 @@ void wp_event(enum gpio_signal signal)
  * This function is also called from system_reset to set the final save
  * reset flags, before an actual planned reset.
  */
-__override
-void bkpdata_write_reset_flags(uint32_t save_flags)
+__override void bkpdata_write_reset_flags(uint32_t save_flags)
 {
 	/* Preserve flags in case a reset pulse occurs */
 	if (!gpio_get_level(GPIO_WP))
