@@ -45,7 +45,7 @@
 /* BH1730 and TCS3400 ALS */
 #define CONFIG_ALS
 #define ALS_COUNT 1
-#define I2C_PORT_ALS      I2C_PORT_SENSOR
+#define I2C_PORT_ALS I2C_PORT_SENSOR
 #define CONFIG_ALS_OPT3001
 #define OPT3001_I2C_ADDR_FLAGS OPT3001_I2C_ADDR1_FLAGS
 
@@ -66,18 +66,18 @@
  * Nightfury will not use both BH1730_LUXTH3_1K condition
  * and BH1730_LUXTH4_1K condition.
  */
-#define BH1730_LUXTH1_1K                270
-#define BH1730_LUXTH1_D0_1K             19200
-#define BH1730_LUXTH1_D1_1K             30528
-#define BH1730_LUXTH2_1K                655360000
-#define BH1730_LUXTH2_D0_1K             11008
-#define BH1730_LUXTH2_D1_1K             10752
-#define BH1730_LUXTH3_1K                1030
-#define BH1730_LUXTH3_D0_1K             11008
-#define BH1730_LUXTH3_D1_1K             10752
-#define BH1730_LUXTH4_1K                3670
-#define BH1730_LUXTH4_D0_1K             11008
-#define BH1730_LUXTH4_D1_1K             10752
+#define BH1730_LUXTH1_1K 270
+#define BH1730_LUXTH1_D0_1K 19200
+#define BH1730_LUXTH1_D1_1K 30528
+#define BH1730_LUXTH2_1K 655360000
+#define BH1730_LUXTH2_D0_1K 11008
+#define BH1730_LUXTH2_D1_1K 10752
+#define BH1730_LUXTH3_1K 1030
+#define BH1730_LUXTH3_D0_1K 11008
+#define BH1730_LUXTH3_D1_1K 10752
+#define BH1730_LUXTH4_1K 3670
+#define BH1730_LUXTH4_D0_1K 11008
+#define BH1730_LUXTH4_D1_1K 10752
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_MUX_RUNTIME_CONFIG
@@ -132,16 +132,16 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_PCH_RSMRST_L	GPIO_EC_PCH_RSMRST_L
-#define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L
-#define GPIO_CPU_PROCHOT	GPIO_EC_PROCHOT_ODL
-#define GPIO_AC_PRESENT		GPIO_ACOK_OD
-#define GPIO_PG_EC_RSMRST_ODL	GPIO_PG_EC_RSMRST_L
-#define GPIO_PCH_SYS_PWROK	GPIO_EC_PCH_SYS_PWROK
-#define GPIO_PCH_SLP_S3_L	GPIO_SLP_S3_L
-#define GPIO_PCH_SLP_S4_L	GPIO_SLP_S4_L
-#define GPIO_TEMP_SENSOR_POWER	GPIO_EN_A_RAILS
-#define GPIO_EN_PP5000		GPIO_EN_PP5000_A
+#define GPIO_PCH_RSMRST_L GPIO_EC_PCH_RSMRST_L
+#define GPIO_PCH_SLP_S0_L GPIO_SLP_S0_L
+#define GPIO_CPU_PROCHOT GPIO_EC_PROCHOT_ODL
+#define GPIO_AC_PRESENT GPIO_ACOK_OD
+#define GPIO_PG_EC_RSMRST_ODL GPIO_PG_EC_RSMRST_L
+#define GPIO_PCH_SYS_PWROK GPIO_EC_PCH_SYS_PWROK
+#define GPIO_PCH_SLP_S3_L GPIO_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L GPIO_SLP_S4_L
+#define GPIO_TEMP_SENSOR_POWER GPIO_EN_A_RAILS
+#define GPIO_EN_PP5000 GPIO_EN_PP5000_A
 
 #ifndef __ASSEMBLER__
 
@@ -152,9 +152,9 @@
 extern enum gpio_signal gpio_en_pp5000_a;
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1,	/* ADC0 */
-	ADC_TEMP_SENSOR_2,	/* ADC1 */
-	ADC_TEMP_SENSOR_3,	/* ADC3 */
+	ADC_TEMP_SENSOR_1, /* ADC0 */
+	ADC_TEMP_SENSOR_2, /* ADC1 */
+	ADC_TEMP_SENSOR_3, /* ADC3 */
 	ADC_CH_COUNT
 };
 
@@ -166,11 +166,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT,
-	PWM_CH_FAN,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT, PWM_CH_FAN, PWM_CH_COUNT };
 
 enum fan_channel {
 	FAN_CH_0 = 0,
