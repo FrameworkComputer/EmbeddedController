@@ -23,7 +23,7 @@
 
 /* Host event queue. Shared by all ports. */
 static struct queue const host_events =
-		QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, uint32_t);
+	QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, uint32_t);
 struct mutex host_event_mtx;
 
 static void pchg_queue_event(struct pchg *ctx, enum pchg_event event)
@@ -59,7 +59,7 @@ static void pchg_queue_host_event(struct pchg *ctx, uint32_t event)
 static const char *_text_state(enum pchg_state state)
 {
 	/* TODO: Use "S%d" for normal build. */
-	static const char * const state_names[] = EC_PCHG_STATE_TEXT;
+	static const char *const state_names[] = EC_PCHG_STATE_TEXT;
 	BUILD_ASSERT(ARRAY_SIZE(state_names) == PCHG_STATE_COUNT);
 
 	if (state >= sizeof(state_names))
@@ -71,7 +71,7 @@ static const char *_text_state(enum pchg_state state)
 static const char *_text_event(enum pchg_event event)
 {
 	/* TODO: Use "S%d" for normal build. */
-	static const char * const event_names[] = {
+	static const char *const event_names[] = {
 		[PCHG_EVENT_NONE] = "NONE",
 		[PCHG_EVENT_IRQ] = "IRQ",
 		[PCHG_EVENT_RESET] = "RESET",
@@ -118,7 +118,8 @@ static void _clear_port(struct pchg *ctx)
 }
 
 __overridable void board_pchg_power_on(int port, bool on)
-{}
+{
+}
 
 static enum pchg_state pchg_reset(struct pchg *ctx)
 {
@@ -504,7 +505,7 @@ static int pchg_run(struct pchg *ctx)
 			/* Don't wake up if the lid is closed. */
 			return 0;
 		return (ctx->event == PCHG_EVENT_DEVICE_DETECTED ||
-				ctx->event == PCHG_EVENT_DEVICE_LOST);
+			ctx->event == PCHG_EVENT_DEVICE_LOST);
 	}
 
 	if (ctx->event == PCHG_EVENT_CHARGE_UPDATE)
@@ -537,7 +538,6 @@ void pchg_irq(enum gpio_signal signal)
 		}
 	}
 }
-
 
 static void pchg_startup(void)
 {
@@ -630,8 +630,8 @@ static enum ec_status hc_pchg(struct host_cmd_handler_args *args)
 
 	ctx = &pchgs[port];
 
-	if (ctx->state == PCHG_STATE_CONNECTED
-			&& ctx->battery_percent >= ctx->cfg->full_percent)
+	if (ctx->state == PCHG_STATE_CONNECTED &&
+	    ctx->battery_percent >= ctx->cfg->full_percent)
 		r->state = PCHG_STATE_FULL;
 	else
 		r->state = ctx->state;
@@ -643,7 +643,8 @@ static enum ec_status hc_pchg(struct host_cmd_handler_args *args)
 	r->dropped_host_event_count = ctx->dropped_host_event_count;
 
 	args->response_size = args->version == 1 ?
-			sizeof(struct ec_response_pchg) : sizeof(*r);
+				      sizeof(struct ec_response_pchg) :
+				      sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
@@ -758,11 +759,11 @@ static int cc_pchg(int argc, char **argv)
 	ctx = &pchgs[port];
 
 	if (argc == 2) {
-		ccprintf("P%d STATE_%s EVENT_%s SOC=%d%%\n",
-			 port, _text_state(ctx->state), _text_event(ctx->event),
+		ccprintf("P%d STATE_%s EVENT_%s SOC=%d%%\n", port,
+			 _text_state(ctx->state), _text_event(ctx->event),
 			 ctx->battery_percent);
-		ccprintf("error=0x%x dropped=%u fw_version=0x%x\n",
-			 ctx->error, ctx->dropped_event_count, ctx->fw_version);
+		ccprintf("error=0x%x dropped=%u fw_version=0x%x\n", ctx->error,
+			 ctx->dropped_event_count, ctx->fw_version);
 		return EC_SUCCESS;
 	}
 
