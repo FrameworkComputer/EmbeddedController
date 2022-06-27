@@ -21,18 +21,20 @@ static void event_venc_written(struct consumer const *consumer, size_t count)
 	task_wake(TASK_ID_VENC_SERVICE);
 }
 static struct consumer const event_venc_consumer;
-static struct queue const event_venc_queue = QUEUE_DIRECT(8,
-	struct venc_msg, null_producer, event_venc_consumer);
+static struct queue const event_venc_queue =
+	QUEUE_DIRECT(8, struct venc_msg, null_producer, event_venc_consumer);
 static struct consumer const event_venc_consumer = {
 	.queue = &event_venc_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_venc_written,
 	}),
 };
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT_SCP
-void venc_h264_msg_handler(void *data) {}
+void venc_h264_msg_handler(void *data)
+{
+}
 #endif
 
 static void venc_h264_ipi_handler(int id, void *data, uint32_t len)
