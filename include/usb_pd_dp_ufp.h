@@ -32,4 +32,4 @@ void usb_pd_hpd_edge_event(int signal);
  */
 void usb_pd_hpd_converter_enable(int enable);
 
-#endif  /* __CROS_EC_USB_PD_DP_UFP_H */
+#endif /* __CROS_EC_USB_PD_DP_UFP_H */
