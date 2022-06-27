@@ -10,21 +10,22 @@
 #include "common.h"
 #include "ec_commands.h"
 
-#define CBI_VERSION_MAJOR	0
-#define CBI_VERSION_MINOR	0
+#define CBI_VERSION_MAJOR 0
+#define CBI_VERSION_MINOR 0
 
 #ifdef CONFIG_CBI_GPIO
 /*
  * if CBI is sourced from GPIO, the CBI cache only needs to accomondate
  * BOARD_VERSION and SKU_ID
  */
-#define CBI_IMAGE_SIZE		(sizeof(struct cbi_header) +  (2 * \
-				(sizeof(struct cbi_data) + sizeof(uint32_t))))
+#define CBI_IMAGE_SIZE               \
+	(sizeof(struct cbi_header) + \
+	 (2 * (sizeof(struct cbi_data) + sizeof(uint32_t))))
 #else
-#define CBI_IMAGE_SIZE		256
+#define CBI_IMAGE_SIZE 256
 #endif
 
-static const uint8_t cbi_magic[] = { 0x43, 0x42, 0x49 };  /* 'C' 'B' 'I' */
+static const uint8_t cbi_magic[] = { 0x43, 0x42, 0x49 }; /* 'C' 'B' 'I' */
 
 struct cbi_header {
 	uint8_t magic[3];
@@ -47,9 +48,9 @@ struct cbi_header {
 } __attribute__((packed));
 
 struct cbi_data {
-	uint8_t tag;		/* enum cbi_data_tag */
-	uint8_t size;		/* size of value[] */
-	uint8_t value[];	/* data value */
+	uint8_t tag; /* enum cbi_data_tag */
+	uint8_t size; /* size of value[] */
+	uint8_t value[]; /* data value */
 } __attribute__((packed));
 
 enum cbi_cache_status {
@@ -143,8 +144,8 @@ uint8_t cbi_crc8(const struct cbi_header *h);
  * @return	Address of the byte following the stored data in the
  * 		destination buffer
  */
-uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag,
-		      const void *buf, int size);
+uint8_t *cbi_set_data(uint8_t *p, enum cbi_data_tag tag, const void *buf,
+		      int size);
 
 /**
  * Store string data in memory in CBI data format.
