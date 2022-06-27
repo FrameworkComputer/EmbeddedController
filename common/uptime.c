@@ -32,14 +32,12 @@ host_command_get_uptime_info(struct host_cmd_handler_args *args)
 	r->ec_reset_flags = system_get_reset_flags();
 
 	memset(r->recent_ap_reset, 0, sizeof(r->recent_ap_reset));
-	rc = get_ap_reset_stats(recent_ap_reset,
-				ARRAY_SIZE(r->recent_ap_reset),
+	rc = get_ap_reset_stats(recent_ap_reset, ARRAY_SIZE(r->recent_ap_reset),
 				&ap_resets_since_ec_boot);
 
 	r->ap_resets_since_ec_boot = ap_resets_since_ec_boot;
 	args->response_size = sizeof(*r);
 	return rc == EC_SUCCESS ? EC_RES_SUCCESS : EC_RES_ERROR;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GET_UPTIME_INFO,
-	host_command_get_uptime_info,
-	EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_GET_UPTIME_INFO, host_command_get_uptime_info,
+		     EC_VER_MASK(0));
