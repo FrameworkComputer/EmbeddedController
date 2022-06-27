@@ -20,12 +20,12 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 
 #define I2C_ERROR_FAILED_START EC_ERROR_INTERNAL_FIRST
 
 /* Transmit timeout in microseconds */
-#define I2C_TX_TIMEOUT_MASTER   (10 * MSEC)
+#define I2C_TX_TIMEOUT_MASTER (10 * MSEC)
 
 enum i2c_freq_khz {
 	freq_100 = 100,
@@ -44,8 +44,8 @@ struct i2c_timing {
 /* timing register values for supported input clks / i2c clk rates */
 static const uint32_t busyloop_us[I2C_FREQ_COUNT] = {
 	[I2C_FREQ_1000KHZ] = 16, /* Enough for 2 bytes */
-	[I2C_FREQ_400KHZ] = 40,  /* Enough for 2 bytes */
-	[I2C_FREQ_100KHZ] = 0,   /* No busy looping at 100kHz (bus is slow) */
+	[I2C_FREQ_400KHZ] = 40, /* Enough for 2 bytes */
+	[I2C_FREQ_100KHZ] = 0, /* No busy looping at 100kHz (bus is slow) */
 };
 
 /*
@@ -94,8 +94,8 @@ static const uint32_t i2c_regs_base[] = {
 
 /* I2C port state data */
 struct i2c_port_data {
-	uint32_t timeout_us;    /* Transaction timeout, or 0 to use default */
-	enum i2c_freq freq;	/* Port clock speed */
+	uint32_t timeout_us; /* Transaction timeout, or 0 to use default */
+	enum i2c_freq freq; /* Port clock speed */
 };
 static struct i2c_port_data pdata[I2C_PORT_COUNT];
 
@@ -145,10 +145,10 @@ static void i2c_set_timingr_port(const struct i2c_port_t *p)
 	}
 	/* Assemble write value for timingr register */
 	timingr = (i2c_timingr[index].scll << STM32_I2C_TIMINGR_SCLL_OFF) |
-		(i2c_timingr[index].sclh << STM32_I2C_TIMINGR_SCLH_OFF) |
-		(i2c_timingr[index].sdadel << STM32_I2C_TIMINGR_SDADEL_OFF) |
-		(i2c_timingr[index].scldel << STM32_I2C_TIMINGR_SCLDEL_OFF) |
-		(i2c_timingr[index].presc << STM32_I2C_TIMINGR_PRESC_OFF);
+		  (i2c_timingr[index].sclh << STM32_I2C_TIMINGR_SCLH_OFF) |
+		  (i2c_timingr[index].sdadel << STM32_I2C_TIMINGR_SDADEL_OFF) |
+		  (i2c_timingr[index].scldel << STM32_I2C_TIMINGR_SCLDEL_OFF) |
+		  (i2c_timingr[index].presc << STM32_I2C_TIMINGR_PRESC_OFF);
 
 	/* Write timingr value */
 	STM32_I2C_TIMINGR(base) = timingr;
@@ -189,8 +189,8 @@ static void i2c_init_port(const struct i2c_port_t *p)
 		mask = STM32_RCC_CCIPR_I2CNSEL_MASK << shift;
 		clksel = STM32_RCC_CCIPR;
 		clksel &= ~mask;
-		STM32_RCC_CCIPR = clksel | (STM32_RCC_CCIPR_I2CNSEL_HSI
-					    << shift);
+		STM32_RCC_CCIPR = clksel |
+				  (STM32_RCC_CCIPR_I2CNSEL_HSI << shift);
 	} else if (port == 3) {
 		/* i2c4sel is bits 1:0, no shift required */
 		STM32_RCC_CCIPR2 &= ~STM32_RCC_CCIPR2_I2C4SEL_MASK;
@@ -260,9 +260,8 @@ static int wait_isr(int port, int mask)
  * Exported functions declared in i2c.h
  */
 /* Perform an i2c transaction. */
-int chip_i2c_xfer(const int port, const uint16_t addr_flags,
-		  const uint8_t *out, int out_bytes,
-		  uint8_t *in, int in_bytes, int flags)
+int chip_i2c_xfer(const int port, const uint16_t addr_flags, const uint8_t *out,
+		  int out_bytes, uint8_t *in, int in_bytes, int flags)
 {
 	int addr_8bit = I2C_STRIP_FLAGS(addr_flags) << 1;
 	int rv = EC_SUCCESS;
@@ -290,13 +289,13 @@ int chip_i2c_xfer(const int port, const uint16_t addr_flags,
 		 * if we are not stopping, set RELOAD bit so that we can load
 		 * NBYTES again. if we are starting, then set START bit.
 		 */
-		STM32_I2C_CR2(base) = ((out_bytes & 0xFF) << 16)
-			| addr_8bit
-			| ((in_bytes == 0 && xfer_stop) ?
-				STM32_I2C_CR2_AUTOEND : 0)
-			| ((in_bytes == 0 && !xfer_stop) ?
-				STM32_I2C_CR2_RELOAD : 0)
-			| (xfer_start ? STM32_I2C_CR2_START : 0);
+		STM32_I2C_CR2(base) =
+			((out_bytes & 0xFF) << 16) | addr_8bit |
+			((in_bytes == 0 && xfer_stop) ? STM32_I2C_CR2_AUTOEND :
+							0) |
+			((in_bytes == 0 && !xfer_stop) ? STM32_I2C_CR2_RELOAD :
+							 0) |
+			(xfer_start ? STM32_I2C_CR2_START : 0);
 
 		for (i = 0; i < out_bytes; i++) {
 			rv = wait_isr(port, STM32_I2C_ISR_TXIS);
@@ -319,11 +318,11 @@ int chip_i2c_xfer(const int port, const uint16_t addr_flags,
 		 * NBYTES again. if we were just transmitting, we need to
 		 * set START bit to send (re)start and begin read transaction.
 		 */
-		STM32_I2C_CR2(base) = ((in_bytes & 0xFF) << 16)
-			| STM32_I2C_CR2_RD_WRN | addr_8bit
-			| (xfer_stop ? STM32_I2C_CR2_AUTOEND : 0)
-			| (!xfer_stop ? STM32_I2C_CR2_RELOAD : 0)
-			| (out_bytes || xfer_start ? STM32_I2C_CR2_START : 0);
+		STM32_I2C_CR2(base) =
+			((in_bytes & 0xFF) << 16) | STM32_I2C_CR2_RD_WRN |
+			addr_8bit | (xfer_stop ? STM32_I2C_CR2_AUTOEND : 0) |
+			(!xfer_stop ? STM32_I2C_CR2_RELOAD : 0) |
+			(out_bytes || xfer_start ? STM32_I2C_CR2_START : 0);
 
 		for (i = 0; i < in_bytes; i++) {
 			/* Wait for receive buffer not empty */
@@ -402,7 +401,7 @@ int i2c_raw_get_sda(int port)
 int i2c_get_line_levels(int port)
 {
 	return (i2c_raw_get_sda(port) ? I2C_LINE_SDA_HIGH : 0) |
-		(i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
+	       (i2c_raw_get_scl(port) ? I2C_LINE_SCL_HIGH : 0);
 }
 
 /*****************************************************************************/
