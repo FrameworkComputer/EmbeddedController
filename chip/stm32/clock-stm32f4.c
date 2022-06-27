@@ -21,12 +21,12 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
 enum clock_osc {
-	OSC_HSI = 0,	/* High-speed internal oscillator */
-	OSC_HSE,	/* High-speed external oscillator */
-	OSC_PLL,	/* PLL */
+	OSC_HSI = 0, /* High-speed internal oscillator */
+	OSC_HSE, /* High-speed external oscillator */
+	OSC_PLL, /* PLL */
 };
 
 /*
@@ -35,10 +35,11 @@ enum clock_osc {
  * A CONFIG may be needed if other boards have different MCO
  * requirements.
  */
-#define RCC_CFGR_MCO_CONFIG ((2 << 30) | /* MCO2 <- HSE  */ \
-			     (0 << 27) | /* MCO2 div / 4 */ \
-			     (6 << 24) | /* MCO1 div / 4 */ \
-			     (3 << 21))  /* MCO1 <- PLL  */
+#define RCC_CFGR_MCO_CONFIG             \
+	((2 << 30) | /* MCO2 <- HSE  */ \
+	 (0 << 27) | /* MCO2 div / 4 */ \
+	 (6 << 24) | /* MCO1 div / 4 */ \
+	 (3 << 21)) /* MCO1 <- PLL  */
 
 #ifdef CONFIG_STM32_CLOCK_HSE_HZ
 /* RTC clock must 1 Mhz when derived from HSE */
@@ -48,7 +49,6 @@ enum clock_osc {
 #define RTC_DIV 0
 #endif /* CONFIG_STM32_CLOCK_HSE_HZ */
 
-
 /* Bus clocks dividers depending on the configuration */
 /*
  * max speed configuration with the PLL ON
@@ -56,18 +56,18 @@ enum clock_osc {
  * For STM32F446: max 45 MHz
  * For STM32F412: max AHB 100 MHz / APB2 100 Mhz / APB1 50 Mhz
  */
-#define RCC_CFGR_DIVIDERS_WITH_PLL (RCC_CFGR_MCO_CONFIG  | \
-				    CFGR_RTCPRE(RTC_DIV) | \
-				    CFGR_PPRE2(STM32F4_APB2_PRE) | \
-				    CFGR_PPRE1(STM32F4_APB1_PRE) | \
-				    CFGR_HPRE(STM32F4_AHB_PRE))
+#define RCC_CFGR_DIVIDERS_WITH_PLL                                     \
+	(RCC_CFGR_MCO_CONFIG | CFGR_RTCPRE(RTC_DIV) |                  \
+	 CFGR_PPRE2(STM32F4_APB2_PRE) | CFGR_PPRE1(STM32F4_APB1_PRE) | \
+	 CFGR_HPRE(STM32F4_AHB_PRE))
 /*
  * lower power configuration without the PLL
  * the frequency will be low (8-24Mhz), we don't want dividers to the
  * peripheral clocks, put /1 everywhere.
  */
-#define RCC_CFGR_DIVIDERS_NO_PLL (RCC_CFGR_MCO_CONFIG | CFGR_RTCPRE(0) | \
-				  CFGR_PPRE2(0) | CFGR_PPRE1(0) | CFGR_HPRE(0))
+#define RCC_CFGR_DIVIDERS_NO_PLL                                \
+	(RCC_CFGR_MCO_CONFIG | CFGR_RTCPRE(0) | CFGR_PPRE2(0) | \
+	 CFGR_PPRE1(0) | CFGR_HPRE(0))
 
 /* PLL output frequency */
 #define STM32F4_PLL_CLOCK (STM32F4_VCO_CLOCK / STM32F4_PLLP_DIV)
@@ -166,8 +166,9 @@ void clock_set_osc(enum clock_osc osc)
 		/* Switch to HSI */
 		clock_switch_osc(OSC_HSI);
 		/* optimized flash latency settings for <30Mhz clock (0-WS) */
-		STM32_FLASH_ACR = (STM32_FLASH_ACR & ~STM32_FLASH_ACR_LAT_MASK)
-				| STM32_FLASH_ACR_LATENCY_SLOW;
+		STM32_FLASH_ACR =
+			(STM32_FLASH_ACR & ~STM32_FLASH_ACR_LAT_MASK) |
+			STM32_FLASH_ACR_LATENCY_SLOW;
 		/* read-back the latency as advised by the Reference Manual */
 		unused = STM32_FLASH_ACR;
 		/* Turn off the PLL1 to save power */
@@ -182,8 +183,9 @@ void clock_set_osc(enum clock_osc osc)
 		/* Switch to HSE */
 		clock_switch_osc(OSC_HSE);
 		/* optimized flash latency settings for <30Mhz clock (0-WS) */
-		STM32_FLASH_ACR = (STM32_FLASH_ACR & ~STM32_FLASH_ACR_LAT_MASK)
-				| STM32_FLASH_ACR_LATENCY_SLOW;
+		STM32_FLASH_ACR =
+			(STM32_FLASH_ACR & ~STM32_FLASH_ACR_LAT_MASK) |
+			STM32_FLASH_ACR_LATENCY_SLOW;
 		/* read-back the latency as advised by the Reference Manual */
 		unused = STM32_FLASH_ACR;
 		/* Turn off the PLL1 to save power */
@@ -201,8 +203,9 @@ void clock_set_osc(enum clock_osc osc)
 		 * Increase flash latency before transition the clock
 		 * Use the minimum Wait States value optimized for the platform.
 		 */
-		STM32_FLASH_ACR = (STM32_FLASH_ACR & ~STM32_FLASH_ACR_LAT_MASK)
-				| STM32_FLASH_ACR_LATENCY;
+		STM32_FLASH_ACR =
+			(STM32_FLASH_ACR & ~STM32_FLASH_ACR_LAT_MASK) |
+			STM32_FLASH_ACR_LATENCY;
 		/* read-back the latency as advised by the Reference Manual */
 		unused = STM32_FLASH_ACR;
 		/* Switch to PLL */
@@ -247,17 +250,14 @@ static void clock_pll_configure(void)
 	i2sdiv = (vcoclock + (systemclock / 2)) / systemclock;
 
 	/* Set up PLL */
-	STM32_RCC_PLLCFGR =
-		PLLCFGR_PLLM(plldiv) |
-		PLLCFGR_PLLN(pllmult) |
-		PLLCFGR_PLLP(STM32F4_PLLP_DIV / 2 - 1) |
+	STM32_RCC_PLLCFGR = PLLCFGR_PLLM(plldiv) | PLLCFGR_PLLN(pllmult) |
+			    PLLCFGR_PLLP(STM32F4_PLLP_DIV / 2 - 1) |
 #if defined(CONFIG_STM32_CLOCK_HSE_HZ)
-		PLLCFGR_PLLSRC_HSE |
+			    PLLCFGR_PLLSRC_HSE |
 #else
-		PLLCFGR_PLLSRC_HSI |
+			    PLLCFGR_PLLSRC_HSI |
 #endif
-		PLLCFGR_PLLQ(usbdiv) |
-		PLLCFGR_PLLR(i2sdiv);
+			    PLLCFGR_PLLQ(usbdiv) | PLLCFGR_PLLR(i2sdiv);
 }
 
 void low_power_init(void);
@@ -300,22 +300,23 @@ void clock_enable_module(enum module_id module, int enable)
 		if (enable) {
 			STM32_RCC_AHB2ENR |= STM32_RCC_AHB2ENR_OTGFSEN;
 			STM32_RCC_AHB1ENR |= STM32_RCC_AHB1ENR_OTGHSEN |
-				STM32_RCC_AHB1ENR_OTGHSULPIEN;
+					     STM32_RCC_AHB1ENR_OTGHSULPIEN;
 		} else {
 			STM32_RCC_AHB2ENR &= ~STM32_RCC_AHB2ENR_OTGFSEN;
 			STM32_RCC_AHB1ENR &= ~STM32_RCC_AHB1ENR_OTGHSEN &
-				     ~STM32_RCC_AHB1ENR_OTGHSULPIEN;
+					     ~STM32_RCC_AHB1ENR_OTGHSULPIEN;
 		}
 		return;
 	} else if (module == MODULE_I2C) {
 		if (enable) {
 			/* Enable clocks to I2C modules if necessary */
 			STM32_RCC_APB1ENR |=
-				STM32_RCC_I2C1EN | STM32_RCC_I2C2EN
-				| STM32_RCC_I2C3EN | STM32_RCC_FMPI2C4EN;
+				STM32_RCC_I2C1EN | STM32_RCC_I2C2EN |
+				STM32_RCC_I2C3EN | STM32_RCC_FMPI2C4EN;
 			STM32_RCC_DCKCFGR2 =
-				(STM32_RCC_DCKCFGR2 & ~DCKCFGR2_FMPI2C1SEL_MASK)
-				| DCKCFGR2_FMPI2C1SEL(FMPI2C1SEL_APB);
+				(STM32_RCC_DCKCFGR2 &
+				 ~DCKCFGR2_FMPI2C1SEL_MASK) |
+				DCKCFGR2_FMPI2C1SEL(FMPI2C1SEL_APB);
 		} else {
 			STM32_RCC_APB1ENR &=
 				~(STM32_RCC_I2C1EN | STM32_RCC_I2C2EN |
@@ -349,12 +350,14 @@ void clock_enable_module(enum module_id module, int enable)
 
 int32_t rtcss_to_us(uint32_t rtcss)
 {
-	return ((RTC_PREDIV_S - rtcss) * (SECOND/SCALING) / (RTC_FREQ/SCALING));
+	return ((RTC_PREDIV_S - rtcss) * (SECOND / SCALING) /
+		(RTC_FREQ / SCALING));
 }
 
 uint32_t us_to_rtcss(int32_t us)
 {
-	return (RTC_PREDIV_S - (us * (RTC_FREQ/SCALING) / (SECOND/SCALING)));
+	return (RTC_PREDIV_S -
+		(us * (RTC_FREQ / SCALING) / (SECOND / SCALING)));
 }
 
 void rtc_init(void)
@@ -365,8 +368,8 @@ void rtc_init(void)
 	STM32_RCC_BDCR = STM32_RCC_BDCR_RTCEN | BDCR_RTCSEL(BDCR_SRC_HSE);
 #else
 	/* RTC clocked from the LSI, ensure first it is ON */
-	wait_for_ready(&(STM32_RCC_CSR),
-		STM32_RCC_CSR_LSION, STM32_RCC_CSR_LSIRDY);
+	wait_for_ready(&(STM32_RCC_CSR), STM32_RCC_CSR_LSION,
+		       STM32_RCC_CSR_LSIRDY);
 
 	STM32_RCC_BDCR = STM32_RCC_BDCR_RTCEN | BDCR_RTCSEL(BDCR_SRC_LSI);
 #endif
@@ -379,11 +382,10 @@ void rtc_init(void)
 		;
 
 	/* Set clock prescalars: Needs two separate writes. */
-	STM32_RTC_PRER =
-		(STM32_RTC_PRER & ~STM32_RTC_PRER_S_MASK) | RTC_PREDIV_S;
-	STM32_RTC_PRER =
-		(STM32_RTC_PRER & ~STM32_RTC_PRER_A_MASK)
-		| (RTC_PREDIV_A << 16);
+	STM32_RTC_PRER = (STM32_RTC_PRER & ~STM32_RTC_PRER_S_MASK) |
+			 RTC_PREDIV_S;
+	STM32_RTC_PRER = (STM32_RTC_PRER & ~STM32_RTC_PRER_A_MASK) |
+			 (RTC_PREDIV_A << 16);
 
 	/* Start RTC timer */
 	STM32_RTC_ISR &= ~STM32_RTC_ISR_INIT;
@@ -528,8 +530,9 @@ void __idle(void)
 			/* Set deep sleep bit */
 			CPU_SCB_SYSCTRL |= 0x4;
 
-			set_rtc_alarm(0, next_delay - STOP_MODE_LATENCY
-						    - PLL_LOCK_LATENCY,
+			set_rtc_alarm(0,
+				      next_delay - STOP_MODE_LATENCY -
+					      PLL_LOCK_LATENCY,
 				      &rtc_sleep, 0);
 
 			/* Switch to HSI */
@@ -587,16 +590,15 @@ static int command_idle_stats(int argc, char **argv)
 	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
 	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
 	ccprintf("Time spent in deep-sleep:            %.6llds\n",
-			idle_dsleep_time_us);
+		 idle_dsleep_time_us);
 	ccprintf("Num of prevented sleep:              %d\n",
-			idle_sleep_prevented_cnt);
+		 idle_sleep_prevented_cnt);
 	ccprintf("Total time on:                       %.6llds\n", ts.val);
 	ccprintf("Deep-sleep closest to wake deadline: %dus\n",
-			dsleep_recovery_margin_us);
+		 dsleep_recovery_margin_us);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
-			"",
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 			"Print last idle stats");
 #endif /* CONFIG_LOW_POWER_IDLE */
