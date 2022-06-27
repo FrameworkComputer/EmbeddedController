@@ -52,7 +52,7 @@ static void pg_exit_restore_hw(void)
  * fixed amount of time to keep the console in use flag true after boot in
  * order to give a permanent window in which the low speed clock is not used.
  */
-#define CONSOLE_IN_USE_ON_BOOT_TIME (15*SECOND)
+#define CONSOLE_IN_USE_ON_BOOT_TIME (15 * SECOND)
 
 /* power management internal context data structure */
 struct pm_context {
@@ -172,20 +172,20 @@ static void init_aon_task(void)
 	 * limit: 0x67
 	 * Present = 1, DPL = 0
 	 */
-	desc_lo = GEN_GDT_DESC_LO((uint32_t)&main_tss,
-			GDT_DESC_TSS_LIMIT, GDT_DESC_TSS_FLAGS);
-	desc_up = GEN_GDT_DESC_UP((uint32_t)&main_tss,
-			GDT_DESC_TSS_LIMIT, GDT_DESC_TSS_FLAGS);
+	desc_lo = GEN_GDT_DESC_LO((uint32_t)&main_tss, GDT_DESC_TSS_LIMIT,
+				  GDT_DESC_TSS_FLAGS);
+	desc_up = GEN_GDT_DESC_UP((uint32_t)&main_tss, GDT_DESC_TSS_LIMIT,
+				  GDT_DESC_TSS_FLAGS);
 	add_gdt_entry(desc_lo, desc_up);
 
 	/* set GDT entry 4 for TSS descriptor of aontask
 	 * limit: 0x67
 	 * Present = 1, DPL = 0, Accessed = 1
 	 */
-	desc_lo = GEN_GDT_DESC_LO((uint32_t)aon_tss,
-			GDT_DESC_TSS_LIMIT, GDT_DESC_TSS_FLAGS);
-	desc_up = GEN_GDT_DESC_UP((uint32_t)aon_tss,
-			GDT_DESC_TSS_LIMIT, GDT_DESC_TSS_FLAGS);
+	desc_lo = GEN_GDT_DESC_LO((uint32_t)aon_tss, GDT_DESC_TSS_LIMIT,
+				  GDT_DESC_TSS_FLAGS);
+	desc_up = GEN_GDT_DESC_UP((uint32_t)aon_tss, GDT_DESC_TSS_LIMIT,
+				  GDT_DESC_TSS_FLAGS);
 	pm_ctx.aon_tss_selector[1] = add_gdt_entry(desc_lo, desc_up);
 
 	/* set GDT entry 5 for LDT descriptor of aontask
@@ -205,12 +205,12 @@ static void init_aon_task(void)
 			 "pop %eax;");
 
 	aon_share->main_fw_ro_addr = (uint32_t)&__aon_ro_start;
-	aon_share->main_fw_ro_size = (uint32_t)&__aon_ro_end -
-				     (uint32_t)&__aon_ro_start;
+	aon_share->main_fw_ro_size =
+		(uint32_t)&__aon_ro_end - (uint32_t)&__aon_ro_start;
 
 	aon_share->main_fw_rw_addr = (uint32_t)&__aon_rw_start;
-	aon_share->main_fw_rw_size = (uint32_t)&__aon_rw_end -
-				     (uint32_t)&__aon_rw_start;
+	aon_share->main_fw_rw_size =
+		(uint32_t)&__aon_rw_end - (uint32_t)&__aon_rw_start;
 
 	aon_share->uma_msb = IPC_UMA_RANGE_LOWER_1;
 
@@ -258,8 +258,7 @@ static void switch_to_aontask(void)
 	interrupt_enable();
 }
 
-noreturn
-static void handle_reset_in_aontask(enum ish_pm_state pm_state)
+noreturn static void handle_reset_in_aontask(enum ish_pm_state pm_state)
 {
 	pm_ctx.aon_share->pm_state = pm_state;
 
@@ -318,10 +317,8 @@ static uint32_t convert_both_edge_gpio_to_single_edge(void)
 	 * interrupt trigger mode enabled pins.
 	 */
 	for (i = 0; i < 32; i++) {
-		if (ISH_GPIO_GIMR & BIT(i) &&
-		    ISH_GPIO_GRER & BIT(i) &&
+		if (ISH_GPIO_GIMR & BIT(i) && ISH_GPIO_GRER & BIT(i) &&
 		    ISH_GPIO_GFER & BIT(i)) {
-
 			/* Record the pin so we can restore it later */
 			both_edge_pins |= BIT(i);
 
@@ -513,7 +510,6 @@ static int d0ix_decide(timestamp_t cur_time, uint32_t idle_us)
 	int pm_state = ISH_PM_STATE_D0I0;
 
 	if (DEEP_SLEEP_ALLOWED) {
-
 		/* check if the console use has expired. */
 		if (sleep_mask & SLEEP_MASK_CONSOLE) {
 			if (cur_time.val > pm_ctx.console_expire_time.val) {
@@ -525,8 +521,7 @@ static int d0ix_decide(timestamp_t cur_time, uint32_t idle_us)
 		}
 
 		if (IS_ENABLED(CONFIG_ISH_PM_D0I3) &&
-		    idle_us >= CONFIG_ISH_D0I3_MIN_USEC &&
-		    pm_ctx.aon_valid)
+		    idle_us >= CONFIG_ISH_D0I3_MIN_USEC && pm_ctx.aon_valid)
 			pm_state = ISH_PM_STATE_D0I3;
 
 		else if (IS_ENABLED(CONFIG_ISH_PM_D0I2) &&
@@ -633,7 +628,8 @@ void ish_pm_init(void)
 	PMU_MASK_EVENT = ~PMU_MASK_EVENT_BIT_ALL;
 
 	if (IS_ENABLED(CONFIG_ISH_NEW_PM)) {
-		PMU_ISH_FABRIC_CNT = (PMU_ISH_FABRIC_CNT & 0xffff0000) | FABRIC_IDLE_COUNT;
+		PMU_ISH_FABRIC_CNT = (PMU_ISH_FABRIC_CNT & 0xffff0000) |
+				     FABRIC_IDLE_COUNT;
 		PMU_PGCB_CLKGATE_CTRL = TRUNK_CLKGATE_COUNT;
 	}
 
@@ -656,11 +652,9 @@ void ish_pm_init(void)
 	}
 }
 
-noreturn
-void ish_pm_reset(enum ish_pm_state pm_state)
+noreturn void ish_pm_reset(enum ish_pm_state pm_state)
 {
-	if (IS_ENABLED(CONFIG_ISH_PM_AONTASK) &&
-	    pm_ctx.aon_valid) {
+	if (IS_ENABLED(CONFIG_ISH_PM_AONTASK) && pm_ctx.aon_valid) {
 		handle_reset_in_aontask(pm_state);
 	} else {
 		ish_mia_reset();
@@ -679,8 +673,8 @@ void __idle(void)
 	 * time in order to give a fixed window on boot
 	 */
 	disable_sleep(SLEEP_MASK_CONSOLE);
-	pm_ctx.console_expire_time.val = get_time().val +
-					 CONSOLE_IN_USE_ON_BOOT_TIME;
+	pm_ctx.console_expire_time.val =
+		get_time().val + CONSOLE_IN_USE_ON_BOOT_TIME;
 
 	while (1) {
 		t0 = get_time();
@@ -742,13 +736,11 @@ static int command_idle_stats(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 			"Print power management statistics");
 
-
 /**
  * main FW only need handle PMU wakeup interrupt for D0i1 state, aontask will
  * handle PMU wakeup interrupt for other low power states
  */
-__maybe_unused
-static void pmu_wakeup_isr(void)
+__maybe_unused static void pmu_wakeup_isr(void)
 {
 	/* at current nothing need to do */
 }
@@ -763,8 +755,7 @@ DECLARE_IRQ(ISH_PMU_WAKEUP_IRQ, pmu_wakeup_isr);
  *
  */
 
-__maybe_unused noreturn
-static void reset_prep_isr(void)
+__maybe_unused noreturn static void reset_prep_isr(void)
 {
 	/* mask reset prep avail interrupt */
 	PMU_RST_PREP = PMU_RST_PREP_INT_MASK;
@@ -784,8 +775,7 @@ static void reset_prep_isr(void)
 DECLARE_IRQ(ISH_RESET_PREP_IRQ, reset_prep_isr);
 #endif
 
-__maybe_unused
-static void handle_d3(uint32_t irq_vec)
+__maybe_unused static void handle_d3(uint32_t irq_vec)
 {
 	PMU_D3_STATUS = PMU_D3_STATUS;
 
@@ -839,5 +829,5 @@ void ish_pm_refresh_console_in_use(void)
 	/* Set console in use expire time. */
 	pm_ctx.console_expire_time = get_time();
 	pm_ctx.console_expire_time.val +=
-				pm_ctx.console_in_use_timeout_sec * SECOND;
+		pm_ctx.console_in_use_timeout_sec * SECOND;
 }
