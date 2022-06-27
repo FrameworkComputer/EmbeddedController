@@ -15,19 +15,19 @@
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_LPC, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_LPC, format, ##args)
 
 struct heci_header {
 	uint8_t fw_addr;
 	uint8_t host_addr;
 	uint16_t length; /* [8:0] length, [14:9] reserved, [15] msg_complete */
 } __packed;
-#define HECI_MSG_CMPL_SHIFT		15
-#define HECI_MSG_LENGTH_MASK		0x01FF
-#define HECI_MSG_LENGTH(length)		((length) & HECI_MSG_LENGTH_MASK)
+#define HECI_MSG_CMPL_SHIFT 15
+#define HECI_MSG_LENGTH_MASK 0x01FF
+#define HECI_MSG_LENGTH(length) ((length)&HECI_MSG_LENGTH_MASK)
 #define HECI_MSG_IS_COMPLETED(length) \
-				(!!((length) & (0x01 << HECI_MSG_CMPL_SHIFT)))
+	(!!((length) & (0x01 << HECI_MSG_CMPL_SHIFT)))
 
 BUILD_ASSERT(HECI_IPC_PAYLOAD_SIZE ==
 	     (IPC_MAX_PAYLOAD_SIZE - sizeof(struct heci_header)));
@@ -38,26 +38,26 @@ struct heci_msg {
 } __packed;
 
 /* HECI addresses */
-#define HECI_HBM_ADDRESS		0	/* HECI Bus Message */
-#define HECI_DYN_CLIENT_ADDR_START	0x20	/* Dynamic client start addr */
+#define HECI_HBM_ADDRESS 0 /* HECI Bus Message */
+#define HECI_DYN_CLIENT_ADDR_START 0x20 /* Dynamic client start addr */
 
 /* A fw client has the same value for both handle and fw address */
-#define TO_FW_ADDR(handle)		((uintptr_t)(handle))
-#define TO_HECI_HANDLE(fw_addr)		((heci_handle_t)(uintptr_t)(fw_addr))
+#define TO_FW_ADDR(handle) ((uintptr_t)(handle))
+#define TO_HECI_HANDLE(fw_addr) ((heci_handle_t)(uintptr_t)(fw_addr))
 /* convert client fw address to client context index */
-#define TO_CLIENT_CTX_IDX(fw_addr)	((fw_addr) - HECI_DYN_CLIENT_ADDR_START)
+#define TO_CLIENT_CTX_IDX(fw_addr) ((fw_addr)-HECI_DYN_CLIENT_ADDR_START)
 
 /* should be less than HECI_INVALID_HANDLE - 1 */
 BUILD_ASSERT(HECI_MAX_NUM_OF_CLIENTS < 0x0FE);
 
 struct heci_client_connect {
-	uint8_t is_connected;	/* client is connected to host */
-	uint8_t host_addr;	/* connected host address */
+	uint8_t is_connected; /* client is connected to host */
+	uint8_t host_addr; /* connected host address */
 
 	/* receiving message */
 	uint8_t ignore_rx_msg;
-	uint8_t	rx_msg[HECI_MAX_MSG_SIZE];
-	size_t  rx_msg_length;
+	uint8_t rx_msg[HECI_MAX_MSG_SIZE];
+	size_t rx_msg_length;
 
 	uint32_t flow_ctrl_creds; /* flow control */
 	struct mutex lock; /* protects against 2 writers */
@@ -67,7 +67,7 @@ struct heci_client_connect {
 
 struct heci_client_context {
 	const struct heci_client *client;
-	void *data;	/* client specific data */
+	void *data; /* client specific data */
 
 	struct heci_client_connect connect; /* connection context */
 	struct ss_subsys_device ss_device; /* system state receiver device */
@@ -82,7 +82,7 @@ struct heci_bus_context {
 
 /* declare heci bus */
 struct heci_bus_context heci_bus_ctx = {
-		.ipc_handle = IPC_INVALID_HANDLE,
+	.ipc_handle = IPC_INVALID_HANDLE,
 };
 
 static inline struct heci_client_context *
@@ -118,11 +118,14 @@ static inline int heci_is_valid_handle(const heci_handle_t handle)
 
 /* find heci device that contains this system state device in it */
 #define ss_device_to_heci_client_context(ss_dev) \
-	((struct heci_client_context *)((void *)(ss_dev) - \
-	(void *)(&(((struct heci_client_context *)0)->ss_device))))
-#define client_context_to_handle(cli_ctx) \
-	((heci_handle_t)((uint32_t)((cli_ctx) - &heci_bus_ctx.client_ctxs[0]) \
-	/ sizeof(heci_bus_ctx.client_ctxs[0]) + 1))
+	((struct heci_client_context             \
+		  *)((void *)(ss_dev) -          \
+		     (void *)(&(                 \
+			     ((struct heci_client_context *)0)->ss_device))))
+#define client_context_to_handle(cli_ctx)                                       \
+	((heci_handle_t)((uint32_t)((cli_ctx) - &heci_bus_ctx.client_ctxs[0]) / \
+				 sizeof(heci_bus_ctx.client_ctxs[0]) +          \
+			 1))
 
 /*
  * each heci device registered as system state device which gets
@@ -132,7 +135,7 @@ static inline int heci_is_valid_handle(const heci_handle_t handle)
 static int heci_client_suspend(struct ss_subsys_device *ss_device)
 {
 	struct heci_client_context *cli_ctx =
-			ss_device_to_heci_client_context(ss_device);
+		ss_device_to_heci_client_context(ss_device);
 	heci_handle_t handle = client_context_to_handle(cli_ctx);
 
 	if (cli_ctx->client->cbs->suspend)
@@ -144,7 +147,7 @@ static int heci_client_suspend(struct ss_subsys_device *ss_device)
 static int heci_client_resume(struct ss_subsys_device *ss_device)
 {
 	struct heci_client_context *cli_ctx =
-			ss_device_to_heci_client_context(ss_device);
+		ss_device_to_heci_client_context(ss_device);
 	heci_handle_t handle = client_context_to_handle(cli_ctx);
 
 	if (cli_ctx->client->cbs->resume)
@@ -239,8 +242,8 @@ static int heci_send_heci_msg_timestamp(struct heci_msg *msg,
 				      timestamp);
 
 	if (written != length) {
-		CPRINTF("%s error : len = %d err = %d\n", __func__,
-			(int)length, written);
+		CPRINTF("%s error : len = %d err = %d\n", __func__, (int)length,
+			written);
 		return -EC_ERROR_UNKNOWN;
 	}
 
@@ -381,7 +384,6 @@ int heci_send_msg(const heci_handle_t handle, uint8_t *buf,
 	return heci_send_msg_timestamp(handle, buf, buf_size, NULL);
 }
 
-
 int heci_send_msgs(const heci_handle_t handle,
 		   const struct heci_msg_list *msg_list)
 {
@@ -453,8 +455,8 @@ int heci_send_msgs(const heci_handle_t handle,
 
 			/* no leftovers, send the last msg here */
 			if (msg_sent == total_size) {
-				msg.hdr.length |=
-					(uint16_t)1 << HECI_MSG_CMPL_SHIFT;
+				msg.hdr.length |= (uint16_t)1
+						  << HECI_MSG_CMPL_SHIFT;
 			}
 
 			heci_send_heci_msg(&msg);
@@ -488,7 +490,6 @@ err_locked:
 	mutex_unlock(&connect->lock);
 
 	return total_size;
-
 }
 
 /* For now, we only support fixed client payload size < IPC payload size */
@@ -535,9 +536,9 @@ static int handle_version_req(struct hbm_version_req *ver_req)
 	return EC_SUCCESS;
 }
 
-#define BITS_PER_BYTE			8
+#define BITS_PER_BYTE 8
 /* get number of bits for one element of "valid_addresses" array */
-#define	BITS_PER_ELEMENT \
+#define BITS_PER_ELEMENT \
 	(sizeof(((struct hbm_enum_res *)0)->valid_addresses[0]) * BITS_PER_BYTE)
 
 static int handle_enum_req(struct hbm_enum_req *enum_req)
@@ -604,11 +605,11 @@ static int handle_client_prop_req(struct hbm_client_prop_req *client_prop_req)
 		client_prop->protocol_name = client->protocol_id;
 		client_prop->protocol_version = client->protocol_ver;
 		client_prop->max_number_of_connections =
-						client->max_n_of_connections;
+			client->max_n_of_connections;
 		client_prop->max_msg_length = client->max_msg_size;
 		client_prop->dma_hdr_len = client->dma_header_length;
-		client_prop->dma_hdr_len |= client->dma_enabled ?
-					    CLIENT_DMA_ENABLE : 0;
+		client_prop->dma_hdr_len |=
+			client->dma_enabled ? CLIENT_DMA_ENABLE : 0;
 	}
 
 	heci_send_heci_msg(&heci_msg);
@@ -642,8 +643,8 @@ static int heci_send_flow_control(uint8_t fw_addr)
 	return EC_SUCCESS;
 }
 
-static int handle_client_connect_req(
-			struct hbm_client_connect_req *client_connect_req)
+static int
+handle_client_connect_req(struct hbm_client_connect_req *client_connect_req)
 {
 	struct hbm_client_connect_res *client_connect_res;
 	struct heci_msg heci_msg;
@@ -663,7 +664,7 @@ static int handle_client_connect_req(
 	client_connect_res->host_addr = client_connect_req->host_addr;
 	if (!heci_is_valid_client_addr(client_connect_req->fw_addr)) {
 		client_connect_res->status =
-					HECI_CONNECT_STATUS_CLIENT_NOT_FOUND;
+			HECI_CONNECT_STATUS_CLIENT_NOT_FOUND;
 	} else if (!client_connect_req->host_addr) {
 		client_connect_res->status =
 			HECI_CONNECT_STATUS_INVALID_PARAMETER;
@@ -671,7 +672,7 @@ static int handle_client_connect_req(
 		connect = heci_get_client_connect(client_connect_req->fw_addr);
 		if (connect->is_connected) {
 			client_connect_res->status =
-					HECI_CONNECT_STATUS_ALREADY_EXISTS;
+				HECI_CONNECT_STATUS_ALREADY_EXISTS;
 		} else {
 			connect->is_connected = 1;
 			connect->host_addr = client_connect_req->host_addr;
@@ -729,8 +730,7 @@ static void heci_handle_client_msg(struct heci_msg *msg, size_t length)
 	connect = &cli_ctx->connect;
 
 	payload_size = HECI_MSG_LENGTH(msg->hdr.length);
-	if (connect->is_connected &&
-	    msg->hdr.host_addr == connect->host_addr) {
+	if (connect->is_connected && msg->hdr.host_addr == connect->host_addr) {
 		if (!connect->ignore_rx_msg &&
 		    connect->rx_msg_length + payload_size > HECI_MAX_MSG_SIZE) {
 			connect->ignore_rx_msg = 1; /* too big. discard */
@@ -760,7 +760,7 @@ static void heci_handle_client_msg(struct heci_msg *msg, size_t length)
 }
 
 static int handle_client_disconnect_req(
-			struct hbm_client_disconnect_req *client_disconnect_req)
+	struct hbm_client_disconnect_req *client_disconnect_req)
 {
 	struct hbm_client_disconnect_res *client_disconnect_res;
 	struct heci_msg heci_msg;
@@ -772,8 +772,9 @@ static int handle_client_disconnect_req(
 
 	CPRINTS("Got HECI disconnect request");
 
-	heci_build_hbm_header(&heci_msg.hdr, sizeof(i2h->cmd) +
-					     sizeof(*client_disconnect_res));
+	heci_build_hbm_header(&heci_msg.hdr,
+			      sizeof(i2h->cmd) +
+				      sizeof(*client_disconnect_res));
 
 	i2h = (struct hbm_i2h *)heci_msg.payload;
 	i2h->cmd = HECI_BUS_MSG_CLIENT_DISCONNECT_RESP;
@@ -789,7 +790,7 @@ static int handle_client_disconnect_req(
 	if (!heci_is_valid_client_addr(fw_addr) ||
 	    !heci_is_client_connected(fw_addr)) {
 		client_disconnect_res->status =
-					HECI_CONNECT_STATUS_CLIENT_NOT_FOUND;
+			HECI_CONNECT_STATUS_CLIENT_NOT_FOUND;
 	} else {
 		connect = heci_get_client_connect(fw_addr);
 		if (connect->host_addr != host_addr) {
@@ -891,8 +892,8 @@ static int is_hbm_validity(struct hbm_h2i *h2i, size_t length)
 	}
 
 	if (valid_msg_len != length) {
-		CPRINTF("invalid cmd(%d) valid : %d, cur : %zd\n",
-			h2i->cmd, valid_msg_len, length);
+		CPRINTF("invalid cmd(%d) valid : %d, cur : %zd\n", h2i->cmd,
+			valid_msg_len, length);
 		/* TODO: invalid cmd. not sure to reply with error ? */
 		return 0;
 	}
@@ -922,7 +923,7 @@ static void heci_handle_hbm(struct hbm_h2i *h2i, size_t length)
 
 	case HECI_BUS_MSG_CLIENT_CONNECT_REQ:
 		handle_client_connect_req(
-					(struct hbm_client_connect_req *)data);
+			(struct hbm_client_connect_req *)data);
 		break;
 
 	case HECI_BUS_MSG_FLOW_CONTROL:
@@ -931,7 +932,7 @@ static void heci_handle_hbm(struct hbm_h2i *h2i, size_t length)
 
 	case HECI_BUS_MSG_CLIENT_DISCONNECT_REQ:
 		handle_client_disconnect_req(
-				(struct hbm_client_disconnect_req *)data);
+			(struct hbm_client_disconnect_req *)data);
 		break;
 
 	case HECI_BUS_MSG_HOST_STOP_REQ:
@@ -991,7 +992,7 @@ static void heci_handle_heci_msg(struct heci_msg *heci_msg, size_t msg_length)
 }
 
 /* event flag for HECI msg */
-#define EVENT_FLAG_BIT_HECI_MSG			TASK_EVENT_CUSTOM_BIT(0)
+#define EVENT_FLAG_BIT_HECI_MSG TASK_EVENT_CUSTOM_BIT(0)
 
 void heci_rx_task(void)
 {
@@ -1017,8 +1018,9 @@ void heci_rx_task(void)
 			continue;
 		}
 
-		if (HECI_MSG_LENGTH(heci_msg.hdr.length) + sizeof(heci_msg.hdr)
-		    == msg_len)
+		if (HECI_MSG_LENGTH(heci_msg.hdr.length) +
+			    sizeof(heci_msg.hdr) ==
+		    msg_len)
 			heci_handle_heci_msg(&heci_msg, msg_len);
 		else
 			CPRINTS("msg len mismatch.. discard..");
