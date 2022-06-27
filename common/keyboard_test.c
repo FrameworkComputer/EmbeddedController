@@ -13,8 +13,8 @@
 #include <util.h>
 
 enum {
-	KEYSCAN_MAX_LENGTH		= 20,
-	KEYSCAN_SEQ_START_DELAY_US	= 10000,
+	KEYSCAN_MAX_LENGTH = 20,
+	KEYSCAN_SEQ_START_DELAY_US = 10000,
 };
 
 static uint8_t keyscan_seq_count;
@@ -151,8 +151,8 @@ static int keyscan_seq_collect(struct ec_params_keyscan_seq_ctrl *req,
 	resp->collect.num_items = end - start;
 
 	for (i = start, ksi = keyscan_items; i < end; i++, ksi++)
-		resp->collect.item[i].flags = ksi->done ?
-						EC_KEYSCAN_SEQ_FLAG_DONE : 0;
+		resp->collect.item[i].flags =
+			ksi->done ? EC_KEYSCAN_SEQ_FLAG_DONE : 0;
 
 	return sizeof(*resp) + resp->collect.num_items;
 }
@@ -186,7 +186,8 @@ static enum ec_status keyscan_seq_ctrl(struct host_cmd_handler_args *args)
 		keyscan_seq_start();
 		break;
 	case EC_KEYSCAN_SEQ_COLLECT:
-		args->response_size = keyscan_seq_collect(&req,
+		args->response_size = keyscan_seq_collect(
+			&req,
 			(struct ec_result_keyscan_seq_ctrl *)args->response);
 		break;
 	default:
@@ -196,6 +197,4 @@ static enum ec_status keyscan_seq_ctrl(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-DECLARE_HOST_COMMAND(EC_CMD_KEYSCAN_SEQ_CTRL,
-		     keyscan_seq_ctrl,
-		     EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_KEYSCAN_SEQ_CTRL, keyscan_seq_ctrl, EC_VER_MASK(0));
