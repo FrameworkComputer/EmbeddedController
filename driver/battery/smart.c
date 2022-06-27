@@ -15,9 +15,9 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr);
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
-#define BATTERY_NO_RESPONSE_TIMEOUT	(1000*MSEC)
+#define BATTERY_NO_RESPONSE_TIMEOUT (1000 * MSEC)
 
 static int fake_state_of_charge = -1;
 static int fake_temperature = -1;
@@ -92,8 +92,7 @@ int sb_read_string(int offset, uint8_t *data, int len)
 	if (battery_supports_pec())
 		addr_flags |= I2C_FLAG_PEC;
 
-	return i2c_read_string(I2C_PORT_BATTERY, addr_flags, offset, data,
-			       len);
+	return i2c_read_string(I2C_PORT_BATTERY, addr_flags, offset, data, len);
 }
 
 int sb_read_sized_block(int offset, uint8_t *data, int len)
@@ -315,12 +314,12 @@ test_mockable int battery_manufacture_date(int *year, int *month, int *day)
 	/* battery date format:
 	 * ymd = day + month * 32 + (year - 1980) * 512
 	 */
-	*year  = ((ymd & MANUFACTURE_DATE_YEAR_MASK) >>
-		  MANUFACTURE_DATE_YEAR_SHIFT) + MANUFACTURE_DATE_YEAR_OFFSET;
+	*year = ((ymd & MANUFACTURE_DATE_YEAR_MASK) >>
+		 MANUFACTURE_DATE_YEAR_SHIFT) +
+		MANUFACTURE_DATE_YEAR_OFFSET;
 	*month = (ymd & MANUFACTURE_DATE_MONTH_MASK) >>
 		 MANUFACTURE_DATE_MONTH_SHIFT;
-	*day   = (ymd & MANUFACTURE_DATE_DAY_MASK) >>
-		 MANUFACTURE_DATE_DAY_SHIFT;
+	*day = (ymd & MANUFACTURE_DATE_DAY_MASK) >> MANUFACTURE_DATE_DAY_SHIFT;
 
 	return EC_SUCCESS;
 }
@@ -408,16 +407,16 @@ void battery_get_params(struct batt_params *batt)
 	memcpy(&batt_new, batt, sizeof(*batt));
 	batt_new.flags = 0;
 
-	if (sb_read(SB_TEMPERATURE, &batt_new.temperature)
-			&& fake_temperature < 0)
+	if (sb_read(SB_TEMPERATURE, &batt_new.temperature) &&
+	    fake_temperature < 0)
 		batt_new.flags |= BATT_FLAG_BAD_TEMPERATURE;
 
 	/* If temperature is faked, override with faked data */
 	if (fake_temperature >= 0)
 		batt_new.temperature = fake_temperature;
 
-	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt_new.state_of_charge)
-	    && fake_state_of_charge < 0)
+	if (sb_read(SB_RELATIVE_STATE_OF_CHARGE, &batt_new.state_of_charge) &&
+	    fake_state_of_charge < 0)
 		batt_new.flags |= BATT_FLAG_BAD_STATE_OF_CHARGE;
 
 	if (sb_read(SB_VOLTAGE, &batt_new.voltage))
@@ -455,7 +454,7 @@ void battery_get_params(struct batt_params *batt)
 		batt_new.flags |= BATT_FLAG_IMBALANCED_CELL;
 #endif
 
-#if defined(CONFIG_BATTERY_PRESENT_CUSTOM) ||	\
+#if defined(CONFIG_BATTERY_PRESENT_CUSTOM) || \
 	defined(CONFIG_BATTERY_PRESENT_GPIO)
 	/* Hardware can tell us for certain */
 	batt_new.is_present = battery_is_present();
@@ -471,23 +470,20 @@ void battery_get_params(struct batt_params *batt)
 	 * Charging allowed if both desired voltage and current are nonzero
 	 * and battery isn't full (and we read them all correctly).
 	 */
-	if (!(batt_new.flags & (BATT_FLAG_BAD_DESIRED_VOLTAGE |
-				BATT_FLAG_BAD_DESIRED_CURRENT |
-				BATT_FLAG_BAD_STATE_OF_CHARGE)) &&
+	if (!(batt_new.flags &
+	      (BATT_FLAG_BAD_DESIRED_VOLTAGE | BATT_FLAG_BAD_DESIRED_CURRENT |
+	       BATT_FLAG_BAD_STATE_OF_CHARGE)) &&
 #ifdef CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
-		/*
-		 * TODO (crosbug.com/p/29467): remove this workaround
-		 * for dead battery that requests no voltage/current
-		 */
-		((batt_new.desired_voltage &&
-			batt_new.desired_current &&
-			batt_new.state_of_charge < BATTERY_LEVEL_FULL) ||
-		(batt_new.desired_voltage == 0 &&
-			batt_new.desired_current == 0 &&
-			batt_new.state_of_charge == 0)))
+	    /*
+	     * TODO (crosbug.com/p/29467): remove this workaround
+	     * for dead battery that requests no voltage/current
+	     */
+	    ((batt_new.desired_voltage && batt_new.desired_current &&
+	      batt_new.state_of_charge < BATTERY_LEVEL_FULL) ||
+	     (batt_new.desired_voltage == 0 && batt_new.desired_current == 0 &&
+	      batt_new.state_of_charge == 0)))
 #else
-	    batt_new.desired_voltage &&
-	    batt_new.desired_current &&
+	    batt_new.desired_voltage && batt_new.desired_current &&
 	    batt_new.state_of_charge < BATTERY_LEVEL_FULL)
 #endif
 		batt_new.flags |= BATT_FLAG_WANT_CHARGE;
@@ -515,7 +511,7 @@ int battery_wait_for_stable(void)
 	uint64_t wait_timeout = get_time().val + BATTERY_NO_RESPONSE_TIMEOUT;
 
 	CPRINTS("Wait for battery stabilized during %d",
-			 BATTERY_NO_RESPONSE_TIMEOUT);
+		BATTERY_NO_RESPONSE_TIMEOUT);
 	while (get_time().val < wait_timeout) {
 		/* Starting pinging battery */
 		if (battery_status(&status) == EC_SUCCESS) {
@@ -571,9 +567,10 @@ static int command_batttempfake(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(batttempfake, command_batttempfake,
-			"temperature (-1 = use real temperature)",
-			"Set fake battery temperature in deciKelvin (2731 = 273.1 K = 0 deg C)");
+DECLARE_CONSOLE_COMMAND(
+	batttempfake, command_batttempfake,
+	"temperature (-1 = use real temperature)",
+	"Set fake battery temperature in deciKelvin (2731 = 273.1 K = 0 deg C)");
 #endif
 
 #ifdef CONFIG_CMD_BATT_MFG_ACCESS
@@ -643,8 +640,7 @@ host_command_sb_read_word(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_SB_READ_WORD,
-		     host_command_sb_read_word,
+DECLARE_HOST_COMMAND(EC_CMD_SB_READ_WORD, host_command_sb_read_word,
 		     EC_VER_MASK(0));
 
 static enum ec_status
@@ -661,8 +657,7 @@ host_command_sb_write_word(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_SB_WRITE_WORD,
-		     host_command_sb_write_word,
+DECLARE_HOST_COMMAND(EC_CMD_SB_WRITE_WORD, host_command_sb_write_word,
 		     EC_VER_MASK(0));
 
 static enum ec_status
@@ -672,10 +667,8 @@ host_command_sb_read_block(struct host_cmd_handler_args *args)
 	const struct ec_params_sb_rd *p = args->params;
 	struct ec_response_sb_rd_block *r = args->response;
 
-	if ((p->reg != SB_MANUFACTURER_NAME) &&
-	    (p->reg != SB_DEVICE_NAME) &&
-	    (p->reg != SB_DEVICE_CHEMISTRY) &&
-	    (p->reg != SB_MANUFACTURER_DATA))
+	if ((p->reg != SB_MANUFACTURER_NAME) && (p->reg != SB_DEVICE_NAME) &&
+	    (p->reg != SB_DEVICE_CHEMISTRY) && (p->reg != SB_MANUFACTURER_DATA))
 		return EC_RES_INVALID_PARAM;
 	rv = sb_read_string(p->reg, r->data, 32);
 	if (rv)
@@ -685,8 +678,7 @@ host_command_sb_read_block(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_SB_READ_BLOCK,
-		     host_command_sb_read_block,
+DECLARE_HOST_COMMAND(EC_CMD_SB_READ_BLOCK, host_command_sb_read_block,
 		     EC_VER_MASK(0));
 
 static enum ec_status
@@ -695,8 +687,7 @@ host_command_sb_write_block(struct host_cmd_handler_args *args)
 	/* Not implemented */
 	return EC_RES_INVALID_COMMAND;
 }
-DECLARE_HOST_COMMAND(EC_CMD_SB_WRITE_BLOCK,
-		     host_command_sb_write_block,
+DECLARE_HOST_COMMAND(EC_CMD_SB_WRITE_BLOCK, host_command_sb_write_block,
 		     EC_VER_MASK(0));
 #endif
 
@@ -707,8 +698,8 @@ test_mockable int sb_i2c_test_read(int cmd, int *param)
 	int rv;
 
 	if (cmd == SB_DEVICE_CHEMISTRY) {
-		rv = battery_device_chemistry(chemistry,
-			sizeof(CONFIG_BATTERY_DEVICE_CHEMISTRY));
+		rv = battery_device_chemistry(
+			chemistry, sizeof(CONFIG_BATTERY_DEVICE_CHEMISTRY));
 		if (rv)
 			return rv;
 		if (strcasecmp(chemistry, CONFIG_BATTERY_DEVICE_CHEMISTRY))
@@ -717,7 +708,6 @@ test_mockable int sb_i2c_test_read(int cmd, int *param)
 		*param = EC_SUCCESS;
 		return EC_SUCCESS;
 	}
-
 
 	return sb_read(cmd, param);
 }
