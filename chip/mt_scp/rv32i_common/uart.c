@@ -31,9 +31,8 @@ void uart_init(void)
 	uart_init_pinmux();
 
 	/* Clear FIFO */
-	UART_FCR(UARTN) = UART_FCR_ENABLE_FIFO
-		| UART_FCR_CLEAR_RCVR
-		| UART_FCR_CLEAR_XMIT;
+	UART_FCR(UARTN) = UART_FCR_ENABLE_FIFO | UART_FCR_CLEAR_RCVR |
+			  UART_FCR_CLEAR_XMIT;
 	/* Line control: parity none, 8 bit, 1 stop bit */
 	UART_LCR(UARTN) = UART_LCR_WLEN8;
 	/* For baud rate <= 115200 */
@@ -137,7 +136,7 @@ static void uart_irq_handler(void)
 	case UART_RX_IRQ(UARTN):
 		uart_process();
 		SCP_CORE0_INTC_UART_RX_IRQ(UARTN) = BIT(0);
-		asm volatile ("fence.i" ::: "memory");
+		asm volatile("fence.i" ::: "memory");
 		task_clear_pending_irq(ec_int);
 		break;
 	}
