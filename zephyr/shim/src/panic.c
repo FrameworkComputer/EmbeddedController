@@ -48,13 +48,13 @@
  */
 #define PANIC_ARCH PANIC_ARCH_RISCV_RV32I
 #define PANIC_REG_LIST(M)         \
-	M(ra, riscv.regs[29], ra)  \
-	M(a0, riscv.regs[26], a0)  \
-	M(a1, riscv.regs[25], a1)  \
-	M(a2, riscv.regs[24], a2)  \
-	M(a3, riscv.regs[23], a3)  \
-	M(a4, riscv.regs[22], a4)  \
-	M(a5, riscv.regs[21], a5)  \
+	M(ra, riscv.regs[29], ra) \
+	M(a0, riscv.regs[26], a0) \
+	M(a1, riscv.regs[25], a1) \
+	M(a2, riscv.regs[24], a2) \
+	M(a3, riscv.regs[23], a3) \
+	M(a4, riscv.regs[22], a4) \
+	M(a5, riscv.regs[21], a5) \
 	M(a6, riscv.regs[20], a6) \
 	M(a7, riscv.regs[19], a7) \
 	M(t0, riscv.regs[18], t0) \
@@ -99,8 +99,9 @@ static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
 {
 	pdata->arch = PANIC_ARCH;
 	pdata->struct_version = 2;
-	pdata->flags = (PANIC_ARCH == PANIC_ARCH_CORTEX_M)
-		? PANIC_DATA_FLAG_FRAME_VALID : 0;
+	pdata->flags = (PANIC_ARCH == PANIC_ARCH_CORTEX_M) ?
+			       PANIC_DATA_FLAG_FRAME_VALID :
+			       0;
 	pdata->reserved = 0;
 	pdata->struct_size = sizeof(*pdata);
 	pdata->magic = PANIC_DATA_MAGIC;
@@ -137,7 +138,7 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 #ifdef CONFIG_PLATFORM_EC_SOFTWARE_PANIC
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
-	struct panic_data * const pdata = get_panic_data_write();
+	struct panic_data *const pdata = get_panic_data_write();
 
 	/* Setup panic data structure */
 	memset(pdata, 0, CONFIG_PANIC_DATA_SIZE);
@@ -157,7 +158,7 @@ void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 
 void panic_get_reason(uint32_t *reason, uint32_t *info, uint8_t *exception)
 {
-	struct panic_data * const pdata = panic_get_data();
+	struct panic_data *const pdata = panic_get_data();
 
 	if (pdata && pdata->struct_version == 2) {
 		*exception = PANIC_REG_EXCEPTION(pdata);
