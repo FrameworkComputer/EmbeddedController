@@ -23,12 +23,12 @@ enum ec_cfg_keyboard_backlight_type {
 
 union ghost_cbi_fw_config {
 	struct {
-		uint32_t				reserved_1 : 4;
-		uint32_t				sd_db : 2;
-		uint32_t				lte_db : 1;
-		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
-		uint32_t				audio : 3;
-		uint32_t				reserved_2 : 21;
+		uint32_t reserved_1 : 4;
+		uint32_t sd_db : 2;
+		uint32_t lte_db : 1;
+		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
+		uint32_t audio : 3;
+		uint32_t reserved_2 : 21;
 	};
 	uint32_t raw_value;
 };
