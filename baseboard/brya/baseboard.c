@@ -41,5 +41,5 @@ __override void lid_angle_peripheral_enable(int enable)
 		 */
 		if (!chipset_in_state(CHIPSET_STATE_ON))
 			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-		}
+	}
 }
