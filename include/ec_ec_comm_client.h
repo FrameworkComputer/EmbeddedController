@@ -42,8 +42,7 @@ int ec_ec_client_base_get_static_info(void);
  * @return EC_RES_SUCCESS on success, EC_RES_ERROR on communication error,
  * else forwards the error code from the server.
  */
-int ec_ec_client_base_charge_control(int max_current,
-				     int otg_voltage,
+int ec_ec_client_base_charge_control(int max_current, int otg_voltage,
 				     int allow_charging);
 
 /**
