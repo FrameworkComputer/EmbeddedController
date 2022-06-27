@@ -85,4 +85,4 @@ static inline atomic_val_t atomic_and(atomic_t *addr, atomic_val_t bits)
 	return ret;
 }
 
-#endif  /* __CROS_EC_ATOMIC_H */
+#endif /* __CROS_EC_ATOMIC_H */
