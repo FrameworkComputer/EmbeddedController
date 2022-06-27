@@ -17,8 +17,8 @@
 #include "task_filter.h"
 
 /* define the name of the header containing the list of tasks */
-#define STRINGIFY0(name)  #name
-#define STRINGIFY(name)  STRINGIFY0(name)
+#define STRINGIFY0(name) #name
+#define STRINGIFY(name) STRINGIFY0(name)
 #define CTS_TASK_LIST STRINGIFY(CTS_TASKFILE)
 #define TEST_TASK_LIST STRINGIFY(TEST_TASKFILE)
 #define BOARD_TASK_LIST STRINGIFY(BOARD_TASKFILE)
@@ -46,16 +46,17 @@ enum {
 	TASK_ID_IDLE,
 	/* CONFIG_TASK_LIST is a macro coming from the BOARD_TASK_LIST file */
 	CONFIG_TASK_LIST
-	/* CONFIG_TEST_TASK_LIST is a macro from the TEST_TASK_LIST file */
-	CONFIG_TEST_TASK_LIST
-	/* For CTS tasks */
-	CONFIG_CTS_TASK_LIST
+		/* CONFIG_TEST_TASK_LIST is a macro from the TEST_TASK_LIST file
+		 */
+			CONFIG_TEST_TASK_LIST
+				/* For CTS tasks */
+				CONFIG_CTS_TASK_LIST
 #ifdef EMU_BUILD
-	TASK_ID_TEST_RUNNER,
+					TASK_ID_TEST_RUNNER,
 #endif
 	/* Number of tasks */
 	TASK_ID_COUNT,
-	/* Special task identifiers */
+/* Special task identifiers */
 #ifdef EMU_BUILD
 	TASK_ID_INT_GEN = 0xfe, /* interrupt generator */
 #endif
