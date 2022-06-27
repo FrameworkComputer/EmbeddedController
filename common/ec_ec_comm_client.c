@@ -16,7 +16,7 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 
 /*
  * TODO(b:65697962): The packed structures below do not play well if we force EC
@@ -97,9 +97,8 @@ struct {
  *  - EC_ERROR_INVAL when the received header is invalid.
  *  - EC_ERROR_UNKNOWN on other error.
  */
-static int write_command(uint16_t command,
-			 uint8_t *data, int req_len, int resp_len,
-			 int timeout_us)
+static int write_command(uint16_t command, uint8_t *data, int req_len,
+			 int resp_len, int timeout_us)
 {
 	/* Sequence number. */
 	static uint8_t cur_seq;
@@ -111,11 +110,10 @@ static int write_command(uint16_t command,
 	int tx_length =
 		sizeof(*request_header) + ((req_len > 0) ? (req_len + 1) : 0);
 
-	struct ec_host_response4 *response_header =
-		(void *)&data[tx_length];
+	struct ec_host_response4 *response_header = (void *)&data[tx_length];
 	/* RX length is TX length + response from server. */
-	int rx_length = tx_length +
-		sizeof(*request_header) + ((resp_len > 0) ? (resp_len + 1) : 0);
+	int rx_length = tx_length + sizeof(*request_header) +
+			((resp_len > 0) ? (resp_len + 1) : 0);
 
 	/*
 	 * Make sure there is a gap between each command, so that the server
@@ -124,7 +122,7 @@ static int write_command(uint16_t command,
 	 * TODO(b:65697962): We can be much smarter than this, and record the
 	 * last transaction time instead of just sleeping blindly.
 	 */
-	usleep(10*MSEC);
+	usleep(10 * MSEC);
 
 #ifdef DEBUG_EC_COMM_STATS
 	if ((comm_stats.total % 128) == 0) {
@@ -136,26 +134,26 @@ static int write_command(uint16_t command,
 #endif
 
 	cur_seq = (cur_seq + 1) &
-		(EC_PACKET4_0_SEQ_NUM_MASK >> EC_PACKET4_0_SEQ_NUM_SHIFT);
+		  (EC_PACKET4_0_SEQ_NUM_MASK >> EC_PACKET4_0_SEQ_NUM_SHIFT);
 
 	memset(request_header, 0, sizeof(*request_header));
 	/* fields0: leave seq_dup and is_response as 0. */
-	request_header->fields0 =
-		EC_EC_HOSTCMD_VERSION | /* version */
-		(cur_seq << EC_PACKET4_0_SEQ_NUM_SHIFT); /* seq_num */
+	request_header->fields0 = EC_EC_HOSTCMD_VERSION | /* version */
+				  (cur_seq << EC_PACKET4_0_SEQ_NUM_SHIFT); /* seq_num
+									    */
 	/* fields1: leave command_version as 0. */
 	if (req_len > 0)
 		request_header->fields1 |= EC_PACKET4_1_DATA_CRC_PRESENT_MASK;
 	request_header->command = command;
 	request_header->data_len = req_len;
-	request_header->header_crc =
-		cros_crc8((uint8_t *)request_header, sizeof(*request_header)-1);
+	request_header->header_crc = cros_crc8((uint8_t *)request_header,
+					       sizeof(*request_header) - 1);
 	if (req_len > 0)
 		data[sizeof(*request_header) + req_len] =
 			cros_crc8(&data[sizeof(*request_header)], req_len);
 
-	ret = uart_alt_pad_write_read((void *)data, tx_length,
-				      (void *)data, rx_length, timeout_us);
+	ret = uart_alt_pad_write_read((void *)data, tx_length, (void *)data,
+				      rx_length, timeout_us);
 
 	INCR_COMM_STATS(total);
 
@@ -187,20 +185,19 @@ static int write_command(uint16_t command,
 
 	hascrc = response_header->fields1 & EC_PACKET4_1_DATA_CRC_PRESENT_MASK;
 	response_seq = (response_header->fields0 & EC_PACKET4_0_SEQ_NUM_MASK) >>
-		EC_PACKET4_0_SEQ_NUM_SHIFT;
+		       EC_PACKET4_0_SEQ_NUM_SHIFT;
 
 	/*
 	 * Validate received header.
 	 * Note that we _require_ data crc to be present if there is data to be
 	 * read back, else we would not know how many bytes to read exactly.
 	 */
-	if ((response_header->fields0 & EC_PACKET4_0_STRUCT_VERSION_MASK)
-				!= EC_EC_HOSTCMD_VERSION ||
-			!(response_header->fields0 &
-				EC_PACKET4_0_IS_RESPONSE_MASK) ||
-			response_seq != cur_seq ||
-			(response_header->data_len > 0 && !hascrc) ||
-			response_header->data_len != resp_len) {
+	if ((response_header->fields0 & EC_PACKET4_0_STRUCT_VERSION_MASK) !=
+		    EC_EC_HOSTCMD_VERSION ||
+	    !(response_header->fields0 & EC_PACKET4_0_IS_RESPONSE_MASK) ||
+	    response_seq != cur_seq ||
+	    (response_header->data_len > 0 && !hascrc) ||
+	    response_header->data_len != resp_len) {
 		INCR_COMM_STATS(errinval);
 		return EC_ERROR_INVAL;
 	}
@@ -259,9 +256,9 @@ int ec_ec_client_base_get_dynamic_info(void)
 
 	data.req.param.index = 0;
 
-	ret = write_command(EC_CMD_BATTERY_GET_DYNAMIC,
-			(void *)&data, sizeof(data.req.param),
-			sizeof(data.resp.info), 15 * MSEC);
+	ret = write_command(EC_CMD_BATTERY_GET_DYNAMIC, (void *)&data,
+			    sizeof(data.req.param), sizeof(data.resp.info),
+			    15 * MSEC);
 	ret = handle_error(__func__, ret, data.resp.head.result);
 	if (ret != EC_RES_SUCCESS)
 		return ret;
@@ -277,7 +274,7 @@ int ec_ec_client_base_get_dynamic_info(void)
 #endif
 
 	memcpy(&battery_dynamic[BATT_IDX_BASE], &data.resp.info,
-				sizeof(battery_dynamic[BATT_IDX_BASE]));
+	       sizeof(battery_dynamic[BATT_IDX_BASE]));
 	return EC_RES_SUCCESS;
 }
 
@@ -301,9 +298,9 @@ int ec_ec_client_base_get_static_info(void)
 
 	data.req.param.index = 0;
 
-	ret = write_command(EC_CMD_BATTERY_GET_STATIC,
-			(void *)&data, sizeof(data.req.param),
-			sizeof(data.resp.info), 15 * MSEC);
+	ret = write_command(EC_CMD_BATTERY_GET_STATIC, (void *)&data,
+			    sizeof(data.req.param), sizeof(data.resp.info),
+			    15 * MSEC);
 	ret = handle_error(__func__, ret, data.resp.head.result);
 	if (ret != EC_RES_SUCCESS)
 		return ret;
@@ -330,8 +327,7 @@ int ec_ec_client_base_get_static_info(void)
 	return EC_RES_SUCCESS;
 }
 
-int ec_ec_client_base_charge_control(int max_current,
-				     int otg_voltage,
+int ec_ec_client_base_charge_control(int max_current, int otg_voltage,
 				     int allow_charging)
 {
 	int ret;
@@ -350,8 +346,8 @@ int ec_ec_client_base_charge_control(int max_current,
 	data.req.ctrl.max_current = max_current;
 	data.req.ctrl.otg_voltage = otg_voltage;
 
-	ret = write_command(EC_CMD_CHARGER_CONTROL,
-		(void *)&data, sizeof(data.req.ctrl), 0, 30 * MSEC);
+	ret = write_command(EC_CMD_CHARGER_CONTROL, (void *)&data,
+			    sizeof(data.req.ctrl), 0, 30 * MSEC);
 
 	return handle_error(__func__, ret, data.resp.head.result);
 }
@@ -372,8 +368,8 @@ int ec_ec_client_hibernate(void)
 	data.req.param.cmd = EC_REBOOT_HIBERNATE;
 	data.req.param.flags = 0;
 
-	ret = write_command(EC_CMD_REBOOT_EC,
-		(void *)&data, sizeof(data.req.param), 0, 30 * MSEC);
+	ret = write_command(EC_CMD_REBOOT_EC, (void *)&data,
+			    sizeof(data.req.param), 0, 30 * MSEC);
 
 	return handle_error(__func__, ret, data.resp.head.result);
 }
