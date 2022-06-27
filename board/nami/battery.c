@@ -16,8 +16,8 @@
 #include "hooks.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* Default, Nami, Vayne */
 static const struct battery_info info_0 = {
@@ -243,8 +243,9 @@ static int battery_init(void)
 	if (batt_status & STATUS_INITIALIZED)
 		return 1;
 
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
+	return battery_status(&batt_status) ?
+		       0 :
+		       !!(batt_status & STATUS_INITIALIZED);
 }
 
 enum battery_disconnect_grace_period {
@@ -278,13 +279,13 @@ static int battery_check_disconnect_ti_bq40z50(void)
 	uint8_t data[6];
 
 	/* Check if battery charging + discharging is disabled. */
-	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
-			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS, SB_ALT_MANUFACTURER_ACCESS,
+			    data, sizeof(data));
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
-			BATTERY_CHARGING_DISABLED)) ==
+	if ((data[3] &
+	     (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED)) ==
 	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED)) {
 		if (oem != PROJECT_SONA)
 			return BATTERY_DISCONNECTED;
@@ -298,10 +299,10 @@ static int battery_check_disconnect_ti_bq40z50(void)
 		 * stop charging and avoid damaging the battery.
 		 */
 		if (disconnect_grace_period ==
-				BATTERY_DISCONNECT_GRACE_PERIOD_OVER)
+		    BATTERY_DISCONNECT_GRACE_PERIOD_OVER)
 			return BATTERY_DISCONNECTED;
 		if (disconnect_grace_period ==
-				BATTERY_DISCONNECT_GRACE_PERIOD_OFF)
+		    BATTERY_DISCONNECT_GRACE_PERIOD_OFF)
 			hook_call_deferred(&battery_disconnect_timer_data,
 					   5 * SECOND);
 		ccprintf("Battery disconnect grace period\n");
