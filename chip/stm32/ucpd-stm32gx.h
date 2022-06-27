@@ -37,7 +37,6 @@
 #define UCPD_TRANSWIN_CNT 8
 #define UCPD_IFRGAP_CNT 17
 
-
 /*
  * K-codes and ordered set defines. These codes and sets are used to encode
  * which type of USB-PD message is being sent. This information can be found in
@@ -47,48 +46,36 @@
 #define UCPD_SYNC1 0x18u
 #define UCPD_SYNC2 0x11u
 #define UCPD_SYNC3 0x06u
-#define UCPD_RST1  0x07u
-#define UCPD_RST2  0x19u
-#define UCPD_EOP   0x0Du
+#define UCPD_RST1 0x07u
+#define UCPD_RST2 0x19u
+#define UCPD_EOP 0x0Du
 
 /* This order of this enum matches tcpm_sop_type */
 enum ucpd_tx_ordset {
-	TX_ORDERSET_SOP =	(UCPD_SYNC1 |
-				(UCPD_SYNC1<<5u) |
-				(UCPD_SYNC1<<10u) |
-				(UCPD_SYNC2<<15u)),
+	TX_ORDERSET_SOP = (UCPD_SYNC1 | (UCPD_SYNC1 << 5u) |
+			   (UCPD_SYNC1 << 10u) | (UCPD_SYNC2 << 15u)),
 
-	TX_ORDERSET_SOP_PRIME =	(UCPD_SYNC1 |
-				(UCPD_SYNC1<<5u) |
-				(UCPD_SYNC3<<10u) |
-				(UCPD_SYNC3<<15u)),
+	TX_ORDERSET_SOP_PRIME = (UCPD_SYNC1 | (UCPD_SYNC1 << 5u) |
+				 (UCPD_SYNC3 << 10u) | (UCPD_SYNC3 << 15u)),
 
-	TX_ORDERSET_SOP_PRIME_PRIME =	(UCPD_SYNC1 |
-				(UCPD_SYNC3<<5u) |
-				(UCPD_SYNC1<<10u) |
-				(UCPD_SYNC3<<15u)),
+	TX_ORDERSET_SOP_PRIME_PRIME =
+		(UCPD_SYNC1 | (UCPD_SYNC3 << 5u) | (UCPD_SYNC1 << 10u) |
+		 (UCPD_SYNC3 << 15u)),
 
-	TX_ORDERSET_SOP_PRIME_DEBUG =	(UCPD_SYNC1 |
-					(UCPD_RST2<<5u) |
-					(UCPD_RST2<<10u) |
-					(UCPD_SYNC3<<15u)),
+	TX_ORDERSET_SOP_PRIME_DEBUG =
+		(UCPD_SYNC1 | (UCPD_RST2 << 5u) | (UCPD_RST2 << 10u) |
+		 (UCPD_SYNC3 << 15u)),
 
-	TX_ORDERSET_SOP_PRIME_PRIME_DEBUG =	(UCPD_SYNC1 |
-					(UCPD_RST2<<5u) |
-					(UCPD_SYNC3<<10u) |
-					(UCPD_SYNC2<<15u)),
+	TX_ORDERSET_SOP_PRIME_PRIME_DEBUG =
+		(UCPD_SYNC1 | (UCPD_RST2 << 5u) | (UCPD_SYNC3 << 10u) |
+		 (UCPD_SYNC2 << 15u)),
 
-	TX_ORDERSET_HARD_RESET =	(UCPD_RST1  |
-					(UCPD_RST1<<5u) |
-					(UCPD_RST1<<10u)  |
-					(UCPD_RST2<<15u)),
+	TX_ORDERSET_HARD_RESET = (UCPD_RST1 | (UCPD_RST1 << 5u) |
+				  (UCPD_RST1 << 10u) | (UCPD_RST2 << 15u)),
 
-	TX_ORDERSET_CABLE_RESET =	(UCPD_RST1 |
-					(UCPD_SYNC1<<5u) |
-					(UCPD_RST1<<10u)  |
-					(UCPD_SYNC3<<15u)),
+	TX_ORDERSET_CABLE_RESET = (UCPD_RST1 | (UCPD_SYNC1 << 5u) |
+				   (UCPD_RST1 << 10u) | (UCPD_SYNC3 << 15u)),
 };
-
 
 /**
  * STM32Gx UCPD implementation of tcpci .init method
@@ -172,9 +159,7 @@ int stm32gx_ucpd_set_msg_header(int port, int power_role, int data_role);
  * @param *data -> pointer to message contents
  * @return EC_SUCCESS
  */
-int stm32gx_ucpd_transmit(int port,
-			enum tcpci_msg_type type,
-			uint16_t header,
+int stm32gx_ucpd_transmit(int port, enum tcpci_msg_type type, uint16_t header,
 			  const uint32_t *data);
 
 /**
