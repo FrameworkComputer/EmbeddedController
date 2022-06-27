@@ -14,7 +14,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DMA, outstr)
-#define CPRINTS(format, args...) cprints(CC_DMA, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_DMA, format, ##args)
 
 mec1322_dma_chan_t *dma_get_channel(enum dma_channel channel)
 {
@@ -65,7 +65,7 @@ void dma_disable_all(void)
  *				MEC1322_DMA_INC_MEM for rx
  */
 static void prepare_channel(mec1322_dma_chan_t *chan, unsigned count,
-		void *periph, void *memory, unsigned flags)
+			    void *periph, void *memory, unsigned flags)
 {
 	int xfer_size = (flags >> 20) & 0x7;
 
@@ -99,11 +99,11 @@ void dma_prepare_tx(const struct dma_option *option, unsigned count,
 	 */
 	prepare_channel(chan, count, option->periph, (void *)memory,
 			MEC1322_DMA_INC_MEM | MEC1322_DMA_TO_DEV |
-			MEC1322_DMA_DEV(option->channel) | option->flags);
+				MEC1322_DMA_DEV(option->channel) |
+				option->flags);
 }
 
-void dma_start_rx(const struct dma_option *option, unsigned count,
-		  void *memory)
+void dma_start_rx(const struct dma_option *option, unsigned count, void *memory)
 {
 	mec1322_dma_chan_t *chan;
 
@@ -111,7 +111,7 @@ void dma_start_rx(const struct dma_option *option, unsigned count,
 
 	prepare_channel(chan, count, option->periph, memory,
 			MEC1322_DMA_INC_MEM | MEC1322_DMA_DEV(option->channel) |
-			option->flags);
+				option->flags);
 	dma_go(chan);
 }
 
