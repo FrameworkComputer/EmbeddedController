@@ -24,7 +24,8 @@ struct vdec_msg {
 	unsigned char msg[48];
 };
 
-BUILD_ASSERT(member_size(struct vdec_msg, msg) <= CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
+BUILD_ASSERT(member_size(struct vdec_msg, msg) <=
+	     CONFIG_IPC_SHARED_OBJ_BUF_SIZE);
 
 /* Functions provided by private overlay. */
 void vdec_h264_service_init(void);
