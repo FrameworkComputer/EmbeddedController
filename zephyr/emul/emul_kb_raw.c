@@ -109,7 +109,7 @@ static const struct cros_kb_raw_driver_api emul_kb_raw_driver_api = {
 	static struct kb_raw_emul_data kb_raw_emul_data_##n = {            \
 		.matrix = kb_raw_emul_matrix_##n,                          \
 	};                                                                 \
-									   \
+                                                                           \
 	static const struct kb_raw_emul_cfg kb_raw_emul_cfg_##n = {        \
 		.dev_label = DT_INST_LABEL(n),                             \
 		.data = &kb_raw_emul_data_##n,                             \
