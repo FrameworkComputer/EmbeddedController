@@ -16,7 +16,7 @@
 #include "usart-stm32f0.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
 static uint8_t mcdp_inbuf[MCDP_INBUF_MAX];
 
@@ -35,27 +35,21 @@ static inline void print_buffer(uint8_t *buf, int cnt)
 	CPRINTF("\n");
 }
 #else
-static inline void print_buffer(uint8_t *buf, int cnt) {}
+static inline void print_buffer(uint8_t *buf, int cnt)
+{
+}
 #endif
 
 static struct usart_config const usart_mcdp;
 
-struct queue const usart_mcdp_rx_queue = QUEUE_DIRECT(MCDP_INBUF_MAX,
-						      uint8_t,
-						      usart_mcdp.producer,
-						      null_consumer);
-struct queue const usart_mcdp_tx_queue = QUEUE_DIRECT(MCDP_OUTBUF_MAX,
-						      uint8_t,
-						      null_producer,
-						      usart_mcdp.consumer);
+struct queue const usart_mcdp_rx_queue = QUEUE_DIRECT(
+	MCDP_INBUF_MAX, uint8_t, usart_mcdp.producer, null_consumer);
+struct queue const usart_mcdp_tx_queue = QUEUE_DIRECT(
+	MCDP_OUTBUF_MAX, uint8_t, null_producer, usart_mcdp.consumer);
 
-static struct usart_config const usart_mcdp = USART_CONFIG(CONFIG_MCDP28X0,
-							   usart_rx_interrupt,
-							   usart_tx_interrupt,
-							   115200,
-							   0,
-							   usart_mcdp_rx_queue,
-							   usart_mcdp_tx_queue);
+static struct usart_config const usart_mcdp =
+	USART_CONFIG(CONFIG_MCDP28X0, usart_rx_interrupt, usart_tx_interrupt,
+		     115200, 0, usart_mcdp_rx_queue, usart_mcdp_tx_queue);
 
 /**
  * Compute checksum.
@@ -131,7 +125,7 @@ static int rx_serial(uint8_t *msg, int cnt)
 
 	read = queue_remove_units(&usart_mcdp_rx_queue, msg, cnt);
 	while ((read < cnt) && retry) {
-		usleep(100*MSEC);
+		usleep(100 * MSEC);
 		read += queue_remove_units(&usart_mcdp_rx_queue, msg + read,
 					   cnt - read);
 		retry--;
@@ -143,7 +137,7 @@ static int rx_serial(uint8_t *msg, int cnt)
 	if (cnt > msg[0])
 		cnt = msg[0];
 
-	if (msg[cnt-1] != compute_checksum(0, msg, cnt-1))
+	if (msg[cnt - 1] != compute_checksum(0, msg, cnt - 1))
 		return MCDP_ERROR_CHKSUM;
 
 	if (read != cnt) {
@@ -176,9 +170,9 @@ void mcdp_disable(void)
 	usart_shutdown(&usart_mcdp);
 }
 
-int mcdp_get_info(struct mcdp_info  *info)
+int mcdp_get_info(struct mcdp_info *info)
 {
-	const uint8_t msg[2] = {MCDP_CMD_APPSTEST, 0x28};
+	const uint8_t msg[2] = { MCDP_CMD_APPSTEST, 0x28 };
 	int rv = tx_serial(msg, sizeof(msg));
 
 	if (rv)
@@ -233,8 +227,8 @@ static int mcdp_appstest(uint8_t cmd, int paramc, char **paramv)
 		msg[1] = i + 1;
 		msg[2] = (param >> 24) & 0xff;
 		msg[3] = (param >> 16) & 0xff;
-		msg[4] = (param >>  8) & 0xff;
-		msg[5] = (param >>  0) & 0xff;
+		msg[4] = (param >> 8) & 0xff;
+		msg[5] = (param >> 0) & 0xff;
 		rv = tx_serial(msg, sizeof(msg));
 		if (rv)
 			return rv;
@@ -277,9 +271,8 @@ int command_mcdp(int argc, char **argv)
 			ccprintf("family:%04x chipid:%04x irom:%d.%d.%d "
 				 "fw:%d.%d.%d\n",
 				 MCDP_FAMILY(info.family),
-				 MCDP_CHIPID(info.chipid),
-				 info.irom.major, info.irom.minor,
-				 info.irom.build,
+				 MCDP_CHIPID(info.chipid), info.irom.major,
+				 info.irom.minor, info.irom.build,
 				 info.fw.major, info.fw.minor, info.fw.build);
 	} else if (!strncasecmp(argv[1], "devid", 4)) {
 		uint8_t dev_id = strtoi(argv[2], &e, 10);
@@ -309,6 +302,5 @@ int command_mcdp(int argc, char **argv)
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(mcdp, command_mcdp,
-			"info|devid <id>|appstest <cmd> [<params>]",
-			"USB PD");
+			"info|devid <id>|appstest <cmd> [<params>]", "USB PD");
 #endif /* CONFIG_CMD_MCDP */
