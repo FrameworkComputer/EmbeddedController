@@ -44,15 +44,15 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_CONSOLE	0
-#define USB_IFACE_UPDATE	1
-#define USB_IFACE_COUNT		2
+#define USB_IFACE_CONSOLE 0
+#define USB_IFACE_UPDATE 1
+#define USB_IFACE_COUNT 2
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_CONSOLE		1
-#define USB_EP_UPDATE		2
-#define USB_EP_COUNT		3
+#define USB_EP_CONTROL 0
+#define USB_EP_CONSOLE 1
+#define USB_EP_UPDATE 2
+#define USB_EP_COUNT 3
 
 /* This is not actually a Chromium EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
