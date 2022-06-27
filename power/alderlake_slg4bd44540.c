@@ -24,30 +24,29 @@
  */
 
 /* PG_EC_ALL_SYS_PWRGD high to VCCST_PWRGD high delay */
-#define VCCST_PWRGD_DELAY_MS	2
+#define VCCST_PWRGD_DELAY_MS 2
 
 /* IMVP9_VRRDY high to PCH_PWROK high delay */
-#define PCH_PWROK_DELAY_MS	2
+#define PCH_PWROK_DELAY_MS 2
 
 /* PG_EC_ALL_SYS_PWRGD high to EC_PCH_SYS_PWROK high delay */
-#define SYS_PWROK_DELAY_MS	45
+#define SYS_PWROK_DELAY_MS 45
 
 /* IMVP9_VRRDY high timeout */
-#define VRRDY_TIMEOUT_MS	50
+#define VRRDY_TIMEOUT_MS 50
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 #ifdef CONFIG_BRINGUP
 #define GPIO_SET_LEVEL(signal, value) \
 	gpio_set_level_verbose(CC_CHIPSET, signal, value)
 #else
-#define GPIO_SET_LEVEL(signal, value) \
-	gpio_set_level(signal, value)
+#define GPIO_SET_LEVEL(signal, value) gpio_set_level(signal, value)
 #endif
 
 /* The wait time is ~150 msec, allow for safety margin. */
-#define IN_PCH_SLP_SUS_WAIT_TIME_USEC	(250 * MSEC)
+#define IN_PCH_SLP_SUS_WAIT_TIME_USEC (250 * MSEC)
 
 /* Power signals list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -250,7 +249,6 @@ enum power_state power_handle_state(enum power_state state)
 	common_intel_x86_handle_rsmrst(state);
 
 	switch (state) {
-
 	case POWER_G3S5:
 		GPIO_SET_LEVEL(GPIO_EN_S5_RAILS, 1);
 
@@ -262,7 +260,8 @@ enum power_state power_handle_state(enum power_state state)
 		 * signal doesn't go high within 250 msec then go back to G3.
 		 */
 		if (power_wait_signals_timeout(IN_PCH_SLP_SUS_DEASSERTED,
-				IN_PCH_SLP_SUS_WAIT_TIME_USEC) != EC_SUCCESS) {
+					       IN_PCH_SLP_SUS_WAIT_TIME_USEC) !=
+		    EC_SUCCESS) {
 			CPRINTS("SLP_SUS_L didn't go high!  Going back to G3.");
 			return POWER_S5G3;
 		}
