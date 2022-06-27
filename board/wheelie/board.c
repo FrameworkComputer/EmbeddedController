@@ -40,7 +40,7 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
+#define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 /* C0 interrupt line shared by BC 1.2 and charger */
 static void usb_c0_interrupt(enum gpio_signal s)
@@ -68,34 +68,26 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_VSNS_PP3300_A] = {
-		.name = "PP3300_A_PGOOD",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH0
-	},
-	[ADC_TEMP_SENSOR_1] = {
-		.name = "TEMP_SENSOR1",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH2
-	},
-	[ADC_TEMP_SENSOR_2] = {
-		.name = "TEMP_SENSOR2",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH3
-	},
-	[ADC_SUB_ANALOG] = {
-		.name = "SUB_ANALOG",
-		.factor_mul = ADC_MAX_MVOLT,
-		.factor_div = ADC_READ_MAX + 1,
-		.shift = 0,
-		.channel = CHIP_ADC_CH13
-	},
+	[ADC_VSNS_PP3300_A] = { .name = "PP3300_A_PGOOD",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH0 },
+	[ADC_TEMP_SENSOR_1] = { .name = "TEMP_SENSOR1",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH2 },
+	[ADC_TEMP_SENSOR_2] = { .name = "TEMP_SENSOR2",
+				.factor_mul = ADC_MAX_MVOLT,
+				.factor_div = ADC_READ_MAX + 1,
+				.shift = 0,
+				.channel = CHIP_ADC_CH3 },
+	[ADC_SUB_ANALOG] = { .name = "SUB_ANALOG",
+			     .factor_mul = ADC_MAX_MVOLT,
+			     .factor_div = ADC_READ_MAX + 1,
+			     .shift = 0,
+			     .channel = CHIP_ADC_CH13 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -445,14 +437,14 @@ const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 /* Thermistors */
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = {.name = "Memory",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_1},
-	[TEMP_SENSOR_2] = {.name = "Ambient",
-			   .type = TEMP_SENSOR_TYPE_BOARD,
-			   .read = get_temp_3v3_51k1_47k_4050b,
-			   .idx = ADC_TEMP_SENSOR_2},
+	[TEMP_SENSOR_1] = { .name = "Memory",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_1 },
+	[TEMP_SENSOR_2] = { .name = "Ambient",
+			    .type = TEMP_SENSOR_TYPE_BOARD,
+			    .read = get_temp_3v3_51k1_47k_4050b,
+			    .idx = ADC_TEMP_SENSOR_2 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
