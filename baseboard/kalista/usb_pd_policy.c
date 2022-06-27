@@ -23,8 +23,8 @@
 #include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 int board_vbus_source_enabled(int port)
 {
@@ -58,8 +58,7 @@ int pd_snk_is_vbus_provided(int port)
 	return !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L);
 }
 
-__override void pd_check_pr_role(int port,
-				 enum pd_power_role pr_role,
+__override void pd_check_pr_role(int port, enum pd_power_role pr_role,
 				 int flags)
 {
 }
