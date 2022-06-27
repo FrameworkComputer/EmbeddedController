@@ -15,9 +15,8 @@
 
 /* Ensure that the idle task is at lower priority than lowest priority task. */
 BUILD_ASSERT(EC_TASK_PRIORITY(EC_TASK_PRIO_LOWEST) < K_IDLE_PRIO,
-	"CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at "
-	"idle priority");
-
+	     "CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at "
+	     "idle priority");
 
 /* Declare all task stacks here */
 #define CROS_EC_TASK(name, e, p, size, pr) \
@@ -68,21 +67,19 @@ struct task_ctx_data {
 	struct task_ctx_base_data base;
 };
 
-#define CROS_EC_TASK(_name, _entry, _parameter, _size, _prio)          \
-	{                                                              \
-		.entry = _entry,                                       \
-		.parameter = _parameter,                               \
-		.stack = _name##_STACK,                                \
-		.stack_size = _size,                                   \
-		.priority = EC_TASK_PRIORITY(_prio),                   \
-		COND_CODE_1(CONFIG_THREAD_NAME, (.name = #_name,), ()) \
-	},
+#define CROS_EC_TASK(_name, _entry, _parameter, _size, _prio) \
+	{ .entry = _entry,                                    \
+	  .parameter = _parameter,                            \
+	  .stack = _name##_STACK,                             \
+	  .stack_size = _size,                                \
+	  .priority = EC_TASK_PRIORITY(_prio),                \
+	  COND_CODE_1(CONFIG_THREAD_NAME, (.name = #_name, ), ()) },
 #define TASK_TEST(_name, _entry, _parameter, _size) \
 	CROS_EC_TASK(_name, _entry, _parameter, _size)
 const static struct task_ctx_cfg shimmed_tasks_cfg[TASK_ID_COUNT] = {
 	CROS_EC_TASK_LIST
 #ifdef TEST_BUILD
-	[TASK_ID_TEST_RUNNER] = {},
+		[TASK_ID_TEST_RUNNER] = {},
 #endif
 };
 
@@ -238,8 +235,7 @@ uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 	return events & event_mask;
 }
 
-static void task_entry(void *task_context_cfg,
-		       void *task_context_data,
+static void task_entry(void *task_context_cfg, void *task_context_data,
 		       void *unused1)
 {
 	ARG_UNUSED(task_context_data);
@@ -335,17 +331,11 @@ void start_ec_tasks(void)
 		 * comment in config.h for CONFIG_TASK_LIST for existing flags
 		 * implementation.
 		 */
-		data->zephyr_tid = k_thread_create(
-			&data->zephyr_thread,
-			cfg->stack,
-			cfg->stack_size,
-			task_entry,
-			(void *)cfg,
-			data,
-			NULL,
-			cfg->priority,
-			0,
-			K_NO_WAIT);
+		data->zephyr_tid = k_thread_create(&data->zephyr_thread,
+						   cfg->stack, cfg->stack_size,
+						   task_entry, (void *)cfg,
+						   data, NULL, cfg->priority, 0,
+						   K_NO_WAIT);
 
 #ifdef CONFIG_THREAD_NAME
 		/* Name thread for debugging */
