@@ -13,13 +13,13 @@
 #include "util.h"
 
 static inline int bool_compare_and_swap_u32(uint32_t *var, uint32_t old_value,
-		uint32_t new_value)
+					    uint32_t new_value)
 {
 	uint32_t _old_value = old_value;
 
 	__asm__ __volatile__(ASM_LOCK_PREFIX "cmpxchgl %2, %1"
-			     : "=a" (old_value), "+m" (*var)
-			     : "r" (new_value), "0" (old_value)
+			     : "=a"(old_value), "+m"(*var)
+			     : "r"(new_value), "0"(old_value)
 			     : "memory");
 
 	return (_old_value == old_value);
@@ -65,4 +65,4 @@ static inline atomic_val_t atomic_clear(atomic_t *addr)
 	return __atomic_exchange_n(addr, 0, __ATOMIC_SEQ_CST);
 }
 
-#endif  /* __CROS_EC_ATOMIC_H */
+#endif /* __CROS_EC_ATOMIC_H */
