@@ -48,8 +48,7 @@ static int accel_read(const struct motion_sensor_t *s, intv3_t v)
 	return EC_SUCCESS;
 }
 
-static int accel_set_range(struct motion_sensor_t *s,
-			   const int range,
+static int accel_set_range(struct motion_sensor_t *s, const int range,
 			   const int rnd)
 {
 	s->current_range = range;
@@ -63,9 +62,8 @@ static int accel_get_resolution(const struct motion_sensor_t *s)
 
 int test_data_rate[2] = { 0 };
 
-static int accel_set_data_rate(const struct motion_sensor_t *s,
-			      const int rate,
-			      const int rnd)
+static int accel_set_data_rate(const struct motion_sensor_t *s, const int rate,
+			       const int rnd)
 {
 	test_data_rate[s - motion_sensors] = rate;
 	return EC_SUCCESS;
@@ -148,11 +146,10 @@ static void wait_for_valid_sample(void)
 
 static int test_lid_angle(void)
 {
-
-	struct motion_sensor_t *base = &motion_sensors[
-		CONFIG_LID_ANGLE_SENSOR_BASE];
-	struct motion_sensor_t *lid = &motion_sensors[
-		CONFIG_LID_ANGLE_SENSOR_LID];
+	struct motion_sensor_t *base =
+		&motion_sensors[CONFIG_LID_ANGLE_SENSOR_BASE];
+	struct motion_sensor_t *lid =
+		&motion_sensors[CONFIG_LID_ANGLE_SENSOR_LID];
 	int lid_angle;
 
 	/* We don't have TASK_CHIP so simulate init ourselves */
@@ -189,10 +186,9 @@ static int test_lid_angle(void)
 
 	wait_for_valid_sample();
 	lid_angle = motion_lid_get_angle();
-	cprints(CC_ACCEL, "LID(%d, %d, %d)/BASE(%d, %d, %d): %d",
-			lid->xyz[X], lid->xyz[Y], lid->xyz[Z],
-			base->xyz[X], base->xyz[Y], base->xyz[Z],
-			lid_angle);
+	cprints(CC_ACCEL, "LID(%d, %d, %d)/BASE(%d, %d, %d): %d", lid->xyz[X],
+		lid->xyz[Y], lid->xyz[Z], base->xyz[X], base->xyz[Y],
+		base->xyz[Z], lid_angle);
 	TEST_ASSERT(lid_angle == 0);
 
 	/* Set lid open to 90 degrees. */
@@ -318,7 +314,6 @@ static int test_lid_angle(void)
 
 	return EC_SUCCESS;
 }
-
 
 void run_test(int argc, char **argv)
 {
