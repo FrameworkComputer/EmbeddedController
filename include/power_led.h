@@ -28,7 +28,9 @@ void powerled_set_state(enum powerled_state state);
 
 #else
 
-static inline void powerled_set_state(enum powerled_state state) {}
+static inline void powerled_set_state(enum powerled_state state)
+{
+}
 
 #endif
 
