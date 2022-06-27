@@ -34,50 +34,50 @@
  * typedef mxc_i2c_regs_t - Structure type to access the I2C Registers.
  */
 typedef struct {
-	__IO uint32_t ctrl;		/* 0x00: I2C CTRL Register */
-	__IO uint32_t status;		/* 0x04: I2C STATUS Register */
-	__IO uint32_t int_fl0;		/* 0x08: I2C INT_FL0 Register */
-	__IO uint32_t int_en0;		/* 0x0C: I2C INT_EN0 Register */
-	__IO uint32_t int_fl1;		/* 0x10: I2C INT_FL1 Register */
-	__IO uint32_t int_en1;		/* 0x14: I2C INT_EN1 Register */
-	__IO uint32_t fifo_len;		/* 0x18: I2C FIFO_LEN Register */
-	__IO uint32_t rx_ctrl0;		/* 0x1C: I2C RX_CTRL0 Register */
-	__IO uint32_t rx_ctrl1;		/* 0x20: I2C RX_CTRL1 Register */
-	__IO uint32_t tx_ctrl0;		/* 0x24: I2C TX_CTRL0 Register */
-	__IO uint32_t tx_ctrl1;		/* 0x28: I2C TX_CTRL1 Register */
-	__IO uint32_t fifo;		/* 0x2C: I2C FIFO Register */
-	__IO uint32_t controller_ctrl;	/* 0x30: I2C CONTROLLER_CTRL Register */
-	__IO uint32_t clk_lo;		/* 0x34: I2C CLK_LO Register */
-	__IO uint32_t clk_hi;		/* 0x38: I2C CLK_HI Register */
-	__IO uint32_t hs_clk;		/* 0x3C: I2C HS_CLK Register */
-	__IO uint32_t timeout;		/* 0x40: I2C TIMEOUT Register */
-	__IO uint32_t target_addr;	/* 0x44: I2C TARGET_ADDR Register */
-	__IO uint32_t dma;		/* 0x48: I2C DMA Register */
+	__IO uint32_t ctrl; /* 0x00: I2C CTRL Register */
+	__IO uint32_t status; /* 0x04: I2C STATUS Register */
+	__IO uint32_t int_fl0; /* 0x08: I2C INT_FL0 Register */
+	__IO uint32_t int_en0; /* 0x0C: I2C INT_EN0 Register */
+	__IO uint32_t int_fl1; /* 0x10: I2C INT_FL1 Register */
+	__IO uint32_t int_en1; /* 0x14: I2C INT_EN1 Register */
+	__IO uint32_t fifo_len; /* 0x18: I2C FIFO_LEN Register */
+	__IO uint32_t rx_ctrl0; /* 0x1C: I2C RX_CTRL0 Register */
+	__IO uint32_t rx_ctrl1; /* 0x20: I2C RX_CTRL1 Register */
+	__IO uint32_t tx_ctrl0; /* 0x24: I2C TX_CTRL0 Register */
+	__IO uint32_t tx_ctrl1; /* 0x28: I2C TX_CTRL1 Register */
+	__IO uint32_t fifo; /* 0x2C: I2C FIFO Register */
+	__IO uint32_t controller_ctrl; /* 0x30: I2C CONTROLLER_CTRL Register */
+	__IO uint32_t clk_lo; /* 0x34: I2C CLK_LO Register */
+	__IO uint32_t clk_hi; /* 0x38: I2C CLK_HI Register */
+	__IO uint32_t hs_clk; /* 0x3C: I2C HS_CLK Register */
+	__IO uint32_t timeout; /* 0x40: I2C TIMEOUT Register */
+	__IO uint32_t target_addr; /* 0x44: I2C TARGET_ADDR Register */
+	__IO uint32_t dma; /* 0x48: I2C DMA Register */
 } mxc_i2c_regs_t;
 
 /* Register offsets for module I2C */
 /*
  * I2C Peripheral Register Offsets from the I2C Base Peripheral Address.
  */
-#define MXC_R_I2C_CTRL			0x00000000UL
-#define MXC_R_I2C_STATUS		0x00000004UL
-#define MXC_R_I2C_INT_FL0		0x00000008UL
-#define MXC_R_I2C_INT_EN0		0x0000000CUL
-#define MXC_R_I2C_INT_FL1		0x00000010UL
-#define MXC_R_I2C_INT_EN1		0x00000014UL
-#define MXC_R_I2C_FIFO_LEN		0x00000018UL
-#define MXC_R_I2C_RX_CTRL0		0x0000001CUL
-#define MXC_R_I2C_RX_CTRL1		0x00000020UL
-#define MXC_R_I2C_TX_CTRL0		0x00000024UL
-#define MXC_R_I2C_TX_CTRL1		0x00000028UL
-#define MXC_R_I2C_FIFO			0x0000002CUL
-#define MXC_R_I2C_CONTROLLER_CTRL	0x00000030UL
-#define MXC_R_I2C_CLK_LO		0x00000034UL
-#define MXC_R_I2C_CLK_HI		0x00000038UL
-#define MXC_R_I2C_HS_CLK		0x0000003CUL
-#define MXC_R_I2C_TIMEOUT		0x00000040UL
-#define MXC_R_I2C_TARGET_ADDR		0x00000044UL
-#define MXC_R_I2C_DMA			0x00000048UL
+#define MXC_R_I2C_CTRL 0x00000000UL
+#define MXC_R_I2C_STATUS 0x00000004UL
+#define MXC_R_I2C_INT_FL0 0x00000008UL
+#define MXC_R_I2C_INT_EN0 0x0000000CUL
+#define MXC_R_I2C_INT_FL1 0x00000010UL
+#define MXC_R_I2C_INT_EN1 0x00000014UL
+#define MXC_R_I2C_FIFO_LEN 0x00000018UL
+#define MXC_R_I2C_RX_CTRL0 0x0000001CUL
+#define MXC_R_I2C_RX_CTRL1 0x00000020UL
+#define MXC_R_I2C_TX_CTRL0 0x00000024UL
+#define MXC_R_I2C_TX_CTRL1 0x00000028UL
+#define MXC_R_I2C_FIFO 0x0000002CUL
+#define MXC_R_I2C_CONTROLLER_CTRL 0x00000030UL
+#define MXC_R_I2C_CLK_LO 0x00000034UL
+#define MXC_R_I2C_CLK_HI 0x00000038UL
+#define MXC_R_I2C_HS_CLK 0x0000003CUL
+#define MXC_R_I2C_TIMEOUT 0x00000040UL
+#define MXC_R_I2C_TARGET_ADDR 0x00000044UL
+#define MXC_R_I2C_DMA 0x00000048UL
 
 /**
  * Control Register0.
