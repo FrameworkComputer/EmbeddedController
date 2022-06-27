@@ -37,9 +37,9 @@
 
 /* Battery */
 #ifdef BOARD_KRANE
-#define BATTERY_DESIRED_CHARGING_CURRENT    3500  /* mA */
+#define BATTERY_DESIRED_CHARGING_CURRENT 3500 /* mA */
 #else
-#define BATTERY_DESIRED_CHARGING_CURRENT    2000  /* mA */
+#define BATTERY_DESIRED_CHARGING_CURRENT 2000 /* mA */
 #endif /* BOARD_KRANE */
 
 #ifdef BOARD_KRANE
@@ -79,19 +79,18 @@
 /* Camera VSYNC */
 #define CONFIG_SYNC
 #define CONFIG_SYNC_COMMAND
-#define CONFIG_SYNC_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
+#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 #endif /* SECTION_IS_RW */
 
 /* I2C ports */
-#define I2C_PORT_CHARGER  0
-#define I2C_PORT_TCPC0    0
-#define I2C_PORT_USB_MUX  0
-#define I2C_PORT_BATTERY  1
+#define I2C_PORT_CHARGER 0
+#define I2C_PORT_TCPC0 0
+#define I2C_PORT_USB_MUX 0
+#define I2C_PORT_BATTERY 1
 #define I2C_PORT_VIRTUAL_BATTERY I2C_PORT_BATTERY
-#define I2C_PORT_ACCEL    1
-#define I2C_PORT_BC12     1
-#define I2C_PORT_ALS      1
+#define I2C_PORT_ACCEL 1
+#define I2C_PORT_BC12 1
+#define I2C_PORT_ALS 1
 
 /* Route sbs host requests to virtual battery driver */
 #define VIRTUAL_BATTERY_ADDR_FLAGS 0x0B
