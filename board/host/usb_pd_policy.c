@@ -9,8 +9,8 @@
 #include "usb_pd_pdo.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 test_mockable int pd_set_power_supply_ready(int port)
 {
@@ -41,22 +41,18 @@ __override int pd_check_power_swap(int port)
 	return 1;
 }
 
-__override int pd_check_data_swap(int port,
-				  enum pd_data_role data_role)
+__override int pd_check_data_swap(int port, enum pd_data_role data_role)
 {
 	/* Always allow data swap */
 	return 1;
 }
 
-__override void pd_check_pr_role(int port,
-				 enum pd_power_role pr_role,
+__override void pd_check_pr_role(int port, enum pd_power_role pr_role,
 				 int flags)
 {
 }
 
-__override void pd_check_dr_role(int port,
-				 enum pd_data_role dr_role,
-				 int flags)
+__override void pd_check_dr_role(int port, enum pd_data_role dr_role, int flags)
 {
 }
 
