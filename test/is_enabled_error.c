@@ -7,7 +7,7 @@
 #include "common.h"
 #include "test_util.h"
 
-#define	CONFIG_VALUE		TEST_VALUE
+#define CONFIG_VALUE TEST_VALUE
 
 static int test_invalid_value(void)
 {
