@@ -12,7 +12,7 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define CHARGING_CURRENT_REDUCE	4000
+#define CHARGING_CURRENT_REDUCE 4000
 /*
  * Battery info for all sasuke battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
@@ -152,7 +152,7 @@ static void reduce_input_voltage_when_full(void)
 	int port;
 
 	if (charge_get_percent() == 100 &&
-			chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+	    chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 		if (max_pd_voltage_mv != PD_VOLTAGE_WHEN_FULL) {
 			saved_input_voltage = max_pd_voltage_mv;
 			max_pd_voltage_mv = PD_VOLTAGE_WHEN_FULL;
@@ -168,5 +168,4 @@ static void reduce_input_voltage_when_full(void)
 			pd_set_external_voltage_limit(port, max_pd_voltage_mv);
 	}
 }
-DECLARE_HOOK(HOOK_SECOND, reduce_input_voltage_when_full,
-             HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, reduce_input_voltage_when_full, HOOK_PRIO_DEFAULT);
