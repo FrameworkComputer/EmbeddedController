@@ -17,20 +17,19 @@
 #include "timer.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 #ifdef CONFIG_BRINGUP
 #define GPIO_SET_LEVEL(signal, value) \
 	gpio_set_level_verbose(CC_CHIPSET, signal, value)
 #else
-#define GPIO_SET_LEVEL(signal, value) \
-	gpio_set_level(signal, value)
+#define GPIO_SET_LEVEL(signal, value) gpio_set_level(signal, value)
 #endif
 
 /* The wait time is ~150 msec, allow for safety margin. */
-#define IN_PCH_SLP_SUS_WAIT_TIME_USEC	(250 * MSEC)
+#define IN_PCH_SLP_SUS_WAIT_TIME_USEC (250 * MSEC)
 
-static int forcing_shutdown;  /* Forced shutdown in progress? */
+static int forcing_shutdown; /* Forced shutdown in progress? */
 
 /* Power signals list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -152,7 +151,7 @@ void chipset_handle_espi_reset_assert(void)
 	 * power button. If yes, release power button.
 	 */
 	if ((power_get_signals() & IN_PCH_SLP_SUS_DEASSERTED) &&
-		forcing_shutdown) {
+	    forcing_shutdown) {
 		power_button_pch_release();
 		forcing_shutdown = 0;
 	}
@@ -171,7 +170,6 @@ static void enable_pp5000_rail(void)
 		power_5v_enable(task_get_current(), 1);
 	else
 		GPIO_SET_LEVEL(GPIO_EN_PP5000, 1);
-
 }
 
 static void dsw_pwrok_pass_thru(void)
@@ -180,8 +178,8 @@ static void dsw_pwrok_pass_thru(void)
 
 	/* Pass-through DSW_PWROK to ICL. */
 	if (dswpwrok_in != gpio_get_level(GPIO_PCH_DSW_PWROK)) {
-		if (IS_ENABLED(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)
-			&& dswpwrok_in) {
+		if (IS_ENABLED(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE) &&
+		    dswpwrok_in) {
 			/*
 			 * Once DSW_PWROK is high, reconfigure SLP_S3_L back to
 			 * an input after a short delay.
@@ -208,7 +206,7 @@ static void dsw_pwrok_pass_thru(void)
  * &param level		0 deasserts the signal, other values assert the signal
  */
 static void pwrok_signal_set(const struct intel_x86_pwrok_signal *signal,
-	int level)
+			     int level)
 {
 	GPIO_SET_LEVEL(signal->gpio, signal->active_low ? !level : level);
 }
@@ -257,7 +255,6 @@ enum power_state power_handle_state(enum power_state state)
 	common_intel_x86_handle_rsmrst(state);
 
 	switch (state) {
-
 	case POWER_G3S5:
 		if (IS_ENABLED(CONFIG_CHIPSET_SLP_S3_L_OVERRIDE)) {
 			/*
@@ -297,7 +294,8 @@ enum power_state power_handle_state(enum power_state state)
 		 * signal doesn't go high within 250 msec then go back to G3.
 		 */
 		if (power_wait_signals_timeout(IN_PCH_SLP_SUS_DEASSERTED,
-				IN_PCH_SLP_SUS_WAIT_TIME_USEC) != EC_SUCCESS) {
+					       IN_PCH_SLP_SUS_WAIT_TIME_USEC) !=
+		    EC_SUCCESS) {
 			CPRINTS("SLP_SUS_L didn't go high!  Going back to G3.");
 			return POWER_S5G3;
 		}
@@ -318,7 +316,7 @@ enum power_state power_handle_state(enum power_state state)
 		GPIO_SET_LEVEL(GPIO_EN_VCCIO_EXT, 1);
 		/* Now wait for ALL_SYS_PWRGD. */
 		while (!intel_x86_get_pg_ec_all_sys_pwrgd() &&
-			(timeout_ms > 0)) {
+		       (timeout_ms > 0)) {
 			msleep(1);
 			timeout_ms--;
 		};
