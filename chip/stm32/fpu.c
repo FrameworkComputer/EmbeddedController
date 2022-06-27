@@ -38,5 +38,6 @@ __attribute__((naked)) void IRQ_HANDLER(STM32_IRQ_FPU)(void)
 		     "pop {r0, pc}\n");
 }
 const struct irq_priority __keep IRQ_PRIORITY(STM32_IRQ_FPU)
-	__attribute__((section(".rodata.irqprio")))
-		= {STM32_IRQ_FPU, 0}; /* highest priority */
+	__attribute__((section(".rodata.irqprio"))) = { STM32_IRQ_FPU,
+							0 }; /* highest priority
+							      */
