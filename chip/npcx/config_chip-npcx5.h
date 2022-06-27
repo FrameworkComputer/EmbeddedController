@@ -14,10 +14,10 @@
  */
 
 /* Chip ID for all variants */
-#define NPCX585G_CHIP_ID		0x12
-#define NPCX575G_CHIP_ID		0x13
-#define NPCX586G_CHIP_ID		0x16
-#define NPCX576G_CHIP_ID		0x17
+#define NPCX585G_CHIP_ID 0x12
+#define NPCX575G_CHIP_ID 0x13
+#define NPCX586G_CHIP_ID 0x16
+#define NPCX576G_CHIP_ID 0x17
 
 /*****************************************************************************/
 /* Hardware features */
@@ -37,18 +37,18 @@
  */
 #define CONFIG_I2C_MULTI_PORT_CONTROLLER
 /* Number of I2C controllers */
-#define I2C_CONTROLLER_COUNT	4
+#define I2C_CONTROLLER_COUNT 4
 /* Number of I2C ports */
-#define I2C_PORT_COUNT		5
+#define I2C_PORT_COUNT 5
 
 /*****************************************************************************/
 /* Memory mapping */
-#define NPCX_BTRAM_SIZE		0x800 /* 2KB data ram used by booter. */
-#define CONFIG_RAM_BASE		0x200C0000 /* memory address of data ram */
-#define CONFIG_DATA_RAM_SIZE	0x00008000 /* Size of data RAM */
-#define CONFIG_RAM_SIZE		(CONFIG_DATA_RAM_SIZE - NPCX_BTRAM_SIZE)
-#define CONFIG_LPRAM_BASE	0x40001600 /* memory address of lpwr ram */
-#define CONFIG_LPRAM_SIZE	0x00000620 /* 1568B low power ram */
+#define NPCX_BTRAM_SIZE 0x800 /* 2KB data ram used by booter. */
+#define CONFIG_RAM_BASE 0x200C0000 /* memory address of data ram */
+#define CONFIG_DATA_RAM_SIZE 0x00008000 /* Size of data RAM */
+#define CONFIG_RAM_SIZE (CONFIG_DATA_RAM_SIZE - NPCX_BTRAM_SIZE)
+#define CONFIG_LPRAM_BASE 0x40001600 /* memory address of lpwr ram */
+#define CONFIG_LPRAM_SIZE 0x00000620 /* 1568B low power ram */
 
 /* Use chip variant to specify the size and start address of program memory */
 #if defined(CHIP_VARIANT_NPCX5M5G)
