@@ -33,10 +33,10 @@
  * (1<<9)-6 reads, leaving 6012 bytes of RAM available, down from 7356 bytes of
  * RAM available with the default 60 byte limits.
  */
-#if CONFIG_USB_I2C_MAX_WRITE_COUNT != ((1<<9) - 4)
+#if CONFIG_USB_I2C_MAX_WRITE_COUNT != ((1 << 9) - 4)
 #error Must set CONFIG_USB_I2C_MAX_WRITE_COUNT to ((1<<9) - 4)
 #endif
-#if CONFIG_USB_I2C_MAX_READ_COUNT != ((1<<9) - 6)
+#if CONFIG_USB_I2C_MAX_READ_COUNT != ((1 << 9) - 6)
 #error Must set CONFIG_USB_I2C_MAX_WRITE_COUNT to ((1<<9) - 6)
 #endif
 
@@ -97,16 +97,15 @@ static int ite_i2c_read_register(uint8_t register_offset, uint8_t *output)
 	int ret;
 	/* Tell the ITE EC which register we want to read. */
 	ret = i2c_xfer_unlocked(ite_dfu_config.i2c_port,
-				ITE_DFU_I2C_CMD_ADDR_FLAGS,
-				&register_offset, sizeof(register_offset),
-				NULL, 0, I2C_XFER_SINGLE);
+				ITE_DFU_I2C_CMD_ADDR_FLAGS, &register_offset,
+				sizeof(register_offset), NULL, 0,
+				I2C_XFER_SINGLE);
 	if (ret != EC_SUCCESS)
 		return ret;
 	/* Read in the 1 byte register value. */
 	ret = i2c_xfer_unlocked(ite_dfu_config.i2c_port,
-				ITE_DFU_I2C_DATA_ADDR_FLAGS,
-				NULL, 0,
-				output, sizeof(*output), I2C_XFER_SINGLE);
+				ITE_DFU_I2C_DATA_ADDR_FLAGS, NULL, 0, output,
+				sizeof(*output), I2C_XFER_SINGLE);
 	return ret;
 }
 
@@ -212,7 +211,7 @@ unlock:
 	}
 
 	ccprintf("ITE EC info: CHIPID1=0x%02X CHIPID2=0x%02X CHIPVER=0x%02X ",
-		chipid1[0], chipid2[0], chipver[0]);
+		 chipid1[0], chipid2[0], chipver[0]);
 	ccprintf("version=%d flash_bytes=%d\n", chip_version, flash_kb << 10);
 
 	/*
@@ -236,8 +235,8 @@ static int command_enable_ite_dfu(int argc, char **argv)
 		return EC_ERROR_ACCESS_DENIED;
 
 	/* Enable peripheral clocks. */
-	STM32_RCC_APB2ENR |=
-		STM32_RCC_APB2ENR_TIM16EN | STM32_RCC_APB2ENR_TIM17EN;
+	STM32_RCC_APB2ENR |= STM32_RCC_APB2ENR_TIM16EN |
+			     STM32_RCC_APB2ENR_TIM17EN;
 
 	/* Reset timer registers which are not otherwise set below. */
 	STM32_TIM_CR2(16) = 0x0000;
@@ -265,10 +264,10 @@ static int command_enable_ite_dfu(int argc, char **argv)
 	STM32_TIM_ARR(17) = (MHz / SMDAT_WAVEFORM_PERIOD_HZ) - 1;
 
 	/* Set output compare 1 mode to PWM mode 1 and enable preload. */
-	STM32_TIM_CCMR1(16) =
-		STM32_TIM_CCMR1_OC1M_PWM_MODE_1 | STM32_TIM_CCMR1_OC1PE;
-	STM32_TIM_CCMR1(17) =
-		STM32_TIM_CCMR1_OC1M_PWM_MODE_1 | STM32_TIM_CCMR1_OC1PE;
+	STM32_TIM_CCMR1(16) = STM32_TIM_CCMR1_OC1M_PWM_MODE_1 |
+			      STM32_TIM_CCMR1_OC1PE;
+	STM32_TIM_CCMR1(17) = STM32_TIM_CCMR1_OC1M_PWM_MODE_1 |
+			      STM32_TIM_CCMR1_OC1PE;
 
 	/*
 	 * Enable output compare 1 (or its N counterpart). Note that if only
@@ -335,9 +334,8 @@ static int command_enable_ite_dfu(int argc, char **argv)
 
 	return cprint_ite_chip_id();
 }
-DECLARE_CONSOLE_COMMAND(
-	enable_ite_dfu, command_enable_ite_dfu, "",
-	"Enable ITE Direct Firmware Update (DFU) mode");
+DECLARE_CONSOLE_COMMAND(enable_ite_dfu, command_enable_ite_dfu, "",
+			"Enable ITE Direct Firmware Update (DFU) mode");
 
 /* Read ITE chip ID.  Can be used to verify ITE DFU mode. */
 static int command_get_ite_chipid(int argc, char **argv)
