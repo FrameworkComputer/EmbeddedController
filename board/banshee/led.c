@@ -28,15 +28,14 @@
 #define LED_TICKS_PER_CYCLE 10
 #define LED_ON_TICKS 5
 
-#define BREATH_LIGHT_LENGTH	55
-#define BREATH_HOLD_LENGTH	50
-#define BREATH_OFF_LENGTH	200
+#define BREATH_LIGHT_LENGTH 55
+#define BREATH_HOLD_LENGTH 50
+#define BREATH_OFF_LENGTH 200
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_BATTERY_LED,
 	EC_LED_ID_POWER_LED,
 };
-
 
 enum breath_status {
 	BREATH_LIGHT_UP = 0,
@@ -45,26 +44,23 @@ enum breath_status {
 	BREATH_OFF,
 };
 
-enum led_port {
-	RIGHT_PORT = 1,
-	LEFT_PORT
-};
+enum led_port { RIGHT_PORT = 1, LEFT_PORT };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT] = {
-				/* Red, Green, Blue */
-	[EC_LED_COLOR_RED]    = {  50,   0,   0 },
-	[EC_LED_COLOR_GREEN]  = {   0,  50,   0 },
-	[EC_LED_COLOR_BLUE]   = {   0,   0,   8 },
-	[EC_LED_COLOR_YELLOW] = {  40,  50,   0 },
-	[EC_LED_COLOR_WHITE]  = {  20,  50,  25 },
-	[EC_LED_COLOR_AMBER]  = {  45,  5,    0 },
+	/* Red, Green, Blue */
+	[EC_LED_COLOR_RED] = { 50, 0, 0 },
+	[EC_LED_COLOR_GREEN] = { 0, 50, 0 },
+	[EC_LED_COLOR_BLUE] = { 0, 0, 8 },
+	[EC_LED_COLOR_YELLOW] = { 40, 50, 0 },
+	[EC_LED_COLOR_WHITE] = { 20, 50, 25 },
+	[EC_LED_COLOR_AMBER] = { 45, 5, 0 },
 };
 
 struct pwm_led_color_map pwr_led_color_map[EC_LED_COLOR_COUNT] = {
-				/* White, Green, Red */
-	[EC_LED_COLOR_WHITE]  = {  BREATH_LIGHT_LENGTH,   0,   0 },
+	/* White, Green, Red */
+	[EC_LED_COLOR_WHITE] = { BREATH_LIGHT_LENGTH, 0, 0 },
 };
 
 /*
@@ -88,12 +84,10 @@ struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT] = {
 	},
 };
 
-
 uint8_t breath_led_light_up;
 uint8_t breath_led_light_down;
 uint8_t breath_led_hold;
 uint8_t breath_led_off;
-
 
 int breath_pwm_enable;
 int breath_led_status;
@@ -110,13 +104,11 @@ DECLARE_DEFERRED(breath_led_pwm_deferred);
 
 static void breath_led_pwm_deferred(void)
 {
-
 	switch (breath_led_status) {
 	case BREATH_LIGHT_UP:
 
-		if (breath_led_light_up <=  BREATH_LIGHT_LENGTH)
-			pwm_set_duty(PWM_CH_POWER_LED_W,
-					breath_led_light_up++);
+		if (breath_led_light_up <= BREATH_LIGHT_LENGTH)
+			pwm_set_duty(PWM_CH_POWER_LED_W, breath_led_light_up++);
 		else {
 			breath_led_light_up = 0;
 			breath_led_light_down = BREATH_LIGHT_LENGTH;
@@ -126,7 +118,7 @@ static void breath_led_pwm_deferred(void)
 		break;
 	case BREATH_HOLD:
 
-		if (breath_led_hold <=  BREATH_HOLD_LENGTH)
+		if (breath_led_hold <= BREATH_HOLD_LENGTH)
 			breath_led_hold++;
 		else {
 			breath_led_hold = 0;
@@ -138,7 +130,7 @@ static void breath_led_pwm_deferred(void)
 
 		if (breath_led_light_down != 0)
 			pwm_set_duty(PWM_CH_POWER_LED_W,
-					breath_led_light_down--);
+				     breath_led_light_down--);
 		else {
 			breath_led_light_down = BREATH_LIGHT_LENGTH;
 			breath_led_status = BREATH_OFF;
@@ -147,7 +139,7 @@ static void breath_led_pwm_deferred(void)
 		break;
 	case BREATH_OFF:
 
-		if (breath_led_off <=  BREATH_OFF_LENGTH)
+		if (breath_led_off <= BREATH_OFF_LENGTH)
 			breath_led_off++;
 		else {
 			breath_led_off = 0;
@@ -157,11 +149,9 @@ static void breath_led_pwm_deferred(void)
 		break;
 	}
 
-
 	if (breath_pwm_enable)
 		hook_call_deferred(&breath_led_pwm_deferred_data, 10 * MSEC);
 }
-
 
 void breath_led_run(uint8_t enable)
 {
@@ -180,7 +170,6 @@ void breath_led_run(uint8_t enable)
 	}
 }
 
-
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	if (led_id == EC_LED_ID_BATTERY_LED) {
@@ -192,7 +181,6 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 		brightness_range[EC_LED_COLOR_WHITE] = 100;
 	} else if (led_id == EC_LED_ID_POWER_LED)
 		brightness_range[EC_LED_COLOR_WHITE] = 100;
-
 }
 
 void set_pwr_led_color(enum pwm_led_id id, int color)
@@ -265,8 +253,8 @@ static int led_get_charge_percent(void)
 static void select_active_port_led(int port)
 {
 	if ((charge_get_state() == PWR_STATE_DISCHARGE &&
-			 led_get_charge_percent() < 10) ||
-			 charge_get_state() == PWR_STATE_ERROR) {
+	     led_get_charge_percent() < 10) ||
+	    charge_get_state() == PWR_STATE_ERROR) {
 		gpio_set_level(GPIO_LEFT_SIDE, 1);
 		gpio_set_level(GPIO_RIGHT_SIDE, 1);
 	} else if (port == RIGHT_PORT) {
@@ -283,8 +271,7 @@ static void select_active_port_led(int port)
 
 static int led_power_enable(void)
 {
-	if (gpio_get_level(GPIO_LEFT_SIDE) ||
-		gpio_get_level(GPIO_RIGHT_SIDE))
+	if (gpio_get_level(GPIO_LEFT_SIDE) || gpio_get_level(GPIO_RIGHT_SIDE))
 		return true;
 
 	return false;
@@ -322,14 +309,15 @@ static void led_set_battery(void)
 		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
 			if (led_get_charge_percent() < 10)
 				set_active_port_color((battery_ticks & 0x2) ?
-					EC_LED_COLOR_RED : -1);
+							      EC_LED_COLOR_RED :
+							      -1);
 			else
 				set_active_port_color(-1);
 		}
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
-				EC_LED_COLOR_RED : -1);
+		set_active_port_color((battery_ticks & 0x2) ? EC_LED_COLOR_RED :
+							      -1);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(EC_LED_COLOR_GREEN);
@@ -337,14 +325,14 @@ static void led_set_battery(void)
 	case PWR_STATE_IDLE:
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
 			set_active_port_color((battery_ticks & 0x4) ?
-					EC_LED_COLOR_AMBER : -1);
+						      EC_LED_COLOR_AMBER :
+						      -1);
 		else
 			set_active_port_color(EC_LED_COLOR_AMBER);
 		break;
 	default:
 		break;
 	}
-
 }
 
 static void led_set_power(void)
@@ -352,8 +340,7 @@ static void led_set_power(void)
 	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 		breath_led_run(1);
 		return;
-	}
-	else
+	} else
 		breath_led_run(0);
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
@@ -369,6 +356,5 @@ static void led_tick(void)
 		led_set_battery();
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		led_set_power();
-
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
