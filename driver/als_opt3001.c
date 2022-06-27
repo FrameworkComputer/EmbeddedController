@@ -17,11 +17,10 @@ static int opt3001_i2c_read(const int reg, int *data_ptr)
 {
 	int ret;
 
-	ret = i2c_read16(I2C_PORT_ALS, OPT3001_I2C_ADDR_FLAGS,
-			 reg, data_ptr);
+	ret = i2c_read16(I2C_PORT_ALS, OPT3001_I2C_ADDR_FLAGS, reg, data_ptr);
 	if (!ret)
 		*data_ptr = ((*data_ptr << 8) & 0xFF00) |
-				((*data_ptr >> 8) & 0x00FF);
+			    ((*data_ptr >> 8) & 0x00FF);
 
 	return ret;
 }
@@ -32,8 +31,7 @@ static int opt3001_i2c_read(const int reg, int *data_ptr)
 static int opt3001_i2c_write(const int reg, int data)
 {
 	data = ((data << 8) & 0xFF00) | ((data >> 8) & 0x00FF);
-	return i2c_write16(I2C_PORT_ALS, OPT3001_I2C_ADDR_FLAGS,
-			   reg, data);
+	return i2c_write16(I2C_PORT_ALS, OPT3001_I2C_ADDR_FLAGS, reg, data);
 }
 
 /**
@@ -102,25 +100,23 @@ struct i2c_stress_test_dev opt3001_i2c_stress_test_dev = {
 	.i2c_read_dev = &opt3001_i2c_read,
 	.i2c_write_dev = &opt3001_i2c_write,
 };
-#endif  /* CONFIG_CMD_I2C_STRESS_TEST_ALS */
-#else  /* HAS_TASK_ALS */
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_ALS */
+#else /* HAS_TASK_ALS */
 #include "accelgyro.h"
 #include "math_util.h"
 
 /**
  *  Read register from OPT3001 light sensor.
  */
-static int opt3001_i2c_read(const int port,
-			    const uint16_t i2c_addr_flags,
+static int opt3001_i2c_read(const int port, const uint16_t i2c_addr_flags,
 			    const int reg, int *data_ptr)
 {
 	int ret;
 
-	ret = i2c_read16(port, i2c_addr_flags,
-			 reg, data_ptr);
+	ret = i2c_read16(port, i2c_addr_flags, reg, data_ptr);
 	if (!ret)
 		*data_ptr = ((*data_ptr << 8) & 0xFF00) |
-				((*data_ptr >> 8) & 0x00FF);
+			    ((*data_ptr >> 8) & 0x00FF);
 
 	return ret;
 }
@@ -128,8 +124,7 @@ static int opt3001_i2c_read(const int port,
 /**
  *  Write register to OPT3001 light sensor.
  */
-static int opt3001_i2c_write(const int port,
-			     const uint16_t i2c_addr_flags,
+static int opt3001_i2c_write(const int port, const uint16_t i2c_addr_flags,
 			     const int reg, int data)
 {
 	data = ((data << 8) & 0xFF00) | ((data >> 8) & 0x00FF);
@@ -177,8 +172,7 @@ int opt3001_read_lux(const struct motion_sensor_t *s, intv3_t v)
 	}
 }
 
-static int opt3001_set_range(struct motion_sensor_t *s, int range,
-			     int rnd)
+static int opt3001_set_range(struct motion_sensor_t *s, int range, int rnd)
 {
 	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
 
@@ -188,8 +182,8 @@ static int opt3001_set_range(struct motion_sensor_t *s, int range,
 	return EC_SUCCESS;
 }
 
-static int opt3001_set_data_rate(const struct motion_sensor_t *s,
-				int rate, int roundup)
+static int opt3001_set_data_rate(const struct motion_sensor_t *s, int rate,
+				 int roundup)
 {
 	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
 	int rv;
@@ -216,10 +210,9 @@ static int opt3001_set_data_rate(const struct motion_sensor_t *s,
 	if (rv)
 		return rv;
 
-	rv = opt3001_i2c_write(s->port, s->i2c_spi_addr_flags,
-			       OPT3001_REG_CONFIGURE,
-			       (reg & OPT3001_MODE_MASK) |
-				   (mode << OPT3001_MODE_OFFSET));
+	rv = opt3001_i2c_write(
+		s->port, s->i2c_spi_addr_flags, OPT3001_REG_CONFIGURE,
+		(reg & OPT3001_MODE_MASK) | (mode << OPT3001_MODE_OFFSET));
 	if (rv)
 		return rv;
 
@@ -235,8 +228,7 @@ static int opt3001_get_data_rate(const struct motion_sensor_t *s)
 }
 
 static int opt3001_set_offset(const struct motion_sensor_t *s,
-			const int16_t *offset,
-			int16_t    temp)
+			      const int16_t *offset, int16_t temp)
 {
 	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
 
@@ -244,9 +236,8 @@ static int opt3001_set_offset(const struct motion_sensor_t *s,
 	return EC_SUCCESS;
 }
 
-static int opt3001_get_offset(const struct motion_sensor_t *s,
-			int16_t   *offset,
-			int16_t    *temp)
+static int opt3001_get_offset(const struct motion_sensor_t *s, int16_t *offset,
+			      int16_t *temp)
 {
 	struct opt3001_drv_data_t *drv_data = OPT3001_GET_DATA(s);
 
@@ -283,8 +274,8 @@ static int opt3001_init(struct motion_sensor_t *s)
 	 * [11]   : 1b    Conversion time 800ms
 	 * [4]    : 1b    Latched window-style comparison operation
 	 */
-	opt3001_i2c_write(s->port, s->i2c_spi_addr_flags,
-			  OPT3001_REG_CONFIGURE, 0xC810);
+	opt3001_i2c_write(s->port, s->i2c_spi_addr_flags, OPT3001_REG_CONFIGURE,
+			  0xC810);
 
 	opt3001_set_range(s, s->default_range, 0);
 
@@ -311,5 +302,5 @@ struct i2c_stress_test_dev opt3001_i2c_stress_test_dev = {
 	.i2c_read = &opt3001_i2c_read,
 	.i2c_write = &opt3001_i2c_write,
 };
-#endif  /* CONFIG_CMD_I2C_STRESS_TEST_ALS */
-#endif  /* HAS_TASK_ALS */
+#endif /* CONFIG_CMD_I2C_STRESS_TEST_ALS */
+#endif /* HAS_TASK_ALS */
