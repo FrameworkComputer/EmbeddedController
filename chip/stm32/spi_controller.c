@@ -17,13 +17,11 @@
 #include "timer.h"
 #include "util.h"
 
-#if defined(CHIP_VARIANT_STM32F373)  || \
-	defined(CHIP_FAMILY_STM32L4) || \
-	defined(CHIP_FAMILY_STM32L5) || \
-	defined(CHIP_VARIANT_STM32F76X)
+#if defined(CHIP_VARIANT_STM32F373) || defined(CHIP_FAMILY_STM32L4) || \
+	defined(CHIP_FAMILY_STM32L5) || defined(CHIP_VARIANT_STM32F76X)
 #define HAS_SPI3
 #else
-#undef  HAS_SPI3
+#undef HAS_SPI3
 #endif
 
 /* The second (and third if available) SPI port are used as controller */
@@ -66,52 +64,40 @@ static struct mutex spi_mutex[ARRAY_SIZE(SPI_REGS)];
 
 /* Default DMA channel options */
 #ifdef CHIP_FAMILY_STM32F4
-#define F4_CHANNEL(ch)	STM32_DMA_CCR_CHANNEL(ch)
+#define F4_CHANNEL(ch) STM32_DMA_CCR_CHANNEL(ch)
 #else
-#define F4_CHANNEL(ch)	0
+#define F4_CHANNEL(ch) 0
 #endif
 
 static const struct dma_option dma_tx_option[] = {
 #ifdef CONFIG_STM32_SPI1_CONTROLLER
-	{
-		STM32_DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->dr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-		| F4_CHANNEL(STM32_SPI1_TX_REQ_CH)
-	},
+	{ STM32_DMAC_SPI1_TX, (void *)&STM32_SPI1_REGS->dr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
+		  F4_CHANNEL(STM32_SPI1_TX_REQ_CH) },
 #endif
-	{
-		STM32_DMAC_SPI2_TX, (void *)&STM32_SPI2_REGS->dr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-		| F4_CHANNEL(STM32_SPI2_TX_REQ_CH)
-	},
+	{ STM32_DMAC_SPI2_TX, (void *)&STM32_SPI2_REGS->dr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
+		  F4_CHANNEL(STM32_SPI2_TX_REQ_CH) },
 #ifdef HAS_SPI3
-	{
-		STM32_DMAC_SPI3_TX, (void *)&STM32_SPI3_REGS->dr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-		| F4_CHANNEL(STM32_SPI3_TX_REQ_CH)
-	},
+	{ STM32_DMAC_SPI3_TX, (void *)&STM32_SPI3_REGS->dr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
+		  F4_CHANNEL(STM32_SPI3_TX_REQ_CH) },
 #endif
 };
 
 static const struct dma_option dma_rx_option[] = {
 #ifdef CONFIG_STM32_SPI1_CONTROLLER
-	{
-		STM32_DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->dr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-		| F4_CHANNEL(STM32_SPI1_RX_REQ_CH)
-	},
+	{ STM32_DMAC_SPI1_RX, (void *)&STM32_SPI1_REGS->dr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
+		  F4_CHANNEL(STM32_SPI1_RX_REQ_CH) },
 #endif
-	{
-		STM32_DMAC_SPI2_RX, (void *)&STM32_SPI2_REGS->dr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-		| F4_CHANNEL(STM32_SPI2_RX_REQ_CH)
-	},
+	{ STM32_DMAC_SPI2_RX, (void *)&STM32_SPI2_REGS->dr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
+		  F4_CHANNEL(STM32_SPI2_RX_REQ_CH) },
 #ifdef HAS_SPI3
-	{
-		STM32_DMAC_SPI3_RX, (void *)&STM32_SPI3_REGS->dr,
-		STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
-		| F4_CHANNEL(STM32_SPI3_RX_REQ_CH)
-	},
+	{ STM32_DMAC_SPI3_RX, (void *)&STM32_SPI3_REGS->dr,
+	  STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT |
+		  F4_CHANNEL(STM32_SPI3_RX_REQ_CH) },
 #endif
 };
 
@@ -134,7 +120,7 @@ static int spi_clear_rx_fifo(stm32_spi_regs_t *spi)
 	uint32_t start = __hw_clock_source_read(), delta;
 
 	while (!spi_rx_done(spi)) {
-		unused = spi->dr;  /* Read one byte from FIFO */
+		unused = spi->dr; /* Read one byte from FIFO */
 		delta = __hw_clock_source_read() - start;
 		if (delta >= SPI_TRANSACTION_TIMEOUT_USEC)
 			return EC_ERROR_TIMEOUT;
@@ -232,7 +218,7 @@ static int spi_controller_initialize(const struct spi_device_t *spi_device)
 	 * https://www.st.com/resource/en/reference_manual/dm00031936.pdf#page=803
 	 */
 	spi->cr2 = STM32_SPI_CR2_TXDMAEN | STM32_SPI_CR2_RXDMAEN |
-			STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8);
+		   STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8);
 
 #ifdef CONFIG_SPI_HALFDUPLEX
 	spi->cr1 |= STM32_SPI_CR1_BIDIMODE | STM32_SPI_CR1_BIDIOE;
@@ -287,8 +273,8 @@ int spi_enable(const struct spi_device_t *spi_device, int enable)
 		return spi_controller_shutdown(spi_device);
 }
 
-static int spi_dma_start(int port, const uint8_t *txdata,
-			 uint8_t *rxdata, int len)
+static int spi_dma_start(int port, const uint8_t *txdata, uint8_t *rxdata,
+			 int len)
 {
 	dma_chan_t *txdma;
 
@@ -350,8 +336,8 @@ static int spi_dma_wait(int port)
 static uint8_t spi_chip_select_already_asserted[ARRAY_SIZE(SPI_REGS)];
 
 int spi_transaction_async(const struct spi_device_t *spi_device,
-			  const uint8_t *txdata, int txlen,
-			  uint8_t *rxdata, int rxlen)
+			  const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			  int rxlen)
 {
 	int rv = EC_SUCCESS;
 	int port = spi_device->port;
@@ -424,8 +410,8 @@ int spi_transaction_flush(const struct spi_device_t *spi_device)
 {
 	int rv = spi_dma_wait(spi_device->port);
 
-	if (!IS_ENABLED(CONFIG_USB_SPI)
-	    || !spi_chip_select_already_asserted[spi_device->port]) {
+	if (!IS_ENABLED(CONFIG_USB_SPI) ||
+	    !spi_chip_select_already_asserted[spi_device->port]) {
 		/* Drive SS high */
 		gpio_set_level(spi_device->gpio_cs, 1);
 	}
@@ -439,8 +425,8 @@ int spi_transaction_wait(const struct spi_device_t *spi_device)
 }
 
 int spi_transaction(const struct spi_device_t *spi_device,
-		    const uint8_t *txdata, int txlen,
-		    uint8_t *rxdata, int rxlen)
+		    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+		    int rxlen)
 {
 	int rv;
 	int port = spi_device->port;
