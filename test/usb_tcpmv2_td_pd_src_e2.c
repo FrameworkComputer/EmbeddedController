@@ -63,12 +63,8 @@ int test_td_pd_src_e2(void)
 	 *    Provider, if the Specification Revision field is 10b
 	 *    (Rev 3.0), the test passes and stops here,
 	 */
-	TEST_EQ(verify_tcpci_tx_with_data(TCPCI_MSG_SOP,
-					  PD_DATA_SOURCE_CAP,
-					  data,
-					  sizeof(data),
-					  &msg_len,
-					  0),
+	TEST_EQ(verify_tcpci_tx_with_data(TCPCI_MSG_SOP, PD_DATA_SOURCE_CAP,
+					  data, sizeof(data), &msg_len, 0),
 		EC_SUCCESS, "%d");
 	TEST_GE(msg_len, HEADER_BYTE_CNT, "%d");
 
@@ -95,7 +91,7 @@ int test_td_pd_src_e2(void)
 	TEST_EQ(revision, REVISION_2, "%d");
 	TEST_EQ(PD_HEADER_DROLE(header), PD_ROLE_DFP, "%d");
 	TEST_EQ(PD_HEADER_TYPE(header), PD_DATA_SOURCE_CAP, "%d");
-	TEST_EQ(header & (BIT(4)|BIT(15)), 0, "%d");
+	TEST_EQ(header & (BIT(4) | BIT(15)), 0, "%d");
 
 	/*
 	 * c) For the first PDO, the Tester verifies:
@@ -103,8 +99,8 @@ int test_td_pd_src_e2(void)
 	 *    2. Voltage field = 100 (5 V)
 	 *    3. Bits 24..22 = 000b (Reserved)
 	 */
-	pdo = UINT32_FROM_BYTE_ARRAY_LE(data, HEADER_BYTE_OFFSET +
-					      HEADER_BYTE_CNT);
+	pdo = UINT32_FROM_BYTE_ARRAY_LE(data,
+					HEADER_BYTE_OFFSET + HEADER_BYTE_CNT);
 
 	type = pdo & PDO_TYPE_MASK;
 	TEST_EQ(type, PDO_TYPE_FIXED, "%d");
@@ -132,8 +128,7 @@ int test_td_pd_src_e2(void)
 		int offset;
 		uint32_t voltage;
 
-		offset = HEADER_BYTE_OFFSET +
-			 HEADER_BYTE_CNT +
+		offset = HEADER_BYTE_OFFSET + HEADER_BYTE_CNT +
 			 (i * PDO_BYTE_CNT);
 		pdo = UINT32_FROM_BYTE_ARRAY_LE(data, offset);
 
