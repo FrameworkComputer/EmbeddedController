@@ -74,4 +74,4 @@ int acpi_dptf_set_profile_num(int n);
  */
 int acpi_dptf_get_profile_num(void);
 
-#endif	/* __CROS_EC_ACPI_H */
+#endif /* __CROS_EC_ACPI_H */
