@@ -21,16 +21,16 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define SYV682X_FLAGS_SOURCE_ENABLED	BIT(0)
-#define SYV682X_FLAGS_SINK_ENABLED	BIT(1)
+#define SYV682X_FLAGS_SOURCE_ENABLED BIT(0)
+#define SYV682X_FLAGS_SINK_ENABLED BIT(1)
 /* 0 -> CC1, 1 -> CC2 */
-#define SYV682X_FLAGS_CC_POLARITY	BIT(2)
-#define SYV682X_FLAGS_VBUS_PRESENT	BIT(3)
-#define SYV682X_FLAGS_TSD		BIT(4)
-#define SYV682X_FLAGS_OVP		BIT(5)
-#define SYV682X_FLAGS_5V_OC		BIT(6)
-#define SYV682X_FLAGS_FRS		BIT(7)
-#define SYV682X_FLAGS_VCONN_OCP		BIT(8)
+#define SYV682X_FLAGS_CC_POLARITY BIT(2)
+#define SYV682X_FLAGS_VBUS_PRESENT BIT(3)
+#define SYV682X_FLAGS_TSD BIT(4)
+#define SYV682X_FLAGS_OVP BIT(5)
+#define SYV682X_FLAGS_5V_OC BIT(6)
+#define SYV682X_FLAGS_FRS BIT(7)
+#define SYV682X_FLAGS_VCONN_OCP BIT(8)
 
 static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 static atomic_t flags[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -39,7 +39,7 @@ static atomic_t sink_ocp_count[CONFIG_USB_PD_PORT_MAX_COUNT];
 static timestamp_t vbus_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 static timestamp_t vconn_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define SYV682X_VBUS_DET_THRESH_MV		4000
+#define SYV682X_VBUS_DET_THRESH_MV 4000
 /* Longest time that can be programmed in DSG_TIME field */
 #define SYV682X_MAX_VBUS_DISCHARGE_TIME_MS 400
 /*
@@ -68,9 +68,10 @@ static timestamp_t vconn_oc_timer[CONFIG_USB_PD_PORT_MAX_COUNT];
 "instead of the TCPC"
 #endif
 
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
-static int syv682x_vbus_sink_enable(int port, int enable);
+	static int
+	syv682x_vbus_sink_enable(int port, int enable);
 
 static int syv682x_init(int port);
 
@@ -79,9 +80,7 @@ static void syv682x_interrupt_delayed(int port, int delay);
 static int read_reg(uint8_t port, int reg, int *regval)
 {
 	return i2c_read8(ppc_chips[port].i2c_port,
-			 ppc_chips[port].i2c_addr_flags,
-			 reg,
-			 regval);
+			 ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 #ifdef CONFIG_USBC_PPC_SYV682C
@@ -107,8 +106,8 @@ static int syv682x_wait_for_ready(int port, int reg)
 		return EC_SUCCESS;
 #endif
 
-	deadline.val = get_time().val
-			+ (SYV682X_MAX_VBUS_DISCHARGE_TIME_MS * MSEC);
+	deadline.val =
+		get_time().val + (SYV682X_MAX_VBUS_DISCHARGE_TIME_MS * MSEC);
 
 	do {
 		rv = read_reg(port, SYV682X_CONTROL_3_REG, &regval);
@@ -138,9 +137,7 @@ static int write_reg(uint8_t port, int reg, int regval)
 		return rv;
 
 	return i2c_write8(ppc_chips[port].i2c_port,
-			  ppc_chips[port].i2c_addr_flags,
-			  reg,
-			  regval);
+			  ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 static int syv682x_is_sourcing_vbus(int port)
@@ -186,8 +183,8 @@ static int syv682x_vbus_source_enable(int port, int enable)
 
 	if (enable) {
 		/* Select 5V path and turn on channel */
-		regval &= ~(SYV682X_CONTROL_1_CH_SEL |
-			    SYV682X_CONTROL_1_PWR_ENB);
+		regval &=
+			~(SYV682X_CONTROL_1_CH_SEL | SYV682X_CONTROL_1_PWR_ENB);
 		/* Disable HV Sink path */
 		regval |= SYV682X_CONTROL_1_HV_DR;
 	} else if (flags[port] & SYV682X_FLAGS_SOURCE_ENABLED) {
@@ -416,8 +413,8 @@ static int syv682x_vbus_sink_enable(int port, int enable)
 		/* Select high voltage path */
 		regval |= SYV682X_CONTROL_1_CH_SEL;
 		/* Select Sink mode and turn on the channel */
-		regval &= ~(SYV682X_CONTROL_1_HV_DR |
-			    SYV682X_CONTROL_1_PWR_ENB);
+		regval &=
+			~(SYV682X_CONTROL_1_HV_DR | SYV682X_CONTROL_1_PWR_ENB);
 		/* Set sink current limit to the configured value */
 		regval |= CONFIG_SYV682X_HV_ILIM << SYV682X_HV_ILIM_BIT_SHIFT;
 		atomic_clear_bits(&flags[port], SYV682X_FLAGS_SOURCE_ENABLED);
@@ -567,8 +564,8 @@ static int syv682x_dump(int port)
 			ccprintf("ppc_syv682[p%d]: Failed to read reg 0x%02x\n",
 				 port, reg_addr);
 		else
-			ccprintf("ppc_syv682[p%d]: reg 0x%02x = 0x%02x\n",
-				 port, reg_addr, data);
+			ccprintf("ppc_syv682[p%d]: reg 0x%02x = 0x%02x\n", port,
+				 reg_addr, data);
 	}
 
 	cflush();
@@ -652,10 +649,10 @@ static int syv682x_set_frs_enable(int port, int enable)
 		 * should be set.
 		 */
 		regval &= ~(SYV682X_CONTROL_4_CC1_BPS |
-				SYV682X_CONTROL_4_CC2_BPS);
+			    SYV682X_CONTROL_4_CC2_BPS);
 		regval |= flags[port] & SYV682X_FLAGS_CC_POLARITY ?
-					SYV682X_CONTROL_4_CC2_BPS :
-					SYV682X_CONTROL_4_CC1_BPS;
+				  SYV682X_CONTROL_4_CC2_BPS :
+				  SYV682X_CONTROL_4_CC1_BPS;
 		/* set GPIO after configuring */
 		write_reg(port, SYV682X_CONTROL_4_REG, regval);
 		gpio_or_ioex_set_level(ppc_chips[port].frs_en, 1);
@@ -705,9 +702,9 @@ static bool syv682x_is_sink(uint8_t control_1)
 	 *
 	 * The SYV682 is only a sink when !HV_DR && CH_SEL
 	 */
-	if (!(control_1 & SYV682X_CONTROL_1_PWR_ENB)
-		&& !(control_1 & SYV682X_CONTROL_1_HV_DR)
-		&& (control_1 & SYV682X_CONTROL_1_CH_SEL))
+	if (!(control_1 & SYV682X_CONTROL_1_PWR_ENB) &&
+	    !(control_1 & SYV682X_CONTROL_1_HV_DR) &&
+	    (control_1 & SYV682X_CONTROL_1_CH_SEL))
 		return true;
 
 	return false;
@@ -735,8 +732,7 @@ static int syv682x_init(int port)
 	if (IS_ENABLED(CONFIG_USB_PD_FRS_PPC))
 		gpio_or_ioex_set_level(ppc_chips[port].frs_en, 0);
 
-	if (!syv682x_is_sink(control_1)
-		|| (status & SYV682X_STATUS_VSAFE_0V)) {
+	if (!syv682x_is_sink(control_1) || (status & SYV682X_STATUS_VSAFE_0V)) {
 		/*
 		 * Disable both power paths,
 		 * set HV_ILIM to 3.3A,
@@ -745,9 +741,9 @@ static int syv682x_init(int port)
 		 * select HV channel.
 		 */
 		regval = SYV682X_CONTROL_1_PWR_ENB |
-			(CONFIG_SYV682X_HV_ILIM << SYV682X_HV_ILIM_BIT_SHIFT) |
-			/* !SYV682X_CONTROL_1_HV_DR */
-			SYV682X_CONTROL_1_CH_SEL;
+			 (CONFIG_SYV682X_HV_ILIM << SYV682X_HV_ILIM_BIT_SHIFT) |
+			 /* !SYV682X_CONTROL_1_HV_DR */
+			 SYV682X_CONTROL_1_CH_SEL;
 		rv = write_reg(port, SYV682X_CONTROL_1_REG, regval);
 		if (rv)
 			return rv;
@@ -775,9 +771,9 @@ static int syv682x_init(int port)
 	 * tVconnOff (35ms) timeout.
 	 * On SYV682C, we are allowed to access CONTROL4 while the i2c busy.
 	 */
-	regval = (SYV682X_OC_DELAY_10MS << SYV682X_OC_DELAY_SHIFT)
-		| (SYV682X_DSG_RON_200_OHM << SYV682X_DSG_RON_SHIFT)
-		| (SYV682X_DSG_TIME_50MS << SYV682X_DSG_TIME_SHIFT);
+	regval = (SYV682X_OC_DELAY_10MS << SYV682X_OC_DELAY_SHIFT) |
+		 (SYV682X_DSG_RON_200_OHM << SYV682X_DSG_RON_SHIFT) |
+		 (SYV682X_DSG_TIME_50MS << SYV682X_DSG_TIME_SHIFT);
 
 	if (IS_ENABLED(CONFIG_USBC_PPC_SYV682X_SMART_DISCHARGE))
 		regval |= SYV682X_CONTROL_2_SDSG;
