@@ -19,30 +19,30 @@ const int led_charge_lvl_1 = 5;
 const int led_charge_lvl_2 = 97;
 
 struct led_descriptor led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
-	[STATE_CHARGING_LVL_1]	     = {{EC_LED_COLOR_RED, LED_INDEFINITE} },
-	[STATE_CHARGING_LVL_2]	     = {{EC_LED_COLOR_AMBER, LED_INDEFINITE} },
-	[STATE_CHARGING_FULL_CHARGE] = {{EC_LED_COLOR_GREEN,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S0]	     = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S3]	     = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_DISCHARGE_S5]         = {{LED_OFF,  LED_INDEFINITE} },
-	[STATE_BATTERY_ERROR]        = {{EC_LED_COLOR_RED,  1 * LED_ONE_SEC},
-					{LED_OFF,	    1 * LED_ONE_SEC} },
-	[STATE_FACTORY_TEST]         = {{EC_LED_COLOR_RED,   2 * LED_ONE_SEC},
-					{EC_LED_COLOR_GREEN, 2 * LED_ONE_SEC} },
+	[STATE_CHARGING_LVL_1] = { { EC_LED_COLOR_RED, LED_INDEFINITE } },
+	[STATE_CHARGING_LVL_2] = { { EC_LED_COLOR_AMBER, LED_INDEFINITE } },
+	[STATE_CHARGING_FULL_CHARGE] = { { EC_LED_COLOR_GREEN,
+					   LED_INDEFINITE } },
+	[STATE_DISCHARGE_S0] = { { LED_OFF, LED_INDEFINITE } },
+	[STATE_DISCHARGE_S3] = { { LED_OFF, LED_INDEFINITE } },
+	[STATE_DISCHARGE_S5] = { { LED_OFF, LED_INDEFINITE } },
+	[STATE_BATTERY_ERROR] = { { EC_LED_COLOR_RED, 1 * LED_ONE_SEC },
+				  { LED_OFF, 1 * LED_ONE_SEC } },
+	[STATE_FACTORY_TEST] = { { EC_LED_COLOR_RED, 2 * LED_ONE_SEC },
+				 { EC_LED_COLOR_GREEN, 2 * LED_ONE_SEC } },
 };
 
 const struct led_descriptor
-		led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
-	[PWR_LED_STATE_ON]           = {{EC_LED_COLOR_WHITE, LED_INDEFINITE} },
-	[PWR_LED_STATE_SUSPEND_AC]   = {{EC_LED_COLOR_WHITE, 1 * LED_ONE_SEC},
-					{LED_OFF,	   1 * LED_ONE_SEC} },
-	[PWR_LED_STATE_OFF]           = {{LED_OFF, LED_INDEFINITE} },
-};
+	led_pwr_state_table[PWR_LED_NUM_STATES][LED_NUM_PHASES] = {
+		[PWR_LED_STATE_ON] = { { EC_LED_COLOR_WHITE, LED_INDEFINITE } },
+		[PWR_LED_STATE_SUSPEND_AC] = { { EC_LED_COLOR_WHITE,
+						 1 * LED_ONE_SEC },
+					       { LED_OFF, 1 * LED_ONE_SEC } },
+		[PWR_LED_STATE_OFF] = { { LED_OFF, LED_INDEFINITE } },
+	};
 
-const enum ec_led_id supported_led_ids[] = {
-	EC_LED_ID_POWER_LED,
-	EC_LED_ID_BATTERY_LED
-};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_POWER_LED,
+					     EC_LED_ID_BATTERY_LED };
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
@@ -51,15 +51,15 @@ void led_set_color_power(enum ec_led_colors color)
 	if (color == EC_LED_COLOR_WHITE)
 #ifdef CONFIG_ZEPHYR
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_white_l),
-							LED_ON_LVL);
+				LED_ON_LVL);
 #else
 		gpio_set_level(GPIO_PWR_LED_WHITE_L, LED_ON_LVL);
 #endif /* CONFIG_ZEPHYR */
 	else
-		/* LED_OFF and unsupported colors */
+	/* LED_OFF and unsupported colors */
 #ifdef CONFIG_ZEPHYR
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_white_l),
-							LED_OFF_LVL);
+				LED_OFF_LVL);
 #else
 		gpio_set_level(GPIO_PWR_LED_WHITE_L, LED_OFF_LVL);
 #endif /* CONFIG_ZEPHYR */
@@ -70,32 +70,28 @@ void led_set_color_battery(enum ec_led_colors color)
 	switch (color) {
 	case EC_LED_COLOR_RED:
 #ifdef CONFIG_ZEPHYR
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l),
-							LED_ON_LVL);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l), LED_ON_LVL);
 #else
 		gpio_set_level(GPIO_BAT_LED_RED_L, LED_ON_LVL);
 #endif /* CONFIG_ZEPHYR */
 		break;
 	case EC_LED_COLOR_AMBER:
 #ifdef CONFIG_ZEPHYR
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l),
-							LED_ON_LVL);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l), LED_ON_LVL);
 #else
 		gpio_set_level(GPIO_BAT_LED_RED_L, LED_ON_LVL);
 #endif /* CONFIG_ZEPHYR */
 		break;
 	case EC_LED_COLOR_GREEN:
 #ifdef CONFIG_ZEPHYR
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l),
-							LED_OFF_LVL);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l), LED_OFF_LVL);
 #else
 		gpio_set_level(GPIO_BAT_LED_RED_L, LED_OFF_LVL);
 #endif /* CONFIG_ZEPHYR */
 		break;
 	default: /* LED_OFF and other unsupported colors */
 #ifdef CONFIG_ZEPHYR
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l),
-							LED_OFF_LVL);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(led_red_l), LED_OFF_LVL);
 #else
 		gpio_set_level(GPIO_BAT_LED_RED_L, LED_OFF_LVL);
 #endif /* CONFIG_ZEPHYR */
