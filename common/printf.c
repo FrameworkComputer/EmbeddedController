@@ -12,7 +12,7 @@
 
 static const char error_str[] = "ERROR";
 
-#define MAX_FORMAT 1024  /* Maximum chars in a single format field */
+#define MAX_FORMAT 1024 /* Maximum chars in a single format field */
 
 #ifndef CONFIG_DEBUG_PRINTF
 static inline int divmod(uint64_t *n, int d)
@@ -47,27 +47,26 @@ static int hexdigit(int c)
 }
 
 /* Flags for vfnprintf() flags */
-#define PF_LEFT		BIT(0)  /* Left-justify */
-#define PF_PADZERO	BIT(1)  /* Pad with 0's not spaces */
-#define PF_SIGN		BIT(2)  /* Add sign (+) for a positive number */
+#define PF_LEFT BIT(0) /* Left-justify */
+#define PF_PADZERO BIT(1) /* Pad with 0's not spaces */
+#define PF_SIGN BIT(2) /* Add sign (+) for a positive number */
 
 /* Deactivate the PF_64BIT flag is 64-bit support is disabled. */
 #ifdef NO_UINT64_SUPPORT
-#define PF_64BIT	0
+#define PF_64BIT 0
 #else
-#define PF_64BIT	BIT(3)  /* Number is 64-bit */
+#define PF_64BIT BIT(3) /* Number is 64-bit */
 #endif
 
 /*
  * Print the buffer as a string of bytes in hex.
  * Returns 0 on success or an error on failure.
  */
-static int print_hex_buffer(int (*addchar)(void *context, int c),
-			    void *context, const char *vstr, int precision,
-			    int pad_width, int flags)
+static int print_hex_buffer(int (*addchar)(void *context, int c), void *context,
+			    const char *vstr, int precision, int pad_width,
+			    int flags)
 
 {
-
 	/*
 	 * Divide pad_width instead of multiplying precision to avoid overflow
 	 * error in the condition. The "/2" and "2*" can be optimized by
@@ -270,8 +269,8 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				 * Avoid null pointer dereference for %ph and
 				 * %pb. %pT and %pP can accept null.
 				 */
-				if (ptrval == NULL
-				    && ptrspec != 'T' && ptrspec != 'P')
+				if (ptrval == NULL && ptrspec != 'T' &&
+				    ptrspec != 'P')
 					continue;
 				/* %pT - print a timestamp. */
 				if (ptrspec == 'T' &&
@@ -285,7 +284,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 						v = *(uint64_t *)ptrval;
 
 					if (IS_ENABLED(
-						CONFIG_CONSOLE_VERBOSE)) {
+						    CONFIG_CONSOLE_VERBOSE)) {
 						precision = 6;
 					} else {
 						precision = 3;
@@ -298,11 +297,9 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 						ptrval;
 					int rc;
 
-					rc = print_hex_buffer(addchar,
-							      context,
+					rc = print_hex_buffer(addchar, context,
 							      hexbuf->buffer,
-							      hexbuf->size,
-							      0,
+							      hexbuf->size, 0,
 							      0);
 
 					if (rc != EC_SUCCESS)
@@ -443,7 +440,6 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			vlen = strnlen(vstr, precision);
 		}
 
-
 		while (vlen < pad_width && !(flags & PF_LEFT)) {
 			if (addchar(context, flags & PF_PADZERO ? '0' : ' '))
 				return EC_ERROR_OVERFLOW;
@@ -509,7 +505,7 @@ int crec_vsnprintf(char *str, size_t size, const char *format, va_list args)
 		return -EC_ERROR_INVAL;
 
 	ctx.str = str;
-	ctx.size = size - 1;  /* Reserve space for terminating '\0' */
+	ctx.size = size - 1; /* Reserve space for terminating '\0' */
 
 	rv = vfnprintf(snprintf_addchar, &ctx, format, args);
 
