@@ -103,7 +103,7 @@ static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 	/* Drive all lines to low for detection any key press */
 	else if (col == KEYBOARD_COLUMN_ALL) {
 		mchp_soc_ecia_girq_src_dis(MCHP_GIRQ21_ID,
-			MCHP_KEYSCAN_GIRQ_POS);
+					   MCHP_KEYSCAN_GIRQ_POS);
 		inst->KSO_SEL = MCHP_KSCAN_KSO_ALL;
 		/* Set logical level low on COL2 */
 		cros_kb_raw_set_col2(0);
@@ -122,7 +122,7 @@ static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 			kb_raw_xec_clr_src(dev);
 		}
 		mchp_soc_ecia_girq_src_en(MCHP_GIRQ21_ID,
-			MCHP_KEYSCAN_GIRQ_POS);
+					  MCHP_KEYSCAN_GIRQ_POS);
 	}
 	/* Drive one line to low for determining
 	 * which key's state changed.
@@ -164,7 +164,7 @@ static int cros_kb_raw_xec_init(const struct device *dev)
 
 	/* Set up Kscan IRQ and ISR */
 	IRQ_CONNECT(DT_INST_IRQN(0), DT_INST_IRQ(0, priority),
-		cros_kb_raw_xec_ksi_isr, DEVICE_DT_INST_GET(0), 0);
+		    cros_kb_raw_xec_ksi_isr, DEVICE_DT_INST_GET(0), 0);
 
 	/* Disable Kscan NVIC and source interrupts */
 	irq_disable(cfg->irq);
