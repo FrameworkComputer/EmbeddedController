@@ -54,8 +54,7 @@ DECLARE_EC_TEST(test_crc5)
 	return EC_SUCCESS;
 }
 
-static int enctest(const void *src, int srcbits, int crc_every,
-		   const char *enc)
+static int enctest(const void *src, int srcbits, int crc_every, const char *enc)
 {
 	char dest[32];
 
@@ -73,7 +72,7 @@ static int enctest(const void *src, int srcbits, int crc_every,
 
 DECLARE_EC_TEST(test_encode)
 {
-	const uint8_t src1[5] = {0xff, 0x00, 0xff, 0x00, 0xff};
+	const uint8_t src1[5] = { 0xff, 0x00, 0xff, 0x00, 0xff };
 	char enc[32];
 
 	/* Test for enough space; error produces null string */
@@ -104,10 +103,9 @@ DECLARE_EC_TEST(test_encode)
 	/* CRC requires exact multiple of symbol count */
 	ENCTEST("\xff\x00\xff\x00\xff", 40, 4, "96ARU8AH9D");
 	ENCTEST("\xff\x00\xff\x00\xff", 40, 8, "96AR8AH9L");
-	zassert_equal(
-		base32_encode(enc, 16, (uint8_t *)"\xff\x00\xff\x00\xff",
-			40, 6),
-		EC_ERROR_INVAL, NULL);
+	zassert_equal(base32_encode(enc, 16, (uint8_t *)"\xff\x00\xff\x00\xff",
+				    40, 6),
+		      EC_ERROR_INVAL, NULL);
 	/* But what matters is symbol count, not bit count */
 	ENCTEST("\xff\x00\xff\x00\xfe", 39, 4, "96ARU8AH8P");
 
@@ -201,8 +199,7 @@ DECLARE_EC_TEST(test_decode)
 
 TEST_MAIN()
 {
-	ztest_test_suite(test_base32_lib,
-			 ztest_unit_test(test_crc5),
+	ztest_test_suite(test_base32_lib, ztest_unit_test(test_crc5),
 			 ztest_unit_test(test_encode),
 			 ztest_unit_test(test_decode));
 	ztest_run_test_suite(test_base32_lib);
