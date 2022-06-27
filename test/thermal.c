@@ -18,7 +18,6 @@
 #include "timer.h"
 #include "util.h"
 
-
 /*****************************************************************************/
 /* Exported data */
 
@@ -95,7 +94,7 @@ static void reset_mocks(void)
 	memset(thermal_params, 0, sizeof(thermal_params));
 
 	/* All sensors report error anyway */
-	set_temps(-1, -1 , -1, -1);
+	set_temps(-1, -1, -1, -1);
 
 	/* Reset expectations */
 	host_throttled = 0;
@@ -104,7 +103,6 @@ static void reset_mocks(void)
 	fan_pct = 0;
 	no_temps_read = 0;
 }
-
 
 /*****************************************************************************/
 /* Tests */
@@ -146,7 +144,6 @@ static int test_sensors_can_be_read(void)
 
 	return EC_SUCCESS;
 }
-
 
 static int test_one_fan(void)
 {
@@ -448,42 +445,41 @@ static int test_several_limits(void)
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
-	set_temps(500, 50, -1, 10);	/* 1=low, 2=X, 3=low */
+	set_temps(500, 50, -1, 10); /* 1=low, 2=X, 3=low */
 	sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
-	set_temps(500, 170, 210, 10);	/* 1=warn, 2=high, 3=low */
+	set_temps(500, 170, 210, 10); /* 1=warn, 2=high, 3=low */
 	sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 0);
 
-	set_temps(500, 100, 50, 40);	/* 1=low, 2=low, 3=high */
+	set_temps(500, 100, 50, 40); /* 1=low, 2=low, 3=high */
 	sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 0);
 
-	set_temps(500, 100, 50, 41);	/* 1=low, 2=low, 3=shutdown */
+	set_temps(500, 100, 50, 41); /* 1=low, 2=low, 3=shutdown */
 	sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 1);
 
-	all_temps(0);			/* reset from shutdown */
+	all_temps(0); /* reset from shutdown */
 	sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
-
 
 	return EC_SUCCESS;
 }
 
 /* Tests for ncp15wb thermistor ADC-to-temp calculation */
-#define LOW_ADC_TEST_VALUE	887 /* 0 C */
-#define HIGH_ADC_TEST_VALUE	100 /* > 100C */
+#define LOW_ADC_TEST_VALUE 887 /* 0 C */
+#define HIGH_ADC_TEST_VALUE 100 /* > 100C */
 
 static int test_ncp15wb_adc_to_temp(void)
 {
@@ -496,17 +492,10 @@ static int test_ncp15wb_adc_to_temp(void)
 		int adc;
 		int temp;
 	} adc_temp_datapoints[] = {
-		{ 615, 30 },
-		{ 561, 35 },
-		{ 508, 40 },
-		{ 407, 50 },
-		{ 315, 60 },
-		{ 243, 70 },
-		{ 186, 80 },
-		{ 140, 90 },
-		{ 107, 100 },
+		{ 615, 30 }, { 561, 35 }, { 508, 40 },
+		{ 407, 50 }, { 315, 60 }, { 243, 70 },
+		{ 186, 80 }, { 140, 90 }, { 107, 100 },
 	};
-
 
 	/*
 	 * Verify that calculated temp is decreasing for entire ADC range,
@@ -518,8 +507,7 @@ static int test_ncp15wb_adc_to_temp(void)
 
 	while (--i > HIGH_ADC_TEST_VALUE) {
 		new_temp = ncp15wb_calculate_temp(i);
-		TEST_ASSERT(new_temp == temp ||
-			    new_temp == temp + 1);
+		TEST_ASSERT(new_temp == temp || new_temp == temp + 1);
 		temp = new_temp;
 	}
 
@@ -539,9 +527,7 @@ static int test_thermistor_linear_interpolate(void)
 	int i, t, t0;
 	uint16_t mv;
 	/* Simple test case - a straight line. */
-	struct thermistor_data_pair line_data[] = {
-		{ 100, 0 }, { 0, 100 }
-	};
+	struct thermistor_data_pair line_data[] = { { 100, 0 }, { 0, 100 } };
 	struct thermistor_info line_info = {
 		.scaling_factor = 1,
 		.num_pairs = ARRAY_SIZE(line_data),
@@ -576,19 +562,17 @@ static int test_thermistor_linear_interpolate(void)
 	 * of derived values but at temp - 1, temp + 1, and in between.
 	 */
 	struct {
-		uint16_t mv;	/* not scaled */
+		uint16_t mv; /* not scaled */
 		int temp;
 	} cmp[] = {
-		{ 3030, 1 },  { 2341, 5 }, { 2195, 9 },
-		{ 2120, 11 }, { 1966, 15 }, { 1811, 19 },
-		{ 1733, 21 }, { 1581, 25 }, { 1434, 29 },
-		{ 1363, 31 }, { 1227, 35 }, { 1100, 39 },
-		{ 1040, 41 }, { 929, 45 }, { 827, 49 },
-		{ 780, 51 }, { 693, 55 }, { 615, 59 },
-		{ 579, 61 }, { 514, 65 }, { 460, 69 },
-		{ 430, 71 }, { 382, 75 }, { 339, 79 },
-		{ 320, 81 }, { 285, 85 }, { 254, 89 },
-		{ 240, 91 }, { 214, 95 }, { 192, 99 },
+		{ 3030, 1 },  { 2341, 5 },  { 2195, 9 },  { 2120, 11 },
+		{ 1966, 15 }, { 1811, 19 }, { 1733, 21 }, { 1581, 25 },
+		{ 1434, 29 }, { 1363, 31 }, { 1227, 35 }, { 1100, 39 },
+		{ 1040, 41 }, { 929, 45 },  { 827, 49 },  { 780, 51 },
+		{ 693, 55 },  { 615, 59 },  { 579, 61 },  { 514, 65 },
+		{ 460, 69 },  { 430, 71 },  { 382, 75 },  { 339, 79 },
+		{ 320, 81 },  { 285, 85 },  { 254, 89 },  { 240, 91 },
+		{ 214, 95 },  { 192, 99 },
 	};
 
 	/* Return lowest temperature in data set if voltage is too high. */
@@ -602,9 +586,8 @@ static int test_thermistor_linear_interpolate(void)
 	TEST_ASSERT(t == data[info.num_pairs - 1].temp);
 
 	/* Simple line test */
-	for (mv = line_data[0].mv;
-		mv > line_data[line_info.num_pairs - 1].mv;
-		mv--) {
+	for (mv = line_data[0].mv; mv > line_data[line_info.num_pairs - 1].mv;
+	     mv--) {
 		t = thermistor_linear_interpolate(mv, &line_info);
 		TEST_ASSERT(mv == line_data[line_info.num_pairs - 1].temp - t);
 	}
@@ -614,8 +597,7 @@ static int test_thermistor_linear_interpolate(void)
 	 * decreases with increase in voltage (0-5V, 10mV steps).
 	 */
 	for (mv = data[0].mv * info.scaling_factor, t0 = data[0].temp;
-		mv > data[info.num_pairs - 1].mv;
-		mv -= 10) {
+	     mv > data[info.num_pairs - 1].mv; mv -= 10) {
 		int t1 = thermistor_linear_interpolate(mv, &info);
 
 		TEST_ASSERT(t1 >= t0);
