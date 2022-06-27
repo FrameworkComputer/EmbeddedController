@@ -25,13 +25,13 @@
 #include "touchpad_fw_hash.h"
 
 BUILD_ASSERT(sizeof(touchpad_fw_hashes) ==
-		(CONFIG_TOUCHPAD_FW_CHUNKS * SHA256_DIGEST_SIZE));
+	     (CONFIG_TOUCHPAD_FW_CHUNKS * SHA256_DIGEST_SIZE));
 BUILD_ASSERT(sizeof(touchpad_fw_hashes[0]) == SHA256_DIGEST_SIZE);
 
 BUILD_ASSERT(sizeof(touchpad_fw_full_hash) == SHA256_DIGEST_SIZE);
 #endif
 
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 /* Section to be updated (i.e. not the current section). */
 struct {
@@ -47,9 +47,8 @@ struct {
 static int is_touchpad_block(uint32_t block_offset, size_t body_size)
 {
 	return (block_offset >= CONFIG_TOUCHPAD_VIRTUAL_OFF) &&
-	       (block_offset + body_size) <=
-			(CONFIG_TOUCHPAD_VIRTUAL_OFF +
-				CONFIG_TOUCHPAD_VIRTUAL_SIZE);
+	       (block_offset + body_size) <= (CONFIG_TOUCHPAD_VIRTUAL_OFF +
+					      CONFIG_TOUCHPAD_VIRTUAL_SIZE);
 }
 #endif
 
@@ -71,17 +70,15 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 	if (update_section.base_offset != update_section.top_offset &&
 	    (block_offset >= update_section.base_offset) &&
 	    ((block_offset + body_size) <= update_section.top_offset)) {
-
 		base = update_section.base_offset;
-		size = update_section.top_offset -
-			 update_section.base_offset;
+		size = update_section.top_offset - update_section.base_offset;
 		/*
 		 * If this is the first chunk for this section, it needs to
 		 * be erased.
 		 */
 		if (block_offset == base) {
 			if (crec_flash_physical_erase(base, size) !=
-				EC_SUCCESS) {
+			    EC_SUCCESS) {
 				CPRINTF("%s:%d erase failure of 0x%x..+0x%x\n",
 					__func__, __LINE__, base, size);
 				return UPDATE_ERASE_FAILURE;
@@ -96,14 +93,11 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 		return UPDATE_SUCCESS;
 #endif
 
-	CPRINTF("%s:%d %x, %d section base %x top %x\n",
-		__func__, __LINE__,
-		block_offset, body_size,
-		update_section.base_offset,
+	CPRINTF("%s:%d %x, %d section base %x top %x\n", __func__, __LINE__,
+		block_offset, body_size, update_section.base_offset,
 		update_section.top_offset);
 
 	return UPDATE_BAD_ADDR;
-
 }
 
 int update_pdu_valid(struct update_command *cmd_body, size_t cmd_size)
@@ -120,8 +114,8 @@ static void new_chunk_written(uint32_t block_offset)
 {
 }
 
-static int contents_allowed(uint32_t block_offset,
-			    size_t body_size, void *update_data)
+static int contents_allowed(uint32_t block_offset, size_t body_size,
+			    void *update_data)
 {
 #if defined(CONFIG_TOUCHPAD_VIRTUAL_OFF) && defined(CONFIG_TOUCHPAD_HASH_FW)
 	if (is_touchpad_block(block_offset, body_size)) {
@@ -132,9 +126,9 @@ static int contents_allowed(uint32_t block_offset,
 		int good = 0;
 
 		if (chunk >= CONFIG_TOUCHPAD_FW_CHUNKS ||
-				(fw_offset % CONFIG_UPDATE_PDU_SIZE) != 0) {
-			CPRINTF("%s: TP invalid offset %08x\n",
-				__func__, fw_offset);
+		    (fw_offset % CONFIG_UPDATE_PDU_SIZE) != 0) {
+			CPRINTF("%s: TP invalid offset %08x\n", __func__,
+				fw_offset);
 			return 0;
 		}
 
@@ -143,10 +137,10 @@ static int contents_allowed(uint32_t block_offset,
 		tmp = SHA256_final(&ctx);
 
 		good = !memcmp(tmp, touchpad_fw_hashes[chunk],
-				SHA256_DIGEST_SIZE);
+			       SHA256_DIGEST_SIZE);
 
-		CPRINTF("%s: TP %08x %02x..%02x (%s)\n", __func__,
-			fw_offset, tmp[0], tmp[31], good ? "GOOD" : "BAD");
+		CPRINTF("%s: TP %08x %02x..%02x (%s)\n", __func__, fw_offset,
+			tmp[0], tmp[31], good ? "GOOD" : "BAD");
 
 		return good;
 	}
@@ -194,7 +188,7 @@ void fw_update_start(struct first_response_pdu *rpdu)
 	rpdu->common.offset = htobe32(update_section.base_offset);
 	if (version)
 		memcpy(rpdu->common.version, version,
-			sizeof(rpdu->common.version));
+		       sizeof(rpdu->common.version));
 
 #ifdef CONFIG_ROLLBACK
 	rpdu->common.min_rollback = htobe32(rollback_get_minimum_version());
@@ -216,13 +210,12 @@ void fw_update_start(struct first_response_pdu *rpdu)
 #endif
 }
 
-void fw_update_command_handler(void *body,
-			       size_t cmd_size,
+void fw_update_command_handler(void *body, size_t cmd_size,
 			       size_t *response_size)
 {
 	struct update_command *cmd_body = body;
 	void *update_data;
-	uint8_t *error_code = body;  /* Cache the address for code clarity. */
+	uint8_t *error_code = body; /* Cache the address for code clarity. */
 	size_t body_size;
 	uint32_t block_offset;
 
@@ -285,11 +278,11 @@ void fw_update_command_handler(void *body,
 #ifdef CONFIG_TOUCHPAD_VIRTUAL_OFF
 	if (is_touchpad_block(block_offset, body_size)) {
 		if (touchpad_update_write(
-				block_offset - CONFIG_TOUCHPAD_VIRTUAL_OFF,
-				body_size, update_data)	!= EC_SUCCESS) {
+			    block_offset - CONFIG_TOUCHPAD_VIRTUAL_OFF,
+			    body_size, update_data) != EC_SUCCESS) {
 			*error_code = UPDATE_WRITE_FAILURE;
-			CPRINTF("%s:%d update write error\n",
-				__func__, __LINE__);
+			CPRINTF("%s:%d update write error\n", __func__,
+				__LINE__);
 			return;
 		}
 
@@ -301,8 +294,8 @@ void fw_update_command_handler(void *body,
 #endif
 
 	CPRINTF("update: 0x%x\n", block_offset + CONFIG_PROGRAM_MEMORY_BASE);
-	if (crec_flash_physical_write(block_offset, body_size, update_data)
-	    != EC_SUCCESS) {
+	if (crec_flash_physical_write(block_offset, body_size, update_data) !=
+	    EC_SUCCESS) {
 		*error_code = UPDATE_WRITE_FAILURE;
 		CPRINTF("%s:%d update write error\n", __func__, __LINE__);
 		return;
@@ -311,12 +304,12 @@ void fw_update_command_handler(void *body,
 	new_chunk_written(block_offset);
 
 	/* Verify that data was written properly. */
-	if (memcmp(update_data, (void *)
-		   (block_offset + CONFIG_PROGRAM_MEMORY_BASE),
+	if (memcmp(update_data,
+		   (void *)(block_offset + CONFIG_PROGRAM_MEMORY_BASE),
 		   body_size)) {
 		*error_code = UPDATE_VERIFY_ERROR;
-		CPRINTF("%s:%d update verification error\n",
-			__func__, __LINE__);
+		CPRINTF("%s:%d update verification error\n", __func__,
+			__LINE__);
 		return;
 	}
 
