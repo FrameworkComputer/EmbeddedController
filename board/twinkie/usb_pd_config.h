@@ -50,7 +50,7 @@ static inline void spi_enable_clock(int port)
 #define DMAC_TIM_RX(p) STM32_DMAC_CH2
 #define TIM_RX_CCR_IDX(p) TIM_RX_CCR_C0
 #define TIM_TX_CCR_IDX(p) TIM_TX_CCR_C0
-#define TIM_CCR_CS  1
+#define TIM_CCR_CS 1
 #define EXTI_COMP_MASK(p) (BIT(21) | BIT(22))
 #define IRQ_COMP STM32_IRQ_COMP
 /* triggers packet detection on comparator falling edge */
@@ -102,11 +102,11 @@ static inline void pd_tx_enable(int port, int polarity)
 static inline void pd_tx_disable(int port, int polarity)
 {
 	/* TX_DATA on PB4 is an output low GPIO to disable the FET */
-	STM32_GPIO_MODER(GPIO_B) = (STM32_GPIO_MODER(GPIO_B) & ~(3 << (2*4)))
-							     |  (1 << (2*4));
+	STM32_GPIO_MODER(GPIO_B) =
+		(STM32_GPIO_MODER(GPIO_B) & ~(3 << (2 * 4))) | (1 << (2 * 4));
 	/* TX_DATA on PA6 is an output low GPIO to disable the FET */
-	STM32_GPIO_MODER(GPIO_A) = (STM32_GPIO_MODER(GPIO_A) & ~(3 << (2*6)))
-							     |  (1 << (2*6));
+	STM32_GPIO_MODER(GPIO_A) =
+		(STM32_GPIO_MODER(GPIO_A) & ~(3 << (2 * 6))) | (1 << (2 * 6));
 	/*
 	 * Tri-state the low side after the high side
 	 * to ensure we are not going above Vnc
@@ -119,11 +119,12 @@ static inline void pd_tx_disable(int port, int polarity)
 static inline void pd_select_polarity(int port, int polarity)
 {
 	/* use the right comparator */
-	STM32_COMP_CSR = (STM32_COMP_CSR
-		& ~(STM32_COMP_CMP1INSEL_MASK | STM32_COMP_CMP2INSEL_MASK
-		  |STM32_COMP_CMP1EN | STM32_COMP_CMP2EN))
-		| STM32_COMP_CMP1INSEL_INM4 | STM32_COMP_CMP2INSEL_INM4
-		| (polarity ? STM32_COMP_CMP2EN : STM32_COMP_CMP1EN);
+	STM32_COMP_CSR =
+		(STM32_COMP_CSR &
+		 ~(STM32_COMP_CMP1INSEL_MASK | STM32_COMP_CMP2INSEL_MASK |
+		   STM32_COMP_CMP1EN | STM32_COMP_CMP2EN)) |
+		STM32_COMP_CMP1INSEL_INM4 | STM32_COMP_CMP2INSEL_INM4 |
+		(polarity ? STM32_COMP_CMP2EN : STM32_COMP_CMP1EN);
 }
 
 /* Initialize pins used for clocking */
