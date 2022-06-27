@@ -17,8 +17,8 @@ static inline void crc32_init(void)
 	/* Delay 1 AHB clock cycle after the clock is enabled */
 	clock_wait_bus_cycles(BUS_AHB, 1);
 	/* reset CRC state */
-	STM32_CRC_CR = STM32_CRC_CR_RESET | STM32_CRC_CR_REV_OUT
-		     | STM32_CRC_CR_REV_IN_WORD;
+	STM32_CRC_CR = STM32_CRC_CR_RESET | STM32_CRC_CR_REV_OUT |
+		       STM32_CRC_CR_REV_IN_WORD;
 	while (STM32_CRC_CR & 1)
 		;
 }
