@@ -96,7 +96,7 @@ void board_config_pre_init(void)
 	/* enable SYSCFG clock */
 	STM32_RCC_APB2ENR |= BIT(0);
 	/* Remap USART DMA to match the USART driver */
-	STM32_SYSCFG_CFGR1 |= BIT(9) | BIT(10);/* Remap USART1 RX/TX DMA */
+	STM32_SYSCFG_CFGR1 |= BIT(9) | BIT(10); /* Remap USART1 RX/TX DMA */
 }
 
 /* Initialize board. */
@@ -115,10 +115,10 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* USB PD CC lines sensing. Converted to mV (3300mV/4096). */
-	[ADC_CH_CC1_PD] = {"USB_C_CC1_PD", 3300, 4096, 0, STM32_AIN(1)},
+	[ADC_CH_CC1_PD] = { "USB_C_CC1_PD", 3300, 4096, 0, STM32_AIN(1) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-const void * const usb_strings[] = {
+const void *const usb_strings[] = {
 	[USB_STR_DESC] = usb_string_desc,
 	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
 	[USB_STR_PRODUCT] = USB_STRING_DESC("Dingdong"),
