@@ -35,36 +35,36 @@ enum fw_config_db get_cbi_fw_config_db(void)
 
 enum fw_config_stylus get_cbi_fw_config_stylus(void)
 {
-	return ((cached_fw_config & FW_CONFIG_STYLUS_MASK)
-			>> FW_CONFIG_STYLUS_OFFSET);
+	return ((cached_fw_config & FW_CONFIG_STYLUS_MASK) >>
+		FW_CONFIG_STYLUS_OFFSET);
 }
 
 enum fw_config_kblight_type get_cbi_fw_config_kblight(void)
 {
-	return ((cached_fw_config & FW_CONFIG_KB_BL_MASK)
-			>> FW_CONFIG_KB_BL_OFFSET);
+	return ((cached_fw_config & FW_CONFIG_KB_BL_MASK) >>
+		FW_CONFIG_KB_BL_OFFSET);
 }
 
 enum fw_config_tablet_mode_type get_cbi_fw_config_tablet_mode(void)
 {
-	return ((cached_fw_config & FW_CONFIG_TABLET_MODE_MASK)
-			>> FW_CONFIG_TABLET_MODE_OFFSET);
+	return ((cached_fw_config & FW_CONFIG_TABLET_MODE_MASK) >>
+		FW_CONFIG_TABLET_MODE_OFFSET);
 }
 
 int get_cbi_fw_config_keyboard(void)
 {
-	return ((cached_fw_config & FW_CONFIG_KB_LAYOUT_MASK)
-			>> FW_CONFIG_KB_LAYOUT_OFFSET);
+	return ((cached_fw_config & FW_CONFIG_KB_LAYOUT_MASK) >>
+		FW_CONFIG_KB_LAYOUT_OFFSET);
 }
 
 enum fw_config_numeric_pad_type get_cbi_fw_config_numeric_pad(void)
 {
-	return ((cached_fw_config & FW_CONFIG_KB_NUMPAD_MASK)
-		>> FW_CONFIG_KB_NUMPAD_OFFSET);
+	return ((cached_fw_config & FW_CONFIG_KB_NUMPAD_MASK) >>
+		FW_CONFIG_KB_NUMPAD_OFFSET);
 }
 
 enum fw_config_hdmi_type get_cbi_fw_config_hdmi(void)
 {
-	return ((cached_fw_config & FW_CONFIG_HDMI_MASK)
-		>> FW_CONFIG_HDMI_OFFSET);
+	return ((cached_fw_config & FW_CONFIG_HDMI_MASK) >>
+		FW_CONFIG_HDMI_OFFSET);
 }
