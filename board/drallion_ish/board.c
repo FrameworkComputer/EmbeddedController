@@ -43,11 +43,9 @@ static struct stprivate_data g_lis2dh_data;
 static struct lis2mdl_private_data lis2mdl_a_data;
 
 /* Matrix to rotate base sensor into standard reference frame */
-const mat33_fp_t base_rot_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_rot_ref = { { 0, FLOAT_TO_FP(1), 0 },
+				  { FLOAT_TO_FP(-1), 0, 0 },
+				  { 0, 0, FLOAT_TO_FP(1) } };
 
 /* Drivers */
 struct motion_sensor_t motion_sensors[] = {
