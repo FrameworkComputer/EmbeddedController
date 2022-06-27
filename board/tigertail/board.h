@@ -40,19 +40,19 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_CONSOLE	0
-#define USB_IFACE_UPDATE	1
-#define USB_IFACE_USART1_STREAM	2
-#define USB_IFACE_I2C		3
-#define USB_IFACE_COUNT		4
+#define USB_IFACE_CONSOLE 0
+#define USB_IFACE_UPDATE 1
+#define USB_IFACE_USART1_STREAM 2
+#define USB_IFACE_I2C 3
+#define USB_IFACE_COUNT 4
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_CONSOLE		1
-#define USB_EP_UPDATE		2
-#define USB_EP_USART1_STREAM	3
-#define USB_EP_I2C		4
-#define USB_EP_COUNT		5
+#define USB_EP_CONTROL 0
+#define USB_EP_CONSOLE 1
+#define USB_EP_UPDATE 2
+#define USB_EP_USART1_STREAM 3
+#define USB_EP_I2C 4
+#define USB_EP_COUNT 5
 
 /* Enable console recasting of GPIO type. */
 #define CONFIG_CMD_GPIO_EXTENDED
@@ -77,14 +77,11 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
-
 #ifndef __ASSEMBLER__
 
 /* Timer selection */
 #define TIM_CLOCK32 2
-#define TIM_ADC     3
-
-
+#define TIM_ADC 3
 
 #include "gpio_signal.h"
 
