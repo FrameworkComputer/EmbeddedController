@@ -763,6 +763,16 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		HOOK_PRIO_DEFAULT);
 
 static int force_gpio6_rework;
+
+void disable_bb_retimer_power_deferred(void)
+{
+	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework) {
+		CPRINTS("Disable BBR power");
+		gpio_set_level(GPIO_PM_SLP_S0_L, 0);
+	}
+}
+DECLARE_DEFERRED(disable_bb_retimer_power_deferred);
+
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
@@ -773,11 +783,16 @@ static void board_chipset_resume(void)
 	charge_psys_onoff(1);
 
 	/* Enable BB retimer power, for MP boards. */
-	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework)
+	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework) {
+		CPRINTS("Enable BBR power");
 		gpio_set_level(GPIO_PM_SLP_S0_L, 1);
+	}
+
+	hook_call_deferred(&disable_bb_retimer_power_deferred_data, -1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume,
 	     MOTION_SENSE_HOOK_PRIO-1);
+
 
 /* Called on AP S0 -> S3 transition */
 static void board_chipset_suspend(void)
@@ -791,8 +806,7 @@ static void board_chipset_suspend(void)
 	charge_psys_onoff(0);
 
 	/* Disable BB retimer power, for MP boards. */
-	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework)
-		gpio_set_level(GPIO_PM_SLP_S0_L, 0);
+	hook_call_deferred(&disable_bb_retimer_power_deferred_data, 3 * SECOND);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
 		board_chipset_suspend,
