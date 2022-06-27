@@ -47,26 +47,27 @@
 #define CONFIG_HW_CRC
 
 /* Servo v4 CC configuration */
-#define CC_DETACH	BIT(0)   /* Emulate detach: both CC open */
-#define CC_DISABLE_DTS	BIT(1)   /* Apply resistors to single or both CC? */
-#define CC_ALLOW_SRC	BIT(2)   /* Allow charge through by policy? */
-#define CC_ENABLE_DRP	BIT(3)   /* Enable dual-role port */
-#define CC_SNK_WITH_PD	BIT(4)   /* Force enabling PD comm for sink role */
-#define CC_POLARITY	BIT(5)   /* CC polarity */
-#define CC_EMCA_SERVO	BIT(6)   /*
-				  * Emulate Electronically Marked Cable Assembly
-				  * (EMCA) servo (or non-EMCA)
-				  */
-#define CC_FASTBOOT_DFP	BIT(7)   /* Allow mux uServo->Fastboot on DFP */
+#define CC_DETACH BIT(0) /* Emulate detach: both CC open */
+#define CC_DISABLE_DTS BIT(1) /* Apply resistors to single or both CC? */
+#define CC_ALLOW_SRC BIT(2) /* Allow charge through by policy? */
+#define CC_ENABLE_DRP BIT(3) /* Enable dual-role port */
+#define CC_SNK_WITH_PD BIT(4) /* Force enabling PD comm for sink role */
+#define CC_POLARITY BIT(5) /* CC polarity */
+#define CC_EMCA_SERVO                                          \
+	BIT(6) /*                                              \
+		* Emulate Electronically Marked Cable Assembly \
+		* (EMCA) servo (or non-EMCA)                   \
+		*/
+#define CC_FASTBOOT_DFP BIT(7) /* Allow mux uServo->Fastboot on DFP */
 
 /* Servo v4 DP alt-mode configuration */
-#define ALT_DP_ENABLE		BIT(0)   /* Enable DP alt-mode or not */
-#define ALT_DP_PIN_C		BIT(1)   /* Pin assignment C supported */
-#define ALT_DP_PIN_D		BIT(2)   /* Pin assignment D supported */
-#define ALT_DP_MF_PREF		BIT(3)   /* Multi-Function preferred */
-#define ALT_DP_PLUG		BIT(4)   /* Plug or receptacle */
-#define ALT_DP_OVERRIDE_HPD	BIT(5)   /* Override the HPD signal */
-#define ALT_DP_HPD_LVL		BIT(6)   /* HPD level if overridden */
+#define ALT_DP_ENABLE BIT(0) /* Enable DP alt-mode or not */
+#define ALT_DP_PIN_C BIT(1) /* Pin assignment C supported */
+#define ALT_DP_PIN_D BIT(2) /* Pin assignment D supported */
+#define ALT_DP_MF_PREF BIT(3) /* Multi-Function preferred */
+#define ALT_DP_PLUG BIT(4) /* Plug or receptacle */
+#define ALT_DP_OVERRIDE_HPD BIT(5) /* Override the HPD signal */
+#define ALT_DP_HPD_LVL BIT(6) /* HPD level if overridden */
 
 /* TX uses SPI1 on PB3-4 for CHG port, SPI2 on PB 13-14 for DUT port */
 #define SPI_REGS(p) ((p) ? STM32_SPI2_REGS : STM32_SPI1_REGS)
@@ -89,14 +90,14 @@ static inline void spi_enable_clock(int port)
 
 #define TIM_TX_CCR_IDX(p) ((p) ? TIM_TX_CCR_DUT : TIM_TX_CCR_CHG)
 #define TIM_RX_CCR_IDX(p) ((p) ? TIM_RX_CCR_DUT : TIM_RX_CCR_CHG)
-#define TIM_CCR_CS  1
+#define TIM_CCR_CS 1
 
 /*
  * EXTI line 21 is connected to the CMP1 output,
  * EXTI line 22 is connected to the CMP2 output,
  * CHG uses CMP2, and DUT uses CMP1.
  */
-#define EXTI_COMP_MASK(p) ((p) ? (1<<21) : BIT(22))
+#define EXTI_COMP_MASK(p) ((p) ? (1 << 21) : BIT(22))
 
 #define IRQ_COMP STM32_IRQ_COMP
 /* triggers packet detection on comparator falling edge */
@@ -188,13 +189,23 @@ static inline void pd_select_polarity(int port, int polarity)
 	if (port == CHG) {
 		/* CHG use the right comparator inverted input for COMP2 */
 		STM32_COMP_CSR = (val & ~STM32_COMP_CMP2INSEL_MASK) |
-			(polarity ? STM32_COMP_CMP2INSEL_INM4  /* PA4: C0_CC2 */
-				  : STM32_COMP_CMP2INSEL_INM6);/* PA2: C0_CC1 */
+				 (polarity ? STM32_COMP_CMP2INSEL_INM4 /* PA4:
+									  C0_CC2
+									*/
+					     :
+					     STM32_COMP_CMP2INSEL_INM6); /* PA2:
+									    C0_CC1
+									  */
 	} else {
 		/* DUT use the right comparator inverted input for COMP1 */
 		STM32_COMP_CSR = (val & ~STM32_COMP_CMP1INSEL_MASK) |
-			(polarity ? STM32_COMP_CMP1INSEL_INM5  /* PA5: C1_CC2 */
-			 : STM32_COMP_CMP1INSEL_INM6);/* PA0: C1_CC1 */
+				 (polarity ? STM32_COMP_CMP1INSEL_INM5 /* PA5:
+									  C1_CC2
+									*/
+					     :
+					     STM32_COMP_CMP1INSEL_INM6); /* PA0:
+									    C1_CC1
+									  */
 	}
 }
 
@@ -274,7 +285,6 @@ static inline void pd_config_init(int port, uint8_t power_role)
 
 	/* Initialize TX pins and put them in Hi-Z */
 	pd_tx_init();
-
 }
 
 int pd_adc_read(int port, int cc);
