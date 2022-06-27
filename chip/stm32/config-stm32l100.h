@@ -5,8 +5,8 @@
 
 /* Memory mapping */
 #define CONFIG_FLASH_SIZE_BYTES 0x00020000
-#define CONFIG_FLASH_BANK_SIZE  0x1000
-#define CONFIG_FLASH_ERASE_SIZE 0x0100  /* erase bank size */
+#define CONFIG_FLASH_BANK_SIZE 0x1000
+#define CONFIG_FLASH_ERASE_SIZE 0x0100 /* erase bank size */
 
 /*
  * TODO(crosbug.com/p/23805): Technically we can write in word-mode (4 bytes at
@@ -21,8 +21,8 @@
 /* Ideal write size in page-mode */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE 0x0080
 
-#define CONFIG_RAM_BASE         0x20000000
-#define CONFIG_RAM_SIZE         0x00002800
+#define CONFIG_RAM_BASE 0x20000000
+#define CONFIG_RAM_SIZE 0x00002800
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 45
@@ -37,10 +37,10 @@
 #define CONFIG_STM32L_FAKE_HIBERNATE
 
 /* USB packet ram config */
-#define CONFIG_USB_RAM_BASE        0x40006000
-#define CONFIG_USB_RAM_SIZE        512
+#define CONFIG_USB_RAM_BASE 0x40006000
+#define CONFIG_USB_RAM_SIZE 512
 #define CONFIG_USB_RAM_ACCESS_TYPE uint32_t
 #define CONFIG_USB_RAM_ACCESS_SIZE 4
 
 /* DFU Address */
-#define STM32_DFU_BASE              0x1ff00000
+#define STM32_DFU_BASE 0x1ff00000
