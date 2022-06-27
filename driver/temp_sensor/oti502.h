@@ -8,10 +8,10 @@
 #ifndef __CROS_EC_OTI502_H
 #define __CROS_EC_OTI502_H
 
-#define OTI502_I2C_ADDR_FLAGS		0x10
+#define OTI502_I2C_ADDR_FLAGS 0x10
 
-#define OTI502_IDX_AMBIENT	0
-#define OTI502_IDX_OBJECT	1
+#define OTI502_IDX_AMBIENT 0
+#define OTI502_IDX_OBJECT 1
 
 /**
  * Get the last polled value of a sensor.
@@ -24,4 +24,4 @@
  */
 int oti502_get_val(int idx, int *temp_ptr);
 
-#endif  /* __CROS_EC_OTI502_H */
+#endif /* __CROS_EC_OTI502_H */
