@@ -31,17 +31,18 @@ enum led_color {
 	LED_OFF = 0,
 	LED_AMBER,
 	LED_WHITE,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static void side_led_set_color(int port, enum led_color color)
 {
 	int yellow_c0 = (system_get_board_version() >= 5) ?
-			GPIO_LED_YELLOW_C0 : GPIO_LED_YELLOW_C0_OLD;
+				GPIO_LED_YELLOW_C0 :
+				GPIO_LED_YELLOW_C0_OLD;
 	gpio_set_level(port ? GPIO_LED_YELLOW_C1 : yellow_c0,
-		(color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_AMBER) ? BAT_LED_ON : BAT_LED_OFF);
 	gpio_set_level(port ? GPIO_LED_WHITE_C1 : GPIO_LED_WHITE_C0,
-		(color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
+		       (color == LED_WHITE) ? BAT_LED_ON : BAT_LED_OFF);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
@@ -104,8 +105,9 @@ static void board_led_set_battery(void)
 	case PWR_STATE_DISCHARGE:
 		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
 			if (charge_get_percent() <= 10)
-				side_led_set_color(0,
-				   (battery_ticks & 0x4) ? LED_WHITE : LED_OFF);
+				side_led_set_color(0, (battery_ticks & 0x4) ?
+							      LED_WHITE :
+							      LED_OFF);
 			else
 				side_led_set_color(0, LED_OFF);
 		}
@@ -114,16 +116,16 @@ static void board_led_set_battery(void)
 			side_led_set_color(1, LED_OFF);
 		break;
 	case PWR_STATE_ERROR:
-		set_active_port_color((battery_ticks & 0x2) ?
-				LED_WHITE : LED_OFF);
+		set_active_port_color((battery_ticks & 0x2) ? LED_WHITE :
+							      LED_OFF);
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			set_active_port_color((battery_ticks & 0x4) ?
-					LED_AMBER : LED_OFF);
+			set_active_port_color(
+				(battery_ticks & 0x4) ? LED_AMBER : LED_OFF);
 		else
 			set_active_port_color(LED_WHITE);
 		break;
