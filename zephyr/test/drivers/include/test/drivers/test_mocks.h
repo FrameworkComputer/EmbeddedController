@@ -42,27 +42,27 @@
  * @param  EXPECTED_VAL - The 8-bit value that was supposed to be written, or
  *          `MOCK_IGNORE_VALUE` to suppress this check.
  */
-#define MOCK_ASSERT_I2C_WRITE(FAKE, CALL_NUM, EXPECTED_REG, EXPECTED_VAL)     \
-	do {                                                                  \
-		zassert_true((CALL_NUM) < FAKE##_fake.call_count,             \
-			     "Call #%d did not occur (%d I2C writes total)",  \
-			     (CALL_NUM), FAKE##_fake.call_count);             \
-		zassert_equal(                                                \
-			FAKE##_fake.arg1_history[(CALL_NUM)], (EXPECTED_REG), \
-			"Expected I2C write #%d to register 0x%02x ("         \
-			#EXPECTED_REG ") but wrote to reg 0x%02x",            \
-			(CALL_NUM), (EXPECTED_REG),                           \
-			FAKE##_fake.arg1_history[(CALL_NUM)]);                \
-		if ((EXPECTED_VAL) != MOCK_IGNORE_VALUE) {                    \
-			zassert_equal(                                        \
-				FAKE##_fake.arg2_history[(CALL_NUM)],         \
-				(EXPECTED_VAL),                               \
-				"Expected I2C write #%d to register 0x%02x (" \
-				#EXPECTED_REG ") to write 0x%02x ("           \
-				#EXPECTED_VAL ") but wrote 0x%02x",           \
-				(CALL_NUM), (EXPECTED_REG), (EXPECTED_VAL),   \
-				FAKE##_fake.arg2_history[(CALL_NUM)]);        \
-		}                                                             \
+#define MOCK_ASSERT_I2C_WRITE(FAKE, CALL_NUM, EXPECTED_REG, EXPECTED_VAL)                   \
+	do {                                                                                \
+		zassert_true((CALL_NUM) < FAKE##_fake.call_count,                           \
+			     "Call #%d did not occur (%d I2C writes total)",                \
+			     (CALL_NUM), FAKE##_fake.call_count);                           \
+		zassert_equal(                                                              \
+			FAKE##_fake.arg1_history[(CALL_NUM)], (EXPECTED_REG),               \
+			"Expected I2C write #%d to register 0x%02x (" #EXPECTED_REG         \
+			") but wrote to reg 0x%02x",                                        \
+			(CALL_NUM), (EXPECTED_REG),                                         \
+			FAKE##_fake.arg1_history[(CALL_NUM)]);                              \
+		if ((EXPECTED_VAL) != MOCK_IGNORE_VALUE) {                                  \
+			zassert_equal(                                                      \
+				FAKE##_fake.arg2_history[(CALL_NUM)],                       \
+				(EXPECTED_VAL),                                             \
+				"Expected I2C write #%d to register 0x%02x (" #EXPECTED_REG \
+				") to write 0x%02x (" #EXPECTED_VAL                         \
+				") but wrote 0x%02x",                                       \
+				(CALL_NUM), (EXPECTED_REG), (EXPECTED_VAL),                 \
+				FAKE##_fake.arg2_history[(CALL_NUM)]);                      \
+		}                                                                           \
 	} while (0)
 
 /** @brief Value to pass to MOCK_ASSERT_I2C_WRITE to ignore the actual value
@@ -81,17 +81,17 @@
  * @param  EXPECTED_REG - The register address that was supposed to be read
  *          from.
  */
-#define MOCK_ASSERT_I2C_READ(FAKE, CALL_NUM, EXPECTED_REG)                    \
-	do {                                                                  \
-		zassert_true((CALL_NUM) < FAKE##_fake.call_count,             \
-			     "Call #%d did not occur (%d I2C reads total)",   \
-			     (CALL_NUM), FAKE##_fake.call_count);             \
-		zassert_equal(                                                \
-			FAKE##_fake.arg1_history[(CALL_NUM)], (EXPECTED_REG), \
-			"Expected I2C read #%d from register 0x%02x ("        \
-			#EXPECTED_REG ") but read from reg 0x%02x",           \
-			(CALL_NUM), (EXPECTED_REG),                           \
-			FAKE##_fake.arg1_history[(CALL_NUM)]);                \
+#define MOCK_ASSERT_I2C_READ(FAKE, CALL_NUM, EXPECTED_REG)                           \
+	do {                                                                         \
+		zassert_true((CALL_NUM) < FAKE##_fake.call_count,                    \
+			     "Call #%d did not occur (%d I2C reads total)",          \
+			     (CALL_NUM), FAKE##_fake.call_count);                    \
+		zassert_equal(                                                       \
+			FAKE##_fake.arg1_history[(CALL_NUM)], (EXPECTED_REG),        \
+			"Expected I2C read #%d from register 0x%02x (" #EXPECTED_REG \
+			") but read from reg 0x%02x",                                \
+			(CALL_NUM), (EXPECTED_REG),                                  \
+			FAKE##_fake.arg1_history[(CALL_NUM)]);                       \
 	} while (0)
 
 /*
