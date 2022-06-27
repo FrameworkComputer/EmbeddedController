@@ -28,15 +28,11 @@ int verify_tcpci_tx_retry_count(enum tcpci_msg_type tx_type,
 
 int verify_tcpci_tx_timeout(enum tcpci_msg_type tx_type,
 			    enum pd_ctrl_msg_type ctrl_msg,
-			    enum pd_data_msg_type data_msg,
-			    int timeout);
+			    enum pd_data_msg_type data_msg, int timeout);
 
 int verify_tcpci_tx_with_data(enum tcpci_msg_type tx_type,
-			      enum pd_data_msg_type data_msg,
-			      uint8_t *data,
-			      int data_bytes,
-			      int *msg_len,
-			      int timeout);
+			      enum pd_data_msg_type data_msg, uint8_t *data,
+			      int data_bytes, int *msg_len, int timeout);
 
 struct possible_tx {
 	enum tcpci_msg_type tx_type;
@@ -44,13 +40,9 @@ struct possible_tx {
 	enum pd_data_msg_type data_msg;
 };
 
-int verify_tcpci_possible_tx(struct possible_tx possible[],
-			     int possible_cnt,
-			     int *found_index,
-			     uint8_t *data,
-			     int data_bytes,
-			     int *msg_len,
-			     int timeout);
+int verify_tcpci_possible_tx(struct possible_tx possible[], int possible_cnt,
+			     int *found_index, uint8_t *data, int data_bytes,
+			     int *msg_len, int timeout);
 
 void mock_tcpci_receive(enum tcpci_msg_type sop, uint16_t header,
 			uint32_t *payload);
