@@ -74,8 +74,8 @@ enum mpsse_pins {
  * propagates data on the falling edge
  * and reads data on the rising edge of the clock.
  */
-#define SPI_CMD_TX   (MPSSE_DO_WRITE | MPSSE_WRITE_NEG)
-#define SPI_CMD_RX   (MPSSE_DO_READ)
+#define SPI_CMD_TX (MPSSE_DO_WRITE | MPSSE_WRITE_NEG)
+#define SPI_CMD_RX (MPSSE_DO_READ)
 #define SPI_CMD_TXRX (MPSSE_DO_WRITE | MPSSE_DO_READ | MPSSE_WRITE_NEG)
 
 static int raw_read(uint8_t *buf, int size)
@@ -94,7 +94,7 @@ static int raw_read(uint8_t *buf, int size)
 
 static int mpsse_set_pins(uint8_t levels)
 {
-	uint8_t buf[MPSSE_CMD_SIZE] = {0};
+	uint8_t buf[MPSSE_CMD_SIZE] = { 0 };
 
 	buf[0] = SET_BITS_LOW;
 	buf[1] = levels;
@@ -103,8 +103,8 @@ static int mpsse_set_pins(uint8_t levels)
 	return ftdi_write_data(&ftdi, buf, sizeof(buf)) != sizeof(buf);
 }
 
-static int send_request(int cmd, int version,
-			const uint8_t *outdata, size_t outsize)
+static int send_request(int cmd, int version, const uint8_t *outdata,
+			size_t outsize)
 {
 	uint8_t *txbuf;
 	struct ec_host_request *request;
@@ -133,8 +133,8 @@ static int send_request(int cmd, int version,
 	request->data_len = outsize;
 
 	/* copy the data to transmit after the command header */
-	memcpy(txbuf + MPSSE_CMD_SIZE + sizeof(struct ec_host_request),
-	       outdata, outsize);
+	memcpy(txbuf + MPSSE_CMD_SIZE + sizeof(struct ec_host_request), outdata,
+	       outsize);
 
 	/* Compute the checksum */
 	for (i = MPSSE_CMD_SIZE; i < total_len; i++)
@@ -212,13 +212,12 @@ static int get_response(uint8_t *bodydest, size_t bodylen)
 	/* Check the header */
 	if (hdr.struct_version != EC_HOST_RESPONSE_VERSION) {
 		fprintf(stderr, "response version %d (should be %d)\n",
-			hdr.struct_version,
-			EC_HOST_RESPONSE_VERSION);
+			hdr.struct_version, EC_HOST_RESPONSE_VERSION);
 		return -EC_RES_ERROR;
 	}
 	if (hdr.data_len > bodylen) {
-		fprintf(stderr, "response data_len %d is > %zd\n",
-			hdr.data_len, bodylen);
+		fprintf(stderr, "response data_len %d is > %zd\n", hdr.data_len,
+			bodylen);
 		return -EC_RES_ERROR;
 	}
 
@@ -243,9 +242,8 @@ read_error:
 	return -EC_RES_ERROR;
 }
 
-static int ec_command_servo_spi(int cmd, int version,
-				const void *outdata, int outsize,
-				void *indata, int insize)
+static int ec_command_servo_spi(int cmd, int version, const void *outdata,
+				int outsize, void *indata, int insize)
 {
 	int ret = -EC_RES_ERROR;
 
@@ -275,7 +273,7 @@ static int mpsse_set_clock(uint32_t freq)
 {
 	uint32_t system_clock = 0;
 	uint16_t divisor = 0;
-	uint8_t buf[MPSSE_CMD_SIZE] = {0};
+	uint8_t buf[MPSSE_CMD_SIZE] = { 0 };
 
 	if (freq > 6000000) {
 		buf[0] = TCK_X5;
@@ -307,10 +305,10 @@ static void servo_spi_close(void)
 int comm_init_servo_spi(const char *device_name)
 {
 	int status;
-	uint8_t buf[MPSSE_CMD_SIZE] = {0};
+	uint8_t buf[MPSSE_CMD_SIZE] = { 0 };
 	/* if the user mentioned a device name, use it as serial string */
-	const char *serial = strcmp(CROS_EC_DEV_NAME, device_name) ?
-		device_name : NULL;
+	const char *serial =
+		strcmp(CROS_EC_DEV_NAME, device_name) ? device_name : NULL;
 
 	if (ftdi_init(&ftdi))
 		return -EC_RES_ERROR;
