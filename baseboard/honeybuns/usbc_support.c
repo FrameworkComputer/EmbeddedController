@@ -23,8 +23,8 @@
 #include "registers.h"
 #include "ucpd-stm32gx.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 enum usbc_states {
 	UNATTACHED_SNK,
@@ -39,7 +39,7 @@ static int usbc_vbus;
 static enum tcpc_cc_voltage_status cc1_v;
 static enum tcpc_cc_voltage_status cc2_v;
 
-__maybe_unused static __const_data const char * const usbc_state_names[] = {
+__maybe_unused static __const_data const char *const usbc_state_names[] = {
 	[UNATTACHED_SNK] = "Unattached.SNK",
 	[ATTACH_WAIT_SNK] = "AttachWait.SNK",
 	[ATTACHED_SNK] = "Attached.SNK",
@@ -48,17 +48,13 @@ __maybe_unused static __const_data const char * const usbc_state_names[] = {
 static int read_reg(uint8_t port, int reg, int *regval)
 {
 	return i2c_read8(ppc_chips[port].i2c_port,
-			 ppc_chips[port].i2c_addr_flags,
-			 reg,
-			 regval);
+			 ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 static int write_reg(uint8_t port, int reg, int regval)
 {
 	return i2c_write8(ppc_chips[port].i2c_port,
-			  ppc_chips[port].i2c_addr_flags,
-			  reg,
-			  regval);
+			  ppc_chips[port].i2c_addr_flags, reg, regval);
 }
 
 static int baseboard_ppc_enable_sink_path(int port)
@@ -126,9 +122,9 @@ static void baseboard_ucpd_apply_rd(int port)
 	 */
 
 	cfgr1_reg = STM32_UCPD_CFGR1_PSC_CLK_VAL(UCPD_PSC_DIV - 1) |
-		STM32_UCPD_CFGR1_TRANSWIN_VAL(UCPD_TRANSWIN_CNT - 1) |
-		STM32_UCPD_CFGR1_IFRGAP_VAL(UCPD_IFRGAP_CNT - 1) |
-		STM32_UCPD_CFGR1_HBITCLKD_VAL(UCPD_HBIT_DIV - 1);
+		    STM32_UCPD_CFGR1_TRANSWIN_VAL(UCPD_TRANSWIN_CNT - 1) |
+		    STM32_UCPD_CFGR1_IFRGAP_VAL(UCPD_IFRGAP_CNT - 1) |
+		    STM32_UCPD_CFGR1_HBITCLKD_VAL(UCPD_HBIT_DIV - 1);
 	STM32_UCPD_CFGR1(port) = cfgr1_reg;
 
 	/* Enable ucpd  */
@@ -147,9 +143,8 @@ static void baseboard_ucpd_apply_rd(int port)
 	STM32_PWR_CR3 |= STM32_PWR_CR3_UCPD1_DBDIS;
 }
 
-
 static void baseboard_ucpd_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+				  enum tcpc_cc_voltage_status *cc2)
 {
 	int vstate_cc1;
 	int vstate_cc2;
@@ -163,7 +158,7 @@ static void baseboard_ucpd_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	 *
 	 * vstate_cc maps directly to cc_state from tcpci spec when ANAMODE = 1,
 	 * but needs to be modified slightly for case ANAMODE = 0.
-         *
+	 *
 	 * If presenting Rp (source), then need to to a circular shift of
 	 * vstate_ccx value:
 	 *     vstate_cc | cc_state
@@ -178,9 +173,9 @@ static void baseboard_ucpd_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 	/* Get Rp or Rd active */
 	anamode = !!(STM32_UCPD_CR(port) & STM32_UCPD_CR_ANAMODE);
 	vstate_cc1 = (sr & STM32_UCPD_SR_VSTATE_CC1_MASK) >>
-		STM32_UCPD_SR_VSTATE_CC1_SHIFT;
+		     STM32_UCPD_SR_VSTATE_CC1_SHIFT;
 	vstate_cc2 = (sr & STM32_UCPD_SR_VSTATE_CC2_MASK) >>
-		STM32_UCPD_SR_VSTATE_CC2_SHIFT;
+		     STM32_UCPD_SR_VSTATE_CC2_SHIFT;
 
 	/* Do circular shift if port == source */
 	if (anamode) {
@@ -325,10 +320,8 @@ int c1_ps8805_is_sourcing_vbus(int port)
 	return level;
 }
 
-
 int c1_ps8805_vbus_source_enable(int port, int enable)
 {
-
 	return ps8805_gpio_set_level(port, PS8805_GPIO_1, enable);
 }
 
@@ -358,12 +351,13 @@ static void baseboard_usb3_manage_vbus(void)
 		ppc_ocp_count = 0;
 
 #ifdef GPIO_USB_HUB_OCP_NOTIFY
-	/*
-	 * In the case of an OCP event on this port, the usb hub should be
-	 * notified via a GPIO signal. Following, an OCP, the attached.src state
-	 * for the usb3 only port is checked again. If it's attached, then make
-	 * sure the OCP notify signal is reset.
-	 */
+		/*
+		 * In the case of an OCP event on this port, the usb hub should
+		 * be notified via a GPIO signal. Following, an OCP, the
+		 * attached.src state for the usb3 only port is checked again.
+		 * If it's attached, then make sure the OCP notify signal is
+		 * reset.
+		 */
 		gpio_set_level(GPIO_USB_HUB_OCP_NOTIFY, 1);
 #endif
 	}
@@ -436,8 +430,9 @@ static void baseboard_usbc_usb3_handle_interrupt(void)
 			CPRINTS("usb3_ppc: VBUS OC!");
 			gpio_set_level(GPIO_USB_HUB_OCP_NOTIFY, 0);
 			if (++ppc_ocp_count < 5)
-				hook_call_deferred(&baseboard_usb3_manage_vbus_data,
-						   USB_HUB_OCP_RESET_MSEC);
+				hook_call_deferred(
+					&baseboard_usb3_manage_vbus_data,
+					USB_HUB_OCP_RESET_MSEC);
 			else
 				CPRINTS("usb3_ppc: VBUS OC limit reached!");
 		}
@@ -466,7 +461,6 @@ static void baseboard_usbc_usb3_handle_interrupt(void)
 		/* Clear the interrupt sources. */
 		write_reg(port, SN5S330_INT_TRIP_RISE_REG2, rise);
 		write_reg(port, SN5S330_INT_TRIP_FALL_REG2, fall);
-
 	}
 }
 DECLARE_DEFERRED(baseboard_usbc_usb3_handle_interrupt);
