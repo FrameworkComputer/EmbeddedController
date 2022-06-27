@@ -15,7 +15,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_EVENTS, outstr)
-#define CPRINTS(format, args...) cprints(CC_EVENTS, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_EVENTS, format, ##args)
 
 static atomic_t device_current_events;
 static atomic_t device_enabled_events;
