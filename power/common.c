@@ -27,8 +27,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
 
 /*
  * Default timeout in us; if we've been waiting this long for an input
@@ -43,37 +43,24 @@ static int s5_inactivity_timeout = 10;
 static const int s5_inactivity_timeout = 10;
 #endif
 
-static const char * const state_names[] = {
-	"G3",
-	"S5",
-	"S4",
-	"S3",
-	"S0",
+static const char *const state_names[] = {
+	"G3",	    "S5",	"S4",	  "S3",	    "S0",
 #ifdef CONFIG_POWER_S0IX
 	"S0ix",
 #endif
-	"G3->S5",
-	"S5->S3",
-	"S3->S0",
-	"S0->S3",
-	"S3->S5",
-	"S5->G3",
-	"S3->S4",
-	"S4->S3",
-	"S4->S5",
-	"S5->S4",
+	"G3->S5",   "S5->S3",	"S3->S0", "S0->S3", "S3->S5",
+	"S5->G3",   "S3->S4",	"S4->S3", "S4->S5", "S5->S4",
 #ifdef CONFIG_POWER_S0IX
-	"S0ix->S0",
-	"S0->S0ix",
+	"S0ix->S0", "S0->S0ix",
 #endif
 };
 
-static uint32_t in_signals;   /* Current input signal states (IN_PGOOD_*) */
-static uint32_t in_want;      /* Input signal state we're waiting for */
-static uint32_t in_debug;     /* Signal values which print debug output */
+static uint32_t in_signals; /* Current input signal states (IN_PGOOD_*) */
+static uint32_t in_want; /* Input signal state we're waiting for */
+static uint32_t in_debug; /* Signal values which print debug output */
 
-static enum power_state state = POWER_G3;  /* Current state */
-static int want_g3_exit;      /* Should we exit the G3 state? */
+static enum power_state state = POWER_G3; /* Current state */
+static int want_g3_exit; /* Should we exit the G3 state? */
 static uint64_t last_shutdown_time; /* When did we enter G3? */
 
 #ifdef CONFIG_HIBERNATE
@@ -86,7 +73,7 @@ static uint32_t hibernate_delay = CONFIG_HIBERNATE_DELAY_SEC;
 static int pause_in_s5;
 #endif
 
-static bool want_reboot_ap_at_g3;/* Want to reboot AP from G3? */
+static bool want_reboot_ap_at_g3; /* Want to reboot AP from G3? */
 /* Want to reboot AP from G3 with delay? */
 static uint64_t reboot_ap_at_g3_delay;
 
@@ -111,8 +98,7 @@ host_command_reboot_ap_on_g3(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3,
-		     host_command_reboot_ap_on_g3,
+DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3, host_command_reboot_ap_on_g3,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 __overridable int power_signal_get_level(enum gpio_signal signal)
@@ -150,7 +136,7 @@ int power_signal_enable_interrupt(enum gpio_signal signal)
 int power_signal_is_asserted(const struct power_signal_info *s)
 {
 	return power_signal_get_level(s->gpio) ==
-		!!(s->flags & POWER_SIGNAL_ACTIVE_STATE);
+	       !!(s->flags & POWER_SIGNAL_ACTIVE_STATE);
 }
 
 #ifdef CONFIG_BRINGUP
@@ -196,8 +182,8 @@ int power_has_signals(uint32_t want)
 	if ((in_signals & want) == want)
 		return 1;
 
-	CPRINTS("power lost input; wanted 0x%04x, got 0x%04x",
-		want, in_signals & want);
+	CPRINTS("power lost input; wanted 0x%04x, got 0x%04x", want,
+		in_signals & want);
 
 	return 0;
 }
@@ -267,18 +253,19 @@ enum power_state power_get_state(void)
 #ifdef CONFIG_HOSTCMD_X86
 
 /* If host doesn't program s0ix lazy wake mask, use default s0ix mask */
-#define DEFAULT_WAKE_MASK_S0IX  (EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
-				EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE))
+#define DEFAULT_WAKE_MASK_S0IX                        \
+	(EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN) | \
+	 EC_HOST_EVENT_MASK(EC_HOST_EVENT_MODE_CHANGE))
 
- /*
-  * Set the wake mask according to the current power state:
-  * 1. On transition to S0, wake mask is reset.
-  * 2. In non-S0 states, active mask set by host gets a higher preference.
-  * 3. If host has not set any active mask, then check if a lazy mask exists
-  *    for the current power state.
-  * 4. If state is S0ix and no lazy or active wake mask is set, then use default
-  *    S0ix mask to be compatible with older BIOS versions.
-  */
+/*
+ * Set the wake mask according to the current power state:
+ * 1. On transition to S0, wake mask is reset.
+ * 2. In non-S0 states, active mask set by host gets a higher preference.
+ * 3. If host has not set any active mask, then check if a lazy mask exists
+ *    for the current power state.
+ * 4. If state is S0ix and no lazy or active wake mask is set, then use default
+ *    S0ix mask to be compatible with older BIOS versions.
+ */
 
 void power_update_wake_mask(void)
 {
@@ -300,11 +287,11 @@ void power_update_wake_mask(void)
 
 	lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, wake_mask);
 }
- /*
-  * Set wake mask after power state has stabilized, 5ms after power state
-  * change. The reason for making this a deferred call is to avoid race
-  * conditions occurring from S0ix periodic wakes on the SoC.
-  */
+/*
+ * Set wake mask after power state has stabilized, 5ms after power state
+ * change. The reason for making this a deferred call is to avoid race
+ * conditions occurring from S0ix periodic wakes on the SoC.
+ */
 
 static void power_update_wake_mask_deferred(void);
 DECLARE_DEFERRED(power_update_wake_mask_deferred);
@@ -329,12 +316,13 @@ static void power_set_active_wake_mask(void)
 	 * that it takes ~2msec for the periodic wake cycle to complete on the
 	 * host for KBL.
 	 */
-	hook_call_deferred(&power_update_wake_mask_deferred_data,
-			   5 * MSEC);
+	hook_call_deferred(&power_update_wake_mask_deferred_data, 5 * MSEC);
 }
 
 #else
-static void power_set_active_wake_mask(void) { }
+static void power_set_active_wake_mask(void)
+{
+}
 #endif
 
 #ifdef CONFIG_HIBERNATE
@@ -378,15 +366,15 @@ static enum ec_status hc_smart_discharge(struct host_cmd_handler_args *args)
 		else if (p->drate.cutoff > 0 && p->drate.hibern > 0)
 			drate = p->drate;
 		else if (p->drate.cutoff == 0 && p->drate.hibern == 0)
-			;  /* no-op. use the current drate. */
+			; /* no-op. use the current drate. */
 		else
 			return EC_RES_INVALID_PARAM;
 
 		/* Commit */
 		hours_to_zero = p->hours_to_zero;
 		sdzone.stayup = MIN(hours_to_zero * drate.hibern / 1000, cap);
-		sdzone.cutoff = MIN(hours_to_zero * drate.cutoff / 1000,
-				    sdzone.stayup);
+		sdzone.cutoff =
+			MIN(hours_to_zero * drate.cutoff / 1000, sdzone.stayup);
 	}
 
 	/* Return the effective values. */
@@ -397,12 +385,12 @@ static enum ec_status hc_smart_discharge(struct host_cmd_handler_args *args)
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_SMART_DISCHARGE,
-		     hc_smart_discharge,
+DECLARE_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, hc_smart_discharge,
 		     EC_VER_MASK(0));
 
-__overridable enum critical_shutdown board_system_is_idle(
-		uint64_t last_shutdown_time, uint64_t *target, uint64_t now)
+__overridable enum critical_shutdown
+board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
+		     uint64_t now)
 {
 	int remain;
 
@@ -427,14 +415,15 @@ __overridable enum critical_shutdown board_system_is_idle(
 }
 #else
 /* Default implementation for battery-less systems */
-__overridable enum critical_shutdown board_system_is_idle(
-		uint64_t last_shutdown_time, uint64_t *target, uint64_t now)
+__overridable enum critical_shutdown
+board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
+		     uint64_t now)
 {
-	return now > *target ?
-			CRITICAL_SHUTDOWN_HIBERNATE : CRITICAL_SHUTDOWN_IGNORE;
+	return now > *target ? CRITICAL_SHUTDOWN_HIBERNATE :
+			       CRITICAL_SHUTDOWN_IGNORE;
 }
-#endif	/* CONFIG_BATTERY */
-#endif	/* CONFIG_HIBERNATE */
+#endif /* CONFIG_BATTERY */
+#endif /* CONFIG_HIBERNATE */
 
 /**
  * Common handler for steady states
@@ -475,7 +464,7 @@ static enum power_state power_common_state(enum power_state state)
 
 			now = get_time().val;
 			target = last_shutdown_time +
-					(uint64_t)hibernate_delay * SECOND;
+				 (uint64_t)hibernate_delay * SECOND;
 			switch (board_system_is_idle(last_shutdown_time,
 						     &target, now)) {
 			case CRITICAL_SHUTDOWN_HIBERNATE:
@@ -708,8 +697,8 @@ void chipset_task(void *u)
 		 */
 		this_in_signals = in_signals;
 		if (this_in_signals != last_in_signals || state != last_state) {
-			CPRINTS("power state %d = %s, in 0x%04x",
-				state, state_names[state], this_in_signals);
+			CPRINTS("power state %d = %s, in 0x%04x", state,
+				state_names[state], this_in_signals);
 			if (IS_ENABLED(CONFIG_SEVEN_SEG_DISPLAY))
 				display_7seg_write(SEVEN_SEG_EC_DISPLAY, state);
 			last_in_signals = this_in_signals;
@@ -809,7 +798,7 @@ static struct {
 static void siglog_deferred(void)
 {
 	unsigned int i;
-	timestamp_t tdiff = {.val = 0};
+	timestamp_t tdiff = { .val = 0 };
 
 	/* Disable interrupts for input signals while we print stuff.*/
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++)
@@ -818,10 +807,9 @@ static void siglog_deferred(void)
 	CPRINTF("%d signal changes:\n", siglog_entries);
 	for (i = 0; i < siglog_entries; i++) {
 		if (i)
-			tdiff.val = siglog[i].time.val - siglog[i-1].time.val;
-		CPRINTF("  %.6lld  +%.6lld  %s => %d\n",
-			siglog[i].time.val, tdiff.val,
-			power_signal_get_name(siglog[i].signal),
+			tdiff.val = siglog[i].time.val - siglog[i - 1].time.val;
+		CPRINTF("  %.6lld  +%.6lld  %s => %d\n", siglog[i].time.val,
+			tdiff.val, power_signal_get_name(siglog[i].signal),
 			siglog[i].level);
 	}
 	if (siglog_truncated)
@@ -853,7 +841,7 @@ static void siglog_add(enum gpio_signal signal)
 
 #else
 #define SIGLOG(S)
-#endif	/* CONFIG_BRINGUP */
+#endif /* CONFIG_BRINGUP */
 
 #ifdef CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD
 /*
@@ -870,8 +858,7 @@ static void reset_power_signal_interrupt_count(void)
 	for (i = 0; i < POWER_SIGNAL_COUNT; ++i)
 		power_signal_interrupt_count[i] = 0;
 }
-DECLARE_HOOK(HOOK_SECOND,
-	     reset_power_signal_interrupt_count,
+DECLARE_HOOK(HOOK_SECOND, reset_power_signal_interrupt_count,
 	     HOOK_PRIO_DEFAULT);
 #endif
 
@@ -884,7 +871,7 @@ void power_signal_interrupt(enum gpio_signal signal)
 	for (i = 0; i < POWER_SIGNAL_COUNT; ++i) {
 		if (power_signal_list[i].gpio == signal) {
 			if (power_signal_interrupt_count[i]++ ==
-			   CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD)
+			    CONFIG_POWER_SIGNAL_INTERRUPT_STORM_DETECT_THRESHOLD)
 				CPRINTS("Interrupt storm! Signal %d", i);
 			break;
 		}
@@ -921,13 +908,12 @@ static int command_powerinfo(int argc, char **argv)
 	 * Print power state in same format as state machine.  This is
 	 * used by FAFT tests, so must match exactly.
 	 */
-	ccprintf("power state %d = %s, in 0x%04x\n",
-		 state, state_names[state], in_signals);
+	ccprintf("power state %d = %s, in 0x%04x\n", state, state_names[state],
+		 in_signals);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo,
-			NULL,
+DECLARE_CONSOLE_COMMAND(powerinfo, command_powerinfo, NULL,
 			"Show current power state");
 
 #ifdef CONFIG_CMD_POWERINDEBUG
@@ -955,14 +941,13 @@ static int command_powerindebug(int argc, char **argv)
 	ccprintf("bit meanings:\n");
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++) {
 		int mask = 1 << i;
-		ccprintf("  0x%04x %d %s\n",
-			 mask, in_signals & mask ? 1 : 0, s->name);
+		ccprintf("  0x%04x %d %s\n", mask, in_signals & mask ? 1 : 0,
+			 s->name);
 	}
 
 	return EC_SUCCESS;
 };
-DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug,
-			"[mask]",
+DECLARE_CONSOLE_COMMAND(powerindebug, command_powerindebug, "[mask]",
 			"Get/set power input debug mask");
 #endif
 
@@ -985,8 +970,7 @@ static int command_s5_timeout(int argc, char **argv)
 	ccprintf("S5 inactivity timeout: %d s\n", s5_inactivity_timeout);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(s5_timeout, command_s5_timeout,
-			"[sec]",
+DECLARE_CONSOLE_COMMAND(s5_timeout, command_s5_timeout, "[sec]",
 			"Set the timeout from S5 to G3 transition, "
 			"-1 to indicate no transition");
 #endif
@@ -995,8 +979,8 @@ DECLARE_CONSOLE_COMMAND(s5_timeout, command_s5_timeout,
 static int command_hibernation_delay(int argc, char **argv)
 {
 	char *e;
-	uint32_t time_g3 = ((uint32_t)(get_time().val - last_shutdown_time))
-				/ SECOND;
+	uint32_t time_g3 =
+		((uint32_t)(get_time().val - last_shutdown_time)) / SECOND;
 
 	if (argc >= 2) {
 		uint32_t s = strtoi(argv[1], &e, 0);
@@ -1014,8 +998,7 @@ static int command_hibernation_delay(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay,
-			"[sec]",
+DECLARE_CONSOLE_COMMAND(hibdelay, command_hibernation_delay, "[sec]",
 			"Set the delay before going into hibernation");
 
 static enum ec_status
@@ -1048,8 +1031,7 @@ host_command_hibernation_delay(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(struct ec_response_hibernation_delay);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY,
-		     host_command_hibernation_delay,
+DECLARE_HOST_COMMAND(EC_CMD_HIBERNATION_DELAY, host_command_hibernation_delay,
 		     EC_VER_MASK(0));
 #endif /* CONFIG_HIBERNATE */
 
@@ -1068,8 +1050,7 @@ host_command_pause_in_s5(struct host_cmd_handler_args *args)
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_GSV_PAUSE_IN_S5,
-		     host_command_pause_in_s5,
+DECLARE_HOST_COMMAND(EC_CMD_GSV_PAUSE_IN_S5, host_command_pause_in_s5,
 		     EC_VER_MASK(0));
 
 static int command_pause_in_s5(int argc, char **argv)
@@ -1081,8 +1062,7 @@ static int command_pause_in_s5(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(pause_in_s5, command_pause_in_s5,
-			"[on|off]",
+DECLARE_CONSOLE_COMMAND(pause_in_s5, command_pause_in_s5, "[on|off]",
 			"Should the AP pause in S5 during shutdown?");
 #endif /* CONFIG_POWER_SHUTDOWN_PAUSE_IN_S5 */
 
@@ -1116,14 +1096,13 @@ void power_5v_enable(task_id_t tid, int enable)
 	mutex_unlock(&pwr_5v_ctl_mtx);
 }
 
-#define P5_SYSJUMP_TAG 0x5005  /* "P5" */
+#define P5_SYSJUMP_TAG 0x5005 /* "P5" */
 static void restore_enable_5v_state(void)
 {
 	const uint32_t *state;
 	int size;
 
-	state = (const uint32_t *) system_get_jump_tag(P5_SYSJUMP_TAG, 0,
-						       &size);
+	state = (const uint32_t *)system_get_jump_tag(P5_SYSJUMP_TAG, 0, &size);
 	if (state && size == sizeof(pwr_5v_en_req)) {
 		mutex_lock(&pwr_5v_ctl_mtx);
 		pwr_5v_en_req |= *state;
@@ -1136,7 +1115,7 @@ static void preserve_enable_5v_state(void)
 {
 	mutex_lock(&pwr_5v_ctl_mtx);
 	system_add_jump_tag(P5_SYSJUMP_TAG, 0, sizeof(pwr_5v_en_req),
-	    &pwr_5v_en_req);
+			    &pwr_5v_en_req);
 	mutex_unlock(&pwr_5v_ctl_mtx);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, preserve_enable_5v_state, HOOK_PRIO_DEFAULT);
