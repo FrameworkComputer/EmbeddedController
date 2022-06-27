@@ -11,7 +11,7 @@
 #include "common.h"
 #include "stdbool.h"
 
-#define ISL923X_ADDR_FLAGS	(0x09)
+#define ISL923X_ADDR_FLAGS (0x09)
 
 extern const struct charger_drv isl923x_drv;
 
