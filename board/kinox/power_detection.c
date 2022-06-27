@@ -17,215 +17,211 @@
 #include "util.h"
 
 /* Console output macros */
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /******************************************************************************/
 
-static const char * const adp_id_names[] = {
-	"unknown",
-	"tiny",
-	"tio1",
-	"tio2",
-	"typec",
+static const char *const adp_id_names[] = {
+	"unknown", "tiny", "tio1", "tio2", "typec",
 };
 
 /* ADP_ID control */
 struct adpater_id_params tio1_power[] = {
 	{
-	.min_voltage = 3300,
-	.max_voltage = 3300,
-	.charge_voltage = 20000,
-	.charge_current = 6000,
-	.watt = 120,
-	.obp95 = 1990,
-	.obp85 = 1780,
+		.min_voltage = 3300,
+		.max_voltage = 3300,
+		.charge_voltage = 20000,
+		.charge_current = 6000,
+		.watt = 120,
+		.obp95 = 1990,
+		.obp85 = 1780,
 	},
 };
 
 struct adpater_id_params tio2_power[] = {
 	{
-	.min_voltage = 0,
-	.max_voltage = 68,
-	.charge_voltage = 20000,
-	.charge_current = 8500,
-	.watt = 170,
-	.obp95 = 2820,
-	.obp85 = 916,
+		.min_voltage = 0,
+		.max_voltage = 68,
+		.charge_voltage = 20000,
+		.charge_current = 8500,
+		.watt = 170,
+		.obp95 = 2820,
+		.obp85 = 916,
 	},
 	{
-	.min_voltage = 68,
-	.max_voltage = 142,
-	.charge_voltage = 20000,
-	.charge_current = 2250,
-	.watt = 45,
-	.obp95 = 750,
-	.obp85 = 670,
+		.min_voltage = 68,
+		.max_voltage = 142,
+		.charge_voltage = 20000,
+		.charge_current = 2250,
+		.watt = 45,
+		.obp95 = 750,
+		.obp85 = 670,
 	},
 	{
-	.min_voltage = 200,
-	.max_voltage = 288,
-	.charge_voltage = 20000,
-	.charge_current = 3250,
-	.watt = 65,
-	.obp95 = 1080,
-	.obp85 = 960,
+		.min_voltage = 200,
+		.max_voltage = 288,
+		.charge_voltage = 20000,
+		.charge_current = 3250,
+		.watt = 65,
+		.obp95 = 1080,
+		.obp85 = 960,
 	},
 	{
-	.min_voltage = 531,
-	.max_voltage = 607,
-	.charge_voltage = 20000,
-	.charge_current = 6000,
-	.watt = 120,
-	.obp95 = 1990,
-	.obp85 = 1780,
+		.min_voltage = 531,
+		.max_voltage = 607,
+		.charge_voltage = 20000,
+		.charge_current = 6000,
+		.watt = 120,
+		.obp95 = 1990,
+		.obp85 = 1780,
 	},
 	{
-	.min_voltage = 384,
-	.max_voltage = 480,
-	.charge_voltage = 20000,
-	.charge_current = 7500,
-	.watt = 150,
-	.obp95 = 2490,
-	.obp85 = 2220,
+		.min_voltage = 384,
+		.max_voltage = 480,
+		.charge_voltage = 20000,
+		.charge_current = 7500,
+		.watt = 150,
+		.obp95 = 2490,
+		.obp85 = 2220,
 	},
 	{
-	.min_voltage = 1062,
-	.max_voltage = 1126,
-	.charge_voltage = 20000,
-	.charge_current = 8500,
-	.watt = 170,
-	.obp95 = 2820,
-	.obp85 = 916,
+		.min_voltage = 1062,
+		.max_voltage = 1126,
+		.charge_voltage = 20000,
+		.charge_current = 8500,
+		.watt = 170,
+		.obp95 = 2820,
+		.obp85 = 916,
 	},
 	{
-	.min_voltage = 2816,
-	.max_voltage = 3300,
-	.charge_voltage = 20000,
-	.charge_current = 6000,
-	.watt = 120,
-	.obp95 = 1990,
-	.obp85 = 1780,
+		.min_voltage = 2816,
+		.max_voltage = 3300,
+		.charge_voltage = 20000,
+		.charge_current = 6000,
+		.watt = 120,
+		.obp95 = 1990,
+		.obp85 = 1780,
 	},
 };
 
 struct adpater_id_params tiny_power[] = {
 	{
-	.min_voltage = 68,
-	.max_voltage = 142,
-	.charge_voltage = 20000,
-	.charge_current = 2250,
-	.watt = 45,
-	.obp95 = 750,
-	.obp85 = 670,
+		.min_voltage = 68,
+		.max_voltage = 142,
+		.charge_voltage = 20000,
+		.charge_current = 2250,
+		.watt = 45,
+		.obp95 = 750,
+		.obp85 = 670,
 	},
 	{
-	.min_voltage = 200,
-	.max_voltage = 288,
-	.charge_voltage = 20000,
-	.charge_current = 3250,
-	.watt = 65,
-	.obp95 = 1080,
-	.obp85 = 960,
+		.min_voltage = 200,
+		.max_voltage = 288,
+		.charge_voltage = 20000,
+		.charge_current = 3250,
+		.watt = 65,
+		.obp95 = 1080,
+		.obp85 = 960,
 	},
 	{
-	.min_voltage = 384,
-	.max_voltage = 480,
-	.charge_voltage = 20000,
-	.charge_current = 4500,
-	.watt = 90,
-	.obp95 = 1490,
-	.obp85 = 1330,
+		.min_voltage = 384,
+		.max_voltage = 480,
+		.charge_voltage = 20000,
+		.charge_current = 4500,
+		.watt = 90,
+		.obp95 = 1490,
+		.obp85 = 1330,
 	},
 	{
-	.min_voltage = 531,
-	.max_voltage = 607,
-	.charge_voltage = 20000,
-	.charge_current = 6000,
-	.watt = 120,
-	.obp95 = 0x2D3,
-	.obp85 = 0x286,
+		.min_voltage = 531,
+		.max_voltage = 607,
+		.charge_voltage = 20000,
+		.charge_current = 6000,
+		.watt = 120,
+		.obp95 = 0x2D3,
+		.obp85 = 0x286,
 	},
 	{
-	.min_voltage = 653,
-	.max_voltage = 783,
-	.charge_voltage = 20000,
-	.charge_current = 6750,
-	.watt = 135,
-	.obp95 = 2240,
-	.obp85 = 2000,
+		.min_voltage = 653,
+		.max_voltage = 783,
+		.charge_voltage = 20000,
+		.charge_current = 6750,
+		.watt = 135,
+		.obp95 = 2240,
+		.obp85 = 2000,
 	},
 	{
-	.min_voltage = 851,
-	.max_voltage = 997,
-	.charge_voltage = 20000,
-	.charge_current = 7500,
-	.watt = 150,
-	.obp95 = 2490,
-	.obp85 = 2220,
+		.min_voltage = 851,
+		.max_voltage = 997,
+		.charge_voltage = 20000,
+		.charge_current = 7500,
+		.watt = 150,
+		.obp95 = 2490,
+		.obp85 = 2220,
 	},
 	{
-	.min_voltage = 1063,
-	.max_voltage = 1226,
-	.charge_voltage = 20000,
-	.charge_current = 8500,
-	.watt = 170,
-	.obp95 = 2820,
-	.obp85 = 916,
+		.min_voltage = 1063,
+		.max_voltage = 1226,
+		.charge_voltage = 20000,
+		.charge_current = 8500,
+		.watt = 170,
+		.obp95 = 2820,
+		.obp85 = 916,
 	},
 	{
-	.min_voltage = 1749,
-	.max_voltage = 1968,
-	.charge_voltage = 20000,
-	.charge_current = 11500,
-	.watt = 230,
-	.obp95 = 3810,
-	.obp85 = 3410,
+		.min_voltage = 1749,
+		.max_voltage = 1968,
+		.charge_voltage = 20000,
+		.charge_current = 11500,
+		.watt = 230,
+		.obp95 = 3810,
+		.obp85 = 3410,
 	},
 };
 
 struct adpater_id_params typec_power[] = {
 	{
-	.charge_voltage = 20000,
-	.charge_current = 1500,
-	.watt = 30,
-	.obp95 = 500,
-	.obp85 = 440,
+		.charge_voltage = 20000,
+		.charge_current = 1500,
+		.watt = 30,
+		.obp95 = 500,
+		.obp85 = 440,
 	},
 	{
-	.charge_voltage = 15000,
-	.charge_current = 2000,
-	.watt = 30,
-	.obp95 = 660,
-	.obp85 = 590,
+		.charge_voltage = 15000,
+		.charge_current = 2000,
+		.watt = 30,
+		.obp95 = 660,
+		.obp85 = 590,
 	},
 	{
-	.charge_voltage = 20000,
-	.charge_current = 2250,
-	.watt = 45,
-	.obp95 = 750,
-	.obp85 = 670,
+		.charge_voltage = 20000,
+		.charge_current = 2250,
+		.watt = 45,
+		.obp95 = 750,
+		.obp85 = 670,
 	},
 	{
-	.charge_voltage = 15000,
-	.charge_current = 3000,
-	.watt = 45,
-	.obp95 = 990,
-	.obp85 = 890,
+		.charge_voltage = 15000,
+		.charge_current = 3000,
+		.watt = 45,
+		.obp95 = 990,
+		.obp85 = 890,
 	},
 	{
-	.charge_voltage = 20000,
-	.charge_current = 3250,
-	.watt = 65,
-	.obp95 = 1080,
-	.obp85 = 960,
+		.charge_voltage = 20000,
+		.charge_current = 3250,
+		.watt = 65,
+		.obp95 = 1080,
+		.obp85 = 960,
 	},
 	{
-	.charge_voltage = 20000,
-	.charge_current = 5000,
-	.watt = 100,
-	.obp95 = 1660,
-	.obp85 = 1480,
+		.charge_voltage = 20000,
+		.charge_current = 5000,
+		.watt = 100,
+		.obp95 = 1660,
+		.obp85 = 1480,
 	},
 };
 
@@ -259,14 +255,14 @@ void obp_point_85(void)
 struct npcx_adc_thresh_t adc_obp_point_95 = {
 	.adc_ch = ADC_PWR_IN_IMON,
 	.adc_thresh_cb = obp_point_95,
-	.thresh_assert = 3300,	/* Default */
+	.thresh_assert = 3300, /* Default */
 };
 
 struct npcx_adc_thresh_t adc_obp_point_85 = {
 	.adc_ch = ADC_PWR_IN_IMON,
 	.adc_thresh_cb = obp_point_85,
 	.lower_or_higher = 1,
-	.thresh_assert = 0,	/* Default */
+	.thresh_assert = 0, /* Default */
 };
 
 static void set_up_adc_irqs(void)
@@ -296,13 +292,13 @@ void set_the_obp(int power_type_index, int adp_type)
 		case TIO1:
 		case TIO2:
 			charge_manager_update_charge(
-						CHARGE_SUPPLIER_PROPRIETARY,
-						DEDICATED_CHARGE_PORT, &pi);
+				CHARGE_SUPPLIER_PROPRIETARY,
+				DEDICATED_CHARGE_PORT, &pi);
 			break;
 		case TINY:
-			charge_manager_update_charge(
-						CHARGE_SUPPLIER_DEDICATED,
-						DEDICATED_CHARGE_PORT, &pi);
+			charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
+						     DEDICATED_CHARGE_PORT,
+						     &pi);
 			break;
 		}
 	}
@@ -362,18 +358,18 @@ void adp_id_deferred(void)
 
 	switch (adp_type) {
 	case TIO1:
-		power_type_len = sizeof(tio1_power) /
-					sizeof(struct adpater_id_params);
+		power_type_len =
+			sizeof(tio1_power) / sizeof(struct adpater_id_params);
 		memcpy(&power_type, &tio1_power, sizeof(tio1_power));
 		break;
 	case TIO2:
-		power_type_len = sizeof(tio2_power) /
-					sizeof(struct adpater_id_params);
+		power_type_len =
+			sizeof(tio2_power) / sizeof(struct adpater_id_params);
 		memcpy(&power_type, &tio2_power, sizeof(tio2_power));
 		break;
 	case TINY:
-		power_type_len = sizeof(tiny_power) /
-					sizeof(struct adpater_id_params);
+		power_type_len =
+			sizeof(tiny_power) / sizeof(struct adpater_id_params);
 		memcpy(&power_type, &tiny_power, sizeof(tiny_power));
 		break;
 	}
@@ -405,13 +401,13 @@ static void typec_adapter_setting(void)
 	/* Check the barrel jack is not present */
 	if (gpio_get_level(GPIO_BJ_ADP_PRESENT_ODL)) {
 		adapter_current_ma = charge_manager_get_charger_current();
-		power_type_len = sizeof(typec_power) /
-					sizeof(struct adpater_id_params);
+		power_type_len =
+			sizeof(typec_power) / sizeof(struct adpater_id_params);
 
 		memcpy(&power_type, &typec_power, sizeof(typec_power));
 		for (i = (power_type_len - 1); i >= 0; i--) {
 			if (adapter_current_ma >=
-				power_type[i].charge_current) {
+			    power_type[i].charge_current) {
 				set_the_obp(i, adp_type);
 				break;
 			}
