@@ -50,17 +50,16 @@ static int board_ver;
  * that we don't have pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-	{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-	{0, 7}, {-1, -1}, {-1, -1}, {1, 4}, {1, 3},
-	{-1, -1}, {1, 6}, {1, 7}, {3, 1}, {2, 0},
-	{1, 5}, {2, 6}, {2, 7}, {2, 1}, {2, 4},
-	{2, 5}, {1, 2}, {2, 3}, {2, 2}, {3, 0},
-	{-1, -1}, {0, 4}, {-1, -1}, {8, 2}, {-1, -1},
-	{-1, -1},
+	{ -1, -1 }, { 0, 5 },	{ 1, 1 }, { 1, 0 },   { 0, 6 },	  { 0, 7 },
+	{ -1, -1 }, { -1, -1 }, { 1, 4 }, { 1, 3 },   { -1, -1 }, { 1, 6 },
+	{ 1, 7 },   { 3, 1 },	{ 2, 0 }, { 1, 5 },   { 2, 6 },	  { 2, 7 },
+	{ 2, 1 },   { 2, 4 },	{ 2, 5 }, { 1, 2 },   { 2, 3 },	  { 2, 2 },
+	{ 3, 0 },   { -1, -1 }, { 0, 4 }, { -1, -1 }, { 8, 2 },	  { -1, -1 },
+	{ -1, -1 },
 };
 
 const int keyboard_factory_scan_pins_used =
-		ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 /* Motion sensors */
 static struct mutex g_lid_mutex;
@@ -72,21 +71,15 @@ static struct bmi_drv_data_t g_bmi160_data;
 static struct icm_drv_data_t g_icm426xx_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0, 0,  FLOAT_TO_FP(-1)}
-};
-const mat33_fp_t base_standard_ref_1 = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(-1)}
-};
-const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
+const mat33_fp_t base_standard_ref_1 = { { FLOAT_TO_FP(1), 0, 0 },
+					 { 0, FLOAT_TO_FP(-1), 0 },
+					 { 0, 0, FLOAT_TO_FP(-1) } };
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(-1), 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 /* TODO(gcc >= 5.0) Remove the casts to const pointer at rot_standard_ref */
 struct motion_sensor_t motion_sensors[] = {
@@ -210,7 +203,6 @@ struct motion_sensor_t icm426xx_base_gyro = {
 	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
 	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
 };
-
 
 struct motion_sensor_t icm42607_base_accel = {
 	.name = "Base Accel",
@@ -411,8 +403,7 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_amd_fp5_usb_mux,
+		memcpy(&usb_muxes[USBC_PORT_C1], &usbc1_amd_fp5_usb_mux,
 		       sizeof(struct usb_mux));
 		/* Set the PS8818 as the secondary MUX */
 		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
@@ -424,8 +415,7 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_amd_fp5_usb_mux,
+		memcpy(&usb_muxes[USBC_PORT_C1], &usbc1_amd_fp5_usb_mux,
 		       sizeof(struct usb_mux));
 		/* Set the TUSB544 as the secondary MUX */
 		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_tusb544;
@@ -437,8 +427,7 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the PS8743
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1],
-		       &usbc1_ps8743,
+		memcpy(&usb_muxes[USBC_PORT_C1], &usbc1_ps8743,
 		       sizeof(struct usb_mux));
 		/* Set the AMD FP5 as the secondary MUX */
 		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_amd_fp5_usb_mux;
@@ -462,7 +451,7 @@ struct usb_mux usb_muxes[] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
 static int board_tusb544_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+				 mux_state_t mux_state)
 {
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		/* Enable IN_HPD on the DB */
@@ -474,8 +463,7 @@ static int board_tusb544_mux_set(const struct usb_mux *me,
 	return EC_SUCCESS;
 }
 
-static int board_ps8743_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+static int board_ps8743_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	if (mux_state & USB_PD_MUX_DP_ENABLED)
 		/* Enable IN_HPD on the DB */
@@ -543,15 +531,15 @@ __override void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
-__override int board_aoz1380_set_vbus_source_current_limit(int port,
-						enum tcpc_rp_value rp)
+__override int
+board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv;
 
 	/* Use the TCPC to set the current limit */
-	rv = ioex_set_level(port ? IOEX_USB_C1_PPC_ILIM_3A_EN
-				: IOEX_USB_C0_PPC_ILIM_3A_EN,
-				(rp == TYPEC_RP_3A0) ? 1 : 0);
+	rv = ioex_set_level(port ? IOEX_USB_C1_PPC_ILIM_3A_EN :
+				   IOEX_USB_C0_PPC_ILIM_3A_EN,
+			    (rp == TYPEC_RP_3A0) ? 1 : 0);
 
 	return rv;
 }
@@ -621,10 +609,9 @@ static void hdmi_hpd_handler(void)
 
 	gpio_set_level(GPIO_DP1_HPD, hpd);
 	ccprints("HDMI HPD %d", hpd);
-	pi3hdx1204_enable(I2C_PORT_TCPC1,
-			  PI3HDX1204_I2C_ADDR_FLAGS,
-			  chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON)
-			  && hpd);
+	pi3hdx1204_enable(
+		I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
+		chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON) && hpd);
 }
 DECLARE_DEFERRED(hdmi_hpd_handler);
 
@@ -652,8 +639,7 @@ static void board_chipset_resume(void)
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 1);
 		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
 				  check_hdmi_hpd_status());
 	}
 }
@@ -664,9 +650,7 @@ static void board_chipset_suspend(void)
 	ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
-		pi3hdx1204_enable(I2C_PORT_TCPC1,
-				  PI3HDX1204_I2C_ADDR_FLAGS,
-				  0);
+		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS, 0);
 		ioex_set_level(IOEX_HDMI_POWER_EN_DB, 0);
 	}
 
@@ -681,7 +665,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = -1,
 };
@@ -772,8 +756,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_THERMISTOR \
-	{ \
+#define THERMAL_THERMISTOR       \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(95), \
@@ -790,8 +774,8 @@ __maybe_unused static const struct ec_thermal_config thermal_thermistor =
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_SOC \
-	{ \
+#define THERMAL_SOC              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -814,14 +798,14 @@ struct fan_step {
 
 /* Note: Do not make the fan on/off point equal to 0 or 100 */
 static const struct fan_step fan_table0[] = {
-	{.on =  0, .off =  1, .rpm = 0},
-	{.on =  9, .off =  1, .rpm = 3200},
-	{.on = 21, .off =  7, .rpm = 3500},
-	{.on = 28, .off = 16, .rpm = 3900},
-	{.on = 37, .off = 26, .rpm = 4200},
-	{.on = 47, .off = 35, .rpm = 4600},
-	{.on = 56, .off = 44, .rpm = 5100},
-	{.on = 72, .off = 60, .rpm = 5500},
+	{ .on = 0, .off = 1, .rpm = 0 },
+	{ .on = 9, .off = 1, .rpm = 3200 },
+	{ .on = 21, .off = 7, .rpm = 3500 },
+	{ .on = 28, .off = 16, .rpm = 3900 },
+	{ .on = 37, .off = 26, .rpm = 4200 },
+	{ .on = 47, .off = 35, .rpm = 4600 },
+	{ .on = 56, .off = 44, .rpm = 5100 },
+	{ .on = 72, .off = 60, .rpm = 5500 },
 };
 /* All fan tables must have the same number of levels */
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
@@ -867,8 +851,7 @@ int fan_percent_to_rpm(int fan, int pct)
 
 	previous_pct = pct;
 
-	if (fan_table[current_level].rpm !=
-		fan_get_rpm_target(FAN_CH(fan))) {
+	if (fan_table[current_level].rpm != fan_get_rpm_target(FAN_CH(fan))) {
 		cprints(CC_THERMAL, "Setting fan RPM to %d",
 			fan_table[current_level].rpm);
 		board_print_temps();
@@ -878,7 +861,7 @@ int fan_percent_to_rpm(int fan, int pct)
 }
 
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
-			int max_ma, int charge_mv)
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Limit the input current to 95% negotiated limit,
@@ -886,7 +869,6 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 */
 	charge_ma = charge_ma * 95 / 100;
 
-	charge_set_input_current_limit(MAX(charge_ma,
-				CONFIG_CHARGER_INPUT_CURRENT),
-				charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
