@@ -10,12 +10,12 @@
 #include "hooks.h"
 
 #ifndef CONFIG_BLINK_LEDS
-	#error The macro CONFIG_BLINK_LEDS must be specified to use BLINK.
+#error The macro CONFIG_BLINK_LEDS must be specified to use BLINK.
 #endif
 
 static const enum gpio_signal leds[] = { CONFIG_BLINK_LEDS };
 
-BUILD_ASSERT(ARRAY_SIZE(leds) <= sizeof(int)*8, "Too many LEDs to drive.");
+BUILD_ASSERT(ARRAY_SIZE(leds) <= sizeof(int) * 8, "Too many LEDs to drive.");
 BUILD_ASSERT(ARRAY_SIZE(leds) > 0, "Must have at least one LED to blink.");
 
 static void blink(void)
