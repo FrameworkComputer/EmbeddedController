@@ -26,12 +26,12 @@ enum ec_cfg_thermal_solution_type {
 
 union kano_cbi_fw_config {
 	struct {
-		enum ec_cfg_keyboard_backlight_type	kb_bl : 1;
-		uint32_t				audio : 3;
-		uint32_t				ufc : 2;
-		uint32_t				stylus : 1;
-		enum ec_cfg_thermal_solution_type	thermal_solution : 1;
-		uint32_t				reserved_1 : 24;
+		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
+		uint32_t audio : 3;
+		uint32_t ufc : 2;
+		uint32_t stylus : 1;
+		enum ec_cfg_thermal_solution_type thermal_solution : 1;
+		uint32_t reserved_1 : 24;
 	};
 	uint32_t raw_value;
 };
