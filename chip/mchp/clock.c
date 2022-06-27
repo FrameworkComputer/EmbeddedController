@@ -25,17 +25,17 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
 #ifdef CONFIG_LOW_POWER_IDLE
 
-#define HTIMER_DIV_1_US_MAX	(1998848)
-#define HTIMER_DIV_1_1SEC	(0x8012)
+#define HTIMER_DIV_1_US_MAX (1998848)
+#define HTIMER_DIV_1_1SEC (0x8012)
 
 /* Recovery time for HvySlp2 is 0 us */
-#define HEAVY_SLEEP_RECOVER_TIME_USEC   75
+#define HEAVY_SLEEP_RECOVER_TIME_USEC 75
 
-#define SET_HTIMER_DELAY_USEC           200
+#define SET_HTIMER_DELAY_USEC 200
 
 static int idle_sleep_cnt;
 static int idle_dsleep_cnt;
@@ -52,7 +52,7 @@ static uint32_t ecia_result[MCHP_INT_GIRQ_NUM];
  * boot in order to give a permanent window in which the heavy sleep
  * mode is not used.
  */
-#define CONSOLE_IN_USE_ON_BOOT_TIME (15*SECOND)
+#define CONSOLE_IN_USE_ON_BOOT_TIME (15 * SECOND)
 static int console_in_use_timeout_sec = 60;
 static timestamp_t console_expire_time;
 #endif /*CONFIG_LOW_POWER_IDLE */
@@ -62,7 +62,8 @@ static int freq = 48000000;
 void clock_wait_cycles(uint32_t cycles)
 {
 	asm volatile("1: subs %0, #1\n"
-		     "   bne 1b\n" : "+r"(cycles));
+		     "   bne 1b\n"
+		     : "+r"(cycles));
 }
 
 int clock_get_freq(void)
@@ -80,15 +81,13 @@ int clock_get_freq(void)
 /* 32 KHz crystal connected in parallel */
 static inline void config_32k_src_crystal(void)
 {
-	MCHP_VBAT_CSS = MCHP_VBAT_CSS_XTAL_EN
-			| MCHP_VBAT_CSS_SRC_XTAL;
+	MCHP_VBAT_CSS = MCHP_VBAT_CSS_XTAL_EN | MCHP_VBAT_CSS_SRC_XTAL;
 }
 
 /* 32 KHz source is 32KHZ_IN pin which must be configured */
 static inline void config_32k_src_se_input(void)
 {
-	MCHP_VBAT_CSS = MCHP_VBAT_CSS_SIL32K_EN
-				| MCHP_VBAT_CSS_SRC_SWPS;
+	MCHP_VBAT_CSS = MCHP_VBAT_CSS_SIL32K_EN | MCHP_VBAT_CSS_SRC_SWPS;
 }
 
 static inline void config_32k_src_sil_osc(void)
@@ -99,21 +98,21 @@ static inline void config_32k_src_sil_osc(void)
 #else
 static void config_32k_src_crystal(void)
 {
-	MCHP_VBAT_CE = MCHP_VBAT_CE_XOSEL_PAR
-			| MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_CRYSTAL;
+	MCHP_VBAT_CE = MCHP_VBAT_CE_XOSEL_PAR |
+		       MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_CRYSTAL;
 }
 
 /* 32 KHz source is 32KHZ_IN pin which must be configured */
 static inline void config_32k_src_se_input(void)
 {
-	MCHP_VBAT_CE = MCHP_VBAT_CE_32K_DOMAIN_32KHZ_IN_PIN
-			| MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_INT;
+	MCHP_VBAT_CE = MCHP_VBAT_CE_32K_DOMAIN_32KHZ_IN_PIN |
+		       MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_INT;
 }
 
 static inline void config_32k_src_sil_osc(void)
 {
-	MCHP_VBAT_CE = ~(MCHP_VBAT_CE_32K_DOMAIN_32KHZ_IN_PIN
-			| MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_CRYSTAL);
+	MCHP_VBAT_CE = ~(MCHP_VBAT_CE_32K_DOMAIN_32KHZ_IN_PIN |
+			 MCHP_VBAT_CE_ALWAYS_ON_32K_SRC_CRYSTAL);
 }
 #endif
 
@@ -173,9 +172,7 @@ static void clock_turbo_disable(void)
 		/* Use 12 MHz processor clock for power savings */
 		MCHP_PCR_PROC_CLK_CTL = MCHP_PCR_CLK_CTL_12MHZ;
 }
-DECLARE_HOOK(HOOK_INIT,
-		clock_turbo_disable,
-		HOOK_PRIO_INIT_VBOOT_HASH + 1);
+DECLARE_HOOK(HOOK_INIT, clock_turbo_disable, HOOK_PRIO_INIT_VBOOT_HASH + 1);
 
 /**
  * initialization of Hibernation timer 0
@@ -208,8 +205,7 @@ void htimer_init(void)
  * 1 is divide by 4096 for 0.125 s per LSB for a maximum of ~2 hours.
  *	65535 * 0.125 s ~ 8192 s = 2.27 hours
  */
-void system_set_htimer_alarm(uint32_t seconds,
-		uint32_t microseconds)
+void system_set_htimer_alarm(uint32_t seconds, uint32_t microseconds)
 {
 	uint32_t hcnt, ns;
 	uint8_t hctrl;
@@ -226,7 +222,7 @@ void system_set_htimer_alarm(uint32_t seconds,
 	}
 
 	if (seconds > 1) {
-		hcnt = (seconds << 3);	/* divide by 0.125 */
+		hcnt = (seconds << 3); /* divide by 0.125 */
 		if (hcnt > 0xfffful)
 			hcnt = 0xfffful;
 		hctrl = 1;
@@ -236,7 +232,7 @@ void system_set_htimer_alarm(uint32_t seconds,
 		 * seconds / 30.5e-6 + microseconds / 30.5
 		 */
 		hcnt = (seconds << 15) + (microseconds >> 5) +
-			(microseconds >> 10);
+		       (microseconds >> 10);
 		hctrl = 0;
 	}
 
@@ -254,19 +250,18 @@ static timestamp_t system_get_htimer(void)
 	uint16_t count;
 	timestamp_t time;
 
-	count =  MCHP_HTIMER_COUNT(0);
-
+	count = MCHP_HTIMER_COUNT(0);
 
 	if (MCHP_HTIMER_CONTROL(0) == 1) /* if > 2 sec */
 		/* 0.125 sec per count */
 		time.le.lo = (uint32_t)(count * 125000);
-	else    /* if < 2 sec */
+	else /* if < 2 sec */
 		/* 30.5(=61/2) us per count */
 		time.le.lo = (uint32_t)(count * 61 / 2);
 
 	time.le.hi = 0;
 
-	return time;  /* in uSec */
+	return time; /* in uSec */
 }
 
 /**
@@ -275,8 +270,7 @@ static timestamp_t system_get_htimer(void)
 static void system_reset_htimer_alarm(void)
 {
 	MCHP_HTIMER_PRELOAD(0) = 0;
-	MCHP_INT_SOURCE(MCHP_HTIMER_GIRQ) =
-			MCHP_HTIMER_GIRQ_BIT(0);
+	MCHP_INT_SOURCE(MCHP_HTIMER_GIRQ) = MCHP_HTIMER_GIRQ_BIT(0);
 }
 
 #ifdef CONFIG_MCHP_DEEP_SLP_DEBUG
@@ -286,10 +280,10 @@ static void print_pcr_regs(void)
 
 	trace0(0, MEC, 0, "Current PCR registers");
 	for (i = 0; i < 5; i++) {
-		trace12(0, MEC, 0, "REG  SLP_EN[%d] = 0x%08X",
-			i, MCHP_PCR_SLP_EN(i));
-		trace12(0, MEC, 0, "REG CLK_REQ[%d] = 0x%08X",
-			i, MCHP_PCR_CLK_REQ(i));
+		trace12(0, MEC, 0, "REG  SLP_EN[%d] = 0x%08X", i,
+			MCHP_PCR_SLP_EN(i));
+		trace12(0, MEC, 0, "REG CLK_REQ[%d] = 0x%08X", i,
+			MCHP_PCR_CLK_REQ(i));
 	}
 }
 
@@ -298,10 +292,9 @@ static void print_ecia_regs(void)
 	int i;
 
 	trace0(0, MEC, 0, "Current GIRQn.Result registers");
-	for (i = MCHP_INT_GIRQ_FIRST;
-			i <= MCHP_INT_GIRQ_LAST; i++)
-		trace12(0, MEC, 0, "GIRQ[%d].Result = 0x%08X",
-			i, MCHP_INT_RESULT(i));
+	for (i = MCHP_INT_GIRQ_FIRST; i <= MCHP_INT_GIRQ_LAST; i++)
+		trace12(0, MEC, 0, "GIRQ[%d].Result = 0x%08X", i,
+			MCHP_INT_RESULT(i));
 }
 
 static void save_regs(void)
@@ -314,8 +307,7 @@ static void save_regs(void)
 	}
 
 	for (i = 0; i < MCHP_INT_GIRQ_NUM; i++)
-		ecia_result[i] =
-			MCHP_INT_RESULT(MCHP_INT_GIRQ_FIRST + i);
+		ecia_result[i] = MCHP_INT_RESULT(MCHP_INT_GIRQ_FIRST + i);
 }
 
 static void print_saved_regs(void)
@@ -324,21 +316,29 @@ static void print_saved_regs(void)
 
 	trace0(0, BRD, 0, "Before sleep saved registers");
 	for (i = 0; i < MCHP_PCR_SLP_RST_REG_MAX; i++) {
-		trace12(0, BRD, 0, "PCR_SLP_EN[%d]  = 0x%08X",
-			i, pcr_slp_en[i]);
-		trace12(0, BRD, 0, "PCR_CLK_REQ[%d] = 0x%08X",
-			i, pcr_clk_req[i]);
+		trace12(0, BRD, 0, "PCR_SLP_EN[%d]  = 0x%08X", i,
+			pcr_slp_en[i]);
+		trace12(0, BRD, 0, "PCR_CLK_REQ[%d] = 0x%08X", i,
+			pcr_clk_req[i]);
 	}
 
 	for (i = 0; i < MCHP_INT_GIRQ_NUM; i++)
 		trace12(0, BRD, 0, "GIRQ[%d].Result = 0x%08X",
-			(i+MCHP_INT_GIRQ_FIRST), ecia_result[i]);
+			(i + MCHP_INT_GIRQ_FIRST), ecia_result[i]);
 }
 #else
-static __maybe_unused void print_pcr_regs(void) {}
-static __maybe_unused void print_ecia_regs(void) {}
-static __maybe_unused void save_regs(void) {}
-static __maybe_unused void print_saved_regs(void) {}
+static __maybe_unused void print_pcr_regs(void)
+{
+}
+static __maybe_unused void print_ecia_regs(void)
+{
+}
+static __maybe_unused void save_regs(void)
+{
+}
+static __maybe_unused void print_saved_regs(void)
+{
+}
 #endif /* #ifdef CONFIG_MCHP_DEEP_SLP_DEBUG */
 
 /**
@@ -377,23 +377,18 @@ static void prepare_for_deep_sleep(void)
 	MCHP_TMR32_CTL(1) &= ~1;
 #ifdef CONFIG_WATCHDOG_HELP
 	MCHP_TMR16_CTL(0) &= ~1;
-	MCHP_INT_DISABLE(MCHP_TMR16_GIRQ) =
-			MCHP_TMR16_GIRQ_BIT(0);
-	MCHP_INT_SOURCE(MCHP_TMR16_GIRQ) =
-			MCHP_TMR16_GIRQ_BIT(0);
+	MCHP_INT_DISABLE(MCHP_TMR16_GIRQ) = MCHP_TMR16_GIRQ_BIT(0);
+	MCHP_INT_SOURCE(MCHP_TMR16_GIRQ) = MCHP_TMR16_GIRQ_BIT(0);
 #endif
 	MCHP_INT_DISABLE(MCHP_TMR32_GIRQ) =
-			MCHP_TMR32_GIRQ_BIT(0) +
-			MCHP_TMR32_GIRQ_BIT(1);
+		MCHP_TMR32_GIRQ_BIT(0) + MCHP_TMR32_GIRQ_BIT(1);
 	MCHP_INT_SOURCE(MCHP_TMR32_GIRQ) =
-			MCHP_TMR32_GIRQ_BIT(0) +
-			MCHP_TMR32_GIRQ_BIT(1);
+		MCHP_TMR32_GIRQ_BIT(0) + MCHP_TMR32_GIRQ_BIT(1);
 
 #ifdef CONFIG_WATCHDOG
 	/* Stop watchdog */
 	MCHP_WDG_CTL &= ~1;
 #endif
-
 
 #ifdef CONFIG_HOST_INTERFACE_ESPI
 	MCHP_INT_SOURCE(22) = MCHP_INT22_WAKE_ONLY_ESPI;
@@ -448,7 +443,7 @@ static void prepare_for_deep_sleep(void)
 
 static void resume_from_deep_sleep(void)
 {
-	MCHP_PCR_SYS_SLP_CTL = 0x00;  /* default */
+	MCHP_PCR_SYS_SLP_CTL = 0x00; /* default */
 
 	/* Disable assertion of DeepSleep signal when core executes WFI */
 	CPU_SCB_SYSCTRL &= ~BIT(2);
@@ -476,19 +471,19 @@ static void resume_from_deep_sleep(void)
 	MCHP_PCR_SLP_EN3 |= (MCHP_PCR_SLP_EN3_HTMR0);
 
 #ifdef CONFIG_HOST_INTERFACE_ESPI
-	#ifdef CONFIG_POWER_S0IX
+#ifdef CONFIG_POWER_S0IX
 	MCHP_INT_DISABLE(22) = MCHP_INT22_WAKE_ONLY_ESPI;
 	MCHP_INT_SOURCE(22) = MCHP_INT22_WAKE_ONLY_ESPI;
-	#else
-	MCHP_ESPI_ACTIVATE |= 1;
-	#endif
 #else
-	#ifdef CONFIG_POWER_S0IX
+	MCHP_ESPI_ACTIVATE |= 1;
+#endif
+#else
+#ifdef CONFIG_POWER_S0IX
 	MCHP_INT_DISABLE(22) = MCHP_INT22_WAKE_ONLY_LPC;
 	MCHP_INT_SOURCE(22) = MCHP_INT22_WAKE_ONLY_LPC;
-	#else
+#else
 	MCHP_LPC_ACT |= 1;
-	#endif
+#endif
 #endif
 
 	/* re-enable Port 80 capture */
@@ -505,10 +500,8 @@ static void resume_from_deep_sleep(void)
 	MCHP_TMR32_CTL(1) |= 1;
 	MCHP_TMR16_CTL(0) |= 1;
 	MCHP_INT_ENABLE(MCHP_TMR32_GIRQ) =
-			MCHP_TMR32_GIRQ_BIT(0) +
-			MCHP_TMR32_GIRQ_BIT(1);
-	MCHP_INT_ENABLE(MCHP_TMR16_GIRQ) =
-			MCHP_TMR16_GIRQ_BIT(0);
+		MCHP_TMR32_GIRQ_BIT(0) + MCHP_TMR32_GIRQ_BIT(1);
+	MCHP_INT_ENABLE(MCHP_TMR16_GIRQ) = MCHP_TMR16_GIRQ_BIT(0);
 
 	/* Enable watchdog */
 #ifdef CONFIG_WATCHDOG
@@ -520,7 +513,6 @@ static void resume_from_deep_sleep(void)
 #endif
 #endif
 }
-
 
 void clock_refresh_console_in_use(void)
 {
@@ -547,9 +539,7 @@ void __idle(void)
 	htimer_init(); /* hibernation timer initialize */
 
 	disable_sleep(SLEEP_MASK_CONSOLE);
-	console_expire_time.val = get_time().val +
-			CONSOLE_IN_USE_ON_BOOT_TIME;
-
+	console_expire_time.val = get_time().val + CONSOLE_IN_USE_ON_BOOT_TIME;
 
 	/*
 	 * Print when the idle task starts. This is the lowest priority
@@ -562,17 +552,15 @@ void __idle(void)
 		/* Disable interrupts */
 		interrupt_disable();
 
-		t0 = get_time();  /* uSec */
+		t0 = get_time(); /* uSec */
 
 		/* __hw_clock_event_get() is next programmed timer event */
 		next_delay = __hw_clock_event_get() - t0.le.lo;
 
-		time_for_dsleep = next_delay >
-			(HEAVY_SLEEP_RECOVER_TIME_USEC +
-			SET_HTIMER_DELAY_USEC);
+		time_for_dsleep = next_delay > (HEAVY_SLEEP_RECOVER_TIME_USEC +
+						SET_HTIMER_DELAY_USEC);
 
-		max_sleep_time = next_delay -
-				HEAVY_SLEEP_RECOVER_TIME_USEC;
+		max_sleep_time = next_delay - HEAVY_SLEEP_RECOVER_TIME_USEC;
 
 		/* check if there enough time for deep sleep */
 		if (DEEP_SLEEP_ALLOWED && time_for_dsleep) {
@@ -582,7 +570,7 @@ void __idle(void)
 			 * interrupt.
 			 */
 			if ((sleep_mask & SLEEP_MASK_CONSOLE) &&
-				t0.val > console_expire_time.val) {
+			    t0.val > console_expire_time.val) {
 				/* allow console to sleep. */
 				enable_sleep(SLEEP_MASK_CONSOLE);
 
@@ -598,12 +586,10 @@ void __idle(void)
 						"in deep sleep");
 			}
 
-
 			/* UART is not being used  */
 			uart_ready_for_deepsleep =
 				LOW_SPEED_DEEP_SLEEP_ALLOWED &&
-					!uart_tx_in_progress() &&
-					uart_buffer_empty();
+				!uart_tx_in_progress() && uart_buffer_empty();
 
 			/*
 			 * Since MCHP's heavy sleep mode requires all
@@ -612,7 +598,6 @@ void __idle(void)
 			 * heavy sleep of EC.
 			 */
 			if (uart_ready_for_deepsleep) {
-
 				idle_dsleep_cnt++;
 
 				/*
@@ -630,18 +615,14 @@ void __idle(void)
 				 * interrupt triggers only after 'wfi'
 				 * completes its execution.
 				 */
-				max_sleep_time -=
-					(get_time().le.lo - t0.le.lo);
+				max_sleep_time -= (get_time().le.lo - t0.le.lo);
 
 				/* setup/enable htimer wakeup interrupt */
-				system_set_htimer_alarm(0,
-						max_sleep_time);
+				system_set_htimer_alarm(0, max_sleep_time);
 
 				/* set sleep all just before WFI */
-				MCHP_PCR_SYS_SLP_CTL |=
-						MCHP_PCR_SYS_SLP_HEAVY;
-				MCHP_PCR_SYS_SLP_CTL |=
-						MCHP_PCR_SYS_SLP_ALL;
+				MCHP_PCR_SYS_SLP_CTL |= MCHP_PCR_SYS_SLP_HEAVY;
+				MCHP_PCR_SYS_SLP_CTL |= MCHP_PCR_SYS_SLP_ALL;
 
 			} else {
 				idle_sleep_cnt++;
@@ -654,7 +635,6 @@ void __idle(void)
 			asm("nop");
 
 			if (uart_ready_for_deepsleep) {
-
 				resume_from_deep_sleep();
 
 				/*
@@ -673,9 +653,8 @@ void __idle(void)
 				/* disable/clear htimer wakeup interrupt */
 				system_reset_htimer_alarm();
 
-				t1.val = t0.val +
-					(uint64_t)(max_sleep_time -
-							ht_t1.le.lo);
+				t1.val = t0.val + (uint64_t)(max_sleep_time -
+							     ht_t1.le.lo);
 
 				force_time(t1);
 
@@ -685,7 +664,7 @@ void __idle(void)
 				/* Record time spent in deep sleep. */
 				total_idle_dsleep_time_us +=
 					(uint64_t)(max_sleep_time -
-							ht_t1.le.lo);
+						   ht_t1.le.lo);
 			}
 
 		} else { /* CPU 'Sleep' mode */
@@ -693,7 +672,6 @@ void __idle(void)
 			idle_sleep_cnt++;
 
 			asm("wfi");
-
 		}
 
 		interrupt_enable();
@@ -709,23 +687,19 @@ static int command_idle_stats(int argc, char **argv)
 {
 	timestamp_t ts = get_time();
 
-	ccprintf("Num idle calls that sleep:           %d\n",
-			idle_sleep_cnt);
-	ccprintf("Num idle calls that deep-sleep:      %d\n",
-			idle_dsleep_cnt);
+	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
+	ccprintf("Num idle calls that deep-sleep:      %d\n", idle_dsleep_cnt);
 
 	ccprintf("Total Time spent in deep-sleep(sec): %.6lld(s)\n",
-			total_idle_dsleep_time_us);
-	ccprintf("Total time on:                       %.6llds\n\n",
-			ts.val);
+		 total_idle_dsleep_time_us);
+	ccprintf("Total time on:                       %.6llds\n\n", ts.val);
 
 	if (IS_ENABLED(CONFIG_MCHP_DEEP_SLP_DEBUG))
-		print_pcr_regs();	/* debug */
+		print_pcr_regs(); /* debug */
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats,
-			"",
+DECLARE_CONSOLE_COMMAND(idlestats, command_idle_stats, "",
 			"Print last idle stats");
 #endif /* defined(CONFIG_CMD_IDLE_STATS) */
 
@@ -742,12 +716,10 @@ static int command_dsleep(int argc, char **argv)
 			 * Force deep sleep not to use heavy sleep mode or
 			 * allow it to use the heavy sleep mode.
 			 */
-			if (v)  /* 'on' */
-				disable_sleep(
-					SLEEP_MASK_FORCE_NO_LOW_SPEED);
-			else    /* 'off' */
-				enable_sleep(
-					SLEEP_MASK_FORCE_NO_LOW_SPEED);
+			if (v) /* 'on' */
+				disable_sleep(SLEEP_MASK_FORCE_NO_LOW_SPEED);
+			else /* 'off' */
+				enable_sleep(SLEEP_MASK_FORCE_NO_LOW_SPEED);
 		} else {
 			/* Set console in use timeout. */
 			char *e;
@@ -765,16 +737,16 @@ static int command_dsleep(int argc, char **argv)
 
 	ccprintf("Sleep mask: %08x\n", (int)sleep_mask);
 	ccprintf("Console in use timeout:   %d sec\n",
-			console_in_use_timeout_sec);
+		 console_in_use_timeout_sec);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dsleep, command_dsleep,
-		"[ on | off | <timeout> sec]",
-		"Deep sleep clock settings:\nUse 'on' to force deep "
-		"sleep NOT to enter heavy sleep mode.\nUse 'off' to "
-		"allow deep sleep to use heavy sleep whenever conditions "
-		"allow.\n"
-		"Give a timeout value for the console in use timeout.\n"
-		"See also 'sleep mask'.");
+DECLARE_CONSOLE_COMMAND(
+	dsleep, command_dsleep, "[ on | off | <timeout> sec]",
+	"Deep sleep clock settings:\nUse 'on' to force deep "
+	"sleep NOT to enter heavy sleep mode.\nUse 'off' to "
+	"allow deep sleep to use heavy sleep whenever conditions "
+	"allow.\n"
+	"Give a timeout value for the console in use timeout.\n"
+	"See also 'sleep mask'.");
 #endif /* CONFIG_LOW_POWER_IDLE */
