@@ -12,7 +12,7 @@
 
 #include "espi.h"
 
-#define MCHP_HOST_IF_LPC  (0)
+#define MCHP_HOST_IF_LPC (0)
 #define MCHP_HOST_IF_ESPI (1)
 
 /* eSPI Initialization functions */
