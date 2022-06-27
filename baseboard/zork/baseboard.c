@@ -59,15 +59,15 @@ const enum gpio_signal hibernate_wake_pins[] = {
 	GPIO_POWER_BUTTON_L,
 	GPIO_EC_RST_ODL,
 };
-const int hibernate_wake_pins_used =  ARRAY_SIZE(hibernate_wake_pins);
+const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /*
  * In the AOZ1380 PPC, there are no programmable features.  We use
  * the attached NCT3807 to control a GPIO to indicate 1A5 or 3A0
  * current limits.
  */
-__overridable int board_aoz1380_set_vbus_source_current_limit(int port,
-						enum tcpc_rp_value rp)
+__overridable int
+board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv;
 
@@ -96,11 +96,10 @@ static void baseboard_chipset_resume(void)
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, baseboard_chipset_resume, HOOK_PRIO_DEFAULT);
 
 __overridable void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+					  int max_ma, int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /* Keyboard scan setting */
@@ -134,19 +133,19 @@ __override struct keyboard_scan_config keyscan_config = {
  * Murata page for part NCP15WB473F03RC. Vdd=3.3V, R=30.9Kohm.
  */
 const struct thermistor_data_pair thermistor_data[] = {
-	{ 2761 / THERMISTOR_SCALING_FACTOR, 0},
-	{ 2492 / THERMISTOR_SCALING_FACTOR, 10},
-	{ 2167 / THERMISTOR_SCALING_FACTOR, 20},
-	{ 1812 / THERMISTOR_SCALING_FACTOR, 30},
-	{ 1462 / THERMISTOR_SCALING_FACTOR, 40},
-	{ 1146 / THERMISTOR_SCALING_FACTOR, 50},
-	{ 878 / THERMISTOR_SCALING_FACTOR, 60},
-	{ 665 / THERMISTOR_SCALING_FACTOR, 70},
-	{ 500 / THERMISTOR_SCALING_FACTOR, 80},
-	{ 434 / THERMISTOR_SCALING_FACTOR, 85},
-	{ 376 / THERMISTOR_SCALING_FACTOR, 90},
-	{ 326 / THERMISTOR_SCALING_FACTOR, 95},
-	{ 283 / THERMISTOR_SCALING_FACTOR, 100}
+	{ 2761 / THERMISTOR_SCALING_FACTOR, 0 },
+	{ 2492 / THERMISTOR_SCALING_FACTOR, 10 },
+	{ 2167 / THERMISTOR_SCALING_FACTOR, 20 },
+	{ 1812 / THERMISTOR_SCALING_FACTOR, 30 },
+	{ 1462 / THERMISTOR_SCALING_FACTOR, 40 },
+	{ 1146 / THERMISTOR_SCALING_FACTOR, 50 },
+	{ 878 / THERMISTOR_SCALING_FACTOR, 60 },
+	{ 665 / THERMISTOR_SCALING_FACTOR, 70 },
+	{ 500 / THERMISTOR_SCALING_FACTOR, 80 },
+	{ 434 / THERMISTOR_SCALING_FACTOR, 85 },
+	{ 376 / THERMISTOR_SCALING_FACTOR, 90 },
+	{ 326 / THERMISTOR_SCALING_FACTOR, 95 },
+	{ 283 / THERMISTOR_SCALING_FACTOR, 100 }
 };
 
 const struct thermistor_info thermistor_info = {
@@ -293,8 +292,7 @@ static int command_temps_log(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(tempslog, command_temps_log,
-			"seconds",
+DECLARE_CONSOLE_COMMAND(tempslog, command_temps_log, "seconds",
 			"Print temp sensors periodically");
 
 /*
