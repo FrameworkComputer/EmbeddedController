@@ -25,8 +25,8 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 
 #define FAN_CONFIGS(node_id)                                                   \
 	const struct fan_conf node_id##_conf = {                               \
-		.flags = (COND_CODE_1(DT_PROP(node_id, not_use_rpm_mode),      \
-				      (0), (FAN_USE_RPM_MODE))) |              \
+		.flags = (COND_CODE_1(DT_PROP(node_id, not_use_rpm_mode), (0), \
+				      (FAN_USE_RPM_MODE))) |                   \
 			 (COND_CODE_1(DT_PROP(node_id, use_fast_start),        \
 				      (FAN_USE_FAST_START), (0))),             \
 		.ch = node_id,                                                 \
@@ -45,26 +45,24 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 		.rpm_max = DT_PROP(node_id, rpm_max),                          \
 	};
 
-#define FAN_INST(node_id)              \
-	[node_id] = {                  \
+#define FAN_INST(node_id)                \
+	[node_id] = {                    \
 		.conf = &node_id##_conf, \
 		.rpm = &node_id##_rpm,   \
 	},
 
-#define FAN_CONTROL_INST(node_id)                                            \
-	[node_id] = {                                                        \
-		.pwm = DEVICE_DT_GET(DT_PWMS_CTLR(node_id)),                 \
-		.channel = DT_PWMS_CHANNEL(node_id),                         \
-		.flags = DT_PWMS_FLAGS(node_id),                             \
-		.period_ns = (NSEC_PER_SEC/DT_PROP(node_id, pwm_frequency)), \
-		.tach = DEVICE_DT_GET(DT_PHANDLE(node_id, tach)),            \
+#define FAN_CONTROL_INST(node_id)                                              \
+	[node_id] = {                                                          \
+		.pwm = DEVICE_DT_GET(DT_PWMS_CTLR(node_id)),                   \
+		.channel = DT_PWMS_CHANNEL(node_id),                           \
+		.flags = DT_PWMS_FLAGS(node_id),                               \
+		.period_ns = (NSEC_PER_SEC / DT_PROP(node_id, pwm_frequency)), \
+		.tach = DEVICE_DT_GET(DT_PHANDLE(node_id, tach)),              \
 	},
 
 DT_INST_FOREACH_CHILD(0, FAN_CONFIGS)
 
-const struct fan_t fans[FAN_CH_COUNT] = {
-	DT_INST_FOREACH_CHILD(0, FAN_INST)
-};
+const struct fan_t fans[FAN_CH_COUNT] = { DT_INST_FOREACH_CHILD(0, FAN_INST) };
 
 /* Rpm deviation (Unit:percent) */
 #ifndef RPM_DEVIATION
@@ -130,8 +128,8 @@ static void fan_pwm_update(int ch)
 	}
 
 	if (data->pwm_enabled) {
-		pulse_ns = DIV_ROUND_NEAREST(
-				cfg->period_ns * data->pwm_percent, 100);
+		pulse_ns = DIV_ROUND_NEAREST(cfg->period_ns * data->pwm_percent,
+					     100);
 	} else {
 		pulse_ns = 0;
 	}
@@ -320,8 +318,8 @@ void fan_tick_func(void)
 			fan_tick_func_duty(ch);
 			break;
 		default:
-			LOG_ERR("Invalid fan %d mode: %d",
-				ch, fan_data[ch].current_fan_mode);
+			LOG_ERR("Invalid fan %d mode: %d", ch,
+				fan_data[ch].current_fan_mode);
 		}
 	}
 }
