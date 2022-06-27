@@ -18,7 +18,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 /* DPTF current limit, -1 = none */
 static int dptf_limit_ma = -1;
@@ -71,7 +71,7 @@ int charger_closest_voltage(int voltage)
 
 int charger_closest_current(int current)
 {
-	const struct charger_info * const info = charger_get_info();
+	const struct charger_info *const info = charger_get_info();
 
 	/* Apply DPTF limit if necessary */
 	if (dptf_limit_ma >= 0 && current > dptf_limit_ma)
@@ -210,41 +210,41 @@ static int command_charger(int argc, char **argv)
 		return EC_SUCCESS;
 	}
 
-	if (strcasecmp(argv[1+idx_provided], "input") == 0) {
-		d = strtoi(argv[2+idx_provided], &e, 0);
+	if (strcasecmp(argv[1 + idx_provided], "input") == 0) {
+		d = strtoi(argv[2 + idx_provided], &e, 0);
 		if (*e)
-			return EC_ERROR_PARAM2+idx_provided;
+			return EC_ERROR_PARAM2 + idx_provided;
 		return charger_set_input_current_limit(chgnum, d);
-	} else if (strcasecmp(argv[1+idx_provided], "current") == 0) {
-		d = strtoi(argv[2+idx_provided], &e, 0);
+	} else if (strcasecmp(argv[1 + idx_provided], "current") == 0) {
+		d = strtoi(argv[2 + idx_provided], &e, 0);
 		if (*e)
-			return EC_ERROR_PARAM2+idx_provided;
+			return EC_ERROR_PARAM2 + idx_provided;
 		chgstate_set_manual_current(d);
 		return charger_set_current(chgnum, d);
-	} else if (strcasecmp(argv[1+idx_provided], "voltage") == 0) {
-		d = strtoi(argv[2+idx_provided], &e, 0);
+	} else if (strcasecmp(argv[1 + idx_provided], "voltage") == 0) {
+		d = strtoi(argv[2 + idx_provided], &e, 0);
 		if (*e)
-			return EC_ERROR_PARAM2+idx_provided;
+			return EC_ERROR_PARAM2 + idx_provided;
 		chgstate_set_manual_voltage(d);
 		return charger_set_voltage(chgnum, d);
-	} else if (strcasecmp(argv[1+idx_provided], "dptf") == 0) {
-		d = strtoi(argv[2+idx_provided], &e, 0);
+	} else if (strcasecmp(argv[1 + idx_provided], "dptf") == 0) {
+		d = strtoi(argv[2 + idx_provided], &e, 0);
 		if (*e)
-			return EC_ERROR_PARAM2+idx_provided;
+			return EC_ERROR_PARAM2 + idx_provided;
 		dptf_limit_ma = d;
 		return EC_SUCCESS;
-	} else if (strcasecmp(argv[1+idx_provided], "dump") == 0) {
+	} else if (strcasecmp(argv[1 + idx_provided], "dump") == 0) {
 		if (!IS_ENABLED(CONFIG_CMD_CHARGER_DUMP) ||
-				!chg_chips[chgnum].drv->dump_registers) {
+		    !chg_chips[chgnum].drv->dump_registers) {
 			ccprintf("dump not supported\n");
-			return EC_ERROR_PARAM1+idx_provided;
+			return EC_ERROR_PARAM1 + idx_provided;
 		}
 		ccprintf("Dump %s registers\n",
-				chg_chips[chgnum].drv->get_info(chgnum)->name);
+			 chg_chips[chgnum].drv->get_info(chgnum)->name);
 		chg_chips[chgnum].drv->dump_registers(chgnum);
 		return EC_SUCCESS;
 	} else {
-		return EC_ERROR_PARAM1+idx_provided;
+		return EC_ERROR_PARAM1 + idx_provided;
 	}
 }
 
@@ -644,12 +644,16 @@ enum ec_error_list charger_set_hw_ramp(int enable)
 			if (enable) {
 				/* Check if this is the active chg chip. */
 				if (chgnum == charge_get_active_chg_chip())
-					rv = chg_chips[chgnum].drv->set_hw_ramp(chgnum, 1);
-				/* This is not the active chg chip, disable hw_ramp. */
+					rv = chg_chips[chgnum].drv->set_hw_ramp(
+						chgnum, 1);
+				/* This is not the active chg chip, disable
+				 * hw_ramp. */
 				else
-					rv = chg_chips[chgnum].drv->set_hw_ramp(chgnum, 0);
+					rv = chg_chips[chgnum].drv->set_hw_ramp(
+						chgnum, 0);
 			} else
-				rv = chg_chips[chgnum].drv->set_hw_ramp(chgnum, 0);
+				rv = chg_chips[chgnum].drv->set_hw_ramp(chgnum,
+									0);
 		}
 	}
 
@@ -705,8 +709,7 @@ int chg_ramp_get_current_limit(void)
 
 enum ec_error_list charger_set_vsys_compensation(int chgnum,
 						 struct ocpc_data *ocpc,
-						 int current_ma,
-						 int voltage_mv)
+						 int current_ma, int voltage_mv)
 {
 	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
@@ -726,7 +729,7 @@ enum ec_error_list charger_set_vsys_compensation(int chgnum,
 
 enum ec_error_list charger_is_icl_reached(int chgnum, bool *reached)
 {
-		if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
+	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
 		return EC_ERROR_INVAL;
 	}
