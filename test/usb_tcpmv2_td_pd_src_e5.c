@@ -71,12 +71,12 @@ int test_td_pd_src_e5(void)
 	end_time += 6 * MSEC;
 	while (get_time().val < end_time) {
 		if (mock_tcpci_get_reg(TCPC_REG_TRANSMIT) ==
-						TCPCI_MSG_TX_HARD_RESET)
+		    TCPCI_MSG_TX_HARD_RESET)
 			break;
 		task_wait_event(1 * MSEC);
 	}
-	TEST_EQ(mock_tcpci_get_reg(TCPC_REG_TRANSMIT),
-		TCPCI_MSG_TX_HARD_RESET, "%d");
+	TEST_EQ(mock_tcpci_get_reg(TCPC_REG_TRANSMIT), TCPCI_MSG_TX_HARD_RESET,
+		"%d");
 	mock_set_alert(TCPC_REG_ALERT_TX_SUCCESS | TCPC_REG_ALERT_TX_FAILED);
 	mock_tcpci_set_reg(TCPC_REG_TRANSMIT, 0);
 	task_wait_event(1 * MSEC);
