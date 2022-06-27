@@ -89,8 +89,8 @@ int spi_enable(const struct spi_device_t *spi_device, int enable);
  * @param rxlen  number of bytes in rxdata or SPI_READBACK_ALL.
  */
 int spi_transaction(const struct spi_device_t *spi_device,
-		    const uint8_t *txdata, int txlen,
-		    uint8_t *rxdata, int rxlen);
+		    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+		    int rxlen);
 
 /*
  * Similar to spi_transaction(), but hands over to DMA for reading response.
@@ -100,8 +100,8 @@ int spi_transaction(const struct spi_device_t *spi_device,
  * SPI port, it's up to the caller to ensure proper mutual exclusion if needed.
  */
 int spi_transaction_async(const struct spi_device_t *spi_device,
-			  const uint8_t *txdata, int txlen,
-			  uint8_t *rxdata, int rxlen);
+			  const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			  int rxlen);
 
 /* Wait for async response received */
 int spi_transaction_flush(const struct spi_device_t *spi_device);
@@ -131,4 +131,4 @@ static inline void spi_event(enum gpio_signal signal)
 
 #endif
 
-#endif  /* __CROS_EC_SPI_H */
+#endif /* __CROS_EC_SPI_H */
