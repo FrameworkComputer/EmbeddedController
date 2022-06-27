@@ -22,26 +22,25 @@
 #include "usb_pe_sm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define RT1718S_SW_RESET_DELAY_MS	2
+#define RT1718S_SW_RESET_DELAY_MS 2
 /* Time for delay deasserting EN_FRS after FRS VBUS drop. */
-#define RT1718S_FRS_DIS_DELAY		(5 * MSEC)
+#define RT1718S_FRS_DIS_DELAY (5 * MSEC)
 
-#define FLAG_FRS_ENABLED		BIT(0)
-#define FLAG_FRS_RX_SIGNALLED		BIT(1)
-#define FLAG_FRS_VBUS_VALID_FALL	BIT(2)
+#define FLAG_FRS_ENABLED BIT(0)
+#define FLAG_FRS_RX_SIGNALLED BIT(1)
+#define FLAG_FRS_VBUS_VALID_FALL BIT(2)
 static atomic_t frs_flag[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* i2c_write function which won't wake TCPC from low power mode. */
 static int rt1718s_write(int port, int reg, int val, int len)
 {
 	if (reg > 0xFF) {
-		return i2c_write_offset16(
-			tcpc_config[port].i2c_info.port,
-			tcpc_config[port].i2c_info.addr_flags,
-			reg, val, len);
+		return i2c_write_offset16(tcpc_config[port].i2c_info.port,
+					  tcpc_config[port].i2c_info.addr_flags,
+					  reg, val, len);
 	} else if (len == 1) {
 		return tcpc_write(port, reg, val);
 	} else {
@@ -52,10 +51,9 @@ static int rt1718s_write(int port, int reg, int val, int len)
 static int rt1718s_read(int port, int reg, int *val, int len)
 {
 	if (reg > 0xFF) {
-		return i2c_read_offset16(
-			tcpc_config[port].i2c_info.port,
-			tcpc_config[port].i2c_info.addr_flags,
-			reg, val, len);
+		return i2c_read_offset16(tcpc_config[port].i2c_info.port,
+					 tcpc_config[port].i2c_info.addr_flags,
+					 reg, val, len);
 	} else if (len == 1) {
 		return tcpc_read(port, reg, val);
 	} else {
@@ -97,13 +95,12 @@ int rt1718s_read16(int port, int reg, int *val)
 	return rt1718s_read(port, reg, val, 2);
 }
 
-
 int rt1718s_sw_reset(int port)
 {
 	int rv;
 
-	rv = rt1718s_update_bits8(port, RT1718S_SYS_CTRL3,
-		RT1718S_SWRESET_MASK, 0xFF);
+	rv = rt1718s_update_bits8(port, RT1718S_SYS_CTRL3, RT1718S_SWRESET_MASK,
+				  0xFF);
 
 	msleep(RT1718S_SW_RESET_DELAY_MS);
 
@@ -114,44 +111,43 @@ int rt1718s_sw_reset(int port)
 static int rt1718s_enable_bc12_sink(int port, bool en)
 {
 	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
-			RT1718S_RT2_BC12_SNK_FUNC_BC12_SNK_EN,
-			en ? 0xFF : 0);
+				    RT1718S_RT2_BC12_SNK_FUNC_BC12_SNK_EN,
+				    en ? 0xFF : 0);
 }
 
 static int rt1718s_set_bc12_sink_spec_ta(int port, bool en)
 {
-	return rt1718s_update_bits8(port,
-			RT1718S_RT2_BC12_SNK_FUNC,
-			RT1718S_RT2_BC12_SNK_FUNC_SPEC_TA_EN, en ? 0xFF : 0);
+	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
+				    RT1718S_RT2_BC12_SNK_FUNC_SPEC_TA_EN,
+				    en ? 0xFF : 0);
 }
 
 static int rt1718s_set_bc12_sink_dcdt_sel(int port, uint8_t dcdt_sel)
 {
-	return rt1718s_update_bits8(port,
-			RT1718S_RT2_BC12_SNK_FUNC,
-			RT1718S_RT2_BC12_SNK_FUNC_DCDT_SEL_MASK, dcdt_sel);
+	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
+				    RT1718S_RT2_BC12_SNK_FUNC_DCDT_SEL_MASK,
+				    dcdt_sel);
 }
 
 static int rt1718s_set_bc12_sink_vlgc_option(int port, bool en)
 {
-	return rt1718s_update_bits8(port,
-			RT1718S_RT2_BC12_SNK_FUNC,
-			RT1718S_RT2_BC12_SNK_FUNC_VLGC_OPT, en ? 0xFF : 0);
+	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
+				    RT1718S_RT2_BC12_SNK_FUNC_VLGC_OPT,
+				    en ? 0xFF : 0);
 }
 
 static int rt1718s_set_bc12_sink_vport_sel(int port, uint8_t sel)
 {
-	return rt1718s_update_bits8(port,
-			RT1718S_RT2_DPDM_CTR1_DPDM_SET,
-			RT1718S_RT2_DPDM_CTR1_DPDM_SET_DPDM_VSRC_SEL_MASK, sel);
+	return rt1718s_update_bits8(
+		port, RT1718S_RT2_DPDM_CTR1_DPDM_SET,
+		RT1718S_RT2_DPDM_CTR1_DPDM_SET_DPDM_VSRC_SEL_MASK, sel);
 }
 
 static int rt1718s_set_bc12_sink_wait_vbus(int port, bool en)
 {
-	return rt1718s_update_bits8(port,
-			RT1718S_RT2_BC12_SNK_FUNC,
-			RT1718S_RT2_BC12_SNK_FUNC_BC12_WAIT_VBUS,
-			en ? 0xFF : 0);
+	return rt1718s_update_bits8(port, RT1718S_RT2_BC12_SNK_FUNC,
+				    RT1718S_RT2_BC12_SNK_FUNC_BC12_WAIT_VBUS,
+				    en ? 0xFF : 0);
 }
 
 /*
@@ -161,27 +157,27 @@ static int rt1718s_bc12_init(int port)
 {
 	/* Enable vendor defined BC12 function */
 	RETURN_ERROR(rt1718s_write8(port, RT1718S_RT_MASK6,
-			RT1718S_RT_MASK6_M_BC12_SNK_DONE |
-			RT1718S_RT_MASK6_M_BC12_TA_CHG));
+				    RT1718S_RT_MASK6_M_BC12_SNK_DONE |
+					    RT1718S_RT_MASK6_M_BC12_TA_CHG));
 
 	RETURN_ERROR(rt1718s_write8(port, RT1718S_RT2_SBU_CTRL_01,
-			RT1718S_RT2_SBU_CTRL_01_DPDM_VIEN |
-			RT1718S_RT2_SBU_CTRL_01_DM_SWEN |
-			RT1718S_RT2_SBU_CTRL_01_DP_SWEN));
+				    RT1718S_RT2_SBU_CTRL_01_DPDM_VIEN |
+					    RT1718S_RT2_SBU_CTRL_01_DM_SWEN |
+					    RT1718S_RT2_SBU_CTRL_01_DP_SWEN));
 
 	/* Disable 2.7v mode */
 	RETURN_ERROR(rt1718s_set_bc12_sink_spec_ta(port, false));
 
 	/* DCDT select 600ms timeout */
-	RETURN_ERROR(rt1718s_set_bc12_sink_dcdt_sel(port,
-			RT1718S_RT2_BC12_SNK_FUNC_DCDT_SEL_600MS));
+	RETURN_ERROR(rt1718s_set_bc12_sink_dcdt_sel(
+		port, RT1718S_RT2_BC12_SNK_FUNC_DCDT_SEL_600MS));
 
 	/* Disable vlgc option */
 	RETURN_ERROR(rt1718s_set_bc12_sink_vlgc_option(port, false));
 
 	/* DPDM voltage selection */
-	RETURN_ERROR(rt1718s_set_bc12_sink_vport_sel(port,
-			RT1718S_RT2_DPDM_CTR1_DPDM_SET_DPDM_VSRC_SEL_0_65V));
+	RETURN_ERROR(rt1718s_set_bc12_sink_vport_sel(
+		port, RT1718S_RT2_DPDM_CTR1_DPDM_SET_DPDM_VSRC_SEL_0_65V));
 
 	/* Disable sink wait vbus */
 	RETURN_ERROR(rt1718s_set_bc12_sink_wait_vbus(port, false));
@@ -197,22 +193,24 @@ static int rt1718s_workaround(int port)
 
 	switch (device_id) {
 	case RT1718S_DEVICE_ID_ES1:
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_VCONN_CONTROL_3,
-					RT1718S_VCONN_CONTROL_3_VCONN_OVP_DEG,
-					0xFF));
+		RETURN_ERROR(rt1718s_update_bits8(
+			port, RT1718S_VCONN_CONTROL_3,
+			RT1718S_VCONN_CONTROL_3_VCONN_OVP_DEG, 0xFF));
 		/* fallthrough */
 	case RT1718S_DEVICE_ID_ES2:
-		RETURN_ERROR(rt1718s_update_bits8(port, TCPC_REG_FAULT_CTRL,
-					TCPC_REG_FAULT_CTRL_VBUS_OCP_FAULT_DIS,
-					0xFF));
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_VCON_CTRL4,
-					RT1718S_VCON_CTRL4_UVP_CP_EN |
-					RT1718S_VCON_CTRL4_OCP_CP_EN,
-					0));
-		RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_VCONN_CONTROL_2,
-					RT1718S_VCONN_CONTROL_2_OVP_EN_CC1 |
-					RT1718S_VCONN_CONTROL_2_OVP_EN_CC2,
-					0xFF));
+		RETURN_ERROR(rt1718s_update_bits8(
+			port, TCPC_REG_FAULT_CTRL,
+			TCPC_REG_FAULT_CTRL_VBUS_OCP_FAULT_DIS, 0xFF));
+		RETURN_ERROR(rt1718s_update_bits8(
+			port, RT1718S_VCON_CTRL4,
+			RT1718S_VCON_CTRL4_UVP_CP_EN |
+				RT1718S_VCON_CTRL4_OCP_CP_EN,
+			0));
+		RETURN_ERROR(rt1718s_update_bits8(
+			port, RT1718S_VCONN_CONTROL_2,
+			RT1718S_VCONN_CONTROL_2_OVP_EN_CC1 |
+				RT1718S_VCONN_CONTROL_2_OVP_EN_CC2,
+			0xFF));
 		break;
 	default:
 		/* do nothing */
@@ -271,12 +269,13 @@ static int rt1718s_init(int port)
 
 	/* Set VBUS_VOL_SEL to 20V */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_RT2_VBUS_VOL_CTRL,
-				RT1718S_RT2_VBUS_VOL_CTRL_VOL_SEL,
-				RT1718S_VBUS_VOL_TO_REG(20)));
+					  RT1718S_RT2_VBUS_VOL_CTRL_VOL_SEL,
+					  RT1718S_VBUS_VOL_TO_REG(20)));
 
 	/* Set VCONN_OCP_SEL to 400mA */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_VCONN_CONTROL_3,
-				RT1718S_VCONN_CONTROL_3_VCONN_OCP_SEL, 0x7F));
+					  RT1718S_VCONN_CONTROL_3_VCONN_OCP_SEL,
+					  0x7F));
 
 	/* Increase the Vconn OCP shoot detection from 200ns to 3~5us */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_VCON_CTRL4,
@@ -287,9 +286,10 @@ static int rt1718s_init(int port)
 
 	/* Tcpc connect invalid disabled. Exit shipping mode */
 	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_SYS_CTRL1,
-				RT1718S_SYS_CTRL1_TCPC_CONN_INVALID, 0x00));
-	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_SYS_CTRL1,
-				RT1718S_SYS_CTRL1_SHIPPING_OFF, 0xFF));
+					  RT1718S_SYS_CTRL1_TCPC_CONN_INVALID,
+					  0x00));
+	RETURN_ERROR(rt1718s_update_bits8(
+		port, RT1718S_SYS_CTRL1, RT1718S_SYS_CTRL1_SHIPPING_OFF, 0xFF));
 
 	/* Clear alert and fault */
 	RETURN_ERROR(rt1718s_write8(port, TCPC_REG_FAULT_STATUS, 0xFF));
@@ -303,8 +303,7 @@ static int rt1718s_init(int port)
 	 * tcpci_tcpm_init.
 	 */
 	RETURN_ERROR(tcpc_update16(port, TCPC_REG_ALERT_MASK,
-				TCPC_REG_ALERT_MASK_VENDOR_DEF,
-				MASK_SET));
+				   TCPC_REG_ALERT_MASK_VENDOR_DEF, MASK_SET));
 
 	if (IS_ENABLED(CONFIG_USB_PD_FRS)) {
 		memset(frs_flag, 0,
@@ -368,7 +367,7 @@ static void rt1718s_update_charge_manager(int port,
 	if (new_bc12_type != current_bc12_type) {
 		if (current_bc12_type != CHARGE_SUPPLIER_NONE)
 			charge_manager_update_charge(current_bc12_type, port,
-							NULL);
+						     NULL);
 
 		if (new_bc12_type != CHARGE_SUPPLIER_NONE) {
 			struct charge_port_info chg = {
@@ -391,16 +390,15 @@ static void rt1718s_bc12_usb_charger_task_init(const int port)
 static void rt1718s_bc12_usb_charger_task_event(const int port, uint32_t evt)
 {
 	bool is_non_pd_sink = !pd_capable(port) &&
-		!usb_charger_port_is_sourcing_vbus(port) &&
-		pd_check_vbus_level(port, VBUS_PRESENT);
+			      !usb_charger_port_is_sourcing_vbus(port) &&
+			      pd_check_vbus_level(port, VBUS_PRESENT);
 
 	if (evt & USB_CHG_EVENT_VBUS) {
-
 		if (is_non_pd_sink)
 			rt1718s_enable_bc12_sink(port, true);
 		else
-			rt1718s_update_charge_manager(
-					port, CHARGE_SUPPLIER_NONE);
+			rt1718s_update_charge_manager(port,
+						      CHARGE_SUPPLIER_NONE);
 	}
 
 	/* detection done, update charge_manager and stop detection */
@@ -534,8 +532,7 @@ void rt1718s_vendor_defined_alert(int port)
 		return;
 	/* ES1 workaround: disable Vconn discharge */
 	rv = rt1718s_update_bits8(port, RT1718S_SYS_CTRL2,
-			RT1718S_SYS_CTRL2_VCONN_DISCHARGE_EN,
-			0);
+				  RT1718S_SYS_CTRL2_VCONN_DISCHARGE_EN, 0);
 	if (rv)
 		return;
 
@@ -546,7 +543,6 @@ __overridable int board_rt1718s_set_snk_enable(int port, int enable)
 {
 	return EC_SUCCESS;
 }
-
 
 static int rt1718s_tcpm_set_snk_ctrl(int port, int enable)
 {
@@ -721,8 +717,7 @@ void rt1718s_gpio_set_flags(int port, enum rt1718s_gpio signal, uint32_t flags)
 void rt1718s_gpio_set_level(int port, enum rt1718s_gpio signal, int value)
 {
 	rt1718s_update_bits8(port, RT1718S_GPIO_CTRL(signal),
-			RT1718S_GPIO_CTRL_O,
-			value ? 0xFF : 0);
+			     RT1718S_GPIO_CTRL_O, value ? 0xFF : 0);
 }
 
 int rt1718s_gpio_get_level(int port, enum rt1718s_gpio signal)
@@ -739,7 +734,6 @@ static int command_rt1718s_gpio(int argc, char **argv)
 	uint32_t flags;
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
-
 		if (tcpc_config[i].drv != &rt1718s_tcpm_drv)
 			continue;
 
@@ -751,7 +745,7 @@ static int command_rt1718s_gpio(int argc, char **argv)
 				return EC_ERROR_UNKNOWN;
 
 			ccprintf("C%d GPIO%d OD=%d PU=%d PD=%d OE=%d HL=%d\n",
-				 i, j+1, !(flags & RT1718S_GPIO_CTRL_OD_N),
+				 i, j + 1, !(flags & RT1718S_GPIO_CTRL_OD_N),
 				 !!(flags & RT1718S_GPIO_CTRL_PU),
 				 !!(flags & RT1718S_GPIO_CTRL_PD),
 				 !!(flags & RT1718S_GPIO_CTRL_OE),
@@ -780,42 +774,42 @@ static int rt1718s_set_sbu(int port, bool enable)
 
 /* RT1718S is a TCPCI compatible port controller */
 const struct tcpm_drv rt1718s_tcpm_drv = {
-	.init			= &rt1718s_init,
-	.release		= &tcpci_tcpm_release,
-	.get_cc			= &tcpci_tcpm_get_cc,
+	.init = &rt1718s_init,
+	.release = &tcpci_tcpm_release,
+	.get_cc = &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
+	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
 #endif
-	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &tcpci_tcpm_set_cc,
-	.set_polarity		= &tcpci_tcpm_set_polarity,
+	.select_rp_value = &tcpci_tcpm_select_rp_value,
+	.set_cc = &tcpci_tcpm_set_cc,
+	.set_polarity = &tcpci_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable	= &tcpci_tcpm_sop_prime_enable,
+	.sop_prime_enable = &tcpci_tcpm_sop_prime_enable,
 #endif
-	.set_vconn		= &rt1718s_set_vconn,
-	.set_msg_header		= &tcpci_tcpm_set_msg_header,
-	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
-	.get_message_raw	= &tcpci_tcpm_get_message_raw,
-	.transmit		= &tcpci_tcpm_transmit,
-	.tcpc_alert		= &rt1718s_alert,
+	.set_vconn = &rt1718s_set_vconn,
+	.set_msg_header = &tcpci_tcpm_set_msg_header,
+	.set_rx_enable = &tcpci_tcpm_set_rx_enable,
+	.get_message_raw = &tcpci_tcpm_get_message_raw,
+	.transmit = &tcpci_tcpm_transmit,
+	.tcpc_alert = &rt1718s_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+	.tcpc_discharge_vbus = &tcpci_tcpc_discharge_vbus,
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= &tcpci_tcpc_drp_toggle,
+	.drp_toggle = &tcpci_tcpc_drp_toggle,
 #endif
-	.get_chip_info		= &tcpci_get_chip_info,
-	.set_snk_ctrl		= &rt1718s_tcpm_set_snk_ctrl,
-	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+	.get_chip_info = &tcpci_get_chip_info,
+	.set_snk_ctrl = &rt1718s_tcpm_set_snk_ctrl,
+	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &rt1718s_enter_low_power_mode,
+	.enter_low_power_mode = &rt1718s_enter_low_power_mode,
 #endif
 #ifdef CONFIG_USB_PD_FRS_TCPC
-	.set_frs_enable		= &rt1718s_set_frs_enable,
+	.set_frs_enable = &rt1718s_set_frs_enable,
 #endif
-	.set_bist_test_mode	= &tcpci_set_bist_test_mode,
+	.set_bist_test_mode = &tcpci_set_bist_test_mode,
 #ifdef CONFIG_USB_PD_TCPM_SBU
-	.set_sbu		= &rt1718s_set_sbu,
+	.set_sbu = &rt1718s_set_sbu,
 #endif
 };
 
