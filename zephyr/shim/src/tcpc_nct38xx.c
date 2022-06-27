@@ -18,10 +18,9 @@
 		    ([TCPC_PORT(id)] = GPIO_DEV_WITH_COMMA(id)), ())
 
 /* NCT38XX GPIO device pool for binding the TCPC port and NCT38XX GPIO device */
-static const struct device
-	*nct38xx_gpio_devices[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-		DT_FOREACH_STATUS_OKAY(nuvoton_nct38xx, GPIO_DEV_BINDING)
-	};
+static const struct device *nct38xx_gpio_devices[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	DT_FOREACH_STATUS_OKAY(nuvoton_nct38xx, GPIO_DEV_BINDING)
+};
 
 const struct device *nct38xx_get_gpio_device_from_port(const int port)
 {
