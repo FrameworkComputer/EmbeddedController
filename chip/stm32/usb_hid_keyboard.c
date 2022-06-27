@@ -28,7 +28,7 @@
 #include "usb_hid_hw.h"
 
 /* Console output macro */
-#define CPRINTF(format, args...) cprintf(CC_USB, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USB, format, ##args)
 
 static const int keyboard_debug;
 
@@ -51,7 +51,7 @@ enum hid_protocol {
 static enum hid_protocol protocol = HID_REPORT_PROTOCOL;
 
 #if defined(CONFIG_KEYBOARD_ASSISTANT_KEY) || \
-    defined(CONFIG_KEYBOARD_TABLET_MODE_SWITCH)
+	defined(CONFIG_KEYBOARD_TABLET_MODE_SWITCH)
 #define HID_KEYBOARD_EXTRA_FIELD
 #endif
 
@@ -126,19 +126,20 @@ struct usb_hid_keyboard_output_report {
  * Assistant key is mapped as 0xf0, but this key code is never actually send.
  */
 const uint8_t keycodes[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
-	{0x00, 0x00, 0xe0, 0xe3, 0xe4, HID_KEYBOARD_ASSISTANT_KEY, 0x00, 0x00},
-	{0xe3, 0x29, 0x2b, 0x35, 0x04, 0x1d, 0x1e, 0x14},
-	{0x3a, 0x3d, 0x3c, 0x3b, 0x07, 0x06, 0x20, 0x08},
-	{0x05, 0x0a, 0x17, 0x22, 0x09, 0x19, 0x21, 0x15},
-	{0x43, 0x40, 0x3f, 0x3e, 0x16, 0x1b, 0x1f, 0x1a},
-	{0x87, 0x00, 0x30, 0x00, 0x0e, 0x36, 0x25, 0x0c},
-	{0x11, 0x0b, 0x1c, 0x23, 0x0d, 0x10, 0x24, 0x18},
-	{0x00, 0x00, 0x64, 0x00, 0x00, 0xe1, 0x00, 0xe5},
-	{0x2e, 0x34, 0x2F, 0x2d, 0x33, 0x38, 0x27, 0x13},
-	{0x00, 0x42, 0x41, 0x68, 0x0f, 0x37, 0x26, 0x12},
-	{0xe6, 0x00, 0x89, 0x00, 0x31, 0x00, 0xe2, 0x00},
-	{0x00, 0x2a, 0x00, 0x31, 0x28, 0x2c, 0x51, 0x52},
-	{0x00, 0x8a, 0x00, 0x8b, 0x00, 0x00, 0x4f, 0x50},
+	{ 0x00, 0x00, 0xe0, 0xe3, 0xe4, HID_KEYBOARD_ASSISTANT_KEY, 0x00,
+	  0x00 },
+	{ 0xe3, 0x29, 0x2b, 0x35, 0x04, 0x1d, 0x1e, 0x14 },
+	{ 0x3a, 0x3d, 0x3c, 0x3b, 0x07, 0x06, 0x20, 0x08 },
+	{ 0x05, 0x0a, 0x17, 0x22, 0x09, 0x19, 0x21, 0x15 },
+	{ 0x43, 0x40, 0x3f, 0x3e, 0x16, 0x1b, 0x1f, 0x1a },
+	{ 0x87, 0x00, 0x30, 0x00, 0x0e, 0x36, 0x25, 0x0c },
+	{ 0x11, 0x0b, 0x1c, 0x23, 0x0d, 0x10, 0x24, 0x18 },
+	{ 0x00, 0x00, 0x64, 0x00, 0x00, 0xe1, 0x00, 0xe5 },
+	{ 0x2e, 0x34, 0x2F, 0x2d, 0x33, 0x38, 0x27, 0x13 },
+	{ 0x00, 0x42, 0x41, 0x68, 0x0f, 0x37, 0x26, 0x12 },
+	{ 0xe6, 0x00, 0x89, 0x00, 0x31, 0x00, 0xe2, 0x00 },
+	{ 0x00, 0x2a, 0x00, 0x31, 0x28, 0x2c, 0x51, 0x52 },
+	{ 0x00, 0x8a, 0x00, 0x8b, 0x00, 0x00, 0x4f, 0x50 },
 };
 
 /* HID descriptors */
@@ -177,80 +178,84 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 02) = {
 };
 #endif
 
-#define KEYBOARD_BASE_DESC						\
-	0x05, 0x01, /* Usage Page (Generic Desktop) */			\
-	0x09, 0x06, /* Usage (Keyboard) */				\
-	0xA1, 0x01, /* Collection (Application) */			\
-									\
-	/* Modifiers */							\
-	0x05, 0x07, /* Usage Page (Key Codes) */			\
-	0x19, HID_KEYBOARD_MODIFIER_LOW, /* Usage Minimum */		\
-	0x29, HID_KEYBOARD_MODIFIER_HIGH, /* Usage Maximum */		\
-	0x15, 0x00, /* Logical Minimum (0) */				\
-	0x25, 0x01, /* Logical Maximum (1) */				\
-	0x75, 0x01, /* Report Size (1) */				\
-	0x95, 0x08, /* Report Count (8) */				\
-	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */ \
-									\
-	0x95, 0x01, /* Report Count (1) */				\
-	0x75, 0x08, /* Report Size (8) */				\
-	0x81, 0x01, /* Input (Constant), ;Reserved byte */		\
-									\
-	/* Normal keys */						\
-	0x95, 0x06, /* Report Count (6) */				\
-	0x75, 0x08, /* Report Size (8) */				\
-	0x15, 0x00, /* Logical Minimum (0) */				\
-	0x25, 0xa4, /* Logical Maximum (164) */				\
-	0x05, 0x07, /* Usage Page (Key Codes) */			\
-	0x19, 0x00, /* Usage Minimum (0) */				\
-	0x29, 0xa4, /* Usage Maximum (164) */				\
-	0x81, 0x00, /* Input (Data, Array), ;Key arrays (6 bytes) */
+#define KEYBOARD_BASE_DESC                                                 \
+	0x05, 0x01, /* Usage Page (Generic Desktop) */                     \
+		0x09, 0x06, /* Usage (Keyboard) */                         \
+		0xA1, 0x01, /* Collection (Application) */                 \
+                                                                           \
+		/* Modifiers */                                            \
+		0x05, 0x07, /* Usage Page (Key Codes) */                   \
+		0x19, HID_KEYBOARD_MODIFIER_LOW, /* Usage Minimum */       \
+		0x29, HID_KEYBOARD_MODIFIER_HIGH, /* Usage Maximum */      \
+		0x15, 0x00, /* Logical Minimum (0) */                      \
+		0x25, 0x01, /* Logical Maximum (1) */                      \
+		0x75, 0x01, /* Report Size (1) */                          \
+		0x95, 0x08, /* Report Count (8) */                         \
+		0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier \
+			       byte */                                     \
+                                                                           \
+		0x95, 0x01, /* Report Count (1) */                         \
+		0x75, 0x08, /* Report Size (8) */                          \
+		0x81, 0x01, /* Input (Constant), ;Reserved byte */         \
+                                                                           \
+		/* Normal keys */                                          \
+		0x95, 0x06, /* Report Count (6) */                         \
+		0x75, 0x08, /* Report Size (8) */                          \
+		0x15, 0x00, /* Logical Minimum (0) */                      \
+		0x25, 0xa4, /* Logical Maximum (164) */                    \
+		0x05, 0x07, /* Usage Page (Key Codes) */                   \
+		0x19, 0x00, /* Usage Minimum (0) */                        \
+		0x29, 0xa4, /* Usage Maximum (164) */                      \
+		0x81, 0x00, /* Input (Data, Array), ;Key arrays (6 bytes) */
 
-#define KEYBOARD_TOP_ROW_DESC						\
-	/* Modifiers */							\
-	0x05, 0x0C, /* Consumer Page */					\
-	0x0A, 0x24, 0x02, /* AC Back (0x224) */				\
-	0x0A, 0x25, 0x02, /* AC Forward (0x225) */			\
-	0x0A, 0x27, 0x02, /* AC Refresh (0x227) */			\
-	0x0A, 0x32, 0x02, /* AC View Toggle (0x232) */			\
-	0x0A, 0x9F, 0x02, /* AC Desktop Show All windows (0x29F) */	\
-	0x09, 0x70,       /* Display Brightness Decrement (0x70) */	\
-	0x09, 0x6F,       /* Display Brightness Increment (0x6F) */	\
-	0x09, 0xE2,       /* Mute (0xE2) */				\
-	0x09, 0xEA,       /* Volume Decrement (0xEA) */			\
-	0x09, 0xE9,       /* Volume Increment (0xE9) */			\
-	0x0B, 0x46, 0x00, 0x07, 0x00, /* PrintScreen (Page 0x7, Usage 0x46) */ \
-	0x0A, 0xD0, 0x02, /* Privacy Screen Toggle (0x2D0) */		\
-	0x09, 0x7A,       /* Keyboard Brightness Decrement (0x7A) */	\
-	0x09, 0x79,       /* Keyboard Brightness Increment (0x79)*/	\
-	0x09, 0xCD,       /* Play / Pause (0xCD) */			\
-	0x09, 0xB5,       /* Scan Next Track (0xB5) */			\
-	0x09, 0xB6,       /* Scan Previous Track (0xB6) */		\
-	0x09, 0x7C,       /* Keyboard Backlight OOC (0x7C) */ \
-	0x0B, 0x2F, 0x00, 0x0B, 0x00, /* Phone Mute (Page 0xB, Usage 0x2F) */ \
-	0x09, 0x32,       /* Sleep (0x32) */				\
-	0x15, 0x00, /* Logical Minimum (0) */				\
-	0x25, 0x01, /* Logical Maximum (1) */				\
-	0x75, 0x01, /* Report Size (1) */				\
-	0x95, 0x14, /* Report Count (20) */				\
-	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */ \
-									\
-	/* 12-bit padding */						\
-	0x95, 0x0C, /* Report Count (12) */				\
-	0x75, 0x01, /* Report Size (1) */				\
-	0x81, 0x01, /* Input (Constant), ;1-bit padding */
+#define KEYBOARD_TOP_ROW_DESC                                                 \
+	/* Modifiers */                                                       \
+	0x05, 0x0C, /* Consumer Page */                                       \
+		0x0A, 0x24, 0x02, /* AC Back (0x224) */                       \
+		0x0A, 0x25, 0x02, /* AC Forward (0x225) */                    \
+		0x0A, 0x27, 0x02, /* AC Refresh (0x227) */                    \
+		0x0A, 0x32, 0x02, /* AC View Toggle (0x232) */                \
+		0x0A, 0x9F, 0x02, /* AC Desktop Show All windows (0x29F) */   \
+		0x09, 0x70, /* Display Brightness Decrement (0x70) */         \
+		0x09, 0x6F, /* Display Brightness Increment (0x6F) */         \
+		0x09, 0xE2, /* Mute (0xE2) */                                 \
+		0x09, 0xEA, /* Volume Decrement (0xEA) */                     \
+		0x09, 0xE9, /* Volume Increment (0xE9) */                     \
+		0x0B, 0x46, 0x00, 0x07, 0x00, /* PrintScreen (Page 0x7, Usage \
+						 0x46) */                     \
+		0x0A, 0xD0, 0x02, /* Privacy Screen Toggle (0x2D0) */         \
+		0x09, 0x7A, /* Keyboard Brightness Decrement (0x7A) */        \
+		0x09, 0x79, /* Keyboard Brightness Increment (0x79)*/         \
+		0x09, 0xCD, /* Play / Pause (0xCD) */                         \
+		0x09, 0xB5, /* Scan Next Track (0xB5) */                      \
+		0x09, 0xB6, /* Scan Previous Track (0xB6) */                  \
+		0x09, 0x7C, /* Keyboard Backlight OOC (0x7C) */               \
+		0x0B, 0x2F, 0x00, 0x0B, 0x00, /* Phone Mute (Page 0xB, Usage  \
+						 0x2F) */                     \
+		0x09, 0x32, /* Sleep (0x32) */                                \
+		0x15, 0x00, /* Logical Minimum (0) */                         \
+		0x25, 0x01, /* Logical Maximum (1) */                         \
+		0x75, 0x01, /* Report Size (1) */                             \
+		0x95, 0x14, /* Report Count (20) */                           \
+		0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier    \
+			       byte */                                        \
+                                                                              \
+		/* 12-bit padding */                                          \
+		0x95, 0x0C, /* Report Count (12) */                           \
+		0x75, 0x01, /* Report Size (1) */                             \
+		0x81, 0x01, /* Input (Constant), ;1-bit padding */
 
-#define KEYBOARD_TOP_ROW_FEATURE_DESC					\
-	0x06, 0xd1, 0xff, /* Usage Page (Google) */			\
-	0x09, 0x01,       /* Usage (Top Row List) */			\
-	0xa1, 0x02,       /* Collection (Logical) */			\
-	0x05, 0x0a,       /*   Usage Page (Ordinal) */			\
-	0x19, 0x01,       /*   Usage Minimum (1) */			\
-	0x29, CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS, /* Usage Maximum */	\
-	0x95, CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS, /* Report Count */	\
-	0x75, 0x20,       /*   Report Size (32) */			\
-	0xb1, 0x03,       /*   Feature (Cnst,Var,Abs) */		\
-	0xc0,             /* End Collection */
+#define KEYBOARD_TOP_ROW_FEATURE_DESC                                         \
+	0x06, 0xd1, 0xff, /* Usage Page (Google) */                           \
+		0x09, 0x01, /* Usage (Top Row List) */                        \
+		0xa1, 0x02, /* Collection (Logical) */                        \
+		0x05, 0x0a, /*   Usage Page (Ordinal) */                      \
+		0x19, 0x01, /*   Usage Minimum (1) */                         \
+		0x29, CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS, /* Usage Maximum */ \
+		0x95, CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS, /* Report Count */  \
+		0x75, 0x20, /*   Report Size (32) */                          \
+		0xb1, 0x03, /*   Feature (Cnst,Var,Abs) */                    \
+		0xc0, /* End Collection */
 
 /*
  * Vendor-defined Usage Page 0xffd1:
@@ -259,60 +264,62 @@ const struct usb_endpoint_descriptor USB_EP_DESC(USB_IFACE_HID_KEYBOARD, 02) = {
  */
 #ifdef HID_KEYBOARD_EXTRA_FIELD
 #ifdef CONFIG_KEYBOARD_ASSISTANT_KEY
-#define KEYBOARD_ASSISTANT_KEY_DESC					\
-	0x19, 0x18, /* Usage Minimum */					\
-	0x29, 0x18, /* Usage Maximum */					\
-	0x15, 0x00, /* Logical Minimum (0) */				\
-	0x25, 0x01, /* Logical Maximum (1) */				\
-	0x75, 0x01, /* Report Size (1) */				\
-	0x95, 0x01, /* Report Count (1) */				\
-	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */
+#define KEYBOARD_ASSISTANT_KEY_DESC                                        \
+	0x19, 0x18, /* Usage Minimum */                                    \
+		0x29, 0x18, /* Usage Maximum */                            \
+		0x15, 0x00, /* Logical Minimum (0) */                      \
+		0x25, 0x01, /* Logical Maximum (1) */                      \
+		0x75, 0x01, /* Report Size (1) */                          \
+		0x95, 0x01, /* Report Count (1) */                         \
+		0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier \
+			       byte */
 #else
 /* No assistant key: just pad 1 bit. */
-#define KEYBOARD_ASSISTANT_KEY_DESC					\
-	0x95, 0x01, /* Report Count (1) */				\
-	0x75, 0x01, /* Report Size (1) */				\
-	0x81, 0x01, /* Input (Constant), ;1-bit padding */
+#define KEYBOARD_ASSISTANT_KEY_DESC               \
+	0x95, 0x01, /* Report Count (1) */        \
+		0x75, 0x01, /* Report Size (1) */ \
+		0x81, 0x01, /* Input (Constant), ;1-bit padding */
 #endif /* !CONFIG_KEYBOARD_ASSISTANT_KEY */
 
 #ifdef CONFIG_KEYBOARD_TABLET_MODE_SWITCH
-#define KEYBOARD_TABLET_MODE_SWITCH_DESC				\
-	0x19, 0x19, /* Usage Minimum */					\
-	0x29, 0x19, /* Usage Maximum */					\
-	0x15, 0x00, /* Logical Minimum (0) */				\
-	0x25, 0x01, /* Logical Maximum (1) */				\
-	0x75, 0x01, /* Report Size (1) */				\
-	0x95, 0x01, /* Report Count (1) */				\
-	0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier byte */
+#define KEYBOARD_TABLET_MODE_SWITCH_DESC                                   \
+	0x19, 0x19, /* Usage Minimum */                                    \
+		0x29, 0x19, /* Usage Maximum */                            \
+		0x15, 0x00, /* Logical Minimum (0) */                      \
+		0x25, 0x01, /* Logical Maximum (1) */                      \
+		0x75, 0x01, /* Report Size (1) */                          \
+		0x95, 0x01, /* Report Count (1) */                         \
+		0x81, 0x02, /* Input (Data, Variable, Absolute), ;Modifier \
+			       byte */
 #else
 /* No tablet mode swtch: just pad 1 bit. */
-#define KEYBOARD_TABLET_MODE_SWITCH_DESC				\
-	0x95, 0x01, /* Report Count (1) */				\
-	0x75, 0x01, /* Report Size (1) */				\
-	0x81, 0x01, /* Input (Constant), ;1-bit padding */
+#define KEYBOARD_TABLET_MODE_SWITCH_DESC          \
+	0x95, 0x01, /* Report Count (1) */        \
+		0x75, 0x01, /* Report Size (1) */ \
+		0x81, 0x01, /* Input (Constant), ;1-bit padding */
 #endif /* CONFIG_KEYBOARD_TABLET_MODE_SWITCH */
 
-#define KEYBOARD_VENDOR_DESC						\
-	0x06, 0xd1, 0xff, /* Usage Page (Vendor-defined 0xffd1) */	\
-									\
-	KEYBOARD_ASSISTANT_KEY_DESC					\
-	KEYBOARD_TABLET_MODE_SWITCH_DESC				\
-									\
-	0x95, 0x01, /* Report Count (1) */				\
-	0x75, 0x06, /* Report Size (6) */				\
-	0x81, 0x01, /* Input (Constant), ;6-bit padding */
+#define KEYBOARD_VENDOR_DESC                                                 \
+	0x06, 0xd1, 0xff, /* Usage Page (Vendor-defined 0xffd1) */           \
+                                                                             \
+		KEYBOARD_ASSISTANT_KEY_DESC KEYBOARD_TABLET_MODE_SWITCH_DESC \
+                                                                             \
+		0x95,                                                        \
+		0x01, /* Report Count (1) */                                 \
+		0x75, 0x06, /* Report Size (6) */                            \
+		0x81, 0x01, /* Input (Constant), ;6-bit padding */
 #endif /* HID_KEYBOARD_EXTRA_FIELD */
 
-#define KEYBOARD_BACKLIGHT_DESC \
-	0xA1, 0x02, /* Collection (Logical) */				\
-	0x05, 0x14, /*   Usage Page (Alphanumeric Display) */		\
-	0x09, 0x46, /*   Usage (Display Brightness) */			\
-	0x95, 0x01, /*   Report Count (1) */				\
-	0x75, 0x08, /*   Report Size (8) */				\
-	0x15, 0x00, /*   Logical Minimum (0) */				\
-	0x25, 0x64, /*   Logical Maximum (100) */			\
-	0x91, 0x02, /*   Output (Data, Variable, Absolute) */		\
-	0xC0,       /* End Collection */
+#define KEYBOARD_BACKLIGHT_DESC                                       \
+	0xA1, 0x02, /* Collection (Logical) */                        \
+		0x05, 0x14, /*   Usage Page (Alphanumeric Display) */ \
+		0x09, 0x46, /*   Usage (Display Brightness) */        \
+		0x95, 0x01, /*   Report Count (1) */                  \
+		0x75, 0x08, /*   Report Size (8) */                   \
+		0x15, 0x00, /*   Logical Minimum (0) */               \
+		0x25, 0x64, /*   Logical Maximum (100) */             \
+		0x91, 0x02, /*   Output (Data, Variable, Absolute) */ \
+		0xC0, /* End Collection */
 
 /*
  * To allow dynamic detection of keyboard backlights, we define two descriptors.
@@ -325,16 +332,14 @@ static const uint8_t report_desc[] = {
 	KEYBOARD_BASE_DESC
 
 #ifdef KEYBOARD_VENDOR_DESC
-	KEYBOARD_VENDOR_DESC
+		KEYBOARD_VENDOR_DESC
 #endif
 
 #ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
-	KEYBOARD_TOP_ROW_DESC
-	KEYBOARD_TOP_ROW_FEATURE_DESC
+			KEYBOARD_TOP_ROW_DESC KEYBOARD_TOP_ROW_FEATURE_DESC
 #endif
-	0xC0        /* End Collection */
+	0xC0 /* End Collection */
 };
-
 
 #ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
 
@@ -344,32 +349,29 @@ static const uint8_t report_desc_with_backlight[] = {
 	KEYBOARD_BASE_DESC
 
 #ifdef KEYBOARD_VENDOR_DESC
-	KEYBOARD_VENDOR_DESC
+		KEYBOARD_VENDOR_DESC
 #endif
 
 #ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
-	KEYBOARD_TOP_ROW_DESC
-	KEYBOARD_TOP_ROW_FEATURE_DESC
+			KEYBOARD_TOP_ROW_DESC KEYBOARD_TOP_ROW_FEATURE_DESC
 #endif
-	KEYBOARD_BACKLIGHT_DESC
+				KEYBOARD_BACKLIGHT_DESC
 
-	0xC0        /* End Collection */
+	0xC0 /* End Collection */
 };
 
 #endif
 
 /* HID: HID Descriptor */
-const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_KEYBOARD,
-						hid, hid_desc_kb) = {
+const struct usb_hid_descriptor USB_CUSTOM_DESC_VAR(USB_IFACE_HID_KEYBOARD, hid,
+						    hid_desc_kb) = {
 	.bLength = 9,
 	.bDescriptorType = USB_HID_DT_HID,
 	.bcdHID = 0x0100,
 	.bCountryCode = 0x00, /* Hardware target country */
 	.bNumDescriptors = 1,
-	.desc = {{
-		.bDescriptorType = USB_HID_DT_REPORT,
-		.wDescriptorLength = sizeof(report_desc)
-	}}
+	.desc = { { .bDescriptorType = USB_HID_DT_REPORT,
+		    .wDescriptorLength = sizeof(report_desc) } }
 };
 
 #define EP_TX_BUF_SIZE DIV_ROUND_UP(HID_KEYBOARD_REPORT_SIZE, 2)
@@ -403,10 +405,10 @@ static void write_keyboard_report(void)
 		 * send the buffer: enable TX.
 		 */
 
-		memcpy_to_usbram((void *) usb_sram_addr(hid_ep_tx_buf),
-				&report, sizeof(report));
-		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
-				EP_TX_VALID, 0);
+		memcpy_to_usbram((void *)usb_sram_addr(hid_ep_tx_buf), &report,
+				 sizeof(report));
+		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK, EP_TX_VALID,
+				0);
 	}
 
 	/*
@@ -422,7 +424,7 @@ static void write_keyboard_report(void)
 static void hid_keyboard_rx(void)
 {
 	struct usb_hid_keyboard_output_report report;
-	memcpy_from_usbram(&report, (void *) usb_sram_addr(hid_ep_rx_buf),
+	memcpy_from_usbram(&report, (void *)usb_sram_addr(hid_ep_rx_buf),
 			   HID_KEYBOARD_OUTPUT_REPORT_SIZE);
 
 	CPRINTF("Keyboard backlight set to %d%%\n", report.brightness);
@@ -439,10 +441,10 @@ static void hid_keyboard_tx(void)
 {
 	hid_tx(USB_EP_HID_KEYBOARD);
 	if (hid_ep_data_ready) {
-		memcpy_to_usbram((void *) usb_sram_addr(hid_ep_tx_buf),
-				&report, sizeof(report));
-		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
-				EP_TX_VALID, 0);
+		memcpy_to_usbram((void *)usb_sram_addr(hid_ep_tx_buf), &report,
+				 sizeof(report));
+		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK, EP_TX_VALID,
+				0);
 		hid_ep_data_ready = 0;
 	}
 
@@ -455,16 +457,14 @@ static void hid_keyboard_event(enum usb_ep_event evt)
 	if (evt == USB_EVENT_RESET) {
 		protocol = HID_REPORT_PROTOCOL;
 
-		hid_reset(USB_EP_HID_KEYBOARD,
-			  hid_ep_tx_buf,
+		hid_reset(USB_EP_HID_KEYBOARD, hid_ep_tx_buf,
 			  HID_KEYBOARD_REPORT_SIZE,
 #ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
-			  hid_ep_rx_buf,
-			  HID_KEYBOARD_OUTPUT_REPORT_SIZE
+			  hid_ep_rx_buf, HID_KEYBOARD_OUTPUT_REPORT_SIZE
 #else
 			  NULL, 0
 #endif
-			  );
+		);
 
 		/*
 		 * Reload endpoint on reset, to make sure we report accurate
@@ -547,8 +547,8 @@ static int hid_keyboard_get_report(uint8_t report_id, uint8_t report_type,
 #ifdef CONFIG_USB_HID_KEYBOARD_VIVALDI
 	if (report_type == REPORT_TYPE_FEATURE) {
 		*buffer_ptr = (uint8_t *)feature_report;
-		*buffer_size = (sizeof(uint32_t) *
-				CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS);
+		*buffer_size =
+			(sizeof(uint32_t) * CONFIG_USB_HID_KB_NUM_TOP_ROW_KEYS);
 		return 0;
 	}
 #endif
@@ -572,8 +572,9 @@ static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
 	if (ret >= 0)
 		return ret;
 
-	if (ep0_buf_rx[0] == (USB_DIR_OUT | USB_TYPE_CLASS |
-		       USB_RECIP_INTERFACE | (USB_HID_REQ_SET_PROTOCOL << 8))) {
+	if (ep0_buf_rx[0] ==
+	    (USB_DIR_OUT | USB_TYPE_CLASS | USB_RECIP_INTERFACE |
+	     (USB_HID_REQ_SET_PROTOCOL << 8))) {
 		uint16_t value = ep0_buf_rx[1];
 
 		if (value >= HID_PROTOCOL_COUNT)
@@ -584,19 +585,21 @@ static int hid_keyboard_iface_request(usb_uint *ep0_buf_rx,
 		/* Reload endpoint with appropriate tx_count. */
 		btable_ep[USB_EP_HID_KEYBOARD].tx_count =
 			(protocol == HID_BOOT_PROTOCOL) ?
-			HID_KEYBOARD_BOOT_SIZE : HID_KEYBOARD_REPORT_SIZE;
-		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK,
-				EP_TX_VALID, 0);
+				HID_KEYBOARD_BOOT_SIZE :
+				HID_KEYBOARD_REPORT_SIZE;
+		STM32_TOGGLE_EP(USB_EP_HID_KEYBOARD, EP_TX_MASK, EP_TX_VALID,
+				0);
 
 		btable_ep[0].tx_count = 0;
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
 		return 0;
-	} else if (ep0_buf_rx[0] == (USB_DIR_IN | USB_TYPE_CLASS |
-		       USB_RECIP_INTERFACE | (USB_HID_REQ_GET_PROTOCOL << 8))) {
+	} else if (ep0_buf_rx[0] ==
+		   (USB_DIR_IN | USB_TYPE_CLASS | USB_RECIP_INTERFACE |
+		    (USB_HID_REQ_GET_PROTOCOL << 8))) {
 		uint8_t value = protocol;
 
-		memcpy_to_usbram((void *) usb_sram_addr(ep0_buf_tx),
-				 &value, sizeof(value));
+		memcpy_to_usbram((void *)usb_sram_addr(ep0_buf_tx), &value,
+				 sizeof(value));
 		btable_ep[0].tx_count = 1;
 		STM32_TOGGLE_EP(0, EP_TX_RX_MASK, EP_TX_RX_VALID, 0);
 		return 0;
@@ -615,7 +618,7 @@ void keyboard_clear_buffer(void)
 	memset(&report, 0, sizeof(report));
 #ifdef CONFIG_KEYBOARD_TABLET_MODE_SWITCH
 	if (tablet_get_mode())
-		report.extra |= 0x01 <<	(HID_KEYBOARD_TABLET_MODE_SWITCH -
+		report.extra |= 0x01 << (HID_KEYBOARD_TABLET_MODE_SWITCH -
 					 HID_KEYBOARD_EXTRA_LOW);
 #endif
 	write_keyboard_report();
@@ -648,7 +651,7 @@ static uint32_t maybe_convert_function_key(int keycode)
 		return SLEEP_KEY_MASK;
 
 	if (index >= config->num_top_row_keys ||
-			config->action_keys[index] == TK_ABSENT)
+	    config->action_keys[index] == TK_ABSENT)
 		return 0; /* not mapped */
 	return action_key[config->action_keys[index]].mask;
 }
@@ -666,8 +669,8 @@ static void keyboard_process_queue(void)
 	if (keyboard_debug)
 		CPRINTF("Q%d (s%d ep%d hw%d)\n", queue_count(&key_queue),
 			usb_is_suspended(), hid_ep_data_ready,
-			(STM32_USB_EP(USB_EP_HID_KEYBOARD) & EP_TX_MASK)
-			== EP_TX_VALID);
+			(STM32_USB_EP(USB_EP_HID_KEYBOARD) & EP_TX_MASK) ==
+				EP_TX_VALID);
 	mutex_lock(&key_queue_mutex);
 
 	if (queue_count(&key_queue) == 0) {
@@ -728,7 +731,7 @@ static void keyboard_process_queue(void)
 			valid = 1;
 #endif
 		} else if (ev.keycode >= HID_KEYBOARD_EXTRA_LOW &&
-		    ev.keycode <= HID_KEYBOARD_EXTRA_HIGH) {
+			   ev.keycode <= HID_KEYBOARD_EXTRA_HIGH) {
 #ifdef HID_KEYBOARD_EXTRA_FIELD
 			mask = 0x01 << (ev.keycode - HID_KEYBOARD_EXTRA_LOW);
 			if (ev.pressed)
@@ -738,7 +741,7 @@ static void keyboard_process_queue(void)
 			valid = 1;
 #endif
 		} else if (ev.keycode >= HID_KEYBOARD_MODIFIER_LOW &&
-		    ev.keycode <= HID_KEYBOARD_MODIFIER_HIGH) {
+			   ev.keycode <= HID_KEYBOARD_MODIFIER_HIGH) {
 			mask = 0x01 << (ev.keycode - HID_KEYBOARD_MODIFIER_LOW);
 			if (ev.pressed)
 				report.modifiers |= mask;
@@ -805,7 +808,7 @@ static void tablet_mode_change(void)
 }
 DECLARE_HOOK(HOOK_TABLET_MODE_CHANGE, tablet_mode_change, HOOK_PRIO_DEFAULT);
 /* Run after tablet_mode_init. */
-DECLARE_HOOK(HOOK_INIT, tablet_mode_change, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_INIT, tablet_mode_change, HOOK_PRIO_DEFAULT + 1);
 #endif
 
 void keyboard_state_changed(int row, int col, int is_pressed)
@@ -821,7 +824,8 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 }
 
 void clear_typematic_key(void)
-{ }
+{
+}
 
 #ifdef CONFIG_USB_HID_KEYBOARD_BACKLIGHT
 void usb_hid_keyboard_init(void)
@@ -831,8 +835,8 @@ void usb_hid_keyboard_init(void)
 		hid_config_kb.report_size = sizeof(report_desc_with_backlight);
 
 		set_descriptor_patch(USB_DESC_KEYBOARD_BACKLIGHT,
-			&hid_desc_kb.desc[0].wDescriptorLength,
-			sizeof(report_desc_with_backlight));
+				     &hid_desc_kb.desc[0].wDescriptorLength,
+				     sizeof(report_desc_with_backlight));
 	}
 }
 /* This needs to happen before usb_init (HOOK_PRIO_DEFAULT) */
