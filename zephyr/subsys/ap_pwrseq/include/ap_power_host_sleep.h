@@ -22,8 +22,8 @@ void ap_power_set_active_wake_mask(void);
  *
  * @return 0 for success; -EINVAL if power state is not S3/S5/S0ix
  */
-int ap_power_get_lazy_wake_mask(
-	enum power_states_ndsx state, host_event_t *mask);
+int ap_power_get_lazy_wake_mask(enum power_states_ndsx state,
+				host_event_t *mask);
 
 #if CONFIG_AP_PWRSEQ_S0IX
 /* For S0ix path, flag to notify sleep change */
