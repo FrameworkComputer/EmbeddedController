@@ -17,7 +17,7 @@
 
 #include "bootblock_data.h"
 
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
 
 enum emmc_cmd {
 	EMMC_ERROR = -1,
@@ -129,7 +129,7 @@ static void emmc_bootblock_transfer(void)
 		/* Wait for FIFO1 or FIFO2 have been transmitted */
 		start = __hw_clock_source_read();
 		while (!(IT83XX_SPI_TXFSR & BIT(0)) &&
-			(__hw_clock_source_read() - start < timeout_us))
+		       (__hw_clock_source_read() - start < timeout_us))
 			;
 		/* Abort an ongoing transfer due to a command is received. */
 		if (IT83XX_SPI_ISR & IT83XX_SPI_RX_FIFO_FULL)
@@ -147,16 +147,16 @@ static enum emmc_cmd emmc_parse_command(int index, uint32_t *cmd0)
 	uint32_t data[3];
 
 	data[0] = htobe32(cmd0[index]);
-	data[1] = htobe32(cmd0[index+1]);
-	data[2] = htobe32(cmd0[index+2]);
+	data[1] = htobe32(cmd0[index + 1]);
+	data[2] = htobe32(cmd0[index + 2]);
 
 	if ((data[0] & 0xff000000) != 0x40000000) {
 		/* Figure out alignment (cmd starts with 01) */
 		/* Number of leading ones. */
 		shift0 = __builtin_clz(~data[0]);
 
-		data[0] = (data[0] << shift0) | (data[1] >> (32-shift0));
-		data[1] = (data[1] << shift0) | (data[2] >> (32-shift0));
+		data[0] = (data[0] << shift0) | (data[1] >> (32 - shift0));
+		data[1] = (data[1] << shift0) | (data[2] >> (32 - shift0));
 	}
 
 	if (data[0] == 0x40000000 && data[1] == 0x0095ffff) {
