@@ -14,13 +14,12 @@
 #define CPU_CLOCK 48000000
 #define CONFIG_STM_HWTIMER32
 #define TIM_CLOCK32 2
-#define TIM_CLOCK_MSB  3
+#define TIM_CLOCK_MSB 3
 #define TIM_CLOCK_LSB 15
 #define TIM_WATCHDOG 7
 
 /* Nucelo platform does not have a lid switch */
 #undef CONFIG_LID_SWITCH
-
 
 /* Setup UART console */
 /*
@@ -49,23 +48,19 @@
 #define CONFIG_UART_TX_DMA_PH DMAMUX_REQ_USART1_TX
 #endif
 
-
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
-#define GPIO_WP_L		GPIO_EC_WP_L
-
-
+#define GPIO_ENTERING_RW GPIO_EC_ENTERING_RW
+#define GPIO_WP_L GPIO_EC_WP_L
 
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
 #include "registers.h"
-
 
 #endif /* !__ASSEMBLER__ */
 
