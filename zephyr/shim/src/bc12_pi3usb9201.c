@@ -14,28 +14,25 @@
 #include "usb_pd.h"
 #include "usbc/utils.h"
 
-
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) > 0,
-		"No compatible BC1.2 instance found");
+	     "No compatible BC1.2 instance found");
 
-#define USBC_PORT_BC12(inst)                                                  \
-	{                                                                     \
-		.i2c_port = I2C_PORT(DT_PHANDLE(DT_DRV_INST(inst), port)),    \
-		.i2c_addr_flags = DT_STRING_UPPER_TOKEN(                      \
-					DT_DRV_INST(inst), i2c_addr_flags),   \
+#define USBC_PORT_BC12(inst)                                               \
+	{                                                                  \
+		.i2c_port = I2C_PORT(DT_PHANDLE(DT_DRV_INST(inst), port)), \
+		.i2c_addr_flags = DT_STRING_UPPER_TOKEN(DT_DRV_INST(inst), \
+							i2c_addr_flags),   \
 	},
 
 const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	DT_INST_FOREACH_STATUS_OKAY(USBC_PORT_BC12)
 };
 
-static void bc12_enable_irqs(void)
-{
+static void bc12_enable_irqs(void){
 	DT_INST_FOREACH_STATUS_OKAY(BC12_GPIO_ENABLE_INTERRUPT)
-}
-DECLARE_HOOK(HOOK_INIT, bc12_enable_irqs, HOOK_PRIO_DEFAULT);
+} DECLARE_HOOK(HOOK_INIT, bc12_enable_irqs, HOOK_PRIO_DEFAULT);
 
 #if DT_INST_NODE_HAS_PROP(0, irq)
 void usb0_evt(enum gpio_signal signal)
