@@ -26,7 +26,8 @@
 #define CONFIG_CHARGER_RAA489000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr */
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
+					*/
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
 #define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
 
@@ -40,8 +41,8 @@
 #define CONFIG_PWM
 
 /* Sensors */
-#define CONFIG_ACCEL_LIS2DWL		/* Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
+#define CONFIG_ACCEL_LIS2DWL /* Lid accel */
+#define CONFIG_ACCELGYRO_LSM6DSM /* Base accel */
 #define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 /* Sensors without hardware FIFO are in forced mode */
@@ -109,26 +110,17 @@ enum pwm_channel {
 };
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* ADC channels */
 enum adc_channel {
-	ADC_VSNS_PP3300_A,     /* ADC0 */
-	ADC_TEMP_SENSOR_1,     /* ADC2 */
-	ADC_TEMP_SENSOR_2,     /* ADC3 */
+	ADC_VSNS_PP3300_A, /* ADC0 */
+	ADC_TEMP_SENSOR_1, /* ADC2 */
+	ADC_TEMP_SENSOR_2, /* ADC3 */
 	ADC_CH_COUNT
 };
 
-enum temp_sensor_id {
-	TEMP_SENSOR_1,
-	TEMP_SENSOR_2,
-	TEMP_SENSOR_COUNT
-};
+enum temp_sensor_id { TEMP_SENSOR_1, TEMP_SENSOR_2, TEMP_SENSOR_COUNT };
 
 /* List of possible batteries */
 enum battery_type {
