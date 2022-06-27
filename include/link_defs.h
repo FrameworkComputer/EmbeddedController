@@ -133,7 +133,7 @@ extern void *__dram_bss_end;
 /* Helper for special chip-specific memory sections */
 #if defined(CONFIG_CHIP_MEMORY_REGIONS) || defined(CONFIG_DRAM_BASE)
 #define __SECTION(name) __attribute__((section("." STRINGIFY(name) ".50_auto")))
-#define __SECTION_KEEP(name)                                                   \
+#define __SECTION_KEEP(name) \
 	__keep __attribute__((section("." STRINGIFY(name) ".keep.50_auto")))
 #else
 #define __SECTION(name)
@@ -148,7 +148,7 @@ extern void *__dram_bss_end;
 #endif /* __CROS_EC_LINK_DEFS_H */
 
 #ifdef CONFIG_PRESERVE_LOGS
-#define __preserved_logs(name)                                                 \
+#define __preserved_logs(name) \
 	__attribute__((section(".preserved_logs." STRINGIFY(name))))
 /* preserved_logs section. */
 extern const char __preserved_logs_start[];
