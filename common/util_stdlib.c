@@ -134,8 +134,7 @@ __stdlib_compat int atoi(const char *nptr)
 	return neg ? -result : result;
 }
 
-__keep
-__stdlib_compat int memcmp(const void *s1, const void *s2, size_t len)
+__keep __stdlib_compat int memcmp(const void *s1, const void *s2, size_t len)
 {
 	const char *sa = s1;
 	const char *sb = s2;
@@ -151,17 +150,16 @@ __stdlib_compat int memcmp(const void *s1, const void *s2, size_t len)
 }
 
 #if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
-__keep
-__stdlib_compat void *memcpy(void *dest, const void *src, size_t len)
+__keep __stdlib_compat void *memcpy(void *dest, const void *src, size_t len)
 {
 	char *d = (char *)dest;
 	const char *s = (const char *)src;
 	uint32_t *dw;
 	const uint32_t *sw;
 	char *head;
-	char * const tail = (char *)dest + len;
+	char *const tail = (char *)dest + len;
 	/* Set 'body' to the last word boundary */
-	uint32_t * const body = (uint32_t *)((uintptr_t)tail & ~3);
+	uint32_t *const body = (uint32_t *)((uintptr_t)tail & ~3);
 
 	if (((uintptr_t)dest & 3) != ((uintptr_t)src & 3)) {
 		/* Misaligned. no body, no tail. */
@@ -197,18 +195,17 @@ __stdlib_compat void *memcpy(void *dest, const void *src, size_t len)
 #endif /* address_sanitizer || memory_sanitizer */
 
 #if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
-__keep
-__stdlib_compat __visible void *memset(void *dest, int c, size_t len)
+__keep __stdlib_compat __visible void *memset(void *dest, int c, size_t len)
 {
 	char *d = (char *)dest;
 	uint32_t cccc;
 	uint32_t *dw;
 	char *head;
-	char * const tail = (char *)dest + len;
+	char *const tail = (char *)dest + len;
 	/* Set 'body' to the last word boundary */
-	uint32_t * const body = (uint32_t *)((uintptr_t)tail & ~3);
+	uint32_t *const body = (uint32_t *)((uintptr_t)tail & ~3);
 
-	c &= 0xff;	/* Clear upper bits before ORing below */
+	c &= 0xff; /* Clear upper bits before ORing below */
 	cccc = c | (c << 8) | (c << 16) | (c << 24);
 
 	if ((uintptr_t)tail < (((uintptr_t)d + 3) & ~3))
@@ -237,8 +234,7 @@ __stdlib_compat __visible void *memset(void *dest, int c, size_t len)
 #endif /* address_sanitizer || memory_sanitizer */
 
 #if !(__has_feature(address_sanitizer) || __has_feature(memory_sanitizer))
-__keep
-__stdlib_compat void *memmove(void *dest, const void *src, size_t len)
+__keep __stdlib_compat void *memmove(void *dest, const void *src, size_t len)
 {
 	if ((uintptr_t)dest <= (uintptr_t)src ||
 	    (uintptr_t)dest >= (uintptr_t)src + len) {
@@ -253,9 +249,9 @@ __stdlib_compat void *memmove(void *dest, const void *src, size_t len)
 		uint32_t *dw;
 		const uint32_t *sw;
 		char *head;
-		char * const tail = (char *)dest;
+		char *const tail = (char *)dest;
 		/* Set 'body' to the last word boundary */
-		uint32_t * const body = (uint32_t *)(((uintptr_t)tail+3) & ~3);
+		uint32_t *const body = (uint32_t *)(((uintptr_t)tail + 3) & ~3);
 
 		if (((uintptr_t)dest & 3) != ((uintptr_t)src & 3)) {
 			/* Misaligned. no body, no tail. */
@@ -326,7 +322,6 @@ __stdlib_compat int strncmp(const char *s1, const char *s2, size_t n)
 			break;
 		s1++;
 		s2++;
-
 	}
 	return 0;
 }
