@@ -19,28 +19,27 @@
 /* struct spi_device_t */
 #include "spi.h"
 
-#define SPI_DMA_OPTION_RD	0
-#define SPI_DMA_OPTION_WR	1
+#define SPI_DMA_OPTION_RD 0
+#define SPI_DMA_OPTION_WR 1
 
 /*
  * bits[3:0] = controller instance
  * bits[7:4] = controller family
  * 0 = QMSPI, 1 = GPSPI
  */
-#define QMSPI0_PORT	0x00
-#define GPSPI0_PORT	0x10
-#define GPSPI1_PORT	0x11
+#define QMSPI0_PORT 0x00
+#define GPSPI0_PORT 0x10
+#define GPSPI1_PORT 0x11
 
+#define QMSPI_CLASS0 0
+#define GPSPI_CLASS0 1
 
-#define QMSPI_CLASS0	0
-#define GPSPI_CLASS0	1
+#define QMSPI_CLASS (0 << 4)
+#define GPSPI_CLASS BIT(4)
 
-#define QMSPI_CLASS	(0 << 4)
-#define GPSPI_CLASS	BIT(4)
-
-#define QMSPI_CTRL0	0
-#define GPSPI_CTRL0	0
-#define GPSPI_CTRL1	1
+#define QMSPI_CTRL0 0
+#define GPSPI_CTRL0 0
+#define GPSPI_CTRL1 1
 
 /*
  * Encode zero based controller class and instance values
@@ -51,8 +50,7 @@
 /*
  * helper to return pointer to QMSPI or GPSPI struct dma_option
  */
-const void *spi_dma_option(const struct spi_device_t *spi_device,
-				int is_tx);
+const void *spi_dma_option(const struct spi_device_t *spi_device, int is_tx);
 
 #endif /* #ifndef _QMSPI_CHIP_H */
 /**   @}
