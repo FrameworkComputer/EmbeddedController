@@ -167,8 +167,7 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 }
 
 #if IS_ENABLED(CONFIG_SHELL)
-static int command_flashchip(const struct shell *shell,
-			     size_t argc,
+static int command_flashchip(const struct shell *shell, size_t argc,
 			     char **argv)
 {
 	uint8_t manufacturer;
@@ -177,23 +176,19 @@ static int command_flashchip(const struct shell *shell,
 	uint8_t status2;
 	int res;
 
-	res = cros_flash_physical_get_status(cros_flash_dev,
-					     &status1,
+	res = cros_flash_physical_get_status(cros_flash_dev, &status1,
 					     &status2);
 
 	if (!res)
-		shell_fprintf(shell,
-			      SHELL_NORMAL,
-			      "Status 1: 0x%02x, Status 2: 0x%02x\n",
-			      status1, status2);
+		shell_fprintf(shell, SHELL_NORMAL,
+			      "Status 1: 0x%02x, Status 2: 0x%02x\n", status1,
+			      status2);
 
-	res = cros_flash_physical_get_jedec_id(cros_flash_dev,
-					       &manufacturer,
+	res = cros_flash_physical_get_jedec_id(cros_flash_dev, &manufacturer,
 					       &device);
 
 	if (!res)
-		shell_fprintf(shell,
-			      SHELL_NORMAL,
+		shell_fprintf(shell, SHELL_NORMAL,
 			      "Manufacturer: 0x%02x, DID: 0x%04x\n",
 			      manufacturer, device);
 
