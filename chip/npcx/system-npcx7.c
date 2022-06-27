@@ -21,13 +21,13 @@
 #include "system_chip.h"
 #include "rom_chip.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /* Macros for last 32K ram block */
 #define LAST_RAM_BLK ((NPCX_RAM_SIZE / (32 * 1024)) - 1)
 /* Higher bits are reserved and need to be masked */
-#define RAM_PD_MASK  (~BIT(LAST_RAM_BLK))
+#define RAM_PD_MASK (~BIT(LAST_RAM_BLK))
 
 /*****************************************************************************/
 /* IC specific low-level driver depends on chip series */
@@ -83,11 +83,11 @@ void system_enter_psl_mode(void)
 	NPCX_BBRAM(BBRM_DATA_INDEX_WAKE) = HIBERNATE_WAKE_PSL;
 
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
-	 /*
-	  * If pulse mode is enabled, the VCC power is turned off by the
-	  * external component (Ex: PMIC) but PSL_OUT. So we can just return
-	  * here.
-	  */
+	/*
+	 * If pulse mode is enabled, the VCC power is turned off by the
+	 * external component (Ex: PMIC) but PSL_OUT. So we can just return
+	 * here.
+	 */
 	if (IS_BIT_SET(NPCX_GLUE_PSL_MCTL1, NPCX_GLUE_PSL_MCTL1_PLS_EN))
 		return;
 #endif
@@ -113,8 +113,7 @@ static void system_psl_type_sel(enum psl_pin_t psl_pin, uint32_t flags)
 	/* Set PSL input events' type as level or edge trigger */
 	if ((flags & GPIO_INT_F_HIGH) || (flags & GPIO_INT_F_LOW))
 		CLEAR_BIT(NPCX_GLUE_PSL_CTS, psl_pin + 4);
-	else if ((flags & GPIO_INT_F_RISING) ||
-		 (flags & GPIO_INT_F_FALLING))
+	else if ((flags & GPIO_INT_F_RISING) || (flags & GPIO_INT_F_FALLING))
 		SET_BIT(NPCX_GLUE_PSL_CTS, psl_pin + 4);
 
 	/*
@@ -145,7 +144,7 @@ int system_config_psl_mode(enum gpio_signal signal)
  * Hibernate function in last 32K ram block for npcx7 series.
  * Do not use global variable since we also turn off data ram.
  */
-noreturn void __keep __attribute__ ((section(".after_init")))
+noreturn void __keep __attribute__((section(".after_init")))
 __enter_hibernate_in_last_block(void)
 {
 	/*
@@ -164,7 +163,7 @@ __enter_hibernate_in_last_block(void)
 	NPCX_PMCSR = 0x6;
 
 	/* Enter deep idle, wake-up by GPIOs or RTC */
-	asm volatile ("wfi");
+	asm volatile("wfi");
 
 	/* RTC wake-up */
 	if (IS_BIT_SET(NPCX_WTC, NPCX_WTC_PTO))
@@ -208,8 +207,8 @@ void __hibernate_npcx_series(void)
 	__enter_hibernate_in_psl();
 #else
 	/* Make sure this is located in the last 32K code RAM block */
-	ASSERT((uint32_t)(&__after_init_end) - CONFIG_PROGRAM_MEMORY_BASE
-								< (32*1024));
+	ASSERT((uint32_t)(&__after_init_end) - CONFIG_PROGRAM_MEMORY_BASE <
+	       (32 * 1024));
 
 	/* Execute hibernate func in last 32K block */
 	__enter_hibernate_in_last_block();
