@@ -11,40 +11,40 @@
 #include "system_chip.h"
 
 /* Modules Map */
-#define NPCX_PMC_BASE_ADDR	0x4000D000
-#define NPCX_GDMA_BASE_ADDR	0x40011000
+#define NPCX_PMC_BASE_ADDR 0x4000D000
+#define NPCX_GDMA_BASE_ADDR 0x40011000
 
 /******************************************************************************/
 /* GDMA (General DMA) Registers */
-#define NPCX_GDMA_CTL		REG32(NPCX_GDMA_BASE_ADDR + 0x000)
-#define NPCX_GDMA_SRCB		REG32(NPCX_GDMA_BASE_ADDR + 0x004)
-#define NPCX_GDMA_DSTB		REG32(NPCX_GDMA_BASE_ADDR + 0x008)
-#define NPCX_GDMA_TCNT		REG32(NPCX_GDMA_BASE_ADDR + 0x00C)
+#define NPCX_GDMA_CTL REG32(NPCX_GDMA_BASE_ADDR + 0x000)
+#define NPCX_GDMA_SRCB REG32(NPCX_GDMA_BASE_ADDR + 0x004)
+#define NPCX_GDMA_DSTB REG32(NPCX_GDMA_BASE_ADDR + 0x008)
+#define NPCX_GDMA_TCNT REG32(NPCX_GDMA_BASE_ADDR + 0x00C)
 
 /******************************************************************************/
 /* GDMA register fields */
-#define NPCX_GDMA_CTL_GDMAEN                         0
-#define NPCX_GDMA_CTL_GDMAMS                         FIELD(2,   2)
-#define NPCX_GDMA_CTL_DADIR                          4
-#define NPCX_GDMA_CTL_SADIR                          5
-#define NPCX_GDMA_CTL_SAFIX                          7
-#define NPCX_GDMA_CTL_SIEN                           8
-#define NPCX_GDMA_CTL_BME                            9
-#define NPCX_GDMA_CTL_SBMS                           11
-#define NPCX_GDMA_CTL_TWS                            FIELD(12,  2)
-#define NPCX_GDMA_CTL_DM                             15
-#define NPCX_GDMA_CTL_SOFTREQ                        16
-#define NPCX_GDMA_CTL_TC                             18
-#define NPCX_GDMA_CTL_GDMAERR                        20
-#define NPCX_GDMA_CTL_BLOCK_BUG_CORRECTION_DISABLE   26
+#define NPCX_GDMA_CTL_GDMAEN 0
+#define NPCX_GDMA_CTL_GDMAMS FIELD(2, 2)
+#define NPCX_GDMA_CTL_DADIR 4
+#define NPCX_GDMA_CTL_SADIR 5
+#define NPCX_GDMA_CTL_SAFIX 7
+#define NPCX_GDMA_CTL_SIEN 8
+#define NPCX_GDMA_CTL_BME 9
+#define NPCX_GDMA_CTL_SBMS 11
+#define NPCX_GDMA_CTL_TWS FIELD(12, 2)
+#define NPCX_GDMA_CTL_DM 15
+#define NPCX_GDMA_CTL_SOFTREQ 16
+#define NPCX_GDMA_CTL_TC 18
+#define NPCX_GDMA_CTL_GDMAERR 20
+#define NPCX_GDMA_CTL_BLOCK_BUG_CORRECTION_DISABLE 26
 
 /******************************************************************************/
 /* Low Power RAM definitions */
-#define NPCX_LPRAM_CTRL		REG32(0x40001044)
+#define NPCX_LPRAM_CTRL REG32(0x40001044)
 
 /******************************************************************************/
 /* Sysjump utilities in low power ram for npcx series. */
-noreturn void __keep __attribute__ ((section(".lowpower_ram2")))
+noreturn void __keep __attribute__((section(".lowpower_ram2")))
 __start_gdma(uint32_t exeAddr)
 {
 	/* Enable GDMA now */
@@ -55,7 +55,7 @@ __start_gdma(uint32_t exeAddr)
 
 	/* Wait for transfer to complete/fail */
 	while (!IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_TC) &&
-			!IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAERR))
+	       !IS_BIT_SET(NPCX_GDMA_CTL, NPCX_GDMA_CTL_GDMAERR))
 		;
 
 	/* Disable GDMA now */
@@ -81,11 +81,11 @@ __start_gdma(uint32_t exeAddr)
 }
 
 /* Begin address of Suspend RAM for little FW (GDMA utilities). */
-#define LFW_OFFSET		0x160
+#define LFW_OFFSET 0x160
 uintptr_t __lpram_lfw_start = CONFIG_LPRAM_BASE + LFW_OFFSET;
 
 void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
-		uint32_t size, uint32_t exeAddr)
+				uint32_t size, uint32_t exeAddr)
 {
 	int i;
 	uint8_t chunkSize = 16; /* 4 data burst mode. ie.16 bytes */
@@ -94,7 +94,7 @@ void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 	 * it's a thumb branch for cortex-m series CPU.
 	 */
 	void (*__start_gdma_in_lpram)(uint32_t) =
-			(void(*)(uint32_t))(__lpram_lfw_start | 0x01);
+		(void (*)(uint32_t))(__lpram_lfw_start | 0x01);
 
 	/*
 	 * Before enabling burst mode for better performance of GDMA, it's
@@ -152,7 +152,7 @@ void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 	/* Copy the __start_gdma_in_lpram instructions to LPRAM */
 	for (i = 0; i < &__flash_lplfw_end - &__flash_lplfw_start; i++)
 		*((uint32_t *)__lpram_lfw_start + i) =
-				*(&__flash_lplfw_start + i);
+			*(&__flash_lplfw_start + i);
 
 	/* Start GDMA in Suspend RAM */
 	__start_gdma_in_lpram(exeAddr);
