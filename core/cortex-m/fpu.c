@@ -9,8 +9,8 @@
 #include "hooks.h"
 #include "task.h"
 
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
-#define CPUTS(format, args...) cputs(CC_SYSTEM, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPUTS(format, args...) cputs(CC_SYSTEM, format, ##args)
 
 /* Floating point unit common code */
 
@@ -65,8 +65,7 @@ static void fpu_warn(void)
 
 DECLARE_DEFERRED(fpu_warn);
 
-test_mockable
-void __keep fpu_irq(uint32_t excep_lr, uint32_t excep_sp)
+test_mockable void __keep fpu_irq(uint32_t excep_lr, uint32_t excep_sp)
 {
 	/*
 	 * Get address of exception FPU exception frame. FPCAR register points
