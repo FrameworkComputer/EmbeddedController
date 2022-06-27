@@ -52,8 +52,8 @@
 #include "util.h"
 #include "espi.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -75,9 +75,9 @@ static void vbus_discharge_handler(void)
 {
 	if (system_get_board_version() >= 2) {
 		pd_set_vbus_discharge(0,
-				gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
+				      gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L));
 		pd_set_vbus_discharge(1,
-				gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
+				      gpio_get_level(GPIO_USB_C1_VBUS_WAKE_L));
 	}
 }
 DECLARE_DEFERRED(vbus_discharge_handler);
@@ -122,56 +122,47 @@ const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Base detection */
-	[ADC_BASE_DET] = {"BASE_DET", NPCX_ADC_CH0,
-			  ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
+	[ADC_BASE_DET] = { "BASE_DET", NPCX_ADC_CH0, ADC_MAX_VOLT,
+			   ADC_READ_MAX + 1, 0 },
 	/* Vbus sensing (10x voltage divider). */
-	[ADC_VBUS] = {"VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_VBUS] = { "VBUS", NPCX_ADC_CH2, ADC_MAX_VOLT * 10,
+		       ADC_READ_MAX + 1, 0 },
 	/*
 	 * Adapter current output or battery charging/discharging current (uV)
 	 * 18x amplification on charger side.
 	 */
-	[ADC_AMON_BMON] = {"AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT*1000/18,
-			   ADC_READ_MAX+1, 0},
+	[ADC_AMON_BMON] = { "AMON_BMON", NPCX_ADC_CH1, ADC_MAX_VOLT * 1000 / 18,
+			    ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* I2C port map */
-const struct i2c_port_t i2c_ports[]  = {
-	{
-		.name = "tcpc0",
-		.port = NPCX_I2C_PORT0_0,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_0_SCL,
-		.sda  = GPIO_I2C0_0_SDA
-	},
-	{
-		.name = "tcpc1",
-		.port = NPCX_I2C_PORT0_1,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_1_SCL,
-		.sda  = GPIO_I2C0_1_SDA
-	},
-	{
-		.name = "charger",
-		.port = NPCX_I2C_PORT1,
-		.kbps = 100,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "pmic",
-		.port = NPCX_I2C_PORT2,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
-	{
-		.name = "accelgyro",
-		.port = NPCX_I2C_PORT3,
-		.kbps = 400,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA
-	},
+const struct i2c_port_t i2c_ports[] = {
+	{ .name = "tcpc0",
+	  .port = NPCX_I2C_PORT0_0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_0_SCL,
+	  .sda = GPIO_I2C0_0_SDA },
+	{ .name = "tcpc1",
+	  .port = NPCX_I2C_PORT0_1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_1_SCL,
+	  .sda = GPIO_I2C0_1_SDA },
+	{ .name = "charger",
+	  .port = NPCX_I2C_PORT1,
+	  .kbps = 100,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "pmic",
+	  .port = NPCX_I2C_PORT2,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "accelgyro",
+	  .port = NPCX_I2C_PORT3,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -222,7 +213,7 @@ BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
 const int usb_port_enable[CONFIG_USB_PORT_POWER_SMART_PORT_COUNT] = {
-        GPIO_USB1_ENABLE,
+	GPIO_USB1_ENABLE,
 };
 
 const struct charger_config_t chg_chips[] = {
@@ -260,9 +251,9 @@ void board_tcpc_init(void)
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 uint16_t tcpc_get_alert_status(void)
 {
@@ -282,13 +273,13 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 const struct temp_sensor_t temp_sensors[] = {
-	{"Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0},
+	{ "Battery", TEMP_SENSOR_TYPE_BATTERY, charge_get_battery_temp, 0 },
 
 	/* These BD99992GW temp sensors are only readable in S0 */
-	{"Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM1},
-	{"DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
-	 BD99992GW_ADC_CHANNEL_SYSTHERM2},
+	{ "Charger", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM1 },
+	{ "DRAM", TEMP_SENSOR_TYPE_BOARD, bd99992gw_get_val,
+	  BD99992GW_ADC_CHANNEL_SYSTHERM2 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -304,8 +295,8 @@ static void board_report_pmic_fault(const char *str)
 	uint32_t info;
 
 	/* RESETIRQ1 -- Bit 4: VRFAULT */
-	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault)
-	    != EC_SUCCESS)
+	if (i2c_read8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x8, &vrfault) !=
+	    EC_SUCCESS)
 		return;
 
 	if (!(vrfault & BIT(4)))
@@ -414,8 +405,7 @@ static void board_pmic_enable_slp_s0_vr_decay(void)
 	i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x38, 0x7a);
 }
 
-__override void power_board_handle_host_sleep_event(
-		enum host_sleep_event state)
+__override void power_board_handle_host_sleep_event(enum host_sleep_event state)
 {
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND)
 		board_pmic_enable_slp_s0_vr_decay();
@@ -463,13 +453,13 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_L);
 
 	/* Level of sensor's I2C and interrupt are 3.3V on proto board */
-	if(system_get_board_version() < 2) {
+	if (system_get_board_version() < 2) {
 		/* ACCELGYRO3_INT_L */
 		gpio_set_flags(GPIO_ACCELGYRO3_INT_L, GPIO_INT_FALLING);
 		/* I2C3_SCL / I2C3_SDA */
 		gpio_set_flags(GPIO_I2C3_SCL, GPIO_INPUT);
 		gpio_set_flags(GPIO_I2C3_SDA, GPIO_INPUT);
-        }
+	}
 
 	/* Enable Gyro interrupts */
 	gpio_enable_interrupt(GPIO_ACCELGYRO3_INT_L);
@@ -519,10 +509,12 @@ int board_set_active_charge_port(int charge_port)
 	} else {
 		/* Make sure non-charging port is disabled */
 		gpio_set_level(charge_port ? GPIO_USB_C0_CHARGE_L :
-					     GPIO_USB_C1_CHARGE_L, 1);
+					     GPIO_USB_C1_CHARGE_L,
+			       1);
 		/* Enable charging port */
 		gpio_set_level(charge_port ? GPIO_USB_C1_CHARGE_L :
-					     GPIO_USB_C0_CHARGE_L, 0);
+					     GPIO_USB_C0_CHARGE_L,
+			       0);
 	}
 
 	return EC_SUCCESS;
@@ -536,16 +528,16 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
-        /*
-         * Limit the input current to 96% negotiated limit,
-         * to account for the charger chip margin.
-         */
+	/*
+	 * Limit the input current to 96% negotiated limit,
+	 * to account for the charger chip margin.
+	 */
 	charge_ma = charge_ma * 96 / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-				   CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /**
@@ -571,7 +563,7 @@ void board_hibernate(void)
 	CPRINTS("Triggering PMIC shutdown.");
 	uart_flush_output();
 
-    /* Trigger PMIC shutdown. */
+	/* Trigger PMIC shutdown. */
 	if (i2c_write8(I2C_PORT_PMIC, I2C_ADDR_BD99992_FLAGS, 0x49, 0x01)) {
 		/*
 		 * If we can't tell the PMIC to shutdown, instead reset
@@ -625,17 +617,13 @@ static struct bmi_drv_data_t g_bmi160_data;
 static struct accelgyro_saved_data_t g_bma255_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0 },
-	{ 0,  FLOAT_TO_FP(1), 0 },
-	{ 0, 0, FLOAT_TO_FP(-1) }
-};
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, FLOAT_TO_FP(1), 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t lid_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0, 0 },
-	{ 0,  FLOAT_TO_FP(1), 0 },
-	{ 0, 0, FLOAT_TO_FP(-1) }
-};
+const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, FLOAT_TO_FP(1), 0 },
+				      { 0, 0, FLOAT_TO_FP(-1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
@@ -779,13 +767,12 @@ int board_has_working_reset_flags(void)
  * I2C callbacks to ensure bus free time for battery I2C transactions is at
  * least 5ms.
  */
-#define BATTERY_FREE_MIN_DELTA_US		(5 * MSEC)
+#define BATTERY_FREE_MIN_DELTA_US (5 * MSEC)
 static timestamp_t battery_last_i2c_time;
 
 static int is_battery_i2c(const int port, const uint16_t addr_flags)
 {
-	return (port == I2C_PORT_BATTERY)
-		&& (addr_flags == BATTERY_ADDR_FLAGS);
+	return (port == I2C_PORT_BATTERY) && (addr_flags == BATTERY_ADDR_FLAGS);
 }
 
 void i2c_start_xfer_notify(const int port, const uint16_t addr_flags)
