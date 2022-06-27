@@ -25,7 +25,7 @@
 
 #include "battery.h"
 #include "charge_state.h"
-#include "chipset.h"  /* This module implements chipset functions too */
+#include "chipset.h" /* This module implements chipset functions too */
 #include "clock.h"
 #include "common.h"
 #include "console.h"
@@ -43,14 +43,14 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* masks for power signals */
 #define IN_POWER_GOOD POWER_SIGNAL_MASK(RK_POWER_GOOD)
 #define IN_SUSPEND POWER_SIGNAL_MASK(RK_SUSPEND_ASSERTED)
 
 /* Long power key press to force shutdown */
-#define DELAY_FORCE_SHUTDOWN  (8 * SECOND)
+#define DELAY_FORCE_SHUTDOWN (8 * SECOND)
 
 /*
  * If the power key is pressed to turn on, then held for this long, we
@@ -60,7 +60,7 @@
  *    into the inner loop, waiting for next event to occur (power button
  *    press or power good == 0).
  */
-#define DELAY_SHUTDOWN_ON_POWER_HOLD	(8 * SECOND)
+#define DELAY_SHUTDOWN_ON_POWER_HOLD (8 * SECOND)
 
 /*
  * The hold time for pulling down the PMIC_WARM_RESET_L pin so that
@@ -101,10 +101,8 @@ enum power_request_t {
 
 static enum power_request_t power_request;
 
-
 /* Forward declaration */
 static void chipset_turn_off_power_rails(void);
-
 
 /**
  * Set the PMIC WARM RESET signal.
@@ -116,7 +114,6 @@ static void set_pmic_warm_reset(int asserted)
 	/* Signal is active-low */
 	gpio_set_level(GPIO_PMIC_WARM_RESET_L, asserted ? 0 : 1);
 }
-
 
 /**
  * Set the PMIC PWRON signal.
@@ -161,7 +158,7 @@ static int check_for_power_off_event(void)
 		pressed = 1;
 	} else if (power_request == POWER_REQ_OFF) {
 		power_request = POWER_REQ_NONE;
-		return 4;  /* return non-zero for shudown down */
+		return 4; /* return non-zero for shudown down */
 	}
 
 	now = get_time();
@@ -294,13 +291,11 @@ static int check_for_power_on_event(void)
 	/* check if system is already ON */
 	if (power_get_signals() & IN_POWER_GOOD) {
 		if (ap_off_flag) {
-			CPRINTS(
-				"system is on, but "
+			CPRINTS("system is on, but "
 				"EC_RESET_FLAG_AP_OFF is on");
 			return 0;
 		} else {
-			CPRINTS(
-				"system is on, thus clear "
+			CPRINTS("system is on, thus clear "
 				"auto_power_on");
 			/* no need to arrange another power on */
 			auto_power_on = 0;
@@ -391,7 +386,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	report_ap_reset(reason);
 
 	CPRINTS("assert GPIO_PMIC_WARM_RESET_L for %d ms",
-			PMIC_WARM_RESET_L_HOLD_TIME / MSEC);
+		PMIC_WARM_RESET_L_HOLD_TIME / MSEC);
 	set_pmic_warm_reset(1);
 	usleep(PMIC_WARM_RESET_L_HOLD_TIME);
 	set_pmic_warm_reset(0);
@@ -437,16 +432,17 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_wait_signals(IN_POWER_GOOD) == EC_SUCCESS) {
 			CPRINTS("POWER_GOOD seen");
 			if (power_button_wait_for_release(
-					DELAY_SHUTDOWN_ON_POWER_HOLD) ==
-					EC_SUCCESS) {
+				    DELAY_SHUTDOWN_ON_POWER_HOLD) ==
+			    EC_SUCCESS) {
 				power_button_was_pressed = 0;
 				set_pmic_pwron(0);
 
 				/* setup misc gpio for S3/S0 functionality */
-				gpio_set_flags(GPIO_SUSPEND_L, GPIO_INPUT
-					| GPIO_INT_BOTH | GPIO_PULL_DOWN);
-				gpio_set_flags(GPIO_EC_INT_L, GPIO_OUTPUT
-						| GPIO_OUT_HIGH);
+				gpio_set_flags(GPIO_SUSPEND_L,
+					       GPIO_INPUT | GPIO_INT_BOTH |
+						       GPIO_PULL_DOWN);
+				gpio_set_flags(GPIO_EC_INT_L,
+					       GPIO_OUTPUT | GPIO_OUT_HIGH);
 
 				/* Call hooks now that AP is running */
 				hook_notify(HOOK_CHIPSET_STARTUP);
@@ -521,7 +517,7 @@ static void powerbtn_rockchip_changed(void)
 	task_wake(TASK_ID_CHIPSET);
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, powerbtn_rockchip_changed,
-		HOOK_PRIO_DEFAULT);
+	     HOOK_PRIO_DEFAULT);
 
 /*****************************************************************************/
 /* Console debug command */
@@ -542,7 +538,7 @@ enum power_state_t {
 	PSTATE_COUNT,
 };
 
-static const char * const state_name[] = {
+static const char *const state_name[] = {
 	"unknown",
 	"off",
 	"suspend",
@@ -577,6 +573,4 @@ static int command_power(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(power, command_power,
-			"on/off",
-			"Turn AP power on/off");
+DECLARE_CONSOLE_COMMAND(power, command_power, "on/off", "Turn AP power on/off");
