@@ -30,10 +30,10 @@
  * Dratini's battery takes several seconds to come back out of its disconnect
  * state (~4 seconds, but give it 6 for margin).
  */
-#undef  CONFIG_POWER_BUTTON_INIT_TIMEOUT
+#undef CONFIG_POWER_BUTTON_INIT_TIMEOUT
 #define CONFIG_POWER_BUTTON_INIT_TIMEOUT 6
 
-#define CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV	5000
+#define CONFIG_BATT_FULL_CHIPSET_OFF_INPUT_LIMIT_MV 5000
 
 /* Sensors */
 /* BMI160 Base accel/gyro */
@@ -112,16 +112,16 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_PCH_RSMRST_L	GPIO_EC_PCH_RSMRST_L
-#define GPIO_PCH_SLP_S0_L	GPIO_SLP_S0_L
-#define GPIO_CPU_PROCHOT	GPIO_EC_PROCHOT_ODL
-#define GPIO_AC_PRESENT		GPIO_ACOK_OD
-#define GPIO_PG_EC_RSMRST_ODL	GPIO_PG_EC_RSMRST_L
-#define GPIO_PCH_SYS_PWROK	GPIO_EC_PCH_SYS_PWROK
-#define GPIO_PCH_SLP_S3_L	GPIO_SLP_S3_L
-#define GPIO_PCH_SLP_S4_L	GPIO_SLP_S4_L
-#define GPIO_TEMP_SENSOR_POWER	GPIO_EN_A_RAILS
-#define GPIO_EN_PP5000		GPIO_EN_PP5000_A
+#define GPIO_PCH_RSMRST_L GPIO_EC_PCH_RSMRST_L
+#define GPIO_PCH_SLP_S0_L GPIO_SLP_S0_L
+#define GPIO_CPU_PROCHOT GPIO_EC_PROCHOT_ODL
+#define GPIO_AC_PRESENT GPIO_ACOK_OD
+#define GPIO_PG_EC_RSMRST_ODL GPIO_PG_EC_RSMRST_L
+#define GPIO_PCH_SYS_PWROK GPIO_EC_PCH_SYS_PWROK
+#define GPIO_PCH_SLP_S3_L GPIO_SLP_S3_L
+#define GPIO_PCH_SLP_S4_L GPIO_SLP_S4_L
+#define GPIO_TEMP_SENSOR_POWER GPIO_EN_A_RAILS
+#define GPIO_EN_PP5000 GPIO_EN_PP5000_A
 
 #ifndef __ASSEMBLER__
 
@@ -129,9 +129,9 @@
 #include "registers.h"
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_1,	/* ADC0 */
-	ADC_TEMP_SENSOR_2,	/* ADC1 */
-	ADC_TEMP_SENSOR_3,	/* ADC2 */
+	ADC_TEMP_SENSOR_1, /* ADC0 */
+	ADC_TEMP_SENSOR_2, /* ADC1 */
+	ADC_TEMP_SENSOR_3, /* ADC2 */
 	ADC_CH_COUNT
 };
 
@@ -142,11 +142,7 @@ enum sensor_id {
 	SENSOR_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT,
-	PWM_CH_FAN,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT, PWM_CH_FAN, PWM_CH_COUNT };
 
 enum fan_channel {
 	FAN_CH_0 = 0,
