@@ -18,9 +18,9 @@ LOG_MODULE_REGISTER(tcpci_partner, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include "util.h"
 
 /** Length of PDO, RDO and BIST request object in SOP message in bytes */
-#define TCPCI_MSG_DO_LEN	4
+#define TCPCI_MSG_DO_LEN 4
 /** Length of header in SOP message in bytes  */
-#define TCPCI_MSG_HEADER_LEN	2
+#define TCPCI_MSG_HEADER_LEN 2
 /** Length of extended header in bytes  */
 #define TCPCI_MSG_EXT_HEADER_LEN 2
 
@@ -136,10 +136,8 @@ tcpci_partner_alloc_extended_msg(size_t payload_size)
  * @return Pointer to message status
  */
 static enum tcpci_emul_tx_status *tcpci_partner_log_msg(
-	struct tcpci_partner_data *data,
-	const struct tcpci_emul_msg *msg,
-	enum tcpci_partner_msg_sender sender,
-	enum tcpci_emul_tx_status status)
+	struct tcpci_partner_data *data, const struct tcpci_emul_msg *msg,
+	enum tcpci_partner_msg_sender sender, enum tcpci_emul_tx_status status)
 {
 	struct tcpci_partner_log_msg *log_msg;
 	int cnt;
@@ -348,8 +346,8 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 		return ret;
 	}
 
-	prev_msg = SYS_SLIST_PEEK_HEAD_CONTAINER(&data->to_send, prev_msg,
-						 node);
+	prev_msg =
+		SYS_SLIST_PEEK_HEAD_CONTAINER(&data->to_send, prev_msg, node);
 	/* Current message should be sent first */
 	if (prev_msg == NULL || prev_msg->time > msg->time) {
 		sys_slist_prepend(&data->to_send, &msg->node);
@@ -359,7 +357,8 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 	}
 
 	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(&data->to_send, prev_msg, next_msg,
-					  node) {
+					  node)
+	{
 		/*
 		 * If we reach tail or next message should be sent after new
 		 * message, insert new message to the list.
@@ -378,8 +377,7 @@ int tcpci_partner_send_msg(struct tcpci_partner_data *data,
 }
 
 int tcpci_partner_send_control_msg(struct tcpci_partner_data *data,
-				   enum pd_ctrl_msg_type type,
-				   uint64_t delay)
+				   enum pd_ctrl_msg_type type, uint64_t delay)
 {
 	struct tcpci_partner_msg *msg;
 
@@ -401,9 +399,8 @@ int tcpci_partner_send_control_msg(struct tcpci_partner_data *data,
 }
 
 int tcpci_partner_send_data_msg(struct tcpci_partner_data *data,
-				enum pd_data_msg_type type,
-				uint32_t *data_obj, int data_obj_num,
-				uint64_t delay)
+				enum pd_data_msg_type type, uint32_t *data_obj,
+				int data_obj_num, uint64_t delay)
 {
 	struct tcpci_partner_msg *msg;
 	int addr;
@@ -566,9 +563,8 @@ void tcpci_partner_common_send_get_battery_capabilities(
 static void tcpci_partner_sender_response_timeout(struct k_work *work)
 {
 	struct k_work_delayable *dwork = k_work_delayable_from_work(work);
-	struct tcpci_partner_data *data =
-		CONTAINER_OF(dwork, struct tcpci_partner_data,
-			     sender_response_timeout);
+	struct tcpci_partner_data *data = CONTAINER_OF(
+		dwork, struct tcpci_partner_data, sender_response_timeout);
 
 	if (k_mutex_lock(&data->transmit_mutex, K_NO_WAIT) != 0) {
 		/*
@@ -842,9 +838,9 @@ tcpi_partner_common_handle_accept(struct tcpci_partner_data *data)
  * @param TCPCI_PARTNER_COMMON_MSG_HARD_RESET Message was handled by sending
  *                                            hard reset
  */
-static enum tcpci_partner_handler_res tcpci_partner_common_sop_msg_handler(
-	struct tcpci_partner_data *data,
-	const struct tcpci_emul_msg *tx_msg)
+static enum tcpci_partner_handler_res
+tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
+				     const struct tcpci_emul_msg *tx_msg)
 {
 	struct tcpci_partner_extension *ext;
 	uint16_t header;
@@ -1045,8 +1041,10 @@ static char *tcpci_partner_sender_names[] = {
  *
  * @return Number of written bytes
  */
-static __printf_like(4, 5) int tcpci_partner_print_to_buf(
-	char *buf, const int buf_len, int start, const char *fmt, ...)
+static __printf_like(4, 5) int tcpci_partner_print_to_buf(char *buf,
+							  const int buf_len,
+							  int start,
+							  const char *fmt, ...)
 {
 	va_list ap;
 	int ret;
@@ -1082,7 +1080,8 @@ void tcpci_partner_common_print_logged_msgs(struct tcpci_partner_data *data)
 	chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
 					       "===PD messages log:\n");
 
-	SYS_SLIST_FOR_EACH_CONTAINER(&data->msg_log, msg, node) {
+	SYS_SLIST_FOR_EACH_CONTAINER(&data->msg_log, msg, node)
+	{
 		/*
 		 * If there is too many messages to keep them in local buffer,
 		 * accept possibility of lines interleaving on console and print
@@ -1092,27 +1091,27 @@ void tcpci_partner_common_print_logged_msgs(struct tcpci_partner_data *data)
 			LOG_PRINTK("%s", buf);
 			chars_in = 0;
 		}
-		chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
-				"\tAt %lld Msg SOP %d from %s (status 0x%x):\n",
-				msg->time, msg->sop,
-				tcpci_partner_sender_names[msg->sender],
-				msg->status);
+		chars_in += tcpci_partner_print_to_buf(
+			buf, buf_len, chars_in,
+			"\tAt %lld Msg SOP %d from %s (status 0x%x):\n",
+			msg->time, msg->sop,
+			tcpci_partner_sender_names[msg->sender], msg->status);
 		header = sys_get_le16(msg->buf);
+		chars_in += tcpci_partner_print_to_buf(
+			buf, buf_len, chars_in,
+			"\t\text=%d;cnt=%d;id=%d;pr=%d;dr=%d;rev=%d;type=%d\n",
+			PD_HEADER_EXT(header), PD_HEADER_CNT(header),
+			PD_HEADER_ID(header), PD_HEADER_PROLE(header),
+			PD_HEADER_DROLE(header), PD_HEADER_REV(header),
+			PD_HEADER_TYPE(header));
 		chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
-				"\t\text=%d;cnt=%d;id=%d;pr=%d;dr=%d;rev=%d;type=%d\n",
-				PD_HEADER_EXT(header), PD_HEADER_CNT(header),
-				PD_HEADER_ID(header), PD_HEADER_PROLE(header),
-				PD_HEADER_DROLE(header), PD_HEADER_REV(header),
-				PD_HEADER_TYPE(header));
-		chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
-				"\t\t");
+						       "\t\t");
 		for (i = 0; i < msg->cnt; i++) {
 			chars_in += tcpci_partner_print_to_buf(
-					buf, buf_len, chars_in,
-					"%02x ", msg->buf[i]);
+				buf, buf_len, chars_in, "%02x ", msg->buf[i]);
 		}
 		chars_in += tcpci_partner_print_to_buf(buf, buf_len, chars_in,
-				"\n");
+						       "\n");
 	}
 	LOG_PRINTK("%s===\n", buf);
 
@@ -1149,11 +1148,10 @@ void tcpci_partner_common_set_ams_ctrl_msg(struct tcpci_partner_data *data,
 					   enum pd_ctrl_msg_type msg_type)
 {
 	/* Make sure we handle one CTRL request at a time */
-	zassert_equal(
-		data->cur_ams_ctrl_req, PD_CTRL_INVALID,
-		"More than one CTRL msg handled in parallel"
-		" cur_ams_ctrl_req=%d, msg_type=%d",
-		data->cur_ams_ctrl_req, msg_type);
+	zassert_equal(data->cur_ams_ctrl_req, PD_CTRL_INVALID,
+		      "More than one CTRL msg handled in parallel"
+		      " cur_ams_ctrl_req=%d, msg_type=%d",
+		      data->cur_ams_ctrl_req, msg_type);
 	data->cur_ams_ctrl_req = msg_type;
 }
 
@@ -1184,7 +1182,6 @@ void tcpci_partner_received_msg_status(struct tcpci_partner_data *data,
 		LOG_WRN("Changing status of received message more than once");
 	}
 	*data->received_msg_status = status;
-
 }
 
 /**
@@ -1200,8 +1197,7 @@ void tcpci_partner_received_msg_status(struct tcpci_partner_data *data,
 static void tcpci_partner_transmit_op(const struct emul *emul,
 				      const struct tcpci_emul_partner_ops *ops,
 				      const struct tcpci_emul_msg *tx_msg,
-				      enum tcpci_msg_type type,
-				      int retry)
+				      enum tcpci_msg_type type, int retry)
 {
 	struct tcpci_partner_data *data =
 		CONTAINER_OF(ops, struct tcpci_partner_data, ops);
@@ -1209,9 +1205,8 @@ static void tcpci_partner_transmit_op(const struct emul *emul,
 	struct tcpci_partner_extension *ext;
 	int ret;
 
-	data->received_msg_status =
-		tcpci_partner_log_msg(data, tx_msg, TCPCI_PARTNER_SENDER_TCPM,
-				      TCPCI_EMUL_TX_UNKNOWN);
+	data->received_msg_status = tcpci_partner_log_msg(
+		data, tx_msg, TCPCI_PARTNER_SENDER_TCPM, TCPCI_EMUL_TX_UNKNOWN);
 
 	ret = k_mutex_lock(&data->transmit_mutex, K_FOREVER);
 	if (ret) {
@@ -1265,8 +1260,7 @@ static void tcpci_partner_transmit_op(const struct emul *emul,
 	}
 
 	/* Send reject for not handled messages (PD rev 2.0) */
-	tcpci_partner_send_control_msg(data,
-				       PD_CTRL_REJECT, 0);
+	tcpci_partner_send_control_msg(data, PD_CTRL_REJECT, 0);
 
 message_handled:
 	k_mutex_unlock(&data->transmit_mutex);
@@ -1280,14 +1274,13 @@ message_handled:
  * @param ops Pointer to partner operations structure
  * @param rx_msg Message that was consumed by TCPM
  */
-static void tcpci_partner_rx_consumed_op(
-		const struct emul *emul,
-		const struct tcpci_emul_partner_ops *ops,
-		const struct tcpci_emul_msg *rx_msg)
+static void
+tcpci_partner_rx_consumed_op(const struct emul *emul,
+			     const struct tcpci_emul_partner_ops *ops,
+			     const struct tcpci_emul_msg *rx_msg)
 {
-	struct tcpci_partner_msg *msg = CONTAINER_OF(rx_msg,
-						     struct tcpci_partner_msg,
-						     msg);
+	struct tcpci_partner_msg *msg =
+		CONTAINER_OF(rx_msg, struct tcpci_partner_msg, msg);
 
 	tcpci_partner_free_msg(msg);
 }
@@ -1298,9 +1291,9 @@ static void tcpci_partner_rx_consumed_op(
  * @param emul Pointer to TCPCI emulator
  * @param ops Pointer to partner operations structure
  */
-static void tcpci_partner_disconnect_op(
-		const struct emul *emul,
-		const struct tcpci_emul_partner_ops *ops)
+static void
+tcpci_partner_disconnect_op(const struct emul *emul,
+			    const struct tcpci_emul_partner_ops *ops)
 {
 	struct tcpci_partner_data *data =
 		CONTAINER_OF(ops, struct tcpci_partner_data, ops);
