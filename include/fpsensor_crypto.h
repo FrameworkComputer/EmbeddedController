@@ -67,11 +67,9 @@ int derive_positive_match_secret(uint8_t *output,
  * @param tag_size the size of |tag|.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-int aes_gcm_encrypt(const uint8_t *key, int key_size,
-		    const uint8_t *plaintext,
-		    uint8_t *ciphertext, int text_size,
-		    const uint8_t *nonce, int nonce_size,
-		    uint8_t *tag, int tag_size);
+int aes_gcm_encrypt(const uint8_t *key, int key_size, const uint8_t *plaintext,
+		    uint8_t *ciphertext, int text_size, const uint8_t *nonce,
+		    int nonce_size, uint8_t *tag, int tag_size);
 
 /**
  * Decrypt |plaintext| using AES-GCM128.
@@ -89,7 +87,7 @@ int aes_gcm_encrypt(const uint8_t *key, int key_size,
  */
 int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
 		    const uint8_t *ciphertext, int text_size,
-		    const uint8_t *nonce, int nonce_size,
-		    const uint8_t *tag, int tag_size);
+		    const uint8_t *nonce, int nonce_size, const uint8_t *tag,
+		    int tag_size);
 
 #endif /* __CROS_EC_FPSENSOR_CRYPTO_H */
