@@ -28,7 +28,7 @@ enum led_color {
 	LED_RED,
 	LED_AMBER,
 	LED_GREEN,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
 static int bat_led_set_color(enum led_color color)
@@ -69,13 +69,13 @@ static void scarlet_led_set_battery(void)
 		break;
 	case PWR_STATE_DISCHARGE:
 		if (charge_get_percent() < 3)
-			bat_led_set_color((battery_second & 1)
-					? LED_OFF : LED_AMBER);
+			bat_led_set_color((battery_second & 1) ? LED_OFF :
+								 LED_AMBER);
 		else if (charge_get_percent() < 10)
-			bat_led_set_color((battery_second & 3)
-					? LED_OFF : LED_AMBER);
+			bat_led_set_color((battery_second & 3) ? LED_OFF :
+								 LED_AMBER);
 		else if (charge_get_percent() >= BATTERY_LEVEL_NEAR_FULL &&
-		    (chflags & CHARGE_FLAG_EXTERNAL_POWER))
+			 (chflags & CHARGE_FLAG_EXTERNAL_POWER))
 			bat_led_set_color(LED_GREEN);
 		else
 			bat_led_set_color(LED_OFF);
@@ -88,8 +88,8 @@ static void scarlet_led_set_battery(void)
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE. */
 		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			bat_led_set_color(
-				(battery_second & 0x2) ? LED_GREEN : LED_AMBER);
+			bat_led_set_color((battery_second & 0x2) ? LED_GREEN :
+								   LED_AMBER);
 		else
 			bat_led_set_color(LED_GREEN);
 		break;
@@ -112,10 +112,12 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	if (led_id == EC_LED_ID_BATTERY_LED) {
 		gpio_set_level(GPIO_BAT_LED_RED,
 			       (brightness[EC_LED_COLOR_RED] != 0) ?
-				BAT_LED_ON : BAT_LED_OFF);
+				       BAT_LED_ON :
+				       BAT_LED_OFF);
 		gpio_set_level(GPIO_BAT_LED_GREEN,
 			       (brightness[EC_LED_COLOR_GREEN] != 0) ?
-				BAT_LED_ON : BAT_LED_OFF);
+				       BAT_LED_ON :
+				       BAT_LED_OFF);
 		return EC_SUCCESS;
 	}
 	return EC_ERROR_UNKNOWN;
