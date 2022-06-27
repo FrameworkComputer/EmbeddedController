@@ -18,7 +18,6 @@ struct overflow_msg {
 BUILD_ASSERT(offsetof(struct overflow_msg, overflow_detector) ==
 	     offsetof(struct cec_msg_transfer, buf) + MAX_CEC_MSG_LEN);
 
-
 struct overflow_queue {
 	struct cec_rx_queue queue;
 	uint8_t overflow_detector[CEC_RX_BUFFER_SIZE];
@@ -35,7 +34,7 @@ static int test_msg_overflow(void)
 	int i;
 
 	/* Overwrite the buffer by 1 byte */
-	for (i = 0; i < (MAX_CEC_MSG_LEN+1)*8; i++) {
+	for (i = 0; i < (MAX_CEC_MSG_LEN + 1) * 8; i++) {
 		cec_transfer_set_bit(&overflow_msg.transfer, 1);
 		cec_transfer_inc_bit(&overflow_msg.transfer);
 	}
@@ -60,8 +59,6 @@ static int test_msg_overflow(void)
 	return EC_SUCCESS;
 }
 
-
-
 static int verify_no_queue_overflow(void)
 {
 	int i;
@@ -73,11 +70,9 @@ static int verify_no_queue_overflow(void)
 	return EC_SUCCESS;
 }
 
-
 static void clear_queue(void)
 {
 	memset(queue, 0, sizeof(struct cec_rx_queue));
-
 }
 
 static int fill_queue(uint8_t *msg, int msg_size)
@@ -92,12 +87,12 @@ static int fill_queue(uint8_t *msg, int msg_size)
 	 */
 	clear_queue();
 
-	for (i = 0; i < (CEC_RX_BUFFER_SIZE - 1)/(msg_size + 1); i++)
+	for (i = 0; i < (CEC_RX_BUFFER_SIZE - 1) / (msg_size + 1); i++)
 		TEST_ASSERT(cec_rx_queue_push(queue, msg, msg_size) == 0);
 
 	/* Now the queue should be full */
 	TEST_ASSERT(cec_rx_queue_push(queue, msg, msg_size) ==
-							EC_ERROR_OVERFLOW);
+		    EC_ERROR_OVERFLOW);
 
 	/* Verify nothing was written outside of the queue */
 	TEST_ASSERT(verify_no_queue_overflow() == EC_SUCCESS);
