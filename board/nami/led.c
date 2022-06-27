@@ -38,8 +38,8 @@
 #include "timer.h"
 #include "util.h"
 
-const enum ec_led_id supported_led_ids[] = {
-		EC_LED_ID_BATTERY_LED, EC_LED_ID_POWER_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
+					     EC_LED_ID_POWER_LED };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
@@ -79,19 +79,19 @@ struct led_pattern {
 	uint8_t pulse;
 };
 
-#define PULSE_NO		0
-#define PULSE(interval)		(BIT(7) | (interval))
-#define BLINK(interval) 	(interval)
-#define ALTERNATE(interval)	(BIT(6) | (interval))
-#define IS_PULSING(pulse)	((pulse) & 0x80)
-#define IS_ALTERNATE(pulse)	((pulse) & 0x40)
-#define PULSE_INTERVAL(pulse)	(((pulse) & 0x3f) * 100 * MSEC)
+#define PULSE_NO 0
+#define PULSE(interval) (BIT(7) | (interval))
+#define BLINK(interval) (interval)
+#define ALTERNATE(interval) (BIT(6) | (interval))
+#define IS_PULSING(pulse) ((pulse)&0x80)
+#define IS_ALTERNATE(pulse) ((pulse)&0x40)
+#define PULSE_INTERVAL(pulse) (((pulse)&0x3f) * 100 * MSEC)
 
 /* 40 msec for nice and smooth transition. */
-#define LED_PULSE_TICK_US	(40 * MSEC)
+#define LED_PULSE_TICK_US (40 * MSEC)
 
 typedef struct led_pattern led_patterns[LED_CHARGE_STATE_COUNT]
-					[LED_POWER_STATE_COUNT];
+				       [LED_POWER_STATE_COUNT];
 
 /*
  * Nami/Vayne - One dual color LED:
@@ -105,11 +105,17 @@ typedef struct led_pattern led_patterns[LED_CHARGE_STATE_COUNT]
  */
 const static led_patterns battery_pattern_0 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE(10)}, {LED_OFF,  PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE(10) },
+	  { LED_OFF, PULSE_NO } },
 	/* charging: s0, s3, s5 */
-	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
+	{ { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO } },
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO } },
 };
 
 /*
@@ -117,11 +123,15 @@ const static led_patterns battery_pattern_0 = {
  */
 const static led_patterns battery_pattern_1 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}},
+	{ { LED_OFF, PULSE_NO }, { LED_OFF, PULSE_NO }, { LED_OFF, PULSE_NO } },
 	/* charging: s0, s3, s5 */
-	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
+	{ { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO } },
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO } },
 };
 
 /*
@@ -132,11 +142,15 @@ const static led_patterns battery_pattern_1 = {
  */
 const static led_patterns battery_pattern_2 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}, {LED_OFF,   PULSE_NO}},
+	{ { LED_OFF, PULSE_NO }, { LED_OFF, PULSE_NO }, { LED_OFF, PULSE_NO } },
 	/* charging: s0, s3, s5 */
-	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}},
+	{ { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO } },
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO } },
 };
 
 /*
@@ -144,11 +158,17 @@ const static led_patterns battery_pattern_2 = {
  */
 const static led_patterns power_pattern_1 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF, PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, BLINK(10) },
+	  { LED_OFF, PULSE_NO } },
 	/* charging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF, PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, BLINK(10) },
+	  { LED_OFF, PULSE_NO } },
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF, PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, BLINK(10) },
+	  { LED_OFF, PULSE_NO } },
 };
 
 /*
@@ -159,11 +179,17 @@ const static led_patterns power_pattern_1 = {
  */
 const static led_patterns power_pattern_2 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, 0}, {LED_WHITE, ALTERNATE(BLINK(10))}, {LED_OFF, 0}},
+	{ { LED_WHITE, 0 },
+	  { LED_WHITE, ALTERNATE(BLINK(10)) },
+	  { LED_OFF, 0 } },
 	/* charging: s0, s3, s5 */
-	{{LED_WHITE, 0}, {LED_WHITE, ALTERNATE(BLINK(10))}, {LED_OFF, 0}},
+	{ { LED_WHITE, 0 },
+	  { LED_WHITE, ALTERNATE(BLINK(10)) },
+	  { LED_OFF, 0 } },
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, 0}, {LED_WHITE, ALTERNATE(BLINK(10))}, {LED_OFF, 0}},
+	{ { LED_WHITE, 0 },
+	  { LED_WHITE, ALTERNATE(BLINK(10)) },
+	  { LED_OFF, 0 } },
 };
 
 /*
@@ -178,30 +204,42 @@ const static led_patterns power_pattern_2 = {
  */
 const static led_patterns battery_pattern_3 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, 0}, {LED_AMBER, ALTERNATE(BLINK(10))}, {LED_OFF, 0}},
+	{ { LED_WHITE, 0 },
+	  { LED_AMBER, ALTERNATE(BLINK(10)) },
+	  { LED_OFF, 0 } },
 	/* charging: s0, s3, s5 */
-	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO}, {LED_AMBER,  PULSE_NO}},
+	{ { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO } },
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO}, {LED_WHITE,  PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO } },
 };
 
 const static led_patterns battery_pattern_4 = {
 	/* discharging: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, BLINK(10)}, {LED_OFF, PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, BLINK(10) },
+	  { LED_OFF, PULSE_NO } },
 	/* charging: s0, s3, s5 */
-	{{LED_AMBER, PULSE_NO}, {LED_AMBER, PULSE_NO},  {LED_AMBER, PULSE_NO}},
+	{ { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO },
+	  { LED_AMBER, PULSE_NO } },
 	/* full: s0, s3, s5 */
-	{{LED_WHITE, PULSE_NO}, {LED_WHITE, PULSE_NO},  {LED_WHITE, PULSE_NO}},
+	{ { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO },
+	  { LED_WHITE, PULSE_NO } },
 };
 
 /* Patterns for battery LED and power LED. Initialized at run-time. */
 static led_patterns const *patterns[2];
 /* Pattern for battery error. Only blinking battery LED is supported. */
-static struct led_pattern battery_error = {LED_AMBER, BLINK(10)};
+static struct led_pattern battery_error = { LED_AMBER, BLINK(10) };
 /* Pattern for low state of charge. Only battery LED is supported. */
-static struct led_pattern low_battery = {LED_WHITE, BLINK(10)};
+static struct led_pattern low_battery = { LED_WHITE, BLINK(10) };
 /* Pattern for factory mode. Blinking 2-color battery LED. */
-static struct led_pattern battery_factory = {LED_FACTORY, BLINK(20)};
+static struct led_pattern battery_factory = { LED_FACTORY, BLINK(20) };
 static int low_battery_soc;
 static void led_charge_hook(void);
 static enum led_power_state power_state;
@@ -222,7 +260,7 @@ static void led_init(void)
 			patterns[1] = &power_pattern_1;
 		}
 		battery_error.pulse = BLINK(5);
-		low_battery_soc = 100;  /* 10.0% */
+		low_battery_soc = 100; /* 10.0% */
 		break;
 	case PROJECT_PANTHEON:
 		patterns[0] = &battery_pattern_2;
@@ -452,7 +490,7 @@ void config_led(enum ec_led_id id, enum led_charge_state charge)
 
 	pattern = patterns[id];
 	if (!pattern)
-		return;	/* This LED isn't present */
+		return; /* This LED isn't present */
 
 	start_tick(id, &(*pattern)[charge][power_state]);
 }
@@ -505,8 +543,7 @@ static void call_handler(void)
 		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
 			led_factory(1);
 		break;
-	default:
-		;
+	default:;
 	}
 }
 
@@ -587,9 +624,10 @@ static int command_led(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|green|amber|off|alert|s0|s3|s5|conf|factory]",
-			"Turn on/off LED.");
+DECLARE_CONSOLE_COMMAND(
+	led, command_led,
+	"[debug|red|green|amber|off|alert|s0|s3|s5|conf|factory]",
+	"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
