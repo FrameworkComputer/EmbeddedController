@@ -17,7 +17,7 @@ extern "C" {
  * host byte order. Note that the code currently does not require functions
  * for converting little endian integers.
  */
-#if (__BYTE_ORDER__  == __ORDER_LITTLE_ENDIAN__)
+#if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
 
 static inline uint16_t be16toh(uint16_t in)
 {
@@ -40,10 +40,10 @@ static inline uint64_t be64toh(uint64_t in)
 #define htole32(x) (uint32_t)(x)
 #define htole64(x) (uint64_t)(x)
 
-#endif  /* __BYTE_ORDER__  == __ORDER_LITTLE_ENDIAN__ */
+#endif /* __BYTE_ORDER__  == __ORDER_LITTLE_ENDIAN__ */
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif  /* __EC_BUILTIN_ENDIAN_H */
+#endif /* __EC_BUILTIN_ENDIAN_H */
