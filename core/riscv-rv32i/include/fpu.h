@@ -10,4 +10,4 @@
 
 float sqrtf(float x);
 
-#endif  /* __CROS_EC_FPU_H */
+#endif /* __CROS_EC_FPU_H */
