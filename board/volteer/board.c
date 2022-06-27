@@ -64,7 +64,7 @@ __override struct keyboard_scan_config keyscan_config = {
 
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
@@ -100,8 +100,8 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
@@ -128,8 +128,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_INDUCTOR \
-	{ \
+#define THERMAL_INDUCTOR         \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
