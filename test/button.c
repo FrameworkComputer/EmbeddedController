@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  *
  * Test non-keyboard buttons.
-*
+ *
  * Using GPIOS and buttons[] defined in board/host/board.c
  * Volume down is active low with a debounce time of 30 mSec.
  * Volume up is active high with a debounce time of 60 mSec.
