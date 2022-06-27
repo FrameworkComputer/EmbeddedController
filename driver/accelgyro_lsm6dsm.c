@@ -25,11 +25,11 @@
 #endif
 
 #define CPUTS(outstr) cputs(CC_ACCEL, outstr)
-#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
 STATIC_IF(ACCEL_LSM6DSM_INT_ENABLE)
-	volatile uint32_t last_interrupt_timestamp;
+volatile uint32_t last_interrupt_timestamp;
 
 /**
  * Gets the sensor type associated with the dev_fifo enum. This type can be used
@@ -55,7 +55,7 @@ static inline uint8_t get_sensor_type(enum dev_fifo fifo_type)
 static inline int get_xyz_reg(enum motionsensor_type type)
 {
 	return LSM6DSM_ACCEL_OUT_X_L_ADDR -
-		(LSM6DSM_ACCEL_OUT_X_L_ADDR - LSM6DSM_GYRO_OUT_X_L_ADDR) * type;
+	       (LSM6DSM_ACCEL_OUT_X_L_ADDR - LSM6DSM_GYRO_OUT_X_L_ADDR) * type;
 }
 
 /**
@@ -77,12 +77,11 @@ __maybe_unused static int config_interrupt(const struct motion_sensor_t *accel)
 				   LSM6DSM_FIFO_CTRL1_ADDR,
 				   OUT_XYZ_SIZE / sizeof(uint16_t)));
 	int1_ctrl_val |= LSM6DSM_INT_FIFO_TH | LSM6DSM_INT_FIFO_OVR |
-		LSM6DSM_INT_FIFO_FULL;
+			 LSM6DSM_INT_FIFO_FULL;
 
 	return st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
-			LSM6DSM_INT1_CTRL, int1_ctrl_val);
+			     LSM6DSM_INT1_CTRL, int1_ctrl_val);
 }
-
 
 /**
  * fifo_disable - set fifo mode
@@ -132,7 +131,6 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 		MOTIONSENSE_TYPE_MAG,
 	};
 
-
 	/* Search for min and max odr values for acc, gyro. */
 	for (i = FIFO_DEV_GYRO; i < FIFO_DEV_NUM; i++) {
 		/* Check if sensor enabled with ODR. */
@@ -151,8 +149,7 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 	}
 
 	/* FIFO ODR must be set before the decimation factors */
-	odr_reg_val = LSM6DSM_ODR_TO_REG(max_odr) <<
-					LSM6DSM_FIFO_CTRL5_ODR_OFF;
+	odr_reg_val = LSM6DSM_ODR_TO_REG(max_odr) << LSM6DSM_FIFO_CTRL5_ODR_OFF;
 	err = st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
 			    LSM6DSM_FIFO_CTRL5_ADDR, odr_reg_val);
 
@@ -174,12 +171,13 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 	st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
 		      LSM6DSM_FIFO_CTRL3_ADDR,
 		      (decimators[FIFO_DEV_GYRO] << LSM6DSM_FIFO_DEC_G_OFF) |
-		      (decimators[FIFO_DEV_ACCEL] << LSM6DSM_FIFO_DEC_XL_OFF));
+			      (decimators[FIFO_DEV_ACCEL]
+			       << LSM6DSM_FIFO_DEC_XL_OFF));
 	if (IS_ENABLED(CONFIG_LSM6DSM_SEC_I2C)) {
 		ASSERT(ARRAY_SIZE(decimators) > FIFO_DEV_MAG);
 		st_raw_write8(accel->port, accel->i2c_spi_addr_flags,
-				LSM6DSM_FIFO_CTRL4_ADDR,
-				decimators[FIFO_DEV_MAG]);
+			      LSM6DSM_FIFO_CTRL4_ADDR,
+			      decimators[FIFO_DEV_MAG]);
 
 		/*
 		 * FIFO ODR is limited by odr of gyro or accel.
@@ -204,12 +202,12 @@ static int fifo_enable(const struct motion_sensor_t *accel)
 		 */
 		if (max_odr > MAX(odrs[FIFO_DEV_ACCEL], odrs[FIFO_DEV_GYRO])) {
 			st_write_data_with_mask(accel,
-				LSM6DSM_ODR_REG(accel->type),
-				LSM6DSM_ODR_MASK,
-				LSM6DSM_ODR_TO_REG(max_odr));
+						LSM6DSM_ODR_REG(accel->type),
+						LSM6DSM_ODR_MASK,
+						LSM6DSM_ODR_TO_REG(max_odr));
 		} else {
-			st_write_data_with_mask(accel,
-				LSM6DSM_ODR_REG(accel->type),
+			st_write_data_with_mask(
+				accel, LSM6DSM_ODR_REG(accel->type),
 				LSM6DSM_ODR_MASK,
 				LSM6DSM_ODR_TO_REG(odrs[FIFO_DEV_ACCEL]));
 		}
@@ -275,8 +273,7 @@ static int fifo_next(struct lsm6dsm_data *private)
  * push_fifo_data - Scan data pattern and push upside
  */
 static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
-			   uint16_t flen,
-			   uint32_t timestamp)
+			   uint16_t flen, uint32_t timestamp)
 {
 	struct motion_sensor_t *s;
 	struct lsm6dsm_data *private = LSM6DSM_GET_DATA(accel);
@@ -309,7 +306,6 @@ static void push_fifo_data(struct motion_sensor_t *accel, uint8_t *fifo,
 			} else {
 				st_normalize(s, axis, fifo);
 			}
-
 
 			if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 				struct ec_response_motion_sensor_data vect;
@@ -356,8 +352,7 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts)
 
 		/* Read data and copy in buffer. */
 		err = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
-					  LSM6DSM_FIFO_DATA_ADDR,
-					  fifo, length);
+					  LSM6DSM_FIFO_DATA_ADDR, fifo, length);
 		if (err != EC_SUCCESS)
 			return err;
 
@@ -398,17 +393,13 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	    (!(*event & CONFIG_ACCEL_LSM6DSM_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-
 	while (!fifo_empty) {
 		/* Read how many data pattern on FIFO to read. */
-		RETURN_ERROR(st_raw_read_n_noinc(s->port,
-						 s->i2c_spi_addr_flags,
-						 LSM6DSM_FIFO_STS1_ADDR,
-						 (uint8_t *)&fsts,
-						 sizeof(fsts)));
+		RETURN_ERROR(st_raw_read_n_noinc(
+			s->port, s->i2c_spi_addr_flags, LSM6DSM_FIFO_STS1_ADDR,
+			(uint8_t *)&fsts, sizeof(fsts)));
 		if (fsts.len & (LSM6DSM_FIFO_DATA_OVR | LSM6DSM_FIFO_FULL))
-			CPRINTS("%s FIFO Overrun: %04x",
-					s->name, fsts.len);
+			CPRINTS("%s FIFO Overrun: %04x", s->name, fsts.len);
 		fifo_empty = fsts.len & LSM6DSM_FIFO_EMPTY;
 		if (!fifo_empty) {
 			commit_needed = true;
@@ -420,7 +411,7 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 
 	return EC_SUCCESS;
 }
-#endif  /* ACCEL_LSM6DSM_INT_ENABLE */
+#endif /* ACCEL_LSM6DSM_INT_ENABLE */
 
 /**
  * set_range - set full scale range
@@ -520,10 +511,10 @@ int lsm6dsm_set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		 * less often.
 		 */
 		if (normalized_rate > 0)
-			cal->batch_size = MAX(
-				MAG_CAL_MIN_BATCH_SIZE,
-				(normalized_rate * 1000) /
-					MAG_CAL_MIN_BATCH_WINDOW_US);
+			cal->batch_size =
+				MAX(MAG_CAL_MIN_BATCH_SIZE,
+				    (normalized_rate * 1000) /
+					    MAG_CAL_MIN_BATCH_WINDOW_US);
 		else
 			cal->batch_size = 0;
 		CPRINTS("Batch size: %d", cal->batch_size);
@@ -554,8 +545,8 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LSM6DSM_STATUS_REG, &tmp);
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DSM_STATUS_REG,
+			   &tmp);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s type:0x%X RS Error", s->name, s->type);
 		return ret;
@@ -610,8 +601,8 @@ static int init(struct motion_sensor_t *s)
 	struct stprivate_data *data = s->drv_data;
 	uint8_t ctrl_reg, reg_val = 0;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LSM6DSM_WHO_AM_I_REG, &tmp);
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LSM6DSM_WHO_AM_I_REG,
+			   &tmp);
 	if (ret != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 
@@ -648,8 +639,8 @@ static int init(struct motion_sensor_t *s)
 			goto err_unlock;
 
 		/* Power ON Accel. */
-		ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-				    ctrl_reg, reg_val);
+		ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, ctrl_reg,
+				    reg_val);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 
@@ -669,12 +660,12 @@ static int init(struct motion_sensor_t *s)
 
 			/* Power ON Accel. */
 			ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-					ctrl_reg, reg_val);
+					    ctrl_reg, reg_val);
 			if (ret != EC_SUCCESS)
 				goto err_unlock;
 
 			ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-					LSM6DSM_CTRL3_ADDR, LSM6DSM_BOOT);
+					    LSM6DSM_CTRL3_ADDR, LSM6DSM_BOOT);
 			if (ret != EC_SUCCESS)
 				goto err_unlock;
 
@@ -686,7 +677,7 @@ static int init(struct motion_sensor_t *s)
 
 			/* Power OFF Accel. */
 			ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-					ctrl_reg, 0);
+					    ctrl_reg, 0);
 			if (ret != EC_SUCCESS)
 				goto err_unlock;
 		}
@@ -695,11 +686,9 @@ static int init(struct motion_sensor_t *s)
 		 * Output data not updated until have been read.
 		 * Prefer interrupt to be active low.
 		 */
-		ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-				    LSM6DSM_CTRL3_ADDR,
-				    LSM6DSM_BDU
-				    | LSM6DSM_H_L_ACTIVE
-				    | LSM6DSM_IF_INC);
+		ret = st_raw_write8(
+			s->port, s->i2c_spi_addr_flags, LSM6DSM_CTRL3_ADDR,
+			LSM6DSM_BDU | LSM6DSM_H_L_ACTIVE | LSM6DSM_IF_INC);
 		if (ret != EC_SUCCESS)
 			goto err_unlock;
 
