@@ -19,19 +19,21 @@
 static struct consumer const event_dip_consumer;
 static void event_dip_written(struct consumer const *consumer, size_t count);
 
-static struct queue const event_dip_queue = QUEUE_DIRECT(4,
-	struct dip_msg_service, null_producer, event_dip_consumer);
+static struct queue const event_dip_queue = QUEUE_DIRECT(
+	4, struct dip_msg_service, null_producer, event_dip_consumer);
 
 static struct consumer const event_dip_consumer = {
 	.queue = &event_dip_queue,
-	.ops = &((struct consumer_ops const) {
+	.ops = &((struct consumer_ops const){
 		.written = event_dip_written,
 	}),
 };
 
 /* Stub functions only provided by private overlays. */
 #ifndef HAVE_PRIVATE_MT8183
-void dip_msg_handler(void *data) {}
+void dip_msg_handler(void *data)
+{
+}
 #endif
 
 static void event_dip_written(struct consumer const *consumer, size_t count)
