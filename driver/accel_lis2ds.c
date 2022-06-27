@@ -28,10 +28,10 @@
 #define ACCEL_LIS2DS_INT_ENABLE
 #endif
 
-#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_ACCEL, format, ##args)
 
 STATIC_IF(ACCEL_LIS2DS_INT_ENABLE)
-	volatile uint32_t last_interrupt_timestamp;
+volatile uint32_t last_interrupt_timestamp;
 
 /**
  * lis2ds_enable_fifo - Enable/Disable FIFO in LIS2DS12
@@ -49,8 +49,8 @@ static int lis2ds_config_interrupt(const struct motion_sensor_t *s)
 	int ret = EC_SUCCESS;
 
 	/* Interrupt trigger level of power-on-reset is HIGH */
-	RETURN_ERROR(st_write_data_with_mask(s, LIS2DS_H_ACTIVE_ADDR,
-				LIS2DS_H_ACTIVE_MASK, LIS2DS_EN_BIT));
+	RETURN_ERROR(st_write_data_with_mask(
+		s, LIS2DS_H_ACTIVE_ADDR, LIS2DS_H_ACTIVE_MASK, LIS2DS_EN_BIT));
 
 	/*
 	 * Configure FIFO threshold to 1 sample: interrupt on watermark
@@ -60,13 +60,13 @@ static int lis2ds_config_interrupt(const struct motion_sensor_t *s)
 	 * configured threshold.
 	 */
 	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,
-			LIS2DS_FIFO_THS_ADDR, 1);
+			    LIS2DS_FIFO_THS_ADDR, 1);
 	if (ret != EC_SUCCESS)
 		return ret;
 
 	/* Enable interrupt on FIFO watermark and route to int1. */
-	ret = st_write_data_with_mask(s, LIS2DS_CTRL4_ADDR,
-			LIS2DS_INT1_FTH, LIS2DS_EN_BIT);
+	ret = st_write_data_with_mask(s, LIS2DS_CTRL4_ADDR, LIS2DS_INT1_FTH,
+				      LIS2DS_EN_BIT);
 
 	return ret;
 }
@@ -137,20 +137,17 @@ void lis2ds_interrupt(enum gpio_signal signal)
 /**
  * lis2ds_irq_handler - bottom half of the interrupt stack.
  */
-static int lis2ds_irq_handler(struct motion_sensor_t *s,
-					     uint32_t *event)
+static int lis2ds_irq_handler(struct motion_sensor_t *s, uint32_t *event)
 {
 	int ret = EC_SUCCESS;
 	uint16_t nsamples = 0;
 	uint8_t fifo_src_samples[2];
 
-
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCEL_LIS2DS_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-	ret = st_raw_read_n_noinc(s->port,
-				  s->i2c_spi_addr_flags,
+	ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
 				  LIS2DS_FIFO_SRC_ADDR,
 				  (uint8_t *)fifo_src_samples,
 				  sizeof(fifo_src_samples));
@@ -169,7 +166,7 @@ static int lis2ds_irq_handler(struct motion_sensor_t *s,
 	return lis2ds_load_fifo(s, nsamples, last_interrupt_timestamp);
 }
 
-#endif  /* ACCEL_LIS2DS_INT_ENABLE */
+#endif /* ACCEL_LIS2DS_INT_ENABLE */
 
 /**
  * set_range - set full scale range
@@ -257,8 +254,8 @@ static int is_data_ready(const struct motion_sensor_t *s, int *ready)
 {
 	int ret, tmp;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LIS2DS_STATUS_REG, &tmp);
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LIS2DS_STATUS_REG,
+			   &tmp);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("%s: type:0x%X RD XYZ Error %d", s->name, s->type, ret);
 		return ret;
@@ -309,8 +306,8 @@ static int init(struct motion_sensor_t *s)
 	int ret = 0, tmp;
 	struct stprivate_data *data = s->drv_data;
 
-	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
-			   LIS2DS_WHO_AM_I_REG, &tmp);
+	ret = st_raw_read8(s->port, s->i2c_spi_addr_flags, LIS2DS_WHO_AM_I_REG,
+			   &tmp);
 	if (ret != EC_SUCCESS)
 		return EC_ERROR_UNKNOWN;
 
