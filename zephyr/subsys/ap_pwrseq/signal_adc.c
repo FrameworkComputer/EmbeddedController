@@ -11,7 +11,7 @@
 #include <power_signals.h>
 #include <signal_adc.h>
 
-#define MY_COMPAT	intel_ap_pwrseq_adc
+#define MY_COMPAT intel_ap_pwrseq_adc
 
 #if HAS_ADC_SIGNALS
 
@@ -26,74 +26,59 @@ struct adc_config {
 	enum power_signal signal;
 };
 
-#define	ADC_HIGH_DEV(id)	DEVICE_DT_GET(DT_IO_CHANNELS_CTLR(id))
+#define ADC_HIGH_DEV(id) DEVICE_DT_GET(DT_IO_CHANNELS_CTLR(id))
 
-#define	ADC_HIGH_CHAN(id)	DT_IO_CHANNELS_INPUT(id)
+#define ADC_HIGH_CHAN(id) DT_IO_CHANNELS_INPUT(id)
 
-#define	ADC_THRESH(id)	DT_PROP(id, threshold_mv)
+#define ADC_THRESH(id) DT_PROP(id, threshold_mv)
 
-#define INIT_ADC_CONFIG(id)	\
-{									\
-	.dev_trig_high = DEVICE_DT_GET(DT_PHANDLE(id, trigger_high)),	\
-	.dev_trig_low = DEVICE_DT_GET(DT_PHANDLE(id, trigger_low)),	\
-	.adc_dev = ADC_HIGH_DEV(DT_PHANDLE(id, trigger_high)),		\
-	.adc_ch = ADC_HIGH_CHAN(DT_PHANDLE(id, trigger_high)),	\
-	.threshold = ADC_THRESH(DT_PHANDLE(id, trigger_high)),		\
-	.signal = PWR_SIGNAL_ENUM(id),					\
-},
+#define INIT_ADC_CONFIG(id)                                                   \
+	{                                                                     \
+		.dev_trig_high = DEVICE_DT_GET(DT_PHANDLE(id, trigger_high)), \
+		.dev_trig_low = DEVICE_DT_GET(DT_PHANDLE(id, trigger_low)),   \
+		.adc_dev = ADC_HIGH_DEV(DT_PHANDLE(id, trigger_high)),        \
+		.adc_ch = ADC_HIGH_CHAN(DT_PHANDLE(id, trigger_high)),        \
+		.threshold = ADC_THRESH(DT_PHANDLE(id, trigger_high)),        \
+		.signal = PWR_SIGNAL_ENUM(id),                                \
+	},
 
-static const struct adc_config config[] = {
-DT_FOREACH_STATUS_OKAY(MY_COMPAT, INIT_ADC_CONFIG)
-};
+static const struct adc_config config[] = { DT_FOREACH_STATUS_OKAY(
+	MY_COMPAT, INIT_ADC_CONFIG) };
 
 /*
  * Bit allocations for atomic state
  */
-enum {
-	ADC_BIT_VALUE = 0,
-	ADC_BIT_LOW_ENABLED = 1,
-	ADC_BIT_HIGH_ENABLED = 2
-};
+enum { ADC_BIT_VALUE = 0, ADC_BIT_LOW_ENABLED = 1, ADC_BIT_HIGH_ENABLED = 2 };
 
 atomic_t adc_state[ARRAY_SIZE(config)];
 
-static void set_trigger(const struct device *dev,
-			atomic_t *state,
-			int bit,
+static void set_trigger(const struct device *dev, atomic_t *state, int bit,
 			bool enable)
 {
 	/*
 	 * Only enable or disable if the trigger is not
 	 * already enabled or disabled.
 	 */
-	if (enable
-		? !atomic_test_and_set_bit(state, bit)
-		: atomic_test_and_clear_bit(state, bit)) {
+	if (enable ? !atomic_test_and_set_bit(state, bit) :
+		     atomic_test_and_clear_bit(state, bit)) {
 		struct sensor_value val;
 
 		val.val1 = enable;
-		sensor_attr_set(dev,
-				SENSOR_CHAN_VOLTAGE,
-				SENSOR_ATTR_ALERT,
+		sensor_attr_set(dev, SENSOR_CHAN_VOLTAGE, SENSOR_ATTR_ALERT,
 				&val);
 	}
 }
 
 static void set_low_trigger(enum pwr_sig_adc adc, bool enable)
 {
-	set_trigger(config[adc].dev_trig_low,
-		    &adc_state[adc],
-		    ADC_BIT_LOW_ENABLED,
-		    enable);
-
+	set_trigger(config[adc].dev_trig_low, &adc_state[adc],
+		    ADC_BIT_LOW_ENABLED, enable);
 }
 
 static void set_high_trigger(enum pwr_sig_adc adc, bool enable)
 {
-	set_trigger(config[adc].dev_trig_high,
-		    &adc_state[adc],
-		    ADC_BIT_HIGH_ENABLED,
-		    enable);
+	set_trigger(config[adc].dev_trig_high, &adc_state[adc],
+		    ADC_BIT_HIGH_ENABLED, enable);
 }
 
 static void trigger_high(enum pwr_sig_adc adc)
@@ -156,32 +141,28 @@ int power_signal_adc_disable(enum pwr_sig_adc adc)
 
 #define PWR_ADC_ENUM(id) TAG_ADC(PWR_SIG_TAG_ADC, PWR_SIGNAL_ENUM(id))
 
-#define ADC_CB(id, lev)	cb_##lev##_##id
+#define ADC_CB(id, lev) cb_##lev##_##id
 
-#define ADC_CB_DEFINE(id, lev)					\
-static void ADC_CB(id, lev)(const struct device *dev,		\
-		       const struct sensor_trigger *trigger)	\
-{								\
-	trigger_##lev(PWR_ADC_ENUM(id));			\
-}
+#define ADC_CB_DEFINE(id, lev)                                            \
+	static void ADC_CB(id, lev)(const struct device *dev,             \
+				    const struct sensor_trigger *trigger) \
+	{                                                                 \
+		trigger_##lev(PWR_ADC_ENUM(id));                          \
+	}
 
 DT_FOREACH_STATUS_OKAY_VARGS(MY_COMPAT, ADC_CB_DEFINE, high)
 DT_FOREACH_STATUS_OKAY_VARGS(MY_COMPAT, ADC_CB_DEFINE, low)
 
-#define ADC_CB_COMMA(id, lev)	ADC_CB(id, lev),
+#define ADC_CB_COMMA(id, lev) ADC_CB(id, lev),
 
 void power_signal_adc_init(void)
 {
-	struct sensor_trigger trig = {
-		.type = SENSOR_TRIG_THRESHOLD,
-		.chan = SENSOR_CHAN_VOLTAGE
-	};
-	sensor_trigger_handler_t low_cb[] = {
-		DT_FOREACH_STATUS_OKAY_VARGS(MY_COMPAT, ADC_CB_COMMA, low)
-	};
-	sensor_trigger_handler_t high_cb[] = {
-		DT_FOREACH_STATUS_OKAY_VARGS(MY_COMPAT, ADC_CB_COMMA, high)
-	};
+	struct sensor_trigger trig = { .type = SENSOR_TRIG_THRESHOLD,
+				       .chan = SENSOR_CHAN_VOLTAGE };
+	sensor_trigger_handler_t low_cb[] = { DT_FOREACH_STATUS_OKAY_VARGS(
+		MY_COMPAT, ADC_CB_COMMA, low) };
+	sensor_trigger_handler_t high_cb[] = { DT_FOREACH_STATUS_OKAY_VARGS(
+		MY_COMPAT, ADC_CB_COMMA, high) };
 	int i, rv;
 	int32_t val = 0;
 
@@ -202,11 +183,10 @@ void power_signal_adc_init(void)
 
 		rv = adc_read(dev, &seq);
 		if (rv) {
-			LOG_ERR("ADC %s:%d initial read failed",
-				dev->name, config[i].adc_ch);
+			LOG_ERR("ADC %s:%d initial read failed", dev->name,
+				config[i].adc_ch);
 		} else {
-			adc_raw_to_millivolts(adc_ref_internal(dev),
-					      ADC_GAIN_1,
+			adc_raw_to_millivolts(adc_ref_internal(dev), ADC_GAIN_1,
 					      CONFIG_PLATFORM_EC_ADC_RESOLUTION,
 					      &val);
 			if (val >= config[i].threshold) {
