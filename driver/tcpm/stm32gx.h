@@ -7,8 +7,6 @@
 #ifndef __CROS_EC_DRIVER_TCPM_STM32GX_H
 #define __CROS_EC_DRIVER_TCPM_STM32GX_H
 
-
 extern const struct tcpm_drv stm32gx_tcpm_drv;
-
 
 #endif /* __CROS_EC_DRIVER_TCPM_STM32GX_H */
