@@ -16,15 +16,14 @@ static struct {
 	struct calendar_date time;
 	uint32_t sec;
 } test_case[] = {
-	{{8, 3, 1}, 1204329600},
-	{{17, 10, 1}, 1506816000},
+	{ { 8, 3, 1 }, 1204329600 },
+	{ { 17, 10, 1 }, 1506816000 },
 };
 
 static int calendar_time_comp(struct calendar_date time_1,
-			   struct calendar_date time_2)
+			      struct calendar_date time_2)
 {
-	return (time_1.year == time_2.year &&
-		time_1.month == time_2.month &&
+	return (time_1.year == time_2.year && time_1.month == time_2.month &&
 		time_1.day == time_2.day);
 }
 
