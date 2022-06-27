@@ -40,10 +40,10 @@
 #include "thermal.h"
 #include "usbc_ppc.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define KS_DEBOUNCE_US    (30 * MSEC)  /* Debounce time for kickstand switch */
+#define KS_DEBOUNCE_US (30 * MSEC) /* Debounce time for kickstand switch */
 
 /* Forward declaration */
 static void tcpc_alert_event(enum gpio_signal signal);
@@ -102,34 +102,26 @@ static void board_connect_c0_sbu(enum gpio_signal s)
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "power",
-		.port = I2C_PORT_POWER,
-		.kbps = 100,
-		.scl  = GPIO_EC_I2C_POWER_SCL,
-		.sda  = GPIO_EC_I2C_POWER_SDA
-	},
-	{
-		.name = "tcpc0",
-		.port = I2C_PORT_TCPC0,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_USB_C0_PD_SCL,
-		.sda  = GPIO_EC_I2C_USB_C0_PD_SDA
-	},
-	{
-		.name = "eeprom",
-		.port = I2C_PORT_EEPROM,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_EEPROM_SCL,
-		.sda  = GPIO_EC_I2C_EEPROM_SDA
-	},
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_SENSOR_SCL,
-		.sda  = GPIO_EC_I2C_SENSOR_SDA
-	},
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_POWER_SCL,
+	  .sda = GPIO_EC_I2C_POWER_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_USB_C0_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_PD_SDA },
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_EEPROM_SCL,
+	  .sda = GPIO_EC_I2C_EEPROM_SDA },
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_SENSOR_SCL,
+	  .sda = GPIO_EC_I2C_SENSOR_SDA },
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -204,11 +196,9 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Power Path Controller */
 struct ppc_config_t ppc_chips[] = {
-	{
-		.i2c_port = I2C_PORT_TCPC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	{ .i2c_port = I2C_PORT_TCPC0,
+	  .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+	  .drv = &sn5s330_drv },
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -262,11 +252,9 @@ enum lid_accelgyro_type {
 static enum lid_accelgyro_type lid_accelgyro_config;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+				      { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -365,8 +353,7 @@ static void board_detect_motionsensor(void)
 		return;
 
 	/* Check base accelgyro chip */
-	icm_read8(&motion_sensors_icm[LID_ACCEL], ICM42607_REG_WHO_AM_I,
-		  &val);
+	icm_read8(&motion_sensors_icm[LID_ACCEL], ICM42607_REG_WHO_AM_I, &val);
 	if (val == ICM42607_CHIP_ICM42607P) {
 		motion_sensors[LID_ACCEL] = motion_sensors_icm[LID_ACCEL];
 		motion_sensors[LID_GYRO] = motion_sensors_icm[LID_GYRO];
@@ -443,9 +430,9 @@ void board_tcpc_init(void)
 	 */
 	for (int port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port)
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 }
-DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C+1);
+DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
 void board_hibernate(void)
 {
@@ -455,8 +442,7 @@ void board_hibernate(void)
 	 * Sensors are unpowered in hibernate. Apply PD to the
 	 * interrupt lines such that they don't float.
 	 */
-	gpio_set_flags(GPIO_ACCEL_GYRO_INT_L,
-		       GPIO_INPUT | GPIO_PULL_DOWN);
+	gpio_set_flags(GPIO_ACCEL_GYRO_INT_L, GPIO_INPUT | GPIO_PULL_DOWN);
 
 	/*
 	 * Board rev 1+ has the hardware fix. Don't need the following
@@ -550,8 +536,7 @@ void board_overcurrent_event(int port, int is_overcurrented)
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 &&
-			    port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
@@ -579,7 +564,6 @@ int board_set_active_charge_port(int port)
 		return EC_ERROR_INVAL;
 	}
 
-
 	CPRINTS("New charge port: p%d", port);
 
 	/*
@@ -603,24 +587,22 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
 	 * critical, as we may brownout.
 	 */
-	if (supplier == CHARGE_SUPPLIER_PD &&
-	    charge_ma < 1500 &&
+	if (supplier == CHARGE_SUPPLIER_PD && charge_ma < 1500 &&
 	    charge_get_percent() < CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON) {
 		CPRINTS("Using max ilim %d", max_ma);
 		charge_ma = max_ma;
 	}
 
 	charge_ma = charge_ma * 95 / 100;
-	charge_set_input_current_limit(MAX(charge_ma,
-					   CONFIG_CHARGER_INPUT_CURRENT),
-				       charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /**
@@ -629,7 +611,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 static void pen_input_deferred(void)
 {
 	bool pen_charge_enable = !gpio_get_level(GPIO_EC_PEN_PDCT_L) &&
-			!chipset_in_state(CHIPSET_STATE_ANY_OFF);
+				 !chipset_in_state(CHIPSET_STATE_ANY_OFF);
 
 	gpio_set_level(GPIO_PEN_PWR_EN, pen_charge_enable);
 
