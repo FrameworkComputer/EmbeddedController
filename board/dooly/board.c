@@ -50,8 +50,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 /* Sensors */
 static struct mutex g_accel_mutex;
@@ -109,11 +109,9 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	.saturation.atime = TCS_DEFAULT_ATIME,
 };
 
-const mat33_fp_t screen_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t screen_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					 { FLOAT_TO_FP(1), 0, 0 },
+					 { 0, 0, FLOAT_TO_FP(-1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[SCREEN_ACCEL] = {
@@ -190,15 +188,15 @@ DECLARE_DEFERRED(power_monitor);
  * that range, so we define and use a 64-bit fixed representation instead.
  */
 typedef int64_t fp64_t;
-#define INT_TO_FP64(x)   ((int64_t)(x) << 32)
-#define FP64_TO_INT(x)   ((x) >> 32)
+#define INT_TO_FP64(x) ((int64_t)(x) << 32)
+#define FP64_TO_INT(x) ((x) >> 32)
 #define FLOAT_TO_FP64(x) ((int64_t)((x) * (float)(1LL << 32)))
 
 __override void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 					 int32_t *crgb_data, int32_t *xyz_data)
 {
 	struct tcs_saturation_t *sat_p =
-		&(TCS3400_RGB_DRV_DATA(s+1)->saturation);
+		&(TCS3400_RGB_DRV_DATA(s + 1)->saturation);
 
 	int32_t cur_gain = (1 << (2 * sat_p->again));
 	int32_t integration_time_us =
@@ -208,40 +206,37 @@ __override void tcs3400_translate_to_xyz(struct motion_sensor_t *s,
 	fp64_t result;
 
 	/* Use different coefficients based on n_interval = (G+B)/C */
-	fp64_t gb_sum = INT_TO_FP64(crgb_data[2]) +
-			INT_TO_FP64(crgb_data[3]);
+	fp64_t gb_sum = INT_TO_FP64(crgb_data[2]) + INT_TO_FP64(crgb_data[3]);
 	fp64_t n_interval = gb_sum / MAX(crgb_data[0], 1);
 
 	if (n_interval < FLOAT_TO_FP64(0.692)) {
 		const float scale = 799.797;
 
-		c_coeff = FLOAT_TO_FP64(0.009  * scale);
-		r_coeff = FLOAT_TO_FP64(0.056  * scale);
-		g_coeff = FLOAT_TO_FP64(2.735  * scale);
+		c_coeff = FLOAT_TO_FP64(0.009 * scale);
+		r_coeff = FLOAT_TO_FP64(0.056 * scale);
+		g_coeff = FLOAT_TO_FP64(2.735 * scale);
 		b_coeff = FLOAT_TO_FP64(-1.903 * scale);
 	} else if (n_interval < FLOAT_TO_FP64(1.012)) {
 		const float scale = 801.347;
 
-		c_coeff = FLOAT_TO_FP64(0.202  * scale);
-		r_coeff = FLOAT_TO_FP64(-1.1   * scale);
-		g_coeff = FLOAT_TO_FP64(8.692  * scale);
+		c_coeff = FLOAT_TO_FP64(0.202 * scale);
+		r_coeff = FLOAT_TO_FP64(-1.1 * scale);
+		g_coeff = FLOAT_TO_FP64(8.692 * scale);
 		b_coeff = FLOAT_TO_FP64(-7.068 * scale);
 	} else {
 		const float scale = 795.574;
 
 		c_coeff = FLOAT_TO_FP64(-0.661 * scale);
-		r_coeff = FLOAT_TO_FP64(1.334  * scale);
-		g_coeff = FLOAT_TO_FP64(1.095  * scale);
+		r_coeff = FLOAT_TO_FP64(1.334 * scale);
+		g_coeff = FLOAT_TO_FP64(1.095 * scale);
 		b_coeff = FLOAT_TO_FP64(-1.821 * scale);
 	}
 
 	/* Multiply each channel by the coefficient and compute the sum.
 	 * Note: int * fp64_t = fp64_t and fp64_t + fp64_t = fp64_t.
 	 */
-	result = crgb_data[0] * c_coeff +
-		 crgb_data[1] * r_coeff +
-		 crgb_data[2] * g_coeff +
-		 crgb_data[3] * b_coeff;
+	result = crgb_data[0] * c_coeff + crgb_data[1] * r_coeff +
+		 crgb_data[2] * g_coeff + crgb_data[3] * b_coeff;
 
 	/* Adjust for exposure time and sensor gain.
 	 * Note: fp64_t / int = fp64_t.
@@ -328,8 +323,8 @@ uint16_t tcpc_get_alert_status(void)
 }
 
 /* Called when the charge manager has switched to a new port. */
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Blink alert if insufficient power per system_can_boot_ap(). */
 	int insufficient_power =
@@ -346,12 +341,12 @@ static int32_t base_5v_power;
  * Power usage for each port as measured or estimated.
  * Units are milliwatts (5v x ma current)
  */
-#define PWR_BASE_LOAD	(5*1335)
-#define PWR_FRONT_HIGH	(5*1603)
-#define PWR_FRONT_LOW	(5*963)
-#define PWR_C_HIGH	(5*3740)
-#define PWR_C_LOW	(5*2090)
-#define PWR_MAX		(5*10000)
+#define PWR_BASE_LOAD (5 * 1335)
+#define PWR_FRONT_HIGH (5 * 1603)
+#define PWR_FRONT_LOW (5 * 963)
+#define PWR_C_HIGH (5 * 3740)
+#define PWR_C_LOW (5 * 2090)
+#define PWR_MAX (5 * 10000)
 
 /*
  * Update the 5V power usage, assuming no throttling,
@@ -416,16 +411,14 @@ static const struct {
 	int current;
 } bj_power[] = {
 	{ /* 0 - 65W (also default) */
-	.voltage = 19500,
-	.current = 3200
-	},
+	  .voltage = 19500,
+	  .current = 3200 },
 	{ /* 1 - 90W */
-	.voltage = 19500,
-	.current = 4600
-	},
+	  .voltage = 19500,
+	  .current = 4600 },
 };
 
-#define ADP_DEBOUNCE_MS		1000  /* Debounce time for BJ plug/unplug */
+#define ADP_DEBOUNCE_MS 1000 /* Debounce time for BJ plug/unplug */
 /* Debounced connection state of the barrel jack */
 static int8_t adp_connected = -1;
 static void adp_connect_deferred(void)
@@ -470,29 +463,26 @@ static void adp_state_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
-
 #include "gpio_list.h" /* Must come after other header files. */
 
 /******************************************************************************/
 /* SPI devices */
-const struct spi_device_t spi_devices[] = {
-};
+const struct spi_device_t spi_devices[] = {};
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 /******************************************************************************/
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_FAN]        = { .channel = 5,
-				.flags = PWM_CONFIG_OPEN_DRAIN,
-				.freq = 25000},
-	[PWM_CH_LED_RED]    = { .channel = 0,
-				.flags = PWM_CONFIG_ACTIVE_LOW |
-					 PWM_CONFIG_DSLEEP,
-				.freq = 2000 },
-	[PWM_CH_LED_WHITE]  = { .channel = 2,
-				.flags = PWM_CONFIG_ACTIVE_LOW |
-					 PWM_CONFIG_DSLEEP,
-				.freq = 2000 },
+	[PWM_CH_FAN] = { .channel = 5,
+			 .flags = PWM_CONFIG_OPEN_DRAIN,
+			 .freq = 25000 },
+	[PWM_CH_LED_RED] = { .channel = 0,
+			     .flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+			     .freq = 2000 },
+	[PWM_CH_LED_WHITE] = { .channel = 2,
+			       .flags = PWM_CONFIG_ACTIVE_LOW |
+					PWM_CONFIG_DSLEEP,
+			       .freq = 2000 },
 };
 
 /******************************************************************************/
@@ -533,55 +523,41 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 /******************************************************************************/
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "ina",
-		.port = I2C_PORT_INA,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_SCL,
-		.sda  = GPIO_I2C0_SDA
-	},
-	{
-		.name = "ppc0",
-		.port = I2C_PORT_PPC0,
-		.kbps = 400,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
-	{
-		.name = "ppc1",
-		.port = I2C_PORT_PPC1,
-		.kbps = 400,
-		.scl  = GPIO_I2C2_SCL,
-		.sda  = GPIO_I2C2_SDA
-	},
-	{
-		.name = "tcpc0",
-		.port = I2C_PORT_TCPC0,
-		.kbps = 400,
-		.scl  = GPIO_I2C3_SCL,
-		.sda  = GPIO_I2C3_SDA
-	},
-	{
-		.name = "tcpc1",
-		.port = I2C_PORT_TCPC1,
-		.kbps = 400,
-		.scl  = GPIO_I2C4_SCL,
-		.sda  = GPIO_I2C4_SDA
-	},
-	{
-		.name = "power",
-		.port = I2C_PORT_POWER,
-		.kbps = 400,
-		.scl  = GPIO_I2C5_SCL,
-		.sda  = GPIO_I2C5_SDA
-	},
-	{
-		.name = "eeprom",
-		.port = I2C_PORT_EEPROM,
-		.kbps = 400,
-		.scl  = GPIO_I2C7_SCL,
-		.sda  = GPIO_I2C7_SDA
-	},
+	{ .name = "ina",
+	  .port = I2C_PORT_INA,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
+	{ .name = "ppc0",
+	  .port = I2C_PORT_PPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
+	{ .name = "ppc1",
+	  .port = I2C_PORT_PPC1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C2_SCL,
+	  .sda = GPIO_I2C2_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 400,
+	  .scl = GPIO_I2C3_SCL,
+	  .sda = GPIO_I2C3_SDA },
+	{ .name = "tcpc1",
+	  .port = I2C_PORT_TCPC1,
+	  .kbps = 400,
+	  .scl = GPIO_I2C4_SCL,
+	  .sda = GPIO_I2C4_SDA },
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 400,
+	  .scl = GPIO_I2C5_SCL,
+	  .sda = GPIO_I2C5_SDA },
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_I2C7_SCL,
+	  .sda = GPIO_I2C7_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -637,15 +613,14 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /******************************************************************************/
 /* Wake up pins */
-const enum gpio_signal hibernate_wake_pins[] = {
-};
+const enum gpio_signal hibernate_wake_pins[] = {};
 const int hibernate_wake_pins_used = ARRAY_SIZE(hibernate_wake_pins);
 
 /******************************************************************************/
 /* Physical fans. These are logically separate from pwm_channels. */
 const struct fan_conf fan_conf_0 = {
 	.flags = FAN_USE_RPM_MODE,
-	.ch = MFT_CH_0,	/* Use MFT id to control fan */
+	.ch = MFT_CH_0, /* Use MFT id to control fan */
 	.pgood_gpio = -1,
 	.enable_gpio = -1,
 };
@@ -664,7 +639,7 @@ BUILD_ASSERT(ARRAY_SIZE(fans) == FAN_CH_COUNT);
 /******************************************************************************/
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
-	[MFT_CH_0] = {NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN},
+	[MFT_CH_0] = { NPCX_MFT_MODULE_2, TCKC_LFCLK, PWM_CH_FAN },
 };
 BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
@@ -673,8 +648,8 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_A \
-	{ \
+#define THERMAL_A                \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_WARN] = 0, \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
@@ -727,7 +702,7 @@ static void cbi_init(void)
 	if (cbi_get_ssfc(&val) == EC_SUCCESS)
 		ssfc = val;
 	CPRINTS("Board Version: %d, SKU ID: 0x%08x, "
-			"F/W config: 0x%08x, SSFC: 0x%08x ",
+		"F/W config: 0x%08x, SSFC: 0x%08x ",
 		board_version, sku_id, fw_config, ssfc);
 }
 DECLARE_HOOK(HOOK_INIT, cbi_init, HOOK_PRIO_INIT_I2C + 1);
@@ -793,29 +768,23 @@ static void board_chipset_startup(void)
 	/* set high to enable EDID ROM WP */
 	gpio_set_level(GPIO_EC_EDID_WP_DISABLE_L, 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup,
-	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
 
 static void board_chipset_shutdown(void)
 {
 	/* set low to prevent power leakage */
 	gpio_set_level(GPIO_EC_EDID_WP_DISABLE_L, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown,
-	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
 /******************************************************************************/
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USB_PD_PORT_TCPC_0] = {
-		.i2c_port = I2C_PORT_PPC0,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-	[USB_PD_PORT_TCPC_1] = {
-		.i2c_port = I2C_PORT_PPC1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	[USB_PD_PORT_TCPC_0] = { .i2c_port = I2C_PORT_PPC0,
+				 .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+				 .drv = &sn5s330_drv },
+	[USB_PD_PORT_TCPC_1] = { .i2c_port = I2C_PORT_PPC1,
+				 .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+				 .drv = &sn5s330_drv },
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -842,7 +811,6 @@ static void board_tcpc_init(void)
 	/* Enable other overcurrent interrupts */
 	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
-
 }
 /* Make sure this is called after fw_config is initialised */
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 2);
@@ -965,8 +933,8 @@ void board_enable_s0_rails(int enable)
 
 unsigned int ec_config_get_bj_power(void)
 {
-	unsigned int bj =
-		(fw_config & EC_CFG_BJ_POWER_MASK) >> EC_CFG_BJ_POWER_L;
+	unsigned int bj = (fw_config & EC_CFG_BJ_POWER_MASK) >>
+			  EC_CFG_BJ_POWER_L;
 	/* Out of range value defaults to 0 */
 	if (bj >= ARRAY_SIZE(bj_power))
 		bj = 0;
@@ -1021,28 +989,28 @@ unsigned int ec_ssfc_get_led_ic(void)
  *
  *  All measurements are in milliwatts.
  */
-#define THROT_TYPE_A		BIT(0)
-#define THROT_TYPE_C		BIT(1)
-#define THROT_PROCHOT		BIT(2)
+#define THROT_TYPE_A BIT(0)
+#define THROT_TYPE_C BIT(1)
+#define THROT_PROCHOT BIT(2)
 
 /*
  * Power gain if front USB A ports are limited.
  */
-#define POWER_GAIN_TYPE_A	3200
+#define POWER_GAIN_TYPE_A 3200
 /*
  * Power gain if Type C port is limited.
  */
-#define POWER_GAIN_TYPE_C	8800
+#define POWER_GAIN_TYPE_C 8800
 /*
  * Power is averaged over 10 ms, with a reading every 2 ms.
  */
-#define POWER_DELAY_MS		2
-#define POWER_READINGS		(10/POWER_DELAY_MS)
+#define POWER_DELAY_MS 2
+#define POWER_READINGS (10 / POWER_DELAY_MS)
 
 /* PROCHOT_DEFER_OFF is to extend CPU prochot long enough
  * to pass safety requirement 30 * 2ms = 60 ms
  */
-#define PROCHOT_DEFER_OFF		30
+#define PROCHOT_DEFER_OFF 30
 
 static void power_monitor(void)
 {
@@ -1058,8 +1026,7 @@ static void power_monitor(void)
 	 * If CPU is off or suspended, no need to throttle
 	 * or restrict power.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF |
-			     CHIPSET_STATE_SUSPEND)) {
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF | CHIPSET_STATE_SUSPEND)) {
 		/*
 		 * Slow down monitoring, assume no throttling required.
 		 */
@@ -1087,7 +1054,7 @@ static void power_monitor(void)
 			 */
 			power = (adc_read_channel(ADC_VBUS) *
 				 adc_read_channel(ADC_PPVAR_IMON)) /
-				 1000;
+				1000;
 			/* Init power table */
 			if (history[0] == 0) {
 				for (i = 0; i < POWER_READINGS; i++)
@@ -1114,8 +1081,7 @@ static void power_monitor(void)
 			 * For barrel-jack supplies, the rating can be
 			 * exceeded briefly, so use the average.
 			 */
-			if (charge_manager_get_supplier() ==
-			    CHARGE_SUPPLIER_PD)
+			if (charge_manager_get_supplier() == CHARGE_SUPPLIER_PD)
 				power = max;
 			else
 				power = total / POWER_READINGS;
@@ -1184,8 +1150,8 @@ static void power_monitor(void)
 		 * Check whether type C is not throttled,
 		 * and is not overcurrent.
 		 */
-		if (!((new_state & THROT_TYPE_C) ||
-		       usbc_0_overcurrent || usbc_1_overcurrent)) {
+		if (!((new_state & THROT_TYPE_C) || usbc_0_overcurrent ||
+		      usbc_1_overcurrent)) {
 			/*
 			 * [1] Type C not in overcurrent, throttle it.
 			 */
@@ -1218,8 +1184,9 @@ static void power_monitor(void)
 		gpio_set_level(GPIO_EC_PROCHOT_ODL, prochot);
 	}
 	if (diff & THROT_TYPE_C) {
-		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C)
-			? TYPEC_RP_1A5 : TYPEC_RP_3A0;
+		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C) ?
+						TYPEC_RP_1A5 :
+						TYPEC_RP_3A0;
 
 		ppc_set_vbus_source_current_limit(0, rp);
 		tcpm_select_rp_value(0, rp);
@@ -1302,5 +1269,4 @@ void board_backlight_enable_interrupt(enum gpio_signal signal)
 		oz554_interrupt(signal);
 		break;
 	}
-
 }
