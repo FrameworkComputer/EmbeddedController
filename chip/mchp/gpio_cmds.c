@@ -17,9 +17,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
-#define CPRINTS(format, args...) cprints(CC_LPC, format, ## args)
-
-
+#define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 
 static int cmd_gp_get_config(int argc, char **argv)
 {
@@ -43,7 +41,7 @@ static int cmd_gp_get_config(int argc, char **argv)
 	} else { /* Otherwise print them all */
 		for (i = 0; i < GPIO_COUNT; i++) {
 			if (!gpio_is_implemented(i))
-				continue;  /* Skip unsupported signals */
+				continue; /* Skip unsupported signals */
 
 			gctrl = MCHP_GPIO_CTRL(i);
 
@@ -56,8 +54,7 @@ static int cmd_gp_get_config(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(gpgetcfg, cmd_gp_get_config,
-			"[number]",
+DECLARE_CONSOLE_COMMAND(gpgetcfg, cmd_gp_get_config, "[number]",
 			"Read GPIO config");
 
 static int cmd_gp_set_config(int argc, char **argv)
@@ -91,6 +88,5 @@ static int cmd_gp_set_config(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(gpsetcfg, cmd_gp_set_config,
-			"gp_num val",
+DECLARE_CONSOLE_COMMAND(gpsetcfg, cmd_gp_set_config, "gp_num val",
 			"Set GPIO config");
