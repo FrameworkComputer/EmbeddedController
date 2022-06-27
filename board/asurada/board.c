@@ -66,17 +66,15 @@ static enum base_accelgyro_type base_accelgyro_config;
 /* Matrix to rotate accelerometer into standard reference frame */
 /* for rev 0 */
 static const mat33_fp_t base_standard_ref_rev0 = {
-	{FLOAT_TO_FP(-1), 0, 0},
-	{0, FLOAT_TO_FP(1), 0},
-	{0, 0, FLOAT_TO_FP(-1)},
+	{ FLOAT_TO_FP(-1), 0, 0 },
+	{ 0, FLOAT_TO_FP(1), 0 },
+	{ 0, 0, FLOAT_TO_FP(-1) },
 };
 
 static void update_rotation_matrix(void)
 {
-	motion_sensors[BASE_ACCEL].rot_standard_ref =
-		&base_standard_ref_rev0;
-	motion_sensors[BASE_GYRO].rot_standard_ref =
-		&base_standard_ref_rev0;
+	motion_sensors[BASE_ACCEL].rot_standard_ref = &base_standard_ref_rev0;
+	motion_sensors[BASE_GYRO].rot_standard_ref = &base_standard_ref_rev0;
 }
 DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 2);
 
@@ -138,9 +136,9 @@ static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 /* Matrix to rotate accelerometer into standard reference frame */
 /* for Hayato */
 static const mat33_fp_t base_standard_ref = {
-	{0, FLOAT_TO_FP(1), 0},
-	{FLOAT_TO_FP(-1), 0 , 0},
-	{0, 0, FLOAT_TO_FP(1)},
+	{ 0, FLOAT_TO_FP(1), 0 },
+	{ FLOAT_TO_FP(-1), 0, 0 },
+	{ 0, 0, FLOAT_TO_FP(1) },
 };
 
 static void update_rotation_matrix(void)
@@ -151,8 +149,7 @@ static void update_rotation_matrix(void)
 	if (board_get_version() >= 2) {
 		motion_sensors[BASE_ACCEL].rot_standard_ref =
 			&base_standard_ref;
-		motion_sensors[BASE_GYRO].rot_standard_ref =
-			&base_standard_ref;
+		motion_sensors[BASE_GYRO].rot_standard_ref = &base_standard_ref;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, update_rotation_matrix, HOOK_PRIO_INIT_ADC + 2);
@@ -340,28 +337,27 @@ static void board_detect_motionsense(void)
 	if (val == ICM426XX_CHIP_ICM40608) {
 		motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
 		motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
-		base_accelgyro_config =  BASE_GYRO_ICM426XX;
+		base_accelgyro_config = BASE_GYRO_ICM426XX;
 		ccprints("Base Accelgyro: ICM426XX");
 	} else {
 		base_accelgyro_config = BASE_GYRO_BMI160;
 		ccprints("Base Accelgyro: BMI160");
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsense,
-	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_detect_motionsense, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_INIT, board_detect_motionsense, HOOK_PRIO_DEFAULT);
 
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
 	/* Convert to mV (3000mV/1024). */
-	{"VBUS_C0", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0, CHIP_ADC_CH0},
-	{"BOARD_ID_0", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH1},
-	{"BOARD_ID_1", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH2},
+	{ "VBUS_C0", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0, CHIP_ADC_CH0 },
+	{ "BOARD_ID_0", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH1 },
+	{ "BOARD_ID_1", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH2 },
 	/* AMON/BMON gain = 17.97 */
-	{"CHARGER_AMON_R", ADC_MAX_MVOLT * 1000 / 17.97, ADC_READ_MAX + 1, 0,
-	 CHIP_ADC_CH3},
-	{"VBUS_C1", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0, CHIP_ADC_CH5},
-	{"CHARGER_PMON", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH6},
+	{ "CHARGER_AMON_R", ADC_MAX_MVOLT * 1000 / 17.97, ADC_READ_MAX + 1, 0,
+	  CHIP_ADC_CH3 },
+	{ "VBUS_C1", ADC_MAX_MVOLT * 10, ADC_READ_MAX + 1, 0, CHIP_ADC_CH5 },
+	{ "CHARGER_PMON", ADC_MAX_MVOLT, ADC_READ_MAX + 1, 0, CHIP_ADC_CH6 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -374,24 +370,18 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
  * number of pwm channel greater than three.
  */
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED1] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
-	[PWM_CH_LED2] = {
-		.channel = 1,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
-	[PWM_CH_LED3] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
-		.freq_hz = 324, /* maximum supported frequency */
-		.pcfsr_sel = PWM_PRESCALER_C4
-	},
+	[PWM_CH_LED1] = { .channel = 0,
+			  .flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+			  .freq_hz = 324, /* maximum supported frequency */
+			  .pcfsr_sel = PWM_PRESCALER_C4 },
+	[PWM_CH_LED2] = { .channel = 1,
+			  .flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+			  .freq_hz = 324, /* maximum supported frequency */
+			  .pcfsr_sel = PWM_PRESCALER_C4 },
+	[PWM_CH_LED3] = { .channel = 2,
+			  .flags = PWM_CONFIG_DSLEEP | PWM_CONFIG_ACTIVE_LOW,
+			  .freq_hz = 324, /* maximum supported frequency */
+			  .pcfsr_sel = PWM_PRESCALER_C4 },
 };
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
