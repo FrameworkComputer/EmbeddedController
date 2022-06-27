@@ -17,7 +17,7 @@
 #include "timer.h"
 #include "util.h"
 
-#define FAN_RPM(fan)	fans[fan].rpm
+#define FAN_RPM(fan) fans[fan].rpm
 
 /*****************************************************************************/
 /* Tests */
