@@ -47,11 +47,9 @@ void console_buf_notify_chars(const char *s, size_t len)
 		if (new_tail == head_idx)
 			head_idx = next_idx(head_idx);
 		if (new_tail == previous_snapshot_idx)
-			previous_snapshot_idx =
-				next_idx(previous_snapshot_idx);
+			previous_snapshot_idx = next_idx(previous_snapshot_idx);
 		if (new_tail == current_snapshot_idx)
-			current_snapshot_idx =
-				next_idx(current_snapshot_idx);
+			current_snapshot_idx = next_idx(current_snapshot_idx);
 		if (new_tail == read_next_idx)
 			read_next_idx = next_idx(read_next_idx);
 
