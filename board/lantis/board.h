@@ -23,21 +23,22 @@
 
 /* Charger */
 #define CONFIG_CHARGE_RAMP_HW
-#define CONFIG_CHARGER_SM5803		/* C0 and C1: Charger */
+#define CONFIG_CHARGER_SM5803 /* C0 and C1: Charger */
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
-#undef  CONFIG_CHARGER_SINGLE_CHIP
+#undef CONFIG_CHARGER_SINGLE_CHIP
 #define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 21 /* R_DS(on) 10.7mOhm + 10mOhm sns rstr */
+#define CONFIG_OCPC_DEF_RBATT_MOHMS 21 /* R_DS(on) 10.7mOhm + 10mOhm sns rstr \
+					*/
 
 /* PWM */
 #define CONFIG_PWM
 
 /* Sensors */
-#define CONFIG_ACCEL_BMA255		/* Lid accel */
-#define CONFIG_ACCEL_BMA4XX		/* 2nd source Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM	/* Base accel */
+#define CONFIG_ACCEL_BMA255 /* Lid accel */
+#define CONFIG_ACCEL_BMA4XX /* 2nd source Lid accel */
+#define CONFIG_ACCELGYRO_LSM6DSM /* Base accel */
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
 
@@ -68,8 +69,8 @@
 
 /* TCPC */
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
-#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP	/* C0: ITE EC TCPC */
-#define CONFIG_USB_PD_TCPM_PS8705	/* C1: PS8705 TCPC*/
+#define CONFIG_USB_PD_TCPM_ITE_ON_CHIP /* C0: ITE EC TCPC */
+#define CONFIG_USB_PD_TCPM_PS8705 /* C1: PS8705 TCPC*/
 #define CONFIG_USB_PD_ITE_ACTIVE_PORT_COUNT 1
 #define CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 #define CONFIG_USB_PD_TCPC_LOW_POWER
@@ -80,8 +81,8 @@
 #define CONFIG_STEINHART_HART_3V3_51K1_47K_4050B
 
 /* USB Mux and Retimer */
-#define CONFIG_USB_MUX_IT5205			/* C1: ITE Mux */
-#define I2C_PORT_USB_MUX I2C_PORT_USB_C0	/* Required for ITE Mux */
+#define CONFIG_USB_MUX_IT5205 /* C1: ITE Mux */
+#define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
 
 /* USB Type A Features */
 #define USB_PORT_COUNT 1
@@ -104,21 +105,16 @@ enum pwm_channel {
 };
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* ADC channels */
 enum adc_channel {
-	ADC_VSNS_PP3300_A,     /* ADC0 */
-	ADC_TEMP_SENSOR_1,     /* ADC2 */
-	ADC_TEMP_SENSOR_2,     /* ADC3 */
-	ADC_SUB_ANALOG,        /* ADC13 */
-	ADC_TEMP_SENSOR_3,     /* ADC15 */
-	ADC_TEMP_SENSOR_4,     /* ADC16 */
+	ADC_VSNS_PP3300_A, /* ADC0 */
+	ADC_TEMP_SENSOR_1, /* ADC2 */
+	ADC_TEMP_SENSOR_2, /* ADC3 */
+	ADC_SUB_ANALOG, /* ADC13 */
+	ADC_TEMP_SENSOR_3, /* ADC15 */
+	ADC_TEMP_SENSOR_4, /* ADC16 */
 	ADC_CH_COUNT
 };
 
@@ -143,10 +139,7 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-enum ec_cfg_keyboard_layout {
-	KB_LAYOUT_DEFAULT = 0,
-	KB_LAYOUT_1 = 1
-};
+enum ec_cfg_keyboard_layout { KB_LAYOUT_DEFAULT = 0, KB_LAYOUT_1 = 1 };
 
 #endif /* !__ASSEMBLER__ */
 
