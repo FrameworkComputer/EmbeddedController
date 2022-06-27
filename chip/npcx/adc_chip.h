@@ -32,7 +32,7 @@ enum npcx_adc_input_channel {
 #if NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9
 	NPCX_ADC_CH10,
 	NPCX_ADC_CH11,
- #endif
+#endif
 	NPCX_ADC_CH_COUNT
 };
 
