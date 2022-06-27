@@ -17,7 +17,7 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /* Global variables */
 static struct mutex adc_lock;
@@ -26,42 +26,42 @@ static volatile task_id_t task_waiting;
 
 /* Data structure of ADC channel control registers. */
 const struct adc_ctrl_t adc_ctrl_regs[] = {
-	{&IT83XX_ADC_VCH0CTL, &IT83XX_ADC_VCH0DATM, &IT83XX_ADC_VCH0DATL},
-	{&IT83XX_ADC_VCH1CTL, &IT83XX_ADC_VCH1DATM, &IT83XX_ADC_VCH1DATL},
-	{&IT83XX_ADC_VCH2CTL, &IT83XX_ADC_VCH2DATM, &IT83XX_ADC_VCH2DATL},
-	{&IT83XX_ADC_VCH3CTL, &IT83XX_ADC_VCH3DATM, &IT83XX_ADC_VCH3DATL},
-	{&IT83XX_ADC_VCH4CTL, &IT83XX_ADC_VCH4DATM, &IT83XX_ADC_VCH4DATL},
-	{&IT83XX_ADC_VCH5CTL, &IT83XX_ADC_VCH5DATM, &IT83XX_ADC_VCH5DATL},
-	{&IT83XX_ADC_VCH6CTL, &IT83XX_ADC_VCH6DATM, &IT83XX_ADC_VCH6DATL},
-	{&IT83XX_ADC_VCH7CTL, &IT83XX_ADC_VCH7DATM, &IT83XX_ADC_VCH7DATL},
-	{&IT83XX_ADC_VCH13CTL, &IT83XX_ADC_VCH13DATM, &IT83XX_ADC_VCH13DATL},
-	{&IT83XX_ADC_VCH14CTL, &IT83XX_ADC_VCH14DATM, &IT83XX_ADC_VCH14DATL},
-	{&IT83XX_ADC_VCH15CTL, &IT83XX_ADC_VCH15DATM, &IT83XX_ADC_VCH15DATL},
-	{&IT83XX_ADC_VCH16CTL, &IT83XX_ADC_VCH16DATM, &IT83XX_ADC_VCH16DATL},
+	{ &IT83XX_ADC_VCH0CTL, &IT83XX_ADC_VCH0DATM, &IT83XX_ADC_VCH0DATL },
+	{ &IT83XX_ADC_VCH1CTL, &IT83XX_ADC_VCH1DATM, &IT83XX_ADC_VCH1DATL },
+	{ &IT83XX_ADC_VCH2CTL, &IT83XX_ADC_VCH2DATM, &IT83XX_ADC_VCH2DATL },
+	{ &IT83XX_ADC_VCH3CTL, &IT83XX_ADC_VCH3DATM, &IT83XX_ADC_VCH3DATL },
+	{ &IT83XX_ADC_VCH4CTL, &IT83XX_ADC_VCH4DATM, &IT83XX_ADC_VCH4DATL },
+	{ &IT83XX_ADC_VCH5CTL, &IT83XX_ADC_VCH5DATM, &IT83XX_ADC_VCH5DATL },
+	{ &IT83XX_ADC_VCH6CTL, &IT83XX_ADC_VCH6DATM, &IT83XX_ADC_VCH6DATL },
+	{ &IT83XX_ADC_VCH7CTL, &IT83XX_ADC_VCH7DATM, &IT83XX_ADC_VCH7DATL },
+	{ &IT83XX_ADC_VCH13CTL, &IT83XX_ADC_VCH13DATM, &IT83XX_ADC_VCH13DATL },
+	{ &IT83XX_ADC_VCH14CTL, &IT83XX_ADC_VCH14DATM, &IT83XX_ADC_VCH14DATL },
+	{ &IT83XX_ADC_VCH15CTL, &IT83XX_ADC_VCH15DATM, &IT83XX_ADC_VCH15DATL },
+	{ &IT83XX_ADC_VCH16CTL, &IT83XX_ADC_VCH16DATM, &IT83XX_ADC_VCH16DATL },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_ctrl_regs) == CHIP_ADC_COUNT);
 
 #ifdef CONFIG_ADC_VOLTAGE_COMPARATOR
-#define VCMP_ADC_CH_MASK_H           BIT(3)
-#define VCMP_ADC_CH_MASK_L           0x7
+#define VCMP_ADC_CH_MASK_H BIT(3)
+#define VCMP_ADC_CH_MASK_L 0x7
 /* 10-bits resolution */
-#define VCMP_RESOLUTION              BIT(10)
-#define VCMP_MAX_MVOLT               3000
+#define VCMP_RESOLUTION BIT(10)
+#define VCMP_MAX_MVOLT 3000
 
 /* Data structure of voltage comparator control registers. */
 const struct vcmp_ctrl_t vcmp_ctrl_regs[] = {
-	{&IT83XX_ADC_VCMP0CTL, &IT83XX_ADC_VCMP0CSELM, &IT83XX_ADC_CMP0THRDATM,
-		&IT83XX_ADC_CMP0THRDATL},
-	{&IT83XX_ADC_VCMP1CTL, &IT83XX_ADC_VCMP1CSELM, &IT83XX_ADC_CMP1THRDATM,
-		&IT83XX_ADC_CMP1THRDATL},
-	{&IT83XX_ADC_VCMP2CTL, &IT83XX_ADC_VCMP2CSELM, &IT83XX_ADC_CMP2THRDATM,
-		&IT83XX_ADC_CMP2THRDATL},
-	{&IT83XX_ADC_VCMP3CTL, &IT83XX_ADC_VCMP3CSELM, &IT83XX_ADC_CMP3THRDATM,
-		&IT83XX_ADC_CMP3THRDATL},
-	{&IT83XX_ADC_VCMP4CTL, &IT83XX_ADC_VCMP4CSELM, &IT83XX_ADC_CMP4THRDATM,
-		&IT83XX_ADC_CMP4THRDATL},
-	{&IT83XX_ADC_VCMP5CTL, &IT83XX_ADC_VCMP5CSELM, &IT83XX_ADC_CMP5THRDATM,
-		&IT83XX_ADC_CMP5THRDATL},
+	{ &IT83XX_ADC_VCMP0CTL, &IT83XX_ADC_VCMP0CSELM, &IT83XX_ADC_CMP0THRDATM,
+	  &IT83XX_ADC_CMP0THRDATL },
+	{ &IT83XX_ADC_VCMP1CTL, &IT83XX_ADC_VCMP1CSELM, &IT83XX_ADC_CMP1THRDATM,
+	  &IT83XX_ADC_CMP1THRDATL },
+	{ &IT83XX_ADC_VCMP2CTL, &IT83XX_ADC_VCMP2CSELM, &IT83XX_ADC_CMP2THRDATM,
+	  &IT83XX_ADC_CMP2THRDATL },
+	{ &IT83XX_ADC_VCMP3CTL, &IT83XX_ADC_VCMP3CSELM, &IT83XX_ADC_CMP3THRDATM,
+	  &IT83XX_ADC_CMP3THRDATL },
+	{ &IT83XX_ADC_VCMP4CTL, &IT83XX_ADC_VCMP4CSELM, &IT83XX_ADC_CMP4THRDATM,
+	  &IT83XX_ADC_CMP4THRDATL },
+	{ &IT83XX_ADC_VCMP5CTL, &IT83XX_ADC_VCMP5CSELM, &IT83XX_ADC_CMP5THRDATM,
+	  &IT83XX_ADC_CMP5THRDATL },
 };
 BUILD_ASSERT(ARRAY_SIZE(vcmp_ctrl_regs) == CHIP_VCMP_COUNT);
 #endif
@@ -120,8 +120,8 @@ static void adc_disable_channel(int ch)
 static int adc_data_valid(enum chip_adc_channel adc_ch)
 {
 	return (adc_ch <= CHIP_ADC_CH7) ?
-		(IT83XX_ADC_ADCDVSTS & BIT(adc_ch)) :
-		(IT83XX_ADC_ADCDVSTS2 & (1 << (adc_ch - CHIP_ADC_CH13)));
+		       (IT83XX_ADC_ADCDVSTS & BIT(adc_ch)) :
+		       (IT83XX_ADC_ADCDVSTS2 & (1 << (adc_ch - CHIP_ADC_CH13)));
 }
 
 int adc_read_channel(enum adc_channel ch)
@@ -153,13 +153,13 @@ int adc_read_channel(enum adc_channel ch)
 	 * next read.
 	 */
 	atomic_clear_bits(task_get_event_bitmap(task_get_current()),
-		TASK_EVENT_ADC_DONE);
+			  TASK_EVENT_ADC_DONE);
 
 	/* data valid of adc channel[x] */
 	if (adc_data_valid(adc_ch)) {
 		/* read adc raw data msb and lsb */
 		adc_raw_data = (*adc_ctrl_regs[adc_ch].adc_datm << 8) +
-			*adc_ctrl_regs[adc_ch].adc_datl;
+			       *adc_ctrl_regs[adc_ch].adc_datl;
 
 		/* W/C data valid flag */
 		if (adc_ch <= CHIP_ADC_CH7)
@@ -168,15 +168,15 @@ int adc_read_channel(enum adc_channel ch)
 			IT83XX_ADC_ADCDVSTS2 = (1 << (adc_ch - CHIP_ADC_CH13));
 
 		mv = adc_raw_data * adc_channels[ch].factor_mul /
-			adc_channels[ch].factor_div + adc_channels[ch].shift;
+			     adc_channels[ch].factor_div +
+		     adc_channels[ch].shift;
 		valid = 1;
 	}
 
 	if (!valid) {
 		CPRINTS("ADC failed to read!!! (regs=%x, %x, ch=%d, evt=%x)",
-			IT83XX_ADC_ADCDVSTS,
-			IT83XX_ADC_ADCDVSTS2,
-			adc_ch, events);
+			IT83XX_ADC_ADCDVSTS, IT83XX_ADC_ADCDVSTS2, adc_ch,
+			events);
 	}
 
 	adc_disable_channel(adc_ch);
@@ -292,8 +292,8 @@ static void voltage_comparator_init(void)
 		 */
 
 		/* Select which ADC channel output voltage into comparator */
-		*vcmp_ctrl_regs[idx].vcmp_ctrl |=
-			vcmp_list[idx].adc_ch & VCMP_ADC_CH_MASK_L;
+		*vcmp_ctrl_regs[idx].vcmp_ctrl |= vcmp_list[idx].adc_ch &
+						  VCMP_ADC_CH_MASK_L;
 		if (vcmp_list[idx].adc_ch & VCMP_ADC_CH_MASK_H)
 			*vcmp_ctrl_regs[idx].vcmp_adc_chm |= ADC_VCMP_VCMPCSELM;
 
