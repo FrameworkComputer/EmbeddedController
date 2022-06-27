@@ -100,7 +100,8 @@ void set_read_blocking(int dev_drv, bool block)
 	memset(&tty, 0, sizeof(tty));
 
 	if (tcgetattr(dev_drv, &tty) != 0) {
-		display_color_msg(FAIL,
+		display_color_msg(
+			FAIL,
 			"set_read_blocking Error: %d Fail to get attribute "
 			"from Device number %d.\n",
 			errno, dev_drv);
@@ -111,7 +112,8 @@ void set_read_blocking(int dev_drv, bool block)
 	tty.c_cc[VTIME] = 5; /* 0.5 seconds read timeout */
 
 	if (tcsetattr(dev_drv, TCSANOW, &tty) != 0) {
-		display_color_msg(FAIL,
+		display_color_msg(
+			FAIL,
 			"set_read_blocking Error: %d Fail to set attribute to "
 			"Device number %d.\n",
 			errno, dev_drv);
@@ -145,7 +147,8 @@ bool com_config_uart(int h_dev_drv, struct comport_fields com_port_fields)
 	memset(&tty, 0, sizeof(tty));
 
 	if (tcgetattr(h_dev_drv, &tty) != 0) {
-		display_color_msg(FAIL,
+		display_color_msg(
+			FAIL,
 			"com_config_uart Error: Fail to get attribute from "
 			"Device number %d.\n",
 			h_dev_drv);
@@ -171,12 +174,12 @@ bool com_config_uart(int h_dev_drv, struct comport_fields com_port_fields)
 	tty.c_lflag &= ~(ECHO | ECHONL | ICANON | ISIG | IEXTEN);
 
 	tty.c_oflag = ~OPOST;
-	tty.c_cc[VMIN] = 0;  /* read doesn't block		*/
+	tty.c_cc[VMIN] = 0; /* read doesn't block		*/
 	tty.c_cc[VTIME] = 5; /* 0.5 seconds read timeout	*/
 
-	tty.c_iflag |= (com_port_fields.flow_control == 0x01)
-			       ? (IXON | IXOFF)
-			       : 0x00; /* xon/xoff ctrl */
+	tty.c_iflag |= (com_port_fields.flow_control == 0x01) ? (IXON | IXOFF) :
+								0x00; /* xon/xoff
+									 ctrl */
 
 	tty.c_cflag |= (CLOCAL | CREAD); /* ignore modem controls */
 	/* enable reading */
@@ -191,7 +194,8 @@ bool com_config_uart(int h_dev_drv, struct comport_fields com_port_fields)
 	tcflush(h_dev_drv, TCIFLUSH);
 
 	if (tcsetattr(h_dev_drv, TCSANOW, &tty) != 0) {
-		display_color_msg(FAIL,
+		display_color_msg(
+			FAIL,
 			"com_config_uart Error: %d setting port handle %d: %s.\n",
 			errno, h_dev_drv, strerror(errno));
 		return false;
@@ -221,7 +225,6 @@ static void discard_input(int fd)
 	do {
 		res = read(fd, buffer, sizeof(buffer));
 		if (res > 0) {
-
 			/* Discard zeros in the beginning of the buffer. */
 			for (i = 0; i < res; i++)
 				if (buffer[i])
@@ -250,7 +253,6 @@ static void discard_input(int fd)
 		printf("%d zeros ignored\n", count_of_zeros);
 }
 
-
 /******************************************************************************
  * Function: int com_port_open()
  *
@@ -268,7 +270,7 @@ static void discard_input(int fd)
  *****************************************************************************
  */
 int com_port_open(const char *com_port_dev_name,
-				struct comport_fields com_port_fields)
+		  struct comport_fields com_port_fields)
 {
 	int port_handler;
 
@@ -276,15 +278,16 @@ int com_port_open(const char *com_port_dev_name,
 
 	if (port_handler < 0) {
 		display_color_msg(FAIL,
-				"com_port_open Error %d opening %s: %s\n",
-				errno, com_port_dev_name, strerror(errno));
+				  "com_port_open Error %d opening %s: %s\n",
+				  errno, com_port_dev_name, strerror(errno));
 		return INVALID_HANDLE_VALUE;
 	}
 
 	tcgetattr(port_handler, &savetty);
 
 	if (!com_config_uart(port_handler, com_port_fields)) {
-		display_color_msg(FAIL,
+		display_color_msg(
+			FAIL,
 			"com_port_open() Error %d, Failed on com_config_uart() %s, "
 			"%s\n",
 			errno, com_port_dev_name, strerror(errno));
@@ -318,7 +321,8 @@ bool com_port_close(int device_id)
 	tcsetattr(device_id, TCSANOW, &savetty);
 
 	if (close(device_id) == INVALID_HANDLE_VALUE) {
-		display_color_msg(FAIL,
+		display_color_msg(
+			FAIL,
 			"com_port_close() Error: %d Device com%u was not opened, "
 			"%s.\n",
 			errno, (uint32_t)device_id, strerror(errno));
@@ -345,14 +349,14 @@ bool com_port_close(int device_id)
  *
  *****************************************************************************
  */
-bool com_port_write_bin(int device_id, const uint8_t *buffer,
-						uint32_t buf_size)
+bool com_port_write_bin(int device_id, const uint8_t *buffer, uint32_t buf_size)
 {
 	uint32_t bytes_written;
 
 	bytes_written = write(device_id, buffer, buf_size);
 	if (bytes_written != buf_size) {
-		display_color_msg(FAIL,
+		display_color_msg(
+			FAIL,
 			"com_port_write_bin() Error: %d  Failed to write data to "
 			"Uart Port %d, %s.\n",
 			errno, (uint32_t)device_id, strerror(errno));
@@ -389,9 +393,10 @@ uint32_t com_port_read_bin(int device_id, uint8_t *buffer, uint32_t buf_size)
 
 	if (read_bytes == -1) {
 		display_color_msg(FAIL,
-			"%s() Error: %d Device number %u was not "
-			"opened, %s.\n",
-			__func__, errno, (uint32_t)device_id, strerror(errno));
+				  "%s() Error: %d Device number %u was not "
+				  "opened, %s.\n",
+				  __func__, errno, (uint32_t)device_id,
+				  strerror(errno));
 	}
 
 	return read_bytes;
@@ -422,9 +427,9 @@ uint32_t com_port_wait_read(int device_id)
 	fds.events = POLLIN;
 	ret_val = poll(&fds, 1, COMMAND_TIMEOUT);
 	if (ret_val < 0) {
-		display_color_msg(FAIL,
-			"%s() Error: %d Device number %u %s\n",
-			__func__, errno, (uint32_t)device_id, strerror(errno));
+		display_color_msg(FAIL, "%s() Error: %d Device number %u %s\n",
+				  __func__, errno, (uint32_t)device_id,
+				  strerror(errno));
 		return 0;
 	}
 
@@ -434,7 +439,8 @@ uint32_t com_port_wait_read(int device_id)
 	if (ret_val > 0) {
 		/* Get number of bytes that are ready to be read. */
 		if (ioctl(device_id, FIONREAD, &bytes) < 0) {
-			display_color_msg(FAIL,
+			display_color_msg(
+				FAIL,
 				"com_port_wait_for_read() Error: %d Device number "
 				"%u %s\n",
 				errno, (uint32_t)device_id, strerror(errno));
