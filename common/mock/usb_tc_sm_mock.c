@@ -26,7 +26,7 @@ void mock_tc_port_reset(void)
 {
 	int port;
 
-	for (port = 0 ; port < CONFIG_USB_PD_PORT_MAX_COUNT ; ++port) {
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; ++port) {
 		mock_tc_port[port].rev = PD_REV30;
 		mock_tc_port[port].pd_enable = 0;
 		mock_tc_port[port].msg_tx_id = 0;
@@ -93,7 +93,8 @@ int tc_check_vconn_swap(int port)
 }
 
 void tc_ctvpd_detected(int port)
-{}
+{
+}
 
 int tc_is_vconn_src(int port)
 {
@@ -106,31 +107,40 @@ void tc_hard_reset_request(int port)
 }
 
 void tc_partner_dr_data(int port, int en)
-{}
+{
+}
 
 void tc_partner_dr_power(int port, int en)
-{}
+{
+}
 
 void tc_partner_unconstrainedpower(int port, int en)
-{}
+{
+}
 
 void tc_partner_usb_comm(int port, int en)
-{}
+{
+}
 
 void tc_pd_connection(int port, int en)
-{}
+{
+}
 
 void tc_pr_swap_complete(int port, bool success)
-{}
+{
+}
 
 void tc_src_power_off(int port)
-{}
+{
+}
 
 void tc_start_error_recovery(int port)
-{}
+{
+}
 
 void tc_snk_power_off(int port)
-{}
+{
+}
 
 void tc_request_power_swap(int port)
 {
@@ -200,13 +210,16 @@ enum tcpc_cc_polarity pd_get_polarity(int port)
 }
 
 void pd_request_data_swap(int port)
-{}
+{
+}
 
 void pd_request_vconn_swap_off(int port)
-{}
+{
+}
 
 void pd_request_vconn_swap_on(int port)
-{}
+{
+}
 
 bool pd_alt_mode_capable(int port)
 {
