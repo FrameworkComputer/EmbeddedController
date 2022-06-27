@@ -20,8 +20,7 @@ static int check_pch_out_of_suspend(void)
 	/*
 	 * Wait for SLP_SUS deasserted.
 	 */
-	ret = power_wait_mask_signals_timeout(IN_PCH_SLP_SUS,
-					      0,
+	ret = power_wait_mask_signals_timeout(IN_PCH_SLP_SUS, 0,
 					      IN_PCH_SLP_SUS_WAIT_TIME_MS);
 	if (ret == 0) {
 		LOG_DBG("SLP_SUS now %d", power_signal_get(PWR_SLP_SUS));
@@ -42,10 +41,10 @@ int all_sys_pwrgd_handler(void)
 	k_msleep(AP_PWRSEQ_DT_VALUE(all_sys_pwrgd_timeout));
 
 	if (power_signal_get(PWR_DSW_PWROK) == 0) {
-	/* Todo: Remove workaround for the retry
-	 * without this change the system hits G3 as it detects
-	 * ALL_SYS_PWRGD as 0 and then 1 as a glitch
-	 */
+		/* Todo: Remove workaround for the retry
+		 * without this change the system hits G3 as it detects
+		 * ALL_SYS_PWRGD as 0 and then 1 as a glitch
+		 */
 		while (power_signal_get(PWR_ALL_SYS_PWRGD) == 0) {
 			if (++retry > 2) {
 				LOG_ERR("PG_EC_ALL_SYS_PWRGD not ok");
