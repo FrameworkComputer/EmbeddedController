@@ -15,10 +15,8 @@
 #include "ec_commands.h"
 #include "misc_util.h"
 
-
-int (*ec_command_proto)(int command, int version,
-			const void *outdata, int outsize,
-			void *indata, int insize);
+int (*ec_command_proto)(int command, int version, const void *outdata,
+			int outsize, void *indata, int insize);
 
 int (*ec_readmem)(int offset, int bytes, void *dest);
 
@@ -45,8 +43,8 @@ static int fake_readmem(int offset, int bytes, void *dest)
 
 	if (bytes) {
 		p.size = bytes;
-		c = ec_command(EC_CMD_READ_MEMMAP, 0, &p, sizeof(p),
-			       dest, p.size);
+		c = ec_command(EC_CMD_READ_MEMMAP, 0, &p, sizeof(p), dest,
+			       p.size);
 		if (c < 0)
 			return c;
 		return p.size;
@@ -73,14 +71,12 @@ void set_command_offset(int offset)
 	command_offset = offset;
 }
 
-int ec_command(int command, int version,
-	       const void *outdata, int outsize,
+int ec_command(int command, int version, const void *outdata, int outsize,
 	       void *indata, int insize)
 {
 	/* Offset command code to support sub-devices */
-	return ec_command_proto(command_offset + command, version,
-				outdata, outsize,
-				indata, insize);
+	return ec_command_proto(command_offset + command, version, outdata,
+				outsize, indata, insize);
 }
 
 int comm_init_alt(int interfaces, const char *device_name, int i2c_bus)
@@ -99,13 +95,13 @@ int comm_init_alt(int interfaces, const char *device_name, int i2c_bus)
 	dev_is_cros_ec = !strcmp(CROS_EC_DEV_NAME, device_name);
 
 	/* Fallback to direct LPC on x86 */
-	if (dev_is_cros_ec && (interfaces & COMM_LPC) &&
-			comm_init_lpc && !comm_init_lpc())
+	if (dev_is_cros_ec && (interfaces & COMM_LPC) && comm_init_lpc &&
+	    !comm_init_lpc())
 		return 0;
 
 	/* Fallback to direct I2C */
 	if ((dev_is_cros_ec || i2c_bus != -1) && (interfaces & COMM_I2C) &&
-			comm_init_i2c && !comm_init_i2c(i2c_bus))
+	    comm_init_i2c && !comm_init_i2c(i2c_bus))
 		return 0;
 
 	/* Give up */
@@ -134,11 +130,11 @@ int comm_init_buffer(void)
 
 	/* read max request / response size from ec for protocol v3+ */
 	if (ec_command(EC_CMD_GET_PROTOCOL_INFO, 0, NULL, 0, &info,
-		sizeof(info)) == sizeof(info)) {
+		       sizeof(info)) == sizeof(info)) {
 		int outsize = info.max_request_packet_size -
-			sizeof(struct ec_host_request);
+			      sizeof(struct ec_host_request);
 		int insize = info.max_response_packet_size -
-			sizeof(struct ec_host_response);
+			     sizeof(struct ec_host_response);
 		if ((allow_large_buffer) || (outsize < ec_max_outsize))
 			ec_max_outsize = outsize;
 		if ((allow_large_buffer) || (insize < ec_max_insize))
