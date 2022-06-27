@@ -15,12 +15,12 @@
 #include "common.h"
 
 /* Registers to validate the backup memory region. */
-#define DFU_BOOTMANAGER_VALUE_MASK      0x00FF
-#define DFU_BOOTMANAGER_VALID_MASK      0xFF00
-#define DFU_BOOTMANAGER_VALID_CHECK     0xAA00
+#define DFU_BOOTMANAGER_VALUE_MASK 0x00FF
+#define DFU_BOOTMANAGER_VALID_MASK 0xFF00
+#define DFU_BOOTMANAGER_VALID_CHECK 0xAA00
 
-#define DFU_BOOTMANAGER_VALUE_CLEAR     0
-#define DFU_BOOTMANAGER_VALUE_DFU       UINT8_MAX
+#define DFU_BOOTMANAGER_VALUE_CLEAR 0
+#define DFU_BOOTMANAGER_VALUE_DFU UINT8_MAX
 
 /*
  * Reset and enter the DFU mode.
