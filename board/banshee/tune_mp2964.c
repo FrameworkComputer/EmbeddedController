@@ -12,10 +12,10 @@
 #include "mp2964.h"
 
 const static struct mp2964_reg_val rail_a[] = {
-	{ MP2964_MFR_ALT_SET,     0xe081 },	/* ALERT_DELAY = 200ns */
+	{ MP2964_MFR_ALT_SET, 0xe081 }, /* ALERT_DELAY = 200ns */
 };
 const static struct mp2964_reg_val rail_b[] = {
-	{ MP2964_MFR_ALT_SET,     0xe081 },	/* ALERT_DELAY = 200ns */
+	{ MP2964_MFR_ALT_SET, 0xe081 }, /* ALERT_DELAY = 200ns */
 };
 
 static void mp2964_on_startup(void)
@@ -33,11 +33,10 @@ static void mp2964_on_startup(void)
 
 	ccprintf("%s: attempting to tune PMIC\n", __func__);
 
-	status = mp2964_tune(rail_a, ARRAY_SIZE(rail_a),
-			     rail_b, ARRAY_SIZE(rail_b));
+	status = mp2964_tune(rail_a, ARRAY_SIZE(rail_a), rail_b,
+			     ARRAY_SIZE(rail_b));
 	if (status != EC_SUCCESS)
 		ccprintf("%s: could not update all settings\n", __func__);
 }
 
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, mp2964_on_startup,
-	     HOOK_PRIO_FIRST);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, mp2964_on_startup, HOOK_PRIO_FIRST);
