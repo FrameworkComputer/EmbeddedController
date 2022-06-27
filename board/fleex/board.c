@@ -42,11 +42,11 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define USB_PD_PORT_ANX7447	0
-#define USB_PD_PORT_PS8751	1
+#define USB_PD_PORT_ANX7447 0
+#define USB_PD_PORT_PS8751 1
 
 static uint8_t sku_id;
 static int is_support_syv_ppc;
@@ -74,11 +74,9 @@ static void board_update_ppc_config_from_board(void)
 	if (!is_support_syv_ppc)
 		return;
 
-	memcpy(&ppc_chips[USB_PD_PORT_TCPC_0],
-	       &ppc_syv682x_port0,
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_0], &ppc_syv682x_port0,
 	       sizeof(struct ppc_config_t));
-	memcpy(&ppc_chips[USB_PD_PORT_TCPC_1],
-	       &ppc_syv682x_port1,
+	memcpy(&ppc_chips[USB_PD_PORT_TCPC_1], &ppc_syv682x_port1,
 	       sizeof(struct ppc_config_t));
 
 	gpio_set_flags(GPIO_USB_PD_C0_INT_ODL, GPIO_INT_BOTH);
@@ -112,28 +110,30 @@ static void ppc_interrupt(enum gpio_signal signal)
 
 /* ADC channels */
 const struct adc_t adc_channels[] = {
-	[ADC_TEMP_SENSOR_AMB] = {
-		"TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_TEMP_SENSOR_CHARGER] = {
-		"TEMP_CHARGER", NPCX_ADC_CH1, ADC_MAX_VOLT, ADC_READ_MAX+1, 0},
-	[ADC_VBUS_C0] = {"VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
-	[ADC_VBUS_C1] = {"VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT*10, ADC_READ_MAX+1, 0},
+	[ADC_TEMP_SENSOR_AMB] = { "TEMP_AMB", NPCX_ADC_CH0, ADC_MAX_VOLT,
+				  ADC_READ_MAX + 1, 0 },
+	[ADC_TEMP_SENSOR_CHARGER] = { "TEMP_CHARGER", NPCX_ADC_CH1,
+				      ADC_MAX_VOLT, ADC_READ_MAX + 1, 0 },
+	[ADC_VBUS_C0] = { "VBUS_C0", NPCX_ADC_CH9, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
+	[ADC_VBUS_C1] = { "VBUS_C1", NPCX_ADC_CH4, ADC_MAX_VOLT * 10,
+			  ADC_READ_MAX + 1, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp,
-				 .idx = 0},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp,
+				  .idx = 0 },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -143,17 +143,13 @@ static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1),  0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+				      { FLOAT_TO_FP(-1), 0, 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
- const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0,  FLOAT_TO_FP(1)}
- };
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, FLOAT_TO_FP(-1), 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
 /* sensor private data */
 static struct stprivate_data g_lis2dh_data;
@@ -242,8 +238,8 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static int board_is_convertible(void)
 {
-	return sku_id == 0x21 || sku_id == 0x22 || sku_id == 0x23
-		|| sku_id == 0xff;
+	return sku_id == 0x21 || sku_id == 0x22 || sku_id == 0x23 ||
+	       sku_id == 0xff;
 }
 
 static void board_update_sensor_config_from_sku(void)
@@ -300,9 +296,10 @@ void board_overcurrent_event(int port, int is_overcurrented)
 static void charger_set_buck_boost_mode(void)
 {
 	int reg;
-	/* Reduce Buck-boost mode switching frequency to improve power efficiency. */
+	/* Reduce Buck-boost mode switching frequency to improve power
+	 * efficiency. */
 	if (i2c_read16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
-			ISL9238_REG_CONTROL3, &reg) == EC_SUCCESS) {
+		       ISL9238_REG_CONTROL3, &reg) == EC_SUCCESS) {
 		reg |= ISL9238_C3_BB_SWITCHING_PERIOD;
 		if (i2c_write16(I2C_PORT_CHARGER, I2C_ADDR_CHARGER_FLAGS,
 				ISL9238_REG_CONTROL3, reg))
