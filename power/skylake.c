@@ -17,9 +17,9 @@
 #include "timer.h"
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
-static int forcing_shutdown;  /* Forced shutdown in progress? */
+static int forcing_shutdown; /* Forced shutdown in progress? */
 
 /* Power signals list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
@@ -57,7 +57,6 @@ const struct power_signal_info power_signal_list[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
-
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
@@ -110,7 +109,7 @@ void chipset_handle_espi_reset_assert(void)
 	 * power button. If yes, release power button.
 	 */
 	if ((power_get_signals() & IN_PCH_SLP_SUS_DEASSERTED) &&
-		forcing_shutdown) {
+	    forcing_shutdown) {
 		power_button_pch_release();
 		forcing_shutdown = 0;
 	}
@@ -157,9 +156,8 @@ void chipset_handle_reboot(void)
 	 * Do not make PMIC re-sequence the power rails if the following reset
 	 * conditions are not met.
 	 */
-	if (!(flags &
-		(EC_RESET_FLAG_WATCHDOG | EC_RESET_FLAG_SOFT |
-		 EC_RESET_FLAG_HARD)))
+	if (!(flags & (EC_RESET_FLAG_WATCHDOG | EC_RESET_FLAG_SOFT |
+		       EC_RESET_FLAG_HARD)))
 		return;
 
 	/* Preserve AP off request. */
