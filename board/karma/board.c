@@ -8,8 +8,8 @@
 #include "hooks.h"
 #include "oz554.h"
 
-#define CPRINTS(format, args...) cprints(CC_I2C, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_I2C, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)
 
 void oz554_board_init(void)
 {
