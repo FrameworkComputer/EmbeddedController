@@ -16,7 +16,7 @@
 #define GPIO_PG_EC_RSMRST_ODL GPIO_RSMRST_L_PGOOD
 
 /* I2C bus configuraiton */
-#define I2C_PORT_ACCEL	I2C_PORT_SENSOR
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
 
 /* EC console commands  */
 #define CONFIG_CMD_ACCEL_INFO
@@ -40,10 +40,10 @@
 #define CONFIG_USB_PD_RESET_MIN_BATT_SOC 2
 
 /* Sensors */
-#define CONFIG_ACCEL_KX022	/* Lid accel */
-#define CONFIG_ACCELGYRO_BMI160	/* Base accel main source*/
-#define CONFIG_ACCELGYRO_ICM426XX	/* Base accel second source*/
-#define CONFIG_SYNC		/* Camera VSYNC */
+#define CONFIG_ACCEL_KX022 /* Lid accel */
+#define CONFIG_ACCELGYRO_BMI160 /* Base accel main source*/
+#define CONFIG_ACCELGYRO_ICM426XX /* Base accel second source*/
+#define CONFIG_SYNC /* Camera VSYNC */
 
 #define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 /* Sensors without hardware FIFO are in forced mode */
@@ -55,9 +55,7 @@
 #define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
-
-#define CONFIG_SYNC_INT_EVENT	\
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
+#define CONFIG_SYNC_INT_EVENT TASK_EVENT_MOTION_SENSOR_INTERRUPT(VSYNC)
 
 #define CONFIG_LID_ANGLE
 #define CONFIG_LID_ANGLE_UPDATE
@@ -97,10 +95,10 @@
 #include "registers.h"
 
 enum adc_channel {
-	ADC_TEMP_SENSOR_AMB,		/* ADC0 */
-	ADC_TEMP_SENSOR_CHARGER,	/* ADC1 */
-	ADC_VBUS_C0,			/* ADC9 */
-	ADC_VBUS_C1,			/* ADC4 */
+	ADC_TEMP_SENSOR_AMB, /* ADC0 */
+	ADC_TEMP_SENSOR_CHARGER, /* ADC1 */
+	ADC_VBUS_C0, /* ADC9 */
+	ADC_VBUS_C1, /* ADC4 */
 	ADC_CH_COUNT
 };
 
@@ -111,19 +109,10 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT, PWM_CH_COUNT };
 
 /* Motion sensors */
-enum sensor_id {
-	LID_ACCEL,
-	BASE_ACCEL,
-	BASE_GYRO,
-	VSYNC,
-	SENSOR_COUNT
-};
+enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, VSYNC, SENSOR_COUNT };
 
 /* List of possible batteries */
 enum battery_type {
