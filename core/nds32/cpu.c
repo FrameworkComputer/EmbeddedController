@@ -12,5 +12,5 @@ void cpu_init(void)
 {
 	/* DLM initialization is done in init.S */
 	/* Global interrupt enable */
-	asm volatile ("setgie.e");
+	asm volatile("setgie.e");
 }
