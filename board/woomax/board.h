@@ -50,36 +50,32 @@
 #define CONFIG_CUSTOM_FAN_CONTROL
 
 /* GPIO mapping from board specific name to EC common name. */
-#define CONFIG_BATTERY_PRESENT_GPIO	GPIO_EC_BATT_PRES_ODL
-#define CONFIG_SCI_GPIO			GPIO_EC_FCH_SCI_ODL
-#define GPIO_AC_PRESENT			GPIO_ACOK_OD
-#define GPIO_CPU_PROCHOT		GPIO_PROCHOT_ODL
-#define GPIO_EC_INT_L			GPIO_EC_AP_INT_ODL
-#define GPIO_ENABLE_BACKLIGHT_L		GPIO_EC_EDP_BL_DISABLE
-#define GPIO_ENTERING_RW		GPIO_EC_ENTERING_RW
-#define GPIO_KBD_KSO2			GPIO_EC_KSO_02_INV
-#define GPIO_PCH_PWRBTN_L		GPIO_EC_FCH_PWR_BTN_L
-#define GPIO_PCH_RSMRST_L		GPIO_EC_FCH_RSMRST_L
-#define GPIO_PCH_SLP_S3_L		GPIO_SLP_S3_L
-#define GPIO_PCH_SLP_S5_L		GPIO_SLP_S5_L
-#define GPIO_PCH_SYS_PWROK		GPIO_EC_FCH_PWROK
-#define GPIO_PCH_WAKE_L			GPIO_EC_FCH_WAKE_L
-#define GPIO_POWER_BUTTON_L		GPIO_EC_PWR_BTN_ODL
-#define GPIO_S0_PGOOD			GPIO_S0_PWROK_OD
-#define GPIO_S5_PGOOD			GPIO_EC_PWROK_OD
-#define GPIO_SYS_RESET_L		GPIO_EC_SYS_RST_L
-#define GPIO_VOLUME_DOWN_L		GPIO_VOLDN_BTN_ODL
-#define GPIO_VOLUME_UP_L		GPIO_VOLUP_BTN_ODL
-#define GPIO_WP_L			GPIO_EC_WP_L
-#define GPIO_PACKET_MODE_EN		GPIO_EC_H1_PACKET_MODE
+#define CONFIG_BATTERY_PRESENT_GPIO GPIO_EC_BATT_PRES_ODL
+#define CONFIG_SCI_GPIO GPIO_EC_FCH_SCI_ODL
+#define GPIO_AC_PRESENT GPIO_ACOK_OD
+#define GPIO_CPU_PROCHOT GPIO_PROCHOT_ODL
+#define GPIO_EC_INT_L GPIO_EC_AP_INT_ODL
+#define GPIO_ENABLE_BACKLIGHT_L GPIO_EC_EDP_BL_DISABLE
+#define GPIO_ENTERING_RW GPIO_EC_ENTERING_RW
+#define GPIO_KBD_KSO2 GPIO_EC_KSO_02_INV
+#define GPIO_PCH_PWRBTN_L GPIO_EC_FCH_PWR_BTN_L
+#define GPIO_PCH_RSMRST_L GPIO_EC_FCH_RSMRST_L
+#define GPIO_PCH_SLP_S3_L GPIO_SLP_S3_L
+#define GPIO_PCH_SLP_S5_L GPIO_SLP_S5_L
+#define GPIO_PCH_SYS_PWROK GPIO_EC_FCH_PWROK
+#define GPIO_PCH_WAKE_L GPIO_EC_FCH_WAKE_L
+#define GPIO_POWER_BUTTON_L GPIO_EC_PWR_BTN_ODL
+#define GPIO_S0_PGOOD GPIO_S0_PWROK_OD
+#define GPIO_S5_PGOOD GPIO_EC_PWROK_OD
+#define GPIO_SYS_RESET_L GPIO_EC_SYS_RST_L
+#define GPIO_VOLUME_DOWN_L GPIO_VOLDN_BTN_ODL
+#define GPIO_VOLUME_UP_L GPIO_VOLUP_BTN_ODL
+#define GPIO_WP_L GPIO_EC_WP_L
+#define GPIO_PACKET_MODE_EN GPIO_EC_H1_PACKET_MODE
 
 #ifndef __ASSEMBLER__
 
-enum adc_channel {
-	ADC_TEMP_SENSOR_CHARGER,
-	ADC_TEMP_SENSOR_SOC,
-	ADC_CH_COUNT
-};
+enum adc_channel { ADC_TEMP_SENSOR_CHARGER, ADC_TEMP_SENSOR_SOC, ADC_CH_COUNT };
 
 enum battery_type {
 	BATTERY_C536,
@@ -92,11 +88,7 @@ enum mft_channel {
 	MFT_CH_COUNT,
 };
 
-enum pwm_channel {
-	PWM_CH_KBLIGHT = 0,
-	PWM_CH_FAN,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_KBLIGHT = 0, PWM_CH_FAN, PWM_CH_COUNT };
 
 enum temp_sensor_id {
 	TEMP_SENSOR_CHARGER = 0,
@@ -105,10 +97,7 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-enum usba_port {
-	USBA_PORT_A0 = 0,
-	USBA_PORT_COUNT
-};
+enum usba_port { USBA_PORT_A0 = 0, USBA_PORT_COUNT };
 
 /*****************************************************************************
  * CBI EC FW Configuration
@@ -156,40 +145,32 @@ enum ec_cfg_usb_db_type {
 
 #include "cbi_ec_fw_config.h"
 
-#define HAS_USBC1_RETIMER_PS8802 \
-			 (BIT(WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB))
+#define HAS_USBC1_RETIMER_PS8802 (BIT(WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB))
 
 static inline bool ec_config_has_usbc1_retimer_ps8802(void)
 {
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1_RETIMER_PS8802);
+	return !!(BIT(ec_config_get_usb_db()) & HAS_USBC1_RETIMER_PS8802);
 }
 
-#define HAS_USBC1_RETIMER_PS8818 \
-			(BIT(WOOMAX_DB_T_OPT1_USBAC_HMDI))
+#define HAS_USBC1_RETIMER_PS8818 (BIT(WOOMAX_DB_T_OPT1_USBAC_HMDI))
 
 static inline bool ec_config_has_usbc1_retimer_ps8818(void)
 {
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_USBC1_RETIMER_PS8818);
+	return !!(BIT(ec_config_get_usb_db()) & HAS_USBC1_RETIMER_PS8818);
 }
 
-#define HAS_HDMI_RETIMER_PI3HDX1204 \
-			(BIT(WOOMAX_DB_T_OPT1_USBAC_HMDI))
+#define HAS_HDMI_RETIMER_PI3HDX1204 (BIT(WOOMAX_DB_T_OPT1_USBAC_HMDI))
 
 static inline bool ec_config_has_hdmi_retimer_pi3hdx1204(void)
 {
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_HDMI_RETIMER_PI3HDX1204);
+	return !!(BIT(ec_config_get_usb_db()) & HAS_HDMI_RETIMER_PI3HDX1204);
 }
 
-#define HAS_MST_HUB_RTD2141B \
-			(BIT(WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB))
+#define HAS_MST_HUB_RTD2141B (BIT(WOOMAX_DB_T_OPT3_USBAC_HDMI_MSTHUB))
 
 static inline bool ec_config_has_mst_hub_rtd2141b(void)
 {
-	return !!(BIT(ec_config_get_usb_db()) &
-		  HAS_MST_HUB_RTD2141B);
+	return !!(BIT(ec_config_get_usb_db()) & HAS_MST_HUB_RTD2141B);
 }
 
 /**
