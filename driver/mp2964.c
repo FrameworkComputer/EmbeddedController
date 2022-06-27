@@ -11,22 +11,18 @@
 #include "timer.h"
 #include "util.h"
 
-#define MP2964_STARTUP_WAIT_US		(50 * MSEC)
-#define MP2964_STORE_WAIT_US		(300 * MSEC)
-#define MP2964_RESTORE_WAIT_US		(2 * MSEC)
+#define MP2964_STARTUP_WAIT_US (50 * MSEC)
+#define MP2964_STORE_WAIT_US (300 * MSEC)
+#define MP2964_RESTORE_WAIT_US (2 * MSEC)
 
-enum reg_page {
-	REG_PAGE_0,
-	REG_PAGE_1,
-	REG_PAGE_COUNT
-};
+enum reg_page { REG_PAGE_0, REG_PAGE_1, REG_PAGE_COUNT };
 
 static int mp2964_write8(uint8_t reg, uint8_t value)
 {
 	const uint8_t tx[2] = { reg, value };
 
-	return i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS,
-				 tx, sizeof(tx), NULL, 0, I2C_XFER_SINGLE);
+	return i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS, tx,
+				 sizeof(tx), NULL, 0, I2C_XFER_SINGLE);
 }
 
 static void mp2964_read16(uint8_t reg, uint16_t *value)
@@ -34,8 +30,8 @@ static void mp2964_read16(uint8_t reg, uint16_t *value)
 	const uint8_t tx[1] = { reg };
 	uint8_t rx[2];
 
-	i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS,
-			  tx, sizeof(tx), rx, sizeof(rx), I2C_XFER_SINGLE);
+	i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS, tx,
+			  sizeof(tx), rx, sizeof(rx), I2C_XFER_SINGLE);
 	*value = (rx[1] << 8) | rx[0];
 }
 
@@ -43,8 +39,8 @@ static void mp2964_write16(uint8_t reg, uint16_t value)
 {
 	const uint8_t tx[3] = { reg, value & 0xff, value >> 8 };
 
-	i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS,
-			  tx, sizeof(tx), NULL, 0, I2C_XFER_SINGLE);
+	i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS, tx,
+			  sizeof(tx), NULL, 0, I2C_XFER_SINGLE);
 }
 
 static int mp2964_select_page(enum reg_page page)
@@ -92,15 +88,15 @@ static int mp2964_store_user_all(void)
 
 	ccprintf("%s: updating persistent settings\n", __func__);
 
-	status = i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS,
-				   &wr, sizeof(wr), NULL, 0, I2C_XFER_SINGLE);
+	status = i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS, &wr,
+				   sizeof(wr), NULL, 0, I2C_XFER_SINGLE);
 	if (status != EC_SUCCESS)
 		return status;
 
 	usleep(MP2964_STORE_WAIT_US);
 
-	status = i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS,
-				   &rd, sizeof(rd), NULL, 0, I2C_XFER_SINGLE);
+	status = i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS, &rd,
+				   sizeof(rd), NULL, 0, I2C_XFER_SINGLE);
 	if (status != EC_SUCCESS)
 		return status;
 
@@ -110,8 +106,7 @@ static int mp2964_store_user_all(void)
 }
 
 static void mp2964_patch_rail(enum reg_page page,
-			      const struct mp2964_reg_val *page_vals,
-			      int count,
+			      const struct mp2964_reg_val *page_vals, int count,
 			      int *delta)
 {
 	if (mp2964_select_page(page) != EC_SUCCESS)
