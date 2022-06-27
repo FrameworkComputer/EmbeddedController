@@ -45,7 +45,6 @@ static const struct ec_response_keybd_config keybd = {
 	.capabilities = KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
-
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
