@@ -70,8 +70,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CPU \
-	{ \
+#define THERMAL_CPU              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
@@ -100,8 +100,8 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_FAN \
-	{ \
+#define THERMAL_FAN              \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
@@ -128,8 +128,8 @@ __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 /*
  * TODO(b/202062363): Remove when clang is fixed.
  */
-#define THERMAL_CHARGER \
-	{ \
+#define THERMAL_CHARGER          \
+	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
@@ -141,12 +141,12 @@ __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 		.temp_fan_max = C_TO_K(50), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_charger =
-							THERMAL_CHARGER;
+	THERMAL_CHARGER;
 
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
 	[TEMP_SENSOR_2_FAN] = THERMAL_FAN,
-	[TEMP_SENSOR_3_CHARGER]	= THERMAL_CHARGER,
+	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
