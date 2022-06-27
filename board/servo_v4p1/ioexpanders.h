@@ -10,10 +10,7 @@
 #define BOARD_ID_DET_OFFSET 3
 #define BOARD_ID_DET_PORT 1
 
-enum uservo_fastboot_mux_sel_t {
-	MUX_SEL_USERVO = 0,
-	MUX_SEL_FASTBOOT = 1
-};
+enum uservo_fastboot_mux_sel_t { MUX_SEL_USERVO = 0, MUX_SEL_FASTBOOT = 1 };
 
 /*
  * Initialize Ioexpanders
@@ -236,14 +233,14 @@ int get_dut_chg_en(void);
  */
 int host_or_chg_ctl(int en);
 
-#define USERVO_FAULT_L		BIT(0)
-#define USB3_A0_FAULT_L		BIT(1)
-#define USB3_A1_FAULT_L		BIT(2)
-#define USB_DUTCHG_FLT_ODL	BIT(3)
-#define PP3300_DP_FAULT_L	BIT(4)
-#define DAC_BUF1_LATCH_FAULT_L	BIT(5)
-#define DAC_BUF2_LATCH_FAULT_L	BIT(6)
-#define PP5000_SRC_SEL		BIT(7)
+#define USERVO_FAULT_L BIT(0)
+#define USB3_A0_FAULT_L BIT(1)
+#define USB3_A1_FAULT_L BIT(2)
+#define USB_DUTCHG_FLT_ODL BIT(3)
+#define PP3300_DP_FAULT_L BIT(4)
+#define DAC_BUF1_LATCH_FAULT_L BIT(5)
+#define DAC_BUF2_LATCH_FAULT_L BIT(6)
+#define PP5000_SRC_SEL BIT(7)
 
 /**
  * Read any faults that may have occurred. A fault has occurred if the
@@ -271,8 +268,8 @@ int host_or_chg_ctl(int en);
  */
 int read_faults(void);
 
-#define HOST_CHRG_DET	BIT(0)
-#define SYS_PWR_IRQ_ODL	BIT(6)
+#define HOST_CHRG_DET BIT(0)
+#define SYS_PWR_IRQ_ODL BIT(6)
 
 /**
  * Read irqs which indicate some system event.
