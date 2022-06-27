@@ -45,7 +45,7 @@
 #define PD_MAX_CURRENT_MA CONFIG_CHARGER_MAX_INPUT_CURRENT
 #define PD_MAX_VOLTAGE_MV 20000
 #define PD_OPERATING_POWER_MW 15000
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 #undef CONFIG_SYV682X_HV_ILIM
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
@@ -75,18 +75,15 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-enum temp_sensor_id {
-	TEMP_SENSOR_CHARGER,
-	TEMP_SENSOR_COUNT
-};
+enum temp_sensor_id { TEMP_SENSOR_CHARGER, TEMP_SENSOR_COUNT };
 
 enum adc_channel {
-	ADC_VBUS_C0,             /* ADC 0 */
-	ADC_BOARD_ID_0,          /* ADC 1 */
-	ADC_BOARD_ID_1,          /* ADC 2 */
-	ADC_CHARGER_AMON_R,      /* ADC 3 */
-	ADC_VBUS_C1,             /* ADC 5 */
-	ADC_CHARGER_PMON,        /* ADC 6 */
+	ADC_VBUS_C0, /* ADC 0 */
+	ADC_BOARD_ID_0, /* ADC 1 */
+	ADC_BOARD_ID_1, /* ADC 2 */
+	ADC_CHARGER_AMON_R, /* ADC 3 */
+	ADC_VBUS_C1, /* ADC 5 */
+	ADC_CHARGER_PMON, /* ADC 6 */
 	ADC_TEMP_SENSOR_CHARGER, /* ADC 7 */
 	/* Number of ADC channels */
 	ADC_CH_COUNT,
