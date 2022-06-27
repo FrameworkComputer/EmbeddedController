@@ -19,7 +19,7 @@
 
 LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
-#define  X86_NON_DSX_ADLP_NONPWRSEQ_FORCE_SHUTDOWN_TO_MS	5
+#define X86_NON_DSX_ADLP_NONPWRSEQ_FORCE_SHUTDOWN_TO_MS 5
 
 static bool s0_stable;
 
@@ -48,7 +48,7 @@ void board_ap_power_force_shutdown(void)
 	power_signal_set(PWR_EC_SOC_DSW_PWROK, 0);
 
 	while (power_signal_get(PWR_RSMRST) == 0 &&
-	      power_signal_get(PWR_SLP_SUS) == 0 && timeout_ms > 0) {
+	       power_signal_get(PWR_SLP_SUS) == 0 && timeout_ms > 0) {
 		k_msleep(1);
 		timeout_ms--;
 	}
@@ -88,10 +88,9 @@ void board_ap_power_action_g3_s5(void)
 	power_signal_set(PWR_EN_PP3300_A, 1);
 
 	power_wait_signals_timeout(IN_PGOOD_ALL_CORE,
-		AP_PWRSEQ_DT_VALUE(wait_signal_timeout));
+				   AP_PWRSEQ_DT_VALUE(wait_signal_timeout));
 
-	generate_ec_soc_dsw_pwrok_handler(
-		AP_PWRSEQ_DT_VALUE(dsw_pwrok_delay));
+	generate_ec_soc_dsw_pwrok_handler(AP_PWRSEQ_DT_VALUE(dsw_pwrok_delay));
 	s0_stable = false;
 }
 
@@ -132,8 +131,8 @@ int board_ap_power_assert_pch_power_ok(void)
 bool board_ap_power_check_power_rails_enabled(void)
 {
 	return power_signal_get(PWR_EN_PP3300_A) &&
-			power_signal_get(PWR_EN_PP5000_A) &&
-			power_signal_get(PWR_EC_SOC_DSW_PWROK);
+	       power_signal_get(PWR_EN_PP5000_A) &&
+	       power_signal_get(PWR_EC_SOC_DSW_PWROK);
 }
 
 int board_power_signal_get(enum power_signal signal)
@@ -154,7 +153,7 @@ int board_power_signal_get(enum power_signal signal)
 			return 0;
 		}
 		if (!gpio_pin_get_dt(
-		     GPIO_DT_FROM_NODELABEL(gpio_all_sys_pwrgd))) {
+			    GPIO_DT_FROM_NODELABEL(gpio_all_sys_pwrgd))) {
 			return 0;
 		}
 		if (!power_signal_get(PWR_PG_PP1P05)) {
