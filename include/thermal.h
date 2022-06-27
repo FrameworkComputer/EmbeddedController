@@ -27,4 +27,4 @@ int thermal_fan_percent(int low, int high, int cur);
  */
 void board_override_fan_control(int fan, int *tmp);
 
-#endif  /* __CROS_EC_THERMAL_H */
+#endif /* __CROS_EC_THERMAL_H */
