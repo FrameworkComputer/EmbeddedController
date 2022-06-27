@@ -19,12 +19,12 @@ enum led_color {
 	LED_RED,
 	LED_YELLOW,
 	LED_GREEN,
-	LED_COLOR_COUNT  /* Number of colors, not a color itself */
+	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
-static const uint8_t led_masks[LED_COLOR_COUNT] = {0xff, 0xfe, 0xfc, 0xfd};
-static const char * const color_names[LED_COLOR_COUNT] = {
-	"off", "red", "yellow", "green"};
+static const uint8_t led_masks[LED_COLOR_COUNT] = { 0xff, 0xfe, 0xfc, 0xfd };
+static const char *const color_names[LED_COLOR_COUNT] = { "off", "red",
+							  "yellow", "green" };
 
 /**
  * Set the onewire LED GPIO controller outputs
@@ -48,9 +48,9 @@ static int led_set_mask(int mask)
 	/* Write and turn on the LEDs */
 	onewire_write(0x5a);
 	onewire_write(mask);
-	onewire_write(~mask);  /* Repeat inverted */
+	onewire_write(~mask); /* Repeat inverted */
 
-	rv = onewire_read();   /* Confirmation byte */
+	rv = onewire_read(); /* Confirmation byte */
 	if (rv != 0xaa)
 		return EC_ERROR_UNKNOWN;
 
@@ -161,6 +161,5 @@ static int command_powerled(int argc, char **argv)
 	return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND(powerled, command_powerled,
-			"<off | red | yellow | green>",
-			"Set power LED color");
+			"<off | red | yellow | green>", "Set power LED color");
 #endif
