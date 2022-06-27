@@ -12,13 +12,13 @@
 #include "stdbool.h"
 
 #ifdef VARIANT_INTELRVP_EC_IT8320
-	#include "ite_ec.h"
+#include "ite_ec.h"
 #elif defined(VARIANT_INTELRVP_EC_MCHP)
-	#include "mchp_ec.h"
+#include "mchp_ec.h"
 #elif defined(VARIANT_INTELRVP_EC_NPCX)
-	#include "npcx_ec.h"
+#include "npcx_ec.h"
 #else
-	#error "Define EC chip variant"
+#error "Define EC chip variant"
 #endif
 
 /*
@@ -27,7 +27,7 @@
  */
 #define CONFIG_SYSTEM_UNLOCKED
 
-#define CC_DEFAULT     (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
+#define CC_DEFAULT (CC_ALL & ~(CC_MASK(CC_EVENTS) | CC_MASK(CC_LPC)))
 #undef CONFIG_HOSTCMD_DEBUG_MODE
 
 /*
@@ -51,7 +51,7 @@
 #define CONFIG_MAX695X_SEVEN_SEGMENT_DISPLAY
 
 /* RVP ID read retry count */
-#define RVP_VERSION_READ_RETRY_CNT	2
+#define RVP_VERSION_READ_RETRY_CNT 2
 
 /* Battery */
 #define CONFIG_BATTERY_CUT_OFF
@@ -66,7 +66,7 @@
 #define CONFIG_CHARGER_INPUT_CURRENT 512
 #define CONFIG_CHARGER_SENSE_RESISTOR 5
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
-#undef  CONFIG_EXTPOWER_DEBOUNCE_MS
+#undef CONFIG_EXTPOWER_DEBOUNCE_MS
 #define CONFIG_EXTPOWER_DEBOUNCE_MS 200
 #define CONFIG_EXTPOWER_GPIO
 #define CONFIG_TRICKLE_CHARGING
@@ -75,8 +75,8 @@
  * Don't allow the system to boot to S0 when the battery is low and unable to
  * communicate on locked systems (which haven't PD negotiated)
  */
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT	15000
-#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON		15001
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON_WITH_BATT 15000
+#define CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON 15001
 
 /* Keyboard */
 
@@ -109,7 +109,7 @@
 
 /* USB MUX */
 #ifdef CONFIG_USB_MUX_VIRTUAL
-	#define CONFIG_HOSTCMD_LOCATE_CHIP
+#define CONFIG_HOSTCMD_LOCATE_CHIP
 #endif
 #define CONFIG_USBC_SS_MUX
 
@@ -152,13 +152,13 @@
 
 /* Temperature sensor */
 #ifdef CONFIG_TEMP_SENSOR
-	#define CONFIG_STEINHART_HART_3V0_22K6_47K_4050B
-	#define CONFIG_TEMP_SENSOR_POWER
-	#define GPIO_TEMP_SENSOR_POWER GPIO_EN_PP3300_A
-	#define CONFIG_THERMISTOR
-	#define CONFIG_THROTTLE_AP
+#define CONFIG_STEINHART_HART_3V0_22K6_47K_4050B
+#define CONFIG_TEMP_SENSOR_POWER
+#define GPIO_TEMP_SENSOR_POWER GPIO_EN_PP3300_A
+#define CONFIG_THERMISTOR
+#define CONFIG_THROTTLE_AP
 #ifdef CONFIG_PECI
-	#define CONFIG_PECI_COMMON
+#define CONFIG_PECI_COMMON
 #endif /* CONFIG_PECI */
 #endif /* CONFIG_TEMP_SENSOR */
 
@@ -177,10 +177,7 @@
 FORWARD_DECLARE_ENUM(tcpc_rp_value);
 
 /* PWM channels */
-enum pwm_channel {
-	PWM_CH_FAN,
-	PWM_CH_COUNT
-};
+enum pwm_channel { PWM_CH_FAN, PWM_CH_COUNT };
 
 /* FAN channels */
 enum fan_channel {
@@ -211,13 +208,13 @@ enum temp_sensor_id {
 };
 
 /* TODO(b:132652892): Verify the below numbers. */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY  30000  /* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* Define typical operating power */
-#define PD_OPERATING_POWER_MW  15000
-#define PD_MAX_VOLTAGE_MV      20000
-#define PD_MAX_CURRENT_MA      ((PD_MAX_POWER_MW/PD_MAX_VOLTAGE_MV) * 1000)
+#define PD_OPERATING_POWER_MW 15000
+#define PD_MAX_VOLTAGE_MV 20000
+#define PD_MAX_CURRENT_MA ((PD_MAX_POWER_MW / PD_MAX_VOLTAGE_MV) * 1000)
 #define DC_JACK_MAX_VOLTAGE_MV 19000
 
 /* TCPC gpios */
