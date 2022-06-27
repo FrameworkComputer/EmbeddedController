@@ -29,7 +29,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* Long power key press to force shutdown in S0. go/crosdebug */
 #define FORCED_SHUTDOWN_DELAY (8 * SECOND)
@@ -39,60 +39,34 @@
 #define SYS_RST_PULSE_LENGTH (30 * MSEC)
 
 /* Masks for power signals */
-#define IN_PG_S5		POWER_SIGNAL_MASK(FCL_PG_S5)
-#define IN_PGOOD		(POWER_SIGNAL_MASK(FCL_PG_VDD1_VDD2) | \
-				 POWER_SIGNAL_MASK(FCL_PG_VDD_MEDIA_ML) | \
-				 POWER_SIGNAL_MASK(FCL_PG_VDD_SOC) | \
-				 POWER_SIGNAL_MASK(FCL_PG_VDD_DDR_OD) | \
-				 POWER_SIGNAL_MASK(FCL_PG_S5))
+#define IN_PG_S5 POWER_SIGNAL_MASK(FCL_PG_S5)
+#define IN_PGOOD                                  \
+	(POWER_SIGNAL_MASK(FCL_PG_VDD1_VDD2) |    \
+	 POWER_SIGNAL_MASK(FCL_PG_VDD_MEDIA_ML) | \
+	 POWER_SIGNAL_MASK(FCL_PG_VDD_SOC) |      \
+	 POWER_SIGNAL_MASK(FCL_PG_VDD_DDR_OD) | POWER_SIGNAL_MASK(FCL_PG_S5))
 
-#define IN_ALL_S0		IN_PGOOD
-#define IN_ALL_S3		IN_PGOOD
+#define IN_ALL_S0 IN_PGOOD
+#define IN_ALL_S3 IN_PGOOD
 
 /* Power signal list. Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	[FCL_AP_WARM_RST_REQ] = {
-		GPIO_AP_EC_WARM_RST_REQ,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"AP_WARM_RST_REQ"
-	},
-	[FCL_AP_SHUTDOWN_REQ] = {
-		GPIO_AP_EC_SHUTDOWN_REQ_L,
-		POWER_SIGNAL_ACTIVE_LOW,
-		"AP_SHUTDOWN_REQ"
-	},
-	[FCL_AP_WATCHDOG] = {
-		GPIO_AP_EC_WATCHDOG_L,
-		POWER_SIGNAL_ACTIVE_LOW,
-		"AP_WDT"
-	},
-	[FCL_PG_S5] = {
-		GPIO_PG_S5_PWR_OD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"PG_S5"
-	},
-	[FCL_PG_VDD1_VDD2] = {
-		GPIO_PG_VDD1_VDD2_OD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"PG_VDD1_VDD2"
-	},
-	[FCL_PG_VDD_MEDIA_ML] = {
-		GPIO_PG_VDD_MEDIA_ML_OD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"PG_VDD_MEDIA_ML"
-	},
-	[FCL_PG_VDD_SOC] = {
-		GPIO_PG_VDD_SOC_OD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"PG_VDD_SOC"
-	},
-	[FCL_PG_VDD_DDR_OD] = {
-		GPIO_PG_VDD_DDR_OD,
-		POWER_SIGNAL_ACTIVE_HIGH,
-		"PG_VDD_DDR"
-	},
+	[FCL_AP_WARM_RST_REQ] = { GPIO_AP_EC_WARM_RST_REQ,
+				  POWER_SIGNAL_ACTIVE_HIGH, "AP_WARM_RST_REQ" },
+	[FCL_AP_SHUTDOWN_REQ] = { GPIO_AP_EC_SHUTDOWN_REQ_L,
+				  POWER_SIGNAL_ACTIVE_LOW, "AP_SHUTDOWN_REQ" },
+	[FCL_AP_WATCHDOG] = { GPIO_AP_EC_WATCHDOG_L, POWER_SIGNAL_ACTIVE_LOW,
+			      "AP_WDT" },
+	[FCL_PG_S5] = { GPIO_PG_S5_PWR_OD, POWER_SIGNAL_ACTIVE_HIGH, "PG_S5" },
+	[FCL_PG_VDD1_VDD2] = { GPIO_PG_VDD1_VDD2_OD, POWER_SIGNAL_ACTIVE_HIGH,
+			       "PG_VDD1_VDD2" },
+	[FCL_PG_VDD_MEDIA_ML] = { GPIO_PG_VDD_MEDIA_ML_OD,
+				  POWER_SIGNAL_ACTIVE_HIGH, "PG_VDD_MEDIA_ML" },
+	[FCL_PG_VDD_SOC] = { GPIO_PG_VDD_SOC_OD, POWER_SIGNAL_ACTIVE_HIGH,
+			     "PG_VDD_SOC" },
+	[FCL_PG_VDD_DDR_OD] = { GPIO_PG_VDD_DDR_OD, POWER_SIGNAL_ACTIVE_HIGH,
+				"PG_VDD_DDR" },
 };
-
 
 /* Data structure for a GPIO operation for power sequencing */
 struct power_seq_op {
@@ -109,70 +83,63 @@ struct power_seq_op {
 
 /* The power sequence for POWER_S3S5 */
 static const struct power_seq_op s3s5_power_seq[] = {
-	{GPIO_EN_VDD_CPU, 0, 0},
-	{GPIO_EN_VDD_GPU, 0, 0},
-	{GPIO_EN_VDD_MEDIA_ML, 0, 4},
+	{ GPIO_EN_VDD_CPU, 0, 0 },	{ GPIO_EN_VDD_GPU, 0, 0 },
+	{ GPIO_EN_VDD_MEDIA_ML, 0, 4 },
 
-	{GPIO_EN_VDDQ_VR_D, 0, 4},    /* LPDDR */
+	{ GPIO_EN_VDDQ_VR_D, 0, 4 }, /* LPDDR */
 
-	{GPIO_EN_VDD1_VDD2_VR, 0, 4}, /* LPDDR */
+	{ GPIO_EN_VDD1_VDD2_VR, 0, 4 }, /* LPDDR */
 
-	{GPIO_EN_VDD_DDR, 0, 4},
+	{ GPIO_EN_VDD_DDR, 0, 4 },
 
-	{GPIO_EN_PP3300A_IO_X, 0, 0},
-	{GPIO_EN_PP3300_S3, 0, 4},
+	{ GPIO_EN_PP3300A_IO_X, 0, 0 }, { GPIO_EN_PP3300_S3, 0, 4 },
 
-	{GPIO_EN_PP1820A_IO_X, 0, 0},
-	{GPIO_EN_PP1800_S3, 0, 0},
+	{ GPIO_EN_PP1820A_IO_X, 0, 0 }, { GPIO_EN_PP1800_S3, 0, 0 },
 };
 
 /* The power sequence for POWER_G3S5 */
 static const struct power_seq_op g3s5_power_seq[] = {
 	/* delay 10ms as PP1800_S5 uses PP1800_S5 as alaternative supply */
-	{GPIO_EN_PP5000_S5, 1, 10},
+	{ GPIO_EN_PP5000_S5, 1, 10 },
 
-	{GPIO_EN_PP1800_S5, 1, 0},
+	{ GPIO_EN_PP1800_S5, 1, 0 },
 
-	{GPIO_EN_PP1800_VDDIO_PMC_X, 1, 4},
+	{ GPIO_EN_PP1800_VDDIO_PMC_X, 1, 4 },
 
-	{GPIO_EN_PP0800_VDD_PMC_X, 1, 0},
-	{GPIO_EN_VDD_SOC, 1, 4},
+	{ GPIO_EN_PP0800_VDD_PMC_X, 1, 0 },   { GPIO_EN_VDD_SOC, 1, 4 },
 
-	{GPIO_EN_PP1800_VDD33_PMC_X, 1, 0},
+	{ GPIO_EN_PP1800_VDD33_PMC_X, 1, 0 },
 };
 
 /* This is the power sequence for POWER_S5S3. */
 static const struct power_seq_op s5s3_power_seq[] = {
-	{GPIO_EN_PP1800_S3, 1, 0},
-	{GPIO_EN_PP1820A_IO_X, 1, 4},
+	{ GPIO_EN_PP1800_S3, 1, 0 },	{ GPIO_EN_PP1820A_IO_X, 1, 4 },
 
-	{GPIO_EN_PP3300_S3, 1, 0},
-	{GPIO_EN_PP3300A_IO_X, 1, 4},
+	{ GPIO_EN_PP3300_S3, 1, 0 },	{ GPIO_EN_PP3300A_IO_X, 1, 4 },
 
-	{GPIO_EN_VDD_DDR, 1, 4},
+	{ GPIO_EN_VDD_DDR, 1, 4 },
 
-	{GPIO_EN_VDD1_VDD2_VR, 1, 4}, /* LPDDR */
+	{ GPIO_EN_VDD1_VDD2_VR, 1, 4 }, /* LPDDR */
 
-	{GPIO_EN_VDDQ_VR_D, 1, 4},    /* LPDDR */
+	{ GPIO_EN_VDDQ_VR_D, 1, 4 }, /* LPDDR */
 
-	{GPIO_EN_VDD_MEDIA_ML, 1, 0},
-	{GPIO_EN_VDD_GPU, 1, 0},
-	{GPIO_EN_VDD_CPU, 1, 0},
+	{ GPIO_EN_VDD_MEDIA_ML, 1, 0 }, { GPIO_EN_VDD_GPU, 1, 0 },
+	{ GPIO_EN_VDD_CPU, 1, 0 },
 };
 
 /* The power sequence for POWER_S5G3 */
 static const struct power_seq_op s5g3_power_seq[] = {
-	{GPIO_EN_PP1800_VDD33_PMC_X, 0, 4},
+	{ GPIO_EN_PP1800_VDD33_PMC_X, 0, 4 },
 
-	{GPIO_EN_VDD_SOC, 0, 0},
+	{ GPIO_EN_VDD_SOC, 0, 0 },
 
-	{GPIO_EN_PP0800_VDD_PMC_X, 0, 4},
+	{ GPIO_EN_PP0800_VDD_PMC_X, 0, 4 },
 
-	{GPIO_EN_PP1800_VDDIO_PMC_X, 0, 4},
+	{ GPIO_EN_PP1800_VDDIO_PMC_X, 0, 4 },
 
-	{GPIO_EN_PP1800_S5, 0, 4},
+	{ GPIO_EN_PP1800_S5, 0, 4 },
 
-	{GPIO_EN_PP5000_S5, 0, 4},
+	{ GPIO_EN_PP5000_S5, 0, 4 },
 };
 
 /* most recently received sleep event */
@@ -265,7 +232,7 @@ enum power_state power_chipset_init(void)
 	} else if (reset_flags & EC_RESET_FLAG_AP_OFF) {
 		exit_hard_off = 0;
 	} else if ((reset_flags & EC_RESET_FLAG_HIBERNATE) &&
-			gpio_get_level(GPIO_AC_PRESENT)) {
+		   gpio_get_level(GPIO_AC_PRESENT)) {
 		/*
 		 * If AC present, assume this is a wake-up by AC insert.
 		 * Boot EC only.
@@ -324,8 +291,7 @@ static void power_seq_run(const struct power_seq_op *power_seq_ops,
 	int i;
 
 	for (i = 0; i < op_count; i++) {
-		GPIO_SET_LEVEL(power_seq_ops[i].signal,
-			       power_seq_ops[i].level);
+		GPIO_SET_LEVEL(power_seq_ops[i].signal, power_seq_ops[i].level);
 		if (!power_seq_ops[i].delay)
 			continue;
 		msleep(power_seq_ops[i].delay);
@@ -491,9 +457,9 @@ static void power_button_changed(void)
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, power_button_changed, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
-__override void power_chipset_handle_host_sleep_event(
-		enum host_sleep_event state,
-		struct host_sleep_event_context *ctx)
+__override void
+power_chipset_handle_host_sleep_event(enum host_sleep_event state,
+				      struct host_sleep_event_context *ctx)
 {
 	CPRINTS("Handle sleep: %d", state);
 
