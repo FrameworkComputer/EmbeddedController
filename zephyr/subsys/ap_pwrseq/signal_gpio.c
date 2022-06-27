@@ -8,16 +8,14 @@
 #include <zephyr/drivers/gpio.h>
 #include "system.h"
 
-#define MY_COMPAT	intel_ap_pwrseq_gpio
+#define MY_COMPAT intel_ap_pwrseq_gpio
 
 #if HAS_GPIO_SIGNALS
 
-#define INIT_GPIO_SPEC(id)	\
-	GPIO_DT_SPEC_GET(id, gpios),
+#define INIT_GPIO_SPEC(id) GPIO_DT_SPEC_GET(id, gpios),
 
-const static struct gpio_dt_spec spec[] = {
-DT_FOREACH_STATUS_OKAY(MY_COMPAT, INIT_GPIO_SPEC)
-};
+const static struct gpio_dt_spec spec[] = { DT_FOREACH_STATUS_OKAY(
+	MY_COMPAT, INIT_GPIO_SPEC) };
 
 /*
  * Configuration for GPIO inputs.
@@ -29,17 +27,16 @@ struct ps_gpio_int {
 	unsigned no_enable : 1;
 };
 
-#define INIT_GPIO_CONFIG(id)					\
-	{							\
-		.flags = DT_PROP_OR(id, interrupt_flags, 0),	\
-		.signal = PWR_SIGNAL_ENUM(id),			\
-		.no_enable = DT_PROP(id, no_enable),		\
-		.output = DT_PROP(id, output),			\
-	 },
+#define INIT_GPIO_CONFIG(id)                                 \
+	{                                                    \
+		.flags = DT_PROP_OR(id, interrupt_flags, 0), \
+		.signal = PWR_SIGNAL_ENUM(id),               \
+		.no_enable = DT_PROP(id, no_enable),         \
+		.output = DT_PROP(id, output),               \
+	},
 
-const static struct ps_gpio_int gpio_config[] = {
-DT_FOREACH_STATUS_OKAY(MY_COMPAT, INIT_GPIO_CONFIG)
-};
+const static struct ps_gpio_int gpio_config[] = { DT_FOREACH_STATUS_OKAY(
+	MY_COMPAT, INIT_GPIO_CONFIG) };
 
 static struct gpio_callback int_cb[ARRAY_SIZE(gpio_config)];
 
@@ -123,7 +120,8 @@ void power_signal_gpio_init(void)
 	 * to the deasserted state.
 	 */
 	gpio_flags_t out_flags = system_jumped_to_this_image() ?
-				 GPIO_OUTPUT : GPIO_OUTPUT_INACTIVE;
+					 GPIO_OUTPUT :
+					 GPIO_OUTPUT_INACTIVE;
 
 	for (int i = 0; i < ARRAY_SIZE(gpio_config); i++) {
 		if (gpio_config[i].output) {
@@ -133,8 +131,8 @@ void power_signal_gpio_init(void)
 			/* If interrupt, initialise it */
 			if (gpio_config[i].flags) {
 				gpio_init_callback(&int_cb[i],
-					   power_signal_gpio_interrupt,
-					   BIT(spec[i].pin));
+						   power_signal_gpio_interrupt,
+						   BIT(spec[i].pin));
 				gpio_add_callback(spec[i].port, &int_cb[i]);
 				/*
 				 * If the interrupt is to be enabled at
