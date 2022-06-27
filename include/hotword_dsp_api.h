@@ -44,4 +44,4 @@ int GoogleHotwordDspGetMaximumAudioPreambleMs(void);
 /* Returns an internal version number that this library was built at. */
 extern int GoogleHotwordVersion(void);
 
-#endif  /* SPEECH_MICRO_API_HOTWORD_DSP_API_H_ */
+#endif /* SPEECH_MICRO_API_HOTWORD_DSP_API_H_ */
