@@ -26,7 +26,7 @@ struct sha256_ctx {
 	uint32_t tot_len;
 	uint32_t len;
 	uint8_t block[2 * SHA256_BLOCK_SIZE];
-	uint8_t buf[SHA256_DIGEST_SIZE];  /* Used to store the final digest. */
+	uint8_t buf[SHA256_DIGEST_SIZE]; /* Used to store the final digest. */
 };
 #endif
 
@@ -37,4 +37,4 @@ uint8_t *SHA256_final(struct sha256_ctx *ctx);
 void hmac_SHA256(uint8_t *output, const uint8_t *key, const int key_len,
 		 const uint8_t *message, const int message_len);
 
-#endif  /* __CROS_EC_SHA256_H */
+#endif /* __CROS_EC_SHA256_H */
