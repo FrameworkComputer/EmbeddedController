@@ -25,23 +25,22 @@
 
 #include "ec_lfw.h"
 
-__attribute__ ((section(".intvector")))
+__attribute__((section(".intvector")))
 const struct int_vector_t hdr_int_vect = {
-			(void *)0x11FA00, /* init sp, unused,
-						set by MEC ROM loader*/
-			&lfw_main,	  /* reset vector */
-			&fault_handler,   /* NMI handler */
-			&fault_handler,   /* HardFault handler */
-			&fault_handler,   /* MPU fault handler */
-			&fault_handler    /* Bus fault handler */
+	(void *)0x11FA00, /* init sp, unused,
+				set by MEC ROM loader*/
+	&lfw_main, /* reset vector */
+	&fault_handler, /* NMI handler */
+	&fault_handler, /* HardFault handler */
+	&fault_handler, /* MPU fault handler */
+	&fault_handler /* Bus fault handler */
 };
 
 /* SPI devices - from glados/board.c*/
 const struct spi_device_t spi_devices[] = {
-	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_PVT_CS0},
+	{ CONFIG_SPI_FLASH_PORT, 0, GPIO_PVT_CS0 },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
-
 
 void timer_init()
 {
@@ -71,17 +70,13 @@ void timer_init()
 
 	/* Start counting in timer 0 */
 	MEC1322_TMR32_CTL(0) |= BIT(5);
-
 }
 
-static int spi_flash_readloc(uint8_t *buf_usr,
-				unsigned int offset,
-				unsigned int bytes)
+static int spi_flash_readloc(uint8_t *buf_usr, unsigned int offset,
+			     unsigned int bytes)
 {
-	uint8_t cmd[4] = {SPI_FLASH_READ,
-				(offset >> 16) & 0xFF,
-				(offset >> 8) & 0xFF,
-				offset & 0xFF};
+	uint8_t cmd[4] = { SPI_FLASH_READ, (offset >> 16) & 0xFF,
+			   (offset >> 8) & 0xFF, offset & 0xFF };
 
 	if (offset + bytes > CONFIG_FLASH_SIZE_BYTES)
 		return EC_ERROR_INVAL;
@@ -91,8 +86,8 @@ static int spi_flash_readloc(uint8_t *buf_usr,
 
 int spi_image_load(uint32_t offset)
 {
-	uint8_t *buf = (uint8_t *) (CONFIG_RW_MEM_OFF +
-				    CONFIG_PROGRAM_MEMORY_BASE);
+	uint8_t *buf =
+		(uint8_t *)(CONFIG_RW_MEM_OFF + CONFIG_PROGRAM_MEMORY_BASE);
 	uint32_t i;
 
 	BUILD_ASSERT(CONFIG_RO_SIZE == CONFIG_RW_SIZE);
@@ -102,7 +97,6 @@ int spi_image_load(uint32_t offset)
 		spi_flash_readloc(&buf[i], offset + i, SPI_CHUNK_SIZE);
 
 	return 0;
-
 }
 
 void udelay(unsigned us)
@@ -128,7 +122,6 @@ int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
 
 	return now->le.lo >= deadline.le.lo;
 }
-
 
 timestamp_t get_time(void)
 {
@@ -169,12 +162,11 @@ void fault_handler(void)
 	MEC1322_WDG_CTL |= 1;
 	while (1)
 		;
-
 }
 
 void jump_to_image(uintptr_t init_addr)
 {
-	void (*resetvec)(void) = (void(*)(void))init_addr;
+	void (*resetvec)(void) = (void (*)(void))init_addr;
 	resetvec();
 }
 
@@ -212,10 +204,8 @@ void uart_init(void)
 
 void system_init(void)
 {
-
 	uint32_t wdt_sts = MEC1322_VBAT_STS & MEC1322_VBAT_STS_WDT;
-	uint32_t rst_sts = MEC1322_PCR_CHIP_PWR_RST &
-				MEC1322_PWR_RST_STS_VCC1;
+	uint32_t rst_sts = MEC1322_PCR_CHIP_PWR_RST & MEC1322_PWR_RST_STS_VCC1;
 
 	if (rst_sts || wdt_sts)
 		MEC1322_VBAT_RAM(MEC1322_IMAGETYPE_IDX) = EC_IMAGE_RO;
@@ -228,11 +218,10 @@ enum ec_image system_get_image_copy(void)
 
 void lfw_main()
 {
-
 	uintptr_t init_addr;
 
 	/* install vector table */
-	*((uintptr_t *) 0xe000ed08) = (uintptr_t) &hdr_int_vect;
+	*((uintptr_t *)0xe000ed08) = (uintptr_t)&hdr_int_vect;
 
 	/* Use 48 MHz processor clock to power through boot */
 	MEC1322_PCR_PROC_CLK_CTL = 1;
