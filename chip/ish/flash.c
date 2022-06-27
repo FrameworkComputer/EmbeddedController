@@ -6,7 +6,6 @@
 #include "common.h"
 #include "flash.h"
 
-
 /**
  * Initialize the module.
  *
