@@ -29,7 +29,10 @@ struct pwm_t {
 extern const struct pwm_t pwm_channels[];
 
 /* Macro to fill in both timer ID and register base */
-#define STM32_TIM(x) {x, STM32_TIM_BASE(x)}
+#define STM32_TIM(x)                 \
+	{                            \
+		x, STM32_TIM_BASE(x) \
+	}
 
 /* Plain ID mapping for readability */
 #define STM32_TIM_CH(x) (x)
