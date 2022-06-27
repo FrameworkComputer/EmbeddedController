@@ -24,8 +24,8 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SPI, outstr)
-#define CPRINTS(format, args...) cprints(CC_SPI, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SPI, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SPI, format, ##args)
 
 /* SPI FIFO registers */
 #ifdef CHIP_FAMILY_STM32H7
@@ -41,7 +41,7 @@ static const struct dma_option dma_tx_option = {
 	STM32_DMAC_SPI1_TX, (void *)&SPI_TXDR,
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 #ifdef CHIP_FAMILY_STM32F4
-	| STM32_DMA_CCR_CHANNEL(STM32_SPI1_TX_REQ_CH)
+		| STM32_DMA_CCR_CHANNEL(STM32_SPI1_TX_REQ_CH)
 #endif
 };
 
@@ -49,7 +49,7 @@ static const struct dma_option dma_rx_option = {
 	STM32_DMAC_SPI1_RX, (void *)&SPI_RXDR,
 	STM32_DMA_CCR_MSIZE_8_BIT | STM32_DMA_CCR_PSIZE_8_BIT
 #ifdef CHIP_FAMILY_STM32F4
-	| STM32_DMA_CCR_CHANNEL(STM32_SPI1_RX_REQ_CH)
+		| STM32_DMA_CCR_CHANNEL(STM32_SPI1_RX_REQ_CH)
 #endif
 };
 
@@ -71,8 +71,8 @@ static const struct dma_option dma_rx_option = {
  * the AP will have a known and identifiable value.
  */
 #define SPI_PROTO2_OFFSET (EC_PROTO2_RESPONSE_HEADER_BYTES + 2)
-#define SPI_PROTO2_OVERHEAD (SPI_PROTO2_OFFSET +		\
-			     EC_PROTO2_RESPONSE_TRAILER_BYTES + 1)
+#define SPI_PROTO2_OVERHEAD \
+	(SPI_PROTO2_OFFSET + EC_PROTO2_RESPONSE_TRAILER_BYTES + 1)
 #endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 /*
  * Max data size for a version 3 request/response packet.  This is big enough
@@ -92,10 +92,8 @@ static const struct dma_option dma_rx_option = {
  * 32-bit aligned.
  */
 static const uint8_t out_preamble[4] = {
-	EC_SPI_PROCESSING,
-	EC_SPI_PROCESSING,
-	EC_SPI_PROCESSING,
-	EC_SPI_FRAME_START,  /* This is the byte which matters */
+	EC_SPI_PROCESSING, EC_SPI_PROCESSING, EC_SPI_PROCESSING,
+	EC_SPI_FRAME_START, /* This is the byte which matters */
 };
 
 /*
@@ -117,7 +115,7 @@ static const uint8_t out_preamble[4] = {
  * message, including protocol overhead, and must be 32-bit aligned.
  */
 static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble) +
-	EC_SPI_PAST_END_LENGTH] __aligned(4) __uncached;
+		       EC_SPI_PAST_END_LENGTH] __aligned(4) __uncached;
 static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __aligned(4) __uncached;
 static uint8_t enabled;
 #ifdef CONFIG_SPI_PROTOCOL_V2
@@ -172,8 +170,7 @@ enum spi_state {
  * @param nss		GPIO signal for NSS control line
  * @return 0 if bytes received, -1 if we hit a timeout or NSS went high
  */
-static int wait_for_bytes(dma_chan_t *rxdma, int needed,
-			  enum gpio_signal nss)
+static int wait_for_bytes(dma_chan_t *rxdma, int needed, enum gpio_signal nss)
 {
 	timestamp_t deadline;
 
@@ -230,8 +227,8 @@ static int wait_for_bytes(dma_chan_t *rxdma, int needed,
  *			SPI_PROTO2_OFFSET bytes into out_msg
  * @param msg_len	Number of message bytes to send
  */
-static void reply(dma_chan_t *txdma,
-		  enum ec_status status, char *msg_ptr, int msg_len)
+static void reply(dma_chan_t *txdma, enum ec_status status, char *msg_ptr,
+		  int msg_len)
 {
 	char *msg = out_msg;
 	int need_copy = msg_ptr != msg + SPI_PROTO2_OFFSET;
@@ -438,8 +435,10 @@ static void spi_send_response_packet(struct host_packet *pkt)
 
 	/* Transmit the reply */
 	txdma = dma_get_channel(STM32_DMAC_SPI1_TX);
-	dma_prepare_tx(&dma_tx_option, sizeof(out_preamble) + pkt->response_size
-		+ EC_SPI_PAST_END_LENGTH, out_msg);
+	dma_prepare_tx(&dma_tx_option,
+		       sizeof(out_preamble) + pkt->response_size +
+			       EC_SPI_PAST_END_LENGTH,
+		       out_msg);
 	dma_go(txdma);
 #ifdef CHIP_FAMILY_STM32H7
 	/* clear any previous underrun */
@@ -544,8 +543,9 @@ void spi_event(enum gpio_signal signal)
 		memcpy(out_msg, out_preamble, sizeof(out_preamble));
 		spi_packet.response = out_msg + sizeof(out_preamble);
 		/* Reserve space for the preamble and trailing past-end byte */
-		spi_packet.response_max = sizeof(out_msg)
-			- sizeof(out_preamble) - EC_SPI_PAST_END_LENGTH;
+		spi_packet.response_max = sizeof(out_msg) -
+					  sizeof(out_preamble) -
+					  EC_SPI_PAST_END_LENGTH;
 		spi_packet.response_size = 0;
 
 		spi_packet.driver_result = EC_RES_SUCCESS;
@@ -608,7 +608,7 @@ void spi_event(enum gpio_signal signal)
 #endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 	}
 
- spi_event_error:
+spi_event_error:
 	/* Error, timeout, or protocol we can't handle.  Ignore data. */
 	tx_status(EC_SPI_RX_BAD_DATA);
 	state = SPI_STATE_RX_BAD;
@@ -701,14 +701,13 @@ static void spi_init(void)
 #ifdef CHIP_FAMILY_STM32H7
 	spi->cfg2 = 0;
 	spi->cfg1 = STM32_SPI_CFG1_DATASIZE(8) | STM32_SPI_CFG1_FTHLV(4) |
-			STM32_SPI_CFG1_CRCSIZE(8) |
-			STM32_SPI_CFG1_TXDMAEN | STM32_SPI_CFG1_RXDMAEN |
-			STM32_SPI_CFG1_UDRCFG_CONST |
-			STM32_SPI_CFG1_UDRDET_BEGIN_FRM;
+		    STM32_SPI_CFG1_CRCSIZE(8) | STM32_SPI_CFG1_TXDMAEN |
+		    STM32_SPI_CFG1_RXDMAEN | STM32_SPI_CFG1_UDRCFG_CONST |
+		    STM32_SPI_CFG1_UDRDET_BEGIN_FRM;
 	spi->cr1 = 0;
 #else /* !CHIP_FAMILY_STM32H7 */
 	spi->cr2 = STM32_SPI_CR2_RXDMAEN | STM32_SPI_CR2_TXDMAEN |
-		STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8);
+		   STM32_SPI_CR2_FRXTH | STM32_SPI_CR2_DATASIZE(8);
 
 	/* Enable the SPI peripheral */
 	spi->cr1 |= STM32_SPI_CR1_SPE;
