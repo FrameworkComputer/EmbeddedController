@@ -37,9 +37,9 @@ static int fake_hibernate;
 #define MSI_1MHZ_CLOCK BIT(20)
 
 enum clock_osc {
-	OSC_INIT = 0,	/* Uninitialized */
-	OSC_HSI,	/* High-speed oscillator */
-	OSC_MSI,	/* Med-speed oscillator @ 1 MHz */
+	OSC_INIT = 0, /* Uninitialized */
+	OSC_HSI, /* High-speed oscillator */
+	OSC_MSI, /* Med-speed oscillator @ 1 MHz */
 };
 
 static int freq;
@@ -86,8 +86,8 @@ static void clock_set_osc(enum clock_osc osc)
 	switch (osc) {
 	case OSC_HSI:
 		/* Ensure that HSI is ON */
-		wait_for_ready(&STM32_RCC_CR,
-			       STM32_RCC_CR_HSION, STM32_RCC_CR_HSIRDY);
+		wait_for_ready(&STM32_RCC_CR, STM32_RCC_CR_HSION,
+			       STM32_RCC_CR_HSIRDY);
 
 		/* Disable LPSDSR */
 		STM32_PWR_CR &= ~STM32_PWR_CR_LPSDSR;
@@ -122,7 +122,7 @@ static void clock_set_osc(enum clock_osc osc)
 		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_HSI;
 		/* RM says to check SWS bits to make sure HSI is the sysclock */
 		while ((STM32_RCC_CFGR & STM32_RCC_CFGR_SWS_MASK) !=
-			STM32_RCC_CFGR_SWS_HSI)
+		       STM32_RCC_CFGR_SWS_HSI)
 			;
 
 		/* Disable MSI */
@@ -137,14 +137,14 @@ static void clock_set_osc(enum clock_osc osc)
 			(STM32_RCC_ICSCR & ~STM32_RCC_ICSCR_MSIRANGE_MASK) |
 			STM32_RCC_ICSCR_MSIRANGE_1MHZ;
 		/* Ensure that MSI is ON */
-		wait_for_ready(&STM32_RCC_CR,
-			       STM32_RCC_CR_MSION, STM32_RCC_CR_MSIRDY);
+		wait_for_ready(&STM32_RCC_CR, STM32_RCC_CR_MSION,
+			       STM32_RCC_CR_MSIRDY);
 
 		/* Switch to MSI */
 		STM32_RCC_CFGR = STM32_RCC_CFGR_SW_MSI;
 		/* RM says to check SWS bits to make sure MSI is the sysclock */
 		while ((STM32_RCC_CFGR & STM32_RCC_CFGR_SWS_MASK) !=
-			STM32_RCC_CFGR_SWS_MSI)
+		       STM32_RCC_CFGR_SWS_MSI)
 			;
 
 		/*
@@ -208,7 +208,6 @@ void clock_enable_module(enum module_id module, int enable)
 
 	/* Only change clock if needed */
 	if ((!!new_mask) != (!!clock_mask)) {
-
 		/* Flush UART before switching clock speed */
 		cflush();
 
@@ -314,7 +313,7 @@ static void fake_hibernate_power_button_hook(void)
 	}
 }
 DECLARE_HOOK(HOOK_POWER_BUTTON_CHANGE, fake_hibernate_power_button_hook,
-	HOOK_PRIO_DEFAULT);
+	     HOOK_PRIO_DEFAULT);
 
 static void fake_hibernate_lid_hook(void)
 {
@@ -379,6 +378,5 @@ static int command_clock(int argc, char **argv)
 	ccprintf("Clock frequency is now %d Hz\n", freq);
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(clock, command_clock,
-			"hsi | msi",
+DECLARE_CONSOLE_COMMAND(clock, command_clock, "hsi | msi",
 			"Set clock frequency");
