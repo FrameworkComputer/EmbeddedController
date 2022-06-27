@@ -14,14 +14,14 @@
 #include "gpio.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 
 /* Shutdown mode parameter to write to manufacturer access register */
-#define SB_SHIP_MODE_REG	SB_MANUFACTURER_ACCESS
-#define SB_SHUTDOWN_DATA	0x0010
-#define SB_REVIVE_DATA		0x23a7
+#define SB_SHIP_MODE_REG SB_MANUFACTURER_ACCESS
+#define SB_SHUTDOWN_DATA 0x0010
+#define SB_REVIVE_DATA 0x23a7
 
 #if defined(BOARD_SORAKA) || defined(BOARD_LUX)
 static const struct battery_info info = {
@@ -86,8 +86,9 @@ static int battery_init(void)
 {
 	int batt_status;
 
-	return battery_status(&batt_status) ? 0 :
-		!!(batt_status & STATUS_INITIALIZED);
+	return battery_status(&batt_status) ?
+		       0 :
+		       !!(batt_status & STATUS_INITIALIZED);
 }
 
 /*
@@ -108,13 +109,13 @@ static int battery_check_disconnect(void)
 	uint8_t data[6];
 
 	/* Check if battery charging + discharging is disabled. */
-	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
-			    SB_ALT_MANUFACTURER_ACCESS, data, sizeof(data));
+	rv = sb_read_mfgacc(PARAM_OPERATION_STATUS, SB_ALT_MANUFACTURER_ACCESS,
+			    data, sizeof(data));
 	if (rv)
 		return BATTERY_DISCONNECT_ERROR;
 
-	if ((data[3] & (BATTERY_DISCHARGING_DISABLED |
-			BATTERY_CHARGING_DISABLED)) ==
+	if ((data[3] &
+	     (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED)) ==
 	    (BATTERY_DISCHARGING_DISABLED | BATTERY_CHARGING_DISABLED))
 		return BATTERY_DISCONNECTED;
 
