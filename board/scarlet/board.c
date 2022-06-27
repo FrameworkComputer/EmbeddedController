@@ -43,8 +43,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static void tcpc_alert_event(enum gpio_signal signal)
 {
@@ -68,27 +68,23 @@ static void warm_reset_request_interrupt(enum gpio_signal signal)
 /******************************************************************************/
 /* ADC channels. Must be in the exactly same order as in enum adc_channel. */
 const struct adc_t adc_channels[] = {
-	[ADC_BOARD_ID] = {"BOARD_ID", 3300, 4096, 0, STM32_AIN(10)},
+	[ADC_BOARD_ID] = { "BOARD_ID", 3300, 4096, 0, STM32_AIN(10) },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************/
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "charger",
-		.port = I2C_PORT_CHARGER,
-		.kbps = 400,
-		.scl  = GPIO_I2C0_SCL,
-		.sda  = GPIO_I2C0_SDA
-	},
-	{
-		.name = "tcpc0",
-		.port = I2C_PORT_TCPC0,
-		.kbps = 1000,
-		.scl  = GPIO_I2C1_SCL,
-		.sda  = GPIO_I2C1_SDA
-	},
+	{ .name = "charger",
+	  .port = I2C_PORT_CHARGER,
+	  .kbps = 400,
+	  .scl = GPIO_I2C0_SCL,
+	  .sda = GPIO_I2C0_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 1000,
+	  .scl = GPIO_I2C1_SCL,
+	  .sda = GPIO_I2C1_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
@@ -104,22 +100,22 @@ const struct charger_config_t chg_chips[] = {
 
 /* power signal list.  Must match order of enum power_signal. */
 const struct power_signal_info power_signal_list[] = {
-	{GPIO_PP1250_S3_PG,    POWER_SIGNAL_ACTIVE_HIGH, "PP1250_S3_PWR_GOOD"},
-	{GPIO_PP900_S0_PG,     POWER_SIGNAL_ACTIVE_HIGH, "PP900_S0_PWR_GOOD"},
-	{GPIO_AP_CORE_PG,      POWER_SIGNAL_ACTIVE_HIGH, "AP_PWR_GOOD"},
-	{GPIO_AP_EC_S3_S0_L,   POWER_SIGNAL_ACTIVE_LOW, "SUSPEND_DEASSERTED"},
+	{ GPIO_PP1250_S3_PG, POWER_SIGNAL_ACTIVE_HIGH, "PP1250_S3_PWR_GOOD" },
+	{ GPIO_PP900_S0_PG, POWER_SIGNAL_ACTIVE_HIGH, "PP900_S0_PWR_GOOD" },
+	{ GPIO_AP_CORE_PG, POWER_SIGNAL_ACTIVE_HIGH, "AP_PWR_GOOD" },
+	{ GPIO_AP_EC_S3_S0_L, POWER_SIGNAL_ACTIVE_LOW, "SUSPEND_DEASSERTED" },
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
 #ifdef CONFIG_TEMP_SENSOR_TMP432
 /* Temperature sensors data; must be in same order as enum temp_sensor_id. */
 const struct temp_sensor_t temp_sensors[] = {
-	{"TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_LOCAL, 4},
-	{"TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE1, 4},
-	{"TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
-		TMP432_IDX_REMOTE2, 4},
+	{ "TMP432_Internal", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	  TMP432_IDX_LOCAL, 4 },
+	{ "TMP432_Sensor_1", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	  TMP432_IDX_REMOTE1, 4 },
+	{ "TMP432_Sensor_2", TEMP_SENSOR_TYPE_BOARD, tmp432_get_val,
+	  TMP432_IDX_REMOTE2, 4 },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -128,9 +124,9 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * same order as enum temp_sensor_id. To always ignore any temp, use 0.
  */
 struct ec_thermal_config thermal_params[] = {
-	{{0, 0, 0}, 0, 0}, /* TMP432_Internal */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_1 */
-	{{0, 0, 0}, 0, 0}, /* TMP432_Sensor_2 */
+	{ { 0, 0, 0 }, 0, 0 }, /* TMP432_Internal */
+	{ { 0, 0, 0 }, 0, 0 }, /* TMP432_Sensor_1 */
+	{ { 0, 0, 0 }, 0, 0 }, /* TMP432_Sensor_2 */
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 #endif
@@ -166,11 +162,11 @@ void board_reset_pd_mcu(void)
 {
 }
 
-enum critical_shutdown board_critical_shutdown_check(
-		struct charge_state_data *curr)
+enum critical_shutdown
+board_critical_shutdown_check(struct charge_state_data *curr)
 {
 	if ((curr->batt.flags & BATT_FLAG_BAD_VOLTAGE) ||
-		(curr->batt.voltage <= BAT_LOW_VOLTAGE_THRESH))
+	    (curr->batt.voltage <= BAT_LOW_VOLTAGE_THRESH))
 		return CRITICAL_SHUTDOWN_CUTOFF;
 	else
 		return CRITICAL_SHUTDOWN_IGNORE;
@@ -212,11 +208,11 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
-	charge_set_input_current_limit(MAX(charge_ma,
-			       CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(
+		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 int extpower_is_present(void)
@@ -252,8 +248,7 @@ static void board_spi_enable(void)
 
 	spi_enable(&spi_devices[0], 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
-	     board_spi_enable,
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_spi_enable,
 	     MOTION_SENSE_HOOK_PRIO - 1);
 
 static void board_spi_disable(void)
@@ -265,8 +260,7 @@ static void board_spi_disable(void)
 
 	gpio_config_module(MODULE_SPI_CONTROLLER, 0);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
-	     board_spi_disable,
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_spi_disable,
 	     MOTION_SENSE_HOOK_PRIO + 1);
 
 static void board_init(void)
@@ -306,8 +300,8 @@ void board_config_pre_init(void)
 	 * Ch4: USART1_TX / Ch5: USART1_RX (1000)
 	 * Ch6: SPI2_RX / Ch7: SPI2_TX (0011)
 	 */
-	STM32_DMA_CSELR(STM32_DMAC_CH4) = (8 << 12) | (8 << 16) |
-					  (3 << 20) | (3 << 24);
+	STM32_DMA_CSELR(STM32_DMAC_CH4) = (8 << 12) | (8 << 16) | (3 << 20) |
+					  (3 << 24);
 }
 
 enum scarlet_board_version {
@@ -335,16 +329,16 @@ struct {
 	enum scarlet_board_version version;
 	int expect_mv;
 } const scarlet_boards[] = {
-	{ BOARD_VERSION_REV0, 109 },   /* 51.1K , 2.2K(gru 3.3K) ohm */
-	{ BOARD_VERSION_REV1, 211 },   /* 51.1k , 6.8K ohm */
-	{ BOARD_VERSION_REV2, 319 },   /* 51.1K , 11K ohm */
-	{ BOARD_VERSION_REV3, 427 },   /* 56K   , 17.4K ohm */
-	{ BOARD_VERSION_REV4, 542 },   /* 51.1K , 22K ohm */
-	{ BOARD_VERSION_REV5, 666 },   /* 51.1K , 30K ohm */
-	{ BOARD_VERSION_REV6, 781 },   /* 51.1K , 39.2K ohm */
-	{ BOARD_VERSION_REV7, 900 },   /* 56K   , 56K ohm */
-	{ BOARD_VERSION_REV8, 1023 },  /* 47K   , 61.9K ohm */
-	{ BOARD_VERSION_REV9, 1137 },  /* 47K   , 80.6K ohm */
+	{ BOARD_VERSION_REV0, 109 }, /* 51.1K , 2.2K(gru 3.3K) ohm */
+	{ BOARD_VERSION_REV1, 211 }, /* 51.1k , 6.8K ohm */
+	{ BOARD_VERSION_REV2, 319 }, /* 51.1K , 11K ohm */
+	{ BOARD_VERSION_REV3, 427 }, /* 56K   , 17.4K ohm */
+	{ BOARD_VERSION_REV4, 542 }, /* 51.1K , 22K ohm */
+	{ BOARD_VERSION_REV5, 666 }, /* 51.1K , 30K ohm */
+	{ BOARD_VERSION_REV6, 781 }, /* 51.1K , 39.2K ohm */
+	{ BOARD_VERSION_REV7, 900 }, /* 56K   , 56K ohm */
+	{ BOARD_VERSION_REV8, 1023 }, /* 47K   , 61.9K ohm */
+	{ BOARD_VERSION_REV9, 1137 }, /* 47K   , 80.6K ohm */
 	{ BOARD_VERSION_REV10, 1240 }, /* 56K   , 124K ohm */
 	{ BOARD_VERSION_REV11, 1343 }, /* 51.1K , 150K ohm */
 	{ BOARD_VERSION_REV12, 1457 }, /* 47K   , 200K ohm */
@@ -400,11 +394,9 @@ static struct mutex g_base_mutex;
 static struct bmi_drv_data_t g_bmi160_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(-1), 0,  0},
-	{ 0,  FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+				       { 0, FLOAT_TO_FP(-1), 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
