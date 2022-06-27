@@ -33,7 +33,6 @@ static uint16_t detect_type(uint16_t det_type)
 	return STM32_USB_BCDR;
 }
 
-
 int charger_detect_get_device_type(void)
 {
 	uint16_t pdet_result;
