@@ -19,12 +19,11 @@ enum usb_ep_event {
 #include "usb_dwc_hw.h"
 #else
 
-
 /*
  * The STM32 has dedicated USB RAM visible on the APB1 bus (so all reads &
  * writes are 16-bits wide). The endpoint tables and the data buffers live in
  * this RAM.
-*/
+ */
 
 /* Primitive to access the words in USB RAM */
 typedef CONFIG_USB_RAM_ACCESS_TYPE usb_uint;
@@ -87,8 +86,8 @@ enum usb_desc_patch_type {
  * The patches need to be setup before _before_ usb_init is executed (or, at
  * least, before the first call to memcpy_to_usbram_ep0_patch).
  */
-void set_descriptor_patch(enum usb_desc_patch_type type,
-			  const void *address, uint16_t data);
+void set_descriptor_patch(enum usb_desc_patch_type type, const void *address,
+			  uint16_t data);
 
 /* Copy to USB ram, applying patches to src as required. */
 void *memcpy_to_usbram_ep0_patch(const void *src, size_t n);
@@ -106,44 +105,42 @@ void *memcpy_to_usbram_ep0_patch(const void *src, size_t n);
 #define _EP_RX_HANDLER_TYPECHECK(num) _EP_HANDLER2(num, _rx_typecheck)
 #define _EP_EVENT_HANDLER_TYPECHECK(num) _EP_HANDLER2(num, _evt_typecheck)
 
-#define USB_DECLARE_EP(num, tx_handler, rx_handler, evt_handler)  \
-	void _EP_TX_HANDLER(num)(void)				  \
-		__attribute__ ((alias(STRINGIFY(tx_handler))));	  \
-	void _EP_RX_HANDLER(num)(void)                            \
-		__attribute__ ((alias(STRINGIFY(rx_handler))));	  \
-	void _EP_EVENT_HANDLER(num)(enum usb_ep_event evt)        \
-		__attribute__ ((alias(STRINGIFY(evt_handler))));  \
-	static __unused void					  \
-	(*_EP_TX_HANDLER_TYPECHECK(num))(void) = tx_handler;	  \
-	static __unused void					  \
-	(*_EP_RX_HANDLER_TYPECHECK(num))(void) = rx_handler;	  \
-	static __unused void					  \
-	(*_EP_EVENT_HANDLER_TYPECHECK(num))(enum usb_ep_event evt)\
-			= evt_handler
+#define USB_DECLARE_EP(num, tx_handler, rx_handler, evt_handler)      \
+	void _EP_TX_HANDLER(num)(void)                                \
+		__attribute__((alias(STRINGIFY(tx_handler))));        \
+	void _EP_RX_HANDLER(num)(void)                                \
+		__attribute__((alias(STRINGIFY(rx_handler))));        \
+	void _EP_EVENT_HANDLER(num)(enum usb_ep_event evt)            \
+		__attribute__((alias(STRINGIFY(evt_handler))));       \
+	static __unused void (*_EP_TX_HANDLER_TYPECHECK(num))(void) = \
+		tx_handler;                                           \
+	static __unused void (*_EP_RX_HANDLER_TYPECHECK(num))(void) = \
+		rx_handler;                                           \
+	static __unused void (*_EP_EVENT_HANDLER_TYPECHECK(num))(     \
+		enum usb_ep_event evt) = evt_handler
 
 /* arrays with all endpoint callbacks */
-extern void (*usb_ep_tx[]) (void);
-extern void (*usb_ep_rx[]) (void);
-extern void (*usb_ep_event[]) (enum usb_ep_event evt);
+extern void (*usb_ep_tx[])(void);
+extern void (*usb_ep_rx[])(void);
+extern void (*usb_ep_event[])(enum usb_ep_event evt);
 /* array with interface-specific control request callbacks */
-extern int (*usb_iface_request[]) (usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
+extern int (*usb_iface_request[])(usb_uint *ep0_buf_rx, usb_uint *ep0_buf_tx);
 
 /*
  * Interface handler returns -1 on error, 0 if it wrote the last chunk of data,
  * or 1 if more data needs to be transferred on the next control request.
  */
 #define _IFACE_HANDLER(num) CONCAT3(iface_, num, _request)
-#define USB_DECLARE_IFACE(num, handler)					\
-	int _IFACE_HANDLER(num)(usb_uint *ep0_buf_rx,			\
-			       usb_uint *epo_buf_tx)			\
-	__attribute__ ((alias(STRINGIFY(handler))));
+#define USB_DECLARE_IFACE(num, handler)                                       \
+	int _IFACE_HANDLER(num)(usb_uint * ep0_buf_rx, usb_uint * epo_buf_tx) \
+		__attribute__((alias(STRINGIFY(handler))));
 
 #endif
 
 /*
  * In and out buffer sizes for host command over USB.
  */
-#define USBHC_MAX_REQUEST_SIZE	0x200
+#define USBHC_MAX_REQUEST_SIZE 0x200
 #define USBHC_MAX_RESPONSE_SIZE 0x100
 
-#endif	/* __CROS_EC_USB_HW_H */
+#endif /* __CROS_EC_USB_HW_H */
