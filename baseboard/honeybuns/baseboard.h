@@ -40,30 +40,30 @@
 /* Do not use a dedicated PSTATE bank */
 #undef CONFIG_FLASH_PSTATE_BANK
 
-#define CONFIG_SHAREDLIB_SIZE	0
+#define CONFIG_SHAREDLIB_SIZE 0
 
-#define CONFIG_RO_MEM_OFF	0
-#define CONFIG_RO_STORAGE_OFF	0
-#define CONFIG_RO_SIZE		(64*1024)
+#define CONFIG_RO_MEM_OFF 0
+#define CONFIG_RO_STORAGE_OFF 0
+#define CONFIG_RO_SIZE (64 * 1024)
 
-#define CONFIG_RW_MEM_OFF	(CONFIG_RO_SIZE + CONFIG_RO_MEM_OFF)
-#define CONFIG_RW_STORAGE_OFF	0
-#define CONFIG_RW_SIZE		(CONFIG_FLASH_SIZE_BYTES - \
-				(CONFIG_RW_MEM_OFF - CONFIG_RO_MEM_OFF))
+#define CONFIG_RW_MEM_OFF (CONFIG_RO_SIZE + CONFIG_RO_MEM_OFF)
+#define CONFIG_RW_STORAGE_OFF 0
+#define CONFIG_RW_SIZE \
+	(CONFIG_FLASH_SIZE_BYTES - (CONFIG_RW_MEM_OFF - CONFIG_RO_MEM_OFF))
 
-#define CONFIG_EC_PROTECTED_STORAGE_OFF		CONFIG_RO_MEM_OFF
-#define CONFIG_EC_PROTECTED_STORAGE_SIZE	CONFIG_RO_SIZE
-#define CONFIG_EC_WRITABLE_STORAGE_OFF		CONFIG_RW_MEM_OFF
-#define CONFIG_EC_WRITABLE_STORAGE_SIZE		CONFIG_RW_SIZE
+#define CONFIG_EC_PROTECTED_STORAGE_OFF CONFIG_RO_MEM_OFF
+#define CONFIG_EC_PROTECTED_STORAGE_SIZE CONFIG_RO_SIZE
+#define CONFIG_EC_WRITABLE_STORAGE_OFF CONFIG_RW_MEM_OFF
+#define CONFIG_EC_WRITABLE_STORAGE_SIZE CONFIG_RW_SIZE
 
-#define CONFIG_WP_STORAGE_OFF		CONFIG_EC_PROTECTED_STORAGE_OFF
-#define CONFIG_WP_STORAGE_SIZE		CONFIG_EC_PROTECTED_STORAGE_SIZE
+#define CONFIG_WP_STORAGE_OFF CONFIG_EC_PROTECTED_STORAGE_OFF
+#define CONFIG_WP_STORAGE_SIZE CONFIG_EC_PROTECTED_STORAGE_SIZE
 
 /* 48 MHz SYSCLK clock frequency */
 #define CPU_CLOCK 48000000
 #define CONFIG_STM_HWTIMER32
 #define TIM_CLOCK32 2
-#define TIM_CLOCK_MSB  3
+#define TIM_CLOCK_MSB 3
 #define TIM_CLOCK_LSB 15
 #define TIM_WATCHDOG 7
 
@@ -80,7 +80,7 @@
 #define CONFIG_UART_TX_DMA_PH DMAMUX_REQ_USART3_TX
 
 /* CBI Configs */
-#define I2C_ADDR_EEPROM_FLAGS   0x50
+#define I2C_ADDR_EEPROM_FLAGS 0x50
 #define CONFIG_CBI_EEPROM
 #define CONFIG_BOARD_VERSION_CBI
 #define CONFIG_CMD_CBI
@@ -101,12 +101,12 @@
 #define CONFIG_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_UPDATE		1
-#define USB_EP_COUNT		2
+#define USB_EP_CONTROL 0
+#define USB_EP_UPDATE 1
+#define USB_EP_COUNT 2
 
-#define USB_IFACE_UPDATE	0
-#define USB_IFACE_COUNT		1
+#define USB_IFACE_UPDATE 0
+#define USB_IFACE_COUNT 1
 
 #ifndef __ASSEMBLER__
 /* USB string indexes */
@@ -197,14 +197,14 @@ enum usb_strings {
 #define CONFIG_SHA256
 
 /* Define typical operating power and max power. */
-#define PD_MAX_VOLTAGE_MV     5000
-#define PD_MAX_CURRENT_MA     3000
-#define PD_MAX_POWER_MW       15000
+#define PD_MAX_VOLTAGE_MV 5000
+#define PD_MAX_CURRENT_MA 3000
+#define PD_MAX_POWER_MW 15000
 #define PD_OPERATING_POWER_MW 15000
 
 /* TODO(b:147314141): Verify these timings */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY	30000	/* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY	250000	/* us */
+#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
+#define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
 
 /* I2C Bus Configuration */
 #define CONFIG_I2C
@@ -216,8 +216,8 @@ enum usb_strings {
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_ENTERING_RW	GPIO_EC_ENTERING_RW
-#define GPIO_WP_L		GPIO_EC_WP_L
+#define GPIO_ENTERING_RW GPIO_EC_ENTERING_RW
+#define GPIO_WP_L GPIO_EC_WP_L
 
 #ifndef __ASSEMBLER__
 
@@ -226,8 +226,8 @@ enum usb_strings {
 
 struct power_seq {
 	enum gpio_signal signal; /* power/reset gpio_signal to control */
-	int level;               /* level to set in power sequence */
-	unsigned int delay_ms;   /* delay (in msec) after setting gpio_signal */
+	int level; /* level to set in power sequence */
+	unsigned int delay_ms; /* delay (in msec) after setting gpio_signal */
 };
 
 enum mf_preference {
@@ -239,9 +239,7 @@ enum mf_preference {
  * This is required as adc_channel is included in adc.h which ends up being
  * included when TCPMv2 functions are included
  */
-enum adc_channel {
-	ADC_CH_COUNT
-};
+enum adc_channel { ADC_CH_COUNT };
 
 extern const struct power_seq board_power_seq[];
 extern const size_t board_power_seq_count;
@@ -278,7 +276,6 @@ int baseboard_config_usbc_usb3_ppc(void);
  * enable/disable VBUS in the PPC.
  */
 void baseboard_usb3_check_state(void);
-
 
 /*
  * Set MST_LANE_CONTROL gpio to match the DP pin configuration selected
@@ -323,7 +320,7 @@ int c1_ps8805_is_sourcing_vbus(int port);
  * @param port: The Type-C port number.
  * @param enable: 1: Turn on VBUS, 0: turn off VBUS.
  * @return EC_SUCCESS on success, error otherwise.
-	 */
+ */
 int c1_ps8805_vbus_source_enable(int port, int enable);
 
 #endif /* !__ASSEMBLER__ */
