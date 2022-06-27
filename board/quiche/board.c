@@ -29,8 +29,8 @@
 #include "usb_tc_sm.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 #define QUICHE_PD_DEBUG_LVL 1
 
@@ -104,29 +104,29 @@ static void board_usbc_usb3_interrupt(enum gpio_signal signal)
  * signals is driven by USB/MST hub power sequencing requirements.
  */
 const struct power_seq board_power_seq[] = {
-	{GPIO_EN_AC_JACK,               1, 20},
-	{GPIO_EC_DFU_MUX_CTRL,          0, 0},
-	{GPIO_EN_PP5000_A,              1, 31},
-	{GPIO_MST_LP_CTL_L,             1, 0},
-	{GPIO_EN_PP3300_B,              1, 1},
-	{GPIO_EN_PP1100_A,              1, 100+30},
-	{GPIO_EN_BB,                    1, 30},
-	{GPIO_EN_PP1050_A,              1, 30},
-	{GPIO_EN_PP1200_A,              1, 20},
-	{GPIO_EN_PP5000_C,              1, 20},
-	{GPIO_EN_PP5000_HSPORT,         1, 31},
-	{GPIO_EN_DP_SINK,               1, 80},
-	{GPIO_MST_RST_L,                1, 61},
-	{GPIO_EC_HUB2_RESET_L,          1, 41},
-	{GPIO_EC_HUB3_RESET_L,          1, 33},
-	{GPIO_DP_SINK_RESET,            1, 100},
-	{GPIO_USBC_DP_PD_RST_L,         1, 100},
-	{GPIO_USBC_UF_RESET_L,          1, 33},
-	{GPIO_DEMUX_DUAL_DP_PD_N,       1, 100},
-	{GPIO_DEMUX_DUAL_DP_RESET_N,    1, 100},
-	{GPIO_DEMUX_DP_HDMI_PD_N,       1, 10},
-	{GPIO_DEMUX_DUAL_DP_MODE,       1, 10},
-	{GPIO_DEMUX_DP_HDMI_MODE,       1, 5},
+	{ GPIO_EN_AC_JACK, 1, 20 },
+	{ GPIO_EC_DFU_MUX_CTRL, 0, 0 },
+	{ GPIO_EN_PP5000_A, 1, 31 },
+	{ GPIO_MST_LP_CTL_L, 1, 0 },
+	{ GPIO_EN_PP3300_B, 1, 1 },
+	{ GPIO_EN_PP1100_A, 1, 100 + 30 },
+	{ GPIO_EN_BB, 1, 30 },
+	{ GPIO_EN_PP1050_A, 1, 30 },
+	{ GPIO_EN_PP1200_A, 1, 20 },
+	{ GPIO_EN_PP5000_C, 1, 20 },
+	{ GPIO_EN_PP5000_HSPORT, 1, 31 },
+	{ GPIO_EN_DP_SINK, 1, 80 },
+	{ GPIO_MST_RST_L, 1, 61 },
+	{ GPIO_EC_HUB2_RESET_L, 1, 41 },
+	{ GPIO_EC_HUB3_RESET_L, 1, 33 },
+	{ GPIO_DP_SINK_RESET, 1, 100 },
+	{ GPIO_USBC_DP_PD_RST_L, 1, 100 },
+	{ GPIO_USBC_UF_RESET_L, 1, 33 },
+	{ GPIO_DEMUX_DUAL_DP_PD_N, 1, 100 },
+	{ GPIO_DEMUX_DUAL_DP_RESET_N, 1, 100 },
+	{ GPIO_DEMUX_DP_HDMI_PD_N, 1, 10 },
+	{ GPIO_DEMUX_DUAL_DP_MODE, 1, 10 },
+	{ GPIO_DEMUX_DP_HDMI_MODE, 1, 5 },
 };
 const size_t board_power_seq_count = ARRAY_SIZE(board_power_seq);
 
@@ -134,13 +134,13 @@ const size_t board_power_seq_count = ARRAY_SIZE(board_power_seq);
  * Define the strings used in our USB descriptors.
  */
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("Quiche"),
-	[USB_STR_SERIALNO]     = 0,
-	[USB_STR_VERSION]      =
-			USB_STRING_DESC(CROS_EC_SECTION ":" CROS_EC_VERSION32),
-	[USB_STR_UPDATE_NAME]  = USB_STRING_DESC("Firmware update"),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("Quiche"),
+	[USB_STR_SERIALNO] = 0,
+	[USB_STR_VERSION] =
+		USB_STRING_DESC(CROS_EC_SECTION ":" CROS_EC_VERSION32),
+	[USB_STR_UPDATE_NAME] = USB_STRING_DESC("Firmware update"),
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
@@ -159,8 +159,7 @@ struct ppc_config_t ppc_chips[] = {
  * PS8802 set mux board tuning.
  * Adds in board specific gain and DP lane count configuration
  */
-static int board_ps8822_mux_set(const struct usb_mux *me,
-				mux_state_t mux_state)
+static int board_ps8822_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 {
 	int rv = EC_SUCCESS;
 
@@ -206,21 +205,15 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 
 /* USB-C PPC Configuration */
 struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[USB_PD_PORT_HOST] = {
-		.i2c_port = I2C_PORT_I2C1,
-		.i2c_addr_flags = SN5S330_ADDR0_FLAGS,
-		.drv = &sn5s330_drv
-	},
-	[USB_PD_PORT_DP] = {
-		.i2c_port = I2C_PORT_I2C1,
-		.i2c_addr_flags = SN5S330_ADDR2_FLAGS,
-		.drv = &sn5s330_drv
-	},
-	[USB_PD_PORT_USB3] = {
-		.i2c_port = I2C_PORT_I2C3,
-		.i2c_addr_flags = SN5S330_ADDR1_FLAGS,
-		.drv = &sn5s330_drv
-	},
+	[USB_PD_PORT_HOST] = { .i2c_port = I2C_PORT_I2C1,
+			       .i2c_addr_flags = SN5S330_ADDR0_FLAGS,
+			       .drv = &sn5s330_drv },
+	[USB_PD_PORT_DP] = { .i2c_port = I2C_PORT_I2C1,
+			     .i2c_addr_flags = SN5S330_ADDR2_FLAGS,
+			     .drv = &sn5s330_drv },
+	[USB_PD_PORT_USB3] = { .i2c_port = I2C_PORT_I2C3,
+			       .i2c_addr_flags = SN5S330_ADDR1_FLAGS,
+			       .drv = &sn5s330_drv },
 };
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
@@ -366,14 +359,13 @@ static void board_usb_tc_disconnect(void)
 	if (port == USB_PD_PORT_HOST)
 		gpio_set_level(GPIO_UFP_PLUG_DET, 1);
 }
-DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, board_usb_tc_disconnect, \
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, board_usb_tc_disconnect,
 	     HOOK_PRIO_DEFAULT);
 
 #endif /* SECTION_IS_RW */
 
 static void board_init(void)
 {
-
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -438,6 +430,4 @@ static int command_dplane(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dplane, command_dplane,
-			"<2 | 4>",
-			"MST lane control.");
+DECLARE_CONSOLE_COMMAND(dplane, command_dplane, "<2 | 4>", "MST lane control.");
