@@ -13,8 +13,8 @@
 #include "driver/tcpm/tcpci.h"
 #include "usb_pd.h"
 
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 int pd_check_vconn_swap(int port)
 {
