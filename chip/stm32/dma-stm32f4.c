@@ -14,15 +14,15 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_DMA, outstr)
-#define CPRINTF(format, args...) cprintf(CC_DMA, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_DMA, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_DMA, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_DMA, format, ##args)
 
 stm32_dma_regs_t *STM32_DMA_REGS[] = { STM32_DMA1_REGS, STM32_DMA2_REGS };
 
 /* Callback data to use when IRQ fires */
 static struct {
-	void (*cb)(void *);	/* Callback function to call */
-	void *cb_data;		/* Callback data for callback function */
+	void (*cb)(void *); /* Callback function to call */
+	void *cb_data; /* Callback data for callback function */
 } dma_irq[STM32_DMAS_TOTAL_COUNT];
 
 /**
@@ -91,7 +91,7 @@ void dma_disable_all(void)
  * @param flags		DMA flags for the control register.
  */
 static void prepare_stream(enum dma_channel stream, unsigned count,
-		void *periph, void *memory, unsigned flags)
+			   void *periph, void *memory, unsigned flags)
 {
 	stm32_dma_stream_t *dma_stream = dma_get_channel(stream);
 	uint32_t ccr = STM32_DMA_CCR_PL_VERY_HIGH;
@@ -128,18 +128,17 @@ void dma_prepare_tx(const struct dma_option *option, unsigned count,
 	 * we're preparing the stream for transmit.
 	 */
 	prepare_stream(option->channel, count, option->periph, (void *)memory,
-			STM32_DMA_CCR_MINC | STM32_DMA_CCR_DIR_M2P |
-			option->flags);
+		       STM32_DMA_CCR_MINC | STM32_DMA_CCR_DIR_M2P |
+			       option->flags);
 }
 
-void dma_start_rx(const struct dma_option *option, unsigned count,
-		  void *memory)
+void dma_start_rx(const struct dma_option *option, unsigned count, void *memory)
 {
 	stm32_dma_stream_t *stream = dma_get_channel(option->channel);
 
 	prepare_stream(option->channel, count, option->periph, memory,
-			STM32_DMA_CCR_MINC | STM32_DMA_CCR_DIR_P2M |
-			option->flags);
+		       STM32_DMA_CCR_MINC | STM32_DMA_CCR_DIR_P2M |
+			       option->flags);
 	dma_go(stream);
 }
 
@@ -176,10 +175,8 @@ void dma_dump(enum dma_channel stream)
 	CPRINTF("scr=%x, sndtr=%x, spar=%x, sm0ar=%x, sfcr=%x\n",
 		dma_stream->scr, dma_stream->sndtr, dma_stream->spar,
 		dma_stream->sm0ar, dma_stream->sfcr);
-	CPRINTF("stream %d, isr=%x, ifcr=%x\n",
-		stream,
-		STM32_DMA_GET_ISR(stream),
-		STM32_DMA_GET_IFCR(stream));
+	CPRINTF("stream %d, isr=%x, ifcr=%x\n", stream,
+		STM32_DMA_GET_ISR(stream), STM32_DMA_GET_IFCR(stream));
 }
 
 void dma_check(enum dma_channel stream, char *buf)
@@ -218,7 +215,7 @@ void dma_test(enum dma_channel stream)
 	dma_stream->spar = (uint32_t)periph;
 	dma_stream->sm0ar = (uint32_t)memory;
 	dma_stream->sndtr = count;
-	dma_stream->sfcr  &= ~STM32_DMA_SFCR_DMDIS;
+	dma_stream->sfcr &= ~STM32_DMA_SFCR_DMDIS;
 	ctrl = STM32_DMA_CCR_PL_MEDIUM;
 	dma_stream->scr = ctrl;
 
@@ -300,17 +297,17 @@ void dma_clear_isr(enum dma_channel stream)
 }
 
 #ifdef CONFIG_DMA_DEFAULT_HANDLERS
-#define STM32_DMA_IDX(dma, x)   CONCAT4(STM32_DMA, dma, _STREAM, x)
-#define STM32_DMA_FCT(dma, x)   CONCAT4(dma_, dma, _event_interrupt_stream_, x)
-#define DECLARE_DMA_IRQ(dma, x) \
-	static void STM32_DMA_FCT(dma, x)(void) \
-	{ \
-		dma_clear_isr(STM32_DMA_IDX(dma, x)); \
-		if (dma_irq[STM32_DMA_IDX(dma, x)].cb != NULL) \
-			(*dma_irq[STM32_DMA_IDX(dma, x)].cb) \
-				(dma_irq[STM32_DMA_IDX(dma, x)].cb_data); \
-	} \
-	DECLARE_IRQ(CONCAT4(STM32_IRQ_DMA, dma, _STREAM, x), \
+#define STM32_DMA_IDX(dma, x) CONCAT4(STM32_DMA, dma, _STREAM, x)
+#define STM32_DMA_FCT(dma, x) CONCAT4(dma_, dma, _event_interrupt_stream_, x)
+#define DECLARE_DMA_IRQ(dma, x)                                          \
+	static void STM32_DMA_FCT(dma, x)(void)                          \
+	{                                                                \
+		dma_clear_isr(STM32_DMA_IDX(dma, x));                    \
+		if (dma_irq[STM32_DMA_IDX(dma, x)].cb != NULL)           \
+			(*dma_irq[STM32_DMA_IDX(dma, x)].cb)(            \
+				dma_irq[STM32_DMA_IDX(dma, x)].cb_data); \
+	}                                                                \
+	DECLARE_IRQ(CONCAT4(STM32_IRQ_DMA, dma, _STREAM, x),             \
 		    STM32_DMA_FCT(dma, x), 1);
 
 DECLARE_DMA_IRQ(1, 0);
