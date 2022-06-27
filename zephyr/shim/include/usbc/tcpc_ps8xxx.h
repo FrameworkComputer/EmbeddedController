@@ -8,7 +8,7 @@
 
 #define PS8XXX_COMPAT parade_ps8xxx
 
-#define TCPC_CONFIG_PS8XXX(id)                                                \
+#define TCPC_CONFIG_PS8XXX(id) \
 	{                                                                     \
 		.bus_type = EC_BUS_TYPE_I2C,                                  \
 		.i2c_info = {                                                 \
