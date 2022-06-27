@@ -34,15 +34,14 @@
 #include "task.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 
 /* Masks for power signals */
-#define IN_POWER_GOOD		POWER_SIGNAL_MASK(SDM845_POWER_GOOD)
-#define IN_AP_RST_ASSERTED	POWER_SIGNAL_MASK(SDM845_AP_RST_ASSERTED)
-
+#define IN_POWER_GOOD POWER_SIGNAL_MASK(SDM845_POWER_GOOD)
+#define IN_AP_RST_ASSERTED POWER_SIGNAL_MASK(SDM845_AP_RST_ASSERTED)
 
 /* Long power key press to force shutdown */
-#define DELAY_FORCE_SHUTDOWN		(8 * SECOND)
+#define DELAY_FORCE_SHUTDOWN (8 * SECOND)
 
 /*
  * If the power button is pressed to turn on, then held for this long, we
@@ -52,40 +51,40 @@
  *    into the inner loop, waiting for next event to occur (power button
  *    press or POWER_GOOD == 0).
  */
-#define DELAY_SHUTDOWN_ON_POWER_HOLD	(8 * SECOND)
+#define DELAY_SHUTDOWN_ON_POWER_HOLD (8 * SECOND)
 
 /*
  * After trigger PMIC power sequence, how long it triggers AP to turn on
  * or off. Observed that the worst case is ~150ms. Pick a safe vale.
  */
-#define PMIC_POWER_AP_RESPONSE_TIMEOUT	(350 * MSEC)
+#define PMIC_POWER_AP_RESPONSE_TIMEOUT (350 * MSEC)
 
 /*
  * After force off the switch cap, how long the PMIC/AP totally off.
  * Observed that the worst case is 2s. Pick a safe vale.
  */
-#define FORCE_OFF_RESPONSE_TIMEOUT	(4 * SECOND)
+#define FORCE_OFF_RESPONSE_TIMEOUT (4 * SECOND)
 
 /* Wait for polling the AP on signal */
-#define PMIC_POWER_AP_WAIT		(1 * MSEC)
+#define PMIC_POWER_AP_WAIT (1 * MSEC)
 
 /* The length of an issued low pulse to the PMIC_RESIN_L signal */
-#define PMIC_RESIN_PULSE_LENGTH		(20 * MSEC)
+#define PMIC_RESIN_PULSE_LENGTH (20 * MSEC)
 
 /* The timeout of the check if the system can boot AP */
-#define CAN_BOOT_AP_CHECK_TIMEOUT	(500 * MSEC)
+#define CAN_BOOT_AP_CHECK_TIMEOUT (500 * MSEC)
 
 /* Wait for polling if the system can boot AP */
-#define CAN_BOOT_AP_CHECK_WAIT		(100 * MSEC)
+#define CAN_BOOT_AP_CHECK_WAIT (100 * MSEC)
 
 /* The timeout of the check if the switchcap outputs good voltage */
-#define SWITCHCAP_PG_CHECK_TIMEOUT	(50 * MSEC)
+#define SWITCHCAP_PG_CHECK_TIMEOUT (50 * MSEC)
 
 /* Wait for polling if the switchcap outputs good voltage */
-#define SWITCHCAP_PG_CHECK_WAIT		(5 * MSEC)
+#define SWITCHCAP_PG_CHECK_WAIT (5 * MSEC)
 
 /* Delay between power-on the system and power-on the PMIC */
-#define SYSTEM_POWER_ON_DELAY		(10 * MSEC)
+#define SYSTEM_POWER_ON_DELAY (10 * MSEC)
 
 /* TODO(crosbug.com/p/25047): move to HOOK_POWER_BUTTON_CHANGE */
 /* 1 if the power button was pressed last time we checked */
@@ -182,9 +181,11 @@ void chipset_warm_reset_interrupt(enum gpio_signal signal)
 			 */
 			ap_rst_overdriven = 1;
 			gpio_set_flags(GPIO_PS_HOLD, GPIO_INT_BOTH |
-				       GPIO_SEL_1P8V | GPIO_OUT_HIGH);
+							     GPIO_SEL_1P8V |
+							     GPIO_OUT_HIGH);
 			gpio_set_flags(GPIO_AP_RST_L, GPIO_INT_BOTH |
-				       GPIO_SEL_1P8V | GPIO_OUT_LOW);
+							      GPIO_SEL_1P8V |
+							      GPIO_OUT_LOW);
 		} else {
 			/*
 			 * The pull-up rail POWER_GOOD drops.
@@ -192,10 +193,10 @@ void chipset_warm_reset_interrupt(enum gpio_signal signal)
 			 * High-Z both AP_RST_L and PS_HOLD to restore their
 			 * states.
 			 */
-			gpio_set_flags(GPIO_AP_RST_L, GPIO_INT_BOTH |
-				       GPIO_SEL_1P8V);
-			gpio_set_flags(GPIO_PS_HOLD, GPIO_INT_BOTH |
-				       GPIO_SEL_1P8V);
+			gpio_set_flags(GPIO_AP_RST_L,
+				       GPIO_INT_BOTH | GPIO_SEL_1P8V);
+			gpio_set_flags(GPIO_PS_HOLD,
+				       GPIO_INT_BOTH | GPIO_SEL_1P8V);
 			ap_rst_overdriven = 0;
 		}
 	} else {
@@ -268,7 +269,6 @@ static void wait_switchcap_power_good(int enable)
 		else
 			CPRINTS("SWITCHCAP STILL POWER GOOD!");
 	}
-
 }
 
 /**
@@ -500,7 +500,7 @@ static int power_is_enough(void)
 	 * waste the time and exit the loop.
 	 */
 	while (!system_can_boot_ap() && !charge_want_shutdown() &&
-		get_time().val < poll_deadline.val) {
+	       get_time().val < poll_deadline.val) {
 		usleep(CAN_BOOT_AP_CHECK_WAIT);
 	}
 
@@ -850,7 +850,7 @@ enum power_state_t {
 	PSTATE_COUNT,
 };
 
-static const char * const state_name[] = {
+static const char *const state_name[] = {
 	"unknown",
 	"off",
 	"on",
@@ -882,6 +882,4 @@ static int command_power(int argc, char **argv)
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(power, command_power,
-			"on/off",
-			"Turn AP power on/off");
+DECLARE_CONSOLE_COMMAND(power, command_power, "on/off", "Turn AP power on/off");
