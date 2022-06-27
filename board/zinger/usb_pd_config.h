@@ -10,7 +10,7 @@
 
 /* Timer selection for baseband PD communication */
 #define TIM_CLOCK_PD_TX_C0 14
-#define TIM_CLOCK_PD_RX_C0  3
+#define TIM_CLOCK_PD_RX_C0 3
 
 #define TIM_CLOCK_PD_TX(p) TIM_CLOCK_PD_TX_C0
 #define TIM_CLOCK_PD_RX(p) TIM_CLOCK_PD_RX_C0
@@ -46,7 +46,7 @@ static inline void spi_enable_clock(int port)
 #define TIM_TX_CCR_IDX(p) TIM_TX_CCR_C0
 #define TIM_RX_CCR_IDX(p) TIM_RX_CCR_C0
 /* connect TIM3 CH1 to TIM3_CH2 input */
-#define TIM_CCR_CS  2
+#define TIM_CCR_CS 2
 #define EXTI_COMP_MASK(p) BIT(7)
 #define IRQ_COMP STM32_IRQ_EXTI4_15
 /* the RX is inverted, triggers on rising edge */
@@ -72,7 +72,7 @@ static inline void pd_tx_spi_reset(int port)
 static inline void pd_tx_enable(int port, int polarity)
 {
 	/* Drive SPI MISO on PA6 by putting it in AF mode  */
-	STM32_GPIO_MODER(GPIO_A) |= 0x2 << (2*6);
+	STM32_GPIO_MODER(GPIO_A) |= 0x2 << (2 * 6);
 	/* Drive TX GND on PA4 */
 	STM32_GPIO_BSRR(GPIO_A) = 1 << (4 + 16 /* Reset */);
 }
@@ -83,7 +83,7 @@ static inline void pd_tx_disable(int port, int polarity)
 	/* Put TX GND (PA4) in Hi-Z state */
 	STM32_GPIO_BSRR(GPIO_A) = BIT(4) /* Set */;
 	/* Put SPI MISO (PA6) in Hi-Z by putting it in input mode  */
-	STM32_GPIO_MODER(GPIO_A) &= ~(0x3 << (2*6));
+	STM32_GPIO_MODER(GPIO_A) &= ~(0x3 << (2 * 6));
 }
 
 /* we know the plug polarity, do the right configuration */
@@ -98,7 +98,9 @@ static inline void pd_tx_init(void)
 	/* Already done in hardware_init() */
 }
 
-static inline void pd_config_init(int port, uint8_t power_role) {}
+static inline void pd_config_init(int port, uint8_t power_role)
+{
+}
 
 static inline int pd_adc_read(int port, int cc)
 {
