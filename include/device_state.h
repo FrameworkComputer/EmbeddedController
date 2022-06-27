@@ -84,4 +84,4 @@ int device_set_state(enum device_type device, enum device_state state);
  */
 void board_update_device_state(enum device_type device);
 
-#endif  /* __CROS_DEVICE_STATE_H */
+#endif /* __CROS_DEVICE_STATE_H */
