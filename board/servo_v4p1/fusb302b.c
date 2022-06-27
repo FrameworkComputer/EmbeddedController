@@ -72,7 +72,6 @@ int init_fusb302b(int p)
 	if (ret)
 		return ret;
 
-
 	ret = tcpc_read(TCPC_REG_INTERRUPTA, &interrupta);
 	if (ret)
 		return ret;
@@ -158,7 +157,6 @@ int get_cc(int *cc1, int *cc2)
 		orig_meas_cc2 = 1;
 	else
 		orig_meas_cc2 = 0;
-
 
 	/* Disable CC2 measurement switch, enable CC1 measurement switch */
 	reg &= ~TCPC_REG_SWITCHES0_MEAS_CC2;
