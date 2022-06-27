@@ -26,8 +26,8 @@
 #include "usbc_config.h"
 #include "usbc_ppc.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #include "gpio_list.h"
 
@@ -39,10 +39,8 @@ __override struct keyboard_scan_config keyscan_config = {
 	 * Unmask 0x08 in [0] (KSO_00/KSI_03, the new location of Search key);
 	 * as it still uses the legacy location (KSO_01/KSI_00).
 	 */
-	.actual_key_mask = {
-		0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca
-	},
+	.actual_key_mask = { 0x14, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff, 0xa4,
+			     0xff, 0xfe, 0x55, 0xfa, 0xca },
 	/* Other values should be the same as the default configuration. */
 	.debounce_down_us = 9 * MSEC,
 	.debounce_up_us = 30 * MSEC,
@@ -57,52 +55,42 @@ __override struct keyboard_scan_config keyscan_config = {
  * The connector has 24 pins total, and there is no pin 0.
  */
 const int keyboard_factory_scan_pins[][2] = {
-	{-1, -1}, {0, 5}, {1, 1}, {1, 0}, {0, 6},
-	{0, 7}, {1, 4}, {1, 3}, {1, 6}, {1, 7},
-	{3, 1}, {2, 0}, {1, 5}, {2, 6}, {2, 7},
-	{2, 1}, {2, 4}, {2, 5}, {1, 2}, {2, 3},
-	{2, 2}, {3, 0}, {-1, -1}, {-1, -1}, {-1, -1},
+	{ -1, -1 }, { 0, 5 }, { 1, 1 },	  { 1, 0 },   { 0, 6 },
+	{ 0, 7 },   { 1, 4 }, { 1, 3 },	  { 1, 6 },   { 1, 7 },
+	{ 3, 1 },   { 2, 0 }, { 1, 5 },	  { 2, 6 },   { 2, 7 },
+	{ 2, 1 },   { 2, 4 }, { 2, 5 },	  { 1, 2 },   { 2, 3 },
+	{ 2, 2 },   { 3, 0 }, { -1, -1 }, { -1, -1 }, { -1, -1 },
 };
 const int keyboard_factory_scan_pins_used =
-		ARRAY_SIZE(keyboard_factory_scan_pins);
+	ARRAY_SIZE(keyboard_factory_scan_pins);
 
 /* I2C port map */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "power",
-		.port = I2C_PORT_POWER,
-		.kbps = 100,
-		.scl  = GPIO_EC_I2C_POWER_SCL,
-		.sda  = GPIO_EC_I2C_POWER_SDA
-	},
-	{
-		.name = "tcpc0",
-		.port = I2C_PORT_TCPC0,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_USB_C0_PD_SCL,
-		.sda  = GPIO_EC_I2C_USB_C0_PD_SDA
-	},
-	{
-		.name = "tcpc1",
-		.port = I2C_PORT_TCPC1,
-		.kbps = 1000,
-		.scl  = GPIO_EC_I2C_USB_C1_PD_SCL,
-		.sda  = GPIO_EC_I2C_USB_C1_PD_SDA
-	},
-	{
-		.name = "eeprom",
-		.port = I2C_PORT_EEPROM,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_EEPROM_SCL,
-		.sda  = GPIO_EC_I2C_EEPROM_SDA
-	},
-	{
-		.name = "sensor",
-		.port = I2C_PORT_SENSOR,
-		.kbps = 400,
-		.scl  = GPIO_EC_I2C_SENSOR_SCL,
-		.sda  = GPIO_EC_I2C_SENSOR_SDA
-	},
+	{ .name = "power",
+	  .port = I2C_PORT_POWER,
+	  .kbps = 100,
+	  .scl = GPIO_EC_I2C_POWER_SCL,
+	  .sda = GPIO_EC_I2C_POWER_SDA },
+	{ .name = "tcpc0",
+	  .port = I2C_PORT_TCPC0,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_USB_C0_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C0_PD_SDA },
+	{ .name = "tcpc1",
+	  .port = I2C_PORT_TCPC1,
+	  .kbps = 1000,
+	  .scl = GPIO_EC_I2C_USB_C1_PD_SCL,
+	  .sda = GPIO_EC_I2C_USB_C1_PD_SDA },
+	{ .name = "eeprom",
+	  .port = I2C_PORT_EEPROM,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_EEPROM_SCL,
+	  .sda = GPIO_EC_I2C_EEPROM_SDA },
+	{ .name = "sensor",
+	  .port = I2C_PORT_SENSOR,
+	  .kbps = 400,
+	  .scl = GPIO_EC_I2C_SENSOR_SCL,
+	  .sda = GPIO_EC_I2C_SENSOR_SDA },
 };
 
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
@@ -110,37 +98,22 @@ const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Measure VBUS through a 1/10 voltage divider */
-	[ADC_VBUS] = {
-		"VBUS",
-		NPCX_ADC_CH1,
-		ADC_MAX_VOLT * 10,
-		ADC_READ_MAX + 1,
-		0
-	},
+	[ADC_VBUS] = { "VBUS", NPCX_ADC_CH1, ADC_MAX_VOLT * 10,
+		       ADC_READ_MAX + 1, 0 },
 	/*
 	 * Adapter current output or battery charging/discharging current (uV)
 	 * 18x amplification on charger side.
 	 */
-	[ADC_AMON_BMON] = {
-		"AMON_BMON",
-		NPCX_ADC_CH2,
-		ADC_MAX_VOLT * 1000 / 18,
-		ADC_READ_MAX + 1,
-		0
-	},
+	[ADC_AMON_BMON] = { "AMON_BMON", NPCX_ADC_CH2, ADC_MAX_VOLT * 1000 / 18,
+			    ADC_READ_MAX + 1, 0 },
 	/*
 	 * ISL9238 PSYS output is 1.44 uA/W over 5.6K resistor, to read
 	 * 0.8V @ 99 W, i.e. 124000 uW/mV. Using ADC_MAX_VOLT*124000 and
 	 * ADC_READ_MAX+1 as multiplier/divider leads to overflows, so we
 	 * only divide by 2 (enough to avoid precision issues).
 	 */
-	[ADC_PSYS] = {
-		"PSYS",
-		NPCX_ADC_CH3,
-		ADC_MAX_VOLT * 124000 * 2 / (ADC_READ_MAX + 1),
-		2,
-		0
-	},
+	[ADC_PSYS] = { "PSYS", NPCX_ADC_CH3,
+		       ADC_MAX_VOLT * 124000 * 2 / (ADC_READ_MAX + 1), 2, 0 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
@@ -192,17 +165,13 @@ static struct bmi_drv_data_t g_bmi160_data;
 static struct accelgyro_saved_data_t g_bma255_data;
 
 /* Matrix to rotate accelerometer into standard reference frame */
-const mat33_fp_t base_standard_ref = {
-	{ FLOAT_TO_FP(1), 0,  0},
-	{ 0,  FLOAT_TO_FP(-1),  0},
-	{ 0,  0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, FLOAT_TO_FP(-1), 0 },
+				       { 0, 0, FLOAT_TO_FP(-1) } };
 
-static const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(-1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+static const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					     { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
