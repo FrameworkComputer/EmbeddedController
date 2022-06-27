@@ -42,14 +42,14 @@ static timestamp_t encryption_deadline;
 #define FP_SENSOR_IMAGE_OFFSET 0
 #endif
 
-#define FP_MODE_ANY_CAPTURE (FP_MODE_CAPTURE | FP_MODE_ENROLL_IMAGE | \
-			     FP_MODE_MATCH)
-#define FP_MODE_ANY_DETECT_FINGER (FP_MODE_FINGER_DOWN | FP_MODE_FINGER_UP | \
-				   FP_MODE_ANY_CAPTURE)
-#define FP_MODE_ANY_WAIT_IRQ      (FP_MODE_FINGER_DOWN | FP_MODE_ANY_CAPTURE)
+#define FP_MODE_ANY_CAPTURE \
+	(FP_MODE_CAPTURE | FP_MODE_ENROLL_IMAGE | FP_MODE_MATCH)
+#define FP_MODE_ANY_DETECT_FINGER \
+	(FP_MODE_FINGER_DOWN | FP_MODE_FINGER_UP | FP_MODE_ANY_CAPTURE)
+#define FP_MODE_ANY_WAIT_IRQ (FP_MODE_FINGER_DOWN | FP_MODE_ANY_CAPTURE)
 
 /* Delay between 2 s of the sensor to detect finger removal */
-#define FINGER_POLLING_DELAY (100*MSEC)
+#define FINGER_POLLING_DELAY (100 * MSEC)
 
 /* Timing statistics. */
 static uint32_t capture_time_us;
@@ -76,8 +76,8 @@ static inline int is_raw_capture(uint32_t mode)
 {
 	int capture_type = FP_CAPTURE_TYPE(mode);
 
-	return (capture_type == FP_CAPTURE_VENDOR_FORMAT
-	     || capture_type == FP_CAPTURE_QUALITY_TEST);
+	return (capture_type == FP_CAPTURE_VENDOR_FORMAT ||
+		capture_type == FP_CAPTURE_QUALITY_TEST);
 }
 
 __maybe_unused static bool fp_match_success(int match_result)
@@ -92,10 +92,10 @@ static inline int is_test_capture(uint32_t mode)
 {
 	int capture_type = FP_CAPTURE_TYPE(mode);
 
-	return (mode & FP_MODE_CAPTURE)
-		&& (capture_type == FP_CAPTURE_PATTERN0
-		    || capture_type == FP_CAPTURE_PATTERN1
-		    || capture_type == FP_CAPTURE_RESET_TEST);
+	return (mode & FP_MODE_CAPTURE) &&
+	       (capture_type == FP_CAPTURE_PATTERN0 ||
+		capture_type == FP_CAPTURE_PATTERN1 ||
+		capture_type == FP_CAPTURE_RESET_TEST);
 }
 
 /*
@@ -119,8 +119,8 @@ static uint32_t fp_process_enroll(void)
 	res = fp_finger_enroll(fp_buffer, &percent);
 	CPRINTS("[%d]Enroll =>%d (%d%%)", templ_valid, res, percent);
 	if (res < 0)
-		return EC_MKBP_FP_ENROLL
-		     | EC_MKBP_FP_ERRCODE(EC_MKBP_FP_ERR_ENROLL_INTERNAL);
+		return EC_MKBP_FP_ENROLL |
+		       EC_MKBP_FP_ERRCODE(EC_MKBP_FP_ERR_ENROLL_INTERNAL);
 	templ_dirty |= BIT(templ_valid);
 	if (percent == 100) {
 		res = fp_enrollment_finish(fp_template[templ_valid]);
@@ -128,15 +128,15 @@ static uint32_t fp_process_enroll(void)
 			res = EC_MKBP_FP_ERR_ENROLL_INTERNAL;
 		} else {
 			template_newly_enrolled = templ_valid;
-			fp_enable_positive_match_secret(templ_valid,
-				&positive_match_secret_state);
+			fp_enable_positive_match_secret(
+				templ_valid, &positive_match_secret_state);
 			templ_valid++;
 		}
 		sensor_mode &= ~FP_MODE_ENROLL_SESSION;
 		enroll_session &= ~FP_MODE_ENROLL_SESSION;
 	}
-	return EC_MKBP_FP_ENROLL | EC_MKBP_FP_ERRCODE(res)
-	     | (percent << EC_MKBP_FP_ENROLL_PROGRESS_OFFSET);
+	return EC_MKBP_FP_ENROLL | EC_MKBP_FP_ERRCODE(res) |
+	       (percent << EC_MKBP_FP_ENROLL_PROGRESS_OFFSET);
 }
 
 static uint32_t fp_process_match(void)
@@ -161,8 +161,8 @@ static uint32_t fp_process_match(void)
 			 * with EC_MKBP_FP_ERR_MATCH_NO_INTERNAL.
 			 */
 			if (fgr >= 0 && fgr < FP_MAX_FINGER_COUNT) {
-				fp_enable_positive_match_secret(fgr,
-					&positive_match_secret_state);
+				fp_enable_positive_match_secret(
+					fgr, &positive_match_secret_state);
 			} else {
 				res = EC_MKBP_FP_ERR_MATCH_NO_INTERNAL;
 			}
@@ -187,8 +187,9 @@ static uint32_t fp_process_match(void)
 		timestamps_invalid |= FPSTATS_MATCHING_INV;
 
 	matching_time_us = time_since32(t0);
-	return EC_MKBP_FP_MATCH | EC_MKBP_FP_ERRCODE(res)
-	| ((fgr << EC_MKBP_FP_MATCH_IDX_OFFSET) & EC_MKBP_FP_MATCH_IDX_MASK);
+	return EC_MKBP_FP_MATCH | EC_MKBP_FP_ERRCODE(res) |
+	       ((fgr << EC_MKBP_FP_MATCH_IDX_OFFSET) &
+		EC_MKBP_FP_MATCH_IDX_MASK);
 }
 
 static void fp_process_finger(void)
@@ -260,12 +261,12 @@ void fp_task(void)
 				} else {
 					fp_enrollment_finish(NULL);
 				}
-				enroll_session =
-					sensor_mode & FP_MODE_ENROLL_SESSION;
+				enroll_session = sensor_mode &
+						 FP_MODE_ENROLL_SESSION;
 			}
 			if (is_test_capture(mode)) {
-				fp_sensor_acquire_image_with_mode(fp_buffer,
-					FP_CAPTURE_TYPE(mode));
+				fp_sensor_acquire_image_with_mode(
+					fp_buffer, FP_CAPTURE_TYPE(mode));
 				sensor_mode &= ~FP_MODE_CAPTURE;
 				send_mkbp_event(EC_MKBP_FP_IMAGE_READY);
 				continue;
@@ -343,13 +344,14 @@ static enum ec_status fp_command_passthru(struct host_cmd_handler_args *args)
 	if (system_is_locked())
 		return EC_RES_ACCESS_DENIED;
 
-	if (params->len > args->params_size +
-	    offsetof(struct ec_params_fp_passthru, data) ||
+	if (params->len >
+		    args->params_size +
+			    offsetof(struct ec_params_fp_passthru, data) ||
 	    params->len > args->response_max)
 		return EC_RES_INVALID_PARAM;
 
-	rc = spi_transaction_async(&spi_devices[0], params->data,
-				   params->len, out, SPI_READBACK_ALL);
+	rc = spi_transaction_async(&spi_devices[0], params->data, params->len,
+				   out, SPI_READBACK_ALL);
 	if (params->flags & EC_FP_FLAG_NOT_COMPLETE)
 		rc |= spi_transaction_wait(&spi_devices[0]);
 	else
@@ -381,8 +383,9 @@ static enum ec_status fp_command_info(struct host_cmd_handler_args *args)
 	r->template_version = FP_TEMPLATE_FORMAT_VERSION;
 
 	/* V1 is identical to V0 with more information appended */
-	args->response_size = args->version ? sizeof(*r) :
-			sizeof(struct ec_response_fp_info_v0);
+	args->response_size = args->version ?
+				      sizeof(*r) :
+				      sizeof(struct ec_response_fp_info_v0);
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_INFO, fp_command_info,
@@ -508,8 +511,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 
 		/* Encrypt the secret blob in-place. */
 		ret = aes_gcm_encrypt(key, SBP_ENC_KEY_LEN, encrypted_template,
-				      encrypted_template,
-				      encrypted_blob_size,
+				      encrypted_template, encrypted_blob_size,
 				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
 				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
 		always_memset(key, 0, sizeof(key));
@@ -550,12 +552,11 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_STATS, fp_command_stats, EC_VER_MASK(0));
 static bool template_needs_validation_value(
 	struct ec_fp_template_encryption_metadata *enc_info)
 {
-	return enc_info->struct_version == 3
-		&& FP_TEMPLATE_FORMAT_VERSION == 4;
+	return enc_info->struct_version == 3 && FP_TEMPLATE_FORMAT_VERSION == 4;
 }
 
-static int validate_template_format(
-	struct ec_fp_template_encryption_metadata *enc_info)
+static int
+validate_template_format(struct ec_fp_template_encryption_metadata *enc_info)
 {
 	if (template_needs_validation_value(enc_info))
 		/* The host requested migration to v4. */
@@ -619,9 +620,8 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 		if (enc_info->struct_version <= 3) {
 			encrypted_blob_size = sizeof(fp_template[0]);
 		} else {
-			encrypted_blob_size =
-				sizeof(fp_template[0]) +
-				sizeof(fp_positive_match_salt[0]);
+			encrypted_blob_size = sizeof(fp_template[0]) +
+					      sizeof(fp_positive_match_salt[0]);
 		}
 
 		ret = derive_encryption_key(key, enc_info->encryption_salt);
@@ -632,8 +632,7 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 
 		/* Decrypt the secret blob in-place. */
 		ret = aes_gcm_decrypt(key, SBP_ENC_KEY_LEN, encrypted_template,
-				      encrypted_template,
-				      encrypted_blob_size,
+				      encrypted_template, encrypted_blob_size,
 				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
 				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
 		always_memset(key, 0, sizeof(key));
@@ -703,7 +702,8 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_TEMPLATE, fp_command_template, EC_VER_MASK(0));
  * Add the following to your ${HOME}/.screenrc:
  *
  * zmodem catch
- * zmodem recvcmd '!!! bash -c "ascii-xfr -rdv /tmp/finger.pgm && display /tmp/finger.pgm"'
+ * zmodem recvcmd '!!! bash -c "ascii-xfr -rdv /tmp/finger.pgm && display
+ * /tmp/finger.pgm"'
  *
  * From *outside the chroot*, use screen to connect to UART console:
  *
@@ -781,8 +781,8 @@ static int command_fpcapture(int argc, char **argv)
 		if (*e || capture_type < 0)
 			return EC_ERROR_PARAM1;
 	}
-	mode = FP_MODE_CAPTURE | ((capture_type << FP_MODE_CAPTURE_TYPE_SHIFT)
-				  & FP_MODE_CAPTURE_TYPE_MASK);
+	mode = FP_MODE_CAPTURE | ((capture_type << FP_MODE_CAPTURE_TYPE_SHIFT) &
+				  FP_MODE_CAPTURE_TYPE_MASK);
 
 	rc = fp_console_action(mode);
 	if (rc == EC_SUCCESS)
@@ -799,8 +799,8 @@ static int command_fpenroll(int argc, char **argv)
 	enum ec_error_list rc;
 	int percent = 0;
 	uint32_t event;
-	static const char * const enroll_str[] = {"OK", "Low Quality",
-						  "Immobile", "Low Coverage"};
+	static const char *const enroll_str[] = { "OK", "Low Quality",
+						  "Immobile", "Low Coverage" };
 
 	/*
 	 * TODO(b/142944002): Remove this redundant check for system_is_locked
@@ -832,9 +832,7 @@ static int command_fpenroll(int argc, char **argv)
 	return rc;
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(fpenroll, command_fpenroll, NULL,
-			      "Enroll a new fingerprint",
-			      CMD_FLAG_RESTRICTED);
-
+			      "Enroll a new fingerprint", CMD_FLAG_RESTRICTED);
 
 static int command_fpmatch(int argc, char **argv)
 {
