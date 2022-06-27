@@ -13,10 +13,10 @@
 #define TMP112_I2C_ADDR_FLAGS2 (0x4A | I2C_FLAG_BIG_ENDIAN)
 #define TMP112_I2C_ADDR_FLAGS3 (0x4B | I2C_FLAG_BIG_ENDIAN)
 
-#define TMP112_REG_TEMP	0x00
-#define TMP112_REG_CONF	0x01
-#define TMP112_REG_HYST	0x02
-#define TMP112_REG_MAX	0x03
+#define TMP112_REG_TEMP 0x00
+#define TMP112_REG_CONF 0x01
+#define TMP112_REG_HYST 0x02
+#define TMP112_REG_MAX 0x03
 
 /*
  * I2C port and address information for all the board TMP112 sensors should be
