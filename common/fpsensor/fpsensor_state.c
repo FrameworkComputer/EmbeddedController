@@ -19,19 +19,18 @@
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);
 /* Fingers templates for the current user */
-uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE]
-	FP_TEMPLATE_SECTION;
+uint8_t fp_template[FP_MAX_FINGER_COUNT]
+		   [FP_ALGORITHM_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 /* Encryption/decryption buffer */
 /* TODO: On-the-fly encryption/decryption without a dedicated buffer */
 /*
  * Store the encryption metadata at the beginning of the buffer containing the
  * ciphered data.
  */
-uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE]
-	FP_TEMPLATE_SECTION;
+uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 /* Salt used in derivation of positive match secret. */
-uint8_t fp_positive_match_salt
-	[FP_MAX_FINGER_COUNT][FP_POSITIVE_MATCH_SALT_BYTES];
+uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
+			      [FP_POSITIVE_MATCH_SALT_BYTES];
 
 struct positive_match_secret_state positive_match_secret_state = {
 	.template_matched = FP_NO_SUCH_TEMPLATE,
@@ -262,23 +261,22 @@ int fp_enable_positive_match_secret(uint32_t fgr,
 	return EC_SUCCESS;
 }
 
-void fp_disable_positive_match_secret(
-	struct positive_match_secret_state *state)
+void fp_disable_positive_match_secret(struct positive_match_secret_state *state)
 {
 	state->template_matched = FP_NO_SUCH_TEMPLATE;
 	state->readable = false;
 	state->deadline.val = 0;
 }
 
-static enum ec_status fp_command_read_match_secret(
-	struct host_cmd_handler_args *args)
+static enum ec_status
+fp_command_read_match_secret(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_fp_read_match_secret *params = args->params;
 	struct ec_response_fp_read_match_secret *response = args->response;
 	int8_t fgr = params->fgr;
 	timestamp_t now = get_time();
-	struct positive_match_secret_state state_copy
-		= positive_match_secret_state;
+	struct positive_match_secret_state state_copy =
+		positive_match_secret_state;
 
 	fp_disable_positive_match_secret(&positive_match_secret_state);
 
@@ -293,13 +291,14 @@ static enum ec_status fp_command_read_match_secret(
 	}
 	if (fgr != state_copy.template_matched || !state_copy.readable) {
 		CPRINTS("Positive match secret for finger %d is not meant to "
-			"be read now.", fgr);
+			"be read now.",
+			fgr);
 		return EC_RES_ACCESS_DENIED;
 	}
 
 	if (derive_positive_match_secret(response->positive_match_secret,
-					 fp_positive_match_salt[fgr])
-		!= EC_SUCCESS) {
+					 fp_positive_match_salt[fgr]) !=
+	    EC_SUCCESS) {
 		CPRINTS("Failed to derive positive match secret for finger %d",
 			fgr);
 		/* Keep the template and encryption salt. */
