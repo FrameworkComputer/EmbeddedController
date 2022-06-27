@@ -26,26 +26,22 @@
 #ifndef CONFIG_USB_PD_TCPC_LOW_POWER
 static inline int tcpc_addr_write(int port, int i2c_addr, int reg, int val)
 {
-	return i2c_write8(tcpc_config[port].i2c_info.port,
-			  i2c_addr, reg, val);
+	return i2c_write8(tcpc_config[port].i2c_info.port, i2c_addr, reg, val);
 }
 
 static inline int tcpc_addr_write16(int port, int i2c_addr, int reg, int val)
 {
-	return i2c_write16(tcpc_config[port].i2c_info.port,
-			   i2c_addr, reg, val);
+	return i2c_write16(tcpc_config[port].i2c_info.port, i2c_addr, reg, val);
 }
 
 static inline int tcpc_addr_read(int port, int i2c_addr, int reg, int *val)
 {
-	return i2c_read8(tcpc_config[port].i2c_info.port,
-			 i2c_addr, reg, val);
+	return i2c_read8(tcpc_config[port].i2c_info.port, i2c_addr, reg, val);
 }
 
 static inline int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val)
 {
-	return i2c_read16(tcpc_config[port].i2c_info.port,
-			  i2c_addr, reg, val);
+	return i2c_read16(tcpc_config[port].i2c_info.port, i2c_addr, reg, val);
 }
 
 /*
@@ -65,8 +61,8 @@ static inline int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val)
  *    need an explicit by the caller.
  */
 
-static inline int tcpc_addr_read16_no_lpm_exit(int port, int i2c_addr,
-					       int reg, int *val)
+static inline int tcpc_addr_read16_no_lpm_exit(int port, int i2c_addr, int reg,
+					       int *val)
 {
 	return tcpc_addr_read16(port, i2c_addr, reg, val);
 }
@@ -75,49 +71,47 @@ static inline int tcpc_xfer(int port, const uint8_t *out, int out_size,
 			    uint8_t *in, int in_size)
 {
 	return i2c_xfer(tcpc_config[port].i2c_info.port,
-			tcpc_config[port].i2c_info.addr_flags,
-			out, out_size, in, in_size);
+			tcpc_config[port].i2c_info.addr_flags, out, out_size,
+			in, in_size);
 }
 
 static inline int tcpc_xfer_unlocked(int port, const uint8_t *out, int out_size,
-			    uint8_t *in, int in_size, int flags)
+				     uint8_t *in, int in_size, int flags)
 {
 	return i2c_xfer_unlocked(tcpc_config[port].i2c_info.port,
-				 tcpc_config[port].i2c_info.addr_flags,
-				 out, out_size, in, in_size, flags);
+				 tcpc_config[port].i2c_info.addr_flags, out,
+				 out_size, in, in_size, flags);
 }
 
 static inline int tcpc_read_block(int port, int reg, uint8_t *in, int size)
 {
 	return i2c_read_block(tcpc_config[port].i2c_info.port,
-			      tcpc_config[port].i2c_info.addr_flags,
-			      reg, in, size);
+			      tcpc_config[port].i2c_info.addr_flags, reg, in,
+			      size);
 }
 
-static inline int tcpc_write_block(int port, int reg,
-		const uint8_t *out, int size)
+static inline int tcpc_write_block(int port, int reg, const uint8_t *out,
+				   int size)
 {
 	return i2c_write_block(tcpc_config[port].i2c_info.port,
-			       tcpc_config[port].i2c_info.addr_flags,
-			       reg, out, size);
+			       tcpc_config[port].i2c_info.addr_flags, reg, out,
+			       size);
 }
 
-static inline int tcpc_update8(int port, int reg,
-			       uint8_t mask,
+static inline int tcpc_update8(int port, int reg, uint8_t mask,
 			       enum mask_update_action action)
 {
 	return i2c_update8(tcpc_config[port].i2c_info.port,
-			   tcpc_config[port].i2c_info.addr_flags,
-			   reg, mask, action);
+			   tcpc_config[port].i2c_info.addr_flags, reg, mask,
+			   action);
 }
 
-static inline int tcpc_update16(int port, int reg,
-				uint16_t mask,
+static inline int tcpc_update16(int port, int reg, uint16_t mask,
 				enum mask_update_action action)
 {
 	return i2c_update16(tcpc_config[port].i2c_info.port,
-			    tcpc_config[port].i2c_info.addr_flags,
-			    reg, mask, action);
+			    tcpc_config[port].i2c_info.addr_flags, reg, mask,
+			    action);
 }
 
 #else /* !CONFIG_USB_PD_TCPC_LOW_POWER */
@@ -128,40 +122,40 @@ int tcpc_addr_read16(int port, int i2c_addr, int reg, int *val);
 int tcpc_addr_read16_no_lpm_exit(int port, int i2c_addr, int reg, int *val);
 int tcpc_read_block(int port, int reg, uint8_t *in, int size);
 int tcpc_write_block(int port, int reg, const uint8_t *out, int size);
-int tcpc_xfer(int port, const uint8_t *out, int out_size,
-		uint8_t *in, int in_size);
-int tcpc_xfer_unlocked(int port, const uint8_t *out, int out_size,
-		uint8_t *in, int in_size, int flags);
+int tcpc_xfer(int port, const uint8_t *out, int out_size, uint8_t *in,
+	      int in_size);
+int tcpc_xfer_unlocked(int port, const uint8_t *out, int out_size, uint8_t *in,
+		       int in_size, int flags);
 
-int tcpc_update8(int port, int reg,
-		 uint8_t mask, enum mask_update_action action);
-int tcpc_update16(int port, int reg,
-		  uint16_t mask, enum mask_update_action action);
+int tcpc_update8(int port, int reg, uint8_t mask,
+		 enum mask_update_action action);
+int tcpc_update16(int port, int reg, uint16_t mask,
+		  enum mask_update_action action);
 
 #endif /* CONFIG_USB_PD_TCPC_LOW_POWER */
 
 static inline int tcpc_write(int port, int reg, int val)
 {
-	return tcpc_addr_write(port,
-			       tcpc_config[port].i2c_info.addr_flags, reg, val);
+	return tcpc_addr_write(port, tcpc_config[port].i2c_info.addr_flags, reg,
+			       val);
 }
 
 static inline int tcpc_write16(int port, int reg, int val)
 {
-	return tcpc_addr_write16(port,
-			tcpc_config[port].i2c_info.addr_flags, reg, val);
+	return tcpc_addr_write16(port, tcpc_config[port].i2c_info.addr_flags,
+				 reg, val);
 }
 
 static inline int tcpc_read(int port, int reg, int *val)
 {
-	return tcpc_addr_read(port,
-			      tcpc_config[port].i2c_info.addr_flags, reg, val);
+	return tcpc_addr_read(port, tcpc_config[port].i2c_info.addr_flags, reg,
+			      val);
 }
 
 static inline int tcpc_read16(int port, int reg, int *val)
 {
-	return tcpc_addr_read16(port,
-			tcpc_config[port].i2c_info.addr_flags, reg, val);
+	return tcpc_addr_read16(port, tcpc_config[port].i2c_info.addr_flags,
+				reg, val);
 }
 
 static inline void tcpc_lock(int port, int lock)
@@ -191,7 +185,7 @@ static inline int tcpm_release(int port)
 }
 
 static inline int tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2)
+			      enum tcpc_cc_voltage_status *cc2)
 {
 	return tcpc_config[port].drv->get_cc(port, cc1, cc2);
 }
@@ -281,7 +275,8 @@ static inline int tcpm_transmit(int port, enum tcpci_msg_type type,
 static inline bool tcpm_get_snk_ctrl(int port)
 {
 	return tcpc_config[port].drv->get_snk_ctrl ?
-		tcpc_config[port].drv->get_snk_ctrl(port) : false;
+		       tcpc_config[port].drv->get_snk_ctrl(port) :
+		       false;
 }
 static inline int tcpm_set_snk_ctrl(int port, int enable)
 {
@@ -293,9 +288,9 @@ static inline int tcpm_set_snk_ctrl(int port, int enable)
 
 static inline bool tcpm_get_src_ctrl(int port)
 {
-
 	return tcpc_config[port].drv->get_src_ctrl ?
-		tcpc_config[port].drv->get_src_ctrl(port) : false;
+		       tcpc_config[port].drv->get_src_ctrl(port) :
+		       false;
 }
 static inline int tcpm_set_src_ctrl(int port, int enable)
 {
@@ -444,8 +439,8 @@ static inline int tcpm_set_frs_enable(int port, int enable)
 static inline int tcpc_set_sbu(int port, bool enable)
 {
 	return tcpc_config[port].drv->set_sbu ?
-		tcpc_config[port].drv->set_sbu(port, enable) :
-		EC_SUCCESS;
+		       tcpc_config[port].drv->set_sbu(port, enable) :
+		       EC_SUCCESS;
 }
 #endif /* CONFIG_USB_PD_TCPM_SBU */
 
@@ -470,7 +465,7 @@ int tcpm_init(int port);
  * @return EC_SUCCESS or error
  */
 int tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
-	enum tcpc_cc_voltage_status *cc2);
+		enum tcpc_cc_voltage_status *cc2);
 
 /**
  * Check VBUS level
