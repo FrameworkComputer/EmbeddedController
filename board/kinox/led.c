@@ -19,16 +19,16 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_GPIO, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_GPIO, format, ##args)
 
 /*
  * Due to the CSME-Lite processing, upon startup the CPU transitions through
  * S0->S3->S5->S3->S0, causing the LED to turn on/off/on, so
  * delay turning off the LED during suspend/shutdown.
  */
-#define LED_CPU_DELAY_MS	(2000 * MSEC)
+#define LED_CPU_DELAY_MS (2000 * MSEC)
 
-const enum ec_led_id supported_led_ids[] = {EC_LED_ID_POWER_LED};
+const enum ec_led_id supported_led_ids[] = { EC_LED_ID_POWER_LED };
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
 enum led_color {
@@ -84,9 +84,9 @@ static int set_color(enum ec_led_id id, enum led_color color, int duty)
 	}
 }
 
-#define LED_PULSE_US		(2 * SECOND)
+#define LED_PULSE_US (2 * SECOND)
 /* 40 msec for nice and smooth transition. */
-#define LED_PULSE_TICK_US	(40 * MSEC)
+#define LED_PULSE_TICK_US (40 * MSEC)
 
 /*
  * When pulsing is enabled, brightness is incremented by <duty_inc> every
@@ -242,8 +242,7 @@ static int command_led(int argc, char **argv)
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(led, command_led,
-			"[debug|red|green|off|alert|crit]",
+DECLARE_CONSOLE_COMMAND(led, command_led, "[debug|red|green|off|alert|crit]",
 			"Turn on/off LED.");
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
