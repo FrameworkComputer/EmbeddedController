@@ -76,7 +76,9 @@ void usb_restore_suspended_state(void);
 #ifdef CONFIG_USB_REMOTE_WAKEUP
 void usb_wake(void);
 #else
-static inline void usb_wake(void) {}
+static inline void usb_wake(void)
+{
+}
 #endif
 
 /* Board-specific USB wake, for side-band wake, called by usb_wake above. */
