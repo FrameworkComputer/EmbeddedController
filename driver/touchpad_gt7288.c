@@ -16,7 +16,7 @@
 /* Define this to enable various warning messages during report parsing. */
 #undef DEBUG_CHECKS
 
-#define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_TOUCHPAD, format, ##args)
 
 #define GT7288_I2C_ADDR_FLAGS 0x14
 
@@ -44,9 +44,8 @@
 static int gt7288_read_desc(uint16_t register_id, uint8_t *data,
 			    size_t max_length)
 {
-	uint8_t reg_bytes[] = {
-		register_id & 0xFF, (register_id & 0xFF00) >> 8
-	};
+	uint8_t reg_bytes[] = { register_id & 0xFF,
+				(register_id & 0xFF00) >> 8 };
 	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, GT7288_I2C_ADDR_FLAGS,
 			reg_bytes, sizeof(reg_bytes), data, max_length);
 }
@@ -88,8 +87,8 @@ static void gt7288_translate_contact(const uint8_t *data,
 
 static int gt7288_read(uint8_t *data, size_t max_length)
 {
-	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, GT7288_I2C_ADDR_FLAGS,
-			NULL, 0, data, max_length);
+	return i2c_xfer(CONFIG_TOUCHPAD_I2C_PORT, GT7288_I2C_ADDR_FLAGS, NULL,
+			0, data, max_length);
 }
 
 int gt7288_read_ptp_report(struct gt7288_ptp_report *report)
@@ -102,8 +101,8 @@ int gt7288_read_ptp_report(struct gt7288_ptp_report *report)
 
 	if (data[10] > GT7288_MAX_CONTACTS) {
 		if (IS_ENABLED(DEBUG_CHECKS))
-			CPRINTS("ERROR: too many contacts (%d > %d).",
-				data[10], GT7288_MAX_CONTACTS);
+			CPRINTS("ERROR: too many contacts (%d > %d).", data[10],
+				GT7288_MAX_CONTACTS);
 		return EC_ERROR_HW_INTERNAL;
 	}
 	report->num_contacts = data[10];
@@ -150,8 +149,7 @@ static int command_gt7288_read_desc(int argc, char **argv)
 	ccprintf("\n");
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(gt7288_desc, command_gt7288_read_desc,
-			"register",
+DECLARE_CONSOLE_COMMAND(gt7288_desc, command_gt7288_read_desc, "register",
 			"Read a descriptor on the GT7288");
 
 static int command_gt7288_read_report_descriptor(int argc, char **argv)
