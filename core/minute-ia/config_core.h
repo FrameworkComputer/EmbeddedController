@@ -29,6 +29,6 @@
 /*
  * Flag indicates the task uses FPU H/W
  */
-#define MIA_TASK_FLAG_USE_FPU                   0x00000001
+#define MIA_TASK_FLAG_USE_FPU 0x00000001
 
 #endif /* __CROS_EC_CONFIG_CORE_H */
