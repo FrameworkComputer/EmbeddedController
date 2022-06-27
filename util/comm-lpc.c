@@ -14,7 +14,7 @@
 
 #include "comm-host.h"
 
-#define INITIAL_UDELAY 5     /* 5 us */
+#define INITIAL_UDELAY 5 /* 5 us */
 #define MAXIMUM_UDELAY 10000 /* 10 ms */
 
 /*
@@ -43,12 +43,11 @@ static int wait_for_ec(int status_addr, int timeout_usec)
 		if (i > 20)
 			delay = MIN(delay * 2, MAXIMUM_UDELAY);
 	}
-	return -1;  /* Timeout */
+	return -1; /* Timeout */
 }
 
-static int ec_command_lpc(int command, int version,
-			  const void *outdata, int outsize,
-			  void *indata, int insize)
+static int ec_command_lpc(int command, int version, const void *outdata,
+			  int outsize, void *indata, int insize)
 {
 	struct ec_lpc_host_args args;
 	const uint8_t *d;
@@ -112,8 +111,7 @@ static int ec_command_lpc(int command, int version,
 	csum = command + args.flags + args.command_version + args.data_size;
 
 	/* Read response and update checksum */
-	for (i = 0, dout = (uint8_t *)indata; i < args.data_size;
-	     i++, dout++) {
+	for (i = 0, dout = (uint8_t *)indata; i < args.data_size; i++, dout++) {
 		*dout = inb(EC_LPC_ADDR_HOST_PARAM + i);
 		csum += *dout;
 	}
@@ -128,9 +126,8 @@ static int ec_command_lpc(int command, int version,
 	return args.data_size;
 }
 
-static int ec_command_lpc_3(int command, int version,
-			  const void *outdata, int outsize,
-			  void *indata, int insize)
+static int ec_command_lpc_3(int command, int version, const void *outdata,
+			    int outsize, void *indata, int insize)
 {
 	struct ec_host_request rq;
 	struct ec_host_response rs;
@@ -231,10 +228,10 @@ static int ec_readmem_lpc(int offset, int bytes, void *dest)
 	if (offset >= EC_MEMMAP_SIZE - bytes)
 		return -1;
 
-	if (bytes) {				/* fixed length */
+	if (bytes) { /* fixed length */
 		for (; cnt < bytes; i++, s++, cnt++)
 			*s = inb(EC_LPC_ADDR_MEMMAP + i);
-	} else {				/* string */
+	} else { /* string */
 		for (; i < EC_MEMMAP_SIZE; i++, s++) {
 			*s = inb(EC_LPC_ADDR_MEMMAP + i);
 			cnt++;
@@ -294,9 +291,9 @@ int comm_init_lpc(void)
 		/* Protocol version 3 */
 		ec_command_proto = ec_command_lpc_3;
 		ec_max_outsize = EC_LPC_HOST_PACKET_SIZE -
-			sizeof(struct ec_host_request);
+				 sizeof(struct ec_host_request);
 		ec_max_insize = EC_LPC_HOST_PACKET_SIZE -
-			sizeof(struct ec_host_response);
+				sizeof(struct ec_host_response);
 
 	} else if (i & EC_HOST_CMD_FLAG_LPC_ARGS_SUPPORTED) {
 		/* Protocol version 2 */
