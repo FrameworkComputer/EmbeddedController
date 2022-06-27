@@ -23,7 +23,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_VBOOT, outstr)
-#define CPRINTS(format, args...) cprints(CC_VBOOT, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_VBOOT, format, ##args)
 
 struct vboot_hash_tag {
 	uint8_t hash[SHA256_DIGEST_SIZE];
@@ -31,8 +31,8 @@ struct vboot_hash_tag {
 	uint32_t size;
 };
 
-#define CHUNK_SIZE 1024       /* Bytes to hash per deferred call */
-#define WORK_INTERVAL_US 100  /* Delay between deferred calls */
+#define CHUNK_SIZE 1024 /* Bytes to hash per deferred call */
+#define WORK_INTERVAL_US 100 /* Delay between deferred calls */
 
 /* Check that CHUNK_SIZE fits in shared memory. */
 SHARED_MEM_CHECK_SIZE(CHUNK_SIZE);
@@ -40,11 +40,11 @@ SHARED_MEM_CHECK_SIZE(CHUNK_SIZE);
 static uint32_t data_offset;
 static uint32_t data_size;
 static uint32_t curr_pos;
-static const uint8_t *hash;   /* Hash, or NULL if not valid */
+static const uint8_t *hash; /* Hash, or NULL if not valid */
 static int want_abort;
 static int in_progress;
-#define VBOOT_HASH_DEFERRED	true
-#define VBOOT_HASH_BLOCKING	false
+#define VBOOT_HASH_DEFERRED true
+#define VBOOT_HASH_BLOCKING false
 
 static struct sha256_ctx ctx;
 
@@ -117,9 +117,10 @@ static void hash_next_chunk(size_t size)
 {
 #ifdef CONFIG_MAPPED_STORAGE
 	crec_flash_lock_mapped_storage(1);
-	SHA256_update(&ctx, (const uint8_t *)
-				((uintptr_t)CONFIG_MAPPED_STORAGE_BASE +
-				 data_offset + curr_pos), size);
+	SHA256_update(&ctx,
+		      (const uint8_t *)((uintptr_t)CONFIG_MAPPED_STORAGE_BASE +
+					data_offset + curr_pos),
+		      size);
 	crec_flash_lock_mapped_storage(0);
 #else
 	if (read_and_hash_chunk(data_offset + curr_pos, size) != EC_SUCCESS)
@@ -271,9 +272,9 @@ int vboot_hash_invalidate(int offset, int size)
  */
 static uint32_t get_rw_size(void)
 {
-#ifdef CONFIG_VBOOT_EFS		/* Only needed for EFS, which signs and verifies
-				 * entire RW, thus not needed for EFS2, which
-				 * verifies only the used image size. */
+#ifdef CONFIG_VBOOT_EFS /* Only needed for EFS, which signs and verifies \
+			 * entire RW, thus not needed for EFS2, which    \
+			 * verifies only the used image size. */
 	return CONFIG_RW_SIZE;
 #else
 	return system_get_image_used(EC_IMAGE_RW);
@@ -329,8 +330,8 @@ static int get_offset(int offset)
 #ifdef CONFIG_CMD_HASH
 static int command_hash(int argc, char **argv)
 {
-	uint32_t offset = CONFIG_EC_WRITABLE_STORAGE_OFF +
-			  CONFIG_RW_STORAGE_OFF;
+	uint32_t offset =
+		CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
 	uint32_t size = CONFIG_RW_SIZE;
 	char *e;
 
@@ -356,15 +357,14 @@ static int command_hash(int argc, char **argv)
 			return EC_SUCCESS;
 		} else if (!strcasecmp(argv[1], "rw")) {
 			return vboot_hash_start(
-					get_offset(EC_VBOOT_HASH_OFFSET_ACTIVE),
-					get_rw_size(),
-					NULL, 0, VBOOT_HASH_DEFERRED);
+				get_offset(EC_VBOOT_HASH_OFFSET_ACTIVE),
+				get_rw_size(), NULL, 0, VBOOT_HASH_DEFERRED);
 		} else if (!strcasecmp(argv[1], "ro")) {
 			return vboot_hash_start(
 				CONFIG_EC_PROTECTED_STORAGE_OFF +
-				CONFIG_RO_STORAGE_OFF,
-				system_get_image_used(EC_IMAGE_RO),
-				NULL, 0, VBOOT_HASH_DEFERRED);
+					CONFIG_RO_STORAGE_OFF,
+				system_get_image_used(EC_IMAGE_RO), NULL, 0,
+				VBOOT_HASH_DEFERRED);
 		}
 		return EC_ERROR_PARAM2;
 	}
@@ -384,12 +384,11 @@ static int command_hash(int argc, char **argv)
 		if (*e)
 			return EC_ERROR_PARAM3;
 
-		return vboot_hash_start(offset, size,
-					(const uint8_t *)&nonce,
+		return vboot_hash_start(offset, size, (const uint8_t *)&nonce,
 					sizeof(nonce), VBOOT_HASH_DEFERRED);
 	} else
-		return vboot_hash_start(offset, size,
-					NULL, 0, VBOOT_HASH_DEFERRED);
+		return vboot_hash_start(offset, size, NULL, 0,
+					VBOOT_HASH_DEFERRED);
 }
 DECLARE_CONSOLE_COMMAND(hash, command_hash,
 			"[abort | ro | rw] | [<offset> <size> [<nonce>]]",
@@ -399,8 +398,7 @@ DECLARE_CONSOLE_COMMAND(hash, command_hash,
 /* Host commands */
 
 /* Fill in the response with the current hash status */
-static void fill_response(struct ec_response_vboot_hash *r,
-			  int request_offset)
+static void fill_response(struct ec_response_vboot_hash *r, int request_offset)
 {
 	if (in_progress)
 		r->status = EC_VBOOT_HASH_STATUS_BUSY;
@@ -439,7 +437,7 @@ static int host_start_hash(const struct ec_params_vboot_hash *p)
 	if (offset == EC_VBOOT_HASH_OFFSET_RO)
 		size = system_get_image_used(EC_IMAGE_RO);
 	else if ((offset == EC_VBOOT_HASH_OFFSET_ACTIVE) ||
-			(offset == EC_VBOOT_HASH_OFFSET_UPDATE))
+		 (offset == EC_VBOOT_HASH_OFFSET_UPDATE))
 		size = get_rw_size();
 	offset = get_offset(offset);
 	rv = vboot_hash_start(offset, size, p->nonce_data, p->nonce_size,
@@ -493,6 +491,5 @@ host_command_vboot_hash(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 }
-DECLARE_HOST_COMMAND(EC_CMD_VBOOT_HASH,
-		     host_command_vboot_hash,
+DECLARE_HOST_COMMAND(EC_CMD_VBOOT_HASH, host_command_vboot_hash,
 		     EC_VER_MASK(0));
