@@ -69,4 +69,4 @@ int64_t get_time_dsw_pwrok(void);
  */
 void board_pwrbtn_to_pch(int level);
 
-#endif  /* __CROS_EC_POWER_BUTTON_H */
+#endif /* __CROS_EC_POWER_BUTTON_H */
