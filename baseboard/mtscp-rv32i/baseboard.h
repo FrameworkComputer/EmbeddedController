@@ -21,8 +21,8 @@
 
 /* IPI configs */
 #define CONFIG_IPC_SHARED_OBJ_BUF_SIZE 288
-#define CONFIG_IPC_SHARED_OBJ_ADDR                                             \
-	(SCP_FW_END -                                                         \
+#define CONFIG_IPC_SHARED_OBJ_ADDR \
+	(SCP_FW_END -              \
 	 (CONFIG_IPC_SHARED_OBJ_BUF_SIZE + 2 * 4 /* int32_t */) * 2)
 #define CONFIG_IPI
 #define CONFIG_RPMSG_NAME_SERVICE
@@ -62,7 +62,8 @@
 #define CONFIG_PANIC_BASE_OFFSET 0x100 /* reserved for jump data */
 
 #ifdef CHIP_VARIANT_MT8195
-#define CONFIG_PANIC_DATA_BASE (CONFIG_PANIC_DRAM_BASE + CONFIG_PANIC_BASE_OFFSET)
+#define CONFIG_PANIC_DATA_BASE \
+	(CONFIG_PANIC_DRAM_BASE + CONFIG_PANIC_BASE_OFFSET)
 #endif
 
 /* MPU settings */
