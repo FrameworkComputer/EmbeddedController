@@ -16,34 +16,32 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define BB_RETIMER_REG_SIZE	4
-#define BB_RETIMER_READ_SIZE	(BB_RETIMER_REG_SIZE + 1)
-#define BB_RETIMER_WRITE_SIZE	(BB_RETIMER_REG_SIZE + 2)
-#define BB_RETIMER_MUX_DATA_PRESENT (USB_PD_MUX_USB_ENABLED \
-				| USB_PD_MUX_DP_ENABLED \
-				| USB_PD_MUX_SAFE_MODE \
-				| USB_PD_MUX_TBT_COMPAT_ENABLED \
-				| USB_PD_MUX_USB4_ENABLED)
+#define BB_RETIMER_REG_SIZE 4
+#define BB_RETIMER_READ_SIZE (BB_RETIMER_REG_SIZE + 1)
+#define BB_RETIMER_WRITE_SIZE (BB_RETIMER_REG_SIZE + 2)
+#define BB_RETIMER_MUX_DATA_PRESENT                             \
+	(USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED |       \
+	 USB_PD_MUX_SAFE_MODE | USB_PD_MUX_TBT_COMPAT_ENABLED | \
+	 USB_PD_MUX_USB4_ENABLED)
 
-#define BB_RETIMER_MUX_USB_ALT_MODE (USB_PD_MUX_USB_ENABLED\
-				| USB_PD_MUX_DP_ENABLED \
-				| USB_PD_MUX_TBT_COMPAT_ENABLED \
-				| USB_PD_MUX_USB4_ENABLED)
+#define BB_RETIMER_MUX_USB_ALT_MODE                       \
+	(USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED | \
+	 USB_PD_MUX_TBT_COMPAT_ENABLED | USB_PD_MUX_USB4_ENABLED)
 
-#define BB_RETIMER_MUX_USB_DP_MODE (USB_PD_MUX_USB_ENABLED \
-				| USB_PD_MUX_DP_ENABLED \
-				| USB_PD_MUX_USB4_ENABLED)
+#define BB_RETIMER_MUX_USB_DP_MODE                        \
+	(USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED | \
+	 USB_PD_MUX_USB4_ENABLED)
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#define BB_RETIMER_I2C_RETRY	5
+#define BB_RETIMER_I2C_RETRY 5
 
 /**
  * Utility functions
  */
-static int bb_retimer_read(const struct usb_mux *me,
-			   const uint8_t offset, uint32_t *data)
+static int bb_retimer_read(const struct usb_mux *me, const uint8_t offset,
+			   uint32_t *data)
 {
 	int rv, retry = 0;
 	uint8_t buf[BB_RETIMER_READ_SIZE];
@@ -60,15 +58,15 @@ static int bb_retimer_read(const struct usb_mux *me,
 		 * byte[1:4] : Data [LSB -> MSB]
 		 * Stop
 		 */
-		rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags,
-		      &offset, 1, buf, BB_RETIMER_READ_SIZE);
+		rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags, &offset, 1, buf,
+			      BB_RETIMER_READ_SIZE);
 
 		if (rv == EC_SUCCESS)
 			break;
 
 		if (++retry >= BB_RETIMER_I2C_RETRY) {
-			CPRINTS("C%d: Retimer I2C read err=%d",
-				me->usb_port, rv);
+			CPRINTS("C%d: Retimer I2C read err=%d", me->usb_port,
+				rv);
 			return rv;
 		}
 		msleep(10);
@@ -82,8 +80,8 @@ static int bb_retimer_read(const struct usb_mux *me,
 	return EC_SUCCESS;
 }
 
-static int bb_retimer_write(const struct usb_mux *me,
-			    const uint8_t offset, uint32_t data)
+static int bb_retimer_write(const struct usb_mux *me, const uint8_t offset,
+			    uint32_t data)
 {
 	int rv, retry = 0;
 	uint8_t buf[BB_RETIMER_WRITE_SIZE];
@@ -109,14 +107,14 @@ static int bb_retimer_write(const struct usb_mux *me,
 	 */
 	while (1) {
 		rv = i2c_xfer(me->i2c_port, me->i2c_addr_flags, buf,
-			     BB_RETIMER_WRITE_SIZE, NULL, 0);
+			      BB_RETIMER_WRITE_SIZE, NULL, 0);
 
 		if (rv == EC_SUCCESS)
 			break;
 
 		if (++retry >= BB_RETIMER_I2C_RETRY) {
-			CPRINTS("C%d: Retimer I2C write err=%d",
-				me->usb_port, rv);
+			CPRINTS("C%d: Retimer I2C write err=%d", me->usb_port,
+				rv);
 			break;
 		}
 		msleep(10);
@@ -157,7 +155,8 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 				  uint32_t *set_retimer_con)
 {
 	union tbt_mode_resp_cable cable_resp = {
-		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME) };
+		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME)
+	};
 	union tbt_mode_resp_device dev_resp;
 	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
 
@@ -171,7 +170,7 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 	 *
 	 */
 	if (is_active_cable_element_retimer(port) &&
-	   (mux_state & BB_RETIMER_MUX_USB_DP_MODE))
+	    (mux_state & BB_RETIMER_MUX_USB_DP_MODE))
 		*set_retimer_con |= BB_RETIMER_RE_TIMER_DRIVER;
 
 	/*
@@ -184,7 +183,7 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 	 */
 	if ((mux_state & BB_RETIMER_MUX_USB_ALT_MODE) &&
 	    ((cable_type == IDH_PTYPE_ACABLE) ||
-	      cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE))
+	     cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE))
 		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
 
 	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ||
@@ -239,7 +238,7 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 */
 		if ((cable_type == IDH_PTYPE_ACABLE ||
 		     cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE) &&
-		     cable_resp.lsrx_comm == UNIDIR_LSRX_COMM)
+		    cable_resp.lsrx_comm == UNIDIR_LSRX_COMM)
 			*set_retimer_con |= BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
 
 		/*
@@ -251,9 +250,9 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 * 10..11b - Reserved
 		 */
 		*set_retimer_con |= BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(
-				    mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ?
-				    get_tbt_cable_speed(port) :
-				    get_usb4_cable_speed(port));
+			mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ?
+				get_tbt_cable_speed(port) :
+				get_usb4_cable_speed(port));
 
 		/*
 		 * Bits 29-28: TBT_GEN_SUPPORT
@@ -262,8 +261,8 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 		 *                           20.0625Gb/s, 20.000Gb/s)
 		 * 10..11b - Reserved
 		 */
-		*set_retimer_con |= BB_RETIMER_TBT_CABLE_GENERATION(
-				       cable_resp.tbt_rounded);
+		*set_retimer_con |=
+			BB_RETIMER_TBT_CABLE_GENERATION(cable_resp.tbt_rounded);
 	}
 }
 
@@ -284,7 +283,8 @@ static void retimer_set_state_ufp(int port, mux_state_t mux_state,
 	/* TODO:b/168890624: Set USB4 retimer config for UFP */
 	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED) {
 		union tbt_dev_mode_enter_cmd ufp_tbt_enter_mode = {
-			.raw_value = pd_ufp_get_enter_mode(port)};
+			.raw_value = pd_ufp_get_enter_mode(port)
+		};
 		/*
 		 * Bit 2: RE_TIMER_DRIVER
 		 * 0 - Re-driver
@@ -316,9 +316,9 @@ static void retimer_set_state_ufp(int port, mux_state_t mux_state,
 		 */
 		if ((IS_ENABLED(CONFIG_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE) &&
 		     ufp_tbt_enter_mode.intel_spec_b0 ==
-					VENDOR_SPECIFIC_SUPPORTED) ||
+			     VENDOR_SPECIFIC_SUPPORTED) ||
 		    ufp_tbt_enter_mode.vendor_spec_b1 ==
-					VENDOR_SPECIFIC_SUPPORTED)
+			    VENDOR_SPECIFIC_SUPPORTED)
 			*set_retimer_con |= BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE;
 
 		/*
@@ -352,7 +352,7 @@ static void retimer_set_state_ufp(int port, mux_state_t mux_state,
 		 * Set according to TBT3 Enter Mode bit 18:16
 		 */
 		*set_retimer_con |= BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(
-					ufp_tbt_enter_mode.tbt_cable_speed);
+			ufp_tbt_enter_mode.tbt_cable_speed);
 		/*
 		 * Bits 29-28: TBT_GEN_SUPPORT
 		 * 00b - 3rd generation TBT (10.3125 and 20.625Gb/s)
@@ -363,7 +363,7 @@ static void retimer_set_state_ufp(int port, mux_state_t mux_state,
 		 * Set according to TBT3 Enter Mode bit 20:19
 		 */
 		*set_retimer_con |= BB_RETIMER_TBT_CABLE_GENERATION(
-				       ufp_tbt_enter_mode.tbt_rounded);
+			ufp_tbt_enter_mode.tbt_rounded);
 	}
 }
 
@@ -429,7 +429,7 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 		 */
 		dp_pin_mode = get_dp_pin_mode(port);
 		if (dp_pin_mode == MODE_DP_PIN_C ||
-			dp_pin_mode == MODE_DP_PIN_D)
+		    dp_pin_mode == MODE_DP_PIN_D)
 			set_retimer_con |= BB_RETIMER_DP_PIN_ASSIGNMENT;
 
 		/*
@@ -472,7 +472,7 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 
 	/* Writing the register4 */
 	return bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE,
-			set_retimer_con);
+				set_retimer_con);
 }
 
 void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
@@ -544,8 +544,7 @@ static int retimer_init(const struct usb_mux *me)
 	if (data != BB_RETIMER_DEVICE_ID)
 		return EC_ERROR_INVAL;
 #else
-	if ((data != BB_RETIMER_VENDOR_ID_1) &&
-			data != BB_RETIMER_VENDOR_ID_2)
+	if ((data != BB_RETIMER_VENDOR_ID_1) && data != BB_RETIMER_VENDOR_ID_2)
 		return EC_ERROR_INVAL;
 
 	rv = bb_retimer_read(me, BB_RETIMER_REG_DEVICE_ID, &data);
@@ -615,10 +614,9 @@ static int console_command_bb_retimer(int argc, char **argv)
 			else {
 				rv = bb_retimer_write(mux, reg, val);
 				if (rv == EC_SUCCESS) {
-					rv = bb_retimer_read(
-						mux, reg, &data);
-				if (rv == EC_SUCCESS && data != val)
-					rv = EC_ERROR_UNKNOWN;
+					rv = bb_retimer_read(mux, reg, &data);
+					if (rv == EC_SUCCESS && data != val)
+						rv = EC_ERROR_UNKNOWN;
 				}
 			}
 			if (rv == EC_SUCCESS)
