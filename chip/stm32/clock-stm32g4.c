@@ -21,14 +21,14 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
-#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
-#define MHZ(x) ((x) * 1000000)
-#define WAIT_STATE_FREQ_STEP_HZ	MHZ(20)
+#define MHZ(x) ((x)*1000000)
+#define WAIT_STATE_FREQ_STEP_HZ MHZ(20)
 /* PLL configuration constants */
-#define STM32G4_SYSCLK_MAX_HZ		MHZ(170)
-#define STM32G4_HSI_CLK_HZ		MHZ(16)
-#define STM32G4_PLL_IN_FREQ_HZ		MHZ(4)
+#define STM32G4_SYSCLK_MAX_HZ MHZ(170)
+#define STM32G4_HSI_CLK_HZ MHZ(16)
+#define STM32G4_PLL_IN_FREQ_HZ MHZ(4)
 #define STM32G4_PLL_R 2
 #define STM32G4_AHB_PRE 1
 #define STM32G4_APB1_PRE 1
@@ -42,7 +42,7 @@ enum rcc_clksrc {
 };
 
 static void stm32g4_config_pll(uint32_t hclk_hz, uint32_t pll_src,
-			      uint32_t pll_clk_in_hz)
+			       uint32_t pll_clk_in_hz)
 {
 	/*
 	 * The pll output frequency (Fhclkc) is determined by:
@@ -81,20 +81,16 @@ static void stm32g4_config_pll(uint32_t hclk_hz, uint32_t pll_src,
 	ASSERT(pll_m && (pll_m <= 16));
 	ASSERT((pll_n >= 8) && (pll_n <= 127));
 
-	hclk_freq = pll_clk_in_hz * pll_n / (pll_m *
-					      STM32G4_PLL_R * STM32G4_AHB_PRE);
+	hclk_freq = pll_clk_in_hz * pll_n /
+		    (pll_m * STM32G4_PLL_R * STM32G4_AHB_PRE);
 	/* Ensure that there aren't any integer rounding errors */
 	ASSERT(hclk_freq == hclk_hz);
 
 	/* Program PLL config register */
-	STM32_RCC_PLLCFGR = PLLCFGR_PLLP(0) |
-		PLLCFGR_PLLR(STM32G4_PLL_R / 2 - 1) |
-		PLLCFGR_PLLR_EN |
-		PLLCFGR_PLLQ(0) |
-		PLLCFGR_PLLQ_EN |
-		PLLCFGR_PLLN(pll_n) |
-		PLLCFGR_PLLM(pll_m - 1) |
-		pll_src;
+	STM32_RCC_PLLCFGR =
+		PLLCFGR_PLLP(0) | PLLCFGR_PLLR(STM32G4_PLL_R / 2 - 1) |
+		PLLCFGR_PLLR_EN | PLLCFGR_PLLQ(0) | PLLCFGR_PLLQ_EN |
+		PLLCFGR_PLLN(pll_n) | PLLCFGR_PLLM(pll_m - 1) | pll_src;
 
 	/* Wait until PLL is locked */
 	wait_for_ready(&(STM32_RCC_CR), STM32_RCC_CR_PLLON,
@@ -116,8 +112,8 @@ static void stm32g4_config_pll(uint32_t hclk_hz, uint32_t pll_src,
 static void stm32g4_config_low_speed_clock(void)
 {
 	/* Ensure that LSI is ON */
-	wait_for_ready(&(STM32_RCC_CSR),
-		STM32_RCC_CSR_LSION, STM32_RCC_CSR_LSIRDY);
+	wait_for_ready(&(STM32_RCC_CSR), STM32_RCC_CSR_LSION,
+		       STM32_RCC_CSR_LSIRDY);
 
 	/* Setup RTC Clock input */
 	STM32_RCC_BDCR |= STM32_RCC_BDCR_BDRST;
@@ -163,10 +159,10 @@ void stm32g4_set_flash_ws(uint32_t freq_hz)
 	 * found in Table 9 of RM0440 - STM32G4 technical reference manual. A
 	 * table lookup is not required though as WS = HCLK (MHz) / 20
 	 */
-	ws = freq_hz /  WAIT_STATE_FREQ_STEP_HZ;
+	ws = freq_hz / WAIT_STATE_FREQ_STEP_HZ;
 	/* Enable data and instruction cache */
 	STM32_FLASH_ACR |= STM32_FLASH_ACR_DCEN | STM32_FLASH_ACR_ICEN |
-		STM32_FLASH_ACR_PRFTEN | ws;
+			   STM32_FLASH_ACR_PRFTEN | ws;
 }
 
 void clock_init(void)
@@ -255,16 +251,14 @@ void clock_enable_module(enum module_id module, int enable)
 	} else if (module == MODULE_I2C) {
 		if (enable) {
 			/* Enable clocks to I2C modules if necessary */
-			STM32_RCC_APB1ENR1 |=
-				STM32_RCC_APB1ENR1_I2C1EN |
-				STM32_RCC_APB1ENR1_I2C2EN |
-				STM32_RCC_APB1ENR1_I2C3EN;
+			STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_I2C1EN |
+					      STM32_RCC_APB1ENR1_I2C2EN |
+					      STM32_RCC_APB1ENR1_I2C3EN;
 			STM32_RCC_APB1ENR2 |= STM32_RCC_APB1ENR2_I2C4EN;
 		} else {
-			STM32_RCC_APB1ENR1 &=
-				~(STM32_RCC_APB1ENR1_I2C1EN |
-				  STM32_RCC_APB1ENR1_I2C2EN |
-				  STM32_RCC_APB1ENR1_I2C3EN);
+			STM32_RCC_APB1ENR1 &= ~(STM32_RCC_APB1ENR1_I2C1EN |
+						STM32_RCC_APB1ENR1_I2C2EN |
+						STM32_RCC_APB1ENR1_I2C3EN);
 			STM32_RCC_APB1ENR2 &= ~STM32_RCC_APB1ENR2_I2C4EN;
 		}
 	} else if (module == MODULE_ADC) {
@@ -274,7 +268,7 @@ void clock_enable_module(enum module_id module, int enable)
 					      STM32_RCC_APB2ENR_ADC345EN);
 		else
 			STM32_RCC_AHB2ENR &= ~(STM32_RCC_AHB2ENR_ADC12EN |
-					      STM32_RCC_APB2ENR_ADC345EN);
+					       STM32_RCC_APB2ENR_ADC345EN);
 	} else {
 		CPRINTS("stm32g4: enable clock module %d not supported",
 			module);
