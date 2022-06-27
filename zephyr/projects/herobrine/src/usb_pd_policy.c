@@ -13,8 +13,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 int pd_check_vconn_swap(int port)
 {
@@ -94,11 +94,11 @@ __override int svdm_dp_config(int port, uint32_t *payload)
 	 *  (3) plug a monitor to the port-1 dongle.
 	 */
 
-	payload[0] = VDO(USB_SID_DISPLAYPORT, 1,
-			 CMD_DP_CONFIG | VDO_OPOS(opos));
-	payload[1] = VDO_DP_CFG(pin_mode,      /* pin mode */
-				1,             /* DPv1.3 signaling */
-				2);            /* UFP connected */
+	payload[0] =
+		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG | VDO_OPOS(opos));
+	payload[1] = VDO_DP_CFG(pin_mode, /* pin mode */
+				1, /* DPv1.3 signaling */
+				2); /* UFP connected */
 	return 2;
 };
 
@@ -176,8 +176,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		 * because of the board USB-C topology (limited to 2
 		 * lanes DP).
 		 */
-		usb_mux_set(port, USB_PD_MUX_DOCK,
-			    USB_SWITCH_CONNECT,
+		usb_mux_set(port, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
 		/* Disconnect the DP port selection mux. */
@@ -189,13 +188,11 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 			ppc_set_sbu(port, 0);
 
 		/* Disconnect the DP but keep the USB SS lines in TCPC chip. */
-		usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
-			    USB_SWITCH_CONNECT,
+		usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 
-	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-	    (irq || lvl))
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) && (irq || lvl))
 		/*
 		 * Wake up the AP.  IRQ or level high indicates a DP sink is now
 		 * present.
@@ -222,8 +219,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		CPRINTS("C%d: Recv IRQ. HPD->1", port);
 
 		/* Set the minimum time delay (2ms) for the next HPD IRQ */
-		svdm_hpd_deadline[port] = get_time().val +
-			HPD_USTREAM_DEBOUNCE_LVL;
+		svdm_hpd_deadline[port] =
+			get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 	} else if (irq & !lvl) {
 		CPRINTF("ERR:HPD:IRQ&LOW\n");
 		return 0;
@@ -231,8 +228,8 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		CPRINTS("C%d: Recv lvl. HPD->%d", port, lvl);
 		gpio_pin_set_dt(hpd, lvl);
 		/* Set the minimum time delay (2ms) for the next HPD IRQ */
-		svdm_hpd_deadline[port] = get_time().val +
-			HPD_USTREAM_DEBOUNCE_LVL;
+		svdm_hpd_deadline[port] =
+			get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 	}
 
 	return 1;
@@ -248,10 +245,10 @@ __override void svdm_exit_dp_mode(int port)
 
 		/* Signal AP for the HPD low event */
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
-					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 		CPRINTS("C%d: DP exit. HPD->0", port);
-		gpio_pin_set_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_dp_hot_plug_det_r), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_hot_plug_det_r),
+				0);
 	}
 }
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
