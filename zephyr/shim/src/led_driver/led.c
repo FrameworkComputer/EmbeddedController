@@ -24,7 +24,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(led, LOG_LEVEL_ERR);
 
-#define LED_COLOR_NODE  DT_PATH(led_colors)
+#define LED_COLOR_NODE DT_PATH(led_colors)
 
 struct led_color_node_t {
 	struct led_pins_node_t *pins_node;
@@ -37,8 +37,7 @@ enum led_extra_flag_t {
 	LED_CHFLAG_DEFAULT,
 };
 
-#define DECLARE_PINS_NODE(id)						\
-extern struct led_pins_node_t PINS_NODE(id);
+#define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED)
 DT_FOREACH_CHILD(PWM_LED_PINS_NODE, DECLARE_PINS_NODE)
@@ -59,7 +58,7 @@ DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, DECLARE_PINS_NODE)
  * 3, 4, 5 < period_3 -> LED_COLOR_3 for 3 secs
  * 6, 7, 8 < period_4 -> LED_COLOR_4 for 3 secs
  */
-#define MAX_COLOR	4
+#define MAX_COLOR 4
 
 struct node_prop_t {
 	enum charge_state pwr_state;
@@ -80,53 +79,50 @@ struct node_prop_t {
  * HOOT_TICK_INTERVAL_MS
  */
 
-#define PERIOD_VAL(id) COND_CODE_1(DT_NODE_HAS_PROP(id, period_ms),	\
-		(DT_PROP(id, period_ms) / HOOK_TICK_INTERVAL_MS), (0))
+#define PERIOD_VAL(id)                               \
+	COND_CODE_1(DT_NODE_HAS_PROP(id, period_ms), \
+		    (DT_PROP(id, period_ms) / HOOK_TICK_INTERVAL_MS), (0))
 
-#define LED_PERIOD(color_num, state_id)					\
+#define LED_PERIOD(color_num, state_id) \
 	PERIOD_VAL(DT_CHILD(state_id, color_##color_num))
 
-#define LED_PLUS_PERIOD(color_num, state_id)				\
-	+ LED_PERIOD(color_num, state_id)
+#define LED_PLUS_PERIOD(color_num, state_id) +LED_PERIOD(color_num, state_id)
 
-#define ACC_PERIOD(color_num, state_id)					\
+#define ACC_PERIOD(color_num, state_id) \
 	(0 LISTIFY(color_num, LED_PLUS_PERIOD, (), state_id))
 
-#define PINS_NODE_ADDR(id)	DT_PHANDLE(id, led_color)
-#define LED_COLOR_INIT(color_num, color_num_plus_one, state_id)		\
-{									\
-	.pins_node = COND_CODE_1(					\
-		DT_NODE_EXISTS(DT_CHILD(state_id, color_##color_num)),	\
-		(&PINS_NODE(PINS_NODE_ADDR(				\
-			DT_CHILD(state_id, color_##color_num)))),	\
-		(NULL)),						\
-	.acc_period = ACC_PERIOD(color_num_plus_one, state_id)		\
-}
+#define PINS_NODE_ADDR(id) DT_PHANDLE(id, led_color)
+#define LED_COLOR_INIT(color_num, color_num_plus_one, state_id)                \
+	{                                                                      \
+		.pins_node = COND_CODE_1(                                      \
+			DT_NODE_EXISTS(DT_CHILD(state_id, color_##color_num)), \
+			(&PINS_NODE(PINS_NODE_ADDR(                            \
+				DT_CHILD(state_id, color_##color_num)))),      \
+			(NULL)),                                               \
+		.acc_period = ACC_PERIOD(color_num_plus_one, state_id)         \
+	}
 
 /*
  * Initialize node_array struct with prop listed in dts
  */
-#define SET_LED_VALUES(state_id)					\
-{									\
-	.pwr_state = GET_PROP(state_id, charge_state),			\
-	.chipset_state = GET_PROP(state_id, chipset_state),		\
-	.led_extra_flag = GET_PROP(state_id, extra_flag),		\
-	.batt_lvl = COND_CODE_1(					\
-			DT_NODE_HAS_PROP(state_id, batt_lvl),		\
-			(DT_PROP(state_id, batt_lvl)), ({-1, -1})),	\
-	.charge_port = COND_CODE_1(					\
-			DT_NODE_HAS_PROP(state_id, charge_port),	\
-			(DT_PROP(state_id, charge_port)), (-1)),	\
-	.led_colors = {LED_COLOR_INIT(0, 1, state_id),			\
-		       LED_COLOR_INIT(1, 2, state_id),			\
-		       LED_COLOR_INIT(2, 3, state_id),			\
-		       LED_COLOR_INIT(3, 4, state_id),			\
-		      }							\
-},
+#define SET_LED_VALUES(state_id)                                              \
+	{ .pwr_state = GET_PROP(state_id, charge_state),                      \
+	  .chipset_state = GET_PROP(state_id, chipset_state),                 \
+	  .led_extra_flag = GET_PROP(state_id, extra_flag),                   \
+	  .batt_lvl = COND_CODE_1(DT_NODE_HAS_PROP(state_id, batt_lvl),       \
+				  (DT_PROP(state_id, batt_lvl)),              \
+				  ({ -1, -1 })),                              \
+	  .charge_port = COND_CODE_1(DT_NODE_HAS_PROP(state_id, charge_port), \
+				     (DT_PROP(state_id, charge_port)), (-1)), \
+	  .led_colors = {                                                     \
+		  LED_COLOR_INIT(0, 1, state_id),                             \
+		  LED_COLOR_INIT(1, 2, state_id),                             \
+		  LED_COLOR_INIT(2, 3, state_id),                             \
+		  LED_COLOR_INIT(3, 4, state_id),                             \
+	  } },
 
-static const struct node_prop_t node_array[] = {
-	DT_FOREACH_CHILD(LED_COLOR_NODE, SET_LED_VALUES)
-};
+static const struct node_prop_t node_array[] = { DT_FOREACH_CHILD(
+	LED_COLOR_NODE, SET_LED_VALUES) };
 
 static enum power_state get_chipset_state(void)
 {
@@ -159,7 +155,7 @@ static bool find_node_with_extra_flag(int i)
 	case LED_CHFLAG_DEFAULT:
 		if (chflags & CHARGE_FLAG_FORCE_IDLE) {
 			if (node_array[i].led_extra_flag ==
-					LED_CHFLAG_FORCE_IDLE)
+			    LED_CHFLAG_FORCE_IDLE)
 				found_node = true;
 		} else {
 			if (node_array[i].led_extra_flag == LED_CHFLAG_DEFAULT)
@@ -168,14 +164,14 @@ static bool find_node_with_extra_flag(int i)
 		break;
 	default:
 		LOG_ERR("Invalid led extra flag %d",
-				node_array[i].led_extra_flag);
+			node_array[i].led_extra_flag);
 		break;
 	}
 
 	return found_node;
 }
 
-#define GET_PERIOD(n_idx, c_idx)  node_array[n_idx].led_colors[c_idx].acc_period
+#define GET_PERIOD(n_idx, c_idx) node_array[n_idx].led_colors[c_idx].acc_period
 #define GET_PIN_NODE(n_idx, c_idx) node_array[n_idx].led_colors[c_idx].pins_node
 
 static void set_color(int node_idx, uint32_t ticks)
