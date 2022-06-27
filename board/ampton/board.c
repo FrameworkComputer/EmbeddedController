@@ -65,8 +65,8 @@ int ppc_get_alert_status(int port)
 /******************************************************************************/
 /* USB-C MUX Configuration */
 
-#define USB_PD_PORT_ITE_0      0
-#define USB_PD_PORT_ITE_1      1
+#define USB_PD_PORT_ITE_0 0
+#define USB_PD_PORT_ITE_1 1
 
 static int tune_mux(const struct usb_mux *me);
 
@@ -101,8 +101,8 @@ static int tune_mux(const struct usb_mux *me)
 	/* Auto EQ disabled, compensate for channel lost up to 3.6dB */
 	RETURN_ERROR(mux_write(me, PS8XXX_REG_MUX_DP_EQ_CONFIGURATION, 0x98));
 	/* DP output swing adjustment +15% */
-	RETURN_ERROR(mux_write(me, PS8XXX_REG_MUX_DP_OUTPUT_CONFIGURATION,
-			       0xc0));
+	RETURN_ERROR(
+		mux_write(me, PS8XXX_REG_MUX_DP_OUTPUT_CONFIGURATION, 0xc0));
 
 	return EC_SUCCESS;
 }
@@ -110,44 +110,44 @@ static int tune_mux(const struct usb_mux *me)
 /* ADC channels */
 const struct adc_t adc_channels[] = {
 	/* Vbus C0 sensing (10x voltage divider). PPVAR_USB_C0_VBUS */
-	[ADC_VBUS_C0] = {.name = "VBUS_C0",
-			 .factor_mul = 10 * ADC_MAX_MVOLT,
-			 .factor_div = ADC_READ_MAX + 1,
-			 .shift = 0,
-			 .channel = CHIP_ADC_CH13},
+	[ADC_VBUS_C0] = { .name = "VBUS_C0",
+			  .factor_mul = 10 * ADC_MAX_MVOLT,
+			  .factor_div = ADC_READ_MAX + 1,
+			  .shift = 0,
+			  .channel = CHIP_ADC_CH13 },
 	/* Vbus C1 sensing (10x voltage divider). SUB_EC_ADC */
-	[ADC_VBUS_C1] = {.name = "VBUS_C1",
-			 .factor_mul = 10 * ADC_MAX_MVOLT,
-			 .factor_div = ADC_READ_MAX + 1,
-			 .shift = 0,
-			 .channel = CHIP_ADC_CH14},
+	[ADC_VBUS_C1] = { .name = "VBUS_C1",
+			  .factor_mul = 10 * ADC_MAX_MVOLT,
+			  .factor_div = ADC_READ_MAX + 1,
+			  .shift = 0,
+			  .channel = CHIP_ADC_CH14 },
 	/* Convert to raw mV for thermistor table lookup */
-	[ADC_TEMP_SENSOR_AMB] = {.name = "TEMP_AMB",
-			 .factor_mul = ADC_MAX_MVOLT,
-			 .factor_div = ADC_READ_MAX + 1,
-			 .shift = 0,
-			 .channel = CHIP_ADC_CH3},
+	[ADC_TEMP_SENSOR_AMB] = { .name = "TEMP_AMB",
+				  .factor_mul = ADC_MAX_MVOLT,
+				  .factor_div = ADC_READ_MAX + 1,
+				  .shift = 0,
+				  .channel = CHIP_ADC_CH3 },
 	/* Convert to raw mV for thermistor table lookup */
-	[ADC_TEMP_SENSOR_CHARGER] = {.name = "TEMP_CHARGER",
-			 .factor_mul = ADC_MAX_MVOLT,
-			 .factor_div = ADC_READ_MAX + 1,
-			 .shift = 0,
-			 .channel = CHIP_ADC_CH5},
+	[ADC_TEMP_SENSOR_CHARGER] = { .name = "TEMP_CHARGER",
+				      .factor_mul = ADC_MAX_MVOLT,
+				      .factor_div = ADC_READ_MAX + 1,
+				      .shift = 0,
+				      .channel = CHIP_ADC_CH5 },
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_BATTERY] = {.name = "Battery",
-				 .type = TEMP_SENSOR_TYPE_BATTERY,
-				 .read = charge_get_battery_temp},
-	[TEMP_SENSOR_AMBIENT] = {.name = "Ambient",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_51k1_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_AMB},
-	[TEMP_SENSOR_CHARGER] = {.name = "Charger",
-				 .type = TEMP_SENSOR_TYPE_BOARD,
-				 .read = get_temp_3v3_13k7_47k_4050b,
-				 .idx = ADC_TEMP_SENSOR_CHARGER},
+	[TEMP_SENSOR_BATTERY] = { .name = "Battery",
+				  .type = TEMP_SENSOR_TYPE_BATTERY,
+				  .read = charge_get_battery_temp },
+	[TEMP_SENSOR_AMBIENT] = { .name = "Ambient",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_51k1_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_AMB },
+	[TEMP_SENSOR_CHARGER] = { .name = "Charger",
+				  .type = TEMP_SENSOR_TYPE_BOARD,
+				  .read = get_temp_3v3_13k7_47k_4050b,
+				  .idx = ADC_TEMP_SENSOR_CHARGER },
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
@@ -156,35 +156,25 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 static struct mutex g_lid_mutex;
 static struct mutex g_base_mutex;
 
-const mat33_fp_t lid_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t lid_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				      { FLOAT_TO_FP(1), 0, 0 },
+				      { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t base_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t gyro_standard_ref = {
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(1)}
-};
+const mat33_fp_t gyro_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
+				       { FLOAT_TO_FP(1), 0, 0 },
+				       { 0, 0, FLOAT_TO_FP(1) } };
 
-const mat33_fp_t base_standard_ref_icm42607 = {
-	{ 0, FLOAT_TO_FP(1), 0},
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t base_standard_ref_icm42607 = { { 0, FLOAT_TO_FP(1), 0 },
+						{ FLOAT_TO_FP(1), 0, 0 },
+						{ 0, 0, FLOAT_TO_FP(-1) } };
 
-const mat33_fp_t lid_standard_ref_sku57 = {
-	{ FLOAT_TO_FP(1), 0, 0},
-	{ 0, FLOAT_TO_FP(-1), 0},
-	{ 0, 0, FLOAT_TO_FP(-1)}
-};
+const mat33_fp_t lid_standard_ref_sku57 = { { FLOAT_TO_FP(1), 0, 0 },
+					    { 0, FLOAT_TO_FP(-1), 0 },
+					    { 0, 0, FLOAT_TO_FP(-1) } };
 /* sensor private data */
 static struct kionix_accel_data g_kx022_data;
 static struct bmi_drv_data_t g_bmi160_data;
@@ -355,9 +345,9 @@ unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 static int board_is_convertible(void)
 {
 	/* SKU IDs of Ampton & unprovisioned: 1, 2, 3, 4, 255 */
-	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 4
-		|| sku_id == 57 || sku_id == 255;
-	}
+	return sku_id == 1 || sku_id == 2 || sku_id == 3 || sku_id == 4 ||
+	       sku_id == 57 || sku_id == 255;
+}
 
 static int board_with_sensor_bma253(void)
 {
@@ -389,13 +379,12 @@ static void board_update_sensor_config_from_sku(void)
 		if (board_with_sensor_icm42607()) {
 			motion_sensors[BASE_ACCEL] =
 				motion_sensor_accel_icm42607;
-			motion_sensors[BASE_GYRO] =
-				motion_sensor_gyro_icm42607;
+			motion_sensors[BASE_GYRO] = motion_sensor_gyro_icm42607;
 			ccprints("Gyro sensor: ICM-42607");
 		}
 		if (sku_id == 57)
 			motion_sensors[LID_ACCEL].rot_standard_ref =
-					&lid_standard_ref_sku57;
+				&lid_standard_ref_sku57;
 
 		/* Enable Base Accel interrupt */
 		gpio_enable_interrupt(GPIO_BASE_SIXAXIS_INT_L);
