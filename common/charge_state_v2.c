@@ -1465,6 +1465,7 @@ static void charge_wakeup(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, charge_wakeup, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_AC_CHANGE, charge_wakeup, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, charge_wakeup, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_EC_EC_COMM_BATTERY_CLIENT
 /* Reset the base on S5->S0 transition. */
