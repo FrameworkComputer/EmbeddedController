@@ -15,16 +15,28 @@
 
 static int test_isalpha(void)
 {
-	TEST_CHECK(isalpha('a') && isalpha('z') && isalpha('A') &&
-		   isalpha('Z') && !isalpha('0') && !isalpha('~') &&
-		   !isalpha(' ') && !isalpha('\0') && !isalpha('\n'));
+	TEST_CHECK(isalpha('a'));
+	TEST_CHECK(isalpha('z'));
+	TEST_CHECK(isalpha('A'));
+	TEST_CHECK(isalpha('Z'));
+	TEST_CHECK(!isalpha('0'));
+	TEST_CHECK(!isalpha('~'));
+	TEST_CHECK(!isalpha(' '));
+	TEST_CHECK(!isalpha('\0'));
+	TEST_CHECK(!isalpha('\n'));
 }
 
 static int test_isprint(void)
 {
-	TEST_CHECK(isprint('a') && isprint('z') && isprint('A') &&
-		   isprint('Z') && isprint('0') && isprint('~') &&
-		   isprint(' ') && !isprint('\0') && !isprint('\n'));
+	TEST_CHECK(isprint('a'));
+	TEST_CHECK(isprint('z'));
+	TEST_CHECK(isprint('A'));
+	TEST_CHECK(isprint('Z'));
+	TEST_CHECK(isprint('0'));
+	TEST_CHECK(isprint('~'));
+	TEST_CHECK(isprint(' '));
+	TEST_CHECK(!isprint('\0'));
+	TEST_CHECK(!isprint('\n'));
 }
 
 static int test_strstr(void)
@@ -229,27 +241,27 @@ static int test_strnlen(void)
 
 static int test_strcasecmp(void)
 {
-	TEST_CHECK((strcasecmp("test string", "TEST strIng") == 0) &&
-		   (strcasecmp("test123!@#", "TesT123!@#") == 0) &&
-		   (strcasecmp("lower", "UPPER") != 0));
+	TEST_CHECK(strcasecmp("test string", "TEST strIng") == 0);
+	TEST_CHECK(strcasecmp("test123!@#", "TesT123!@#") == 0);
+	TEST_CHECK(strcasecmp("lower", "UPPER") != 0);
 }
 
 static int test_strncasecmp(void)
 {
-	TEST_CHECK((strncasecmp("test string", "TEST str", 4) == 0) &&
-		   (strncasecmp("test string", "TEST str", 8) == 0) &&
-		   (strncasecmp("test123!@#", "TesT321!@#", 5) != 0) &&
-		   (strncasecmp("test123!@#", "TesT321!@#", 4) == 0) &&
-		   (strncasecmp("1test123!@#", "1TesT321!@#", 5) == 0) &&
-		   (strncasecmp("1test123", "teststr", 0) == 0));
+	TEST_CHECK(strncasecmp("test string", "TEST str", 4) == 0);
+	TEST_CHECK(strncasecmp("test string", "TEST str", 8) == 0);
+	TEST_CHECK(strncasecmp("test123!@#", "TesT321!@#", 5) != 0);
+	TEST_CHECK(strncasecmp("test123!@#", "TesT321!@#", 4) == 0);
+	TEST_CHECK(strncasecmp("1test123!@#", "1TesT321!@#", 5) == 0);
+	TEST_CHECK(strncasecmp("1test123", "teststr", 0) == 0);
 }
 
 static int test_atoi(void)
 {
-	TEST_CHECK((atoi("  901") == 901) &&
-		   (atoi("-12c") == -12) &&
-		   (atoi("   0  ") == 0) &&
-		   (atoi("\t111") == 111));
+	TEST_CHECK(atoi("  901") == 901);
+	TEST_CHECK(atoi("-12c") == -12);
+	TEST_CHECK(atoi("   0  ") == 0);
+	TEST_CHECK(atoi("\t111") == 111);
 }
 
 static int test_snprintf(void)
