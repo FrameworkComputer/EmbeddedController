@@ -7158,6 +7158,7 @@ enum ec_rgbkbd_subcmd {
 	EC_RGBKBD_SUBCMD_CLEAR = 1,
 	EC_RGBKBD_SUBCMD_DEMO = 2,
 	EC_RGBKBD_SUBCMD_SET_SCALE = 3,
+	EC_RGBKBD_SUBCMD_GET_CONFIG = 4,
 	EC_RGBKBD_SUBCMD_COUNT
 };
 
@@ -7169,6 +7170,15 @@ enum ec_rgbkbd_demo {
 };
 
 BUILD_ASSERT(EC_RGBKBD_DEMO_COUNT <= 255);
+
+enum ec_rgbkbd_type {
+	EC_RGBKBD_TYPE_UNKNOWN = 0,
+	EC_RGBKBD_TYPE_PER_KEY = 1,		/* e.g. Vell */
+	EC_RGBKBD_TYPE_FOUR_ZONES_40_LEDS = 2,  /* e.g. Taniks */
+	EC_RGBKBD_TYPE_FOUR_ZONES_12_LEDS = 3,  /* e.g. Osiris */
+	EC_RGBKBD_TYPE_FOUR_ZONES_15_LEDS = 4,	/* e.g. Mithrax */
+	EC_RGBKBD_TYPE_COUNT,
+};
 
 struct ec_rgbkbd_set_scale {
 	uint8_t key;
@@ -7182,6 +7192,14 @@ struct ec_params_rgbkbd {
 		uint8_t demo; /* EC_RGBKBD_SUBCMD_DEMO */
 		struct ec_rgbkbd_set_scale set_scale;
 	};
+} __ec_align1;
+
+struct ec_response_rgbkbd {
+	/*
+	 * RGBKBD type supported by the device.
+	 */
+
+	uint8_t rgbkbd_type; /* enum ec_rgbkbd_type */
 } __ec_align1;
 
 struct ec_params_rgbkbd_set_color {

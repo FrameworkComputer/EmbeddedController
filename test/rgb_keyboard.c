@@ -51,6 +51,8 @@ const uint8_t rgbkbd_count = ARRAY_SIZE(rgbkbds);
 const uint8_t rgbkbd_hsize = RGB_GRID0_COL + RGB_GRID1_COL;
 const uint8_t rgbkbd_vsize = RGB_GRID0_ROW;
 
+const enum ec_rgbkbd_type rgbkbd_type = EC_RGBKBD_TYPE_UNKNOWN;
+
 const uint8_t rgbkbd_map[] = {
 	RGBKBD_DELM,	    RGBKBD_COORD(1, 2), RGBKBD_DELM, RGBKBD_COORD(3, 4),
 	RGBKBD_COORD(5, 6), RGBKBD_DELM,	RGBKBD_DELM, RGBKBD_DELM,
