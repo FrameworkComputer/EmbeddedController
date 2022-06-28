@@ -945,6 +945,11 @@ test_mockable int calc_is_full(void)
 	return ret;
 }
 
+__overridable int board_should_charger_bypass(void)
+{
+	return false;
+}
+
 /*
  * Ask the charger for some voltage and current. If either value is 0,
  * charging is disabled; otherwise it's enabled. Negative values are ignored.
@@ -953,6 +958,7 @@ static int charge_request(int voltage, int current)
 {
 	int r1 = EC_SUCCESS, r2 = EC_SUCCESS, r3 = EC_SUCCESS, r4 = EC_SUCCESS;
 	static int prev_volt, prev_curr;
+	bool should_bypass;
 
 	if (!voltage || !current) {
 #ifdef CONFIG_CHARGER_NARROW_VDC
@@ -978,6 +984,17 @@ static int charge_request(int voltage, int current)
 		if (prev_volt != voltage || prev_curr != current)
 			CPRINTS("%s(%dmV, %dmA)", __func__, voltage, current);
 	}
+
+	/*
+	 * Enable bypass mode if applicable. Transition from Bypass to Bypass +
+	 * CHRG or backward is done after this call (by set_current & set_mode)
+	 * thus not done here. Similarly, when bypass is disabled, transitioning
+	 * from nvdc + chrg will be done separately.
+	 */
+	should_bypass = board_should_charger_bypass();
+	if ((should_bypass && !(curr.chg.status & CHARGER_BYPASS_MODE))
+		|| (!should_bypass && (curr.chg.status & CHARGER_BYPASS_MODE)))
+		charger_enable_bypass_mode(0, should_bypass);
 
 	/*
 	 * Set current before voltage so that if we are just starting

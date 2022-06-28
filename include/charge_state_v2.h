@@ -223,4 +223,11 @@ __test_only void reset_prev_disp_charge(void);
  */
 __test_only bool charging_progress_displayed(void);
 
+/**
+ * Callback for boards to request charger to enable bypass mode on/off.
+ *
+ * @return True for requesting bypass on. False for requesting bypass off.
+ */
+int board_should_charger_bypass(void);
+
 #endif /* __CROS_EC_CHARGE_STATE_V2_H */

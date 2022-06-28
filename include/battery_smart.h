@@ -150,6 +150,7 @@
 #define CHARGER_POWER_FAIL              BIT(13)
 #define CHARGER_BATTERY_PRESENT         BIT(14)
 #define CHARGER_AC_PRESENT              BIT(15)
+#define CHARGER_BYPASS_MODE             BIT(16)
 /* Charger specification info */
 #define INFO_CHARGER_SPEC(INFO)         ((INFO) & 0xf)
 #define INFO_SELECTOR_SUPPORT(INFO)     (((INFO) >> 4) & 1)
