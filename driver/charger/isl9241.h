@@ -159,4 +159,10 @@
  */
 #define ISL9241_ACOK_REF_LOW_VOLTAGE_ADAPTER_MV 3600
 
+/*
+ * Max wait time for Vsys to be close to Vin (Vadp) before turning on the bypass
+ * gate. See 2.5.1 of application notes for details.
+ */
+#define ISL9241_BYPASS_VSYS_TIMEOUT_MS	500
+
 #endif /* __CROS_EC_ISL9241_H */
