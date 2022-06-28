@@ -19,8 +19,8 @@
 	};
 
 	batteries {
-		default_battery: lgc {
-			compatible = "lgc,ap18c8k", "battery-smart";
+		default_battery: smp_c31n2005 {
+			compatible = "smp,c31n2005", "battery-smart";
 		};
 	};
 

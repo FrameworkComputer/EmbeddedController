@@ -30,6 +30,7 @@ properties:
          - "panasonic,ap16l5j-009"
          - "panasonic,ap19a5k"
          - "powertech,batgqa05l22"
+         - "smp,c31n2005"
          - "smp,l20m3pg0"
          - "smp,l20m3pg1"
          - "smp,l20m3pg2"
