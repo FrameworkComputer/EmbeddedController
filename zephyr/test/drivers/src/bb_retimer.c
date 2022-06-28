@@ -162,8 +162,7 @@ ZTEST_USER(bb_retimer, test_bb_set_state)
 	zassert_false(ack_required, "ACK is never required for BB retimer");
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
-		   BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_DP_CONNECTION;
+		   BB_RETIMER_DATA_CONNECTION_PRESENT;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
@@ -177,7 +176,7 @@ ZTEST_USER(bb_retimer, test_bb_set_state)
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
 		   BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_DP_CONNECTION | BB_RETIMER_IRQ_HPD;
+		   BB_RETIMER_IRQ_HPD;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
@@ -191,7 +190,7 @@ ZTEST_USER(bb_retimer, test_bb_set_state)
 	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
 	exp_conn = BB_RETIMER_USB_DATA_ROLE |
 		   BB_RETIMER_DATA_CONNECTION_PRESENT |
-		   BB_RETIMER_DP_CONNECTION | BB_RETIMER_HPD_LVL;
+		   BB_RETIMER_HPD_LVL;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 }
