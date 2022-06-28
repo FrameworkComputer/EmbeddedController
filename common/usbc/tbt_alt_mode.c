@@ -57,8 +57,8 @@
  */
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
 #else
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
@@ -70,8 +70,8 @@
  * with a partner. It may be fixed in b/159495742, in which case this
  * logic is unneeded.
  */
-#define TBT_FLAG_RETRY_DONE BIT(0)
-#define TBT_FLAG_EXIT_DONE BIT(1)
+#define TBT_FLAG_RETRY_DONE       BIT(0)
+#define TBT_FLAG_EXIT_DONE        BIT(1)
 #define TBT_FLAG_CABLE_ENTRY_DONE BIT(2)
 
 static uint8_t tbt_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -123,12 +123,14 @@ void tbt_init(int port)
 
 bool tbt_is_active(int port)
 {
-	return tbt_state[port] != TBT_INACTIVE && tbt_state[port] != TBT_START;
+	return tbt_state[port] != TBT_INACTIVE &&
+	       tbt_state[port] != TBT_START;
 }
 
 bool tbt_entry_is_done(int port)
 {
-	return tbt_state[port] == TBT_ACTIVE || tbt_state[port] == TBT_INACTIVE;
+	return tbt_state[port] == TBT_ACTIVE ||
+		tbt_state[port] == TBT_INACTIVE;
 }
 
 bool tbt_cable_entry_is_done(int port)
@@ -138,15 +140,13 @@ bool tbt_cable_entry_is_done(int port)
 
 static void tbt_exit_done(int port)
 {
-	/*
-	 * If the EC exits an alt mode autonomously, don't try to enter it
-	 * again. If the AP commands the EC to exit DP mode, it might command
-	 * the EC to enter again later, so leave the state machine ready for
-	 * that possibility.
-	 */
-	tbt_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) ?
-				  TBT_START :
-				  TBT_INACTIVE;
+    /*
+     * If the EC exits an alt mode autonomously, don't try to enter it again. If
+     * the AP commands the EC to exit DP mode, it might command the EC to enter
+     * again later, so leave the state machine ready for that possibility.
+     */
+	tbt_state[port] = IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY)
+		? TBT_START : TBT_INACTIVE;
 	TBT_CLR_FLAG(port, TBT_FLAG_RETRY_DONE);
 	TBT_CLR_FLAG(port, TBT_FLAG_CABLE_ENTRY_DONE);
 
@@ -159,10 +159,50 @@ static void tbt_exit_done(int port)
 	tbt_prints("alt mode protocol failed!", port);
 }
 
-void tbt_exit_mode_request(int port)
+static bool tbt_is_lrd_active_cable(int port)
 {
 	union tbt_mode_resp_cable cable_mode_resp;
 
+	cable_mode_resp.raw_value =
+			pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
+	/* TODO(b:233402434 b:233429913)
+	 * Need to add the checking that cable is passive in Discover ID
+	 * Header VDO.
+	 */
+	if (cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE)
+		return true;
+
+	return false;
+}
+
+/* Check if this port requires SOP' mode entry and exit */
+static bool tbt_sop_prime_needed(int port)
+{
+	/*
+	 * We require SOP' entry if cable is
+	 * active cable, or
+	 * an LRD cable (passive in DiscoverIdentity, active in TBT mode)
+	 */
+	if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE ||
+			    tbt_is_lrd_active_cable(port))
+		return true;
+	return false;
+}
+
+/* Check if this port requires SOP'' mode entry and exit */
+static bool tbt_sop_prime_prime_needed(int port)
+{
+	const struct pd_discovery *disc;
+
+	disc = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
+	if (disc->identity.product_t1.a_rev20.sop_p_p &&
+		!tbt_is_lrd_active_cable(port))
+		return true;
+	return false;
+}
+
+void tbt_exit_mode_request(int port)
+{
 	TBT_SET_FLAG(port, TBT_FLAG_RETRY_DONE);
 	TBT_CLR_FLAG(port, TBT_FLAG_EXIT_DONE);
 	/*
@@ -172,28 +212,24 @@ void tbt_exit_mode_request(int port)
 	 * TODO (b/156749387): Remove once data reset feature is in place.
 	 */
 	if (tbt_state[port] == TBT_ENTER_SOP) {
-		cable_mode_resp.raw_value =
-			pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
-
 		/*
 		 * For Linear re-driver cables, the port enters USB4 mode
 		 * with Thunderbolt mode for SOP prime. Hence, on request to
 		 * exit, only exit Thunderbolt mode SOP prime
 		 */
-		tbt_state[port] = cable_mode_resp.tbt_active_passive ==
-						  TBT_CABLE_ACTIVE ?
-					  TBT_EXIT_SOP_PRIME :
-					  TBT_EXIT_SOP_PRIME_PRIME;
+		tbt_state[port] =
+			/* TODO: replace with tbt_sop_prime_prime_needed */
+			tbt_is_lrd_active_cable(port) ?
+			TBT_EXIT_SOP_PRIME : TBT_EXIT_SOP_PRIME_PRIME;
 	}
 }
 
-static bool tbt_response_valid(int port, enum tcpci_msg_type type, char *cmdt,
-			       int vdm_cmd)
+static bool tbt_response_valid(int port, enum tcpci_msg_type type,
+				char *cmdt, int vdm_cmd)
 {
 	enum tbt_states st = tbt_state[port];
 	union tbt_mode_resp_cable cable_mode_resp = {
-		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME)
-	};
+		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME) };
 
 	/*
 	 * Check for an unexpected response.
@@ -234,55 +270,47 @@ static void tbt_active_cable_exit_mode(int port)
 bool tbt_cable_entry_required_for_usb4(int port)
 {
 	const struct pd_discovery *disc_sop_prime;
-	union tbt_mode_resp_cable cable_mode_resp;
 
-	/* Request to enter Thunderbolt mode for the cable prior to entering
-	 * USB4 mode if -
-	 * 1. Thunderbolt Mode SOP' VDO active/passive bit (B25) is
-	 *    TBT_CABLE_ACTIVE or
-	 * 2. It's an active cable with VDM version < 2.0 or
-	 *    VDO version < 1.3
-	 */
 	if (tbt_cable_entry_is_done(port))
 		return false;
 
-	cable_mode_resp.raw_value =
-		pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
-
-	if (cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE)
+	/*
+	 * For some cables, the TCPM may need to enter TBT mode with the
+	 * cable to support USB4 mode with the partner. Request to enter
+	 * Thunderbolt mode for the cable prior to entering USB4 for
+	 * the port partner if
+	 * 1. The cable advertises itself as passive in its Identity VDO
+	 * but active in its TBT mode VDO, or
+	 * 2. The cable advertises itself as active, but its PD support
+	 * is not new enough to support Enter_USB.
+	 */
+	if (tbt_is_lrd_active_cable(port))
 		return true;
 
 	if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) {
 		disc_sop_prime = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) < VDM_VER20 ||
 		    disc_sop_prime->identity.product_t1.a_rev30.vdo_ver <
-			    VDO_VERSION_1_3)
+							VDO_VERSION_1_3)
 			return true;
 	}
 	return false;
 }
 
 void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
-		     uint32_t *vdm)
+		uint32_t *vdm)
 {
-	const struct pd_discovery *disc;
 	const uint8_t vdm_cmd = PD_VDO_CMD(vdm[0]);
 	int opos_sop, opos_sop_prime;
-	union tbt_mode_resp_cable cable_mode_resp;
 
 	if (!tbt_response_valid(port, type, "ACK", vdm_cmd))
 		return;
 
-	disc = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-
 	switch (tbt_state[port]) {
 	case TBT_ENTER_SOP_PRIME:
 		tbt_prints("enter mode SOP'", port);
-		cable_mode_resp.raw_value =
-			pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
 		/* For LRD cables, Enter mode SOP' -> Enter mode SOP */
-		if (disc->identity.product_t1.a_rev20.sop_p_p &&
-		    cable_mode_resp.tbt_active_passive != TBT_CABLE_ACTIVE) {
+		if (tbt_sop_prime_prime_needed(port)) {
 			tbt_state[port] = TBT_ENTER_SOP_PRIME_PRIME;
 		} else {
 			TBT_SET_FLAG(port, TBT_FLAG_CABLE_ENTRY_DONE);
@@ -310,6 +338,11 @@ void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		if (opos_sop > 0)
 			pd_dfp_exit_mode(port, TCPCI_MSG_SOP, USB_VID_INTEL,
 					 opos_sop);
+		/*
+		 * TODO:
+		 * Replace with tbt_sop_prime_prime_needed() and
+		 * tbt_sop_prime_prime_needed().
+		 */
 		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) {
 			tbt_active_cable_exit_mode(port);
 		} else {
@@ -332,12 +365,13 @@ void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 			 * Exit mode process is complete; go to inactive state.
 			 */
 			tbt_exit_done(port);
-			opos_sop_prime = pd_alt_mode(port, TCPCI_MSG_SOP_PRIME,
-						     USB_VID_INTEL);
+			opos_sop_prime =
+				pd_alt_mode(port, TCPCI_MSG_SOP_PRIME,
+					    USB_VID_INTEL);
 
 			/* Clear Thunderbolt related signals */
 			pd_dfp_exit_mode(port, TCPCI_MSG_SOP_PRIME,
-					 USB_VID_INTEL, opos_sop_prime);
+					USB_VID_INTEL, opos_sop_prime);
 			set_usb_mux_with_current_data_role(port);
 		} else {
 			tbt_retry_enter_mode(port);
@@ -352,8 +386,8 @@ void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		break;
 	default:
 		/* Invalid or unexpected negotiation state */
-		CPRINTF("%s called with invalid state %d\n", __func__,
-			tbt_state[port]);
+		 CPRINTF("%s called with invalid state %d\n",
+				__func__, tbt_state[port]);
 		tbt_exit_done(port);
 		break;
 	}
@@ -407,8 +441,8 @@ void intel_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 		}
 		break;
 	default:
-		CPRINTS("C%d: NAK for cmd %d in state %d", port, vdm_cmd,
-			tbt_state[port]);
+		CPRINTS("C%d: NAK for cmd %d in state %d", port,
+			vdm_cmd, tbt_state[port]);
 		tbt_exit_done(port);
 		break;
 	}
@@ -417,7 +451,7 @@ void intel_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 static bool tbt_mode_is_supported(int port, int vdo_count)
 {
 	const struct pd_discovery *disc =
-		pd_get_am_discovery(port, TCPCI_MSG_SOP);
+			pd_get_am_discovery(port, TCPCI_MSG_SOP);
 
 	if (!disc->identity.idh.modal_support)
 		return false;
@@ -431,8 +465,8 @@ static bool tbt_mode_is_supported(int port, int vdo_count)
 	 * SVID USB_VID_INTEL to enter Thunderbolt alt mode
 	 */
 	if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE &&
-	    !pd_is_mode_discovered_for_svid(port, TCPCI_MSG_SOP_PRIME,
-					    USB_VID_INTEL))
+		!pd_is_mode_discovered_for_svid(
+			port, TCPCI_MSG_SOP_PRIME, USB_VID_INTEL))
 		return false;
 
 	return true;
@@ -444,7 +478,6 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 {
 	struct svdm_amode_data *modep;
 	int vdo_count_ret = 0;
-	union tbt_mode_resp_cable cable_mode_resp;
 
 	*tx_type = TCPCI_MSG_SOP;
 
@@ -468,12 +501,8 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		 */
 		usb_mux_set_safe_mode(port);
 
-		cable_mode_resp.raw_value =
-			pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
-
 		/* Active cable and LRD cables send Enter Mode SOP' first */
-		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE ||
-		    cable_mode_resp.tbt_active_passive == TBT_CABLE_ACTIVE) {
+		if (tbt_sop_prime_needed(port)) {
 			tbt_state[port] = TBT_ENTER_SOP_PRIME;
 		} else {
 			/* Passive cable send Enter Mode SOP */
@@ -487,12 +516,14 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		*tx_type = TCPCI_MSG_SOP_PRIME;
 		break;
 	case TBT_ENTER_SOP_PRIME_PRIME:
-		vdo_count_ret = enter_tbt_compat_mode(
-			port, TCPCI_MSG_SOP_PRIME_PRIME, vdm);
+		vdo_count_ret =
+			enter_tbt_compat_mode(
+				port, TCPCI_MSG_SOP_PRIME_PRIME, vdm);
 		*tx_type = TCPCI_MSG_SOP_PRIME_PRIME;
 		break;
 	case TBT_ENTER_SOP:
-		vdo_count_ret = enter_tbt_compat_mode(port, TCPCI_MSG_SOP, vdm);
+		vdo_count_ret =
+			enter_tbt_compat_mode(port, TCPCI_MSG_SOP, vdm);
 		break;
 	case TBT_ACTIVE:
 		/*
@@ -514,38 +545,43 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		return MSG_SETUP_MUX_WAIT;
 	case TBT_EXIT_SOP:
 		/* DPM will only call this after safe state set is done */
-		modep = pd_get_amode_data(port, TCPCI_MSG_SOP, USB_VID_INTEL);
+		modep = pd_get_amode_data(port,
+					  TCPCI_MSG_SOP, USB_VID_INTEL);
 		if (!(modep && modep->opos))
 			return MSG_SETUP_ERROR;
 
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
-			 VDO_OPOS(modep->opos) | VDO_CMDT(CMDT_INIT) |
-			 VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
+			VDO_OPOS(modep->opos) |
+			VDO_CMDT(CMDT_INIT) |
+			VDO_SVDM_VERS(
+				pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		vdo_count_ret = 1;
 		break;
 	case TBT_EXIT_SOP_PRIME_PRIME:
-		modep = pd_get_amode_data(port, TCPCI_MSG_SOP_PRIME,
-					  USB_VID_INTEL);
+		modep = pd_get_amode_data(port,
+			TCPCI_MSG_SOP_PRIME, USB_VID_INTEL);
 		if (!(modep && modep->opos))
 			return MSG_SETUP_ERROR;
 
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
-			 VDO_OPOS(modep->opos) | VDO_CMDT(CMDT_INIT) |
-			 VDO_SVDM_VERS(pd_get_vdo_ver(
-				 port, TCPCI_MSG_SOP_PRIME_PRIME));
+			VDO_OPOS(modep->opos) |
+			VDO_CMDT(CMDT_INIT) |
+			VDO_SVDM_VERS(pd_get_vdo_ver(port,
+				TCPCI_MSG_SOP_PRIME_PRIME));
 		vdo_count_ret = 1;
 		*tx_type = TCPCI_MSG_SOP_PRIME_PRIME;
 		break;
 	case TBT_EXIT_SOP_PRIME:
-		modep = pd_get_amode_data(port, TCPCI_MSG_SOP_PRIME,
-					  USB_VID_INTEL);
+		modep = pd_get_amode_data(port,
+				TCPCI_MSG_SOP_PRIME, USB_VID_INTEL);
 		if (!(modep && modep->opos))
 			return MSG_SETUP_ERROR;
 
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
-			 VDO_OPOS(modep->opos) | VDO_CMDT(CMDT_INIT) |
-			 VDO_SVDM_VERS(
-				 pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME));
+			VDO_OPOS(modep->opos) |
+			VDO_CMDT(CMDT_INIT) |
+			VDO_SVDM_VERS(pd_get_vdo_ver(port,
+						TCPCI_MSG_SOP_PRIME));
 		vdo_count_ret = 1;
 		*tx_type = TCPCI_MSG_SOP_PRIME;
 		break;
@@ -553,8 +589,8 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		/* Thunderbolt mode is inactive */
 		return MSG_SETUP_UNSUPPORTED;
 	default:
-		CPRINTF("%s called with invalid state %d\n", __func__,
-			tbt_state[port]);
+		 CPRINTF("%s called with invalid state %d\n",
+				__func__, tbt_state[port]);
 		return MSG_SETUP_ERROR;
 	}
 
