@@ -181,6 +181,19 @@ static const struct charger_info *isl9241_get_info(int chgnum)
 	return &isl9241_charger_info;
 }
 
+static enum ec_error_list isl9241_bypass_mode_enabled(int chgnum, int *enabled)
+{
+	int reg, rv;
+
+	rv = isl9241_read(chgnum, ISL9241_REG_CONTROL0, &reg);
+	if (rv)
+		return rv;
+
+	*enabled = !!(reg & ISL9241_CONTROL0_EN_BYPASS_GATE);
+
+	return EC_SUCCESS;
+}
+
 static enum ec_error_list isl9241_get_status(int chgnum, int *status)
 {
 	int rv;
@@ -204,6 +217,13 @@ static enum ec_error_list isl9241_get_status(int chgnum, int *status)
 		*status |= CHARGER_BATTERY_PRESENT;
 	if (reg & ISL9241_INFORMATION2_ACOK_PIN)
 		*status |= CHARGER_AC_PRESENT;
+
+	/* Bypass mode status */
+	rv = isl9241_bypass_mode_enabled(chgnum, &reg);
+	if (rv)
+		return rv;
+	if (reg)
+		*status |= CHARGER_BYPASS_MODE;
 
 	return EC_SUCCESS;
 }
