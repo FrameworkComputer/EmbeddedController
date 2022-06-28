@@ -173,7 +173,7 @@ HOST_CXXFLAGS=$(HOST_CFLAGS)
 ifneq (${SYSROOT},)
   LDFLAGS_EXTRA+=--sysroot=${SYSROOT}
 endif
-LDFLAGS=-nostdlib -g -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
+LDFLAGS=-nostdlib -g -no-pie -Wl,-X -Wl,--gc-sections -Wl,--build-id=none \
 	$(LDFLAGS_EXTRA) $(CFLAGS_CPU)
 MEMSIZE_FLAGS=
 ifeq ($(cc-name),gcc)
@@ -182,12 +182,12 @@ endif
 BUILD_LDFLAGS=$(LIBFTDIUSB_LDLIBS)
 HOST_LDFLAGS=$(LIBFTDIUSB_LDLIBS)
 HOST_TEST_LDFLAGS=-Wl,-T core/host/host_exe.lds -lrt -pthread -rdynamic -lm\
-		  -fuse-ld=bfd \
+		  -fuse-ld=bfd -no-pie \
 		  $(if $(TEST_COVERAGE), --coverage,) \
 		  $(if $(TEST_ASAN), -fsanitize=address) \
 		  $(if $(TEST_MSAN), -fsanitize=memory) \
 		  $(if $(TEST_UBSAN), ${UBSAN_FLAGS}) \
-		  $(if $(TEST_FUZZ), -fsanitize=fuzzer -no-pie)
+		  $(if $(TEST_FUZZ), -fsanitize=fuzzer)
 
 # utility function to provide overridable defaults
 # $1: name of variable to set
