@@ -203,7 +203,7 @@ static void bc12_power_down(int port)
 	pi3usb9201_set_mode(port, PI3USB9201_POWER_DOWN);
 	/* The start bc1.2 bit does not auto clear */
 	pi3usb9201_bc12_detect_ctrl(port, 0);
-	/* Mask interrupts unitl next bc1.2 detection event */
+	/* Mask interrupts until next bc1.2 detection event */
 	pi3usb9201_interrupt_mask(port, 1);
 	/*
 	 * Let charge manager know there's no more charge available for the
