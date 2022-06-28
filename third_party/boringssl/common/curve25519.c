@@ -27,7 +27,7 @@
 
 #ifdef CONFIG_RNG
 void X25519_keypair(uint8_t out_public_value[32], uint8_t out_private_key[32]) {
-  trng_rand_bytes(out_private_key, 32);
+  rand_bytes(out_private_key, 32);
 
   /* All X25519 implementations should decode scalars correctly (see
    * https://tools.ietf.org/html/rfc7748#section-5). However, if an

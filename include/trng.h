@@ -14,30 +14,32 @@
  *
  * Not supported by all platforms.
  **/
-void trng_init(void);
+void init_trng(void);
 
 /**
  * Shutdown the true random number generator.
  *
- * The opposite operation of trng_init(), disable the hardware resources
+ * The opposite operation of init_trng(), disable the hardware resources
  * used by the TRNG to save power.
  *
  * Not supported by all platforms.
  **/
-void trng_exit(void);
+void exit_trng(void);
 
 /**
  * Retrieve a 32 bit random value.
  *
  * Not supported on all platforms.
  **/
-uint32_t trng_rand(void);
+#ifndef HIDE_EC_STDLIB
+uint32_t rand(void);
+#endif
 
 /**
  * Output len random bytes into buffer.
  *
  * Not supported on all platforms.
  **/
-void trng_rand_bytes(void *buffer, size_t len);
+void rand_bytes(void *buffer, size_t len);
 
 #endif /* __EC_INCLUDE_TRNG_H */

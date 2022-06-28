@@ -400,9 +400,9 @@ static void add_entropy_deferred(void)
 	if (add_entropy_action == ADD_ENTROPY_RESET_ASYNC)
 		repeat = ROLLBACK_REGIONS;
 
-	trng_init();
+	init_trng();
 	do {
-		trng_rand_bytes(rand, sizeof(rand));
+		rand_bytes(rand, sizeof(rand));
 		if (rollback_add_entropy(rand, sizeof(rand)) != EC_SUCCESS) {
 			add_entropy_rv = EC_RES_ERROR;
 			goto out;
@@ -411,7 +411,7 @@ static void add_entropy_deferred(void)
 
 	add_entropy_rv = EC_RES_SUCCESS;
 out:
-	trng_exit();
+	exit_trng();
 }
 DECLARE_DEFERRED(add_entropy_deferred);
 
