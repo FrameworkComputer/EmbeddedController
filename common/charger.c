@@ -500,7 +500,7 @@ enum ec_error_list charger_enable_bypass_mode(int chgnum, int enable)
 	return chg_chips[chgnum].drv->enable_bypass_mode(chgnum, enable);
 }
 
-enum ec_error_list charger_get_vbus_voltage(int port, int *voltage)
+static int charger_get_valid_chgnum(int port)
 {
 	int chgnum = 0;
 
@@ -510,13 +510,36 @@ enum ec_error_list charger_get_vbus_voltage(int port, int *voltage)
 
 	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
 		CPRINTS("%s(%d) Invalid charger!", __func__, chgnum);
-		return 0;
+		return -1;
 	}
+
+	return chgnum;
+}
+
+enum ec_error_list charger_get_vbus_voltage(int port, int *voltage)
+{
+	int chgnum = charger_get_valid_chgnum(port);
+
+	if (chgnum < 0)
+		return EC_ERROR_INVAL;
 
 	if (!chg_chips[chgnum].drv->get_vbus_voltage)
 		return EC_ERROR_UNIMPLEMENTED;
 
 	return chg_chips[chgnum].drv->get_vbus_voltage(chgnum, port, voltage);
+}
+
+enum ec_error_list charger_get_vsys_voltage(int port, int *voltage)
+{
+	int chgnum = charger_get_valid_chgnum(port);
+
+	if (chgnum < 0)
+		return EC_ERROR_INVAL;
+
+	if (!chg_chips[chgnum].drv->get_vsys_voltage)
+		return EC_ERROR_UNIMPLEMENTED;
+
+	return chg_chips[chgnum].drv->get_vsys_voltage(chgnum, port, voltage);
 }
 
 enum ec_error_list charger_set_input_current_limit(int chgnum,
