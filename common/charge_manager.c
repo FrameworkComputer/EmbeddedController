@@ -411,21 +411,30 @@ static int command_vbus(int argc, char **argv)
 {
 	/* port = -1 to print all the ports */
 	int port = -1;
+	int vbus, vsys;
 
 	if (argc == 2)
 		port = atoi(argv[1]);
 
-	for (int i = 0; i < board_get_usb_pd_port_count(); i++) {
-		if (port < 0 || i == port)
-			ccprintf("VBUS C%d = %d mV\n", i,
-				 charge_manager_get_vbus_voltage(i));
+	ccprintf("       VBUS     VSYS\n");
+	for (int i = 0; i < CHARGE_PORT_COUNT; i++) {
+		if (port < 0 || i == port) {
+			vbus = charge_manager_get_vbus_voltage(i);
+			if (charger_get_vsys_voltage(i, &vsys))
+				vsys = -1;
+			ccprintf("  P%d %6dmV ", i, vbus);
+			if (vsys >= 0)
+				ccprintf("%6dmV\n", vsys);
+			else
+				ccprintf("(unknown)\n");
+		}
 	}
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(vbus, command_vbus,
 			"[port]",
-			"VBUS of the given port");
+			"Print VBUS & VSYS of the given port");
 #endif
 
 /**
