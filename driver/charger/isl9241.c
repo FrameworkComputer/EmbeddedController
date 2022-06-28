@@ -316,6 +316,38 @@ error:
 	return rv;
 }
 
+static enum ec_error_list isl9241_get_vsys_voltage(int chgnum, int port,
+						   int *voltage)
+{
+	int val = 0;
+	int rv;
+
+	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL3,
+			    ISL9241_CONTROL3_ENABLE_ADC, MASK_SET);
+	if (rv) {
+		CPRINTS("Could not enable ADC for Vsys. (rv=%d)", rv);
+		return rv;
+	}
+
+	usleep(ISL9241_ADC_POLLING_TIME_US);
+
+	/* Read voltage ADC value */
+	rv = isl9241_read(chgnum, ISL9241_REG_VSYS_ADC_RESULTS, &val);
+	if (rv) {
+		CPRINTS("Could not read Vsys. (rv=%d)", rv);
+		isl9241_update(chgnum, ISL9241_REG_CONTROL3,
+			       ISL9241_CONTROL3_ENABLE_ADC, MASK_CLR);
+		return rv;
+	}
+
+	/* Adjust adc_val. Same as Vin. */
+	val >>= ISL9241_VIN_ADC_BIT_OFFSET;
+	val *= ISL9241_VIN_ADC_STEP_MV;
+	*voltage = val;
+
+	return EC_SUCCESS;
+}
+
 static enum ec_error_list isl9241_post_init(int chgnum)
 {
 	return EC_SUCCESS;
@@ -876,6 +908,7 @@ const struct charger_drv isl9241_drv = {
 	.set_voltage = &isl9241_set_voltage,
 	.discharge_on_ac = &isl9241_discharge_on_ac,
 	.get_vbus_voltage = &isl9241_get_vbus_voltage,
+	.get_vsys_voltage = &isl9241_get_vsys_voltage,
 	.set_input_current_limit = &isl9241_set_input_current_limit,
 	.get_input_current_limit = &isl9241_get_input_current_limit,
 	.manufacturer_id = &isl9241_manufacturer_id,
