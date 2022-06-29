@@ -27,6 +27,7 @@ GPIO_INT(USB_C2_BC12_INT_ODL,            PIN(8, 3), GPIO_INT_FALLING, bc12_inter
 GPIO_INT(USB_C2_TCPC_INT_ODL,            PIN(A, 7), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C2_PPC_INT_ODL,             PIN(7, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(BJ_ADP_PRESENT_ODL,             PIN(5, 6), GPIO_INT_BOTH | GPIO_PULL_UP, bj_present_interrupt)
+GPIO_INT(GPU_OVERT_ODL,                  PIN(5, 0), GPIO_INT_BOTH, gpu_overt_interrupt)
 
 /* USED GPIOs: */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -128,7 +129,6 @@ UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(8, 1))       /* GPIO81 */
 UNUSED(PIN(7, 3))       /* GPIO73 */
-UNUSED(PIN(5, 0))       /* GPIO50 */
 UNUSED(PIN(6, 0))       /* GPIO60 */
 UNUSED(PIN(C, 2))       /* GPIOC2 */
 UNUSED(PIN(E, 1))       /* GPIOE1 */

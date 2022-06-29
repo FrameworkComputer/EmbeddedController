@@ -223,6 +223,9 @@ void board_power_interrupt(enum gpio_signal signal);
 /* IRQ for BJ plug/unplug. */
 void bj_present_interrupt(enum gpio_signal signal);
 
+/* IRQ for over temperature. */
+void gpu_overt_interrupt(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

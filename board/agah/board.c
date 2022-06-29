@@ -114,3 +114,8 @@ static int cc_blockseq(int argc, char *argv[])
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(blockseq, cc_blockseq, "[on/off]", NULL);
+
+void gpu_overt_interrupt(enum gpio_signal signal)
+{
+	nvidia_gpu_over_temp(gpio_get_level(signal));
+}
