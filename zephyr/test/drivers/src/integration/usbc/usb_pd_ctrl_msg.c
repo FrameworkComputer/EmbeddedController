@@ -80,8 +80,6 @@ static void *usb_pd_ctrl_msg_setup_emul(void)
 	fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 
-	tcpci_emul_set_rev(fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
-
 	return &fixture;
 }
 

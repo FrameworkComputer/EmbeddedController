@@ -91,9 +91,7 @@ ZTEST(tcpci, test_generic_tcpci_get_rx_message_raw_rev2)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
-	tcpc_config[USBC_PORT_C0].flags = TCPC_FLAGS_TCPCI_REV2_0;
-	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV2_0_VER1_1);
-
+	/* Revision 2.0 is set by default in test_rules */
 	test_tcpci_get_rx_message_raw(emul, USBC_PORT_C0);
 }
 
@@ -113,9 +111,7 @@ ZTEST(tcpci, test_generic_tcpci_transmit_rev2)
 {
 	const struct emul *emul = emul_get_binding(DT_LABEL(EMUL_LABEL));
 
-	tcpc_config[USBC_PORT_C0].flags = TCPC_FLAGS_TCPCI_REV2_0;
-	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV2_0_VER1_1);
-
+	/* Revision 2.0 is set by default in test_rules */
 	test_tcpci_transmit(emul, USBC_PORT_C0);
 }
 

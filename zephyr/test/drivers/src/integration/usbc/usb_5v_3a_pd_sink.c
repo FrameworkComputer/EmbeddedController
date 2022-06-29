@@ -80,7 +80,6 @@ static void *usb_attach_5v_3a_pd_sink_setup(void)
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
 	test_fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
-	tcpci_emul_set_rev(test_fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
 
 	return &test_fixture;
 }

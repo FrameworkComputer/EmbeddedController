@@ -142,9 +142,6 @@ static void *usbc_alt_mode_setup(void)
 	/* Get references for the emulators */
 	fixture.tcpci_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
-	/* The configured TCPCI rev must match the emulator's supported rev. */
-	tcpc_config[TEST_PORT].flags |= TCPC_FLAGS_TCPCI_REV2_0;
-	tcpci_emul_set_rev(fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
 	fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
 

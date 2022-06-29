@@ -71,8 +71,6 @@ static void *usb_malfunction_sink_setup(void)
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
 	test_fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
-	tcpci_emul_set_rev(test_fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
-	tcpc_config[0].flags = tcpc_config[0].flags | TCPC_FLAGS_TCPCI_REV2_0;
 
 	/* Initialized the sink to request 5V and 3A */
 	tcpci_partner_init(&test_fixture.sink, PD_REV20);

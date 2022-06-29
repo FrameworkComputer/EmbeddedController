@@ -45,9 +45,7 @@ void test_tcpci_init(const struct emul *emul, enum usbc_port port)
 	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	uint16_t exp_mask;
 
-	tcpc_config[port].flags = TCPC_FLAGS_TCPCI_REV2_0 &
-				  TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V;
-	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV2_0_VER1_1);
+	tcpc_config[port].flags |= TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V;
 
 	/* Test fail on power status read */
 	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_POWER_STATUS);
@@ -612,9 +610,6 @@ void test_tcpci_alert(const struct emul *emul, enum usbc_port port)
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
 	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 
-	tcpc_config[port].flags = TCPC_FLAGS_TCPCI_REV2_0;
-	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV2_0_VER1_1);
-
 	/* Test alert read fail */
 	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_ALERT);
 	drv->tcpc_alert(port);
@@ -664,8 +659,6 @@ void test_tcpci_alert_rx_message(const struct emul *emul, enum usbc_port port)
 	int i, head;
 	int size;
 
-	tcpc_config[port].flags = TCPC_FLAGS_TCPCI_REV2_0;
-	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV2_0_VER1_1);
 	tcpci_emul_set_reg(emul, TCPC_REG_DEV_CAP_2,
 			   TCPC_REG_DEV_CAP_2_LONG_MSG);
 	tcpci_emul_set_reg(emul, TCPC_REG_RX_DETECT,
@@ -831,10 +824,6 @@ void test_tcpci_drp_toggle(const struct emul *emul, enum usbc_port port)
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
 	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	uint8_t exp_tcpc_ctrl, exp_role_ctrl, initial_tcpc_ctrl;
-
-	/* Set TCPCI to revision 2 */
-	tcpc_config[port].flags = TCPC_FLAGS_TCPCI_REV2_0;
-	tcpci_emul_set_rev(emul, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Test error on failed role CTRL set */
 	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_ROLE_CTRL);

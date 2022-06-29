@@ -55,7 +55,6 @@ static void *console_cmd_charge_manager_setup(void)
 		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
 	test_fixture.charger_emul =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)));
-	tcpci_emul_set_rev(test_fixture.tcpci_emul, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Initialized the sink to request 5V and 3A */
 	tcpci_partner_init(&test_fixture.sink_5v_3a, PD_REV20);

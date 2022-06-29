@@ -167,9 +167,6 @@ static void attach_emulated_snk(struct emul_state *my_emul_state)
 	struct tcpci_partner_data *my_snk = &my_emul_state->my_snk;
 	uint16_t power_reg_val;
 
-	/* Attach emulated sink */
-	tcpci_emul_set_rev(tcpci_emul_snk, TCPCI_EMUL_REV2_0_VER1_1);
-
 	/* Turn on VBUS detection */
 	/*
 	 * TODO(b/223901282): integration tests should not be setting vbus
@@ -199,9 +196,6 @@ static void attach_emulated_src(struct emul_state *my_emul_state)
 	const struct emul *charger_emul = my_emul_state->charger_isl923x_emul;
 	struct tcpci_partner_data *my_src = &my_emul_state->my_src;
 	uint16_t power_reg_val;
-
-	/* Attach emulated charger. */
-	tcpci_emul_set_rev(tcpci_emul_src, TCPCI_EMUL_REV2_0_VER1_1);
 
 	/* Turn on VBUS detection */
 	/*
