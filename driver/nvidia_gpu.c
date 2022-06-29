@@ -22,12 +22,6 @@
 #define CPRINTS(fmt, args...) cprints(CC_GPU, "GPU: " fmt, ## args)
 #define CPRINTF(fmt, args...) cprintf(CC_GPU, "GPU: " fmt, ## args)
 
-/*
- * BIT0~2: D-Notify level (0:D1, ... 4:D5)
- * note: may need a bit for disabling dynamic boost.
- */
-#define MEMMAP_D_NOTIFY_MASK		GENMASK(2, 0)
-
 test_export_static enum d_notify_level d_notify_level = D_NOTIFY_1;
 test_export_static bool policy_initialized = false;
 test_export_static const struct d_notify_policy *d_notify_policy = NULL;
@@ -40,6 +34,18 @@ void nvidia_gpu_init_policy(const struct d_notify_policy *policy)
 	}
 }
 
+void nvidia_gpu_over_temp(int assert)
+{
+	uint8_t *memmap_gpu = (uint8_t *)host_get_memmap(EC_MEMMAP_GPU);
+
+	if (assert)
+		*memmap_gpu |= EC_MEMMAP_GPU_OVERT_BIT;
+	else
+		*memmap_gpu &= ~EC_MEMMAP_GPU_OVERT_BIT;
+
+	host_set_single_event(EC_HOST_EVENT_GPU);
+}
+
 static void set_d_notify_level(enum d_notify_level level)
 {
 	uint8_t *memmap_gpu = (uint8_t *)host_get_memmap(EC_MEMMAP_GPU);
@@ -48,7 +54,8 @@ static void set_d_notify_level(enum d_notify_level level)
 		return;
 
 	d_notify_level = level;
-	*memmap_gpu = (*memmap_gpu & ~MEMMAP_D_NOTIFY_MASK) | d_notify_level;
+	*memmap_gpu = (*memmap_gpu & ~EC_MEMMAP_GPU_D_NOTIFY_MASK)
+			| d_notify_level;
 	host_set_single_event(EC_HOST_EVENT_GPU);
 	CPRINTS("Set D-notify level to D%c", ('1' + (int)d_notify_level));
 }

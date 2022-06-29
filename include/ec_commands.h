@@ -173,6 +173,14 @@ extern "C" {
 /* Unused 0xa7 - 0xdf */
 
 /*
+ * Bit fields for EC_MEMMAP_GPU
+ * 0:2: D-Notify level (0:D1, ... 4:D5)
+ * 3: Over temperature
+ */
+#define EC_MEMMAP_GPU_D_NOTIFY_MASK GENMASK(2, 0)
+#define EC_MEMMAP_GPU_OVERT_BIT BIT(3)
+
+/*
  * ACPI is unable to access memory mapped data at or above this offset due to
  * limitations of the ACPI protocol. Do not place data in the range 0xe0 - 0xfe
  * which might be needed by ACPI.

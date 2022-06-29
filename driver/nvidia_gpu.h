@@ -56,4 +56,11 @@ struct d_notify_policy {
 
 void nvidia_gpu_init_policy(const struct d_notify_policy *policies);
 
+/**
+ * Notify the host of assertion or deassertion of GPU over temperature.
+ *
+ * @param assert  True for assert. False for deassert.
+ */
+void nvidia_gpu_over_temp(int assert);
+
 #endif /* DRIVER_NVIDIA_GPU_H */

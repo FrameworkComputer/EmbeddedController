@@ -185,6 +185,19 @@ static int test_ac_plug(void)
 	return EC_SUCCESS;
 }
 
+static int test_overt(void)
+{
+	nvidia_gpu_over_temp(1);
+	TEST_ASSERT(*memmap_gpu & EC_MEMMAP_GPU_OVERT_BIT);
+	TEST_ASSERT(host_is_event_set(EC_HOST_EVENT_GPU));
+
+	nvidia_gpu_over_temp(0);
+	TEST_ASSERT(!(*memmap_gpu & EC_MEMMAP_GPU_OVERT_BIT));
+	TEST_ASSERT(host_is_event_set(EC_HOST_EVENT_GPU));
+
+	return EC_SUCCESS;
+}
+
 static void board_gpu_init(void)
 {
 	nvidia_gpu_init_policy(d_notify_policies);
@@ -200,5 +213,6 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_startup);
 	RUN_TEST(test_ac_unplug);
 	RUN_TEST(test_ac_plug);
+	RUN_TEST(test_overt);
 	test_print_result();
 }
