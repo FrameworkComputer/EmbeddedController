@@ -92,15 +92,6 @@
 			gpios = <&gpiod 4 GPIO_OUTPUT>;
 			no-auto-init;
 		};
-
-		gpio_sb_3: sb_3 {
-			gpios = <&gpiof 4 GPIO_OPEN_DRAIN>;
-			no-auto-init;
-		};
-		gpio_sb_4: sb_4 {
-			gpios = <&gpiof 5 GPIO_INPUT>;
-			no-auto-init;
-		};
 	};
 
 	/*
@@ -109,7 +100,6 @@
 	aliases {
 		/*
 		 * Input GPIO when used with type-C port 1
-		 * Output when used with HDMI sub-board
 		 */
 		gpio-usb-c1-int-odl = &gpio_sb_1;
 		gpio-en-rails-odl = &gpio_sb_1;
@@ -117,11 +107,6 @@
 		 * Sub-board with type A USB, enable.
 		 */
 		gpio-en-usb-a1-vbus = &gpio_sb_2;
-		/*
-		 * HPD pins for HDMI sub-board.
-		 */
-		gpio-hdmi-en-odl = &gpio_sb_3;
-		gpio-hpd-odl = &gpio_sb_4;
 		/*
 		 * Enable S5 rails for LTE sub-board
 		 */
@@ -234,11 +219,16 @@
 		};
 	};
 
-	kblight {
-		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm6 6 0 PWM_POLARITY_NORMAL>;
-		frequency = <10000>;
-	};
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio3 3 0>,
+			<&gpio3 6 0>,
+			<&gpiod 7 0>,
+			<&gpio6 0 0>,
+			<&gpiof 2 0>,
+			<&gpiof 3 0>;
+	 };
 
 	/*
 	 * Set I2C pins for type C sub-board to be

@@ -9,7 +9,8 @@
 		pwm_led0: pwm_led_0 {
 			pwms = <&pwm2 2 0 PWM_POLARITY_INVERTED>,
 			       <&pwm0 0 0 PWM_POLARITY_INVERTED>,
-			       <&pwm1 1 0 PWM_POLARITY_INVERTED>;
+			       <&pwm1 1 0 PWM_POLARITY_INVERTED>,
+				   <&pwm6 6 0 PWM_POLARITY_INVERTED>;
 		};
 	};
 
@@ -59,5 +60,11 @@
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
+};
+
+&pwm6 {
+	status = "okay";
+	pinctrl-0 = <&pwm6_gpc0>;
 	pinctrl-names = "default";
 };

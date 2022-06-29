@@ -79,7 +79,7 @@
 		gpio_ec_soc_dsw_pwrok: ec_soc_dsw_pwrok {
 			gpios = <&gpio6 1 GPIO_OUTPUT>;
 		};
-		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
+		gpio_ec_acok_otg_c1: ec_acok_otg_c1 {
 			gpios = <&gpioe 4 GPIO_OUTPUT>;
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
@@ -108,10 +108,6 @@
 		gpio_ec_wp_odl: ec_wp_odl {
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
-		gpio_en_kb_bl: en_kb_bl {
-			gpios = <&gpioa 0 GPIO_OUTPUT>;
-			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
-		};
 		gpio_en_pp3300_s5: en_pp3300_s5 {
 			gpios = <&gpiob 6 GPIO_OUTPUT>;
 			enum-name = "GPIO_TEMP_SENSOR_POWER";
@@ -132,7 +128,7 @@
 			gpios = <&gpio0 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
-		gpio_hdmi_sel: hdmi_sel {
+		gpio_ec_acok_otg_c0: ec_acok_otg_c0 {
 			gpios = <&gpioc 6 GPIO_OUTPUT>;
 		};
 		gpio_imu_int_l: imu_int_l {
