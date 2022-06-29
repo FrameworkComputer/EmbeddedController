@@ -1,0 +1,112 @@
+/* Copyright 2022 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwm_pins {
+		compatible = "cros-ec,pwm-pin-config";
+		pwm_led_y_c0: pwm_led_y_c0 {
+			#led-pin-cells = <1>;
+			pwms = <&pwm2 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+
+		pwm_led_w_c0: pwm_led_w_c0 {
+			#led-pin-cells = <1>;
+			pwms = <&pwm0 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+
+		pwm_led_y_c1: pwm_led_y_c1 {
+			#led-pin-cells = <1>;
+			pwms = <&pwm6 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+
+		pwm_led_w_c1: pwm_led_w_c1 {
+			#led-pin-cells = <1>;
+			pwms = <&pwm1 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+		pwm-frequency = <324>;
+
+		color_off_left: color-off-left {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_LEFT_LED";
+			led-pins = <&pwm_led_y_c1 0>,
+				   <&pwm_led_w_c1 0>;
+		};
+
+		color_off_right: color-off-right {
+			led-color = "LED_OFF";
+			led-id = "EC_LED_ID_RIGHT_LED";
+			led-pins = <&pwm_led_y_c0 0>,
+				   <&pwm_led_w_c0 0>;
+		};
+
+		color_amber_left: color-amber-left {
+			led-color = "LED_AMBER";
+			led-id = "EC_LED_ID_LEFT_LED";
+			br-color = "EC_LED_COLOR_AMBER";
+			led-pins = <&pwm_led_y_c1 1>,
+				   <&pwm_led_w_c1 0>;
+		};
+
+		color_amber_right: color-amber-right {
+			led-color = "LED_AMBER";
+			led-id = "EC_LED_ID_RIGHT_LED";
+			br-color = "EC_LED_COLOR_AMBER";
+			led-pins = <&pwm_led_y_c0 1>,
+				   <&pwm_led_w_c0 0>;
+		};
+
+		color_white_left: color-white-left {
+			led-color = "LED_WHITE";
+			led-id = "EC_LED_ID_LEFT_LED";
+			br-color = "EC_LED_COLOR_WHITE";
+			led-pins = <&pwm_led_y_c1 0>,
+				   <&pwm_led_w_c1 1>;
+		};
+
+		color_white_right: color-white-right {
+			led-color = "LED_WHITE";
+			led-id = "EC_LED_ID_RIGHT_LED";
+			br-color = "EC_LED_COLOR_WHITE";
+			led-pins = <&pwm_led_y_c0 0>,
+				   <&pwm_led_w_c0 1>;
+		};
+	};
+};
+
+/* LED2 */
+&pwm0 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
+};
+
+/* LED3 */
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
+};
+
+/* LED1 */
+&pwm2 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
+};
+
+/* LED0 */
+&pwm6 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm6_gpc0>;
+	pinctrl-names = "default";
+};

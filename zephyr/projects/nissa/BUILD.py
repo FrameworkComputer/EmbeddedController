@@ -92,7 +92,8 @@ xivu = register_nissa_project(
         here / "xivu_motionsense.dts",
         here / "xivu_keyboard.dts",
         here / "xivu_power_signals.dts",
-        here / "xivu_pwm_leds.dts",
+        here / "xivu_led_pins.dts",
+        here / "xivu_led_policy.dts",
     ],
     extra_kconfig_files=[here / "prj_xivu.conf"],
 )

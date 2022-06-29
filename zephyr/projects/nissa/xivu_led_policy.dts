@@ -1,0 +1,300 @@
+#include <dt-bindings/battery.h>
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-colors";
+
+		power-state-charge-left {
+			charge-state = "PWR_STATE_CHARGE";
+			charge-port = <1>; /* Left port */
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED to Amber */
+			color-1 {
+				led-color = <&color_amber_left>;
+			};
+		};
+
+		power-state-charge-right {
+			charge-state = "PWR_STATE_CHARGE";
+			charge-port = <0>; /* Right port */
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED to Amber */
+			color-1 {
+				led-color = <&color_amber_right>;
+			};
+		};
+
+		power-state-near-full-left {
+			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-port = <1>; /* Left port */
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED to White */
+			color-1 {
+				led-color = <&color_white_left>;
+			};
+		};
+
+		power-state-near-full-right {
+			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-port = <0>; /* Right port */
+
+			/* Turn off the left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED to White */
+			color-1 {
+				led-color = <&color_white_right>;
+			};
+		};
+
+		power-state-discharge-s0 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S0";
+
+			/* Left LED to White */
+			color-0 {
+				led-color = <&color_white_left>;
+			};
+			/* Right LED to White */
+			color-1 {
+				led-color = <&color_white_right>;
+			};
+		};
+
+		power-state-discharge-s3 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			/* White 1 sec, off 3 sec */
+			color-0 {
+				led-color = <&color_white_left>;
+				led-color = <&color_white_right>;
+				period-ms = <1000>;
+			};
+			color-1 {
+				led-color = <&color_off_left>;
+				led-color = <&color_off_right>;
+				period-ms = <3000>;
+			};
+		};
+
+		power-state-discharge-s5 {
+			charge-state = "PWR_STATE_DISCHARGE";
+			chipset-state = "POWER_S5";
+
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			color-1 {
+				led-color = <&color_off_right>;
+			};
+		};
+
+		power-state-charge-s0-batt-low-left {
+			charge-state = "PWR_STATE_CHARGE";
+			charge-port = <1>; /* Left port */
+			chipset-state = "POWER_S0";
+			/* Battery percent range (>= Empty, <= Low) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED - Amber 1 sec, off 3 sec */
+			color-1 {
+				led-color = <&color_amber_left>;
+				period-ms = <1000>;
+			};
+			color-2 {
+				led-color = <&color_off_left>;
+				period-ms = <3000>;
+			};
+		};
+
+		power-state-charge-s0-batt-low-right {
+			charge-state = "PWR_STATE_CHARGE";
+			charge-port = <0>; /* Right port */
+			chipset-state = "POWER_S0";
+			/* Battery percent range (>= Empty, <= Low) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			/* Turn off the Left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED - Amber 1 sec, off 3 sec */
+			color-1 {
+				led-color = <&color_amber_right>;
+				period-ms = <1000>;
+			};
+			color-2 {
+				led-color = <&color_off_right>;
+				period-ms = <3000>;
+			};
+		};
+
+		power-state-charge-s3-batt-low-left {
+			charge-state = "PWR_STATE_CHARGE";
+			charge-port = <1>; /* Left port */
+			chipset-state = "POWER_S3";
+			/* Battery percent range (>= Empty, <= Low) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED -White 1 sec, off 3 sec */
+			color-1 {
+				led-color = <&color_white_left>;
+				period-ms = <1000>;
+			};
+			color-2 {
+				led-color = <&color_off_left>;
+				period-ms = <3000>;
+			};
+		};
+
+		power-state-charge-s3-batt-low-right {
+			charge-state = "PWR_STATE_CHARGE";
+			charge-port = <0>; /* Right port */
+			chipset-state = "POWER_S3";
+			/* Battery percent range (>= Empty, <= Low) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			/* Turn off the Left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED -White 1 sec, off 3 sec */
+			color-1 {
+				led-color = <&color_white_right>;
+				period-ms = <1000>;
+			};
+			color-2 {
+				led-color = <&color_off_right>;
+				period-ms = <3000>;
+			};
+		};
+
+		power-state-charge-s5-batt-low {
+			charge-state = "PWR_STATE_CHARGE";
+			chipset-state = "POWER_S5";
+			/* Battery percent range (>= Empty, <= Low) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			color-1 {
+				led-color = <&color_off_right>;
+			};
+		};
+
+		power-state-error-s0-left {
+			charge-state = "PWR_STATE_ERROR";
+			charge-port = <1>; /* Left port */
+			chipset-state = "POWER_S0";
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED -Amber 1 sec, off 1 sec */
+			color-1 {
+				led-color = <&color_amber_left>;
+				period-ms = <1000>;
+			};
+			color-2 {
+				led-color = <&color_off_left>;
+				period-ms = <1000>;
+			};
+		};
+
+		power-state-error-s0-right {
+			charge-state = "PWR_STATE_ERROR";
+			charge-port = <0>; /* Right port */
+			chipset-state = "POWER_S0";
+
+			/* Turn off the Left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED -Amber 1 sec, off 1 sec */
+			color-1 {
+				led-color = <&color_amber_right>;
+				period-ms = <1000>;
+			};
+			color-2 {
+				led-color = <&color_off_right>;
+				period-ms = <1000>;
+			};
+		};
+
+		power-state-error-s3-left {
+			charge-state = "PWR_STATE_ERROR";
+			charge-port = <1>; /* Left port */
+			chipset-state = "POWER_S3";
+
+			/* Turn off the right LED */
+			color-0 {
+				led-color = <&color_off_right>;
+			};
+			/* Left LED -White 1 sec, off 3 sec */
+			color-1 {
+				led-color = <&color_white_left>;
+				period-ms = <1000>;
+			};
+			color-2 {
+				led-color = <&color_off_left>;
+				period-ms = <3000>;
+			};
+		};
+
+		power-state-error-s3-right {
+			charge-state = "PWR_STATE_ERROR";
+			charge-port = <0>; /* Right port */
+			chipset-state = "POWER_S3";
+
+			/* Turn off the Left LED */
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			/* Right LED -White 1 sec, off 3 sec */
+			color-1 {
+				led-color = <&color_white_right>;
+				period-ms = <1000>;
+			};
+			color-2 {
+				led-color = <&color_off_right>;
+				period-ms = <3000>;
+			};
+		};
+
+		power-state-error-s5 {
+			charge-state = "PWR_STATE_ERROR";
+			chipset-state = "POWER_S5";
+
+			color-0 {
+				led-color = <&color_off_left>;
+			};
+			color-1 {
+				led-color = <&color_off_right>;
+			};
+		};
+	};
+};

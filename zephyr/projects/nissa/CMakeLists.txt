@@ -53,9 +53,6 @@ if(DEFINED CONFIG_BOARD_PUJJO)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/pujjo/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_XIVU)
-        zephyr_library_sources(
-                        "src/xivu/led.c"
-        )
         project(xivu)
         zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/xivu/usbc.c")
         zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/xivu/charger.c")
