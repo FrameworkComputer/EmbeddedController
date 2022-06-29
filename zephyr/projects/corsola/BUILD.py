@@ -64,7 +64,10 @@ register_corsola_project(
         here / "usbc_kingler.dts",
         here / "default_gpio_pinctrl_kingler.dts",
     ],
-    extra_kconfig_files=[here / "prj_kingler.conf"],
+    extra_kconfig_files=[
+        here / "prj_npcx993_base.conf",
+        here / "prj_kingler.conf",
+    ],
 )
 
 register_corsola_project(
@@ -88,7 +91,7 @@ register_corsola_project(
         here / "default_gpio_pinctrl_kingler.dts",
     ],
     extra_kconfig_files=[
-        here / "prj_kingler.conf",
+        here / "prj_npcx993_base.conf",
         here / "prj_steelix.conf",
     ],
 )
