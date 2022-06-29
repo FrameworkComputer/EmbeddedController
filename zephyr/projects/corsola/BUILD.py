@@ -44,7 +44,10 @@ register_corsola_project(
         here / "motionsense_krabby.dts",
         here / "usbc_krabby.dts",
     ],
-    extra_kconfig_files=[here / "prj_krabby.conf"],
+    extra_kconfig_files=[
+        here / "prj_it81202_base.conf",
+        here / "prj_krabby.conf",
+    ],
 )
 
 register_corsola_project(
@@ -111,7 +114,7 @@ register_corsola_project(
         here / "usbc_krabby.dts",
     ],
     extra_kconfig_files=[
-        here / "prj_krabby.conf",
+        here / "prj_it81202_base.conf",
         here / "prj_tentacruel.conf",
     ],
 )
