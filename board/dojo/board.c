@@ -298,7 +298,7 @@ const struct pwm_t pwm_channels[] = {
 	},
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
-		.freq_hz = 10000,
+		.freq_hz = 2400,
 		.pcfsr_sel = PWM_PRESCALER_C6,
 	},
 	[PWM_CH_LED_C0_WHITE] = {
