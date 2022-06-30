@@ -450,4 +450,11 @@ void *test_malloc(size_t bytes);
  */
 void test_free(void *mem);
 
+/**
+ * @brief Force the chipset to state G3 and then transition to S3 and finally
+ * S5.
+ *
+ */
+void test_set_chipset_to_g3_then_transition_to_s5(void);
+
 #endif /* ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_ */

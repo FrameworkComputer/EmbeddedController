@@ -44,35 +44,6 @@ static bool is_chargesplash_requested(void)
 	return response.requested;
 }
 
-static struct k_poll_signal shutdown_complete_signal =
-	K_POLL_SIGNAL_INITIALIZER(shutdown_complete_signal);
-static struct k_poll_event shutdown_complete_event = K_POLL_EVENT_INITIALIZER(
-	K_POLL_TYPE_SIGNAL, K_POLL_MODE_NOTIFY_ONLY, &shutdown_complete_signal);
-
-static void handle_chipset_shutdown_complete_event(void)
-{
-	k_poll_signal_raise(&shutdown_complete_signal, 0);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE,
-	     handle_chipset_shutdown_complete_event, HOOK_PRIO_LAST);
-
-static void force_chipset_off(void)
-{
-	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		k_poll_signal_reset(&shutdown_complete_signal);
-		chipset_force_shutdown(CHIPSET_RESET_INIT);
-		k_poll(&shutdown_complete_event, 1, K_MSEC(1000));
-	}
-
-	/*
-	 * Signal will trigger during S3->S5, but we want to wait until we're
-	 * actually at S5.  Give it a quick sleep if required.
-	 */
-	while (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		msleep(5);
-	}
-}
-
 static struct k_poll_signal s0_signal = K_POLL_SIGNAL_INITIALIZER(s0_signal);
 static struct k_poll_event s0_event = K_POLL_EVENT_INITIALIZER(
 	K_POLL_TYPE_SIGNAL, K_POLL_MODE_NOTIFY_ONLY, &s0_signal);
@@ -124,7 +95,7 @@ static void set_lid(bool open, bool inhibit_boot)
 
 	if (inhibit_boot) {
 		wait_for_chipset_startup();
-		force_chipset_off();
+		test_set_chipset_to_g3_then_transition_to_s5();
 	}
 }
 
@@ -136,7 +107,7 @@ static void pulse_power_button(void)
 
 static void reset_state(void *unused)
 {
-	force_chipset_off();
+	test_set_chipset_to_g3_then_transition_to_s5();
 
 	if (lid_is_open()) {
 		set_lid(false, false);
@@ -213,7 +184,7 @@ ZTEST_USER(chargesplash, test_lockout)
 		wait_for_chipset_startup();
 
 		set_ac_enabled(false);
-		force_chipset_off();
+		test_set_chipset_to_g3_then_transition_to_s5();
 	}
 
 	set_ac_enabled(true);
@@ -260,7 +231,7 @@ ZTEST_USER(chargesplash, test_manual_lockout_via_console)
 	zassert_true(is_chargesplash_requested(),
 		     "chargesplash should be requested");
 	wait_for_chipset_startup();
-	force_chipset_off();
+	test_set_chipset_to_g3_then_transition_to_s5();
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chargesplash lockout"),
 		   NULL);
@@ -288,7 +259,7 @@ ZTEST_USER(chargesplash, test_manual_lockout_via_hostcmd)
 	zassert_true(is_chargesplash_requested(),
 		     "chargesplash should be requested");
 	wait_for_chipset_startup();
-	force_chipset_off();
+	test_set_chipset_to_g3_then_transition_to_s5();
 
 	zassert_ok(chargesplash_hostcmd(EC_CHARGESPLASH_LOCKOUT, &response),
 		   NULL);

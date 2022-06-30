@@ -416,3 +416,36 @@ void test_free(void *mem)
 {
 	k_heap_free(&test_heap, mem);
 }
+
+static struct k_poll_signal shutdown_complete_signal =
+	K_POLL_SIGNAL_INITIALIZER(shutdown_complete_signal);
+static struct k_poll_event shutdown_complete_event = K_POLL_EVENT_INITIALIZER(
+	K_POLL_TYPE_SIGNAL, K_POLL_MODE_NOTIFY_ONLY, &shutdown_complete_signal);
+
+static void handle_chipset_shutdown_complete_event(void)
+{
+	k_poll_signal_raise(&shutdown_complete_signal, 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE,
+	     handle_chipset_shutdown_complete_event, HOOK_PRIO_LAST);
+
+void test_set_chipset_to_g3_then_transition_to_s5(void)
+{
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		k_poll_signal_reset(&shutdown_complete_signal);
+		chipset_force_shutdown(CHIPSET_RESET_INIT);
+		k_poll(&shutdown_complete_event, 1, K_MSEC(1000));
+	}
+
+	/*
+	 * Signal will trigger during S3->S5, but we want to wait until we're
+	 * actually at S5.  Give it a quick sleep if required.
+	 */
+	WAIT_FOR(!chipset_in_state(CHIPSET_STATE_ANY_OFF), 1000000 /* 1s */,
+		 k_msleep(5));
+
+	/*
+	 * TODO(b/236726670): Why do we need to sleep after restarting chipset?
+	 */
+	k_sleep(K_SECONDS(1));
+}
