@@ -322,7 +322,8 @@ a lot easier during both development and testing.
 ## Power
 
 See [Measuring Power] for instructions on how to measure power with the
-fingerprint development boards.
+fingerprint development boards. *Make sure that any debuggers are completely
+disconnected.*
 
 ### Dragonclaw v0.2
 
@@ -341,13 +342,13 @@ fingerprint development boards.
 
 ```
 @@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@       sample_msecs    113   533.56   40.91   658.52   447.06
-@@    pp1800_dx_fp_mv    113  1800.00    0.00  1800.00  1800.00
-@@    pp1800_dx_fp_mw    113     0.00    0.00     0.00     0.00
-@@    pp3300_dx_fp_mv    113  3280.00    0.00  3280.00  3280.00
-@@    pp3300_dx_fp_mw    113     0.01    0.05     0.26     0.00
-@@   pp3300_dx_mcu_mv    113  3280.00    0.00  3280.00  3280.00
-@@   pp3300_dx_mcu_mw    113    24.67    0.00    24.67    24.67
+@@       sample_msecs    465   129.06   22.68   396.32    94.61
+@@    pp1800_dx_fp_mv    465  1800.00    0.00  1800.00  1800.00
+@@    pp1800_dx_fp_mw    465     0.00    0.00     0.00     0.00
+@@    pp3300_dx_fp_mv    465  3280.02    0.37  3288.00  3280.00
+@@    pp3300_dx_fp_mw    465     0.01    0.04     0.26     0.00
+@@   pp3300_dx_mcu_mv    465  3280.00    0.00  3280.00  3280.00
+@@   pp3300_dx_mcu_mw    465    20.76    0.12    22.04    20.73
 ```
 
 #### MCU in low power mode (suspend)
@@ -358,13 +359,13 @@ fingerprint development boards.
 
 ```
 @@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@       sample_msecs    115   526.56   36.79   607.60   426.58
-@@    pp1800_dx_fp_mv    115  1800.00    0.00  1800.00  1800.00
-@@    pp1800_dx_fp_mw    115     0.00    0.00     0.00     0.00
-@@    pp3300_dx_fp_mv    115  3287.30    2.25  3288.00  3280.00
-@@    pp3300_dx_fp_mw    115     0.00    0.02     0.26     0.00
-@@   pp3300_dx_mcu_mv    115  3280.97    2.62  3288.00  3280.00
-@@   pp3300_dx_mcu_mw    115     4.02    0.64    10.76     3.94
+@@       sample_msecs    462   129.89   15.65   381.76    97.02
+@@    pp1800_dx_fp_mv    462  1800.00    0.00  1800.00  1800.00
+@@    pp1800_dx_fp_mw    462     0.00    0.00     0.00     0.00
+@@    pp3300_dx_fp_mv    462  3287.65    1.63  3288.00  3280.00
+@@    pp3300_dx_fp_mw    462     0.00    0.03     0.26     0.00
+@@   pp3300_dx_mcu_mv    462  3283.31    3.94  3288.00  3280.00
+@@   pp3300_dx_mcu_mw    462     1.55    0.08     1.58     1.31
 ```
 
 ### Icetower v0.1

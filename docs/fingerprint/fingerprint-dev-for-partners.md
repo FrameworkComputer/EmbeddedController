@@ -315,6 +315,11 @@ You can get a summary of the power over `N` seconds with:
 (chroot) $ dut-control -t N pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
 ```
 
+When measuring the power, make sure that any debuggers are disconnected. The
+most reliable way to make sure it is disconnected is to physically disconnect
+the debugger and servo_micro from the board. Then re-attach servo_micro and
+restart `servod`.
+
 <!-- mdformat off(b/139308852) -->
 *** note
 The `_mv` suffix denotes millivolt and `_mw` suffix denotes milliwatt.
