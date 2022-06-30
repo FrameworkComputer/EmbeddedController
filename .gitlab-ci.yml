@@ -191,12 +191,6 @@ lazor:
     PROJECT: "lazor"
   <<: *build_template
 
-native_posix:
-  variables:
-    PROJECT: "posix-ec"
-    TOOLCHAIN: "host"
-  <<: *build_template
-
 npcx7_evb:
   variables:
     PROJECT: "npcx7"
