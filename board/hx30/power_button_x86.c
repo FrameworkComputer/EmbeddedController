@@ -170,6 +170,7 @@ static void set_pwrbtn_to_pch(int high, int init)
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) && !high &&
 		(charge_want_shutdown() || charge_prevent_power_on(!init))) {
 		CPRINTS("PB PCH pwrbtn ignored due to battery level");
+		update_prevent_power_on_flag(1);
 		high = 1;
 	}
 #endif
@@ -311,8 +312,6 @@ static void state_machine(uint64_t tnow)
 			pwrbtn_state = PWRBTN_STATE_WAS_OFF;
 			msleep(20);
 			set_pwrbtn_to_pch(0, 0);
-			power_button_enable_led(1);
-
 		} else {
 			/*
 			 * when in preOS still need send power button signal
@@ -401,7 +400,6 @@ static void state_machine(uint64_t tnow)
 				}
 				msleep(20);
 				set_pwrbtn_to_pch(0, 1);
-				power_button_enable_led(1);
 			}
 
 			tnext_state = get_time().val + PWRBTN_INITIAL_US;

@@ -186,6 +186,12 @@ void chipset_throttle_cpu(int throttle)
 		gpio_set_level(GPIO_EC_PROCHOT_L, !throttle);
 }
 
+static int system_prevent_power_on_flag;
+void update_prevent_power_on_flag(int status)
+{
+	system_prevent_power_on_flag = status;
+}
+
 int board_chipset_power_on(void)
 {
 	/*gpio_set_level(GPIO_VS_ON, 1); Todo fix vson noboot*/
@@ -240,7 +246,14 @@ int board_chipset_power_on(void)
 	}
 
 	msleep(50);
-	return true;
+
+	/**
+	 *  if EC doesn't assert the power button signal vai prevent power on,
+	 *  the power state should return to G3 state
+	 */
+	CPRINTS("Power on flag: %d", system_prevent_power_on_flag);
+	power_button_enable_led(!system_prevent_power_on_flag);
+	return !system_prevent_power_on_flag;
 }
 
 enum power_state power_chipset_init(void)
@@ -505,6 +518,7 @@ enum power_state power_handle_state(enum power_state state)
 			
 			return POWER_S5;
 		} else {
+			system_prevent_power_on_flag = 0;
 			return POWER_G3;
 		}
 		break;

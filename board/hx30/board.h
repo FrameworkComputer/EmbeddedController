@@ -751,6 +751,7 @@ void cancel_board_power_off(void);
 
 /* power sequence */
 int board_chipset_power_on(void);
+void update_prevent_power_on_flag(int status);
 
 int board_get_version(void);
 
