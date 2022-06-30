@@ -5,8 +5,8 @@
 
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/logging/log.h>
-
 #include "board_led.h"
+#include "chipset.h"
 #include "common.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
@@ -37,11 +37,14 @@ __override struct led_descriptor
 					     LED_INDEFINITE } },
 		[STATE_CHARGING_FULL_CHARGE] = { { EC_LED_COLOR_WHITE,
 						   LED_INDEFINITE } },
-		[STATE_DISCHARGE_S0] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S0] = { { EC_LED_COLOR_WHITE,
+					   LED_INDEFINITE } },
 		[STATE_DISCHARGE_S0_BAT_LOW] = { { EC_LED_COLOR_AMBER,
 						   1 * LED_ONE_SEC },
 						 { LED_OFF, 3 * LED_ONE_SEC } },
-		[STATE_DISCHARGE_S3] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S3] = { { EC_LED_COLOR_WHITE,
+					   1 * LED_ONE_SEC },
+					 { LED_OFF, 3 * LED_ONE_SEC } },
 		[STATE_DISCHARGE_S5] = { { LED_OFF, LED_INDEFINITE } },
 		[STATE_BATTERY_ERROR] = { { EC_LED_COLOR_AMBER,
 					    1 * LED_ONE_SEC },
@@ -154,4 +157,25 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	}
 
 	return EC_SUCCESS;
+}
+
+__override enum led_states board_led_get_state(enum led_states desired_state)
+{
+	/*
+	 * Battery error LED behavior as below:
+	 * S0: Blinking Amber LED, 1s on/ 1s off
+	 * S3/S5: following S3/S5 behavior
+	 * Add function to let battery error LED follow S3/S5 behavior in S3/S5.
+	 */
+
+	if (desired_state == STATE_BATTERY_ERROR) {
+		if (chipset_in_state(CHIPSET_STATE_ON)) {
+			return desired_state;
+		} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+			return STATE_DISCHARGE_S3;
+		} else {
+			return STATE_DISCHARGE_S5;
+		}
+	}
+	return desired_state;
 }
