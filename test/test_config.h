@@ -22,7 +22,7 @@
 #undef CONFIG_VBOOT_HASH
 #undef CONFIG_USB_PD_LOGGING
 
-#ifdef TEST_AES
+#if defined(TEST_AES) || defined(TEST_CRYPTO_BENCHMARK)
 #define CONFIG_AES
 #define CONFIG_AES_GCM
 #endif
