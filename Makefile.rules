@@ -368,8 +368,7 @@ run-fuzz-test-targets=$(foreach t,$(fuzz-test-list-host),run-$(t))
 
 $(fuzz-test-targets): TEST_FLAG=TEST_FUZZ=y TEST_ASAN=$(TEST_ASAN) \
 	TEST_MSAN=$(TEST_MSAN) TEST_UBSAN=$(TEST_UBSAN) \
-	CROSS_COMPILE=$(shell echo $(HOSTCC) | grep -v ccache | \
-		sed -e 's/[^-]*$$//')
+	CROSS_COMPILE=$(HOST_CROSS_COMPILE)
 $(fuzz-test-targets): host-%: | $(FAILED_BOARDS_DIR)
 	@touch $(FAILED_BOARDS_DIR)/test-$*
 	+$(call quiet,host_test,BUILD  )
