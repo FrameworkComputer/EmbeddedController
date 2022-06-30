@@ -1217,6 +1217,15 @@ static void ps8805_before(void *state)
 	setup_no_fail_all();
 }
 
+static void ps8805_after(void *state)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	ARG_UNUSED(state);
+
+	/* Set correct firmware revision */
+	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x31);
+}
+
 /**
  * Setup PS8xxx emulator to mimic PS8815 and setup no fail for all I2C devices
  * associated with PS8xxx emulator
@@ -1231,8 +1240,17 @@ static void ps8815_before(void *state)
 	setup_no_fail_all();
 }
 
-ZTEST_SUITE(ps8805, drivers_predicate_post_main, NULL, ps8805_before, NULL,
-	    NULL);
+static void ps8815_after(void *state)
+{
+	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	ARG_UNUSED(state);
 
-ZTEST_SUITE(ps8815, drivers_predicate_post_main, NULL, ps8815_before, NULL,
-	    NULL);
+	/* Set correct firmware revision */
+	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x31);
+}
+
+ZTEST_SUITE(ps8805, drivers_predicate_post_main, NULL, ps8805_before,
+	    ps8805_after, NULL);
+
+ZTEST_SUITE(ps8815, drivers_predicate_post_main, NULL, ps8815_before,
+	    ps8815_after, NULL);
