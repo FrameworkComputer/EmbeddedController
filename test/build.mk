@@ -174,6 +174,7 @@ compile_time_macros-y=compile_time_macros.o
 console_edit-y=console_edit.o
 cortexm_fpu-y=cortexm_fpu.o
 crc-y=crc.o
+debug-y=debug.o
 entropy-y=entropy.o
 extpwr_gpio-y=extpwr_gpio.o
 fan-y=fan.o

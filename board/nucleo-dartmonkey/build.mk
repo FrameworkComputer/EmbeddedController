@@ -15,6 +15,7 @@ test-list-y=\
        cec \
        compile_time_macros \
        crc \
+       debug \
        flash_physical \
        flash_write_protect \
        fpsensor \

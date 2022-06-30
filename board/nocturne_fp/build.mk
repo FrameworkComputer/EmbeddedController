@@ -31,6 +31,7 @@ test-list-y=\
        compile_time_macros \
        cortexm_fpu \
        crc \
+       debug \
        flash_physical \
        flash_write_protect \
        fpsensor \
