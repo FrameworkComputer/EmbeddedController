@@ -298,9 +298,14 @@ enum power_state power_chipset_init(void)
 		 */
 		battery_wait_for_stable();
 
-	if (exit_hard_off)
-		/* Auto-power on */
-		mt8186_exit_off();
+	if (exit_hard_off) {
+		if (init_state == POWER_S5 || init_state == POWER_G3) {
+			/* Auto-power on */
+			mt8186_exit_off();
+		} else {
+			is_exiting_off = false;
+		}
+	}
 
 	if (init_state != POWER_G3 && !exit_hard_off)
 		/* Force shutdown from S5 if the PMIC is already up. */
