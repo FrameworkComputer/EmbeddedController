@@ -1766,11 +1766,6 @@ int board_set_active_charge_port(int charge_port)
 {
 	CPRINTS("start change port = %d, prev_charge_port = %d", charge_port, prev_charge_port);
 
-	if (board_batt_is_present() != BP_YES) {
-		CPRINTS("No batt, no change");
-		return EC_ERROR_NOT_POWERED;
-	}
-
 	/* port need change, stop all power and ready to switch. */
 	if (prev_charge_port != -1 && prev_charge_port != charge_port) {
 		update_soc_power_limit(false, true);
