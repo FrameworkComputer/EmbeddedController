@@ -6,10 +6,13 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
+#include <zephyr/shell/shell.h>
 
 #include <zephyr/logging/log.h>
 
 #include "gpio/gpio.h"
+#include "soc_gpio.h"
+#include "util.h"
 
 LOG_MODULE_REGISTER(shim_cros_gpio, LOG_LEVEL_ERR);
 
@@ -53,3 +56,142 @@ int gpio_config_unused_pins(void)
 
 	return 0;
 }
+
+#ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_GPIODBG
+/*
+ * IO information about each GPIO that is configured in the `named_gpios` and
+ *` unused_pins` device tree nodes.
+ */
+struct npcx_io_info {
+	/* A npcx gpio port device */
+	const struct device *dev;
+	/* A npcx gpio port number */
+	int port;
+	/* Bit number of pin within a npcx gpio port */
+	gpio_pin_t pin;
+	/* GPIO net name */
+	const char *name;
+	/* Enable flag of npcx gpio input buffer */
+	bool enable;
+};
+
+#define NAMED_GPIO_INFO(node)                                      \
+	{                                                          \
+		.dev = DEVICE_DT_GET(DT_GPIO_CTLR(node, gpios)),   \
+		.port = DT_PROP(DT_GPIO_CTLR(node, gpios), index), \
+		.pin = DT_GPIO_PIN(node, gpios),                   \
+		.name = DT_NODE_FULL_NAME(node),                   \
+		.enable = true,                                    \
+	},
+
+#define UNUSED_GPIO_INFO(node, prop, idx)                                     \
+	{                                                                     \
+		.dev = DEVICE_DT_GET(DT_GPIO_CTLR_BY_IDX(node, prop, idx)),   \
+		.port = DT_PROP(DT_GPIO_CTLR_BY_IDX(node, prop, idx), index), \
+		.pin = DT_GPIO_PIN_BY_IDX(node, prop, idx),                   \
+		.name = "unused pin",                                         \
+		.enable = true,                                               \
+	},
+
+#define NAMED_GPIO_INIT(node) \
+	COND_CODE_1(DT_NODE_HAS_PROP(node, gpios), (NAMED_GPIO_INFO(node)), ())
+
+static struct npcx_io_info gpio_info[] = {
+#if DT_NODE_EXISTS(DT_PATH(named_gpios))
+	DT_FOREACH_CHILD(DT_PATH(named_gpios), NAMED_GPIO_INIT)
+#endif
+#if DT_NODE_EXISTS(DT_PATH(unused_pins))
+		DT_FOREACH_PROP_ELEM(DT_PATH(unused_pins), unused_gpios,
+				     UNUSED_GPIO_INFO)
+#endif
+};
+
+static int get_index_from_arg(const struct shell *sh, char **argv, int *index)
+{
+	char *end_ptr;
+	int num = strtol(argv[1], &end_ptr, 0);
+	const int gpio_cnt = ARRAY_SIZE(gpio_info);
+
+	if (*end_ptr != '\0') {
+		shell_error(sh, "Failed to parse %s", argv[1]);
+		return -EINVAL;
+	}
+
+	if (num >= gpio_cnt) {
+		shell_error(sh, "Index shall be less than %u, was %u", gpio_cnt,
+			    num);
+		return -EINVAL;
+	}
+
+	*index = num;
+
+	return 0;
+}
+
+static int cmd_gpio_list_all(const struct shell *sh, size_t argc, char **argv)
+{
+	ARG_UNUSED(argc);
+	ARG_UNUSED(argv);
+
+	/* Print header */
+	shell_print(sh, "IDX|ON| GPIO | Name");
+	shell_print(sh, "---+--+------+----------");
+
+	/* List all GPIOs in 'named-gpios' and 'unused_pins' DT nodes */
+	for (int i = 0; i < ARRAY_SIZE(gpio_info); i++) {
+		shell_print(sh, "%02d |%s | io%x%x | %s", i,
+			    gpio_info[i].enable ? "*" : " ", gpio_info[i].port,
+			    gpio_info[i].pin, gpio_info[i].name);
+	}
+
+	return 0;
+}
+
+static int cmd_gpio_turn_on(const struct shell *sh, size_t argc, char **argv)
+{
+	int index;
+	int res = get_index_from_arg(sh, argv, &index);
+
+	if (res < 0) {
+		return res;
+	}
+
+	/* Turn on GPIO's input buffer by index */
+	gpio_info[index].enable = true;
+	npcx_gpio_enable_io_pads(gpio_info[index].dev, gpio_info[index].pin);
+
+	return 0;
+}
+
+static int cmd_gpio_turn_off(const struct shell *sh, size_t argc, char **argv)
+{
+	int index;
+	int res = get_index_from_arg(sh, argv, &index);
+
+	if (res < 0) {
+		return res;
+	}
+
+	/* Turn off GPIO's input buffer by index */
+	gpio_info[index].enable = false;
+	npcx_gpio_disable_io_pads(gpio_info[index].dev, gpio_info[index].pin);
+
+	return 0;
+}
+
+SHELL_STATIC_SUBCMD_SET_CREATE(
+	sub_gpiodbg,
+	SHELL_CMD_ARG(list, NULL, "List all GPIOs used on platform by index",
+		      cmd_gpio_list_all, 1, 0),
+	SHELL_CMD_ARG(on, NULL, "<index_in_list> Turn on GPIO's input buffer",
+		      cmd_gpio_turn_on, 2, 0),
+	SHELL_CMD_ARG(off, NULL, "<index_in_list> Turn off GPIO's input buffer",
+		      cmd_gpio_turn_off, 2, 0),
+	SHELL_SUBCMD_SET_END /* Array terminated. */
+);
+
+SHELL_CMD_ARG_REGISTER(gpiodbg, &sub_gpiodbg,
+		       "Commands for power consumption "
+		       "investigation",
+		       NULL, 2, 0);
+#endif /* CONFIG_PLATFORM_EC_CONSOLE_CMD_GPIODBG */
