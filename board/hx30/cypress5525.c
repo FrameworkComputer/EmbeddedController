@@ -480,7 +480,7 @@ int cyp5525_setup(int controller)
 	 */
 
 	int rv, data, i;
-	#define CYPD_SETUP_CMDS_LEN  7
+	#define CYPD_SETUP_CMDS_LEN  5
 	struct {
 		int reg;
 		int value;
@@ -491,8 +491,6 @@ int cyp5525_setup(int controller)
 		{ CYP5525_PD_CONTROL_REG(1), CYPD_PD_CMD_SET_TYPEC_1_5A, CYP5525_PORT1_INTR},	/* Set the port 1 PDO 1.5A */
 		{ CYP5525_EVENT_MASK_REG(0), 0x7ffff, 4, CYP5525_PORT0_INTR},	/* Set the port 0 event mask */
 		{ CYP5525_EVENT_MASK_REG(1), 0x7ffff, 4, CYP5525_PORT1_INTR },	/* Set the port 1 event mask */
-		{ CYP5525_VDM_EC_CONTROL_REG(0), CYP5525_EXTEND_MSG_CTRL_EN, 1, CYP5525_PORT0_INTR},	/* Set the port 0 event mask */
-		{ CYP5525_VDM_EC_CONTROL_REG(1), CYP5525_EXTEND_MSG_CTRL_EN, 1, CYP5525_PORT1_INTR },	/* Set the port 1 event mask */
 		{ CYP5525_PD_CONTROL_REG(0), CYPD_PD_CMD_EC_INIT_COMPLETE, CYP5525_PORT0_INTR },	/* EC INIT Complete */
 	};
 	BUILD_ASSERT(ARRAY_SIZE(cypd_setup_cmds) == CYPD_SETUP_CMDS_LEN);
@@ -971,7 +969,7 @@ void cyp5525_port_int(int controller, int port)
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 	int port_idx = (controller << 1) + port;
-	enum pd_msg_type sop_type;
+	/* enum pd_msg_type sop_type; */
 	rv = i2c_read_offset16_block(i2c_port, addr_flags, CYP5525_PORT_PD_RESPONSE_REG(port), data2, 4);
 	if (rv != EC_SUCCESS)
 		CPRINTS("PORT_PD_RESPONSE_REG failed");
@@ -1003,6 +1001,7 @@ void cyp5525_port_int(int controller, int port)
 		cypd_set_typec_profile(controller, port);
 		cypd_update_port_state(controller, port);
 		break;
+	/*
 	case CYPD_RESPONSE_EXT_MSG_SOP_RX:
 	case CYPD_RESPONSE_EXT_SOP1_RX:
 	case CYPD_RESPONSE_EXT_SOP2_RX:
@@ -1015,6 +1014,7 @@ void cyp5525_port_int(int controller, int port)
 		cypd_handle_extend_msg(controller, port, response_len, sop_type);
 		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
 		break;
+	*/
 	default:
 		if (response_len && verbose_msg_logging) {
 			CPRINTF("Port:%d Data:0x", port_idx);
