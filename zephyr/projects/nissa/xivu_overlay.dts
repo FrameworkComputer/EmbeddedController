@@ -126,6 +126,7 @@
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
 			adc = <&adc_temp_sensor_1>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 		};
 		charger {
 			compatible = "cros-ec,temp-sensor-thermistor",
@@ -139,6 +140,7 @@
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
 			adc = <&adc_temp_sensor_2>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 		};
 	};
 
