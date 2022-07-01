@@ -13,7 +13,8 @@
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED_GREEN] = {
 		.channel = 0,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP |
+				PWM_CONFIG_OPEN_DRAIN,
 		.freq = 2000
 	},
 	[PWM_CH_FAN] = {
