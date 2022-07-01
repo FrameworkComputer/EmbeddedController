@@ -319,6 +319,16 @@
 	pinctrl-names = "default";
 };
 
+&i2c_ec_i2c_sub_usb_c1 {
+	/*
+	 * Dynamic speed setting is used for AP-controlled firmware update
+	 * of PS8745 TCPC/redriver: the AP lowers speed to 400 kHz in order
+	 * to use more efficient window programming, then sets it back when
+	 * done.
+	 */
+	dynamic-speed;
+};
+
 &i2c5 {
 	label = "I2C_USB_C0_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
