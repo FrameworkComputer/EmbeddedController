@@ -124,6 +124,7 @@
 		ec-ds3 {
 			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP3300_A";
+			alias = "GPIO_TEMP_SENSOR_POWER";
 		};
 		pch-pwrok-ec {
 			gpios = <&gpioa 0 GPIO_INPUT>;

@@ -27,5 +27,13 @@ child-binding:
         according to the flags in the gpios node.
       type: boolean
       required: false
+    alias:
+      description:
+        When set, defines an alias for this GPIO's enum-name.
+
+        This is to allow common or generic names in legacy code to map
+        to the particular board's GPIO name.
+      type: string
+      required: false
   led-pin-cells:
     - value

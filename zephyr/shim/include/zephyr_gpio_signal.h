@@ -41,19 +41,33 @@
 
 #define GPIO_SIGNAL(id) GPIO_SIGNAL_NAME(id)
 #define GPIO_SIGNAL_WITH_COMMA(id) GPIO_SIGNAL(id),
+/*
+ * Create a list of aliases to allow remapping of aliased names.
+ */
+#define GPIO_DT_MK_ALIAS(id) \
+	DT_STRING_UPPER_TOKEN(id, alias) = DT_STRING_UPPER_TOKEN(id, enum_name),
+
+#define GPIO_DT_ALIAS_LIST(id) \
+	COND_CODE_1(DT_NODE_HAS_PROP(id, alias), (GPIO_DT_MK_ALIAS(id)), ())
+
 enum gpio_signal {
 	GPIO_UNIMPLEMENTED = -1,
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
 	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_SIGNAL_WITH_COMMA)
 #endif
 		GPIO_COUNT,
-	GPIO_LIMIT = 0x0FFF,
+#if DT_NODE_EXISTS(DT_PATH(named_gpios))
+	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DT_ALIAS_LIST)
+#endif
+		GPIO_LIMIT = 0x0FFF,
 
 	IOEX_SIGNAL_START = GPIO_LIMIT + 1,
 	IOEX_SIGNAL_END = IOEX_SIGNAL_START,
 	IOEX_LIMIT = 0x1FFF,
 };
 #undef GPIO_SIGNAL_WITH_COMMA
+#undef GPIO_DT_ALIAS_LIST
+#undef GPIO_DT_MK_ALIAS
 
 BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
 

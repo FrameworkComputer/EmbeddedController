@@ -22,6 +22,7 @@
 		gpio_slp_s3_l: slp_s3_l {
 			gpios = <&gpio6 1 GPIO_INPUT>;
 			enum-name = "GPIO_PCH_SLP_S3_L";
+			alias = "GPIO_PCH_SLP_S0_L";
 		};
 		gpio_slp_s5_l: slp_s5_l {
 			gpios = <&gpio7 2 GPIO_INPUT>;

@@ -132,10 +132,12 @@
 		gpio_pg_ec_dsw_pwrok: pg_ec_dsw_pwrok {
 			gpios = <&gpioc 7 GPIO_INPUT>;
 			enum-name = "GPIO_PG_EC_DSW_PWROK";
+			alias = "GPIO_SEQ_EC_DSW_PWROK";
 		};
 		en_s5_rails {
 			gpios = <&gpiob 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_S5_RAILS";
+			alias = "GPIO_TEMP_SENSOR_POWER";
 		};
 		sys_rst_odl {
 			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
