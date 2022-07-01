@@ -1398,60 +1398,7 @@ enum dmamux1_request {
 #define STM32_CRC_CR_REV_IN_WORD    (3 << 5)
 #define STM32_CRC_CR_REV_OUT        BIT(7)
 
-
 /* --- USB --- */
-#define STM32_USB_EP(n)            REG16(STM32_USB_FS_BASE + (n) * 4)
-
-#define STM32_USB_CNTR             REG16(STM32_USB_FS_BASE + 0x40)
-
-#define STM32_USB_CNTR_FRES	    BIT(0)
-#define STM32_USB_CNTR_PDWN	    BIT(1)
-#define STM32_USB_CNTR_LP_MODE	    BIT(2)
-#define STM32_USB_CNTR_FSUSP	    BIT(3)
-#define STM32_USB_CNTR_RESUME	    BIT(4)
-#define STM32_USB_CNTR_L1RESUME	    BIT(5)
-#define STM32_USB_CNTR_L1REQM	    BIT(7)
-#define STM32_USB_CNTR_ESOFM	    BIT(8)
-#define STM32_USB_CNTR_SOFM	    BIT(9)
-#define STM32_USB_CNTR_RESETM	    BIT(10)
-#define STM32_USB_CNTR_SUSPM	    BIT(11)
-#define STM32_USB_CNTR_WKUPM	    BIT(12)
-#define STM32_USB_CNTR_ERRM	    BIT(13)
-#define STM32_USB_CNTR_PMAOVRM	    BIT(14)
-#define STM32_USB_CNTR_CTRM	    BIT(15)
-
-#define STM32_USB_ISTR             REG16(STM32_USB_FS_BASE + 0x44)
-
-#define STM32_USB_ISTR_EP_ID_MASK   (0x000f)
-#define STM32_USB_ISTR_DIR	    BIT(4)
-#define STM32_USB_ISTR_L1REQ	    BIT(7)
-#define STM32_USB_ISTR_ESOF	    BIT(8)
-#define STM32_USB_ISTR_SOF	    BIT(9)
-#define STM32_USB_ISTR_RESET	    BIT(10)
-#define STM32_USB_ISTR_SUSP	    BIT(11)
-#define STM32_USB_ISTR_WKUP	    BIT(12)
-#define STM32_USB_ISTR_ERR	    BIT(13)
-#define STM32_USB_ISTR_PMAOVR	    BIT(14)
-#define STM32_USB_ISTR_CTR	    BIT(15)
-
-#define STM32_USB_FNR              REG16(STM32_USB_FS_BASE + 0x48)
-
-#define STM32_USB_FNR_RXDP_RXDM_SHIFT (14)
-#define STM32_USB_FNR_RXDP_RXDM_MASK  (3 << STM32_USB_FNR_RXDP_RXDM_SHIFT)
-
-#define STM32_USB_DADDR            REG16(STM32_USB_FS_BASE + 0x4C)
-#define STM32_USB_BTABLE           REG16(STM32_USB_FS_BASE + 0x50)
-#define STM32_USB_LPMCSR           REG16(STM32_USB_FS_BASE + 0x54)
-#define STM32_USB_BCDR             REG16(STM32_USB_FS_BASE + 0x58)
-
-#define STM32_USB_BCDR_BCDEN	    BIT(0)
-#define STM32_USB_BCDR_DCDEN	    BIT(1)
-#define STM32_USB_BCDR_PDEN	    BIT(2)
-#define STM32_USB_BCDR_SDEN	    BIT(3)
-#define STM32_USB_BCDR_DCDET	    BIT(4)
-#define STM32_USB_BCDR_PDET	    BIT(5)
-#define STM32_USB_BCDR_SDET	    BIT(6)
-#define STM32_USB_BCDR_PS2DET	    BIT(7)
 #define STM32_USB_BCDR_DPPU	    BIT(15)
 
 /* --- USB Endpoint bit definitions  --- */
