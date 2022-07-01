@@ -8,6 +8,12 @@
 #ifndef __CROS_EC_BASEBOARD_USBC_CONFIG_H
 #define __CROS_EC_BASEBOARD_USBC_CONFIG_H
 
+#ifdef CONFIG_PLATFORM_EC_USB_PD_TCPM_RT1718S
+#define GPIO_EN_USB_C1_SINK RT1718S_GPIO1
+#define GPIO_EN_USB_C1_SOURCE RT1718S_GPIO2
+#define GPIO_EN_USB_C1_FRS RT1718S_GPIO3
+#endif
+
 void ppc_interrupt(enum gpio_signal signal);
 
 /* USB-A ports */
