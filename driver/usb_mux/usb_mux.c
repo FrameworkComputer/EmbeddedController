@@ -256,7 +256,7 @@ static int configure_mux(int port, int index, enum mux_config_type config,
 			 mux_state_t *mux_state)
 {
 	int rv = EC_SUCCESS;
-	const struct usb_mux *mux_ptr;
+	const struct usb_mux_chain *mux_chain;
 	int chip = 0;
 
 	if (config == USB_MUX_SET_MODE || config == USB_MUX_GET_MODE) {
@@ -272,9 +272,11 @@ static int configure_mux(int port, int index, enum mux_config_type config,
 	 * MUXes.  So when we change one, we traverse the whole list
 	 * to make sure they are all updated appropriately.
 	 */
-	for (mux_ptr = &usb_muxes[port]; rv == EC_SUCCESS && mux_ptr != NULL;
-	     mux_ptr = mux_ptr->next_mux, chip++) {
+	for (mux_chain = &usb_muxes[port];
+	     rv == EC_SUCCESS && mux_chain != NULL;
+	     mux_chain = mux_chain->next, chip++) {
 		mux_state_t lcl_state;
+		const struct usb_mux *mux_ptr = mux_chain->mux;
 		const struct usb_mux_driver *drv = mux_ptr->driver;
 		bool ack_required = false;
 
@@ -661,15 +663,17 @@ int usb_mux_retimer_fw_update_port_info(void)
 	int i;
 	int port_info = 0;
 	const struct usb_mux *mux_ptr;
+	const struct usb_mux_chain *mux_chain;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		mux_ptr = &usb_muxes[i];
-		while (mux_ptr) {
+		mux_chain = &usb_muxes[i];
+		while (mux_chain) {
+			mux_ptr = mux_chain->mux;
 			if (mux_ptr->driver &&
 			    mux_ptr->driver->is_retimer_fw_update_capable &&
 			    mux_ptr->driver->is_retimer_fw_update_capable())
 				port_info |= BIT(i);
-			mux_ptr = mux_ptr->next_mux;
+			mux_chain = mux_chain->next;
 		}
 	}
 	return port_info;
@@ -693,17 +697,19 @@ static void usb_mux_reset_in_g3(void)
 {
 	int port;
 	const struct usb_mux *mux_ptr;
+	const struct usb_mux_chain *mux_chain;
 
 	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
-		mux_ptr = &usb_muxes[port];
+		mux_chain = &usb_muxes[port];
 
-		while (mux_ptr) {
+		while (mux_chain) {
+			mux_ptr = mux_chain->mux;
 			if (mux_ptr->flags & USB_MUX_FLAG_RESETS_IN_G3) {
 				atomic_clear_bits(&flags[port],
 						  USB_MUX_FLAG_INIT |
 							  USB_MUX_FLAG_IN_LPM);
 			}
-			mux_ptr = mux_ptr->next_mux;
+			mux_chain = mux_chain->next;
 		}
 	}
 }

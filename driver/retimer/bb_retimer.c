@@ -638,6 +638,7 @@ static int console_command_bb_retimer(int argc, const char **argv)
 	int port, reg, data, val = 0;
 	int rv = EC_SUCCESS;
 	const struct usb_mux *mux;
+	const struct usb_mux_chain *mux_chain;
 
 	if (argc < 4)
 		return EC_ERROR_PARAM_COUNT;
@@ -647,14 +648,15 @@ static int console_command_bb_retimer(int argc, const char **argv)
 	if (*e || !board_is_usb_pd_port_present(port))
 		return EC_ERROR_PARAM1;
 
-	mux = &usb_muxes[port];
-	while (mux) {
+	mux_chain = &usb_muxes[port];
+	while (mux_chain) {
+		mux = mux_chain->mux;
 		if (mux->driver == &bb_usb_retimer)
 			break;
-		mux = mux->next_mux;
+		mux_chain = mux_chain->next;
 	}
 
-	if (!mux)
+	if (!mux_chain)
 		return EC_ERROR_PARAM1;
 
 	/* Validate r/w selection */
@@ -674,7 +676,8 @@ static int console_command_bb_retimer(int argc, const char **argv)
 			return EC_ERROR_PARAM4;
 	}
 
-	for (; mux != NULL; mux = mux->next_mux) {
+	for (; mux_chain != NULL; mux_chain = mux_chain->next) {
+		mux = mux_chain->mux;
 		if (mux->driver == &bb_usb_retimer) {
 			if (rw == 'r')
 				rv = bb_retimer_read(mux, reg, &data);

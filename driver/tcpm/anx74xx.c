@@ -292,7 +292,7 @@ static int anx74xx_tcpm_mux_init(const struct usb_mux *me)
 static int anx74xx_tcpm_mux_enter_safe_mode(int port)
 {
 	int reg;
-	const struct usb_mux *me = &usb_muxes[port];
+	const struct usb_mux *me = usb_muxes[port].mux;
 
 	if (mux_read(me, ANX74XX_REG_ANALOG_CTRL_2, &reg))
 		return EC_ERROR_UNKNOWN;
@@ -306,7 +306,7 @@ static int anx74xx_tcpm_mux_enter_safe_mode(int port)
 static int anx74xx_tcpm_mux_exit_safe_mode(int port)
 {
 	int reg;
-	const struct usb_mux *me = &usb_muxes[port];
+	const struct usb_mux *me = usb_muxes[port].mux;
 
 	if (mux_read(me, ANX74XX_REG_ANALOG_CTRL_2, &reg))
 		return EC_ERROR_UNKNOWN;
@@ -320,7 +320,7 @@ static int anx74xx_tcpm_mux_exit_safe_mode(int port)
 static int anx74xx_tcpm_mux_exit(int port)
 {
 	int reg;
-	const struct usb_mux *me = &usb_muxes[port];
+	const struct usb_mux *me = usb_muxes[port].mux;
 
 	/*
 	 * Safe mode must be entered before any changes are made to the mux
@@ -360,7 +360,7 @@ static int anx74xx_mux_aux_to_sbu(int port, int polarity, int enabled)
 	int reg;
 	const int aux_mask = ANX74XX_REG_AUX_SWAP_SET_CC2 |
 			     ANX74XX_REG_AUX_SWAP_SET_CC1;
-	const struct usb_mux *me = &usb_muxes[port];
+	const struct usb_mux *me = usb_muxes[port].mux;
 
 	/*
 	 * Get the current value of analog_ctrl_2 register. Note, that safe mode
@@ -777,7 +777,7 @@ static int anx74xx_tcpm_set_cc(int port, int pull)
 static int anx74xx_tcpm_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
 	int reg, mux_state, rv = EC_SUCCESS;
-	const struct usb_mux *me = &usb_muxes[port];
+	const struct usb_mux *me = usb_muxes[port].mux;
 	bool unused;
 
 	rv |= tcpc_read(port, ANX74XX_REG_CC_SOFTWARE_CTRL, &reg);

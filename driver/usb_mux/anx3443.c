@@ -194,7 +194,7 @@ static bool anx3443_port_is_usb2_only(const struct usb_mux *me)
 static void anx3443_suspend(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		const struct usb_mux *mux = &usb_muxes[i];
+		const struct usb_mux *mux = usb_muxes[i].mux;
 
 		if (mux->driver != &anx3443_usb_mux_driver)
 			continue;
@@ -208,14 +208,14 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, anx3443_suspend, HOOK_PRIO_DEFAULT);
 static void anx3443_resume(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		int port = usb_muxes[i].usb_port;
+		int port = usb_muxes[i].mux->usb_port;
 		bool ack_required;
 
-		if (usb_muxes[i].driver != &anx3443_usb_mux_driver)
+		if (usb_muxes[i].mux->driver != &anx3443_usb_mux_driver)
 			continue;
 
-		anx3443_set_mux(&usb_muxes[i], saved_mux_state[port].mux_state,
-				&ack_required);
+		anx3443_set_mux(usb_muxes[i].mux,
+				saved_mux_state[port].mux_state, &ack_required);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, anx3443_resume, HOOK_PRIO_DEFAULT);
