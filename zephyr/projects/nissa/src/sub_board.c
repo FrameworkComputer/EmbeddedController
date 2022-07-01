@@ -7,6 +7,7 @@
 
 #include <ap_power/ap_power.h>
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
@@ -86,6 +87,30 @@ static void lte_power_handler(struct ap_power_ev_callback *cb,
 	}
 }
 
+#ifdef CONFIG_SOC_IT8XXX2
+/*
+ * On it8xxx2, the below condition will break the EC to enter deep doze mode
+ * (b:237717730):
+ * Enhance i2c (GPE0/E7, GPH1/GPH2 or GPA4/GPA5) is enabled and its clock and
+ * data pins aren't both at high level.
+ *
+ * Since HDMI+type A SKU doesn't use i2c4, disable it for better power number.
+ */
+#define I2C4_NODE DT_NODELABEL(i2c4)
+#if DT_NODE_EXISTS(I2C4_NODE)
+PINCTRL_DT_DEFINE(I2C4_NODE);
+
+/* disable i2c4 alternate function  */
+static void soc_it8xxx2_disable_i2c4_alt(void)
+{
+	const struct pinctrl_dev_config *pcfg =
+		PINCTRL_DT_DEV_CONFIG_GET(I2C4_NODE);
+
+	pinctrl_apply_state(pcfg, PINCTRL_STATE_SLEEP);
+}
+#endif
+#endif /* CONFIG_SOC_IT8XXX2 */
+
 /**
  * Configure GPIOs (and other pin functions) that vary with present sub-board.
  *
@@ -145,6 +170,10 @@ static void nereid_subboard_config(void)
 		static struct gpio_callback hdmi_hpd_cb;
 		int rv, irq_key;
 
+#if CONFIG_SOC_IT8XXX2 && DT_NODE_EXISTS(I2C4_NODE)
+		/* disable i2c4 alternate function for better power number */
+		soc_it8xxx2_disable_i2c4_alt();
+#endif
 		/* HDMI power enable outputs */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_rails_odl),
 				      GPIO_OUTPUT_INACTIVE | GPIO_OPEN_DRAIN |
