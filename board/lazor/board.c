@@ -33,8 +33,9 @@
 #include "usbc_config.h"
 #include "usbc_ppc.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+/* Disable debug messages to free flash space */
+#define CPRINTS(format, args...)
+#define CPRINTF(format, args...)
 
 #include "gpio_list.h"
 

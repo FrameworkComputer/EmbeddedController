@@ -27,8 +27,9 @@
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
+/* Disable debug messages to free flash space */
+#define CPRINTS(format, args...)
+#define CPRINTF(format, args...)
 
 const struct charger_config_t chg_chips[] = {
 	{
