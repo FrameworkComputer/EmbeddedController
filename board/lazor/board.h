@@ -14,6 +14,7 @@
 #define CONFIG_FLASH_SIZE_BYTES (512 * 1024) /* 512KB internal spi flash */
 
 /* Reduce flash usage */
+#define CONFIG_LTO
 #define CONFIG_USB_PD_DEBUG_LEVEL 2
 
 /* Switchcap */
