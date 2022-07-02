@@ -191,7 +191,6 @@
 		};
 		usb_c0_ppc_en_l {
 			gpios = <&ioex_c0_port1 0 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C0_PPC_EN_L";
 		};
 		usb_c0_ppc_ilim_3a_en {
 			gpios = <&ioex_c0_port1 1 GPIO_OUTPUT_LOW>;
@@ -199,15 +198,12 @@
 		};
 		ioex_usb_c0_sbu_fault_odl: usb_c0_sbu_fault_odl {
 			gpios = <&ioex_c0_port1 2 GPIO_INPUT>;
-			enum-name = "IOEX_USB_C0_FAULT_ODL";
 		};
 		ioex_en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus {
 			gpios = <&ioex_c0_port1 5 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_EN_PP5000_USB_A0_VBUS";
 		};
 		ioex_usb_a0_fault_odl: usb_a0_fault_odl {
 			gpios = <&ioex_c0_port1 6 GPIO_INPUT>;
-			enum-name = "IOEX_USB3_A0_FAULT_L";
 		};
 		usb_c0_sbu_flip {
 			gpios = <&ioex_c0_port1 7 GPIO_OUTPUT_LOW>;
@@ -220,7 +216,6 @@
 		};
 		usb_a1_retimer_rst {
 			gpios = <&ioex_c1_port0 1 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_A1_RETIMER_RST";
 		};
 		usb_c1_in_hpd {
 			gpios = <&ioex_c1_port0 3 GPIO_OUTPUT_LOW>;
@@ -232,7 +227,6 @@
 		};
 		usb_c1_ppc_en_l {
 			gpios = <&ioex_c1_port1 0 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C1_PPC_EN_L";
 		};
 		usb_c1_ppc_ilim_3a_en {
 			gpios = <&ioex_c1_port1 1 GPIO_OUTPUT_LOW>;
@@ -244,11 +238,9 @@
 		};
 		ioex_en_pp5000_usb_a1_vbus: en_pp5000_usb_a1_vbus {
 			gpios = <&ioex_c1_port1 5 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_EN_PP5000_USB_A1_VBUS_DB";
 		};
 		ioex_usb_a1_fault_db_odl: usb_a1_fault_db_odl {
 			gpios = <&ioex_c1_port1 6 GPIO_INPUT>;
-			enum-name = "IOEX_USB_A1_FAULT_DB_ODL";
 		};
 		usb_c1_sbu_flip {
 			gpios = <&ioex_c1_port1 7 GPIO_OUTPUT_LOW>;

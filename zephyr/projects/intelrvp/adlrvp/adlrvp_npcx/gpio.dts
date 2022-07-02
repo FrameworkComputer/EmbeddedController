@@ -319,11 +319,9 @@
 		};
 		usb-c2-usb-mux-cntrl-1 {
 			gpios = <&ioex_c2_port 4 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C2_USB_MUX_CNTRL_1";
 		};
 		usb-c2-usb-mux-cntrl-0 {
 			gpios = <&ioex_c2_port 5 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C2_USB_MUX_CNTRL_0";
 		};
 		usb_c3_bb_retimer_rst: usb-c3-bb-retimer-rst {
 			gpios = <&ioex_c3_port 0 GPIO_OUTPUT_LOW>;
