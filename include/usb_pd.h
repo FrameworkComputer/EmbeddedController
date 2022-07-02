@@ -1283,6 +1283,7 @@ enum pd_ext_msg_type {
 
 /* Alert Data Object fields for REV 3.1 */
 #define ADO_EXTENDED_ALERT_EVENT (BIT(24) << 7)
+#define ADO_EXTENDED_ALERT_EVENT_TYPE 0xf
 /* Alert Data Object fields for REV 3.0 */
 #define ADO_OVP_EVENT (BIT(24) << 6)
 #define ADO_SOURCE_INPUT_CHANGE (BIT(24) << 5)

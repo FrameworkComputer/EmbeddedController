@@ -1025,6 +1025,23 @@ int pd_send_alert_msg(int port, uint32_t ado)
 {
 #if defined(CONFIG_USB_PD_TCPMV2) && defined(CONFIG_USB_PE_SM) && \
 	!defined(CONFIG_USB_VPD) && !defined(CONFIG_USB_CTVPD)
+	struct rmdo partner_rmdo;
+
+	/*
+	 * The Alert Data Object (ADO) definition changed between USB PD
+	 * Revision 3.0 and 3.1. Clear reserved bits from the USB PD 3.0
+	 * ADO before sending to a USB PD 3.0 partner and block the
+	 * message if the ADO is empty.
+	 */
+	partner_rmdo = pe_get_partner_rmdo(port);
+	if (partner_rmdo.major_rev == 0) {
+		ado &= ~(ADO_EXTENDED_ALERT_EVENT |
+			 ADO_EXTENDED_ALERT_EVENT_TYPE);
+	}
+
+	if (!ado)
+		return EC_ERROR_INVAL;
+
 	if (pe_set_ado(port, ado) != EC_SUCCESS)
 		return EC_ERROR_BUSY;
 
