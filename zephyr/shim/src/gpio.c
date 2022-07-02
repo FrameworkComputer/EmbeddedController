@@ -55,12 +55,16 @@ struct gpio_config {
 		.init_flags = DT_GPIO_FLAGS(id, gpios),    \
 		.no_auto_init = DT_PROP(id, no_auto_init), \
 	},
+#define GPIO_IMPL_CONFIG(id) \
+	COND_CODE_1(DT_NODE_HAS_PROP(id, gpios), (GPIO_CONFIG(id)), ())
+
 static const struct gpio_config configs[] = {
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
-	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_CONFIG)
+	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_IMPL_CONFIG)
 #endif
 };
 
+#undef GPIO_IMPL_CONFIG
 #undef GPIO_CONFIG
 #undef OUR_DT_SPEC
 

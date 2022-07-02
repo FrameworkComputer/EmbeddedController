@@ -118,7 +118,6 @@
 		};
 		ec_entering_rw {
 			gpios = <&gpio0 3 GPIO_OUTPUT_LOW>;
-			enum-name = "GPIO_ENTERING_RW";
 		};
 		charger_prochot_odl {
 			gpios = <&gpiob 1 GPIO_INPUT>;
@@ -219,6 +218,10 @@
 		ccd_mode_odl {
 			gpios = <&gpioe 5 GPIO_INPUT>;
 			enum-name = "GPIO_CCD_MODE_ODL";
+		};
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
 		};
 	};
 

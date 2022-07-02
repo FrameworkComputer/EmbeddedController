@@ -81,6 +81,13 @@
 		gpio_accel_gyro_int_l: accel_gyro_int_l {
 			gpios = <&gpioa 0 GPIO_INPUT>;
 		};
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		pch-sys-prwok {
+			enum-name = "GPIO_PCH_SYS_PWROK";
+		};
 	};
 
 	def-lvol-io-list {

@@ -40,7 +40,13 @@
 		    (GPIO_SIGNAL_NAME_FROM_ORD(id##_ORD)))
 
 #define GPIO_SIGNAL(id) GPIO_SIGNAL_NAME(id)
-#define GPIO_SIGNAL_WITH_COMMA(id) GPIO_SIGNAL(id),
+
+#define GPIO_IMPL_SIGNAL(id) \
+	COND_CODE_1(DT_NODE_HAS_PROP(id, gpios), (GPIO_SIGNAL(id), ), ())
+
+#define GPIO_UNIMPL_SIGNAL(id)                       \
+	COND_CODE_1(DT_NODE_HAS_PROP(id, gpios), (), \
+		    (GPIO_SIGNAL_NAME(id) = GPIO_UNIMPLEMENTED, ))
 /*
  * Create a list of aliases to allow remapping of aliased names.
  */
@@ -53,21 +59,23 @@
 enum gpio_signal {
 	GPIO_UNIMPLEMENTED = -1,
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
-	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_SIGNAL_WITH_COMMA)
+	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_IMPL_SIGNAL)
 #endif
 		GPIO_COUNT,
 #if DT_NODE_EXISTS(DT_PATH(named_gpios))
-	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DT_ALIAS_LIST)
+	DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_UNIMPL_SIGNAL)
+		DT_FOREACH_CHILD(DT_PATH(named_gpios), GPIO_DT_ALIAS_LIST)
 #endif
-		GPIO_LIMIT = 0x0FFF,
+			GPIO_LIMIT = 0x0FFF,
 
 	IOEX_SIGNAL_START = GPIO_LIMIT + 1,
 	IOEX_SIGNAL_END = IOEX_SIGNAL_START,
 	IOEX_LIMIT = 0x1FFF,
 };
-#undef GPIO_SIGNAL_WITH_COMMA
 #undef GPIO_DT_ALIAS_LIST
 #undef GPIO_DT_MK_ALIAS
+#undef GPIO_IMPL_SIGNAL
+#undef GPIO_UNIMPL_SIGNAL
 
 BUILD_ASSERT(GPIO_COUNT < GPIO_LIMIT);
 

@@ -302,6 +302,10 @@
 			enum-name = "IOEX_USB_C2_FRS_EN";
 			no-auto-init;
 		};
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
 	};
 
 	usba-port-enable-list {

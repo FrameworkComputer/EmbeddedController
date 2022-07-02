@@ -307,6 +307,10 @@
 		usb-c0-mux-sbu-sel-1 {
 			gpios = <&ioex_c1 4 GPIO_OUTPUT_LOW>;
 		};
+		/* unimplemented GPIOs */
+		en-pp5000 {
+			enum-name = "GPIO_EN_PP5000";
+		};
 	};
 
 	def-lvol-io-list {
