@@ -192,8 +192,8 @@ static bool tbt_sop_prime_prime_needed(int port)
 	const struct pd_discovery *disc;
 
 	disc = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-	if (disc->identity.product_t1.a_rev20.sop_p_p &&
-	    !tbt_is_lrd_active_cable(port))
+	if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE &&
+	    disc->identity.product_t1.a_rev20.sop_p_p)
 		return true;
 	return false;
 }
@@ -214,11 +214,9 @@ void tbt_exit_mode_request(int port)
 		 * with Thunderbolt mode for SOP prime. Hence, on request to
 		 * exit, only exit Thunderbolt mode SOP prime
 		 */
-		tbt_state[port] =
-			/* TODO: replace with tbt_sop_prime_prime_needed */
-			tbt_is_lrd_active_cable(port) ?
-				TBT_EXIT_SOP_PRIME :
-				TBT_EXIT_SOP_PRIME_PRIME;
+		tbt_state[port] = tbt_sop_prime_prime_needed(port) ?
+					  TBT_EXIT_SOP_PRIME_PRIME :
+					  TBT_EXIT_SOP_PRIME;
 	}
 }
 
@@ -251,19 +249,6 @@ static void tbt_retry_enter_mode(int port)
 {
 	tbt_state[port] = TBT_START;
 	TBT_SET_FLAG(port, TBT_FLAG_RETRY_DONE);
-}
-
-/* Send Exit Mode to SOP''(if supported), or SOP' */
-static void tbt_active_cable_exit_mode(int port)
-{
-	const struct pd_discovery *disc;
-
-	disc = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-
-	if (disc->identity.product_t1.a_rev20.sop_p_p)
-		tbt_state[port] = TBT_EXIT_SOP_PRIME_PRIME;
-	else
-		tbt_state[port] = TBT_EXIT_SOP_PRIME;
 }
 
 bool tbt_cable_entry_required_for_usb4(int port)
@@ -337,13 +322,11 @@ void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		if (opos_sop > 0)
 			pd_dfp_exit_mode(port, TCPCI_MSG_SOP, USB_VID_INTEL,
 					 opos_sop);
-		/*
-		 * TODO:
-		 * Replace with tbt_sop_prime_prime_needed() and
-		 * tbt_sop_prime_prime_needed().
-		 */
-		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) {
-			tbt_active_cable_exit_mode(port);
+
+		if (tbt_sop_prime_prime_needed(port)) {
+			tbt_state[port] = TBT_EXIT_SOP_PRIME_PRIME;
+		} else if (tbt_sop_prime_needed(port)) {
+			tbt_state[port] = TBT_EXIT_SOP_PRIME;
 		} else {
 			set_usb_mux_with_current_data_role(port);
 			if (TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE))
@@ -411,9 +394,12 @@ void intel_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 	case TBT_EXIT_SOP:
 		/* Exit SOP got NAK'ed */
 		tbt_prints("exit mode SOP failed", port);
-		if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE)
-			tbt_active_cable_exit_mode(port);
-		else {
+
+		if (tbt_sop_prime_prime_needed(port)) {
+			tbt_state[port] = TBT_EXIT_SOP_PRIME_PRIME;
+		} else if (tbt_sop_prime_needed(port)) {
+			tbt_state[port] = TBT_EXIT_SOP_PRIME;
+		} else {
 			set_usb_mux_with_current_data_role(port);
 			if (TBT_CHK_FLAG(port, TBT_FLAG_RETRY_DONE))
 				/* Retried enter mode, still failed, give up */
