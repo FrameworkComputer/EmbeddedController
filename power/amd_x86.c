@@ -13,6 +13,7 @@
 #include "hooks.h"
 #include "lid_switch.h"
 #include "lpc.h"
+#include "power/amd_x86.h"
 #include "power.h"
 #include "power_button.h"
 #include "system.h"

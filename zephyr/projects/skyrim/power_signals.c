@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "ioexpander.h"
 #include "power.h"
+#include "power/amd_x86.h"
 #include "timer.h"
 
 /* Power Signal Input List */

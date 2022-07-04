@@ -18,6 +18,7 @@
 #include "host_command.h"
 #include "lpc.h"
 #include "power.h"
+#include "power/amd_x86.h"
 #include "power/intel_x86.h"
 #include "power/qcom.h"
 #include "system.h"
