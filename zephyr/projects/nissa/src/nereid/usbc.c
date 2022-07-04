@@ -364,7 +364,8 @@ void usb_c1_interrupt(enum gpio_signal s)
 void board_handle_initial_typec_irq(void)
 {
 	check_c0_line();
-	check_c1_line();
+	if (board_get_usb_pd_port_count() == 2)
+		check_c1_line();
 }
 /*
  * This must run after sub-board detection (which happens in EC main()),
