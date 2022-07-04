@@ -37,6 +37,9 @@
 /* Charger */
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 
+/* Chipset */
+#define CONFIG_CHIPSET_RESUME_INIT_HOOK
+
 /* PD / USB-C / PPC */
 #undef CONFIG_USB_PD_DEBUG_LEVEL /* default to 1, configurable in ec console \
 				  */

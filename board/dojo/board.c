@@ -467,7 +467,7 @@ static void enable_nvme(void)
 {
 	gpio_set_level(GPIO_EN_PP3300_SSD, 1);
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_nvme, HOOK_PRIO_FIRST);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME_INIT, enable_nvme, HOOK_PRIO_FIRST);
 
 static void disable_nvme(void)
 {
