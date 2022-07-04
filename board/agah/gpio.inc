@@ -69,6 +69,8 @@ GPIO(EN_USB_A_LOW_POWER,             PIN(9, 3), GPIO_OUT_LOW)
 GPIO(PG_PP3300_S5_EC_SEQ_OD,         PIN(B, 5), GPIO_OUT_LOW)
 GPIO(USB_C2_FRS_EN,                  PIN(D, 4), GPIO_OUT_LOW)
 GPIO(NVIDIA_GPU_ACOFF_ODL,           PIN(9, 5), GPIO_ODR_HIGH)
+GPIO(LED_2_L,                        PIN(C, 3), GPIO_OUT_LOW)
+GPIO(LED_1_L,                        PIN(C, 4), GPIO_OUT_LOW)
 
 /*
  * Barrel-jack adapter enable switch. When starting up on a depleted battery,
@@ -101,7 +103,6 @@ ALTERNATE(PIN_MASK(4, 0x01), 0, MODULE_PWM, 0)               /* GPIO40/TA1 */
 ALTERNATE(PIN_MASK(7, 0x08), 0, MODULE_PWM, 0)               /* GPIO73/TA2 */
 ALTERNATE(PIN_MASK(8, 0x01), 0, MODULE_PWM, 0)               /* GPIO80/PWM3 */
 ALTERNATE(PIN_MASK(B, 0xC0), 0, MODULE_PWM, 0)               /* GPIOB7/PWM5, GPIOB6/PWM4 */
-ALTERNATE(PIN_MASK(C, 0x18), 0, MODULE_PWM, 0)               /* GPIOC4/PWM2, GPIOC3/PWM0 */
 
 /* ADC alternate functions */
 ALTERNATE(PIN_MASK(3, 0x10), 0, MODULE_ADC, 0)               /* GPIO34/PS2_DAT2/ADC6 */

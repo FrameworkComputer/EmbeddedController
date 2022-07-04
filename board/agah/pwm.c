@@ -11,16 +11,6 @@
 #include "pwm_chip.h"
 
 const struct pwm_t pwm_channels[] = {
-	[PWM_CH_LED2] = {
-		.channel = 0,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
-	},
-	[PWM_CH_LED1] = {
-		.channel = 2,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
-	},
 	[PWM_CH_KBLIGHT] = {
 		.channel = 3,
 		.flags = 0,
@@ -51,10 +41,6 @@ static void board_pwm_init(void)
 	 * Turn off all the LEDs.
 	 * Turn on the fan at 100%.
 	 */
-	pwm_enable(PWM_CH_LED1, 1);
-	pwm_set_duty(PWM_CH_LED1, 0);
-	pwm_enable(PWM_CH_LED2, 1);
-	pwm_set_duty(PWM_CH_LED2, 0);
 
 	pwm_enable(PWM_CH_KBLIGHT, 1);
 	pwm_set_duty(PWM_CH_KBLIGHT, 50);
