@@ -24,11 +24,11 @@ properties:
    fet_mfgacc_support:
       default: 0
    fet_reg_addr:
-      default: 0x34
+      default: 0x00
    fet_reg_mask:
-      default: 0x0100
+      default: 0x0018
    fet_disconnect_val:
-      default: 0x0100
+      default: 0x0000
 
    # Battery info
    voltage_max:

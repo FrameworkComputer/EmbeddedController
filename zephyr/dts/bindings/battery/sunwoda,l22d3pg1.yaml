@@ -2,21 +2,21 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: "CELXPERT L22C3PG0"
-compatible: "celxpert,l22c3pg0"
+description: "SUNWODA L22D3PG1"
+compatible: "sunwoda,l22d3pg1"
 
 include: battery-smart.yaml
 
 properties:
    enum-name:
       type: string
-      default: "celxpert,l22c3pg0"
+      default: "sunwoda,l22d3pg1"
 
    # Fuel gauge
    manuf_name:
-      default: "Celxpert"
+      default: "Sunwoda"
    device_name:
-      default: "L22C3PG0"
+      default: "L22D3PG1"
    ship_mode_reg_addr:
       default: 0x34
    ship_mode_reg_data:
@@ -34,11 +34,11 @@ properties:
    voltage_max:
       default: 13200
    voltage_normal:
-      default: 11310
+      default: 11520
    voltage_min:
       default: 9000
    precharge_current:
-      default: 416
+      default: 251
    start_charging_min_c:
       default: 0
    start_charging_max_c:
