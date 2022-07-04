@@ -74,7 +74,6 @@ GPIO(LED_1_L,                        PIN(C, 4), GPIO_OUT_HIGH)
 GPIO(LED_2_L,                        PIN(C, 3), GPIO_OUT_HIGH)
 GPIO(KYBL_EN,                        PIN(A, 7), GPIO_OUT_LOW)
 GPIO(AMP_PWR_EN,                     PIN(5, 7), GPIO_OUT_LOW)
-GPIO(EC_FAN_TACH_2,                  PIN(7, 3), GPIO_INPUT)
 GPIO(RGB_KB_INT,                     PIN(5, 6), GPIO_INPUT)
 
 /* UART alternate functions */
