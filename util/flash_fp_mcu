@@ -430,19 +430,7 @@ flash_fp_mcu_stm32() {
   fi
 
   # Go back to normal mode
-  gpio out "${gpio_nrst}"
-  gpio 0   "${gpio_boot0}" "${gpio_nrst}"
-  gpio 1   "${gpio_nrst}"
-
-  # Give up GPIO control, unless we need to keep these driving as
-  # outputs because they're not open-drain signals.
-  # TODO(b/179839337): Make this the default and properly support
-  # open-drain outputs on other platforms.
-  if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
-     [[ "${PLATFORM_BASE_NAME}" != "herobrine" ]]; then
-    gpio in       "${gpio_boot0}" "${gpio_nrst}"
-  fi
-  gpio unexport "${gpio_boot0}" "${gpio_nrst}"
+  gpio 0   "${gpio_boot0}"
 
   # Dartmonkey's RO has a flashprotect logic issue that forces reboot loops
   # when SW-WP is enabled and HW-WP is disabled. It is avoided if a POR is
@@ -458,7 +446,24 @@ flash_fp_mcu_stm32() {
     gpio 1      "${gpio_pwren}"
     # Power enable line is externally pulled down, so leave as output-high.
     gpio unexport "${gpio_pwren}"
+  else
+    echo "Reset the FPMCU."
+    gpio out	"${gpio_nrst}"
+    gpio 0	"${gpio_nrst}"
+    # Make sure that we keep nRST line low long enough.
+    sleep 0.01
+    gpio 1	"${gpio_nrst}"
   fi
+
+  # Give up GPIO control, unless we need to keep these driving as
+  # outputs because they're not open-drain signals.
+  # TODO(b/179839337): Make this the default and properly support
+  # open-drain outputs on other platforms.
+  if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "herobrine" ]]; then
+    gpio in       "${gpio_boot0}" "${gpio_nrst}"
+  fi
+  gpio unexport "${gpio_boot0}" "${gpio_nrst}"
 
   # Put back cros_fp driver if transport is SPI
   if [[ "${transport}" != "UART" ]]; then
