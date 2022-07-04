@@ -14,6 +14,7 @@
 	{                                                                      \
 		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),                   \
 			.driver = &anx7483_usb_retimer_driver,                 \
+			.board_set = &anx7483_set_default_tuning,	       \
 			.i2c_port = I2C_PORT(DT_PHANDLE(mux_id, port)),        \
 			.i2c_addr_flags =                                      \
 				DT_STRING_UPPER_TOKEN(mux_id, i2c_addr_flags), \

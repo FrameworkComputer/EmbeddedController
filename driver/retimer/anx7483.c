@@ -286,8 +286,8 @@ static enum ec_error_list anx7483_apply_tuning(const struct usb_mux *me,
 	return EC_SUCCESS;
 }
 
-enum ec_error_list anx7483_set_default_tuning(const struct usb_mux *me,
-					      mux_state_t mux_state)
+int anx7483_set_default_tuning(const struct usb_mux *me,
+			       mux_state_t mux_state)
 {
 	bool flipped = mux_state & USB_PD_MUX_POLARITY_INVERTED;
 

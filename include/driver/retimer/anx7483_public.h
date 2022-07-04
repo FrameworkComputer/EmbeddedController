@@ -52,9 +52,12 @@ enum ec_error_list anx7483_set_eq(const struct usb_mux *me,
 				  enum anx7483_tune_pin pin,
 				  enum anx7483_eq_setting eq);
 
-/* Configure datasheet defaults for tuning registers at this mux setting */
-enum ec_error_list anx7483_set_default_tuning(const struct usb_mux *me,
-					      mux_state_t mux_state);
+/*
+ * Configure datasheet defaults for tuning registers at this mux setting.
+ * Return int so function can be used directly for board_set.
+ */
+int anx7483_set_default_tuning(const struct usb_mux *me,
+			       mux_state_t mux_state);
 
 extern const struct usb_mux_driver anx7483_usb_retimer_driver;
 #endif /* __CROS_EC_USB_RETIMER_ANX7483_PUBLIC_H */
