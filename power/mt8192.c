@@ -394,6 +394,11 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S0:
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		/* Call hooks prior to chipset resume */
+		hook_notify(HOOK_CHIPSET_RESUME_INIT);
+#endif
+
 		if (power_wait_signals(IN_PGOOD_S0)) {
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_WAIT);
 			return POWER_S0S3;
@@ -418,6 +423,10 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0S3:
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+		/* Call hooks after chipset suspend */
+		hook_notify(HOOK_CHIPSET_SUSPEND_COMPLETE);
+#endif
 
 #ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 		sleep_suspend_transition();
