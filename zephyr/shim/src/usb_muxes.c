@@ -43,7 +43,15 @@
 USB_MUX_FOREACH_MUX(USB_MUX_CHECK_ALL_PORTS_ARE_SAME)
 
 /**
- * Define usb_mux_chain structures e.g.
+ * Declare all usb_mux_chain structures e.g.
+ * MAYBE_CONST struct usb_mux_chain
+ * USB_MUX_chain_port_<port_id>_mux_<position_id>;
+ */
+USB_MUX_FOREACH_CHAIN_VARGS(USB_MUX_FOREACH_NO_ROOT_MUX,
+			    USB_MUX_CHAIN_STRUCT_DECLARE_OP)
+
+/**
+ * Define usb_mux_chain structures for main chain e.g.
  *
  * MAYBE_CONST struct usb_mux_chain
  * USB_MUX_chain_port_<port_id>_mux_<position_id> = {
@@ -51,7 +59,7 @@ USB_MUX_FOREACH_MUX(USB_MUX_CHECK_ALL_PORTS_ARE_SAME)
  *         .next = &USB_MUX_chain_port_0_mux_1,
  * }
  */
-USB_MUX_FOREACH_CHAIN_VARGS(USB_MUX_FOREACH_NO_ROOT_MUX,
+USB_MUX_FOREACH_CHAIN_VARGS(USB_MUX_FOR_MAIN_CHAIN, USB_MUX_FOREACH_NO_ROOT_MUX,
 			    USB_MUX_CHAIN_STRUCT_DEFINE_OP)
 
 /**
@@ -70,8 +78,8 @@ USB_MUX_FOREACH_MUX(USB_MUX_CB_BOARD_SET_DECLARE_IF_EXISTS)
  * },
  * [1] = { ... },
  */
-MAYBE_CONST struct usb_mux_chain usb_muxes[] = { USB_MUX_FOREACH_CHAIN(
-	USB_MUX_DEFINE_ROOT_MUX) };
+MAYBE_CONST struct usb_mux_chain usb_muxes[] = { USB_MUX_FOREACH_CHAIN_VARGS(
+	USB_MUX_FOR_MAIN_CHAIN, USB_MUX_DEFINE_ROOT_MUX) };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 /**

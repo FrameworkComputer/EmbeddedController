@@ -17,8 +17,16 @@ properties:
       adding the "cros-ec,usb-mux-chain" as a child of the "named-usbc-port"
       node.
 
-# Example DTS defining USB-C port 0 with usb mux chain. The chain has two muxes:
-# BB retimer and virtual mux.
+  alternative-chain:
+    type: boolean
+    description: |
+      Set if this is alternative USB-C muxes chain. It can be selected in
+      runtime using USB_MUX_ENABLE_ALTERNATIVE macro.
+
+# Example DTS defining USB-C port 0 with main and alternative usb mux chains.
+# The main chain has two muxes: BB retimer and virtual mux.
+# The alternative chain has three muxes: BB retimer, SOC side BB retimer and
+# virtual mux.
 #
 #       usbc_port0: port0@0 {
 #               compatible = "named-usbc-port";
@@ -27,6 +35,13 @@ properties:
 #               usb-mux-chain-0 {
 #                       compatible = "cros-ec,usb-mux-chain";
 #                       usb-muxes = <&usb_c0_bb_retimer
+#                                    &virtual_mux_c0>;
+#               };
+#               usb-mux-chain-0 {
+#                       compatible = "cros-ec,usb-mux-chain";
+#                       alternative-chain;
+#                       usb-muxes = <&usb_c0_bb_retimer
+#                                    &usb_c0_soc_side_bb_retimer
 #                                    &virtual_mux_c0>;
 #               };
 #       };
