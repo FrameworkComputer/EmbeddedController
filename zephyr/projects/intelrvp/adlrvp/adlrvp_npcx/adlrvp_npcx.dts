@@ -150,6 +150,13 @@
 		reg = <0x22>;
 	};
 
+	usb_c0_soc_side_bb_retimer: jhl8040r-c0-soc-side@54 {
+		compatible = "intel,jhl8040r";
+		reg = <0x54>;
+		reset-pin = <&usb_c0_bb_retimer_rst>;
+		ls-en-pin = <&usb_c0_bb_retimer_ls_en>;
+	};
+
 	usb_c0_bb_retimer: jhl8040r-c0@56 {
 		compatible = "intel,jhl8040r";
 		reg = <0x56>;
@@ -172,6 +179,13 @@
 	tcpc_port1: fusb302@22 {
 		compatible = "fairchild,fusb302";
 		reg = <0x22>;
+	};
+
+	usb_c1_soc_side_bb_retimer: jhl8040r-c1-soc-side@55 {
+		compatible = "intel,jhl8040r";
+		reg = <0x55>;
+		reset-pin = <&usb_c1_bb_retimer_rst>;
+		ls-en-pin = <&usb_c1_bb_retimer_ls_en>;
 	};
 
 	usb_c1_bb_retimer: jhl8040r-c1@57 {

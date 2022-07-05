@@ -17,6 +17,13 @@
 				usb-muxes = <&usb_c0_bb_retimer
 					     &virtual_mux_c0>;
 			};
+			usb_mux_alt_chain_0: usb-mux-alt-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&usb_c0_bb_retimer
+					     &usb_c0_soc_side_bb_retimer
+					     &virtual_mux_c0>;
+			};
 		};
 		port0-muxes {
 			virtual_mux_c0: virtual-mux-c0 {
@@ -31,6 +38,13 @@
 			usb_mux_chain_1: usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&usb_c1_bb_retimer
+					     &virtual_mux_c1>;
+			};
+			usb_mux_alt_chain_1: usb-mux-alt-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&usb_c1_bb_retimer
+					     &usb_c1_soc_side_bb_retimer
 					     &virtual_mux_c1>;
 			};
 		};
