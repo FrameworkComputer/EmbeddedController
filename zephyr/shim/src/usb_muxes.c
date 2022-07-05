@@ -99,6 +99,9 @@ USB_MUX_FOREACH_MUX(USB_MUX_DEFINE)
 /* Create bb_controls only if BB or HB retimer driver is enabled */
 #if defined(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB) || \
 	defined(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_HB)
+
+BB_RETIMER_CHECK_SAME_CONTROLS(BB_RETIMER_INSTANCES_LIST)
+
 /**
  * @brief bb_controls array should be constant only if configuration cannot
  *        change in runtime
