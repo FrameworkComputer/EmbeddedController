@@ -169,12 +169,12 @@ DECLARE_IRQ(STM32_IRQ_USART5, usart5_interrupt, 2);
 
 #if defined(CONFIG_STREAM_USART9)
 struct usart_hw_config const usart9_hw = {
-	.index          = 5,
-	.base           = STM32_USART9_BASE,
-	.irq            = STM32_IRQ_USART9,
+	.index = 5,
+	.base = STM32_USART9_BASE,
+	.irq = STM32_IRQ_USART9,
 	.clock_register = &STM32_RCC_APB1ENR2,
-	.clock_enable   = STM32_RCC_APB1ENR2_LPUART1EN,
-	.ops            = &usart_variant_hw_ops,
+	.clock_enable = STM32_RCC_APB1ENR2_LPUART1EN,
+	.ops = &usart_variant_hw_ops,
 };
 
 static void usart9_interrupt(void)
