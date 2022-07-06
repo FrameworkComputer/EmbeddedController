@@ -20,15 +20,14 @@ static void motion_sense_fifo_reset_before(const struct ztest_unit_test *test,
 ZTEST_RULE(motion_sense_fifo_reset, motion_sense_fifo_reset_before, NULL);
 
 static void tcpci_revision_reset_before(const struct ztest_unit_test *test,
-					    void *data)
+					void *data)
 {
 	ARG_UNUSED(test);
 	ARG_UNUSED(data);
 	const struct emul *tcpci_emul =
-			emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
+		emul_get_binding(DT_LABEL(DT_NODELABEL(tcpci_emul)));
 	const struct emul *ps8xxx_emul =
-			emul_get_binding(DT_LABEL(DT_NODELABEL(ps8xxx_emul)));
-
+		emul_get_binding(DT_LABEL(DT_NODELABEL(ps8xxx_emul)));
 
 	/* Set TCPCI to revision 2 for both emulators */
 	tcpc_config[USBC_PORT_C0].flags |= TCPC_FLAGS_TCPCI_REV2_0;
