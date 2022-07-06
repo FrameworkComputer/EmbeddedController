@@ -160,9 +160,10 @@ static int dp_status(int port, uint32_t *payload)
 				   0, /* request exit DP */
 				   0, /* request exit USB */
 				   0, /* MF pref */
-				   gpio_get_level(GPIO_PD_SBU_ENABLE), 0, /* power
-									     low
-									   */
+				   gpio_get_level(GPIO_PD_SBU_ENABLE),
+				   0, /* power
+					 low
+				       */
 				   0x2);
 	return 2;
 }
