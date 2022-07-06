@@ -48,11 +48,11 @@ enum {
 	CONFIG_TASK_LIST
 		/* CONFIG_TEST_TASK_LIST is a macro from the TEST_TASK_LIST file
 		 */
-			CONFIG_TEST_TASK_LIST
-				/* For CTS tasks */
-				CONFIG_CTS_TASK_LIST
+		CONFIG_TEST_TASK_LIST
+			/* For CTS tasks */
+			CONFIG_CTS_TASK_LIST
 #ifdef EMU_BUILD
-					TASK_ID_TEST_RUNNER,
+				TASK_ID_TEST_RUNNER,
 #endif
 	/* Number of tasks */
 	TASK_ID_COUNT,
