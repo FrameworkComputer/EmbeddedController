@@ -90,39 +90,44 @@ typedef struct {
 	((uint32_t)(0x7UL << MXC_F_TMR_CN_TMODE_POS)) /**< CN_TMODE Mask */
 #define MXC_V_TMR_CN_TMODE_ONESHOT \
 	((uint32_t)0x0UL) /**< CN_TMODE_ONESHOT Value */
-#define MXC_S_TMR_CN_TMODE_ONESHOT                                                 \
-	(MXC_V_TMR_CN_TMODE_ONESHOT << MXC_F_TMR_CN_TMODE_POS) /**<                \
-								  CN_TMODE_ONESHOT \
-								  Setting */
+#define MXC_S_TMR_CN_TMODE_ONESHOT                      \
+	(MXC_V_TMR_CN_TMODE_ONESHOT                     \
+	 << MXC_F_TMR_CN_TMODE_POS) /**<                \
+				       CN_TMODE_ONESHOT \
+				       Setting */
 #define MXC_V_TMR_CN_TMODE_CONTINUOUS \
 	((uint32_t)0x1UL) /**< CN_TMODE_CONTINUOUS Value */
-#define MXC_S_TMR_CN_TMODE_CONTINUOUS                                                    \
-	(MXC_V_TMR_CN_TMODE_CONTINUOUS << MXC_F_TMR_CN_TMODE_POS) /**<                   \
-								     CN_TMODE_CONTINUOUS \
-								     Setting             \
-								   */
+#define MXC_S_TMR_CN_TMODE_CONTINUOUS                      \
+	(MXC_V_TMR_CN_TMODE_CONTINUOUS                     \
+	 << MXC_F_TMR_CN_TMODE_POS) /**<                   \
+				       CN_TMODE_CONTINUOUS \
+				       Setting             \
+				     */
 #define MXC_V_TMR_CN_TMODE_COUNTER \
 	((uint32_t)0x2UL) /**< CN_TMODE_COUNTER Value */
-#define MXC_S_TMR_CN_TMODE_COUNTER                                                 \
-	(MXC_V_TMR_CN_TMODE_COUNTER << MXC_F_TMR_CN_TMODE_POS) /**<                \
-								  CN_TMODE_COUNTER \
-								  Setting */
+#define MXC_S_TMR_CN_TMODE_COUNTER                      \
+	(MXC_V_TMR_CN_TMODE_COUNTER                     \
+	 << MXC_F_TMR_CN_TMODE_POS) /**<                \
+				       CN_TMODE_COUNTER \
+				       Setting */
 #define MXC_V_TMR_CN_TMODE_PWM ((uint32_t)0x3UL) /**< CN_TMODE_PWM Value */
 #define MXC_S_TMR_CN_TMODE_PWM                                               \
 	(MXC_V_TMR_CN_TMODE_PWM << MXC_F_TMR_CN_TMODE_POS) /**< CN_TMODE_PWM \
 							      Setting */
 #define MXC_V_TMR_CN_TMODE_CAPTURE \
 	((uint32_t)0x4UL) /**< CN_TMODE_CAPTURE Value */
-#define MXC_S_TMR_CN_TMODE_CAPTURE                                                 \
-	(MXC_V_TMR_CN_TMODE_CAPTURE << MXC_F_TMR_CN_TMODE_POS) /**<                \
-								  CN_TMODE_CAPTURE \
-								  Setting */
+#define MXC_S_TMR_CN_TMODE_CAPTURE                      \
+	(MXC_V_TMR_CN_TMODE_CAPTURE                     \
+	 << MXC_F_TMR_CN_TMODE_POS) /**<                \
+				       CN_TMODE_CAPTURE \
+				       Setting */
 #define MXC_V_TMR_CN_TMODE_COMPARE \
 	((uint32_t)0x5UL) /**< CN_TMODE_COMPARE Value */
-#define MXC_S_TMR_CN_TMODE_COMPARE                                                 \
-	(MXC_V_TMR_CN_TMODE_COMPARE << MXC_F_TMR_CN_TMODE_POS) /**<                \
-								  CN_TMODE_COMPARE \
-								  Setting */
+#define MXC_S_TMR_CN_TMODE_COMPARE                      \
+	(MXC_V_TMR_CN_TMODE_COMPARE                     \
+	 << MXC_F_TMR_CN_TMODE_POS) /**<                \
+				       CN_TMODE_COMPARE \
+				       Setting */
 #define MXC_V_TMR_CN_TMODE_GATED                    \
 	((uint32_t)0x6UL) /**< CN_TMODE_GATED Value \
 			   */
@@ -132,11 +137,12 @@ typedef struct {
 								Setting */
 #define MXC_V_TMR_CN_TMODE_CAPTURECOMPARE \
 	((uint32_t)0x7UL) /**< CN_TMODE_CAPTURECOMPARE Value */
-#define MXC_S_TMR_CN_TMODE_CAPTURECOMPARE                                                        \
-	(MXC_V_TMR_CN_TMODE_CAPTURECOMPARE << MXC_F_TMR_CN_TMODE_POS) /**<                       \
-									 CN_TMODE_CAPTURECOMPARE \
-									 Setting                 \
-								       */
+#define MXC_S_TMR_CN_TMODE_CAPTURECOMPARE                      \
+	(MXC_V_TMR_CN_TMODE_CAPTURECOMPARE                     \
+	 << MXC_F_TMR_CN_TMODE_POS) /**<                       \
+				       CN_TMODE_CAPTURECOMPARE \
+				       Setting                 \
+				     */
 
 #define MXC_F_TMR_CN_PRES_POS 3 /**< CN_PRES Position */
 #define MXC_F_TMR_CN_PRES \
@@ -182,16 +188,18 @@ typedef struct {
 	((uint32_t)(0x1UL << MXC_F_TMR_CN_TPOL_POS)) /**< CN_TPOL Mask */
 #define MXC_V_TMR_CN_TPOL_ACTIVEHI \
 	((uint32_t)0x0UL) /**< CN_TPOL_ACTIVEHI Value */
-#define MXC_S_TMR_CN_TPOL_ACTIVEHI                                                \
-	(MXC_V_TMR_CN_TPOL_ACTIVEHI << MXC_F_TMR_CN_TPOL_POS) /**<                \
-								 CN_TPOL_ACTIVEHI \
-								 Setting */
+#define MXC_S_TMR_CN_TPOL_ACTIVEHI                     \
+	(MXC_V_TMR_CN_TPOL_ACTIVEHI                    \
+	 << MXC_F_TMR_CN_TPOL_POS) /**<                \
+				      CN_TPOL_ACTIVEHI \
+				      Setting */
 #define MXC_V_TMR_CN_TPOL_ACTIVELO \
 	((uint32_t)0x1UL) /**< CN_TPOL_ACTIVELO Value */
-#define MXC_S_TMR_CN_TPOL_ACTIVELO                                                \
-	(MXC_V_TMR_CN_TPOL_ACTIVELO << MXC_F_TMR_CN_TPOL_POS) /**<                \
-								 CN_TPOL_ACTIVELO \
-								 Setting */
+#define MXC_S_TMR_CN_TPOL_ACTIVELO                     \
+	(MXC_V_TMR_CN_TPOL_ACTIVELO                    \
+	 << MXC_F_TMR_CN_TPOL_POS) /**<                \
+				      CN_TPOL_ACTIVELO \
+				      Setting */
 
 #define MXC_F_TMR_CN_TEN_POS 7 /**< CN_TEN Position */
 #define MXC_F_TMR_CN_TEN \
@@ -216,10 +224,11 @@ typedef struct {
 #define MXC_V_TMR_CN_PWMSYNC_DIS                    \
 	((uint32_t)0x0UL) /**< CN_PWMSYNC_DIS Value \
 			   */
-#define MXC_S_TMR_CN_PWMSYNC_DIS                                                 \
-	(MXC_V_TMR_CN_PWMSYNC_DIS << MXC_F_TMR_CN_PWMSYNC_POS) /**<              \
-								  CN_PWMSYNC_DIS \
-								  Setting */
+#define MXC_S_TMR_CN_PWMSYNC_DIS                        \
+	(MXC_V_TMR_CN_PWMSYNC_DIS                       \
+	 << MXC_F_TMR_CN_PWMSYNC_POS) /**<              \
+					 CN_PWMSYNC_DIS \
+					 Setting */
 #define MXC_V_TMR_CN_PWMSYNC_EN ((uint32_t)0x1UL) /**< CN_PWMSYNC_EN Value */
 #define MXC_S_TMR_CN_PWMSYNC_EN                                                \
 	(MXC_V_TMR_CN_PWMSYNC_EN << MXC_F_TMR_CN_PWMSYNC_POS) /**<             \
@@ -233,10 +242,11 @@ typedef struct {
 #define MXC_V_TMR_CN_NOLHPOL_DIS                    \
 	((uint32_t)0x0UL) /**< CN_NOLHPOL_DIS Value \
 			   */
-#define MXC_S_TMR_CN_NOLHPOL_DIS                                                 \
-	(MXC_V_TMR_CN_NOLHPOL_DIS << MXC_F_TMR_CN_NOLHPOL_POS) /**<              \
-								  CN_NOLHPOL_DIS \
-								  Setting */
+#define MXC_S_TMR_CN_NOLHPOL_DIS                        \
+	(MXC_V_TMR_CN_NOLHPOL_DIS                       \
+	 << MXC_F_TMR_CN_NOLHPOL_POS) /**<              \
+					 CN_NOLHPOL_DIS \
+					 Setting */
 #define MXC_V_TMR_CN_NOLHPOL_EN ((uint32_t)0x1UL) /**< CN_NOLHPOL_EN Value */
 #define MXC_S_TMR_CN_NOLHPOL_EN                                                \
 	(MXC_V_TMR_CN_NOLHPOL_EN << MXC_F_TMR_CN_NOLHPOL_POS) /**<             \
@@ -250,10 +260,11 @@ typedef struct {
 #define MXC_V_TMR_CN_NOLLPOL_DIS                    \
 	((uint32_t)0x0UL) /**< CN_NOLLPOL_DIS Value \
 			   */
-#define MXC_S_TMR_CN_NOLLPOL_DIS                                                 \
-	(MXC_V_TMR_CN_NOLLPOL_DIS << MXC_F_TMR_CN_NOLLPOL_POS) /**<              \
-								  CN_NOLLPOL_DIS \
-								  Setting */
+#define MXC_S_TMR_CN_NOLLPOL_DIS                        \
+	(MXC_V_TMR_CN_NOLLPOL_DIS                       \
+	 << MXC_F_TMR_CN_NOLLPOL_POS) /**<              \
+					 CN_NOLLPOL_DIS \
+					 Setting */
 #define MXC_V_TMR_CN_NOLLPOL_EN ((uint32_t)0x1UL) /**< CN_NOLLPOL_EN Value */
 #define MXC_S_TMR_CN_NOLLPOL_EN                                                \
 	(MXC_V_TMR_CN_NOLLPOL_EN << MXC_F_TMR_CN_NOLLPOL_POS) /**<             \
@@ -267,10 +278,11 @@ typedef struct {
 #define MXC_V_TMR_CN_PWMCKBD_DIS                    \
 	((uint32_t)0x1UL) /**< CN_PWMCKBD_DIS Value \
 			   */
-#define MXC_S_TMR_CN_PWMCKBD_DIS                                                 \
-	(MXC_V_TMR_CN_PWMCKBD_DIS << MXC_F_TMR_CN_PWMCKBD_POS) /**<              \
-								  CN_PWMCKBD_DIS \
-								  Setting */
+#define MXC_S_TMR_CN_PWMCKBD_DIS                        \
+	(MXC_V_TMR_CN_PWMCKBD_DIS                       \
+	 << MXC_F_TMR_CN_PWMCKBD_POS) /**<              \
+					 CN_PWMCKBD_DIS \
+					 Setting */
 #define MXC_V_TMR_CN_PWMCKBD_EN ((uint32_t)0x0UL) /**< CN_PWMCKBD_EN Value */
 #define MXC_S_TMR_CN_PWMCKBD_EN                                                \
 	(MXC_V_TMR_CN_PWMCKBD_EN << MXC_F_TMR_CN_PWMCKBD_POS) /**<             \
