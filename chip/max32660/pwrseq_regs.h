@@ -171,25 +171,28 @@ typedef struct {
 							       Mask */
 #define MXC_V_PWRSEQ_LP_CTRL_OVR_0_9V \
 	((uint32_t)0x0UL) /**< LP_CTRL_OVR_0_9V Value */
-#define MXC_S_PWRSEQ_LP_CTRL_OVR_0_9V                                                       \
-	(MXC_V_PWRSEQ_LP_CTRL_OVR_0_9V << MXC_F_PWRSEQ_LP_CTRL_OVR_POS) /**<                \
-									   LP_CTRL_OVR_0_9V \
-									   Setting          \
-									 */
+#define MXC_S_PWRSEQ_LP_CTRL_OVR_0_9V                         \
+	(MXC_V_PWRSEQ_LP_CTRL_OVR_0_9V                        \
+	 << MXC_F_PWRSEQ_LP_CTRL_OVR_POS) /**<                \
+					     LP_CTRL_OVR_0_9V \
+					     Setting          \
+					   */
 #define MXC_V_PWRSEQ_LP_CTRL_OVR_1_0V \
 	((uint32_t)0x1UL) /**< LP_CTRL_OVR_1_0V Value */
-#define MXC_S_PWRSEQ_LP_CTRL_OVR_1_0V                                                       \
-	(MXC_V_PWRSEQ_LP_CTRL_OVR_1_0V << MXC_F_PWRSEQ_LP_CTRL_OVR_POS) /**<                \
-									   LP_CTRL_OVR_1_0V \
-									   Setting          \
-									 */
+#define MXC_S_PWRSEQ_LP_CTRL_OVR_1_0V                         \
+	(MXC_V_PWRSEQ_LP_CTRL_OVR_1_0V                        \
+	 << MXC_F_PWRSEQ_LP_CTRL_OVR_POS) /**<                \
+					     LP_CTRL_OVR_1_0V \
+					     Setting          \
+					   */
 #define MXC_V_PWRSEQ_LP_CTRL_OVR_1_1V \
 	((uint32_t)0x2UL) /**< LP_CTRL_OVR_1_1V Value */
-#define MXC_S_PWRSEQ_LP_CTRL_OVR_1_1V                                                       \
-	(MXC_V_PWRSEQ_LP_CTRL_OVR_1_1V << MXC_F_PWRSEQ_LP_CTRL_OVR_POS) /**<                \
-									   LP_CTRL_OVR_1_1V \
-									   Setting          \
-									 */
+#define MXC_S_PWRSEQ_LP_CTRL_OVR_1_1V                         \
+	(MXC_V_PWRSEQ_LP_CTRL_OVR_1_1V                        \
+	 << MXC_F_PWRSEQ_LP_CTRL_OVR_POS) /**<                \
+					     LP_CTRL_OVR_1_1V \
+					     Setting          \
+					   */
 
 #define MXC_F_PWRSEQ_LP_CTRL_VCORE_DET_BYPASS_POS \
 	6 /**< LP_CTRL_VCORE_DET_BYPASS Position */
@@ -378,12 +381,13 @@ typedef struct {
  * Low Power Mode Wakeup Flags for GPIO0
  */
 #define MXC_F_PWRSEQ_LP_WAKEFL_WAKEST_POS 0 /**< LP_WAKEFL_WAKEST Position */
-#define MXC_F_PWRSEQ_LP_WAKEFL_WAKEST                                                   \
-	((uint32_t)(0x3FFFUL << MXC_F_PWRSEQ_LP_WAKEFL_WAKEST_POS)) /**<                \
-								       LP_WAKEFL_WAKEST \
-								       \                \
-								       \ \ \ Mask       \
-								     */
+#define MXC_F_PWRSEQ_LP_WAKEFL_WAKEST                                          \
+	((uint32_t)(0x3FFFUL                                                   \
+		    << MXC_F_PWRSEQ_LP_WAKEFL_WAKEST_POS)) /**<                \
+							      LP_WAKEFL_WAKEST \
+							      \                \
+							      \ \ \ Mask       \
+							    */
 
 /**
  * pwrseq_registers
@@ -391,12 +395,13 @@ typedef struct {
  * power wakeup functionality for GPIO0.
  */
 #define MXC_F_PWRSEQ_LPWK_EN_WAKEEN_POS 0 /**< LPWK_EN_WAKEEN Position */
-#define MXC_F_PWRSEQ_LPWK_EN_WAKEEN                                                 \
-	((uint32_t)(0x3FFFUL << MXC_F_PWRSEQ_LPWK_EN_WAKEEN_POS)) /**<              \
-								     LPWK_EN_WAKEEN \
-								     \              \
-								     \ \ \ Mask     \
-								   */
+#define MXC_F_PWRSEQ_LPWK_EN_WAKEEN                                        \
+	((uint32_t)(0x3FFFUL                                               \
+		    << MXC_F_PWRSEQ_LPWK_EN_WAKEEN_POS)) /**<              \
+							    LPWK_EN_WAKEEN \
+							    \              \
+							    \ \ \ Mask     \
+							  */
 
 /**
  * pwrseq_registers
