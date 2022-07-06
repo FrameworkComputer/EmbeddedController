@@ -386,20 +386,21 @@ __asm__(".section .text._lapic_error_handler\n"
 	"movl $stack_end, %esp\n"
 	"push %eax\n"
 #ifdef CONFIG_TASK_PROFILING
-	"push $" STRINGIFY(CONFIG_IRQ_COUNT) "\n"
-					     "call task_start_irq_handler\n"
-					     "addl $0x04, %esp\n"
+	"push $" STRINGIFY(
+		CONFIG_IRQ_COUNT) "\n"
+				  "call task_start_irq_handler\n"
+				  "addl $0x04, %esp\n"
 #endif
-					     "call handle_lapic_lvt_error\n"
-					     "pop %esp\n"
-					     "movl $0x00, (0xFEE000B0)\n" /* Set
-									     EOI
-									     for
-									     LAPIC
-									   */
+				  "call handle_lapic_lvt_error\n"
+				  "pop %esp\n"
+				  "movl $0x00, (0xFEE000B0)\n" /* Set
+								  EOI
+								  for
+								  LAPIC
+								*/
 	ASM_LOCK_PREFIX "subl $1, __in_isr\n"
-					     "popa\n"
-					     "iret\n");
+				  "popa\n"
+				  "iret\n");
 
 /* Should only be called in interrupt context */
 void unhandled_vector(void)
