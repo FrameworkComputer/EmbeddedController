@@ -203,16 +203,11 @@ int pd_snk_is_vbus_provided(int port)
 
 void pd_power_supply_reset(int port)
 {
-	int prev_en;
-
-	prev_en = ppc_is_sourcing_vbus(port);
-
 	/* Disable VBUS. */
 	ppc_vbus_source_enable(port, 0);
 
 	/* Enable discharge if we were previously sourcing 5V */
-	if (prev_en)
-		pd_set_vbus_discharge(port, 1);
+	pd_set_vbus_discharge(port, 1);
 
 	if (port == 1)
 		rt1718s_gpio_set_level(port, GPIO_EN_USB_C1_5V_OUT, 0);
