@@ -107,14 +107,6 @@
 			}                                                  \
 	} while (0)
 
-#define TEST_CHECK(n)                            \
-	do {                                     \
-		if (n)                           \
-			return EC_SUCCESS;       \
-		else                             \
-			return EC_ERROR_UNKNOWN; \
-	} while (0)
-
 /* Mutlistep test states */
 enum test_state_t {
 	TEST_STATE_STEP_1 = 0,

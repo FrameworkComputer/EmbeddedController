@@ -114,7 +114,8 @@ static int __verify_no_char(void)
 {
 	lpc_char_cnt = 0;
 	msleep(30);
-	TEST_CHECK(lpc_char_cnt == 0);
+	TEST_ASSERT(lpc_char_cnt == 0);
+	return EC_SUCCESS;
 }
 
 #define VERIFY_NO_CHAR() TEST_ASSERT(__verify_no_char() == EC_SUCCESS)

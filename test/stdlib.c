@@ -16,28 +16,30 @@
 
 static int test_isalpha(void)
 {
-	TEST_CHECK(isalpha('a'));
-	TEST_CHECK(isalpha('z'));
-	TEST_CHECK(isalpha('A'));
-	TEST_CHECK(isalpha('Z'));
-	TEST_CHECK(!isalpha('0'));
-	TEST_CHECK(!isalpha('~'));
-	TEST_CHECK(!isalpha(' '));
-	TEST_CHECK(!isalpha('\0'));
-	TEST_CHECK(!isalpha('\n'));
+	TEST_ASSERT(isalpha('a'));
+	TEST_ASSERT(isalpha('z'));
+	TEST_ASSERT(isalpha('A'));
+	TEST_ASSERT(isalpha('Z'));
+	TEST_ASSERT(!isalpha('0'));
+	TEST_ASSERT(!isalpha('~'));
+	TEST_ASSERT(!isalpha(' '));
+	TEST_ASSERT(!isalpha('\0'));
+	TEST_ASSERT(!isalpha('\n'));
+	return EC_SUCCESS;
 }
 
 static int test_isprint(void)
 {
-	TEST_CHECK(isprint('a'));
-	TEST_CHECK(isprint('z'));
-	TEST_CHECK(isprint('A'));
-	TEST_CHECK(isprint('Z'));
-	TEST_CHECK(isprint('0'));
-	TEST_CHECK(isprint('~'));
-	TEST_CHECK(isprint(' '));
-	TEST_CHECK(!isprint('\0'));
-	TEST_CHECK(!isprint('\n'));
+	TEST_ASSERT(isprint('a'));
+	TEST_ASSERT(isprint('z'));
+	TEST_ASSERT(isprint('A'));
+	TEST_ASSERT(isprint('Z'));
+	TEST_ASSERT(isprint('0'));
+	TEST_ASSERT(isprint('~'));
+	TEST_ASSERT(isprint(' '));
+	TEST_ASSERT(!isprint('\0'));
+	TEST_ASSERT(!isprint('\n'));
+	return EC_SUCCESS;
 }
 
 static int test_strstr(void)
@@ -145,7 +147,8 @@ static int test_strncmp(void)
 
 static int test_strlen(void)
 {
-	TEST_CHECK(strlen("this is a string") == 16);
+	TEST_ASSERT(strlen("this is a string") == 16);
+	return EC_SUCCESS;
 }
 
 static int test_strnlen(void)
@@ -159,35 +162,39 @@ static int test_strnlen(void)
 
 static int test_strcasecmp(void)
 {
-	TEST_CHECK(strcasecmp("test string", "TEST strIng") == 0);
-	TEST_CHECK(strcasecmp("test123!@#", "TesT123!@#") == 0);
-	TEST_CHECK(strcasecmp("lower", "UPPER") != 0);
+	TEST_ASSERT(strcasecmp("test string", "TEST strIng") == 0);
+	TEST_ASSERT(strcasecmp("test123!@#", "TesT123!@#") == 0);
+	TEST_ASSERT(strcasecmp("lower", "UPPER") != 0);
+	return EC_SUCCESS;
 }
 
 static int test_strncasecmp(void)
 {
-	TEST_CHECK(strncasecmp("test string", "TEST str", 4) == 0);
-	TEST_CHECK(strncasecmp("test string", "TEST str", 8) == 0);
-	TEST_CHECK(strncasecmp("test123!@#", "TesT321!@#", 5) != 0);
-	TEST_CHECK(strncasecmp("test123!@#", "TesT321!@#", 4) == 0);
-	TEST_CHECK(strncasecmp("1test123!@#", "1TesT321!@#", 5) == 0);
-	TEST_CHECK(strncasecmp("1test123", "teststr", 0) == 0);
+	TEST_ASSERT(strncasecmp("test string", "TEST str", 4) == 0);
+	TEST_ASSERT(strncasecmp("test string", "TEST str", 8) == 0);
+	TEST_ASSERT(strncasecmp("test123!@#", "TesT321!@#", 5) != 0);
+	TEST_ASSERT(strncasecmp("test123!@#", "TesT321!@#", 4) == 0);
+	TEST_ASSERT(strncasecmp("1test123!@#", "1TesT321!@#", 5) == 0);
+	TEST_ASSERT(strncasecmp("1test123", "teststr", 0) == 0);
+	return EC_SUCCESS;
 }
 
 static int test_atoi(void)
 {
-	TEST_CHECK(atoi("  901") == 901);
-	TEST_CHECK(atoi("-12c") == -12);
-	TEST_CHECK(atoi("   0  ") == 0);
-	TEST_CHECK(atoi("\t111") == 111);
+	TEST_ASSERT(atoi("  901") == 901);
+	TEST_ASSERT(atoi("-12c") == -12);
+	TEST_ASSERT(atoi("   0  ") == 0);
+	TEST_ASSERT(atoi("\t111") == 111);
+	return EC_SUCCESS;
 }
 
 static int test_snprintf(void)
 {
 	char buffer[32];
 
-	TEST_CHECK(snprintf(buffer, sizeof(buffer), "%u", 1234) == 4);
-	TEST_CHECK(strncmp(buffer, "1234", sizeof(buffer)));
+	TEST_ASSERT(snprintf(buffer, sizeof(buffer), "%u", 1234) == 4);
+	TEST_ASSERT(strncmp(buffer, "1234", sizeof(buffer)) == 0);
+	return EC_SUCCESS;
 }
 
 static int test_strcspn(void)

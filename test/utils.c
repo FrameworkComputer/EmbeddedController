@@ -21,7 +21,8 @@ static int test_uint64divmod_0(void)
 	int d = 54870071;
 	int r = uint64divmod(&n, d);
 
-	TEST_CHECK(r == 5991285 && n == 156134415ULL);
+	TEST_ASSERT(r == 5991285 && n == 156134415ULL);
+	return EC_SUCCESS;
 }
 
 static int test_uint64divmod_1(void)
@@ -30,7 +31,8 @@ static int test_uint64divmod_1(void)
 	int d = 2;
 	int r = uint64divmod(&n, d);
 
-	TEST_CHECK(r == 0 && n == 4283553221292375ULL);
+	TEST_ASSERT(r == 0 && n == 4283553221292375ULL);
+	return EC_SUCCESS;
 }
 
 static int test_uint64divmod_2(void)
@@ -39,7 +41,8 @@ static int test_uint64divmod_2(void)
 	int d = 0;
 	int r = uint64divmod(&n, d);
 
-	TEST_CHECK(r == 0 && n == 0ULL);
+	TEST_ASSERT(r == 0 && n == 0ULL);
+	return EC_SUCCESS;
 }
 
 static int test_get_next_bit(void)

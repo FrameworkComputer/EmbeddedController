@@ -142,7 +142,6 @@ find-and-replace.
 *   `TEST_BITS_CLEARED(a, bits)` to `zassert_true(a & (int)bits == 0, "%u, 0", a
     & (int)bits)`
 *   `TEST_ASSERT_ARRAY_EQ(s, d, n)` to `zassert_mem_equal(s, d, b, NULL)`
-*   `TEST_CHECK(n)` to `zassert_true(n, NULL)`
 *   `TEST_NEAR(a, b, epsilon, fmt)` to `zassert_within(a, b, epsilon, fmt, a)`
     *   Currently, every usage of `TEST_NEAR` involves floating point values
 *   `TEST_ASSERT_ABS_LESS(n, t)` to `zassert_true(abs(n) < t, "%d, %d", n, t)`

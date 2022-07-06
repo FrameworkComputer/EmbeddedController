@@ -98,7 +98,8 @@ static int test_backspace(void)
 	cmd_1_call_cnt = 0;
 	UART_INJECT("testx\b1\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1);
+	TEST_ASSERT(cmd_1_call_cnt == 1);
+	return EC_SUCCESS;
 }
 
 static int test_insert_char(void)
@@ -108,7 +109,8 @@ static int test_insert_char(void)
 	arrow_key(ARROW_LEFT, 2);
 	UART_INJECT("s\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1);
+	TEST_ASSERT(cmd_1_call_cnt == 1);
+	return EC_SUCCESS;
 }
 
 static int test_delete_char(void)
@@ -118,7 +120,8 @@ static int test_delete_char(void)
 	arrow_key(ARROW_LEFT, 1);
 	UART_INJECT("\b\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1);
+	TEST_ASSERT(cmd_1_call_cnt == 1);
+	return EC_SUCCESS;
 }
 
 static int test_insert_delete_char(void)
@@ -130,7 +133,8 @@ static int test_insert_delete_char(void)
 	arrow_key(ARROW_RIGHT, 1);
 	UART_INJECT("s\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1);
+	TEST_ASSERT(cmd_1_call_cnt == 1);
+	return EC_SUCCESS;
 }
 
 static int test_home_end_key(void)
@@ -142,7 +146,8 @@ static int test_home_end_key(void)
 	end_key();
 	UART_INJECT("1\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1);
+	TEST_ASSERT(cmd_1_call_cnt == 1);
+	return EC_SUCCESS;
 }
 
 static int test_ctrl_k(void)
@@ -153,7 +158,8 @@ static int test_ctrl_k(void)
 	ctrl_key('K');
 	UART_INJECT("\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1);
+	TEST_ASSERT(cmd_1_call_cnt == 1);
+	return EC_SUCCESS;
 }
 
 static int test_history_up(void)
@@ -164,7 +170,8 @@ static int test_history_up(void)
 	arrow_key(ARROW_UP, 1);
 	UART_INJECT("\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 2);
+	TEST_ASSERT(cmd_1_call_cnt == 2);
+	return EC_SUCCESS;
 }
 
 static int test_history_up_up(void)
@@ -178,7 +185,8 @@ static int test_history_up_up(void)
 	arrow_key(ARROW_UP, 2);
 	UART_INJECT("\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 2 && cmd_2_call_cnt == 1);
+	TEST_ASSERT(cmd_1_call_cnt == 2 && cmd_2_call_cnt == 1);
+	return EC_SUCCESS;
 }
 
 static int test_history_up_up_down(void)
@@ -193,7 +201,8 @@ static int test_history_up_up_down(void)
 	arrow_key(ARROW_DOWN, 1);
 	UART_INJECT("\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1 && cmd_2_call_cnt == 2);
+	TEST_ASSERT(cmd_1_call_cnt == 1 && cmd_2_call_cnt == 2);
+	return EC_SUCCESS;
 }
 
 static int test_history_edit(void)
@@ -205,7 +214,8 @@ static int test_history_edit(void)
 	arrow_key(ARROW_UP, 1);
 	UART_INJECT("\b2\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1 && cmd_2_call_cnt == 1);
+	TEST_ASSERT(cmd_1_call_cnt == 1 && cmd_2_call_cnt == 1);
+	return EC_SUCCESS;
 }
 
 static int test_history_stash(void)
@@ -219,7 +229,8 @@ static int test_history_stash(void)
 	arrow_key(ARROW_DOWN, 1);
 	UART_INJECT("2\n");
 	msleep(30);
-	TEST_CHECK(cmd_1_call_cnt == 1 && cmd_2_call_cnt == 1);
+	TEST_ASSERT(cmd_1_call_cnt == 1 && cmd_2_call_cnt == 1);
+	return EC_SUCCESS;
 }
 
 static int test_history_list(void)
