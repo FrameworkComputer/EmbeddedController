@@ -63,10 +63,11 @@ int comm_init_buffer(void);
  * Send a command to the EC.  Returns the length of output data returned (0 if
  * none), or negative on error.
  */
-int ec_command(int command, int version, const void *outdata, int outsize, /* to
-									      the
-									      EC
-									    */
+int ec_command(int command, int version, const void *outdata,
+	       int outsize, /* to
+			       the
+			       EC
+			     */
 	       void *indata, int insize); /* from the EC */
 
 /**
