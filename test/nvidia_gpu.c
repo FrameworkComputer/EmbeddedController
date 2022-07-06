@@ -21,11 +21,8 @@
 #include "driver/nvidia_gpu.h"
 
 struct d_notify_policy d_notify_policies[] = {
-	AC_ATLEAST_W(100),
-	AC_ATLEAST_W(65),
-	AC_DC,
-	DC_ATLEAST_SOC(20),
-	DC_ATLEAST_SOC(5),
+	AC_ATLEAST_W(100),  AC_ATLEAST_W(65),  AC_DC,
+	DC_ATLEAST_SOC(20), DC_ATLEAST_SOC(5),
 };
 
 extern enum d_notify_level d_notify_level;
