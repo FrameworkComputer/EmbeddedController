@@ -28,7 +28,6 @@ LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
  */
 static int tcpci_emul_reg_bytes(int reg)
 {
-
 	switch (reg) {
 	case TCPC_REG_VENDOR_ID:
 	case TCPC_REG_PRODUCT_ID:
@@ -392,7 +391,8 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 	if (ctx->rx_msg == NULL) {
 		get_reg(ctx, TCPC_REG_DEV_CAP_2, &dev_cap_2);
 		if ((!(dev_cap_2 & TCPC_REG_DEV_CAP_2_LONG_MSG) &&
-		       rx_msg->cnt > 31) || rx_msg->cnt > 265) {
+		     rx_msg->cnt > 31) ||
+		    rx_msg->cnt > 265) {
 			LOG_ERR("Too long first message (%d)", rx_msg->cnt);
 			i2c_common_emul_unlock_data(&ctx->common.emul);
 			return -EINVAL;
@@ -454,12 +454,12 @@ void tcpci_emul_set_rev(const struct emul *emul, enum tcpci_emul_rev rev)
 	case TCPCI_EMUL_REV1_0_VER1_0:
 		tcpci_emul_set_reg(emul, TCPC_REG_PD_INT_REV,
 				   (TCPC_REG_PD_INT_REV_REV_1_0 << 8) |
-				    TCPC_REG_PD_INT_REV_VER_1_0);
+					   TCPC_REG_PD_INT_REV_VER_1_0);
 		return;
 	case TCPCI_EMUL_REV2_0_VER1_1:
 		tcpci_emul_set_reg(emul, TCPC_REG_PD_INT_REV,
 				   (TCPC_REG_PD_INT_REV_REV_2_0 << 8) |
-				    TCPC_REG_PD_INT_REV_VER_1_1);
+					   TCPC_REG_PD_INT_REV_VER_1_1);
 		return;
 	}
 }
@@ -494,9 +494,9 @@ void tcpci_emul_set_partner_ops(const struct emul *emul,
  *
  * @return Voltage visible at CC resistor side
  */
-static enum tcpc_cc_voltage_status tcpci_emul_detected_volt_for_res(
-		enum tcpc_cc_pull res,
-		enum tcpc_cc_voltage_status volt)
+static enum tcpc_cc_voltage_status
+tcpci_emul_detected_volt_for_res(enum tcpc_cc_pull res,
+				 enum tcpc_cc_voltage_status volt)
 {
 	switch (res) {
 	case TYPEC_CC_RD:
@@ -569,8 +569,7 @@ int tcpci_emul_connect_partner(const struct emul *emul,
 
 	/* If CC status is TYPEC_CC_VOLT_RP_*, then BIT(2) is ignored */
 	cc_status = TCPC_REG_CC_STATUS_SET(
-				partner_power_role == PD_ROLE_SOURCE ? 1 : 0,
-				cc2_v, cc1_v);
+		partner_power_role == PD_ROLE_SOURCE ? 1 : 0, cc2_v, cc1_v);
 	set_reg(ctx, TCPC_REG_CC_STATUS, cc_status);
 	get_reg(ctx, TCPC_REG_ALERT, &alert);
 	set_reg(ctx, TCPC_REG_ALERT, alert | TCPC_REG_ALERT_CC_STATUS);
@@ -675,67 +674,67 @@ void tcpci_emul_partner_msg_status(const struct emul *emul,
 
 /** Mask reserved bits in each register of TCPCI */
 static const uint8_t tcpci_emul_rsvd_mask[] = {
-	[TCPC_REG_VENDOR_ID]				= 0x00,
-	[TCPC_REG_VENDOR_ID + 1]			= 0x00,
-	[TCPC_REG_PRODUCT_ID]				= 0x00,
-	[TCPC_REG_PRODUCT_ID + 1]			= 0x00,
-	[TCPC_REG_BCD_DEV]				= 0x00,
-	[TCPC_REG_BCD_DEV + 1]				= 0xff,
-	[TCPC_REG_TC_REV]				= 0x00,
-	[TCPC_REG_TC_REV + 1]				= 0x00,
-	[TCPC_REG_PD_REV]				= 0x00,
-	[TCPC_REG_PD_REV + 1]				= 0x00,
-	[TCPC_REG_PD_INT_REV]				= 0x00,
-	[TCPC_REG_PD_INT_REV + 1]			= 0x00,
-	[0x0c ... 0x0f]					= 0xff, /* Reserved */
-	[TCPC_REG_ALERT]				= 0x00,
-	[TCPC_REG_ALERT + 1]				= 0x00,
-	[TCPC_REG_ALERT_MASK]				= 0x00,
-	[TCPC_REG_ALERT_MASK + 1]			= 0x00,
-	[TCPC_REG_POWER_STATUS_MASK]			= 0x00,
-	[TCPC_REG_FAULT_STATUS_MASK]			= 0x00,
-	[TCPC_REG_EXT_STATUS_MASK]			= 0xfe,
-	[TCPC_REG_ALERT_EXTENDED_MASK]			= 0xf8,
-	[TCPC_REG_CONFIG_STD_OUTPUT]			= 0x00,
-	[TCPC_REG_TCPC_CTRL]				= 0x00,
-	[TCPC_REG_ROLE_CTRL]				= 0x80,
-	[TCPC_REG_FAULT_CTRL]				= 0x80,
-	[TCPC_REG_POWER_CTRL]				= 0x00,
-	[TCPC_REG_CC_STATUS]				= 0xc0,
-	[TCPC_REG_POWER_STATUS]				= 0x00,
-	[TCPC_REG_FAULT_STATUS]				= 0x00,
-	[TCPC_REG_EXT_STATUS]				= 0xfe,
-	[TCPC_REG_ALERT_EXT]				= 0xf8,
-	[0x22]						= 0xff, /* Reserved */
-	[TCPC_REG_COMMAND]				= 0x00,
-	[TCPC_REG_DEV_CAP_1]				= 0x00,
-	[TCPC_REG_DEV_CAP_1 + 1]			= 0x00,
-	[TCPC_REG_DEV_CAP_2]				= 0x80,
-	[TCPC_REG_DEV_CAP_2 + 1]			= 0x00,
-	[TCPC_REG_STD_INPUT_CAP]			= 0xe0,
-	[TCPC_REG_STD_OUTPUT_CAP]			= 0x00,
-	[TCPC_REG_CONFIG_EXT_1]				= 0xfc,
-	[0x2b]						= 0xff, /* Reserved */
-	[TCPC_REG_GENERIC_TIMER]			= 0x00,
-	[TCPC_REG_GENERIC_TIMER + 1]			= 0x00,
-	[TCPC_REG_MSG_HDR_INFO]				= 0xe0,
-	[TCPC_REG_RX_DETECT]				= 0x00,
-	[TCPC_REG_RX_BUFFER ... 0x4f]			= 0x00,
-	[TCPC_REG_TRANSMIT ... 0x69]			= 0x00,
-	[TCPC_REG_VBUS_VOLTAGE]				= 0xf0,
-	[TCPC_REG_VBUS_VOLTAGE + 1]			= 0x00,
-	[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH]		= 0x00,
-	[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH + 1]	= 0xfc,
-	[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH]		= 0x00,
-	[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH + 1]	= 0xfc,
-	[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG]		= 0x00,
-	[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG + 1]	= 0xfc,
-	[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG]		= 0x00,
-	[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG + 1]	= 0xfc,
-	[TCPC_REG_VBUS_NONDEFAULT_TARGET]		= 0x00,
-	[TCPC_REG_VBUS_NONDEFAULT_TARGET + 1]		= 0x00,
-	[0x7c ... 0x7f]					= 0xff, /* Reserved */
-	[0x80 ... TCPCI_EMUL_REG_COUNT - 1]		= 0x00,
+	[TCPC_REG_VENDOR_ID] = 0x00,
+	[TCPC_REG_VENDOR_ID + 1] = 0x00,
+	[TCPC_REG_PRODUCT_ID] = 0x00,
+	[TCPC_REG_PRODUCT_ID + 1] = 0x00,
+	[TCPC_REG_BCD_DEV] = 0x00,
+	[TCPC_REG_BCD_DEV + 1] = 0xff,
+	[TCPC_REG_TC_REV] = 0x00,
+	[TCPC_REG_TC_REV + 1] = 0x00,
+	[TCPC_REG_PD_REV] = 0x00,
+	[TCPC_REG_PD_REV + 1] = 0x00,
+	[TCPC_REG_PD_INT_REV] = 0x00,
+	[TCPC_REG_PD_INT_REV + 1] = 0x00,
+	[0x0c ... 0x0f] = 0xff, /* Reserved */
+	[TCPC_REG_ALERT] = 0x00,
+	[TCPC_REG_ALERT + 1] = 0x00,
+	[TCPC_REG_ALERT_MASK] = 0x00,
+	[TCPC_REG_ALERT_MASK + 1] = 0x00,
+	[TCPC_REG_POWER_STATUS_MASK] = 0x00,
+	[TCPC_REG_FAULT_STATUS_MASK] = 0x00,
+	[TCPC_REG_EXT_STATUS_MASK] = 0xfe,
+	[TCPC_REG_ALERT_EXTENDED_MASK] = 0xf8,
+	[TCPC_REG_CONFIG_STD_OUTPUT] = 0x00,
+	[TCPC_REG_TCPC_CTRL] = 0x00,
+	[TCPC_REG_ROLE_CTRL] = 0x80,
+	[TCPC_REG_FAULT_CTRL] = 0x80,
+	[TCPC_REG_POWER_CTRL] = 0x00,
+	[TCPC_REG_CC_STATUS] = 0xc0,
+	[TCPC_REG_POWER_STATUS] = 0x00,
+	[TCPC_REG_FAULT_STATUS] = 0x00,
+	[TCPC_REG_EXT_STATUS] = 0xfe,
+	[TCPC_REG_ALERT_EXT] = 0xf8,
+	[0x22] = 0xff, /* Reserved */
+	[TCPC_REG_COMMAND] = 0x00,
+	[TCPC_REG_DEV_CAP_1] = 0x00,
+	[TCPC_REG_DEV_CAP_1 + 1] = 0x00,
+	[TCPC_REG_DEV_CAP_2] = 0x80,
+	[TCPC_REG_DEV_CAP_2 + 1] = 0x00,
+	[TCPC_REG_STD_INPUT_CAP] = 0xe0,
+	[TCPC_REG_STD_OUTPUT_CAP] = 0x00,
+	[TCPC_REG_CONFIG_EXT_1] = 0xfc,
+	[0x2b] = 0xff, /* Reserved */
+	[TCPC_REG_GENERIC_TIMER] = 0x00,
+	[TCPC_REG_GENERIC_TIMER + 1] = 0x00,
+	[TCPC_REG_MSG_HDR_INFO] = 0xe0,
+	[TCPC_REG_RX_DETECT] = 0x00,
+	[TCPC_REG_RX_BUFFER... 0x4f] = 0x00,
+	[TCPC_REG_TRANSMIT... 0x69] = 0x00,
+	[TCPC_REG_VBUS_VOLTAGE] = 0xf0,
+	[TCPC_REG_VBUS_VOLTAGE + 1] = 0x00,
+	[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH] = 0x00,
+	[TCPC_REG_VBUS_SINK_DISCONNECT_THRESH + 1] = 0xfc,
+	[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH] = 0x00,
+	[TCPC_REG_VBUS_STOP_DISCHARGE_THRESH + 1] = 0xfc,
+	[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG] = 0x00,
+	[TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG + 1] = 0xfc,
+	[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG] = 0x00,
+	[TCPC_REG_VBUS_VOLTAGE_ALARM_LO_CFG + 1] = 0xfc,
+	[TCPC_REG_VBUS_NONDEFAULT_TARGET] = 0x00,
+	[TCPC_REG_VBUS_NONDEFAULT_TARGET + 1] = 0x00,
+	[0x7c ... 0x7f] = 0xff, /* Reserved */
+	[0x80 ... TCPCI_EMUL_REG_COUNT - 1] = 0x00,
 };
 
 /**
@@ -1094,7 +1093,7 @@ int tcpci_emul_write_byte(const struct emul *emul, int reg, uint8_t val,
 
 		if (bytes > 1) {
 			LOG_ERR("Writing byte %d to 2 byte register 0x%x",
-				 bytes, reg);
+				bytes, reg);
 			tcpci_emul_set_i2c_interface_err(emul);
 			return -EIO;
 		}
@@ -1143,8 +1142,9 @@ static int tcpci_emul_handle_command(const struct emul *emul)
 		 * Start DRP toggling only if auto discharge is disabled,
 		 * DRP is enabled and CC1/2 are both Rp or Rd
 		 */
-		if (!(pwr_ctrl & TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT)
-		    && TCPC_REG_ROLE_CTRL_DRP(role_ctrl) &&
+		if (!(pwr_ctrl &
+		      TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT) &&
+		    TCPC_REG_ROLE_CTRL_DRP(role_ctrl) &&
 		    (TCPC_REG_ROLE_CTRL_CC1(role_ctrl) ==
 		     TCPC_REG_ROLE_CTRL_CC2(role_ctrl)) &&
 		    (TCPC_REG_ROLE_CTRL_CC1(role_ctrl) == TYPEC_CC_RP ||
@@ -1361,8 +1361,8 @@ int tcpci_emul_handle_write(const struct emul *emul, int reg, int msg_len)
 	/* Check if I2C write message has correct length */
 	if (msg_len != reg_bytes) {
 		tcpci_emul_set_i2c_interface_err(emul);
-		LOG_ERR("Writing byte %d to %d byte register 0x%x",
-			msg_len, reg_bytes, reg);
+		LOG_ERR("Writing byte %d to %d byte register 0x%x", msg_len,
+			reg_bytes, reg);
 		return -EIO;
 	}
 
