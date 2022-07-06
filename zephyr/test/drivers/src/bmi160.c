@@ -2080,4 +2080,40 @@ ZTEST_USER(bmi160, test_bmi_init_chip_id)
 	i2c_common_emul_set_write_func(emul, NULL, NULL);
 }
 
-ZTEST_SUITE(bmi160, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+static void bmi160_before(void *fixture)
+{
+	ARG_UNUSED(fixture);
+	struct i2c_emul *emul = bmi_emul_get(BMI_ORD);
+	struct motion_sensor_t *acc_ms;
+	struct motion_sensor_t *gyr_ms;
+
+	acc_ms = &motion_sensors[BMI_ACC_SENSOR_ID];
+	gyr_ms = &motion_sensors[BMI_GYR_SENSOR_ID];
+
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	bmi_emul_set_reg(emul, BMI160_CHIP_ID, 0xd1);
+
+	/* Disable rotation */
+	gyr_ms->rot_standard_ref = NULL;
+	acc_ms->rot_standard_ref = NULL;
+
+	zassume_equal(EC_SUCCESS, acc_ms->drv->set_data_rate(acc_ms, 50000, 0),
+		      NULL);
+	zassume_equal(EC_SUCCESS, gyr_ms->drv->set_data_rate(gyr_ms, 50000, 0),
+		      NULL);
+}
+
+static void bmi160_after(void *state)
+{
+	ARG_UNUSED(state);
+	struct motion_sensor_t *acc_ms, *gyr_ms;
+
+	acc_ms = &motion_sensors[BMI_ACC_SENSOR_ID];
+	gyr_ms = &motion_sensors[BMI_GYR_SENSOR_ID];
+
+	acc_ms->drv->set_data_rate(acc_ms, 0, 0);
+	gyr_ms->drv->set_data_rate(gyr_ms, 0, 0);
+}
+
+ZTEST_SUITE(bmi160, drivers_predicate_post_main, NULL, bmi160_before,
+	    bmi160_after, NULL);
