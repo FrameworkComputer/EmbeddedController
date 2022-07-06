@@ -98,7 +98,7 @@ static int board_disable_other_vbus_sink(int except_port)
 		 */
 		r = ppc_vbus_sink_enable(i, 0);
 		if (r)
-			CPRINTS("Failed to disable sink path C%d (%d)", i,  r);
+			CPRINTS("Failed to disable sink path C%d (%d)", i, r);
 		rv |= r;
 	}
 
@@ -116,8 +116,8 @@ int board_set_active_charge_port(int port)
 	enum charge_supplier active_supplier = charge_manager_get_supplier();
 	int active_port = charge_manager_get_active_charge_port();
 
-	CPRINTS("Switching charger from P%d (supplier=%d) to P%d",
-		active_port, active_supplier, port);
+	CPRINTS("Switching charger from P%d (supplier=%d) to P%d", active_port,
+		active_supplier, port);
 
 	if (port == CHARGE_PORT_NONE) {
 		CPRINTS("Disabling all charger ports");
@@ -146,8 +146,8 @@ int board_set_active_charge_port(int port)
 	 * If we're running currently on a battery (active_supplier == NONE), we
 	 * don't need to throttle because we're not disabling any port.
 	 */
-	if (chipset_in_state(CHIPSET_STATE_ON)
-			&& active_supplier != CHARGE_SUPPLIER_NONE)
+	if (chipset_in_state(CHIPSET_STATE_ON) &&
+	    active_supplier != CHARGE_SUPPLIER_NONE)
 		board_throttle_ap_gpu();
 
 	/*
@@ -250,7 +250,6 @@ void ac_change(void)
 	hook_call_deferred(&bj_connect_data, 0);
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, ac_change, HOOK_PRIO_DEFAULT);
-
 
 static void power_supply_changed(void)
 {
