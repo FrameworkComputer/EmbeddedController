@@ -37,8 +37,9 @@
 #define CONFIG_CHARGER_RAA489000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
-					*/
+#define CONFIG_OCPC_DEF_RBATT_MOHMS               \
+	22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
+	    */
 #define CONFIG_OCPC
 #undef CONFIG_CHARGER_SINGLE_CHIP
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
