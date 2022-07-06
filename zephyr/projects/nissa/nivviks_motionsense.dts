@@ -80,7 +80,7 @@
 	 * List of motion sensors that creates motion_sensors array.
 	 * The label "lid_accel" and "base_accel" are used to indicate
 	 * motion sensor IDs for lid angle calculation.
-	 * TODO:(b/229577857) The first entries of the array must be
+	 * TODO(b/238139272): The first entries of the array must be
 	 * accelerometers,then gyroscope. Fix this dependency in the DTS
 	 * processing which makes the devicetree entries independent.
 	 */
