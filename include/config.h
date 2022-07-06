@@ -6877,4 +6877,4 @@
 #define HAS_GPU_DRIVER
 #endif
 
-#endif  /* __CROS_EC_CONFIG_H */
+#endif /* __CROS_EC_CONFIG_H */
