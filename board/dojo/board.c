@@ -119,20 +119,20 @@ static struct kionix_accel_data g_kx022_data;
 
 /* Matrix to rotate accelrator into standard reference frame */
 static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(-1), 0 },
-						{ FLOAT_TO_FP(1), 0, 0 },
-						{ 0, 0, FLOAT_TO_FP(1) } };
+					      { FLOAT_TO_FP(1), 0, 0 },
+					      { 0, 0, FLOAT_TO_FP(1) } };
 
 static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(1), 0, 0 },
 					     { 0, FLOAT_TO_FP(-1), 0 },
 					     { 0, 0, FLOAT_TO_FP(-1) } };
 
 static const mat33_fp_t icm42607_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
-					      { 0, FLOAT_TO_FP(-1), 0 },
-					      { 0, 0, FLOAT_TO_FP(1) } };
+						  { 0, FLOAT_TO_FP(-1), 0 },
+						  { 0, 0, FLOAT_TO_FP(1) } };
 
 static const mat33_fp_t icm426xx_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
-					      { 0, FLOAT_TO_FP(-1), 0 },
-					      { 0, 0, FLOAT_TO_FP(1) } };
+						  { 0, FLOAT_TO_FP(-1), 0 },
+						  { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	/*
@@ -435,8 +435,8 @@ const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
-			    int max_ma, int charge_mv)
+void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
+			    int charge_mv)
 {
 	/* Limit input current lower than 2944 mA for safety */
 	charge_ma = MIN(charge_ma, 2944);
