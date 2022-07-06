@@ -60,7 +60,7 @@ static const struct option opts_create[] = {
 	{ "pcb_supplier", 1, 0, OPT_PCB_SUPPLIER },
 	{ "ssfc", 1, 0, OPT_SSFC },
 	{ "rework_id", 1, 0, OPT_REWORK_ID },
-	{ "factory_calibration_data", 1, 0, OPT_FACTORY_CALIBRATION_DATA},
+	{ "factory_calibration_data", 1, 0, OPT_FACTORY_CALIBRATION_DATA },
 	{ "size", 1, 0, OPT_SIZE },
 	{ "erase_byte", 1, 0, OPT_ERASE_BYTE },
 	{ NULL, 0, 0, 0 }
@@ -72,9 +72,17 @@ static const struct option opts_show[] = { { "file", 1, 0, OPT_FILENAME },
 
 static const char *field_name[] = {
 	/* Same order as enum cbi_data_tag */
-	"BOARD_VERSION", "OEM_ID",    "SKU_ID",	   "DRAM_PART_NUM",
-	"OEM_NAME",	 "MODEL_ID",  "FW_CONFIG", "PCB_SUPPLIER",
-	"SSFC",		 "REWORK_ID", "FACTORY_CALIBRATION_DATA",
+	"BOARD_VERSION",
+	"OEM_ID",
+	"SKU_ID",
+	"DRAM_PART_NUM",
+	"OEM_NAME",
+	"MODEL_ID",
+	"FW_CONFIG",
+	"PCB_SUPPLIER",
+	"SSFC",
+	"REWORK_ID",
+	"FACTORY_CALIBRATION_DATA",
 };
 BUILD_ASSERT(ARRAY_SIZE(field_name) == CBI_TAG_COUNT);
 
