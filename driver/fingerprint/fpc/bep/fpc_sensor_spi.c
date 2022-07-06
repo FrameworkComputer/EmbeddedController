@@ -22,10 +22,10 @@
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
 
-#define SPI_BUF_SIZE              (1024)
+#define SPI_BUF_SIZE (1024)
 
-#define FPC_RESULT_OK                (0)
-#define FPC_RESULT_IO_ERROR         (-8)
+#define FPC_RESULT_OK (0)
+#define FPC_RESULT_IO_ERROR (-8)
 
 static uint8_t spi_buf[SPI_BUF_SIZE] FP_FRAME_SECTION __aligned(4);
 
