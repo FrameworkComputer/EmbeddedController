@@ -126,18 +126,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_SCON_SBUSARB_FIX \
 	((uint32_t)0x0UL) /**< SCON_SBUSARB_FIX Value */
-#define MXC_S_GCR_SCON_SBUSARB_FIX                                                     \
-	(MXC_V_GCR_SCON_SBUSARB_FIX << MXC_F_GCR_SCON_SBUSARB_POS) /**<                \
-								      SCON_SBUSARB_FIX \
-								      Setting          \
-								    */
+#define MXC_S_GCR_SCON_SBUSARB_FIX                          \
+	(MXC_V_GCR_SCON_SBUSARB_FIX                         \
+	 << MXC_F_GCR_SCON_SBUSARB_POS) /**<                \
+					   SCON_SBUSARB_FIX \
+					   Setting          \
+					 */
 #define MXC_V_GCR_SCON_SBUSARB_ROUND \
 	((uint32_t)0x1UL) /**< SCON_SBUSARB_ROUND Value */
-#define MXC_S_GCR_SCON_SBUSARB_ROUND                                                       \
-	(MXC_V_GCR_SCON_SBUSARB_ROUND << MXC_F_GCR_SCON_SBUSARB_POS) /**<                  \
-									SCON_SBUSARB_ROUND \
-									Setting            \
-								      */
+#define MXC_S_GCR_SCON_SBUSARB_ROUND                          \
+	(MXC_V_GCR_SCON_SBUSARB_ROUND                         \
+	 << MXC_F_GCR_SCON_SBUSARB_POS) /**<                  \
+					   SCON_SBUSARB_ROUND \
+					   Setting            \
+					 */
 
 #define MXC_F_GCR_SCON_FLASH_PAGE_FLIP_POS \
 	4 /**< SCON_FLASH_PAGE_FLIP Position */
@@ -167,18 +169,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_SCON_FPU_DIS_ENABLE \
 	((uint32_t)0x0UL) /**< SCON_FPU_DIS_ENABLE Value */
-#define MXC_S_GCR_SCON_FPU_DIS_ENABLE                                                        \
-	(MXC_V_GCR_SCON_FPU_DIS_ENABLE << MXC_F_GCR_SCON_FPU_DIS_POS) /**<                   \
-									 SCON_FPU_DIS_ENABLE \
-									 Setting             \
-								       */
+#define MXC_S_GCR_SCON_FPU_DIS_ENABLE                          \
+	(MXC_V_GCR_SCON_FPU_DIS_ENABLE                         \
+	 << MXC_F_GCR_SCON_FPU_DIS_POS) /**<                   \
+					   SCON_FPU_DIS_ENABLE \
+					   Setting             \
+					 */
 #define MXC_V_GCR_SCON_FPU_DIS_DISABLE \
 	((uint32_t)0x1UL) /**< SCON_FPU_DIS_DISABLE Value */
-#define MXC_S_GCR_SCON_FPU_DIS_DISABLE                                                         \
-	(MXC_V_GCR_SCON_FPU_DIS_DISABLE << MXC_F_GCR_SCON_FPU_DIS_POS) /**<                    \
-									  SCON_FPU_DIS_DISABLE \
-									  Setting              \
-									*/
+#define MXC_S_GCR_SCON_FPU_DIS_DISABLE                          \
+	(MXC_V_GCR_SCON_FPU_DIS_DISABLE                         \
+	 << MXC_F_GCR_SCON_FPU_DIS_POS) /**<                    \
+					   SCON_FPU_DIS_DISABLE \
+					   Setting              \
+					 */
 
 #define MXC_F_GCR_SCON_CCACHE_FLUSH_POS 6 /**< SCON_CCACHE_FLUSH Position */
 #define MXC_F_GCR_SCON_CCACHE_FLUSH                                           \
@@ -205,18 +209,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_SCON_SWD_DIS_ENABLE \
 	((uint32_t)0x0UL) /**< SCON_SWD_DIS_ENABLE Value */
-#define MXC_S_GCR_SCON_SWD_DIS_ENABLE                                                        \
-	(MXC_V_GCR_SCON_SWD_DIS_ENABLE << MXC_F_GCR_SCON_SWD_DIS_POS) /**<                   \
-									 SCON_SWD_DIS_ENABLE \
-									 Setting             \
-								       */
+#define MXC_S_GCR_SCON_SWD_DIS_ENABLE                          \
+	(MXC_V_GCR_SCON_SWD_DIS_ENABLE                         \
+	 << MXC_F_GCR_SCON_SWD_DIS_POS) /**<                   \
+					   SCON_SWD_DIS_ENABLE \
+					   Setting             \
+					 */
 #define MXC_V_GCR_SCON_SWD_DIS_DISABLE \
 	((uint32_t)0x1UL) /**< SCON_SWD_DIS_DISABLE Value */
-#define MXC_S_GCR_SCON_SWD_DIS_DISABLE                                                         \
-	(MXC_V_GCR_SCON_SWD_DIS_DISABLE << MXC_F_GCR_SCON_SWD_DIS_POS) /**<                    \
-									  SCON_SWD_DIS_DISABLE \
-									  Setting              \
-									*/
+#define MXC_S_GCR_SCON_SWD_DIS_DISABLE                          \
+	(MXC_V_GCR_SCON_SWD_DIS_DISABLE                         \
+	 << MXC_F_GCR_SCON_SWD_DIS_POS) /**<                    \
+					   SCON_SWD_DIS_DISABLE \
+					   Setting              \
+					 */
 
 /**
  * Reset Register 0.
@@ -231,24 +237,27 @@ typedef struct {
 								Setting */
 #define MXC_V_GCR_RSTR0_DMA_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_DMA_RESET Value */
-#define MXC_S_GCR_RSTR0_DMA_RESET                                                 \
-	(MXC_V_GCR_RSTR0_DMA_RESET << MXC_F_GCR_RSTR0_DMA_POS) /**<               \
-								  RSTR0_DMA_RESET \
-								  Setting */
+#define MXC_S_GCR_RSTR0_DMA_RESET                       \
+	(MXC_V_GCR_RSTR0_DMA_RESET                      \
+	 << MXC_F_GCR_RSTR0_DMA_POS) /**<               \
+					RSTR0_DMA_RESET \
+					Setting */
 #define MXC_V_GCR_RSTR0_DMA_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_DMA_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_DMA_RESET_DONE                                                      \
-	(MXC_V_GCR_RSTR0_DMA_RESET_DONE << MXC_F_GCR_RSTR0_DMA_POS) /**<                    \
-								       RSTR0_DMA_RESET_DONE \
-								       Setting              \
-								     */
+#define MXC_S_GCR_RSTR0_DMA_RESET_DONE                       \
+	(MXC_V_GCR_RSTR0_DMA_RESET_DONE                      \
+	 << MXC_F_GCR_RSTR0_DMA_POS) /**<                    \
+					RSTR0_DMA_RESET_DONE \
+					Setting              \
+				      */
 #define MXC_V_GCR_RSTR0_DMA_BUSY                    \
 	((uint32_t)0x1UL) /**< RSTR0_DMA_BUSY Value \
 			   */
-#define MXC_S_GCR_RSTR0_DMA_BUSY                                                \
-	(MXC_V_GCR_RSTR0_DMA_BUSY << MXC_F_GCR_RSTR0_DMA_POS) /**<              \
-								 RSTR0_DMA_BUSY \
-								 Setting */
+#define MXC_S_GCR_RSTR0_DMA_BUSY                       \
+	(MXC_V_GCR_RSTR0_DMA_BUSY                      \
+	 << MXC_F_GCR_RSTR0_DMA_POS) /**<              \
+					RSTR0_DMA_BUSY \
+					Setting */
 
 #define MXC_F_GCR_RSTR0_WDT_POS 1 /**< RSTR0_WDT Position */
 #define MXC_F_GCR_RSTR0_WDT \
@@ -260,24 +269,27 @@ typedef struct {
 								Setting */
 #define MXC_V_GCR_RSTR0_WDT_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_WDT_RESET Value */
-#define MXC_S_GCR_RSTR0_WDT_RESET                                                 \
-	(MXC_V_GCR_RSTR0_WDT_RESET << MXC_F_GCR_RSTR0_WDT_POS) /**<               \
-								  RSTR0_WDT_RESET \
-								  Setting */
+#define MXC_S_GCR_RSTR0_WDT_RESET                       \
+	(MXC_V_GCR_RSTR0_WDT_RESET                      \
+	 << MXC_F_GCR_RSTR0_WDT_POS) /**<               \
+					RSTR0_WDT_RESET \
+					Setting */
 #define MXC_V_GCR_RSTR0_WDT_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_WDT_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_WDT_RESET_DONE                                                      \
-	(MXC_V_GCR_RSTR0_WDT_RESET_DONE << MXC_F_GCR_RSTR0_WDT_POS) /**<                    \
-								       RSTR0_WDT_RESET_DONE \
-								       Setting              \
-								     */
+#define MXC_S_GCR_RSTR0_WDT_RESET_DONE                       \
+	(MXC_V_GCR_RSTR0_WDT_RESET_DONE                      \
+	 << MXC_F_GCR_RSTR0_WDT_POS) /**<                    \
+					RSTR0_WDT_RESET_DONE \
+					Setting              \
+				      */
 #define MXC_V_GCR_RSTR0_WDT_BUSY                    \
 	((uint32_t)0x1UL) /**< RSTR0_WDT_BUSY Value \
 			   */
-#define MXC_S_GCR_RSTR0_WDT_BUSY                                                \
-	(MXC_V_GCR_RSTR0_WDT_BUSY << MXC_F_GCR_RSTR0_WDT_POS) /**<              \
-								 RSTR0_WDT_BUSY \
-								 Setting */
+#define MXC_S_GCR_RSTR0_WDT_BUSY                       \
+	(MXC_V_GCR_RSTR0_WDT_BUSY                      \
+	 << MXC_F_GCR_RSTR0_WDT_POS) /**<              \
+					RSTR0_WDT_BUSY \
+					Setting */
 
 #define MXC_F_GCR_RSTR0_GPIO0_POS 2 /**< RSTR0_GPIO0 Position */
 #define MXC_F_GCR_RSTR0_GPIO0                                                  \
@@ -285,31 +297,35 @@ typedef struct {
 							  */
 #define MXC_V_GCR_RSTR0_GPIO0_RFU \
 	((uint32_t)0x0UL) /**< RSTR0_GPIO0_RFU Value */
-#define MXC_S_GCR_RSTR0_GPIO0_RFU                                                   \
-	(MXC_V_GCR_RSTR0_GPIO0_RFU << MXC_F_GCR_RSTR0_GPIO0_POS) /**<               \
-								    RSTR0_GPIO0_RFU \
-								    Setting */
+#define MXC_S_GCR_RSTR0_GPIO0_RFU                         \
+	(MXC_V_GCR_RSTR0_GPIO0_RFU                        \
+	 << MXC_F_GCR_RSTR0_GPIO0_POS) /**<               \
+					  RSTR0_GPIO0_RFU \
+					  Setting */
 #define MXC_V_GCR_RSTR0_GPIO0_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_GPIO0_RESET Value */
-#define MXC_S_GCR_RSTR0_GPIO0_RESET                                                     \
-	(MXC_V_GCR_RSTR0_GPIO0_RESET << MXC_F_GCR_RSTR0_GPIO0_POS) /**<                 \
-								      RSTR0_GPIO0_RESET \
-								      Setting           \
-								    */
+#define MXC_S_GCR_RSTR0_GPIO0_RESET                         \
+	(MXC_V_GCR_RSTR0_GPIO0_RESET                        \
+	 << MXC_F_GCR_RSTR0_GPIO0_POS) /**<                 \
+					  RSTR0_GPIO0_RESET \
+					  Setting           \
+					*/
 #define MXC_V_GCR_RSTR0_GPIO0_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_GPIO0_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_GPIO0_RESET_DONE                                                          \
-	(MXC_V_GCR_RSTR0_GPIO0_RESET_DONE << MXC_F_GCR_RSTR0_GPIO0_POS) /**<                      \
-									   RSTR0_GPIO0_RESET_DONE \
-									   Setting                \
-									 */
+#define MXC_S_GCR_RSTR0_GPIO0_RESET_DONE                         \
+	(MXC_V_GCR_RSTR0_GPIO0_RESET_DONE                        \
+	 << MXC_F_GCR_RSTR0_GPIO0_POS) /**<                      \
+					  RSTR0_GPIO0_RESET_DONE \
+					  Setting                \
+					*/
 #define MXC_V_GCR_RSTR0_GPIO0_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_GPIO0_BUSY Value */
-#define MXC_S_GCR_RSTR0_GPIO0_BUSY                                                    \
-	(MXC_V_GCR_RSTR0_GPIO0_BUSY << MXC_F_GCR_RSTR0_GPIO0_POS) /**<                \
-								     RSTR0_GPIO0_BUSY \
-								     Setting          \
-								   */
+#define MXC_S_GCR_RSTR0_GPIO0_BUSY                         \
+	(MXC_V_GCR_RSTR0_GPIO0_BUSY                        \
+	 << MXC_F_GCR_RSTR0_GPIO0_POS) /**<                \
+					  RSTR0_GPIO0_BUSY \
+					  Setting          \
+					*/
 
 #define MXC_F_GCR_RSTR0_TIMER0_POS 5 /**< RSTR0_TIMER0 Position */
 #define MXC_F_GCR_RSTR0_TIMER0                                              \
@@ -317,18 +333,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_RSTR0_TIMER0_RFU \
 	((uint32_t)0x0UL) /**< RSTR0_TIMER0_RFU Value */
-#define MXC_S_GCR_RSTR0_TIMER0_RFU                                                     \
-	(MXC_V_GCR_RSTR0_TIMER0_RFU << MXC_F_GCR_RSTR0_TIMER0_POS) /**<                \
-								      RSTR0_TIMER0_RFU \
-								      Setting          \
-								    */
+#define MXC_S_GCR_RSTR0_TIMER0_RFU                          \
+	(MXC_V_GCR_RSTR0_TIMER0_RFU                         \
+	 << MXC_F_GCR_RSTR0_TIMER0_POS) /**<                \
+					   RSTR0_TIMER0_RFU \
+					   Setting          \
+					 */
 #define MXC_V_GCR_RSTR0_TIMER0_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_TIMER0_RESET Value */
-#define MXC_S_GCR_RSTR0_TIMER0_RESET                                                       \
-	(MXC_V_GCR_RSTR0_TIMER0_RESET << MXC_F_GCR_RSTR0_TIMER0_POS) /**<                  \
-									RSTR0_TIMER0_RESET \
-									Setting            \
-								      */
+#define MXC_S_GCR_RSTR0_TIMER0_RESET                          \
+	(MXC_V_GCR_RSTR0_TIMER0_RESET                         \
+	 << MXC_F_GCR_RSTR0_TIMER0_POS) /**<                  \
+					   RSTR0_TIMER0_RESET \
+					   Setting            \
+					 */
 #define MXC_V_GCR_RSTR0_TIMER0_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_TIMER0_RESET_DONE Value */
 #define MXC_S_GCR_RSTR0_TIMER0_RESET_DONE                                    \
@@ -337,11 +355,12 @@ typedef struct {
 					 */
 #define MXC_V_GCR_RSTR0_TIMER0_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_TIMER0_BUSY Value */
-#define MXC_S_GCR_RSTR0_TIMER0_BUSY                                                      \
-	(MXC_V_GCR_RSTR0_TIMER0_BUSY << MXC_F_GCR_RSTR0_TIMER0_POS) /**<                 \
-								       RSTR0_TIMER0_BUSY \
-								       Setting           \
-								     */
+#define MXC_S_GCR_RSTR0_TIMER0_BUSY                          \
+	(MXC_V_GCR_RSTR0_TIMER0_BUSY                         \
+	 << MXC_F_GCR_RSTR0_TIMER0_POS) /**<                 \
+					   RSTR0_TIMER0_BUSY \
+					   Setting           \
+					 */
 
 #define MXC_F_GCR_RSTR0_TIMER1_POS 6 /**< RSTR0_TIMER1 Position */
 #define MXC_F_GCR_RSTR0_TIMER1                                              \
@@ -349,18 +368,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_RSTR0_TIMER1_RFU \
 	((uint32_t)0x0UL) /**< RSTR0_TIMER1_RFU Value */
-#define MXC_S_GCR_RSTR0_TIMER1_RFU                                                     \
-	(MXC_V_GCR_RSTR0_TIMER1_RFU << MXC_F_GCR_RSTR0_TIMER1_POS) /**<                \
-								      RSTR0_TIMER1_RFU \
-								      Setting          \
-								    */
+#define MXC_S_GCR_RSTR0_TIMER1_RFU                          \
+	(MXC_V_GCR_RSTR0_TIMER1_RFU                         \
+	 << MXC_F_GCR_RSTR0_TIMER1_POS) /**<                \
+					   RSTR0_TIMER1_RFU \
+					   Setting          \
+					 */
 #define MXC_V_GCR_RSTR0_TIMER1_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_TIMER1_RESET Value */
-#define MXC_S_GCR_RSTR0_TIMER1_RESET                                                       \
-	(MXC_V_GCR_RSTR0_TIMER1_RESET << MXC_F_GCR_RSTR0_TIMER1_POS) /**<                  \
-									RSTR0_TIMER1_RESET \
-									Setting            \
-								      */
+#define MXC_S_GCR_RSTR0_TIMER1_RESET                          \
+	(MXC_V_GCR_RSTR0_TIMER1_RESET                         \
+	 << MXC_F_GCR_RSTR0_TIMER1_POS) /**<                  \
+					   RSTR0_TIMER1_RESET \
+					   Setting            \
+					 */
 #define MXC_V_GCR_RSTR0_TIMER1_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_TIMER1_RESET_DONE Value */
 #define MXC_S_GCR_RSTR0_TIMER1_RESET_DONE                                    \
@@ -369,11 +390,12 @@ typedef struct {
 					 */
 #define MXC_V_GCR_RSTR0_TIMER1_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_TIMER1_BUSY Value */
-#define MXC_S_GCR_RSTR0_TIMER1_BUSY                                                      \
-	(MXC_V_GCR_RSTR0_TIMER1_BUSY << MXC_F_GCR_RSTR0_TIMER1_POS) /**<                 \
-								       RSTR0_TIMER1_BUSY \
-								       Setting           \
-								     */
+#define MXC_S_GCR_RSTR0_TIMER1_BUSY                          \
+	(MXC_V_GCR_RSTR0_TIMER1_BUSY                         \
+	 << MXC_F_GCR_RSTR0_TIMER1_POS) /**<                 \
+					   RSTR0_TIMER1_BUSY \
+					   Setting           \
+					 */
 
 #define MXC_F_GCR_RSTR0_TIMER2_POS 7 /**< RSTR0_TIMER2 Position */
 #define MXC_F_GCR_RSTR0_TIMER2                                              \
@@ -381,18 +403,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_RSTR0_TIMER2_RFU \
 	((uint32_t)0x0UL) /**< RSTR0_TIMER2_RFU Value */
-#define MXC_S_GCR_RSTR0_TIMER2_RFU                                                     \
-	(MXC_V_GCR_RSTR0_TIMER2_RFU << MXC_F_GCR_RSTR0_TIMER2_POS) /**<                \
-								      RSTR0_TIMER2_RFU \
-								      Setting          \
-								    */
+#define MXC_S_GCR_RSTR0_TIMER2_RFU                          \
+	(MXC_V_GCR_RSTR0_TIMER2_RFU                         \
+	 << MXC_F_GCR_RSTR0_TIMER2_POS) /**<                \
+					   RSTR0_TIMER2_RFU \
+					   Setting          \
+					 */
 #define MXC_V_GCR_RSTR0_TIMER2_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_TIMER2_RESET Value */
-#define MXC_S_GCR_RSTR0_TIMER2_RESET                                                       \
-	(MXC_V_GCR_RSTR0_TIMER2_RESET << MXC_F_GCR_RSTR0_TIMER2_POS) /**<                  \
-									RSTR0_TIMER2_RESET \
-									Setting            \
-								      */
+#define MXC_S_GCR_RSTR0_TIMER2_RESET                          \
+	(MXC_V_GCR_RSTR0_TIMER2_RESET                         \
+	 << MXC_F_GCR_RSTR0_TIMER2_POS) /**<                  \
+					   RSTR0_TIMER2_RESET \
+					   Setting            \
+					 */
 #define MXC_V_GCR_RSTR0_TIMER2_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_TIMER2_RESET_DONE Value */
 #define MXC_S_GCR_RSTR0_TIMER2_RESET_DONE                                    \
@@ -401,11 +425,12 @@ typedef struct {
 					 */
 #define MXC_V_GCR_RSTR0_TIMER2_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_TIMER2_BUSY Value */
-#define MXC_S_GCR_RSTR0_TIMER2_BUSY                                                      \
-	(MXC_V_GCR_RSTR0_TIMER2_BUSY << MXC_F_GCR_RSTR0_TIMER2_POS) /**<                 \
-								       RSTR0_TIMER2_BUSY \
-								       Setting           \
-								     */
+#define MXC_S_GCR_RSTR0_TIMER2_BUSY                          \
+	(MXC_V_GCR_RSTR0_TIMER2_BUSY                         \
+	 << MXC_F_GCR_RSTR0_TIMER2_POS) /**<                 \
+					   RSTR0_TIMER2_BUSY \
+					   Setting           \
+					 */
 
 #define MXC_F_GCR_RSTR0_UART0_POS 11 /**< RSTR0_UART0 Position */
 #define MXC_F_GCR_RSTR0_UART0                                                  \
@@ -413,31 +438,35 @@ typedef struct {
 							  */
 #define MXC_V_GCR_RSTR0_UART0_RFU \
 	((uint32_t)0x0UL) /**< RSTR0_UART0_RFU Value */
-#define MXC_S_GCR_RSTR0_UART0_RFU                                                   \
-	(MXC_V_GCR_RSTR0_UART0_RFU << MXC_F_GCR_RSTR0_UART0_POS) /**<               \
-								    RSTR0_UART0_RFU \
-								    Setting */
+#define MXC_S_GCR_RSTR0_UART0_RFU                         \
+	(MXC_V_GCR_RSTR0_UART0_RFU                        \
+	 << MXC_F_GCR_RSTR0_UART0_POS) /**<               \
+					  RSTR0_UART0_RFU \
+					  Setting */
 #define MXC_V_GCR_RSTR0_UART0_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_UART0_RESET Value */
-#define MXC_S_GCR_RSTR0_UART0_RESET                                                     \
-	(MXC_V_GCR_RSTR0_UART0_RESET << MXC_F_GCR_RSTR0_UART0_POS) /**<                 \
-								      RSTR0_UART0_RESET \
-								      Setting           \
-								    */
+#define MXC_S_GCR_RSTR0_UART0_RESET                         \
+	(MXC_V_GCR_RSTR0_UART0_RESET                        \
+	 << MXC_F_GCR_RSTR0_UART0_POS) /**<                 \
+					  RSTR0_UART0_RESET \
+					  Setting           \
+					*/
 #define MXC_V_GCR_RSTR0_UART0_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_UART0_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_UART0_RESET_DONE                                                          \
-	(MXC_V_GCR_RSTR0_UART0_RESET_DONE << MXC_F_GCR_RSTR0_UART0_POS) /**<                      \
-									   RSTR0_UART0_RESET_DONE \
-									   Setting                \
-									 */
+#define MXC_S_GCR_RSTR0_UART0_RESET_DONE                         \
+	(MXC_V_GCR_RSTR0_UART0_RESET_DONE                        \
+	 << MXC_F_GCR_RSTR0_UART0_POS) /**<                      \
+					  RSTR0_UART0_RESET_DONE \
+					  Setting                \
+					*/
 #define MXC_V_GCR_RSTR0_UART0_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_UART0_BUSY Value */
-#define MXC_S_GCR_RSTR0_UART0_BUSY                                                    \
-	(MXC_V_GCR_RSTR0_UART0_BUSY << MXC_F_GCR_RSTR0_UART0_POS) /**<                \
-								     RSTR0_UART0_BUSY \
-								     Setting          \
-								   */
+#define MXC_S_GCR_RSTR0_UART0_BUSY                         \
+	(MXC_V_GCR_RSTR0_UART0_BUSY                        \
+	 << MXC_F_GCR_RSTR0_UART0_POS) /**<                \
+					  RSTR0_UART0_BUSY \
+					  Setting          \
+					*/
 
 #define MXC_F_GCR_RSTR0_UART1_POS 12 /**< RSTR0_UART1 Position */
 #define MXC_F_GCR_RSTR0_UART1                                                  \
@@ -445,31 +474,35 @@ typedef struct {
 							  */
 #define MXC_V_GCR_RSTR0_UART1_RFU \
 	((uint32_t)0x0UL) /**< RSTR0_UART1_RFU Value */
-#define MXC_S_GCR_RSTR0_UART1_RFU                                                   \
-	(MXC_V_GCR_RSTR0_UART1_RFU << MXC_F_GCR_RSTR0_UART1_POS) /**<               \
-								    RSTR0_UART1_RFU \
-								    Setting */
+#define MXC_S_GCR_RSTR0_UART1_RFU                         \
+	(MXC_V_GCR_RSTR0_UART1_RFU                        \
+	 << MXC_F_GCR_RSTR0_UART1_POS) /**<               \
+					  RSTR0_UART1_RFU \
+					  Setting */
 #define MXC_V_GCR_RSTR0_UART1_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_UART1_RESET Value */
-#define MXC_S_GCR_RSTR0_UART1_RESET                                                     \
-	(MXC_V_GCR_RSTR0_UART1_RESET << MXC_F_GCR_RSTR0_UART1_POS) /**<                 \
-								      RSTR0_UART1_RESET \
-								      Setting           \
-								    */
+#define MXC_S_GCR_RSTR0_UART1_RESET                         \
+	(MXC_V_GCR_RSTR0_UART1_RESET                        \
+	 << MXC_F_GCR_RSTR0_UART1_POS) /**<                 \
+					  RSTR0_UART1_RESET \
+					  Setting           \
+					*/
 #define MXC_V_GCR_RSTR0_UART1_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_UART1_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_UART1_RESET_DONE                                                          \
-	(MXC_V_GCR_RSTR0_UART1_RESET_DONE << MXC_F_GCR_RSTR0_UART1_POS) /**<                      \
-									   RSTR0_UART1_RESET_DONE \
-									   Setting                \
-									 */
+#define MXC_S_GCR_RSTR0_UART1_RESET_DONE                         \
+	(MXC_V_GCR_RSTR0_UART1_RESET_DONE                        \
+	 << MXC_F_GCR_RSTR0_UART1_POS) /**<                      \
+					  RSTR0_UART1_RESET_DONE \
+					  Setting                \
+					*/
 #define MXC_V_GCR_RSTR0_UART1_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_UART1_BUSY Value */
-#define MXC_S_GCR_RSTR0_UART1_BUSY                                                    \
-	(MXC_V_GCR_RSTR0_UART1_BUSY << MXC_F_GCR_RSTR0_UART1_POS) /**<                \
-								     RSTR0_UART1_BUSY \
-								     Setting          \
-								   */
+#define MXC_S_GCR_RSTR0_UART1_BUSY                         \
+	(MXC_V_GCR_RSTR0_UART1_BUSY                        \
+	 << MXC_F_GCR_RSTR0_UART1_POS) /**<                \
+					  RSTR0_UART1_BUSY \
+					  Setting          \
+					*/
 
 #define MXC_F_GCR_RSTR0_SPI0_POS 13 /**< RSTR0_SPI0 Position */
 #define MXC_F_GCR_RSTR0_SPI0                                                 \
@@ -478,29 +511,33 @@ typedef struct {
 #define MXC_V_GCR_RSTR0_SPI0_RFU                    \
 	((uint32_t)0x0UL) /**< RSTR0_SPI0_RFU Value \
 			   */
-#define MXC_S_GCR_RSTR0_SPI0_RFU                                                 \
-	(MXC_V_GCR_RSTR0_SPI0_RFU << MXC_F_GCR_RSTR0_SPI0_POS) /**<              \
-								  RSTR0_SPI0_RFU \
-								  Setting */
+#define MXC_S_GCR_RSTR0_SPI0_RFU                        \
+	(MXC_V_GCR_RSTR0_SPI0_RFU                       \
+	 << MXC_F_GCR_RSTR0_SPI0_POS) /**<              \
+					 RSTR0_SPI0_RFU \
+					 Setting */
 #define MXC_V_GCR_RSTR0_SPI0_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_SPI0_RESET Value */
-#define MXC_S_GCR_RSTR0_SPI0_RESET                                                   \
-	(MXC_V_GCR_RSTR0_SPI0_RESET << MXC_F_GCR_RSTR0_SPI0_POS) /**<                \
-								    RSTR0_SPI0_RESET \
-								    Setting */
+#define MXC_S_GCR_RSTR0_SPI0_RESET                        \
+	(MXC_V_GCR_RSTR0_SPI0_RESET                       \
+	 << MXC_F_GCR_RSTR0_SPI0_POS) /**<                \
+					 RSTR0_SPI0_RESET \
+					 Setting */
 #define MXC_V_GCR_RSTR0_SPI0_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_SPI0_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_SPI0_RESET_DONE                                                        \
-	(MXC_V_GCR_RSTR0_SPI0_RESET_DONE << MXC_F_GCR_RSTR0_SPI0_POS) /**<                     \
-									 RSTR0_SPI0_RESET_DONE \
-									 Setting               \
-								       */
+#define MXC_S_GCR_RSTR0_SPI0_RESET_DONE                        \
+	(MXC_V_GCR_RSTR0_SPI0_RESET_DONE                       \
+	 << MXC_F_GCR_RSTR0_SPI0_POS) /**<                     \
+					 RSTR0_SPI0_RESET_DONE \
+					 Setting               \
+				       */
 #define MXC_V_GCR_RSTR0_SPI0_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_SPI0_BUSY Value */
-#define MXC_S_GCR_RSTR0_SPI0_BUSY                                                  \
-	(MXC_V_GCR_RSTR0_SPI0_BUSY << MXC_F_GCR_RSTR0_SPI0_POS) /**<               \
-								   RSTR0_SPI0_BUSY \
-								   Setting */
+#define MXC_S_GCR_RSTR0_SPI0_BUSY                        \
+	(MXC_V_GCR_RSTR0_SPI0_BUSY                       \
+	 << MXC_F_GCR_RSTR0_SPI0_POS) /**<               \
+					 RSTR0_SPI0_BUSY \
+					 Setting */
 
 #define MXC_F_GCR_RSTR0_SPI1_POS 14 /**< RSTR0_SPI1 Position */
 #define MXC_F_GCR_RSTR0_SPI1                                                 \
@@ -509,29 +546,33 @@ typedef struct {
 #define MXC_V_GCR_RSTR0_SPI1_RFU                    \
 	((uint32_t)0x0UL) /**< RSTR0_SPI1_RFU Value \
 			   */
-#define MXC_S_GCR_RSTR0_SPI1_RFU                                                 \
-	(MXC_V_GCR_RSTR0_SPI1_RFU << MXC_F_GCR_RSTR0_SPI1_POS) /**<              \
-								  RSTR0_SPI1_RFU \
-								  Setting */
+#define MXC_S_GCR_RSTR0_SPI1_RFU                        \
+	(MXC_V_GCR_RSTR0_SPI1_RFU                       \
+	 << MXC_F_GCR_RSTR0_SPI1_POS) /**<              \
+					 RSTR0_SPI1_RFU \
+					 Setting */
 #define MXC_V_GCR_RSTR0_SPI1_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_SPI1_RESET Value */
-#define MXC_S_GCR_RSTR0_SPI1_RESET                                                   \
-	(MXC_V_GCR_RSTR0_SPI1_RESET << MXC_F_GCR_RSTR0_SPI1_POS) /**<                \
-								    RSTR0_SPI1_RESET \
-								    Setting */
+#define MXC_S_GCR_RSTR0_SPI1_RESET                        \
+	(MXC_V_GCR_RSTR0_SPI1_RESET                       \
+	 << MXC_F_GCR_RSTR0_SPI1_POS) /**<                \
+					 RSTR0_SPI1_RESET \
+					 Setting */
 #define MXC_V_GCR_RSTR0_SPI1_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_SPI1_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_SPI1_RESET_DONE                                                        \
-	(MXC_V_GCR_RSTR0_SPI1_RESET_DONE << MXC_F_GCR_RSTR0_SPI1_POS) /**<                     \
-									 RSTR0_SPI1_RESET_DONE \
-									 Setting               \
-								       */
+#define MXC_S_GCR_RSTR0_SPI1_RESET_DONE                        \
+	(MXC_V_GCR_RSTR0_SPI1_RESET_DONE                       \
+	 << MXC_F_GCR_RSTR0_SPI1_POS) /**<                     \
+					 RSTR0_SPI1_RESET_DONE \
+					 Setting               \
+				       */
 #define MXC_V_GCR_RSTR0_SPI1_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_SPI1_BUSY Value */
-#define MXC_S_GCR_RSTR0_SPI1_BUSY                                                  \
-	(MXC_V_GCR_RSTR0_SPI1_BUSY << MXC_F_GCR_RSTR0_SPI1_POS) /**<               \
-								   RSTR0_SPI1_BUSY \
-								   Setting */
+#define MXC_S_GCR_RSTR0_SPI1_BUSY                        \
+	(MXC_V_GCR_RSTR0_SPI1_BUSY                       \
+	 << MXC_F_GCR_RSTR0_SPI1_POS) /**<               \
+					 RSTR0_SPI1_BUSY \
+					 Setting */
 
 #define MXC_F_GCR_RSTR0_I2C0_POS 16 /**< RSTR0_I2C0 Position */
 #define MXC_F_GCR_RSTR0_I2C0                                                 \
@@ -540,29 +581,33 @@ typedef struct {
 #define MXC_V_GCR_RSTR0_I2C0_RFU                    \
 	((uint32_t)0x0UL) /**< RSTR0_I2C0_RFU Value \
 			   */
-#define MXC_S_GCR_RSTR0_I2C0_RFU                                                 \
-	(MXC_V_GCR_RSTR0_I2C0_RFU << MXC_F_GCR_RSTR0_I2C0_POS) /**<              \
-								  RSTR0_I2C0_RFU \
-								  Setting */
+#define MXC_S_GCR_RSTR0_I2C0_RFU                        \
+	(MXC_V_GCR_RSTR0_I2C0_RFU                       \
+	 << MXC_F_GCR_RSTR0_I2C0_POS) /**<              \
+					 RSTR0_I2C0_RFU \
+					 Setting */
 #define MXC_V_GCR_RSTR0_I2C0_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_I2C0_RESET Value */
-#define MXC_S_GCR_RSTR0_I2C0_RESET                                                   \
-	(MXC_V_GCR_RSTR0_I2C0_RESET << MXC_F_GCR_RSTR0_I2C0_POS) /**<                \
-								    RSTR0_I2C0_RESET \
-								    Setting */
+#define MXC_S_GCR_RSTR0_I2C0_RESET                        \
+	(MXC_V_GCR_RSTR0_I2C0_RESET                       \
+	 << MXC_F_GCR_RSTR0_I2C0_POS) /**<                \
+					 RSTR0_I2C0_RESET \
+					 Setting */
 #define MXC_V_GCR_RSTR0_I2C0_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_I2C0_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_I2C0_RESET_DONE                                                        \
-	(MXC_V_GCR_RSTR0_I2C0_RESET_DONE << MXC_F_GCR_RSTR0_I2C0_POS) /**<                     \
-									 RSTR0_I2C0_RESET_DONE \
-									 Setting               \
-								       */
+#define MXC_S_GCR_RSTR0_I2C0_RESET_DONE                        \
+	(MXC_V_GCR_RSTR0_I2C0_RESET_DONE                       \
+	 << MXC_F_GCR_RSTR0_I2C0_POS) /**<                     \
+					 RSTR0_I2C0_RESET_DONE \
+					 Setting               \
+				       */
 #define MXC_V_GCR_RSTR0_I2C0_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_I2C0_BUSY Value */
-#define MXC_S_GCR_RSTR0_I2C0_BUSY                                                  \
-	(MXC_V_GCR_RSTR0_I2C0_BUSY << MXC_F_GCR_RSTR0_I2C0_POS) /**<               \
-								   RSTR0_I2C0_BUSY \
-								   Setting */
+#define MXC_S_GCR_RSTR0_I2C0_BUSY                        \
+	(MXC_V_GCR_RSTR0_I2C0_BUSY                       \
+	 << MXC_F_GCR_RSTR0_I2C0_POS) /**<               \
+					 RSTR0_I2C0_BUSY \
+					 Setting */
 
 #define MXC_F_GCR_RSTR0_RTC_POS 17 /**< RSTR0_RTC Position */
 #define MXC_F_GCR_RSTR0_RTC \
@@ -574,24 +619,27 @@ typedef struct {
 								Setting */
 #define MXC_V_GCR_RSTR0_RTC_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_RTC_RESET Value */
-#define MXC_S_GCR_RSTR0_RTC_RESET                                                 \
-	(MXC_V_GCR_RSTR0_RTC_RESET << MXC_F_GCR_RSTR0_RTC_POS) /**<               \
-								  RSTR0_RTC_RESET \
-								  Setting */
+#define MXC_S_GCR_RSTR0_RTC_RESET                       \
+	(MXC_V_GCR_RSTR0_RTC_RESET                      \
+	 << MXC_F_GCR_RSTR0_RTC_POS) /**<               \
+					RSTR0_RTC_RESET \
+					Setting */
 #define MXC_V_GCR_RSTR0_RTC_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_RTC_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_RTC_RESET_DONE                                                      \
-	(MXC_V_GCR_RSTR0_RTC_RESET_DONE << MXC_F_GCR_RSTR0_RTC_POS) /**<                    \
-								       RSTR0_RTC_RESET_DONE \
-								       Setting              \
-								     */
+#define MXC_S_GCR_RSTR0_RTC_RESET_DONE                       \
+	(MXC_V_GCR_RSTR0_RTC_RESET_DONE                      \
+	 << MXC_F_GCR_RSTR0_RTC_POS) /**<                    \
+					RSTR0_RTC_RESET_DONE \
+					Setting              \
+				      */
 #define MXC_V_GCR_RSTR0_RTC_BUSY                    \
 	((uint32_t)0x1UL) /**< RSTR0_RTC_BUSY Value \
 			   */
-#define MXC_S_GCR_RSTR0_RTC_BUSY                                                \
-	(MXC_V_GCR_RSTR0_RTC_BUSY << MXC_F_GCR_RSTR0_RTC_POS) /**<              \
-								 RSTR0_RTC_BUSY \
-								 Setting */
+#define MXC_S_GCR_RSTR0_RTC_BUSY                       \
+	(MXC_V_GCR_RSTR0_RTC_BUSY                      \
+	 << MXC_F_GCR_RSTR0_RTC_POS) /**<              \
+					RSTR0_RTC_BUSY \
+					Setting */
 
 #define MXC_F_GCR_RSTR0_SRST_POS 29 /**< RSTR0_SRST Position */
 #define MXC_F_GCR_RSTR0_SRST                                                 \
@@ -600,29 +648,33 @@ typedef struct {
 #define MXC_V_GCR_RSTR0_SRST_RFU                    \
 	((uint32_t)0x0UL) /**< RSTR0_SRST_RFU Value \
 			   */
-#define MXC_S_GCR_RSTR0_SRST_RFU                                                 \
-	(MXC_V_GCR_RSTR0_SRST_RFU << MXC_F_GCR_RSTR0_SRST_POS) /**<              \
-								  RSTR0_SRST_RFU \
-								  Setting */
+#define MXC_S_GCR_RSTR0_SRST_RFU                        \
+	(MXC_V_GCR_RSTR0_SRST_RFU                       \
+	 << MXC_F_GCR_RSTR0_SRST_POS) /**<              \
+					 RSTR0_SRST_RFU \
+					 Setting */
 #define MXC_V_GCR_RSTR0_SRST_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_SRST_RESET Value */
-#define MXC_S_GCR_RSTR0_SRST_RESET                                                   \
-	(MXC_V_GCR_RSTR0_SRST_RESET << MXC_F_GCR_RSTR0_SRST_POS) /**<                \
-								    RSTR0_SRST_RESET \
-								    Setting */
+#define MXC_S_GCR_RSTR0_SRST_RESET                        \
+	(MXC_V_GCR_RSTR0_SRST_RESET                       \
+	 << MXC_F_GCR_RSTR0_SRST_POS) /**<                \
+					 RSTR0_SRST_RESET \
+					 Setting */
 #define MXC_V_GCR_RSTR0_SRST_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_SRST_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_SRST_RESET_DONE                                                        \
-	(MXC_V_GCR_RSTR0_SRST_RESET_DONE << MXC_F_GCR_RSTR0_SRST_POS) /**<                     \
-									 RSTR0_SRST_RESET_DONE \
-									 Setting               \
-								       */
+#define MXC_S_GCR_RSTR0_SRST_RESET_DONE                        \
+	(MXC_V_GCR_RSTR0_SRST_RESET_DONE                       \
+	 << MXC_F_GCR_RSTR0_SRST_POS) /**<                     \
+					 RSTR0_SRST_RESET_DONE \
+					 Setting               \
+				       */
 #define MXC_V_GCR_RSTR0_SRST_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_SRST_BUSY Value */
-#define MXC_S_GCR_RSTR0_SRST_BUSY                                                  \
-	(MXC_V_GCR_RSTR0_SRST_BUSY << MXC_F_GCR_RSTR0_SRST_POS) /**<               \
-								   RSTR0_SRST_BUSY \
-								   Setting */
+#define MXC_S_GCR_RSTR0_SRST_BUSY                        \
+	(MXC_V_GCR_RSTR0_SRST_BUSY                       \
+	 << MXC_F_GCR_RSTR0_SRST_POS) /**<               \
+					 RSTR0_SRST_BUSY \
+					 Setting */
 
 #define MXC_F_GCR_RSTR0_PRST_POS 30 /**< RSTR0_PRST Position */
 #define MXC_F_GCR_RSTR0_PRST                                                 \
@@ -631,29 +683,33 @@ typedef struct {
 #define MXC_V_GCR_RSTR0_PRST_RFU                    \
 	((uint32_t)0x0UL) /**< RSTR0_PRST_RFU Value \
 			   */
-#define MXC_S_GCR_RSTR0_PRST_RFU                                                 \
-	(MXC_V_GCR_RSTR0_PRST_RFU << MXC_F_GCR_RSTR0_PRST_POS) /**<              \
-								  RSTR0_PRST_RFU \
-								  Setting */
+#define MXC_S_GCR_RSTR0_PRST_RFU                        \
+	(MXC_V_GCR_RSTR0_PRST_RFU                       \
+	 << MXC_F_GCR_RSTR0_PRST_POS) /**<              \
+					 RSTR0_PRST_RFU \
+					 Setting */
 #define MXC_V_GCR_RSTR0_PRST_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_PRST_RESET Value */
-#define MXC_S_GCR_RSTR0_PRST_RESET                                                   \
-	(MXC_V_GCR_RSTR0_PRST_RESET << MXC_F_GCR_RSTR0_PRST_POS) /**<                \
-								    RSTR0_PRST_RESET \
-								    Setting */
+#define MXC_S_GCR_RSTR0_PRST_RESET                        \
+	(MXC_V_GCR_RSTR0_PRST_RESET                       \
+	 << MXC_F_GCR_RSTR0_PRST_POS) /**<                \
+					 RSTR0_PRST_RESET \
+					 Setting */
 #define MXC_V_GCR_RSTR0_PRST_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_PRST_RESET_DONE Value */
-#define MXC_S_GCR_RSTR0_PRST_RESET_DONE                                                        \
-	(MXC_V_GCR_RSTR0_PRST_RESET_DONE << MXC_F_GCR_RSTR0_PRST_POS) /**<                     \
-									 RSTR0_PRST_RESET_DONE \
-									 Setting               \
-								       */
+#define MXC_S_GCR_RSTR0_PRST_RESET_DONE                        \
+	(MXC_V_GCR_RSTR0_PRST_RESET_DONE                       \
+	 << MXC_F_GCR_RSTR0_PRST_POS) /**<                     \
+					 RSTR0_PRST_RESET_DONE \
+					 Setting               \
+				       */
 #define MXC_V_GCR_RSTR0_PRST_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_PRST_BUSY Value */
-#define MXC_S_GCR_RSTR0_PRST_BUSY                                                  \
-	(MXC_V_GCR_RSTR0_PRST_BUSY << MXC_F_GCR_RSTR0_PRST_POS) /**<               \
-								   RSTR0_PRST_BUSY \
-								   Setting */
+#define MXC_S_GCR_RSTR0_PRST_BUSY                        \
+	(MXC_V_GCR_RSTR0_PRST_BUSY                       \
+	 << MXC_F_GCR_RSTR0_PRST_POS) /**<               \
+					 RSTR0_PRST_BUSY \
+					 Setting */
 
 #define MXC_F_GCR_RSTR0_SYSTEM_POS 31 /**< RSTR0_SYSTEM Position */
 #define MXC_F_GCR_RSTR0_SYSTEM                                              \
@@ -661,18 +717,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_RSTR0_SYSTEM_RFU \
 	((uint32_t)0x0UL) /**< RSTR0_SYSTEM_RFU Value */
-#define MXC_S_GCR_RSTR0_SYSTEM_RFU                                                     \
-	(MXC_V_GCR_RSTR0_SYSTEM_RFU << MXC_F_GCR_RSTR0_SYSTEM_POS) /**<                \
-								      RSTR0_SYSTEM_RFU \
-								      Setting          \
-								    */
+#define MXC_S_GCR_RSTR0_SYSTEM_RFU                          \
+	(MXC_V_GCR_RSTR0_SYSTEM_RFU                         \
+	 << MXC_F_GCR_RSTR0_SYSTEM_POS) /**<                \
+					   RSTR0_SYSTEM_RFU \
+					   Setting          \
+					 */
 #define MXC_V_GCR_RSTR0_SYSTEM_RESET \
 	((uint32_t)0x1UL) /**< RSTR0_SYSTEM_RESET Value */
-#define MXC_S_GCR_RSTR0_SYSTEM_RESET                                                       \
-	(MXC_V_GCR_RSTR0_SYSTEM_RESET << MXC_F_GCR_RSTR0_SYSTEM_POS) /**<                  \
-									RSTR0_SYSTEM_RESET \
-									Setting            \
-								      */
+#define MXC_S_GCR_RSTR0_SYSTEM_RESET                          \
+	(MXC_V_GCR_RSTR0_SYSTEM_RESET                         \
+	 << MXC_F_GCR_RSTR0_SYSTEM_POS) /**<                  \
+					   RSTR0_SYSTEM_RESET \
+					   Setting            \
+					 */
 #define MXC_V_GCR_RSTR0_SYSTEM_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR0_SYSTEM_RESET_DONE Value */
 #define MXC_S_GCR_RSTR0_SYSTEM_RESET_DONE                                    \
@@ -681,11 +739,12 @@ typedef struct {
 					 */
 #define MXC_V_GCR_RSTR0_SYSTEM_BUSY \
 	((uint32_t)0x1UL) /**< RSTR0_SYSTEM_BUSY Value */
-#define MXC_S_GCR_RSTR0_SYSTEM_BUSY                                                      \
-	(MXC_V_GCR_RSTR0_SYSTEM_BUSY << MXC_F_GCR_RSTR0_SYSTEM_POS) /**<                 \
-								       RSTR0_SYSTEM_BUSY \
-								       Setting           \
-								     */
+#define MXC_S_GCR_RSTR0_SYSTEM_BUSY                          \
+	(MXC_V_GCR_RSTR0_SYSTEM_BUSY                         \
+	 << MXC_F_GCR_RSTR0_SYSTEM_POS) /**<                 \
+					   RSTR0_SYSTEM_BUSY \
+					   Setting           \
+					 */
 
 /**
  * Clock Control.
@@ -696,55 +755,63 @@ typedef struct {
 #define MXC_V_GCR_CLKCN_PSC_DIV1                    \
 	((uint32_t)0x0UL) /**< CLKCN_PSC_DIV1 Value \
 			   */
-#define MXC_S_GCR_CLKCN_PSC_DIV1                                                \
-	(MXC_V_GCR_CLKCN_PSC_DIV1 << MXC_F_GCR_CLKCN_PSC_POS) /**<              \
-								 CLKCN_PSC_DIV1 \
-								 Setting */
+#define MXC_S_GCR_CLKCN_PSC_DIV1                       \
+	(MXC_V_GCR_CLKCN_PSC_DIV1                      \
+	 << MXC_F_GCR_CLKCN_PSC_POS) /**<              \
+					CLKCN_PSC_DIV1 \
+					Setting */
 #define MXC_V_GCR_CLKCN_PSC_DIV2                    \
 	((uint32_t)0x1UL) /**< CLKCN_PSC_DIV2 Value \
 			   */
-#define MXC_S_GCR_CLKCN_PSC_DIV2                                                \
-	(MXC_V_GCR_CLKCN_PSC_DIV2 << MXC_F_GCR_CLKCN_PSC_POS) /**<              \
-								 CLKCN_PSC_DIV2 \
-								 Setting */
+#define MXC_S_GCR_CLKCN_PSC_DIV2                       \
+	(MXC_V_GCR_CLKCN_PSC_DIV2                      \
+	 << MXC_F_GCR_CLKCN_PSC_POS) /**<              \
+					CLKCN_PSC_DIV2 \
+					Setting */
 #define MXC_V_GCR_CLKCN_PSC_DIV4                    \
 	((uint32_t)0x2UL) /**< CLKCN_PSC_DIV4 Value \
 			   */
-#define MXC_S_GCR_CLKCN_PSC_DIV4                                                \
-	(MXC_V_GCR_CLKCN_PSC_DIV4 << MXC_F_GCR_CLKCN_PSC_POS) /**<              \
-								 CLKCN_PSC_DIV4 \
-								 Setting */
+#define MXC_S_GCR_CLKCN_PSC_DIV4                       \
+	(MXC_V_GCR_CLKCN_PSC_DIV4                      \
+	 << MXC_F_GCR_CLKCN_PSC_POS) /**<              \
+					CLKCN_PSC_DIV4 \
+					Setting */
 #define MXC_V_GCR_CLKCN_PSC_DIV8                    \
 	((uint32_t)0x3UL) /**< CLKCN_PSC_DIV8 Value \
 			   */
-#define MXC_S_GCR_CLKCN_PSC_DIV8                                                \
-	(MXC_V_GCR_CLKCN_PSC_DIV8 << MXC_F_GCR_CLKCN_PSC_POS) /**<              \
-								 CLKCN_PSC_DIV8 \
-								 Setting */
+#define MXC_S_GCR_CLKCN_PSC_DIV8                       \
+	(MXC_V_GCR_CLKCN_PSC_DIV8                      \
+	 << MXC_F_GCR_CLKCN_PSC_POS) /**<              \
+					CLKCN_PSC_DIV8 \
+					Setting */
 #define MXC_V_GCR_CLKCN_PSC_DIV16 \
 	((uint32_t)0x4UL) /**< CLKCN_PSC_DIV16 Value */
-#define MXC_S_GCR_CLKCN_PSC_DIV16                                                 \
-	(MXC_V_GCR_CLKCN_PSC_DIV16 << MXC_F_GCR_CLKCN_PSC_POS) /**<               \
-								  CLKCN_PSC_DIV16 \
-								  Setting */
+#define MXC_S_GCR_CLKCN_PSC_DIV16                       \
+	(MXC_V_GCR_CLKCN_PSC_DIV16                      \
+	 << MXC_F_GCR_CLKCN_PSC_POS) /**<               \
+					CLKCN_PSC_DIV16 \
+					Setting */
 #define MXC_V_GCR_CLKCN_PSC_DIV32 \
 	((uint32_t)0x5UL) /**< CLKCN_PSC_DIV32 Value */
-#define MXC_S_GCR_CLKCN_PSC_DIV32                                                 \
-	(MXC_V_GCR_CLKCN_PSC_DIV32 << MXC_F_GCR_CLKCN_PSC_POS) /**<               \
-								  CLKCN_PSC_DIV32 \
-								  Setting */
+#define MXC_S_GCR_CLKCN_PSC_DIV32                       \
+	(MXC_V_GCR_CLKCN_PSC_DIV32                      \
+	 << MXC_F_GCR_CLKCN_PSC_POS) /**<               \
+					CLKCN_PSC_DIV32 \
+					Setting */
 #define MXC_V_GCR_CLKCN_PSC_DIV64 \
 	((uint32_t)0x6UL) /**< CLKCN_PSC_DIV64 Value */
-#define MXC_S_GCR_CLKCN_PSC_DIV64                                                 \
-	(MXC_V_GCR_CLKCN_PSC_DIV64 << MXC_F_GCR_CLKCN_PSC_POS) /**<               \
-								  CLKCN_PSC_DIV64 \
-								  Setting */
+#define MXC_S_GCR_CLKCN_PSC_DIV64                       \
+	(MXC_V_GCR_CLKCN_PSC_DIV64                      \
+	 << MXC_F_GCR_CLKCN_PSC_POS) /**<               \
+					CLKCN_PSC_DIV64 \
+					Setting */
 #define MXC_V_GCR_CLKCN_PSC_DIV128 \
 	((uint32_t)0x7UL) /**< CLKCN_PSC_DIV128 Value */
-#define MXC_S_GCR_CLKCN_PSC_DIV128                                                  \
-	(MXC_V_GCR_CLKCN_PSC_DIV128 << MXC_F_GCR_CLKCN_PSC_POS) /**<                \
-								   CLKCN_PSC_DIV128 \
-								   Setting */
+#define MXC_S_GCR_CLKCN_PSC_DIV128                       \
+	(MXC_V_GCR_CLKCN_PSC_DIV128                      \
+	 << MXC_F_GCR_CLKCN_PSC_POS) /**<                \
+					CLKCN_PSC_DIV128 \
+					Setting */
 
 #define MXC_F_GCR_CLKCN_CLKSEL_POS 9 /**< CLKCN_CLKSEL Position */
 #define MXC_F_GCR_CLKCN_CLKSEL                                              \
@@ -752,25 +819,28 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_CLKCN_CLKSEL_HIRC \
 	((uint32_t)0x0UL) /**< CLKCN_CLKSEL_HIRC Value */
-#define MXC_S_GCR_CLKCN_CLKSEL_HIRC                                                      \
-	(MXC_V_GCR_CLKCN_CLKSEL_HIRC << MXC_F_GCR_CLKCN_CLKSEL_POS) /**<                 \
-								       CLKCN_CLKSEL_HIRC \
-								       Setting           \
-								     */
+#define MXC_S_GCR_CLKCN_CLKSEL_HIRC                          \
+	(MXC_V_GCR_CLKCN_CLKSEL_HIRC                         \
+	 << MXC_F_GCR_CLKCN_CLKSEL_POS) /**<                 \
+					   CLKCN_CLKSEL_HIRC \
+					   Setting           \
+					 */
 #define MXC_V_GCR_CLKCN_CLKSEL_NANORING \
 	((uint32_t)0x3UL) /**< CLKCN_CLKSEL_NANORING Value */
-#define MXC_S_GCR_CLKCN_CLKSEL_NANORING                                                          \
-	(MXC_V_GCR_CLKCN_CLKSEL_NANORING << MXC_F_GCR_CLKCN_CLKSEL_POS) /**<                     \
-									   CLKCN_CLKSEL_NANORING \
-									   Setting               \
-									 */
+#define MXC_S_GCR_CLKCN_CLKSEL_NANORING                          \
+	(MXC_V_GCR_CLKCN_CLKSEL_NANORING                         \
+	 << MXC_F_GCR_CLKCN_CLKSEL_POS) /**<                     \
+					   CLKCN_CLKSEL_NANORING \
+					   Setting               \
+					 */
 #define MXC_V_GCR_CLKCN_CLKSEL_HFXIN \
 	((uint32_t)0x6UL) /**< CLKCN_CLKSEL_HFXIN Value */
-#define MXC_S_GCR_CLKCN_CLKSEL_HFXIN                                                       \
-	(MXC_V_GCR_CLKCN_CLKSEL_HFXIN << MXC_F_GCR_CLKCN_CLKSEL_POS) /**<                  \
-									CLKCN_CLKSEL_HFXIN \
-									Setting            \
-								      */
+#define MXC_S_GCR_CLKCN_CLKSEL_HFXIN                          \
+	(MXC_V_GCR_CLKCN_CLKSEL_HFXIN                         \
+	 << MXC_F_GCR_CLKCN_CLKSEL_POS) /**<                  \
+					   CLKCN_CLKSEL_HFXIN \
+					   Setting            \
+					 */
 
 #define MXC_F_GCR_CLKCN_CKRDY_POS 13 /**< CLKCN_CKRDY Position */
 #define MXC_F_GCR_CLKCN_CKRDY                                                  \
@@ -778,18 +848,20 @@ typedef struct {
 							  */
 #define MXC_V_GCR_CLKCN_CKRDY_BUSY \
 	((uint32_t)0x0UL) /**< CLKCN_CKRDY_BUSY Value */
-#define MXC_S_GCR_CLKCN_CKRDY_BUSY                                                    \
-	(MXC_V_GCR_CLKCN_CKRDY_BUSY << MXC_F_GCR_CLKCN_CKRDY_POS) /**<                \
-								     CLKCN_CKRDY_BUSY \
-								     Setting          \
-								   */
+#define MXC_S_GCR_CLKCN_CKRDY_BUSY                         \
+	(MXC_V_GCR_CLKCN_CKRDY_BUSY                        \
+	 << MXC_F_GCR_CLKCN_CKRDY_POS) /**<                \
+					  CLKCN_CKRDY_BUSY \
+					  Setting          \
+					*/
 #define MXC_V_GCR_CLKCN_CKRDY_READY \
 	((uint32_t)0x1UL) /**< CLKCN_CKRDY_READY Value */
-#define MXC_S_GCR_CLKCN_CKRDY_READY                                                     \
-	(MXC_V_GCR_CLKCN_CKRDY_READY << MXC_F_GCR_CLKCN_CKRDY_POS) /**<                 \
-								      CLKCN_CKRDY_READY \
-								      Setting           \
-								    */
+#define MXC_S_GCR_CLKCN_CKRDY_READY                         \
+	(MXC_V_GCR_CLKCN_CKRDY_READY                        \
+	 << MXC_F_GCR_CLKCN_CKRDY_POS) /**<                 \
+					  CLKCN_CKRDY_READY \
+					  Setting           \
+					*/
 
 #define MXC_F_GCR_CLKCN_X32K_EN_POS 17 /**< CLKCN_X32K_EN Position */
 #define MXC_F_GCR_CLKCN_X32K_EN                                               \
@@ -797,18 +869,20 @@ typedef struct {
 							      Mask */
 #define MXC_V_GCR_CLKCN_X32K_EN_DIS \
 	((uint32_t)0x0UL) /**< CLKCN_X32K_EN_DIS Value */
-#define MXC_S_GCR_CLKCN_X32K_EN_DIS                                                       \
-	(MXC_V_GCR_CLKCN_X32K_EN_DIS << MXC_F_GCR_CLKCN_X32K_EN_POS) /**<                 \
-									CLKCN_X32K_EN_DIS \
-									Setting           \
-								      */
+#define MXC_S_GCR_CLKCN_X32K_EN_DIS                           \
+	(MXC_V_GCR_CLKCN_X32K_EN_DIS                          \
+	 << MXC_F_GCR_CLKCN_X32K_EN_POS) /**<                 \
+					    CLKCN_X32K_EN_DIS \
+					    Setting           \
+					  */
 #define MXC_V_GCR_CLKCN_X32K_EN_EN \
 	((uint32_t)0x1UL) /**< CLKCN_X32K_EN_EN Value */
-#define MXC_S_GCR_CLKCN_X32K_EN_EN                                                      \
-	(MXC_V_GCR_CLKCN_X32K_EN_EN << MXC_F_GCR_CLKCN_X32K_EN_POS) /**<                \
-								       CLKCN_X32K_EN_EN \
-								       Setting          \
-								     */
+#define MXC_S_GCR_CLKCN_X32K_EN_EN                           \
+	(MXC_V_GCR_CLKCN_X32K_EN_EN                          \
+	 << MXC_F_GCR_CLKCN_X32K_EN_POS) /**<                \
+					    CLKCN_X32K_EN_EN \
+					    Setting          \
+					  */
 
 #define MXC_F_GCR_CLKCN_HIRC_EN_POS 18 /**< CLKCN_HIRC_EN Position */
 #define MXC_F_GCR_CLKCN_HIRC_EN                                               \
@@ -816,18 +890,20 @@ typedef struct {
 							      Mask */
 #define MXC_V_GCR_CLKCN_HIRC_EN_DIS \
 	((uint32_t)0x0UL) /**< CLKCN_HIRC_EN_DIS Value */
-#define MXC_S_GCR_CLKCN_HIRC_EN_DIS                                                       \
-	(MXC_V_GCR_CLKCN_HIRC_EN_DIS << MXC_F_GCR_CLKCN_HIRC_EN_POS) /**<                 \
-									CLKCN_HIRC_EN_DIS \
-									Setting           \
-								      */
+#define MXC_S_GCR_CLKCN_HIRC_EN_DIS                           \
+	(MXC_V_GCR_CLKCN_HIRC_EN_DIS                          \
+	 << MXC_F_GCR_CLKCN_HIRC_EN_POS) /**<                 \
+					    CLKCN_HIRC_EN_DIS \
+					    Setting           \
+					  */
 #define MXC_V_GCR_CLKCN_HIRC_EN_EN \
 	((uint32_t)0x1UL) /**< CLKCN_HIRC_EN_EN Value */
-#define MXC_S_GCR_CLKCN_HIRC_EN_EN                                                      \
-	(MXC_V_GCR_CLKCN_HIRC_EN_EN << MXC_F_GCR_CLKCN_HIRC_EN_POS) /**<                \
-								       CLKCN_HIRC_EN_EN \
-								       Setting          \
-								     */
+#define MXC_S_GCR_CLKCN_HIRC_EN_EN                           \
+	(MXC_V_GCR_CLKCN_HIRC_EN_EN                          \
+	 << MXC_F_GCR_CLKCN_HIRC_EN_POS) /**<                \
+					    CLKCN_HIRC_EN_EN \
+					    Setting          \
+					  */
 
 #define MXC_F_GCR_CLKCN_X32K_RDY_POS 25 /**< CLKCN_X32K_RDY Position */
 #define MXC_F_GCR_CLKCN_X32K_RDY                                              \
@@ -836,18 +912,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_GCR_CLKCN_X32K_RDY_NOT \
 	((uint32_t)0x0UL) /**< CLKCN_X32K_RDY_NOT Value */
-#define MXC_S_GCR_CLKCN_X32K_RDY_NOT                                                         \
-	(MXC_V_GCR_CLKCN_X32K_RDY_NOT << MXC_F_GCR_CLKCN_X32K_RDY_POS) /**<                  \
-									  CLKCN_X32K_RDY_NOT \
-									  Setting            \
-									*/
+#define MXC_S_GCR_CLKCN_X32K_RDY_NOT                            \
+	(MXC_V_GCR_CLKCN_X32K_RDY_NOT                           \
+	 << MXC_F_GCR_CLKCN_X32K_RDY_POS) /**<                  \
+					     CLKCN_X32K_RDY_NOT \
+					     Setting            \
+					   */
 #define MXC_V_GCR_CLKCN_X32K_RDY_READY \
 	((uint32_t)0x1UL) /**< CLKCN_X32K_RDY_READY Value */
-#define MXC_S_GCR_CLKCN_X32K_RDY_READY                                                           \
-	(MXC_V_GCR_CLKCN_X32K_RDY_READY << MXC_F_GCR_CLKCN_X32K_RDY_POS) /**<                    \
-									    CLKCN_X32K_RDY_READY \
-									    Setting              \
-									  */
+#define MXC_S_GCR_CLKCN_X32K_RDY_READY                            \
+	(MXC_V_GCR_CLKCN_X32K_RDY_READY                           \
+	 << MXC_F_GCR_CLKCN_X32K_RDY_POS) /**<                    \
+					     CLKCN_X32K_RDY_READY \
+					     Setting              \
+					   */
 
 #define MXC_F_GCR_CLKCN_HIRC_RDY_POS 26 /**< CLKCN_HIRC_RDY Position */
 #define MXC_F_GCR_CLKCN_HIRC_RDY                                              \
@@ -856,18 +934,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_GCR_CLKCN_HIRC_RDY_NOT \
 	((uint32_t)0x0UL) /**< CLKCN_HIRC_RDY_NOT Value */
-#define MXC_S_GCR_CLKCN_HIRC_RDY_NOT                                                         \
-	(MXC_V_GCR_CLKCN_HIRC_RDY_NOT << MXC_F_GCR_CLKCN_HIRC_RDY_POS) /**<                  \
-									  CLKCN_HIRC_RDY_NOT \
-									  Setting            \
-									*/
+#define MXC_S_GCR_CLKCN_HIRC_RDY_NOT                            \
+	(MXC_V_GCR_CLKCN_HIRC_RDY_NOT                           \
+	 << MXC_F_GCR_CLKCN_HIRC_RDY_POS) /**<                  \
+					     CLKCN_HIRC_RDY_NOT \
+					     Setting            \
+					   */
 #define MXC_V_GCR_CLKCN_HIRC_RDY_READY \
 	((uint32_t)0x1UL) /**< CLKCN_HIRC_RDY_READY Value */
-#define MXC_S_GCR_CLKCN_HIRC_RDY_READY                                                           \
-	(MXC_V_GCR_CLKCN_HIRC_RDY_READY << MXC_F_GCR_CLKCN_HIRC_RDY_POS) /**<                    \
-									    CLKCN_HIRC_RDY_READY \
-									    Setting              \
-									  */
+#define MXC_S_GCR_CLKCN_HIRC_RDY_READY                            \
+	(MXC_V_GCR_CLKCN_HIRC_RDY_READY                           \
+	 << MXC_F_GCR_CLKCN_HIRC_RDY_POS) /**<                    \
+					     CLKCN_HIRC_RDY_READY \
+					     Setting              \
+					   */
 
 #define MXC_F_GCR_CLKCN_LIRC8K_RDY_POS 29 /**< CLKCN_LIRC8K_RDY Position */
 #define MXC_F_GCR_CLKCN_LIRC8K_RDY                                            \
@@ -902,10 +982,11 @@ typedef struct {
 							       Setting */
 #define MXC_V_GCR_PM_MODE_SHUTDOWN \
 	((uint32_t)0x3UL) /**< PM_MODE_SHUTDOWN Value */
-#define MXC_S_GCR_PM_MODE_SHUTDOWN                                                \
-	(MXC_V_GCR_PM_MODE_SHUTDOWN << MXC_F_GCR_PM_MODE_POS) /**<                \
-								 PM_MODE_SHUTDOWN \
-								 Setting */
+#define MXC_S_GCR_PM_MODE_SHUTDOWN                     \
+	(MXC_V_GCR_PM_MODE_SHUTDOWN                    \
+	 << MXC_F_GCR_PM_MODE_POS) /**<                \
+				      PM_MODE_SHUTDOWN \
+				      Setting */
 #define MXC_V_GCR_PM_MODE_BACKUP                    \
 	((uint32_t)0x4UL) /**< PM_MODE_BACKUP Value \
 			   */
@@ -920,17 +1001,19 @@ typedef struct {
 							  */
 #define MXC_V_GCR_PM_GPIOWKEN_DIS \
 	((uint32_t)0x0UL) /**< PM_GPIOWKEN_DIS Value */
-#define MXC_S_GCR_PM_GPIOWKEN_DIS                                                   \
-	(MXC_V_GCR_PM_GPIOWKEN_DIS << MXC_F_GCR_PM_GPIOWKEN_POS) /**<               \
-								    PM_GPIOWKEN_DIS \
-								    Setting */
+#define MXC_S_GCR_PM_GPIOWKEN_DIS                         \
+	(MXC_V_GCR_PM_GPIOWKEN_DIS                        \
+	 << MXC_F_GCR_PM_GPIOWKEN_POS) /**<               \
+					  PM_GPIOWKEN_DIS \
+					  Setting */
 #define MXC_V_GCR_PM_GPIOWKEN_EN                    \
 	((uint32_t)0x1UL) /**< PM_GPIOWKEN_EN Value \
 			   */
-#define MXC_S_GCR_PM_GPIOWKEN_EN                                                  \
-	(MXC_V_GCR_PM_GPIOWKEN_EN << MXC_F_GCR_PM_GPIOWKEN_POS) /**<              \
-								   PM_GPIOWKEN_EN \
-								   Setting */
+#define MXC_S_GCR_PM_GPIOWKEN_EN                         \
+	(MXC_V_GCR_PM_GPIOWKEN_EN                        \
+	 << MXC_F_GCR_PM_GPIOWKEN_POS) /**<              \
+					  PM_GPIOWKEN_EN \
+					  Setting */
 
 #define MXC_F_GCR_PM_RTCWKEN_POS 5 /**< PM_RTCWKEN Position */
 #define MXC_F_GCR_PM_RTCWKEN                                                 \
@@ -939,10 +1022,11 @@ typedef struct {
 #define MXC_V_GCR_PM_RTCWKEN_DIS                    \
 	((uint32_t)0x0UL) /**< PM_RTCWKEN_DIS Value \
 			   */
-#define MXC_S_GCR_PM_RTCWKEN_DIS                                                 \
-	(MXC_V_GCR_PM_RTCWKEN_DIS << MXC_F_GCR_PM_RTCWKEN_POS) /**<              \
-								  PM_RTCWKEN_DIS \
-								  Setting */
+#define MXC_S_GCR_PM_RTCWKEN_DIS                        \
+	(MXC_V_GCR_PM_RTCWKEN_DIS                       \
+	 << MXC_F_GCR_PM_RTCWKEN_POS) /**<              \
+					 PM_RTCWKEN_DIS \
+					 Setting */
 #define MXC_V_GCR_PM_RTCWKEN_EN ((uint32_t)0x1UL) /**< PM_RTCWKEN_EN Value */
 #define MXC_S_GCR_PM_RTCWKEN_EN                                                \
 	(MXC_V_GCR_PM_RTCWKEN_EN << MXC_F_GCR_PM_RTCWKEN_POS) /**<             \
@@ -954,17 +1038,19 @@ typedef struct {
 	((uint32_t)(0x1UL << MXC_F_GCR_PM_HIRCPD_POS)) /**< PM_HIRCPD Mask */
 #define MXC_V_GCR_PM_HIRCPD_ACTIVE \
 	((uint32_t)0x0UL) /**< PM_HIRCPD_ACTIVE Value */
-#define MXC_S_GCR_PM_HIRCPD_ACTIVE                                                  \
-	(MXC_V_GCR_PM_HIRCPD_ACTIVE << MXC_F_GCR_PM_HIRCPD_POS) /**<                \
-								   PM_HIRCPD_ACTIVE \
-								   Setting */
+#define MXC_S_GCR_PM_HIRCPD_ACTIVE                       \
+	(MXC_V_GCR_PM_HIRCPD_ACTIVE                      \
+	 << MXC_F_GCR_PM_HIRCPD_POS) /**<                \
+					PM_HIRCPD_ACTIVE \
+					Setting */
 #define MXC_V_GCR_PM_HIRCPD_DEEPSLEEP \
 	((uint32_t)0x1UL) /**< PM_HIRCPD_DEEPSLEEP Value */
-#define MXC_S_GCR_PM_HIRCPD_DEEPSLEEP                                                     \
-	(MXC_V_GCR_PM_HIRCPD_DEEPSLEEP << MXC_F_GCR_PM_HIRCPD_POS) /**<                   \
-								      PM_HIRCPD_DEEPSLEEP \
-								      Setting             \
-								    */
+#define MXC_S_GCR_PM_HIRCPD_DEEPSLEEP                       \
+	(MXC_V_GCR_PM_HIRCPD_DEEPSLEEP                      \
+	 << MXC_F_GCR_PM_HIRCPD_POS) /**<                   \
+					PM_HIRCPD_DEEPSLEEP \
+					Setting             \
+				      */
 
 /**
  * Peripheral Clock Divider.
@@ -975,32 +1061,36 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_PCKDIV_AONCD_DIV_4 \
 	((uint32_t)0x0UL) /**< PCKDIV_AONCD_DIV_4 Value */
-#define MXC_S_GCR_PCKDIV_AONCD_DIV_4                                                       \
-	(MXC_V_GCR_PCKDIV_AONCD_DIV_4 << MXC_F_GCR_PCKDIV_AONCD_POS) /**<                  \
-									PCKDIV_AONCD_DIV_4 \
-									Setting            \
-								      */
+#define MXC_S_GCR_PCKDIV_AONCD_DIV_4                          \
+	(MXC_V_GCR_PCKDIV_AONCD_DIV_4                         \
+	 << MXC_F_GCR_PCKDIV_AONCD_POS) /**<                  \
+					   PCKDIV_AONCD_DIV_4 \
+					   Setting            \
+					 */
 #define MXC_V_GCR_PCKDIV_AONCD_DIV_8 \
 	((uint32_t)0x1UL) /**< PCKDIV_AONCD_DIV_8 Value */
-#define MXC_S_GCR_PCKDIV_AONCD_DIV_8                                                       \
-	(MXC_V_GCR_PCKDIV_AONCD_DIV_8 << MXC_F_GCR_PCKDIV_AONCD_POS) /**<                  \
-									PCKDIV_AONCD_DIV_8 \
-									Setting            \
-								      */
+#define MXC_S_GCR_PCKDIV_AONCD_DIV_8                          \
+	(MXC_V_GCR_PCKDIV_AONCD_DIV_8                         \
+	 << MXC_F_GCR_PCKDIV_AONCD_POS) /**<                  \
+					   PCKDIV_AONCD_DIV_8 \
+					   Setting            \
+					 */
 #define MXC_V_GCR_PCKDIV_AONCD_DIV_16 \
 	((uint32_t)0x2UL) /**< PCKDIV_AONCD_DIV_16 Value */
-#define MXC_S_GCR_PCKDIV_AONCD_DIV_16                                                        \
-	(MXC_V_GCR_PCKDIV_AONCD_DIV_16 << MXC_F_GCR_PCKDIV_AONCD_POS) /**<                   \
-									 PCKDIV_AONCD_DIV_16 \
-									 Setting             \
-								       */
+#define MXC_S_GCR_PCKDIV_AONCD_DIV_16                          \
+	(MXC_V_GCR_PCKDIV_AONCD_DIV_16                         \
+	 << MXC_F_GCR_PCKDIV_AONCD_POS) /**<                   \
+					   PCKDIV_AONCD_DIV_16 \
+					   Setting             \
+					 */
 #define MXC_V_GCR_PCKDIV_AONCD_DIV_32 \
 	((uint32_t)0x3UL) /**< PCKDIV_AONCD_DIV_32 Value */
-#define MXC_S_GCR_PCKDIV_AONCD_DIV_32                                                        \
-	(MXC_V_GCR_PCKDIV_AONCD_DIV_32 << MXC_F_GCR_PCKDIV_AONCD_POS) /**<                   \
-									 PCKDIV_AONCD_DIV_32 \
-									 Setting             \
-								       */
+#define MXC_S_GCR_PCKDIV_AONCD_DIV_32                          \
+	(MXC_V_GCR_PCKDIV_AONCD_DIV_32                         \
+	 << MXC_F_GCR_PCKDIV_AONCD_POS) /**<                   \
+					   PCKDIV_AONCD_DIV_32 \
+					   Setting             \
+					 */
 
 /**
  * Peripheral Clock Disable.
@@ -1012,18 +1102,20 @@ typedef struct {
 							  Mask */
 #define MXC_V_GCR_PERCKCN0_GPIO0D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_GPIO0D_EN Value */
-#define MXC_S_GCR_PERCKCN0_GPIO0D_EN                                                          \
-	(MXC_V_GCR_PERCKCN0_GPIO0D_EN << MXC_F_GCR_PERCKCN0_GPIO0D_POS) /**<                  \
-									   PERCKCN0_GPIO0D_EN \
-									   Setting            \
-									 */
+#define MXC_S_GCR_PERCKCN0_GPIO0D_EN                             \
+	(MXC_V_GCR_PERCKCN0_GPIO0D_EN                            \
+	 << MXC_F_GCR_PERCKCN0_GPIO0D_POS) /**<                  \
+					      PERCKCN0_GPIO0D_EN \
+					      Setting            \
+					    */
 #define MXC_V_GCR_PERCKCN0_GPIO0D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_GPIO0D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_GPIO0D_DIS                                                           \
-	(MXC_V_GCR_PERCKCN0_GPIO0D_DIS << MXC_F_GCR_PERCKCN0_GPIO0D_POS) /**<                   \
-									    PERCKCN0_GPIO0D_DIS \
-									    Setting             \
-									  */
+#define MXC_S_GCR_PERCKCN0_GPIO0D_DIS                             \
+	(MXC_V_GCR_PERCKCN0_GPIO0D_DIS                            \
+	 << MXC_F_GCR_PERCKCN0_GPIO0D_POS) /**<                   \
+					      PERCKCN0_GPIO0D_DIS \
+					      Setting             \
+					    */
 
 #define MXC_F_GCR_PERCKCN0_DMAD_POS 5 /**< PERCKCN0_DMAD Position */
 #define MXC_F_GCR_PERCKCN0_DMAD                                               \
@@ -1031,18 +1123,20 @@ typedef struct {
 							      Mask */
 #define MXC_V_GCR_PERCKCN0_DMAD_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_DMAD_EN Value */
-#define MXC_S_GCR_PERCKCN0_DMAD_EN                                                      \
-	(MXC_V_GCR_PERCKCN0_DMAD_EN << MXC_F_GCR_PERCKCN0_DMAD_POS) /**<                \
-								       PERCKCN0_DMAD_EN \
-								       Setting          \
-								     */
+#define MXC_S_GCR_PERCKCN0_DMAD_EN                           \
+	(MXC_V_GCR_PERCKCN0_DMAD_EN                          \
+	 << MXC_F_GCR_PERCKCN0_DMAD_POS) /**<                \
+					    PERCKCN0_DMAD_EN \
+					    Setting          \
+					  */
 #define MXC_V_GCR_PERCKCN0_DMAD_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_DMAD_DIS Value */
-#define MXC_S_GCR_PERCKCN0_DMAD_DIS                                                       \
-	(MXC_V_GCR_PERCKCN0_DMAD_DIS << MXC_F_GCR_PERCKCN0_DMAD_POS) /**<                 \
-									PERCKCN0_DMAD_DIS \
-									Setting           \
-								      */
+#define MXC_S_GCR_PERCKCN0_DMAD_DIS                           \
+	(MXC_V_GCR_PERCKCN0_DMAD_DIS                          \
+	 << MXC_F_GCR_PERCKCN0_DMAD_POS) /**<                 \
+					    PERCKCN0_DMAD_DIS \
+					    Setting           \
+					  */
 
 #define MXC_F_GCR_PERCKCN0_SPI0D_POS 6 /**< PERCKCN0_SPI0D Position */
 #define MXC_F_GCR_PERCKCN0_SPI0D                                              \
@@ -1051,18 +1145,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_GCR_PERCKCN0_SPI0D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_SPI0D_EN Value */
-#define MXC_S_GCR_PERCKCN0_SPI0D_EN                                                        \
-	(MXC_V_GCR_PERCKCN0_SPI0D_EN << MXC_F_GCR_PERCKCN0_SPI0D_POS) /**<                 \
-									 PERCKCN0_SPI0D_EN \
-									 Setting           \
-								       */
+#define MXC_S_GCR_PERCKCN0_SPI0D_EN                            \
+	(MXC_V_GCR_PERCKCN0_SPI0D_EN                           \
+	 << MXC_F_GCR_PERCKCN0_SPI0D_POS) /**<                 \
+					     PERCKCN0_SPI0D_EN \
+					     Setting           \
+					   */
 #define MXC_V_GCR_PERCKCN0_SPI0D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_SPI0D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_SPI0D_DIS                                                         \
-	(MXC_V_GCR_PERCKCN0_SPI0D_DIS << MXC_F_GCR_PERCKCN0_SPI0D_POS) /**<                  \
-									  PERCKCN0_SPI0D_DIS \
-									  Setting            \
-									*/
+#define MXC_S_GCR_PERCKCN0_SPI0D_DIS                            \
+	(MXC_V_GCR_PERCKCN0_SPI0D_DIS                           \
+	 << MXC_F_GCR_PERCKCN0_SPI0D_POS) /**<                  \
+					     PERCKCN0_SPI0D_DIS \
+					     Setting            \
+					   */
 
 #define MXC_F_GCR_PERCKCN0_SPI1D_POS 7 /**< PERCKCN0_SPI1D Position */
 #define MXC_F_GCR_PERCKCN0_SPI1D                                              \
@@ -1071,18 +1167,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_GCR_PERCKCN0_SPI1D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_SPI1D_EN Value */
-#define MXC_S_GCR_PERCKCN0_SPI1D_EN                                                        \
-	(MXC_V_GCR_PERCKCN0_SPI1D_EN << MXC_F_GCR_PERCKCN0_SPI1D_POS) /**<                 \
-									 PERCKCN0_SPI1D_EN \
-									 Setting           \
-								       */
+#define MXC_S_GCR_PERCKCN0_SPI1D_EN                            \
+	(MXC_V_GCR_PERCKCN0_SPI1D_EN                           \
+	 << MXC_F_GCR_PERCKCN0_SPI1D_POS) /**<                 \
+					     PERCKCN0_SPI1D_EN \
+					     Setting           \
+					   */
 #define MXC_V_GCR_PERCKCN0_SPI1D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_SPI1D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_SPI1D_DIS                                                         \
-	(MXC_V_GCR_PERCKCN0_SPI1D_DIS << MXC_F_GCR_PERCKCN0_SPI1D_POS) /**<                  \
-									  PERCKCN0_SPI1D_DIS \
-									  Setting            \
-									*/
+#define MXC_S_GCR_PERCKCN0_SPI1D_DIS                            \
+	(MXC_V_GCR_PERCKCN0_SPI1D_DIS                           \
+	 << MXC_F_GCR_PERCKCN0_SPI1D_POS) /**<                  \
+					     PERCKCN0_SPI1D_DIS \
+					     Setting            \
+					   */
 
 #define MXC_F_GCR_PERCKCN0_UART0D_POS 9 /**< PERCKCN0_UART0D Position */
 #define MXC_F_GCR_PERCKCN0_UART0D                                           \
@@ -1091,18 +1189,20 @@ typedef struct {
 							  Mask */
 #define MXC_V_GCR_PERCKCN0_UART0D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_UART0D_EN Value */
-#define MXC_S_GCR_PERCKCN0_UART0D_EN                                                          \
-	(MXC_V_GCR_PERCKCN0_UART0D_EN << MXC_F_GCR_PERCKCN0_UART0D_POS) /**<                  \
-									   PERCKCN0_UART0D_EN \
-									   Setting            \
-									 */
+#define MXC_S_GCR_PERCKCN0_UART0D_EN                             \
+	(MXC_V_GCR_PERCKCN0_UART0D_EN                            \
+	 << MXC_F_GCR_PERCKCN0_UART0D_POS) /**<                  \
+					      PERCKCN0_UART0D_EN \
+					      Setting            \
+					    */
 #define MXC_V_GCR_PERCKCN0_UART0D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_UART0D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_UART0D_DIS                                                           \
-	(MXC_V_GCR_PERCKCN0_UART0D_DIS << MXC_F_GCR_PERCKCN0_UART0D_POS) /**<                   \
-									    PERCKCN0_UART0D_DIS \
-									    Setting             \
-									  */
+#define MXC_S_GCR_PERCKCN0_UART0D_DIS                             \
+	(MXC_V_GCR_PERCKCN0_UART0D_DIS                            \
+	 << MXC_F_GCR_PERCKCN0_UART0D_POS) /**<                   \
+					      PERCKCN0_UART0D_DIS \
+					      Setting             \
+					    */
 
 #define MXC_F_GCR_PERCKCN0_UART1D_POS 10 /**< PERCKCN0_UART1D Position */
 #define MXC_F_GCR_PERCKCN0_UART1D                                           \
@@ -1111,18 +1211,20 @@ typedef struct {
 							  Mask */
 #define MXC_V_GCR_PERCKCN0_UART1D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_UART1D_EN Value */
-#define MXC_S_GCR_PERCKCN0_UART1D_EN                                                          \
-	(MXC_V_GCR_PERCKCN0_UART1D_EN << MXC_F_GCR_PERCKCN0_UART1D_POS) /**<                  \
-									   PERCKCN0_UART1D_EN \
-									   Setting            \
-									 */
+#define MXC_S_GCR_PERCKCN0_UART1D_EN                             \
+	(MXC_V_GCR_PERCKCN0_UART1D_EN                            \
+	 << MXC_F_GCR_PERCKCN0_UART1D_POS) /**<                  \
+					      PERCKCN0_UART1D_EN \
+					      Setting            \
+					    */
 #define MXC_V_GCR_PERCKCN0_UART1D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_UART1D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_UART1D_DIS                                                           \
-	(MXC_V_GCR_PERCKCN0_UART1D_DIS << MXC_F_GCR_PERCKCN0_UART1D_POS) /**<                   \
-									    PERCKCN0_UART1D_DIS \
-									    Setting             \
-									  */
+#define MXC_S_GCR_PERCKCN0_UART1D_DIS                             \
+	(MXC_V_GCR_PERCKCN0_UART1D_DIS                            \
+	 << MXC_F_GCR_PERCKCN0_UART1D_POS) /**<                   \
+					      PERCKCN0_UART1D_DIS \
+					      Setting             \
+					    */
 
 #define MXC_F_GCR_PERCKCN0_I2C0D_POS 13 /**< PERCKCN0_I2C0D Position */
 #define MXC_F_GCR_PERCKCN0_I2C0D                                              \
@@ -1131,18 +1233,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_GCR_PERCKCN0_I2C0D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_I2C0D_EN Value */
-#define MXC_S_GCR_PERCKCN0_I2C0D_EN                                                        \
-	(MXC_V_GCR_PERCKCN0_I2C0D_EN << MXC_F_GCR_PERCKCN0_I2C0D_POS) /**<                 \
-									 PERCKCN0_I2C0D_EN \
-									 Setting           \
-								       */
+#define MXC_S_GCR_PERCKCN0_I2C0D_EN                            \
+	(MXC_V_GCR_PERCKCN0_I2C0D_EN                           \
+	 << MXC_F_GCR_PERCKCN0_I2C0D_POS) /**<                 \
+					     PERCKCN0_I2C0D_EN \
+					     Setting           \
+					   */
 #define MXC_V_GCR_PERCKCN0_I2C0D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_I2C0D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_I2C0D_DIS                                                         \
-	(MXC_V_GCR_PERCKCN0_I2C0D_DIS << MXC_F_GCR_PERCKCN0_I2C0D_POS) /**<                  \
-									  PERCKCN0_I2C0D_DIS \
-									  Setting            \
-									*/
+#define MXC_S_GCR_PERCKCN0_I2C0D_DIS                            \
+	(MXC_V_GCR_PERCKCN0_I2C0D_DIS                           \
+	 << MXC_F_GCR_PERCKCN0_I2C0D_POS) /**<                  \
+					     PERCKCN0_I2C0D_DIS \
+					     Setting            \
+					   */
 
 #define MXC_F_GCR_PERCKCN0_T0D_POS 15 /**< PERCKCN0_T0D Position */
 #define MXC_F_GCR_PERCKCN0_T0D                                              \
@@ -1150,18 +1254,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_PERCKCN0_T0D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_T0D_EN Value */
-#define MXC_S_GCR_PERCKCN0_T0D_EN                                                    \
-	(MXC_V_GCR_PERCKCN0_T0D_EN << MXC_F_GCR_PERCKCN0_T0D_POS) /**<               \
-								     PERCKCN0_T0D_EN \
-								     Setting         \
-								   */
+#define MXC_S_GCR_PERCKCN0_T0D_EN                          \
+	(MXC_V_GCR_PERCKCN0_T0D_EN                         \
+	 << MXC_F_GCR_PERCKCN0_T0D_POS) /**<               \
+					   PERCKCN0_T0D_EN \
+					   Setting         \
+					 */
 #define MXC_V_GCR_PERCKCN0_T0D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_T0D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_T0D_DIS                                                     \
-	(MXC_V_GCR_PERCKCN0_T0D_DIS << MXC_F_GCR_PERCKCN0_T0D_POS) /**<                \
-								      PERCKCN0_T0D_DIS \
-								      Setting          \
-								    */
+#define MXC_S_GCR_PERCKCN0_T0D_DIS                          \
+	(MXC_V_GCR_PERCKCN0_T0D_DIS                         \
+	 << MXC_F_GCR_PERCKCN0_T0D_POS) /**<                \
+					   PERCKCN0_T0D_DIS \
+					   Setting          \
+					 */
 
 #define MXC_F_GCR_PERCKCN0_T1D_POS 16 /**< PERCKCN0_T1D Position */
 #define MXC_F_GCR_PERCKCN0_T1D                                              \
@@ -1169,18 +1275,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_PERCKCN0_T1D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_T1D_EN Value */
-#define MXC_S_GCR_PERCKCN0_T1D_EN                                                    \
-	(MXC_V_GCR_PERCKCN0_T1D_EN << MXC_F_GCR_PERCKCN0_T1D_POS) /**<               \
-								     PERCKCN0_T1D_EN \
-								     Setting         \
-								   */
+#define MXC_S_GCR_PERCKCN0_T1D_EN                          \
+	(MXC_V_GCR_PERCKCN0_T1D_EN                         \
+	 << MXC_F_GCR_PERCKCN0_T1D_POS) /**<               \
+					   PERCKCN0_T1D_EN \
+					   Setting         \
+					 */
 #define MXC_V_GCR_PERCKCN0_T1D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_T1D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_T1D_DIS                                                     \
-	(MXC_V_GCR_PERCKCN0_T1D_DIS << MXC_F_GCR_PERCKCN0_T1D_POS) /**<                \
-								      PERCKCN0_T1D_DIS \
-								      Setting          \
-								    */
+#define MXC_S_GCR_PERCKCN0_T1D_DIS                          \
+	(MXC_V_GCR_PERCKCN0_T1D_DIS                         \
+	 << MXC_F_GCR_PERCKCN0_T1D_POS) /**<                \
+					   PERCKCN0_T1D_DIS \
+					   Setting          \
+					 */
 
 #define MXC_F_GCR_PERCKCN0_T2D_POS 17 /**< PERCKCN0_T2D Position */
 #define MXC_F_GCR_PERCKCN0_T2D                                              \
@@ -1188,18 +1296,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_PERCKCN0_T2D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_T2D_EN Value */
-#define MXC_S_GCR_PERCKCN0_T2D_EN                                                    \
-	(MXC_V_GCR_PERCKCN0_T2D_EN << MXC_F_GCR_PERCKCN0_T2D_POS) /**<               \
-								     PERCKCN0_T2D_EN \
-								     Setting         \
-								   */
+#define MXC_S_GCR_PERCKCN0_T2D_EN                          \
+	(MXC_V_GCR_PERCKCN0_T2D_EN                         \
+	 << MXC_F_GCR_PERCKCN0_T2D_POS) /**<               \
+					   PERCKCN0_T2D_EN \
+					   Setting         \
+					 */
 #define MXC_V_GCR_PERCKCN0_T2D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_T2D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_T2D_DIS                                                     \
-	(MXC_V_GCR_PERCKCN0_T2D_DIS << MXC_F_GCR_PERCKCN0_T2D_POS) /**<                \
-								      PERCKCN0_T2D_DIS \
-								      Setting          \
-								    */
+#define MXC_S_GCR_PERCKCN0_T2D_DIS                          \
+	(MXC_V_GCR_PERCKCN0_T2D_DIS                         \
+	 << MXC_F_GCR_PERCKCN0_T2D_POS) /**<                \
+					   PERCKCN0_T2D_DIS \
+					   Setting          \
+					 */
 
 #define MXC_F_GCR_PERCKCN0_I2C1D_POS 28 /**< PERCKCN0_I2C1D Position */
 #define MXC_F_GCR_PERCKCN0_I2C1D                                              \
@@ -1208,18 +1318,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_GCR_PERCKCN0_I2C1D_EN \
 	((uint32_t)0x0UL) /**< PERCKCN0_I2C1D_EN Value */
-#define MXC_S_GCR_PERCKCN0_I2C1D_EN                                                        \
-	(MXC_V_GCR_PERCKCN0_I2C1D_EN << MXC_F_GCR_PERCKCN0_I2C1D_POS) /**<                 \
-									 PERCKCN0_I2C1D_EN \
-									 Setting           \
-								       */
+#define MXC_S_GCR_PERCKCN0_I2C1D_EN                            \
+	(MXC_V_GCR_PERCKCN0_I2C1D_EN                           \
+	 << MXC_F_GCR_PERCKCN0_I2C1D_POS) /**<                 \
+					     PERCKCN0_I2C1D_EN \
+					     Setting           \
+					   */
 #define MXC_V_GCR_PERCKCN0_I2C1D_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN0_I2C1D_DIS Value */
-#define MXC_S_GCR_PERCKCN0_I2C1D_DIS                                                         \
-	(MXC_V_GCR_PERCKCN0_I2C1D_DIS << MXC_F_GCR_PERCKCN0_I2C1D_POS) /**<                  \
-									  PERCKCN0_I2C1D_DIS \
-									  Setting            \
-									*/
+#define MXC_S_GCR_PERCKCN0_I2C1D_DIS                            \
+	(MXC_V_GCR_PERCKCN0_I2C1D_DIS                           \
+	 << MXC_F_GCR_PERCKCN0_I2C1D_POS) /**<                  \
+					     PERCKCN0_I2C1D_DIS \
+					     Setting            \
+					   */
 
 /**
  * Memory Clock Control Register.
@@ -1336,18 +1448,20 @@ typedef struct {
 							      Mask */
 #define MXC_V_GCR_MEMZCN_SRAM0Z_NOP \
 	((uint32_t)0x0UL) /**< MEMZCN_SRAM0Z_NOP Value */
-#define MXC_S_GCR_MEMZCN_SRAM0Z_NOP                                                       \
-	(MXC_V_GCR_MEMZCN_SRAM0Z_NOP << MXC_F_GCR_MEMZCN_SRAM0Z_POS) /**<                 \
-									MEMZCN_SRAM0Z_NOP \
-									Setting           \
-								      */
+#define MXC_S_GCR_MEMZCN_SRAM0Z_NOP                           \
+	(MXC_V_GCR_MEMZCN_SRAM0Z_NOP                          \
+	 << MXC_F_GCR_MEMZCN_SRAM0Z_POS) /**<                 \
+					    MEMZCN_SRAM0Z_NOP \
+					    Setting           \
+					  */
 #define MXC_V_GCR_MEMZCN_SRAM0Z_START \
 	((uint32_t)0x1UL) /**< MEMZCN_SRAM0Z_START Value */
-#define MXC_S_GCR_MEMZCN_SRAM0Z_START                                                         \
-	(MXC_V_GCR_MEMZCN_SRAM0Z_START << MXC_F_GCR_MEMZCN_SRAM0Z_POS) /**<                   \
-									  MEMZCN_SRAM0Z_START \
-									  Setting             \
-									*/
+#define MXC_S_GCR_MEMZCN_SRAM0Z_START                           \
+	(MXC_V_GCR_MEMZCN_SRAM0Z_START                          \
+	 << MXC_F_GCR_MEMZCN_SRAM0Z_POS) /**<                   \
+					    MEMZCN_SRAM0Z_START \
+					    Setting             \
+					  */
 
 #define MXC_F_GCR_MEMZCN_ICACHEZ_POS 1 /**< MEMZCN_ICACHEZ Position */
 #define MXC_F_GCR_MEMZCN_ICACHEZ                                              \
@@ -1356,18 +1470,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_GCR_MEMZCN_ICACHEZ_NOP \
 	((uint32_t)0x0UL) /**< MEMZCN_ICACHEZ_NOP Value */
-#define MXC_S_GCR_MEMZCN_ICACHEZ_NOP                                                         \
-	(MXC_V_GCR_MEMZCN_ICACHEZ_NOP << MXC_F_GCR_MEMZCN_ICACHEZ_POS) /**<                  \
-									  MEMZCN_ICACHEZ_NOP \
-									  Setting            \
-									*/
+#define MXC_S_GCR_MEMZCN_ICACHEZ_NOP                            \
+	(MXC_V_GCR_MEMZCN_ICACHEZ_NOP                           \
+	 << MXC_F_GCR_MEMZCN_ICACHEZ_POS) /**<                  \
+					     MEMZCN_ICACHEZ_NOP \
+					     Setting            \
+					   */
 #define MXC_V_GCR_MEMZCN_ICACHEZ_START \
 	((uint32_t)0x1UL) /**< MEMZCN_ICACHEZ_START Value */
-#define MXC_S_GCR_MEMZCN_ICACHEZ_START                                                           \
-	(MXC_V_GCR_MEMZCN_ICACHEZ_START << MXC_F_GCR_MEMZCN_ICACHEZ_POS) /**<                    \
-									    MEMZCN_ICACHEZ_START \
-									    Setting              \
-									  */
+#define MXC_S_GCR_MEMZCN_ICACHEZ_START                            \
+	(MXC_V_GCR_MEMZCN_ICACHEZ_START                           \
+	 << MXC_F_GCR_MEMZCN_ICACHEZ_POS) /**<                    \
+					     MEMZCN_ICACHEZ_START \
+					     Setting              \
+					   */
 
 /**
  * System Status Register.
@@ -1414,18 +1530,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_SYSST_SCMEMF_NORM \
 	((uint32_t)0x0UL) /**< SYSST_SCMEMF_NORM Value */
-#define MXC_S_GCR_SYSST_SCMEMF_NORM                                                      \
-	(MXC_V_GCR_SYSST_SCMEMF_NORM << MXC_F_GCR_SYSST_SCMEMF_POS) /**<                 \
-								       SYSST_SCMEMF_NORM \
-								       Setting           \
-								     */
+#define MXC_S_GCR_SYSST_SCMEMF_NORM                          \
+	(MXC_V_GCR_SYSST_SCMEMF_NORM                         \
+	 << MXC_F_GCR_SYSST_SCMEMF_POS) /**<                 \
+					   SYSST_SCMEMF_NORM \
+					   Setting           \
+					 */
 #define MXC_V_GCR_SYSST_SCMEMF_MEMORY \
 	((uint32_t)0x1UL) /**< SYSST_SCMEMF_MEMORY Value */
-#define MXC_S_GCR_SYSST_SCMEMF_MEMORY                                                        \
-	(MXC_V_GCR_SYSST_SCMEMF_MEMORY << MXC_F_GCR_SYSST_SCMEMF_POS) /**<                   \
-									 SYSST_SCMEMF_MEMORY \
-									 Setting             \
-								       */
+#define MXC_S_GCR_SYSST_SCMEMF_MEMORY                          \
+	(MXC_V_GCR_SYSST_SCMEMF_MEMORY                         \
+	 << MXC_F_GCR_SYSST_SCMEMF_POS) /**<                   \
+					   SYSST_SCMEMF_MEMORY \
+					   Setting             \
+					 */
 
 /**
  * Reset Register.
@@ -1436,23 +1554,26 @@ typedef struct {
 							 */
 #define MXC_V_GCR_RSTR1_I2C1_RESET \
 	((uint32_t)0x1UL) /**< RSTR1_I2C1_RESET Value */
-#define MXC_S_GCR_RSTR1_I2C1_RESET                                                   \
-	(MXC_V_GCR_RSTR1_I2C1_RESET << MXC_F_GCR_RSTR1_I2C1_POS) /**<                \
-								    RSTR1_I2C1_RESET \
-								    Setting */
+#define MXC_S_GCR_RSTR1_I2C1_RESET                        \
+	(MXC_V_GCR_RSTR1_I2C1_RESET                       \
+	 << MXC_F_GCR_RSTR1_I2C1_POS) /**<                \
+					 RSTR1_I2C1_RESET \
+					 Setting */
 #define MXC_V_GCR_RSTR1_I2C1_RESET_DONE \
 	((uint32_t)0x0UL) /**< RSTR1_I2C1_RESET_DONE Value */
-#define MXC_S_GCR_RSTR1_I2C1_RESET_DONE                                                        \
-	(MXC_V_GCR_RSTR1_I2C1_RESET_DONE << MXC_F_GCR_RSTR1_I2C1_POS) /**<                     \
-									 RSTR1_I2C1_RESET_DONE \
-									 Setting               \
-								       */
+#define MXC_S_GCR_RSTR1_I2C1_RESET_DONE                        \
+	(MXC_V_GCR_RSTR1_I2C1_RESET_DONE                       \
+	 << MXC_F_GCR_RSTR1_I2C1_POS) /**<                     \
+					 RSTR1_I2C1_RESET_DONE \
+					 Setting               \
+				       */
 #define MXC_V_GCR_RSTR1_I2C1_BUSY \
 	((uint32_t)0x1UL) /**< RSTR1_I2C1_BUSY Value */
-#define MXC_S_GCR_RSTR1_I2C1_BUSY                                                  \
-	(MXC_V_GCR_RSTR1_I2C1_BUSY << MXC_F_GCR_RSTR1_I2C1_POS) /**<               \
-								   RSTR1_I2C1_BUSY \
-								   Setting */
+#define MXC_S_GCR_RSTR1_I2C1_BUSY                        \
+	(MXC_V_GCR_RSTR1_I2C1_BUSY                       \
+	 << MXC_F_GCR_RSTR1_I2C1_POS) /**<               \
+					 RSTR1_I2C1_BUSY \
+					 Setting */
 
 /**
  * Peripheral Clock Disable.
@@ -1463,18 +1584,20 @@ typedef struct {
 							      Mask */
 #define MXC_V_GCR_PERCKCN1_FLCD_EN \
 	((uint32_t)0x0UL) /**< PERCKCN1_FLCD_EN Value */
-#define MXC_S_GCR_PERCKCN1_FLCD_EN                                                      \
-	(MXC_V_GCR_PERCKCN1_FLCD_EN << MXC_F_GCR_PERCKCN1_FLCD_POS) /**<                \
-								       PERCKCN1_FLCD_EN \
-								       Setting          \
-								     */
+#define MXC_S_GCR_PERCKCN1_FLCD_EN                           \
+	(MXC_V_GCR_PERCKCN1_FLCD_EN                          \
+	 << MXC_F_GCR_PERCKCN1_FLCD_POS) /**<                \
+					    PERCKCN1_FLCD_EN \
+					    Setting          \
+					  */
 #define MXC_V_GCR_PERCKCN1_FLCD_DIS \
 	((uint32_t)0x1UL) /**< PERCKCN1_FLCD_DIS Value */
-#define MXC_S_GCR_PERCKCN1_FLCD_DIS                                                       \
-	(MXC_V_GCR_PERCKCN1_FLCD_DIS << MXC_F_GCR_PERCKCN1_FLCD_POS) /**<                 \
-									PERCKCN1_FLCD_DIS \
-									Setting           \
-								      */
+#define MXC_S_GCR_PERCKCN1_FLCD_DIS                           \
+	(MXC_V_GCR_PERCKCN1_FLCD_DIS                          \
+	 << MXC_F_GCR_PERCKCN1_FLCD_POS) /**<                 \
+					    PERCKCN1_FLCD_DIS \
+					    Setting           \
+					  */
 
 #define MXC_F_GCR_PERCKCN1_ICACHED_POS 11 /**< PERCKCN1_ICACHED Position */
 #define MXC_F_GCR_PERCKCN1_ICACHED                                            \
@@ -1528,18 +1651,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_GCR_SYSSIE_ICEULIE_DIS \
 	((uint32_t)0x0UL) /**< SYSSIE_ICEULIE_DIS Value */
-#define MXC_S_GCR_SYSSIE_ICEULIE_DIS                                                         \
-	(MXC_V_GCR_SYSSIE_ICEULIE_DIS << MXC_F_GCR_SYSSIE_ICEULIE_POS) /**<                  \
-									  SYSSIE_ICEULIE_DIS \
-									  Setting            \
-									*/
+#define MXC_S_GCR_SYSSIE_ICEULIE_DIS                            \
+	(MXC_V_GCR_SYSSIE_ICEULIE_DIS                           \
+	 << MXC_F_GCR_SYSSIE_ICEULIE_POS) /**<                  \
+					     SYSSIE_ICEULIE_DIS \
+					     Setting            \
+					   */
 #define MXC_V_GCR_SYSSIE_ICEULIE_EN \
 	((uint32_t)0x1UL) /**< SYSSIE_ICEULIE_EN Value */
-#define MXC_S_GCR_SYSSIE_ICEULIE_EN                                                        \
-	(MXC_V_GCR_SYSSIE_ICEULIE_EN << MXC_F_GCR_SYSSIE_ICEULIE_POS) /**<                 \
-									 SYSSIE_ICEULIE_EN \
-									 Setting           \
-								       */
+#define MXC_S_GCR_SYSSIE_ICEULIE_EN                            \
+	(MXC_V_GCR_SYSSIE_ICEULIE_EN                           \
+	 << MXC_F_GCR_SYSSIE_ICEULIE_POS) /**<                 \
+					     SYSSIE_ICEULIE_EN \
+					     Setting           \
+					   */
 
 #define MXC_F_GCR_SYSSIE_CIEIE_POS 1 /**< SYSSIE_CIEIE Position */
 #define MXC_F_GCR_SYSSIE_CIEIE                                              \
@@ -1547,18 +1672,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_GCR_SYSSIE_CIEIE_DIS \
 	((uint32_t)0x0UL) /**< SYSSIE_CIEIE_DIS Value */
-#define MXC_S_GCR_SYSSIE_CIEIE_DIS                                                     \
-	(MXC_V_GCR_SYSSIE_CIEIE_DIS << MXC_F_GCR_SYSSIE_CIEIE_POS) /**<                \
-								      SYSSIE_CIEIE_DIS \
-								      Setting          \
-								    */
+#define MXC_S_GCR_SYSSIE_CIEIE_DIS                          \
+	(MXC_V_GCR_SYSSIE_CIEIE_DIS                         \
+	 << MXC_F_GCR_SYSSIE_CIEIE_POS) /**<                \
+					   SYSSIE_CIEIE_DIS \
+					   Setting          \
+					 */
 #define MXC_V_GCR_SYSSIE_CIEIE_EN \
 	((uint32_t)0x1UL) /**< SYSSIE_CIEIE_EN Value */
-#define MXC_S_GCR_SYSSIE_CIEIE_EN                                                    \
-	(MXC_V_GCR_SYSSIE_CIEIE_EN << MXC_F_GCR_SYSSIE_CIEIE_POS) /**<               \
-								     SYSSIE_CIEIE_EN \
-								     Setting         \
-								   */
+#define MXC_S_GCR_SYSSIE_CIEIE_EN                          \
+	(MXC_V_GCR_SYSSIE_CIEIE_EN                         \
+	 << MXC_F_GCR_SYSSIE_CIEIE_POS) /**<               \
+					   SYSSIE_CIEIE_EN \
+					   Setting         \
+					 */
 
 #define MXC_F_GCR_SYSSIE_SCMFIE_POS 5 /**< SYSSIE_SCMFIE Position */
 #define MXC_F_GCR_SYSSIE_SCMFIE                                               \
@@ -1566,17 +1693,19 @@ typedef struct {
 							      Mask */
 #define MXC_V_GCR_SYSSIE_SCMFIE_DIS \
 	((uint32_t)0x0UL) /**< SYSSIE_SCMFIE_DIS Value */
-#define MXC_S_GCR_SYSSIE_SCMFIE_DIS                                                       \
-	(MXC_V_GCR_SYSSIE_SCMFIE_DIS << MXC_F_GCR_SYSSIE_SCMFIE_POS) /**<                 \
-									SYSSIE_SCMFIE_DIS \
-									Setting           \
-								      */
+#define MXC_S_GCR_SYSSIE_SCMFIE_DIS                           \
+	(MXC_V_GCR_SYSSIE_SCMFIE_DIS                          \
+	 << MXC_F_GCR_SYSSIE_SCMFIE_POS) /**<                 \
+					    SYSSIE_SCMFIE_DIS \
+					    Setting           \
+					  */
 #define MXC_V_GCR_SYSSIE_SCMFIE_EN \
 	((uint32_t)0x1UL) /**< SYSSIE_SCMFIE_EN Value */
-#define MXC_S_GCR_SYSSIE_SCMFIE_EN                                                      \
-	(MXC_V_GCR_SYSSIE_SCMFIE_EN << MXC_F_GCR_SYSSIE_SCMFIE_POS) /**<                \
-								       SYSSIE_SCMFIE_EN \
-								       Setting          \
-								     */
+#define MXC_S_GCR_SYSSIE_SCMFIE_EN                           \
+	(MXC_V_GCR_SYSSIE_SCMFIE_EN                          \
+	 << MXC_F_GCR_SYSSIE_SCMFIE_POS) /**<                \
+					    SYSSIE_SCMFIE_EN \
+					    Setting          \
+					  */
 
 #endif /* _GCR_REGS_H_ */
