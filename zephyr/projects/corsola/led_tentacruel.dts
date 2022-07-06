@@ -2,46 +2,54 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "led_it81202_base.dtsi"
 
-/ {
-	pwmleds {
-		compatible = "pwm-leds";
-		/* NOTE: &pwm number needs same with channel number */
-		led_power_white: ec_led1_odl {
-			pwms = <&pwm0 PWM_CHANNEL_0 PWM_HZ(324)
-					PWM_POLARITY_INVERTED>;
-		};
-		led_battery_amber: ec_led2_odl {
-			pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(324)
-					PWM_POLARITY_INVERTED>;
-		};
-		led_battery_white: ec_led3_odl {
-			pwms = <&pwm2 PWM_CHANNEL_2 PWM_HZ(324)
-					PWM_POLARITY_INVERTED>;
+&led_colors {
+	bat-power-state-discharge-s0 {
+		charge-state = "PWR_STATE_DISCHARGE";
+		chipset-state = "POWER_S0";
+
+		color-0 {
+			led-color = <&color_battery_white>;
 		};
 	};
-};
 
-/* LED1 */
-&pwm0 {
-	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C4>;
-	pinctrl-0 = <&pwm0_gpa0_default>;
-	pinctrl-names = "default";
-};
+	bat-power-state-discharge-s3 {
+		charge-state = "PWR_STATE_DISCHARGE";
+		chipset-state = "POWER_S3";
 
-/* LED2 */
-&pwm1 {
-	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C4>;
-	pinctrl-0 = <&pwm1_gpa1_default>;
-	pinctrl-names = "default";
-};
+		color-0 {
+			led-color = <&color_battery_white>;
+			period-ms = <1000>;
+		};
 
-/* LED3 */
-&pwm2 {
-	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C4>;
-	pinctrl-0 = <&pwm2_gpa2_default>;
-	pinctrl-names = "default";
+		color-1 {
+			led-color = <&color_battery_off>;
+			period-ms = <3000>;
+		};
+	};
+
+	bat-power-state-error-s3 {
+		charge-state = "PWR_STATE_ERROR";
+		chipset-state = "POWER_S3";
+
+		color-0 {
+			led-color = <&color_battery_white>;
+			period-ms = <1000>;
+		};
+
+		color-1 {
+			led-color = <&color_battery_off>;
+			period-ms = <1000>;
+		};
+	};
+
+	bat-power-state-error-s5 {
+		charge-state = "PWR_STATE_ERROR";
+		chipset-state = "POWER_S5";
+
+		color-0 {
+			led-color = <&color_battery_off>;
+		};
+	};
 };
