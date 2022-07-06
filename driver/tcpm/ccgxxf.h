@@ -21,8 +21,8 @@
 #define CCGXXF_REG_FW_VERSION_BUILD 0x96
 
 /* Firmware update / reset control register */
-#define CCGXXF_REG_FWU_COMMAND		0x92
-#define CCGXXF_FWU_CMD_RESET		0x0077
+#define CCGXXF_REG_FWU_COMMAND 0x92
+#define CCGXXF_FWU_CMD_RESET 0x0077
 
 /**
  * Reset CCGXXF chip
