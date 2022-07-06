@@ -42,7 +42,7 @@
 #define AC_CURRENT_TO_REG(CUR) (((CUR)*BOARD_RS1) / ISL9241_DEFAULT_RS1)
 
 /* Console output macros */
-#define CPRINTS(format, args...) cprints(CC_CHARGER, "ISL9241 " format, ## args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, "ISL9241 " format, ##args)
 
 static int learn_mode;
 
