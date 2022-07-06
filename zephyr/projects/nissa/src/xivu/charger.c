@@ -43,11 +43,9 @@ __override void board_check_extpower(void)
 	else
 		extpower_present = 0;
 
-	gpio_pin_set_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_ec_acok_otg_c0),
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_acok_otg_c0),
 			extpower_present);
-	gpio_pin_set_dt(
-			GPIO_DT_FROM_NODELABEL(gpio_ec_acok_otg_c1),
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_acok_otg_c1),
 			extpower_present);
 }
 
