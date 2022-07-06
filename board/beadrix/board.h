@@ -32,8 +32,9 @@
 #define CONFIG_CHARGE_RAMP_HW
 #undef CONFIG_CHARGER_SINGLE_CHIP
 #define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
-					*/
+#define CONFIG_OCPC_DEF_RBATT_MOHMS               \
+	22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
+	    */
 
 /*
  * GPIO for C1 interrupts, for baseboard use
