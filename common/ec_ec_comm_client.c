@@ -138,9 +138,10 @@ static int write_command(uint16_t command, uint8_t *data, int req_len,
 
 	memset(request_header, 0, sizeof(*request_header));
 	/* fields0: leave seq_dup and is_response as 0. */
-	request_header->fields0 = EC_EC_HOSTCMD_VERSION | /* version */
-				  (cur_seq << EC_PACKET4_0_SEQ_NUM_SHIFT); /* seq_num
-									    */
+	request_header->fields0 =
+		EC_EC_HOSTCMD_VERSION | /* version */
+		(cur_seq << EC_PACKET4_0_SEQ_NUM_SHIFT); /* seq_num
+							  */
 	/* fields1: leave command_version as 0. */
 	if (req_len > 0)
 		request_header->fields1 |= EC_PACKET4_1_DATA_CRC_PRESENT_MASK;
