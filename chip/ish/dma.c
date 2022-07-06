@@ -138,10 +138,11 @@ int ish_dma_copy(uint32_t chan, uint32_t dst, uint32_t src, uint32_t length,
 						   transfer */
 		DMA_DAR(chan_reg) = dst; /* Destination address */
 		DMA_SAR(chan_reg) = src; /* Source address */
-		DMA_EN_REG = DMA_CH_EN_BIT(chan) | DMA_CH_EN_WE_BIT(chan); /* Enable
-									      the
-									      channel
-									    */
+		DMA_EN_REG = DMA_CH_EN_BIT(chan) |
+			     DMA_CH_EN_WE_BIT(chan); /* Enable
+							the
+							channel
+						      */
 		interrupt_unlock(eflags);
 
 		rc = ish_wait_for_dma_done(chan); /* Wait for trans completion
