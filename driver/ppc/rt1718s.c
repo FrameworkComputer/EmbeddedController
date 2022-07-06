@@ -65,18 +65,10 @@ static int rt1718s_is_sourcing_vbus(int port)
 
 static int rt1718s_vbus_source_enable(int port, int enable)
 {
-	atomic_t prev_flag;
-
 	if (enable)
-		prev_flag =
-			atomic_or(&flags[port], RT1718S_FLAGS_SOURCE_ENABLED);
+		atomic_or(&flags[port], RT1718S_FLAGS_SOURCE_ENABLED);
 	else
-		prev_flag = atomic_clear_bits(&flags[port],
-					      RT1718S_FLAGS_SOURCE_ENABLED);
-
-	/* Return if status doesn't change */
-	if (!!(prev_flag & RT1718S_FLAGS_SOURCE_ENABLED) == !!enable)
-		return EC_SUCCESS;
+		atomic_clear_bits(&flags[port], RT1718S_FLAGS_SOURCE_ENABLED);
 
 	RETURN_ERROR(tcpm_set_src_ctrl(port, enable));
 
