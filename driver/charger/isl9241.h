@@ -151,7 +151,7 @@
 #define ISL9241_VIN_ADC_BIT_OFFSET 6
 #define ISL9241_VIN_ADC_STEP_MV 96
 
-#define ISL9241_ADC_POLLING_TIME_US	400
+#define ISL9241_ADC_POLLING_TIME_US 400
 
 /*
  * Used to reset ACOKref register to normal value to detect low voltage (5V or
@@ -163,6 +163,6 @@
  * Max wait time for Vsys to be close to Vin (Vadp) before turning on the bypass
  * gate. See 2.5.1 of application notes for details.
  */
-#define ISL9241_BYPASS_VSYS_TIMEOUT_MS	500
+#define ISL9241_BYPASS_VSYS_TIMEOUT_MS 500
 
 #endif /* __CROS_EC_ISL9241_H */
