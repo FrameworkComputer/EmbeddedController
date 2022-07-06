@@ -111,7 +111,7 @@ register_corsola_project(
         here / "cbi_eeprom.dts",
         here / "led_tentacruel.dts",
         here / "motionsense_krabby.dts",
-        here / "usbc_krabby.dts",
+        here / "usbc_tentacruel.dts",
     ],
     extra_kconfig_files=[
         here / "prj_it81202_base.conf",

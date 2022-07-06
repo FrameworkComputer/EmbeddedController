@@ -1,0 +1,76 @@
+/* Copyright 2022 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			bc12 {
+				compatible = "richtek,rt1739-bc12";
+				status = "okay";
+			};
+			ppc {
+				compatible = "richtek,rt1739-ppc";
+				status = "okay";
+				port = <&i2c_usb_c0>;
+				i2c-addr-flags = "RT1739_ADDR1_FLAGS";
+			};
+			tcpc {
+				compatible = "ite,it8xxx2-tcpc";
+			};
+			chg {
+				compatible = "richtek,rt9490";
+				status = "okay";
+				port = <&i2c_charger>;
+			};
+			usb-muxes = <&it5205_mux_0 &virtual_mux_0>;
+		};
+		port0-muxes {
+			it5205_mux_0: it5205-mux-0 {
+				compatible = "ite,it5205";
+				port = <&i2c_usb_mux0>;
+				i2c-addr-flags = "IT5205_I2C_ADDR1_FLAGS";
+			};
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			bc12 {
+				compatible = "richtek,rt9490-bc12";
+				status = "okay";
+				irq = <&int_usb_c1_bc12_charger>;
+			};
+			ppc {
+				compatible = "silergy,syv682x";
+				status = "okay";
+				port = <&i2c_usb_c1>;
+				i2c-addr-flags = "SYV682X_ADDR0_FLAGS";
+				frs_en_gpio = <&gpio_ec_x_gpio1>;
+			};
+			tcpc {
+				compatible = "ite,it8xxx2-tcpc";
+			};
+			usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
+		};
+		port1-muxes {
+			ps8743_mux_1: ps8743-mux-1 {
+				compatible = "parade,ps8743";
+				port = <&i2c_usb_mux1>;
+				i2c-addr-flags = "PS8743_I2C_ADDR0_FLAG";
+			};
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
