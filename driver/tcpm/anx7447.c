@@ -16,8 +16,8 @@
 #include "usb_pd.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #define VSAFE5V_MIN 3800
 #define VSAFE0V_MAX 800
@@ -53,17 +53,16 @@ static bool anx_frs_dis[CONFIG_USB_PD_PORT_MAX_COUNT];
  * ANX7447 SPI address.
  */
 const struct anx7447_i2c_addr anx7447_i2c_addrs_flags[] = {
-	{AN7447_TCPC0_I2C_ADDR_FLAGS, AN7447_SPI0_I2C_ADDR_FLAGS},
-	{AN7447_TCPC1_I2C_ADDR_FLAGS, AN7447_SPI1_I2C_ADDR_FLAGS},
-	{AN7447_TCPC2_I2C_ADDR_FLAGS, AN7447_SPI2_I2C_ADDR_FLAGS},
-	{AN7447_TCPC3_I2C_ADDR_FLAGS, AN7447_SPI3_I2C_ADDR_FLAGS}
+	{ AN7447_TCPC0_I2C_ADDR_FLAGS, AN7447_SPI0_I2C_ADDR_FLAGS },
+	{ AN7447_TCPC1_I2C_ADDR_FLAGS, AN7447_SPI1_I2C_ADDR_FLAGS },
+	{ AN7447_TCPC2_I2C_ADDR_FLAGS, AN7447_SPI2_I2C_ADDR_FLAGS },
+	{ AN7447_TCPC3_I2C_ADDR_FLAGS, AN7447_SPI3_I2C_ADDR_FLAGS }
 };
 
 static inline int anx7447_reg_write(int port, int reg, int val)
 {
 	int rv = i2c_write8(tcpc_config[port].i2c_info.port,
-			    anx[port].i2c_addr_flags,
-			    reg, val);
+			    anx[port].i2c_addr_flags, reg, val);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	pd_device_accessed(port);
 #endif
@@ -73,8 +72,7 @@ static inline int anx7447_reg_write(int port, int reg, int val)
 static inline int anx7447_reg_read(int port, int reg, int *val)
 {
 	int rv = i2c_read8(tcpc_config[port].i2c_info.port,
-			   anx[port].i2c_addr_flags,
-			   reg, val);
+			   anx[port].i2c_addr_flags, reg, val);
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
 	pd_device_accessed(port);
 #endif
@@ -151,7 +149,7 @@ static inline void anx7447_reg_write_or(int port, int reg, int v_or)
 		anx7447_reg_write(port, reg, (val | v_or));
 }
 
-#define ANX7447_FLASH_DONE_TIMEOUT_US	(100 * MSEC)
+#define ANX7447_FLASH_DONE_TIMEOUT_US (100 * MSEC)
 
 static int anx7447_wait_for_flash_done(int port)
 {
@@ -270,17 +268,16 @@ static int command_anx_ocm(int argc, char **argv)
 		rv = anx7447_flash_erase_internal(
 			port, 1 /* write to console if empty */);
 		if (rv)
-			ccprintf("C%d: Failed to erase OCM flash (%d)\n",
-				 port, rv);
+			ccprintf("C%d: Failed to erase OCM flash (%d)\n", port,
+				 rv);
 	}
 
-	ccprintf("C%d: OCM flash is %sempty.\n",
-		port, anx7447_flash_is_empty(port) ? "" : "not ");
+	ccprintf("C%d: OCM flash is %sempty.\n", port,
+		 anx7447_flash_is_empty(port) ? "" : "not ");
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(anx_ocm, command_anx_ocm,
-			"port [erase]",
+DECLARE_CONSOLE_COMMAND(anx_ocm, command_anx_ocm, "port [erase]",
 			"Print OCM status or erases OCM for a given port.");
 #endif
 
@@ -308,12 +305,11 @@ static int anx7447_init(int port)
 		}
 	}
 	if (!I2C_STRIP_FLAGS(anx[port].i2c_addr_flags)) {
-		ccprintf("TCPC I2C addr 0x%x is invalid for ANX7447\n",
-			 I2C_STRIP_FLAGS(tcpc_config[port]
-				      .i2c_info.addr_flags));
+		ccprintf(
+			"TCPC I2C addr 0x%x is invalid for ANX7447\n",
+			I2C_STRIP_FLAGS(tcpc_config[port].i2c_info.addr_flags));
 		return EC_ERROR_UNKNOWN;
 	}
-
 
 	rv = tcpci_tcpm_init(port);
 	if (rv)
@@ -321,8 +317,8 @@ static int anx7447_init(int port)
 
 #ifdef CONFIG_USB_PD_TCPM_ANX7447_OCM_ERASE_COMMAND
 	/* Check and print OCM status to console. */
-	CPRINTS("C%d: OCM flash is %sempty",
-		port, anx7447_flash_is_empty(port) ? "" : "not ");
+	CPRINTS("C%d: OCM flash is %sempty", port,
+		anx7447_flash_is_empty(port) ? "" : "not ");
 #endif
 
 	/*
@@ -344,7 +340,8 @@ static int anx7447_init(int port)
 		return rv;
 
 	/* Set VBUS_VOLTAGE_ALARM_HI threshold */
-	RETURN_ERROR(tcpc_write16(port, TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG, 0x3FF));
+	RETURN_ERROR(
+		tcpc_write16(port, TCPC_REG_VBUS_VOLTAGE_ALARM_HI_CFG, 0x3FF));
 	/* Set VCONN_VOLTAGE_ALARM_HI threshold to 6V */
 	RETURN_ERROR(tcpc_write16(port, VCONN_VOLTAGE_ALARM_HI_CFG, 0xF0));
 
@@ -392,8 +389,7 @@ static int anx7447_init(int port)
 	 * Note that bypassing the usb_mux API is okay for internal driver calls
 	 * since the task calling init already holds this port's mux lock.
 	 */
-	if (me != NULL &&
-	    !(me->flags & USB_MUX_FLAG_NOT_TCPC))
+	if (me != NULL && !(me->flags & USB_MUX_FLAG_NOT_TCPC))
 		rv = anx7447_mux_set(me, USB_PD_MUX_NONE, &unused);
 #endif /* CONFIG_USB_PD_TCPM_MUX */
 
@@ -553,8 +549,7 @@ static int anx7447_set_frs_enable(int port, int enable)
 static uint64_t hpd_deadline[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void anx7447_tcpc_update_hpd_status(const struct usb_mux *me,
-				    mux_state_t mux_state,
-				    bool *ack_required)
+				    mux_state_t mux_state, bool *ack_required)
 {
 	int reg = 0;
 	int port = me->usb_port;
@@ -658,8 +653,8 @@ static void anx7447_mux_safemode(const struct usb_mux *me, int on_off)
 		reg &= ~(ANX7447_REG_SAFE_MODE);
 
 	mux_write(me, ANX7447_REG_ANALOG_CTRL_9, reg);
-	CPRINTS("C%d set mux to safemode %s, reg = 0x%x",
-		me->usb_port, (on_off) ? "on" : "off", reg);
+	CPRINTS("C%d set mux to safemode %s, reg = 0x%x", me->usb_port,
+		(on_off) ? "on" : "off", reg);
 }
 
 static inline void anx7447_configure_aux_src(const struct usb_mux *me,
@@ -676,8 +671,8 @@ static inline void anx7447_configure_aux_src(const struct usb_mux *me,
 
 	mux_write(me, ANX7447_REG_ANALOG_CTRL_9, reg);
 
-	CPRINTS("C%d set aux_src to %s, reg = 0x%x",
-		me->usb_port, (on_off) ? "on" : "off", reg);
+	CPRINTS("C%d set aux_src to %s, reg = 0x%x", me->usb_port,
+		(on_off) ? "on" : "off", reg);
 }
 #endif
 
@@ -704,8 +699,8 @@ static int anx7447_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 
 	cc_direction = mux_state & USB_PD_MUX_POLARITY_INVERTED;
 	mux_type = mux_state & USB_PD_MUX_DOCK;
-	CPRINTS("C%d mux_state = 0x%x, mux_type = 0x%x",
-		port, mux_state, mux_type);
+	CPRINTS("C%d mux_state = 0x%x, mux_type = 0x%x", port, mux_state,
+		mux_type);
 	if (cc_direction == 0) {
 		/* cc1 connection */
 		if (mux_type == USB_PD_MUX_DOCK) {
@@ -829,14 +824,10 @@ static int anx7447_set_cc(int port, int pull)
 }
 
 /* Override for tcpci_tcpm_set_polarity */
-static int anx7447_set_polarity(int port,
-				enum tcpc_cc_polarity polarity)
+static int anx7447_set_polarity(int port, enum tcpc_cc_polarity polarity)
 {
-	return tcpc_update8(port,
-			    TCPC_REG_TCPC_CTRL,
-			    TCPC_REG_TCPC_CTRL_SET(1),
-			    polarity_rm_dts(polarity)
-					? MASK_SET : MASK_CLR);
+	return tcpc_update8(port, TCPC_REG_TCPC_CTRL, TCPC_REG_TCPC_CTRL_SET(1),
+			    polarity_rm_dts(polarity) ? MASK_SET : MASK_CLR);
 }
 
 #ifdef CONFIG_CMD_TCPC_DUMP
@@ -920,15 +911,15 @@ static void anx7447_dump_registers(int port)
 	for (i = 0; i < ARRAY_SIZE(anx7447_alt_regs); i++) {
 		anx7447_reg_read(port, anx7447_alt_regs[i].addr, &val);
 		ccprintf("  %-26s(ALT/0x%02x) =   0x%02x\n",
-				anx7447_alt_regs[i].name,
-				anx7447_alt_regs[i].addr, (uint8_t)val);
+			 anx7447_alt_regs[i].name, anx7447_alt_regs[i].addr,
+			 (uint8_t)val);
 		cflush();
 	}
 }
 #endif /* defined(CONFIG_CMD_TCPC_DUMP) */
 
 static int anx7447_get_chip_info(int port, int live,
-			struct ec_response_pd_chip_info_v1 *chip_info)
+				 struct ec_response_pd_chip_info_v1 *chip_info)
 {
 	int main_version = 0x0, build_version = 0x0;
 
@@ -983,43 +974,43 @@ enum ec_error_list anx7447_set_bist_test_mode(const int port, const bool enable)
  * overrides for set_cc and set_polarity.
  */
 const struct tcpm_drv anx7447_tcpm_drv = {
-	.init			= &anx7447_init,
-	.release		= &anx7447_release,
-	.get_cc			= &tcpci_tcpm_get_cc,
+	.init = &anx7447_init,
+	.release = &anx7447_release,
+	.get_cc = &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
-	.check_vbus_level	= &tcpci_tcpm_check_vbus_level,
+	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
 #endif
-	.get_vbus_voltage	= &anx7447_get_vbus_voltage,
-	.select_rp_value	= &tcpci_tcpm_select_rp_value,
-	.set_cc			= &anx7447_set_cc,
-	.set_polarity		= &anx7447_set_polarity,
+	.get_vbus_voltage = &anx7447_get_vbus_voltage,
+	.select_rp_value = &tcpci_tcpm_select_rp_value,
+	.set_cc = &anx7447_set_cc,
+	.set_polarity = &anx7447_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
-	.sop_prime_enable	= &tcpci_tcpm_sop_prime_enable,
+	.sop_prime_enable = &tcpci_tcpm_sop_prime_enable,
 #endif
-	.set_vconn		= &tcpci_tcpm_set_vconn,
-	.set_msg_header		= &tcpci_tcpm_set_msg_header,
-	.set_rx_enable		= &tcpci_tcpm_set_rx_enable,
-	.get_message_raw	= &tcpci_tcpm_get_message_raw,
-	.transmit		= &tcpci_tcpm_transmit,
-	.tcpc_alert		= &anx7447_tcpc_alert,
+	.set_vconn = &tcpci_tcpm_set_vconn,
+	.set_msg_header = &tcpci_tcpm_set_msg_header,
+	.set_rx_enable = &tcpci_tcpm_set_rx_enable,
+	.get_message_raw = &tcpci_tcpm_get_message_raw,
+	.transmit = &tcpci_tcpm_transmit,
+	.tcpc_alert = &anx7447_tcpc_alert,
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
-	.tcpc_discharge_vbus	= &tcpci_tcpc_discharge_vbus,
+	.tcpc_discharge_vbus = &tcpci_tcpc_discharge_vbus,
 #endif
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
-	.drp_toggle		= anx7447_tcpc_drp_toggle,
+	.drp_toggle = anx7447_tcpc_drp_toggle,
 #endif
-	.get_chip_info		= &anx7447_get_chip_info,
-	.set_snk_ctrl		= &tcpci_tcpm_set_snk_ctrl,
-	.set_src_ctrl		= &tcpci_tcpm_set_src_ctrl,
+	.get_chip_info = &anx7447_get_chip_info,
+	.set_snk_ctrl = &tcpci_tcpm_set_snk_ctrl,
+	.set_src_ctrl = &tcpci_tcpm_set_src_ctrl,
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER
-	.enter_low_power_mode	= &tcpci_enter_low_power_mode,
+	.enter_low_power_mode = &tcpci_enter_low_power_mode,
 #endif
 #ifdef CONFIG_USB_PD_FRS_TCPC
-	.set_frs_enable		= &anx7447_set_frs_enable,
+	.set_frs_enable = &anx7447_set_frs_enable,
 #endif
-	.set_bist_test_mode	= &anx7447_set_bist_test_mode,
+	.set_bist_test_mode = &anx7447_set_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
-	.dump_registers		= &anx7447_dump_registers,
+	.dump_registers = &anx7447_dump_registers,
 #endif
 };
 
