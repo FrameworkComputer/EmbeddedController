@@ -106,19 +106,19 @@ static void fan_set_percent(int fan, int pct, bool fan_triggered)
 void board_override_fan_control(int fan, int *tmp)
 {
 	/*
-	* Crota's fan speed is control by three sensors.
-	*
-	* Sensor SOC control high loading's speed.
-	* Sensor ambient control low loading's speed.
-	* Sensor charger control the speed when system's temperature
-	* is too high.
-	*
-	* When sensor charger is not triggered, the fan is control
-	* and choose the smaller speed between SOC and ambient.
-	*
-	* When sensor charger is triggered, the fan speed is only
-	* control by sensor charger, avoid heat damage to system.
-	*/
+	 * Crota's fan speed is control by three sensors.
+	 *
+	 * Sensor SOC control high loading's speed.
+	 * Sensor ambient control low loading's speed.
+	 * Sensor charger control the speed when system's temperature
+	 * is too high.
+	 *
+	 * When sensor charger is not triggered, the fan is control
+	 * and choose the smaller speed between SOC and ambient.
+	 *
+	 * When sensor charger is triggered, the fan speed is only
+	 * control by sensor charger, avoid heat damage to system.
+	 */
 
 	int pct;
 	int sensor_soc;
@@ -127,20 +127,19 @@ void board_override_fan_control(int fan, int *tmp)
 	bool fan_triggered;
 
 	sensor_soc = thermal_fan_percent(thermal_params[0].temp_fan_off,
-				thermal_params[0].temp_fan_max,
-				C_TO_K(tmp[0]));
+					 thermal_params[0].temp_fan_max,
+					 C_TO_K(tmp[0]));
 	sensor_ambient = thermal_fan_percent(thermal_params[3].temp_fan_off,
-				thermal_params[3].temp_fan_max,
-				C_TO_K(tmp[3]));
+					     thermal_params[3].temp_fan_max,
+					     C_TO_K(tmp[3]));
 	sensor_charger = thermal_fan_percent(thermal_params[2].temp_fan_off,
-				thermal_params[2].temp_fan_max,
-				C_TO_K(tmp[2]));
+					     thermal_params[2].temp_fan_max,
+					     C_TO_K(tmp[2]));
 
-	if (sensor_charger){
+	if (sensor_charger) {
 		fan_triggered = true;
 		pct = sensor_charger;
-	}
-	else{
+	} else {
 		fan_triggered = false;
 		pct = MIN(sensor_soc, sensor_ambient);
 	}
