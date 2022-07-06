@@ -179,7 +179,7 @@ cd ~/trunk/src/platform/ec
 make -j BOARD=<boardname>
 ```
 
-Where **<boardname>** is replaced by the name of the board you want to build an
+Where `<boardname>` is replaced by the name of the board you want to build an
 EC binary for. For example, the boardname for the Chromebook Pixel is “link”.
 The make command will generate an EC binary at `build/<boardname>/ec.bin`. The
 `-j` tells make to build multi-threaded which can be much faster on a multi-core
