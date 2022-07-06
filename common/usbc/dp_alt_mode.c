@@ -20,8 +20,8 @@
 #include "usb_pd_tcpm.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
-#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ## args)
-#define CPRINTS(format, args...) cprints(CC_USBPD, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #else
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
@@ -47,24 +47,20 @@ static enum dp_states dp_state[CONFIG_USB_PD_PORT_MAX_COUNT];
  * Default of 0 indicates no command expected.
  */
 static const uint8_t state_vdm_cmd[DP_STATE_COUNT] = {
-	[DP_START] = CMD_ENTER_MODE,
-	[DP_ENTER_ACKED] = CMD_DP_STATUS,
-	[DP_PREPARE_CONFIG] = CMD_DP_CONFIG,
-	[DP_PREPARE_EXIT] = CMD_EXIT_MODE,
+	[DP_START] = CMD_ENTER_MODE,	     [DP_ENTER_ACKED] = CMD_DP_STATUS,
+	[DP_PREPARE_CONFIG] = CMD_DP_CONFIG, [DP_PREPARE_EXIT] = CMD_EXIT_MODE,
 	[DP_ENTER_RETRY] = CMD_ENTER_MODE,
 };
 
 /*
  * Track if we're retrying due to an Enter Mode NAK
  */
-#define DP_FLAG_RETRY	BIT(0)
+#define DP_FLAG_RETRY BIT(0)
 
 static atomic_t dpm_dp_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-#define DP_SET_FLAG(port, flag) \
-	atomic_or(&dpm_dp_flags[port], (flag))
-#define DP_CLR_FLAG(port, flag) \
-	atomic_clear_bits(&dpm_dp_flags[port], (flag))
+#define DP_SET_FLAG(port, flag) atomic_or(&dpm_dp_flags[port], (flag))
+#define DP_CLR_FLAG(port, flag) atomic_clear_bits(&dpm_dp_flags[port], (flag))
 #define DP_CHK_FLAG(port, flag) (dpm_dp_flags[port] & (flag))
 
 bool dp_is_active(int port)
@@ -85,8 +81,7 @@ void dp_init(int port)
 
 bool dp_entry_is_done(int port)
 {
-	return dp_state[port] == DP_ACTIVE ||
-		dp_state[port] == DP_INACTIVE;
+	return dp_state[port] == DP_ACTIVE || dp_state[port] == DP_INACTIVE;
 }
 
 static void dp_entry_failed(int port)
@@ -96,8 +91,8 @@ static void dp_entry_failed(int port)
 	dpm_dp_flags[port] = 0;
 }
 
-static bool dp_response_valid(int port, enum tcpci_msg_type type,
-			     char *cmdt, int vdm_cmd)
+static bool dp_response_valid(int port, enum tcpci_msg_type type, char *cmdt,
+			      int vdm_cmd)
 {
 	enum dp_states st = dp_state[port];
 
@@ -108,7 +103,8 @@ static bool dp_response_valid(int port, enum tcpci_msg_type type,
 	if (type != TCPCI_MSG_SOP ||
 	    (st != DP_INACTIVE && state_vdm_cmd[st] != vdm_cmd)) {
 		CPRINTS("C%d: Received unexpected DP VDM %s (cmd %d) from"
-			" %s in state %d", port, cmdt, vdm_cmd,
+			" %s in state %d",
+			port, cmdt, vdm_cmd,
 			type == TCPCI_MSG_SOP ? "port partner" : "cable plug",
 			st);
 		dp_entry_failed(port);
@@ -135,7 +131,7 @@ static void dp_exit_to_usb_mode(int port)
 }
 
 void dp_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
-		uint32_t *vdm)
+		  uint32_t *vdm)
 {
 	const struct svdm_amode_data *modep =
 		pd_get_amode_data(port, type, USB_SID_DISPLAYPORT);
@@ -185,8 +181,8 @@ void dp_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		break;
 	default:
 		/* Invalid or unexpected negotiation state */
-		CPRINTF("%s called with invalid state %d\n",
-				__func__, dp_state[port]);
+		CPRINTF("%s called with invalid state %d\n", __func__,
+			dp_state[port]);
 		dp_entry_failed(port);
 		break;
 	}
@@ -221,8 +217,8 @@ void dp_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 		dp_exit_to_usb_mode(port);
 		break;
 	default:
-		CPRINTS("C%d: NAK for cmd %d in state %d", port,
-			vdm_cmd, dp_state[port]);
+		CPRINTS("C%d: NAK for cmd %d in state %d", port, vdm_cmd,
+			dp_state[port]);
 		dp_entry_failed(port);
 		break;
 	}
@@ -231,8 +227,8 @@ void dp_vdm_naked(int port, enum tcpci_msg_type type, uint8_t vdm_cmd)
 enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 					    uint32_t *vdm)
 {
-	const struct svdm_amode_data *modep = pd_get_amode_data(port,
-			TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
+	const struct svdm_amode_data *modep =
+		pd_get_amode_data(port, TCPCI_MSG_SOP, USB_SID_DISPLAYPORT);
 	int vdo_count_ret;
 
 	if (*vdo_count < VDO_MAX_SIZE)
@@ -243,7 +239,7 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 	case DP_ENTER_RETRY:
 		/* Enter the first supported mode for DisplayPort. */
 		vdm[0] = pd_dfp_enter_mode(port, TCPCI_MSG_SOP,
-				USB_SID_DISPLAYPORT, 0);
+					   USB_SID_DISPLAYPORT, 0);
 		if (vdm[0] == 0)
 			return MSG_SETUP_ERROR;
 		/* CMDT_INIT is 0, so this is a no-op */
@@ -316,8 +312,7 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 		return MSG_SETUP_MUX_WAIT;
 	case DP_PREPARE_EXIT:
 		/* DPM should call setup only after safe state is set */
-		vdm[0] = VDO(USB_SID_DISPLAYPORT,
-			     1, /* structured */
+		vdm[0] = VDO(USB_SID_DISPLAYPORT, 1, /* structured */
 			     CMD_EXIT_MODE);
 
 		vdm[0] |= VDO_OPOS(modep->opos);
@@ -331,8 +326,8 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 		 */
 		return MSG_SETUP_ERROR;
 	default:
-		CPRINTF("%s called with invalid state %d\n",
-				__func__, dp_state[port]);
+		CPRINTF("%s called with invalid state %d\n", __func__,
+			dp_state[port]);
 		return MSG_SETUP_ERROR;
 	}
 
