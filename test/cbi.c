@@ -186,7 +186,8 @@ DECLARE_EC_TEST(test_all_tags)
 		      EC_SUCCESS, NULL);
 	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_FACTORY_CALIBRATION_DATA, &d8,
-		      sizeof(d8)), EC_SUCCESS, NULL);
+					 sizeof(d8)),
+		      EC_SUCCESS, NULL);
 	count++;
 
 	/* Read out all */
