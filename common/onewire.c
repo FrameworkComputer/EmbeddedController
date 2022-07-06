@@ -18,8 +18,9 @@
  */
 #define T_RSTL 602 /* Reset low pulse; 600-960 us */
 #define T_MSP 72 /* Presence detect sample time; 70-75 us */
-#define T_RSTH (68 + 260 + 5 + 2) /* Reset high; tPDHmax + tPDLmax + tRECmin \
-				   */
+#define T_RSTH                                                        \
+	(68 + 260 + 5 + 2) /* Reset high; tPDHmax + tPDLmax + tRECmin \
+			    */
 #define T_SLOT 70 /* Timeslot; >67 us */
 #define T_W0L 63 /* Write 0 low; 62-120 us */
 #define T_W1L 7 /* Write 1 low; 5-15 us */
