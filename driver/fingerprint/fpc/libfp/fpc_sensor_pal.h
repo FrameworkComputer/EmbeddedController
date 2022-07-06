@@ -14,8 +14,10 @@ typedef void *fpc_device_t;
  * @brief Used to describe an interrupt
  */
 typedef enum {
-    IRQ_INT_TRIG = 0x01, /**< Internally triggered by sensor (fast interrupt)                   **/
-    IRQ_EXT_TRIG = 0x02  /**< Externally triggered by event outside sensor (may take long time) **/
+	IRQ_INT_TRIG = 0x01, /**< Internally triggered by sensor (fast
+				interrupt)                   **/
+	IRQ_EXT_TRIG = 0x02 /**< Externally triggered by event outside sensor
+			       (may take long time) **/
 } fpc_pal_irq_t;
 
 /**
@@ -109,9 +111,9 @@ int fpc_pal_spi_get_speed_hz(fpc_device_t device, uint32_t *speed_hz);
  * @param[in] ...        additional arguments.
  *
  */
-#define FPC_SENSOR_SDK_LOG_LEVEL_DEBUG    (1)
-#define FPC_SENSOR_SDK_LOG_LEVEL_INFO     (2)
-#define FPC_SENSOR_SDK_LOG_LEVEL_ERROR    (3)
+#define FPC_SENSOR_SDK_LOG_LEVEL_DEBUG (1)
+#define FPC_SENSOR_SDK_LOG_LEVEL_INFO (2)
+#define FPC_SENSOR_SDK_LOG_LEVEL_ERROR (3)
 #define FPC_SENSOR_SDK_LOG_LEVEL_DISABLED (4)
 void fpc_pal_log_entry(const char *tag, int log_level, const char *format, ...);
 
