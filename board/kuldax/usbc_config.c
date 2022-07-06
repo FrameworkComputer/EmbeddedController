@@ -144,7 +144,6 @@ static void board_tcpc_init(void)
 	/* Don't reset TCPCs after initial reset */
 	if (!system_jumped_late()) {
 		board_reset_pd_mcu();
-
 	}
 
 	/* Enable PPC interrupts. */
