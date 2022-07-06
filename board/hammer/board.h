@@ -177,16 +177,19 @@
 #undef CONFIG_USB_I2C_MAX_WRITE_COUNT
 #ifdef VARIANT_HAMMER_TP_LARGE_PAGE
 /* Zed requires 516 byte per packet for touchpad update */
-#define CONFIG_USB_I2C_MAX_WRITE_COUNT (1024 - 4) /* 4 is maximum header size \
-						   */
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT         \
+	(1024 - 4) /* 4 is maximum header size \
+		    */
 #else
-#define CONFIG_USB_I2C_MAX_WRITE_COUNT (128 - 4) /* 4 is maximum header size \
-						  */
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT        \
+	(128 - 4) /* 4 is maximum header size \
+		   */
 #endif
 
 #undef CONFIG_USB_I2C_MAX_READ_COUNT
-#define CONFIG_USB_I2C_MAX_READ_COUNT (1024 - 6) /* 6 is maximum header size \
-						  */
+#define CONFIG_USB_I2C_MAX_READ_COUNT          \
+	(1024 - 6) /* 6 is maximum header size \
+		    */
 
 #define CONFIG_I2C_XFER_LARGE_TRANSFER
 
