@@ -43,10 +43,7 @@ enum ec_ssfc_lightbar {
 /*
  * Keyboard Type (Bit 11)
  */
-enum ec_ssfc_keyboard {
-	SSFC_KEYBOARD_DEFAULT = 0,
-	SSFC_KEYBOARD_GAMING = 1
-};
+enum ec_ssfc_keyboard { SSFC_KEYBOARD_DEFAULT = 0, SSFC_KEYBOARD_GAMING = 1 };
 
 union volteer_cbi_ssfc {
 	struct {
