@@ -243,8 +243,9 @@ ZTEST_F(usbc_alt_mode, verify_displayport_mode_entry)
 	/* TODO(b/237553647): Test EC-driven mode entry (requires a separate
 	 * config).
 	 */
-	host_cmd_typec_control(TEST_PORT,
-	TYPEC_CONTROL_COMMAND_ENTER_MODE, TYPEC_MODE_DP); k_sleep(K_SECONDS(1));
+	host_cmd_typec_control(TEST_PORT, TYPEC_CONTROL_COMMAND_ENTER_MODE,
+			       TYPEC_MODE_DP);
+	k_sleep(K_SECONDS(1));
 
 	/* Verify host command when VDOs are present. */
 	struct ec_params_usb_pd_get_mode_request params = {
@@ -306,7 +307,6 @@ ZTEST_F(usbc_alt_mode, verify_displayport_mode_reentry)
 	zassert_equal(response.svid, USB_SID_DISPLAYPORT, NULL);
 	zassert_equal(response.vdo[0],
 		      fixture->partner.modes_vdm[response.opos], NULL);
-
 }
 
 ZTEST_SUITE(usbc_alt_mode, drivers_predicate_post_main, usbc_alt_mode_setup,
