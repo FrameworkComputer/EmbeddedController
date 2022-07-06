@@ -122,7 +122,7 @@ struct tcpc_emul_data {
 			.data = &tcpci_ctx##n.common,                      \
 			.addr = DT_INST_REG_ADDR(n),                       \
 		},                                                         \
-	};                                                                 \
+	}; \
 	EMUL_DEFINE(init, DT_DRV_INST(n), cfg_ptr, &tcpc_emul_data_##n)
 
 /** Response from TCPCI specific device operations */
