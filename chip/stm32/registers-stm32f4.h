@@ -457,8 +457,9 @@
 #define STM32F4_PLL_REQ 2000000
 #define STM32F4_RTC_REQ 1000000
 #define STM32F4_IO_CLOCK 45000000
-#define STM32F4_USB_REQ 45000000 /* not compatible with USB, will use PLLSAI \
-				  */
+#define STM32F4_USB_REQ                                      \
+	45000000 /* not compatible with USB, will use PLLSAI \
+		  */
 #define STM32F4_VCO_CLOCK 360000000
 #define STM32F4_HSI_CLOCK 16000000
 #define STM32F4_LSI_CLOCK 32000
