@@ -20,8 +20,8 @@ enum throttle_level {
  * Types of throttling desired. These are independent.
  */
 enum throttle_type {
-	THROTTLE_SOFT = 0,			/* for example, host events */
-	THROTTLE_HARD,				/* for example, PROCHOT */
+	THROTTLE_SOFT = 0, /* for example, host events */
+	THROTTLE_HARD, /* for example, PROCHOT */
 	NUM_THROTTLE_TYPES
 };
 
@@ -58,12 +58,11 @@ struct prochot_cfg {
  * @param type          Type of throttling desired
  * @param source        Which task is requesting throttling
  */
-#if defined(CONFIG_THROTTLE_AP) || \
+#if defined(CONFIG_THROTTLE_AP) ||                           \
 	defined(CONFIG_THROTTLE_AP_ON_BAT_DISCHG_CURRENT) || \
 	defined(CONFIG_THROTTLE_AP_ON_BAT_VOLTAGE)
 
-void throttle_ap(enum throttle_level level,
-		 enum throttle_type type,
+void throttle_ap(enum throttle_level level, enum throttle_type type,
 		 enum throttle_sources source);
 
 /**
@@ -103,11 +102,11 @@ void throttle_ap_c10_input_interrupt(enum gpio_signal signal);
 static inline void throttle_ap(enum throttle_level level,
 			       enum throttle_type type,
 			       enum throttle_sources source)
-{}
+{
+}
 #endif
 
-void throttle_gpu(enum throttle_level level,
-		  enum throttle_type type,
+void throttle_gpu(enum throttle_level level, enum throttle_type type,
 		  enum throttle_sources source);
 
-#endif	/* __CROS_EC_THROTTLE_AP_H */
+#endif /* __CROS_EC_THROTTLE_AP_H */
