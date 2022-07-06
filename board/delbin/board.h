@@ -42,7 +42,6 @@
 #define CONFIG_KEYBOARD_CUSTOMIZATION
 #define CONFIG_KEYBOARD_MULTIPLE
 
-
 /* Sensors */
 /* BMA253 accelerometer in base */
 #define CONFIG_ACCEL_BMA255
