@@ -1004,15 +1004,16 @@ static int dp_status(int port, uint32_t *payload)
 	if (opos != OPOS)
 		return 0; /* NAK */
 
-	payload[1] = VDO_DP_STATUS(0, /* IRQ_HPD */
-				   hpd, /* HPD_HI|LOW */
-				   0, /* request exit DP */
-				   0, /* request exit USB */
-				   (alt_dp_config & ALT_DP_MF_PREF) != 0, /* MF
-									     pref
-									   */
-				   dp_enabled, 0, /* power low */
-				   hpd ? 0x2 : 0);
+	payload[1] =
+		VDO_DP_STATUS(0, /* IRQ_HPD */
+			      hpd, /* HPD_HI|LOW */
+			      0, /* request exit DP */
+			      0, /* request exit USB */
+			      (alt_dp_config & ALT_DP_MF_PREF) != 0, /* MF
+									pref
+								      */
+			      dp_enabled, 0, /* power low */
+			      hpd ? 0x2 : 0);
 
 	return 2;
 }
