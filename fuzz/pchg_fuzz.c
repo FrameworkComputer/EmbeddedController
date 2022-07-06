@@ -5,7 +5,6 @@
  * Test peripheral device charger module.
  */
 
-#define HIDE_EC_STDLIB
 #include "common.h"
 #include "compile_time_macros.h"
 #include "driver/nfc/ctn730.h"

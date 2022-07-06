@@ -372,8 +372,7 @@ enum ec_error_list {
 
 /*
  * Mark functions that collide with stdlib so they can be hidden when linking
- * against libraries that require stdlib. HIDE_EC_STDLIB should be defined
- * before including common.h from code that links to cstdlib.
+ * against libraries that require stdlib.
  */
 #ifdef TEST_FUZZ
 #define __stdlib_compat __attribute__((visibility("hidden")))

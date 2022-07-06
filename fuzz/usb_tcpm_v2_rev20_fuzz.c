@@ -5,7 +5,6 @@
  * Stubs needed for fuzz testing the USB TCPMv2 state machines.
  */
 
-#define HIDE_EC_STDLIB
 #include "charge_manager.h"
 #include "mock/usb_mux_mock.h"
 #include "usb_pd.h"
