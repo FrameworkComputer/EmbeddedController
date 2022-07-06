@@ -8,7 +8,7 @@
 #ifndef DRIVER_NVIDIA_GPU_H
 #define DRIVER_NVIDIA_GPU_H
 
-#define NVIDIA_GPU_ACOFF_DURATION	(100 * MSEC)
+#define NVIDIA_GPU_ACOFF_DURATION (100 * MSEC)
 
 enum d_notify_level {
 	D_NOTIFY_1 = 0,
@@ -40,18 +40,19 @@ struct d_notify_policy {
 	};
 };
 
-#define AC_ATLEAST_W(W) { \
-	.power_source = D_NOTIFY_AC, \
-	.ac.min_charger_watts = (W), \
+#define AC_ATLEAST_W(W)                                                   \
+	{                                                                 \
+		.power_source = D_NOTIFY_AC, .ac.min_charger_watts = (W), \
 	}
 
-#define AC_DC { \
-	.power_source = D_NOTIFY_AC_DC, \
+#define AC_DC                                   \
+	{                                       \
+		.power_source = D_NOTIFY_AC_DC, \
 	}
 
-#define DC_ATLEAST_SOC(S) { \
-	.power_source = D_NOTIFY_DC, \
-	.dc.min_battery_soc = (S), \
+#define DC_ATLEAST_SOC(S)                                               \
+	{                                                               \
+		.power_source = D_NOTIFY_DC, .dc.min_battery_soc = (S), \
 	}
 
 void nvidia_gpu_init_policy(const struct d_notify_policy *policies);
