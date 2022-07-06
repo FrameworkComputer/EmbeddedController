@@ -141,6 +141,7 @@
 			mutex = <&base_mutex>;
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
+			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
 			drv-data = <&lsm6dso_data>;
 		};
 	};
