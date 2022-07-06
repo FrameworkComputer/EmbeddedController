@@ -442,8 +442,6 @@ cmd_merge_cov=lcov --rc lcov_branch_coverage=1 -o build/coverage/lcov.info \
 	$(foreach info,$^,-a ${info})
 cmd_report_cov=genhtml --branch-coverage -q -o build/coverage/coverage_rpt -t \
 	       "EC Unittest "$(bldversion) -s $^
-cmd_strip_lcov=sed -i build/coverage/lcov.info \
-	-e 's/\/mnt\/host\/source\/src\/platform\/ec\///'
 
 # Unless V is set to 0 we always want the 'size:' target to report its output,
 # there is no point in generating a short form command trace when calculating
@@ -491,7 +489,6 @@ coverage: TEST_FLAG=TEST_COVERAGE=y
 coverage: $(cov-test-targets) $(cov-initial-targets)
 	$(call quiet,merge_cov,MERGE  )
 	$(call quiet,report_cov,REPORT )
-	$(call quiet,strip_lcov,STRIP  )
 test-coverage: TEST_FLAG=TEST_COVERAGE=y
 test-coverage: $(cov-test-targets)
 	$(call quiet,merge_cov,MERGE  )
