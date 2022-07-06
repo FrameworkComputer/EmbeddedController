@@ -992,8 +992,8 @@ static int charge_request(int voltage, int current)
 	 * from nvdc + chrg will be done separately.
 	 */
 	should_bypass = board_should_charger_bypass();
-	if ((should_bypass && !(curr.chg.status & CHARGER_BYPASS_MODE))
-		|| (!should_bypass && (curr.chg.status & CHARGER_BYPASS_MODE)))
+	if ((should_bypass && !(curr.chg.status & CHARGER_BYPASS_MODE)) ||
+	    (!should_bypass && (curr.chg.status & CHARGER_BYPASS_MODE)))
 		charger_enable_bypass_mode(0, should_bypass);
 
 	/*
