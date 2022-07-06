@@ -19,8 +19,8 @@
 #include "throttle_ap.h"
 #include "timer.h"
 
-#define CPRINTS(fmt, args...) cprints(CC_GPU, "GPU: " fmt, ## args)
-#define CPRINTF(fmt, args...) cprintf(CC_GPU, "GPU: " fmt, ## args)
+#define CPRINTS(fmt, args...) cprints(CC_GPU, "GPU: " fmt, ##args)
+#define CPRINTF(fmt, args...) cprintf(CC_GPU, "GPU: " fmt, ##args)
 
 test_export_static enum d_notify_level d_notify_level = D_NOTIFY_1;
 test_export_static bool policy_initialized = false;
@@ -54,8 +54,8 @@ static void set_d_notify_level(enum d_notify_level level)
 		return;
 
 	d_notify_level = level;
-	*memmap_gpu = (*memmap_gpu & ~EC_MEMMAP_GPU_D_NOTIFY_MASK)
-			| d_notify_level;
+	*memmap_gpu = (*memmap_gpu & ~EC_MEMMAP_GPU_D_NOTIFY_MASK) |
+		      d_notify_level;
 	host_set_single_event(EC_HOST_EVENT_GPU);
 	CPRINTS("Set D-notify level to D%c", ('1' + (int)d_notify_level));
 }
@@ -139,8 +139,8 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, handle_battery_soc_change,
  * is called whenever (and prior to) active port or active supplier or both
  * changes.
  */
-void throttle_gpu(enum throttle_level level,
-		  enum throttle_type type, /* not used */
+void throttle_gpu(enum throttle_level level, enum throttle_type type, /* not
+									 used */
 		  enum throttle_sources source)
 {
 	if (level == THROTTLE_ON) {
