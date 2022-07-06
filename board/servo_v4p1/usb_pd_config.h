@@ -189,23 +189,25 @@ static inline void pd_select_polarity(int port, int polarity)
 	if (port == CHG) {
 		/* CHG use the right comparator inverted input for COMP2 */
 		STM32_COMP_CSR = (val & ~STM32_COMP_CMP2INSEL_MASK) |
-				 (polarity ? STM32_COMP_CMP2INSEL_INM4 /* PA4:
-									  C0_CC2
-									*/
-					     :
-					     STM32_COMP_CMP2INSEL_INM6); /* PA2:
-									    C0_CC1
-									  */
+				 (polarity ?
+					  STM32_COMP_CMP2INSEL_INM4 /* PA4:
+								       C0_CC2
+								     */
+					  :
+					  STM32_COMP_CMP2INSEL_INM6); /* PA2:
+									 C0_CC1
+								       */
 	} else {
 		/* DUT use the right comparator inverted input for COMP1 */
 		STM32_COMP_CSR = (val & ~STM32_COMP_CMP1INSEL_MASK) |
-				 (polarity ? STM32_COMP_CMP1INSEL_INM5 /* PA5:
-									  C1_CC2
-									*/
-					     :
-					     STM32_COMP_CMP1INSEL_INM6); /* PA0:
-									    C1_CC1
-									  */
+				 (polarity ?
+					  STM32_COMP_CMP1INSEL_INM5 /* PA5:
+								       C1_CC2
+								     */
+					  :
+					  STM32_COMP_CMP1INSEL_INM6); /* PA0:
+									 C1_CC1
+								       */
 	}
 }
 
