@@ -44,7 +44,7 @@
  * STM32F072x8 Datasheet.  PVD Threshold 1 corresponds to a falling
  * voltage threshold of min:2.09V, max:2.27V.
  */
-#define PVD_THRESHOLD     (1)
+#define PVD_THRESHOLD (1)
 
 /* USB Configuration */
 
@@ -66,25 +66,25 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
-#define USB_IFACE_CONSOLE	0
-#define USB_IFACE_SPI		1
-#define USB_IFACE_I2C		2
-#define USB_IFACE_USART1_STREAM	3
-#define USB_IFACE_USART2_STREAM	4
-#define USB_IFACE_USART4_STREAM	5
-#define USB_IFACE_USART9_STREAM	6
-#define USB_IFACE_COUNT		7
+#define USB_IFACE_CONSOLE 0
+#define USB_IFACE_SPI 1
+#define USB_IFACE_I2C 2
+#define USB_IFACE_USART1_STREAM 3
+#define USB_IFACE_USART2_STREAM 4
+#define USB_IFACE_USART4_STREAM 5
+#define USB_IFACE_USART9_STREAM 6
+#define USB_IFACE_COUNT 7
 
 /* USB endpoint indexes (use define rather than enum to expand them) */
-#define USB_EP_CONTROL		0
-#define USB_EP_CONSOLE		1
-#define USB_EP_SPI		2
-#define USB_EP_I2C		3
-#define USB_EP_USART1_STREAM	4
-#define USB_EP_USART2_STREAM	5
-#define USB_EP_USART4_STREAM	6
-#define USB_EP_USART9_STREAM	7
-#define USB_EP_COUNT		8
+#define USB_EP_CONTROL 0
+#define USB_EP_CONSOLE 1
+#define USB_EP_SPI 2
+#define USB_EP_I2C 3
+#define USB_EP_USART1_STREAM 4
+#define USB_EP_USART2_STREAM 5
+#define USB_EP_USART4_STREAM 6
+#define USB_EP_USART9_STREAM 7
+#define USB_EP_COUNT 8
 
 /*
  * Do not enable the common EC command gpioset for recasting of GPIO
@@ -106,14 +106,13 @@
 #define I2C_PORT_CONTROLLER 0
 #define CONFIG_STM32_SPI1_CONTROLLER
 
-
 /* See i2c_ite_flash_support.c for more information about these values */
 /*#define CONFIG_ITE_FLASH_SUPPORT */
 /*#define CONFIG_I2C_XFER_LARGE_TRANSFER */
 #undef CONFIG_USB_I2C_MAX_WRITE_COUNT
 #undef CONFIG_USB_I2C_MAX_READ_COUNT
-#define CONFIG_USB_I2C_MAX_WRITE_COUNT ((1<<9) - 4)
-#define CONFIG_USB_I2C_MAX_READ_COUNT ((1<<9) - 6)
+#define CONFIG_USB_I2C_MAX_WRITE_COUNT ((1 << 9) - 4)
+#define CONFIG_USB_I2C_MAX_READ_COUNT ((1 << 9) - 6)
 
 /* This is not actually an EC so disable some features. */
 #undef CONFIG_WATCHDOG_HELP
