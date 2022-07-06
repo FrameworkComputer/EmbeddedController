@@ -88,19 +88,21 @@ typedef struct {
 							     Mask */
 #define MXC_V_UART_CTRL_ENABLE_DIS \
 	((uint32_t)0x0UL) /**< CTRL_ENABLE_DIS Value */
-#define MXC_S_UART_CTRL_ENABLE_DIS                                                    \
-	(MXC_V_UART_CTRL_ENABLE_DIS << MXC_F_UART_CTRL_ENABLE_POS) /**<               \
-								      CTRL_ENABLE_DIS \
-								      Setting         \
-								    */
+#define MXC_S_UART_CTRL_ENABLE_DIS                         \
+	(MXC_V_UART_CTRL_ENABLE_DIS                        \
+	 << MXC_F_UART_CTRL_ENABLE_POS) /**<               \
+					   CTRL_ENABLE_DIS \
+					   Setting         \
+					 */
 #define MXC_V_UART_CTRL_ENABLE_EN                   \
 	((uint32_t)0x1UL) /**< CTRL_ENABLE_EN Value \
 			   */
-#define MXC_S_UART_CTRL_ENABLE_EN                                                   \
-	(MXC_V_UART_CTRL_ENABLE_EN << MXC_F_UART_CTRL_ENABLE_POS) /**<              \
-								     CTRL_ENABLE_EN \
-								     Setting        \
-								   */
+#define MXC_S_UART_CTRL_ENABLE_EN                         \
+	(MXC_V_UART_CTRL_ENABLE_EN                        \
+	 << MXC_F_UART_CTRL_ENABLE_POS) /**<              \
+					   CTRL_ENABLE_EN \
+					   Setting        \
+					 */
 
 #define MXC_F_UART_CTRL_PARITY_EN_POS 1 /**< CTRL_PARITY_EN Position */
 #define MXC_F_UART_CTRL_PARITY_EN                                              \
@@ -109,18 +111,20 @@ typedef struct {
 								Mask */
 #define MXC_V_UART_CTRL_PARITY_EN_DIS \
 	((uint32_t)0x0UL) /**< CTRL_PARITY_EN_DIS Value */
-#define MXC_S_UART_CTRL_PARITY_EN_DIS                                                          \
-	(MXC_V_UART_CTRL_PARITY_EN_DIS << MXC_F_UART_CTRL_PARITY_EN_POS) /**<                  \
-									    CTRL_PARITY_EN_DIS \
-									    Setting            \
-									  */
+#define MXC_S_UART_CTRL_PARITY_EN_DIS                            \
+	(MXC_V_UART_CTRL_PARITY_EN_DIS                           \
+	 << MXC_F_UART_CTRL_PARITY_EN_POS) /**<                  \
+					      CTRL_PARITY_EN_DIS \
+					      Setting            \
+					    */
 #define MXC_V_UART_CTRL_PARITY_EN_EN \
 	((uint32_t)0x1UL) /**< CTRL_PARITY_EN_EN Value */
-#define MXC_S_UART_CTRL_PARITY_EN_EN                                                         \
-	(MXC_V_UART_CTRL_PARITY_EN_EN << MXC_F_UART_CTRL_PARITY_EN_POS) /**<                 \
-									   CTRL_PARITY_EN_EN \
-									   Setting           \
-									 */
+#define MXC_S_UART_CTRL_PARITY_EN_EN                            \
+	(MXC_V_UART_CTRL_PARITY_EN_EN                           \
+	 << MXC_F_UART_CTRL_PARITY_EN_POS) /**<                 \
+					      CTRL_PARITY_EN_EN \
+					      Setting           \
+					    */
 
 #define MXC_F_UART_CTRL_PARITY_POS 2 /**< CTRL_PARITY Position */
 #define MXC_F_UART_CTRL_PARITY                                             \
@@ -128,32 +132,36 @@ typedef struct {
 							     Mask */
 #define MXC_V_UART_CTRL_PARITY_EVEN \
 	((uint32_t)0x0UL) /**< CTRL_PARITY_EVEN Value */
-#define MXC_S_UART_CTRL_PARITY_EVEN                                                     \
-	(MXC_V_UART_CTRL_PARITY_EVEN << MXC_F_UART_CTRL_PARITY_POS) /**<                \
-								       CTRL_PARITY_EVEN \
-								       Setting          \
-								     */
+#define MXC_S_UART_CTRL_PARITY_EVEN                         \
+	(MXC_V_UART_CTRL_PARITY_EVEN                        \
+	 << MXC_F_UART_CTRL_PARITY_POS) /**<                \
+					   CTRL_PARITY_EVEN \
+					   Setting          \
+					 */
 #define MXC_V_UART_CTRL_PARITY_ODD \
 	((uint32_t)0x1UL) /**< CTRL_PARITY_ODD Value */
-#define MXC_S_UART_CTRL_PARITY_ODD                                                    \
-	(MXC_V_UART_CTRL_PARITY_ODD << MXC_F_UART_CTRL_PARITY_POS) /**<               \
-								      CTRL_PARITY_ODD \
-								      Setting         \
-								    */
+#define MXC_S_UART_CTRL_PARITY_ODD                         \
+	(MXC_V_UART_CTRL_PARITY_ODD                        \
+	 << MXC_F_UART_CTRL_PARITY_POS) /**<               \
+					   CTRL_PARITY_ODD \
+					   Setting         \
+					 */
 #define MXC_V_UART_CTRL_PARITY_MARK \
 	((uint32_t)0x2UL) /**< CTRL_PARITY_MARK Value */
-#define MXC_S_UART_CTRL_PARITY_MARK                                                     \
-	(MXC_V_UART_CTRL_PARITY_MARK << MXC_F_UART_CTRL_PARITY_POS) /**<                \
-								       CTRL_PARITY_MARK \
-								       Setting          \
-								     */
+#define MXC_S_UART_CTRL_PARITY_MARK                         \
+	(MXC_V_UART_CTRL_PARITY_MARK                        \
+	 << MXC_F_UART_CTRL_PARITY_POS) /**<                \
+					   CTRL_PARITY_MARK \
+					   Setting          \
+					 */
 #define MXC_V_UART_CTRL_PARITY_SPACE \
 	((uint32_t)0x3UL) /**< CTRL_PARITY_SPACE Value */
-#define MXC_S_UART_CTRL_PARITY_SPACE                                                      \
-	(MXC_V_UART_CTRL_PARITY_SPACE << MXC_F_UART_CTRL_PARITY_POS) /**<                 \
-									CTRL_PARITY_SPACE \
-									Setting           \
-								      */
+#define MXC_S_UART_CTRL_PARITY_SPACE                         \
+	(MXC_V_UART_CTRL_PARITY_SPACE                        \
+	 << MXC_F_UART_CTRL_PARITY_POS) /**<                 \
+					   CTRL_PARITY_SPACE \
+					   Setting           \
+					 */
 
 #define MXC_F_UART_CTRL_PARMD_POS 4 /**< CTRL_PARMD Position */
 #define MXC_F_UART_CTRL_PARMD                                                 \
@@ -186,18 +194,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_UART_CTRL_BITACC_FRAME \
 	((uint32_t)0x0UL) /**< CTRL_BITACC_FRAME Value */
-#define MXC_S_UART_CTRL_BITACC_FRAME                                                      \
-	(MXC_V_UART_CTRL_BITACC_FRAME << MXC_F_UART_CTRL_BITACC_POS) /**<                 \
-									CTRL_BITACC_FRAME \
-									Setting           \
-								      */
+#define MXC_S_UART_CTRL_BITACC_FRAME                         \
+	(MXC_V_UART_CTRL_BITACC_FRAME                        \
+	 << MXC_F_UART_CTRL_BITACC_POS) /**<                 \
+					   CTRL_BITACC_FRAME \
+					   Setting           \
+					 */
 #define MXC_V_UART_CTRL_BITACC_BIT \
 	((uint32_t)0x1UL) /**< CTRL_BITACC_BIT Value */
-#define MXC_S_UART_CTRL_BITACC_BIT                                                    \
-	(MXC_V_UART_CTRL_BITACC_BIT << MXC_F_UART_CTRL_BITACC_POS) /**<               \
-								      CTRL_BITACC_BIT \
-								      Setting         \
-								    */
+#define MXC_S_UART_CTRL_BITACC_BIT                         \
+	(MXC_V_UART_CTRL_BITACC_BIT                        \
+	 << MXC_F_UART_CTRL_BITACC_POS) /**<               \
+					   CTRL_BITACC_BIT \
+					   Setting         \
+					 */
 
 #define MXC_F_UART_CTRL_CHAR_SIZE_POS 8 /**< CTRL_CHAR_SIZE Position */
 #define MXC_F_UART_CTRL_CHAR_SIZE                                              \
@@ -206,32 +216,36 @@ typedef struct {
 								Mask */
 #define MXC_V_UART_CTRL_CHAR_SIZE_5 \
 	((uint32_t)0x0UL) /**< CTRL_CHAR_SIZE_5 Value */
-#define MXC_S_UART_CTRL_CHAR_SIZE_5                                                        \
-	(MXC_V_UART_CTRL_CHAR_SIZE_5 << MXC_F_UART_CTRL_CHAR_SIZE_POS) /**<                \
-									  CTRL_CHAR_SIZE_5 \
-									  Setting          \
-									*/
+#define MXC_S_UART_CTRL_CHAR_SIZE_5                            \
+	(MXC_V_UART_CTRL_CHAR_SIZE_5                           \
+	 << MXC_F_UART_CTRL_CHAR_SIZE_POS) /**<                \
+					      CTRL_CHAR_SIZE_5 \
+					      Setting          \
+					    */
 #define MXC_V_UART_CTRL_CHAR_SIZE_6 \
 	((uint32_t)0x1UL) /**< CTRL_CHAR_SIZE_6 Value */
-#define MXC_S_UART_CTRL_CHAR_SIZE_6                                                        \
-	(MXC_V_UART_CTRL_CHAR_SIZE_6 << MXC_F_UART_CTRL_CHAR_SIZE_POS) /**<                \
-									  CTRL_CHAR_SIZE_6 \
-									  Setting          \
-									*/
+#define MXC_S_UART_CTRL_CHAR_SIZE_6                            \
+	(MXC_V_UART_CTRL_CHAR_SIZE_6                           \
+	 << MXC_F_UART_CTRL_CHAR_SIZE_POS) /**<                \
+					      CTRL_CHAR_SIZE_6 \
+					      Setting          \
+					    */
 #define MXC_V_UART_CTRL_CHAR_SIZE_7 \
 	((uint32_t)0x2UL) /**< CTRL_CHAR_SIZE_7 Value */
-#define MXC_S_UART_CTRL_CHAR_SIZE_7                                                        \
-	(MXC_V_UART_CTRL_CHAR_SIZE_7 << MXC_F_UART_CTRL_CHAR_SIZE_POS) /**<                \
-									  CTRL_CHAR_SIZE_7 \
-									  Setting          \
-									*/
+#define MXC_S_UART_CTRL_CHAR_SIZE_7                            \
+	(MXC_V_UART_CTRL_CHAR_SIZE_7                           \
+	 << MXC_F_UART_CTRL_CHAR_SIZE_POS) /**<                \
+					      CTRL_CHAR_SIZE_7 \
+					      Setting          \
+					    */
 #define MXC_V_UART_CTRL_CHAR_SIZE_8 \
 	((uint32_t)0x3UL) /**< CTRL_CHAR_SIZE_8 Value */
-#define MXC_S_UART_CTRL_CHAR_SIZE_8                                                        \
-	(MXC_V_UART_CTRL_CHAR_SIZE_8 << MXC_F_UART_CTRL_CHAR_SIZE_POS) /**<                \
-									  CTRL_CHAR_SIZE_8 \
-									  Setting          \
-									*/
+#define MXC_S_UART_CTRL_CHAR_SIZE_8                            \
+	(MXC_V_UART_CTRL_CHAR_SIZE_8                           \
+	 << MXC_F_UART_CTRL_CHAR_SIZE_POS) /**<                \
+					      CTRL_CHAR_SIZE_8 \
+					      Setting          \
+					    */
 
 #define MXC_F_UART_CTRL_STOPBITS_POS 10 /**< CTRL_STOPBITS Position */
 #define MXC_F_UART_CTRL_STOPBITS                                               \
@@ -239,18 +253,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_UART_CTRL_STOPBITS_1 \
 	((uint32_t)0x0UL) /**< CTRL_STOPBITS_1 Value */
-#define MXC_S_UART_CTRL_STOPBITS_1                                                      \
-	(MXC_V_UART_CTRL_STOPBITS_1 << MXC_F_UART_CTRL_STOPBITS_POS) /**<               \
-									CTRL_STOPBITS_1 \
-									Setting         \
-								      */
+#define MXC_S_UART_CTRL_STOPBITS_1                           \
+	(MXC_V_UART_CTRL_STOPBITS_1                          \
+	 << MXC_F_UART_CTRL_STOPBITS_POS) /**<               \
+					     CTRL_STOPBITS_1 \
+					     Setting         \
+					   */
 #define MXC_V_UART_CTRL_STOPBITS_1_5 \
 	((uint32_t)0x1UL) /**< CTRL_STOPBITS_1_5 Value */
-#define MXC_S_UART_CTRL_STOPBITS_1_5                                                        \
-	(MXC_V_UART_CTRL_STOPBITS_1_5 << MXC_F_UART_CTRL_STOPBITS_POS) /**<                 \
-									  CTRL_STOPBITS_1_5 \
-									  Setting           \
-									*/
+#define MXC_S_UART_CTRL_STOPBITS_1_5                           \
+	(MXC_V_UART_CTRL_STOPBITS_1_5                          \
+	 << MXC_F_UART_CTRL_STOPBITS_POS) /**<                 \
+					     CTRL_STOPBITS_1_5 \
+					     Setting           \
+					   */
 
 #define MXC_F_UART_CTRL_FLOW_CTRL_POS 11 /**< CTRL_FLOW_CTRL Position */
 #define MXC_F_UART_CTRL_FLOW_CTRL                                              \
@@ -259,18 +275,20 @@ typedef struct {
 								Mask */
 #define MXC_V_UART_CTRL_FLOW_CTRL_EN \
 	((uint32_t)0x1UL) /**< CTRL_FLOW_CTRL_EN Value */
-#define MXC_S_UART_CTRL_FLOW_CTRL_EN                                                         \
-	(MXC_V_UART_CTRL_FLOW_CTRL_EN << MXC_F_UART_CTRL_FLOW_CTRL_POS) /**<                 \
-									   CTRL_FLOW_CTRL_EN \
-									   Setting           \
-									 */
+#define MXC_S_UART_CTRL_FLOW_CTRL_EN                            \
+	(MXC_V_UART_CTRL_FLOW_CTRL_EN                           \
+	 << MXC_F_UART_CTRL_FLOW_CTRL_POS) /**<                 \
+					      CTRL_FLOW_CTRL_EN \
+					      Setting           \
+					    */
 #define MXC_V_UART_CTRL_FLOW_CTRL_DIS \
 	((uint32_t)0x0UL) /**< CTRL_FLOW_CTRL_DIS Value */
-#define MXC_S_UART_CTRL_FLOW_CTRL_DIS                                                          \
-	(MXC_V_UART_CTRL_FLOW_CTRL_DIS << MXC_F_UART_CTRL_FLOW_CTRL_POS) /**<                  \
-									    CTRL_FLOW_CTRL_DIS \
-									    Setting            \
-									  */
+#define MXC_S_UART_CTRL_FLOW_CTRL_DIS                            \
+	(MXC_V_UART_CTRL_FLOW_CTRL_DIS                           \
+	 << MXC_F_UART_CTRL_FLOW_CTRL_POS) /**<                  \
+					      CTRL_FLOW_CTRL_DIS \
+					      Setting            \
+					    */
 
 #define MXC_F_UART_CTRL_FLOW_POL_POS 12 /**< CTRL_FLOW_POL Position */
 #define MXC_F_UART_CTRL_FLOW_POL                                               \
@@ -278,18 +296,20 @@ typedef struct {
 							       Mask */
 #define MXC_V_UART_CTRL_FLOW_POL_0 \
 	((uint32_t)0x0UL) /**< CTRL_FLOW_POL_0 Value */
-#define MXC_S_UART_CTRL_FLOW_POL_0                                                      \
-	(MXC_V_UART_CTRL_FLOW_POL_0 << MXC_F_UART_CTRL_FLOW_POL_POS) /**<               \
-									CTRL_FLOW_POL_0 \
-									Setting         \
-								      */
+#define MXC_S_UART_CTRL_FLOW_POL_0                           \
+	(MXC_V_UART_CTRL_FLOW_POL_0                          \
+	 << MXC_F_UART_CTRL_FLOW_POL_POS) /**<               \
+					     CTRL_FLOW_POL_0 \
+					     Setting         \
+					   */
 #define MXC_V_UART_CTRL_FLOW_POL_1 \
 	((uint32_t)0x1UL) /**< CTRL_FLOW_POL_1 Value */
-#define MXC_S_UART_CTRL_FLOW_POL_1                                                      \
-	(MXC_V_UART_CTRL_FLOW_POL_1 << MXC_F_UART_CTRL_FLOW_POL_POS) /**<               \
-									CTRL_FLOW_POL_1 \
-									Setting         \
-								      */
+#define MXC_S_UART_CTRL_FLOW_POL_1                           \
+	(MXC_V_UART_CTRL_FLOW_POL_1                          \
+	 << MXC_F_UART_CTRL_FLOW_POL_POS) /**<               \
+					     CTRL_FLOW_POL_1 \
+					     Setting         \
+					   */
 
 #define MXC_F_UART_CTRL_NULL_MODEM_POS 13 /**< CTRL_NULL_MODEM Position */
 #define MXC_F_UART_CTRL_NULL_MODEM                                           \
@@ -315,15 +335,17 @@ typedef struct {
 #define MXC_V_UART_CTRL_BREAK_DIS                   \
 	((uint32_t)0x0UL) /**< CTRL_BREAK_DIS Value \
 			   */
-#define MXC_S_UART_CTRL_BREAK_DIS                                                  \
-	(MXC_V_UART_CTRL_BREAK_DIS << MXC_F_UART_CTRL_BREAK_POS) /**<              \
-								    CTRL_BREAK_DIS \
-								    Setting */
+#define MXC_S_UART_CTRL_BREAK_DIS                        \
+	(MXC_V_UART_CTRL_BREAK_DIS                       \
+	 << MXC_F_UART_CTRL_BREAK_POS) /**<              \
+					  CTRL_BREAK_DIS \
+					  Setting */
 #define MXC_V_UART_CTRL_BREAK_EN ((uint32_t)0x1UL) /**< CTRL_BREAK_EN Value */
-#define MXC_S_UART_CTRL_BREAK_EN                                                 \
-	(MXC_V_UART_CTRL_BREAK_EN << MXC_F_UART_CTRL_BREAK_POS) /**<             \
-								   CTRL_BREAK_EN \
-								   Setting */
+#define MXC_S_UART_CTRL_BREAK_EN                        \
+	(MXC_V_UART_CTRL_BREAK_EN                       \
+	 << MXC_F_UART_CTRL_BREAK_POS) /**<             \
+					  CTRL_BREAK_EN \
+					  Setting */
 
 #define MXC_F_UART_CTRL_CLKSEL_POS 15 /**< CTRL_CLKSEL Position */
 #define MXC_F_UART_CTRL_CLKSEL                                             \
@@ -331,18 +353,20 @@ typedef struct {
 							     Mask */
 #define MXC_V_UART_CTRL_CLKSEL_SYSTEM \
 	((uint32_t)0x0UL) /**< CTRL_CLKSEL_SYSTEM Value */
-#define MXC_S_UART_CTRL_CLKSEL_SYSTEM                                                       \
-	(MXC_V_UART_CTRL_CLKSEL_SYSTEM << MXC_F_UART_CTRL_CLKSEL_POS) /**<                  \
-									 CTRL_CLKSEL_SYSTEM \
-									 Setting            \
-								       */
+#define MXC_S_UART_CTRL_CLKSEL_SYSTEM                         \
+	(MXC_V_UART_CTRL_CLKSEL_SYSTEM                        \
+	 << MXC_F_UART_CTRL_CLKSEL_POS) /**<                  \
+					   CTRL_CLKSEL_SYSTEM \
+					   Setting            \
+					 */
 #define MXC_V_UART_CTRL_CLKSEL_ALTERNATE \
 	((uint32_t)0x1UL) /**< CTRL_CLKSEL_ALTERNATE Value */
-#define MXC_S_UART_CTRL_CLKSEL_ALTERNATE                                                          \
-	(MXC_V_UART_CTRL_CLKSEL_ALTERNATE << MXC_F_UART_CTRL_CLKSEL_POS) /**<                     \
-									    CTRL_CLKSEL_ALTERNATE \
-									    Setting               \
-									  */
+#define MXC_S_UART_CTRL_CLKSEL_ALTERNATE                         \
+	(MXC_V_UART_CTRL_CLKSEL_ALTERNATE                        \
+	 << MXC_F_UART_CTRL_CLKSEL_POS) /**<                     \
+					   CTRL_CLKSEL_ALTERNATE \
+					   Setting               \
+					 */
 
 #define MXC_F_UART_CTRL_RX_TO_POS 16 /**< CTRL_RX_TO Position */
 #define MXC_F_UART_CTRL_RX_TO                                                  \
@@ -614,32 +638,36 @@ typedef struct {
 							      Mask */
 #define MXC_V_UART_BAUD0_FACTOR_128 \
 	((uint32_t)0x0UL) /**< BAUD0_FACTOR_128 Value */
-#define MXC_S_UART_BAUD0_FACTOR_128                                                      \
-	(MXC_V_UART_BAUD0_FACTOR_128 << MXC_F_UART_BAUD0_FACTOR_POS) /**<                \
-									BAUD0_FACTOR_128 \
-									Setting          \
-								      */
+#define MXC_S_UART_BAUD0_FACTOR_128                          \
+	(MXC_V_UART_BAUD0_FACTOR_128                         \
+	 << MXC_F_UART_BAUD0_FACTOR_POS) /**<                \
+					    BAUD0_FACTOR_128 \
+					    Setting          \
+					  */
 #define MXC_V_UART_BAUD0_FACTOR_64 \
 	((uint32_t)0x1UL) /**< BAUD0_FACTOR_64 Value */
-#define MXC_S_UART_BAUD0_FACTOR_64                                                     \
-	(MXC_V_UART_BAUD0_FACTOR_64 << MXC_F_UART_BAUD0_FACTOR_POS) /**<               \
-								       BAUD0_FACTOR_64 \
-								       Setting         \
-								     */
+#define MXC_S_UART_BAUD0_FACTOR_64                          \
+	(MXC_V_UART_BAUD0_FACTOR_64                         \
+	 << MXC_F_UART_BAUD0_FACTOR_POS) /**<               \
+					    BAUD0_FACTOR_64 \
+					    Setting         \
+					  */
 #define MXC_V_UART_BAUD0_FACTOR_32 \
 	((uint32_t)0x2UL) /**< BAUD0_FACTOR_32 Value */
-#define MXC_S_UART_BAUD0_FACTOR_32                                                     \
-	(MXC_V_UART_BAUD0_FACTOR_32 << MXC_F_UART_BAUD0_FACTOR_POS) /**<               \
-								       BAUD0_FACTOR_32 \
-								       Setting         \
-								     */
+#define MXC_S_UART_BAUD0_FACTOR_32                          \
+	(MXC_V_UART_BAUD0_FACTOR_32                         \
+	 << MXC_F_UART_BAUD0_FACTOR_POS) /**<               \
+					    BAUD0_FACTOR_32 \
+					    Setting         \
+					  */
 #define MXC_V_UART_BAUD0_FACTOR_16 \
 	((uint32_t)0x3UL) /**< BAUD0_FACTOR_16 Value */
-#define MXC_S_UART_BAUD0_FACTOR_16                                                     \
-	(MXC_V_UART_BAUD0_FACTOR_16 << MXC_F_UART_BAUD0_FACTOR_POS) /**<               \
-								       BAUD0_FACTOR_16 \
-								       Setting         \
-								     */
+#define MXC_S_UART_BAUD0_FACTOR_16                          \
+	(MXC_V_UART_BAUD0_FACTOR_16                         \
+	 << MXC_F_UART_BAUD0_FACTOR_POS) /**<               \
+					    BAUD0_FACTOR_16 \
+					    Setting         \
+					  */
 
 /**
  * Baud rate register. Decimal Setting.
@@ -666,19 +694,21 @@ typedef struct {
 							     Mask */
 #define MXC_V_UART_DMA_TDMA_EN_DIS \
 	((uint32_t)0x0UL) /**< DMA_TDMA_EN_DIS Value */
-#define MXC_S_UART_DMA_TDMA_EN_DIS                                                    \
-	(MXC_V_UART_DMA_TDMA_EN_DIS << MXC_F_UART_DMA_TDMA_EN_POS) /**<               \
-								      DMA_TDMA_EN_DIS \
-								      Setting         \
-								    */
+#define MXC_S_UART_DMA_TDMA_EN_DIS                         \
+	(MXC_V_UART_DMA_TDMA_EN_DIS                        \
+	 << MXC_F_UART_DMA_TDMA_EN_POS) /**<               \
+					   DMA_TDMA_EN_DIS \
+					   Setting         \
+					 */
 #define MXC_V_UART_DMA_TDMA_EN_EN                   \
 	((uint32_t)0x1UL) /**< DMA_TDMA_EN_EN Value \
 			   */
-#define MXC_S_UART_DMA_TDMA_EN_EN                                                   \
-	(MXC_V_UART_DMA_TDMA_EN_EN << MXC_F_UART_DMA_TDMA_EN_POS) /**<              \
-								     DMA_TDMA_EN_EN \
-								     Setting        \
-								   */
+#define MXC_S_UART_DMA_TDMA_EN_EN                         \
+	(MXC_V_UART_DMA_TDMA_EN_EN                        \
+	 << MXC_F_UART_DMA_TDMA_EN_POS) /**<              \
+					   DMA_TDMA_EN_EN \
+					   Setting        \
+					 */
 
 #define MXC_F_UART_DMA_RXDMA_EN_POS 1 /**< DMA_RXDMA_EN Position */
 #define MXC_F_UART_DMA_RXDMA_EN                                              \
@@ -686,18 +716,20 @@ typedef struct {
 							      Mask */
 #define MXC_V_UART_DMA_RXDMA_EN_DIS \
 	((uint32_t)0x0UL) /**< DMA_RXDMA_EN_DIS Value */
-#define MXC_S_UART_DMA_RXDMA_EN_DIS                                                      \
-	(MXC_V_UART_DMA_RXDMA_EN_DIS << MXC_F_UART_DMA_RXDMA_EN_POS) /**<                \
-									DMA_RXDMA_EN_DIS \
-									Setting          \
-								      */
+#define MXC_S_UART_DMA_RXDMA_EN_DIS                          \
+	(MXC_V_UART_DMA_RXDMA_EN_DIS                         \
+	 << MXC_F_UART_DMA_RXDMA_EN_POS) /**<                \
+					    DMA_RXDMA_EN_DIS \
+					    Setting          \
+					  */
 #define MXC_V_UART_DMA_RXDMA_EN_EN \
 	((uint32_t)0x1UL) /**< DMA_RXDMA_EN_EN Value */
-#define MXC_S_UART_DMA_RXDMA_EN_EN                                                     \
-	(MXC_V_UART_DMA_RXDMA_EN_EN << MXC_F_UART_DMA_RXDMA_EN_POS) /**<               \
-								       DMA_RXDMA_EN_EN \
-								       Setting         \
-								     */
+#define MXC_S_UART_DMA_RXDMA_EN_EN                          \
+	(MXC_V_UART_DMA_RXDMA_EN_EN                         \
+	 << MXC_F_UART_DMA_RXDMA_EN_POS) /**<               \
+					    DMA_RXDMA_EN_EN \
+					    Setting         \
+					  */
 
 #define MXC_F_UART_DMA_TXDMA_LEVEL_POS 8 /**< DMA_TXDMA_LEVEL Position */
 #define MXC_F_UART_DMA_TXDMA_LEVEL                                           \
