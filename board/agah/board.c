@@ -37,11 +37,8 @@
 static int block_sequence;
 
 struct d_notify_policy d_notify_policies[] = {
-	AC_ATLEAST_W(100),
-	AC_ATLEAST_W(65),
-	AC_DC,
-	DC_ATLEAST_SOC(20),
-	DC_ATLEAST_SOC(5),
+	AC_ATLEAST_W(100),  AC_ATLEAST_W(65),  AC_DC,
+	DC_ATLEAST_SOC(20), DC_ATLEAST_SOC(5),
 };
 BUILD_ASSERT(ARRAY_SIZE(d_notify_policies) == D_NOTIFY_COUNT);
 
