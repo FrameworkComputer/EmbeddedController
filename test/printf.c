@@ -12,12 +12,21 @@
 #include "test_util.h"
 #include "util.h"
 
+#ifdef USE_BUILTIN_STDLIB
 /*
- * This file is intended to test the EC printf implementation. We need to
- * include the builtin header file directly so that we can call the EC
- * version (crec_vsnprintf) when linking with the standard library on the host.
+ * When USE_BUILTIN_STDLIB is defined, we want to test the EC printf
+ * implementation. We need to include the builtin header file directly so
+ * that we can call the EC version (crec_vsnprintf) when linking with the
+ * standard library on the host.
  */
 #include "builtin/stdio.h"
+#define VSNPRINTF crec_vsnprintf
+static const bool use_builtin_stdlib = true;
+#else
+#include <stdio.h>
+#define VSNPRINTF vsnprintf
+static const bool use_builtin_stdlib = false;
+#endif
 
 #define INIT_VALUE 0x5E
 #define NO_BYTES_TOUCHED NULL
@@ -40,8 +49,7 @@ int run(int expect_ret, const char *expect, bool output_null, size_t size_limit,
 	TEST_ASSERT(expect_size <= size_limit);
 	memset(output, INIT_VALUE, sizeof(output));
 
-	rv = crec_vsnprintf(output_null ? NULL : output, size_limit, format,
-			    args);
+	rv = VSNPRINTF(output_null ? NULL : output, size_limit, format, args);
 	ccprintf("received='%.*s'   | ret          =%d\n", 30, output, rv);
 
 	TEST_ASSERT_ARRAY_EQ(output, expect, expect_size);
@@ -95,27 +103,33 @@ test_static int test_vsnprintf_args(void)
 	T(expect_success("", ""));
 	T(expect_success("a", "a"));
 
-	T(expect(/* expect an invalid args error */
-		 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 /* given 0 as output size limit */
-		 false, 0, ""));
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): This differs from the C standard library
+		 * behavior and should probably be changed.
+		 */
+		T(expect(/* expect an invalid args error */
+			 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
+			 /* given 0 as output size limit */
+			 false, 0, ""));
+		T(expect(/* expect an overflow error */
+			 EC_ERROR_OVERFLOW, "",
+			 /* given 1 as output size limit with a non-blank format
+			  */
+			 false, 1, "a"));
+		T(expect(/* expect an invalid args error */
+			 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
+			 /* given NULL as the output buffer */
+			 true, sizeof(output), ""));
+		T(expect(/* expect an invalid args error */
+			 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
+			 /* given a NULL format string */
+			 false, sizeof(output), NULL));
+	}
 	T(expect(/* expect SUCCESS */
 		 EC_SUCCESS, "",
 		 /* given 1 as output size limit and a blank format */
 		 false, 1, ""));
-	T(expect(/* expect an overflow error */
-		 EC_ERROR_OVERFLOW, "",
-		 /* given 1 as output size limit with a non-blank format */
-		 false, 1, "a"));
-
-	T(expect(/* expect an invalid args error */
-		 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 /* given NULL as the output buffer */
-		 true, sizeof(output), ""));
-	T(expect(/* expect an invalid args error */
-		 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-		 /* given a NULL format string */
-		 false, sizeof(output), NULL));
 
 	return EC_SUCCESS;
 }
@@ -133,42 +147,79 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success(" +123", "%+5d", 123));
 	T(expect_success("00123", "%05d", 123));
 	T(expect_success("00123", "%005d", 123));
-	/*
-	 * TODO(crbug.com/974084): This odd behavior should be fixed.
-	 * T(expect_success("+0123",     "%+05d",   123));
-	 * Actual: "0+123"
-	 * T(expect_success("+0123",     "%+005d",  123));
-	 * Actual: "0+123"
-	 */
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): These are incorrect and should be fixed.
+		 */
+		T(expect_success("0+123", "%+05d", 123));
+		T(expect_success("0+123", "%+005d", 123));
+	} else {
+		T(expect_success("+0123", "%+05d", 123));
+		T(expect_success("+0123", "%+005d", 123));
+	}
 
 	T(expect_success("  123", "%*d", 5, 123));
 	T(expect_success(" +123", "%+*d", 5, 123));
 	T(expect_success("00123", "%0*d", 5, 123));
-	/*
-	 * TODO(crbug.com/974084): This odd behavior should be fixed.
-	 * T(expect_success("00123",     "%00*d",   5, 123));
-	 * Actual: "ERROR"
-	 */
-	T(expect_success("0+123", "%+0*d", 5, 123));
-	/*
-	 * TODO(crbug.com/974084): This odd behavior should be fixed.
-	 * T(expect_success("0+123",     "%+00*d",  5, 123));
-	 * Actual: "ERROR"
-	 */
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): This incorrect and should be fixed.
+		 */
+		T(expect_success(err_str, "%00*d", 5, 123));
+	} else {
+		T(expect_success("00123", "%00*d", 5, 123));
+	}
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): This is incorrect and should be fixed.
+		 */
+		T(expect_success("0+123", "%+0*d", 5, 123));
+	} else {
+		T(expect_success("+0123", "%+0*d", 5, 123));
+	}
+
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): This is incorrect and should be fixed.
+		 */
+		T(expect_success(err_str, "%+00*d", 5, 123));
+	} else {
+		T(expect_success("+0123", "%+00*d", 5, 123));
+	}
 
 	T(expect_success("123  ", "%-5d", 123));
 	T(expect_success("+123 ", "%-+5d", 123));
-	T(expect_success(err_str, "%+-5d", 123));
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): This incorrect and should be fixed.
+		 */
+		T(expect_success(err_str, "%+-5d", 123));
+	} else {
+		T(expect_success("+123 ", "%+-5d", 123));
+	}
 	T(expect_success("123  ", "%-05d", 123));
 	T(expect_success("123  ", "%-005d", 123));
 	T(expect_success("+123 ", "%-+05d", 123));
 	T(expect_success("+123 ", "%-+005d", 123));
 
-	T(expect_success("0.00123", "%.5d", 123));
-	T(expect_success("+0.00123", "%+.5d", 123));
-	T(expect_success("0.00123", "%7.5d", 123));
-	T(expect_success("  0.00123", "%9.5d", 123));
-	T(expect_success(" +0.00123", "%+9.5d", 123));
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): These are incorrect and should be fixed.
+		 */
+		T(expect_success("0.00123", "%.5d", 123));
+		T(expect_success("+0.00123", "%+.5d", 123));
+		T(expect_success("0.00123", "%7.5d", 123));
+		T(expect_success("  0.00123", "%9.5d", 123));
+		T(expect_success(" +0.00123", "%+9.5d", 123));
+	} else {
+		T(expect_success("00123", "%.5d", 123));
+		T(expect_success("+00123", "%+.5d", 123));
+		T(expect_success("  00123", "%7.5d", 123));
+		T(expect_success("    00123", "%9.5d", 123));
+		T(expect_success("   +00123", "%+9.5d", 123));
+	}
 
 	T(expect_success("123", "%u", 123));
 	T(expect_success("4294967295", "%u", -1));
@@ -255,8 +306,16 @@ test_static int test_vsnprintf_64bit_long_supported(void)
 	T(expect_success("00000123", "%08lu", 123));
 	T(expect_success("131415", "%d%lu%d", 13, 14L, 15));
 
-	T(expect_success(err_str, "%i", 123));
-	T(expect_success(err_str, "%li", 123));
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): These are incorrect and should be fixed.
+		 */
+		T(expect_success(err_str, "%i", 123));
+		T(expect_success(err_str, "%li", 123));
+	} else {
+		T(expect_success("123", "%i", 123));
+		T(expect_success("123", "%li", 123));
+	}
 
 	return EC_SUCCESS;
 }
@@ -295,7 +354,14 @@ test_static int test_vsnprintf_pointers(void)
 {
 	void *ptr = (void *)0x55005E00;
 
-	T(expect_success("55005e00", "%p", ptr));
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): This incorrect and should be fixed.
+		 */
+		T(expect_success("55005e00", "%p", ptr));
+	} else {
+		T(expect_success("0x55005e00", "%p", ptr));
+	}
 
 	return EC_SUCCESS;
 }
@@ -318,12 +384,14 @@ test_static int test_vsnprintf_strings(void)
 	T(expect_success("a", "%.*s", 1, "abc"));
 	T(expect_success("", "%.0s", "abc"));
 	T(expect_success("", "%.*s", 0, "abc"));
-	/*
-	 * TODO(crbug.com/974084):
-	 * Ignoring the padding parameter is slightly
-	 * odd behavior and could use a review.
-	 */
-	T(expect_success("ab", "%5.2s", "abc"));
+	if (use_builtin_stdlib) {
+		/*
+		 * TODO(b/239233116): This incorrect and should be fixed.
+		 */
+		T(expect_success("ab", "%5.2s", "abc"));
+	} else {
+		T(expect_success("   ab", "%5.2s", "abc"));
+	}
 	T(expect_success("abc", "%.4s", "abc"));
 
 	/*
