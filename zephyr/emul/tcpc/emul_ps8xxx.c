@@ -579,8 +579,8 @@ static int ps8xxx_emul_init(const struct emul *emul,
 			.write_byte = ps8xxx_emul_write_byte,		\
 			.read_byte = ps8xxx_emul_read_byte,		\
 		},							\
-	};          \
-                                                                            \
+	};    \
+                                                                      \
 	static const struct ps8xxx_emul_cfg ps8xxx_emul_cfg_##n = {	\
 		.p0_cfg = {						\
 			.i2c_label = DT_INST_BUS_LABEL(n),		\
@@ -600,8 +600,8 @@ static int ps8xxx_emul_init(const struct emul *emul,
 			.data = &ps8xxx_emul_data_##n.gpio_data,	\
 			.addr = DT_INST_PROP(n, gpio_i2c_addr),		\
 		},							\
-	};       \
-	TCPCI_EMUL_DEFINE(n, ps8xxx_emul_init, &ps8xxx_emul_cfg_##n, \
+	}; \
+	TCPCI_EMUL_DEFINE(n, ps8xxx_emul_init, &ps8xxx_emul_cfg_##n,  \
 			  &ps8xxx_emul_data_##n)
 
 DT_INST_FOREACH_STATUS_OKAY(PS8XXX_EMUL)
