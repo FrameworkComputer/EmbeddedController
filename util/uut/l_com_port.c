@@ -177,9 +177,10 @@ bool com_config_uart(int h_dev_drv, struct comport_fields com_port_fields)
 	tty.c_cc[VMIN] = 0; /* read doesn't block		*/
 	tty.c_cc[VTIME] = 5; /* 0.5 seconds read timeout	*/
 
-	tty.c_iflag |= (com_port_fields.flow_control == 0x01) ? (IXON | IXOFF) :
-								0x00; /* xon/xoff
-									 ctrl */
+	tty.c_iflag |= (com_port_fields.flow_control == 0x01) ?
+			       (IXON | IXOFF) :
+			       0x00; /* xon/xoff
+					ctrl */
 
 	tty.c_cflag |= (CLOCAL | CREAD); /* ignore modem controls */
 	/* enable reading */
