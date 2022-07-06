@@ -283,18 +283,20 @@ typedef enum {
 								   Mask */
 #define MXC_V_GPIO_EN_GPIO_EN_ALTERNATE \
 	((uint32_t)0x0UL) /**< EN_GPIO_EN_ALTERNATE Value */
-#define MXC_S_GPIO_EN_GPIO_EN_ALTERNATE                                                        \
-	(MXC_V_GPIO_EN_GPIO_EN_ALTERNATE << MXC_F_GPIO_EN_GPIO_EN_POS) /**<                    \
-									  EN_GPIO_EN_ALTERNATE \
-									  Setting              \
-									*/
+#define MXC_S_GPIO_EN_GPIO_EN_ALTERNATE                        \
+	(MXC_V_GPIO_EN_GPIO_EN_ALTERNATE                       \
+	 << MXC_F_GPIO_EN_GPIO_EN_POS) /**<                    \
+					  EN_GPIO_EN_ALTERNATE \
+					  Setting              \
+					*/
 #define MXC_V_GPIO_EN_GPIO_EN_GPIO \
 	((uint32_t)0x1UL) /**< EN_GPIO_EN_GPIO Value */
-#define MXC_S_GPIO_EN_GPIO_EN_GPIO                                                   \
-	(MXC_V_GPIO_EN_GPIO_EN_GPIO << MXC_F_GPIO_EN_GPIO_EN_POS) /**<               \
-								     EN_GPIO_EN_GPIO \
-								     Setting         \
-								   */
+#define MXC_S_GPIO_EN_GPIO_EN_GPIO                        \
+	(MXC_V_GPIO_EN_GPIO_EN_GPIO                       \
+	 << MXC_F_GPIO_EN_GPIO_EN_POS) /**<               \
+					  EN_GPIO_EN_GPIO \
+					  Setting         \
+					*/
 
 /**
  * GPIO Set Function Enable Register. Writing a 1 to one or more bits
@@ -349,10 +351,11 @@ typedef enum {
  * GPIO_OUT_EN to 1, without affecting other bits in that register.
  */
 #define MXC_F_GPIO_OUT_EN_SET_ALL_POS 0 /**< OUT_EN_SET_ALL Position */
-#define MXC_F_GPIO_OUT_EN_SET_ALL                                                     \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_OUT_EN_SET_ALL_POS)) /**<              \
-								       OUT_EN_SET_ALL \
-								       Mask */
+#define MXC_F_GPIO_OUT_EN_SET_ALL                                        \
+	((uint32_t)(0xFFFFFFFFUL                                         \
+		    << MXC_F_GPIO_OUT_EN_SET_ALL_POS)) /**<              \
+							  OUT_EN_SET_ALL \
+							  Mask */
 
 /**
  * GPIO Output Enable Clear Function Enable Register. Writing a 1 to
@@ -360,10 +363,11 @@ typedef enum {
  * GPIO_OUT_EN to 0, without affecting other bits in that register.
  */
 #define MXC_F_GPIO_OUT_EN_CLR_ALL_POS 0 /**< OUT_EN_CLR_ALL Position */
-#define MXC_F_GPIO_OUT_EN_CLR_ALL                                                     \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_OUT_EN_CLR_ALL_POS)) /**<              \
-								       OUT_EN_CLR_ALL \
-								       Mask */
+#define MXC_F_GPIO_OUT_EN_CLR_ALL                                        \
+	((uint32_t)(0xFFFFFFFFUL                                         \
+		    << MXC_F_GPIO_OUT_EN_CLR_ALL_POS)) /**<              \
+							  OUT_EN_CLR_ALL \
+							  Mask */
 
 /**
  * GPIO Output Register. Each bit controls the GPIO_OUT setting for
@@ -371,24 +375,27 @@ typedef enum {
  * directly, or by using the GPIO_OUT_SET and GPIO_OUT_CLR registers.
  */
 #define MXC_F_GPIO_OUT_GPIO_OUT_POS 0 /**< OUT_GPIO_OUT Position */
-#define MXC_F_GPIO_OUT_GPIO_OUT                                                   \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_OUT_GPIO_OUT_POS)) /**<            \
-								     OUT_GPIO_OUT \
-								     Mask */
+#define MXC_F_GPIO_OUT_GPIO_OUT                                      \
+	((uint32_t)(0xFFFFFFFFUL                                     \
+		    << MXC_F_GPIO_OUT_GPIO_OUT_POS)) /**<            \
+							OUT_GPIO_OUT \
+							Mask */
 #define MXC_V_GPIO_OUT_GPIO_OUT_LOW \
 	((uint32_t)0x0UL) /**< OUT_GPIO_OUT_LOW Value */
-#define MXC_S_GPIO_OUT_GPIO_OUT_LOW                                                      \
-	(MXC_V_GPIO_OUT_GPIO_OUT_LOW << MXC_F_GPIO_OUT_GPIO_OUT_POS) /**<                \
-									OUT_GPIO_OUT_LOW \
-									Setting          \
-								      */
+#define MXC_S_GPIO_OUT_GPIO_OUT_LOW                          \
+	(MXC_V_GPIO_OUT_GPIO_OUT_LOW                         \
+	 << MXC_F_GPIO_OUT_GPIO_OUT_POS) /**<                \
+					    OUT_GPIO_OUT_LOW \
+					    Setting          \
+					  */
 #define MXC_V_GPIO_OUT_GPIO_OUT_HIGH \
 	((uint32_t)0x1UL) /**< OUT_GPIO_OUT_HIGH Value */
-#define MXC_S_GPIO_OUT_GPIO_OUT_HIGH                                                       \
-	(MXC_V_GPIO_OUT_GPIO_OUT_HIGH << MXC_F_GPIO_OUT_GPIO_OUT_POS) /**<                 \
-									 OUT_GPIO_OUT_HIGH \
-									 Setting           \
-								       */
+#define MXC_S_GPIO_OUT_GPIO_OUT_HIGH                          \
+	(MXC_V_GPIO_OUT_GPIO_OUT_HIGH                         \
+	 << MXC_F_GPIO_OUT_GPIO_OUT_POS) /**<                 \
+					    OUT_GPIO_OUT_HIGH \
+					    Setting           \
+					  */
 
 /**
  * GPIO Output Set. Writing a 1 to one or more bits in this register
@@ -599,10 +606,11 @@ typedef enum {
  * affecting other bits in that register.
  */
 #define MXC_F_GPIO_INT_CLR_ALL_POS 0 /**< INT_CLR_ALL Position */
-#define MXC_F_GPIO_INT_CLR_ALL                                                  \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_INT_CLR_ALL_POS)) /**<           \
-								    INT_CLR_ALL \
-								    Mask */
+#define MXC_F_GPIO_INT_CLR_ALL                                     \
+	((uint32_t)(0xFFFFFFFFUL                                   \
+		    << MXC_F_GPIO_INT_CLR_ALL_POS)) /**<           \
+						       INT_CLR_ALL \
+						       Mask */
 
 /**
  * GPIO Wake Enable Register. Each bit in this register controls the
@@ -749,17 +757,19 @@ typedef enum {
  * this port.
  */
 #define MXC_F_GPIO_EN1_GPIO_EN1_POS 0 /**< EN1_GPIO_EN1 Position */
-#define MXC_F_GPIO_EN1_GPIO_EN1                                                   \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_EN1_GPIO_EN1_POS)) /**<            \
-								     EN1_GPIO_EN1 \
-								     Mask */
+#define MXC_F_GPIO_EN1_GPIO_EN1                                      \
+	((uint32_t)(0xFFFFFFFFUL                                     \
+		    << MXC_F_GPIO_EN1_GPIO_EN1_POS)) /**<            \
+							EN1_GPIO_EN1 \
+							Mask */
 #define MXC_V_GPIO_EN1_GPIO_EN1_PRIMARY \
 	((uint32_t)0x0UL) /**< EN1_GPIO_EN1_PRIMARY Value */
-#define MXC_S_GPIO_EN1_GPIO_EN1_PRIMARY                                                          \
-	(MXC_V_GPIO_EN1_GPIO_EN1_PRIMARY << MXC_F_GPIO_EN1_GPIO_EN1_POS) /**<                    \
-									    EN1_GPIO_EN1_PRIMARY \
-									    Setting              \
-									  */
+#define MXC_S_GPIO_EN1_GPIO_EN1_PRIMARY                          \
+	(MXC_V_GPIO_EN1_GPIO_EN1_PRIMARY                         \
+	 << MXC_F_GPIO_EN1_GPIO_EN1_POS) /**<                    \
+					    EN1_GPIO_EN1_PRIMARY \
+					    Setting              \
+					  */
 #define MXC_V_GPIO_EN1_GPIO_EN1_SECONDARY \
 	((uint32_t)0x1UL) /**< EN1_GPIO_EN1_SECONDARY Value */
 #define MXC_S_GPIO_EN1_GPIO_EN1_SECONDARY                                    \
@@ -773,10 +783,11 @@ typedef enum {
  * affecting other bits in that register.
  */
 #define MXC_F_GPIO_EN1_SET_ALL_POS 0 /**< EN1_SET_ALL Position */
-#define MXC_F_GPIO_EN1_SET_ALL                                                  \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_EN1_SET_ALL_POS)) /**<           \
-								    EN1_SET_ALL \
-								    Mask */
+#define MXC_F_GPIO_EN1_SET_ALL                                     \
+	((uint32_t)(0xFFFFFFFFUL                                   \
+		    << MXC_F_GPIO_EN1_SET_ALL_POS)) /**<           \
+						       EN1_SET_ALL \
+						       Mask */
 
 /**
  * GPIO Alternate Function Clear. Writing a 1 to one or more bits in
@@ -784,10 +795,11 @@ typedef enum {
  * affecting other bits in that register.
  */
 #define MXC_F_GPIO_EN1_CLR_ALL_POS 0 /**< EN1_CLR_ALL Position */
-#define MXC_F_GPIO_EN1_CLR_ALL                                                  \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_EN1_CLR_ALL_POS)) /**<           \
-								    EN1_CLR_ALL \
-								    Mask */
+#define MXC_F_GPIO_EN1_CLR_ALL                                     \
+	((uint32_t)(0xFFFFFFFFUL                                   \
+		    << MXC_F_GPIO_EN1_CLR_ALL_POS)) /**<           \
+						       EN1_CLR_ALL \
+						       Mask */
 
 /**
  * GPIO Alternate Function Enable Register. Each bit in this register
@@ -795,17 +807,19 @@ typedef enum {
  * this port.
  */
 #define MXC_F_GPIO_EN2_GPIO_EN2_POS 0 /**< EN2_GPIO_EN2 Position */
-#define MXC_F_GPIO_EN2_GPIO_EN2                                                   \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_EN2_GPIO_EN2_POS)) /**<            \
-								     EN2_GPIO_EN2 \
-								     Mask */
+#define MXC_F_GPIO_EN2_GPIO_EN2                                      \
+	((uint32_t)(0xFFFFFFFFUL                                     \
+		    << MXC_F_GPIO_EN2_GPIO_EN2_POS)) /**<            \
+							EN2_GPIO_EN2 \
+							Mask */
 #define MXC_V_GPIO_EN2_GPIO_EN2_PRIMARY \
 	((uint32_t)0x0UL) /**< EN2_GPIO_EN2_PRIMARY Value */
-#define MXC_S_GPIO_EN2_GPIO_EN2_PRIMARY                                                          \
-	(MXC_V_GPIO_EN2_GPIO_EN2_PRIMARY << MXC_F_GPIO_EN2_GPIO_EN2_POS) /**<                    \
-									    EN2_GPIO_EN2_PRIMARY \
-									    Setting              \
-									  */
+#define MXC_S_GPIO_EN2_GPIO_EN2_PRIMARY                          \
+	(MXC_V_GPIO_EN2_GPIO_EN2_PRIMARY                         \
+	 << MXC_F_GPIO_EN2_GPIO_EN2_POS) /**<                    \
+					    EN2_GPIO_EN2_PRIMARY \
+					    Setting              \
+					  */
 #define MXC_V_GPIO_EN2_GPIO_EN2_SECONDARY \
 	((uint32_t)0x1UL) /**< EN2_GPIO_EN2_SECONDARY Value */
 #define MXC_S_GPIO_EN2_GPIO_EN2_SECONDARY                                    \
@@ -819,10 +833,11 @@ typedef enum {
  * affecting other bits in that register.
  */
 #define MXC_F_GPIO_EN2_SET_ALL_POS 0 /**< EN2_SET_ALL Position */
-#define MXC_F_GPIO_EN2_SET_ALL                                                  \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_EN2_SET_ALL_POS)) /**<           \
-								    EN2_SET_ALL \
-								    Mask */
+#define MXC_F_GPIO_EN2_SET_ALL                                     \
+	((uint32_t)(0xFFFFFFFFUL                                   \
+		    << MXC_F_GPIO_EN2_SET_ALL_POS)) /**<           \
+						       EN2_SET_ALL \
+						       Mask */
 
 /**
  * GPIO Wake Alternate Function Clear. Writing a 1 to one or more bits
@@ -830,10 +845,11 @@ typedef enum {
  * without affecting other bits in that register.
  */
 #define MXC_F_GPIO_EN2_CLR_ALL_POS 0 /**< EN2_CLR_ALL Position */
-#define MXC_F_GPIO_EN2_CLR_ALL                                                  \
-	((uint32_t)(0xFFFFFFFFUL << MXC_F_GPIO_EN2_CLR_ALL_POS)) /**<           \
-								    EN2_CLR_ALL \
-								    Mask */
+#define MXC_F_GPIO_EN2_CLR_ALL                                     \
+	((uint32_t)(0xFFFFFFFFUL                                   \
+		    << MXC_F_GPIO_EN2_CLR_ALL_POS)) /**<           \
+						       EN2_CLR_ALL \
+						       Mask */
 
 /**
  * GPIO Drive Strength  Register. Each bit in this register selects
