@@ -124,10 +124,11 @@ typedef struct {
 	((uint32_t)(0x1UL << MXC_F_FLC_CN_WDTH_POS)) /**< CN_WDTH Mask */
 #define MXC_V_FLC_CN_WDTH_SIZE128 \
 	((uint32_t)0x0UL) /**< CN_WDTH_SIZE128 Value */
-#define MXC_S_FLC_CN_WDTH_SIZE128                                               \
-	(MXC_V_FLC_CN_WDTH_SIZE128 << MXC_F_FLC_CN_WDTH_POS) /**<               \
-								CN_WDTH_SIZE128 \
-								Setting */
+#define MXC_S_FLC_CN_WDTH_SIZE128                     \
+	(MXC_V_FLC_CN_WDTH_SIZE128                    \
+	 << MXC_F_FLC_CN_WDTH_POS) /**<               \
+				      CN_WDTH_SIZE128 \
+				      Setting */
 #define MXC_V_FLC_CN_WDTH_SIZE32                    \
 	((uint32_t)0x1UL) /**< CN_WDTH_SIZE32 Value \
 			   */
@@ -142,11 +143,12 @@ typedef struct {
 							       Mask */
 #define MXC_V_FLC_CN_ERASE_CODE_NOP \
 	((uint32_t)0x0UL) /**< CN_ERASE_CODE_NOP Value */
-#define MXC_S_FLC_CN_ERASE_CODE_NOP                                                       \
-	(MXC_V_FLC_CN_ERASE_CODE_NOP << MXC_F_FLC_CN_ERASE_CODE_POS) /**<                 \
-									CN_ERASE_CODE_NOP \
-									Setting           \
-								      */
+#define MXC_S_FLC_CN_ERASE_CODE_NOP                           \
+	(MXC_V_FLC_CN_ERASE_CODE_NOP                          \
+	 << MXC_F_FLC_CN_ERASE_CODE_POS) /**<                 \
+					    CN_ERASE_CODE_NOP \
+					    Setting           \
+					  */
 #define MXC_V_FLC_CN_ERASE_CODE_ERASEPAGE \
 	((uint32_t)0x55UL) /**< CN_ERASE_CODE_ERASEPAGE Value */
 #define MXC_S_FLC_CN_ERASE_CODE_ERASEPAGE                                     \
@@ -189,10 +191,11 @@ typedef struct {
 	((uint32_t)(0x1UL << MXC_F_FLC_CN_BRST_POS)) /**< CN_BRST Mask */
 #define MXC_V_FLC_CN_BRST_DISABLE \
 	((uint32_t)0x0UL) /**< CN_BRST_DISABLE Value */
-#define MXC_S_FLC_CN_BRST_DISABLE                                               \
-	(MXC_V_FLC_CN_BRST_DISABLE << MXC_F_FLC_CN_BRST_POS) /**<               \
-								CN_BRST_DISABLE \
-								Setting */
+#define MXC_S_FLC_CN_BRST_DISABLE                     \
+	(MXC_V_FLC_CN_BRST_DISABLE                    \
+	 << MXC_F_FLC_CN_BRST_POS) /**<               \
+				      CN_BRST_DISABLE \
+				      Setting */
 #define MXC_V_FLC_CN_BRST_ENABLE                    \
 	((uint32_t)0x1UL) /**< CN_BRST_ENABLE Value \
 			   */
@@ -206,11 +209,12 @@ typedef struct {
 	((uint32_t)(0xFUL << MXC_F_FLC_CN_UNLOCK_POS)) /**< CN_UNLOCK Mask */
 #define MXC_V_FLC_CN_UNLOCK_UNLOCKED \
 	((uint32_t)0x2UL) /**< CN_UNLOCK_UNLOCKED Value */
-#define MXC_S_FLC_CN_UNLOCK_UNLOCKED                                                    \
-	(MXC_V_FLC_CN_UNLOCK_UNLOCKED << MXC_F_FLC_CN_UNLOCK_POS) /**<                  \
-								     CN_UNLOCK_UNLOCKED \
-								     Setting            \
-								   */
+#define MXC_S_FLC_CN_UNLOCK_UNLOCKED                       \
+	(MXC_V_FLC_CN_UNLOCK_UNLOCKED                      \
+	 << MXC_F_FLC_CN_UNLOCK_POS) /**<                  \
+					CN_UNLOCK_UNLOCKED \
+					Setting            \
+				      */
 
 /**
  * Flash Interrupt Register.
@@ -220,27 +224,30 @@ typedef struct {
 	((uint32_t)(0x1UL << MXC_F_FLC_INTR_DONE_POS)) /**< INTR_DONE Mask */
 #define MXC_V_FLC_INTR_DONE_INACTIVE \
 	((uint32_t)0x0UL) /**< INTR_DONE_INACTIVE Value */
-#define MXC_S_FLC_INTR_DONE_INACTIVE                                                    \
-	(MXC_V_FLC_INTR_DONE_INACTIVE << MXC_F_FLC_INTR_DONE_POS) /**<                  \
-								     INTR_DONE_INACTIVE \
-								     Setting            \
-								   */
+#define MXC_S_FLC_INTR_DONE_INACTIVE                       \
+	(MXC_V_FLC_INTR_DONE_INACTIVE                      \
+	 << MXC_F_FLC_INTR_DONE_POS) /**<                  \
+					INTR_DONE_INACTIVE \
+					Setting            \
+				      */
 #define MXC_V_FLC_INTR_DONE_PENDING \
 	((uint32_t)0x1UL) /**< INTR_DONE_PENDING Value */
-#define MXC_S_FLC_INTR_DONE_PENDING                                                   \
-	(MXC_V_FLC_INTR_DONE_PENDING << MXC_F_FLC_INTR_DONE_POS) /**<                 \
-								    INTR_DONE_PENDING \
-								    Setting */
+#define MXC_S_FLC_INTR_DONE_PENDING                       \
+	(MXC_V_FLC_INTR_DONE_PENDING                      \
+	 << MXC_F_FLC_INTR_DONE_POS) /**<                 \
+					INTR_DONE_PENDING \
+					Setting */
 
 #define MXC_F_FLC_INTR_AF_POS 1 /**< INTR_AF Position */
 #define MXC_F_FLC_INTR_AF \
 	((uint32_t)(0x1UL << MXC_F_FLC_INTR_AF_POS)) /**< INTR_AF Mask */
 #define MXC_V_FLC_INTR_AF_NOERROR \
 	((uint32_t)0x0UL) /**< INTR_AF_NOERROR Value */
-#define MXC_S_FLC_INTR_AF_NOERROR                                               \
-	(MXC_V_FLC_INTR_AF_NOERROR << MXC_F_FLC_INTR_AF_POS) /**<               \
-								INTR_AF_NOERROR \
-								Setting */
+#define MXC_S_FLC_INTR_AF_NOERROR                     \
+	(MXC_V_FLC_INTR_AF_NOERROR                    \
+	 << MXC_F_FLC_INTR_AF_POS) /**<               \
+				      INTR_AF_NOERROR \
+				      Setting */
 #define MXC_V_FLC_INTR_AF_ERROR ((uint32_t)0x1UL) /**< INTR_AF_ERROR Value */
 #define MXC_S_FLC_INTR_AF_ERROR                                               \
 	(MXC_V_FLC_INTR_AF_ERROR << MXC_F_FLC_INTR_AF_POS) /**< INTR_AF_ERROR \
@@ -252,18 +259,20 @@ typedef struct {
 							  */
 #define MXC_V_FLC_INTR_DONEIE_DISABLE \
 	((uint32_t)0x0UL) /**< INTR_DONEIE_DISABLE Value */
-#define MXC_S_FLC_INTR_DONEIE_DISABLE                                                       \
-	(MXC_V_FLC_INTR_DONEIE_DISABLE << MXC_F_FLC_INTR_DONEIE_POS) /**<                   \
-									INTR_DONEIE_DISABLE \
-									Setting             \
-								      */
+#define MXC_S_FLC_INTR_DONEIE_DISABLE                         \
+	(MXC_V_FLC_INTR_DONEIE_DISABLE                        \
+	 << MXC_F_FLC_INTR_DONEIE_POS) /**<                   \
+					  INTR_DONEIE_DISABLE \
+					  Setting             \
+					*/
 #define MXC_V_FLC_INTR_DONEIE_ENABLE \
 	((uint32_t)0x1UL) /**< INTR_DONEIE_ENABLE Value */
-#define MXC_S_FLC_INTR_DONEIE_ENABLE                                                      \
-	(MXC_V_FLC_INTR_DONEIE_ENABLE << MXC_F_FLC_INTR_DONEIE_POS) /**<                  \
-								       INTR_DONEIE_ENABLE \
-								       Setting            \
-								     */
+#define MXC_S_FLC_INTR_DONEIE_ENABLE                         \
+	(MXC_V_FLC_INTR_DONEIE_ENABLE                        \
+	 << MXC_F_FLC_INTR_DONEIE_POS) /**<                  \
+					  INTR_DONEIE_ENABLE \
+					  Setting            \
+					*/
 
 #define MXC_F_FLC_INTR_AFIE_POS 9 /**< INTR_AFIE Position */
 #define MXC_F_FLC_INTR_AFIE \
