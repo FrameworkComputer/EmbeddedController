@@ -30,8 +30,8 @@ void board_config_pre_init(void)
  * Forward UARTs as a USB serial interface.
  */
 
-#define USB_STREAM_RX_SIZE	16
-#define USB_STREAM_TX_SIZE	16
+#define USB_STREAM_RX_SIZE 16
+#define USB_STREAM_TX_SIZE 16
 
 /******************************************************************************
  * Forward USART1 as a simple USB serial interface.
@@ -40,28 +40,19 @@ void board_config_pre_init(void)
 static struct usart_config const usart1;
 struct usb_stream_config const usart1_usb;
 
-static struct queue const usart1_to_usb = QUEUE_DIRECT(64, uint8_t,
-	usart1.producer, usart1_usb.consumer);
-static struct queue const usb_to_usart1 = QUEUE_DIRECT(64, uint8_t,
-	usart1_usb.producer, usart1.consumer);
+static struct queue const usart1_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart1.producer, usart1_usb.consumer);
+static struct queue const usb_to_usart1 =
+	QUEUE_DIRECT(64, uint8_t, usart1_usb.producer, usart1.consumer);
 
 static struct usart_config const usart1 =
-	USART_CONFIG(usart1_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart1_to_usb,
-		usb_to_usart1);
+	USART_CONFIG(usart1_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart1_to_usb, usb_to_usart1);
 
-USB_STREAM_CONFIG(usart1_usb,
-	USB_IFACE_USART1_STREAM,
-	USB_STR_USART1_STREAM_NAME,
-	USB_EP_USART1_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart1,
-	usart1_to_usb)
+USB_STREAM_CONFIG(usart1_usb, USB_IFACE_USART1_STREAM,
+		  USB_STR_USART1_STREAM_NAME, USB_EP_USART1_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart1,
+		  usart1_to_usb)
 
 /******************************************************************************
  * Forward USART2 as a simple USB serial interface.
@@ -70,28 +61,19 @@ USB_STREAM_CONFIG(usart1_usb,
 static struct usart_config const usart2;
 struct usb_stream_config const usart2_usb;
 
-static struct queue const usart2_to_usb = QUEUE_DIRECT(64, uint8_t,
-	usart2.producer, usart2_usb.consumer);
-static struct queue const usb_to_usart2 = QUEUE_DIRECT(64, uint8_t,
-	usart2_usb.producer, usart2.consumer);
+static struct queue const usart2_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart2.producer, usart2_usb.consumer);
+static struct queue const usb_to_usart2 =
+	QUEUE_DIRECT(64, uint8_t, usart2_usb.producer, usart2.consumer);
 
 static struct usart_config const usart2 =
-	USART_CONFIG(usart2_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart2_to_usb,
-		usb_to_usart2);
+	USART_CONFIG(usart2_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart2_to_usb, usb_to_usart2);
 
-USB_STREAM_CONFIG(usart2_usb,
-	USB_IFACE_USART2_STREAM,
-	USB_STR_USART2_STREAM_NAME,
-	USB_EP_USART2_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart2,
-	usart2_to_usb)
+USB_STREAM_CONFIG(usart2_usb, USB_IFACE_USART2_STREAM,
+		  USB_STR_USART2_STREAM_NAME, USB_EP_USART2_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart2,
+		  usart2_to_usb)
 
 /******************************************************************************
  * Forward USART4 as a simple USB serial interface.
@@ -100,28 +82,19 @@ USB_STREAM_CONFIG(usart2_usb,
 static struct usart_config const usart4;
 struct usb_stream_config const usart4_usb;
 
-static struct queue const usart4_to_usb = QUEUE_DIRECT(64, uint8_t,
-	usart4.producer, usart4_usb.consumer);
-static struct queue const usb_to_usart4 = QUEUE_DIRECT(64, uint8_t,
-	usart4_usb.producer, usart4.consumer);
+static struct queue const usart4_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart4.producer, usart4_usb.consumer);
+static struct queue const usb_to_usart4 =
+	QUEUE_DIRECT(64, uint8_t, usart4_usb.producer, usart4.consumer);
 
 static struct usart_config const usart4 =
-	USART_CONFIG(usart4_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart4_to_usb,
-		usb_to_usart4);
+	USART_CONFIG(usart4_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart4_to_usb, usb_to_usart4);
 
-USB_STREAM_CONFIG(usart4_usb,
-	USB_IFACE_USART4_STREAM,
-	USB_STR_USART4_STREAM_NAME,
-	USB_EP_USART4_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart4,
-	usart4_to_usb)
+USB_STREAM_CONFIG(usart4_usb, USB_IFACE_USART4_STREAM,
+		  USB_STR_USART4_STREAM_NAME, USB_EP_USART4_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart4,
+		  usart4_to_usb)
 
 /******************************************************************************
  * Forward LPUART (USART9) as a simple USB serial interface.
@@ -130,28 +103,19 @@ USB_STREAM_CONFIG(usart4_usb,
 static struct usart_config const usart9;
 struct usb_stream_config const usart9_usb;
 
-static struct queue const usart9_to_usb = QUEUE_DIRECT(64, uint8_t,
-	usart9.producer, usart9_usb.consumer);
-static struct queue const usb_to_usart9 = QUEUE_DIRECT(64, uint8_t,
-	usart9_usb.producer, usart9.consumer);
+static struct queue const usart9_to_usb =
+	QUEUE_DIRECT(64, uint8_t, usart9.producer, usart9_usb.consumer);
+static struct queue const usb_to_usart9 =
+	QUEUE_DIRECT(64, uint8_t, usart9_usb.producer, usart9.consumer);
 
 static struct usart_config const usart9 =
-	USART_CONFIG(usart9_hw,
-		usart_rx_interrupt,
-		usart_tx_interrupt,
-		115200,
-		0,
-		usart9_to_usb,
-		usb_to_usart9);
+	USART_CONFIG(usart9_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
+		     0, usart9_to_usb, usb_to_usart9);
 
-USB_STREAM_CONFIG(usart9_usb,
-	USB_IFACE_USART9_STREAM,
-	USB_STR_USART9_STREAM_NAME,
-	USB_EP_USART9_STREAM,
-	USB_STREAM_RX_SIZE,
-	USB_STREAM_TX_SIZE,
-	usb_to_usart9,
-	usart9_to_usb)
+USB_STREAM_CONFIG(usart9_usb, USB_IFACE_USART9_STREAM,
+		  USB_STR_USART9_STREAM_NAME, USB_EP_USART9_STREAM,
+		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart9,
+		  usart9_to_usb)
 
 /******************************************************************************
  * Support SPI bridging over USB, this requires usb_spi_board_enable and
@@ -160,7 +124,7 @@ USB_STREAM_CONFIG(usart9_usb,
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	{ 1 /* SPI2 */, 7, GPIO_SPI2_CS},
+	{ 1 /* SPI2 */, 7, GPIO_SPI2_CS },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
@@ -204,35 +168,36 @@ USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI, 0);
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{
-		.name = "controller",
-		.port = I2C_PORT_CONTROLLER,
-		.kbps = 100,
-		.scl  = GPIO_TPM_I2C1_HOST_SCL,
-		.sda  = GPIO_TPM_I2C1_HOST_SDA
-	},
+	{ .name = "controller",
+	  .port = I2C_PORT_CONTROLLER,
+	  .kbps = 100,
+	  .scl = GPIO_TPM_I2C1_HOST_SCL,
+	  .sda = GPIO_TPM_I2C1_HOST_SDA },
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
-int usb_i2c_board_is_enabled(void) { return 1; }
+int usb_i2c_board_is_enabled(void)
+{
+	return 1;
+}
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.
  */
 
 const void *const usb_strings[] = {
-	[USB_STR_DESC]         = usb_string_desc,
-	[USB_STR_VENDOR]       = USB_STRING_DESC("Google Inc."),
-	[USB_STR_PRODUCT]      = USB_STRING_DESC("HyperDebug"),
-	[USB_STR_SERIALNO]     = 0,
-	[USB_STR_VERSION]      = USB_STRING_DESC(CROS_EC_VERSION32),
+	[USB_STR_DESC] = usb_string_desc,
+	[USB_STR_VENDOR] = USB_STRING_DESC("Google Inc."),
+	[USB_STR_PRODUCT] = USB_STRING_DESC("HyperDebug"),
+	[USB_STR_SERIALNO] = 0,
+	[USB_STR_VERSION] = USB_STRING_DESC(CROS_EC_VERSION32),
 	[USB_STR_CONSOLE_NAME] = USB_STRING_DESC("HyperDebug Shell"),
-	[USB_STR_SPI_NAME]     = USB_STRING_DESC("SPI"),
-	[USB_STR_I2C_NAME]     = USB_STRING_DESC("I2C"),
-	[USB_STR_USART1_STREAM_NAME]  = USB_STRING_DESC("UART1"),
-	[USB_STR_USART2_STREAM_NAME]  = USB_STRING_DESC("UART2"),
-	[USB_STR_USART4_STREAM_NAME]  = USB_STRING_DESC("UART4"),
-	[USB_STR_USART9_STREAM_NAME]  = USB_STRING_DESC("UART9"),
+	[USB_STR_SPI_NAME] = USB_STRING_DESC("SPI"),
+	[USB_STR_I2C_NAME] = USB_STRING_DESC("I2C"),
+	[USB_STR_USART1_STREAM_NAME] = USB_STRING_DESC("UART1"),
+	[USB_STR_USART2_STREAM_NAME] = USB_STRING_DESC("UART2"),
+	[USB_STR_USART4_STREAM_NAME] = USB_STRING_DESC("UART4"),
+	[USB_STR_USART9_STREAM_NAME] = USB_STRING_DESC("UART9"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
@@ -327,9 +292,7 @@ static int command_gpio_mode(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(gpiomode, command_gpio_mode,
 			      "name <input | opendrain | pushpull>",
-			      "Set a GPIO mode",
-			      CMD_FLAG_RESTRICTED
-);
+			      "Set a GPIO mode", CMD_FLAG_RESTRICTED);
 
 /*
  * Set the weak pulling of a GPIO pin: up/down/none.
@@ -363,6 +326,4 @@ static int command_gpio_pull_mode(int argc, char **argv)
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(gpiopullmode, command_gpio_pull_mode,
 			      "name <none | up | down>",
-			      "Set a GPIO weak pull mode",
-			      CMD_FLAG_RESTRICTED
-);
+			      "Set a GPIO weak pull mode", CMD_FLAG_RESTRICTED);
