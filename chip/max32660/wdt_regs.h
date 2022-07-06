@@ -258,17 +258,19 @@ typedef struct {
 							  */
 #define MXC_V_WDT_CTRL_WDT_EN_DIS \
 	((uint32_t)0x0UL) /**< CTRL_WDT_EN_DIS Value */
-#define MXC_S_WDT_CTRL_WDT_EN_DIS                                                   \
-	(MXC_V_WDT_CTRL_WDT_EN_DIS << MXC_F_WDT_CTRL_WDT_EN_POS) /**<               \
-								    CTRL_WDT_EN_DIS \
-								    Setting */
+#define MXC_S_WDT_CTRL_WDT_EN_DIS                         \
+	(MXC_V_WDT_CTRL_WDT_EN_DIS                        \
+	 << MXC_F_WDT_CTRL_WDT_EN_POS) /**<               \
+					  CTRL_WDT_EN_DIS \
+					  Setting */
 #define MXC_V_WDT_CTRL_WDT_EN_EN                    \
 	((uint32_t)0x1UL) /**< CTRL_WDT_EN_EN Value \
 			   */
-#define MXC_S_WDT_CTRL_WDT_EN_EN                                                  \
-	(MXC_V_WDT_CTRL_WDT_EN_EN << MXC_F_WDT_CTRL_WDT_EN_POS) /**<              \
-								   CTRL_WDT_EN_EN \
-								   Setting */
+#define MXC_S_WDT_CTRL_WDT_EN_EN                         \
+	(MXC_V_WDT_CTRL_WDT_EN_EN                        \
+	 << MXC_F_WDT_CTRL_WDT_EN_POS) /**<              \
+					  CTRL_WDT_EN_EN \
+					  Setting */
 
 #define MXC_F_WDT_CTRL_INT_FLAG_POS 9 /**< CTRL_INT_FLAG Position */
 #define MXC_F_WDT_CTRL_INT_FLAG                                               \
@@ -282,11 +284,12 @@ typedef struct {
 					  */
 #define MXC_V_WDT_CTRL_INT_FLAG_PENDING \
 	((uint32_t)0x1UL) /**< CTRL_INT_FLAG_PENDING Value */
-#define MXC_S_WDT_CTRL_INT_FLAG_PENDING                                                           \
-	(MXC_V_WDT_CTRL_INT_FLAG_PENDING << MXC_F_WDT_CTRL_INT_FLAG_POS) /**<                     \
-									    CTRL_INT_FLAG_PENDING \
-									    Setting               \
-									  */
+#define MXC_S_WDT_CTRL_INT_FLAG_PENDING                           \
+	(MXC_V_WDT_CTRL_INT_FLAG_PENDING                          \
+	 << MXC_F_WDT_CTRL_INT_FLAG_POS) /**<                     \
+					    CTRL_INT_FLAG_PENDING \
+					    Setting               \
+					  */
 
 #define MXC_F_WDT_CTRL_INT_EN_POS 10 /**< CTRL_INT_EN Position */
 #define MXC_F_WDT_CTRL_INT_EN                                                  \
@@ -294,17 +297,19 @@ typedef struct {
 							  */
 #define MXC_V_WDT_CTRL_INT_EN_DIS \
 	((uint32_t)0x0UL) /**< CTRL_INT_EN_DIS Value */
-#define MXC_S_WDT_CTRL_INT_EN_DIS                                                   \
-	(MXC_V_WDT_CTRL_INT_EN_DIS << MXC_F_WDT_CTRL_INT_EN_POS) /**<               \
-								    CTRL_INT_EN_DIS \
-								    Setting */
+#define MXC_S_WDT_CTRL_INT_EN_DIS                         \
+	(MXC_V_WDT_CTRL_INT_EN_DIS                        \
+	 << MXC_F_WDT_CTRL_INT_EN_POS) /**<               \
+					  CTRL_INT_EN_DIS \
+					  Setting */
 #define MXC_V_WDT_CTRL_INT_EN_EN                    \
 	((uint32_t)0x1UL) /**< CTRL_INT_EN_EN Value \
 			   */
-#define MXC_S_WDT_CTRL_INT_EN_EN                                                  \
-	(MXC_V_WDT_CTRL_INT_EN_EN << MXC_F_WDT_CTRL_INT_EN_POS) /**<              \
-								   CTRL_INT_EN_EN \
-								   Setting */
+#define MXC_S_WDT_CTRL_INT_EN_EN                         \
+	(MXC_V_WDT_CTRL_INT_EN_EN                        \
+	 << MXC_F_WDT_CTRL_INT_EN_POS) /**<              \
+					  CTRL_INT_EN_EN \
+					  Setting */
 
 #define MXC_F_WDT_CTRL_RST_EN_POS 11 /**< CTRL_RST_EN Position */
 #define MXC_F_WDT_CTRL_RST_EN                                                  \
@@ -312,17 +317,19 @@ typedef struct {
 							  */
 #define MXC_V_WDT_CTRL_RST_EN_DIS \
 	((uint32_t)0x0UL) /**< CTRL_RST_EN_DIS Value */
-#define MXC_S_WDT_CTRL_RST_EN_DIS                                                   \
-	(MXC_V_WDT_CTRL_RST_EN_DIS << MXC_F_WDT_CTRL_RST_EN_POS) /**<               \
-								    CTRL_RST_EN_DIS \
-								    Setting */
+#define MXC_S_WDT_CTRL_RST_EN_DIS                         \
+	(MXC_V_WDT_CTRL_RST_EN_DIS                        \
+	 << MXC_F_WDT_CTRL_RST_EN_POS) /**<               \
+					  CTRL_RST_EN_DIS \
+					  Setting */
 #define MXC_V_WDT_CTRL_RST_EN_EN                    \
 	((uint32_t)0x1UL) /**< CTRL_RST_EN_EN Value \
 			   */
-#define MXC_S_WDT_CTRL_RST_EN_EN                                                  \
-	(MXC_V_WDT_CTRL_RST_EN_EN << MXC_F_WDT_CTRL_RST_EN_POS) /**<              \
-								   CTRL_RST_EN_EN \
-								   Setting */
+#define MXC_S_WDT_CTRL_RST_EN_EN                         \
+	(MXC_V_WDT_CTRL_RST_EN_EN                        \
+	 << MXC_F_WDT_CTRL_RST_EN_POS) /**<              \
+					  CTRL_RST_EN_EN \
+					  Setting */
 
 #define MXC_F_WDT_CTRL_RST_FLAG_POS 31 /**< CTRL_RST_FLAG Position */
 #define MXC_F_WDT_CTRL_RST_FLAG                                               \
@@ -330,11 +337,12 @@ typedef struct {
 							      Mask */
 #define MXC_V_WDT_CTRL_RST_FLAG_NOEVENT \
 	((uint32_t)0x0UL) /**< CTRL_RST_FLAG_NOEVENT Value */
-#define MXC_S_WDT_CTRL_RST_FLAG_NOEVENT                                                           \
-	(MXC_V_WDT_CTRL_RST_FLAG_NOEVENT << MXC_F_WDT_CTRL_RST_FLAG_POS) /**<                     \
-									    CTRL_RST_FLAG_NOEVENT \
-									    Setting               \
-									  */
+#define MXC_S_WDT_CTRL_RST_FLAG_NOEVENT                           \
+	(MXC_V_WDT_CTRL_RST_FLAG_NOEVENT                          \
+	 << MXC_F_WDT_CTRL_RST_FLAG_POS) /**<                     \
+					    CTRL_RST_FLAG_NOEVENT \
+					    Setting               \
+					  */
 #define MXC_V_WDT_CTRL_RST_FLAG_OCCURRED \
 	((uint32_t)0x1UL) /**< CTRL_RST_FLAG_OCCURRED Value */
 #define MXC_S_WDT_CTRL_RST_FLAG_OCCURRED                                     \
@@ -351,17 +359,19 @@ typedef struct {
 							     Mask */
 #define MXC_V_WDT_RST_WDT_RST_SEQ0 \
 	((uint32_t)0xA5UL) /**< RST_WDT_RST_SEQ0 Value */
-#define MXC_S_WDT_RST_WDT_RST_SEQ0                                                    \
-	(MXC_V_WDT_RST_WDT_RST_SEQ0 << MXC_F_WDT_RST_WDT_RST_POS) /**<                \
-								     RST_WDT_RST_SEQ0 \
-								     Setting          \
-								   */
+#define MXC_S_WDT_RST_WDT_RST_SEQ0                         \
+	(MXC_V_WDT_RST_WDT_RST_SEQ0                        \
+	 << MXC_F_WDT_RST_WDT_RST_POS) /**<                \
+					  RST_WDT_RST_SEQ0 \
+					  Setting          \
+					*/
 #define MXC_V_WDT_RST_WDT_RST_SEQ1 \
 	((uint32_t)0x5AUL) /**< RST_WDT_RST_SEQ1 Value */
-#define MXC_S_WDT_RST_WDT_RST_SEQ1                                                    \
-	(MXC_V_WDT_RST_WDT_RST_SEQ1 << MXC_F_WDT_RST_WDT_RST_POS) /**<                \
-								     RST_WDT_RST_SEQ1 \
-								     Setting          \
-								   */
+#define MXC_S_WDT_RST_WDT_RST_SEQ1                         \
+	(MXC_V_WDT_RST_WDT_RST_SEQ1                        \
+	 << MXC_F_WDT_RST_WDT_RST_POS) /**<                \
+					  RST_WDT_RST_SEQ1 \
+					  Setting          \
+					*/
 
 #endif /* _WDT_REGS_H_ */
