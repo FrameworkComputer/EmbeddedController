@@ -65,7 +65,7 @@ int bkpdata_index_lookup(enum system_bbram_idx idx, int *msb)
 	return -1;
 }
 
-uint32_t bkpdata_read_reset_flags()
+uint32_t bkpdata_read_reset_flags(void)
 {
 	uint32_t flags = bkpdata_read(BKPDATA_INDEX_SAVED_RESET_FLAGS);
 

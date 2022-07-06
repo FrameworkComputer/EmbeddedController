@@ -1374,7 +1374,7 @@ void system_jump_to_booter(void)
 #endif
 }
 
-uint32_t system_get_lfw_address()
+uint32_t system_get_lfw_address(void)
 {
 	/*
 	 * In A3 version, we don't use little FW anymore

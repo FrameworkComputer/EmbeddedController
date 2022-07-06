@@ -20,7 +20,7 @@ typedef void (*func)(void);
 #if PASS == 1
 /* Default exception handler */
 void __attribute__((used, naked)) default_handler(void);
-void default_handler()
+void default_handler(void)
 {
 	asm(".thumb_func\n"
 	    "	b exception_panic");
@@ -58,7 +58,7 @@ void weak_with_default svc_handler(int desched, task_id_t resched);
  * it only loads r0 (desched) and r1 (resched) for svc_handler.
  */
 void __attribute__((used, naked)) svc_helper_handler(void);
-void svc_helper_handler()
+void svc_helper_handler(void)
 {
 	asm(".thumb_func\n"
 	    "	tst lr, #4		/* see if called from supervisor mode */\n"
