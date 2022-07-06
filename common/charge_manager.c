@@ -475,6 +475,8 @@ static void charge_manager_fill_power_info(int port,
 		}
 	} else {
 		int use_ramp_current;
+		uint32_t max_mv, max_ma, pdo, unused;
+
 		switch (sup) {
 		case CHARGE_SUPPLIER_PD:
 			r->type = USB_CHG_TYPE_PD;
@@ -523,7 +525,24 @@ static void charge_manager_fill_power_info(int port,
 			r->type = USB_CHG_TYPE_OTHER;
 #endif
 		}
-		r->meas.voltage_max = available_charge[sup][port].voltage;
+
+		if (IS_ENABLED(CONFIG_USB_PD_DPS) && dps_is_enabled() &&
+				sup == CHARGE_SUPPLIER_PD) {
+			/*
+			 * Returns the maximum power the system can request when
+			 * DPS enabled. This is to prevent the system think it's
+			 * using a low power charger.
+			 */
+			pd_find_pdo_index(pd_get_src_cap_cnt(port),
+					  pd_get_src_caps(port),
+					  pd_get_max_voltage(), &pdo);
+			pd_extract_pdo_power(pdo, &max_ma, &max_mv, &unused);
+		} else {
+			max_mv = available_charge[sup][port].voltage;
+			max_ma = available_charge[sup][port].current;
+		}
+
+		r->meas.voltage_max = max_mv;
 
 		/*
 		 * Report unknown charger CHARGE_DETECT_DELAY after supplier
@@ -564,15 +583,12 @@ static void charge_manager_fill_power_info(int port,
 			 */
 			r->meas.current_max = chg_ramp_is_stable() ?
 				r->meas.current_lim : chg_ramp_max(port, sup,
-					available_charge[sup][port].current);
+					max_ma);
 
-			r->max_power =
-				r->meas.current_max * r->meas.voltage_max;
 		} else {
-			r->meas.current_max = r->meas.current_lim =
-				available_charge[sup][port].current;
-			r->max_power = POWER(available_charge[sup][port]);
+			r->meas.current_max = r->meas.current_lim = max_ma;
 		}
+		r->max_power = r->meas.current_max * r->meas.voltage_max;
 
 		r->meas.voltage_now = get_vbus_voltage(port, r->role);
 	}
