@@ -30,8 +30,9 @@
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #undef CONFIG_CHARGER_SINGLE_CHIP
 #define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS 22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
-					*/
+#define CONFIG_OCPC_DEF_RBATT_MOHMS               \
+	22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
+	    */
 #undef CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE
 #define CONFIG_USB_PD_TCPC_LPM_EXIT_DEBOUNCE (100 * MSEC)
 
