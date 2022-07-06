@@ -45,8 +45,8 @@ typedef int (*cros_flash_api_physical_erase)(const struct device *dev,
 typedef int (*cros_flash_api_physical_get_protect)(const struct device *dev,
 						   int bank);
 
-typedef uint32_t
-(*cros_flash_api_physical_get_protect_flags)(const struct device *dev);
+typedef uint32_t (*cros_flash_api_physical_get_protect_flags)(
+	const struct device *dev);
 
 typedef int (*cros_flash_api_physical_protect_at_boot)(const struct device *dev,
 						       uint32_t new_flags);
@@ -55,12 +55,11 @@ typedef int (*cros_flash_api_physical_protect_now)(const struct device *dev,
 						   int all);
 
 typedef int (*cros_flash_api_physical_get_jedec_id)(const struct device *dev,
-						   uint8_t *manufacturer,
-						   uint16_t *device);
+						    uint8_t *manufacturer,
+						    uint16_t *device);
 
 typedef int (*cros_flash_api_physical_get_status)(const struct device *dev,
-						   uint8_t *sr1,
-						   uint8_t *sr2);
+						  uint8_t *sr1, uint8_t *sr2);
 
 __subsystem struct cros_flash_driver_api {
 	cros_flash_api_init init;
@@ -183,6 +182,7 @@ z_impl_cros_flash_physical_get_protect(const struct device *dev, int bank)
 	return api->physical_get_protect(dev, bank);
 }
 
+/* clang-format off */
 /**
  * @brief Return flash protect state flags from the physical layer.
  *
@@ -192,6 +192,7 @@ z_impl_cros_flash_physical_get_protect(const struct device *dev, int bank)
  */
 __syscall
 uint32_t cros_flash_physical_get_protect_flags(const struct device *dev);
+/* clang-format on */
 
 static inline uint32_t
 z_impl_cros_flash_physical_get_protect_flags(const struct device *dev)
@@ -269,13 +270,12 @@ z_impl_cros_flash_physical_protect_now(const struct device *dev, int all)
  * @retval -ENOTSUP Not supported api function.
  */
 __syscall int cros_flash_physical_get_jedec_id(const struct device *dev,
-						      uint8_t *manufacturer,
-						      uint16_t *device);
+					       uint8_t *manufacturer,
+					       uint16_t *device);
 
 static inline int
 z_impl_cros_flash_physical_get_jedec_id(const struct device *dev,
-					uint8_t *manufacturer,
-					uint16_t *device)
+					uint8_t *manufacturer, uint16_t *device)
 {
 	const struct cros_flash_driver_api *api =
 		(const struct cros_flash_driver_api *)dev->api;
@@ -297,11 +297,11 @@ z_impl_cros_flash_physical_get_jedec_id(const struct device *dev,
  * @retval -ENOTSUP Not supported api function.
  */
 __syscall int cros_flash_physical_get_status(const struct device *dev,
-		uint8_t *sr1, uint8_t *sr2);
+					     uint8_t *sr1, uint8_t *sr2);
 
 static inline int
-z_impl_cros_flash_physical_get_status(const struct device *dev,
-				      uint8_t *sr1, uint8_t *sr2)
+z_impl_cros_flash_physical_get_status(const struct device *dev, uint8_t *sr1,
+				      uint8_t *sr2)
 {
 	const struct cros_flash_driver_api *api =
 		(const struct cros_flash_driver_api *)dev->api;
