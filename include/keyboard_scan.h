@@ -44,7 +44,6 @@ struct boot_key_entry {
 	uint8_t row;
 };
 
-
 /**
  * Initializes the module.
  */
@@ -184,4 +183,4 @@ struct keyboard_type {
 extern struct keyboard_type key_typ;
 #endif
 
-#endif  /* __CROS_EC_KEYBOARD_SCAN_H */
+#endif /* __CROS_EC_KEYBOARD_SCAN_H */
