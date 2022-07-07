@@ -21,7 +21,7 @@
 		},                                                            \
 		.drv = &nct38xx_tcpm_drv,                                     \
 		.flags = DT_PROP(id, tcpc_flags),                             \
-	},
+	}
 
 /**
  * @brief Get the NCT38XX GPIO device from the TCPC port enumeration

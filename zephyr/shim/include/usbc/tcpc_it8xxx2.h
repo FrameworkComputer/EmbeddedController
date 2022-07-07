@@ -13,4 +13,4 @@
 		.bus_type = EC_BUS_TYPE_EMBEDDED, \
 		.drv = &it8xxx2_tcpm_drv,         \
 		.flags = 0,                       \
-	},
+	}

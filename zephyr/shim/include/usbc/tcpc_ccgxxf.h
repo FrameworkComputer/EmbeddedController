@@ -18,4 +18,4 @@
 		},                                                            \
 		.drv = &ccgxxf_tcpm_drv,                                      \
 		.flags = TCPC_FLAGS_TCPCI_REV2_0,                             \
-	},
+	}

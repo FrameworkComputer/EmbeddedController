@@ -17,4 +17,4 @@
 			.addr_flags = DT_PROP(id, i2c_addr_flags),            \
 		},                                                            \
 		.drv = &tcpci_tcpm_drv,                                       \
-	},
+	}

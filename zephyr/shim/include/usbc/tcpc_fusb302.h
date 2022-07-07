@@ -17,4 +17,4 @@
 					id, i2c_addr_flags),                  \
 		},                                                            \
 		.drv = &fusb302_tcpm_drv,                                      \
-	},
+	}
