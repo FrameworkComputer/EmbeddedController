@@ -25,10 +25,13 @@ See the piplines [here](https://gitlab.com/zephyr-ec/ec/-/pipelines).
 To test the cq builder script run these commands:
 
 ### firmware-zephyr-cq
+Build this in the /mnt/host/source/src/platform/ec dir not
+~/chromiumos/src/platform/ec so that the paths come out the same as the CQ.
+
 ```
 rm -rf /tmp/artifact_bundles /tmp/artifact_bundle_metadata \
-  ~/chromiumos/src/platform/ec/build
-( cd ~/chromiumos/src/platform/ec/zephyr ; \
+ /mnt/host/source//src/platform/ec/build
+( cd /mnt/host/source/src/platform/ec/zephyr ; \
 ./firmware_builder.py --metrics /tmp/metrics-build build && \
 ./firmware_builder.py --metrics /tmp/metrics-test test && \
 ./firmware_builder.py --metrics /tmp/metrics-bundle bundle && \
@@ -39,10 +42,14 @@ ls -l /tmp/artifact_bundles/
 ```
 
 ### firmware-zephyr-cov-cq
+
+Build this in the /mnt/host/source/src/platform/ec dir not
+~/chromiumos/src/platform/ec so that the paths come out the same as the CQ.
+
 ```
 rm -rf /tmp/artifact_bundles-cov /tmp/artifact_bundle_metadata-cov \
-  ~/chromiumos/src/platform/ec/build && \
-cd ~/chromiumos/src/platform/ec/zephyr && \
+  /mnt/host/source/src/platform/ec/build && \
+cd /mnt/host/source/src/platform/ec/zephyr && \
 ./firmware_builder.py --metrics /tmp/metrics --code-coverage build && \
 ./firmware_builder.py --metrics /tmp/metrics --code-coverage test && \
 ./firmware_builder.py --metrics /tmp/metrics --code-coverage \

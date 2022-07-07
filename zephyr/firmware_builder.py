@@ -131,6 +131,13 @@ def bundle_coverage(opts):
     meta.lcov_info.type = (
         firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV
     )
+    tarball_name = "html.tbz2"
+    tarball_path = bundle_dir / tarball_name
+    cmd = ["tar", "cvfj", tarball_path, "lcov_rpt"]
+    subprocess.run(cmd, cwd=build_dir, check=True)
+    meta = info.objects.add()
+    meta.file_name = tarball_name
+    meta.coverage_html.SetInParent()
 
     write_metadata(opts, info)
 
@@ -247,6 +254,22 @@ def test(opts):
             universal_newlines=True,
         ).stdout
         _extract_lcov_summary("ALL_MERGED", metrics, output)
+
+        subprocess.run(
+            [
+                "/usr/bin/genhtml",
+                "--branch-coverage",
+                "-q",
+                "-o",
+                build_dir / "lcov_rpt",
+                "-t",
+                "All boards and tests merged",
+                "-s",
+                build_dir / "lcov.info",
+            ],
+            cwd=pathlib.Path(__file__).parent,
+            check=True,
+        )
 
     with open(opts.metrics, "w") as file:
         file.write(json_format.MessageToJson(metrics))
