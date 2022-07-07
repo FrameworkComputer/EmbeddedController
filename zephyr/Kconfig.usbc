@@ -133,6 +133,16 @@ config PLATFORM_EC_CONSOLE_CMD_PPC_DUMP
 	  reference to the datasheet for the part this can help you figure out
 	  what is going on.
 
+config PLATFORM_EC_USBC_PPC_LOGGING
+	bool "Enable PPC Related logging"
+	depends on PLATFORM_EC_USBC_PPC
+	default y
+	help
+	  PPC drivers use two print functions for logging error messages
+	  (ppc_prints and ppc_err_prints). Setting this config adds the
+	  CPRINTS call to both of these function which will enable PPC
+	  related logging but increase EC image size.
+
 config PLATFORM_EC_USB_PD_TCPM_DRIVER_IT83XX
 	bool "Enable IT83XX driver"
 	depends on PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP

@@ -962,6 +962,11 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_CMD_PPC_DUMP
 #endif
 
+#undef CONFIG_USBC_PPC_LOGGING
+#ifdef CONFIG_PLATFORM_EC_USBC_PPC_LOGGING
+#define CONFIG_USBC_PPC_LOGGING
+#endif
+
 #undef CONFIG_CMD_TCPC_DUMP
 #ifdef CONFIG_PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP
 #define CONFIG_CMD_TCPC_DUMP
