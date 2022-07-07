@@ -347,13 +347,14 @@ Disable all debug from ASSERT() calls.<br> EC is reset using a software breakpoi
 It is not recommended to disable `CONFIG_PLATFORM_EC_DEBUG_ASSERT_REBOOTS` on
 shipping firmware.
 
-### Disable console help
+### Disable console help and history
 
 The help strings can be removed from the final build, saving about 5000 bytes of
-flash space.
+flash space. The history command can also be disabled to save another 200 bytes
+of flash space.
 
-For cros-ec builds, add `#undef CONFIG_CONSOLE_CMDHELP` to the
-board.h/baseboard.h file.
+For cros-ec builds, add `#undef CONFIG_CONSOLE_CMDHELP` and `#undef
+CONFIG_CONSOLE_HISTORY` to the board.h/baseboard.h file.
 
 zephyr-ec builds use Zephyr's shell subsystem and by default enable the
 `CONFIG_SHELL_MINIMAL` option.  This option already disables shell help along
