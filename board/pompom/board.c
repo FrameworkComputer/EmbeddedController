@@ -607,7 +607,7 @@ static void board_detect_motionsensor(void)
 	int val = 0;
 
 	/*
-	 * BMA253 and LIS2DWL have same slave address, so we check the
+	 * BMA253 and LIS2DWL have same target address, so we check the
 	 * LIS2DWL WHO AM I register to check the lid accel type
 	 */
 	i2c_read8(I2C_PORT_SENSOR, LIS2DWL_ADDR0_FLAGS, LIS2DW12_WHO_AM_I_REG,
