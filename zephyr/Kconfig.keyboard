@@ -145,8 +145,8 @@ config PLATFORM_EC_VOLUME_BUTTONS
 	  These are buttons controlled by GPIOs and are not part of the keyboard
 	  matrix.
 
-	  Your board must define GPIO_VOLUME_UP_L and GPIO_VOLUME_DOWN_L in
-	  gpio_map.h
+	  Your board must define GPIO_VOLUME_UP_L and GPIO_VOLUME_DOWN_L as
+	  GPIOs names or as aliases in the GPIO devicetree configuration.
 
 config PLATFORM_EC_BUTTONS_RUNTIME_CONFIG
 	bool "Enable buttons runtime configuration"

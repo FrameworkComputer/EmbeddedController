@@ -126,8 +126,8 @@ config PLATFORM_EC_POWERSEQ_RTC_RESET
 	bool "Board has an RTC reset"
 	help
 	  This project has a gpio named GPIO_PCH_RTCRST defined in
-	  gpio_map.h, which can be used to reset the AP's RTC when set
-	  high.
+	  the GPIO configuration, which can be used to reset the AP's RTC when
+	  set high.
 
 config PLATFORM_EC_POWERSEQ_S4
 	bool "Advertise S4 residency"

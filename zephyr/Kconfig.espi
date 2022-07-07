@@ -8,13 +8,13 @@ config PLATFORM_EC_ESPI_VW_SLP_S3
 	bool "SLP_S3 is an eSPI virtual wire instead of a GPIO"
 	help
 	  For power sequencing, use an eSPI virtual wire instead of
-	  defining GPIO_PCH_SLP_S3 in gpio_map.h.
+	  defining GPIO_PCH_SLP_S3 in the GPIO device tree.
 
 config PLATFORM_EC_ESPI_VW_SLP_S4
 	bool "SLP_S4 is an eSPI virtual wire instead of a GPIO"
 	help
 	  For power sequencing, use an eSPI virtual wire instead of
-	  defining GPIO_PCH_SLP_S4 in gpio_map.h.
+	  defining GPIO_PCH_SLP_S4 in the GPIO device tree.
 
 config PLATFORM_EC_ESPI_VW_SLP_S5
 	bool "SLP_S5 is an eSPI virtual wire instead of an alias for SLP_S4"

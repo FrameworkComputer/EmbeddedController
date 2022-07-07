@@ -57,18 +57,16 @@ config PLATFORM_EC_BATTERY_PRESENT_GPIO
 	  GPIO should read low if the battery is present, high if absent.
 
 	  The GPIO is hard-coded to GPIO_BATT_PRES_ODL so you should define this
-	  in the device tree and GPIO map. The convention is to use the signal
+	  in the device tree. The convention is to use the signal
 	  name from schematic as both the node name and label for the GPIO. For
 	  example:
 
 	    /* gpio.dts */
 	    ec_batt_pres_odl {
 	    	gpios = <&gpioe 5 GPIO_INPUT>;
-	    	label = "EC_BATT_PRES_ODL";
+	    	enum-name = "EC_BATT_PRES_ODL";
+		alias = "GPIO_BATT_PRES_ODL";
 	    };
-
-	    /* gpio_map.h */
-	    #define GPIO_BATT_PRES_ODL		NAMED_GPIO(ec_batt_pres_odl)
 
 endchoice # PLATFORM_EC_BATTERY_PRESENT_MODE
 

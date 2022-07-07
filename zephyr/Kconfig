@@ -327,7 +327,7 @@ config PLATFORM_EC_EXTPOWER_GPIO
 	  Enable shimming the extpower_gpio module, which provides
 	  GPIO-based external power presence detection features.  The
 	  project should define a GPIO pin named GPIO_AC_PRESENT, with
-	  extpower_interrupt configured as the handler in gpio_map.h.
+	  extpower_interrupt configured as the handler.
 
 config PLATFORM_EC_FLASH_CROS
 	bool
@@ -429,7 +429,7 @@ config PLATFORM_EC_LID_SWITCH
 	  behaviour. For example, when the lid is opened, the device may
 	  automatically power on.
 
-	  This requires a GPIO named GPIO_LID_OPEN to be defined in gpio_map.h.
+	  This requires a GPIO named GPIO_LID_OPEN to be defined or aliased.
 
 config PLATFORM_EC_MKBP_INPUT_DEVICES
 	bool "Input devices via MKBP"
@@ -540,7 +540,7 @@ config PLATFORM_EC_POWER_BUTTON
 	  commands in platform/ec.  This is used to implement the Chromium OS
 	  shutdown sequence.
 
-	  This requires a GPIO named GPIO_POWER_BUTTON_L in gpio_map.h.
+	  This requires a GPIO named GPIO_POWER_BUTTON_L.
 
 config PLATFORM_EC_PWM_HC
 	bool
