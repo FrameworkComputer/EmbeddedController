@@ -9,6 +9,7 @@
 #define __CROS_EC_SM5803_H
 
 #include "common.h"
+#include "usb_pd_tcpm.h"
 
 /* Note: configure charger struct with CHARGER_FLAGS */
 #define SM5803_ADDR_MAIN_FLAGS 0x30
@@ -128,6 +129,18 @@ enum sm5803_gpio0_modes {
 #define SM5803_GPADCC1_VCHGPWR_EN BIT(5) /* NOTE: DO NOT CLEAR */
 #define SM5803_GPADCC1_VSYS_EN BIT(6) /* NOTE: DO NOT CLEAR */
 #define SM5803_GPADCC1_TINT_EN BIT(7)
+
+/*
+ * Default value for GPADCC1, set at initialization: the normal operating state.
+ *
+ * IBAT_CHG is enabled in order to measure battery current and calculate system
+ * resistance.
+ */
+#define SM5803_GPADCC1_DEFAULT_ENABLE                              \
+	(SM5803_GPADCC1_TINT_EN | SM5803_GPADCC1_VSYS_EN |         \
+	 SM5803_GPADCC1_VCHGPWR_EN | SM5803_GPADCC1_VBUS_EN |      \
+	 SM5803_GPADCC1_IBAT_CHG_EN | SM5803_GPADCC1_IBAT_DIS_EN | \
+	 SM5803_GPADCC1_VBATSNSP_EN)
 
 #define SM5803_REG_GPADC_CONFIG2 0x02
 
@@ -417,6 +430,21 @@ void sm5803_interrupt(int chgnum);
  * @return EC_SUCCESS, error otherwise.
  */
 enum ec_error_list sm5803_is_acok(int chgnum, bool *acok);
+
+/**
+ * Test whether the current voltage on VBUS corresponds to the given range.
+ *
+ * Users should prefer this function to manually evaluating the result of
+ * charger_get_vbus_voltage because that function may behave incorrectly when
+ * the charger is in low power mode. This function will return correct results
+ * regardless of the charger state.
+ *
+ * @param chgnum charger index to test
+ * @param level VBUS range
+ * @return true if the current VBUS voltage is in the given range, false if it
+ *         is not or if there is a problem communicating with the charger.
+ */
+bool sm5803_check_vbus_level(int chgnum, enum vbus_level level);
 
 /* Expose low power mode functions */
 void sm5803_disable_low_power_mode(int chgnum);
