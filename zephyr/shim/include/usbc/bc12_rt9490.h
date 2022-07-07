@@ -10,4 +10,4 @@
 #define BC12_CHIP_RT9490(id)             \
 	{                                \
 		.drv = &rt9490_bc12_drv, \
-	},
+	}
