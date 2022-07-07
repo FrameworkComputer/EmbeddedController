@@ -4,12 +4,12 @@
 
 """Define zmake projects for corsola."""
 
-# Default chip is it8xxx2, some variants will use NPCX9X.
+# Default chip is it81202bx, some variants will use NPCX9X.
 
 
 def register_corsola_project(
     project_name,
-    chip="it8xxx2",
+    chip="it81202bx",
     extra_dts_overlays=(),
     extra_kconfig_files=(),
 ):
