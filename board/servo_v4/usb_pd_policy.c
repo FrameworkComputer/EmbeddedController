@@ -259,6 +259,20 @@ static void update_ports(void)
 			src_index = 0;
 			snk_index = -1;
 
+			/*
+			 * TODO: This code artificially limits PDO
+			 * to entries in pd_src_voltages_mv table
+			 *
+			 * This is artificially overconstrainted.
+			 *
+			 * Allow non-standard PDO objects so long
+			 * as they are valid. See: crrev/c/730877
+			 * for where this started.
+			 *
+			 * This needs to be rearchitected in order
+			 * to support Variable PDO passthrough.
+			 */
+
 			for (i = 0; i < ARRAY_SIZE(pd_src_voltages_mv); ++i) {
 				/* Adhere to board voltage limits */
 				if (pd_src_voltages_mv[i] >
@@ -280,11 +294,40 @@ static void update_ports(void)
 				snk_index = pdo_index;
 				pd_extract_pdo_power(pdo, &max_ma, &max_mv,
 						     &unused);
-				pd_src_chg_pdo[src_index++] =
+				pd_src_chg_pdo[src_index] =
 					PDO_FIXED_VOLT(max_mv) |
-					PDO_FIXED_CURR(max_ma) |
-					DUT_PDO_FIXED_FLAGS |
-					PDO_FIXED_UNCONSTRAINED;
+					PDO_FIXED_CURR(max_ma);
+
+				if (src_index == 0) {
+					/*
+					 * TODO: 1st PDO *should* always be
+					 * vSafe5v PDO. But not always with bad
+					 * DUT. Should re-index and re-map.
+					 *
+					 * TODO: Add variable voltage PDO
+					 * conversion.
+					 */
+					pd_src_chg_pdo[src_index] &=
+						~(DUT_PDO_FIXED_FLAGS |
+						  PDO_FIXED_UNCONSTRAINED);
+
+					/*
+					 * TODO: Keep Unconstrained Power knobs
+					 * exposed and well-defined.
+					 *
+					 * Current method is workaround that
+					 * force-rejects PR_SWAPs in lieu of UP.
+					 *
+					 * Migrate to use config flag such as:
+					 * ((cc_config &
+					 * CC_UNCONSTRAINED_POWER)?
+					 * PDO_FIXED_UNCONSTRAINED:0)
+					 */
+					pd_src_chg_pdo[src_index] |=
+						(DUT_PDO_FIXED_FLAGS |
+						 PDO_FIXED_UNCONSTRAINED);
+				}
+				src_index++;
 			}
 			chg_pdo_cnt = src_index;
 		} else {
@@ -293,6 +336,10 @@ static void update_ports(void)
 					    PDO_FIXED_CURR(vbus[CHG].ma) |
 					    DUT_PDO_FIXED_FLAGS |
 					    PDO_FIXED_UNCONSTRAINED;
+			/*
+			 * TODO: Keep Unconstrained Power knobs
+			 * exposed and well-defined.
+			 */
 
 			chg_pdo_cnt = 1;
 		}
