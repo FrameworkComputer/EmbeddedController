@@ -146,10 +146,12 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	 * transitions to G3.
 	 */
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 0);
-	CPRINTS("Forcing pmic off with long press.");
-	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 0);
-	hook_call_deferred(&release_power_button_data,
-			   FORCED_SHUTDOWN_DELAY + SECOND);
+	if (reason != CHIPSET_SHUTDOWN_BUTTON) {
+		CPRINTS("Forcing pmic off with long press.");
+		GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 0);
+		hook_call_deferred(&release_power_button_data,
+				   FORCED_SHUTDOWN_DELAY + SECOND);
+	}
 
 	task_wake(TASK_ID_CHIPSET);
 }
@@ -426,9 +428,16 @@ enum power_state power_handle_state(enum power_state state)
 		 * In case the power button is held awaiting power-off timeout,
 		 * power off immediately now that we're entering S3.
 		 */
-		if (power_button_is_pressed())
+		if (power_button_is_pressed()) {
 			hook_call_deferred(&chipset_force_shutdown_button_data,
 					   -1);
+			/*
+			 * if the ap is shutting down, but it doesn't report
+			 * the reason, report it now.
+			 */
+			if (!is_shutdown)
+				chipset_force_shutdown_button();
+		}
 
 		return POWER_S3;
 
