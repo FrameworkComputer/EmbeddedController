@@ -11,8 +11,8 @@
 		 * FW_CONFIG field to indicate the device is clamshell
 		 * or convertible.
 		 */
-		from_factor {
-			enum-name = "FROM_FACTOR";
+		form_factor {
+			enum-name = "FORM_FACTOR";
 			start = <13>;
 			size = <3>;
 

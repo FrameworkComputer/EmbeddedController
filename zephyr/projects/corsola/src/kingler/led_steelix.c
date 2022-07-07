@@ -95,9 +95,9 @@ static bool device_is_clamshell(void)
 	int ret;
 	uint32_t val;
 
-	ret = cros_cbi_get_fw_config(FROM_FACTOR, &val);
+	ret = cros_cbi_get_fw_config(FORM_FACTOR, &val);
 	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FROM_FACTOR);
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FORM_FACTOR);
 		return false;
 	}
 
