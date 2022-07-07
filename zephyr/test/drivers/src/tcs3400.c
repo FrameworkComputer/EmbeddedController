@@ -602,4 +602,35 @@ ZTEST_USER(tcs3400, test_tcs_set_range)
 	zassert_equal(0x10000, ms->current_range, NULL);
 }
 
-ZTEST_SUITE(tcs3400, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+struct tcs3400_test_fixture {
+	struct als_drv_data_t drv_data;
+	struct tcs3400_rgb_drv_data_t rgb_drv_data;
+};
+
+static void tcs3400_before(void *state)
+{
+	struct tcs3400_test_fixture *f = state;
+
+	f->drv_data = *TCS3400_DRV_DATA(&motion_sensors[TCS_CLR_SENSOR_ID]);
+	f->rgb_drv_data =
+		*TCS3400_RGB_DRV_DATA(&motion_sensors[TCS_RGB_SENSOR_ID]);
+}
+
+static void tcs3400_after(void *state)
+{
+	struct tcs3400_test_fixture *f = state;
+
+	*TCS3400_DRV_DATA(&motion_sensors[TCS_CLR_SENSOR_ID]) = f->drv_data;
+	*TCS3400_RGB_DRV_DATA(&motion_sensors[TCS_RGB_SENSOR_ID]) =
+		f->rgb_drv_data;
+}
+
+static void *tcs3400_setup(void)
+{
+	static struct tcs3400_test_fixture tcs3400_fixture = { 0 };
+
+	return &tcs3400_fixture;
+}
+
+ZTEST_SUITE(tcs3400, drivers_predicate_post_main, tcs3400_setup, tcs3400_before,
+	    tcs3400_after, NULL);
