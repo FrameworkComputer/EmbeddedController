@@ -10,7 +10,9 @@
 
 static K_KERNEL_STACK_DEFINE(pwrseq_thread_stack, CONFIG_AP_PWRSEQ_STACK_SIZE);
 static struct k_thread pwrseq_thread_data;
-static struct pwrseq_context pwrseq_ctx;
+static struct pwrseq_context pwrseq_ctx = {
+	.power_state = SYS_POWER_STATE_UNINIT,
+};
 /* S5 inactive timer*/
 K_TIMER_DEFINE(s5_inactive_timer, NULL, NULL);
 /*
@@ -31,6 +33,7 @@ LOG_MODULE_REGISTER(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
  * @brief power_state names for debug
  */
 static const char *const pwrsm_dbg[] = {
+	[SYS_POWER_STATE_UNINIT] = "Unknown",
 	[SYS_POWER_STATE_G3] = "G3",
 	[SYS_POWER_STATE_S5] = "S5",
 	[SYS_POWER_STATE_S4] = "S4",

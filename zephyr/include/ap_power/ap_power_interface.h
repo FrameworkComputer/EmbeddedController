@@ -34,6 +34,8 @@
  * is hibernated or all the VRs are turned off.
  */
 enum power_states_ndsx {
+	/* Power state machine is not ready; AP state is unknown. */
+	SYS_POWER_STATE_UNINIT,
 	/*
 	 * Actual power states
 	 */
