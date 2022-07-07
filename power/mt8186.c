@@ -137,7 +137,7 @@ DECLARE_DEFERRED(release_power_button);
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	CPRINTS("%s(%d)", __func__, reason);
+	CPRINTS("%s: 0x%x", __func__, reason);
 	report_ap_reset(reason);
 
 	is_shutdown = true;
@@ -194,7 +194,7 @@ DECLARE_DEFERRED(reset_flag_deferred);
 
 void chipset_reset(enum chipset_shutdown_reason reason)
 {
-	CPRINTS("%s: %d", __func__, reason);
+	CPRINTS("%s: 0x%x", __func__, reason);
 	report_ap_reset(reason);
 
 	is_resetting = true;
