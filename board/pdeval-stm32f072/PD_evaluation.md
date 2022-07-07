@@ -43,12 +43,12 @@ also need to create/delete the corresponding `PD_Cx` tasks in
 [board/pdeval-stm32f072/ec.tasklist](ec.tasklist).
 
 By default, the firmware is using I2C1 with SCL/SDA on pins PB6 and PB7, running
-with a 100kHz clock, and tries to talk to TCPCs at i2c slave addresses 0x9c and
+with a 100kHz clock, and tries to talk to TCPCs at i2c target addresses 0x9c and
 0x9e. To change the pins or speed, you need to edit `i2c_ports` in
 [board/pdeval-stm32f072/board.c](board.c), update `I2C_PORT_TCPC` in
 [board/pdeval-stm32f072/board.h](board.h) with the right controller number, and
 change the pin mux in [board/pdeval-stm32f072/gpio.inc](gpio.inc). To change
-TCPC i2c slave addresses, update `TCPC1_I2C_ADDR` and `TCPC2_I2C_ADDR` in
+TCPC i2c target addresses, update `TCPC1_I2C_ADDR` and `TCPC2_I2C_ADDR` in
 [board/pdeval-stm32f072/board.h](board.h).
 
 The I2C bus needs pull-up resistors on SCL/SDA. If your setup doesn't have
