@@ -264,7 +264,7 @@ static void fifo_stage_unit(struct ec_response_motion_sensor_data *data,
 		if (removed) {
 			mutex_unlock(&g_sensor_mutex);
 			if (IS_ENABLED(CONFIG_ONLINE_CALIB) &&
-			    next_timestamp_initialized & BIT(data->sensor_num))
+			    !is_new_timestamp(data->sensor_num))
 				online_calibration_process_data(
 					data, sensor,
 					next_timestamp[data->sensor_num].next);
@@ -515,7 +515,7 @@ commit_data_end:
 		 * sensor or the timestamp is after our computed next, skip
 		 * ahead.
 		 */
-		if (!(next_timestamp_initialized & BIT(sensor_num)) ||
+		if (is_new_timestamp(sensor_num) ||
 		    time_after(data->timestamp,
 			       next_timestamp[sensor_num].prev)) {
 			next_timestamp[sensor_num].next = data->timestamp;
