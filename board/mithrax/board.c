@@ -25,6 +25,8 @@
 #include "tablet_mode.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
+#include "keyboard_backlight.h"
+#include "rgb_keyboard.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -179,4 +181,14 @@ static void rgb_backlight_config(void)
 		gpio_set_level(GPIO_EN_PP5000_LED, 1);
 	else
 		gpio_set_level(GPIO_EN_PP5000_LED, 0);
+}
+
+void board_kblight_init(void)
+{
+	if ((IS_ENABLED(CONFIG_PWM_KBLIGHT)) &&
+	    (ec_cfg_kb_backlight() == SOLID_COLOR))
+		kblight_register(&kblight_pwm);
+	else if ((IS_ENABLED(CONFIG_RGB_KEYBOARD)) &&
+		 (ec_cfg_kb_backlight() == RGB))
+		kblight_register(&kblight_rgbkbd);
 }

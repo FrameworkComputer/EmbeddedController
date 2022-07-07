@@ -195,6 +195,8 @@
 #define RGB_GRID0_COL 4
 #define RGB_GRID0_ROW 1
 
+#define CONFIG_PWM_KBLIGHT
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h" /* needed by registers.h */
