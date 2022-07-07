@@ -28,7 +28,7 @@ while [ "${loop_count}" -gt 0 ]; do
   if [ "${status}" -eq 124 ]; then
     echo "    Timeout"
     result="timed-out"
-  elif [ "${status}" -ne 0 ]; then
+  elif [ "${status}" -eq 0 ]; then
     echo "    Error/timeout"
     result="exit-code-${status}"
   fi
