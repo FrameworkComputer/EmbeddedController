@@ -55,6 +55,9 @@ def build(opts):
             f.write(json_format.MessageToJson(metric_list))
         return
 
+    ec_dir = pathlib.Path(__file__).parent
+    subprocess.run([ec_dir / "util" / "check_clang_format.py"], check=True)
+
     cmd = ['make', 'buildall_only', f'-j{opts.cpus}']
     print(f"# Running {' '.join(cmd)}.")
     subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)

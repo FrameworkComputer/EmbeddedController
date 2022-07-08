@@ -29,13 +29,15 @@ def build(opts):
     """Builds all Zephyr firmware targets"""
     metric_list = firmware_pb2.FwBuildMetricList()
 
+    zephyr_dir = pathlib.Path(__file__).parent
+    platform_ec = zephyr_dir.resolve().parent
+    subprocess.run([platform_ec / "util" / "check_clang_format.py"], check=True)
+
     cmd = ['zmake', '-D', 'build', '-a']
     if opts.code_coverage:
         cmd.append('--coverage')
     subprocess.run(cmd, cwd=pathlib.Path(__file__).parent, check=True)
     if not opts.code_coverage:
-        zephyr_dir = pathlib.Path(__file__).parent
-        platform_ec = zephyr_dir.resolve().parent
         for project in zmake.project.find_projects(zephyr_dir).values():
             if project.config.is_test:
                 continue
