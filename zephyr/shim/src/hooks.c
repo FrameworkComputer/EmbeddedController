@@ -52,7 +52,7 @@ static void work_queue_error(const void *data, int rv)
 {
 	cprints(CC_HOOK,
 		"Warning: deferred call not submitted, "
-		"deferred_data=0x%pP, err=%d",
+		"deferred_data=0x%p, err=%d",
 		data, rv);
 }
 

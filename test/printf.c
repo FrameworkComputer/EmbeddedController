@@ -287,20 +287,7 @@ test_static int test_vsnprintf_pointers(void)
 {
 	void *ptr = (void *)0x55005E00;
 
-	T(expect_success("55005e00", "%pP", ptr));
-	T(expect_success(err_str, "%P", ptr));
-	/* %p by itself is invalid */
-	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%p"));
-	/* %p with an unknown suffix is invalid */
-	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%p "));
-	/* %p with an unknown suffix is invalid */
-	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%pQ"));
-
-	/*
-	 * Test %pb, which used to print binary, but is non-standard and no
-	 * longer supported.
-	 */
-	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%pb", 0xff));
+	T(expect_success("55005e00", "%p", ptr));
 
 	return EC_SUCCESS;
 }
@@ -337,19 +324,6 @@ test_static int test_vsnprintf_strings(void)
 	 * from the malformed address and a blank output string.
 	 */
 	T(expect_success("", "%.0s", (char *)1));
-
-	return EC_SUCCESS;
-}
-
-test_static int test_vsnprintf_timestamps(void)
-{
-	uint64_t ts = 0;
-
-	/*
-	 * Test %pT, which used to print timestamps, but is non-standard and no
-	 * longer supported.
-	 */
-	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%pT", &ts));
 
 	return EC_SUCCESS;
 }
@@ -409,19 +383,6 @@ test_static int test_snprintf_timestamp(void)
 	TEST_EQ(ret, -EC_ERROR_OVERFLOW, "%d");
 	TEST_EQ(str[0], '\0', "%d");
 
-	return EC_SUCCESS;
-}
-
-test_static int test_vsnprintf_hexdump(void)
-{
-	const char bytes[] = { 0x00, 0x5E };
-
-	/*
-	 * Test %ph, which used to print buffers as hex, but is non-standard
-	 * and no longer supported.
-	 */
-	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%ph",
-		 HEX_BUF(bytes, 2)));
 	return EC_SUCCESS;
 }
 
@@ -597,8 +558,6 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_vsnprintf_pointers);
 	RUN_TEST(test_vsnprintf_chars);
 	RUN_TEST(test_vsnprintf_strings);
-	RUN_TEST(test_vsnprintf_timestamps);
-	RUN_TEST(test_vsnprintf_hexdump);
 	RUN_TEST(test_vsnprintf_combined);
 	RUN_TEST(test_uint64_to_str);
 	RUN_TEST(test_snprintf_timestamp);

@@ -339,7 +339,6 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			int base = 10;
 			uint64_t v;
 
-			int ptrspec;
 			void *ptrval;
 
 			/*
@@ -390,23 +389,11 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 			if (c == 'p') {
 				c = -1;
-				ptrspec = *format++;
 				ptrval = va_arg(args, void *);
-				/*
-				 * %pP can accept null.
-				 */
-				if (ptrspec == 'P') {
-					/* %pP - Print a raw pointer. */
-					v = (unsigned long)ptrval;
-					base = 16;
-					if (sizeof(unsigned long) ==
-					    sizeof(uint64_t))
-						flags |= PF_64BIT;
-
-				} else {
-					return EC_ERROR_INVAL;
-				}
-
+				v = (unsigned long)ptrval;
+				base = 16;
+				if (sizeof(unsigned long) == sizeof(uint64_t))
+					flags |= PF_64BIT;
 			} else if (flags & PF_64BIT) {
 				v = va_arg(args, uint64_t);
 			} else {

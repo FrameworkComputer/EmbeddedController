@@ -111,7 +111,7 @@ static int check_for_overlaps(void)
 			}
 		}
 		if (!allocation_match) {
-			ccprintf("missing match %pP!\n", allocations[i].buf);
+			ccprintf("missing match %p!\n", allocations[i].buf);
 			return 0;
 		}
 	}
@@ -136,7 +136,7 @@ static int shmem_is_ok(int line)
 	struct shm_buffer *pbuf = free_buf_chain;
 
 	if (pbuf && pbuf->prev_buffer) {
-		ccprintf("Bad free buffer list start %pP\n", pbuf);
+		ccprintf("Bad free buffer list start %p\n", pbuf);
 		goto bailout;
 	}
 
@@ -152,13 +152,13 @@ static int shmem_is_ok(int line)
 		if (pbuf->next_buffer) {
 			if (top >= pbuf->next_buffer) {
 				ccprintf("%s:%d"
-					 " - inconsistent buffer size at %pP\n",
+					 " - inconsistent buffer size at %p\n",
 					 __func__, __LINE__, pbuf);
 				goto bailout;
 			}
 			if (pbuf->next_buffer->prev_buffer != pbuf) {
 				ccprintf("%s:%d"
-					 " - inconsistent next buffer at %pP\n",
+					 " - inconsistent next buffer at %p\n",
 					 __func__, __LINE__, pbuf);
 				goto bailout;
 			}

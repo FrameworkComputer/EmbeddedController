@@ -63,9 +63,7 @@
  *   - 'x' - unsigned integer, print as lower-case hexadecimal
  *   - 'X' - unsigned integer, print as upper-case hexadecimal
  *   - 'b' - unsigned integer, print as binary
- *
- * Special format codes:
- *   - '%pP' - raw pointer.
+ *   - 'p' - pointer
  */
 
 #ifndef HIDE_EC_STDLIB

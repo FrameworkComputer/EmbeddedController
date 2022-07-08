@@ -196,7 +196,7 @@ void hook_task(void *u)
 				 */
 				__deferred_until[i] = 0;
 				interrupt_enable();
-				CPRINTS("hook call deferred 0x%pP",
+				CPRINTS("hook call deferred 0x%p",
 					__deferred_funcs[i].routine);
 				__deferred_funcs[i].routine();
 				interrupt_disable();

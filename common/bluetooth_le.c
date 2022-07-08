@@ -139,7 +139,7 @@ static void mem_dump(uint8_t *mem, int len)
 	for (i = 0; i < len; i++) {
 		value = mem[i];
 		if (i % 8 == 0)
-			CPRINTF("\n%pP: %02x", &mem[i], value);
+			CPRINTF("\n%p: %02x", &mem[i], value);
 		else
 			CPRINTF(" %02x", value);
 	}
@@ -160,7 +160,7 @@ void dump_ble_packet(struct ble_pdu *ble_p)
 	int curr_offs;
 
 	if (ble_p->header_type_adv) {
-		CPRINTF("BLE packet @ %pP: type %d, len %d, %s %s\n", ble_p,
+		CPRINTF("BLE packet @ %p: type %d, len %d, %s %s\n", ble_p,
 			ble_p->header.adv.type, ble_p->header.adv.length,
 			(ble_p->header.adv.txaddr ? " TXADDR" : ""),
 			(ble_p->header.adv.rxaddr ? " RXADDR" : ""));
@@ -187,7 +187,7 @@ void dump_ble_packet(struct ble_pdu *ble_p)
 			mem_dump(ble_p->payload + curr_offs,
 				 ble_p->header.adv.length - curr_offs);
 	} else { /* Data PDUs */
-		CPRINTF("BLE data packet @%pP: LLID %d,"
+		CPRINTF("BLE data packet @%p: LLID %d,"
 			" nesn %d, sn %d, md %d, length %d\n",
 			ble_p, ble_p->header.data.llid, ble_p->header.data.nesn,
 			ble_p->header.data.sn, ble_p->header.data.md,
