@@ -575,6 +575,18 @@ static void charge_manager_get_best_charge_port(int *new_port,
 	int best_port_power = -1, candidate_port_power;
 	int i, j;
 
+#ifdef CONFIG_USB_PD_VBUS_CTRL_BY_PD_CHIP
+	/* If system initially power on w/o dc, CYPD will control C_CTRL */
+	if ((charge_port == CHARGE_SUPPLIER_NONE) && (board_batt_is_present() != BP_YES)) {
+		*new_port = check_power_on_port();
+		CPRINTS("NO DC, choose AC by CYPD: %d", *new_port);
+		*new_supplier = CHARGE_SUPPLIER_PD;
+		if (*new_port == -1)
+			*new_supplier = CHARGE_SUPPLIER_NONE;
+		return;
+	}
+#endif /* CONFIG_USB_PD_VBUS_CTRL_BY_PD_CHIP */
+
 	/* Skip port selection on OVERRIDE_DONT_CHARGE. */
 	if (override_port != OVERRIDE_DONT_CHARGE) {
 		/*

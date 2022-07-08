@@ -315,4 +315,6 @@ __override_proto
 void board_fill_source_power_info(int port,
 				  struct ec_response_usb_pd_power_info *r);
 
+extern int check_power_on_port(void);
+
 #endif /* __CROS_EC_CHARGE_MANAGER_H */
