@@ -14,7 +14,6 @@
 #include "util.h"
 #include "watchdog.h"
 
-
 static int test_uint64divmod_0(void)
 {
 	uint64_t n = 8567106442584750ULL;

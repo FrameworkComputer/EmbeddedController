@@ -256,8 +256,8 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				 * For more context, see
 				 * https://issuetracker.google.com/issues/172210614
 				 */
-				if (!IS_ENABLED(CONFIG_PRINTF_LONG_IS_32BITS)
-				    && !(flags & PF_64BIT)) {
+				if (!IS_ENABLED(CONFIG_PRINTF_LONG_IS_32BITS) &&
+				    !(flags & PF_64BIT)) {
 					format = error_str;
 					continue;
 				}

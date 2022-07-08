@@ -22,7 +22,6 @@
 
 extern const struct ppc_drv nx20p348x_drv;
 
-
 /**
  * Interrupt Handler for the NX20P348x.
  *

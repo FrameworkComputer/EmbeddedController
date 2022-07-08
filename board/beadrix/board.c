@@ -443,8 +443,9 @@ int board_set_active_charge_port(int port)
 		}
 
 		/*
-		 * Stop the charger IC from switching while changing ports.  Otherwise,
-		 * we can overcurrent the adapter we're switching to. (crbug.com/926056)
+		 * Stop the charger IC from switching while changing ports.
+		 * Otherwise, we can overcurrent the adapter we're switching to.
+		 * (crbug.com/926056)
 		 */
 		charger_discharge_on_ac(1);
 	}

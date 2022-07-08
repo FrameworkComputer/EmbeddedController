@@ -104,7 +104,6 @@ static int test_strzcpy(void)
 	return EC_SUCCESS;
 }
 
-
 void run_test(int argc, char **argv)
 {
 	test_reset();

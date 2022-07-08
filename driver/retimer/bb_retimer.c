@@ -414,7 +414,6 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 	}
 
 	if (mux_state & USB_PD_MUX_DP_ENABLED) {
-
 		/*
 		 * Bit 11-10: DP_PIN_ASSIGNMENT (ignored if BIT8 = 0)
 		 * 00 – Pin assignments E/E’
@@ -507,11 +506,11 @@ void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 	 * low power mode until the external monitor is connected.
 	 */
 	if (mux_state & USB_PD_MUX_HPD_LVL)
-		retimer_con_reg |= (BB_RETIMER_HPD_LVL |
-					BB_RETIMER_DP_CONNECTION);
+		retimer_con_reg |=
+			(BB_RETIMER_HPD_LVL | BB_RETIMER_DP_CONNECTION);
 	else
-		retimer_con_reg &= ~(BB_RETIMER_HPD_LVL |
-					BB_RETIMER_DP_CONNECTION);
+		retimer_con_reg &=
+			~(BB_RETIMER_HPD_LVL | BB_RETIMER_DP_CONNECTION);
 
 	/* Writing the register4 */
 	bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE, retimer_con_reg);

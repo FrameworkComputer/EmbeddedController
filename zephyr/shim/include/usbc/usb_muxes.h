@@ -84,7 +84,7 @@
  * @param idx Position of USB mux in chain
  * @param conf Driver configuration function
  */
-#define USB_MUX_CB_BOARD_INIT_DECLARE(mux_id, port_id, idx, conf)       \
+#define USB_MUX_CB_BOARD_INIT_DECLARE(mux_id, port_id, idx, conf) \
 	int DT_STRING_TOKEN(mux_id, board_init)(const struct usb_mux *);
 
 /**
@@ -95,8 +95,8 @@
  * @param idx Position of USB mux in chain
  * @param conf Driver configuration function
  */
-#define USB_MUX_CB_BOARD_SET_DECLARE(mux_id, port_id, idx, conf)        \
-	int DT_STRING_TOKEN(mux_id, board_set)(const struct usb_mux *,  \
+#define USB_MUX_CB_BOARD_SET_DECLARE(mux_id, port_id, idx, conf)       \
+	int DT_STRING_TOKEN(mux_id, board_set)(const struct usb_mux *, \
 					       mux_state_t);
 
 /**
@@ -300,8 +300,8 @@
  * @param cb The callback name
  * @param op Operation to perform on USB muxes
  */
-#define USB_MUX_DO_SKIP_NO_CB(port_id, mux_id, idx, cb, op)             \
-	COND_CODE_0(IS_EMPTY(DT_STRING_TOKEN(mux_id, cb)),              \
+#define USB_MUX_DO_SKIP_NO_CB(port_id, mux_id, idx, cb, op) \
+	COND_CODE_0(IS_EMPTY(DT_STRING_TOKEN(mux_id, cb)),  \
 		    (USB_MUX_DO(port_id, idx, op)), ())
 
 /**
@@ -313,9 +313,9 @@
  *           ID, USBC port node ID, position in chain, and driver config as
  *           arguments.
  */
-#define USB_MUX_HAS_CB(port_id, cb, op)                                 \
-	DT_FOREACH_PROP_ELEM_VARGS(port_id, usb_muxes,                  \
-				  USB_MUX_DO_SKIP_NO_CB, cb, op)
+#define USB_MUX_HAS_CB(port_id, cb, op)                                       \
+	DT_FOREACH_PROP_ELEM_VARGS(port_id, usb_muxes, USB_MUX_DO_SKIP_NO_CB, \
+				   cb, op)
 
 /**
  * @brief If usb_muxes property of @p port_id has callback board_init
@@ -325,7 +325,7 @@
  *           ID, USBC port node ID, position in chain, and driver config as
  *           arguments.
  */
-#define USB_MUX_HAS_CB_BOARD_INIT(port_id, op)                          \
+#define USB_MUX_HAS_CB_BOARD_INIT(port_id, op) \
 	USB_MUX_HAS_CB(port_id, board_init, op)
 
 /**
@@ -336,7 +336,7 @@
  *           ID, USBC port node ID, position in chain, and driver config as
  *           arguments.
  */
-#define USB_MUX_HAS_CB_BOARD_SET(port_id, op)                           \
+#define USB_MUX_HAS_CB_BOARD_SET(port_id, op) \
 	USB_MUX_HAS_CB(port_id, board_set, op)
 
 /**

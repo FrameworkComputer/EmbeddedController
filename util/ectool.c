@@ -1288,25 +1288,25 @@ int cmd_reboot_ap_on_g3(int argc, char *argv[])
 static void cmd_rgbkbd_help(char *cmd)
 {
 	fprintf(stderr,
-	"  Usage1: %s <key> <RGB> [<RGB> ...]\n"
-	"          Set the color of <key> to <RGB>. Multiple colors for\n"
-	"          adjacent keys can be set at once.\n"
-	"\n"
-	"  Usage2: %s clear <RGB>\n"
-	"          Set the color of all keys to <RGB>.\n"
-	"\n"
-	"  Usage3: %s demo <num>\n"
-	"          Run demo-<num>. 0: Off, 1: Flow, 2: Dot.\n"
-	"\n"
-	"  Usage4: %s scale <key> <val>\n"
-	"          Set the scale parameter of key_<key> to <val>.\n"
-	"          <val> is a 24-bit integer where scale values are encoded\n"
-	"          as R=23:16, G=15:8, B=7:0.\n"
-	"\n"
-	"  Usage5: %s getconfig\n"
-	"          Get the HW config supported.\n"
-	"\n",
-	cmd, cmd, cmd, cmd, cmd);
+		"  Usage1: %s <key> <RGB> [<RGB> ...]\n"
+		"          Set the color of <key> to <RGB>. Multiple colors for\n"
+		"          adjacent keys can be set at once.\n"
+		"\n"
+		"  Usage2: %s clear <RGB>\n"
+		"          Set the color of all keys to <RGB>.\n"
+		"\n"
+		"  Usage3: %s demo <num>\n"
+		"          Run demo-<num>. 0: Off, 1: Flow, 2: Dot.\n"
+		"\n"
+		"  Usage4: %s scale <key> <val>\n"
+		"          Set the scale parameter of key_<key> to <val>.\n"
+		"          <val> is a 24-bit integer where scale values are encoded\n"
+		"          as R=23:16, G=15:8, B=7:0.\n"
+		"\n"
+		"  Usage5: %s getconfig\n"
+		"          Get the HW config supported.\n"
+		"\n",
+		cmd, cmd, cmd, cmd, cmd);
 }
 
 static int cmd_rgbkbd_parse_rgb_text(const char *text, struct rgb_s *color)

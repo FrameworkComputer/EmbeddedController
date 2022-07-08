@@ -20,7 +20,7 @@
 #include "driver/tcpm/ps8xxx_public.h"
 #include "test/drivers/test_state.h"
 
-#define PS8XXX_EMUL_LABEL	DT_LABEL(DT_NODELABEL(ps8xxx_emul))
+#define PS8XXX_EMUL_LABEL DT_LABEL(DT_NODELABEL(ps8xxx_emul))
 
 /** Test PS8xxx init fail conditions common for all PS8xxx devices */
 static void test_ps8xxx_init_fail(void)
@@ -79,16 +79,14 @@ ZTEST(ps8805, test_ps8805_init)
 	/* Test fail on read I2C debug reg */
 	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
 					  PS8XXX_REG_I2C_DEBUGGING_ENABLE);
-	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1),
-		      NULL);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
 	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on read DCI reg */
 	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
 					  PS8XXX_P1_REG_MUX_USB_DCI_CFG);
-	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1),
-		      NULL);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
 	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -98,7 +96,8 @@ ZTEST(ps8805, test_ps8805_init)
 			PS8XXX_REG_I2C_DEBUGGING_ENABLE_ON);
 	zassert_equal(PS8XXX_REG_MUX_USB_DCI_CFG_MODE_OFF,
 		      ps8xxx_emul_get_dci_cfg(ps8xxx_emul) &
-		      PS8XXX_REG_MUX_USB_DCI_CFG_MODE_MASK, NULL);
+			      PS8XXX_REG_MUX_USB_DCI_CFG_MODE_MASK,
+		      NULL);
 }
 
 /** Test PS8815 init */
@@ -116,8 +115,7 @@ ZTEST(ps8815, test_ps8815_init)
 	/* Test fail on reading HW revision register */
 	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
 					  PS8815_P1_REG_HW_REVISION);
-	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1),
-		      NULL);
+	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
 	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -134,16 +132,14 @@ static void test_ps8xxx_release(void)
 
 	/* Test successful release with correct FW reg read */
 	start_ms = k_uptime_get();
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.release(USBC_PORT_C1),
-		      NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.release(USBC_PORT_C1), NULL);
 	zassert_true(k_uptime_get() - start_ms < 10,
 		     "release on correct FW reg read shouldn't wait for chip");
 
 	/* Test delay on FW reg read fail */
 	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul, PS8XXX_REG_FW_REV);
 	start_ms = k_uptime_get();
-	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.release(USBC_PORT_C1),
-		      NULL);
+	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.release(USBC_PORT_C1), NULL);
 	zassert_true(k_uptime_get() - start_ms >= 10,
 		     "release on FW reg read fail should wait for chip");
 }
@@ -250,8 +246,8 @@ ZTEST(ps8815, test_ps8815_set_cc)
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
 			    "delay on HW rev 0x0a00");
 	delay = k_uptime_delta(&start_time);
-	zassert_true(delay >= 1,
-		     "expected delay on HW rev 0x0a00 (delay %lld)", delay);
+	zassert_true(delay >= 1, "expected delay on HW rev 0x0a00 (delay %lld)",
+		     delay);
 
 	/*
 	 * Set hw revision 0x0a01 to enable workaround for b/171430855 (delay
@@ -263,8 +259,8 @@ ZTEST(ps8815, test_ps8815_set_cc)
 	check_ps8815_set_cc(TYPEC_RP_1A5, TYPEC_CC_RP, 0,
 			    "delay on HW rev 0x0a01");
 	delay = k_uptime_delta(&start_time);
-	zassert_true(delay >= 1,
-		     "expected delay on HW rev 0x0a01 (delay %lld)", delay);
+	zassert_true(delay >= 1, "expected delay on HW rev 0x0a01 (delay %lld)",
+		     delay);
 
 	/*
 	 * Set other hw revision to disable workaround for b/171430855 (delay
@@ -325,18 +321,18 @@ static void test_ps8xxx_transmit(void)
 	/* Test fail on transmitting BIST MODE 2 message */
 	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul, TCPC_REG_TRANSMIT);
 	zassert_equal(EC_ERROR_INVAL,
-		      ps8xxx_tcpm_drv.transmit(USBC_PORT_C1,
-					       TCPCI_MSG_TX_BIST_MODE_2, 0,
-					       NULL), NULL);
+		      ps8xxx_tcpm_drv.transmit(
+			      USBC_PORT_C1, TCPCI_MSG_TX_BIST_MODE_2, 0, NULL),
+		      NULL);
 	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test sending BIST MODE 2 message */
 	exp_cnt = PS8751_BIST_COUNTER;
 	zassert_equal(EC_SUCCESS,
-		      ps8xxx_tcpm_drv.transmit(USBC_PORT_C1,
-					       TCPCI_MSG_TX_BIST_MODE_2, 0,
-					       NULL), NULL);
+		      ps8xxx_tcpm_drv.transmit(
+			      USBC_PORT_C1, TCPCI_MSG_TX_BIST_MODE_2, 0, NULL),
+		      NULL);
 	check_tcpci_reg(ps8xxx_emul, PS8XXX_REG_BIST_CONT_MODE_CTR, 0);
 	zassert_equal(TCPCI_MSG_TX_BIST_MODE_2, msg->type, NULL);
 
@@ -668,27 +664,29 @@ ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 		ps8xxx_emul_set_chip_rev(ps8xxx_emul, test_param[i].chip_rev);
 
 		/* Test correct device id after fixing */
-		zassert_equal(EC_SUCCESS,
-			      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1,
-							    &info),
-			      "Failed to get chip info in test case %d (chip_rev 0x%x)",
-			      i, test_param[i].chip_rev);
-		zassert_equal(vendor, info.vendor_id,
-			      "0x%x != (vendor = 0x%x) in test case %d (chip_rev 0x%x)",
-			      vendor, info.vendor_id,
-			      i, test_param[i].chip_rev);
-		zassert_equal(product, info.product_id,
-			      "0x%x != (product = 0x%x) in test case %d (chip_rev 0x%x)",
-			      product, info.product_id,
-			      i, test_param[i].chip_rev);
-		zassert_equal(test_param[i].exp_dev_id, info.device_id,
-			      "0x%x != (device = 0x%x) in test case %d (chip_rev 0x%x)",
-			      test_param[i].exp_dev_id, info.device_id,
-			      i, test_param[i].chip_rev);
-		zassert_equal(fw_rev, info.fw_version_number,
-			      "0x%x != (FW rev = 0x%x) in test case %d (chip_rev 0x%x)",
-			      fw_rev, info.fw_version_number,
-			      i, test_param[i].chip_rev);
+		zassert_equal(
+			EC_SUCCESS,
+			ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
+			"Failed to get chip info in test case %d (chip_rev 0x%x)",
+			i, test_param[i].chip_rev);
+		zassert_equal(
+			vendor, info.vendor_id,
+			"0x%x != (vendor = 0x%x) in test case %d (chip_rev 0x%x)",
+			vendor, info.vendor_id, i, test_param[i].chip_rev);
+		zassert_equal(
+			product, info.product_id,
+			"0x%x != (product = 0x%x) in test case %d (chip_rev 0x%x)",
+			product, info.product_id, i, test_param[i].chip_rev);
+		zassert_equal(
+			test_param[i].exp_dev_id, info.device_id,
+			"0x%x != (device = 0x%x) in test case %d (chip_rev 0x%x)",
+			test_param[i].exp_dev_id, info.device_id, i,
+			test_param[i].chip_rev);
+		zassert_equal(
+			fw_rev, info.fw_version_number,
+			"0x%x != (FW rev = 0x%x) in test case %d (chip_rev 0x%x)",
+			fw_rev, info.fw_version_number, i,
+			test_param[i].chip_rev);
 	}
 }
 
@@ -759,26 +757,29 @@ ZTEST(ps8815, test_ps8815_get_chip_info_fix_dev_id)
 		ps8xxx_emul_set_hw_rev(ps8xxx_emul, test_param[i].hw_rev);
 
 		/* Test correct device id after fixing */
-		zassert_equal(EC_SUCCESS,
-			      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1,
-							    &info),
-			      "Failed to get chip info in test case %d (hw_rev 0x%x)",
-			      i, test_param[i].hw_rev);
-		zassert_equal(vendor, info.vendor_id,
-			      "0x%x != (vendor = 0x%x) in test case %d (hw_rev 0x%x)",
-			      vendor, info.vendor_id, i, test_param[i].hw_rev);
-		zassert_equal(product, info.product_id,
-			      "0x%x != (product = 0x%x) in test case %d (hw_rev 0x%x)",
-			      product, info.product_id,
-			      i, test_param[i].hw_rev);
-		zassert_equal(test_param[i].exp_dev_id, info.device_id,
-			      "0x%x != (device = 0x%x) in test case %d (hw_rev 0x%x)",
-			      test_param[i].exp_dev_id, info.device_id,
-			      i, test_param[i].hw_rev);
-		zassert_equal(fw_rev, info.fw_version_number,
-			      "0x%x != (FW rev = 0x%x) in test case %d (hw_rev 0x%x)",
-			      fw_rev, info.fw_version_number,
-			      i, test_param[i].hw_rev);
+		zassert_equal(
+			EC_SUCCESS,
+			ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
+			"Failed to get chip info in test case %d (hw_rev 0x%x)",
+			i, test_param[i].hw_rev);
+		zassert_equal(
+			vendor, info.vendor_id,
+			"0x%x != (vendor = 0x%x) in test case %d (hw_rev 0x%x)",
+			vendor, info.vendor_id, i, test_param[i].hw_rev);
+		zassert_equal(
+			product, info.product_id,
+			"0x%x != (product = 0x%x) in test case %d (hw_rev 0x%x)",
+			product, info.product_id, i, test_param[i].hw_rev);
+		zassert_equal(
+			test_param[i].exp_dev_id, info.device_id,
+			"0x%x != (device = 0x%x) in test case %d (hw_rev 0x%x)",
+			test_param[i].exp_dev_id, info.device_id, i,
+			test_param[i].hw_rev);
+		zassert_equal(
+			fw_rev, info.fw_version_number,
+			"0x%x != (FW rev = 0x%x) in test case %d (hw_rev 0x%x)",
+			fw_rev, info.fw_version_number, i,
+			test_param[i].hw_rev);
 	}
 }
 
@@ -855,7 +856,8 @@ ZTEST(ps8805, test_ps8805_gpio)
 		      NULL);
 	zassert_equal(EC_ERROR_INVAL,
 		      ps8805_gpio_get_level(USBC_PORT_C1, PS8805_GPIO_NUM,
-					    &level), NULL);
+					    &level),
+		      NULL);
 
 	/* Setup fail on gpio control reg read */
 	i2c_common_emul_set_read_fail_reg(gpio_i2c_emul,
@@ -867,7 +869,8 @@ ZTEST(ps8805, test_ps8805_gpio)
 		      NULL);
 	zassert_equal(EC_ERROR_INVAL,
 		      ps8805_gpio_get_level(USBC_PORT_C1, PS8805_GPIO_0,
-					    &level), NULL);
+					    &level),
+		      NULL);
 
 	/* Do not fail on gpio control reg read */
 	i2c_common_emul_set_read_fail_reg(gpio_i2c_emul,
@@ -893,27 +896,30 @@ ZTEST(ps8805, test_ps8805_gpio)
 		} else {
 			exp_ctrl &= ~test_param[i].gpio_reg;
 		}
-		zassert_equal(EC_SUCCESS,
-			      ps8805_gpio_set_level(USBC_PORT_C1,
-						    test_param[i].signal,
-						    test_param[i].level),
-			      "Failed gpio_set in test case %d (gpio %d, level %d)",
-			      i, test_param[i].signal, test_param[i].level);
-		zassert_equal(EC_SUCCESS,
-			      ps8805_gpio_get_level(USBC_PORT_C1,
-						    test_param[i].signal,
-						    &level),
-			      "Failed gpio_get in test case %d (gpio %d, level %d)",
-			      i, test_param[i].signal, test_param[i].level);
-		zassert_equal(test_param[i].level, level,
-			      "%d != (gpio_get_level = %d) in test case %d (gpio %d, level %d)",
-			      test_param[i].level, level, i,
-			      test_param[i].signal, test_param[i].level);
+		zassert_equal(
+			EC_SUCCESS,
+			ps8805_gpio_set_level(USBC_PORT_C1,
+					      test_param[i].signal,
+					      test_param[i].level),
+			"Failed gpio_set in test case %d (gpio %d, level %d)",
+			i, test_param[i].signal, test_param[i].level);
+		zassert_equal(
+			EC_SUCCESS,
+			ps8805_gpio_get_level(USBC_PORT_C1,
+					      test_param[i].signal, &level),
+			"Failed gpio_get in test case %d (gpio %d, level %d)",
+			i, test_param[i].signal, test_param[i].level);
+		zassert_equal(
+			test_param[i].level, level,
+			"%d != (gpio_get_level = %d) in test case %d (gpio %d, level %d)",
+			test_param[i].level, level, i, test_param[i].signal,
+			test_param[i].level);
 		gpio_ctrl = ps8xxx_emul_get_gpio_ctrl(ps8xxx_emul);
-		zassert_equal(exp_ctrl, gpio_ctrl,
-			      "0x%x != (gpio_ctrl = 0x%x) in test case %d (gpio %d, level %d)",
-			      exp_ctrl, gpio_ctrl, i, test_param[i].signal,
-			      test_param[i].level);
+		zassert_equal(
+			exp_ctrl, gpio_ctrl,
+			"0x%x != (gpio_ctrl = 0x%x) in test case %d (gpio %d, level %d)",
+			exp_ctrl, gpio_ctrl, i, test_param[i].signal,
+			test_param[i].level);
 	}
 }
 
@@ -1125,7 +1131,7 @@ static void test_ps8xxx_tcpci_low_power_mode(void)
 	 * don't have it. Stub it out for PS8751/PS8815.
 	 */
 	if (board_get_ps8xxx_product_id(USBC_PORT_C1) == PS8751_PRODUCT_ID ||
-		board_get_ps8xxx_product_id(USBC_PORT_C1) == PS8815_PRODUCT_ID)
+	    board_get_ps8xxx_product_id(USBC_PORT_C1) == PS8815_PRODUCT_ID)
 		return;
 	test_tcpci_low_power_mode(ps8xxx_emul, USBC_PORT_C1);
 }
@@ -1224,7 +1230,6 @@ static void ps8815_before(void *state)
 	ps8xxx_emul_set_product_id(ps8xxx_emul, PS8815_PRODUCT_ID);
 	setup_no_fail_all();
 }
-
 
 ZTEST_SUITE(ps8805, drivers_predicate_post_main, NULL, ps8805_before, NULL,
 	    NULL);

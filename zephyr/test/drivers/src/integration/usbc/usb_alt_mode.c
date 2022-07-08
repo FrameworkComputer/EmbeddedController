@@ -319,14 +319,14 @@ ZTEST_SUITE(usbc_alt_mode, drivers_predicate_post_main, usbc_alt_mode_setup,
 ZTEST_F(usbc_alt_mode_dp_unsupported, verify_discovery)
 {
 	host_cmd_typec_control(TEST_PORT, TYPEC_CONTROL_COMMAND_ENTER_MODE,
-				   TYPEC_MODE_DP);
+			       TYPEC_MODE_DP);
 	k_sleep(K_SECONDS(1));
 
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
 	struct ec_response_typec_discovery *discovery =
 		(struct ec_response_typec_discovery *)response_buffer;
-	host_cmd_typec_discovery(TEST_PORT, TYPEC_PARTNER_SOP,
-			response_buffer, sizeof(response_buffer));
+	host_cmd_typec_discovery(TEST_PORT, TYPEC_PARTNER_SOP, response_buffer,
+				 sizeof(response_buffer));
 
 	/* The host command does not count the VDM header in identity_count. */
 	zassert_equal(discovery->identity_count,
@@ -334,11 +334,10 @@ ZTEST_F(usbc_alt_mode_dp_unsupported, verify_discovery)
 		      "Expected %d identity VDOs, got %d",
 		      fixture->partner.identity_vdos - 1,
 		      discovery->identity_count);
-	zassert_mem_equal(discovery->discovery_vdo,
-			  fixture->partner.identity_vdm + 1,
-			  discovery->identity_count *
-				  sizeof(*discovery->discovery_vdo),
-			  "Discovered SOP identity ACK did not match");
+	zassert_mem_equal(
+		discovery->discovery_vdo, fixture->partner.identity_vdm + 1,
+		discovery->identity_count * sizeof(*discovery->discovery_vdo),
+		"Discovered SOP identity ACK did not match");
 	zassert_equal(discovery->svid_count, 1, "Expected 1 SVID, got %d",
 		      discovery->svid_count);
 	zassert_equal(discovery->svids[0].svid, USB_SID_DISPLAYPORT,

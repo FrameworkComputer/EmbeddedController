@@ -22,7 +22,6 @@ test_static int test_debugger_is_connected(void)
 	return EC_SUCCESS;
 }
 
-
 void run_test(int argc, char **argv)
 {
 	test_reset();
