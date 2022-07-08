@@ -424,6 +424,55 @@ test_static int test_vsnprintf_hexdump(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_snprintf_hex_buffer(void)
+{
+	const uint8_t bytes[] = { 0xAB, 0x5E };
+	char str_buf[5];
+	int rv;
+
+	/* Success cases. */
+
+	memset(str_buf, 0xff, sizeof(str_buf));
+	rv = snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(bytes, 2));
+	TEST_ASSERT_ARRAY_EQ(str_buf, "ab5e", sizeof("ab5e"));
+	TEST_EQ(rv, 4, "%d");
+
+	memset(str_buf, 0xff, sizeof(str_buf));
+	rv = snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(bytes, 0));
+	TEST_ASSERT_ARRAY_EQ(str_buf, "", sizeof(""));
+	TEST_EQ(rv, 0, "%d");
+
+	memset(str_buf, 0xff, sizeof(str_buf));
+	rv = snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(bytes, 1));
+	TEST_ASSERT_ARRAY_EQ(str_buf, "ab", sizeof("ab"));
+	TEST_EQ(rv, 2, "%d");
+
+	/* Error cases. */
+
+	/* Zero for buffer size argument is an error. */
+	memset(str_buf, 0xff, sizeof(str_buf));
+	TEST_ASSERT_MEMSET(str_buf, (char)0xff, sizeof(str_buf));
+	rv = snprintf_hex_buffer(str_buf, 0, HEX_BUF(bytes, 2));
+	TEST_EQ(rv, -EC_ERROR_INVAL, "%d");
+	TEST_ASSERT_MEMSET(str_buf, (char)0xff, sizeof(str_buf));
+
+	/* Buffer only has space for terminating '\0'. */
+	memset(str_buf, 0xff, sizeof(str_buf));
+	TEST_ASSERT_MEMSET(str_buf, (char)0xff, sizeof(str_buf));
+	rv = snprintf_hex_buffer(str_buf, 1, HEX_BUF(bytes, 1));
+	TEST_ASSERT_ARRAY_EQ(str_buf, "", sizeof(""));
+	TEST_EQ(rv, -EC_ERROR_OVERFLOW, "%d");
+
+	/* Buffer only has space for one character and '\0'. */
+	memset(str_buf, 0xff, sizeof(str_buf));
+	TEST_ASSERT_MEMSET(str_buf, (char)0xff, sizeof(str_buf));
+	rv = snprintf_hex_buffer(str_buf, 2, HEX_BUF(bytes, 1));
+	TEST_ASSERT_ARRAY_EQ(str_buf, "a", sizeof("a"));
+	TEST_EQ(rv, -EC_ERROR_OVERFLOW, "%d");
+
+	return EC_SUCCESS;
+}
+
 test_static int test_vsnprintf_combined(void)
 {
 	T(expect_success("abc", "%c%s", 'a', "bc"));
@@ -552,6 +601,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_vsnprintf_combined);
 	RUN_TEST(test_uint64_to_str);
 	RUN_TEST(test_snprintf_timestamp);
+	RUN_TEST(test_snprintf_hex_buffer);
 
 	test_print_result();
 }

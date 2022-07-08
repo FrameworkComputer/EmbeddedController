@@ -12,6 +12,7 @@
 #include <stdbool.h>
 #include <stddef.h> /* For size_t */
 #include "common.h"
+#include "console.h"
 
 /* The declaration of snprintf is changed to crec_snprintf for Zephyr,
  * so include stdio.h from Zephyr.
@@ -177,5 +178,27 @@ int snprintf_timestamp(char *str, size_t size, uint64_t timestamp);
  * @return -EC_ERROR_INVAL when @size is 0.
  */
 int snprintf_timestamp_now(char *str, size_t size);
+
+/**
+ * Prints bytes as a hex string in the provided buffer.
+ *
+ * Guarantees NUL-termination if size != 0.
+ *
+ * @param[out] str Destination string
+ * @param[in] size Size of @str in bytes
+ * @param[in] params Data to print
+ * @return Length of string written to @str, not including terminating NUL.
+ * @return -EC_ERROR_OVERFLOW when @str buffer is not large enough.
+ * @return -EC_ERROR_INVAL when @size is 0.
+ */
+int snprintf_hex_buffer(char *str, size_t size,
+			const struct hex_buffer_params *params);
+
+/**
+ * @param[in] num_bytes
+ * @return number of bytes needed to store @num_bytes as a string (including
+ * terminating '\0').
+ */
+size_t hex_str_buf_size(size_t num_bytes);
 
 #endif /* __CROS_EC_PRINTF_H */
