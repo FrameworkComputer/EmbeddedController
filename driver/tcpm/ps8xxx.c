@@ -8,6 +8,7 @@
  *
  * Supported TCPCs:
  * - PS8705
+ * - PS8745
  * - PS8751
  * - PS8755
  * - PS8805
@@ -24,6 +25,7 @@
 #include "usb_pd.h"
 
 #if !defined(CONFIG_USB_PD_TCPM_PS8705) &&     \
+	!defined(CONFIG_USB_PD_TCPM_PS8745) && \
 	!defined(CONFIG_USB_PD_TCPM_PS8751) && \
 	!defined(CONFIG_USB_PD_TCPM_PS8755) && \
 	!defined(CONFIG_USB_PD_TCPM_PS8805) && \
@@ -165,13 +167,13 @@ static int ps8751_dci_disable(int port)
 }
 #endif /* CONFIG_USB_PD_TCPM_PS8751 */
 
-#ifdef CONFIG_USB_PD_TCPM_PS8815
+#if defined(CONFIG_USB_PD_TCPM_PS8815) || defined(CONFIG_USB_PD_TCPM_PS8745)
 static int ps8815_dci_disable(int port)
 {
-	/* DCI is disabled on the ps8815 */
+	/* DCI is disabled on the ps8815 and ps8745 */
 	return EC_SUCCESS;
 }
-#endif /* CONFIG_USB_PD_TCPM_PS8815 */
+#endif /* CONFIG_USB_PD_TCPM_PS8815 || CONFIG_USB_PD_TCPM_PS8745 */
 
 #ifdef CONFIG_USB_PD_TCPM_PS8805
 static int ps8805_gpio_mask[] = {
@@ -249,6 +251,9 @@ static struct ps8xxx_variant_map variant_map[] = {
 	  {
 		  [REG_FW_VER] = 0x82,
 	  } },
+#endif
+#ifdef CONFIG_USB_PD_TCPM_PS8745
+	{ PS8745_PRODUCT_ID, ps8815_dci_disable, { [REG_FW_VER] = 0x82 } },
 #endif
 #ifdef CONFIG_USB_PD_TCPM_PS8751
 	{ PS8751_PRODUCT_ID,
@@ -341,6 +346,8 @@ __overridable uint16_t board_get_ps8xxx_product_id(int port)
 		return 0;
 	} else if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8705)) {
 		return PS8705_PRODUCT_ID;
+	} else if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8745)) {
+		return PS8745_PRODUCT_ID;
 	} else if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8751)) {
 		return PS8751_PRODUCT_ID;
 	} else if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8755)) {
@@ -480,12 +487,13 @@ static int ps8xxx_tcpc_drp_toggle(int port)
 	int opposite_pull;
 
 	/*
-	 * Workaround for PS8805/PS8815, which can't restart Connection
+	 * Workaround for PS8805/PS8815/PS8745, which can't restart Connection
 	 * Detection if the partner already presents pull. Now starts with
 	 * the opposite pull. Check b/149570002.
 	 */
 	if (product_id[port] == PS8805_PRODUCT_ID ||
-	    product_id[port] == PS8815_PRODUCT_ID) {
+	    product_id[port] == PS8815_PRODUCT_ID ||
+	    product_id[port] == PS8745_PRODUCT_ID) {
 		if (ps8815_disable_rp_detect[port]) {
 			CPRINTS("TCPC%d: rearm Rp disable detect on connect",
 				port);
@@ -587,6 +595,44 @@ static int ps8815_make_device_id(int port, int *id)
 }
 #endif
 
+#ifdef CONFIG_USB_PD_TCPM_PS8745_FORCE_ID
+/*
+ * Some PS8745 firmwares report the same product/device ID and chip rev as
+ * PS8815-A2. This function probes vendor-specific registers to determine
+ * whether the device is a PS8815 or PS8745 and updates the IDs pointed to by
+ * the parameters to be the correct IDs for the detected chip.
+ *
+ * See b/236761058 and the PS8xxx TCPC Family Chip Revision Guide (v0.2)
+ */
+static int ps8745_make_device_id(int port, uint16_t *pid, uint16_t *did)
+{
+	int status;
+	int val;
+
+	status = tcpc_addr_read(
+		port,
+		PS8751_P3_TO_P0_FLAGS(tcpc_config[port].i2c_info.addr_flags),
+		PS8815_P0_REG_ID, &val);
+	if (status != EC_SUCCESS)
+		return status;
+
+	if (*pid == PS8815_PRODUCT_ID && (val & BIT(1)) != 0) {
+		/* PS8815 with this bit set is actually PS8745 */
+		*pid = PS8745_PRODUCT_ID;
+	}
+
+	if (*pid == PS8745_PRODUCT_ID && *did == 0x0003) {
+		/*
+		 * Some versions report the correct product ID but the
+		 * device ID is still for PS8815-A2.
+		 */
+		*did = 0x0006;
+	}
+
+	return EC_SUCCESS;
+}
+#endif
+
 /*
  * The ps8815 can take up to 50ms (FW_INIT_DELAY_MS) to fully wake up
  * from sleep/low power mode - specially when it contains an application
@@ -654,6 +700,20 @@ static int ps8xxx_get_chip_info(int port, int live,
 		chip_info->product_id = product_id[port];
 	}
 
+#ifdef CONFIG_USB_PD_TCPM_PS8745_FORCE_ID
+	/* device ID 3 is PS8815 and might be misreported */
+	if (chip_info->product_id == PS8815_PRODUCT_ID ||
+	    chip_info->device_id == 0x0003) {
+		uint16_t pid = chip_info->product_id;
+		uint16_t did = chip_info->device_id;
+
+		rv = ps8745_make_device_id(port, &pid, &did);
+		chip_info->product_id = pid;
+		chip_info->device_id = did;
+		if (rv != EC_SUCCESS)
+			return rv;
+	}
+#endif
 #ifdef CONFIG_USB_PD_TCPM_PS8805_FORCE_DID
 	if (chip_info->product_id == PS8805_PRODUCT_ID &&
 	    chip_info->device_id == 0x0001) {
@@ -702,12 +762,13 @@ static int ps8xxx_get_chip_info(int port, int live,
 static int ps8xxx_enter_low_power_mode(int port)
 {
 	/*
-	 * PS8751/PS8815 has the auto sleep function that enters
+	 * PS8751/PS8815/PS8745 has the auto sleep function that enters
 	 * low power mode on its own in ~2 seconds. Other chips
 	 * don't have it. Stub it out for PS8751/PS8815.
 	 */
 	if (product_id[port] == PS8751_PRODUCT_ID ||
-	    product_id[port] == PS8815_PRODUCT_ID)
+	    product_id[port] == PS8815_PRODUCT_ID ||
+	    product_id[port] == PS8745_PRODUCT_ID)
 		return EC_SUCCESS;
 
 	return tcpci_enter_low_power_mode(port);
@@ -823,7 +884,10 @@ static int ps8xxx_tcpm_init(int port)
 		status = ps8815_disable_rp_detect_workaround_check(port);
 		if (status != EC_SUCCESS)
 			return status;
+	}
 
+	if (IS_ENABLED(CONFIG_USB_PD_TCPM_PS8745) ||
+	    IS_ENABLED(CONFIG_USB_PD_TCPM_PS8815)) {
 		/*
 		 * NOTE(b/183127346): Enable FRS sequence:
 		 *
@@ -973,7 +1037,8 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.enter_low_power_mode = ps8xxx_enter_low_power_mode,
 #endif
 	.set_bist_test_mode = tcpci_set_bist_test_mode,
-#if defined(CONFIG_USB_PD_FRS) && defined(CONFIG_USB_PD_TCPM_PS8815)
+#if defined(CONFIG_USB_PD_FRS) && (defined(CONFIG_USB_PD_TCPM_PS8815) || \
+				   defined(CONFIG_USB_PD_TCPM_PS8745))
 	.set_frs_enable = ps8815_tcpc_fast_role_swap_enable,
 #endif
 };

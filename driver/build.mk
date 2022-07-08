@@ -165,6 +165,7 @@ endif
 driver-$(CONFIG_USB_PD_TCPM_ANX74XX)+=tcpm/anx74xx.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7688)+=tcpm/anx7688.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7447)+=tcpm/anx7447.o
+driver-$(CONFIG_USB_PD_TCPM_PS8745)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8751)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8755)+=tcpm/ps8xxx.o
 driver-$(CONFIG_USB_PD_TCPM_PS8705)+=tcpm/ps8xxx.o

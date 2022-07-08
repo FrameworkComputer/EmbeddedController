@@ -99,6 +99,11 @@
  * bit 7-4: 1010b is A3 chip, 0000b is A2 chip
  */
 #define PS8805_P0_REG_CHIP_REVISION 0x62
+/*
+ * PS8815 register to differentiate with PS8745: bit 1 = 0 is a PS8815-A2,
+ * 1 is a PS8745-A2.
+ */
+#define PS8815_P0_REG_ID 0x2C
 
 /*
  * PS8805 GPIO control register. Note the device I2C address of 0x1A is

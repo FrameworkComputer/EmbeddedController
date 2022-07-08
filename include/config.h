@@ -4811,6 +4811,7 @@
  * to provide the product id per port.
  */
 #undef CONFIG_USB_PD_TCPM_MULTI_PS8XXX
+#undef CONFIG_USB_PD_TCPM_PS8745
 #undef CONFIG_USB_PD_TCPM_PS8751
 #undef CONFIG_USB_PD_TCPM_PS8755
 #undef CONFIG_USB_PD_TCPM_PS8705

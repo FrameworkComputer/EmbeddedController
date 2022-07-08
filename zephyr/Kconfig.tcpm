@@ -156,11 +156,32 @@ config PLATFORM_EC_USB_PD_TCPM_MULTI_PS8XXX
 	  Supported return values are:
 
 	     PS8705_PRODUCT_ID
+	     PS8745_PRODUCT_ID
 	     PS8751_PRODUCT_ID
 	     PS8755_PRODUCT_ID
 	     PS8805_PRODUCT_ID
 	     PS8815_PRODUCT_ID
 endif # PLATFORM_EC_USB_PD_TCPM_PS8XXX
+
+config PLATFORM_EC_USB_PD_TCPM_PS8745
+	bool "Parade PS8745 USB-C Gen 2 Type-C Port Controller"
+	select PLATFORM_EC_USB_PD_TCPM_PS8XXX
+	help
+	  The Parade Technologies PS8815 is an active retiming/redriving
+	  (respectively for USB 3.1 Gen 2 / DisplayPort 1.4a HBR3) integrated
+	  with a USB Type-C Port Controller (TCPC) for USB Type-C Host and
+	  DisplayPort applications. It supports Power Delivery and the
+	  DisplayPort Alt Mode.
+
+if PLATFORM_EC_USB_PD_TCPM_PS8745
+config PLATFORM_EC_USB_PD_TCPM_PS8745_FORCE_ID
+	bool "Disambiguate PS8745 and PS8815"
+	default y
+	help
+	  Some firmware versions of the PS8745 report incorrect product and device
+	  IDs. Enable this option to check vendor-specific registers and force the
+	  correct device and product IDs.
+endif # PLATFORM_EC_USB_PD_TCPM_PS8745
 
 config PLATFORM_EC_USB_PD_TCPM_PS8751
 	bool "Parade PS8751 USB-C Gen 2 Type-C Port Controller"
