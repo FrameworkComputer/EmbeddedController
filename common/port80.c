@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "port80.h"
+#include "printf.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -39,6 +40,8 @@ DECLARE_DEFERRED(port80_dump_buffer);
 
 void port_80_write(int data)
 {
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
+
 	/*
 	 * By default print_in_int is disabled if:
 	 * 1. CONFIG_BRINGUP is not defined
@@ -53,9 +56,11 @@ void port_80_write(int data)
 	 * dump the current port80 buffer to EC console. This is to allow
 	 * developers to help debug BIOS progress by tracing port80 messages.
 	 */
-	if (print_in_int)
-		CPRINTF("%c[%pT Port 80: 0x%02x]", scroll ? '\n' : '\r',
-			PRINTF_TIMESTAMP_NOW, data);
+	if (print_in_int) {
+		snprintf_timestamp_now(ts_str, sizeof(ts_str));
+		CPRINTF("%c[%s Port 80: 0x%02x]", scroll ? '\n' : '\r', ts_str,
+			data);
+	}
 
 	hook_call_deferred(&port80_dump_buffer_data, 4 * SECOND);
 

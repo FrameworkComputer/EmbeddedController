@@ -68,9 +68,6 @@
  *   - '%ph' - binary data, print as hex; Use HEX_BUF(buffer, size) to encode
  *             parameters.
  *   - '%pP' - raw pointer.
- *   - "%pT" - current time in seconds - interpreted as "%.6T" for precision.
- *           Supply PRINTF_TIMESTAMP_NOW to use the current time, or supply a
- *           pointer to a 64-bit timestamp to print.
  */
 
 #ifndef HIDE_EC_STDLIB

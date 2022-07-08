@@ -6,6 +6,7 @@
 /* Console output module for Chrome EC */
 
 #include "console.h"
+#include "printf.h"
 #include "uart.h"
 #include "usb_console.h"
 #include "util.h"
@@ -114,12 +115,14 @@ int cprints(enum console_channel channel, const char *format, ...)
 {
 	int r, rv;
 	va_list args;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
 	/* Filter out inactive channels */
 	if (console_channel_is_disabled(channel))
 		return EC_SUCCESS;
 
-	rv = cprintf(channel, "[%pT ", PRINTF_TIMESTAMP_NOW);
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+	rv = cprintf(channel, "[%s ", ts_str);
 
 	va_start(args, format);
 	r = uart_vprintf(format, args);

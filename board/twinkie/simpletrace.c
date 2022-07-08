@@ -11,6 +11,7 @@
 #include "hooks.h"
 #include "hwtimer.h"
 #include "injector.h"
+#include "printf.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -105,9 +106,11 @@ static void print_packet(int head, uint32_t *payload)
 	int id = PD_HEADER_ID(head);
 	const char *name;
 	const char *prole;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
 	if (trace_mode == TRACE_MODE_RAW) {
-		ccprintf("%pT[%04x]", PRINTF_TIMESTAMP_NOW, head);
+		snprintf_timestamp_now(ts_str, sizeof(ts_str));
+		ccprintf("%s[%04x]", ts_str, head);
 		for (i = 0; i < cnt; i++)
 			ccprintf(" %08x", payload[i]);
 		ccputs("\n");
@@ -115,8 +118,8 @@ static void print_packet(int head, uint32_t *payload)
 	}
 	name = cnt ? data_msg_name[typ] : ctrl_msg_name[typ];
 	prole = head & (PD_ROLE_SOURCE << 8) ? "SRC" : "SNK";
-	ccprintf("%pT %s/%d [%04x]%s", PRINTF_TIMESTAMP_NOW, prole, id, head,
-		 name);
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+	ccprintf("%s %s/%d [%04x]%s", ts_str, prole, id, head, name);
 	if (!cnt) { /* Control message : we are done */
 		ccputs("\n");
 		return;
@@ -146,12 +149,16 @@ static void print_packet(int head, uint32_t *payload)
 
 static void print_error(enum pd_rx_errors err)
 {
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
+
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+
 	if (err == PD_RX_ERR_INVAL)
-		ccprintf("%pT TMOUT\n", PRINTF_TIMESTAMP_NOW);
+		ccprintf("%s TMOUT\n", ts_str);
 	else if (err == PD_RX_ERR_HARD_RESET)
-		ccprintf("%pT HARD-RST\n", PRINTF_TIMESTAMP_NOW);
+		ccprintf("%s HARD-RST\n", ts_str);
 	else if (err == PD_RX_ERR_UNSUPPORTED_SOP)
-		ccprintf("%pT SOP*\n", PRINTF_TIMESTAMP_NOW);
+		ccprintf("%s SOP*\n", ts_str);
 	else
 		ccprintf("ERR %d\n", err);
 }

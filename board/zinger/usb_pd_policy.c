@@ -9,6 +9,7 @@
 #include "debug_printf.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "printf.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -492,12 +493,13 @@ __override int pd_custom_vdm(int port, int cnt, uint32_t *payload,
 {
 	int cmd = PD_VDO_CMD(payload[0]);
 	int rsize;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
 	if (PD_VDO_VID(payload[0]) != USB_VID_GOOGLE || !gfu_mode)
 		return 0;
 
-	debug_printf("%pT] VDM/%d [%d] %08x\n", PRINTF_TIMESTAMP_NOW, cnt, cmd,
-		     payload[0]);
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+	debug_printf("%s] VDM/%d [%d] %08x\n", ts_str, cnt, cmd, payload[0]);
 	*rpayload = payload;
 
 	rsize = pd_custom_flash_vdm(port, cnt, payload);

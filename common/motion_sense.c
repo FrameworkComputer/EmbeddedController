@@ -24,6 +24,7 @@
 #include "motion_lid.h"
 #include "motion_orientation.h"
 #include "online_calibration.h"
+#include "printf.h"
 #include "power.h"
 #include "queue.h"
 #include "tablet_mode.h"
@@ -933,8 +934,10 @@ void motion_sense_task(void *u)
 			}
 		}
 		if (IS_ENABLED(CONFIG_CMD_ACCEL_INFO) && (accel_disp)) {
-			CPRINTF("[%pT event 0x%08x ", PRINTF_TIMESTAMP_NOW,
-				event);
+			char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
+
+			snprintf_timestamp_now(ts_str, sizeof(ts_str));
+			CPRINTF("[%s event 0x%08x ", ts_str, event);
 			for (i = 0; i < motion_sensor_count; ++i) {
 				sensor = &motion_sensors[i];
 				CPRINTF("%s=%-5d, %-5d, %-5d ", sensor->name,

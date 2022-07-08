@@ -31,6 +31,7 @@
 #include "motion_sense.h"
 #include "power.h"
 #include "power_button.h"
+#include "printf.h"
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
@@ -262,8 +263,10 @@ void board_print_temps(void)
 {
 	int t, i;
 	int rv;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
-	cprintf(CC_THERMAL, "[%pT ", PRINTF_TIMESTAMP_NOW);
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+	cprintf(CC_THERMAL, "[%s ", ts_str);
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i) {
 		rv = temp_sensor_read(i, &t);
 		if (rv == EC_SUCCESS)

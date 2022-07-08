@@ -12,6 +12,7 @@
 #include "host_command.h"
 #include "link_defs.h"
 #include "lpc.h"
+#include "printf.h"
 #include "shared_mem.h"
 #include "system.h"
 #include "task.h"
@@ -588,11 +589,13 @@ static void dump_host_command_suppressed(int force)
 {
 #ifdef CONFIG_SUPPRESSED_HOST_COMMANDS
 	int i;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
 	if (!force && !timestamp_expired(suppressed_cmd_deadline, NULL))
 		return;
 
-	CPRINTF("[%pT HC Suppressed:", PRINTF_TIMESTAMP_NOW);
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+	CPRINTF("[%s HC Suppressed:", ts_str);
 	for (i = 0; i < ARRAY_SIZE(hc_suppressed_cmd); i++) {
 		CPRINTF(" 0x%x=%d", hc_suppressed_cmd[i], hc_suppressed_cnt[i]);
 		hc_suppressed_cnt[i] = 0;

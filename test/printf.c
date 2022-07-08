@@ -345,13 +345,11 @@ test_static int test_vsnprintf_timestamps(void)
 {
 	uint64_t ts = 0;
 
-	T(expect_success("0.000000", "%pT", &ts));
-	ts = 123456;
-	T(expect_success("0.123456", "%pT", &ts));
-	ts = 9999999000000;
-	T(expect_success("9999999.000000", "%pT", &ts));
-	ts = UINT64_MAX;
-	T(expect_success("18446744073709.551615", "%pT", &ts));
+	/*
+	 * Test %pT, which used to print timestamps, but is non-standard and no
+	 * longer supported.
+	 */
+	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%pT", &ts));
 
 	return EC_SUCCESS;
 }

@@ -97,6 +97,7 @@
 #include "ec_commands.h"
 #include "i2c.h"
 #include "lb_common.h"
+#include "printf.h"
 #include "util.h"
 
 /* Console output macros */
@@ -274,8 +275,10 @@ uint8_t lb_get_brightness(void)
 void lb_init(int use_lock)
 {
 	int i;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
-	CPRINTF("[%pT LB_init_vals ", PRINTF_TIMESTAMP_NOW);
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+	CPRINTF("[%s LB_init_vals ", ts_str);
 	for (i = 0; i < ARRAY_SIZE(init_vals); i++) {
 		CPRINTF("%c", '0' + i % 10);
 		if (use_lock)

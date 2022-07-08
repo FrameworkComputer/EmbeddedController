@@ -167,7 +167,7 @@ cprintf(enum console_channel channel, const char *format, ...);
 
 /**
  * Print formatted output with timestamp. This is like:
- *   cprintf(channel, "[%pT " + format + "]\n", PRINTF_TIMESTAMP_NOW, ...)
+ *   cprintf(channel, "[<TIMESTAMP> " + format + "]\n", ...)
  *
  * @param channel	Output channel
  * @param format	Format string; see printf.h for valid formatting codes

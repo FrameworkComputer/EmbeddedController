@@ -15,6 +15,7 @@
 #include "host_command.h"
 #include "keyboard_backlight.h"
 #include "lpc.h"
+#include "printf.h"
 #include "pwm.h"
 #include "timer.h"
 #include "tablet_mode.h"
@@ -315,13 +316,14 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 #endif
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
 		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
+			char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 			/*
 			 * Debug output with CR not newline, because the host
 			 * does a lot of keyboard backlights and it scrolls the
 			 * debug console.
 			 */
-			CPRINTF("\r[%pT ACPI kblight %d]", PRINTF_TIMESTAMP_NOW,
-				data);
+			snprintf_timestamp_now(ts_str, sizeof(ts_str));
+			CPRINTF("\r[%s ACPI kblight %d]", ts_str, data);
 			kblight_set(data);
 			kblight_enable(data > 0);
 			break;

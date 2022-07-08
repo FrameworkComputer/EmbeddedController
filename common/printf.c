@@ -394,30 +394,11 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				ptrval = va_arg(args, void *);
 				/*
 				 * Avoid null pointer dereference for %ph.
-				 * %pT and %pP can accept null.
+				 * %pP can accept null.
 				 */
-				if (ptrval == NULL && ptrspec != 'T' &&
-				    ptrspec != 'P')
+				if (ptrval == NULL && ptrspec != 'P')
 					continue;
-				/* %pT - print a timestamp. */
-				if (ptrspec == 'T' &&
-				    (!IS_ENABLED(CONFIG_ZEPHYR) ||
-				     IS_ENABLED(CONFIG_PLATFORM_EC_TIMER))) {
-					flags |= PF_64BIT;
-					if (ptrval == PRINTF_TIMESTAMP_NOW)
-						v = get_time().val;
-					else
-						v = *(uint64_t *)ptrval;
-
-					if (IS_ENABLED(
-						    CONFIG_CONSOLE_VERBOSE)) {
-						precision = 6;
-					} else {
-						precision = 3;
-						v /= 1000;
-					}
-
-				} else if (ptrspec == 'h') {
+				else if (ptrspec == 'h') {
 					/* %ph - Print a hex byte buffer. */
 					struct hex_buffer_params *hexbuf =
 						ptrval;

@@ -9,6 +9,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "keyboard_protocol.h"
+#include "printf.h"
 #include "timer.h"
 
 /* Console output macro */
@@ -48,11 +49,12 @@ static void capsense_change_deferred(void)
 	static uint8_t cur_val;
 	uint8_t new_val;
 	int i, n, c;
+	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
 	new_val = capsense_read_bitmask();
 	if (new_val != cur_val) {
-		CPRINTF("[%pT capsense 0x%02x: ", PRINTF_TIMESTAMP_NOW,
-			new_val);
+		snprintf_timestamp_now(ts_str, sizeof(ts_str));
+		CPRINTF("[%s capsense 0x%02x: ", ts_str, new_val);
 		for (i = 0; i < CAPSENSE_MASK_BITS; i++) {
 			/* See what changed */
 			n = (new_val >> i) & 0x01;
