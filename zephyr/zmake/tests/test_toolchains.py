@@ -7,7 +7,7 @@
 import os
 import pathlib
 
-import pytest
+import pytest  # pylint:disable=import-error
 import zmake.output_packers
 import zmake.project as project
 import zmake.toolchains as toolchains

@@ -7,8 +7,8 @@
 import pathlib
 import tempfile
 
-import hypothesis
-import hypothesis.strategies as st
+import hypothesis  # pylint:disable=import-error
+import hypothesis.strategies as st  # pylint:disable=import-error
 import zmake.modules
 
 module_lists = st.lists(

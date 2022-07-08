@@ -6,7 +6,7 @@
 Tests for the generate_readme.py file.
 """
 
-import pytest
+import pytest  # pylint:disable=import-error
 import zmake.generate_readme as gen_readme
 
 

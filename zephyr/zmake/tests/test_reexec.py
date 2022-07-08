@@ -7,7 +7,7 @@ import os
 import sys
 import unittest.mock as mock
 
-import pytest
+import pytest  # pylint:disable=import-error
 import zmake.__main__ as main
 
 

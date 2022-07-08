@@ -14,7 +14,7 @@ import logging
 import tempfile
 import unittest
 
-import mock
+import mock  # pylint:disable=import-error
 import six
 from ec3po import console, interpreter, threadproc_shim
 
@@ -188,7 +188,7 @@ class TestConsoleEditingMethods(unittest.TestCase):
         # Setup logging with a timestamp, the module, and the log level.
         logging.basicConfig(
             level=logging.DEBUG,
-            format=("%(asctime)s - %(module)s -" " %(levelname)s - %(message)s"),
+            format=("%(asctime)s - %(module)s - %(levelname)s - %(message)s"),
         )
 
         # Create a temp file and set both the controller and peripheral PTYs to the
@@ -1101,7 +1101,7 @@ class TestConsoleCompatibility(unittest.TestCase):
         # Setup logging with a timestamp, the module, and the log level.
         logging.basicConfig(
             level=logging.DEBUG,
-            format=("%(asctime)s - %(module)s -" " %(levelname)s - %(message)s"),
+            format=("%(asctime)s - %(module)s - %(levelname)s - %(message)s"),
         )
         # Create a temp file and set both the controller and peripheral PTYs to the
         # file to create a loopback.
@@ -1207,7 +1207,7 @@ class TestConsoleCompatibility(unittest.TestCase):
 
         # At this point, we should have negotiated to enhanced.
         self.assertTrue(
-            self.console.enhanced_ec, msg=("Did not negotiate to " "enhanced EC image.")
+            self.console.enhanced_ec, msg=("Did not negotiate to enhanced EC image.")
         )
 
         # The command would have been dropped however, so verify this...
@@ -1259,7 +1259,7 @@ class TestConsoleCompatibility(unittest.TestCase):
         # Verify this.
         self.assertFalse(
             self.console.enhanced_ec,
-            msg=("Did not negotiate to" "non-enhanced EC image."),
+            msg=("Did not negotiate to non-enhanced EC image."),
         )
         CheckInputBuffer(self, b"")
         CheckInputBufferPosition(self, 0)
@@ -1398,7 +1398,7 @@ class TestOOBMConsoleCommands(unittest.TestCase):
         # Setup logging with a timestamp, the module, and the log level.
         logging.basicConfig(
             level=logging.DEBUG,
-            format=("%(asctime)s - %(module)s -" " %(levelname)s - %(message)s"),
+            format=("%(asctime)s - %(module)s - %(levelname)s - %(message)s"),
         )
         # Create a temp file and set both the controller and peripheral PTYs to the
         # file to create a loopback.
@@ -1470,7 +1470,7 @@ class TestOOBMConsoleCommands(unittest.TestCase):
         # The EC image should be assumed to be not enhanced.
         self.assertFalse(
             self.console.enhanced_ec,
-            "The image should be assumed to" " be NOT enhanced.",
+            "The image should be assumed to be NOT enhanced.",
         )
 
         # Reset the mocks.
@@ -1520,7 +1520,7 @@ class TestOOBMConsoleCommands(unittest.TestCase):
         # The EC image should be assumed to be not enhanced.
         self.assertFalse(
             self.console.enhanced_ec,
-            "The image should be assumed to" " be NOT enhanced.",
+            "The image should be assumed to be NOT enhanced.",
         )
 
         # Reset the mocks.
@@ -1575,7 +1575,7 @@ class TestOOBMConsoleCommands(unittest.TestCase):
         # The EC image should be assumed to be not enhanced.
         self.assertFalse(
             self.console.enhanced_ec,
-            "The image should be assumed to" " be NOT enhanced.",
+            "The image should be assumed to be NOT enhanced.",
         )
 
         # Now, let's try to assume that the image is enhanced while still disabling
@@ -1623,7 +1623,7 @@ class TestOOBMConsoleCommands(unittest.TestCase):
 
         # The EC image should be assumed to be enhanced.
         self.assertTrue(
-            self.console.enhanced_ec, "The image should be" " assumed to be enhanced."
+            self.console.enhanced_ec, "The image should be assumed to be enhanced."
         )
 
 

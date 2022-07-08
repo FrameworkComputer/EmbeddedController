@@ -7,9 +7,9 @@
 import pathlib
 import tempfile
 
-import hypothesis
-import hypothesis.strategies as st
-import pytest
+import hypothesis  # pylint:disable=import-error
+import hypothesis.strategies as st  # pylint:disable=import-error
+import pytest  # pylint:disable=import-error
 import zmake.util as util
 
 # Strategies for use with hypothesis

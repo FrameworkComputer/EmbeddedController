@@ -4,10 +4,6 @@
 # Copyright 2019 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-#
-# Ignore indention messages, since legacy scripts use 2 spaces instead of 4.
-# pylint: disable=bad-indentation,docstring-section-indent
-# pylint: disable=docstring-trailing-quotes
 
 # A script to pack EC binary with manifest header according to
 # Based on 607297_Host_ISH_Firmware_Load_Chrome_OS_SAS_Rev0p5.pdf,
@@ -34,8 +30,7 @@ def parseargs():
     parser.add_argument(
         "-k",
         "--kernel",
-        help="EC kernel binary to pack, \
-                      usually ec.RW.bin or ec.RW.flat.",
+        help="EC kernel binary to pack, usually ec.RW.bin or ec.RW.flat.",
         required=True,
     )
     parser.add_argument(
@@ -44,8 +39,7 @@ def parseargs():
     parser.add_argument(
         "-a",
         "--aon",
-        help="EC aontask binary to pack, \
-                      usually ish_aontask.bin.",
+        help="EC aontask binary to pack, usually ish_aontask.bin.",
         required=False,
     )
     parser.add_argument(

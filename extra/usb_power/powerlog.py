@@ -2,10 +2,6 @@
 # Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-#
-# Ignore indention messages, since legacy scripts use 2 spaces instead of 4.
-# pylint: disable=bad-indentation,docstring-section-indent
-# pylint: disable=docstring-trailing-quotes
 
 """Program to fetch power logging data from a sweetberry device
    or other usb device that exports a USB power logging interface.
@@ -27,8 +23,8 @@ import time
 import traceback
 from distutils import sysconfig
 
-import usb
-from stats_manager import StatsManager
+import usb  # pylint:disable=import-error
+from stats_manager import StatsManager  # pylint:disable=import-error
 
 # Directory where hdctools installs configuration files into.
 LIB_DIR = os.path.join(sysconfig.get_python_lib(standard_lib=False), "servo", "data")
@@ -182,11 +178,7 @@ class Spower(object):
             if dev is None:
                 raise Exception("Power", "USB device(%s) not found" % serialname)
         else:
-            try:
-                dev = dev_list[0]
-            except TypeError:
-                # Incompatible pyUsb version.
-                dev = dev_list.next()
+            dev = dev_list[0]
 
         self._logger.debug("Found USB device: %04x:%04x", vendor, product)
         self._dev = dev
@@ -728,6 +720,7 @@ class powerlog(object):
                 if integration_us != integration_us_new:
                     raise Exception(
                         "FAIL",
+                        # pylint:disable=bad-string-format-type
                         "Integration on A: %dus != integration on B %dus"
                         % (integration_us, integration_us_new),
                     )

@@ -2,10 +2,6 @@
 # Copyright 2017 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-#
-# Ignore indention messages, since legacy scripts use 2 spaces instead of 4.
-# pylint: disable=bad-indentation,docstring-section-indent
-# pylint: disable=docstring-trailing-quotes
 
 """Statically analyze stack usage of EC firmware.
 
@@ -26,7 +22,7 @@ import os
 import re
 import subprocess
 
-import yaml
+import yaml  # pylint:disable=import-error
 
 SECTION_RO = "RO"
 SECTION_RW = "RW"
@@ -1165,7 +1161,7 @@ class StackAnalyzer(object):
 
                 if not name:
                     raise StackAnalyzerError(
-                        "Cannot find function for address %s.", hex(val)
+                        "Cannot find function for address %s." % hex(val)
                     )
 
                 output.append((name, None, None))

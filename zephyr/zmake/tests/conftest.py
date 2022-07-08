@@ -7,8 +7,8 @@
 import os
 import pathlib
 
-import hypothesis
-import pytest
+import hypothesis  # pylint:disable=import-error
+import pytest  # pylint:disable=import-error
 import zmake.zmake as zm
 
 hypothesis.settings.register_profile(

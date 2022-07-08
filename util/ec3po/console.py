@@ -776,9 +776,7 @@ class Console(object):
             self.input_buffer_pos += count
 
         else:
-            raise AssertionError(
-                ("The only valid directions are 'left' and " "'right'")
-            )
+            raise AssertionError(("The only valid directions are 'left' and 'right'"))
 
         self.logger.debug("input_buffer_pos: %d", self.input_buffer_pos)
         # Move the cursor.
@@ -1149,11 +1147,11 @@ def main(argv):
     """
     # Set up argument parser.
     parser = argparse.ArgumentParser(
-        description=("Start interactive EC console " "and interpreter.")
+        description=("Start interactive EC console and interpreter.")
     )
     parser.add_argument(
         "ec_uart_pty",
-        help=("The full PTY name that the EC UART" " is present on. eg: /dev/pts/12"),
+        help=("The full PTY name that the EC UART is present on. eg: /dev/pts/12"),
     )
     parser.add_argument(
         "--log-level", default="info", help="info, debug, warning, error, or critical"
@@ -1181,7 +1179,7 @@ def main(argv):
     # entry.
     logging.basicConfig(
         level=log_level,
-        format=("%(asctime)s - %(module)s -" " %(levelname)s - %(message)s"),
+        format=("%(asctime)s - %(module)s - %(levelname)s - %(message)s"),
     )
 
     # Create some pipes to communicate between the interpreter and the console.
@@ -1213,7 +1211,11 @@ def main(argv):
     )
     # Create a console.
     console = Console(
-        controller_pty, os.ttyname(user_pty), cmd_pipe_interactive, dbg_pipe_interactive
+        controller_pty,
+        os.ttyname(user_pty),
+        os.ttyname(controller_pty),
+        cmd_pipe_interactive,
+        dbg_pipe_interactive,
     )
     # Start serving the console.
     v = threadproc_shim.Value(ctypes.c_bool, False)

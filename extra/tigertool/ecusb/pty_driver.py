@@ -1,10 +1,6 @@
 # Copyright 2017 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-#
-# Ignore indention messages, since legacy scripts use 2 spaces instead of 4.
-# pylint: disable=bad-indentation,docstring-section-indent
-# pylint: disable=docstring-trailing-quotes
 
 """ptyDriver class
 
@@ -19,8 +15,8 @@ import fcntl
 import os
 import time
 
-import pexpect
-from pexpect import fdpexpect
+import pexpect  # pylint:disable=import-error
+from pexpect import fdpexpect  # pylint:disable=import-error
 
 # Expecting a result in 3 seconds is plenty even for slow platforms.
 DEFAULT_UART_TIMEOUT = 3

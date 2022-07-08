@@ -13,7 +13,7 @@ import logging
 import tempfile
 import unittest
 
-import mock
+import mock  # pylint:disable=import-error
 import six
 from ec3po import interpreter, threadproc_shim
 
@@ -32,7 +32,7 @@ class TestEnhancedECBehaviour(unittest.TestCase):
         # Setup logging with a timestamp, the module, and the log level.
         logging.basicConfig(
             level=logging.DEBUG,
-            format=("%(asctime)s - %(module)s -" " %(levelname)s - %(message)s"),
+            format=("%(asctime)s - %(module)s - %(levelname)s - %(message)s"),
         )
 
         # Create a tempfile that would represent the EC UART PTY.
@@ -226,7 +226,7 @@ class TestEnhancedECBehaviour(unittest.TestCase):
         # enhanced.
         self.assertFalse(
             self.itpr.enhanced_ec,
-            msg=("State of enhanced_ec upon" " init is not False."),
+            msg=("State of enhanced_ec upon init is not False."),
         )
 
         # Assume an interrogation request comes in from the user.
@@ -238,7 +238,7 @@ class TestEnhancedECBehaviour(unittest.TestCase):
         # The state of enhanced_ec should not be changed yet because we haven't
         # received a valid response yet.
         self.assertFalse(
-            self.itpr.enhanced_ec, msg=("State of enhanced_ec is " "not False.")
+            self.itpr.enhanced_ec, msg=("State of enhanced_ec is not False.")
         )
 
         # Assume that the EC responds with an EC_ACK.
@@ -247,9 +247,7 @@ class TestEnhancedECBehaviour(unittest.TestCase):
 
         # Now, the interrogation should be complete and we should know that the
         # current EC image is enhanced.
-        self.assertFalse(
-            self.itpr.interrogating, msg=("interrogating should be " "False")
-        )
+        self.assertFalse(self.itpr.interrogating, msg=("interrogating should be False"))
         self.assertTrue(self.itpr.enhanced_ec, msg="enhanced_ec sholud be True")
 
         # Now let's perform another interrogation, but pretend that the EC ignores
@@ -281,7 +279,7 @@ class TestUARTDisconnection(unittest.TestCase):
         # Setup logging with a timestamp, the module, and the log level.
         logging.basicConfig(
             level=logging.DEBUG,
-            format=("%(asctime)s - %(module)s -" " %(levelname)s - %(message)s"),
+            format=("%(asctime)s - %(module)s - %(levelname)s - %(message)s"),
         )
 
         # Create a tempfile that would represent the EC UART PTY.
@@ -307,7 +305,7 @@ class TestUARTDisconnection(unittest.TestCase):
         # First, check that interpreter is initialized to connected.
         self.assertTrue(
             self.itpr.connected,
-            ("The interpreter should be" " initialized in a connected state"),
+            ("The interpreter should be initialized in a connected state"),
         )
 
     def test_DisconnectStopsECTraffic(self):
@@ -318,7 +316,7 @@ class TestUARTDisconnection(unittest.TestCase):
 
         # Verify interpreter is disconnected from EC.
         self.assertFalse(
-            self.itpr.connected, ("The interpreter should be" "disconnected.")
+            self.itpr.connected, ("The interpreter should be disconnected.")
         )
         # Verify that the EC UART is no longer a member of the inputs.  The
         # interpreter will never pull data from the EC if it's not a member of the
@@ -335,7 +333,7 @@ class TestUARTDisconnection(unittest.TestCase):
 
         # Verify interpreter is disconnected from EC.
         self.assertFalse(
-            self.itpr.connected, ("The interpreter should be" "disconnected.")
+            self.itpr.connected, ("The interpreter should be disconnected.")
         )
         # Verify that the EC UART is no longer a member of the inputs nor outputs.
         self.assertFalse(self.itpr.ec_uart_pty in self.itpr.inputs)
@@ -372,7 +370,7 @@ class TestUARTDisconnection(unittest.TestCase):
 
         # Verify interpreter is disconnected.
         self.assertFalse(
-            self.itpr.connected, ("The interpreter should be" "disconnected.")
+            self.itpr.connected, ("The interpreter should be disconnected.")
         )
         # Verify that the EC UART is no longer a member of the inputs nor outputs.
         self.assertFalse(self.itpr.ec_uart_pty in self.itpr.inputs)
@@ -385,7 +383,7 @@ class TestUARTDisconnection(unittest.TestCase):
             self.itpr.HandleUserData()
 
         # Verify interpreter is connected.
-        self.assertTrue(self.itpr.connected, ("The interpreter should be" "connected."))
+        self.assertTrue(self.itpr.connected, ("The interpreter should be connected."))
         # Verify that the EC UART is now a member of the inputs.
         self.assertTrue(self.itpr.ec_uart_pty in self.itpr.inputs)
         # Since we have issued no commands during the disconnected state, no

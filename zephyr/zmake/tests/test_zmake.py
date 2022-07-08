@@ -10,14 +10,14 @@ import pathlib
 import re
 import unittest.mock
 
-import pytest
+import pytest  # pylint:disable=import-error
 import zmake.build_config
 import zmake.jobserver
 import zmake.multiproc as multiproc
 import zmake.output_packers
 import zmake.project
 import zmake.toolchains
-from testfixtures import LogCapture
+from testfixtures import LogCapture  # pylint:disable=import-error
 
 OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 

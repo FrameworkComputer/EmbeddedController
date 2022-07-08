@@ -2,10 +2,6 @@
 # Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-#
-# Ignore indention messages, since legacy scripts use 2 spaces instead of 4.
-# pylint: disable=bad-indentation,docstring-section-indent
-# pylint: disable=docstring-trailing-quotes
 
 """Allow creation of uart/console interface via usb google serial endpoint."""
 
@@ -23,7 +19,7 @@ import time
 import tty
 
 try:
-    import usb
+    import usb  # pylint:disable=import-error
 except ModuleNotFoundError:
     print("import usb failed")
     print("try running these commands:")
@@ -113,12 +109,7 @@ class Susb:
             try:
                 dev = dev_list[0]
             except:
-                try:
-                    dev = dev_list.next()
-                except:
-                    raise SusbError(
-                        "USB device %04x:%04x not found" % (vendor, product)
-                    )
+                raise SusbError("USB device %04x:%04x not found" % (vendor, product))
 
         # If we can't set configuration, it's already been set.
         try:

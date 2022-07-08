@@ -10,9 +10,9 @@ import pathlib
 import string
 import tempfile
 
-import hypothesis
-import hypothesis.strategies as st
-import pytest
+import hypothesis  # pylint:disable=import-error
+import hypothesis.strategies as st  # pylint:disable=import-error
+import pytest  # pylint:disable=import-error
 import zmake.jobserver
 import zmake.util as util
 from zmake.build_config import BuildConfig

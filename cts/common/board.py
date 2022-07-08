@@ -1,10 +1,6 @@
 # Copyright 2016 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-#
-# Ignore indention messages, since legacy scripts use 2 spaces instead of 4.
-# pylint: disable=bad-indentation,docstring-section-indent
-# pylint: disable=docstring-trailing-quotes
 
 # Note: This is a py2/3 compatible file.
 
@@ -15,7 +11,7 @@ import shutil
 import subprocess as sp
 from abc import ABCMeta, abstractmethod
 
-import serial
+import serial  # pylint:disable=import-error
 import six
 
 OCD_SCRIPT_DIR = "/usr/share/openocd/scripts"
@@ -77,12 +73,16 @@ class Board(six.with_metaclass(ABCMeta, object)):
         self.hla_serial = hla_serial
         self.tty_port = None
         self.tty = None
+        self.log_dir = None
+        self.openocd_log = os.devnull
+        self.build_log = os.devnull
 
     def reset_log_dir(self):
         """Reset log directory."""
-        if os.path.isdir(self.log_dir):
-            shutil.rmtree(self.log_dir)
-        os.makedirs(self.log_dir)
+        if self.log_dir:
+            if os.path.isdir(self.log_dir):
+                shutil.rmtree(self.log_dir)
+            os.makedirs(self.log_dir)
 
     @staticmethod
     def get_stlink_serials():
@@ -394,7 +394,7 @@ class DeviceUnderTest(Board):
         # If len(dut) is 0 then your dut doesn't use an st-link device, so we
         # don't have to worry about its serial number
         if not dut:
-            msg = "Failed to find serial for DUT.\n" "Is " + self.board + " connected?"
+            msg = "Failed to find serial for DUT.\nIs " + self.board + " connected?"
             raise RuntimeError(msg)
         if len(dut) > 1:
             msg = (

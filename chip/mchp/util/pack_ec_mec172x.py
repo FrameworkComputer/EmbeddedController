@@ -3,10 +3,6 @@
 # Copyright 2021 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-#
-# Ignore indention messages, since legacy scripts use 2 spaces instead of 4.
-# pylint: disable=bad-indentation,docstring-section-indent
-# pylint: disable=docstring-trailing-quotes
 
 # A script to pack EC binary into SPI flash image for MEC172x
 # Based on MEC172x_ROM_Description.pdf revision 6/8/2020
@@ -121,8 +117,9 @@ def GetEntryPoint(payload_file):
     return int.from_bytes(s, byteorder="little")
 
 
-def GetPayloadFromOffset(payload_file, offset, padsize):
-    """Read payload and pad it to padsize."""
+def GetPayloadFromOffset(payload_file, offset, chip_dict):
+    """Read payload and pad it to chip_dict["PAD_SIZE"]."""
+    padsize = chip_dict["PAD_SIZE"]
     with open(payload_file, "rb") as f:
         f.seek(offset)
         payload = bytearray(f.read())
@@ -134,15 +131,15 @@ def GetPayloadFromOffset(payload_file, offset, padsize):
     )
 
     if rem_len:
-        payload += PAYLOAD_PAD_BYTE * (padsize - rem_len)
+        payload += chip_dict["PAYLOAD_PAD_BYTE"] * (padsize - rem_len)
         debug_print("GetPayload: Added {0} padding bytes".format(padsize - rem_len))
 
     return payload
 
 
-def GetPayload(payload_file, padsize):
-    """Read payload and pad it to padsize"""
-    return GetPayloadFromOffset(payload_file, 0, padsize)
+def GetPayload(payload_file, chip_dict):
+    """Read payload and pad it to chip_dict["PAD_SIZE"]"""
+    return GetPayloadFromOffset(payload_file, 0, chip_dict)
 
 
 def GetPublicKey(pem_file):
@@ -223,13 +220,6 @@ def GetSpiCphaMiso(args):
 
 def PadZeroTo(data, size):
     data.extend(b"\0" * (size - len(data)))
-
-
-#
-# Boot-ROM SPI image encryption not used with Chromebooks
-#
-def EncryptPayload(args, chip_dict, payload):
-    return None
 
 
 #
@@ -797,16 +787,16 @@ def main():
     rorofile = PacklfwRoImage(args.input, args.loader_file, args.image_size)
     debug_print("Temporary file containing LFW + EC_RO is ", rorofile)
 
-    lfw_ecro = GetPayload(rorofile, chip_dict["PAD_SIZE"])
+    lfw_ecro = GetPayload(rorofile, chip_dict)
     lfw_ecro_len = len(lfw_ecro)
     debug_print("Padded LFW + EC_RO length = ", hex(lfw_ecro_len))
 
     # SPI test mode compute CRC32 of EC_RO and store in last 4 bytes
     if args.test_spi:
-        crc32_ecro = zlib.crc32(bytes(lfw_ecro[LFW_SIZE:-4]))
+        crc32_ecro = zlib.crc32(bytes(lfw_ecro[args.lfw_size : -4]))
         crc32_ecro_bytes = crc32_ecro.to_bytes(4, byteorder="little")
         lfw_ecro[-4:] = crc32_ecro_bytes
-        debug_print("ecro len = ", hex(len(lfw_ecro) - LFW_SIZE))
+        debug_print("ecro len = ", hex(len(lfw_ecro) - args.lfw_size))
         debug_print("CRC32(ecro-4) = ", hex(crc32_ecro))
 
     # Reads entry point from offset 4 of file.
@@ -825,21 +815,13 @@ def main():
     header = BuildHeader2(args, chip_dict, lfw_ecro_len, args.load_addr, lfw_ecro_entry)
     printByteArrayAsHex(header, "Header(lfw_ecro)")
 
-    # If payload encryption used then encrypt payload and
-    # generate Payload Key Header. If encryption not used
-    # payload is not modified and the method returns None
-    encryption_key_header = EncryptPayload(args, chip_dict, lfw_ecro)
-    printByteArrayAsHex(encryption_key_header, "LFW + EC_RO encryption_key_header")
-
     ec_info_block = GenEcInfoBlock(args, chip_dict)
     printByteArrayAsHex(ec_info_block, "EC Info Block")
 
     cosignature = GenCoSignature(args, chip_dict, lfw_ecro)
     printByteArrayAsHex(cosignature, "LFW + EC_RO cosignature")
 
-    trailer = GenTrailer(
-        args, chip_dict, lfw_ecro, encryption_key_header, ec_info_block, cosignature
-    )
+    trailer = GenTrailer(args, chip_dict, lfw_ecro, None, ec_info_block, cosignature)
 
     printByteArrayAsHex(trailer, "LFW + EC_RO trailer")
 
@@ -851,7 +833,7 @@ def main():
     debug_print("args.input = ", args.input)
     debug_print("args.image_size = ", hex(args.image_size))
 
-    ecrw = GetPayloadFromOffset(args.input, args.image_size, chip_dict["PAD_SIZE"])
+    ecrw = GetPayloadFromOffset(args.input, args.image_size, chip_dict)
     debug_print("type(ecrw) is ", type(ecrw))
     debug_print("len(ecrw) is ", hex(len(ecrw)))
 

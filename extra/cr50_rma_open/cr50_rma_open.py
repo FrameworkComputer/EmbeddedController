@@ -50,16 +50,14 @@ import subprocess
 import sys
 import time
 
-import serial
+import serial  # pylint:disable=import-error
 
 SCRIPT_VERSION = 5
 CCD_IS_UNRESTRICTED = 1 << 0
 WP_IS_DISABLED = 1 << 1
 TESTLAB_IS_ENABLED = 1 << 2
 RMA_OPENED = CCD_IS_UNRESTRICTED | WP_IS_DISABLED
-URL = (
-    "https://www.google.com/chromeos/partner/console/cr50reset?" "challenge=%s&hwid=%s"
-)
+URL = "https://www.google.com/chromeos/partner/console/cr50reset?challenge=%s&hwid=%s"
 RMA_SUPPORT_PROD = "0.3.3"
 RMA_SUPPORT_PREPVT = "0.4.5"
 DEV_MODE_OPEN_PROD = "0.3.9"
@@ -398,7 +396,7 @@ class RMAOpen(object):
             self.send_cmd_get_output("ccd open")
         logging.info("Enabling testlab mode reqires pressing the power button.")
         logging.info(
-            "Once the process starts keep tapping the power button " "for 10 seconds."
+            "Once the process starts keep tapping the power button for 10 seconds."
         )
         input("Press Enter when you're ready to start...")
         end_time = time.time() + 15
@@ -473,11 +471,11 @@ class RMAOpen(object):
             rma_support,
         )
         if not self.is_prepvt and self._running_version_is_older(TESTLAB_PROD):
-            raise ValueError("Update cr50. No testlab support in old prod " "images.")
+            raise ValueError("Update cr50. No testlab support in old prod images.")
         if self._running_version_is_older(rma_support):
             raise ValueError(
-                "%s does not have RMA support. Update to at "
-                "least %s" % (version, rma_support)
+                "%s does not have RMA support. Update to at least %s"
+                % (version, rma_support)
             )
 
     def _running_version_is_older(self, target_ver):
@@ -538,7 +536,7 @@ class RMAOpen(object):
                 return
         logging.warning(DEBUG_CONNECTION)
         raise ValueError(
-            "Found USB device, but could not communicate with " "cr50 console"
+            "Found USB device, but could not communicate with cr50 console"
         )
 
     def print_platform_info(self):
@@ -578,7 +576,7 @@ class RMAOpen(object):
             logging.info("CCD is still restricted.")
             logging.info("Run cr50_rma_open.py -g -i $HWID to generate a url")
             logging.info(
-                "Run cr50_rma_open.py -a $AUTHCODE to open cr50 with " "an authcode"
+                "Run cr50_rma_open.py -a $AUTHCODE to open cr50 with an authcode"
             )
         elif not self.check(WP_IS_DISABLED):
             logging.info("WP is still enabled.")
@@ -692,7 +690,7 @@ def main(argv):
                 "open. Run through the rma open process first"
             )
         if tried_authcode:
-            logging.warning("RMA Open did not disable write protect. File a " "bug")
+            logging.warning("RMA Open did not disable write protect. File a bug")
             logging.warning("Trying to disable it manually")
         cr50_rma_open.wp_disable()
 

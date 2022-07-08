@@ -3,10 +3,6 @@
 # Copyright 2021 The Chromium OS Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-#
-# Ignore indention messages, since legacy scripts use 2 spaces instead of 4.
-# pylint: disable=bad-indentation,docstring-section-indent
-# pylint: disable=docstring-trailing-quotes
 
 # A script to pack EC binary into SPI flash image for MEC152x
 # Based on MEC1521/MEC1523_ROM_Description.pdf
@@ -215,13 +211,6 @@ def GetSpiCphaMiso(args):
 
 def PadZeroTo(data, size):
     data.extend(b"\0" * (size - len(data)))
-
-
-#
-# Boot-ROM SPI image encryption not used with Chromebooks
-#
-def EncryptPayload(args, chip_dict, payload):
-    return None
 
 
 #
@@ -508,9 +497,6 @@ def gen_test_ecrw(pldrw):
 
 
 def parseargs():
-    # TODO I commented this out. Why?
-    rpath = os.path.dirname(os.path.relpath(__file__))
-
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-i",
@@ -778,21 +764,13 @@ def main():
     header = BuildHeader2(args, chip_dict, lfw_ecro_len, LOAD_ADDR, lfw_ecro_entry)
     printByteArrayAsHex(header, "Header(lfw_ecro)")
 
-    # If payload encryption used then encrypt payload and
-    # generate Payload Key Header. If encryption not used
-    # payload is not modified and the method returns None
-    encryption_key_header = EncryptPayload(args, chip_dict, lfw_ecro)
-    printByteArrayAsHex(encryption_key_header, "LFW + EC_RO encryption_key_header")
-
     ec_info_block = GenEcInfoBlock(args, chip_dict)
     printByteArrayAsHex(ec_info_block, "EC Info Block")
 
     cosignature = GenCoSignature(args, chip_dict, lfw_ecro)
     printByteArrayAsHex(cosignature, "LFW + EC_RO cosignature")
 
-    trailer = GenTrailer(
-        args, chip_dict, lfw_ecro, encryption_key_header, ec_info_block, cosignature
-    )
+    trailer = GenTrailer(args, chip_dict, lfw_ecro, None, ec_info_block, cosignature)
 
     printByteArrayAsHex(trailer, "LFW + EC_RO trailer")
 
@@ -883,7 +861,7 @@ def main():
 
     assert rw_offset >= offset, print(
         """Offset of EC_RW at {0:08x} overlaps end
-               of EC_RO at {0:08x}""".format(
+               of EC_RO at {1:08x}""".format(
             rw_offset, offset
         )
     )
