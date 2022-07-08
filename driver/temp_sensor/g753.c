@@ -120,10 +120,10 @@ static int print_status(void)
 	ccprintf("\n");
 
 	if (raw_read8(G753_STATUS, &value) == EC_SUCCESS)
-		ccprintf("STATUS:  %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("STATUS:  0x%x\n", value);
 
 	if (raw_read8(G753_CONFIGURATION_R, &value) == EC_SUCCESS)
-		ccprintf("CONFIG:  %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("CONFIG:  0x%x\n", value);
 
 	return EC_SUCCESS;
 }
@@ -157,8 +157,7 @@ static int command_g753(int argc, char **argv)
 		rv = raw_read8(offset, &data);
 		if (rv < 0)
 			return rv;
-		ccprintf("Byte at offset 0x%02x is %pb\n", offset,
-			 BINARY_VALUE(data, 8));
+		ccprintf("Byte at offset 0x%02x is 0x%x\n", offset, data);
 		return rv;
 	}
 

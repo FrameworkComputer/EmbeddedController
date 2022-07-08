@@ -83,7 +83,7 @@ static int is31fl3743b_enable(struct rgbkbd *ctx, bool enable)
 {
 	uint8_t u8 =
 		IS31FL3743B_CONFIG(IS31FL3743B_CFG_SWS_1_11, 0, enable ? 1 : 0);
-	CPRINTS("Setting config register to 0b%pb", BINARY_VALUE(u8, 8));
+	CPRINTS("Setting config register to 0x%x", u8);
 	return is31fl3743b_write(ctx, IS31FL3743B_REG_CONFIG, u8);
 }
 

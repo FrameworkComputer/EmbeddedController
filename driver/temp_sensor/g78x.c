@@ -158,15 +158,15 @@ static int print_status(void)
 	ccprintf("\n");
 
 	if (raw_read8(G78X_STATUS, &value) == EC_SUCCESS)
-		ccprintf("STATUS:  %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("STATUS:  0x%x\n", value);
 
 #ifdef CONFIG_TEMP_SENSOR_G782
 	if (raw_read8(G78X_STATUS1, &value) == EC_SUCCESS)
-		ccprintf("STATUS1: %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("STATUS1: 0x%x\n", value);
 #endif
 
 	if (raw_read8(G78X_CONFIGURATION_R, &value) == EC_SUCCESS)
-		ccprintf("CONFIG:  %pb\n", BINARY_VALUE(value, 8));
+		ccprintf("CONFIG:  0x%x\n", value);
 
 	return EC_SUCCESS;
 }
@@ -200,8 +200,7 @@ static int command_g78x(int argc, char **argv)
 		rv = raw_read8(offset, &data);
 		if (rv < 0)
 			return rv;
-		ccprintf("Byte at offset 0x%02x is %pb\n", offset,
-			 BINARY_VALUE(data, 8));
+		ccprintf("Byte at offset 0x%02x is 0x%x\n", offset, data);
 		return rv;
 	}
 

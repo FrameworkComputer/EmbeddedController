@@ -273,8 +273,8 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				ptrspec = *format++;
 				ptrval = va_arg(args, void *);
 				/*
-				 * Avoid null pointer dereference for %ph and
-				 * %pb. %pT and %pP can accept null.
+				 * Avoid null pointer dereference for %ph.
+				 * %pT and %pP can accept null.
 				 */
 				if (ptrval == NULL && ptrspec != 'T' &&
 				    ptrspec != 'P')
@@ -321,16 +321,6 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 					if (sizeof(unsigned long) ==
 					    sizeof(uint64_t))
 						flags |= PF_64BIT;
-
-				} else if (ptrspec == 'b') {
-					/* %pb - Print a binary integer */
-					struct binary_print_params *binary =
-						ptrval;
-
-					v = binary->value;
-					pad_width = binary->count;
-					flags |= PF_PADZERO;
-					base = 2;
 
 				} else {
 					return EC_ERROR_INVAL;

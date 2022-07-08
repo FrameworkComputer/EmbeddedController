@@ -40,7 +40,6 @@ BUILD_ASSERT(__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__);
 
 static const char *_text_instruction(uint8_t instruction)
 {
-	/* TODO: For normal build, use %pb and BINARY_VALUE(res->inst, 6) */
 	switch (instruction) {
 	case WLC_HOST_CTRL_RESET:
 		return "RESET";
