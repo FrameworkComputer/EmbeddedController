@@ -6,6 +6,7 @@
    /* C, Makefiles, ASM, Linkerfiles, Properties */
    "editor.insertSpaces": false,
    "editor.tabSize": 8,
+   "python.formatting.provider": "black",
    /* Some exceptions based on current trends */
    "[markdown]": {
       "editor.insertSpaces": true,
@@ -14,6 +15,9 @@
    "[python]": {
       "editor.insertSpaces": true,
       "editor.tabSize": 2
+      "editor.rulers": [
+         88
+      ],
    },
    "[shellscript]": {
       "editor.insertSpaces": true,
