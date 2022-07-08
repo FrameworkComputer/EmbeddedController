@@ -822,7 +822,7 @@ void dpm_evaluate_request_rdo(int port, uint32_t rdo)
 		return;
 
 	op_ma = (rdo >> 10) & 0x3FF;
-	if ((BIT(port) && sink_max_pdo_requested) && (op_ma <= 150)) {
+	if ((BIT(port) & sink_max_pdo_requested) && (op_ma <= 150)) {
 		/*
 		 * sink_max_pdo_requested will be set when we get 5V/3A sink
 		 * capability from port partner. If port partner only request
