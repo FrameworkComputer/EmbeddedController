@@ -25,11 +25,5 @@ export PYTHONPATH="${PWD}"
 # happens.  Remove this flag.
 pytest --hypothesis-profile=cq .
 
-# Check black formatting.
-black --check --diff .
-
-# Check flake8 reports no issues.
-flake8 .
-
 # Check auto-generated README.md is as expected.
 python -m zmake generate-readme --diff

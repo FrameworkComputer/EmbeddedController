@@ -45,6 +45,21 @@ def build(opts):
     """
     metric_list = firmware_pb2.FwBuildMetricList()
 
+    # Run formatting checks on all python files.
+    subprocess.run(["black", "--check", "."], cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(
+        [
+            "isort",
+            "--settings-file=.isort.cfg",
+            "--check",
+            "--gitignore",
+            "--dont-follow-links",
+            ".",
+        ],
+        cwd=os.path.dirname(__file__),
+        check=True,
+    )
+
     if opts.code_coverage:
         print(
             "When --code-coverage is selected, 'build' is a no-op. "
@@ -195,6 +210,14 @@ def test(opts):
     with open(opts.metrics, "w") as f:
         f.write(json_format.MessageToJson(metrics))
 
+    # Run python unit tests.
+    subprocess.run(
+        ["util/ec3po/run_tests.sh"], cwd=os.path.dirname(__file__), check=True
+    )
+    subprocess.run(
+        ["extra/stack_analyzer/run_tests.sh"], cwd=os.path.dirname(__file__), check=True
+    )
+
     # If building for code coverage, build the 'coverage' target, which
     # builds the posix-based unit tests for code coverage and assembles
     # the LCOV information.
@@ -260,13 +283,13 @@ def parse_args(args):
     parser.add_argument(
         "--metadata",
         required=False,
-        help="Full pathname for the file in which to write build artifact " "metadata.",
+        help="Full pathname for the file in which to write build artifact metadata.",
     )
 
     parser.add_argument(
         "--output-dir",
         required=False,
-        help="Full pathanme for the directory in which to bundle build " "artifacts.",
+        help="Full pathanme for the directory in which to bundle build artifacts.",
     )
 
     parser.add_argument(
@@ -293,8 +316,7 @@ def parse_args(args):
 
     build_cmd = sub_cmds.add_parser(
         "bundle",
-        help="Creates a tarball containing build "
-        "artifacts from all firmware targets",
+        help="Creates a tarball containing build artifacts from all firmware targets",
     )
     build_cmd.set_defaults(func=bundle)
 
