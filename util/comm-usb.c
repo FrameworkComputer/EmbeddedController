@@ -138,24 +138,33 @@ int parse_vidpid(const char *input, uint16_t *vid_ptr, uint16_t *pid_ptr)
 {
 	char *copy, *s, *e;
 
+	int ret = 1;
+
 	copy = strdup(input);
 
 	s = strchr(copy, ':');
-	if (!s)
-		return 0;
+	if (!s) {
+		ret = 0;
+		goto cleanup;
+	}
 	*s++ = '\0';
 
 	e = NULL;
 	*vid_ptr = strtoul(copy, &e, 16);
-	if (e && *e)
-		return 0;
+	if (e && *e) {
+		ret = 0;
+		goto cleanup;
+	}
 
 	e = NULL;
 	*pid_ptr = strtoul(s, &e, 16);
-	if (e && *e)
-		return 0;
-
-	return 1;
+	if (e && *e) {
+		ret = 0;
+		goto cleanup;
+	}
+cleanup:
+	free(copy);
+	return ret;
 }
 
 static libusb_device_handle *check_device(libusb_device *dev, uint16_t vid,
