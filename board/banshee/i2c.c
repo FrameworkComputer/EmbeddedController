@@ -7,6 +7,7 @@
 #include "compile_time_macros.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "i2c_bitbang.h"
 
 #define BOARD_ID_FAST_PLUS_CAPABLE 2
 
@@ -78,3 +79,16 @@ const struct i2c_port_t i2c_ports[] = {
 	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
+
+const struct i2c_port_t i2c_bitbang_ports[] = {
+	[I2C_BITBANG_CHAN_BRD_ID] = {
+		.name = "bitbang_brd_id",
+		.port = I2C_PORT_EEPROM,
+		.kbps = 100,
+		.scl = GPIO_EC_I2C_MISC_SCL_R,
+		.sda = GPIO_EC_I2C_MISC_SDA_R,
+		.drv = &bitbang_drv,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(i2c_bitbang_ports) == I2C_BITBANG_CHAN_COUNT);
+const unsigned int i2c_bitbang_ports_used = ARRAY_SIZE(i2c_bitbang_ports);

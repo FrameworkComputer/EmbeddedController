@@ -10,6 +10,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
@@ -75,12 +76,19 @@ void battery_present_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&board_set_charger_current_limit_deferred_data, 0);
 }
 
-void board_init(void)
+static void configure_keyboard(void)
 {
-	int board_id = get_board_id();
+	uint32_t cbi_val;
+	uint32_t board_id = 1;
 
-	gpio_enable_interrupt(GPIO_EC_BATT_PRES_ODL);
-	hook_call_deferred(&board_set_charger_current_limit_deferred_data, 0);
+	/* Board ID */
+	if (cbi_get_board_version(&cbi_val) != EC_SUCCESS ||
+	    cbi_val > UINT8_MAX)
+		CPRINTS("CBI: Read Board ID failed");
+	else
+		board_id = cbi_val;
+
+	CPRINTS("Read Board ID: %d", board_id);
 
 	if (board_id == 0) {
 		/* keyboard_col2_inverted on board id 0 */
@@ -102,6 +110,18 @@ void board_init(void)
 					    GPIO_ALT_FUNC_DEFAULT);
 	}
 
-	board_id_keyboard_col_inverted(board_id);
+	board_id_keyboard_col_inverted((int)board_id);
+}
+
+void board_init(void)
+{
+	gpio_enable_interrupt(GPIO_EC_BATT_PRES_ODL);
+	hook_call_deferred(&board_set_charger_current_limit_deferred_data, 0);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+
+__override void board_pre_task_i2c_peripheral_init(void)
+{
+	/* Configure board specific keyboard */
+	configure_keyboard();
+}
