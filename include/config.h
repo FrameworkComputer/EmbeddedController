@@ -6501,11 +6501,13 @@
 
 /*
  * By default, enable a request for an ACK from AP, on setting the mux, if the
- * board supports Burnside Bridge retimer.
+ * board supports Intel retimer.
  */
-#if defined(CONFIG_USBC_RETIMER_INTEL_BB) && defined(CONFIG_USB_MUX_VIRTUAL)
+#if (defined(CONFIG_USBC_RETIMER_INTEL_BB) ||  \
+     defined(CONFIG_USBC_RETIMER_INTEL_HB)) && \
+	defined(CONFIG_USB_MUX_VIRTUAL)
 #define CONFIG_USB_MUX_AP_ACK_REQUEST
-#endif /* CONFIG_USBC_RETIMER_INTEL_BB  */
+#endif /* CONFIG_USBC_RETIMER_INTEL_BB || CONFIG_USBC_RETIMER_INTEL_HB */
 
 /*****************************************************************************/
 
