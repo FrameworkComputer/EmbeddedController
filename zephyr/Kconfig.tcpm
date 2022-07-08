@@ -79,27 +79,6 @@ config PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG
 	  factory. Without this, multiple EC images would need to be installed
 	  depending on the board.
 
-config PLATFORM_EC_USB_PD_TCPM_MULTI_PS8XXX
-	bool "Support multiple PS8xxx devices"
-	help
-	  PS8XXX-series chips are all supported by a single driver. Enable
-	  this If a board with the same EC firmware is expected to support
-	  multiple products here. Then enable the required PS8xxx options
-	  below.
-
-	  In this case the board must provide a function to return the correct
-	  product ID actually used by a particular board:
-
-	     uint16_t board_get_ps8xxx_product_id(int port)
-
-	  Supported return values are:
-
-	     PS8705_PRODUCT_ID
-	     PS8751_PRODUCT_ID
-	     PS8755_PRODUCT_ID
-	     PS8805_PRODUCT_ID
-	     PS8815_PRODUCT_ID
-
 config PLATFORM_EC_USB_PD_TCPM_ANX7447
 	bool "Analogix ANX7447 USB-C Gen 2 Type-C Port Controller"
 	select PLATFORM_EC_USB_PD_TCPM_MUX
@@ -150,10 +129,42 @@ config PLATFORM_EC_USB_PD_TCPM_NCT38XX
 	  (TCPC). It incorporates a Power Delivery (PD) PHY with BMC encoding,
 	  Protocol logic and USB Type-C Configuration Channel (CC) logic.
 
+config PLATFORM_EC_USB_PD_TCPM_PS8XXX
+  bool
+  select PLATFORM_EC_USB_PD_TCPM_MUX
+  imply PLATFORM_EC_HOSTCMD_I2C_CONTROL
+  help
+    Enable the driver for PS8xxx active retimer/redrivers with integrated
+    USB Type-C Port Controller (TCPC) for USB Type-C Host and DisplayPort
+    applications. They support Power Delivery and the DisplayPort Alt Mode.
+
+    Support for specific devices in the driver (below) must also be enabled.
+
+if PLATFORM_EC_USB_PD_TCPM_PS8XXX
+config PLATFORM_EC_USB_PD_TCPM_MULTI_PS8XXX
+	bool "Support multiple PS8xxx devices"
+	help
+	  PS8XXX-series chips are all supported by a single driver. Enable
+	  this if a board with the same EC firmware is expected to support
+	  multiple products here.
+
+	  In this case the board must provide a function to return the correct
+	  product ID actually used by a particular board:
+
+	     uint16_t board_get_ps8xxx_product_id(int port)
+
+	  Supported return values are:
+
+	     PS8705_PRODUCT_ID
+	     PS8751_PRODUCT_ID
+	     PS8755_PRODUCT_ID
+	     PS8805_PRODUCT_ID
+	     PS8815_PRODUCT_ID
+endif # PLATFORM_EC_USB_PD_TCPM_PS8XXX
+
 config PLATFORM_EC_USB_PD_TCPM_PS8751
 	bool "Parade PS8751 USB-C Gen 2 Type-C Port Controller"
-	select PLATFORM_EC_USB_PD_TCPM_MUX
-	imply PLATFORM_EC_HOSTCMD_I2C_CONTROL
+	select PLATFORM_EC_USB_PD_TCPM_PS8XXX
 	help
 	  The Parade Technologies PS8751 is a USB Type-C Port Controller (TCPC)
 	  for USB Type-C Host and DisplayPort applications. It supports
@@ -161,8 +172,7 @@ config PLATFORM_EC_USB_PD_TCPM_PS8751
 
 config PLATFORM_EC_USB_PD_TCPM_PS8805
 	bool "Parade PS8805 USB-C Gen 2 Type-C Port Controller"
-	select PLATFORM_EC_USB_PD_TCPM_MUX
-	imply PLATFORM_EC_HOSTCMD_I2C_CONTROL
+	select PLATFORM_EC_USB_PD_TCPM_PS8XXX
 	help
 	  The Parade Technologies PS8805 is an active retiming/redriving
 	  (respectively for USB 3.1 Gen 2 / DisplayPort 1.4a HBR3) integrated
@@ -182,8 +192,7 @@ endif # PLATFORM_EC_USB_PD_TCPM_PS8805
 
 config PLATFORM_EC_USB_PD_TCPM_PS8815
 	bool "Parade PS8815 USB-C Gen 2 Type-C Port Controller"
-	select PLATFORM_EC_USB_PD_TCPM_MUX
-	imply PLATFORM_EC_HOSTCMD_I2C_CONTROL
+	select PLATFORM_EC_USB_PD_TCPM_PS8XXX
 	help
 	  The Parade Technologies PS8815 is an active retiming/redriving
 	  (respectively for USB 3.1 Gen 2 / DisplayPort 1.4a HBR3) integrated
