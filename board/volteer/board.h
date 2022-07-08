@@ -98,6 +98,9 @@
 #define CONFIG_USBC_PPC_SYV682X /* USBC port C1 */
 #define CONFIG_USB_PD_FRS_PPC
 
+/* Disable PPC logging to reduce EC image size */
+#undef CONFIG_USBC_PPC_LOGGING
+
 /* BC 1.2 */
 
 /* Volume Button feature */
@@ -176,6 +179,7 @@
 #undef CONFIG_CMD_REGULATOR
 #undef CONFIG_CMD_USB_PD_CABLE
 #undef CONFIG_CONSOLE_CMDHELP
+#undef CONFIG_CONSOLE_HISTORY
 
 /* Disable volume button in ectool */
 #undef CONFIG_HOSTCMD_BUTTON
