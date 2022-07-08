@@ -32,12 +32,13 @@ import sys
 USE_KCONFIGLIB = False
 try:
     import kconfiglib
+
     USE_KCONFIGLIB = True
 except ImportError:
     pass
 
 # Where we put the new config_allowed file
-NEW_ALLOWED_FNAME = pathlib.Path('/tmp/new_config_allowed.txt')
+NEW_ALLOWED_FNAME = pathlib.Path("/tmp/new_config_allowed.txt")
 
 
 def parse_args(argv):
@@ -49,38 +50,72 @@ def parse_args(argv):
     Returns:
         argparse.Namespace object containing the results
     """
-    epilog = '''Checks that new ad-hoc CONFIG options are not introduced without
-a corresponding Kconfig option for Zephyr'''
+    epilog = """Checks that new ad-hoc CONFIG options are not introduced without
+a corresponding Kconfig option for Zephyr"""
 
     parser = argparse.ArgumentParser(epilog=epilog)
-    parser.add_argument('-a', '--allowed', type=str,
-                        default='util/config_allowed.txt',
-                        help='File containing list of allowed ad-hoc CONFIGs')
-    parser.add_argument('-c', '--configs', type=str, default='.config',
-                        help='File containing CONFIG options to check')
-    parser.add_argument('-d', '--use-defines', action='store_true',
-                        help='Lines in the configs file use #define')
     parser.add_argument(
-        '-D', '--debug', action='store_true',
-        help='Enabling debugging (provides a full traceback on error)')
+        "-a",
+        "--allowed",
+        type=str,
+        default="util/config_allowed.txt",
+        help="File containing list of allowed ad-hoc CONFIGs",
+    )
     parser.add_argument(
-        '-i', '--ignore', action='append',
-        help='Kconfig options to ignore (without CONFIG_ prefix)')
-    parser.add_argument('-I', '--search-path', type=str, action='append',
-                        help='Search paths to look for Kconfigs')
-    parser.add_argument('-p', '--prefix', type=str, default='PLATFORM_EC_',
-                        help='Prefix to string from Kconfig options')
-    parser.add_argument('-s', '--srctree', type=str, default='zephyr/',
-                        help='Path to source tree to look for Kconfigs')
+        "-c",
+        "--configs",
+        type=str,
+        default=".config",
+        help="File containing CONFIG options to check",
+    )
+    parser.add_argument(
+        "-d",
+        "--use-defines",
+        action="store_true",
+        help="Lines in the configs file use #define",
+    )
+    parser.add_argument(
+        "-D",
+        "--debug",
+        action="store_true",
+        help="Enabling debugging (provides a full traceback on error)",
+    )
+    parser.add_argument(
+        "-i",
+        "--ignore",
+        action="append",
+        help="Kconfig options to ignore (without CONFIG_ prefix)",
+    )
+    parser.add_argument(
+        "-I",
+        "--search-path",
+        type=str,
+        action="append",
+        help="Search paths to look for Kconfigs",
+    )
+    parser.add_argument(
+        "-p",
+        "--prefix",
+        type=str,
+        default="PLATFORM_EC_",
+        help="Prefix to string from Kconfig options",
+    )
+    parser.add_argument(
+        "-s",
+        "--srctree",
+        type=str,
+        default="zephyr/",
+        help="Path to source tree to look for Kconfigs",
+    )
 
     # TODO(sjg@chromium.org): The chroot uses a very old Python. Once it moves
     # to 3.7 or later we can use this instead:
     #    subparsers = parser.add_subparsers(dest='cmd', required=True)
-    subparsers = parser.add_subparsers(dest='cmd')
+    subparsers = parser.add_subparsers(dest="cmd")
     subparsers.required = True
 
-    subparsers.add_parser('build', help='Build new list of ad-hoc CONFIGs')
-    subparsers.add_parser('check', help='Check for new ad-hoc CONFIGs')
+    subparsers.add_parser("build", help="Build new list of ad-hoc CONFIGs")
+    subparsers.add_parser("check", help="Check for new ad-hoc CONFIGs")
 
     return parser.parse_args(argv)
 
@@ -107,6 +142,7 @@ class KconfigCheck:
     the user is exhorted to add a new Kconfig. This helps avoid adding new ad-hoc
     CONFIG options, eventually returning the number to zero.
     """
+
     @classmethod
     def find_new_adhoc(cls, configs, kconfigs, allowed):
         """Get a list of new ad-hoc CONFIG options
@@ -172,11 +208,12 @@ class KconfigCheck:
             List of CONFIG_xxx options found in the file, with the 'CONFIG_'
                 prefix removed
         """
-        with open(configs_file, 'r') as inf:
-            configs = re.findall('%sCONFIG_([A-Za-z0-9_]*)%s' %
-                                 ((use_defines and '#define ' or ''),
-                                  (use_defines and ' ' or '')),
-                                 inf.read())
+        with open(configs_file, "r") as inf:
+            configs = re.findall(
+                "%sCONFIG_([A-Za-z0-9_]*)%s"
+                % ((use_defines and "#define " or ""), (use_defines and " " or "")),
+                inf.read(),
+            )
         return configs
 
     @classmethod
@@ -190,8 +227,8 @@ class KconfigCheck:
             List of CONFIG_xxx options found in the file, with the 'CONFIG_'
                 prefix removed
         """
-        with open(allowed_file, 'r') as inf:
-            configs = re.findall('CONFIG_([A-Za-z0-9_]*)', inf.read())
+        with open(allowed_file, "r") as inf:
+            configs = re.findall("CONFIG_([A-Za-z0-9_]*)", inf.read())
         return configs
 
     @classmethod
@@ -209,15 +246,17 @@ class KconfigCheck:
         """
         kconfig_files = []
         for root, dirs, files in os.walk(srcdir):
-            kconfig_files += [os.path.join(root, fname)
-                              for fname in files if fname.startswith('Kconfig')]
-            if 'Kconfig' in dirs:
-                dirs.remove('Kconfig')
+            kconfig_files += [
+                os.path.join(root, fname)
+                for fname in files
+                if fname.startswith("Kconfig")
+            ]
+            if "Kconfig" in dirs:
+                dirs.remove("Kconfig")
         return kconfig_files
 
     @classmethod
-    def scan_kconfigs(cls, srcdir, prefix='', search_paths=None,
-                      try_kconfiglib=True):
+    def scan_kconfigs(cls, srcdir, prefix="", search_paths=None, try_kconfiglib=True):
         """Scan a source tree for Kconfig options
 
         Args:
@@ -231,31 +270,40 @@ class KconfigCheck:
             List of config and menuconfig options found
         """
         if USE_KCONFIGLIB and try_kconfiglib:
-            os.environ['srctree'] = srcdir
-            kconf = kconfiglib.Kconfig('Kconfig', warn=False,
-                                       search_paths=search_paths,
-                                       allow_empty_macros=True)
+            os.environ["srctree"] = srcdir
+            kconf = kconfiglib.Kconfig(
+                "Kconfig",
+                warn=False,
+                search_paths=search_paths,
+                allow_empty_macros=True,
+            )
 
             # There is always a MODULES config, since kconfiglib is designed for
             # linux, but we don't want it
-            kconfigs = [name for name in kconf.syms if name != 'MODULES']
+            kconfigs = [name for name in kconf.syms if name != "MODULES"]
 
             if prefix:
-                re_drop_prefix = re.compile(r'^%s' % prefix)
-                kconfigs = [re_drop_prefix.sub('', name) for name in kconfigs]
+                re_drop_prefix = re.compile(r"^%s" % prefix)
+                kconfigs = [re_drop_prefix.sub("", name) for name in kconfigs]
         else:
             kconfigs = []
             # Remove the prefix if present
-            expr = re.compile(r'\n(config|menuconfig) (%s)?([A-Za-z0-9_]*)\n' %
-                              prefix)
+            expr = re.compile(r"\n(config|menuconfig) (%s)?([A-Za-z0-9_]*)\n" % prefix)
             for fname in cls.find_kconfigs(srcdir):
                 with open(fname) as inf:
                     found = re.findall(expr, inf.read())
                     kconfigs += [name for kctype, _, name in found]
         return sorted(kconfigs)
 
-    def check_adhoc_configs(self, configs_file, srcdir, allowed_file,
-                            prefix='', use_defines=False, search_paths=None):
+    def check_adhoc_configs(
+        self,
+        configs_file,
+        srcdir,
+        allowed_file,
+        prefix="",
+        use_defines=False,
+        search_paths=None,
+    ):
         """Find new and unneeded ad-hoc configs in the configs_file
 
         Args:
@@ -283,8 +331,9 @@ class KconfigCheck:
         except kconfiglib.KconfigError:
             # If we don't actually have access to the full Kconfig then we may
             # get an error. Fall back to using manual methods.
-            kconfigs = self.scan_kconfigs(srcdir, prefix, search_paths,
-                                          try_kconfiglib=False)
+            kconfigs = self.scan_kconfigs(
+                srcdir, prefix, search_paths, try_kconfiglib=False
+            )
 
         allowed = self.read_allowed(allowed_file)
         new_adhoc = self.find_new_adhoc(configs, kconfigs, allowed)
@@ -292,8 +341,16 @@ class KconfigCheck:
         updated_adhoc = self.get_updated_adhoc(unneeded_adhoc, allowed)
         return new_adhoc, unneeded_adhoc, updated_adhoc
 
-    def do_check(self, configs_file, srcdir, allowed_file, prefix, use_defines,
-                 search_paths, ignore=None):
+    def do_check(
+        self,
+        configs_file,
+        srcdir,
+        allowed_file,
+        prefix,
+        use_defines,
+        search_paths,
+        ignore=None,
+    ):
         """Find new ad-hoc configs in the configs_file
 
         Args:
@@ -313,11 +370,12 @@ class KconfigCheck:
             Exit code: 0 if OK, 1 if a problem was found
         """
         new_adhoc, unneeded_adhoc, updated_adhoc = self.check_adhoc_configs(
-            configs_file, srcdir, allowed_file, prefix, use_defines,
-            search_paths)
+            configs_file, srcdir, allowed_file, prefix, use_defines, search_paths
+        )
         if new_adhoc:
-            file_list = '\n'.join(['CONFIG_%s' % name for name in new_adhoc])
-            print(f'''Error:\tThe EC is in the process of migrating to Zephyr.
+            file_list = "\n".join(["CONFIG_%s" % name for name in new_adhoc])
+            print(
+                f"""Error:\tThe EC is in the process of migrating to Zephyr.
 \tZephyr uses Kconfig for configuration rather than ad-hoc #defines.
 \tAny new EC CONFIG options must ALSO be added to Zephyr so that new
 \tfunctionality is available in Zephyr also. The following new ad-hoc
@@ -330,19 +388,21 @@ file in zephyr/ and add a 'config' or 'menuconfig' option.
 Also see details in http://issuetracker.google.com/181253613
 
 To temporarily disable this, use: ALLOW_CONFIG=1 make ...
-''', file=sys.stderr)
+""",
+                file=sys.stderr,
+            )
             return 1
 
         if not ignore:
             ignore = []
         unneeded_adhoc = [name for name in unneeded_adhoc if name not in ignore]
         if unneeded_adhoc:
-            with open(NEW_ALLOWED_FNAME, 'w') as out:
+            with open(NEW_ALLOWED_FNAME, "w") as out:
                 for config in updated_adhoc:
-                    print('CONFIG_%s' % config, file=out)
-            now_in_kconfig = '\n'.join(
-                ['CONFIG_%s' % name for name in unneeded_adhoc])
-            print(f'''The following options are now in Kconfig:
+                    print("CONFIG_%s" % config, file=out)
+            now_in_kconfig = "\n".join(["CONFIG_%s" % name for name in unneeded_adhoc])
+            print(
+                f"""The following options are now in Kconfig:
 
 {now_in_kconfig}
 
@@ -350,12 +410,14 @@ Please run this to update the list of allowed ad-hoc CONFIGs and include this
 update in your CL:
 
    cp {NEW_ALLOWED_FNAME} util/config_allowed.txt
-''')
+"""
+            )
             return 1
         return 0
 
-    def do_build(self, configs_file, srcdir, allowed_file, prefix, use_defines,
-                 search_paths):
+    def do_build(
+        self, configs_file, srcdir, allowed_file, prefix, use_defines, search_paths
+    ):
         """Find new ad-hoc configs in the configs_file
 
         Args:
@@ -372,13 +434,14 @@ update in your CL:
             Exit code: 0 if OK, 1 if a problem was found
         """
         new_adhoc, _, updated_adhoc = self.check_adhoc_configs(
-            configs_file, srcdir, allowed_file, prefix, use_defines,
-            search_paths)
-        with open(NEW_ALLOWED_FNAME, 'w') as out:
+            configs_file, srcdir, allowed_file, prefix, use_defines, search_paths
+        )
+        with open(NEW_ALLOWED_FNAME, "w") as out:
             combined = sorted(new_adhoc + updated_adhoc)
             for config in combined:
-                print(f'CONFIG_{config}', file=out)
-        print(f'New list is in {NEW_ALLOWED_FNAME}')
+                print(f"CONFIG_{config}", file=out)
+        print(f"New list is in {NEW_ALLOWED_FNAME}")
+
 
 def main(argv):
     """Main function"""
@@ -386,18 +449,27 @@ def main(argv):
     if not args.debug:
         sys.tracebacklimit = 0
     checker = KconfigCheck()
-    if args.cmd == 'check':
+    if args.cmd == "check":
         return checker.do_check(
-            configs_file=args.configs, srcdir=args.srctree,
-            allowed_file=args.allowed, prefix=args.prefix,
-            use_defines=args.use_defines, search_paths=args.search_path,
-            ignore=args.ignore)
-    elif args.cmd == 'build':
-        return checker.do_build(configs_file=args.configs, srcdir=args.srctree,
-            allowed_file=args.allowed, prefix=args.prefix,
-            use_defines=args.use_defines, search_paths=args.search_path)
+            configs_file=args.configs,
+            srcdir=args.srctree,
+            allowed_file=args.allowed,
+            prefix=args.prefix,
+            use_defines=args.use_defines,
+            search_paths=args.search_path,
+            ignore=args.ignore,
+        )
+    elif args.cmd == "build":
+        return checker.do_build(
+            configs_file=args.configs,
+            srcdir=args.srctree,
+            allowed_file=args.allowed,
+            prefix=args.prefix,
+            use_defines=args.use_defines,
+            search_paths=args.search_path,
+        )
     return 2
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))

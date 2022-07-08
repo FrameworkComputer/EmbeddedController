@@ -9,7 +9,6 @@ import pathlib
 
 import hypothesis
 import pytest
-
 import zmake.zmake as zm
 
 hypothesis.settings.register_profile(

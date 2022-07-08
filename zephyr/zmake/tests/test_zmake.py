@@ -11,14 +11,13 @@ import re
 import unittest.mock
 
 import pytest
-from testfixtures import LogCapture
-
 import zmake.build_config
 import zmake.jobserver
 import zmake.multiproc as multiproc
 import zmake.output_packers
 import zmake.project
 import zmake.toolchains
+from testfixtures import LogCapture
 
 OUR_PATH = os.path.dirname(os.path.realpath(__file__))
 

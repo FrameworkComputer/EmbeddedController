@@ -13,7 +13,6 @@ import tempfile
 import hypothesis
 import hypothesis.strategies as st
 import pytest
-
 import zmake.jobserver
 import zmake.util as util
 from zmake.build_config import BuildConfig

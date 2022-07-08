@@ -7,7 +7,6 @@ Tests for the generate_readme.py file.
 """
 
 import pytest
-
 import zmake.generate_readme as gen_readme
 
 

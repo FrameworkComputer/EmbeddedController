@@ -6,4 +6,4 @@
 # pylint: disable=bad-indentation,docstring-section-indent
 # pylint: disable=docstring-trailing-quotes
 
-__all__ = ['tiny_servo_common', 'stm32usb', 'stm32uart', 'pty_driver']
+__all__ = ["tiny_servo_common", "stm32usb", "stm32uart", "pty_driver"]

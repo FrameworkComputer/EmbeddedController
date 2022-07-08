@@ -11,7 +11,6 @@ import tempfile
 import hypothesis
 import hypothesis.strategies as st
 import pytest
-
 import zmake.modules
 import zmake.output_packers
 import zmake.project

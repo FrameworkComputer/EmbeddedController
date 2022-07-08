@@ -8,7 +8,6 @@ import sys
 import unittest.mock as mock
 
 import pytest
-
 import zmake.__main__ as main
 
 

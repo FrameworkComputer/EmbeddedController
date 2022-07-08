@@ -14,6 +14,7 @@ Program to convert sweetberry config to servod config template.
 # Note: This is a py2/3 compatible file.
 
 from __future__ import print_function
+
 import json
 import os
 import sys
@@ -48,21 +49,25 @@ def write_to_file(file, sweetberry, inas):
       inas: list of inas read from board file.
     """
 
-    with open(file, 'w') as pyfile:
+    with open(file, "w") as pyfile:
 
-        pyfile.write('inas = [\n')
+        pyfile.write("inas = [\n")
 
         for rec in inas:
-            if rec['sweetberry'] != sweetberry:
+            if rec["sweetberry"] != sweetberry:
                 continue
 
             # EX : ('sweetberry', 0x40, 'SB_FW_CAM_2P8', 5.0, 1.000, 3, False),
-            channel, i2c_addr = Spower.CHMAP[rec['channel']]
-            record = ("    ('sweetberry', 0x%02x, '%s', 5.0, %f, %d, 'True')"
-                      ",\n" % (i2c_addr, rec['name'], rec['rs'], channel))
+            channel, i2c_addr = Spower.CHMAP[rec["channel"]]
+            record = "    ('sweetberry', 0x%02x, '%s', 5.0, %f, %d, 'True')" ",\n" % (
+                i2c_addr,
+                rec["name"],
+                rec["rs"],
+                channel,
+            )
             pyfile.write(record)
 
-        pyfile.write(']\n')
+        pyfile.write("]\n")
 
 
 def main(argv):
@@ -76,16 +81,18 @@ def main(argv):
 
     inas = fetch_records(inputf)
 
-    sweetberry = set(rec['sweetberry'] for rec in inas)
+    sweetberry = set(rec["sweetberry"] for rec in inas)
 
     if len(sweetberry) == 2:
-        print("Converting %s to %s and %s" % (inputf, basename + '_a.py',
-                                              basename + '_b.py'))
-        write_to_file(basename + '_a.py', 'A', inas)
-        write_to_file(basename + '_b.py', 'B', inas)
+        print(
+            "Converting %s to %s and %s"
+            % (inputf, basename + "_a.py", basename + "_b.py")
+        )
+        write_to_file(basename + "_a.py", "A", inas)
+        write_to_file(basename + "_b.py", "B", inas)
     else:
-        print("Converting %s to %s" % (inputf, basename + '.py'))
-        write_to_file(basename + '.py', sweetberry.pop(), inas)
+        print("Converting %s to %s" % (inputf, basename + ".py"))
+        write_to_file(basename + ".py", sweetberry.pop(), inas)
 
 
 if __name__ == "__main__":

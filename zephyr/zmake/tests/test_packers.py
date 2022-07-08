@@ -10,7 +10,6 @@ import tempfile
 import hypothesis
 import hypothesis.strategies as st
 import pytest
-
 import zmake.output_packers as packers
 
 # Strategies for use with hypothesis

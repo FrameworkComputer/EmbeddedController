@@ -19,8 +19,7 @@ import subprocess
 import sys
 import textwrap
 
-
-BUG_NONE_PATTERN = re.compile('none', flags=re.IGNORECASE)
+BUG_NONE_PATTERN = re.compile("none", flags=re.IGNORECASE)
 
 
 def git_commit_msg(branch, head, merge_head, rel_paths, cmd):
@@ -42,18 +41,17 @@ def git_commit_msg(branch, head, merge_head, rel_paths, cmd):
         A String containing the git commit message with the exception of the
         Signed-Off-By field and Change-ID field.
     """
-    relevant_commits_cmd, relevant_commits = get_relevant_commits(head,
-                                                                  merge_head,
-                                                                  '--oneline',
-                                                                  rel_paths)
+    relevant_commits_cmd, relevant_commits = get_relevant_commits(
+        head, merge_head, "--oneline", rel_paths
+    )
 
-    _, relevant_bugs = get_relevant_commits(head, merge_head, '', rel_paths)
-    relevant_bugs = set(re.findall('BUG=(.*)', relevant_bugs))
+    _, relevant_bugs = get_relevant_commits(head, merge_head, "", rel_paths)
+    relevant_bugs = set(re.findall("BUG=(.*)", relevant_bugs))
     # Filter out "none" from set of bugs
     filtered = []
     for bug_line in relevant_bugs:
-        bug_line = bug_line.replace(',', ' ')
-        bugs = bug_line.split(' ')
+        bug_line = bug_line.replace(",", " ")
+        bugs = bug_line.split(" ")
         for bug in bugs:
             if bug and not BUG_NONE_PATTERN.match(bug):
                 filtered.append(bug)
@@ -82,18 +80,20 @@ Cq-Include-Trybots: chromeos/cq:cq-orchestrator
     # 72 cols.
     relevant_commits_cmd = textwrap.fill(relevant_commits_cmd, width=72)
     # Wrap at 68 cols to save room for 'BUG='
-    bugs = textwrap.wrap(' '.join(relevant_bugs), width=68)
-    bug_field = ''
+    bugs = textwrap.wrap(" ".join(relevant_bugs), width=68)
+    bug_field = ""
     for line in bugs:
-        bug_field += 'BUG=' + line + '\n'
+        bug_field += "BUG=" + line + "\n"
     # Remove the final newline since the template adds it for us.
     bug_field = bug_field[:-1]
 
-    return COMMIT_MSG_TEMPLATE.format(BRANCH=branch,
-                                      RELEVANT_COMMITS_CMD=relevant_commits_cmd,
-                                      RELEVANT_COMMITS=relevant_commits,
-                                      BUG_FIELD=bug_field,
-                                      COMMAND_LINE=cmd)
+    return COMMIT_MSG_TEMPLATE.format(
+        BRANCH=branch,
+        RELEVANT_COMMITS_CMD=relevant_commits_cmd,
+        RELEVANT_COMMITS=relevant_commits,
+        BUG_FIELD=bug_field,
+        COMMAND_LINE=cmd,
+    )
 
 
 def get_relevant_boards(baseboard):
@@ -105,15 +105,16 @@ def get_relevant_boards(baseboard):
     Returns:
         A list of strings containing the boards based off of the baseboard.
     """
-    proc = subprocess.run(['git', 'grep', 'BASEBOARD:=' + baseboard, '--',
-                           'board/'],
-                          stdout=subprocess.PIPE,
-                          encoding='utf-8',
-                          check=True)
+    proc = subprocess.run(
+        ["git", "grep", "BASEBOARD:=" + baseboard, "--", "board/"],
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+        check=True,
+    )
     boards = []
     res = proc.stdout.splitlines()
     for line in res:
-        boards.append(line.split('/')[1])
+        boards.append(line.split("/")[1])
     return boards
 
 
@@ -135,21 +136,18 @@ def get_relevant_commits(head, merge_head, fmt, relevant_paths):
         stdout.
     """
     if fmt:
-        cmd = ['git', 'log', fmt, head + '..' + merge_head, '--',
-               relevant_paths]
+        cmd = ["git", "log", fmt, head + ".." + merge_head, "--", relevant_paths]
     else:
-        cmd = ['git', 'log', head + '..' + merge_head, '--', relevant_paths]
+        cmd = ["git", "log", head + ".." + merge_head, "--", relevant_paths]
 
     # Pass cmd as a string to subprocess.run() since we need to run with shell
     # equal to True.  The reason we are using shell equal to True is to take
     # advantage of the glob expansion for the relevant paths.
-    cmd = ' '.join(cmd)
-    proc = subprocess.run(cmd,
-                          stdout=subprocess.PIPE,
-                          encoding='utf-8',
-                          check=True,
-                          shell=True)
-    return ''.join(proc.args), proc.stdout
+    cmd = " ".join(cmd)
+    proc = subprocess.run(
+        cmd, stdout=subprocess.PIPE, encoding="utf-8", check=True, shell=True
+    )
+    return "".join(proc.args), proc.stdout
 
 
 def main(argv):
@@ -165,46 +163,61 @@ def main(argv):
         argv: A list of the command line arguments passed to this script.
     """
     # Set up argument parser.
-    parser = argparse.ArgumentParser(description=('A script that generates a '
-                                                  'merge commit from cros/main'
-                                                  ' to a desired release '
-                                                  'branch.  By default, the '
-                                                  '"recursive" merge strategy '
-                                                  'with the "theirs" strategy '
-                                                  'option is used.'))
-    parser.add_argument('--baseboard')
-    parser.add_argument('--board')
-    parser.add_argument('release_branch', help=('The name of the target release'
-                                                ' branch'))
-    parser.add_argument('--relevant_paths_file',
-                        help=('A path to a text file which includes other '
-                              'relevant paths of interest for this board '
-                              'or baseboard'))
-    parser.add_argument('--merge_strategy', '-s', default='recursive',
-                        help='The merge strategy to pass to `git merge -s`')
-    parser.add_argument('--strategy_option', '-X',
-                        help=('The strategy option for the chosen merge '
-                              'strategy'))
+    parser = argparse.ArgumentParser(
+        description=(
+            "A script that generates a "
+            "merge commit from cros/main"
+            " to a desired release "
+            "branch.  By default, the "
+            '"recursive" merge strategy '
+            'with the "theirs" strategy '
+            "option is used."
+        )
+    )
+    parser.add_argument("--baseboard")
+    parser.add_argument("--board")
+    parser.add_argument(
+        "release_branch", help=("The name of the target release" " branch")
+    )
+    parser.add_argument(
+        "--relevant_paths_file",
+        help=(
+            "A path to a text file which includes other "
+            "relevant paths of interest for this board "
+            "or baseboard"
+        ),
+    )
+    parser.add_argument(
+        "--merge_strategy",
+        "-s",
+        default="recursive",
+        help="The merge strategy to pass to `git merge -s`",
+    )
+    parser.add_argument(
+        "--strategy_option",
+        "-X",
+        help=("The strategy option for the chosen merge " "strategy"),
+    )
 
     opts = parser.parse_args(argv[1:])
 
-    baseboard_dir = ''
-    board_dir = ''
+    baseboard_dir = ""
+    board_dir = ""
 
     if opts.baseboard:
         # Dereference symlinks so "git log" works as expected.
-        baseboard_dir = os.path.relpath('baseboard/' + opts.baseboard)
+        baseboard_dir = os.path.relpath("baseboard/" + opts.baseboard)
         baseboard_dir = os.path.relpath(os.path.realpath(baseboard_dir))
 
         boards = get_relevant_boards(opts.baseboard)
     elif opts.board:
-        board_dir = os.path.relpath('board/' + opts.board)
+        board_dir = os.path.relpath("board/" + opts.board)
         board_dir = os.path.relpath(os.path.realpath(board_dir))
         boards = [opts.board]
     else:
-        parser.error('You must specify a board OR a baseboard')
+        parser.error("You must specify a board OR a baseboard")
 
-    print('Gathering relevant paths...')
+    print("Gathering relevant paths...")
     relevant_paths = []
     if opts.baseboard:
         relevant_paths.append(baseboard_dir)
@@ -212,65 +225,91 @@ def main(argv):
         relevant_paths.append(board_dir)
 
     for board in boards:
-        relevant_paths.append('board/' + board)
+        relevant_paths.append("board/" + board)
 
     # Check for the existence of a file that has other paths of interest.
     if opts.relevant_paths_file and os.path.exists(opts.relevant_paths_file):
-        with open(opts.relevant_paths_file, 'r') as relevant_paths_file:
+        with open(opts.relevant_paths_file, "r") as relevant_paths_file:
             for line in relevant_paths_file:
-                if not line.startswith('#'):
+                if not line.startswith("#"):
                     relevant_paths.append(line.rstrip())
-    relevant_paths.append('util/getversion.sh')
-    relevant_paths = ' '.join(relevant_paths)
+    relevant_paths.append("util/getversion.sh")
+    relevant_paths = " ".join(relevant_paths)
 
     # Check if we are already in merge process
-    result = subprocess.run(['git', 'rev-parse', '--quiet', '--verify',
-                             'MERGE_HEAD'], stdout=subprocess.DEVNULL,
-                            stderr=subprocess.DEVNULL, check=False)
+    result = subprocess.run(
+        ["git", "rev-parse", "--quiet", "--verify", "MERGE_HEAD"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
     if result.returncode:
         # Let's perform the merge
-        print('Updating remote...')
-        subprocess.run(['git', 'remote', 'update'], check=True)
-        subprocess.run(['git', 'checkout', '-B', opts.release_branch, 'cros/' +
-                        opts.release_branch], check=True)
-        print('Attempting git merge...')
-        if opts.merge_strategy == 'recursive' and not opts.strategy_option:
-            opts.strategy_option = 'theirs'
-        print('Using "%s" merge strategy' % opts.merge_strategy,
-              ("with strategy option '%s'" % opts.strategy_option
-               if opts.strategy_option else ''))
-        arglist = ['git', 'merge', '--no-ff', '--no-commit', 'cros/main', '-s',
-                   opts.merge_strategy]
+        print("Updating remote...")
+        subprocess.run(["git", "remote", "update"], check=True)
+        subprocess.run(
+            [
+                "git",
+                "checkout",
+                "-B",
+                opts.release_branch,
+                "cros/" + opts.release_branch,
+            ],
+            check=True,
+        )
+        print("Attempting git merge...")
+        if opts.merge_strategy == "recursive" and not opts.strategy_option:
+            opts.strategy_option = "theirs"
+        print(
+            'Using "%s" merge strategy' % opts.merge_strategy,
+            (
+                "with strategy option '%s'" % opts.strategy_option
+                if opts.strategy_option
+                else ""
+            ),
+        )
+        arglist = [
+            "git",
+            "merge",
+            "--no-ff",
+            "--no-commit",
+            "cros/main",
+            "-s",
+            opts.merge_strategy,
+        ]
         if opts.strategy_option:
-            arglist.append('-X' + opts.strategy_option)
+            arglist.append("-X" + opts.strategy_option)
         subprocess.run(arglist, check=True)
     else:
-        print('We have already started merge process.',
-              'Attempt to generate commit.')
+        print("We have already started merge process.", "Attempt to generate commit.")
 
-    print('Generating commit message...')
-    branch = subprocess.run(['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
-                            stdout=subprocess.PIPE,
-                            encoding='utf-8',
-                            check=True).stdout.rstrip()
-    head = subprocess.run(['git', 'rev-parse', '--short', 'HEAD'],
-                          stdout=subprocess.PIPE,
-                          encoding='utf-8',
-                          check=True).stdout.rstrip()
-    merge_head = subprocess.run(['git', 'rev-parse', '--short',
-                                 'MERGE_HEAD'],
-                                stdout=subprocess.PIPE,
-                                encoding='utf-8',
-                                check=True).stdout.rstrip()
+    print("Generating commit message...")
+    branch = subprocess.run(
+        ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+        check=True,
+    ).stdout.rstrip()
+    head = subprocess.run(
+        ["git", "rev-parse", "--short", "HEAD"],
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+        check=True,
+    ).stdout.rstrip()
+    merge_head = subprocess.run(
+        ["git", "rev-parse", "--short", "MERGE_HEAD"],
+        stdout=subprocess.PIPE,
+        encoding="utf-8",
+        check=True,
+    ).stdout.rstrip()
 
-    cmd = ' '.join(argv)
-    print('Typing as fast as I can...')
+    cmd = " ".join(argv)
+    print("Typing as fast as I can...")
     commit_msg = git_commit_msg(branch, head, merge_head, relevant_paths, cmd)
-    subprocess.run(['git', 'commit', '--signoff', '-m', commit_msg], check=True)
-    subprocess.run(['git', 'commit', '--amend'], check=True)
-    print(("Finished! **Please review the commit to see if it's to your "
-           'liking.**'))
+    subprocess.run(["git", "commit", "--signoff", "-m", commit_msg], check=True)
+    subprocess.run(["git", "commit", "--amend"], check=True)
+    print(("Finished! **Please review the commit to see if it's to your " "liking.**"))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main(sys.argv)

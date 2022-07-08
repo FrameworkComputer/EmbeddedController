@@ -13,7 +13,6 @@ import argparse
 import subprocess
 import sys
 
-
 # Script to control tigertail USB-C Mux board.
 #
 # optional arguments:
@@ -35,58 +34,60 @@ import sys
 
 
 def testCmd(cmd, expected_results):
-  """Run command on console, check for success.
+    """Run command on console, check for success.
 
-  Args:
-    cmd: shell command to run.
-    expected_results: a list object of strings expected in the result.
+    Args:
+      cmd: shell command to run.
+      expected_results: a list object of strings expected in the result.
 
-  Raises:
-    Exception on fail.
-  """
-  print('run: ' + cmd)
-  try:
-    p = subprocess.run(cmd, shell=True, check=False, capture_output=True)
-    output = p.stdout.decode('utf-8')
-    error = p.stderr.decode('utf-8')
-    assert p.returncode == 0
-    for result in expected_results:
-      output.index(result)
-  except Exception as e:
-    print('FAIL')
-    print('cmd: ' + cmd)
-    print('error: ' + str(e))
-    print('stdout:\n' + output)
-    print('stderr:\n' + error)
-    print('expected: ' + str(expected_results))
-    print('RC: ' + str(p.returncode))
-    raise e
+    Raises:
+      Exception on fail.
+    """
+    print("run: " + cmd)
+    try:
+        p = subprocess.run(cmd, shell=True, check=False, capture_output=True)
+        output = p.stdout.decode("utf-8")
+        error = p.stderr.decode("utf-8")
+        assert p.returncode == 0
+        for result in expected_results:
+            output.index(result)
+    except Exception as e:
+        print("FAIL")
+        print("cmd: " + cmd)
+        print("error: " + str(e))
+        print("stdout:\n" + output)
+        print("stderr:\n" + error)
+        print("expected: " + str(expected_results))
+        print("RC: " + str(p.returncode))
+        raise e
+
 
 def test_sequence():
-  testCmd('./tigertool.py --reboot', ['PASS'])
-  testCmd('./tigertool.py --setserialno test', ['PASS'])
-  testCmd('./tigertool.py --check_serial', ['test', 'PASS'])
-  testCmd('./tigertool.py -s test --check_serial', ['test', 'PASS'])
-  testCmd('./tigertool.py -m A', ['Mux set to A', 'PASS'])
-  testCmd('./tigertool.py -m B', ['Mux set to B', 'PASS'])
-  testCmd('./tigertool.py -m off', ['Mux set to off', 'PASS'])
-  testCmd('./tigertool.py -p', ['PASS'])
-  testCmd('./tigertool.py -r rw', ['PASS'])
-  testCmd('./tigertool.py -r ro', ['PASS'])
-  testCmd('./tigertool.py --check_version', ['RW', 'RO', 'PASS'])
+    testCmd("./tigertool.py --reboot", ["PASS"])
+    testCmd("./tigertool.py --setserialno test", ["PASS"])
+    testCmd("./tigertool.py --check_serial", ["test", "PASS"])
+    testCmd("./tigertool.py -s test --check_serial", ["test", "PASS"])
+    testCmd("./tigertool.py -m A", ["Mux set to A", "PASS"])
+    testCmd("./tigertool.py -m B", ["Mux set to B", "PASS"])
+    testCmd("./tigertool.py -m off", ["Mux set to off", "PASS"])
+    testCmd("./tigertool.py -p", ["PASS"])
+    testCmd("./tigertool.py -r rw", ["PASS"])
+    testCmd("./tigertool.py -r ro", ["PASS"])
+    testCmd("./tigertool.py --check_version", ["RW", "RO", "PASS"])
 
-  print('PASS')
+    print("PASS")
+
 
 def main(argv):
-  parser = argparse.ArgumentParser(description=__doc__)
-  parser.add_argument('-c', '--count', type=int, default=1,
-                      help='loops to run')
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("-c", "--count", type=int, default=1, help="loops to run")
 
-  opts = parser.parse_args(argv)
+    opts = parser.parse_args(argv)
 
-  for i in range(1, opts.count + 1):
-    print('Iteration: %d' % i)
-    test_sequence()
+    for i in range(1, opts.count + 1):
+        print("Iteration: %d" % i)
+        test_sequence()
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main(sys.argv[1:])

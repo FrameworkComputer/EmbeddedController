@@ -10,7 +10,6 @@ import tempfile
 import hypothesis
 import hypothesis.strategies as st
 import pytest
-
 import zmake.util as util
 
 # Strategies for use with hypothesis

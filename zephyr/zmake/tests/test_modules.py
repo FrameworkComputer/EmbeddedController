@@ -9,7 +9,6 @@ import tempfile
 
 import hypothesis
 import hypothesis.strategies as st
-
 import zmake.modules
 
 module_lists = st.lists(

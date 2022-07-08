@@ -34,33 +34,34 @@ wait until after completing the TODO above to stop using multiprocessing.Pipe!
 
 # Imports to bring objects into this namespace for users of this module.
 from multiprocessing import Pipe
-from six.moves.queue import Queue
 from threading import Thread as ThreadOrProcess
+
+from six.moves.queue import Queue
 
 # True if this module has ec3po using subprocesses, False if using threads.
 USING_SUBPROCS = False
 
 
 def _DoNothing():
-  """Do-nothing function for use as a callback with DoIf()."""
+    """Do-nothing function for use as a callback with DoIf()."""
 
 
 def DoIf(subprocs=_DoNothing, threads=_DoNothing):
-  """Return a callback or not based on ec3po use of subprocesses or threads.
+    """Return a callback or not based on ec3po use of subprocesses or threads.
 
-  Args:
-    subprocs: callback that does not require any args - This will be returned
-        (not called!) if and only if ec3po is using subprocesses.  This is
-        OPTIONAL, the default value is a do-nothing callback that returns None.
-    threads: callback that does not require any args - This will be returned
-        (not called!) if and only if ec3po is using threads.  This is OPTIONAL,
-        the default value is a do-nothing callback that returns None.
+    Args:
+      subprocs: callback that does not require any args - This will be returned
+          (not called!) if and only if ec3po is using subprocesses.  This is
+          OPTIONAL, the default value is a do-nothing callback that returns None.
+      threads: callback that does not require any args - This will be returned
+          (not called!) if and only if ec3po is using threads.  This is OPTIONAL,
+          the default value is a do-nothing callback that returns None.
 
-  Returns:
-    Either the subprocs or threads argument will be returned.
-  """
-  return subprocs if USING_SUBPROCS else threads
+    Returns:
+      Either the subprocs or threads argument will be returned.
+    """
+    return subprocs if USING_SUBPROCS else threads
 
 
 def Value(ctype, *args):
-  return ctype(*args)
+    return ctype(*args)

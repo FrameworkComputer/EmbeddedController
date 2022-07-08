@@ -25,7 +25,6 @@ import sys
 import tempfile
 import time
 
-
 DEFAULT_SEGGER_REMOTE_PORT = 19020
 
 # Commands are documented here: https://wiki.segger.com/J-Link_Commander
@@ -41,27 +40,34 @@ exit
 
 class BoardConfig:
     """Board configuration."""
+
     def __init__(self, interface, device, flash_address):
         self.interface = interface
         self.device = device
         self.flash_address = flash_address
 
 
-SWD_INTERFACE = 'SWD'
-STM32_DEFAULT_FLASH_ADDRESS = '0x8000000'
-DRAGONCLAW_CONFIG = BoardConfig(interface=SWD_INTERFACE, device='STM32F412CG',
-                                flash_address=STM32_DEFAULT_FLASH_ADDRESS)
-ICETOWER_CONFIG = BoardConfig(interface=SWD_INTERFACE, device='STM32H743ZI',
-                              flash_address=STM32_DEFAULT_FLASH_ADDRESS)
+SWD_INTERFACE = "SWD"
+STM32_DEFAULT_FLASH_ADDRESS = "0x8000000"
+DRAGONCLAW_CONFIG = BoardConfig(
+    interface=SWD_INTERFACE,
+    device="STM32F412CG",
+    flash_address=STM32_DEFAULT_FLASH_ADDRESS,
+)
+ICETOWER_CONFIG = BoardConfig(
+    interface=SWD_INTERFACE,
+    device="STM32H743ZI",
+    flash_address=STM32_DEFAULT_FLASH_ADDRESS,
+)
 
 BOARD_CONFIGS = {
-    'dragonclaw': DRAGONCLAW_CONFIG,
-    'bloonchipper': DRAGONCLAW_CONFIG,
-    'nucleo-f412zg': DRAGONCLAW_CONFIG,
-    'dartmonkey': ICETOWER_CONFIG,
-    'icetower': ICETOWER_CONFIG,
-    'nucleo-dartmonkey': ICETOWER_CONFIG,
-    'nucleo-h743zi': ICETOWER_CONFIG,
+    "dragonclaw": DRAGONCLAW_CONFIG,
+    "bloonchipper": DRAGONCLAW_CONFIG,
+    "nucleo-f412zg": DRAGONCLAW_CONFIG,
+    "dartmonkey": ICETOWER_CONFIG,
+    "icetower": ICETOWER_CONFIG,
+    "nucleo-dartmonkey": ICETOWER_CONFIG,
+    "nucleo-h743zi": ICETOWER_CONFIG,
 }
 
 
@@ -93,9 +99,11 @@ def is_tcp_port_open(host: str, tcp_port: int) -> bool:
 
 def create_jlink_command_file(firmware_file, config):
     tmp = tempfile.NamedTemporaryFile()
-    tmp.write(JLINK_COMMANDS.format(FIRMWARE=firmware_file,
-                                    FLASH_ADDRESS=config.flash_address).encode(
-                                        'utf-8'))
+    tmp.write(
+        JLINK_COMMANDS.format(
+            FIRMWARE=firmware_file, FLASH_ADDRESS=config.flash_address
+        ).encode("utf-8")
+    )
     tmp.flush()
     return tmp
 
@@ -106,8 +114,8 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
     ]
 
     if remote:
-        logging.debug(f'Connecting to J-Link over TCP/IP {remote}.')
-        remote_components = remote.split(':')
+        logging.debug(f"Connecting to J-Link over TCP/IP {remote}.")
+        remote_components = remote.split(":")
         if len(remote_components) not in [1, 2]:
             logging.debug(f'Given remote "{remote}" is malformed.')
             return 1
@@ -118,7 +126,7 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
         except socket.gaierror as e:
             logging.error(f'Failed to resolve host "{host}": {e}.')
             return 1
-        logging.debug(f'Resolved {host} as {ip}.')
+        logging.debug(f"Resolved {host} as {ip}.")
         port = DEFAULT_SEGGER_REMOTE_PORT
 
         if len(remote_components) == 2:
@@ -126,29 +134,36 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
                 port = int(remote_components[1])
             except ValueError:
                 logging.error(
-                    f'Given remote port "{remote_components[1]}" is malformed.')
+                    f'Given remote port "{remote_components[1]}" is malformed.'
+                )
                 return 1
 
-        remote = f'{ip}:{port}'
+        remote = f"{ip}:{port}"
 
-        logging.debug(f'Checking connection to {remote}.')
+        logging.debug(f"Checking connection to {remote}.")
         if not is_tcp_port_open(ip, port):
-            logging.error(
-                f"JLink server doesn't seem to be listening on {remote}.")
-            logging.error('Ensure that JLinkRemoteServerCLExe is running.')
+            logging.error(f"JLink server doesn't seem to be listening on {remote}.")
+            logging.error("Ensure that JLinkRemoteServerCLExe is running.")
             return 1
-        cmd.extend(['-ip', remote])
+        cmd.extend(["-ip", remote])
 
-    cmd.extend([
-        '-device', device,
-        '-if', interface,
-        '-speed', 'auto',
-        '-autoconnect', '1',
-        '-CommandFile', cmd_file,
-        ])
-    logging.debug('Running command: "%s"', ' '.join(cmd))
+    cmd.extend(
+        [
+            "-device",
+            device,
+            "-if",
+            interface,
+            "-speed",
+            "auto",
+            "-autoconnect",
+            "1",
+            "-CommandFile",
+            cmd_file,
+        ]
+    )
+    logging.debug('Running command: "%s"', " ".join(cmd))
     completed_process = subprocess.run(cmd)  # pylint: disable=subprocess-run-check
-    logging.debug('JLink return code: %d', completed_process.returncode)
+    logging.debug("JLink return code: %d", completed_process.returncode)
     return completed_process.returncode
 
 
@@ -156,37 +171,41 @@ def main(argv: list):
 
     parser = argparse.ArgumentParser()
 
-    default_jlink = './JLink_Linux_V684a_x86_64/JLinkExe'
+    default_jlink = "./JLink_Linux_V684a_x86_64/JLinkExe"
     if shutil.which(default_jlink) is None:
-        default_jlink = 'JLinkExe'
+        default_jlink = "JLinkExe"
     parser.add_argument(
-        '--jlink', '-j',
-        help='JLinkExe path (default: ' + default_jlink + ')',
-        default=default_jlink)
-
-    parser.add_argument(
-        '--remote', '-n',
-        help='Use TCP/IP host[:port] to connect to a J-Link or '
-        'JLinkRemoteServerCLExe. If unspecified, connect over USB.')
-
-    default_board = 'bloonchipper'
-    parser.add_argument(
-        '--board', '-b',
-        help='Board (default: ' + default_board + ')',
-        default=default_board)
-
-    default_firmware = os.path.join('./build', default_board, 'ec.bin')
-    parser.add_argument(
-        '--image', '-i',
-        help='Firmware binary (default: ' + default_firmware + ')',
-        default=default_firmware)
-
-    log_level_choices = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
-    parser.add_argument(
-        '--log_level', '-l',
-        choices=log_level_choices,
-        default='DEBUG'
+        "--jlink",
+        "-j",
+        help="JLinkExe path (default: " + default_jlink + ")",
+        default=default_jlink,
     )
+
+    parser.add_argument(
+        "--remote",
+        "-n",
+        help="Use TCP/IP host[:port] to connect to a J-Link or "
+        "JLinkRemoteServerCLExe. If unspecified, connect over USB.",
+    )
+
+    default_board = "bloonchipper"
+    parser.add_argument(
+        "--board",
+        "-b",
+        help="Board (default: " + default_board + ")",
+        default=default_board,
+    )
+
+    default_firmware = os.path.join("./build", default_board, "ec.bin")
+    parser.add_argument(
+        "--image",
+        "-i",
+        help="Firmware binary (default: " + default_firmware + ")",
+        default=default_firmware,
+    )
+
+    log_level_choices = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+    parser.add_argument("--log_level", "-l", choices=log_level_choices, default="DEBUG")
 
     args = parser.parse_args(argv)
     logging.basicConfig(level=args.log_level)
@@ -201,11 +220,12 @@ def main(argv: list):
     args.jlink = args.jlink
 
     cmd_file = create_jlink_command_file(args.image, config)
-    ret_code = flash(args.jlink, args.remote, config.device, config.interface,
-                     cmd_file.name)
+    ret_code = flash(
+        args.jlink, args.remote, config.device, config.interface, cmd_file.name
+    )
     cmd_file.close()
     return ret_code
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.exit(main(sys.argv[1:]))
