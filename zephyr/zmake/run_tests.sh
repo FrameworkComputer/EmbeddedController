@@ -25,9 +25,6 @@ export PYTHONPATH="${PWD}"
 # happens.  Remove this flag.
 pytest --hypothesis-profile=cq .
 
-# Check import sorting.
-isort --check .
-
 # Check black formatting.
 black --check --diff .
 

@@ -3,12 +3,7 @@ init-hook='import sys; sys.path.extend(["zephyr/zmake"])'
 
 [MESSAGES CONTROL]
 
-disable=bad-continuation,bad-whitespace,format,fixme,wrong-import-order
-
-[format]
-
-max-line-length=88
-string-quote=double
+disable=format,fixme,wrong-import-order
 
 [BASIC]
 good-names=
