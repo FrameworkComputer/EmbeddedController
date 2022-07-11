@@ -291,11 +291,11 @@ test_static int test_vsnprintf_pointers(void)
 	T(expect_success("55005e00", "%pP", ptr));
 	T(expect_success(err_str, "%P", ptr));
 	/* %p by itself is invalid */
-	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED, false, 0, "%p"));
+	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%p"));
 	/* %p with an unknown suffix is invalid */
-	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED, false, 0, "%p "));
+	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%p "));
 	/* %p with an unknown suffix is invalid */
-	T(expect(EC_ERROR_INVAL, NO_BYTES_TOUCHED, false, 0, "%pQ"));
+	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%pQ"));
 
 	/* Test %pb, binary format */
 	T(expect_success("0", "%pb", BINARY_VALUE(val, 0)));
