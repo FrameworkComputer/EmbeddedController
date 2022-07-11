@@ -424,3 +424,10 @@ static void typec_adapter_setting(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, typec_adapter_setting, HOOK_PRIO_DEFAULT);
+
+/* IRQ for BJ plug/unplug. It shouldn't be called if BJ is the power source. */
+void adp_connect_interrupt(enum gpio_signal signal)
+{
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		hook_call_deferred(&adp_id_deferred_data, 0);
+}

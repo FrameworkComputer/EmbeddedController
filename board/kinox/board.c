@@ -120,5 +120,6 @@ DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
 static void board_init(void)
 {
+	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_ODL);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
