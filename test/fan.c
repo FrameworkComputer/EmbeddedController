@@ -10,7 +10,6 @@
 #include "fan.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "printf.h"
 #include "temp_sensor.h"
 #include "test_util.h"
 #include "thermal.h"
@@ -110,4 +109,11 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_fan);
 
 	test_print_result();
+}
+
+/* Doesn't do anything, but it makes this test stop intermittently covering
+ * some code in core/host/task.c:fast_forward().
+ */
+void interrupt_generator(void)
+{
 }
