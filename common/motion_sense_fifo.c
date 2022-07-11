@@ -66,6 +66,18 @@ static struct fifo_staged fifo_staged;
 static struct timestamp_state next_timestamp[MAX_MOTION_SENSORS];
 
 /**
+ * Expected data periods:
+ * copy of collection rate, updated when ODR changes.
+ */
+static uint32_t expected_data_periods[MAX_MOTION_SENSORS];
+
+/**
+ * Calculated data periods:
+ * can be different from collection rate when spreading.
+ */
+static uint32_t data_periods[MAX_MOTION_SENSORS];
+
+/**
  * Bitmap telling which sensors have valid entries in the next_timestamp array.
  */
 static uint32_t next_timestamp_initialized;
@@ -429,8 +441,6 @@ void motion_sense_fifo_stage_data(struct ec_response_motion_sensor_data *data,
 
 void motion_sense_fifo_commit_data(void)
 {
-	/* Cached data periods, static to store off stack. */
-	static uint32_t data_periods[MAX_MOTION_SENSORS];
 	struct ec_response_motion_sensor_data *data;
 	int i, window, sensor_num;
 
@@ -471,7 +481,7 @@ void motion_sense_fifo_commit_data(void)
 		if (!fifo_staged.sample_count[i])
 			continue;
 
-		period = motion_sensors[i].collection_rate;
+		period = expected_data_periods[i];
 		/*
 		 * Clamp the sample period to the MIN of collection_rate and the
 		 * window length / (sample count - 1).
@@ -536,7 +546,7 @@ commit_data_end:
 		next_timestamp[sensor_num].next +=
 			fifo_staged.requires_spreading ?
 				data_periods[sensor_num] :
-				motion_sensors[sensor_num].collection_rate;
+				expected_data_periods[sensor_num];
 
 		/* Update online calibration if enabled. */
 		data = peek_fifo_staged(i);
@@ -551,12 +561,6 @@ commit_data_end:
 
 	/* Reset metadata for next staging cycle. */
 	memset(&fifo_staged, 0, sizeof(fifo_staged));
-
-	/*
-	 * Reset the initialized bits. This will allow new timestamps to be
-	 * considered as the new "source of truth".
-	 */
-	next_timestamp_initialized = 0;
 
 	mutex_unlock(&g_sensor_mutex);
 }
@@ -631,6 +635,12 @@ void motion_sense_fifo_reset(void)
 	motion_sense_fifo_init();
 	queue_init(&fifo);
 	motion_sense_fifo_get_info(&fifo_info, /*reset=*/true);
+}
+
+void motion_sense_set_data_period(int sensor_num, uint32_t data_period)
+{
+	expected_data_periods[sensor_num] = data_period;
+	next_timestamp_initialized &= ~BIT(sensor_num);
 }
 
 #ifdef CONFIG_CMD_ACCEL_FIFO

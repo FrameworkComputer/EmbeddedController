@@ -196,6 +196,10 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 	sensor->collection_rate = odr > 0 ? SECOND * 1000 / odr : 0;
 	sensor->next_collection = ts.le.lo + sensor->collection_rate;
 	sensor->oversampling = 0;
+	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
+		motion_sense_set_data_period(sensor - motion_sensors,
+					     sensor->collection_rate);
+	}
 	mutex_unlock(&g_sensor_mutex);
 	if (IS_ENABLED(CONFIG_BODY_DETECTION) &&
 	    (sensor - motion_sensors == CONFIG_BODY_DETECTION_SENSOR))

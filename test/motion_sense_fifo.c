@@ -273,7 +273,7 @@ static int test_spread_data_in_window(void)
 	int read_count;
 
 	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20; /* us */
+	motion_sense_set_data_period(0, 20 /* us */);
 	now = __hw_clock_source_read();
 
 	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 18);
@@ -300,9 +300,9 @@ static int test_spread_data_on_overflow(void)
 	int i, read_count;
 
 	/* Set up the sensors */
-	motion_sensors[0].collection_rate = 20; /* us */
 	motion_sensors[0].oversampling_ratio = 1;
 	motion_sensors[1].oversampling_ratio = 1;
+	motion_sense_set_data_period(0, 20 /* us */);
 
 	/* Add 1 sample for sensor [1]. This will be evicted. */
 	data->sensor_num = 1;
@@ -351,7 +351,7 @@ static int test_spread_data_by_collection_rate(void)
 	int read_count;
 
 	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20; /* us */
+	motion_sense_set_data_period(0, 20 /* us */);
 	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
 	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
 	motion_sense_fifo_commit_data();
@@ -366,42 +366,13 @@ static int test_spread_data_by_collection_rate(void)
 	return EC_SUCCESS;
 }
 
-static int test_spread_double_commit_same_timestamp(void)
-{
-	const uint32_t now = __hw_clock_source_read();
-	int read_count;
-
-	/*
-	 * Stage and commit the same sample. This is not expected to happen
-	 * since batches of sensor samples should be staged together and only
-	 * commit once. We assume that the driver did this on purpose and will
-	 * allow the same timestamp to be sent.
-	 */
-	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20; /* us */
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
-	motion_sense_fifo_commit_data();
-	motion_sense_fifo_stage_data(data, motion_sensors, 3, now - 25);
-	motion_sense_fifo_commit_data();
-
-	read_count = motion_sense_fifo_read(
-		sizeof(data), CONFIG_ACCEL_FIFO_SIZE, data, &data_bytes_read);
-	TEST_EQ(read_count, 4, "%d");
-	TEST_BITS_SET(data[0].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_EQ(data[0].timestamp, now - 25, "%u");
-	TEST_BITS_SET(data[2].flags, MOTIONSENSE_SENSOR_FLAG_TIMESTAMP);
-	TEST_EQ(data[2].timestamp, now - 25, "%u");
-
-	return EC_SUCCESS;
-}
-
 static int test_commit_non_data_or_timestamp_entries(void)
 {
 	const uint32_t now = __hw_clock_source_read();
 	int read_count;
 
 	motion_sensors[0].oversampling_ratio = 1;
-	motion_sensors[0].collection_rate = 20; /* us */
+	motion_sense_set_data_period(0, 20 /* us */);
 
 	/* Insert non-data entry */
 	data[0].flags = MOTIONSENSE_SENSOR_FLAG_ODR;
@@ -462,7 +433,6 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_spread_data_in_window);
 	RUN_TEST(test_spread_data_on_overflow);
 	RUN_TEST(test_spread_data_by_collection_rate);
-	RUN_TEST(test_spread_double_commit_same_timestamp);
 	RUN_TEST(test_commit_non_data_or_timestamp_entries);
 	RUN_TEST(test_get_info_size);
 

@@ -22,6 +22,15 @@ enum motion_sense_async_event {
 void motion_sense_fifo_init(void);
 
 /**
+ * Set the expected period between samples. Must be call under
+ * g_mutex_lock each time the sensor ODR changes.
+ *
+ * @param sensor_num Affected sensor
+ * @param data_period expected milliseconds between samples.
+ */
+void motion_sense_set_data_period(int sensor_num, uint32_t data_period);
+
+/**
  * Whether or not we need to bypass the FIFO to send an important message.
  *
  * @return Non zero when a bypass is needed.
