@@ -132,6 +132,6 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_resets);
 
 	/* Wait for all background tasks to start. */
-	sleep(2);
+	sleep(4);
 	test_print_result();
 }
