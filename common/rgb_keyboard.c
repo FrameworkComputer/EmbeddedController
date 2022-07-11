@@ -533,8 +533,7 @@ static enum ec_status hc_rgbkbd(struct host_cmd_handler_args *args)
 	struct ec_response_rgbkbd *r = args->response;
 	enum ec_status rv = EC_RES_SUCCESS;
 
-	/* Default value is 0 */
-	args->response_size = 0;
+	args->response_size = sizeof(*r);
 
 	if (rgbkbd_late_init())
 		return EC_RES_ERROR;
@@ -553,7 +552,6 @@ static enum ec_status hc_rgbkbd(struct host_cmd_handler_args *args)
 			rv = EC_RES_ERROR;
 		break;
 	case EC_RGBKBD_SUBCMD_GET_CONFIG:
-		args->response_size = sizeof(*r);
 		r->rgbkbd_type = rgbkbd_type;
 		break;
 	default:
