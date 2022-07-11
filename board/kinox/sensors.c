@@ -104,8 +104,8 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
 			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
 		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(65), \
+		.temp_fan_off = C_TO_K(25), \
+		.temp_fan_max = C_TO_K(75), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
