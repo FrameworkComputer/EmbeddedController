@@ -41,7 +41,7 @@ enum ec_ssfc_lightbar {
 };
 
 /*
- * Keyboard Type (Bit 11)
+ * Keyboard Type (Bit 12)
  */
 enum ec_ssfc_keyboard { SSFC_KEYBOARD_DEFAULT = 0, SSFC_KEYBOARD_GAMING = 1 };
 
