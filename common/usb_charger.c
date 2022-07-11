@@ -120,11 +120,6 @@ void usb_charger_reset_charge(int port)
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED, port, NULL);
 #endif
-#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_BPP, port, NULL);
-	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_EPP, port, NULL);
-	charge_manager_update_charge(CHARGE_SUPPLIER_WPC_GPP, port, NULL);
-#endif
 }
 
 void usb_charger_task_set_event(int port, uint8_t event)

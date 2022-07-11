@@ -70,11 +70,6 @@ __overridable const int supplier_priority[] = {
 	[CHARGE_SUPPLIER_OTHER] = 4,
 	[CHARGE_SUPPLIER_VBUS] = 4,
 #endif
-#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-	[CHARGE_SUPPLIER_WPC_BPP] = 5,
-	[CHARGE_SUPPLIER_WPC_EPP] = 5,
-	[CHARGE_SUPPLIER_WPC_GPP] = 5,
-#endif
 
 };
 BUILD_ASSERT(ARRAY_SIZE(supplier_priority) == CHARGE_SUPPLIER_COUNT);
@@ -499,28 +494,13 @@ charge_manager_fill_power_info(int port,
 			r->type = USB_CHG_TYPE_VBUS;
 			break;
 #endif
-#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-		/*
-		 * Todo:need kernel add wpc device node in power_supply
-		 * before that use USB_CHG_TYPE_PROPRIETARY to present WPC.
-		 */
-		case CHARGE_SUPPLIER_WPC_BPP:
-		case CHARGE_SUPPLIER_WPC_EPP:
-		case CHARGE_SUPPLIER_WPC_GPP:
-			r->type = USB_CHG_TYPE_PROPRIETARY;
-			break;
-#endif
 #if CONFIG_DEDICATED_CHARGE_PORT_COUNT > 0
 		case CHARGE_SUPPLIER_DEDICATED:
 			r->type = USB_CHG_TYPE_DEDICATED;
 			break;
 #endif
 		default:
-#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-			r->type = USB_CHG_TYPE_VBUS;
-#else
 			r->type = USB_CHG_TYPE_OTHER;
-#endif
 		}
 
 		if (IS_ENABLED(CONFIG_USB_PD_DPS) && dps_is_enabled() &&

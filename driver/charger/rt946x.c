@@ -1567,12 +1567,6 @@ static void rt946x_usb_charger_task_init(const int unused_port)
 			CPRINTS("BC12 type %d", bc12_type);
 			if (bc12_type == CHARGE_SUPPLIER_NONE)
 				goto bc12_none;
-			if (IS_ENABLED(CONFIG_WIRELESS_CHARGER_P9221_R7) &&
-			    bc12_type == CHARGE_SUPPLIER_BC12_SDP &&
-			    wpc_chip_is_online()) {
-				p9221_notify_vbus_change(1);
-				CPRINTS("WPC ON");
-			}
 			if (bc12_type == CHARGE_SUPPLIER_BC12_SDP &&
 			    ++bc12_cnt < max_bc12_cnt) {
 				/*
@@ -1594,9 +1588,6 @@ static void rt946x_usb_charger_task_init(const int unused_port)
 		    bc12_type != CHARGE_SUPPLIER_NONE) {
 			CPRINTS("VBUS detached");
 			bc12_cnt = 0;
-#ifdef CONFIG_WIRELESS_CHARGER_P9221_R7
-			p9221_notify_vbus_change(0);
-#endif
 			charge_manager_update_charge(bc12_type, 0, NULL);
 		}
 
