@@ -1327,10 +1327,6 @@ static enum ec_status host_cmd_motion_sense(struct host_cmd_handler_args *args)
 			break;
 		}
 		motion_sense_fifo_get_info(&out->fifo_info, 1);
-		for (i = 0; i < motion_sensor_count; i++) {
-			out->fifo_info.lost[i] = motion_sensors[i].lost;
-			motion_sensors[i].lost = 0;
-		}
 		args->response_size = sizeof(out->fifo_info) +
 				      sizeof(uint16_t) * motion_sensor_count;
 		break;

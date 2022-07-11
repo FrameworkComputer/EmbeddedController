@@ -436,15 +436,12 @@ static int test_get_info_size(void)
 
 void before_test(void)
 {
-	static struct ec_response_motion_sense_fifo_info fifo_info;
-
 	motion_sense_fifo_commit_data();
 	motion_sense_fifo_read(sizeof(data), CONFIG_ACCEL_FIFO_SIZE, &data,
 			       &data_bytes_read);
 	motion_sense_fifo_reset_needed_flags();
 	memset(data, 0, sizeof(data));
 	motion_sense_fifo_reset();
-	motion_sense_fifo_get_info(&fifo_info, /*reset=*/true);
 }
 
 void run_test(int argc, char **argv)

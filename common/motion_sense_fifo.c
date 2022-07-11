@@ -50,6 +50,12 @@ static struct queue fifo = QUEUE_NULL(CONFIG_ACCEL_FIFO_SIZE,
 				      struct ec_response_motion_sensor_data);
 /** Count of the number of entries lost due to a small queue. */
 static int fifo_lost;
+/*
+ * How many vector events are lost in the FIFO since last time
+ * FIFO info has been transmitted.
+ */
+static uint16_t fifo_sensor_lost[MAX_MOTION_SENSORS];
+
 /** Metadata for the fifo, used for staging and spreading data. */
 static struct fifo_staged fifo_staged;
 
@@ -149,7 +155,7 @@ static void fifo_pop(void)
 
 	/* Increment lost counter if we have valid data. */
 	if (!is_timestamp(head))
-		motion_sensors[head->sensor_num].lost++;
+		fifo_sensor_lost[head->sensor_num]++;
 
 	/*
 	 * We're done if the initial count was non-zero and we only advanced the
@@ -228,6 +234,7 @@ static inline bool is_new_timestamp(uint8_t sensor_num)
  * @param data The data to stage.
  * @param sensor The sensor that generated the data
  * @param valid_data The number of readable data entries in the data.
+ *   sensor can be NULL (for activity sensors). valid_data must be 0 then.
  */
 static void fifo_stage_unit(struct ec_response_motion_sensor_data *data,
 			    struct motion_sensor_t *sensor, int valid_data)
@@ -557,17 +564,24 @@ commit_data_end:
 void motion_sense_fifo_get_info(
 	struct ec_response_motion_sense_fifo_info *fifo_info, int reset)
 {
+	int i;
+
 	mutex_lock(&g_sensor_mutex);
 	fifo_info->size = fifo.buffer_units;
 	fifo_info->count = queue_count(&fifo);
 	fifo_info->total_lost = fifo_lost;
+	for (i = 0; i < MAX_MOTION_SENSORS; i++) {
+		fifo_info->lost[i] = fifo_sensor_lost[i];
+	}
 	mutex_unlock(&g_sensor_mutex);
 #ifdef CONFIG_MKBP_EVENT
 	fifo_info->timestamp = mkbp_last_event_time;
 #endif
 
-	if (reset)
+	if (reset) {
 		fifo_lost = 0;
+		memset(fifo_sensor_lost, 0, sizeof(fifo_sensor_lost));
+	}
 }
 
 /* LCOV_EXCL_START - function cannot be tested due to limitations with mkbp */
@@ -610,10 +624,13 @@ int motion_sense_fifo_read(int capacity_bytes, int max_count, void *out,
 
 void motion_sense_fifo_reset(void)
 {
+	static struct ec_response_motion_sense_fifo_info fifo_info;
+
 	next_timestamp_initialized = 0;
 	memset(&fifo_staged, 0, sizeof(fifo_staged));
 	motion_sense_fifo_init();
 	queue_init(&fifo);
+	motion_sense_fifo_get_info(&fifo_info, /*reset=*/true);
 }
 
 #ifdef CONFIG_CMD_ACCEL_FIFO

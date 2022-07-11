@@ -220,12 +220,6 @@ struct motion_sensor_t {
 	uint16_t oversampling_ratio;
 
 	/*
-	 * How many vector events are lost in the FIFO since last time
-	 * FIFO info has been transmitted.
-	 */
-	uint16_t lost;
-
-	/*
 	 * For sensors in forced mode the ideal time to collect the next
 	 * measurement.
 	 *
