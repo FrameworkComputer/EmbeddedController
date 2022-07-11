@@ -334,6 +334,11 @@ static void setup_usb_mux_proxy_chain(void)
 static void restore_usb_mux_chain(void)
 {
 	memcpy(&usb_muxes[USBC_PORT_C1], &usb_mux_c1, sizeof(struct usb_mux));
+
+	/* Reset flags to default */
+	proxy_chain_0.flags = 0;
+	proxy_chain_1.flags = 0;
+	proxy_chain_2.flags = 0;
 }
 
 /**
