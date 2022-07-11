@@ -220,8 +220,9 @@ int update_static_battery_info(void)
 	/* Smart battery serial number is 16 bits */
 	rv = battery_serial_number(&batt_serial);
 	if (!rv)
-		snprintf(bs->serial_ext, sizeof(bs->serial_ext), "%04X",
-			 batt_serial);
+		if (snprintf(bs->serial_ext, sizeof(bs->serial_ext), "%04X",
+			     batt_serial) <= 0)
+			rv |= EC_ERROR_UNKNOWN;
 
 	/* Design Capacity of Full */
 	ret = battery_design_capacity(&val);

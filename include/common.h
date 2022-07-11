@@ -187,6 +187,12 @@
 #define __overridable __attribute__((weak))
 
 /*
+ * Attribute that will generate a compiler warning if the return value is not
+ * used.
+ */
+#define __warn_unused_result __attribute__((warn_unused_result))
+
+/*
  * Macros for combining bytes into larger integers. _LE and _BE signify little
  * and big endian versions respectively.
  */

@@ -350,7 +350,9 @@ __override const char *board_read_serial(void)
 		int i;
 
 		for (i = 0; i < idlen && pos < sizeof(str); i++, pos += 2) {
-			snprintf(&str[pos], sizeof(str) - pos, "%02x", id[i]);
+			if (snprintf(&str[pos], sizeof(str) - pos, "%02x",
+				     id[i]) < 0)
+				return NULL;
 		}
 	}
 

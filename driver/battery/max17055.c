@@ -92,10 +92,13 @@ int battery_device_name(char *device_name, int buf_size)
 	int rv;
 
 	rv = max17055_read(REG_DEVICE_NAME, &dev_id);
-	if (!rv)
-		snprintf(device_name, buf_size, "0x%04x", dev_id);
+	if (rv != EC_SUCCESS)
+		return rv;
 
-	return rv;
+	if (snprintf(device_name, buf_size, "0x%04x", dev_id) <= 0)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
 }
 
 int battery_state_of_charge_abs(int *percent)

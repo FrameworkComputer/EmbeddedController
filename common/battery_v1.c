@@ -34,8 +34,11 @@ int update_static_battery_info(void)
 	batt_str = (char *)host_get_memmap(EC_MEMMAP_BATT_SERIAL);
 	memset(batt_str, 0, EC_MEMMAP_TEXT_MAX);
 	rv = battery_serial_number(&batt_serial);
-	if (!rv)
-		snprintf(batt_str, EC_MEMMAP_TEXT_MAX, "%04X", batt_serial);
+	if (!rv) {
+		if (snprintf(batt_str, EC_MEMMAP_TEXT_MAX, "%04X",
+			     batt_serial) <= 0)
+			rv |= EC_ERROR_UNKNOWN;
+	}
 
 	/* Design Capacity of Full */
 	rv |= battery_design_capacity(

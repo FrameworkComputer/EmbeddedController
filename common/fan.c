@@ -183,7 +183,9 @@ static int cc_faninfo(int argc, char **argv)
 	char leader[20] = "";
 	for (fan = 0; fan < fan_count; fan++) {
 		if (fan_count > 1)
-			snprintf(leader, sizeof(leader), "Fan %d ", fan);
+			if (snprintf(leader, sizeof(leader), "Fan %d ", fan) <
+			    0)
+				leader[0] = '\0';
 		if (fan)
 			ccprintf("\n");
 		ccprintf("%sActual: %4d rpm\n", leader,

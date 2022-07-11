@@ -72,10 +72,13 @@ static void button_refresh_event_deferred(void)
 	/* Display supply voltage on first page. */
 	lcd_clear();
 	for (i = 0; i < MIN(pd_get_src_cap_cnt(0), 4); i++) {
+		int rv;
 		pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv, &unused);
-		snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
-		lcd_set_cursor(0, i);
-		lcd_print_string(c);
+		rv = snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
+		if (rv > 0) {
+			lcd_set_cursor(0, i);
+			lcd_print_string(c);
+		}
 	}
 
 	/* Display selector */
@@ -107,21 +110,29 @@ static void button_down_event_deferred(void)
 	if (count == 0) {
 		lcd_clear();
 		for (i = 0; i < MIN(pd_get_src_cap_cnt(0), 4); i++) {
+			int rv;
 			pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv,
 					     &unused);
-			snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
-			lcd_set_cursor(0, i);
-			lcd_print_string(c);
+			rv = snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv,
+				      ma);
+			if (rv > 0) {
+				lcd_set_cursor(0, i);
+				lcd_print_string(c);
+			}
 		}
 	}
 	if (count == 4) {
 		lcd_clear();
 		for (i = 4; i < pd_get_src_cap_cnt(0); i++) {
+			int rv;
 			pd_extract_pdo_power(pd_get_src_caps(0)[i], &ma, &mv,
 					     &unused);
-			snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv, ma);
-			lcd_set_cursor(0, i - 4);
-			lcd_print_string(c);
+			rv = snprintf(c, ARRAY_SIZE(c), "[%d] %dmV %dmA", i, mv,
+				      ma);
+			if (rv > 0) {
+				lcd_set_cursor(0, i - 4);
+				lcd_print_string(c);
+			}
 		}
 	}
 
