@@ -77,10 +77,10 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
 		}, \
-		.temp_fan_off = C_TO_K(25), \
-		.temp_fan_max = C_TO_K(50), \
+		.temp_fan_off = C_TO_K(30), \
+		.temp_fan_max = C_TO_K(84), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
@@ -103,14 +103,14 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 #define THERMAL_FAN              \
 	{                        \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HIGH] = 0, \
+			[EC_TEMP_THRESH_HALT] = 0, \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
+			[EC_TEMP_THRESH_HIGH] = 0, \
 		}, \
-		.temp_fan_off = C_TO_K(25), \
-		.temp_fan_max = C_TO_K(50), \
+		.temp_fan_off = 0, \
+		.temp_fan_max = 0, \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 
@@ -131,14 +131,14 @@ __maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
 #define THERMAL_CHARGER          \
 	{                        \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HIGH] = 0, \
+			[EC_TEMP_THRESH_HALT] = 0, \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
+			[EC_TEMP_THRESH_HIGH] = 0, \
 		}, \
-		.temp_fan_off = C_TO_K(25), \
-		.temp_fan_max = C_TO_K(50), \
+		.temp_fan_off = 0, \
+		.temp_fan_max = 0, \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_charger =
 	THERMAL_CHARGER;
