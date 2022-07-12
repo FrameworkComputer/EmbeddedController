@@ -6,14 +6,22 @@
 
 set +x
 
-zmake build --clobber test-drivers || exit 1
+if [ $# -ne 2 ]; then
+  echo "Usage: $0 <target> <error regex>"
+  exit 1
+fi
 
-echo "Searching for '${1}'..."
+target=$1
+pattern=$2
+
+zmake build --clobber "${target}" || exit 1
+
+echo "Searching for '${pattern}'..."
 found_errors=0
 loop_count=100
 start_time=$(date +%Y-%m-%d_%H.%M.%S)
 log_dir="/tmp"
-EXECUTABLE=./build/zephyr/test-drivers/build-singleimage/zephyr/zephyr.exe
+EXECUTABLE=./build/zephyr/${target}/build-singleimage/zephyr/zephyr.exe
 while [ "${loop_count}" -gt 0 ]; do
   seed=${RANDOM}
   log_file_prefix="${log_dir}"/shuffle_"${start_time}"_"${seed}"
@@ -21,7 +29,7 @@ while [ "${loop_count}" -gt 0 ]; do
   echo "[$((100 - loop_count))] Using seed=${seed}"
   error_count=$(timeout 150s "${EXECUTABLE}" -seed="${seed}" 2>&1 |
     tee "${log_file_prefix}".log |
-    grep -c "${1}")
+    grep -c "${pattern}")
   status=$?
 
   result="0-matches"
@@ -33,7 +41,7 @@ while [ "${loop_count}" -gt 0 ]; do
     result="exit-code-${status}"
   fi
   if [ "${error_count}" -gt 0 ]; then
-    echo "    Found ${error_count} errors matching '${1}'"
+    echo "    Found ${error_count} errors matching '${pattern}'"
     result="${error_count}-matches"
   fi
 
