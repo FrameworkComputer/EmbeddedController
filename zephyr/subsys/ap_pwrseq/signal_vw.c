@@ -13,6 +13,15 @@
 
 #if HAS_VW_SIGNALS
 
+/*
+ * A callback must be registered on the ESPI device (for the
+ * bus events that are required to be handled) that calls
+ * power_signal_espi_cb().
+ *
+ * This registration is done in a common ESPI initialisation module so
+ * that there is no possibility of missing events.
+ */
+
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
 #define INIT_ESPI_SIGNAL(id)                                            \
@@ -48,8 +57,8 @@ static atomic_t signal_valid;
 
 BUILD_ASSERT(ARRAY_SIZE(vw_config) <= (sizeof(atomic_t) * 8));
 
-static void espi_handler(const struct device *dev, struct espi_callback *cb,
-			 struct espi_event event)
+void power_signal_espi_cb(const struct device *dev, struct espi_callback *cb,
+			  struct espi_event event)
 {
 	LOG_DBG("ESPI event type 0x%x %d:%d", event.evt_type, event.evt_details,
 		event.evt_data);
@@ -94,15 +103,6 @@ int power_signal_vw_get(enum pwr_sig_vw vw)
 
 void power_signal_vw_init(void)
 {
-	static struct espi_callback espi_cb;
-
-	/* Assumes ESPI device is already configured. */
-
-	/* Configure handler for eSPI events */
-	espi_init_callback(&espi_cb, espi_handler,
-			   ESPI_BUS_EVENT_CHANNEL_READY |
-				   ESPI_BUS_EVENT_VWIRE_RECEIVED);
-	espi_add_callback(espi_dev, &espi_cb);
 	/*
 	 * Check whether the bus is ready, and if so,
 	 * initialise the current values of the signals.
