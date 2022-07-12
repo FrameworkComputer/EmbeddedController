@@ -14,23 +14,6 @@ static const char error_str[] = "ERROR";
 
 #define MAX_FORMAT 1024 /* Maximum chars in a single format field */
 
-#ifndef CONFIG_DEBUG_PRINTF
-static inline int divmod(uint64_t *n, int d)
-{
-	return uint64divmod(n, d);
-}
-
-#else /* CONFIG_DEBUG_PRINTF */
-/* if we are optimizing for size, remove the 64-bit support */
-#define NO_UINT64_SUPPORT
-static inline int divmod(uint32_t *n, int d)
-{
-	int r = *n % d;
-	*n /= d;
-	return r;
-}
-#endif
-
 /**
  * Convert the lowest nibble of a number to hex
  *
@@ -50,13 +33,7 @@ static int hexdigit(int c)
 #define PF_LEFT BIT(0) /* Left-justify */
 #define PF_PADZERO BIT(1) /* Pad with 0's not spaces */
 #define PF_SIGN BIT(2) /* Add sign (+) for a positive number */
-
-/* Deactivate the PF_64BIT flag is 64-bit support is disabled. */
-#ifdef NO_UINT64_SUPPORT
-#define PF_64BIT 0
-#else
 #define PF_64BIT BIT(3) /* Number is 64-bit */
-#endif
 
 /*
  * Print the buffer as a string of bytes in hex.
@@ -214,11 +191,8 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 
 		} else {
 			int base = 10;
-#ifdef NO_UINT64_SUPPORT
-			uint32_t v;
-#else
 			uint64_t v;
-#endif
+
 			int ptrspec;
 			void *ptrval;
 
@@ -281,7 +255,6 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 					continue;
 				/* %pT - print a timestamp. */
 				if (ptrspec == 'T' &&
-				    !IS_ENABLED(NO_UINT64_SUPPORT) &&
 				    (!IS_ENABLED(CONFIG_ZEPHYR) ||
 				     IS_ENABLED(CONFIG_PLATFORM_EC_TIMER))) {
 					flags |= PF_64BIT;
@@ -391,7 +364,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			 * numbers.
 			 */
 			for (vlen = 0; vlen < precision; vlen++)
-				*(--vstr) = '0' + divmod(&v, 10);
+				*(--vstr) = '0' + uint64divmod(&v, 10);
 			if (precision >= 0)
 				*(--vstr) = '.';
 
@@ -399,7 +372,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				*(--vstr) = '0';
 
 			while (v) {
-				int digit = divmod(&v, base);
+				int digit = uint64divmod(&v, base);
 				if (digit < 10)
 					*(--vstr) = '0' + digit;
 				else if (c == 'X')
