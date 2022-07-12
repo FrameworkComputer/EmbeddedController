@@ -108,5 +108,7 @@
 			offset = <0x60000>;
 			size = <0x60000>;
 		};
+		pad-byte = <0xff>;
+		pad-after = <0x40000>;
 	};
 };
