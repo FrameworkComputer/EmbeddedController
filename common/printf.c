@@ -93,6 +93,46 @@ test_export_static char *uint64_to_str(char *buf, int buf_len, uint64_t val,
 	return str;
 }
 
+int snprintf_timestamp_now(char *str, size_t size)
+{
+	return snprintf_timestamp(str, size, get_time().val);
+}
+
+int snprintf_timestamp(char *str, size_t size, uint64_t timestamp)
+{
+	int len;
+	int precision;
+	char *tmp_str;
+	char tmp_buf[PRINTF_TIMESTAMP_BUF_SIZE];
+	int base = 10;
+
+	if (size == 0)
+		return -EC_ERROR_INVAL;
+
+	/* Ensure string has terminating '\0' in error cases. */
+	str[0] = '\0';
+
+	if (IS_ENABLED(CONFIG_CONSOLE_VERBOSE)) {
+		precision = 6;
+	} else {
+		precision = 3;
+		timestamp /= 1000;
+	}
+
+	tmp_str = uint64_to_str(tmp_buf, sizeof(tmp_buf), timestamp, precision,
+				base, false);
+	if (!tmp_str)
+		return -EC_ERROR_OVERFLOW;
+
+	len = strlen(tmp_str);
+	if (len + 1 > size)
+		return -EC_ERROR_OVERFLOW;
+
+	memcpy(str, tmp_str, len + 1);
+
+	return len;
+}
+
 /*
  * Print the buffer as a string of bytes in hex.
  * Returns 0 on success or an error on failure.

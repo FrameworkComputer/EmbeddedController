@@ -350,6 +350,67 @@ test_static int test_vsnprintf_timestamps(void)
 	T(expect_success("0.123456", "%pT", &ts));
 	ts = 9999999000000;
 	T(expect_success("9999999.000000", "%pT", &ts));
+	ts = UINT64_MAX;
+	T(expect_success("18446744073709.551615", "%pT", &ts));
+
+	return EC_SUCCESS;
+}
+
+test_static int test_snprintf_timestamp(void)
+{
+	char str[PRINTF_TIMESTAMP_BUF_SIZE];
+	int size;
+	int ret;
+	uint64_t ts = 0;
+
+	/* Success cases. */
+
+	ret = snprintf_timestamp(str, sizeof(str), ts);
+	TEST_EQ(ret, 8, "%d");
+	TEST_ASSERT_ARRAY_EQ(str, "0.000000", sizeof("0.000000"));
+
+	ts = 123456;
+	ret = snprintf_timestamp(str, sizeof(str), ts);
+	TEST_EQ(ret, 8, "%d");
+	TEST_ASSERT_ARRAY_EQ(str, "0.123456", sizeof("0.123456"));
+
+	ts = 9999999000000;
+	ret = snprintf_timestamp(str, sizeof(str), ts);
+	TEST_EQ(ret, 14, "%d");
+	TEST_ASSERT_ARRAY_EQ(str, "9999999.000000", sizeof("9999999.000000"));
+
+	ts = UINT64_MAX;
+	ret = snprintf_timestamp(str, sizeof(str), ts);
+	TEST_EQ(ret, 21, "%d");
+	TEST_ASSERT_ARRAY_EQ(str, "18446744073709.551615",
+			     sizeof("18446744073709.551615"));
+
+	/* Error cases. */
+
+	/* Buffer is too small by one. */
+	size = 21;
+	ts = UINT64_MAX;
+	str[0] = 'f';
+	ret = snprintf_timestamp(str, size, ts);
+	TEST_EQ(ret, -EC_ERROR_OVERFLOW, "%d");
+	TEST_EQ(str[0], '\0', "%d");
+
+	/* Size is zero. */
+	size = 0;
+	ts = UINT64_MAX;
+	str[0] = 'f';
+	ret = snprintf_timestamp(str, size, ts);
+	TEST_EQ(ret, -EC_ERROR_INVAL, "%d");
+	TEST_EQ(str[0], 'f', "%d");
+
+	/* Size is one. */
+	size = 1;
+	ts = UINT64_MAX;
+	str[0] = 'f';
+	ret = snprintf_timestamp(str, size, ts);
+	TEST_EQ(ret, -EC_ERROR_OVERFLOW, "%d");
+	TEST_EQ(str[0], '\0', "%d");
+
 	return EC_SUCCESS;
 }
 
@@ -490,6 +551,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_vsnprintf_hexdump);
 	RUN_TEST(test_vsnprintf_combined);
 	RUN_TEST(test_uint64_to_str);
+	RUN_TEST(test_snprintf_timestamp);
 
 	test_print_result();
 }

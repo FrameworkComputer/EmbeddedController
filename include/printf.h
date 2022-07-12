@@ -20,6 +20,11 @@
 #include <stdio.h>
 #endif
 
+/**
+ * Buffer size in bytes large enough to hold the largest possible timestamp.
+ */
+#define PRINTF_TIMESTAMP_BUF_SIZE 22
+
 /*
  * Printf formatting: % [flags] [width] [.precision] [length] [type]
  *
@@ -143,5 +148,34 @@ crec_vsnprintf(char *str, size_t size, const char *format, va_list args);
 char *uint64_to_str(char *buf, int buf_len, uint64_t val, int precision,
 		    int base, bool uppercase);
 #endif /* TEST_BUILD */
+
+/**
+ * Print timestamp as string to the provided buffer.
+ *
+ * Guarantees NUL-termination if size != 0.
+ *
+ * @param[out] str Destination string
+ * @param[in] size Size of @str in bytes
+ * @param[in] timestamp Timestamp
+ * @return Length of string written to @str, not including terminating NUL.
+ * @return -EC_ERROR_OVERFLOW when @str buffer is not large enough. @str[0]
+ * is set to '\0'.
+ * @return -EC_ERROR_INVAL when @size is 0.
+ */
+int snprintf_timestamp(char *str, size_t size, uint64_t timestamp);
+
+/**
+ * Print the current time as a string to the provided buffer.
+ *
+ * Guarantees NUL-termination if size != 0.
+ *
+ * @param[out] str Destination string
+ * @param[in] size Size of @str in bytes
+ * @return Length of string written to @str, not including terminating NUL.
+ * @return -EC_ERROR_OVERFLOW when @str buffer is not large enough. @str[0]
+ * is set to '\0'.
+ * @return -EC_ERROR_INVAL when @size is 0.
+ */
+int snprintf_timestamp_now(char *str, size_t size);
 
 #endif /* __CROS_EC_PRINTF_H */
