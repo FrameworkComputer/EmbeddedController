@@ -254,7 +254,9 @@ conflicting_options := \
 	SPI \
 	UART_CONSOLE
 
-cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
+cmd_check_allowed = \
+	ZEPHYR_BASE=$(abspath ../../../src/third_party/zephyr/main) \
+	./util/kconfig_check.py -c ${config} \
 	 -a util/config_allowed.txt -p PLATFORM_EC_ -s zephyr/ \
 	 -I $(abspath ../../../src/third_party/zephyr/main) \
 	 $(foreach opt,$(conflicting_options),-i $(opt)) check

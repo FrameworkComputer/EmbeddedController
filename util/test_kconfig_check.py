@@ -202,10 +202,11 @@ rsource "subdir/Kconfig.wibble"
     def test_real_kconfig(self):
         """Same Kconfig should be returned for kconfiglib / adhoc"""
         if not kconfig_check.USE_KCONFIGLIB:
-            self.skipTest("No kconfiglib available")
-        zephyr_path = pathlib.Path("../../third_party/zephyr/main").resolve()
+            self.fail("No kconfiglib available")
+        zephyr_path = pathlib.Path("../../../src/third_party/zephyr/main").resolve()
         if not zephyr_path.exists():
-            self.skipTest("No zephyr tree available")
+            self.fail("No zephyr tree available")
+        os.environ["ZEPHYR_BASE"] = str(zephyr_path)
 
         checker = kconfig_check.KconfigCheck()
         srcdir = "zephyr"
@@ -229,7 +230,14 @@ rsource "subdir/Kconfig.wibble"
         # Similarly, some other items are defined in files that are not included
         # in all cases, only for particular values of $(ARCH)
         self.assertEqual(
-            ["FLASH_LOAD_OFFSET", "NPCX_HEADER", "SYS_CLOCK_HW_CYCLES_PER_SEC"], missing
+            [
+                "BUG209907615",
+                "FLASH_LOAD_OFFSET",
+                "NPCX_HEADER",
+                "SYS_CLOCK_HW_CYCLES_PER_SEC",
+                "TRAP_UNALIGNED_ACCESS",
+            ],
+            missing,
         )
 
     def test_check_unneeded(self):
