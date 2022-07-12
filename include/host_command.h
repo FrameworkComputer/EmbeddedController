@@ -12,6 +12,10 @@
 #include "common.h"
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Args for host command handler */
 struct host_cmd_handler_args {
 	/*
@@ -359,17 +363,17 @@ stub_send_response_callback(struct host_cmd_handler_args *args)
 
 #define BUILD_HOST_COMMAND(CMD, VERSION, RESPONSE, PARAMS)          \
 	{                                                           \
-		.command = (CMD), .version = (VERSION),             \
 		.send_response = stub_send_response_callback,       \
-		.response_size = 0,                                 \
+		.command = (CMD), .version = (VERSION),             \
+		COND_CODE_0(IS_EMPTY(PARAMS),                       \
+			    (.params = &(PARAMS),                   \
+			     .params_size = sizeof(PARAMS)),        \
+			    (.params = NULL, .params_size = 0)),    \
 		COND_CODE_0(IS_EMPTY(RESPONSE),                     \
 			    (.response = &(RESPONSE),               \
 			     .response_max = sizeof(RESPONSE)),     \
 			    (.response = NULL, .response_max = 0)), \
-		COND_CODE_0(IS_EMPTY(PARAMS),                       \
-			    (.params = &(PARAMS),                   \
-			     .params_size = sizeof(PARAMS)),        \
-			    (.params = NULL, .params_size = 0))     \
+		.response_size = 0,                                 \
 	}
 
 #define BUILD_HOST_COMMAND_RESPONSE(CMD, VERSION, RESPONSE) \
@@ -381,5 +385,9 @@ stub_send_response_callback(struct host_cmd_handler_args *args)
 #define BUILD_HOST_COMMAND_SIMPLE(CMD, VERSION) \
 	BUILD_HOST_COMMAND(CMD, VERSION, EMPTY, EMPTY)
 #endif /* CONFIG_ZTEST */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_HOST_COMMAND_H */
