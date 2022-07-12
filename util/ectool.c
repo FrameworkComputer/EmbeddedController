@@ -1385,7 +1385,7 @@ static int cmd_rgbkbd(int argc, char *argv[])
 		if (cmd_rgbkbd_parse_rgb_text(argv[2], &p.color))
 			return -1;
 
-		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), &r, 0);
+		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), &r, sizeof(r));
 	} else if (argc == 3 && !strcasecmp(argv[1], "demo")) {
 		/* Usage 3 */
 		val = strtol(argv[2], &e, 0);
@@ -1395,7 +1395,7 @@ static int cmd_rgbkbd(int argc, char *argv[])
 		}
 		p.subcmd = EC_RGBKBD_SUBCMD_DEMO;
 		p.demo = val;
-		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), &r, 0);
+		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), &r, sizeof(r));
 	} else if (argc == 4 && !strcasecmp(argv[1], "scale")) {
 		/* Usage 4 */
 		val = strtol(argv[2], &e, 0);
@@ -1409,7 +1409,7 @@ static int cmd_rgbkbd(int argc, char *argv[])
 			return -1;
 		}
 		p.subcmd = EC_RGBKBD_SUBCMD_SET_SCALE;
-		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), &r, 0);
+		rv = ec_command(EC_CMD_RGBKBD, 0, &p, sizeof(p), &r, sizeof(r));
 	} else if (argc == 2 && !strcasecmp(argv[1], "getconfig")) {
 		/* Usage 5 */
 		char *type;
