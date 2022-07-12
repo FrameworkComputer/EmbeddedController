@@ -66,6 +66,7 @@ class KconfigCheck(unittest.TestCase):
         )
 
     def check_read_configs(self, use_defines):
+        """Check that kconfigs can be read."""
         checker = kconfig_check.KconfigCheck()
         with tempfile.NamedTemporaryFile() as configs:
             with open(configs.name, "w") as out:

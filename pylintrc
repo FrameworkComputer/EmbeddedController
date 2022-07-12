@@ -6,7 +6,12 @@
 
 [MESSAGES CONTROL]
 
-disable=bad-continuation,bad-whitespace
+disable=
+    bad-continuation,
+    bad-whitespace,
+    # These have nothing to do with black, they are just annoying
+    fixme,
+    too-many-arguments
 
 [format]
 

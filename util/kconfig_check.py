@@ -470,7 +470,7 @@ def main(argv):
             search_paths=args.search_path,
             ignore=args.ignore,
         )
-    elif args.cmd == "build":
+    if args.cmd == "build":
         return checker.do_build(
             configs_file=args.configs,
             srcdir=args.srctree,
