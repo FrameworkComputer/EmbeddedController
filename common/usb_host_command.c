@@ -9,6 +9,7 @@
 #include "ec_commands.h"
 #include "queue_policies.h"
 #include "host_command.h"
+#include "printf.h"
 #include "system.h"
 #include "usb_api.h"
 #include "usb_hw.h"
@@ -161,8 +162,13 @@ static void usbhc_written(struct consumer const *consumer, size_t count)
 		block_index = 0;
 		/* Only version 3 is supported. Using in_msg as a courtesy. */
 		QUEUE_REMOVE_UNITS(consumer->queue, in_msg, count);
-		if (IS_ENABLED(DEBUG))
-			CPRINTS("%ph", HEX_BUF(in_msg, count));
+		if (IS_ENABLED(DEBUG)) {
+			char str_buf[hex_str_buf_size(count)];
+
+			snprintf_hex_buffer(str_buf, sizeof(str_buf),
+					    HEX_BUF(in_msg, count));
+			CPRINTS("%s", str_buf);
+		}
 		if (in_msg[0] != EC_HOST_REQUEST_VERSION) {
 			CPRINTS("Unsupported version: %u", in_msg[0]);
 			return;

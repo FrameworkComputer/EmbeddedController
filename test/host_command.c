@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "host_command.h"
+#include "printf.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -177,6 +178,7 @@ static int test_hostcmd_reuse_response_buffer(void)
 	struct ec_host_request *h = (struct ec_host_request *)resp_buf;
 	struct ec_params_hello *d =
 		(struct ec_params_hello *)(resp_buf + sizeof(*h));
+	char str_buf[hex_str_buf_size(BUFFER_SIZE)];
 
 	h->struct_version = 3;
 	h->checksum = 0;
@@ -201,13 +203,15 @@ static int test_hostcmd_reuse_response_buffer(void)
 
 	h->checksum = calculate_checksum(resp_buf, pkt.request_size);
 
-	ccprintf("\nBuffer contents before process 0x%ph\n",
-		 HEX_BUF(resp_buf, BUFFER_SIZE));
+	snprintf_hex_buffer(str_buf, sizeof(str_buf),
+			    HEX_BUF(resp_buf, BUFFER_SIZE));
+	ccprintf("\nBuffer contents before process 0x%s\n", str_buf);
 	host_packet_receive(&pkt);
 	task_wait_event(-1);
 
-	ccprintf("\nBuffer contents after process 0x%ph\n",
-		 HEX_BUF(resp_buf, BUFFER_SIZE));
+	snprintf_hex_buffer(str_buf, sizeof(str_buf),
+			    HEX_BUF(resp_buf, BUFFER_SIZE));
+	ccprintf("\nBuffer contents after process 0x%s\n", str_buf);
 
 	TEST_EQ(calculate_checksum(resp_buf, sizeof(*resp) + resp->data_len), 0,
 		"%d");
@@ -239,6 +243,7 @@ static void hostcmd_fill_chip_info(void)
 static int test_hostcmd_clears_unused_data(void)
 {
 	int i, found_null;
+	char str_buf[hex_str_buf_size(BUFFER_SIZE)];
 
 	/* Set the buffer to junk and ensure that is gets cleared */
 	memset(resp_buf, 0xAA, BUFFER_SIZE);
@@ -246,7 +251,9 @@ static int test_hostcmd_clears_unused_data(void)
 
 	hostcmd_send();
 
-	ccprintf("\nBuffer contents 0x%ph\n", HEX_BUF(resp_buf, BUFFER_SIZE));
+	snprintf_hex_buffer(str_buf, sizeof(str_buf),
+			    HEX_BUF(resp_buf, BUFFER_SIZE));
+	ccprintf("\nBuffer contents 0x%s\n", str_buf);
 
 	TEST_EQ(calculate_checksum(resp_buf, sizeof(*resp) + resp->data_len), 0,
 		"%d");

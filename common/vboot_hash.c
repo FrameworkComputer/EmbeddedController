@@ -11,6 +11,7 @@
 #include "flash.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "printf.h"
 #include "sha256.h"
 #include "shared_mem.h"
 #include "stdbool.h"
@@ -130,6 +131,8 @@ static void hash_next_chunk(size_t size)
 
 static void vboot_hash_all_chunks(void)
 {
+	char str_buf[hex_str_buf_size(SHA256_PRINT_SIZE)];
+
 	do {
 		size_t size = MIN(CHUNK_SIZE, data_size - curr_pos);
 		hash_next_chunk(size);
@@ -137,7 +140,9 @@ static void vboot_hash_all_chunks(void)
 	} while (curr_pos < data_size);
 
 	hash = SHA256_final(&ctx);
-	CPRINTS("hash done %ph", HEX_BUF(hash, SHA256_PRINT_SIZE));
+	snprintf_hex_buffer(str_buf, sizeof(str_buf),
+			    HEX_BUF(hash, SHA256_PRINT_SIZE));
+	CPRINTS("hash done %s", str_buf);
 	in_progress = 0;
 	clock_enable_module(MODULE_FAST_CPU, 0);
 
@@ -165,9 +170,14 @@ static void vboot_hash_next_chunk(void)
 
 	curr_pos += size;
 	if (curr_pos >= data_size) {
+		char str_buf[hex_str_buf_size(SHA256_PRINT_SIZE)];
+
 		/* Store the final hash */
 		hash = SHA256_final(&ctx);
-		CPRINTS("hash done %ph", HEX_BUF(hash, SHA256_PRINT_SIZE));
+
+		snprintf_hex_buffer(str_buf, sizeof(str_buf),
+				    HEX_BUF(hash, SHA256_PRINT_SIZE));
+		CPRINTS("hash done %s", str_buf);
 
 		in_progress = 0;
 
@@ -343,9 +353,13 @@ static int command_hash(int argc, char **argv)
 			ccprintf("(aborting)\n");
 		else if (in_progress)
 			ccprintf("(in progress)\n");
-		else if (hash)
-			ccprintf("%ph\n", HEX_BUF(hash, SHA256_DIGEST_SIZE));
-		else
+		else if (hash) {
+			char str_buf[hex_str_buf_size(SHA256_DIGEST_SIZE)];
+
+			snprintf_hex_buffer(str_buf, sizeof(str_buf),
+					    HEX_BUF(hash, SHA256_DIGEST_SIZE));
+			ccprintf("%s\n", str_buf);
+		} else
 			ccprintf("(invalid)\n");
 
 		return EC_SUCCESS;

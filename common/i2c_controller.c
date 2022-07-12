@@ -15,6 +15,7 @@
 #include "i2c.h"
 #include "i2c_bitbang.h"
 #include "i2c_private.h"
+#include "printf.h"
 #include "system.h"
 #include "task.h"
 #include "usb_pd.h"
@@ -1710,8 +1711,13 @@ static int command_i2cxfer(int argc, char **argv)
 
 		rv = i2c_xfer(port, addr_flags, (uint8_t *)&offset, 1, data, v);
 
-		if (!rv)
-			ccprintf("Data: %ph\n", HEX_BUF(data, v));
+		if (!rv) {
+			char str_buf[hex_str_buf_size(v)];
+
+			snprintf_hex_buffer(str_buf, sizeof(str_buf),
+					    HEX_BUF(data, v));
+			ccprintf("Data: %s\n", str_buf);
+		}
 
 	} else if (strcasecmp(argv[1], "w") == 0) {
 		/* 8-bit write */
@@ -1780,9 +1786,13 @@ static int command_i2cxfer(int argc, char **argv)
 					       read_count,
 					       I2C_XFER_START | I2C_XFER_STOP);
 			i2c_lock(port, 0);
-			if (!rv)
-				ccprintf("Data: %ph\n",
-					 HEX_BUF(data, read_count));
+			if (!rv) {
+				char str_buf[hex_str_buf_size(read_count)];
+
+				snprintf_hex_buffer(str_buf, sizeof(str_buf),
+						    HEX_BUF(data, read_count));
+				ccprintf("Data: %s\n", str_buf);
+			}
 		}
 #endif /* CONFIG_CMD_I2C_XFER_RAW */
 	} else {

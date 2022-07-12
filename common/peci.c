@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "peci.h"
+#include "printf.h"
 #include "util.h"
 
 static int peci_get_cpu_temp(int *cpu_temp)
@@ -139,9 +140,15 @@ static int peci_cmd(int argc, char **argv)
 	if (peci_transaction(&peci)) {
 		ccprintf("PECI transaction error\n");
 		return EC_ERROR_UNKNOWN;
+	} else {
+		char str_buf[hex_str_buf_size(peci.r_len)];
+
+		snprintf_hex_buffer(str_buf, sizeof(str_buf),
+				    HEX_BUF(r_buf, sizeof(str_buf)));
+		ccprintf("PECI read data: %s\n", str_buf);
+
+		return EC_SUCCESS;
 	}
-	ccprintf("PECI read data: %ph\n", HEX_BUF(r_buf, peci.r_len));
-	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(peci, peci_cmd, "addr wlen rlen cmd timeout(us)",
 			"PECI command");

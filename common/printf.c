@@ -393,28 +393,9 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 				ptrspec = *format++;
 				ptrval = va_arg(args, void *);
 				/*
-				 * Avoid null pointer dereference for %ph.
 				 * %pP can accept null.
 				 */
-				if (ptrval == NULL && ptrspec != 'P')
-					continue;
-				else if (ptrspec == 'h') {
-					/* %ph - Print a hex byte buffer. */
-					struct hex_buffer_params *hexbuf =
-						ptrval;
-					int rc;
-
-					rc = print_hex_buffer(addchar, context,
-							      hexbuf->buffer,
-							      hexbuf->size, 0,
-							      0);
-
-					if (rc != EC_SUCCESS)
-						return rc;
-
-					continue;
-
-				} else if (ptrspec == 'P') {
+				if (ptrspec == 'P') {
 					/* %pP - Print a raw pointer. */
 					v = (unsigned long)ptrval;
 					base = 16;

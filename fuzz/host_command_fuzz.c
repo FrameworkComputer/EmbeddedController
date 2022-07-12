@@ -12,6 +12,7 @@
 #include "console.h"
 #include "host_command.h"
 #include "host_test.h"
+#include "printf.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
@@ -112,8 +113,11 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 	 * issues.
 	 */
 	if (first) {
-		ccprintf("Request: cmd=%04x data=%ph\n", req->command,
-			 HEX_BUF(req_buf, req_size));
+		char str_buf[hex_str_buf_size(req_size)];
+
+		snprintf_hex_buffer(str_buf, sizeof(str_buf),
+				    HEX_BUF(req_buf, req_size));
+		ccprintf("Request: cmd=%04x data=%s\n", req->command, str_buf);
 		first = 0;
 	}
 

@@ -9,6 +9,7 @@
 #include "console.h"
 #include "host_command.h"
 #include "panic.h"
+#include "printf.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"
@@ -106,12 +107,15 @@ test_mockable void trng_exit(void)
 static int command_rand(int argc, char **argv)
 {
 	uint8_t data[32];
+	char str_buf[hex_str_buf_size(sizeof(data))];
 
 	trng_init();
 	trng_rand_bytes(data, sizeof(data));
 	trng_exit();
 
-	ccprintf("rand %ph\n", HEX_BUF(data, sizeof(data)));
+	snprintf_hex_buffer(str_buf, sizeof(str_buf),
+			    HEX_BUF(data, sizeof(data)));
+	ccprintf("rand %s\n", str_buf);
 
 	return EC_SUCCESS;
 }

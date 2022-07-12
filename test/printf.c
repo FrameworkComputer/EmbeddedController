@@ -416,9 +416,12 @@ test_static int test_vsnprintf_hexdump(void)
 {
 	const char bytes[] = { 0x00, 0x5E };
 
-	T(expect_success("005e", "%ph", HEX_BUF(bytes, 2)));
-	T(expect_success("", "%ph", HEX_BUF(bytes, 0)));
-	T(expect_success("00", "%ph", HEX_BUF(bytes, 1)));
+	/*
+	 * Test %ph, which used to print buffers as hex, but is non-standard
+	 * and no longer supported.
+	 */
+	T(expect(EC_ERROR_INVAL, "", false, sizeof(output), "%ph",
+		 HEX_BUF(bytes, 2)));
 	return EC_SUCCESS;
 }
 

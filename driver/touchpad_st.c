@@ -11,6 +11,7 @@
 #include "hwtimer.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "printf.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"
@@ -578,7 +579,7 @@ static void dump_error(void)
 static void dump_memory(void)
 {
 	uint32_t size = 0x10000, rx_len = 512 + ST_TP_EXTRA_BYTE;
-	uint32_t offset, i;
+	uint32_t offset, i, j;
 	uint8_t cmd[] = { 0xFB, 0x00, 0x10, 0x00, 0x00 };
 
 	if (!dump_memory_on_error)
@@ -591,16 +592,16 @@ static void dump_memory(void)
 				rx_len);
 
 		for (i = 0; i < rx_len - ST_TP_EXTRA_BYTE; i += 32) {
-			CPRINTF("%ph %ph %ph %ph "
-				"%ph %ph %ph %ph\n",
-				HEX_BUF(rx_buf.bytes + i + 4 * 0, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 1, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 2, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 3, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 4, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 5, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 6, 4),
-				HEX_BUF(rx_buf.bytes + i + 4 * 7, 4));
+			for (j = 0; j < 8; j++) {
+				char str_buf[hex_str_buf_size(4)];
+
+				snprintf_hex_buffer(
+					str_buf, sizeof(str_buf),
+					HEX_BUF(rx_buf.bytes + i + 4 * j, 4));
+
+				CPRINTF("%s ", str_buf);
+			}
+			CPRINTF("\n");
 			msleep(8);
 		}
 	}
@@ -1235,13 +1236,17 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 		*data_size = 0;
 		st_tp_stop_scan();
 		return EC_SUCCESS;
-	case ST_TP_DEBUG_CMD_READ_BUF_HEADER:
+	case ST_TP_DEBUG_CMD_READ_BUF_HEADER: {
+		char str_buf[hex_str_buf_size(8)];
 		*data = buf;
 		*data_size = 8;
 		st_tp_read_host_buffer_header();
 		memcpy(buf, rx_buf.bytes, *data_size);
-		CPRINTS("header: %ph", HEX_BUF(buf, *data_size));
+		snprintf_hex_buffer(str_buf, sizeof(str_buf),
+				    HEX_BUF(buf, *data_size));
+		CPRINTS("header: %s", str_buf);
 		return EC_SUCCESS;
+	}
 	case ST_TP_DEBUG_CMD_READ_EVENTS:
 		num_events = st_tp_read_all_events(0);
 		if (num_events) {

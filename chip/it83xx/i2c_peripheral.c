@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c_peripheral.h"
+#include "printf.h"
 #include "registers.h"
 #include <stddef.h>
 #include <string.h>
@@ -178,13 +179,17 @@ void i2c_peripheral_read_write_data(int port)
 			/* Peripheral finish */
 			if (periph_status & IT83XX_I2C_P_CLR) {
 				if (wr_done[idx]) {
+					char str_buf[hex_str_buf_size(
+						I2C_MAX_BUFFER_SIZE)];
 					/*
 					 * TODO(b:129360157): Handle controller
 					 * write data by "in_data" array.
 					 */
-					CPRINTS("WData: %ph",
+					snprintf_hex_buffer(
+						str_buf, sizeof(str_buf),
 						HEX_BUF(in_data[idx],
 							I2C_MAX_BUFFER_SIZE));
+					CPRINTS("WData: %s", str_buf);
 					wr_done[idx] = 0;
 				}
 			}

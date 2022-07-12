@@ -65,8 +65,6 @@
  *   - 'b' - unsigned integer, print as binary
  *
  * Special format codes:
- *   - '%ph' - binary data, print as hex; Use HEX_BUF(buffer, size) to encode
- *             parameters.
  *   - '%pP' - raw pointer.
  */
 
