@@ -100,6 +100,19 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEF
 
 
 
+void update_soc_power_on_boot_deferred(void)
+{
+	update_soc_power_limit(true, false);
+}
+DECLARE_DEFERRED(update_soc_power_on_boot_deferred);
+
+void update_soc_power_limit_boot(void)
+{
+	hook_call_deferred(&update_soc_power_on_boot_deferred_data, MSEC*1000);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, update_soc_power_limit_boot, HOOK_PRIO_DEFAULT);
+
+
 static int cmd_cpupower(int argc, char **argv)
 {
 	uint32_t pl1, pl2, pl4, psys;
