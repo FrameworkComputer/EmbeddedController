@@ -60,9 +60,7 @@ __override void board_cbi_init(void)
 
 void board_init(void)
 {
-#ifdef SECTION_IS_RW
 	rgbkbd_register_init_setting(&rgbkbd_init_taniks);
-#endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
