@@ -8,7 +8,7 @@
 
 #define CCGXXF_TCPC_COMPAT cypress_ccgxxf
 
-#define TCPC_CONFIG_CCGXXF(id)                                                  \
+#define TCPC_CONFIG_CCGXXF(id) \
 	{                                                                       \
 		.bus_type = EC_BUS_TYPE_I2C,                                  \
 		.i2c_info = {                                                 \
@@ -17,5 +17,5 @@
 					id, i2c_addr_flags),                  \
 		},                                                            \
 		.drv = &ccgxxf_tcpm_drv,                                      \
-		.flags = TCPC_FLAGS_TCPCI_REV2_0, \
-	}
+		.flags = TCPC_FLAGS_TCPCI_REV2_0,                             \
+	},
