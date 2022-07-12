@@ -36,17 +36,18 @@ int extpower_is_present(void)
  */
 __override void board_check_extpower(void)
 {
-	int extpower_present;
+	int extpower_present_p0;
+	int extpower_present_p1;
 
 	if (pd_is_connected(0))
-		extpower_present = extpower_is_present();
-	else
-		extpower_present = 0;
+		extpower_present_p0 = extpower_is_present();
+	else if (pd_is_connected(1))
+		extpower_present_p1 = extpower_is_present();
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_acok_otg_c0),
-			extpower_present);
+			extpower_present_p0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_acok_otg_c1),
-			extpower_present);
+			extpower_present_p1);
 }
 
 __override void board_hibernate(void)
