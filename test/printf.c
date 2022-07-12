@@ -370,6 +370,111 @@ test_static int test_vsnprintf_combined(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_uint64_to_str(void)
+{
+	/* Longest uin64 in decimal = 20, plus terminating NUL. */
+	char buf[21];
+	char *str;
+
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/0, /*precision=*/-1,
+			    /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT_ARRAY_EQ(str, "0", sizeof("0"));
+
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/UINT64_MAX,
+			    /*precision=*/-1, /*base=*/10,
+			    /*uppercase=*/false);
+	TEST_ASSERT_ARRAY_EQ(str, "18446744073709551615",
+			     sizeof("18446744073709551615"));
+
+	/* Buffer too small by 1. */
+	str = uint64_to_str(buf, /*buf_len=*/20, /*val=*/UINT64_MAX,
+			    /*precision=*/-1, /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT(str == NULL);
+
+	/* lower case hex */
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/0, /*precision=*/-1,
+			    /*base=*/16, /*uppercase=*/false);
+	TEST_ASSERT_ARRAY_EQ(str, "0", sizeof("0"));
+
+	/* lower case hex */
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/UINT64_MAX,
+			    /*precision=*/-1, /*base=*/16,
+			    /*uppercase=*/false);
+	TEST_ASSERT_ARRAY_EQ(str, "ffffffffffffffff",
+			     sizeof("fffffffffffffff"));
+
+	/* upper case hex */
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/0, /*precision=*/-1,
+			    /*base=*/16, /*uppercase=*/true);
+	TEST_ASSERT_ARRAY_EQ(str, "0", sizeof("0"));
+
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/UINT64_MAX,
+			    /*precision=*/-1, /*base=*/16,
+			    /*uppercase=*/true);
+	TEST_ASSERT_ARRAY_EQ(str, "FFFFFFFFFFFFFFFF",
+			     sizeof("FFFFFFFFFFFFFFF"));
+
+	/* precision 0 */
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/1, /*precision=*/0,
+			    /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT_ARRAY_EQ(str, "1.", sizeof("1."));
+
+	/* precision 6 */
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/1, /*precision=*/6,
+			    /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT_ARRAY_EQ(str, "0.000001", sizeof("0.000001"));
+
+	/* Reduced precision due to buffer that is too small. */
+	str = uint64_to_str(buf, /*buf_len=*/8, /*val=*/1, /*precision=*/6,
+			    /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT_ARRAY_EQ(str, "0.00001", sizeof("0.00001"));
+
+	/*
+	 * Reduced precision due to buffer that is too small, so precision
+	 * gets changed to 0.
+	 */
+	str = uint64_to_str(buf, /*buf_len=*/3, /*val=*/1, /*precision=*/6,
+			    /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT_ARRAY_EQ(str, "1.", sizeof("1."));
+
+	/* Precision is unable to fit in provided buffer. */
+	str = uint64_to_str(buf, /*buf_len=*/2, /*val=*/1, /*precision=*/6,
+			    /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT(str == NULL);
+
+	/* Negative base. */
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/0, /*precision=*/-1,
+			    /*base=*/-1, /*uppercase=*/false);
+	TEST_ASSERT(str == NULL);
+
+	/* Base zero. */
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/1, /*precision=*/-1,
+			    /*base=*/0, /*uppercase=*/false);
+	TEST_ASSERT(str == NULL);
+
+	/* Base one. */
+	str = uint64_to_str(buf, sizeof(buf), /*val=*/1, /*precision=*/-1,
+			    /*base=*/1, /*uppercase=*/false);
+	TEST_ASSERT(str == NULL);
+
+	/* Buffer size 1. */
+	str = uint64_to_str(buf, /*buf_len=*/1, /*val=*/0, /*precision=*/-1,
+			    /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT(str == NULL);
+
+	/* Buffer size 0. */
+	str = uint64_to_str(buf, /*buf_len=*/0, /*val=*/0, /*precision=*/-1,
+			    /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT(str == NULL);
+
+	/* Buffer size -1. */
+	str = uint64_to_str(buf, /*buf_len=*/-1, /*val=*/0, /*precision=*/-1,
+			    /*base=*/10, /*uppercase=*/false);
+	TEST_ASSERT(str == NULL);
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
@@ -384,5 +489,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_vsnprintf_timestamps);
 	RUN_TEST(test_vsnprintf_hexdump);
 	RUN_TEST(test_vsnprintf_combined);
+	RUN_TEST(test_uint64_to_str);
+
 	test_print_result();
 }

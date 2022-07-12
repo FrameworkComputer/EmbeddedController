@@ -35,6 +35,64 @@ static int hexdigit(int c)
 #define PF_SIGN BIT(2) /* Add sign (+) for a positive number */
 #define PF_64BIT BIT(3) /* Number is 64-bit */
 
+test_export_static char *uint64_to_str(char *buf, int buf_len, uint64_t val,
+				       int precision, int base, bool uppercase)
+{
+	int i;
+	char *str;
+
+	if (buf_len <= 1)
+		return NULL;
+
+	if (base <= 1)
+		return NULL;
+
+	/*
+	 * Convert integer to string, starting at end of
+	 * buffer and working backwards.
+	 */
+	str = buf + buf_len - 1;
+	*(str) = '\0';
+
+	/*
+	 * Fixed-point precision must fit in our buffer.
+	 * Leave space for "0." and the terminating null.
+	 */
+	if (precision > buf_len - 3) {
+		precision = buf_len - 3;
+		if (precision < 0)
+			return NULL;
+	}
+
+	/*
+	 * Handle digits to right of decimal for fixed point numbers.
+	 */
+	for (i = 0; i < precision; i++)
+		*(--str) = '0' + uint64divmod(&val, 10);
+	if (precision >= 0)
+		*(--str) = '.';
+
+	if (!val)
+		*(--str) = '0';
+
+	while (val) {
+		int digit;
+
+		if (str <= buf)
+			return NULL;
+
+		digit = uint64divmod(&val, base);
+		if (digit < 10)
+			*(--str) = '0' + digit;
+		else if (uppercase)
+			*(--str) = 'A' + digit - 10;
+		else
+			*(--str) = 'a' + digit - 10;
+	}
+
+	return str;
+}
+
 /*
  * Print the buffer as a string of bytes in hex.
  * Returns 0 on success or an error on failure.
@@ -345,41 +403,9 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			if (format == error_str)
 				continue; /* Bad format specifier */
 
-			/*
-			 * Convert integer to string, starting at end of
-			 * buffer and working backwards.
-			 */
-			vstr = intbuf + sizeof(intbuf) - 1;
-			*(vstr) = '\0';
-
-			/*
-			 * Fixed-point precision must fit in our buffer.
-			 * Leave space for "0." and the terminating null.
-			 */
-			if (precision > (int)(sizeof(intbuf) - 3))
-				precision = sizeof(intbuf) - 3;
-
-			/*
-			 * Handle digits to right of decimal for fixed point
-			 * numbers.
-			 */
-			for (vlen = 0; vlen < precision; vlen++)
-				*(--vstr) = '0' + uint64divmod(&v, 10);
-			if (precision >= 0)
-				*(--vstr) = '.';
-
-			if (!v)
-				*(--vstr) = '0';
-
-			while (v) {
-				int digit = uint64divmod(&v, base);
-				if (digit < 10)
-					*(--vstr) = '0' + digit;
-				else if (c == 'X')
-					*(--vstr) = 'A' + digit - 10;
-				else
-					*(--vstr) = 'a' + digit - 10;
-			}
+			vstr = uint64_to_str(intbuf, sizeof(intbuf), v,
+					     precision, base, c == 'X');
+			ASSERT(vstr);
 
 			if (sign)
 				*(--vstr) = sign;

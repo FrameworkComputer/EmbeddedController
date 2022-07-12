@@ -9,6 +9,7 @@
 #define __CROS_EC_PRINTF_H
 
 #include <stdarg.h> /* For va_list */
+#include <stdbool.h>
 #include <stddef.h> /* For size_t */
 #include "common.h"
 
@@ -119,5 +120,28 @@ __warn_unused_result __stdlib_compat int
 crec_vsnprintf(char *str, size_t size, const char *format, va_list args);
 
 #endif /* !HIDE_EC_STDLIB */
+
+#ifdef TEST_BUILD
+/**
+ * Converts @val to a string written in @buf. The value is converted from
+ * least-significant digit to most-significant digit, so the pointer returned
+ * does not necessarily point to the start of @buf.
+ *
+ * This function shouldn't be used directly; it's a helper function for other
+ * printf functions and only exposed for testing.
+ *
+ * @param[out] buf Destination buffer
+ * @param[in] buf_len Length of @buf in bytes
+ * @param[in] val Value to convert
+ * @param[in] precision Fixed point precision; -1 disables fixed point
+ * @param[in] base Base
+ * @param[in] uppercase true to print hex characters uppercase
+ * @return pointer to start of string on success (not necessarily the start of
+ * @buf).
+ * @return NULL on error
+ */
+char *uint64_to_str(char *buf, int buf_len, uint64_t val, int precision,
+		    int base, bool uppercase);
+#endif /* TEST_BUILD */
 
 #endif /* __CROS_EC_PRINTF_H */
