@@ -2604,4 +2604,9 @@ extern struct jump_data mock_jump_data;
 #define CONFIG_IO_EXPANDER_CCGXXF
 #endif
 
+#undef CONFIG_PERIPHERAL_CHARGER
+#ifdef CONFIG_PLATFORM_EC_PERIPHERAL_CHARGER
+#define CONFIG_PERIPHERAL_CHARGER
+#endif
+
 #endif /* __CROS_EC_CONFIG_CHIP_H */
