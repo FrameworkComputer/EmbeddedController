@@ -60,6 +60,7 @@ GPIO(EC_PCH_SYS_PWROK,               PIN(3, 7), GPIO_OUT_LOW)
 GPIO(EC_PCH_WAKE_R_ODL,              PIN(C, 0), GPIO_ODR_HIGH)
 GPIO(EC_PROCHOT_ODL,                 PIN(6, 3), GPIO_ODR_HIGH)
 GPIO(EN_PP5000_FAN,                  PIN(6, 1), GPIO_OUT_LOW)
+GPIO(EN_PP5000_FAN2,                 PIN(9, 7), GPIO_OUT_LOW)
 GPIO(EN_PP5000_USBA_R,               PIN(D, 7), GPIO_OUT_LOW)
 GPIO(EN_S5_RAILS,                    PIN(B, 6), GPIO_OUT_LOW)
 GPIO(IMVP9_VRRDY_OD,                 PIN(4, 3), GPIO_INPUT)
@@ -122,7 +123,6 @@ UNUSED(PIN(8, 3))       /* GPIO83 */
 UNUSED(PIN(7, 0))       /* GPIO70 */
 UNUSED(PIN(8, 1))       /* GPIO81 */
 UNUSED(PIN(9, 3))       /* GPIO93 */
-UNUSED(PIN(9, 7))       /* GPIO97 */
 UNUSED(PIN(D, 0))       /* GPIOD0/I2C3_SDA0 */
 UNUSED(PIN(D, 1))       /* GPIOD1/I2C3_SCL0 */
 
