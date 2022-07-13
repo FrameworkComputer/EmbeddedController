@@ -74,6 +74,8 @@ static int proxy_set_custom(const struct usb_mux *me, mux_state_t mux_state,
 	if (org_mux[i] != NULL && org_mux[i]->driver->set != NULL) {
 		ec = org_mux[i]->driver->set(org_mux[i], mux_state,
 					     ack_required);
+		/* Disable waiting for ACK in tests */
+		*ack_required = false;
 	}
 
 	if (task_get_current() == TASK_ID_TEST_RUNNER) {
@@ -193,6 +195,8 @@ static void proxy_hpd_update_custom(const struct usb_mux *me,
 
 	if (org_mux[i] != NULL && org_mux[i]->hpd_update != NULL) {
 		org_mux[i]->hpd_update(org_mux[i], mux_state, ack_required);
+		/* Disable waiting for ACK in tests */
+		*ack_required = false;
 	}
 
 	if (task_get_current() != TASK_ID_TEST_RUNNER) {
