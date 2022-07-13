@@ -56,4 +56,17 @@ enum ap_power_sleep_type ap_power_sleep_get_notify(void);
 void ap_power_sleep_notify_transition(enum ap_power_sleep_type check_state);
 #endif /* CONFIG_AP_PWRSEQ_S0IX */
 
+/*
+ * Get sleep timeout from host command context
+ */
+uint16_t host_get_sleep_timeout(void);
+
+/*
+ * Set sleep transitions for host command response
+ *
+ * @param val sleep transitions
+ *
+ */
+void host_set_sleep_transitions(uint32_t val);
+
 #endif /* __AP_PWRSEQ_HOST_SLEEP_H */

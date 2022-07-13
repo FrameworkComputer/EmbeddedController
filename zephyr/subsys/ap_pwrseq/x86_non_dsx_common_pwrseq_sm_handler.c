@@ -410,6 +410,7 @@ static int common_pwr_sm_run(int state)
 		 * HC already set sleep suspend state.
 		 */
 		ap_power_sleep_notify_transition(AP_POWER_SLEEP_SUSPEND);
+		ap_power_ev_send_callbacks(AP_POWER_S0IX_SUSPEND);
 
 		/*
 		 * Enable idle task deep sleep. Allow the low power idle task
@@ -430,9 +431,11 @@ static int common_pwr_sm_run(int state)
 		 */
 		disable_sleep(SLEEP_MASK_AP_RUN);
 
+		ap_power_ev_send_callbacks(AP_POWER_S0IX_RESUME
 #if CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK
-		ap_power_ev_send_callbacks(AP_POWER_RESUME_INIT);
+					   | AP_POWER_RESUME_INIT
 #endif
+		);
 
 		return SYS_POWER_STATE_S0;
 

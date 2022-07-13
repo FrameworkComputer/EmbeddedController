@@ -105,6 +105,27 @@ enum ap_power_events {
 	 * initialization depends upon the initial state of the AP.
 	 */
 	AP_POWER_INITIALIZED = BIT(10),
+
+	/**
+	 * S0ix suspend starts.
+	 */
+	AP_POWER_S0IX_SUSPEND_START = BIT(11),
+	/**
+	 * Transitioning from s0 to s0ix.
+	 */
+	AP_POWER_S0IX_SUSPEND = BIT(12),
+	/**
+	 * Transitioning from s0ix to s0.
+	 */
+	AP_POWER_S0IX_RESUME = BIT(13),
+	/**
+	 * si0x resume complete.
+	 */
+	AP_POWER_S0IX_RESUME_COMPLETE = BIT(14),
+	/**
+	 * Reset s0ix tracking.
+	 */
+	AP_POWER_S0IX_RESET_TRACKING = BIT(15),
 };
 
 /**

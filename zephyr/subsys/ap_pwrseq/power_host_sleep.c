@@ -184,9 +184,12 @@ void ap_power_sleep_notify_transition(enum ap_power_sleep_type check_state)
 #if CONFIG_AP_PWRSEQ_HOST_SLEEP
 #define HOST_SLEEP_EVENT_DEFAULT_RESET 0
 
+static struct host_sleep_event_context *g_ctx;
+
 void ap_power_reset_host_sleep_state(void)
 {
 	power_set_host_sleep_state(HOST_SLEEP_EVENT_DEFAULT_RESET);
+	ap_power_ev_send_callbacks(AP_POWER_S0IX_RESET_TRACKING);
 	ap_power_chipset_handle_host_sleep_event(HOST_SLEEP_EVENT_DEFAULT_RESET,
 						 NULL);
 }
@@ -202,6 +205,9 @@ void ap_power_chipset_handle_host_sleep_event(
 	enum host_sleep_event state, struct host_sleep_event_context *ctx)
 {
 	LOG_DBG("host sleep event = %d!", state);
+
+	g_ctx = ctx;
+
 #if CONFIG_AP_PWRSEQ_S0IX
 	if (state == HOST_SLEEP_EVENT_S0IX_SUSPEND) {
 		/*
@@ -210,6 +216,7 @@ void ap_power_chipset_handle_host_sleep_event(
 		 * notification needs to be sent to listeners.
 		 */
 		ap_power_sleep_set_notify(AP_POWER_SLEEP_SUSPEND);
+		ap_power_ev_send_callbacks(AP_POWER_S0IX_SUSPEND_START);
 		power_signal_enable(PWR_SLP_S0);
 
 	} else if (state == HOST_SLEEP_EVENT_S0IX_RESUME) {
@@ -220,6 +227,7 @@ void ap_power_chipset_handle_host_sleep_event(
 		ap_power_sleep_set_notify(AP_POWER_SLEEP_RESUME);
 		power_s0ix_resume_restore_masks();
 		power_signal_disable(PWR_SLP_S0);
+		ap_power_ev_send_callbacks(AP_POWER_S0IX_RESUME_COMPLETE);
 
 		/*
 		 * If the sleep signal timed out and never transitioned, then
@@ -234,6 +242,16 @@ void ap_power_chipset_handle_host_sleep_event(
 	}
 #endif /* CONFIG_AP_PWRSEQ_S0IX */
 	ap_pwrseq_wake();
+}
+
+uint16_t host_get_sleep_timeout(void)
+{
+	return g_ctx->sleep_timeout_ms;
+}
+
+void host_set_sleep_transitions(uint32_t val)
+{
+	g_ctx->sleep_transitions = val;
 }
 
 #endif /* CONFIG_AP_PWRSEQ_HOST_SLEEP */
