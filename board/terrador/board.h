@@ -14,6 +14,7 @@
 /* Free flash space */
 #define CONFIG_USB_PD_DEBUG_LEVEL 2
 #undef CONFIG_CONSOLE_CMDHELP
+#undef CONFIG_CMD_BATTFAKE
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */
