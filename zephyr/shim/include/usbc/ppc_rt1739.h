@@ -15,4 +15,4 @@
 		.frs_en = COND_CODE_1(DT_NODE_HAS_PROP(id, irq),             \
 				      (GPIO_SIGNAL(DT_PHANDLE(id, irq))),    \
 				      (0)),                                  \
-	}
+	},
