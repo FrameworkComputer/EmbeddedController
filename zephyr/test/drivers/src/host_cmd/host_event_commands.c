@@ -211,7 +211,11 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_clear__cmd)
 	enum ec_status ret_val;
 	host_event_t events;
 	host_event_t mask = EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY);
+	host_event_t lpc_event_mask;
 	struct ec_response_host_event_mask response = { 0 };
+
+	lpc_event_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, lpc_event_mask | mask);
 
 	host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 	events = host_get_events();
@@ -236,9 +240,12 @@ ZTEST_USER(host_cmd_host_event_commands, test_host_event_clear_b_cmd)
 	enum ec_status ret_val;
 	host_event_t events_b;
 	host_event_t mask = EC_HOST_EVENT_MASK(EC_HOST_EVENT_KEYBOARD_RECOVERY);
-
+	host_event_t lpc_event_mask;
 	struct ec_response_host_event_mask response = { 0 };
 	struct ec_response_host_event result = { 0 };
+
+	lpc_event_mask = lpc_get_host_event_mask(LPC_HOST_EVENT_SMI);
+	lpc_set_host_event_mask(LPC_HOST_EVENT_SMI, lpc_event_mask | mask);
 
 	host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 
