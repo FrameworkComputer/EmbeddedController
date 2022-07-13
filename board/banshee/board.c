@@ -20,6 +20,7 @@
 #include "fw_config.h"
 #include "hooks.h"
 #include "keyboard_customization.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "power_button.h"
 #include "power.h"
@@ -27,7 +28,7 @@
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
-#include "keyboard_scan.h"
+#include "watchdog.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -151,6 +152,16 @@ __override void board_pre_task_i2c_peripheral_init(void)
 {
 	/* Configure board specific keyboard */
 	configure_keyboard();
+
+	/* Workaround for b:238683420 with board id >= 2 */
+
+#ifdef SECTION_IS_RO
+	if (board_id >= 2) {
+		udelay(500 * MSEC);
+		watchdog_reload();
+		CPRINTS("Add delay to check boot key");
+	}
+#endif
 }
 
 __override uint8_t board_keyboard_row_refresh(void)
