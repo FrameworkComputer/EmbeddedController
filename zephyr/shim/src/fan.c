@@ -51,13 +51,13 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 		.rpm = &node_id##_rpm,   \
 	},
 
-#define FAN_CONTROL_INST(node_id)                                              \
-	[node_id] = {                                                          \
-		.pwm = DEVICE_DT_GET(DT_PWMS_CTLR(node_id)),                   \
-		.channel = DT_PWMS_CHANNEL(node_id),                           \
-		.flags = DT_PWMS_FLAGS(node_id),                               \
-		.period_ns = (NSEC_PER_SEC / DT_PROP(node_id, pwm_frequency)), \
-		.tach = DEVICE_DT_GET(DT_PHANDLE(node_id, tach)),              \
+#define FAN_CONTROL_INST(node_id)                                      \
+	[node_id] = {                                                  \
+		.pwm = DEVICE_DT_GET(DT_PWMS_CTLR(node_id)),           \
+		.channel = DT_PWMS_CHANNEL(node_id),                   \
+		.flags = DT_PWMS_FLAGS(node_id),                       \
+		.period_ns = (NSEC_PER_SEC / DT_PWMS_PERIOD(node_id)), \
+		.tach = DEVICE_DT_GET(DT_PHANDLE(node_id, tach)),      \
 	},
 
 DT_INST_FOREACH_CHILD(0, FAN_CONFIGS)
