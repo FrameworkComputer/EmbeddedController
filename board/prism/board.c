@@ -109,7 +109,7 @@ const enum ec_rgbkbd_type rgbkbd_type = EC_RGBKBD_TYPE_PER_KEY;
 
 const uint8_t rgbkbd_map[] = {
 	DELM, /* 0: (null) */
-	LED(0, 1),  DELM, /* 1: ~ ` */
+	LED(0, 1),  LED(0, 2),	DELM, /* 1: ~ ` */
 	LED(1, 1),  LED(1, 2),	DELM, /* 2: ! 1 */
 	LED(2, 1),  LED(2, 2),	DELM, /* 3: @ 2 */
 	LED(3, 1),  LED(3, 2),	DELM, /* 4: # 3 */
@@ -124,7 +124,7 @@ const uint8_t rgbkbd_map[] = {
 	LED(12, 1), LED(12, 2), DELM, /* 13: + = */
 	DELM, /* 14: (null) */
 	LED(13, 1), LED(13, 2), DELM, /* 15: backspace */
-	LED(0, 3),  DELM, /* 16: tab */
+	LED(0, 3),  LED(15, 2), DELM, /* 16: tab */
 	LED(1, 3),  DELM, /* 17: q */
 	LED(2, 3),  DELM, /* 18: w */
 	LED(3, 3),  DELM, /* 19: e */
