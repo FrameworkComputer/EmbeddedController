@@ -12,6 +12,8 @@
  * EC Config
  */
 
+#define CONFIG_LTO
+
 /*
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
