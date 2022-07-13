@@ -77,6 +77,9 @@ static void baseboard_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_groupc_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s0));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_lpddr_s3));
+
+	/* Enable thermtrip interrupt */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_thermtrip));
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_POST_I2C);
 
@@ -192,4 +195,10 @@ void baseboard_set_en_pwr_s3(enum gpio_signal signal)
 
 	/* Chain off the normal power signal interrupt handler */
 	power_signal_interrupt(signal);
+}
+
+void baseboard_soc_thermtrip(enum gpio_signal signal)
+{
+	ccprints("SoC thermtrip reported, shutting down");
+	chipset_force_shutdown(CHIPSET_SHUTDOWN_THERMAL);
 }

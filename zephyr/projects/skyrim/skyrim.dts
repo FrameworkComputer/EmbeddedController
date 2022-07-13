@@ -24,8 +24,7 @@
 		gpio_ec_i2c_usbc_pd_int: ec_i2c_usbc_pd_int {
 			gpios = <&gpioa 3 GPIO_INPUT>;
 		};
-		/* TODO: Add interrupt handler */
-		soc_thermtrip_odl {
+		gpio_soc_thermtrip_odl: soc_thermtrip_odl {
 			gpios = <&gpio9 5 GPIO_INPUT>;
 		};
 		gpio_hub_rst: hub_rst {

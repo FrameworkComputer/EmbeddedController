@@ -42,6 +42,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "baseboard_set_en_pwr_pcore";
 		};
+		int_soc_thermtrip: soc_thermtrip {
+			irq-pin = <&gpio_soc_thermtrip_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "baseboard_soc_thermtrip";
+		};
 		int_volume_up: volume_up {
 			irq-pin = <&gpio_volup_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
