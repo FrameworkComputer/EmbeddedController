@@ -30,7 +30,7 @@ GPIO(EC_ENTERING_RW,                 PIN(0, 3), GPIO_OUT_LOW)
 GPIO(EC_GSC_PACKET_MODE,             PIN(7, 5), GPIO_OUT_LOW)
 
 /* Fan */
-GPIO(EN_PP12000_FAN,                 PIN(6, 1), GPIO_OUT_HIGH)
+GPIO(EN_PP12000_FAN,                 PIN(6, 1), GPIO_OUT_LOW)
 
 /* Display */
 GPIO(DP_CONN_OC_ODL,                 PIN(2, 5), GPIO_INPUT)
