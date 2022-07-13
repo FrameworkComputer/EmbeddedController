@@ -20,6 +20,7 @@
 #undef CONFIG_CMD_ADC
 #undef CONFIG_CMD_APTHROTTLE
 #undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_GETTIME
 
 /*
  * Macros for GPIO signals used in common code that don't match the
