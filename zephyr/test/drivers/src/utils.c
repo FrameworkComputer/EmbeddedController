@@ -10,6 +10,7 @@
 
 #include "battery.h"
 #include "battery_smart.h"
+#include "charge_state.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
@@ -49,6 +50,10 @@ void test_set_chipset_to_s0(void)
 	zassert_ok(gpio_emul_input_set(battery_gpio_dev,
 				       GPIO_BATT_PRES_ODL_PORT, 0),
 		   NULL);
+
+	/* We need to wait for the charge task to re-read battery parameters */
+	WAIT_FOR(!charge_want_shutdown(), CHARGE_MAX_SLEEP_USEC + 1,
+		 k_sleep(K_SECONDS(1)));
 
 	/* The easiest way to power on seems to be the shell command. */
 	zassert_equal(EC_SUCCESS, shell_execute_cmd(get_ec_shell(), "power on"),
