@@ -85,6 +85,7 @@
 /* Enable control of GPIOs over USB */
 #define CONFIG_USB_GPIO
 
+#undef CONFIG_CMD_GETTIME
 #undef CONFIG_WATCHDOG_HELP
 #undef CONFIG_LID_SWITCH
 
