@@ -7,6 +7,6 @@
 	switchcap {
 		compatible = "switchcap-gpio";
 		enable-pin = <&gpio_switchcap_on>;
-		poff-delay-ms = <500>;
+		poff-delay-ms = <550>;
 	};
 };
