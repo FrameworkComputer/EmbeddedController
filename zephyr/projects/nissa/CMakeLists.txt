@@ -8,6 +8,7 @@ find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 
 zephyr_include_directories(include)
 zephyr_library_sources("src/common.c")
+zephyr_library_sources("src/sub_board.c")
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 
 if(DEFINED CONFIG_BOARD_NIVVIKS)
@@ -17,7 +18,6 @@ if(DEFINED CONFIG_BOARD_NIVVIKS)
 			"src/nivviks/form_factor.c"
 			"src/nivviks/keyboard.c"
 	)
-	zephyr_library_sources("src/sub_board.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/nivviks/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/nivviks/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/nivviks/charger.c")
@@ -28,7 +28,6 @@ if(DEFINED CONFIG_BOARD_NEREID)
 			"src/led.c"
 			"src/nereid/keyboard.c"
 	)
-	zephyr_library_sources("src/sub_board.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/nereid/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/nereid/charger.c")
 endif()
@@ -37,7 +36,6 @@ if(DEFINED CONFIG_BOARD_CRAASK)
 			"src/craask/led.c"
 	)
 	project(craask)
-	zephyr_library_sources("src/sub_board.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/craask/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/craask/charger.c")
 endif()
@@ -47,7 +45,6 @@ if(DEFINED CONFIG_BOARD_PUJJO)
 			"src/led.c"
 			"src/pujjo/keyboard.c"
 	)
-	zephyr_library_sources("src/sub_board.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/pujjo/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/pujjo/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/pujjo/charger.c")
@@ -63,7 +60,6 @@ if(DEFINED CONFIG_BOARD_JOXER)
 			"src/led.c"
 			"src/joxer/keyboard.c"
 	)
-	zephyr_library_sources("src/sub_board.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/joxer/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/joxer/charger.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/joxer/fan.c")

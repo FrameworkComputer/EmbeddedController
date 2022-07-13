@@ -23,6 +23,8 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
+#define BOARD_HAS_HDMI_SUPPORT DT_NODE_EXISTS(DT_NODELABEL(gpio_hdmi_sel))
+#if BOARD_HAS_HDMI_SUPPORT
 static void hdmi_power_handler(struct ap_power_ev_callback *cb,
 			       struct ap_power_ev_data data)
 {
@@ -65,6 +67,7 @@ static void hdmi_hpd_interrupt(const struct device *device,
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_hdmi_hpd), state);
 	LOG_DBG("HDMI HPD changed state to %d", state);
 }
+#endif
 
 static void lte_power_handler(struct ap_power_ev_callback *cb,
 			      struct ap_power_ev_data data)
@@ -159,6 +162,7 @@ static void nereid_subboard_config(void)
 	}
 
 	switch (sb) {
+#if BOARD_HAS_HDMI_SUPPORT
 	case NISSA_SB_HDMI_A: {
 		/*
 		 * HDMI: two outputs control power which must be configured to
@@ -213,6 +217,7 @@ static void nereid_subboard_config(void)
 		irq_unlock(irq_key);
 		break;
 	}
+#endif
 	case NISSA_SB_C_LTE:
 		/*
 		 * LTE: Set up callbacks for enabling/disabling
