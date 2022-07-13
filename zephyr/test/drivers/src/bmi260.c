@@ -152,6 +152,7 @@ static void bmi_init_emul(void)
 	struct motion_sensor_t *ms_acc;
 	struct motion_sensor_t *ms_gyr;
 	struct i2c_emul *emul;
+	int ret;
 
 	emul = bmi_emul_get(BMI_ORD);
 	ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
@@ -163,8 +164,13 @@ static void bmi_init_emul(void)
 	 * which clears value set in this register before test.
 	 */
 	i2c_common_emul_set_read_func(emul, emul_init_ok, NULL);
-	zassert_equal(EC_RES_SUCCESS, ms_acc->drv->init(ms_acc), NULL);
-	zassert_equal(EC_RES_SUCCESS, ms_gyr->drv->init(ms_gyr), NULL);
+
+	ret = ms_acc->drv->init(ms_acc);
+	zassert_equal(EC_RES_SUCCESS, ret, "Got accel init error %d", ret);
+
+	ret = ms_gyr->drv->init(ms_gyr);
+	zassert_equal(EC_RES_SUCCESS, ret, "Got gyro init error %d", ret);
+
 	/* Remove custom emulator read function */
 	i2c_common_emul_set_read_func(emul, NULL, NULL);
 }
@@ -1405,7 +1411,7 @@ ZTEST_USER(bmi260, test_bmi_gyr_read)
 	ms->rot_standard_ref = NULL;
 }
 
-/** Test acceleromtere calibration */
+/** Test accelerometer calibration */
 ZTEST_USER(bmi260, test_bmi_acc_perform_calib)
 {
 	struct motion_sensor_t *ms;
@@ -1514,6 +1520,8 @@ ZTEST_USER(bmi260, test_bmi_gyr_perform_calib)
 
 	emul = bmi_emul_get(BMI_ORD);
 	ms = &motion_sensors[BMI_GYR_SENSOR_ID];
+
+	bmi_init_emul();
 
 	/* Range and rate cannot change after calibration */
 	range = 125;
@@ -2189,4 +2197,35 @@ ZTEST_USER(bmi260, test_init_config_status_timeout)
 		      EC_ERROR_INVALID_CONFIG, ret);
 }
 
-ZTEST_SUITE(bmi260, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+/**
+ * @brief Put the driver and emulator in to a consistent state before each test.
+ *
+ * @param arg Test fixture (unused)
+ */
+static void bmi260_test_before(void *arg)
+{
+	ARG_UNUSED(arg);
+
+	struct i2c_emul *emul = bmi_emul_get(BMI_ORD);
+	struct motion_sensor_t *ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
+	struct motion_sensor_t *ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
+
+	/* Reset I2C */
+	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_func(emul, NULL, NULL);
+	i2c_common_emul_set_write_func(emul, NULL, NULL);
+
+	/* Reset local fakes(s) */
+	RESET_FAKE(bmi_config_load_no_mapped_flash_mock_read_fn);
+
+	/* Clear rotation matrices */
+	ms_acc->rot_standard_ref = NULL;
+	ms_gyr->rot_standard_ref = NULL;
+
+	/* Set Chip ID register to BMI260 (required for init() to succeed) */
+	bmi_emul_set_reg(emul, BMI260_CHIP_ID, BMI260_CHIP_ID_MAJOR);
+}
+
+ZTEST_SUITE(bmi260, drivers_predicate_post_main, NULL, bmi260_test_before, NULL,
+	    NULL);
