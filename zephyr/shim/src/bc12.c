@@ -16,15 +16,15 @@
 
 #define BC12_CHIP(id, fn) [USBC_PORT(id)] = fn(id)
 
-#define MAYBE_EMPTY(compat, config)                                            \
-	COND_CODE_1(DT_HAS_STATUS_OKAY(compat),                                \
-		    (DT_FOREACH_STATUS_OKAY_VARGS(compat, BC12_CHIP, config)), \
-		    (EMPTY))
-
 /* Power Path Controller */
-struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = { LIST_DROP_EMPTY(
-	MAYBE_EMPTY(RT1739_BC12_COMPAT, BC12_CHIP_RT1739),
-	MAYBE_EMPTY(RT9490_BC12_COMPAT, BC12_CHIP_RT9490),
-	MAYBE_EMPTY(PI3USB9201_COMPAT, BC12_CHIP_PI3USB9201)) };
+struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
+	DT_FOREACH_STATUS_OKAY_VARGS(RT1739_BC12_COMPAT, BC12_CHIP,
+				     BC12_CHIP_RT1739)
+		DT_FOREACH_STATUS_OKAY_VARGS(RT9490_BC12_COMPAT, BC12_CHIP,
+					     BC12_CHIP_RT9490)
+			DT_FOREACH_STATUS_OKAY_VARGS(PI3USB9201_COMPAT,
+						     BC12_CHIP,
+						     BC12_CHIP_PI3USB9201)
+};
 
 #endif /* #if DT_HAS_COMPAT_STATUS_OKAY */

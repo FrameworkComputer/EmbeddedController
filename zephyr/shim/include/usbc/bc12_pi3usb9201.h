@@ -10,4 +10,4 @@
 #define BC12_CHIP_PI3USB9201(id)        \
 	{                               \
 		.drv = &pi3usb9201_drv, \
-	}
+	},
