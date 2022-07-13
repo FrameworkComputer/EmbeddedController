@@ -17,14 +17,16 @@
 #define BC12_CHIP(id, fn) [USBC_PORT(id)] = fn(id)
 
 /* Power Path Controller */
+/* Enable clang-format when the formatted code is readable. */
+/* clang-format off */
 struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
 	DT_FOREACH_STATUS_OKAY_VARGS(RT1739_BC12_COMPAT, BC12_CHIP,
 				     BC12_CHIP_RT1739)
-		DT_FOREACH_STATUS_OKAY_VARGS(RT9490_BC12_COMPAT, BC12_CHIP,
-					     BC12_CHIP_RT9490)
-			DT_FOREACH_STATUS_OKAY_VARGS(PI3USB9201_COMPAT,
-						     BC12_CHIP,
-						     BC12_CHIP_PI3USB9201)
+	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_BC12_COMPAT, BC12_CHIP,
+				     BC12_CHIP_RT9490)
+	DT_FOREACH_STATUS_OKAY_VARGS(PI3USB9201_COMPAT, BC12_CHIP,
+				     BC12_CHIP_PI3USB9201)
 };
+/* clang-format on */
 
 #endif /* #if DT_HAS_COMPAT_STATUS_OKAY */
