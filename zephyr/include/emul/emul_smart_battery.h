@@ -77,8 +77,12 @@ struct sbat_emul_bat_data {
 	uint16_t max_error;
 	/** Capacity of the battery at the moment in mAh */
 	uint16_t cap;
+	/** Default capacity of the battery at the moment in mAh */
+	const uint16_t default_cap;
 	/** Full capacity of the battery in mAh */
 	uint16_t full_cap;
+	/** Default full capacity of the battery at the moment in mAh */
+	const uint16_t default_full_cap;
 	/** Design battery capacity in mAh */
 	uint16_t design_cap;
 	/** Charging current requested by battery */

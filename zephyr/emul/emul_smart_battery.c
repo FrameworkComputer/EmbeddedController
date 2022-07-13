@@ -13,6 +13,7 @@ LOG_MODULE_REGISTER(smart_battery);
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/ztest.h>
 
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_smart_battery.h"
@@ -832,7 +833,9 @@ static int sbat_emul_init(const struct emul *emul, const struct device *parent)
 			.avg_cur = DT_INST_PROP(n, avg_cur),		\
 			.max_error = DT_INST_PROP(n, max_error),	\
 			.cap = DT_INST_PROP(n, cap),			\
+			.default_cap = DT_INST_PROP(n, cap),		\
 			.full_cap = DT_INST_PROP(n, full_cap),		\
+			.default_full_cap = DT_INST_PROP(n, full_cap),	\
 			.desired_charg_cur = DT_INST_PROP(n,		\
 						desired_charg_cur),	\
 			.desired_charg_volt = DT_INST_PROP(n,		\
@@ -895,3 +898,22 @@ struct i2c_emul *sbat_emul_get_ptr(int ord)
 		return NULL;
 	}
 }
+
+static void emul_smart_battery_reset_capacity(struct sbat_emul_data *bat_data)
+{
+	bat_data->bat.cap = bat_data->bat.default_cap;
+	bat_data->bat.full_cap = bat_data->bat.default_full_cap;
+}
+
+#define SBAT_EMUL_RESET_RULE_AFTER(n) \
+	emul_smart_battery_reset_capacity(&sbat_emul_data_##n)
+
+static void emul_sbat_reset(const struct ztest_unit_test *test, void *data)
+{
+	ARG_UNUSED(test);
+	ARG_UNUSED(data);
+
+	DT_INST_FOREACH_STATUS_OKAY(SBAT_EMUL_RESET_RULE_AFTER);
+}
+
+ZTEST_RULE(emul_smart_battery_reset, NULL, emul_sbat_reset);
