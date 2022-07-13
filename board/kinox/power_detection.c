@@ -291,11 +291,13 @@ void set_the_obp(int power_type_index, int adp_type)
 		switch (adp_type) {
 		case TIO1:
 		case TIO2:
+			gpio_set_level(GPIO_SIO_LEGO_EN_L, 0);
 			charge_manager_update_charge(
 				CHARGE_SUPPLIER_PROPRIETARY,
 				DEDICATED_CHARGE_PORT, &pi);
 			break;
 		case TINY:
+			gpio_set_level(GPIO_SIO_LEGO_EN_L, 1);
 			charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 						     DEDICATED_CHARGE_PORT,
 						     &pi);

@@ -58,7 +58,7 @@ GPIO(CPU_C10_GATE_L,                 PIN(6, 7), GPIO_INPUT)
 GPIO(EC_PCH_PWR_BTN_ODL,             PIN(C, 1), GPIO_ODR_HIGH)
 GPIO(GSC_EC_RECOVERY_BTN_OD,         PIN(2, 2), GPIO_INPUT)
 
-GPIO(SIO_LEGO_EN,                    PIN(9, 6), GPIO_INPUT | GPIO_PULL_UP)
+GPIO(SIO_LEGO_EN_L,                  PIN(9, 6), GPIO_OUT_LOW)
 
 /* HDMI CEC */
 /* TODO(b/197474873): Enable HDMI CEC */
