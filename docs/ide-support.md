@@ -1,5 +1,7 @@
 # IDE Support
 
+This document explains how to configure IDEs to better support the EC codebase.
+
 [TOC]
 
 ## Odd File Types
