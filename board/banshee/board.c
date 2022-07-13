@@ -27,6 +27,7 @@
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
+#include "keyboard_scan.h"
 
 #include "gpio_list.h" /* Must come after other header files. */
 
@@ -100,10 +101,10 @@ void battery_present_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&board_set_charger_current_limit_deferred_data, 0);
 }
 
+static uint32_t board_id;
 static void configure_keyboard(void)
 {
 	uint32_t cbi_val;
-	uint32_t board_id = 1;
 
 	/* Board ID */
 	if (cbi_get_board_version(&cbi_val) != EC_SUCCESS ||
@@ -132,6 +133,8 @@ static void configure_keyboard(void)
 		gpio_set_flags(GPIO_EC_KSO_04_INV, GPIO_ODR_HIGH);
 		gpio_set_alternate_function(GPIO_PORT_1, (BIT(5) | BIT(7)),
 					    GPIO_ALT_FUNC_DEFAULT);
+		key_typ.col_refresh = KEYBOARD_COL_ID2_REFRESH;
+		key_typ.row_refresh = KEYBOARD_ROW_ID2_REFRESH;
 	}
 
 	board_id_keyboard_col_inverted((int)board_id);
@@ -148,4 +151,12 @@ __override void board_pre_task_i2c_peripheral_init(void)
 {
 	/* Configure board specific keyboard */
 	configure_keyboard();
+}
+
+__override uint8_t board_keyboard_row_refresh(void)
+{
+	if (board_id < 2)
+		return KEYBOARD_ROW_ID1_REFRESH;
+	else
+		return KEYBOARD_ROW_ID2_REFRESH;
 }
