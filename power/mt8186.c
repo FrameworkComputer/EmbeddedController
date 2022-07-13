@@ -439,6 +439,8 @@ enum power_state power_handle_state(enum power_state state)
 				chipset_force_shutdown_button();
 		}
 
+		hook_notify(HOOK_CHIPSET_SUSPEND_COMPLETE);
+
 		return POWER_S3;
 
 	case POWER_S3S5:
