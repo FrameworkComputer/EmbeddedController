@@ -49,15 +49,6 @@ config PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
 	  This is selected by the ITE USB Type-C drivers. It cannot be set
 	  otherwise, even in prj.conf
 
-config PLATFORM_EC_USB_PD_ITE_ACTIVE_PORT_COUNT
-	int "Number of ITE USB PD active ports"
-	depends on PLATFORM_EC_USB_PD_TCPM_ITE_ON_CHIP
-	default 1
-	help
-	  This sets the number of active USB Power Delivery (USB PD) ports
-	  in use on the ITE microcontroller. The active port usage should
-	  follow the order of ITE TCPC port index.
-
 config PLATFORM_EC_USB_PD_PPC
 	bool "Enable Power Path Control from PD"
 	default n

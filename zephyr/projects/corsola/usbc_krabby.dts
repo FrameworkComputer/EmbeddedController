@@ -74,3 +74,11 @@
 		};
 	};
 };
+
+&usbpd0 {
+	status = "okay";
+};
+
+&usbpd1 {
+	status = "okay";
+};

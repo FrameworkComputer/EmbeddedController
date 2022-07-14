@@ -370,3 +370,7 @@
 		     &i2c5_data_gpa5_default>;
 	pinctrl-names = "default";
 };
+
+&usbpd0 {
+	status = "okay";
+};

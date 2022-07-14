@@ -423,3 +423,7 @@
 	pinctrl-0 = <&tach1a_gpd7_default>;
 	pinctrl-names = "default";
 };
+
+&usbpd0 {
+	status = "okay";
+};
