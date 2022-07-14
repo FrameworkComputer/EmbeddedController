@@ -741,6 +741,13 @@ def main():
         )
         sys.exit(1)
 
+    if args.remote and args.flasher == SERVO_MICRO:
+        logging.error(
+            "The remote option is not supported when flashing with servo "
+            "micro. Use J-Link instead or flash with a local servo micro."
+        )
+        sys.exit(1)
+
     if args.board not in BOARD_CONFIGS:
         logging.error('Unable to find a config for board: "%s"', args.board)
         sys.exit(1)
