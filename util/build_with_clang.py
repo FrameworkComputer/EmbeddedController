@@ -41,7 +41,9 @@ def main() -> int:
     parser = argparse.ArgumentParser()
 
     log_level_choices = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    parser.add_argument("--log_level", "-l", choices=log_level_choices, default="DEBUG")
+    parser.add_argument(
+        "--log_level", "-l", choices=log_level_choices, default="DEBUG"
+    )
 
     parser.add_argument(
         "--num_threads", "-j", type=int, default=multiprocessing.cpu_count()
@@ -67,7 +69,8 @@ def main() -> int:
 
     if len(failed_boards) > 0:
         logging.error(
-            "The following boards failed to compile:\n%s", "\n".join(failed_boards)
+            "The following boards failed to compile:\n%s",
+            "\n".join(failed_boards),
         )
         return 1
 

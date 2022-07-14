@@ -81,10 +81,14 @@ class Cts(object):
         """Build images for DUT and TH."""
         print("Building DUT image...")
         if not self.dut.build(self.ec_dir):
-            raise RuntimeError("Building module %s for DUT failed" % (self.module))
+            raise RuntimeError(
+                "Building module %s for DUT failed" % (self.module)
+            )
         print("Building TH image...")
         if not self.th.build(self.ec_dir):
-            raise RuntimeError("Building module %s for TH failed" % (self.module))
+            raise RuntimeError(
+                "Building module %s for TH failed" % (self.module)
+            )
 
     def flash_boards(self):
         """Flashes TH and DUT with their most recently built ec.bin."""
@@ -134,7 +138,9 @@ class Cts(object):
                 d["name"] = l[0].strip()
                 d["th_rc"] = self.get_return_code_value(l[1].strip().strip('"'))
                 d["th_string"] = l[2].strip().strip('"')
-                d["dut_rc"] = self.get_return_code_value(l[3].strip().strip('"'))
+                d["dut_rc"] = self.get_return_code_value(
+                    l[3].strip().strip('"')
+                )
                 d["dut_string"] = l[4].strip().strip('"')
                 tests.append(d)
         return tests
@@ -246,7 +252,10 @@ class Cts(object):
         for i, v in enumerate(self.testlist):
             if v["th_string"] in th_results[i]["output"] or not v["th_string"]:
                 th_results[i]["string"] = True
-            if v["dut_string"] in dut_results[i]["output"] or not v["dut_string"]:
+            if (
+                v["dut_string"] in dut_results[i]["output"]
+                or not v["dut_string"]
+            ):
                 dut_results[i]["string"] = True
 
         return th_results, dut_results
@@ -260,7 +269,8 @@ class Cts(object):
         """
         len_test_name = max(len(s["name"]) for s in self.testlist)
         len_code_name = max(
-            len(self.get_return_code_name(v, True)) for v in self.return_codes.values()
+            len(self.get_return_code_name(v, True))
+            for v in self.return_codes.values()
         )
 
         head = "{:^" + str(len_test_name) + "} "
@@ -283,7 +293,9 @@ class Cts(object):
             th_cn = self.get_return_code_name(th_results[i]["rc"], True)
             dut_cn = self.get_return_code_name(dut_results[i]["rc"], True)
             th_res = self.evaluate_result(
-                th_results[i], self.testlist[i]["th_rc"], self.testlist[i]["th_string"]
+                th_results[i],
+                self.testlist[i]["th_rc"],
+                self.testlist[i]["th_string"],
             )
             dut_res = self.evaluate_result(
                 dut_results[i],
@@ -398,8 +410,12 @@ def main():
     module = "meta"
 
     parser = argparse.ArgumentParser(description="Used to build/flash boards")
-    parser.add_argument("-d", "--dut", help="Specify DUT you want to build/flash")
-    parser.add_argument("-m", "--module", help="Specify module you want to build/flash")
+    parser.add_argument(
+        "-d", "--dut", help="Specify DUT you want to build/flash"
+    )
+    parser.add_argument(
+        "-m", "--module", help="Specify module you want to build/flash"
+    )
     parser.add_argument(
         "-s",
         "--setup",
@@ -407,7 +423,10 @@ def main():
         help="Connect only the TH to save its serial",
     )
     parser.add_argument(
-        "-b", "--build", action="store_true", help="Build test suite (no flashing)"
+        "-b",
+        "--build",
+        action="store_true",
+        help="Build test suite (no flashing)",
     )
     parser.add_argument(
         "-f",

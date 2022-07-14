@@ -108,7 +108,9 @@ DARTMONKEY_IMAGE_PATH = os.path.join(
 NOCTURNE_FP_IMAGE_PATH = os.path.join(
     TEST_ASSETS_BUCKET, "nocturne_fp_v2.2.64-58cf5974e.bin"
 )
-NAMI_FP_IMAGE_PATH = os.path.join(TEST_ASSETS_BUCKET, "nami_fp_v2.2.144-7a08e07eb.bin")
+NAMI_FP_IMAGE_PATH = os.path.join(
+    TEST_ASSETS_BUCKET, "nami_fp_v2.2.144-7a08e07eb.bin"
+)
 BLOONCHIPPER_V4277_IMAGE_PATH = os.path.join(
     TEST_ASSETS_BUCKET, "bloonchipper_v2.0.4277-9f652bb3.bin"
 )
@@ -161,7 +163,10 @@ class TestConfig:
 
     def __post_init__(self):
         if self.finish_regexes is None:
-            self.finish_regexes = [ALL_TESTS_PASSED_REGEX, ALL_TESTS_FAILED_REGEX]
+            self.finish_regexes = [
+                ALL_TESTS_PASSED_REGEX,
+                ALL_TESTS_FAILED_REGEX,
+            ]
         if self.fail_regexes is None:
             self.fail_regexes = [
                 SINGLE_CHECK_FAILED_REGEX,
@@ -193,7 +198,9 @@ class AllTests:
             TestConfig(test_name="cortexm_fpu"),
             TestConfig(test_name="crc"),
             TestConfig(
-                test_name="flash_physical", image_to_use=ImageType.RO, toggle_power=True
+                test_name="flash_physical",
+                image_to_use=ImageType.RO,
+                toggle_power=True,
             ),
             TestConfig(
                 test_name="flash_write_protect",
@@ -209,7 +216,9 @@ class AllTests:
                 test_args=["spi"],
             ),
             TestConfig(
-                config_name="fpsensor_spi_rw", test_name="fpsensor", test_args=["spi"]
+                config_name="fpsensor_spi_rw",
+                test_name="fpsensor",
+                test_args=["spi"],
             ),
             TestConfig(
                 config_name="fpsensor_uart_ro",
@@ -218,7 +227,9 @@ class AllTests:
                 test_args=["uart"],
             ),
             TestConfig(
-                config_name="fpsensor_uart_rw", test_name="fpsensor", test_args=["uart"]
+                config_name="fpsensor_uart_rw",
+                test_name="fpsensor",
+                test_args=["uart"],
             ),
             TestConfig(
                 config_name="mpu_ro",
@@ -281,7 +292,10 @@ class AllTests:
                 TestConfig(
                     config_name="panic_data_" + variant_name,
                     test_name="panic_data",
-                    fail_regexes=[SINGLE_CHECK_FAILED_REGEX, ALL_TESTS_FAILED_REGEX],
+                    fail_regexes=[
+                        SINGLE_CHECK_FAILED_REGEX,
+                        ALL_TESTS_FAILED_REGEX,
+                    ],
                     ro_image=variant_info.get("ro_image_path"),
                     build_board=variant_info.get("build_board"),
                 )
@@ -320,8 +334,12 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
     variants={
-        "bloonchipper_v2.0.4277": {"ro_image_path": BLOONCHIPPER_V4277_IMAGE_PATH},
-        "bloonchipper_v2.0.5938": {"ro_image_path": BLOONCHIPPER_V5938_IMAGE_PATH},
+        "bloonchipper_v2.0.4277": {
+            "ro_image_path": BLOONCHIPPER_V4277_IMAGE_PATH
+        },
+        "bloonchipper_v2.0.5938": {
+            "ro_image_path": BLOONCHIPPER_V5938_IMAGE_PATH
+        },
     },
 )
 
@@ -452,7 +470,9 @@ def power(board_config: BoardConfig, on: bool) -> None:
         board_config.servo_power_enable + ":" + state,
     ]
     logging.debug('Running command: "%s"', " ".join(cmd))
-    subprocess.run(cmd).check_returncode()  # pylint: disable=subprocess-run-check
+    subprocess.run(
+        cmd
+    ).check_returncode()  # pylint: disable=subprocess-run-check
 
 
 def hw_write_protect(enable: bool) -> None:
@@ -467,7 +487,9 @@ def hw_write_protect(enable: bool) -> None:
         "fw_wp_state:" + state,
     ]
     logging.debug('Running command: "%s"', " ".join(cmd))
-    subprocess.run(cmd).check_returncode()  # pylint: disable=subprocess-run-check
+    subprocess.run(
+        cmd
+    ).check_returncode()  # pylint: disable=subprocess-run-check
 
 
 def build(test_name: str, board_name: str, compiler: str) -> None:
@@ -484,7 +506,9 @@ def build(test_name: str, board_name: str, compiler: str) -> None:
     ]
 
     logging.debug('Running command: "%s"', " ".join(cmd))
-    subprocess.run(cmd).check_returncode()  # pylint: disable=subprocess-run-check
+    subprocess.run(
+        cmd
+    ).check_returncode()  # pylint: disable=subprocess-run-check
 
 
 def flash(
@@ -512,7 +536,9 @@ def flash(
         ]
     )
     logging.debug('Running command: "%s"', " ".join(cmd))
-    completed_process = subprocess.run(cmd)  # pylint: disable=subprocess-run-check
+    completed_process = subprocess.run(
+        cmd
+    )  # pylint: disable=subprocess-run-check
     return completed_process.returncode == 0
 
 
@@ -538,7 +564,9 @@ def readline(
         return None
 
 
-def readlines_until_timeout(executor, f: BinaryIO, timeout_secs: int) -> List[bytes]:
+def readlines_until_timeout(
+    executor, f: BinaryIO, timeout_secs: int
+) -> List[bytes]:
     """Continuously read lines for timeout_secs."""
     lines: List[bytes] = []
     while True:
@@ -641,7 +669,10 @@ def get_test_list(config: BoardConfig, test_args) -> List[TestConfig]:
 
 
 def flash_and_run_test(
-    test: TestConfig, board_config: BoardConfig, args: argparse.Namespace, executor
+    test: TestConfig,
+    board_config: BoardConfig,
+    args: argparse.Namespace,
+    executor,
 ) -> bool:
     """Run a single test using the test and board configuration specified"""
     build_board = args.board
@@ -672,13 +703,17 @@ def flash_and_run_test(
     flash_succeeded = False
     for i in range(0, test.num_flash_attempts):
         logging.debug("Flash attempt %d", i + 1)
-        if flash(image_path, args.board, args.flasher, args.remote, args.jlink_port):
+        if flash(
+            image_path, args.board, args.flasher, args.remote, args.jlink_port
+        ):
             flash_succeeded = True
             break
         time.sleep(1)
 
     if not flash_succeeded:
-        logging.debug("Flashing failed after max attempts: %d", test.num_flash_attempts)
+        logging.debug(
+            "Flashing failed after max attempts: %d", test.num_flash_attempts
+        )
         return False
 
     if test.toggle_power:
@@ -775,13 +810,19 @@ def main():
     )
 
     log_level_choices = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
-    parser.add_argument("--log_level", "-l", choices=log_level_choices, default="DEBUG")
+    parser.add_argument(
+        "--log_level", "-l", choices=log_level_choices, default="DEBUG"
+    )
 
     flasher_choices = [SERVO_MICRO, JTRACE]
-    parser.add_argument("--flasher", "-f", choices=flasher_choices, default=JTRACE)
+    parser.add_argument(
+        "--flasher", "-f", choices=flasher_choices, default=JTRACE
+    )
 
     compiler_options = [GCC, CLANG]
-    parser.add_argument("--compiler", "-c", choices=compiler_options, default=GCC)
+    parser.add_argument(
+        "--compiler", "-c", choices=compiler_options, default=GCC
+    )
 
     # This might be expanded to serve as a "remote" for flash_ec also, so
     # we will leave it generic.
@@ -793,7 +834,10 @@ def main():
     )
 
     parser.add_argument(
-        "--jlink_port", "-j", type=int, help="The port to use when connecting to JLink."
+        "--jlink_port",
+        "-j",
+        type=int,
+        help="The port to use when connecting to JLink.",
     )
     parser.add_argument(
         "--console_port",

@@ -53,7 +53,9 @@ class MarkdownHelpFormatter(argparse.HelpFormatter):
                     if action.nargs == 0:
                         parts.append(option_string)
                     else:
-                        parts.append(f"{option_string} {_get_metavar(action).upper()}")
+                        parts.append(
+                            f"{option_string} {_get_metavar(action).upper()}"
+                        )
                 return ", ".join(f"`{part}`" for part in parts)
             return f"`{_get_metavar(action)}`"
 
@@ -103,7 +105,9 @@ def generate_readme():
 
     _append("# Zmake")
     _append()
-    _append('<!-- Auto-generated contents!  Run "zmake generate-readme" to update. -->')
+    _append(
+        '<!-- Auto-generated contents!  Run "zmake generate-readme" to update. -->'
+    )
     _append()
     _append("[TOC]")
     _append()

@@ -25,7 +25,13 @@ def module_dts_overlay_name(modpath, board_name):
     Returns:
         A pathlib.Path object to the expected overlay path.
     """
-    return modpath / "zephyr" / "dts" / "board-overlays" / "{}.dts".format(board_name)
+    return (
+        modpath
+        / "zephyr"
+        / "dts"
+        / "board-overlays"
+        / "{}.dts".format(board_name)
+    )
 
 
 @dataclasses.dataclass
@@ -43,7 +49,9 @@ class ProjectConfig:
     is_test: bool = dataclasses.field(default=False)
     test_args: typing.List[str] = dataclasses.field(default_factory=list)
     dts_overlays: "list[str]" = dataclasses.field(default_factory=list)
-    kconfig_files: "list[pathlib.Path]" = dataclasses.field(default_factory=list)
+    kconfig_files: "list[pathlib.Path]" = dataclasses.field(
+        default_factory=list
+    )
     project_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
     test_timeout_secs: float = dataclasses.field(default=2 * 60)
 
@@ -53,7 +61,9 @@ class Project:
 
     def __init__(self, config: ProjectConfig):
         self.config = config
-        self.packer: zmake.output_packers.BasePacker = self.config.output_packer(self)
+        self.packer: zmake.output_packers.BasePacker = (
+            self.config.output_packer(self)
+        )
 
     def iter_builds(self):
         """Iterate thru the build combinations provided by the project's packer.
@@ -61,7 +71,9 @@ class Project:
         Yields:
             2-tuples of a build configuration name and a BuildConfig.
         """
-        conf = build_config.BuildConfig(cmake_defs={"BOARD": self.config.zephyr_board})
+        conf = build_config.BuildConfig(
+            cmake_defs={"BOARD": self.config.zephyr_board}
+        )
 
         kconfig_files = []
         prj_conf = self.config.project_dir / "prj.conf"
@@ -85,7 +97,9 @@ class Project:
         """
         overlays = []
         for module_path in modules.values():
-            dts_path = module_dts_overlay_name(module_path, self.config.zephyr_board)
+            dts_path = module_dts_overlay_name(
+                module_path, self.config.zephyr_board
+            )
             if dts_path.is_file():
                 overlays.append(dts_path.resolve())
 
@@ -148,7 +162,9 @@ class Project:
             support_class = toolchains.support_classes[name]
             toolchain = support_class(name=name, modules=module_paths)
             if toolchain.probe():
-                logging.info("Toolchain %r selected by probe function.", toolchain)
+                logging.info(
+                    "Toolchain %r selected by probe function.", toolchain
+                )
                 return toolchain
         raise OSError(
             "No supported toolchains could be found on your system. If you see "

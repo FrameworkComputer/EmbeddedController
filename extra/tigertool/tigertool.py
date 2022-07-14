@@ -202,7 +202,9 @@ def do_sysjump(region, pty, serialname):
     """
     validregion = ["ro", "rw"]
     if region not in validregion:
-        c.log("Region setting %s invalid, try one of %s" % (region, validregion))
+        c.log(
+            "Region setting %s invalid, try one of %s" % (region, validregion)
+        )
         return False
 
     cmd = "sysjump %s" % region
@@ -232,7 +234,11 @@ def do_sysjump(region, pty, serialname):
 def get_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "-s", "--serialno", type=str, default=None, help="serial number of board to use"
+        "-s",
+        "--serialno",
+        type=str,
+        default=None,
+        help="serial number of board to use",
     )
     parser.add_argument(
         "-b",
@@ -253,9 +259,13 @@ def get_parser():
         action="store_true",
         help="check serial number set on the board.",
     )
-    group.add_argument("-m", "--mux", type=str, default=None, help="mux selection")
+    group.add_argument(
+        "-m", "--mux", type=str, default=None, help="mux selection"
+    )
     group.add_argument("-p", "--power", action="store_true", help="check VBUS")
-    group.add_argument("-l", "--powerlog", type=int, default=None, help="log VBUS")
+    group.add_argument(
+        "-l", "--powerlog", type=int, default=None, help="log VBUS"
+    )
     group.add_argument(
         "-r", "--sysjump", type=str, default=None, help="region selection"
     )

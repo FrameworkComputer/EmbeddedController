@@ -244,7 +244,11 @@ def BuildTag(args):
 
 def BuildTagFromHdrAddr(header_loc):
     tag = bytearray(
-        [(header_loc >> 8) & 0xFF, (header_loc >> 16) & 0xFF, (header_loc >> 24) & 0xFF]
+        [
+            (header_loc >> 8) & 0xFF,
+            (header_loc >> 16) & 0xFF,
+            (header_loc >> 24) & 0xFF,
+        ]
     )
     tag.append(Crc8(0, tag))
     return tag
@@ -327,7 +331,11 @@ def parseargs():
         "--loader_file", help="EC loader binary", default="ecloader.bin"
     )
     parser.add_argument(
-        "-s", "--spi_size", type=int, help="Size of the SPI flash in KB", default=512
+        "-s",
+        "--spi_size",
+        type=int,
+        help="Size of the SPI flash in KB",
+        default=512,
     )
     parser.add_argument(
         "-l",
@@ -381,7 +389,10 @@ def parseargs():
         default=False,
     )
     parser.add_argument(
-        "--verbose", action="store_true", help="Enable verbose output", default=False
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output",
+        default=False,
     )
 
     return parser.parse_args()
@@ -535,7 +546,9 @@ def main():
     if args.test_spi == True:
         crc = zlib.crc32(bytes(payload_rw[: (payload_rw_len - 32)]))
         crc_ofs = payload_rw_len - 4
-        debug_print("EC_RW CRC32 = 0x{0:08x} at offset 0x{1:08x}".format(crc, crc_ofs))
+        debug_print(
+            "EC_RW CRC32 = 0x{0:08x} at offset 0x{1:08x}".format(crc, crc_ofs)
+        )
         for i in range(4):
             payload_rw[crc_ofs + i] = crc & 0xFF
             crc = crc >> 8
@@ -551,7 +564,11 @@ def main():
 
     spi_list.append((args.header_loc, header, "header(lwf + ro)"))
     spi_list.append(
-        (args.header_loc + HEADER_SIZE, header_signature, "header(lwf + ro) signature")
+        (
+            args.header_loc + HEADER_SIZE,
+            header_signature,
+            "header(lwf + ro) signature",
+        )
     )
     spi_list.append(
         (args.header_loc + args.payload_offset, payload, "payload(lfw + ro)")
@@ -593,12 +610,20 @@ def main():
         for s in spi_list:
             if addr < s[0]:
                 debug_print(
-                    "Offset ", hex(addr), " Length", hex(s[0] - addr), "fill with 0xff"
+                    "Offset ",
+                    hex(addr),
+                    " Length",
+                    hex(s[0] - addr),
+                    "fill with 0xff",
                 )
                 f.write(b"\xff" * (s[0] - addr))
                 addr = s[0]
                 debug_print(
-                    "Offset ", hex(addr), " Length", hex(len(s[1])), "write data"
+                    "Offset ",
+                    hex(addr),
+                    " Length",
+                    hex(len(s[1])),
+                    "write data",
                 )
 
             f.write(s[1])
@@ -606,7 +631,11 @@ def main():
 
         if addr < spi_size:
             debug_print(
-                "Offset ", hex(addr), " Length", hex(spi_size - addr), "fill with 0xff"
+                "Offset ",
+                hex(addr),
+                " Length",
+                hex(spi_size - addr),
+                "fill with 0xff",
             )
             f.write(b"\xff" * (spi_size - addr))
 

@@ -97,7 +97,9 @@ def do_with_retries(func, *args):
             time.sleep(RETRIES_DELAY)
             continue
 
-    raise Exception("'{}' failed after {} retries".format(func.__name__, RETRIES_COUNT))
+    raise Exception(
+        "'{}' failed after {} retries".format(func.__name__, RETRIES_COUNT)
+    )
 
 
 def flash(brdfile, serialno, binfile):
@@ -144,7 +146,9 @@ def flash2(vidpid, serialno, binfile):
     print(cmd)
     help_cmd = "%s --help" % tool
     with open("/dev/null") as devnull:
-        valid_check = subprocess.call(help_cmd.split(), stdout=devnull, stderr=devnull)
+        valid_check = subprocess.call(
+            help_cmd.split(), stdout=devnull, stderr=devnull
+        )
     if valid_check:
         raise ServoUpdaterException(
             "%s exit with res = %d. Make sure the tool "
@@ -236,7 +240,9 @@ def do_updater_version(tinys):
             return 2
         else:
             return 6
-    raise ServoUpdaterException("Can't determine updater target from vers: [%s]" % vers)
+    raise ServoUpdaterException(
+        "Can't determine updater target from vers: [%s]" % vers
+    )
 
 
 def _extract_version(boardname, binfile):
@@ -260,7 +266,9 @@ def _extract_version(boardname, binfile):
     if m:
         newvers = m.group(0).strip(" \t\r\n\0")
     else:
-        raise ServoUpdaterException("Can't find version from file: %s." % binfile)
+        raise ServoUpdaterException(
+            "Can't find version from file: %s." % binfile
+        )
 
     return newvers
 
@@ -305,7 +313,9 @@ def get_files_and_version(cname, fname=None, channel=DEFAULT_CHANNEL):
         if os.path.exists(updater_path):
             break
     else:
-        raise ServoUpdaterException("servo_updater/ dir not found in known spots.")
+        raise ServoUpdaterException(
+            "servo_updater/ dir not found in known spots."
+        )
 
     firmware_path = os.path.join(updater_path, FIRMWARE_DIR)
     configs_path = os.path.join(updater_path, CONFIGS_DIR)
@@ -338,7 +348,9 @@ def get_files_and_version(cname, fname=None, channel=DEFAULT_CHANNEL):
         if os.path.isfile(newname):
             fname = newname
         else:
-            raise ServoUpdaterException("Can't find firmware binary: %s." % binary_file)
+            raise ServoUpdaterException(
+                "Can't find firmware binary: %s." % binary_file
+            )
     elif not os.path.isfile(fname):
         # If a name is specified but not found, try the default path.
         newname = os.path.join(firmware_path, fname)
@@ -365,7 +377,11 @@ def main():
         help="only print available firmware for board/channel",
     )
     parser.add_argument(
-        "-s", "--serialno", type=str, help="serial number to program", default=None
+        "-s",
+        "--serialno",
+        type=str,
+        help="serial number to program",
+        default=None,
     )
     parser.add_argument(
         "-b",
@@ -392,9 +408,14 @@ def main():
         help="Update even if version match",
         default=False,
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Chatty output")
     parser.add_argument(
-        "-r", "--reboot", action="store_true", help="Always reboot, even after probe."
+        "-v", "--verbose", action="store_true", help="Chatty output"
+    )
+    parser.add_argument(
+        "-r",
+        "--reboot",
+        action="store_true",
+        help="Always reboot, even after probe.",
     )
 
     args = parser.parse_args()

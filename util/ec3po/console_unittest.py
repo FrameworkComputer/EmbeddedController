@@ -625,7 +625,9 @@ class TestConsoleEditingMethods(unittest.TestCase):
 
         # We expect the test string, followed by a jump to the beginning of the
         # line, and finally a move right 1.
-        exp_console_out = test_str + OutputStream.MoveCursorLeft(len((test_str)))
+        exp_console_out = test_str + OutputStream.MoveCursorLeft(
+            len((test_str))
+        )
 
         # A move right 1 column.
         exp_console_out += OutputStream.MoveCursorRight(1)
@@ -653,7 +655,9 @@ class TestConsoleEditingMethods(unittest.TestCase):
 
         # We expect the test string, followed by a jump to the beginning of the
         # line, and finally a move right 1.
-        exp_console_out = test_str + OutputStream.MoveCursorLeft(len((test_str)))
+        exp_console_out = test_str + OutputStream.MoveCursorLeft(
+            len((test_str))
+        )
 
         # A move right 1 column.
         exp_console_out += OutputStream.MoveCursorRight(1)
@@ -704,7 +708,9 @@ class TestConsoleEditingMethods(unittest.TestCase):
         test_str = b"accelinfo on"
         input_stream = BytesToByteList(test_str)
         # Jump to beginning of line and then kill it with Ctrl+K.
-        input_stream.extend([console.ControlKey.CTRL_A, console.ControlKey.CTRL_K])
+        input_stream.extend(
+            [console.ControlKey.CTRL_A, console.ControlKey.CTRL_K]
+        )
 
         # Send the sequence out.
         for byte in input_stream:
@@ -1207,7 +1213,8 @@ class TestConsoleCompatibility(unittest.TestCase):
 
         # At this point, we should have negotiated to enhanced.
         self.assertTrue(
-            self.console.enhanced_ec, msg=("Did not negotiate to enhanced EC image.")
+            self.console.enhanced_ec,
+            msg=("Did not negotiate to enhanced EC image."),
         )
 
         # The command would have been dropped however, so verify this...
@@ -1623,7 +1630,8 @@ class TestOOBMConsoleCommands(unittest.TestCase):
 
         # The EC image should be assumed to be enhanced.
         self.assertTrue(
-            self.console.enhanced_ec, "The image should be assumed to be enhanced."
+            self.console.enhanced_ec,
+            "The image should be assumed to be enhanced.",
         )
 
 

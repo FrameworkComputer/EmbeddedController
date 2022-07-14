@@ -136,7 +136,14 @@ def get_relevant_commits(head, merge_head, fmt, relevant_paths):
         stdout.
     """
     if fmt:
-        cmd = ["git", "log", fmt, head + ".." + merge_head, "--", relevant_paths]
+        cmd = [
+            "git",
+            "log",
+            fmt,
+            head + ".." + merge_head,
+            "--",
+            relevant_paths,
+        ]
     else:
         cmd = ["git", "log", head + ".." + merge_head, "--", relevant_paths]
 
@@ -281,7 +288,10 @@ def main(argv):
             arglist.append("-X" + opts.strategy_option)
         subprocess.run(arglist, check=True)
     else:
-        print("We have already started merge process.", "Attempt to generate commit.")
+        print(
+            "We have already started merge process.",
+            "Attempt to generate commit.",
+        )
 
     print("Generating commit message...")
     branch = subprocess.run(
@@ -308,7 +318,12 @@ def main(argv):
     commit_msg = git_commit_msg(branch, head, merge_head, relevant_paths, cmd)
     subprocess.run(["git", "commit", "--signoff", "-m", commit_msg], check=True)
     subprocess.run(["git", "commit", "--amend"], check=True)
-    print(("Finished! **Please review the commit to see if it's to your " "liking.**"))
+    print(
+        (
+            "Finished! **Please review the commit to see if it's to your "
+            "liking.**"
+        )
+    )
 
 
 if __name__ == "__main__":

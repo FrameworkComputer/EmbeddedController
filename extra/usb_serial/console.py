@@ -71,7 +71,9 @@ class Susb:
     WRITE_ENDPOINT = 0x1
     TIMEOUT_MS = 100
 
-    def __init__(self, vendor=0x18D1, product=0x500F, interface=1, serialname=None):
+    def __init__(
+        self, vendor=0x18D1, product=0x500F, interface=1, serialname=None
+    ):
         """Susb constructor.
 
         Discovers and connects to USB endpoints.
@@ -109,7 +111,9 @@ class Susb:
             try:
                 dev = dev_list[0]
             except:
-                raise SusbError("USB device %04x:%04x not found" % (vendor, product))
+                raise SusbError(
+                    "USB device %04x:%04x not found" % (vendor, product)
+                )
 
         # If we can't set configuration, it's already been set.
         try:
@@ -130,11 +134,15 @@ class Susb:
             dev.detach_kernel_driver(intf.bInterfaceNumber)
 
         read_ep_number = intf.bInterfaceNumber + self.READ_ENDPOINT
-        read_ep = usb.util.find_descriptor(intf, bEndpointAddress=read_ep_number)
+        read_ep = usb.util.find_descriptor(
+            intf, bEndpointAddress=read_ep_number
+        )
         self._read_ep = read_ep
 
         write_ep_number = intf.bInterfaceNumber + self.WRITE_ENDPOINT
-        write_ep = usb.util.find_descriptor(intf, bEndpointAddress=write_ep_number)
+        write_ep = usb.util.find_descriptor(
+            intf, bEndpointAddress=write_ep_number
+        )
         self._write_ep = write_ep
 
 
@@ -163,7 +171,9 @@ class SuartError(Exception):
 class Suart:
     """Provide interface to serial usb endpoint."""
 
-    def __init__(self, vendor=0x18D1, product=0x501C, interface=0, serialname=None):
+    def __init__(
+        self, vendor=0x18D1, product=0x501C, interface=0, serialname=None
+    ):
         """Suart contstructor.
 
         Initializes USB stream interface.
@@ -179,7 +189,10 @@ class Suart:
         """
         self._done = threading.Event()
         self._susb = Susb(
-            vendor=vendor, product=product, interface=interface, serialname=serialname
+            vendor=vendor,
+            product=product,
+            interface=interface,
+            serialname=serialname,
         )
 
     def wait_until_done(self, timeout=None):
@@ -239,7 +252,11 @@ class Suart:
 
 parser = argparse.ArgumentParser(description="Open a console to a USB device")
 parser.add_argument(
-    "-d", "--device", type=str, help="vid:pid of target device", default="18d1:501c"
+    "-d",
+    "--device",
+    type=str,
+    help="vid:pid of target device",
+    default="18d1:501c",
 )
 parser.add_argument(
     "-i", "--interface", type=int, help="interface number of console", default=0
@@ -272,7 +289,9 @@ def runconsole():
     serialno = args.serialno
     interface = args.interface
 
-    sobj = Suart(vendor=vid, product=pid, interface=interface, serialname=serialno)
+    sobj = Suart(
+        vendor=vid, product=pid, interface=interface, serialname=serialno
+    )
     if sys.stdin.isatty():
         tty.setraw(sys.stdin.fileno())
     sobj.run()

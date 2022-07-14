@@ -125,7 +125,9 @@ def inject_event(key, press):
         print("%s: invalid key: %s" % (this_script, key))
         sys.exit(1)
     (row, col) = KEYMATRIX[key]
-    subprocess.call(["ectool", "kbpress", str(row), str(col), "1" if press else "0"])
+    subprocess.call(
+        ["ectool", "kbpress", str(row), str(col), "1" if press else "0"]
+    )
 
 
 def inject_key(key):
@@ -191,7 +193,8 @@ usage_check(arg_len % 2 == 1, "mismatched arguments")
 
 for i in range(1, arg_len, 2):
     usage_check(
-        sys.argv[i] in ("-s", "-k", "-p", "-r"), "unknown flag: %s" % sys.argv[i]
+        sys.argv[i] in ("-s", "-k", "-p", "-r"),
+        "unknown flag: %s" % sys.argv[i],
     )
 
 for i in range(1, arg_len, 2):

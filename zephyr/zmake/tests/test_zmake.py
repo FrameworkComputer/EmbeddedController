@@ -87,7 +87,10 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
         """Ignores the provided command and just runs 'cat' instead"""
         for pattern, filename in self.fnames.items():
             # Convert to a list of strings
-            cmd = [isinstance(c, pathlib.PosixPath) and c.as_posix() or c for c in cmd]
+            cmd = [
+                isinstance(c, pathlib.PosixPath) and c.as_posix() or c
+                for c in cmd
+            ]
             if pattern.match(" ".join(cmd)):
                 new_cmd = ["cat", filename]
                 break
@@ -167,7 +170,9 @@ class TestFilters:
         expected = {
             "Configuring fakeproject:rw.",
             "Configuring fakeproject:ro.",
-            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmp_path),
+            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(
+                tmp_path
+            ),
             "Building fakeproject:ro: /usr/bin/ninja -C {}-ro".format(
                 tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
@@ -178,7 +183,9 @@ class TestFilters:
         for suffix in ["ro", "rw"]:
             with open(get_test_filepath("%s_INFO" % suffix)) as file:
                 for line in file:
-                    expected.add("[fakeproject:{}]{}".format(suffix, line.strip()))
+                    expected.add(
+                        "[fakeproject:{}]{}".format(suffix, line.strip())
+                    )
         # This produces an easy-to-read diff if there is a difference
         assert expected == set(recs)
 
@@ -191,7 +198,9 @@ class TestFilters:
         expected = {
             "Configuring fakeproject:rw.",
             "Configuring fakeproject:ro.",
-            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(tmp_path),
+            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(
+                tmp_path
+            ),
             "Building fakeproject:ro: /usr/bin/ninja -C {}-ro".format(
                 tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
@@ -204,7 +213,9 @@ class TestFilters:
         for suffix in ["ro", "rw"]:
             with open(get_test_filepath(suffix)) as file:
                 for line in file:
-                    expected.add("[fakeproject:{}]{}".format(suffix, line.strip()))
+                    expected.add(
+                        "[fakeproject:{}]{}".format(suffix, line.strip())
+                    )
         # This produces an easy-to-read diff if there is a difference
         assert expected == set(recs)
 
@@ -218,7 +229,9 @@ class TestFilters:
         )
 
         dt_errs = [rec for rec in recs if "adc" in rec]
-        assert "devicetree error: 'adc' is marked as required" in list(dt_errs)[0]
+        assert (
+            "devicetree error: 'adc' is marked as required" in list(dt_errs)[0]
+        )
 
 
 @pytest.mark.parametrize(

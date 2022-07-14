@@ -134,11 +134,14 @@ rsource "subdir/Kconfig.wibble"
         with tempfile.TemporaryDirectory() as srctree:
             self.setup_srctree(srctree)
             self.assertEqual(
-                ["MENU_KCONFIG", "MY_KCONFIG"], checker.scan_kconfigs(srctree, PREFIX)
+                ["MENU_KCONFIG", "MY_KCONFIG"],
+                checker.scan_kconfigs(srctree, PREFIX),
             )
 
     @classmethod
-    def setup_allowed_and_configs(cls, allowed_fname, configs_fname, add_new_one=True):
+    def setup_allowed_and_configs(
+        cls, allowed_fname, configs_fname, add_new_one=True
+    ):
         """Set up the 'allowed' and 'configs' files for tests
 
         Args:
@@ -181,7 +184,9 @@ rsource "subdir/Kconfig.wibble"
                 self.setup_srctree(srctree)
                 with tempfile.NamedTemporaryFile() as allowed:
                     with tempfile.NamedTemporaryFile() as configs:
-                        self.setup_allowed_and_configs(allowed.name, configs.name)
+                        self.setup_allowed_and_configs(
+                            allowed.name, configs.name
+                        )
                         ret_code = kconfig_check.main(
                             [
                                 "-c",
@@ -204,7 +209,9 @@ rsource "subdir/Kconfig.wibble"
         """Same Kconfig should be returned for kconfiglib / adhoc"""
         if not kconfig_check.USE_KCONFIGLIB:
             self.fail("No kconfiglib available")
-        zephyr_path = pathlib.Path("../../../src/third_party/zephyr/main").resolve()
+        zephyr_path = pathlib.Path(
+            "../../../src/third_party/zephyr/main"
+        ).resolve()
         if not zephyr_path.exists():
             self.fail("No zephyr tree available")
         os.environ["ZEPHYR_BASE"] = str(zephyr_path)

@@ -10,21 +10,23 @@ import time
 
 def one_pass(helper):
     helper.wait_output("=== Timer calibration ===")
-    res = helper.wait_output("back-to-back get_time : (?P<lat>[0-9]+) us", use_re=True)[
-        "lat"
-    ]
+    res = helper.wait_output(
+        "back-to-back get_time : (?P<lat>[0-9]+) us", use_re=True
+    )["lat"]
     minlat = int(res)
     helper.trace("get_time latency %d us\n" % minlat)
 
     helper.wait_output("sleep 1s")
     t0 = time.time()
-    second = helper.wait_output("done. delay = (?P<second>[0-9]+) us", use_re=True)[
-        "second"
-    ]
+    second = helper.wait_output(
+        "done. delay = (?P<second>[0-9]+) us", use_re=True
+    )["second"]
     t1 = time.time()
     secondreal = t1 - t0
     secondlat = int(second) - 1000000
-    helper.trace("1s timer latency %d us / real time %f s\n" % (secondlat, secondreal))
+    helper.trace(
+        "1s timer latency %d us / real time %f s\n" % (secondlat, secondreal)
+    )
 
     us = {}
     for pow2 in range(7):

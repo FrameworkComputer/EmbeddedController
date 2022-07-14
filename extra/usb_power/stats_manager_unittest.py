@@ -228,7 +228,9 @@ class TestStatsManager(unittest.TestCase):
         """Order passed into StatsManager is honoured when formatting summary."""
         # StatsManager that should print D & B first, and the subsequent elements
         # are sorted.
-        d_b_a_c_regexp = re.compile("D-domain.*B-domain.*A-domain.*C-domain", re.DOTALL)
+        d_b_a_c_regexp = re.compile(
+            "D-domain.*B-domain.*A-domain.*C-domain", re.DOTALL
+        )
         data = stats_manager.StatsManager(order=["D-domain", "B-domain"])
         data.AddSample("A-domain", 17)
         data.AddSample("B-domain", 17)
@@ -255,7 +257,9 @@ class TestStatsManager(unittest.TestCase):
         # Assert the reported fname is the same as the expected fname
         self.assertEqual(expected_fname, fname)
         # Assert only the reported fname is output (in the tempdir)
-        self.assertEqual(set([os.path.basename(fname)]), set(os.listdir(self.tempdir)))
+        self.assertEqual(
+            set([os.path.basename(fname)]), set(os.listdir(self.tempdir))
+        )
         with open(fname, "r") as f:
             self.assertEqual(
                 "@@   NAME  COUNT       MEAN  STDDEV        MAX       MIN\n",
@@ -287,7 +291,9 @@ class TestStatsManager(unittest.TestCase):
         # Assert the reported fname is the same as the expected fname
         self.assertEqual(expected_fname, fname)
         # Assert only the reported fname is output (in the tempdir)
-        self.assertEqual(set([os.path.basename(fname)]), set(os.listdir(self.tempdir)))
+        self.assertEqual(
+            set([os.path.basename(fname)]), set(os.listdir(self.tempdir))
+        )
         with open(fname, "r") as f:
             summary = json.load(f)
             self.assertAlmostEqual(100000.0, summary["A"]["mean"])

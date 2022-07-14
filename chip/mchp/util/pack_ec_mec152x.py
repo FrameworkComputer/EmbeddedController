@@ -123,7 +123,9 @@ def GetPayloadFromOffset(payload_file, offset, padsize):
 
     if rem_len:
         payload += PAYLOAD_PAD_BYTE * (padsize - rem_len)
-        debug_print("GetPayload: Added {0} padding bytes".format(padsize - rem_len))
+        debug_print(
+            "GetPayload: Added {0} padding bytes".format(padsize - rem_len)
+        )
 
     return payload
 
@@ -312,7 +314,9 @@ def BuildHeader2(args, chip_dict, payload_len, load_addr, payload_entry):
 
     payload_units = int(payload_len // chip_dict["PAYLOAD_GRANULARITY"])
     assert payload_units < 0x10000, print(
-        "Payload too large: len={0} units={1}".format(payload_len, payload_units)
+        "Payload too large: len={0} units={1}".format(
+            payload_len, payload_units
+        )
     )
 
     header[0x10:0x12] = payload_units.to_bytes(2, "little")
@@ -414,7 +418,11 @@ def BuildTag(args):
 
 def BuildTagFromHdrAddr(header_loc):
     tag = bytearray(
-        [(header_loc >> 8) & 0xFF, (header_loc >> 16) & 0xFF, (header_loc >> 24) & 0xFF]
+        [
+            (header_loc >> 8) & 0xFF,
+            (header_loc >> 16) & 0xFF,
+            (header_loc >> 24) & 0xFF,
+        ]
     )
     tag.append(Crc8(0, tag))
     return tag
@@ -516,7 +524,11 @@ def parseargs():
         "--loader_file", help="EC loader binary", default="ecloader.bin"
     )
     parser.add_argument(
-        "-s", "--spi_size", type=int, help="Size of the SPI flash in KB", default=512
+        "-s",
+        "--spi_size",
+        type=int,
+        help="Size of the SPI flash in KB",
+        default=512,
     )
     parser.add_argument(
         "-l",
@@ -563,7 +575,10 @@ def parseargs():
         default=False,
     )
     parser.add_argument(
-        "--verbose", action="store_true", help="Enable verbose output", default=False
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output",
+        default=False,
     )
     parser.add_argument(
         "--tag0_loc", type=int, help="MEC152X TAG0 SPI offset", default=0
@@ -761,7 +776,9 @@ def main():
     # is filled with the hash digest of the respective entity.
     # BuildHeader2 computes the hash digest and stores it in the correct
     # header location.
-    header = BuildHeader2(args, chip_dict, lfw_ecro_len, LOAD_ADDR, lfw_ecro_entry)
+    header = BuildHeader2(
+        args, chip_dict, lfw_ecro_len, LOAD_ADDR, lfw_ecro_entry
+    )
     printByteArrayAsHex(header, "Header(lfw_ecro)")
 
     ec_info_block = GenEcInfoBlock(args, chip_dict)
@@ -770,7 +787,9 @@ def main():
     cosignature = GenCoSignature(args, chip_dict, lfw_ecro)
     printByteArrayAsHex(cosignature, "LFW + EC_RO cosignature")
 
-    trailer = GenTrailer(args, chip_dict, lfw_ecro, None, ec_info_block, cosignature)
+    trailer = GenTrailer(
+        args, chip_dict, lfw_ecro, None, ec_info_block, cosignature
+    )
 
     printByteArrayAsHex(trailer, "LFW + EC_RO trailer")
 
@@ -782,7 +801,9 @@ def main():
     debug_print("args.input = ", args.input)
     debug_print("args.image_size = ", hex(args.image_size))
 
-    ecrw = GetPayloadFromOffset(args.input, args.image_size, chip_dict["PAD_SIZE"])
+    ecrw = GetPayloadFromOffset(
+        args.input, args.image_size, chip_dict["PAD_SIZE"]
+    )
     debug_print("type(ecrw) is ", type(ecrw))
     debug_print("len(ecrw) is ", hex(len(ecrw)))
 
@@ -883,12 +904,20 @@ def main():
         for s in spi_list:
             if addr < s[0]:
                 debug_print(
-                    "Offset ", hex(addr), " Length", hex(s[0] - addr), "fill with 0xff"
+                    "Offset ",
+                    hex(addr),
+                    " Length",
+                    hex(s[0] - addr),
+                    "fill with 0xff",
                 )
                 f.write(b"\xff" * (s[0] - addr))
                 addr = s[0]
                 debug_print(
-                    "Offset ", hex(addr), " Length", hex(len(s[1])), "write data"
+                    "Offset ",
+                    hex(addr),
+                    " Length",
+                    hex(len(s[1])),
+                    "write data",
                 )
 
             f.write(s[1])
@@ -896,7 +925,11 @@ def main():
 
         if addr < spi_size:
             debug_print(
-                "Offset ", hex(addr), " Length", hex(spi_size - addr), "fill with 0xff"
+                "Offset ",
+                hex(addr),
+                " Length",
+                hex(spi_size - addr),
+                "fill with 0xff",
             )
             f.write(b"\xff" * (spi_size - addr))
 

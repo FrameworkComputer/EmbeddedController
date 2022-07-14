@@ -14,10 +14,7 @@
    },
    "[python]": {
       "editor.insertSpaces": true,
-      "editor.tabSize": 2
-      "editor.rulers": [
-         88
-      ],
+      "editor.tabSize": 4
    },
    "[shellscript]": {
       "editor.insertSpaces": true,

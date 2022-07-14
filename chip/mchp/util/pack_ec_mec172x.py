@@ -132,7 +132,9 @@ def GetPayloadFromOffset(payload_file, offset, chip_dict):
 
     if rem_len:
         payload += chip_dict["PAYLOAD_PAD_BYTE"] * (padsize - rem_len)
-        debug_print("GetPayload: Added {0} padding bytes".format(padsize - rem_len))
+        debug_print(
+            "GetPayload: Added {0} padding bytes".format(padsize - rem_len)
+        )
 
     return payload
 
@@ -335,12 +337,16 @@ def BuildHeader2(args, chip_dict, payload_len, load_addr, payload_entry):
 
     # bytes 0x10 - 0x11 payload length in units of 128 bytes
     assert payload_len % chip_dict["PAYLOAD_GRANULARITY"] == 0, print(
-        "Payload size not a multiple of {0}".format(chip_dict["PAYLOAD_GRANULARITY"])
+        "Payload size not a multiple of {0}".format(
+            chip_dict["PAYLOAD_GRANULARITY"]
+        )
     )
 
     payload_units = int(payload_len // chip_dict["PAYLOAD_GRANULARITY"])
     assert payload_units < 0x10000, print(
-        "Payload too large: len={0} units={1}".format(payload_len, payload_units)
+        "Payload too large: len={0} units={1}".format(
+            payload_len, payload_units
+        )
     )
 
     header[0x10:0x12] = payload_units.to_bytes(2, "little")
@@ -438,7 +444,9 @@ def GenTrailer(
     debug_print("  Update: payload len=0x{0:0x}".format(len(payload)))
     if ec_info_block != None:
         hasher.update(ec_info_block)
-        debug_print("  Update: ec_info_block len=0x{0:0x}".format(len(ec_info_block)))
+        debug_print(
+            "  Update: ec_info_block len=0x{0:0x}".format(len(ec_info_block))
+        )
     if encryption_key_header != None:
         hasher.update(encryption_key_header)
         debug_print(
@@ -448,7 +456,9 @@ def GenTrailer(
         )
     if cosignature != None:
         hasher.update(cosignature)
-        debug_print("  Update: cosignature len=0x{0:0x}".format(len(cosignature)))
+        debug_print(
+            "  Update: cosignature len=0x{0:0x}".format(len(cosignature))
+        )
     trailer[0:48] = hasher.digest()
     trailer[-16:] = 16 * b"\xff"
 
@@ -478,7 +488,11 @@ def BuildTag(args):
 
 def BuildTagFromHdrAddr(header_loc):
     tag = bytearray(
-        [(header_loc >> 8) & 0xFF, (header_loc >> 16) & 0xFF, (header_loc >> 24) & 0xFF]
+        [
+            (header_loc >> 8) & 0xFF,
+            (header_loc >> 16) & 0xFF,
+            (header_loc >> 24) & 0xFF,
+        ]
     )
     tag.append(Crc8(0, tag))
     return tag
@@ -585,7 +599,11 @@ def parseargs():
         "--load_addr", type=int, help="EC SRAM load address", default=0xC0000
     )
     parser.add_argument(
-        "-s", "--spi_size", type=int, help="Size of the SPI flash in KB", default=512
+        "-s",
+        "--spi_size",
+        type=int,
+        help="Size of the SPI flash in KB",
+        default=512,
     )
     parser.add_argument(
         "-l",
@@ -641,7 +659,10 @@ def parseargs():
         default=False,
     )
     parser.add_argument(
-        "--verbose", action="store_true", help="Enable verbose output", default=False
+        "--verbose",
+        action="store_true",
+        help="Enable verbose output",
+        default=False,
     )
     parser.add_argument(
         "--tag0_loc", type=int, help="MEC172x TAG0 SPI offset", default=0
@@ -805,14 +826,18 @@ def main():
     # 32-bit word at offset 0x4 address of reset handler
     # NOTE: reset address will have bit[0]=1 to ensure thumb mode.
     lfw_ecro_entry = GetEntryPoint(rorofile)
-    debug_print("LFW Entry point from GetEntryPoint = 0x{0:08x}".format(lfw_ecro_entry))
+    debug_print(
+        "LFW Entry point from GetEntryPoint = 0x{0:08x}".format(lfw_ecro_entry)
+    )
 
     # Chromebooks are not using MEC BootROM SPI header/payload authentication
     # or payload encryption. In this case the header authentication signature
     # is filled with the hash digest of the respective entity.
     # BuildHeader2 computes the hash digest and stores it in the correct
     # header location.
-    header = BuildHeader2(args, chip_dict, lfw_ecro_len, args.load_addr, lfw_ecro_entry)
+    header = BuildHeader2(
+        args, chip_dict, lfw_ecro_len, args.load_addr, lfw_ecro_entry
+    )
     printByteArrayAsHex(header, "Header(lfw_ecro)")
 
     ec_info_block = GenEcInfoBlock(args, chip_dict)
@@ -821,7 +846,9 @@ def main():
     cosignature = GenCoSignature(args, chip_dict, lfw_ecro)
     printByteArrayAsHex(cosignature, "LFW + EC_RO cosignature")
 
-    trailer = GenTrailer(args, chip_dict, lfw_ecro, None, ec_info_block, cosignature)
+    trailer = GenTrailer(
+        args, chip_dict, lfw_ecro, None, ec_info_block, cosignature
+    )
 
     printByteArrayAsHex(trailer, "LFW + EC_RO trailer")
 
@@ -937,12 +964,20 @@ def main():
         for s in spi_list:
             if addr < s[0]:
                 debug_print(
-                    "Offset ", hex(addr), " Length", hex(s[0] - addr), "fill with 0xff"
+                    "Offset ",
+                    hex(addr),
+                    " Length",
+                    hex(s[0] - addr),
+                    "fill with 0xff",
                 )
                 f.write(b"\xff" * (s[0] - addr))
                 addr = s[0]
                 debug_print(
-                    "Offset ", hex(addr), " Length", hex(len(s[1])), "write data"
+                    "Offset ",
+                    hex(addr),
+                    " Length",
+                    hex(len(s[1])),
+                    "write data",
                 )
 
             f.write(s[1])
@@ -950,7 +985,11 @@ def main():
 
         if addr < spi_size:
             debug_print(
-                "Offset ", hex(addr), " Length", hex(spi_size - addr), "fill with 0xff"
+                "Offset ",
+                hex(addr),
+                " Length",
+                hex(spi_size - addr),
+                "fill with 0xff",
             )
             f.write(b"\xff" * (spi_size - addr))
 

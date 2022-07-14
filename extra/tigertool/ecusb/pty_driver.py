@@ -126,7 +126,9 @@ class ptyDriver(object):
         """
         self._issue_cmd_get_results(cmds, [])
 
-    def _issue_cmd_get_results(self, cmds, regex_list, timeout=DEFAULT_UART_TIMEOUT):
+    def _issue_cmd_get_results(
+        self, cmds, regex_list, timeout=DEFAULT_UART_TIMEOUT
+    ):
         """Send command to the device and wait for response.
 
         This function waits for response message matching a regular
@@ -199,10 +201,14 @@ class ptyDriver(object):
                 try:
                     self._child.expect(regex, timeout=0.1)
                     match = self._child.match
-                    lastindex = match.lastindex if match and match.lastindex else 0
+                    lastindex = (
+                        match.lastindex if match and match.lastindex else 0
+                    )
                     # Create a tuple which contains the entire matched string and all
                     # the subgroups of the match.
-                    result = match.group(*range(lastindex + 1)) if match else None
+                    result = (
+                        match.group(*range(lastindex + 1)) if match else None
+                    )
                     if result:
                         result = tuple(res.decode("utf-8") for res in result)
                     result_list.append(result)

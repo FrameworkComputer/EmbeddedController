@@ -59,7 +59,9 @@ class Task(object):
       routine_address: Resolved routine address. None if it hasn't been resolved.
     """
 
-    def __init__(self, name, routine_name, stack_max_size, routine_address=None):
+    def __init__(
+        self, name, routine_name, stack_max_size, routine_address=None
+    ):
         """Constructor.
 
         Args:
@@ -250,7 +252,9 @@ class Function(object):
         if len(self.stack_max_path) != len(other.stack_max_path):
             return False
 
-        for self_func, other_func in zip(self.stack_max_path, other.stack_max_path):
+        for self_func, other_func in zip(
+            self.stack_max_path, other.stack_max_path
+        ):
             # Assume the addresses of functions are unique.
             if self_func.address != other_func.address:
                 return False
@@ -294,10 +298,14 @@ class AndesAnalyzer(object):
         r"^(b{0}|j|jr|jr.|jrnez)(\d?|\d\d)$".format(CONDITION_CODES_RE)
     )
     # Call instructions.
-    CALL_OPCODE_RE = re.compile(r"^(jal|jral|jral.|jralnez|beqzal|bltzal|bgezal)(\d)?$")
+    CALL_OPCODE_RE = re.compile(
+        r"^(jal|jral|jral.|jralnez|beqzal|bltzal|bgezal)(\d)?$"
+    )
     CALL_OPERAND_RE = re.compile(r"^{}$".format(IMM_ADDRESS_RE))
     # Ignore lp register because it's for return.
-    INDIRECT_CALL_OPERAND_RE = re.compile(r"^\$r\d{1,}$|\$fp$|\$gp$|\$ta$|\$sp$|\$pc$")
+    INDIRECT_CALL_OPERAND_RE = re.compile(
+        r"^\$r\d{1,}$|\$fp$|\$gp$|\$ta$|\$sp$|\$pc$"
+    )
     # TODO: Handle other kinds of store instructions.
     PUSH_OPCODE_RE = re.compile(r"^push(\d{1,})$")
     PUSH_OPERAND_RE = re.compile(r"^\$r\d{1,}, \#\d{1,}    \! \{([^\]]+)\}")
@@ -363,7 +371,10 @@ class AndesAnalyzer(object):
                 result = self.CALL_OPERAND_RE.match(operand_text)
 
                 if result is None:
-                    if self.INDIRECT_CALL_OPERAND_RE.match(operand_text) is not None:
+                    if (
+                        self.INDIRECT_CALL_OPERAND_RE.match(operand_text)
+                        is not None
+                    ):
                         # Found an indirect call.
                         callsites.append(Callsite(address, None, is_tail))
 
@@ -378,7 +389,9 @@ class AndesAnalyzer(object):
                         < (function_symbol.address + function_symbol.size)
                     ):
                         # Maybe it is a callsite.
-                        callsites.append(Callsite(address, target_address, is_tail))
+                        callsites.append(
+                            Callsite(address, target_address, is_tail)
+                        )
 
             elif self.LWI_OPCODE_RE.match(opcode) is not None:
                 result = self.LWI_PC_OPERAND_RE.match(operand_text)
@@ -400,14 +413,25 @@ class AndesAnalyzer(object):
                     result = self.PUSH_OPERAND_RE.match(operand_text)
                     operandgroup_text = result.group(1)
                     # capture $rx~$ry
-                    if self.OPERANDGROUP_RE.match(operandgroup_text) is not None:
+                    if (
+                        self.OPERANDGROUP_RE.match(operandgroup_text)
+                        is not None
+                    ):
                         # capture number & transfer string to integer
                         oprandgrouphead = operandgroup_text.split(",")[0]
                         rx = int(
-                            "".join(filter(str.isdigit, oprandgrouphead.split("~")[0]))
+                            "".join(
+                                filter(
+                                    str.isdigit, oprandgrouphead.split("~")[0]
+                                )
+                            )
                         )
                         ry = int(
-                            "".join(filter(str.isdigit, oprandgrouphead.split("~")[1]))
+                            "".join(
+                                filter(
+                                    str.isdigit, oprandgrouphead.split("~")[1]
+                                )
+                            )
                         )
 
                         stack_frame += (
@@ -425,14 +449,25 @@ class AndesAnalyzer(object):
                     result = self.SMW_OPERAND_RE.match(operand_text)
                     operandgroup_text = result.group(3)
                     # capture $rx~$ry
-                    if self.OPERANDGROUP_RE.match(operandgroup_text) is not None:
+                    if (
+                        self.OPERANDGROUP_RE.match(operandgroup_text)
+                        is not None
+                    ):
                         # capture number & transfer string to integer
                         oprandgrouphead = operandgroup_text.split(",")[0]
                         rx = int(
-                            "".join(filter(str.isdigit, oprandgrouphead.split("~")[0]))
+                            "".join(
+                                filter(
+                                    str.isdigit, oprandgrouphead.split("~")[0]
+                                )
+                            )
                         )
                         ry = int(
-                            "".join(filter(str.isdigit, oprandgrouphead.split("~")[1]))
+                            "".join(
+                                filter(
+                                    str.isdigit, oprandgrouphead.split("~")[1]
+                                )
+                            )
                         )
 
                         stack_frame += (
@@ -482,9 +517,13 @@ class ArmAnalyzer(object):
 
     # Fuzzy regular expressions for instruction and operand parsing.
     # Branch instructions.
-    JUMP_OPCODE_RE = re.compile(r"^(b{0}|bx{0})(\.\w)?$".format(CONDITION_CODES_RE))
+    JUMP_OPCODE_RE = re.compile(
+        r"^(b{0}|bx{0})(\.\w)?$".format(CONDITION_CODES_RE)
+    )
     # Call instructions.
-    CALL_OPCODE_RE = re.compile(r"^(bl{0}|blx{0})(\.\w)?$".format(CONDITION_CODES_RE))
+    CALL_OPCODE_RE = re.compile(
+        r"^(bl{0}|blx{0})(\.\w)?$".format(CONDITION_CODES_RE)
+    )
     CALL_OPERAND_RE = re.compile(r"^{}$".format(IMM_ADDRESS_RE))
     CBZ_CBNZ_OPCODE_RE = re.compile(r"^(cbz|cbnz)(\.\w)?$")
     # Example: "r0, 1009bcbe <host_cmd_motion_sense+0x1d2>"
@@ -555,7 +594,9 @@ class ArmAnalyzer(object):
         for address, opcode, operand_text in instructions:
             is_jump_opcode = self.JUMP_OPCODE_RE.match(opcode) is not None
             is_call_opcode = self.CALL_OPCODE_RE.match(opcode) is not None
-            is_cbz_cbnz_opcode = self.CBZ_CBNZ_OPCODE_RE.match(opcode) is not None
+            is_cbz_cbnz_opcode = (
+                self.CBZ_CBNZ_OPCODE_RE.match(opcode) is not None
+            )
             if is_jump_opcode or is_call_opcode or is_cbz_cbnz_opcode:
                 is_tail = is_jump_opcode or is_cbz_cbnz_opcode
 
@@ -586,7 +627,9 @@ class ArmAnalyzer(object):
                         < (function_symbol.address + function_symbol.size)
                     ):
                         # Maybe it is a callsite.
-                        callsites.append(Callsite(address, target_address, is_tail))
+                        callsites.append(
+                            Callsite(address, target_address, is_tail)
+                        )
 
             elif self.LDR_OPCODE_RE.match(opcode) is not None:
                 result = self.LDR_PC_OPERAND_RE.match(operand_text)
@@ -599,7 +642,8 @@ class ArmAnalyzer(object):
             elif self.PUSH_OPCODE_RE.match(opcode) is not None:
                 # Example: "{r4, r5, r6, r7, lr}"
                 stack_frame += (
-                    len(operand_text.split(",")) * self.GENERAL_PURPOSE_REGISTER_SIZE
+                    len(operand_text.split(","))
+                    * self.GENERAL_PURPOSE_REGISTER_SIZE
                 )
             elif self.SUB_OPCODE_RE.match(opcode) is not None:
                 result = self.SUB_OPERAND_RE.match(operand_text)
@@ -614,7 +658,11 @@ class ArmAnalyzer(object):
                     # Subtract and writeback to stack register.
                     # Example: "sp!, {r4, r5, r6, r7, r8, r9, lr}"
                     # Get the text of pushed register list.
-                    unused_sp, unused_sep, parameter_text = operand_text.partition(",")
+                    (
+                        unused_sp,
+                        unused_sep,
+                        parameter_text,
+                    ) = operand_text.partition(",")
                     stack_frame += (
                         len(parameter_text.split(","))
                         * self.GENERAL_PURPOSE_REGISTER_SIZE
@@ -716,13 +764,18 @@ class RiscvAnalyzer(object):
 
                 result = self.CALL_OPERAND_RE.match(operand_text)
                 if result is None:
-                    if self.INDIRECT_CALL_OPERAND_RE.match(operand_text) is not None:
+                    if (
+                        self.INDIRECT_CALL_OPERAND_RE.match(operand_text)
+                        is not None
+                    ):
                         # Found an indirect call.
                         callsites.append(Callsite(address, None, is_tail))
 
                 else:
                     # Capture address form operand_text and then convert to string
-                    address_str = "".join(self.CAPTURE_ADDRESS.findall(operand_text))
+                    address_str = "".join(
+                        self.CAPTURE_ADDRESS.findall(operand_text)
+                    )
                     # String to integer
                     target_address = int(address_str, 16)
                     # Filter out the in-function target (branches and in-function calls,
@@ -734,7 +787,9 @@ class RiscvAnalyzer(object):
                         < (function_symbol.address + function_symbol.size)
                     ):
                         # Maybe it is a callsite.
-                        callsites.append(Callsite(address, target_address, is_tail))
+                        callsites.append(
+                            Callsite(address, target_address, is_tail)
+                        )
 
             elif self.ADDI_OPCODE_RE.match(opcode) is not None:
                 # Example: sp,sp,-32
@@ -940,7 +995,9 @@ class StackAnalyzer(object):
                     instructions = []
                     # If symbol size exists, use it as a hint of function size.
                     if function_symbol.size > 0:
-                        function_end = function_symbol.address + function_symbol.size
+                        function_end = (
+                            function_symbol.address + function_symbol.size
+                        )
                     else:
                         function_end = None
 
@@ -1193,7 +1250,10 @@ class StackAnalyzer(object):
                         else:
                             add_rules[src_sig].add(dst_sig)
 
-        if "remove" in self.annotation and self.annotation["remove"] is not None:
+        if (
+            "remove" in self.annotation
+            and self.annotation["remove"] is not None
+        ):
             for sigtxt_path in self.annotation["remove"]:
                 if isinstance(sigtxt_path, str):
                     # The path has only one vertex.
@@ -1232,7 +1292,9 @@ class StackAnalyzer(object):
 
                     # Append each signature of the current node to the all previous
                     # remove paths.
-                    sig_paths = [path + [sig] for path in sig_paths for sig in sig_set]
+                    sig_paths = [
+                        path + [sig] for path in sig_paths for sig in sig_set
+                    ]
 
                 if not broken_flag:
                     # All signatures are normalized. The remove path has no error.
@@ -1282,7 +1344,9 @@ class StackAnalyzer(object):
             signature_set.update(remove_sigs)
 
         # Map signatures to functions.
-        (signature_map, sig_error_map) = self.MapAnnotation(function_map, signature_set)
+        (signature_map, sig_error_map) = self.MapAnnotation(
+            function_map, signature_set
+        )
 
         # Build the indirect callsite map indexed by callsite signature.
         indirect_map = collections.defaultdict(set)
@@ -1326,7 +1390,9 @@ class StackAnalyzer(object):
                     # Assume the error is always the not found error. Since the signature
                     # found in indirect callsite map must be a full signature, it can't
                     # happen the ambiguous error.
-                    assert sig_error_map[src_sig] == self.ANNOTATION_ERROR_NOTFOUND
+                    assert (
+                        sig_error_map[src_sig] == self.ANNOTATION_ERROR_NOTFOUND
+                    )
                     # Found in inline stack, remove the not found error.
                     del sig_error_map[src_sig]
 
@@ -1357,7 +1423,9 @@ class StackAnalyzer(object):
                 else:
                     # Append each function of the current signature to the all previous
                     # remove paths.
-                    remove_paths = [p + [f] for p in remove_paths for f in remove_funcs]
+                    remove_paths = [
+                        p + [f] for p in remove_paths for f in remove_funcs
+                    ]
 
             if skip_flag:
                 # Ignore the broken remove path.
@@ -1417,7 +1485,9 @@ class StackAnalyzer(object):
 
         for src_func, dst_func in add_set:
             # TODO(cheyuw): Support tailing call annotation.
-            src_func.callsites.append(Callsite(None, dst_func.address, False, dst_func))
+            src_func.callsites.append(
+                Callsite(None, dst_func.address, False, dst_func)
+            )
 
         # Delete simple remove paths.
         remove_simple = set(tuple(p) for p in remove_list if len(p) <= 2)
@@ -1431,7 +1501,10 @@ class StackAnalyzer(object):
                 ) in remove_simple:
                     continue
 
-                if callsite.target is None and callsite.address in eliminated_addrs:
+                if (
+                    callsite.target is None
+                    and callsite.address in eliminated_addrs
+                ):
                     continue
 
                 cleaned_callsites.append(callsite)
@@ -1542,7 +1615,9 @@ class StackAnalyzer(object):
                     elif callee_state in stacked_states:
                         # The state is shown in the stack. There is a cycle.
                         sub_stack_usage = 0
-                        scc_lowlink = min(scc_lowlink, scc_index_map[callee_state])
+                        scc_lowlink = min(
+                            scc_lowlink, scc_index_map[callee_state]
+                        )
                         if callee_state == curr_state:
                             self_loop = True
 
@@ -1559,9 +1634,13 @@ class StackAnalyzer(object):
                         if callsite.is_tail:
                             # For tailing call, since the callee reuses the stack frame of the
                             # caller, choose the larger one directly.
-                            stack_usage = max(curr_func.stack_frame, sub_stack_usage)
+                            stack_usage = max(
+                                curr_func.stack_frame, sub_stack_usage
+                            )
                         else:
-                            stack_usage = curr_func.stack_frame + sub_stack_usage
+                            stack_usage = (
+                                curr_func.stack_frame + sub_stack_usage
+                            )
 
                         if stack_usage > max_stack_usage:
                             max_stack_usage = stack_usage
@@ -1664,12 +1743,16 @@ class StackAnalyzer(object):
                     (function_name, path, linenum) = line_info
 
                 line_texts.append(
-                    "{}[{}:{}]".format(function_name, os.path.relpath(path), linenum)
+                    "{}[{}:{}]".format(
+                        function_name, os.path.relpath(path), linenum
+                    )
                 )
 
             output = "{}-> {} {:x}\n".format(prefix, line_texts[0], address)
             for depth, line_text in enumerate(line_texts[1:]):
-                output += "{}   {}- {}\n".format(prefix, "  " * depth, line_text)
+                output += "{}   {}- {}\n".format(
+                    prefix, "  " * depth, line_text
+                )
 
             # Remove the last newline character.
             return (order_key, output.rstrip("\n"))
@@ -1677,7 +1760,8 @@ class StackAnalyzer(object):
         # Analyze disassembly.
         try:
             disasm_text = subprocess.check_output(
-                [self.options.objdump, "-d", self.options.elf_path], encoding="utf-8"
+                [self.options.objdump, "-d", self.options.elf_path],
+                encoding="utf-8",
             )
         except subprocess.CalledProcessError:
             raise StackAnalyzerError("objdump failed to disassemble.")
@@ -1773,7 +1857,11 @@ class StackAnalyzer(object):
         if len(cycle_functions) > 0:
             print("There are cycles in the following function sets:")
             for functions in cycle_functions:
-                print("[{}]".format(", ".join(function.name for function in functions)))
+                print(
+                    "[{}]".format(
+                        ", ".join(function.name for function in functions)
+                    )
+                )
 
 
 def ParseArgs():
@@ -1795,7 +1883,9 @@ def ParseArgs():
         help="the section.",
         choices=[SECTION_RO, SECTION_RW],
     )
-    parser.add_argument("--objdump", default="objdump", help="the path of objdump")
+    parser.add_argument(
+        "--objdump", default="objdump", help="the path of objdump"
+    )
     parser.add_argument(
         "--addr2line", default="addr2line", help="the path of addr2line"
     )
@@ -1954,7 +2044,9 @@ def main():
             annotation = {}
         elif not os.path.exists(options.annotation):
             print(
-                "Warning: Annotation file {} does not exist.".format(options.annotation)
+                "Warning: Annotation file {} does not exist.".format(
+                    options.annotation
+                )
             )
             annotation = {}
         else:
@@ -1964,11 +2056,15 @@ def main():
 
             except yaml.YAMLError:
                 raise StackAnalyzerError(
-                    "Failed to parse annotation file {}.".format(options.annotation)
+                    "Failed to parse annotation file {}.".format(
+                        options.annotation
+                    )
                 )
             except IOError:
                 raise StackAnalyzerError(
-                    "Failed to open annotation file {}.".format(options.annotation)
+                    "Failed to open annotation file {}.".format(
+                        options.annotation
+                    )
                 )
 
             # TODO(cheyuw): Do complete annotation format verification.
@@ -1987,7 +2083,9 @@ def main():
                 encoding="utf-8",
             )
         except subprocess.CalledProcessError:
-            raise StackAnalyzerError("objdump failed to dump symbol table or rodata.")
+            raise StackAnalyzerError(
+                "objdump failed to dump symbol table or rodata."
+            )
         except OSError:
             raise StackAnalyzerError("Failed to run objdump.")
 

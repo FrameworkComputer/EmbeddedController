@@ -196,9 +196,13 @@ def test_no_toolchains(fake_project: project.Project, mockfs, no_environ):
         fake_project.get_toolchain(module_paths)
 
 
-def test_override_without_sdk(fake_project: project.Project, mockfs, no_environ):
+def test_override_without_sdk(
+    fake_project: project.Project, mockfs, no_environ
+):
     """Check for error override is set to zephyr, but it can't be found."""
     chain = fake_project.get_toolchain(module_paths, override="zephyr")
 
-    with pytest.raises(RuntimeError, match=r"No installed Zephyr SDK was found"):
+    with pytest.raises(
+        RuntimeError, match=r"No installed Zephyr SDK was found"
+    ):
         chain.get_build_config()

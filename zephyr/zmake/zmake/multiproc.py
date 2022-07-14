@@ -297,7 +297,9 @@ class Executor:
              exception.
         """
         with self.lock:
-            thread = threading.Thread(target=lambda: self._run_fn(func), daemon=True)
+            thread = threading.Thread(
+                target=lambda: self._run_fn(func), daemon=True
+            )
             thread.start()
             self.threads.append(thread)
 

@@ -15,5 +15,4 @@ disable=
 
 [format]
 
-max-line-length=88
 string-quote=double

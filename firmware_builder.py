@@ -46,7 +46,9 @@ def build(opts):
     metric_list = firmware_pb2.FwBuildMetricList()
 
     # Run formatting checks on all python files.
-    subprocess.run(["black", "--check", "."], cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(
+        ["black", "--check", "."], cwd=os.path.dirname(__file__), check=True
+    )
     subprocess.run(
         [
             "isort",
@@ -217,9 +219,13 @@ def test(opts):
         ["util/ec3po/run_tests.sh"], cwd=os.path.dirname(__file__), check=True
     )
     subprocess.run(
-        ["extra/stack_analyzer/run_tests.sh"], cwd=os.path.dirname(__file__), check=True
+        ["extra/stack_analyzer/run_tests.sh"],
+        cwd=os.path.dirname(__file__),
+        check=True,
     )
-    subprocess.run(["util/run_tests.sh"], cwd=os.path.dirname(__file__), check=True)
+    subprocess.run(
+        ["util/run_tests.sh"], cwd=os.path.dirname(__file__), check=True
+    )
 
     # If building for code coverage, build the 'coverage' target, which
     # builds the posix-based unit tests for code coverage and assembles

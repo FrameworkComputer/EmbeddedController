@@ -40,7 +40,9 @@ class TestEnhancedECBehaviour(unittest.TestCase):
 
         # Create the pipes that the interpreter will use.
         self.cmd_pipe_user, self.cmd_pipe_itpr = threadproc_shim.Pipe()
-        self.dbg_pipe_user, self.dbg_pipe_itpr = threadproc_shim.Pipe(duplex=False)
+        self.dbg_pipe_user, self.dbg_pipe_itpr = threadproc_shim.Pipe(
+            duplex=False
+        )
 
         # Mock the open() function so we can inspect reads/writes to the EC.
         self.ec_uart_pty = mock.mock_open()
@@ -91,7 +93,9 @@ class TestEnhancedECBehaviour(unittest.TestCase):
         self.itpr.HandleUserData()
         self.itpr.SendCmdToEC()
         # Since the EC image is enhanced, we should have sent a packed command.
-        expected_ec_calls.append(mock.call().write(self.itpr.PackCommand(test_cmd)))
+        expected_ec_calls.append(
+            mock.call().write(self.itpr.PackCommand(test_cmd))
+        )
         expected_ec_calls.append(mock.call().flush())
 
         # Now that the first command was sent, we should send another command which
@@ -116,7 +120,9 @@ class TestEnhancedECBehaviour(unittest.TestCase):
         self.itpr.HandleUserData()
         self.itpr.SendCmdToEC()
         # Since the EC image is enhanced, we should have sent a packed command.
-        expected_ec_calls.append(mock.call().write(self.itpr.PackCommand(test_cmd)))
+        expected_ec_calls.append(
+            mock.call().write(self.itpr.PackCommand(test_cmd))
+        )
         expected_ec_calls.append(mock.call().flush())
 
         # Finally, verify that the appropriate writes were actually sent to the EC.
@@ -156,7 +162,9 @@ class TestEnhancedECBehaviour(unittest.TestCase):
         self.itpr.HandleUserData()
         self.itpr.SendCmdToEC()
         packed_cmd = self.itpr.PackCommand(test_cmd)
-        expected_ec_calls.extend([mock.call().write(packed_cmd), mock.call().flush()])
+        expected_ec_calls.extend(
+            [mock.call().write(packed_cmd), mock.call().flush()]
+        )
         # Have the EC return the error string twice.
         mock_os.read.side_effect = [b"&&EE", b"&&EE"]
         for i in range(2):
@@ -180,7 +188,9 @@ class TestEnhancedECBehaviour(unittest.TestCase):
             self.itpr.SendCmdToEC()
 
         # Now assume that the last one goes through with no trouble.
-        expected_ec_calls.extend([mock.call().write(packed_cmd), mock.call().flush()])
+        expected_ec_calls.extend(
+            [mock.call().write(packed_cmd), mock.call().flush()]
+        )
         self.itpr.SendCmdToEC()
 
         # Verify all the calls.
@@ -247,7 +257,9 @@ class TestEnhancedECBehaviour(unittest.TestCase):
 
         # Now, the interrogation should be complete and we should know that the
         # current EC image is enhanced.
-        self.assertFalse(self.itpr.interrogating, msg=("interrogating should be False"))
+        self.assertFalse(
+            self.itpr.interrogating, msg=("interrogating should be False")
+        )
         self.assertTrue(self.itpr.enhanced_ec, msg="enhanced_ec sholud be True")
 
         # Now let's perform another interrogation, but pretend that the EC ignores
@@ -259,7 +271,9 @@ class TestEnhancedECBehaviour(unittest.TestCase):
         self.assertTrue(self.itpr.interrogating, "interrogating sholud be True")
         # We should assume that the image is not enhanced until we get the valid
         # response.
-        self.assertFalse(self.itpr.enhanced_ec, "enhanced_ec should be False now.")
+        self.assertFalse(
+            self.itpr.enhanced_ec, "enhanced_ec should be False now."
+        )
 
         # Let's pretend that we get a random debug print.  This should clear the
         # interrogating flag.
@@ -267,8 +281,12 @@ class TestEnhancedECBehaviour(unittest.TestCase):
         self.itpr.HandleECData()
 
         # Verify that interrogating flag is cleared and enhanced_ec is still False.
-        self.assertFalse(self.itpr.interrogating, "interrogating should be False.")
-        self.assertFalse(self.itpr.enhanced_ec, "enhanced_ec should still be False.")
+        self.assertFalse(
+            self.itpr.interrogating, "interrogating should be False."
+        )
+        self.assertFalse(
+            self.itpr.enhanced_ec, "enhanced_ec should still be False."
+        )
 
 
 class TestUARTDisconnection(unittest.TestCase):
@@ -287,7 +305,9 @@ class TestUARTDisconnection(unittest.TestCase):
 
         # Create the pipes that the interpreter will use.
         self.cmd_pipe_user, self.cmd_pipe_itpr = threadproc_shim.Pipe()
-        self.dbg_pipe_user, self.dbg_pipe_itpr = threadproc_shim.Pipe(duplex=False)
+        self.dbg_pipe_user, self.dbg_pipe_itpr = threadproc_shim.Pipe(
+            duplex=False
+        )
 
         # Mock the open() function so we can inspect reads/writes to the EC.
         self.ec_uart_pty = mock.mock_open()
@@ -383,7 +403,9 @@ class TestUARTDisconnection(unittest.TestCase):
             self.itpr.HandleUserData()
 
         # Verify interpreter is connected.
-        self.assertTrue(self.itpr.connected, ("The interpreter should be connected."))
+        self.assertTrue(
+            self.itpr.connected, ("The interpreter should be connected.")
+        )
         # Verify that the EC UART is now a member of the inputs.
         self.assertTrue(self.itpr.ec_uart_pty in self.itpr.inputs)
         # Since we have issued no commands during the disconnected state, no

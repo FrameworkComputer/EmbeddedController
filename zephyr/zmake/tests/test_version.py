@@ -39,7 +39,9 @@ def _git_commit(repo, message="message!"):
         "GIT_COMMITTER_EMAIL": "bitdiddle@example.org",
         "GIT_COMMITTER_DATE": "Tue, 30 Aug 2005 10:50:30 -0700",
     }
-    subprocess.run(["git", "-C", repo, "commit", "-m", message], check=True, env=env)
+    subprocess.run(
+        ["git", "-C", repo, "commit", "-m", message], check=True, env=env
+    )
 
 
 def _setup_example_repos(tmp_path):
@@ -94,7 +96,9 @@ def test_version_string(tmp_path):
     """Test a that version string is as expected."""
     project, zephyr_base, modules = _setup_example_repos(tmp_path)
     assert (
-        version.get_version_string(project.config.project_name, zephyr_base, modules)
+        version.get_version_string(
+            project.config.project_name, zephyr_base, modules
+        )
         == "prj_v2.6.4-ec:b5991f,os:377d26,mod1:02fd7a"
     )
 
@@ -181,7 +185,9 @@ def test_header_gen_exists_not_changed(fake_user_hostname, fake_date, tmp_path):
     assert output_file.stat().st_mtime == expected_mtime
 
 
-def test_header_gen_exists_needs_changes(fake_user_hostname, fake_date, tmp_path):
+def test_header_gen_exists_needs_changes(
+    fake_user_hostname, fake_date, tmp_path
+):
     """Test that the version file is changed, when needed."""
     # Test we overwrite when it exists already and changes are needed.
     output_file = tmp_path / "ec_version.h"

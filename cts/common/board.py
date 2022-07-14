@@ -271,7 +271,14 @@ class Board(six.with_metaclass(ABCMeta, object)):
         for device in com_devices:
             self.tty_port = os.path.join(dev_dir, device)
             properties = sp.check_output(
-                ["udevadm", "info", "-a", "-n", self.tty_port, "--query=property"],
+                [
+                    "udevadm",
+                    "info",
+                    "-a",
+                    "-n",
+                    self.tty_port,
+                    "--query=property",
+                ],
                 **get_subprocess_args()
             )
             for line in [l.strip() for l in properties.split("\n")]:
@@ -394,7 +401,11 @@ class DeviceUnderTest(Board):
         # If len(dut) is 0 then your dut doesn't use an st-link device, so we
         # don't have to worry about its serial number
         if not dut:
-            msg = "Failed to find serial for DUT.\nIs " + self.board + " connected?"
+            msg = (
+                "Failed to find serial for DUT.\nIs "
+                + self.board
+                + " connected?"
+            )
             raise RuntimeError(msg)
         if len(dut) > 1:
             msg = (

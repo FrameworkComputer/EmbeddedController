@@ -66,7 +66,10 @@ class Suart(object):
         self._tx_thread = None
         self._debuglog = debuglog
         self._susb = stm32usb.Susb(
-            vendor=vendor, product=product, interface=interface, serialname=serialname
+            vendor=vendor,
+            product=product,
+            interface=interface,
+            serialname=serialname,
         )
         self._running = False
 

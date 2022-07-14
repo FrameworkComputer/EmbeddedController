@@ -61,10 +61,13 @@ def main(argv):
             boardfile.write(",\n")
             scenario.write(",\n")
 
-        record = '  {"name": "%s", "rs": %f, "sweetberry": "A", "channel": %d}' % (
-            rec[2],
-            rec[4],
-            rec[1] - 64,
+        record = (
+            '  {"name": "%s", "rs": %f, "sweetberry": "A", "channel": %d}'
+            % (
+                rec[2],
+                rec[4],
+                rec[1] - 64,
+            )
         )
         boardfile.write(record)
         scenario.write('"%s"' % rec[2])

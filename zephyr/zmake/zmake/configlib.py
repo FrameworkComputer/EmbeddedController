@@ -11,7 +11,9 @@ def _register_project(**kwargs):
     kwargs.setdefault(
         "project_dir", here  # noqa: F821 pylint: disable=undefined-variable
     )
-    return register_project(**kwargs)  # noqa: F821 pylint: disable=undefined-variable
+    return register_project(
+        **kwargs
+    )  # noqa: F821 pylint: disable=undefined-variable
 
 
 def register_host_project(**kwargs):
@@ -25,7 +27,9 @@ def register_host_project(**kwargs):
 def register_host_test(test_name, **kwargs):
     """Register a test project that runs on the host."""
     kwargs.setdefault("is_test", True)
-    return register_host_project(project_name="test-{}".format(test_name), **kwargs)
+    return register_host_project(
+        project_name="test-{}".format(test_name), **kwargs
+    )
 
 
 def register_raw_project(**kwargs):

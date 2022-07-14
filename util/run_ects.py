@@ -68,7 +68,10 @@ def main():
         help="Echo commands to be executed without running them.",
     )
     parser.add_argument(
-        "-s", "--sync", action="store_true", help="Sync tree before running tests."
+        "-s",
+        "--sync",
+        action="store_true",
+        help="Sync tree before running tests.",
     )
     parser.add_argument(
         "-u", "--upload", action="store_true", help="Upload test results."

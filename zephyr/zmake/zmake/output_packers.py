@@ -85,8 +85,10 @@ class BasePacker:
         Returns:
             The file if it passes the test.
         """
-        max_size = self._get_max_image_bytes(  # pylint: disable=assignment-from-none
-            dir_map
+        max_size = (
+            self._get_max_image_bytes(  # pylint: disable=assignment-from-none
+                dir_map
+            )
         )
         if max_size is None or file.stat().st_size <= max_size:
             return file
@@ -120,11 +122,19 @@ class BinmanPacker(BasePacker):
         super().__init__(project)
 
     def configs(self):
-        yield "ro", build_config.BuildConfig(kconfig_defs={"CONFIG_CROS_EC_RO": "y"})
-        yield "rw", build_config.BuildConfig(kconfig_defs={"CONFIG_CROS_EC_RW": "y"})
+        yield "ro", build_config.BuildConfig(
+            kconfig_defs={"CONFIG_CROS_EC_RO": "y"}
+        )
+        yield "rw", build_config.BuildConfig(
+            kconfig_defs={"CONFIG_CROS_EC_RW": "y"}
+        )
 
     def pack_firmware(
-        self, work_dir, jobclient: zmake.jobserver.JobClient, dir_map, version_string=""
+        self,
+        work_dir,
+        jobclient: zmake.jobserver.JobClient,
+        dir_map,
+        version_string="",
     ):
         """Pack RO and RW sections using Binman.
 
@@ -148,8 +158,12 @@ class BinmanPacker(BasePacker):
 
         # Copy the inputs into the work directory so that Binman can
         # find them under a hard-coded name.
-        shutil.copy2(ro_dir / "zephyr" / self.ro_file, work_dir / "zephyr_ro.bin")
-        shutil.copy2(rw_dir / "zephyr" / self.rw_file, work_dir / "zephyr_rw.bin")
+        shutil.copy2(
+            ro_dir / "zephyr" / self.ro_file, work_dir / "zephyr_ro.bin"
+        )
+        shutil.copy2(
+            rw_dir / "zephyr" / self.rw_file, work_dir / "zephyr_rw.bin"
+        )
 
         # Version in FRID/FWID can be at most 31 bytes long (32, minus
         # one for null character).
@@ -176,8 +190,12 @@ class BinmanPacker(BasePacker):
             encoding="utf-8",
         )
 
-        zmake.multiproc.LogWriter.log_output(self.logger, logging.DEBUG, proc.stdout)
-        zmake.multiproc.LogWriter.log_output(self.logger, logging.ERROR, proc.stderr)
+        zmake.multiproc.LogWriter.log_output(
+            self.logger, logging.DEBUG, proc.stdout
+        )
+        zmake.multiproc.LogWriter.log_output(
+            self.logger, logging.ERROR, proc.stderr
+        )
         if proc.wait(timeout=60):
             raise OSError("Failed to run binman")
 

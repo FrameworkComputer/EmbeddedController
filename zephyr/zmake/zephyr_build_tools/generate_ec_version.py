@@ -59,7 +59,9 @@ def main():
         help="Specify modules paths to include in version hash. Uses "
         "ZEPHYR_MODULES env var if unset",
     )
-    parser.add_argument("-n", "--name", required=True, type=str, help="Project name")
+    parser.add_argument(
+        "-n", "--name", required=True, type=str, help="Project name"
+    )
 
     args = parser.parse_args()
 
@@ -82,7 +84,9 @@ def main():
         # No modules specified on command line. Default to environment variable.
         env_modules = os.environ.get("ZEPHYR_MODULES")
         args.module = env_modules.split(";") if env_modules else []
-        logging.info("No modules passed via CLI. Getting list from ZEPHYR_MODULES")
+        logging.info(
+            "No modules passed via CLI. Getting list from ZEPHYR_MODULES"
+        )
 
     elif len(args.module) == 1:
         # In case of a single -m flag, treat value as a semicolon-delimited
@@ -90,7 +94,9 @@ def main():
         args.module = args.module[0].split(";")
 
     try:
-        module_dict = convert_module_list_to_dict(map(pathlib.Path, args.module))
+        module_dict = convert_module_list_to_dict(
+            map(pathlib.Path, args.module)
+        )
     except FileNotFoundError as err:
         logging.error("Cannot find module: %s", str(err))
         return 1
@@ -112,7 +118,9 @@ def main():
         output_path.parent.mkdir(parents=True, exist_ok=True)
 
         logging.info("Writing header to %s", args.header_path)
-        zmake.version.write_version_header(ver, output_path, sys.argv[0], args.static)
+        zmake.version.write_version_header(
+            ver, output_path, sys.argv[0], args.static
+        )
 
     return 0
 

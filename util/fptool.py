@@ -44,7 +44,9 @@ def main(argv: list) -> int:
 
     # Parser for "flash" subcommand.
     parser_decrypt = subparsers.add_parser("flash", help=cmd_flash.__doc__)
-    parser_decrypt.add_argument("image", nargs="?", help="Path to the firmware image")
+    parser_decrypt.add_argument(
+        "image", nargs="?", help="Path to the firmware image"
+    )
     parser_decrypt.set_defaults(func=cmd_flash)
     opts = parser.parse_args(argv)
     return opts.func(opts)

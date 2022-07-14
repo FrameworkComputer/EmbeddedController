@@ -84,7 +84,9 @@ class StatsManager(object):
     """
 
     # pylint: disable=W0102
-    def __init__(self, smid="", title="", order=[], hide_domains=[], accept_nan=True):
+    def __init__(
+        self, smid="", title="", order=[], hide_domains=[], accept_nan=True
+    ):
         """Initialize infrastructure for data and their statistics."""
         self._title = title
         self._data = collections.defaultdict(list)
@@ -112,11 +114,15 @@ class StatsManager(object):
         except ValueError:
             # if we don't accept nan this will be caught below
             self._logger.debug(
-                "sample %s for domain %s is not a number. Making NaN", sample, domain
+                "sample %s for domain %s is not a number. Making NaN",
+                sample,
+                domain,
             )
             sample = float("NaN")
         if not self._accept_nan and math.isnan(sample):
-            raise StatsManagerError("accept_nan is false. Cannot add NaN sample.")
+            raise StatsManagerError(
+                "accept_nan is false. Cannot add NaN sample."
+            )
         self._data[domain].append(sample)
         if math.isnan(sample):
             self._nan_domains.add(domain)
@@ -133,7 +139,8 @@ class StatsManager(object):
         """
         if domain in self._unit:
             self._logger.warning(
-                "overwriting the unit of %s, old unit is %s, new " "unit is %s.",
+                "overwriting the unit of %s, old unit is %s, new "
+                "unit is %s.",
                 domain,
                 self._unit[domain],
                 unit,
@@ -179,7 +186,9 @@ class StatsManager(object):
         table = [headers]
         # determine what domains to display & and the order
         domains_to_display = self.DomainsToDisplay
-        display_order = [key for key in self._order if key in domains_to_display]
+        display_order = [
+            key for key in self._order if key in domains_to_display
+        ]
         domains_to_display -= set(display_order)
         display_order.extend(sorted(domains_to_display))
         for domain in display_order:
@@ -259,8 +268,13 @@ class StatsManager(object):
             # line is a seperator line consisting of -----
             line = "%s%s" % (prefix, "-" * (line_length - dec_length))
             # prepend the prefix to the centered title
-            padded_title = "%s%s" % (prefix, title.center(line_length)[dec_length:])
-            formatted_lines = [line, padded_title, line] + formatted_lines + [line]
+            padded_title = "%s%s" % (
+                prefix,
+                title.center(line_length)[dec_length:],
+            )
+            formatted_lines = (
+                [line, padded_title, line] + formatted_lines + [line]
+            )
         formatted_output = "\n".join(formatted_lines)
         return formatted_output
 
@@ -399,7 +413,9 @@ class StatsManager(object):
         for domain, data in self._data.items():
             if not domain.endswith(self._unit[domain]):
                 domain = "%s_%s" % (domain, self._unit[domain])
-            fname = self._MakeUniqueFName(os.path.join(dirname, "%s.txt" % domain))
+            fname = self._MakeUniqueFName(
+                os.path.join(dirname, "%s.txt" % domain)
+            )
             with open(fname, "w") as f:
                 f.write("\n".join("%.2f" % sample for sample in data) + "\n")
             fnames.append(fname)

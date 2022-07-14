@@ -8,5 +8,6 @@ register_host_test(
     "math_fixed", kconfig_files=[here / "prj.conf", here / "fixed_point.conf"]
 )
 register_host_test(
-    "math_float", kconfig_files=[here / "prj.conf", here / "floating_point.conf"]
+    "math_float",
+    kconfig_files=[here / "prj.conf", here / "floating_point.conf"],
 )

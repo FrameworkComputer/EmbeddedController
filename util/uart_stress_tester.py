@@ -46,7 +46,10 @@ TPM_CMD = (
 )
 # A ChromeOS TPM command for the cr50 stress
 # purpose.
-CR50_LOAD_GEN_CMD = "while [[ -f %s ]]; do   %s; done &" % (FLAG_FILENAME, TPM_CMD)
+CR50_LOAD_GEN_CMD = "while [[ -f %s ]]; do   %s; done &" % (
+    FLAG_FILENAME,
+    TPM_CMD,
+)
 # A command line to run TPM_CMD in background
 # infinitely.
 
@@ -231,7 +234,9 @@ class UartSerial(object):
                         " to this port, and try it again." % self.serial.port
                     )
 
-            self.logger.info("Detected as %s UART", self.dev_prof["device_type"])
+            self.logger.info(
+                "Detected as %s UART", self.dev_prof["device_type"]
+            )
             # Log displays the UART type (AP|EC) instead of device filename.
             self.logger = logging.getLogger(
                 type(self).__name__ + "| " + self.dev_prof["device_type"]
@@ -266,7 +271,9 @@ class UartSerial(object):
                 )
 
             self.num_ch_exp = int(self.serial.baudrate * self.duration / 10)
-            chargen_cmd = "chargen " + str(CHARGEN_TXT_LEN) + " " + str(self.num_ch_exp)
+            chargen_cmd = (
+                "chargen " + str(CHARGEN_TXT_LEN) + " " + str(self.num_ch_exp)
+            )
             if self.usb_output:
                 chargen_cmd += " usb"
             self.test_cli = [chargen_cmd]
@@ -304,9 +311,13 @@ class UartSerial(object):
             self.char_loss_occurrences = 0
             data_starve_count = 0
 
-            total_num_ch = self.num_ch_exp  # Expected number of characters in total
+            total_num_ch = (
+                self.num_ch_exp
+            )  # Expected number of characters in total
             ch_exp = CHARGEN_TXT[0]
-            ch_cap = "z"  # any character value is ok for loop initial condition.
+            ch_cap = (
+                "z"  # any character value is ok for loop initial condition.
+            )
             while self.num_ch_cap < total_num_ch:
                 captured = self.get_output()
 
@@ -325,7 +336,9 @@ class UartSerial(object):
                         # If it is not alpha-numeric, terminate the test.
                         if ch_cap not in CRLF:
                             # If it is neither a CR nor LF, then it is an error case.
-                            self.logger.error("Whole captured characters: %r", captured)
+                            self.logger.error(
+                                "Whole captured characters: %r", captured
+                            )
                             raise ChargenTestError(
                                 err_msg
                                 % (
@@ -509,7 +522,9 @@ class ChargenTest(object):
         # Print the result.
         char_lost = self.print_result()
         if char_lost:
-            raise ChargenTestError("Test failed: lost %d character(s)" % char_lost)
+            raise ChargenTestError(
+                "Test failed: lost %d character(s)" % char_lost
+            )
 
         self.logger.info("Test is done")
 
@@ -537,7 +552,9 @@ Examples:
     parser = argparse.ArgumentParser(
         description=description, formatter_class=argparse.RawTextHelpFormatter
     )
-    parser.add_argument("port", type=str, nargs="*", help="UART device path to test")
+    parser.add_argument(
+        "port", type=str, nargs="*", help="UART device path to test"
+    )
     parser.add_argument(
         "-c",
         "--cr50",
@@ -580,7 +597,9 @@ def main():
             loglevel = logging.INFO
         log_format += " | %(message)s"
 
-        logging.basicConfig(level=loglevel, format=log_format, datefmt=date_format)
+        logging.basicConfig(
+            level=loglevel, format=log_format, datefmt=date_format
+        )
 
         # Create a ChargenTest object
         utest = ChargenTest(

@@ -212,7 +212,10 @@ class KconfigCheck:
         with open(configs_file, "r") as inf:
             configs = re.findall(
                 "%sCONFIG_([A-Za-z0-9_]*)%s"
-                % ((use_defines and "#define " or ""), (use_defines and " " or "")),
+                % (
+                    (use_defines and "#define " or ""),
+                    (use_defines and " " or ""),
+                ),
                 inf.read(),
             )
         return configs
@@ -265,7 +268,9 @@ class KconfigCheck:
         return kconfig_files
 
     @classmethod
-    def scan_kconfigs(cls, srcdir, prefix="", search_paths=None, try_kconfiglib=True):
+    def scan_kconfigs(
+        cls, srcdir, prefix="", search_paths=None, try_kconfiglib=True
+    ):
         """Scan a source tree for Kconfig options
 
         Args:
@@ -297,7 +302,9 @@ class KconfigCheck:
         else:
             kconfigs = []
             # Remove the prefix if present
-            expr = re.compile(r"\n(config|menuconfig) (%s)?([A-Za-z0-9_]*)\n" % prefix)
+            expr = re.compile(
+                r"\n(config|menuconfig) (%s)?([A-Za-z0-9_]*)\n" % prefix
+            )
             for fname in cls.find_kconfigs(srcdir):
                 with open(fname) as inf:
                     found = re.findall(expr, inf.read())
@@ -381,7 +388,12 @@ class KconfigCheck:
             Exit code: 0 if OK, 1 if a problem was found
         """
         new_adhoc, unneeded_adhoc, updated_adhoc = self.check_adhoc_configs(
-            configs_file, srcdir, allowed_file, prefix, use_defines, search_paths
+            configs_file,
+            srcdir,
+            allowed_file,
+            prefix,
+            use_defines,
+            search_paths,
         )
         if new_adhoc:
             file_list = "\n".join(["CONFIG_%s" % name for name in new_adhoc])
@@ -411,7 +423,9 @@ To temporarily disable this, use: ALLOW_CONFIG=1 make ...
             with open(NEW_ALLOWED_FNAME, "w") as out:
                 for config in updated_adhoc:
                     print("CONFIG_%s" % config, file=out)
-            now_in_kconfig = "\n".join(["CONFIG_%s" % name for name in unneeded_adhoc])
+            now_in_kconfig = "\n".join(
+                ["CONFIG_%s" % name for name in unneeded_adhoc]
+            )
             print(
                 f"""The following options are now in Kconfig:
 
@@ -427,7 +441,13 @@ update in your CL:
         return 0
 
     def do_build(
-        self, configs_file, srcdir, allowed_file, prefix, use_defines, search_paths
+        self,
+        configs_file,
+        srcdir,
+        allowed_file,
+        prefix,
+        use_defines,
+        search_paths,
     ):
         """Find new ad-hoc configs in the configs_file
 
@@ -445,7 +465,12 @@ update in your CL:
             Exit code: 0 if OK, 1 if a problem was found
         """
         new_adhoc, _, updated_adhoc = self.check_adhoc_configs(
-            configs_file, srcdir, allowed_file, prefix, use_defines, search_paths
+            configs_file,
+            srcdir,
+            allowed_file,
+            prefix,
+            use_defines,
+            search_paths,
         )
         with open(NEW_ALLOWED_FNAME, "w") as out:
             combined = sorted(new_adhoc + updated_adhoc)

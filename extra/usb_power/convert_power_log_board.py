@@ -55,11 +55,15 @@ def write_to_file(file, sweetberry, inas):
 
             # EX : ('sweetberry', 0x40, 'SB_FW_CAM_2P8', 5.0, 1.000, 3, False),
             channel, i2c_addr = Spower.CHMAP[rec["channel"]]
-            record = "    ('sweetberry', 0x%02x, '%s', 5.0, %f, %d, 'True')" ",\n" % (
-                i2c_addr,
-                rec["name"],
-                rec["rs"],
-                channel,
+            record = (
+                "    ('sweetberry', 0x%02x, '%s', 5.0, %f, %d, 'True')"
+                ",\n"
+                % (
+                    i2c_addr,
+                    rec["name"],
+                    rec["rs"],
+                    channel,
+                )
             )
             pyfile.write(record)
 

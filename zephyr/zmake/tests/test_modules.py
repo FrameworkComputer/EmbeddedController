@@ -36,4 +36,6 @@ def test_locate_in_directory(modules):
 
             expected_modules[module] = module_dir
 
-        assert zmake.modules.locate_from_directory(modules_dir) == expected_modules
+        assert (
+            zmake.modules.locate_from_directory(modules_dir) == expected_modules
+        )

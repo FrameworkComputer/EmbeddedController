@@ -27,11 +27,17 @@ import usb  # pylint:disable=import-error
 from stats_manager import StatsManager  # pylint:disable=import-error
 
 # Directory where hdctools installs configuration files into.
-LIB_DIR = os.path.join(sysconfig.get_python_lib(standard_lib=False), "servo", "data")
+LIB_DIR = os.path.join(
+    sysconfig.get_python_lib(standard_lib=False), "servo", "data"
+)
 
 # Potential config file locations: current working directory, the same directory
 # as powerlog.py file or LIB_DIR.
-CONFIG_LOCATIONS = [os.getcwd(), os.path.dirname(os.path.realpath(__file__)), LIB_DIR]
+CONFIG_LOCATIONS = [
+    os.getcwd(),
+    os.path.dirname(os.path.realpath(__file__)),
+    LIB_DIR,
+]
 
 
 def logoutput(msg):
@@ -176,7 +182,9 @@ class Spower(object):
                     dev = d
                     break
             if dev is None:
-                raise Exception("Power", "USB device(%s) not found" % serialname)
+                raise Exception(
+                    "Power", "USB device(%s) not found" % serialname
+                )
         else:
             dev = dev_list[0]
 
@@ -202,7 +210,9 @@ class Spower(object):
         read_ep = usb.util.find_descriptor(
             intf,
             # match the first IN endpoint
-            custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
+            custom_match=lambda e: usb.util.endpoint_direction(
+                e.bEndpointAddress
+            )
             == usb.util.ENDPOINT_IN,
         )
 
@@ -212,7 +222,9 @@ class Spower(object):
         write_ep = usb.util.find_descriptor(
             intf,
             # match the first OUT endpoint
-            custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
+            custom_match=lambda e: usb.util.endpoint_direction(
+                e.bEndpointAddress
+            )
             == usb.util.ENDPOINT_OUT,
         )
 
@@ -227,7 +239,9 @@ class Spower(object):
         """Clear INA description struct."""
         self._inas = []
 
-    def append_ina_struct(self, name, rs, port, addr, data=None, ina_type=INA_POWER):
+    def append_ina_struct(
+        self, name, rs, port, addr, data=None, ina_type=INA_POWER
+    ):
         """Add an INA descriptor into the list of active INAs.
 
         Args:
@@ -313,7 +327,9 @@ class Spower(object):
         """Clear pending reads on the stm32"""
         try:
             while True:
-                ret = self.wr_command(b"", read_count=512, rtimeout=100, wtimeout=50)
+                ret = self.wr_command(
+                    b"", read_count=512, rtimeout=100, wtimeout=50
+                )
                 self._logger.debug(
                     "Try Clear: read %s", "success" if ret == 0 else "failure"
                 )
@@ -324,7 +340,9 @@ class Spower(object):
         """Reset the power interface on the stm32"""
         cmd = struct.pack("<H", self.CMD_RESET)
         ret = self.wr_command(cmd, rtimeout=50, wtimeout=50)
-        self._logger.debug("Command RESET: %s", "success" if ret == 0 else "failure")
+        self._logger.debug(
+            "Command RESET: %s", "success" if ret == 0 else "failure"
+        )
 
     def reset(self):
         """Try resetting the USB interface until success.
@@ -343,7 +361,9 @@ class Spower(object):
             except Exception as e:
                 self.clear()
                 self.clear()
-                self._logger.debug("TRY %d of %d: %s", count, max_reset_retry, e)
+                self._logger.debug(
+                    "TRY %d of %d: %s", count, max_reset_retry, e
+                )
                 time.sleep(count * 0.01)
         raise Exception("Power", "Failed to reset")
 
@@ -351,7 +371,9 @@ class Spower(object):
         """Stop any active data acquisition."""
         cmd = struct.pack("<H", self.CMD_STOP)
         ret = self.wr_command(cmd)
-        self._logger.debug("Command STOP: %s", "success" if ret == 0 else "failure")
+        self._logger.debug(
+            "Command STOP: %s", "success" if ret == 0 else "failure"
+        )
 
     def start(self, integration_us):
         """Start data acquisition.
@@ -420,7 +442,9 @@ class Spower(object):
         cmd = struct.pack("<HQ", self.CMD_SETTIME, timestamp_us)
         ret = self.wr_command(cmd)
 
-        self._logger.debug("Command SETTIME: %s", "success" if ret == 0 else "failure")
+        self._logger.debug(
+            "Command SETTIME: %s", "success" if ret == 0 else "failure"
+        )
 
     def add_ina(self, bus, ina_type, addr, extra, resistance, data=None):
         """Add an INA to the data acquisition list.
@@ -445,7 +469,9 @@ class Spower(object):
             self.append_ina_struct(
                 name, resistance, bus, addr, data=data, ina_type=ina_type
             )
-        self._logger.debug("Command ADD_INA: %s", "success" if ret == 0 else "failure")
+        self._logger.debug(
+            "Command ADD_INA: %s", "success" if ret == 0 else "failure"
+        )
 
     def report_header_size(self):
         """Helper function to calculate power record header size."""
@@ -481,13 +507,17 @@ class Spower(object):
         if len(bytesread) == 1:
             if bytesread[0] != 0x6:
                 self._logger.debug(
-                    "READ LINE FAILED bytes: %d ret: %02x", len(bytesread), bytesread[0]
+                    "READ LINE FAILED bytes: %d ret: %02x",
+                    len(bytesread),
+                    bytesread[0],
                 )
             return None
 
         if len(bytesread) % expected_bytes != 0:
             self._logger.debug(
-                "READ LINE WARNING: expected %d, got %d", expected_bytes, len(bytesread)
+                "READ LINE WARNING: expected %d, got %d",
+                expected_bytes,
+                len(bytesread),
             )
 
         packet_count = len(bytesread) // expected_bytes
@@ -694,7 +724,8 @@ class powerlog(object):
                     raise Exception(
                         "Invalid INA type",
                         "Type of %s [%s] not recognized,"
-                        " try one of POWER, BUSV, CURRENT" % (entry[0], entry[1]),
+                        " try one of POWER, BUSV, CURRENT"
+                        % (entry[0], entry[1]),
                     )
             else:
                 name = entry
@@ -774,7 +805,9 @@ class powerlog(object):
                         aggregate_record["boards"].add(record["berry"])
                     else:
                         self._logger.info(
-                            "break %s, %s", record["berry"], aggregate_record["boards"]
+                            "break %s, %s",
+                            record["berry"],
+                            aggregate_record["boards"],
                         )
                         break
 
@@ -784,7 +817,10 @@ class powerlog(object):
                             if name in aggregate_record:
                                 multiplier = (
                                     0.001
-                                    if (self._use_mW and name[1] == Spower.INA_POWER)
+                                    if (
+                                        self._use_mW
+                                        and name[1] == Spower.INA_POWER
+                                    )
                                     else 1
                                 )
                                 value = aggregate_record[name] * multiplier
@@ -826,7 +862,9 @@ def main(argv=None):
     if argv is None:
         argv = sys.argv[1:]
     # Command line argument description.
-    parser = argparse.ArgumentParser(description="Gather CSV data from sweetberry")
+    parser = argparse.ArgumentParser(
+        description="Gather CSV data from sweetberry"
+    )
     parser.add_argument(
         "-b",
         "--board",
@@ -842,10 +880,18 @@ def main(argv=None):
         default="",
     )
     parser.add_argument(
-        "-A", "--serial", type=str, help="Serial number of sweetberry A", default=""
+        "-A",
+        "--serial",
+        type=str,
+        help="Serial number of sweetberry A",
+        default="",
     )
     parser.add_argument(
-        "-B", "--serial_b", type=str, help="Serial number of sweetberry B", default=""
+        "-B",
+        "--serial_b",
+        type=str,
+        help="Serial number of sweetberry B",
+        default="",
     )
     parser.add_argument(
         "-t",
@@ -855,7 +901,11 @@ def main(argv=None):
         default=100000,
     )
     parser.add_argument(
-        "-s", "--seconds", type=float, help="Seconds to run capture", default=0.0
+        "-s",
+        "--seconds",
+        type=float,
+        help="Seconds to run capture",
+        default=0.0,
     )
     parser.add_argument(
         "--date",
@@ -876,7 +926,10 @@ def main(argv=None):
         action="store_true",
     )
     parser.add_argument(
-        "--slow", default=False, help="Intentionally overflow", action="store_true"
+        "--slow",
+        default=False,
+        help="Intentionally overflow",
+        action="store_true",
     )
     parser.add_argument(
         "--print_stats",
@@ -917,7 +970,8 @@ def main(argv=None):
         dest="print_raw_data",
         default=True,
         action="store_false",
-        help="Not print raw sweetberry readings at real time, default is to " "print",
+        help="Not print raw sweetberry readings at real time, default is to "
+        "print",
     )
     parser.add_argument(
         "--save_raw_data",
@@ -952,7 +1006,9 @@ def main(argv=None):
     # if powerlog is used through main, log to sys.stdout
     if __name__ == "__main__":
         stdout_handler = logging.StreamHandler(sys.stdout)
-        stdout_handler.setFormatter(logging.Formatter("%(levelname)s: %(message)s"))
+        stdout_handler.setFormatter(
+            logging.Formatter("%(levelname)s: %(message)s")
+        )
         root_logger.addHandler(stdout_handler)
 
     integration_us_request = args.integration_us

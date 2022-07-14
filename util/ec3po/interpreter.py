@@ -147,7 +147,9 @@ class Interpreter(object):
           command: A string which contains the command to be sent.
         """
         self.ec_cmd_queue.put(command)
-        self.logger.log(1, "Commands now in queue: %d", self.ec_cmd_queue.qsize())
+        self.logger.log(
+            1, "Commands now in queue: %d", self.ec_cmd_queue.qsize()
+        )
 
         # Add the EC UART as an output to be serviced.
         if self.connected and self.ec_uart_pty not in self.outputs:
@@ -215,12 +217,16 @@ class Interpreter(object):
                 self.inputs.remove(fileobj)
                 if fileobj in self.outputs:
                     self.outputs.remove(fileobj)
-                self.logger.debug("Removed fileobj. Remaining inputs: %r", self.inputs)
+                self.logger.debug(
+                    "Removed fileobj. Remaining inputs: %r", self.inputs
+                )
                 # Close the file.
                 fileobj.close()
                 # Mark the interpreter as disconnected now.
                 self.connected = False
-                self.logger.debug("Disconnected from %s.", self.ec_uart_pty_name)
+                self.logger.debug(
+                    "Disconnected from %s.", self.ec_uart_pty_name
+                )
             return
 
         elif command == b"reconnect":
@@ -248,7 +254,9 @@ class Interpreter(object):
         # Ignore any other commands while in the disconnected state.
         self.logger.log(1, "command: '%s'", command)
         if not self.connected:
-            self.logger.debug("Ignoring command because currently disconnected.")
+            self.logger.debug(
+                "Ignoring command because currently disconnected."
+            )
             return
 
         # Remove leading and trailing spaces only if this is an enhanced EC image.
@@ -354,7 +362,9 @@ class Interpreter(object):
             if self.enhanced_ec:
                 self.logger.debug("The current EC image seems enhanced.")
             else:
-                self.logger.debug("The current EC image does NOT seem enhanced.")
+                self.logger.debug(
+                    "The current EC image does NOT seem enhanced."
+                )
             # Done interrogating.
             self.interrogating = False
         # For now, just forward everything the EC sends us.

@@ -146,7 +146,9 @@ def wait_for_usb_remove(vidpid, serialname=None, timeout=None):
 
     Wrapper for wait_for_usb below
     """
-    wait_for_usb(vidpid, serialname=serialname, timeout=timeout, desiredpresence=False)
+    wait_for_usb(
+        vidpid, serialname=serialname, timeout=timeout, desiredpresence=False
+    )
 
 
 def wait_for_usb(vidpid, serialname=None, timeout=None, desiredpresence=True):
@@ -167,7 +169,9 @@ def wait_for_usb(vidpid, serialname=None, timeout=None, desiredpresence=True):
         time.sleep(0.1)
         if timeout:
             if datetime.datetime.now() > finish:
-                raise TinyServoError("Timeout", "Timeout waiting for USB %s" % vidpid)
+                raise TinyServoError(
+                    "Timeout", "Timeout waiting for USB %s" % vidpid
+                )
 
 
 def do_serialno(serialno, pty):
@@ -198,7 +202,8 @@ def do_serialno(serialno, pty):
     else:
         log("Serial number set to %s but saved as %s." % (serialno, sn))
         raise TinyServoError(
-            "Serial Number", "Serial number set to %s but saved as %s." % (serialno, sn)
+            "Serial Number",
+            "Serial number set to %s but saved as %s." % (serialno, sn),
         )
 
 

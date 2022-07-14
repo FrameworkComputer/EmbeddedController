@@ -172,7 +172,8 @@ def print_missing_config_options(hunks, config_options):
         for l in h.lines:
             # Check for the existence of a CONFIG_* in the line.
             match = filter(
-                lambda opt: opt in ALLOWLIST_CONFIGS, config_option_re.findall(l.string)
+                lambda opt: opt in ALLOWLIST_CONFIGS,
+                config_option_re.findall(l.string),
             )
             if not match:
                 continue
@@ -189,7 +190,10 @@ def print_missing_config_options(hunks, config_options):
                     # is no longer being used in the entire repo.
 
                     if l.line_type == "-":
-                        if option not in options_in_use and option in config_options:
+                        if (
+                            option not in options_in_use
+                            and option in config_options
+                        ):
                             deprecated_options.add(option)
                     else:
                         violations.add(option)
@@ -370,7 +374,9 @@ def get_hunks():
                 line_type = match.groups(1)[0]
                 # We only care about modifications.
                 if line_type != " ":
-                    hunk_lines.append(Line(line_num, match.groups(2)[1], line_type))
+                    hunk_lines.append(
+                        Line(line_num, match.groups(2)[1], line_type)
+                    )
                 # Deletions don't count towards the line numbers.
                 if line_type != "-":
                     line_num += 1

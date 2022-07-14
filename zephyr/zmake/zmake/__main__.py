@@ -225,7 +225,9 @@ def get_argparser():
         dest="clobber",
         help="Delete existing build directories, even if configuration is unchanged",
     )
-    testall.add_argument("-B", "--build-dir", type=pathlib.Path, help="Build directory")
+    testall.add_argument(
+        "-B", "--build-dir", type=pathlib.Path, help="Build directory"
+    )
 
     generate_readme = sub.add_parser(
         "generate-readme",
@@ -251,7 +253,9 @@ def get_argparser():
 
 def add_common_configure_args(sub_parser: argparse.ArgumentParser):
     """Adds common arguments used by configure-like subcommands."""
-    sub_parser.add_argument("-t", "--toolchain", help="Name of toolchain to use")
+    sub_parser.add_argument(
+        "-t", "--toolchain", help="Name of toolchain to use"
+    )
     sub_parser.add_argument(
         "--bringup",
         action="store_true",

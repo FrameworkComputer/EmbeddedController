@@ -20,7 +20,9 @@ def test_read_output_from_pipe():
     file_desc = io.TextIOWrapper(os.fdopen(pipe[0], "rb"), encoding="utf-8")
     logger = mock.Mock(spec=logging.Logger)
     logger.log.side_effect = lambda log_lvl, line: semaphore.release()
-    zmake.multiproc.LogWriter.log_output(logger, logging.DEBUG, file_desc, job_id="")
+    zmake.multiproc.LogWriter.log_output(
+        logger, logging.DEBUG, file_desc, job_id=""
+    )
     os.write(pipe[1], "Hello\n".encode("utf-8"))
     semaphore.acquire()
     logger.log.assert_called_with(logging.DEBUG, "Hello")
@@ -77,8 +79,12 @@ def test_read_output_from_second_pipe():
     logger = mock.Mock(spec=logging.Logger)
     logger.log.side_effect = lambda log_lvl, fmt, id, line: semaphore.release()
 
-    zmake.multiproc.LogWriter.log_output(logger, logging.DEBUG, fds[0], job_id="0")
-    zmake.multiproc.LogWriter.log_output(logger, logging.ERROR, fds[1], job_id="1")
+    zmake.multiproc.LogWriter.log_output(
+        logger, logging.DEBUG, fds[0], job_id="0"
+    )
+    zmake.multiproc.LogWriter.log_output(
+        logger, logging.ERROR, fds[1], job_id="1"
+    )
 
     os.write(pipes[1][1], "Hello\n".encode("utf-8"))
     semaphore.acquire()
@@ -102,8 +108,12 @@ def test_read_output_after_another_pipe_closed():
     logger = mock.Mock(spec=logging.Logger)
     logger.log.side_effect = lambda log_lvl, fmt, id, line: semaphore.release()
 
-    zmake.multiproc.LogWriter.log_output(logger, logging.DEBUG, fds[0], job_id="0")
-    zmake.multiproc.LogWriter.log_output(logger, logging.ERROR, fds[1], job_id="1")
+    zmake.multiproc.LogWriter.log_output(
+        logger, logging.DEBUG, fds[0], job_id="0"
+    )
+    zmake.multiproc.LogWriter.log_output(
+        logger, logging.ERROR, fds[1], job_id="1"
+    )
 
     fds[0].close()
     os.write(pipes[1][1], "Hello\n".encode("utf-8"))

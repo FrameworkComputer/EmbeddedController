@@ -35,7 +35,12 @@ class Susb(object):
     TIMEOUT_MS = 100
 
     def __init__(
-        self, vendor=0x18D1, product=0x5027, interface=1, serialname=None, logger=None
+        self,
+        vendor=0x18D1,
+        product=0x5027,
+        interface=1,
+        serialname=None,
+        logger=None,
     ):
         """Susb constructor.
 
@@ -83,7 +88,8 @@ class Susb(object):
                 dev = dev_list[0]
             except StopIteration:
                 raise SusbError(
-                    "USB device %04x:%04x not found" % (self._vendor, self._product)
+                    "USB device %04x:%04x not found"
+                    % (self._vendor, self._product)
                 )
 
         # If we can't set configuration, it's already been set.
@@ -111,11 +117,15 @@ class Susb(object):
             dev.detach_kernel_driver(intf.bInterfaceNumber)
 
         read_ep_number = intf.bInterfaceNumber + self.READ_ENDPOINT
-        read_ep = usb.util.find_descriptor(intf, bEndpointAddress=read_ep_number)
+        read_ep = usb.util.find_descriptor(
+            intf, bEndpointAddress=read_ep_number
+        )
         self._read_ep = read_ep
 
         write_ep_number = intf.bInterfaceNumber + self.WRITE_ENDPOINT
-        write_ep = usb.util.find_descriptor(intf, bEndpointAddress=write_ep_number)
+        write_ep = usb.util.find_descriptor(
+            intf, bEndpointAddress=write_ep_number
+        )
         self._write_ep = write_ep
 
     def close(self):

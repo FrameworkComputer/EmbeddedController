@@ -231,7 +231,11 @@ def parseargs():
         "--loader_file", help="EC loader binary", default="ecloader.bin"
     )
     parser.add_argument(
-        "-s", "--spi_size", type=int, help="Size of the SPI flash in MB", default=4
+        "-s",
+        "--spi_size",
+        type=int,
+        help="Size of the SPI flash in MB",
+        default=4,
     )
     parser.add_argument(
         "-l",
@@ -281,7 +285,10 @@ def parseargs():
         default=0xB,
     )
     parser.add_argument(
-        "--image_size", type=int, help="Size of a single image.", default=(96 * 1024)
+        "--image_size",
+        type=int,
+        help="Size of a single image.",
+        default=(96 * 1024),
     )
     return parser.parse_args()
 

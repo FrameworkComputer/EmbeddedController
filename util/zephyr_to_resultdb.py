@@ -50,7 +50,9 @@ def testcase_summary(testcase):
         or "reason" in testcase
         or translate_status(testcase["status"]) == "SKIP"
     ):
-        html = '<p><text-artifact artifact-id="artifact-content-in-request"></p>'
+        html = (
+            '<p><text-artifact artifact-id="artifact-content-in-request"></p>'
+        )
 
     return html
 

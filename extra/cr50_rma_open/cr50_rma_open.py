@@ -357,7 +357,9 @@ class RMAOpen(object):
 
     def _run_on_dut(self, command):
         """Run the command on the DUT."""
-        return subprocess.check_output(["ssh", self.ip, command], encoding="utf-8")
+        return subprocess.check_output(
+            ["ssh", self.ip, command], encoding="utf-8"
+        )
 
     def _open_in_dev_mode(self):
         """Open Cr50 when it's in dev mode"""
@@ -471,7 +473,9 @@ class RMAOpen(object):
             rma_support,
         )
         if not self.is_prepvt and self._running_version_is_older(TESTLAB_PROD):
-            raise ValueError("Update cr50. No testlab support in old prod images.")
+            raise ValueError(
+                "Update cr50. No testlab support in old prod images."
+            )
         if self._running_version_is_older(rma_support):
             raise ValueError(
                 "%s does not have RMA support. Update to at least %s"
@@ -565,7 +569,9 @@ class RMAOpen(object):
                 raise ValueError('Could not find usb device "%s"' % usb_serial)
             return usb_serial
         if len(serialnames) > 1:
-            logging.info("Found Cr50 device serialnames %s", ", ".join(serialnames))
+            logging.info(
+                "Found Cr50 device serialnames %s", ", ".join(serialnames)
+            )
             logging.warning(DEBUG_TOO_MANY_USB_DEVICES)
             raise ValueError("Too many cr50 usb devices")
         return serialnames[0]
@@ -605,7 +611,10 @@ def parse_args(argv):
         help="Generate Cr50 challenge. Must be used with -i",
     )
     parser.add_argument(
-        "-t", "--enable_testlab", action="store_true", help="enable testlab mode"
+        "-t",
+        "--enable_testlab",
+        action="store_true",
+        help="enable testlab mode",
     )
     parser.add_argument(
         "-w", "--wp_disable", action="store_true", help="Disable write protect"
@@ -617,7 +626,11 @@ def parse_args(argv):
         help="Check cr50 console connection works",
     )
     parser.add_argument(
-        "-s", "--serialname", type=str, default="", help="The cr50 usb serialname"
+        "-s",
+        "--serialname",
+        type=str,
+        default="",
+        help="The cr50 usb serialname",
     )
     parser.add_argument(
         "-D", "--debug", action="store_true", help="print debug messages"
@@ -647,7 +660,11 @@ def parse_args(argv):
         "-P", "--servo_port", type=str, default="", help="the servo port"
     )
     parser.add_argument(
-        "-I", "--ip", type=str, default="", help="The DUT IP. Necessary to do ccd open"
+        "-I",
+        "--ip",
+        type=str,
+        default="",
+        help="The DUT IP. Necessary to do ccd open",
     )
     return parser.parse_args(argv)
 
@@ -667,7 +684,9 @@ def main(argv):
     tried_authcode = False
     logging.info("Running cr50_rma_open version %s", SCRIPT_VERSION)
 
-    cr50_rma_open = RMAOpen(opts.device, opts.serialname, opts.servo_port, opts.ip)
+    cr50_rma_open = RMAOpen(
+        opts.device, opts.serialname, opts.servo_port, opts.ip
+    )
     if opts.check_connection:
         sys.exit(0)
 
@@ -683,14 +702,18 @@ def main(argv):
             cr50_rma_open.try_authcode(opts.authcode)
             tried_authcode = True
 
-    if not cr50_rma_open.check(WP_IS_DISABLED) and (tried_authcode or opts.wp_disable):
+    if not cr50_rma_open.check(WP_IS_DISABLED) and (
+        tried_authcode or opts.wp_disable
+    ):
         if not cr50_rma_open.check(CCD_IS_UNRESTRICTED):
             raise ValueError(
                 "Can't disable write protect unless ccd is "
                 "open. Run through the rma open process first"
             )
         if tried_authcode:
-            logging.warning("RMA Open did not disable write protect. File a bug")
+            logging.warning(
+                "RMA Open did not disable write protect. File a bug"
+            )
             logging.warning("Trying to disable it manually")
         cr50_rma_open.wp_disable()
 

@@ -70,7 +70,9 @@ class ArmAnalyzerTest(unittest.TestCase):
 
         cbz_list = ["cbz", "cbnz", "cbz.n", "cbnz.n", "cbz.w", "cbnz.w"]
         for opcode in cbz_list:
-            self.assertIsNotNone(sa.ArmAnalyzer.CBZ_CBNZ_OPCODE_RE.match(opcode))
+            self.assertIsNotNone(
+                sa.ArmAnalyzer.CBZ_CBNZ_OPCODE_RE.match(opcode)
+            )
 
         self.assertIsNone(sa.ArmAnalyzer.CBZ_CBNZ_OPCODE_RE.match("cbn"))
 
@@ -199,7 +201,10 @@ class StackAnalyzerTest(unittest.TestCase):
             " 20000 dead1000 00100000 dead2000 00200000  He..f.He..s.\n"
         )
         rodata = sa.ParseRoDataText(rodata_text)
-        expect_rodata = (0x20000, [0x0010ADDE, 0x00001000, 0x0020ADDE, 0x00002000])
+        expect_rodata = (
+            0x20000,
+            [0x0010ADDE, 0x00001000, 0x0020ADDE, 0x00002000],
+        )
         self.assertEqual(rodata, expect_rodata)
 
     def testLoadTasklist(self):
@@ -246,13 +251,21 @@ class StackAnalyzerTest(unittest.TestCase):
 
     def testResolveAnnotation(self):
         self.analyzer.annotation = {}
-        (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+        (
+            add_rules,
+            remove_rules,
+            invalid_sigtxts,
+        ) = self.analyzer.LoadAnnotation()
         self.assertEqual(add_rules, {})
         self.assertEqual(remove_rules, [])
         self.assertEqual(invalid_sigtxts, set())
 
         self.analyzer.annotation = {"add": None, "remove": None}
-        (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+        (
+            add_rules,
+            remove_rules,
+            invalid_sigtxts,
+        ) = self.analyzer.LoadAnnotation()
         self.assertEqual(add_rules, {})
         self.assertEqual(remove_rules, [])
         self.assertEqual(invalid_sigtxts, set())
@@ -264,7 +277,11 @@ class StackAnalyzerTest(unittest.TestCase):
                 [["a", "b[x:3]"], ["0", "1", "2"], "x"],
             ],
         }
-        (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+        (
+            add_rules,
+            remove_rules,
+            invalid_sigtxts,
+        ) = self.analyzer.LoadAnnotation()
         self.assertEqual(add_rules, {})
         self.assertEqual(
             list.sort(remove_rules),
@@ -298,7 +315,11 @@ class StackAnalyzerTest(unittest.TestCase):
                 "touchpad_calc": [dict(name="__array", stride=8, offset=4)],
             }
         }
-        (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+        (
+            add_rules,
+            remove_rules,
+            invalid_sigtxts,
+        ) = self.analyzer.LoadAnnotation()
         self.assertEqual(
             add_rules,
             {
@@ -351,7 +372,11 @@ class StackAnalyzerTest(unittest.TestCase):
                 ["inlined_mul", "inlined_mul_alias", "console_task"],
             ],
         }
-        (add_rules, remove_rules, invalid_sigtxts) = self.analyzer.LoadAnnotation()
+        (
+            add_rules,
+            remove_rules,
+            invalid_sigtxts,
+        ) = self.analyzer.LoadAnnotation()
         self.assertEqual(invalid_sigtxts, {"touchpad?calc["})
 
         signature_set = set()
@@ -362,7 +387,9 @@ class StackAnalyzerTest(unittest.TestCase):
         for remove_sigs in remove_rules:
             signature_set.update(remove_sigs)
 
-        (signature_map, failed_sigs) = self.analyzer.MapAnnotation(funcs, signature_set)
+        (signature_map, failed_sigs) = self.analyzer.MapAnnotation(
+            funcs, signature_set
+        )
         result = self.analyzer.ResolveAnnotation(funcs)
         (add_set, remove_list, eliminated_addrs, failed_sigs) = result
 
@@ -416,7 +443,10 @@ class StackAnalyzerTest(unittest.TestCase):
                 ("touchpad_calc", sa.StackAnalyzer.ANNOTATION_ERROR_AMBIGUOUS),
                 ("hook_task[q.c]", sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
                 ("task_unk[a.c]", sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
-                ("touchpad_calc[x/a.c]", sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
+                (
+                    "touchpad_calc[x/a.c]",
+                    sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND,
+                ),
                 ("trackpad_range", sa.StackAnalyzer.ANNOTATION_ERROR_NOTFOUND),
             },
         )
@@ -427,7 +457,9 @@ class StackAnalyzerTest(unittest.TestCase):
             0x2000: sa.Function(0x2000, "console_task", 0, []),
             0x4000: sa.Function(0x4000, "touchpad_calc", 0, []),
         }
-        funcs[0x1000].callsites = [sa.Callsite(0x1002, 0x1000, False, funcs[0x1000])]
+        funcs[0x1000].callsites = [
+            sa.Callsite(0x1002, 0x1000, False, funcs[0x1000])
+        ]
         funcs[0x2000].callsites = [
             sa.Callsite(0x2002, 0x1000, False, funcs[0x1000]),
             sa.Callsite(0x2006, None, True, None),
@@ -495,7 +527,10 @@ class StackAnalyzerTest(unittest.TestCase):
         )
         function_map = self.analyzer.AnalyzeDisassembly(disasm_text)
         func_hook_task = sa.Function(
-            0x1000, "hook_task", 48, [sa.Callsite(0x1006, 0x100929DE, True, None)]
+            0x1000,
+            "hook_task",
+            48,
+            [sa.Callsite(0x1006, 0x100929DE, True, None)],
         )
         expect_funcmap = {
             0x1000: func_hook_task,
@@ -537,7 +572,10 @@ class StackAnalyzerTest(unittest.TestCase):
         )
         function_map = self.analyzer.AnalyzeDisassembly(disasm_text)
         func_hook_task = sa.Function(
-            0x1000, "hook_task", 0, [sa.Callsite(0x1006, 0x100929DE, True, None)]
+            0x1000,
+            "hook_task",
+            0,
+            [sa.Callsite(0x1006, 0x100929DE, True, None)],
         )
         expect_funcmap = {
             0x1000: func_hook_task,
@@ -585,11 +623,21 @@ class StackAnalyzerTest(unittest.TestCase):
             sa.Callsite(0x4006, 0x7000, False, funcs[0x7000]),
             sa.Callsite(0x400A, 0x8000, False, funcs[0x8000]),
         ]
-        funcs[0x5000].callsites = [sa.Callsite(0x5002, 0x4000, False, funcs[0x4000])]
-        funcs[0x7000].callsites = [sa.Callsite(0x7002, 0x7000, False, funcs[0x7000])]
-        funcs[0x8000].callsites = [sa.Callsite(0x8002, 0x9000, False, funcs[0x9000])]
-        funcs[0x9000].callsites = [sa.Callsite(0x9002, 0x4000, False, funcs[0x4000])]
-        funcs[0x10000].callsites = [sa.Callsite(0x10002, 0x2000, False, funcs[0x2000])]
+        funcs[0x5000].callsites = [
+            sa.Callsite(0x5002, 0x4000, False, funcs[0x4000])
+        ]
+        funcs[0x7000].callsites = [
+            sa.Callsite(0x7002, 0x7000, False, funcs[0x7000])
+        ]
+        funcs[0x8000].callsites = [
+            sa.Callsite(0x8002, 0x9000, False, funcs[0x9000])
+        ]
+        funcs[0x9000].callsites = [
+            sa.Callsite(0x9002, 0x4000, False, funcs[0x4000])
+        ]
+        funcs[0x10000].callsites = [
+            sa.Callsite(0x10002, 0x2000, False, funcs[0x2000])
+        ]
 
         cycles = self.analyzer.AnalyzeCallGraph(
             funcs,
@@ -643,7 +691,10 @@ class StackAnalyzerTest(unittest.TestCase):
             0x5000: (152, [funcs[0x5000], funcs[0x4000], funcs[0x7000]]),
             0x6000: (100, [funcs[0x6000]]),
             0x7000: (24, [funcs[0x7000]]),
-            0x8000: (160, [funcs[0x8000], funcs[0x9000], funcs[0x4000], funcs[0x7000]]),
+            0x8000: (
+                160,
+                [funcs[0x8000], funcs[0x9000], funcs[0x4000], funcs[0x7000]],
+            ),
             0x9000: (140, [funcs[0x9000], funcs[0x4000], funcs[0x7000]]),
             0x10000: (
                 200,
@@ -688,11 +739,14 @@ class StackAnalyzerTest(unittest.TestCase):
             [("fake_func", "/a.c", 1), ("bake_func", "/b.c", 2)],
         )
         checkoutput_mock.assert_called_once_with(
-            ["addr2line", "-f", "-e", "./ec.RW.elf", "1234", "-i"], encoding="utf-8"
+            ["addr2line", "-f", "-e", "./ec.RW.elf", "1234", "-i"],
+            encoding="utf-8",
         )
         checkoutput_mock.reset_mock()
 
-        checkoutput_mock.return_value = "fake_func\n/test.c:1 (discriminator 128)"
+        checkoutput_mock.return_value = (
+            "fake_func\n/test.c:1 (discriminator 128)"
+        )
         self.assertEqual(
             self.analyzer.AddressToLine(0x12345), [("fake_func", "/test.c", 1)]
         )
@@ -703,7 +757,8 @@ class StackAnalyzerTest(unittest.TestCase):
 
         checkoutput_mock.return_value = "??\n:?\nbake_func\n/b.c:2\n"
         self.assertEqual(
-            self.analyzer.AddressToLine(0x123456), [None, ("bake_func", "/b.c", 2)]
+            self.analyzer.AddressToLine(0x123456),
+            [None, ("bake_func", "/b.c", 2)],
         )
         checkoutput_mock.assert_called_once_with(
             ["addr2line", "-f", "-e", "./ec.RW.elf", "123456"], encoding="utf-8"
@@ -716,7 +771,9 @@ class StackAnalyzerTest(unittest.TestCase):
             checkoutput_mock.side_effect = subprocess.CalledProcessError(1, "")
             self.analyzer.AddressToLine(0x5678)
 
-        with self.assertRaisesRegexp(sa.StackAnalyzerError, "Failed to run addr2line."):
+        with self.assertRaisesRegexp(
+            sa.StackAnalyzerError, "Failed to run addr2line."
+        ):
             checkoutput_mock.side_effect = OSError()
             self.analyzer.AddressToLine(0x9012)
 
@@ -773,7 +830,9 @@ class StackAnalyzerTest(unittest.TestCase):
                 ]
             )
 
-        with self.assertRaisesRegexp(sa.StackAnalyzerError, "Failed to run objdump."):
+        with self.assertRaisesRegexp(
+            sa.StackAnalyzerError, "Failed to run objdump."
+        ):
             checkoutput_mock.side_effect = OSError()
             self.analyzer.Analyze()
 
@@ -836,7 +895,9 @@ class StackAnalyzerTest(unittest.TestCase):
                 ]
             )
 
-        with self.assertRaisesRegexp(sa.StackAnalyzerError, "Failed to run objdump."):
+        with self.assertRaisesRegexp(
+            sa.StackAnalyzerError, "Failed to run objdump."
+        ):
             checkoutput_mock.side_effect = OSError()
             self.analyzer.Analyze()
 
@@ -911,7 +972,9 @@ class StackAnalyzerTest(unittest.TestCase):
         with mock.patch("builtins.print") as print_mock:
             checkoutput_mock.side_effect = [symbol_text, rodata_text]
             sa.main()
-            print_mock.assert_called_once_with("Error: Failed to load export_taskinfo.")
+            print_mock.assert_called_once_with(
+                "Error: Failed to load export_taskinfo."
+            )
 
         with mock.patch("builtins.print") as print_mock:
             checkoutput_mock.side_effect = subprocess.CalledProcessError(1, "")

@@ -113,7 +113,9 @@ class Supdate(object):
         read_ep = usb.util.find_descriptor(
             intf,
             # match the first IN endpoint
-            custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
+            custom_match=lambda e: usb.util.endpoint_direction(
+                e.bEndpointAddress
+            )
             == usb.util.ENDPOINT_IN,
         )
 
@@ -123,7 +125,9 @@ class Supdate(object):
         write_ep = usb.util.find_descriptor(
             intf,
             # match the first OUT endpoint
-            custom_match=lambda e: usb.util.endpoint_direction(e.bEndpointAddress)
+            custom_match=lambda e: usb.util.endpoint_direction(
+                e.bEndpointAddress
+            )
             == usb.util.ENDPOINT_OUT,
         )
 
@@ -267,7 +271,9 @@ class Supdate(object):
             result = struct.unpack("<I", read)
             result = result[0]
             if result != 0:
-                raise Exception("Update", "Upload failed with rc: 0x%x" % result)
+                raise Exception(
+                    "Update", "Upload failed with rc: 0x%x" % result
+                )
 
     def start(self):
         """Start a transaction and erase currently inactive region.
@@ -297,7 +303,9 @@ class Supdate(object):
             log("Update protocol v. %d" % version)
             log("Available flash region base: %x" % base)
         else:
-            raise Exception("Update", "Start command returned %d bytes" % len(read))
+            raise Exception(
+                "Update", "Start command returned %d bytes" % len(read)
+            )
 
         if base < 256:
             raise Exception("Update", "Start returned error code 0x%x" % base)
@@ -380,7 +388,8 @@ class Supdate(object):
         if self._filesize != self._flashsize:
             raise Exception(
                 "Update",
-                "Flash size 0x%x != file size 0x%x" % (self._flashsize, self._filesize),
+                "Flash size 0x%x != file size 0x%x"
+                % (self._flashsize, self._filesize),
             )
 
 
@@ -396,9 +405,13 @@ parser.add_argument(
 parser.add_argument(
     "-f", "--file", type=str, help="Complete ec.bin file", default="ec.bin"
 )
-parser.add_argument("-s", "--serial", type=str, help="Serial number", default="")
+parser.add_argument(
+    "-s", "--serial", type=str, help="Serial number", default=""
+)
 parser.add_argument("-l", "--list", action="store_true", help="List regions")
-parser.add_argument("-v", "--verbose", action="store_true", help="Chatty output")
+parser.add_argument(
+    "-v", "--verbose", action="store_true", help="Chatty output"
+)
 
 
 def main():

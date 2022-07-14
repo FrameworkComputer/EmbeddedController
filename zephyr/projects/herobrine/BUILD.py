@@ -5,7 +5,9 @@
 """Define zmake projects for herobrine."""
 
 
-def register_variant(project_name, extra_dts_overlays=(), extra_kconfig_files=()):
+def register_variant(
+    project_name, extra_dts_overlays=(), extra_kconfig_files=()
+):
     """Register a variant of herobrine."""
     register_npcx_project(
         project_name=project_name,
