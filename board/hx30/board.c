@@ -481,6 +481,10 @@ DECLARE_HOOK(HOOK_INIT, vci_init, HOOK_PRIO_FIRST);
 static void board_power_off_deferred(void)
 {
 	int i;
+	/* Turn off BGATE and NGATE for power saving */
+	charger_psys_enable(0);
+	charge_gate_onoff(0);
+
 
 	/* Disable interrupts */
 	interrupt_disable();
@@ -618,7 +622,7 @@ void charge_gate_onoff(uint8_t enable)
 }
 
 
-void charge_psys_onoff(uint8_t enable)
+void charger_psys_enable(uint8_t enable)
 {
 	int control1 = 0x0000;
 	int control4 = 0x0000;
@@ -661,43 +665,6 @@ void charge_psys_onoff(uint8_t enable)
 }
 
 
-/*
- * Charger Low Power Mode Process
- * modern standby should not turn off Bfet and Nfet
- * DC only at S5 need enable
- * AC+DC at S5 & Fully charge need enable
- * AC+DC at Modern standby & Fully charge need enable
- * AC only need disable
- */
-void charger_low_power_update(void)
-{
-	static int ac_state;
-	static int dc_state;
-	int batt_status;
-
-	ac_state = extpower_is_present();
-	dc_state = battery_is_present();
-	battery_status(&batt_status);
-
-	if (dc_state && !ac_state &&
-		chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		charge_gate_onoff(0);
-		charge_psys_onoff(0);
-	} else if (ac_state && dc_state &&
-		batt_status & STATUS_FULLY_CHARGED) {
-		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-			charge_gate_onoff(0);
-			charge_psys_onoff(0);
-		} else if (chipset_in_state(CHIPSET_STATE_STANDBY))
-			charge_psys_onoff(0);
-	} else if (ac_state && !dc_state) {
-		charge_gate_onoff(1);
-		charge_psys_onoff(1);
-	}
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, charger_low_power_update, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_low_power_update, HOOK_PRIO_DEFAULT);
-
 /* Initialize board. */
 static void board_init(void)
 {
@@ -732,8 +699,7 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT + 1);
 static void board_chipset_startup(void)
 {
 	CPRINTS("HOOK_CHIPSET_STARTUP - called board_chipset_startup");
-	charge_gate_onoff(1);
-	charge_psys_onoff(1);
+	charger_psys_enable(1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP,
 		board_chipset_startup,
@@ -752,11 +718,8 @@ static void board_chipset_shutdown(void)
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
 #endif
 
-	/* avoid AC mode enable charger LPM when charging*/
-	if (!extpower_is_present() || (batt_status & STATUS_FULLY_CHARGED)) {
-		charge_gate_onoff(0);
-		charge_psys_onoff(0);
-	}
+	charger_psys_enable(0);
+
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN,
 		board_chipset_shutdown,
@@ -780,7 +743,7 @@ static void board_chipset_resume(void)
 	/*gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);*/
 	gpio_set_level(GPIO_EC_MUTE_L, 1);
 	gpio_set_level(GPIO_CAM_EN, 1);
-	charge_psys_onoff(1);
+	charger_psys_enable(1);
 
 	/* Enable BB retimer power, for MP boards. */
 	if (board_get_version() > BOARD_VERSION_10 || force_gpio6_rework) {
@@ -803,7 +766,7 @@ static void board_chipset_suspend(void)
 		gpio_set_level(GPIO_EC_MUTE_L, 0);
 		gpio_set_level(GPIO_CAM_EN, 0);
 	}
-	charge_psys_onoff(0);
+	charger_psys_enable(0);
 
 	/* Disable BB retimer power, for MP boards. */
 	hook_call_deferred(&disable_bb_retimer_power_deferred_data, 3 * SECOND);
@@ -1005,6 +968,9 @@ static void charger_chips_init(void)
 		goto init_fail;
 
 	val = ISL9241_CONTROL1_PROCHOT_REF_6800 | ISL9241_CONTROL1_SWITCH_FREQ;
+
+	/* make sure battery FET is enabled on EC on */
+	val &= ~ISL9241_CONTROL1_BGATE;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL1, val))
