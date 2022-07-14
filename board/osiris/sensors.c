@@ -63,9 +63,9 @@ const struct temp_sensor_t temp_sensors[] = {
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /*
- * TODO(b/234545460): update for Alder Lake/brya
- *
- * temperature limit, See thermal table in b/234545460#comment2
+ * Temperature limit, See thermal table in b/234545460#comment16
+ * For real temperature in fan control table, set temp_fan_off
+ * and temp_fan_max to 0 and 99.
  */
 /*
  * TODO(b/202062363): Remove when clang is fixed.
@@ -74,13 +74,13 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 	{                        \
 		.temp_host = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(78), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
 		}, \
 		.temp_host_release = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
 		}, \
-		.temp_fan_off = C_TO_K(25), \
-		.temp_fan_max = C_TO_K(89), \
+		.temp_fan_off = C_TO_K(0), \
+		.temp_fan_max = C_TO_K(99), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
