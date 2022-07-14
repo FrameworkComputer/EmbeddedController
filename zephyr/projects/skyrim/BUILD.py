@@ -33,6 +33,3 @@ def register_variant(project_name):
 
 
 register_variant(project_name="skyrim")
-
-# TODO: Deprecate guybrush build after skyrim hardware is readily available.
-# register_variant(project_name="guybrush")
