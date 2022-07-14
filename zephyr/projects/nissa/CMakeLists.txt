@@ -27,6 +27,7 @@ if(DEFINED CONFIG_BOARD_NEREID)
 	zephyr_library_sources(
 			"src/led.c"
 			"nereid/src/keyboard.c"
+			"nereid/src/hdmi.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "nereid/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "nereid/src/charger.c")
@@ -46,6 +47,7 @@ if(DEFINED CONFIG_BOARD_PUJJO)
 	zephyr_library_sources(
 			"pujjo/src/led.c"
 			"pujjo/src/keyboard.c"
+			"pujjo/src/hdmi.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "pujjo/src/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "pujjo/src/usbc.c")
