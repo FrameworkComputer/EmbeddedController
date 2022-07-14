@@ -17,3 +17,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"led.c")
+
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
+	"stt.c")
