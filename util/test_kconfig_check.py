@@ -219,22 +219,10 @@ rsource "subdir/Kconfig.wibble"
         # List of things missing from the Kconfig
         missing = sorted(list(set(adhoc_version) - set(kc_version)))
 
-        # The Kconfig is disjoint in some places, e.g. the boards have their
-        # own Kconfig files which are not included from the main Kconfig
-        missing = [
-            item
-            for item in missing
-            if not item.startswith("BOARD") and not item.startswith("VARIANT")
-        ]
-
-        # Similarly, some other items are defined in files that are not included
+        # Some items are defined in files that are not included
         # in all cases, only for particular values of $(ARCH)
         self.assertEqual(
             [
-                "BUG209907615",
-                "FLASH_LOAD_OFFSET",
-                "NPCX_HEADER",
-                "SYS_CLOCK_HW_CYCLES_PER_SEC",
                 "TRAP_UNALIGNED_ACCESS",
             ],
             missing,

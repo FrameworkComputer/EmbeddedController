@@ -254,6 +254,14 @@ class KconfigCheck:
             ]
             if "Kconfig" in dirs:
                 dirs.remove("Kconfig")
+            if "boards" in dirs:
+                dirs.remove("boards")
+            if "projects" in dirs:
+                dirs.remove("projects")
+            if "test" in dirs:
+                dirs.remove("test")
+            if "chip" in dirs:
+                dirs.remove("chip")
         return kconfig_files
 
     @classmethod
