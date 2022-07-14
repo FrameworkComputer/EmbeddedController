@@ -12,6 +12,7 @@
 #include "sb_rmi.h"
 #include "stdbool.h"
 #include "time.h"
+#include "timer.h"
 #include "util.h"
 
 /* Console output macros */
