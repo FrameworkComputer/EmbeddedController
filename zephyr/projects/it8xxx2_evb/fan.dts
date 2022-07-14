@@ -9,7 +9,6 @@
 
 		fan_0 {
 			pwms = <&pwm7 PWM_CHANNEL_7 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
-			pwm-frequency = <30000>;
 			tach = <&tach0>;
 			rpm_min = <1500>;
 			rpm_start = <1500>;

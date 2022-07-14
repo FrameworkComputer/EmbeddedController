@@ -9,7 +9,6 @@
 
 		fan_0 {
 			pwms = <&pwm0 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
-			pwm-frequency = <25000>;
 			rpm_min = <1000>;
 			rpm_start = <1000>;
 			rpm_max = <5200>;

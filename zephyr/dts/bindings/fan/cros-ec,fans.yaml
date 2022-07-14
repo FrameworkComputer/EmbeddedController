@@ -29,10 +29,6 @@ child-binding:
       required: true
       description:
         PWM channel to control the fan
-    pwm-frequency:
-      type: int
-      description:
-        PWM frequency in Hz.
     tach:
       type: phandle
       required: false
