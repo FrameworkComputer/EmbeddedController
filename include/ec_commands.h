@@ -1921,10 +1921,19 @@ struct ec_params_rand_num {
 } __ec_align4;
 
 struct ec_response_rand_num {
-	uint8_t rand[0]; /**< generated random numbers */
-} __ec_align4;
+	/**
+	 * generated random numbers in the range of 1 to EC_MAX_INSIZE. The size
+	 * of this is set to 1 in order to support C++ compilation. The true
+	 * size of rand is determined by ec_params_rand_num's num_rand_bytes.
+	 */
+	uint8_t rand[1];
+} __ec_align1;
 
-BUILD_ASSERT(sizeof(struct ec_response_rand_num) == 0);
+/* C++ requires all structs to be at least 1 byte long. Since struct
+ * ec_response_rand_num will never be used with num_rand_bytes == 0 (from
+ * ec_params_rand_num) it is set to always be at least 1.
+ */
+BUILD_ASSERT(sizeof(struct ec_response_rand_num) == 1);
 
 /**
  * Get information about the key used to sign the RW firmware.
