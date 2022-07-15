@@ -112,7 +112,6 @@
 	kb_discrete: ite-it8801@39 {
 		compatible = "ite,it8801";
 		reg = <0x39>;
-		label = "KEYBOARD_DISCRETE";
 	};
 
 	seven_seg_display: max695x-seven-seg-display@38 {

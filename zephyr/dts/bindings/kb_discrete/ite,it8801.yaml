@@ -14,6 +14,5 @@ include: i2c-device.yaml
 # kb_not_raw: ite-it8801@38 {
 #         compatible = "ite,it8801";
 #         reg = <0x38>;
-#         label = "KEYBOARD_DISCRETE";
 # };
 #
