@@ -20,4 +20,10 @@ config BOARD_VILLAGER
 	  Build the Villager board. The board is based on the Herobrine
 	  reference design.
 
+config BOARD_EVOKER
+	bool "Evoker Board"
+	help
+	  Build the Evoker board. The board is based on the Herobrine
+	  reference design.
+
 source "Kconfig.zephyr"
