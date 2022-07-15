@@ -56,7 +56,6 @@ enumeration and the Zephyr ADC driver's channel_id.
 named-adc-channels {
 	compatible = "named-adc-channels";
 	vbus {
-		label = "VBUS";
 		enum-name = "ADC_VBUS";
 		io-channels = <&adc0 1>;
 		/* Measure VBUS through a 1/10 voltage divider */
@@ -158,22 +157,18 @@ named-adc-channels {
 	compatible = "named-adc-channels";
 
 	adc_charger: charger {
-		label = "TEMP_CHARGER";
 		enum-name = "ADC_TEMP_SENSOR_CHARGER";
 		io-channels = <&adc0 0>;
 	};
 	adc_pp3300_regulator: pp3300_regulator {
-		label = "TEMP_PP3300_REGULATOR";
 		enum-name = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
 		io-channels = <&adc0 1>;
 	};
 	adc_ddr_soc: ddr_soc {
-		label = "TEMP_DDR_SOC";
 		enum-name = "ADC_TEMP_SENSOR_DDR_SOC";
 		io-channels = <&adc0 8>;
 	};
 	adc_fan: fan {
-		label = "TEMP_FAN";
 		enum-name = "ADC_TEMP_SENSOR_FAN";
 		io-channels = <&adc0 3>;
 	};

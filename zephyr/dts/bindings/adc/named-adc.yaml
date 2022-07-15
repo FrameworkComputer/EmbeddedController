@@ -9,11 +9,6 @@ compatible: "named-adc-channels"
 child-binding:
   description: Named ADCs child node
   properties:
-    label:
-      required: true
-      type: string
-      description:
-        String used to describe an ADC channel in the 'adc' console command.
     io-channels:
       required: true
       type: phandle-array

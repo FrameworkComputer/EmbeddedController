@@ -343,34 +343,28 @@
 		compatible = "named-adc-channels";
 
 		adc_charger: charger {
-			label = "ADC_TEMP_SENSOR_CHARGER";
 			enum-name = "ADC_TEMP_SENSOR_CHARGER";
 			io-channels = <&adc0 0>;
 		};
 		adc_pp3300_regulator: pp3300-regulator {
-			label = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
 			enum-name = "ADC_TEMP_SENSOR_PP3300_REGULATOR";
 			io-channels = <&adc0 1>;
 		};
 		adc_ddr_soc: ddr-soc {
-			label = "ADC_TEMP_SENSOR_DDR_SOC";
 			enum-name = "ADC_TEMP_SENSOR_DDR_SOC";
 			io-channels = <&adc0 2>;
 		};
 		adc_fan: fan {
-			label = "ADC_TEMP_SENSOR_FAN";
 			enum-name = "ADC_TEMP_SENSOR_FAN";
 			io-channels = <&adc0 3>;
 		};
 		amon_bmon {
-			label = "AMON_BMON";
 			enum-name = "ADC_AMON_BMON";
 			io-channels = <&adc0 4>;
 			mul = <1000>;
 			div = <20>;
 		};
 		psys {
-			label = "PSYS";
 			enum-name = "ADC_PSYS";
 			io-channels = <&adc0 5>;
 			mul = <124000>;

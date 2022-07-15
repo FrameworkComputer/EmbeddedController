@@ -10,14 +10,12 @@
 		compatible = "named-adc-channels";
 
 		vbus {
-			label = "VBUS";
 			enum-name = "ADC_VBUS";
 			io-channels = <&adc0 1>;
 			/* Measure VBUS through a 1/10 voltage divider */
 			mul = <10>;
 		};
 		amon_bmon {
-			label = "AMON_BMON";
 			enum-name = "ADC_AMON_BMON";
 			io-channels = <&adc0 2>;
 			/*
@@ -29,7 +27,6 @@
 			div = <18>;
 		};
 		psys {
-			label = "PSYS";
 			enum-name = "ADC_PSYS";
 			io-channels = <&adc0 3>;
 			/*

@@ -20,8 +20,8 @@ LOG_MODULE_REGISTER(shim_adc, LOG_LEVEL_ERR);
 #if HAS_NAMED_ADC_CHANNELS
 #define ADC_CHANNEL_COMMA(node_id) \
 	[ZSHIM_ADC_ID(node_id)] = {                                       \
-		.name = DT_LABEL(node_id),                                \
-		.dev = DEVICE_DT_GET(DT_IO_CHANNELS_CTLR(node_id)),        \
+		.name = DT_NODE_FULL_NAME(node_id),                       \
+		.dev = DEVICE_DT_GET(DT_IO_CHANNELS_CTLR(node_id)),       \
 		.input_ch = DT_IO_CHANNELS_INPUT(node_id),                \
 		.factor_mul = DT_PROP(node_id, mul),                      \
 		.factor_div = DT_PROP(node_id, div),                      \
