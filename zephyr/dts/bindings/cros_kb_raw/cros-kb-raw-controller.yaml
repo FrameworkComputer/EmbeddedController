@@ -6,7 +6,3 @@
 include: base.yaml
 
 bus: croskb
-
-properties:
-    label:
-      required: true
