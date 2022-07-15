@@ -63,14 +63,16 @@ int parse_bool(const char *s, int *dest)
 {
 	/* off, disable, false, no */
 	if (!strcasecmp(s, "off") || !strncasecmp(s, "dis", 3) ||
-	    tolower(*s) == 'f' || tolower(*s) == 'n') {
+	    tolower((unsigned char)*s) == 'f' ||
+	    tolower((unsigned char)*s) == 'n') {
 		*dest = 0;
 		return 1;
 	}
 
 	/* on, enable, true, yes */
 	if (!strcasecmp(s, "on") || !strncasecmp(s, "ena", 3) ||
-	    tolower(*s) == 't' || tolower(*s) == 'y') {
+	    tolower((unsigned char)*s) == 't' ||
+	    tolower((unsigned char)*s) == 'y') {
 		*dest = 1;
 		return 1;
 	}

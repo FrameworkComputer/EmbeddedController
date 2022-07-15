@@ -321,6 +321,64 @@ test_static int test_binary_first_base3_from_bits(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_parse_bool(void)
+{
+	int bool_val;
+	int rv;
+
+	/* False cases. */
+
+	bool_val = 1;
+	rv = parse_bool("off", &bool_val);
+	TEST_EQ(rv, 1, "%d");
+	TEST_EQ(bool_val, 0, "%d");
+
+	bool_val = 1;
+	rv = parse_bool("dis", &bool_val);
+	TEST_EQ(rv, 1, "%d");
+	TEST_EQ(bool_val, 0, "%d");
+
+	bool_val = 1;
+	rv = parse_bool("f", &bool_val);
+	TEST_EQ(rv, 1, "%d");
+	TEST_EQ(bool_val, 0, "%d");
+
+	bool_val = 1;
+	rv = parse_bool("n", &bool_val);
+	TEST_EQ(rv, 1, "%d");
+	TEST_EQ(bool_val, 0, "%d");
+
+	/* True cases. */
+
+	bool_val = 0;
+	rv = parse_bool("on", &bool_val);
+	TEST_EQ(rv, 1, "%d");
+	TEST_EQ(bool_val, 1, "%d");
+
+	bool_val = 0;
+	rv = parse_bool("ena", &bool_val);
+	TEST_EQ(rv, 1, "%d");
+	TEST_EQ(bool_val, 1, "%d");
+
+	bool_val = 0;
+	rv = parse_bool("t", &bool_val);
+	TEST_EQ(rv, 1, "%d");
+	TEST_EQ(bool_val, 1, "%d");
+
+	bool_val = 0;
+	rv = parse_bool("y", &bool_val);
+	TEST_EQ(rv, 1, "%d");
+	TEST_EQ(bool_val, 1, "%d");
+
+	/* Error case. */
+	bool_val = -1;
+	rv = parse_bool("a", &bool_val);
+	TEST_EQ(rv, 0, "%d");
+	TEST_EQ(bool_val, -1, "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, char **argv)
 {
 	test_reset();
@@ -339,6 +397,7 @@ void run_test(int argc, char **argv)
 	RUN_TEST(test_safe_memcmp);
 	RUN_TEST(test_alignment_log2);
 	RUN_TEST(test_binary_first_base3_from_bits);
+	RUN_TEST(test_parse_bool);
 
 	test_print_result();
 }
