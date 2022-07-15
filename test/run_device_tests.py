@@ -178,6 +178,7 @@ class AllTests:
 
     @staticmethod
     def get(board_config: BoardConfig) -> List[TestConfig]:
+        """Return public and private test configs for the specified board."""
         public_tests = AllTests.get_public_tests(board_config)
         private_tests = AllTests.get_private_tests()
 
@@ -185,6 +186,7 @@ class AllTests:
 
     @staticmethod
     def get_public_tests(board_config: BoardConfig) -> List[TestConfig]:
+        """Return public test configs for the specified board."""
         tests = [
             TestConfig(test_name="aes"),
             TestConfig(test_name="cec"),
@@ -289,7 +291,7 @@ class AllTests:
 
     @staticmethod
     def get_private_tests() -> List[TestConfig]:
-        # Return all private tests, if the folder exists
+        """Return private test configs for the specified board, if available."""
         tests = []
         try:
             current_dir = os.path.dirname(__file__)
@@ -549,6 +551,7 @@ def readlines_until_timeout(executor, f: BinaryIO, timeout_secs: int) -> List[by
 
 
 def process_console_output_line(line: bytes, test: TestConfig):
+    """Parse console output line and update test pass/fail counters."""
     try:
         line_str = line.decode()
 
@@ -640,6 +643,7 @@ def get_test_list(config: BoardConfig, test_args) -> List[TestConfig]:
 
 
 def parse_remote_arg(remote: str) -> str:
+    """Convert the 'remote' input argument to IP address, if available."""
     if not remote:
         return ""
 
@@ -652,6 +656,7 @@ def parse_remote_arg(remote: str) -> str:
 
 
 def main():
+    """Run unit tests on device and displays the results."""
     parser = argparse.ArgumentParser()
 
     default_board = "bloonchipper"
