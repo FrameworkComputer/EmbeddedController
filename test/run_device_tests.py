@@ -49,9 +49,10 @@ import subprocess
 import sys
 import time
 from concurrent.futures.thread import ThreadPoolExecutor
+from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import BinaryIO, List, Optional
+from typing import BinaryIO, Dict, List, Optional
 
 # pylint: disable=import-error
 import colorama  # type: ignore[import]
@@ -123,75 +124,52 @@ class ImageType(Enum):
     RW = 2
 
 
+@dataclass
 class BoardConfig:
     """Board-specific configuration."""
 
-    def __init__(
-        self,
-        name,
-        servo_uart_name,
-        servo_power_enable,
-        rollback_region0_regex,
-        rollback_region1_regex,
-        mpu_regex,
-        variants,
-    ):
-        self.name = name
-        self.servo_uart_name = servo_uart_name
-        self.servo_power_enable = servo_power_enable
-        self.rollback_region0_regex = rollback_region0_regex
-        self.rollback_region1_regex = rollback_region1_regex
-        self.mpu_regex = mpu_regex
-        self.variants = variants
+    name: str
+    servo_uart_name: str
+    servo_power_enable: str
+    rollback_region0_regex: object
+    rollback_region1_regex: object
+    mpu_regex: object
+    variants: Dict
 
 
+@dataclass
 class TestConfig:
     """Configuration for a given test."""
 
-    def __init__(
-        self,
-        test_name,
-        image_to_use=ImageType.RW,
-        finish_regexes=None,
-        fail_regexes=None,
-        toggle_power=False,
-        test_args=None,
-        num_flash_attempts=2,
-        timeout_secs=10,
-        enable_hw_write_protect=False,
-        ro_image=None,
-        build_board=None,
-        config_name=None,
-    ):
-        if test_args is None:
-            test_args = []
-        if finish_regexes is None:
-            finish_regexes = [ALL_TESTS_PASSED_REGEX, ALL_TESTS_FAILED_REGEX]
-        if fail_regexes is None:
-            fail_regexes = [
+    # pylint: disable=too-many-instance-attributes
+    test_name: str
+    image_to_use: ImageType = ImageType.RW
+    finish_regexes: List = None
+    fail_regexes: List = None
+    toggle_power: bool = False
+    test_args: List[str] = field(default_factory=list)
+    num_flash_attempts: int = 2
+    timeout_secs: int = 10
+    enable_hw_write_protect: bool = False
+    ro_image: str = None
+    build_board: str = None
+    config_name: str = None
+    logs: List = field(init=False, default_factory=list)
+    passed: bool = field(init=False, default=False)
+    num_passes: int = field(init=False, default=0)
+    num_fails: int = field(init=False, default=0)
+
+    def __post_init__(self):
+        if self.finish_regexes is None:
+            self.finish_regexes = [ALL_TESTS_PASSED_REGEX, ALL_TESTS_FAILED_REGEX]
+        if self.fail_regexes is None:
+            self.fail_regexes = [
                 SINGLE_CHECK_FAILED_REGEX,
                 ALL_TESTS_FAILED_REGEX,
                 ASSERTION_FAILURE_REGEX,
             ]
-        if config_name is None:
-            config_name = test_name
-
-        self.test_name = test_name
-        self.config_name = config_name
-        self.image_to_use = image_to_use
-        self.finish_regexes = finish_regexes
-        self.fail_regexes = fail_regexes
-        self.test_args = test_args
-        self.toggle_power = toggle_power
-        self.num_flash_attempts = num_flash_attempts
-        self.timeout_secs = timeout_secs
-        self.enable_hw_write_protect = enable_hw_write_protect
-        self.logs = []
-        self.passed = False
-        self.num_fails = 0
-        self.num_passes = 0
-        self.ro_image = ro_image
-        self.build_board = build_board
+        if self.config_name is None:
+            self.config_name = self.test_name
 
 
 # All possible tests.
