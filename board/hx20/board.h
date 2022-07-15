@@ -775,6 +775,8 @@ void board_prepare_for_deep_sleep(void);
 void board_resume_from_deep_sleep(void);
 #endif
 
+void charge_gate_onoff(uint8_t enable);
+void charger_psys_enable(uint8_t enable);
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
