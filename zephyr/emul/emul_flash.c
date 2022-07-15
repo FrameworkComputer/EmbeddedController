@@ -17,8 +17,6 @@ LOG_MODULE_REGISTER(emul_flash);
 struct flash_emul_data {};
 
 struct flash_emul_cfg {
-	/** Label of the device being emulated */
-	const char *dev_label;
 	/** Pointer to run-time data */
 	struct flash_emul_data *data;
 };
@@ -121,7 +119,6 @@ static int flash_emul_init(const struct device *dev)
 	static struct flash_emul_data flash_emul_data_##n = {};               \
                                                                               \
 	static const struct flash_emul_cfg flash_emul_cfg_##n = {             \
-		.dev_label = DT_INST_LABEL(n),                                \
 		.data = &flash_emul_data_##n,                                 \
 	};                                                                    \
 	DEVICE_DT_INST_DEFINE(n, flash_emul_init, NULL, &flash_emul_data_##n, \

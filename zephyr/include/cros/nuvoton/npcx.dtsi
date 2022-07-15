@@ -68,9 +68,8 @@
 		};
 	};
 
-	fiu0: cros-flash{
+	fiu0: cros-flash {
 		compatible = "nuvoton,npcx-cros-flash";
-		label = "INTERNAL_FLASH";
 	};
 
 	soc {

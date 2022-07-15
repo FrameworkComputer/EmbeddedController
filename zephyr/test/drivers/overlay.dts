@@ -765,7 +765,6 @@
 
 	cros_flash: cros-flash {
 		compatible = "cros-ec,flash-emul";
-		label = "FLASH";
 	};
 };
 

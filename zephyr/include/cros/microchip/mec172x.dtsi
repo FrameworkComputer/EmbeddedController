@@ -69,9 +69,8 @@
 		};
 	};
 
-	fiu0: cros-flash{
+	fiu0: cros-flash {
 		compatible = "microchip,xec-cros-flash";
-		label = "INTERNAL_FLASH";
 	};
 
 /*

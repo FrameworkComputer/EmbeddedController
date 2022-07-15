@@ -77,7 +77,6 @@
 		fiu0: cros-flash@80000000 {
 			compatible = "ite,it8xxx2-cros-flash";
 			reg = <0x80000000 0x100000>;
-			label = "FLASH";
 		};
 
 		cros_kb_raw: cros-kb-raw@f01d00 {

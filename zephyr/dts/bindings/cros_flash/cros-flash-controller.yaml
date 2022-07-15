@@ -6,7 +6,3 @@
 include: base.yaml
 
 bus: crosflash
-
-properties:
-    label:
-      required: true
