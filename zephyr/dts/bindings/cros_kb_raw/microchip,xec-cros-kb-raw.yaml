@@ -6,7 +6,7 @@ description: Microchip, xec-cros-kb-raw node
 
 compatible: "microchip,xec-cros-kb-raw"
 
-include: [cros-kb-raw-controller.yaml, pinctrl-device.yaml]
+include: [base.yaml, pinctrl-device.yaml]
 
 properties:
     reg:

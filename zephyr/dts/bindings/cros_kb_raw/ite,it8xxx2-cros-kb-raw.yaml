@@ -5,7 +5,7 @@ description: ITE, it8xxx2-cros-kb-raw node
 
 compatible: "ite,it8xxx2-cros-kb-raw"
 
-include: cros-kb-raw-controller.yaml
+include: base.yaml
 
 properties:
     reg:

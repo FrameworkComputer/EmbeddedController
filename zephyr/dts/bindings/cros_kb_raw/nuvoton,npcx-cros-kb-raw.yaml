@@ -5,7 +5,7 @@ description: Nuvoton, NPCX-cros-kb-raw node
 
 compatible: "nuvoton,npcx-cros-kb-raw"
 
-include: [cros-kb-raw-controller.yaml, pinctrl-device.yaml]
+include: [base.yaml, pinctrl-device.yaml]
 
 properties:
     reg:
