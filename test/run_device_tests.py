@@ -851,27 +851,26 @@ def main():
     validate_args_combination(args)
 
     board_config = BOARD_CONFIGS[args.board]
-    e = ThreadPoolExecutor(max_workers=1)
     test_list = get_test_list(board_config, args.tests)
     logging.debug("Running tests: %s", [test.config_name for test in test_list])
 
-    for test in test_list:
-        test.passed = flash_and_run_test(test, board_config, args, e)
+    with ThreadPoolExecutor(max_workers=1) as e:
+        for test in test_list:
+            test.passed = flash_and_run_test(test, board_config, args, e)
 
-    colorama.init()
-    exit_code = 0
-    for test in test_list:
-        # print results
-        print('Test "' + test.config_name + '": ', end="")
-        if test.passed:
-            print(colorama.Fore.GREEN + "PASSED")
-        else:
-            print(colorama.Fore.RED + "FAILED")
-            exit_code = 1
+        colorama.init()
+        exit_code = 0
+        for test in test_list:
+            # print results
+            print('Test "' + test.config_name + '": ', end="")
+            if test.passed:
+                print(colorama.Fore.GREEN + "PASSED")
+            else:
+                print(colorama.Fore.RED + "FAILED")
+                exit_code = 1
 
-        print(colorama.Style.RESET_ALL)
+            print(colorama.Style.RESET_ALL)
 
-    e.shutdown(wait=False)
     sys.exit(exit_code)
 
 
