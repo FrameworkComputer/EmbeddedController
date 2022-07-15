@@ -4,6 +4,7 @@
  */
 
 #include <stddef.h>
+#include <sys/types.h>
 #include "common.h"
 #include "console.h"
 #include "fpc_bio_algorithm.h"

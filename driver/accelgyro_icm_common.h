@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_ACCELGYRO_ICM_COMMON_H
 #define __CROS_EC_ACCELGYRO_ICM_COMMON_H
 
+#include <sys/types.h>
+
 #include "accelgyro.h"
 #include "hwtimer.h"
 #include "timer.h"

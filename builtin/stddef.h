@@ -11,12 +11,6 @@
 #endif
 
 typedef __SIZE_TYPE__ size_t;
-/* There is a GCC macro for a size_t type, but not for a ssize_t type.
- * The following construct convinces GCC to make __SIZE_TYPE__ signed.
- */
-#define unsigned signed
-typedef __SIZE_TYPE__ ssize_t;
-#undef unsigned
 
 #ifndef NULL
 #define NULL ((void *)0)
