@@ -86,7 +86,7 @@ named-i2c-ports {
 	battery {
 		i2c-port = <{i2c_phandle}>;
 		remote-port = <{I2C_PASSTHRU-PORT-NUMBER}>;
-		enum-name = "I2C_PORT_BATTERY";
+		enum-names = "I2C_PORT_BATTERY";
 	};
 	...
 	...

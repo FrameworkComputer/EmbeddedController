@@ -152,7 +152,7 @@ func i2cConfig(out io.Writer, pin *Pin, chip Chip) {
 	fmt.Fprintf(out, "\t\ti2c_%s: %s {\n", lc, lc)
 	fmt.Fprintf(out, "\t\t\ti2c-port = <&%s>;\n", c)
 	if len(pin.Enum) > 0 {
-		fmt.Fprintf(out, "\t\t\tenum-name = \"%s\";\n", pin.Enum)
+		fmt.Fprintf(out, "\t\t\tenum-names = \"%s\";\n", pin.Enum)
 	}
 	fmt.Fprintf(out, "\t\t};\n")
 }

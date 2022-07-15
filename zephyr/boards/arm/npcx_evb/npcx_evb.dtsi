@@ -22,23 +22,23 @@
 
 		i2c_evb_0_0 {
 			i2c-port = <&i2c0_0>;
-			enum-name = "I2C_PORT_EVB_0";
+			enum-names = "I2C_PORT_EVB_0";
 		};
 		i2c_evb_1_0 {
 			i2c-port = <&i2c1_0>;
-			enum-name = "I2C_PORT_EVB_1";
+			enum-names = "I2C_PORT_EVB_1";
 		};
 		i2c_evb_2_0 {
 			i2c-port = <&i2c2_0>;
-			enum-name = "I2C_PORT_EVB_2";
+			enum-names = "I2C_PORT_EVB_2";
 		};
 		i2c_evb_3_0 {
 			i2c-port = <&i2c3_0>;
-			enum-name = "I2C_PORT_EVB_3";
+			enum-names = "I2C_PORT_EVB_3";
 		};
 		i2c_evb_7_0 {
 			i2c-port = <&i2c7_0>;
-			enum-name = "I2C_PORT_EVB_7";
+			enum-names = "I2C_PORT_EVB_7";
 		};
 	};
 

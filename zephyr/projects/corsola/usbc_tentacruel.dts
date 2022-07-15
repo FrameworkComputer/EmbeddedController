@@ -34,7 +34,7 @@
 		port0-muxes {
 			it5205_mux_0: it5205-mux-0 {
 				compatible = "ite,it5205";
-				port = <&i2c_usb_mux0>;
+				port = <&i2c_usb_c0>;
 				i2c-addr-flags = "IT5205_I2C_ADDR1_FLAGS";
 			};
 			virtual_mux_0: virtual-mux-0 {
@@ -65,7 +65,7 @@
 		port1-muxes {
 			ps8743_mux_1: ps8743-mux-1 {
 				compatible = "parade,ps8743";
-				port = <&i2c_usb_mux1>;
+				port = <&i2c_usb_c1>;
 				i2c-addr-flags = "PS8743_I2C_ADDR0_FLAG";
 			};
 			virtual_mux_1: virtual-mux-1 {

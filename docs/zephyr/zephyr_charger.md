@@ -56,7 +56,7 @@ named-i2c-ports {
 		/* TODO(b/228237412): Update this comment once charger chg_chips[] is
 		 * created by a shim driver.
 		 */
-   		enum-name = "I2C_PORT_CHARGER";
+   		enum-names = "I2C_PORT_CHARGER";
    	};
 };
 ```

@@ -20,15 +20,12 @@
 		compatible = "named-i2c-ports";
 		accel-0 {
 			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_ACCEL";
-		};
-		eeprom {
-			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_EEPROM";
+			enum-names = "I2C_PORT_ACCEL",
+				"I2C_PORT_EEPROM";
 		};
 		usb-c1 {
 			i2c-port = <&i2c1>;
-			enum-name = "I2C_PORT_USB_C1";
+			enum-names = "I2C_PORT_USB_C1";
 		};
 	};
 };

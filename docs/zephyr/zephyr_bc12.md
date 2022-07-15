@@ -69,7 +69,7 @@ named-i2c-ports {
     ...
     c0_bc12: c0_bc12 {
         i2c-port = <&i2c0_0>;
-        enum-name = "I2C_PORT_USB_C0_BC12";
+        enum-names = "I2C_PORT_USB_C0_BC12";
     };
 };
 

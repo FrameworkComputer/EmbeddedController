@@ -36,7 +36,7 @@
 			chg {
 				compatible = "intersil,isl923x";
 				status = "okay";
-				port = <&i2c_charger>;
+				port = <&named_i2c0>;
 			};
 		};
 
@@ -238,41 +238,20 @@
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
-		usb-c0 {
+		named_i2c0: i2c0 {
 			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_USB_C0";
+			enum-names = "I2C_PORT_USB_C0",
+				"I2C_PORT_BATTERY",
+				"I2C_PORT_POWER",
+				"I2C_PORT_CHARGER",
+				"I2C_PORT_EEPROM",
+				"I2C_PORT_ACCEL",
+				"I2C_PORT_VIRTUAL_BATTERY";
 		};
-		usb-c1 {
+		named_i2c1: i2c1 {
 			i2c-port = <&i2c1>;
-			enum-name = "I2C_PORT_USB_C1";
-		};
-		battery {
-			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_BATTERY";
-		};
-		power {
-			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_POWER";
-		};
-		i2c_charger: charger {
-			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_CHARGER";
-		};
-		eeprom {
-			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_EEPROM";
-		};
-		i2c_accel: accel {
-			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_ACCEL";
-		};
-		i2c_sensor: sensor {
-			i2c-port = <&i2c1>;
-			enum-name = "I2C_PORT_SENSOR";
-		};
-		virtual-battery {
-			i2c-port = <&i2c0>;
-			enum-name = "I2C_PORT_VIRTUAL_BATTERY";
+			enum-names = "I2C_PORT_USB_C1",
+				"I2C_PORT_SENSOR";
 		};
 	};
 
@@ -552,7 +531,7 @@
 			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&mutex_bma255>;
-			port = <&i2c_accel>;
+			port = <&named_i2c0>;
 			default-range = <2>;
 			drv-data = <&bma255_data>;
 			i2c-spi-addr-flags = "BMA2x2_I2C_ADDR1_FLAGS";
@@ -577,7 +556,7 @@
 
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi260>;
-			port = <&i2c_accel>;
+			port = <&named_i2c0>;
 			drv-data = <&bmi260_data>;
 			default-range = <4>;
 			i2c-spi-addr-flags = "BMI260_ADDR0_FLAGS";
@@ -589,7 +568,7 @@
 
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi260>;
-			port = <&i2c_accel>;
+			port = <&named_i2c0>;
 			drv-data = <&bmi260_data>;
 			default-range = <1000>; /* dps */
 			i2c-spi-addr-flags = "BMI260_ADDR0_FLAGS";
@@ -602,7 +581,7 @@
 			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi160>;
-			port = <&i2c_sensor>;
+			port = <&named_i2c1>;
 			drv-data = <&bmi160_data>;
 			default-range = <4>;
 			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
@@ -614,7 +593,7 @@
 
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi160>;
-			port = <&i2c_sensor>;
+			port = <&named_i2c1>;
 			drv-data = <&bmi160_data>;
 			default-range = <1000>; /* dps */
 			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
@@ -626,7 +605,7 @@
 
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_lis2dw12>;
-			port = <&i2c_accel>;
+			port = <&named_i2c0>;
 			drv-data = <&lis2dw12_data>;
 			default-range = <2>;
 			i2c-spi-addr-flags = "LIS2DWL_ADDR1_FLAGS";
@@ -637,7 +616,7 @@
 			status = "okay";
 
 			location = "MOTIONSENSE_LOC_BASE";
-			port = <&i2c_sensor>;
+			port = <&named_i2c1>;
 			default-range = <0x10000>;
 			drv-data = <&tcs_clear_data>;
 			i2c-spi-addr-flags = "TCS3400_I2C_ADDR_FLAGS";

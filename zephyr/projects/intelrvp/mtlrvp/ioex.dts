@@ -7,7 +7,7 @@
 	/* IOEX_KBD_GPIO IT8801 */
 	ioex-kbd-gpio {
 		compatible = "cros,ioex-chip";
-		i2c-port = <&battery>;
+		i2c-port = <&i2c_charger>;
 		i2c-addr = <0x39>;
 		drv = "it8801_ioexpander_drv";
 		flags = <0x00>;

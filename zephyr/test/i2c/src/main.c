@@ -17,8 +17,8 @@ void watchdog_reload(void)
 
 static void test_i2c_port_count(void)
 {
-	zassert_equal(I2C_PORT_COUNT, 3,
-		      "I2C_PORT_COUNT expected to be 3 but was %d",
+	zassert_equal(I2C_PORT_COUNT, 2,
+		      "I2C_PORT_COUNT expected to be 2 but was %d",
 		      I2C_PORT_COUNT);
 }
 

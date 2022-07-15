@@ -33,7 +33,7 @@
 			chg {
 				compatible = "intersil,isl923x";
 				status = "okay";
-				port = <&i2c_charger>;
+				port = <&i2c_power>;
 			};
 			usb-muxes = <&usb_mux_0>;
 		};

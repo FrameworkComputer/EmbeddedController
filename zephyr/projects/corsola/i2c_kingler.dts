@@ -13,42 +13,29 @@
 
 		i2c_sensor: sensor {
 			i2c-port = <&i2c0_0>;
-			enum-name = "I2C_PORT_SENSOR";
+			enum-names = "I2C_PORT_SENSOR";
 		};
 		i2c_usb_c0: usb-c0 {
 			i2c-port = <&i2c1_0>;
 			remote-port = <7>;
-			enum-name = "I2C_PORT_USB_C0";
+			enum-names = "I2C_PORT_USB_C0";
 		};
 		i2c_usb_c1: usb-c1 {
 			i2c-port = <&i2c2_0>;
-			enum-name = "I2C_PORT_USB_C1";
-		};
-		tcpc1 {
-			i2c-port = <&i2c2_0>;
-			enum-name = "I2C_PORT_USB_C1_TCPC";
-		};
-		ppc1 {
-			i2c-port = <&i2c2_0>;
-			enum-name = "I2C_PORT_USB_C1_PPC";
-		};
-		eeprom {
-			i2c-port = <&i2c3_0>;
-			enum-name = "I2C_PORT_EEPROM";
+			enum-names = "I2C_PORT_USB_C1",
+				"I2C_PORT_USB_C1_TCPC",
+				"I2C_PORT_USB_C1_PPC";
 		};
 		i2c_charger: charger {
 			i2c-port = <&i2c3_0>;
-			enum-name = "I2C_PORT_POWER";
+			enum-names = "I2C_PORT_POWER",
+				"I2C_PORT_EEPROM";
 		};
 		battery {
 			i2c-port = <&i2c5_0>;
 			remote-port = <1>;
-			enum-name = "I2C_PORT_BATTERY";
-		};
-		virtual-battery {
-			i2c-port = <&i2c5_0>;
-			remote-port = <1>;
-			enum-name = "I2C_PORT_VIRTUAL_BATTERY";
+			enum-names = "I2C_PORT_BATTERY",
+				"I2C_PORT_VIRTUAL_BATTERY";
 		};
 	};
 };
