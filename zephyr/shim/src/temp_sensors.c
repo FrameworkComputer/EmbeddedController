@@ -65,7 +65,7 @@ static int thermistor_get_temp(const struct temp_sensor_t *sensor,
 
 #define TEMP_THERMISTOR(node_id)                                           \
 	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                                \
-		.name = DT_LABEL(node_id),                                 \
+		.name = DT_NODE_FULL_NAME(node_id),                        \
 		.idx = ZSHIM_ADC_ID(DT_PHANDLE(node_id, adc)),             \
 		.type = TEMP_SENSOR_TYPE_BOARD,                            \
 		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_THERMISTOR(node_id), \
@@ -93,7 +93,7 @@ static int pct2075_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
 
 #define TEMP_PCT2075(node_id)                                           \
 	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                             \
-		.name = DT_LABEL(node_id),                              \
+		.name = DT_NODE_FULL_NAME(node_id),                     \
 		.idx = ZSHIM_PCT2075_SENSOR_ID(node_id),                \
 		.type = TEMP_SENSOR_TYPE_BOARD,                         \
 		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_PCT2075(node_id), \
@@ -123,7 +123,7 @@ static int sb_tsi_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
 
 #define TEMP_SB_TSI(node_id)                                           \
 	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                            \
-		.name = DT_LABEL(node_id),                             \
+		.name = DT_NODE_FULL_NAME(node_id),                    \
 		.idx = 0,                                              \
 		.type = TEMP_SENSOR_TYPE_CPU,                          \
 		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_SB_TSI(node_id), \
@@ -149,7 +149,7 @@ static int tmp112_get_temp(const struct temp_sensor_t *sensor, int *temp_ptr)
 
 #define TEMP_TMP112(node_id)                                           \
 	[ZSHIM_TEMP_SENSOR_ID(node_id)] = {                            \
-		.name = DT_LABEL(node_id),                             \
+		.name = DT_NODE_FULL_NAME(node_id),                    \
 		.idx = ZSHIM_TMP112_SENSOR_ID(node_id),                \
 		.type = TEMP_SENSOR_TYPE_BOARD,                        \
 		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_TMP112(node_id), \

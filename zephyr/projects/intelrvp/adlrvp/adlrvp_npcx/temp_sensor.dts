@@ -11,7 +11,6 @@
 			compatible = "cros-ec,temp-sensor-thermistor",
 				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
-			label = "Ambient";
 			enum-name = "TEMP_SENSOR_1";
 			temp_fan_off = <15>;
 			temp_fan_max = <50>;
@@ -30,7 +29,6 @@
 		 *	compatible = "cros-ec,temp-sensor-thermistor",
 		 *		     "cros-ec,temp-sensor";
 		 *	thermistor = < >;
-		 *	label = "Battery";
 		 *	enum-name = "";
 		 *	temp_fan_off = <15>;
 		 *	temp_fan_max = <50>;
@@ -45,7 +43,6 @@
 			compatible = "cros-ec,temp-sensor-thermistor",
 				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
-			label = "DDR";
 			enum-name = "TEMP_SENSOR_2";
 			temp_fan_off = <15>;
 			temp_fan_max = <50>;
@@ -58,7 +55,6 @@
 			compatible = "cros-ec,temp-sensor-thermistor",
 				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
-			label = "Skin";
 			enum-name = "TEMP_SENSOR_3";
 			temp_fan_off = <15>;
 			temp_fan_max = <50>;
@@ -71,7 +67,6 @@
 			compatible = "cros-ec,temp-sensor-thermistor",
 				     "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V0_22K6_47K_4050B>;
-			label = "VR";
 			enum-name = "TEMP_SENSOR_4";
 			temp_fan_off = <15>;
 			temp_fan_max = <50>;

@@ -103,7 +103,6 @@
 		soc-pct2075 {
 			compatible = "cros-ec,temp-sensor-pct2075",
 				     "cros-ec,temp-sensor";
-			label = "SOC";
 			enum-name = "TEMP_SENSOR_SOC";
 			pct2075-name = "PCT2075_SOC";
 			port = <&i2c_sensor>;
@@ -119,7 +118,6 @@
 		amb-pct2075 {
 			compatible = "cros-ec,temp-sensor-pct2075",
 				     "cros-ec,temp-sensor";
-			label = "Ambient";
 			enum-name = "TEMP_SENSOR_AMB";
 			pct2075-name = "PCT2075_AMB";
 			port = <&i2c_sensor>;

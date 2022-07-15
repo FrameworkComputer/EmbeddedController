@@ -10,13 +10,6 @@ description: >
 compatible: cros-ec,temp-sensor
 
 properties:
-    label:
-      required: true
-      type: string
-      description:
-        Human-readable string describing the device (used as
-        device_get_binding() argument)
-
     enum-name:
       type: string
       required: true

@@ -82,7 +82,6 @@ tree. This example is from [zephyr/boards/arm/brya/brya.dts](../../zephyr/boards
 		ddr_soc {
 			compatible = "cros-ec,temp-sensor";
 			thermistor = <&thermistor_3V3_30K9_47K_4050B>;
-			label = "DDR and SOC";
 			enum-name = "TEMP_SENSOR_1_DDR_SOC";
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
