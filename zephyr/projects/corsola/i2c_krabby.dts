@@ -73,6 +73,12 @@ i2c_pwr_cbi: &i2c0 {
 	pinctrl-0 = <&i2c2_clk_gpf6_default
 		     &i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
+
+	bc12_port0: rt1739-bc12@70 {
+		compatible = "richtek,rt1739-bc12";
+		status = "okay";
+		reg = <0x70>;
+	};
 };
 
 &i2c3 {
@@ -99,4 +105,11 @@ i2c_pwr_cbi: &i2c0 {
 		     &i2c4_data_gpe7_default>;
 	pinctrl-names = "default";
 	prescale-scl-low = <1>;
+
+	bc12_port1: rt9490-bc12@53 {
+		compatible = "richtek,rt9490-bc12";
+		status = "okay";
+		reg = <0x53>;
+		irq = <&int_usb_c1_bc12_charger>;
+	};
 };

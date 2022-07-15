@@ -18,9 +18,8 @@ sub-options related to BC1.2 support.
 
 ## Devicetree Nodes
 
-A BC1.2 device node should be child of an USBC port node with a compatible
-property equals to "named-usbc-port". The USBC port node should have only one
-BC1.2 device node.
+The BC1.2 device node is added to the I2C bus node, and the  bc12  property on
+the USBC port node refers to the BC1.2 device.
 
 ### Richtek RT1718S
 
@@ -64,15 +63,6 @@ found in [shimmed_task_id.h].
 Example of defining a BC1.2 chip in DTS:
 
 ```
-named-i2c-ports {
-    compatible = "named-i2c-ports";
-    ...
-    c0_bc12: c0_bc12 {
-        i2c-port = <&i2c0_0>;
-        enum-names = "I2C_PORT_USB_C0_BC12";
-    };
-};
-
 gpio-interrupts {
     compatible = "cros-ec,gpio-interrupts"
     int_usb_c0_bc12: usb_c0_bc12 {
@@ -82,23 +72,26 @@ gpio-interrupts {
     };
 };
 
+&i2c2_0 {
+	bc12_port0: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5f>;
+		irq = <&int_usb_c0_bc12>;
+	};
+};
+
 port0@0 {
     compatible = "named-usbc-port";
     reg = <0>;
-    bc12 {
-        compatible = "pericom,pi3usb9201";
-        status = "okay";
-        irq = <&int_usb_c0_bc12>;
-        port = <&c0_bc12>;
-        i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
-    };
+    bc12 = <&bc12_port0>;
 };
 ```
 
-`bc12` is a BC1.2 device node ("pericom,pi3usb9201" is a compatible that is
-used by one of the BC1.2 devices). The `bc12` is child of the `port0@0` which
-has to be the "named-usbc-port". Each "named-usbc-port" can have no more than
-one BC1.2 device node.
+`bc12_port0` is a BC1.2 device node ("pericom,pi3usb9201" is a compatible that
+is used by one of the BC1.2 devices). The `bc12_port0` is child of the `i2c2_0`
+which is an I2C controller device. Each "named-usbc-port" node can point one
+BC1.2 device node.
 
 [Kconfig.usb_charger]: https://source.chromium.org/chromium/chromiumos/platform/ec/+/HEAD:zephyr/Kconfig.usb_charger
 [richtek,rt1739-bc12.yaml]: https://source.chromium.org/chromium/chromiumos/platform/ec/+/HEAD:zephyr/dts/bindings/usbc/richtek,rt1739-bc12.yaml

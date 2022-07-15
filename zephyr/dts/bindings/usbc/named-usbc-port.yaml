@@ -9,6 +9,11 @@ compatible: "named-usbc-port"
 include: base.yaml
 
 properties:
+  bc12:
+    type: phandle
+    required: false
+    description: |
+      BC1.2 chip for the USB-C port.
   usb-muxes:
     type: phandles
     required: false
@@ -27,17 +32,11 @@ properties:
 #		port0@0 {
 #			compatible = "named-usbc-port";
 #			reg = <0>;
-#			bc12 {
-#				compatible = "pericom,pi3usb9201";
-#				port = <&i2c_ec_i2c_usb_c0>;
-#			};
+#			bc12 = <&bc12_port0>;
 #		};
 #		port1@1 {
 #			compatible = "named-usbc-port";
 #			reg = <1>;
-#			bc12 {
-#				compatible = "pericom,pi3usb9201";
-#				port = <&i2c_ec_i2c_sub_usb_c1>;
-#			};
+#			bc12 = <&bc12_port1>;
 #		};
 #	};

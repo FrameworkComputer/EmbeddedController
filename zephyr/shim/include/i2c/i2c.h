@@ -117,6 +117,42 @@
  */
 #define I2C_PORT_NODELABEL(label) I2C_PORT_BUS(DT_NODELABEL(label))
 
+/*
+ * Get the legacy I2C port enum for a child device on an I2C bus.
+ *
+ * Example devicetree fragment:
+ *
+ *     i2c2_0: io_i2c_ctrl2_port0 {
+ *         compatible = "nuvoton,npcx-i2c-port";
+ *         #address-cells = <1>;
+ *         #size-cells = <0>;
+ *         port = <0x20>;
+ *         controller = <&i2c_ctrl2>;
+ *         label = "I2C_2_PORT_0";
+ *         status = "disabled";
+ *     };
+ *
+ *     &i2c2_0 {
+ *         bc12_port0: pi3usb9201@5f {
+ *             compatible = "pericom,pi3usb9201";
+ *             status = "okay";
+ *             reg = <0x5f>;
+ *             irq = <&int_usb_c0_bc12>;
+ *         };
+ *     };
+ *
+ * Example usage to get the I2C port enum value for bc12_port0:
+ *
+ *     I2C_PORT_BY_DEV(DT_NODELABEL(bc12_port0))
+ *
+ *  * which equals:
+ *
+ *     I2C_PORT_BUS(DT_NODELABEL(i2c2_0))
+ *
+ * @param dev_id: node id of a device on the I2C bus
+ */
+#define I2C_PORT_BY_DEV(dev_id) I2C_PORT_BUS(DT_BUS(dev_id))
+
 enum i2c_ports_chip {
 	I2C_FOREACH_PORT(I2C_PORT_BUS_WITH_COMMA) I2C_PORT_COUNT
 };

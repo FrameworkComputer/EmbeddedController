@@ -6,6 +6,8 @@ description: USBC BC1.2
 
 compatible: "richtek,rt9490-bc12"
 
+include: base.yaml
+
 properties:
   irq:
     type: phandles

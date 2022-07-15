@@ -11,13 +11,7 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			bc12 {
-				compatible = "pericom,pi3usb9201";
-				status = "okay";
-				irq = <&int_usb_c0_bc12>;
-				port = <&i2c_power>;
-				i2c-addr-flags = "PI3USB9201_I2C_ADDR_3_FLAGS";
-			};
+			bc12 = <&bc12_port0>;
 			ppc_port0: ppc {
 				compatible = "silergy,syv682x";
 				status = "okay";
@@ -45,13 +39,7 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			bc12 {
-				compatible = "pericom,pi3usb9201";
-				status = "okay";
-				irq = <&int_usb_c1_bc12>;
-				port = <&i2c_eeprom>;
-				i2c-addr-flags = "PI3USB9201_I2C_ADDR_2_FLAGS";
-			};
+			bc12 = <&bc12_port1>;
 			ppc_port1: ppc {
 				compatible = "silergy,syv682x";
 				status = "okay";

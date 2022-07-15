@@ -58,6 +58,13 @@
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
+
+	bc12_port0: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5f>;
+		irq = <&int_usb_c0_bc12>;
+	};
 };
 
 &i2c_ctrl1 {
@@ -70,6 +77,12 @@
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
 	pinctrl-names = "default";
+
+	bc12_port1: rt1718s-bc12@40 {
+		compatible = "richtek,rt1718s-bc12";
+		status = "okay";
+		reg = <0x40>;
+	};
 };
 
 &i2c_ctrl2 {

@@ -23,6 +23,13 @@
 #define USBC_PORT(id) DT_REG_ADDR(DT_PARENT(id))
 
 /*
+ * Get the port number from a `named-usbc-port` node.
+ *
+ * @param id: `named-usbc-port` node id
+ */
+#define USBC_PORT_NEW(id) DT_REG_ADDR(id)
+
+/*
  * Get the port number from a child of `named-usbc-port` node.
  *
  * @param inst: instance number of the node

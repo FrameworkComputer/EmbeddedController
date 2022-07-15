@@ -22,21 +22,25 @@
 BUILD_ASSERT(DT_HAS_COMPAT_STATUS_OKAY(RT1718S_TCPC_COMPAT));
 #endif
 
-#define BC12_CHIP(id, fn) [USBC_PORT(id)] = fn(id)
+#define BC12_CHIP_ENTRY(usbc_id, bc12_id, chip_fn) \
+	[USBC_PORT_NEW(usbc_id)] = chip_fn(bc12_id)
 
-/* Power Path Controller */
-/* Enable clang-format when the formatted code is readable. */
-/* clang-format off */
-struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = {
-	DT_FOREACH_STATUS_OKAY_VARGS(RT1718S_BC12_COMPAT, BC12_CHIP,
-				     BC12_CHIP_RT1718S)
-	DT_FOREACH_STATUS_OKAY_VARGS(RT1739_BC12_COMPAT, BC12_CHIP,
-				     BC12_CHIP_RT1739)
-	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_BC12_COMPAT, BC12_CHIP,
-				     BC12_CHIP_RT9490)
-	DT_FOREACH_STATUS_OKAY_VARGS(PI3USB9201_COMPAT, BC12_CHIP,
-				     BC12_CHIP_PI3USB9201)
-};
-/* clang-format on */
+#define CHECK_COMPAT(compat, usbc_id, bc12_id, config)   \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(bc12_id, compat), \
+		    (BC12_CHIP_ENTRY(usbc_id, bc12_id, config)), ())
+
+#define BC12_CHIP_FIND(usbc_id, bc12_id)                                       \
+	CHECK_COMPAT(RT1718S_BC12_COMPAT, usbc_id, bc12_id, BC12_CHIP_RT1718S) \
+	CHECK_COMPAT(RT1739_BC12_COMPAT, usbc_id, bc12_id, BC12_CHIP_RT1739)   \
+	CHECK_COMPAT(RT9490_BC12_COMPAT, usbc_id, bc12_id, BC12_CHIP_RT9490)   \
+	CHECK_COMPAT(PI3USB9201_COMPAT, usbc_id, bc12_id, BC12_CHIP_PI3USB9201)
+
+#define BC12_CHIP(usbc_id)                           \
+	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, bc12), \
+		    (BC12_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, bc12))), ())
+
+/* BC1.2 controllers */
+struct bc12_config bc12_ports[CHARGE_PORT_COUNT] = { DT_FOREACH_STATUS_OKAY(
+	named_usbc_port, BC12_CHIP) };
 
 #endif /* #if DT_HAS_COMPAT_STATUS_OKAY */
