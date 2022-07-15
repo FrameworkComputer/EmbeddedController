@@ -95,7 +95,7 @@ static void set_lid(bool open, bool inhibit_boot)
 
 	if (inhibit_boot) {
 		wait_for_chipset_startup();
-		test_set_chipset_to_g3_then_transition_to_s5();
+		test_set_chipset_to_g3();
 	}
 }
 
@@ -107,7 +107,7 @@ static void pulse_power_button(void)
 
 static void reset_state(void *unused)
 {
-	test_set_chipset_to_g3_then_transition_to_s5();
+	test_set_chipset_to_g3();
 
 	if (lid_is_open()) {
 		set_lid(false, false);
@@ -184,7 +184,7 @@ ZTEST_USER(chargesplash, test_lockout)
 		wait_for_chipset_startup();
 
 		set_ac_enabled(false);
-		test_set_chipset_to_g3_then_transition_to_s5();
+		test_set_chipset_to_g3();
 	}
 
 	set_ac_enabled(true);
@@ -231,7 +231,7 @@ ZTEST_USER(chargesplash, test_manual_lockout_via_console)
 	zassert_true(is_chargesplash_requested(),
 		     "chargesplash should be requested");
 	wait_for_chipset_startup();
-	test_set_chipset_to_g3_then_transition_to_s5();
+	test_set_chipset_to_g3();
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chargesplash lockout"),
 		   NULL);
@@ -259,7 +259,7 @@ ZTEST_USER(chargesplash, test_manual_lockout_via_hostcmd)
 	zassert_true(is_chargesplash_requested(),
 		     "chargesplash should be requested");
 	wait_for_chipset_startup();
-	test_set_chipset_to_g3_then_transition_to_s5();
+	test_set_chipset_to_g3();
 
 	zassert_ok(chargesplash_hostcmd(EC_CHARGESPLASH_LOCKOUT, &response),
 		   NULL);
