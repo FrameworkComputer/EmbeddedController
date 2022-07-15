@@ -51,13 +51,10 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 		.rpm = &node_id##_rpm,   \
 	},
 
-#define FAN_CONTROL_INST(node_id)                                      \
-	[node_id] = {                                                  \
-		.pwm = DEVICE_DT_GET(DT_PWMS_CTLR(node_id)),           \
-		.channel = DT_PWMS_CHANNEL(node_id),                   \
-		.flags = DT_PWMS_FLAGS(node_id),                       \
-		.period_ns = (NSEC_PER_SEC / DT_PWMS_PERIOD(node_id)), \
-		.tach = DEVICE_DT_GET(DT_PHANDLE(node_id, tach)),      \
+#define FAN_CONTROL_INST(node_id)                                 \
+	[node_id] = {                                             \
+		.pwm = PWM_DT_SPEC_GET(node_id),                  \
+		.tach = DEVICE_DT_GET(DT_PHANDLE(node_id, tach)), \
 	},
 
 DT_INST_FOREACH_CHILD(0, FAN_CONFIGS)
@@ -102,10 +99,7 @@ struct fan_data {
 
 /* Data structure to define PWM and tachometer. */
 struct fan_config {
-	const struct device *pwm;
-	uint32_t channel;
-	pwm_flags_t flags;
-	uint32_t period_ns;
+	struct pwm_dt_spec pwm;
 
 	const struct device *tach;
 };
@@ -119,28 +113,28 @@ static void fan_pwm_update(int ch)
 {
 	const struct fan_config *cfg = &fan_config[ch];
 	struct fan_data *data = &fan_data[ch];
+	const struct device *pwm_dev = cfg->pwm.dev;
 	uint32_t pulse_ns;
 	int ret;
 
-	if (!device_is_ready(cfg->pwm)) {
-		LOG_ERR("PWM device %s not ready", cfg->pwm->name);
+	if (!device_is_ready(pwm_dev)) {
+		LOG_ERR("PWM device %s not ready", pwm_dev->name);
 		return;
 	}
 
 	if (data->pwm_enabled) {
-		pulse_ns = DIV_ROUND_NEAREST(cfg->period_ns * data->pwm_percent,
-					     100);
+		pulse_ns = DIV_ROUND_NEAREST(
+			cfg->pwm.period * data->pwm_percent, 100);
 	} else {
 		pulse_ns = 0;
 	}
 
-	LOG_DBG("FAN PWM %s set percent (%d), pulse %d", cfg->pwm->name,
+	LOG_DBG("FAN PWM %s set percent (%d), pulse %d", pwm_dev->name,
 		data->pwm_percent, pulse_ns);
 
-	ret = pwm_set(cfg->pwm, cfg->channel, cfg->period_ns, pulse_ns,
-		      cfg->flags);
+	ret = pwm_set_dt(&cfg->pwm, cfg->pwm.period, pulse_ns);
 	if (ret) {
-		LOG_ERR("pwm_set() failed %s (%d)", cfg->pwm->name, ret);
+		LOG_ERR("pwm_set() failed %s (%d)", pwm_dev->name, ret);
 	}
 }
 
