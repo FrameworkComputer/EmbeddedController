@@ -1,0 +1,198 @@
+/* Copyright 2021 The Chromium OS Authors. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		gpio-wp = &gpio_wp;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
+
+	named-gpios {
+		/* Guybrush-specific GPIO customizations */
+		gpio_wp: ec_wp_l {
+			gpios = <&gpio5 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+		};
+		gpio_slp_s3_s0i3_l: slp_s3_s0i3_l {
+			gpios = <&gpio7 4 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S0_L";
+		};
+		gpio_ec_pcore_int_odl: ec_pcore_int_odl {
+			gpios = <&gpiof 0 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_pg_groupc_s0_od: pg_groupc_s0_od {
+			gpios = <&gpioa 3 GPIO_INPUT>;
+		};
+		gpio_pg_lpddr4x_s3_od: pg_lpddr4x_s3_od {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+		};
+		ec_soc_pwr_good {
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PCH_SYS_PWROK";
+		};
+		ec_entering_rw {
+			gpios = <&gpio6 6 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		ec_clr_cmos {
+			gpios = <&gpioa 1 GPIO_OUTPUT_LOW>;
+		};
+		ec_mem_event {
+			gpios = <&gpioa 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
+			gpios = <&gpio6 3 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		ec_soc_int_l {
+			gpios = <&gpio8 3 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+		soc_thermtrip_odl {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+		};
+		gpio_usb_c0_c1_fault_odl: usb_c0_c1_fault_odl {
+			gpios = <&gpio7 3 GPIO_ODR_HIGH>;
+		};
+		3axis_int_l {
+			gpios = <&gpioa 2 GPIO_INPUT_PULL_DOWN>;
+		};
+		gpio_voldn_btn_odl: voldn_btn_odl {
+			gpios = <&gpioa 7 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		gpio_volup_btn_odl: volup_btn_odl {
+			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		ec_ps2_clk {
+			gpios = <&gpio6 7 GPIO_INPUT_PULL_UP>;
+		};
+		ec_ps2_dat {
+			gpios = <&gpio7 0 GPIO_INPUT_PULL_UP>;
+		};
+		ec_ps2_rst {
+			gpios = <&gpio6 2 GPIO_INPUT_PULL_UP>;
+		};
+		ec_gpiob0 {
+			gpios = <&gpiob 0 GPIO_INPUT_PULL_UP>;
+		};
+		ec_gpio81 {
+			gpios = <&gpio8 1 GPIO_INPUT_PULL_UP>;
+		};
+		ec_psl_gpo {
+			gpios = <&gpiod 7 GPIO_INPUT_PULL_UP>;
+		};
+		ec_pwm7 {
+			gpios = <&gpio6 0 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_accel_gyro_int_l: accel_gyro_int_l {
+			gpios = <&gpioa 0 GPIO_INPUT_PULL_UP>;
+		};
+	};
+
+	def-lvol-io-list {
+		compatible = "nuvoton,npcx-lvolctrl-def";
+
+		/* Low voltage on I2C6_1 */
+		lvol-io-pads = <&lvol_ioe4 &lvol_ioe3>;
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_temp_soc: temp-soc {
+			label = "SOC";
+			enum-name = "ADC_TEMP_SENSOR_SOC";
+			io-channels = <&adc0 0>;
+		};
+	};
+
+	named-temp-sensors {
+		soc-tmp112 {
+			compatible = "cros-ec,temp-sensor-tmp112",
+				     "cros-ec,temp-sensor";
+			label = "SOC";
+			enum-name = "TEMP_SENSOR_SOC";
+			tmp112-name = "TMP112_SOC";
+			port = <&i2c_sensor>;
+			i2c-addr-flags = "TMP112_I2C_ADDR_FLAGS0";
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			temp_fan_off = <0>;
+			temp_fan_max = <70>;
+		};
+		amb-tmp112 {
+			compatible = "cros-ec,temp-sensor-tmp112",
+				     "cros-ec,temp-sensor";
+			label = "Ambient";
+			enum-name = "TEMP_SENSOR_AMB";
+			tmp112-name = "TMP112_AMB";
+			port = <&i2c_sensor>;
+			i2c-addr-flags = "TMP112_I2C_ADDR_FLAGS1";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_pg_lpddr4x_s3: pg_lpddr4x_s3 {
+			irq-pin = <&gpio_pg_lpddr4x_s3_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_en_pwr_pcore_s0";
+		};
+		int_slp_s3_s0i3: slp_s3_s0i3 {
+			irq-pin = <&gpio_slp_s3_s0i3_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ec_pwr_btn: ec_pwr_btn {
+			irq-pin = <&gpio_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ec_pcore: ec_pcore {
+			irq-pin = <&gpio_ec_pcore_int_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_pg_groupc_s0: pg_groupc_s0 {
+			irq-pin = <&gpio_pg_groupc_s0_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "baseboard_en_pwr_pcore_s0";
+		};
+		int_s0_pgood: s0_pgood {
+			irq-pin = <&gpio_s0_pgood>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 (-1) 0 0
+				 0 0 (-1)>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <(-1) 0 0
+				 0 1 0
+				 0 0 (-1)>;
+		};
+	};
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
