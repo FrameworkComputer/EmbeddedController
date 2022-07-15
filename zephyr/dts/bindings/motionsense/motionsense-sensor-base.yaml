@@ -9,13 +9,6 @@ include: base.yaml
 properties:
   status:
     required: true
-  label:
-    type: string
-    required: true
-    description: |
-        Human readable string describing the motion sensor.
-        This is used as the name of the motion sensor.
-        e.g) label = "Lid Accel";
   active-mask:
     type: string
     description: indicates system power state for sensor to be active
@@ -73,7 +66,6 @@ properties:
 #           compatible = "cros-ec,bma255";
 #           status = "okay";
 #
-#           label = "Lid Accel";
 #           active-mask = "SENSOR_ACTIVE_S0_S3";
 #           location = "MOTIONSENSE_LOC_LID";
 #           mutex = <&mutex_bma255>;

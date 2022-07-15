@@ -29,11 +29,9 @@
 	motionsense-mutex {
 		compatible = "cros-ec,motionsense-mutex";
 		mutex_lis2dw12: lis2dw12-mutex {
-			label = "LIS2DW12_MUTEX";
 		};
 
 		mutex_lsm6dso: lsm6dso-mutex {
-			label = "LSM6DSO_MUTEX";
 		};
 	};
 
@@ -139,7 +137,7 @@
 
 	/*
 	 * List of motion sensors that creates motion_sensors array.
-	 * The label "lid_accel" and "base_accel" are used to indicate
+	 * The nodelabel "lid_accel" and "base_accel" are used to indicate
 	 * motion sensor IDs for lid angle calculation.
 	 */
 	motionsense-sensor {
@@ -147,7 +145,6 @@
 			compatible = "cros-ec,lis2dw12";
 			status = "okay";
 
-			label = "Lid Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&mutex_lis2dw12>;
@@ -160,11 +157,9 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					label = "SENSOR_CONFIG_EC_S0";
 					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					label = "SENSOR_CONFIG_EC_S3";
 					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 			};
@@ -174,7 +169,6 @@
 			compatible = "cros-ec,lsm6dso-accel";
 			status = "okay";
 
-			label = "Base Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_lsm6dso>;
@@ -187,12 +181,10 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					label = "SENSOR_CONFIG_EC_S0";
 					odr = <(13000 | ROUND_UP_FLAG)>;
 					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 				ec-s3 {
-					label = "SENSOR_CONFIG_EC_S3";
 					odr = <(10000 | ROUND_UP_FLAG)>;
 					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
@@ -203,7 +195,6 @@
 			compatible = "cros-ec,lsm6dso-gyro";
 			status = "okay";
 
-			label = "Base Gyro";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_lsm6dso>;
@@ -218,7 +209,6 @@
 			compatible = "cros-ec,tcs3400-clear";
 			status = "okay";
 
-			label = "Clear Light";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_CAMERA";
 			port = <&i2c_sensor>;
@@ -230,7 +220,6 @@
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
 					/* Run ALS sensor in S0 */
-					label = "SENSOR_CONFIG_EC_S0";
 					odr = <1000>;
 				};
 			};
@@ -240,7 +229,6 @@
 			compatible = "cros-ec,tcs3400-rgb";
 			status = "okay";
 
-			label = "RGB Light";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_CAMERA";
 			default-range = <0x10000>; /* scale = 1x, uscale = 0 */

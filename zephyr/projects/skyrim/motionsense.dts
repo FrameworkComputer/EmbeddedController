@@ -26,11 +26,9 @@
 	motionsense-mutex {
 		compatible = "cros-ec,motionsense-mutex";
 		lid_mutex: lid-mutex {
-			label = "LID_MUTEX";
 		};
 
 		mutex_bmi3xx: bmi3xx-mutex {
-			label = "BMI3XX_MUTEX";
 		};
 	};
 
@@ -57,7 +55,7 @@
 
 	/*
 	 * List of motion sensors that creates motion_sensors array.
-	 * The label "lid_accel" and "base_accel" are used to indicate
+	 * The nodelabel "lid_accel" and "base_accel" are used to indicate
 	 * motion sensor IDs for lid angle calculation.
 	 */
 	motionsense-sensor {
@@ -65,7 +63,6 @@
 			compatible = "cros-ec,bma4xx";
 			status = "okay";
 
-			label = "Lid Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&lid_mutex>;
@@ -77,12 +74,10 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					label = "SENSOR_CONFIG_EC_S0";
 					odr = <(12500 | ROUND_UP_FLAG)>;
 					ec-rate = <100>;
 				};
 				ec-s3 {
-					label = "SENSOR_CONFIG_EC_S3";
 					odr = <(12500 | ROUND_UP_FLAG)>;
 				};
 			};
@@ -92,7 +87,6 @@
 			compatible = "cros-ec,bmi3xx-accel";
 			status = "okay";
 
-			label = "Base Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi3xx>;
@@ -104,12 +98,10 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					label = "SENSOR_CONFIG_EC_S0";
 					odr = <(12500 | ROUND_UP_FLAG)>;
 					ec-rate = <100>;
 				};
 				ec-s3 {
-					label = "SENSOR_CONFIG_EC_S3";
 					odr = <(12500 | ROUND_UP_FLAG)>;
 				};
 			};
@@ -119,7 +111,6 @@
 			compatible = "cros-ec,bmi3xx-gyro";
 			status = "okay";
 
-			label = "Base Gyro";
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi3xx>;

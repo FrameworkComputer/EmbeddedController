@@ -26,17 +26,10 @@ child-binding:
     and it is used to indicate one of the 4 configurations.
     For example, node name ec-s0 is for SENSOR_CONFIG_EC_S0.
     ec-s0 {
-       label = "SENSOR_CONFIG_EC_S0";
        odr = <1000>;
        ec_rate = <1000>;
     };
   properties:
-    label:
-      type: string
-      required: false
-      description: |
-        Human-readable string describing the config.
-        see the example the above.
     odr:
       type: int
       required: false
@@ -55,11 +48,9 @@ child-binding:
 #         compatible =
 #                 "cros-ec,motionsense-sensor-config";
 #         ec-s0 {
-#                 label = "SENSOR_CONFIG_EC_S0";
 #                 odr = <(10000 | ROUND_UP_FLAG)>;
 #         };
 #         ec-s3 {
-#                 label = "SENSOR_CONFIG_EC_S3";
 #                 odr = <(10000 | ROUND_UP_FLAG)>;
 #         };
 # };

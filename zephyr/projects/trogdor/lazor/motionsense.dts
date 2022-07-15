@@ -26,11 +26,9 @@
 	motionsense-mutex {
 		compatible = "cros-ec,motionsense-mutex";
 		lid_mutex: lid-mutex {
-			label = "LID_MUTEX";
 		};
 
 		mutex_bmi160: bmi160-mutex {
-			label = "BMI160_MUTEX";
 		};
 	};
 
@@ -78,7 +76,7 @@
 
 	/*
 	 * List of motion sensors that creates motion_sensors array.
-	 * The label "lid_accel" and "base_accel" are used to indicate
+	 * The nodelabel "lid_accel" and "base_accel" are used to indicate
 	 * motion sensor IDs for lid angle calculation.
 	 */
 	motionsense-sensor {
@@ -86,7 +84,6 @@
 			compatible = "cros-ec,bma255";
 			status = "okay";
 
-			label = "Lid Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&lid_mutex>;
@@ -99,11 +96,9 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					label = "SENSOR_CONFIG_EC_S0";
 					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					label = "SENSOR_CONFIG_EC_S3";
 					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 			};
@@ -113,7 +108,6 @@
 			compatible = "cros-ec,bmi160-accel";
 			status = "okay";
 
-			label = "Base Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi160>;
@@ -124,11 +118,9 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					label = "SENSOR_CONFIG_EC_S0";
 					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					label = "SENSOR_CONFIG_EC_S3";
 					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 			};
@@ -138,7 +130,6 @@
 			compatible = "cros-ec,bmi160-gyro";
 			status = "okay";
 
-			label = "Base Gyro";
 			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&mutex_bmi160>;
@@ -156,7 +147,6 @@
 		alt_lid_accel {
 			compatible = "cros-ec,kx022";
 			status = "okay";
-			label = "Lid Accel";
 			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&lid_mutex>;
@@ -168,11 +158,9 @@
 				compatible =
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
-					label = "SENSOR_CONFIG_EC_S0";
 					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 				ec-s3 {
-					label = "SENSOR_CONFIG_EC_S3";
 					odr = <(10000 | ROUND_UP_FLAG)>;
 				};
 			};
