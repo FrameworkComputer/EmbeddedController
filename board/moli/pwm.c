@@ -27,14 +27,7 @@ BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 static void board_pwm_init(void)
 {
-	/*
-	 * TODO(b/197478860): Turn on the fan at 100% by default
-	 * We need to find tune the fan speed according to the
-	 * thermal sensor value.
-	 */
 	pwm_enable(PWM_CH_FAN, 1);
-	pwm_set_duty(PWM_CH_FAN, 100);
-
 	pwm_enable(PWM_CH_LED_BLUE, 1);
 	pwm_enable(PWM_CH_LED_AMBER, 1);
 }
