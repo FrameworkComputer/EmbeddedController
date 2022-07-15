@@ -278,5 +278,7 @@ static void bj_state_init(void)
 	}
 
 	bj_connect();
+
+	isl9241_set_ac_prochot(CHARGER_SOLO, AGAH_AC_PROCHOT_CURRENT_MA);
 }
 DECLARE_HOOK(HOOK_INIT, bj_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);

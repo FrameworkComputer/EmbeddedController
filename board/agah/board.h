@@ -133,6 +133,8 @@
 #define CONFIG_CHARGER_ISL9241
 #define CONFIG_CHARGER_SENSE_RESISTOR 10
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
+/* Round down 7700 max current to multiple of 128mA for ISL9241 AC prochot. */
+#define AGAH_AC_PROCHOT_CURRENT_MA 7680
 
 /* Barrel jack adapter settings */
 #undef CONFIG_DEDICATED_CHARGE_PORT_COUNT
