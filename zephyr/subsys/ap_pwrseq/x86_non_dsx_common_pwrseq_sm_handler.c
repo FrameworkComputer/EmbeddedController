@@ -526,6 +526,11 @@ static void pwrseq_loop_thread(void *p1, void *p2, void *p3)
 	power_signal_mask_t last_in_signals = 0;
 	enum power_states_ndsx last_state = -1;
 
+	/*
+	 * Let clients know that the AP power state is now
+	 * initialized and ready.
+	 */
+	ap_power_ev_send_callbacks(AP_POWER_INITIALIZED);
 	while (1) {
 		curr_state = pwr_sm_get_state();
 
@@ -612,7 +617,7 @@ static int pwrseq_init(const struct device *dev)
 }
 
 /*
- * The initialisation must occur after system I/O initialisation that
+ * The initialization must occur after system I/O initialization that
  * the signals depend upon, such as GPIO, ADC etc.
  */
 SYS_INIT(pwrseq_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
