@@ -295,6 +295,12 @@ SECTIONS
 		__data_end = .;
 
 		/*
+		 * _sbrk in newlib expects "end" symbol to point to start of
+		 * free memory.
+		 */
+		end = .;
+
+		/*
 		 * Shared memory buffer must be at the end of preallocated
 		 * RAM, so it can expand to use all the remaining RAM.
 		 */

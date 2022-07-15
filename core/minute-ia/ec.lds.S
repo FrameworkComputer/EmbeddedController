@@ -220,6 +220,12 @@ SECTIONS
 		 __bss_end = .;
 		 __bss_size_words = ABSOLUTE((__bss_end - __bss_start) / 4);
 
+		 /*
+		 * _sbrk in newlib expects "end" symbol to point to start of
+		 * free memory.
+		 */
+		end = .;
+
 		/*
 		 * Shared memory buffer must be at the end of
 		 * preallocated RAM, so it can expand to use all the
