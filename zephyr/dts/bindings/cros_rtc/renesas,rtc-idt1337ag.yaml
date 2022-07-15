@@ -8,9 +8,6 @@ compatible: "renesas,rtc-idt1337ag"
 include: [base.yaml, i2c-device.yaml]
 
 properties:
-    label:
-      required: true
-
     int-pin:
       type: phandle
       required: true

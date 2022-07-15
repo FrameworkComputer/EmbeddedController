@@ -87,7 +87,6 @@
 			compatible = "nuvoton,npcx-cros-mtc";
 			reg = <0x400b7000 0x2000>;
 			mtc-alarm = <&wui_mtc>;
-			label = "MTC";
 		};
 
 		shi: shi@4000f000 {
