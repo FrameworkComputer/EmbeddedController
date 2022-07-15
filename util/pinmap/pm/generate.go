@@ -87,7 +87,6 @@ func adcConfig(out io.Writer, pin *Pin, chip Chip) {
 	}
 	lc := strings.ToLower(pin.Signal)
 	fmt.Fprintf(out, "\t\tadc_%s: %s {\n", lc, lc)
-	fmt.Fprintf(out, "\t\t\tlabel = \"%s\";\n", pin.Signal)
 	if len(pin.Enum) > 0 {
 		fmt.Fprintf(out, "\t\t\tenum-name = \"%s\";\n", pin.Enum)
 	}
