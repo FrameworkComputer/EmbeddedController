@@ -192,7 +192,7 @@ func generateEnabledNodes(out io.Writer, nodes []string) {
 func generateLineNames(out io.Writer, gpios map[string][]lineName) {
 	// Sort the GPIO controller names.
 	var gcList []string
-	for gc, _ := range gpios {
+	for gc := range gpios {
 		gcList = append(gcList, gc)
 	}
 	sort.Strings(gcList)
