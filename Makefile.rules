@@ -233,6 +233,11 @@ print-boards:
 	$(call cmd_pretty_print_list,\
 		$(sort $(boards)))
 
+# The zephyr path can be overridden on invocation, as in the following example:
+# $ make ZEPHYR_BASE=~/zephyr/main BOARD=dartmonkey
+ZEPHYR_BASE ?= $(abspath ../../../src/third_party/zephyr/main)
+export ZEPHYR_BASE
+
 ifeq ($(ALLOW_CONFIG),)
 
 # These are options defined by both ECOS and Zephyr. We need to tolerate this
@@ -254,11 +259,9 @@ conflicting_options := \
 	SPI \
 	UART_CONSOLE
 
-cmd_check_allowed = \
-	ZEPHYR_BASE=$(abspath ../../../src/third_party/zephyr/main) \
-	./util/kconfig_check.py -c ${config} \
+cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
 	 -a util/config_allowed.txt -p PLATFORM_EC_ -s zephyr/ \
-	 -I $(abspath ../../../src/third_party/zephyr/main) \
+	 -I "${ZEPHYR_BASE}" \
 	 $(foreach opt,$(conflicting_options),-i $(opt)) check
 else
 cmd_check_allowed = true
