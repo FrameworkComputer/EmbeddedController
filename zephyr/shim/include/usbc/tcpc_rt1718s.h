@@ -23,5 +23,5 @@
 		},                                                            \
 		.drv = &rt1718s_tcpm_drv,                                     \
 		.flags = DT_PROP(id, tcpc_flags),                             \
-	}
+	},
 /* clang-format on */
