@@ -185,7 +185,7 @@
 			gpios = <&gpiod 1 GPIO_ODR_HIGH>;
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
-			gpios = <&gpioa 7 GPIO_INPUT>;
+			gpios = <&gpioj 7 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
