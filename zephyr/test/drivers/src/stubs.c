@@ -167,6 +167,7 @@ int board_is_sourcing_vbus(int port)
 	return ppc_is_sourcing_vbus(port);
 }
 
+/* TODO(b/239457738): Move to dts */
 struct usb_mux usbc0_virtual_usb_mux = {
 	.usb_port = USBC_PORT_C0,
 	.driver = &virtual_usb_mux_driver,
