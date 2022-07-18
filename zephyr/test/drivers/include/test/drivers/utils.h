@@ -369,17 +369,21 @@ void host_cmd_usb_pd_get_amode(
 	int *response_size);
 
 /**
- * Run the host command to control PD port behavior. For now, this function only
- * supports entering and exiting modes.
+ * Run the host command to control PD port behavior, with the sub-command of
+ * TYPEC_CONTROL_COMMAND_ENTER_MODE
+ *
+ * @param port	The USB-C port number
+ * @param mode	Mode to enter
+ */
+void host_cmd_typec_control_enter_mode(int port, enum typec_mode mode);
+
+/**
+ * Run the host command to control PD port behavior, with the sub-command of
+ * TYPEC_CONTROL_COMMAND_EXIT_MODES
  *
  * @param port      The USB-C port number
- * @param command   Sub-command to perform on the port
- * @param mode      The mode to enter if command is
- *                  TYPEC_CONTROL_COMMAND_ENTER_MODE.
- * @param response_size Number of bytes in response
  */
-void host_cmd_typec_control(int port, enum typec_control_command command,
-			    enum typec_mode mode);
+void host_cmd_typec_control_exit_modes(int port);
 
 #define GPIO_ACOK_OD_NODE DT_NODELABEL(gpio_acok_od)
 #define GPIO_ACOK_OD_PIN DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)

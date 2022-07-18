@@ -372,12 +372,25 @@ void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 		   "Failed to get Type-C state for port %d", port);
 }
 
-void host_cmd_typec_control(int port, enum typec_control_command command,
-			    enum typec_mode mode)
+void host_cmd_typec_control_enter_mode(int port, enum typec_mode mode)
 {
-	struct ec_params_typec_control params = { .port = port,
-						  .command = command,
-						  .mode_to_enter = mode };
+	struct ec_params_typec_control params = {
+		.port = port,
+		.command = TYPEC_CONTROL_COMMAND_ENTER_MODE,
+		.mode_to_enter = mode
+	};
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
+
+	zassume_ok(host_command_process(&args),
+		   "Failed to send Type-C control for port %d", port);
+}
+
+void host_cmd_typec_control_exit_modes(int port)
+{
+	struct ec_params_typec_control params = {
+		.port = port, .command = TYPEC_CONTROL_COMMAND_EXIT_MODES
+	};
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_TYPEC_CONTROL, 0, params);
 
