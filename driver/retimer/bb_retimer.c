@@ -10,6 +10,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
@@ -41,7 +42,7 @@
  * Mutex for BB_RETIMER_REG_CONNECTION_STATE register, which can be
  * accessed from multiple tasks.
  */
-K_MUTEX_DEFINE(bb_retimer_state_mutex);
+static mutex_t bb_retimer_lock[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /**
  * Utility functions
@@ -387,7 +388,7 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
 
-	mutex_lock(&bb_retimer_state_mutex);
+	mutex_lock(&bb_retimer_lock[port]);
 
 	/*
 	 * Bit 0: DATA_CONNECTION_PRESENT
@@ -475,7 +476,7 @@ static int retimer_set_state(const struct usb_mux *me, mux_state_t mux_state,
 	/* Writing the register4 */
 	rv = bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE,
 			      set_retimer_con);
-	mutex_unlock(&bb_retimer_state_mutex);
+	mutex_unlock(&bb_retimer_lock[port]);
 	return rv;
 }
 
@@ -483,15 +484,16 @@ void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 			   bool *ack_required)
 {
 	uint32_t retimer_con_reg = 0;
+	int port = me->usb_port;
 
 	/* This driver does not use host command ACKs */
 	*ack_required = false;
 
-	mutex_lock(&bb_retimer_state_mutex);
+	mutex_lock(&bb_retimer_lock[port]);
 
 	if (bb_retimer_read(me, BB_RETIMER_REG_CONNECTION_STATE,
 			    &retimer_con_reg) != EC_SUCCESS) {
-		mutex_unlock(&bb_retimer_state_mutex);
+		mutex_unlock(&bb_retimer_lock[port]);
 		return;
 	}
 	/*
@@ -529,31 +531,44 @@ void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
 	/* Writing the register4 */
 	bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE, retimer_con_reg);
 
-	mutex_unlock(&bb_retimer_state_mutex);
+	mutex_unlock(&bb_retimer_lock[port]);
 }
 
 void bb_retimer_set_usb3(const struct usb_mux *me, bool enable)
 {
 	int rv;
 	uint32_t reg_val = 0;
+	int port = me->usb_port;
 
-	mutex_lock(&bb_retimer_state_mutex);
+	mutex_lock(&bb_retimer_lock[port]);
 
 	rv = bb_retimer_read(me, BB_RETIMER_REG_CONNECTION_STATE, &reg_val);
 	if (rv != EC_SUCCESS) {
-		mutex_unlock(&bb_retimer_state_mutex);
+		mutex_unlock(&bb_retimer_lock[port]);
 		return;
 	}
 	/* Bit 5: USB_3_CONNECTION */
 	WRITE_BIT(reg_val, 5, enable);
 	rv = bb_retimer_write(me, BB_RETIMER_REG_CONNECTION_STATE, reg_val);
 	if (rv != EC_SUCCESS) {
-		mutex_unlock(&bb_retimer_state_mutex);
+		mutex_unlock(&bb_retimer_lock[port]);
 		return;
 	}
 
-	mutex_unlock(&bb_retimer_state_mutex);
+	mutex_unlock(&bb_retimer_lock[port]);
 }
+
+#ifdef CONFIG_ZEPHYR
+static void init_retimer_mutexes(void)
+{
+	int port;
+
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
+		k_mutex_init(&bb_retimer_lock[port]);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, init_retimer_mutexes, HOOK_PRIO_FIRST);
+#endif
 
 static int retimer_low_power_mode(const struct usb_mux *me)
 {
