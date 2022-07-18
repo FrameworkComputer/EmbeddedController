@@ -100,6 +100,28 @@ int power_signal_gpio_get(enum pwr_sig_gpio index)
 	if (index < 0 || index >= ARRAY_SIZE(gpio_config)) {
 		return -EINVAL;
 	}
+	/*
+	 * Getting the current value of an output is
+	 * done by retrieving the config and checking what the
+	 * output state has been set to, not by reading the
+	 * physical level of the pin (open drain outputs
+	 * may have a low voltage).
+	 */
+	if (gpio_config[index].output) {
+		int rv;
+		gpio_flags_t flags;
+
+		rv = gpio_pin_get_config_dt(&spec[index], &flags);
+		if (rv != 0) {
+			return rv;
+		}
+		rv = (flags & GPIO_OUTPUT_INIT_HIGH) ? 1 : 0;
+		/* If active low signal, invert it */
+		if (spec[index].dt_flags & GPIO_ACTIVE_LOW) {
+			rv = !rv;
+		}
+		return rv;
+	}
 	return gpio_pin_get_dt(&spec[index]);
 }
 
