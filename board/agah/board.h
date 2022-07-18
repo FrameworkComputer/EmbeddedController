@@ -64,6 +64,9 @@
 #define PD_MAX_CURRENT_MA 5000
 #define PD_MAX_VOLTAGE_MV 20000
 
+#undef CONFIG_EXTPOWER_DEBOUNCE_MS
+#define CONFIG_EXTPOWER_DEBOUNCE_MS 500
+
 /*
  * Macros for GPIO signals used in common code that don't match the
  * schematic names. Signal names in gpio.inc match the schematic and are
