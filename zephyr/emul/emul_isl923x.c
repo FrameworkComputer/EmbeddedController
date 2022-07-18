@@ -434,7 +434,7 @@ static int emul_isl923x_init(const struct emul *emul,
 	}; \
 	static struct isl923x_emul_cfg isl923x_emul_cfg_##n = {                \
 	.common = {                                                            \
-		.i2c_label = DT_INST_BUS_LABEL(n),                             \
+		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),                 \
 		.dev_label = DT_INST_LABEL(n),                                 \
 		.addr = DT_INST_REG_ADDR(n),                                   \
 		},                                                             \

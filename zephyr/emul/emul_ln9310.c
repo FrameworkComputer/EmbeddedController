@@ -506,7 +506,7 @@ static int emul_ln9310_init(const struct emul *emul,
 		.gpio_int_pin = LN9310_GET_GPIO_INT_PIN(n),		       \
 	}; \
 	static const struct i2c_common_emul_cfg ln9310_emul_cfg_##n = {          \
-		.i2c_label = DT_INST_BUS_LABEL(n),                               \
+		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),                   \
 		.dev_label = DT_INST_LABEL(n),                                   \
 		.addr = DT_INST_REG_ADDR(n),                                     \
 	};                                                                       \

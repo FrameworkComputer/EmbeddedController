@@ -171,7 +171,7 @@ static int pi3usb9201_emul_init(const struct emul *emul,
 #define PI3USB9201_EMUL(n)                                                  \
 	static struct pi3usb9201_emul_data pi3usb9201_emul_data_##n = {};   \
 	static const struct pi3usb9201_emul_cfg pi3usb9201_emul_cfg_##n = { \
-		.i2c_label = DT_INST_BUS_LABEL(n),                          \
+		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),              \
 		.data = &pi3usb9201_emul_data_##n,                          \
 		.addr = DT_INST_REG_ADDR(n),                                \
 	};                                                                  \
