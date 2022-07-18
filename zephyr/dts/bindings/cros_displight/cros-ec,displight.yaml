@@ -14,11 +14,6 @@ properties:
     required: true
     description: PWM controlling the display backlight level.
 
-  frequency:
-    type: int
-    required: true
-    description: PWM frequency in Hz.
-
   generic-pwm-channel:
     type: int
     required: false
