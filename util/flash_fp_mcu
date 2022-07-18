@@ -655,15 +655,27 @@ config_brya() {
   # brya device to determine gpio number from pin number.
   # For example: GPP_D1 is ISH_GP_1 which can be queried from EDS
   # the pin number is 100 from the pinctrl-tigerlake.c.
-  # From the gpio-ranges, the gpio value is 312 + (100-99) = 313
+  # From the gpio-ranges, the gpio value is 824 + (100-99) = 825
 
-  readonly GPIO_CHIP="gpiochip152"
-  # FPMCU RST_ODL is on GPP_D1 = 312 + (100 - 99) = 313
-  readonly GPIO_NRST=313
-  # FPMCU BOOT0 is on GPP_D0 = 312 + (99 - 99) = 312
-  readonly GPIO_BOOT0=312
-  # FP_PWR_EN is on GPP_D2 = 312 + (101 - 99) = 314
-  readonly GPIO_PWREN=314
+  local gpiochip="gpiochip664"
+  # Support kernel version 5.10 during transition to 5.15+
+  match_kernel_regex "^5\.10\." && gpiochip="gpiochip152"
+  readonly GPIO_CHIP="${gpiochip}"
+
+  local offset=0
+  # Support kernel version 5.10 during transition to 5.15+
+  # v5.10 has GPIOs that are offset by -512
+  match_kernel_regex "^5\.10\." && offset=512
+
+  # FPMCU RST_ODL is on GPP_D1 = 824 + (100 - 99) = 825
+  local gpionrst=825
+  readonly GPIO_NRST=$(( gpionrst - offset ))
+  # FPMCU BOOT0 is on GPP_D0 = 824 + (99 - 99) = 824
+  local gpioboot=824
+  readonly GPIO_BOOT0=$(( gpioboot - offset ))
+  # FP_PWR_EN is on GPP_D2 = 824 + (101 - 99) = 826
+  local gpiopwren=826
+  readonly GPIO_PWREN=$(( gpiopwren - offset ))
 }
 
 config_brask() {
