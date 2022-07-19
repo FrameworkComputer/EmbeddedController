@@ -50,7 +50,7 @@ DEFINE_string 'ref2' "HEAD^" 'Git reference (commit, branch, etc)'
 DEFINE_boolean 'keep' "${FLAGS_FALSE}" \
                'Remove the temp directory after comparison.' 'k'
 # Integer type can still be passed blank ("")
-DEFINE_integer 'jobs' "-1" 'Number of jobs to pass to make' 'j'
+DEFINE_integer 'jobs' "$(nproc)" 'Number of jobs to pass to make' 'j'
 # When compiling both refs for all boards, mem usage was larger than 32GB.
 # If you don't have more than 32GB, you probably don't want to build both
 # refs at the same time. Use the -o flag.
