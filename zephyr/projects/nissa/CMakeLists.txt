@@ -33,6 +33,7 @@ if(DEFINED CONFIG_BOARD_NEREID)
 endif()
 if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources(
+			"src/craask/keyboard.c"
 			"src/craask/led.c"
 	)
 	project(craask)
