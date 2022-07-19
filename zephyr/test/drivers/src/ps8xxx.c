@@ -1222,6 +1222,7 @@ static void ps8805_before(void *state)
 	board_set_ps8xxx_product_id(PS8805_PRODUCT_ID);
 	ps8xxx_emul_set_product_id(ps8xxx_emul, PS8805_PRODUCT_ID);
 	setup_no_fail_all();
+	zassume_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
 }
 
 static void ps8805_after(void *state)
@@ -1245,6 +1246,7 @@ static void ps8815_before(void *state)
 	board_set_ps8xxx_product_id(PS8815_PRODUCT_ID);
 	ps8xxx_emul_set_product_id(ps8xxx_emul, PS8815_PRODUCT_ID);
 	setup_no_fail_all();
+	zassume_equal(EC_SUCCESS, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
 }
 
 static void ps8815_after(void *state)
