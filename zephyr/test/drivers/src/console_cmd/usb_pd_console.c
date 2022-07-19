@@ -20,6 +20,9 @@ static void console_cmd_usb_pd_after(void *fixture)
 	k_sleep(K_SECONDS(1));
 	test_set_chipset_to_s0();
 	k_sleep(K_SECONDS(10));
+
+	/* Keep port used by testsuite enabled (default state) */
+	pd_comm_enable(0, 1);
 }
 
 ZTEST_SUITE(console_cmd_usb_pd, drivers_predicate_post_main, NULL, NULL,
