@@ -467,6 +467,9 @@ class Zmake:
                     "SYSCALL_INCLUDE_DIRS": str(
                         self.module_paths["ec"] / "zephyr" / "include" / "drivers"
                     ),
+                    "USER_CACHE_DIR": str(
+                        self.module_paths["ec"] / "build" / "zephyr" / "user-cache"
+                    ),
                     "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
                     "ZMAKE_PROJECT_NAME": project.config.project_name,
                 },
