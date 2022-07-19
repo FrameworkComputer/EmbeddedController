@@ -181,14 +181,6 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		}
 	}
 
-	/* Its initial DP status message prior to config */
-	if (!(dp_flags[port] & DP_FLAGS_DP_ON)) {
-		if (lvl) {
-			dp_flags[port] |= DP_FLAGS_HPD_HI_PENDING;
-		}
-		return 1;
-	}
-
 #ifdef CONFIG_USB_PD_DP_HPD_GPIO
 	if (irq && !lvl) {
 		/*
