@@ -40,8 +40,3 @@ brya = register_npcx9_variant(
     extra_dts_overlays=[here / "brya.dts"],
     extra_kconfig_files=[here / "prj_brya.conf"],
 )
-
-ghost = brya.variant(
-    project_name="ghost",
-    kconfig_files=[here / "prj_ghost.conf"],
-)
