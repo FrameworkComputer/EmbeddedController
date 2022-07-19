@@ -170,7 +170,7 @@ const uint8_t rgbkbd_map[] = {
 	LED(15, 0), DELM, /* 59: power */
 	LED(17, 2), LED(18, 2), LED(19, 2), DELM, /* 60: L-alt */
 	LED(17, 3), LED(18, 3), LED(19, 3), LED(20, 3),
-	LED(21, 3), DELM, /* 61: space */
+	LED(21, 3), LED(16, 2), DELM, /* 61: space */
 	LED(20, 2), DELM, /* 62: R-alt */
 	DELM, /* 63: (null) */
 	LED(21, 2), DELM, /* 64: R-ctrl */
