@@ -740,7 +740,6 @@
 	cbi_eeprom: eeprom@56 {
 		compatible = "atmel,at24";
 		reg = <0x56>;
-		label = "EEPROM_CBI";
 		size = <512>;
 		pagesize = <8>;
 		address-width = <8>;

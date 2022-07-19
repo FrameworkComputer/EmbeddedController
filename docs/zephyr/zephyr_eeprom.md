@@ -41,7 +41,6 @@ An example definition of the Atmel AT24 is:
         cbi_eeprom: eeprom@50 {
             compatible = "atmel,at24";
             reg = <0x50>;
-            label = "EEPROM_CBI";
             size = <2048>;
             pagesize = <16>;
             address-width = <8>;
