@@ -18,6 +18,7 @@
 #define VDEC_CAP_VP8_FRAME BIT(9)
 #define VDEC_CAP_VP9_FRAME BIT(10)
 #define VDEC_CAP_IRQ_IN_SCP BIT(16)
+#define VDEC_CAP_INNER_RACING BIT(17)
 
 /*
  * Video encoder supported capability:
