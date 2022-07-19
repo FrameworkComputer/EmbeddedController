@@ -599,4 +599,8 @@ const struct i2c_port_t *get_i2c_port(const int port);
  */
 int i2c_get_physical_port(int enum_port);
 
+#ifdef CONFIG_ZTEST
+int i2c_port_is_locked(int port);
+#endif
+
 #endif /* __CROS_EC_I2C_H */

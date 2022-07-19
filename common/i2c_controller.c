@@ -82,7 +82,8 @@ SYS_INIT(init_port_mutex, POST_KERNEL, 50);
  * will incorrectly return true.  However, callers which failed to statically
  * lock the port will fail quickly.
  */
-static int i2c_port_is_locked(int port)
+STATIC_IF_NOT(CONFIG_ZTEST)
+int i2c_port_is_locked(int port)
 {
 #ifdef CONFIG_I2C_MULTI_PORT_CONTROLLER
 	/* Test the controller, not the port */

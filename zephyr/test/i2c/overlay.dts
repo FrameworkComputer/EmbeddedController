@@ -4,11 +4,29 @@
  */
 
 / {
+	i2c1: i2c@400 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x400 4>;
+		label = "I2C_1";
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 		accel-0 {
-			i2c-port = <&bmi_i2c>;
+			i2c-port = <&i2c0>;
 			enum-name = "I2C_PORT_ACCEL";
+		};
+		eeprom {
+			i2c-port = <&i2c0>;
+			enum-name = "I2C_PORT_EEPROM";
+		};
+		usb-c1 {
+			i2c-port = <&i2c1>;
+			enum-name = "I2C_PORT_USB_C1";
 		};
 	};
 };
