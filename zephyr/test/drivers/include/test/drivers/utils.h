@@ -385,6 +385,26 @@ void host_cmd_typec_control_enter_mode(int port, enum typec_mode mode);
  */
 void host_cmd_typec_control_exit_modes(int port);
 
+/**
+ * Run the host command to control PD port behavior, with the sub-command of
+ * TYPEC_CONTROL_COMMAND_USB_MUX_SET
+ *
+ * @param port		The USB-C port number
+ * @param mux_set	Mode and mux index to set
+ */
+void host_cmd_typec_control_usb_mux_set(int port,
+					struct typec_usb_mux_set mux_set);
+
+/**
+ * Run the host command to control PD port behavior, with the sub-command of
+ * TYPEC_CONTROL_COMMAND_CLEAR_EVENTS
+ *
+ * @param port		The USB-C port number
+ * @param events	Events to clear for the port (see PD_STATUS_EVENT_*
+ *			definitions for options)
+ */
+void host_cmd_typec_control_clear_events(int port, uint32_t events);
+
 #define GPIO_ACOK_OD_NODE DT_NODELABEL(gpio_acok_od)
 #define GPIO_ACOK_OD_PIN DT_GPIO_PIN(GPIO_ACOK_OD_NODE, gpios)
 
