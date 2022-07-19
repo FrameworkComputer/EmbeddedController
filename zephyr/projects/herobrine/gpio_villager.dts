@@ -219,6 +219,12 @@
 		arm_x86 {
 			gpios = <&gpio6 6 GPIO_OUTPUT_LOW>;
 		};
+		ec-i2c-sensor-scl {
+			gpios = <&gpiob 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpiob 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
@@ -227,14 +233,6 @@
 	usba-port-enable-list {
 		compatible = "cros-ec,usba-port-enable-pins";
 		enable-pins = <&gpio_en_usb_a_5v>;
-	};
-
-	def-lvol-io-list {
-		compatible = "nuvoton,npcx-lvolctrl-def";
-		lvol-io-pads = <
-			&lvol_iob3 /* EC_I2C_SENSOR_SCL */
-			&lvol_iob2 /* EC_I2C_SENSOR_SDA */
-		>;
 	};
 
 	sku {
