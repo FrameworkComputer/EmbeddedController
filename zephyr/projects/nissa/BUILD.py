@@ -11,7 +11,6 @@ def register_nissa_project(
     project_name,
     chip="it81302bx",
     extra_dts_overlays=(),
-    extra_kconfig_files=(),
 ):
     """Register a variant of nissa."""
     register_func = register_binman_project
@@ -21,8 +20,9 @@ def register_nissa_project(
     return register_func(
         project_name=project_name,
         zephyr_board=chip,
-        dts_overlays=["cbi.dts", *extra_dts_overlays],
-        kconfig_files=[here / "prj.conf", *extra_kconfig_files],
+        dts_overlays=["cbi.dts"]
+        + [here / project_name / filename for filename in extra_dts_overlays],
+        kconfig_files=[here / "prj.conf", here / project_name / "prj.conf"],
     )
 
 
@@ -30,84 +30,78 @@ nivviks = register_nissa_project(
     project_name="nivviks",
     chip="npcx9m3f",
     extra_dts_overlays=[
-        here / "nivviks_generated.dts",
-        here / "nivviks_cbi.dts",
-        here / "nivviks_overlay.dts",
-        here / "nivviks_motionsense.dts",
-        here / "nivviks_keyboard.dts",
-        here / "nivviks_power_signals.dts",
-        here / "nivviks_pwm_leds.dts",
+        "generated.dts",
+        "cbi.dts",
+        "overlay.dts",
+        "motionsense.dts",
+        "keyboard.dts",
+        "power_signals.dts",
+        "pwm_leds.dts",
     ],
-    extra_kconfig_files=[here / "prj_nivviks.conf"],
 )
 
 nereid = register_nissa_project(
     project_name="nereid",
     chip="it81302bx",
     extra_dts_overlays=[
-        here / "nereid_generated.dts",
-        here / "nereid_overlay.dts",
-        here / "nereid_motionsense.dts",
-        here / "nereid_keyboard.dts",
-        here / "nereid_power_signals.dts",
-        here / "nereid_pwm_leds.dts",
+        "generated.dts",
+        "overlay.dts",
+        "motionsense.dts",
+        "keyboard.dts",
+        "power_signals.dts",
+        "pwm_leds.dts",
     ],
-    extra_kconfig_files=[here / "prj_nereid.conf"],
 )
 
 craask = register_nissa_project(
     project_name="craask",
     chip="npcx9m3f",
     extra_dts_overlays=[
-        here / "craask_generated.dts",
-        here / "craask_overlay.dts",
-        here / "craask_motionsense.dts",
-        here / "craask_keyboard.dts",
-        here / "craask_power_signals.dts",
-        here / "craask_pwm_leds.dts",
+        "generated.dts",
+        "overlay.dts",
+        "motionsense.dts",
+        "keyboard.dts",
+        "power_signals.dts",
+        "pwm_leds.dts",
     ],
-    extra_kconfig_files=[here / "prj_craask.conf"],
 )
 
 pujjo = register_nissa_project(
     project_name="pujjo",
     chip="npcx9m3f",
     extra_dts_overlays=[
-        here / "pujjo_generated.dts",
-        here / "pujjo_overlay.dts",
-        here / "pujjo_motionsense.dts",
-        here / "pujjo_keyboard.dts",
-        here / "pujjo_power_signals.dts",
-        here / "pujjo_pwm_leds.dts",
+        "generated.dts",
+        "overlay.dts",
+        "motionsense.dts",
+        "keyboard.dts",
+        "power_signals.dts",
+        "pwm_leds.dts",
     ],
-    extra_kconfig_files=[here / "prj_pujjo.conf"],
 )
 
 xivu = register_nissa_project(
     project_name="xivu",
     chip="npcx9m3f",
     extra_dts_overlays=[
-        here / "xivu_generated.dts",
-        here / "xivu_overlay.dts",
-        here / "xivu_motionsense.dts",
-        here / "xivu_keyboard.dts",
-        here / "xivu_power_signals.dts",
-        here / "xivu_led_pins.dts",
-        here / "xivu_led_policy.dts",
+        "generated.dts",
+        "overlay.dts",
+        "motionsense.dts",
+        "keyboard.dts",
+        "power_signals.dts",
+        "led_pins.dts",
+        "led_policy.dts",
     ],
-    extra_kconfig_files=[here / "prj_xivu.conf"],
 )
 
 joxer = register_nissa_project(
     project_name="joxer",
     chip="it81302bx",
     extra_dts_overlays=[
-        here / "joxer_generated.dts",
-        here / "joxer_overlay.dts",
-        here / "joxer_motionsense.dts",
-        here / "joxer_keyboard.dts",
-        here / "joxer_power_signals.dts",
-        here / "joxer_pwm_leds.dts",
+        "generated.dts",
+        "overlay.dts",
+        "motionsense.dts",
+        "keyboard.dts",
+        "power_signals.dts",
+        "pwm_leds.dts",
     ],
-    extra_kconfig_files=[here / "prj_joxer.conf"],
 )

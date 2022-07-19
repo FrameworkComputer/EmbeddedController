@@ -15,53 +15,53 @@ if(DEFINED CONFIG_BOARD_NIVVIKS)
 	project(nivviks)
 	zephyr_library_sources(
 			"src/led.c"
-			"src/nivviks/form_factor.c"
-			"src/nivviks/keyboard.c"
+			"nivviks/src/form_factor.c"
+			"nivviks/src/keyboard.c"
 	)
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/nivviks/fan.c")
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/nivviks/usbc.c")
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/nivviks/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "nivviks/src/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "nivviks/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "nivviks/src/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_NEREID)
 	project(nereid)
 	zephyr_library_sources(
 			"src/led.c"
-			"src/nereid/keyboard.c"
+			"nereid/src/keyboard.c"
 	)
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/nereid/usbc.c")
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/nereid/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "nereid/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "nereid/src/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources(
-			"src/craask/keyboard.c"
-			"src/craask/led.c"
+			"craask/src/keyboard.c"
+			"craask/src/led.c"
 	)
 	project(craask)
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/craask/usbc.c")
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/craask/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "craask/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "craask/src/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_PUJJO)
 	project(pujjo)
 	zephyr_library_sources(
 			"src/led.c"
-			"src/pujjo/keyboard.c"
+			"pujjo/src/keyboard.c"
 	)
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/pujjo/fan.c")
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/pujjo/usbc.c")
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/pujjo/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "pujjo/src/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "pujjo/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "pujjo/src/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_XIVU)
         project(xivu)
-        zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/xivu/usbc.c")
-        zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/xivu/charger.c")
+        zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "xivu/src/usbc.c")
+        zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "xivu/src/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_JOXER)
 	project(joxer)
 	zephyr_library_sources(
 			"src/led.c"
-			"src/joxer/keyboard.c"
+			"joxer/src/keyboard.c"
 	)
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/joxer/usbc.c")
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "src/joxer/charger.c")
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/joxer/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "joxer/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "joxer/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "joxer/src/fan.c")
 endif()
