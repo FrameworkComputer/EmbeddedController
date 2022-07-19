@@ -12,9 +12,9 @@ static const struct ec_response_keybd_config pujjo_kb = {
 		TK_REFRESH,		/* T2 */
 		TK_FULLSCREEN,		/* T3 */
 		TK_OVERVIEW,		/* T4 */
-		TK_SNAPSHOT,		/* T5 */
-		TK_BRIGHTNESS_DOWN,	/* T6 */
-		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_BRIGHTNESS_DOWN,	/* T5 */
+		TK_BRIGHTNESS_UP,	/* T6 */
+		TK_MICMUTE,		/* T7 */
 		TK_VOL_MUTE,		/* T8 */
 		TK_VOL_DOWN,		/* T9 */
 		TK_VOL_UP,		/* T10 */
