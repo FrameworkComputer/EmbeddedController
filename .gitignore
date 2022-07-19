@@ -31,3 +31,6 @@ zephyr/zmake/.coverage
 # Clangd language server
 .cache/clangd/index/*
 compile_commands.json
+
+# Twister test output directories
+twister-out*

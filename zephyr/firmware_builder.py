@@ -185,8 +185,19 @@ def test(opts):
     ret = subprocess.run(cmd, check=True).returncode
     if ret:
         return ret
+
+    # Twister-based tests
+    platform_ec = zephyr_dir.parent
+    cmd = [platform_ec / "twister", "--outdir", platform_ec / "twister-out"]
     if opts.code_coverage:
-        platform_ec = zephyr_dir.parent
+        # Tell Twister to collect coverage data. We must specify an explicit platform
+        # type in this case, as well.
+        cmd.extend(["--coverage", "-p", "native_posix"])
+    ret = subprocess.run(cmd, check=True).returncode
+    if ret:
+        return ret
+
+    if opts.code_coverage:
         build_dir = platform_ec / "build" / "zephyr"
         # Merge lcov files here because bundle failures are "infra" failures.
         cmd = [
@@ -199,6 +210,8 @@ def test(opts):
             build_dir / "all_tests.info",
             "-a",
             build_dir / "all_builds.info",
+            "-a",
+            platform_ec / "twister-out" / "coverage.info",
         ]
         output = subprocess.run(
             cmd,
