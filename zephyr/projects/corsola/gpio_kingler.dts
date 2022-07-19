@@ -175,7 +175,7 @@
 		gpio_usb_c0_tcpc_rst: usb_c0_tcpc_rst {
 			gpios = <&gpioc 0 GPIO_OUTPUT_LOW>;
 		};
-		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus_x {
+		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus {
 			gpios = <&gpio6 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
