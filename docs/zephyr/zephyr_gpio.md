@@ -241,18 +241,18 @@ For example on the Volteer reference board:
 
 Low voltage pins configuration depends on the specific chip family.
 
-For Nuvoton, this is done using a [nuvoton,npcx-lvolctrl-def] devicetree node,
-with a `lvol-io-pads` property listing all the pins that have to be configured
-for low-voltage operation. For example:
+For Nuvoton, this is done using the `GPIO_VOLTAGE_1P8` flag in the `named-gpios`
+child node. For example
 
 ```
-def-lvol-io-list {
-        compatible = "nuvoton,npcx-lvolctrl-def";
-        lvol-io-pads = <
-                &lvol_iob3 /* EC_I2C_SENSOR_SCL */
-                &lvol_iob2 /* EC_I2C_SENSOR_SDA */
-        >;
-};
+named-gpios {
+        compatible = "named-gpios";
+        ...
+        ec-i2c-sensor-scl {
+                gpios = <&gpiob 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+        };
+        ...
+}
 ```
 
 For ITE, this is done using the `GPIO_VOLTAGE_1P8` flag in the `named-gpios`

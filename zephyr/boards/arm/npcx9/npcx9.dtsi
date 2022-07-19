@@ -33,10 +33,6 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 	};
-
-	def-lvol-io-list {
-		compatible = "nuvoton,npcx-lvolctrl-def";
-	};
 };
 
 &uart1 {
