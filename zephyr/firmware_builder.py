@@ -234,13 +234,29 @@ def test(opts):
         cmd = [
             "/usr/bin/lcov",
             "-o",
-            build_dir / "lcov.info",
+            build_dir / "lcov_unfiltered.info",
             "--rc",
             "lcov_branch_coverage=1",
             "-a",
             build_dir / "zephyr_merged.info",
             "-a",
             platform_ec / "build/coverage/lcov.info",
+        ]
+        subprocess.run(
+            cmd,
+            cwd=pathlib.Path(__file__).parent,
+            check=True,
+        )
+
+        cmd = [
+            "/usr/bin/lcov",
+            "-o",
+            build_dir / "lcov.info",
+            "--rc",
+            "lcov_branch_coverage=1",
+            "-r",
+            build_dir / "lcov_unfiltered.info",
+            platform_ec / "build/**",
         ]
         output = subprocess.run(
             cmd,
