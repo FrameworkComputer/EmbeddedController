@@ -33,6 +33,7 @@ if(DEFINED CONFIG_BOARD_NEREID)
 endif()
 if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources(
+			"craask/src/form_factor.c"
 			"craask/src/keyboard.c"
 			"craask/src/led.c"
 	)

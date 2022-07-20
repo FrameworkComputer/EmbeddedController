@@ -41,6 +41,12 @@
 		};
 
 		base_rot_ref: base-rotation-ref {
+			mat33 = <1 0 0
+				 0 (-1) 0
+				 0 0 (-1)>;
+		};
+
+		base_rot_ver1: base-rotation-ver1 {
 			mat33 = <(-1) 0 0
 				 0 (-1) 0
 				 0 0 1>;
