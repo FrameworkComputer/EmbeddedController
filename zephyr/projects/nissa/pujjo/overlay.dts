@@ -94,11 +94,11 @@
 		};
 
 		gpio_sb_3: sb_3 {
-			gpios = <&gpiof 4 GPIO_OPEN_DRAIN>;
+			gpios = <&gpiof 5 GPIO_OPEN_DRAIN>;
 			no-auto-init;
 		};
 		gpio_sb_4: sb_4 {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+			gpios = <&gpiof 4 GPIO_INPUT>;
 			no-auto-init;
 		};
 		gpio_fan_enable: fan-enable {
