@@ -1,0 +1,7 @@
+common:
+  platform_allow: native_posix
+tests:
+  util.math.fixed_point:
+    extra_args: OVERLAY_CONFIG=./fixed_point.conf
+  util.math.floating_point:
+    extra_args: OVERLAY_CONFIG=./floating_point.conf
