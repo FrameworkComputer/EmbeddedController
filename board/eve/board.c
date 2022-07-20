@@ -240,16 +240,22 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.driver = &anx74xx_tcpm_usb_mux_driver,
-		.hpd_update = &anx74xx_tcpc_update_hpd_status,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.driver = &anx74xx_tcpm_usb_mux_driver,
+				.hpd_update = &anx74xx_tcpc_update_hpd_status,
+			},
 	},
 	{
-		.usb_port = 1,
-		.driver = &anx74xx_tcpm_usb_mux_driver,
-		.hpd_update = &anx74xx_tcpc_update_hpd_status,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 1,
+				.driver = &anx74xx_tcpm_usb_mux_driver,
+				.hpd_update = &anx74xx_tcpc_update_hpd_status,
+			},
 	},
 };
 
