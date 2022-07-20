@@ -15,7 +15,10 @@
 			ppc = <&bc12_ppc_port0>;
 			tcpc = <&usbpd0>;
 			chg = <&charger>;
-			usb-muxes = <&it5205_mux_0 &virtual_mux_0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&it5205_mux_0 &virtual_mux_0>;
+			};
 		};
 		port0-muxes {
 			virtual_mux_0: virtual-mux-0 {
@@ -29,7 +32,10 @@
 			bc12 = <&bc12_port1>;
 			ppc = <&ppc_port1>;
 			tcpc = <&usbpd1>;
-			usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
+			};
 		};
 		port1-muxes {
 			virtual_mux_1: virtual-mux-1 {
