@@ -242,7 +242,7 @@ __overridable int board_c1_ps8818_mux_set(const struct usb_mux *me,
 	return 0;
 }
 
-struct usb_mux usbc1_ps8818 = {
+const struct usb_mux usbc1_ps8818 = {
 	.usb_port = USBC_PORT_C1,
 	.i2c_port = I2C_PORT_TCPC1,
 	.flags = USB_MUX_FLAG_RESETS_IN_G3,
@@ -258,7 +258,7 @@ __overridable int board_c1_anx7451_mux_set(const struct usb_mux *me,
 	return 0;
 }
 
-struct usb_mux usbc1_anx7451 = {
+const struct usb_mux usbc1_anx7451 = {
 	.usb_port = USBC_PORT_C1,
 	.i2c_port = I2C_PORT_TCPC1,
 	.flags = USB_MUX_FLAG_RESETS_IN_G3,
@@ -267,20 +267,27 @@ struct usb_mux usbc1_anx7451 = {
 	.board_set = &board_c1_anx7451_mux_set,
 };
 
-struct usb_mux usb_muxes[] = {
+/* Filled in by setup_mux based on fw_config */
+struct usb_mux_chain usbc1_mux1;
+
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = AMD_FP6_C0_MUX_I2C_ADDR,
-		.driver = &amd_fp6_usb_mux_driver,
-		.board_set = &fsusb42umx_set_mux,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_USB_MUX,
+			.i2c_addr_flags = AMD_FP6_C0_MUX_I2C_ADDR,
+			.driver = &amd_fp6_usb_mux_driver,
+			.board_set = &fsusb42umx_set_mux,
+		},
 	},
 	[USBC_PORT_C1] = {
-		.usb_port = USBC_PORT_C1,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = AMD_FP6_C4_MUX_I2C_ADDR,
-		.driver = &amd_fp6_usb_mux_driver,
-		/* .next_mux = filled in by setup_mux based on fw_config */
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C1,
+			.i2c_port = I2C_PORT_USB_MUX,
+			.i2c_addr_flags = AMD_FP6_C4_MUX_I2C_ADDR,
+			.driver = &amd_fp6_usb_mux_driver,
+		},
+		.next = &usbc1_mux1,
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
@@ -373,14 +380,15 @@ static void setup_mux(void)
 	switch (board_get_usb_c1_mux()) {
 	case USB_C1_MUX_PS8818:
 		CPRINTSUSB("C1: Setting PS8818 mux");
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
+		usbc1_mux1.mux = &usbc1_ps8818;
 		break;
 	case USB_C1_MUX_ANX7451:
 		CPRINTSUSB("C1: Setting ANX7451 mux");
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_anx7451;
+		usbc1_mux1.mux = &usbc1_anx7451;
 		break;
 	default:
 		CPRINTSUSB("C1: Mux is unknown");
+		usb_muxes[USBC_PORT_C1].next = NULL;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, setup_mux, HOOK_PRIO_INIT_I2C);
