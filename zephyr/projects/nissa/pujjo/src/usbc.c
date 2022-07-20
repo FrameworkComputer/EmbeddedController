@@ -31,17 +31,6 @@ struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
 			TCPC_FLAGS_VBUS_MONITOR,
 	},
-	{ /* sub-board */
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_USB_C1_TCPC,
-			.addr_flags = RAA489000_TCPC0_I2C_FLAGS,
-		},
-		.drv = &raa489000_tcpm_drv,
-		/* RAA489000 implements TCPCI 2.0 */
-		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_VBUS_MONITOR,
-	},
 };
 
 int board_is_sourcing_vbus(int port)
@@ -138,19 +127,6 @@ uint16_t tcpc_get_alert_status(void)
 				status |= PD_STATUS_TCPC_ALERT_0;
 		}
 	}
-
-	if (board_get_usb_pd_port_count() == 2 &&
-	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
-		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
-			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
-			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
-				regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
-
-			if (regval)
-				status |= PD_STATUS_TCPC_ALERT_1;
-		}
-	}
-
 	return status;
 }
 
@@ -223,8 +199,6 @@ void board_reset_pd_mcu(void)
 
 static void poll_c0_int(void);
 DECLARE_DEFERRED(poll_c0_int);
-static void poll_c1_int(void);
-DECLARE_DEFERRED(poll_c1_int);
 
 static void usbc_interrupt_trigger(int port)
 {
@@ -247,12 +221,6 @@ static void poll_c0_int(void)
 		      &poll_c0_int_data);
 }
 
-static void poll_c1_int(void)
-{
-	poll_usb_gpio(1, GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl),
-		      &poll_c1_int_data);
-}
-
 void usb_interrupt(enum gpio_signal signal)
 {
 	int port;
@@ -261,9 +229,6 @@ void usb_interrupt(enum gpio_signal signal)
 	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_int_odl))) {
 		port = 0;
 		ud = &poll_c0_int_data;
-	} else {
-		port = 1;
-		ud = &poll_c1_int_data;
 	}
 	/*
 	 * We've just been called from a falling edge, so there's definitely

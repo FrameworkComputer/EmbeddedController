@@ -48,9 +48,7 @@ __override void board_check_extpower(void)
 __override void board_hibernate(void)
 {
 	/* Shut down the chargers */
-	if (board_get_usb_pd_port_count() == 2)
-		raa489000_hibernate(CHARGER_SECONDARY, true);
-	raa489000_hibernate(CHARGER_PRIMARY, true);
+	raa489000_hibernate(0, true);
 	LOG_INF("Charger(s) hibernated");
 	cflush();
 }
