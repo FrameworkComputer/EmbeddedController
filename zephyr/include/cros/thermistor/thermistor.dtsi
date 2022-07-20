@@ -1,5 +1,5 @@
 / {
-	thermistor_3V3_30K9_47K_4050B: thermistor-3V3-30K9-47K-4050B {
+	/omit-if-no-ref/ thermistor_3V3_30K9_47K_4050B: thermistor-3V3-30K9-47K-4050B {
 		status = "disabled";
 		compatible = "cros-ec,thermistor";
 		scaling-factor = <11>;
@@ -64,8 +64,7 @@
 		};
 	};
 
-
-	thermistor_3V0_22K6_47K_4050B: thermistor-3V0-22K6-47K-4050B {
+	/omit-if-no-ref/ thermistor_3V0_22K6_47K_4050B: thermistor-3V0-22K6-47K-4050B {
 		status = "disabled";
 		compatible = "cros-ec,thermistor";
 		scaling-factor = <11>;
@@ -145,7 +144,7 @@
 		};
 	};
 
-	thermistor_3V3_13K7_47K_4050B: thermistor-3V3-13K7-47K-4050B {
+	/omit-if-no-ref/ thermistor_3V3_13K7_47K_4050B: thermistor-3V3-13K7-47K-4050B {
 		status = "disabled";
 		compatible = "cros-ec,thermistor";
 		scaling-factor = <13>;
@@ -226,7 +225,7 @@
 	};
 
 
-	thermistor_3V3_51K1_47K_4050B: thermistor-3V3-51K1-47K-4050B {
+	/omit-if-no-ref/ thermistor_3V3_51K1_47K_4050B: thermistor-3V3-51K1-47K-4050B {
 		status = "disabled";
 		compatible = "cros-ec,thermistor";
 		scaling-factor = <11>;
