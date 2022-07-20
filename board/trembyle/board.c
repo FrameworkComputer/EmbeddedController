@@ -252,6 +252,10 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
 /*****************************************************************************
  * USB-C MUX/Retimer dynamic configuration
  */
+
+/* Place holder for second mux in USBC1 chain */
+struct usb_mux_chain usbc1_mux1;
+
 static void setup_mux(void)
 {
 	if (ec_config_has_usbc1_retimer_ps8802()) {
@@ -261,11 +265,10 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the PS8802
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1], &usbc1_ps8802,
-		       sizeof(struct usb_mux));
+		usb_muxes[USBC_PORT_C1].mux = &usbc1_ps8802;
 
 		/* Set the AMD FP5 as the secondary MUX */
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_amd_fp5_usb_mux;
+		usbc1_mux1.mux = &usbc1_amd_fp5_usb_mux;
 
 		/* Don't have the AMD FP5 flip */
 		usbc1_amd_fp5_usb_mux.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP;
@@ -277,11 +280,10 @@ static void setup_mux(void)
 		 * Replace usb_muxes[USBC_PORT_C1] with the AMD FP5
 		 * table entry.
 		 */
-		memcpy(&usb_muxes[USBC_PORT_C1], &usbc1_amd_fp5_usb_mux,
-		       sizeof(struct usb_mux));
+		usb_muxes[USBC_PORT_C1].mux = &usbc1_amd_fp5_usb_mux;
 
 		/* Set the PS8818 as the secondary MUX */
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
+		usbc1_mux1.mux = &usbc1_ps8818;
 	}
 }
 
@@ -295,23 +297,29 @@ const struct pi3dpx1207_usb_control pi3dpx1207_controls[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3dpx1207_controls) == USBC_PORT_COUNT);
 
-const struct usb_mux usbc0_pi3dpx1207_usb_retimer = {
-	.usb_port = USBC_PORT_C0,
-	.i2c_port = I2C_PORT_TCPC0,
-	.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
-	.driver = &pi3dpx1207_usb_retimer,
+const struct usb_mux_chain usbc0_pi3dpx1207_usb_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_TCPC0,
+			.i2c_addr_flags = PI3DPX1207_I2C_ADDR_FLAGS,
+			.driver = &pi3dpx1207_usb_retimer,
+		},
 };
 
-struct usb_mux usb_muxes[] = {
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.i2c_port = I2C_PORT_USB_AP_MUX,
-		.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
-		.driver = &amd_fp5_usb_mux_driver,
-		.next_mux = &usbc0_pi3dpx1207_usb_retimer,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_USB_AP_MUX,
+			.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+			.driver = &amd_fp5_usb_mux_driver,
+		},
+		.next = &usbc0_pi3dpx1207_usb_retimer,
 	},
 	[USBC_PORT_C1] = {
 		/* Filled in dynamically at startup */
+		.next = &usbc1_mux1,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);

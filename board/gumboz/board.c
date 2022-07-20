@@ -195,33 +195,43 @@ const struct usb_mux_driver usbc0_sbu_mux_driver = {
  * Since PI3USB221 is not a i2c device, .i2c_port and
  * .i2c_addr_flags are not required here.
  */
-const struct usb_mux usbc0_sbu_mux = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &usbc0_sbu_mux_driver,
+const struct usb_mux_chain usbc0_sbu_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C0,
+			.driver = &usbc0_sbu_mux_driver,
+		},
 };
 
-struct usb_mux usbc1_amd_fp5_usb_mux = {
-	.usb_port = USBC_PORT_C1,
-	.i2c_port = I2C_PORT_USB_AP_MUX,
-	.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
-	.driver = &amd_fp5_usb_mux_driver,
-	.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP,
+struct usb_mux_chain usbc1_amd_fp5_usb_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.i2c_port = I2C_PORT_USB_AP_MUX,
+			.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+			.driver = &amd_fp5_usb_mux_driver,
+			.flags = USB_MUX_FLAG_SET_WITHOUT_FLIP,
+		},
 };
 
-struct usb_mux usb_muxes[] = {
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.i2c_port = I2C_PORT_USB_AP_MUX,
-		.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
-		.driver = &amd_fp5_usb_mux_driver,
-		.next_mux = &usbc0_sbu_mux,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_USB_AP_MUX,
+			.i2c_addr_flags = AMD_FP5_MUX_I2C_ADDR_FLAGS,
+			.driver = &amd_fp5_usb_mux_driver,
+		},
+		.next = &usbc0_sbu_mux,
 	},
 	[USBC_PORT_C1] = {
-		.usb_port = USBC_PORT_C1,
-		.i2c_port = I2C_PORT_TCPC1,
-		.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
-		.driver = &ps8743_usb_mux_driver,
-		.next_mux = &usbc1_amd_fp5_usb_mux,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C1,
+			.i2c_port = I2C_PORT_TCPC1,
+			.i2c_addr_flags = PS8743_I2C_ADDR1_FLAG,
+			.driver = &ps8743_usb_mux_driver,
+		},
+		.next = &usbc1_amd_fp5_usb_mux,
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);

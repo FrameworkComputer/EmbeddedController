@@ -187,9 +187,9 @@ static inline bool ec_config_has_mst_hub_rtd2141b(void)
 int board_usbc_port_to_hpd_gpio_or_ioex(int port);
 #define PORT_TO_HPD(port) board_usbc_port_to_hpd_gpio_or_ioex(port)
 
-extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
-extern const struct usb_mux usbc1_ps8802;
+extern const struct usb_mux_chain usbc0_pi3dpx1207_usb_retimer;
 extern const struct usb_mux usbc1_ps8818;
+extern struct usb_mux usbc1_ps8802;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
 void hdmi_hpd_interrupt(enum gpio_signal signal);
 void motion_interrupt(enum gpio_signal signal);

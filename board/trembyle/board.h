@@ -183,9 +183,9 @@ static inline bool ec_config_has_hdmi_conn_hpd(void)
 	 (ec_config_has_usbc1_retimer_ps8802()) ? GPIO_DP1_HPD :    \
 						  GPIO_DP2_HPD)
 
-extern const struct usb_mux usbc0_pi3dpx1207_usb_retimer;
-extern const struct usb_mux usbc1_ps8802;
+extern const struct usb_mux_chain usbc0_pi3dpx1207_usb_retimer;
 extern const struct usb_mux usbc1_ps8818;
+extern struct usb_mux usbc1_ps8802;
 extern struct usb_mux usbc1_amd_fp5_usb_mux;
 
 void hdmi_hpd_interrupt(enum ioex_signal signal);
