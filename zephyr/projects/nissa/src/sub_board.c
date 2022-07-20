@@ -180,7 +180,7 @@ static void nereid_subboard_config(void)
 				      GPIO_INPUT | GPIO_PULL_UP);
 	} else {
 		/* Port doesn't exist, doesn't need muxing */
-		usb_muxes[1].next_mux = NULL;
+		usb_muxes[1].next = NULL;
 	}
 #endif
 

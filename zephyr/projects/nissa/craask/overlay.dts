@@ -212,7 +212,10 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
-			usb-muxes = <&virtual_mux_0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
 		};
 		port0-muxes {
 			virtual_mux_0: virtual-mux-0 {
@@ -228,11 +231,14 @@
 			reg = <1>;
 			bc12 = <&bc12_port1>;
 			chg = <&chg_port1>;
-			/*
-			 * Some sub-boards may disable all usb muxes in chain
-			 * except virtual_mux_1
-			 */
-			usb-muxes = <&virtual_mux_1 &anx7483_mux_1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				/*
+				 * Some sub-boards may disable all usb muxes in
+				 * chain except virtual_mux_1
+				 */
+				usb-muxes = <&virtual_mux_1 &anx7483_mux_1>;
+			};
 		};
 		port1-muxes {
 			virtual_mux_1: virtual-mux-1 {

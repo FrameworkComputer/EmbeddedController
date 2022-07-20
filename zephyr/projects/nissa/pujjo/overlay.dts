@@ -203,7 +203,10 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
-			usb-muxes = <&virtual_mux_0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
 		};
 		port0-muxes {
 			virtual_mux_0: virtual-mux-0 {

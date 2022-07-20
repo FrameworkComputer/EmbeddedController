@@ -18,8 +18,6 @@ enum nissa_sub_board_type {
 	NISSA_SB_HDMI_A = 3, /* HDMI, USB type A */
 };
 
-extern struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT];
-
 enum nissa_sub_board_type nissa_get_sb_type(void);
 
 #endif /* __CROS_EC_NISSA_NISSA_COMMON_H__ */
