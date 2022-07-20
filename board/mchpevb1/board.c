@@ -349,18 +349,24 @@ struct pi3usb9281_config pi3usb9281_chips[] = {
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9281_chips) ==
 	     CONFIG_BC12_DETECT_PI3USB9281_CHIP_COUNT);
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.i2c_port = I2C_PORT_USB_MUX,
+				.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+				.driver = &pi3usb3x532_usb_mux_driver,
+			},
 	},
 	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = 0x10,
-		.driver = &ps8740_usb_mux_driver,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 1,
+				.i2c_port = I2C_PORT_USB_MUX,
+				.i2c_addr_flags = 0x10,
+				.driver = &ps8740_usb_mux_driver,
+			},
 	}
 };
 #endif
