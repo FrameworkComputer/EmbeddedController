@@ -96,23 +96,29 @@ BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* USB Mux Configuration for Soc side BB-Retimers for Dual retimer config */
-static struct usb_mux soc_side_bb_retimer0_usb_mux = {
-	.usb_port = TYPE_C_PORT_0,
-	.next_mux = USB_MUX_NEXT_POINTER(DT_NODELABEL(usbc_port0), 0),
-	.driver = &bb_usb_retimer,
-	.hpd_update = bb_retimer_hpd_update,
-	.i2c_port = I2C_PORT_TYPEC_0,
-	.i2c_addr_flags = I2C_PORT0_BB_RETIMER_SOC_ADDR,
+struct usb_mux_chain soc_side_bb_retimer0_usb_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = TYPE_C_PORT_0,
+			.driver = &bb_usb_retimer,
+			.hpd_update = bb_retimer_hpd_update,
+			.i2c_port = I2C_PORT_TYPEC_0,
+			.i2c_addr_flags = I2C_PORT0_BB_RETIMER_SOC_ADDR,
+		},
+	.next = &USB_MUX_CHAIN_STRUCT_NAME(1, 0),
 };
 
 #if defined(HAS_TASK_PD_C1)
-static struct usb_mux soc_side_bb_retimer1_usb_mux = {
-	.usb_port = TYPE_C_PORT_1,
-	.next_mux = USB_MUX_NEXT_POINTER(DT_NODELABEL(usbc_port1), 0),
-	.driver = &bb_usb_retimer,
-	.hpd_update = bb_retimer_hpd_update,
-	.i2c_port = I2C_PORT_TYPEC_1,
-	.i2c_addr_flags = I2C_PORT1_BB_RETIMER_SOC_ADDR,
+struct usb_mux_chain soc_side_bb_retimer1_usb_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = TYPE_C_PORT_1,
+			.driver = &bb_usb_retimer,
+			.hpd_update = bb_retimer_hpd_update,
+			.i2c_port = I2C_PORT_TYPEC_1,
+			.i2c_addr_flags = I2C_PORT1_BB_RETIMER_SOC_ADDR,
+		},
+	.next = &USB_MUX_CHAIN_STRUCT_NAME(1, 1),
 };
 #endif
 
@@ -244,25 +250,29 @@ static void configure_charger(void)
 
 static void configure_retimer_usbmux(void)
 {
+	struct usb_mux *mux;
+
 	switch (ADL_RVP_BOARD_ID(board_get_version())) {
 	case ADLN_LP5_ERB_SKU_BOARD_ID:
 	case ADLN_LP5_RVP_SKU_BOARD_ID:
 		/* enable TUSB1044RNQR redriver on Port0  */
-		usb_muxes[TYPE_C_PORT_0].i2c_addr_flags =
-			TUSB1064_I2C_ADDR14_FLAGS;
-		usb_muxes[TYPE_C_PORT_0].driver = &tusb1064_usb_mux_driver;
-		usb_muxes[TYPE_C_PORT_0].hpd_update = tusb1044_hpd_update;
+		mux = USB_MUX_POINTER(DT_NODELABEL(usb_mux_chain_0), 0);
+		mux->i2c_addr_flags = TUSB1064_I2C_ADDR14_FLAGS;
+		mux->driver = &tusb1064_usb_mux_driver;
+		mux->hpd_update = tusb1044_hpd_update;
 
 #if defined(HAS_TASK_PD_C1)
-		usb_muxes[TYPE_C_PORT_1].driver = NULL;
-		usb_muxes[TYPE_C_PORT_1].hpd_update = NULL;
+		mux = USB_MUX_POINTER(DT_NODELABEL(usb_mux_chain_1), 0);
+		mux->driver = NULL;
+		mux->hpd_update = NULL;
 #endif
 		break;
 
 	case ADLP_LP5_T4_RVP_SKU_BOARD_ID:
 		/* No retimer on Port-2 */
 #if defined(HAS_TASK_PD_C2)
-		usb_muxes[TYPE_C_PORT_2].driver = NULL;
+		mux = USB_MUX_POINTER(DT_NODELABEL(usb_mux_chain_2), 0);
+		mux->driver = NULL;
 #endif
 		break;
 
@@ -272,11 +282,9 @@ static void configure_retimer_usbmux(void)
 		 * Change the default usb mux config on runtime to support
 		 * dual retimer topology.
 		 */
-		usb_muxes[TYPE_C_PORT_0].next_mux =
-			&soc_side_bb_retimer0_usb_mux;
+		usb_muxes[TYPE_C_PORT_0].next = &soc_side_bb_retimer0_usb_mux;
 #if defined(HAS_TASK_PD_C1)
-		usb_muxes[TYPE_C_PORT_1].next_mux =
-			&soc_side_bb_retimer1_usb_mux;
+		usb_muxes[TYPE_C_PORT_1].next = &soc_side_bb_retimer1_usb_mux;
 #endif
 		break;
 

@@ -12,7 +12,11 @@
 			reg = <0>;
 			tcpc = <&tcpc_port0>;
 			chg = <&charger>;
-			usb-muxes = <&usb_c0_bb_retimer &virtual_mux_c0>;
+			usb_mux_chain_0: usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c0_bb_retimer
+					     &virtual_mux_c0>;
+			};
 		};
 		port0-muxes {
 			virtual_mux_c0: virtual-mux-c0 {
@@ -24,7 +28,11 @@
 			compatible = "named-usbc-port";
 			reg = <1>;
 			tcpc = <&tcpc_port1>;
-			usb-muxes = <&usb_c1_bb_retimer &virtual_mux_c1>;
+			usb_mux_chain_1: usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_bb_retimer
+					     &virtual_mux_c1>;
+			};
 		};
 		port1-muxes {
 			virtual_mux_c1: virtual-mux-c1 {
@@ -36,7 +44,11 @@
 			compatible = "named-usbc-port";
 			reg = <2>;
 			tcpc = <&tcpc_port2>;
-			usb-muxes = <&usb_c2_bb_retimer &virtual_mux_c2>;
+			usb_mux_chain_2: usb-mux-chain-2 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c2_bb_retimer
+					     &virtual_mux_c2>;
+			};
 		};
 		port2-muxes {
 			virtual_mux_c2: virtual-mux-c2 {
@@ -48,7 +60,11 @@
 			compatible = "named-usbc-port";
 			reg = <3>;
 			tcpc = <&tcpc_port3>;
-			usb-muxes = <&usb_c3_bb_retimer &virtual_mux_c3>;
+			usb_mux_chain_3: usb-mux-chain-3 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c3_bb_retimer
+					     &virtual_mux_c3>;
+			};
 		};
 		port3-muxes {
 			virtual_mux_c3: virtual-mux-c3 {
