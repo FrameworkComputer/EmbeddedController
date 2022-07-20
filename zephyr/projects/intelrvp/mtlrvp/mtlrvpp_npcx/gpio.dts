@@ -20,7 +20,7 @@
 			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
 		};
 		rsmrst_pwrgd: rsmrst-pwrgd {
-			gpios = <&gpio6 6 GPIO_INPUT>; /* 1.8V */
+			gpios = <&gpio6 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_PG_EC_RSMRST_ODL";
 		};
 		pch_slp_s0_n: pch-slp-s0-n-ec {
@@ -161,10 +161,10 @@
 			gpios = <&gpiob 4 GPIO_INPUT>;
 		};
 		usbc-tcpc-i2c-clk-aic2 {
-			gpios = <&gpio9 0 GPIO_INPUT>;
+			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		usbc-tcpc-i2c-data-aic2 {
-			gpios = <&gpio8 7 GPIO_INPUT>;
+			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		/* Unused 1.8V pins */
 		i3c-1-sda-r {
@@ -192,22 +192,22 @@
 			gpios = <&gpioa 6 GPIO_INPUT>;
 		};
 		sml1-clk-mecc {
-			gpios = <&gpio3 3 GPIO_INPUT>;
+			gpios = <&gpio3 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		sml1-data-mecc {
-			gpios = <&gpio3 6 GPIO_INPUT>;
+			gpios = <&gpio3 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		sml1-alert {
-			gpios = <&gpioc 7 GPIO_INPUT>;
+			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		smb-pch-alrt {
 			gpios = <&gpioa 3 GPIO_INPUT>;
 		};
 		smb-pch-data {
-			gpios = <&gpioc 1 GPIO_INPUT>;
+			gpios = <&gpioc 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		smb-pch-clk {
-			gpios = <&gpioc 2 GPIO_INPUT>;
+			gpios = <&gpioc 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		/* Unused 3.3V pins */
 		cpu-cat-err-mecc {
@@ -362,20 +362,6 @@
 		en-pp5000 {
 			enum-name = "GPIO_EN_PP5000";
 		};
-	};
-
-	def-lvol-io-list {
-		compatible = "nuvoton,npcx-lvolctrl-def";
-		lvol-io-pads = <
-			&lvol_io66 /* RSMRET_PWRGD */
-			&lvol_io90 /* I2C1_SCL0 */
-			&lvol_io87 /* I2C1_SDA0 */
-			&lvol_io33 /* SML1_CLK_MECC */
-			&lvol_io36 /* SML1_DATA_MECC */
-			&lvol_ioc7 /* SML1_ALERT */
-			&lvol_ioc1 /* SMB_PCH_DATA */
-			&lvol_ioc2 /* SMB_PCH_CLK */
-		>;
 	};
 };
 
