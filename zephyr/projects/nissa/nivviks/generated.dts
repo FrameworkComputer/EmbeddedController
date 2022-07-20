@@ -184,10 +184,10 @@
 			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_vccin_aux_vid0: vccin_aux_vid0 {
-			gpios = <&gpio9 2 GPIO_INPUT>;
+			gpios = <&gpio9 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_vccin_aux_vid1: vccin_aux_vid1 {
-			gpios = <&gpioe 3 GPIO_INPUT>;
+			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
 			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
