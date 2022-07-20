@@ -13,7 +13,7 @@
 	named-gpios {
 		/* Skyrim-specific GPIO customizations */
 		gpio_usb_fault_odl: usb_fault_odl {
-			gpios = <&gpio5 0 GPIO_ODR_HIGH>;
+			gpios = <&gpio5 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_en_pwr_s3: en_pwr_s3 {
 			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
@@ -87,16 +87,6 @@
 		pch-sys-prwok {
 			enum-name = "GPIO_PCH_SYS_PWROK";
 		};
-	};
-
-	def-lvol-io-list {
-		compatible = "nuvoton,npcx-lvolctrl-def";
-
-		/*
-		 * Low voltage on I2C2_0, I2C6_1, I2C7_0, USB_FAUT_ODL
-		 */
-		lvol-io-pads = <&lvol_io92 &lvol_io91 &lvol_ioe4 &lvol_ioe3
-				&lvol_iob3 &lvol_iob2 &lvol_io50>;
 	};
 
 	named-temp-sensors {

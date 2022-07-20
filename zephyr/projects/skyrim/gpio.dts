@@ -133,10 +133,10 @@
 			gpios = <&gpio8 7 GPIO_INPUT>;
 		};
 		ec_i2c_batt_scl {
-			gpios = <&gpio9 2 GPIO_INPUT>;
+			gpios = <&gpio9 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		ec_i2c_batt_sda {
-			gpios = <&gpio9 1 GPIO_INPUT>;
+			gpios = <&gpio9 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		ec_i2c_usbc_mux_scl {
 			gpios = <&gpiod 1 GPIO_INPUT>;
@@ -157,16 +157,16 @@
 			gpios = <&gpio3 6 GPIO_INPUT>;
 		};
 		ec_i2c_sensor_scl {
-			gpios = <&gpioe 4 GPIO_INPUT>;
+			gpios = <&gpioe 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		ec_i2c_sensor_sda {
-			gpios = <&gpioe 3 GPIO_INPUT>;
+			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		ec_i2c_soc_sic {
-			gpios = <&gpiob 3 GPIO_INPUT>;
+			gpios = <&gpiob 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		ec_i2c_soc_sid {
-			gpios = <&gpiob 2 GPIO_INPUT>;
+			gpios = <&gpiob 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		en_kb_bl {
 			gpios = <&gpio9 7 GPIO_OUTPUT_HIGH>;
