@@ -162,13 +162,16 @@ static void board_hpd_status(const struct usb_mux *me, mux_state_t mux_state,
 	host_set_single_event(EC_HOST_EVENT_USB_MUX);
 }
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
-		.driver = &it5205_usb_mux_driver,
-		.hpd_update = &board_hpd_status,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.i2c_port = I2C_PORT_USB_MUX,
+				.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
+				.driver = &it5205_usb_mux_driver,
+				.hpd_update = &board_hpd_status,
+			},
 	},
 };
 
