@@ -12,6 +12,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 
+#include "cros_board_info.h"
 #include "driver/tcpm/tcpci.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -28,7 +29,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 static void hdmi_power_handler(struct ap_power_ev_callback *cb,
 			       struct ap_power_ev_data data)
 {
-	/* Enable rails for S3 */
+	/* Enable VCC on the HDMI port. */
 	const struct gpio_dt_spec *s3_rail =
 		GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl);
 	/* Connect AP's DDC to sub-board (default is USB-C aux) */
@@ -173,23 +174,43 @@ static void nereid_subboard_config(void)
 			GPIO_DT_FROM_ALIAS(gpio_hpd_odl);
 		static struct gpio_callback hdmi_hpd_cb;
 		int rv, irq_key;
+		bool use_vcc_enable = false;
 
 #if CONFIG_SOC_IT8XXX2 && DT_NODE_EXISTS(I2C4_NODE)
 		/* disable i2c4 alternate function for better power number */
 		soc_it8xxx2_disable_i2c4_alt();
 #endif
 		/* HDMI power enable outputs */
+		if (IS_ENABLED(CONFIG_BOARD_NEREID)) {
+			/*
+			 * Nereid versions before 2 need hdmi-en-odl to be
+			 * pulled down to enable VCC on the HDMI port, but later
+			 * versions (and other boards) disconnect this so
+			 * the port's VCC directly follows en-rails-odl. Only
+			 * configure the GPIO if needed, to save power.
+			 */
+			uint32_t board_version = 0;
+
+			/* CBI errors ignored, will configure the pin */
+			cbi_get_board_version(&board_version);
+			if (board_version < 2) {
+				gpio_pin_configure_dt(
+					GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl),
+					GPIO_OUTPUT_INACTIVE | GPIO_OPEN_DRAIN |
+						GPIO_ACTIVE_LOW);
+				use_vcc_enable = true;
+			}
+		}
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_rails_odl),
 				      GPIO_OUTPUT_INACTIVE | GPIO_OPEN_DRAIN |
 					      GPIO_PULL_UP | GPIO_ACTIVE_LOW);
-		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl),
-				      GPIO_OUTPUT_INACTIVE | GPIO_OPEN_DRAIN |
-					      GPIO_ACTIVE_LOW);
 		/* Control HDMI power in concert with AP */
 		ap_power_ev_init_callback(
 			&power_cb, hdmi_power_handler,
 			AP_POWER_PRE_INIT | AP_POWER_HARD_OFF |
-				AP_POWER_STARTUP | AP_POWER_SHUTDOWN);
+				(use_vcc_enable ?
+					 AP_POWER_STARTUP | AP_POWER_SHUTDOWN :
+					 0));
 		ap_power_ev_add_callback(&power_cb);
 
 		/*
