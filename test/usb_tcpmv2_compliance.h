@@ -26,7 +26,7 @@ extern uint32_t rdo;
 extern uint32_t pdo;
 
 extern const struct tcpc_config_t tcpc_config[];
-extern const struct usb_mux usb_muxes[];
+extern const struct usb_mux_chain usb_muxes[];
 
 void mock_set_cc(enum mock_connect_result cr, enum mock_cc_state cc1,
 		 enum mock_cc_state cc2);

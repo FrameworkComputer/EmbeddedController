@@ -27,7 +27,7 @@ const struct svdm_response svdm_rsp = {
 };
 
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT];
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT];
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 int board_vbus_source_enabled(int port)
 {
