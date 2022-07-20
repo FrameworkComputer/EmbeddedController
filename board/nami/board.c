@@ -282,16 +282,22 @@ static int ps8751_tune_mux(const struct usb_mux *me)
 	return EC_SUCCESS;
 }
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux usb_mux_ps8751 = {
+	.usb_port = USB_PD_PORT_PS8751,
+	.driver = &tcpci_tcpm_usb_mux_driver,
+	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+};
+
+struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_PS8751] = {
-		.usb_port = USB_PD_PORT_PS8751,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.mux = &usb_mux_ps8751,
 	},
 	[USB_PD_PORT_ANX7447] = {
-		.usb_port = USB_PD_PORT_ANX7447,
-		.driver = &anx7447_usb_mux_driver,
-		.hpd_update = &anx7447_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_ANX7447,
+			.driver = &anx7447_usb_mux_driver,
+			.hpd_update = &anx7447_tcpc_update_hpd_status,
+		},
 	}
 };
 
@@ -345,7 +351,7 @@ void board_tcpc_init(void)
 	gpio_enable_interrupt(GPIO_USB_C1_PD_INT_ODL);
 
 	if (oem == PROJECT_SONA && model != MODEL_SYNDRA)
-		usb_muxes[USB_PD_PORT_PS8751].board_init = ps8751_tune_mux;
+		usb_mux_ps8751.board_init = ps8751_tune_mux;
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
