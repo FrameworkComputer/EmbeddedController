@@ -315,12 +315,14 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 
-struct usb_mux usb_muxes[] = {
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = DT_REG_ADDR(DT_NODELABEL(tcpci_emul)),
+		.mux = &(struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.i2c_port = I2C_PORT_USB_C0,
+			.i2c_addr_flags = DT_REG_ADDR(DT_NODELABEL(tcpci_emul)),
+		},
 	},
 };
 

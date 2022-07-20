@@ -288,13 +288,13 @@ ZTEST(tcpci, test_generic_tcpci_debug_accessory)
 /* Setup TCPCI usb mux to behave as it is used only for usb mux */
 static void set_usb_mux_not_tcpc(void)
 {
-	usb_muxes[USBC_PORT_C0].flags = USB_MUX_FLAG_NOT_TCPC;
+	usbc0_mux0.flags = USB_MUX_FLAG_NOT_TCPC;
 }
 
 /* Setup TCPCI usb mux to behave as it is used for usb mux and TCPC */
 static void set_usb_mux_tcpc(void)
 {
-	usb_muxes[USBC_PORT_C0].flags = 0;
+	usbc0_mux0.flags = 0;
 }
 
 /** Test TCPCI mux init */
@@ -303,7 +303,7 @@ ZTEST(tcpci, test_generic_tcpci_mux_init)
 	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
-	struct usb_mux *tcpci_usb_mux = &usb_muxes[USBC_PORT_C0];
+	const struct usb_mux *tcpci_usb_mux = usb_muxes[USBC_PORT_C0].mux;
 
 	/* Set as usb mux with TCPC for first init call */
 	set_usb_mux_tcpc();
@@ -360,7 +360,7 @@ ZTEST(tcpci, test_generic_tcpci_mux_enter_low_power)
 	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
-	struct usb_mux *tcpci_usb_mux = &usb_muxes[USBC_PORT_C0];
+	const struct usb_mux *tcpci_usb_mux = usb_muxes[USBC_PORT_C0].mux;
 
 	/* Set as usb mux with TCPC for first enter_low_power call */
 	set_usb_mux_tcpc();
@@ -393,7 +393,7 @@ static void test_generic_tcpci_mux_set_get(void)
 	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
 	struct i2c_common_emul_data *common_data =
 		emul_tcpci_generic_get_i2c_common_data(emul);
-	struct usb_mux *tcpci_usb_mux = &usb_muxes[USBC_PORT_C0];
+	const struct usb_mux *tcpci_usb_mux = usb_muxes[USBC_PORT_C0].mux;
 	mux_state_t mux_state, mux_state_get;
 	uint16_t exp_val, initial_val;
 	bool ack;
@@ -508,7 +508,8 @@ ZTEST(tcpci, test_generic_tcpci_hard_reset_reinit)
 static void *tcpci_setup(void)
 {
 	/* This test suite assumes that first usb mux for port C0 is TCPCI */
-	__ASSERT(usb_muxes[USBC_PORT_C0].driver == &tcpci_tcpm_usb_mux_driver,
+	__ASSERT(usb_muxes[USBC_PORT_C0].mux->driver ==
+			 &tcpci_tcpm_usb_mux_driver,
 		 "Invalid config of usb_muxes in test/drivers/src/stubs.c");
 
 	return NULL;
