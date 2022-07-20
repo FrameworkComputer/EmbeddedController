@@ -6,12 +6,13 @@
 / {
 	kblight {
 		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm6 6 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
+		pwms = <&pwm6 6 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
 	};
 };
 
 &pwm6 {
 	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm6_gpc0>;
 	pinctrl-names = "default";
 };
