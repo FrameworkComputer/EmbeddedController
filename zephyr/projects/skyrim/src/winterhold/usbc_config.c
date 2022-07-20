@@ -97,14 +97,20 @@ struct usb_mux_driver ioex_sbu_mux_driver = {
  * Since NX3DV221GM is not a i2c device, .i2c_port and
  * .i2c_addr_flags are not required here.
  */
-struct usb_mux usbc0_sbu_mux = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &ioex_sbu_mux_driver,
+struct usb_mux_chain usbc0_sbu_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C0,
+			.driver = &ioex_sbu_mux_driver,
+		},
 };
 
-struct usb_mux usbc1_sbu_mux = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &ioex_sbu_mux_driver,
+struct usb_mux_chain usbc1_sbu_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.driver = &ioex_sbu_mux_driver,
+		},
 };
 
 int baseboard_anx7483_c0_mux_set(const struct usb_mux *me,
@@ -164,13 +170,16 @@ int baseboard_anx7483_c1_mux_set(const struct usb_mux *me,
 	return EC_SUCCESS;
 }
 
-struct usb_mux usbc0_anx7483 = {
-	.usb_port = USBC_PORT_C0,
-	.i2c_port = I2C_PORT_TCPC0,
-	.i2c_addr_flags = ANX7483_I2C_ADDR0_FLAGS,
-	.driver = &anx7483_usb_retimer_driver,
-	.board_set = &baseboard_anx7483_c0_mux_set,
-	.next_mux = &usbc0_sbu_mux,
+struct usb_mux_chain usbc0_anx7483 = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_TCPC0,
+			.i2c_addr_flags = ANX7483_I2C_ADDR0_FLAGS,
+			.driver = &anx7483_usb_retimer_driver,
+			.board_set = &baseboard_anx7483_c0_mux_set,
+		},
+	.next = &usbc0_sbu_mux,
 };
 
 __overridable int board_c1_ps8818_mux_set(const struct usb_mux *me,
@@ -187,38 +196,48 @@ __overridable int board_c1_ps8818_mux_set(const struct usb_mux *me,
 	return 0;
 }
 
-struct usb_mux usbc1_ps8818 = {
-	.usb_port = USBC_PORT_C1,
-	.i2c_port = I2C_PORT_TCPC1,
-	.flags = USB_MUX_FLAG_RESETS_IN_G3,
-	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
-	.driver = &ps8818_usb_retimer_driver,
-	.board_set = &board_c1_ps8818_mux_set,
+struct usb_mux_chain usbc1_ps8818 = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.i2c_port = I2C_PORT_TCPC1,
+			.flags = USB_MUX_FLAG_RESETS_IN_G3,
+			.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+			.driver = &ps8818_usb_retimer_driver,
+			.board_set = &board_c1_ps8818_mux_set,
+		},
 };
 
-struct usb_mux usbc1_anx7483 = {
-	.usb_port = USBC_PORT_C1,
-	.i2c_port = I2C_PORT_TCPC1,
-	.i2c_addr_flags = ANX7483_I2C_ADDR0_FLAGS,
-	.driver = &anx7483_usb_retimer_driver,
-	.board_set = &baseboard_anx7483_c1_mux_set,
-	.next_mux = &usbc1_sbu_mux,
+struct usb_mux_chain usbc1_anx7483 = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.i2c_port = I2C_PORT_TCPC1,
+			.i2c_addr_flags = ANX7483_I2C_ADDR0_FLAGS,
+			.driver = &anx7483_usb_retimer_driver,
+			.board_set = &baseboard_anx7483_c1_mux_set,
+		},
+	.next = &usbc1_sbu_mux,
 };
 
-struct usb_mux usb_muxes[] = {
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = AMD_FP6_C0_MUX_I2C_ADDR,
-		.driver = &amd_fp6_usb_mux_driver,
-		.next_mux = &usbc0_anx7483,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.i2c_port = I2C_PORT_USB_MUX,
+			.i2c_addr_flags = AMD_FP6_C0_MUX_I2C_ADDR,
+			.driver = &amd_fp6_usb_mux_driver,
+		},
+		.next = &usbc0_anx7483,
 	},
 	[USBC_PORT_C1] = {
-		.usb_port = USBC_PORT_C1,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = AMD_FP6_C4_MUX_I2C_ADDR,
-		.driver = &amd_fp6_usb_mux_driver,
-		/* .next_mux = filled in by setup_mux based on fw_config */
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C1,
+			.i2c_port = I2C_PORT_USB_MUX,
+			.i2c_addr_flags = AMD_FP6_C4_MUX_I2C_ADDR,
+			.driver = &amd_fp6_usb_mux_driver,
+		},
+		/* .next = filled in by setup_mux based on fw_config */
 	}
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
@@ -258,10 +277,10 @@ static void setup_mux(void)
 
 	if (val == FW_IO_DB_PS8811_PS8818) {
 		CPRINTSUSB("C1: Setting PS8818 mux");
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_ps8818;
+		usb_muxes[USBC_PORT_C1].next = &usbc1_ps8818;
 	} else if (val == FW_IO_DB_NONE_ANX7483) {
 		CPRINTSUSB("C1: Setting ANX7483 mux");
-		usb_muxes[USBC_PORT_C1].next_mux = &usbc1_anx7483;
+		usb_muxes[USBC_PORT_C1].next = &usbc1_anx7483;
 	} else {
 		CPRINTSUSB("Unexpected DB_IO board: %d", val);
 	}
