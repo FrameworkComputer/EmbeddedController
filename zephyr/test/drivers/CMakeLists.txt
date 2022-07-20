@@ -6,8 +6,9 @@ cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(${ZMAKE_PROJECT_NAME})
 
-zephyr_include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include)
-zephyr_include_directories("${PLATFORM_EC}/driver/ppc/")
+target_include_directories(app PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    "${PLATFORM_EC}/driver/ppc/")
 
 # Common sources
 target_sources(app PRIVATE
