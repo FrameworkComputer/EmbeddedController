@@ -57,20 +57,25 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* USBC mux configuration - Alder Lake includes internal mux */
-static const struct usb_mux usbc0_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C0,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
+static const struct usb_mux_chain usbc0_tcss_usb_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C0,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
+		},
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USBC_PORT_C0] = {
-		.usb_port = USBC_PORT_C0,
-		.driver = &bb_usb_retimer,
-		.hpd_update = bb_retimer_hpd_update,
-		.i2c_port = I2C_PORT_USB_C0_C2_MUX,
-		.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
-		.next_mux = &usbc0_tcss_usb_mux,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.driver = &bb_usb_retimer,
+			.hpd_update = bb_retimer_hpd_update,
+			.i2c_port = I2C_PORT_USB_C0_C2_MUX,
+			.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
+		},
+		.next = &usbc0_tcss_usb_mux,
 	},
 };
 
