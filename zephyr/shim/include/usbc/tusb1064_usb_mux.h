@@ -11,26 +11,26 @@
 #define TUSB1064_USB_MUX_COMPAT ti_tusb1064
 
 #if defined(CONFIG_USB_MUX_TUSB1044)
-#define USB_MUX_CONFIG_TUSB1064(mux_id, port_id, idx)          \
+#define USB_MUX_CONFIG_TUSB1064(mux_id)                        \
 	{                                                      \
-		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),   \
+		USB_MUX_COMMON_FIELDS(mux_id),                 \
 			.driver = &tusb1064_usb_mux_driver,    \
 			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
 			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 			.hpd_update = &tusb1044_hpd_update,    \
 	}
 #elif defined(CONFIG_USB_MUX_TUSB546)
-#define USB_MUX_CONFIG_TUSB1064(mux_id, port_id, idx)          \
+#define USB_MUX_CONFIG_TUSB1064(mux_id)                        \
 	{                                                      \
-		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),   \
+		USB_MUX_COMMON_FIELDS(mux_id),                 \
 			.driver = &tusb1064_usb_mux_driver,    \
 			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
 			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
 #else
-#define USB_MUX_CONFIG_TUSB1064(mux_id, port_id, idx)          \
+#define USB_MUX_CONFIG_TUSB1064(mux_id)                        \
 	{                                                      \
-		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),   \
+		USB_MUX_COMMON_FIELDS(mux_id),                 \
 			.driver = &tusb1064_usb_mux_driver,    \
 			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
 			.i2c_addr_flags = DT_REG_ADDR(mux_id), \

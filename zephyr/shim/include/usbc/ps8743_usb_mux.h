@@ -10,9 +10,9 @@
 
 #define PS8743_USB_MUX_COMPAT parade_ps8743
 
-#define USB_MUX_CONFIG_PS8743(mux_id, port_id, idx)            \
+#define USB_MUX_CONFIG_PS8743(mux_id)                          \
 	{                                                      \
-		USB_MUX_COMMON_FIELDS(mux_id, port_id, idx),   \
+		USB_MUX_COMMON_FIELDS(mux_id),                 \
 			.driver = &ps8743_usb_mux_driver,      \
 			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
 			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
