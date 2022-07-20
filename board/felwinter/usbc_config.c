@@ -99,16 +99,22 @@ struct ppc_config_t ppc_chips_c1 = {
 };
 
 /* USBC mux configuration - Alder Lake includes internal mux */
-static const struct usb_mux usbc2_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C2,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
+static const struct usb_mux_chain usbc2_tcss_usb_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C2,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
+		},
 };
 
-static const struct usb_mux usbc1_tcss_usb_mux = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &virtual_usb_mux_driver,
-	.hpd_update = &virtual_hpd_update,
+static const struct usb_mux_chain usbc1_tcss_usb_mux = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
+		},
 };
 
 /*
@@ -116,44 +122,57 @@ static const struct usb_mux usbc1_tcss_usb_mux = {
  * to the virtual_usb_mux_driver so the AP gets notified of mux changes
  * and updates the TCSS configuration on state changes.
  */
-static const struct usb_mux usbc1_usb3_db_retimer = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &tcpci_tcpm_usb_mux_driver,
-	.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+static const struct usb_mux_chain usbc1_usb3_db_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		},
 };
 
-struct usb_mux usb_muxes[] = {
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C2] = {
-		.usb_port = USBC_PORT_C2,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C2,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
+		},
 	},
 	[USBC_PORT_C1] = {
-		/* PS8815 DB */
-		.usb_port = USBC_PORT_C1,
-		.driver = &virtual_usb_mux_driver,
-		.hpd_update = &virtual_hpd_update,
-		.next_mux = &usbc1_usb3_db_retimer,
+		.mux = &(const struct usb_mux) {
+			/* PS8815 DB */
+			.usb_port = USBC_PORT_C1,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = &virtual_hpd_update,
+		},
+		.next = &usbc1_usb3_db_retimer,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
-static const struct usb_mux usb_muxes_c1 = {
-	.usb_port = USBC_PORT_C1,
-	.driver = &bb_usb_retimer,
-	.hpd_update = bb_retimer_hpd_update,
-	.i2c_port = I2C_PORT_USB_C1_MUX,
-	.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
-	.next_mux = &usbc1_tcss_usb_mux,
+static const struct usb_mux_chain usb_muxes_c1 = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C1,
+			.driver = &bb_usb_retimer,
+			.hpd_update = bb_retimer_hpd_update,
+			.i2c_port = I2C_PORT_USB_C1_MUX,
+			.i2c_addr_flags = USBC_PORT_C1_BB_RETIMER_I2C_ADDR,
+		},
+	.next = &usbc1_tcss_usb_mux,
 };
 
-static const struct usb_mux usb_muxes_c2 = {
-	.usb_port = USBC_PORT_C2,
-	.driver = &bb_usb_retimer,
-	.hpd_update = bb_retimer_hpd_update,
-	.i2c_port = I2C_PORT_USB_C2_MUX,
-	.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
-	.next_mux = &usbc2_tcss_usb_mux,
+static const struct usb_mux_chain usb_muxes_c2 = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = USBC_PORT_C2,
+			.driver = &bb_usb_retimer,
+			.hpd_update = bb_retimer_hpd_update,
+			.i2c_port = I2C_PORT_USB_C2_MUX,
+			.i2c_addr_flags = USBC_PORT_C2_BB_RETIMER_I2C_ADDR,
+		},
+	.next = &usbc2_tcss_usb_mux,
 };
 
 /* BC1.2 charger detect configuration */
