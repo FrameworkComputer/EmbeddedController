@@ -13,34 +13,36 @@
 	named-gpios {
 		compatible = "named-gpios";
 
+		/*
+		 * In npcx9 series, gpio46, gpio47, and the whole gpio5 port
+		 * belong to VHIF power well. On steelix, it is connencted to
+		 * 1.8V.
+		 */
 		base_imu_int_l: base_imu_int_l {
-			gpios = <&gpio5 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio5 6 GPIO_INPUT>;
 		};
 		spi_ap_clk_ec {
-			gpios = <&gpio5 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio5 5 GPIO_INPUT>;
 		};
 		spi_ap_cs_ec_l {
-			gpios = <&gpio5 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio5 3 GPIO_INPUT>;
 		};
 		spi_ap_do_ec_di {
-			gpios = <&gpio4 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio4 6 GPIO_INPUT>;
 		};
 		spi_ap_di_ec_do {
-			gpios = <&gpio4 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio4 7 GPIO_INPUT>;
 		};
 		ap_ec_warm_rst_req: ap_ec_warm_rst_req {
-			gpios = <&gpio5 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
-				 GPIO_ACTIVE_HIGH)>;
+			gpios = <&gpio5 1 (GPIO_INPUT | GPIO_ACTIVE_HIGH)>;
 			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
 		};
 		ap_ec_wdtrst_l: ap_ec_wdtrst_l {
-			gpios = <&gpio5 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
-				 GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio5 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_EC_WDTRST_L";
 		};
 		ap_in_sleep_l: ap_in_sleep_l {
-			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
-				 GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_IN_SLEEP_L";
 		};
 		gpio_en_ulp: en_ulp {
@@ -96,7 +98,8 @@
 			gpios = <&gpio8 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_wp_l: ec_wp_odl {
-			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_ACTIVE_LOW |
+				 GPIO_VOLTAGE_1P8)>;
 		};
 		lid_accel_int_l {
 			gpios = <&gpiob 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
@@ -147,13 +150,17 @@
 		gpio_x_ec_gpio2: x_ec_gpio2 {
 			gpios = <&gpiod 4 GPIO_INPUT>;
 		};
+		/*
+		 * In npcx9 series, gpio93-97, the whole gpioa port, and gpiob0
+		 * belong to VSPI power well. On steelix, it is connencted to
+		 * 1.8V.
+		 */
 		ap_sysrst_odl_r: ap_sysrst_odl_r {
-			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
-				 GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_AP_EC_SYSRST_ODL";
 		};
 		gpio_ap_xhci_init_done: ap_xhci_init_done {
-			gpios = <&gpioa 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpioa 3 GPIO_INPUT>;
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpio6 7 GPIO_INPUT>;
@@ -201,7 +208,7 @@
 			gpios = <&gpioc 7 GPIO_INPUT>;
 		};
 		ec_ap_dp_hpd_odl: ec_ap_dp_hpd_odl {
-			gpios = <&gpio6 1 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio6 1 GPIO_ODR_HIGH>;
 		};
 		ec_pmic_en_odl {
 			gpios = <&gpio7 4 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
@@ -243,14 +250,6 @@
 			&int_ac_present
 			&int_power_button
 			&int_lid_open
-		>;
-	};
-
-	def-lvol-io-list {
-		compatible = "nuvoton,npcx-lvolctrl-def";
-		lvol-io-pads = <
-			&lvol_ioe3 /*  GPIOE3 GPIO_EC_WP_L */
-			&lvol_io40 /*  GPIO40 GPIO_EC_BL_EN_OD */
 		>;
 	};
 };
