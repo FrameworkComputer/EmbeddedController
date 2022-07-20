@@ -195,23 +195,29 @@ struct als_t als[] = {
 BUILD_ASSERT(ARRAY_SIZE(als) == ALS_COUNT);
 #endif
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.i2c_port = I2C_PORT_USB_MUX,
+				.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+				.driver = &pi3usb3x532_usb_mux_driver,
+			},
 	},
 	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_USB_MUX,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 1,
+				.i2c_port = I2C_PORT_USB_MUX,
 #if (BOARD_REV <= OAK_REV4)
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR1,
-		.driver = &pi3usb3x532_usb_mux_driver,
+				.i2c_addr_flags = PI3USB3X532_I2C_ADDR1,
+				.driver = &pi3usb3x532_usb_mux_driver,
 #else
-		.i2c_addr_flags = 0x10,
-		.driver = &ps8740_usb_mux_driver,
+				.i2c_addr_flags = 0x10,
+				.driver = &ps8740_usb_mux_driver,
 #endif
+			},
 	},
 };
 
