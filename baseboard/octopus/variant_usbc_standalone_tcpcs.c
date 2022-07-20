@@ -66,22 +66,26 @@ static int ps8751_tune_mux(const struct usb_mux *me)
 }
 #endif
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_TCPC_0] = {
-		.usb_port = USB_PD_PORT_TCPC_0,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_TCPC_0,
 #if defined(VARIANT_OCTOPUS_TCPC_0_PS8751)
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-		.board_init = &ps8751_tune_mux,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+			.board_init = &ps8751_tune_mux,
 #else
-		.driver = &anx7447_usb_mux_driver,
-		.hpd_update = &anx7447_tcpc_update_hpd_status,
+			.driver = &anx7447_usb_mux_driver,
+			.hpd_update = &anx7447_tcpc_update_hpd_status,
 #endif
+		},
 	},
 	[USB_PD_PORT_TCPC_1] = {
-		.usb_port = USB_PD_PORT_TCPC_1,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_TCPC_1,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		},
 	}
 };
 

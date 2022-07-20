@@ -71,22 +71,26 @@ static void board_it83xx_hpd_status(const struct usb_mux *me,
 }
 
 /* This configuration might be override by each boards */
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_ITE_0] = {
-		.usb_port = USB_PD_PORT_ITE_0,
-		.i2c_port = I2C_PORT_USB_MUX,
-		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
-		.driver = &it5205_usb_mux_driver,
-		.hpd_update = &board_it83xx_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_ITE_0,
+			.i2c_port = I2C_PORT_USB_MUX,
+			.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
+			.driver = &it5205_usb_mux_driver,
+			.hpd_update = &board_it83xx_hpd_status,
+		},
 	},
 	[USB_PD_PORT_ITE_1] = {
-		.usb_port = USB_PD_PORT_ITE_1,
-		/* Use PS8751 as mux only */
-		.i2c_port = I2C_PORT_USBC1,
-		.i2c_addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
-		.flags = USB_MUX_FLAG_NOT_TCPC,
-		.driver = &ps8xxx_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_ITE_1,
+			/* Use PS8751 as mux only */
+			.i2c_port = I2C_PORT_USBC1,
+			.i2c_addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
+			.flags = USB_MUX_FLAG_NOT_TCPC,
+			.driver = &ps8xxx_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		},
 	}
 };
 
