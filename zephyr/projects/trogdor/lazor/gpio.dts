@@ -67,7 +67,7 @@
 			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_ap_rst_l: ap_rst_l {
-			gpios = <&gpioc 1 GPIO_INPUT>;
+			gpios = <&gpioc 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_AP_RST_L";
 		};
 		gpio_ps_hold: ps_hold {
@@ -79,7 +79,7 @@
 			enum-name = "GPIO_AP_SUSPEND";
 		};
 		gpio_deprecated_ap_rst_req: deprecated_ap_rst_req {
-			gpios = <&gpioc 2 GPIO_INPUT_PULL_DOWN>;
+			gpios = <&gpioc 2 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_DEPRECATED_AP_RST_REQ";
 		};
 		gpio_power_good: power_good {
@@ -87,7 +87,7 @@
 			enum-name = "GPIO_POWER_GOOD";
 		};
 		gpio_warm_reset_l: warm_reset_l {
-			gpios = <&gpiof 4 GPIO_INPUT>;
+			gpios = <&gpiof 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_WARM_RESET_L";
 		};
 		ap_ec_spi_cs_l {
@@ -219,6 +219,12 @@
 		arm_x86 {
 			gpios = <&gpio6 6 GPIO_OUTPUT_LOW>;
 		};
+		ec-i2c-sensor-scl {
+			gpios = <&gpiob 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpiob 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
 		};
@@ -227,17 +233,6 @@
 	usba-port-enable-list {
 		compatible = "cros-ec,usba-port-enable-pins";
 		enable-pins = <&gpio_en_usb_a_5v>;
-	};
-
-	def-lvol-io-list {
-		compatible = "nuvoton,npcx-lvolctrl-def";
-		lvol-io-pads = <
-			&lvol_ioc1 /* AP_RST_L */
-			&lvol_ioc2 /* DEPRECATED_AP_RST_REQ */
-			&lvol_iof4 /* WARM_RESET_L */
-			&lvol_iob3 /* EC_I2C_SENSOR_SCL */
-			&lvol_iob2 /* EC_I2C_SENSOR_SDA */
-		>;
 	};
 
 	hibernate-wake-pins {
