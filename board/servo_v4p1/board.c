@@ -85,14 +85,20 @@ static int board_tusb1064_dp_rx_eq_set(const struct usb_mux *me,
 	return rv;
 }
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	[CHG] = { /* CHG port connected directly to USB 3.0 hub, no mux */ },
-	[DUT] = { /* DUT port with UFP mux */
-		.usb_port = DUT,
-		.i2c_port = I2C_PORT_MASTER,
-		.i2c_addr_flags = TUSB1064_I2C_ADDR10_FLAGS,
-		.driver = &tusb1064_usb_mux_driver,
-		.board_set = &board_tusb1064_dp_rx_eq_set,
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+	[CHG] = {
+		/* CHG port connected directly to USB 3.0 hub, no mux */
+	},
+	[DUT] = {
+		/* DUT port with UFP mux */
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = DUT,
+				.i2c_port = I2C_PORT_MASTER,
+				.i2c_addr_flags = TUSB1064_I2C_ADDR10_FLAGS,
+				.driver = &tusb1064_usb_mux_driver,
+				.board_set = &board_tusb1064_dp_rx_eq_set,
+			},
 	}
 };
 
