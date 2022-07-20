@@ -154,13 +154,15 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_HOST] = {
-		.usb_port = USB_PD_PORT_HOST,
-		.i2c_port = I2C_PORT_I2C1,
-		.i2c_addr_flags = PS8822_I2C_ADDR3_FLAG,
-		.driver = &ps8822_usb_mux_driver,
-		.board_set = &board_ps8822_mux_set,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_HOST,
+			.i2c_port = I2C_PORT_I2C1,
+			.i2c_addr_flags = PS8822_I2C_ADDR3_FLAG,
+			.driver = &ps8822_usb_mux_driver,
+			.board_set = &board_ps8822_mux_set,
+		},
 	},
 };
 

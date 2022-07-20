@@ -186,20 +186,24 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[USB_PD_PORT_HOST] = {
-		.usb_port = USB_PD_PORT_HOST,
-		.i2c_port = I2C_PORT_I2C1,
-		.i2c_addr_flags = TUSB1064_I2C_ADDR0_FLAGS,
-		.driver = &tusb1064_usb_mux_driver,
-		.board_set = &board_tusb1064_dp_rx_eq_set,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_HOST,
+			.i2c_port = I2C_PORT_I2C1,
+			.i2c_addr_flags = TUSB1064_I2C_ADDR0_FLAGS,
+			.driver = &tusb1064_usb_mux_driver,
+			.board_set = &board_tusb1064_dp_rx_eq_set,
+		},
 	},
 	[USB_PD_PORT_DP] = {
-		.usb_port = USB_PD_PORT_DP,
-		.i2c_port = I2C_PORT_I2C3,
-		.i2c_addr_flags = PS8XXX_I2C_ADDR2_FLAGS,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		.mux = &(const struct usb_mux) {
+			.usb_port = USB_PD_PORT_DP,
+			.i2c_port = I2C_PORT_I2C3,
+			.i2c_addr_flags = PS8XXX_I2C_ADDR2_FLAGS,
+			.driver = &tcpci_tcpm_usb_mux_driver,
+			.hpd_update = &ps8xxx_tcpc_update_hpd_status,
+		},
 	},
 };
 
