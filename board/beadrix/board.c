@@ -219,30 +219,39 @@ static int board_nb7v904m_mux_set(const struct usb_mux *me,
 				  mux_state_t mux_state);
 
 /* USB Retimer */
-const struct usb_mux usbc1_retimer = {
-	.usb_port = 1,
-	.i2c_port = I2C_PORT_SUB_USB_C1,
-	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
-	.driver = &nb7v904m_usb_redriver_drv,
-	.board_set = &board_nb7v904m_mux_set,
+const struct usb_mux_chain usbc1_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = 1,
+			.i2c_port = I2C_PORT_SUB_USB_C1,
+			.i2c_addr_flags = NB7V904M_I2C_ADDR0,
+			.driver = &nb7v904m_usb_redriver_drv,
+			.board_set = &board_nb7v904m_mux_set,
+		},
 };
 
 /* USB Muxes */
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
-		.driver = &it5205_usb_mux_driver,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.i2c_port = I2C_PORT_USB_C0,
+				.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
+				.driver = &it5205_usb_mux_driver,
+			},
 	},
 	{
 		/* Used as MUX only*/
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
-		.flags = USB_MUX_FLAG_NOT_TCPC,
-		.driver = &anx7447_usb_mux_driver,
-		.next_mux = &usbc1_retimer,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 1,
+				.i2c_port = I2C_PORT_SUB_USB_C1,
+				.i2c_addr_flags = AN7447_TCPC0_I2C_ADDR_FLAGS,
+				.flags = USB_MUX_FLAG_NOT_TCPC,
+				.driver = &anx7447_usb_mux_driver,
+			},
+		.next = &usbc1_retimer,
 	},
 };
 

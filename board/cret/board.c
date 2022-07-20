@@ -480,12 +480,15 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.drv = &raa489000_tcpm_drv,
 	},
 };
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.i2c_port = I2C_PORT_USB_C0,
+				.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+				.driver = &pi3usb3x532_usb_mux_driver,
+			},
 	},
 };
 

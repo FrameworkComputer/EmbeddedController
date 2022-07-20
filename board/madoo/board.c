@@ -512,31 +512,43 @@ const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	},
 };
 
-const struct usb_mux usbc0_retimer = {
-	.usb_port = 0,
-	.i2c_port = I2C_PORT_USB_C0,
-	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
-	.driver = &nb7v904m_usb_redriver_drv,
+const struct usb_mux_chain usbc0_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = 0,
+			.i2c_port = I2C_PORT_USB_C0,
+			.i2c_addr_flags = NB7V904M_I2C_ADDR0,
+			.driver = &nb7v904m_usb_redriver_drv,
+		},
 };
-const struct usb_mux usbc1_retimer = {
-	.usb_port = 1,
-	.i2c_port = I2C_PORT_SUB_USB_C1,
-	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
-	.driver = &nb7v904m_usb_redriver_drv,
+const struct usb_mux_chain usbc1_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = 1,
+			.i2c_port = I2C_PORT_SUB_USB_C1,
+			.i2c_addr_flags = NB7V904M_I2C_ADDR0,
+			.driver = &nb7v904m_usb_redriver_drv,
+		},
 };
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.i2c_port = I2C_PORT_USB_C0,
+				.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+				.driver = &pi3usb3x532_usb_mux_driver,
+			},
 	},
 	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
-		.next_mux = &usbc1_retimer,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 1,
+				.i2c_port = I2C_PORT_SUB_USB_C1,
+				.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+				.driver = &pi3usb3x532_usb_mux_driver,
+			},
+		.next = &usbc1_retimer,
 	}
 };
 
@@ -544,7 +556,7 @@ static void reconfigure_usbmux(void)
 {
 	if (system_get_board_version() < 2) {
 		CPRINTS("add redriver at usbc0");
-		usb_muxes[0].next_mux = &usbc0_retimer;
+		usb_muxes[0].next = &usbc0_retimer;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, reconfigure_usbmux, HOOK_PRIO_INIT_I2C + 1);

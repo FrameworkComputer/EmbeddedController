@@ -176,7 +176,7 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 static int board_id = -1;
 static int mux_c1 = SSFC_USB_SS_MUX_DEFAULT;
 
-extern const struct usb_mux usbc0_retimer;
+extern const struct usb_mux_chain usbc0_retimer;
 extern const struct usb_mux usbmux_ps8743;
 
 void board_init(void)
@@ -227,7 +227,7 @@ void board_init(void)
 			if (board_id == 2) {
 				nb7v904m_lpm_disable = 1;
 				nb7v904m_set_aux_ch_switch(
-					&usbc0_retimer,
+					usbc0_retimer.mux,
 					NB7V904M_AUX_CH_FLIPPED);
 			}
 		}
@@ -235,8 +235,10 @@ void board_init(void)
 
 	mux_c1 = get_cbi_ssfc_usb_ss_mux();
 
-	if (mux_c1 == SSFC_USB_SS_MUX_PS8743)
-		memcpy(&usb_muxes[1], &usbmux_ps8743, sizeof(struct usb_mux));
+	if (mux_c1 == SSFC_USB_SS_MUX_PS8743) {
+		usb_muxes[1].mux = &usbmux_ps8743;
+		usb_muxes[1].next = NULL;
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -486,19 +488,25 @@ static int board_nb7v904m_mux_set(const struct usb_mux *me,
 				  mux_state_t mux_state);
 static int ps8743_tune_mux(const struct usb_mux *me);
 
-const struct usb_mux usbc0_retimer = {
-	.usb_port = 0,
-	.i2c_port = I2C_PORT_USB_C0,
-	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
-	.driver = &nb7v904m_usb_redriver_drv,
-	.board_set = &board_nb7v904m_mux_set_c0,
+const struct usb_mux_chain usbc0_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = 0,
+			.i2c_port = I2C_PORT_USB_C0,
+			.i2c_addr_flags = NB7V904M_I2C_ADDR0,
+			.driver = &nb7v904m_usb_redriver_drv,
+			.board_set = &board_nb7v904m_mux_set_c0,
+		},
 };
-const struct usb_mux usbc1_retimer = {
-	.usb_port = 1,
-	.i2c_port = I2C_PORT_SUB_USB_C1,
-	.i2c_addr_flags = NB7V904M_I2C_ADDR0,
-	.driver = &nb7v904m_usb_redriver_drv,
-	.board_set = &board_nb7v904m_mux_set,
+const struct usb_mux_chain usbc1_retimer = {
+	.mux =
+		&(const struct usb_mux){
+			.usb_port = 1,
+			.i2c_port = I2C_PORT_SUB_USB_C1,
+			.i2c_addr_flags = NB7V904M_I2C_ADDR0,
+			.driver = &nb7v904m_usb_redriver_drv,
+			.board_set = &board_nb7v904m_mux_set,
+		},
 };
 
 const struct usb_mux usbmux_ps8743 = {
@@ -509,20 +517,26 @@ const struct usb_mux usbmux_ps8743 = {
 	.board_init = &ps8743_tune_mux,
 };
 
-struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
-		.next_mux = &usbc0_retimer,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 0,
+				.i2c_port = I2C_PORT_USB_C0,
+				.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+				.driver = &pi3usb3x532_usb_mux_driver,
+			},
+		.next = &usbc0_retimer,
 	},
 	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
-		.driver = &pi3usb3x532_usb_mux_driver,
-		.next_mux = &usbc1_retimer,
+		.mux =
+			&(const struct usb_mux){
+				.usb_port = 1,
+				.i2c_port = I2C_PORT_SUB_USB_C1,
+				.i2c_addr_flags = PI3USB3X532_I2C_ADDR0,
+				.driver = &pi3usb3x532_usb_mux_driver,
+			},
+		.next = &usbc1_retimer,
 	}
 };
 /* USB Mux C1 : board_init of PS8743 */
