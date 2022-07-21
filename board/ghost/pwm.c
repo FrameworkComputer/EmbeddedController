@@ -14,7 +14,7 @@ const struct pwm_t pwm_channels[] = {
 	[PWM_CH_LED1] = {
 		.channel = 0,
 		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
-		.freq = 4800,
+		.freq = 12000,
 	},
 	[PWM_CH_LED2] = {
 		.channel = 1,
@@ -35,7 +35,7 @@ const struct pwm_t pwm_channels[] = {
 		 * lower PWM frequencies, but higher frequencies record a much
 		 * lower maximum power.
 		 */
-		.freq = 2400,
+		.freq = 12000,
 	},
 	[PWM_CH_FAN1] = {
 		.channel = 5,
