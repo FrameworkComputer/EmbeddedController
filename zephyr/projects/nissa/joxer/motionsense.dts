@@ -87,6 +87,7 @@
 			rot-standard-ref = <&lid_rot_ref>;
 			default-range = <2>;
 			drv-data = <&bma422_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
