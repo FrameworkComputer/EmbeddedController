@@ -214,6 +214,8 @@ const char help_str[] =
 	"      Set the color of an LED or query brightness range\n"
 	"  lightbar [CMDS]\n"
 	"      Various lightbar control commands\n"
+	"  locatechip <type> <index>\n"
+	"      Get the addresses and ports of i2c connected and embedded chips\n"
 	"  mkbpget <buttons|switches>\n"
 	"      Get MKBP buttons/switches supported mask and current state\n"
 	"  mkbpwakemask <get|set> <event|hostevent> [mask]\n"
