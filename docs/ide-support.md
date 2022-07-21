@@ -18,10 +18,10 @@ Patterns                                              | Vague Type
 
 ## IDE Configuration Primitives
 
-Due to the way most EC code has been structured, you can typically only safely
-inspect a configuration for a single image (RO or RW) for a single board. Thus,
-you need to specify the specific board/image pair when requesting defines and
-includes.
+EC firmware presents some unique challenges because it is designed to support a
+number of different MCUs and board configurations, each of which is split across
+separate RO (Read-Only) and RW (Read-Write) applications. For this reason, you
+must specify the specific board/image pair when requesting defines and includes.
 
 Command                                      | Description
 -------------------------------------------- | ------------------------------
