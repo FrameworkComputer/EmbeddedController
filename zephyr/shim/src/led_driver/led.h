@@ -61,9 +61,7 @@ struct gpio_pin_t {
  * Struct defining LED PWM pin and duty cycle to set.
  */
 struct pwm_pin_t {
-	const struct device *pwm;
-	uint8_t channel;
-	pwm_flags_t flags;
+	struct pwm_dt_spec pwm;
 	uint32_t pulse_ns; /* PWM Duty cycle ns */
 };
 
