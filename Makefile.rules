@@ -255,6 +255,7 @@ conflicting_options := \
 	EEPROM \
 	I2C_BITBANG \
 	INA219 \
+	MPU \
 	PECI \
 	PS2 \
 	SPI \

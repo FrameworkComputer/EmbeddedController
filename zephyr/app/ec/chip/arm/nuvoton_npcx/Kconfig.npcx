@@ -8,6 +8,10 @@
 
 if SOC_FAMILY_NPCX
 
+# Enable MPU for ARM targets
+config ARM_MPU
+	default y
+
 # Enable NPCX firmware header generator
 config NPCX_HEADER
 	default y

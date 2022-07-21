@@ -491,23 +491,6 @@ config PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK
                           HOST_EVENT_AC_CONNECTED)>;
       The host events are defined in dt-bindings/wake_mask_event_defines.h
 
-config PLATFORM_EC_MPU
-	bool "Support Memory-Protection Unit (MPU)"
-	depends on CPU_CORTEX_M
-	select ARM_MPU
-	default y
-	help
-	  This enables support a Memory-Protection Unit which can limit access
-	  to certain areas of memory. This can be used to protect code or data
-	  from being written to improve security or to find bugs.
-
-	  It causes any code in the iram.text section to be protected when
-	  system jump is disabled (see system_disable_jump()). It also stops
-	  execution of the image that is not currently being executed (read-only
-	  or read-write). If internal storage is used, this is achieved by not
-	  allowing code execution in that area. For external storage, it
-	  disallows loading any code into RAM.
-
 config PLATFORM_EC_PANIC
 	bool "Panic output"
 	default y

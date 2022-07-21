@@ -8,6 +8,10 @@
 
 if SOC_FAMILY_MEC
 
+# Enable MPU for ARM targets
+config ARM_MPU
+	default y
+
 # ADC
 config PLATFORM_EC_ADC_RESOLUTION
 	default 10
