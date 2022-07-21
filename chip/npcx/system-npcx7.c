@@ -335,7 +335,7 @@ void system_download_from_flash(uint32_t srcAddr, uint32_t dstAddr,
 	ASSERT((size % chunkSize) == 0 && (srcAddr % chunkSize) == 0 &&
 			(dstAddr % chunkSize) == 0);
 
-	/* Check valid address for jumpiing */
+	/* Check valid address for jumping */
 	ASSERT(exeAddr != 0x0);
 
 	/* Enable power for the Low Power RAM */

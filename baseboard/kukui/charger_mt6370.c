@@ -170,7 +170,7 @@ int command_jc(int argc, char **argv)
 DECLARE_CONSOLE_COMMAND(jc, command_jc, "", "mt6370 junction temp");
 
 /*
- * b/143318064: A workwround for mt6370 bad buck efficiency.
+ * b/143318064: A workaround for mt6370 bad buck efficiency.
  * If the delta of VBUS and VBAT(on krane, desired voltage 4.4V) is too small
  * (i.e. < 500mV), the buck throughput will be bounded, and causing that we
  * can't drain 5V/3A when battery SoC above around 40%.

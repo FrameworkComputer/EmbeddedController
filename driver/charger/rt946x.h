@@ -737,7 +737,7 @@ int rt946x_is_charge_done(void);
  */
 int rt946x_cutoff_battery(void);
 
-/* Enable/Disable charge temination */
+/* Enable/Disable charge termination */
 int rt946x_enable_charge_termination(int en);
 
 /* Enable/Disable charge EOC */
