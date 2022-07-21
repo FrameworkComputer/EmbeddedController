@@ -41,8 +41,8 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	duty_percent = brightness[EC_LED_COLOR_WHITE];
 	if (duty_percent > 100)
 		duty_percent = 100;
-	pwm_set_duty(PWM_CH_LED1, duty_percent);
-	pwm_set_duty(PWM_CH_LED2, duty_percent);
+	pwm_set_duty(PWM_CH_GLOGO, duty_percent);
+	pwm_set_duty(PWM_CH_CAM_LED, duty_percent);
 
 	return EC_SUCCESS;
 }

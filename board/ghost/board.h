@@ -171,8 +171,8 @@ enum ioex_port { IOEX_C0_NCT38XX = 0, IOEX_C1_NCT38XX, IOEX_PORT_COUNT };
 enum battery_type { BATTERY_POWER_TECH, BATTERY_SWD_ATL, BATTERY_TYPE_COUNT };
 
 enum pwm_channel {
-	PWM_CH_LED1 = 0, /* PWM0 */
-	PWM_CH_LED2, /* PWM1 */
+	PWM_CH_GLOGO = 0, /* PWM0 */
+	PWM_CH_CAM_LED, /* PWM1 */
 	PWM_CH_FAN2, /* PWM2 */
 	PWM_CH_KBLIGHT, /* PWM3 */
 	PWM_CH_FAN1, /* PWM5 */
