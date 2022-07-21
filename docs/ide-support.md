@@ -38,8 +38,11 @@ includes selectable sub-configurations for every board/image pair.
 1.  From the root `ec` directory, do the following:
 
     ```bash
-    mkdir -p .vscode
-    ./util/ide-config.sh vscode all:RW all:RO | tee .vscode/c_cpp_properties.json
+    (outside) $ mkdir -p .vscode
+    ```
+
+    ```bash
+    (chroot) $ ./util/ide-config.sh vscode all:RW all:RO | tee .vscode/c_cpp_properties.json
     ```
 
 2.  Open VSCode and navigate to some C source file.
@@ -55,7 +58,7 @@ includes selectable sub-configurations for every board/image pair.
     to copy the default settings to `.vscode/settings.json`:
 
     ```bash
-    cp .vscode/settings.json.default .vscode/settings.json
+    (outside) $ cp .vscode/settings.json.default .vscode/settings.json
     ```
 
 ## VSCode CrOS IDE
