@@ -356,6 +356,7 @@
 
 &pwm5 {
 	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm5_gpb7>;
 	pinctrl-names = "default";
 };
