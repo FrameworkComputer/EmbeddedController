@@ -56,10 +56,11 @@ enum ps8xxx_emul_port {
  * @param port Select which "hidden" I2C device should be obtained
  *
  * @return NULL if given "hidden" I2C device cannot be found
- * @return pointer to "hidden" I2C device
+ * @return pointer to "hidden" device i2c_common_emul_data
  */
-struct i2c_emul *ps8xxx_emul_get_i2c_emul(const struct emul *emul,
-					  enum ps8xxx_emul_port port);
+struct i2c_common_emul_data *
+ps8xxx_emul_get_i2c_common_data(const struct emul *emul,
+				enum ps8xxx_emul_port port);
 
 /**
  * @brief Get pointer to TCPCI emulator that is base for PS8xxx emulator

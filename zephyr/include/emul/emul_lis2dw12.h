@@ -10,14 +10,6 @@
 #include <zephyr/drivers/i2c_emul.h>
 
 /**
- * @brief The the i2c emulator pointer from the top level emul.
- *
- * @param emul The emulator to query
- * @return Pointer to the i2c emulator struct
- */
-struct i2c_emul *lis2dw12_emul_to_i2c_emul(const struct emul *emul);
-
-/**
  * @brief Reset the state of the lis2dw12 emulator.
  *
  * @param emul The emulator to reset.
@@ -54,7 +46,7 @@ uint32_t lis2dw12_emul_get_soft_reset_count(const struct emul *emul);
  * @param reg The register to access
  * @return The value of the register
  */
-uint8_t lis2dw12_emul_peek_reg(struct i2c_emul *emul, int reg);
+uint8_t lis2dw12_emul_peek_reg(const struct emul *emul, int reg);
 
 /**
  * @brief Retrieves the ODR[3:0] bits from CRTL1 register
@@ -62,7 +54,7 @@ uint8_t lis2dw12_emul_peek_reg(struct i2c_emul *emul, int reg);
  * @param emul The emulator to query
  * @return The ODR bits, right-aligned
  */
-uint8_t lis2dw12_emul_peek_odr(struct i2c_emul *emul);
+uint8_t lis2dw12_emul_peek_odr(const struct emul *emul);
 
 /**
  * @brief Retrieves the MODE[1:0] bits from CRTL1 register
@@ -70,7 +62,7 @@ uint8_t lis2dw12_emul_peek_odr(struct i2c_emul *emul);
  * @param emul The emulator to query
  * @return The MODE bits, right-aligned
  */
-uint8_t lis2dw12_emul_peek_mode(struct i2c_emul *emul);
+uint8_t lis2dw12_emul_peek_mode(const struct emul *emul);
 
 /**
  * @brief Retrieves the LPMODE[1:0] bits from CRTL1 register
@@ -78,7 +70,7 @@ uint8_t lis2dw12_emul_peek_mode(struct i2c_emul *emul);
  * @param emul The emulator to query
  * @return The LPMODE bits, right-aligned
  */
-uint8_t lis2dw12_emul_peek_lpmode(struct i2c_emul *emul);
+uint8_t lis2dw12_emul_peek_lpmode(const struct emul *emul);
 
 /**
  * @brief Updates the current 3-axis acceleromter reading and
@@ -95,5 +87,14 @@ int lis2dw12_emul_set_accel_reading(const struct emul *emul, intv3_t reading);
  * @param emul Reference to current LIS2DW12 emulator.
  */
 void lis2dw12_emul_clear_accel_reading(const struct emul *emul);
+
+/**
+ * @brief Saves current internal state of sensors to emulator's registers.
+ *
+ * @param emul Pointer to LIS2DW12 emulator
+ * @return Pointer to LIS2DW12 emulator associated i2c_common_emul_data
+ */
+struct i2c_common_emul_data *
+emul_lis2dw12_get_i2c_common_data(const struct emul *emul);
 
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_LIS2DW12_H_ */

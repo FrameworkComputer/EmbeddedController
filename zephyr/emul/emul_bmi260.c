@@ -123,7 +123,7 @@ static const uint8_t bmi_emul_260_rsvd_mask[] = {
  * @param regs Pointer to array of emulator's registers
  * @param emul Pointer to BMI emulator
  */
-static void bmi260_emul_reset(uint8_t *regs, struct i2c_emul *emul)
+static void bmi260_emul_reset(uint8_t *regs, const struct emul *emul)
 {
 	bool tag_time;
 	bool header;
@@ -278,7 +278,8 @@ static int bmi260_emul_gyr_range_to_shift(uint8_t range)
  * @return 0 on success
  * @return -EIO on failure
  */
-static int bmi260_emul_start_cmd(uint8_t *regs, struct i2c_emul *emul, int cmd)
+static int bmi260_emul_start_cmd(uint8_t *regs, const struct emul *emul,
+				 int cmd)
 {
 	int time;
 
@@ -306,7 +307,7 @@ static int bmi260_emul_start_cmd(uint8_t *regs, struct i2c_emul *emul, int cmd)
  * @param regs Pointer to array of emulator's registers
  * @param emul Pointer to BMI emulator
  */
-static void bmi260_emul_end_cmd(uint8_t *regs, struct i2c_emul *emul)
+static void bmi260_emul_end_cmd(uint8_t *regs, const struct emul *emul)
 {
 	bool tag_time;
 	bool header;
@@ -339,7 +340,7 @@ static void bmi260_emul_end_cmd(uint8_t *regs, struct i2c_emul *emul)
  *
  * @return Currently accessed register
  */
-static int bmi260_emul_access_reg(struct i2c_emul *emul, int reg, int byte,
+static int bmi260_emul_access_reg(const struct emul *emul, int reg, int byte,
 				  bool read)
 {
 	/* Ignore first byte which sets starting register */
@@ -380,7 +381,7 @@ static int bmi260_emul_access_reg(struct i2c_emul *emul, int reg, int byte,
  * @return BMI_EMUL_ACCESS_E on RO register access
  * @return -EIO on error
  */
-static int bmi260_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
+static int bmi260_emul_handle_write(uint8_t *regs, const struct emul *emul,
 				    int reg, int byte, uint8_t val)
 {
 	uint8_t mask;
@@ -452,7 +453,7 @@ static int bmi260_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
  * @return BMI_EMUL_ACCESS_E on WO register access
  * @return -EIO on other error
  */
-static int bmi260_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
+static int bmi260_emul_handle_read(uint8_t *regs, const struct emul *emul,
 				   int reg, int byte, char *buf)
 {
 	uint16_t fifo_len;

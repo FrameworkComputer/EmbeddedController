@@ -29,9 +29,10 @@
 ZTEST_USER(tcs3400, test_tcs_init)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
-	struct i2c_emul *emul;
+	const struct emul *emul = tcs_emul_get(TCS_ORD);
+	struct i2c_common_emul_data *common_data =
+		emul_tcs3400_get_i2c_common_data(emul);
 
-	emul = tcs_emul_get(TCS_ORD);
 	ms = &motion_sensors[TCS_CLR_SENSOR_ID];
 	ms_rgb = &motion_sensors[TCS_RGB_SENSOR_ID];
 
@@ -39,9 +40,11 @@ ZTEST_USER(tcs3400, test_tcs_init)
 	zassert_equal(EC_SUCCESS, ms_rgb->drv->init(ms_rgb), NULL);
 
 	/* Fail init on communication errors */
-	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_FAIL_ALL_REG);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_FAIL_ALL_REG);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->init(ms), NULL);
-	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Fail on bad ID */
 	tcs_emul_set_reg(emul, TCS_I2C_ID, 0);
@@ -62,7 +65,9 @@ ZTEST_USER(tcs3400, test_tcs_init)
 ZTEST_USER(tcs3400, test_tcs_read)
 {
 	struct motion_sensor_t *ms;
-	struct i2c_emul *emul;
+	const struct emul *emul = tcs_emul_get(TCS_ORD);
+	struct i2c_common_emul_data *common_data =
+		emul_tcs3400_get_i2c_common_data(emul);
 	uint8_t enable;
 	intv3_t v;
 
@@ -70,13 +75,14 @@ ZTEST_USER(tcs3400, test_tcs_read)
 	ms = &motion_sensors[TCS_CLR_SENSOR_ID];
 
 	/* Test error on writing registers */
-	i2c_common_emul_set_write_fail_reg(emul, TCS_I2C_ATIME);
+	i2c_common_emul_set_write_fail_reg(common_data, TCS_I2C_ATIME);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, v), NULL);
-	i2c_common_emul_set_write_fail_reg(emul, TCS_I2C_CONTROL);
+	i2c_common_emul_set_write_fail_reg(common_data, TCS_I2C_CONTROL);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, v), NULL);
-	i2c_common_emul_set_write_fail_reg(emul, TCS_I2C_ENABLE);
+	i2c_common_emul_set_write_fail_reg(common_data, TCS_I2C_ENABLE);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->read(ms, v), NULL);
-	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(common_data,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test starting read with calibration */
 	tcs_emul_set_reg(emul, TCS_I2C_ATIME, 0);
@@ -141,7 +147,9 @@ static void check_fifo_empty_f(struct motion_sensor_t *ms,
 ZTEST_USER(tcs3400, test_tcs_irq_handler_fail)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
-	struct i2c_emul *emul;
+	const struct emul *emul = tcs_emul_get(TCS_ORD);
+	struct i2c_common_emul_data *common_data =
+		emul_tcs3400_get_i2c_common_data(emul);
 	uint32_t event;
 
 	emul = tcs_emul_get(TCS_ORD);
@@ -156,15 +164,17 @@ ZTEST_USER(tcs3400, test_tcs_irq_handler_fail)
 
 	event = TCS_INT_EVENT;
 	/* Test error on reading status */
-	i2c_common_emul_set_read_fail_reg(emul, TCS_I2C_STATUS);
+	i2c_common_emul_set_read_fail_reg(common_data, TCS_I2C_STATUS);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->irq_handler(ms, &event), NULL);
-	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	check_fifo_empty(ms, ms_rgb);
 
 	/* Test fail on changing device power state */
-	i2c_common_emul_set_write_fail_reg(emul, TCS_I2C_ENABLE);
+	i2c_common_emul_set_write_fail_reg(common_data, TCS_I2C_ENABLE);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->irq_handler(ms, &event), NULL);
-	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(common_data,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
 	check_fifo_empty(ms, ms_rgb);
 
 	/* Test that no data is committed when status is 0 */
@@ -230,7 +240,7 @@ static void check_fifo_f(struct motion_sensor_t *ms,
 ZTEST_USER(tcs3400, test_tcs_read_calibration)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
-	struct i2c_emul *emul;
+	const struct emul *emul = tcs_emul_get(TCS_ORD);
 	uint32_t event = TCS_INT_EVENT;
 	int emul_v[4];
 	int exp_v[4];
@@ -304,7 +314,7 @@ ZTEST_USER(tcs3400, test_tcs_read_calibration)
  * First element of expected vector is updated by this function.
  */
 static void set_emul_val_from_exp(int *exp_v, uint16_t *scale,
-				  struct i2c_emul *emul)
+				  const struct emul *emul)
 {
 	int emul_v[4];
 	int ir;
@@ -342,7 +352,7 @@ static void set_emul_val_from_exp(int *exp_v, uint16_t *scale,
 ZTEST_USER(tcs3400, test_tcs_read_xyz)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
-	struct i2c_emul *emul;
+	const struct emul *emul = tcs_emul_get(TCS_ORD);
 	uint32_t event = TCS_INT_EVENT;
 	/* Expected data to test: IR, R, G, B */
 	int exp_v[][4] = {
@@ -414,7 +424,7 @@ ZTEST_USER(tcs3400, test_tcs_read_xyz)
 ZTEST_USER(tcs3400, test_tcs_scale)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
-	struct i2c_emul *emul;
+	const struct emul *emul = tcs_emul_get(TCS_ORD);
 	uint32_t event = TCS_INT_EVENT;
 	/* Expected data to test: IR, R, G, B */
 	int exp_v[][4] = {
@@ -524,7 +534,9 @@ ZTEST_USER(tcs3400, test_tcs_scale)
 ZTEST_USER(tcs3400, test_tcs_data_rate)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
-	struct i2c_emul *emul;
+	const struct emul *emul = tcs_emul_get(TCS_ORD);
+	struct i2c_common_emul_data *common_data =
+		emul_tcs3400_get_i2c_common_data(emul);
 	uint8_t enable;
 
 	emul = tcs_emul_get(TCS_ORD);
@@ -533,12 +545,13 @@ ZTEST_USER(tcs3400, test_tcs_data_rate)
 	ms_rgb = &motion_sensors[TCS_RGB_SENSOR_ID];
 
 	/* Test fail on reading device power state */
-	i2c_common_emul_set_read_fail_reg(emul, TCS_I2C_ENABLE);
+	i2c_common_emul_set_read_fail_reg(common_data, TCS_I2C_ENABLE);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 0, 0), NULL);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 0, 1), NULL);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 100, 0), NULL);
 	zassert_equal(EC_ERROR_INVAL, ms->drv->set_data_rate(ms, 100, 1), NULL);
-	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test setting 0 rate disables device */
 	zassert_equal(EC_SUCCESS, ms->drv->set_data_rate(ms, 0, 0), NULL);
@@ -585,7 +598,7 @@ ZTEST_USER(tcs3400, test_tcs_data_rate)
 ZTEST_USER(tcs3400, test_tcs_set_range)
 {
 	struct motion_sensor_t *ms, *ms_rgb;
-	struct i2c_emul *emul;
+	const struct emul *emul = tcs_emul_get(TCS_ORD);
 
 	emul = tcs_emul_get(TCS_ORD);
 	ms = &motion_sensors[TCS_CLR_SENSOR_ID];

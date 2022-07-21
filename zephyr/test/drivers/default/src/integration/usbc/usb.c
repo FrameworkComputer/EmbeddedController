@@ -47,7 +47,7 @@ static void integration_usb_before(void *state)
 	/* Reset vbus to 0mV */
 	/* TODO(b/217610871): Remove redundant test state cleanup */
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
-	struct i2c_emul *i2c_emul;
+	const struct emul *battery_emul = sbat_emul_get_ptr(BATTERY_ORD);
 	struct sbat_emul_bat_data *bat;
 	const struct device *gpio_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_AC_OK_PATH, gpios));
@@ -70,8 +70,8 @@ static void integration_usb_before(void *state)
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul2), NULL);
 
 	/* Battery defaults to charging, so reset to not charging. */
-	i2c_emul = sbat_emul_get_ptr(BATTERY_ORD);
-	bat = sbat_emul_get_bat_data(i2c_emul);
+	battery_emul = sbat_emul_get_ptr(BATTERY_ORD);
+	bat = sbat_emul_get_bat_data(battery_emul);
 	bat->cur = -5;
 
 	/*

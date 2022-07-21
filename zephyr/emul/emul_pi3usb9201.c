@@ -11,6 +11,8 @@
 #include <zephyr/drivers/i2c_emul.h>
 
 #include "emul/emul_pi3usb9201.h"
+#include "emul/emul_stub_device.h"
+#include "emul/emul_common_i2c.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(emul_pi3usb9201, LOG_LEVEL_DBG);
@@ -20,6 +22,8 @@ LOG_MODULE_REGISTER(emul_pi3usb9201, LOG_LEVEL_DBG);
 
 /** Run-time data used by the emulator */
 struct pi3usb9201_emul_data {
+	/** Common I2C data */
+	struct i2c_common_emul_data common;
 	/** I2C emulator detail */
 	struct i2c_emul emul;
 	/** pi3usb9201 device being emulated */
@@ -40,37 +44,37 @@ struct pi3usb9201_emul_cfg {
 	uint16_t addr;
 };
 
-int pi3usb9201_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
+int pi3usb9201_emul_set_reg(const struct emul *emul, int reg, uint8_t val)
 {
 	struct pi3usb9201_emul_data *data;
 
 	if (!EMUL_REG_IS_VALID(reg))
 		return -EIO;
 
-	data = CONTAINER_OF(emul, struct pi3usb9201_emul_data, emul);
+	data = emul->data;
 	data->reg[reg] = val;
 
 	return 0;
 }
 
-int pi3usb9201_emul_get_reg(struct i2c_emul *emul, int reg, uint8_t *val)
+int pi3usb9201_emul_get_reg(const struct emul *emul, int reg, uint8_t *val)
 {
 	struct pi3usb9201_emul_data *data;
 
 	if (!EMUL_REG_IS_VALID(reg))
 		return -EIO;
 
-	data = CONTAINER_OF(emul, struct pi3usb9201_emul_data, emul);
+	data = emul->data;
 	*val = data->reg[reg];
 
 	return 0;
 }
 
-static void pi3usb9201_emul_reset(struct i2c_emul *emul)
+static void pi3usb9201_emul_reset(const struct emul *emul)
 {
 	struct pi3usb9201_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct pi3usb9201_emul_data, emul);
+	data = emul->data;
 
 	data->reg[PI3USB9201_REG_CTRL_1] = 0;
 	data->reg[PI3USB9201_REG_CTRL_2] = 0;
@@ -91,13 +95,14 @@ static void pi3usb9201_emul_reset(struct i2c_emul *emul)
  * @retval 0 If successful
  * @retval -EIO General input / output error
  */
-static int pi3usb9201_emul_transfer(struct i2c_emul *emul, struct i2c_msg *msgs,
-				    int num_msgs, int addr)
+static int pi3usb9201_emul_transfer(const struct emul *emul,
+				    struct i2c_msg *msgs, int num_msgs,
+				    int addr)
 {
 	const struct pi3usb9201_emul_cfg *cfg;
 	struct pi3usb9201_emul_data *data;
 
-	data = CONTAINER_OF(emul, struct pi3usb9201_emul_data, emul);
+	data = emul->data;
 	cfg = data->cfg;
 
 	if (cfg->addr != addr) {
@@ -154,18 +159,16 @@ static int pi3usb9201_emul_init(const struct emul *emul,
 {
 	const struct pi3usb9201_emul_cfg *cfg = emul->cfg;
 	struct pi3usb9201_emul_data *data = cfg->data;
-	int ret;
 
 	data->emul.api = &pi3usb9201_emul_api;
 	data->emul.addr = cfg->addr;
+	data->emul.target = emul;
 	data->i2c = parent;
 	data->cfg = cfg;
 
-	ret = i2c_emul_register(parent, emul->dev_label, &data->emul);
+	pi3usb9201_emul_reset(emul);
 
-	pi3usb9201_emul_reset(&data->emul);
-
-	return ret;
+	return 0;
 }
 
 #define PI3USB9201_EMUL(n)                                                  \
@@ -176,15 +179,16 @@ static int pi3usb9201_emul_init(const struct emul *emul,
 		.addr = DT_INST_REG_ADDR(n),                                \
 	};                                                                  \
 	EMUL_DEFINE(pi3usb9201_emul_init, DT_DRV_INST(n),                   \
-		    &pi3usb9201_emul_cfg_##n, &pi3usb9201_emul_data_##n)
+		    &pi3usb9201_emul_cfg_##n, &pi3usb9201_emul_data_##n,    \
+		    &pi3usb9201_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(PI3USB9201_EMUL)
 
 #define PI3USB9201_EMUL_CASE(n)  \
 	case DT_INST_DEP_ORD(n): \
-		return &pi3usb9201_emul_data_##n.emul;
+		return pi3usb9201_emul_data_##n.emul.target;
 
-struct i2c_emul *pi3usb9201_emul_get(int ord)
+const struct emul *pi3usb9201_emul_get(int ord)
 {
 	switch (ord) {
 		DT_INST_FOREACH_STATUS_OKAY(PI3USB9201_EMUL_CASE)
@@ -193,3 +197,5 @@ struct i2c_emul *pi3usb9201_emul_get(int ord)
 		return NULL;
 	}
 }
+
+DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

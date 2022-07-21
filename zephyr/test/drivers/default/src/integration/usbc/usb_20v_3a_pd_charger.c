@@ -87,10 +87,10 @@ ZTEST_SUITE(usb_attach_20v_3a_pd_charger, drivers_predicate_post_main,
 
 ZTEST(usb_attach_20v_3a_pd_charger, test_battery_is_charging)
 {
-	struct i2c_emul *i2c_emul = sbat_emul_get_ptr(BATTERY_ORD);
+	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
 	uint16_t battery_status;
 
-	zassume_ok(sbat_emul_get_word_val(i2c_emul, SB_BATTERY_STATUS,
+	zassume_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
 	zassert_equal(battery_status & STATUS_DISCHARGING, 0,
@@ -155,11 +155,11 @@ ZTEST(usb_attach_20v_3a_pd_charger, test_power_info)
 
 ZTEST_F(usb_attach_20v_3a_pd_charger, test_disconnect_battery_not_charging)
 {
-	struct i2c_emul *i2c_emul = sbat_emul_get_ptr(BATTERY_ORD);
+	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
 	uint16_t battery_status;
 
 	disconnect_charger_from_port(fixture);
-	zassert_ok(sbat_emul_get_word_val(i2c_emul, SB_BATTERY_STATUS,
+	zassert_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
 	zassert_equal(battery_status & STATUS_DISCHARGING, STATUS_DISCHARGING,

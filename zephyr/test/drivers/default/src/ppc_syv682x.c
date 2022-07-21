@@ -25,7 +25,8 @@
 #define GPIO_USB_C1_FRS_EN_PATH DT_PATH(named_gpios, usb_c1_frs_en)
 
 struct ppc_syv682x_fixture {
-	struct i2c_emul *ppc_emul;
+	const struct emul *ppc_emul;
+	struct i2c_common_emul_data *common_data;
 	const struct device *frs_en_gpio_port;
 	int frs_en_gpio_pin;
 };
@@ -43,6 +44,8 @@ static void *syv682x_test_setup(void)
 	static struct ppc_syv682x_fixture fixture;
 
 	fixture.ppc_emul = syv682x_emul_get(SYV682X_ORD);
+	fixture.common_data =
+		emul_syv682x_get_i2c_common_data(fixture.ppc_emul);
 	zassume_not_null(fixture.ppc_emul, NULL);
 	fixture.frs_en_gpio_port =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_USB_C1_FRS_EN_PATH, gpios));
@@ -55,7 +58,8 @@ static void *syv682x_test_setup(void)
 static void syv682x_test_after(void *data)
 {
 	struct ppc_syv682x_fixture *fixture = data;
-	struct i2c_emul *emul = fixture->ppc_emul;
+	const struct emul *emul = fixture->ppc_emul;
+	struct i2c_common_emul_data *common_data = fixture->common_data;
 
 	/* Disable the power path and clear interrupt conditions. */
 	zassume_ok(syv682x_emul_set_reg(emul, SYV682X_CONTROL_1_REG,
@@ -65,12 +69,14 @@ static void syv682x_test_after(void *data)
 				   SYV682X_CONTROL_4_NONE);
 
 	/* Clear the mock read/write functions */
-	i2c_common_emul_set_read_func(emul, NULL, NULL);
-	i2c_common_emul_set_write_func(emul, NULL, NULL);
+	i2c_common_emul_set_read_func(common_data, NULL, NULL);
+	i2c_common_emul_set_write_func(common_data, NULL, NULL);
 
 	/* Don't fail on any register access */
-	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
-	i2c_common_emul_set_write_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_write_fail_reg(common_data,
+					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
 ZTEST_SUITE(ppc_syv682x, drivers_predicate_post_main, syv682x_test_setup, NULL,
@@ -658,7 +664,7 @@ ZTEST(ppc_syv682x, test_syv682x_ppc_dump)
  * reg_access_to_fail on read number N, where N is the initial value of
  * reg_access_fail_countdown.
  */
-static int mock_read_intercept_reg_fail(struct i2c_emul *emul, int reg,
+static int mock_read_intercept_reg_fail(const struct emul *emul, int reg,
 					uint8_t *val, int bytes, void *data)
 {
 	struct reg_to_fail_data *test_data = data;
@@ -674,11 +680,11 @@ static int mock_read_intercept_reg_fail(struct i2c_emul *emul, int reg,
 ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_status)
 {
 	/* Failed STATUS read should cause init to fail. */
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  SYV682X_STATUS_REG);
 	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
 			  "STATUS read error, but init succeeded");
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
@@ -691,7 +697,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_1)
 	};
 
 	/* Failed CONTROL_1 read */
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  SYV682X_CONTROL_1_REG);
 	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
 			  "CONTROL_1 read error, but init succeeded");
@@ -709,23 +715,23 @@ ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_1)
 			  "succeeded");
 	zassert_ok(drv->reg_dump(syv682x_port),
 		   "CONTROL_1 read error, and ppc_dump failed");
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Init reads CONTROL_1 several times. The 3rd read happens while
 	 * setting the source current limit. Check that init fails when that
 	 * read fails.
 	 */
-	i2c_common_emul_set_read_func(fixture->ppc_emul,
+	i2c_common_emul_set_read_func(fixture->common_data,
 				      &mock_read_intercept_reg_fail, &reg_fail);
 	reg_fail.reg_access_to_fail = SYV682X_CONTROL_1_REG;
 	reg_fail.reg_access_fail_countdown = 3;
 	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
 			  "CONTROL_1 read error, but init succeeded");
-	i2c_common_emul_set_read_func(fixture->ppc_emul, NULL, NULL);
+	i2c_common_emul_set_read_func(fixture->common_data, NULL, NULL);
 
 	/* Failed CONTROL_1 write */
-	i2c_common_emul_set_write_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_write_fail_reg(fixture->common_data,
 					   SYV682X_CONTROL_1_REG);
 
 	/* During init, the driver will write CONTROL_1 either to disable all
@@ -745,65 +751,65 @@ ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_1)
 			  EC_SUCCESS,
 			  "CONTROL_1 write error, but VBUS source "
 			  "enable succeeded");
-	i2c_common_emul_set_write_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_write_fail_reg(fixture->common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
 ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_2)
 {
 	/* Failed CONTROL_2 read */
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  SYV682X_CONTROL_2_REG);
 	zassert_not_equal(ppc_discharge_vbus(syv682x_port, true), EC_SUCCESS,
 			  "CONTROL_2 read error, but VBUS discharge succeeded");
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Failed CONTROL_2 write */
-	i2c_common_emul_set_write_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_write_fail_reg(fixture->common_data,
 					   SYV682X_CONTROL_2_REG);
 	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
 			  "CONTROL_2 write error, but init succeeded");
-	i2c_common_emul_set_write_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_write_fail_reg(fixture->common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
 ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_3)
 {
 	/* Failed CONTROL_3 read */
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  SYV682X_CONTROL_3_REG);
 	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
 			  "CONTROL_3 read error, but VBUS discharge succeeded");
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Failed CONTROL_3 write */
-	i2c_common_emul_set_write_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_write_fail_reg(fixture->common_data,
 					   SYV682X_CONTROL_3_REG);
 	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
 			  "CONTROL_3 write error, but init succeeded");
-	i2c_common_emul_set_write_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_write_fail_reg(fixture->common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
 ZTEST_F(ppc_syv682x, test_syv682x_i2c_error_control_4)
 {
 	/* Failed CONTROL_4 read */
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  SYV682X_CONTROL_4_REG);
 	zassert_not_equal(ppc_set_vconn(syv682x_port, true), EC_SUCCESS,
 			  "CONTROL_2 read error, but VCONN set succeeded");
-	i2c_common_emul_set_read_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_read_fail_reg(fixture->common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Failed CONTROL_4 write */
-	i2c_common_emul_set_write_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_write_fail_reg(fixture->common_data,
 					   SYV682X_CONTROL_4_REG);
 	zassert_not_equal(ppc_init(syv682x_port), EC_SUCCESS,
 			  "CONTROL_4 write error, but init succeeded");
 	zassert_not_equal(ppc_set_vconn(syv682x_port, true), EC_SUCCESS,
 			  "CONTROL_4 write error, but VCONN set succeeded");
-	i2c_common_emul_set_write_fail_reg(fixture->ppc_emul,
+	i2c_common_emul_set_write_fail_reg(fixture->common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }

@@ -20,6 +20,7 @@
 #include "power_signals.h"
 
 #include "ec_tasks.h"
+#include "emul/emul_stub_device.h"
 #include "gpio.h"
 #include "gpio/gpio.h"
 #include "gpio/gpio_int.h"
@@ -420,3 +421,7 @@ static void init_signals(void *data)
  */
 ZTEST_SUITE(signals, ap_power_predicate_post_main, init_dev, init_signals, NULL,
 	    NULL);
+
+/* These 2 lines are needed because we don't define an espi host driver */
+#define DT_DRV_COMPAT zephyr_espi_emul_espi_host
+DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

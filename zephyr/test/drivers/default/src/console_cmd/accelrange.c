@@ -16,17 +16,20 @@
 #include "motion_sense.h"
 #include "test/drivers/test_state.h"
 
-#define EMUL_LABEL DT_NODELABEL(bma_emul)
+#define EMUL_NODE DT_NODELABEL(bma_emul)
 
 #define BMA_ORD DT_DEP_ORD(EMUL_LABEL)
 
 static void console_cmd_accelrange_after(void *fixture)
 {
-	struct i2c_emul *emul = bma_emul_get(BMA_ORD);
+	const struct emul *emul = emul_get_binding(DEVICE_DT_NAME(EMUL_NODE));
+	struct i2c_common_emul_data *common_data =
+		emul_bma_get_i2c_common_data(emul);
 
 	ARG_UNUSED(fixture);
 	shell_execute_cmd(get_ec_shell(), "accelrange 0 2");
-	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
 ZTEST_SUITE(console_cmd_accelrange, drivers_predicate_post_main, NULL, NULL,
@@ -101,10 +104,13 @@ ZTEST_USER(console_cmd_accelrange, test_set_range_round_down)
 
 ZTEST_USER(console_cmd_accelrange, test_i2c_error)
 {
-	struct i2c_emul *emul = bma_emul_get(BMA_ORD);
+	const struct emul *emul = emul_get_binding(DEVICE_DT_NAME(EMUL_NODE));
+	struct i2c_common_emul_data *common_data =
+		emul_bma_get_i2c_common_data(emul);
 	int rv;
 
-	i2c_common_emul_set_read_fail_reg(emul, BMA2x2_RANGE_SELECT_ADDR);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  BMA2x2_RANGE_SELECT_ADDR);
 
 	rv = shell_execute_cmd(get_ec_shell(), "accelrange 0 3");
 	zassert_equal(rv, EC_ERROR_PARAM2, "Expected %d, but got %d",

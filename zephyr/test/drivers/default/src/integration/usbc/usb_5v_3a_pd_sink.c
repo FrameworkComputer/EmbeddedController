@@ -115,11 +115,11 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_partner_pd_completed)
 
 ZTEST(usb_attach_5v_3a_pd_sink, test_battery_is_discharging)
 {
-	struct i2c_emul *i2c_emul =
+	const struct emul *emul =
 		sbat_emul_get_ptr(DT_DEP_ORD(DT_NODELABEL(battery)));
 	uint16_t battery_status;
 
-	zassume_ok(sbat_emul_get_word_val(i2c_emul, SB_BATTERY_STATUS,
+	zassume_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
 	zassert_equal(battery_status & STATUS_DISCHARGING, STATUS_DISCHARGING,
@@ -171,12 +171,12 @@ ZTEST(usb_attach_5v_3a_pd_sink, test_power_info)
 
 ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_battery_discharging)
 {
-	struct i2c_emul *i2c_emul =
+	const struct emul *emul =
 		sbat_emul_get_ptr(DT_DEP_ORD(DT_NODELABEL(battery)));
 	uint16_t battery_status;
 
 	disconnect_sink_from_port(fixture);
-	zassert_ok(sbat_emul_get_word_val(i2c_emul, SB_BATTERY_STATUS,
+	zassert_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
 	zassert_equal(battery_status & STATUS_DISCHARGING, STATUS_DISCHARGING,

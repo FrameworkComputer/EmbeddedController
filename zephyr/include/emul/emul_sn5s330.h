@@ -47,4 +47,13 @@ void sn5s330_emul_make_vbus_overcurrent(const struct emul *emul);
  */
 void sn5s330_emul_lower_vbus_below_minv(const struct emul *emul);
 
+/**
+ * @brief Saves current internal state of sensors to emulator's registers.
+ *
+ * @param emul Pointer to SN5S330 emulator
+ * @return Pointer to SN5S330 emulator associated i2c_common_emul_data
+ */
+struct i2c_common_emul_data *
+emul_sn5s330_get_i2c_common_data(const struct emul *emul);
+
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_SN5S330_H_ */

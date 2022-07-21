@@ -15,6 +15,7 @@ LOG_MODULE_REGISTER(tcpci_generic_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <ztest.h>
 
 #include "tcpm/tcpci.h"
+#include "emul/emul_stub_device.h"
 
 #include "emul/emul_common_i2c.h"
 #include "emul/tcpc/emul_tcpci.h"
@@ -22,7 +23,7 @@ LOG_MODULE_REGISTER(tcpci_generic_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 /**
  * @brief Function called for each byte of read message from TCPCI emulator
  *
- * @param i2c_emul Pointer to I2C TCPCI emulator
+ * @param emul Pointer to I2C TCPCI emulator
  * @param reg First byte of last write message
  * @param val Pointer where byte to read should be stored
  * @param bytes Number of bytes already read
@@ -30,14 +31,10 @@ LOG_MODULE_REGISTER(tcpci_generic_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
  * @return 0 on success
  * @return -EIO on invalid read request
  */
-static int tcpci_generic_emul_read_byte(struct i2c_emul *i2c_emul, int reg,
+static int tcpci_generic_emul_read_byte(const struct emul *emul, int reg,
 					uint8_t *val, int bytes)
 {
-	const struct emul *emul;
-
-	LOG_DBG("TCPCI Generic 0x%x: read reg 0x%x", i2c_emul->addr, reg);
-
-	emul = i2c_emul->parent;
+	LOG_DBG("TCPCI Generic 0x%x: read reg 0x%x", emul->bus.i2c->addr, reg);
 
 	return tcpci_emul_read_byte(emul, reg, val, bytes);
 }
@@ -45,7 +42,7 @@ static int tcpci_generic_emul_read_byte(struct i2c_emul *i2c_emul, int reg,
 /**
  * @brief Function called for each byte of write message to TCPCI emulator
  *
- * @param i2c_emul Pointer to I2C TCPCI emulator
+ * @param emul Pointer to I2C TCPCI emulator
  * @param reg First byte of write message
  * @param val Received byte of write message
  * @param bytes Number of bytes already received
@@ -53,14 +50,10 @@ static int tcpci_generic_emul_read_byte(struct i2c_emul *i2c_emul, int reg,
  * @return 0 on success
  * @return -EIO on invalid write request
  */
-static int tcpci_generic_emul_write_byte(struct i2c_emul *i2c_emul, int reg,
+static int tcpci_generic_emul_write_byte(const struct emul *emul, int reg,
 					 uint8_t val, int bytes)
 {
-	const struct emul *emul;
-
-	LOG_DBG("TCPCI Generic 0x%x: write reg 0x%x", i2c_emul->addr, reg);
-
-	emul = i2c_emul->parent;
+	LOG_DBG("TCPCI Generic 0x%x: write reg 0x%x", emul->bus.i2c->addr, reg);
 
 	return tcpci_emul_write_byte(emul, reg, val, bytes);
 }
@@ -68,22 +61,18 @@ static int tcpci_generic_emul_write_byte(struct i2c_emul *i2c_emul, int reg,
 /**
  * @brief Function called on the end of write message to TCPCI emulator
  *
- * @param i2c_emul Pointer to I2C TCPCI emulator
+ * @param emul Pointer to I2C TCPCI emulator
  * @param reg Register which is written
  * @param msg_len Length of handled I2C message
  *
  * @return 0 on success
  * @return -EIO on error
  */
-static int tcpci_generic_emul_finish_write(struct i2c_emul *i2c_emul, int reg,
+static int tcpci_generic_emul_finish_write(const struct emul *emul, int reg,
 					   int msg_len)
 {
-	const struct emul *emul;
-
-	LOG_DBG("TCPCI Generic 0x%x: finish write reg 0x%x", i2c_emul->addr,
-		reg);
-
-	emul = i2c_emul->parent;
+	LOG_DBG("TCPCI Generic 0x%x: finish write reg 0x%x",
+		emul->bus.i2c->addr, reg);
 
 	return tcpci_emul_handle_write(emul, reg, msg_len);
 }
@@ -92,14 +81,14 @@ static int tcpci_generic_emul_finish_write(struct i2c_emul *i2c_emul, int reg,
  * @brief Get currently accessed register, which always equals to selected
  *        register from TCPCI emulator.
  *
- * @param i2c_emul Pointer to I2C TCPCI emulator
+ * @param emul Pointer to I2C TCPCI emulator
  * @param reg First byte of last write message
  * @param bytes Number of bytes already handled from current message
  * @param read If currently handled is read message
  *
  * @return Currently accessed register
  */
-static int tcpci_generic_emul_access_reg(struct i2c_emul *i2c_emul, int reg,
+static int tcpci_generic_emul_access_reg(const struct emul *emul, int reg,
 					 int bytes, bool read)
 {
 	return reg;
@@ -132,7 +121,6 @@ static int tcpci_generic_emul_init(const struct emul *emul,
 	struct tcpc_emul_data *tcpc_data = emul->data;
 	struct tcpci_ctx *tcpci_ctx = tcpc_data->tcpci_ctx;
 	const struct device *i2c_dev;
-	int ret;
 
 	i2c_dev = parent;
 
@@ -143,16 +131,30 @@ static int tcpci_generic_emul_init(const struct emul *emul,
 
 	tcpci_emul_i2c_init(emul, i2c_dev);
 
-	ret = i2c_emul_register(i2c_dev, emul->dev_label,
-				&tcpci_ctx->common.emul);
-
 	tcpci_generic_emul_reset(emul);
 
-	return ret;
+	return 0;
 }
 
-#define TCPCI_GENERIC_EMUL(n) \
-	TCPCI_EMUL_DEFINE(n, tcpci_generic_emul_init, NULL, NULL)
+static int i2c_tcpci_generic_emul_transfer(const struct emul *target,
+					   struct i2c_msg *msgs, int num_msgs,
+					   int addr)
+{
+	struct tcpc_emul_data *tcpc_data = target->data;
+	struct tcpci_ctx *tcpci_ctx = tcpc_data->tcpci_ctx;
+
+	return i2c_common_emul_transfer_workhorse(target, &tcpci_ctx->common,
+						  &tcpc_data->i2c_cfg, msgs,
+						  num_msgs, addr);
+}
+
+struct i2c_emul_api i2c_tcpci_generic_emul_api = {
+	.transfer = i2c_tcpci_generic_emul_transfer,
+};
+
+#define TCPCI_GENERIC_EMUL(n)                                     \
+	TCPCI_EMUL_DEFINE(n, tcpci_generic_emul_init, NULL, NULL, \
+			  &i2c_tcpci_generic_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(TCPCI_GENERIC_EMUL)
 
@@ -170,3 +172,14 @@ tcpci_generic_emul_reset_rule_before(const struct ztest_unit_test *test,
 ZTEST_RULE(tcpci_generic_emul_reset, tcpci_generic_emul_reset_rule_before,
 	   NULL);
 #endif /* CONFIG_ZTEST_NEW_API */
+
+DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
+
+struct i2c_common_emul_data *
+emul_tcpci_generic_get_i2c_common_data(const struct emul *emul)
+{
+	struct tcpc_emul_data *tcpc_data = emul->data;
+	struct tcpci_ctx *tcpci_ctx = tcpc_data->tcpci_ctx;
+
+	return &tcpci_ctx->common;
+}

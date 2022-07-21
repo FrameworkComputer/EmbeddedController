@@ -46,8 +46,9 @@ BUILD_ASSERT(IS_ENABLED(CONFIG_CHARGER_ISL9238),
 
 #define CHARGER_NUM get_charger_num(&isl923x_drv)
 #define ISL923X_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(isl923x_emul)))
+#define COMMON_DATA emul_isl923x_get_i2c_common_data(ISL923X_EMUL)
 
-static int mock_write_fn_always_fail(struct i2c_emul *emul, int reg,
+static int mock_write_fn_always_fail(const struct emul *emul, int reg,
 				     uint8_t val, int bytes, void *data)
 {
 	ztest_test_fail();
@@ -56,8 +57,6 @@ static int mock_write_fn_always_fail(struct i2c_emul *emul, int reg,
 
 ZTEST(isl923x, test_isl923x_set_current)
 {
-	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	int expected_current_milli_amps[] = {
 		EXPECTED_CURRENT_MA(0),	   EXPECTED_CURRENT_MA(4),
 		EXPECTED_CURRENT_MA(8),	   EXPECTED_CURRENT_MA(16),
@@ -69,13 +68,13 @@ ZTEST(isl923x, test_isl923x_set_current)
 	int current_milli_amps;
 
 	/* Test I2C failure when reading charge current */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CHG_CURRENT);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_CHG_CURRENT);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.get_current(CHARGER_NUM, &current_milli_amps),
 		      NULL);
 
 	/* Reset fail register */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	for (int i = 0; i < ARRAY_SIZE(expected_current_milli_amps); ++i) {
@@ -129,8 +128,6 @@ ZTEST(isl923x, test_isl923x_set_voltage)
 
 ZTEST(isl923x, test_isl923x_set_input_current_limit)
 {
-	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	int expected_current_milli_amps[] = { EXPECTED_INPUT_CURRENT_MA(0),
 					      EXPECTED_INPUT_CURRENT_MA(4),
 					      EXPECTED_INPUT_CURRENT_MA(8),
@@ -146,25 +143,25 @@ ZTEST(isl923x, test_isl923x_set_input_current_limit)
 	int current_milli_amps;
 
 	/* Test failing to write to current limit 1 reg */
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   ISL923X_REG_ADAPTER_CURRENT_LIMIT1);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.set_input_current_limit(CHARGER_NUM, 0),
 		      NULL);
 
 	/* Test failing to write to current limit 2 reg */
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   ISL923X_REG_ADAPTER_CURRENT_LIMIT2);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.set_input_current_limit(CHARGER_NUM, 0),
 		      NULL);
 
 	/* Reset fail register */
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test failing to read current limit 1 reg */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  ISL923X_REG_ADAPTER_CURRENT_LIMIT1);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.get_input_current_limit(CHARGER_NUM,
@@ -172,7 +169,7 @@ ZTEST(isl923x, test_isl923x_set_input_current_limit)
 		      NULL);
 
 	/* Reset fail register */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test normal code path */
@@ -200,7 +197,6 @@ ZTEST(isl923x, test_isl923x_psys)
 ZTEST(isl923x, test_manufacturer_id)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	int id;
 
 	isl923x_emul_set_manufacturer_id(isl923x_emul, 0x1234);
@@ -208,20 +204,19 @@ ZTEST(isl923x, test_manufacturer_id)
 	zassert_equal(0x1234, id, NULL);
 
 	/* Test read error */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  ISL923X_REG_MANUFACTURER_ID);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.manufacturer_id(CHARGER_NUM, &id), NULL);
 
 	/* Reset fail register */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
 ZTEST(isl923x, test_device_id)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	int id;
 
 	isl923x_emul_set_device_id(isl923x_emul, 0x5678);
@@ -229,47 +224,45 @@ ZTEST(isl923x, test_device_id)
 	zassert_equal(0x5678, id, NULL);
 
 	/* Test read error */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_DEVICE_ID);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_DEVICE_ID);
 	zassert_equal(EC_ERROR_INVAL, isl923x_drv.device_id(CHARGER_NUM, &id),
 		      NULL);
 
 	/* Reset fail register */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
 ZTEST(isl923x, test_options)
 {
-	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	uint32_t option;
 
 	/* Test failed control 0 read */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL0);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.get_option(CHARGER_NUM, &option), NULL);
 
 	/* Test failed control 1 read */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL1);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.get_option(CHARGER_NUM, &option), NULL);
 
 	/* Reset failed read */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test failed control 0 write */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL0);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.set_option(CHARGER_NUM, option), NULL);
 
 	/* Test failed control 1 write */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL1);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.set_option(CHARGER_NUM, option), NULL);
 
 	/* Reset failed write */
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test normal write/read, note that bits 23 and 0 are always 0 */
@@ -333,7 +326,6 @@ ZTEST(isl923x, test_set_ac_prochot)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	uint16_t expected_current_milli_amps[] = {
 		EXPECTED_INPUT_CURRENT_MA(0),
 		EXPECTED_INPUT_CURRENT_MA(128),
@@ -352,12 +344,12 @@ ZTEST(isl923x, test_set_ac_prochot)
 		      NULL);
 
 	/* Test failed I2C write to prochot register */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_PROCHOT_AC);
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL923X_REG_PROCHOT_AC);
 	zassert_equal(EC_ERROR_INVAL, isl923x_set_ac_prochot(CHARGER_NUM, 0),
 		      NULL);
 
 	/* Clear write fail reg */
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	for (int i = 0; i < ARRAY_SIZE(expected_current_milli_amps); ++i) {
@@ -377,8 +369,9 @@ ZTEST(isl923x, test_set_ac_prochot)
 				   CHARGER_NUM, expected_current_milli_amps[i]),
 			   "Failed to set AC prochot to %dmA",
 			   expected_current_milli_amps[i]);
-		zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
-					  sizeof(reg_addr), &current_milli_amps,
+		zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
+					  &reg_addr, sizeof(reg_addr),
+					  &current_milli_amps,
 					  sizeof(current_milli_amps)),
 			   "Failed to read AC prochot register");
 		zassert_equal(EXPECTED_INPUT_CURRENT_REG(
@@ -394,7 +387,6 @@ ZTEST(isl923x, test_set_dc_prochot)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	uint16_t expected_current_milli_amps[] = {
 		EXPECTED_CURRENT_MA(256),  EXPECTED_CURRENT_MA(512),
 		EXPECTED_CURRENT_MA(1024), EXPECTED_CURRENT_MA(2048),
@@ -409,12 +401,12 @@ ZTEST(isl923x, test_set_dc_prochot)
 		      NULL);
 
 	/* Test failed I2C write to prochot register */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_PROCHOT_DC);
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL923X_REG_PROCHOT_DC);
 	zassert_equal(EC_ERROR_INVAL, isl923x_set_dc_prochot(CHARGER_NUM, 0),
 		      NULL);
 
 	/* Clear write fail reg */
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	for (int i = 0; i < ARRAY_SIZE(expected_current_milli_amps); ++i) {
@@ -433,8 +425,9 @@ ZTEST(isl923x, test_set_dc_prochot)
 				   CHARGER_NUM, expected_current_milli_amps[i]),
 			   "Failed to set DC prochot to %dmA",
 			   expected_current_milli_amps[i]);
-		zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
-					  sizeof(reg_addr), &current_milli_amps,
+		zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
+					  &reg_addr, sizeof(reg_addr),
+					  &current_milli_amps,
 					  sizeof(current_milli_amps)),
 			   "Failed to read DC prochot register");
 		zassert_equal(
@@ -450,44 +443,44 @@ ZTEST(isl923x, test_comparator_inversion)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	const struct device *i2c_dev = isl923x_emul_get_parent(isl923x_emul);
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	uint8_t reg_addr = ISL923X_REG_CONTROL2;
 	uint16_t reg_value;
 	uint8_t tx_buf[] = { reg_addr, 0, 0 };
 
 	/* Test failed read, should not write */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
-	i2c_common_emul_set_write_func(i2c_emul, mock_write_fn_always_fail,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL2);
+	i2c_common_emul_set_write_func(COMMON_DATA, mock_write_fn_always_fail,
 				       NULL);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_set_comparator_inversion(CHARGER_NUM, false),
 		      NULL);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
-	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_write_func(COMMON_DATA, NULL, NULL);
 
 	/* Test failed write */
-	zassert_ok(i2c_write(i2c_dev, tx_buf, sizeof(tx_buf), i2c_emul->addr),
+	zassert_ok(i2c_write(i2c_dev, tx_buf, sizeof(tx_buf),
+			     isl923x_emul->bus.i2c->addr),
 		   "Failed to clear CTRL2 register");
-	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL2);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_set_comparator_inversion(CHARGER_NUM, true),
 		      NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test enable comparator inversion */
 	zassert_ok(isl923x_set_comparator_inversion(CHARGER_NUM, true), NULL);
-	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
-				  sizeof(reg_addr), &reg_value,
+	zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
+				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   "Failed to read CTRL 2 register");
 	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) != 0, NULL);
 
 	/* Test disable comparator inversion */
 	zassert_ok(isl923x_set_comparator_inversion(CHARGER_NUM, false), NULL);
-	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
-				  sizeof(reg_addr), &reg_value,
+	zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
+				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   "Failed to read CTRL 2 register");
 	zassert_true((reg_value & ISL923X_C2_INVERT_CMOUT) == 0, NULL);
@@ -503,10 +496,10 @@ ZTEST(isl923x, test_discharge_on_ac)
 	uint16_t reg_value;
 
 	/* Test failure to read CTRL1 register */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL1);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.discharge_on_ac(CHARGER_NUM, true), NULL);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set CTRL1 register to 0 */
@@ -514,22 +507,22 @@ ZTEST(isl923x, test_discharge_on_ac)
 		   NULL);
 
 	/* Test failure to write CTRL1 register */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL1);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.discharge_on_ac(CHARGER_NUM, true), NULL);
-	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
-				  sizeof(reg_addr), &reg_value,
+	zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
+				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   NULL);
 	zassert_equal(0, reg_value, NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test enabling discharge on AC */
 	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, true), NULL);
 
-	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
-				  sizeof(reg_addr), &reg_value,
+	zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
+				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   NULL);
 	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) != 0, NULL);
@@ -537,8 +530,8 @@ ZTEST(isl923x, test_discharge_on_ac)
 	/* Test disabling discharge on AC */
 	zassert_ok(isl923x_drv.discharge_on_ac(CHARGER_NUM, false), NULL);
 
-	zassert_ok(i2c_write_read(i2c_dev, i2c_emul->addr, &reg_addr,
-				  sizeof(reg_addr), &reg_value,
+	zassert_ok(i2c_write_read(i2c_dev, isl923x_emul->bus.i2c->addr,
+				  &reg_addr, sizeof(reg_addr), &reg_value,
 				  sizeof(reg_value)),
 		   NULL);
 	zassert_true((reg_value & ISL923X_C1_LEARN_MODE_ENABLE) == 0, NULL);
@@ -547,17 +540,16 @@ ZTEST(isl923x, test_discharge_on_ac)
 ZTEST(isl923x, test_get_vbus_voltage)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	/* Standard fixed-power PD source voltages. */
 	int test_voltage_mv[] = { 5000, 9000, 15000, 20000 };
 	int voltage;
 
 	/* Test fail to read the ADC vbus register */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, RAA489000_REG_ADC_VBUS);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, RAA489000_REG_ADC_VBUS);
 	zassert_equal(EC_ERROR_INVAL,
 		      isl923x_drv.get_vbus_voltage(CHARGER_NUM, 0, &voltage),
 		      NULL);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	for (int i = 0; i < ARRAY_SIZE(test_voltage_mv); ++i) {
@@ -582,14 +574,13 @@ ZTEST(isl923x, test_get_vbus_voltage)
 ZTEST(isl923x, test_init)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	int input_current;
 
 	/* Test failed CTRL2 register read (prochot debounce) */
 	isl923x_emul_reset_registers(isl923x_emul);
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL2);
 	isl923x_drv.init(CHARGER_NUM);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
 						       &input_current),
@@ -599,9 +590,9 @@ ZTEST(isl923x, test_init)
 
 	/* Test failed CTRL2 register write */
 	isl923x_emul_reset_registers(isl923x_emul);
-	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL2);
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL2);
 	isl923x_drv.init(CHARGER_NUM);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
 						       &input_current),
@@ -611,9 +602,9 @@ ZTEST(isl923x, test_init)
 
 	/* Test failed CTRL 0 read */
 	isl923x_emul_reset_registers(isl923x_emul);
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL0);
 	isl923x_drv.init(CHARGER_NUM);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
 						       &input_current),
@@ -624,9 +615,9 @@ ZTEST(isl923x, test_init)
 
 	/* Test failed CTRL 0 write */
 	isl923x_emul_reset_registers(isl923x_emul);
-	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL0);
 	isl923x_drv.init(CHARGER_NUM);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
 						       &input_current),
@@ -637,9 +628,9 @@ ZTEST(isl923x, test_init)
 
 	/* Test failed CTRL 3 read */
 	isl923x_emul_reset_registers(isl923x_emul);
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL9238_REG_CONTROL3);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL9238_REG_CONTROL3);
 	isl923x_drv.init(CHARGER_NUM);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
 						       &input_current),
@@ -649,9 +640,9 @@ ZTEST(isl923x, test_init)
 
 	/* Test failed CTRL 3 write */
 	isl923x_emul_reset_registers(isl923x_emul);
-	i2c_common_emul_set_write_fail_reg(i2c_emul, ISL9238_REG_CONTROL3);
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA, ISL9238_REG_CONTROL3);
 	isl923x_drv.init(CHARGER_NUM);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
 						       &input_current),
@@ -661,10 +652,10 @@ ZTEST(isl923x, test_init)
 
 	/* Test failed write adapter current limit */
 	isl923x_emul_reset_registers(isl923x_emul);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   ISL923X_REG_ADAPTER_CURRENT_LIMIT1);
 	isl923x_drv.init(CHARGER_NUM);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 	zassert_ok(isl923x_drv.get_input_current_limit(CHARGER_NUM,
 						       &input_current),
@@ -698,7 +689,6 @@ ZTEST(isl923x, test_init_late_jump)
 ZTEST(isl923x, test_isl923x_is_acok)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	enum ec_error_list rv;
 	bool acok;
 
@@ -708,13 +698,13 @@ ZTEST(isl923x, test_isl923x_is_acok)
 		      "Invalid charger num, but AC OK check succeeded");
 
 	/* Part 2: error accessing register */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL9238_REG_INFO2);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL9238_REG_INFO2);
 
 	rv = raa489000_is_acok(CHARGER_NUM, &acok);
 	zassert_equal(EC_ERROR_INVAL, rv,
 		      "Register read failure, but AC OK check succeeded");
 
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Part 3: successful path - ACOK is true */
@@ -735,7 +725,6 @@ ZTEST(isl923x, test_isl923x_is_acok)
 ZTEST(isl923x, test_isl923x_enable_asgate)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	int rv;
 
 	/* Part 1: Try enabling the ASGATE */
@@ -744,7 +733,7 @@ ZTEST(isl923x, test_isl923x_enable_asgate)
 	zassert_equal(EC_SUCCESS, rv, "Expected return code of %d but got %d",
 		      EC_SUCCESS, rv);
 	zassert_true(
-		isl923x_emul_peek_reg(i2c_emul, RAA489000_REG_CONTROL8) &
+		isl923x_emul_peek_reg(isl923x_emul, RAA489000_REG_CONTROL8) &
 			RAA489000_C8_ASGATE_ON_READY,
 		"RAA489000_C8_ASGATE_ON_READY bit not set in Control Reg 8");
 
@@ -753,15 +742,16 @@ ZTEST(isl923x, test_isl923x_enable_asgate)
 
 	zassert_equal(EC_SUCCESS, rv, "Expected return code of %d but got %d",
 		      EC_SUCCESS, rv);
-	zassert_false(isl923x_emul_peek_reg(i2c_emul, RAA489000_REG_CONTROL8) &
+	zassert_false(isl923x_emul_peek_reg(isl923x_emul,
+					    RAA489000_REG_CONTROL8) &
 			      RAA489000_C8_ASGATE_ON_READY,
 		      "RAA489000_C8_ASGATE_ON_READY bit set in Control Reg 8");
 }
 
 /* Mock read and write functions to use in the hibernation test */
-FAKE_VALUE_FUNC(int, hibernate_mock_read_fn, struct i2c_emul *, int, uint8_t *,
-		int, void *);
-FAKE_VALUE_FUNC(int, hibernate_mock_write_fn, struct i2c_emul *, int, uint8_t,
+FAKE_VALUE_FUNC(int, hibernate_mock_read_fn, const struct emul *, int,
+		uint8_t *, int, void *);
+FAKE_VALUE_FUNC(int, hibernate_mock_write_fn, const struct emul *, int, uint8_t,
 		int, void *);
 
 /**
@@ -769,8 +759,6 @@ FAKE_VALUE_FUNC(int, hibernate_mock_write_fn, struct i2c_emul *, int, uint8_t,
  */
 static void isl923x_hibernate_before(void *state)
 {
-	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	ARG_UNUSED(state);
 
 	/* Reset mocks and make the read/write mocks pass all data through */
@@ -779,13 +767,15 @@ static void isl923x_hibernate_before(void *state)
 	hibernate_mock_read_fn_fake.return_val = 1;
 	hibernate_mock_write_fn_fake.return_val = 1;
 
-	i2c_common_emul_set_read_func(i2c_emul, hibernate_mock_read_fn, NULL);
-	i2c_common_emul_set_write_func(i2c_emul, hibernate_mock_write_fn, NULL);
+	i2c_common_emul_set_read_func(COMMON_DATA, hibernate_mock_read_fn,
+				      NULL);
+	i2c_common_emul_set_write_func(COMMON_DATA, hibernate_mock_write_fn,
+				       NULL);
 
 	/* Don't fail on any register access */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
@@ -794,31 +784,28 @@ static void isl923x_hibernate_before(void *state)
  */
 static void isl923x_hibernate_after(void *state)
 {
-	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	ARG_UNUSED(state);
 
 	/* Clear the mock read/write functions */
-	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
-	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_read_func(COMMON_DATA, NULL, NULL);
+	i2c_common_emul_set_write_func(COMMON_DATA, NULL, NULL);
 
 	/* Don't fail on any register access */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
 ZTEST(isl923x_hibernate, test_isl923x_hibernate__happy_path)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	uint16_t actual;
 
 	raa489000_hibernate(CHARGER_NUM, false);
 
 	/* Check ISL923X_REG_CONTROL0 */
-	actual = isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	actual = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL0);
 
 	zassert_false(actual & RAA489000_C0_EN_CHG_PUMPS_TO_100PCT,
 		      "RAA489000_C0_EN_CHG_PUMPS_TO_100PCT should not be set");
@@ -826,7 +813,7 @@ ZTEST(isl923x_hibernate, test_isl923x_hibernate__happy_path)
 		      "RAA489000_C0_BGATE_FORCE_ON should not be set");
 
 	/* Check ISL923X_REG_CONTROL1 */
-	actual = isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	actual = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
 
 	zassert_false(
 		actual & RAA489000_C1_ENABLE_SUPP_SUPPORT_MODE,
@@ -839,13 +826,13 @@ ZTEST(isl923x_hibernate, test_isl923x_hibernate__happy_path)
 		     "ISL923X_C1_DISABLE_MON should be set");
 
 	/* Check ISL9238_REG_CONTROL3 (disable_adc = false) */
-	actual = isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3);
+	actual = isl923x_emul_peek_reg(isl923x_emul, ISL9238_REG_CONTROL3);
 
 	zassert_true(actual & RAA489000_ENABLE_ADC,
 		     "RAA489000_ENABLE_ADC should be set");
 
 	/* Check ISL9238_REG_CONTROL4 */
-	actual = isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL4);
+	actual = isl923x_emul_peek_reg(isl923x_emul, ISL9238_REG_CONTROL4);
 
 	zassert_true(actual & RAA489000_C4_DISABLE_GP_CMP,
 		     "RAA489000_C4_DISABLE_GP_CMP should be set");
@@ -886,10 +873,7 @@ ZTEST(isl923x_hibernate, test_isl923x_hibernate__invalid_charger_number)
 
 ZTEST(isl923x_hibernate, test_isl923x_hibernate__fail_at_ISL923X_REG_CONTROL0)
 {
-	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
-
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL0);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL0);
 
 	raa489000_hibernate(CHARGER_NUM, false);
 
@@ -904,10 +888,7 @@ ZTEST(isl923x_hibernate, test_isl923x_hibernate__fail_at_ISL923X_REG_CONTROL0)
 
 ZTEST(isl923x_hibernate, test_isl923x_hibernate__fail_at_ISL923X_REG_CONTROL1)
 {
-	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
-
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL923X_REG_CONTROL1);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL923X_REG_CONTROL1);
 
 	raa489000_hibernate(CHARGER_NUM, false);
 
@@ -928,10 +909,7 @@ ZTEST(isl923x_hibernate, test_isl923x_hibernate__fail_at_ISL923X_REG_CONTROL1)
 
 ZTEST(isl923x_hibernate, test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL3)
 {
-	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
-
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL9238_REG_CONTROL3);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL9238_REG_CONTROL3);
 
 	raa489000_hibernate(CHARGER_NUM, false);
 
@@ -952,10 +930,7 @@ ZTEST(isl923x_hibernate, test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL3)
 
 ZTEST(isl923x_hibernate, test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL4)
 {
-	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
-
-	i2c_common_emul_set_read_fail_reg(i2c_emul, ISL9238_REG_CONTROL4);
+	i2c_common_emul_set_read_fail_reg(COMMON_DATA, ISL9238_REG_CONTROL4);
 
 	raa489000_hibernate(CHARGER_NUM, false);
 
@@ -974,13 +949,12 @@ ZTEST(isl923x_hibernate, test_isl923x_hibernate__fail_at_ISL9238_REG_CONTROL4)
 ZTEST(isl923x_hibernate, test_isl923x_hibernate__adc_disable)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	uint16_t expected;
 
 	raa489000_hibernate(CHARGER_NUM, true);
 
 	/* Check ISL9238_REG_CONTROL3 (disable_adc = true) */
-	expected = isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3);
+	expected = isl923x_emul_peek_reg(isl923x_emul, ISL9238_REG_CONTROL3);
 	expected &= ~RAA489000_ENABLE_ADC;
 
 	MOCK_ASSERT_I2C_READ(hibernate_mock_read_fn, 4, ISL9238_REG_CONTROL3);
@@ -994,40 +968,39 @@ ZTEST(isl923x_hibernate, test_isl923x_hibernate__adc_disable)
 ZTEST(isl923x_hibernate, test_isl9238c_hibernate)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	uint16_t control1_expected, control2_expected, control3_expected;
 	int rv;
 
 	/* Part 1: Happy path */
 	control1_expected =
-		(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1) &
+		(isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1) &
 		 ~ISL923X_C1_ENABLE_PSYS) |
 		ISL923X_C1_DISABLE_MON;
 	control2_expected =
-		isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2) |
+		isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL2) |
 		ISL923X_C2_COMPARATOR;
 	control3_expected =
-		isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3) |
+		isl923x_emul_peek_reg(isl923x_emul, ISL9238_REG_CONTROL3) |
 		ISL9238_C3_BGATE_OFF;
 
 	rv = isl9238c_hibernate(CHARGER_NUM);
 
 	zassert_equal(EC_SUCCESS, rv, "Expected return code %d but got %d",
 		      EC_SUCCESS, rv);
-	zassert_equal(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1),
+	zassert_equal(isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1),
 		      control1_expected,
 		      "Unexpected register value 0x%02x. Should be 0x%02x",
-		      isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1),
+		      isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1),
 		      control1_expected);
-	zassert_equal(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2),
+	zassert_equal(isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL2),
 		      control2_expected,
 		      "Unexpected register value 0x%02x. Should be 0x%02x",
-		      isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2),
+		      isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL2),
 		      control2_expected);
-	zassert_equal(isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3),
+	zassert_equal(isl923x_emul_peek_reg(isl923x_emul, ISL9238_REG_CONTROL3),
 		      control3_expected,
 		      "Unexpected register value 0x%02x. Should be 0x%02x",
-		      isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3),
+		      isl923x_emul_peek_reg(isl923x_emul, ISL9238_REG_CONTROL3),
 		      control3_expected);
 
 	/* Part 2: Fail reading each register and check for error code */
@@ -1035,7 +1008,7 @@ ZTEST(isl923x_hibernate, test_isl9238c_hibernate)
 			    ISL9238_REG_CONTROL3 };
 
 	for (int i = 0; i < ARRAY_SIZE(registers); i++) {
-		i2c_common_emul_set_read_fail_reg(i2c_emul, registers[i]);
+		i2c_common_emul_set_read_fail_reg(COMMON_DATA, registers[i]);
 
 		rv = isl9238c_hibernate(CHARGER_NUM);
 
@@ -1048,39 +1021,38 @@ ZTEST(isl923x_hibernate, test_isl9238c_hibernate)
 ZTEST(isl923x_hibernate, test_isl9238c_resume)
 {
 	const struct emul *isl923x_emul = ISL923X_EMUL;
-	struct i2c_emul *i2c_emul = isl923x_emul_get_i2c_emul(isl923x_emul);
 	uint16_t control1_expected, control2_expected, control3_expected;
 	int rv;
 
 	/* Part 1: Happy path */
 	control1_expected =
-		isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1) |
+		isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1) |
 		ISL923X_C1_ENABLE_PSYS;
 	control2_expected =
-		isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2) &
+		isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL2) &
 		~ISL923X_C2_COMPARATOR;
 	control3_expected =
-		isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3) &
+		isl923x_emul_peek_reg(isl923x_emul, ISL9238_REG_CONTROL3) &
 		~ISL9238_C3_BGATE_OFF;
 
 	rv = isl9238c_resume(CHARGER_NUM);
 
 	zassert_equal(EC_SUCCESS, rv, "Expected return code %d but got %d",
 		      EC_SUCCESS, rv);
-	zassert_equal(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1),
+	zassert_equal(isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1),
 		      control1_expected,
 		      "Unexpected register value 0x%02x. Should be 0x%02x",
-		      isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL1),
+		      isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1),
 		      control1_expected);
-	zassert_equal(isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2),
+	zassert_equal(isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL2),
 		      control2_expected,
 		      "Unexpected register value 0x%02x. Should be 0x%02x",
-		      isl923x_emul_peek_reg(i2c_emul, ISL923X_REG_CONTROL2),
+		      isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL2),
 		      control2_expected);
-	zassert_equal(isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3),
+	zassert_equal(isl923x_emul_peek_reg(isl923x_emul, ISL9238_REG_CONTROL3),
 		      control3_expected,
 		      "Unexpected register value 0x%02x. Should be 0x%02x",
-		      isl923x_emul_peek_reg(i2c_emul, ISL9238_REG_CONTROL3),
+		      isl923x_emul_peek_reg(isl923x_emul, ISL9238_REG_CONTROL3),
 		      control3_expected);
 
 	/* Part 2: Fail reading each register and check for error code */
@@ -1088,7 +1060,7 @@ ZTEST(isl923x_hibernate, test_isl9238c_resume)
 			    ISL9238_REG_CONTROL3 };
 
 	for (int i = 0; i < ARRAY_SIZE(registers); i++) {
-		i2c_common_emul_set_read_fail_reg(i2c_emul, registers[i]);
+		i2c_common_emul_set_read_fail_reg(COMMON_DATA, registers[i]);
 
 		rv = isl9238c_resume(CHARGER_NUM);
 

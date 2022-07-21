@@ -16,14 +16,15 @@
 #include "test/drivers/test_state.h"
 
 #define MOCK_EMUL emul_get_binding(DT_LABEL(DT_NODELABEL(i2c_mock)))
+#define COMMON_DATA emul_i2c_mock_get_i2c_common_data(MOCK_EMUL)
 
 struct mock_properties {
 	/* Incremented by the mock function every time it is called */
 	int call_count;
 };
 
-static int mock_read_fn(struct i2c_emul *emul, int reg, uint8_t *val, int bytes,
-			void *data)
+static int mock_read_fn(const struct emul *emul, int reg, uint8_t *val,
+			int bytes, void *data)
 {
 	ztest_check_expected_value(reg);
 	ztest_check_expected_value(bytes);
@@ -34,8 +35,8 @@ static int mock_read_fn(struct i2c_emul *emul, int reg, uint8_t *val, int bytes,
 	return ztest_get_return_value();
 }
 
-static int mock_write_fn(struct i2c_emul *emul, int reg, uint8_t val, int bytes,
-			 void *data)
+static int mock_write_fn(const struct emul *emul, int reg, uint8_t val,
+			 int bytes, void *data)
 {
 	struct mock_properties *props = (struct mock_properties *)data;
 
@@ -51,10 +52,10 @@ static int mock_write_fn(struct i2c_emul *emul, int reg, uint8_t val, int bytes,
 ZTEST(stm_mems_common, test_st_raw_read_n)
 {
 	const struct emul *emul = MOCK_EMUL;
-	struct i2c_emul *i2c_emul = i2c_mock_to_i2c_emul(emul);
+
 	int rv;
 
-	i2c_common_emul_set_read_func(i2c_emul, mock_read_fn, NULL);
+	i2c_common_emul_set_read_func(COMMON_DATA, mock_read_fn, NULL);
 	/*
 	 * Ensure the MSb (auto-increment bit) in the register address gets
 	 * set, but also return an error condition
@@ -72,10 +73,10 @@ ZTEST(stm_mems_common, test_st_raw_read_n)
 ZTEST(stm_mems_common, test_st_raw_read_n_noinc)
 {
 	const struct emul *emul = MOCK_EMUL;
-	struct i2c_emul *i2c_emul = i2c_mock_to_i2c_emul(emul);
+
 	int rv;
 
-	i2c_common_emul_set_read_func(i2c_emul, mock_read_fn, NULL);
+	i2c_common_emul_set_read_func(COMMON_DATA, mock_read_fn, NULL);
 	/*
 	 * Unlike `st_raw_read_n`, the MSb (auto-increment bit) in the register
 	 * address should NOT be automatically set. Also return an error.
@@ -94,7 +95,7 @@ ZTEST(stm_mems_common, test_st_raw_read_n_noinc)
 ZTEST(stm_mems_common, test_st_write_data_with_mask)
 {
 	const struct emul *emul = MOCK_EMUL;
-	struct i2c_emul *i2c_emul = i2c_mock_to_i2c_emul(emul);
+
 	int rv;
 
 	const struct motion_sensor_t sensor = {
@@ -111,7 +112,7 @@ ZTEST(stm_mems_common, test_st_write_data_with_mask)
 				     (test_data & test_mask);
 
 	/* Part 1: error occurs when reading initial value from sensor */
-	i2c_common_emul_set_read_func(i2c_emul, mock_read_fn, NULL);
+	i2c_common_emul_set_read_func(COMMON_DATA, mock_read_fn, NULL);
 	ztest_expect_value(mock_read_fn, reg, test_addr);
 	ztest_expect_value(mock_read_fn, bytes, 0);
 	/* Value is immaterial but ztest has no way to explicitly ignore it */
@@ -136,7 +137,7 @@ ZTEST(stm_mems_common, test_st_write_data_with_mask)
 		.call_count = 0,
 	};
 
-	i2c_common_emul_set_write_func(i2c_emul, mock_write_fn,
+	i2c_common_emul_set_write_func(COMMON_DATA, mock_write_fn,
 				       &write_fn_props);
 
 	rv = st_write_data_with_mask(&sensor, test_addr, test_mask, test_data);

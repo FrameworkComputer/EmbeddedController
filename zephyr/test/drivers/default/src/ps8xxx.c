@@ -26,13 +26,14 @@
 static void test_ps8xxx_init_fail(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *ps8xxx_i2c_emul = tcpci_emul_get_i2c_emul(ps8xxx_emul);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
 	/* Test fail on FW reg read */
-	i2c_common_emul_set_read_fail_reg(ps8xxx_i2c_emul, PS8XXX_REG_FW_REV);
+	i2c_common_emul_set_read_fail_reg(common_data, PS8XXX_REG_FW_REV);
 	zassert_equal(EC_ERROR_TIMEOUT, ps8xxx_tcpm_drv.init(USBC_PORT_C1),
 		      NULL);
-	i2c_common_emul_set_read_fail_reg(ps8xxx_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on FW reg set to 0 */
@@ -67,9 +68,11 @@ ZTEST(ps8815, test_init_fail)
 ZTEST(ps8805, test_ps8805_init)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *p1_i2c_emul =
-		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_1);
-	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(ps8xxx_emul);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
+	struct i2c_common_emul_data *p1_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_1);
 
 	/* Set arbitrary FW reg value != 0 for this test */
 	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x31);
@@ -77,17 +80,17 @@ ZTEST(ps8805, test_ps8805_init)
 	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_POWER_STATUS, 0x0);
 
 	/* Test fail on read I2C debug reg */
-	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  PS8XXX_REG_I2C_DEBUGGING_ENABLE);
 	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
-	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on read DCI reg */
-	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  PS8XXX_P1_REG_MUX_USB_DCI_CFG);
 	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
-	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test successful init */
@@ -104,8 +107,9 @@ ZTEST(ps8805, test_ps8805_init)
 ZTEST(ps8815, test_ps8815_init)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *p1_i2c_emul =
-		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_1);
+	struct i2c_common_emul_data *p1_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_1);
 
 	/* Set arbitrary FW reg value != 0 for this test */
 	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x31);
@@ -113,10 +117,10 @@ ZTEST(ps8815, test_ps8815_init)
 	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_POWER_STATUS, 0x0);
 
 	/* Test fail on reading HW revision register */
-	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  PS8815_P1_REG_HW_REVISION);
 	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.init(USBC_PORT_C1), NULL);
-	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test successful init */
@@ -127,7 +131,9 @@ ZTEST(ps8815, test_ps8815_init)
 static void test_ps8xxx_release(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(ps8xxx_emul);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
+
 	uint64_t start_ms;
 
 	/* Test successful release with correct FW reg read */
@@ -137,7 +143,7 @@ static void test_ps8xxx_release(void)
 		     "release on correct FW reg read shouldn't wait for chip");
 
 	/* Test delay on FW reg read fail */
-	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul, PS8XXX_REG_FW_REV);
+	i2c_common_emul_set_read_fail_reg(common_data, PS8XXX_REG_FW_REV);
 	start_ms = k_uptime_get();
 	zassert_equal(EC_SUCCESS, ps8xxx_tcpm_drv.release(USBC_PORT_C1), NULL);
 	zassert_true(k_uptime_get() - start_ms >= 10,
@@ -318,7 +324,9 @@ ZTEST(ps8815, test_set_vconn)
 static void test_ps8xxx_transmit(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(ps8xxx_emul);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
+
 	struct tcpci_emul_msg *msg;
 	uint64_t exp_cnt, cnt;
 	uint16_t reg_val;
@@ -326,12 +334,12 @@ static void test_ps8xxx_transmit(void)
 	msg = tcpci_emul_get_tx_msg(ps8xxx_emul);
 
 	/* Test fail on transmitting BIST MODE 2 message */
-	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul, TCPC_REG_TRANSMIT);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TRANSMIT);
 	zassert_equal(EC_ERROR_INVAL,
 		      ps8xxx_tcpm_drv.transmit(
 			      USBC_PORT_C1, TCPCI_MSG_TX_BIST_MODE_2, 0, NULL),
 		      NULL);
-	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test sending BIST MODE 2 message */
@@ -378,28 +386,30 @@ ZTEST(ps8815, test_transmit)
 static void test_ps88x5_drp_toggle(bool delay_expected)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(ps8xxx_emul);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
+
 	uint16_t exp_role_ctrl;
 	int64_t start_time;
 	int64_t delay;
 
 	/* Test fail on command write */
-	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul, TCPC_REG_COMMAND);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_COMMAND);
 	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
 		      NULL);
 
 	/* Test fail on role control write */
-	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul, TCPC_REG_ROLE_CTRL);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_ROLE_CTRL);
 	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
 		      NULL);
-	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on CC status read */
-	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul, TCPC_REG_CC_STATUS);
+	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_CC_STATUS);
 	zassert_equal(EC_ERROR_INVAL, ps8xxx_tcpm_drv.drp_toggle(USBC_PORT_C1),
 		      NULL);
-	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set CC status as snk, CC lines set arbitrary */
@@ -481,7 +491,9 @@ ZTEST(ps8805, test_drp_toggle)
 static void test_ps8xxx_get_chip_info(uint16_t current_product_id)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(ps8xxx_emul);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
+
 	struct ec_response_pd_chip_info_v1 info;
 	uint16_t vendor, product, device_id, fw_rev;
 
@@ -499,11 +511,11 @@ static void test_ps8xxx_get_chip_info(uint16_t current_product_id)
 	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, fw_rev);
 
 	/* Test fail on reading FW revision */
-	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul, PS8XXX_REG_FW_REV);
+	i2c_common_emul_set_read_fail_reg(common_data, PS8XXX_REG_FW_REV);
 	zassert_equal(EC_ERROR_INVAL,
 		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
 		      NULL);
-	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test reading chip info */
@@ -608,8 +620,9 @@ ZTEST(ps8815, test_ps8815_get_chip_info)
 ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *p0_i2c_emul =
-		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_0);
+	struct i2c_common_emul_data *p0_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_0);
 	struct ec_response_pd_chip_info_v1 info;
 	uint16_t vendor, product, device_id, fw_rev;
 	uint16_t chip_rev;
@@ -649,12 +662,12 @@ ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_BCD_DEV, device_id);
 
 	/* Test error on fixing device id because of fail chip revision read */
-	i2c_common_emul_set_read_fail_reg(p0_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(p0_i2c_common_data,
 					  PS8805_P0_REG_CHIP_REVISION);
 	zassert_equal(EC_ERROR_INVAL,
 		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
 		      NULL);
-	i2c_common_emul_set_read_fail_reg(p0_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(p0_i2c_common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set wrong chip revision */
@@ -701,8 +714,9 @@ ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 ZTEST(ps8815, test_ps8815_get_chip_info_fix_dev_id)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *p1_i2c_emul =
-		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_1);
+	struct i2c_common_emul_data *p1_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_1);
 	struct ec_response_pd_chip_info_v1 info;
 	uint16_t vendor, product, device_id, fw_rev;
 	uint16_t hw_rev;
@@ -742,12 +756,12 @@ ZTEST(ps8815, test_ps8815_get_chip_info_fix_dev_id)
 	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_BCD_DEV, device_id);
 
 	/* Test error on fixing device id because of fail hw revision read */
-	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  PS8815_P1_REG_HW_REVISION);
 	zassert_equal(EC_ERROR_INVAL,
 		      ps8xxx_tcpm_drv.get_chip_info(USBC_PORT_C1, 1, &info),
 		      NULL);
-	i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set wrong hw revision */
@@ -794,8 +808,9 @@ ZTEST(ps8815, test_ps8815_get_chip_info_fix_dev_id)
 ZTEST(ps8805, test_ps8805_gpio)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *gpio_i2c_emul =
-		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_GPIO);
+	struct i2c_common_emul_data *gpio_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_GPIO);
 	uint8_t exp_ctrl, gpio_ctrl;
 	int level;
 
@@ -867,7 +882,7 @@ ZTEST(ps8805, test_ps8805_gpio)
 		      NULL);
 
 	/* Setup fail on gpio control reg read */
-	i2c_common_emul_set_read_fail_reg(gpio_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(gpio_i2c_common_data,
 					  PS8805_REG_GPIO_CONTROL);
 
 	/* Test fail on reading gpio control reg */
@@ -880,16 +895,16 @@ ZTEST(ps8805, test_ps8805_gpio)
 		      NULL);
 
 	/* Do not fail on gpio control reg read */
-	i2c_common_emul_set_read_fail_reg(gpio_i2c_emul,
+	i2c_common_emul_set_read_fail_reg(gpio_i2c_common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on writing gpio control reg */
-	i2c_common_emul_set_write_fail_reg(gpio_i2c_emul,
+	i2c_common_emul_set_write_fail_reg(gpio_i2c_common_data,
 					   PS8805_REG_GPIO_CONTROL);
 	zassert_equal(EC_ERROR_INVAL,
 		      ps8805_gpio_set_level(USBC_PORT_C1, PS8805_GPIO_0, 1),
 		      NULL);
-	i2c_common_emul_set_write_fail_reg(gpio_i2c_emul,
+	i2c_common_emul_set_write_fail_reg(gpio_i2c_common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Clear gpio control reg */
@@ -934,8 +949,10 @@ ZTEST(ps8805, test_ps8805_gpio)
 static void test_ps8xxx_tcpci_init(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_init(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_init(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_init)
@@ -952,8 +969,10 @@ ZTEST(ps8815, test_tcpci_init)
 static void test_ps8xxx_tcpci_release(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_release(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_release(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_release)
@@ -970,8 +989,10 @@ ZTEST(ps8815, test_tcpci_release)
 static void test_ps8xxx_tcpci_get_cc(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_get_cc(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_get_cc(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_get_cc)
@@ -988,8 +1009,10 @@ ZTEST(ps8815, test_tcpci_get_cc)
 static void test_ps8xxx_tcpci_set_cc(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_set_cc(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_set_cc(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_set_cc)
@@ -1006,8 +1029,10 @@ ZTEST(ps8815, test_tcpci_set_cc)
 static void test_ps8xxx_tcpci_set_polarity(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_set_polarity(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_set_polarity(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_set_polarity)
@@ -1024,8 +1049,10 @@ ZTEST(ps8815, test_tcpci_set_polarity)
 static void test_ps8xxx_tcpci_set_vconn(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_set_vconn(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_set_vconn(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_set_vconn)
@@ -1042,8 +1069,10 @@ ZTEST(ps8815, test_tcpci_set_vconn)
 static void test_ps8xxx_tcpci_set_msg_header(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_set_msg_header(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_set_msg_header(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_set_msg_header)
@@ -1060,8 +1089,10 @@ ZTEST(ps8815, test_tcpci_set_msg_header)
 static void test_ps8xxx_tcpci_get_rx_message_raw(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_get_rx_message_raw(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_get_rx_message_raw(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_get_rx_message_raw)
@@ -1078,8 +1109,10 @@ ZTEST(ps8815, test_tcpci_get_rx_message_raw)
 static void test_ps8xxx_tcpci_transmit(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_transmit(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_transmit(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_transmit)
@@ -1096,8 +1129,10 @@ ZTEST(ps8815, test_tcpci_transmit)
 static void test_ps8xxx_tcpci_alert(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_alert(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_alert(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_alert)
@@ -1114,8 +1149,10 @@ ZTEST(ps8815, test_tcpci_alert)
 static void test_ps8xxx_tcpci_alert_rx_message(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_alert_rx_message(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_alert_rx_message(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_alert_rx_message)
@@ -1132,6 +1169,8 @@ ZTEST(ps8815, test_tcpci_alert_rx_message)
 static void test_ps8xxx_tcpci_low_power_mode(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 	/*
 	 * PS8751/PS8815 has the auto sleep function that enters
 	 * low power mode on its own in ~2 seconds. Other chips
@@ -1140,7 +1179,7 @@ static void test_ps8xxx_tcpci_low_power_mode(void)
 	if (board_get_ps8xxx_product_id(USBC_PORT_C1) == PS8751_PRODUCT_ID ||
 	    board_get_ps8xxx_product_id(USBC_PORT_C1) == PS8815_PRODUCT_ID)
 		return;
-	test_tcpci_low_power_mode(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_low_power_mode(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_low_power_mode)
@@ -1157,8 +1196,10 @@ ZTEST(ps8815, test_tcpci_low_power_mode)
 static void test_ps8xxx_tcpci_set_bist_mode(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	test_tcpci_set_bist_mode(ps8xxx_emul, USBC_PORT_C1);
+	test_tcpci_set_bist_mode(ps8xxx_emul, common_data, USBC_PORT_C1);
 }
 
 ZTEST(ps8805, test_tcpci_set_bist_mode)
@@ -1175,37 +1216,42 @@ ZTEST(ps8815, test_tcpci_set_bist_mode)
 static void setup_no_fail_all(void)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
-	struct i2c_emul *tcpci_i2c_emul = tcpci_emul_get_i2c_emul(ps8xxx_emul);
-	struct i2c_emul *p0_i2c_emul =
-		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_0);
-	struct i2c_emul *p1_i2c_emul =
-		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_1);
-	struct i2c_emul *gpio_i2c_emul =
-		ps8xxx_emul_get_i2c_emul(ps8xxx_emul, PS8XXX_EMUL_PORT_GPIO);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
-	i2c_common_emul_set_read_fail_reg(tcpci_i2c_emul,
+	struct i2c_common_emul_data *p0_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_0);
+	struct i2c_common_emul_data *p1_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_1);
+	struct i2c_common_emul_data *gpio_i2c_common_data =
+		ps8xxx_emul_get_i2c_common_data(ps8xxx_emul,
+						PS8XXX_EMUL_PORT_GPIO);
+
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
-	i2c_common_emul_set_write_fail_reg(tcpci_i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
-	if (p0_i2c_emul != NULL) {
-		i2c_common_emul_set_read_fail_reg(p0_i2c_emul,
+	if (p0_i2c_common_data != NULL) {
+		i2c_common_emul_set_read_fail_reg(p0_i2c_common_data,
 						  I2C_COMMON_EMUL_NO_FAIL_REG);
-		i2c_common_emul_set_write_fail_reg(p0_i2c_emul,
+		i2c_common_emul_set_write_fail_reg(p0_i2c_common_data,
 						   I2C_COMMON_EMUL_NO_FAIL_REG);
 	}
 
-	if (p1_i2c_emul != NULL) {
-		i2c_common_emul_set_read_fail_reg(p1_i2c_emul,
+	if (p1_i2c_common_data != NULL) {
+		i2c_common_emul_set_read_fail_reg(p1_i2c_common_data,
 						  I2C_COMMON_EMUL_NO_FAIL_REG);
-		i2c_common_emul_set_write_fail_reg(p1_i2c_emul,
+		i2c_common_emul_set_write_fail_reg(p1_i2c_common_data,
 						   I2C_COMMON_EMUL_NO_FAIL_REG);
 	}
 
-	if (gpio_i2c_emul != NULL) {
-		i2c_common_emul_set_read_fail_reg(gpio_i2c_emul,
+	if (gpio_i2c_common_data != NULL) {
+		i2c_common_emul_set_read_fail_reg(gpio_i2c_common_data,
 						  I2C_COMMON_EMUL_NO_FAIL_REG);
-		i2c_common_emul_set_write_fail_reg(gpio_i2c_emul,
+		i2c_common_emul_set_write_fail_reg(gpio_i2c_common_data,
 						   I2C_COMMON_EMUL_NO_FAIL_REG);
 	}
 }

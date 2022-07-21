@@ -182,7 +182,7 @@ static int bmi160_emul_gyr_range_to_shift(uint8_t range)
  * @param regs Pointer to array of emulator's registers
  * @param emul Pointer to BMI emulator
  */
-static void bmi160_emul_reset(uint8_t *regs, struct i2c_emul *emul)
+static void bmi160_emul_reset(uint8_t *regs, const struct emul *emul)
 {
 	bool tag_time;
 	bool header;
@@ -349,7 +349,7 @@ static int16_t bmi160_emul_get_acc_target_off(int32_t acc, uint8_t target)
  * @param regs Pointer to array of emulator's registers
  * @param emul Pointer to BMI emulator
  */
-static void bmi160_emul_handle_off_comp(uint8_t *regs, struct i2c_emul *emul)
+static void bmi160_emul_handle_off_comp(uint8_t *regs, const struct emul *emul)
 {
 	uint8_t target;
 	int16_t off;
@@ -361,6 +361,7 @@ static void bmi160_emul_handle_off_comp(uint8_t *regs, struct i2c_emul *emul)
 		bmi_emul_set_off(emul, BMI_EMUL_GYR_X, off);
 		val = bmi_emul_get_value(emul, BMI_EMUL_GYR_Y);
 		off = bmi160_emul_get_gyr_target_off(val);
+
 		bmi_emul_set_off(emul, BMI_EMUL_GYR_Y, off);
 		val = bmi_emul_get_value(emul, BMI_EMUL_GYR_Z);
 		off = bmi160_emul_get_gyr_target_off(val);
@@ -401,7 +402,8 @@ static void bmi160_emul_handle_off_comp(uint8_t *regs, struct i2c_emul *emul)
  * @return 0 on success
  * @return -EIO on failure
  */
-static int bmi160_emul_start_cmd(uint8_t *regs, struct i2c_emul *emul, int cmd)
+static int bmi160_emul_start_cmd(uint8_t *regs, const struct emul *emul,
+				 int cmd)
 {
 	int time;
 
@@ -470,7 +472,7 @@ static int bmi160_emul_start_cmd(uint8_t *regs, struct i2c_emul *emul, int cmd)
  * @param regs Pointer to array of emulator's registers
  * @param emul Pointer to BMI emulator
  */
-static void bmi160_emul_end_cmd(uint8_t *regs, struct i2c_emul *emul)
+static void bmi160_emul_end_cmd(uint8_t *regs, const struct emul *emul)
 {
 	uint8_t pmu_status;
 	bool tag_time;
@@ -560,7 +562,7 @@ static void bmi160_emul_end_cmd(uint8_t *regs, struct i2c_emul *emul)
  * @return BMI_EMUL_ACCESS_E on RO register access
  * @return -EIO on error
  */
-static int bmi160_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
+static int bmi160_emul_handle_write(uint8_t *regs, const struct emul *emul,
 				    int reg, int byte, uint8_t val)
 {
 	bool tag_time;
@@ -618,7 +620,7 @@ static int bmi160_emul_handle_write(uint8_t *regs, struct i2c_emul *emul,
  *
  * @return Currently accessed register
  */
-static int bmi160_emul_access_reg(struct i2c_emul *emul, int reg, int byte,
+static int bmi160_emul_access_reg(const struct emul *emul, int reg, int byte,
 				  bool read)
 {
 	if (!read) {
@@ -654,7 +656,7 @@ static int bmi160_emul_access_reg(struct i2c_emul *emul, int reg, int byte,
  * @return BMI_EMUL_ACCESS_E on WO register access
  * @return -EIO on other error
  */
-static int bmi160_emul_handle_read(uint8_t *regs, struct i2c_emul *emul,
+static int bmi160_emul_handle_read(uint8_t *regs, const struct emul *emul,
 				   int reg, int byte, char *buf)
 {
 	uint16_t fifo_len;

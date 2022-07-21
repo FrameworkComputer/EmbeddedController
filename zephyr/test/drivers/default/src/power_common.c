@@ -296,7 +296,9 @@ ZTEST(power_common, test_power_hc_smart_discharge)
 	struct ec_params_smart_discharge params;
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
-	struct i2c_emul *emul;
+	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
+	struct i2c_common_emul_data *common_data =
+		emul_smart_battery_get_i2c_common_data(emul);
 	int hours_to_zero;
 	int hibern_drate;
 	int cutoff_drate;
@@ -309,9 +311,10 @@ ZTEST(power_common, test_power_hc_smart_discharge)
 	params.flags = EC_SMART_DISCHARGE_FLAGS_SET;
 
 	/* Test fail when battery capacity is not available */
-	i2c_common_emul_set_read_fail_reg(emul, SB_FULL_CHARGE_CAPACITY);
+	i2c_common_emul_set_read_fail_reg(common_data, SB_FULL_CHARGE_CAPACITY);
 	zassert_equal(EC_RES_UNAVAILABLE, host_command_process(&args), NULL);
-	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Setup discharge rates */
 	params.drate.hibern = 10;
@@ -391,7 +394,9 @@ ZTEST(power_common, test_power_board_system_is_idle)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
 	struct sbat_emul_bat_data *bat;
-	struct i2c_emul *emul;
+	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
+	struct i2c_common_emul_data *common_data =
+		emul_smart_battery_get_i2c_common_data(emul);
 	uint64_t last_shutdown_time = 0;
 	uint64_t target;
 	uint64_t now;
@@ -421,11 +426,12 @@ ZTEST(power_common, test_power_board_system_is_idle)
 	 * Test hibernation is requested when battery remaining capacity
 	 * is not available
 	 */
-	i2c_common_emul_set_read_fail_reg(emul, SB_REMAINING_CAPACITY);
+	i2c_common_emul_set_read_fail_reg(common_data, SB_REMAINING_CAPACITY);
 	zassert_equal(CRITICAL_SHUTDOWN_HIBERNATE,
 		      board_system_is_idle(last_shutdown_time, &target, now),
 		      NULL);
-	i2c_common_emul_set_read_fail_reg(emul, I2C_COMMON_EMUL_NO_FAIL_REG);
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Setup remaining capacity to trigger cutoff */
 	bat->cap = response.dzone.cutoff - 5;
@@ -458,7 +464,7 @@ static void setup_hibernation_delay(void *state)
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND(EC_CMD_SMART_DISCHARGE, 0, response, params);
 	struct sbat_emul_bat_data *bat;
-	struct i2c_emul *emul;
+	const struct emul *emul = sbat_emul_get_ptr(BATTERY_ORD);
 	ARG_UNUSED(state);
 
 	emul = sbat_emul_get_ptr(BATTERY_ORD);

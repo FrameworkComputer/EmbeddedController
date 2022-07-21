@@ -39,18 +39,19 @@ void check_tcpci_reg_with_mask_f(const struct emul *emul, int reg,
 }
 
 /** Test TCPCI init and vbus level */
-void test_tcpci_init(const struct emul *emul, enum usbc_port port)
+void test_tcpci_init(const struct emul *emul,
+		     struct i2c_common_emul_data *common_data,
+		     enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	uint16_t exp_mask;
 
 	tcpc_config[port].flags |= TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V;
 
 	/* Test fail on power status read */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_POWER_STATUS);
+	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_POWER_STATUS);
 	zassert_equal(EC_ERROR_INVAL, drv->init(port), NULL);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test fail on uninitialised bit set */
@@ -134,7 +135,9 @@ void test_tcpci_init(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI release */
-void test_tcpci_release(const struct emul *emul, enum usbc_port port)
+void test_tcpci_release(const struct emul *emul,
+			struct i2c_common_emul_data *common_data,
+			enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
 
@@ -147,7 +150,9 @@ void test_tcpci_release(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI get cc */
-void test_tcpci_get_cc(const struct emul *emul, enum usbc_port port)
+void test_tcpci_get_cc(const struct emul *emul,
+		       struct i2c_common_emul_data *common_data,
+		       enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
 	enum tcpc_cc_voltage_status cc1, cc2;
@@ -247,10 +252,11 @@ void test_tcpci_get_cc(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI set cc */
-void test_tcpci_set_cc(const struct emul *emul, enum usbc_port port)
+void test_tcpci_set_cc(const struct emul *emul,
+		       struct i2c_common_emul_data *common_data,
+		       enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	enum tcpc_rp_value rp;
 	enum tcpc_cc_pull cc;
 
@@ -263,9 +269,9 @@ void test_tcpci_set_cc(const struct emul *emul, enum usbc_port port)
 			TCPC_REG_ROLE_CTRL_SET(TYPEC_NO_DRP, rp, cc, cc));
 
 	/* Test error on failed role ctrl set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_ROLE_CTRL);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_ROLE_CTRL);
 	zassert_equal(EC_ERROR_INVAL, drv->set_cc(port, TYPEC_CC_OPEN), NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test setting 1.5 RP and cc RD */
@@ -295,10 +301,11 @@ void test_tcpci_set_cc(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI set polarity */
-void test_tcpci_set_polarity(const struct emul *emul, enum usbc_port port)
+void test_tcpci_set_polarity(const struct emul *emul,
+			     struct i2c_common_emul_data *common_data,
+			     enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	uint8_t initial_ctrl;
 	uint8_t exp_ctrl;
 
@@ -309,10 +316,10 @@ void test_tcpci_set_polarity(const struct emul *emul, enum usbc_port port)
 
 	/* Test error on failed polarity set */
 	exp_ctrl = initial_ctrl;
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_TCPC_CTRL);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TCPC_CTRL);
 	zassert_equal(EC_ERROR_INVAL, drv->set_polarity(port, POLARITY_CC2),
 		      NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 	check_tcpci_reg(emul, TCPC_REG_TCPC_CTRL, exp_ctrl);
 
@@ -340,10 +347,11 @@ void test_tcpci_set_polarity(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI set vconn */
-void test_tcpci_set_vconn(const struct emul *emul, enum usbc_port port)
+void test_tcpci_set_vconn(const struct emul *emul,
+			  struct i2c_common_emul_data *common_data,
+			  enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	uint8_t initial_ctrl;
 	uint8_t exp_ctrl;
 
@@ -354,9 +362,9 @@ void test_tcpci_set_vconn(const struct emul *emul, enum usbc_port port)
 
 	/* Test error on failed vconn set */
 	exp_ctrl = initial_ctrl;
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_POWER_CTRL);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_POWER_CTRL);
 	zassert_equal(EC_ERROR_INVAL, drv->set_vconn(port, 1), NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 	check_tcpci_reg(emul, TCPC_REG_POWER_CTRL, exp_ctrl);
 
@@ -372,17 +380,18 @@ void test_tcpci_set_vconn(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI set msg header */
-void test_tcpci_set_msg_header(const struct emul *emul, enum usbc_port port)
+void test_tcpci_set_msg_header(const struct emul *emul,
+			       struct i2c_common_emul_data *common_data,
+			       enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 
 	/* Test error on failed header set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_MSG_HDR_INFO);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_MSG_HDR_INFO);
 	zassert_equal(EC_ERROR_INVAL,
 		      drv->set_msg_header(port, PD_ROLE_SINK, PD_ROLE_UFP),
 		      NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test setting sink UFP */
@@ -415,15 +424,16 @@ void test_tcpci_set_msg_header(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI rx and sop prime enable */
-void test_tcpci_set_rx_detect(const struct emul *emul, enum usbc_port port)
+void test_tcpci_set_rx_detect(const struct emul *emul,
+			      struct i2c_common_emul_data *common_data,
+			      enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 
 	/* Test error from rx_enable on rx detect set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_RX_DETECT);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_RX_DETECT);
 	zassert_equal(EC_ERROR_INVAL, drv->set_rx_enable(port, 1), NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test rx disable */
@@ -440,9 +450,9 @@ void test_tcpci_set_rx_detect(const struct emul *emul, enum usbc_port port)
 			TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK);
 
 	/* Test error from sop_prime on rx detect set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_RX_DETECT);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_RX_DETECT);
 	zassert_equal(EC_ERROR_INVAL, drv->sop_prime_enable(port, 0), NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test disabling sop prime with rx enabled does change RX_DETECT */
@@ -459,10 +469,11 @@ void test_tcpci_set_rx_detect(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI get raw message from TCPC */
-void test_tcpci_get_rx_message_raw(const struct emul *emul, enum usbc_port port)
+void test_tcpci_get_rx_message_raw(const struct emul *emul,
+				   struct i2c_common_emul_data *common_data,
+				   enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	struct tcpci_emul_msg msg;
 	uint32_t payload[7];
 	uint16_t rx_mask;
@@ -488,10 +499,10 @@ void test_tcpci_get_rx_message_raw(const struct emul *emul, enum usbc_port port)
 		      "Failed to setup emulator message");
 
 	/* Test fail on reading byte count */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_RX_BUFFER);
+	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_RX_BUFFER);
 	zassert_equal(EC_ERROR_UNKNOWN,
 		      drv->get_message_raw(port, payload, &head), NULL);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	/* Get raw message should always clean RX alerts */
 	rx_mask = TCPC_REG_ALERT_RX_BUF_OVF | TCPC_REG_ALERT_RX_STATUS;
@@ -537,10 +548,11 @@ void test_tcpci_get_rx_message_raw(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI transmitting message from TCPC */
-void test_tcpci_transmit(const struct emul *emul, enum usbc_port port)
+void test_tcpci_transmit(const struct emul *emul,
+			 struct i2c_common_emul_data *common_data,
+			 enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	struct tcpci_emul_msg *msg;
 	uint32_t data[6];
 	uint16_t header;
@@ -554,11 +566,11 @@ void test_tcpci_transmit(const struct emul *emul, enum usbc_port port)
 	}
 
 	/* Test transmit hard reset fail */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_TRANSMIT);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TRANSMIT);
 	zassert_equal(EC_ERROR_INVAL,
 		      drv->transmit(port, TCPCI_MSG_TX_HARD_RESET, 0, NULL),
 		      NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test transmit cabel reset */
@@ -574,10 +586,10 @@ void test_tcpci_transmit(const struct emul *emul, enum usbc_port port)
 	zassert_equal(TCPCI_MSG_TX_HARD_RESET, msg->type, NULL);
 
 	/* Test transmit fail on rx buffer */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_TX_BUFFER);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TX_BUFFER);
 	zassert_equal(EC_ERROR_INVAL,
 		      drv->transmit(port, TCPCI_MSG_SOP_PRIME, 0, data), NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test transmit only header */
@@ -605,15 +617,16 @@ void test_tcpci_transmit(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI alert */
-void test_tcpci_alert(const struct emul *emul, enum usbc_port port)
+void test_tcpci_alert(const struct emul *emul,
+		      struct i2c_common_emul_data *common_data,
+		      enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 
 	/* Test alert read fail */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_ALERT);
+	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_ALERT);
 	drv->tcpc_alert(port);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Handle overcurrent */
@@ -649,7 +662,9 @@ void test_tcpci_alert(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI alert RX message */
-void test_tcpci_alert_rx_message(const struct emul *emul, enum usbc_port port)
+void test_tcpci_alert_rx_message(const struct emul *emul,
+				 struct i2c_common_emul_data *common_data,
+				 enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
 	struct tcpci_emul_msg msg1, msg2;
@@ -795,7 +810,9 @@ void test_tcpci_alert_rx_message(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI auto discharge on disconnect */
-void test_tcpci_auto_discharge(const struct emul *emul, enum usbc_port port)
+void test_tcpci_auto_discharge(const struct emul *emul,
+			       struct i2c_common_emul_data *common_data,
+			       enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
 	uint8_t initial_ctrl;
@@ -819,24 +836,25 @@ void test_tcpci_auto_discharge(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI drp toggle */
-void test_tcpci_drp_toggle(const struct emul *emul, enum usbc_port port)
+void test_tcpci_drp_toggle(const struct emul *emul,
+			   struct i2c_common_emul_data *common_data,
+			   enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	uint8_t exp_tcpc_ctrl, exp_role_ctrl, initial_tcpc_ctrl;
 
 	/* Test error on failed role CTRL set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_ROLE_CTRL);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_ROLE_CTRL);
 	zassert_equal(EC_ERROR_INVAL, drv->drp_toggle(port), NULL);
 
 	/* Test error on failed TCPC CTRL set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_TCPC_CTRL);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TCPC_CTRL);
 	zassert_equal(EC_ERROR_INVAL, drv->drp_toggle(port), NULL);
 
 	/* Test error on failed command set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_COMMAND);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_COMMAND);
 	zassert_equal(EC_ERROR_INVAL, drv->drp_toggle(port), NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set initial value for TCPC ctrl register. Chosen arbitrary. */
@@ -884,25 +902,26 @@ void test_tcpci_drp_toggle(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI get chip info */
-void test_tcpci_get_chip_info(const struct emul *emul, enum usbc_port port)
+void test_tcpci_get_chip_info(const struct emul *emul,
+			      struct i2c_common_emul_data *common_data,
+			      enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	struct ec_response_pd_chip_info_v1 info;
 	uint16_t vendor, product, bcd;
 
 	/* Test error on failed vendor id get */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_VENDOR_ID);
+	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_VENDOR_ID);
 	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info), NULL);
 
 	/* Test error on failed product id get */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_PRODUCT_ID);
+	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_PRODUCT_ID);
 	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info), NULL);
 
 	/* Test error on failed BCD get */
-	i2c_common_emul_set_read_fail_reg(i2c_emul, TCPC_REG_VENDOR_ID);
+	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_VENDOR_ID);
 	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info), NULL);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test reading chip info. Values chosen arbitrary. */
@@ -922,10 +941,10 @@ void test_tcpci_get_chip_info(const struct emul *emul, enum usbc_port port)
 	info.product_id = 0;
 	info.device_id = 0;
 	/* Make sure, that TCPC is not accessed */
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_FAIL_ALL_REG);
 	zassert_equal(EC_SUCCESS, drv->get_chip_info(port, 0, &info), NULL);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	zassert_equal(vendor, info.vendor_id, NULL);
 	zassert_equal(product, info.product_id, NULL);
@@ -933,15 +952,16 @@ void test_tcpci_get_chip_info(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI enter low power mode */
-void test_tcpci_low_power_mode(const struct emul *emul, enum usbc_port port)
+void test_tcpci_low_power_mode(const struct emul *emul,
+			       struct i2c_common_emul_data *common_data,
+			       enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 
 	/* Test error on failed command set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_COMMAND);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_COMMAND);
 	zassert_equal(EC_ERROR_INVAL, drv->enter_low_power_mode(port), NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Test correct command is issued */
@@ -950,21 +970,22 @@ void test_tcpci_low_power_mode(const struct emul *emul, enum usbc_port port)
 }
 
 /** Test TCPCI set bist test mode */
-void test_tcpci_set_bist_mode(const struct emul *emul, enum usbc_port port)
+void test_tcpci_set_bist_mode(const struct emul *emul,
+			      struct i2c_common_emul_data *common_data,
+			      enum usbc_port port)
 {
 	const struct tcpm_drv *drv = tcpc_config[port].drv;
-	struct i2c_emul *i2c_emul = tcpci_emul_get_i2c_emul(emul);
 	uint16_t exp_mask, initial_mask;
 	uint8_t exp_ctrl, initial_ctrl;
 
 	/* Test error on TCPC CTRL set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_TCPC_CTRL);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_TCPC_CTRL);
 	zassert_equal(EC_ERROR_INVAL, drv->set_bist_test_mode(port, 1), NULL);
 
 	/* Test error on alert mask set */
-	i2c_common_emul_set_write_fail_reg(i2c_emul, TCPC_REG_ALERT_MASK);
+	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_ALERT_MASK);
 	zassert_equal(EC_ERROR_INVAL, drv->set_bist_test_mode(port, 1), NULL);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(common_data,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
 
 	/* Set initial value for alert mask register. Chosen arbitrary. */

@@ -324,7 +324,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 	int rc;
 
 	/* Acquire lock to prevent race conditions with TCPM accessing I2C */
-	rc = i2c_common_emul_lock_data(&ctx->common.emul, K_FOREVER);
+	rc = i2c_common_emul_lock_data(&ctx->common, K_FOREVER);
 	if (rc != 0) {
 		LOG_ERR("Failed to acquire TCPCI lock");
 		return rc;
@@ -353,7 +353,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		rx_detect_mask = TCPC_REG_RX_DETECT_CABLE_RST;
 		break;
 	default:
-		i2c_common_emul_unlock_data(&ctx->common.emul);
+		i2c_common_emul_unlock_data(&ctx->common);
 		return -EINVAL;
 	}
 
@@ -363,7 +363,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		 * TCPCI will not respond with GoodCRC, so from partner emulator
 		 * point of view it failed to send message
 		 */
-		i2c_common_emul_unlock_data(&ctx->common.emul);
+		i2c_common_emul_unlock_data(&ctx->common);
 		return TCPCI_EMUL_TX_FAILED;
 	}
 
@@ -378,7 +378,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		set_reg(ctx, TCPC_REG_ALERT, alert_reg);
 		rc = tcpci_emul_alert_changed(emul);
 
-		i2c_common_emul_unlock_data(&ctx->common.emul);
+		i2c_common_emul_unlock_data(&ctx->common);
 		return rc;
 	}
 
@@ -394,7 +394,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		     rx_msg->cnt > 31) ||
 		    rx_msg->cnt > 265) {
 			LOG_ERR("Too long first message (%d)", rx_msg->cnt);
-			i2c_common_emul_unlock_data(&ctx->common.emul);
+			i2c_common_emul_unlock_data(&ctx->common);
 			return -EINVAL;
 		}
 
@@ -402,7 +402,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 	} else if (ctx->rx_msg->next == NULL) {
 		if (rx_msg->cnt > 31) {
 			LOG_ERR("Too long second message (%d)", rx_msg->cnt);
-			i2c_common_emul_unlock_data(&ctx->common.emul);
+			i2c_common_emul_unlock_data(&ctx->common);
 			return -EINVAL;
 		}
 
@@ -412,7 +412,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 		}
 	} else {
 		LOG_ERR("Cannot setup third message");
-		i2c_common_emul_unlock_data(&ctx->common.emul);
+		i2c_common_emul_unlock_data(&ctx->common);
 		return -EINVAL;
 	}
 
@@ -426,7 +426,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 
 		rc = tcpci_emul_alert_changed(emul);
 		if (rc != 0) {
-			i2c_common_emul_unlock_data(&ctx->common.emul);
+			i2c_common_emul_unlock_data(&ctx->common);
 			return rc;
 		}
 	}
@@ -434,7 +434,7 @@ int tcpci_emul_add_rx_msg(const struct emul *emul,
 	rx_msg->next = NULL;
 	rx_msg->idx = 0;
 
-	i2c_common_emul_unlock_data(&ctx->common.emul);
+	i2c_common_emul_unlock_data(&ctx->common);
 	return TCPCI_EMUL_TX_SUCCESS;
 }
 
@@ -1383,23 +1383,12 @@ int tcpci_emul_handle_write(const struct emul *emul, int reg, int msg_len)
 }
 
 /** Check description in emul_tcpci.h */
-struct i2c_emul *tcpci_emul_get_i2c_emul(const struct emul *emul)
-{
-	struct tcpc_emul_data *tcpc_data = emul->data;
-	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
-
-	return &ctx->common.emul;
-}
-
-/** Check description in emul_tcpci.h */
 void tcpci_emul_i2c_init(const struct emul *emul, const struct device *i2c_dev)
 {
 	struct tcpc_emul_data *tcpc_data = emul->data;
 	struct tcpci_ctx *ctx = tcpc_data->tcpci_ctx;
 
-	ctx->common.emul.api = &i2c_common_emul_api;
 	ctx->common.emul.addr = tcpc_data->i2c_cfg.addr;
-	ctx->common.emul.parent = emul;
 	ctx->common.i2c = i2c_dev;
 	ctx->common.cfg = &tcpc_data->i2c_cfg;
 

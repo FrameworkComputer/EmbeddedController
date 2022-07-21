@@ -110,7 +110,7 @@
  *
  * @return Pointer to smart battery emulator
  */
-struct i2c_emul *syv682x_emul_get(int ord);
+const struct emul *syv682x_emul_get(int ord);
 
 /**
  * @brief Set the underlying interrupt conditions affecting the SYV682x
@@ -122,7 +122,7 @@ struct i2c_emul *syv682x_emul_get(int ord);
  *                  conditions; only the bits in SYV682X_CONTROL_4_INT_MASK have
  *                  an effect.
  */
-void syv682x_emul_set_condition(struct i2c_emul *emul, uint8_t status,
+void syv682x_emul_set_condition(const struct emul *emul, uint8_t status,
 				uint8_t control_4);
 
 /**
@@ -133,7 +133,7 @@ void syv682x_emul_set_condition(struct i2c_emul *emul, uint8_t status,
  * @param emul  SYV682x emulator
  * @param reads The number of reads of CONTROL_3 to keep BUSY set for
  */
-void syv682x_emul_set_busy_reads(struct i2c_emul *emul, int reads);
+void syv682x_emul_set_busy_reads(const struct emul *emul, int reads);
 
 /**
  * @brief Set value of a register of SYV682x
@@ -144,7 +144,7 @@ void syv682x_emul_set_busy_reads(struct i2c_emul *emul, int reads);
  *
  * @return 0 on success, error code on error
  */
-int syv682x_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val);
+int syv682x_emul_set_reg(const struct emul *emul, int reg, uint8_t val);
 
 /**
  * @brief Get value of a register of SYV682x
@@ -155,6 +155,15 @@ int syv682x_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val);
  *
  * @return 0 on success, error code on error
  */
-int syv682x_emul_get_reg(struct i2c_emul *emul, int reg, uint8_t *val);
+int syv682x_emul_get_reg(const struct emul *emul, int reg, uint8_t *val);
+
+/**
+ * @brief Saves current internal state of sensors to emulator's registers.
+ *
+ * @param emul Pointer to SYV682X emulator
+ * @return Pointer to SYV682X emulator associated i2c_common_emul_data
+ */
+struct i2c_common_emul_data *
+emul_syv682x_get_i2c_common_data(const struct emul *emul);
 
 #endif /* __EMUL_SYV682X_H */

@@ -16,13 +16,10 @@
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_lis2dw12.h"
 #include "i2c.h"
+#include "emul/emul_stub_device.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(lis2dw12_emul, CONFIG_LIS2DW12_EMUL_LOG_LEVEL);
-
-#define LIS2DW12_DATA_FROM_I2C_EMUL(_emul)                                   \
-	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
-		     struct lis2dw12_emul_data, common)
 
 struct lis2dw12_emul_data {
 	/** Common I2C data */
@@ -50,24 +47,16 @@ struct lis2dw12_emul_cfg {
 	struct i2c_common_emul_cfg common;
 };
 
-struct i2c_emul *lis2dw12_emul_to_i2c_emul(const struct emul *emul)
-{
-	struct lis2dw12_emul_data *data = emul->data;
-
-	return &(data->common.emul);
-}
-
 void lis2dw12_emul_reset(const struct emul *emul)
 {
 	struct lis2dw12_emul_data *data = emul->data;
-	struct i2c_emul *i2c_emul = lis2dw12_emul_to_i2c_emul(emul);
 
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(&data->common,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
-	i2c_common_emul_set_write_fail_reg(i2c_emul,
+	i2c_common_emul_set_write_fail_reg(&data->common,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
-	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
-	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_read_func(&data->common, NULL, NULL);
+	i2c_common_emul_set_write_func(&data->common, NULL, NULL);
 	data->who_am_i_reg = LIS2DW12_WHO_AM_I;
 	data->ctrl1_reg = 0;
 	data->ctrl2_reg = 0;
@@ -93,10 +82,10 @@ uint32_t lis2dw12_emul_get_soft_reset_count(const struct emul *emul)
 	return data->soft_reset_count;
 }
 
-static int lis2dw12_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
-				   int bytes)
+static int lis2dw12_emul_read_byte(const struct emul *emul, int reg,
+				   uint8_t *val, int bytes)
 {
-	struct lis2dw12_emul_data *data = LIS2DW12_DATA_FROM_I2C_EMUL(emul);
+	struct lis2dw12_emul_data *data = emul->data;
 
 	switch (reg) {
 	case LIS2DW12_WHO_AM_I_REG:
@@ -158,7 +147,7 @@ static int lis2dw12_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 	return 0;
 }
 
-uint8_t lis2dw12_emul_peek_reg(struct i2c_emul *emul, int reg)
+uint8_t lis2dw12_emul_peek_reg(const struct emul *emul, int reg)
 {
 	__ASSERT(emul, "emul is NULL");
 
@@ -171,7 +160,7 @@ uint8_t lis2dw12_emul_peek_reg(struct i2c_emul *emul, int reg)
 	return val;
 }
 
-uint8_t lis2dw12_emul_peek_odr(struct i2c_emul *emul)
+uint8_t lis2dw12_emul_peek_odr(const struct emul *emul)
 {
 	__ASSERT(emul, "emul is NULL");
 
@@ -181,7 +170,7 @@ uint8_t lis2dw12_emul_peek_odr(struct i2c_emul *emul)
 	       __builtin_ctz(LIS2DW12_ACC_ODR_MASK);
 }
 
-uint8_t lis2dw12_emul_peek_mode(struct i2c_emul *emul)
+uint8_t lis2dw12_emul_peek_mode(const struct emul *emul)
 {
 	__ASSERT(emul, "emul is NULL");
 
@@ -191,7 +180,7 @@ uint8_t lis2dw12_emul_peek_mode(struct i2c_emul *emul)
 	       __builtin_ctz(LIS2DW12_ACC_MODE_MASK);
 }
 
-uint8_t lis2dw12_emul_peek_lpmode(struct i2c_emul *emul)
+uint8_t lis2dw12_emul_peek_lpmode(const struct emul *emul)
 {
 	__ASSERT(emul, "emul is NULL");
 
@@ -200,10 +189,10 @@ uint8_t lis2dw12_emul_peek_lpmode(struct i2c_emul *emul)
 	return (reg & LIS2DW12_ACC_LPMODE_MASK);
 }
 
-static int lis2dw12_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
-				    int bytes)
+static int lis2dw12_emul_write_byte(const struct emul *emul, int reg,
+				    uint8_t val, int bytes)
 {
-	struct lis2dw12_emul_data *data = LIS2DW12_DATA_FROM_I2C_EMUL(emul);
+	struct lis2dw12_emul_data *data = emul->data;
 
 	switch (reg) {
 	case LIS2DW12_WHO_AM_I_REG:
@@ -254,14 +243,13 @@ static int emul_lis2dw12_init(const struct emul *emul,
 	const struct i2c_common_emul_cfg *cfg = &(lis2dw12_cfg->common);
 	struct lis2dw12_emul_data *data = emul->data;
 
-	data->common.emul.api = &i2c_common_emul_api;
 	data->common.emul.addr = cfg->addr;
-	data->common.emul.parent = emul;
+	data->common.emul.target = emul;
 	data->common.i2c = parent;
 	data->common.cfg = cfg;
 	i2c_common_emul_init(&data->common);
 
-	return i2c_emul_register(parent, emul->dev_label, &data->common.emul);
+	return 0;
 }
 
 int lis2dw12_emul_set_accel_reading(const struct emul *emul, intv3_t reading)
@@ -310,6 +298,14 @@ void lis2dw12_emul_clear_accel_reading(const struct emul *emul)
 		},                                                        \
 	}; \
 	EMUL_DEFINE(emul_lis2dw12_init, DT_DRV_INST(n),                     \
-		    &lis2dw12_emul_cfg_##n, &lis2dw12_emul_data_##n)
+		    &lis2dw12_emul_cfg_##n, &lis2dw12_emul_data_##n,        \
+		    &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_LIS2DW12)
+DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
+
+struct i2c_common_emul_data *
+emul_lis2dw12_get_i2c_common_data(const struct emul *emul)
+{
+	return emul->data;
+}

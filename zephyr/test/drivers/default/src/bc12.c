@@ -98,7 +98,7 @@ static const struct bc12_status bc12_chg_limits[] = {
 
 static void test_bc12_pi3usb9201_host_mode(void)
 {
-	struct i2c_emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
+	const struct emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
 	uint8_t a, b;
 
 	/*
@@ -145,7 +145,7 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 				 enum charge_supplier supplier,
 				 int current_limit)
 {
-	struct i2c_emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
+	const struct emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
 	uint8_t a, b;
 	int port, voltage;
 
@@ -234,7 +234,7 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
 	const struct device *acok_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_PATH, gpios));
-	struct i2c_emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
+	const struct emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
 	uint8_t a, b;
 
 	/* Pretend we have battery and AC so charging works normally. */

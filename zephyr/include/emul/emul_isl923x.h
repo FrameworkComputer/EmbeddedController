@@ -94,6 +94,15 @@ void raa489000_emul_set_acok_pin(const struct emul *emulator, uint16_t value);
  * @param reg The address of the register to query
  * @return The 16-bit value of the register
  */
-uint16_t isl923x_emul_peek_reg(struct i2c_emul *i2c_emul, int reg);
+uint16_t isl923x_emul_peek_reg(const struct emul *emul, int reg);
+
+/**
+ * @brief Saves current internal state of sensors to emulator's registers.
+ *
+ * @param emul Pointer to ISL923X emulator
+ * @return Pointer to ISL923X emulator associated i2c_common_emul_data
+ */
+struct i2c_common_emul_data *
+emul_isl923x_get_i2c_common_data(const struct emul *emul);
 
 #endif /* ZEPHYR_INCLUDE_EMUL_EMUL_ISL923X_H_ */

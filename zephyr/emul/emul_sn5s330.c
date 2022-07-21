@@ -19,13 +19,10 @@
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sn5s330.h"
 #include "i2c.h"
+#include "emul/emul_stub_device.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(sn5s330_emul, CONFIG_SN5S330_EMUL_LOG_LEVEL);
-
-#define SN5S330_DATA_FROM_I2C_EMUL(_emul)                                    \
-	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
-		     struct sn5s330_emul_data, common)
 
 struct sn5s330_emul_data {
 	/** Common I2C data */
@@ -110,13 +107,6 @@ test_mockable_static void sn5s330_emul_interrupt_set_stub(void)
 	/* Stub to be used by fff fakes during test */
 }
 
-struct i2c_emul *sn5s330_emul_to_i2c_emul(const struct emul *emul)
-{
-	struct sn5s330_emul_data *data = emul->data;
-
-	return &(data->common.emul);
-}
-
 /* Workhorse for mapping i2c reg to internal emulator data access */
 static uint8_t *sn5s330_emul_get_reg_ptr(struct sn5s330_emul_data *data,
 					 int reg)
@@ -194,29 +184,29 @@ void sn5s330_emul_peek_reg(const struct emul *emul, uint32_t reg, uint8_t *val)
 	*val = *data_reg;
 }
 
-static void sn5s330_emul_set_int_pin(struct i2c_emul *emul, bool val)
+static void sn5s330_emul_set_int_pin(const struct emul *emul, bool val)
 {
-	struct sn5s330_emul_data *data = SN5S330_DATA_FROM_I2C_EMUL(emul);
+	struct sn5s330_emul_data *data = emul->data;
 	int res = gpio_emul_input_set(data->gpio_int_port, data->gpio_int_pin,
 				      val);
 	__ASSERT_NO_MSG(res == 0);
 }
 
-static void sn5s330_emul_assert_interrupt(struct i2c_emul *emul)
+static void sn5s330_emul_assert_interrupt(const struct emul *emul)
 {
 	sn5s330_emul_interrupt_set_stub();
 	sn5s330_emul_set_int_pin(emul, false);
 }
 
-static void sn5s330_emul_deassert_interrupt(struct i2c_emul *emul)
+static void sn5s330_emul_deassert_interrupt(const struct emul *emul)
 {
 	sn5s330_emul_set_int_pin(emul, true);
 }
 
-static int sn5s330_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
-				  int bytes)
+static int sn5s330_emul_read_byte(const struct emul *emul, int reg,
+				  uint8_t *val, int bytes)
 {
-	struct sn5s330_emul_data *data = SN5S330_DATA_FROM_I2C_EMUL(emul);
+	struct sn5s330_emul_data *data = emul->data;
 	uint8_t *reg_to_read = sn5s330_emul_get_reg_ptr(data, reg);
 
 	__ASSERT(bytes == 0, "bytes 0x%x != 0x0 on reg 0x%x", bytes, reg);
@@ -225,10 +215,10 @@ static int sn5s330_emul_read_byte(struct i2c_emul *emul, int reg, uint8_t *val,
 	return 0;
 }
 
-static int sn5s330_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
-				   int bytes)
+static int sn5s330_emul_write_byte(const struct emul *emul, int reg,
+				   uint8_t val, int bytes)
 {
-	struct sn5s330_emul_data *data = SN5S330_DATA_FROM_I2C_EMUL(emul);
+	struct sn5s330_emul_data *data = emul->data;
 	uint8_t *reg_to_write;
 	bool deassert_int = false;
 
@@ -278,7 +268,6 @@ static int sn5s330_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 void sn5s330_emul_make_vbus_overcurrent(const struct emul *emul)
 {
 	struct sn5s330_emul_data *data = emul->data;
-	struct i2c_emul *i2c_emul = &data->common.emul;
 
 	data->int_status_reg1 |= SN5S330_ILIM_PP1_MASK;
 	data->int_trip_rise_reg1 |= SN5S330_ILIM_PP1_MASK;
@@ -287,13 +276,12 @@ void sn5s330_emul_make_vbus_overcurrent(const struct emul *emul)
 	if (data->int_mask_rise_reg1 & SN5S330_ILIM_PP1_MASK)
 		return;
 
-	sn5s330_emul_assert_interrupt(i2c_emul);
+	sn5s330_emul_assert_interrupt(emul);
 }
 
 void sn5s330_emul_lower_vbus_below_minv(const struct emul *emul)
 {
 	struct sn5s330_emul_data *data = emul->data;
-	struct i2c_emul *i2c_emul = &data->common.emul;
 
 	data->int_status_reg4 |= SN5S330_VSAFE0V_STAT;
 
@@ -301,7 +289,7 @@ void sn5s330_emul_lower_vbus_below_minv(const struct emul *emul)
 	if (data->int_status_reg4 & SN5S330_VSAFE0V_MASK)
 		return;
 
-	sn5s330_emul_assert_interrupt(i2c_emul);
+	sn5s330_emul_assert_interrupt(emul);
 }
 
 void sn5s330_emul_reset(const struct emul *emul)
@@ -311,7 +299,7 @@ void sn5s330_emul_reset(const struct emul *emul)
 	const struct device *gpio_int_port = data->gpio_int_port;
 	gpio_pin_t gpio_int_pin = data->gpio_int_pin;
 
-	sn5s330_emul_deassert_interrupt(&data->common.emul);
+	sn5s330_emul_deassert_interrupt(emul);
 
 	/*
 	 * TODO(b/203364783): Some registers reset with set bits; this should be
@@ -331,16 +319,15 @@ static int emul_sn5s330_init(const struct emul *emul,
 	const struct sn5s330_emul_cfg *cfg = emul->cfg;
 	struct sn5s330_emul_data *data = emul->data;
 
-	sn5s330_emul_deassert_interrupt(&data->common.emul);
+	sn5s330_emul_deassert_interrupt(emul);
 
-	data->common.emul.api = &i2c_common_emul_api;
 	data->common.emul.addr = cfg->common.addr;
-	data->common.emul.parent = emul;
+	data->common.emul.target = emul;
 	data->common.i2c = parent;
 	data->common.cfg = &cfg->common;
 	i2c_common_emul_init(&data->common);
 
-	return i2c_emul_register(parent, emul->dev_label, &data->common.emul);
+	return 0;
 }
 
 #define SN5S330_GET_GPIO_INT_PORT(n) \
@@ -365,6 +352,13 @@ static int emul_sn5s330_init(const struct emul *emul,
 		},                                                             \
 	}; \
 	EMUL_DEFINE(emul_sn5s330_init, DT_DRV_INST(n), &sn5s330_emul_cfg_##n,    \
-		    &sn5s330_emul_data_##n)
+		    &sn5s330_emul_data_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_SN5S330)
+DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
+
+struct i2c_common_emul_data *
+emul_sn5s330_get_i2c_common_data(const struct emul *emul)
+{
+	return emul->data;
+}

@@ -85,6 +85,7 @@ struct tcpci_ctx {
 
 /** Run-time data used by the emulator */
 struct tcpc_emul_data {
+	struct i2c_common_emul_data common;
 	/** Pointer to the common TCPCI emulator context */
 	struct tcpci_ctx *tcpci_ctx;
 
@@ -94,7 +95,7 @@ struct tcpc_emul_data {
 	const struct i2c_common_emul_cfg i2c_cfg;
 };
 
-#define TCPCI_EMUL_DEFINE(n, init, cfg_ptr, chip_data_ptr)                   \
+#define TCPCI_EMUL_DEFINE(n, init, cfg_ptr, chip_data_ptr, bus_api)          \
 	static uint8_t tcpci_emul_tx_buf_##n[128];                           \
 	static struct tcpci_emul_msg tcpci_emul_tx_msg_##n = {               \
 		.buf = tcpci_emul_tx_buf_##n,                                \
@@ -123,7 +124,7 @@ struct tcpc_emul_data {
 			.addr = DT_INST_REG_ADDR(n),                       \
 		},                                                         \
 	}; \
-	EMUL_DEFINE(init, DT_DRV_INST(n), cfg_ptr, &tcpc_emul_data_##n)
+	EMUL_DEFINE(init, DT_DRV_INST(n), cfg_ptr, &tcpc_emul_data_##n, bus_api)
 
 /** Response from TCPCI specific device operations */
 enum tcpci_emul_ops_resp {
@@ -256,15 +257,6 @@ struct tcpci_emul_partner_ops {
 	void (*disconnect)(const struct emul *emul,
 			   const struct tcpci_emul_partner_ops *ops);
 };
-
-/**
- * @brief Get i2c_emul for TCPCI emulator
- *
- * @param emul Pointer to TCPC emulator
- *
- * @return Pointer to I2C TCPCI emulator
- */
-struct i2c_emul *tcpci_emul_get_i2c_emul(const struct emul *emul);
 
 /**
  * @brief Set value of given register of TCPCI
@@ -454,6 +446,15 @@ int tcpci_emul_disconnect_partner(const struct emul *emul);
  */
 void tcpci_emul_partner_msg_status(const struct emul *emul,
 				   enum tcpci_emul_tx_status status);
+
+/**
+ * @brief Gets the common data associated with the tcpci chip overall
+ *
+ * @param emul Pointer to TCPC emulator
+ * @return Pointer to struct i2c_common_emul_data
+ */
+struct i2c_common_emul_data *
+emul_tcpci_generic_get_i2c_common_data(const struct emul *emul);
 
 /**
  * @}

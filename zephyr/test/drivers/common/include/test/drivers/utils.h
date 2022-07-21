@@ -8,6 +8,7 @@
 
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/ztest.h>
 #include <stddef.h>
 #include <string.h>
 

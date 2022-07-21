@@ -32,10 +32,10 @@ ZTEST(ln9310, test_ln9310_read_chip_fails)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 
 	zassert_not_null(emulator, NULL);
-	zassert_not_null(i2c_emul, NULL);
 
 	ln9310_emul_set_context(emulator);
 	ln9310_emul_reset(emulator);
@@ -43,7 +43,7 @@ ZTEST(ln9310, test_ln9310_read_chip_fails)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	i2c_common_emul_set_read_fail_reg(i2c_emul, LN9310_REG_BC_STS_C);
+	i2c_common_emul_set_read_fail_reg(common_data, LN9310_REG_BC_STS_C);
 
 	zassert_true(ln9310_init() != 0, NULL);
 	zassert_false(ln9310_emul_is_init(emulator), NULL);
@@ -52,7 +52,7 @@ ZTEST(ln9310, test_ln9310_read_chip_fails)
 	k_msleep(TEST_DELAY_MS);
 	zassert_false(ln9310_power_good(), NULL);
 
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
@@ -111,7 +111,7 @@ struct startup_workaround_data {
 	bool startup_workaround_should_fail;
 };
 
-static int mock_write_fn_intercept_startup_workaround(struct i2c_emul *emul,
+static int mock_write_fn_intercept_startup_workaround(const struct emul *emul,
 						      int reg, uint8_t val,
 						      int bytes, void *data)
 {
@@ -136,8 +136,8 @@ ZTEST(ln9310, test_ln9310_2s_cfly_precharge_startup)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-
-	struct i2c_emul *emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 
 	struct startup_workaround_data test_data = {
 		.startup_workaround_attempted = false,
@@ -160,7 +160,8 @@ ZTEST(ln9310, test_ln9310_2s_cfly_precharge_startup)
 	zassert_false(ln9310_power_good(), NULL);
 
 	i2c_common_emul_set_write_func(
-		emul, mock_write_fn_intercept_startup_workaround, &test_data);
+		common_data, mock_write_fn_intercept_startup_workaround,
+		&test_data);
 
 	ln9310_software_enable(true);
 	zassert_true(test_data.startup_workaround_attempted, NULL);
@@ -175,14 +176,15 @@ ZTEST(ln9310, test_ln9310_2s_cfly_precharge_startup)
 	k_msleep(TEST_DELAY_MS);
 	zassert_false(ln9310_power_good(), NULL);
 
-	i2c_common_emul_set_write_func(emul, NULL, NULL);
+	i2c_common_emul_set_write_func(common_data, NULL, NULL);
 }
 
 ZTEST(ln9310, test_ln9310_3s_cfly_precharge_startup)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 
 	struct startup_workaround_data test_data = {
 		.startup_workaround_attempted = false,
@@ -205,7 +207,8 @@ ZTEST(ln9310, test_ln9310_3s_cfly_precharge_startup)
 	zassert_false(ln9310_power_good(), NULL);
 
 	i2c_common_emul_set_write_func(
-		emul, mock_write_fn_intercept_startup_workaround, &test_data);
+		common_data, mock_write_fn_intercept_startup_workaround,
+		&test_data);
 
 	ln9310_software_enable(true);
 	zassert_true(test_data.startup_workaround_attempted, NULL);
@@ -220,15 +223,15 @@ ZTEST(ln9310, test_ln9310_3s_cfly_precharge_startup)
 	k_msleep(TEST_DELAY_MS);
 	zassert_false(ln9310_power_good(), NULL);
 
-	i2c_common_emul_set_write_func(emul, NULL, NULL);
+	i2c_common_emul_set_write_func(common_data, NULL, NULL);
 }
 
 ZTEST(ln9310, test_ln9310_cfly_precharge_exceeds_retries)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-
-	struct i2c_emul *emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 
 	struct startup_workaround_data test_data = {
 		.startup_workaround_attempted = false,
@@ -255,7 +258,8 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_exceeds_retries)
 	zassert_false(ln9310_power_good(), NULL);
 
 	i2c_common_emul_set_write_func(
-		emul, mock_write_fn_intercept_startup_workaround, &test_data);
+		common_data, mock_write_fn_intercept_startup_workaround,
+		&test_data);
 
 	ln9310_software_enable(true);
 	zassert_true(test_data.startup_workaround_attempted, NULL);
@@ -264,7 +268,7 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_exceeds_retries)
 	k_msleep(TEST_DELAY_MS);
 	zassert_false(ln9310_power_good(), NULL);
 
-	i2c_common_emul_set_write_func(emul, NULL, NULL);
+	i2c_common_emul_set_write_func(common_data, NULL, NULL);
 }
 
 ZTEST(ln9310, test_ln9310_battery_unknown)
@@ -301,10 +305,10 @@ ZTEST(ln9310, test_ln9310_2s_battery_read_fails)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 
 	zassert_not_null(emulator, NULL);
-	zassert_not_null(i2c_emul, NULL);
 
 	ln9310_emul_set_context(emulator);
 	ln9310_emul_reset(emulator);
@@ -312,7 +316,7 @@ ZTEST(ln9310, test_ln9310_2s_battery_read_fails)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	i2c_common_emul_set_read_fail_reg(i2c_emul, LN9310_REG_BC_STS_B);
+	i2c_common_emul_set_read_fail_reg(common_data, LN9310_REG_BC_STS_B);
 
 	zassert_true(ln9310_init() != 0, NULL);
 	zassert_false(ln9310_emul_is_init(emulator), NULL);
@@ -326,10 +330,10 @@ ZTEST(ln9310, test_ln9310_2s_battery_read_fails)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	i2c_common_emul_set_read_fail_reg(i2c_emul, LN9310_REG_TRACK_CTRL);
+	i2c_common_emul_set_read_fail_reg(common_data, LN9310_REG_TRACK_CTRL);
 
 	zassert_false(ln9310_init() == 0, NULL);
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
@@ -337,10 +341,10 @@ ZTEST(ln9310, test_ln9310_lion_ctrl_reg_fails)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 
 	zassert_not_null(emulator, NULL);
-	zassert_not_null(i2c_emul, NULL);
 
 	ln9310_emul_set_context(emulator);
 	ln9310_emul_reset(emulator);
@@ -348,7 +352,7 @@ ZTEST(ln9310, test_ln9310_lion_ctrl_reg_fails)
 	ln9310_emul_set_battery_cell_type(emulator, BATTERY_CELL_TYPE_2S);
 	ln9310_emul_set_version(emulator, LN9310_BC_STS_C_CHIP_REV_FIXED);
 
-	i2c_common_emul_set_read_fail_reg(i2c_emul, LN9310_REG_LION_CTRL);
+	i2c_common_emul_set_read_fail_reg(common_data, LN9310_REG_LION_CTRL);
 
 	zassert_true(ln9310_init() != 0, NULL);
 	zassert_false(ln9310_emul_is_init(emulator), NULL);
@@ -362,7 +366,7 @@ ZTEST(ln9310, test_ln9310_lion_ctrl_reg_fails)
 	ln9310_software_enable(true);
 	zassert_false(ln9310_power_good(), NULL);
 
-	i2c_common_emul_set_read_fail_reg(i2c_emul,
+	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 }
 
@@ -371,7 +375,7 @@ struct precharge_timeout_data {
 	bool handled_clearing_standby_en_bit_timeout;
 };
 
-static int mock_intercept_startup_ctrl_reg(struct i2c_emul *emul, int reg,
+static int mock_intercept_startup_ctrl_reg(const struct emul *emulator, int reg,
 					   uint8_t val, int bytes, void *data)
 {
 	struct precharge_timeout_data *test_data = data;
@@ -398,7 +402,8 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_timesout)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 	struct precharge_timeout_data test_data = {
 		.time_to_mock = {
 			.val = -1,
@@ -411,7 +416,6 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_timesout)
 	};
 
 	zassert_not_null(emulator, NULL);
-	zassert_not_null(i2c_emul, NULL);
 
 	ln9310_emul_set_context(emulator);
 	ln9310_emul_reset(emulator);
@@ -428,7 +432,7 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_timesout)
 	zassert_false(ln9310_power_good(), NULL);
 
 	i2c_common_emul_set_write_func(
-		i2c_emul, mock_intercept_startup_ctrl_reg, &test_data);
+		common_data, mock_intercept_startup_ctrl_reg, &test_data);
 
 	ln9310_software_enable(true);
 	/* TODO(b/201420132) */
@@ -437,7 +441,7 @@ ZTEST(ln9310, test_ln9310_cfly_precharge_timesout)
 	/* It only times out on one attempt, it should subsequently startup */
 	zassert_true(ln9310_power_good(), NULL);
 
-	i2c_common_emul_set_write_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_write_func(common_data, NULL, NULL);
 }
 
 struct reg_to_fail_data {
@@ -445,7 +449,7 @@ struct reg_to_fail_data {
 	int reg_access_fail_countdown;
 };
 
-static int mock_read_intercept_reg_to_fail(struct i2c_emul *emul, int reg,
+static int mock_read_intercept_reg_to_fail(const struct emul *emul, int reg,
 					   uint8_t *val, int bytes, void *data)
 {
 	struct reg_to_fail_data *test_data = data;
@@ -462,14 +466,14 @@ ZTEST(ln9310, test_ln9310_interrupt_reg_fail)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_fail_data test_data = {
 		.reg_access_to_fail = 0,
 		.reg_access_fail_countdown = 0,
 	};
 
 	zassert_not_null(emulator, NULL);
-	zassert_not_null(i2c_emul, NULL);
 
 	ln9310_emul_set_context(emulator);
 	ln9310_emul_reset(emulator);
@@ -480,8 +484,8 @@ ZTEST(ln9310, test_ln9310_interrupt_reg_fail)
 	zassert_ok(ln9310_init(), NULL);
 	zassert_true(ln9310_emul_is_init(emulator), NULL);
 
-	i2c_common_emul_set_read_func(i2c_emul, mock_read_intercept_reg_to_fail,
-				      &test_data);
+	i2c_common_emul_set_read_func(
+		common_data, mock_read_intercept_reg_to_fail, &test_data);
 
 	/* Fail in beginning of software enable */
 	test_data.reg_access_to_fail = LN9310_REG_INT1;
@@ -503,21 +507,21 @@ ZTEST(ln9310, test_ln9310_interrupt_reg_fail)
 	zassert_false(ln9310_power_good(), NULL);
 	zassert_true(test_data.reg_access_fail_countdown <= 0, NULL);
 
-	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
 
 ZTEST(ln9310, test_ln9310_sys_sts_reg_fail)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_fail_data test_data = {
 		.reg_access_to_fail = 0,
 		.reg_access_fail_countdown = 0,
 	};
 
 	zassert_not_null(emulator, NULL);
-	zassert_not_null(i2c_emul, NULL);
 
 	ln9310_emul_set_context(emulator);
 	ln9310_emul_reset(emulator);
@@ -529,7 +533,7 @@ ZTEST(ln9310, test_ln9310_sys_sts_reg_fail)
 	zassert_true(ln9310_emul_is_init(emulator), NULL);
 
 	i2c_common_emul_set_read_func(
-		i2c_emul, &mock_read_intercept_reg_to_fail, &test_data);
+		common_data, &mock_read_intercept_reg_to_fail, &test_data);
 
 	/* Register only read once and in the interrupt handler */
 	test_data.reg_access_to_fail = LN9310_REG_SYS_STS;
@@ -543,7 +547,7 @@ ZTEST(ln9310, test_ln9310_sys_sts_reg_fail)
 	zassert_false(ln9310_power_good(), NULL);
 	zassert_true(test_data.reg_access_fail_countdown <= 0, NULL);
 
-	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
 
 struct reg_to_intercept {
@@ -551,7 +555,7 @@ struct reg_to_intercept {
 	uint8_t replace_val;
 };
 
-static int mock_read_interceptor(struct i2c_emul *emul, int reg, uint8_t *val,
+static int mock_read_interceptor(const struct emul *emul, int reg, uint8_t *val,
 				 int bytes, void *data)
 {
 	struct reg_to_intercept *test_data = data;
@@ -568,14 +572,14 @@ ZTEST(ln9310, test_ln9310_reset_explicit_detected_startup)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_intercept test_data = {
 		.reg = LN9310_REG_LION_CTRL,
 		.replace_val = 0,
 	};
 
 	zassert_not_null(emulator, NULL);
-	zassert_not_null(i2c_emul, NULL);
 
 	ln9310_emul_set_context(emulator);
 	ln9310_emul_reset(emulator);
@@ -586,7 +590,7 @@ ZTEST(ln9310, test_ln9310_reset_explicit_detected_startup)
 	zassert_ok(ln9310_init(), NULL);
 	zassert_true(ln9310_emul_is_init(emulator), NULL);
 
-	i2c_common_emul_set_read_func(i2c_emul, &mock_read_interceptor,
+	i2c_common_emul_set_read_func(common_data, &mock_read_interceptor,
 				      &test_data);
 
 	ln9310_software_enable(true);
@@ -596,21 +600,21 @@ ZTEST(ln9310, test_ln9310_reset_explicit_detected_startup)
 
 	zassert_true(ln9310_power_good(), NULL);
 
-	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
 
 ZTEST(ln9310, test_ln9310_update_startup_seq_fails)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_fail_data test_data = {
 		.reg_access_to_fail = LN9310_REG_CFG_4,
 		.reg_access_fail_countdown = 1,
 	};
 
 	zassert_not_null(emulator, NULL);
-	zassert_not_null(i2c_emul, NULL);
 
 	ln9310_emul_set_context(emulator);
 	ln9310_emul_reset(emulator);
@@ -621,7 +625,7 @@ ZTEST(ln9310, test_ln9310_update_startup_seq_fails)
 				REQUIRES_CFLY_PRECHARGE_STARTUP_CHIP_REV);
 
 	i2c_common_emul_set_read_func(
-		i2c_emul, &mock_read_intercept_reg_to_fail, &test_data);
+		common_data, &mock_read_intercept_reg_to_fail, &test_data);
 
 	zassert_false(ln9310_init() == 0, NULL);
 	zassert_false(ln9310_emul_is_init(emulator), NULL);
@@ -634,21 +638,21 @@ ZTEST(ln9310, test_ln9310_update_startup_seq_fails)
 	zassert_false(ln9310_power_good(), NULL);
 	zassert_true(test_data.reg_access_fail_countdown <= 0, NULL);
 
-	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
 
 ZTEST(ln9310, test_ln9310_state_change_only_on_mode_change_interrupt)
 {
 	const struct emul *emulator =
 		emul_get_binding(DT_LABEL(DT_NODELABEL(ln9310)));
-	struct i2c_emul *i2c_emul = ln9310_emul_get_i2c_emul(emulator);
+	struct i2c_common_emul_data *common_data =
+		emul_ln9310_get_i2c_common_data(emulator);
 	struct reg_to_intercept test_data = {
 		.reg = LN9310_REG_INT1,
 		.replace_val = 0,
 	};
 
 	zassert_not_null(emulator, NULL);
-	zassert_not_null(i2c_emul, NULL);
 
 	ln9310_emul_set_context(emulator);
 	ln9310_emul_reset(emulator);
@@ -659,7 +663,7 @@ ZTEST(ln9310, test_ln9310_state_change_only_on_mode_change_interrupt)
 	zassert_ok(ln9310_init(), NULL);
 	zassert_true(ln9310_emul_is_init(emulator), NULL);
 
-	i2c_common_emul_set_read_func(i2c_emul, &mock_read_interceptor,
+	i2c_common_emul_set_read_func(common_data, &mock_read_interceptor,
 				      &test_data);
 
 	ln9310_software_enable(true);
@@ -669,7 +673,7 @@ ZTEST(ln9310, test_ln9310_state_change_only_on_mode_change_interrupt)
 
 	zassert_false(ln9310_power_good(), NULL);
 
-	i2c_common_emul_set_read_func(i2c_emul, NULL, NULL);
+	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
 
 static inline void reset_ln9310_state(void)

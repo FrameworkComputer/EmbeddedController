@@ -18,10 +18,7 @@ LOG_MODULE_REGISTER(emul_bma255);
 #include "emul/emul_bma255.h"
 
 #include "driver/accel_bma2x2.h"
-
-#define BMA_DATA_FROM_I2C_EMUL(_emul)                                        \
-	CONTAINER_OF(CONTAINER_OF(_emul, struct i2c_common_emul_data, emul), \
-		     struct bma_emul_data, common)
+#include "emul/emul_stub_device.h"
 
 /** Run-time data used by the emulator */
 struct bma_emul_data {
@@ -74,7 +71,7 @@ struct bma_emul_data {
 };
 
 /** Check description in emul_bma255.h */
-void bma_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
+void bma_emul_set_reg(const struct emul *emul, int reg, uint8_t val)
 {
 	struct bma_emul_data *data;
 
@@ -82,12 +79,12 @@ void bma_emul_set_reg(struct i2c_emul *emul, int reg, uint8_t val)
 		return;
 	}
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 	data->reg[reg] = val;
 }
 
 /** Check description in emul_bma255.h */
-uint8_t bma_emul_get_reg(struct i2c_emul *emul, int reg)
+uint8_t bma_emul_get_reg(const struct emul *emul, int reg)
 {
 	struct bma_emul_data *data;
 
@@ -95,7 +92,7 @@ uint8_t bma_emul_get_reg(struct i2c_emul *emul, int reg)
 		return 0;
 	}
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	return data->reg[reg];
 }
@@ -182,11 +179,11 @@ static uint8_t bma_emul_off_to_nvm(int16_t off)
 }
 
 /** Check description in emul_bma255.h */
-int16_t bma_emul_get_off(struct i2c_emul *emul, int axis)
+int16_t bma_emul_get_off(const struct emul *emul, int axis)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	switch (axis) {
 	case BMA_EMUL_AXIS_X:
@@ -201,11 +198,11 @@ int16_t bma_emul_get_off(struct i2c_emul *emul, int axis)
 }
 
 /** Check description in emul_bma255.h */
-void bma_emul_set_off(struct i2c_emul *emul, int axis, int16_t val)
+void bma_emul_set_off(const struct emul *emul, int axis, int16_t val)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	switch (axis) {
 	case BMA_EMUL_AXIS_X:
@@ -227,11 +224,11 @@ void bma_emul_set_off(struct i2c_emul *emul, int axis, int16_t val)
 }
 
 /** Check description in emul_bma255.h */
-int16_t bma_emul_get_acc(struct i2c_emul *emul, int axis)
+int16_t bma_emul_get_acc(const struct emul *emul, int axis)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	switch (axis) {
 	case BMA_EMUL_AXIS_X:
@@ -246,11 +243,11 @@ int16_t bma_emul_get_acc(struct i2c_emul *emul, int axis)
 }
 
 /** Check description in emul_bma255.h */
-void bma_emul_set_acc(struct i2c_emul *emul, int axis, int16_t val)
+void bma_emul_set_acc(const struct emul *emul, int axis, int16_t val)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	switch (axis) {
 	case BMA_EMUL_AXIS_X:
@@ -266,47 +263,47 @@ void bma_emul_set_acc(struct i2c_emul *emul, int axis, int16_t val)
 }
 
 /** Check description in emul_bma255.h */
-void bma_emul_set_err_on_cal_nrdy(struct i2c_emul *emul, bool set)
+void bma_emul_set_err_on_cal_nrdy(const struct emul *emul, bool set)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 	data->error_on_cal_trg_nrdy = set;
 }
 
 /** Check description in emul_bma255.h */
-void bma_emul_set_err_on_cal_bad_range(struct i2c_emul *emul, bool set)
+void bma_emul_set_err_on_cal_bad_range(const struct emul *emul, bool set)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 	data->error_on_cal_trg_bad_range = set;
 }
 
 /** Check description in emul_bma255.h */
-void bma_emul_set_err_on_ro_write(struct i2c_emul *emul, bool set)
+void bma_emul_set_err_on_ro_write(const struct emul *emul, bool set)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 	data->error_on_ro_write = set;
 }
 
 /** Check description in emul_bma255.h */
-void bma_emul_set_err_on_rsvd_write(struct i2c_emul *emul, bool set)
+void bma_emul_set_err_on_rsvd_write(const struct emul *emul, bool set)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 	data->error_on_rsvd_write = set;
 }
 
 /** Check description in emul_bma255.h */
-void bma_emul_set_err_on_msb_first(struct i2c_emul *emul, bool set)
+void bma_emul_set_err_on_msb_first(const struct emul *emul, bool set)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 	data->error_on_msb_first = set;
 }
 
@@ -384,11 +381,11 @@ static const uint8_t bma_emul_rsvd_mask[] = {
  *
  * @param emul Pointer to BMA255 emulator
  */
-static void bma_emul_restore_nvm(struct i2c_emul *emul)
+static void bma_emul_restore_nvm(const struct emul *emul)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	/* Restore registers values */
 	data->reg[BMA2x2_OFFSET_X_AXIS_ADDR] = data->nvm_x;
@@ -408,11 +405,11 @@ static void bma_emul_restore_nvm(struct i2c_emul *emul)
  *
  * @param emul Pointer to BMA255 emulator
  */
-static void bma_emul_reset(struct i2c_emul *emul)
+static void bma_emul_reset(const struct emul *emul)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	data->reg[BMA2x2_CHIP_ID_ADDR] = 0xfa;
 	data->reg[0x01] = 0x00; /* Reserved */
@@ -514,12 +511,12 @@ static int bma_emul_range_to_shift(uint8_t range)
  *
  * @return 0 on success
  */
-static int bma_emul_handle_nvm_write(struct i2c_emul *emul, uint8_t val)
+static int bma_emul_handle_nvm_write(const struct emul *emul, uint8_t val)
 {
 	struct bma_emul_data *data;
 	uint8_t writes_rem;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	/* NVM not ready, ignore write/load requests */
 	if (!(data->reg[BMA2x2_EEPROM_CTRL_ADDR] & BMA2x2_EEPROM_RDY)) {
@@ -558,11 +555,11 @@ static int bma_emul_handle_nvm_write(struct i2c_emul *emul, uint8_t val)
  *
  * @param emul Pointer to BMA255 emulator
  */
-static void bma_emul_clear_int(struct i2c_emul *emul)
+static void bma_emul_clear_int(const struct emul *emul)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	data->reg[BMA2x2_STAT1_ADDR] = 0x00;
 	data->reg[BMA2x2_STAT2_ADDR] = 0x00;
@@ -579,12 +576,12 @@ static void bma_emul_clear_int(struct i2c_emul *emul)
  *
  * @return target Value to which offset compensation should be calculated
  */
-static int16_t bma_emul_get_target(struct i2c_emul *emul, int axis)
+static int16_t bma_emul_get_target(const struct emul *emul, int axis)
 {
 	struct bma_emul_data *data;
 	uint8_t target;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	target = data->reg[BMA2x2_OFC_SETTING_ADDR] >>
 		 BMA2x2_OFC_TARGET_AXIS(axis);
@@ -614,13 +611,13 @@ static int16_t bma_emul_get_target(struct i2c_emul *emul, int axis)
  * @return 0 on success
  * @return -EIO when trying to start fast compensation in wrong emulator state
  */
-static int bma_emul_handle_off_comp(struct i2c_emul *emul, uint8_t val)
+static int bma_emul_handle_off_comp(const struct emul *emul, uint8_t val)
 {
 	struct bma_emul_data *data;
 	uint8_t trigger;
 	int16_t target;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	if (val & BMA2x2_OFFSET_RESET) {
 		data->off_x = 0;
@@ -680,13 +677,13 @@ static int bma_emul_handle_off_comp(struct i2c_emul *emul, uint8_t val)
  * @return 0 on success
  * @return -EIO on error
  */
-static int bma_emul_handle_write(struct i2c_emul *emul, int reg, int bytes)
+static int bma_emul_handle_write(const struct emul *emul, int reg, int bytes)
 {
 	struct bma_emul_data *data;
 	uint8_t val;
 	int ret;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	val = data->write_byte;
 
@@ -791,7 +788,7 @@ static int bma_emul_handle_write(struct i2c_emul *emul, int reg, int bytes)
  * @return 0 on success
  * @return -EIO when accessing MSB before LSB with enabled shadowing
  */
-static int bma_emul_get_acc_val(struct i2c_emul *emul, int lsb_reg,
+static int bma_emul_get_acc_val(const struct emul *emul, int lsb_reg,
 				bool *lsb_read, bool lsb, int16_t val)
 {
 	struct bma_emul_data *data;
@@ -800,7 +797,7 @@ static int bma_emul_get_acc_val(struct i2c_emul *emul, int lsb_reg,
 	int msb_reg;
 	int shift;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	if (lsb) {
 		*lsb_read = 1;
@@ -835,7 +832,7 @@ static int bma_emul_get_acc_val(struct i2c_emul *emul, int lsb_reg,
 }
 
 /** Check description in emul_bma255.h */
-int bma_emul_access_reg(struct i2c_emul *emul, int reg, int bytes, bool read)
+int bma_emul_access_reg(const struct emul *emul, int reg, int bytes, bool read)
 {
 	/*
 	 * Exclude first byte (select register) from total number of bytes
@@ -866,13 +863,13 @@ int bma_emul_access_reg(struct i2c_emul *emul, int reg, int bytes, bool read)
  * @return 0 on success
  * @return -EIO on error
  */
-static int bma_emul_handle_read(struct i2c_emul *emul, int reg, uint8_t *val,
+static int bma_emul_handle_read(const struct emul *emul, int reg, uint8_t *val,
 				int bytes)
 {
 	struct bma_emul_data *data;
 	int ret;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	reg = bma_emul_access_reg(emul, reg, bytes, true /* = read */);
 
@@ -934,12 +931,12 @@ static int bma_emul_handle_read(struct i2c_emul *emul, int reg, uint8_t *val,
  * @return 0 on success
  * @return -EIO on error
  */
-static int bma_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
+static int bma_emul_write_byte(const struct emul *emul, int reg, uint8_t val,
 			       int bytes)
 {
 	struct bma_emul_data *data;
 
-	data = BMA_DATA_FROM_I2C_EMUL(emul);
+	data = emul->data;
 
 	data->write_byte = val;
 
@@ -962,20 +959,18 @@ static int bma_emul_write_byte(struct i2c_emul *emul, int reg, uint8_t val,
 static int bma_emul_init(const struct emul *emul, const struct device *parent)
 {
 	const struct i2c_common_emul_cfg *cfg = emul->cfg;
-	struct i2c_common_emul_data *data = cfg->data;
-	int ret;
+	struct bma_emul_data *data = emul->data;
 
-	data->emul.api = &i2c_common_emul_api;
-	data->emul.addr = cfg->addr;
-	data->i2c = parent;
-	data->cfg = cfg;
-	i2c_common_emul_init(data);
+	data->common.emul.addr = cfg->addr;
+	data->common.emul.target = emul;
+	data->common.i2c = parent;
+	data->common.cfg = cfg;
 
-	ret = i2c_emul_register(parent, emul->dev_label, &data->emul);
+	i2c_common_emul_init(&data->common);
 
-	bma_emul_reset(&data->emul);
+	bma_emul_reset(emul);
 
-	return ret;
+	return 0;
 }
 
 #define BMA255_EMUL(n)                                                \
@@ -1016,16 +1011,16 @@ static int bma_emul_init(const struct emul *emul, const struct device *parent)
 		.addr = DT_INST_REG_ADDR(n),                          \
 	};                                                            \
 	EMUL_DEFINE(bma_emul_init, DT_DRV_INST(n), &bma_emul_cfg_##n, \
-		    &bma_emul_data_##n)
+		    &bma_emul_data_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL)
 
 #define BMA255_EMUL_CASE(n)      \
 	case DT_INST_DEP_ORD(n): \
-		return &bma_emul_data_##n.common.emul;
+		return bma_emul_data_##n.common.emul.target;
 
 /** Check description in emul_bma255.h */
-struct i2c_emul *bma_emul_get(int ord)
+const struct emul *bma_emul_get(int ord)
 {
 	switch (ord) {
 		DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL_CASE)
@@ -1034,3 +1029,11 @@ struct i2c_emul *bma_emul_get(int ord)
 		return NULL;
 	}
 }
+
+struct i2c_common_emul_data *
+emul_bma_get_i2c_common_data(const struct emul *emul)
+{
+	return emul->data;
+}
+
+DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
