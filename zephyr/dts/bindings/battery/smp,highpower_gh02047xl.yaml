@@ -2,19 +2,19 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: "DYNAPACK_ATL GH02047XL"
-compatible: "dynapack_atl,gh02047xl"
+description: "SMP HIGHPOWER_GH02047XL"
+compatible: "smp,highpower_gh02047xl"
 
 include: battery-smart.yaml
 
 properties:
    enum-name:
       type: string
-      default: "dynapack_atl,gh02047xl"
+      default: "smp,highpower_gh02047xl"
 
    # Fuel gauge
    manuf_name:
-      default: "333-27-DA-A"
+      default: "333-1D-DA-A"
    device_name:
       default: "GH02047XL"
    ship_mode_reg_addr:

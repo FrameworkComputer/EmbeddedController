@@ -2,15 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: "SMP_COSLIGHT GH02047XL"
-compatible: "smp_coslight,gh02047xl"
+description: "SMP COSLIGHT_GH02047XL"
+compatible: "smp,coslight_gh02047xl"
 
 include: battery-smart.yaml
 
 properties:
    enum-name:
       type: string
-      default: "smp_coslight,gh02047xl"
+      default: "smp,coslight_gh02047xl"
 
    # Fuel gauge
    manuf_name:

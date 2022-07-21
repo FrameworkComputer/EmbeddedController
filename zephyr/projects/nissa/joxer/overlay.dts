@@ -22,16 +22,16 @@
 			compatible = "cosmx,gh02047xl", "battery-smart";
 		};
 		dynapack_atl_gh02047xl {
-			compatible = "dynapack_atl,gh02047xl", "battery-smart";
+			compatible = "dynapack,atl_gh02047xl", "battery-smart";
 		};
 		dynapack_cosmx_gh02047xl {
-			compatible = "dynapack_cosmx,gh02047xl", "battery-smart";
+			compatible = "dynapack,cosmx_gh02047xl", "battery-smart";
 		};
 		smp_coslight_gh02047xl {
-			compatible = "smp_coslight,gh02047xl", "battery-smart";
+			compatible = "smp,coslight_gh02047xl", "battery-smart";
 		};
 		smp_highpower_gh02047xl {
-			compatible = "smp_highpower,gh02047xl", "battery-smart";
+			compatible = "smp,highpower_gh02047xl", "battery-smart";
 		};
 	};
 
