@@ -6,12 +6,6 @@ description: PWM LED pins parent node
 
 compatible: "cros-ec,pwm-led-pins"
 
-properties:
-  pwm-frequency:
-    type: int
-    required: true
-    description: PWM frequency in Hz.
-
 child-binding:
     description: Each child node describes all the PWM pins that need to be
                  altered to set a specific color. Eg. For blue and amber PWM

@@ -120,7 +120,6 @@
 
 	pwm-led-pins {
 		compatible = "cros-ec,pwm-led-pins";
-		pwm-frequency = <324>;
 
 		color_power_off: color-power-off {
 			led-color = "LED_OFF";
