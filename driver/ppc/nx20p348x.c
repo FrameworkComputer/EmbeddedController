@@ -315,6 +315,10 @@ static int nx20p348x_init(int port)
 		/* Unmask Fast Role Swap detect interrupt */
 		mask &= ~NX20P3481_INT1_FRS_DET;
 	}
+	if (IS_ENABLED(CONFIG_USBC_NX20P348X_RCP_5VSRC_MASK_ENABLE)) {
+		/* Mask RCP 5V SRC */
+		mask |= NX20P348X_INT1_RCP_5VSRC;
+	}
 	rv = write_reg(port, NX20P348X_INTERRUPT1_MASK_REG, mask);
 	if (rv)
 		return rv;

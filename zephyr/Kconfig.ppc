@@ -89,6 +89,13 @@ config PLATFORM_EC_USBC_PPC_NX20P3483
 	  The NX20P3483 is a product with combined multiple power switches
 	  and a LDO for USB PD application.
 
+config PLATFORM_EC_USBC_RCP_5VSRC_MASK_ENABLE
+	bool "NX20P3483 RCP 5VSRC MASK enable"
+	depends on PLATFORM_EC_USBC_PPC_NX20P3483
+	help
+	  The NX20P3483 is a product with 5V SRC reverse current protection
+	  mask enable and disable.
+
 config PLATFORM_EC_USBC_PPC_RT1739
 	bool "Richtek RT1739 Type-C Power Path Controller"
 	help

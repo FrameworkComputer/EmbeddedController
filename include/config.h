@@ -5054,6 +5054,12 @@
 #undef CONFIG_USBC_PPC_SYV682X
 
 /*
+ * NX20P348x 5V SRC RCP trigger level at 10mV. Define to enable 5V SRC RCP
+ * mask for can't trigger interrupt signal.
+ */
+#undef CONFIG_USBC_NX20P348X_RCP_5VSRC_MASK_ENABLE
+
+/*
  * SYV682x PPC high voltage power path current limit.  Default limit is
  * 3.3A.  See the syv682x header file for permissible values.
  */
