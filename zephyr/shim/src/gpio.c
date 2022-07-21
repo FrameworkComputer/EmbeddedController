@@ -95,6 +95,24 @@ int gpio_get_level(enum gpio_signal signal)
 	if (!gpio_is_implemented(signal))
 		return 0;
 
+	/*
+	 * If an output GPIO, get the configured value of the output
+	 * rather than the raw value of the pin.
+	 */
+	if (IS_ENABLED(CONFIG_GPIO_GET_CONFIG) &&
+	    configs[signal].init_flags & GPIO_OUTPUT) {
+		int rv;
+		gpio_flags_t flags;
+
+		rv = gpio_pin_get_config_dt(&configs[signal].spec, &flags);
+		if (rv != 0) {
+			LOG_ERR("Cannot get config for %s (%d)",
+				configs[signal].name, rv);
+			return 0;
+		}
+		return (flags & GPIO_OUTPUT_INIT_HIGH) ? 1 : 0;
+	}
+
 	const int l = gpio_pin_get_raw(configs[signal].spec.port,
 				       configs[signal].spec.pin);
 
