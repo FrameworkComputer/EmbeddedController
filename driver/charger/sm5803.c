@@ -28,6 +28,13 @@
 #error "SM5803 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
 #endif
 
+#ifdef PD_MAX_VOLTAGE_MV
+#if PD_MAX_VOLTAGE_MV > 15000
+/* See https://issuetracker.google.com/230712704 for details. */
+#error "VBUS >15V is forbidden for SM5803 because it can cause hardware damage"
+#endif
+#endif
+
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
