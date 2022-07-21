@@ -36,8 +36,10 @@
 #define FP_LED_HIGH 55
 #define FP_LED_MEDIUM 40
 #define FP_LED_LOW 15
+#define FP_LED_OFF 0
 
 #define FP_BREATH_LOW 20
+#define FP_BREATH_OFF 0
 
 const enum ec_led_id supported_led_ids[] = {
 	EC_LED_ID_LEFT_LED,
@@ -343,6 +345,9 @@ static void led_configure(void)
 			breath_led_level = FP_BREATH_LOW;
 			breath_led_length = BREATH_ON_LENGTH_LOW;
 			break;
+		case FP_LED_BRIGHTNESS_OFF:
+			breath_led_level = FP_BREATH_OFF;
+			break;
 		default:
 			break;
 		}
@@ -391,6 +396,10 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 		led_level = FP_LED_LOW;
 		breath_led_level = FP_BREATH_LOW;
 		breath_led_length = BREATH_ON_LENGTH_LOW;
+		break;
+	case FP_LED_BRIGHTNESS_OFF:
+		led_level = FP_LED_OFF;
+		breath_led_level = FP_BREATH_OFF;
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
