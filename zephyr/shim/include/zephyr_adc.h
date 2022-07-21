@@ -8,7 +8,7 @@
 
 #include <zephyr/drivers/adc.h>
 
-#ifdef CONFIG_PLATFORM_EC_ADC
+#ifdef CONFIG_ADC
 
 #define ZSHIM_ADC_ID(node_id) DT_STRING_UPPER_TOKEN(node_id, enum_name)
 #define ADC_ID_WITH_COMMA(node_id) ZSHIM_ADC_ID(node_id),
@@ -39,6 +39,6 @@ extern struct adc_t adc_channels[];
 #else
 /* Empty declaration to avoid warnings if adc.h is included */
 enum adc_channel { ADC_CH_COUNT };
-#endif /* CONFIG_PLATFORM_EC_ADC */
+#endif /* CONFIG_ADC */
 
 #endif /* __CROS_EC_ZEPHYR_ADC_H */

@@ -33,7 +33,7 @@ config PLATFORM_EC_DPTF
 
 config PLATFORM_EC_THERMISTOR
 	bool "Thermistor support"
-	depends on PLATFORM_EC_ADC
+	depends on ADC
 	help
 	  Enables support for thermistors (resistor whose resistance is
 	  strongly dependent on temperature) as temperature-sensor type.

@@ -248,6 +248,7 @@ ifeq ($(ALLOW_CONFIG),)
 # Zephyr upstream happens to add the same option, since we are requiring new
 # ECOS options to have a corresponding Kconfig anyway.
 conflicting_options := \
+	ADC \
 	AUDIO_CODEC \
 	DAC \
 	DMA \

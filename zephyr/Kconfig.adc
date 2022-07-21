@@ -2,16 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-menuconfig PLATFORM_EC_ADC
-	bool "ADC shim"
-	default n if ARCH_POSIX
-	default y
-	imply ADC
-	help
-	  Enable compilation of the EC ADC module. Once enabled, it is
-	  possible to call platform/ec adc_read_channel() function.
-
-if PLATFORM_EC_ADC
+# Note - CONFIG_ADC is defined in upstream Zephyr
+if ADC
 
 # Chromium EC provides it's own "adc" command.  Disable the Zephyr
 # built-in ADC shell command.
@@ -59,4 +51,4 @@ config PLATFORM_EC_ADC_CHANNELS_RUNTIME_CONFIG
 	  Without this, multiple EC images would need to be installed
 	  depending on the board.
 
-endif # PLATFORM_EC_ADC
+endif # ADC
