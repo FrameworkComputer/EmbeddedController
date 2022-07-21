@@ -32,6 +32,7 @@ static int command_offset;
 
 int comm_init_dev(const char *device_name) __attribute__((weak));
 int comm_init_lpc(void) __attribute__((weak));
+int comm_init_fwk(void) __attribute__((weak));
 int comm_init_i2c(int i2c_bus) __attribute__((weak));
 int comm_init_servo_spi(const char *device_name) __attribute__((weak));
 
@@ -97,6 +98,10 @@ int comm_init_alt(int interfaces, const char *device_name, int i2c_bus)
 	/* Do not fallback to other communication methods if target is not a
 	 * cros_ec device */
 	dev_is_cros_ec = !strcmp(CROS_EC_DEV_NAME, device_name);
+
+	if (dev_is_cros_ec && (interfaces & COMM_FWK) &&
+			comm_init_fwk && !comm_init_fwk())
+		return 0;
 
 	/* Fallback to direct LPC on x86 */
 	if (dev_is_cros_ec && (interfaces & COMM_LPC) &&
