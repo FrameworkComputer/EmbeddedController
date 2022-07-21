@@ -814,7 +814,7 @@ static inline void cancel_power_button_timer(void)
 /*****************************************************************************/
 /* Chipset interface */
 
-void chipset_force_shutdown(enum chipset_shutdown_reason reason)
+test_mockable void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
 	CPRINTS("%s(%d)", __func__, reason);
 	report_ap_reset(reason);
@@ -824,7 +824,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	task_wake(TASK_ID_CHIPSET);
 }
 
-void chipset_power_on(void)
+test_mockable void chipset_power_on(void)
 {
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		power_request = POWER_REQ_ON;
@@ -999,7 +999,7 @@ power_chipset_handle_host_sleep_event(enum host_sleep_event state,
  * @param state		Current power state
  * @return Updated power state
  */
-enum power_state power_handle_state(enum power_state state)
+test_mockable enum power_state power_handle_state(enum power_state state)
 {
 	static uint8_t boot_from_off, shutdown_from_on;
 
@@ -1204,7 +1204,7 @@ static const char *const state_name[] = {
 	"on",
 };
 
-static int command_power(int argc, char **argv)
+test_mockable_static int command_power(int argc, char **argv)
 {
 	int v;
 

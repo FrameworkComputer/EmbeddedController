@@ -8,6 +8,14 @@ tests:
       - CONFIG_LINK_TEST_SUITE_DEFAULT=y
       - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
       - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+  drivers.default.mock_power:
+    timeout: 120
+    extra_args: CONF_FILE="prj.conf;default/prj.conf"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_DEFAULT=y
+      - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
+      - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.host_cmd:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_HOST_COMMANDS=y
@@ -19,6 +27,10 @@ tests:
   drivers.chargesplash:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
+  drivers.chargesplash.mock_power:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.dps:
     extra_args: CONF_FILE="prj.conf;dps/prj.conf"
     extra_configs:
@@ -26,6 +38,10 @@ tests:
   drivers.isl923x:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_ISL923X=y
+  drivers.isl923x.mock_power:
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_ISL923X=y
+      - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.led_driver:
     extra_args: CONF_FILE="prj.conf;led_driver/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./led_driver/led_pins.dts;./led_driver/led_policy.dts"
     extra_configs:
