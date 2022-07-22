@@ -5,9 +5,9 @@
 description: >
   Properties for a TMP112 I2C temperature sensor
 
-include: cros_ec_temp_sensor.yaml
+include: cros-ec,temp-sensor.yaml
 
-compatible: cros-ec,temp-sensor-tmp112
+compatible: "cros-ec,temp-sensor-tmp112"
 
 properties:
     tmp112-name:

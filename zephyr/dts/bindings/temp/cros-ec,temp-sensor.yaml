@@ -7,7 +7,7 @@ description: >
   Zero values in degrees K(-273 in degrees C)in thermal thresholds will
   be ignored
 
-compatible: cros-ec,temp-sensor
+compatible: "cros-ec,temp-sensor"
 
 properties:
     enum-name:

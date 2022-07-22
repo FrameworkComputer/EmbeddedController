@@ -6,7 +6,7 @@ description: |
   Bindings for als_channel_scale_t in accelgyro.h.
   Each channel has scaling factor for normalization & cover
 
-compatible: cros-ec,accelgyro-als-channel-scale
+compatible: "cros-ec,accelgyro-als-channel-scale"
 
 properties:
   k-channel-scale:

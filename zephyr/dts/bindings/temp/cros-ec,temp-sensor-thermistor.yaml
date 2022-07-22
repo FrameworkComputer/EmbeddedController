@@ -5,9 +5,9 @@
 description: >
   Properties for a thermistor temperature sensor
 
-include: cros_ec_temp_sensor.yaml
+include: cros-ec,temp-sensor.yaml
 
-compatible: cros-ec,temp-sensor-thermistor
+compatible: "cros-ec,temp-sensor-thermistor"
 
 properties:
     adc:

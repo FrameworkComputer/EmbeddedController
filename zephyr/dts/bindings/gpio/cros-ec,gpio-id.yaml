@@ -1,6 +1,6 @@
 description: Defines board version and sku id gpios
 
-compatible: cros-ec,gpio-id
+compatible: "cros-ec,gpio-id"
 
 properties:
   bits:

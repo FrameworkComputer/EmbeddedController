@@ -5,9 +5,9 @@
 description: >
   Properties for an Side Band Temperature Sensor Interface sensor
 
-include: cros_ec_temp_sensor.yaml
+include: cros-ec,temp-sensor.yaml
 
-compatible: cros-ec,temp-sensor-sb-tsi
+compatible: "cros-ec,temp-sensor-sb-tsi"
 
 properties:
     port:

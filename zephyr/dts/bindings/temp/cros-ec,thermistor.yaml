@@ -7,7 +7,7 @@
 
 description: Common properties for thermistors
 
-compatible: cros-ec,thermistor
+compatible: "cros-ec,thermistor"
 
 properties:
   scaling-factor:
