@@ -2,11 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-DT_COMPAT_CLOCK_CONTROL_EMUL := cros,clock-control-emul
-
 config EMUL_CLOCK_CONTROL
 	bool "Emulated clock control"
-	default $(dt_compat_enabled,$(DT_COMPAT_CLOCK_CONTROL_EMUL))
+	default y
+	depends on DT_HAS_CROS_CLOCK_CONTROL_EMUL_ENABLED
 	help
 	  Enable the emulated clock control module. This module introduces a
 	  functioning clock control implementation along with backdoor APIs to

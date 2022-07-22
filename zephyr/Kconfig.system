@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-DT_COMPAT_NUVOTON_NPCX_POWER_PSL := nuvoton,npcx-power-psl
-
 if PLATFORM_EC
 
 config PLATFORM_EC_CONSOLE_CMD_SCRATCHPAD
@@ -22,7 +20,8 @@ config PLATFORM_EC_CONSOLE_CMD_SYSINFO
 
 config PLATFORM_EC_HIBERNATE_PSL
 	bool "System hibernating with PSL (Power Switch Logic) mechanism"
-	default $(dt_compat_enabled,$(DT_COMPAT_NUVOTON_NPCX_POWER_PSL))
+	default y
+	depends on DT_HAS_NUVOTON_NPCX_POWER_PSL_ENABLED
 	depends on SOC_FAMILY_NPCX
 	help
 	  Use PSL (Power Switch Logic) for hibernating. It turns off VCC power

@@ -180,11 +180,10 @@ config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
 	    kblog	- Print or toggle keyboard event log (current disabled)
 	    typematic	- Get/set typematic delays
 
-DT_COMPAT_CROS_EC_KBLIGHT_PWM := cros-ec,kblight-pwm
-
 config PLATFORM_EC_PWM_KBLIGHT
 	bool "PWM keyboard backlight"
-	default $(dt_compat_enabled,$(DT_COMPAT_CROS_EC_KBLIGHT_PWM))
+	default y
+	depends on DT_HAS_CROS_EC_KBLIGHT_PWM_ENABLED
 	select PLATFORM_EC_PWM_HC
 	help
 	  Enables a PWM-controlled keyboard backlight controlled by a PWM signal

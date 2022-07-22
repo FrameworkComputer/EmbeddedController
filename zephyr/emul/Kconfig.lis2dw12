@@ -2,11 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-DT_COMPAT_LIS2DW12_EMUL := cros,lis2dw12-emul
-
 menuconfig EMUL_LIS2DW12
 	bool "LIS2DW12 accelerometer emulator"
-	default $(dt_compat_enabled,$(DT_COMPAT_LIS2DW12_EMUL))
+	default y
+	depends on DT_HAS_CROS_LIS2DW12_EMUL_ENABLED
 	depends on I2C_EMUL
 	select PLATFORM_EC_ACCEL_LIS2DW12
 	help

@@ -2,11 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-DT_COMPAT_I2C_MOCK := cros,i2c-mock
-
 menuconfig I2C_MOCK
 	bool "Mock implementation of an I2C device"
-	default $(dt_compat_enabled,$(DT_COMPAT_I2C_MOCK))
+	default y
+	depends on DT_HAS_CROS_I2C_MOCK_ENABLED
 	depends on I2C_EMUL
 	help
 	  Enable the I2C mock. This driver is a pure mock and does nothing by
