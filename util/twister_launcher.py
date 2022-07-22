@@ -71,8 +71,8 @@ def main():
     twister_env.update(
         {
             "ZEPHYR_BASE": str(zephyr_base),
-            "TOOLCHAIN_ROOT": str(zephyr_base),
-            "ZEPHYR_TOOLCHAIN_VARIANT": "host",
+            "TOOLCHAIN_ROOT": str(ec_base / "zephyr"),
+            "ZEPHYR_TOOLCHAIN_VARIANT": "llvm",
         }
     )
 
