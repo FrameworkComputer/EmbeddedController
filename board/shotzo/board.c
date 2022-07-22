@@ -465,7 +465,13 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 }
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */
-const struct pwm_t pwm_channels[] = {};
+const struct pwm_t pwm_channels[] = {
+	[PWM_CH_LED_WHITE] = {
+		.channel = 1,
+		.flags = PWM_CONFIG_ACTIVE_LOW,
+		.freq_hz = 2000,
+	},
+};
 BUILD_ASSERT(ARRAY_SIZE(pwm_channels) == PWM_CH_COUNT);
 
 /* Thermistors */

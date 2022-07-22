@@ -75,6 +75,7 @@
 #include "registers.h"
 
 enum pwm_channel {
+	PWM_CH_LED_WHITE,
 	PWM_CH_COUNT,
 };
 
@@ -116,6 +117,9 @@ enum charge_port {
 	CHARGE_PORT_TYPEC0,
 	CHARGE_PORT_BARRELJACK,
 };
+
+/* Board specific handlers */
+void led_alert(int enable);
 
 /* Pin renaming */
 #define GPIO_AC_PRESENT GPIO_BJ_ADP_PRESENT_L
