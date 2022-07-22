@@ -6,7 +6,7 @@
 
 / {
 	led_colors: led-colors {
-		compatible = "cros-ec,led-colors";
+		compatible = "cros-ec,led-policy";
 
 		bat-power-state-charge {
 			charge-state = "PWR_STATE_CHARGE";
