@@ -187,27 +187,34 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 		.temp_host_release = { \
 			[EC_TEMP_THRESH_HIGH] = C_TO_K(77), \
 		}, \
-		.temp_fan_off = C_TO_K(39), \
-		.temp_fan_max = C_TO_K(52), \
+		.temp_fan_off = C_TO_K(35), \
+		.temp_fan_max = C_TO_K(45), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
 
+#define THERMAL_DDR                                                     \
+	{                                                               \
+		.temp_fan_off = C_TO_K(56), .temp_fan_max = C_TO_K(59), \
+	}
+__maybe_unused static const struct ec_thermal_config thermal_ddr = THERMAL_DDR;
+
 #define THERMAL_CHARGER                                                 \
 	{                                                               \
-		.temp_fan_off = C_TO_K(59), .temp_fan_max = C_TO_K(65), \
+		.temp_fan_off = C_TO_K(67), .temp_fan_max = C_TO_K(70), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_charger =
 	THERMAL_CHARGER;
 
 #define THERMAL_AMBIENT                                                 \
 	{                                                               \
-		.temp_fan_off = C_TO_K(26), .temp_fan_max = C_TO_K(31), \
+		.temp_fan_off = C_TO_K(38), .temp_fan_max = C_TO_K(45), \
 	}
 __maybe_unused static const struct ec_thermal_config thermal_ambient =
 	THERMAL_AMBIENT;
 
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_SOC] = THERMAL_CPU,
+	[TEMP_SENSOR_2_DDR] = THERMAL_DDR,
 	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
 	[TEMP_SENSOR_4_AMBIENT] = THERMAL_AMBIENT,
 };

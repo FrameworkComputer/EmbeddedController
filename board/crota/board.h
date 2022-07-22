@@ -178,15 +178,15 @@
 #define CONFIG_TEMP_SENSOR_POWER
 #define CONFIG_STEINHART_HART_3V3_30K9_47K_4050B
 
-#define CONFIG_FANS FAN_CH_COUNT
-
 /* LED defines */
 #define CONFIG_LED_ONOFF_STATES
 #define CONFIG_LED_ONOFF_STATES_BAT_LOW 10
 
 /* Fan features */
 #define CONFIG_CUSTOM_FAN_CONTROL
+#define CONFIG_FANS FAN_CH_COUNT
 #define CONFIG_FAN_DYNAMIC
+#define RPM_DEVIATION 1
 
 /* Charger defines */
 #define CONFIG_CHARGER_BQ25720
@@ -249,6 +249,15 @@ enum pwm_channel {
 };
 
 enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
+
+enum fan_rpm_table {
+	RPM_TABLE_CPU0,
+	RPM_TABLE_CPU1,
+	RPM_TABLE_DDR,
+	RPM_TABLE_CHARGER,
+	RPM_TABLE_AMBIENT,
+	FAN_RPM_TABLE_COUNT
+};
 
 enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
 

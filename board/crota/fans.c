@@ -15,6 +15,10 @@
 #include "thermal.h"
 #include "util.h"
 
+#define SENSOR_SOC_FAN_OFF 35
+#define SENSOR_SOC_FAN_MID 45
+#define SENSOR_SOC_FAN_MAX 51
+
 /* MFT channels. These are logically separate from pwm_channels. */
 const struct mft_t mft_channels[] = {
 	[MFT_CH_0] = {
@@ -32,118 +36,143 @@ static const struct fan_conf fan_conf_0 = {
 	.enable_gpio = GPIO_EN_PP5000_FAN,
 };
 
-static const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 3500,
-	.rpm_start = 3500,
-	.rpm_max = 4300,
-};
+static const struct fan_rpm rpm_table[FAN_RPM_TABLE_COUNT] = {
+	[RPM_TABLE_CPU0] = {
+		.rpm_min = 2200,
+		.rpm_start = 2200,
+		.rpm_max = 3700,
+	},
 
-static const struct fan_rpm fan_rpm_1 = {
-	.rpm_min = 4300,
-	.rpm_start = 4300,
-	.rpm_max = 4700,
+	[RPM_TABLE_CPU1] = {
+		.rpm_min = 3700,
+		.rpm_start = 3700,
+		.rpm_max = 4000,
+	},
+
+	[RPM_TABLE_DDR] = {
+		.rpm_min = 4000,
+		.rpm_start = 4000,
+		.rpm_max = 4200,
+	},
+
+	[RPM_TABLE_CHARGER] = {
+		.rpm_min = 4000,
+		.rpm_start = 4000,
+		.rpm_max = 4200,
+	},
+
+	[RPM_TABLE_AMBIENT] = {
+		.rpm_min = 4000,
+		.rpm_start = 4000,
+		.rpm_max = 4200,
+	},
 };
 
 struct fan_t fans[FAN_CH_COUNT] = {
 	[FAN_CH_0] = {
 		.conf = &fan_conf_0,
-		.rpm = &fan_rpm_0,
+		.rpm = &rpm_table[RPM_TABLE_CPU0],
 	},
 };
 
-#ifndef CONFIG_FANS
-
-/*
- * TODO(b/181271666): use static fan speeds until fan and sensors are
- * tuned. for now, use:
- *
- *   AP off:  33%
- *   AP  on: 100%
- */
-
-static void fan_slow(void)
-{
-	const int duty_pct = 33;
-
-	ccprints("%s: speed %d%%", __func__, duty_pct);
-
-	pwm_enable(PWM_CH_FAN, 1);
-	pwm_set_duty(PWM_CH_FAN, duty_pct);
-}
-
-static void fan_max(void)
-{
-	const int duty_pct = 100;
-
-	ccprints("%s: speed %d%%", __func__, duty_pct);
-
-	pwm_enable(PWM_CH_FAN, 1);
-	pwm_set_duty(PWM_CH_FAN, duty_pct);
-}
-
-DECLARE_HOOK(HOOK_INIT, fan_slow, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, fan_slow, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, fan_slow, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_RESET, fan_max, HOOK_PRIO_FIRST);
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, fan_max, HOOK_PRIO_DEFAULT);
-
-#endif /* CONFIG_FANS */
-
-static void fan_set_percent(int fan, int pct, bool fan_triggered)
+static void fan_set_percent(int fan, int pct, int soc_temp, int fan_triggered)
 {
 	int new_rpm;
 
-	if (fan_triggered)
-		fans[fan].rpm = &fan_rpm_1;
-	else
-		fans[fan].rpm = &fan_rpm_0;
+	switch (fan_triggered) {
+	case TEMP_SENSOR_1_SOC:
+		if (soc_temp > SENSOR_SOC_FAN_MID)
+			fans[fan].rpm = &rpm_table[RPM_TABLE_CPU1];
+		else
+			fans[fan].rpm = &rpm_table[RPM_TABLE_CPU0];
+		break;
+	case TEMP_SENSOR_2_DDR:
+		fans[fan].rpm = &rpm_table[RPM_TABLE_DDR];
+		break;
+	case TEMP_SENSOR_3_CHARGER:
+		fans[fan].rpm = &rpm_table[RPM_TABLE_CHARGER];
+		break;
+	case TEMP_SENSOR_4_AMBIENT:
+		fans[fan].rpm = &rpm_table[RPM_TABLE_AMBIENT];
+		break;
+	}
 
 	new_rpm = fan_percent_to_rpm(fan, pct);
-
 	fan_set_rpm_target(FAN_CH(fan), new_rpm);
 }
 
 void board_override_fan_control(int fan, int *tmp)
 {
 	/*
-	 * Crota's fan speed is control by three sensors.
+	 * Crota's fan speed is control by four sensors.
 	 *
-	 * Sensor SOC control high loading's speed.
-	 * Sensor ambient control low loading's speed.
 	 * Sensor charger control the speed when system's temperature
 	 * is too high.
-	 *
-	 * When sensor charger is not triggered, the fan is control
-	 * and choose the smaller speed between SOC and ambient.
+	 * Other sensors control normal loading's speed.
 	 *
 	 * When sensor charger is triggered, the fan speed is only
 	 * control by sensor charger, avoid heat damage to system.
+	 * When other sensors is triggered, the fan is control
+	 * by other sensors.
+	 *
+	 * Sensor SOC has two slopes for fan speed.
+	 *
 	 */
-
 	int pct;
 	int sensor_soc;
-	int sensor_ambient;
+	int sensor_ddr;
 	int sensor_charger;
-	bool fan_triggered;
+	int sensor_ambient;
+	int fan_triggered;
 
-	sensor_soc = thermal_fan_percent(thermal_params[0].temp_fan_off,
-					 thermal_params[0].temp_fan_max,
-					 C_TO_K(tmp[0]));
-	sensor_ambient = thermal_fan_percent(thermal_params[3].temp_fan_off,
-					     thermal_params[3].temp_fan_max,
-					     C_TO_K(tmp[3]));
-	sensor_charger = thermal_fan_percent(thermal_params[2].temp_fan_off,
-					     thermal_params[2].temp_fan_max,
-					     C_TO_K(tmp[2]));
-
-	if (sensor_charger) {
-		fan_triggered = true;
-		pct = sensor_charger;
+	/* Decide sensor SOC temperature using which slope */
+	if (tmp[TEMP_SENSOR_1_SOC] > SENSOR_SOC_FAN_MID) {
+		thermal_params[TEMP_SENSOR_1_SOC].temp_fan_off =
+			C_TO_K(SENSOR_SOC_FAN_MID);
+		thermal_params[TEMP_SENSOR_1_SOC].temp_fan_max =
+			C_TO_K(SENSOR_SOC_FAN_MAX);
 	} else {
-		fan_triggered = false;
-		pct = MIN(sensor_soc, sensor_ambient);
+		thermal_params[TEMP_SENSOR_1_SOC].temp_fan_off =
+			C_TO_K(SENSOR_SOC_FAN_OFF);
+		thermal_params[TEMP_SENSOR_1_SOC].temp_fan_max =
+			C_TO_K(SENSOR_SOC_FAN_MID);
 	}
 
-	/* transfer percent to rpm */
-	fan_set_percent(fan, pct, fan_triggered);
+	sensor_soc = thermal_fan_percent(
+		thermal_params[TEMP_SENSOR_1_SOC].temp_fan_off,
+		thermal_params[TEMP_SENSOR_1_SOC].temp_fan_max,
+		C_TO_K(tmp[TEMP_SENSOR_1_SOC]));
+	sensor_ddr = thermal_fan_percent(
+		thermal_params[TEMP_SENSOR_2_DDR].temp_fan_off,
+		thermal_params[TEMP_SENSOR_2_DDR].temp_fan_max,
+		C_TO_K(tmp[TEMP_SENSOR_2_DDR]));
+	sensor_charger = thermal_fan_percent(
+		thermal_params[TEMP_SENSOR_3_CHARGER].temp_fan_off,
+		thermal_params[TEMP_SENSOR_3_CHARGER].temp_fan_max,
+		C_TO_K(tmp[TEMP_SENSOR_3_CHARGER]));
+	sensor_ambient = thermal_fan_percent(
+		thermal_params[TEMP_SENSOR_4_AMBIENT].temp_fan_off,
+		thermal_params[TEMP_SENSOR_4_AMBIENT].temp_fan_max,
+		C_TO_K(tmp[TEMP_SENSOR_4_AMBIENT]));
+
+	/*
+	 * Decide which sensor was triggered
+	 * Priority: charger > soc > ddr > ambient
+	 */
+	if (sensor_charger) {
+		fan_triggered = TEMP_SENSOR_3_CHARGER;
+		pct = sensor_charger;
+	} else if (sensor_soc) {
+		fan_triggered = TEMP_SENSOR_1_SOC;
+		pct = sensor_soc;
+	} else if (sensor_ddr) {
+		fan_triggered = TEMP_SENSOR_2_DDR;
+		pct = sensor_ddr;
+	} else {
+		fan_triggered = TEMP_SENSOR_4_AMBIENT;
+		pct = sensor_ambient;
+	}
+
+	/* Transfer percent to rpm */
+	fan_set_percent(fan, pct, tmp[TEMP_SENSOR_1_SOC], fan_triggered);
 }
