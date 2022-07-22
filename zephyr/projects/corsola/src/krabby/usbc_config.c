@@ -32,16 +32,6 @@ void c0_bc12_interrupt(enum gpio_signal signal)
 	rt1739_interrupt(0);
 }
 
-static void board_sub_bc12_init(void)
-{
-	if (corsola_get_db_type() == CORSOLA_DB_HDMI) {
-		/* If this is not a Type-C subboard, disable the task. */
-		task_disable_task(TASK_ID_USB_CHG_P1);
-	}
-}
-/* Must be done after I2C and subboard */
-DECLARE_HOOK(HOOK_INIT, board_sub_bc12_init, HOOK_PRIO_POST_I2C);
-
 static void board_usbc_init(void)
 {
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc_bc12));
