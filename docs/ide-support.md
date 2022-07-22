@@ -97,7 +97,7 @@ manually enabled following these steps.
 
     ```bash
     (chroot) $ cd ~/chromiumos/chromite/ide_tooling/scripts
-    python compdb_no_chroot.py /home/${USER}/chromiumos \
+    python compdb_no_chroot.py ${EXTERNAL_TRUNK_PATH} \
       < ~/chromiumos/src/platform/ec/compile_commands_inside_chroot.json \
       > ~/chromiumos/src/platform/ec/compile_commands.json
     ```
