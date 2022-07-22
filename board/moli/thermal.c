@@ -42,7 +42,7 @@ static const struct fan_step fan_table[] = {
 		/* level 1 */
 		.on = { -1, 50, -1 },
 		.off = { -1, 47, -1 },
-		.rpm = { 2500 },
+		.rpm = { 2400 },
 	},
 	{
 		/* level 2 */
