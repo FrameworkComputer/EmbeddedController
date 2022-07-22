@@ -23,6 +23,20 @@ DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 
 
+def run_twister(platform_ec, opts, extra_args):
+    # Twister-based build
+    cmd = [platform_ec / "twister", "--outdir", platform_ec / "twister-out"]
+    cmd.append(extra_args)
+
+    if opts.code_coverage:
+        # Tell Twister to collect coverage data. We must specify an explicit platform
+        # type in this case, as well.
+        cmd.extend(["--coverage", "-p", "native_posix"])
+    ret = subprocess.run(cmd, check=True).returncode
+    if ret:
+        return ret
+
+
 def build(opts):
     """Builds all Zephyr firmware targets"""
     metric_list = firmware_pb2.FwBuildMetricList()
@@ -48,6 +62,9 @@ def build(opts):
                 parse_buildlog(build_log, metric, variant.upper())
     with open(opts.metrics, "w") as file:
         file.write(json_format.MessageToJson(metric_list))
+
+    run_twister(platform_ec, opts, "--build-only")
+
     return 0
 
 
@@ -188,14 +205,7 @@ def test(opts):
 
     # Twister-based tests
     platform_ec = zephyr_dir.parent
-    cmd = [platform_ec / "twister", "--outdir", platform_ec / "twister-out"]
-    if opts.code_coverage:
-        # Tell Twister to collect coverage data. We must specify an explicit platform
-        # type in this case, as well.
-        cmd.extend(["--coverage", "-p", "native_posix"])
-    ret = subprocess.run(cmd, check=True).returncode
-    if ret:
-        return ret
+    run_twister(platform_ec, opts, "--test-only")
 
     if opts.code_coverage:
         build_dir = platform_ec / "build" / "zephyr"
