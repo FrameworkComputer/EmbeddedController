@@ -12,6 +12,7 @@
 #include <console.h>
 
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "ec_commands.h"
 #include "host_command.h"
 
@@ -34,18 +35,44 @@ int emul_lid_close(void)
 	return gpio_emul_input_set(lid_gpio_dev, LID_GPIO_PIN, 0);
 }
 
-static void cleanup(void *unused)
+static void *lid_switch_setup(void)
+{
+	/**
+	 * Set chipset to S0 as chipset power on after opening lid may disturb
+	 * test
+	 */
+	test_set_chipset_to_s0();
+
+	return NULL;
+}
+
+static void lid_switch_before(void *unused)
+{
+	/* Make sure that interrupt fire at the next lid open/close */
+	zassume_ok(emul_lid_close(), NULL);
+	zassume_ok(emul_lid_open(), NULL);
+	k_sleep(K_MSEC(100));
+}
+
+static void lid_switch_after(void *unused)
 {
 	struct ec_params_force_lid_open params = {
 		.enabled = 0,
 	};
 	struct host_cmd_handler_args args =
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_FORCE_LID_OPEN, 0, params);
+	int res;
 
-	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	res = host_command_process(&args);
+	if (res)
+		TC_ERROR("host_command_process() failed (%d)\n", res);
 
-	zassert_ok(emul_lid_open(), NULL);
+	if (args.result)
+		TC_ERROR("args.result != 0 (%d != 0)\n", args.result);
+
+	res = emul_lid_open();
+	if (res)
+		TC_ERROR("emul_lid_open() failed (%d)\n", res);
 	k_sleep(K_MSEC(100));
 }
 
@@ -246,5 +273,5 @@ ZTEST(lid_switch, test_hc_force_lid_open)
 	zassert_equal(lid_is_open(), 1, NULL);
 }
 
-ZTEST_SUITE(lid_switch, drivers_predicate_post_main, NULL, NULL, &cleanup,
-	    NULL);
+ZTEST_SUITE(lid_switch, drivers_predicate_post_main, lid_switch_setup,
+	    lid_switch_before, lid_switch_after, NULL);
