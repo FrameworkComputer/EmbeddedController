@@ -228,6 +228,12 @@ def get_argparser():
     testall.add_argument(
         "-B", "--build-dir", type=pathlib.Path, help="Build directory"
     )
+    testall.add_argument(
+        "--static",
+        action="store_true",
+        dest="static_version",
+        help="Generate static version information for reproducible builds",
+    )
 
     generate_readme = sub.add_parser(
         "generate-readme",
@@ -267,6 +273,12 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
         action="store_true",
         dest="clobber",
         help="Delete existing build directories, even if configuration is unchanged",
+    )
+    sub_parser.add_argument(
+        "--static",
+        action="store_true",
+        dest="static_version",
+        help="Generate static version information for reproducible builds",
     )
     sub_parser.add_argument(
         "--allow-warnings",

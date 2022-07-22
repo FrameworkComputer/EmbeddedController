@@ -250,6 +250,7 @@ class Zmake:
         extra_cflags=None,
         delete_intermediates=False,
         boards_only=False,
+        static_version=False,
     ):
         """Locate and configure the specified projects."""
         # Resolve build_dir if needed.
@@ -281,6 +282,7 @@ class Zmake:
                     extra_cflags=extra_cflags,
                     multiproject=len(projects) > 1,
                     delete_intermediates=delete_intermediates,
+                    static_version=static_version,
                 )
             )
             if self._sequential:
@@ -326,6 +328,7 @@ class Zmake:
         extra_cflags=None,
         delete_intermediates=False,
         boards_only=False,
+        static_version=False,
     ):
         """Locate and build the specified projects."""
         return self.configure(
@@ -342,6 +345,7 @@ class Zmake:
             build_after_configure=True,
             delete_intermediates=delete_intermediates,
             boards_only=boards_only,
+            static_version=static_version,
         )
 
     def test(  # pylint: disable=too-many-arguments,too-many-locals
@@ -359,6 +363,7 @@ class Zmake:
         no_rebuild=False,
         delete_intermediates=False,
         boards_only=False,
+        static_version=False,
     ):
         """Locate and build the specified projects."""
         if not no_rebuild:
@@ -376,6 +381,7 @@ class Zmake:
                 test_after_configure=True,
                 delete_intermediates=delete_intermediates,
                 boards_only=boards_only,
+                static_version=static_version,
             )
         # Resolve build_dir if needed.
         if not build_dir:
@@ -435,6 +441,7 @@ class Zmake:
         bringup=False,
         coverage=False,
         allow_warnings=False,
+        static_version=False,
     ):
         """Locate and build all the projects."""
         return self.test(
@@ -446,6 +453,7 @@ class Zmake:
             coverage=coverage,
             allow_warnings=allow_warnings,
             all_projects=True,
+            static_version=static_version,
         )
 
     def _configure(
@@ -462,6 +470,7 @@ class Zmake:
         extra_cflags=None,
         multiproject=False,
         delete_intermediates=False,
+        static_version=False,
     ):
         # pylint: disable=too-many-arguments,too-many-locals,too-many-branches
         # pylint: disable=too-many-statements
@@ -497,6 +506,11 @@ class Zmake:
                     ),
                     "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
                     "ZMAKE_PROJECT_NAME": project.config.project_name,
+                    **(
+                        {"EXTRA_EC_VERSION_FLAGS": "--static"}
+                        if static_version
+                        else {}
+                    ),
                 },
             )
 
@@ -645,6 +659,7 @@ class Zmake:
                     coverage=coverage,
                     output_files_out=output_files,
                     multiproject=multiproject,
+                    static_version=static_version,
                 )
                 if result:
                     self.failed_projects.append(project.config.project_name)
@@ -687,6 +702,7 @@ class Zmake:
         output_files_out=None,
         coverage=False,
         multiproject=False,
+        static_version=False,
     ):
         # pylint: disable=too-many-locals,too-many-branches
         """Build a pre-configured build directory."""
@@ -730,13 +746,17 @@ class Zmake:
             project.config.project_name,
             build_dir / "zephyr_base",
             zmake.modules.locate_from_directory(build_dir / "modules"),
+            static=static_version,
         )
 
         # The version header needs to generated during the build phase
         # instead of configure, as the tree may have changed since
         # configure was run.
         zmake.version.write_version_header(
-            version_string, build_dir / "include" / "ec_version.h", "zmake"
+            version_string,
+            build_dir / "include" / "ec_version.h",
+            "zmake",
+            static=static_version,
         )
 
         gcov = "gcov.sh-not-found"

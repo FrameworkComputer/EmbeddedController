@@ -565,6 +565,7 @@ add_custom_target(
   "--base" "${ZEPHYR_BASE}"
   "--name" "${CMAKE_PROJECT_NAME}"
   "--module" "${ZEPHYR_MODULES}"
+  ${EXTRA_EC_VERSION_FLAGS}
 )
 add_dependencies(app ec_version_header)
 
