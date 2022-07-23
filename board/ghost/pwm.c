@@ -6,6 +6,7 @@
 #include "common.h"
 
 #include "compile_time_macros.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "pwm.h"
 #include "pwm_chip.h"
@@ -50,6 +51,7 @@ static void board_pwm_init(void)
 	/*
 	 * Turn on all the LEDs at 50%.
 	 */
+	gpio_set_level(GPIO_GLOGO_EN, 1);
 	pwm_enable(PWM_CH_GLOGO, 1);
 	pwm_set_duty(PWM_CH_GLOGO, 50);
 
