@@ -21,6 +21,11 @@
 
 #define CONFIG_MP2964
 
+/* Tablet mode is not supported */
+#undef CONFIG_TABLET_MODE
+#undef CONFIG_TABLET_MODE_SWITCH
+#undef CONFIG_LID_ANGLE
+
 /* LED */
 #define CONFIG_LED_ONOFF_STATES
 

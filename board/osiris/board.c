@@ -20,7 +20,6 @@
 #include "power.h"
 #include "registers.h"
 #include "switch.h"
-#include "tablet_mode.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
 

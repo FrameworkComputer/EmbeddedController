@@ -19,7 +19,6 @@ GPIO_INT(SEQ_EC_RSMRST_ODL,              PIN(E, 2), GPIO_INT_BOTH, power_signal_
 GPIO_INT(SLP_S3_L,                       PIN(A, 5), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SLP_SUS_L,                      PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SYS_SLP_S0IX_L,                 PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
-GPIO_INT(TABLET_MODE_L,                  PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
 GPIO_INT(USB_C0_BC12_INT_ODL,            PIN(C, 6), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C0_C2_TCPC_INT_ODL,         PIN(E, 0), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C0_PPC_INT_ODL,             PIN(6, 2), GPIO_INT_FALLING, ppc_interrupt)
@@ -125,6 +124,7 @@ UNUSED(PIN(8, 1))       /* GPIO81 */
 UNUSED(PIN(9, 3))       /* GPIO93 */
 UNUSED(PIN(D, 0))       /* GPIOD0/I2C3_SDA0 */
 UNUSED(PIN(D, 1))       /* GPIOD1/I2C3_SCL0 */
+UNUSED(PIN(9, 5))       /* GPIO95 */
 
 /* Pre-configured PSL balls:  J8  K6 */
 
