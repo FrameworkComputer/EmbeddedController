@@ -14,6 +14,8 @@ int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 	return (i2c_get_device_for_port(cmd_desc->port) ==
 			i2c_get_device_for_port(I2C_PORT_VIRTUAL_BATTERY) ||
 		i2c_get_device_for_port(cmd_desc->port) ==
-			i2c_get_device_for_port(I2C_PORT_EEPROM));
+			i2c_get_device_for_port(I2C_PORT_EEPROM) ||
+		i2c_get_device_for_port(cmd_desc->port) ==
+			i2c_get_device_for_port(I2C_PORT_USB_C0));
 }
 #endif
