@@ -137,6 +137,10 @@ enum ec_status pd_request_enter_mode(int port, enum typec_mode mode)
 		break;
 #ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
 	case TYPEC_MODE_TBT:
+		/* TODO(b/235984702#comment21): Refactor alt mode modules
+		 * to better support mode reentry. */
+		if (dp_is_idle(port))
+			dp_init(port);
 		DPM_SET_FLAG(port, DPM_FLAG_ENTER_TBT);
 		break;
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
