@@ -129,6 +129,7 @@
 
 		color_power_white: color-power-white {
 			led-color = "LED_WHITE";
+			br-color = "EC_LED_COLOR_WHITE";
 			led-id = "EC_LED_ID_POWER_LED";
 			led-pins = <&led_power_white 100>;
 		};
@@ -142,6 +143,7 @@
 
 		color_battery_amber: color-battery-amber {
 			led-color = "LED_AMBER";
+			br-color = "EC_LED_COLOR_AMBER";
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&led_battery_amber 100>,
 				   <&led_battery_white 0>;
@@ -149,6 +151,7 @@
 
 		color_battery_white: color-battery-white {
 			led-color = "LED_WHITE";
+			br-color = "EC_LED_COLOR_WHITE";
 			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&led_battery_amber 0>,
 				   <&led_battery_white 100>;
