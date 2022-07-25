@@ -194,6 +194,26 @@ static int get_desired_input_power(int *vbus, int *input_current)
 	return (*vbus) * (*input_current) / 1000;
 }
 
+static int get_battery_target_voltage(int *target_mv)
+{
+	int active_port = charge_manager_get_active_charge_port();
+	int error = charger_get_voltage(active_port, target_mv);
+
+	if (!error) {
+		return EC_SUCCESS;
+	}
+	if (error != EC_ERROR_UNIMPLEMENTED) {
+		CPRINTS("Failed to get voltage for charge port %d: %d",
+			active_port, error);
+		return error;
+	}
+	/*
+	 * Fall back to battery design voltage if charger output voltage
+	 * is not available.
+	 */
+	return battery_design_voltage(target_mv);
+}
+
 /*
  * Get the most efficient PDO voltage for the battery of the charging port
  *
@@ -221,7 +241,7 @@ int get_efficient_voltage(void)
 	if (!input_pwr)
 		return 0;
 
-	if (battery_design_voltage(&batt_mv))
+	if (get_battery_target_voltage(&batt_mv))
 		return 0;
 
 	batt_pwr = batt->current * batt->voltage / 1000;
@@ -302,7 +322,7 @@ static bool has_new_power_request(struct pdo_candidate *cand)
 	if (!req_mv)
 		CLEAR_AND_RETURN();
 
-	if (battery_design_voltage(&batt_mv))
+	if (get_battery_target_voltage(&batt_mv))
 		CLEAR_AND_RETURN();
 
 	/* if last sample is not the same as the current one, reset counting. */
@@ -540,7 +560,7 @@ static int command_dps(int argc, char **argv)
 			return EC_SUCCESS;
 		}
 
-		battery_design_voltage(&batt_mv);
+		get_battery_target_voltage(&batt_mv);
 		input_pwr = get_desired_input_power(&vbus, &input_curr);
 		if (!(flag & DPS_FLAG_NO_SRCCAP)) {
 			last_mv = pd_get_requested_voltage(port);
