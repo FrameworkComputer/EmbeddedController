@@ -5129,6 +5129,9 @@
 /* Common USB / BC1.2 charger detection routines */
 #undef CONFIG_USB_CHARGER
 
+/* Only allow PI3USB9201 to advertise itself as BC1.2 client */
+#undef CONFIG_BC12_CLIENT_MODE_ONLY_PI3USB9201
+
 /*
  * Used for bc1.2 chips that need to be triggered from data role swaps instead
  * of just VBUS changes.
@@ -6227,6 +6230,7 @@
 /* Define derived config options for BC1.2 detection */
 #ifdef CONFIG_BC12_DETECT_PI3USB9201
 #define CONFIG_BC12_DETECT_DATA_ROLE_TRIGGER
+#undef CONFIG_BC12_CLIENT_MODE_ONLY_PI3USB9201
 #endif
 
 /*****************************************************************************/

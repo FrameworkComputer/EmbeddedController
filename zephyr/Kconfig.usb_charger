@@ -29,6 +29,14 @@ config PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
 	  This is a helper symbol that indicates the BC1.2 chip needs to be
 	  triggered on data role swaps in addition to VBUS changes.
 
+config PLATFORM_EC_BC12_CLIENT_MODE_ONLY_PI3USB9201
+	bool "Run as BC1.2 client while using PI3USB9201"
+	depends on PLATFORM_EC_BC12_DETECT_PI3USB9201
+	default n
+	help
+	  This is a helper symbol that indicates the PI3USB9201 will only
+	  advertise itself as a BC1.2 client, not a BC1.2 host.
+
 config PLATFORM_EC_BC12_DETECT_PI3USB9201
 	bool "Enable support for Pericom PI3USB9201"
 	select PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
