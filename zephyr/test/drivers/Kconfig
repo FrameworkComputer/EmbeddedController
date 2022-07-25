@@ -2,10 +2,25 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config BUG209907615
-	bool "Enable tests for b:209907615"
-	help
-	This flag may change as we protoype integration tests.
-	TODO(b/209907615): Remove when test finished.
+config LINK_TEST_SUITE_DEFAULT
+	bool "Link and test the default test suite"
+
+config LINK_TEST_SUITE_AP_MUX_CONTROL
+	bool "Link and test the ap_mux_control tests"
+
+config LINK_TEST_SUITE_CHARGESPLASH
+	bool "Link and test the chargesplash tests"
+
+config LINK_TEST_SUITE_ISL923X
+	bool "Link and test the isl923x tests"
+
+config LINK_TEST_SUITE_LED_DRIVER
+	bool "Link and test the led_driver tests"
+
+config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
+	bool "Link and test the usb_malfunction_sink tests"
+
+config LINK_TEST_SUITE_USBC_ALT_MODE
+	bool "Link and test the usbc_alt_mode tests"
 
 source "Kconfig.zephyr"

@@ -4,87 +4,50 @@
 
 cmake_minimum_required(VERSION 3.13.1)
 find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
-project(${ZMAKE_PROJECT_NAME})
+project(drivers)
 
-target_include_directories(app PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    "${PLATFORM_EC}/driver/ppc/")
+add_subdirectory(common)
 
-# Common sources
-target_sources(app PRIVATE
-  src/main.c
-  src/test_mocks.c
-  src/test_rules.c
-  src/utils.c
-  src/stubs.c
-)
+get_target_property(TEST_SOURCES app SOURCES)
 
-if(NOT ZMAKE_PROJECT_NAME MATCHES "^test-drivers.*")
-  message(FATAL "Invalid project name")
+# Support zmake for now
+if("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers")
+  set(CONFIG_LINK_TEST_SUITE_DEFAULT TRUE)
+  set(CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_DEFAULT=1)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-ap_mux_control")
+  set(CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-chargesplash")
+  set(CONFIG_LINK_TEST_SUITE_CHARGESPLASH TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_CHARGESPLASH=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-isl923x")
+  set(CONFIG_LINK_TEST_SUITE_ISL923X TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_ISL923X=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-led_driver")
+  set(CONFIG_LINK_TEST_SUITE_LED_DRIVER TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_LED_DRIVER=1)
+elseif("${ZMAKE_PROJECT_NAME}" STREQUAL "test-drivers-usbc_alt_mode")
+  set(CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE TRUE)
+  add_compile_definitions(CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=1)
 endif()
-string(SUBSTRING "${ZMAKE_PROJECT_NAME}" 12 -1 subproject_path)
-string(REPLACE "-" "/" subproject_path "${subproject_path}")
 
-if(subproject_path STREQUAL "")
-  target_sources(app PRIVATE
-    src/battery.c
-    src/bb_retimer.c
-    src/bc12.c
-    src/bma2x2.c
-    src/bmi160.c
-    src/bmi260.c
-    src/charge_manager.c
-    src/console_cmd/charge_manager.c
-    src/console_cmd/charge_state.c
-    src/console_cmd/accelinit.c
-    src/console_cmd/accelinfo.c
-    src/console_cmd/accelspoof.c
-    src/console_cmd/accelrate.c
-    src/console_cmd/accelrange.c
-    src/console_cmd/accelread.c
-    src/console_cmd/accelres.c
-    src/console_cmd/usb_pd_console.c
-    src/cros_cbi.c
-    src/espi.c
-    src/gpio.c
-    src/host_cmd/host_event_commands.c
-    src/host_cmd/motion_sense.c
-    src/integration/usbc/usb.c
-    src/integration/usbc/usb_20v_3a_pd_charger.c
-    src/integration/usbc/usb_5v_3a_pd_sink.c
-    src/integration/usbc/usb_5v_3a_pd_source.c
-    src/integration/usbc/usb_attach_src_snk.c
-    src/integration/usbc/usb_pd_ctrl_msg.c
-    src/integration/usbc/usb_pd_rev3.c
-    src/i2c_passthru.c
-    src/isl923x.c
-    src/keyboard_scan.c
-    src/lid_switch.c
-    src/lis2dw12.c
-    src/ln9310.c
-    src/motion_sense/motion_sense.c
-    src/panic.c
-    src/power_common.c
-    src/ppc_sn5s330.c
-    src/ppc_syv682x.c
-    src/ps8xxx.c
-    src/smart.c
-    src/stm_mems_common.c
-    src/tcpci.c
-    src/tcpci_test_common.c
-    src/tcs3400.c
-    src/temp_sensor.c
-    src/thermistor.c
-    src/uart_hostcmd.c
-    src/usb_mux.c
-    src/usb_pd_host_cmd.c
-    src/vboot_hash.c
-    src/watchdog.c
-  )
+# Add linked suites here
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_DEFAULT default)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL ap_mux_control)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_CHARGESPLASH chargesplash)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_ISL923X isl923x)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER led_driver)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK usb_malfunction_sink)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE usbc_alt_mode)
 
-    add_subdirectory(usb_malfunction_sink)
-else()
-  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}${subproject_path})
+get_target_property(TEST_SOURCES_NEW app SOURCES)
+
+# Check to make sure at least one suite was added
+list(REMOVE_ITEM TEST_SOURCES_NEW ${TEST_SOURCES})
+if(NOT TEST_SOURCES_NEW)
+  message(FATAL_ERROR "Invalid configuration, must add test sources")
 endif()
 
 set_compiler_property(APPEND PROPERTY coverage -O0)

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <board-overlays/native_posix.dts>
 #include <cros/binman.dtsi>
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/gpio_defines.h>

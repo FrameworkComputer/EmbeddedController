@@ -8,7 +8,7 @@
 drivers = register_host_test(
     test_name="drivers",
     dts_overlays=[
-        here / "overlay.dts",
+        here / "boards/native_posix.overlay",
     ],
     kconfig_files=[
         here / "prj.conf",
