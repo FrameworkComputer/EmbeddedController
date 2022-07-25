@@ -133,6 +133,21 @@
 			gpios = <&gpiol 4 GPIO_OUTPUT>;
 			no-auto-init;
 		};
+		gpio_power_led_gate: power_led_gate {
+			gpios = <&gpiof 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_led_1_odl: led_1_odl {
+			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_led_2_odl: led_2_odl {
+			gpios = <&gpioa 2 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_led_3_l: led_3_l {
+			gpios = <&gpiol 2 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_led_4_l: led_4_l {
+			gpios = <&gpiol 3 GPIO_OUTPUT_HIGH>;
+		};
 	};
 
 	/*

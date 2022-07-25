@@ -59,7 +59,7 @@ endif()
 if(DEFINED CONFIG_BOARD_JOXER)
 	project(joxer)
 	zephyr_library_sources(
-			"src/led.c"
+			"joxer/src/led.c"
 			"joxer/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "joxer/src/usbc.c")
