@@ -105,12 +105,13 @@ register_corsola_project(
     extra_dts_overlays=[
         here / "adc_krabby.dts",
         here / "battery_tentacruel.dts",
+        here / "cbi_tentacruel.dts",
         here / "gpio_tentacruel.dts",
         here / "i2c_krabby.dts",
-        here / "interrupts_krabby.dts",
+        here / "interrupts_tentacruel.dts",
         here / "cbi_eeprom.dts",
         here / "led_tentacruel.dts",
-        here / "motionsense_krabby.dts",
+        here / "motionsense_tentacruel.dts",
         here / "usbc_tentacruel.dts",
     ],
     extra_kconfig_files=[

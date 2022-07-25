@@ -52,7 +52,8 @@ elseif(DEFINED CONFIG_BOARD_STEELIX)
 elseif(DEFINED CONFIG_BOARD_TENTACRUEL)
 	project(tentacruel)
 	zephyr_library_sources("src/krabby/hooks.c"
-				"src/krabby/charger_workaround.c")
+				"src/krabby/charger_workaround.c"
+				"src/krabby/sensor_tentacruel.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C "src/krabby/i2c.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 				"src/krabby/usb_pd_policy.c")
