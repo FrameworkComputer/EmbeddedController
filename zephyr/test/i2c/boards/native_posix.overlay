@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <board-overlays/native_posix.dts>
+
 / {
 	i2c1: i2c@400 {
 		status = "okay";
