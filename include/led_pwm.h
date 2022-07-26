@@ -15,20 +15,12 @@
 #ifdef CONFIG_ZEPHYR
 #define PWM_LED_NO_CHANNEL NULL
 
-/* This could really be pwm_dt_spec. */
-struct pwm_led_dt_channel {
-	const struct device *dev;
-	uint32_t channel;
-	pwm_flags_t flags;
-	uint32_t period_ns;
-};
-
 struct pwm_led {
-	const struct pwm_led_dt_channel *ch0;
-	const struct pwm_led_dt_channel *ch1;
-	const struct pwm_led_dt_channel *ch2;
+	const struct pwm_dt_spec *ch0;
+	const struct pwm_dt_spec *ch1;
+	const struct pwm_dt_spec *ch2;
 
-	void (*set_duty)(const struct pwm_led_dt_channel *ch, int percent);
+	void (*set_duty)(const struct pwm_dt_spec *pwm, int percent);
 };
 #else
 #define PWM_LED_NO_CHANNEL ((enum pwm_channel)(-1))

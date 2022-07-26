@@ -25,9 +25,6 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
 BUILD_ASSERT(DT_INST_PROP_LEN(0, leds) <= 2,
 	     "Unsupported number of LEDs defined");
 
-#define PWM_LED_PERIOD_NS (NSEC_PER_SEC / DT_INST_PROP(0, frequency))
-#define PWM_SIDESEL_PERIOD_NS (PWM_LED_PERIOD_NS * 2)
-
 #define PWM_LED_NAME(node_id) DT_STRING_UPPER_TOKEN(node_id, ec_led_name)
 #define PWM_LED_NAME_WITH_COMMA(node_id) PWM_LED_NAME(node_id),
 
@@ -38,40 +35,32 @@ const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 BUILD_ASSERT(ARRAY_SIZE(supported_led_ids) == DT_INST_PROP_LEN(0, leds),
 	     "Mismatch count of LED device phandles and LED name map entries.");
 
-static void pwm_led_set_duty(const struct pwm_led_dt_channel *ch, int percent)
+static void pwm_led_set_duty(const struct pwm_dt_spec *pwm, int percent)
 {
 	uint32_t pulse_ns;
 	int rv;
 
-	if (!device_is_ready(ch->dev)) {
-		LOG_ERR("PWM device %s not ready", ch->dev->name);
+	if (!device_is_ready(pwm->dev)) {
+		LOG_ERR("PWM device %s not ready", pwm->dev->name);
 		return;
 	}
 
-	pulse_ns = DIV_ROUND_NEAREST(ch->period_ns * percent, 100);
+	pulse_ns = DIV_ROUND_NEAREST(pwm->period * percent, 100);
 
-	LOG_DBG("LED PWM %s set percent (%d), pulse %d", ch->dev->name, percent,
-		pulse_ns);
+	LOG_DBG("LED PWM %s set percent (%d), pulse %d", pwm->dev->name,
+		percent, pulse_ns);
 
-	rv = pwm_set(ch->dev, ch->channel, ch->period_ns, pulse_ns, ch->flags);
+	rv = pwm_set_pulse_dt(pwm, pulse_ns);
 	if (rv) {
-		LOG_ERR("pwm_set() failed %s (%d)", ch->dev->name, rv);
+		LOG_ERR("pwm_set_pulse_dt() failed %s (%d)", pwm->dev->name,
+			rv);
 	}
 }
 
-#define PWM_CHANNEL_DT_BY_IDX_INIT(node_id, led_ch, _period_ns)             \
-	{                                                                   \
-		.dev = DEVICE_DT_GET(DT_PWMS_CTLR_BY_IDX(node_id, led_ch)), \
-		.channel = DT_PWMS_CHANNEL_BY_IDX(node_id, led_ch),         \
-		.flags = DT_PWMS_FLAGS_BY_IDX(node_id, led_ch),             \
-		.period_ns = _period_ns,                                    \
-	}
-
 #define PWM_CHANNEL_DT_BY_IDX(node_id, prop, idx, led_ch)                     \
-	static const struct pwm_led_dt_channel                                \
-		_pwm_led_dt_##idx##_ch_##led_ch = PWM_CHANNEL_DT_BY_IDX_INIT( \
-			DT_PHANDLE_BY_IDX(node_id, prop, idx), led_ch,        \
-			PWM_LED_PERIOD_NS);
+	static const struct pwm_dt_spec _pwm_dt_spec_##idx##_ch_##led_ch =    \
+		PWM_DT_SPEC_GET_BY_IDX(DT_PHANDLE_BY_IDX(node_id, prop, idx), \
+				       led_ch);
 
 #define PWM_CHANNEL_DT_BY_IDX_COND(node_id, prop, idx, led_ch)            \
 	IF_ENABLED(DT_PROP_HAS_IDX(DT_PHANDLE_BY_IDX(node_id, prop, idx), \
@@ -88,7 +77,7 @@ DT_INST_FOREACH_PROP_ELEM(0, leds, PWM_LED_DT_INIT)
 #define PWM_CHANNEL_BY_IDX_COND(node_id, prop, idx, led_ch)                \
 	COND_CODE_1(DT_PROP_HAS_IDX(DT_PHANDLE_BY_IDX(node_id, prop, idx), \
 				    pwms, led_ch),                         \
-		    (&_pwm_led_dt_##idx##_ch_##led_ch), (PWM_LED_NO_CHANNEL))
+		    (&_pwm_dt_spec_##idx##_ch_##led_ch), (PWM_LED_NO_CHANNEL))
 
 #define PWM_LED_INIT(node_id, prop, idx)                               \
 	[PWM_LED##idx] = {                                             \
@@ -177,9 +166,8 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 #if DT_INST_NODE_HAS_PROP(0, sidesel)
 
-static const struct pwm_led_dt_channel _pwm_led_dt_sidesel =
-	PWM_CHANNEL_DT_BY_IDX_INIT(DT_INST_PROP(0, sidesel), 0,
-				   PWM_SIDESEL_PERIOD_NS);
+static const struct pwm_dt_spec _pwm_dt_spec_sidesel =
+	PWM_DT_SPEC_GET_BY_IDX(DT_INST_PROP(0, sidesel), 0);
 
 /* Illuminates the LED on the side of the active charging port. If not charging,
  * illuminates both LEDs.
@@ -202,14 +190,14 @@ static void led_set_charge_port_tick(void)
 	}
 
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		pwm_led_set_duty(&_pwm_led_dt_sidesel, side_select_duty);
+		pwm_led_set_duty(&_pwm_dt_spec_sidesel, side_select_duty);
 }
 DECLARE_HOOK(HOOK_TICK, led_set_charge_port_tick, HOOK_PRIO_DEFAULT);
 
 static void board_led_init(void)
 {
 	/* Illuminate motherboard and daughter board LEDs equally to start. */
-	pwm_led_set_duty(&_pwm_led_dt_sidesel, 50);
+	pwm_led_set_duty(&_pwm_dt_spec_sidesel, 50);
 }
 DECLARE_HOOK(HOOK_INIT, board_led_init, HOOK_PRIO_DEFAULT);
 
