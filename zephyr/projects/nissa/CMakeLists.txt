@@ -44,7 +44,7 @@ endif()
 if(DEFINED CONFIG_BOARD_PUJJO)
 	project(pujjo)
 	zephyr_library_sources(
-			"src/led.c"
+			"pujjo/src/led.c"
 			"pujjo/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "pujjo/src/fan.c")
