@@ -21,7 +21,10 @@
 #error "Define EC chip variant"
 #endif
 
-#define CONFIG_LTO
+/*
+ * TODO: b/241322365 - Watchdog error are observed if LTO is enabled
+ * hence disabled it. Enable LTO once the fix is found.
+ */
 
 /*
  * Allow dangerous commands.
