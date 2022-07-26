@@ -59,12 +59,14 @@ def testcase_artifact(testcase):
     """Translates ZTEST testcase to ResultDB artifact"""
     artifact = "Unknown"
 
-    if "log" in testcase:
+    if "log" in testcase and testcase["log"]:
         artifact = testcase["log"]
-    elif "reason" in testcase:
+    elif "reason" in testcase and testcase["reason"]:
         artifact = testcase["reason"]
     elif testcase["status"] == "filtered":
         artifact = "filtered"
+    elif testcase["status"] == "skipped":
+        artifact = "skipped"
 
     return base64.b64encode(artifact.encode())
 
