@@ -315,7 +315,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			break;
 #endif
 #ifdef CONFIG_KEYBOARD_BACKLIGHT
-		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT:
+		case EC_ACPI_MEM_KEYBOARD_BACKLIGHT: {
 			char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 			/*
 			 * Debug output with CR not newline, because the host
@@ -327,6 +327,7 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			kblight_set(data);
 			kblight_enable(data > 0);
 			break;
+		}
 #endif
 #ifdef CONFIG_FANS
 		case EC_ACPI_MEM_FAN_DUTY:
