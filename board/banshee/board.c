@@ -60,7 +60,8 @@ void set_bb_retimer_usb3_state(bool enable)
 /* Called on AP S3 -> S0 transition */
 static void board_chipset_resume(void)
 {
-	set_bb_retimer_usb3_state(true);
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		set_bb_retimer_usb3_state(true);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
