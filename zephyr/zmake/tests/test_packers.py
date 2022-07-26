@@ -53,7 +53,7 @@ def test_file_size_in_bounds(data):
     """Test with file size limited."""
     packer = FakePacker(100)
     with tempfile.TemporaryDirectory() as temp_dir_name:
-        file = pathlib.Path(temp_dir_name) / "zephyr.bin"
+        file = pathlib.Path(temp_dir_name) / "ec.bin"
         with open(file, "wb") as outfile:
             outfile.write(data)
         assert packer.check_packed_file_size(file=file, dir_map={}) == file
@@ -65,7 +65,7 @@ def test_file_size_out_of_bounds(data):
     """Test with file size limited, and file exceeds limit."""
     packer = FakePacker(100)
     with tempfile.TemporaryDirectory() as temp_dir_name:
-        file = pathlib.Path(temp_dir_name) / "zephyr.bin"
+        file = pathlib.Path(temp_dir_name) / "ec.bin"
         with open(file, "wb") as outfile:
             outfile.write(data)
         with pytest.raises(RuntimeError):

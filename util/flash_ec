@@ -676,8 +676,6 @@ fi
 # Possible default EC images
 if [ "${FLAGS_ro}" = ${FLAGS_TRUE} ] ; then
 	EC_FILE=ec.RO.flat
-elif [ "${FLAGS_zephyr}" = ${FLAGS_TRUE} ] ; then
-	EC_FILE=zephyr.bin
 else
 	EC_FILE=ec.bin
 fi

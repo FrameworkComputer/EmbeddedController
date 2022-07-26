@@ -108,7 +108,7 @@ class RawBinPacker(BasePacker):
 
     def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
         del version_string
-        yield dir_map["singleimage"] / "zephyr" / "zephyr.bin", "zephyr.bin"
+        yield dir_map["singleimage"] / "zephyr" / "zephyr.bin", "ec.bin"
 
 
 class BinmanPacker(BasePacker):
@@ -199,7 +199,7 @@ class BinmanPacker(BasePacker):
         if proc.wait(timeout=60):
             raise OSError("Failed to run binman")
 
-        yield work_dir / "zephyr.bin", "zephyr.bin"
+        yield work_dir / "ec.bin", "ec.bin"
         yield ro_dir / "zephyr" / "zephyr.elf", "zephyr.ro.elf"
         yield rw_dir / "zephyr" / "zephyr.elf", "zephyr.rw.elf"
 
@@ -238,10 +238,10 @@ class NpcxPacker(BinmanPacker):
             dir_map,
             version_string=version_string,
         ):
-            if output_file == "zephyr.bin":
+            if output_file == "ec.bin":
                 yield (
                     self._check_packed_file_size(path, dir_map),
-                    "zephyr.bin",
+                    "ec.bin",
                 )
             else:
                 yield path, output_file

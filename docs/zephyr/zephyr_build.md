@@ -38,7 +38,7 @@ For example, to build the EC for `skyrim`, run:
 (chroot) $ zmake build skyrim
 ```
 
-The output binary will then be located at `build/zephyr/skyrim/output/zephyr.bin`.
+The output binary will then be located at `build/zephyr/skyrim/output/ec.bin`.
 
 Additional output files you may find useful:
 
