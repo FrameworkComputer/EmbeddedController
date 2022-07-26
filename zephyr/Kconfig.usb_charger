@@ -16,10 +16,12 @@ config PLATFORM_EC_USB_CHARGER
 if PLATFORM_EC_USB_CHARGER
 
 config PLATFORM_EC_USB_CHARGER_SINGLE_TASK
-	bool "Run all charger code in a single task"
+	bool
 	default y
 	help
-	  Run all USB charger code in a single task rather than a task per port.
+	  Helper symbol use in the common EC code for Zephyr specific charger
+	  changes.
+
 
 config PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
 	bool

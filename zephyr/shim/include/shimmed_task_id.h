@@ -28,10 +28,6 @@ enum {
 	EC_SYSWORKQ_PRIO = EC_TASK_PRIO_LOWEST,
 	EC_TASK_CHG_RAMP_PRIO,
 	EC_TASK_USB_CHG_PRIO,
-	EC_TASK_USB_CHG_P0_PRIO,
-	EC_TASK_USB_CHG_P1_PRIO,
-	EC_TASK_USB_CHG_P2_PRIO,
-	EC_TASK_USB_CHG_P3_PRIO,
 	EC_TASK_DPS_PRIO,
 	EC_TASK_CHARGER_PRIO,
 	EC_TASK_CHIPSET_PRIO,
@@ -69,30 +65,10 @@ enum {
 				  CONFIG_TASK_CHG_RAMP_STACK_SIZE,         \
 				  EC_TASK_CHG_RAMP_PRIO)),                 \
 		    ())                                                    \
-	COND_CODE_1(CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK,            \
+	COND_CODE_1(CONFIG_PLATFORM_EC_USB_CHARGER,                        \
 		    (CROS_EC_TASK(USB_CHG, usb_charger_task_shared, 0,     \
 				  CONFIG_TASK_USB_CHG_STACK_SIZE,          \
 				  EC_TASK_USB_CHG_PRIO)),                  \
-		    ())                                                    \
-	COND_CODE_1(HAS_TASK_USB_CHG_P0,                                   \
-		    (CROS_EC_TASK(USB_CHG_P0, usb_charger_task, 0,         \
-				  CONFIG_TASK_USB_CHG_STACK_SIZE,          \
-				  EC_TASK_USB_CHG_P0_PRIO)),               \
-		    ())                                                    \
-	COND_CODE_1(HAS_TASK_USB_CHG_P1,                                   \
-		    (CROS_EC_TASK(USB_CHG_P1, usb_charger_task, 0,         \
-				  CONFIG_TASK_USB_CHG_STACK_SIZE,          \
-				  EC_TASK_USB_CHG_P1_PRIO)),               \
-		    ())                                                    \
-	COND_CODE_1(HAS_TASK_USB_CHG_P2,                                   \
-		    (CROS_EC_TASK(USB_CHG_P2, usb_charger_task, 0,         \
-				  CONFIG_TASK_USB_CHG_STACK_SIZE,          \
-				  EC_TASK_USB_CHG_P2_PRIO)),               \
-		    ())                                                    \
-	COND_CODE_1(HAS_TASK_USB_CHG_P3,                                   \
-		    (CROS_EC_TASK(USB_CHG_P3, usb_charger_task, 0,         \
-				  CONFIG_TASK_USB_CHG_STACK_SIZE,          \
-				  EC_TASK_USB_CHG_P3_PRIO)),               \
 		    ())                                                    \
 	COND_CODE_1(HAS_TASK_DPS,                                          \
 		    (CROS_EC_TASK(DPS, dps_task, 0,                        \
