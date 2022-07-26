@@ -222,7 +222,7 @@
 	unused-pins {
 		compatible = "unused-gpios";
 		unused-gpios =
-			<&gpio3 3 0>,
+			<&gpio8 5 0>,
 			<&gpio3 6 0>,
 			<&gpiod 7 0>,
 			<&gpio6 0 0>,
