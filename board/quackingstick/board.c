@@ -434,21 +434,27 @@ void board_tcpc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_tcpc_init, HOOK_PRIO_INIT_I2C + 1);
 
-void board_delay_on_first_power_on(void)
+enum battery_present battery_is_present(void)
 {
+	static int first_check_done;
+
 	/*
 	 * b/231911921: It's found that the D-FET status is incorrect
 	 * when the battery resume from cut off. The battery needs
 	 * about 2s to ready to discharge so delay 2s before charge
 	 * manager init.
 	 */
-	if (system_get_reset_flags() == EC_RESET_FLAG_POWER_ON) {
-		CPRINTS("Delay 2s on the first power on.");
-		sleep(2);
+	if (!first_check_done) {
+		if (battery_get_disconnect_state() ==
+		    BATTERY_NOT_DISCONNECTED) {
+			CPRINTS("Delay 2s on the first power on.");
+			sleep(2);
+		}
+		first_check_done = 1;
 	}
+
+	return gpio_get_level(GPIO_BATT_PRES_ODL) ? BP_NO : BP_YES;
 }
-DECLARE_HOOK(HOOK_INIT, board_delay_on_first_power_on,
-	     HOOK_PRIO_INIT_CHARGE_MANAGER - 1);
 
 void board_hibernate(void)
 {
