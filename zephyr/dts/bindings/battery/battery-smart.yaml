@@ -40,6 +40,8 @@ properties:
          - "smp,l20m3pg1"
          - "smp,l20m3pg2"
          - "smp,l22m3pg0"
+         - "smp,l22m3pg1"
          - "smp,coslight_gh02047xl"
          - "smp,highpower_gh02047xl"
          - "sunwoda,l22d3pg0"
+         - "sunwoda,l22d3pg1"
