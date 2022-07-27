@@ -158,12 +158,11 @@ def bundle_coverage(opts):
     meta.lcov_info.type = (
         firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV
     )
-    tarball_name = "html.tbz2"
-    tarball_path = bundle_dir / tarball_name
-    cmd = ["tar", "cvfj", tarball_path, "lcov_rpt"]
+    (bundle_dir / "html").mkdir(exist_ok=True)
+    cmd = ["mv", "lcov_rpt", bundle_dir / "html/lcov_rpt"]
     subprocess.run(cmd, cwd=build_dir, check=True)
     meta = info.objects.add()
-    meta.file_name = tarball_name
+    meta.file_name = "html"
     meta.coverage_html.SetInParent()
 
     write_metadata(opts, info)
