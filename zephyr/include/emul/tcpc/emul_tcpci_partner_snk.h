@@ -41,6 +41,8 @@ struct tcpci_snk_emul_data {
 	bool ping_received;
 	/** PD_DATA_ALERT message received  */
 	bool alert_received;
+	/** Last received 5V fixed source cap */
+	uint32_t last_5v_source_cap;
 };
 
 /**
@@ -71,6 +73,13 @@ void tcpci_snk_emul_clear_ping_received(struct tcpci_snk_emul_data *sink_data);
  * @param sink_data
  */
 void tcpci_snk_emul_clear_alert_received(struct tcpci_snk_emul_data *sink_data);
+
+/**
+ * @brief Clear the last received 5V fixed source cap.
+ *
+ * @param sink_data
+ */
+void tcpci_snk_emul_clear_last_5v_cap(struct tcpci_snk_emul_data *sink_data);
 
 /**
  * @}

@@ -262,6 +262,12 @@ tcpci_snk_emul_handle_source_cap(struct tcpci_snk_emul_data *data,
 	snk_pdos = tcpci_snk_emul_num_of_pdos(data);
 	src_pdos = (msg->cnt - TCPCI_MSG_HEADER_LEN) / TCPCI_MSG_DO_LEN;
 
+	/*
+	 * Store the 5V fixed PDO for future reference (required to be index 0
+	 * by spec)
+	 */
+	data->last_5v_source_cap = tcpci_snk_emul_get_pdo_from_cap(msg, 0);
+
 	/* Find if any source PDO satisfy any sink PDO */
 	for (int pdo_num = 0; pdo_num < src_pdos; pdo_num++) {
 		pdo = tcpci_snk_emul_get_pdo_from_cap(msg, pdo_num);
@@ -346,6 +352,11 @@ void tcpci_snk_emul_clear_ping_received(struct tcpci_snk_emul_data *data)
 void tcpci_snk_emul_clear_alert_received(struct tcpci_snk_emul_data *data)
 {
 	data->alert_received = false;
+}
+
+void tcpci_snk_emul_clear_last_5v_cap(struct tcpci_snk_emul_data *data)
+{
+	data->last_5v_source_cap = 0;
 }
 
 /**
