@@ -44,10 +44,10 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 static struct als_drv_data_t g_cm32183_data = {
 	/**
 	 * adjusted_value = raw_value * scale + raw_value * uscale / 10000
-	 * the coeficient we need is 3.8
+	 * the coeficient we need is 3.2
 	 */
 	.als_cal.scale = 3,
-	.als_cal.uscale = 8000,
+	.als_cal.uscale = 2000,
 	.als_cal.offset = 0,
 	.als_cal.channel_scale = {
 		/* TODO(b/219424210):  Calibrate ALS CM32183A3OP */
