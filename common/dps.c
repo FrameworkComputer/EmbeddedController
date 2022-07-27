@@ -196,15 +196,15 @@ static int get_desired_input_power(int *vbus, int *input_current)
 
 static int get_battery_target_voltage(int *target_mv)
 {
-	int active_port = charge_manager_get_active_charge_port();
-	int error = charger_get_voltage(active_port, target_mv);
+	int charger_id = charge_get_active_chg_chip();
+	int error = charger_get_voltage(charger_id, target_mv);
 
 	if (!error) {
 		return EC_SUCCESS;
 	}
 	if (error != EC_ERROR_UNIMPLEMENTED) {
 		CPRINTS("Failed to get voltage for charge port %d: %d",
-			active_port, error);
+			charger_id, error);
 		return error;
 	}
 	/*
