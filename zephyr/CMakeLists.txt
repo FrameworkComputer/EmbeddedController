@@ -29,6 +29,19 @@ if(DEFINED ZMAKE_INCLUDE_DIR)
   zephyr_include_directories("${ZMAKE_INCLUDE_DIR}")
 endif()
 
+# When CONFIG_ASSERT is enabled, the __FILE__ macro may add full paths into the
+# read-only strings. This wastes space and can cause non-reproducible builds.
+# When the compiler supports it, replace common path prefixes with static
+# strings.
+
+# PLATFORM_EC points to the build directory, which symlinks to the actual
+# source. ZEPHYR_CURRENT_CMAKE_DIR points to the actual source directory
+# containing this file.  Set the PLATFORM_EC_SRC to the parent.
+# Replace the paths of the both the build and source directories with "EC_BASE".
+cmake_path(GET ZEPHYR_CURRENT_CMAKE_DIR PARENT_PATH PLATFORM_EC_SRC)
+zephyr_cc_option(-fmacro-prefix-map=${PLATFORM_EC}=EC_BASE)
+zephyr_cc_option(-fmacro-prefix-map=${PLATFORM_EC_SRC}=EC_BASE)
+
 if(DEFINED CONFIG_PLATFORM_EC)
   # Add CHROMIUM_EC definition, which is used by ec_commands.h to
   # determine that the header is being compiled for the EC instead of
