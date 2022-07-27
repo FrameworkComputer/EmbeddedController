@@ -26,42 +26,6 @@ struct usb_malfunction_sink_fixture {
 	struct tcpci_faulty_snk_action actions[2];
 };
 
-static void connect_sink_to_port(struct usb_malfunction_sink_fixture *fixture)
-{
-	/*
-	 * TODO(b/221439302) Updating the TCPCI emulator registers, updating the
-	 *   vbus, as well as alerting should all be a part of the connect
-	 *   function.
-	 */
-	isl923x_emul_set_adc_vbus(fixture->charger_emul, 0);
-	tcpci_emul_set_reg(fixture->tcpci_emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
-	tcpci_emul_set_reg(fixture->tcpci_emul, TCPC_REG_EXT_STATUS,
-			   TCPC_REG_EXT_STATUS_SAFE0V);
-	tcpci_tcpc_alert(0);
-	/*
-	 * TODO(b/226567798) Wait for TCPC init and DRPToggle. It is required,
-	 *   because tcpci_emul_reset_rule_before reset registers including
-	 *   Looking4Connection bit in CC_STATUS register.
-	 */
-	k_sleep(K_SECONDS(1));
-	zassume_ok(tcpci_partner_connect_to_tcpci(&fixture->sink,
-						  fixture->tcpci_emul),
-		   NULL);
-
-	/* Wait for PD negotiation and current ramp.
-	 * TODO(b/213906889): Check message timing and contents.
-	 */
-	k_sleep(K_SECONDS(10));
-}
-
-static inline void
-disconnect_sink_from_port(struct usb_malfunction_sink_fixture *fixture)
-{
-	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul), NULL);
-	k_sleep(K_SECONDS(1));
-}
-
 static void *usb_malfunction_sink_setup(void)
 {
 	static struct usb_malfunction_sink_fixture test_fixture;
@@ -98,7 +62,7 @@ static void usb_malfunction_sink_after(void *data)
 	struct usb_malfunction_sink_fixture *fixture = data;
 
 	tcpci_faulty_snk_emul_clear_actions_list(&fixture->faulty_snk_ext);
-	disconnect_sink_from_port(fixture);
+	disconnect_sink_from_port(fixture->tcpci_emul);
 	tcpci_partner_common_clear_logged_msgs(&fixture->sink);
 }
 
@@ -119,7 +83,8 @@ ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_disable)
 	tcpci_faulty_snk_emul_append_action(&fixture->faulty_snk_ext,
 					    &fixture->actions[0]);
 
-	connect_sink_to_port(fixture);
+	connect_sink_to_port(&fixture->sink, fixture->tcpci_emul,
+			     fixture->charger_emul);
 
 	typec_status = host_cmd_typec_status(0);
 
@@ -143,7 +108,8 @@ ZTEST_F(usb_malfunction_sink, test_fail_source_cap_and_pd_connect)
 	tcpci_faulty_snk_emul_append_action(&fixture->faulty_snk_ext,
 					    &fixture->actions[0]);
 
-	connect_sink_to_port(fixture);
+	connect_sink_to_port(&fixture->sink, fixture->tcpci_emul,
+			     fixture->charger_emul);
 
 	typec_status = host_cmd_typec_status(0);
 
@@ -190,7 +156,8 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap)
 					    &fixture->actions[0]);
 
 	tcpci_partner_common_enable_pd_logging(&fixture->sink, true);
-	connect_sink_to_port(fixture);
+	connect_sink_to_port(&fixture->sink, fixture->tcpci_emul,
+			     fixture->charger_emul);
 	tcpci_partner_common_enable_pd_logging(&fixture->sink, false);
 
 	/*
@@ -244,7 +211,8 @@ ZTEST_F(usb_malfunction_sink, test_ignore_source_cap_and_pd_disable)
 	tcpci_faulty_snk_emul_append_action(&fixture->faulty_snk_ext,
 					    &fixture->actions[1]);
 
-	connect_sink_to_port(fixture);
+	connect_sink_to_port(&fixture->sink, fixture->tcpci_emul,
+			     fixture->charger_emul);
 
 	typec_status = host_cmd_typec_status(0);
 

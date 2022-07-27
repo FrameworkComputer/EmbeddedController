@@ -32,40 +32,6 @@ struct usb_attach_5v_3a_pd_sink_fixture {
 /* Only used to verify sink capabilities being received by SRC port */
 #define TEST_ADDITIONAL_SINK_CAP PDO_FIXED(TEST_SRC_PORT_VBUS_MV, 5000, 0)
 
-static void
-connect_sink_to_port(struct usb_attach_5v_3a_pd_sink_fixture *fixture)
-{
-	/*
-	 * TODO(b/221439302) Updating the TCPCI emulator registers, updating the
-	 *   vbus, as well as alerting should all be a part of the connect
-	 *   function.
-	 */
-	isl923x_emul_set_adc_vbus(fixture->charger_emul, 0);
-	tcpci_emul_set_reg(fixture->tcpci_emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
-	tcpci_emul_set_reg(fixture->tcpci_emul, TCPC_REG_EXT_STATUS,
-			   TCPC_REG_EXT_STATUS_SAFE0V);
-
-	tcpci_tcpc_alert(0);
-	k_sleep(K_SECONDS(1));
-
-	zassume_ok(tcpci_partner_connect_to_tcpci(&fixture->sink_5v_3a,
-						  fixture->tcpci_emul),
-		   NULL);
-
-	/* Wait for PD negotiation and current ramp.
-	 * TODO(b/213906889): Check message timing and contents.
-	 */
-	k_sleep(K_SECONDS(10));
-}
-
-static inline void
-disconnect_sink_from_port(struct usb_attach_5v_3a_pd_sink_fixture *fixture)
-{
-	zassume_ok(tcpci_emul_disconnect_partner(fixture->tcpci_emul), NULL);
-	k_sleep(K_SECONDS(1));
-}
-
 static void *usb_attach_5v_3a_pd_sink_setup(void)
 {
 	static struct usb_attach_5v_3a_pd_sink_fixture test_fixture;
@@ -95,13 +61,16 @@ static void usb_attach_5v_3a_pd_sink_before(void *data)
 		&test_fixture->snk_ext, &test_fixture->sink_5v_3a, NULL);
 	test_fixture->snk_ext.pdo[0] = TEST_INITIAL_SINK_CAP;
 	test_fixture->snk_ext.pdo[1] = TEST_ADDITIONAL_SINK_CAP;
-	connect_sink_to_port(test_fixture);
+	connect_sink_to_port(&test_fixture->sink_5v_3a,
+			     test_fixture->tcpci_emul,
+			     test_fixture->charger_emul);
 }
 
 static void usb_attach_5v_3a_pd_sink_after(void *data)
 {
-	disconnect_sink_from_port(
-		(struct usb_attach_5v_3a_pd_sink_fixture *)data);
+	struct usb_attach_5v_3a_pd_sink_fixture *test_fixture = data;
+
+	disconnect_sink_from_port(test_fixture->tcpci_emul);
 }
 
 ZTEST_SUITE(usb_attach_5v_3a_pd_sink, drivers_predicate_post_main,
@@ -175,7 +144,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_battery_discharging)
 		sbat_emul_get_ptr(DT_DEP_ORD(DT_NODELABEL(battery)));
 	uint16_t battery_status;
 
-	disconnect_sink_from_port(fixture);
+	disconnect_sink_from_port(fixture->tcpci_emul);
 	zassert_ok(sbat_emul_get_word_val(emul, SB_BATTERY_STATUS,
 					  &battery_status),
 		   NULL);
@@ -187,7 +156,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_charge_state)
 {
 	struct ec_response_charge_state charge_state;
 
-	disconnect_sink_from_port(fixture);
+	disconnect_sink_from_port(fixture->tcpci_emul);
 	charge_state = host_cmd_charge_state(0);
 
 	zassert_false(charge_state.get_state.ac, "AC_OK not triggered");
@@ -205,7 +174,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_typec_status)
 {
 	struct ec_response_typec_status typec_status;
 
-	disconnect_sink_from_port(fixture);
+	disconnect_sink_from_port(fixture->tcpci_emul);
 	typec_status = host_cmd_typec_status(0);
 
 	zassert_false(typec_status.pd_enabled, NULL);
@@ -223,7 +192,7 @@ ZTEST_F(usb_attach_5v_3a_pd_sink, test_disconnect_power_info)
 {
 	struct ec_response_usb_pd_power_info power_info;
 
-	disconnect_sink_from_port(fixture);
+	disconnect_sink_from_port(fixture->tcpci_emul);
 	power_info = host_cmd_power_info(0);
 
 	zassert_equal(power_info.role, USB_PD_PORT_POWER_DISCONNECTED,

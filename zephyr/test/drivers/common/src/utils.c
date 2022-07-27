@@ -19,6 +19,7 @@
 #include "hooks.h"
 #include "power.h"
 #include "task.h"
+#include "tcpm/tcpci.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/utils.h"
 
@@ -134,6 +135,41 @@ void disconnect_source_from_port(const struct emul *tcpci_emul,
 	set_ac_enabled(false);
 	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
+	k_sleep(K_SECONDS(1));
+}
+
+void connect_sink_to_port(struct tcpci_partner_data *partner,
+			  const struct emul *tcpci_emul,
+			  const struct emul *charger_emul)
+{
+	/*
+	 * TODO(b/221439302) Updating the TCPCI emulator registers, updating the
+	 *   vbus, as well as alerting should all be a part of the connect
+	 *   function.
+	 */
+	/* Enforce that we only support the isl923x emulator for now */
+	__ASSERT_NO_MSG(emul_get_binding(DT_LABEL(
+				DT_NODELABEL(isl923x_emul))) == charger_emul);
+	isl923x_emul_set_adc_vbus(charger_emul, 0);
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS,
+			   TCPC_REG_POWER_STATUS_VBUS_DET);
+	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_EXT_STATUS,
+			   TCPC_REG_EXT_STATUS_SAFE0V);
+
+	tcpci_tcpc_alert(0);
+	k_sleep(K_SECONDS(1));
+
+	zassume_ok(tcpci_partner_connect_to_tcpci(partner, tcpci_emul), NULL);
+
+	/* Wait for PD negotiation and current ramp.
+	 * TODO(b/213906889): Check message timing and contents.
+	 */
+	k_sleep(K_SECONDS(10));
+}
+
+void disconnect_sink_from_port(const struct emul *tcpci_emul)
+{
+	zassume_ok(tcpci_emul_disconnect_partner(tcpci_emul), NULL);
 	k_sleep(K_SECONDS(1));
 }
 
