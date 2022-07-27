@@ -12,15 +12,14 @@
 #define NCT38XX_TCPC_COMPAT nuvoton_nct38xx
 
 #define TCPC_CONFIG_NCT38XX(id) \
-	{                                                                       \
-		.bus_type = EC_BUS_TYPE_I2C,                                  \
-		.i2c_info = {                                                 \
-			.port = I2C_PORT(DT_PHANDLE(id, port)),               \
-			.addr_flags = DT_STRING_UPPER_TOKEN(                  \
-					id, i2c_addr_flags),                  \
-		},                                                            \
-		.drv = &nct38xx_tcpm_drv,                                     \
-		.flags = DT_PROP(id, tcpc_flags),                             \
+	{                                              \
+		.bus_type = EC_BUS_TYPE_I2C,           \
+		.i2c_info = {                          \
+			.port = I2C_PORT_BY_DEV(id),   \
+			.addr_flags = DT_REG_ADDR(id), \
+		},                                     \
+		.drv = &nct38xx_tcpm_drv,              \
+		.flags = DT_PROP(id, tcpc_flags),      \
 	},
 
 /**

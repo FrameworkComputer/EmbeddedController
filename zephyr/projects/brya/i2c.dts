@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+ #include <dt-bindings/usb_pd_tcpm.h>
+
 / {
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
@@ -63,6 +65,22 @@
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
+
+	tcpc_port0: nct38xx@70 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x70>;
+		gpio-dev = <&nct3808_0_P1>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
+	};
+
+	tcpc_port2: nct38xx@74 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x74>;
+		gpio-dev = <&nct3808_0_P2>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+	};
 };
 
 &i2c_ctrl1 {
@@ -110,6 +128,16 @@
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
 	pinctrl-names = "default";
+
+	tcpc_port1: ps8xxx@b {
+		compatible = "parade,ps8xxx";
+		reg = <0xb>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
+			TCPC_FLAGS_CONTROL_VCONN |
+			TCPC_FLAGS_CONTROL_FRS)>;
+	};
 };
 
 &i2c_ctrl4 {

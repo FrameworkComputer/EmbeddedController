@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
- #include <dt-bindings/usb_pd_tcpm.h>
-
 / {
 	usbc {
 		#address-cells = <1>;
@@ -20,13 +18,7 @@
 				port = <&i2c_ec_i2c_usb_c0_ppc_b>;
 				i2c-addr-flags = "SYV682X_ADDR1_FLAGS";
 			};
-			tcpc {
-				compatible = "nuvoton,nct38xx";
-				gpio-dev = <&nct3807_C0>;
-				port = <&i2c_ec_i2c_usb_c0_tcp>;
-				i2c-addr-flags = "NCT38XX_I2C_ADDR1_4_FLAGS";
-				tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
-			};
+			tcpc = <&tcpc_port0>;
 			chg {
 				compatible = "intersil,isl9241";
 				status = "okay";

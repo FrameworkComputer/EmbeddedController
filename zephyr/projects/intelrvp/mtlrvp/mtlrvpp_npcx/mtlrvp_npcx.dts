@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+ #include <dt-bindings/usb_pd_tcpm.h>
+
 / {
 	chosen {
 		cros,rtc = &mtc;
@@ -126,6 +128,22 @@
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
 	pinctrl-names = "default";
+
+	tcpc_port0: nct38xx@73 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x73>;
+		gpio-dev = <&nct38xx_c0>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
+	};
+
+	tcpc_port1: nct38xx@77 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x77>;
+		gpio-dev = <&nct38xx_c1>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+	};
 };
 
 &i2c_ctrl0 {
@@ -138,6 +156,16 @@
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
+
+	tcpc_port2: ccgxxf@b {
+		compatible = "cypress,ccgxxf";
+		reg = <0xb>;
+	};
+
+	tcpc_port3: ccgxxf@1b {
+		compatible = "cypress,ccgxxf";
+		reg = <0x1b>;
+	};
 };
 
 &i2c_ctrl1 {

@@ -6,7 +6,7 @@
 #include <zephyr/devicetree.h>
 #include "driver/tcpm/it8xxx2_pd_public.h"
 
-#define IT8XXX2_TCPC_COMPAT ite_it8xxx2_tcpc
+#define IT8XXX2_TCPC_COMPAT ite_it8xxx2_usbpd
 
 #define TCPC_CONFIG_IT8XXX2(id)                   \
 	{                                         \

@@ -17,40 +17,44 @@
 #include "usbc/tcpci.h"
 #include "usbc/utils.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(ANX7447_TCPC_COMPAT) ||     \
-	DT_HAS_COMPAT_STATUS_OKAY(CCGXXF_TCPC_COMPAT) ||  \
-	DT_HAS_COMPAT_STATUS_OKAY(FUSB302_TCPC_COMPAT) || \
-	DT_HAS_COMPAT_STATUS_OKAY(IT8XXX2_TCPC_COMPAT) || \
-	DT_HAS_COMPAT_STATUS_OKAY(PS8XXX_COMPAT) ||       \
-	DT_HAS_COMPAT_STATUS_OKAY(NCT38XX_TCPC_COMPAT) || \
-	DT_HAS_COMPAT_STATUS_OKAY(RT1718S_TCPC_COMPAT) || \
-	DT_HAS_COMPAT_STATUS_OKAY(TCPCI_COMPAT)
+#define HAS_TCPC_PROP(usbc_id) \
+	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, tcpc), (|| 1), ())
 
-#define TCPC_CONFIG(id, fn) [USBC_PORT(id)] = fn(id)
+#define DT_HAS_TCPC (0 DT_FOREACH_STATUS_OKAY(named_usbc_port, HAS_TCPC_PROP))
+
+#if DT_HAS_TCPC
+
+#define TCPC_CHIP_ENTRY(usbc_id, tcpc_id, config_fn) \
+	[USBC_PORT_NEW(usbc_id)] = config_fn(tcpc_id)
+
+#define CHECK_COMPAT(compat, usbc_id, tcpc_id, config_fn) \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(tcpc_id, compat),  \
+		    (TCPC_CHIP_ENTRY(usbc_id, tcpc_id, config_fn)), ())
+
+#define TCPC_CHIP_FIND(usbc_id, tcpc_id)                                       \
+	CHECK_COMPAT(ANX7447_TCPC_COMPAT, usbc_id, tcpc_id,                    \
+		     TCPC_CONFIG_ANX7447)                                      \
+	CHECK_COMPAT(CCGXXF_TCPC_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_CCGXXF) \
+	CHECK_COMPAT(FUSB302_TCPC_COMPAT, usbc_id, tcpc_id,                    \
+		     TCPC_CONFIG_FUSB302)                                      \
+	CHECK_COMPAT(IT8XXX2_TCPC_COMPAT, usbc_id, tcpc_id,                    \
+		     TCPC_CONFIG_IT8XXX2)                                      \
+	CHECK_COMPAT(PS8XXX_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_PS8XXX)      \
+	CHECK_COMPAT(NCT38XX_TCPC_COMPAT, usbc_id, tcpc_id,                    \
+		     TCPC_CONFIG_NCT38XX)                                      \
+	CHECK_COMPAT(RT1718S_TCPC_COMPAT, usbc_id, tcpc_id,                    \
+		     TCPC_CONFIG_RT1718S)                                      \
+	CHECK_COMPAT(TCPCI_COMPAT, usbc_id, tcpc_id, TCPC_CONFIG_TCPCI)
+
+#define TCPC_CHIP(usbc_id)                           \
+	COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, tcpc), \
+		    (TCPC_CHIP_FIND(usbc_id, DT_PHANDLE(usbc_id, tcpc))), ())
 
 #define MAYBE_CONST \
 	COND_CODE_1(CONFIG_PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG, (), (const))
 
-/* Enable clang-format when the formatted code is readable. */
-/* clang-format off */
-MAYBE_CONST struct tcpc_config_t tcpc_config[] = {
-	DT_FOREACH_STATUS_OKAY_VARGS(ANX7447_TCPC_COMPAT, TCPC_CONFIG,
-				     TCPC_CONFIG_ANX7447)
-	DT_FOREACH_STATUS_OKAY_VARGS(CCGXXF_TCPC_COMPAT, TCPC_CONFIG,
-				     TCPC_CONFIG_CCGXXF)
-	DT_FOREACH_STATUS_OKAY_VARGS(FUSB302_TCPC_COMPAT, TCPC_CONFIG,
-				     TCPC_CONFIG_FUSB302)
-	DT_FOREACH_STATUS_OKAY_VARGS(IT8XXX2_TCPC_COMPAT, TCPC_CONFIG,
-				     TCPC_CONFIG_IT8XXX2)
-	DT_FOREACH_STATUS_OKAY_VARGS(PS8XXX_COMPAT, TCPC_CONFIG,
-				     TCPC_CONFIG_PS8XXX)
-	DT_FOREACH_STATUS_OKAY_VARGS(NCT38XX_TCPC_COMPAT, TCPC_CONFIG,
-				     TCPC_CONFIG_NCT38XX)
-	DT_FOREACH_STATUS_OKAY_VARGS(RT1718S_TCPC_COMPAT, TCPC_CONFIG,
-				     TCPC_CONFIG_RT1718S)
-	DT_FOREACH_STATUS_OKAY_VARGS(TCPCI_COMPAT, TCPC_CONFIG,
-				     TCPC_CONFIG_TCPCI)
-};
-/* clang-format on */
+/* Type C Port Controllers */
+MAYBE_CONST struct tcpc_config_t tcpc_config[] = { DT_FOREACH_STATUS_OKAY(
+	named_usbc_port, TCPC_CHIP) };
 
 #endif /* DT_HAS_COMPAT_STATUS_OKAY */

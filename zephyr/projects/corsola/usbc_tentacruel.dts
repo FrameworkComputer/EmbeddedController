@@ -18,9 +18,7 @@
 				port = <&i2c_usb_c0>;
 				i2c-addr-flags = "RT1739_ADDR1_FLAGS";
 			};
-			tcpc {
-				compatible = "ite,it8xxx2-tcpc";
-			};
+			tcpc = <&usbpd0>;
 			chg {
 				compatible = "richtek,rt9490";
 				status = "okay";
@@ -50,9 +48,7 @@
 				i2c-addr-flags = "SYV682X_ADDR0_FLAGS";
 				frs_en_gpio = <&gpio_ec_x_gpio1>;
 			};
-			tcpc {
-				compatible = "ite,it8xxx2-tcpc";
-			};
+			tcpc = <&usbpd1>;
 			usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
 		};
 		port1-muxes {

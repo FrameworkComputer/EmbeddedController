@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+ #include <dt-bindings/usb_pd_tcpm.h>
+
 / {
 	aliases {
 		gpio-wp = &ec_wp_l;
@@ -69,6 +71,13 @@
 		status = "okay";
 		reg = <0x5f>;
 		irq = <&int_usb_c0_bc12>;
+	};
+
+	tcpc_port0: nct38xx@73 {
+		compatible = "nuvoton,nct38xx";
+		gpio-dev = <&nct3807_C0>;
+		reg = <0x73>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
 	};
 
 	nct3807_C0:nct3807_C0@70 {

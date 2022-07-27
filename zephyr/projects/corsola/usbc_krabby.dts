@@ -12,14 +12,12 @@
 			compatible = "named-usbc-port";
 			reg = <0>;
 			bc12 = <&bc12_port0>;
+			tcpc = <&usbpd0>;
 			ppc {
 				compatible = "richtek,rt1739-ppc";
 				status = "okay";
 				port = <&i2c_usb_c0>;
 				i2c-addr-flags = "RT1739_ADDR1_FLAGS";
-			};
-			tcpc {
-				compatible = "ite,it8xxx2-tcpc";
 			};
 			chg {
 				compatible = "richtek,rt9490";
@@ -43,15 +41,13 @@
 			compatible = "named-usbc-port";
 			reg = <1>;
 			bc12 = <&bc12_port1>;
+			tcpc = <&usbpd1>;
 			ppc {
 				compatible = "silergy,syv682x";
 				status = "okay";
 				port = <&i2c_usb_c1>;
 				i2c-addr-flags = "SYV682X_ADDR0_FLAGS";
 				frs_en_gpio = <&gpio_ec_x_gpio1>;
-			};
-			tcpc {
-				compatible = "ite,it8xxx2-tcpc";
 			};
 			usb-muxes = <&tusb1064_mux_1 &virtual_mux_1>;
 		};

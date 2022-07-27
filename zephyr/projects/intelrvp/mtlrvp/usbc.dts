@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
- #include <dt-bindings/usb_pd_tcpm.h>
-
 / {
 	usbc {
 		#address-cells = <1>;
@@ -13,15 +11,7 @@
 		usbc_port0: port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			tcpc {
-				compatible = "nuvoton,nct38xx";
-				gpio-dev = <&nct38xx_c0>;
-				port = <&typec_aic1>;
-				i2c-addr-flags = "NCT38XX_I2C_ADDR1_4_FLAGS";
-				tcpc-flags = <(
-					TCPC_FLAGS_TCPCI_REV2_0 |
-					TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
-			};
+			tcpc = <&tcpc_port0>;
 			chg {
 				compatible = "intersil,isl9241";
 				status = "okay";
@@ -45,13 +35,7 @@
 		usbc_port1: port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			tcpc {
-				compatible = "nuvoton,nct38xx";
-				gpio-dev = <&nct38xx_c1>;
-				port = <&typec_aic1>;
-				i2c-addr-flags = "NCT38XX_I2C_ADDR2_4_FLAGS";
-				tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
-			};
+			tcpc = <&tcpc_port1>;
 			usb-muxes = <&usb_c1_hb_retimer &virtual_mux_c1>;
 		};
 		port1-muxes {
@@ -70,11 +54,7 @@
 		usbc_port2: port2@2 {
 			compatible = "named-usbc-port";
 			reg = <2>;
-			tcpc {
-				compatible = "cypress,ccgxxf";
-				port = <&typec_aic2>;
-				i2c-addr-flags = "CCGXXF_I2C_ADDR1_FLAGS";
-			};
+			tcpc = <&tcpc_port2>;
 			usb-muxes = <&usb_c2_hb_retimer &virtual_mux_c2>;
 		};
 		port2-muxes {
@@ -93,11 +73,7 @@
 		usbc_port3: port3@3 {
 			compatible = "named-usbc-port";
 			reg = <3>;
-			tcpc {
-				compatible = "cypress,ccgxxf";
-				port = <&typec_aic2>;
-				i2c-addr-flags = "CCGXXF_I2C_ADDR2_FLAGS";
-			};
+			tcpc = <&tcpc_port3>;
 			usb-muxes = <&usb_c3_hb_retimer &virtual_mux_c3>;
 		};
 		port3-muxes {

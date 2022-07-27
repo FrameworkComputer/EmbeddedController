@@ -14,6 +14,11 @@ properties:
     required: false
     description: |
       BC1.2 chip for the USB-C port.
+  tcpc:
+    type: phandle
+    required: false
+    description: |
+      TCPC chip for the USB-C port.
   usb-muxes:
     type: phandles
     required: false

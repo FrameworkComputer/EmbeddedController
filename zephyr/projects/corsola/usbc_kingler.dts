@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <dt-bindings/usb_pd_tcpm.h>
-
 / {
 	usbc {
 		#address-cells = <1>;
@@ -14,17 +12,7 @@
 			compatible = "named-usbc-port";
 			reg = <0>;
 			bc12 = <&bc12_port0>;
-			tcpc {
-				compatible = "anologix,anx7447-tcpc";
-				status = "okay";
-				port = <&i2c_usb_c0>;
-				i2c-addr-flags = "AN7447_TCPC0_I2C_ADDR_FLAGS";
-				tcpc-flags = <(
-					TCPC_FLAGS_VBUS_MONITOR |
-					TCPC_FLAGS_ALERT_OD |
-					TCPC_FLAGS_CONTROL_VCONN |
-					TCPC_FLAGS_CONTROL_FRS)>;
-			};
+			tcpc = <&tcpc_port0>;
 			ppc {
 				compatible = "nxp,nx20p348x";
 				status = "okay";
@@ -52,15 +40,7 @@
 			compatible = "named-usbc-port";
 			reg = <1>;
 			bc12 = <&bc12_port1>;
-			tcpc {
-				compatible = "richtek,rt1718s-tcpc";
-				port = <&i2c_usb_c1>;
-				i2c-addr-flags = "RT1718S_I2C_ADDR2_FLAGS";
-				tcpc-flags = <(
-					TCPC_FLAGS_ALERT_OD |
-					TCPC_FLAGS_CONTROL_VCONN |
-					TCPC_FLAGS_CONTROL_FRS)>;
-			};
+			tcpc = <&tcpc_port1>;
 			ppc {
 				compatible = "nxp,nx20p348x";
 				status = "okay";
