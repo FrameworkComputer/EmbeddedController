@@ -131,6 +131,20 @@ int dpm_get_source_pdo(const uint32_t **src_pdo, const int port);
 int dpm_get_source_current(const int port);
 
 /*
+ * Report we've been asked to enter BIST Shared Test Mode
+ *
+ * @param port		USB-C port number
+ */
+void dpm_bist_shared_mode_enter(int port);
+
+/*
+ * Report we've been asked to exit BIST Shared Test Mode
+ *
+ * @param port		USB-C port number
+ */
+void dpm_bist_shared_mode_exit(int port);
+
+/*
  * Build SOP Status Data Block (SDB)
  *
  * @param port		USB-C port number

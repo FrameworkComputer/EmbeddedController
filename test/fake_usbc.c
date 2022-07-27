@@ -328,6 +328,14 @@ void dpm_remove_source(int port)
 {
 }
 
+void dpm_bist_shared_mode_enter(int port)
+{
+}
+
+void dpm_bist_shared_mode_exit(int port)
+{
+}
+
 int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
 	*src_pdo = pd_src_pdo;

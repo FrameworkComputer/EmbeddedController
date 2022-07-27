@@ -616,6 +616,9 @@ static atomic_t source_frs_max_requested;
 /* Ports with non-PD sinks, so current requirements are unknown */
 static atomic_t non_pd_sink_max_requested;
 
+/* BIST shared test mode */
+static bool bist_shared_mode_enabled;
+
 #define LOWEST_PORT(p) __builtin_ctz(p) /* Undefined behavior if p == 0 */
 
 static int count_port_bits(uint32_t bitmask)
@@ -649,6 +652,13 @@ static void balance_source_ports(void)
 	 * finish the downgrade.
 	 */
 	if (deferred_waiting)
+		return;
+
+	/*
+	 * Turn off all shared power logic while BIST shared test mode is active
+	 * on the system.
+	 */
+	if (bist_shared_mode_enabled)
 		return;
 
 	mutex_lock(&max_current_claimed_lock);
@@ -873,16 +883,83 @@ void dpm_remove_source(int port)
 	balance_source_ports();
 }
 
+void dpm_bist_shared_mode_enter(int port)
+{
+	/*
+	 * From 6.4.3.3.1 BIST Shared Test Mode Entry:
+	 *
+	 * "When any Master Port in a shared capacity group receives a BIST
+	 * Message with a BIST Shared Test Mode Entry BIST Data Object, while
+	 * in the PE_SRC_Ready State, the UUT Shall enter a compliance test
+	 * mode where the maximum source capability is always offered on every
+	 * port, regardless of the availability of shared power i.e. all shared
+	 * power management is disabled.
+	 * . . .
+	 * On entering this mode, the UUT Shall send a new Source_Capabilities
+	 * Message from each Port in the shared capacity group within
+	 * tBISTSharedTestMode. The Tester will not exceed the shared capacity
+	 * during this mode."
+	 */
+
+	/* Shared mode is unnecessary without at least one 3.0 A port */
+	if (CONFIG_USB_PD_3A_PORTS == 0)
+		return;
+
+	/* Enter mode only if this port had been in PE_SRC_Ready */
+	if (pd_get_power_role(port) != PD_ROLE_SOURCE)
+		return;
+
+	bist_shared_mode_enabled = true;
+
+	/* Trigger new source caps on all source ports */
+	for (int i = 0; i < board_get_usb_pd_port_count(); i++) {
+		if (pd_get_power_role(i) == PD_ROLE_SOURCE)
+			typec_select_src_current_limit_rp(i, TYPEC_RP_3A0);
+	}
+}
+
+void dpm_bist_shared_mode_exit(int port)
+{
+	/*
+	 * From 6.4.3.3.2 BIST Shared Test Mode Exit:
+	 *
+	 * "Upon receipt of a BIST Message, with a BIST Shared Test Mode Exit
+	 * BIST Data Object, the UUT Shall return a GoodCRC Message and Shall
+	 * exit the BIST Shared Capacity Test Mode.
+	 * . . .
+	 * On exiting the mode, the UUT May send a new Source_Capabilities
+	 * Message to each port in the shared capacity group or the UUT May
+	 * perform ErrorRecovery on each port."
+	 */
+
+	/* Shared mode is unnecessary without at least one 3.0 A port */
+	if (CONFIG_USB_PD_3A_PORTS == 0)
+		return;
+
+	/* Do nothing if Exit was received with no Entry */
+	if (!bist_shared_mode_enabled)
+		return;
+
+	bist_shared_mode_enabled = false;
+
+	/* Declare error recovery bankruptcy */
+	for (int i = 0; i < board_get_usb_pd_port_count(); i++) {
+		pd_set_error_recovery(i);
+	}
+}
+
 /*
  * Note: all ports receive the 1.5 A source offering until they are found to
  * match a criteria on the 3.0 A priority list (ex. through sink capability
  * probing), at which point they will be offered a new 3.0 A source capability.
+ *
+ * All ports must be offered our full capability while in BIST shared test mode.
  */
 __overridable int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 {
 	/* Max PDO may not exist on boards which don't offer 3 A */
 #if CONFIG_USB_PD_3A_PORTS > 0
-	if (max_current_claimed & BIT(port)) {
+	if (max_current_claimed & BIT(port) || bist_shared_mode_enabled) {
 		*src_pdo = pd_src_pdo_max;
 		return pd_src_pdo_max_cnt;
 	}
@@ -897,7 +974,7 @@ int dpm_get_source_current(const int port)
 	if (pd_get_power_role(port) == PD_ROLE_SINK)
 		return 0;
 
-	if (max_current_claimed & BIT(port))
+	if (max_current_claimed & BIT(port) || bist_shared_mode_enabled)
 		return 3000;
 	else if (typec_get_default_current_limit_rp(port) == TYPEC_RP_1A5)
 		return 1500;

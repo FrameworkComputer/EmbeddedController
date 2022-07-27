@@ -148,7 +148,7 @@ enum pd_rx_errors {
 /* BDO : BIST Data Object
  * 31:28 BIST Mode
  *       In PD 3.0, all but Carrier Mode 2 (as Carrier Mode) and Test Data are
- *       reserved.
+ *       reserved, with a new BIST shared mode added
  * 27:16 Reserved
  * 15:0  Returned error counters (reserved in PD 3.0)
  */
@@ -161,6 +161,8 @@ enum pd_rx_errors {
 #define BDO_MODE_CARRIER3 (BIST_CARRIER_MODE_3 << 28)
 #define BDO_MODE_EYE (BIST_EYE_PATTERN << 28)
 #define BDO_MODE_TEST_DATA (BIST_TEST_DATA << 28)
+#define BDO_MODE_SHARED_ENTER (BIST_SHARED_MODE_ENTER << 28)
+#define BDO_MODE_SHARED_EXIT (BIST_SHARED_MODE_EXIT << 28)
 
 #define BDO(mode, cnt) ((mode) | ((cnt)&0xFFFF))
 
@@ -175,6 +177,8 @@ enum pd_rx_errors {
 #define BIST_CARRIER_MODE_3 6
 #define BIST_EYE_PATTERN 7
 #define BIST_TEST_DATA 8
+#define BIST_SHARED_MODE_ENTER 9
+#define BIST_SHARED_MODE_EXIT 10
 
 #define SVID_DISCOVERY_MAX 16
 

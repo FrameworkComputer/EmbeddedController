@@ -5287,6 +5287,18 @@ static void pe_bist_tx_entry(int port)
 		 */
 		if (tcpc_set_bist_test_mode(port, true) != EC_SUCCESS)
 			CPRINTS("C%d: Failed to enter BIST Test Mode", port);
+	} else if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+		   mode == BIST_SHARED_MODE_ENTER) {
+		/* Notify the DPM and return to ready */
+		dpm_bist_shared_mode_enter(port);
+		pe_set_ready_state(port);
+		return;
+	} else if (IS_ENABLED(CONFIG_USB_PD_REV30) &&
+		   mode == BIST_SHARED_MODE_EXIT) {
+		/* Notify the DPM and return to ready */
+		dpm_bist_shared_mode_exit(port);
+		pe_set_ready_state(port);
+		return;
 	} else {
 		/* Ignore unsupported BIST messages. */
 		pe_set_ready_state(port);
