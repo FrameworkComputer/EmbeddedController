@@ -79,8 +79,6 @@ def build(opts):
 
     run_twister(platform_ec, opts.code_coverage, ["--build-only"])
 
-    return 0
-
 
 UNITS = {
     "B": 1,
@@ -217,9 +215,7 @@ def test(opts):
     cmd = ["zmake", "-D", "test", "-a", "--no-rebuild"]
     if opts.code_coverage:
         cmd.append("--coverage")
-    ret = subprocess.run(cmd, check=True, cwd=zephyr_dir).returncode
-    if ret:
-        return ret
+    subprocess.run(cmd, check=True, cwd=zephyr_dir)
 
     # Twister-based tests
     platform_ec = zephyr_dir.parent
@@ -332,7 +328,6 @@ def test(opts):
 
     with open(opts.metrics, "w") as file:
         file.write(json_format.MessageToJson(metrics))
-    return 0
 
 
 COVERAGE_RE = re.compile(
@@ -359,7 +354,8 @@ def main(args):
         return -1
 
     # Run selected sub command function
-    return opts.func(opts)
+    opts.func(opts)
+    return 0
 
 
 def parse_args(args):
