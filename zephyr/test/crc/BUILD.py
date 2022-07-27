@@ -4,4 +4,4 @@
 
 """Register zmake project for crc test."""
 
-register_host_test("crc")
+register_host_test("crc", dts_overlays=[here / "boards/native_posix.overlay"])
