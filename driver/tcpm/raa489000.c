@@ -258,6 +258,54 @@ int raa489000_tcpm_set_cc(int port, int pull)
 	return rv;
 }
 
+#ifdef CONFIG_CMD_TCPC_DUMP
+
+static const struct tcpc_reg_dump_map raa489000_regs[] = {
+	{
+		.addr = RAA489000_TCPC_SETTING1,
+		.name = "TCPC_SETTING1",
+		.size = 2,
+	},
+	{
+		.addr = RAA489000_VBUS_VOLTAGE_TARGET,
+		.name = "VBUS_VOLTAGE_TARGET",
+		.size = 2,
+	},
+	{
+		.addr = RAA489000_VBUS_CURRENT_TARGET,
+		.name = "VBUS_CURRENT_TARGET",
+		.size = 2,
+	},
+	{
+		.addr = RAA489000_VBUS_OCP_UV_THRESHOLD,
+		.name = "VBUS_OCP_UV_THRESHOLD",
+		.size = 2,
+	},
+	{
+		.addr = RAA489000_TYPEC_SETTING1,
+		.name = "TYPEC_SETTING1",
+		.size = 2,
+	},
+	{
+		.addr = RAA489000_PD_PHYSICAL_SETTING1,
+		.name = "PD_PHYSICAL_SETTING1",
+		.size = 2,
+	},
+	{
+		.addr = RAA489000_PD_PHYSICAL_PARAMETER1,
+		.name = "PD_PHYSICAL_PARAMETER1",
+		.size = 2,
+	},
+};
+
+void raa489000_dump_registers(int port)
+{
+	tcpc_dump_std_registers(port);
+	tcpc_dump_registers(port, raa489000_regs, ARRAY_SIZE(raa489000_regs));
+}
+
+#endif
+
 int raa489000_debug_detach(int port)
 {
 	int rv;
@@ -323,4 +371,7 @@ const struct tcpm_drv raa489000_tcpm_drv = {
 	.tcpc_enable_auto_discharge_disconnect =
 		&tcpci_tcpc_enable_auto_discharge_disconnect,
 	.debug_detach = &raa489000_debug_detach,
+#ifdef CONFIG_CMD_TCPC_DUMP
+	.dump_registers = &raa489000_dump_registers,
+#endif
 };
