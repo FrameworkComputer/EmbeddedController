@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <ztest.h>
+#include <ztest_assert.h>
+#include <ztest_test_new.h>
 
 #include "crc8.h"
 
-/* Note this test makes the pure platform/ec test that uses the same value */
-static void test_crc8_known_data(void)
+ZTEST_SUITE(crc_driver, NULL, NULL, NULL, NULL, NULL);
+
+ZTEST(crc_driver, test_crc8_known_data)
 {
 	uint8_t buffer[10] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 8 };
 
@@ -17,10 +18,4 @@ static void test_crc8_known_data(void)
 
 	/* Verifies polynomial values of 0x07 representing x^8 + x^2 + x + 1 */
 	zassert_equal(crc, 170, "CRC8 hash did not match");
-}
-
-void test_main(void)
-{
-	ztest_test_suite(test_task_shim, ztest_unit_test(test_crc8_known_data));
-	ztest_run_test_suite(test_task_shim);
 }
