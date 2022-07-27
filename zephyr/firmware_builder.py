@@ -24,7 +24,7 @@ DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 
 
 def run_twister(platform_ec, code_coverage=False, extra_args=None):
-    # Twister-based build
+    """Build the tests using twister."""
     cmd = [platform_ec / "twister", "--outdir", platform_ec / "twister-out"]
 
     if extra_args:
@@ -42,23 +42,25 @@ def run_twister(platform_ec, code_coverage=False, extra_args=None):
                 platform_ec / "util" / "llvm-gcov.sh",
             ]
         )
-    ret = subprocess.run(cmd, check=True).returncode
-    if ret:
-        return ret
+    subprocess.run(cmd, check=True, cwd=platform_ec)
 
 
 def build(opts):
     """Builds all Zephyr firmware targets"""
     metric_list = firmware_pb2.FwBuildMetricList()
 
-    zephyr_dir = pathlib.Path(__file__).parent
-    platform_ec = zephyr_dir.resolve().parent
-    subprocess.run([platform_ec / "util" / "check_clang_format.py"], check=True)
+    zephyr_dir = pathlib.Path(__file__).parent.resolve()
+    platform_ec = zephyr_dir.parent
+    subprocess.run(
+        [platform_ec / "util" / "check_clang_format.py"],
+        check=True,
+        cwd=platform_ec,
+    )
 
     cmd = ["zmake", "-D", "build", "-a"]
     if opts.code_coverage:
         cmd.append("--coverage")
-    subprocess.run(cmd, cwd=pathlib.Path(__file__).parent, check=True)
+    subprocess.run(cmd, cwd=zephyr_dir, check=True)
     if not opts.code_coverage:
         for project in zmake.project.find_projects(zephyr_dir).values():
             if project.config.is_test:
@@ -148,8 +150,8 @@ def bundle_coverage(opts):
     info = firmware_pb2.FirmwareArtifactInfo()
     info.bcs_version_info.version_string = opts.bcs_version
     bundle_dir = get_bundle_dir(opts)
-    zephyr_dir = pathlib.Path(__file__).parent
-    platform_ec = zephyr_dir.resolve().parent
+    zephyr_dir = pathlib.Path(__file__).parent.resolve()
+    platform_ec = zephyr_dir.parent
     build_dir = platform_ec / "build" / "zephyr"
     tarball_name = "coverage.tbz2"
     tarball_path = bundle_dir / tarball_name
@@ -176,8 +178,8 @@ def bundle_firmware(opts):
     info = firmware_pb2.FirmwareArtifactInfo()
     info.bcs_version_info.version_string = opts.bcs_version
     bundle_dir = get_bundle_dir(opts)
-    zephyr_dir = pathlib.Path(__file__).parent
-    platform_ec = zephyr_dir.resolve().parent
+    zephyr_dir = pathlib.Path(__file__).parent.resolve()
+    platform_ec = zephyr_dir.parent
     for project in zmake.project.find_projects(zephyr_dir).values():
         if project.config.is_test:
             continue
@@ -208,12 +210,14 @@ def test(opts):
 
     # Run zmake tests to ensure we have a fully working zmake before
     # proceeding.
-    subprocess.run([zephyr_dir / "zmake" / "run_tests.sh"], check=True)
+    subprocess.run(
+        [zephyr_dir / "zmake" / "run_tests.sh"], check=True, cwd=zephyr_dir
+    )
 
     cmd = ["zmake", "-D", "test", "-a", "--no-rebuild"]
     if opts.code_coverage:
         cmd.append("--coverage")
-    ret = subprocess.run(cmd, check=True).returncode
+    ret = subprocess.run(cmd, check=True, cwd=zephyr_dir).returncode
     if ret:
         return ret
 
@@ -239,7 +243,7 @@ def test(opts):
         ]
         output = subprocess.run(
             cmd,
-            cwd=pathlib.Path(__file__).parent,
+            cwd=zephyr_dir,
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
@@ -248,7 +252,7 @@ def test(opts):
 
         output = subprocess.run(
             ["/usr/bin/lcov", "--summary", build_dir / "all_tests.info"],
-            cwd=pathlib.Path(__file__).parent,
+            cwd=zephyr_dir,
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
@@ -265,7 +269,7 @@ def test(opts):
                 "--summary",
                 platform_ec / "build/coverage/lcov.info",
             ],
-            cwd=pathlib.Path(__file__).parent,
+            cwd=zephyr_dir,
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
@@ -285,7 +289,7 @@ def test(opts):
         ]
         subprocess.run(
             cmd,
-            cwd=pathlib.Path(__file__).parent,
+            cwd=zephyr_dir,
             check=True,
         )
 
@@ -298,10 +302,12 @@ def test(opts):
             "-r",
             build_dir / "lcov_unfiltered.info",
             platform_ec / "build/**",
+            platform_ec / "twister-out*/**",
+            "/usr/include/**",
         ]
         output = subprocess.run(
             cmd,
-            cwd=pathlib.Path(__file__).parent,
+            cwd=zephyr_dir,
             check=True,
             stdout=subprocess.PIPE,
             universal_newlines=True,
@@ -320,7 +326,7 @@ def test(opts):
                 "-s",
                 build_dir / "lcov.info",
             ],
-            cwd=pathlib.Path(__file__).parent,
+            cwd=zephyr_dir,
             check=True,
         )
 
