@@ -97,7 +97,6 @@
 		compatible = "unused-gpios";
 		unused-gpios = <&gpioc 3 0>,
 			       <&gpiod 4 0>,
-			       <&gpiod 7 0>,
 			       <&gpioh 2 0>,
 			       <&gpioj 7 0>,
 			       <&gpiol 4 0>;
@@ -286,7 +285,7 @@
 
 		fan_0 {
 			pwms = <&pwm7 PWM_CHANNEL_7 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
-			tach = <&tach0>;
+			tach = <&tach1>;
 			rpm_min = <1500>;
 			rpm_start = <1500>;
 			rpm_max = <6500>;
@@ -416,7 +415,7 @@
 };
 
 /* fan tachometer sensor */
-&tach0 {
+&tach1 {
 	status = "okay";
 	channel = <IT8XXX2_TACH_CHANNEL_A>;
 	pulses-per-round = <2>;
