@@ -16,6 +16,7 @@
 #include "extpower.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(test_drivers_bc12, LOG_LEVEL_DBG);
@@ -92,9 +93,6 @@ static const struct bc12_status bc12_chg_limits[] = {
 
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
-
-#define GPIO_ACOK_OD_PATH DT_PATH(named_gpios, acok_od)
-#define GPIO_ACOK_OD_PORT DT_GPIO_PIN(GPIO_ACOK_OD_PATH, gpios)
 
 static void test_bc12_pi3usb9201_host_mode(void)
 {
@@ -232,8 +230,6 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 {
 	const struct device *batt_pres_dev =
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
-	const struct device *acok_dev =
-		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_ACOK_OD_PATH, gpios));
 	const struct emul *emul = pi3usb9201_emul_get(PI3USB9201_ORD);
 	uint8_t a, b;
 
@@ -242,9 +238,7 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 				       0),
 		   NULL);
 	zassert_equal(BP_YES, battery_is_present(), NULL);
-	zassert_ok(gpio_emul_input_set(acok_dev, GPIO_ACOK_OD_PORT, 1), NULL);
-	msleep(CONFIG_EXTPOWER_DEBOUNCE_MS + 1);
-	zassert_equal(1, extpower_is_present(), NULL);
+	set_ac_enabled(true);
 
 	/* Wait long enough for TCPMv2 to be idle. */
 	msleep(2000);
@@ -277,5 +271,9 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 /*
  * TODO(b/216660795): Cleanup state using a teardown_fn
  */
+static void bc12_after(void *unused)
+{
+	set_ac_enabled(false);
+}
 
-ZTEST_SUITE(bc12, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(bc12, drivers_predicate_post_main, NULL, NULL, bc12_after, NULL);
