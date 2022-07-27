@@ -380,6 +380,11 @@ static int isl923x_emul_finish_write(const struct emul *emul, int reg,
 	struct sbat_emul_bat_data *bat;
 	int16_t current;
 
+	/* This write only selected register for I2C read message */
+	if (bytes < 2) {
+		return 0;
+	}
+
 	switch (reg) {
 	case ISL923X_REG_CHG_CURRENT:
 		/* Write current to battery. */
