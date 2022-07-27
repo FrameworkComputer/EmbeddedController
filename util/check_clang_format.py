@@ -19,11 +19,12 @@ from chromite.lib import commandline
 
 
 def main(argv=None):
+    """Find all C files and runs clang-format on them."""
     parser = commandline.ArgumentParser()
     parser.parse_args(argv)
 
     logging.info("Validating all code is formatted with clang-format.")
-    ec_dir = pathlib.Path(__file__).parent.parent
+    ec_dir = pathlib.Path(__file__).resolve().parent.parent
     all_files = [
         ec_dir / path
         for path in subprocess.run(
