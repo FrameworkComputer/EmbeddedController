@@ -26,6 +26,7 @@ target_sources(app PRIVATE
     src/integration/usbc/usb_5v_3a_pd_sink.c
     src/integration/usbc/usb_5v_3a_pd_source.c
     src/integration/usbc/usb_attach_src_snk.c
+    src/integration/usbc/usb_pd_bist_shared.c
     src/integration/usbc/usb_pd_ctrl_msg.c
     src/integration/usbc/usb_pd_rev3.c
     src/i2c_passthru.c
