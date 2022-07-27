@@ -41,20 +41,13 @@ properties:
         pwmleds {
                 compatible = "pwm-leds";
                 pwm_sidesel: pwm_sidesel {
-                        pwms = <&pwm7 0 PWM_HZ(4800) PWM_POLARITY_INVERTED>;
+                        pwms = <&pwm7 0 PWM_HZ(2400) PWM_POLARITY_INVERTED>;
                 };
         };
         cros-pwmleds {
                 compatible = "cros-ec,pwm-leds";
                 sidesel = <&pwm_sidesel>;
         };
-
-  frequency:
-    type: int
-    required: true
-    description: |
-      PWM frequency in Hz for LEDs. SIDESEL, if present, uses half the
-      frequency.
 
   color-map-red:
     type: array

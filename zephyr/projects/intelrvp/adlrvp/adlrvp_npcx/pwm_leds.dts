@@ -7,10 +7,10 @@
 	pwmleds {
 		compatible = "pwm-leds";
 		pwm_led0: pwm_led_0 {
-			pwms = <&pwm4 0 0 PWM_POLARITY_INVERTED>;
+			pwms = <&pwm4 0 PWM_HZ(4800) PWM_POLARITY_INVERTED>;
 		};
 		pwm_led1: pwm_led_1 {
-			pwms = <&pwm5 0 0 PWM_POLARITY_INVERTED>;
+			pwms = <&pwm5 0 PWM_HZ(4800) PWM_POLARITY_INVERTED>;
 		};
 	};
 
@@ -18,7 +18,6 @@
 		compatible = "cros-ec,pwm-leds";
 
 		leds = <&pwm_led0 &pwm_led1>;
-		frequency = <4800>;
 
 		color-map-green  = <100>;
 
