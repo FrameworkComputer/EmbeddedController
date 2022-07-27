@@ -472,6 +472,18 @@ flash_fp_mcu_stm32() {
     klog "Binding cros-ec driver"
     echo "" > "/sys/bus/spi/devices/${deviceid}/driver_override"
     echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
+  else
+    # FPMCU can still have ro_now protection (sector write protection) enabled
+    # e.g. when flash_fp_mcu was run with --read option. It is disabled when
+    # FPMCU boots with HW write protect disabled.
+    # Disabling sector write protection takes some time due to flash internal
+    # structures update. During that time we can't reset or power cycle FPMCU
+    # otherwise we will corrupt internal flash state which will brick FPMCU.
+    # This situation can occur if DUT is rebooted immediately after flash_fp_mcu
+    # finishes, so give some time to remove sector write protection. No need to
+    # wait if transport is SPI because later we query for version and reset
+    # flags.
+    sleep 3
   fi
 
   if [[ "${cmd_exit_status}" -ne 0 ]]; then
