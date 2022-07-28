@@ -6,7 +6,8 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/bbram.h>
 #include <zephyr/logging/log.h>
-#include <ztest.h>
+#include <ztest_assert.h>
+#include <ztest_test_new.h>
 
 #include "system.h"
 
@@ -20,7 +21,9 @@ LOG_MODULE_REGISTER(test);
 static char mock_data[64] =
 	"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@";
 
-static void test_bbram_get(void)
+ZTEST_SUITE(system, NULL, NULL, NULL, NULL, NULL);
+
+ZTEST(system, test_bbram_get)
 {
 	const struct device *const bbram_dev =
 		DEVICE_DT_GET(DT_CHOSEN(cros_ec_bbram));
@@ -50,10 +53,4 @@ static void test_bbram_get(void)
 	zassert_ok(rc, NULL);
 	zassert_mem_equal(output, mock_data + BBRAM_REGION_OFF(try_slot),
 			  BBRAM_REGION_SIZE(try_slot), NULL);
-}
-
-void test_main(void)
-{
-	ztest_test_suite(system, ztest_unit_test(test_bbram_get));
-	ztest_run_test_suite(system);
 }
