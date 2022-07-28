@@ -4,4 +4,6 @@
 
 """Register zmake project for i2c_dts test."""
 
-register_host_test("i2c_dts", dts_overlays=["overlay.dts"])
+register_host_test(
+    "i2c_dts", dts_overlays=[here / "boards/native_posix.overlay"]
+)

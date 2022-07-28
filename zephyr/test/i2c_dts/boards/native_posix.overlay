@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <board-overlays/native_posix.dts>
+
 / {
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
