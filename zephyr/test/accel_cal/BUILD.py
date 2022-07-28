@@ -4,4 +4,4 @@
 
 """Register zmake project for accel_cal test."""
 
-register_host_test("accel_cal")
+register_host_test("accel_cal", dts_overlays=["boards/native_posix.overlay"])
