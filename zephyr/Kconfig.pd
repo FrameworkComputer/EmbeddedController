@@ -76,6 +76,16 @@ config PLATFORM_EC_USB_PD_DEBUG_LEVEL
 	  The meaning of each level depends on the module in question, but
 	  the maximum available level is 3.
 
+config PLATFORM_EC_USB_PD_INITIAL_DEBUG_LEVEL
+	int "Initial debug level to use"
+	default 1
+	help
+	  Sets the initial value of the debug level to use, while
+	  still allowing the debug level to be changed using 'pd dump'.
+	  A value of 0 will initially disable debug logging, and values 1
+	  through to 3 will increase the level of debug logging.
+	  If this config is not set, the default level will be set to 1.
+
 config PLATFORM_EC_USB_PD_5V_EN_CUSTOM
 	bool "Custom method of detecting VBUS"
 	help

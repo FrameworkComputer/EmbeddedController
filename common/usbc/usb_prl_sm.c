@@ -184,6 +184,8 @@ __maybe_unused static void print_flag(const char *group, int set_or_clear,
  */
 #ifdef CONFIG_USB_PD_DEBUG_LEVEL
 static const enum debug_level prl_debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
+#elif defined(CONFIG_USB_PD_INITIAL_DEBUG_LEVEL)
+static enum debug_level prl_debug_level = CONFIG_USB_PD_INITIAL_DEBUG_LEVEL;
 #else
 static enum debug_level prl_debug_level = DEBUG_LEVEL_1;
 #endif

@@ -550,6 +550,8 @@ static void pe_sender_response_msg_exit(const int port);
 /* Debug log level - higher number == more log */
 #ifdef CONFIG_USB_PD_DEBUG_LEVEL
 static const enum debug_level pe_debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
+#elif defined(CONFIG_USB_PD_INITIAL_DEBUG_LEVEL)
+static enum debug_level pe_debug_level = CONFIG_USB_PD_INITIAL_DEBUG_LEVEL;
 #else
 static enum debug_level pe_debug_level = DEBUG_LEVEL_1;
 #endif
