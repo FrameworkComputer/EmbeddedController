@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <ztest_assert.h>
+#include <ztest_test_new.h>
 #include "ec_app_main.h"
 #include "hooks.h"
 
-static void test_init_reset_log(void)
+ZTEST(ec_app_tests, test_init_reset_log)
 {
 #ifdef CONFIG_CMD_AP_RESET_LOG
 	zassert_unreachable("TODO: Implement this test.");
@@ -16,7 +17,7 @@ static void test_init_reset_log(void)
 #endif
 }
 
-static void test_lpc_init_mask(void)
+ZTEST(ec_app_tests, test_lpc_init_mask)
 {
 #ifdef CONFIG_HOSTCMD_X86
 	zassert_unreachable("TODO: Implement this test.");
@@ -25,7 +26,7 @@ static void test_lpc_init_mask(void)
 #endif
 }
 
-static void test_keyboard_scan_init(void)
+ZTEST(ec_app_tests, test_keyboard_scan_init)
 {
 #ifdef HAS_TASK_KEYSCAN
 	zassert_unreachable("TODO: Implement this test.");
@@ -34,7 +35,7 @@ static void test_keyboard_scan_init(void)
 #endif
 }
 
-static void test_button_init(void)
+ZTEST(ec_app_tests, test_button_init)
 {
 #if defined(CONFIG_DEDICATED_RECOVERY_BUTTON) || defined(CONFIG_VOLUME_BUTTONS)
 	zassert_unreachable("TODO: Implement this test.");
@@ -43,7 +44,7 @@ static void test_button_init(void)
 #endif
 }
 
-static void test_setup_espi(void)
+ZTEST(ec_app_tests, test_setup_espi)
 {
 #ifdef CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI
 	zassert_unreachable("TODO: Implement this test.");
@@ -52,7 +53,7 @@ static void test_setup_espi(void)
 #endif
 }
 
-static void test_watchdog_init(void)
+ZTEST(ec_app_tests, test_watchdog_init)
 {
 #ifdef CONFIG_PLATFORM_EC_WATCHDOG
 	zassert_unreachable("TODO: Implement this test.");
@@ -61,7 +62,7 @@ static void test_watchdog_init(void)
 #endif
 }
 
-static void test_vboot_main(void)
+ZTEST(ec_app_tests, test_vboot_main)
 {
 #ifdef CONFIG_PLATFORM_EC_VBOOT_EFS2
 	zassert_unreachable("TODO: Implement this test.");
@@ -88,7 +89,7 @@ DECLARE_HOOK(HOOK_INIT, sample_init_hook, HOOK_PRIO_DEFAULT);
  * This test installs a hook, runs main and verifies that the hook ran.
  *
  */
-static void test_hook_notify_init(void)
+ZTEST(ec_app_tests, test_hook_notify_init)
 {
 	sample_init_hook_count = 0;
 	ec_app_main();
@@ -96,13 +97,13 @@ static void test_hook_notify_init(void)
 		      "Expected sample_init_hook to run once.");
 }
 #else
-static void test_hook_notify_init(void)
+ZTEST(ec_app_tests, test_hook_notify_init)
 {
 	ztest_test_skip();
 }
 #endif
 
-static void test_start_ec_tasks(void)
+ZTEST(ec_app_tests, test_start_ec_tasks)
 {
 #ifdef CONFIG_SHIMMED_TASKS
 	zassert_unreachable("TODO: Implement this test.");
@@ -111,17 +112,4 @@ static void test_start_ec_tasks(void)
 #endif
 }
 
-void test_main(void)
-{
-	ztest_test_suite(ec_app_tests, ztest_unit_test(test_init_reset_log),
-			 ztest_unit_test(test_lpc_init_mask),
-			 ztest_unit_test(test_keyboard_scan_init),
-			 ztest_unit_test(test_button_init),
-			 ztest_unit_test(test_setup_espi),
-			 ztest_unit_test(test_watchdog_init),
-			 ztest_unit_test(test_vboot_main),
-			 ztest_unit_test(test_hook_notify_init),
-			 ztest_unit_test(test_start_ec_tasks));
-
-	ztest_run_test_suite(ec_app_tests);
-}
+ZTEST_SUITE(ec_app_tests, NULL, NULL, NULL, NULL, NULL);
