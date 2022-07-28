@@ -36,8 +36,8 @@ int extpower_is_present(void)
  */
 __override void board_check_extpower(void)
 {
-	int extpower_present_p0;
-	int extpower_present_p1;
+	int extpower_present_p0 = 0;
+	int extpower_present_p1 = 0;
 
 	if (pd_is_connected(0))
 		extpower_present_p0 = extpower_is_present();
