@@ -117,6 +117,11 @@ __override int board_rt1718s_init(int port)
 					  RT1718S_FRS_CTRL1_FRSWAPRX_MASK,
 					  0xFF));
 
+	/* Disable BC1.2 SRC mode */
+	RETURN_ERROR(rt1718s_update_bits8(port, RT1718S_RT2_BC12_SRC_FUNC,
+					  RT1718S_RT2_BC12_SRC_FUNC_BC12_SRC_EN,
+					  0));
+
 	return EC_SUCCESS;
 }
 
