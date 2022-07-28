@@ -463,10 +463,11 @@ static enum ec_error_list rt9490_get_input_current_limit(int chgnum,
 static enum ec_error_list rt9490_get_input_current(int chgnum,
 						   int *input_current)
 {
-	uint16_t reg_val;
+	int16_t reg_val;
 
-	RETURN_ERROR(rt9490_read16(chgnum, RT9490_REG_IBUS_ADC, &reg_val));
-	*input_current = (int)reg_val * 1000;
+	RETURN_ERROR(rt9490_read16(chgnum, RT9490_REG_IBUS_ADC,
+				   (uint16_t *)&reg_val));
+	*input_current = reg_val;
 	return EC_SUCCESS;
 }
 
