@@ -40,7 +40,7 @@ static void h3(void)
 }
 DECLARE_HOOK(HOOK_TEST_1, h3, HOOK_PRIO_LAST);
 
-static void test_hook_list_multiple(void)
+ZTEST(hooks_tests, test_hook_list_multiple)
 {
 	hook_notify(HOOK_TEST_1);
 	zassert_true(h1_called, "h1 was not called, but should have been");
@@ -57,13 +57,13 @@ static void h4(void)
 }
 DECLARE_HOOK(HOOK_TEST_2, h4, HOOK_PRIO_DEFAULT);
 
-static void test_hook_list_single(void)
+ZTEST(hooks_tests, test_hook_list_single)
 {
 	hook_notify(HOOK_TEST_2);
 	zassert_true(h4_called, "h4 was not called, but should have been");
 }
 
-static void test_hook_list_empty(void)
+ZTEST(hooks_tests, test_hook_list_empty)
 {
 	hook_notify(HOOK_TEST_3);
 }
@@ -77,7 +77,7 @@ static void deferred_func(void)
 }
 DECLARE_DEFERRED(deferred_func);
 
-static void test_deferred_func(void)
+ZTEST(hooks_tests, test_deferred_func)
 {
 	zassert_false(
 		deferred_func_called,
@@ -104,7 +104,7 @@ DECLARE_DEFERRED(deferred_func_2);
  * Test that repeated calls to hook_call_deferred result in the
  * function being pushed out.
  */
-static void test_deferred_func_push_out(void)
+ZTEST(hooks_tests, test_deferred_func_push_out)
 {
 	zassert_false(
 		deferred_func_2_called,
@@ -129,7 +129,7 @@ static void deferred_func_3(void)
 }
 DECLARE_DEFERRED(deferred_func_3);
 
-static void test_deferred_func_cancel(void)
+ZTEST(hooks_tests, test_deferred_func_cancel)
 {
 	zassert_false(
 		deferred_func_3_called,
@@ -164,7 +164,7 @@ static void ev_handler(struct ap_power_ev_callback *callback,
 	ev->event = data.event;
 }
 
-static void test_hook_ap_power_events(void)
+ZTEST(hooks_tests, test_hook_ap_power_events)
 {
 	static struct events cb;
 
@@ -199,15 +199,4 @@ static void test_hook_ap_power_events(void)
 	zassert_equal(3, cb.count, "Startup callback not called");
 }
 
-void test_main(void)
-{
-	ztest_test_suite(hooks_tests, ztest_unit_test(test_hook_list_multiple),
-			 ztest_unit_test(test_hook_list_single),
-			 ztest_unit_test(test_hook_list_empty),
-			 ztest_unit_test(test_deferred_func),
-			 ztest_unit_test(test_deferred_func_push_out),
-			 ztest_unit_test(test_deferred_func_cancel),
-			 ztest_unit_test(test_hook_ap_power_events));
-
-	ztest_run_test_suite(hooks_tests);
-}
+ZTEST_SUITE(hooks_tests, NULL, NULL, NULL, NULL, NULL);
