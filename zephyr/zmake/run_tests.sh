@@ -19,11 +19,7 @@ cd "$(dirname "$(realpath -e "${BASH_SOURCE[0]}")")"
 export PYTHONPATH="${PWD}"
 
 # Run pytest.
-# TODO(jrosenth): --hypothesis-profile=cq is very likely to be
-# unnecessary, as this was only needed when we were heavily taxing the
-# CPU by running pytest alongside all the ninjas, which no longer
-# happens.  Remove this flag.
-pytest --hypothesis-profile=cq .
+pytest . -v
 
 # Check auto-generated README.md is as expected.
 python -m zmake generate-readme --diff

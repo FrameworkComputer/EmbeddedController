@@ -14,6 +14,7 @@ import zmake.zmake as zm
 hypothesis.settings.register_profile(
     "cq", suppress_health_check=hypothesis.HealthCheck.all()
 )
+hypothesis.settings.load_profile("cq")
 
 # pylint: disable=redefined-outer-name,unused-argument
 
