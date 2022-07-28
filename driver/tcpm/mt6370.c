@@ -216,4 +216,5 @@ const struct tcpm_drv mt6370_tcpm_drv = {
 	.enter_low_power_mode = &mt6370_enter_low_power_mode,
 #endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
+	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 };

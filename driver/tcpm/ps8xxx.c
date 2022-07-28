@@ -1037,6 +1037,7 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 	.enter_low_power_mode = ps8xxx_enter_low_power_mode,
 #endif
 	.set_bist_test_mode = tcpci_set_bist_test_mode,
+	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 #if defined(CONFIG_USB_PD_FRS) && (defined(CONFIG_USB_PD_TCPM_PS8815) || \
 				   defined(CONFIG_USB_PD_TCPM_PS8745))
 	.set_frs_enable = ps8815_tcpc_fast_role_swap_enable,

@@ -330,6 +330,7 @@ void tcpci_wake_low_power_mode(int port);
 int tcpci_hard_reset_reinit(int port);
 
 enum ec_error_list tcpci_set_bist_test_mode(const int port, const bool enable);
+enum ec_error_list tcpci_get_bist_test_mode(const int port, bool *enable);
 void tcpci_tcpc_discharge_vbus(int port, int enable);
 void tcpci_tcpc_enable_auto_discharge_disconnect(int port, int enable);
 int tcpci_tcpc_debug_accessory(int port, bool enable);

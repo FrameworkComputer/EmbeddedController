@@ -103,4 +103,5 @@ const struct tcpm_drv fusb307_tcpm_drv = {
 	.drp_toggle = &tcpci_tcpc_drp_toggle,
 #endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
+	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 };

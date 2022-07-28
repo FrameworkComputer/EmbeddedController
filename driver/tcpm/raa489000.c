@@ -368,6 +368,7 @@ const struct tcpm_drv raa489000_tcpm_drv = {
 	.wake_low_power_mode = &tcpci_wake_low_power_mode,
 #endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
+	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 	.tcpc_enable_auto_discharge_disconnect =
 		&tcpci_tcpc_enable_auto_discharge_disconnect,
 	.debug_detach = &raa489000_debug_detach,

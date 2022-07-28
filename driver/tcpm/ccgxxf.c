@@ -122,6 +122,7 @@ const struct tcpm_drv ccgxxf_tcpm_drv = {
 	.enter_low_power_mode = &tcpci_enter_low_power_mode,
 #endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
+	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
 	.dump_registers = &ccgxxf_dump_registers,
 #endif

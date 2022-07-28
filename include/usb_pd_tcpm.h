@@ -515,6 +515,16 @@ struct tcpm_drv {
 	 */
 	enum ec_error_list (*set_bist_test_mode)(int port, bool enable);
 
+	/**
+	 * Get control of BIST Test Mode (or analogous functionality) in the
+	 * TCPC.
+	 *
+	 * @param port   USB-C port number
+	 * @param enable true for BIST Test Mode enabled; false for error
+	 *               occurred or BIST Test Mode disabled.
+	 * @return EC_SUCCESS or error code
+	 */
+	enum ec_error_list (*get_bist_test_mode)(int port, bool *enable);
 #ifdef CONFIG_CMD_TCPC_DUMP
 	/**
 	 * Dump TCPC registers

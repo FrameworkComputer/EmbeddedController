@@ -389,6 +389,7 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 	.enter_low_power_mode = &tcpci_enter_low_power_mode,
 #endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
+	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 #ifdef CONFIG_USB_PD_FRS
 	.set_frs_enable = &nct38xx_set_frs_enable,
 #endif

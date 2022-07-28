@@ -400,6 +400,19 @@ static inline enum ec_error_list tcpc_set_bist_test_mode(int port, bool enable)
 	return rv;
 }
 
+static inline enum ec_error_list tcpc_get_bist_test_mode(int port, bool *enable)
+{
+	const struct tcpm_drv *tcpc;
+
+	tcpc = tcpc_config[port].drv;
+	if (tcpc->get_bist_test_mode)
+		return tcpc->get_bist_test_mode(port, enable);
+
+	*enable = false;
+
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
 /*
  * Returns true if the port controls FRS using the TCPC.
  */

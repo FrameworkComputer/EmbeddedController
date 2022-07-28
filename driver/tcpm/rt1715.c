@@ -257,4 +257,5 @@ const struct tcpm_drv rt1715_tcpm_drv = {
 	.enter_low_power_mode = &rt1715_enter_low_power_mode,
 #endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
+	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 };

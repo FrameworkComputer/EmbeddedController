@@ -1107,6 +1107,17 @@ enum ec_error_list tcpci_set_bist_test_mode(const int port, const bool enable)
 	return rv;
 }
 
+enum ec_error_list tcpci_get_bist_test_mode(const int port, bool *enable)
+{
+	int rv;
+	int val;
+
+	rv = tcpc_read(port, TCPC_REG_TCPC_CTRL, &val);
+	*enable = !!(val & TCPC_REG_TCPC_CTRL_BIST_TEST_MODE);
+
+	return rv;
+}
+
 static int tcpci_clear_fault(int port, int fault)
 {
 	int rv;
@@ -1860,6 +1871,7 @@ const struct tcpm_drv tcpci_tcpm_drv = {
 	.enter_low_power_mode = &tcpci_enter_low_power_mode,
 #endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
+	.get_bist_test_mode = &tcpci_get_bist_test_mode,
 #ifdef CONFIG_CMD_TCPC_DUMP
 	.dump_registers = &tcpc_dump_std_registers,
 #endif
