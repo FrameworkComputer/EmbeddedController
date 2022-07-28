@@ -4,4 +4,4 @@
 
 """Register zmake project for ap_power test."""
 
-register_host_test("ap_power", dts_overlays=["overlay.dts"])
+register_host_test("ap_power", dts_overlays=["boards/native_posix.overlay"])
