@@ -7,7 +7,7 @@
 #include <zephyr/devicetree.h>
 #include <ztest.h>
 
-static void test_i2c_get_device(void)
+ZTEST(i2c_bindings, test_i2c_get_device)
 {
 	const struct device *accel0 = DEVICE_DT_GET(
 		DT_PHANDLE(DT_PATH(named_i2c_ports, accel_0), i2c_port));
@@ -20,10 +20,4 @@ static void test_i2c_get_device(void)
 		"named_i2c_ports/accel0 and bmi_i2c should resolve to the same device");
 }
 
-/* test case main entry */
-void test_main(void)
-{
-	ztest_test_suite(test_i2c_bindings,
-			 ztest_user_unit_test(test_i2c_get_device));
-	ztest_run_test_suite(test_i2c_bindings);
-}
+ZTEST_SUITE(i2c_bindings, NULL, NULL, NULL, NULL, NULL);
