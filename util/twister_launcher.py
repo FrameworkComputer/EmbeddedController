@@ -85,6 +85,8 @@ def main():
         f"-x=DTS_ROOT={str( ec_base / 'zephyr')}",
         f"-x=SYSCALL_INCLUDE_DIRS={str(ec_base / 'zephyr' / 'include' / 'drivers')}",
         f"-x=ZEPHYR_MODULES={';'.join([str(p) for p in zephyr_modules])}",
+        "--gcov-tool",
+        ec_base / "util" / "llvm-gcov.sh",
     ]
 
     # `-T` flags (used for specifying test directories to build and run)

@@ -38,8 +38,6 @@ def run_twister(platform_ec, code_coverage=False, extra_args=None):
                 "--coverage",
                 "-p",
                 "native_posix",
-                "--gcov-tool",
-                platform_ec / "util" / "llvm-gcov.sh",
             ]
         )
     subprocess.run(cmd, check=True, cwd=platform_ec)
