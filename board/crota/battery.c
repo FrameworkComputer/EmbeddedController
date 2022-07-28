@@ -210,7 +210,7 @@ const struct board_batt_params board_battery_info[] = {
 	/* SWD 1002000008482 Battery Information */
 	[BATTERY_SWD_ATL3] = {
 		.fuel_gauge = {
-			.manuf_name = "SWD-ATL3.661",
+			.manuf_name = "SWD-ATL3.660",
 			.device_name = "DELL VKYJX",
 			.ship_mode = {
 				.reg_addr = 0x00,
