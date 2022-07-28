@@ -40,4 +40,11 @@ config PLATFORM_EC_STACKOVERFLOW
 	  This can be used to check that stack-overflow detection is working
 	  as expected.
 
+config PLATFORM_EC_DEBUG_ASSERT_BRIEF
+	bool "Enable brief panic messages"
+	default n
+	help
+	  On assertion failure, prints only the file name and the line number.
+	  Boards typically define this option in order to reduce image size.
+
 endif # PLATFORM_EC_PANIC
