@@ -1,16 +1,16 @@
-description: "AS3GXXe3KA C140254"
-compatible: "as3gxxe3ka,c140254"
+description: "DYNAPACK AS3GXXE3KA C140254"
+compatible: "dynapack,c140254"
 
 include: battery-smart.yaml
 
 properties:
    enum-name:
       type: string
-      default: "as3gxxe3ka,c140254"
+      default: "dynapack,c140254"
 
    # Fuel gauge
    manuf_name:
-      default: "AS3GXXe3KA"
+      default: "AS3GXXE3KA"
    device_name:
       default: "C140254"
    ship_mode_reg_addr:

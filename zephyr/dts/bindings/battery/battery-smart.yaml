@@ -13,7 +13,6 @@ properties:
       enum:
          - "aec,5477109"
          - "as3gwrc3ka,c235-41"
-         - "as3gxxe3ka,c140254"
          - "byd,l22b3pg0"
          - "celxpert,l22c3pg0"
          - "cosmx,ap20cbl"
@@ -21,6 +20,7 @@ properties:
          - "cosmx,l22x3pg0"
          - "dynapack,atl_gh02047xl"
          - "dynapack,cosmx_gh02047xl"
+         - "dynapack,c140254"
          - "ganfeng,7c01"
          - "getac,bq40z50-R3-S3"
          - "getac,bq40z50-R3-S2"
