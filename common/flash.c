@@ -5,6 +5,7 @@
 
 /* Flash memory module for Chrome EC - common functions */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "cros_board_info.h"

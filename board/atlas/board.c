@@ -29,6 +29,7 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
+#include "panic.h"
 #include "power_button.h"
 #include "power.h"
 #include "pwm_chip.h"

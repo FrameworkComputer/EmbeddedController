@@ -17,6 +17,7 @@
 #include "fw_config.h"
 #include "hooks.h"
 #include "lid_switch.h"
+#include "panic.h"
 #include "power_button.h"
 #include "power.h"
 #include "registers.h"

@@ -5,6 +5,7 @@
 
 /* PECI interface for Chrome EC */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "hooks.h"
 #include "peci.h"

@@ -27,6 +27,7 @@
 #include "host_command.h"
 #include "i2c.h"
 #include "lid_switch.h"
+#include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"

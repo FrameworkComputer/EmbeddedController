@@ -22,6 +22,7 @@
  */
 
 #include "battery.h"
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "common.h"
 #include "gpio.h"

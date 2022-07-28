@@ -5,6 +5,7 @@
 
 /* System module for emulator */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "host_test.h"

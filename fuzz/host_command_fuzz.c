@@ -8,6 +8,7 @@
 #include <pthread.h>
 #include <sys/time.h>
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "host_command.h"

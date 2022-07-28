@@ -6,6 +6,7 @@
 /* I2C cross-platform code for Chrome EC */
 
 #include "battery.h"
+#include "builtin/assert.h"
 #include "clock.h"
 #include "charge_state.h"
 #include "console.h"

@@ -5,6 +5,7 @@
 
 /* ANX7447 port manager */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "anx7447.h"
 #include "console.h"

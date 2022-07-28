@@ -13,6 +13,7 @@
 #define TEST_TASK_EXTRA_ARGS 0
 
 #include "atomic.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "link_defs.h"

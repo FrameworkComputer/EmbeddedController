@@ -35,6 +35,7 @@
  * SUCH DAMAGE.
  */
 
+#include "builtin/assert.h"
 #include "sha256.h"
 #include "util.h"
 

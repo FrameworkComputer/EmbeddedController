@@ -11,6 +11,7 @@
 #include <termio.h>
 #include <unistd.h>
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "queue.h"
 #include "task.h"

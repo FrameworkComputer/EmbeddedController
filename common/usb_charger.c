@@ -12,6 +12,7 @@
  * is necessary to update charge_manager with detected charger attributes.
  */
 
+#include "builtin/assert.h"
 #include "charge_manager.h"
 #include "charger.h"
 #include "common.h"

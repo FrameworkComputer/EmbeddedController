@@ -14,6 +14,7 @@
 #include "host_command.h"
 #include "intc.h"
 #include "link_defs.h"
+#include "panic.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"

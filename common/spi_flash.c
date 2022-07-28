@@ -6,6 +6,7 @@
  * SPI flash driver for Chrome EC.
  */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "host_command.h"

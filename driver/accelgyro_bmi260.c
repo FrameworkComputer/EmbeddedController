@@ -9,6 +9,7 @@
  */
 
 #include "accelgyro.h"
+#include "builtin/assert.h"
 #include "console.h"
 #include "accelgyro_bmi_common.h"
 #include "accelgyro_bmi260.h"

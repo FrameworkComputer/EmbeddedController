@@ -7,7 +7,7 @@
 
 #include <stdint.h>
 
-#include "assert.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"

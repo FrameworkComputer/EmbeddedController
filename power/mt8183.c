@@ -5,6 +5,7 @@
 
 /* mt8183 chipset power control module for Chrome EC */
 
+#include "builtin/assert.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"

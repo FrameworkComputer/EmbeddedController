@@ -7,6 +7,7 @@
 #include "cache.h"
 #include "csr.h"
 #include "hooks.h"
+#include "panic.h"
 #include "registers.h"
 
 #define SCP_SRAM_END (CONFIG_IPC_SHARED_OBJ_ADDR & (~(0x400 - 1)))

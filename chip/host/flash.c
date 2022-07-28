@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "config_chip.h"
 #include "flash.h"

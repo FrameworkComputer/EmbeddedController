@@ -5,6 +5,7 @@
 
 /* Persistent storage commands for Chrome EC */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "eeprom.h"
 #include "host_command.h"

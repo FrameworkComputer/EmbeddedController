@@ -9,6 +9,7 @@
  * This driver supports both devices LSM6DSM and LSM6DSL
  */
 
+#include "builtin/assert.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/mag_lis2mdl.h"
 #include "hooks.h"

@@ -4,6 +4,7 @@
  */
 
 #include "atomic.h"
+#include "builtin/assert.h"
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"

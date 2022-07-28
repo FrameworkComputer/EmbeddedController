@@ -21,8 +21,8 @@
  *  - Pressing and releaseing power within that 8s is ignored
  */
 
-#include "assert.h"
 #include "battery.h"
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "common.h"
 #include "gpio.h"

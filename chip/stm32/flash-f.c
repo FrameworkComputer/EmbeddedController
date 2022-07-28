@@ -7,6 +7,7 @@
 
 #include <stdbool.h>
 #include "battery.h"
+#include "builtin/assert.h"
 #include "console.h"
 #include "clock.h"
 #include "flash.h"

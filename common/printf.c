@@ -5,6 +5,7 @@
 
 /* Printf-like functionality for Chrome EC */
 
+#include "builtin/assert.h"
 #include "console.h"
 #include "printf.h"
 #include "timer.h"

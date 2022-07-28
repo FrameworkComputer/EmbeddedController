@@ -11,6 +11,7 @@
 #include "accelgyro.h"
 #include "accelgyro_bmi323.h"
 #include "accelgyro_bmi_common.h"
+#include "builtin/assert.h"
 #include "console.h"
 #include "hwtimer.h"
 #include "i2c.h"

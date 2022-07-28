@@ -6,6 +6,7 @@
  */
 
 #include "battery.h"
+#include "builtin/assert.h"
 #include "console.h"
 #include "extpower.h"
 #include "hooks.h"

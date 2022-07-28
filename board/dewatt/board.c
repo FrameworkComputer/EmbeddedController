@@ -9,6 +9,7 @@
 #include "base_fw_config.h"
 #include "battery.h"
 #include "board_fw_config.h"
+#include "builtin/assert.h"
 #include "button.h"
 #include "charger.h"
 #include "common.h"

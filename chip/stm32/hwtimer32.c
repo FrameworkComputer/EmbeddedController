@@ -5,6 +5,7 @@
 
 /* Hardware 32-bit timer driver */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "clock-f.h"
 #include "common.h"

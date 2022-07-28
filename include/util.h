@@ -10,9 +10,7 @@
 
 #include "common.h"
 #include "compile_time_macros.h"
-#include "panic.h"
 
-#include "builtin/assert.h" /* For ASSERT(). */
 #include <ctype.h>
 #include <stdbool.h>
 #include <stddef.h>

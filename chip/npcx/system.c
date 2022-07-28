@@ -5,6 +5,7 @@
 
 /* System module for Chrome EC : NPCX hardware specific implementation */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "clock_chip.h"
 #include "common.h"
@@ -15,6 +16,7 @@
 #include "host_command.h"
 #include "hwtimer_chip.h"
 #include "lct_chip.h"
+#include "panic.h"
 #include "registers.h"
 #include "rom_chip.h"
 #include "sib_chip.h"

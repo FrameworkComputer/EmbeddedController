@@ -5,6 +5,7 @@
 
 /* Clocks and power management settings for STM32L4xx as well as STM32L5xx. */
 
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "clock.h"
 #include "clock-l4.h"

@@ -5,6 +5,7 @@
  * Alternate Mode Downstream Facing Port (DFP) USB-PD module.
  */
 
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "console.h"
 #include "gpio.h"

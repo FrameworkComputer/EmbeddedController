@@ -6,6 +6,7 @@
 /* USB mux high-level driver. */
 
 #include "atomic.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "chipset.h"

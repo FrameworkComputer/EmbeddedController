@@ -9,6 +9,7 @@
  */
 
 #include "adc.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "gpio.h"
 #include "temp_sensor/thermistor.h"

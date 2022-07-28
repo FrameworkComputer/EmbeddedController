@@ -9,6 +9,7 @@
  * These functions are shared by the STM32F0 and STM32L variants.
  */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "gpio_chip.h"
 #include "registers.h"

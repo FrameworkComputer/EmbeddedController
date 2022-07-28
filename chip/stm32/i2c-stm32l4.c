@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "builtin/assert.h"
 #include "printf.h"
 #include "chipset.h"
 #include "clock.h"

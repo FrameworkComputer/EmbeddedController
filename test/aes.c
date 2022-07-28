@@ -16,6 +16,7 @@
 
 #include "aes.h"
 #include "aes-gcm.h"
+#include "builtin/assert.h"
 #include "console.h"
 #include "common.h"
 #include "test_util.h"

@@ -26,6 +26,7 @@
  */
 
 #include "battery.h"
+#include "builtin/assert.h"
 #include "chipset.h" /* ./common/chipset.c implements chipset functions too */
 #include "common.h"
 #include "gpio.h"

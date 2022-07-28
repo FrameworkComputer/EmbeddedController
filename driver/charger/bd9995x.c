@@ -15,6 +15,7 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "panic.h"
 #include "task.h"
 #include "time.h"
 #include "util.h"

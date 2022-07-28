@@ -5,6 +5,7 @@
 
 /* Common chipset throttling code for Chrome EC */
 
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"

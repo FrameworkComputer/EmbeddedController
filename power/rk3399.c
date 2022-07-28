@@ -12,6 +12,7 @@
  * Version 1: Simplified power tree for tablet / detachable.
  */
 
+#include "builtin/assert.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"

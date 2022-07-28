@@ -4,6 +4,7 @@
  * found in the LICENSE file.
  */
 
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"

@@ -5,6 +5,7 @@
 
 /* Rollback protection logic. */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #ifdef CONFIG_LIBCRYPTOC

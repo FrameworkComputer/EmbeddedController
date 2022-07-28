@@ -11,8 +11,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
-#include "assert.h"
 #include "atomic.h"
+#include "builtin/assert.h"
 #include "console.h"
 #include "usb_common.h"
 #include "usb_dp_alt_mode.h"

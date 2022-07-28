@@ -8,6 +8,7 @@
 #include "accelgyro.h"
 #include "atomic.h"
 #include "body_detection.h"
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"

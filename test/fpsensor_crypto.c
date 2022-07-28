@@ -5,6 +5,7 @@
 
 #include <stdbool.h>
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "fpsensor_crypto.h"

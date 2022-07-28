@@ -6,6 +6,7 @@
 /* Task scheduling / events module for Chrome EC operating system */
 
 #include "atomic.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
@@ -13,6 +14,7 @@
 #include "intc.h"
 #include "irq_chip.h"
 #include "link_defs.h"
+#include "panic.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"

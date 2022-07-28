@@ -39,6 +39,7 @@
 #include "math_util.h"
 #include "motion_lid.h"
 #include "motion_sense.h"
+#include "panic.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"

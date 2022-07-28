@@ -22,6 +22,7 @@
  *  - If POWER_GOOD is dropped by the AP, then we power the AP off
  */
 
+#include "builtin/assert.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"

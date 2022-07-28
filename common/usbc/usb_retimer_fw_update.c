@@ -5,6 +5,8 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "builtin/assert.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "hooks.h"

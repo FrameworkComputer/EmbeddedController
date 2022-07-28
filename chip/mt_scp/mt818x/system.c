@@ -5,6 +5,7 @@
 
 /* System : hardware specific implementation */
 
+#include "builtin/assert.h"
 #include "clock_chip.h"
 #include "console.h"
 #include "cpu.h"

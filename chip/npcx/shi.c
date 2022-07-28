@@ -10,6 +10,7 @@
  * This uses Input/Output buffer to handle SPI transmission and reception.
  */
 
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "clock.h"
 #include "console.h"

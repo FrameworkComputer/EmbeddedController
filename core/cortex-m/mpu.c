@@ -5,6 +5,7 @@
 
 /* MPU module for Chrome EC */
 
+#include "builtin/assert.h"
 #include "mpu.h"
 #include "console.h"
 #include "cpu.h"

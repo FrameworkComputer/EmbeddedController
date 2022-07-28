@@ -35,6 +35,7 @@
 #include "motion_lid.h"
 #include "motion_sense.h"
 #include "pi3usb9281.h"
+#include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "spi.h"

@@ -5,6 +5,7 @@
 
 /* System module for Chrome EC : MEC1322 hardware specific implementation */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"

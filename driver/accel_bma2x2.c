@@ -10,6 +10,7 @@
  */
 
 #include "accelgyro.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "accel_bma2x2.h"

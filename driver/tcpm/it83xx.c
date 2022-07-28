@@ -5,6 +5,7 @@
 
 /* TCPM for MCU also running TCPC */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "config.h"
 #include "console.h"

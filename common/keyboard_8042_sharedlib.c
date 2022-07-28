@@ -7,6 +7,7 @@
 
 #include <stddef.h>
 
+#include "builtin/assert.h"
 #include "button.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"

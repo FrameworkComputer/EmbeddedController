@@ -5,7 +5,7 @@
 
 /* Basic Chrome OS fan control */
 
-#include "assert.h"
+#include "builtin/assert.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"

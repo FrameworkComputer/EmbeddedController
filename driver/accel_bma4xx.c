@@ -11,6 +11,7 @@
 
 #include "accelgyro.h"
 #include "accel_bma422.h"
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "i2c.h"

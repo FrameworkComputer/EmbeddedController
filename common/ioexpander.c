@@ -5,6 +5,7 @@
 
 /* IO Expander Controller Common Code */
 
+#include "builtin/assert.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "ioexpander.h"

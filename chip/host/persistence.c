@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "builtin/assert.h"
 #include "util.h"
 
 /* The longest path in a chroot seems to be about 280 characters (as of

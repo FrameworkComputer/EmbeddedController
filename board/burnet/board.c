@@ -34,6 +34,7 @@
 #include "it8801.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "registers.h"

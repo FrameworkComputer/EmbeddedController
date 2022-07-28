@@ -8,6 +8,7 @@
  * Refer to USB PD 3.0 spec, version 2.0, sections 8.2 and 8.3
  */
 
+#include "builtin/assert.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "compile_time_macros.h"

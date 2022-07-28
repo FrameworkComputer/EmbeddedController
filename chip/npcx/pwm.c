@@ -8,7 +8,7 @@
  * On this chip, the PWM logic is implemented by the hardware FAN modules.
  */
 
-#include "assert.h"
+#include "builtin/assert.h"
 #include "clock.h"
 #include "clock_chip.h"
 #include "console.h"

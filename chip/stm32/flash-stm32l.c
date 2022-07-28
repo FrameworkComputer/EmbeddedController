@@ -5,9 +5,11 @@
 
 /* Flash memory module for Chrome EC */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "console.h"
 #include "flash.h"
+#include "panic.h"
 #include "registers.h"
 #include "system.h"
 #include "task.h"

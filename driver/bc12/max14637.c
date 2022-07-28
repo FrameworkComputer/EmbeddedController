@@ -12,6 +12,7 @@
  * the system will have to charge ramp.
  */
 
+#include "builtin/assert.h"
 #include "max14637.h"
 #include "charge_manager.h"
 #include "chipset.h"

@@ -31,6 +31,7 @@
 #include "keyboard_scan.h"
 #include "keyboard_backlight.h"
 #include "lid_switch.h"
+#include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "registers.h"

@@ -5,6 +5,7 @@
  * Pericom PI3USB3281 USB port switch driver.
  */
 
+#include "builtin/assert.h"
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"

@@ -5,6 +5,7 @@
 
 /* Vivali Keyboard code for Chrome EC */
 
+#include "builtin/assert.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_scan.h"
 #include "ec_commands.h"

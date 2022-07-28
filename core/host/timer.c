@@ -8,6 +8,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#include "builtin/assert.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"

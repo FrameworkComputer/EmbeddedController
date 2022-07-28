@@ -5,6 +5,7 @@
  * Test thermal engine.
  */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
 #include "driver/temp_sensor/thermistor.h"

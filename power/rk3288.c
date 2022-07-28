@@ -24,6 +24,7 @@
  */
 
 #include "battery.h"
+#include "builtin/assert.h"
 #include "charge_state.h"
 #include "chipset.h" /* This module implements chipset functions too */
 #include "clock.h"

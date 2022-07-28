@@ -5,6 +5,7 @@
 
 /* TCPM on ITE chip it8xxx2 with embedded TCPC */
 
+#include "builtin/assert.h"
 #include "common.h"
 #include "config.h"
 #include "console.h"

@@ -6,6 +6,7 @@
 /* Phaser board-specific configuration */
 
 #include "adc.h"
+#include "builtin/stdnoreturn.h"
 #include "button.h"
 #include "charge_state.h"
 #include "common.h"

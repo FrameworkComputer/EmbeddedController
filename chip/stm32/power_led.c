@@ -15,6 +15,7 @@
  * results in a breathing effect. It takes about 2sec for a full cycle.
  */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "console.h"
 #include "gpio.h"

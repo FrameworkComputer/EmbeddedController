@@ -5,6 +5,7 @@
 
 /* Clocks and power management settings */
 
+#include "builtin/assert.h"
 #include "clock.h"
 #include "common.h"
 #include "console.h"

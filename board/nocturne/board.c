@@ -30,6 +30,7 @@
 #include "lpc.h"
 #include "mkbp_event.h"
 #include "motion_sense.h"
+#include "panic.h"
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
