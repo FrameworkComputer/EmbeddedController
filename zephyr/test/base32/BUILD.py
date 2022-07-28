@@ -4,4 +4,4 @@
 
 """Register zmake project for base32 test."""
 
-register_host_test("base32")
+register_host_test("base32", dts_overlays=["boards/native_posix.overlay"])
