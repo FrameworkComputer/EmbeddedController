@@ -4,4 +4,6 @@
 
 """Register zmake project for ec_app test."""
 
-register_host_test("ec_app")
+register_host_test(
+    "ec_app", dts_overlays=[here / "boards/native_posix.overlay"]
+)
