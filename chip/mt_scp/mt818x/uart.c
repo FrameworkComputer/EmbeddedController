@@ -174,6 +174,5 @@ void uart_init(void)
 	/* UART RX IRQ needs an extra enable */
 	SCP_INTC_UART_RX_IRQ |= 1 << UARTN;
 #endif
-	gpio_config_module(MODULE_UART, 1);
 	uart_done = 1;
 }
