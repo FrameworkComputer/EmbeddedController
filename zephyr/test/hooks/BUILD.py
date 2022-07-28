@@ -4,4 +4,4 @@
 
 """Register zmake project for hooks test."""
 
-register_host_test("hooks")
+register_host_test("hooks", dts_overlays=[here / "boards/native_posix.overlay"])
