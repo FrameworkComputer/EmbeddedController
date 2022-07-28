@@ -2,6 +2,7 @@ common:
   platform_allow: native_posix
 tests:
   drivers.default:
+    timeout: 120
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_DEFAULT=y
       - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
