@@ -117,7 +117,7 @@ static struct usart_config const usart4;
 struct usb_stream_config const usart4_usb;
 
 static struct queue const usart4_to_usb =
-	QUEUE_DIRECT(64, uint8_t, usart4.producer, usart4_usb.consumer);
+	QUEUE_DIRECT(1024, uint8_t, usart4.producer, usart4_usb.consumer);
 static struct queue const usb_to_usart4 =
 	QUEUE_DIRECT(64, uint8_t, usart4_usb.producer, usart4.consumer);
 
