@@ -7176,7 +7176,7 @@ enum ec_rgbkbd_type {
 	EC_RGBKBD_TYPE_PER_KEY = 1, /* e.g. Vell */
 	EC_RGBKBD_TYPE_FOUR_ZONES_40_LEDS = 2, /* e.g. Taniks */
 	EC_RGBKBD_TYPE_FOUR_ZONES_12_LEDS = 3, /* e.g. Osiris */
-	EC_RGBKBD_TYPE_FOUR_ZONES_15_LEDS = 4, /* e.g. Mithrax */
+	EC_RGBKBD_TYPE_FOUR_ZONES_4_LEDS = 4, /* e.g. Mithrax */
 	EC_RGBKBD_TYPE_COUNT,
 };
 

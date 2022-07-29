@@ -1430,8 +1430,8 @@ static int cmd_rgbkbd(int argc, char *argv[])
 		case EC_RGBKBD_TYPE_FOUR_ZONES_12_LEDS:
 			type = "EC_RGBKBD_TYPE_FOUR_ZONES_12_LEDS";
 			break;
-		case EC_RGBKBD_TYPE_FOUR_ZONES_15_LEDS:
-			type = "EC_RGBKBD_TYPE_FOUR_ZONES_15_LEDS";
+		case EC_RGBKBD_TYPE_FOUR_ZONES_4_LEDS:
+			type = "EC_RGBKBD_TYPE_FOUR_ZONES_4_LEDS";
 			break;
 		default:
 			type = "EC_RGBKBD_TYPE_UNKNOWN";
