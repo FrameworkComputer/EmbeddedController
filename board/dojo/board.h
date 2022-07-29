@@ -154,6 +154,13 @@ struct vol_up_key {
 	uint8_t col;
 };
 
+/* AP in sleep power signal */
+enum ap_in_sleep_l_signal {
+	GPIO_SIGNAL_SUSPEND = 0,
+	GPIO_SIGNAL_RESUME,
+};
+void suspend_resume_power_signal_interrupt(enum gpio_signal signal);
+
 int board_accel_force_mode_mask(void);
 void motion_interrupt(enum gpio_signal signal);
 

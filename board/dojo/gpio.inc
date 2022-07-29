@@ -24,7 +24,8 @@ GPIO_INT(AP_EC_WARM_RST_REQ, PIN(D, 3), GPIO_INT_RISING | GPIO_SEL_1P8V,
 GPIO_INT(AP_EC_WATCHDOG_L, PIN(C, 7), GPIO_INT_BOTH | GPIO_SEL_1P8V,
          chipset_watchdog_interrupt)
 GPIO_INT(AP_IN_SLEEP_L, PIN(F, 2),
-         GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt)
+         GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V,
+         suspend_resume_power_signal_interrupt)
 GPIO_INT(PMIC_EC_PWRGD, PIN(F, 3),
          GPIO_INT_BOTH | GPIO_PULL_DOWN | GPIO_SEL_1P8V, power_signal_interrupt)
 
