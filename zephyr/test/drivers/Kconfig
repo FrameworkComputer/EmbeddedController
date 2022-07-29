@@ -17,6 +17,9 @@ config LINK_TEST_SUITE_ISL923X
 config LINK_TEST_SUITE_LED_DRIVER
 	bool "Link and test the led_driver tests"
 
+config LINK_TEST_SUITE_PWM_LED_DRIVER
+	bool "Link and test the pwm_led_driver tests"
+
 config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
 	bool "Link and test the usb_malfunction_sink tests"
 

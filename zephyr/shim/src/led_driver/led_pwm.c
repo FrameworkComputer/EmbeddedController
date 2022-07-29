@@ -95,6 +95,8 @@ void led_set_color(enum led_color color, enum ec_led_id led_id)
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
+	memset(brightness_range, 0, EC_LED_COLOR_COUNT);
+
 	for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
 		int br_color = pins_node[i]->br_color;
 

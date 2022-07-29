@@ -20,6 +20,10 @@ tests:
     extra_args: CONF_FILE="prj.conf;led_driver/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./led_driver/led_pins.dts;./led_driver/led_policy.dts"
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_LED_DRIVER=y
+  drivers.pwm_led_driver:
+    extra_args: CONF_FILE="prj.conf;pwm_led_driver/prj.conf" DTC_OVERLAY_FILE="./boards/native_posix.overlay;./pwm_led_driver/led_pins.dts"
+    extra_configs:
+      - CONFIG_LINK_TEST_SUITE_PWM_LED_DRIVER=y
   drivers.usbc_alt_mode:
     extra_configs:
       - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
