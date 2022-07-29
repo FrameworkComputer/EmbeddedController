@@ -195,9 +195,10 @@ int test_pd_timers(void)
 		TEST_ASSERT(pd_timer_is_disabled(port, bit));
 
 	/*
-	 * Disable the PE timer range, which contains the previously enabled
-	 * timers 1-5.
+	 * Disable the PE and DPM timer ranges, which contain the previously
+	 * enabled timers 1-5.
 	 */
+	pd_timer_disable_range(port, DPM_TIMER_RANGE);
 	pd_timer_disable_range(port, PE_TIMER_RANGE);
 	/* Verify all timers are disabled. */
 	for (bit = 0; bit < PD_TIMER_COUNT; ++bit)

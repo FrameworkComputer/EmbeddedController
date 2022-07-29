@@ -4975,6 +4975,12 @@
 /* Index for temperature sensor used in PD messages. Defaults to 0. */
 #define CONFIG_USB_PD_TEMP_SENSOR 0
 
+/*
+ * Time limit in ms for a USB PD power button press to be considered a short
+ * press
+ */
+#define CONFIG_USB_PD_SHORT_PRESS_MAX_MS 4000
+
 /* Time limit in ms for a USB PD power button press to be considered valid. */
 #define CONFIG_USB_PD_LONG_PRESS_MAX_MS 8000
 

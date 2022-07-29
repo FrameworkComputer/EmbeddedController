@@ -842,6 +842,9 @@ struct pd_cable {
 /* Timeout for message receive in microseconds */
 #define USB_PD_RX_TMOUT_US 1800
 
+/* Power button press length triggered by USB PD short button press */
+#define USB_PD_SHORT_BUTTON_PRESS_MS 500
+
 /* --- Protocol layer functions --- */
 
 enum pd_states {

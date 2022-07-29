@@ -18,10 +18,16 @@
  */
 enum pd_task_timer {
 	/*
-	 * Timer to wait for a button release alert after receiving a button
-	 * press alert.
+	 * Timer to check if a USB PD power button press exceeds the long press
+	 * time limit.
 	 */
-	DPM_TIMER_PD_BUTTON_PRESS,
+	DPM_TIMER_PD_BUTTON_LONG_PRESS,
+
+	/*
+	 * Timer to check if a USB PD power button press exceeds the short press
+	 * time limit.
+	 */
+	DPM_TIMER_PD_BUTTON_SHORT_PRESS,
 
 	/*
 	 * In BIST_TX mode, this timer is used by a UUT to ensure that a
@@ -226,10 +232,14 @@ enum pd_task_timer {
 };
 
 enum pd_timer_range {
+	DPM_TIMER_RANGE,
 	PE_TIMER_RANGE,
 	PR_TIMER_RANGE,
 	TC_TIMER_RANGE,
 };
+#define DPM_TIMER_START DPM_TIMER_PD_BUTTON_LONG_PRESS
+#define DPM_TIMER_END DPM_TIMER_PD_BUTTON_SHORT_PRESS
+
 #define PE_TIMER_START PE_TIMER_BIST_CONT_MODE
 #define PE_TIMER_END PE_TIMER_WAIT_AND_ADD_JITTER
 

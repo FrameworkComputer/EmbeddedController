@@ -200,6 +200,22 @@ void power_button_interrupt(enum gpio_signal signal)
 			   power_button.debounce_us);
 }
 
+void power_button_simulate_press(int duration)
+{
+	ccprintf("Simulating %d ms %s press.\n", duration, power_button.name);
+	simulate_power_pressed = 1;
+	power_button_is_stable = 0;
+	hook_call_deferred(&power_button_change_deferred_data, 0);
+
+	if (duration > 0)
+		msleep(duration);
+
+	ccprintf("Simulating %s release.\n", power_button.name);
+	simulate_power_pressed = 0;
+	power_button_is_stable = 0;
+	hook_call_deferred(&power_button_change_deferred_data, 0);
+}
+
 /*****************************************************************************/
 /* Console commands */
 
@@ -214,19 +230,7 @@ static int command_powerbtn(int argc, char **argv)
 			return EC_ERROR_PARAM1;
 	}
 
-	ccprintf("Simulating %d ms %s press.\n", ms, power_button.name);
-	simulate_power_pressed = 1;
-	power_button_is_stable = 0;
-	hook_call_deferred(&power_button_change_deferred_data, 0);
-
-	if (ms > 0)
-		msleep(ms);
-
-	ccprintf("Simulating %s release.\n", power_button.name);
-	simulate_power_pressed = 0;
-	power_button_is_stable = 0;
-	hook_call_deferred(&power_button_change_deferred_data, 0);
-
+	power_button_simulate_press(ms);
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(powerbtn, command_powerbtn, "[msec]",

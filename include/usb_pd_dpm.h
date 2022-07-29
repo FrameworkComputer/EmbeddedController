@@ -173,6 +173,5 @@ enum dpm_msg_setup_status {
 enum dpm_pd_button_state {
 	DPM_PD_BUTTON_IDLE,
 	DPM_PD_BUTTON_PRESSED,
-	DPM_PD_BUTTON_RELEASED,
 };
 #endif /* __CROS_EC_USB_DPM_H */

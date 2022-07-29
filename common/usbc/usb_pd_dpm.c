@@ -16,6 +16,7 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "power.h"
+#include "power_button.h"
 #include "system.h"
 #include "task.h"
 #include "tcpm/tcpm.h"
@@ -521,6 +522,16 @@ void dpm_handle_alert(int port, uint32_t ado)
 
 static void dpm_run_pd_button_sm(int port)
 {
+#ifdef CONFIG_AP_POWER_CONTROL
+	if (!IS_ENABLED(CONFIG_POWER_BUTTON_X86) &&
+	    !IS_ENABLED(CONFIG_CHIPSET_SC7180) &&
+	    !IS_ENABLED(CONFIG_CHIPSET_SC7280)) {
+		/* Insufficient chipset API support for USB PD power button. */
+		DPM_CLR_FLAG(port, DPM_FLAG_PD_BUTTON_PRESSED);
+		DPM_CLR_FLAG(port, DPM_FLAG_PD_BUTTON_RELEASED);
+		return;
+	}
+
 	/*
 	 * Check for invalid flag combination. Alerts can only send a press or
 	 * release event at once and only one flag should be set. If press and
@@ -532,7 +543,8 @@ static void dpm_run_pd_button_sm(int port)
 	    DPM_CHK_FLAG(port, DPM_FLAG_PD_BUTTON_RELEASED)) {
 		DPM_CLR_FLAG(port, DPM_FLAG_PD_BUTTON_PRESSED |
 					   DPM_FLAG_PD_BUTTON_RELEASED);
-		pd_timer_disable(port, DPM_TIMER_PD_BUTTON_PRESS);
+		pd_timer_disable(port, DPM_TIMER_PD_BUTTON_SHORT_PRESS);
+		pd_timer_disable(port, DPM_TIMER_PD_BUTTON_LONG_PRESS);
 		dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
 		return;
 	}
@@ -540,36 +552,64 @@ static void dpm_run_pd_button_sm(int port)
 	switch (dpm[port].pd_button_state) {
 	case DPM_PD_BUTTON_IDLE:
 		if (DPM_CHK_FLAG(port, DPM_FLAG_PD_BUTTON_PRESSED)) {
-			pd_timer_enable(port, DPM_TIMER_PD_BUTTON_PRESS,
+			pd_timer_enable(port, DPM_TIMER_PD_BUTTON_SHORT_PRESS,
+					CONFIG_USB_PD_SHORT_PRESS_MAX_MS *
+						MSEC);
+			pd_timer_enable(port, DPM_TIMER_PD_BUTTON_LONG_PRESS,
 					CONFIG_USB_PD_LONG_PRESS_MAX_MS * MSEC);
 			dpm[port].pd_button_state = DPM_PD_BUTTON_PRESSED;
 		}
 		break;
 	case DPM_PD_BUTTON_PRESSED:
 		if (DPM_CHK_FLAG(port, DPM_FLAG_PD_BUTTON_PRESSED)) {
-			pd_timer_enable(port, DPM_TIMER_PD_BUTTON_PRESS,
+			pd_timer_enable(port, DPM_TIMER_PD_BUTTON_SHORT_PRESS,
+					CONFIG_USB_PD_SHORT_PRESS_MAX_MS *
+						MSEC);
+			pd_timer_enable(port, DPM_TIMER_PD_BUTTON_LONG_PRESS,
 					CONFIG_USB_PD_LONG_PRESS_MAX_MS * MSEC);
+		} else if (pd_timer_is_expired(
+				   port, DPM_TIMER_PD_BUTTON_LONG_PRESS)) {
+			pd_timer_disable(port, DPM_TIMER_PD_BUTTON_SHORT_PRESS);
+			pd_timer_disable(port, DPM_TIMER_PD_BUTTON_LONG_PRESS);
+			dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
 		} else if (DPM_CHK_FLAG(port, DPM_FLAG_PD_BUTTON_RELEASED)) {
-			pd_timer_disable(port, DPM_TIMER_PD_BUTTON_PRESS);
-			dpm[port].pd_button_state = DPM_PD_BUTTON_RELEASED;
-		} else if (pd_timer_is_expired(port,
-					       DPM_TIMER_PD_BUTTON_PRESS)) {
-			pd_timer_disable(port, DPM_TIMER_PD_BUTTON_PRESS);
+			if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+				/*
+				 * Wake chipset on any button press when the
+				 * system is off.
+				 */
+				chipset_power_on();
+			} else if (chipset_in_state(
+					   CHIPSET_STATE_ANY_SUSPEND) ||
+				   chipset_in_state(CHIPSET_STATE_ON)) {
+				if (pd_timer_is_expired(
+					    port,
+					    DPM_TIMER_PD_BUTTON_SHORT_PRESS)) {
+					/*
+					 * Shutdown chipset on long USB PD power
+					 * button press.
+					 */
+					chipset_force_shutdown(
+						CHIPSET_SHUTDOWN_BUTTON);
+				} else {
+					/*
+					 * Simulate a short power button press
+					 * on short USB PD power button press.
+					 * This will wake the system from
+					 * suspend, or bring up the power UI
+					 * when the system is on.
+					 */
+					power_button_simulate_press(
+						USB_PD_SHORT_BUTTON_PRESS_MS);
+				}
+			}
+			pd_timer_disable(port, DPM_TIMER_PD_BUTTON_SHORT_PRESS);
+			pd_timer_disable(port, DPM_TIMER_PD_BUTTON_LONG_PRESS);
 			dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
 		}
 		break;
-	case DPM_PD_BUTTON_RELEASED:
-#ifdef CONFIG_AP_POWER_CONTROL
-		if (IS_ENABLED(CONFIG_POWER_BUTTON_X86) ||
-		    IS_ENABLED(CONFIG_CHIPSET_SC7180) ||
-		    IS_ENABLED(CONFIG_CHIPSET_SC7280)) {
-			if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-				chipset_power_on();
-		}
-#endif
-		dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
-		break;
 	}
+#endif /* CONFIG_AP_POWER_CONTROL */
 
 	/* After checking flags, clear them. */
 	DPM_CLR_FLAG(port, DPM_FLAG_PD_BUTTON_PRESSED);

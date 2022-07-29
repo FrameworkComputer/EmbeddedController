@@ -353,6 +353,16 @@ config PLATFORM_EC_USB_PD_TEMP_SENSOR
 	 one temperature. But, Chromebooks can have multiple temperature sensors.
 	 This option selects which temperature sensor is used for USB PD.
 
+config PLATFORM_EC_USB_PD_SHORT_PRESS_MAX_MS
+	int "Time limit in ms for short presses with a USB PD power button"
+	default 4000
+	help
+	 USB PD supports power buttons over USB-C using button press and button
+	 release alerts. How a chromeOS device responds depends on whether the button
+	 press is considered short or long. This config is used to set the short press
+	 time limit in ms. Any press shorter will be a short press and any press
+	 longer will either be a long press or invalid.
+
 config PLATFORM_EC_USB_PD_LONG_PRESS_MAX_MS
 	int "Time limit in ms for valid presses with a USB PD power button"
 	default 8000

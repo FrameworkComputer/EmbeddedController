@@ -52,6 +52,8 @@ static int count[MAX_PD_PORTS];
 static int max_count[MAX_PD_PORTS];
 
 __maybe_unused static __const_data const char *const pd_timer_names[] = {
+	[DPM_TIMER_PD_BUTTON_LONG_PRESS] = "DPM-PD_BUTTON_LONG_PRESS",
+	[DPM_TIMER_PD_BUTTON_SHORT_PRESS] = "DPM-PD_BUTTON_SHORT_PRESS",
 	[PE_TIMER_BIST_CONT_MODE] = "PE-BIST_CONT_MODE",
 	[PE_TIMER_CHUNKING_NOT_SUPPORTED] = "PE-CHUNKING_NOT_SUPPORTED",
 	[PE_TIMER_DISCOVER_IDENTITY] = "PE-DISCOVER_IDENTITY",
@@ -86,7 +88,6 @@ __maybe_unused static __const_data const char *const pd_timer_names[] = {
 	[TC_TIMER_TIMEOUT] = "TC-TIMEOUT",
 	[TC_TIMER_TRY_WAIT_DEBOUNCE] = "TC-TRY_WAIT_DEBOUNCE",
 	[TC_TIMER_VBUS_DEBOUNCE] = "TC-VBUS_DEBOUNCE",
-	[DPM_TIMER_PD_BUTTON_PRESS] = "DPM-PD_BUTTON_PRESS",
 };
 
 /*****************************************************************************
@@ -170,6 +171,10 @@ void pd_timer_disable_range(int port, enum pd_timer_range range)
 	enum pd_task_timer timer;
 
 	switch (range) {
+	case DPM_TIMER_RANGE:
+		start = DPM_TIMER_START;
+		end = DPM_TIMER_END;
+		break;
 	case PE_TIMER_RANGE:
 		start = PE_TIMER_START;
 		end = PE_TIMER_END;
