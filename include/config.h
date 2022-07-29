@@ -5778,6 +5778,9 @@
  */
 #undef CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT
 
+/* Define this to enable system boot time logging */
+#undef CONFIG_SYSTEM_BOOT_TIME_LOGGING
+
 /*
  * The USB port used for CCD. Defaults to 0/C0.
  */

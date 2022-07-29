@@ -16,6 +16,7 @@
 #include "task.h"
 #include "timer.h"
 #include "zephyr_espi_shim.h"
+#include "system_boot_time.h"
 
 #include <stdint.h>
 
@@ -162,6 +163,8 @@ static void espi_chipset_reset(void)
 	} else {
 		hook_notify(HOOK_CHIPSET_RESET);
 	}
+
+	update_ap_boot_time(ESPIRST);
 }
 DECLARE_DEFERRED(espi_chipset_reset);
 #endif /* CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK */
@@ -189,6 +192,10 @@ static void espi_vwire_handler(const struct device *dev,
 	if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
 	    event.evt_data == 0) {
 		hook_call_deferred(&espi_chipset_reset_data, MSEC);
+		update_ap_boot_time(PLTRST_LOW);
+	} else if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
+		   event.evt_data == 1) {
+		update_ap_boot_time(PLTRST_HIGH);
 	}
 #endif
 }

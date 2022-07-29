@@ -17,6 +17,8 @@
 #include <power_signals.h>
 #include <x86_power_signals.h>
 
+#include "system_boot_time.h"
+
 LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
 #define X86_NON_DSX_ADLP_NONPWRSEQ_FORCE_SHUTDOWN_TO_MS 5
@@ -87,6 +89,7 @@ void board_ap_power_action_g3_s5(void)
 	power_signal_set(PWR_EN_PP5000_A, 1);
 	power_signal_set(PWR_EN_PP3300_A, 1);
 
+	update_ap_boot_time(ARAIL);
 	power_wait_signals_timeout(IN_PGOOD_ALL_CORE,
 				   AP_PWRSEQ_DT_VALUE(wait_signal_timeout));
 

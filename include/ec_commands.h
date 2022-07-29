@@ -7766,6 +7766,24 @@ struct ec_params_usb_pd_mux_ack {
 	uint8_t port; /* USB-C port number */
 } __ec_align1;
 
+/* Get boot time */
+#define EC_CMD_GET_BOOT_TIME 0x0604
+
+enum boot_time_param {
+	ARAIL = 0,
+	RSMRST,
+	ESPIRST,
+	PLTRST_LOW,
+	PLTRST_HIGH,
+	EC_CUR_TIME,
+	RESET_CNT,
+};
+
+struct ap_boot_time_data {
+	uint64_t timestamp[RESET_CNT];
+	uint16_t cnt;
+} __ec_align4;
+
 /*****************************************************************************/
 /*
  * Reserve a range of host commands for board-specific, experimental, or
