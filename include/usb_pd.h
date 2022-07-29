@@ -152,15 +152,15 @@ enum pd_rx_errors {
  * 27:16 Reserved
  * 15:0  Returned error counters (reserved in PD 3.0)
  */
-#define BDO_MODE_RECV (0 << 28)
-#define BDO_MODE_TRANSMIT BIT(28)
-#define BDO_MODE_COUNTERS (2 << 28)
-#define BDO_MODE_CARRIER0 (3 << 28)
-#define BDO_MODE_CARRIER1 (4 << 28)
-#define BDO_MODE_CARRIER2 (5 << 28)
-#define BDO_MODE_CARRIER3 (6 << 28)
-#define BDO_MODE_EYE (7 << 28)
-#define BDO_MODE_TEST_DATA (8 << 28)
+#define BDO_MODE_RECV (BIST_RECEIVER_MODE << 28)
+#define BDO_MODE_TRANSMIT (BIST_TRANSMIT_MODE << 28)
+#define BDO_MODE_COUNTERS (BIST_RETURNED_COUNTER << 28)
+#define BDO_MODE_CARRIER0 (BIST_CARRIER_MODE_0 << 28)
+#define BDO_MODE_CARRIER1 (BIST_CARRIER_MODE_1 << 28)
+#define BDO_MODE_CARRIER2 (BIST_CARRIER_MODE_2 << 28)
+#define BDO_MODE_CARRIER3 (BIST_CARRIER_MODE_3 << 28)
+#define BDO_MODE_EYE (BIST_EYE_PATTERN << 28)
+#define BDO_MODE_TEST_DATA (BIST_TEST_DATA << 28)
 
 #define BDO(mode, cnt) ((mode) | ((cnt)&0xFFFF))
 
