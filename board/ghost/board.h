@@ -18,11 +18,6 @@
 /* Baseboard features */
 #include "baseboard.h"
 
-/*
- * TODO(b/230813416): remove after bringup
- */
-#define CONFIG_BRINGUP
-
 /* Buttons are not supported */
 #undef CONFIG_VOLUME_BUTTONS
 #undef CONFIG_MKBP_INPUT_DEVICES
