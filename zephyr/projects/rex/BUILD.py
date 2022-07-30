@@ -31,6 +31,7 @@ register_variant(
     project_name="rex",
     extra_dts_overlays=[
         here / "generated.dts",
+        here / "interrupts.dts",
     ],
     extra_kconfig_files=[here / "prj_rex.conf"],
 )
