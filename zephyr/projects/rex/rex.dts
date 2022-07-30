@@ -27,6 +27,13 @@
 	pinctrl-names = "default";
 };
 
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
 /* ADC and GPIO alt-function specifications */
 &adc0 {
 	pinctrl-0 = <&adc0_chan0_gp45

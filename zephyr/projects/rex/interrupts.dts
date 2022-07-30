@@ -24,3 +24,7 @@
 		};
 	};
 };
+
+/* Required node label that doesn't is named differently on Rex */
+gpio_ec_pch_wake_odl: &gpio_ec_soc_wake_r_odl {};
+
