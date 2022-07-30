@@ -338,14 +338,26 @@ void system_init(void)
 	uint32_t wdt_sts = MCHP_VBAT_STS & MCHP_VBAT_STS_ANY_RST;
 	uint32_t rst_sts = MCHP_PCR_PWR_RST_STS &
 				MCHP_PWR_RST_STS_VTR;
+	/*
+	 * **HX20**: We can't hibernate the EC without also keeping
+	 * 5v3v ALW on, so we cut power entirely. Unfortunately,
+	 * that means that one of rst_sts or wdt_sts will always be
+	 * on... and that precludes the use of the RW firmware.
+	 * However, if we store a bit in IMAGETYPE to indicate that
+	 * we cut power to ourselves, we can use it at the next boot
+	 * to determine whether this poweroff was EC-origin or not.
+	 */
+	bool wacked = (MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) & 0x80) != 0;
 
 	trace12(0, LFW, 0,
 		"VBAT_STS = 0x%08x  PCR_PWR_RST_STS = 0x%08x",
 		wdt_sts, rst_sts);
 
-	if (rst_sts || wdt_sts)
+	if ((rst_sts || wdt_sts) && !wacked)
 		MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX)
 					= EC_IMAGE_UNKNOWN;
+
+	MCHP_VBAT_RAM(MCHP_IMAGETYPE_IDX) &= 0x7F;
 }
 
 enum ec_image system_get_image_copy(void)
