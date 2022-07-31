@@ -14,9 +14,15 @@
 		ec_wp_l: write-protect {
 			gpios = <&gpioa 0 GPIO_INPUT>;
 		};
-
 		gpio_ec_entering_rw: ec_entering_rw {
 			enum-name = "GPIO_ENTERING_RW";
+		};
+
+		ioex_usb_c0_sbu_fault_odl: usb_c0_sbu_fault_odl {
+			gpios = <&ioex_c0_port1 2 GPIO_INPUT>;
+		};
+		ioex_usb_c0_rt_rst_ls_l: usb_c0_rt_rst_ls_l {
+			gpios = <&ioex_c0_port0 7 GPIO_OUTPUT>;
 		};
 	};
 };
@@ -52,15 +58,57 @@
 };
 
 &i2c1_0 {
-	label = "I2C_PORT_USB_C0_TCPC";
+	label = "I2C_USB_C0_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
+
+	bc12_port0: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5f>;
+		irq = <&int_usb_c0_bc12>;
+	};
+
+	nct3807_C0:nct3807_C0@70 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "nuvoton,nct38xx-gpio";
+		reg = <0x70>;
+		label = "NCT3807_C0";
+
+		ioex_c0_port0:gpio@0 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x0>;
+			label = "NCT3807_C0_GPIO0";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+			pinmux_mask = <0xf7>;
+		};
+		ioex_c0_port1:gpio@1 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x1>;
+			label = "NCT3807_C0_GPIO1";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xff>;
+		};
+	};
+
+	nct3808_alert_0 {
+		compatible = "nuvoton,nct38xx-gpio-alert";
+		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
+		nct38xx-dev = <&nct3807_C0>;
+		label = "NCT3807_ALERT_0";
+	};
 };
 
 &i2c2_0 {
-	label = "I2C_PORT_PPC0";
+	label = "I2C_PPC0";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
 	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
@@ -68,7 +116,7 @@
 };
 
 &i2c3_0 {
-	label = "I2C_PORT_USB_C0_C2_MUX";
+	label = "I2C_USB_C0_C2_MUX";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
 	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
@@ -76,7 +124,7 @@
 };
 
 &i2c4_1 {
-	label = "I2C_PORT_USB_C1_TCPC";
+	label = "I2_USB_C1_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
 	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
@@ -84,7 +132,7 @@
 };
 
 &i2c5_0 {
-	label = "I2C_PORT_BATTERY";
+	label = "I2C__BATTERY";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
 	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
@@ -92,7 +140,7 @@
 };
 
 &i2c6_1 {
-	label = "I2C_PORT_USB_1_MIX";
+	label = "I2C_USB_1_MIX";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
 	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
@@ -100,7 +148,7 @@
 };
 
 &i2c7_0 {
-	label = "I2C_PORT_CHARGER";
+	label = "I2C_CHARGER";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
 	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;

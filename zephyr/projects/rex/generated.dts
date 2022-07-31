@@ -156,9 +156,11 @@
 		};
 		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
 			gpios = <&gpioc 6 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpio6 2 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c0_rt_3p3_sx_en: usb_c0_rt_3p3_sx_en {
 			gpios = <&gpio0 3 GPIO_ODR_HIGH>;
@@ -168,6 +170,7 @@
 		};
 		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
 			gpios = <&gpioe 0 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
 		gpio_usb_c0_tcpc_rst_odl: usb_c0_tcpc_rst_odl {
 			gpios = <&gpio6 7 GPIO_ODR_LOW>;

@@ -33,6 +33,8 @@ register_variant(
         here / "generated.dts",
         here / "interrupts.dts",
         here / "power_signals.dts",
+        here / "battery.dts",
+        here / "usbc.dts",
     ],
     extra_kconfig_files=[here / "prj_rex.conf"],
 )

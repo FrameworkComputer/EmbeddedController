@@ -1,0 +1,51 @@
+/* Copyright 2022 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ #include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			bc12 = <&i2c_ec_i2c_usb_c0_ppc_b>;
+			ppc_port0_syv: ppc-port0 {
+				compatible = "silergy,syv682x";
+				status = "okay";
+				port = <&i2c_ec_i2c_usb_c0_ppc_b>;
+				i2c-addr-flags = "SYV682X_ADDR1_FLAGS";
+			};
+			tcpc {
+				compatible = "nuvoton,nct38xx";
+				gpio-dev = <&nct3807_C0>;
+				port = <&i2c_ec_i2c_usb_c0_tcp>;
+				i2c-addr-flags = "NCT38XX_I2C_ADDR1_4_FLAGS";
+				tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+			};
+			chg {
+				compatible = "intersil,isl9241";
+				status = "okay";
+				port = <&i2c_ec_i2c_mi>;
+			};
+			usb-muxes = <&usb_c0_hb_retimer &virtual_mux_c0>;
+		};
+		port0-muxes {
+			usb_c0_hb_retimer: jhl8040r-c0 {
+				compatible = "intel,jhl8040r";
+				port = <&i2c_ec_i2c_usb_c0_rt>;
+				i2c-addr-flags = <0x56>;
+				ls-en-pin = <&gpio_usb_c0_rt_3p3_sx_en>;
+				int-pin = <&gpio_usb_c0_rt_int_odl>;
+				reset-pin = <&ioex_usb_c0_rt_rst_ls_l>;
+			};
+			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
