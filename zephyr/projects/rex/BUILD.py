@@ -32,6 +32,7 @@ register_variant(
     extra_dts_overlays=[
         here / "generated.dts",
         here / "interrupts.dts",
+        here / "power_signals.dts",
     ],
     extra_kconfig_files=[here / "prj_rex.conf"],
 )
