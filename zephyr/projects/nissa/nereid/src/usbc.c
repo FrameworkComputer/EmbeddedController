@@ -145,7 +145,7 @@ int board_set_active_charge_port(int port)
 	}
 
 	/* Don't enable anything (stop here) if no ports were requested */
-	if (port == CHARGE_PORT_NONE)
+	if ((port == CHARGE_PORT_NONE) || (old_port == port))
 		return EC_SUCCESS;
 
 	/*
