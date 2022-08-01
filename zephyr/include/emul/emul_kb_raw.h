@@ -36,6 +36,13 @@ int emul_kb_raw_set_kbstate(const struct device *dev, uint8_t row, uint8_t col,
 			    int pressed);
 
 /**
+ * @brief Resets the keyboard to its initial state.
+ *
+ * @param dev Pointer to kb_raw emulator device.
+ */
+void emul_kb_raw_reset(const struct device *dev);
+
+/**
  * @}
  */
 

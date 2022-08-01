@@ -294,10 +294,11 @@ static void simulate_key(int row, int col, int pressed)
  *
  * @param state		Destination for new state (must be KEYBOARD_COLS_MAX
  *			long).
+ * @param at_boot	True if we are reading the boot key state.
  *
  * @return 1 if at least one key is pressed, else zero.
  */
-static int read_matrix(uint8_t *state)
+static int read_matrix(uint8_t *state, bool at_boot)
 {
 	int c;
 	int pressed = 0;
@@ -332,6 +333,31 @@ static int read_matrix(uint8_t *state)
 			state[c] = keyscan_seq_get_scan(c, state[c]);
 	}
 
+#ifdef KEYBOARD_MASK_PWRBTN
+	/*
+	 * 2. Boot key workaround.
+	 *
+	 * Check if KSI2 or KSI3 is asserted for all columns due to power
+	 * button hold, and ignore it if so.
+	 */
+	if (at_boot) {
+		for (c = 0; c < keyboard_cols; c++) {
+			if (!(state[c] & KEYBOARD_MASK_PWRBTN))
+				break;
+		}
+
+		if (c == keyboard_cols) {
+			for (c = 0; c < keyboard_cols; c++)
+				state[c] &= ~KEYBOARD_MASK_PWRBTN;
+#ifndef CONFIG_KEYBOARD_MULTIPLE
+			state[KEYBOARD_COL_REFRESH] |= KEYBOARD_MASK_PWRBTN;
+#else
+			state[key_typ.col_refresh] |= KEYBOARD_MASK_PWRBTN;
+#endif
+		}
+	}
+#endif
+
 #ifdef CONFIG_KEYBOARD_SCAN_ADC
 	/* Account for the refresh key */
 	keyboard_read_refresh_key(state);
@@ -341,7 +367,7 @@ static int read_matrix(uint8_t *state)
 	 * this check isn't required
 	 */
 #else
-	/* 2. Detect transitional ghost */
+	/* 3. Detect transitional ghost */
 	for (c = 0; c < keyboard_cols; c++) {
 		int c2;
 
@@ -366,7 +392,7 @@ static int read_matrix(uint8_t *state)
 	}
 #endif
 
-	/* 3. Fix result */
+	/* 4. Fix result */
 	for (c = 0; c < keyboard_cols; c++) {
 		/* Add in simulated keypresses */
 		state[c] |= simulated_key[c];
@@ -576,7 +602,7 @@ static int check_keys_changed(uint8_t *state)
 	scan_time[scan_time_index] = tnow;
 
 	/* Read the raw key state */
-	any_pressed = read_matrix(new_state);
+	any_pressed = read_matrix(new_state, false);
 
 	if (!IS_ENABLED(CONFIG_KEYBOARD_SCAN_ADC)) {
 		/* Ignore if so many keys are pressed that we're ghosting. */
@@ -702,22 +728,6 @@ static uint32_t check_key_list(const uint8_t *state)
 
 	/* Make copy of current debounced state. */
 	memcpy(curr_state, state, sizeof(curr_state));
-
-#ifdef KEYBOARD_MASK_PWRBTN
-	/*
-	 * Check if KSI2 or KSI3 is asserted for all columns due to power
-	 * button hold, and ignore it if so.
-	 */
-	for (c = 0; c < keyboard_cols; c++)
-		if ((keyscan_config.actual_key_mask[c] &
-		     KEYBOARD_MASK_PWRBTN) &&
-		    !(curr_state[c] & KEYBOARD_MASK_PWRBTN))
-			break;
-
-	if (c == keyboard_cols)
-		for (c = 0; c < keyboard_cols; c++)
-			curr_state[c] &= ~KEYBOARD_MASK_PWRBTN;
-#endif
 
 #ifndef CONFIG_KEYBOARD_MULTIPLE
 	curr_state[KEYBOARD_COL_REFRESH] &= ~keyboard_mask_refresh;
@@ -854,7 +864,7 @@ void keyboard_scan_init(void)
 
 	/* Initialize raw state */
 #ifndef CONFIG_KEYBOARD_SCAN_ADC
-	read_matrix(debounced_state);
+	read_matrix(debounced_state, true);
 #else
 	read_adc_boot_keys(debounced_state);
 #endif
