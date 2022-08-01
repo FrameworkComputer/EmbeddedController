@@ -12,64 +12,19 @@
 #define VARIANT_DEDEDE_EC_IT8320
 #include "baseboard.h"
 
-#undef GPIO_VOLUME_UP_L
-#define GPIO_VOLUME_UP_L GPIO_VOLUP_BTN_ODL_HDMI_HPD
-
 /* Battery */
 #define CONFIG_BATTERY_FUEL_GAUGE
 
-/* BC 1.2 */
-#define CONFIG_BC12_DETECT_PI3USB9201
-
 /* Charger */
-#define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER_SM5803 /* C0 and C1: Charger */
 #define PD_MAX_VOLTAGE_MV 15000
 #define CONFIG_USB_PD_VBUS_DETECT_CHARGER
 #define CONFIG_USB_PD_5V_CHARGER_CTRL
 #define CONFIG_CHARGER_OTG
 #undef CONFIG_CHARGER_SINGLE_CHIP
-#define CONFIG_OCPC
-#define CONFIG_OCPC_DEF_RBATT_MOHMS               \
-	21 /* R_DS(on) 10.7mOhm + 10mOhm sns rstr \
-	    */
 
 /* PWM */
 #define CONFIG_PWM
-
-/* Sensors */
-#define CONFIG_ACCEL_BMA255 /* Lid accel */
-#define CONFIG_ACCEL_BMA4XX /* 2nd source Lid accel */
-#define CONFIG_ACCELGYRO_LSM6DSM /* Base accel */
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
-
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
-
-/* Enable sensor fifo, must also define the _SIZE and _THRES */
-#define CONFIG_ACCEL_FIFO
-/* Power of 2 - Too large of a fifo causes too much timestamp jitter */
-#define CONFIG_ACCEL_FIFO_SIZE 256
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-
-#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
-
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
-
-#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
-#define CONFIG_TABLET_MODE
-#define CONFIG_TABLET_MODE_SWITCH
-#define CONFIG_GMR_TABLET_MODE
-
-/* Keyboard */
-#define CONFIG_KEYBOARD_FACTORY_TEST
-#define CONFIG_PWM_KBLIGHT
 
 /* TCPC */
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
@@ -92,6 +47,19 @@
 #define USB_PORT_COUNT 1
 #define CONFIG_USB_PORT_POWER_DUMB
 
+/* Buttons */
+#define CONFIG_POWER_BUTTON_IGNORE_LID
+
+/* Unused Features */
+#undef CONFIG_BACKLIGHT_LID
+#undef CONFIG_CMD_KEYBOARD
+#undef CONFIG_HIBERNATE
+#undef CONFIG_KEYBOARD_BOOT_KEYS
+#undef CONFIG_KEYBOARD_RUNTIME_KEYS
+#undef CONFIG_LID_SWITCH
+#undef CONFIG_USB_CHARGER
+#undef CONFIG_VOLUME_BUTTONS
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
@@ -104,12 +72,8 @@ enum chg_id {
 };
 
 enum pwm_channel {
-	PWM_CH_KBLIGHT,
 	PWM_CH_COUNT,
 };
-
-/* Motion sensors */
-enum sensor_id { LID_ACCEL, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 /* ADC channels */
 enum adc_channel {
