@@ -26,6 +26,9 @@ new project variant.
 The [Zephyr New Board Checklist](zephyr_new_board_checklist.md) links to the
 documentation needed to configure individual EC features.
 
+The [Zephyr Troubleshooting](zephyr_troubleshooting.md) page lists few common
+errors and troubleshooting techniques used when working with Zephyr.
+
 ## Source Code Organization
 
 Zephyr EC images rely on multiple Chromium repositories to build Zephyr EC images.
