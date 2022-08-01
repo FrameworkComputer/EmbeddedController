@@ -3,22 +3,23 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/shell/shell_uart.h>
 #include <zephyr/zephyr.h>
 #include <ztest.h>
-#include <zephyr/shell/shell_uart.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
 
 #include "battery.h"
 #include "battery_smart.h"
 #include "charge_state.h"
+#include "chipset.h"
 #include "emul/emul_isl923x.h"
 #include "emul/emul_smart_battery.h"
 #include "emul/emul_stub_device.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "hooks.h"
 #include "power.h"
+#include "task.h"
 #include "test/drivers/stubs.h"
-#include "chipset.h"
 #include "test/drivers/utils.h"
 
 #define BATTERY_ORD DT_DEP_ORD(DT_NODELABEL(battery))
@@ -33,6 +34,9 @@ void test_set_chipset_to_s0(void)
 		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
 
 	printk("%s: Forcing power on\n", __func__);
+
+	task_wake(TASK_ID_CHIPSET);
+	k_sleep(K_SECONDS(1));
 
 	bat = sbat_emul_get_bat_data(emul);
 
@@ -77,6 +81,8 @@ void test_set_chipset_to_power_level(enum power_state new_state)
 #endif
 		     ,
 		     "Power state must be one of the steady states");
+	task_wake(TASK_ID_CHIPSET);
+	k_sleep(K_SECONDS(1));
 
 	if (new_state == POWER_G3) {
 		test_set_chipset_to_g3();
@@ -96,6 +102,10 @@ void test_set_chipset_to_power_level(enum power_state new_state)
 
 void test_set_chipset_to_g3(void)
 {
+	/* Let power code to settle on a particular state first. */
+	task_wake(TASK_ID_CHIPSET);
+	k_sleep(K_SECONDS(1));
+
 	printk("%s: Forcing shutdown\n", __func__);
 	chipset_force_shutdown(CHIPSET_RESET_KB_SYSRESET);
 	k_sleep(K_SECONDS(20));
