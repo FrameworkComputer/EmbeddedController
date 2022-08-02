@@ -184,6 +184,12 @@
 		reg = <0x20>;
 		label = "I2C_ADDR_MP2964_FLAGS";
 	};
+
+	charger: bq25710@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
 };
 
 &i2c_ctrl7 {

@@ -8,9 +8,9 @@
 
 #define RT9490_CHG_COMPAT richtek_rt9490
 
-#define CHG_CONFIG_RT9490(id)                               \
-	{                                                   \
-		.i2c_port = I2C_PORT(DT_PHANDLE(id, port)), \
-		.i2c_addr_flags = RT9490_ADDR_FLAGS,        \
-		.drv = &rt9490_drv,                         \
+#define CHG_CONFIG_RT9490(id)                      \
+	{                                          \
+		.i2c_port = I2C_PORT_BY_DEV(id),   \
+		.i2c_addr_flags = DT_REG_ADDR(id), \
+		.drv = &rt9490_drv,                \
 	},

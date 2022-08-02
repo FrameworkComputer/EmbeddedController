@@ -212,11 +212,7 @@
 			compatible = "named-usbc-port";
 			reg = <0>;
 			bc12 = <&bc12_port0>;
-			chg {
-				compatible = "intersil,isl923x";
-				status = "okay";
-				port = <&i2c_ec_i2c_usb_c0>;
-			};
+			chg = <&chg_port0>;
 			usb-muxes = <&virtual_mux_0>;
 		};
 		port0-muxes {
@@ -304,6 +300,12 @@
 		 * IRQ is not specified here and handled by
 		 * usb_c0_interrupt.
 		 */
+	};
+
+	chg_port0: isl923x@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
 	};
 };
 

@@ -25,11 +25,7 @@
 				i2c-addr-flags = "SN5S330_ADDR0_FLAGS";
 			};
 
-			chg {
-				compatible = "intersil,isl923x";
-				status = "okay";
-				port = <&i2c_power>;
-			};
+			chg = <&charger>;
 		};
 
 		port1@1 {

@@ -8,9 +8,9 @@
 
 #define SM5803_CHG_COMPAT siliconmitus_sm5803
 
-#define CHG_CONFIG_SM5803(id)                                \
-	{                                                    \
-		.i2c_port = I2C_PORT(DT_PHANDLE(id, port)),  \
-		.i2c_addr_flags = SM5803_ADDR_CHARGER_FLAGS, \
-		.drv = &sm5803_drv,                          \
+#define CHG_CONFIG_SM5803(id)                      \
+	{                                          \
+		.i2c_port = I2C_PORT_BY_DEV(id),   \
+		.i2c_addr_flags = DT_REG_ADDR(id), \
+		.drv = &sm5803_drv,                \
 	},

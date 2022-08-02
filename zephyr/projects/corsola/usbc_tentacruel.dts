@@ -19,11 +19,7 @@
 				i2c-addr-flags = "RT1739_ADDR1_FLAGS";
 			};
 			tcpc = <&usbpd0>;
-			chg {
-				compatible = "richtek,rt9490";
-				status = "okay";
-				port = <&i2c_charger>;
-			};
+			chg = <&charger>;
 			usb-muxes = <&it5205_mux_0 &virtual_mux_0>;
 		};
 		port0-muxes {

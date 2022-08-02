@@ -53,6 +53,12 @@ i2c_pwr_cbi: &i2c0 {
 	pinctrl-0 = <&i2c0_clk_gpb3_default
 		     &i2c0_data_gpb4_default>;
 	pinctrl-names = "default";
+
+	charger: rt9490@53 {
+		compatible = "richtek,rt9490";
+		status = "okay";
+		reg = <0x53>;
+	};
 };
 
 &i2c1 {

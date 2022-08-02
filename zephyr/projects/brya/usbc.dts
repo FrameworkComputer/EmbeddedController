@@ -13,11 +13,7 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			tcpc = <&tcpc_port0>;
-			chg {
-				compatible = "ti,bq25710";
-				status = "okay";
-				port = <&i2c_charger>;
-			};
+			chg = <&charger>;
 			usb-muxes = <&usb_c0_bb_retimer &virtual_mux_c0>;
 		};
 		port0-muxes {

@@ -32,12 +32,7 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-
-			chg {
-				compatible = "intersil,isl923x";
-				status = "okay";
-				port = <&named_i2c0>;
-			};
+			chg = <&isl923x_emul>;
 		};
 
 		port1@1 {

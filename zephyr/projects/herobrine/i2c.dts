@@ -66,6 +66,12 @@
 		reg = <0x5f>;
 		irq = <&int_usb_c0_bc12>;
 	};
+
+	charger: isl923x@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
 };
 
 &i2c_ctrl0 {

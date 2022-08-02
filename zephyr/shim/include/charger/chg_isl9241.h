@@ -8,9 +8,9 @@
 
 #define ISL9241_CHG_COMPAT intersil_isl9241
 
-#define CHG_CONFIG_ISL9241(id)                              \
-	{                                                   \
-		.i2c_port = I2C_PORT(DT_PHANDLE(id, port)), \
-		.i2c_addr_flags = ISL9241_ADDR_FLAGS,       \
-		.drv = &isl9241_drv,                        \
+#define CHG_CONFIG_ISL9241(id)                     \
+	{                                          \
+		.i2c_port = I2C_PORT_BY_DEV(id),   \
+		.i2c_addr_flags = DT_REG_ADDR(id), \
+		.drv = &isl9241_drv,               \
 	},

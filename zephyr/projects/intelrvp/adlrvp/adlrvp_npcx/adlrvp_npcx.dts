@@ -117,6 +117,12 @@
 		reg = <0x38>;
 		label = "MAX695X_SEVEN_SEG_DISPLAY";
 	};
+
+	charger: isl9241@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
 };
 
 &i2c_ctrl7 {

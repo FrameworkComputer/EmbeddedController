@@ -20,11 +20,7 @@
 				i2c-addr-flags = "NX20P3483_ADDR2_FLAGS";
 			};
 			usb-muxes = <&anx7447_mux_0 &virtual_mux_0>;
-			chg {
-				compatible = "intersil,isl923x";
-				status = "okay";
-				port = <&i2c_charger>;
-			};
+			chg = <&charger>;
 		};
 
 		port0-muxes {

@@ -13,11 +13,7 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			tcpc = <&tcpc_port0>;
-			chg {
-				compatible = "intersil,isl9241";
-				status = "okay";
-				port = <&i2c_charger>;
-			};
+			chg = <&charger>;
 		};
 
 		port1@1 {

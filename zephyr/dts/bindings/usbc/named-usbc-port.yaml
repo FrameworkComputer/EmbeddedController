@@ -19,6 +19,11 @@ properties:
     required: false
     description: |
       TCPC chip for the USB-C port.
+  chg:
+    type: phandle
+    required: false
+    description: |
+      Charger chip for the USB-C port.
   usb-muxes:
     type: phandles
     required: false
