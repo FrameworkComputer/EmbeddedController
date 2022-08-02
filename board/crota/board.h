@@ -22,7 +22,11 @@
 #define CONFIG_MP2964
 
 /* Sensors */
-#define CONFIG_ACCELGYRO_LSM6DSO /* Base accel */
+#define CONFIG_ACCELGYRO_BMI260 /* Base accel/gyro */
+#define CONFIG_ACCELGYRO_BMI260_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+
+#define CONFIG_ACCELGYRO_LSM6DSO /* Base accel/gyro */
 #define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 
@@ -152,6 +156,9 @@
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
 #define I2C_PORT_MP2964 NPCX_I2C_PORT7_0
 
+/* define this to avoid error on CONFIG_ACCELGYRO_BMI_COMM_I2C */
+#define I2C_PORT_ACCEL I2C_PORT_SENSOR
+
 #define I2C_ADDR_EEPROM_FLAGS 0x50
 
 #define I2C_ADDR_MP2964_FLAGS 0x20
@@ -260,6 +267,8 @@ enum fan_rpm_table {
 };
 
 enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
+
+void motion_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 
