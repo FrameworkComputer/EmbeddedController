@@ -4,12 +4,12 @@
 
 description: USBC ANX7447 USB MUX
 
-include: cros-ec,usbc-mux-tcpci.yaml
+include: cros-ec,usbc-mux.yaml
 
 compatible: "analogix,usbc-mux-anx7447"
 
 properties:
-  hpd-update:
-    required: false
-    enum:
-      - anx7447_tcpc_update_hpd_status
+  hpd-update-enable:
+    type: boolean
+    description: |
+      Enable anx7447 hpd update callback
