@@ -683,6 +683,11 @@ config_brask() {
   config_brya
 }
 
+config_ghost() {
+  # No changes to brya.
+  config_brya
+}
+
 config_zork() {
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
