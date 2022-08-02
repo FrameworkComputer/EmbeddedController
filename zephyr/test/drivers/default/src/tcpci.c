@@ -505,4 +505,4 @@ static void *tcpci_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(tcpci, drivers_predicate_post_main, tcpci_setup, NULL, NULL, NULL);
+ZTEST_SUITE(tcpci, drivers_predicate_pre_main, tcpci_setup, NULL, NULL, NULL);

@@ -196,7 +196,7 @@ static void check_ps8815_set_cc(enum tcpc_rp_value rp, enum tcpc_cc_pull cc,
 }
 
 /** Test PS8815 set cc and device specific workarounds */
-ZTEST(ps8815_no_tasks, test_ps8815_set_cc)
+ZTEST(ps8815, test_ps8815_set_cc)
 {
 	const struct emul *ps8xxx_emul = emul_get_binding(PS8XXX_EMUL_LABEL);
 	int64_t start_time;
@@ -1304,11 +1304,8 @@ static void ps8815_after(void *state)
 	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, 0x31);
 }
 
-ZTEST_SUITE(ps8805, drivers_predicate_post_main, NULL, ps8805_before,
+ZTEST_SUITE(ps8805, drivers_predicate_pre_main, NULL, ps8805_before,
 	    ps8805_after, NULL);
 
-ZTEST_SUITE(ps8815, drivers_predicate_post_main, NULL, ps8815_before,
-	    ps8815_after, NULL);
-
-ZTEST_SUITE(ps8815_no_tasks, drivers_predicate_pre_main, NULL, ps8815_before,
+ZTEST_SUITE(ps8815, drivers_predicate_pre_main, NULL, ps8815_before,
 	    ps8815_after, NULL);
