@@ -14,6 +14,15 @@
 #define GPIO_BATT_PRES_ODL_PATH DT_PATH(named_gpios, ec_batt_pres_odl)
 #define GPIO_BATT_PRES_ODL_PORT DT_GPIO_PIN(GPIO_BATT_PRES_ODL_PATH, gpios)
 
+static void battery_after(void *data)
+{
+	const struct device *dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
+
+	/* Set default state (battery is present) */
+	gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 0);
+}
+
 ZTEST_USER(battery, test_battery_is_present_gpio)
 {
 	const struct device *dev =
@@ -28,4 +37,5 @@ ZTEST_USER(battery, test_battery_is_present_gpio)
 	zassert_equal(BP_NO, battery_is_present(), NULL);
 }
 
-ZTEST_SUITE(battery, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(battery, drivers_predicate_post_main, NULL, NULL, battery_after,
+	    NULL);
