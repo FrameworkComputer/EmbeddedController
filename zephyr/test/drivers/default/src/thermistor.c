@@ -24,7 +24,7 @@
 /* TODO replace counting macros with DT macro when
  * https://github.com/zephyrproject-rtos/zephyr/issues/38715 lands
  */
-#define _ACCUMULATOR(x)
+#define _ACCUMULATOR(x) 1 +
 #define NAMED_TEMP_SENSORS_SIZE                                     \
 	DT_FOREACH_CHILD(DT_PATH(named_temp_sensors), _ACCUMULATOR) \
 	0
@@ -259,9 +259,9 @@ ZTEST_USER(thermistor, test_thermistors_adc_temperature_conversion)
 	int sensor_idx;
 
 	const static int reference_mv_arr[] = { DT_FOREACH_STATUS_OKAY(
-		cros_temp_sensor, GET_THERMISTOR_REF_MV) };
+		cros_ec_temp_sensor, GET_THERMISTOR_REF_MV) };
 	const static int reference_res_arr[] = { DT_FOREACH_STATUS_OKAY(
-		cros_temp_sensor, GET_THERMISTOR_REF_RES) };
+		cros_ec_temp_sensor, GET_THERMISTOR_REF_RES) };
 
 	for (sensor_idx = 0; sensor_idx < NAMED_TEMP_SENSORS_SIZE; sensor_idx++)
 		do_thermistor_test(&temp_sensors[sensor_idx],
