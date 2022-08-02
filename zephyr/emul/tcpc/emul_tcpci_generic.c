@@ -160,7 +160,7 @@ DT_INST_FOREACH_STATUS_OKAY(TCPCI_GENERIC_EMUL)
 
 #ifdef CONFIG_ZTEST_NEW_API
 #define TCPCI_GENERIC_EMUL_RESET_RULE_BEFORE(n) \
-	tcpci_generic_emul_reset(&EMUL_REG_NAME(DT_DRV_INST(n)));
+	tcpci_generic_emul_reset(EMUL_DT_GET(DT_DRV_INST(n)));
 static void
 tcpci_generic_emul_reset_rule_before(const struct ztest_unit_test *test,
 				     void *data)

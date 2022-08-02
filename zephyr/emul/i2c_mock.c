@@ -56,15 +56,15 @@ static int i2c_mock_init(const struct emul *emul, const struct device *parent)
 	return 0;
 }
 
-#define INIT_I2C_MOCK(n)                                              \
-	static const struct i2c_common_emul_cfg i2c_mock_cfg_##n = {  \
-		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),        \
-		.dev_label = DT_INST_LABEL(n),                        \
-		.addr = DT_INST_REG_ADDR(n),                          \
-	};                                                            \
-	static struct i2c_common_emul_data i2c_mock_data_##n;         \
-	EMUL_DEFINE(i2c_mock_init, DT_DRV_INST(n), &i2c_mock_cfg_##n, \
-		    &i2c_mock_data_##n, &i2c_common_emul_api)
+#define INIT_I2C_MOCK(n)                                             \
+	static const struct i2c_common_emul_cfg i2c_mock_cfg_##n = { \
+		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),       \
+		.dev_label = DT_INST_LABEL(n),                       \
+		.addr = DT_INST_REG_ADDR(n),                         \
+	};                                                           \
+	static struct i2c_common_emul_data i2c_mock_data_##n;        \
+	EMUL_DT_INST_DEFINE(n, i2c_mock_init, &i2c_mock_data_##n,    \
+			    &i2c_mock_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_I2C_MOCK)
 

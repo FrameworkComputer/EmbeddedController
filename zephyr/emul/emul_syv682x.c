@@ -273,8 +273,8 @@ static int syv682x_emul_init(const struct emul *emul,
 			.addr = DT_INST_REG_ADDR(n),                           \
 		},                                                             \
 	}; \
-	EMUL_DEFINE(syv682x_emul_init, DT_DRV_INST(n), &syv682x_emul_cfg_##n,    \
-		    &syv682x_emul_data_##n, &i2c_common_emul_api)
+	EMUL_DT_INST_DEFINE(n, syv682x_emul_init, &syv682x_emul_data_##n,        \
+			    &syv682x_emul_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(SYV682X_EMUL)
 

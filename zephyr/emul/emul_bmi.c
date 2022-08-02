@@ -1059,7 +1059,7 @@ static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 	return 0;
 }
 
-#define BMI_EMUL(n)                                                   \
+#define BMI_EMUL(n)                                                  \
 	static struct bmi_emul_data bmi_emul_data_##n = {		\
 		.error_on_ro_write = DT_INST_PROP(n, error_on_ro_write),\
 		.error_on_wo_read = DT_INST_PROP(n, error_on_wo_read),	\
@@ -1077,16 +1077,15 @@ static int bmi_emul_init(const struct emul *emul, const struct device *parent)
 			.finish_read = NULL,				\
 			.access_reg = NULL,				\
 		},							\
-	};          \
-                                                                      \
-	static const struct i2c_common_emul_cfg bmi_emul_cfg_##n = {  \
-		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),        \
-		.dev_label = DT_INST_LABEL(n),                        \
-		.data = &bmi_emul_data_##n.common,                    \
-		.addr = DT_INST_REG_ADDR(n),                          \
-	};                                                            \
-	EMUL_DEFINE(bmi_emul_init, DT_DRV_INST(n), &bmi_emul_cfg_##n, \
-		    &bmi_emul_data_##n, &i2c_common_emul_api)
+	};         \
+	static const struct i2c_common_emul_cfg bmi_emul_cfg_##n = { \
+		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),       \
+		.dev_label = DT_INST_LABEL(n),                       \
+		.data = &bmi_emul_data_##n.common,                   \
+		.addr = DT_INST_REG_ADDR(n),                         \
+	};                                                           \
+	EMUL_DT_INST_DEFINE(n, bmi_emul_init, &bmi_emul_data_##n,    \
+			    &bmi_emul_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(BMI_EMUL)
 

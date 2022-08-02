@@ -662,7 +662,7 @@ DT_INST_FOREACH_STATUS_OKAY(PS8XXX_EMUL)
 
 #ifdef CONFIG_ZTEST_NEW_API
 #define PS8XXX_EMUL_RESET_RULE_BEFORE(n) \
-	ps8xxx_emul_tcpc_reset(&EMUL_REG_NAME(DT_DRV_INST(n)));
+	ps8xxx_emul_tcpc_reset(EMUL_DT_GET(DT_DRV_INST(n)));
 static void ps8xxx_emul_reset_rule_before(const struct ztest_unit_test *test,
 					  void *data)
 {

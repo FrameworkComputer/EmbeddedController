@@ -973,7 +973,7 @@ static int bma_emul_init(const struct emul *emul, const struct device *parent)
 	return 0;
 }
 
-#define BMA255_EMUL(n)                                                \
+#define BMA255_EMUL(n)                                               \
 	static struct bma_emul_data bma_emul_data_##n = {		\
 		.nvm_x = DT_INST_PROP(n, nvm_off_x),			\
 		.nvm_y = DT_INST_PROP(n, nvm_off_y),			\
@@ -1002,16 +1002,16 @@ static int bma_emul_init(const struct emul *emul, const struct device *parent)
 			.finish_read = NULL,				\
 			.access_reg = bma_emul_access_reg,		\
 		},							\
-	};          \
-                                                                      \
-	static const struct i2c_common_emul_cfg bma_emul_cfg_##n = {  \
-		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),        \
-		.dev_label = DT_INST_LABEL(n),                        \
-		.data = &bma_emul_data_##n.common,                    \
-		.addr = DT_INST_REG_ADDR(n),                          \
-	};                                                            \
-	EMUL_DEFINE(bma_emul_init, DT_DRV_INST(n), &bma_emul_cfg_##n, \
-		    &bma_emul_data_##n, &i2c_common_emul_api)
+	};         \
+                                                                     \
+	static const struct i2c_common_emul_cfg bma_emul_cfg_##n = { \
+		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),       \
+		.dev_label = DT_INST_LABEL(n),                       \
+		.data = &bma_emul_data_##n.common,                   \
+		.addr = DT_INST_REG_ADDR(n),                         \
+	};                                                           \
+	EMUL_DT_INST_DEFINE(n, bma_emul_init, &bma_emul_data_##n,    \
+			    &bma_emul_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(BMA255_EMUL)
 

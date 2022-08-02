@@ -592,7 +592,7 @@ static int tcs_emul_init(const struct emul *emul, const struct device *parent)
 	return 0;
 }
 
-#define TCS3400_EMUL(n)                                               \
+#define TCS3400_EMUL(n)                                              \
 	static struct tcs_emul_data tcs_emul_data_##n = {		\
 		.revision = DT_INST_PROP(n, revision),			\
 		.id = DT_STRING_TOKEN(DT_DRV_INST(n), device_id),		\
@@ -614,16 +614,16 @@ static int tcs_emul_init(const struct emul *emul, const struct device *parent)
 			.finish_read = NULL,				\
 			.access_reg = NULL,				\
 		},							\
-	};          \
-                                                                      \
-	static const struct i2c_common_emul_cfg tcs_emul_cfg_##n = {  \
-		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),        \
-		.dev_label = DT_INST_LABEL(n),                        \
-		.data = &tcs_emul_data_##n.common,                    \
-		.addr = DT_INST_REG_ADDR(n),                          \
-	};                                                            \
-	EMUL_DEFINE(tcs_emul_init, DT_DRV_INST(n), &tcs_emul_cfg_##n, \
-		    &tcs_emul_data_##n, &i2c_common_emul_api)
+	};         \
+                                                                     \
+	static const struct i2c_common_emul_cfg tcs_emul_cfg_##n = { \
+		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),       \
+		.dev_label = DT_INST_LABEL(n),                       \
+		.data = &tcs_emul_data_##n.common,                   \
+		.addr = DT_INST_REG_ADDR(n),                         \
+	};                                                           \
+	EMUL_DT_INST_DEFINE(n, tcs_emul_init, &tcs_emul_data_##n,    \
+			    &tcs_emul_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(TCS3400_EMUL)
 

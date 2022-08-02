@@ -796,7 +796,7 @@ static int sbat_emul_init(const struct emul *emul, const struct device *parent)
 	return 0;
 }
 
-#define SMART_BATTERY_EMUL(n)                                           \
+#define SMART_BATTERY_EMUL(n)                                         \
 	static struct sbat_emul_data sbat_emul_data_##n = {		\
 		.bat = {						\
 			.mf_access = DT_INST_PROP(n, mf_access),	\
@@ -864,16 +864,16 @@ static int sbat_emul_init(const struct emul *emul, const struct device *parent)
 			.finish_read = NULL,				\
 			.access_reg = sbat_emul_access_reg,		\
 		},							\
-	};          \
-                                                                        \
-	static const struct i2c_common_emul_cfg sbat_emul_cfg_##n = {   \
-		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),          \
-		.dev_label = DT_INST_LABEL(n),                          \
-		.data = &sbat_emul_data_##n.common,                     \
-		.addr = DT_INST_REG_ADDR(n),                            \
-	};                                                              \
-	EMUL_DEFINE(sbat_emul_init, DT_DRV_INST(n), &sbat_emul_cfg_##n, \
-		    &sbat_emul_data_##n, &i2c_common_emul_api)
+	};        \
+                                                                      \
+	static const struct i2c_common_emul_cfg sbat_emul_cfg_##n = { \
+		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),        \
+		.dev_label = DT_INST_LABEL(n),                        \
+		.data = &sbat_emul_data_##n.common,                   \
+		.addr = DT_INST_REG_ADDR(n),                          \
+	};                                                            \
+	EMUL_DT_INST_DEFINE(n, sbat_emul_init, &sbat_emul_data_##n,   \
+			    &sbat_emul_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(SMART_BATTERY_EMUL)
 

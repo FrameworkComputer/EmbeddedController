@@ -443,8 +443,8 @@ static int emul_isl923x_init(const struct emul *emul,
 		.addr = DT_INST_REG_ADDR(n),                                   \
 		},                                                             \
 	}; \
-	EMUL_DEFINE(emul_isl923x_init, DT_DRV_INST(n), &isl923x_emul_cfg_##n,    \
-		    &isl923x_emul_data_##n, &i2c_common_emul_api)
+	EMUL_DT_INST_DEFINE(n, emul_isl923x_init, &isl923x_emul_data_##n,        \
+			    &isl923x_emul_cfg_##n, &i2c_common_emul_api)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_ISL923X)
 
