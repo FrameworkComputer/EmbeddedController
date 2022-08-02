@@ -211,6 +211,8 @@ int usb_i2c_board_is_enabled(void)
 
 #define USB_STREAM_RX_SIZE 32
 #define USB_STREAM_TX_SIZE 64
+#define USART_TO_USB_SIZE 1024
+#define USB_TO_USART_SIZE 64
 
 /******************************************************************************
  * Forward USART1 (EC) as a simple USB serial interface.
@@ -219,10 +221,10 @@ int usb_i2c_board_is_enabled(void)
 static struct usart_config const usart1;
 struct usb_stream_config const usart1_usb;
 
-static struct queue const usart1_to_usb =
-	QUEUE_DIRECT(1024, uint8_t, usart1.producer, usart1_usb.consumer);
-static struct queue const usb_to_usart1 =
-	QUEUE_DIRECT(64, uint8_t, usart1_usb.producer, usart1.consumer);
+static struct queue const usart1_to_usb = QUEUE_DIRECT(
+	USART_TO_USB_SIZE, uint8_t, usart1.producer, usart1_usb.consumer);
+static struct queue const usb_to_usart1 = QUEUE_DIRECT(
+	USB_TO_USART_SIZE, uint8_t, usart1_usb.producer, usart1.consumer);
 
 static struct usart_rx_dma const usart1_rx_dma =
 	USART_RX_DMA(STM32_DMAC_CH5, 32);
@@ -243,10 +245,10 @@ USB_STREAM_CONFIG_USART_IFACE(usart1_usb, USB_IFACE_USART1_STREAM,
 static struct usart_config const usart3;
 struct usb_stream_config const usart3_usb;
 
-static struct queue const usart3_to_usb =
-	QUEUE_DIRECT(1024, uint8_t, usart3.producer, usart3_usb.consumer);
-static struct queue const usb_to_usart3 =
-	QUEUE_DIRECT(64, uint8_t, usart3_usb.producer, usart3.consumer);
+static struct queue const usart3_to_usb = QUEUE_DIRECT(
+	USART_TO_USB_SIZE, uint8_t, usart3.producer, usart3_usb.consumer);
+static struct queue const usb_to_usart3 = QUEUE_DIRECT(
+	USB_TO_USART_SIZE, uint8_t, usart3_usb.producer, usart3.consumer);
 
 static struct usart_rx_dma const usart3_rx_dma =
 	USART_RX_DMA(STM32_DMAC_CH3, 32);
@@ -269,10 +271,10 @@ USB_STREAM_CONFIG_USART_IFACE(usart3_usb, USB_IFACE_USART3_STREAM,
 static struct usart_config const usart4;
 struct usb_stream_config const usart4_usb;
 
-static struct queue const usart4_to_usb =
-	QUEUE_DIRECT(1024, uint8_t, usart4.producer, usart4_usb.consumer);
-static struct queue const usb_to_usart4 =
-	QUEUE_DIRECT(64, uint8_t, usart4_usb.producer, usart4.consumer);
+static struct queue const usart4_to_usb = QUEUE_DIRECT(
+	USART_TO_USB_SIZE, uint8_t, usart4.producer, usart4_usb.consumer);
+static struct queue const usb_to_usart4 = QUEUE_DIRECT(
+	USB_TO_USART_SIZE, uint8_t, usart4_usb.producer, usart4.consumer);
 
 static struct usart_config const usart4 =
 	USART_CONFIG(usart4_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
