@@ -24,7 +24,10 @@
 	 */
 	motionsense-mutex {
 		compatible = "cros-ec,motionsense-mutex";
-		lid_mutex: lid-mutex {
+		lid_mutex: lis2dw12-mutex {
+		};
+
+		lid_mutex_bma422: bma422-mutex {
 		};
 
 		base_mutex: base-mutex {
@@ -51,6 +54,12 @@
 				 0 (-1) 0
 				 0 0 1>;
 		};
+
+		lid_rot_bma422: lid-rotation-ref {
+			mat33 = <1 0 0
+				 0 (-1) 0
+				 0 0 (-1)>;
+		};
 	};
 
 	/*
@@ -70,6 +79,11 @@
 
 		lis2dw12_data: lis2dw12-drv-data {
 			compatible = "cros-ec,drvdata-lis2dw12";
+			status = "okay";
+		};
+
+		bma422_data: bma4xx-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
 			status = "okay";
 		};
 	};
@@ -140,6 +154,34 @@
 			rot-standard-ref = <&base_rot_ref>;
 			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
 			drv-data = <&lsm6dso_data>;
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_bma422>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&lid_rot_bma422>;
+			default-range = <2>;
+			drv-data = <&bma422_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
+			alternate-for = <&lid_accel>;
+			alternate-ssfc-indicator = <&lid_sensor_1>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
 		};
 	};
 

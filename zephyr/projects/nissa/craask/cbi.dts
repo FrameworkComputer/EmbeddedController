@@ -1,0 +1,39 @@
+/* Copyright 2022 The Chromium OS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Craask-specific ssfc fields. */
+	cbi-ssfc {
+		compatible = "named-cbi-ssfc";
+		/*
+		 * SSFC bit0-1 was defined for AUDIO CODEC.
+		 * 0: ALC5682I_VS
+		 * 1: NAU8825
+		 */
+		audio_codec {
+			enum-name = "AUDIO_CODEC";
+			size = <2>;
+		};
+		/*
+		 * SSFC field to identify LID motion sensor.
+		 */
+		lid-sensor {
+			enum-name = "LID_SENSOR";
+			size = <2>;
+
+			lid_sensor_0: lis2dw12 {
+				compatible = "named-cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			lid_sensor_1: bma422 {
+				compatible = "named-cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+	};
+};

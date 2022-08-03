@@ -37,5 +37,7 @@ static void form_factor_init(void)
 		motion_sensors[BASE_SENSOR].rot_standard_ref = &ALT_MAT;
 		motion_sensors[BASE_GYRO].rot_standard_ref = &ALT_MAT;
 	}
+
+	motion_sensors_check_ssfc();
 }
 DECLARE_HOOK(HOOK_INIT, form_factor_init, HOOK_PRIO_POST_I2C);
