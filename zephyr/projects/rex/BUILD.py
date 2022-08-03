@@ -36,6 +36,7 @@ register_variant(
         here / "battery.dts",
         here / "usbc.dts",
         here / "keyboard.dts",
+        here / "led.dts",
     ],
     extra_kconfig_files=[here / "prj_rex.conf"],
 )
