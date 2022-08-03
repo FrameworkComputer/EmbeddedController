@@ -11,7 +11,7 @@ def register_variant(
     """Register a variant of rex."""
     register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9m3f",
+        zephyr_board="npcx9m7f",
         dts_overlays=[
             # Common to all projects.
             here / "rex.dts",
