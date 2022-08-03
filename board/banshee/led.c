@@ -296,7 +296,6 @@ static void set_active_port_color(int color)
 static void led_set_battery(void)
 {
 	static int battery_ticks;
-	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
 
@@ -323,12 +322,11 @@ static void led_set_battery(void)
 		set_active_port_color(EC_LED_COLOR_GREEN);
 		break;
 	case PWR_STATE_IDLE:
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			set_active_port_color((battery_ticks & 0x4) ?
-						      EC_LED_COLOR_AMBER :
-						      -1);
-		else
-			set_active_port_color(EC_LED_COLOR_AMBER);
+		set_active_port_color(EC_LED_COLOR_AMBER);
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		set_active_port_color(
+			(battery_ticks & 0x4) ? EC_LED_COLOR_AMBER : -1);
 		break;
 	default:
 		break;

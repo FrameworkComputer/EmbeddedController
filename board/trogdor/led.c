@@ -90,7 +90,6 @@ static void set_active_port_color(enum led_color color)
 static void board_led_set_battery(void)
 {
 	static int battery_ticks;
-	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
 
@@ -120,11 +119,11 @@ static void board_led_set_battery(void)
 		set_active_port_color(LED_WHITE);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			set_active_port_color(
-				(battery_ticks & 0x4) ? LED_AMBER : LED_OFF);
-		else
-			set_active_port_color(LED_WHITE);
+		set_active_port_color(LED_WHITE);
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		set_active_port_color((battery_ticks & 0x4) ? LED_AMBER :
+							      LED_OFF);
 		break;
 	default:
 		/* Other states don't alter LED behavior */

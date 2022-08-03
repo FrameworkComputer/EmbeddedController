@@ -149,10 +149,11 @@ static void rammus_led_set_battery(void)
 		break;
 	case PWR_STATE_CHARGE_NEAR_FULL:
 	case PWR_STATE_IDLE:
-		if (charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
-			config_battery_led(LED_STATE_FULL);
-		else
-			config_battery_led(LED_STATE_DISCHARGE);
+		config_battery_led(LED_STATE_DISCHARGE);
+		charge_ticks = 0;
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		config_battery_led(LED_STATE_FULL);
 		charge_ticks = 0;
 		break;
 	default:

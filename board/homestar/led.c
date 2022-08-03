@@ -78,7 +78,6 @@ static void board_led_set_battery(void)
 	int color = LED_OFF;
 	int period = 0;
 	int percent = DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
-	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
 
@@ -115,16 +114,16 @@ static void board_led_set_battery(void)
 			color = LED_OFF;
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE) {
-			/* Factory mode, Red 2 sec, green 2 sec */
-			period = (2 + 2) * LED_ONE_SEC;
-			battery_ticks = battery_ticks % period;
-			if (battery_ticks < 2 * LED_ONE_SEC)
-				color = LED_RED;
-			else
-				color = LED_GREEN;
-		} else
+		color = LED_RED;
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		/* Factory mode, Red 2 sec, green 2 sec */
+		period = (2 + 2) * LED_ONE_SEC;
+		battery_ticks = battery_ticks % period;
+		if (battery_ticks < 2 * LED_ONE_SEC)
 			color = LED_RED;
+		else
+			color = LED_GREEN;
 		break;
 	default:
 		/* Other states don't alter LED behavior */

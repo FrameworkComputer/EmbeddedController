@@ -109,10 +109,10 @@ static void onewire_led_tick(void)
 	/* Translate charge state to LED color */
 	switch (charge_get_state()) {
 	case PWR_STATE_IDLE:
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			new_color = (tick_count & 1) ? LED_GREEN : LED_OFF;
-		else
-			new_color = LED_GREEN;
+		new_color = LED_GREEN;
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		new_color = (tick_count & 1) ? LED_GREEN : LED_OFF;
 		break;
 	case PWR_STATE_CHARGE:
 		new_color = LED_YELLOW;

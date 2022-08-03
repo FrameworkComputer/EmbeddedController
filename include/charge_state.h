@@ -36,6 +36,8 @@ enum charge_state {
 	PWR_STATE_IDLE0,
 	/* Idle; AC present */
 	PWR_STATE_IDLE,
+	/* Forced Idle */
+	PWR_STATE_FORCED_IDLE,
 	/* Discharging */
 	PWR_STATE_DISCHARGE,
 	/* Discharging and fully charged */

@@ -152,7 +152,6 @@ static void std_led_set_power(void)
 static void std_led_set_battery(void)
 {
 	static int battery_second;
-	uint32_t chflags = charge_get_flags();
 
 	battery_second++;
 
@@ -181,11 +180,11 @@ static void std_led_set_battery(void)
 		bat_led_set_color(LED_GREEN);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE. */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			bat_led_set_color((battery_second & 0x2) ? LED_GREEN :
-								   LED_AMBER);
-		else
-			bat_led_set_color(LED_GREEN);
+		bat_led_set_color(LED_GREEN);
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		bat_led_set_color((battery_second & 0x2) ? LED_GREEN :
+							   LED_AMBER);
 		break;
 	default:
 		/* Other states don't alter LED behavior */

@@ -537,11 +537,13 @@ static void call_handler(void)
 		led_alert(1);
 		break;
 	case PWR_STATE_IDLE:
-		/* External power connected in IDLE. This is also used to show
-		 * factory mode when 'ectool chargecontrol idle' is run during
-		 * factory process. */
-		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
-			led_factory(1);
+		/* External power connected in IDLE. */
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		/* This is used to show factory mode when
+		 * 'ectool chargecontrol idle' is run during factory process.
+		 */
+		led_factory(1);
 		break;
 	default:;
 	}

@@ -82,7 +82,6 @@ static void board_led_set_battery(void)
 	static int battery_ticks;
 	int color = LED_OFF;
 	int period = 0;
-	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
 
@@ -109,16 +108,16 @@ static void board_led_set_battery(void)
 		color = LED_WHITE;
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE) {
-			/* Factory mode: White 2 sec, Amber 2 sec */
-			period = (2 + 2);
-			battery_ticks = battery_ticks % period;
-			if (battery_ticks < 2)
-				color = LED_WHITE;
-			else
-				color = LED_AMBER;
-		} else
+		color = LED_WHITE;
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		/* Factory mode: White 2 sec, Amber 2 sec */
+		period = (2 + 2);
+		battery_ticks = battery_ticks % period;
+		if (battery_ticks < 2)
 			color = LED_WHITE;
+		else
+			color = LED_AMBER;
 		break;
 	default:
 		/* Other states don't alter LED behavior */

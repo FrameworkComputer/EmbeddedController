@@ -2205,11 +2205,19 @@ static int battery_near_full(void)
 
 enum charge_state charge_get_state(void)
 {
+	uint32_t chflags;
+
 	switch (curr.state) {
 	case ST_IDLE:
+		chflags = charge_get_flags();
+
 		if (battery_seems_dead || curr.batt.is_present == BP_NO)
 			return PWR_STATE_ERROR;
-		return PWR_STATE_IDLE;
+
+		if (chflags & CHARGE_FLAG_FORCE_IDLE)
+			return PWR_STATE_FORCED_IDLE;
+		else
+			return PWR_STATE_IDLE;
 	case ST_DISCHARGE:
 #ifdef CONFIG_PWR_STATE_DISCHARGE_FULL
 		if (battery_near_full())
@@ -2227,8 +2235,13 @@ enum charge_state charge_get_state(void)
 		else
 			return PWR_STATE_CHARGE;
 	case ST_PRECHARGE:
+		chflags = charge_get_flags();
+
 		/* we're in battery discovery mode */
-		return PWR_STATE_IDLE;
+		if (chflags & CHARGE_FLAG_FORCE_IDLE)
+			return PWR_STATE_FORCED_IDLE;
+		else
+			return PWR_STATE_IDLE;
 	default:
 		/* Anything else can be considered an error for LED purposes */
 		return PWR_STATE_ERROR;

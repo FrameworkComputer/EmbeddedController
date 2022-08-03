@@ -112,7 +112,6 @@ static void board_led_set_battery(void)
 {
 #ifdef CONFIG_CHARGER
 	static int battery_ticks;
-	uint32_t chflags = charge_get_flags();
 
 	battery_ticks++;
 
@@ -155,14 +154,14 @@ static void board_led_set_battery(void)
 		board_led_set_color_battery(LED_GREEN);
 		break;
 	case PWR_STATE_IDLE: /* External power connected in IDLE */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
-			board_led_set_color_battery(
-				(battery_ticks % LED_TOTAL_4SECS_TICKS <
-				 LED_ON_2SECS_TICKS) ?
-					LED_GREEN :
-					LED_AMBER);
-		else
-			board_led_set_color_battery(LED_GREEN);
+		board_led_set_color_battery(LED_GREEN);
+		break;
+	case PWR_STATE_FORCED_IDLE:
+		board_led_set_color_battery(
+			(battery_ticks % LED_TOTAL_4SECS_TICKS <
+			 LED_ON_2SECS_TICKS) ?
+				LED_GREEN :
+				LED_AMBER);
 		break;
 	default:
 		/* Other states don't alter LED behavior */
