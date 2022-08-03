@@ -117,6 +117,9 @@
 			gpios = <&gpio6 3 GPIO_OUTPUT>;
 			no-auto-init;
 		};
+		gpio_power_led: power_led {
+			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	/*

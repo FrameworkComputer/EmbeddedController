@@ -10,6 +10,9 @@
 #include "led_onoff_states.h"
 #include "led_pwm.h"
 
+#define PWR_LED_ON_LVL 1
+#define PWR_LED_OFF_LVL 0
+
 __override const int led_charge_lvl_1 = 5;
 __override const int led_charge_lvl_2 = 97;
 __override struct led_descriptor
@@ -49,10 +52,12 @@ __override const struct led_descriptor
 __override void led_set_color_power(enum ec_led_colors color)
 {
 	if (color == EC_LED_COLOR_WHITE)
-		set_pwm_led_color(EC_LED_ID_POWER_LED, EC_LED_COLOR_WHITE);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_power_led),
+				PWR_LED_ON_LVL);
 	else
 		/* LED_OFF and unsupported colors */
-		set_pwm_led_color(EC_LED_ID_POWER_LED, -1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_power_led),
+				PWR_LED_OFF_LVL);
 }
 
 __override void led_set_color_battery(enum ec_led_colors color)
