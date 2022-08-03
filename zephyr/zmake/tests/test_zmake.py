@@ -95,8 +95,12 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
                 break
         else:
             raise Exception('No pattern matched "%s"' % " ".join(cmd))
-        kwargs.pop("env", None)
+        kwargs["env"] = {}
         return super().popen(new_cmd, *args, **kwargs)
+
+    def env(self):
+        """Runs test commands with an empty environment for simpler logs."""
+        return {}
 
 
 def get_test_filepath(suffix):
@@ -206,8 +210,8 @@ class TestFilters:
             "Building fakeproject:rw: /usr/bin/ninja -C {}-rw".format(
                 tmp_path / "ec/build/zephyr/fakeproject/build"
             ),
-            "Running cat {}/files/sample_ro.txt".format(OUR_PATH),
-            "Running cat {}/files/sample_rw.txt".format(OUR_PATH),
+            "Running `env -i cat {}/files/sample_ro.txt`".format(OUR_PATH),
+            "Running `env -i cat {}/files/sample_rw.txt`".format(OUR_PATH),
         }
         for suffix in ["ro", "rw"]:
             with open(get_test_filepath(suffix)) as file:
