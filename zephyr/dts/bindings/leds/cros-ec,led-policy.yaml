@@ -26,6 +26,14 @@ child-binding:
             description: |
               If the LED color depends on charge state, this property is used
               to describe it.
+              PWR_STATE_CHARGE - AC is connected, battery is charging.
+              PWR_STATE_DISCHARGE - AC is not connected, battery is discharging.
+              PWR_STATE_ERROR - Battery is in error state.
+              PWR_STATE_IDLE - AC is connected, battery is not charging.
+              PWR_STATE_FORCED_IDLE - AC is connected, battery is not charging.
+                                      Used during factory testing.
+              PWR_STATE_CHARGE_NEAR_FULL - AC is connected, battery is charging
+                                           and close to fully charged.
             type: string
             required: false
             enum:
@@ -33,6 +41,7 @@ child-binding:
                 - PWR_STATE_DISCHARGE
                 - PWR_STATE_ERROR
                 - PWR_STATE_IDLE
+                - PWR_STATE_FORCED_IDLE
                 - PWR_STATE_CHARGE_NEAR_FULL
 
         charge-port:
@@ -61,23 +70,6 @@ child-binding:
                    range of BATTERY_LEVEL_EMPTY to BATTERY_LEVEL_LOW inclusive.
             type: array
             required: false
-
-        extra-flag:
-            description: |
-              This property is used if the LED color depends on additional
-              factors.
-              e.g.
-              LED_CHFLAG_FORCE_IDLE - The LED policy is only applied when battery
-              charging is disabled.
-              LED_CHFLAG_DEFAULT - The LED policy is only applied when battery
-              charging is allowed.
-              NONE - extra-flag is ignored and LED policy is always applied.
-            type: string
-            required: false
-            enum:
-                - NONE
-                - LED_CHFLAG_FORCE_IDLE
-                - LED_CHFLAG_DEFAULT
 
     child-binding:
         description: Color enum

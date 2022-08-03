@@ -31,12 +31,6 @@ struct led_color_node_t {
 	int acc_period;
 };
 
-enum led_extra_flag_t {
-	NONE = 0,
-	LED_CHFLAG_FORCE_IDLE,
-	LED_CHFLAG_DEFAULT,
-};
-
 #define DECLARE_PINS_NODE(id) extern struct led_pins_node_t PINS_NODE(id);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED)
@@ -63,7 +57,6 @@ DT_FOREACH_CHILD(GPIO_LED_PINS_NODE, DECLARE_PINS_NODE)
 struct node_prop_t {
 	enum charge_state pwr_state;
 	enum power_state chipset_state;
-	enum led_extra_flag_t led_extra_flag;
 	int8_t batt_lvl[2];
 	int8_t charge_port;
 	struct led_color_node_t led_colors[MAX_COLOR];
@@ -108,7 +101,6 @@ struct node_prop_t {
 #define SET_LED_VALUES(state_id)                                              \
 	{ .pwr_state = GET_PROP(state_id, charge_state),                      \
 	  .chipset_state = GET_PROP(state_id, chipset_state),                 \
-	  .led_extra_flag = GET_PROP(state_id, extra_flag),                   \
 	  .batt_lvl = COND_CODE_1(DT_NODE_HAS_PROP(state_id, batt_lvl),       \
 				  (DT_PROP(state_id, batt_lvl)),              \
 				  ({ -1, -1 })),                              \
@@ -143,32 +135,6 @@ static enum power_state get_chipset_state(void)
 		chipset_state = POWER_S5;
 
 	return chipset_state;
-}
-
-static bool find_node_with_extra_flag(int i)
-{
-	uint32_t chflags = charge_get_flags();
-	bool found_node = false;
-
-	switch (node_array[i].led_extra_flag) {
-	case LED_CHFLAG_FORCE_IDLE:
-	case LED_CHFLAG_DEFAULT:
-		if (chflags & CHARGE_FLAG_FORCE_IDLE) {
-			if (node_array[i].led_extra_flag ==
-			    LED_CHFLAG_FORCE_IDLE)
-				found_node = true;
-		} else {
-			if (node_array[i].led_extra_flag == LED_CHFLAG_DEFAULT)
-				found_node = true;
-		}
-		break;
-	default:
-		LOG_ERR("Invalid led extra flag %d",
-			node_array[i].led_extra_flag);
-		break;
-	}
-
-	return found_node;
 }
 
 #define GET_PERIOD(n_idx, c_idx) node_array[n_idx].led_colors[c_idx].acc_period
@@ -253,11 +219,6 @@ static int match_node(int node_idx)
 		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1]))
 			return -1;
 	}
-
-	/* Check if the node depends on any special flags */
-	if (node_array[node_idx].led_extra_flag != NONE)
-		if (!find_node_with_extra_flag(node_idx))
-			return -1;
 
 	/* We found the node that matches the current system state */
 	return node_idx;
