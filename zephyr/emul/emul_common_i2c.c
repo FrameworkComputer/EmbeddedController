@@ -424,6 +424,7 @@ void i2c_common_emul_init(struct i2c_common_emul_data *data)
 	data->read_func = NULL;
 
 	data->write_fail_reg = I2C_COMMON_EMUL_NO_FAIL_REG;
+	data->read_fail_reg = I2C_COMMON_EMUL_NO_FAIL_REG;
 
 	k_mutex_init(&data->data_mtx);
 }
