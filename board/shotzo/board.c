@@ -45,21 +45,6 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A_5V,
 };
 
-__override void board_process_pd_alert(int port)
-{
-	/*
-	 * PD_INT task will process this alert, and that task is only needed on
-	 * C1.
-	 */
-	if (port != 1)
-		return;
-
-	if (gpio_get_level(GPIO_USB_C1_INT_ODL))
-		return;
-
-	sm5803_handle_interrupt(port);
-}
-
 /* C0 interrupt line triggered by charger */
 static void check_c0_line(void);
 DECLARE_DEFERRED(check_c0_line);
@@ -91,39 +76,6 @@ static void usb_c0_interrupt(enum gpio_signal s)
 
 	/* Check the line again in 5ms */
 	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
-}
-
-/* C1 interrupt line shared by TCPC and charger */
-static void check_c1_line(void);
-DECLARE_DEFERRED(check_c1_line);
-
-static void notify_c1_chips(void)
-{
-	schedule_deferred_pd_interrupt(1);
-}
-
-static void check_c1_line(void)
-{
-	/*
-	 * If line is still being held low, see if there's more to process from
-	 * one of the chips.
-	 */
-	if (!gpio_get_level(GPIO_USB_C1_INT_ODL)) {
-		notify_c1_chips();
-		hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
-	}
-}
-
-static void usb_c1_interrupt(enum gpio_signal s)
-{
-	/* Cancel any previous calls to check the interrupt line */
-	hook_call_deferred(&check_c1_line_data, -1);
-
-	/* Notify all chips using this line that an interrupt came in */
-	notify_c1_chips();
-
-	/* Check the line again in 5ms */
-	hook_call_deferred(&check_c1_line_data, INT_RECHECK_US);
 }
 
 static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
@@ -171,58 +123,32 @@ const struct adc_t adc_channels[] = {
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /* Charger chips */
-const struct charger_config_t chg_chips[] = {
-	[CHARGER_PRIMARY] = {
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = SM5803_ADDR_CHARGER_FLAGS,
-		.drv = &sm5803_drv,
-	},
-	[CHARGER_SECONDARY] = {
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = SM5803_ADDR_CHARGER_FLAGS,
-		.drv = &sm5803_drv,
-	},
-};
+const struct charger_config_t
+	chg_chips[] = { [CHARGER_SOLO] = {
+				.i2c_port = I2C_PORT_USB_C0,
+				.i2c_addr_flags = SM5803_ADDR_CHARGER_FLAGS,
+				.drv = &sm5803_drv,
+			} };
 
 /* TCPCs */
-const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.bus_type = EC_BUS_TYPE_EMBEDDED,
-		.drv = &it83xx_tcpm_drv,
-	},
-	{
-		.bus_type = EC_BUS_TYPE_I2C,
-		.i2c_info = {
-			.port = I2C_PORT_SUB_USB_C1,
-			.addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
-		},
-		.drv = &ps8xxx_tcpm_drv,
-	},
-};
+const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = { {
+	.bus_type = EC_BUS_TYPE_EMBEDDED,
+	.drv = &it83xx_tcpm_drv,
+} };
 
 /* USB Muxes */
-const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	{
-		.usb_port = 0,
-		.i2c_port = I2C_PORT_USB_C0,
-		.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
-		.driver = &it5205_usb_mux_driver,
-	},
-	{
-		.usb_port = 1,
-		.i2c_port = I2C_PORT_SUB_USB_C1,
-		.i2c_addr_flags = PS8XXX_I2C_ADDR1_FLAGS,
-		.driver = &tcpci_tcpm_usb_mux_driver,
-		.hpd_update = &ps8xxx_tcpc_update_hpd_status,
-	},
-};
+const struct usb_mux usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = { {
+	.usb_port = 0,
+	.i2c_port = I2C_PORT_USB_C0,
+	.i2c_addr_flags = IT5205_I2C_ADDR1_FLAGS,
+	.driver = &it5205_usb_mux_driver,
+} };
 
 void board_init(void)
 {
 	int on;
 
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C1_INT_ODL);
 
 	/* Store board version for use in determining charge limits */
 	cbi_get_board_version(&board_version);
@@ -233,19 +159,12 @@ void board_init(void)
 	 */
 	if (!gpio_get_level(GPIO_USB_C0_INT_ODL))
 		hook_call_deferred(&check_c0_line_data, 0);
-	if (!gpio_get_level(GPIO_USB_C1_INT_ODL))
-		hook_call_deferred(&check_c1_line_data, 0);
 
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
 
 	/* Charger on the MB will be outputting PROCHOT_ODL and OD CHG_DET */
-	sm5803_configure_gpio0(CHARGER_PRIMARY, GPIO0_MODE_PROCHOT, 1);
-	sm5803_configure_chg_det_od(CHARGER_PRIMARY, 1);
-
-	if (board_get_charger_chip_count() > 1) {
-		/* Charger on the sub-board will be a push-pull GPIO */
-		sm5803_configure_gpio0(CHARGER_SECONDARY, GPIO0_MODE_OUTPUT, 0);
-	}
+	sm5803_configure_gpio0(CHARGER_SOLO, GPIO0_MODE_PROCHOT, 1);
+	sm5803_configure_chg_det_od(CHARGER_SOLO, 1);
 
 	/* Turn on 5V if the system is on, otherwise turn it off */
 	on = chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND |
@@ -256,17 +175,13 @@ DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
 static void board_resume(void)
 {
-	sm5803_disable_low_power_mode(CHARGER_PRIMARY);
-	if (board_get_charger_chip_count() > 1)
-		sm5803_disable_low_power_mode(CHARGER_SECONDARY);
+	sm5803_disable_low_power_mode(CHARGER_SOLO);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_resume, HOOK_PRIO_DEFAULT);
 
 static void board_suspend(void)
 {
-	sm5803_enable_low_power_mode(CHARGER_PRIMARY);
-	if (board_get_charger_chip_count() > 1)
-		sm5803_enable_low_power_mode(CHARGER_SECONDARY);
+	sm5803_enable_low_power_mode(CHARGER_SOLO);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_suspend, HOOK_PRIO_DEFAULT);
 
@@ -293,8 +208,7 @@ __override void board_pulse_entering_rw(void)
 void board_reset_pd_mcu(void)
 {
 	/*
-	 * Nothing to do.  TCPC C0 is internal, TCPC C1 reset pin is not
-	 * connected to the EC.
+	 * Nothing to do.  TCPC C0 is internal.
 	 */
 }
 
@@ -305,12 +219,6 @@ __override void board_power_5v_enable(int enable)
 	 * sets it through the charger GPIO.
 	 */
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
-
-	if (board_get_charger_chip_count() > 1) {
-		if (sm5803_set_gpio0_level(1, !!enable))
-			CPRINTUSB("Failed to %sable sub rails!",
-				  enable ? "en" : "dis");
-	}
 }
 
 uint16_t tcpc_get_alert_status(void)
@@ -319,34 +227,12 @@ uint16_t tcpc_get_alert_status(void)
 	 * TCPC 0 is embedded in the EC and processes interrupts in the chip
 	 * code (it83xx/intc.c)
 	 */
-
-	uint16_t status = 0;
-	int regval;
-
-	/* Check whether TCPC 1 pulled the shared interrupt line */
-	if (!gpio_get_level(GPIO_USB_C1_INT_ODL)) {
-		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
-			if (regval)
-				status = PD_STATUS_TCPC_ALERT_1;
-		}
-	}
-
-	return status;
+	return 0;
 }
 
 void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 			    int charge_mv)
 {
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/* Limit C1 on board version 0 to 2.0 A */
-	if ((board_version == 0) && (port == 1))
-		icl = MIN(icl, 2000);
-	/*
-	 * TODO(b/151955431): Characterize the input current limit in case a
-	 * scaling needs to be applied here
-	 */
-	charge_set_input_current_limit(icl, charge_mv);
 }
 
 int board_set_active_charge_port(int port)
@@ -359,10 +245,7 @@ int board_set_active_charge_port(int port)
 	if (port == CHARGE_PORT_NONE) {
 		CPRINTUSB("Disabling all charge ports");
 
-		sm5803_vbus_sink_enable(CHARGER_PRIMARY, 0);
-
-		if (board_get_charger_chip_count() > 1)
-			sm5803_vbus_sink_enable(CHARGER_SECONDARY, 0);
+		sm5803_vbus_sink_enable(CHARGER_SOLO, 0);
 
 		return EC_SUCCESS;
 	}
@@ -373,13 +256,9 @@ int board_set_active_charge_port(int port)
 	 * Ensure other port is turned off, then enable new charge port
 	 */
 	if (port == 0) {
-		if (board_get_charger_chip_count() > 1)
-			sm5803_vbus_sink_enable(CHARGER_SECONDARY, 0);
-		sm5803_vbus_sink_enable(CHARGER_PRIMARY, 1);
-
+		sm5803_vbus_sink_enable(CHARGER_SOLO, 1);
 	} else {
-		sm5803_vbus_sink_enable(CHARGER_PRIMARY, 0);
-		sm5803_vbus_sink_enable(CHARGER_SECONDARY, 1);
+		sm5803_vbus_sink_enable(CHARGER_SOLO, 0);
 	}
 
 	return EC_SUCCESS;
