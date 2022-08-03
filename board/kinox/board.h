@@ -27,11 +27,10 @@
 #define CONFIG_USB_PORT_POWER_DUMB
 
 /* USB Type C and USB PD defines */
-#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
-
 #define CONFIG_USB_PD_PPC
 #define CONFIG_USB_PD_TCPM_PS8815
 #define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
+#undef CONFIG_USB_PD_TCPM_NCT38XX
 
 #define CONFIG_USBC_PPC_SYV682X
 #undef CONFIG_SYV682X_HV_ILIM
@@ -92,16 +91,8 @@
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50
 
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR 0x58
-
 /* I2C control host command */
 #define CONFIG_HOSTCMD_I2C_CONTROL
-
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
-
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
 
 /* Thermal features */
 #define CONFIG_THERMISTOR
