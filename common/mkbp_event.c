@@ -201,10 +201,7 @@ static inline int host_is_sleeping(void)
 static void force_mkbp_if_events(void);
 DECLARE_DEFERRED(force_mkbp_if_events);
 
-/*
- * Send events to AP, return true if succeeded to generate host interrupt.
- */
-static bool activate_mkbp_with_events(uint32_t events_to_add)
+static void activate_mkbp_with_events(uint32_t events_to_add)
 {
 	int interrupt_id = -1;
 	int skip_interrupt = 0;
@@ -246,7 +243,7 @@ static bool activate_mkbp_with_events(uint32_t events_to_add)
 
 	/* If we don't need to send an interrupt we are done */
 	if (interrupt_id < 0)
-		return false;
+		return;
 
 	/* Send a rising edge MKBP interrupt */
 	rv = mkbp_set_host_active(1, &mkbp_last_event_time);
@@ -269,8 +266,6 @@ static bool activate_mkbp_with_events(uint32_t events_to_add)
 		if (rv != EC_SUCCESS)
 			CPRINTS("Could not activate MKBP (%d). Deferring", rv);
 	}
-
-	return rv == EC_SUCCESS;
 }
 
 /*
@@ -343,7 +338,9 @@ static void force_mkbp_if_events(void)
 
 test_mockable int mkbp_send_event(uint8_t event_type)
 {
-	return activate_mkbp_with_events(BIT(event_type));
+	activate_mkbp_with_events(BIT(event_type));
+
+	return 1;
 }
 
 static int set_inactive_if_no_events(void)
