@@ -65,9 +65,8 @@
 			};
 		};
 
-		power-state-idle-forced {
-			charge-state = "PWR_STATE_IDLE";
-			extra-flag = "LED_CHFLAG_FORCE_IDLE";
+		power-state-forced-idle {
+			charge-state = "PWR_STATE_FORCED_IDLE";
 
 			/* Blue 2 sec, Amber 2 sec */
 			color-0 {
@@ -80,9 +79,8 @@
 			};
 		};
 
-		power-state-idle-default {
+		power-state-idle {
 			charge-state = "PWR_STATE_IDLE";
-			extra-flag = "LED_CHFLAG_DEFAULT";
 
 			color-0 {
 				led-color = <&color_blue>;
