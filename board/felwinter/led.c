@@ -15,7 +15,7 @@
 #define LED_ON_LVL 0
 
 __override const int led_charge_lvl_1;
-__override const int led_charge_lvl_2 = 94;
+__override const int led_charge_lvl_2 = 95;
 
 __override struct led_descriptor
 	led_bat_state_table[LED_NUM_STATES][LED_NUM_PHASES] = {
