@@ -230,12 +230,11 @@ zephyr_coverage:
   stage: test
   needs: ["seed_cache"]
   script:
-    - zmake --zephyr-base "${ZEPHYR_BASE}"
-      --modules-dir "${MODULES_DIR}" -l DEBUG test
-      --coverage --host-tests-only
+    - ${EC_DIR}/twister --coverage --outdir "${EC_DIR}/twister-out/"
+      -p native_posix
   artifacts:
     paths:
-      - build/zephyr/all_tests.info
+      - ${EC_DIR}/twister-out/coverage.info
     expire_in: 1 week
   coverage: '/lines\.*: \d+\.\d+%/'
 
@@ -259,7 +258,7 @@ merged_coverage:
   needs: ["ec_coverage", "zephyr_coverage", "zephyr_boards_coverage"]
   script:
     - lcov --rc lcov_branch_coverage=1 -o build/merged.info
-      -a build/coverage/lcov.info -a build/zephyr/all_tests.info
+      -a build/coverage/lcov.info -a "${EC_DIR}/twister-out/coverage.info"
     - lcov --rc lcov_branch_coverage=1 -o build/merged_no_zephyr.info
       -r build/merged.info
       "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
@@ -302,8 +301,8 @@ testall:
   stage: test
   needs: ["seed_cache"]
   script:
-    - zmake --zephyr-base "${ZEPHYR_BASE}"
-      --modules-dir "${MODULES_DIR}" -l DEBUG test --host-tests-only
+    - ${EC_DIR}/twister --coverage --outdir "${EC_DIR}/twister-out/"
+      -p native_posix
 
 twister_coverage:
   stage: test

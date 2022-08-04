@@ -209,11 +209,6 @@ def test(opts):
         [zephyr_dir / "zmake" / "run_tests.sh"], check=True, cwd=zephyr_dir
     )
 
-    cmd = ["zmake", "-D", "test", "-a", "--no-rebuild"]
-    if opts.code_coverage:
-        cmd.append("--coverage")
-    subprocess.run(cmd, check=True, cwd=zephyr_dir)
-
     # Twister-based tests
     platform_ec = zephyr_dir.parent
     run_twister(platform_ec, opts.code_coverage, ["--test-only"])
@@ -227,8 +222,6 @@ def test(opts):
             build_dir / "zephyr_merged.info",
             "--rc",
             "lcov_branch_coverage=1",
-            "-a",
-            build_dir / "all_tests.info",
             "-a",
             build_dir / "all_builds.info",
             "-a",
@@ -244,7 +237,11 @@ def test(opts):
         _extract_lcov_summary("EC_ZEPHYR_MERGED", metrics, output)
 
         output = subprocess.run(
-            ["/usr/bin/lcov", "--summary", build_dir / "all_tests.info"],
+            [
+                "/usr/bin/lcov",
+                "--summary",
+                platform_ec / "twister-out" / "coverage.info",
+            ],
             cwd=zephyr_dir,
             check=True,
             stdout=subprocess.PIPE,
