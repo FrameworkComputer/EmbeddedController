@@ -91,7 +91,8 @@ void motion_sense_fifo_commit_data(void);
  * Get information about the fifo.
  *
  * @param fifo_info The struct to modify with the current information about the
- *	  fifo.
+ *	  fifo. WARNING: This must point to a buffer big enough for the struct
+ *	  and also sizeof(uint16_t) * MAX_MOTION_SENSORS of extra space.
  * @param reset Whether or not to reset statistics after reading them.
  */
 void motion_sense_fifo_get_info(

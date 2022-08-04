@@ -628,13 +628,17 @@ int motion_sense_fifo_read(int capacity_bytes, int max_count, void *out,
 
 void motion_sense_fifo_reset(void)
 {
-	static struct ec_response_motion_sense_fifo_info fifo_info;
+	static uint8_t fifo_info_buffer
+		[sizeof(struct ec_response_motion_sense_fifo_info) +
+		 sizeof(uint16_t) * MAX_MOTION_SENSORS];
+	struct ec_response_motion_sense_fifo_info *fifo_info =
+		(void *)fifo_info_buffer;
 
 	next_timestamp_initialized = 0;
 	memset(&fifo_staged, 0, sizeof(fifo_staged));
 	motion_sense_fifo_init();
 	queue_init(&fifo);
-	motion_sense_fifo_get_info(&fifo_info, /*reset=*/true);
+	motion_sense_fifo_get_info(fifo_info, /*reset=*/true);
 }
 
 void motion_sense_set_data_period(int sensor_num, uint32_t data_period)
