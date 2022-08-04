@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <fff.h>
+#include <zephyr/fff.h>
 
 /*
  * Convenience macros

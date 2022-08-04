@@ -15,7 +15,7 @@
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "power_signals.h"
 

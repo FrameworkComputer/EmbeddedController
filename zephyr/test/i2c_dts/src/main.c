@@ -5,7 +5,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 ZTEST(i2c_bindings, test_i2c_get_device)
 {

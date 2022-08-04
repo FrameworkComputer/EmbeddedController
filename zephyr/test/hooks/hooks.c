@@ -4,7 +4,7 @@
  */
 
 #include <stdbool.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "ap_power/ap_power.h"
 #include "hooks.h"

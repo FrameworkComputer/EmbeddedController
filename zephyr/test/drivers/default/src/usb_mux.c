@@ -5,7 +5,7 @@
 
 #include <zephyr/kernel.h>
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/shell/shell.h>
@@ -14,7 +14,7 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
-#include "fff.h"
+#include <zephyr/fff.h>
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"

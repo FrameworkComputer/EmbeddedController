@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <errno.h>

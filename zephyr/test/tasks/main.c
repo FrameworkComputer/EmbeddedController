@@ -5,7 +5,7 @@
 
 #include <zephyr/kernel.h>
 #include <stdbool.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "ec_tasks.h"
 #include "task.h"

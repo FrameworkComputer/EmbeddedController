@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/adc/adc_emul.h>
 #include <zephyr/drivers/gpio.h>

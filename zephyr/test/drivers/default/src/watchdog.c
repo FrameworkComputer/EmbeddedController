@@ -13,11 +13,11 @@
 
 #include <zephyr/logging/log.h>
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "common.h"
 #include "ec_tasks.h"
-#include "fff.h"
+#include <zephyr/fff.h>
 #include "hooks.h"
 #include "test/drivers/stubs.h"
 #include "watchdog.h"

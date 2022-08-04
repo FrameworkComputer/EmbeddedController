@@ -16,7 +16,7 @@
 LOG_MODULE_REGISTER(syv682x);
 #include <stdint.h>
 #include <string.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_syv682x.h"

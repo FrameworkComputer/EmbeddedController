@@ -5,7 +5,7 @@
 
 #include <zephyr/shell/shell.h>
 #include <zephyr/devicetree.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "console.h"
 #include "driver/accel_bma2x2.h"

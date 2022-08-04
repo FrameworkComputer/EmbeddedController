@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "charge_manager.h"
 #include "ec_commands.h"

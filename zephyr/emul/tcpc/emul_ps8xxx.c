@@ -12,7 +12,7 @@ LOG_MODULE_REGISTER(ps8xxx_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "tcpm/tcpci.h"
 

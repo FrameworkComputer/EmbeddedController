@@ -14,7 +14,7 @@
 #include <zephyr/drivers/espi_emul.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "ap_power/ap_power.h"
 #include "ap_power/ap_power_events.h"

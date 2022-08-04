@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include <ap_power_override_functions.h>
 #include <ap_power/ap_power_interface.h>

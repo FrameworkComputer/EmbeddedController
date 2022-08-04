@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include <zephyr/drivers/emul.h>
-#include <fff.h>
+#include <zephyr/fff.h>
 
 #include "battery.h"
 #include "battery_smart.h"

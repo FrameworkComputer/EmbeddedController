@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/kernel.h>
-#include <ztest_assert.h>
+#include <zephyr/ztest_assert.h>
 #include <zephyr/drivers/i2c_emul.h>
 
 #include "driver/ln9310.h"

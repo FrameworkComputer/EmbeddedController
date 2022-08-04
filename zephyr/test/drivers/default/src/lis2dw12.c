@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include <zephyr/drivers/emul.h>
 #include "driver/accel_lis2dw12.h"
 #include "emul/emul_common_i2c.h"

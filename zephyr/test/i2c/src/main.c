@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/devicetree.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "common.h"
 #include "i2c/i2c.h"

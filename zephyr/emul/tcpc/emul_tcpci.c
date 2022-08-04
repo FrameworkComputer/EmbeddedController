@@ -12,7 +12,7 @@ LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/sys/byteorder.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "tcpm/tcpci.h"
 

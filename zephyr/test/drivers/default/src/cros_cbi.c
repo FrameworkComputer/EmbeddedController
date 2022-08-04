@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/device.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "cros_cbi.h"
 #include "test/drivers/test_state.h"

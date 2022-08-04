@@ -13,7 +13,7 @@ LOG_MODULE_REGISTER(emul_tcs);
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_tcs3400.h"

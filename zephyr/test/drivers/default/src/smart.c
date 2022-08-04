@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/shell/shell_uart.h>
 

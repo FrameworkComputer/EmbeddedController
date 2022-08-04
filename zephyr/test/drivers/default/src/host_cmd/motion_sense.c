@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <fff.h>
+#include <zephyr/fff.h>
 #include <zephyr/shell/shell.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "atomic.h"
 #include "console.h"

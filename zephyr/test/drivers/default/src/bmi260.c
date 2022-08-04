@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <fff.h>
+#include <zephyr/fff.h>
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "common.h"
 #include "i2c.h"

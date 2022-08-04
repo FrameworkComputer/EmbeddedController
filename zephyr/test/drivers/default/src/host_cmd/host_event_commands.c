@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include "include/lpc.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"

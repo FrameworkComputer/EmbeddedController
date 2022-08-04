@@ -3,6 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 ZTEST_SUITE(math, NULL, NULL, NULL, NULL, NULL);

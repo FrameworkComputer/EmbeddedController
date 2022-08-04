@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/shell/shell.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "console.h"
 #include "ec_commands.h"

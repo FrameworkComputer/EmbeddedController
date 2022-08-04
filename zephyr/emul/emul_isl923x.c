@@ -11,7 +11,7 @@
 #include <zephyr/drivers/emul.h>
 #include <errno.h>
 #include <zephyr/sys/__assert.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "driver/charger/isl923x.h"
 #include "driver/charger/isl923x_public.h"

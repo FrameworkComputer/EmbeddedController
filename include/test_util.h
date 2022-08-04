@@ -13,7 +13,7 @@
 #include "stack_trace.h"
 
 #ifdef CONFIG_ZTEST
-#include <ztest.h>
+#include <zephyr/ztest.h>
 #include "ec_tasks.h"
 #endif /* CONFIG_ZTEST */
 

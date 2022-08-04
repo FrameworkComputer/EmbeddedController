@@ -9,7 +9,7 @@
 #include <zephyr/shell/shell.h>
 #include <zephyr/shell/shell_uart.h>
 #include <zephyr/sys/__assert.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "chipset.h"
 #include "config.h"

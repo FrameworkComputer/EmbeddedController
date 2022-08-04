@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "battery_smart.h"
 #include "emul/emul_isl923x.h"

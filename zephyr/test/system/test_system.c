@@ -6,8 +6,8 @@
 #include <zephyr/device.h>
 #include <zephyr/drivers/bbram.h>
 #include <zephyr/logging/log.h>
-#include <ztest_assert.h>
-#include <ztest_test_new.h>
+#include <zephyr/ztest_assert.h>
+#include <zephyr/ztest_test_new.h>
 
 #include "system.h"
 

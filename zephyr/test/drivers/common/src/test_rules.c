@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "emul/tcpc/emul_tcpci.h"
 #include "motion_sense_fifo.h"

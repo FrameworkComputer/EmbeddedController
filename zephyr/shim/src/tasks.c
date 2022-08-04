@@ -295,7 +295,7 @@ void set_test_runner_tid(void)
 }
 
 #ifdef CONFIG_TASKS_SET_TEST_RUNNER_TID_RULE
-#include <ztest.h>
+#include <zephyr/ztest.h>
 static void set_test_runner_tid_rule_before(const struct ztest_unit_test *test,
 					    void *data)
 {

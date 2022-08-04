@@ -5,8 +5,8 @@
 #include <soc_espi.h>
 #include <ap_power/ap_power.h>
 #include <chipset.h>
-#include <devicetree.h>
-#include <logging/log.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(ec_chip_it8xxx2_espi, CONFIG_ESPI_LOG_LEVEL);
 

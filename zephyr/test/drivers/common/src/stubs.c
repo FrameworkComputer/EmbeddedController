@@ -11,7 +11,7 @@
 #include "charger/isl923x_public.h"
 #include "charger/isl9241_public.h"
 #include "config.h"
-#include "fff.h"
+#include <zephyr/fff.h>
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c/i2c.h"

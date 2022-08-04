@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/shell/shell.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "charge_state.h"
 #include "charge_state_v2.h"

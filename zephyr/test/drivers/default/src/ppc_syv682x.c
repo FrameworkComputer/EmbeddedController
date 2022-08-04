@@ -7,10 +7,10 @@
 #include <zephyr/devicetree/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/gpio.h>
-#include <fff.h>
+#include <zephyr/fff.h>
 #include <zephyr/zephyr.h>
-#include <ztest.h>
-#include <ztest_assert.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_syv682x.h"

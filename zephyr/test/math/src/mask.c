@@ -4,7 +4,7 @@
  */
 
 #include <inttypes.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "math.h"
 #include "math_util.h"

@@ -9,7 +9,7 @@ LOG_MODULE_REGISTER(tcpci_partner, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 #include <stdlib.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "common.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"

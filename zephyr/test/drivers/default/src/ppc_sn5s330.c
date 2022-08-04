@@ -7,8 +7,8 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/emul.h>
-#include <ztest.h>
-#include <fff.h>
+#include <zephyr/ztest.h>
+#include <zephyr/fff.h>
 
 #include "driver/ppc/sn5s330.h"
 #include "driver/ppc/sn5s330_public.h"

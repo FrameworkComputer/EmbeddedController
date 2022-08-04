@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/zephyr.h>
-#include <ztest.h>
+#include <zephyr/ztest.h>
 
 #include "ec_commands.h"
 #include "host_command.h"
