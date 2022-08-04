@@ -42,12 +42,18 @@
 		gpio_cpu_c10_gate_l: cpu_c10_gate_l {
 			gpios = <&gpioa 7 GPIO_INPUT>;
 		};
+		gpio_ec_accel_int_r_l: ec_accel_int_r_l {
+			gpios = <&gpio8 1 GPIO_INPUT>;
+		};
 		gpio_ec_als_rgb_int_r_l: ec_als_rgb_int_r_l {
 			gpios = <&gpiod 4 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
 			gpios = <&gpioa 3 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpio7 3 GPIO_OUTPUT>;
 		};
 		gpio_ec_edp_bl_en: ec_edp_bl_en {
 			gpios = <&gpiod 3 GPIO_ODR_HIGH>;
@@ -59,6 +65,12 @@
 		};
 		gpio_ec_imu_int_r_l: ec_imu_int_r_l {
 			gpios = <&gpio5 6 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_ec_imvp92_en_smb: ec_imvp92_en_smb {
+			gpios = <&gpiob 1 GPIO_OUTPUT>;
+		};
+		gpio_ec_kb_bl_en_l: ec_kb_bl_en_l {
+			gpios = <&gpio8 6 GPIO_OUTPUT>;
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
@@ -89,6 +101,30 @@
 		gpio_ec_soc_wake_r_odl: ec_soc_wake_r_odl {
 			gpios = <&gpioc 0 GPIO_ODR_LOW>;
 		};
+		gpio_ec_spare_gpio42: ec_spare_gpio42 {
+			gpios = <&gpio4 2 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio66: ec_spare_gpio66 {
+			gpios = <&gpio6 6 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio94: ec_spare_gpio94 {
+			gpios = <&gpio9 4 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpioa2: ec_spare_gpioa2 {
+			gpios = <&gpioa 2 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpioa4: ec_spare_gpioa4 {
+			gpios = <&gpioa 4 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpioc7: ec_spare_gpioc7 {
+			gpios = <&gpioc 7 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpo32: ec_spare_gpo32 {
+			gpios = <&gpio3 2 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpo35: ec_spare_gpo35 {
+			gpios = <&gpio3 5 GPIO_OUTPUT>;
+		};
 		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
 			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_DOWN_L";
@@ -118,6 +154,18 @@
 		};
 		gpio_imvp92_vrrdy_od: imvp92_vrrdy_od {
 			gpios = <&gpio4 3 GPIO_INPUT>;
+		};
+		gpio_led_1_l: led_1_l {
+			gpios = <&gpioc 4 GPIO_OUTPUT>;
+		};
+		gpio_led_2_l: led_2_l {
+			gpios = <&gpioc 3 GPIO_OUTPUT>;
+		};
+		gpio_led_3_l: led_3_l {
+			gpios = <&gpioc 2 GPIO_OUTPUT>;
+		};
+		gpio_led_4_l: led_4_l {
+			gpios = <&gpio6 0 GPIO_OUTPUT>;
 		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT_PULL_UP>;
@@ -177,12 +225,14 @@
 		};
 		gpio_usb_c1_bc12_int_odl: usb_c1_bc12_int_odl {
 			gpios = <&gpio5 0 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
 		gpio_usb_c1_frs_en: usb_c1_frs_en {
 			gpios = <&gpio8 3 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
 			gpios = <&gpiof 5 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c1_rst_odl: usb_c1_rst_odl {
 			gpios = <&gpio3 7 GPIO_ODR_LOW>;
@@ -195,6 +245,7 @@
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
 			gpios = <&gpio3 4 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
 		};
 	};
 
@@ -215,7 +266,7 @@
 		};
 		i2c_ec_i2c_usb_c0_rt: ec_i2c_usb_c0_rt {
 			i2c-port = <&i2c3_0>;
-			enum-names = "I2C_PORT_USB_C0_C2_MUX";
+			enum-names = "I2C_PORT_USB_C0_RT";
 		};
 		i2c_ec_i2c_usb_c1_tcp: ec_i2c_usb_c1_tcp {
 			i2c-port = <&i2c4_1>;
