@@ -485,10 +485,6 @@ class Zmake:
 
             generated_include_dir = (build_dir / "include").resolve()
             base_config = zmake.build_config.BuildConfig(
-                environ_defs={
-                    "ZEPHYR_BASE": str(self.zephyr_base),
-                    "PATH": "/usr/bin",
-                },
                 cmake_defs={
                     "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
                     "DTS_ROOT": str(self.module_paths["ec"] / "zephyr"),
@@ -504,6 +500,7 @@ class Zmake:
                         / "zephyr"
                         / "user-cache"
                     ),
+                    "ZEPHYR_BASE": str(self.zephyr_base),
                     "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
                     "ZMAKE_PROJECT_NAME": project.config.project_name,
                     **(

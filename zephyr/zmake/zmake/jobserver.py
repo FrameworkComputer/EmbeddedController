@@ -48,7 +48,10 @@ class JobClient:
         Returns:
             A Popen object.
         """
-        kwargs.setdefault("env", os.environ)
+        # By default, we scrub the environment for all commands we run, setting
+        # the bare minimum (PATH only).  This prevents us from building obscure
+        # dependencies on the environment variables.
+        kwargs.setdefault("env", {"PATH": "/bin:/usr/bin"})
         kwargs["env"].update(self.env())
 
         logger = logging.getLogger(self.__class__.__name__)
