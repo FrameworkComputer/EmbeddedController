@@ -84,6 +84,17 @@
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
+	ppc_port0: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
+	ppc_port0_alt: syv682x@41 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x41>;
+		frs_en_gpio = <&gpio_usb_c0_frs_en>;
+	};
 };
 
 &i2c_ctrl1 {
@@ -96,6 +107,11 @@
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
 	pinctrl-names = "default";
+	ppc_port1: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
 };
 
 &i2c_ctrl2 {

@@ -80,8 +80,8 @@ i2c_pwr_cbi: &i2c0 {
 		     &i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
 
-	bc12_port0: rt1739-bc12@70 {
-		compatible = "richtek,rt1739-bc12";
+	bc12_ppc_port0: rt1739@70 {
+		compatible = "richtek,rt1739";
 		status = "okay";
 		reg = <0x70>;
 	};
@@ -117,5 +117,11 @@ i2c_pwr_cbi: &i2c0 {
 		status = "okay";
 		reg = <0x53>;
 		irq = <&int_usb_c1_bc12_charger>;
+	};
+	ppc_port1: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_ec_x_gpio1>;
 	};
 };

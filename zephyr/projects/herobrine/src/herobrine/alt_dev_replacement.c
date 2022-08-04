@@ -12,7 +12,7 @@ LOG_MODULE_REGISTER(alt_dev_replacement);
 #define BOARD_VERSION_UNKNOWN 0xffffffff
 
 /* Check board version to decide which ppc is used. */
-static bool board_has_syv_ppc(void)
+static bool board_has_alt_ppc(void)
 {
 	static uint32_t board_version = BOARD_VERSION_UNKNOWN;
 
@@ -29,7 +29,8 @@ static bool board_has_syv_ppc(void)
 static void check_alternate_devices(void)
 {
 	/* Configure the PPC driver */
-	if (board_has_syv_ppc())
-		PPC_ENABLE_ALTERNATE(ppc_port0_syv);
+	if (board_has_alt_ppc())
+		/* Arg is the USB port number */
+		PPC_ENABLE_ALTERNATE(0);
 }
 DECLARE_HOOK(HOOK_INIT, check_alternate_devices, HOOK_PRIO_DEFAULT);

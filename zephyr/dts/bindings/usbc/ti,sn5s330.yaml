@@ -3,12 +3,3 @@ description: USBC PPC
 compatible: "ti,sn5s330"
 
 include: ppc-chip.yaml
-
-properties:
-  i2c-addr-flags:
-    default: "SN5S330_ADDR0_FLAGS"
-    enum:
-      - "SN5S330_ADDR0_FLAGS"
-      - "SN5S330_ADDR1_FLAGS"
-      - "SN5S330_ADDR2_FLAGS"
-      - "SN5S330_ADDR3_FLAGS"

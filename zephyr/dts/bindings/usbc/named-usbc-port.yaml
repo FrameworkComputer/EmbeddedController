@@ -24,6 +24,16 @@ properties:
     required: false
     description: |
       Charger chip for the USB-C port.
+  ppc:
+    type: phandle
+    required: false
+    description: |
+      PPC for the USB-C port.
+  ppc_alt:
+    type: phandle
+    required: false
+    description: |
+      Alternate PPC for the USB-C port.
   usb-muxes:
     type: phandles
     required: false

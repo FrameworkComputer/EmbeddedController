@@ -7,16 +7,3 @@ description: NXP NX20P348X USBC PPC binding
 compatible: "nxp,nx20p348x"
 
 include: ppc-chip.yaml
-
-properties:
-  i2c-addr-flags:
-    default: "NX20P3483_ADDR2_FLAGS"
-    enum:
-      - "NX20P3483_ADDR0_FLAGS"
-      - "NX20P3483_ADDR1_FLAGS"
-      - "NX20P3483_ADDR2_FLAGS"
-      - "NX20P3483_ADDR3_FLAGS"
-      - "NX20P3481_ADDR0_FLAGS"
-      - "NX20P3481_ADDR1_FLAGS"
-      - "NX20P3481_ADDR2_FLAGS"
-      - "NX20P3481_ADDR3_FLAGS"

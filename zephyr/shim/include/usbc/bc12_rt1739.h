@@ -5,7 +5,7 @@
 
 #include "driver/ppc/rt1739.h"
 
-#define RT1739_BC12_COMPAT richtek_rt1739_bc12
+#define RT1739_BC12_COMPAT richtek_rt1739
 
 #define BC12_CHIP_RT1739(id)             \
 	{                                \

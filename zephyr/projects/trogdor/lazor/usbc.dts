@@ -18,12 +18,7 @@
 			bc12 = <&bc12_port0>;
 			tcpc = <&tcpc_port0>;
 
-			ppc {
-				compatible = "ti,sn5s330";
-				status = "okay";
-				port = <&i2c_tcpc0>;
-				i2c-addr-flags = "SN5S330_ADDR0_FLAGS";
-			};
+			ppc = <&ppc_port0>;
 
 			chg = <&charger>;
 		};
@@ -35,12 +30,7 @@
 			bc12 = <&bc12_port1>;
 			tcpc = <&tcpc_port1>;
 
-			ppc {
-				compatible = "ti,sn5s330";
-				status = "okay";
-				port = <&i2c_tcpc1>;
-				i2c-addr-flags = "SN5S330_ADDR0_FLAGS";
-			};
+			ppc = <&ppc_port1>;
 		};
 	};
 };

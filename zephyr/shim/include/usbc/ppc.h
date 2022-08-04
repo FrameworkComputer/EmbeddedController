@@ -15,32 +15,24 @@
 #include "usbc/utils.h"
 #include "usbc_ppc.h"
 
-#define PPC_ID(id) DT_CAT(PPC_, id)
-#define PPC_ID_WITH_COMMA(id) PPC_ID(id),
-#define PPC_ALT_FOR(alt_id) USBC_PORT(DT_PHANDLE(alt_id, alternate_for))
-
-#define PPC_ALT_ENUM(id)                                 \
-	COND_CODE_1(DT_NODE_HAS_PROP(id, alternate_for), \
-		    (PPC_ID_WITH_COMMA(id)), ())
-
-enum ppc_chips_alt_id {
-	DT_FOREACH_STATUS_OKAY(NX20P348X_COMPAT, PPC_ALT_ENUM)
-		DT_FOREACH_STATUS_OKAY(RT1739_PPC_COMPAT, PPC_ALT_ENUM)
-			DT_FOREACH_STATUS_OKAY(SN5S330_COMPAT, PPC_ALT_ENUM)
-				DT_FOREACH_STATUS_OKAY(SYV682X_COMPAT,
-						       PPC_ALT_ENUM)
-					PPC_CHIP_ALT_COUNT
-};
-
 extern struct ppc_config_t ppc_chips_alt[];
 
-#define PPC_ENABLE_ALTERNATE(nodelabel)                                  \
-	do {                                                             \
-		BUILD_ASSERT(DT_NODE_EXISTS(DT_NODELABEL(nodelabel)),    \
-			     "PPC alternate node does not exist");       \
-		memcpy(&ppc_chips[PPC_ALT_FOR(DT_NODELABEL(nodelabel))], \
-		       &ppc_chips_alt[PPC_ID(DT_NODELABEL(nodelabel))],  \
-		       sizeof(struct ppc_config_t));                     \
+#define ALT_PPC_CHIP_CHK(usbc_id, usb_port_num)                              \
+	COND_CODE_1(DT_REG_HAS_IDX(usbc_id, usb_port_num),                   \
+		    (COND_CODE_1(DT_NODE_HAS_PROP(usbc_id, ppc_alt), (|| 1), \
+				 (|| 0))),                                   \
+		    (|| 0))
+
+#define PPC_ENABLE_ALTERNATE(usb_port_num)                                            \
+	do {                                                                          \
+		BUILD_ASSERT(                                                         \
+			(0 DT_FOREACH_STATUS_OKAY_VARGS(named_usbc_port,              \
+							ALT_PPC_CHIP_CHK,             \
+							usb_port_num)),               \
+			"Selected USB node does not exist or does not specify a PPC " \
+			"alternate chip");                                            \
+		memcpy(&ppc_chips[usb_port_num], &ppc_chips_alt[usb_port_num],        \
+		       sizeof(struct ppc_config_t));                                  \
 	} while (0)
 
 #endif /* ZEPHYR_CHROME_USBC_PPC_H */

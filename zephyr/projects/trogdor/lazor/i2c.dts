@@ -66,6 +66,12 @@
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
 
+	ppc_port0: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
+
 	tcpc_port0: ps8xxx@b {
 		compatible = "parade,ps8xxx";
 		status = "okay";
@@ -82,6 +88,12 @@
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
 	pinctrl-names = "default";
+
+	ppc_port1: sn5s330@40{
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+	};
 
 	tcpc_port1: ps8xxx@b {
 		compatible = "parade,ps8xxx";
