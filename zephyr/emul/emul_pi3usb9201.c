@@ -36,8 +36,6 @@ struct pi3usb9201_emul_data {
 
 /** Static configuration for the emulator */
 struct pi3usb9201_emul_cfg {
-	/** Label of the I2C bus this emulator connects to */
-	const char *i2c_label;
 	/** Pointer to run-time data */
 	struct pi3usb9201_emul_data *data;
 	/** Address of pi3usb9201 on i2c bus */
@@ -174,7 +172,6 @@ static int pi3usb9201_emul_init(const struct emul *emul,
 #define PI3USB9201_EMUL(n)                                                  \
 	static struct pi3usb9201_emul_data pi3usb9201_emul_data_##n = {};   \
 	static const struct pi3usb9201_emul_cfg pi3usb9201_emul_cfg_##n = { \
-		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),              \
 		.data = &pi3usb9201_emul_data_##n,                          \
 		.addr = DT_INST_REG_ADDR(n),                                \
 	};                                                                  \

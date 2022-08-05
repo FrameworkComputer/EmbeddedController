@@ -292,7 +292,6 @@ void lis2dw12_emul_clear_accel_reading(const struct emul *emul)
 	}; \
 	static const struct lis2dw12_emul_cfg lis2dw12_emul_cfg_##n = {   \
 		.common = {                                               \
-		.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),            \
 			.dev_label = DT_INST_LABEL(n),                    \
 			.addr = DT_INST_REG_ADDR(n),                      \
 		},                                                        \

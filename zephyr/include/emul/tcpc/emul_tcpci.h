@@ -118,7 +118,6 @@ struct tcpc_emul_data {
 		.tcpci_ctx = &tcpci_ctx##n,                                \
 		.chip_data = chip_data_ptr,                                \
 		.i2c_cfg = {                                               \
-			.i2c_label = DT_LABEL(DT_BUS(DT_DRV_INST(n))),     \
 			.dev_label = DT_INST_LABEL(n),                     \
 			.data = &tcpci_ctx##n.common,                      \
 			.addr = DT_INST_REG_ADDR(n),                       \
