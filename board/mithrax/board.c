@@ -59,14 +59,6 @@ static void board_chipset_resume(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_chipset_resume, HOOK_PRIO_DEFAULT);
 
-/* Called on AP S0 -> S3 transition */
-static void board_chipset_suspend(void)
-{
-	/* Turn off the keyboard backlight if it's on. */
-	gpio_set_level(GPIO_EC_KB_BL_EN_L, 1);
-}
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
-
 /* Called on AP S5 -> S3 transition */
 static void board_chipset_startup(void)
 {
