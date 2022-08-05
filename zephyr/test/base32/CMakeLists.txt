@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 cmake_minimum_required(VERSION 3.13.1)
-find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(base32)
 
 target_sources(app PRIVATE "${PLATFORM_EC}/test/base32.c")

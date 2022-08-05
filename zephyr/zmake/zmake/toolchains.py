@@ -122,7 +122,10 @@ class ZephyrToolchain(GenericToolchain):
             "ZEPHYR_SDK_INSTALL_DIR": str(self.zephyr_sdk_install_dir),
         }
         return (
-            build_config.BuildConfig(cmake_defs=tc_vars)
+            build_config.BuildConfig(
+                environ_defs=tc_vars,
+                cmake_defs=tc_vars,
+            )
             | super().get_build_config()
         )
 

@@ -35,13 +35,17 @@ config_dicts_at_least_one_entry = st.dictionaries(
 
 build_configs = st.builds(
     BuildConfig,
+    environ_defs=config_dicts,
     cmake_defs=config_dicts,
     kconfig_defs=config_dicts,
     kconfig_files=st.lists(paths),
 )
-build_configs_no_kconfig = st.builds(BuildConfig, cmake_defs=config_dicts)
+build_configs_no_kconfig = st.builds(
+    BuildConfig, environ_defs=config_dicts, cmake_defs=config_dicts
+)
 build_configs_with_at_least_one_kconfig = st.builds(
     BuildConfig,
+    environ_defs=config_dicts,
     cmake_defs=config_dicts,
     kconfig_defs=config_dicts_at_least_one_entry,
 )
@@ -65,16 +69,19 @@ def test_merge(coins, combined):
         return left, right
 
     # Split the original config into two
+    env1, env2 = split(combined.environ_defs.items())
     cmake1, cmake2 = split(combined.cmake_defs.items())
     kconf1, kconf2 = split(combined.kconfig_defs.items())
     files1, files2 = split(combined.kconfig_files)
 
     config1 = BuildConfig(
+        environ_defs=dict(env1),
         cmake_defs=dict(cmake1),
         kconfig_defs=dict(kconf1),
         kconfig_files=files1,
     )
     config2 = BuildConfig(
+        environ_defs=dict(env2),
         cmake_defs=dict(cmake2),
         kconfig_defs=dict(kconf2),
         kconfig_files=files2,
@@ -84,6 +91,7 @@ def test_merge(coins, combined):
     merged = config1 | config2
 
     # Assert that the merged split configs is the original config
+    assert merged.environ_defs == combined.environ_defs
     assert merged.cmake_defs == combined.cmake_defs
     assert merged.kconfig_defs == combined.kconfig_defs
     assert set(merged.kconfig_files) == set(combined.kconfig_files)
@@ -149,6 +157,7 @@ def test_popen_cmake_no_kconfig(conf: BuildConfig, project_dir, build_dir):
     _, cmake_defs = parse_cmake_args(job_client.captured_argv)
 
     assert cmake_defs == conf.cmake_defs
+    assert job_client.captured_env == conf.environ_defs
 
 
 @hypothesis.given(build_configs_with_at_least_one_kconfig, paths, paths)
@@ -194,6 +203,7 @@ def test_popen_cmake_kconfig(conf: BuildConfig, project_dir, build_dir):
             kconfig_files = set()
 
         assert cmake_defs == conf.cmake_defs
+        assert job_client.captured_env == conf.environ_defs
         assert kconfig_files == expected_kconfig_files
 
         kconfig_defs = util.read_kconfig_file(temp_path)
@@ -221,6 +231,10 @@ def test_build_config_json_stability(fake_kconfig_files):
     build configs.
     """
     config_a = BuildConfig(
+        environ_defs={
+            "A": "B",
+            "B": "C",
+        },
         cmake_defs={
             "Z": "Y",
             "X": "W",
@@ -234,6 +248,10 @@ def test_build_config_json_stability(fake_kconfig_files):
 
     # Dict ordering is intentionally reversed in b.
     config_b = BuildConfig(
+        environ_defs={
+            "B": "C",
+            "A": "B",
+        },
         cmake_defs={
             "X": "W",
             "Z": "Y",
@@ -253,7 +271,7 @@ def test_build_config_json_inequality():
     representation.
     """
     config_a = BuildConfig(cmake_defs={"A": "B"})
-    config_b = BuildConfig(kconfig_defs={"CONFIG_A": "y"})
+    config_b = BuildConfig(environ_defs={"A": "B"})
 
     assert config_a.as_json() != config_b.as_json()
 

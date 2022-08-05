@@ -137,6 +137,9 @@ def test_zephyr(fake_project: project.Project, zephyr_exists, no_environ):
         "ZEPHYR_TOOLCHAIN_VARIANT": "zephyr",
         "ZEPHYR_SDK_INSTALL_DIR": str(pathlib.Path("/opt/zephyr-sdk")),
     }
+    assert config.environ_defs == {
+        "ZEPHYR_SDK_INSTALL_DIR": str(pathlib.Path("/opt/zephyr-sdk")),
+    }
 
 
 def test_zephyr_from_env(mockfs, monkeypatch, fake_project):
@@ -153,6 +156,9 @@ def test_zephyr_from_env(mockfs, monkeypatch, fake_project):
     config = chain.get_build_config()
     assert config.cmake_defs == {
         "ZEPHYR_TOOLCHAIN_VARIANT": "zephyr",
+        "ZEPHYR_SDK_INSTALL_DIR": str(zephyr_sdk_path),
+    }
+    assert config.environ_defs == {
         "ZEPHYR_SDK_INSTALL_DIR": str(zephyr_sdk_path),
     }
 
