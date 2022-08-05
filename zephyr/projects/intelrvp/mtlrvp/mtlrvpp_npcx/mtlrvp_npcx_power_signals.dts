@@ -98,15 +98,27 @@
  * Because the power signals directly reference the GPIOs,
  * the correspinding named-gpios need to have no-auto-init set.
  */
-&sys_pwrok_ec {
+&en_pp3300_a {
 	no-auto-init;
 };
 &rsmrst_pwrgd {
 	no-auto-init;
 };
-&all_sys_pwrgd {
+&ec_pch_rsmrst_l {
 	no-auto-init;
 };
 &pch_slp_s0_n {
+	no-auto-init;
+};
+&ec_pch_pwrok_od {
+	no-auto-init;
+};
+&sys_pwrok_ec {
+	no-auto-init;
+};
+&sys_rst_odl {
+	no-auto-init;
+};
+&all_sys_pwrgd {
 	no-auto-init;
 };

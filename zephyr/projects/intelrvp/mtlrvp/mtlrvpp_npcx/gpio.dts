@@ -98,11 +98,11 @@
 			gpios = <&gpio6 0 GPIO_INPUT>;
 			enum-name = "GPIO_CPU_PROCHOT";
 		};
-		sys-rst-odl-ec {
+		sys_rst_odl: sys-rst-odl-ec {
 			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
 			enum-name = "GPIO_SYS_RESET_L";
 		};
-		pm-rsmrst-r-n {
+		ec_pch_rsmrst_l: pm-rsmrst-r-n {
 			gpios = <&gpioa 4 GPIO_OUTPUT_LOW>; /* 1.8V */
 			enum-name = "GPIO_PCH_RSMRST_L";
 		};
@@ -113,12 +113,12 @@
 		ec_spi_oe_mecc: ec-spi-oe-mecc-r {
 			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>; /* 1.8V */
 		};
-		ec-ds3-r {
+		en_pp3300_a: ec-ds3-r {
 			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_PP3300_A";
 			alias = "GPIO_TEMP_SENSOR_POWER";
 		};
-		pch-pwrok-ec-r {
+		ec_pch_pwrok_od: pch-pwrok-ec-r {
 			gpios = <&gpiod 3 GPIO_ODR_LOW>;
 			enum-name = "GPIO_PCH_PWROK";
 		};
