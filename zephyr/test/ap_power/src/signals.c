@@ -406,7 +406,7 @@ ZTEST(signals, test_espi_vw)
 
 static void *init_dev(void)
 {
-	emul_port = device_get_binding("GPIO_0");
+	emul_port = DEVICE_DT_GET(DT_NODELABEL(gpio0));
 
 	return NULL;
 }
