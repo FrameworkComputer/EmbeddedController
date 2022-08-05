@@ -20,10 +20,8 @@
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, "USBHC: " format, ##args)
 
 enum usbhc_state {
-	/* Not enabled (initial state, and when chipset is off) */
-	USBHC_STATE_DISABLED = 0,
-	/* Ready to receive next request */
-	USBHC_STATE_READY_TO_RX,
+	/* Initial State - Ready to receive next request */
+	USBHC_STATE_READY_TO_RX = 0,
 	/* Receiving request */
 	USBHC_STATE_RECEIVING,
 	/* Processing request */
@@ -202,7 +200,6 @@ static void usbhc_written(struct consumer const *consumer, size_t count)
 		return;
 	case USBHC_STATE_PROCESSING:
 	case USBHC_STATE_SENDING:
-	case USBHC_STATE_DISABLED:
 		/*
 		 * Take no action and return though we may have resource to
 		 * receive a new request. Host will get a buffer full error or
