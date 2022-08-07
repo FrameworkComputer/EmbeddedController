@@ -8,6 +8,7 @@
 / {
 	aliases {
 		gpio-wp = &ec_wp_l;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
 
 	named-gpios {
@@ -27,12 +28,6 @@
 			gpios = <&ioex_c0_port0 7 GPIO_OUTPUT>;
 		};
 	};
-};
-
-&cros_kb_raw {
-	status = "okay";
-	pinctrl-0 = <>;
-	pinctrl-names = "default";
 };
 
 /* host interface */

@@ -35,6 +35,7 @@ register_variant(
         here / "power_signals.dts",
         here / "battery.dts",
         here / "usbc.dts",
+        here / "keyboard.dts",
     ],
     extra_kconfig_files=[here / "prj_rex.conf"],
 )
