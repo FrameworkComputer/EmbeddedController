@@ -86,6 +86,7 @@ register_corsola_project(
         here / "cbi_steelix.dts",
         here / "gpio_steelix.dts",
         here / "npcx_keyboard.dts",
+        here / "keyboard_steelix.dts",
         here / "led_steelix.dts",
         here / "motionsense_kingler.dts",
         here / "motionsense_steelix.dts",
