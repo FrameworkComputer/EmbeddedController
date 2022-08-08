@@ -144,11 +144,56 @@
 			TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
 	};
 
+	nct38xx_c0: nct38xx_c0@73 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "nuvoton,nct38xx-gpio";
+		reg = <0x73>;
+		label = "NCT38XX_C0";
+
+		ioex_c0:gpio@0 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x0>;
+			label = "NCT38XX_C0_GPIO0";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xdc>;
+			pinmux_mask = <0xff>;
+		};
+	};
+
 	tcpc_port1: nct38xx@77 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x77>;
 		gpio-dev = <&nct38xx_c1>;
 		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+	};
+
+	nct38xx_c1: nct38xx_c1@77 {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		compatible = "nuvoton,nct38xx-gpio";
+		reg = <0x77>;
+		label = "NCT38XX_C1";
+
+		ioex_c1:gpio@0 {
+			compatible = "nuvoton,nct38xx-gpio-port";
+			reg = <0x0>;
+			label = "NCT38XX_C1_GPIO0";
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+			pin_mask = <0xdc>;
+			pinmux_mask = <0xff>;
+		};
+	};
+
+	nct38xx_alert_0 {
+		compatible = "nuvoton,nct38xx-gpio-alert";
+		irq-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+		nct38xx-dev = <&nct38xx_c0 &nct38xx_c1>;
+		label = "NCT38XX_ALERT_1";
 	};
 };
 
