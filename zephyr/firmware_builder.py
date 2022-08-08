@@ -12,6 +12,7 @@ import argparse
 import multiprocessing
 import pathlib
 import re
+import shlex
 import subprocess
 import sys
 
@@ -21,6 +22,9 @@ from google.protobuf import json_format  # pylint: disable=import-error
 
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
 DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
+
+# Boards that we want to track the coverage of our own files specifically.
+SPECIAL_BOARDS = ["herobrine"]
 
 
 def run_twister(platform_ec, code_coverage=False, extra_args=None):
@@ -40,6 +44,7 @@ def run_twister(platform_ec, code_coverage=False, extra_args=None):
                 "native_posix",
             ]
         )
+    print(" ".join(shlex.quote(str(x)) for x in cmd))
     subprocess.run(cmd, check=True, cwd=platform_ec)
 
 
@@ -58,6 +63,7 @@ def build(opts):
     cmd = ["zmake", "-D", "build", "-a"]
     if opts.code_coverage:
         cmd.append("--coverage")
+    print(" ".join(shlex.quote(str(x)) for x in cmd))
     subprocess.run(cmd, cwd=zephyr_dir, check=True)
     if not opts.code_coverage:
         for project in zmake.project.find_projects(zephyr_dir).values():
@@ -152,6 +158,7 @@ def bundle_coverage(opts):
     tarball_name = "coverage.tbz2"
     tarball_path = bundle_dir / tarball_name
     cmd = ["tar", "cvfj", tarball_path, "lcov.info"]
+    print(" ".join(shlex.quote(str(x)) for x in cmd))
     subprocess.run(cmd, cwd=build_dir, check=True)
     meta = info.objects.add()
     meta.file_name = tarball_name
@@ -160,6 +167,7 @@ def bundle_coverage(opts):
     )
     (bundle_dir / "html").mkdir(exist_ok=True)
     cmd = ["mv", "lcov_rpt", bundle_dir / "html/lcov_rpt"]
+    print(" ".join(shlex.quote(str(x)) for x in cmd))
     subprocess.run(cmd, cwd=build_dir, check=True)
     meta = info.objects.add()
     meta.file_name = "html"
@@ -185,6 +193,7 @@ def bundle_firmware(opts):
         tarball_name = f"{project.config.project_name}.firmware.tbz2"
         tarball_path = bundle_dir.joinpath(tarball_name)
         cmd = ["tar", "cvfj", tarball_path, "."]
+        print(" ".join(shlex.quote(str(x)) for x in cmd))
         subprocess.run(cmd, cwd=artifacts_dir, check=True)
         meta = info.objects.add()
         meta.file_name = tarball_name
@@ -216,26 +225,6 @@ def test(opts):
     if opts.code_coverage:
         build_dir = platform_ec / "build" / "zephyr"
         # Merge lcov files here because bundle failures are "infra" failures.
-        cmd = [
-            "/usr/bin/lcov",
-            "-o",
-            build_dir / "zephyr_merged.info",
-            "--rc",
-            "lcov_branch_coverage=1",
-            "-a",
-            build_dir / "all_builds.info",
-            "-a",
-            platform_ec / "twister-out" / "coverage.info",
-        ]
-        output = subprocess.run(
-            cmd,
-            cwd=zephyr_dir,
-            check=True,
-            stdout=subprocess.PIPE,
-            universal_newlines=True,
-        ).stdout
-        _extract_lcov_summary("EC_ZEPHYR_MERGED", metrics, output)
-
         output = subprocess.run(
             [
                 "/usr/bin/lcov",
@@ -249,8 +238,8 @@ def test(opts):
         ).stdout
         _extract_lcov_summary("EC_ZEPHYR_TESTS", metrics, output)
 
-        cmd = ["make", "coverage", f"-j{opts.cpus}"]
-        print(f"# Running {' '.join(cmd)}.")
+        cmd = ["make", "test-coverage", f"-j{opts.cpus}"]
+        print(" ".join(shlex.quote(str(x)) for x in cmd))
         subprocess.run(cmd, cwd=platform_ec, check=True)
 
         output = subprocess.run(
@@ -264,7 +253,49 @@ def test(opts):
             stdout=subprocess.PIPE,
             universal_newlines=True,
         ).stdout
-        _extract_lcov_summary("EC_LEGACY_MERGED", metrics, output)
+        _extract_lcov_summary("EC_LEGACY_TESTS", metrics, output)
+
+        cmd = [
+            "/usr/bin/lcov",
+            "-o",
+            build_dir / "all_tests.info",
+            "--rc",
+            "lcov_branch_coverage=1",
+            "-a",
+            platform_ec / "build/coverage/lcov.info",
+            "-a",
+            platform_ec / "twister-out" / "coverage.info",
+        ]
+        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        output = subprocess.run(
+            cmd,
+            cwd=zephyr_dir,
+            check=True,
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        ).stdout
+        _extract_lcov_summary("ALL_TESTS", metrics, output)
+
+        cmd = [
+            "/usr/bin/lcov",
+            "-o",
+            build_dir / "zephyr_merged.info",
+            "--rc",
+            "lcov_branch_coverage=1",
+            "-a",
+            build_dir / "all_builds.info",
+            "-a",
+            build_dir / "all_tests.info",
+        ]
+        print(" ".join(shlex.quote(str(x)) for x in cmd))
+        output = subprocess.run(
+            cmd,
+            cwd=zephyr_dir,
+            check=True,
+            stdout=subprocess.PIPE,
+            universal_newlines=True,
+        ).stdout
+        _extract_lcov_summary("EC_ZEPHYR_MERGED", metrics, output)
 
         cmd = [
             "/usr/bin/lcov",
@@ -277,6 +308,7 @@ def test(opts):
             "-a",
             platform_ec / "build/coverage/lcov.info",
         ]
+        print(" ".join(shlex.quote(str(x)) for x in cmd))
         subprocess.run(
             cmd,
             cwd=zephyr_dir,
@@ -295,6 +327,7 @@ def test(opts):
             platform_ec / "twister-out*/**",
             "/usr/include/**",
         ]
+        print(" ".join(shlex.quote(str(x)) for x in cmd))
         output = subprocess.run(
             cmd,
             cwd=zephyr_dir,
@@ -320,8 +353,89 @@ def test(opts):
             check=True,
         )
 
+        third_party = platform_ec.parent.parent / "third_party"
+        for board in SPECIAL_BOARDS:
+            # Merge board coverage with tests
+            cmd = [
+                "/usr/bin/lcov",
+                "-o",
+                build_dir / (board + "_merged.info"),
+                "--rc",
+                "lcov_branch_coverage=1",
+                "-a",
+                build_dir / "all_tests.info",
+                "-a",
+                build_dir / board / "output/zephyr.info",
+            ]
+            print(" ".join(shlex.quote(str(x)) for x in cmd))
+            subprocess.run(
+                cmd,
+                cwd=zephyr_dir,
+                check=True,
+            )
+            # Exclude file patterns we don't want
+            cmd = [
+                "/usr/bin/lcov",
+                "-o",
+                build_dir / (board + "_filtered.info"),
+                "--rc",
+                "lcov_branch_coverage=1",
+                "-r",
+                build_dir / (board + "_merged.info"),
+                # Exclude generated files
+                platform_ec / "build/**",
+                platform_ec / "twister-out*/**",
+                # Exclude system headers
+                "/usr/include/**",
+                # Exclude third_party code (specifically zephyr)
+                third_party / "**",
+                # These are questionable, but they are essentically untestable
+                zephyr_dir / "drivers/**",
+                zephyr_dir / "include/drivers/**",
+                zephyr_dir / "projects/**",
+                zephyr_dir / "shim/chip/**",
+                zephyr_dir / "shim/chip/npcx/npcx_monitor/**",
+                zephyr_dir / "shim/core/**",
+                # Exclude tests
+                platform_ec / "test/**",
+                zephyr_dir / "emul/**",
+                zephyr_dir / "test/**",
+            ]
+            print(" ".join(shlex.quote(str(x)) for x in cmd))
+            subprocess.run(
+                cmd,
+                cwd=zephyr_dir,
+                check=True,
+            )
+            # Then keep only files present in the board build
+            filenames = set()
+            with open(
+                build_dir / board / "output/zephyr.info", "r"
+            ) as board_cov:
+                for line in board_cov.readlines():
+                    if line.startswith("SF:"):
+                        filenames.add(line[3:-1])
+            cmd = [
+                "/usr/bin/lcov",
+                "-o",
+                build_dir / (board + "_final.info"),
+                "--rc",
+                "lcov_branch_coverage=1",
+                "-e",
+                build_dir / (board + "_filtered.info"),
+            ] + list(filenames)
+            print(" ".join(shlex.quote(str(x)) for x in cmd))
+            output = subprocess.run(
+                cmd,
+                cwd=zephyr_dir,
+                check=True,
+                stdout=subprocess.PIPE,
+                universal_newlines=True,
+            ).stdout
+            _extract_lcov_summary(f"BOARD_{board}".upper(), metrics, output)
+
     with open(opts.metrics, "w") as file:
-        file.write(json_format.MessageToJson(metrics))
+        file.write(json_format.MessageToJson(metrics))  # type: ignore
 
 
 COVERAGE_RE = re.compile(
