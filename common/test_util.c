@@ -49,11 +49,13 @@ test_mockable void after_test(void)
 }
 
 #ifdef TEST_COVERAGE
-extern void __gcov_flush(void);
+extern void __gcov_dump(void);
+extern void __gcov_reset(void);
 
 void emulator_flush(void)
 {
-	__gcov_flush();
+	__gcov_dump();
+	__gcov_reset();
 }
 #else
 void emulator_flush(void)
