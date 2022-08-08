@@ -595,8 +595,8 @@ static int ps8xxx_emul_init(const struct emul *emul,
 	 * ps8xxx
 	 * TODO(b/240564574): Call EMUL_DEFINE for each "hidden" sub-chip.
 	 */
-	ret |= i2c_emul_register(i2c_dev, emul->dev->name, &data->p0_data.emul);
-	ret |= i2c_emul_register(i2c_dev, emul->dev->name, &data->p1_data.emul);
+	ret |= i2c_emul_register(i2c_dev, &data->p0_data.emul);
+	ret |= i2c_emul_register(i2c_dev, &data->p1_data.emul);
 
 	if (cfg->gpio_cfg.addr != 0) {
 		data->gpio_data.emul.api = &i2c_ps8xxx_emul_api;
@@ -604,8 +604,7 @@ static int ps8xxx_emul_init(const struct emul *emul,
 		data->gpio_data.emul.target = emul;
 		data->gpio_data.i2c = i2c_dev;
 		data->gpio_data.cfg = &cfg->gpio_cfg;
-		ret |= i2c_emul_register(i2c_dev, emul->dev->name,
-					 &data->gpio_data.emul);
+		ret |= i2c_emul_register(i2c_dev, &data->gpio_data.emul);
 		i2c_common_emul_init(&data->gpio_data);
 	}
 
