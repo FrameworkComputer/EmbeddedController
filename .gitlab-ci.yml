@@ -216,7 +216,6 @@ ec_coverage:
   needs: ["seed_cache"]
   script:
     - make -j8 CRYPTOC_DIR="${MODULES_DIR}/cryptoc"
-      HOSTGCOV='gcov'
       CROSS_COMPILE_arm=/opt/zephyr-sdk/arm-zephyr-eabi/bin/arm-zephyr-eabi-
       test-coverage
   artifacts:

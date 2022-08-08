@@ -61,7 +61,11 @@ HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)clang++
 HOST_PKG_CONFIG?=$(HOST_CROSS_COMPILE)pkg-config
 PROTOC?=protoc
 GCOV=$(CROSS_COMPILE)gcov
+ifeq ($(cc-name),gcc)
+HOSTGCOV=$(HOST_CROSS_COMPILE)gcov
+else
 HOSTGCOV=$(CURDIR)/util/llvm-gcov.sh
+endif
 
 C_WARN = -Wstrict-prototypes -Wdeclaration-after-statement -Wno-pointer-sign
 COMMON_WARN = -Wall -Wundef -Werror-implicit-function-declaration \
