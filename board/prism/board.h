@@ -8,13 +8,15 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* TODO: May remove CONFIG_SYSTEM_UNLOCKED prior to building MP FW. */
-#define CONFIG_SYSTEM_UNLOCKED
+/* Prism doesn't use WP GPIO, set WP enabled */
+#ifdef SECTION_IS_RO
+#define CONFIG_WP_ALWAYS
+#endif
 
 /* TODO: May define FLASH_PSTATE_LOCKED prior to building MP FW. */
 #undef CONFIG_FLASH_PSTATE_LOCKED
 
-/* USB ID. TODO: May need to find one for Prism. */
+/* USB ID for Prism */
 #define CONFIG_USB_PID 0x5022
 
 /* 48 MHz SYSCLK clock frequency */
@@ -120,7 +122,7 @@
 
 #define CONFIG_USB_SERIALNO
 /* Replaced at runtime (board_read_serial) by chip unique-id-based number. */
-#define DEFAULT_SERIALNO ""
+#define DEFAULT_SERIALNO "Uninitialized"
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #undef CONFIG_HOSTCMD_EVENTS
