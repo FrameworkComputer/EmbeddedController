@@ -84,7 +84,6 @@ def main():
     twister_env = dict(os.environ)
     twister_env.update(
         {
-            "ZEPHYR_BASE": str(zephyr_base),
             "TOOLCHAIN_ROOT": str(ec_base / "zephyr"),
             "ZEPHYR_TOOLCHAIN_VARIANT": "llvm",
         }
@@ -96,6 +95,7 @@ def main():
         "--ninja",
         f"-x=DTS_ROOT={str( ec_base / 'zephyr')}",
         f"-x=SYSCALL_INCLUDE_DIRS={str(ec_base / 'zephyr' / 'include' / 'drivers')}",
+        f"-x=ZEPHYR_BASE={zephyr_base}",
         f"-x=ZEPHYR_MODULES={';'.join([str(p) for p in zephyr_modules])}",
         "--gcov-tool",
         ec_base / "util" / "llvm-gcov.sh",
