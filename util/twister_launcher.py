@@ -13,6 +13,7 @@ parameters that may be used, please consult the Twister documentation.
 import argparse
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 
@@ -142,6 +143,7 @@ def main():
         env=twister_env,
     ) as proc:
         proc.wait()
+        sys.exit(proc.returncode)
 
 
 if __name__ == "__main__":
