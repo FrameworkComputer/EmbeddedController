@@ -70,6 +70,15 @@ included from the main board DTS file.
 For platform specific features, other flags may be available in the Zephyr
 [dt-bindings/gpio/gpio.h] file, such as `GPIO_VOLTAGE_1P8`.
 
+### Alternate functions
+
+All pins are configured as GPIO by default, so normally pinctrl configuration
+for GPIO pins is not required. Note that on NPCX ECs some pins default to a
+non-GPIO function after reset. These are explicitly set to GPIO during
+initialization, based on the `def-io-conf-list` node in [npcx9.dtsi], so they
+do not need to be set to GPIO usage, but they need an explicit `pinctrl-x`
+entry to be set back to the specific function.
+
 ### Legacy enum-name usage
 
 Only GPIOs that require referencing from legacy common code should have
@@ -457,3 +466,4 @@ project.
 [interrupts.dts]: ../../zephyr/projects/volteer/volteer/interrupts.dts
 [BUILD.py]: ../../zephyr/projects/volteer/volteer/BUILD.py
 [*node label*]: https://docs.zephyrproject.org/latest/build/dts/intro.html#dt-node-labels
+[npcx9.dtsi]: https://github.com/zephyrproject-rtos/zephyr/blob/main/dts/arm/nuvoton/npcx9.dtsi
