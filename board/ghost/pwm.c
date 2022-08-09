@@ -14,7 +14,7 @@
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_GLOGO] = {
 		.channel = 0,
-		.flags = PWM_CONFIG_ACTIVE_LOW | PWM_CONFIG_DSLEEP,
+		.flags = 0,
 		.freq = 12000,
 	},
 	[PWM_CH_CAM_LED] = {
