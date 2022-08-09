@@ -61,7 +61,7 @@ static struct als_drv_data_t g_tcs3400_data = {
 	.als_cal.offset = 0,
 	.als_cal.channel_scale = {
 		.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kc from VPD */
-		.cover_scale = ALS_CHANNEL_SCALE(1.0),     /* CT */
+		.cover_scale = ALS_CHANNEL_SCALE(0.23),     /* CT */
 	},
 };
 
@@ -71,39 +71,39 @@ static struct als_drv_data_t g_tcs3400_data = {
  */
 static struct tcs3400_rgb_drv_data_t g_tcs3400_rgb_data = {
 	.calibration.rgb_cal[X] = {
-		.offset = 0,
-		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(1.0),
+		.offset = 448, /* 447.5509362 */
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.45511034),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(-0.21956361),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0.32628044),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.3610898),
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kr */
-			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+			.cover_scale = ALS_CHANNEL_SCALE(0.08)
 		}
 	},
 	.calibration.rgb_cal[Y] = {
-		.offset = 0,
-		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(1.0),
+		.offset = 436, /* 435.9025807*/
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.50765776),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(-0.34142269),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0.55352908),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.35923454),
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kg */
 			.cover_scale = ALS_CHANNEL_SCALE(1.0)
 		},
 	},
 	.calibration.rgb_cal[Z] = {
-		.offset = 0,
-		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(0),
-		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(1.0),
+		.offset = 287, /* 286.51472391*/
+		.coeff[TCS_RED_COEFF_IDX] = FLOAT_TO_FP(-0.11635731),
+		.coeff[TCS_GREEN_COEFF_IDX] = FLOAT_TO_FP(-0.76700456),
+		.coeff[TCS_BLUE_COEFF_IDX] = FLOAT_TO_FP(1.36663521),
+		.coeff[TCS_CLEAR_COEFF_IDX] = FLOAT_TO_FP(0.18494607),
 		.scale = {
 			.k_channel_scale = ALS_CHANNEL_SCALE(1.0), /* kb */
-			.cover_scale = ALS_CHANNEL_SCALE(1.0)
+			.cover_scale = ALS_CHANNEL_SCALE(0.54)
 		}
 	},
-	.calibration.irt = INT_TO_FP(1),
+	.calibration.irt = FLOAT_TO_FP(0.06),
 	.saturation.again = TCS_DEFAULT_AGAIN,
 	.saturation.atime = TCS_DEFAULT_ATIME,
 };
