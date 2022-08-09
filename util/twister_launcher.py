@@ -17,21 +17,19 @@ from pathlib import Path
 
 
 def find_checkout() -> Path:
-    """Find the location of the source checkout or raise an error."""
-    # cros_checkout = os.environ.get("CROS_WORKON_SRCROOT")
-    # if cros_checkout is not None:
-    #     return Path(cros_checkout)
+    """Find the location of the source checkout or return None."""
+    cros_checkout = os.environ.get("CROS_WORKON_SRCROOT")
+    if cros_checkout is not None:
+        return Path(cros_checkout)
 
     # Attempt to locate checkout location relatively if being run outside of chroot.
     try:
         cros_checkout = Path(__file__).resolve().parents[4]
         assert (cros_checkout / "src").exists()
         return cros_checkout
-    except (IndexError, AssertionError) as err:
-        raise RuntimeError(
-            "Cannot locate the checkout source root. Try entering the chroot or "
-            "making sure your directory structure matches it."
-        ) from err
+    except (IndexError, AssertionError):
+        # Not in the chroot or matching directory structure
+        return None
 
 
 def find_modules(mod_dir: Path) -> list:
@@ -47,24 +45,38 @@ def find_modules(mod_dir: Path) -> list:
 def main():
     """Run Twister using defaults for the EC project."""
 
-    # Determine where the source tree is checked out.
+    # Determine where the source tree is checked out. Will be None if operating outside
+    # of the chroot (e.g. Gitlab builds). In this case, additional paths need to be
+    # passed in through environment variables.
     cros_checkout = find_checkout()
 
-    # Use ZEPHYR_BASE environment var, or compute from checkout path if not
-    # specified.
-    zephyr_base = Path(
-        os.environ.get(
-            "ZEPHYR_BASE",
-            cros_checkout / "src" / "third_party" / "zephyr" / "main",
-        )
-    )
+    if cros_checkout:
+        ec_base = cros_checkout / "src" / "platform" / "ec"
+        zephyr_base = cros_checkout / "src" / "third_party" / "zephyr" / "main"
+        zephyr_modules_dir = cros_checkout / "src" / "third_party" / "zephyr"
+    else:
+        try:
+            ec_base = Path(os.environ["EC_DIR"]).resolve()
+        except KeyError as err:
+            raise RuntimeError(
+                "EC_DIR unspecified. Please pass as env var or use chroot."
+            ) from err
 
-    ec_base = cros_checkout / "src" / "platform" / "ec"
+        try:
+            zephyr_base = Path(os.environ["ZEPHYR_BASE"]).resolve()
+        except KeyError as err:
+            raise RuntimeError(
+                "ZEPHYR_BASE unspecified. Please pass as env var or use chroot."
+            ) from err
 
-    # Module paths, including third party modules and the EC application.
-    zephyr_modules = find_modules(
-        cros_checkout / "src" / "third_party" / "zephyr"
-    )
+        try:
+            zephyr_modules_dir = Path(os.environ["MODULES_DIR"]).resolve()
+        except KeyError as err:
+            raise RuntimeError(
+                "MODULES_DIR unspecified. Please pass as env var or use chroot."
+            ) from err
+
+    zephyr_modules = find_modules(zephyr_modules_dir)
     zephyr_modules.append(ec_base)
 
     # Prepare environment variables for export to Twister and inherit the
