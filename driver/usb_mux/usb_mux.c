@@ -318,6 +318,10 @@ static int configure_mux(int port, int index, enum mux_config_type config,
 			if (mux_ptr->flags & USB_MUX_FLAG_SET_WITHOUT_FLIP)
 				lcl_state &= ~USB_PD_MUX_POLARITY_INVERTED;
 
+			if ((lcl_state != USB_PD_MUX_NONE) &&
+			    (mux_ptr->flags & USB_MUX_FLAG_POLARITY_INVERTED))
+				lcl_state ^= USB_PD_MUX_POLARITY_INVERTED;
+
 			if (drv && drv->set) {
 				rv = drv->set(mux_ptr, lcl_state,
 					      &ack_required);
