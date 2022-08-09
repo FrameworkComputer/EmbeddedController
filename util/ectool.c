@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #include <getopt.h>
@@ -402,6 +403,48 @@ int parse_bool(const char *s, int *dest)
 	} else {
 		return 0;
 	}
+}
+
+/**
+ * @brief Find the enum value associated the string of enum text or value.
+ *
+ * @param str The input string to parse an enum from.
+ * @param enum_text_map The array that maps enum value (index) to text.
+ * @param enum_text_map_length The length of the enum_text_map array.
+ * @param enum_value Output parsed enum value.
+ * @return int 0 on success, -1 if result cannot be found
+ */
+static int find_enum_from_text(const char *str,
+			       const char *const enum_text_map[],
+			       long enum_text_map_length, long *enum_value)
+{
+	char *e;
+	long value;
+
+	assert(str);
+	assert(enum_value);
+	assert(enum_text_map);
+	assert(enum_text_map_length >= 0);
+
+	if (*str == '\0')
+		return -1;
+
+	value = strtol(str, &e, 0);
+	if (!e || !*e) {
+		*enum_value = value;
+		return 0;
+	}
+
+	for (value = 0; value < enum_text_map_length; value++) {
+		if (!enum_text_map[value])
+			continue;
+		if (strcasecmp(str, enum_text_map[value]) == 0) {
+			*enum_value = value;
+			return 0;
+		}
+	}
+
+	return -1;
 }
 
 void print_help(const char *prog, int print_cmds)
@@ -10524,11 +10567,17 @@ err:
 
 int cmd_wait_event(int argc, char *argv[])
 {
+	static const char *const mkbp_event_text[] = EC_MKBP_EVENT_TEXT;
+	static const char *const host_event_text[] = HOST_EVENT_TEXT;
+
 	int rv, i;
 	struct ec_response_get_next_event_v1 buffer;
 	long timeout = 5000;
 	long event_type;
 	char *e;
+
+	BUILD_ASSERT(ARRAY_SIZE(mkbp_event_text) == EC_MKBP_EVENT_COUNT);
+	BUILD_ASSERT(ARRAY_SIZE(host_event_text) == 33); /* events start at 1 */
 
 	if (!ec_pollevent) {
 		fprintf(stderr, "Polling for MKBP event not supported\n");
@@ -10537,11 +10586,22 @@ int cmd_wait_event(int argc, char *argv[])
 
 	if (argc < 2) {
 		fprintf(stderr, "Usage: %s <type> [<timeout>]\n", argv[0]);
+		fprintf(stderr, "\n");
+		fprintf(stderr, "type: MKBP event number or name.\n");
+		for (int i = 0; i < ARRAY_SIZE(mkbp_event_text); i++) {
+			const char *name = mkbp_event_text[i];
+
+			if (name) {
+				fprintf(stderr, "      %s or %d\n", name, i);
+			}
+		}
+
 		return -1;
 	}
 
-	event_type = strtol(argv[1], &e, 0);
-	if ((e && *e) || event_type < 0 || event_type >= EC_MKBP_EVENT_COUNT) {
+	rv = find_enum_from_text(argv[1], mkbp_event_text,
+				 ARRAY_SIZE(mkbp_event_text), &event_type);
+	if (rv < 0 || event_type < 0 || event_type >= EC_MKBP_EVENT_COUNT) {
 		fprintf(stderr, "Bad event type '%s'.\n", argv[1]);
 		return -1;
 	}
@@ -10561,6 +10621,20 @@ int cmd_wait_event(int argc, char *argv[])
 	for (i = 0; i < rv - 1; ++i)
 		printf("%02x ", buffer.data.key_matrix[i]);
 	printf("\n");
+
+	switch (event_type) {
+	case EC_MKBP_EVENT_HOST_EVENT:
+		printf("Host events:");
+		for (int evt = 1; evt <= 32; evt++) {
+			if (buffer.data.host_event & EC_HOST_EVENT_MASK(evt)) {
+				const char *name = host_event_text[evt];
+
+				printf(" %s", name ? name : "UNKNOWN");
+			}
+		}
+		printf("\n");
+		break;
+	}
 
 	return 0;
 }
